@@ -1,11 +1,34 @@
 #pragma once
 
 #include "file.h"
+#include "function.h"
 
 namespace countrybit
 {
 	namespace system
 	{
+
+		using namespace std;
+
+		template<typename T>
+		struct memfun_type
+		{
+			using type = void;
+		};
+
+		template<typename Ret, typename Class, typename... Args>
+		struct memfun_type<Ret(Class::*)(Args...) const>
+		{
+			using type = std::function<Ret(Args...)>;
+		};
+
+		template<typename F>
+		typename memfun_type<decltype(&F::operator())>::type
+			FFL(F const& func)
+		{ // Function from lambda !
+			return func;
+		}
+
 		class application
 		{
 			job_queue queue;
@@ -37,6 +60,21 @@ namespace countrybit
 			{
 				return file(&queue, filename, system::file_open_types::create_new);
 			}
+
+			background_function create_function()
+			{
+				background_function bf(&queue);
+				return bf;
+			}
+
+			template <class f_type> auto run_function(std::function<f_type> fn)
+			{
+				background_function bf(&queue);				
+				return bf.run(fn);
+			}
+
+		private:
+
 		};
 
 	}

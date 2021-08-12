@@ -16,6 +16,7 @@
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)application.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)file.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)function.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)jnode.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)jcollection.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)messages.h" />
@@ -26,6 +27,7 @@
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)application.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)file.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)function.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)queue.cpp" />
   </ItemGroup>
 </Project>
