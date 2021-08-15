@@ -20,7 +20,6 @@ namespace countrybit
 			virtual job_notify execute(job_queue* _callingQueue, DWORD _bytesTransferred, BOOL _success)
 			{
 				job_notify jn;
-				jn.setCoroutine(handle);
 				jn.shouldDelete = false;
 				return jn;
 			}
@@ -38,7 +37,6 @@ namespace countrybit
 
 			void read(HANDLE hfile, uint64_t location, void* destination, uint32_t bytes_to_read)
 			{
-				ovp = { };
 				LARGE_INTEGER li;
 				li.QuadPart = location;
 				ovp.OffsetHigh = li.HighPart;
@@ -58,7 +56,6 @@ namespace countrybit
 
 			void write(HANDLE hfile, uint64_t location, void* destination, uint32_t bytes_to_read)
 			{
-				ovp = { };
 				LARGE_INTEGER li;
 				li.QuadPart = location;
 				ovp.OffsetHigh = li.HighPart;

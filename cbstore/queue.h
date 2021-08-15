@@ -18,7 +18,6 @@ namespace countrybit
 			enum notifies {
 				postmessage,
 				setevent,
-				coroutine,
 				none
 			} notification;
 
@@ -26,17 +25,14 @@ namespace countrybit
 
 			void notify();
 
-			std::coroutine_handle<> handle;
-
 		public:
 
 			bool repost, shouldDelete;
 
 			job_notify();
-			job_notify(const job_notify& _src);
+			job_notify(job_notify&& _src);
 			void setSignal(HANDLE signal);
 			void setPostMsg(HWND _hwnd, UINT _message, WPARAM _wParam, LPARAM _lParam);
-			void setCoroutine(std::coroutine_handle<> handle);
 			~job_notify();
 			void operator = (const job_notify& _src);
 			friend class job_queue;
@@ -49,18 +45,13 @@ namespace countrybit
 			OVERLAPPED ovp;
 
 		public:
-
 			job();
 			virtual ~job();
-			virtual job_notify on_completed(job_queue* _callingQueue, DWORD _bytesTransferred, BOOL _success);
+			virtual job_notify execute(job_queue* _callingQueue, DWORD _bytesTransferred, BOOL _success);
 			friend class job_queue;
 		};
 
 		class finish_job : public job {
-
-		protected:
-
-			OVERLAPPED ovp; // this MUST be the first element in this structure
 
 		public:
 
@@ -68,7 +59,7 @@ namespace countrybit
 
 			finish_job();
 			virtual ~finish_job();
-			virtual job_notify on_completed(job_queue* _callingQueue, DWORD _bytesTransferred, BOOL _success);
+			virtual job_notify execute(job_queue* _callingQueue, DWORD _bytesTransferred, BOOL _success);
 			friend class job_queue;
 		};
 
@@ -113,11 +104,9 @@ namespace countrybit
 
 			HANDLE ioCompPort;
 
-			HANDLE		threadHandles[maxWorkerThreads];
-			std::thread threads[maxWorkerThreads];
+			std::vector<std::thread> threads;
 			int numWorkerThreads;
 
-			job shutDownJob;
 			bool shutDownOrdered;
 
 			int num_outstanding_jobs;

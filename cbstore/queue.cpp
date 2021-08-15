@@ -18,9 +18,6 @@ namespace countrybit
 			case setevent:
 				SetEvent((HANDLE)msg.lParam);
 				break;
-			case coroutine:
-				handle();
-				break;
 			}
 		}
 
@@ -29,9 +26,10 @@ namespace countrybit
 			repost = false;
 			notification = none;
 			shouldDelete = false;
+			ZeroMemory(&msg, sizeof(msg));
 		}
 
-		job_notify::job_notify(const job_notify& _src)
+		job_notify::job_notify(job_notify&& _src)
 		{
 			repost = _src.repost;
 			msg.hwnd = _src.msg.hwnd;
@@ -57,12 +55,6 @@ namespace countrybit
 			msg.lParam = _lParam;
 		}
 
-		void job_notify::setCoroutine(std::coroutine_handle<> _handle)
-		{
-			notification = coroutine;
-			handle = _handle;
-		}
-
 		job_notify::~job_notify()
 		{
 			;
@@ -81,6 +73,7 @@ namespace countrybit
 
 		// ----------------------------------------------------------------------------
 
+
 		job::job()
 		{
 			::ZeroMemory(&ovp, sizeof(ovp));
@@ -91,16 +84,19 @@ namespace countrybit
 			;
 		}
 
-		job_notify job::on_completed(job_queue* _callingQueue, DWORD _bytesTransferred, BOOL _success)
+		job_notify job::execute(job_queue* _callingQueue, DWORD _bytesTransferred, BOOL _success)
 		{
-			job_notify t;
+			job_notify jobNotify;
 
-			return t;
+			jobNotify.shouldDelete = false;
+
+			return jobNotify;
 		}
+
 
 		// -------------------------------------------------------------------------------
 
-		finish_job::finish_job()
+		finish_job::finish_job() : job()
 		{
 			handle = ::CreateEvent(NULL, FALSE, FALSE, NULL);
 		}
@@ -110,7 +106,7 @@ namespace countrybit
 			::CloseHandle(handle);
 		}
 
-		job_notify finish_job::on_completed(job_queue* _callingQueue, DWORD _bytesTransferred, BOOL _success)
+		job_notify finish_job::execute(job_queue* _callingQueue, DWORD _bytesTransferred, BOOL _success)
 		{
 			job_notify jobNotify;
 
@@ -180,13 +176,13 @@ namespace countrybit
 
 		job_queue::~job_queue()
 		{
+			shutDown();
 			::CloseHandle(empty_queue_event);
 		}
 
 		void job_queue::start(int _numThreads)
 		{
 			int i;
-
 
 			shutDownOrdered = false;
 
@@ -202,8 +198,7 @@ namespace countrybit
 
 				if (ioCompPort) {
 					for (i = 0; i < numWorkerThreads; i++) {
-						threads[i] = std::thread(jobQueueThread, this);
-						threadHandles[i] = ::OpenThread(THREAD_ALL_ACCESS, FALSE, (DWORD)threads[i].native_handle());
+						threads.push_back( std::thread(jobQueueThread, this) );
 					}
 				}
 			}
@@ -226,17 +221,9 @@ namespace countrybit
 
 			shutDownOrdered = true;
 
-			for (timeout = WAIT_TIMEOUT;
-				timeout == WAIT_TIMEOUT;
-				timeout = WaitForMultipleObjects(numWorkerThreads, threadHandles, 200, FALSE))
-			{
-				postJobMessage(&shutDownJob);
-			}
-
-			for (i = 0; i < numWorkerThreads; i++) {
-				threads[i].detach();
-				::CloseHandle(threadHandles[i]);
-				threadHandles[i] = 0;
+			for (i = 0; i < threads.size(); i++) {
+				if (threads[i].joinable())
+					threads[i].join();
 			}
 
 			::CloseHandle(ioCompPort);
@@ -246,21 +233,7 @@ namespace countrybit
 
 		void job_queue::kill()
 		{
-			int i;
-
-			shutDownOrdered = true;
-
-			if (ioCompPort) {
-				for (i = 0; i < numWorkerThreads; i++) {
-					threads[i].detach();
-					::TerminateThread(threadHandles[i], 0);
-					::CloseHandle(threadHandles[i]);
-					threadHandles[i] = 0;
-				}
-				::CloseHandle(ioCompPort);
-			}
-
-			ioCompPort = NULL;
+			shutDown();
 		}
 
 		unsigned int job_queue::jobQueueThread(job_queue* jobQueue)
@@ -269,11 +242,10 @@ namespace countrybit
 			LPOVERLAPPED lpov;
 			job* waiting_job;
 
-			BOOL success, shuttingDown;
+			BOOL success;
 			DWORD bytesTransferred;
 			ULONG_PTR compKey;
 
-			shuttingDown = FALSE;
 			job_notify jobNotify;
 
 #ifdef COM_INITIALIZATION
@@ -281,30 +253,28 @@ namespace countrybit
 			CoInitialize(NULL);
 #endif
 
-			while (!shuttingDown) {
-				success = ::GetQueuedCompletionStatus(jobQueue->ioCompPort, &bytesTransferred, &compKey, &lpov, INFINITE);
-				waiting_job = (job*)lpov;
+			while (!jobQueue->wasShutDownOrdered()) {
+				success = ::GetQueuedCompletionStatus(jobQueue->ioCompPort, &bytesTransferred, &compKey, &lpov, 1000);
+				if (success && lpov) {
+					waiting_job  = (job*)lpov;
 
-				if (waiting_job == &(jobQueue->shutDownJob)) {
-					shuttingDown = true;
-				}
-				else if (waiting_job) {
-					jobNotify = waiting_job->on_completed(jobQueue, bytesTransferred, success);
-					jobNotify.notify();
-					if (jobNotify.repost && (!jobQueue->wasShutDownOrdered())) {
-						jobQueue->postJobMessage(waiting_job);
+					if (waiting_job) {
+						jobNotify = waiting_job->execute(jobQueue, bytesTransferred, success);
+						jobNotify.notify();
+						if (jobNotify.repost && (!jobQueue->wasShutDownOrdered())) {
+							jobQueue->postJobMessage(waiting_job);
+						}
+						if (jobNotify.shouldDelete) {
+							delete waiting_job;
+						}
 					}
-					if (jobNotify.shouldDelete) {
-						delete waiting_job;
+
+					LONG numJobs = ::InterlockedDecrement((LONG*)(&jobQueue->num_outstanding_jobs));
+
+					if (!numJobs) {
+						::SetEvent(jobQueue->empty_queue_event);
 					}
 				}
-
-				LONG numJobs = ::InterlockedDecrement((LONG*)(&jobQueue->num_outstanding_jobs));
-
-				if (!numJobs) {
-					::SetEvent(jobQueue->empty_queue_event);
-				}
-
 			}
 
 #ifdef COM_INITIALIZATION
