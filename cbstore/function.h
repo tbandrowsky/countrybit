@@ -45,29 +45,29 @@ namespace countrybit
 
 				promise_type()
 				{
-					std::cout << "promise_type:" << this << " " << GetCurrentThreadId() << std::endl;
+					std::cout << "task promise_type:" << this << " " << GetCurrentThreadId() << std::endl;
 				}
 
 				task get_return_object()
 				{
-					std::cout << "get_return_object:" << this << " " << GetCurrentThreadId() << std::endl;
+					std::cout << "task get_return_object:" << this << " " << GetCurrentThreadId() << std::endl;
 					task my_task;
 					my_task.coroutine = std::coroutine_handle<promise_type>::from_promise(*this);
 					return my_task;
 				};
 
 				void return_value(T value) {
-					std::cout << "return_value:" << value << " " << this << GetCurrentThreadId() << std::endl;
+					std::cout << "task return_value:" << value << " " << this << GetCurrentThreadId() << std::endl;
 					m_value = value;
 				}
 
 				std::suspend_always initial_suspend() {
-					std::cout << "initial_suspend:" << this << GetCurrentThreadId() << std::endl;
+					std::cout << "task initial_suspend:" << this << GetCurrentThreadId() << std::endl;
 					return {};
 				}
 
 				std::suspend_always final_suspend() noexcept {
-					std::cout << "final_suspend:" << this << GetCurrentThreadId() << std::endl;
+					std::cout << "task final_suspend:" << this << GetCurrentThreadId() << std::endl;
 					return {};
 				}
 
@@ -94,13 +94,13 @@ namespace countrybit
 
 			T await_resume()
 			{
-				std::cout << "await_resume:" << GetCurrentThreadId() << std::endl;
+				std::cout << "task await_resume:" << GetCurrentThreadId() << std::endl;
 				auto t = coroutine.promise().m_value;
 				return t;
 			}
 
 			operator T() {
-				std::cout << this << ", cast to T:" << GetCurrentThreadId() << std::endl;
+				std::cout << this << ", task cast to T:" << GetCurrentThreadId() << std::endl;
 				return coroutine.promise().m_value;
 			}
 
