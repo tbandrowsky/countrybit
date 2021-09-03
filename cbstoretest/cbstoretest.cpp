@@ -5,6 +5,7 @@
 #include "application.h"
 #include "queue.h"
 #include "function.h"
+#include "jobject.h"
 
 countrybit::system::sync<int> test_queue();
 countrybit::system::task<int> calc();
