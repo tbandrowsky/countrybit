@@ -14,10 +14,12 @@ namespace countrybit
 		{
 			row_id_type start;
 			row_id_type stop;
+
+			row_id_type size() { return stop - start;  }
 		};
 
 		template <class T, int max_rows> 
-		requires (std::is_trivial<T>::value)
+		requires (std::is_standard_layout<T>::value)
 		class table
 		{
 			T			rows[max_rows];
@@ -72,22 +74,33 @@ namespace countrybit
 		{
 			P* the_parent;
 			C* the_children;
-			row_id_type length;
 			row_id_type id;
+			row_id_type length;
 
 		public:
 
-			parent_child_holder(P* _parent, C* _children, row_id_type _length, row_id_type _id) :
+			parent_child_holder(P* _parent, C* _children, row_id_type _id, row_id_type _length) :
 				the_parent(_parent),
 				the_children(_children),
-				length(_length),
-				id(_id)
+				id(_id),
+				length(_length)
+			{
+				;
+			}
+
+			parent_child_holder() :
+				the_parent(nullptr),
+				the_children(nullptr),
+				id(0),
+				length(0)
 			{
 				;
 			}
 
 			P& parent()
 			{
+				if (!the_parent)
+					throw std::invalid_argument("no parent");
 				return *the_parent;
 			}
 
@@ -98,19 +111,19 @@ namespace countrybit
 				return the_children[idx];
 			}
 
-			int row_id()
+			int row_id() const
 			{
 				return id;
 			}
 
-			size_t size()
+			size_t size() const
 			{
 				return length;
 			}
 		};
 
-		template <typename P, typename C, int max_rows, int max_child_rows>
-		requires (std::is_trivial<P>::value && std::is_trivial<C>::value)
+		template <typename P, typename C, int max_rows, int avg_children_per_row>
+		requires (std::is_standard_layout<P>::value && std::is_standard_layout<C>::value)
 		class parent_child_table
 		{
 			struct parent_child
@@ -120,7 +133,7 @@ namespace countrybit
 			};
 
 			table<parent_child, max_rows> parents;
-			table<C, max_child_rows> children;
+			table<C, avg_children_per_row * max_rows> children;
 
 		public:
 
@@ -135,21 +148,19 @@ namespace countrybit
 				auto pcr = parents.create(1);
 				auto& pc = parents[pcr.start];
 				pc.children = children.create(child_count);
-				return parent_child_holder(&pc.parent, &children[pc.children.start], pcr.start);
+				return parent_child_holder<P, C>(&pc.parent, &children[pc.children.start], pcr.start, child_count);
 			}
 
 			parent_child_holder<P, C> operator[](row_id_type row_id)
 			{
-				auto& pcr = parents[ row_id ];
-				auto& pc = parents[pcr.start];
-				return parent_child_holder(&pc.parent, &children[pc.children.start]);
+				auto& pc = parents[ row_id ];
+				return parent_child_holder<P, C>(&pc.parent, &children[pc.children.start], row_id, pc.children.size());
 			}
 
-			parent_child_holder<P, C> operator[](row_id_type row_id)
+			parent_child_holder<P, C> get(row_id_type row_id)
 			{
-				auto& pcr = parents[row_id];
-				auto& pc = parents[pcr.start];
-				return parent_child_holder(&pc.parent, &children[pc.children.start]);
+				auto& pc = parents[row_id];
+				return parent_child_holder<P, C>(&pc.parent, &children[pc.children.start], row_id, pc.children.size());
 			}
 
 		};

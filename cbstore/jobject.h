@@ -7,68 +7,14 @@
 #include <thread>
 #include <atomic>
 #include <stdexcept>
-#include "skip_list.h"
 #include "table.h"
+#include "jstring.h"
 
 namespace countrybit
 {
 	namespace database
 	{
 
-		template <uint16_t length> 
-		requires(length > 0)
-		class jstring
-		{
-			char data[length];
-
-			static const int max_length = length;
-			static const int last_char = length-1;
-
-			void copy(const char* s)
-			{
-				char* d = &data[0];
-				int l = 0;
-				while (l <= last_char && *s)
-				{
-					*d = *s;
-					l++;
-					s++;
-				}
-				d[last_char] = 0;
-			}
-
-		public:
-
-			jstring()
-			{ 
-				data[0] = 0; 
-			}
-
-			jstring& operator = (const std::string& src)
-			{
-				char* s = src.c_str();
-				copy(s);
-				return *this;
-			}
-
-			template <int Y> jstring& operator = (const jstring<Y> &_src)
-			{
-				char* s = _src.c_str();
-				copy(s);
-				return *this;
-			}
-
-			jstring& operator = (const char *s)
-			{
-				copy(s);
-				return *this;
-			}
-
-			const char* c_str() 
-			{ 
-				return &data[0]; 
-			}
-		};
 
 		enum jtype
 		{
@@ -227,13 +173,13 @@ namespace countrybit
 				switch (sizeof(ITF))
 				{
 					case sizeof(int8_t) :
-						return set_field(_field_id, type_int8, _name, _description, {}, _int_properties, {}, {}, {}, sizeof(ITF));
+						return create_field(_field_id, type_int8, _name, _description, {}, _int_properties, {}, {}, {}, sizeof(ITF));
 					case sizeof(int16_t) :
-						return set_field(_field_id, type_int16, _name, _description, {}, _int_properties, {}, {}, {}, sizeof(ITF));
+						return create_field(_field_id, type_int16, _name, _description, {}, _int_properties, {}, {}, {}, sizeof(ITF));
 					case sizeof(int32_t) :
-						return set_field(_field_id, type_int32, _name, _description, {}, _int_properties, {}, {}, {}, sizeof(ITF));
+						return create_field(_field_id, type_int32, _name, _description, {}, _int_properties, {}, {}, {}, sizeof(ITF));
 					case sizeof(int64_t) :
-						return set_field(_field_id, type_int64, _name, _description, {}, _int_properties, {}, {}, {}, sizeof(ITF));
+						return create_field(_field_id, type_int64, _name, _description, {}, _int_properties, {}, {}, {}, sizeof(ITF));
 					default:
 						throw std::invalid_argument("Invalid integer type for field name:" + _name);
 				}
@@ -250,13 +196,13 @@ namespace countrybit
 				switch (sizeof(DTF))
 				{
 				case 1:
-					auto set_field(_field_id, type_float8, _name, _description, {}, {}, _double_properties, {}, {}, sizeof(DTF));
+					auto create_field(_field_id, type_float8, _name, _description, {}, {}, _double_properties, {}, {}, sizeof(DTF));
 				case 2:
-					auto set_field(_field_id, type_float16, _name, _description, {}, {}, _double_properties, {}, {}, sizeof(DTF));
+					auto create_field(_field_id, type_float16, _name, _description, {}, {}, _double_properties, {}, {}, sizeof(DTF));
 				case 4:
-					auto set_field(_field_id, type_float32, _name, _description, {}, {}, _double_properties, {}, {}, sizeof(DTF));
+					auto create_field(_field_id, type_float32, _name, _description, {}, {}, _double_properties, {}, {}, sizeof(DTF));
 				case 8:
-					auto set_field(_field_id, type_float64, _name, _description, {}, {}, _double_properties, {}, {}, sizeof(DTF));
+					auto create_field(_field_id, type_float64, _name, _description, {}, {}, _double_properties, {}, {}, sizeof(DTF));
 				default:
 					throw std::invalid_argument("Invalid floating point type for field name:" + _name);
 				}
@@ -264,7 +210,7 @@ namespace countrybit
 
 			row_id_type create_string_field(row_id_type _field_id, std::string _name, std::string _description, string_properties_type _string_properties)
 			{
-				return set_field(_field_id, type_string, _name, _description, _string_properties, {}, {}, {}, {}, _string_properties.length);
+				return create_field(_field_id, type_string, _name, _description, _string_properties, {}, {}, {}, {}, _string_properties.length);
 			}
 
 			row_id_type create_object_field(row_id_type _field_id, std::string _name, std::string _description, object_properties_type _object_properties)
@@ -273,7 +219,7 @@ namespace countrybit
 				auto& p = pcr.parent();
 				size_t size = pcr.parent().class_size_bytes;
 				size_t field_size = _object_properties.dim.x * _object_properties.dim.y * _object_properties.dim.z;
-				return set_field(_field_id, type_object, _name, _description, {}, {}, {}, {}, _object_properties, field_size);
+				return create_field(_field_id, type_object, _name, _description, {}, {}, {}, {}, _object_properties, field_size);
 			}
 
 			row_id_type create_class(

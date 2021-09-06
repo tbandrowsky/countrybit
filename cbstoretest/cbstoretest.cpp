@@ -6,6 +6,7 @@
 #include "queue.h"
 #include "function.h"
 #include "jobject.h"
+#include "index.h"
 
 countrybit::system::sync<int> test_queue();
 countrybit::system::task<int> calc();
@@ -14,6 +15,8 @@ int main()
 {
 
     countrybit::system::application aw;
+
+
 
     std::cout << "Hello World!\n";
 
