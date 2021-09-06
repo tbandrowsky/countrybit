@@ -11,16 +11,16 @@ namespace countrybit
 	namespace database
 	{
 
-		template <uint16_t length>
-		requires(length > 0)
+		template <uint16_t max_length>
+		requires(max_length > 0)
 			class jstring
 		{
 		public:
 
-			char data[length];
+			char data[max_length];
+			uint16_t length;
 
-			static const int max_length = length;
-			static const int last_char = length - 1;
+			static const int last_char = max_length - 1;
 
 			void copy(const char* s)
 			{
@@ -37,11 +37,13 @@ namespace countrybit
 
 				if (l <= last_char) 
 				{
-					d[l] = 0;
+					length = l;
+					data[l] = 0;
 				}
 				else 
 				{
-					d[last_char] = 0;
+					length = last_char;
+					data[last_char] = 0;
 				}
 			}
 
@@ -68,7 +70,7 @@ namespace countrybit
 				return *this;
 			}
 
-			template <int Y> jstring& operator = (const jstring<Y>& _src)
+			template <uint16_t Y> jstring& operator = (const jstring<Y>& _src)
 			{
 				char* s = _src.c_str();
 				copy(s);
@@ -86,6 +88,10 @@ namespace countrybit
 				return &data[0];
 			}
 
+			uint16_t size() const
+			{
+				return length;
+			}		
 		};
 
 		template<int l1, int l2> int compare(const jstring<l1>& a, const jstring<l2>& b)

@@ -24,6 +24,7 @@ namespace countrybit
 		{
 			T			rows[max_rows];
 			row_id_type	top_row;
+			row_id_type first_row;
 
 		public:
 
@@ -54,6 +55,31 @@ namespace countrybit
 				rr.stop = rr.start + count;
 				top_row = x;
 				return rr;
+			}
+
+			T& create(row_id_type count, row_range &rr)
+			{
+				auto x = top_row + count;
+				if (x > max_rows)
+					throw std::logic_error("table full");
+
+				rr.start = top_row;
+				rr.stop = rr.start + count;
+				top_row = x;
+				return rows[rr.start];
+			}
+
+			T& insert(T& src, row_range& rr)
+			{
+				auto x = top_row + count;
+				if (x > max_rows)
+					throw std::logic_error("table full");
+
+				rr.start = top_row;
+				rr.stop = rr.start + count;
+				top_row = x;
+				rows[rr.start] = src;
+				return rows[rr.start];
 			}
 
 			T& operator[](row_id_type & r)
