@@ -69,29 +69,26 @@ void table_tests()
     assert_if([s]() { return s == 5; }, "size isn't 5");
 
     table<test_item, 5> basic;
-    basic.init();
 
     test_item* ti = &items[0];
 
     for (int i = 0; i < s; i++) {
         row_range rr;
         auto nr = basic.insert(items[i],rr);
-        assert_if([nr, i, rr]() { return rr.stop - rr.start == 0; }, "size isn't 1");
-        assert_if([nr, i, ti]() { return ti[i].id = nr.id && ti[i].description == nr.description && ti[i].name == nr.name; }, "Names are not the same size");
+        assert_if([nr, i, rr]() { return rr.stop - rr.start == 1; }, "size isn't 1");
+        assert_if([nr, i, ti]() { return ti[i].id == nr.id && ti[i].description == nr.description && ti[i].name == nr.name; }, "item not stored correctly");
     }
 
-    for (int i = 0; i < s; i++) {
-        row_range rr;
-        auto nr = basic.insert(items[i], rr);
-        assert_if([nr, i, rr]() { return rr.stop - rr.start == 0; }, "size isn't 1");
-        assert_if([nr, i, ti]() { return ti[i].id = nr.id && ti[i].description == nr.description && ti[i].name == nr.name; }, "Names are not the same size");
+    for (countrybit::database::row_id_type i = 0; i < basic.size(); i++) {
+        auto nr = basic[i];
+        assert_if([nr, i, ti]() { return ti[i].id == nr.id && ti[i].description == nr.description && ti[i].name == nr.name; }, "item not stored correctly");
     }
 
 }
 
 void index_tests()
 {
-    ;
+    countrybit::database::test_index();
 }
 
 void queue_tests()

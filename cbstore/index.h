@@ -21,138 +21,66 @@ Implementation of design by Bill Pugh.
 #include <algorithm>
 #include <iostream>
 #include <cmath>
+#include "table.h"
 
 namespace countrybit
 {
 	namespace database
 	{
 		const int MaxNumberOfLevels = 20;
-		const int AvgNumberOfLevels = 10;
 		const int MaxLevel = MaxNumberOfLevels - 1;
-
-		template <typename KEY, typename VALUE> class index_node_hdr 
-		{
-		public:
-
-			std::pair<KEY, VALUE>	key_value;
-			row_id_type				node_index;
-		};
 
 		using index_ref = row_id_type;
 
 		template <typename KEY, typename VALUE, int MAX_ROWS, int SORT_ORDER = 1> class index 
-			: public parent_child_table<index_node_hdr<KEY,VALUE>, index_ref, MAX_ROWS, AvgNumberOfLevels>
+			: public parent_child_table<std::pair<KEY,VALUE>, index_ref, MAX_ROWS, MaxNumberOfLevels>
 		{
 		public:
 
-			using index_node = parent_child_holder<index_node_hdr<KEY, VALUE>, index_ref>;
-
-			class node_type 
-			{
-				index* me;
-				index_node nd;
-
-			public:
-
-				node_type() : me(nullptr)
-				{
-					;
-				}
-
-				node_type(index* _me, index_node _nd) 
-					: me(_me),
-					nd(_nd)
-				{
-					;
-				}
-
-				node_type(index* _me, row_id_type r)
-					: me(_me)
-				{
-					nd = me->get( r );
-				}
-
-				bool is_null()
-				{
-					return me == nullptr || nd.row_id() == 0;
-				}
-
-				std::pair<KEY, VALUE>& keyValue()
-				{
-					return nd.parent().key_value;
-				}
-
-				KEY& key()
-				{
-					return nd.parent().key_value.first;
-				}
-
-				VALUE& value()
-				{
-					return nd.parent().key_value.second;
-				}
-
-				node_type forward(int idx)
-				{
-					return node_type( me, nd.child(idx) );
-				}
-
-				row_id_type row_id() const
-				{
-					return nd.row_id();
-				}
-
-				bool operator == (node_type& nt)
-				{
-					return nd.row_id() == nt.nd.row_id();
-				}
-			};
+			using index_node = parent_child_holder<std::pair<KEY, VALUE>, index_ref>;
+			using base_class = parent_child_table<std::pair<KEY, VALUE>, index_ref, MAX_ROWS, MaxNumberOfLevels>;
 
 		private:
 
 			bool deleted;
-			int level;
 			int count;
+			int level;
+
 			row_id_type header_id;
 
-			node_type header()
+			index_node get_header()
 			{
-				return node_type(this, header_id);
+				index_node in = base_class::get(header_id);
+				return in;
+			}
+
+			index_node create_node(int _num_levels)
+			{
+				index_node in = base_class::create(_num_levels + 1);
+				for (int i = 0; i < in.size(); i++)
+				{
+					in.child(i) = null_row;
+				}
+				return in;
 			}
 
 		public:
 
-			void init()
+			index()
 			{
-				parent_child_table::init();
-
 				deleted = false;
-				level = MaxLevel;
 				count = 0;
+				level = 0;
 
-				auto hdr = parent_child_table::create(MaxLevel);
+				index_node hdr = create_node(MaxNumberOfLevels);
 				header_id = hdr.row_id();
-			}
-
-			bool pop_front()
-			{
-				bool result = false;
-				node_type q;
-
-				q = header().forward(0);
-
-				if (q != nullptr)
-				{
-					result = true;
-					remove_node(q->key);
-				}
-				return result;
 			}
 
 			class iterator
 			{
 				index<KEY, VALUE, MAX_ROWS, SORT_ORDER>* base;
-				index<KEY, VALUE, MAX_ROWS, SORT_ORDER>::node_type current;
+				row_id_type current;
+				using index_node = parent_child_holder<std::pair<KEY, VALUE>, index_ref>;
 
 			public:
 				using iterator_category = std::forward_iterator_tag;
@@ -161,14 +89,14 @@ namespace countrybit
 				using pointer = std::pair<KEY, VALUE>*;  // or also value_type*
 				using reference = std::pair<KEY, VALUE>&;  // or also value_type&
 
-				iterator(index<KEY, VALUE, MAX_ROWS, SORT_ORDER>* _base, const index<KEY, VALUE, MAX_ROWS, SORT_ORDER>::node_type& _current) :
+				iterator(index<KEY, VALUE, MAX_ROWS, SORT_ORDER>* _base, row_id_type _current) :
 					base(_base),
 					current(_current)
 				{
 
 				}
 
-				iterator() : base(nullptr), current(nullptr)
+				iterator() : base(nullptr), current(null_row)
 				{
 
 				}
@@ -182,35 +110,34 @@ namespace countrybit
 
 				inline std::pair<KEY, VALUE>& operator *()
 				{
-					return current.keyValue();
+					return base->get(current).parent();
 				}
 
 				inline std::pair<KEY, VALUE>* operator->()
 				{
-					return &current.keyValue();
+					return &base->get(current).parent();
 				}
 
 				inline KEY& get_key()
 				{
-					return current.keyValue().first;
+					std::pair<KEY, VALUE>& p = base->get(current).parent();
+					return p.first;
 				}
 
 				inline VALUE& get_value()
 				{
-					return current.keyValue().second;
+					std::pair<KEY, VALUE>& p = base->get(current).parent();
+					return p.second;
 				}
 
 				inline iterator begin() const
 				{
-					index<KEY, VALUE, MAX_ROWS, SORT_ORDER>::node_type omg;
-					omg = current;
-					return iterator(base, omg);
+					return iterator(base, current);
 				}
 
 				inline iterator end() const
 				{
-					index<KEY, VALUE, MAX_ROWS, SORT_ORDER>::node_type empty;
-					return iterator(base, empty);
+					return iterator(base, null_row);
 				}
 
 				inline iterator operator++()
@@ -228,25 +155,45 @@ namespace countrybit
 
 				bool operator == (const iterator& _src)
 				{
-					return _src.current.row_id() == current.row_id();
+					return _src.current = current;
 				}
 
 				bool operator != (const iterator& _src)
 				{
-					return _src.current.row_id() != current.row_id();
+					return _src.current != current;
 				}
 
 			};
 
+			bool pop_front()
+			{
+				bool result = false;
+				
+				index_node q = get_header();
+				row_id_type qr;
+
+				qr = q.child(0);
+
+				if (qr != null_row)
+				{
+					q = base_class::get(qr);
+					result = true;
+					remove_node(q.parent().key);
+				}
+				return result;
+			}
+
 			index<KEY, VALUE, MAX_ROWS, SORT_ORDER>::iterator begin()
 			{
-				return iterator(this, first_node());
+				index_node q = get_header();
+				row_id_type qr = q.child(0);
+
+				return iterator(this, qr);
 			}
 
 			index<KEY, VALUE, MAX_ROWS, SORT_ORDER>::iterator end()
 			{
-				index<KEY, VALUE, MAX_ROWS, SORT_ORDER>::node_type empty;
-				return iterator(this, empty);
+				return iterator(this, null_row);
 			}
 
 			bool erase(index<KEY, VALUE, MAX_ROWS, SORT_ORDER>::iterator& _iter)
@@ -277,24 +224,24 @@ namespace countrybit
 			bool has(const KEY& key, VALUE& value)
 			{
 				auto n = this->find_node(key);
-				return (n && n->keyValue.second == value);
+				return (n != null_row && get<index_node>(n).parent().key_value.second == value);
 			}
 
 			bool has(const KEY& key, std::function<bool(VALUE& src)> pred)
 			{
 				auto n = this->find_node(key);
-				return (n && pred(n->keyValue.second));
+				return (n != null_row && pred(get<index_node>(n).parent().key_value.second));
 			}
 
 			VALUE& first_value()
 			{
 				auto n = first_node();
-				return n->keyValue.second;
+				return base_class::get(n).parent().key_value;
 			}
 
 			index<KEY, VALUE, MAX_ROWS, SORT_ORDER>::iterator insert_or_assign(std::pair<KEY, VALUE>& kvp)
 			{
-				auto modified_node = this->update_node(kvp);
+				row_id_type modified_node = this->update_node(kvp);
 				return iterator(this, modified_node);
 			}
 
@@ -306,7 +253,7 @@ namespace countrybit
 
 			index<KEY, VALUE, MAX_ROWS, SORT_ORDER>::iterator put(std::pair<KEY, VALUE>& kvp)
 			{
-				auto modified_node = this->update_node(kvp);
+				row_id_type modified_node = this->update_node(kvp);
 				return iterator(this, modified_node);
 			}
 
@@ -316,9 +263,7 @@ namespace countrybit
 				return insert_or_assign(kvp);
 			}
 
-
 		private:
-
 
 			int randomLevel()
 			{
@@ -338,7 +283,7 @@ namespace countrybit
 				bool all = true;
 				for (auto& f : _src)
 				{
-					if (!find_node(f.first))
+					if (find_node(f.first) == null_row)
 					{
 						all = false;
 						break;
@@ -351,13 +296,16 @@ namespace countrybit
 
 			// compare a node to a key for equality
 
-			inline int compare(node_type& _node, const KEY& key)
+			inline int compare(row_id_type _node, const KEY& key)
 			{
-				if (!_node.is_null())
+				if (_node != null_row)
 				{
-					if (_node.key() < key)
+					auto nd = base_class::get(_node);
+					auto ndkey = nd.parent().first;
+
+					if (ndkey < key)
 						return -SORT_ORDER;
-					else if (_node.key() > key)
+					else if (ndkey > key)
 						return SORT_ORDER;
 					else
 						return 0;
@@ -368,19 +316,20 @@ namespace countrybit
 				}
 			}
 
-			node_type find_node(node_type* update, const KEY& key)
+			row_id_type find_node(row_id_type* update, const KEY& key)
 			{
-				node_type p, q, found;
+				row_id_type found = null_row, p, q;
+				auto hdr = base_class::get(header_id);
 
 				for (int k = level; k >= 0; k--)
 				{
-					p = header();
-					q = p.forward(k);
+					p = header_id;
+					q = hdr.child(k);
 					auto comp = compare(q, key);
 					while (comp < 0)
 					{
 						p = q;
-						q = q.forward(k);
+						q = base_class::get(q).child(k);
 						comp = compare(q, key);
 					}
 					if (comp == 0)
@@ -391,21 +340,21 @@ namespace countrybit
 				return found;
 			}
 
-			node_type find_first(node_type* update, const KEY& key)
+			row_id_type find_first(row_id_type* update, const KEY& key)
 			{
-				node_type p, q, found, last;
+				row_id_type found = null_row, p, q, last;
 
 				for (int k = level; k >= 0; k--)
 				{
-					p = header;
-					q = p.forward(k);
+					p = header_id;
+					q = get<index_node>(p).child(k);
 					last = q;
 					auto comp = compare(q, key);
 					while (comp < 0)
 					{
 						p = q;
 						last = q;
-						q = q.forward(k);
+						q = get<index_node>(q).child(k);
 						comp = compare(q, key);
 					}
 					if (comp == 0)
@@ -418,106 +367,114 @@ namespace countrybit
 				return found;
 			}
 
-			node_type update_node(const std::pair<KEY, VALUE>& kvp)
+			row_id_type update_node(const std::pair<KEY, VALUE>& kvp)
 			{
 				int k;
-				node_type null_node;
-				node_type update[MaxNumberOfLevels], p;
+				row_id_type update[MaxNumberOfLevels], p;
+				row_id_type q = find_node(update, kvp.first);
+				index_node qnd;
 
-				node_type q = find_node(update, kvp.first);
-
-				if (!q.is_null())
+				if (q != null_row)
 				{
-					q.value() = kvp.second;
+					qnd = base_class::get(q);
+					qnd.parent().second = kvp.second;
 					return q;
 				}
 
 				k = randomLevel();
-				if (k > level) {
+				if (k > level)
+				{
 					k = ++level;
-					update[k] = header();
-				};
+					update[k] = header_id;
+				}
 
-				auto new_node_base = parent_child_table<index_node_hdr<KEY, VALUE>, index_ref, MAX_ROWS, AvgNumberOfLevels>::create(k);
-				q = node_type(this, new_node_base);
+				qnd = create_node(k);
 
-				if (!q.is_null()) {
-
+				if (!qnd.is_null()) 
+				{
+					qnd.parent() = kvp;
 					count++;
 
 					do {
-						p = update[k];
-						q.forward(k) = p.forward(k);
-						p.forward(k) = q;
+						auto pnd = base_class::get(update[k]);
+						qnd.child(k) = pnd.child(k);
+						pnd.child(k) = qnd.row_id();
 					} while (--k >= 0);
 
-					return q;
+					return qnd.row_id();
 				}
 
-				return null_node;
+				return null_row;
 			}
 
 			bool remove_node(const KEY& key)
 			{
-				int k, m;
-				node_type update[MaxNumberOfLevels];
-				node_type p;
+				int k;
+				row_id_type update[MaxNumberOfLevels], p;
+				index_node qnd, pnd;
 
-				m = level;
-				node_type q = find_node(update, key);
+				row_id_type q = find_node(update, key);
 
-				if (!q.is_null()) {
+				if (q != null_row)
+				{
 					k = 0;
 					p = update[k];
-					while (k <= m && p.forward(k) == q)
+					qnd = base_class::get(q);
+					pnd = base_class::get(p);
+					int m = level;
+					while (k <= m && pnd.child(k) == q)
 					{
-						p.forward(k) = q.forward(k);
+						pnd.child(k) = qnd.child(k);
 						k++;
-						p = update[k];
+						if (k <= m) {
+							p = update[k];
+							pnd = base_class::get(p);
+						}
 					}
 					count--;
-					while (header().forward(m).is_null() && m > 0) {
+					while (get_header().child(m) == null_row && m > 0) {
 						m--;
 					}
 					level = m;
 					return true;
 				}
-				else {
+				else 
+				{
 					return false;
 				}
 			}
 
-			node_type find_node(const KEY& key)
+			row_id_type find_node(const KEY& key)
 			{
 #ifdef	TIME_SKIP_LIST
 				benchmark::auto_timer_type methodtimer("skip_list_type::search");
 #endif
-				node_type update[MaxNumberOfLevels];
+				row_id_type update[MaxNumberOfLevels];
 				return find_node(update, key);
 			}
 
-			node_type find_first_node(const KEY& key)
+			row_id_type find_first_node(const KEY& key)
 			{
 #ifdef	TIME_SKIP_LIST
 				benchmark::auto_timer_type methodtimer("skip_list_type::search");
 #endif
-				node_type update[MaxNumberOfLevels];
+				row_id_type update[MaxNumberOfLevels];
 				return find_first(update, key);
 			}
 
-			node_type first_node()
+			row_id_type first_node()
 			{
-				return header().forward(0);
+				return get_header().child(0);
 			}
 
-			node_type next_node(node_type _node)
+			row_id_type next_node(row_id_type _node)
 			{
-				node_type empty;
-				if (!_node.is_null()) {
-					_node = _node.forward(0);
+				if (_node == null_row)
 					return _node;
-				}
-				return empty;
+
+				auto nd = base_class::get(_node);
+				_node = nd.child(0);
+				return _node;
 			}
 		};
 
@@ -538,3 +495,4 @@ namespace countrybit
 	}
 }
 
+ 

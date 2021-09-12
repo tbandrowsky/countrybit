@@ -8,7 +8,8 @@ namespace countrybit
 {
 	namespace database
 	{
-		typedef uint32_t row_id_type;
+		typedef int32_t row_id_type;
+		const row_id_type null_row = -1;
 
 		struct row_range 
 		{
@@ -23,77 +24,71 @@ namespace countrybit
 		class table
 		{
 			T			rows[max_rows];
-			row_id_type	top_row;
-			row_id_type first_row;
+			row_id_type	last_row;
 
 		public:
 
 			table()
 			{
-				;
-			}
-
-			void init()
-			{
-				top_row = 1;
+				last_row = 0;
 				for (row_id_type i = 0; i < max_rows; i++)
 				{
 					auto& r = rows[i];
-					r.item = {};
-					r.id = i;
+					r = {};
 				}
 			}
 
 			row_range create(row_id_type count)
 			{
-				auto x = top_row + count;
+				auto x = last_row + count;
 				if (x > max_rows)
 					throw std::logic_error("table full");
 
 				row_range rr;
-				rr.start = top_row;
-				rr.stop = rr.start + count;
-				top_row = x;
+				rr.start = last_row;
+				rr.stop = x;
+				last_row = x;
 				return rr;
 			}
 
 			T& create(row_id_type count, row_range &rr)
 			{
-				auto x = top_row + count;
+				auto x = last_row + count;
 				if (x > max_rows)
 					throw std::logic_error("table full");
 
-				rr.start = top_row;
-				rr.stop = rr.start + count;
-				top_row = x;
+				rr.start = last_row;
+				rr.stop = x;
+				last_row = x;
 				return rows[rr.start];
 			}
 
 			T& insert(T& src, row_range& rr)
 			{
-				auto x = top_row + count;
+				auto x = last_row + 1;
 				if (x > max_rows)
 					throw std::logic_error("table full");
 
-				rr.start = top_row;
-				rr.stop = rr.start + count;
-				top_row = x;
+				rr.start = last_row;
+				rr.stop = x;
+				last_row = x;
 				rows[rr.start] = src;
 				return rows[rr.start];
 			}
 
 			T& operator[](row_id_type & r)
 			{
-				if (r >= max_rows)
+				if (r == null_row || r >= last_row)
 					throw std::logic_error("invalid row id");
-
-				if (r > top_row) 
-				{
-					top_row = r + 1;
-				}
 
 				return rows[r];
 			}
+
+			row_id_type size() const
+			{
+				return last_row;
+			}
+
 		};
 
 		template <typename P, typename C> class parent_child_holder
@@ -117,7 +112,7 @@ namespace countrybit
 			parent_child_holder() :
 				the_parent(nullptr),
 				the_children(nullptr),
-				id(0),
+				id(null_row),
 				length(0)
 			{
 				;
@@ -125,19 +120,26 @@ namespace countrybit
 
 			P& parent()
 			{
-				if (!the_parent)
-					throw std::invalid_argument("no parent");
+				if (is_null())
+					throw std::invalid_argument("is null");
 				return *the_parent;
 			}
 
-			C& child(uint32_t idx)
+			C& child(row_id_type idx)
 			{
+				if (is_null())
+					throw std::invalid_argument("is null");
 				if (idx >= length)
 					throw std::invalid_argument("idx out of range");
 				return the_children[idx];
 			}
 
-			int row_id() const
+			bool is_null() const
+			{
+				return !the_parent;
+			}
+
+			row_id_type row_id() const
 			{
 				return id;
 			}
@@ -179,12 +181,16 @@ namespace countrybit
 
 			parent_child_holder<P, C> operator[](row_id_type row_id)
 			{
+				parent_child_holder<P, C> nullpc;
+				if (row_id == null_row) return nullpc;
 				auto& pc = parents[ row_id ];
 				return parent_child_holder<P, C>(&pc.parent, &children[pc.children.start], row_id, pc.children.size());
 			}
 
 			parent_child_holder<P, C> get(row_id_type row_id)
 			{
+				parent_child_holder<P, C> nullpc;
+				if (row_id == null_row) return nullpc;
 				auto& pc = parents[row_id];
 				return parent_child_holder<P, C>(&pc.parent, &children[pc.children.start], row_id, pc.children.size());
 			}
