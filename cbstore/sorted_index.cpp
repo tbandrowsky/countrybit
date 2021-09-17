@@ -1,5 +1,5 @@
 
-#include "index.h"
+#include "sorted_index.h"
 #include "jstring.h"
 
 namespace countrybit
@@ -9,7 +9,7 @@ namespace countrybit
 
 		bool test_index()
 		{
-			index<int, jstring<30>, 100, 1> test;
+			sorted_index<int, jstring<30>, 100, 1> test;
 			bool result = true;
 
 			auto t1 = test.insert_or_assign(5, "hello");

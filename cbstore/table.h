@@ -19,6 +19,75 @@ namespace countrybit
 			row_id_type size() { return stop - start;  }
 		};
 
+		template <typename P, typename C> class parent_child_holder
+		{
+			P* the_parent;
+			C* the_children;
+			row_id_type id;
+			row_id_type length;
+
+		public:
+
+			parent_child_holder(P* _parent, C* _children, row_id_type _id, row_id_type _length) :
+				the_parent(_parent),
+				the_children(_children),
+				id(_id),
+				length(_length)
+			{
+				;
+			}
+
+			parent_child_holder() :
+				the_parent(nullptr),
+				the_children(nullptr),
+				id(null_row),
+				length(0)
+			{
+				;
+			}
+
+			P& parent()
+			{
+				if (is_null())
+					throw std::invalid_argument("is null");
+				return *the_parent;
+			}
+
+			C& child(row_id_type idx)
+			{
+				if (is_null())
+					throw std::invalid_argument("is null");
+				if (idx >= length)
+					throw std::invalid_argument("idx out of range");
+				return the_children[idx];
+			}
+
+			P* pparent()
+			{
+				return the_parent;
+			}
+
+			C* pchild()
+			{
+				return the_child;
+			}
+
+			bool is_null() const
+			{
+				return !the_parent;
+			}
+
+			row_id_type row_id() const
+			{
+				return id;
+			}
+
+			size_t size() const
+			{
+				return length;
+			}
+		};
+
 		template <class T, int max_rows> 
 		requires (std::is_standard_layout<T>::value)
 		class table
@@ -91,64 +160,6 @@ namespace countrybit
 
 		};
 
-		template <typename P, typename C> class parent_child_holder
-		{
-			P* the_parent;
-			C* the_children;
-			row_id_type id;
-			row_id_type length;
-
-		public:
-
-			parent_child_holder(P* _parent, C* _children, row_id_type _id, row_id_type _length) :
-				the_parent(_parent),
-				the_children(_children),
-				id(_id),
-				length(_length)
-			{
-				;
-			}
-
-			parent_child_holder() :
-				the_parent(nullptr),
-				the_children(nullptr),
-				id(null_row),
-				length(0)
-			{
-				;
-			}
-
-			P& parent()
-			{
-				if (is_null())
-					throw std::invalid_argument("is null");
-				return *the_parent;
-			}
-
-			C& child(row_id_type idx)
-			{
-				if (is_null())
-					throw std::invalid_argument("is null");
-				if (idx >= length)
-					throw std::invalid_argument("idx out of range");
-				return the_children[idx];
-			}
-
-			bool is_null() const
-			{
-				return !the_parent;
-			}
-
-			row_id_type row_id() const
-			{
-				return id;
-			}
-
-			size_t size() const
-			{
-				return length;
-			}
-		};
 
 		template <typename P, typename C, int max_rows, int avg_children_per_row>
 		requires (std::is_standard_layout<P>::value && std::is_standard_layout<C>::value)
@@ -197,5 +208,9 @@ namespace countrybit
 
 		};
 
+
+
 	}
+
+
 }

@@ -9,12 +9,19 @@
 #include <stdexcept>
 #include "table.h"
 #include "jstring.h"
+#include "sorted_index.h"
 
 namespace countrybit
 {
 	namespace database
 	{
-
+		class constants 
+		{
+		public:
+			static const int max_fields = 2048;
+			static const int max_classes = 256;
+			static const int max_class_fields = 256;
+		};
 
 		enum jtype
 		{
@@ -25,40 +32,53 @@ namespace countrybit
 			type_int32 = 3,
 			type_int64 = 4,
 
-			type_float8 = 5,
-			type_float16 = 6,
-			type_float32 = 7,
-			type_float64 = 8,
+			type_float32 = 5,
+			type_float64 = 6,
 
-			type_datetime = 9,
-			type_string = 10,
+			type_datetime = 7,
+			type_string = 8,
 
-			type_object = 16
+			type_object = 9,
+			type_object_id = 10
+		};
+
+		struct store_id_type
+		{
+			unsigned long  Data1;
+			unsigned short Data2;
+			unsigned short Data3;
+			unsigned char  Data4[8];
+		};
+
+		struct object_id_type
+		{
+			store_id_type store_id;
+			row_id_type	  row_id;
 		};
 
 		struct string_properties_type
 		{
 			int length;
-			jstring<64> validation_pattern;
-			jstring<128> validation_message;
+			jstring<64>		validation_pattern;
+			jstring<128>	validation_message;
 		};
 
 		struct int_properties_type 
 		{
-			int64_t minimum_int;
-			int64_t maximum_int;
+			int64_t			minimum_int;
+			int64_t			maximum_int;
 		};
 
 		struct double_properties_type 
 		{
-			double minimum_number;
-			double maximum_number;
+			double			minimum_number;
+			double			maximum_number;
 		};
 
 		struct time_properties_type 
 		{
-			time_t minimum_time_t;
-			time_t maximum_time_t;
+			time_t			minimum_time_t;
+			time_t			maximum_time_t;
 		};
 
 		struct dimensions_type
@@ -70,7 +90,12 @@ namespace countrybit
 		{
 			dimensions_type		dim;
 			row_id_type			class_id;
+			size_t				class_size_bytes;
+			size_t				total_size_bytes;
 		};
+
+		using object_name = jstring<64>;
+		using object_description = jstring<256>;
 
 		class jfield
 		{
@@ -80,8 +105,8 @@ namespace countrybit
 			jtype					type_id;
 			uint32_t				size_bytes;
 
-			jstring<64>				name;
-			jstring<256>			description;
+			object_name				name;
+			object_description		description;
 
 			string_properties_type	string_properties;
 			int_properties_type		int_properties;
@@ -90,41 +115,96 @@ namespace countrybit
 			object_properties_type  object_properties;
 		};
 
-		class jfield_reference
+		// a store id is in fact, a guid
+
+		struct jobject_data
 		{
+			object_id_type			id;
+			object_properties_type* props;
+			char*					bytes;
+		};
+
+		template <int max_objects, row_id_type bytes_per_object>
+		class jstore
+		{
+			parent_child_table<object_properties_type, char, max_objects, bytes_per_object> data;
+			store_id_type store_id;
+
 		public:
-			row_id_type				field_id;
-			uint32_t				offset;
+
+			jstore();
+			~jstore();
+
+			jobject_data create_object( object_properties_type& _object_properties )
+			{
+				jobject_data jo;
+
+				auto pt = data.create(_object_properties.total_size_bytes);
+				jp.props = pt.pparent();
+				jp.bytes = pt.pchild();
+				jp.id.store_id = store_id;
+				jp.id.row_id = pt.row_id();
+				return jp;
+			}
+
+			jobject_data get_object( object_id_type _id )
+			{
+				auto pt = data.get(_id.row_id);
+				jp.props = pt.pparent();
+				jp.bytes = pt.pchild();
+				jp.id.store_id = store_id;
+				jp.id.row_id = pt.row_id();
+				return jp;
+			}
+
+			size_t size() const
+			{
+				return sizeof(*this);
+			}
 		};
 
 		class jclass_header
 		{
 		public:
 			row_id_type						class_id;
-			std::string						name;
-			std::string						description;
-			size_t							class_size_bytes;
+			object_name						name;
+			object_description				description;
+			uint64_t						class_size_bytes;
 		};
 
-		template <row_id_type max_fields, row_id_type max_classes, row_id_type max_class_fields>
-		class jdatabase
+		class jfield_instance
 		{
-		protected:
+		public:
+			row_id_type				field_id;
+			uint64_t				offset;
+		};
 
-			table<jfield, max_fields> fields;
-			parent_child_table<jclass_header, jfield_reference, max_classes, max_class_fields> classes;
+		class jclass
+		{
+			parent_child_holder<jclass_header, jfield_instance> source;
+			jschema* schema;
 
 		public:
 
-			jdatabase()
-			{
+			jclass();
+			~jclass();
 
-			}
+			friend class jschema;
+		};
 
-			~jdatabase()
-			{
+		class jschema
+		{
+		protected:
 
-			}
+			table<jfield, constants::max_fields> fields;
+			parent_child_table<jclass_header, jfield_instance, constants::max_classes, constants::max_class_fields> classes;
+			sorted_index<object_name, row_id_type, constants::max_classes> classes_by_name;
+			sorted_index<object_name, row_id_type, constants::max_fields> fields_by_name;
+
+		public:
+
+			jschema();
+			~jschema();
 
 			row_id_type create_field(
 				row_id_type _field_id,
@@ -150,104 +230,184 @@ namespace countrybit
 				jf.object_properties = _object_properties;
 				jf.size_bytes = _size_bytes;
 
+				fields_by_name.insert_or_assign(jf.name, _field_id);
+
 				return _field_id;
 			}
 
-			row_id_type create_time_field(
-				row_id_type _field_id,
-				std::string _name,
-				std::string _description,
-				time_properties_type _time_properties)
+			class create_field_request_base {
+			public:
+				row_id_type field_id;
+				jtype		type_id;
+				std::string name;
+				std::string description;
+			};
+
+			class create_string_field_request : public create_field_request_base, public string_properties_type {
+			public:
+
+			};
+
+			class create_integer_field_request : public create_field_request_base, public int_properties_type {
+			public:
+
+			};
+
+			class create_double_field_request : public create_field_request_base, public double_properties_type {
+			public:
+
+			};
+
+			class create_time_field_request : public create_field_request_base, public time_properties_type {
+			public:
+				
+			};
+
+			class create_object_field_request : public create_field_request_base, public object_properties_type {
+			public:
+
+			};
+
+			class create_class_request  {
+			public:
+				std::string class_name;
+				std::string class_description;
+				std::vector<row_id_type> field_ids;
+				std::vector<create_object_field_request> child_classes;
+			};
+
+			row_id_type create_string_field(create_string_field_request request)
 			{
-				return create_field(_field_id, type_datetime, _name, _description, {}, {}, {}, _time_properties, {}, sizeof(time_t));
+				return create_field(request.field_id, type_string, request.name, request.description, request, {}, {}, {}, {}, request.length);
 			}
 
-			template <typename ITF>
-			requires(std::is_integral<ITF>::value)
-				row_id_type create_integer_field(
-					row_id_type _field_id,
-					std::string _name,
-					std::string _description,
-					int_properties_type _int_properties)
+			row_id_type create_time_field(create_time_field_request request)
 			{
-				switch (sizeof(ITF))
+				return create_field(request.field_id, type_datetime, request.name, request.description, {}, {}, {}, request, {}, sizeof(time_t));
+			}
+
+			row_id_type create_integer_field(create_integer_field_request request)
+			{
+				switch (request.type_id)
 				{
-					case sizeof(int8_t) :
-						return create_field(_field_id, type_int8, _name, _description, {}, _int_properties, {}, {}, {}, sizeof(ITF));
-					case sizeof(int16_t) :
-						return create_field(_field_id, type_int16, _name, _description, {}, _int_properties, {}, {}, {}, sizeof(ITF));
-					case sizeof(int32_t) :
-						return create_field(_field_id, type_int32, _name, _description, {}, _int_properties, {}, {}, {}, sizeof(ITF));
-					case sizeof(int64_t) :
-						return create_field(_field_id, type_int64, _name, _description, {}, _int_properties, {}, {}, {}, sizeof(ITF));
+					case jtype::type_int8:
+						return create_field(request.field_id, type_int8, request.name, request.description, {}, request, {}, {}, {}, sizeof(int8_t));
+					case jtype::type_int16:
+						return create_field(request.field_id, type_int16, request.name, request.description, {}, request, {}, {}, {}, sizeof(int16_t));
+					case jtype::type_int32:
+						return create_field(request.field_id, type_int32, request.name, request.description, {}, request, {}, {}, {}, sizeof(int32_t));
+					case jtype::type_int64:
+						return create_field(request.field_id, type_int64, request.name, request.description, {}, request, {}, {}, {}, sizeof(int64_t));
 					default:
-						throw std::invalid_argument("Invalid integer type for field name:" + _name);
+						throw std::invalid_argument("Invalid integer type for field name:" + request.name);
 				}
 			}
 
-			template <typename DTF>
-			requires(std::is_floating_point<DTF>::value)
-				row_id_type create_double_field(
-					row_id_type _field_id,
-					std::string _name,
-					std::string _description,
-					double_properties_type _double_properties)
+			row_id_type create_double_field(create_double_field_request request)
 			{
-				switch (sizeof(DTF))
+				switch (request.type_id)
 				{
-				case 1:
-					auto create_field(_field_id, type_float8, _name, _description, {}, {}, _double_properties, {}, {}, sizeof(DTF));
-				case 2:
-					auto create_field(_field_id, type_float16, _name, _description, {}, {}, _double_properties, {}, {}, sizeof(DTF));
-				case 4:
-					auto create_field(_field_id, type_float32, _name, _description, {}, {}, _double_properties, {}, {}, sizeof(DTF));
-				case 8:
-					auto create_field(_field_id, type_float64, _name, _description, {}, {}, _double_properties, {}, {}, sizeof(DTF));
-				default:
-					throw std::invalid_argument("Invalid floating point type for field name:" + _name);
+					case type_float32:
+						return create_field(request.field_id, type_float32, request.name, request.description, {}, {}, request, {}, {}, sizeof(float));
+					case type_float64:
+						return create_field(request.field_id, type_float64, request.name, request.description, {}, {}, request, {}, {}, sizeof(double));
+					default:
+						throw std::invalid_argument("Invalid floating point type for field name:" + request.name);
 				}
 			}
 
-			row_id_type create_string_field(row_id_type _field_id, std::string _name, std::string _description, string_properties_type _string_properties)
+			row_id_type create_object_field(create_object_field_request request)
 			{
-				return create_field(_field_id, type_string, _name, _description, _string_properties, {}, {}, {}, {}, _string_properties.length);
-			}
-
-			row_id_type create_object_field(row_id_type _field_id, std::string _name, std::string _description, object_properties_type _object_properties)
-			{
-				auto &pcr = classes[ _object_properties.class_id ];
+				auto pcr = classes[ request.class_id ];
 				auto& p = pcr.parent();
 				size_t size = pcr.parent().class_size_bytes;
-				size_t field_size = _object_properties.dim.x * _object_properties.dim.y * _object_properties.dim.z;
-				return create_field(_field_id, type_object, _name, _description, {}, {}, {}, {}, _object_properties, field_size);
+				request.class_size_bytes = size;
+				request.total_size_bytes = request.dim.x * request.dim.y * request.dim.z * size;
+				return create_field(request.field_id, type_object, request.name, request.description, {}, {}, {}, {}, request, request.total_size_bytes);
 			}
 
-			row_id_type create_class(
-				std::string& _class_name, 
-				std::string& _class_description, 
-				std::vector<row_id_type> _field_ids)
+			row_id_type create_class( create_class_request request )
 			{
-				auto sz = _field_ids.size();
+				auto sz = request.field_ids.size();
 				auto pcr = classes.create(sz);
-				auto& p = pcr.parent;
+				auto& p = pcr.parent();
 
 				p.class_id = pcr.row_id();
-				p.name = _class_name;
-				p.description = _class_description;
+				p.name = request.class_name;
+				p.description = request.class_description;
 				p.class_size_bytes = 0;
 
 				for (int i = 0; i < pcr.size(); i++)
 				{
-					auto fid = _field_ids[i];
+					auto fid = request.field_ids[i];
 					auto& field = fields[fid];
-					pcr.child(i) = fid;
+					auto& ref = pcr.child(i);
+					ref.field_id = fid;
+					ref.offset = p.class_size_bytes;
 					p.class_size_bytes += field.size_bytes;
 				}
 
 				return p.class_id;
 			}
 
+			row_id_type find_class(object_name& class_name)
+			{
+				auto citer = classes_by_name[class_name];
+				if (citer != std::end(citer)) {
+					return citer->second;
+				}
+				return null_row;
+			}
 
+			row_id_type find_field(object_name& class_name)
+			{
+				auto citer = classes_by_name[class_name];
+				if (citer != std::end(citer)) {
+					return citer->second;
+				}
+				return null_row;
+			}
+
+			jclass get_class_details(row_id_type class_id)
+			{
+				jclass jc;
+
+				jc.schema = this;
+				jc.source = classes[class_id];
+
+				return jc;
+			}
+
+		};
+
+		/*
+		
+		The overall schema that we are implementing
+
+		cb_store_app :
+		{
+			fields : [ {}, ...  ],
+			classes: [ {}, ... ],
+			collections: [ ],
+		}
+		
+		*/
+
+		class jcollection 
+		{
+		public:
+			row_id_type		root_class;
+		};
+
+		class jbase_db
+		{
+			jschema schema;
+
+		public:
+
+			jbase_db()
+			{
+			}
 		};
 	}
 }

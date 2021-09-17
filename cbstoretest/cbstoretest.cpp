@@ -6,7 +6,7 @@
 #include "queue.h"
 #include "function.h"
 #include "jobject.h"
-#include "index.h"
+#include "sorted_index.h"
 
 countrybit::system::sync<int> test_queue();
 countrybit::system::task<int> calc();

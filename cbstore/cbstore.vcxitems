@@ -17,7 +17,8 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)application.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)file.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)function.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)index.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)grid_index.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)sorted_index.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)jobject.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)jcollection.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)jstring.h" />
@@ -31,7 +32,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)application.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)file.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)function.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)index.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)sorted_index.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)jobject.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)queue.cpp" />
   </ItemGroup>
