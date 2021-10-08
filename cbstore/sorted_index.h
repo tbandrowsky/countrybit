@@ -32,21 +32,15 @@ namespace countrybit
 
 		using index_ref = row_id_type;
 
-		template <typename KEY, typename VALUE, int MAX_ROWS, int SORT_ORDER = 1> class sorted_index 
-			: public parent_child_table<std::pair<KEY,VALUE>, index_ref, MAX_ROWS, MaxNumberOfLevels>
+		template <typename KEY, typename VALUE, int SORT_ORDER = 1> class sorted_index 
+			: public parent_child_table<std::pair<KEY,VALUE>, index_ref>
 		{
 		public:
 
 			using index_node = parent_child_holder<std::pair<KEY, VALUE>, index_ref>;
-			using base_class = parent_child_table<std::pair<KEY, VALUE>, index_ref, MAX_ROWS, MaxNumberOfLevels>;
+			using base_class = parent_child_table<std::pair<KEY, VALUE>, index_ref>;
 
 		private:
-
-			bool deleted;
-			int count;
-			int level;
-
-			row_id_type header_id;
 
 			index_node get_header()
 			{
@@ -66,6 +60,11 @@ namespace countrybit
 
 		public:
 
+			bool deleted;
+			int count;
+			int level;
+			row_id_type header_id;
+
 			sorted_index()
 			{
 				deleted = false;
@@ -78,7 +77,7 @@ namespace countrybit
 
 			class iterator
 			{
-				sorted_index<KEY, VALUE, MAX_ROWS, SORT_ORDER>* base;
+				sorted_index<KEY, VALUE, SORT_ORDER>* base;
 				row_id_type current;
 				using index_node = parent_child_holder<std::pair<KEY, VALUE>, index_ref>;
 
@@ -89,7 +88,7 @@ namespace countrybit
 				using pointer = std::pair<KEY, VALUE>*;  // or also value_type*
 				using reference = std::pair<KEY, VALUE>&;  // or also value_type&
 
-				iterator(sorted_index<KEY, VALUE, MAX_ROWS, SORT_ORDER>* _base, row_id_type _current) :
+				iterator(sorted_index<BOX, KEY, VALUE, SORT_ORDER>* _base, row_id_type _current) :
 					base(_base),
 					current(_current)
 				{
@@ -183,7 +182,7 @@ namespace countrybit
 				return result;
 			}
 
-			sorted_index<KEY, VALUE, MAX_ROWS, SORT_ORDER>::iterator begin()
+			sorted_index<KEY, VALUE, SORT_ORDER>::iterator begin()
 			{
 				index_node q = get_header();
 				row_id_type qr = q.child(0);
@@ -191,12 +190,12 @@ namespace countrybit
 				return iterator(this, qr);
 			}
 
-			sorted_index<KEY, VALUE, MAX_ROWS, SORT_ORDER>::iterator end()
+			sorted_index<BOX, KEY, VALUE, SORT_ORDER>::iterator end()
 			{
 				return iterator(this, null_row);
 			}
 
-			bool erase(sorted_index<KEY, VALUE, MAX_ROWS, SORT_ORDER>::iterator& _iter)
+			bool erase(sorted_index<BOX, KEY, VALUE, SORT_ORDER>::iterator& _iter)
 			{
 				return this->remove_node(_iter->first);
 			}
@@ -206,17 +205,17 @@ namespace countrybit
 				return this->remove_node(key);
 			}
 
-			sorted_index<KEY, VALUE, MAX_ROWS, SORT_ORDER>::iterator at(const KEY& key)
+			sorted_index<KEY, VALUE, SORT_ORDER>::iterator at(const KEY& key)
 			{
 				return iterator(this, this->find_node(key));
 			}
 
-			sorted_index<KEY, VALUE, MAX_ROWS, SORT_ORDER>::iterator first_like(const KEY& key)
+			sorted_index<KEY, VALUE, SORT_ORDER>::iterator first_like(const KEY& key)
 			{
 				return iterator(this, this->find_first_node(key));
 			}
 
-			sorted_index<KEY, VALUE, MAX_ROWS, SORT_ORDER>::iterator operator[](const KEY& key)
+			sorted_index<KEY, VALUE, SORT_ORDER>::iterator operator[](const KEY& key)
 			{
 				return iterator(this, this->find_node(key));
 			}
@@ -239,25 +238,25 @@ namespace countrybit
 				return base_class::get(n).parent().key_value;
 			}
 
-			sorted_index<KEY, VALUE, MAX_ROWS, SORT_ORDER>::iterator insert_or_assign(std::pair<KEY, VALUE>& kvp)
+			sorted_index<KEY, VALUE, SORT_ORDER>::iterator insert_or_assign(std::pair<KEY, VALUE>& kvp)
 			{
 				row_id_type modified_node = this->update_node(kvp);
 				return iterator(this, modified_node);
 			}
 
-			inline sorted_index<KEY, VALUE, MAX_ROWS, SORT_ORDER>::iterator insert_or_assign(KEY key, VALUE value)
+			inline sorted_index<KEY, VALUE, SORT_ORDER>::iterator insert_or_assign(KEY key, VALUE value)
 			{
 				std::pair<KEY, VALUE> kvp(key, value);
 				return insert_or_assign(kvp);
 			}
 
-			sorted_index<KEY, VALUE, MAX_ROWS, SORT_ORDER>::iterator put(std::pair<KEY, VALUE>& kvp)
+			sorted_index<KEY, VALUE, SORT_ORDER>::iterator put(std::pair<KEY, VALUE>& kvp)
 			{
 				row_id_type modified_node = this->update_node(kvp);
 				return iterator(this, modified_node);
 			}
 
-			inline sorted_index<KEY, VALUE, MAX_ROWS, SORT_ORDER>::iterator put(KEY key, VALUE value)
+			inline sorted_index<KEY, VALUE, SORT_ORDER>::iterator put(KEY key, VALUE value)
 			{
 				std::pair<KEY, VALUE> kvp(key, value);
 				return insert_or_assign(kvp);
@@ -278,7 +277,7 @@ namespace countrybit
 
 			inline int size() { return count; }
 
-			template <int MAX_ROWS, int SORT_ORDER> bool contains(sorted_index<KEY, VALUE, MAX_ROWS, SORT_ORDER>& _src)
+			template <int SORT_ORDER> bool contains(sorted_index<KEY, VALUE, SORT_ORDER>& _src)
 			{
 				bool all = true;
 				for (auto& f : _src)

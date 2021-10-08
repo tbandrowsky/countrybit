@@ -15,6 +15,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)application.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)constants.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)file.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)function.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)grid_index.h" />
@@ -26,6 +27,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)queue.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)read_all_string.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)skip_list.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)store_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)table.h" />
   </ItemGroup>
   <ItemGroup>

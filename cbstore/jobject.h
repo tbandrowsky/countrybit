@@ -7,6 +7,8 @@
 #include <thread>
 #include <atomic>
 #include <stdexcept>
+#include "constants.h"
+#include "store_box.h"
 #include "table.h"
 #include "jstring.h"
 #include "sorted_index.h"
@@ -15,34 +17,7 @@ namespace countrybit
 {
 	namespace database
 	{
-		class constants 
-		{
-		public:
-			static const int max_fields = 2048;
-			static const int max_classes = 256;
-			static const int max_class_fields = 256;
-		};
-
-		enum jtype
-		{
-			type_unknown = 0,
-
-			type_int8 = 1,
-			type_int16 = 2,
-			type_int32 = 3,
-			type_int64 = 4,
-
-			type_float32 = 5,
-			type_float64 = 6,
-
-			type_datetime = 7,
-			type_string = 8,
-
-			type_object = 9,
-			type_object_id = 10
-		};
-
-		struct store_id_type
+		struct collection_id_type
 		{
 			unsigned long  Data1;
 			unsigned short Data2;
@@ -52,15 +27,15 @@ namespace countrybit
 
 		struct object_id_type
 		{
-			store_id_type store_id;
+			collection_id_type collection_id;
 			row_id_type	  row_id;
 		};
 
 		struct string_properties_type
 		{
 			int length;
-			jstring<64>		validation_pattern;
-			jstring<128>	validation_message;
+			jstring		validation_pattern;
+			jstring		validation_message;
 		};
 
 		struct int_properties_type 
@@ -94,8 +69,8 @@ namespace countrybit
 			size_t				total_size_bytes;
 		};
 
-		using object_name = jstring<64>;
-		using object_description = jstring<256>;
+		using object_name = istring<32>;
+		using object_description = istring<250>;
 
 		class jfield
 		{
@@ -113,55 +88,10 @@ namespace countrybit
 			double_properties_type	double_properties;
 			time_properties_type	time_properties;
 			object_properties_type  object_properties;
+
 		};
 
 		// a store id is in fact, a guid
-
-		struct jobject_data
-		{
-			object_id_type			id;
-			object_properties_type* props;
-			char*					bytes;
-		};
-
-		template <int max_objects, row_id_type bytes_per_object>
-		class jstore
-		{
-			parent_child_table<object_properties_type, char, max_objects, bytes_per_object> data;
-			store_id_type store_id;
-
-		public:
-
-			jstore();
-			~jstore();
-
-			jobject_data create_object( object_properties_type& _object_properties )
-			{
-				jobject_data jo;
-
-				auto pt = data.create(_object_properties.total_size_bytes);
-				jp.props = pt.pparent();
-				jp.bytes = pt.pchild();
-				jp.id.store_id = store_id;
-				jp.id.row_id = pt.row_id();
-				return jp;
-			}
-
-			jobject_data get_object( object_id_type _id )
-			{
-				auto pt = data.get(_id.row_id);
-				jp.props = pt.pparent();
-				jp.bytes = pt.pchild();
-				jp.id.store_id = store_id;
-				jp.id.row_id = pt.row_id();
-				return jp;
-			}
-
-			size_t size() const
-			{
-				return sizeof(*this);
-			}
-		};
 
 		class jclass_header
 		{
@@ -172,34 +102,26 @@ namespace countrybit
 			uint64_t						class_size_bytes;
 		};
 
-		class jfield_instance
+		class jclass_field
 		{
 		public:
 			row_id_type				field_id;
 			uint64_t				offset;
 		};
 
-		class jclass
-		{
-			parent_child_holder<jclass_header, jfield_instance> source;
-			jschema* schema;
-
-		public:
-
-			jclass();
-			~jclass();
-
-			friend class jschema;
-		};
+		using jclass_table = parent_child_table<jclass_header, jclass_field>;
+		using jclass = parent_child_holder<jclass_header, jclass_field>;
 
 		class jschema
 		{
+
 		protected:
 
-			table<jfield, constants::max_fields> fields;
-			parent_child_table<jclass_header, jfield_instance, constants::max_classes, constants::max_class_fields> classes;
-			sorted_index<object_name, row_id_type, constants::max_classes> classes_by_name;
-			sorted_index<object_name, row_id_type, constants::max_fields> fields_by_name;
+
+			table<jfield> fields;
+			parent_child_table<jclass_header, jclass_field> classes;
+			sorted_index<object_name, row_id_type> classes_by_name;
+			sorted_index<object_name, row_id_type> fields_by_name;
 
 		public:
 
@@ -278,7 +200,7 @@ namespace countrybit
 
 			row_id_type create_string_field(create_string_field_request request)
 			{
-				return create_field(request.field_id, type_string, request.name, request.description, request, {}, {}, {}, {}, request.length);
+				return create_field(request.field_id, type_string, request.name, request.description, request, {}, {}, {}, {}, request.length + sizeof(jstring));
 			}
 
 			row_id_type create_time_field(create_time_field_request request)
@@ -359,55 +281,205 @@ namespace countrybit
 				return null_row;
 			}
 
-			row_id_type find_field(object_name& class_name)
+			row_id_type find_field(object_name& field_name)
 			{
-				auto citer = classes_by_name[class_name];
+				auto citer = fields_by_name[field_name];
 				if (citer != std::end(citer)) {
 					return citer->second;
 				}
 				return null_row;
 			}
 
-			jclass get_class_details(row_id_type class_id)
+			jclass &get_class(row_id_type class_id)
 			{
-				jclass jc;
+				auto the_class = classes[class_id];
+				return the_class;
+			}
 
-				jc.schema = this;
-				jc.source = classes[class_id];
-
-				return jc;
+			jfield &get_field(row_id_type field_id)
+			{
+				auto the_field = fields[field_id];
+				return the_field;
 			}
 
 		};
 
-		/*
-		
-		The overall schema that we are implementing
-
-		cb_store_app :
+		class jobject
 		{
-			fields : [ {}, ...  ],
-			classes: [ {}, ... ],
-			collections: [ ],
-		}
-		
-		*/
+			jschema* schema;
+			object_id_type oid;
+			char* bytes;
+			row_id_type length;
 
-		class jcollection 
-		{
 		public:
-			row_id_type		root_class;
+
+			jobject(jschema* _schema, object_id_type _oid, char* _bytes, row_id_type _length) :
+				schema(_schema),
+				oid(_oid),
+				bytes(_bytes),
+				length(_length)
+			{
+				;
+			}
 		};
 
-		class jbase_db
+		class jplane
 		{
-			jschema schema;
+			jschema& schema;
+			char* bytes;
+			jclass& the_class;
 
 		public:
 
-			jbase_db()
+			jplane(jclass& _the_class, jschema& _schema, char* _bytes) :
+				schema(_schema),
+				the_class(_the_class),
+				bytes( _bytes )
 			{
+
 			}
+
+			template <typename T> 
+			T get_boxed(int field_idx, jtype jt)
+			{
+				jclass_field& jcf = the_class.child(field_idx);
+				jfield jf = schema.get_field(jcf.field_id);
+				if (jf.type_id != jt) {
+					throw std::invalid_argument("Invalid field type " + std::to_string(jt) + " for field idx " + std::to_string(field_idx));
+				}
+				T b = &bytes[jcf.offset];
+				return b;
+			}
+
+			int8_box get_int8(int field_idx)
+			{
+				return get_boxed<int8_box>(field_idx, jtype::type_int8);
+			}
+
+			int16_box get_int16(int field_idx)
+			{
+				return get_boxed<int16_box>(field_idx, jtype::type_int16);
+			}
+
+			int32_box get_int32(int field_idx)
+			{
+				return get_boxed<int32_box>(field_idx, jtype::type_int32);
+			}
+
+			int64_box get_int64(int field_idx)
+			{
+				return get_boxed<int64_box>(field_idx, jtype::type_int64);
+			}
+
+			float_box get_float(int field_idx)
+			{
+				return get_boxed<float_box>(field_idx, jtype::type_float32);
+			}
+
+			double_box get_double(int field_idx)
+			{
+				return get_boxed<double_box>(field_idx, jtype::type_float64);
+			}
+
+			time_box get_time(int field_idx)
+			{
+				return get_boxed<time_box>(field_idx, jtype::type_float64);
+			}
+
+			jstring get_string(int field_idx)
+			{
+				return get_boxed<jstring>(field_idx, jtype::type_string);
+			}
+		};
+
+		class jarray
+		{
+			jschema& schema;
+			row_id_type field_id;
+			char* bytes;
+
+		public:
+
+			jarray(jschema& _schema, row_id_type& _field_id, char* _bytes) :
+				schema(_schema),
+				field_id(_field_id),
+				bytes(_bytes)
+			{
+				jfield& field = schema.get_field(field_id);
+				if (field.type_id != jtype::type_object) {
+					throw std::invalid_argument("field " + field.name + " is not an object field." );
+				}
+			}
+
+			jplane get_plane(int x, int y = 0, int z = 0)
+			{
+				jfield& field = schema.get_field(field_id);
+				dimensions_type& dim = field.object_properties.dim;
+				if ((x >= dim.x) ||
+					(y >= dim.y) ||
+					(z >= dim.z)) {
+					throw std::invalid_argument("field " + field.name + " out of range.");
+				}
+				char *b = &bytes[ (z * dim.y * dim.x) + (y * dim.x) + x ];
+				return jplane()
+			}
+		};
+
+		template <typename BOX>
+		requires(box<BOX, char>)
+		class jcollection
+		{
+
+			BOX* b;
+			jschema* schema;
+
+			struct jcollection_data
+			{
+				collection_id_type collection_id;
+				parent_child_table<BOX, jobject_header, char> objects;
+			};
+
+			class jobject_header
+			{
+			public:
+				object_id_type oid;
+			};
+
+			                                                                                                                                                                                         
+		public:
+
+			jobject construct(row_id_type _class_field_id)
+			{
+				auto myclass = schema->get_field(_field_id);
+				auto bytes_to_allocate = myclass.parent().total_size_bytes;
+				auto new_object = objects.create(bytes_to_allocate);
+				new_object.parent().oid.collection_id = collection_id;
+				new_object.parent().oid.row_id = new_object.row_id();
+				return jobject(schema, new_object.parent().oid, new_object.pchild(), new_object.size());
+			}
+
+			static jcollection create(BOX* b, int chars_length)
+			{
+				jcollection temp;
+				temp.b = b;
+				temp.location = b->pack<char>(size(jstring_header) + chars_length);
+				temp.hdr = b->unpack<jstring_header>(temp.location);
+				temp.hdr->last_char = chars_length - 1;
+				temp.hdr->length = 0;
+				temp.hdr->data[0] = 0;
+				return temp;
+			}
+
+			static jcollection get(BOX* b, int location)
+			{
+				jcollection temp;
+				temp.b = b;
+				temp.location = location;
+				temp.hdr = b->unpack<jstring_header>(temp.location);
+				return temp;
+			}
+
+
 		};
 	}
 }

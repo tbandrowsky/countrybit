@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <exception>
 #include <stdexcept>
+#include "store_box.h"
 
 namespace countrybit
 {
@@ -88,80 +89,134 @@ namespace countrybit
 			}
 		};
 
-		template <class T, int max_rows> 
+		template <typename T> 
 		requires (std::is_standard_layout<T>::value)
 		class table
 		{
-			T			rows[max_rows];
-			row_id_type	last_row;
+
+			struct table_header
+			{
+				row_id_type
+					max_rows,
+					last_row
+					T			rows[0];
+			};
+
+			table_header<T>* hdr;
 
 		public:
 
-			table()
+			table(  ) : 
+				hdr(nullptr)
 			{
-				last_row = 0;
-				for (row_id_type i = 0; i < max_rows; i++)
-				{
-					auto& r = rows[i];
-					r = {};
+				
+			}
+
+			table(const table& src) : hdr(src.hdr)
+			{
+
+			}
+
+			static int get_box_size( int _rows )
+			{
+				return sizeof(table_header<T>) + sizeof(T) * _rows;
+			}
+
+			template <typename B, typename T>
+			requires (std::is_standard_layout<T>::value
+				&& std::is_standard_layout<T>::value
+				&& box<B, T>
+				&& box<B, table_header<T>>)
+			static row_id_type create(B *_b, int _max_rows)
+			{
+				table t;
+				table_header<T> th;
+
+				int hdr_offset;
+
+				th.max_rows = top;
+				th.last_row = 0;
+
+				row_id_type bytes_size = get_box_size(_max_rows);
+				char c = 0;
+				hdr_offset = _b->pack<char>(c, bytes_size);
+
+				t.hdr = b->unpack<table_header<T>>(hdr_offset);
+				for (int i = 0; i < _max_rows; i++) {
+					t.hdr->data[i] = {};
 				}
+
+				return hdr_offset;
+			}
+
+			template <typename B, typename T>
+			requires (std::is_standard_layout<T>::value
+				&& std::is_standard_layout<T>::value
+				&& box<B, T>
+				&& box<B, table_header<T>>)
+			static table get(B* _b, row_id_type offset)
+			{
+				table t;
+
+				t.hdr = b->unpack<table_header<T>>(offset);
+
+				return t;
 			}
 
 			row_range create(row_id_type count)
 			{
-				auto x = last_row + count;
-				if (x > max_rows)
+				auto x = hdr->last_row + count;
+				if (x > hdr->max_rows)
 					throw std::logic_error("table full");
 
 				row_range rr;
-				rr.start = last_row;
+				rr.start = hdr->last_row;
 				rr.stop = x;
-				last_row = x;
+				hdr->last_row = x;
 				return rr;
 			}
 
 			T& create(row_id_type count, row_range &rr)
 			{
-				auto x = last_row + count;
-				if (x > max_rows)
+				auto x = hdr->last_row + count;
+				if (x > hdr->max_rows)
 					throw std::logic_error("table full");
 
-				rr.start = last_row;
+				rr.start = hdr->last_row;
 				rr.stop = x;
-				last_row = x;
-				return rows[rr.start];
+				hdr->last_row = x;
+				return hdr->rows[rr.start];
 			}
 
 			T& insert(T& src, row_range& rr)
 			{
-				auto x = last_row + 1;
-				if (x > max_rows)
+				auto x = hdr->last_row + 1;
+				if (x > hdr->max_rows)
 					throw std::logic_error("table full");
 
-				rr.start = last_row;
+				rr.start = hdr->last_row;
 				rr.stop = x;
-				last_row = x;
-				rows[rr.start] = src;
-				return rows[rr.start];
+				hdr->last_row = x;
+				hdr->rows[rr.start] = src;
+				return hdr->rows[rr.start];
 			}
 
 			T& operator[](row_id_type & r)
 			{
-				if (r == null_row || r >= last_row)
+				if (r == null_row || r >= hdr->last_row)
 					throw std::logic_error("invalid row id");
 
-				return rows[r];
+				return hdr->rows[r];
 			}
 
 			row_id_type size() const
 			{
-				return last_row;
+				return hdr->last_row;
 			}
 
 		};
 
-
-		template <typename P, typename C, int max_rows, int avg_children_per_row>
+		template <typename P, typename C>
 		requires (std::is_standard_layout<P>::value && std::is_standard_layout<C>::value)
 		class parent_child_table
 		{
@@ -171,15 +226,49 @@ namespace countrybit
 				row_range children;
 			};
 
-			table<parent_child, max_rows> parents;
-			table<C, avg_children_per_row * max_rows> children;
+			struct parent_child_table_header 
+			{
+				row_id_type parents;
+				row_id_type children;
+			}
+
+			table<parent_child> parents;
+			table<C> children;
 
 		public:
 
-			void init()
+			parent_child_table()
 			{
-				parents.init();
-				children.init();
+				;
+			}
+
+			template <typename B, typename P, typename C>
+			requires (std::is_standard_layout<P>::value && 
+				std::is_standard_layout<C>::value
+				&& box<B, P>
+				&& box<B, parent_child_table<P,C>::parent_child>)
+			static row_id_type create( B *b, int parent_rows, int child_rows )
+			{
+				parent_child_table_header hdr;
+				hdr.parents = table< parent_child_table<P,C>::parent_child >::create(b, parent_rows);
+				hdr.children = table< C >::create(b, child_rows);
+				row_id_type r = b->pack(hdr);
+				return r;
+			}
+
+			template <typename B, typename P, typename C>
+			requires (std::is_standard_layout<P>::value&&
+				std::is_standard_layout<C>::value
+				&& box<B, P>
+				&& box<B, parent_child_table<P, C>::parent_child>)
+			static parent_child_table get(B* b, row_id_type row)
+			{
+				parent_child_table pct;
+				parent_child_table_header* hdr;
+				hdr = b->unpack<parent_child_table<P, C>::parent_child_table_header>(row);
+				pct.parents = table< parent_child_table<P, C>::parent_child >::get(b, hdr->parents);
+				pct.children = table< C >::get(b, hdr->children);
+				return pct;
 			}
 
 			parent_child_holder<P, C> create(row_id_type child_count)
@@ -204,6 +293,11 @@ namespace countrybit
 				if (row_id == null_row) return nullpc;
 				auto& pc = parents[row_id];
 				return parent_child_holder<P, C>(&pc.parent, &children[pc.children.start], row_id, pc.children.size());
+			}
+
+			static int get_box_size(int _parent_rows, int _child_rows)
+			{
+				return table<B, parent_child>::get_box_size(_parent_rows) + table<B, C>::get_box_size(_child_rows);
 			}
 
 		};
