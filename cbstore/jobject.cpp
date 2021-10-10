@@ -72,5 +72,103 @@ namespace countrybit
 			field_mime_type = 50,
 			field_image_base64 = 51;
 
+
+		jslice::jslice(jclass& _the_class, jschema& _schema, char* _bytes) :
+			schema(_schema),
+			the_class(_the_class),
+			bytes(_bytes)
+		{
+
+		}
+
+		int8_box jslice::get_int8(int field_idx)
+		{
+			return get_boxed<int8_box>(field_idx, jtype::type_int8);
+		}
+
+		int16_box jslice::get_int16(int field_idx)
+		{
+			return get_boxed<int16_box>(field_idx, jtype::type_int16);
+		}
+
+		int32_box jslice::get_int32(int field_idx)
+		{
+			return jslice::get_boxed<int32_box>(field_idx, jtype::type_int32);
+		}
+
+		int64_box jslice::get_int64(int field_idx)
+		{
+			return jslice::get_boxed<int64_box>(field_idx, jtype::type_int64);
+		}
+
+		float_box jslice::get_float(int field_idx)
+		{
+			return jslice::get_boxed<float_box>(field_idx, jtype::type_float32);
+		}
+
+		double_box jslice::get_double(int field_idx)
+		{
+			return get_boxed<double_box>(field_idx, jtype::type_float64);
+		}
+
+		time_box jslice::get_time(int field_idx)
+		{
+			return get_boxed<time_box>(field_idx, jtype::type_float64);
+		}
+
+		jstring jslice::get_string(int field_idx)
+		{
+			return get_boxed<jstring>(field_idx, jtype::type_string);
+		}
+
+		jarray jslice::get_object(int field_idx)
+		{
+			;
+		}
+
+		int jslice::size()
+		{
+			return the_class.size();
+		}
+
+		class jarray
+		{
+			jschema& schema;
+			row_id_type field_id;
+			char* bytes;
+
+		public:
+
+			jarray(jschema& _schema, row_id_type& _field_id, char* _bytes) :
+				schema(_schema),
+				field_id(_field_id),
+				bytes(_bytes)
+			{
+				jfield& field = schema.get_field(field_id);
+				if (field.type_id != jtype::type_object) {
+					throw std::invalid_argument("field " + field.name + " is not an object field.");
+				}
+			}
+
+			jslice get_slice(int x, int y = 0, int z = 0)
+			{
+				jfield& field = schema.get_field(field_id);
+				jclass& the_class = schema.get_class(field.type_id);
+				dimensions_type& dim = field.object_properties.dim;
+				if ((x >= dim.x) ||
+					(y >= dim.y) ||
+					(z >= dim.z)) {
+					throw std::invalid_argument("field " + field.name + " out of range.");
+				}
+				char* b = &bytes[(z * dim.y * dim.x) + (y * dim.x) + x];
+				return jslice(the_class, schema, b);
+			}
+
+			jslice get_slice(dimensions_type dims)
+			{
+				return get_slice(dims.x, dims.y, dims.z);
+			}
+		};
+
 	}
 }

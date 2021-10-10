@@ -304,42 +304,15 @@ namespace countrybit
 
 		};
 
-		class jobject
-		{
-			jschema* schema;
-			object_id_type oid;
-			char* bytes;
-			row_id_type length;
+		class jarray;
 
-		public:
-
-			jobject(jschema* _schema, object_id_type _oid, char* _bytes, row_id_type _length) :
-				schema(_schema),
-				oid(_oid),
-				bytes(_bytes),
-				length(_length)
-			{
-				;
-			}
-		};
-
-		class jplane
+		class jslice
 		{
 			jschema& schema;
 			char* bytes;
 			jclass& the_class;
 
-		public:
-
-			jplane(jclass& _the_class, jschema& _schema, char* _bytes) :
-				schema(_schema),
-				the_class(_the_class),
-				bytes( _bytes )
-			{
-
-			}
-
-			template <typename T> 
+			template <typename T>
 			T get_boxed(int field_idx, jtype jt)
 			{
 				jclass_field& jcf = the_class.child(field_idx);
@@ -351,45 +324,26 @@ namespace countrybit
 				return b;
 			}
 
-			int8_box get_int8(int field_idx)
+		public:
+
+			jslice(jclass& _the_class, jschema& _schema, char* _bytes) :
+				schema(_schema),
+				the_class(_the_class),
+				bytes( _bytes )
 			{
-				return get_boxed<int8_box>(field_idx, jtype::type_int8);
+
 			}
 
-			int16_box get_int16(int field_idx)
-			{
-				return get_boxed<int16_box>(field_idx, jtype::type_int16);
-			}
-
-			int32_box get_int32(int field_idx)
-			{
-				return get_boxed<int32_box>(field_idx, jtype::type_int32);
-			}
-
-			int64_box get_int64(int field_idx)
-			{
-				return get_boxed<int64_box>(field_idx, jtype::type_int64);
-			}
-
-			float_box get_float(int field_idx)
-			{
-				return get_boxed<float_box>(field_idx, jtype::type_float32);
-			}
-
-			double_box get_double(int field_idx)
-			{
-				return get_boxed<double_box>(field_idx, jtype::type_float64);
-			}
-
-			time_box get_time(int field_idx)
-			{
-				return get_boxed<time_box>(field_idx, jtype::type_float64);
-			}
-
-			jstring get_string(int field_idx)
-			{
-				return get_boxed<jstring>(field_idx, jtype::type_string);
-			}
+			int8_box get_int8(int field_idx);
+			int16_box get_int16(int field_idx);
+			int32_box get_int32(int field_idx);
+			int64_box get_int64(int field_idx);
+			float_box get_float(int field_idx);
+			double_box get_double(int field_idx);
+			time_box get_time(int field_idx);
+			jstring get_string(int field_idx);
+			jarray get_object(int field_idx);
+			int size();
 		};
 
 		class jarray
@@ -411,18 +365,8 @@ namespace countrybit
 				}
 			}
 
-			jplane get_plane(int x, int y = 0, int z = 0)
-			{
-				jfield& field = schema.get_field(field_id);
-				dimensions_type& dim = field.object_properties.dim;
-				if ((x >= dim.x) ||
-					(y >= dim.y) ||
-					(z >= dim.z)) {
-					throw std::invalid_argument("field " + field.name + " out of range.");
-				}
-				char *b = &bytes[ (z * dim.y * dim.x) + (y * dim.x) + x ];
-				return jplane()
-			}
+			jslice get_slice(int x, int y = 0, int z = 0);
+			jslice get_slice(dimensions_type dims);
 		};
 
 		template <typename BOX>
