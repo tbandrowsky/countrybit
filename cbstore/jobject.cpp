@@ -123,7 +123,12 @@ namespace countrybit
 
 		jarray jslice::get_object(int field_idx)
 		{
-			;
+			jclass_field& jcf = the_class.child(field_idx);
+			jfield jf = schema.get_field(jcf.field_id);
+
+			char *b = &bytes[jcf.offset];
+			jarray jerry(schema, field_idx, b);
+			return jerry;
 		}
 
 		int jslice::size()
@@ -131,44 +136,33 @@ namespace countrybit
 			return the_class.size();
 		}
 
-		class jarray
+		jarray::jarray(jschema& _schema, row_id_type& _field_id, char* _bytes) :
+			schema(_schema),
+			class_field_id(_field_id),
+			bytes(_bytes)
 		{
-			jschema& schema;
-			row_id_type field_id;
-			char* bytes;
+			
+			
+		}
 
-		public:
-
-			jarray(jschema& _schema, row_id_type& _field_id, char* _bytes) :
-				schema(_schema),
-				field_id(_field_id),
-				bytes(_bytes)
-			{
-				jfield& field = schema.get_field(field_id);
-				if (field.type_id != jtype::type_object) {
-					throw std::invalid_argument("field " + field.name + " is not an object field.");
-				}
+		jslice jarray::get_slice(int x, int y, int z)
+		{
+			jfield& field = schema.get_field(class_field_id);
+			jclass& the_class = schema.get_class(field.type_id);
+			dimensions_type& dim = field.object_properties.dim;
+			if ((x >= dim.x) ||
+				(y >= dim.y) ||
+				(z >= dim.z)) {
+				throw std::invalid_argument("field " + field.name + " out of range.");
 			}
+			char* b = &bytes[(z * dim.y * dim.x) + (y * dim.x) + x];
+			return jslice(the_class, schema, b);
+		}
 
-			jslice get_slice(int x, int y = 0, int z = 0)
-			{
-				jfield& field = schema.get_field(field_id);
-				jclass& the_class = schema.get_class(field.type_id);
-				dimensions_type& dim = field.object_properties.dim;
-				if ((x >= dim.x) ||
-					(y >= dim.y) ||
-					(z >= dim.z)) {
-					throw std::invalid_argument("field " + field.name + " out of range.");
-				}
-				char* b = &bytes[(z * dim.y * dim.x) + (y * dim.x) + x];
-				return jslice(the_class, schema, b);
-			}
-
-			jslice get_slice(dimensions_type dims)
-			{
-				return get_slice(dims.x, dims.y, dims.z);
-			}
-		};
+		jslice jarray::get_slice(dimensions_type dims)
+		{
+			return get_slice(dims.x, dims.y, dims.z);
+		}
 
 	}
 }

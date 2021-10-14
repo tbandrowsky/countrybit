@@ -326,14 +326,7 @@ namespace countrybit
 
 		public:
 
-			jslice(jclass& _the_class, jschema& _schema, char* _bytes) :
-				schema(_schema),
-				the_class(_the_class),
-				bytes( _bytes )
-			{
-
-			}
-
+			jslice(jclass& _the_class, jschema& _schema, char* _bytes);
 			int8_box get_int8(int field_idx);
 			int16_box get_int16(int field_idx);
 			int32_box get_int32(int field_idx);
@@ -349,81 +342,107 @@ namespace countrybit
 		class jarray
 		{
 			jschema& schema;
-			row_id_type field_id;
+			row_id_type class_field_id;
 			char* bytes;
 
 		public:
 
-			jarray(jschema& _schema, row_id_type& _field_id, char* _bytes) :
-				schema(_schema),
-				field_id(_field_id),
-				bytes(_bytes)
-			{
-				jfield& field = schema.get_field(field_id);
-				if (field.type_id != jtype::type_object) {
-					throw std::invalid_argument("field " + field.name + " is not an object field." );
-				}
-			}
-
+			jarray(jschema& _schema, row_id_type& _class_field_id, char* _bytes);
 			jslice get_slice(int x, int y = 0, int z = 0);
 			jslice get_slice(dimensions_type dims);
 		};
 
-		template <typename BOX>
-		requires(box<BOX, char>)
+		class jcollection_map
+		{
+		public:
+			collection_id_type collection_id;
+			row_id_type table_id;
+		};
+
+		class jobject_header
+		{
+		public:
+			object_id_type oid;
+		};
+
 		class jcollection
 		{
 
-			BOX* b;
-			jschema* schema;
+			jschema& schema;
+			collection_id_type collection_id;
+			parent_child_table<jobject_header, char> objects;
 
-			struct jcollection_data
+			jcollection(jschema& _schema, collection_id_type _collection_id, parent_child_table<jobject_header, char> _objects) :
+				schema( _schema ),
+				collection_id( _collection_id ),
+				objects( _objects )
 			{
-				collection_id_type collection_id;
-				parent_child_table<BOX, jobject_header, char> objects;
-			};
 
-			class jobject_header
+			}
+
+			jcollection(jcollection& _src) :
+				schema(_src.schema),
+				collection_id(_src.collection_id),
+				objects(_src.objects)
 			{
-			public:
-				object_id_type oid;
-			};
 
-			                                                                                                                                                                                         
+			}
+
 		public:
 
-			jobject construct(row_id_type _class_field_id)
+			jarray construct(row_id_type _class_field_id)
 			{
-				auto myclass = schema->get_field(_field_id);
-				auto bytes_to_allocate = myclass.parent().total_size_bytes;
+				auto myclassfield = schema.get_field(_class_field_id);
+				auto myclass = schema.get_class(myclassfield.object_properties.class_id);
+				auto bytes_to_allocate = myclass.parent().class_size_bytes;
 				auto new_object = objects.create(bytes_to_allocate);
 				new_object.parent().oid.collection_id = collection_id;
 				new_object.parent().oid.row_id = new_object.row_id();
-				return jobject(schema, new_object.parent().oid, new_object.pchild(), new_object.size());
+				return jarray(schema, _class_field_id, new_object.pchild());
 			}
 
-			static jcollection create(BOX* b, int chars_length)
+			template <typename B>
+			requires (box<B, jcollection_map>)
+			static row_id_type create(B* _b, jschema& _schema, collection_id_type _collection_id, int _number_of_objects, int *_class_field_ids)
 			{
-				jcollection temp;
-				temp.b = b;
-				temp.location = b->pack<char>(size(jstring_header) + chars_length);
-				temp.hdr = b->unpack<jstring_header>(temp.location);
-				temp.hdr->last_char = chars_length - 1;
-				temp.hdr->length = 0;
-				temp.hdr->data[0] = 0;
-				return temp;
+
+				if (!_class_field_ids)
+				{
+					throw std::invalid_argument("cannot create collection with 0 class size");
+				}
+
+				int max_size = 0;
+				while (*_class_field_ids) 
+				{
+					auto myclassfield = _schema.get_field(*_class_field_ids);
+					if (myclassfield.size_bytes > max_size) {
+						max_size = myclassfield.size_bytes;
+					}
+					_class_field_ids++;
+				}
+
+				if (!max_size) 
+				{
+					throw std::invalid_argument("cannot create collection with 0 class size");
+				}
+
+				jcollection_map jcm;
+				jcm.collection_id = _collection_id;
+				jcm.table_id = parent_child_table<jobject_header, char>::create(_b, _number_of_objects, max_size * _number_of_objects);
+				row_id_type jcm_row = _b->pack(jcm);
+				return jcm_row;
 			}
 
-			static jcollection get(BOX* b, int location)
+			template <typename B>
+			requires (box<B, jcollection_map>)
+			static jcollection get(B* _b, jschema& _schema, row_id_type _location)
 			{
-				jcollection temp;
-				temp.b = b;
-				temp.location = location;
-				temp.hdr = b->unpack<jstring_header>(temp.location);
-				return temp;
+
+				jcollection_map jcm;
+				jcm = _b->unpack<jcollection_map>(_location);
+				auto pct = parent_child_table<jobject_header, char>::get(_b, jcm.table_id);
+				return jcollection( _schema, jcm.collection_id, pct );
 			}
-
-
 		};
 	}
 }

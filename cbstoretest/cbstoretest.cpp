@@ -38,7 +38,7 @@ bool assert_if(std::function<bool()> test, std::string fail)
 
 void jstring_tests()
 {
-    countrybit::database::jstring<5> test1 = "1234567";
+    countrybit::database::istring<5> test1 = "1234567";
 
     assert_if([test1]() { return test1.size() == 4; }, "Size incorrect.");
     assert_if([test1]() { return test1 == "1234"; }, "truncation incorrect.");
@@ -47,14 +47,15 @@ void jstring_tests()
 
 void table_tests()
 {
-    using countrybit::database::jstring;
+    using countrybit::database::istring;
     using countrybit::database::table;
     using countrybit::database::row_range;
+    using countrybit::database::static_box;
 
     struct test_item {
         int id;
-        jstring<10> name;
-        jstring<50> description;
+        istring<10> name;
+        istring<50> description;
     };
 
     test_item items[5] = {
@@ -68,7 +69,14 @@ void table_tests()
     int s = sizeof(items) / sizeof(test_item);
     assert_if([s]() { return s == 5; }, "size isn't 5");
 
-    table<test_item, 5> basic;
+    using box_type = static_box<10000>;
+
+    box_type box;
+
+    table<test_item> basic;
+
+    auto location = table<test_item>::create_table(&box, 20);
+    basic = table<test_item>::get_table(&box, location);
 
     test_item* ti = &items[0];
 

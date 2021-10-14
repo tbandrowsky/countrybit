@@ -70,7 +70,7 @@ namespace countrybit
 
 			C* pchild()
 			{
-				return the_child;
+				return the_children;
 			}
 
 			bool is_null() const
@@ -98,11 +98,11 @@ namespace countrybit
 			{
 				row_id_type
 					max_rows,
-					last_row
-					T			rows[0];
+					last_row;
+				T   rows[1];
 			};
 
-			table_header<T>* hdr;
+			table_header* hdr;
 
 		public:
 
@@ -119,29 +119,26 @@ namespace countrybit
 
 			static int get_box_size( int _rows )
 			{
-				return sizeof(table_header<T>) + sizeof(T) * _rows;
+				return sizeof(table_header) + sizeof(T) * _rows;
 			}
 
-			template <typename B, typename T>
-			requires (std::is_standard_layout<T>::value
-				&& std::is_standard_layout<T>::value
-				&& box<B, T>
-				&& box<B, table_header<T>>)
-			static row_id_type create(B *_b, int _max_rows)
+			template <typename B>
+			requires (box<B, T>&& box<B, table_header>)
+			static row_id_type create_table(B* _b, int _max_rows)
 			{
 				table t;
-				table_header<T> th;
+				table_header th;
 
 				int hdr_offset;
 
-				th.max_rows = top;
+				th.max_rows = _max_rows;
 				th.last_row = 0;
 
 				row_id_type bytes_size = get_box_size(_max_rows);
 				char c = 0;
 				hdr_offset = _b->pack<char>(c, bytes_size);
 
-				t.hdr = b->unpack<table_header<T>>(hdr_offset);
+				t.hdr = _b->unpack<table_header<T>>(hdr_offset);
 				for (int i = 0; i < _max_rows; i++) {
 					t.hdr->data[i] = {};
 				}
@@ -149,16 +146,13 @@ namespace countrybit
 				return hdr_offset;
 			}
 
-			template <typename B, typename T>
-			requires (std::is_standard_layout<T>::value
-				&& std::is_standard_layout<T>::value
-				&& box<B, T>
-				&& box<B, table_header<T>>)
-			static table get(B* _b, row_id_type offset)
+			template <typename B>
+			requires (box<B, T>&& box<B, table_header>)
+			static table get_table(B* _b, row_id_type offset)
 			{
 				table t;
 
-				t.hdr = b->unpack<table_header<T>>(offset);
+				t.hdr = _b->unpack<table_header<T>>(offset);
 
 				return t;
 			}
@@ -220,17 +214,18 @@ namespace countrybit
 		requires (std::is_standard_layout<P>::value && std::is_standard_layout<C>::value)
 		class parent_child_table
 		{
+
 			struct parent_child
 			{
 				P parent;
 				row_range children;
 			};
 
-			struct parent_child_table_header 
+			struct parent_child_table_header
 			{
 				row_id_type parents;
 				row_id_type children;
-			}
+			};
 
 			table<parent_child> parents;
 			table<C> children;
@@ -242,12 +237,9 @@ namespace countrybit
 				;
 			}
 
-			template <typename B, typename P, typename C>
-			requires (std::is_standard_layout<P>::value && 
-				std::is_standard_layout<C>::value
-				&& box<B, P>
-				&& box<B, parent_child_table<P,C>::parent_child>)
-			static row_id_type create( B *b, int parent_rows, int child_rows )
+			template <typename B>
+			requires (box<B, P> && box<B, parent_child_table<P, C>::parent_child>)
+			static row_id_type create_table( B *b, int parent_rows, int child_rows )
 			{
 				parent_child_table_header hdr;
 				hdr.parents = table< parent_child_table<P,C>::parent_child >::create(b, parent_rows);
@@ -256,12 +248,9 @@ namespace countrybit
 				return r;
 			}
 
-			template <typename B, typename P, typename C>
-			requires (std::is_standard_layout<P>::value&&
-				std::is_standard_layout<C>::value
-				&& box<B, P>
-				&& box<B, parent_child_table<P, C>::parent_child>)
-			static parent_child_table get(B* b, row_id_type row)
+			template <typename B>
+			requires (box<B, P> && box<B, parent_child_table<P, C>::parent_child>)
+			static parent_child_table create_table(B* b, row_id_type row)
 			{
 				parent_child_table pct;
 				parent_child_table_header* hdr;
@@ -297,14 +286,10 @@ namespace countrybit
 
 			static int get_box_size(int _parent_rows, int _child_rows)
 			{
-				return table<B, parent_child>::get_box_size(_parent_rows) + table<B, C>::get_box_size(_child_rows);
+				return table<parent_child>::get_box_size(_parent_rows) + table<C>::get_box_size(_child_rows);
 			}
 
 		};
 
-
-
 	}
-
-
 }

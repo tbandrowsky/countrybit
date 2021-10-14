@@ -88,7 +88,7 @@ namespace countrybit
 				using pointer = std::pair<KEY, VALUE>*;  // or also value_type*
 				using reference = std::pair<KEY, VALUE>&;  // or also value_type&
 
-				iterator(sorted_index<BOX, KEY, VALUE, SORT_ORDER>* _base, row_id_type _current) :
+				iterator(sorted_index<KEY, VALUE, SORT_ORDER>* _base, row_id_type _current) :
 					base(_base),
 					current(_current)
 				{
@@ -190,12 +190,12 @@ namespace countrybit
 				return iterator(this, qr);
 			}
 
-			sorted_index<BOX, KEY, VALUE, SORT_ORDER>::iterator end()
+			sorted_index<KEY, VALUE, SORT_ORDER>::iterator end()
 			{
 				return iterator(this, null_row);
 			}
 
-			bool erase(sorted_index<BOX, KEY, VALUE, SORT_ORDER>::iterator& _iter)
+			bool erase(sorted_index<KEY, VALUE, SORT_ORDER>::iterator& _iter)
 			{
 				return this->remove_node(_iter->first);
 			}

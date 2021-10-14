@@ -21,7 +21,7 @@ namespace countrybit
 			public:
 				uint32_t length;
 				int last_char;
-				char data[];
+				char data[1];
 			};
 
 			jstring_data* hdr;
@@ -66,8 +66,8 @@ namespace countrybit
 			static row_id_type create(BOX* b, int chars_length)
 			{
 				jstring temp;
-				auto location = b->pack<char>(size(jstring_header)+chars_length);
-				temp.hdr = b->unpack<jstring_header>(temp.location);
+				auto location = b->pack<char>(sizeof(jstring_data)+chars_length);
+				temp.hdr = b->unpack<jstring_data>(location);
 				temp.hdr->last_char = chars_length - 1;
 				temp.hdr->length = 0;
 				temp.hdr->data[0] = 0;
@@ -79,7 +79,7 @@ namespace countrybit
 			static jstring get(BOX* b, int location)
 			{
 				jstring temp;
-				temp.hdr = b->unpack<jstring_header>(temp.location);
+				temp.hdr = b->unpack<jstring_data>(location);
 				return temp;
 			}
 
@@ -242,43 +242,28 @@ namespace countrybit
 			return output;
 		}
 
-		template <int length> class istring 
+		template <int length_bytes> struct istring 
 		{
-			char data[length];
+			char data[length_bytes];
 			uint32_t length;
-			static int last_char = length - 1;
 
-			void copy(const char* s)
+			istring() = default;
+
+			istring(const char *_src)
 			{
-				char* d = &data[0];
-				int l = 0;
-
-				while (l <= last_char && *s)
-				{
-					*d = *s;
-					l++;
-					s++;
-					d++;
-				}
-
-				if (l <= last_char)
-				{
-					length = l;
-					data[l] = 0;
-				}
-				else
-				{
-					length = last_char;
-					data[last_char] = 0;
-				}
+				copy(_src);
 			}
 
-		public:
-
-			istring() 
+			istring(const istring& src)
 			{
-				data[0] = 0;
-				length = 0;
+				const char* s = src.c_str();
+				copy(s);
+			}
+
+			istring(const std::string& src)
+			{
+				const char* s = src.c_str();
+				copy(s);
 			}
 
 			istring& operator = (const std::string& src)
@@ -312,6 +297,34 @@ namespace countrybit
 			{
 				return length;
 			}
+
+			void copy(const char* s)
+			{
+				int last_char = length_bytes - 1;
+
+				char* d = &data[0];
+				int l = 0;
+
+				while (l <= last_char && *s)
+				{
+					*d = *s;
+					l++;
+					s++;
+					d++;
+				}
+
+				if (l <= last_char)
+				{
+					length = l;
+					data[l] = 0;
+				}
+				else
+				{
+					length = last_char;
+					data[last_char] = 0;
+				}
+			}
+
 		};
 
 		template<int l1, int l2> int compare(const istring<l1>& a, const istring<l2>& b)
@@ -412,5 +425,10 @@ namespace countrybit
 			return temp;
 		}
 
+		template<int l1> std::ostream& operator <<(std::ostream& output, istring<l1>& src)
+		{
+			output << src.c_str();
+			return output;
+		}
 	}
 }

@@ -9,7 +9,9 @@ namespace countrybit
 
 		bool test_index()
 		{
-			sorted_index<int, jstring<30>, 100, 1> test;
+			static_box<20000> box;
+
+			sorted_index<int, istring<30>, 1> test;
 			bool result = true;
 
 			auto t1 = test.insert_or_assign(5, "hello");

@@ -14,12 +14,12 @@ namespace countrybit
 
 		template <typename box_class, typename data>
 		concept box = requires(box_class c, data d, data *pd, int x, int y, char *b) {
-			x = c.pack(d);
-			x = c.pack(&d, y);
 			pd = c.unpack(x);
 			x = c.size();
 			x = c.top();
 			b = c.data();
+			x = c.pack(d);
+			x = c.pack(&d, y);
 		};
 
 		class serialized_box 
@@ -98,7 +98,7 @@ namespace countrybit
 				size_t new_top = placement + sz;
 				if (new_top > _size)
 					return -1;
-				T* item = *unpack(_top);
+				T* item = *unpack<T>(_top);
 				*item = src;
 				_top = new_top;
 				return placement;
@@ -106,7 +106,7 @@ namespace countrybit
 
 			template <typename T>
 			requires (std::is_standard_layout<T>::value)
-				int pack(T* src, int length)
+			int pack(T* src, int length)
 			{
 				size_t sz = sizeof(T) * length;
 				size_t placement = _top;
@@ -115,7 +115,7 @@ namespace countrybit
 					return -1;
 				while (_top < new_top) 
 				{
-					T *item = unpack(_top);
+					T *item = unpack<T>(_top);
 					*item = *src;
 					src++;
 					_top += sizeof(T);
@@ -129,7 +129,7 @@ namespace countrybit
 		class static_box 
 		{
 			static const int length = bytes;
-			char data[length];
+			char stuff[length];
 
 		public:
 
@@ -139,7 +139,7 @@ namespace countrybit
 
 			inline serialized_box* get_box()
 			{
-				return (serialized_box*)&data;
+				return (serialized_box*)&stuff;
 			}
 
 			template <typename bx>
@@ -149,7 +149,6 @@ namespace countrybit
 				int new_size = _src.size();
 				if (length < new_size)
 					throw std::invalid_argument("target box too small");
-				_top = _src.top();
 				memcpy(data(), _src.data(), new_size);
 			}
 
@@ -160,12 +159,11 @@ namespace countrybit
 				int new_size = _src.size();
 				if (length < new_size)
 					throw std::invalid_argument("target box too small");
-				_top = _src.top();
 				memcpy(data(), _src.data(), new_size);
 				return *this;
 			}
 
-			init()
+			void init()
 			{
 				get_box()->init(length - sizeof(serialized_box));
 			}
@@ -210,7 +208,7 @@ namespace countrybit
 
 		class dynamic_box
 		{
-			std::vector<char> data;
+			std::vector<char> stuff;
 
 		public:
 
@@ -220,12 +218,12 @@ namespace countrybit
 
 			inline serialized_box* get_box()
 			{
-				return (serialized_box*)data.data();
+				return (serialized_box*)stuff.data();
 			}
 
 			void init(int _length)
 			{
-				data.resize(_length + sizeof(serialized_box));
+				stuff.resize(_length + sizeof(serialized_box));
 				get_box()->init(_length);
 			}
 
@@ -235,7 +233,6 @@ namespace countrybit
 			{
 				int new_size = _src.size();
 				init(new_size);
-				_top = _src.top();
 				memcpy(data(), _src.data(), new_size);
 			}
 
@@ -245,7 +242,6 @@ namespace countrybit
 			{
 				int new_size = _src.size();
 				init(new_size);
-				_top = _src.top();
 				memcpy(data(), _src.data(), new_size);
 				return *this;
 			}
@@ -295,9 +291,9 @@ namespace countrybit
 
 		public:
 
-			boxed(char* data)
+			boxed(char* _data)
 			{
-				data = (T*)data;
+				data = (T*)_data;
 			}
 
 			boxed(const boxed& _src)
