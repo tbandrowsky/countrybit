@@ -78,7 +78,7 @@ namespace countrybit
 
 			row_id_type				field_id;
 			jtype					type_id;
-			uint32_t				size_bytes;
+			size_t					size_bytes;
 
 			object_name				name;
 			object_description		description;
@@ -138,7 +138,7 @@ namespace countrybit
 				double_properties_type _double_properties,
 				time_properties_type _time_properties,
 				object_properties_type _object_properties,
-				int _size_bytes)
+				size_t _size_bytes)
 			{
 				auto& jf = fields[_field_id];
 
@@ -290,7 +290,7 @@ namespace countrybit
 				return null_row;
 			}
 
-			jclass &get_class(row_id_type class_id)
+			jclass get_class(row_id_type class_id)
 			{
 				auto the_class = classes[class_id];
 				return the_class;
@@ -298,7 +298,7 @@ namespace countrybit
 
 			jfield &get_field(row_id_type field_id)
 			{
-				auto the_field = fields[field_id];
+				auto& the_field = fields[field_id];
 				return the_field;
 			}
 

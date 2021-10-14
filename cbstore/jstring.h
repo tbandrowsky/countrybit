@@ -138,110 +138,27 @@ namespace countrybit
 			}		
 		};
 
-		int compare(const jstring& a, const jstring& b)
-		{
-			return strcmp(a.c_str(), b.c_str());
-		}
+		int compare(const jstring& a, const jstring& b);
+		int operator<(const jstring& a, const jstring& b);
+		int operator>(const jstring& a, const jstring& b);
+		int operator>=(const jstring& a, const jstring& b);
+		int operator<=(const jstring& a, const jstring& b);
+		int operator==(const jstring& a, const jstring& b);
+		int operator!=(const jstring& a, const jstring& b);
+		int compare(const jstring& a, const char* b);
+		int operator<(const jstring& a, const char* b);
+		int operator>(const jstring& a, const char* b);
+		int operator>=(const jstring& a, const char* b);
+		int operator<=(const jstring& a, const char* b);
+		int operator==(const jstring& a, const char* b);
+		int operator!=(const jstring& a, const char* b);
 
-		int operator<(const jstring& a, const jstring& b)
-		{
-			return compare(a, b) < 0;
-		}
-
-		int operator>(const jstring& a, const jstring& b)
-		{
-			return compare(a, b) > 0;
-		}
-
-		int operator>=(const jstring& a, const jstring& b)
-		{
-			return compare(a, b) >= 0;
-		}
-
-		int operator<=(const jstring& a, const jstring& b)
-		{
-			return compare(a, b) <= 0;
-		}
-
-		int operator==(const jstring& a, const jstring& b)
-		{
-			return compare(a, b) == 0;
-		}
-
-		int operator!=(const jstring& a, const jstring& b)
-		{
-			return compare(a, b) != 0;
-		}
-
-		int compare(const jstring& a, const char *b)
-		{
-			return strcmp(a.c_str(), b);
-		}
-
-		int operator<(const jstring& a, const char* b)
-		{
-			return compare(a, b) < 0;
-		}
-
-		int operator>(const jstring& a, const char* b)
-		{
-			return compare(a, b) > 0;
-		}
-
-		int operator>=(const jstring& a, const char* b)
-		{
-			return compare(a, b) >= 0;
-		}
-
-		int operator<=(const jstring& a, const char* b)
-		{
-			return compare(a, b) <= 0;
-		}
-
-		int operator==(const jstring& a, const char* b)
-		{
-			return compare(a, b) == 0;
-		}
-
-		int operator!=(const jstring& a, const char* b)
-		{
-			return compare(a, b) != 0;
-		}
-
-		std::string operator+(const jstring& a, const char* b)
-		{
-			std::string temp = a.c_str();
-			temp += b;
-			return temp;
-		}
-
-		std::string operator+(const char* b, const jstring& a)
-		{
-			std::string temp = b;
-			temp += a.c_str();
-			return temp;
-		}
-
-		std::string operator+(const jstring& a, const std::string& b)
-		{
-			std::string temp = a.c_str();
-			temp += b;
-			return temp;
-		}
-
-		std::string operator+(const std::string& b, const jstring& a)
-		{
-			std::string temp = b;
-			temp += a.c_str();
-			return temp;
-		}
-
-		std::ostream& operator <<(std::ostream& output, jstring& src)
-		{
-			output << src.c_str();
-			return output;
-		}
-
+		std::string operator+(const jstring& a, const char* b);
+		std::string operator+(const char* b, const jstring& a);
+		std::string operator+(const jstring& a, const std::string& b);
+		std::string operator+(const std::string& b, const jstring& a);
+		std::ostream& operator <<(std::ostream& output, jstring& src);
+		
 		template <int length_bytes> struct istring 
 		{
 			char data[length_bytes];
@@ -254,12 +171,6 @@ namespace countrybit
 				copy(_src);
 			}
 
-			istring(const istring& src)
-			{
-				const char* s = src.c_str();
-				copy(s);
-			}
-
 			istring(const std::string& src)
 			{
 				const char* s = src.c_str();
@@ -270,15 +181,6 @@ namespace countrybit
 			{
 				const char* s = src.c_str();
 				copy(s);
-				return *this;
-			}
-
-			istring operator = (const istring& _src)
-			{
-				if (this != &_src) {
-					const char* s = _src.c_str();
-					copy(s);
-				}
 				return *this;
 			}
 

@@ -9,8 +9,6 @@ namespace countrybit
 {
 	namespace database
 	{
-		typedef int32_t row_id_type;
-		const row_id_type null_row = -1;
 
 		struct row_range 
 		{
@@ -129,18 +127,18 @@ namespace countrybit
 				table t;
 				table_header th;
 
-				int hdr_offset;
+				row_id_type hdr_offset;
 
 				th.max_rows = _max_rows;
 				th.last_row = 0;
 
 				row_id_type bytes_size = get_box_size(_max_rows);
 				char c = 0;
-				hdr_offset = _b->pack<char>(c, bytes_size);
+				hdr_offset = _b->pack(c, bytes_size);
 
-				t.hdr = _b->unpack<table_header<T>>(hdr_offset);
+				t.hdr = _b->unpack<table_header>(hdr_offset);
 				for (int i = 0; i < _max_rows; i++) {
-					t.hdr->data[i] = {};
+					t.hdr->rows[i] = {};
 				}
 
 				return hdr_offset;
@@ -152,7 +150,7 @@ namespace countrybit
 			{
 				table t;
 
-				t.hdr = _b->unpack<table_header<T>>(offset);
+				t.hdr = _b->unpack<table_header>(offset);
 
 				return t;
 			}

@@ -34,6 +34,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)application.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)file.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)function.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)jstring.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)sorted_index.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)jobject.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)queue.cpp" />

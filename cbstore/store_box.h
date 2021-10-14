@@ -1,5 +1,7 @@
 #pragma once
+
 #include <vector>
+#include "constants.h"
 
 namespace countrybit
 {
@@ -13,13 +15,14 @@ namespace countrybit
 		};
 
 		template <typename box_class, typename data>
-		concept box = requires(box_class c, data d, data *pd, int x, int y, char *b) {
-			pd = c.unpack(x);
-			x = c.size();
+		concept box = requires(box_class c, data d, data * pd, row_id_type l, size_t s, int x, char* b) {
+			s = c.size();
 			x = c.top();
 			b = c.data();
-			x = c.pack(d);
-			x = c.pack(&d, y);
+			l = c.pack(d);
+			l = c.pack(d, x);
+			l = c.pack(&d, x);
+//			pd = c.unpack(l);
 		};
 
 		class serialized_box 
@@ -83,7 +86,7 @@ namespace countrybit
 
 			template <typename T>
 			requires (std::is_standard_layout<T>::value)
-			T* unpack(int offset)
+			T* unpack(int offset, T* dummy = nullptr)
 			{
 				T* temptress = (T*)&_data[offset];
 				return temptress;
@@ -118,6 +121,24 @@ namespace countrybit
 					T *item = unpack<T>(_top);
 					*item = *src;
 					src++;
+					_top += sizeof(T);
+				}
+				return placement;
+			}
+
+			template <typename T>
+			requires (std::is_standard_layout<T>::value)
+				int pack(T src, int length)
+			{
+				size_t sz = sizeof(T) * length;
+				size_t placement = _top;
+				size_t new_top = placement + sz;
+				if (new_top > _size)
+					return -1;
+				while (_top < new_top)
+				{
+					T* item = unpack<T>(_top);
+					*item = src;
 					_top += sizeof(T);
 				}
 				return placement;
@@ -168,12 +189,12 @@ namespace countrybit
 				get_box()->init(length - sizeof(serialized_box));
 			}
 
-			int top()
+			size_t top()
 			{
 				return get_box()->top();
 			}
 
-			int size()
+			size_t size()
 			{
 				return get_box()->size();
 			}
@@ -195,6 +216,13 @@ namespace countrybit
 				int pack(T& src)
 			{
 				return get_box()->pack<T>(src);
+			}
+
+			template <typename T>
+			requires (std::is_standard_layout<T>::value)
+				int pack(T& src, int length)
+			{
+				return get_box()->pack<T>(src, length);
 			}
 
 			template <typename T>
@@ -246,12 +274,12 @@ namespace countrybit
 				return *this;
 			}
 
-			int top()
+			size_t top()
 			{
 				return get_box()->top();
 			}
 
-			int size()
+			size_t size()
 			{
 				return get_box()->size();
 			}
@@ -273,6 +301,13 @@ namespace countrybit
 				int pack(T& src)
 			{
 				return get_box()->pack<T>(src);
+			}
+
+			template <typename T>
+			requires (std::is_standard_layout<T>::value)
+				int pack(T& src, int length)
+			{
+				return get_box()->pack<T>(src, length);
 			}
 
 			template <typename T>

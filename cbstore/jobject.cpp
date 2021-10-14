@@ -148,7 +148,7 @@ namespace countrybit
 		jslice jarray::get_slice(int x, int y, int z)
 		{
 			jfield& field = schema.get_field(class_field_id);
-			jclass& the_class = schema.get_class(field.type_id);
+			jclass the_class = schema.get_class(field.type_id);
 			dimensions_type& dim = field.object_properties.dim;
 			if ((x >= dim.x) ||
 				(y >= dim.y) ||

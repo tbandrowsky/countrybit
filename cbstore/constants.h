@@ -22,5 +22,8 @@ namespace countrybit
 
 			type_string = 10
 		};
+
+		typedef int32_t row_id_type;
+		const row_id_type null_row = -1;
 	}
 }
