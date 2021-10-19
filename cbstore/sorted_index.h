@@ -32,25 +32,35 @@ namespace countrybit
 
 		using index_ref = row_id_type;
 
-		template <typename KEY, typename VALUE, int SORT_ORDER = 1> class sorted_index 
-			: public parent_child_table<std::pair<KEY,VALUE>, index_ref>
+		template <typename KEY, typename VALUE, int SORT_ORDER = 1> class sorted_index
 		{
 		public:
 
 			using index_node = parent_child_holder<std::pair<KEY, VALUE>, index_ref>;
-			using base_class = parent_child_table<std::pair<KEY, VALUE>, index_ref>;
+			using data_table_type = parent_child_table<std::pair<KEY, VALUE>, index_ref>;
 
 		private:
 
+			struct index_header_type
+			{
+				int count;
+				int level;
+				row_id_type table_id;
+				row_id_type header_id;
+			};
+
+			data_table_type data_table;
+			index_header_type* index_header;
+
 			index_node get_header()
 			{
-				index_node in = base_class::get(header_id);
+				index_node in = data_table.get(index_header->header_id);
 				return in;
 			}
 
 			index_node create_node(int _num_levels)
 			{
-				index_node in = base_class::create(_num_levels + 1);
+				index_node in = data_table.create(_num_levels + 1);
 				for (int i = 0; i < in.size(); i++)
 				{
 					in.child(i) = null_row;
@@ -58,21 +68,56 @@ namespace countrybit
 				return in;
 			}
 
+			index_node get_node(row_id_type _row_id)
+			{
+				return data_table.get(_row_id);
+			}
+
 		public:
 
-			bool deleted;
-			int count;
-			int level;
-			row_id_type header_id;
-
-			sorted_index()
+			sorted_index() : index_header( nullptr )
 			{
-				deleted = false;
-				count = 0;
-				level = 0;
+			}
 
-				index_node hdr = create_node(MaxNumberOfLevels);
-				header_id = hdr.row_id();
+			template <typename B>
+			requires (box<B, index_header_type>)
+			static row_id_type create_sorted_index(B *_b, int _max_items)
+			{
+				index_header_type hdr, *phdr;
+
+				hdr.count = 0;
+				hdr.level = 0;
+				hdr.header_id = 0;
+				hdr.table_id = 0;
+
+				row_id_type header_location = _b->pack(hdr);
+
+				phdr = _b->unpack<index_header_type>(header_location);
+				phdr->table_id = data_table_type::create_table(_b, _max_items, _max_items * MaxNumberOfLevels );
+				return header_location;
+			}
+
+			template <typename B>
+			requires (box<B, index_header_type>)
+			static sorted_index get_sorted_index(B* _b, row_id_type _header_location)
+			{
+
+				sorted_index si;
+
+				si.index_header = _b->unpack<index_header_type>(_header_location);
+				si.data_table = data_table_type::get_table(_b, si.index_header->table_id);
+
+				if (!si.index_header->header_id) {
+					index_node hdr = si.create_node(MaxNumberOfLevels);
+					si.index_header->header_id = hdr.row_id();
+				}
+
+				return si;
+			}
+
+			static size_t get_box_size( row_id_type _max_items )
+			{
+				return parent_child_table<std::pair<KEY, VALUE>, index_ref>::get_box_size(_max_items, _max_items * MaxNumberOfLevels );
 			}
 
 			class iterator
@@ -109,23 +154,23 @@ namespace countrybit
 
 				inline std::pair<KEY, VALUE>& operator *()
 				{
-					return base->get(current).parent();
+					return base->get_node(current).parent();
 				}
 
 				inline std::pair<KEY, VALUE>* operator->()
 				{
-					return &base->get(current).parent();
+					return &base->get_node(current).parent();
 				}
 
 				inline KEY& get_key()
 				{
-					std::pair<KEY, VALUE>& p = base->get(current).parent();
+					std::pair<KEY, VALUE>& p = base->get_node(current).parent();
 					return p.first;
 				}
 
 				inline VALUE& get_value()
 				{
-					std::pair<KEY, VALUE>& p = base->get(current).parent();
+					std::pair<KEY, VALUE>& p = base->get_node(current).parent();
 					return p.second;
 				}
 
@@ -175,7 +220,7 @@ namespace countrybit
 
 				if (qr != null_row)
 				{
-					q = base_class::get(qr);
+					q = get_node(qr);
 					result = true;
 					remove_node(q.parent().key);
 				}
@@ -235,7 +280,7 @@ namespace countrybit
 			VALUE& first_value()
 			{
 				auto n = first_node();
-				return base_class::get(n).parent().key_value;
+				return get_node(n).parent().key_value;
 			}
 
 			sorted_index<KEY, VALUE, SORT_ORDER>::iterator insert_or_assign(std::pair<KEY, VALUE>& kvp)
@@ -275,7 +320,7 @@ namespace countrybit
 
 		public:
 
-			inline int size() { return count; }
+			inline int size() { return index_header->count; }
 
 			template <int SORT_ORDER> bool contains(sorted_index<KEY, VALUE, SORT_ORDER>& _src)
 			{
@@ -299,7 +344,7 @@ namespace countrybit
 			{
 				if (_node != null_row)
 				{
-					auto nd = base_class::get(_node);
+					auto nd = get_node(_node);
 					auto ndkey = nd.parent().first;
 
 					if (ndkey < key)
@@ -318,17 +363,17 @@ namespace countrybit
 			row_id_type find_node(row_id_type* update, const KEY& key)
 			{
 				row_id_type found = null_row, p, q;
-				auto hdr = base_class::get(header_id);
+				auto hdr = get_node(this->index_header->header_id);
 
-				for (int k = level; k >= 0; k--)
+				for (int k = index_header->level; k >= 0; k--)
 				{
-					p = header_id;
+					p = index_header->header_id;
 					q = hdr.child(k);
 					auto comp = compare(q, key);
 					while (comp < 0)
 					{
 						p = q;
-						q = base_class::get(q).child(k);
+						q = get_node(q).child(k);
 						comp = compare(q, key);
 					}
 					if (comp == 0)
@@ -343,17 +388,17 @@ namespace countrybit
 			{
 				row_id_type found = null_row, p, q, last;
 
-				for (int k = level; k >= 0; k--)
+				for (int k = index_header->level; k >= 0; k--)
 				{
-					p = header_id;
-					q = get<index_node>(p).child(k);
+					p = index_header->header_id;
+					q = get_node(p).child(k);
 					last = q;
 					auto comp = compare(q, key);
 					while (comp < 0)
 					{
 						p = q;
 						last = q;
-						q = get<index_node>(q).child(k);
+						q = get_node(q).child(k);
 						comp = compare(q, key);
 					}
 					if (comp == 0)
@@ -375,16 +420,16 @@ namespace countrybit
 
 				if (q != null_row)
 				{
-					qnd = base_class::get(q);
+					qnd = get_node(q);
 					qnd.parent().second = kvp.second;
 					return q;
 				}
 
 				k = randomLevel();
-				if (k > level)
+				if (k > index_header->level)
 				{
-					k = ++level;
-					update[k] = header_id;
+					k = ++index_header->level;
+					update[k] = index_header->header_id;
 				}
 
 				qnd = create_node(k);
@@ -392,10 +437,10 @@ namespace countrybit
 				if (!qnd.is_null()) 
 				{
 					qnd.parent() = kvp;
-					count++;
+					index_header->count++;
 
 					do {
-						auto pnd = base_class::get(update[k]);
+						auto pnd = get_node(update[k]);
 						qnd.child(k) = pnd.child(k);
 						pnd.child(k) = qnd.row_id();
 					} while (--k >= 0);
@@ -418,23 +463,23 @@ namespace countrybit
 				{
 					k = 0;
 					p = update[k];
-					qnd = base_class::get(q);
-					pnd = base_class::get(p);
-					int m = level;
+					qnd = get_node(q);
+					pnd = get_node(p);
+					int m = index_header->level;
 					while (k <= m && pnd.child(k) == q)
 					{
 						pnd.child(k) = qnd.child(k);
 						k++;
 						if (k <= m) {
 							p = update[k];
-							pnd = base_class::get(p);
+							pnd = get_node(p);
 						}
 					}
-					count--;
+					index_header->count--;
 					while (get_header().child(m) == null_row && m > 0) {
 						m--;
 					}
-					level = m;
+					index_header->level = m;
 					return true;
 				}
 				else 
@@ -471,7 +516,7 @@ namespace countrybit
 				if (_node == null_row)
 					return _node;
 
-				auto nd = base_class::get(_node);
+				auto nd = get_node(_node);
 				_node = nd.child(0);
 				return _node;
 			}
@@ -494,4 +539,3 @@ namespace countrybit
 	}
 }
 
- 

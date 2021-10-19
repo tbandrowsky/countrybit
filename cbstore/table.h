@@ -125,18 +125,19 @@ namespace countrybit
 			static row_id_type create_table(B* _b, int _max_rows)
 			{
 				table t;
-				table_header th;
 
 				row_id_type hdr_offset;
 
-				th.max_rows = _max_rows;
-				th.last_row = 0;
-
 				row_id_type bytes_size = get_box_size(_max_rows);
+
 				char c = 0;
 				hdr_offset = _b->pack(c, bytes_size);
 
 				t.hdr = _b->unpack<table_header>(hdr_offset);
+
+				t.hdr->max_rows = _max_rows;
+				t.hdr->last_row = 0;
+
 				for (int i = 0; i < _max_rows; i++) {
 					t.hdr->rows[i] = {};
 				}
@@ -240,21 +241,24 @@ namespace countrybit
 			static row_id_type create_table( B *b, int parent_rows, int child_rows )
 			{
 				parent_child_table_header hdr;
-				hdr.parents = table< parent_child_table<P,C>::parent_child >::create(b, parent_rows);
-				hdr.children = table< C >::create(b, child_rows);
+				hdr.parents = null_row;
+				hdr.children = null_row;
 				row_id_type r = b->pack(hdr);
+				auto* phdr = b->unpack<parent_child_table_header>(r);
+				phdr->parents = table< parent_child_table<P,C>::parent_child >::create_table(b, parent_rows);
+				phdr->children = table< C >::create_table(b, child_rows);
 				return r;
 			}
 
 			template <typename B>
 			requires (box<B, P> && box<B, parent_child_table<P, C>::parent_child>)
-			static parent_child_table create_table(B* b, row_id_type row)
+			static parent_child_table get_table(B* b, row_id_type row)
 			{
 				parent_child_table pct;
 				parent_child_table_header* hdr;
 				hdr = b->unpack<parent_child_table<P, C>::parent_child_table_header>(row);
-				pct.parents = table< parent_child_table<P, C>::parent_child >::get(b, hdr->parents);
-				pct.children = table< C >::get(b, hdr->children);
+				pct.parents = table< parent_child_table<P, C>::parent_child >::get_table(b, hdr->parents);
+				pct.children = table< C >::get_table (b, hdr->children);
 				return pct;
 			}
 

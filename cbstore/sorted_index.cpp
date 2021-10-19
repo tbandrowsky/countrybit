@@ -11,8 +11,13 @@ namespace countrybit
 		{
 			static_box<20000> box;
 
-			sorted_index<int, istring<30>, 1> test;
+			using test_sorted_index_type = sorted_index<int, istring<30>, 1>;
+
+			test_sorted_index_type test;
 			bool result = true;
+
+			row_id_type index_id = test_sorted_index_type::create_sorted_index(&box, 100);
+			test = test_sorted_index_type::get_sorted_index(&box, index_id);
 
 			auto t1 = test.insert_or_assign(5, "hello");
 			if (t1.get_key() != 5 || t1.get_value() != "hello" || t1->second != "hello")

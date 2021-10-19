@@ -101,7 +101,7 @@ namespace countrybit
 				size_t new_top = placement + sz;
 				if (new_top > _size)
 					return -1;
-				T* item = *unpack<T>(_top);
+				T* item = unpack<T>(_top);
 				*item = src;
 				_top = new_top;
 				return placement;
@@ -156,6 +156,7 @@ namespace countrybit
 
 			static_box()
 			{
+				init();
 			}
 
 			inline serialized_box* get_box()
