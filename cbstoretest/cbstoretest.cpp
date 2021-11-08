@@ -24,6 +24,7 @@ int main()
     jstring_tests();
     table_tests();
     index_tests();
+    countrybit::database::schema_tests();
     queue_tests();
 }
 

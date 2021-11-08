@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+#include <ctime>
 #include <vector>
 #include <list>
 #include <fstream>
@@ -12,11 +14,114 @@
 #include "table.h"
 #include "jstring.h"
 #include "sorted_index.h"
+#include <ctime>
 
 namespace countrybit
 {
 	namespace database
 	{
+
+		const static int
+
+			field_none = 0,
+			// string units
+			field_full_name = 1,
+			field_first_name = 2,
+			field_last_name = 4,
+			field_middle_name = 5,
+			field_ssn = 6,
+			field_email = 7,
+			field_title = 8,
+			field_street = 9,
+			field_substreet = 10,
+			field_city = 11,
+			field_state = 12,
+			field_postal = 13,
+			field_country_name = 14,
+			field_country_code = 15,
+			field_longname = 16,
+			field_shortname = 17,
+			field_unit = 18,
+			field_code_symbol = 19,
+			field_code_operator = 20,
+			field_windows_path = 21,
+			field_linux_path = 22,
+			field_url = 23,
+			field_user_name = 24,
+			field_password = 25,
+			field_institution_name = 26,
+			field_document_title = 27,
+			field_section_title = 28,
+			field_block_title = 29,
+			field_caption = 30,
+			field_paragraph = 31,
+			field_base64_block = 32,
+
+			// date units
+			field_birthday = 33,
+			field_scheduled = 34,
+
+			// int units
+			field_count = 35,
+
+			// float units
+			field_quantity = 36,
+			field_degrees = 37,
+			field_radians = 38,
+			field_meters = 39,
+			field_feet = 40,
+			field_grams = 41,
+			field_ounces = 42,
+			field_seconds = 43,
+			field_minutes = 44,
+			field_hours = 45,
+			field_amperes = 46,
+			field_kelvin = 47,
+			field_mole = 42,
+			field_candela = 43,
+			field_latitude = 44,
+			field_longitude = 45,
+			field_pounds = 46,
+			field_kilograms = 47,
+
+			// currencies
+			field_argentina_peso = 48,
+			field_bahama_dollar = 49,
+			field_bermuda_dollar = 50,
+			field_belize_dollar = 51,
+			field_bolivia_boliviano = 52,
+			field_brazil_real = 53,
+			field_canada_dollar = 54,
+			field_cayman_islands_dollars = 55,
+			field_chile_peso = 56,
+			field_columbia_peso = 57,
+			field_costa_rica_colon = 58,
+			field_cuba_peso = 59,
+			field_cuba_convert_peso = 61,
+			field_dominican_peso = 62,
+			field_east_carrbean_dollar = 63,
+			field_falkland_pound = 64,
+			field_guatemala_queztel = 65,
+			field_guyana_dollar = 66,
+			field_haiti_guorde = 67,
+			field_honduras_lempira = 68,
+			field_jamaica_dollar = 69,
+			field_mexico_peso = 70,
+			field_nicaragua_cordoba = 71,
+			field_panama_balboa = 72,
+			field_paraguan_guarani = 73,
+			field_peru_sol = 74,
+			field_surinam_dollar = 75,
+			field_trinidad_tobogo_dollar = 76,
+			field_united_states_dollar = 77,
+			field_venezuela_bolivar = 78,
+
+			field_united_kingdom_pounds = 79,
+			field_euros = 80,
+			field_india_rupees = 81,
+
+			field_mime_type = 83;
+
 		struct collection_id_type
 		{
 			unsigned long  Data1;
@@ -31,11 +136,16 @@ namespace countrybit
 			row_id_type	  row_id;
 		};
 
+		using object_name = istring<32>;
+		using object_description = istring<250>;
+		using string_validation_pattern = istring<250>;
+		using string_validation_message = istring<250>;
+
 		struct string_properties_type
 		{
 			int length;
-			jstring		validation_pattern;
-			jstring		validation_message;
+			string_validation_pattern	validation_pattern;
+			string_validation_message	validation_message;
 		};
 
 		struct int_properties_type 
@@ -52,8 +162,8 @@ namespace countrybit
 
 		struct time_properties_type 
 		{
-			time_t			minimum_time_t;
-			time_t			maximum_time_t;
+			int64_t			minimum_time_t;
+			int64_t			maximum_time_t;
 		};
 
 		struct dimensions_type
@@ -65,12 +175,9 @@ namespace countrybit
 		{
 			dimensions_type		dim;
 			row_id_type			class_id;
-			size_t				class_size_bytes;
-			size_t				total_size_bytes;
+			int64_t				class_size_bytes;
+			int64_t				total_size_bytes;
 		};
-
-		using object_name = istring<32>;
-		using object_description = istring<250>;
 
 		class jfield
 		{
@@ -78,7 +185,7 @@ namespace countrybit
 
 			row_id_type				field_id;
 			jtype					type_id;
-			size_t					size_bytes;
+			int64_t					size_bytes;
 
 			object_name				name;
 			object_description		description;
@@ -112,50 +219,30 @@ namespace countrybit
 		using jclass_table = parent_child_table<jclass_header, jclass_field>;
 		using jclass = parent_child_holder<jclass_header, jclass_field>;
 
+		struct jschema_map
+		{
+			row_id_type fields_table_id;
+			row_id_type classes_table_id;
+			row_id_type classes_by_name_id;
+			row_id_type fields_by_name_id;
+		};
+
 		class jschema
 		{
 
 		protected:
 
+			using field_store_type = table<jfield>;
+			using class_store_type = parent_child_table<jclass_header, jclass_field>;
+			using class_index_type = sorted_index<object_name, row_id_type>;
+			using field_index_type = sorted_index<object_name, row_id_type>;
 
-			table<jfield> fields;
-			parent_child_table<jclass_header, jclass_field> classes;
-			sorted_index<object_name, row_id_type> classes_by_name;
-			sorted_index<object_name, row_id_type> fields_by_name;
+			field_store_type fields;
+			class_store_type classes;
+			class_index_type classes_by_name;
+			field_index_type fields_by_name;
 
 		public:
-
-			jschema();
-			~jschema();
-
-			row_id_type create_field(
-				row_id_type _field_id,
-				jtype _field_type,
-				std::string _name,
-				std::string _description,
-				string_properties_type _string_properties,
-				int_properties_type _int_properties,
-				double_properties_type _double_properties,
-				time_properties_type _time_properties,
-				object_properties_type _object_properties,
-				size_t _size_bytes)
-			{
-				auto& jf = fields[_field_id];
-
-				jf.type_id = _field_type;
-				jf.name = _name;
-				jf.description = _description;
-				jf.string_properties = _string_properties;
-				jf.int_properties = _int_properties;
-				jf.double_properties = _double_properties;
-				jf.time_properties = _time_properties;
-				jf.object_properties = _object_properties;
-				jf.size_bytes = _size_bytes;
-
-				fields_by_name.insert_or_assign(jf.name, _field_id);
-
-				return _field_id;
-			}
 
 			class create_field_request_base {
 			public:
@@ -182,7 +269,7 @@ namespace countrybit
 
 			class create_time_field_request : public create_field_request_base, public time_properties_type {
 			public:
-				
+
 			};
 
 			class create_object_field_request : public create_field_request_base, public object_properties_type {
@@ -190,13 +277,97 @@ namespace countrybit
 
 			};
 
-			class create_class_request  {
+			class create_class_request {
 			public:
 				std::string class_name;
 				std::string class_description;
 				std::vector<row_id_type> field_ids;
 				std::vector<create_object_field_request> child_classes;
 			};
+
+			jschema() = default;
+			~jschema() = default;
+
+			template <typename B>
+			requires (box<B, jfield>
+				&& box<B, jclass_header>
+				&& box<B, jclass_field>
+				&& box<B, object_name>
+				)
+			static row_id_type create_schema(B *_b, int _num_classes, int _num_fields, int _num_class_fields)
+			{
+				jschema_map schema_map, *pschema_map;
+				schema_map.classes_table_id = null_row;
+				schema_map.fields_table_id = null_row;
+				schema_map.classes_by_name_id = null_row;
+				schema_map.fields_by_name_id = null_row;
+
+				row_id_type rit = _b->pack(schema_map);
+				pschema_map = _b->unpack<jschema_map>(rit);
+				pschema_map->fields_table_id = field_store_type::create_table(_b, _num_fields);
+				pschema_map->classes_by_name_id = field_index_type::create_sorted_index(_b, _num_classes);
+				pschema_map->classes_table_id = class_store_type::create_table(_b, _num_classes, _num_class_fields );
+				pschema_map->fields_by_name_id = class_index_type::create_sorted_index(_b, _num_fields);
+				return rit;
+			}
+
+			template <typename B>
+			requires (box<B, jfield>
+				&& box<B, jclass_header>
+				&& box<B, jclass_field>
+				&& box<B, object_name>
+				)
+			static jschema get_schema(B* _b, row_id_type _row)
+			{
+				jschema schema;
+				jschema_map *pschema_map;
+				pschema_map = _b->unpack<jschema_map>(_row);
+				schema.classes = class_store_type::get_table(_b, pschema_map->classes_table_id);
+				schema.fields = field_store_type::get_table(_b, pschema_map->fields_table_id);
+				schema.classes_by_name = class_index_type::get_sorted_index(_b, pschema_map->classes_by_name_id);
+				schema.fields_by_name = field_index_type::get_sorted_index(_b, pschema_map->fields_by_name_id);
+				return schema;
+			}
+
+			void create_standard_fields();
+
+			row_id_type create_field()
+			{
+				return fields.create(1).start;
+			}
+
+			row_id_type create_field(
+				row_id_type _field_id,
+				jtype _field_type,
+				std::string _name,
+				std::string _description,
+				string_properties_type _string_properties,
+				int_properties_type _int_properties,
+				double_properties_type _double_properties,
+				time_properties_type _time_properties,
+				object_properties_type _object_properties,
+				int64_t _size_bytes)
+			{
+				if (_field_id == null_row) {
+					_field_id = create_field();
+				}
+
+				auto& jf = fields[_field_id];
+
+				jf.type_id = _field_type;
+				jf.name = _name;
+				jf.description = _description;
+				jf.string_properties = _string_properties;
+				jf.int_properties = _int_properties;
+				jf.double_properties = _double_properties;
+				jf.time_properties = _time_properties;
+				jf.object_properties = _object_properties;
+				jf.size_bytes = _size_bytes;
+
+				fields_by_name.insert_or_assign(jf.name, _field_id);
+				return _field_id;
+			}
+
 
 			row_id_type create_string_field(create_string_field_request request)
 			{
@@ -242,9 +413,9 @@ namespace countrybit
 			{
 				auto pcr = classes[ request.class_id ];
 				auto& p = pcr.parent();
-				size_t size = pcr.parent().class_size_bytes;
-				request.class_size_bytes = size;
-				request.total_size_bytes = request.dim.x * request.dim.y * request.dim.z * size;
+				int64_t sizeb = pcr.parent().class_size_bytes;
+				request.class_size_bytes = sizeb;
+				request.total_size_bytes = request.dim.x * request.dim.y * request.dim.z * sizeb ;
 				return create_field(request.field_id, type_object, request.name, request.description, {}, {}, {}, {}, request, request.total_size_bytes);
 			}
 
@@ -272,7 +443,7 @@ namespace countrybit
 				return p.class_id;
 			}
 
-			row_id_type find_class(object_name& class_name)
+			row_id_type find_class(const object_name& class_name)
 			{
 				auto citer = classes_by_name[class_name];
 				if (citer != std::end(citer)) {
@@ -281,7 +452,7 @@ namespace countrybit
 				return null_row;
 			}
 
-			row_id_type find_field(object_name& field_name)
+			row_id_type find_field(const object_name& field_name)
 			{
 				auto citer = fields_by_name[field_name];
 				if (citer != std::end(citer)) {
@@ -363,6 +534,7 @@ namespace countrybit
 		{
 		public:
 			object_id_type oid;
+			row_id_type class_field_id;
 		};
 
 		class jcollection
@@ -371,14 +543,6 @@ namespace countrybit
 			jschema& schema;
 			collection_id_type collection_id;
 			parent_child_table<jobject_header, char> objects;
-
-			jcollection(jschema& _schema, collection_id_type _collection_id, parent_child_table<jobject_header, char> _objects) :
-				schema( _schema ),
-				collection_id( _collection_id ),
-				objects( _objects )
-			{
-
-			}
 
 			jcollection(jcollection& _src) :
 				schema(_src.schema),
@@ -390,7 +554,7 @@ namespace countrybit
 
 		public:
 
-			jarray construct(row_id_type _class_field_id)
+			jarray construct_object(row_id_type _class_field_id)
 			{
 				auto myclassfield = schema.get_field(_class_field_id);
 				auto myclass = schema.get_class(myclassfield.object_properties.class_id);
@@ -398,12 +562,30 @@ namespace countrybit
 				auto new_object = objects.create(bytes_to_allocate);
 				new_object.parent().oid.collection_id = collection_id;
 				new_object.parent().oid.row_id = new_object.row_id();
+				new_object.parent().class_field_id = _class_field_id;
 				return jarray(schema, _class_field_id, new_object.pchild());
+			}
+
+			jarray get_object(row_id_type _object_id)
+			{
+				auto new_object = objects.get(_object_id);
+				return jarray(schema, new_object.parent().class_field_id, new_object.pchild());
+			}
+
+			object_id_type get_object_id(row_id_type _object_id)
+			{
+				auto new_object = objects.get(_object_id);
+				return new_object.parent().oid;
+			}
+
+			int size()
+			{
+				return objects.size();
 			}
 
 			template <typename B>
 			requires (box<B, jcollection_map>)
-			static row_id_type create(B* _b, jschema& _schema, collection_id_type _collection_id, int _number_of_objects, int *_class_field_ids)
+			static row_id_type create_collection(B* _b, jschema& _schema, collection_id_type _collection_id, int _number_of_objects, int *_class_field_ids)
 			{
 
 				if (!_class_field_ids)
@@ -435,14 +617,19 @@ namespace countrybit
 
 			template <typename B>
 			requires (box<B, jcollection_map>)
-			static jcollection get(B* _b, jschema& _schema, row_id_type _location)
+			static jcollection get_collection(B* _b, jschema& _schema, row_id_type _location)
 			{
-
 				jcollection_map jcm;
 				jcm = _b->unpack<jcollection_map>(_location);
 				auto pct = parent_child_table<jobject_header, char>::get(_b, jcm.table_id);
 				return jcollection( _schema, jcm.collection_id, pct );
 			}
 		};
+
+		bool schema_tests();
+		bool collection_tests();
+		bool array_tests();
+		bool slice_tests();
+
 	}
 }

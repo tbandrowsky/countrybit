@@ -5,72 +5,6 @@ namespace countrybit
 {
 	namespace database
 	{
-		const static int
-
-			field_none = 0,
-			// string units
-			field_fullname = 1,
-			field_firstname = 2,
-			field_sublastname = 3,
-			field_lastname = 4,
-			field_middlename = 5,
-			field_ssn = 6,
-			field_email = 7,
-			field_title = 8,
-			field_street = 9,
-			field_substreet = 10,
-			field_city = 11,
-			field_state = 12,
-			field_postal = 13,
-			field_countryname = 14,
-			field_countrycode = 15,
-			field_longname = 16,
-			field_shortname = 17,
-			field_unit = 18,
-			field_code_symbol = 19,
-			field_code_operator = 20,
-			field_windows_path = 21,
-			field_linux_path = 22,
-			field_drive_letter = 23,
-			field_user_name = 24,
-			field_password = 25,
-
-			// date units
-			field_birthday = 26,
-			field_scheduled = 27,
-
-			// int units
-			field_count = 28,
-
-			// float units
-			field_money = 29,
-			field_quantity = 30,
-			field_latitude = 31,
-			field_longitude = 32,
-			field_meters = 33,
-			field_feet = 34,
-			field_kilograms = 35,
-			field_pounds = 36,
-			field_seconds = 37,
-			field_minutes = 38,
-			field_hours = 39,
-			field_amperes = 40,
-			field_kelvin = 41,
-			field_mole = 42,
-			field_candela = 43,
-
-			// object units
-			field_address = 44,
-			field_geocode = 45,
-
-			// more string units
-			field_institution_name = 46,
-			field_subtitle = 47,
-			field_caption = 48,
-			field_paragraph = 49,
-
-			field_mime_type = 50,
-			field_image_base64 = 51;
 
 
 		jslice::jslice(jclass& _the_class, jschema& _schema, char* _bytes) :
@@ -162,6 +96,207 @@ namespace countrybit
 		jslice jarray::get_slice(dimensions_type dims)
 		{
 			return get_slice(dims.x, dims.y, dims.z);
+		}
+
+		void jschema::create_standard_fields() 
+		{
+			create_string_field_request string_fields[32] = {
+				{ field_full_name, jtype::type_string , "fullName", "Full Name", 75, "", "" },
+				{ field_first_name, jtype::type_string , "firstName", "First Name", 50, "", "" },
+				{ field_last_name, jtype::type_string , "lastName", "Last Name", 50, "", "" },
+				{ field_middle_name, jtype::type_string , "middleName", "Middle Name", 50, "", "" },
+				{ field_ssn, jtype::type_string , "ssn", "SSN", 10, "", "" },
+				{ field_email, jtype::type_string, "email", "eEmail", 200, "", "" },
+				{ field_title, jtype::type_string, "title", "Title", 200, "", "" },
+				{ field_street, jtype::type_string, "street", "Street", 200, "", "" },
+				{ field_substreet, jtype::type_string, "suiteapt", "Suite/Apt", 100, "", "" },
+				{ field_city, jtype::type_string, "city", "City", 100, "", "" },
+				{ field_state, jtype::type_string, "state", "State", 100, "", "" },
+				{ field_postal, jtype::type_string, "postal", "Postal Code", 50, "", "" },
+				{ field_country_name, jtype::type_string, "countryName", "Country Name", 50, "", "" },
+				{ field_country_code, jtype::type_string, "countryCode", "Country Code", 3, "", "" },
+				{ field_institution_name, jtype::type_string, "institutionName", "Institution Name", 100, "", "" },
+				{ field_longname, jtype::type_string, "longName", "Long Name", 200, "", "" },
+				{ field_shortname, jtype::type_string, "shortName", "Short Name", 50, "", "" },
+				{ field_unit, jtype::type_string, "unit", "Unit", 10, "", "" },
+				{ field_code_symbol, jtype::type_string, "symbol", "Symbol", 10, "", "" },
+				{ field_code_operator, jtype::type_string, "operator", "Operator", 10, "", "" },
+				{ field_windows_path, jtype::type_string, "windowsPath", "Windows Path", 512, "", "" },
+				{ field_linux_path, jtype::type_string, "linuxPath", "Linux Path", 512, "", "" },
+				{ field_url, jtype::type_string, "url", "Url", 512, "", "" },
+				{ field_user_name, jtype::type_string, "userName", "User Name", 100, "", "" },
+				{ field_password, jtype::type_string, "passWord", "Password", 100, "", "" },
+				{ field_document_title, jtype::type_string, "docTitle", "Document Title", 200, "", "" },
+				{ field_section_title, jtype::type_string, "sectionTitle", "Section Title", 200, "", "" },
+				{ field_block_title, jtype::type_string, "blockTitle", "Block Title", 200, "", "" },
+				{ field_caption, jtype::type_string, "caption", "Caption", 200, "", "" },
+				{ field_paragraph, jtype::type_string, "paragraph", "Paragraph", 4000, "", "" },
+				{ field_mime_type, jtype::type_string, "mimeType", "MimeType", 100, "", "" },
+				{ field_base64_block, jtype::type_string, "base64", "Base64", 100, "", "" }
+			};
+
+			create_time_field_request time_fields[2] = {
+				{ field_birthday, jtype::type_datetime, "birthday", "Birthday", 0, INT64_MAX },
+				{ field_scheduled, jtype::type_datetime, "scheduled", "Scheduled", 0, INT64_MAX },
+			};
+
+			create_integer_field_request int_fields[1] = {
+				{ field_count, jtype::type_int64, "count", "Count", 0, INT64_MAX },
+			};
+
+			create_double_field_request double_fields[14] = {
+				{ field_quantity, jtype::type_float64, "quantity", "Quantity", -1E40, 1E40 },
+				{ field_latitude, jtype::type_float64, "latitude", "Latitude", -90, 90 },
+				{ field_longitude, jtype::type_float64, "longitude", "Longitude", -180, 180 },
+				{ field_meters, jtype::type_float64, "meters", "Meters", -1E40, 1E40 },
+				{ field_feet, jtype::type_float64, "feet", "Feet", -1E40, 1E40 },
+				{ field_kilograms, jtype::type_float64, "kilograms", "Kilograms", -1E40, 1E40 },
+				{ field_pounds, jtype::type_float64, "pounds", "Pounds", -1E40, 1E40 },
+				{ field_seconds, jtype::type_float64, "seconds", "Seconds", -1E40, 1E40 },
+				{ field_minutes, jtype::type_float64, "minutes", "Minutes", -1E40, 1E40 },
+				{ field_hours, jtype::type_float64, "hours", "Hours", -1E40, 1E40 },
+				{ field_amperes, jtype::type_float64, "amperes", "Amperes", -1E40, 1E40 },
+				{ field_kelvin, jtype::type_float64, "kelvin", "Kelvin", -1E40, 1E40 },
+				{ field_mole, jtype::type_float64, "moles", "Moles", -1E40, 1E40 },
+				{ field_candela, jtype::type_float64, "candels", "Candels", -1E40, 1E40 }
+			};
+
+			for (int i = 0; i < sizeof(string_fields) / sizeof(string_fields[0]); i++) {
+				create_string_field(string_fields[i]);
+			}
+
+			for (int i = 0; i < sizeof(time_fields) / sizeof(time_fields[0]); i++) {
+				create_time_field(time_fields[i]);
+			}
+
+			for (int i = 0; i < sizeof(int_fields) / sizeof(int_fields[0]); i++) {
+				create_integer_field(int_fields[i]);
+			}
+
+			for (int i = 0; i < sizeof(double_fields) / sizeof(double_fields[0]); i++) {
+				create_double_field(double_fields[i]);
+			}
+
+		}
+
+		bool schema_tests()
+		{
+			dynamic_box box;
+			box.init(1 << 21);
+
+			jschema schema;
+
+			row_id_type schema_id = jschema::create_schema(&box, 10, 200, 500);
+			schema = jschema::get_schema(&box, schema_id);
+			schema.create_standard_fields();
+
+			row_id_type quantity_field_id = schema.find_field("quantity");
+			row_id_type last_name_field_id = schema.find_field("lastName");
+			row_id_type count_field_id = schema.find_field("count");
+
+			if (quantity_field_id == null_row) {
+				std::cout << "find row failed:" << __LINE__ << std::endl;
+				return false;
+			}
+
+			if (quantity_field_id != field_quantity) {
+				std::cout << "field placement failed:" << __LINE__ << std::endl;
+				return false;
+			}
+
+			if (last_name_field_id == null_row) {
+				std::cout << "find row failed" << __LINE__ << std::endl;
+				return false;
+			}
+
+			if (last_name_field_id != field_last_name) {
+				std::cout << "field placement failed:" << __LINE__ << std::endl;
+				return false;
+			}
+
+			if (count_field_id == null_row) {
+				std::cout << "find row failed" << __LINE__ << std::endl;
+				return false;
+			}
+
+			if (count_field_id != field_count) {
+				std::cout << "field placement failed:" << __LINE__ << std::endl;
+				return false;
+			}
+
+			row_id_type failed_field_id = schema.find_field("badFieldName");
+
+			if (failed_field_id != null_row) {
+				std::cout << "find row failed" << __LINE__ << std::endl;
+				return false;
+			}
+
+			countrybit::database::jschema::create_class_request person;
+
+			person.class_name = "person";
+			person.class_description = "a person";
+			person.field_ids = { field_last_name, field_first_name, field_birthday, field_title };
+			row_id_type person_class_id = schema.create_class(person);
+
+			if (person_class_id == null_row) {
+				std::cout << "class create failed failed" << __LINE__ << std::endl;
+				return false;
+			}
+
+			countrybit::database::jschema::create_object_field_request people;
+			people.class_id = person_class_id;
+			people.description = "People";
+			people.name = "people";
+			people.dim = { 100, 1, 1 };
+			people.field_id = schema.create_field();
+			row_id_type people_field = schema.create_object_field(people);
+
+			if (people_field == null_row) {
+				std::cout << "field create failed failed" << __LINE__ << std::endl;
+				return false;
+			}
+
+			countrybit::database::jschema::create_class_request company;
+			company.class_name = "company";
+			company.class_description = "a company is a collection of people";
+			company.field_ids = { field_last_name, field_first_name, field_birthday, people_field };
+			row_id_type company_class_id = schema.create_class(company);
+
+			if (company_class_id == null_row) {
+				std::cout << "class create failed failed" << __LINE__ << std::endl;
+				return false;
+			}
+
+			jclass person_class = schema.get_class(person_class_id);
+			
+			if (person_class.size() != 4) {
+				std::cout << "class size failed failed" << __LINE__ << std::endl;
+				return false;
+			}
+
+			for (int i = 0; i < person_class.size(); i++) {
+				auto &fldref = person_class.child(i);
+				auto &fld = schema.get_field(fldref.field_id);
+				std::cout << fld.name << " " << fld.description << " " << fldref.offset << " " << fld.size_bytes << std::endl;
+			}
+
+			return true;
+		}
+
+		bool collection_tests()
+		{
+			
+			return true;
+		}
+
+		bool array_tests()
+		{
+			return true;
+		}
+
+		bool slice_tests()
+		{
+			return true;
 		}
 
 	}

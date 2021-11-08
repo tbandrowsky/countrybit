@@ -196,8 +196,13 @@ namespace countrybit
 
 			T& operator[](row_id_type & r)
 			{
-				if (r == null_row || r >= hdr->last_row)
+				if (r == null_row || r >= hdr->max_rows)
 					throw std::logic_error("invalid row id");
+
+				if (r > hdr->last_row)
+				{
+					hdr->last_row = r;
+				}
 
 				return hdr->rows[r];
 			}
@@ -289,6 +294,11 @@ namespace countrybit
 			static int get_box_size(int _parent_rows, int _child_rows)
 			{
 				return table<parent_child>::get_box_size(_parent_rows) + table<C>::get_box_size(_child_rows);
+			}
+
+			row_id_type size()
+			{
+				return parents.size();
 			}
 
 		};
