@@ -227,6 +227,20 @@ namespace countrybit
 			row_id_type fields_by_name_id;
 		};
 
+		class jcollection_map
+		{
+		public:
+			collection_id_type collection_id;
+			row_id_type table_id;
+		};
+
+		class jobject_header
+		{
+		public:
+			object_id_type oid;
+			row_id_type class_field_id;
+		};
+
 		class jschema
 		{
 
@@ -294,7 +308,7 @@ namespace countrybit
 				&& box<B, jclass_field>
 				&& box<B, object_name>
 				)
-			static row_id_type create_schema(B *_b, int _num_classes, int _num_fields, int _num_class_fields)
+			static row_id_type reserve_schema(B *_b, int _num_classes, int _num_fields, int _num_class_fields)
 			{
 				jschema_map schema_map, *pschema_map;
 				schema_map.classes_table_id = null_row;
@@ -305,9 +319,9 @@ namespace countrybit
 				row_id_type rit = _b->pack(schema_map);
 				pschema_map = _b->unpack<jschema_map>(rit);
 				pschema_map->fields_table_id = field_store_type::create_table(_b, _num_fields);
-				pschema_map->classes_by_name_id = field_index_type::create_sorted_index(_b, _num_classes);
+				pschema_map->classes_by_name_id = field_index_type::reserve_sorted_index(_b, _num_classes);
 				pschema_map->classes_table_id = class_store_type::create_table(_b, _num_classes, _num_class_fields );
-				pschema_map->fields_by_name_id = class_index_type::create_sorted_index(_b, _num_fields);
+				pschema_map->fields_by_name_id = class_index_type::reserve_sorted_index(_b, _num_fields);
 				return rit;
 			}
 
@@ -326,6 +340,19 @@ namespace countrybit
 				schema.fields = field_store_type::get_table(_b, pschema_map->fields_table_id);
 				schema.classes_by_name = class_index_type::get_sorted_index(_b, pschema_map->classes_by_name_id);
 				schema.fields_by_name = field_index_type::get_sorted_index(_b, pschema_map->fields_by_name_id);
+				return schema;
+			}
+
+			template <typename B>
+				requires (box<B, jfield>
+			&& box<B, jclass_header>
+				&& box<B, jclass_field>
+				&& box<B, object_name>
+				)
+			static jschema create_schema(B* _b, int _num_classes, int _num_fields, int _num_class_fields, row_id_type& _row)
+			{
+				_row = reserve_schema(_b, _num_classes, _num_fields, _num_class_fields);
+				jschema schema = get_schema(_b, _row);
 				return schema;
 			}
 
@@ -473,6 +500,45 @@ namespace countrybit
 				return the_field;
 			}
 
+			template <typename B>
+			requires (box<B, jcollection_map>)
+			row_id_type reserve_collection(B* _b, collection_id_type _collection, int _number_of_objects, int* _class_field_ids)
+			{
+				if (!_class_field_ids)
+				{
+					throw std::invalid_argument("cannot create collection with 0 class size");
+				}
+
+				int max_size = 0;
+				while (*_class_field_ids)
+				{
+					auto myclassfield = _schema.get_field(*_class_field_ids);
+					if (myclassfield.size_bytes > max_size) {
+						max_size = myclassfield.size_bytes;
+					}
+					_class_field_ids++;
+				}
+
+				if (!max_size)
+				{
+					throw std::invalid_argument("cannot create collection with 0 class size");
+				}
+
+				jcollection_map jcm;
+				jcm.table_id = parent_child_table<jobject_header, char>::create(_b, _number_of_objects, max_size * _number_of_objects);
+				row_id_type jcm_row = _b->pack(jcm);
+				return jcm_row;
+			}
+
+			template <typename B, typename jcollection>
+			requires (box<B, jcollection_map>)
+			jcollection get_collection(B* _b, row_id_type _location)
+			{
+				jcollection_map jcm;
+				jcm = _b->unpack<jcollection_map>(_location);
+				auto pct = parent_child_table<jobject_header, char>::get(_b, jcm.table_id);
+				return jcollection(*this, jcm.collection_id, pct);
+			}
 		};
 
 		class jarray;
@@ -523,20 +589,6 @@ namespace countrybit
 			jslice get_slice(dimensions_type dims);
 		};
 
-		class jcollection_map
-		{
-		public:
-			collection_id_type collection_id;
-			row_id_type table_id;
-		};
-
-		class jobject_header
-		{
-		public:
-			object_id_type oid;
-			row_id_type class_field_id;
-		};
-
 		class jcollection
 		{
 
@@ -583,47 +635,6 @@ namespace countrybit
 				return objects.size();
 			}
 
-			template <typename B>
-			requires (box<B, jcollection_map>)
-			static row_id_type create_collection(B* _b, jschema& _schema, collection_id_type _collection_id, int _number_of_objects, int *_class_field_ids)
-			{
-
-				if (!_class_field_ids)
-				{
-					throw std::invalid_argument("cannot create collection with 0 class size");
-				}
-
-				int max_size = 0;
-				while (*_class_field_ids) 
-				{
-					auto myclassfield = _schema.get_field(*_class_field_ids);
-					if (myclassfield.size_bytes > max_size) {
-						max_size = myclassfield.size_bytes;
-					}
-					_class_field_ids++;
-				}
-
-				if (!max_size) 
-				{
-					throw std::invalid_argument("cannot create collection with 0 class size");
-				}
-
-				jcollection_map jcm;
-				jcm.collection_id = _collection_id;
-				jcm.table_id = parent_child_table<jobject_header, char>::create(_b, _number_of_objects, max_size * _number_of_objects);
-				row_id_type jcm_row = _b->pack(jcm);
-				return jcm_row;
-			}
-
-			template <typename B>
-			requires (box<B, jcollection_map>)
-			static jcollection get_collection(B* _b, jschema& _schema, row_id_type _location)
-			{
-				jcollection_map jcm;
-				jcm = _b->unpack<jcollection_map>(_location);
-				auto pct = parent_child_table<jobject_header, char>::get(_b, jcm.table_id);
-				return jcollection( _schema, jcm.collection_id, pct );
-			}
 		};
 
 		bool schema_tests();

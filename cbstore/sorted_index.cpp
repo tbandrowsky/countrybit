@@ -16,8 +16,8 @@ namespace countrybit
 			test_sorted_index_type test;
 			bool result = true;
 
-			row_id_type index_id = test_sorted_index_type::create_sorted_index(&box, 100);
-			test = test_sorted_index_type::get_sorted_index(&box, index_id);
+			row_id_type test_location;
+			test = test_sorted_index_type::create_sorted_index( &box, 100, test_location );
 
 			auto t1 = test.insert_or_assign(5, "hello");
 			if (t1.get_key() != 5 || t1.get_value() != "hello" || t1->second != "hello")

@@ -12,7 +12,7 @@ namespace countrybit
 {
 	namespace database
 	{
-	}
 
+	}
 };
 

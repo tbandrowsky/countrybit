@@ -81,7 +81,7 @@ namespace countrybit
 
 			template <typename B>
 			requires (box<B, index_header_type>)
-			static row_id_type create_sorted_index(B *_b, int _max_items)
+			static row_id_type reserve_sorted_index(B *_b, int _max_items)
 			{
 				index_header_type hdr, *phdr;
 
@@ -115,9 +115,18 @@ namespace countrybit
 				return si;
 			}
 
+			template <typename B> 
+			requires (box<B, index_header_type>)
+			static sorted_index create_sorted_index(B* _b, int _max_items, row_id_type& _header_location)
+			{
+				_header_location = reserve_sorted_index(_b, _max_items);
+				sorted_index new_index = get_sorted_index(_b, _header_location);
+				return new_index;
+			}
+
 			static size_t get_box_size( row_id_type _max_items )
 			{
-				return parent_child_table<std::pair<KEY, VALUE>, index_ref>::get_box_size(_max_items, _max_items * MaxNumberOfLevels );
+				return parent_child_table<std::pair<KEY, VALUE>, index_ref>::get_box_size(_max_items, _max_items * MaxNumberOfLevels);
 			}
 
 			class iterator

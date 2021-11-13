@@ -122,7 +122,7 @@ namespace countrybit
 
 			template <typename B>
 			requires (box<B, T>&& box<B, table_header>)
-			static row_id_type create_table(B* _b, int _max_rows)
+			static row_id_type reserve_table(B* _b, int _max_rows)
 			{
 				table t;
 
@@ -153,6 +153,15 @@ namespace countrybit
 
 				t.hdr = _b->unpack<table_header>(offset);
 
+				return t;
+			}
+
+			template <typename B>
+			requires (box<B, T>&& box<B, table_header>)
+			static table create_table(B* _b, int _max_rows, row_id_type& offset)
+			{
+				offset = reserve_table(_b, _max_rows);
+				table t = _b->unpack(offset);
 				return t;
 			}
 
@@ -243,7 +252,7 @@ namespace countrybit
 
 			template <typename B>
 			requires (box<B, P> && box<B, parent_child_table<P, C>::parent_child>)
-			static row_id_type create_table( B *b, int parent_rows, int child_rows )
+			static row_id_type reserve_table( B *b, int parent_rows, int child_rows )
 			{
 				parent_child_table_header hdr;
 				hdr.parents = null_row;
@@ -264,6 +273,16 @@ namespace countrybit
 				hdr = b->unpack<parent_child_table<P, C>::parent_child_table_header>(row);
 				pct.parents = table< parent_child_table<P, C>::parent_child >::get_table(b, hdr->parents);
 				pct.children = table< C >::get_table (b, hdr->children);
+				return pct;
+			}
+
+			template <typename B>
+			requires (box<B, P>&& box<B, parent_child_table<P, C>::parent_child>)
+			static parent_child_table create_table(B* b, int parent_rows, int child_rows, row_id_type& row)
+			{
+				parent_child_table pct;
+				row = reserve_table(b, parent_rows, child_rows);
+				pct = get_table(b, row);
 				return pct;
 			}
 

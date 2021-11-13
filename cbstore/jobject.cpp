@@ -185,9 +185,9 @@ namespace countrybit
 			box.init(1 << 21);
 
 			jschema schema;
+			row_id_type schema_id;
 
-			row_id_type schema_id = jschema::create_schema(&box, 10, 200, 500);
-			schema = jschema::get_schema(&box, schema_id);
+			schema = jschema::create_schema(&box, 10, 200, 500, schema_id);
 			schema.create_standard_fields();
 
 			row_id_type quantity_field_id = schema.find_field("quantity");
@@ -243,6 +243,19 @@ namespace countrybit
 				return false;
 			}
 
+			jclass person_class = schema.get_class(person_class_id);
+
+			if (person_class.size() != 4) {
+				std::cout << "class size failed failed" << __LINE__ << std::endl;
+				return false;
+			}
+
+			for (int i = 0; i < person_class.size(); i++) {
+				auto& fldref = person_class.child(i);
+				auto& fld = schema.get_field(fldref.field_id);
+				std::cout << fld.name << " " << fld.description << " " << fldref.offset << " " << fld.size_bytes << std::endl;
+			}
+
 			countrybit::database::jschema::create_object_field_request people;
 			people.class_id = person_class_id;
 			people.description = "People";
@@ -267,25 +280,36 @@ namespace countrybit
 				return false;
 			}
 
-			jclass person_class = schema.get_class(person_class_id);
-			
-			if (person_class.size() != 4) {
-				std::cout << "class size failed failed" << __LINE__ << std::endl;
-				return false;
-			}
-
-			for (int i = 0; i < person_class.size(); i++) {
-				auto &fldref = person_class.child(i);
-				auto &fld = schema.get_field(fldref.field_id);
-				std::cout << fld.name << " " << fld.description << " " << fldref.offset << " " << fld.size_bytes << std::endl;
-			}
-
 			return true;
 		}
 
 		bool collection_tests()
 		{
-			
+			dynamic_box box;
+			box.init(1 << 21);
+
+			jschema schema;
+			row_id_type schema_id;
+
+			schema = jschema::create_schema(&box, 10, 200, 500, schema_id);
+			schema.create_standard_fields();
+
+			countrybit::database::jschema::create_class_request person;
+
+			person.class_name = "person";
+			person.class_description = "a person";
+			person.field_ids = { field_last_name, field_first_name, field_birthday, field_title };
+			row_id_type person_class_id = schema.create_class(person);
+
+			if (person_class_id == null_row) {
+				std::cout << "class create failed failed" << __LINE__ << std::endl;
+				return false;
+			}
+
+			jclass person_class = schema.get_class(person_class_id);
+
+			jcollection people;		
+
 			return true;
 		}
 
