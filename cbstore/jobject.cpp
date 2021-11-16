@@ -7,10 +7,49 @@ namespace countrybit
 	namespace database
 	{
 
+		int compare(const dimensions_type& a, const dimensions_type& b)
+		{
+			if (a.z != b.z) return a.z - b.z;
+			if (a.y != b.y) return a.y - b.y;
+			if (a.x != b.x) return a.x - b.x;
+		}
+
+		int operator<(const dimensions_type& a, const dimensions_type& b)
+		{
+			return compare(a, b) < 0;
+		}
+
+		int operator>(const dimensions_type& a, const dimensions_type& b)
+		{
+			return compare(a, b) > 0;
+		}
+
+		int operator>=(const dimensions_type& a, const dimensions_type& b)
+		{
+			return compare(a, b) >= 0;
+		}
+
+		int operator<=(const dimensions_type& a, const dimensions_type& b)
+		{
+			return compare(a, b) <= 0;
+		}
+
+		int operator==(const dimensions_type& a, const dimensions_type& b)
+		{
+			return compare(a, b) == 0;
+		}
+
+		int operator!=(const dimensions_type& a, const dimensions_type& b)
+		{
+			return compare(a, b) != 0;
+		}
+
+
 		bool init_collection_id(collection_id_type &collection_id)
 		{
 			::GUID gidReference;
-			::CoCreateGuid((GUID *) &collection_id);
+			HRESULT hr = ::CoCreateGuid((GUID *) &collection_id);
+			return hr == S_OK;
 		}
 
 		jarray jcollection::create_object(row_id_type _class_field_id)

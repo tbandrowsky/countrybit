@@ -171,43 +171,13 @@ namespace countrybit
 			int x, y, z;
 		};
 
-		int compare(const dimensions_type& a, const dimensions_type& b)
-		{
-			if (a.z != b.z) return a.z - b.z;
-			if (a.y != b.y) return a.y - b.y;
-			if (a.x != b.x) return a.x - b.x;
-		}
-
-		int operator<(const dimensions_type& a, const dimensions_type& b)
-		{
-			return compare(a, b) < 0;
-		}
-
-		int operator>(const dimensions_type& a, const dimensions_type& b)
-		{
-			return compare(a, b) > 0;
-		}
-
-		int operator>=(const dimensions_type& a, const dimensions_type& b)
-		{
-			return compare(a, b) >= 0;
-		}
-
-		int operator<=(const dimensions_type& a, const dimensions_type& b)
-		{
-			return compare(a, b) <= 0;
-		}
-
-		int operator==(const dimensions_type& a, const dimensions_type& b)
-		{
-			return compare(a, b) == 0;
-		}
-
-		int operator!=(const dimensions_type& a, const dimensions_type& b)
-		{
-			return compare(a, b) != 0;
-		}
-
+		int compare(const dimensions_type& a, const dimensions_type& b);
+		int operator<(const dimensions_type& a, const dimensions_type& b);
+		int operator>(const dimensions_type& a, const dimensions_type& b);
+		int operator>=(const dimensions_type& a, const dimensions_type& b);
+		int operator<=(const dimensions_type& a, const dimensions_type& b);
+		int operator==(const dimensions_type& a, const dimensions_type& b);
+		int operator!=(const dimensions_type& a, const dimensions_type& b);
 
 		struct object_properties_type 
 		{
@@ -442,7 +412,15 @@ namespace countrybit
 
 		public:
 
-			jcollection()
+			jcollection() : schema( nullptr )
+			{
+				;
+			}
+
+			jcollection(jschema* _schema, collection_id_type _collection_id, parent_child_table<jobject_header, char>& _objects) :
+				schema(_schema),
+				collection_id(_collection_id),
+				objects(_objects)
 			{
 				;
 			}
@@ -621,9 +599,9 @@ namespace countrybit
 
 				row_id_type rit = _b->pack(schema_map);
 				pschema_map = _b->unpack<jschema_map>(rit);
-				pschema_map->fields_table_id = field_store_type::create_table(_b, _num_fields);
+				pschema_map->fields_table_id = field_store_type::reserve_table(_b, _num_fields);
 				pschema_map->classes_by_name_id = field_index_type::reserve_sorted_index(_b, _num_classes);
-				pschema_map->classes_table_id = class_store_type::create_table(_b, _num_classes, _num_class_fields );
+				pschema_map->classes_table_id = class_store_type::reserve_table(_b, _num_classes, _num_class_fields );
 				pschema_map->fields_by_name_id = class_index_type::reserve_sorted_index(_b, _num_fields);
 				return rit;
 			}
@@ -828,7 +806,7 @@ namespace countrybit
 
 				jcollection_map jcm;
 				jcm.collection_id = _collection_id;
-				jcm.table_id = parent_child_table<jobject_header, char>::create(_b, _number_of_objects, max_size * _number_of_objects);
+				jcm.table_id = parent_child_table<jobject_header, char>::reserve_table(_b, _number_of_objects, max_size * _number_of_objects);
 				row_id_type jcm_row = _b->pack(jcm);
 				return jcm_row;
 			}
@@ -837,12 +815,10 @@ namespace countrybit
 			requires (box<B, jcollection_map>)
 			jcollection get_collection(B* _b, row_id_type _location)
 			{
-				jcollection_map jcm;
-				jcollection collection;
+				jcollection_map *jcm;
 				jcm = _b->unpack<jcollection_map>(_location);
-				collection.schema = *this;
-				collection.collection_id = jcm.collection_id;
-				collection.objects = parent_child_table<jobject_header, char>::get(_b, jcm.table_id);
+				auto obj = parent_child_table<jobject_header, char>::get_table(_b, jcm->table_id);
+				jcollection collection(this, jcm->collection_id, obj);
 				return collection;
 			}
 

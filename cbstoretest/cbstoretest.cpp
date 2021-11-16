@@ -76,7 +76,7 @@ void table_tests()
 
     table<test_item> basic;
 
-    auto location = table<test_item>::create_table(&box, 20);
+    auto location = table<test_item>::reserve_table(&box, 20);
     basic = table<test_item>::get_table(&box, location);
 
     test_item* ti = &items[0];
