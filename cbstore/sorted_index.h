@@ -93,7 +93,7 @@ namespace countrybit
 				row_id_type header_location = _b->pack(hdr);
 
 				phdr = _b->unpack<index_header_type>(header_location);
-				phdr->table_id = data_table_type::create_table(_b, _max_items, _max_items * MaxNumberOfLevels );
+				phdr->table_id = data_table_type::reserve_table (_b, _max_items, _max_items * MaxNumberOfLevels);
 				return header_location;
 			}
 
@@ -206,9 +206,9 @@ namespace countrybit
 					return tmp;
 				}
 
-				bool operator == (const iterator& _src)
+				bool operator == (const iterator& _src) const
 				{
-					return _src.current = current;
+					return _src.current == current;
 				}
 
 				bool operator != (const iterator& _src)
@@ -423,7 +423,7 @@ namespace countrybit
 			row_id_type update_node(const std::pair<KEY, VALUE>& kvp)
 			{
 				int k;
-				row_id_type update[MaxNumberOfLevels], p;
+				row_id_type update[MaxNumberOfLevels];
 				row_id_type q = find_node(update, kvp.first);
 				index_node qnd;
 

@@ -259,8 +259,8 @@ namespace countrybit
 				hdr.children = null_row;
 				row_id_type r = b->pack(hdr);
 				auto* phdr = b->unpack<parent_child_table_header>(r);
-				phdr->parents = table< parent_child_table<P,C>::parent_child >::create_table(b, parent_rows);
-				phdr->children = table< C >::create_table(b, child_rows);
+				phdr->parents = table< parent_child_table<P,C>::parent_child >::reserve_table(b, parent_rows);
+				phdr->children = table< C >::reserve_table(b, child_rows);
 				return r;
 			}
 

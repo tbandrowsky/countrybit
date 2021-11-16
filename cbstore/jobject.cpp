@@ -1,64 +1,99 @@
 
 #include "jobject.h"
+#include "combaseapi.h"
 
 namespace countrybit
 {
 	namespace database
 	{
 
-
-		jslice::jslice(jclass& _the_class, jschema& _schema, char* _bytes) :
-			schema(_schema),
-			the_class(_the_class),
-			bytes(_bytes)
+		bool init_collection_id(collection_id_type &collection_id)
 		{
+			::GUID gidReference;
+			::CoCreateGuid((GUID *) &collection_id);
+		}
 
+		jarray jcollection::create_object(row_id_type _class_field_id)
+		{
+			auto myclassfield = schema->get_field(_class_field_id);
+			auto myclass = schema->get_class(myclassfield.object_properties.class_id);
+			auto bytes_to_allocate = myclass.parent().class_size_bytes;
+			auto new_object = objects.create(bytes_to_allocate);
+			new_object.parent().oid.collection_id = collection_id;
+			new_object.parent().oid.row_id = new_object.row_id();
+			new_object.parent().class_field_id = _class_field_id;
+			jarray ja(schema, _class_field_id, new_object.pchild());
+
+			return ja;
+		}
+
+		size_t jslice::get_offset(jtype field_type_id, int field_idx)
+		{
+			if (schema == nullptr || class_field_id == null_row || bytes == nullptr) {
+				throw std::logic_error("slice is not initialized");
+			}
+			auto the_class = schema->get_class(class_field_id);
+			jclass_field& jcf = the_class.child(field_idx);
+			jfield jf = schema->get_field(jcf.field_id);
+			if (jf.type_id != field_type_id) 
+			{
+				throw std::invalid_argument("Invalid field type " + std::to_string(field_type_id) + " for field idx " + std::to_string(field_idx));
+			}
+			return jcf.offset;
 		}
 
 		int8_box jslice::get_int8(int field_idx)
 		{
-			return get_boxed<int8_box>(field_idx, jtype::type_int8);
+			return get_boxed<int8_box>(jtype::type_int8, field_idx);
 		}
 
 		int16_box jslice::get_int16(int field_idx)
 		{
-			return get_boxed<int16_box>(field_idx, jtype::type_int16);
+			return get_boxed<int16_box>(jtype::type_int16, field_idx);
 		}
 
 		int32_box jslice::get_int32(int field_idx)
 		{
-			return jslice::get_boxed<int32_box>(field_idx, jtype::type_int32);
+			return jslice::get_boxed<int32_box>(jtype::type_int32, field_idx);
 		}
 
 		int64_box jslice::get_int64(int field_idx)
 		{
-			return jslice::get_boxed<int64_box>(field_idx, jtype::type_int64);
+			return jslice::get_boxed<int64_box>(jtype::type_int64, field_idx);
 		}
 
 		float_box jslice::get_float(int field_idx)
 		{
-			return jslice::get_boxed<float_box>(field_idx, jtype::type_float32);
+			return jslice::get_boxed<float_box>(jtype::type_float32, field_idx);
 		}
 
 		double_box jslice::get_double(int field_idx)
 		{
-			return get_boxed<double_box>(field_idx, jtype::type_float64);
+			return get_boxed<double_box>(jtype::type_float64, field_idx);
 		}
 
 		time_box jslice::get_time(int field_idx)
 		{
-			return get_boxed<time_box>(field_idx, jtype::type_float64);
+			return get_boxed<time_box>(jtype::type_datetime, field_idx);
 		}
 
 		jstring jslice::get_string(int field_idx)
 		{
-			return get_boxed<jstring>(field_idx, jtype::type_string);
+			return get_boxed<jstring>(jtype::type_string, field_idx);
 		}
 
 		jarray jslice::get_object(int field_idx)
 		{
+			if (schema == nullptr || class_field_id == null_row || bytes == nullptr) {
+				throw std::logic_error("slice is not initialized");
+			}
+
+			auto the_class = schema->get_class(class_field_id);
 			jclass_field& jcf = the_class.child(field_idx);
-			jfield jf = schema.get_field(jcf.field_id);
+			jfield jf = schema->get_field(jcf.field_id);
+			if (jf.type_id != jtype::type_object) {
+				throw std::invalid_argument("Invalid field type " + std::to_string(jtype::type_object) + " for field idx " + std::to_string(field_idx));
+			}
 
 			char *b = &bytes[jcf.offset];
 			jarray jerry(schema, field_idx, b);
@@ -67,35 +102,39 @@ namespace countrybit
 
 		int jslice::size()
 		{
+			auto the_class = schema->get_class(class_field_id);
 			return the_class.size();
 		}
 
-		jarray::jarray(jschema& _schema, row_id_type& _field_id, char* _bytes) :
-			schema(_schema),
-			class_field_id(_field_id),
-			bytes(_bytes)
+		dimensions_type jarray::dimensions()
 		{
-			
-			
+			jfield& field = schema->get_field(class_field_id);
+			jclass the_class = schema->get_class(field.type_id);
+			dimensions_type& dim = field.object_properties.dim;
+			return dim;
 		}
 
 		jslice jarray::get_slice(int x, int y, int z)
 		{
-			jfield& field = schema.get_field(class_field_id);
-			jclass the_class = schema.get_class(field.type_id);
-			dimensions_type& dim = field.object_properties.dim;
-			if ((x >= dim.x) ||
-				(y >= dim.y) ||
-				(z >= dim.z)) {
-				throw std::invalid_argument("field " + field.name + " out of range.");
-			}
-			char* b = &bytes[(z * dim.y * dim.x) + (y * dim.x) + x];
-			return jslice(the_class, schema, b);
+			dimensions_type dims;
+			dims.x = x;
+			dims.y = y;
+			dims.z = z;
+			return get_slice(dims.x, dims.y, dims.z);
 		}
 
 		jslice jarray::get_slice(dimensions_type dims)
 		{
-			return get_slice(dims.x, dims.y, dims.z);
+			jfield& field = schema->get_field(class_field_id);
+			jclass the_class = schema->get_class(field.type_id);
+			dimensions_type dim = field.object_properties.dim;
+			if ((dims.x >= dim.x) ||
+				(dims.y >= dim.y) ||
+				(dims.z >= dim.z)) {
+				throw std::invalid_argument("field " + field.name + " out of range.");
+			}
+			char* b = &bytes[ ((dims.z * dim.y * dim.x) + (dims.y * dim.x) + dims.x ) * field.object_properties.class_size_bytes ];
+			jslice slice(schema, field.field_id, b, dims);
 		}
 
 		void jschema::create_standard_fields() 
@@ -306,9 +345,21 @@ namespace countrybit
 				return false;
 			}
 
-			jclass person_class = schema.get_class(person_class_id);
+			collection_id_type colid;
 
-			jcollection people;		
+			init_collection_id(colid);
+			
+			jcollection people = schema.create_collection(&box, colid, 50, person_class_id);
+
+			jarray pa;
+			
+			pa = people.create_object(person_class_id);
+
+			pa = people.create_object(person_class_id);
+
+			pa = people.create_object(person_class_id);
+
+			pa = people.create_object(person_class_id);
 
 			return true;
 		}

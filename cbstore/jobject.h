@@ -171,6 +171,44 @@ namespace countrybit
 			int x, y, z;
 		};
 
+		int compare(const dimensions_type& a, const dimensions_type& b)
+		{
+			if (a.z != b.z) return a.z - b.z;
+			if (a.y != b.y) return a.y - b.y;
+			if (a.x != b.x) return a.x - b.x;
+		}
+
+		int operator<(const dimensions_type& a, const dimensions_type& b)
+		{
+			return compare(a, b) < 0;
+		}
+
+		int operator>(const dimensions_type& a, const dimensions_type& b)
+		{
+			return compare(a, b) > 0;
+		}
+
+		int operator>=(const dimensions_type& a, const dimensions_type& b)
+		{
+			return compare(a, b) >= 0;
+		}
+
+		int operator<=(const dimensions_type& a, const dimensions_type& b)
+		{
+			return compare(a, b) <= 0;
+		}
+
+		int operator==(const dimensions_type& a, const dimensions_type& b)
+		{
+			return compare(a, b) == 0;
+		}
+
+		int operator!=(const dimensions_type& a, const dimensions_type& b)
+		{
+			return compare(a, b) != 0;
+		}
+
+
 		struct object_properties_type 
 		{
 			dimensions_type		dim;
@@ -239,6 +277,271 @@ namespace countrybit
 		public:
 			object_id_type oid;
 			row_id_type class_field_id;
+		};
+
+		class jschema;
+		class jarray;
+
+		class jslice
+		{
+			jschema* schema;
+			row_id_type class_field_id;
+			char* bytes;
+			dimensions_type dim;
+
+			size_t get_offset(jtype field_type_id, int field_idx);
+
+			template <typename T> T get_boxed(jtype jt, int field_idx)
+			{
+				size_t offset = get_offset(jt, field_idx);
+				T b = &bytes[offset];
+				return b;
+			}
+
+		public:
+
+			jslice() : schema(nullptr), class_field_id(null_row), bytes(nullptr)
+			{
+				;
+			}
+
+			jslice(jschema* _schema, row_id_type _class_field_id, char* _bytes, dimensions_type _dim) : schema(_schema), class_field_id(_class_field_id), bytes(_bytes), dim(_dim)
+			{
+				;
+			}
+
+			int8_box get_int8(int field_idx);
+			int16_box get_int16(int field_idx);
+			int32_box get_int32(int field_idx);
+			int64_box get_int64(int field_idx);
+			float_box get_float(int field_idx);
+			double_box get_double(int field_idx);
+			time_box get_time(int field_idx);
+			jstring get_string(int field_idx);
+			jarray get_object(int field_idx);
+			int size();
+		};
+
+		class jarray
+		{
+			jschema* schema;
+			row_id_type class_field_id;
+			char* bytes;
+
+		public:
+
+			jarray() : schema(nullptr), class_field_id(null_row), bytes(nullptr)
+			{
+				;
+			}
+
+			jarray(jschema* _schema, row_id_type _class_field_id, char* _bytes) : schema( _schema ), class_field_id( _class_field_id ), bytes( _bytes )
+			{
+
+			}
+
+			dimensions_type dimensions();
+
+			jslice get_slice(int x, int y = 0, int z = 0);
+			jslice get_slice(dimensions_type dims);
+
+			class iterator
+			{
+				jarray* base;
+				dimensions_type current;
+				dimensions_type maxd;
+
+			public:
+				using iterator_category = std::forward_iterator_tag;
+				using difference_type = std::ptrdiff_t;
+				using value_type = jslice;
+				using pointer = jslice*;  // or also value_type*
+				using reference = jslice&;  // or also value_type&
+
+				iterator(jarray* _base, dimensions_type _current) :
+					base(_base),
+					current(_current)
+				{
+					maxd = base->dimensions();
+				}
+
+				iterator() : base(nullptr), current({ 0, 0, 0 }), maxd( { 0, 0, 0 })
+				{
+
+				}
+
+				iterator& operator = (const iterator& _src)
+				{
+					base = _src.base;
+					current = _src.current;
+					return *this;
+				}
+
+				inline jslice operator *()
+				{
+					return base->get_slice(current);
+				}
+
+				inline jslice operator->()
+				{
+					return base->get_slice(current);
+				}
+
+				inline iterator begin() const
+				{
+					return iterator(base, current);
+				}
+
+				inline iterator end()
+				{
+					auto temp = base->dimensions();
+					return iterator(base, temp);
+				}
+
+				inline iterator operator++()
+				{
+					current.x++;
+					if (current.x >= maxd.x) {
+						current.y++;
+						current.x = 0;
+						if (current.y >= maxd.y) {
+							current.z++;
+							current.y = 0;
+						}
+					}
+					return iterator(base, current);
+				}
+
+				inline iterator operator++(int)
+				{
+					iterator tmp(*this);
+					operator++();
+					return tmp;
+				}
+
+				bool operator == (const iterator& _src) const
+				{
+					return _src.current == current;
+				}
+
+				bool operator != (const iterator& _src)
+				{
+					return _src.current != current;
+				}
+
+			};
+
+		};
+
+		class jcollection
+		{
+
+			jschema* schema;
+			collection_id_type collection_id;
+			parent_child_table<jobject_header, char> objects;
+
+		public:
+
+			jcollection()
+			{
+				;
+			}
+
+			jarray create_object(row_id_type _class_field_id);
+
+			jarray get_object(row_id_type _object_id)
+			{
+				auto new_object = objects.get(_object_id);
+				return jarray(schema, new_object.parent().class_field_id, new_object.pchild());
+			}
+
+			object_id_type get_object_id(row_id_type _object_id)
+			{
+				auto new_object = objects.get(_object_id);
+				return new_object.parent().oid;
+			}
+
+			int size()
+			{
+				return objects.size();
+			}
+
+			class iterator
+			{
+				jcollection* base;
+				row_id_type current;
+
+			public:
+				using iterator_category = std::forward_iterator_tag;
+				using difference_type = std::ptrdiff_t;
+				using value_type = jarray;
+				using pointer = jarray*;  // or also value_type*
+				using reference = jarray&;  // or also value_type&
+
+				iterator(jcollection* _base, row_id_type _current) :
+					base(_base),
+					current(_current)
+				{
+
+				}
+
+				iterator() : base(nullptr), current(null_row)
+				{
+
+				}
+
+				iterator& operator = (const iterator& _src)
+				{
+					base = _src.base;
+					current = _src.current;
+					return *this;
+				}
+
+				inline jarray operator *()
+				{
+					return base->get_object(current);
+				}
+
+				inline jarray operator->()
+				{
+					return base->get_object(current);
+				}
+
+				inline iterator begin() const
+				{
+					return iterator(base, current);
+				}
+
+				inline iterator end() const
+				{
+					return iterator(base, null_row);
+				}
+
+				inline iterator operator++()
+				{
+					current = current++;
+					return iterator(base, current);
+				}
+
+				inline iterator operator++(int)
+				{
+					iterator tmp(*this);
+					operator++();
+					return tmp;
+				}
+
+				bool operator == (const iterator& _src) const
+				{
+					return _src.current == current;
+				}
+
+				bool operator != (const iterator& _src)
+				{
+					return _src.current != current;
+				}
+
+			};
+
 		};
 
 		class jschema
@@ -395,7 +698,6 @@ namespace countrybit
 				return _field_id;
 			}
 
-
 			row_id_type create_string_field(create_string_field_request request)
 			{
 				return create_field(request.field_id, type_string, request.name, request.description, request, {}, {}, {}, {}, request.length + sizeof(jstring));
@@ -502,7 +804,7 @@ namespace countrybit
 
 			template <typename B>
 			requires (box<B, jcollection_map>)
-			row_id_type reserve_collection(B* _b, collection_id_type _collection, int _number_of_objects, int* _class_field_ids)
+			row_id_type reserve_collection(B* _b, collection_id_type _collection_id, int _number_of_objects, int* _class_field_ids)
 			{
 				if (!_class_field_ids)
 				{
@@ -512,7 +814,7 @@ namespace countrybit
 				int max_size = 0;
 				while (*_class_field_ids)
 				{
-					auto myclassfield = _schema.get_field(*_class_field_ids);
+					auto myclassfield = get_field(*_class_field_ids);
 					if (myclassfield.size_bytes > max_size) {
 						max_size = myclassfield.size_bytes;
 					}
@@ -525,117 +827,47 @@ namespace countrybit
 				}
 
 				jcollection_map jcm;
+				jcm.collection_id = _collection_id;
 				jcm.table_id = parent_child_table<jobject_header, char>::create(_b, _number_of_objects, max_size * _number_of_objects);
 				row_id_type jcm_row = _b->pack(jcm);
 				return jcm_row;
 			}
 
-			template <typename B, typename jcollection>
+			template <typename B>
 			requires (box<B, jcollection_map>)
 			jcollection get_collection(B* _b, row_id_type _location)
 			{
 				jcollection_map jcm;
+				jcollection collection;
 				jcm = _b->unpack<jcollection_map>(_location);
-				auto pct = parent_child_table<jobject_header, char>::get(_b, jcm.table_id);
-				return jcollection(*this, jcm.collection_id, pct);
+				collection.schema = *this;
+				collection.collection_id = jcm.collection_id;
+				collection.objects = parent_child_table<jobject_header, char>::get(_b, jcm.table_id);
+				return collection;
 			}
+
+			template <typename B>
+			requires (box<B, jcollection_map>)
+			jcollection create_collection(B* _b, collection_id_type _collection_id, int _number_of_objects, row_id_type* _class_field_ids)
+			{
+				auto reserved_id = reserve_collection(_b, _collection_id, _number_of_objects, _class_field_ids);
+				jcollection tmp = get_collection(_b, reserved_id);
+				return tmp;
+			}
+
+			template <typename B>
+			requires (box<B, jcollection_map>)
+			jcollection create_collection(B* _b, collection_id_type _collection_id, int _number_of_objects, row_id_type _class_field_id)
+			{
+				row_id_type class_field_ids[2] = { _class_field_id, 0 };
+				row_id_type reserved_id = reserve_collection(_b, _collection_id, _number_of_objects, class_field_ids);
+				jcollection tmp = get_collection(_b, reserved_id);
+				return tmp;
+			}
+
 		};
 
 		class jarray;
-
-		class jslice
-		{
-			jschema& schema;
-			char* bytes;
-			jclass& the_class;
-
-			template <typename T>
-			T get_boxed(int field_idx, jtype jt)
-			{
-				jclass_field& jcf = the_class.child(field_idx);
-				jfield jf = schema.get_field(jcf.field_id);
-				if (jf.type_id != jt) {
-					throw std::invalid_argument("Invalid field type " + std::to_string(jt) + " for field idx " + std::to_string(field_idx));
-				}
-				T b = &bytes[jcf.offset];
-				return b;
-			}
-
-		public:
-
-			jslice(jclass& _the_class, jschema& _schema, char* _bytes);
-			int8_box get_int8(int field_idx);
-			int16_box get_int16(int field_idx);
-			int32_box get_int32(int field_idx);
-			int64_box get_int64(int field_idx);
-			float_box get_float(int field_idx);
-			double_box get_double(int field_idx);
-			time_box get_time(int field_idx);
-			jstring get_string(int field_idx);
-			jarray get_object(int field_idx);
-			int size();
-		};
-
-		class jarray
-		{
-			jschema& schema;
-			row_id_type class_field_id;
-			char* bytes;
-
-		public:
-
-			jarray(jschema& _schema, row_id_type& _class_field_id, char* _bytes);
-			jslice get_slice(int x, int y = 0, int z = 0);
-			jslice get_slice(dimensions_type dims);
-		};
-
-		class jcollection
-		{
-
-			jschema& schema;
-			collection_id_type collection_id;
-			parent_child_table<jobject_header, char> objects;
-
-			jcollection(jcollection& _src) :
-				schema(_src.schema),
-				collection_id(_src.collection_id),
-				objects(_src.objects)
-			{
-
-			}
-
-		public:
-
-			jarray construct_object(row_id_type _class_field_id)
-			{
-				auto myclassfield = schema.get_field(_class_field_id);
-				auto myclass = schema.get_class(myclassfield.object_properties.class_id);
-				auto bytes_to_allocate = myclass.parent().class_size_bytes;
-				auto new_object = objects.create(bytes_to_allocate);
-				new_object.parent().oid.collection_id = collection_id;
-				new_object.parent().oid.row_id = new_object.row_id();
-				new_object.parent().class_field_id = _class_field_id;
-				return jarray(schema, _class_field_id, new_object.pchild());
-			}
-
-			jarray get_object(row_id_type _object_id)
-			{
-				auto new_object = objects.get(_object_id);
-				return jarray(schema, new_object.parent().class_field_id, new_object.pchild());
-			}
-
-			object_id_type get_object_id(row_id_type _object_id)
-			{
-				auto new_object = objects.get(_object_id);
-				return new_object.parent().oid;
-			}
-
-			int size()
-			{
-				return objects.size();
-			}
-
-		};
 
 		bool schema_tests();
 		bool collection_tests();
