@@ -343,6 +343,12 @@ namespace countrybit
 				return *this;
 			}
 
+			boxed operator = (const T& _src)
+			{
+				*data = _src;
+				return *this;
+			}
+
 			operator T&() { return *data; }
 			T* get_data() { return data; }
 		};
@@ -417,7 +423,7 @@ namespace countrybit
 			return compare(a, b) != 0;
 		}
 
-		template<typename T> std::ostream& operator <<(std::ostream& output, const boxed<T>& src)
+		template<typename T> std::ostream& operator <<(std::ostream& output, boxed<T>& src)
 		{
 			output << (T)src;
 			return output;

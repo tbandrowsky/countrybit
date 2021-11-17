@@ -159,7 +159,7 @@ namespace countrybit
 			dims.x = x;
 			dims.y = y;
 			dims.z = z;
-			return get_slice(dims.x, dims.y, dims.z);
+			return get_slice(dims);
 		}
 
 		jslice jarray::get_slice(dimensions_type dims)
@@ -313,7 +313,7 @@ namespace countrybit
 
 			person.class_name = "person";
 			person.class_description = "a person";
-			person.field_ids = { field_last_name, field_first_name, field_birthday, field_title };
+			person.field_ids = { field_last_name, field_first_name, field_birthday, field_title, field_count, field_quantity };
 			row_id_type person_class_id = schema.create_class(person);
 
 			if (person_class_id == null_row) {
@@ -323,7 +323,7 @@ namespace countrybit
 
 			jclass person_class = schema.get_class(person_class_id);
 
-			if (person_class.size() != 4) {
+			if (person_class.size() != 6) {
 				std::cout << "class size failed failed" << __LINE__ << std::endl;
 				return false;
 			}
@@ -376,7 +376,7 @@ namespace countrybit
 
 			person.class_name = "person";
 			person.class_description = "a person";
-			person.field_ids = { field_last_name, field_first_name, field_birthday, field_title };
+			person.field_ids = { field_last_name, field_first_name, field_birthday, field_count, field_quantity };
 			row_id_type person_class_id = schema.create_class(person);
 
 			if (person_class_id == null_row) {
@@ -384,21 +384,85 @@ namespace countrybit
 				return false;
 			}
 
+			countrybit::database::jschema::create_object_field_request people_field;
+			people_field.class_id = person_class_id;
+			people_field.description = "People";
+			people_field.name = "people";
+			people_field.dim = { 1, 1, 1 };
+			people_field.field_id = schema.create_field();
+			row_id_type people_field_id = schema.create_object_field(people_field);
+
 			collection_id_type colid;
 
 			init_collection_id(colid);
 			
-			jcollection people = schema.create_collection(&box, colid, 50, person_class_id);
+			jcollection people = schema.create_collection(&box, colid, 50, people_field_id);
 
 			jarray pa;
 			
-			pa = people.create_object(person_class_id);
+			pa = people.create_object(people_field_id);
+			
+			auto sl = pa.get_slice(0);
+			auto last_name = sl.get_string(0);
+			auto first_name = sl.get_string(1);
+			auto birthday = sl.get_time(2);
+			auto count = sl.get_int32(3);
+			auto qty = sl.get_double(4);
+			last_name = "last 1";
+			first_name = "first 1";
+			birthday = 500000;
+			count = 12;
+			qty = 10.22;
 
 			pa = people.create_object(person_class_id);
+			sl = pa.get_slice(0);
+			last_name = sl.get_string(0);
+			first_name = sl.get_string(1);
+			birthday = sl.get_time(2);
+			count = sl.get_int32(3);
+			qty = sl.get_double(4);
+			last_name = "last 2";
+			first_name = "first 2";
+			birthday = 600000;
+			count = 22;
+			qty = 20.22;
 
 			pa = people.create_object(person_class_id);
+			sl = pa.get_slice(0);
+			last_name = sl.get_string(0);
+			first_name = sl.get_string(1);
+			birthday = sl.get_time(2);
+			count = sl.get_int32(3);
+			qty = sl.get_double(4);
+			last_name = "last 3";
+			first_name = "first 3";
+			birthday = 700000;
+			count = 32;
+			qty = 30.22;
 
 			pa = people.create_object(person_class_id);
+			sl = pa.get_slice(0);
+			last_name = sl.get_string(0);
+			first_name = sl.get_string(1);
+			birthday = sl.get_time(2);
+			count = sl.get_int32(3);
+			qty = sl.get_double(4);
+			last_name = "last 4";
+			first_name = "first 4";
+			birthday = 800000;
+			count = 42;
+			qty = 40.22;
+
+			for (auto pers : people)
+			{
+				sl = pers.get_slice(0);
+				last_name = sl.get_string(0);
+				first_name = sl.get_string(1);
+				birthday = sl.get_time(2);
+				count = sl.get_int32(3);
+				qty = sl.get_double(4);
+				std::cout << last_name << " " << first_name << " " << birthday << " " << count << " " << count << std::endl;
+			}
 
 			return true;
 		}

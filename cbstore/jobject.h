@@ -520,6 +520,16 @@ namespace countrybit
 
 			};
 
+			inline iterator begin()
+			{
+				return iterator(this, 0);
+			}
+
+			inline iterator end()
+			{
+				return iterator(this, null_row);
+			}
+
 		};
 
 		class jschema
@@ -790,7 +800,7 @@ namespace countrybit
 				}
 
 				int max_size = 0;
-				while (*_class_field_ids)
+				while (*_class_field_ids != null_row)
 				{
 					auto myclassfield = get_field(*_class_field_ids);
 					if (myclassfield.size_bytes > max_size) {
@@ -835,7 +845,7 @@ namespace countrybit
 			requires (box<B, jcollection_map>)
 			jcollection create_collection(B* _b, collection_id_type _collection_id, int _number_of_objects, row_id_type _class_field_id)
 			{
-				row_id_type class_field_ids[2] = { _class_field_id, 0 };
+				row_id_type class_field_ids[2] = { _class_field_id, null_row };
 				row_id_type reserved_id = reserve_collection(_b, _collection_id, _number_of_objects, class_field_ids);
 				jcollection tmp = get_collection(_b, reserved_id);
 				return tmp;
