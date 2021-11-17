@@ -258,6 +258,8 @@ namespace countrybit
 			row_id_type class_field_id;
 			char* bytes;
 			dimensions_type dim;
+			jfield* class_field;
+			jclass the_class;
 
 			size_t get_offset(jtype field_type_id, int field_idx);
 
@@ -270,15 +272,8 @@ namespace countrybit
 
 		public:
 
-			jslice() : schema(nullptr), class_field_id(null_row), bytes(nullptr)
-			{
-				;
-			}
-
-			jslice(jschema* _schema, row_id_type _class_field_id, char* _bytes, dimensions_type _dim) : schema(_schema), class_field_id(_class_field_id), bytes(_bytes), dim(_dim)
-			{
-				;
-			}
+			jslice();
+			jslice(jschema* _schema, row_id_type _class_field_id, char* _bytes, dimensions_type _dim);
 
 			int8_box get_int8(int field_idx);
 			int16_box get_int16(int field_idx);

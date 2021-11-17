@@ -55,6 +55,9 @@ namespace countrybit
 		jarray jcollection::create_object(row_id_type _class_field_id)
 		{
 			auto myclassfield = schema->get_field(_class_field_id);
+			if (myclassfield.type_id != jtype::type_object) {
+				throw std::logic_error("Attempt to create an object from a non-object field.  You must use an object field to create an object.");
+			}
 			auto myclass = schema->get_class(myclassfield.object_properties.class_id);
 			auto bytes_to_allocate = myclass.parent().class_size_bytes;
 			auto new_object = objects.create(bytes_to_allocate);
@@ -66,12 +69,22 @@ namespace countrybit
 			return ja;
 		}
 
+		jslice::jslice() : schema(nullptr), class_field_id(null_row), bytes(nullptr)
+		{
+			;
+		}
+
+		jslice::jslice(jschema* _schema, row_id_type _class_field_id, char* _bytes, dimensions_type _dim) : schema(_schema), class_field_id(_class_field_id), bytes(_bytes), dim(_dim)
+		{
+			class_field = &schema->get_field(class_field_id);
+			the_class = schema->get_class(class_field->object_properties.class_id);
+		}
+
 		size_t jslice::get_offset(jtype field_type_id, int field_idx)
 		{
 			if (schema == nullptr || class_field_id == null_row || bytes == nullptr) {
 				throw std::logic_error("slice is not initialized");
 			}
-			auto the_class = schema->get_class(class_field_id);
 			jclass_field& jcf = the_class.child(field_idx);
 			jfield jf = schema->get_field(jcf.field_id);
 			if (jf.type_id != field_type_id) 
@@ -173,7 +186,8 @@ namespace countrybit
 				throw std::invalid_argument("field " + field.name + " out of range.");
 			}
 			char* b = &bytes[ ((dims.z * dim.y * dim.x) + (dims.y * dim.x) + dims.x ) * field.object_properties.class_size_bytes ];
-			jslice slice(schema, field.field_id, b, dims);
+			jslice slice(schema, class_field_id, b, dims);
+			return slice;
 		}
 
 		void jschema::create_standard_fields() 
@@ -400,13 +414,12 @@ namespace countrybit
 
 			jarray pa;
 			
-			pa = people.create_object(people_field_id);
-			
+			pa = people.create_object(people_field_id);			
 			auto sl = pa.get_slice(0);
 			auto last_name = sl.get_string(0);
 			auto first_name = sl.get_string(1);
 			auto birthday = sl.get_time(2);
-			auto count = sl.get_int32(3);
+			auto count = sl.get_int64(3);
 			auto qty = sl.get_double(4);
 			last_name = "last 1";
 			first_name = "first 1";
@@ -414,12 +427,12 @@ namespace countrybit
 			count = 12;
 			qty = 10.22;
 
-			pa = people.create_object(person_class_id);
+			pa = people.create_object(people_field_id);
 			sl = pa.get_slice(0);
 			last_name = sl.get_string(0);
 			first_name = sl.get_string(1);
 			birthday = sl.get_time(2);
-			count = sl.get_int32(3);
+			count = sl.get_int64(3);
 			qty = sl.get_double(4);
 			last_name = "last 2";
 			first_name = "first 2";
@@ -427,12 +440,12 @@ namespace countrybit
 			count = 22;
 			qty = 20.22;
 
-			pa = people.create_object(person_class_id);
+			pa = people.create_object(people_field_id);
 			sl = pa.get_slice(0);
 			last_name = sl.get_string(0);
 			first_name = sl.get_string(1);
 			birthday = sl.get_time(2);
-			count = sl.get_int32(3);
+			count = sl.get_int64(3);
 			qty = sl.get_double(4);
 			last_name = "last 3";
 			first_name = "first 3";
@@ -440,12 +453,12 @@ namespace countrybit
 			count = 32;
 			qty = 30.22;
 
-			pa = people.create_object(person_class_id);
+			pa = people.create_object(people_field_id);
 			sl = pa.get_slice(0);
 			last_name = sl.get_string(0);
 			first_name = sl.get_string(1);
 			birthday = sl.get_time(2);
-			count = sl.get_int32(3);
+			count = sl.get_int64(3);
 			qty = sl.get_double(4);
 			last_name = "last 4";
 			first_name = "first 4";
@@ -459,7 +472,7 @@ namespace countrybit
 				last_name = sl.get_string(0);
 				first_name = sl.get_string(1);
 				birthday = sl.get_time(2);
-				count = sl.get_int32(3);
+				count = sl.get_int64(3);
 				qty = sl.get_double(4);
 				std::cout << last_name << " " << first_name << " " << birthday << " " << count << " " << count << std::endl;
 			}
