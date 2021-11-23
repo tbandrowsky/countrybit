@@ -1,6 +1,10 @@
 #pragma once
 
 #include <vector>
+#include <cmath>
+#include <cstdlib>
+#include <type_traits>
+#include <numeric>
 #include "constants.h"
 
 namespace countrybit
@@ -323,6 +327,8 @@ namespace countrybit
 		requires (std::is_standard_layout<T>::value)
 		class boxed 
 		{
+		protected:
+
 			T* data;
 
 		public:
@@ -429,13 +435,13 @@ namespace countrybit
 			return output;
 		}
 
-		using int8_box = boxed<int8_t>;
-		using int16_box = boxed<int16_t>;
-		using int32_box = boxed<int32_t>;
-		using int64_box = boxed<int64_t>;
-		using float_box = boxed<float>;
-		using double_box = boxed<double>;
-		using time_box = boxed<time_t>;
+		using basic_int8_box = boxed<int8_t>;
+		using basic_int16_box = boxed<int16_t>;
+		using basic_int32_box = boxed<int32_t>;
+		using basic_int64_box = boxed<int64_t>;
+		using basic_float_box = boxed<float>;
+		using basic_double_box = boxed<double>;
+		using basic_time_box = boxed<time_t>;
 
 	}
 }

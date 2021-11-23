@@ -12,7 +12,10 @@
 #include "constants.h"
 #include "store_box.h"
 #include "table.h"
-#include "jstring.h"
+#include "int_box.h"
+#include "float_box.h"
+#include "time_box.h"
+#include "string_box.h"
 #include "sorted_index.h"
 #include <ctime>
 
@@ -275,6 +278,9 @@ namespace countrybit
 			jslice();
 			jslice(jschema* _schema, row_id_type _class_field_id, char* _bytes, dimensions_type _dim);
 
+			void construct();
+			dimensions_type get_dim();
+			jfield& get_field(int field_idx);
 			int8_box get_int8(int field_idx);
 			int16_box get_int16(int field_idx);
 			int32_box get_int32(int field_idx);
@@ -282,7 +288,7 @@ namespace countrybit
 			float_box get_float(int field_idx);
 			double_box get_double(int field_idx);
 			time_box get_time(int field_idx);
-			jstring get_string(int field_idx);
+			string_box get_string(int field_idx);
 			jarray get_object(int field_idx);
 			int size();
 		};
@@ -396,6 +402,19 @@ namespace countrybit
 
 			};
 
+			inline iterator begin()
+			{
+				dimensions_type dt = { 0, 0, 0 };
+
+				return iterator(this, dt);
+			}
+
+			inline iterator end()
+			{
+				auto temp = this->dimensions();
+				return iterator(this, temp);
+			}
+
 		};
 
 		class jcollection
@@ -480,19 +499,19 @@ namespace countrybit
 					return base->get_object(current);
 				}
 
-				inline iterator begin() const
+				iterator begin() const
 				{
 					return iterator(base, current);
 				}
 
-				inline iterator end() const
+				iterator end() const
 				{
-					return iterator(base, null_row);
+					return iterator(base, base->size());
 				}
 
 				inline iterator operator++()
 				{
-					current = current++;
+					current++;
 					return iterator(base, current);
 				}
 
@@ -522,7 +541,7 @@ namespace countrybit
 
 			inline iterator end()
 			{
-				return iterator(this, null_row);
+				return iterator(this, this->size());
 			}
 
 		};
@@ -683,7 +702,7 @@ namespace countrybit
 
 			row_id_type create_string_field(create_string_field_request request)
 			{
-				return create_field(request.field_id, type_string, request.name, request.description, request, {}, {}, {}, {}, request.length + sizeof(jstring));
+				return create_field(request.field_id, type_string, request.name, request.description, request, {}, {}, {}, {}, request.length + sizeof(string_box));
 			}
 
 			row_id_type create_time_field(create_time_field_request request)

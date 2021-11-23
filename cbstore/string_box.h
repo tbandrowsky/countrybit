@@ -14,17 +14,17 @@ namespace countrybit
 	namespace database
 	{
 
-		class jstring
+		class string_box
 		{
 
-			struct jstring_data {
+			struct string_box_data {
 			public:
 				uint32_t length;
 				int last_char;
 				char data[1];
 			};
 
-			jstring_data* hdr;
+			string_box_data* hdr;
 
 			void copy(const char* s)
 			{
@@ -53,11 +53,11 @@ namespace countrybit
 
 		public:
 
-			jstring() : hdr(nullptr)
+			string_box() : hdr(nullptr)
 			{
 			}
 
-			jstring( char *c ) : hdr((jstring_data*)c)
+			string_box( char *c ) : hdr((string_box_data*)c)
 			{
 			}
 
@@ -65,9 +65,9 @@ namespace countrybit
 			requires(box<BOX, char>)
 			static row_id_type create(BOX* b, int chars_length)
 			{
-				jstring temp;
-				auto location = b->pack<char>(sizeof(jstring_data)+chars_length);
-				temp.hdr = b->unpack<jstring_data>(location);
+				string_box temp;
+				auto location = b->pack<char>(sizeof(string_box_data)+chars_length);
+				temp.hdr = b->unpack<string_box_data>(location);
 				temp.hdr->last_char = chars_length - 1;
 				temp.hdr->length = 0;
 				temp.hdr->data[0] = 0;
@@ -76,43 +76,43 @@ namespace countrybit
 
 			template <typename BOX>
 			requires(box<BOX, char>)
-			static jstring get(BOX* b, int location)
+			static string_box get(BOX* b, int location)
 			{
-				jstring temp;
-				temp.hdr = b->unpack<jstring_data>(location);
+				string_box temp;
+				temp.hdr = b->unpack<string_box_data>(location);
 				return temp;
 			}
 
-			static jstring create(char* b, int chars_length)
+			static string_box create(char* b, int chars_length)
 			{
-				jstring temp;
-				temp.hdr = (jstring_data *)(b);
+				string_box temp;
+				temp.hdr = (string_box_data *)(b);
 				temp.hdr->last_char = chars_length - 1;
 				temp.hdr->length = 0;
 				temp.hdr->data[0] = 0;
 				return temp;
 			}
 
-			static jstring get(char* b)
+			static string_box get(char* b)
 			{
-				jstring temp;
-				temp.hdr = (jstring_data*)(b);
+				string_box temp;
+				temp.hdr = (string_box_data*)(b);
 				return temp;
 			}
 
 			static int get_box_size(int length)
 			{
-				return sizeof(jstring_data) + length;
+				return sizeof(string_box_data) + length;
 			}
 
-			jstring& operator = (const std::string& src)
+			string_box& operator = (const std::string& src)
 			{
 				const char* s = src.c_str();
 				copy(s);
 				return *this;
 			}
 
-			jstring& operator = (const jstring& _src)
+			string_box& operator = (const string_box& _src)
 			{
 				if (_src.hdr != hdr) {
 					const char* s = _src.c_str();
@@ -121,7 +121,7 @@ namespace countrybit
 				return *this;
 			}
 
-			jstring& operator = (const char* s)
+			string_box& operator = (const char* s)
 			{
 				copy(s);
 				return *this;
@@ -138,26 +138,26 @@ namespace countrybit
 			}		
 		};
 
-		int compare(const jstring& a, const jstring& b);
-		int operator<(const jstring& a, const jstring& b);
-		int operator>(const jstring& a, const jstring& b);
-		int operator>=(const jstring& a, const jstring& b);
-		int operator<=(const jstring& a, const jstring& b);
-		int operator==(const jstring& a, const jstring& b);
-		int operator!=(const jstring& a, const jstring& b);
-		int compare(const jstring& a, const char* b);
-		int operator<(const jstring& a, const char* b);
-		int operator>(const jstring& a, const char* b);
-		int operator>=(const jstring& a, const char* b);
-		int operator<=(const jstring& a, const char* b);
-		int operator==(const jstring& a, const char* b);
-		int operator!=(const jstring& a, const char* b);
+		int compare(const string_box& a, const string_box& b);
+		int operator<(const string_box& a, const string_box& b);
+		int operator>(const string_box& a, const string_box& b);
+		int operator>=(const string_box& a, const string_box& b);
+		int operator<=(const string_box& a, const string_box& b);
+		int operator==(const string_box& a, const string_box& b);
+		int operator!=(const string_box& a, const string_box& b);
+		int compare(const string_box& a, const char* b);
+		int operator<(const string_box& a, const char* b);
+		int operator>(const string_box& a, const char* b);
+		int operator>=(const string_box& a, const char* b);
+		int operator<=(const string_box& a, const char* b);
+		int operator==(const string_box& a, const char* b);
+		int operator!=(const string_box& a, const char* b);
 
-		std::string operator+(const jstring& a, const char* b);
-		std::string operator+(const char* b, const jstring& a);
-		std::string operator+(const jstring& a, const std::string& b);
-		std::string operator+(const std::string& b, const jstring& a);
-		std::ostream& operator <<(std::ostream& output, jstring& src);
+		std::string operator+(const string_box& a, const char* b);
+		std::string operator+(const char* b, const string_box& a);
+		std::string operator+(const string_box& a, const std::string& b);
+		std::string operator+(const std::string& b, const string_box& a);
+		std::ostream& operator <<(std::ostream& output, string_box& src);
 		
 		template <int length_bytes> struct istring 
 		{

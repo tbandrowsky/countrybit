@@ -66,6 +66,11 @@ namespace countrybit
 			new_object.parent().class_field_id = _class_field_id;
 			jarray ja(schema, _class_field_id, new_object.pchild());
 
+			for (auto jai : ja) 
+			{
+				jai.construct();
+			}
+
 			return ja;
 		}
 
@@ -94,6 +99,82 @@ namespace countrybit
 			return jcf.offset;
 		}
 
+		dimensions_type jslice::get_dim() 
+		{
+			return dim; 
+		}
+
+		void jslice::construct()
+		{
+			for (int i = 0; i < the_class.size(); i++)
+			{
+				jclass_field& jcf = the_class.child(i);
+				jfield jf = schema->get_field(jcf.field_id);
+				int offset = jcf.offset;
+				char* c = &bytes[offset];
+				switch (jf.type_id) 
+				{
+				case type_unknown:
+					break;
+				case type_int8:
+					{
+						boxed<__int8> b(c);
+						b = 0;
+					}
+					break;
+				case type_int16:
+					{
+						boxed<__int16> b(c);
+						b = 0;
+					}
+					break;
+				case type_int32:
+					{
+						boxed<__int32> b(c);
+						b = 0;
+					}
+					break;
+				case type_int64:
+					{
+						boxed<__int64> b(c);
+						b = 0;
+					}
+					break;
+				case type_float32:
+					{
+						boxed<float> b(c);
+						b = 0.0;
+					}
+					break;
+				case type_float64:
+					{
+						boxed<float> b(c);
+						b = 0.0;
+					}
+					break;
+				case type_datetime:
+					{
+						boxed<time_t> b(c);
+						b = 0.0;
+					}
+					break;
+				case type_object:
+					break;
+				case type_object_id:
+					break;
+				case type_string:
+					break;
+				}
+			}
+		}
+
+		jfield& jslice::get_field(int field_idx)
+		{
+			jclass_field& jcf = the_class.child(field_idx);
+			jfield &jf = schema->get_field(jcf.field_id);
+			return jf;
+		}
+
 		int8_box jslice::get_int8(int field_idx)
 		{
 			return get_boxed<int8_box>(jtype::type_int8, field_idx);
@@ -116,7 +197,7 @@ namespace countrybit
 
 		float_box jslice::get_float(int field_idx)
 		{
-			return jslice::get_boxed<float_box>(jtype::type_float32, field_idx);
+			return jslice::get_boxed<fp_box>(jtype::type_float32, field_idx);
 		}
 
 		double_box jslice::get_double(int field_idx)
@@ -129,9 +210,12 @@ namespace countrybit
 			return get_boxed<time_box>(jtype::type_datetime, field_idx);
 		}
 
-		jstring jslice::get_string(int field_idx)
+		string_box jslice::get_string(int field_idx)
 		{
-			return get_boxed<jstring>(jtype::type_string, field_idx);
+			size_t offset = get_offset(jtype::type_string, field_idx);
+			char *b = &bytes[offset];
+			auto temp = string_box::get(b);
+			return temp;
 		}
 
 		jarray jslice::get_object(int field_idx)

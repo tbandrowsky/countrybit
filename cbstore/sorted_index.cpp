@@ -1,6 +1,6 @@
 
 #include "sorted_index.h"
-#include "jstring.h"
+#include "string_box.h"
 
 namespace countrybit
 {

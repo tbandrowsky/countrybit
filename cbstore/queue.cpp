@@ -215,7 +215,6 @@ namespace countrybit
 		void job_queue::shutDown()
 		{
 			int i;
-			DWORD timeout;
 
 			// keep sending shutdown messages until all of the queues terminate!
 
