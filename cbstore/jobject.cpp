@@ -197,12 +197,12 @@ namespace countrybit
 
 		float_box jslice::get_float(int field_idx)
 		{
-			return jslice::get_boxed<fp_box>(jtype::type_float32, field_idx);
+			return jslice::get_boxed<float_box>(jtype::type_float32, field_idx);
 		}
 
 		double_box jslice::get_double(int field_idx)
 		{
-			return get_boxed<double_box>(jtype::type_float64, field_idx);
+			return jslice::get_boxed<double_box>(jtype::type_float64, field_idx);
 		}
 
 		time_box jslice::get_time(int field_idx)

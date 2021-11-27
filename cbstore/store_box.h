@@ -1,10 +1,12 @@
 #pragma once
 
+#include <ostream>
 #include <vector>
 #include <cmath>
 #include <cstdlib>
 #include <type_traits>
 #include <numeric>
+
 #include "constants.h"
 
 namespace countrybit

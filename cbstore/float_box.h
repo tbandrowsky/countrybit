@@ -13,7 +13,8 @@ namespace countrybit
 	namespace database
 	{
 
-		template <class floating_point>
+		template <typename floating_point>
+		requires (std::is_floating_point<floating_point>::value)
 		class float_math
 		{
 		public:
@@ -232,55 +233,31 @@ namespace countrybit
 
 		};
 
-		template <class floating_point> 
-		requires (std::numeric_limits<floating_point>::is_floating_point)
+		template <typename floating_point> 
+		requires (std::is_floating_point<floating_point>::value)
 		class fp_box : boxed<floating_point>
 		{
 		public:
-			fp_box(char* t) : boxed(t)
+			fp_box(char* t) : boxed<floating_point>(t)
 			{
 				;
 			}
 
 			fp_box operator = (const fp_box & _src)
 			{
-				boxed::operator=(_src);
+				boxed<floating_point>::operator=(_src);
 				return *this;
 			}
 
 			fp_box operator = (floating_point _src)
 			{
-				boxed::operator=(_src);
+				boxed<floating_point>::operator=(_src);
 				return *this;
 			}
 
 			floating_point abs()
 			{
 				return std::abs(*this);
-			}
-			floating_point mod(floating_point d)
-			{
-				return std::fmod(*this, d);
-			}
-			floating_point rem(floating_point d)
-			{
-				return std::remainder(*this, d);
-			}
-			floating_point fma(floating_point m2, floating_point a)
-			{
-				return std::fma(*this, m2, a);
-			}
-			floating_point max(floating_point m2)
-			{
-				return std::max(*this, m2);
-			}
-			floating_point min(floating_point m2)
-			{
-				return std::min(*this, m2);
-			}
-			floating_point dim(floating_point m2)
-			{
-				return std::fdim(*this, m2);
 			}
 
 			floating_point is_nan()
@@ -344,16 +321,6 @@ namespace countrybit
 			floating_point cbrt()
 			{
 				return std::cbrt(*this);
-			}
-
-			floating_point hypot(floating_point m2)
-			{
-				return std::hypot(*this, m2);
-			}
-
-			floating_point hypot(floating_point m2, floating_point m3)
-			{
-				return std::hypot(*this, m2, m3);
 			}
 
 			floating_point sin()

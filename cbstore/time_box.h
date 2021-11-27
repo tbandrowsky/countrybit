@@ -42,7 +42,7 @@ namespace countrybit
 			time_t add_years(time_t years);
 		};
 
-		class time_box : basic_time_box
+		class time_box : public basic_time_box
 		{
 		public:
 			time_box(char* t) : basic_time_box(t)
@@ -66,84 +66,7 @@ namespace countrybit
 			time_t* get_data() { return data; }
 		};
 
-		int compare(const time_box& a, const time_box& b)
-		{
-			return (const time_t&)a - (const time_t&)b;
-		}
-
-		int operator<(const time_box& a, const time_box& b)
-		{
-			return compare(a, b) < 0;
-		}
-
-		int operator>(const time_box& a, const time_box& b)
-		{
-			return compare(a, b) > 0;
-		}
-
-		int operator>=(const time_box& a, const time_box& b)
-		{
-			return compare(a, b) >= 0;
-		}
-
-		int operator<=(const time_box& a, const time_box& b)
-		{
-			return compare(a, b) <= 0;
-		}
-
-		int operator==(const time_box& a, const time_box& b)
-		{
-			return compare(a, b) == 0;
-		}
-
-		int operator!=(const time_box& a, const time_box& b)
-		{
-			return compare(a, b) != 0;
-		}
-
-		int compare(const time_box& a, time_t& b)
-		{
-			char data[sizeof(time_t) * 2];
-			time_box tb(data);
-			tb = b;
-			return compare(a, b);
-		}
-
-		template<typename T> int operator<(const time_box& a, T& b)
-		{
-			return compare(a, b) < 0;
-		}
-
-		template<typename T> int operator>(const time_box& a, T& b)
-		{
-			return compare(a, b) > 0;
-		}
-
-		template<typename T> int operator>=(const time_box& a, T& b)
-		{
-			return compare(a, b) >= 0;
-		}
-
-		template<typename T> int operator<=(const time_box& a, T& b)
-		{
-			return compare(a, b) <= 0;
-		}
-
-		template<typename T> int operator==(const time_box& a, T& b)
-		{
-			return compare(a, b) == 0;
-		}
-
-		template<typename T> int operator!=(const time_box& a, T& b)
-		{
-			return compare(a, b) != 0;
-		}
-
-		template<typename T> std::ostream& operator <<(std::ostream& output, time_box& src)
-		{
-			output << (T)src;
-			return output;
-		}
+		std::ostream& operator <<(std::ostream& output, time_box& src);
 
 	}
 }
