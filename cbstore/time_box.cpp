@@ -80,7 +80,7 @@ namespace countrybit
 
 		std::ostream& operator <<(std::ostream& output, time_box& src)
 		{
-			output << src;
+			output << (time_t)src;
 			return output;
 		}
 

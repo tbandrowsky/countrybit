@@ -9,9 +9,12 @@ namespace countrybit
 
 		int compare(const dimensions_type& a, const dimensions_type& b)
 		{
-			if (a.z != b.z) return a.z - b.z;
-			if (a.y != b.y) return a.y - b.y;
-			if (a.x != b.x) return a.x - b.x;
+			int t = a.z - b.z;
+			if (t) return t;
+			t = a.y - b.y;
+			if (t) return t;
+			t = a.x - b.x;
+			return t;
 		}
 
 		int operator<(const dimensions_type& a, const dimensions_type& b)
@@ -163,6 +166,9 @@ namespace countrybit
 				case type_object_id:
 					break;
 				case type_string:
+					{
+						string_box::create(c, jf.string_properties.length);
+					}
 					break;
 				}
 			}
@@ -486,7 +492,7 @@ namespace countrybit
 			people_field.class_id = person_class_id;
 			people_field.description = "People";
 			people_field.name = "people";
-			people_field.dim = { 1, 1, 1 };
+			people_field.dim = { 1, 0, 0 };
 			people_field.field_id = schema.create_field();
 			row_id_type people_field_id = schema.create_object_field(people_field);
 

@@ -87,7 +87,7 @@ namespace countrybit
 			{
 				string_box temp;
 				temp.hdr = (string_box_data *)(b);
-				temp.hdr->last_char = chars_length - 1;
+				temp.hdr->last_char = chars_length - (sizeof(string_box_data)-1);
 				temp.hdr->length = 0;
 				temp.hdr->data[0] = 0;
 				return temp;
@@ -114,10 +114,7 @@ namespace countrybit
 
 			string_box& operator = (const string_box& _src)
 			{
-				if (_src.hdr != hdr) {
-					const char* s = _src.c_str();
-					copy(s);
-				}
+				hdr = _src.hdr;
 				return *this;
 			}
 

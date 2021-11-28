@@ -365,8 +365,7 @@ namespace countrybit
 
 				inline iterator end()
 				{
-					auto temp = base->dimensions();
-					return iterator(base, temp);
+					return iterator(base, maxd);
 				}
 
 				inline iterator operator++()
@@ -377,7 +376,13 @@ namespace countrybit
 						current.x = 0;
 						if (current.y >= maxd.y) {
 							current.z++;
-							current.y = 0;
+							if (current.z >= maxd.z) {
+								current = maxd;
+							}
+							else 
+							{
+								current.y = 0;
+							}
 						}
 					}
 					return iterator(base, current);
@@ -702,7 +707,7 @@ namespace countrybit
 
 			row_id_type create_string_field(create_string_field_request request)
 			{
-				return create_field(request.field_id, type_string, request.name, request.description, request, {}, {}, {}, {}, request.length + sizeof(string_box));
+				return create_field(request.field_id, type_string, request.name, request.description, request, {}, {}, {}, {}, string_box::get_box_size(request.length));
 			}
 
 			row_id_type create_time_field(create_time_field_request request)
@@ -746,6 +751,9 @@ namespace countrybit
 				auto& p = pcr.parent();
 				int64_t sizeb = pcr.parent().class_size_bytes;
 				request.class_size_bytes = sizeb;
+				if (request.dim.x == 0) request.dim.x = 1;
+				if (request.dim.y == 0) request.dim.y = 1;
+				if (request.dim.z == 0) request.dim.z = 1;
 				request.total_size_bytes = request.dim.x * request.dim.y * request.dim.z * sizeb ;
 				return create_field(request.field_id, type_object, request.name, request.description, {}, {}, {}, {}, request, request.total_size_bytes);
 			}
