@@ -556,6 +556,19 @@ namespace countrybit
 			count = 42;
 			qty = 40.22;
 
+			pa = people.create_object(people_field_id);
+			sl = pa.get_slice(0);
+			last_name = sl.get_string(0);
+			first_name = sl.get_string(1);
+			birthday = sl.get_time(2);
+			count = sl.get_int64(3);
+			qty = sl.get_double(4);
+			last_name = "last 5 really long test 12345 abcde 67890 fghij 12345 klmno 67890 pqrst";
+			first_name = "first 5 really long test 12345 abcde 67890 fghij 12345 klmno 67890 pqrst";
+			birthday = 900000;
+			count = 52;
+			qty = 50.22;
+
 			for (auto pers : people)
 			{
 				sl = pers.get_slice(0);
