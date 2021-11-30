@@ -90,15 +90,19 @@ namespace countrybit
 
 		size_t jslice::get_offset(jtype field_type_id, int field_idx)
 		{
+#if _DEBUG
 			if (schema == nullptr || class_field_id == null_row || bytes == nullptr) {
 				throw std::logic_error("slice is not initialized");
 			}
+#endif
 			jclass_field& jcf = the_class.child(field_idx);
+#if _DEBUG
 			jfield jf = schema->get_field(jcf.field_id);
 			if (jf.type_id != field_type_id) 
 			{
 				throw std::invalid_argument("Invalid field type " + std::to_string(field_type_id) + " for field idx " + std::to_string(field_idx));
 			}
+#endif
 			return jcf.offset;
 		}
 
@@ -251,7 +255,6 @@ namespace countrybit
 		dimensions_type jarray::dimensions()
 		{
 			jfield& field = schema->get_field(class_field_id);
-			jclass the_class = schema->get_class(field.type_id);
 			dimensions_type& dim = field.object_properties.dim;
 			return dim;
 		}
@@ -268,13 +271,14 @@ namespace countrybit
 		jslice jarray::get_slice(dimensions_type dims)
 		{
 			jfield& field = schema->get_field(class_field_id);
-			jclass the_class = schema->get_class(field.type_id);
 			dimensions_type dim = field.object_properties.dim;
+#if _DEBUG
 			if ((dims.x >= dim.x) ||
 				(dims.y >= dim.y) ||
 				(dims.z >= dim.z)) {
 				throw std::invalid_argument("field " + field.name + " out of range.");
 			}
+#endif
 			char* b = &bytes[ ((dims.z * dim.y * dim.x) + (dims.y * dim.x) + dims.x ) * field.object_properties.class_size_bytes ];
 			jslice slice(schema, class_field_id, b, dims);
 			return slice;
@@ -282,7 +286,7 @@ namespace countrybit
 
 		void jschema::create_standard_fields() 
 		{
-			create_string_field_request string_fields[32] = {
+			create_string_field_request string_fields[33] = {
 				{ field_full_name, jtype::type_string , "fullName", "Full Name", 75, "", "" },
 				{ field_first_name, jtype::type_string , "firstName", "First Name", 50, "", "" },
 				{ field_last_name, jtype::type_string , "lastName", "Last Name", 50, "", "" },
@@ -314,7 +318,8 @@ namespace countrybit
 				{ field_caption, jtype::type_string, "caption", "Caption", 200, "", "" },
 				{ field_paragraph, jtype::type_string, "paragraph", "Paragraph", 4000, "", "" },
 				{ field_mime_type, jtype::type_string, "mimeType", "MimeType", 100, "", "" },
-				{ field_base64_block, jtype::type_string, "base64", "Base64", 100, "", "" }
+				{ field_base64_block, jtype::type_string, "base64", "Base64", 100, "", "" },
+				{ field_file_name, jtype::type_string, "fileName", "fileName", 512, "", "" }
 			};
 
 			create_time_field_request time_fields[2] = {
@@ -326,7 +331,7 @@ namespace countrybit
 				{ field_count, jtype::type_int64, "count", "Count", 0, INT64_MAX },
 			};
 
-			create_double_field_request double_fields[14] = {
+			create_double_field_request double_fields[22] = {
 				{ field_quantity, jtype::type_float64, "quantity", "Quantity", -1E40, 1E40 },
 				{ field_latitude, jtype::type_float64, "latitude", "Latitude", -90, 90 },
 				{ field_longitude, jtype::type_float64, "longitude", "Longitude", -180, 180 },
@@ -340,7 +345,15 @@ namespace countrybit
 				{ field_amperes, jtype::type_float64, "amperes", "Amperes", -1E40, 1E40 },
 				{ field_kelvin, jtype::type_float64, "kelvin", "Kelvin", -1E40, 1E40 },
 				{ field_mole, jtype::type_float64, "moles", "Moles", -1E40, 1E40 },
-				{ field_candela, jtype::type_float64, "candels", "Candels", -1E40, 1E40 }
+				{ field_height, jtype::type_float64, "height", "Height", 0, 100000 },
+				{ field_width, jtype::type_float64, "width", "Width", 0, 100000 },
+				{ field_x, jtype::type_float32, "x", "X", -100000, 100000 },
+				{ field_y, jtype::type_float32, "y", "Y", -100000, 100000 },
+				{ field_z, jtype::type_float32, "z", "Z", -100000, 100000 },
+				{ field_red, jtype::type_float32, "red", "red", 0, 1 },
+				{ field_green, jtype::type_float32, "green", "green", 0, 1 },
+				{ field_blue, jtype::type_float32, "blue", "blue", 0, 1 },
+				{ field_alpha, jtype::type_float32, "alpha", "alpha", 0, 1 }
 			};
 
 			for (int i = 0; i < sizeof(string_fields) / sizeof(string_fields[0]); i++) {
@@ -585,11 +598,106 @@ namespace countrybit
 
 		bool array_tests()
 		{
-			return true;
-		}
+			dynamic_box box;
+			box.init(1 << 21);
 
-		bool slice_tests()
-		{
+			jschema schema;
+			row_id_type schema_id;
+
+			schema = jschema::create_schema(&box, 10, 200, 500, schema_id);
+			schema.create_standard_fields();
+
+			countrybit::database::jschema::create_class_request sprite_frame;
+
+			sprite_frame.class_name = "spriteframe";
+			sprite_frame.class_description = "sprite frame";
+			sprite_frame.field_ids = { field_shortname, field_x, field_y, field_width, field_height };
+			row_id_type sprite_frame_class_id = schema.create_class(sprite_frame);
+
+			if (sprite_frame_class_id == null_row) {
+				std::cout << "class create failed failed" << __LINE__ << std::endl;
+				return false;
+			}
+
+			countrybit::database::jschema::create_object_field_request of;
+			of.class_id = sprite_frame_class_id;
+			of.dim = { 10, 10, 1 };
+			of.name = "spriteframe20";
+			of.description = "spriteframe20";
+
+			row_id_type sprite_frame_field_id = schema.create_object_field(of);
+
+			if (sprite_frame_field_id == null_row) {
+				std::cout << "object field create failed" << __LINE__ << std::endl;
+				return false;
+			}
+
+			countrybit::database::jschema::create_class_request sprite_class;
+			sprite_class.class_name = "sprite";
+			sprite_class.class_description = "sprite";
+			sprite_class.field_ids = { field_shortname, field_width, field_height, sprite_frame_field_id };
+			row_id_type sprite_class_id = schema.create_class(sprite_frame);
+
+			if (sprite_class_id == null_row) {
+				std::cout << "class create failed failed" << __LINE__ << std::endl;
+				return false;
+			}
+
+			countrybit::database::jschema::create_object_field_request sprite_field;
+			sprite_field.class_id = sprite_class_id;
+			sprite_field.description = "sprite field with 20 frames";
+			sprite_field.name = "sprite20";
+			sprite_field.dim = { 1, 1, 1 };
+			sprite_field.field_id = schema.create_field();
+			row_id_type sprite_field_id = schema.create_object_field(sprite_field);
+
+			collection_id_type colid;
+
+			init_collection_id(colid);
+
+			jcollection sprites = schema.create_collection(&box, colid, 50, sprite_field_id);
+
+			for (int i = 0; i < 10; i++) {
+				auto new_object = sprites.create_object(sprite_field_id);
+				auto slice = new_object.get_slice(0);
+
+				auto image_name = slice.get_string(0);
+				auto frame_width = slice.get_float(1);
+				auto frame_height = slice.get_float(2);
+
+				auto frame_array = slice.get_object(3);
+
+				image_name = std::format("{} #{}", "image", i);
+				frame_width = 1000;
+				frame_height = 1000;
+
+				for (auto frame : frame_array) 
+				{
+					auto dim = frame.get_dim();
+					auto frame_name = frame.get_string(0);
+					auto x = frame.get_float(1);
+					auto y = frame.get_float(2);
+					auto width = frame.get_float(3);
+					auto height = frame.get_float(4);
+					frame_name = std::format("{} #{}", "frame", frame.get_dim().x);
+					x = dim.x * 100.0;
+					y = dim.y * 100.0;
+					width = 100.0;
+					height = 100.0;
+				}
+			}
+
+			for (auto item : sprites)
+			{
+				auto slice = item.get_slice(0);
+				std::cout << std::format("{} {}x{}", slice.get_string(0).value(), slice.get_float(1).value(), slice.get_float(2).value()) << std::endl;
+
+				for (auto frame : slice.get_object(3))
+				{
+					std::cout << std::format("{} {}x{} - {}x{}", slice.get_string(0).value(), slice.get_float(1).value(), slice.get_float(2).value(), slice.get_float(3).value(), slice.get_float(4).value()) << std::endl;
+				}
+			}
+
 			return true;
 		}
 

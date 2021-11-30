@@ -76,7 +76,7 @@ namespace countrybit
 
 		template <typename integer> 
 		requires (std::numeric_limits<integer>::is_integer)
-		class integer_box : boxed<integer>
+		class integer_box : protected boxed<integer>
 		{
 		public:
 			integer_box(char* t) : boxed<integer>(t)
@@ -96,12 +96,18 @@ namespace countrybit
 				return *this;
 			}
 
-			operator integer& () { return (integer&)(*((boxed<integer> *)this)); }
+			operator integer& () 
+			{ 
+				integer& t = *boxed<integer>::get_data();
+				return t; 
+			}
 
 			static integer random()
 			{
-				::random();
+				return ::random();
 			}
+
+			integer value() const { return boxed<integer>::get_value(); }
 
 			bool has_single_bit()
 			{

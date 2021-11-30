@@ -64,6 +64,7 @@ namespace countrybit
 
 			operator time_t& () { return *data; }
 			time_t* get_data() { return data; }
+			time_t value() const { return *data; }
 		};
 
 		std::ostream& operator <<(std::ostream& output, time_box& src);

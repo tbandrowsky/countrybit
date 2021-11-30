@@ -235,7 +235,7 @@ namespace countrybit
 
 		template <typename floating_point> 
 		requires (std::is_floating_point<floating_point>::value)
-		class fp_box : boxed<floating_point>
+		class fp_box : protected boxed<floating_point>
 		{
 		public:
 			fp_box(char* t) : boxed<floating_point>(t)
@@ -255,180 +255,190 @@ namespace countrybit
 				return *this;
 			}
 
-			floating_point abs()
+			floating_point value() const 
+			{ 
+				return boxed<floating_point>::get_value(); 
+			}
+
+			floating_point abs() const
 			{
 				return std::abs(*this);
 			}
 
-			floating_point is_nan()
+			floating_point is_nan() const
 			{
 				return std::isnan(*this);
 			}
-			floating_point is_normal()
+			floating_point is_normal() const
 			{
 				return std::isnormal(*this);
 			}
-			floating_point is_unordered()
+			floating_point is_unordered() const
 			{
 				return std::isunordered(*this);
 			}
 
-			floating_point exp()
+			floating_point exp() const
 			{
 				return std::exp(*this);
 			}
 
-			floating_point exp2()
+			floating_point exp2() const
 			{
 				return std::exp2(*this);
 			}
 
-			floating_point expm1()
+			floating_point expm1() const
 			{
 				return std::expm1(*this);
 			}
 
-			floating_point log()
+			floating_point log() const
 			{
 				return std::log(*this);
 			}
 
-			floating_point log2()
+			floating_point log2() const
 			{
 				return std::log2(*this);
 			}
 
-			floating_point log10()
+			floating_point log10() const
 			{
 				return std::log10(*this);
 			}
 
-			floating_point loglp()
+			floating_point loglp() const
 			{
 				return std::log1p(*this);
 			}
 
-			floating_point pow(floating_point m2)
+			floating_point pow(floating_point m2) const
 			{
 				return std::pow(*this, m2);
 			}
 
-			floating_point sqrt()
+			floating_point sqrt() const
 			{
 				return std::sqrt(*this);
 			}
 
-			floating_point cbrt()
+			floating_point cbrt() const
 			{
 				return std::cbrt(*this);
 			}
 
-			floating_point sin()
+			floating_point sin() const
 			{
 				return std::sin(*this);
 			}
 
-			floating_point cos()
+			floating_point cos() const
 			{
 				return std::cos(*this);
 			}
 
-			floating_point tan()
+			floating_point tan() const
 			{
 				return std::tan(*this);
 			}
 
-			floating_point asin()
+			floating_point asin() const
 			{
 				return std::asin(*this);
 			}
 
-			floating_point acos()
+			floating_point acos() const
 			{
 				return std::acos(*this);
 			}
 
-			floating_point atan()
+			floating_point atan() const
 			{
 				return std::atan(*this);
 			}
 
-			floating_point atan2()
+			floating_point atan2() const
 			{
 				return std::atan2(*this);
 			}
 
-			floating_point sinh()
+			floating_point sinh() const
 			{
 				return std::sinh(*this);
 			}
 
-			floating_point cosh()
+			floating_point cosh() const
 			{
 				return std::cosh(*this);
 			}
 
-			floating_point tanh()
+			floating_point tanh() const
 			{
 				return std::tanh(*this);
 			}
 
-			floating_point asinh()
+			floating_point asinh() const
 			{
 				return std::asinh(*this);
 			}
 
-			floating_point acosh()
+			floating_point acosh() const
 			{
 				return std::acosh(*this);
 			}
 
-			floating_point atanh()
+			floating_point atanh() const
 			{
 				return std::atanh(*this);
 			}
 
-			floating_point tgamma()
+			floating_point tgamma() const
 			{
 				return std::tgamma(*this);
 			}
 
-			floating_point lgamma()
+			floating_point lgamma() const
 			{
 				return std::lgamma(*this);
 			}
 
-			floating_point ceil()
+			floating_point ceil() const
 			{
 				return std::ceil(*this);
 			}
 
-			floating_point floor()
+			floating_point floor() const
 			{
 				return std::floor(*this);
 			}
 
-			floating_point trunc()
+			floating_point trunc() const
 			{
 				return std::trunc(*this);
 			}
 
-			floating_point round()
+			floating_point round() const
 			{
 				return std::round(*this);
 			}
 
-			floating_point nearbyint()
+			floating_point nearbyint() const
 			{
 				return std::nearbyint(*this);
 			}
 
-			floating_point rint()
+			floating_point rint() const
 			{
 				return std::rint(*this);
 			}
 
-			operator floating_point& () { return boxed::operator(); }
+			operator floating_point& ()
+			{
+				floating_point& t = *boxed<floating_point>::get_data();
+				return t;
+			}
+
 		};
 
 		template<typename T> int compare(const fp_box<T>& a, const fp_box<T>& b)

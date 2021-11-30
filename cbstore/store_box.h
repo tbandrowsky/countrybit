@@ -357,7 +357,7 @@ namespace countrybit
 				return *this;
 			}
 
-			operator T&() { return *data; }
+			T get_value() const { return *data; }
 			T* get_data() { return data; }
 		};
 

@@ -129,6 +129,11 @@ namespace countrybit
 				return &hdr->data[0];
 			}
 
+			std::string value() const
+			{
+				return std::string(c_str());
+			}
+
 			uint16_t size() const
 			{
 				return hdr->length;
@@ -188,6 +193,11 @@ namespace countrybit
 			}
 
 			const char* c_str() const
+			{
+				return &data[0];
+			}
+
+			const char* value() const
 			{
 				return &data[0];
 			}
