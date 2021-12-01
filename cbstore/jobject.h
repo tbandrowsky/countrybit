@@ -20,6 +20,7 @@
 #include "time_box.h"
 #include "string_box.h"
 #include "sorted_index.h"
+#include <cassert>
 
 namespace countrybit
 {
@@ -619,7 +620,6 @@ field_alpha = 92;
 				std::string class_name;
 				std::string class_description;
 				std::vector<row_id_type> field_ids;
-				std::vector<create_object_field_request> child_classes;
 			};
 
 			jschema() = default;
@@ -704,6 +704,7 @@ field_alpha = 92;
 
 				auto& jf = fields[_field_id];
 
+				jf.field_id = _field_id;
 				jf.type_id = _field_type;
 				jf.name = _name;
 				jf.description = _description;
@@ -760,6 +761,7 @@ field_alpha = 92;
 
 			row_id_type create_object_field(create_object_field_request request)
 			{
+				assert(request.field_id > 0);
 				auto pcr = classes[ request.class_id ];
 				auto& p = pcr.parent();
 				int64_t sizeb = pcr.parent().class_size_bytes;

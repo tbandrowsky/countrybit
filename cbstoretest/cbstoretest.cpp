@@ -26,6 +26,7 @@ int main()
     index_tests();
     countrybit::database::schema_tests();
     countrybit::database::collection_tests();
+    countrybit::database::array_tests();
     queue_tests();
 }
 

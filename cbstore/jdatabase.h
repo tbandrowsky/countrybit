@@ -4,15 +4,32 @@
 #include <list>
 #include <fstream>
 #include <algorithm>
-#include "skip_list.h"
 #include <thread>
 #include <atomic>
+
+#include "jobject.h"
 
 namespace countrybit
 {
 	namespace database
 	{
 
+
+		class query_term
+		{
+		public:
+
+		};
+
+		class query
+		{
+		public:
+		};
+
+		class database
+		{
+
+		};
 	}
 };
 

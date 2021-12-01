@@ -24,7 +24,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)int_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)sorted_index.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)jobject.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)jcollection.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)jdatabase.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)string_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)messages.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)queue.h" />

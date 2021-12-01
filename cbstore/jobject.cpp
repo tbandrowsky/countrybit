@@ -166,6 +166,14 @@ namespace countrybit
 					}
 					break;
 				case type_object:
+					{
+						jarray ja(schema, jcf.field_id, c);
+
+						for (auto jai : ja)
+						{
+							jai.construct();
+						}
+					}
 					break;
 				case type_object_id:
 					break;
@@ -230,19 +238,20 @@ namespace countrybit
 
 		jarray jslice::get_object(int field_idx)
 		{
+#if _DEBUG
 			if (schema == nullptr || class_field_id == null_row || bytes == nullptr) {
 				throw std::logic_error("slice is not initialized");
 			}
-
-			auto the_class = schema->get_class(class_field_id);
+#endif
 			jclass_field& jcf = the_class.child(field_idx);
+#if _DEBUG
 			jfield jf = schema->get_field(jcf.field_id);
 			if (jf.type_id != jtype::type_object) {
 				throw std::invalid_argument("Invalid field type " + std::to_string(jtype::type_object) + " for field idx " + std::to_string(field_idx));
 			}
-
+#endif
 			char *b = &bytes[jcf.offset];
-			jarray jerry(schema, field_idx, b);
+			jarray jerry(schema, jcf.field_id, b);
 			return jerry;
 		}
 
@@ -268,19 +277,19 @@ namespace countrybit
 			return get_slice(dims);
 		}
 
-		jslice jarray::get_slice(dimensions_type dims)
+		jslice jarray::get_slice(dimensions_type pos)
 		{
 			jfield& field = schema->get_field(class_field_id);
 			dimensions_type dim = field.object_properties.dim;
 #if _DEBUG
-			if ((dims.x >= dim.x) ||
-				(dims.y >= dim.y) ||
-				(dims.z >= dim.z)) {
+			if ((pos.x >= dim.x) ||
+				(pos.y >= dim.y) ||
+				(pos.z >= dim.z)) {
 				throw std::invalid_argument("field " + field.name + " out of range.");
 			}
 #endif
-			char* b = &bytes[ ((dims.z * dim.y * dim.x) + (dims.y * dim.x) + dims.x ) * field.object_properties.class_size_bytes ];
-			jslice slice(schema, class_field_id, b, dims);
+			char* b = &bytes[ ((pos.z * dim.y * dim.x) + (pos.y * dim.x) + pos.x ) * field.object_properties.class_size_bytes ];
+			jslice slice(schema, class_field_id, b, pos);
 			return slice;
 		}
 
@@ -345,8 +354,8 @@ namespace countrybit
 				{ field_amperes, jtype::type_float64, "amperes", "Amperes", -1E40, 1E40 },
 				{ field_kelvin, jtype::type_float64, "kelvin", "Kelvin", -1E40, 1E40 },
 				{ field_mole, jtype::type_float64, "moles", "Moles", -1E40, 1E40 },
-				{ field_height, jtype::type_float64, "height", "Height", 0, 100000 },
-				{ field_width, jtype::type_float64, "width", "Width", 0, 100000 },
+				{ field_height, jtype::type_float32, "height", "Height", 0, 100000 },
+				{ field_width, jtype::type_float32, "width", "Width", 0, 100000 },
 				{ field_x, jtype::type_float32, "x", "X", -100000, 100000 },
 				{ field_y, jtype::type_float32, "y", "Y", -100000, 100000 },
 				{ field_z, jtype::type_float32, "z", "Z", -100000, 100000 },
@@ -607,12 +616,12 @@ namespace countrybit
 			schema = jschema::create_schema(&box, 10, 200, 500, schema_id);
 			schema.create_standard_fields();
 
-			countrybit::database::jschema::create_class_request sprite_frame;
+			countrybit::database::jschema::create_class_request sprite_frame_request;
 
-			sprite_frame.class_name = "spriteframe";
-			sprite_frame.class_description = "sprite frame";
-			sprite_frame.field_ids = { field_shortname, field_x, field_y, field_width, field_height };
-			row_id_type sprite_frame_class_id = schema.create_class(sprite_frame);
+			sprite_frame_request.class_name = "spriteframe";
+			sprite_frame_request.class_description = "sprite frame";
+			sprite_frame_request.field_ids = { field_shortname, field_x, field_y, field_width, field_height };
+			row_id_type sprite_frame_class_id = schema.create_class(sprite_frame_request);
 
 			if (sprite_frame_class_id == null_row) {
 				std::cout << "class create failed failed" << __LINE__ << std::endl;
@@ -620,6 +629,7 @@ namespace countrybit
 			}
 
 			countrybit::database::jschema::create_object_field_request of;
+			of.field_id = schema.create_field();
 			of.class_id = sprite_frame_class_id;
 			of.dim = { 10, 10, 1 };
 			of.name = "spriteframe20";
@@ -632,11 +642,11 @@ namespace countrybit
 				return false;
 			}
 
-			countrybit::database::jschema::create_class_request sprite_class;
-			sprite_class.class_name = "sprite";
-			sprite_class.class_description = "sprite";
-			sprite_class.field_ids = { field_shortname, field_width, field_height, sprite_frame_field_id };
-			row_id_type sprite_class_id = schema.create_class(sprite_frame);
+			countrybit::database::jschema::create_class_request sprite_class_request;
+			sprite_class_request.class_name = "sprite";
+			sprite_class_request.class_description = "sprite";
+			sprite_class_request.field_ids = { field_shortname, field_width, field_height, sprite_frame_field_id };
+			row_id_type sprite_class_id = schema.create_class(sprite_class_request);
 
 			if (sprite_class_id == null_row) {
 				std::cout << "class create failed failed" << __LINE__ << std::endl;
@@ -644,11 +654,11 @@ namespace countrybit
 			}
 
 			countrybit::database::jschema::create_object_field_request sprite_field;
+			sprite_field.field_id = schema.create_field();
 			sprite_field.class_id = sprite_class_id;
 			sprite_field.description = "sprite field with 20 frames";
 			sprite_field.name = "sprite20";
 			sprite_field.dim = { 1, 1, 1 };
-			sprite_field.field_id = schema.create_field();
 			row_id_type sprite_field_id = schema.create_object_field(sprite_field);
 
 			collection_id_type colid;
@@ -679,7 +689,7 @@ namespace countrybit
 					auto y = frame.get_float(2);
 					auto width = frame.get_float(3);
 					auto height = frame.get_float(4);
-					frame_name = std::format("{} #{}", "frame", frame.get_dim().x);
+					frame_name = std::format("{} #{}", "frame", dim.x);
 					x = dim.x * 100.0;
 					y = dim.y * 100.0;
 					width = 100.0;
@@ -692,9 +702,10 @@ namespace countrybit
 				auto slice = item.get_slice(0);
 				std::cout << std::format("{} {}x{}", slice.get_string(0).value(), slice.get_float(1).value(), slice.get_float(2).value()) << std::endl;
 
-				for (auto frame : slice.get_object(3))
+				auto frames = slice.get_object(3);
+				for (auto frame : frames)
 				{
-					std::cout << std::format("{} {}x{} - {}x{}", slice.get_string(0).value(), slice.get_float(1).value(), slice.get_float(2).value(), slice.get_float(3).value(), slice.get_float(4).value()) << std::endl;
+					std::cout << std::format("{} {}x{} - {}x{}", frame.get_string(0).value(), frame.get_float(1).value(), frame.get_float(2).value(), frame.get_float(3).value(), frame.get_float(4).value()) << std::endl;
 				}
 			}
 
