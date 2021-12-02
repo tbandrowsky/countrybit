@@ -359,6 +359,7 @@ namespace countrybit
 
 			T get_value() const { return *data; }
 			T* get_data() { return data; }
+			T& get_data_ref() { return data; }
 		};
 
 		template<typename T> int compare(const boxed<T>& a, const boxed<T>& b)
@@ -444,6 +445,8 @@ namespace countrybit
 		using basic_float_box = boxed<float>;
 		using basic_double_box = boxed<double>;
 		using basic_time_box = boxed<time_t>;
+		using basic_collection_id_box = boxed<collection_id_type>;
+		using basic_object_id_box = boxed<object_id_type>;
 
 	}
 }

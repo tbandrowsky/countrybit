@@ -435,7 +435,7 @@ namespace countrybit
 
 			operator floating_point& ()
 			{
-				floating_point& t = *boxed<floating_point>::get_data();
+				floating_point& t = boxed<floating_point>::get_data_ref();
 				return t;
 			}
 

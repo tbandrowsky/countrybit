@@ -98,7 +98,7 @@ namespace countrybit
 
 			operator integer& () 
 			{ 
-				integer& t = *boxed<integer>::get_data();
+				integer& t = boxed<integer>::get_data_ref();
 				return t; 
 			}
 

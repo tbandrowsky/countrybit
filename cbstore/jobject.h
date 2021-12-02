@@ -19,6 +19,8 @@
 #include "float_box.h"
 #include "time_box.h"
 #include "string_box.h"
+#include "collection_id_box.h"
+#include "object_id_box.h"
 #include "sorted_index.h"
 #include <cassert>
 
@@ -136,22 +138,11 @@ field_z = 89,
 field_red = 90,
 field_green = 91,
 field_blue = 92,
-field_alpha = 92;
+field_alpha = 93,
 
+field_collection_id = 94,
+field_object_id = 95;
 
-		struct collection_id_type
-		{
-			unsigned long  Data1;
-			unsigned short Data2;
-			unsigned short Data3;
-			unsigned char  Data4[8];
-		};
-
-		struct object_id_type
-		{
-			collection_id_type collection_id;
-			row_id_type	  row_id;
-		};
 
 		using object_name = istring<32>;
 		using object_description = istring<250>;
@@ -304,6 +295,8 @@ field_alpha = 92;
 			time_box get_time(int field_idx);
 			string_box get_string(int field_idx);
 			jarray get_object(int field_idx);
+			collection_id_box get_collection_id(int field_idx);
+			object_id_box get_object_id(int field_idx);
 			int size();
 		};
 
