@@ -17,7 +17,10 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)application.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)collection_id_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)constants.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)point_box.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)query_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)object_id_box.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)rect_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)time_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)file.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)float_box.h" />
@@ -41,6 +44,8 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)file.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)function.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)object_id_box.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)point_box.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)query_box.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)string_box.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)sorted_index.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)jobject.cpp" />

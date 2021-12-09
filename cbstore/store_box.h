@@ -26,6 +26,7 @@ namespace countrybit
 			x = c.top();
 			b = c.data();
 			l = c.pack(d);
+			l = c.reserve(s);
 			l = c.pack(d, x);
 			l = c.pack(&d, x);
 //			pd = c.unpack(l);
@@ -150,6 +151,16 @@ namespace countrybit
 				return placement;
 			}
 
+			int reserve(int length)
+			{
+				size_t sz = length;
+				size_t placement = _top;
+				size_t new_top = placement + sz;
+				if (new_top > _size)
+					return -1;
+				return placement;
+			}
+
 		};
 
 		template <size_t bytes> 
@@ -238,6 +249,11 @@ namespace countrybit
 			{
 				return get_box()->pack<T>(src, length);
 			}
+
+			int reserve(int length)
+			{
+				return get_box()->reserve(length);
+			}
 		};
 
 
@@ -323,6 +339,12 @@ namespace countrybit
 			{
 				return get_box()->pack<T>(src, length);
 			}
+
+			int reserve(int length)
+			{
+				return get_box()->reserve(length);
+			}
+
 		};
 
 		template <typename T>

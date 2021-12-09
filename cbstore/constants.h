@@ -20,7 +20,9 @@ namespace countrybit
 			type_object = 8,
 			type_object_id = 9,
 			type_collection_id = 10,
-			type_string = 11
+			type_string = 11,
+
+			type_query = 12
 		};
 
 		typedef int32_t row_id_type;

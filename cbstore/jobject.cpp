@@ -255,6 +255,16 @@ namespace countrybit
 			return jerry;
 		}
 
+		collection_id_box jslice::get_collection_id(int field_idx)
+		{
+			return jslice::get_boxed<collection_id_box>(jtype::type_collection_id, field_idx);
+		}
+
+		object_id_box jslice::get_object_id(int field_idx)
+		{
+			return jslice::get_boxed<object_id_box>(jtype::type_object_id, field_idx);
+		}
+
 		int jslice::size()
 		{
 			auto the_class = schema->get_class(class_field_id);
