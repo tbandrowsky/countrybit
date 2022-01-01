@@ -8,19 +8,31 @@ namespace countrybit
 {
 	namespace system
 	{
-		class result_base
+		class base_result
 		{
 		public:
 			bool success;
 			std::string message;
 
-			result_base() : success(true)
+			base_result() : success(true)
 			{
 				;
 			}
 		};
 
-		class os_result : public result_base
+		class base_parse_result : public base_result
+		{
+		public:
+			int char_offset;
+			int line_number;
+
+			base_parse_result() : char_offset(0), line_number(0)
+			{
+				;
+			}
+		};
+
+		class os_result : public base_result
 		{
 		public:
 

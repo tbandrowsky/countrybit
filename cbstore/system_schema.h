@@ -1,4 +1,5 @@
 #pragma once
+#pragma once
 
 #include <vector>
 #include <list>
@@ -15,20 +16,19 @@ namespace countrybit
 {
 	namespace database
 	{
-		class jdatabase
+		class system_schema
 		{
-			dynamic_box data_box;
-			countrybit::system::file data_file;
-
-
+			dynamic_box schema_box;
 			jschema schema;
 
-			jdatabase();
+			row_id_type create_database_request_id;
+			row_id_type open_database_request_id;
 
 		public:
 
-			static jcollection create_database(jcollection& request);
-			static jcollection open_database(jcollection& response);
+			system_schema();
+
+			static jcollection parse_schema( row_id_type message_type, std::string& message );
 
 		};
 	}

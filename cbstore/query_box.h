@@ -1,6 +1,7 @@
 #pragma once
 
 #include "store_box.h"
+#include "array_box.h"
 #include <ostream>
 #include <bit>
 
@@ -27,58 +28,26 @@ namespace countrybit
 		struct query_element
 		{
 		public:
-			row_id_type				field_id;
-			row_id_type				compared_field_id;
-			double					distance_threshold;
+			row_id_type				target_field_id;
 			query_comparison_types	comparison;
+			row_id_type				parameter_field_id;
+			double					distance_threshold;
 		};
 
-		template <int length_items> struct iquery
+		template <typename query> concept query_path =
+		requires (query a, int b, query_element c, collection_id_type ci) 
 		{
-			query_element data[length_items];
-			uint32_t length;
-
-			iquery() = default;
-
-			iquery(const std::vector<query_element>& src)
-			{
-				copy(src.data(), src.size());
-			}
-
-			iquery& operator = (const std::vector<query_element>& src)
-			{
-				copy(src.data(), src.size());
-			}
-
-			const query_element* value() const
-			{
-				return &data[0];
-			}
-
-			uint16_t size() const
-			{
-				return length;
-			}
-
-			void copy(int srclength, query_element *src)
-			{
-				int last_char = length_items - 1;
-
-				query_element* d = &data[0];
-				length = 0;
-
-				while (length <= last_char && srclength)
-				{
-					*d = *s;
-					length++;
-					s++;
-					d++;
-					srclength--;
-				}
-			}
-
+			c = a[b];
+			b = a.size();
+			ci = a.collection_id();
 		};
 
+		template <int max_items> 
+		class iquery 
+		{
+		public:
+			iarray<query_element, max_items> terms;
+			istring<255> collection_template_name;
+		};
 	}
-
 }

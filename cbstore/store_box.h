@@ -151,7 +151,7 @@ namespace countrybit
 				return placement;
 			}
 
-			int reserve(int length)
+			size_t reserve(int length)
 			{
 				size_t sz = length;
 				size_t placement = _top;
@@ -255,7 +255,6 @@ namespace countrybit
 				return get_box()->reserve(length);
 			}
 		};
-
 
 		class dynamic_box
 		{
@@ -381,7 +380,7 @@ namespace countrybit
 
 			T get_value() const { return *data; }
 			T* get_data() { return data; }
-			T& get_data_ref() { return data; }
+			T& get_data_ref() { return *data; }
 		};
 
 		template<typename T> int compare(const boxed<T>& a, const boxed<T>& b)

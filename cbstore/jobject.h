@@ -307,6 +307,9 @@ namespace countrybit
 			collection_id_box get_collection_id(int field_idx);
 			object_id_box get_object_id(int field_idx);
 			int size();
+
+			std::string_view parse(std::string_view& _src, int index);
+			std::string to_json();
 		};
 
 		class jarray
@@ -436,6 +439,9 @@ namespace countrybit
 				return iterator(this, temp);
 			}
 
+			std::string_view parse(std::string_view& _src, int index);
+			std::string to_json();
+
 		};
 
 		class jcollection
@@ -461,6 +467,9 @@ namespace countrybit
 			}
 
 			jarray create_object(row_id_type _class_field_id);
+
+			int parse(std::string& _src, int index);
+			std::string to_json();
 
 			jarray get_object(row_id_type _object_id)
 			{
