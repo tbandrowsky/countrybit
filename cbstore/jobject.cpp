@@ -303,35 +303,6 @@ namespace countrybit
 			return slice;
 		}
 
-		// parsing
-
-		int jslice::parse(std::string_view _src, int index)
-		{
-
-		}
-		std::string jslice::to_json()
-		{
-
-		}
-
-		int jarray::parse(std::string_view _src, int index)
-		{
-
-		}
-		std::string jarray::to_json()
-		{
-
-		}
-
-		int jcollection::parse(std::string_view _src, int index)
-		{
-
-		}
-		std::string jcollection::to_json()
-		{
-
-		}
-
 		//
 
 		void jschema::create_standard_fields() 

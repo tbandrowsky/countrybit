@@ -1,4 +1,3 @@
-
 #include "json_parse.h"
 #include <charconv>
 
@@ -6,9 +5,20 @@ namespace countrybit
 {
 	namespace system
 	{
-		void parser::skip_whitespace() 
+		void parser::skip_whitespace()
 		{
 			while (get_space());
+		}
+
+		int parser::get_pattern_count(int& start_index, const std::function<bool(char c)>& matches)
+		{
+			int count = 0;
+			char c = at(start_index);
+			while (matches(c)) {
+				start_index++;
+				count++;
+			}
+			return count;
 		}
 
 		int parser::match(int start_index, int num_groups, match_group* group)
@@ -24,83 +34,34 @@ namespace countrybit
 				switch (group->search_type)
 				{
 				case match_group::search_types::digits:
-					while (std::isdigit(at(start_index))) {
-						start_index++;
-						count++;
-					}
+					count = get_pattern_count(start_index, [](char c) {return std::isdigit(c); });
 					break;
 				case match_group::search_types::digits_and_seps:
-					char c = at(start_index);
-					while (std::isdigit(c) || c == '_')
-					{
-						start_index++;
-						c = at(start_index);
-						count++;
-					}
+					count = get_pattern_count(start_index, [](char c) {return std::isdigit(c) || c == '_'; });
 					break;
 				case match_group::search_types::period:
-					while (at(start_index) == '.')
-					{
-						start_index++;
-						count++;
-					}
+					count = get_pattern_count(start_index, [](char c) {return c == '.'; });
 					break;
 				case match_group::search_types::space:
-					while (at(start_index) <= 32)
-					{
-						if (c == '\n')
-							line++;
-						start_index++;
-						count++;
-					}
+					count = get_pattern_count(start_index, [this](char c) { if (c == '\n') line++;  return c <= 32; });
 					break;
 				case match_group::search_types::plusminus:
-					char c = at(start_index);
-					while (c == '+' || c == '-' || c <= 32)
-					{
-						if (c == '\n')
-							line++;
-						start_index++;
-						c = at(start_index);
-						count++;
-					}
+					count = get_pattern_count(start_index, [](char c) { return c == '+' || c == '-'; });
 					break;
 				case match_group::search_types::E:
-					while (at(start_index) == 'E')
-					{
-						start_index++;
-						count++;
-					}
+					count = get_pattern_count(start_index, [](char c) { return c == 'E'; });
 					break;
 				case match_group::search_types::dollar:
-					while (at(start_index) == '$')
-					{
-						start_index++;
-						count++;
-					}
+					count = get_pattern_count(start_index, [](char c) { return c == '$'; });
 					break;
 				case match_group::search_types::comma:
-					while (at(start_index) == ',')
-					{
-						start_index++;
-						count++;
-					}
+					count = get_pattern_count(start_index, [](char c) { return c == ','; });
 					break;
 				case match_group::search_types::alpha:
-					while (std::isalpha(at(start_index)))
-					{
-						start_index++;
-						count++;
-					}
+					count = get_pattern_count(start_index, [](char c) { return std::isalpha(c); });
 					break;
 				case match_group::search_types::identifier:
-					char c = at(start_index);
-					while (std::isalpha(c) || std::isdigit(c) || c == '_')
-					{
-						start_index++;
-						c = at(start_index);
-						count++;
-					}
+					count = get_pattern_count(start_index, [](char c) { return std::isalnum(c) || c == '_'; });
 					break;
 				}
 
@@ -145,7 +106,7 @@ namespace countrybit
 
 			return original_start;
 		}
-		
+
 		get_number_result parser::get_number()
 		{
 			get_number_result result;
@@ -164,7 +125,7 @@ namespace countrybit
 					search_many
 				} search_counts;
 
-				enum class search_types 
+				enum class search_types
 				{
 					digits,
 					digits_and_seps,
@@ -180,8 +141,8 @@ namespace countrybit
 				int match;
 */
 
-			match_group groups[5] = { 
-				{ match_group::search_counts::search_optional_one, match_group::search_types::plusminus, 0 }, 
+			match_group groups[5] = {
+				{ match_group::search_counts::search_optional_one, match_group::search_types::plusminus, 0 },
 				{ match_group::search_counts::search_optional_many, match_group::search_types::space, 0 },
 				{ match_group::search_counts::search_many, match_group::search_types::digits, 0 },
 				{ match_group::search_counts::search_optional_one, match_group::search_types::period, 0 },
@@ -189,22 +150,22 @@ namespace countrybit
 			};
 
 			int match_end = match(index, 5, groups);
-			if (match_end) 
+			if (match_end)
 			{
 				const char* first = view.data() + index;
 				const char* last = view.data() + match_end;
-				auto fcr = std::from_chars( view.data() + index, view.data() + match_end, result.value );
-				if (fcr.ptr == first) 
+				auto fcr = std::from_chars(view.data() + index, view.data() + match_end, result.value);
+				if (fcr.ptr == first)
 				{
 					result.success = true;
 					index = match_end;
 				}
-				else 
+				else
 				{
 					result.message = "Invalid number";
 				}
 			}
-			else 
+			else
 			{
 				result.message = "Expected number";
 			}
@@ -228,15 +189,13 @@ namespace countrybit
 			int match_end = match(index, 2, groups);
 			if (match_end)
 			{
-				int l = (match_end - index) + 1;
-				int dest = data.reserve(l);
+				int dest = data.pack_extracted(view.data(), index, match_end, true);
 				char* c = data.unpack<char>(dest);
-				strncpy(c, view.data() + index, l);
 				result.success = true;
 				result.value = c;
 				index = match_end;
 			}
-			else 
+			else
 			{
 				result.message = "Expected identifier";
 				result.line_number = line;
@@ -249,51 +208,263 @@ namespace countrybit
 		get_string_result parser::get_string()
 		{
 			get_string_result result;
-			std::string buff;
+
 			result.success = false;
 			result.line_number = line;
 			result.char_offset = index;
 
 			char c = get_quote();
-			if (!c) {
-				result.message = "Expected string";
+			if (!c)
+			{
 				return result;
 			}
-			int maximum_string_size = 1 << 22;
-		
-			while ((c = get_quote()) && maximum_string_size--)
+
+			int maximum_string_size = 1 << 25;
+
+			result.value = nullptr;
+
+			c = get_string_char();
+			while (c && c != '"' && maximum_string_size)
 			{
-				if (c = get_escaped_quote())
+				int l = data.pack(c);
+				if (!result.value)
 				{
-					buff += c;
+					result.value = data.unpack<char>(l);
 				}
-				else if (c = get_escaped_char())
-				{
-					buff += c;
-				}
-				else 
-				{
-					buff += c;
-				}
+				maximum_string_size--;
+				c = get_string_char();
 			}
 
-			if (!maximum_string_size) {
+			char null = 0;
+			int l = data.pack(null);
+
+			if (!result.value)
+			{
+				result.value = data.unpack<char>(l);
+			}
+
+			if (c == '=')
+			{
+				index++;
+			}
+
+			if (!maximum_string_size)
+			{
 				result.message = "string too large";
+				return result;
 			}
 
+			result.success = true;
 			return result;
 		}
 
-		get_object_result parser::get_object()
+		parse_json_value_result parser::parse_json_value()
 		{
-			get_object_result result;
 
+			parse_json_value_result result;
+
+			result.line_number = line;
+			result.char_offset = index;
+			result.success = false;
+
+			pvalue* value = data.allocate<pvalue>(1);
+			value->next = nullptr;
+			result.value = value;
+
+			skip_whitespace();
+
+			char c = at(index);
+
+			switch (c) {
+			case '0':
+			case '1':
+			case '2':
+			case '3':
+			case '4':
+			case '5':
+			case '6':
+			case '7':
+			case '8':
+			case '9':
+			case '+':
+			case '-':
+			{
+				value->pvalue_type = pvalue::pvalue_types::double_value;
+				get_number_result gnr = get_number();
+				if (gnr.success) {
+					value->double_value = gnr.value;
+				}
+				else {
+					result.message = gnr.message;
+					return result;
+				}
+			}
+			break;
+			case '"':
+			{
+				value->pvalue_type = pvalue::pvalue_types::string_value;
+				get_string_result gnr = get_string();
+				if (gnr.success) {
+					value->string_value = gnr.value;
+				}
+				else {
+					result.message = gnr.message;
+					return result;
+				}
+			}
+			break;
+			case '{':
+			{
+				value->pvalue_type = pvalue::pvalue_types::object_value;
+				parse_json_object_result pjor = parse_json_object();
+				if (pjor.success) {
+					value->object_value = pjor.value;
+				}
+				else {
+					result.message = pjor.message;
+					return result;
+				}
+			}
+			break;
+			case '[':
+			{
+				value->pvalue_type = pvalue::pvalue_types::array_value;
+				parse_json_array_result pjar = parse_json_array();
+				if (pjar.success) {
+					value->array_value = pjar.value;
+				}
+				else {
+					result.message = pjar.message;
+					return result;
+				}
+			}
+			break;
+			case 0:
+				result.message = "expected value";
+				return result;
+			}
+			result.success = true;
 			return result;
 		}
 
-		get_array_result parser::get_array()
+		parse_json_object_result parser::parse_json_object()
 		{
-			get_array_result result;
+			parse_json_object_result result;
+
+			result.success = false;
+			result.line_number = line;
+			result.char_offset = index;
+
+			skip_whitespace();
+			char c = get_object_start();
+
+			if (c)
+			{
+				pobject* obj = data.allocate<pobject>(1);
+				obj->first = nullptr;
+				obj->num_members = 0;
+
+				pmember* last_member = nullptr;
+
+				skip_whitespace();
+				while (c != '}')
+				{
+					pmember* member = data.allocate<pmember>(1);
+					if (last_member) {
+						last_member->next = member;
+					}
+					last_member = member;
+					obj->num_members++;
+					if (!obj->first) {
+						obj->first = member;
+					}
+					member->name = nullptr;
+					member->value = nullptr;
+					member->next = nullptr;
+
+					skip_whitespace();
+
+					auto gsr = get_string();
+					if (!gsr.success) {
+						result.message = gsr.message;
+						return result;
+					}
+					member->name = gsr.value;
+
+					skip_whitespace();
+
+					c = get_colon();
+					if (c) {
+						skip_whitespace();
+
+						auto valresult = parse_json_value();
+						member->value = valresult.value;
+
+						c = get_comma();
+						if (c) {
+							skip_whitespace();
+							c = at(index);
+						}
+					}
+				}
+				result.success = true;
+				result.value = obj;
+			}
+			else {
+				result.message = "expected object";
+			}
+			return result;
+		}
+
+		parse_json_array_result parser::parse_json_array()
+		{
+			parse_json_array_result result;
+
+			result.success = false;
+			result.line_number = line;
+			result.char_offset = index;
+
+			skip_whitespace();
+			char c = get_array_start();
+
+			if (c)
+			{
+				parray* pa = data.allocate<parray>(1);
+				pa->num_elements = 0;
+				pa->first = nullptr;
+				pvalue* lastvalue = nullptr;
+
+				skip_whitespace();
+				while (c != ']' && c)
+				{
+					auto valresult = parse_json_value();
+					if (valresult.success) {
+						pvalue *v = valresult.value;
+						if (lastvalue) {
+							lastvalue->next = v;
+						}
+						lastvalue = v;
+						if (!pa->first) {
+							pa->first = v;
+						}
+					}
+					else {
+						result.line_number = valresult.line_number;
+						result.char_offset = valresult.char_offset;
+						result.message = valresult.message;
+						return result;
+					}
+					skip_whitespace();
+					get_comma();
+					skip_whitespace();
+					c = at(index);
+				}
+				result.success = true;
+				result.value = pa;
+			}
+			else {
+				result.message = "Expected Array";
+			}
 
 			return result;
 		}

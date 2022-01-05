@@ -2,6 +2,7 @@
 
 #include "store_box.h"
 #include "array_box.h"
+#include "string_box.h"
 #include <ostream>
 #include <bit>
 

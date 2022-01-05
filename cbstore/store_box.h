@@ -116,7 +116,7 @@ namespace countrybit
 
 			template <typename T>
 			requires (std::is_standard_layout<T>::value)
-			int pack(T* src, int length)
+			int pack(const T* src, int length)
 			{
 				size_t sz = sizeof(T) * length;
 				size_t placement = _top;
@@ -133,9 +133,35 @@ namespace countrybit
 				return placement;
 			}
 
+			template <typename T> 
+			requires (std::is_standard_layout<T>::value)
+			int pack_extracted(const T* base, int start, int stop, bool terminate = true)
+			{
+				int length = stop - start;
+				size_t sz = sizeof(T) * length;
+				size_t placement = _top;
+				size_t new_top = placement + sz;
+				if (new_top > _size)
+					return -1;
+				int i = start;
+				while (i < stop)
+				{
+					T* item = unpack<T>(_top);
+					*item = base[i];
+					i++;
+					_top += sizeof(T);
+				}
+				if (terminate) {
+					T temp = {};
+					pack(temp);
+				}
+
+				return placement;
+			}
+
 			template <typename T>
 			requires (std::is_standard_layout<T>::value)
-				int pack(T src, int length)
+			int pack(T src, int length)
 			{
 				size_t sz = sizeof(T) * length;
 				size_t placement = _top;
@@ -149,6 +175,24 @@ namespace countrybit
 					_top += sizeof(T);
 				}
 				return placement;
+			}
+
+			template <typename T>
+			requires (std::is_standard_layout<T>::value)
+			T* allocate(int count)
+			{
+				int loc = -1;
+				T dummy = {};
+				count--;
+				if (count > 0) {
+					loc = pack(dummy);
+				}
+				while (count) 
+				{
+					pack(dummy);
+					count--;
+				}
+				return unpack<T>(loc);
 			}
 
 			size_t reserve(int length)
@@ -250,6 +294,20 @@ namespace countrybit
 				return get_box()->pack<T>(src, length);
 			}
 
+			template <typename T>
+			requires (std::is_standard_layout<T>::value)
+			int pack_extracted(T* src, int start, int stop, bool terminate = true)
+			{
+				return get_box()->pack_extracted<T>(src, start, stop, terminate);
+			}
+
+			template <typename T>
+			requires (std::is_standard_layout<T>::value)
+			T* allocate(int count)
+			{
+				return get_box()->allocate<T>(count);
+			}
+
 			int reserve(int length)
 			{
 				return get_box()->reserve(length);
@@ -334,12 +392,26 @@ namespace countrybit
 
 			template <typename T>
 			requires (std::is_standard_layout<T>::value)
+			int pack_extracted(T* src, int start, int stop, bool terminate = true)
+			{
+				return get_box()->pack_extracted(src, start, stop, terminate);
+			}
+
+			template <typename T>
+			requires (std::is_standard_layout<T>::value)
 				int pack(T* src, int length)
 			{
 				return get_box()->pack<T>(src, length);
 			}
 
-			int reserve(int length)
+			template <typename T>
+				requires (std::is_standard_layout<T>::value)
+			T* allocate(int count)
+			{
+				return get_box()->allocate<T>(count);
+			}
+
+			size_t reserve(int length)
 			{
 				return get_box()->reserve(length);
 			}

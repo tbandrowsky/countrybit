@@ -6,19 +6,21 @@
 #include <map>
 #include "messages.h"
 #include "store_box.h"
+#include <functional>
 
 namespace countrybit
 {
 	namespace system
 	{
 
-		class jsobject;
+		class pobject;
+		class parray;
 
-		class jsvalue
+		class pvalue
 		{
 		public:
 
-			enum class jvalue_types
+			enum class pvalue_types
 			{
 				string_value,
 				double_value,
@@ -27,22 +29,37 @@ namespace countrybit
 				object_value
 			};
 
-			const char* name;
-			jvalue_types jvalue_type;
+			pvalue_types pvalue_type;
 
 			const char* string_value;
 			double double_value;
 			time_t time_value;
+			const pobject* object_value;
+			const parray* array_value;
 
-			int num_values;
-			const jsobject* object_values[];
+			const pvalue* next;
 		};
 
-		class jsobject
+		class parray
+		{
+		public:
+			int num_elements;
+			const pvalue* first;
+		};
+
+		class pmember
+		{
+		public:
+			const char* name;
+			const pvalue* value;
+			pmember* next;
+		};
+
+		class pobject
 		{
 		public:
 			int num_members;
-			jsvalue *members[];
+			pmember *first;
 		};
 
 		class get_number_result : public base_parse_result 
@@ -60,20 +77,25 @@ namespace countrybit
 		class get_identifier_result : public base_parse_result
 		{
 		public:
-			const char *value;
+			char *value;
 		};
 
-		class get_object_result : public base_parse_result
+		class parse_json_object_result : public base_parse_result
 		{
 		public:
-			const jsobject *value;
+			pobject *value;
 		};
 
-		class get_array_result : public base_parse_result
+		class parse_json_value_result : public base_parse_result
 		{
 		public:
-			int num_values;
-			const jsobject *value[];
+			pvalue* value;
+		};
+
+		class parse_json_array_result : public base_parse_result
+		{
+		public:
+			parray *value;
 		};
 
 		class parser
@@ -105,6 +127,7 @@ namespace countrybit
 				int match;
 			};
 
+			int get_pattern_count(int& start_index, const std::function<bool(char c)>& item);
 			int match(int start_index, int num_groups, match_group* group);
 
 		public:
@@ -161,6 +184,13 @@ namespace countrybit
 				return 0;
 			}
 
+			inline char get_char()
+			{
+				char c = at(index);
+				index++;
+				return c;
+			}
+
 			inline char get_quote()
 			{
 				return get_advance('"');
@@ -174,6 +204,29 @@ namespace countrybit
 					index += 2;
 					return c1;
 				}
+				return 0;
+			}
+
+			inline char get_string_char()
+			{
+				char c = at(index);
+				char c1 = at(index + 1);
+
+				if ((c == '\\' && c1 == '"') || (c == '"' && c1 == '"')) 
+				{
+					index += 2;
+					return c1;
+				}
+				else if (c == '"')
+				{
+					return c;
+				}
+				else if (c) 
+				{
+					index++;
+					return c;
+				}
+				
 				return 0;
 			}
 
@@ -249,8 +302,10 @@ namespace countrybit
 			get_number_result get_number();
 			get_identifier_result get_identifier();
 			get_string_result get_string();
-			get_object_result get_object();
-			get_array_result get_array();
+
+			parse_json_value_result parse_json_value();
+			parse_json_object_result parse_json_object();
+			parse_json_array_result parse_json_array();
 
 		};
 

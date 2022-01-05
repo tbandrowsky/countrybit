@@ -17,6 +17,19 @@ namespace countrybit
 			double z;
 		};
 
+		int compare(const point& a, const point& b);
+		int operator<(const point& a, const point& b);
+		int operator>(const point& a, const point& b);
+		int operator>=(const point& a, const point& b);
+		int operator<=(const point& a, const point& b);
+		int operator==(const point& a, const point& b);
+		int operator!=(const point& a, const point& b);
+
+		point operator+(const point& a, const point& b);
+		point operator-(const point& a, const point& b);
+		point operator*(const point& a, const point& b);
+		point operator/(const point& a, const point& b);
+
 		class point_math
 		{
 		public:
@@ -94,18 +107,7 @@ namespace countrybit
 
 		};
 
-		int compare(const point& a, const point& b);
-		int operator<(const point& a, const point& b);
-		int operator>(const point& a, const point& b);
-		int operator>=(const point& a, const point& b);
-		int operator<=(const point& a, const point& b);
-		int operator==(const point& a, const point& b);
-		int operator!=(const point& a, const point& b);
-
-		point operator+(const point& a, const point& b);
-		point operator-(const point& a, const point& b);
-		point operator*(const point & a, const point & b);
-		point operator/(const point& a, const point& b);
 		std::ostream& operator <<(std::ostream& output, point_box& src);
+
 	}
 }
