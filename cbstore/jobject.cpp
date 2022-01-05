@@ -466,10 +466,16 @@ namespace countrybit
 				return false;
 			}
 
+			int offset_start = 0;
 			for (int i = 0; i < person_class.size(); i++) {
 				auto& fldref = person_class.child(i);
 				auto& fld = schema.get_field(fldref.field_id);
 				std::cout << fld.name << " " << fld.description << " " << fldref.offset << " " << fld.size_bytes << std::endl;
+				if (offset_start && offset_start != fldref.offset) {
+					std::cout << "class alignment failed" << __LINE__ << std::endl;
+
+				}
+				offset_start += fld.size_bytes;
 			}
 
 			countrybit::database::jschema::create_object_field_request people;
@@ -537,6 +543,11 @@ namespace countrybit
 			jcollection people = schema.create_collection(&box, colid, 50, people_field_id);
 
 			jarray pa;
+
+			int birthdaystart = 1941;
+			int countstart = 12;
+			double quantitystart = 10.22;
+			int increment = 5;
 			
 			pa = people.create_object(people_field_id);			
 			auto sl = pa.get_slice(0);
@@ -547,9 +558,9 @@ namespace countrybit
 			auto qty = sl.get_double(4);
 			last_name = "last 1";
 			first_name = "first 1";
-			birthday = 500000;
-			count = 12;
-			qty = 10.22;
+			birthday = birthdaystart + increment * 0;
+			count = countstart + increment * 0;
+			qty = quantitystart + increment * 0;
 
 			pa = people.create_object(people_field_id);
 			sl = pa.get_slice(0);
@@ -560,9 +571,9 @@ namespace countrybit
 			qty = sl.get_double(4);
 			last_name = "last 2";
 			first_name = "first 2";
-			birthday = 600000;
-			count = 22;
-			qty = 20.22;
+			birthday = birthdaystart + increment * 1;
+			count = countstart + increment * 1;
+			qty = quantitystart + increment * 1;
 
 			pa = people.create_object(people_field_id);
 			sl = pa.get_slice(0);
@@ -573,9 +584,9 @@ namespace countrybit
 			qty = sl.get_double(4);
 			last_name = "last 3";
 			first_name = "first 3";
-			birthday = 700000;
-			count = 32;
-			qty = 30.22;
+			birthday = birthdaystart + increment * 2;
+			count = countstart + increment * 2;
+			qty = quantitystart + increment * 2;
 
 			pa = people.create_object(people_field_id);
 			sl = pa.get_slice(0);
@@ -586,9 +597,9 @@ namespace countrybit
 			qty = sl.get_double(4);
 			last_name = "last 4";
 			first_name = "first 4";
-			birthday = 800000;
-			count = 42;
-			qty = 40.22;
+			birthday = birthdaystart + increment * 3;
+			count = countstart + increment * 3;
+			qty = quantitystart + increment * 3;
 
 			pa = people.create_object(people_field_id);
 			sl = pa.get_slice(0);
@@ -599,19 +610,48 @@ namespace countrybit
 			qty = sl.get_double(4);
 			last_name = "last 5 really long test 12345 abcde 67890 fghij 12345 klmno 67890 pqrst";
 			first_name = "first 5 really long test 12345 abcde 67890 fghij 12345 klmno 67890 pqrst";
-			birthday = 900000;
-			count = 52;
-			qty = 50.22;
+			birthday = birthdaystart + increment * 4;
+			count = countstart + increment * 4;
+			qty = quantitystart + increment * 4;
+
+			int inc_count = 0;
 
 			for (auto pers : people)
 			{
 				sl = pers.get_slice(0);
 				last_name = sl.get_string(0);
+				if (!last_name.starts_with("last")) {
+					std::cout << "last name failed" << std::endl;
+					return false;
+				}
 				first_name = sl.get_string(1);
+				if (!first_name.starts_with("first")) {
+					std::cout << "first name failed" << std::endl;
+					return false;
+				}
 				birthday = sl.get_time(2);
 				count = sl.get_int64(3);
 				qty = sl.get_double(4);
-				std::cout << last_name << " " << first_name << " " << birthday << " " << count << " " << count << std::endl;
+
+				if (birthday != birthdaystart + increment * inc_count) {
+					std::cout << "birthday failed" << std::endl;
+					return false;
+
+				}
+
+				if (count != countstart + increment * inc_count) {
+					std::cout << "count failed" << std::endl;
+					return false;
+
+				}
+
+				if (qty != quantitystart + increment * inc_count) {
+
+					std::cout << "qty failed" << std::endl;
+					return false;
+				}
+
+				inc_count++;
 			}
 
 			return true;
@@ -709,15 +749,54 @@ namespace countrybit
 				}
 			}
 
+			int scount = 0;
+
 			for (auto item : sprites)
 			{
 				auto slice = item.get_slice(0);
-				std::cout << std::format("{} {}x{}", slice.get_string(0).value(), slice.get_float(1).value(), slice.get_float(2).value()) << std::endl;
+
+				auto frame_width = slice.get_float(1);
+				auto frame_height = slice.get_float(2);
+
+				if (frame_width != 1000 || frame_height != 1000) {
+
+					std::cout << "array failed" << __LINE__ << std::endl;
+					return false;
+				}
 
 				auto frames = slice.get_object(3);
+
+				int fcount = 0;
 				for (auto frame : frames)
 				{
-					std::cout << std::format("{} {}x{} - {}x{}", frame.get_string(0).value(), frame.get_float(1).value(), frame.get_float(2).value(), frame.get_float(3).value(), frame.get_float(4).value()) << std::endl;
+					if (frame_width != 1000 || frame_height != 1000) {
+
+						std::cout << "array failed" << __LINE__ << std::endl;
+						return false;
+					}
+//					std::cout << std::format("{} {}x{} - {}x{}", frame.get_string(0).value(), frame.get_float(1).value(), frame.get_float(2).value(), frame.get_float(3).value(), frame.get_float(4).value()) << std::endl;
+					auto dim = frame.get_dim();
+					auto x = frame.get_float(1);
+					auto y = frame.get_float(2);
+					auto width = frame.get_float(3);
+					auto height = frame.get_float(4);
+					if (x != dim.x * 100.0) {
+						std::cout << "array failed" << __LINE__ << std::endl;
+						return false;
+					};
+					if (y != dim.y * 100.0) {
+						std::cout << "array failed" << __LINE__ << std::endl;
+						return false;
+					}
+					if (width != 100.0) {
+						std::cout << "array failed" << __LINE__ << std::endl;
+						return false;
+
+					}
+					if (height != 100.0) {
+						std::cout << "array failed" << __LINE__ << std::endl;
+						return false;
+					}
 				}
 			}
 

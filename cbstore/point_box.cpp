@@ -5,6 +5,7 @@
 #include "point_box.h"
 #include <ostream>
 #include <bit>
+#include <iostream>
 
 namespace countrybit
 {
@@ -74,6 +75,32 @@ namespace countrybit
 		{
 			point pt{ a.x / b.x, a.y / b.y, b.z / b.z };
 			return pt;
+		}
+
+		bool test_points()
+		{
+			point ptA{ 0,0,0 };
+			point ptB{ 0,1,0 };
+			point ptC{ 0,0,1 };
+			point ptD{ 0,1,1 };
+
+			auto ptTest = ptA + ptB + ptC;
+			if (ptTest != ptD) {
+				std::cout << "ptTest failed add" << std::endl;
+				return false;
+			}
+
+			char box[2048];
+			point_box pb(box);
+
+			pb = ptA;
+			ptD = pb;
+			if (ptD != ptA) {
+				std::cout << "box test failed" << std::endl;
+				return false;
+			}
+
+			return true;
 		}
 
 	}

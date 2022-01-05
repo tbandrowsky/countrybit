@@ -618,6 +618,11 @@ namespace countrybit
 
 			};
 
+			class create_query_field_request : public create_field_request_base, public query_properties_type {
+			public:
+
+			};
+
 			class create_class_request {
 			public:
 				std::string class_name;
@@ -694,11 +699,12 @@ namespace countrybit
 				jtype _field_type,
 				std::string _name,
 				std::string _description,
-				string_properties_type _string_properties,
-				int_properties_type _int_properties,
-				double_properties_type _double_properties,
-				time_properties_type _time_properties,
-				object_properties_type _object_properties,
+				string_properties_type *_string_properties,
+				int_properties_type *_int_properties,
+				double_properties_type *_double_properties,
+				time_properties_type *_time_properties,
+				object_properties_type *_object_properties,
+				query_properties_type* _query_properties,
 				int64_t _size_bytes)
 			{
 				if (_field_id == null_row) {
@@ -711,11 +717,19 @@ namespace countrybit
 				jf.type_id = _field_type;
 				jf.name = _name;
 				jf.description = _description;
-				jf.string_properties = _string_properties;
-				jf.int_properties = _int_properties;
-				jf.double_properties = _double_properties;
-				jf.time_properties = _time_properties;
-				jf.object_properties = _object_properties;
+				
+				if (_string_properties)
+					jf.string_properties = *_string_properties;
+				if (_int_properties)
+					jf.int_properties = *_int_properties;
+				if (_double_properties)
+					jf.double_properties = *_double_properties;
+				if (_time_properties)
+					jf.time_properties = *_time_properties;
+				if (_object_properties)
+					jf.object_properties = *_object_properties;
+				if (_query_properties)
+					jf.query_properties = *_query_properties;
 				jf.size_bytes = _size_bytes;
 
 				fields_by_name.insert_or_assign(jf.name, _field_id);
@@ -724,12 +738,12 @@ namespace countrybit
 
 			row_id_type create_string_field(create_string_field_request request)
 			{
-				return create_field(request.field_id, type_string, request.name, request.description, request, {}, {}, {}, {}, string_box::get_box_size(request.length));
+				return create_field(request.field_id, type_string, request.name, request.description, &request, nullptr, nullptr, nullptr, nullptr, nullptr, string_box::get_box_size(request.length));
 			}
 
 			row_id_type create_time_field(create_time_field_request request)
 			{
-				return create_field(request.field_id, type_datetime, request.name, request.description, {}, {}, {}, request, {}, sizeof(time_t));
+				return create_field(request.field_id, type_datetime, request.name, request.description, nullptr, nullptr, nullptr, &request, nullptr, nullptr, sizeof(time_t));
 			}
 
 			row_id_type create_integer_field(create_integer_field_request request)
@@ -737,13 +751,13 @@ namespace countrybit
 				switch (request.type_id)
 				{
 					case jtype::type_int8:
-						return create_field(request.field_id, type_int8, request.name, request.description, {}, request, {}, {}, {}, sizeof(int8_t));
+						return create_field(request.field_id, type_int8, request.name, request.description, nullptr, &request, nullptr, nullptr, nullptr, nullptr, sizeof(int8_t));
 					case jtype::type_int16:
-						return create_field(request.field_id, type_int16, request.name, request.description, {}, request, {}, {}, {}, sizeof(int16_t));
+						return create_field(request.field_id, type_int16, request.name, request.description, nullptr, &request, nullptr, nullptr, nullptr, nullptr, sizeof(int16_t));
 					case jtype::type_int32:
-						return create_field(request.field_id, type_int32, request.name, request.description, {}, request, {}, {}, {}, sizeof(int32_t));
+						return create_field(request.field_id, type_int32, request.name, request.description, nullptr, &request, nullptr, nullptr, nullptr, nullptr, sizeof(int32_t));
 					case jtype::type_int64:
-						return create_field(request.field_id, type_int64, request.name, request.description, {}, request, {}, {}, {}, sizeof(int64_t));
+						return create_field(request.field_id, type_int64, request.name, request.description, nullptr, &request, nullptr, nullptr, nullptr, nullptr, sizeof(int64_t));
 					default:
 						throw std::invalid_argument("Invalid integer type for field name:" + request.name);
 				}
@@ -754,9 +768,9 @@ namespace countrybit
 				switch (request.type_id)
 				{
 					case type_float32:
-						return create_field(request.field_id, type_float32, request.name, request.description, {}, {}, request, {}, {}, sizeof(float));
+						return create_field(request.field_id, type_float32, request.name, request.description, nullptr, nullptr, &request, nullptr, nullptr, nullptr, sizeof(float));
 					case type_float64:
-						return create_field(request.field_id, type_float64, request.name, request.description, {}, {}, request, {}, {}, sizeof(double));
+						return create_field(request.field_id, type_float64, request.name, request.description, nullptr, nullptr, &request, nullptr, nullptr, nullptr, sizeof(double));
 					default:
 						throw std::invalid_argument("Invalid floating point type for field name:" + request.name);
 				}
@@ -773,7 +787,13 @@ namespace countrybit
 				if (request.dim.y == 0) request.dim.y = 1;
 				if (request.dim.z == 0) request.dim.z = 1;
 				request.total_size_bytes = request.dim.x * request.dim.y * request.dim.z * sizeb ;
-				return create_field(request.field_id, type_object, request.name, request.description, {}, {}, {}, {}, request, request.total_size_bytes);
+				return create_field(request.field_id, type_object, request.name, request.description, nullptr, nullptr, nullptr, nullptr, &request, nullptr, request.total_size_bytes);
+			}
+
+			row_id_type create_query_field(create_query_field_request request)
+			{
+				assert(request.field_id > 0);
+				return create_field(request.field_id, type_query, request.name, request.description, nullptr, nullptr, nullptr, nullptr, nullptr, &request, sizeof(collection_id_type));
 			}
 
 			row_id_type create_class( create_class_request request )

@@ -138,6 +138,18 @@ namespace countrybit
 			{
 				return hdr->length;
 			}		
+
+			bool starts_with(const char* _data)
+			{
+				int i = 0;
+				while (*_data) {
+					if (i >= size() || *_data != hdr->data[i])
+						return false;
+					_data++;
+					i++;
+				}
+				return true;
+			}
 		};
 
 		int compare(const string_box& a, const string_box& b);

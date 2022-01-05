@@ -73,7 +73,7 @@ namespace countrybit
 			{
 			public:
 				uint32_t length;
-				int max_items;
+				uint32_t max_items;
 				item_type data[1];
 			};
 
@@ -188,6 +188,11 @@ namespace countrybit
 				return hdr->data[_idx];
 			}
 
+			uint16_t max_size() const
+			{
+				return hdr->max_items;
+			}
+
 			uint16_t size() const
 			{
 				return hdr->length;
@@ -202,6 +207,8 @@ namespace countrybit
 			}
 
 		};
+
+		bool array_box_tests();
 	}
 }
 

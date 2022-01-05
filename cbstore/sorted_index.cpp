@@ -14,7 +14,6 @@ namespace countrybit
 			using test_sorted_index_type = sorted_index<int, istring<30>, 1>;
 
 			test_sorted_index_type test;
-			bool result = true;
 
 			row_id_type test_location;
 			test = test_sorted_index_type::create_sorted_index( &box, 100, test_location );
@@ -94,32 +93,47 @@ namespace countrybit
 				return false;
 			}
 
-			std::cout << "first loop" << std::endl;
-
+			int tests[4] = { 1, 2, 5, 7 };
+			int k = 0;
 			for (auto& item : test)
 			{
-				std::cout << item.first << " " << item.second << std::endl;
+				if (tests[k] != item.first) {
+					std::cout << "loop failed" << std::endl;
+					return false;
+				}
+				k++;
 			}
 
-			std::cout << "starting later loop" << std::endl;
+			int tests2[3] = { 2, 5, 7 };
 
+			k = 0; 
 			for (auto& item : test[2])
 			{
-				std::cout << item.first << " " << item.second << std::endl;
+				if (tests2[k] != item.first) {
+					std::cout << "starting from key failed" << std::endl;
+					return false;
+				}
+				k++;
 			}
 
 			auto x = test[1];
 			test.erase(x);
 			test.erase(7);
 
-			std::cout << "erased loop" << std::endl;
+			int tests3[2] = { 2, 5 };
+
+			k = 0;
 
 			for (auto& item : test)
 			{
-				std::cout << item.first << " " << item.second << std::endl;
+				if (tests3[k] != item.first) {
+					std::cout << "erasing iterator failed" << std::endl;
+					return false;
+				}
+				k++;
 			}
 
-			return result;
+			return true;
 		}
 
 	}

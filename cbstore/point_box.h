@@ -109,5 +109,6 @@ namespace countrybit
 
 		std::ostream& operator <<(std::ostream& output, point_box& src);
 
+		bool test_points();
 	}
 }

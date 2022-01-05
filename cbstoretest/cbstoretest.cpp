@@ -7,27 +7,28 @@
 #include "function.h"
 #include "jobject.h"
 #include "sorted_index.h"
+#include "array_box.h"
 
 countrybit::system::sync<int> test_queue();
 countrybit::system::task<int> calc();
 
 void queue_tests();
-void jstring_tests();
-void table_tests();
-void index_tests();
+bool jstring_tests();
+bool table_tests();
 
 int main()
 {
 
     countrybit::system::application aw;
 
-    jstring_tests();
-    table_tests();
-    index_tests();
-    countrybit::database::schema_tests();
-    countrybit::database::collection_tests();
-    countrybit::database::array_tests();
-    queue_tests();
+    if (jstring_tests()) std::cout << "string passed" << std::endl;
+    if (table_tests()) std::cout << "table passed" << std::endl;
+    if (countrybit::database::test_index()) std::cout << "index passed" << std::endl;
+    if (countrybit::database::schema_tests()) std::cout << "schema passed" << std::endl;
+    if (countrybit::database::collection_tests()) std::cout << "collection passed" << std::endl;
+    if (countrybit::database::array_tests()) std::cout << "array object passed" << std::endl;
+    if (countrybit::database::array_box_tests()) std::cout << "array box passed" << std::endl;
+//    queue_tests();
 }
 
 bool assert_if(std::function<bool()> test, std::string fail)
@@ -39,17 +40,19 @@ bool assert_if(std::function<bool()> test, std::string fail)
     return true;
 }
 
-void jstring_tests()
+bool jstring_tests()
 {
+    int r = true;
     countrybit::database::istring<5> test1 = "1234567";
 
-    assert_if([test1]() { return test1.size() == 4; }, "Size incorrect.");
-    assert_if([test1]() { return test1 == "1234"; }, "truncation incorrect.");
-
+    r = r && assert_if([test1]() { return test1.size() == 4; }, "Size incorrect.");
+    r = r && assert_if([test1]() { return test1 == "1234"; }, "truncation incorrect.");
+    return r;
 }
 
-void table_tests()
+bool table_tests()
 {
+    int r = true;
     using countrybit::database::istring;
     using countrybit::database::table;
     using countrybit::database::row_range;
@@ -70,7 +73,7 @@ void table_tests()
     };
 
     int s = sizeof(items) / sizeof(test_item);
-    assert_if([s]() { return s == 5; }, "size isn't 5");
+    r = r && assert_if([s]() { return s == 5; }, "size isn't 5");
 
     using box_type = static_box<10000>;
 
@@ -86,21 +89,18 @@ void table_tests()
     for (int i = 0; i < s; i++) {
         row_range rr;
         auto nr = basic.insert(items[i],rr);
-        assert_if([nr, i, rr]() { return rr.stop - rr.start == 1; }, "size isn't 1");
-        assert_if([nr, i, ti]() { return ti[i].id == nr.id && ti[i].description == nr.description && ti[i].name == nr.name; }, "item not stored correctly");
+        r = r && assert_if([nr, i, rr]() { return rr.stop - rr.start == 1; }, "size isn't 1");
+        r = r && assert_if([nr, i, ti]() { return ti[i].id == nr.id && ti[i].description == nr.description && ti[i].name == nr.name; }, "item not stored correctly");
     }
 
     for (countrybit::database::row_id_type i = 0; i < basic.size(); i++) {
         auto nr = basic[i];
-        assert_if([nr, i, ti]() { return ti[i].id == nr.id && ti[i].description == nr.description && ti[i].name == nr.name; }, "item not stored correctly");
+        r = r && assert_if([nr, i, ti]() { return ti[i].id == nr.id && ti[i].description == nr.description && ti[i].name == nr.name; }, "item not stored correctly");
     }
 
+    return r;
 }
 
-void index_tests()
-{
-    countrybit::database::test_index();
-}
 
 void queue_tests()
 {

@@ -23,7 +23,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)query_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)object_id_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)rect_box.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)system_schema.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)time_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)file.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)float_box.h" />
@@ -43,6 +42,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)application.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)array_box.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)collection_id_box.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)file.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)function.cpp" />
