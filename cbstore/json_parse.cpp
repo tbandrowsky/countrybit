@@ -1,5 +1,6 @@
 #include "json_parse.h"
 #include <charconv>
+#include <iostream>
 
 namespace countrybit
 {
@@ -17,6 +18,7 @@ namespace countrybit
 			while (matches(c)) {
 				start_index++;
 				count++;
+				c = at(start_index);
 			}
 			return count;
 		}
@@ -104,7 +106,7 @@ namespace countrybit
 				group++;
 			}
 
-			return original_start;
+			return start_index;
 		}
 
 		get_number_result parser::get_number()
@@ -179,7 +181,7 @@ namespace countrybit
 			result.success = false;
 
 			match_group groups[2] = {
-				{ match_group::search_counts::search_one, match_group::search_types::alpha, 0 },
+				{ match_group::search_counts::search_many, match_group::search_types::alpha, 0 },
 				{ match_group::search_counts::search_optional_many, match_group::search_types::identifier, 0 }
 			};
 
@@ -223,34 +225,42 @@ namespace countrybit
 
 			result.value = nullptr;
 
-			c = get_string_char();
-			while (c && c != '"' && maximum_string_size)
+			auto cx = get_string_char();
+			while ((cx.c && cx.c != '"') || (cx.c == '"' && cx.escaped == true))
 			{
-				int l = data.pack(c);
+				int l = data.pack(cx.c);
+				if (l<0) {
+					result.message = "no room for string";
+					return result;
+				}
+
 				if (!result.value)
 				{
 					result.value = data.unpack<char>(l);
 				}
 				maximum_string_size--;
-				c = get_string_char();
+				if (!maximum_string_size) {
+					result.message = "string too long";
+					return result;
+				}
+				cx = get_string_char();
 			}
 
 			char null = 0;
-			int l = data.pack(null);
+			int lx = data.pack(null);
 
 			if (!result.value)
 			{
-				result.value = data.unpack<char>(l);
+				result.value = data.unpack<char>(lx);
 			}
 
-			if (c == '=')
+			if (cx.c == '"' && cx.escaped == false)
 			{
 				index++;
 			}
-
-			if (!maximum_string_size)
-			{
-				result.message = "string too large";
+			else {
+				result.success = false;
+				result.message = "string not terminated";
 				return result;
 			}
 
@@ -367,6 +377,7 @@ namespace countrybit
 				pmember* last_member = nullptr;
 
 				skip_whitespace();
+				c = get_char();
 				while (c != '}')
 				{
 					pmember* member = data.allocate<pmember>(1);
@@ -403,7 +414,7 @@ namespace countrybit
 						c = get_comma();
 						if (c) {
 							skip_whitespace();
-							c = at(index);
+							c = get_char();
 						}
 					}
 				}
@@ -469,6 +480,129 @@ namespace countrybit
 			return result;
 		}
 
+		bool parser::test()
+		{
+			int count = 0;
+			std::string pattern_test1 = "12345";
+			parser p1(pattern_test1, 200);
+			count = p1.get_pattern_count(p1.index, [](char c) {return std::isdigit(c); });
+			if (count != 5 || p1.index != 5) {
+				std::cout << __LINE__ << ":digit pattern count failed" << std::endl;
+				return false;
+			}
+
+			std::string pattern_test2 = "abc123";
+			parser p2(pattern_test2, 200);
+			count = p2.get_pattern_count(p2.index, [](char c) {return std::isalpha(c); });
+			if (count != 3 || p2.index != 3) {
+				std::cout << __LINE__ << ":alpha pattern count failed" << std::endl;
+				return false;
+			}
+			if (p2.get_char() != '1') {
+				std::cout << __LINE__ << ":alpha pattern next failed" << std::endl;
+				return false;
+			}
+
+			std::string good_identifier = "  Alpha42_Something  ";
+			parser p3(good_identifier, 2000);
+			p3.skip_whitespace();
+			if (p3.at(p3.index) != 'A') {
+				std::cout << __LINE__ << ":expected to hit A in test" << std::endl;
+				return false;
+			}
+
+			auto p3r = p3.get_identifier();
+			if (!p3r.success || strcmp("Alpha42_Something", p3r.value)) {
+				std::cout << __LINE__ << ":could not extract identifier" << std::endl;
+				return false;
+			}
+
+			std::string bad_identifier = "  0Alpha42_Something  ";
+			parser p4(bad_identifier, 2000);
+			p4.skip_whitespace();
+			auto p4r = p4.get_identifier();
+			if (p4r.success) {
+				std::cout << __LINE__ << ":should not have extracted identifier" << std::endl;
+				return false;
+			}
+
+			std::string good_string1 = "   \"Alpha42_\\\"stuff\\\"Something\"  ";
+			parser p5(good_string1, 2000);
+			p5.skip_whitespace();
+			auto p5r = p5.get_string();
+			if (!p5r.success || strcmp("Alpha42_\"stuff\"Something", p5r.value)) {
+				std::cout << __LINE__ << ":extract string 1 failed" << std::endl;
+				return false;
+			}
+
+			std::string good_string2 = "   \"Alpha42\\\"_Some\"thing  ";
+			parser p6(good_string2, 2000);
+			p6.skip_whitespace();
+			auto p6r = p6.get_string();
+			if (!p6r.success || strcmp("Alpha42\"_Some", p6r.value)) {
+				std::cout << __LINE__ << ":extract string 2 failed" << std::endl;
+				return false;
+			}
+
+			std::string bad_string1 = "\"stuff";
+			parser p7(bad_string1, 2000);
+			auto p7r = p7.get_string();
+			if (p7r.success) {
+				std::cout << __LINE__ << ":should not have extracted string" << std::endl;
+				return false;
+			}
+
+			std::string sampleJsonObject1 = R"^(
+{ "name_user" : "todd",
+  "age" : 42 }
+  )^";
+
+			parser p8(sampleJsonObject1, 4000);
+			auto p8r = p8.parse_json_object();
+			if (!p8r.success) {
+				std::cout << __LINE__ << ":should have extracted json object" << std::endl;
+				return false;
+			}
+
+			if (p8r.value->num_members != 2) {
+				std::cout << __LINE__ << ":wrong member count" << std::endl;
+				return false;
+			}
+
+			auto member1 = p8r.value->first;
+			if (strcmp(member1->name, "name_user")) {
+				std::cout << __LINE__ << ":wrong member name 1" << std::endl;
+				return false;
+			}
+
+			if (member1->value->pvalue_type != pvalue::pvalue_types::string_value) {
+				std::cout << __LINE__ << ":wrong type member 1" << std::endl;
+				return false;
+			}
+
+			if (strcmp(member1->value->string_value, "todd")) {
+				std::cout << __LINE__ << ":wrong value member 1" << std::endl;
+				return false;
+			}
+
+			auto member2 = member1->next;
+			if (strcmp(member2->name, "age")) {
+				std::cout << __LINE__ << ":wrong name member 2" << std::endl;
+				return false;
+			}
+
+			if (member2->value->pvalue_type != pvalue::pvalue_types::double_value) {
+				std::cout << __LINE__ << ":wrong type member 2" << std::endl;
+				return false;
+			}
+
+			if (member2->value->double_value != 42.0) {
+				std::cout << __LINE__ << ":wrong value member 2" << std::endl;
+				return false;
+			}
+
+			return true;
+		}
 	}
 }
 

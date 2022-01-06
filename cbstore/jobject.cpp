@@ -411,39 +411,39 @@ namespace countrybit
 			row_id_type count_field_id = schema.find_field("count");
 
 			if (quantity_field_id == null_row) {
-				std::cout << "find row failed:" << __LINE__ << std::endl;
+				std::cout << __LINE__ << ":find row failed:" << std::endl;
 				return false;
 			}
 
 			if (quantity_field_id != field_quantity) {
-				std::cout << "field placement failed:" << __LINE__ << std::endl;
+				std::cout << __LINE__ << ":field placement failed:" <<  std::endl;
 				return false;
 			}
 
 			if (last_name_field_id == null_row) {
-				std::cout << "find row failed" << __LINE__ << std::endl;
+				std::cout << __LINE__ << ":find row failed" << std::endl;
 				return false;
 			}
 
 			if (last_name_field_id != field_last_name) {
-				std::cout << "field placement failed:" << __LINE__ << std::endl;
+				std::cout << __LINE__ << ":field placement failed" << std::endl;
 				return false;
 			}
 
 			if (count_field_id == null_row) {
-				std::cout << "find row failed" << __LINE__ << std::endl;
+				std::cout << __LINE__ << ":find row failed" << std::endl;
 				return false;
 			}
 
 			if (count_field_id != field_count) {
-				std::cout << "field placement failed:" << __LINE__ << std::endl;
+				std::cout << __LINE__ << ":field placement failed:" << std::endl;
 				return false;
 			}
 
 			row_id_type failed_field_id = schema.find_field("badFieldName");
 
 			if (failed_field_id != null_row) {
-				std::cout << "find row failed" << __LINE__ << std::endl;
+				std::cout << __LINE__ << ":find row failed" << std::endl;
 				return false;
 			}
 
@@ -455,14 +455,14 @@ namespace countrybit
 			row_id_type person_class_id = schema.create_class(person);
 
 			if (person_class_id == null_row) {
-				std::cout << "class create failed failed" << __LINE__ << std::endl;
+				std::cout << __LINE__ << ":class create failed failed" << std::endl;
 				return false;
 			}
 
 			jclass person_class = schema.get_class(person_class_id);
 
 			if (person_class.size() != 6) {
-				std::cout << "class size failed failed" << __LINE__ << std::endl;
+				std::cout << __LINE__ << ":class size failed failed" << std::endl;
 				return false;
 			}
 
@@ -470,9 +470,9 @@ namespace countrybit
 			for (int i = 0; i < person_class.size(); i++) {
 				auto& fldref = person_class.child(i);
 				auto& fld = schema.get_field(fldref.field_id);
-				std::cout << fld.name << " " << fld.description << " " << fldref.offset << " " << fld.size_bytes << std::endl;
+//				std::cout << fld.name << " " << fld.description << " " << fldref.offset << " " << fld.size_bytes << std::endl;
 				if (offset_start && offset_start != fldref.offset) {
-					std::cout << "class alignment failed" << __LINE__ << std::endl;
+					std::cout << __LINE__ << ":class alignment failed" << std::endl;
 
 				}
 				offset_start += fld.size_bytes;
@@ -487,7 +487,7 @@ namespace countrybit
 			row_id_type people_field = schema.create_object_field(people);
 
 			if (people_field == null_row) {
-				std::cout << "field create failed failed" << __LINE__ << std::endl;
+				std::cout << __LINE__ << ":field create failed failed" << std::endl;
 				return false;
 			}
 
@@ -498,7 +498,7 @@ namespace countrybit
 			row_id_type company_class_id = schema.create_class(company);
 
 			if (company_class_id == null_row) {
-				std::cout << "class create failed failed" << __LINE__ << std::endl;
+				std::cout << __LINE__ << ":class create failed failed" << std::endl;
 				return false;
 			}
 
@@ -524,7 +524,7 @@ namespace countrybit
 			row_id_type person_class_id = schema.create_class(person);
 
 			if (person_class_id == null_row) {
-				std::cout << "class create failed failed" << __LINE__ << std::endl;
+				std::cout << __LINE__ << ":class create failed failed" << std::endl;
 				return false;
 			}
 
@@ -621,12 +621,12 @@ namespace countrybit
 				sl = pers.get_slice(0);
 				last_name = sl.get_string(0);
 				if (!last_name.starts_with("last")) {
-					std::cout << "last name failed" << std::endl;
+					std::cout << __LINE__ << ":last name failed" << std::endl;
 					return false;
 				}
 				first_name = sl.get_string(1);
 				if (!first_name.starts_with("first")) {
-					std::cout << "first name failed" << std::endl;
+					std::cout << __LINE__ << ":first name failed" << std::endl;
 					return false;
 				}
 				birthday = sl.get_time(2);
@@ -634,20 +634,20 @@ namespace countrybit
 				qty = sl.get_double(4);
 
 				if (birthday != birthdaystart + increment * inc_count) {
-					std::cout << "birthday failed" << std::endl;
+					std::cout << __LINE__ << ":birthday failed" << std::endl;
 					return false;
 
 				}
 
 				if (count != countstart + increment * inc_count) {
-					std::cout << "count failed" << std::endl;
+					std::cout << __LINE__ << ":count failed" << std::endl;
 					return false;
 
 				}
 
 				if (qty != quantitystart + increment * inc_count) {
 
-					std::cout << "qty failed" << std::endl;
+					std::cout << __LINE__ << ":qty failed" << std::endl;
 					return false;
 				}
 
@@ -676,7 +676,7 @@ namespace countrybit
 			row_id_type sprite_frame_class_id = schema.create_class(sprite_frame_request);
 
 			if (sprite_frame_class_id == null_row) {
-				std::cout << "class create failed failed" << __LINE__ << std::endl;
+				std::cout << __LINE__ << ":class create failed failed" << std::endl;
 				return false;
 			}
 
@@ -690,7 +690,7 @@ namespace countrybit
 			row_id_type sprite_frame_field_id = schema.create_object_field(of);
 
 			if (sprite_frame_field_id == null_row) {
-				std::cout << "object field create failed" << __LINE__ << std::endl;
+				std::cout << __LINE__ << ":object field create failed" << std::endl;
 				return false;
 			}
 
@@ -701,7 +701,7 @@ namespace countrybit
 			row_id_type sprite_class_id = schema.create_class(sprite_class_request);
 
 			if (sprite_class_id == null_row) {
-				std::cout << "class create failed failed" << __LINE__ << std::endl;
+				std::cout << __LINE__ << ":class create failed failed" << std::endl;
 				return false;
 			}
 
@@ -760,7 +760,7 @@ namespace countrybit
 
 				if (frame_width != 1000 || frame_height != 1000) {
 
-					std::cout << "array failed" << __LINE__ << std::endl;
+					std::cout << __LINE__ << ":array failed" << std::endl;
 					return false;
 				}
 
@@ -771,7 +771,7 @@ namespace countrybit
 				{
 					if (frame_width != 1000 || frame_height != 1000) {
 
-						std::cout << "array failed" << __LINE__ << std::endl;
+						std::cout << __LINE__ << ":array failed" << std::endl;
 						return false;
 					}
 //					std::cout << std::format("{} {}x{} - {}x{}", frame.get_string(0).value(), frame.get_float(1).value(), frame.get_float(2).value(), frame.get_float(3).value(), frame.get_float(4).value()) << std::endl;
@@ -781,20 +781,20 @@ namespace countrybit
 					auto width = frame.get_float(3);
 					auto height = frame.get_float(4);
 					if (x != dim.x * 100.0) {
-						std::cout << "array failed" << __LINE__ << std::endl;
+						std::cout << __LINE__ << ":array failed" << std::endl;
 						return false;
 					};
 					if (y != dim.y * 100.0) {
-						std::cout << "array failed" << __LINE__ << std::endl;
+						std::cout << __LINE__ << ":array failed" << std::endl;
 						return false;
 					}
 					if (width != 100.0) {
-						std::cout << "array failed" << __LINE__ << std::endl;
+						std::cout << __LINE__ << ":array failed" << std::endl;
 						return false;
 
 					}
 					if (height != 100.0) {
-						std::cout << "array failed" << __LINE__ << std::endl;
+						std::cout << __LINE__ << ":array failed" << std::endl;
 						return false;
 					}
 				}

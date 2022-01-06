@@ -8,6 +8,7 @@
 #include "jobject.h"
 #include "sorted_index.h"
 #include "array_box.h"
+#include "json_parse.h"
 
 countrybit::system::sync<int> test_queue();
 countrybit::system::task<int> calc();
@@ -28,6 +29,7 @@ int main()
     if (countrybit::database::collection_tests()) std::cout << "collection passed" << std::endl;
     if (countrybit::database::array_tests()) std::cout << "array object passed" << std::endl;
     if (countrybit::database::array_box_tests()) std::cout << "array box passed" << std::endl;
+    if (countrybit::system::parser::test()) std::cout << "parser passed" << std::endl;
 //    queue_tests();
 }
 

@@ -166,7 +166,7 @@ namespace countrybit
 
 			inline char at(int idx)
 			{
-				return is_end() ? 0 : view[idx];
+				return idx >= view.length() ? 0 : view[idx];
 			}
 
 			bool is_end()
@@ -206,28 +206,46 @@ namespace countrybit
 				}
 				return 0;
 			}
-
-			inline char get_string_char()
+			
+			struct get_char_struct 
 			{
+				char c;
+				bool escaped;
+			};
+
+			inline get_char_struct get_string_char()
+			{
+
+				get_char_struct gcs;
+
+				gcs.c = 0;
+				gcs.escaped = false;
+
 				char c = at(index);
 				char c1 = at(index + 1);
 
 				if ((c == '\\' && c1 == '"') || (c == '"' && c1 == '"')) 
 				{
 					index += 2;
-					return c1;
+					gcs.c = '"';
+					gcs.escaped = true;
+					return gcs;
 				}
 				else if (c == '"')
 				{
-					return c;
+					gcs.c = '"';
+					gcs.escaped = false;
+					return gcs;
 				}
 				else if (c) 
 				{
 					index++;
-					return c;
+					gcs.c = c;
+					gcs.escaped = false;
+					return gcs;
 				}
 				
-				return 0;
+				return gcs;
 			}
 
 			inline char get_space()
@@ -306,6 +324,8 @@ namespace countrybit
 			parse_json_value_result parse_json_value();
 			parse_json_object_result parse_json_object();
 			parse_json_array_result parse_json_array();
+
+			static bool test();
 
 		};
 

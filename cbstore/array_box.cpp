@@ -27,7 +27,7 @@ namespace countrybit
 			for (int i = 0; i < ix.size(); i++)
 			{
 				if (ix[i] != i) {
-					std::cout << "array box failed" << std::endl;
+					std::cout << __LINE__ << ": array box failed" << std::endl;
 					return false;
 				}
 			}
@@ -35,7 +35,7 @@ namespace countrybit
 			for (int k = 4000; k < sizeof(box); k++)
 			{
 				if (box[k] != 0) {
-					std::cout << "array box failed" << std::endl;
+					std::cout << __LINE__ << ": array box failed" << std::endl;
 					return false;
 				}
 			}
