@@ -136,8 +136,13 @@ namespace countrybit
 			int index;
 			int line;
 			database::dynamic_box data;
+			char currentChar[2];
 
-			parser() = default;
+			parser() : line(1), index(0)
+			{
+				currentChar[0] = 0;
+				currentChar[1] = 1;
+			}
 
 			parser(char *_str, int _length, int _data_length) : view(_str, _length), index(0), line(1)
 			{
@@ -166,7 +171,9 @@ namespace countrybit
 
 			inline char at(int idx)
 			{
-				return idx >= view.length() ? 0 : view[idx];
+				char c = idx >= view.length() ? 0 : view[idx];
+				currentChar[0] = c;
+				return c;
 			}
 
 			bool is_end()
@@ -235,6 +242,7 @@ namespace countrybit
 				{
 					gcs.c = '"';
 					gcs.escaped = false;
+					index++;
 					return gcs;
 				}
 				else if (c) 

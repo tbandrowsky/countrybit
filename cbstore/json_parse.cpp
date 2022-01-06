@@ -156,8 +156,8 @@ namespace countrybit
 			{
 				const char* first = view.data() + index;
 				const char* last = view.data() + match_end;
-				auto fcr = std::from_chars(view.data() + index, view.data() + match_end, result.value);
-				if (fcr.ptr == first)
+				auto fcr = std::from_chars(first, last, result.value);
+				if (fcr.ptr == last)
 				{
 					result.success = true;
 					index = match_end;
@@ -254,11 +254,8 @@ namespace countrybit
 				result.value = data.unpack<char>(lx);
 			}
 
-			if (cx.c == '"' && cx.escaped == false)
+			if (cx.c != '"' || cx.escaped != false)
 			{
-				index++;
-			}
-			else {
 				result.success = false;
 				result.message = "string not terminated";
 				return result;
@@ -377,7 +374,7 @@ namespace countrybit
 				pmember* last_member = nullptr;
 
 				skip_whitespace();
-				c = get_char();
+				c = at(index);
 				while (c != '}')
 				{
 					pmember* member = data.allocate<pmember>(1);
@@ -411,10 +408,14 @@ namespace countrybit
 						auto valresult = parse_json_value();
 						member->value = valresult.value;
 
-						c = get_comma();
-						if (c) {
-							skip_whitespace();
-							c = get_char();
+						skip_whitespace();
+						
+						if (c = get_comma()) {
+							c = at(index);
+						}
+						else if (!(c = get_object_stop())) {
+							result.message = "Expected object end";
+							return result;
 						}
 					}
 				}

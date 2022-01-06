@@ -184,7 +184,7 @@ namespace countrybit
 				int loc = -1;
 				T dummy = {};
 				count--;
-				if (count > 0) {
+				if (count >= 0) {
 					loc = pack(dummy);
 				}
 				while (count) 
