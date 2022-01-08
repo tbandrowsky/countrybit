@@ -2,6 +2,8 @@
 #include <charconv>
 #include <iostream>
 
+// #define SHOW_ERROR_MESSAGES
+
 namespace countrybit
 {
 	namespace system
@@ -109,6 +111,9 @@ namespace countrybit
 			return start_index;
 		}
 
+		const char* error_invalid_number = "Bad Number.  The parser thought this was a number, but, this text could not be converted to a double.";
+		const char* error_expected_number = "Expected Number.  A number was expected at this point, yet, sadly, other things were found.";
+
 		get_number_result parser::get_number()
 		{
 			get_number_result result;
@@ -164,16 +169,18 @@ namespace countrybit
 				}
 				else
 				{
-					result.message = "Invalid number";
+					result.message = error_invalid_number;
 				}
 			}
 			else
 			{
-				result.message = "Expected number";
+				result.message = error_expected_number;
 			}
 
 			return result;
 		}
+
+		const char* error_expected_identifer = "Expected identifier.  A token of the form 'SomeVariable_Name' was expected at this point, but instead, something else was found.";
 
 		get_identifier_result parser::get_identifier()
 		{
@@ -199,13 +206,18 @@ namespace countrybit
 			}
 			else
 			{
-				result.message = "Expected identifier";
+				result.message = error_expected_identifer;
 				result.line_number = line;
 				result.char_offset = index;
 			}
 
 			return result;
 		}
+
+		const char* error_expected_string = "Expected string.";
+		const char* error_no_memory_for_string = "No memory. There was not enough space in the box for this string.  Make the parser memory larger.";
+		const char* error_string_too_long = "String too large.  The string was simply too big for us to accept.  Max size is 1 << 25 chars.";
+		const char* error_string_not_terminated = "String too large.  The string was simply too big for us to accept.  Max size is 1 << 25 chars.";
 
 		get_string_result parser::get_string()
 		{
@@ -218,6 +230,9 @@ namespace countrybit
 			char c = get_quote();
 			if (!c)
 			{
+				result.message = error_expected_string;
+				result.line_number = line;
+				result.char_offset = index;
 				return result;
 			}
 
@@ -230,7 +245,9 @@ namespace countrybit
 			{
 				int l = data.pack(cx.c);
 				if (l<0) {
-					result.message = "no room for string";
+					result.line_number = line;
+					result.char_offset = index;
+					result.message = error_no_memory_for_string;
 					return result;
 				}
 
@@ -240,7 +257,9 @@ namespace countrybit
 				}
 				maximum_string_size--;
 				if (!maximum_string_size) {
-					result.message = "string too long";
+					result.message = error_string_too_long;
+					result.line_number = line;
+					result.char_offset = index;
 					return result;
 				}
 				cx = get_string_char();
@@ -257,13 +276,17 @@ namespace countrybit
 			if (cx.c != '"' || cx.escaped != false)
 			{
 				result.success = false;
-				result.message = "string not terminated";
+				result.line_number = line;
+				result.char_offset = index;
+				result.message = error_string_not_terminated;
 				return result;
 			}
 
 			result.success = true;
 			return result;
 		}
+
+		const char* error_expected_value = "Expected a value after the colon - either a string, another object, a number, or an array.";
 
 		parse_json_value_result parser::parse_json_value()
 		{
@@ -303,6 +326,8 @@ namespace countrybit
 				}
 				else {
 					result.message = gnr.message;
+					result.line_number = gnr.line_number;
+					result.char_offset = gnr.char_offset;
 					return result;
 				}
 			}
@@ -316,6 +341,8 @@ namespace countrybit
 				}
 				else {
 					result.message = gnr.message;
+					result.line_number = gnr.line_number;
+					result.char_offset = gnr.char_offset;
 					return result;
 				}
 			}
@@ -329,6 +356,8 @@ namespace countrybit
 				}
 				else {
 					result.message = pjor.message;
+					result.line_number = pjor.line_number;
+					result.char_offset = pjor.char_offset;
 					return result;
 				}
 			}
@@ -342,17 +371,25 @@ namespace countrybit
 				}
 				else {
 					result.message = pjar.message;
+					result.line_number = pjar.line_number;
+					result.char_offset = pjar.char_offset;
 					return result;
 				}
 			}
 			break;
-			case 0:
-				result.message = "expected value";
+			default:
+				result.message = error_expected_value;
+				result.line_number = line;
+				result.char_offset = index;
 				return result;
 			}
 			result.success = true;
 			return result;
 		}
+
+		const char* error_expected_object = "Expected an object, one of those chumpies with a { and }.";
+		const char* error_expected_object_end = "Expected either a comma to add another member, or a } to conclude the object.";
+		const char* error_expected_colon = "Expected a colon here.  A key value pair takes the form ""key"" : value.";
 
 		parse_json_object_result parser::parse_json_object()
 		{
@@ -395,6 +432,8 @@ namespace countrybit
 					auto gsr = get_string();
 					if (!gsr.success) {
 						result.message = gsr.message;
+						result.line_number = gsr.line_number;
+						result.char_offset = gsr.char_offset;
 						return result;
 					}
 					member->name = gsr.value;
@@ -406,6 +445,12 @@ namespace countrybit
 						skip_whitespace();
 
 						auto valresult = parse_json_value();
+						if (!valresult.success) {
+							result.line_number = valresult.line_number;
+							result.char_offset = valresult.char_offset;
+							result.message = valresult.message;
+							return result;
+						}
 						member->value = valresult.value;
 
 						skip_whitespace();
@@ -414,19 +459,32 @@ namespace countrybit
 							c = at(index);
 						}
 						else if (!(c = get_object_stop())) {
-							result.message = "Expected object end";
+							result.line_number = line;
+							result.char_offset = index;
+							result.message = error_expected_object_end;
 							return result;
 						}
+					}
+					else {
+						result.line_number = line;
+						result.char_offset = index;
+						result.message = error_expected_colon;
+						return result;
 					}
 				}
 				result.success = true;
 				result.value = obj;
 			}
 			else {
-				result.message = "expected object";
+				result.line_number = line;
+				result.char_offset = index;
+				result.message = error_expected_object;
 			}
 			return result;
 		}
+
+		const char* error_expected_array = "Expected an array, one of those chumpies with a [ and ].";
+		const char* error_expected_array_end = "Expected either a comma to add another element, or a ] to conclude the array.";
 
 		parse_json_array_result parser::parse_json_array()
 		{
@@ -449,8 +507,17 @@ namespace countrybit
 				skip_whitespace();
 				while (c != ']' && c)
 				{
+					skip_whitespace();					
+					c = at(index);
+					if (c == ']') 
+					{
+						index++;
+						break;
+					}
+
 					auto valresult = parse_json_value();
 					if (valresult.success) {
+						pa->num_elements++;
 						pvalue *v = valresult.value;
 						if (lastvalue) {
 							lastvalue->next = v;
@@ -467,21 +534,29 @@ namespace countrybit
 						return result;
 					}
 					skip_whitespace();
-					get_comma();
-					skip_whitespace();
-					c = at(index);
+					if (c = get_comma()) {
+						skip_whitespace();
+					}
+					else if (!(c = get_array_stop())) {
+						result.line_number = line;
+						result.char_offset = index;
+						result.message = error_expected_array_end;
+						return result;
+					}
 				}
 				result.success = true;
 				result.value = pa;
 			}
 			else {
-				result.message = "Expected Array";
+				result.line_number = line;
+				result.char_offset = index;
+				result.message = error_expected_array;
 			}
 
 			return result;
 		}
 
-		bool parser::test()
+		bool parser::test_basics()
 		{
 			int count = 0;
 			std::string pattern_test1 = "12345";
@@ -495,10 +570,12 @@ namespace countrybit
 			std::string pattern_test2 = "abc123";
 			parser p2(pattern_test2, 200);
 			count = p2.get_pattern_count(p2.index, [](char c) {return std::isalpha(c); });
+
 			if (count != 3 || p2.index != 3) {
 				std::cout << __LINE__ << ":alpha pattern count failed" << std::endl;
 				return false;
 			}
+
 			if (p2.get_char() != '1') {
 				std::cout << __LINE__ << ":alpha pattern next failed" << std::endl;
 				return false;
@@ -601,6 +678,175 @@ namespace countrybit
 				std::cout << __LINE__ << ":wrong value member 2" << std::endl;
 				return false;
 			}
+
+			return true;
+		}
+
+		bool parser::test_json(int _case_line, const std::string& _src, int _expected_failure_line)
+		{
+			std::string_view sv(_src);
+			parser p8(sv, 8000);
+			auto p8r = p8.parse_json_object();
+			if (_expected_failure_line) {
+				if (p8r.success) {
+					std::cout << _case_line << ": test " << __LINE__ << ": should have failed object" << std::endl;
+					return false;
+				}
+				if (p8r.line_number != _expected_failure_line)
+				{
+					std::cout << _case_line << ": test " << __LINE__ << ": should have failed at line " << _expected_failure_line << " but failed at " << p8r.line_number << std::endl;
+					return false;
+				}
+#ifdef SHOW_ERROR_MESSAGES
+				std::cout << _case_line << ": pass (message: " << p8r.line_number << ":" << p8r.message << ")" << std::endl;
+#endif
+
+			}
+			else if (!p8r.success)
+			{
+				std::cout << _case_line << ": test " << __LINE__ << ": object should have passed but failed with :" << p8r.message << " at " << p8r.line_number << std::endl;
+				return false;
+			}
+			return true;
+		}
+
+		bool parser::test_json()
+		{
+			std::string sampleJsonArrayGood = R"^(
+{ "people" : [ 
+{ 
+	"name_user" : "todd",
+	"age" : 42 
+},
+{ 
+	"name_user" : "bob",
+	"age" : 35 
+},
+{ 
+	"name_user" : "sam",
+	"age" : 41 
+}
+] }
+  )^";
+
+			if (!parser::test_json(__LINE__, sampleJsonArrayGood, 0))
+				return false;
+
+			std::string sampleJsonArrayBad = R"^(
+{ "people" : [ 
+{ 
+	"name_user" : "todd",
+	"age" : 42 
+},
+[ 
+	"name_user" : "bob",
+	"age" : 35 
+},
+{ 
+	"name_user" : "sam",
+	"age" : 41 
+}
+] }
+  )^";
+
+			if (!parser::test_json(__LINE__, sampleJsonArrayBad, 8))
+				return false;
+
+			std::string sampleJsonArrayBad2 = R"^(
+{ "people" : [ 
+{ 
+	name_user : "todd",
+	"age" : 42 
+},
+{
+	name_user : "bob",
+	"age" : 35 
+},
+{ 
+	"name_user" : "sam",
+	"age" : 41 
+}
+]}
+  )^";
+
+			if (!parser::test_json(__LINE__, sampleJsonArrayBad2, 4))
+				return false;
+
+			std::string sampleJsonArrayBad3 = R"^(
+{
+	"name_user"  "todd",
+	"age" : 42 
+  )^";
+
+			if (!parser::test_json(__LINE__, sampleJsonArrayBad3, 3))
+				return false;
+
+			std::string sampleJsonArrayBad4 = R"^(
+{
+	"name_user" : "todd",
+	"age"  42 
+  )^";
+
+			if (!parser::test_json(__LINE__, sampleJsonArrayBad4, 4))
+				return false;
+
+			std::string sampleJsonArrayGoodEmpty = R"^(
+{
+	"name_user" : [ ]
+}  )^";
+
+			if (!parser::test_json(__LINE__, sampleJsonArrayGoodEmpty, 0))
+				return false;
+
+
+			std::string sampleJsonArrayGoodEmpty2 = R"^(
+{ "people" : [ 
+{ 
+	"name_user" : "todd",
+	"age" : 42,
+	"friends": [ "bob", "ted" ]
+},
+{ 
+	"name_user" : "bob",
+	"age" : 35,
+	"friends": [ "todd", "jan", "dave" ]
+},
+{ 
+	"name_user" : "roger",
+	"age" : 41,
+	"friends": [ ]
+}
+] }
+  )^";
+			if (!parser::test_json(__LINE__, sampleJsonArrayGoodEmpty2, 0))
+				return false;
+
+			std::string sampleJsonArrayGood3 = R"^(
+{ "people" : [ 
+{ 
+	"name_user" : "todd",
+	"age" : 42,
+	"friends": [ "bob", "ted", { "name": "sam", "age": 42 } ]
+},
+{ 
+	"name_user" : "bob",
+	"age" : 35,
+	"friends": [ { "name": "sam", "age": 42 }, "jan", "dave" ]
+},
+{ 
+	"name_user" : "roger",
+	"age" : 41,
+	"friends": [ { "name": "sam", "age": 42 } ]
+},
+{ 
+	"name_user" : "roger",
+	"age" : 45,
+	"friends": [ { "name": "wilson", "age": 52, "shoes": [ "red", "green", "black", "blue"] } ]
+}
+] }
+  )^";
+			if (!parser::test_json(__LINE__, sampleJsonArrayGood3, 0))
+				return false;
 
 			return true;
 		}

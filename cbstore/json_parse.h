@@ -333,7 +333,9 @@ namespace countrybit
 			parse_json_object_result parse_json_object();
 			parse_json_array_result parse_json_array();
 
-			static bool test();
+			static bool test_basics();
+			static bool test_json(int _case_line, const std::string& _src, int _expected_failure_line);
+			static bool test_json();
 
 		};
 

@@ -12,7 +12,7 @@ namespace countrybit
 		{
 		public:
 			bool success;
-			std::string message;
+			const char *message;
 
 			base_result() : success(true)
 			{
