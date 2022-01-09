@@ -322,5 +322,7 @@ namespace countrybit
 
 		};
 
+		bool table_tests();
+
 	}
 }

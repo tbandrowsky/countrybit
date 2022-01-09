@@ -351,5 +351,7 @@ namespace countrybit
 			output << src.c_str();
 			return output;
 		}
+
+		bool string_tests();
 	}
 }

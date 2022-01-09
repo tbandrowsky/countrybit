@@ -9,6 +9,7 @@ namespace countrybit
 
 		bool test_index()
 		{
+
 			static_box<20000> box;
 
 			using test_sorted_index_type = sorted_index<int, istring<30>, 1>;

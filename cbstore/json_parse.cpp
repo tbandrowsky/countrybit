@@ -795,7 +795,16 @@ namespace countrybit
 	"name_user" : [ ]
 }  )^";
 
+
 			if (!parser::test_json(__LINE__, sampleJsonArrayGoodEmpty, 0))
+				return false;
+
+			std::string sampleJsonObjectGoodEmpty = R"^(
+{
+	"name_user" : { }
+}  )^";
+
+			if (!parser::test_json(__LINE__, sampleJsonObjectGoodEmpty, 0))
 				return false;
 
 

@@ -16,6 +16,7 @@
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)application.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)array_box.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)assert_if.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)collection_id_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)constants.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)json_parse.h" />
@@ -43,6 +44,7 @@
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)application.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)array_box.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)assert_if.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)collection_id_box.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)file.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)function.cpp" />
@@ -50,10 +52,12 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)object_id_box.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)point_box.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)query_box.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)store_box.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)string_box.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)sorted_index.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)jobject.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)queue.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)table.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)time_box.cpp" />
   </ItemGroup>
 </Project>

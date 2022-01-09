@@ -1,5 +1,6 @@
 
 #include "string_box.h"
+#include "assert_if.h"
 
 namespace countrybit
 {
@@ -110,6 +111,17 @@ namespace countrybit
 			output << src.c_str();
 			return output;
 		}
+
+		bool string_tests()
+		{
+			int r = true;
+			countrybit::database::istring<5> test1 = "1234567";
+
+			r = r && assert_if([test1]() { return test1.size() == 4; }, "Size incorrect.");
+			r = r && assert_if([test1]() { return test1 == "1234"; }, "truncation incorrect.");
+			return r;
+		}
+
 
 	}
 

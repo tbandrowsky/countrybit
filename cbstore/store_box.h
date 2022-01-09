@@ -195,11 +195,11 @@ namespace countrybit
 				return unpack<T>(loc);
 			}
 
-			size_t reserve(int length)
+			int reserve(int length)
 			{
-				size_t sz = length;
-				size_t placement = _top;
-				size_t new_top = placement + sz;
+				int sz = length;
+				int placement = _top;
+				int new_top = placement + sz;
 				if (new_top > _size)
 					return -1;
 				return placement;
@@ -541,6 +541,7 @@ namespace countrybit
 		using basic_collection_id_box = boxed<collection_id_type>;
 		using basic_object_id_box = boxed<object_id_type>;
 
+		bool box_tests();
 	}
 }
 
