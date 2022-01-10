@@ -24,6 +24,7 @@
     <ProjectGuid>{8ba13569-58de-4105-9694-1ed9f2f85445}</ProjectGuid>
     <RootNamespace>cbstoretest</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>coronatest</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
