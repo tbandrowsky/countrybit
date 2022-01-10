@@ -3,41 +3,25 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cbstore", "cbstore\cbstore.vcxitems", "{C12DE1F8-9A25-4E3B-AF11-93F4B3ACEEE9}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "coronatest", "coronatest\coronatest.vcxproj", "{8BA13569-58DE-4105-9694-1ED9F2F85445}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cbstoretest", "cbstoretest\cbstoretest.vcxproj", "{8BA13569-58DE-4105-9694-1ED9F2F85445}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "corona", "corona\corona.vcxitems", "{C12DE1F8-9A25-4E3B-AF11-93F4B3ACEEE9}"
 EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
-		cbstore\cbstore.vcxitems*{8ba13569-58de-4105-9694-1ed9f2f85445}*SharedItemsImports = 4
-		cbstore\cbstore.vcxitems*{c12de1f8-9a25-4e3b-af11-93f4b3aceee9}*SharedItemsImports = 9
+		corona\corona.vcxitems*{c12de1f8-9a25-4e3b-af11-93f4b3aceee9}*SharedItemsImports = 9
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		Debug|Any CPU = Debug|Any CPU
-		Debug|ARM = Debug|ARM
-		Debug|ARM64 = Debug|ARM64
 		Debug|x64 = Debug|x64
 		Debug|x86 = Debug|x86
-		Release|Any CPU = Release|Any CPU
-		Release|ARM = Release|ARM
-		Release|ARM64 = Release|ARM64
 		Release|x64 = Release|x64
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{8BA13569-58DE-4105-9694-1ED9F2F85445}.Debug|Any CPU.ActiveCfg = Debug|x64
-		{8BA13569-58DE-4105-9694-1ED9F2F85445}.Debug|Any CPU.Build.0 = Debug|x64
-		{8BA13569-58DE-4105-9694-1ED9F2F85445}.Debug|ARM.ActiveCfg = Debug|x64
-		{8BA13569-58DE-4105-9694-1ED9F2F85445}.Debug|ARM.Build.0 = Debug|x64
-		{8BA13569-58DE-4105-9694-1ED9F2F85445}.Debug|ARM64.ActiveCfg = Debug|Win32
 		{8BA13569-58DE-4105-9694-1ED9F2F85445}.Debug|x64.ActiveCfg = Debug|x64
 		{8BA13569-58DE-4105-9694-1ED9F2F85445}.Debug|x64.Build.0 = Debug|x64
 		{8BA13569-58DE-4105-9694-1ED9F2F85445}.Debug|x86.ActiveCfg = Debug|Win32
 		{8BA13569-58DE-4105-9694-1ED9F2F85445}.Debug|x86.Build.0 = Debug|Win32
-		{8BA13569-58DE-4105-9694-1ED9F2F85445}.Release|Any CPU.ActiveCfg = Release|x64
-		{8BA13569-58DE-4105-9694-1ED9F2F85445}.Release|Any CPU.Build.0 = Release|x64
-		{8BA13569-58DE-4105-9694-1ED9F2F85445}.Release|ARM.ActiveCfg = Release|Win32
-		{8BA13569-58DE-4105-9694-1ED9F2F85445}.Release|ARM64.ActiveCfg = Release|Win32
 		{8BA13569-58DE-4105-9694-1ED9F2F85445}.Release|x64.ActiveCfg = Release|x64
 		{8BA13569-58DE-4105-9694-1ED9F2F85445}.Release|x64.Build.0 = Release|x64
 		{8BA13569-58DE-4105-9694-1ED9F2F85445}.Release|x86.ActiveCfg = Release|Win32
