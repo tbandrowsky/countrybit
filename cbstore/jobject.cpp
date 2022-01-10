@@ -305,9 +305,9 @@ namespace countrybit
 
 		//
 
-		void jschema::create_standard_fields() 
+		void jschema::add_standard_fields() 
 		{
-			create_string_field_request string_fields[33] = {
+			add_string_field_request string_fields[33] = {
 				{ field_full_name, jtype::type_string , "fullName", "Full Name", 75, "", "" },
 				{ field_first_name, jtype::type_string , "firstName", "First Name", 50, "", "" },
 				{ field_last_name, jtype::type_string , "lastName", "Last Name", 50, "", "" },
@@ -343,16 +343,16 @@ namespace countrybit
 				{ field_file_name, jtype::type_string, "fileName", "fileName", 512, "", "" }
 			};
 
-			create_time_field_request time_fields[2] = {
+			add_time_field_request time_fields[2] = {
 				{ field_birthday, jtype::type_datetime, "birthday", "Birthday", 0, INT64_MAX },
 				{ field_scheduled, jtype::type_datetime, "scheduled", "Scheduled", 0, INT64_MAX },
 			};
 
-			create_integer_field_request int_fields[1] = {
+			add_integer_field_request int_fields[1] = {
 				{ field_count, jtype::type_int64, "count", "Count", 0, INT64_MAX },
 			};
 
-			create_double_field_request double_fields[22] = {
+			add_double_field_request double_fields[22] = {
 				{ field_quantity, jtype::type_float64, "quantity", "Quantity", -1E40, 1E40 },
 				{ field_latitude, jtype::type_float64, "latitude", "Latitude", -90, 90 },
 				{ field_longitude, jtype::type_float64, "longitude", "Longitude", -180, 180 },
@@ -378,19 +378,19 @@ namespace countrybit
 			};
 
 			for (int i = 0; i < sizeof(string_fields) / sizeof(string_fields[0]); i++) {
-				create_string_field(string_fields[i]);
+				add_string_field(string_fields[i]);
 			}
 
 			for (int i = 0; i < sizeof(time_fields) / sizeof(time_fields[0]); i++) {
-				create_time_field(time_fields[i]);
+				add_time_field(time_fields[i]);
 			}
 
 			for (int i = 0; i < sizeof(int_fields) / sizeof(int_fields[0]); i++) {
-				create_integer_field(int_fields[i]);
+				add_integer_field(int_fields[i]);
 			}
 
 			for (int i = 0; i < sizeof(double_fields) / sizeof(double_fields[0]); i++) {
-				create_double_field(double_fields[i]);
+				add_double_field(double_fields[i]);
 			}
 
 		}
@@ -404,7 +404,7 @@ namespace countrybit
 			row_id_type schema_id;
 
 			schema = jschema::create_schema(&box, 10, 200, 500, schema_id);
-			schema.create_standard_fields();
+			schema.add_standard_fields();
 
 			row_id_type quantity_field_id = schema.find_field("quantity");
 			row_id_type last_name_field_id = schema.find_field("lastName");
@@ -447,12 +447,12 @@ namespace countrybit
 				return false;
 			}
 
-			countrybit::database::jschema::create_class_request person;
+			countrybit::database::jschema::add_class_request person;
 
 			person.class_name = "person";
 			person.class_description = "a person";
 			person.field_ids = { field_last_name, field_first_name, field_birthday, field_title, field_count, field_quantity };
-			row_id_type person_class_id = schema.create_class(person);
+			row_id_type person_class_id = schema.add_class(person);
 
 			if (person_class_id == null_row) {
 				std::cout << __LINE__ << ":class create failed failed" << std::endl;
@@ -478,24 +478,24 @@ namespace countrybit
 				offset_start += fld.size_bytes;
 			}
 
-			countrybit::database::jschema::create_object_field_request people;
+			countrybit::database::jschema::add_object_field_request people;
 			people.class_id = person_class_id;
 			people.description = "People";
 			people.name = "people";
 			people.dim = { 100, 1, 1 };
-			people.field_id = schema.create_field();
-			row_id_type people_field = schema.create_object_field(people);
+			people.field_id = schema.add_field();
+			row_id_type people_field = schema.add_object_field(people);
 
 			if (people_field == null_row) {
 				std::cout << __LINE__ << ":field create failed failed" << std::endl;
 				return false;
 			}
 
-			countrybit::database::jschema::create_class_request company;
+			countrybit::database::jschema::add_class_request company;
 			company.class_name = "company";
 			company.class_description = "a company is a collection of people";
 			company.field_ids = { field_last_name, field_first_name, field_birthday, people_field };
-			row_id_type company_class_id = schema.create_class(company);
+			row_id_type company_class_id = schema.add_class(company);
 
 			if (company_class_id == null_row) {
 				std::cout << __LINE__ << ":class create failed failed" << std::endl;
@@ -514,27 +514,27 @@ namespace countrybit
 			row_id_type schema_id;
 
 			schema = jschema::create_schema(&box, 10, 200, 500, schema_id);
-			schema.create_standard_fields();
+			schema.add_standard_fields();
 
-			countrybit::database::jschema::create_class_request person;
+			countrybit::database::jschema::add_class_request person;
 
 			person.class_name = "person";
 			person.class_description = "a person";
 			person.field_ids = { field_last_name, field_first_name, field_birthday, field_count, field_quantity };
-			row_id_type person_class_id = schema.create_class(person);
+			row_id_type person_class_id = schema.add_class(person);
 
 			if (person_class_id == null_row) {
 				std::cout << __LINE__ << ":class create failed failed" << std::endl;
 				return false;
 			}
 
-			countrybit::database::jschema::create_object_field_request people_field;
+			countrybit::database::jschema::add_object_field_request people_field;
 			people_field.class_id = person_class_id;
 			people_field.description = "People";
 			people_field.name = "people";
 			people_field.dim = { 1, 0, 0 };
-			people_field.field_id = schema.create_field();
-			row_id_type people_field_id = schema.create_object_field(people_field);
+			people_field.field_id = schema.add_field();
+			row_id_type people_field_id = schema.add_object_field(people_field);
 
 			collection_id_type colid;
 
@@ -666,52 +666,52 @@ namespace countrybit
 			row_id_type schema_id;
 
 			schema = jschema::create_schema(&box, 10, 200, 500, schema_id);
-			schema.create_standard_fields();
+			schema.add_standard_fields();
 
-			countrybit::database::jschema::create_class_request sprite_frame_request;
+			countrybit::database::jschema::add_class_request sprite_frame_request;
 
 			sprite_frame_request.class_name = "spriteframe";
 			sprite_frame_request.class_description = "sprite frame";
 			sprite_frame_request.field_ids = { field_shortname, field_x, field_y, field_width, field_height };
-			row_id_type sprite_frame_class_id = schema.create_class(sprite_frame_request);
+			row_id_type sprite_frame_class_id = schema.add_class(sprite_frame_request);
 
 			if (sprite_frame_class_id == null_row) {
 				std::cout << __LINE__ << ":class create failed failed" << std::endl;
 				return false;
 			}
 
-			countrybit::database::jschema::create_object_field_request of;
-			of.field_id = schema.create_field();
+			countrybit::database::jschema::add_object_field_request of;
+			of.field_id = schema.add_field();
 			of.class_id = sprite_frame_class_id;
 			of.dim = { 10, 10, 1 };
 			of.name = "spriteframe20";
 			of.description = "spriteframe20";
 
-			row_id_type sprite_frame_field_id = schema.create_object_field(of);
+			row_id_type sprite_frame_field_id = schema.add_object_field(of);
 
 			if (sprite_frame_field_id == null_row) {
 				std::cout << __LINE__ << ":object field create failed" << std::endl;
 				return false;
 			}
 
-			countrybit::database::jschema::create_class_request sprite_class_request;
+			countrybit::database::jschema::add_class_request sprite_class_request;
 			sprite_class_request.class_name = "sprite";
 			sprite_class_request.class_description = "sprite";
 			sprite_class_request.field_ids = { field_shortname, field_width, field_height, sprite_frame_field_id };
-			row_id_type sprite_class_id = schema.create_class(sprite_class_request);
+			row_id_type sprite_class_id = schema.add_class(sprite_class_request);
 
 			if (sprite_class_id == null_row) {
 				std::cout << __LINE__ << ":class create failed failed" << std::endl;
 				return false;
 			}
 
-			countrybit::database::jschema::create_object_field_request sprite_field;
-			sprite_field.field_id = schema.create_field();
+			countrybit::database::jschema::add_object_field_request sprite_field;
+			sprite_field.field_id = schema.add_field();
 			sprite_field.class_id = sprite_class_id;
 			sprite_field.description = "sprite field with 20 frames";
 			sprite_field.name = "sprite20";
 			sprite_field.dim = { 1, 1, 1 };
-			row_id_type sprite_field_id = schema.create_object_field(sprite_field);
+			row_id_type sprite_field_id = schema.add_object_field(sprite_field);
 
 			collection_id_type colid;
 
