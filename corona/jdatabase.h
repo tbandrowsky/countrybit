@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 #include <vector>
 #include <list>
 #include <fstream>
@@ -15,20 +16,17 @@ namespace countrybit
 {
 	namespace database
 	{
+
 		class jdatabase
 		{
-			dynamic_box data_box;
-			countrybit::system::file data_file;
+			countrybit::system::file	database_file;
 
-
-			jschema schema;
+			dynamic_box					database_box;
+			jschema						schema;
 
 			jdatabase();
 
 		public:
-
-			static jcollection create_database(jcollection& request);
-			static jcollection open_database(jcollection& response);
 
 		};
 	}

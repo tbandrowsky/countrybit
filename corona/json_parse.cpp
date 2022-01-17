@@ -300,6 +300,8 @@ namespace countrybit
 			pvalue* value = data.allocate<pvalue>(1);
 			value->next = nullptr;
 			result.value = value;
+			value->line = line;
+			value->index = index;
 
 			skip_whitespace();
 
@@ -407,6 +409,8 @@ namespace countrybit
 				pobject* obj = data.allocate<pobject>(1);
 				obj->first = nullptr;
 				obj->num_members = 0;
+				obj->line = line;
+				obj->index = index;
 
 				pmember* last_member = nullptr;
 
@@ -502,6 +506,9 @@ namespace countrybit
 				parray* pa = data.allocate<parray>(1);
 				pa->num_elements = 0;
 				pa->first = nullptr;
+				pa->line = line;
+				pa->index = index;
+
 				pvalue* lastvalue = nullptr;
 
 				skip_whitespace();

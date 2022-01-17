@@ -8,6 +8,8 @@
 
 #include "store_box.h"
 #include "constants.h"
+#include "int_box.h"
+#include "float_box.h"
 
 namespace countrybit
 {
@@ -59,6 +61,11 @@ namespace countrybit
 
 			string_box( char *c ) : hdr((string_box_data*)c)
 			{
+			}
+
+			string_box(const string_box& _src)
+			{
+				hdr = _src.hdr;
 			}
 
 			template <typename BOX>
@@ -121,6 +128,14 @@ namespace countrybit
 			string_box& operator = (const char* s)
 			{
 				copy(s);
+				return *this;
+			}
+
+			string_box& operator = (double d)
+			{
+				char buff[256];
+				sprintf(buff, "%f", d);
+				copy(buff);
 				return *this;
 			}
 

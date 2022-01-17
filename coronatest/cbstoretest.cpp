@@ -60,7 +60,8 @@ countrybit::system::sync<int> test_queue()
 
     int x = 0;
 
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 5; i++) 
+    {
         auto temp = co_await calc();
         x += temp;
     }
@@ -71,4 +72,3 @@ countrybit::system::sync<int> test_queue()
 
     co_return x;
 }
-

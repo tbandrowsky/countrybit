@@ -121,51 +121,51 @@ namespace countrybit
 				char* c = &bytes[offset];
 				switch (jf.type_id) 
 				{
-				case type_unknown:
+				case jtype::type_null:
 					break;
-				case type_int8:
+				case jtype::type_int8:
 					{
 						boxed<__int8> b(c);
 						b = 0;
 					}
 					break;
-				case type_int16:
+				case jtype::type_int16:
 					{
 						boxed<__int16> b(c);
 						b = 0;
 					}
 					break;
-				case type_int32:
+				case jtype::type_int32:
 					{
 						boxed<__int32> b(c);
 						b = 0;
 					}
 					break;
-				case type_int64:
+				case jtype::type_int64:
 					{
 						boxed<__int64> b(c);
 						b = 0;
 					}
 					break;
-				case type_float32:
+				case jtype::type_float32:
 					{
 						boxed<float> b(c);
 						b = 0.0;
 					}
 					break;
-				case type_float64:
+				case jtype::type_float64:
 					{
 						boxed<float> b(c);
 						b = 0.0;
 					}
 					break;
-				case type_datetime:
+				case jtype::type_datetime:
 					{
 						boxed<time_t> b(c);
 						b = 0.0;
 					}
 					break;
-				case type_object:
+				case jtype::type_object:
 					{
 						jarray ja(schema, jcf.field_id, c);
 
@@ -175,9 +175,9 @@ namespace countrybit
 						}
 					}
 					break;
-				case type_object_id:
+				case jtype::type_object_id:
 					break;
-				case type_string:
+				case jtype::type_string:
 					{
 						string_box::create(c, jf.string_properties.length);
 					}
@@ -478,7 +478,7 @@ namespace countrybit
 				offset_start += fld.size_bytes;
 			}
 
-			countrybit::database::jschema::add_object_field_request people;
+			countrybit::database::add_object_field_request people;
 			people.class_id = person_class_id;
 			people.description = "People";
 			people.name = "people";
@@ -528,7 +528,7 @@ namespace countrybit
 				return false;
 			}
 
-			countrybit::database::jschema::add_object_field_request people_field;
+			countrybit::database::add_object_field_request people_field;
 			people_field.class_id = person_class_id;
 			people_field.description = "People";
 			people_field.name = "people";
@@ -680,7 +680,7 @@ namespace countrybit
 				return false;
 			}
 
-			countrybit::database::jschema::add_object_field_request of;
+			countrybit::database::add_object_field_request of;
 			of.field_id = schema.add_field();
 			of.class_id = sprite_frame_class_id;
 			of.dim = { 10, 10, 1 };
@@ -705,7 +705,7 @@ namespace countrybit
 				return false;
 			}
 
-			countrybit::database::jschema::add_object_field_request sprite_field;
+			countrybit::database::add_object_field_request sprite_field;
 			sprite_field.field_id = schema.add_field();
 			sprite_field.class_id = sprite_class_id;
 			sprite_field.description = "sprite field with 20 frames";

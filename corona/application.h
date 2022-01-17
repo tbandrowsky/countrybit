@@ -1,6 +1,8 @@
 #pragma once
 
 #include "file.h"
+#include "jdatabase.h"
+#include "json_parse.h"
 
 namespace countrybit
 {

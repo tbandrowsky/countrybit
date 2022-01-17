@@ -6,7 +6,7 @@ namespace countrybit
 	{
 		enum jtype
 		{
-			type_unknown = 0,
+			type_null = 0,
 
 			type_int8 = 1,
 			type_int16 = 2,

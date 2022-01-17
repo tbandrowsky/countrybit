@@ -9,6 +9,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "corona", "corona\corona.vcx
 EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		corona\corona.vcxitems*{8ba13569-58de-4105-9694-1ed9f2f85445}*SharedItemsImports = 4
 		corona\corona.vcxitems*{c12de1f8-9a25-4e3b-af11-93f4b3aceee9}*SharedItemsImports = 9
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

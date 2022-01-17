@@ -40,14 +40,6 @@ namespace countrybit
 			return compare(a, b) != 0;
 		}
 
-		int compare(const time_box& a, time_t& b)
-		{
-			char data[sizeof(time_t) * 2];
-			time_box tb(data);
-			tb = b;
-			return compare(a, b);
-		}
-
 		template<typename T> int operator<(const time_box& a, T& b)
 		{
 			return compare(a, b) < 0;
