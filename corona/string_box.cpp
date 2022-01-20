@@ -112,6 +112,15 @@ namespace countrybit
 			return output;
 		}
 
+		int get_hash_code( const char *_src )
+		{
+			int type_code = 17;
+			for (const char* c = _src; *c; c++)
+			{
+				type_code = type_code * 23 + *c;
+			}
+		}
+
 		bool string_tests()
 		{
 			int r = true;

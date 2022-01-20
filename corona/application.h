@@ -2,7 +2,8 @@
 
 #include "file.h"
 #include "jdatabase.h"
-#include "json_parse.h"
+#include "extractor.h"
+#include "loader.h"
 
 namespace countrybit
 {

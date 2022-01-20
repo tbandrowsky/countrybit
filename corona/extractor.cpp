@@ -1,4 +1,4 @@
-#include "json_parse.h"
+#include "extractor.h"
 #include <charconv>
 #include <iostream>
 
@@ -8,12 +8,12 @@ namespace countrybit
 {
 	namespace system
 	{
-		void parser::skip_whitespace()
+		void string_extractor::skip_whitespace()
 		{
 			while (get_space());
 		}
 
-		int parser::get_pattern_count(int& start_index, const std::function<bool(char c)>& matches)
+		int string_extractor::get_pattern_count(int& start_index, const std::function<bool(char c)>& matches)
 		{
 			int count = 0;
 			char c = at(start_index);
@@ -25,7 +25,7 @@ namespace countrybit
 			return count;
 		}
 
-		int parser::match(int start_index, int num_groups, match_group* group)
+		int string_extractor::match(int start_index, int num_groups, match_group* group)
 		{
 			int original_start = start_index;
 
@@ -114,7 +114,7 @@ namespace countrybit
 		const char* error_invalid_number = "Bad Number.  The parser thought this was a number, but, this text could not be converted to a double.";
 		const char* error_expected_number = "Expected Number.  A number was expected at this point, yet, sadly, other things were found.";
 
-		get_number_result parser::get_number()
+		get_number_result string_extractor::get_number()
 		{
 			get_number_result result;
 
@@ -182,7 +182,7 @@ namespace countrybit
 
 		const char* error_expected_identifer = "Expected identifier.  A token of the form 'SomeVariable_Name' was expected at this point, but instead, something else was found.";
 
-		get_identifier_result parser::get_identifier()
+		get_identifier_result string_extractor::get_identifier()
 		{
 			get_identifier_result result;
 			result.success = false;
@@ -219,7 +219,7 @@ namespace countrybit
 		const char* error_string_too_long = "String too large.  The string was simply too big for us to accept.  Max size is 1 << 25 chars.";
 		const char* error_string_not_terminated = "String too large.  The string was simply too big for us to accept.  Max size is 1 << 25 chars.";
 
-		get_string_result parser::get_string()
+		get_string_result string_extractor::get_string()
 		{
 			get_string_result result;
 
@@ -288,7 +288,7 @@ namespace countrybit
 
 		const char* error_expected_value = "Expected a value after the colon - either a string, another object, a number, or an array.";
 
-		parse_json_value_result parser::parse_json_value()
+		parse_json_value_result string_extractor::parse_json_value()
 		{
 
 			parse_json_value_result result;
@@ -393,7 +393,7 @@ namespace countrybit
 		const char* error_expected_object_end = "Expected either a comma to add another member, or a } to conclude the object.";
 		const char* error_expected_colon = "Expected a colon here.  A key value pair takes the form ""key"" : value.";
 
-		parse_json_object_result parser::parse_json_object()
+		parse_json_object_result string_extractor::parse_json_object()
 		{
 			parse_json_object_result result;
 
@@ -490,7 +490,7 @@ namespace countrybit
 		const char* error_expected_array = "Expected an array, one of those chumpies with a [ and ].";
 		const char* error_expected_array_end = "Expected either a comma to add another element, or a ] to conclude the array.";
 
-		parse_json_array_result parser::parse_json_array()
+		parse_json_array_result string_extractor::parse_json_array()
 		{
 			parse_json_array_result result;
 
@@ -563,11 +563,11 @@ namespace countrybit
 			return result;
 		}
 
-		bool parser::test_basics()
+		bool string_extractor::test_basics()
 		{
 			int count = 0;
 			std::string pattern_test1 = "12345";
-			parser p1(pattern_test1, 200);
+			string_extractor p1(pattern_test1, 200);
 			count = p1.get_pattern_count(p1.index, [](char c) {return std::isdigit(c); });
 			if (count != 5 || p1.index != 5) {
 				std::cout << __LINE__ << ":digit pattern count failed" << std::endl;
@@ -575,7 +575,7 @@ namespace countrybit
 			}
 
 			std::string pattern_test2 = "abc123";
-			parser p2(pattern_test2, 200);
+			string_extractor p2(pattern_test2, 200);
 			count = p2.get_pattern_count(p2.index, [](char c) {return std::isalpha(c); });
 
 			if (count != 3 || p2.index != 3) {
@@ -589,7 +589,7 @@ namespace countrybit
 			}
 
 			std::string good_identifier = "  Alpha42_Something  ";
-			parser p3(good_identifier, 2000);
+			string_extractor p3(good_identifier, 2000);
 			p3.skip_whitespace();
 			if (p3.at(p3.index) != 'A') {
 				std::cout << __LINE__ << ":expected to hit A in test" << std::endl;
@@ -603,7 +603,7 @@ namespace countrybit
 			}
 
 			std::string bad_identifier = "  0Alpha42_Something  ";
-			parser p4(bad_identifier, 2000);
+			string_extractor p4(bad_identifier, 2000);
 			p4.skip_whitespace();
 			auto p4r = p4.get_identifier();
 			if (p4r.success) {
@@ -612,7 +612,7 @@ namespace countrybit
 			}
 
 			std::string good_string1 = "   \"Alpha42_\\\"stuff\\\"Something\"  ";
-			parser p5(good_string1, 2000);
+			string_extractor p5(good_string1, 2000);
 			p5.skip_whitespace();
 			auto p5r = p5.get_string();
 			if (!p5r.success || strcmp("Alpha42_\"stuff\"Something", p5r.value)) {
@@ -621,7 +621,7 @@ namespace countrybit
 			}
 
 			std::string good_string2 = "   \"Alpha42\\\"_Some\"thing  ";
-			parser p6(good_string2, 2000);
+			string_extractor p6(good_string2, 2000);
 			p6.skip_whitespace();
 			auto p6r = p6.get_string();
 			if (!p6r.success || strcmp("Alpha42\"_Some", p6r.value)) {
@@ -630,7 +630,7 @@ namespace countrybit
 			}
 
 			std::string bad_string1 = "\"stuff";
-			parser p7(bad_string1, 2000);
+			string_extractor p7(bad_string1, 2000);
 			auto p7r = p7.get_string();
 			if (p7r.success) {
 				std::cout << __LINE__ << ":should not have extracted string" << std::endl;
@@ -642,7 +642,7 @@ namespace countrybit
   "age" : 42 }
   )^";
 
-			parser p8(sampleJsonObject1, 4000);
+			string_extractor p8(sampleJsonObject1, 4000);
 			auto p8r = p8.parse_json_object();
 			if (!p8r.success) {
 				std::cout << __LINE__ << ":should have extracted json object" << std::endl;
@@ -689,10 +689,10 @@ namespace countrybit
 			return true;
 		}
 
-		bool parser::test_json(int _case_line, const std::string& _src, int _expected_failure_line)
+		bool string_extractor::test_json(int _case_line, const std::string& _src, int _expected_failure_line)
 		{
 			std::string_view sv(_src);
-			parser p8(sv, 8000);
+			string_extractor p8(sv, 8000);
 			auto p8r = p8.parse_json_object();
 			if (_expected_failure_line) {
 				if (p8r.success) {
@@ -717,7 +717,7 @@ namespace countrybit
 			return true;
 		}
 
-		bool parser::test_json()
+		bool string_extractor::test_json()
 		{
 			std::string sampleJsonArrayGood = R"^(
 { "people" : [ 
@@ -736,7 +736,7 @@ namespace countrybit
 ] }
   )^";
 
-			if (!parser::test_json(__LINE__, sampleJsonArrayGood, 0))
+			if (!string_extractor::test_json(__LINE__, sampleJsonArrayGood, 0))
 				return false;
 
 			std::string sampleJsonArrayBad = R"^(
@@ -756,7 +756,7 @@ namespace countrybit
 ] }
   )^";
 
-			if (!parser::test_json(__LINE__, sampleJsonArrayBad, 8))
+			if (!string_extractor::test_json(__LINE__, sampleJsonArrayBad, 8))
 				return false;
 
 			std::string sampleJsonArrayBad2 = R"^(
@@ -776,7 +776,7 @@ namespace countrybit
 ]}
   )^";
 
-			if (!parser::test_json(__LINE__, sampleJsonArrayBad2, 4))
+			if (!string_extractor::test_json(__LINE__, sampleJsonArrayBad2, 4))
 				return false;
 
 			std::string sampleJsonArrayBad3 = R"^(
@@ -785,7 +785,7 @@ namespace countrybit
 	"age" : 42 
   )^";
 
-			if (!parser::test_json(__LINE__, sampleJsonArrayBad3, 3))
+			if (!string_extractor::test_json(__LINE__, sampleJsonArrayBad3, 3))
 				return false;
 
 			std::string sampleJsonArrayBad4 = R"^(
@@ -794,7 +794,7 @@ namespace countrybit
 	"age"  42 
   )^";
 
-			if (!parser::test_json(__LINE__, sampleJsonArrayBad4, 4))
+			if (!string_extractor::test_json(__LINE__, sampleJsonArrayBad4, 4))
 				return false;
 
 			std::string sampleJsonArrayGoodEmpty = R"^(
@@ -803,7 +803,7 @@ namespace countrybit
 }  )^";
 
 
-			if (!parser::test_json(__LINE__, sampleJsonArrayGoodEmpty, 0))
+			if (!string_extractor::test_json(__LINE__, sampleJsonArrayGoodEmpty, 0))
 				return false;
 
 			std::string sampleJsonObjectGoodEmpty = R"^(
@@ -811,7 +811,7 @@ namespace countrybit
 	"name_user" : { }
 }  )^";
 
-			if (!parser::test_json(__LINE__, sampleJsonObjectGoodEmpty, 0))
+			if (!string_extractor::test_json(__LINE__, sampleJsonObjectGoodEmpty, 0))
 				return false;
 
 
@@ -834,7 +834,7 @@ namespace countrybit
 }
 ] }
   )^";
-			if (!parser::test_json(__LINE__, sampleJsonArrayGoodEmpty2, 0))
+			if (!string_extractor::test_json(__LINE__, sampleJsonArrayGoodEmpty2, 0))
 				return false;
 
 			std::string sampleJsonArrayGood3 = R"^(
@@ -861,7 +861,7 @@ namespace countrybit
 }
 ] }
   )^";
-			if (!parser::test_json(__LINE__, sampleJsonArrayGood3, 0))
+			if (!string_extractor::test_json(__LINE__, sampleJsonArrayGood3, 0))
 				return false;
 
 			return true;

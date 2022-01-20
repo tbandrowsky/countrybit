@@ -11,6 +11,8 @@
 #include "int_box.h"
 #include "float_box.h"
 
+#define _CRT_SECURE_NO_WARNINGS
+
 namespace countrybit
 {
 	namespace database
@@ -134,7 +136,7 @@ namespace countrybit
 			string_box& operator = (double d)
 			{
 				char buff[256];
-				sprintf(buff, "%f", d);
+				sprintf_s(buff, "%f", d);
 				copy(buff);
 				return *this;
 			}
@@ -167,6 +169,7 @@ namespace countrybit
 			}
 		};
 
+		int get_hash_code(const char* _src);
 		int compare(const string_box& a, const string_box& b);
 		int operator<(const string_box& a, const string_box& b);
 		int operator>(const string_box& a, const string_box& b);

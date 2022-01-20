@@ -106,7 +106,7 @@ namespace countrybit
 				size_t sz = sizeof(T);
 				size_t placement = _top;
 				size_t new_top = placement + sz;
-				if (new_top > _size)
+				if (new_top >= _size)
 					return -1;
 				T* item = unpack<T>(_top);
 				*item = src;
@@ -121,7 +121,7 @@ namespace countrybit
 				size_t sz = sizeof(T) * length;
 				size_t placement = _top;
 				size_t new_top = placement + sz;
-				if (new_top > _size)
+				if (new_top >= _size)
 					return -1;
 				while (_top < new_top) 
 				{
@@ -141,7 +141,7 @@ namespace countrybit
 				size_t sz = sizeof(T) * length;
 				size_t placement = _top;
 				size_t new_top = placement + sz;
-				if (new_top > _size)
+				if (new_top >= _size)
 					return -1;
 				int i = start;
 				while (i < stop)
@@ -160,13 +160,54 @@ namespace countrybit
 			}
 
 			template <typename T>
+				requires (std::is_standard_layout<T>::value)
+			int pack_extracted(const T* base, int start, bool terminate = true)
+			{
+				T defaulto = {};
+				size_t placement = _top;
+				int i = start;
+				while (base[i] != defaulto)
+				{
+					T* item = unpack<T>(_top);
+					*item = base[i];
+					i++;
+					_top += sizeof(T);
+					if (_top >= _size) {
+						_top = placement;
+						return -1;
+					}
+				}
+				if (terminate) {
+					pack(defaulto);
+				}
+
+				return placement;
+			}
+
+			template <typename T>
+			requires (std::is_standard_layout<T>::value)
+			T* allocate_extracted(const T* base, int start, bool terminate = true)
+			{
+				int l = pack_extracted(base, start, terminate);
+				return unpack<char>(l);
+			}
+
+			template <typename T>
+				requires (std::is_standard_layout<T>::value)
+			T* allocate_extracted(const T* base, int start, int stop, bool terminate = true)
+			{
+				int l = pack_extracted(base, start, stop, terminate);
+				return unpack<char>(l);
+			}
+
+			template <typename T>
 			requires (std::is_standard_layout<T>::value)
 			int pack(T src, int length)
 			{
 				size_t sz = sizeof(T) * length;
 				size_t placement = _top;
 				size_t new_top = placement + sz;
-				if (new_top > _size)
+				if (new_top >= _size)
 					return -1;
 				while (_top < new_top)
 				{
@@ -175,6 +216,22 @@ namespace countrybit
 					_top += sizeof(T);
 				}
 				return placement;
+			}
+
+			template <typename T>
+			T* place()
+			{
+				int sz = sizeof(T);
+				int l = size() - top();
+
+				if (l < sz) 
+				{
+					return nullptr;
+				}
+
+				char* sz = data() + top();
+				_top += sz;
+				return sz;
 			}
 
 			template <typename T>
@@ -302,10 +359,30 @@ namespace countrybit
 			}
 
 			template <typename T>
+				requires (std::is_standard_layout<T>::value)
+			T* allocate_extracted(const T* base, int start, bool terminate = true)
+			{
+				return get_box()->allocate_extracted(base, start, terminate);
+			}
+
+			template <typename T>
+				requires (std::is_standard_layout<T>::value)
+			T* allocate_extracted(const T* base, int start, int stop, bool terminate = true)
+			{
+				return get_box()->allocate_extracted(base, start, stop, terminate);
+			}
+
+			template <typename T>
 			requires (std::is_standard_layout<T>::value)
 			T* allocate(int count)
 			{
 				return get_box()->allocate<T>(count);
+			}
+
+			template <typename T>
+			char* place()
+			{
+				return get_box()->place<T>();
 			}
 
 			int reserve(int length)
@@ -398,6 +475,22 @@ namespace countrybit
 			}
 
 			template <typename T>
+				requires (std::is_standard_layout<T>::value)
+			T* allocate_extracted(const T* base, int start, bool terminate = true)
+			{
+				if (!base) return nullptr;
+				return get_box()->allocate_extracted(base, start, terminate);
+			}
+
+			template <typename T>
+				requires (std::is_standard_layout<T>::value)
+			T* allocate_extracted(const T* base, int start, int stop, bool terminate = true)
+			{
+				if (!base) return nullptr;
+				return get_box()->allocate_extracted(base, start, stop, terminate);
+			}
+
+			template <typename T>
 			requires (std::is_standard_layout<T>::value)
 				int pack(T* src, int length)
 			{
@@ -409,6 +502,12 @@ namespace countrybit
 			T* allocate(int count)
 			{
 				return get_box()->allocate<T>(count);
+			}
+
+			template <typename T>
+			char* place()
+			{
+				return get_box()->place<T>();
 			}
 
 			size_t reserve(int length)

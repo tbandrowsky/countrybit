@@ -50,38 +50,6 @@ namespace countrybit
 		{
 		public:
 			row_id_type				field_id;
-			row_id_type				parent_field_id;
-			jtype					new_field_type;
-
-			union 
-			{
-				string_properties_type	string_properties;
-				int_properties_type		int_properties;
-				double_properties_type	double_properties;
-				time_properties_type	time_properties;
-				object_properties_type  object_properties;
-				query_properties_type   query_properties;
-			};
-
-			object_name				name;
-			object_description		description;
-
-			object_description		string_constant;
-			int64_t					int_constant;
-			double					float_constant;
-			time_t					time_constant;
-
-			static projection_element project_field(row_id_type _parent_field_id, row_id_type _field_id);
-			static projection_element project_string(row_id_type _parent_field_id, object_name& _name, object_description& _description, string_properties_type _request, object_description& description);
-			static projection_element project_int8(row_id_type _parent_field_id, object_name& _name, object_description& _description, int_properties_type _request, int8_t _value);
-			static projection_element project_int16(row_id_type _parent_field_id, object_name& _name, object_description& _description, int_properties_type _request, int16_t _value);
-			static projection_element project_int32(row_id_type _parent_field_id, object_name& _name, object_description& _description, int_properties_type _request, int32_t _value);
-			static projection_element project_int64(row_id_type _parent_field_id, object_name& _name, object_description& _description, int_properties_type _request, int64_t _value);
-			static projection_element project_float(row_id_type _parent_field_id, object_name& _name, object_description& _description, add_double_field_request _request, float _value);
-			static projection_element project_double(row_id_type _parent_field_id, object_name& _name, object_description& _description,add_double_field_request _request, double _value);
-			static projection_element project_time(row_id_type _parent_field_id, object_name& _name, object_description& _description, time_properties_type _request, time_t _value);
-			static projection_element project_object(row_id_type _parent_field_id, object_name& _name, object_description& _description, object_properties_type _request);
-			static projection_element project_query(row_id_type _parent_field_id, object_name& _name, object_description& _description, query_properties_type _request);
 		};
 
 		template <typename query> concept jxquery =

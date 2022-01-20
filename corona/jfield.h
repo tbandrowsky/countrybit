@@ -145,8 +145,9 @@ namespace countrybit
 		using jquery = iquery<128,128>;
 		using object_name = istring<32>;
 		using object_description = istring<250>;
-		using string_validation_pattern = istring<250>;
-		using string_validation_message = istring<250>;
+		using object_type = istring<16>;
+		using string_validation_pattern = istring<100>;
+		using string_validation_message = istring<100>;
 
 		struct string_properties_type
 		{
@@ -163,8 +164,8 @@ namespace countrybit
 
 		struct double_properties_type
 		{
-			double			minimum_number;
-			double			maximum_number;
+			double			minimum_double;
+			double			maximum_double;
 		};
 
 		struct time_properties_type
@@ -226,36 +227,43 @@ namespace countrybit
 			jtype		type_id;
 			object_name name;
 			object_description description;
+			object_type	type;
 		};
 
-		class add_string_field_request : public add_field_request_base, public string_properties_type {
+		class add_string_field_request {
 		public:
-
+			add_field_request_base name;
+			string_properties_type options;
 		};
 
-		class add_integer_field_request : public add_field_request_base, public int_properties_type {
+		class add_integer_field_request  {
 		public:
-
+			add_field_request_base name;
+			int_properties_type options;
 		};
 
-		class add_double_field_request : public add_field_request_base, public double_properties_type {
+		class add_double_field_request  {
 		public:
-
+			add_field_request_base name;
+			double_properties_type options;
 		};
 
-		class add_time_field_request : public add_field_request_base, public time_properties_type {
+		class add_time_field_request  {
 		public:
-
+			add_field_request_base name;
+			time_properties_type options;
 		};
 
-		class add_object_field_request : public add_field_request_base, public object_properties_type {
+		class add_object_field_request {
 		public:
-
+			add_field_request_base name;
+			object_properties_type options;
 		};
 
-		class add_query_field_request : public add_field_request_base, public query_properties_type {
+		class add_query_field_request  {
 		public:
-
+			add_field_request_base name;
+			query_properties_type options;
 		};
 
 	}
