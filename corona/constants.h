@@ -22,7 +22,12 @@ namespace countrybit
 			type_collection_id = 10,
 			type_string = 11,
 
-			type_query = 12
+			type_query = 12,
+			type_image = 13,
+			type_wave = 14,
+			type_midi = 15,
+			type_point = 16,
+			type_rectangle = 17
 		};
 
 		typedef int32_t row_id_type;

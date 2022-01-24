@@ -93,6 +93,11 @@ namespace countrybit
 			jarray get_object(int field_idx);
 			collection_id_box get_collection_id(int field_idx);
 			object_id_box get_object_id(int field_idx);
+			point_box get_point(int field_idx);
+			rectangle_box get_rectangle(int field_idx);
+			image_box get_image(int field_idx);
+			wave_box get_wave(int field_idx);
+			midi_box get_midi(int field_idx);
 			int size();
 		};
 
@@ -455,6 +460,11 @@ namespace countrybit
 				time_properties_type *_time_properties,
 				object_properties_type *_object_properties,
 				query_properties_type* _query_properties,
+				point_properties_type* _point_properties,
+				rectangle_properties_type* _rectangle_properties,
+				image_properties_type* _image_properties,
+				wave_properties_type* _wave_properties,
+				midi_properties_type* _midi_properties,
 				int64_t _size_bytes)
 			{
 				if (_field_id == null_row) {
@@ -480,6 +490,17 @@ namespace countrybit
 					jf.object_properties = *_object_properties;
 				if (_query_properties)
 					jf.query_properties = *_query_properties;
+				if (_point_properties)
+					jf.point_properties = *_point_properties;
+				if (_rectangle_properties)
+					jf.rectangle_properties = *_rectangle_properties;
+				if (_image_properties)
+					jf.image_properties = *_image_properties;
+				if (_wave_properties)
+					jf.wave_properties = *_wave_properties;
+				if (_midi_properties)
+					jf.midi_properties = *_midi_properties;
+
 				jf.size_bytes = _size_bytes;
 
 				fields_by_name.insert_or_assign(jf.name, _field_id);
@@ -488,12 +509,12 @@ namespace countrybit
 
 			row_id_type add_string_field(add_string_field_request request)
 			{
-				return add_field(request.name.field_id, jtype::type_string, request.name.name, request.name.description, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, string_box::get_box_size(request.options.length));
+				return add_field(request.name.field_id, jtype::type_string, request.name.name, request.name.description, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, string_box::get_box_size(request.options.length));
 			}
 
 			row_id_type add_time_field(add_time_field_request request)
 			{
-				return add_field(request.name.field_id, type_datetime, request.name.name, request.name.description, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, sizeof(time_t));
+				return add_field(request.name.field_id, type_datetime, request.name.name, request.name.description, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(time_t));
 			}
 
 			row_id_type add_integer_field(add_integer_field_request request)
@@ -501,13 +522,13 @@ namespace countrybit
 				switch (request.name.type_id)
 				{
 					case jtype::type_int8:
-						return add_field(request.name.field_id, type_int8, request.name.name, request.name.description, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, sizeof(int8_t));
+						return add_field(request.name.field_id, type_int8, request.name.name, request.name.description, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(int8_t));
 					case jtype::type_int16:
-						return add_field(request.name.field_id, type_int16, request.name.name, request.name.description, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, sizeof(int16_t));
+						return add_field(request.name.field_id, type_int16, request.name.name, request.name.description, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(int16_t));
 					case jtype::type_int32:
-						return add_field(request.name.field_id, type_int32, request.name.name, request.name.description, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, sizeof(int32_t));
+						return add_field(request.name.field_id, type_int32, request.name.name, request.name.description, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(int32_t));
 					case jtype::type_int64:
-						return add_field(request.name.field_id, type_int64, request.name.name, request.name.description, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, sizeof(int64_t));
+						return add_field(request.name.field_id, type_int64, request.name.name, request.name.description, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(int64_t));
 					default:
 						throw std::invalid_argument("Invalid integer type for field name:" + request.name.name);
 				}
@@ -518,9 +539,9 @@ namespace countrybit
 				switch (request.name.type_id)
 				{
 					case type_float32:
-						return add_field(request.name.field_id, type_float32, request.name.name, request.name.description, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, sizeof(float));
+						return add_field(request.name.field_id, type_float32, request.name.name, request.name.description, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(float));
 					case type_float64:
-						return add_field(request.name.field_id, type_float64, request.name.name, request.name.description, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, sizeof(double));
+						return add_field(request.name.field_id, type_float64, request.name.name, request.name.description, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(double));
 					default:
 						throw std::invalid_argument("Invalid floating point type for field name:" + request.name.name);
 				}
@@ -536,12 +557,37 @@ namespace countrybit
 				if (request.options.dim.y == 0) request.options.dim.y = 1;
 				if (request.options.dim.z == 0) request.options.dim.z = 1;
 				request.options.total_size_bytes = request.options.dim.x * request.options.dim.y * request.options.dim.z * sizeb ;
-				return add_field(request.name.field_id, type_object, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, request.options.total_size_bytes);
+				return add_field(request.name.field_id, type_object, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, request.options.total_size_bytes);
 			}
 
 			row_id_type add_query_field(add_query_field_request request)
 			{
-				return add_field(request.name.field_id, type_query, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, &request.options, sizeof(collection_id_type));
+				return add_field(request.name.field_id, type_query, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(collection_id_type));
+			}
+
+			row_id_type add_point_field(add_point_field_request request)
+			{
+				return add_field(request.name.field_id, type_query, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, sizeof(collection_id_type));
+			}
+
+			row_id_type add_rectangle_field(add_rectangle_field_request request)
+			{
+				return add_field(request.name.field_id, type_query, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, sizeof(collection_id_type));
+			}
+
+			row_id_type add_image_field(add_image_field_request request)
+			{
+				return add_field(request.name.field_id, type_query, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, sizeof(collection_id_type));
+			}
+
+			row_id_type add_wave_field(add_wave_field_request request)
+			{
+				return add_field(request.name.field_id, type_query, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, sizeof(collection_id_type));
+			}
+
+			row_id_type add_midi_field(add_midi_field_request request)
+			{
+				return add_field(request.name.field_id, type_query, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &request.options, sizeof(collection_id_type));
 			}
 
 			row_id_type add_class( add_class_request request )

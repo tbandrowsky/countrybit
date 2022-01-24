@@ -31,9 +31,11 @@ namespace countrybit
 		struct filter_element
 		{
 		public:
+			object_name				target_field_name;
 			row_id_type				target_field_id;
 			filter_comparison_types	comparison;
 			row_id_type				parameter_field_id;
+			object_name				parameter_field_name;
 			double					distance_threshold;
 
 			static filter_element filter_eq(row_id_type _target_field_id, row_id_type _parameter_field_id);
@@ -50,6 +52,7 @@ namespace countrybit
 		{
 		public:
 			row_id_type				field_id;
+			object_name				field_name;
 		};
 
 		template <typename query> concept jxquery =

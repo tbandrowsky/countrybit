@@ -304,9 +304,9 @@ namespace countrybit
 
 			void bind_integer_fields()
 			{
-				bind_add_integer_field_request(database::jtype::type_int16, "int16fields", "int16");
-				bind_add_integer_field_request(database::jtype::type_int32, "int32fields", "int32");
-				bind_add_integer_field_request(database::jtype::type_int64, "int64fields", "int64");
+				bind_add_integer_field_request(database::jtype::type_int16, "int16_fields", "int16");
+				bind_add_integer_field_request(database::jtype::type_int32, "int32_fields", "int32");
+				bind_add_integer_field_request(database::jtype::type_int64, "int64_fields", "int64");
 			}
 
 			void bind_add_double_field_request(database::jtype jt, const char* member_name, const char* name)
@@ -342,8 +342,8 @@ namespace countrybit
 
 			void bind_double_fields()
 			{
-				bind_add_double_field_request(database::jtype::type_float32, "floatfields", "float");
-				bind_add_double_field_request(database::jtype::type_float64, "doublefields", "double");
+				bind_add_double_field_request(database::jtype::type_float32, "float_fields", "float");
+				bind_add_double_field_request(database::jtype::type_float64, "double_fields", "double");
 			}
 
 			void bind_add_time_field_request()
@@ -352,7 +352,7 @@ namespace countrybit
 				auto b = begin_object_create_binding(
 					nullptr,
 					nullptr,
-					"datetimefields",
+					"datetime_fields",
 					"datetime",
 					100,
 					[tb](const pobject* obj) {
@@ -379,11 +379,11 @@ namespace countrybit
 
 			void bind_add_object_field_request()
 			{
-				auto tb = &add_time_fields;
+				auto tb = &add_object_fields;
 				auto b = begin_object_create_binding(
 					nullptr,
 					nullptr,
-					"objectfields",
+					"object_fields",
 					"object",
 					100,
 					[tb](const pobject* obj) {
@@ -404,15 +404,41 @@ namespace countrybit
 				add_object_member_binding(b, "name", "name", &dummy, &dummy.name.name, true);
 				add_object_member_binding(b, "datetime", "datetime", &dummy, &dummy.name.type, true);
 				add_object_member_binding(b, "description", "description", &dummy, &dummy.name.description, false);
-				add_object_member_binding(b, "min_time", "min_time", &dummy, &dummy.options.class_id, false);
-				add_object_member_binding(b, "max_time", "max_time", &dummy, &dummy.options.dim.x, false);
-				add_object_member_binding(b, "max_time", "max_time", &dummy, &dummy.options.dim.y, false);
-				add_object_member_binding(b, "max_time", "max_time", &dummy, &dummy.options.dim.z, false);
+				add_object_member_binding(b, "class_name", "class_name", &dummy, &dummy.options.class_name, false);
+				add_object_member_binding(b, "x", "x", &dummy, &dummy.options.dim.x, false);
+				add_object_member_binding(b, "y", "y", &dummy, &dummy.options.dim.y, false);
+				add_object_member_binding(b, "z", "z", &dummy, &dummy.options.dim.z, false);
 			}
 
 			void bind_add_query_field_request()
 			{
+				auto tb = &add_query_fields;
+				auto b = begin_object_create_binding(
+					nullptr,
+					nullptr,
+					"query_fields",
+					"query",
+					100,
+					[tb](const pobject* obj) {
+						database::row_range rr;
+						auto& t = tb->create(1, rr);
+						t.name = {};
+						t.name.field_id = 0;
+						t.name.type_id = database::jtype::type_query;
+						t.options = {};
+						return (char*)&t;
+					},
+					[](char* b, const pobject* obj) {
+						return b;
+					});
 
+				database::add_query_field_request dummy;
+
+				add_object_member_binding(b, "name", "name", &dummy, &dummy.name.name, true);
+				add_object_member_binding(b, name, name, &dummy, &dummy.name.type, true);
+				add_object_member_binding(b, "description", "description", &dummy, &dummy.name.description, false);
+				add_object_member_binding(b, "min_int", "min_int", &dummy, &dummy.options.minimum_int, false);
+				add_object_member_binding(b, "max_int", "max_int", &dummy, &dummy.options.maximum_int, false);
 			}
 
 		};

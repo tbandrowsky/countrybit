@@ -20,14 +20,16 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)assert_if.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)collection_id_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)constants.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)image_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)jfield.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)extractor.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)loader.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)midi_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)pobject.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)point_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)query_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)object_id_box.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)rect_box.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)rectangle_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)time_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)file.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)float_box.h" />
@@ -44,6 +46,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)skip_list.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)store_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)table.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)wave_box.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)application.cpp" />

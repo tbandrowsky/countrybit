@@ -22,6 +22,11 @@
 #include "collection_id_box.h"
 #include "object_id_box.h"
 #include "query_box.h"
+#include "point_box.h"
+#include "rectangle_box.h"
+#include "midi_box.h"
+#include "image_box.h"
+#include "wave_box.h"
 #include "sorted_index.h"
 
 namespace countrybit
@@ -174,9 +179,55 @@ namespace countrybit
 			int64_t			maximum_time_t;
 		};
 
+		struct point_properties_type
+		{
+
+		};
+
+		struct rectangle_properties_type
+		{
+
+		};
+
 		struct query_properties_type
 		{
 			jquery			query;
+		};
+
+		struct emphemeral_handle_type
+		{
+			time_t	valid_time;
+			uint64_t handle;
+		};
+
+		struct image_properties_type
+		{
+			istring<256>			image_path;
+			emphemeral_handle_type	handle;			
+		};
+
+		struct midi_properties_type
+		{
+			istring<256>			image_path;
+			emphemeral_handle_type	handle;
+		};
+
+		struct wave_properties_type
+		{
+			istring<256>			image_path;
+			emphemeral_handle_type	handle;
+		};
+
+		struct midi_data_type
+		{
+			istring<256>			image_path;
+			emphemeral_handle_type	handle;
+		};
+
+		struct wave_data_type
+		{
+			istring<256>			image_path;
+			emphemeral_handle_type	handle;
 		};
 
 		struct dimensions_type
@@ -196,6 +247,7 @@ namespace countrybit
 		{
 			dimensions_type		dim;
 			row_id_type			class_id;
+			object_name			class_name;
 			int64_t				class_size_bytes;
 			int64_t				total_size_bytes;
 		};
@@ -218,6 +270,11 @@ namespace countrybit
 				time_properties_type	time_properties;
 				object_properties_type  object_properties;
 				query_properties_type   query_properties;
+				point_properties_type   point_properties;
+				rectangle_properties_type   rectangle_properties;
+				image_properties_type	image_properties;
+				midi_properties_type	midi_properties;
+				wave_properties_type	wave_properties;
 			};
 		};
 
@@ -264,6 +321,36 @@ namespace countrybit
 		public:
 			add_field_request_base name;
 			query_properties_type options;
+		};
+
+		class add_point_field_request {
+		public:
+			add_field_request_base name;
+			point_properties_type options;
+		};
+
+		class add_rectangle_field_request {
+		public:
+			add_field_request_base name;
+			rectangle_properties_type options;
+		};
+
+		class add_image_field_request {
+		public:
+			add_field_request_base name;
+			image_properties_type options;
+		};
+
+		class add_wave_field_request {
+		public:
+			add_field_request_base name;
+			wave_properties_type options;
+		};
+
+		class add_midi_field_request {
+		public:
+			add_field_request_base name;
+			midi_properties_type options;
 		};
 
 	}

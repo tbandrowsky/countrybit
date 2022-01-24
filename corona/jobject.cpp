@@ -182,6 +182,36 @@ namespace countrybit
 						string_box::create(c, jf.string_properties.length);
 					}
 					break;
+				case jtype::type_point:
+					{
+						boxed<point> b(c);
+						b = point { };
+					}
+					break;
+				case jtype::type_rectangle:
+					{
+						boxed<rectangle> b(c);
+						b = rectangle {};
+					}
+					break;
+				case jtype::type_image:
+					{
+						boxed<image_instance> b(c);
+						b = image_instance {};
+					}
+					break;
+				case jtype::type_wave:
+					{
+						boxed<wave_instance> b(c);
+						b = wave_instance {};
+					}
+					break;
+				case jtype::type_midi:
+					{
+						boxed<midi_instance> b(c);
+						b = midi_instance {};
+					}
+					break;
 				}
 			}
 		}
@@ -308,73 +338,73 @@ namespace countrybit
 		void jschema::add_standard_fields() 
 		{
 			add_string_field_request string_fields[33] = {
-				{ field_full_name, jtype::type_string , "fullName", "Full Name", 75, "", "" },
-				{ field_first_name, jtype::type_string , "firstName", "First Name", 50, "", "" },
-				{ field_last_name, jtype::type_string , "lastName", "Last Name", 50, "", "" },
-				{ field_middle_name, jtype::type_string , "middleName", "Middle Name", 50, "", "" },
-				{ field_ssn, jtype::type_string , "ssn", "SSN", 10, "", "" },
-				{ field_email, jtype::type_string, "email", "eEmail", 200, "", "" },
-				{ field_title, jtype::type_string, "title", "Title", 200, "", "" },
-				{ field_street, jtype::type_string, "street", "Street", 200, "", "" },
-				{ field_substreet, jtype::type_string, "suiteapt", "Suite/Apt", 100, "", "" },
-				{ field_city, jtype::type_string, "city", "City", 100, "", "" },
-				{ field_state, jtype::type_string, "state", "State", 100, "", "" },
-				{ field_postal, jtype::type_string, "postal", "Postal Code", 50, "", "" },
-				{ field_country_name, jtype::type_string, "countryName", "Country Name", 50, "", "" },
-				{ field_country_code, jtype::type_string, "countryCode", "Country Code", 3, "", "" },
-				{ field_institution_name, jtype::type_string, "institutionName", "Institution Name", 100, "", "" },
-				{ field_longname, jtype::type_string, "longName", "Long Name", 200, "", "" },
-				{ field_shortname, jtype::type_string, "shortName", "Short Name", 50, "", "" },
-				{ field_unit, jtype::type_string, "unit", "Unit", 10, "", "" },
-				{ field_code_symbol, jtype::type_string, "symbol", "Symbol", 10, "", "" },
-				{ field_code_operator, jtype::type_string, "operator", "Operator", 10, "", "" },
-				{ field_windows_path, jtype::type_string, "windowsPath", "Windows Path", 512, "", "" },
-				{ field_linux_path, jtype::type_string, "linuxPath", "Linux Path", 512, "", "" },
-				{ field_url, jtype::type_string, "url", "Url", 512, "", "" },
-				{ field_user_name, jtype::type_string, "userName", "User Name", 100, "", "" },
-				{ field_password, jtype::type_string, "passWord", "Password", 100, "", "" },
-				{ field_document_title, jtype::type_string, "docTitle", "Document Title", 200, "", "" },
-				{ field_section_title, jtype::type_string, "sectionTitle", "Section Title", 200, "", "" },
-				{ field_block_title, jtype::type_string, "blockTitle", "Block Title", 200, "", "" },
-				{ field_caption, jtype::type_string, "caption", "Caption", 200, "", "" },
-				{ field_paragraph, jtype::type_string, "paragraph", "Paragraph", 4000, "", "" },
-				{ field_mime_type, jtype::type_string, "mimeType", "MimeType", 100, "", "" },
-				{ field_base64_block, jtype::type_string, "base64", "Base64", 100, "", "" },
-				{ field_file_name, jtype::type_string, "fileName", "fileName", 512, "", "" }
+				{ { field_full_name, jtype::type_string , "fullName", "Full Name" }, { 75, "", "" } },
+				{ { field_first_name, jtype::type_string , "firstName", "First Name" }, { 50, "", "" } },
+				{ { field_last_name, jtype::type_string , "lastName", "Last Name" }, { 50, "", "" } },
+				{ { field_middle_name, jtype::type_string , "middleName", "Middle Name" }, { 50, "", "" } },
+				{ { field_ssn, jtype::type_string , "ssn", "SSN" }, { 10, "", "" }},
+				{ { field_email, jtype::type_string, "email", "eEmail" }, { 200, "", ""  }},
+				{ { field_title, jtype::type_string, "title", "Title" }, { 200, "", "" } },
+				{ { field_street, jtype::type_string, "street", "Street" },{  200, "", "" } },
+				{ { field_substreet, jtype::type_string, "suiteapt", "Suite/Apt" }, { 100, "", ""  }},
+				{ { field_city, jtype::type_string, "city", "City" }, { 100, "", "" } },
+				{ { field_state, jtype::type_string, "state", "State" }, { 100, "", "" } },
+				{ { field_postal, jtype::type_string, "postal", "Postal Code" }, { 50, "", ""  }},
+				{ { field_country_name, jtype::type_string, "countryName", "Country Name" }, { 50, "", "" } },
+				{ { field_country_code, jtype::type_string, "countryCode", "Country Code" }, { 3, "", ""  }},
+				{ { field_institution_name, jtype::type_string, "institutionName", "Institution Name" }, { 100, "", "" } },
+				{ { field_longname, jtype::type_string, "longName", "Long Name" }, { 200, "", ""  }},
+				{ { field_shortname, jtype::type_string, "shortName", "Short Name" },{  50, "", ""  }},
+				{ { field_unit, jtype::type_string, "unit", "Unit" }, { 10, "", "" } },
+				{ { field_code_symbol, jtype::type_string, "symbol", "Symbol" }, { 10, "", "" } },
+				{ { field_code_operator, jtype::type_string, "operator", "Operator" }, { 10, "", ""  }},
+				{ { field_windows_path, jtype::type_string, "windowsPath", "Windows Path" }, { 512, "", ""  }},
+				{ { field_linux_path, jtype::type_string, "linuxPath", "Linux Path" }, { 512, "", "" } },
+				{ { field_url, jtype::type_string, "url", "Url" }, { 512, "", "" } },
+				{ { field_user_name, jtype::type_string, "userName", "User Name" }, { 100, "", ""  }},
+				{ { field_password, jtype::type_string, "passWord", "Password" }, { 100, "", ""  }},
+				{ { field_document_title, jtype::type_string, "docTitle", "Document Title" }, { 200, "", "" } },
+				{ { field_section_title, jtype::type_string, "sectionTitle", "Section Title" }, { 200, "", "" } },
+				{ { field_block_title, jtype::type_string, "blockTitle", "Block Title" }, { 200, "", "" } },
+				{ { field_caption, jtype::type_string, "caption", "Caption" }, { 200, "", "" } },
+				{ { field_paragraph, jtype::type_string, "paragraph", "Paragraph" }, { 4000, "", "" } },
+				{ { field_mime_type, jtype::type_string, "mimeType", "MimeType" }, { 100, "", "" } },
+				{ { field_base64_block, jtype::type_string, "base64", "Base64" }, { 100, "", "" } },
+				{ { field_file_name, jtype::type_string, "fileName", "fileName" }, { 512, "", "" } }
 			};
 
 			add_time_field_request time_fields[2] = {
-				{ field_birthday, jtype::type_datetime, "birthday", "Birthday", 0, INT64_MAX },
-				{ field_scheduled, jtype::type_datetime, "scheduled", "Scheduled", 0, INT64_MAX },
+				{ { field_birthday, jtype::type_datetime, "birthday", "Birthday" }, 0, INT64_MAX },
+				{ { field_scheduled, jtype::type_datetime, "scheduled", "Scheduled" }, 0, INT64_MAX },
 			};
 
 			add_integer_field_request int_fields[1] = {
-				{ field_count, jtype::type_int64, "count", "Count", 0, INT64_MAX },
+				{ { field_count, jtype::type_int64, "count", "Count" }, 0, INT64_MAX },
 			};
 
 			add_double_field_request double_fields[22] = {
-				{ field_quantity, jtype::type_float64, "quantity", "Quantity", -1E40, 1E40 },
-				{ field_latitude, jtype::type_float64, "latitude", "Latitude", -90, 90 },
-				{ field_longitude, jtype::type_float64, "longitude", "Longitude", -180, 180 },
-				{ field_meters, jtype::type_float64, "meters", "Meters", -1E40, 1E40 },
-				{ field_feet, jtype::type_float64, "feet", "Feet", -1E40, 1E40 },
-				{ field_kilograms, jtype::type_float64, "kilograms", "Kilograms", -1E40, 1E40 },
-				{ field_pounds, jtype::type_float64, "pounds", "Pounds", -1E40, 1E40 },
-				{ field_seconds, jtype::type_float64, "seconds", "Seconds", -1E40, 1E40 },
-				{ field_minutes, jtype::type_float64, "minutes", "Minutes", -1E40, 1E40 },
-				{ field_hours, jtype::type_float64, "hours", "Hours", -1E40, 1E40 },
-				{ field_amperes, jtype::type_float64, "amperes", "Amperes", -1E40, 1E40 },
-				{ field_kelvin, jtype::type_float64, "kelvin", "Kelvin", -1E40, 1E40 },
-				{ field_mole, jtype::type_float64, "moles", "Moles", -1E40, 1E40 },
-				{ field_height, jtype::type_float32, "height", "Height", 0, 100000 },
-				{ field_width, jtype::type_float32, "width", "Width", 0, 100000 },
-				{ field_x, jtype::type_float32, "x", "X", -100000, 100000 },
-				{ field_y, jtype::type_float32, "y", "Y", -100000, 100000 },
-				{ field_z, jtype::type_float32, "z", "Z", -100000, 100000 },
-				{ field_red, jtype::type_float32, "red", "red", 0, 1 },
-				{ field_green, jtype::type_float32, "green", "green", 0, 1 },
-				{ field_blue, jtype::type_float32, "blue", "blue", 0, 1 },
-				{ field_alpha, jtype::type_float32, "alpha", "alpha", 0, 1 }
+				{ { field_quantity, jtype::type_float64, "quantity", "Quantity" }, -1E40, 1E40 },
+				{ { field_latitude, jtype::type_float64, "latitude", "Latitude" }, -90, 90 },
+				{ { field_longitude, jtype::type_float64, "longitude", "Longitude" }, -180, 180 },
+				{ { field_meters, jtype::type_float64, "meters", "Meters" }, -1E40, 1E40 },
+				{ { field_feet, jtype::type_float64, "feet", "Feet" }, -1E40, 1E40 },
+				{ { field_kilograms, jtype::type_float64, "kilograms", "Kilograms" }, -1E40, 1E40 },
+				{ { field_pounds, jtype::type_float64, "pounds", "Pounds" }, -1E40, 1E40 },
+				{ { field_seconds, jtype::type_float64, "seconds", "Seconds" }, -1E40, 1E40 },
+				{ { field_minutes, jtype::type_float64, "minutes", "Minutes" }, -1E40, 1E40 },
+				{ { field_hours, jtype::type_float64, "hours", "Hours" }, -1E40, 1E40 },
+				{ { field_amperes, jtype::type_float64, "amperes", "Amperes" }, -1E40, 1E40 },
+				{ { field_kelvin, jtype::type_float64, "kelvin", "Kelvin" }, -1E40, 1E40 },
+				{ { field_mole, jtype::type_float64, "moles", "Moles" }, -1E40, 1E40 },
+				{ { field_height, jtype::type_float32, "height", "Height" }, 0, 100000 },
+				{ { field_width, jtype::type_float32, "width", "Width" }, 0, 100000 },
+				{ { field_x, jtype::type_float32, "x", "X" }, -100000, 100000 },
+				{ { field_y, jtype::type_float32, "y", "Y" }, -100000, 100000 },
+				{ { field_z, jtype::type_float32, "z", "Z" }, -100000, 100000 },
+				{ { field_red, jtype::type_float32, "red", "red" }, 0, 1 },
+				{ { field_green, jtype::type_float32, "green", "green" }, 0, 1 },
+				{ { field_blue, jtype::type_float32, "blue", "blue" }, 0, 1 },
+				{ { field_alpha, jtype::type_float32, "alpha", "alpha" }, 0, 1 }
 			};
 
 			for (int i = 0; i < sizeof(string_fields) / sizeof(string_fields[0]); i++) {
@@ -479,11 +509,11 @@ namespace countrybit
 			}
 
 			countrybit::database::add_object_field_request people;
-			people.class_id = person_class_id;
-			people.description = "People";
-			people.name = "people";
-			people.dim = { 100, 1, 1 };
-			people.field_id = schema.add_field();
+			people.options.class_id = person_class_id;
+			people.name.description = "People";
+			people.name.name = "people";
+			people.options.dim = { 100, 1, 1 };
+			people.name.field_id = schema.add_field();
 			row_id_type people_field = schema.add_object_field(people);
 
 			if (people_field == null_row) {
@@ -529,11 +559,11 @@ namespace countrybit
 			}
 
 			countrybit::database::add_object_field_request people_field;
-			people_field.class_id = person_class_id;
-			people_field.description = "People";
-			people_field.name = "people";
-			people_field.dim = { 1, 0, 0 };
-			people_field.field_id = schema.add_field();
+			people_field.options.class_id = person_class_id;
+			people_field.name.description = "People";
+			people_field.name.name = "people";
+			people_field.options.dim = { 1, 0, 0 };
+			people_field.name.field_id = schema.add_field();
 			row_id_type people_field_id = schema.add_object_field(people_field);
 
 			collection_id_type colid;
@@ -681,11 +711,11 @@ namespace countrybit
 			}
 
 			countrybit::database::add_object_field_request of;
-			of.field_id = schema.add_field();
-			of.class_id = sprite_frame_class_id;
-			of.dim = { 10, 10, 1 };
-			of.name = "spriteframe20";
-			of.description = "spriteframe20";
+			of.name.field_id = schema.add_field();
+			of.options.class_id = sprite_frame_class_id;
+			of.options.dim = { 10, 10, 1 };
+			of.name.name = "spriteframe20";
+			of.name.description = "spriteframe20";
 
 			row_id_type sprite_frame_field_id = schema.add_object_field(of);
 
@@ -706,11 +736,11 @@ namespace countrybit
 			}
 
 			countrybit::database::add_object_field_request sprite_field;
-			sprite_field.field_id = schema.add_field();
-			sprite_field.class_id = sprite_class_id;
-			sprite_field.description = "sprite field with 20 frames";
-			sprite_field.name = "sprite20";
-			sprite_field.dim = { 1, 1, 1 };
+			sprite_field.name.field_id = schema.add_field();
+			sprite_field.options.class_id = sprite_class_id;
+			sprite_field.name.description = "sprite field with 20 frames";
+			sprite_field.name.name = "sprite20";
+			sprite_field.options.dim = { 1, 1, 1 };
 			row_id_type sprite_field_id = schema.add_object_field(sprite_field);
 
 			collection_id_type colid;
