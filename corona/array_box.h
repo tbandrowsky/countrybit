@@ -63,6 +63,17 @@ namespace countrybit
 					length++;
 				}
 			}
+
+			item_type* append()
+			{
+				item_type* d = nullptr;
+				if (length < max_items) {
+					d = &data[length];
+					* = t;
+					length++;
+				}
+				return d;
+			}
 		};
 
 		template <typename item_type>

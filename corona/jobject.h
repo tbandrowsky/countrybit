@@ -98,6 +98,7 @@ namespace countrybit
 			image_box get_image(int field_idx);
 			wave_box get_wave(int field_idx);
 			midi_box get_midi(int field_idx);
+			color_box get_color(int field_idx);
 			int size();
 		};
 
@@ -370,10 +371,15 @@ namespace countrybit
 			using class_index_type = sorted_index<object_name, row_id_type>;
 			using field_index_type = sorted_index<object_name, row_id_type>;
 
+			using projection_store_type = parent_child_table<row_id_type, projection_element>;
+			using filter_store_type = parent_child_table<row_id_type, filter_element>;
+
 			field_store_type fields;
 			class_store_type classes;
 			class_index_type classes_by_name;
 			field_index_type fields_by_name;
+			projection_store_type query_projections;
+			filter_store_type	  query_filters;
 
 		public:
 
@@ -465,6 +471,7 @@ namespace countrybit
 				image_properties_type* _image_properties,
 				wave_properties_type* _wave_properties,
 				midi_properties_type* _midi_properties,
+				color_properties_type* _color_properties,
 				int64_t _size_bytes)
 			{
 				if (_field_id == null_row) {
@@ -500,6 +507,8 @@ namespace countrybit
 					jf.wave_properties = *_wave_properties;
 				if (_midi_properties)
 					jf.midi_properties = *_midi_properties;
+				if (_color_properties)
+					jf.color_properties = *_color_properties;
 
 				jf.size_bytes = _size_bytes;
 
@@ -509,12 +518,12 @@ namespace countrybit
 
 			row_id_type add_string_field(add_string_field_request request)
 			{
-				return add_field(request.name.field_id, jtype::type_string, request.name.name, request.name.description, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, string_box::get_box_size(request.options.length));
+				return add_field(request.name.field_id, jtype::type_string, request.name.name, request.name.description, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, string_box::get_box_size(request.options.length));
 			}
 
 			row_id_type add_time_field(add_time_field_request request)
 			{
-				return add_field(request.name.field_id, type_datetime, request.name.name, request.name.description, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(time_t));
+				return add_field(request.name.field_id, type_datetime, request.name.name, request.name.description, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(time_t));
 			}
 
 			row_id_type add_integer_field(add_integer_field_request request)
@@ -522,13 +531,13 @@ namespace countrybit
 				switch (request.name.type_id)
 				{
 					case jtype::type_int8:
-						return add_field(request.name.field_id, type_int8, request.name.name, request.name.description, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(int8_t));
+						return add_field(request.name.field_id, type_int8, request.name.name, request.name.description, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(int8_t));
 					case jtype::type_int16:
-						return add_field(request.name.field_id, type_int16, request.name.name, request.name.description, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(int16_t));
+						return add_field(request.name.field_id, type_int16, request.name.name, request.name.description, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(int16_t));
 					case jtype::type_int32:
-						return add_field(request.name.field_id, type_int32, request.name.name, request.name.description, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(int32_t));
+						return add_field(request.name.field_id, type_int32, request.name.name, request.name.description, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(int32_t));
 					case jtype::type_int64:
-						return add_field(request.name.field_id, type_int64, request.name.name, request.name.description, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(int64_t));
+						return add_field(request.name.field_id, type_int64, request.name.name, request.name.description, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(int64_t));
 					default:
 						throw std::invalid_argument("Invalid integer type for field name:" + request.name.name);
 				}
@@ -539,9 +548,9 @@ namespace countrybit
 				switch (request.name.type_id)
 				{
 					case type_float32:
-						return add_field(request.name.field_id, type_float32, request.name.name, request.name.description, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(float));
+						return add_field(request.name.field_id, type_float32, request.name.name, request.name.description, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(float));
 					case type_float64:
-						return add_field(request.name.field_id, type_float64, request.name.name, request.name.description, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(double));
+						return add_field(request.name.field_id, type_float64, request.name.name, request.name.description, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(double));
 					default:
 						throw std::invalid_argument("Invalid floating point type for field name:" + request.name.name);
 				}
@@ -557,37 +566,195 @@ namespace countrybit
 				if (request.options.dim.y == 0) request.options.dim.y = 1;
 				if (request.options.dim.z == 0) request.options.dim.z = 1;
 				request.options.total_size_bytes = request.options.dim.x * request.options.dim.y * request.options.dim.z * sizeb ;
-				return add_field(request.name.field_id, type_object, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, request.options.total_size_bytes);
+				return add_field(request.name.field_id, type_object, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, request.options.total_size_bytes);
 			}
 
 			row_id_type add_query_field(add_query_field_request request)
 			{
-				return add_field(request.name.field_id, type_query, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(collection_id_type));
+				return add_field(request.name.field_id, type_query, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(collection_id_type));
+			}
+
+			const char* invalid_comparison = "Invalid comparison";
+			const char* invalid_parameter_field = "Invalid parameter field";
+			const char* invalid_target_field = "Invalid target field";
+			const char* invalid_projection_field = "Invalid projection field";
+
+			bool prepare_query_field_request(add_named_query_field_request request)
+			{
+				bool valid = true;
+
+				int filterSize = request.options.filter.size();
+
+				for (int i = 0; i < filterSize; i++)
+				{
+					auto& filter = request.options.filter[i];
+
+					if (!filter.parameter_field_name) {
+						filter.error_message = invalid_parameter_field;
+						valid = false;
+						continue;
+					}
+
+					if (!filter.target_field_name) {
+						filter.error_message = invalid_target_field;
+						valid = false;
+						continue;
+					}
+
+					if (!filter.comparison_name) {
+						filter.comparison_name = invalid_comparison;
+						valid = false;
+						continue;
+					}
+
+					if (strcmp(filter.comparison_name, "$eq") == 0) {
+						filter.comparison = filter_comparison_types::eq;
+					}
+					else if (strcmp(filter.comparison_name, "$gte") == 0) {
+						filter.comparison = filter_comparison_types::gteq;
+					}
+					else if (strcmp(filter.comparison_name, "$lte") == 0) {
+						filter.comparison = filter_comparison_types::lseq;
+					}
+					else if (strcmp(filter.comparison_name, "$gt") == 0) {
+						filter.comparison = filter_comparison_types::gt;
+					}
+					else if (strcmp(filter.comparison_name, "$lt") == 0) {
+						filter.comparison = filter_comparison_types::ls;
+					}
+					else if (strcmp(filter.comparison_name, "$inside") == 0) {
+						filter.comparison = filter_comparison_types::distance;
+					}
+					else if (strcmp(filter.comparison_name, "$in") == 0) {
+						filter.comparison = filter_comparison_types::inlist;
+					}
+					else if (strcmp(filter.comparison_name, "$contains") == 0) {
+						filter.comparison = filter_comparison_types::contains;
+					}
+					else
+					{
+						filter.error_message = invalid_comparison;
+						valid = false;
+					}
+
+					auto piter = fields_by_name[filter.parameter_field_name];
+					if (piter != std::end(fields_by_name)) 
+					{
+						filter.parameter_field_id = piter->second;
+					}
+					else
+					{
+						filter.error_message = invalid_parameter_field;
+					}
+
+					auto titer = fields_by_name[filter.target_field_name];
+					if (titer != std::end(fields_by_name)) 
+					{
+						filter.target_field_id = titer->second;
+					}
+					else
+					{
+						filter.error_message = invalid_target_field;
+					}
+				}
+
+				int projectionSize = request.options.filter.size();
+
+				for (int i = 0; i < projectionSize; i++)
+				{
+					auto& projection = request.options.projection[i];
+
+					if (!projection.field_name) {
+						projection.error_message = invalid_comparison;
+						valid = false;
+						continue;
+					}
+
+					auto titer = fields_by_name[projection.field_name];
+					if (titer != std::end(fields_by_name))
+					{
+						projection.field_id = titer->second;
+					}
+					else
+					{
+						projection.error_message = invalid_target_field;
+						valid = false;
+						continue;
+					}
+				}
+
+				return valid;
+			}
+
+			row_id_type add_query_field(add_named_query_field_request request)
+			{
+				query_properties_type options;
+
+				bool prepared = prepare_query_field_request(request);
+				if (!prepared) {
+					return null_row;
+				}
+
+				int filterSize = request.options.filter.size();
+				auto filterHolder = query_filters.create(filterSize);
+
+				options.filters = filterHolder.row_id();
+
+				for (int fi = 0; fi < filterHolder.size(); fi++)
+				{
+					auto& fe_src = request.options.filter[fi];
+					filter_element fe;
+					fe.comparison = fe_src.comparison;
+					fe.parameter_field_id = fe_src.parameter_field_id;
+					fe.target_field_id = fe_src.target_field_id;
+					fe.distance_threshold = fe_src.distance_threshold;
+					filterHolder.child(fi) = fe;
+				}
+
+				int projectionSize = request.options.filter.size();
+				auto projectionHolder = query_projections.create(projectionSize);
+
+				options.projections = projectionHolder.row_id();
+
+				for (int pi = 0; pi < projectionHolder.size(); pi++)
+				{
+					auto& pe_src = request.options.projection[pi];
+					projection_element pe;
+					pe.field_id = pe_src.field_id;
+					projectionHolder.child(pi) = pe;
+				}
+
+				return add_field(request.name.field_id, type_query, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, &options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(collection_id_type));
 			}
 
 			row_id_type add_point_field(add_point_field_request request)
 			{
-				return add_field(request.name.field_id, type_query, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, sizeof(collection_id_type));
+				return add_field(request.name.field_id, type_query, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(point));
 			}
 
 			row_id_type add_rectangle_field(add_rectangle_field_request request)
 			{
-				return add_field(request.name.field_id, type_query, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, sizeof(collection_id_type));
+				return add_field(request.name.field_id, type_query, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, sizeof(rectangle));
 			}
 
 			row_id_type add_image_field(add_image_field_request request)
 			{
-				return add_field(request.name.field_id, type_query, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, sizeof(collection_id_type));
+				return add_field(request.name.field_id, type_query, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, sizeof(image_instance));
 			}
 
 			row_id_type add_wave_field(add_wave_field_request request)
 			{
-				return add_field(request.name.field_id, type_query, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, sizeof(collection_id_type));
+				return add_field(request.name.field_id, type_query, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, sizeof(wave_instance));
 			}
 
 			row_id_type add_midi_field(add_midi_field_request request)
 			{
-				return add_field(request.name.field_id, type_query, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &request.options, sizeof(collection_id_type));
+				return add_field(request.name.field_id, type_query, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, sizeof(midi_instance));
+			}
+
+			row_id_type add_color_field(add_color_field_request request)
+			{
+				return add_field(request.name.field_id, type_query, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &request.options, sizeof(color));
 			}
 
 			row_id_type add_class( add_class_request request )

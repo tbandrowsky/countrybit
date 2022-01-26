@@ -19,6 +19,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)array_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)assert_if.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)collection_id_box.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)color_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)constants.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)image_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)jfield.h" />

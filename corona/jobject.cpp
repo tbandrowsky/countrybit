@@ -194,6 +194,12 @@ namespace countrybit
 						b = rectangle {};
 					}
 					break;
+				case jtype::type_color:
+					{
+						boxed<color> b(c);
+						b = color{};
+					}
+					break;
 				case jtype::type_image:
 					{
 						boxed<image_instance> b(c);
@@ -256,6 +262,36 @@ namespace countrybit
 		time_box jslice::get_time(int field_idx)
 		{
 			return get_boxed<time_box>(jtype::type_datetime, field_idx);
+		}
+
+		point_box jslice::get_point(int field_idx)
+		{
+			return get_boxed<point_box>(jtype::type_datetime, field_idx);
+		}
+
+		rectangle_box jslice::get_rectangle(int field_idx)
+		{
+			return get_boxed<rectangle_box>(jtype::type_datetime, field_idx);
+		}
+
+		image_box jslice::get_image(int field_idx)
+		{
+			return get_boxed<image_box>(jtype::type_datetime, field_idx);
+		}
+
+		wave_box jslice::get_wave(int field_idx)
+		{
+			return get_boxed<wave_box>(jtype::type_datetime, field_idx);
+		}
+
+		midi_box jslice::get_midi(int field_idx)
+		{
+			return get_boxed<midi_box>(jtype::type_datetime, field_idx);
+		}
+
+		color_box jslice::get_color(int field_idx)
+		{
+			return get_boxed<color_box>(jtype::type_datetime, field_idx);
 		}
 
 		string_box jslice::get_string(int field_idx)

@@ -221,6 +221,12 @@ namespace countrybit
 			database::table<database::add_time_field_request> add_time_fields;
 			database::table<database::add_object_field_request> add_object_fields;
 			database::table<database::add_query_field_request> add_query_fields;
+			database::table<database::add_point_field_request> add_point_fields;
+			database::table<database::add_rectangle_field_request> add_rectangle_fields;
+			database::table<database::add_image_field_request> add_image_fields;
+			database::table<database::add_wave_field_request> add_wave_fields;
+			database::table<database::add_midi_field_request> add_midi_fields;
+			database::table<database::add_color_field_request> add_color_fields;
 
 			database::row_id_type add_string_fields_id;
 			database::row_id_type add_integer_fields_id;
@@ -228,8 +234,15 @@ namespace countrybit
 			database::row_id_type add_time_fields_id;
 			database::row_id_type add_object_fields_id;
 			database::row_id_type add_query_fields_id;
+			database::row_id_type add_point_fields_id;
+			database::row_id_type add_rectangle_fields_id;
+			database::row_id_type add_image_fields_id;
+			database::row_id_type add_wave_fields_id;
+			database::row_id_type add_midi_fields_id;
 
-			schema_loader(int _size, int _num_fields) : loader(_size)
+			database::add_query_field_request * current_query;
+
+			schema_loader(int _size, int _num_fields) : loader(_size), current_query(nullptr)
 			{
 				add_string_fields = database::table<database::add_string_field_request>::create_table(&data, _num_fields, add_string_fields_id);
 				add_integer_fields = database::table<database::add_integer_field_request>::create_table(&data, _num_fields, add_integer_fields_id);
@@ -237,6 +250,11 @@ namespace countrybit
 				add_time_fields = database::table<database::add_time_field_request>::create_table(&data, _num_fields, add_time_fields_id);
 				add_object_fields = database::table<database::add_object_field_request>::create_table(&data, _num_fields, add_object_fields_id);
 				add_query_fields = database::table<database::add_query_field_request>::create_table(&data, _num_fields, add_query_fields_id);
+				add_point_fields = database::table<database::add_point_field_request>::create_table(&data, _num_fields, add_point_fields_id);
+				add_rectangle_fields = database::table<database::add_rectangle_field_request>::create_table(&data, _num_fields, add_rectangle_fields_id);
+				add_image_fields = database::table<database::add_image_field_request>::create_table(&data, _num_fields, add_image_fields_id);
+				add_wave_fields = database::table<database::add_wave_field_request>::create_table(&data, _num_fields, add_wave_fields_id);
+				add_midi_fields = database::table<database::add_midi_field_request>::create_table(&data, _num_fields, add_midi_fields_id);
 			}
 
 			void bind_add_string_field_request()				
@@ -245,7 +263,7 @@ namespace countrybit
 				auto b = begin_object_create_binding(
 					nullptr,
 					nullptr,
-					"stringfields",
+					"string_fields",
 					"stringfield",
 					100,
 					[tb](const pobject* obj) {
@@ -419,13 +437,14 @@ namespace countrybit
 					"query_fields",
 					"query",
 					100,
-					[tb](const pobject* obj) {
+					[tb,this](const pobject* obj) {
 						database::row_range rr;
 						auto& t = tb->create(1, rr);
 						t.name = {};
 						t.name.field_id = 0;
 						t.name.type_id = database::jtype::type_query;
 						t.options = {};
+						this->current_query = &t;
 						return (char*)&t;
 					},
 					[](char* b, const pobject* obj) {
@@ -435,11 +454,39 @@ namespace countrybit
 				database::add_query_field_request dummy;
 
 				add_object_member_binding(b, "name", "name", &dummy, &dummy.name.name, true);
-				add_object_member_binding(b, name, name, &dummy, &dummy.name.type, true);
+				add_object_member_binding(b, "querty", "query", &dummy, &dummy.name.type, true);
 				add_object_member_binding(b, "description", "description", &dummy, &dummy.name.description, false);
-				add_object_member_binding(b, "min_int", "min_int", &dummy, &dummy.options.minimum_int, false);
-				add_object_member_binding(b, "max_int", "max_int", &dummy, &dummy.options.maximum_int, false);
 			}
+
+			void bind_add_query_projection_request()
+			{
+				auto cq = current_query;
+				auto b = begin_object_create_binding(
+					nullptr,
+					nullptr,
+					"projections",
+					"query",
+					100,
+					[cq](const pobject* obj) {
+						auto t = cq->options.query.projection.append();
+						if (t) {
+							t->field_id;
+							t.name.type_id = database::jtype::type_query;
+							t.options = {};
+						}
+						return (char*)t;
+					},
+					[](char* b, const pobject* obj) {
+						return b;
+					});
+
+				database::add_query_field_request dummy;
+
+				add_object_member_binding(b, "name", "name", &dummy, &dummy.name.name, true);
+				add_object_member_binding(b, "querty", "query", &dummy, &dummy.name.type, true);
+				add_object_member_binding(b, "description", "description", &dummy, &dummy.name.description, false);
+			}
+
 
 		};
 

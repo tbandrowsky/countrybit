@@ -27,6 +27,7 @@
 #include "midi_box.h"
 #include "image_box.h"
 #include "wave_box.h"
+#include "color_box.h"
 #include "sorted_index.h"
 
 namespace countrybit
@@ -147,7 +148,6 @@ namespace countrybit
 			field_collection_id = 94,
 			field_object_id = 95;
 
-		using jquery = iquery<128,128>;
 		using object_name = istring<32>;
 		using object_description = istring<250>;
 		using object_type = istring<16>;
@@ -189,9 +189,15 @@ namespace countrybit
 
 		};
 
+		struct color_properties_type
+		{
+
+		};
+
 		struct query_properties_type
 		{
-			jquery			query;
+			row_id_type filters;
+			row_id_type projections;
 		};
 
 		struct emphemeral_handle_type
@@ -213,18 +219,6 @@ namespace countrybit
 		};
 
 		struct wave_properties_type
-		{
-			istring<256>			image_path;
-			emphemeral_handle_type	handle;
-		};
-
-		struct midi_data_type
-		{
-			istring<256>			image_path;
-			emphemeral_handle_type	handle;
-		};
-
-		struct wave_data_type
 		{
 			istring<256>			image_path;
 			emphemeral_handle_type	handle;
@@ -275,6 +269,7 @@ namespace countrybit
 				image_properties_type	image_properties;
 				midi_properties_type	midi_properties;
 				wave_properties_type	wave_properties;
+				color_properties_type	color_properties;
 			};
 		};
 
@@ -323,6 +318,18 @@ namespace countrybit
 			query_properties_type options;
 		};
 
+		class add_query_field_request {
+		public:
+			add_field_request_base name;
+			query_properties_type options;
+		};
+
+		class add_named_query_field_request {
+		public:
+			add_field_request_base name;
+			named_query_properties_type options;
+		};
+
 		class add_point_field_request {
 		public:
 			add_field_request_base name;
@@ -351,6 +358,12 @@ namespace countrybit
 		public:
 			add_field_request_base name;
 			midi_properties_type options;
+		};
+
+		class add_color_field_request {
+		public:
+			add_field_request_base name;
+			color_properties_type options;
 		};
 
 	}

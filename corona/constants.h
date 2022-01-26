@@ -27,7 +27,9 @@ namespace countrybit
 			type_wave = 14,
 			type_midi = 15,
 			type_point = 16,
-			type_rectangle = 17
+			type_rectangle = 17,
+
+			type_color = 18
 		};
 
 		typedef int32_t row_id_type;
