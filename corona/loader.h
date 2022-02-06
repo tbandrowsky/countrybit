@@ -70,7 +70,7 @@ namespace countrybit
 			virtual bool set_value(char* _base, const pvalue* _src) = 0;
 		};
 
-		class property_base
+		class propertyinfo
 		{
 		public:
 
@@ -78,9 +78,9 @@ namespace countrybit
 			property_dest* first_setter,
 				* last_setter;
 
-			property_base() = default;
+			propertyinfo() = default;
 
-			property_base(const char* _source_name) :
+			propertyinfo(const char* _source_name) :
 				source(_source_name),
 				first_setter(nullptr),
 				last_setter(nullptr)
@@ -118,7 +118,7 @@ namespace countrybit
 			}
 		};
 
-		using property_index_type = database::sorted_index<int, property_base*, 1>;
+		using property_index_type = database::sorted_index<int, propertyinfo*, 1>;
 
 		class typeinfo
 		{
@@ -170,19 +170,37 @@ namespace countrybit
 				return false;
 			}
 
-			property_base* add_property(property_base* pb)
+			propertyinfo* add_property(propertyinfo* pb)
 			{
 				int idx = pb->get_type_code();
 				property_index.insert_or_assign(idx, pb);
 				return pb;
 			}
 
-			property_base* find_property(pmember* pm)
+			propertyinfo* find_property(pmember* pm)
 			{
 				int idx = pm->get_type_code();
 				auto piter = property_index[idx];
-				property_base* found = piter != std::end(property_index) ? piter->second : nullptr;
+				propertyinfo* found = piter != std::end(property_index) ? piter->second : nullptr;
 				return found;
+			}
+
+			virtual bool set_value(char* _base, const pobject* _src)
+			{
+				char* loc = _base;
+
+				for (auto member = _src->first; member; member = member->next)
+				{
+					auto prop = find_property(member);
+					if (prop) {
+						auto setter = prop->get_setter(member->value);
+						if (setter) {
+							setter->set_value(loc, member->value);
+						}
+					}
+				}
+
+				return true;
 			}
 		};
 
@@ -208,7 +226,6 @@ namespace countrybit
 
 			virtual bool set_value(char* _base, const pvalue* _src)
 			{
-
 				if (_src->as_object() || _src->as_string()) {
 					throw std::logic_error("attempt to map non-scalar to scalar");
 				}
@@ -265,7 +282,7 @@ namespace countrybit
 			}
 		};
 
-		template <typename ArrayMemberType, typename ArraySize>
+		template <typename ArrayMemberType, int ArraySize>
 		class object_iarray_property_dest : public property_dest
 		{
 		public:
@@ -382,11 +399,98 @@ namespace countrybit
 				return ti;
 			}
 
-			void load(const pvalue* _src)
+			template <typename MemberType>
+			scalar_property_dest<MemberType>* create_scalar_dest(const char* _dest_name, int _offset, pvalue::pvalue_types _match_type)
 			{
-
+				using scalar_dest = scalar_property_dest<MemberType>;
+				char* t = data.place<scalar_dest>();
+				scalar_dest *new_dest = new (t) scalar_dest(_dest_name, _offset, _match_type);
+				return new_dest;
 			}
 
+			object_property_dest* create_object_dest(const char* _dest_name, int _offset, typeinfo* _property_type)
+			{
+				char* t = data.place<object_property_dest>();
+				object_property_dest *new_dest = new (t) object_property_dest(_dest_name, _offset, _property_type);
+				return new_dest;
+			}
+
+			template <typename ArrayMemberType, int ArraySize>
+			object_iarray_property_dest<ArrayMemberType, ArraySize>* create_object_iarray_dest(const char* _dest_name, int _offset, typeinfo* _property_type)
+			{
+				using array_dest = object_iarray_property_dest<ArrayMemberType, ArraySize>;
+				char* t = data.place<array_dest>();
+				array_dest* new_dest = new (t) array_dest(_dest_name, _offset, _property_type);
+				return new_dest;
+			}
+
+			template <typename MemberType>
+			propertyinfo* create_scalar_property(const char *_source_name, const char* _dest_name, int _offset, pvalue::pvalue_types _match_type)
+			{
+				using scalar_dest = scalar_property_dest<MemberType>;
+
+				char* t = data.place<propertyinfo>();
+				propertyinfo* pi = new (t) propertyinfo(_source_name);
+
+				t = data.place<scalar_dest>();
+				scalar_dest* new_dest = new (t) scalar_dest(_dest_name, _offset, _match_type);
+
+				pi->add_setter(new_dest);
+				return pi;
+			}
+
+			propertyinfo* create_object_property(const char* _source_name, const char* _dest_name, int _offset, typeinfo* _property_type)
+			{
+				char *t = data.place<propertyinfo>();
+				propertyinfo* pi = new (t) propertyinfo(_source_name);
+
+				t = data.place<object_property_dest>();
+				object_property_dest* new_dest = new (t) object_property_dest(_dest_name, _offset, _property_type);
+
+				pi->add_setter(new_dest);
+
+				return pi;
+			}
+
+			template <typename ArrayMemberType, int ArraySize>
+			propertyinfo* create_object_iarray_property(const char* _source_name, const char* _dest_name, int _offset, typeinfo* _property_type)
+			{
+				using array_dest = object_iarray_property_dest<ArrayMemberType, ArraySize>;
+
+				char* t = data.place<propertyinfo>();
+				propertyinfo* pi = new (t) propertyinfo(_source_name);
+
+				char* t = data.place<array_dest>();
+				array_dest* new_dest = new (t) array_dest(_dest_name, _offset, _property_type);
+
+				pi->add_setter(new_dest);
+
+				return pi;
+			}
+
+			propertyinfo* create_polymorphic_property(const char* _source_name, int num_dests, property_dest **dests)
+			{
+				char* t = data.place<propertyinfo>();
+				propertyinfo* pi = new (t) propertyinfo(_source_name);
+
+				for (int i = 0; i < num_dests; i++) {
+					pi->add_setter(dests[i]);
+				}
+
+				return pi;
+			}
+
+			virtual char* place(typeinfo* ti) = 0;
+
+			void load(const pobject* _src)
+			{
+				typeinfo*ti = find_typeinfo(_src);
+				if (ti) 
+				{
+					char* base = place(ti);
+					ti->set_value(base, _src);
+				}
+			}
 		};
 
 		class schema_loader : loader
