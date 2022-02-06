@@ -425,7 +425,7 @@ namespace countrybit
 			}
 
 			template <typename MemberType>
-			propertyinfo* create_scalar_property(const char *_source_name, const char* _dest_name, int _offset, pvalue::pvalue_types _match_type)
+			propertyinfo* create_scalar_property(pvalue::pvalue_types _match_type, const char *_source_name, const char* _dest_name, int _offset)
 			{
 				using scalar_dest = scalar_property_dest<MemberType>;
 
@@ -439,7 +439,14 @@ namespace countrybit
 				return pi;
 			}
 
-			propertyinfo* create_object_property(const char* _source_name, const char* _dest_name, int _offset, typeinfo* _property_type)
+			template <typename MemberType>
+			propertyinfo* create_scalar_property(typeinfo *parent, pvalue::pvalue_types _match_type, const char* _source_name, const char* _dest_name, int _offset)
+			{
+				propertyinfo* sp = create_scalar_property(_match_type, _source_name, _dest_name, _offset);
+				parent->add_property(sp);
+			}
+
+			propertyinfo* create_object_property(typeinfo* _property_type, const char* _source_name, const char* _dest_name, int _offset)
 			{
 				char *t = data.place<propertyinfo>();
 				propertyinfo* pi = new (t) propertyinfo(_source_name);
@@ -452,8 +459,15 @@ namespace countrybit
 				return pi;
 			}
 
+			propertyinfo* create_object_property(typeinfo *parent, typeinfo* _property_type, const char* _source_name, const char* _dest_name, int _offset)
+			{
+				propertyinfo* op = create_object_property(_property_type, _source_name, _dest_name, _offset);
+				parent->add_property(op);
+				return op;
+			}
+
 			template <typename ArrayMemberType, int ArraySize>
-			propertyinfo* create_object_iarray_property(const char* _source_name, const char* _dest_name, int _offset, typeinfo* _property_type)
+			propertyinfo* create_object_iarray_property(typeinfo* _property_type, const char* _source_name, const char* _dest_name, int _offset)
 			{
 				using array_dest = object_iarray_property_dest<ArrayMemberType, ArraySize>;
 
@@ -468,16 +482,31 @@ namespace countrybit
 				return pi;
 			}
 
-			propertyinfo* create_polymorphic_property(const char* _source_name, int num_dests, property_dest **dests)
+			template <typename ArrayMemberType, int ArraySize>
+			propertyinfo* create_object_iarray_property(typeinfo* parent, typeinfo* _property_type, const char* _source_name, const char* _dest_name, int _offset)
+			{
+				propertyinfo* op = create_object_iarray_property<ArrayMemberType,ArraySize>(_property_type, _source_name, _dest_name, _offset);
+				parent->add_property(op);
+				return op;
+			}
+
+			propertyinfo* create_polymorphic_property(const char* _source_name, int _num_dests, property_dest **_dests)
 			{
 				char* t = data.place<propertyinfo>();
 				propertyinfo* pi = new (t) propertyinfo(_source_name);
 
-				for (int i = 0; i < num_dests; i++) {
-					pi->add_setter(dests[i]);
+				for (int i = 0; i < _num_dests; i++) {
+					pi->add_setter(_dests[i]);
 				}
 
 				return pi;
+			}
+
+			propertyinfo* create_polymorphic_property(typeinfo* parent, const char* _source_name, int _num_dests, property_dest** _dests)
+			{
+				propertyinfo* op = create_polymorphic_property(_source_name, _num_dests, _dests);
+				parent->add_property(op);
+				return op;
 			}
 
 			virtual char* place(typeinfo* ti) = 0;
@@ -495,13 +524,6 @@ namespace countrybit
 
 		class schema_loader : loader
 		{
-			class load_id
-			{
-			public:
-				database::jtype			request_item_type;
-				database::row_id_type	request_id;
-			};
-
 			enum class errors {
 				could_not_create_binding = 1,
 				could_not_find_binding = 2,
@@ -528,7 +550,6 @@ namespace countrybit
 			database::table<database::add_wave_field_request> add_wave_fields;
 			database::table<database::add_midi_field_request> add_midi_fields;
 			database::table<database::add_color_field_request> add_color_fields;
-			database::table<load_id> field_load_order;
 
 			database::row_id_type error_messages_id;
 			database::row_id_type add_string_fields_id;
@@ -542,7 +563,23 @@ namespace countrybit
 			database::row_id_type add_image_fields_id;
 			database::row_id_type add_wave_fields_id;
 			database::row_id_type add_midi_fields_id;
-			database::row_id_type field_load_order_id;
+
+			typeinfo* error_messages_ti;
+			typeinfo* string_fields_ti;
+			typeinfo* int8_fields_ti;
+			typeinfo* int16_fields_ti;
+			typeinfo* int32_fields_ti;
+			typeinfo* int64_fields_ti;
+			typeinfo* float_fields_ti;
+			typeinfo* double_fields_ti;
+			typeinfo* time_fields_ti;
+			typeinfo* object_fields_ti;
+			typeinfo* query_fields_ti;
+			typeinfo* point_fields_ti;
+			typeinfo* rectangle_fields_ti;
+			typeinfo* image_fields_ti;
+			typeinfo* wave_fields_ti;
+			typeinfo* midi_fields_ti;
 
 			const char* member_type_name = "type";
 
@@ -562,12 +599,34 @@ namespace countrybit
 				add_image_fields = database::table<database::add_image_field_request>::create_table(&data, _num_fields, add_image_fields_id);
 				add_wave_fields = database::table<database::add_wave_field_request>::create_table(&data, _num_fields, add_wave_fields_id);
 				add_midi_fields = database::table<database::add_midi_field_request>::create_table(&data, _num_fields, add_midi_fields_id);
-				field_load_order = database::table<load_id>::create_table(&data, _num_fields, field_load_order_id);
-			}
 
-			bool init()
-			{
-				return add_bindings();
+				string_fields_ti = create_typeinfo(member_type_name, "string", "string", 20);
+
+
+
+				int8_fields_ti = create_typeinfo(member_type_name, "int8", "int8", 20);
+				
+
+				int16_fields_ti = create_typeinfo(member_type_name, "int16", "int16", 20);
+
+				int32_fields_ti = create_typeinfo(member_type_name, "int32", "int32", 20);
+
+				int64_fields_ti = create_typeinfo(member_type_name, "int64", "int64", 20);
+
+				float_fields_ti = create_typeinfo(member_type_name, "float", "float", 20);
+
+
+
+				double_fields_ti = create_typeinfo(member_type_name, "double", "double", 20);
+
+				time_fields_ti = create_typeinfo(member_type_name, "time", "time", 20);
+				object_fields_ti = create_typeinfo(member_type_name, "object", "object", 20);
+				query_fields_ti = create_typeinfo(member_type_name, "query", "query", 20);
+				point_fields_ti = create_typeinfo(member_type_name, "point", "point", 20);
+				rectangle_fields_ti = create_typeinfo(member_type_name, "rectangle", "rectangle", 20);
+				image_fields_ti = create_typeinfo(member_type_name, "image", "image", 20);
+				wave_fields_ti = create_typeinfo(member_type_name, "wave", "wave", 20);
+				midi_fields_ti = create_typeinfo(member_type_name, "midi", "midi", 20);
 			}
 
 			void add_error(errors _error, const pobject* _obj)
@@ -581,724 +640,6 @@ namespace countrybit
 
 		protected:
 
-			bool bind_add_string_field_request()				
-			{
-				auto tb = &add_string_fields;
-				auto fl = &field_load_order;
-				auto b = create_object_binding(
-					member_type_name,
-					"string",
-					nullptr,
-					"string",
-					10,
-					[tb](const pobject* obj) {
-						database::row_range rr;
-						auto& t = tb->create(1, rr);
-						t.name = {};
-						t.name.field_id = 0;
-						t.name.type_id = database::jtype::type_string;
-						t.options = {};
-						load_id li;
-						li.request_id = rr.start;
-						li.request_item_type = database::jtype::type_string;
-						return (char*)&t;
-					},
-					[](char *b, const pobject* obj) {
-						return b;
-					},
-					[](char*b, const pobject*obj, const pmember*m) {
-						return b;
-					},
-					[](char* b, const pobject* obj, const pmember* m, const pvalue* pv) {
-						return b;
-					});
-
-				if (b)
-				{
-					database::add_string_field_request dummy;
-					add_object_member_binding(b, "name", "name", &dummy, &dummy.name.name, true);
-					add_object_member_binding(b, "length", "length", &dummy, &dummy.options.length, true);
-					add_object_member_binding(b, "string", "string", &dummy, &dummy.name.type, true);
-					add_object_member_binding(b, "description", "description", &dummy, &dummy.name.description, false);
-					add_object_member_binding(b, "validation_message", "validation_message", &dummy, &dummy.options.validation_message, false);
-					add_object_member_binding(b, "validation_pattern", "validation_pattern", &dummy, &dummy.options.validation_pattern, false);
-					return true;
-				}
-				else 
-				{
-					add_error(errors::could_not_create_binding, nullptr);
-				}
-
-				return false;
-			}
-
-			bool bind_add_integer_field_request(database::jtype jt, const char *member_name, const char *name)
-			{
-				auto tb = &add_integer_fields;
-				auto fl = &field_load_order;
-				auto b = create_object_binding(
-					member_type_name,
-					name,
-					nullptr,
-					name,
-					100,
-					[tb, jt](const pobject* obj) {
-						database::row_range rr;
-						auto& t = tb->create(1, rr);
-						t.name = {};
-						t.name.field_id = 0;
-						t.name.type_id = jt;
-						t.options = {};
-						load_id li;
-						li.request_id = rr.start;
-						li.request_item_type = jt;
-						return (char*)&t;
-					},
-					[](char* b, const pobject* obj) {
-						return b;
-					},
-					[](char* b, const pobject* obj, const pmember* m) {
-						return b;
-					},
-					[](char* b, const pobject* obj, const pmember* m, const pvalue* pv) {
-						return b;
-					});
-
-				if (b) {
-
-					database::add_integer_field_request dummy;
-
-					add_object_member_binding(b, "name", "name", &dummy, &dummy.name.name, true);
-					add_object_member_binding(b, name, name, &dummy, &dummy.name.type, true);
-					add_object_member_binding(b, "description", "description", &dummy, &dummy.name.description, false);
-					add_object_member_binding(b, "min_int", "min_int", &dummy, &dummy.options.minimum_int, false);
-					add_object_member_binding(b, "max_int", "max_int", &dummy, &dummy.options.maximum_int, false);
-					return true;
-				}
-				else
-				{
-					add_error(errors::could_not_create_binding, nullptr);
-				}
-				return false;
-			}
-
-			bool bind_add_integer_fields()
-			{
-				bool r = true;
-				r = bind_add_integer_field_request(database::jtype::type_int16, "int16_fields", "int16");
-				if (!r) return r;
-				r = bind_add_integer_field_request(database::jtype::type_int32, "int32_fields", "int32");
-				if (!r) return r;
-				r = bind_add_integer_field_request(database::jtype::type_int64, "int64_fields", "int64");
-				if (!r) return r;
-				return r;
-			}
-
-			bool bind_add_double_field_request(database::jtype jt, const char* member_name, const char* name)
-			{
-				auto tb = &add_double_fields;
-				auto fl = &field_load_order;
-				auto b = create_object_binding(
-					member_type_name,
-					name,
-					nullptr,
-					name,
-					100,
-					[tb, jt](const pobject* obj) {
-						database::row_range rr;
-						auto& t = tb->create(1, rr);
-						t.name = {};
-						t.name.field_id = 0;
-						t.name.type_id = jt;
-						t.options = {};
-						load_id li;
-						li.request_id = rr.start;
-						li.request_item_type = jt;
-						return (char*)&t;
-					},
-					[](char* b, const pobject* obj) {
-						return b;
-					},
-					[](char* b, const pobject* obj, const pmember* m) {
-						return b;
-					},
-					[](char* b, const pobject* obj, const pmember* m, const pvalue* pv) {
-						return b;
-					});
-
-				if (b) {
-					database::add_double_field_request dummy;
-
-					add_object_member_binding(b, "name", "name", &dummy, &dummy.name.name, true);
-					add_object_member_binding(b, name, name, &dummy, &dummy.name.type, true);
-					add_object_member_binding(b, "description", "description", &dummy, &dummy.name.description, false);
-					add_object_member_binding(b, "min_double", "min_double", &dummy, &dummy.options.minimum_double, false);
-					add_object_member_binding(b, "max_double", "max_double", &dummy, &dummy.options.maximum_double, false);
-					return true;
-				}
-				else
-				{
-					add_error(errors::could_not_create_binding, nullptr);
-				}
-				return false;
-			}
-
-			bool bind_add_double_fields()
-			{
-				bool r = true;
-				r = bind_add_double_field_request(database::jtype::type_float32, "float_fields", "float");
-				if (!r) return r;
-				r = bind_add_double_field_request(database::jtype::type_float64, "double_fields", "double");
-				if (!r) return r;
-				return r;
-			}
-
-			bool bind_add_time_field_request()
-			{
-				auto tb = &add_time_fields;
-				auto fl = &field_load_order;
-				auto b = create_object_binding(
-					member_type_name,
-					"datetime",
-					nullptr,
-					"datetime",
-					100,
-					[tb](const pobject* obj) {
-						database::row_range rr;
-						auto& t = tb->create(1, rr);
-						t.name = {};
-						t.name.field_id = 0;
-						t.name.type_id = database::jtype::type_datetime;
-						t.options = {};
-						load_id li;
-						li.request_id = rr.start;
-						li.request_item_type = database::jtype::type_datetime;
-						return (char*)&t;
-					},
-					[](char* b, const pobject* obj) {
-						return b;
-					},
-					[](char* b, const pobject* obj, const pmember* m) {
-						return b;
-					},
-					[](char* b, const pobject* obj, const pmember* m, const pvalue *pv) {
-						return b;
-					});
-
-				if (b) {
-					database::add_time_field_request dummy;
-					add_object_member_binding(b, "name", "name", &dummy, &dummy.name.name, true);
-					add_object_member_binding(b, "datetime", "datetime", &dummy, &dummy.name.type, true);
-					add_object_member_binding(b, "description", "description", &dummy, &dummy.name.description, false);
-					add_object_member_binding(b, "min_time", "min_time", &dummy, &dummy.options.minimum_time_t, false);
-					add_object_member_binding(b, "max_time", "max_time", &dummy, &dummy.options.maximum_time_t, false);
-					return true;
-				}
-				else
-				{
-					add_error(errors::could_not_create_binding, nullptr);
-				}
-				return false;
-			}
-
-			bool bind_add_object_field_request()
-			{
-				auto tb = &add_object_fields;
-				auto fl = &field_load_order;
-				auto b = create_object_binding(
-					member_type_name,
-					"object",
-					nullptr,
-					"object",
-					10,
-					[tb](const pobject* obj) {
-						database::row_range rr;
-						auto& t = tb->create(1, rr);
-						t.name = {};
-						t.name.field_id = 0;
-						t.name.type_id = database::jtype::type_object;
-						t.options = {};
-						load_id li;
-						li.request_id = rr.start;
-						li.request_item_type = database::jtype::type_object;
-						return (char*)&t;
-					},
-					[](char* b, const pobject* obj) {
-						return b;
-					},
-					[](char* b, const pobject* obj, const pmember* m) {
-						return b;
-					},
-					[](char* b, const pobject* obj, const pmember* m, const pvalue* pv) {
-						return b;
-					});
-
-				if (b) {
-					database::add_object_field_request dummy;
-
-					add_object_member_binding(b, "name", "name", &dummy, &dummy.name.name, true);
-					add_object_member_binding(b, "datetime", "datetime", &dummy, &dummy.name.type, true);
-					add_object_member_binding(b, "description", "description", &dummy, &dummy.name.description, false);
-					add_object_member_binding(b, "class_name", "class_name", &dummy, &dummy.options.class_name, false);
-					add_object_member_binding(b, "x", "x", &dummy, &dummy.options.dim.x, false);
-					add_object_member_binding(b, "y", "y", &dummy, &dummy.options.dim.y, false);
-					add_object_member_binding(b, "z", "z", &dummy, &dummy.options.dim.z, false);
-				}
-				else 
-				{
-					add_error(errors::could_not_create_binding, nullptr);
-				}
-			}
-
-			bool bind_add_query_field_request()
-			{
-				auto tb = &add_query_fields;
-				auto fl = &field_load_order;
-				auto b = create_object_binding(
-					member_type_name,
-					"query",
-					nullptr,
-					"query",
-					10,
-					[tb,this](const pobject* obj) {
-						database::row_range rr;
-						auto& t = tb->create(1, rr);
-						t.name = {};
-						t.name.field_id = 0;
-						t.name.type_id = database::jtype::type_query;
-						t.options = {};
-						load_id li;
-						li.request_id = rr.start;
-						li.request_item_type = database::jtype::type_query;
-						return (char*)&t;
-					},
-					[](char* b, const pobject* obj) {
-						return b;
-					},
-					[](char* b, const pobject* obj, const pmember* m) {
-						// living with this for the moment
-						return b;
-					},
-					[](char* b, const pobject* obj, const pmember* m, const pvalue* pv) {
-						database::add_named_query_field_request *anqr = (database::add_named_query_field_request*)b;
-						if (stricmp(m->name, "filter")) {
-							database::filter_element_request *fer = anqr->options.filter.append();
-						}
-						else if (stricmp(m->name, "projection")) {
-							anqr->options.projection
-						}
-						return b;
-					});
-
-				if (b) {
-					database::add_query_field_request dummy;
-
-					add_object_member_binding(b, "name", "name", &dummy, &dummy.name.name, true);
-					add_object_member_binding(b, "query", "query", &dummy, &dummy.name.type, true);
-					add_object_member_binding(b, "description", "description", &dummy, &dummy.name.description, false);
-					return true;
-				}
-				else
-				{
-					add_error(errors::could_not_create_binding, nullptr);
-				}
-				return false;
-			}
-
-			bool bind_add_query_projection_request()
-			{
-				auto cq = current_query;
-				auto b = create_object_binding(
-					member_type_name,
-					"projection",
-					nullptr,
-					"projection",
-					100,
-					[cq](const pobject* obj) {
-						auto t = cq->options.projection.append();
-						if (t) {
-							t->error_message = nullptr;
-						}
-						return (char*)t;
-					},
-					[](char* b, const pobject* obj) {
-						return b;
-					},
-					[](char* b, const pobject* obj, const pmember* m) {
-						return b;
-					},
-					[](char* b, const pobject* obj, const pmember* m, const pvalue* pv) {
-						return b;
-					});
-
-				if (b) {
-					database::projection_element_request dummy;
-					add_object_member_binding(b, "field_name", "field_name", &dummy, &dummy.field_name, true);
-					return true;
-				}
-				else
-				{
-					add_error(errors::could_not_create_binding, nullptr);
-				}
-				return false;
-			}
-
-			bool bind_add_query_filter_request()
-			{
-				auto cq = current_query;
-				auto b = create_object_binding(
-					member_type_name,
-					"filter",
-					nullptr,
-					"filter",
-					100,
-					[cq](const pobject* obj) {
-						auto t = cq->options.filter.append();
-						if (t) {
-							t->error_message = nullptr;
-						}
-						return (char*)t;
-					},
-					[](char* b, const pobject* obj) {
-						return b;
-					},
-					[](char* b, const pobject* obj, const pmember* m) {
-						return b;
-					},
-					[](char* b, const pobject* obj, const pmember* m, const pvalue* pv) {
-						return b;
-					});
-
-				if (b) {
-					database::filter_element_request dummy;
-					add_object_member_binding(b, "target_field", "target_field", &dummy, &dummy.target_field_name, true);
-					add_object_member_binding(b, "comparison", "comparison", &dummy, &dummy.comparison_name, true);
-					add_object_member_binding(b, "parameter_field", "parameter_field", &dummy, &dummy.parameter_field_name, true);
-					return true;
-				}
-				else
-				{
-					add_error(errors::could_not_create_binding, nullptr);
-				}
-				return false;
-			}
-
-
-			bool bind_add_point_field_request()
-			{
-				auto tb = &add_point_fields;
-				auto fl = &field_load_order;
-				auto b = create_object_binding(
-					member_type_name,
-					"point",
-					nullptr,
-					"point",
-					100,
-					[tb](const pobject* obj) {
-						database::row_range rr;
-						auto& t = tb->create(1, rr);
-						t.name = {};
-						t.name.field_id = 0;
-						t.name.type_id = database::jtype::type_point;
-						t.options = {};
-						load_id li;
-						li.request_id = rr.start;
-						li.request_item_type = database::jtype::type_point;
-						return (char*)&t;
-					},
-					[](char* b, const pobject* obj) {
-						return b;
-					},
-					[](char* b, const pobject* obj, const pmember* m) {
-						return b;
-					},
-					[](char* b, const pobject* obj, const pmember* m, const pvalue* pv) {
-						return b;
-					});
-
-				if (b) {
-					database::add_time_field_request dummy;
-
-					add_object_member_binding(b, "name", "name", &dummy, &dummy.name.name, true);
-					add_object_member_binding(b, "point", "point", &dummy, &dummy.name.type, true);
-					add_object_member_binding(b, "description", "description", &dummy, &dummy.name.description, false);
-					return true;
-				}
-				else
-				{
-					add_error(errors::could_not_create_binding, nullptr);
-				}
-				return false;
-			}
-
-			bool bind_add_rectangle_field_request()
-			{
-				auto tb = &add_rectangle_fields;
-				auto fl = &field_load_order;
-				auto b = create_object_binding(
-					member_type_name,
-					"rectangle",
-					nullptr,
-					"rectangle",
-					100,
-					[tb](const pobject* obj) {
-						database::row_range rr;
-						auto& t = tb->create(1, rr);
-						t.name = {};
-						t.name.field_id = 0;
-						t.name.type_id = database::jtype::type_rectangle;
-						t.options = {};
-						load_id li;
-						li.request_id = rr.start;
-						li.request_item_type = database::jtype::type_rectangle;
-						return (char*)&t;
-					},
-					[](char* b, const pobject* obj) {
-						return b;
-					},
-					[](char* b, const pobject* obj, const pmember* m) {
-						return b;
-					},
-					[](char* b, const pobject* obj, const pmember* m, const pvalue* pv) {
-						return b;
-					});
-
-				if (b) {
-					database::add_rectangle_field_request dummy;
-
-					add_object_member_binding(b, "name", "name", &dummy, &dummy.name.name, true);
-					add_object_member_binding(b, "rectangle", "rectangle", &dummy, &dummy.name.type, true);
-					add_object_member_binding(b, "description", "description", &dummy, &dummy.name.description, false);
-					return true;
-				}
-				else
-				{
-					add_error(errors::could_not_create_binding, nullptr);
-				}
-
-				return false;
-			}
-
-			bool bind_add_image_field_request()
-			{
-				auto tb = &add_rectangle_fields;
-				auto fl = &field_load_order;
-				auto b = create_object_binding(
-					member_type_name,
-					"image",
-					nullptr,
-					"image",
-					100,
-					[tb](const pobject* obj) {
-						database::row_range rr;
-						auto& t = tb->create(1, rr);
-						t.name = {};
-						t.name.field_id = 0;
-						t.name.type_id = database::jtype::type_image;
-						t.options = {};
-						load_id li;
-						li.request_id = rr.start;
-						li.request_item_type = database::jtype::type_image;
-						return (char*)&t;
-					},
-					[](char* b, const pobject* obj) {
-						return b;
-					},
-					[](char* b, const pobject* obj, const pmember* m) {
-						return b;
-					},
-					[](char* b, const pobject* obj, const pmember* m, const pvalue* pv) {
-						return b;
-					});
-
-				if (b) {
-					database::add_image_field_request dummy;
-
-					add_object_member_binding(b, "name", "name", &dummy, &dummy.name.name, true);
-					add_object_member_binding(b, "image", "image", &dummy, &dummy.name.type, true);
-					add_object_member_binding(b, "description", "description", &dummy, &dummy.name.description, false);
-					add_object_member_binding(b, "filename", "filename", &dummy, &dummy.options.image_path, false);
-					return true;
-				}
-				else
-				{
-					add_error(errors::could_not_create_binding, nullptr);
-				}
-				return false;
-			}
-
-			bool bind_add_wave_field_request()
-			{
-				auto tb = &add_rectangle_fields;
-				auto fl = &field_load_order;
-				auto b = create_object_binding(
-					member_type_name,
-					"wave",
-					nullptr,
-					"wave",
-					100,
-					[tb](const pobject* obj) {
-						database::row_range rr;
-						auto& t = tb->create(1, rr);
-						t.name = {};
-						t.name.field_id = 0;
-						t.name.type_id = database::jtype::type_wave;
-						t.options = {};
-						load_id li;
-						li.request_id = rr.start;
-						li.request_item_type = database::jtype::type_wave;
-						return (char*)&t;
-					},
-					[](char* b, const pobject* obj) {
-						return b;
-					},
-					[](char* b, const pobject* obj, const pmember* m) {
-						return b;
-					},
-					[](char* b, const pobject* obj, const pmember* m, const pvalue* pv) {
-						return b;
-					});
-
-				if (b) {
-					database::add_wave_field_request dummy;
-
-					add_object_member_binding(b, "name", "name", &dummy, &dummy.name.name, true);
-					add_object_member_binding(b, "image", "image", &dummy, &dummy.name.type, true);
-					add_object_member_binding(b, "description", "description", &dummy, &dummy.name.description, false);
-					add_object_member_binding(b, "filename", "filename", &dummy, &dummy.options.image_path, false);
-					return true;
-				}
-				else
-				{
-					add_error(errors::could_not_create_binding, nullptr);
-				}
-				return false;
-			}
-
-			bool bind_add_midi_field_request()
-			{
-				auto tb = &add_rectangle_fields;
-				auto fl = &field_load_order;
-				auto b = create_object_binding(
-					member_type_name,
-					"midi",
-					nullptr,
-					"midi",
-					100,
-					[tb](const pobject* obj) {
-						database::row_range rr;
-						auto& t = tb->create(1, rr);
-						t.name = {};
-						t.name.field_id = 0;
-						t.name.type_id = database::jtype::type_midi;
-						t.options = {};
-						load_id li;
-						li.request_id = rr.start;
-						li.request_item_type = database::jtype::type_midi;
-						return (char*)&t;
-					},
-					[](char* b, const pobject* obj) {
-						return b;
-					},
-					[](char* b, const pobject* obj, const pmember* m) {
-						return b;
-					},
-					[](char* b, const pobject* obj, const pmember* m, const pvalue* pv) {
-						return b;
-					});
-
-				if (b) {
-					database::add_midi_field_request dummy;
-
-					add_object_member_binding(b, "name", "name", &dummy, &dummy.name.name, true);
-					add_object_member_binding(b, "image", "image", &dummy, &dummy.name.type, true);
-					add_object_member_binding(b, "description", "description", &dummy, &dummy.name.description, false);
-					add_object_member_binding(b, "filename", "filename", &dummy, &dummy.options.image_path, false);
-					return true;
-				}
-				else
-				{
-					add_error(errors::could_not_create_binding, nullptr);
-				}
-				return false;
-			}
-
-			bool add_bindings()
-			{
-				bool r = true;
-				r = bind_add_string_field_request();
-				if (!r) return false;
-				r = bind_add_double_fields();
-				if (!r) return false;
-				r = bind_add_integer_fields();
-				if (!r) return false;
-				r = bind_add_time_field_request();
-				if (!r) return false;
-				r = bind_add_object_field_request();
-				if (!r) return false;
-				r = bind_add_query_field_request();
-				if (!r) return false;
-				r = bind_add_point_field_request();
-				if (!r) return false;
-				r = bind_add_rectangle_field_request();
-				if (!r) return false;
-				r = bind_add_image_field_request();
-				if (!r) return false;
-				r = bind_add_wave_field_request();
-				if (!r) return false;
-				r = bind_add_midi_field_request();
-				if (!r) return false;
-				return r;
-			}
-
-			char *load(const pobject* obj)
-			{
-				identify_result ir = identify(obj);
-
-				typeinfo* binding = ir.binding;
-				if (!binding)
-				{
-					add_error(errors::could_not_find_binding, obj);
-					return false;
-				}
-
-				char* new_base = binding->create_object(obj);
-				if (new_base) {
-					char* child_base = nullptr;
-
-					for (const pmember* im = obj->first; im; im = im->next)
-					{
-						if (im != ir.binding_member) {
-							switch (im->value->pvalue_type)
-							{
-							case pvalue::pvalue_types::array_value:
-								{
-									binding->create_array_member(new_base, obj, im);
-									for (auto imo = im->value->array_value->first; imo; imo = imo->next)
-									{
-										binding->add_array_item(new_base, obj, im, imo);
-									}
-								}
-								break;
-							case pvalue::pvalue_types::object_value:
-								child_base = load(im->value->object_value);
-								if (!child_base) {
-									return nullptr;
-								}
-								break;
-							default:
-								auto on = im->get_type_code();
-								auto member = binding->member_index[on];
-								for (auto mi : member) {
-									mi.second->set(new_base, im->value);
-								}
-							}
-						}
-					}
-					binding->object_created(new_base, obj);
-
-				}
-			}
 
 		};
 
