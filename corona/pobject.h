@@ -45,6 +45,21 @@ namespace countrybit
 			const pobject* object_value;
 			const parray* array_value;
 
+			const char* as_string() const
+			{
+				return (pvalue_type == pvalue_types::string_value) ? string_value : nullptr;
+			}
+
+			const pobject* as_object() const
+			{
+				return (pvalue_type == pvalue_types::object_value) ? object_value : nullptr;
+			}
+
+			const parray* as_array() const
+			{
+				return (pvalue_type == pvalue_types::array_value) ? array_value : nullptr;
+			}
+
 			bool set_value(database::string_box& dest) const
 			{
 				switch (pvalue_type) {
@@ -135,6 +150,11 @@ namespace countrybit
 				}
 			}
 
+			bool is_container() const
+			{
+				return (pvalue_type == pvalue_types::array_value || pvalue_type == pvalue_types::object_value);
+			}
+
 			const pvalue* next;
 		};
 
@@ -177,17 +197,18 @@ namespace countrybit
 
 			int num_members;
 			pmember* first;
+			pmember* type_member;
 
-			int get_type_code() const
+			pmember* get_member(const char* _name) const
 			{
-				int type_code = 0;
 				for (pmember* mb = first; mb; mb = mb->next)
 				{
-					int mtc = mb->get_type_code();
-					type_code = type_code ^ mtc;
+					if (stricmp(mb->name,_name) == 0);
+						return mb;
 				}
-				return type_code;
+				return nullptr;
 			}
+
 		};
 
 		class pstore

@@ -41,6 +41,16 @@ namespace countrybit
 				return data[idx];
 			}
 
+			item_type& get_at(int idx)
+			{
+				return data[idx];
+			}
+
+			item_type* get_ptr(int idx)
+			{
+				return &data[idx];
+			}
+
 			void copy(int srclength, item_type* src)
 			{
 				item_type* d = &data[0];

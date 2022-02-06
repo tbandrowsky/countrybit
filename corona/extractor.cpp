@@ -441,6 +441,9 @@ namespace countrybit
 						return result;
 					}
 					member->name = gsr.value;
+					if (type_member_name && !stricmp(member->name, type_member_name)) {
+						obj->type_member = member;
+					}
 
 					skip_whitespace();
 

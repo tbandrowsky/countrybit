@@ -93,29 +93,30 @@ namespace countrybit
 			int line;
 			database::dynamic_box data;
 			char currentChar[2];
+			const char* type_member_name;
 
-			string_extractor() : line(1), index(0)
+			string_extractor() : line(1), index(0), type_member_name(nullptr)
 			{
 				currentChar[0] = 0;
 				currentChar[1] = 1;
 			}
 
-			string_extractor(char *_str, int _length, int _data_length) : view(_str, _length), index(0), line(1)
+			string_extractor(char *_str, int _length, int _data_length, const char *_type_member_name) : view(_str, _length), index(0), line(1), type_member_name(_type_member_name)
 			{
 				data.init(_data_length);
 			}
 
-			string_extractor(std::string& _str, int _data_length) : view(_str), index(0), line(1)
+			string_extractor(std::string& _str, int _data_length, const char *_type_member_name) : view(_str), index(0), line(1), type_member_name(_type_member_name)
 			{
 				data.init(_data_length);
 			}
 
-			string_extractor(std::string_view& _view, int _data_length) : view(_view), index(0), line(1)
+			string_extractor(std::string_view& _view, int _data_length, const char* _type_member_name) : view(_view), index(0), line(1), type_member_name(_type_member_name)
 			{
 				data.init(_data_length);
 			}
 
-			string_extractor(const string_extractor& _ctx) : view(_ctx.view), index(_ctx.index), data(_ctx.data), line(_ctx.line)
+			string_extractor(const string_extractor& _ctx) : view(_ctx.view), index(_ctx.index), data(_ctx.data), line(_ctx.line), type_member_name(_type_member_name)
 			{
 				
 			}
