@@ -31,11 +31,11 @@ namespace countrybit
 		struct filter_element_request
 		{
 		public:
-			const char* target_field_name;
+			object_name target_field_name;
 			row_id_type				target_field_id;
-			const char* comparison_name;
+			object_name comparison_name;
 			filter_comparison_types	comparison;
-			const char* parameter_field_name;
+			object_name parameter_field_name;
 			row_id_type				parameter_field_id;
 			double					distance_threshold;
 			const char* error_message;
@@ -54,7 +54,7 @@ namespace countrybit
 		{
 		public:
 			row_id_type				field_id;
-			const char* field_name;
+			object_name field_name;
 			const char* error_message;
 		};
 
@@ -64,6 +64,9 @@ namespace countrybit
 			row_id_type				field_id;
 		};
 
+		const int max_query_filters = 256;
+		const int max_query_projections = 256;
+
 		template <int max_filters, int max_projections>
 		class named_query_properties_t
 		{
@@ -72,7 +75,7 @@ namespace countrybit
 			iarray<projection_element_request, max_projections> projection;
 		};
 
-		using named_query_properties_type = named_query_properties_t<256, 256>;
+		using named_query_properties_type = named_query_properties_t<max_query_filters, max_query_projections>;
 
 	}
 }

@@ -18,15 +18,15 @@ namespace countrybit
 	namespace database
 	{
 
+		struct string_box_data {
+		public:
+			uint32_t length;
+			int last_char;
+			char data[1];
+		};
+
 		class string_box
 		{
-
-			struct string_box_data {
-			public:
-				uint32_t length;
-				int last_char;
-				char data[1];
-			};
 
 			string_box_data* hdr;
 
@@ -193,17 +193,21 @@ namespace countrybit
 		
 		template <int length_bytes> struct istring 
 		{
-			char data[length_bytes];
 			uint32_t length;
+			int last_char;
+			char data[length_bytes];
 
-			istring() = default;
+			istring() : last_char( length_bytes - 1 )
+			{
+				
+			}
 
-			istring(const char *_src)
+			istring(const char *_src) : last_char(length_bytes - 1)
 			{
 				copy(_src);
 			}
 
-			istring(const std::string& src)
+			istring(const std::string& src) : last_char(length_bytes - 1)
 			{
 				const char* s = src.c_str();
 				copy(s);
@@ -239,8 +243,6 @@ namespace countrybit
 
 			void copy(const char* s)
 			{
-				int last_char = length_bytes - 1;
-
 				char* d = &data[0];
 				int l = 0;
 

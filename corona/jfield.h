@@ -150,13 +150,14 @@ namespace countrybit
 
 		using object_name = istring<32>;
 		using object_description = istring<250>;
+		using object_path = istring<256>;
 		using object_type = istring<16>;
 		using string_validation_pattern = istring<100>;
 		using string_validation_message = istring<100>;
 
 		struct string_properties_type
 		{
-			int length;
+			int32_t						length;
 			string_validation_pattern	validation_pattern;
 			string_validation_message	validation_message;
 		};
@@ -208,19 +209,19 @@ namespace countrybit
 
 		struct image_properties_type
 		{
-			istring<256>			image_path;
+			object_path				image_path;
 			emphemeral_handle_type	handle;			
 		};
 
 		struct midi_properties_type
 		{
-			istring<256>			image_path;
+			object_path				image_path;
 			emphemeral_handle_type	handle;
 		};
 
 		struct wave_properties_type
 		{
-			istring<256>			image_path;
+			object_path				image_path;
 			emphemeral_handle_type	handle;
 		};
 
@@ -313,12 +314,6 @@ namespace countrybit
 		};
 
 		class add_query_field_request  {
-		public:
-			add_field_request_base name;
-			query_properties_type options;
-		};
-
-		class add_query_field_request {
 		public:
 			add_field_request_base name;
 			query_properties_type options;

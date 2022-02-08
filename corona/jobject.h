@@ -370,7 +370,6 @@ namespace countrybit
 			using class_store_type = parent_child_table<jclass_header, jclass_field>;
 			using class_index_type = sorted_index<object_name, row_id_type>;
 			using field_index_type = sorted_index<object_name, row_id_type>;
-
 			using projection_store_type = parent_child_table<row_id_type, projection_element>;
 			using filter_store_type = parent_child_table<row_id_type, filter_element>;
 
@@ -589,46 +588,28 @@ namespace countrybit
 				{
 					auto& filter = request.options.filter[i];
 
-					if (!filter.parameter_field_name) {
-						filter.error_message = invalid_parameter_field;
-						valid = false;
-						continue;
-					}
-
-					if (!filter.target_field_name) {
-						filter.error_message = invalid_target_field;
-						valid = false;
-						continue;
-					}
-
-					if (!filter.comparison_name) {
-						filter.comparison_name = invalid_comparison;
-						valid = false;
-						continue;
-					}
-
-					if (strcmp(filter.comparison_name, "$eq") == 0) {
+					if (filter.comparison_name == "$eq") {
 						filter.comparison = filter_comparison_types::eq;
 					}
-					else if (strcmp(filter.comparison_name, "$gte") == 0) {
+					else if (filter.comparison_name == "$gte") {
 						filter.comparison = filter_comparison_types::gteq;
 					}
-					else if (strcmp(filter.comparison_name, "$lte") == 0) {
+					else if (filter.comparison_name == "$lte") {
 						filter.comparison = filter_comparison_types::lseq;
 					}
-					else if (strcmp(filter.comparison_name, "$gt") == 0) {
+					else if (filter.comparison_name == "$gt") {
 						filter.comparison = filter_comparison_types::gt;
 					}
-					else if (strcmp(filter.comparison_name, "$lt") == 0) {
+					else if (filter.comparison_name == "$lt") {
 						filter.comparison = filter_comparison_types::ls;
 					}
-					else if (strcmp(filter.comparison_name, "$inside") == 0) {
+					else if (filter.comparison_name == "$inside") {
 						filter.comparison = filter_comparison_types::distance;
 					}
-					else if (strcmp(filter.comparison_name, "$in") == 0) {
+					else if (filter.comparison_name == "$in") {
 						filter.comparison = filter_comparison_types::inlist;
 					}
-					else if (strcmp(filter.comparison_name, "$contains") == 0) {
+					else if (filter.comparison_name == "$contains") {
 						filter.comparison = filter_comparison_types::contains;
 					}
 					else
@@ -663,12 +644,6 @@ namespace countrybit
 				for (int i = 0; i < projectionSize; i++)
 				{
 					auto& projection = request.options.projection[i];
-
-					if (!projection.field_name) {
-						projection.error_message = invalid_comparison;
-						valid = false;
-						continue;
-					}
 
 					auto titer = fields_by_name[projection.field_name];
 					if (titer != std::end(fields_by_name))
