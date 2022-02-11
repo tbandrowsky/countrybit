@@ -409,16 +409,16 @@ namespace countrybit
 				{ { field_file_name, jtype::type_string, "fileName", "fileName" }, { 512, "", "" } }
 			};
 
-			add_time_field_request time_fields[2] = {
+			put_time_field_request time_fields[2] = {
 				{ { field_birthday, jtype::type_datetime, "birthday", "Birthday" }, 0, INT64_MAX },
 				{ { field_scheduled, jtype::type_datetime, "scheduled", "Scheduled" }, 0, INT64_MAX },
 			};
 
-			add_integer_field_request int_fields[1] = {
+			put_integer_field_request int_fields[1] = {
 				{ { field_count, jtype::type_int64, "count", "Count" }, 0, INT64_MAX },
 			};
 
-			add_double_field_request double_fields[22] = {
+			put_double_field_request double_fields[22] = {
 				{ { field_quantity, jtype::type_float64, "quantity", "Quantity" }, -1E40, 1E40 },
 				{ { field_latitude, jtype::type_float64, "latitude", "Latitude" }, -90, 90 },
 				{ { field_longitude, jtype::type_float64, "longitude", "Longitude" }, -180, 180 },

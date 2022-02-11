@@ -203,7 +203,7 @@ namespace countrybit
 				return hdr->rows[rr.start];
 			}
 
-			T& operator[](row_id_type & r)
+			T& get_at(row_id_type& r)
 			{
 				if (r == null_row || r >= hdr->max_rows)
 					throw std::logic_error("invalid row id");
@@ -216,11 +216,110 @@ namespace countrybit
 				return hdr->rows[r];
 			}
 
+			T& operator[](row_id_type & r)
+			{
+				return get_at(r);
+			}
+
 			row_id_type size() const
 			{
 				return hdr->last_row;
 			}
 
+			class iterator
+			{
+				table<T>* base;
+				row_id_type current;
+
+			public:
+
+				struct value_ref 
+				{
+					T& item;
+					row_id_type location;
+				};
+
+				using iterator_category = std::forward_iterator_tag;
+				using difference_type = std::ptrdiff_t;
+				using value_type = value_ref;
+				using pointer = value_ref*;  // or also value_type*
+				using reference = value_ref&;  // or also value_type&
+
+				iterator(table<T>* _base, row_id_type _current) :
+					base(_base),
+					current(_current)
+				{
+
+				}
+
+				iterator() : base(nullptr), current(null_row)
+				{
+
+				}
+
+				iterator& operator = (const iterator& _src)
+				{
+					base = _src.base;
+					current = _src.current;
+					return *this;
+				}
+
+				inline value_ref operator *()
+				{
+					return value_ref{ base->get_at(current), current };
+				}
+
+				inline row_id_type get_row_id()
+				{
+					return current;
+				}
+
+				inline iterator begin() const
+				{
+					return iterator(base, current);
+				}
+
+				inline iterator end() const
+				{
+					return iterator(base, null_row);
+				}
+
+				inline iterator operator++()
+				{
+					current++;
+					if (current >= size())
+						return iterator(base, null_row);
+					return iterator(base, current);
+				}
+
+				inline iterator operator++(int)
+				{
+					iterator tmp(*this);
+					operator++();
+					return tmp;
+				}
+
+				bool operator == (const iterator& _src) const
+				{
+					return _src.current == current;
+				}
+
+				bool operator != (const iterator& _src)
+				{
+					return _src.current != current;
+				}
+
+			};
+
+			table<T>::iterator begin()
+			{
+				return iterator(this, 0);
+			}
+
+			table<T>::iterator end()
+			{
+				return iterator(this, null_row);
+			}
 		};
 
 		template <typename P, typename C>
@@ -289,6 +388,18 @@ namespace countrybit
 			parent_child_holder<P, C> create(row_id_type child_count)
 			{
 				auto pcr = parents.create(1);
+				auto& pc = parents[pcr.start];
+				pc.children = children.create(child_count);
+				return parent_child_holder<P, C>(&pc.parent, &children[pc.children.start], pcr.start, child_count);
+			}
+
+			parent_child_holder<P, C> create_at(row_id_type location, row_id_type child_count)
+			{
+				if (location == null_row)
+				{
+					return create(child_count);
+				}
+				auto pcr = parents.get_at(location);
 				auto& pc = parents[pcr.start];
 				pc.children = children.create(child_count);
 				return parent_child_holder<P, C>(&pc.parent, &children[pc.children.start], pcr.start, child_count);

@@ -93,7 +93,7 @@ namespace countrybit
 				return source.get_type_code();
 			}
 
-			void add_setter(property_dest* _new_setter)
+			void put_setter(property_dest* _new_setter)
 			{
 				if (!first_setter) {
 					first_setter = _new_setter;
@@ -170,7 +170,7 @@ namespace countrybit
 				return false;
 			}
 
-			propertyinfo* add_property(propertyinfo* pb)
+			propertyinfo* put_property(propertyinfo* pb)
 			{
 				int idx = pb->get_type_code();
 				property_index.insert_or_assign(idx, pb);
@@ -335,12 +335,34 @@ namespace countrybit
 			}
 		};
 
+
 		class loader 
 		{
+		public:
+
+			enum class errors 
+			{
+				could_not_create_binding = 1,
+				could_not_find_binding = 2,
+				invalid_binding_name_type = 3,
+				class_not_defined = 4,
+				field_not_defined = 5,
+			};
+
+			class error_message
+			{
+			public:
+				errors error;
+				const pobject* obj;
+				const char* name;
+			};
+
 		protected:
 
 			database::dynamic_box data;
 			database::sorted_index<database::object_name, typeinfo*> bindings_by_name;
+			database::table<error_message> error_messages;
+			database::row_id_type error_messages_id;
 
 		public:
 
@@ -349,6 +371,26 @@ namespace countrybit
 				database::row_id_type header_location;
 				data.init(_size);
 				bindings_by_name.create_sorted_index(&data, _max_types, header_location);
+				error_messages = database::table<error_message>::create_table(&data, 250, error_messages_id);
+			}
+
+			void put_error(errors _error, const pobject* _obj)
+			{
+				database::row_range rr;
+				error_message em;
+				em.error = _error;
+				em.obj = _obj;
+				error_messages.insert(em, rr);
+			}
+
+			void put_error(errors _error, const char *_name)
+			{
+				database::row_range rr;
+				error_message em;
+				em.error = _error;
+				em.obj = nullptr;
+				em.name = _name;
+				error_messages.insert(em, rr);
 			}
 
 			typeinfo* create_typeinfo(
@@ -435,7 +477,7 @@ namespace countrybit
 				t = data.place<scalar_dest>();
 				scalar_dest* new_dest = new (t) scalar_dest(_dest_name, _offset, _match_type);
 
-				pi->add_setter(new_dest);
+				pi->put_setter(new_dest);
 				return pi;
 			}
 
@@ -443,7 +485,7 @@ namespace countrybit
 			propertyinfo* create_scalar_property(typeinfo *parent, pvalue::pvalue_types _match_type, const char* _source_name, const char* _dest_name, int _offset)
 			{
 				propertyinfo* sp = create_scalar_property(_match_type, _source_name, _dest_name, _offset);
-				parent->add_property(sp);
+				parent->put_property(sp);
 			}
 
 			propertyinfo* create_object_property(typeinfo* _property_type, const char* _source_name, const char* _dest_name, int _offset)
@@ -454,7 +496,7 @@ namespace countrybit
 				t = data.place<object_property_dest>();
 				object_property_dest* new_dest = new (t) object_property_dest(_dest_name, _offset, _property_type);
 
-				pi->add_setter(new_dest);
+				pi->put_setter(new_dest);
 
 				return pi;
 			}
@@ -462,7 +504,7 @@ namespace countrybit
 			propertyinfo* create_object_property(typeinfo *parent, typeinfo* _property_type, const char* _source_name, const char* _dest_name, int _offset)
 			{
 				propertyinfo* op = create_object_property(_property_type, _source_name, _dest_name, _offset);
-				parent->add_property(op);
+				parent->put_property(op);
 				return op;
 			}
 
@@ -477,7 +519,7 @@ namespace countrybit
 				char* t = data.place<array_dest>();
 				array_dest* new_dest = new (t) array_dest(_dest_name, _offset, _property_type);
 
-				pi->add_setter(new_dest);
+				pi->put_setter(new_dest);
 
 				return pi;
 			}
@@ -486,7 +528,7 @@ namespace countrybit
 			propertyinfo* create_object_iarray_property(typeinfo* parent, typeinfo* _property_type, const char* _source_name, const char* _dest_name, int _offset)
 			{
 				propertyinfo* op = create_object_iarray_property<ArrayMemberType,ArraySize>(_property_type, _source_name, _dest_name, _offset);
-				parent->add_property(op);
+				parent->put_property(op);
 				return op;
 			}
 
@@ -496,7 +538,7 @@ namespace countrybit
 				propertyinfo* pi = new (t) propertyinfo(_source_name);
 
 				for (int i = 0; i < _num_dests; i++) {
-					pi->add_setter(_dests[i]);
+					pi->put_setter(_dests[i]);
 				}
 
 				return pi;
@@ -505,7 +547,7 @@ namespace countrybit
 			propertyinfo* create_polymorphic_property(typeinfo* parent, const char* _source_name, int _num_dests, property_dest** _dests)
 			{
 				propertyinfo* op = create_polymorphic_property(_source_name, _num_dests, _dests);
-				parent->add_property(op);
+				parent->put_property(op);
 				return op;
 			}
 
@@ -524,50 +566,48 @@ namespace countrybit
 
 		class schema_loader : loader
 		{
-			enum class errors {
-				could_not_create_binding = 1,
-				could_not_find_binding = 2,
-				invalid_binding_name_type = 3,
-			};
+		public:
 
-			class error_message
+			struct location 
 			{
-			public:
-				errors error;
-				const pobject* obj;
+				database::jtype item_type;
+				database::row_id_type row_id;					
 			};
 
-			database::table<database::add_string_field_request> add_string_fields;
-			database::table<database::add_integer_field_request> add_integer_fields;
-			database::table<database::add_double_field_request> add_double_fields;
-			database::table<database::add_time_field_request> add_time_fields;
-			database::table<database::add_object_field_request> add_object_fields;
-			database::table<database::add_point_field_request> add_point_fields;
-			database::table<database::add_rectangle_field_request> add_rectangle_fields;
-			database::table<database::add_color_field_request> add_color_fields;
-			database::table<database::add_image_field_request> add_image_fields;
-			database::table<database::add_wave_field_request> add_wave_fields;
-			database::table<database::add_midi_field_request> add_midi_fields;
-			database::table<database::add_color_field_request> add_color_fields;
-			database::table<database::add_named_query_field_request> add_query_fields;
+		private:
+			database::sorted_index<database::object_name, location> fields_by_name;
+			database::sorted_index<database::object_name, database::row_id_type> classes_by_name;
 
-			database::table<error_message> error_messages;
+			database::table<database::put_string_field_request> put_string_fields;
+			database::table<database::put_integer_field_request> put_integer_fields;
+			database::table<database::put_double_field_request> put_double_fields;
+			database::table<database::put_time_field_request> put_time_fields;
+			database::table<database::put_object_field_request> put_object_fields;
+			database::table<database::put_point_field_request> put_point_fields;
+			database::table<database::put_rectangle_field_request> put_rectangle_fields;
+			database::table<database::put_color_field_request> put_color_fields;
+			database::table<database::put_image_field_request> put_image_fields;
+			database::table<database::put_wave_field_request> put_wave_fields;
+			database::table<database::put_midi_field_request> put_midi_fields;
+			database::table<database::put_color_field_request> put_color_fields;
+			database::table<database::put_named_query_field_request> put_query_fields;
+			database::table<database::put_named_class_request> put_classes;
 
-			database::row_id_type error_messages_id;
-			database::row_id_type add_string_fields_id;
-			database::row_id_type add_integer_fields_id;
-			database::row_id_type add_double_fields_id;
-			database::row_id_type add_time_fields_id;
-			database::row_id_type add_object_fields_id;
-			database::row_id_type add_query_fields_id;
-			database::row_id_type add_point_fields_id;
-			database::row_id_type add_rectangle_fields_id;
-			database::row_id_type add_color_fields_id;
-			database::row_id_type add_image_fields_id;
-			database::row_id_type add_wave_fields_id;
-			database::row_id_type add_midi_fields_id;
+			database::row_id_type fields_by_name_id;
+			database::row_id_type put_string_fields_id;
+			database::row_id_type put_integer_fields_id;
+			database::row_id_type put_double_fields_id;
+			database::row_id_type put_time_fields_id;
+			database::row_id_type put_object_fields_id;
+			database::row_id_type put_query_fields_id;
+			database::row_id_type put_point_fields_id;
+			database::row_id_type put_rectangle_fields_id;
+			database::row_id_type put_color_fields_id;
+			database::row_id_type put_image_fields_id;
+			database::row_id_type put_wave_fields_id;
+			database::row_id_type put_midi_fields_id;
+			database::row_id_type put_classes_id;
 
-			typeinfo* error_messages_ti;
 			typeinfo* string_fields_ti;
 			typeinfo* int8_fields_ti;
 			typeinfo* int16_fields_ti;
@@ -586,6 +626,8 @@ namespace countrybit
 			typeinfo* image_fields_ti;
 			typeinfo* wave_fields_ti;
 			typeinfo* midi_fields_ti;
+			typeinfo* put_classes_ti;
+			typeinfo* put_class_fields_ti;
 
 			const char* member_type_name = "type";
 
@@ -593,128 +635,148 @@ namespace countrybit
 
 			schema_loader(int _size, int _num_fields) : loader(_size, _num_fields)
 			{
-				error_messages = database::table<error_message>::create_table(&data, 250, error_messages_id);
-				add_string_fields = database::table<database::add_string_field_request>::create_table(&data, _num_fields, add_string_fields_id);
-				add_integer_fields = database::table<database::add_integer_field_request>::create_table(&data, _num_fields, add_integer_fields_id);
-				add_double_fields = database::table<database::add_double_field_request>::create_table(&data, _num_fields, add_double_fields_id);
-				add_time_fields = database::table<database::add_time_field_request>::create_table(&data, _num_fields, add_time_fields_id);
-				add_object_fields = database::table<database::add_object_field_request>::create_table(&data, _num_fields, add_object_fields_id);
-				add_query_fields = database::table<database::add_named_query_field_request>::create_table(&data, _num_fields, add_query_fields_id);
-				add_point_fields = database::table<database::add_point_field_request>::create_table(&data, _num_fields, add_point_fields_id);
-				add_rectangle_fields = database::table<database::add_rectangle_field_request>::create_table(&data, _num_fields, add_rectangle_fields_id);
-				add_image_fields = database::table<database::add_image_field_request>::create_table(&data, _num_fields, add_image_fields_id);
-				add_wave_fields = database::table<database::add_wave_field_request>::create_table(&data, _num_fields, add_wave_fields_id);
-				add_midi_fields = database::table<database::add_midi_field_request>::create_table(&data, _num_fields, add_midi_fields_id);
+
+				fields_by_name = database::sorted_index<database::object_name, location>::create_sorted_index(&data, _num_fields, fields_by_name_id);
+				put_string_fields = database::table<database::put_string_field_request>::create_table(&data, _num_fields, put_string_fields_id);
+				put_integer_fields = database::table<database::put_integer_field_request>::create_table(&data, _num_fields, put_integer_fields_id);
+				put_double_fields = database::table<database::put_double_field_request>::create_table(&data, _num_fields, put_double_fields_id);
+				put_time_fields = database::table<database::put_time_field_request>::create_table(&data, _num_fields, put_time_fields_id);
+				put_object_fields = database::table<database::put_object_field_request>::create_table(&data, _num_fields, put_object_fields_id);
+				put_query_fields = database::table<database::put_named_query_field_request>::create_table(&data, _num_fields, put_query_fields_id);
+				put_point_fields = database::table<database::put_point_field_request>::create_table(&data, _num_fields, put_point_fields_id);
+				put_rectangle_fields = database::table<database::put_rectangle_field_request>::create_table(&data, _num_fields, put_rectangle_fields_id);
+				put_image_fields = database::table<database::put_image_field_request>::create_table(&data, _num_fields, put_image_fields_id);
+				put_wave_fields = database::table<database::put_wave_field_request>::create_table(&data, _num_fields, put_wave_fields_id);
+				put_midi_fields = database::table<database::put_midi_field_request>::create_table(&data, _num_fields, put_midi_fields_id);
+				put_classes = database::table<database::put_named_class_request>::create_table(&data, _num_fields, put_classes_id);
 
 				string_fields_ti = create_typeinfo(member_type_name, "string", "string", 20);
-				create_scalar_property<database::string_box>(string_fields_ti, pvalue::pvalue_types::string_value, "name", "name", offsetof(database::add_string_field_request, name.name));
-				create_scalar_property<database::string_box>(string_fields_ti, pvalue::pvalue_types::string_value, "description", "description", offsetof(database::add_string_field_request, name.description));
-				create_scalar_property<database::int32_box>(string_fields_ti, pvalue::pvalue_types::double_value, "length", "length", offsetof(database::add_string_field_request, options.length));
-				create_scalar_property<database::string_box>(string_fields_ti, pvalue::pvalue_types::string_value, "validation_pattern", "validation_pattern", offsetof(database::add_string_field_request, options.validation_pattern));
-				create_scalar_property<database::string_box>(string_fields_ti, pvalue::pvalue_types::string_value, "validation_message", "validation_message", offsetof(database::add_string_field_request, options.validation_message));
+				create_scalar_property<database::int32_box>(string_fields_ti, pvalue::pvalue_types::double_value, "id", "id", offsetof(database::put_string_field_request, name.field_id));
+				create_scalar_property<database::string_box>(string_fields_ti, pvalue::pvalue_types::string_value, "name", "name", offsetof(database::put_string_field_request, name.name));
+				create_scalar_property<database::string_box>(string_fields_ti, pvalue::pvalue_types::string_value, "description", "description", offsetof(database::put_string_field_request, name.description));
+				create_scalar_property<database::int32_box>(string_fields_ti, pvalue::pvalue_types::double_value, "length", "length", offsetof(database::put_string_field_request, options.length));
+				create_scalar_property<database::string_box>(string_fields_ti, pvalue::pvalue_types::string_value, "validation_pattern", "validation_pattern", offsetof(database::put_string_field_request, options.validation_pattern));
+				create_scalar_property<database::string_box>(string_fields_ti, pvalue::pvalue_types::string_value, "validation_message", "validation_message", offsetof(database::put_string_field_request, options.validation_message));
 
 				int8_fields_ti = create_typeinfo(member_type_name, "int8", "int8", 20);
-				create_scalar_property<database::string_box>(int8_fields_ti, pvalue::pvalue_types::string_value, "name", "name", offsetof(database::add_integer_field_request, name.name));
-				create_scalar_property<database::string_box>(int8_fields_ti, pvalue::pvalue_types::string_value, "description", "description", offsetof(database::add_integer_field_request, name.description));
-				create_scalar_property<database::int32_box>(int8_fields_ti, pvalue::pvalue_types::double_value, "minimum", "minimum", offsetof(database::add_integer_field_request, options.minimum_int));
-				create_scalar_property<database::int32_box>(int8_fields_ti, pvalue::pvalue_types::double_value, "maximum", "maximum", offsetof(database::add_integer_field_request, options.maximum_int));
+				create_scalar_property<database::int32_box>(int8_fields_ti, pvalue::pvalue_types::double_value, "id", "id", offsetof(database::put_integer_field_request, name.field_id));
+				create_scalar_property<database::string_box>(int8_fields_ti, pvalue::pvalue_types::string_value, "name", "name", offsetof(database::put_integer_field_request, name.name));
+				create_scalar_property<database::string_box>(int8_fields_ti, pvalue::pvalue_types::string_value, "description", "description", offsetof(database::put_integer_field_request, name.description));
+				create_scalar_property<database::int32_box>(int8_fields_ti, pvalue::pvalue_types::double_value, "minimum", "minimum", offsetof(database::put_integer_field_request, options.minimum_int));
+				create_scalar_property<database::int32_box>(int8_fields_ti, pvalue::pvalue_types::double_value, "maximum", "maximum", offsetof(database::put_integer_field_request, options.maximum_int));
 
 				int16_fields_ti = create_typeinfo(member_type_name, "int16", "int16", 20);
-				create_scalar_property<database::string_box>(int16_fields_ti, pvalue::pvalue_types::string_value, "name", "name", offsetof(database::add_integer_field_request, name.name));
-				create_scalar_property<database::string_box>(int16_fields_ti, pvalue::pvalue_types::string_value, "description", "description", offsetof(database::add_integer_field_request, name.description));
-				create_scalar_property<database::int32_box>(int16_fields_ti, pvalue::pvalue_types::double_value, "minimum", "minimum", offsetof(database::add_integer_field_request, options.minimum_int));
-				create_scalar_property<database::int32_box>(int16_fields_ti, pvalue::pvalue_types::double_value, "maximum", "maximum", offsetof(database::add_integer_field_request, options.maximum_int));
+				create_scalar_property<database::int32_box>(int16_fields_ti, pvalue::pvalue_types::double_value, "id", "id", offsetof(database::put_integer_field_request, name.field_id));
+				create_scalar_property<database::string_box>(int16_fields_ti, pvalue::pvalue_types::string_value, "name", "name", offsetof(database::put_integer_field_request, name.name));
+				create_scalar_property<database::string_box>(int16_fields_ti, pvalue::pvalue_types::string_value, "description", "description", offsetof(database::put_integer_field_request, name.description));
+				create_scalar_property<database::int32_box>(int16_fields_ti, pvalue::pvalue_types::double_value, "minimum", "minimum", offsetof(database::put_integer_field_request, options.minimum_int));
+				create_scalar_property<database::int32_box>(int16_fields_ti, pvalue::pvalue_types::double_value, "maximum", "maximum", offsetof(database::put_integer_field_request, options.maximum_int));
 
 				int32_fields_ti = create_typeinfo(member_type_name, "int32", "int32", 20);
-				create_scalar_property<database::string_box>(int32_fields_ti, pvalue::pvalue_types::string_value, "name", "name", offsetof(database::add_integer_field_request, name.name));
-				create_scalar_property<database::string_box>(int32_fields_ti, pvalue::pvalue_types::string_value, "description", "description", offsetof(database::add_integer_field_request, name.description));
-				create_scalar_property<database::int32_box>(int32_fields_ti, pvalue::pvalue_types::double_value, "minimum", "minimum", offsetof(database::add_integer_field_request, options.minimum_int));
-				create_scalar_property<database::int32_box>(int32_fields_ti, pvalue::pvalue_types::double_value, "maximum", "maximum", offsetof(database::add_integer_field_request, options.maximum_int));
+				create_scalar_property<database::int32_box>(int16_fields_ti, pvalue::pvalue_types::double_value, "id", "id", offsetof(database::put_integer_field_request, name.field_id));
+				create_scalar_property<database::string_box>(int32_fields_ti, pvalue::pvalue_types::string_value, "name", "name", offsetof(database::put_integer_field_request, name.name));
+				create_scalar_property<database::string_box>(int32_fields_ti, pvalue::pvalue_types::string_value, "description", "description", offsetof(database::put_integer_field_request, name.description));
+				create_scalar_property<database::int32_box>(int32_fields_ti, pvalue::pvalue_types::double_value, "minimum", "minimum", offsetof(database::put_integer_field_request, options.minimum_int));
+				create_scalar_property<database::int32_box>(int32_fields_ti, pvalue::pvalue_types::double_value, "maximum", "maximum", offsetof(database::put_integer_field_request, options.maximum_int));
 
 				int64_fields_ti = create_typeinfo(member_type_name, "int64", "int64", 20);
-				create_scalar_property<database::string_box>(int64_fields_ti, pvalue::pvalue_types::string_value, "name", "name", offsetof(database::add_integer_field_request, name.name));
-				create_scalar_property<database::string_box>(int64_fields_ti, pvalue::pvalue_types::string_value, "description", "description", offsetof(database::add_integer_field_request, name.description));
-				create_scalar_property<database::int32_box>(int64_fields_ti, pvalue::pvalue_types::double_value, "minimum", "minimum", offsetof(database::add_integer_field_request, options.minimum_int));
-				create_scalar_property<database::int32_box>(int64_fields_ti, pvalue::pvalue_types::double_value, "maximum", "maximum", offsetof(database::add_integer_field_request, options.maximum_int));
+				create_scalar_property<database::int32_box>(int64_fields_ti, pvalue::pvalue_types::double_value, "id", "id", offsetof(database::put_integer_field_request, name.field_id));
+				create_scalar_property<database::string_box>(int64_fields_ti, pvalue::pvalue_types::string_value, "name", "name", offsetof(database::put_integer_field_request, name.name));
+				create_scalar_property<database::string_box>(int64_fields_ti, pvalue::pvalue_types::string_value, "description", "description", offsetof(database::put_integer_field_request, name.description));
+				create_scalar_property<database::int32_box>(int64_fields_ti, pvalue::pvalue_types::double_value, "minimum", "minimum", offsetof(database::put_integer_field_request, options.minimum_int));
+				create_scalar_property<database::int32_box>(int64_fields_ti, pvalue::pvalue_types::double_value, "maximum", "maximum", offsetof(database::put_integer_field_request, options.maximum_int));
 
 				float_fields_ti = create_typeinfo(member_type_name, "float", "float", 20);
-				create_scalar_property<database::string_box>(float_fields_ti, pvalue::pvalue_types::string_value, "name", "name", offsetof(database::add_double_field_request, name.name));
-				create_scalar_property<database::string_box>(float_fields_ti, pvalue::pvalue_types::string_value, "description", "description", offsetof(database::add_double_field_request, name.description));
-				create_scalar_property<database::double_box>(float_fields_ti, pvalue::pvalue_types::double_value, "minimum", "minimum", offsetof(database::add_double_field_request, options.minimum_double));
-				create_scalar_property<database::double_box>(float_fields_ti, pvalue::pvalue_types::double_value, "maximum", "maximum", offsetof(database::add_double_field_request, options.maximum_double));
+				create_scalar_property<database::int32_box>(float_fields_ti, pvalue::pvalue_types::double_value, "id", "id", offsetof(database::put_double_field_request, name.field_id));
+				create_scalar_property<database::string_box>(float_fields_ti, pvalue::pvalue_types::string_value, "name", "name", offsetof(database::put_double_field_request, name.name));
+				create_scalar_property<database::string_box>(float_fields_ti, pvalue::pvalue_types::string_value, "description", "description", offsetof(database::put_double_field_request, name.description));
+				create_scalar_property<database::double_box>(float_fields_ti, pvalue::pvalue_types::double_value, "minimum", "minimum", offsetof(database::put_double_field_request, options.minimum_double));
+				create_scalar_property<database::double_box>(float_fields_ti, pvalue::pvalue_types::double_value, "maximum", "maximum", offsetof(database::put_double_field_request, options.maximum_double));
 
 				double_fields_ti = create_typeinfo(member_type_name, "double", "double", 20);
-				create_scalar_property<database::string_box>(double_fields_ti, pvalue::pvalue_types::string_value, "name", "name", offsetof(database::add_double_field_request, name.name));
-				create_scalar_property<database::string_box>(double_fields_ti, pvalue::pvalue_types::string_value, "description", "description", offsetof(database::add_double_field_request, name.description));
-				create_scalar_property<database::double_box>(double_fields_ti, pvalue::pvalue_types::double_value, "minimum", "minimum", offsetof(database::add_double_field_request, options.minimum_double));
-				create_scalar_property<database::double_box>(double_fields_ti, pvalue::pvalue_types::double_value, "maximum", "maximum", offsetof(database::add_double_field_request, options.maximum_double));
+				create_scalar_property<database::int32_box>(double_fields_ti, pvalue::pvalue_types::double_value, "id", "id", offsetof(database::put_double_field_request, name.field_id));
+				create_scalar_property<database::string_box>(double_fields_ti, pvalue::pvalue_types::string_value, "name", "name", offsetof(database::put_double_field_request, name.name));
+				create_scalar_property<database::string_box>(double_fields_ti, pvalue::pvalue_types::string_value, "description", "description", offsetof(database::put_double_field_request, name.description));
+				create_scalar_property<database::double_box>(double_fields_ti, pvalue::pvalue_types::double_value, "minimum", "minimum", offsetof(database::put_double_field_request, options.minimum_double));
+				create_scalar_property<database::double_box>(double_fields_ti, pvalue::pvalue_types::double_value, "maximum", "maximum", offsetof(database::put_double_field_request, options.maximum_double));
 
 				time_fields_ti = create_typeinfo(member_type_name, "time", "time", 20);
-				create_scalar_property<database::string_box>(time_fields_ti, pvalue::pvalue_types::string_value, "name", "name", offsetof(database::add_time_field_request, name.name));
-				create_scalar_property<database::string_box>(time_fields_ti, pvalue::pvalue_types::string_value, "description", "description", offsetof(database::add_time_field_request, name.description));
-				create_scalar_property<database::int64_box>(time_fields_ti, pvalue::pvalue_types::double_value, "minimum", "minimum", offsetof(database::add_time_field_request, options.minimum_time_t));
-				create_scalar_property<database::int64_box>(time_fields_ti, pvalue::pvalue_types::double_value, "maximum", "maximum", offsetof(database::add_time_field_request, options.maximum_time_t));
+				create_scalar_property<database::int32_box>(double_fields_ti, pvalue::pvalue_types::double_value, "id", "id", offsetof(database::put_time_field_request, name.field_id));
+				create_scalar_property<database::string_box>(time_fields_ti, pvalue::pvalue_types::string_value, "name", "name", offsetof(database::put_time_field_request, name.name));
+				create_scalar_property<database::string_box>(time_fields_ti, pvalue::pvalue_types::string_value, "description", "description", offsetof(database::put_time_field_request, name.description));
+				create_scalar_property<database::int64_box>(time_fields_ti, pvalue::pvalue_types::double_value, "minimum", "minimum", offsetof(database::put_time_field_request, options.minimum_time_t));
+				create_scalar_property<database::int64_box>(time_fields_ti, pvalue::pvalue_types::double_value, "maximum", "maximum", offsetof(database::put_time_field_request, options.maximum_time_t));
 
 				object_fields_ti = create_typeinfo(member_type_name, "object", "object", 20);
-				create_scalar_property<database::string_box>(object_fields_ti, pvalue::pvalue_types::string_value, "name", "name", offsetof(database::add_object_field_request, name.name));
-				create_scalar_property<database::string_box>(object_fields_ti, pvalue::pvalue_types::string_value, "description", "description", offsetof(database::add_object_field_request, name.description));
-				create_scalar_property<database::string_box>(object_fields_ti, pvalue::pvalue_types::string_value, "class", "class", offsetof(database::add_object_field_request, options.class_name));
-				create_scalar_property<database::int32_box>(object_fields_ti, pvalue::pvalue_types::double_value, "x", "x", offsetof(database::add_object_field_request, options.dim.x));
-				create_scalar_property<database::int32_box>(object_fields_ti, pvalue::pvalue_types::double_value, "y", "y", offsetof(database::add_object_field_request, options.dim.y));
-				create_scalar_property<database::int32_box>(object_fields_ti, pvalue::pvalue_types::double_value, "z", "z", offsetof(database::add_object_field_request, options.dim.z));
+				create_scalar_property<database::int32_box>(double_fields_ti, pvalue::pvalue_types::double_value, "id", "id", offsetof(database::put_object_field_request, name.field_id));
+				create_scalar_property<database::string_box>(object_fields_ti, pvalue::pvalue_types::string_value, "name", "name", offsetof(database::put_object_field_request, name.name));
+				create_scalar_property<database::string_box>(object_fields_ti, pvalue::pvalue_types::string_value, "description", "description", offsetof(database::put_object_field_request, name.description));
+				create_scalar_property<database::string_box>(object_fields_ti, pvalue::pvalue_types::string_value, "class_name", "class_name", offsetof(database::put_object_field_request, options.class_name));
+				create_scalar_property<database::int32_box>(object_fields_ti, pvalue::pvalue_types::double_value, "x", "x", offsetof(database::put_object_field_request, options.dim.x));
+				create_scalar_property<database::int32_box>(object_fields_ti, pvalue::pvalue_types::double_value, "y", "y", offsetof(database::put_object_field_request, options.dim.y));
+				create_scalar_property<database::int32_box>(object_fields_ti, pvalue::pvalue_types::double_value, "z", "z", offsetof(database::put_object_field_request, options.dim.z));
 
 				query_fields_ti = create_typeinfo(member_type_name, "query", "query", 20);
-				create_scalar_property<database::string_box>(query_fields_ti, pvalue::pvalue_types::string_value, "name", "name", offsetof(database::add_named_query_field_request, name.name));
-				create_scalar_property<database::string_box>(query_fields_ti, pvalue::pvalue_types::string_value, "description", "description", offsetof(database::add_named_query_field_request, name.description));
+				create_scalar_property<database::int32_box>(query_fields_ti, pvalue::pvalue_types::double_value, "id", "id", offsetof(database::put_named_query_field_request, name.field_id));
+				create_scalar_property<database::string_box>(query_fields_ti, pvalue::pvalue_types::string_value, "name", "name", offsetof(database::put_named_query_field_request, name.name));
+				create_scalar_property<database::string_box>(query_fields_ti, pvalue::pvalue_types::string_value, "description", "description", offsetof(database::put_named_query_field_request, name.description));
 
 				query_projection_ti = create_typeinfo(member_type_name, "projection", "projection", 20);
-				create_scalar_property<database::string_box>(query_fields_ti, pvalue::pvalue_types::string_value, "field", "field", offsetof(database::projection_element_request, field_name));
+				create_scalar_property<database::string_box>(query_fields_ti, pvalue::pvalue_types::string_value, "field_name", "field_name", offsetof(database::projection_element_request, field_name));
 
 				query_filter_ti = create_typeinfo(member_type_name, "filter", "filter", 20);
-				create_scalar_property<database::string_box>(query_filter_ti, pvalue::pvalue_types::string_value, "target_field", "target_field", offsetof(database::filter_element_request, target_field_name));
+				create_scalar_property<database::string_box>(query_filter_ti, pvalue::pvalue_types::string_value, "target_field_name", "target_field_name", offsetof(database::filter_element_request, target_field_name));
 				create_scalar_property<database::string_box>(query_filter_ti, pvalue::pvalue_types::string_value, "comparison", "comparison", offsetof(database::filter_element_request, comparison_name));
-				create_scalar_property<database::string_box>(query_filter_ti, pvalue::pvalue_types::string_value, "parameter_field", "parameter_field", offsetof(database::filter_element_request, parameter_field_name));
+				create_scalar_property<database::string_box>(query_filter_ti, pvalue::pvalue_types::string_value, "parameter_field_name", "parameter_field_name", offsetof(database::filter_element_request, parameter_field_name));
 				create_scalar_property<database::double_box>(query_filter_ti, pvalue::pvalue_types::double_value, "distance", "distance", offsetof(database::filter_element_request, distance_threshold));
 
-				create_object_iarray_property<database::filter_element_request, database::max_query_filters>(query_fields_ti, query_filter_ti, "filters", "filters", offsetof(database::add_named_query_field_request, options.filter));
-				create_object_iarray_property<database::projection_element_request, database::max_query_projections > (query_fields_ti, query_projection_ti, "projections", "projections", offsetof(database::add_named_query_field_request, options.projection));
+				create_object_iarray_property<database::filter_element_request, database::max_query_filters>(query_fields_ti, query_filter_ti, "filters", "filters", offsetof(database::put_named_query_field_request, options.filter));
+				create_object_iarray_property<database::projection_element_request, database::max_query_projections > (query_fields_ti, query_projection_ti, "projections", "projections", offsetof(database::put_named_query_field_request, options.projection));
 
 				point_fields_ti = create_typeinfo(member_type_name, "point", "point", 20);
-				create_scalar_property<database::string_box>(point_fields_ti, pvalue::pvalue_types::string_value, "name", "name", offsetof(database::add_point_field_request, name.name));
-				create_scalar_property<database::string_box>(point_fields_ti, pvalue::pvalue_types::string_value, "description", "description", offsetof(database::add_point_field_request, name.description));
+				create_scalar_property<database::int32_box>(point_fields_ti, pvalue::pvalue_types::double_value, "id", "id", offsetof(database::put_point_field_request, name.field_id));
+				create_scalar_property<database::string_box>(point_fields_ti, pvalue::pvalue_types::string_value, "name", "name", offsetof(database::put_point_field_request, name.name));
+				create_scalar_property<database::string_box>(point_fields_ti, pvalue::pvalue_types::string_value, "description", "description", offsetof(database::put_point_field_request, name.description));
 
 				rectangle_fields_ti = create_typeinfo(member_type_name, "rectangle", "rectangle", 20);
-				create_scalar_property<database::string_box>(rectangle_fields_ti, pvalue::pvalue_types::string_value, "name", "name", offsetof(database::add_rectangle_field_request, name.name));
-				create_scalar_property<database::string_box>(rectangle_fields_ti, pvalue::pvalue_types::string_value, "description", "description", offsetof(database::add_rectangle_field_request, name.description));
+				create_scalar_property<database::int32_box>(rectangle_fields_ti, pvalue::pvalue_types::double_value, "id", "id", offsetof(database::put_rectangle_field_request, name.field_id));
+				create_scalar_property<database::string_box>(rectangle_fields_ti, pvalue::pvalue_types::string_value, "name", "name", offsetof(database::put_rectangle_field_request, name.name));
+				create_scalar_property<database::string_box>(rectangle_fields_ti, pvalue::pvalue_types::string_value, "description", "description", offsetof(database::put_rectangle_field_request, name.description));
 
 				rectangle_fields_ti = create_typeinfo(member_type_name, "color", "color", 20);
-				create_scalar_property<database::string_box>(color_fields_ti, pvalue::pvalue_types::string_value, "name", "name", offsetof(database::add_color_field_request, name.name));
-				create_scalar_property<database::string_box>(color_fields_ti, pvalue::pvalue_types::string_value, "description", "description", offsetof(database::add_color_field_request, name.description));
+				create_scalar_property<database::int32_box>(color_fields_ti, pvalue::pvalue_types::double_value, "id", "id", offsetof(database::put_color_field_request, name.field_id));
+				create_scalar_property<database::string_box>(color_fields_ti, pvalue::pvalue_types::string_value, "name", "name", offsetof(database::put_color_field_request, name.name));
+				create_scalar_property<database::string_box>(color_fields_ti, pvalue::pvalue_types::string_value, "description", "description", offsetof(database::put_color_field_request, name.description));
 
 				image_fields_ti = create_typeinfo(member_type_name, "image", "image", 20);
-				create_scalar_property<database::string_box>(image_fields_ti, pvalue::pvalue_types::string_value, "name", "name", offsetof(database::add_image_field_request, name.name));
-				create_scalar_property<database::string_box>(image_fields_ti, pvalue::pvalue_types::string_value, "description", "description", offsetof(database::add_image_field_request, name.description));
-				create_scalar_property<database::string_box>(image_fields_ti, pvalue::pvalue_types::string_value, "path", "path", offsetof(database::add_image_field_request, options.image_path));
+				create_scalar_property<database::int32_box>(image_fields_ti, pvalue::pvalue_types::double_value, "id", "id", offsetof(database::put_image_field_request, name.field_id));
+				create_scalar_property<database::string_box>(image_fields_ti, pvalue::pvalue_types::string_value, "name", "name", offsetof(database::put_image_field_request, name.name));
+				create_scalar_property<database::string_box>(image_fields_ti, pvalue::pvalue_types::string_value, "description", "description", offsetof(database::put_image_field_request, name.description));
+				create_scalar_property<database::string_box>(image_fields_ti, pvalue::pvalue_types::string_value, "path", "path", offsetof(database::put_image_field_request, options.image_path));
 
 				wave_fields_ti = create_typeinfo(member_type_name, "wave", "wave", 20);
-				create_scalar_property<database::string_box>(wave_fields_ti, pvalue::pvalue_types::string_value, "name", "name", offsetof(database::add_wave_field_request, name.name));
-				create_scalar_property<database::string_box>(wave_fields_ti, pvalue::pvalue_types::string_value, "description", "description", offsetof(database::add_wave_field_request, name.description));
-				create_scalar_property<database::string_box>(wave_fields_ti, pvalue::pvalue_types::string_value, "path", "path", offsetof(database::add_wave_field_request, options.image_path));
+				create_scalar_property<database::int32_box>(wave_fields_ti, pvalue::pvalue_types::double_value, "id", "id", offsetof(database::put_wave_field_request, name.field_id));
+				create_scalar_property<database::string_box>(wave_fields_ti, pvalue::pvalue_types::string_value, "name", "name", offsetof(database::put_wave_field_request, name.name));
+				create_scalar_property<database::string_box>(wave_fields_ti, pvalue::pvalue_types::string_value, "description", "description", offsetof(database::put_wave_field_request, name.description));
+				create_scalar_property<database::string_box>(wave_fields_ti, pvalue::pvalue_types::string_value, "path", "path", offsetof(database::put_wave_field_request, options.image_path));
 
 				midi_fields_ti = create_typeinfo(member_type_name, "midi", "midi", 20);
-				create_scalar_property<database::string_box>(midi_fields_ti, pvalue::pvalue_types::string_value, "name", "name", offsetof(database::add_midi_field_request, name.name));
-				create_scalar_property<database::string_box>(midi_fields_ti, pvalue::pvalue_types::string_value, "description", "description", offsetof(database::add_midi_field_request, name.description));
-				create_scalar_property<database::string_box>(midi_fields_ti, pvalue::pvalue_types::string_value, "path", "path", offsetof(database::add_midi_field_request, options.image_path));
+				create_scalar_property<database::int32_box>(midi_fields_ti, pvalue::pvalue_types::double_value, "id", "id", offsetof(database::put_midi_field_request, name.field_id));
+				create_scalar_property<database::string_box>(midi_fields_ti, pvalue::pvalue_types::string_value, "name", "name", offsetof(database::put_midi_field_request, name.name));
+				create_scalar_property<database::string_box>(midi_fields_ti, pvalue::pvalue_types::string_value, "description", "description", offsetof(database::put_midi_field_request, name.description));
+				create_scalar_property<database::string_box>(midi_fields_ti, pvalue::pvalue_types::string_value, "path", "path", offsetof(database::put_midi_field_request, options.image_path));
+
+				put_classes_ti = create_typeinfo(member_type_name, "class", "class", 20);
+				create_scalar_property<database::int32_box>(put_classes_ti, pvalue::pvalue_types::double_value, "id", "id", offsetof(database::put_named_class_request, class_id));
+				create_scalar_property<database::string_box>(put_classes_ti, pvalue::pvalue_types::string_value, "name", "name", offsetof(database::put_named_class_request, class_name));
+				create_scalar_property<database::string_box>(put_classes_ti, pvalue::pvalue_types::string_value, "description", "description", offsetof(database::put_named_class_request, class_description));
+
+				put_class_fields_ti = create_typeinfo(member_type_name, "class_fields", "class_fields", 20);
+				create_scalar_property<database::string_box>(put_class_fields_ti, pvalue::pvalue_types::string_value, "field_name", "field_name", offsetof(database::include_field_name, field_name));
+				create_object_iarray_property<database::include_field_name, database::max_class_fields >(put_classes_ti, put_class_fields_ti, "fields", "fields", offsetof(database::put_named_class_request, field_names));
 			}
 
-			void add_error(errors _error, const pobject* _obj)
-			{
-				database::row_range rr;
-				error_message em;
-				em.error = _error;
-				em.obj = _obj;
-				error_messages.insert(em, rr);
-			}
+			private:
 
 			virtual char* place(typeinfo* ti)
 			{
@@ -723,61 +785,71 @@ namespace countrybit
 
 				if (ti == string_fields_ti)
 				{
-					auto& asf = add_string_fields.create(1, rr);
+					auto& asf = put_string_fields.create(1, rr);
+					asf.name.field_id = database::null_row;
 					asf.name.type_id = database::jtype::type_string;
 					t = (char*) &asf;
 				}
 				else if (ti == int8_fields_ti)
 				{
-					auto& ai8f = add_integer_fields.create(1, rr);
+					auto& ai8f = put_integer_fields.create(1, rr);
+					ai8f.name.field_id = database::null_row;
 					ai8f.name.type_id = database::jtype::type_int8;
 					t = (char*)&ai8f;
 				}
 				else if (ti == int16_fields_ti)
 				{
-					auto& ai16f = add_integer_fields.create(1, rr);
+					auto& ai16f = put_integer_fields.create(1, rr);
+					ai16f.name.field_id = database::null_row;
 					ai16f.name.type_id = database::jtype::type_int16;
 					t = (char*)&ai16f;
 				}
 				else if (ti == int32_fields_ti)
 				{
-					auto& ai32f = add_integer_fields.create(1, rr);
+					auto& ai32f = put_integer_fields.create(1, rr);
+					ai32f.name.field_id = database::null_row;
 					ai32f.name.type_id = database::jtype::type_int32;
 					t = (char*)&ai32f;
 				}
 				else if (ti == int64_fields_ti)
 				{
-					auto& ai64f = add_integer_fields.create(1, rr);
+					auto& ai64f = put_integer_fields.create(1, rr);
+					ai64f.name.field_id = database::null_row;
 					ai64f.name.type_id = database::jtype::type_int64;
 					t = (char*)&ai64f;
 				}
 				else if (ti == float_fields_ti)
 				{
-					auto& af32f = add_double_fields.create(1, rr);
+					auto& af32f = put_double_fields.create(1, rr);
+					af32f.name.field_id = database::null_row;
 					af32f.name.type_id = database::jtype::type_float32;
 					t = (char*)&af32f;
 				}
 				else if (ti == double_fields_ti)
 				{
-					auto& af64f = add_double_fields.create(1, rr);
+					auto& af64f = put_double_fields.create(1, rr);
+					af64f.name.field_id = database::null_row;
 					af64f.name.type_id = database::jtype::type_float64;
 					t = (char*)&af64f;
 				}
 				else if (ti == time_fields_ti)
 				{
-					auto& at64f = add_time_fields.create(1, rr);
+					auto& at64f = put_time_fields.create(1, rr);
+					at64f.name.field_id = database::null_row;
 					at64f.name.type_id = database::jtype::type_datetime;
 					t = (char*)&at64f;
 				}
 				else if (ti == object_fields_ti)
 				{
-					auto& aof = add_object_fields.create(1, rr);
+					auto& aof = put_object_fields.create(1, rr);
+					aof.name.field_id = database::null_row;
 					aof.name.type_id = database::jtype::type_object;
 					t = (char*)&aof;
 				}
 				else if (ti == query_fields_ti)
 				{
-					auto& aqf = add_query_fields.create(1, rr);
+					auto& aqf = put_query_fields.create(1, rr);
+					aqf.name.field_id = database::null_row;
 					aqf.name.type_id = database::jtype::type_query;
 					t = (char*)&aqf;
 				}
@@ -791,42 +863,333 @@ namespace countrybit
 				}
 				else if (ti == point_fields_ti)
 				{
-					auto& apf = add_point_fields.create(1, rr);
+					auto& apf = put_point_fields.create(1, rr);
+					apf.name.field_id = database::null_row;
 					apf.name.type_id = database::jtype::type_point;
 					t = (char*)&apf;
 				}
 				else if (ti == rectangle_fields_ti)
 				{
-					auto& arf = add_rectangle_fields.create(1, rr);
+					auto& arf = put_rectangle_fields.create(1, rr);
+					arf.name.field_id = database::null_row;
 					arf.name.type_id = database::jtype::type_rectangle;
 					t = (char*)&arf;
 				}
 				else if (ti == color_fields_ti)
 				{
-					auto& acf = add_color_fields.create(1, rr);
+					auto& acf = put_color_fields.create(1, rr);
+					acf.name.field_id = database::null_row;
 					acf.name.type_id = database::jtype::type_color;
 					t = (char*)&acf;
 				}
 				else if (ti == image_fields_ti)
 				{
-					auto& aimf = add_image_fields.create(1, rr);
+					auto& aimf = put_image_fields.create(1, rr);
+					aimf.name.field_id = database::null_row;
 					aimf.name.type_id = database::jtype::type_image;
 					t = (char*)&aimf;
 				}
 				else if (ti == wave_fields_ti)
 				{
-					auto& awf = add_wave_fields.create(1, rr);
+					auto& awf = put_wave_fields.create(1, rr);
+					awf.name.field_id = database::null_row;
 					awf.name.type_id = database::jtype::type_wave;
 					t = (char*)&awf;
 				}
 				else if (ti == midi_fields_ti)
 				{
-					auto& amf = add_midi_fields.create(1, rr);
+					auto& amf = put_midi_fields.create(1, rr);
+					amf.name.field_id = database::null_row;
+					amf.name.type_id = database::jtype::type_midi;
+					t = (char*)&amf;
+				}
+				else if (ti == put_classes_ti)
+				{
+					auto& amf = put_midi_fields.create(1, rr);
+					amf.name.field_id = database::null_row;
 					amf.name.type_id = database::jtype::type_midi;
 					t = (char*)&amf;
 				}
 
 				return t;
+			}
+
+			void index_fields()
+			{
+				location loc;
+
+				loc.item_type = database::jtype::type_string;
+				for (auto asf : put_string_fields)
+				{
+					loc.row_id = asf.location;
+					fields_by_name.insert_or_assign(asf.item.name.name, loc);
+				}
+
+				loc.item_type = database::jtype::type_int32;
+				for (auto aif : put_integer_fields)
+				{
+					loc.row_id = aif.location;
+					fields_by_name.insert_or_assign(aif.item.name.name, loc);
+				}
+
+				loc.item_type = database::jtype::type_float32;
+				for (auto adf : put_double_fields)
+				{
+					loc.row_id = adf.location;
+					fields_by_name.insert_or_assign(adf.item.name.name, loc);
+				}
+
+				loc.item_type = database::jtype::type_datetime;
+				for (auto atf : put_time_fields)
+				{
+					loc.row_id = atf.location;
+					fields_by_name.insert_or_assign(atf.item.name.name, loc);
+				}
+
+				loc.item_type = database::jtype::type_point;
+				for (auto apf : put_point_fields)
+				{
+					loc.row_id = apf.location;
+					fields_by_name.insert_or_assign(apf.item.name.name, loc);
+				}
+
+				loc.item_type = database::jtype::type_rectangle;
+				for (auto arf : put_rectangle_fields)
+				{
+					loc.row_id = arf.location;
+					fields_by_name.insert_or_assign(arf.item.name.name, loc);
+				}
+
+				loc.item_type = database::jtype::type_color;
+				for (auto acf : put_color_fields)
+				{
+					loc.row_id = acf.location;
+					fields_by_name.insert_or_assign(acf.item.name.name, loc);
+				}
+
+				loc.item_type = database::jtype::type_image;
+				for (auto aimf : put_image_fields)
+				{
+					loc.row_id = aimf.location;
+					fields_by_name.insert_or_assign(aimf.item.name.name, loc);
+				}
+
+				loc.item_type = database::jtype::type_wave;
+				for (auto awvf : put_wave_fields)
+				{
+					loc.row_id = awvf.location;
+					fields_by_name.insert_or_assign(awvf.item.name.name, loc);
+				}
+
+				loc.item_type = database::jtype::type_image;
+				for (auto amdf : put_midi_fields)
+				{
+					loc.row_id = amdf.location;
+					fields_by_name.insert_or_assign(amdf.item.name.name, loc);
+				}
+
+				loc.item_type = database::jtype::type_object;
+				for (auto off : put_object_fields)
+				{
+					loc.row_id = off.location;
+					fields_by_name.insert_or_assign(off.item.name.name, loc);
+				}
+
+				loc.item_type = database::jtype::type_query;
+				for (auto off : put_query_fields)
+				{
+					loc.row_id = off.location;
+					fields_by_name.insert_or_assign(off.item.name.name, loc);
+				}
+
+				for (auto cls : put_classes)
+				{
+					classes_by_name.insert_or_assign(cls.item.class_name, cls.location);
+				}
+			}
+
+			void put_base_fields(database::jschema& schema)
+			{
+				for (auto asf : put_string_fields)
+				{
+					schema.put_string_field(asf.item);
+				}
+
+				for (auto aif : put_integer_fields)
+				{
+					schema.put_integer_field(aif.item);
+				}
+
+				for (auto adf : put_double_fields)
+				{
+					schema.put_double_field(adf.item);
+				}
+
+				for (auto atf : put_time_fields)
+				{
+					schema.put_time_field(atf.item);
+				}
+
+				for (auto apf : put_point_fields)
+				{
+					schema.put_point_field(apf.item);
+				}
+
+				for (auto arf : put_rectangle_fields)
+				{
+					schema.put_rectangle_field(arf.item);
+				}
+
+				for (auto acf : put_color_fields)
+				{
+					schema.put_color_field(acf.item);
+				}
+
+				for (auto aimf : put_image_fields)
+				{
+					schema.put_image_field(aimf.item);
+				}
+
+				for (auto awvf : put_wave_fields)
+				{
+					schema.put_wave_field(awvf.item);
+				}
+
+				for (auto amdf : put_midi_fields)
+				{
+					schema.put_midi_field(amdf.item);
+				}
+			}
+
+			void put_field(database::jschema& schema, location loc)
+			{
+				switch (loc.item_type) {
+				case database::jtype::type_collection_id:
+					break;
+				case database::jtype::type_int8:
+				case database::jtype::type_int16:
+				case database::jtype::type_int32:
+				case database::jtype::type_int64:
+					{
+						auto fld = put_integer_fields[ loc.row_id ];
+						schema.put_integer_field(fld);
+					}
+					break;
+				case database::jtype::type_float32:
+				case database::jtype::type_float64:
+					{
+						auto fld = put_double_fields[loc.row_id];
+						schema.put_double_field(fld);
+					}
+					break;
+				case database::jtype::type_image:
+					{
+						auto fld = put_image_fields[loc.row_id];
+						schema.put_image_field(fld);
+					}
+					break;
+				case database::jtype::type_color:
+					{
+						auto fld = put_color_fields[loc.row_id];
+						schema.put_color_field(fld);
+					}
+					break;
+				case database::jtype::type_datetime:
+					{
+						auto fld = put_time_fields[loc.row_id];
+						schema.put_time_field(fld);
+					}
+					break;
+				case database::jtype::type_midi:
+					{
+						auto fld = put_midi_fields[loc.row_id];
+						schema.put_midi_field(fld);
+					}
+					break;
+				case database::jtype::type_object:
+					{
+						auto fld = put_object_fields[loc.row_id];
+						put_object(schema, fld);
+					}
+					break;
+				case database::jtype::type_point:
+					{
+						auto fld = put_point_fields[loc.row_id];
+						schema.put_point_field(fld);
+					}
+					break;
+				case database::jtype::type_query:
+					{
+						auto fld = put_query_fields[loc.row_id];
+						put_query(schema, fld);
+					}
+					break;
+				case database::jtype::type_rectangle:
+					{
+						auto fld = put_query_fields[loc.row_id];
+						put_query(schema, fld);
+					}
+					break;
+				case database::jtype::type_string:
+					{
+						auto fld = put_query_fields[loc.row_id];
+						put_query(schema, fld);
+					}
+					break;
+				case database::jtype::type_wave:
+					{
+						auto fld = put_query_fields[loc.row_id];
+						put_query(schema, fld);
+					}
+					break;
+				}
+			}
+
+			void put_query(database::jschema& schema, database::put_named_query_field_request& aorf)
+			{
+				
+			}
+
+			void put_object(database::jschema& schema, database::put_object_field_request& aorf)
+			{
+				auto class_row_id = schema.find_class(aorf.options.class_name);
+				if (class_row_id == database::null_row)
+				{
+					auto class_name_iter = classes_by_name[ aorf.options.class_name ];
+					if (class_name_iter == std::end(classes_by_name)) 
+					{
+						put_error( errors::class_not_defined, aorf.options.class_name.c_str() );
+					}
+					else 
+					{
+						auto def_row_id = class_name_iter.get_value();
+						auto &class_def = put_classes[def_row_id];
+						put_class( schema, class_def );
+					}
+				}
+			}
+
+			database::row_id_type put_class(database::jschema& schema, database::put_named_class_request& aorf)
+			{
+				for (auto fn : aorf.field_names) 
+				{
+					auto found_field_id = schema.find_field(fn.item.field_name);
+					if (found_field_id == database::null_row)
+					{
+						auto field_name_iter = fields_by_name[fn.item.field_name];
+						if (field_name_iter == std::end(classes_by_name))
+						{
+							put_error(errors::field_not_defined, fn.item.field_name.c_str());
+						}
+						else
+						{
+							put_field(schema, field_name_iter.location);
+							auto def_row_id = fields_by_name;
+						}
+					}
+				}
+
+				schema.put_class(aorf);
 			}
 		};
 

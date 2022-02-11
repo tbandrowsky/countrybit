@@ -155,6 +155,8 @@ namespace countrybit
 		using string_validation_pattern = istring<100>;
 		using string_validation_message = istring<100>;
 
+		const int max_class_fields = 128;
+
 		struct string_properties_type
 		{
 			int32_t						length;
@@ -274,7 +276,7 @@ namespace countrybit
 			};
 		};
 
-		class add_field_request_base {
+		class put_field_request_base {
 		public:
 			row_id_type field_id;
 			jtype		type_id;
@@ -283,82 +285,110 @@ namespace countrybit
 			object_type	type;
 		};
 
-		class add_string_field_request {
+		class put_string_field_request {
 		public:
-			add_field_request_base name;
+			put_field_request_base name;
 			string_properties_type options;
 		};
 
-		class add_integer_field_request  {
+		class put_integer_field_request  {
 		public:
-			add_field_request_base name;
+			put_field_request_base name;
 			int_properties_type options;
 		};
 
-		class add_double_field_request  {
+		class put_double_field_request  {
 		public:
-			add_field_request_base name;
+			put_field_request_base name;
 			double_properties_type options;
 		};
 
-		class add_time_field_request  {
+		class put_time_field_request  {
 		public:
-			add_field_request_base name;
+			put_field_request_base name;
 			time_properties_type options;
 		};
 
-		class add_object_field_request {
+		class put_object_field_request {
 		public:
-			add_field_request_base name;
+			put_field_request_base name;
 			object_properties_type options;
 		};
 
-		class add_query_field_request  {
+		class put_query_field_request  {
 		public:
-			add_field_request_base name;
+			put_field_request_base name;
 			query_properties_type options;
 		};
 
-		class add_named_query_field_request {
+		class put_named_query_field_request {
 		public:
-			add_field_request_base name;
+			put_field_request_base name;
 			named_query_properties_type options;
 		};
 
-		class add_point_field_request {
+		class put_point_field_request {
 		public:
-			add_field_request_base name;
+			put_field_request_base name;
 			point_properties_type options;
 		};
 
-		class add_rectangle_field_request {
+		class put_rectangle_field_request {
 		public:
-			add_field_request_base name;
+			put_field_request_base name;
 			rectangle_properties_type options;
 		};
 
-		class add_image_field_request {
+		class put_image_field_request {
 		public:
-			add_field_request_base name;
+			put_field_request_base name;
 			image_properties_type options;
 		};
 
-		class add_wave_field_request {
+		class put_wave_field_request {
 		public:
-			add_field_request_base name;
+			put_field_request_base name;
 			wave_properties_type options;
 		};
 
-		class add_midi_field_request {
+		class put_midi_field_request {
 		public:
-			add_field_request_base name;
+			put_field_request_base name;
 			midi_properties_type options;
 		};
 
-		class add_color_field_request {
+		class put_color_field_request {
 		public:
-			add_field_request_base name;
+			put_field_request_base name;
 			color_properties_type options;
+		};
+
+		struct include_field_id
+		{
+		public:
+			row_id_type field_id;
+		};
+
+		class put_class_request {
+		public:
+			row_id_type			class_id;
+			object_name			class_name;
+			object_description	class_description;
+			iarray<include_field_id, max_class_fields> field_ids;
+		};
+
+		struct include_field_name
+		{
+		public:
+			object_name field_name;
+		};
+
+		class put_named_class_request {
+		public:
+			row_id_type			class_id;
+			object_name			class_name;
+			object_description	class_description;
+			iarray<include_field_name, max_class_fields> field_names;
 		};
 
 	}

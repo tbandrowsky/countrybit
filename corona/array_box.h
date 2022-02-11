@@ -84,6 +84,102 @@ namespace countrybit
 				}
 				return d;
 			}
+
+			class iterator
+			{
+				iarray<item_type, max_items>* base;
+				row_id_type current;
+
+			public:
+
+				struct value_ref
+				{
+					T& item;
+					row_id_type location;
+				};
+
+				using iterator_category = std::forward_iterator_tag;
+				using difference_type = std::ptrdiff_t;
+				using value_type = value_ref;
+				using pointer = value_ref*;  // or also value_type*
+				using reference = value_ref&;  // or also value_type&
+
+				iterator(iarray<item_type, max_items>* _base, row_id_type _current) :
+					base(_base),
+					current(_current)
+				{
+
+				}
+
+				iterator() : base(nullptr), current(null_row)
+				{
+
+				}
+
+				iterator& operator = (const iterator& _src)
+				{
+					base = _src.base;
+					current = _src.current;
+					return *this;
+				}
+
+				inline value_ref operator *()
+				{
+					return value_ref{ base->get_at(current), current };
+				}
+
+				inline row_id_type get_index()
+				{
+					return current;
+				}
+
+				inline iterator begin() const
+				{
+					return iterator(base, current);
+				}
+
+				inline iterator end() const
+				{
+					return iterator(base, null_row);
+				}
+
+				inline iterator operator++()
+				{
+					current++;
+					if (current >= size())
+						return iterator(base, null_row);
+					return iterator(base, current);
+				}
+
+				inline iterator operator++(int)
+				{
+					iterator tmp(*this);
+					operator++();
+					return tmp;
+				}
+
+				bool operator == (const iterator& _src) const
+				{
+					return _src.current == current;
+				}
+
+				bool operator != (const iterator& _src)
+				{
+					return _src.current != current;
+				}
+
+			};
+
+			iarray<item_type, max_items>::iterator begin()
+			{
+				return iterator(this, 0);
+			}
+
+			iarray<item_type, max_items>::iterator end()
+			{
+				return iterator(this, null_row);
+			}
+
 		};
 
 		template <typename item_type>
