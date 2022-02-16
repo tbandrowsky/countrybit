@@ -29,7 +29,9 @@
 #include "wave_box.h"
 #include "color_box.h"
 #include "sorted_index.h"
-#include "remote_box.h"
+#include "sql_remote_box.h"
+#include "file_remote_box.h"
+#include "http_remote_box.h"
 
 namespace countrybit
 {
