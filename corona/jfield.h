@@ -29,6 +29,7 @@
 #include "wave_box.h"
 #include "color_box.h"
 #include "sorted_index.h"
+#include "remote_box.h"
 
 namespace countrybit
 {
@@ -199,8 +200,22 @@ namespace countrybit
 
 		struct query_properties_type
 		{
-			row_id_type filters;
-			row_id_type projections;
+			row_id_type properties_id;
+		};
+
+		struct sql_properties_type
+		{
+			row_id_type properties_id;
+		};
+
+		struct file_properties_type
+		{
+			row_id_type properties_id;
+		};
+
+		struct http_properties_type
+		{
+			row_id_type properties_id;
 		};
 
 		struct emphemeral_handle_type
@@ -261,18 +276,21 @@ namespace countrybit
 			object_description		description;
 
 			union {
-				string_properties_type	string_properties;
-				int_properties_type		int_properties;
-				double_properties_type	double_properties;
-				time_properties_type	time_properties;
-				object_properties_type  object_properties;
-				query_properties_type   query_properties;
-				point_properties_type   point_properties;
+				string_properties_type		string_properties;
+				int_properties_type			int_properties;
+				double_properties_type		double_properties;
+				time_properties_type		time_properties;
+				object_properties_type		object_properties;
+				query_properties_type		query_properties;
+				point_properties_type		point_properties;
 				rectangle_properties_type   rectangle_properties;
-				image_properties_type	image_properties;
-				midi_properties_type	midi_properties;
-				wave_properties_type	wave_properties;
-				color_properties_type	color_properties;
+				image_properties_type		image_properties;
+				midi_properties_type		midi_properties;
+				wave_properties_type		wave_properties;
+				color_properties_type		color_properties;
+				sql_properties_type			sql_properties;
+				file_properties_type		file_properties;
+				http_properties_type		http_properties;
 			};
 		};
 
@@ -327,6 +345,24 @@ namespace countrybit
 			named_query_properties_type options;
 		};
 
+		class put_named_sql_import_field_request {
+		public:
+			put_field_request_base name;
+			sql_properties_type options;
+		};
+
+		class put_named_sql_import_field_request {
+		public:
+			put_field_request_base name;
+			sql_properties_type options;
+		};
+
+		class put_named_sql_import_field_request {
+		public:
+			put_field_request_base name;
+			sql_properties_type options;
+		};
+
 		class put_point_field_request {
 		public:
 			put_field_request_base name;
@@ -363,6 +399,24 @@ namespace countrybit
 			color_properties_type options;
 		};
 
+		class put_file_field_request {
+		public:
+			put_field_request_base name;
+			named_file_properties_type options;
+		};
+
+		class put_sql_field_request {
+		public:
+			put_field_request_base name;
+			named_sql_properties_type options;
+		};
+
+		class put_http_field_request {
+		public:
+			put_field_request_base name;
+			named_http_properties_type options;
+		};
+
 		struct include_field_id
 		{
 		public:
@@ -374,7 +428,7 @@ namespace countrybit
 			row_id_type			class_id;
 			object_name			class_name;
 			object_description	class_description;
-			iarray<include_field_id, max_class_fields> field_ids;
+			iarray<include_field_id, max_class_fields> member_fields;
 		};
 
 		struct include_field_name

@@ -218,6 +218,30 @@ namespace countrybit
 						b = midi_instance {};
 					}
 					break;
+				case jtype::type_query:
+					{
+						boxed<query_instance> b(c);
+						b = query_instance{};
+					}
+					break;
+				case jtype::type_sql:
+					{
+						boxed<sql_remote_instance> b(c);
+						b = sql_remote_instance{};
+					}
+					break;
+				case jtype::type_file:
+					{
+						boxed<file_remote_instance> b(c);
+						b = file_remote_instance{};
+					}
+					break;
+				case jtype::type_http:
+					{
+						boxed<http_remote_instance> b(c);
+						b = http_remote_instance{};
+					}
+					break;
 				}
 			}
 		}
@@ -292,6 +316,26 @@ namespace countrybit
 		color_box jslice::get_color(int field_idx)
 		{
 			return get_boxed<color_box>(jtype::type_datetime, field_idx);
+		}
+
+		query_box jslice::get_query(int field_idx)
+		{
+			return get_boxed_ex<query_box>(jtype::type_query, field_idx);
+		}
+
+		sql_remote_box jslice::get_sql_remote(int field_idx)
+		{
+			return get_boxed_ex<sql_remote_box>(jtype::type_sql, field_idx);
+		}
+
+		http_remote_box jslice::get_http_remote(int field_idx)
+		{
+			return get_boxed_ex<http_remote_box>(jtype::type_http, field_idx);
+		}
+
+		file_remote_box jslice::get_file_remote(int field_idx)
+		{
+			return get_boxed_ex<file_remote_box>(jtype::type_file, field_idx);
 		}
 
 		string_box jslice::get_string(int field_idx)
@@ -373,7 +417,7 @@ namespace countrybit
 
 		void jschema::add_standard_fields() 
 		{
-			add_string_field_request string_fields[33] = {
+			put_string_field_request string_fields[33] = {
 				{ { field_full_name, jtype::type_string , "fullName", "Full Name" }, { 75, "", "" } },
 				{ { field_first_name, jtype::type_string , "firstName", "First Name" }, { 50, "", "" } },
 				{ { field_last_name, jtype::type_string , "lastName", "Last Name" }, { 50, "", "" } },
@@ -444,19 +488,19 @@ namespace countrybit
 			};
 
 			for (int i = 0; i < sizeof(string_fields) / sizeof(string_fields[0]); i++) {
-				add_string_field(string_fields[i]);
+				put_string_field(string_fields[i]);
 			}
 
 			for (int i = 0; i < sizeof(time_fields) / sizeof(time_fields[0]); i++) {
-				add_time_field(time_fields[i]);
+				put_time_field(time_fields[i]);
 			}
 
 			for (int i = 0; i < sizeof(int_fields) / sizeof(int_fields[0]); i++) {
-				add_integer_field(int_fields[i]);
+				put_integer_field(int_fields[i]);
 			}
 
 			for (int i = 0; i < sizeof(double_fields) / sizeof(double_fields[0]); i++) {
-				add_double_field(double_fields[i]);
+				put_double_field(double_fields[i]);
 			}
 
 		}
@@ -513,12 +557,12 @@ namespace countrybit
 				return false;
 			}
 
-			countrybit::database::jschema::add_class_request person;
+			countrybit::database::jschema::put_class_request person;
 
 			person.class_name = "person";
 			person.class_description = "a person";
-			person.field_ids = { field_last_name, field_first_name, field_birthday, field_title, field_count, field_quantity };
-			row_id_type person_class_id = schema.add_class(person);
+			person.member_fields = { field_last_name, field_first_name, field_birthday, field_title, field_count, field_quantity };
+			row_id_type person_class_id = schema.put_class(person);
 
 			if (person_class_id == null_row) {
 				std::cout << __LINE__ << ":class create failed failed" << std::endl;
@@ -560,7 +604,7 @@ namespace countrybit
 			countrybit::database::jschema::add_class_request company;
 			company.class_name = "company";
 			company.class_description = "a company is a collection of people";
-			company.field_ids = { field_last_name, field_first_name, field_birthday, people_field };
+			company.member_fields = { field_last_name, field_first_name, field_birthday, people_field };
 			row_id_type company_class_id = schema.add_class(company);
 
 			if (company_class_id == null_row) {
@@ -582,25 +626,25 @@ namespace countrybit
 			schema = jschema::create_schema(&box, 10, 200, 500, schema_id);
 			schema.add_standard_fields();
 
-			countrybit::database::jschema::add_class_request person;
+			countrybit::database::put_class_request person;
 
 			person.class_name = "person";
 			person.class_description = "a person";
-			person.field_ids = { field_last_name, field_first_name, field_birthday, field_count, field_quantity };
-			row_id_type person_class_id = schema.add_class(person);
+			person.member_fields = { field_last_name, field_first_name, field_birthday, field_count, field_quantity };
+			row_id_type person_class_id = schema.put_class(person);
 
 			if (person_class_id == null_row) {
 				std::cout << __LINE__ << ":class create failed failed" << std::endl;
 				return false;
 			}
 
-			countrybit::database::add_object_field_request people_field;
+			countrybit::database::put_object_field_request people_field;
 			people_field.options.class_id = person_class_id;
 			people_field.name.description = "People";
 			people_field.name.name = "people";
 			people_field.options.dim = { 1, 0, 0 };
-			people_field.name.field_id = schema.add_field();
-			row_id_type people_field_id = schema.add_object_field(people_field);
+			people_field.name.field_id = null_row;
+			row_id_type people_field_id = schema.put_object_field(people_field);
 
 			collection_id_type colid;
 
@@ -734,50 +778,50 @@ namespace countrybit
 			schema = jschema::create_schema(&box, 10, 200, 500, schema_id);
 			schema.add_standard_fields();
 
-			countrybit::database::jschema::add_class_request sprite_frame_request;
+			countrybit::database::put_class_request sprite_frame_request;
 
 			sprite_frame_request.class_name = "spriteframe";
 			sprite_frame_request.class_description = "sprite frame";
-			sprite_frame_request.field_ids = { field_shortname, field_x, field_y, field_width, field_height };
-			row_id_type sprite_frame_class_id = schema.add_class(sprite_frame_request);
+			sprite_frame_request.member_fields = { field_shortname, field_x, field_y, field_width, field_height };
+			row_id_type sprite_frame_class_id = schema.put_class(sprite_frame_request);
 
 			if (sprite_frame_class_id == null_row) {
 				std::cout << __LINE__ << ":class create failed failed" << std::endl;
 				return false;
 			}
 
-			countrybit::database::add_object_field_request of;
-			of.name.field_id = schema.add_field();
+			countrybit::database::put_object_field_request of;
+			of.name.field_id = null_row;
 			of.options.class_id = sprite_frame_class_id;
 			of.options.dim = { 10, 10, 1 };
 			of.name.name = "spriteframe20";
 			of.name.description = "spriteframe20";
 
-			row_id_type sprite_frame_field_id = schema.add_object_field(of);
+			row_id_type sprite_frame_field_id = schema.put_object_field(of);
 
 			if (sprite_frame_field_id == null_row) {
 				std::cout << __LINE__ << ":object field create failed" << std::endl;
 				return false;
 			}
 
-			countrybit::database::jschema::add_class_request sprite_class_request;
+			countrybit::database::put_class_request sprite_class_request;
 			sprite_class_request.class_name = "sprite";
 			sprite_class_request.class_description = "sprite";
-			sprite_class_request.field_ids = { field_shortname, field_width, field_height, sprite_frame_field_id };
-			row_id_type sprite_class_id = schema.add_class(sprite_class_request);
+			sprite_class_request.member_fields = { field_shortname, field_width, field_height, sprite_frame_field_id };
+			row_id_type sprite_class_id = schema.put_class(sprite_class_request);
 
 			if (sprite_class_id == null_row) {
 				std::cout << __LINE__ << ":class create failed failed" << std::endl;
 				return false;
 			}
 
-			countrybit::database::add_object_field_request sprite_field;
-			sprite_field.name.field_id = schema.add_field();
+			countrybit::database::put_object_field_request sprite_field;
+			sprite_field.name.field_id = null_row;
 			sprite_field.options.class_id = sprite_class_id;
 			sprite_field.name.description = "sprite field with 20 frames";
 			sprite_field.name.name = "sprite20";
 			sprite_field.options.dim = { 1, 1, 1 };
-			row_id_type sprite_field_id = schema.add_object_field(sprite_field);
+			row_id_type sprite_field_id = schema.put_object_field(sprite_field);
 
 			collection_id_type colid;
 

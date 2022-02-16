@@ -15,6 +15,8 @@ namespace countrybit
 
 		class jcollection;
 		class jdatabase;
+		class jschema;
+		class jclass;
 
 		enum class filter_comparison_types
 		{
@@ -76,6 +78,55 @@ namespace countrybit
 		};
 
 		using named_query_properties_type = named_query_properties_t<max_query_filters, max_query_projections>;
+
+		class query_instance
+		{
+		public:
+			collection_id_type			collection;
+			time_t						last_success;
+			time_t						last_error;
+			object_description			error_message;
+		};
+
+		class query_box 
+		{
+			boxed<query_instance> instance;
+			jslice* slice;
+			jschema* schema;
+			jclass* the_class;
+
+		public:
+
+			query_box(char* t, jschema *_schema, jclass *_class, jslice *_slice) : instance(t), schema(_schema), the_class(_class), slice(_slice)
+			{
+				;
+			}
+
+			query_box(query_box& _src) : instance(_src.instance)
+			{
+				;
+			}
+
+			query_box operator = (const query_box& _src)
+			{
+				instance = _src.instance;
+				return *this;
+			}
+
+			query_box operator = (query_instance _src)
+			{
+				instance = _src;
+				return *this;
+			}
+
+			operator query_instance& ()
+			{
+				query_instance& t = instance.get_data_ref();
+				return t;
+			}
+
+			query_instance value() const { return instance.get_value(); }
+		};
 
 	}
 }

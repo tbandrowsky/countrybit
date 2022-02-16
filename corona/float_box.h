@@ -23,26 +23,32 @@ namespace countrybit
 			{
 				return std::abs(d);
 			}
+
 			static floating_point mod(floating_point q, floating_point d)
 			{
 				return std::fmod(q,d);
 			}
+
 			static floating_point rem(floating_point q, floating_point d)
 			{
 				return std::remainder(q, d);
 			}
+
 			static floating_point fma(floating_point m1, floating_point m2, floating_point a)
 			{
 				return std::fma(m1, m2, a);
 			}
+
 			static floating_point max(floating_point m1, floating_point m2)
 			{
 				return std::max(m1, m2);
 			}
+
 			static floating_point min(floating_point m1, floating_point m2)
 			{
 				return std::min(m1, m2);
 			}
+
 			static floating_point dim(floating_point m1, floating_point m2)
 			{
 				return std::fdim(m1, m2);
@@ -52,10 +58,12 @@ namespace countrybit
 			{
 				return std::isnan(m1);
 			}
+
 			static floating_point is_normal(floating_point m1)
 			{
 				return std::isnormal(m1);
 			}
+
 			static floating_point is_unordered(floating_point m1)
 			{
 				return std::isunordered(m1);
@@ -269,10 +277,12 @@ namespace countrybit
 			{
 				return std::isnan(*this);
 			}
+
 			floating_point is_normal() const
 			{
 				return std::isnormal(*this);
 			}
+
 			floating_point is_unordered() const
 			{
 				return std::isunordered(*this);

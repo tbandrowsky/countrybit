@@ -347,6 +347,7 @@ namespace countrybit
 				invalid_binding_name_type = 3,
 				class_not_defined = 4,
 				field_not_defined = 5,
+				invalid_comparison = 6
 			};
 
 			class error_message
@@ -564,7 +565,7 @@ namespace countrybit
 			}
 		};
 
-		class schema_loader : loader
+		class corona_schema_loader : loader
 		{
 		public:
 
@@ -633,7 +634,7 @@ namespace countrybit
 
 		public:
 
-			schema_loader(int _size, int _num_fields) : loader(_size, _num_fields)
+			corona_schema_loader(int _size, int _num_fields) : loader(_size, _num_fields)
 			{
 
 				fields_by_name = database::sorted_index<database::object_name, location>::create_sorted_index(&data, _num_fields, fields_by_name_id);
@@ -1063,6 +1064,7 @@ namespace countrybit
 
 			void put_field(database::jschema& schema, location loc)
 			{
+
 				switch (loc.item_type) {
 				case database::jtype::type_collection_id:
 					break;
@@ -1121,37 +1123,126 @@ namespace countrybit
 				case database::jtype::type_query:
 					{
 						auto fld = put_query_fields[loc.row_id];
-						put_query(schema, fld);
+						put_query_field(schema, fld);
 					}
 					break;
 				case database::jtype::type_rectangle:
 					{
-						auto fld = put_query_fields[loc.row_id];
-						put_query(schema, fld);
+						auto fld = put_rectangle_fields[loc.row_id];
+						schema.put_rectangle_field(fld);
 					}
 					break;
 				case database::jtype::type_string:
 					{
-						auto fld = put_query_fields[loc.row_id];
-						put_query(schema, fld);
+						auto fld = put_string_fields[loc.row_id];
+						schema.put_string_field(fld);
 					}
 					break;
 				case database::jtype::type_wave:
 					{
-						auto fld = put_query_fields[loc.row_id];
-						put_query(schema, fld);
+						auto fld = put_wave_fields[loc.row_id];
+						schema.put_wave_field(fld);
 					}
 					break;
 				}
 			}
 
-			void put_query(database::jschema& schema, database::put_named_query_field_request& aorf)
+			void put_query_field(database::jschema& schema, database::put_named_query_field_request& aorf)
 			{
-				
+				bool valid = true;
+
+				database::row_id_type new_field = database::null_row;
+
+				int filterSize = aorf.options.filter.size();
+
+				for (int i = 0; i < filterSize; i++)
+				{
+					auto& filter = aorf.options.filter[i];
+					filter.error_message = nullptr;
+
+					if (filter.comparison_name == "$eq") {
+						filter.comparison = database::filter_comparison_types::eq;
+					}
+					else if (filter.comparison_name == "$gte") {
+						filter.comparison = database::filter_comparison_types::gteq;
+					}
+					else if (filter.comparison_name == "$lte") {
+						filter.comparison = database::filter_comparison_types::lseq;
+					}
+					else if (filter.comparison_name == "$gt") {
+						filter.comparison = database::filter_comparison_types::gt;
+					}
+					else if (filter.comparison_name == "$lt") {
+						filter.comparison = database::filter_comparison_types::ls;
+					}
+					else if (filter.comparison_name == "$inside") {
+						filter.comparison = database::filter_comparison_types::distance;
+					}
+					else if (filter.comparison_name == "$in") {
+						filter.comparison = database::filter_comparison_types::inlist;
+					}
+					else if (filter.comparison_name == "$contains") {
+						filter.comparison = database::filter_comparison_types::contains;
+					}
+					else
+					{
+						put_error(errors::invalid_comparison, filter.comparison_name.c_str());
+						valid = false;
+					}
+
+					auto parameter_field_id = schema.find_field(filter.parameter_field_name);
+					if (parameter_field_id != database::null_row)
+					{
+						filter.parameter_field_id = parameter_field_id;
+					}
+					else
+					{
+						put_error(errors::field_not_defined, filter.parameter_field_name.c_str());
+						valid = false;
+					}
+
+					auto target_field_id = schema.find_field(filter.target_field_name);
+					if (target_field_id != database::null_row)
+					{
+						filter.target_field_id = target_field_id;
+					}
+					else
+					{
+						put_error(errors::field_not_defined, filter.target_field_name.c_str());
+						valid = false;
+					}
+				}
+
+				int projectionSize = aorf.options.projection.size();
+
+				for (int i = 0; i < projectionSize; i++)
+				{
+					auto& projection = aorf.options.projection[i];
+
+					auto projection_field_id = schema.find_field(projection.field_name);
+					if (projection_field_id != database::null_row)
+					{
+						projection.field_id = projection_field_id;
+					}
+					else
+					{
+						put_error(errors::field_not_defined, projection.field_name.c_str());
+						valid = false;
+					}
+				}
+
+				if (valid) 
+				{
+					schema.put_query_field(aorf);
+				}
+
 			}
 
 			void put_object(database::jschema& schema, database::put_object_field_request& aorf)
 			{
+
+				bool valid = true;
+
 				auto class_row_id = schema.find_class(aorf.options.class_name);
 				if (class_row_id == database::null_row)
 				{
@@ -1159,6 +1250,7 @@ namespace countrybit
 					if (class_name_iter == std::end(classes_by_name)) 
 					{
 						put_error( errors::class_not_defined, aorf.options.class_name.c_str() );
+						valid = false;
 					}
 					else 
 					{
@@ -1167,9 +1259,13 @@ namespace countrybit
 						put_class( schema, class_def );
 					}
 				}
+				if (valid) 
+				{
+					schema.put_object_field(aorf);
+				}
 			}
 
-			database::row_id_type put_class(database::jschema& schema, database::put_named_class_request& aorf)
+			void put_class(database::jschema& schema, database::put_named_class_request& aorf)
 			{
 				for (auto fn : aorf.field_names) 
 				{
@@ -1193,7 +1289,7 @@ namespace countrybit
 			}
 		};
 
-		class data_loader
+		class corona_data_loader
 		{
 
 		};

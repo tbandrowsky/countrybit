@@ -37,6 +37,10 @@ namespace countrybit
 			row_id_type classes_table_id;
 			row_id_type classes_by_name_id;
 			row_id_type fields_by_name_id;
+			row_id_type	query_properties_id;
+			row_id_type sql_properties_id;
+			row_id_type file_properties_id;
+			row_id_type http_properties_id;
 		};
 
 		class jcollection_map
@@ -74,6 +78,13 @@ namespace countrybit
 				return b;
 			}
 
+			template <typename T> T get_boxed_ex(jtype jt, int field_idx)
+			{
+				size_t offset = get_offset(jt, field_idx);
+				T b(&bytes[offset], schema, &the_class, this );
+				return b;
+			}
+
 		public:
 
 			jslice();
@@ -99,6 +110,10 @@ namespace countrybit
 			wave_box get_wave(int field_idx);
 			midi_box get_midi(int field_idx);
 			color_box get_color(int field_idx);
+			query_box get_query(int field_idx);
+			sql_remote_box get_sql_remote(int field_idx);
+			http_remote_box get_http_remote(int field_idx);
+			file_remote_box get_file_remote(int field_idx);
 			int size();
 		};
 
@@ -370,15 +385,19 @@ namespace countrybit
 			using class_store_type = parent_child_table<jclass_header, jclass_field>;
 			using class_index_type = sorted_index<object_name, row_id_type>;
 			using field_index_type = sorted_index<object_name, row_id_type>;
-			using projection_store_type = parent_child_table<row_id_type, projection_element>;
-			using filter_store_type = parent_child_table<row_id_type, filter_element>;
+			using query_store_type = table<named_query_properties_type>;
+			using sql_store_type = table<named_sql_properties_type>;
+			using file_store_type = table<named_file_properties_type>;
+			using http_store_type = table<named_http_properties_type>;
 
-			field_store_type fields;
-			class_store_type classes;
-			class_index_type classes_by_name;
-			field_index_type fields_by_name;
-			projection_store_type query_projections;
-			filter_store_type	  query_filters;
+			field_store_type		fields;
+			class_store_type		classes;
+			class_index_type		classes_by_name;
+			field_index_type		fields_by_name;
+			query_store_type		queries;
+			sql_store_type			sql_remotes;
+			file_store_type			file_remotes;
+			http_store_type			http_remotes;
 
 		public:
 
@@ -391,13 +410,17 @@ namespace countrybit
 				&& box<B, jclass_field>
 				&& box<B, object_name>
 				)
-			static row_id_type reserve_schema(B *_b, int _num_classes, int _num_fields, int _num_class_fields)
+			static row_id_type reserve_schema(B *_b, int _num_classes, int _num_fields, int _num_class_fields, int _num_queries, int _num_sql_remotes, int _num_http_remotes, int _num_file_remotes)
 			{
 				jschema_map schema_map, *pschema_map;
 				schema_map.classes_table_id = null_row;
 				schema_map.fields_table_id = null_row;
 				schema_map.classes_by_name_id = null_row;
 				schema_map.fields_by_name_id = null_row;
+				schema_map.query_properties_id = null_row;
+				schema_map.sql_properties_id = null_row;
+				schema_map.file_properties_id = null_row;
+				schema_map.http_properties_id = null_row;
 
 				row_id_type rit = _b->pack(schema_map);
 				pschema_map = _b->unpack<jschema_map>(rit);
@@ -405,6 +428,10 @@ namespace countrybit
 				pschema_map->classes_by_name_id = field_index_type::reserve_sorted_index(_b, _num_classes);
 				pschema_map->classes_table_id = class_store_type::reserve_table(_b, _num_classes, _num_class_fields );
 				pschema_map->fields_by_name_id = class_index_type::reserve_sorted_index(_b, _num_fields);
+				pschema_map->query_properties_id = query_store_type::reserve_table(_b, _num_queries);
+				pschema_map->sql_properties_id = sql_store_type::reserve_table(_b, _num_sql_remotes);
+				pschema_map->file_properties_id = file_store_type::reserve_table(_b, _num_file_remotes);
+				pschema_map->http_properties_id = http_store_type::reserve_table(_b, _num_http_remotes);
 				return rit;
 			}
 
@@ -423,6 +450,8 @@ namespace countrybit
 				schema.fields = field_store_type::get_table(_b, pschema_map->fields_table_id);
 				schema.classes_by_name = class_index_type::get_sorted_index(_b, pschema_map->classes_by_name_id);
 				schema.fields_by_name = field_index_type::get_sorted_index(_b, pschema_map->fields_by_name_id);
+				schema.query_projections_id = projection_store_type::reserve_table(_b, pschema_map->query_projections_id);
+				schema.query_filters_id = filter_store_type::reserve_table(_b, pschema_map->query_filters_id);
 				return schema;
 			}
 
@@ -432,9 +461,9 @@ namespace countrybit
 				&& box<B, jclass_field>
 				&& box<B, object_name>
 				)
-			static jschema create_schema(B* _b, int _num_classes, int _num_fields, int _num_class_fields, row_id_type& _row)
+			static jschema create_schema(B* _b, int _num_classes, int _num_fields, int _num_class_fields, int _num_queries, int _num_sql_remotes, int _num_http_remotes, int _num_file_remotes, row_id_type& _row)
 			{
-				_row = reserve_schema(_b, _num_classes, _num_fields, _num_class_fields);
+				_row = reserve_schema(_b, _num_classes, _num_fields, _num_class_fields, int _num_queries, int _num_sql_remotes, int _num_http_remotes, int _num_file_remotes);
 				jschema schema = get_schema(_b, _row);
 				return schema;
 			}
@@ -463,6 +492,9 @@ namespace countrybit
 				wave_properties_type* _wave_properties,
 				midi_properties_type* _midi_properties,
 				color_properties_type* _color_properties,
+				sql_properties_type* _sql_properties,
+				file_properties_type* _file_properties,
+				http_properties_type* _http_properties,
 				int64_t _size_bytes)
 			{
 				if (_field_id == null_row) {
@@ -500,6 +532,12 @@ namespace countrybit
 					jf.midi_properties = *_midi_properties;
 				if (_color_properties)
 					jf.color_properties = *_color_properties;
+				if (_sql_properties)
+					jf.sql_properties = *_sql_properties;
+				if (_http_properties)
+					jf.http_properties = *_http_properties;
+				if (_file_properties)
+					jf.file_properties = *_file_properties;
 
 				jf.size_bytes = _size_bytes;
 
@@ -509,12 +547,12 @@ namespace countrybit
 
 			row_id_type put_string_field(put_string_field_request request)
 			{
-				return put_field(request.name.field_id, jtype::type_string, request.name.name, request.name.description, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, string_box::get_box_size(request.options.length));
+				return put_field(request.name.field_id, jtype::type_string, request.name.name, request.name.description, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, string_box::get_box_size(request.options.length));
 			}
 
 			row_id_type put_time_field(put_time_field_request request)
 			{
-				return put_field(request.name.field_id, type_datetime, request.name.name, request.name.description, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(time_t));
+				return put_field(request.name.field_id, type_datetime, request.name.name, request.name.description, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(time_t));
 			}
 
 			row_id_type put_integer_field(put_integer_field_request request)
@@ -522,13 +560,13 @@ namespace countrybit
 				switch (request.name.type_id)
 				{
 					case jtype::type_int8:
-						return put_field(request.name.field_id, type_int8, request.name.name, request.name.description, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(int8_t));
+						return put_field(request.name.field_id, type_int8, request.name.name, request.name.description, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(int8_t));
 					case jtype::type_int16:
-						return put_field(request.name.field_id, type_int16, request.name.name, request.name.description, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(int16_t));
+						return put_field(request.name.field_id, type_int16, request.name.name, request.name.description, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(int16_t));
 					case jtype::type_int32:
-						return put_field(request.name.field_id, type_int32, request.name.name, request.name.description, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(int32_t));
+						return put_field(request.name.field_id, type_int32, request.name.name, request.name.description, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(int32_t));
 					case jtype::type_int64:
-						return put_field(request.name.field_id, type_int64, request.name.name, request.name.description, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(int64_t));
+						return put_field(request.name.field_id, type_int64, request.name.name, request.name.description, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(int64_t));
 					default:
 						throw std::invalid_argument("Invalid integer type for field name:" + request.name.name);
 				}
@@ -539,9 +577,9 @@ namespace countrybit
 				switch (request.name.type_id)
 				{
 					case type_float32:
-						return put_field(request.name.field_id, type_float32, request.name.name, request.name.description, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(float));
+						return put_field(request.name.field_id, type_float32, request.name.name, request.name.description, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(float));
 					case type_float64:
-						return put_field(request.name.field_id, type_float64, request.name.name, request.name.description, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(double));
+						return put_field(request.name.field_id, type_float64, request.name.name, request.name.description, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(double));
 					default:
 						throw std::invalid_argument("Invalid floating point type for field name:" + request.name.name);
 				}
@@ -557,12 +595,7 @@ namespace countrybit
 				if (request.options.dim.y == 0) request.options.dim.y = 1;
 				if (request.options.dim.z == 0) request.options.dim.z = 1;
 				request.options.total_size_bytes = request.options.dim.x * request.options.dim.y * request.options.dim.z * sizeb ;
-				return put_field(request.name.field_id, type_object, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, request.options.total_size_bytes);
-			}
-
-			row_id_type put_query_field(put_query_field_request request)
-			{
-				return put_field(request.name.field_id, type_query, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(collection_id_type));
+				return put_field(request.name.field_id, type_object, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, request.options.total_size_bytes);
 			}
 
 			const char* invalid_comparison = "Invalid comparison";
@@ -570,163 +603,83 @@ namespace countrybit
 			const char* invalid_target_field = "Invalid target field";
 			const char* invalid_projection_field = "Invalid projection field";
 
-			bool prepare_query_field_request(put_named_query_field_request request)
-			{
-				bool valid = true;
-
-				int filterSize = request.options.filter.size();
-
-				for (int i = 0; i < filterSize; i++)
-				{
-					auto& filter = request.options.filter[i];
-
-					if (filter.comparison_name == "$eq") {
-						filter.comparison = filter_comparison_types::eq;
-					}
-					else if (filter.comparison_name == "$gte") {
-						filter.comparison = filter_comparison_types::gteq;
-					}
-					else if (filter.comparison_name == "$lte") {
-						filter.comparison = filter_comparison_types::lseq;
-					}
-					else if (filter.comparison_name == "$gt") {
-						filter.comparison = filter_comparison_types::gt;
-					}
-					else if (filter.comparison_name == "$lt") {
-						filter.comparison = filter_comparison_types::ls;
-					}
-					else if (filter.comparison_name == "$inside") {
-						filter.comparison = filter_comparison_types::distance;
-					}
-					else if (filter.comparison_name == "$in") {
-						filter.comparison = filter_comparison_types::inlist;
-					}
-					else if (filter.comparison_name == "$contains") {
-						filter.comparison = filter_comparison_types::contains;
-					}
-					else
-					{
-						filter.error_message = invalid_comparison;
-						valid = false;
-					}
-
-					auto piter = fields_by_name[filter.parameter_field_name];
-					if (piter != std::end(fields_by_name)) 
-					{
-						filter.parameter_field_id = piter->second;
-					}
-					else
-					{
-						filter.error_message = invalid_parameter_field;
-					}
-
-					auto titer = fields_by_name[filter.target_field_name];
-					if (titer != std::end(fields_by_name)) 
-					{
-						filter.target_field_id = titer->second;
-					}
-					else
-					{
-						filter.error_message = invalid_target_field;
-					}
-				}
-
-				int projectionSize = request.options.filter.size();
-
-				for (int i = 0; i < projectionSize; i++)
-				{
-					auto& projection = request.options.projection[i];
-
-					auto titer = fields_by_name[projection.field_name];
-					if (titer != std::end(fields_by_name))
-					{
-						projection.field_id = titer->second;
-					}
-					else
-					{
-						projection.error_message = invalid_target_field;
-						valid = false;
-						continue;
-					}
-				}
-
-				return valid;
-			}
-
 			row_id_type put_query_field(put_named_query_field_request request)
 			{
 				query_properties_type options;
+				row_range rr;
 
-				bool prepared = prepare_query_field_request(request);
-				if (!prepared) {
-					return null_row;
-				}
+				queries.insert(request.options, rr);
+				options.properties_id = rr.start;
 
-				int filterSize = request.options.filter.size();
-				auto filterHolder = query_filters.create(filterSize);
+				return put_field(request.name.field_id, type_query, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, &options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(query_instance));
+			}
 
-				options.filters = filterHolder.row_id();
+			row_id_type put_sql_remote_field(put_sql_field_request request)
+			{
+				sql_properties_type options;
+				row_range rr;
 
-				for (int fi = 0; fi < filterHolder.size(); fi++)
-				{
-					auto& fe_src = request.options.filter[fi];
-					filter_element fe;
-					fe.comparison = fe_src.comparison;
-					fe.parameter_field_id = fe_src.parameter_field_id;
-					fe.target_field_id = fe_src.target_field_id;
-					fe.distance_threshold = fe_src.distance_threshold;
-					filterHolder.child(fi) = fe;
-				}
+				sql_remotes.insert(request.options, rr);
+				options.properties_id = rr.start;
 
-				int projectionSize = request.options.filter.size();
-				auto projectionHolder = query_projections.create(projectionSize);
+				return put_field(request.name.field_id, type_sql, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &options, nullptr, nullptr, sizeof(sql_remote_instance));
+			}
 
-				options.projections = projectionHolder.row_id();
+			row_id_type put_http_remote_field(put_http_field_request request)
+			{
+				http_properties_type options;
+				row_range rr;
 
-				for (int pi = 0; pi < projectionHolder.size(); pi++)
-				{
-					auto& pe_src = request.options.projection[pi];
-					projection_element pe;
-					pe.field_id = pe_src.field_id;
-					projectionHolder.child(pi) = pe;
-				}
+				http_remotes.insert(request.options, rr);
+				options.properties_id = rr.start;
 
-				return put_field(request.name.field_id, type_query, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, &options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(collection_id_type));
+				return put_field(request.name.field_id, type_sql, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &options, sizeof(http_remote_instance));
+			}
+
+			row_id_type put_file_remote_field(put_file_field_request request)
+			{
+				file_properties_type options;
+				row_range rr;
+
+				file_remotes.insert(request.options, rr);
+				options.properties_id = rr.start;
+
+				return put_field(request.name.field_id, type_sql, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &options, nullptr, sizeof(file_remote_instance));
 			}
 
 			row_id_type put_point_field(put_point_field_request request)
 			{
-				return put_field(request.name.field_id, type_query, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(point));
+				return put_field(request.name.field_id, type_query, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(point));
 			}
 
 			row_id_type put_rectangle_field(put_rectangle_field_request request)
 			{
-				return put_field(request.name.field_id, type_query, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, sizeof(rectangle));
+				return put_field(request.name.field_id, type_query, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(rectangle));
 			}
 
 			row_id_type put_image_field(put_image_field_request request)
 			{
-				return put_field(request.name.field_id, type_query, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, sizeof(image_instance));
+				return put_field(request.name.field_id, type_query, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(image_instance));
 			}
 
 			row_id_type put_wave_field(put_wave_field_request request)
 			{
-				return put_field(request.name.field_id, type_query, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, sizeof(wave_instance));
+				return put_field(request.name.field_id, type_query, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(wave_instance));
 			}
 
 			row_id_type put_midi_field(put_midi_field_request request)
 			{
-				return put_field(request.name.field_id, type_query, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, sizeof(midi_instance));
+				return put_field(request.name.field_id, type_query, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, sizeof(midi_instance));
 			}
 
 			row_id_type put_color_field(put_color_field_request request)
 			{
-				return put_field(request.name.field_id, type_query, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &request.options, sizeof(color));
+				return put_field(request.name.field_id, type_query, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, sizeof(color));
 			}
 
 			row_id_type put_class( put_class_request request )
 			{
-				auto sz = request.field_ids.size();
+				auto sz = request.member_fields.size();
 				auto pcr = classes.create_at(request.class_id, sz);
 				auto& p = pcr.parent();
 
@@ -737,7 +690,7 @@ namespace countrybit
 
 				for (int i = 0; i < pcr.size(); i++)
 				{
-					auto fid = request.field_ids[i].field_id;
+					auto fid = request.member_fields[i].field_id;
 					auto& field = fields[fid];
 					auto& ref = pcr.child(i);
 					ref.field_id = fid;

@@ -22,6 +22,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)color_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)constants.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)image_box.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)remote_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)jfield.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)extractor.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)loader.h" />
@@ -57,6 +58,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)file.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)function.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)extractor.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)remote_box.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)loader.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)object_id_box.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)point_box.cpp" />
