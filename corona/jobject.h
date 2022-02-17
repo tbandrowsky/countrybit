@@ -497,7 +497,16 @@ namespace countrybit
 				http_properties_type* _http_properties,
 				int64_t _size_bytes)
 			{
-				if (_field_id == null_row) {
+
+				auto row_id_iter = fields_by_name[_name];
+
+				if (row_id_iter != std::end(fields_by_name)) 
+				{
+					_field_id = row_id_iter.get_value();
+				}
+				
+				if (_field_id == null_row) 
+				{
 					_field_id = new_field_id();
 				}
 
@@ -585,6 +594,11 @@ namespace countrybit
 				}
 			}
 
+			void get_class_field_name( object_name& _dest, object_name& _class_name, dimensions_type& _dim )
+			{
+				_dest = _class_name + "[" + std::to_string(_dim.x) + "," + std::to_string(_dim.y) + "," + std::to_string(_dim.z) + "]";
+			}
+
 			row_id_type put_object_field(put_object_field_request request)
 			{
 				auto pcr = classes[ request.options.class_id ];
@@ -594,8 +608,10 @@ namespace countrybit
 				if (request.options.dim.x == 0) request.options.dim.x = 1;
 				if (request.options.dim.y == 0) request.options.dim.y = 1;
 				if (request.options.dim.z == 0) request.options.dim.z = 1;
+				object_name field_name;
+				get_class_field_name(field_name, pcr.pparent()->name, request.options.dim);
 				request.options.total_size_bytes = request.options.dim.x * request.options.dim.y * request.options.dim.z * sizeb ;
-				return put_field(request.name.field_id, type_object, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, request.options.total_size_bytes);
+				return put_field(request.name.field_id, type_object, field_name, request.name.description, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, request.options.total_size_bytes);
 			}
 
 			const char* invalid_comparison = "Invalid comparison";
@@ -677,30 +693,6 @@ namespace countrybit
 				return put_field(request.name.field_id, type_query, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, sizeof(color));
 			}
 
-			row_id_type put_class( put_class_request request )
-			{
-				auto sz = request.member_fields.size();
-				auto pcr = classes.create_at(request.class_id, sz);
-				auto& p = pcr.parent();
-
-				p.class_id = pcr.row_id();
-				p.name = request.class_name;
-				p.description = request.class_description;
-				p.class_size_bytes = 0;
-
-				for (int i = 0; i < pcr.size(); i++)
-				{
-					auto fid = request.member_fields[i].field_id;
-					auto& field = fields[fid];
-					auto& ref = pcr.child(i);
-					ref.field_id = fid;
-					ref.offset = p.class_size_bytes;
-					p.class_size_bytes += field.size_bytes;
-				}
-
-				return p.class_id;
-			}
-
 			row_id_type put_class(put_named_class_request request)
 			{
 				auto sz = request.class_name.size();
@@ -714,16 +706,48 @@ namespace countrybit
 
 				for (int i = 0; i < pcr.size(); i++)
 				{
-					auto fname = fields_by_name[ request.field_names[i].field_name ];
-					if (fname == std::end(fields_by_name)) {
-						return null_row;
+					auto& field = request.member_fields[i];
+
+					switch (field.membership_type) 
+					{
+						case membership_types::member_class:
+							{
+								auto fname = fields_by_name[field.field_name];
+								if (fname == std::end(fields_by_name)) {
+									return null_row;
+								}
+								auto fid = fname->second;
+								auto& existing_field = fields[fid];
+								auto& ref = pcr.child(i);
+								ref.field_id = fid;
+								ref.offset = p.class_size_bytes;
+								p.class_size_bytes += existing_field.size_bytes;
+							}
+							break;
+						case membership_types::member_field:
+							{
+								auto class_name = classes_by_name[field.field_name];
+								if (class_name == std::end(classes_by_name)) {
+									return null_row;
+								}
+								put_object_field_request porf;
+								porf.name.name = class_name.get_key();
+								porf.name.field_id = null_row;
+								porf.name.type_id = jtype::type_object;
+								porf.options.class_name = class_name.get_key();
+								porf.options.class_id = class_name.get_value();
+								porf.options.class_size_bytes = classes[class_name.get_value()].pparent()->class_size_bytes;
+								porf.options.dim = field.dimensions;
+								auto class_field_id = put_object_field(porf);
+								auto& existing_field = fields[class_field_id];
+								auto& ref = pcr.child(i);
+								ref.field_id = class_field_id;
+								ref.offset = p.class_size_bytes;
+								p.class_size_bytes += existing_field.size_bytes;
+							}
+							break;
 					}
-					auto fid = fname->second;
-					auto& field = fields[fid];
-					auto& ref = pcr.child(i);
-					ref.field_id = fid;
-					ref.offset = p.class_size_bytes;
-					p.class_size_bytes += field.size_bytes;
+
 				}
 
 				return p.class_id;

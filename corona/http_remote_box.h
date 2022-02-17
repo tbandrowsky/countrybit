@@ -27,19 +27,21 @@ namespace countrybit
 
 		struct named_http_properties_type
 		{
-			object_name					field_name;
-			http_login_types			login_type;
-			object_name					username;
-			object_name					password;
-			import_http_url				url;
-			import_http_method			method;
-
-			object_name					destination_class;
-			parameter_field_maps_type	parameters;
-			import_field_maps_type		import_fields_map;
-			time_t						last_success;
-			time_t						last_error;
-			object_description			error_message;
+			object_name						field_name;
+			object_name						login_type_name;
+			http_login_types				login_type;
+			remote_http_url					login_url;
+			remote_http_method				login_method;
+			object_name						username;
+			object_name						password;
+			remote_http_url					data_url;
+			remote_http_method				data_method;
+			object_name						destination_class;
+			remote_parameter_fields_type	parameters;
+			remote_fields_type				fields;
+			time_t							last_success;
+			time_t							last_error;
+			object_description				error_message;
 		};
 
 		class http_remote_instance

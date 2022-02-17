@@ -419,32 +419,34 @@ namespace countrybit
 			named_http_properties_type options;
 		};
 
-		struct include_field_id
+		enum class membership_types
 		{
-		public:
-			row_id_type field_id;
+			member_field = 1,
+			member_class = 2
 		};
 
-		class put_class_request {
+		struct member_field
+		{
+		public:
+			object_name		field_name;
+			membership_types membership_type;
+
+			union
+			{
+				row_id_type field_id;
+				row_id_type class_id;
+			};
+
+			dimensions_type dimensions;
+		};
+
+		class put_named_class_request 
+		{
 		public:
 			row_id_type			class_id;
 			object_name			class_name;
 			object_description	class_description;
-			iarray<include_field_id, max_class_fields> member_fields;
-		};
-
-		struct include_field_name
-		{
-		public:
-			object_name field_name;
-		};
-
-		class put_named_class_request {
-		public:
-			row_id_type			class_id;
-			object_name			class_name;
-			object_description	class_description;
-			iarray<include_field_name, max_class_fields> field_names;
+			iarray<member_field, max_class_fields> member_fields;
 		};
 
 	}

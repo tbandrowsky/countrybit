@@ -592,6 +592,9 @@ namespace countrybit
 			database::table<database::put_midi_field_request> put_midi_fields;
 			database::table<database::put_color_field_request> put_color_fields;
 			database::table<database::put_named_query_field_request> put_query_fields;
+			database::table<database::put_sql_field_request> put_sql_fields;
+			database::table<database::put_http_field_request> put_http_fields;
+			database::table<database::put_file_field_request> put_file_fields;
 			database::table<database::put_named_class_request> put_classes;
 
 			database::row_id_type fields_by_name_id;
@@ -601,6 +604,9 @@ namespace countrybit
 			database::row_id_type put_time_fields_id;
 			database::row_id_type put_object_fields_id;
 			database::row_id_type put_query_fields_id;
+			database::row_id_type put_sql_fields_id;
+			database::row_id_type put_http_fields_id;
+			database::row_id_type put_file_fields_id;
 			database::row_id_type put_point_fields_id;
 			database::row_id_type put_rectangle_fields_id;
 			database::row_id_type put_color_fields_id;
@@ -618,9 +624,6 @@ namespace countrybit
 			typeinfo* double_fields_ti;
 			typeinfo* time_fields_ti;
 			typeinfo* object_fields_ti;
-			typeinfo* query_fields_ti;
-			typeinfo* query_projection_ti;
-			typeinfo* query_filter_ti;
 			typeinfo* point_fields_ti;
 			typeinfo* rectangle_fields_ti;
 			typeinfo* color_fields_ti;
@@ -629,6 +632,16 @@ namespace countrybit
 			typeinfo* midi_fields_ti;
 			typeinfo* put_classes_ti;
 			typeinfo* put_class_fields_ti;
+
+			typeinfo* query_fields_ti;
+			typeinfo* query_projection_ti;
+			typeinfo* query_filter_ti;
+
+			typeinfo* remote_parameters_ti;
+
+			typeinfo* sql_fields_ti;
+			typeinfo* file_fields_ti;
+			typeinfo* http_fields_ti;
 
 			const char* member_type_name = "type";
 
@@ -717,23 +730,6 @@ namespace countrybit
 				create_scalar_property<database::int32_box>(object_fields_ti, pvalue::pvalue_types::double_value, "y", "y", offsetof(database::put_object_field_request, options.dim.y));
 				create_scalar_property<database::int32_box>(object_fields_ti, pvalue::pvalue_types::double_value, "z", "z", offsetof(database::put_object_field_request, options.dim.z));
 
-				query_fields_ti = create_typeinfo(member_type_name, "query", "query", 20);
-				create_scalar_property<database::int32_box>(query_fields_ti, pvalue::pvalue_types::double_value, "id", "id", offsetof(database::put_named_query_field_request, name.field_id));
-				create_scalar_property<database::string_box>(query_fields_ti, pvalue::pvalue_types::string_value, "name", "name", offsetof(database::put_named_query_field_request, name.name));
-				create_scalar_property<database::string_box>(query_fields_ti, pvalue::pvalue_types::string_value, "description", "description", offsetof(database::put_named_query_field_request, name.description));
-
-				query_projection_ti = create_typeinfo(member_type_name, "projection", "projection", 20);
-				create_scalar_property<database::string_box>(query_fields_ti, pvalue::pvalue_types::string_value, "field_name", "field_name", offsetof(database::projection_element_request, field_name));
-
-				query_filter_ti = create_typeinfo(member_type_name, "filter", "filter", 20);
-				create_scalar_property<database::string_box>(query_filter_ti, pvalue::pvalue_types::string_value, "target_field_name", "target_field_name", offsetof(database::filter_element_request, target_field_name));
-				create_scalar_property<database::string_box>(query_filter_ti, pvalue::pvalue_types::string_value, "comparison", "comparison", offsetof(database::filter_element_request, comparison_name));
-				create_scalar_property<database::string_box>(query_filter_ti, pvalue::pvalue_types::string_value, "parameter_field_name", "parameter_field_name", offsetof(database::filter_element_request, parameter_field_name));
-				create_scalar_property<database::double_box>(query_filter_ti, pvalue::pvalue_types::double_value, "distance", "distance", offsetof(database::filter_element_request, distance_threshold));
-
-				create_object_iarray_property<database::filter_element_request, database::max_query_filters>(query_fields_ti, query_filter_ti, "filters", "filters", offsetof(database::put_named_query_field_request, options.filter));
-				create_object_iarray_property<database::projection_element_request, database::max_query_projections > (query_fields_ti, query_projection_ti, "projections", "projections", offsetof(database::put_named_query_field_request, options.projection));
-
 				point_fields_ti = create_typeinfo(member_type_name, "point", "point", 20);
 				create_scalar_property<database::int32_box>(point_fields_ti, pvalue::pvalue_types::double_value, "id", "id", offsetof(database::put_point_field_request, name.field_id));
 				create_scalar_property<database::string_box>(point_fields_ti, pvalue::pvalue_types::string_value, "name", "name", offsetof(database::put_point_field_request, name.name));
@@ -773,8 +769,72 @@ namespace countrybit
 				create_scalar_property<database::string_box>(put_classes_ti, pvalue::pvalue_types::string_value, "description", "description", offsetof(database::put_named_class_request, class_description));
 
 				put_class_fields_ti = create_typeinfo(member_type_name, "class_fields", "class_fields", 20);
-				create_scalar_property<database::string_box>(put_class_fields_ti, pvalue::pvalue_types::string_value, "field_name", "field_name", offsetof(database::include_field_name, field_name));
-				create_object_iarray_property<database::include_field_name, database::max_class_fields >(put_classes_ti, put_class_fields_ti, "fields", "fields", offsetof(database::put_named_class_request, field_names));
+				create_scalar_property<database::string_box>(put_class_fields_ti, pvalue::pvalue_types::string_value, "field_name", "field_name", offsetof(database::member_field, field_name));
+				create_object_iarray_property<database::member_field, database::max_class_fields >(put_classes_ti, put_class_fields_ti, "fields", "fields", offsetof(database::put_named_class_request, field_names));
+
+				query_fields_ti = create_typeinfo(member_type_name, "query", "query", 20);
+				create_scalar_property<database::int32_box>(query_fields_ti, pvalue::pvalue_types::double_value, "id", "id", offsetof(database::put_named_query_field_request, name.field_id));
+				create_scalar_property<database::string_box>(query_fields_ti, pvalue::pvalue_types::string_value, "name", "name", offsetof(database::put_named_query_field_request, name.name));
+				create_scalar_property<database::string_box>(query_fields_ti, pvalue::pvalue_types::string_value, "description", "description", offsetof(database::put_named_query_field_request, name.description));
+
+				query_projection_ti = create_typeinfo(member_type_name, "projection", "projection", 20);
+				create_scalar_property<database::string_box>(query_fields_ti, pvalue::pvalue_types::string_value, "field_name", "field_name", offsetof(database::projection_element_request, field_name));
+
+				query_filter_ti = create_typeinfo(member_type_name, "filter", "filter", 20);
+				create_scalar_property<database::string_box>(query_filter_ti, pvalue::pvalue_types::string_value, "target_field_name", "target_field_name", offsetof(database::filter_element_request, target_field_name));
+				create_scalar_property<database::string_box>(query_filter_ti, pvalue::pvalue_types::string_value, "comparison", "comparison", offsetof(database::filter_element_request, comparison_name));
+				create_scalar_property<database::string_box>(query_filter_ti, pvalue::pvalue_types::string_value, "parameter_field_name", "parameter_field_name", offsetof(database::filter_element_request, parameter_field_name));
+				create_scalar_property<database::double_box>(query_filter_ti, pvalue::pvalue_types::double_value, "distance", "distance", offsetof(database::filter_element_request, distance_threshold));
+
+				create_object_iarray_property<database::filter_element_request, database::max_query_filters>(query_fields_ti, query_filter_ti, "filters", "filters", offsetof(database::put_named_query_field_request, options.filter));
+				create_object_iarray_property<database::projection_element_request, database::max_query_projections >(query_fields_ti, query_projection_ti, "projections", "projections", offsetof(database::put_named_query_field_request, options.projection));
+
+				remote_parameters_ti = create_typeinfo(member_type_name, "parameter", "parameter", 20);
+				create_scalar_property<database::string_box>(remote_parameters_ti, pvalue::pvalue_types::string_value, "corona_field", "corona_field", offsetof(database::remote_field_map_type, corona_field));
+				create_scalar_property<database::string_box>(remote_parameters_ti, pvalue::pvalue_types::string_value, "remote_field", "remote_field", offsetof(database::remote_field_map_type, remote_field));
+
+				sql_fields_ti = create_typeinfo(member_type_name, "sql", "sql", 20);
+				create_scalar_property<database::int32_box>(sql_fields_ti, pvalue::pvalue_types::double_value, "id", "id", offsetof(database::put_sql_field_request, name.field_id));
+				create_scalar_property<database::string_box>(sql_fields_ti, pvalue::pvalue_types::string_value, "name", "name", offsetof(database::put_sql_field_request, name.name));
+				create_scalar_property<database::string_box>(sql_fields_ti, pvalue::pvalue_types::string_value, "description", "description", offsetof(database::put_sql_field_request, name.description));
+				create_scalar_property<database::string_box>(sql_fields_ti, pvalue::pvalue_types::string_value, "login_type", "login_type", offsetof(database::put_sql_field_request, options.login_type_name));
+				create_scalar_property<database::string_box>(sql_fields_ti, pvalue::pvalue_types::string_value, "username", "username", offsetof(database::put_sql_field_request, options.username));
+				create_scalar_property<database::string_box>(sql_fields_ti, pvalue::pvalue_types::string_value, "password", "password", offsetof(database::put_sql_field_request, options.password));
+				create_scalar_property<database::string_box>(sql_fields_ti, pvalue::pvalue_types::string_value, "destination_class", "destination_class", offsetof(database::put_sql_field_request, options.destination_class));
+				create_scalar_property<database::string_box>(sql_fields_ti, pvalue::pvalue_types::string_value, "query", "query", offsetof(database::put_sql_field_request, options.query));
+				create_object_iarray_property<database::remote_field_map_type, database::max_remote_fields>(sql_fields_ti, remote_parameters_ti, "parameters", "parameters", offsetof(database::put_sql_field_request, options.parameters));
+				create_object_iarray_property<database::remote_field_map_type, database::max_remote_parameter_fields >(sql_fields_ti, remote_parameters_ti, "fields", "fields", offsetof(database::put_sql_field_request, options.fields));
+
+				file_fields_ti = create_typeinfo(member_type_name, "file", "file", 20);
+				create_scalar_property<database::int32_box>(file_fields_ti, pvalue::pvalue_types::double_value, "id", "id", offsetof(database::put_file_field_request, name.field_id));
+				create_scalar_property<database::string_box>(file_fields_ti, pvalue::pvalue_types::string_value, "name", "name", offsetof(database::put_file_field_request, name.name));
+				create_scalar_property<database::string_box>(file_fields_ti, pvalue::pvalue_types::string_value, "description", "description", offsetof(database::put_file_field_request, name.description));
+				create_scalar_property<database::string_box>(file_fields_ti, pvalue::pvalue_types::string_value, "destination_class", "destination_class", offsetof(database::put_file_field_request, options.destination_class));
+				create_scalar_property<database::string_box>(file_fields_ti, pvalue::pvalue_types::string_value, "file", "file", offsetof(database::put_file_field_request, options.file_path));
+				create_object_iarray_property<database::remote_field_map_type, database::max_remote_fields>(file_fields_ti, remote_parameters_ti, "parameters", "parameters", offsetof(database::put_file_field_request, options.parameters));
+				create_object_iarray_property<database::remote_field_map_type, database::max_remote_parameter_fields >(file_fields_ti, remote_parameters_ti, "fields", "fields", offsetof(database::put_file_field_request, options.fields));
+
+				object_name					field_name;
+				http_login_types			login_type;
+				object_name					username;
+				object_name					password;
+				remote_http_url				url;
+				remote_http_method			method;
+
+				http_fields_ti = create_typeinfo(member_type_name, "http", "http", 20);
+				create_scalar_property<database::int32_box>(http_fields_ti, pvalue::pvalue_types::double_value, "id", "id", offsetof(database::put_http_field_request, name.field_id));
+				create_scalar_property<database::string_box>(http_fields_ti, pvalue::pvalue_types::string_value, "name", "name", offsetof(database::put_http_field_request, name.name));
+				create_scalar_property<database::string_box>(http_fields_ti, pvalue::pvalue_types::string_value, "description", "description", offsetof(database::put_http_field_request, name.description));
+				create_scalar_property<database::string_box>(http_fields_ti, pvalue::pvalue_types::string_value, "login_type", "login_type", offsetof(database::put_http_field_request, options.login_type_name));
+				create_scalar_property<database::string_box>(http_fields_ti, pvalue::pvalue_types::string_value, "username", "username", offsetof(database::put_http_field_request, options.username));
+				create_scalar_property<database::string_box>(http_fields_ti, pvalue::pvalue_types::string_value, "password", "password", offsetof(database::put_http_field_request, options.password));
+				create_scalar_property<database::string_box>(http_fields_ti, pvalue::pvalue_types::string_value, "destination_class", "destination_class", offsetof(database::put_http_field_request, options.destination_class));
+				create_scalar_property<database::string_box>(http_fields_ti, pvalue::pvalue_types::string_value, "url", "url", offsetof(database::put_sql_field_request, options.query));
+				create_scalar_property<database::string_box>(http_fields_ti, pvalue::pvalue_types::string_value, "method", "method", offsetof(database::put_sql_field_request, options.query));
+				create_object_iarray_property<database::remote_field_map_type, database::max_remote_fields>(sql_fields_ti, remote_parameters_ti, "parameters", "parameters", offsetof(database::put_sql_field_request, options.parameters));
+				create_object_iarray_property<database::remote_field_map_type, database::max_remote_parameter_fields >(sql_fields_ti, remote_parameters_ti, "fields", "fields", offsetof(database::put_sql_field_request, options.fields));
+
+
 			}
 
 			private:
