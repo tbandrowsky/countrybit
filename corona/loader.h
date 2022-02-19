@@ -21,6 +21,24 @@ namespace countrybit
 {
 	namespace system
 	{
+		template <typename RemoteField>
+		concept remote_field = requires(RemoteField rf, 
+			database::object_name					n,
+			database::remote_parameter_fields_type	p,
+			database::remote_fields_type			r,
+			database::remote_field_map_type			t,
+			int										s
+		)
+		{
+			n = rf.parameter_field;
+			n = rf.result_field;
+			p = rf.parameters;
+			r = rf.fields;
+			t = rf.parameters[0];
+			t = rf.fields[0];
+			s = rf.fields.size();
+			s = rf.parameters.size();
+		};
 
 		class property_source
 		{
@@ -347,7 +365,11 @@ namespace countrybit
 				invalid_binding_name_type = 3,
 				class_not_defined = 4,
 				field_not_defined = 5,
-				invalid_comparison = 6
+				invalid_comparison = 6,
+				invalid_mapping = 7,
+				invalid_sql_use = 8,
+				invalid_http_use = 9,
+				invalid_file_use = 10
 			};
 
 			class error_message
@@ -356,6 +378,7 @@ namespace countrybit
 				errors error;
 				const pobject* obj;
 				const char* name;
+				int line_number;
 			};
 
 		protected:
@@ -381,16 +404,18 @@ namespace countrybit
 				error_message em;
 				em.error = _error;
 				em.obj = _obj;
+				em.line_number = _obj->line;
 				error_messages.insert(em, rr);
 			}
 
-			void put_error(errors _error, const char *_name)
+			void put_error(errors _error, const char *_name, int _line = 0)
 			{
 				database::row_range rr;
 				error_message em;
 				em.error = _error;
 				em.obj = nullptr;
 				em.name = _name;
+				em.line_number = _line;
 				error_messages.insert(em, rr);
 			}
 
@@ -763,19 +788,18 @@ namespace countrybit
 				create_scalar_property<database::string_box>(midi_fields_ti, pvalue::pvalue_types::string_value, "description", "description", offsetof(database::put_midi_field_request, name.description));
 				create_scalar_property<database::string_box>(midi_fields_ti, pvalue::pvalue_types::string_value, "path", "path", offsetof(database::put_midi_field_request, options.image_path));
 
+				put_class_fields_ti = create_typeinfo(member_type_name, "class_fields", "class_fields", 20);
+				create_scalar_property<database::string_box>(put_class_fields_ti, pvalue::pvalue_types::string_value, "field_name", "field_name", offsetof(database::member_field, field_name));
+				create_scalar_property<database::string_box>(put_class_fields_ti, pvalue::pvalue_types::string_value, "member_type", "member_type", offsetof(database::member_field, membership_type_name));
+				create_scalar_property<database::string_box>(put_class_fields_ti, pvalue::pvalue_types::string_value, "dim_x", "dim_x", offsetof(database::member_field, dimensions.x));
+				create_scalar_property<database::string_box>(put_class_fields_ti, pvalue::pvalue_types::string_value, "dim_y", "dim_y", offsetof(database::member_field, dimensions.y));
+				create_scalar_property<database::string_box>(put_class_fields_ti, pvalue::pvalue_types::string_value, "dim_z", "dim_z", offsetof(database::member_field, dimensions.z));
+
 				put_classes_ti = create_typeinfo(member_type_name, "class", "class", 20);
 				create_scalar_property<database::int32_box>(put_classes_ti, pvalue::pvalue_types::double_value, "id", "id", offsetof(database::put_named_class_request, class_id));
 				create_scalar_property<database::string_box>(put_classes_ti, pvalue::pvalue_types::string_value, "name", "name", offsetof(database::put_named_class_request, class_name));
 				create_scalar_property<database::string_box>(put_classes_ti, pvalue::pvalue_types::string_value, "description", "description", offsetof(database::put_named_class_request, class_description));
-
-				put_class_fields_ti = create_typeinfo(member_type_name, "class_fields", "class_fields", 20);
-				create_scalar_property<database::string_box>(put_class_fields_ti, pvalue::pvalue_types::string_value, "field_name", "field_name", offsetof(database::member_field, field_name));
-				create_object_iarray_property<database::member_field, database::max_class_fields >(put_classes_ti, put_class_fields_ti, "fields", "fields", offsetof(database::put_named_class_request, field_names));
-
-				query_fields_ti = create_typeinfo(member_type_name, "query", "query", 20);
-				create_scalar_property<database::int32_box>(query_fields_ti, pvalue::pvalue_types::double_value, "id", "id", offsetof(database::put_named_query_field_request, name.field_id));
-				create_scalar_property<database::string_box>(query_fields_ti, pvalue::pvalue_types::string_value, "name", "name", offsetof(database::put_named_query_field_request, name.name));
-				create_scalar_property<database::string_box>(query_fields_ti, pvalue::pvalue_types::string_value, "description", "description", offsetof(database::put_named_query_field_request, name.description));
+				create_object_iarray_property<database::member_field, database::max_class_fields >(put_classes_ti, put_class_fields_ti, "fields", "fields", offsetof(database::put_named_class_request, member_fields));
 
 				query_projection_ti = create_typeinfo(member_type_name, "projection", "projection", 20);
 				create_scalar_property<database::string_box>(query_fields_ti, pvalue::pvalue_types::string_value, "field_name", "field_name", offsetof(database::projection_element_request, field_name));
@@ -786,6 +810,10 @@ namespace countrybit
 				create_scalar_property<database::string_box>(query_filter_ti, pvalue::pvalue_types::string_value, "parameter_field_name", "parameter_field_name", offsetof(database::filter_element_request, parameter_field_name));
 				create_scalar_property<database::double_box>(query_filter_ti, pvalue::pvalue_types::double_value, "distance", "distance", offsetof(database::filter_element_request, distance_threshold));
 
+				query_fields_ti = create_typeinfo(member_type_name, "query", "query", 20);
+				create_scalar_property<database::int32_box>(query_fields_ti, pvalue::pvalue_types::double_value, "id", "id", offsetof(database::put_named_query_field_request, name.field_id));
+				create_scalar_property<database::string_box>(query_fields_ti, pvalue::pvalue_types::string_value, "name", "name", offsetof(database::put_named_query_field_request, name.name));
+				create_scalar_property<database::string_box>(query_fields_ti, pvalue::pvalue_types::string_value, "description", "description", offsetof(database::put_named_query_field_request, name.description));
 				create_object_iarray_property<database::filter_element_request, database::max_query_filters>(query_fields_ti, query_filter_ti, "filters", "filters", offsetof(database::put_named_query_field_request, options.filter));
 				create_object_iarray_property<database::projection_element_request, database::max_query_projections >(query_fields_ti, query_projection_ti, "projections", "projections", offsetof(database::put_named_query_field_request, options.projection));
 
@@ -800,7 +828,8 @@ namespace countrybit
 				create_scalar_property<database::string_box>(sql_fields_ti, pvalue::pvalue_types::string_value, "login_type", "login_type", offsetof(database::put_sql_field_request, options.login_type_name));
 				create_scalar_property<database::string_box>(sql_fields_ti, pvalue::pvalue_types::string_value, "username", "username", offsetof(database::put_sql_field_request, options.username));
 				create_scalar_property<database::string_box>(sql_fields_ti, pvalue::pvalue_types::string_value, "password", "password", offsetof(database::put_sql_field_request, options.password));
-				create_scalar_property<database::string_box>(sql_fields_ti, pvalue::pvalue_types::string_value, "destination_class", "destination_class", offsetof(database::put_sql_field_request, options.destination_class));
+				create_scalar_property<database::string_box>(sql_fields_ti, pvalue::pvalue_types::string_value, "parameter_field", "parameter_field", offsetof(database::put_sql_field_request, options.parameter_field));
+				create_scalar_property<database::string_box>(sql_fields_ti, pvalue::pvalue_types::string_value, "result_field", "result_field", offsetof(database::put_sql_field_request, options.result_field));
 				create_scalar_property<database::string_box>(sql_fields_ti, pvalue::pvalue_types::string_value, "query", "query", offsetof(database::put_sql_field_request, options.query));
 				create_object_iarray_property<database::remote_field_map_type, database::max_remote_fields>(sql_fields_ti, remote_parameters_ti, "parameters", "parameters", offsetof(database::put_sql_field_request, options.parameters));
 				create_object_iarray_property<database::remote_field_map_type, database::max_remote_parameter_fields >(sql_fields_ti, remote_parameters_ti, "fields", "fields", offsetof(database::put_sql_field_request, options.fields));
@@ -809,31 +838,27 @@ namespace countrybit
 				create_scalar_property<database::int32_box>(file_fields_ti, pvalue::pvalue_types::double_value, "id", "id", offsetof(database::put_file_field_request, name.field_id));
 				create_scalar_property<database::string_box>(file_fields_ti, pvalue::pvalue_types::string_value, "name", "name", offsetof(database::put_file_field_request, name.name));
 				create_scalar_property<database::string_box>(file_fields_ti, pvalue::pvalue_types::string_value, "description", "description", offsetof(database::put_file_field_request, name.description));
-				create_scalar_property<database::string_box>(file_fields_ti, pvalue::pvalue_types::string_value, "destination_class", "destination_class", offsetof(database::put_file_field_request, options.destination_class));
+				create_scalar_property<database::string_box>(file_fields_ti, pvalue::pvalue_types::string_value, "parameter_field", "parameter_field", offsetof(database::put_file_field_request, options.parameter_field));
+				create_scalar_property<database::string_box>(file_fields_ti, pvalue::pvalue_types::string_value, "result_field", "result_field", offsetof(database::put_file_field_request, options.result_field));
 				create_scalar_property<database::string_box>(file_fields_ti, pvalue::pvalue_types::string_value, "file", "file", offsetof(database::put_file_field_request, options.file_path));
 				create_object_iarray_property<database::remote_field_map_type, database::max_remote_fields>(file_fields_ti, remote_parameters_ti, "parameters", "parameters", offsetof(database::put_file_field_request, options.parameters));
 				create_object_iarray_property<database::remote_field_map_type, database::max_remote_parameter_fields >(file_fields_ti, remote_parameters_ti, "fields", "fields", offsetof(database::put_file_field_request, options.fields));
-
-				object_name					field_name;
-				http_login_types			login_type;
-				object_name					username;
-				object_name					password;
-				remote_http_url				url;
-				remote_http_method			method;
 
 				http_fields_ti = create_typeinfo(member_type_name, "http", "http", 20);
 				create_scalar_property<database::int32_box>(http_fields_ti, pvalue::pvalue_types::double_value, "id", "id", offsetof(database::put_http_field_request, name.field_id));
 				create_scalar_property<database::string_box>(http_fields_ti, pvalue::pvalue_types::string_value, "name", "name", offsetof(database::put_http_field_request, name.name));
 				create_scalar_property<database::string_box>(http_fields_ti, pvalue::pvalue_types::string_value, "description", "description", offsetof(database::put_http_field_request, name.description));
 				create_scalar_property<database::string_box>(http_fields_ti, pvalue::pvalue_types::string_value, "login_type", "login_type", offsetof(database::put_http_field_request, options.login_type_name));
+				create_scalar_property<database::string_box>(http_fields_ti, pvalue::pvalue_types::string_value, "login_url", "login_url", offsetof(database::put_http_field_request, options.login_url));
+				create_scalar_property<database::string_box>(http_fields_ti, pvalue::pvalue_types::string_value, "login_method", "login_method", offsetof(database::put_http_field_request, options.login_method));
 				create_scalar_property<database::string_box>(http_fields_ti, pvalue::pvalue_types::string_value, "username", "username", offsetof(database::put_http_field_request, options.username));
 				create_scalar_property<database::string_box>(http_fields_ti, pvalue::pvalue_types::string_value, "password", "password", offsetof(database::put_http_field_request, options.password));
-				create_scalar_property<database::string_box>(http_fields_ti, pvalue::pvalue_types::string_value, "destination_class", "destination_class", offsetof(database::put_http_field_request, options.destination_class));
-				create_scalar_property<database::string_box>(http_fields_ti, pvalue::pvalue_types::string_value, "url", "url", offsetof(database::put_sql_field_request, options.query));
-				create_scalar_property<database::string_box>(http_fields_ti, pvalue::pvalue_types::string_value, "method", "method", offsetof(database::put_sql_field_request, options.query));
+				create_scalar_property<database::string_box>(http_fields_ti, pvalue::pvalue_types::string_value, "parameter_field", "parameter_field", offsetof(database::put_http_field_request, options.parameter_field));
+				create_scalar_property<database::string_box>(http_fields_ti, pvalue::pvalue_types::string_value, "result_field", "result_field", offsetof(database::put_http_field_request, options.result_field));
+				create_scalar_property<database::string_box>(http_fields_ti, pvalue::pvalue_types::string_value, "login_url", "login_url", offsetof(database::put_http_field_request, options.data_url));
+				create_scalar_property<database::string_box>(http_fields_ti, pvalue::pvalue_types::string_value, "login_method", "login_method", offsetof(database::put_http_field_request, options.data_method));
 				create_object_iarray_property<database::remote_field_map_type, database::max_remote_fields>(sql_fields_ti, remote_parameters_ti, "parameters", "parameters", offsetof(database::put_sql_field_request, options.parameters));
 				create_object_iarray_property<database::remote_field_map_type, database::max_remote_parameter_fields >(sql_fields_ti, remote_parameters_ti, "fields", "fields", offsetof(database::put_sql_field_request, options.fields));
-
 
 			}
 
@@ -914,14 +939,6 @@ namespace countrybit
 					aqf.name.type_id = database::jtype::type_query;
 					t = (char*)&aqf;
 				}
-				else if (ti == query_projection_ti)
-				{
-					t = (char*)nullptr;
-				}
-				else if (ti == query_filter_ti)
-				{
-					t = (char*)nullptr;
-				}
 				else if (ti == point_fields_ti)
 				{
 					auto& apf = put_point_fields.create(1, rr);
@@ -966,10 +983,42 @@ namespace countrybit
 				}
 				else if (ti == put_classes_ti)
 				{
-					auto& amf = put_midi_fields.create(1, rr);
-					amf.name.field_id = database::null_row;
-					amf.name.type_id = database::jtype::type_midi;
+					auto& amf = put_classes.create(1, rr);
+					amf.class_id = database::null_row;
 					t = (char*)&amf;
+				}
+				else if (ti == sql_fields_ti)
+				{
+					auto& sqf = put_sql_fields.create(1, rr);
+					sqf.name.field_id = database::null_row;
+					sqf.name.type_id = database::jtype::type_sql;
+					t = (char*)&sqf;
+				}
+				else if (ti == file_fields_ti)
+				{
+					auto& flf = put_file_fields.create(1, rr);
+					flf.name.field_id = database::null_row;
+					flf.name.type_id = database::jtype::type_file;
+					t = (char*)&flf;
+				}
+				else if (ti == http_fields_ti)
+				{
+					auto& htf = put_http_fields.create(1, rr);
+					htf.name.field_id = database::null_row;
+					htf.name.type_id = database::jtype::type_http;
+					t = (char*)&htf;
+				}
+				else if (ti == query_projection_ti)
+				{
+					t = (char*)nullptr;
+				}
+				else if (ti == query_filter_ti)
+				{
+					t = (char*)nullptr;
+				}
+				else if (ti == remote_parameters_ti)
+				{
+					t = (char*)nullptr;
 				}
 
 				return t;
@@ -1063,6 +1112,27 @@ namespace countrybit
 					fields_by_name.insert_or_assign(off.item.name.name, loc);
 				}
 
+				loc.item_type = database::jtype::type_sql;
+				for (auto off : put_sql_fields)
+				{
+					loc.row_id = off.location;
+					fields_by_name.insert_or_assign(off.item.name.name, loc);
+				}
+
+				loc.item_type = database::jtype::type_file;
+				for (auto off : put_file_fields)
+				{
+					loc.row_id = off.location;
+					fields_by_name.insert_or_assign(off.item.name.name, loc);
+				}
+
+				loc.item_type = database::jtype::type_http;
+				for (auto off : put_http_fields)
+				{
+					loc.row_id = off.location;
+					fields_by_name.insert_or_assign(off.item.name.name, loc);
+				}
+
 				for (auto cls : put_classes)
 				{
 					classes_by_name.insert_or_assign(cls.item.class_name, cls.location);
@@ -1120,6 +1190,91 @@ namespace countrybit
 				{
 					schema.put_midi_field(amdf.item);
 				}
+			}
+
+			bool is_field_mapping_valid(database::jschema* pschema, database::row_id_type class_row, database::remote_field_map_type& remote)
+			{
+				if (class_row == database::null_row)
+				{
+					return false;
+				}
+
+				database::jclass the_class = pschema->get_class(class_row);
+
+				database::remote_field_map_type* premote = &remote;
+
+				bool valid = false;
+
+				for (int i = 0; i < the_class.size(); i++) 
+				{
+					auto &c = the_class.child(i);
+					auto &f = pschema->get_field(c.field_id);
+					if (remote.corona_field == f.name) {
+						valid = true;
+						break;
+					}
+				}
+
+				if (!valid) 
+				{
+					put_error(errors::invalid_mapping, remote.corona_field.c_str());
+				}
+
+				return valid;
+			}
+
+			template <int number> 
+			bool check_field_mapping_valid(database::jschema& schema, database::object_name& class_name, database::iarray<database::remote_field_map_type, number>& remotes)
+			{
+				database::jschema* pschema = &schema;
+				database::row_id_type class_row = schema.find_class(class_name);
+				if (class_row == null_row) 
+				{
+					auto class_name_iter = classes_by_name[class_name];
+					if (class_name_iter == std::end(classes_by_name))
+					{
+						put_error(errors::class_not_defined, class_name.c_str());
+					}
+					else
+					{
+						auto def_row_id = class_name_iter.get_value();
+						auto& class_def = put_classes[def_row_id];
+						class_row = put_class(schema, class_def);
+					}
+				}
+				bool valid = std::all_of(remotes.begin(), remotes.end(), [pschema, class_row](database::remote_field_map_type& src) {
+					return is_field_mapping_valid(pschema, class_row, r.item);
+					});
+				return valid;
+			}
+
+			template <typename RemoteField, typename SrcTable> 
+			bool validate_remote_field(database::jschema& schema, RemoteField& rf)
+			{
+				bool validParams = check_field_mapping_valid(schema, rf.parameter_field, rf.parameters);
+				bool validFields = check_field_mapping_valid(schema, rf.results_field, rf.fields);
+				return (validParams && validFields);
+			}
+
+			void put_field(database::jschema& schema, database::put_sql_field_request& fld)
+			{
+				bool validParams = check_field_mapping_valid(schema, fld.options.parameter_field, fld.options.parameters);
+				bool validFields = check_field_mapping_valid(schema, fld.options.result_field, fld.options.fields);
+				schema.put_sql_remote_field(fld);
+			}
+
+			void put_field(database::jschema& schema, database::put_file_field_request& fld)
+			{
+				bool validParams = check_field_mapping_valid(schema, fld.options.parameter_field, fld.options.parameters);
+				bool validFields = check_field_mapping_valid(schema, fld.options.result_field, fld.options.fields);
+				schema.put_file_remote_field(fld);
+			}
+
+			void put_field(database::jschema& schema, database::put_http_field_request& fld)
+			{
+				bool validParams = check_field_mapping_valid(schema, fld.options.parameter_field, fld.options.parameters);
+				bool validFields = check_field_mapping_valid(schema, fld.options.result_field, fld.options.fields);
+				schema.put_http_remote_field(fld);
 			}
 
 			void put_field(database::jschema& schema, location loc)
@@ -1204,6 +1359,24 @@ namespace countrybit
 						schema.put_wave_field(fld);
 					}
 					break;
+				case database::jtype::type_sql:
+					{
+						auto fld = put_sql_fields[loc.row_id];
+						put_field(schema, fld);
+					}
+					break;
+				case database::jtype::type_file:
+					{
+						auto fld = put_file_fields[loc.row_id];
+						put_field(schema, fld);
+					}
+					break;
+				case database::jtype::type_http:
+					{
+						auto fld = put_http_fields[loc.row_id];
+						put_field(schema, fld);
+					}
+					break;
 				}
 			}
 
@@ -1246,7 +1419,7 @@ namespace countrybit
 					}
 					else
 					{
-						put_error(errors::invalid_comparison, filter.comparison_name.c_str());
+						put_error(errors::invalid_comparison, filter.comparison_name.c_str(), 0);
 						valid = false;
 					}
 
@@ -1257,7 +1430,7 @@ namespace countrybit
 					}
 					else
 					{
-						put_error(errors::field_not_defined, filter.parameter_field_name.c_str());
+						put_error(errors::field_not_defined, filter.parameter_field_name.c_str(), 0);
 						valid = false;
 					}
 
@@ -1268,7 +1441,7 @@ namespace countrybit
 					}
 					else
 					{
-						put_error(errors::field_not_defined, filter.target_field_name.c_str());
+						put_error(errors::field_not_defined, filter.target_field_name.c_str(), 0);
 						valid = false;
 					}
 				}
@@ -1286,7 +1459,7 @@ namespace countrybit
 					}
 					else
 					{
-						put_error(errors::field_not_defined, projection.field_name.c_str());
+						put_error(errors::field_not_defined, projection.field_name.c_str(), 0);
 						valid = false;
 					}
 				}
@@ -1309,7 +1482,7 @@ namespace countrybit
 					auto class_name_iter = classes_by_name[ aorf.options.class_name ];
 					if (class_name_iter == std::end(classes_by_name)) 
 					{
-						put_error( errors::class_not_defined, aorf.options.class_name.c_str() );
+						put_error( errors::class_not_defined, aorf.options.class_name.c_str(), 0 );
 						valid = false;
 					}
 					else 
@@ -1325,27 +1498,47 @@ namespace countrybit
 				}
 			}
 
-			void put_class(database::jschema& schema, database::put_named_class_request& aorf)
+			database::row_id_type put_class(database::jschema& schema, database::put_named_class_request& aorf)
 			{
-				for (auto fn : aorf.field_names) 
+				for (auto fn : aorf.member_fields) 
 				{
-					auto found_field_id = schema.find_field(fn.item.field_name);
-					if (found_field_id == database::null_row)
+					if (fn.item.membership_type == database::membership_types::member_field) 
 					{
 						auto field_name_iter = fields_by_name[fn.item.field_name];
-						if (field_name_iter == std::end(classes_by_name))
+						if (field_name_iter == std::end(fields_by_name))
 						{
-							put_error(errors::field_not_defined, fn.item.field_name.c_str());
+							put_error(errors::field_not_defined, fn.item.field_name.c_str(), 0);
 						}
-						else
+						else {
+							auto& loc = field_name_iter.get_value();
+							auto found_field_id = schema.find_field(fn.item.field_name);
+							if (found_field_id == database::null_row)
+							{
+								put_field(schema, loc);
+							}
+						}
+					}
+					else if (fn.item.membership_type == database::membership_types::member_class)
+					{
+						auto found_class_id = schema.find_class(fn.item.field_name);
+						if (found_class_id == database::null_row)
 						{
-							put_field(schema, field_name_iter.location);
-							auto def_row_id = fields_by_name;
+							auto class_name_iter = classes_by_name[fn.item.field_name];
+							if (class_name_iter == std::end(classes_by_name))
+							{
+								put_error(errors::class_not_defined, fn.item.field_name.c_str());
+							}
+							else
+							{
+								auto def_row_id = class_name_iter.get_value();
+								auto& class_def = put_classes[def_row_id];
+								put_class(schema, class_def);
+							}
 						}
 					}
 				}
 
-				schema.put_class(aorf);
+				return schema.put_class(aorf);
 			}
 		};
 

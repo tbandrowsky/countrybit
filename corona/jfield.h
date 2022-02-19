@@ -428,8 +428,9 @@ namespace countrybit
 		struct member_field
 		{
 		public:
-			object_name		field_name;
-			membership_types membership_type;
+			object_name			field_name;
+			object_name			membership_type_name;
+			membership_types	membership_type;
 
 			union
 			{

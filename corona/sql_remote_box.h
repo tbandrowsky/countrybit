@@ -23,18 +23,18 @@ namespace countrybit
 
 		struct named_sql_properties_type
 		{
-			object_name					login_type_name;
-			sql_login_types				login_type;
-			object_name					username;
-			object_name					password;
-
-			object_name					destination_class;
+			object_name						login_type_name;
+			sql_login_types					login_type;
+			object_name						username;
+			object_name						password;
+			object_name						parameter_field;
+			object_name						result_field;
 			remote_parameter_fields_type	parameters;
-			remote_fields_type		fields;
-			remote_sql_query			query;
-			time_t						last_success;
-			time_t						last_error;
-			object_description			error_message;
+			remote_fields_type				fields;
+			remote_sql_query				query;
+			time_t							last_success;
+			time_t							last_error;
+			object_description				error_message;
 		};
 
 		class sql_remote_instance

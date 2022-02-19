@@ -94,7 +94,7 @@ namespace countrybit
 
 				struct value_ref
 				{
-					T& item;
+					item_type& item;
 					row_id_type location;
 				};
 

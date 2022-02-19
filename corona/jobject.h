@@ -696,6 +696,14 @@ namespace countrybit
 			row_id_type put_class(put_named_class_request request)
 			{
 				auto sz = request.class_name.size();
+
+				row_id_type class_id = find_class(request.class_name);
+
+				if (class_id != null_row) 
+				{
+					request.class_id = class_id;
+				}
+
 				auto pcr = classes.create_at(request.class_id, sz);
 				auto& p = pcr.parent();
 
@@ -739,6 +747,9 @@ namespace countrybit
 								porf.options.class_size_bytes = classes[class_name.get_value()].pparent()->class_size_bytes;
 								porf.options.dim = field.dimensions;
 								auto class_field_id = put_object_field(porf);
+								if (class_field_id == null_row) {
+									return null_row;
+								}
 								auto& existing_field = fields[class_field_id];
 								auto& ref = pcr.child(i);
 								ref.field_id = class_field_id;
