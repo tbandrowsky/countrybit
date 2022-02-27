@@ -231,6 +231,11 @@ namespace countrybit
 				return &data[0];
 			}
 
+			char* c_str_w() const
+			{
+				return &data[0];
+			}
+
 			const char* value() const
 			{
 				return &data[0];

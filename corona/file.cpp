@@ -7,23 +7,6 @@ namespace countrybit
 	namespace system
 	{
 
-		class io_job : public job
-		{
-		public:
-			std::coroutine_handle<> handle;
-
-			io_job(std::coroutine_handle<> _handle) : handle(_handle)
-			{
-				;
-			}
-
-			virtual job_notify execute(job_queue* _callingQueue, DWORD _bytesTransferred, BOOL _success)
-			{
-				job_notify jn;
-				jn.shouldDelete = false;
-				return jn;
-			}
-		};
 
 		class read_job : public io_job
 		{
@@ -35,13 +18,13 @@ namespace countrybit
 				;
 			}
 
-			void read(HANDLE hfile, uint64_t location, void* destination, uint32_t bytes_to_read)
+			void read(HANDLE hdirectory, uint64_t location, void* destination, uint32_t bytes_to_read)
 			{
 				LARGE_INTEGER li;
 				li.QuadPart = location;
 				ovp.OffsetHigh = li.HighPart;
 				ovp.Offset = li.LowPart;
-				::ReadFileEx(hfile, destination, bytes_to_read, (OVERLAPPED*)this, nullptr);
+				::ReadFileEx(hdirectory, destination, bytes_to_read, (OVERLAPPED*)this, nullptr);
 			}
 		};
 
@@ -54,13 +37,13 @@ namespace countrybit
 				;
 			}
 
-			void write(HANDLE hfile, uint64_t location, void* destination, uint32_t bytes_to_read)
+			void write(HANDLE hdirectory, uint64_t location, void* destination, uint32_t bytes_to_read)
 			{
 				LARGE_INTEGER li;
 				li.QuadPart = location;
 				ovp.OffsetHigh = li.HighPart;
 				ovp.Offset = li.LowPart;
-				::WriteFileEx(hfile, destination, bytes_to_read, (OVERLAPPED*)this, nullptr);
+				::WriteFileEx(hdirectory, destination, bytes_to_read, (OVERLAPPED*)this, nullptr);
 			}
 		};
 

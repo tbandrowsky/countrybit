@@ -63,6 +63,24 @@ namespace countrybit
 			friend class job_queue;
 		};
 
+		class io_job : public job
+		{
+		public:
+			std::coroutine_handle<> handle;
+
+			io_job(std::coroutine_handle<> _handle) : handle(_handle)
+			{
+				;
+			}
+
+			virtual job_notify execute(job_queue* _callingQueue, DWORD _bytesTransferred, BOOL _success)
+			{
+				job_notify jn;
+				jn.shouldDelete = false;
+				return jn;
+			}
+		};
+
 		// simple wrapper for interlocked increment
 
 		class lockable

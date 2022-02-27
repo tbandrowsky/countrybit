@@ -1,9 +1,6 @@
 #pragma once
 
 #include "file.h"
-#include "jdatabase.h"
-#include "extractor.h"
-#include "loader.h"
 
 namespace countrybit
 {
@@ -41,13 +38,13 @@ namespace countrybit
 				queue.waitForEmptyQueue();
 			}
 
-			file open_file(std::string filename, system::file_open_types _file_open_type)
+			file open_file(file_path filename, system::file_open_types _file_open_type)
 			{
 				file f(&queue, filename, _file_open_type);
 				return f;
 			}
 
-			file create_file(std::string filename)
+			file create_file(file_path filename)
 			{
 				return file(&queue, filename, system::file_open_types::create_new);
 			}
@@ -55,6 +52,11 @@ namespace countrybit
 			void add_job(job* _job)
 			{
 				queue.postJobMessage(_job);
+			}
+
+			virtual void log(const char* _msg)
+			{
+				std::cout << _msg << std::endl;
 			}
 
 		private:

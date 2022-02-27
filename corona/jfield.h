@@ -153,7 +153,7 @@ namespace countrybit
 
 		using object_name = istring<32>;
 		using object_description = istring<250>;
-		using object_path = istring<256>;
+		using object_path = istring<260>;
 		using object_type = istring<16>;
 		using string_validation_pattern = istring<100>;
 		using string_validation_message = istring<100>;

@@ -455,6 +455,18 @@ namespace countrybit
 				return schema;
 			}
 
+			static int64_t get_box_size(int _num_classes, int _num_fields, int _num_class_fields, int _num_queries, int _num_sql_remotes, int _num_http_remotes, int _num_file_remotes)
+			{
+				int64_t field_size = field_store_type::get_box_size(_num_fields);
+				int64_t class_size = class_store_type::get_box_size(_num_fields, _num_class_fields);
+				int64_t query_size = query_store_type::get_box_size(_num_queries);
+				int64_t sql_size = sql_store_type::get_box_size(_num_sql_remotes);
+				int64_t http_size = sql_store_type::get_box_size(_num_http_remotes);
+				int64_t file_size = sql_store_type::get_box_size(_num_file_remotes);
+				int64_t total_size = field_size + class_size + query_size + sql_size + http_size + file_size;
+				return total_size;
+			}
+
 			template <typename B>
 				requires (box<B, jfield>
 			&& box<B, jclass_header>

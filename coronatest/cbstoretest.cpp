@@ -8,7 +8,7 @@
 #include "jobject.h"
 #include "sorted_index.h"
 #include "array_box.h"
-#include "json_parse.h"
+#include "extractor.h"
 #include "assert_if.h"
 
 countrybit::system::sync<int> test_queue();

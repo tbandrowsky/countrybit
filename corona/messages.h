@@ -4,17 +4,21 @@
 #include <cstdint>
 #include <coroutine>
 
+#include "string_box.h"
+
 namespace countrybit
 {
 	namespace system
 	{
+		using error_string = countrybit::database::istring<256>;
+
 		class base_result
 		{
 		public:
 			bool success;
-			const char *message;
+			error_string message;
 
-			base_result() : success(true)
+			base_result() : success(true), message("")
 			{
 				;
 			}
@@ -37,7 +41,6 @@ namespace countrybit
 		public:
 
 			uint64_t error_code;
-
 			os_result();
 		};
 

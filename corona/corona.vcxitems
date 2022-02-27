@@ -21,6 +21,8 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)collection_id_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)color_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)constants.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)desktop_application.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)directory.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)file_remote_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)http_remote_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)image_box.h" />
@@ -58,12 +60,16 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)array_box.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)assert_if.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)collection_id_box.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)desktop_application.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)directory.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)file.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)file_remote_box.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)function.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)extractor.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)http_remote_box.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)jdatabase.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)loader.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)messages.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)object_id_box.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)point_box.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)query_box.cpp" />
