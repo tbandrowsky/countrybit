@@ -4,5 +4,11 @@
 #include <functional>
 #include <iostream>
 
-bool assert_if(std::function<bool()> test, std::string fail);
-
+template <typename string_type> bool assert_if(std::function<bool()> test, string_type fail)
+{
+    if (!test()) {
+        std::cout << fail << std::endl;
+        return false;
+    }
+    return true;
+}

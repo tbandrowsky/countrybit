@@ -13,32 +13,32 @@ namespace countrybit
 			return strcmp(a.c_str(), b.c_str());
 		}
 
-		int operator<(const string_box& a, const string_box& b)
+		bool operator<(const string_box& a, const string_box& b)
 		{
 			return compare(a, b) < 0;
 		}
 
-		int operator>(const string_box& a, const string_box& b)
+		bool operator>(const string_box& a, const string_box& b)
 		{
 			return compare(a, b) > 0;
 		}
 
-		int operator>=(const string_box& a, const string_box& b)
+		bool operator>=(const string_box& a, const string_box& b)
 		{
 			return compare(a, b) >= 0;
 		}
 
-		int operator<=(const string_box& a, const string_box& b)
+		bool operator<=(const string_box& a, const string_box& b)
 		{
 			return compare(a, b) <= 0;
 		}
 
-		int operator==(const string_box& a, const string_box& b)
+		bool operator==(const string_box& a, const string_box& b)
 		{
 			return compare(a, b) == 0;
 		}
 
-		int operator!=(const string_box& a, const string_box& b)
+		bool operator!=(const string_box& a, const string_box& b)
 		{
 			return compare(a, b) != 0;
 		}
@@ -48,32 +48,32 @@ namespace countrybit
 			return strcmp(a.c_str(), b);
 		}
 
-		int operator<(const string_box& a, const char* b)
+		bool operator<(const string_box& a, const char* b)
 		{
 			return compare(a, b) < 0;
 		}
 
-		int operator>(const string_box& a, const char* b)
+		bool operator>(const string_box& a, const char* b)
 		{
 			return compare(a, b) > 0;
 		}
 
-		int operator>=(const string_box& a, const char* b)
+		bool operator>=(const string_box& a, const char* b)
 		{
 			return compare(a, b) >= 0;
 		}
 
-		int operator<=(const string_box& a, const char* b)
+		bool operator<=(const string_box& a, const char* b)
 		{
 			return compare(a, b) <= 0;
 		}
 
-		int operator==(const string_box& a, const char* b)
+		bool operator==(const string_box& a, const char* b)
 		{
 			return compare(a, b) == 0;
 		}
 
-		int operator!=(const string_box& a, const char* b)
+		bool operator!=(const string_box& a, const char* b)
 		{
 			return compare(a, b) != 0;
 		}
@@ -128,10 +128,23 @@ namespace countrybit
 
 			r = r && assert_if([test1]() { return test1.size() == 4; }, "Size incorrect.");
 			r = r && assert_if([test1]() { return test1 == "1234"; }, "truncation incorrect.");
+
+			countrybit::database::iwstring<5> test2 = L"1234567";
+
+			r = r && assert_if([test2]() { return test2.size() == 4; }, L"Size incorrect.");
+			r = r && assert_if([test2]() { return test2 == L"1234"; }, L"truncation incorrect.");
+
+			r = r && assert_if([test1, test2]() { return test1 == test2; }, L"Equality incorrect.");
+			r = r && assert_if([test1, test2]() { return test2 == test1; }, L"Equality incorrect.");
+
+			test1 = "ABC";
+			test2 = "ABCD";
+
+			r = r && assert_if([test1, test2]() { return test2 > test1; }, L"> incorrect.");
+			r = r && assert_if([test1, test2]() { return test1 < test2; }, L"< incorrect.");
+
 			return r;
 		}
-
-
 	}
 
 }

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "windows.h"
+
 #include <cstdint>
 #include <cstring>
 #include <exception>
@@ -114,6 +116,42 @@ namespace countrybit
 				return sizeof(string_box_data) + length;
 			}
 
+			void copy(const wchar_t* _src, int max_len = -1)
+			{
+				if (max_len < 0)
+					max_len = wcslen(_src);
+
+				if (max_len >= hdr->last_char)
+					max_len = hdr->last_char;
+
+				int result = WideCharToMultiByte(CP_UTF8, 0, _src, max_len, NULL, 0, NULL, NULL);
+				if (result > 0)
+				{
+					while (result > hdr->last_char) 
+					{
+						max_len--;
+						result = WideCharToMultiByte(CP_UTF8, 0, _src, max_len, NULL, 0, NULL, NULL);
+					}
+
+					if (result > 0)
+					{
+						WideCharToMultiByte(CP_UTF8, 0, _src, max_len, hdr->data, result, NULL, NULL);
+						hdr->data[result] = 0;
+						hdr->length = result;
+					}
+					else 
+					{
+						hdr->data[0] = 0;
+						hdr->length = 0;
+					}
+				}
+				else 
+				{
+					hdr->data[0] = 0;
+					hdr->length = 0;
+				}
+			}
+
 			string_box& operator = (const std::string& src)
 			{
 				const char* s = src.c_str();
@@ -128,6 +166,46 @@ namespace countrybit
 			}
 
 			string_box& operator = (const char* s)
+			{
+				copy(s);
+				return *this;
+			}
+
+			string_box& operator = (const std::wstring& src)
+			{
+				const wchar_t* s = src.c_str();
+				copy(s);
+				return *this;
+			}
+
+			template <int len> string_box& operator = (const istring<len>& _src)
+			{
+				copy(_src.c_str());
+				return *this;
+			}
+
+			template <int len> string_box& operator = (const iwstring<len>& _src)
+			{
+				copy(_src.c_str());
+				return *this;
+
+			}
+
+			template <int len> istring<len> to_istring()
+			{
+				istring<len> temp;
+				temp = c_str();
+				return temp;
+			}
+
+			template <int len> iwstring<len> to_iwstring()
+			{
+				iwstring<len> temp;
+				temp = c_str();
+				return temp;
+			}
+
+			string_box& operator = (const wchar_t* s)
 			{
 				copy(s);
 				return *this;
@@ -171,19 +249,19 @@ namespace countrybit
 
 		int get_hash_code(const char* _src);
 		int compare(const string_box& a, const string_box& b);
-		int operator<(const string_box& a, const string_box& b);
-		int operator>(const string_box& a, const string_box& b);
-		int operator>=(const string_box& a, const string_box& b);
-		int operator<=(const string_box& a, const string_box& b);
-		int operator==(const string_box& a, const string_box& b);
-		int operator!=(const string_box& a, const string_box& b);
+		bool operator<(const string_box& a, const string_box& b);
+		bool operator>(const string_box& a, const string_box& b);
+		bool operator>=(const string_box& a, const string_box& b);
+		bool operator<=(const string_box& a, const string_box& b);
+		bool operator==(const string_box& a, const string_box& b);
+		bool operator!=(const string_box& a, const string_box& b);
 		int compare(const string_box& a, const char* b);
-		int operator<(const string_box& a, const char* b);
-		int operator>(const string_box& a, const char* b);
-		int operator>=(const string_box& a, const char* b);
-		int operator<=(const string_box& a, const char* b);
-		int operator==(const string_box& a, const char* b);
-		int operator!=(const string_box& a, const char* b);
+		bool operator<(const string_box& a, const char* b);
+		bool operator>(const string_box& a, const char* b);
+		bool operator>=(const string_box& a, const char* b);
+		bool operator<=(const string_box& a, const char* b);
+		bool operator==(const string_box& a, const char* b);
+		bool operator!=(const string_box& a, const char* b);
 
 		std::string operator+(const string_box& a, const char* b);
 		std::string operator+(const char* b, const string_box& a);
@@ -226,6 +304,31 @@ namespace countrybit
 				return *this;
 			}
 
+			istring(const wchar_t* _src) : last_char(length_wchars - 1)
+			{
+				copy(_src);
+			}
+
+			istring(const std::wstring& src) : last_char(length_wchars - 1)
+			{
+				const wchar_t* s = src.c_str();
+				copy(s);
+			}
+
+			istring& operator = (const std::wstring& src)
+			{
+				const wchar_t* s = src.c_str();
+				copy(s);
+				return *this;
+			}
+
+			istring& operator = (const wchar_t* s)
+			{
+				copy(s);
+				return *this;
+			}
+
+
 			const char* c_str() const
 			{
 				return &data[0];
@@ -241,9 +344,41 @@ namespace countrybit
 				return &data[0];
 			}
 
-			uint16_t size() const
+			uint32_t size() const
 			{
 				return length;
+			}
+
+			void copy(const wchar_t* _src, int max_len = -1)
+			{
+				if (max_len < 0)
+					max_len = wcslen(_src);
+
+				if (max_len >= last_char)
+					max_len = last_char;
+
+				int result = WideCharToMultiByte(CP_UTF8, 0, _src, max_len, NULL, 0, NULL, NULL);
+				if (result > 0)
+				{
+					while (result > last_char) {
+						max_len--;
+						result = WideCharToMultiByte(CP_UTF8, 0, _src, max_len, NULL, 0, NULL, NULL);
+					}
+					if (result > 0)
+					{
+						WideCharToMultiByte(CP_UTF8, 0, _src, max_len, data, result, NULL, NULL);
+						data[result] = 0;
+						length = result;
+					}
+					else {
+						data[0] = 0;
+						length = 0;
+					}
+				}
+				else {
+					data[0] = 0;
+					length = 0;
+				}
 			}
 
 			void copy(const char* s)
@@ -278,32 +413,32 @@ namespace countrybit
 			return strcmp(a.c_str(), b.c_str());
 		}
 
-		template<int l1, int l2> int operator<(const istring<l1>& a, const istring<l2>& b)
+		template<int l1, int l2> bool operator<(const istring<l1>& a, const istring<l2>& b)
 		{
 			return compare(a, b) < 0;
 		}
 
-		template<int l1, int l2> int operator>(const istring<l1>& a, const istring<l2>& b)
+		template<int l1, int l2> bool operator>(const istring<l1>& a, const istring<l2>& b)
 		{
 			return compare(a, b) > 0;
 		}
 
-		template<int l1, int l2> int operator>=(const istring<l1>& a, const istring<l2>& b)
+		template<int l1, int l2> bool operator>=(const istring<l1>& a, const istring<l2>& b)
 		{
 			return compare(a, b) >= 0;
 		}
 
-		template<int l1, int l2> int operator<=(const istring<l1>& a, const istring<l2>& b)
+		template<int l1, int l2> bool operator<=(const istring<l1>& a, const istring<l2>& b)
 		{
 			return compare(a, b) <= 0;
 		}
 
-		template<int l1, int l2> int operator==(const istring<l1>& a, const istring<l2>& b)
+		template<int l1, int l2> bool operator==(const istring<l1>& a, const istring<l2>& b)
 		{
 			return compare(a, b) == 0;
 		}
 
-		template<int l1, int l2> int operator!=(const istring<l1>& a, const istring<l2>& b)
+		template<int l1, int l2> bool operator!=(const istring<l1>& a, const istring<l2>& b)
 		{
 			return compare(a, b) != 0;
 		}
@@ -313,32 +448,32 @@ namespace countrybit
 			return strcmp(a.c_str(), b);
 		}
 
-		template<int l1> int operator<(const istring<l1>& a, const char* b)
+		template<int l1> bool operator<(const istring<l1>& a, const char* b)
 		{
 			return compare(a, b) < 0;
 		}
 
-		template<int l1> int operator>(const istring<l1>& a, const char* b)
+		template<int l1> bool operator>(const istring<l1>& a, const char* b)
 		{
 			return compare(a, b) > 0;
 		}
 
-		template<int l1> int operator>=(const istring<l1>& a, const char* b)
+		template<int l1> bool operator>=(const istring<l1>& a, const char* b)
 		{
 			return compare(a, b) >= 0;
 		}
 
-		template<int l1> int operator<=(const istring<l1>& a, const char* b)
+		template<int l1> bool operator<=(const istring<l1>& a, const char* b)
 		{
 			return compare(a, b) <= 0;
 		}
 
-		template<int l1> int operator==(const istring<l1>& a, const char* b)
+		template<int l1> bool operator==(const istring<l1>& a, const char* b)
 		{
 			return compare(a, b) == 0;
 		}
 
-		template<int l1> int operator!=(const istring<l1>& a, const char* b)
+		template<int l1> bool operator!=(const istring<l1>& a, const char* b)
 		{
 			return compare(a, b) != 0;
 		}
@@ -376,6 +511,321 @@ namespace countrybit
 			output << src.c_str();
 			return output;
 		}
+
+
+		template <int length_wchars> struct iwstring
+		{
+			uint32_t length;
+			int last_char;
+			wchar_t data[length_wchars];
+
+			iwstring() : last_char(length_wchars - 1)
+			{
+
+			}
+
+			iwstring(const char* _src) : last_char(length_wchars - 1)
+			{
+				copy(_src);
+			}
+
+			iwstring(const std::string& src) : last_char(length_wchars - 1)
+			{
+				const char* s = src.c_str();
+				copy(s);
+			}
+
+			iwstring(const wchar_t* _src) : last_char(length_wchars - 1)
+			{
+				copy(_src);
+			}
+
+			iwstring(const std::wstring& src) : last_char(length_wchars - 1)
+			{
+				const wchar_t* s = src.c_str();
+				copy(s);
+			}
+
+			iwstring& operator = (const std::wstring& src)
+			{
+				const wchar_t* s = src.c_str();
+				copy(s);
+				return *this;
+			}
+
+			iwstring& operator = (const wchar_t* s)
+			{
+				copy(s);
+				return *this;
+			}
+
+			iwstring& operator = (const std::string& src)
+			{
+				const char* s = src.c_str();
+				copy(s);
+				return *this;
+			}
+
+			iwstring& operator = (const char* s)
+			{
+				copy(s);
+				return *this;
+			}
+
+			const wchar_t* c_str() const
+			{
+				return &data[0];
+			}
+
+			wchar_t* c_str_w() const
+			{
+				return &data[0];
+			}
+
+			const wchar_t* value() const
+			{
+				return &data[0];
+			}
+
+			uint32_t size() const
+			{
+				return length;
+			}
+
+			void copy(const char* s)
+			{
+				int max_len = strlen(s);
+				if (max_len >= last_char)
+					max_len = last_char;
+
+				int result = MultiByteToWideChar( CP_UT8, 0, _src, max_len, NULL, 0 );
+				if (result > 0) 
+				{
+					while (result > last_char) {
+						max_len--;
+						result = MultiByteToWideChar(CP_UT8, 0, _src, max_len, NULL, 0);
+					}
+					if (result > 0)
+					{
+						MultiByteToWideChar(CP_UT8, 0, _src, max_len, data, result);
+						data[result] = 0;
+						length = result;
+					}
+					else {
+						data[0] = 0;
+						length = 0;
+					}
+				}
+				else {
+					data[0] = 0;
+					length = 0;
+				}
+			}
+
+			void copy(const wchar_t* s)
+			{
+				wchar_t* d = &data[0];
+				int l = 0;
+
+				while (l <= last_char && *s)
+				{
+					*d = *s;
+					l++;
+					s++;
+					d++;
+				}
+
+				if (l <= last_char)
+				{
+					length = l;
+					data[l] = 0;
+				}
+				else
+				{
+					length = last_char;
+					data[last_char] = 0;
+				}
+			}
+
+		};
+
+		template<int l1, int l2> int compare(const iwstring<l1>& a, const iwstring<l2>& b)
+		{
+			return wcscmp(a.c_str(), b.c_str());
+		}
+
+		template<int l1, int l2> bool operator<(const iwstring<l1>& a, const iwstring<l2>& b)
+		{
+			return compare(a, b) < 0;
+		}
+
+		template<int l1, int l2> bool operator>(const iwstring<l1>& a, const iwstring<l2>& b)
+		{
+			return compare(a, b) > 0;
+		}
+
+		template<int l1, int l2> bool operator>=(const iwstring<l1>& a, const iwstring<l2>& b)
+		{
+			return compare(a, b) >= 0;
+		}
+
+		template<int l1, int l2> bool operator<=(const iwstring<l1>& a, const iwstring<l2>& b)
+		{
+			return compare(a, b) <= 0;
+		}
+
+		template<int l1, int l2> bool operator==(const iwstring<l1>& a, const iwstring<l2>& b)
+		{
+			return compare(a, b) == 0;
+		}
+
+		template<int l1, int l2> bool operator!=(const iwstring<l1>& a, const iwstring<l2>& b)
+		{
+			return compare(a, b) != 0;
+		}
+
+		template<int l1> bool compare(const iwstring<l1>& a, const wchar_t* b)
+		{
+			return wcscmp(a.c_str(), b);
+		}
+
+		template<int l1> bool operator<(const iwstring<l1>& a, const wchar_t* b)
+		{
+			return compare(a, b) < 0;
+		}
+
+		template<int l1> bool operator>(const iwstring<l1>& a, const wchar_t* b)
+		{
+			return compare(a, b) > 0;
+		}
+
+		template<int l1> bool operator>=(const iwstring<l1>& a, const wchar_t* b)
+		{
+			return compare(a, b) >= 0;
+		}
+
+		template<int l1> bool operator<=(const iwstring<l1>& a, const wchar_t* b)
+		{
+			return compare(a, b) <= 0;
+		}
+
+		template<int l1> bool operator==(const iwstring<l1>& a, const wchar_t* b)
+		{
+			return compare(a, b) == 0;
+		}
+
+		template<int l1> bool operator!=(const iwstring<l1>& a, const wchar_t* b)
+		{
+			return compare(a, b) != 0;
+		}
+
+		template<int l1> std::wstring operator+(const iwstring<l1>& a, const wchar_t* b)
+		{
+			std::wstring temp = a.c_str();
+			temp += b;
+			return temp;
+		}
+
+		template<int l1> std::wstring operator+(const wchar_t* b, const iwstring<l1>& a)
+		{
+			std::wstring temp = b;
+			temp += a.c_str();
+			return temp;
+		}
+
+		template<int l1> std::wstring operator+(const iwstring<l1>& a, const std::wstring& b)
+		{
+			std::wstring temp = a.c_str();
+			temp += b;
+			return temp;
+		}
+
+		template<int l1> std::wstring operator+(const std::wstring& b, const iwstring<l1>& a)
+		{
+			std::wstring temp = b;
+			temp += a.c_str();
+			return temp;
+		}
+
+		template<int l1> std::ostream& operator <<(std::ostream& output, iwstring<l1>& src)
+		{
+			output << src.c_str();
+			return output;
+		}
+
+
+		template<int l1, int l2> int compare(const iwstring<l1>& a, const istring<l2>& b)
+		{
+			iwstring<l2> temp = b;
+			return wcscmp(a.c_str(), temp.c_str());
+		}
+
+		template<int l1, int l2> bool operator<(const iwstring<l1>& a, const istring<l2>& b)
+		{
+			return compare(a, b) < 0;
+		}
+
+		template<int l1, int l2> bool operator>(const iwstring<l1>& a, const istring<l2>& b)
+		{
+			return compare(a, b) > 0;
+		}
+
+		template<int l1, int l2> bool operator>=(const iwstring<l1>& a, const istring<l2>& b)
+		{
+			return compare(a, b) >= 0;
+		}
+
+		template<int l1, int l2> bool operator<=(const iwstring<l1>& a, const istring<l2>& b)
+		{
+			return compare(a, b) <= 0;
+		}
+
+		template<int l1, int l2> bool operator==(const iwstring<l1>& a, const istring<l2>& b)
+		{
+			return compare(a, b) == 0;
+		}
+
+		template<int l1, int l2> int operator!=(const iwstring<l1>& a, const istring<l2>& b)
+		{
+			return compare(a, b) != 0;
+		}
+
+		template<int l1, int l2> int compare(const istring<l1>& a, const iwstring<l2>& b)
+		{
+			iwstring<l2> temp = a;
+			return wcscmp(a.c_str(), temp.c_str());
+		}
+
+		template<int l1, int l2> bool operator<(const istring<l1>& a, const iwstring<l2>& b)
+		{
+			return compare(a, b) < 0;
+		}
+
+		template<int l1, int l2> bool operator>(const istring<l1>& a, const iwstring<l2>& b)
+		{
+			return compare(a, b) > 0;
+		}
+
+		template<int l1, int l2> bool operator>=(const istring<l1>& a, const iwstring<l2>& b)
+		{
+			return compare(a, b) >= 0;
+		}
+
+		template<int l1, int l2> bool operator<=(const istring<l1>& a, const iwstring<l2>& b)
+		{
+			return compare(a, b) <= 0;
+		}
+
+		template<int l1, int l2> bool operator==(const istring<l1>& a, const iwstring<l2>& b)
+		{
+			return compare(a, b) == 0;
+		}
+
+		template<int l1, int l2> int operator!=(const istring<l1>& a, const iwstring<l2>& b)
+		{
+			return compare(a, b) != 0;
+		}
+
 
 		bool string_tests();
 	}
