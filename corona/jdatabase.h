@@ -34,7 +34,21 @@ namespace countrybit
 			}
 		};
 
-		using jcollection_set = sorted_index<object_name, jcollection_ref, 1>;
+		using collection_table_type = table<jcollection_ref>;
+		using collections_by_name_type = sorted_index<object_name, row_id_type, 1>;
+		using collections_by_id_type = sorted_index<collection_id_type, row_id_type, 1>;
+
+		struct jdatabase_control_map
+		{
+		public:
+			char		file_kind[32];
+			row_id_type schema_location;
+			row_id_type collections_location;
+			row_id_type collections_by_name_location;
+			row_id_type collections_by_id_location;
+		};
+
+		using update_function_type = std::function<void(jdatabase*, jarray&)>;
 
 		class jdatabase_open 
 		{
@@ -57,13 +71,68 @@ namespace countrybit
 
 			object_path filename;
 		};
-		
-		struct jdatabase_control_map
+
+		class jdatabase_get_object
 		{
 		public:
-			char		file_kind[32];
-			row_id_type schema_location;
-			row_id_type collections_location;
+			object_id_type object_id;
+		};
+
+		class jdatabase_put_object
+		{
+		public:
+			object_id_type object_id;
+			jarray_container updated;
+		};
+
+		class jdatabase_update_object
+		{
+		public:
+			object_id_type object_id;
+			update_function_type update_function;
+		};
+
+		class collection_class_type
+		{
+		public:
+			row_id_type			class_id;
+			object_name			class_name;
+		};
+
+		class jdatabase_create_collection
+		{
+		public:
+			object_name collection_name;
+			iarray<collection_class_type, 32> classes;
+		};
+
+		class jdatabase_create_object
+		{
+		public:
+			object_name			collection_name;
+			object_name			class_name;
+			dimensions_type		dim;
+			update_function_type update_function;
+		};
+
+		class jdatabase_file_response : public base_result
+		{
+		public:
+			os_result			result;
+		};
+
+		class jdatabase_collection_response : public base_result
+		{
+		public:
+			collection_id_type	collection_id;
+			os_result			result;
+		};
+
+		class jdatabase_object_response : public base_result
+		{
+		public:
+			object_id_type		object_id;
+			jarray_container	items;
 		};
 
 		class jdatabase
@@ -72,7 +141,9 @@ namespace countrybit
 			dynamic_box						database_box;
 
 			jschema							schema;
-			jcollection_set					collections;
+			collection_table_type			collections;
+			collections_by_name_type		collections_by_name;
+			collections_by_id_type			collections_by_id;
 
 			application						*application;
 			jdatabase_control_map			*map;
@@ -80,11 +151,20 @@ namespace countrybit
 		public:
 
 			jdatabase(system::application* _application);
-
-			task<os_result> open(jdatabase_open _open);
-			task<os_result> create(jdatabase_create _create);
-
 			~jdatabase();
+
+			task<jdatabase_file_response> open(jdatabase_open _open);
+			task<jdatabase_file_response> create(jdatabase_create _create);
+
+			task<jdatabase_collection_response> create_collection(jdatabase_create_collection _create_collection);
+
+			task<jdatabase_object_response> create_object(jdatabase_create_object _request);
+			task<jdatabase_object_response> get_object(jdatabase_get_object _request);
+			task<jdatabase_object_response> put_object(jdatabase_put_object _request);
+			task<jdatabase_object_response> update_object(jdatabase_update_object _request);
+
+			jcollection query(named_query_properties_type& query);
+
 		};
 	}
 };

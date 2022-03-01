@@ -135,11 +135,23 @@ namespace countrybit
 
 			}
 
+			jarray(dynamic_box& _dest, jarray& _src)
+			{
+				schema = _src.schema;
+				class_field_id = _src.class_field_id;
+				auto fld = schema->get_field(class_field_id);
+				_dest.init(fld.size_bytes);
+				bytes = _dest.allocate<char>(fld.size_bytes);
+				std::copy(_src.bytes, _src.bytes + fld.size_bytes, bytes);
+			}
+
 			dimensions_type dimensions();
 
 			jslice get_slice(int x, int y = 0, int z = 0);
 			jslice get_slice(dimensions_type dims);
-
+			uint64_t get_size_bytes();
+			char* get_bytes();
+		
 			class iterator
 			{
 				jarray* base;
@@ -245,6 +257,20 @@ namespace countrybit
 			}
 
 
+		};
+
+		class jarray_container
+		{
+			collection_id_type	collection;
+			dynamic_box			data;
+			jarray				objects;
+
+		public:
+
+			jarray_container();
+			jarray_container(collection_id_type& _collection, jarray& _objects);
+			void set(collection_id_type& _collection, jarray& _objects);
+			jarray& get();
 		};
 
 		class jcollection

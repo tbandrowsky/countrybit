@@ -22,7 +22,7 @@ namespace countrybit
                 istring<50> description;
             };
 
-            test_item items[5] = {
+            test_item objects[5] = {
                 { 0, "hello", "long hello" },
                 { 1, "goodbye", "long goodbye"},
                 { 2, "yes", "you say yes"},
@@ -30,7 +30,7 @@ namespace countrybit
                 { 4, "don't", "i don't why you say goodbye"}
             };
 
-            int s = sizeof(items) / sizeof(test_item);
+            int s = sizeof(objects) / sizeof(test_item);
             r = r && assert_if([s]() { return s == 5; }, "size isn't 5");
 
             using box_type = static_box<10000>;
@@ -42,11 +42,11 @@ namespace countrybit
             auto location = table<test_item>::reserve_table(&box, 20);
             basic = table<test_item>::get_table(&box, location);
 
-            test_item* ti = &items[0];
+            test_item* ti = &objects[0];
 
             for (int i = 0; i < s; i++) {
                 row_range rr;
-                auto nr = basic.insert(items[i], rr);
+                auto nr = basic.insert(objects[i], rr);
                 r = r && assert_if([nr, i, rr]() { return rr.stop - rr.start == 1; }, "size isn't 1");
                 r = r && assert_if([nr, i, ti]() { return ti[i].id == nr.id && ti[i].description == nr.description && ti[i].name == nr.name; }, "item not stored correctly");
             }

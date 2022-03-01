@@ -413,6 +413,34 @@ namespace countrybit
 			return slice;
 		}
 
+		uint64_t jarray::get_size_bytes()
+		{
+			jfield& field = schema->get_field(class_field_id);
+			return field.size_bytes;
+		}
+
+
+		jarray_container::jarray_container()
+		{
+			;
+		}
+
+		jarray_container::jarray_container(collection_id_type& _collection, jarray& _objects)
+		{
+			set(_collection, _objects);
+		}
+
+		void jarray_container::set(collection_id_type& _collection, jarray& _objects)
+		{
+			collection = _collection;
+			objects = jarray(data, _objects);
+		}
+
+		jarray& jarray_container::get()
+		{
+			return objects;
+		}
+
 		//
 
 		void jschema::add_standard_fields() 
@@ -502,7 +530,6 @@ namespace countrybit
 			for (int i = 0; i < sizeof(double_fields) / sizeof(double_fields[0]); i++) {
 				put_double_field(double_fields[i]);
 			}
-
 		}
 
 		bool schema_tests()
@@ -513,7 +540,7 @@ namespace countrybit
 			jschema schema;
 			row_id_type schema_id;
 
-			schema = jschema::create_schema(&box, 10, 200, 500, schema_id);
+			schema = jschema::create_schema(&box, 10, 200, 500, 20, 20, 20, 20, schema_id);
 			schema.add_standard_fields();
 
 			row_id_type quantity_field_id = schema.find_field("quantity");

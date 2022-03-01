@@ -449,7 +449,6 @@ namespace countrybit
 			object_description	class_description;
 			iarray<member_field, max_class_fields> member_fields;
 		};
-
 	}
 }
 
