@@ -79,7 +79,6 @@ namespace countrybit
 				item_type* d = nullptr;
 				if (length < max_items) {
 					d = &data[length];
-					* = t;
 					length++;
 				}
 				return d;

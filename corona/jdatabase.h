@@ -27,11 +27,10 @@ namespace countrybit
 			object_name			collection_name;
 			object_path			collection_file_name;
 			collection_id_type	collection_id;
+			uint64_t			collection_size_bytes;
+			uint32_t			collection_size_items;
 
-			jcollection_ref()
-			{
-
-			}
+			jcollection_ref() = default;
 		};
 
 		using collection_table_type = table<jcollection_ref>;
@@ -46,6 +45,8 @@ namespace countrybit
 			row_id_type collections_location;
 			row_id_type collections_by_name_location;
 			row_id_type collections_by_id_location;
+			object_path database_folder;
+			object_path filename;
 		};
 
 		using update_function_type = std::function<void(jdatabase*, jarray&)>;
@@ -69,7 +70,8 @@ namespace countrybit
 			int num_file_remotes;
 			int num_sql_remotes;
 
-			object_path filename;
+			object_path database_filename;
+			object_path database_folder;
 		};
 
 		class jdatabase_get_object
@@ -102,8 +104,9 @@ namespace countrybit
 		class jdatabase_create_collection
 		{
 		public:
-			object_name collection_name;
-			iarray<collection_class_type, 32> classes;
+			object_name				collection_name;
+			collection_class_type	collection_class;
+			uint32_t				number_of_objects;
 		};
 
 		class jdatabase_create_object
@@ -126,6 +129,12 @@ namespace countrybit
 		public:
 			collection_id_type	collection_id;
 			os_result			result;
+		};
+
+		class jdatabase_size_response : public base_result
+		{
+		public:
+			uint64_t size_bytes;
 		};
 
 		class jdatabase_object_response : public base_result

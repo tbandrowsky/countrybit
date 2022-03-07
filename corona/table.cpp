@@ -46,7 +46,7 @@ namespace countrybit
 
             for (int i = 0; i < s; i++) {
                 row_range rr;
-                auto nr = basic.insert(objects[i], rr);
+                auto nr = basic.append(objects[i], rr);
                 r = r && assert_if([nr, i, rr]() { return rr.stop - rr.start == 1; }, "size isn't 1");
                 r = r && assert_if([nr, i, ti]() { return ti[i].id == nr.id && ti[i].description == nr.description && ti[i].name == nr.name; }, "item not stored correctly");
             }

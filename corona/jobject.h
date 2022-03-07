@@ -9,16 +9,19 @@ namespace countrybit
 	namespace database
 	{
 
+		bool init_collection_id(collection_id_type& collection_id);
 
 		// a store id is in fact, a guid
 
 		class jclass_header
 		{
 		public:
-			row_id_type						class_id;
-			object_name						name;
-			object_description				description;
-			uint64_t						class_size_bytes;
+			row_id_type									class_id;
+			object_name									name;
+			object_description							description;
+			row_id_type									ancestor_class_id;
+			uint64_t									class_size_bytes;
+			row_id_type									ancestry_id;
 		};
 
 		class jclass_field
@@ -28,7 +31,6 @@ namespace countrybit
 			uint64_t				offset;
 		};
 
-		using jclass_table = parent_child_table<jclass_header, jclass_field>;
 		using jclass = parent_child_holder<jclass_header, jclass_field>;
 
 		struct jschema_map
@@ -41,6 +43,7 @@ namespace countrybit
 			row_id_type sql_properties_id;
 			row_id_type file_properties_id;
 			row_id_type http_properties_id;
+			row_id_type ancestry_id;
 		};
 
 		class jcollection_map
@@ -409,6 +412,7 @@ namespace countrybit
 
 			using field_store_type = table<jfield>;
 			using class_store_type = parent_child_table<jclass_header, jclass_field>;
+			using ancestry_store_type = parent_child_table<row_id_type, row_id_type>;
 			using class_index_type = sorted_index<object_name, row_id_type>;
 			using field_index_type = sorted_index<object_name, row_id_type>;
 			using query_store_type = table<named_query_properties_type>;
@@ -418,12 +422,20 @@ namespace countrybit
 
 			field_store_type		fields;
 			class_store_type		classes;
+			ancestry_store_type		ancestry;
 			class_index_type		classes_by_name;
 			field_index_type		fields_by_name;
 			query_store_type		queries;
 			sql_store_type			sql_remotes;
 			file_store_type			file_remotes;
 			http_store_type			http_remotes;
+
+			void add_line(row_id_type _ancestor_class, row_id_type _descendant_class)
+			{
+				auto pcr = classes[_ancestor_class];
+				auto& p = pcr.parent();				
+				auto ac = ancestry.get(p.ancestor_class_id);
+			}
 
 		public:
 
@@ -439,8 +451,9 @@ namespace countrybit
 			static row_id_type reserve_schema(B *_b, int _num_classes, int _num_fields, int _num_class_fields, int _num_queries, int _num_sql_remotes, int _num_http_remotes, int _num_file_remotes)
 			{
 				jschema_map schema_map, *pschema_map;
-				schema_map.classes_table_id = null_row;
 				schema_map.fields_table_id = null_row;
+				schema_map.classes_table_id = null_row;
+				schema_map.class_ancestry_id = null_row;
 				schema_map.classes_by_name_id = null_row;
 				schema_map.fields_by_name_id = null_row;
 				schema_map.query_properties_id = null_row;
@@ -451,8 +464,9 @@ namespace countrybit
 				row_id_type rit = _b->pack(schema_map);
 				pschema_map = _b->unpack<jschema_map>(rit);
 				pschema_map->fields_table_id = field_store_type::reserve_table(_b, _num_fields);
+				pschema_map->classes_table_id = class_store_type::reserve_table(_b, _num_classes, _num_class_fields);
+				pschema_map->class_ancestry_id = ancestry_store_type::reserve_table(_b, _num_classes, _num_class_fields);
 				pschema_map->classes_by_name_id = field_index_type::reserve_sorted_index(_b, _num_classes);
-				pschema_map->classes_table_id = class_store_type::reserve_table(_b, _num_classes, _num_class_fields );
 				pschema_map->fields_by_name_id = class_index_type::reserve_sorted_index(_b, _num_fields);
 				pschema_map->query_properties_id = query_store_type::reserve_table(_b, _num_queries);
 				pschema_map->sql_properties_id = sql_store_type::reserve_table(_b, _num_sql_remotes);
@@ -472,12 +486,15 @@ namespace countrybit
 				jschema schema;
 				jschema_map *pschema_map;
 				pschema_map = _b->unpack<jschema_map>(_row);
-				schema.classes = class_store_type::get_table(_b, pschema_map->classes_table_id);
 				schema.fields = field_store_type::get_table(_b, pschema_map->fields_table_id);
+				schema.classes = class_store_type::get_table(_b, pschema_map->classes_table_id);
+				schema.ancestry = ancestry_store_type::get_table(_b, pschema_map->ancestry_id);
 				schema.classes_by_name = class_index_type::get_sorted_index(_b, pschema_map->classes_by_name_id);
 				schema.fields_by_name = field_index_type::get_sorted_index(_b, pschema_map->fields_by_name_id);
-				schema.query_projections_id = projection_store_type::reserve_table(_b, pschema_map->query_projections_id);
-				schema.query_filters_id = filter_store_type::reserve_table(_b, pschema_map->query_filters_id);
+				schema.queries = query_store_type::get_table(_b, pschema_map->query_properties_id);
+				schema.sql_remotes = sql_store_type::get_table(_b, pschema_map->sql_properties_id);
+				schema.file_remotes = file_store_type::get_table(_b, pschema_map->file_properties_id);
+				schema.http_remotes = file_store_type::get_table(_b, pschema_map->http_properties_id);
 				return schema;
 			}
 
@@ -485,11 +502,14 @@ namespace countrybit
 			{
 				int64_t field_size = field_store_type::get_box_size(_num_fields);
 				int64_t class_size = class_store_type::get_box_size(_num_fields, _num_class_fields);
+				int64_t ancestry_size = ancestry_store_type::get_box_size(_num_fields, _num_class_fields);
+				int64_t classes_by_name_size = class_index_type::get_box_size(_num_classes);
+				int64_t fields_by_name_size = field_index_type::get_box_size(_num_fields);
 				int64_t query_size = query_store_type::get_box_size(_num_queries);
 				int64_t sql_size = sql_store_type::get_box_size(_num_sql_remotes);
-				int64_t http_size = sql_store_type::get_box_size(_num_http_remotes);
-				int64_t file_size = sql_store_type::get_box_size(_num_file_remotes);
-				int64_t total_size = field_size + class_size + query_size + sql_size + http_size + file_size;
+				int64_t http_size = http_store_type::get_box_size(_num_http_remotes);
+				int64_t file_size = file_store_type::get_box_size(_num_file_remotes);
+				int64_t total_size = field_size + class_size + ancestry_size + classes_by_name_size + fields_by_name_size + query_size + sql_size + http_size + file_size;
 				return total_size;
 			}
 
@@ -662,7 +682,7 @@ namespace countrybit
 				query_properties_type options;
 				row_range rr;
 
-				queries.insert(request.options, rr);
+				queries.append(request.options, rr);
 				options.properties_id = rr.start;
 
 				return put_field(request.name.field_id, type_query, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, &options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(query_instance));
@@ -673,7 +693,7 @@ namespace countrybit
 				sql_properties_type options;
 				row_range rr;
 
-				sql_remotes.insert(request.options, rr);
+				sql_remotes.append(request.options, rr);
 				options.properties_id = rr.start;
 
 				return put_field(request.name.field_id, type_sql, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &options, nullptr, nullptr, sizeof(sql_remote_instance));
@@ -684,7 +704,7 @@ namespace countrybit
 				http_properties_type options;
 				row_range rr;
 
-				http_remotes.insert(request.options, rr);
+				http_remotes.append(request.options, rr);
 				options.properties_id = rr.start;
 
 				return put_field(request.name.field_id, type_sql, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &options, sizeof(http_remote_instance));
@@ -695,7 +715,7 @@ namespace countrybit
 				file_properties_type options;
 				row_range rr;
 
-				file_remotes.insert(request.options, rr);
+				file_remotes.append(request.options, rr);
 				options.properties_id = rr.start;
 
 				return put_field(request.name.field_id, type_sql, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &options, nullptr, sizeof(file_remote_instance));
@@ -742,13 +762,27 @@ namespace countrybit
 					request.class_id = class_id;
 				}
 
+				row_id_type ancestor_class_id = null_row;
+				
+				if (request.ancestor_class_name > "") 
+				{
+					ancestor_class_id = find_class(request.ancestor_class_name);
+					if (ancestor_class_id == null_row) {
+						return null_row;
+					}
+				}
+
 				auto pcr = classes.create_at(request.class_id, sz);
 				auto& p = pcr.parent();
 
 				p.class_id = pcr.row_id();
 				p.name = request.class_name;
 				p.description = request.class_description;
-				p.class_size_bytes = 0;
+				p.class_size_bytes = 0;			
+				p.ancestor_class_id = ancestor_class_id;
+				auto apcr = ancestry.create_at(p.class_id, 1);
+				apcr.child(0) = null_row;
+				p.ancestry_id = apcr.row_id();
 
 				for (int i = 0; i < pcr.size(); i++)
 				{
@@ -832,13 +866,34 @@ namespace countrybit
 				return the_field;
 			}
 
+			uint64_t estimate_collection_size(int _number_of_objects, int* _class_field_ids)
+			{
+				if (!_class_field_ids)
+				{
+					return 0;
+				}
+
+				int max_size = 0;
+				while (*_class_field_ids != null_row)
+				{
+					auto myclassfield = get_field(*_class_field_ids);
+					if (myclassfield.size_bytes > max_size) {
+						max_size = myclassfield.size_bytes;
+					}
+					_class_field_ids++;
+				}
+
+				return max_size;
+			}
+
 			template <typename B>
 			requires (box<B, jcollection_map>)
 			row_id_type reserve_collection(B* _b, collection_id_type _collection_id, int _number_of_objects, int* _class_field_ids)
 			{
-				if (!_class_field_ids)
+				uint64_t max_size = estimate_collection_size(_number_of_objects, _class_field_ids);
+				if (!max_size)
 				{
-					throw std::invalid_argument("cannot create collection with 0 class size");
+					return null_row;
 				}
 
 				int max_size = 0;
@@ -853,7 +908,7 @@ namespace countrybit
 
 				if (!max_size)
 				{
-					throw std::invalid_argument("cannot create collection with 0 class size");
+					return null_row;
 				}
 
 				jcollection_map jcm;

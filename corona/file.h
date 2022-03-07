@@ -8,7 +8,9 @@
 
 namespace countrybit
 {
-	namespace system {
+	namespace system 
+	{
+		using file_path = countrybit::database::istring<260>;
 
 		class file_instance
 		{
@@ -75,8 +77,6 @@ namespace countrybit
 			open_existing,
 			open_always
 		};
-
-		using file_path = countrybit::database::istring<260>;
 
 		class file
 		{

@@ -447,6 +447,8 @@ namespace countrybit
 			row_id_type			class_id;
 			object_name			class_name;
 			object_description	class_description;
+			object_name			ancestor_class_name;
+			row_id_type			ancestor_class_id;
 			iarray<member_field, max_class_fields> member_fields;
 		};
 	}

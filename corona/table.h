@@ -12,10 +12,16 @@ namespace countrybit
 
 		struct row_range 
 		{
-			row_id_type start;
-			row_id_type stop;
+			row_id_type			start;
+			row_id_type			stop;
+			row_id_type			reserved_stop;
 
 			row_id_type size() { return stop - start;  }
+
+			bool success() const 
+			{
+				return start != null_row && stop != null_row;
+			}
 		};
 
 		template <typename P, typename C> class parent_child_holder
@@ -24,14 +30,16 @@ namespace countrybit
 			C* the_children;
 			row_id_type id;
 			row_id_type length;
+			row_id_type base;
 
 		public:
 
-			parent_child_holder(P* _parent, C* _children, row_id_type _id, row_id_type _length) :
+			parent_child_holder(P* _parent, C* _children, row_id_type _id, row_id_type _length, row_id_type _begin = 0) :
 				the_parent(_parent),
 				the_children(_children),
 				id(_id),
-				length(_length)
+				length(_length),
+				base(_begin)
 			{
 				;
 			}
@@ -40,7 +48,8 @@ namespace countrybit
 				the_parent(nullptr),
 				the_children(nullptr),
 				id(null_row),
-				length(0)
+				length(0),
+				base(0)
 			{
 				;
 			}
@@ -81,9 +90,19 @@ namespace countrybit
 				return id;
 			}
 
+			size_t get_base() const
+			{
+				return base;
+			}
+
 			size_t size() const
 			{
 				return length;
+			}
+
+			bool success() const
+			{
+				return the_parent != nullptr && the_children != nullptr;
 			}
 		};
 
@@ -165,48 +184,116 @@ namespace countrybit
 				return t;
 			}
 
-			row_range create(row_id_type count)
+			row_range create(uint32_t count)
 			{
 				auto x = hdr->last_row + count;
-				if (x > hdr->max_rows)
-					throw std::logic_error("table full");
+				if (x > hdr->max_rows) 
+				{
+					row_range err = { null_row, null_row, null_row };
+					return err;
+				}
 
 				row_range rr;
 				rr.start = hdr->last_row;
 				rr.stop = x;
+				rr.reserved_stop = x;
 				hdr->last_row = x;
 				return rr;
 			}
 
-			T& create(row_id_type count, row_range &rr)
+			T& create(uint32_t count, row_range &rr)
 			{
 				auto x = hdr->last_row + count;
-				if (x > hdr->max_rows)
-					throw std::logic_error("table full");
+				if (x > hdr->max_rows) {
+					rr = { null_row, null_row, null_row };
+					return hdr->rows[0];
+				}
 
 				rr.start = hdr->last_row;
 				rr.stop = x;
+				rr.reserved_stop = x;
 				hdr->last_row = x;
 				return hdr->rows[rr.start];
 			}
 
-			T& insert(T& src, row_range& rr)
+			bool copy_rows(int start, int stop, int shift)
+			{
+				if (start > stop || start < 0 || stop < 0 || start > max() || stop > max())
+				{
+					return false;
+				}
+
+				int new_stop = stop + shift;
+
+				if (new_stop > max())
+					return false;
+				if (new_stop < 0)
+					return false;
+
+				int i, k;
+
+				if (shift > 0)
+				{
+					for (i = stop - 1, k = new_stop - 1; i >= start; i--, k--)
+					{
+						hdr->rows[k] = hdr->rows[i];
+					}
+				}
+				else if (shift < 0)
+				{
+					for (i = start, k = start + shift; i < stop; i++, k++)
+					{
+						hdr->rows[k] = hdr->rows[i];
+					}
+				}
+
+				if (new_stop > hdr->last_row) 
+				{
+					hdr->last_row = new_stop;
+				}
+
+				return true;
+			}
+
+			T& insert(row_id_type index, uint32_t count, row_range& rr)
+			{
+				auto x = hdr->last_row + count;
+				if (x > hdr->max_rows) {
+					rr = { null_row, null_row, null_row };
+					return hdr->rows[0];
+				}
+
+				rr.start = index;
+				rr.stop = index + count;
+				rr.reserved_stop = index + count;
+
+				copy_rows(index + 1, hdr->last_row + 1, count);
+
+				hdr->last_row = x;
+				return hdr->rows[rr.start];
+			}
+
+			T& append(T& src, row_range& rr)
 			{
 				auto x = hdr->last_row + 1;
-				if (x > hdr->max_rows)
-					throw std::logic_error("table full");
+				if (x > hdr->max_rows) {
+					rr = { null_row, null_row, null_row };
+					return hdr->rows[0];
+				}
 
 				rr.start = hdr->last_row;
 				rr.stop = x;
+				rr.reserved_stop = x;
 				hdr->last_row = x;
 				hdr->rows[rr.start] = src;
 				return hdr->rows[rr.start];
 			}
 
+
 			T& get_at(row_id_type& r)
 			{
-				if (r == null_row || r >= hdr->max_rows)
-					throw std::logic_error("invalid row id");
+				if (r == null_row || r >= hdr->max_rows || r < 0)
+					throw std::invalid_argument("invalid row id");
 
 				if (r > hdr->last_row)
 				{
@@ -224,6 +311,11 @@ namespace countrybit
 			row_id_type size() const
 			{
 				return hdr->last_row;
+			}
+
+			row_id_type max() const
+			{
+				return hdr->max_rows;
 			}
 
 			class iterator
@@ -342,6 +434,25 @@ namespace countrybit
 			table<parent_child> parents;
 			table<C> children;
 
+			bool move_child(row_id_type location, int shift)
+			{
+				auto pcr = parents.get_at(location);
+				auto& pc = parents[pcr.start];
+				row_range new_pos{ pc.children.start + shift, pc.children.stop + shift, pc.children.reserved_stop + shift };
+
+				if (new_pos.reserved_stop >= children.size())
+				{
+					return false;
+				}
+
+				bool success = children.copy_rows(pc.children.start, pc.children.stop, shift);
+				if (success)
+				{
+					pc.children = new_pos;
+				}
+				return success;
+			}
+
 		public:
 
 			parent_child_table()
@@ -388,9 +499,16 @@ namespace countrybit
 			parent_child_holder<P, C> create(row_id_type child_count)
 			{
 				auto pcr = parents.create(1);
-				auto& pc = parents[pcr.start];
-				pc.children = children.create(child_count);
-				return parent_child_holder<P, C>(&pc.parent, &children[pc.children.start], pcr.start, child_count);
+				if (pcr.success()) 
+				{
+					auto& pc = parents[pcr.start];
+					pc.children = children.create(child_count);
+					return parent_child_holder<P, C>(&pc.parent, &children[pc.children.start], pcr.start, child_count);
+				}
+				else 
+				{
+					return parent_child_holder<P, C>(nullptr, nullptr, 0, 0);
+				}
 			}
 
 			parent_child_holder<P, C> create_at(row_id_type location, row_id_type child_count)
@@ -403,6 +521,57 @@ namespace countrybit
 				auto& pc = parents[pcr.start];
 				pc.children = children.create(child_count);
 				return parent_child_holder<P, C>(&pc.parent, &children[pc.children.start], pcr.start, child_count);
+			}
+
+			parent_child_holder<P, C> append_child(row_id_type location, int add_child_count)
+			{
+				if (location == null_row)
+				{
+					return create(add_child_count);
+				}
+
+				auto pcr = parents.get_at(location);
+				parent_child& pc = parents[pcr.start];
+
+				if (pc.start == 0 && pc.stop == 0 && pc.reserved_stop == 0)
+				{
+					throw std::invalid_argument("can't extend an uncreated");
+				}
+
+				row_id_type new_base = pc.children.stop;
+
+				row_id_type capacity_in_node = pc.children.reserved_stop - pc.children.start;
+				if (capacity_in_node >= add_child_count)
+				{
+					pc.children.stop = pc.children.stop + add_child_count;
+				}
+				else
+				{
+					int capacity_ask = capacity_in_node + add_child_count;
+					int capacity_allocate = 1;
+					while (capacity_allocate < capacity_ask)
+						capacity_allocate *= 2;
+
+					row_id_type new_stop = pc.children.start + capacity_allocate;
+					row_id_type shift = new_stop - pc.children.reserved_stop;
+
+					if (new_stop < children.max()) 
+					{
+						for (row_id_type i = size()-1; i > location; i--) 
+						{
+							move_child(i, shift);
+						}
+
+						pc.children.reserved_stop = new_stop;
+						pc.children.stop += add_child_count;
+					}
+					else 
+					{
+						return parent_child_holder<P, C>(nullptr, nullptr, nullptr, 0);
+					}
+				}
+
+				return parent_child_holder<P, C>(&pc.parent, &children[pc.children.start], pcr.start, new_base);
 			}
 
 			parent_child_holder<P, C> operator[](row_id_type row_id)
@@ -426,9 +595,14 @@ namespace countrybit
 				return table<parent_child>::get_box_size(_parent_rows) + table<C>::get_box_size(_child_rows);
 			}
 
-			row_id_type size()
+			row_id_type size() const
 			{
 				return parents.size();
+			}
+
+			row_id_type max() const
+			{
+				return parents.max();
 			}
 
 		};

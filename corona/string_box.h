@@ -27,6 +27,22 @@ namespace countrybit
 			char data[1];
 		};
 
+		bool has_any(const char* _src, const char* _charlist)
+		{
+			for (const char *s = _src; *s; s++) 
+			{
+				for (const char* c = _charlist; *c; c++)
+				{
+					if (*c == *s) return true;
+				}
+			}
+			return false;
+		}
+
+		template <int len> class istring;
+		template <int len> class iwstring;
+
+
 		class string_box
 		{
 
@@ -178,19 +194,6 @@ namespace countrybit
 				return *this;
 			}
 
-			template <int len> string_box& operator = (const istring<len>& _src)
-			{
-				copy(_src.c_str());
-				return *this;
-			}
-
-			template <int len> string_box& operator = (const iwstring<len>& _src)
-			{
-				copy(_src.c_str());
-				return *this;
-
-			}
-
 			template <int len> istring<len> to_istring()
 			{
 				istring<len> temp;
@@ -244,6 +247,11 @@ namespace countrybit
 					i++;
 				}
 				return true;
+			}
+
+			bool has_any(const char* _pattern)
+			{
+				return countrybit::database::has_any(hdr->data, _pattern);
 			}
 		};
 
@@ -304,12 +312,12 @@ namespace countrybit
 				return *this;
 			}
 
-			istring(const wchar_t* _src) : last_char(length_wchars - 1)
+			istring(const wchar_t* _src) 
 			{
 				copy(_src);
 			}
 
-			istring(const std::wstring& src) : last_char(length_wchars - 1)
+			istring(const std::wstring& src)
 			{
 				const wchar_t* s = src.c_str();
 				copy(s);
@@ -404,6 +412,11 @@ namespace countrybit
 					length = last_char;
 					data[last_char] = 0;
 				}
+			}
+
+			bool has_any(const char* _pattern)
+			{
+				return countrybit::database::has_any(data, _pattern);
 			}
 
 		};
@@ -598,16 +611,16 @@ namespace countrybit
 				if (max_len >= last_char)
 					max_len = last_char;
 
-				int result = MultiByteToWideChar( CP_UT8, 0, _src, max_len, NULL, 0 );
+				int result = MultiByteToWideChar( CP_UTF8, 0, s, max_len, NULL, 0 );
 				if (result > 0) 
 				{
 					while (result > last_char) {
 						max_len--;
-						result = MultiByteToWideChar(CP_UT8, 0, _src, max_len, NULL, 0);
+						result = MultiByteToWideChar(CP_UTF8, 0, s, max_len, NULL, 0);
 					}
 					if (result > 0)
 					{
-						MultiByteToWideChar(CP_UT8, 0, _src, max_len, data, result);
+						MultiByteToWideChar(CP_UTF8, 0, s, max_len, data, result);
 						data[result] = 0;
 						length = result;
 					}

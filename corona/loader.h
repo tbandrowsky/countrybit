@@ -406,7 +406,7 @@ namespace countrybit
 				em.error = _error;
 				em.obj = _obj;
 				em.line_number = _obj->line;
-				error_messages.insert(em, rr);
+				error_messages.append(em, rr);
 			}
 
 			void put_error(errors _error, const char *_name, int _line = 0)
@@ -417,7 +417,7 @@ namespace countrybit
 				em.obj = nullptr;
 				em.name = _name;
 				em.line_number = _line;
-				error_messages.insert(em, rr);
+				error_messages.append(em, rr);
 			}
 
 			typeinfo* create_typeinfo(

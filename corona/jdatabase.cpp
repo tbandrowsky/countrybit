@@ -1,7 +1,7 @@
 
 #include "jdatabase.h"
 
-
+#include <filesystem>
 
 namespace countrybit 
 {
@@ -48,16 +48,23 @@ namespace countrybit
 			int64_t collection_by_id_bytes = collections_by_id_type::get_box_size(_create.num_collections);
 
 			database_box.init(collection_size_bytes + schema_size_bytes + collection_by_name_bytes + collection_by_id_bytes + sizeof(jdatabase_control_map));
+			map = database_box.allocate<jdatabase_control_map>(1);
 
-			countrybit::system::file dbfile = application->create_file(_create.filename.c_str());
+			std::filesystem::path dbpath = _create.database_filename.c_str();
+			std::filesystem::path dbfolder = dbpath.parent_path();
+
+			map->filename = dbpath;
+			map->database_folder = dbfolder;
+
+			schema = jschema::create_schema(&database_box, _create.num_classes, _create.num_fields, _create.num_class_fields, _create.num_queries, _create.num_sql_remotes, _create.num_http_remotes, _create.num_http_remotes, map->schema_location);
+			schema.add_standard_fields();
+			collections = collection_table_type::create_table(&database_box, _create.num_collections, map->collections_location);
+			collections_by_id = collections_by_id_type::create_sorted_index(&database_box, _create.num_collections, map->collections_by_id_location);
+			collections_by_name = collections_by_name_type::create_sorted_index(&database_box, _create.num_collections, map->collections_by_name_location);
+
+			countrybit::system::file dbfile = application->create_file(_create.database_filename);
 
 			if (dbfile.success()) {
-				map = database_box.allocate<jdatabase_control_map>(1);
-				schema = jschema::create_schema(&database_box, _create.num_classes, _create.num_fields, _create.num_class_fields, _create.num_queries, _create.num_sql_remotes, _create.num_http_remotes, _create.num_http_remotes, map->schema_location);
-				schema.add_standard_fields();
-				collections = collection_table_type::create_table(&database_box, _create.num_collections, map->collections_location);
-				collections_by_id = collections_by_id_type::create_sorted_index(&database_box, _create.num_collections, map->collections_by_id_location);
-				collections_by_name = collections_by_name_type::create_sorted_index(&database_box, _create.num_collections, map->collections_by_name_location);
 				auto result = co_await dbfile.write(0, database_box.data(), database_box.size());
 			}
 
@@ -69,7 +76,61 @@ namespace countrybit
 
 		task<jdatabase_collection_response> jdatabase::create_collection(jdatabase_create_collection _create_collection)
 		{
+			jdatabase_collection_response response;
 
+			if (_create_collection.collection_name.has_any("./\\:"))
+			{
+				response.success = false;
+				response.message = "Invalid collection name.  Collection names may not contain path characters.";
+				co_return response;
+			}
+
+			auto iter = collections_by_name[_create_collection.collection_name];
+
+			if (iter != std::end(collections_by_name)) 
+			{
+				response.success = false;
+				response.message = "Collection exists";
+				co_return response;
+			}
+
+			row_id_type  clsid = schema.find_class(_create_collection.collection_class.class_name);
+			if (clsid == null_row) 
+			{
+				response.success = false;
+				response.message = "Class is not defined.";
+				co_return response;
+			}
+
+			row_id_type classes[2] = { clsid, null_row };
+			uint64_t box_size = schema.estimate_collection_size(_create_collection.number_of_objects, classes);
+
+			if (box_size == null_row) 
+			{
+				response.success = false;
+				response.message = "Could not estimate collection size.";
+				co_return response;
+			}
+
+			collection_id_type colid;
+			if (!init_collection_id(colid)) 
+			{
+				response.success = false;
+				response.message = "Could not create collection id.";
+				co_return response;
+			}
+
+			row_range rr;
+			jcollection_ref& jref = collections.create(1, rr);
+			jref.collection_size_bytes = box_size;
+			jref.collection_name = _create_collection.collection_name;
+			jref.collection_id = colid;
+			std::filesystem::path collection_path = map->database_folder.c_str();
+			collection_path /= jref.collection_name.c_str();
+			collection_path /= ".corc";
+			jref.collection_file_name = collection_path;
+
+			co_return response;
 		}
 
 		task<jdatabase_object_response> jdatabase::create_object(jdatabase_create_object _request)
