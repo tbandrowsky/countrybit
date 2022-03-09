@@ -34,7 +34,10 @@ namespace countrybit
 			return t;
 		}
 
-		sql_remote_instance sql_remote_box::value() const { return instance.get_value(); }
+		sql_remote_instance sql_remote_box::value()
+		{
+			return instance.get_value(); 
+		}
 
 	}
 }

@@ -11,6 +11,15 @@ namespace countrybit
 
 		bool init_collection_id(collection_id_type& collection_id);
 
+		class jlist_header
+		{
+		public:
+			int32_t   allocated;
+			int32_t   selection_offset;
+			int32_t   slice_offset;
+			char	  bytes[];
+		};
+
 		// a store id is in fact, a guid
 
 		class jclass_header
@@ -62,6 +71,7 @@ namespace countrybit
 
 		class jschema;
 		class jarray;
+		class jlist;
 
 		class jslice
 		{
@@ -105,6 +115,7 @@ namespace countrybit
 			time_box get_time(int field_idx);
 			string_box get_string(int field_idx);
 			jarray get_object(int field_idx);
+			jlist get_list(int field_idx);
 			collection_id_box get_collection_id(int field_idx);
 			object_id_box get_object_id(int field_idx);
 			point_box get_point(int field_idx);
@@ -258,8 +269,6 @@ namespace countrybit
 				auto temp = this->dimensions();
 				return iterator(this, temp);
 			}
-
-
 		};
 
 		class jarray_container
@@ -274,6 +283,153 @@ namespace countrybit
 			jarray_container(collection_id_type& _collection, jarray& _objects);
 			void set(collection_id_type& _collection, jarray& _objects);
 			jarray& get();
+		};
+
+		using selection_flag_type = uint32_t;
+
+		class jlist
+		{
+			jschema* schema;
+			row_id_type class_field_id;
+			jlist_header* data;
+			uint32_t* selections;
+			char* slices;
+
+		public:
+
+			jlist() : schema(nullptr), class_field_id(null_row), data(nullptr)
+			{
+				;
+			}
+
+			jlist(jschema* _schema, row_id_type _class_field_id, char* _bytes, bool _init = false) : schema(_schema), class_field_id(_class_field_id)
+			{
+				data = (jlist_header*)_bytes;
+				jfield & field = schema->get_field(class_field_id);
+				dimensions_type& dim = field.object_properties.dim;
+				if (_init) {
+					data->selection_offset = 0;
+					data->slice_offset = sizeof(selection_flag_type) * dim.x;
+					data->allocated = 0;
+				}
+				selections = (selection_flag_type *)(char*)(data->bytes + data->selection_offset);
+				slices = (char*)(data->bytes + data->slice_offset);
+			}
+
+			jlist(dynamic_box& _dest, jlist& _src)
+			{
+				schema = _src.schema;
+				class_field_id = _src.class_field_id;
+				auto fld = schema->get_field(class_field_id);
+				_dest.init(fld.size_bytes);
+				data = (jlist_header *)_dest.allocate<char>(fld.size_bytes);
+				std::copy((char *)_src.data, (char*)_src.data + fld.size_bytes, (char*)data);
+			}
+
+			uint32_t capacity();
+			uint32_t size();
+
+			jslice get_slice(int x);
+			bool erase_slice(int x);
+
+			jslice append_slice();
+			bool select_slice(int x);
+			bool deselect_slice(int x);
+			void deselect_all();
+			void select_all();
+
+			uint64_t get_size_bytes();
+			char* get_bytes();
+
+			class iterator
+			{
+				jlist* base;
+				uint32_t current;
+
+			public:
+				using iterator_category = std::forward_iterator_tag;
+				using difference_type = std::ptrdiff_t;
+				using value_type = jslice;
+				using pointer = jslice*;  // or also value_type*
+				using reference = jslice&;  // or also value_type&
+
+				iterator(jlist* _base, uint32_t _current) :
+					base(_base),
+					current(_current)
+				{
+					;
+				}
+
+				iterator() : base(nullptr), current(0)
+				{
+
+				}
+
+				iterator& operator = (const iterator& _src)
+				{
+					base = _src.base;
+					current = _src.current;
+					return *this;
+				}
+
+				inline jslice operator *()
+				{
+					return base->get_slice(current);
+				}
+
+				inline jslice operator->()
+				{
+					return base->get_slice(current);
+				}
+
+				inline iterator begin() const
+				{
+					return iterator(base, current);
+				}
+
+				inline iterator end()
+				{
+					return iterator(base, base->capacity());
+				}
+
+				inline iterator operator++()
+				{
+					current++;
+					if (current > base->capacity()) 
+					{
+						current = base->capacity();
+					}
+					return iterator(base, current);
+				}
+
+				inline iterator operator++(int)
+				{
+					iterator tmp(*this);
+					operator++();
+					return tmp;
+				}
+
+				bool operator == (const iterator& _src) const
+				{
+					return _src.current == current;
+				}
+
+				bool operator != (const iterator& _src)
+				{
+					return _src.current != current;
+				}
+
+			};
+
+			inline iterator begin()
+			{
+				return iterator(this, 0);
+			}
+
+			inline iterator end()
+			{
+				return iterator(this, capacity());
+			}
 		};
 
 		class jcollection
@@ -430,11 +586,16 @@ namespace countrybit
 			file_store_type			file_remotes;
 			http_store_type			http_remotes;
 
-			void add_line(row_id_type _ancestor_class, row_id_type _descendant_class)
+			void add_ancestor_descendant(row_id_type _ancestor_class, row_id_type _descendant_class)
 			{
-				auto pcr = classes[_ancestor_class];
-				auto& p = pcr.parent();				
-				auto ac = ancestry.get(p.ancestor_class_id);
+				while (_ancestor_class != null_row) 
+				{
+					auto pcr = classes[_ancestor_class];
+					auto& p = pcr.parent();
+					auto ac = ancestry.get(p.ancestry_id);
+					ancestry.append_child(ac.row_id(), 1);
+					_ancestor_class = p.ancestor_class_id;
+				}
 			}
 
 		public:
@@ -652,7 +813,7 @@ namespace countrybit
 				}
 			}
 
-			void get_class_field_name( object_name& _dest, object_name& _class_name, dimensions_type& _dim )
+			void get_class_field_name( object_name& _dest, object_name _class_name, dimensions_type& _dim )
 			{
 				_dest = _class_name + "[" + std::to_string(_dim.x) + "," + std::to_string(_dim.y) + "," + std::to_string(_dim.z) + "]";
 			}
@@ -670,6 +831,26 @@ namespace countrybit
 				get_class_field_name(field_name, pcr.pparent()->name, request.options.dim);
 				request.options.total_size_bytes = request.options.dim.x * request.options.dim.y * request.options.dim.z * sizeb ;
 				return put_field(request.name.field_id, type_object, field_name, request.name.description, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, request.options.total_size_bytes);
+			}
+
+			row_id_type put_list_field(put_object_field_request request)
+			{
+				auto pcr = classes[request.options.class_id];
+				auto& p = pcr.parent();
+				int64_t sizeb = pcr.parent().class_size_bytes;
+				request.options.class_size_bytes = sizeb;
+				if (request.options.dim.x == 0) request.options.dim.x = 1;
+				int64_t power_of_two = 1;
+				while (request.options.dim.x < power_of_two) {
+					power_of_two *= 2;
+				}
+				request.options.dim.x = power_of_two;
+				request.options.dim.y = 1;
+				request.options.dim.z = 1;
+				object_name field_name;
+				get_class_field_name(field_name, pcr.pparent()->name + "list", request.options.dim);
+				request.options.total_size_bytes = request.options.dim.x * request.options.dim.y * request.options.dim.z * sizeb + sizeof(jlist_header) + sizeof(selection_flag_type) * request.options.dim.x + 32;
+				return put_field(request.name.field_id, type_list, field_name, request.name.description, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, request.options.total_size_bytes);
 			}
 
 			const char* invalid_comparison = "Invalid comparison";

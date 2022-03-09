@@ -401,13 +401,11 @@ namespace countrybit
 		{
 			jfield& field = schema->get_field(class_field_id);
 			dimensions_type dim = field.object_properties.dim;
-#if _DEBUG
 			if ((pos.x >= dim.x) ||
 				(pos.y >= dim.y) ||
 				(pos.z >= dim.z)) {
-				throw std::invalid_argument("field " + field.name + " out of range.");
+					return jslice(schema, class_field_id, nullptr, dim);
 			}
-#endif
 			char* b = &bytes[ ((pos.z * dim.y * dim.x) + (pos.y * dim.x) + pos.x ) * field.object_properties.class_size_bytes ];
 			jslice slice(schema, class_field_id, b, pos);
 			return slice;
@@ -418,7 +416,6 @@ namespace countrybit
 			jfield& field = schema->get_field(class_field_id);
 			return field.size_bytes;
 		}
-
 
 		jarray_container::jarray_container()
 		{
@@ -442,6 +439,114 @@ namespace countrybit
 		}
 
 		//
+
+		uint32_t jlist::capacity()
+		{
+			jfield& field = schema->get_field(class_field_id);
+			dimensions_type& dim = field.object_properties.dim;
+			return dim.x;
+		}
+
+		uint32_t jlist::size()
+		{
+			return data->allocated;
+		}
+
+		jslice jlist::get_slice(int idx)
+		{
+			jfield& field = schema->get_field(class_field_id);
+			dimensions_type dim = field.object_properties.dim;
+			if ((idx >= data->allocated) || (idx < 0)) {
+				return jslice(schema, class_field_id, nullptr, dim);
+			}
+			dimensions_type pos = { idx, 0, 0 };
+			char* b = &slices[idx * field.object_properties.class_size_bytes];
+			jslice slice(schema, class_field_id, b, pos);
+			return slice;
+		}
+
+		bool jlist::erase_slice(int idx)
+		{
+			jfield& field = schema->get_field(class_field_id);
+			dimensions_type dim = field.object_properties.dim;
+			if ((idx >= dim.x) || (idx < 0)) 
+			{
+				return false;
+			}
+			else if (data->allocated <= 0)
+			{
+				data->allocated = 0;
+				return false;
+			}
+			else if (idx >= data->allocated)
+			{
+				data->allocated--;
+			}
+			else 
+			{
+				auto class_size = field.object_properties.class_size_bytes;
+				char* b1 = &slices[idx * class_size];
+				char* b2 = &slices[(idx + 1) * class_size];
+				int32_t length_objects = data->allocated - idx;
+				int32_t length_bytes = length_objects * class_size;
+				std::copy(b2, b2 + length_bytes, b1);
+				data->allocated--;
+			}
+			return true;
+		}
+
+		jslice jlist::append_slice()
+		{
+			if (data->allocated < capacity()) {
+				auto index = data->allocated;
+				data->allocated++;
+				return get_slice(index);
+			}
+			return get_slice(-1);
+		}
+
+		bool jlist::select_slice(int idx)
+		{
+			if (idx < 0 || idx >= data->allocated)
+				return false;
+			selections[idx] = 1;
+			return true;
+		}
+
+		bool jlist::deselect_slice(int idx)
+		{
+			if (idx < 0 || idx >= data->allocated)
+				return false;
+			selections[idx] = 0;
+			return true;
+		}
+
+		void jlist::deselect_all()
+		{
+			for (int i = 0; i < data->allocated; i++) 
+			{
+				selections[i] = 0;
+			}
+		}
+
+		void jlist::select_all()
+		{
+			for (int i = 0; i < data->allocated; i++) 
+			{
+				selections[i] = 1;
+			}
+		}
+
+		char* jlist::get_bytes()
+		{
+			return (char *)data;
+		}
+
+		uint64_t jlist::get_size_bytes()
+		{
+			jfield& field = schema->get_field(class_field_id);
+			return field.size_bytes;
+		}
 
 		void jschema::add_standard_fields() 
 		{

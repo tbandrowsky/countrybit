@@ -19,48 +19,27 @@ namespace countrybit
 		class jclass;
 
 		const int max_query_filters = 32;
-		const int max_query_projections = 32;
-		const int max_from_elements = 32;
+		const int max_path_nodes = 64;
 
-		struct from_element_request
+		class path_root
 		{
 		public:
-			row_id_type			field_id;
-			collection_id_type	collection_id;
-			object_name			field_name;
-			const char*			error_message;
-		};
-
-		struct from_element
-		{
-		public:
-			row_id_type			field_id;
-			object_name			field_name;
-		};
-
-		enum class from_set_bases
-		{
-			from_current_object,
-			from_current_collection,
-			from_specific_collection
-		};
-
-		struct from_set_request
-		{
-		public:
-			from_set_bases from_set_base;
-			collection_id_type collection_id;
 			object_name collection_name;
-			iarray<from_element_request, max_from_elements> path;
+			object_name class_name;
 		};
 
-		struct from_set
+		class path_node
 		{
 		public:
-			from_set_bases from_set_base;
-			collection_id_type collection_id;
-			object_name collection_name;
-			iarray<from_element, max_from_elements> path;
+			object_name member_name;
+			row_id_type	member_id;
+		};
+
+		class path
+		{
+		public:
+			path_root							root;
+			iarray<path_node, max_path_nodes>	nodes;
 		};
 
 		enum class filter_comparison_types
@@ -97,35 +76,20 @@ namespace countrybit
 			double					distance_threshold;
 		};
 
-		struct projection_element_request
-		{
-		public:
-			row_id_type				field_id;
-			object_name				field_name;
-			const char*				error_message;
-		};
-
-		struct projection_element
-		{
-		public:
-			row_id_type				field_id;
-		};
-
-		template <int max_filters, int max_projections>
+		template <int max_filters>
 		class named_query_properties_t
 		{
 		public:
-			from_set from;
+			path		source_path;
+			object_name result_field;
 			iarray<filter_element_request, max_filters> filter;
-			iarray<projection_element_request, max_projections> projection;
 		};
 
-		using named_query_properties_type = named_query_properties_t<max_query_filters, max_query_projections>;
+		using named_query_properties_type = named_query_properties_t<max_query_filters>;
 
 		class query_instance
 		{
 		public:
-			collection_id_type			collection;
 			time_t						last_success;
 			time_t						last_error;
 			object_description			error_message;

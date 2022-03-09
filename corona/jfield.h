@@ -347,19 +347,20 @@ namespace countrybit
 			named_query_properties_type options;
 		};
 
-		class put_named_sql_import_field_request {
+		class put_named_sql_remote_field_request {
 		public:
 			put_field_request_base name;
 			sql_properties_type options;
 		};
 
-		class put_named_sql_import_field_request {
+		class put_named_file_import_field_request {
 		public:
 			put_field_request_base name;
 			sql_properties_type options;
 		};
 
-		class put_named_sql_import_field_request {
+		class put_named_http_import_field_request 
+		{
 		public:
 			put_field_request_base name;
 			sql_properties_type options;

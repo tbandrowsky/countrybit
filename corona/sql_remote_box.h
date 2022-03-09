@@ -40,7 +40,6 @@ namespace countrybit
 		class sql_remote_instance
 		{
 		public:
-			collection_id_type			collection;
 			time_t						last_success;
 			time_t						last_error;
 			object_description			error_message;
