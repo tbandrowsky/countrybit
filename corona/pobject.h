@@ -45,9 +45,16 @@ namespace countrybit
 			const pobject* object_value;
 			const parray* array_value;
 
+			int x, y, z;
+
 			const char* as_string() const
 			{
 				return (pvalue_type == pvalue_types::string_value) ? string_value : nullptr;
+			}
+
+			const double* as_double() const
+			{
+				return (pvalue_type == pvalue_types::double_value) ? &double_value : nullptr;
 			}
 
 			const pobject* as_object() const
@@ -155,7 +162,7 @@ namespace countrybit
 				return (pvalue_type == pvalue_types::array_value || pvalue_type == pvalue_types::object_value);
 			}
 
-			const pvalue* next;
+			pvalue* next;
 		};
 
 		class parray
@@ -165,7 +172,19 @@ namespace countrybit
 			int index;
 
 			int num_elements;
-			const pvalue* first;
+			pvalue* first, *last;
+
+			void add(pvalue* pv)
+			{
+				num_elements++;
+				if (!first) {
+					first = last = pv;
+				}
+				else {
+					last->next = pv;
+					last = pv;
+				}
+			}
 		};
 
 		class pmember
@@ -196,7 +215,7 @@ namespace countrybit
 			int index;
 
 			int num_members;
-			pmember* first;
+			pmember* first, *last;
 			pmember* type_member;
 
 			pmember* get_member(const char* _name) const
@@ -207,6 +226,18 @@ namespace countrybit
 						return mb;
 				}
 				return nullptr;
+			}
+
+			void add(pmember* pv)
+			{
+				num_members++;
+				if (!first) {
+					first = last = pv;
+				}
+				else {
+					last->next = pv;
+					last = pv;
+				}
 			}
 
 		};
@@ -231,13 +262,13 @@ namespace countrybit
 
 			const char* allocate(const char* src)
 			{
-				char* t = data.allocate_extracted(src, 0);
+				char* t = data.copy(src, 0);
 				return t;
 			}
 
 			const char* allocate(const char* src, int start, int stop)
 			{
-				char* t = data.allocate_extracted(src, start, stop, true);
+				char* t = data.copy(src, start, stop, true);
 				return t;
 			}
 

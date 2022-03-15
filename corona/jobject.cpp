@@ -365,6 +365,25 @@ namespace countrybit
 			return jerry;
 		}
 
+		jlist jslice::get_list(int field_idx)
+		{
+#if _DEBUG
+			if (schema == nullptr || class_field_id == null_row || bytes == nullptr) {
+				throw std::logic_error("slice is not initialized");
+			}
+#endif
+			jclass_field& jcf = the_class.child(field_idx);
+#if _DEBUG
+			jfield jf = schema->get_field(jcf.field_id);
+			if (jf.type_id != jtype::type_object) {
+				throw std::invalid_argument("Invalid field type " + std::to_string(jtype::type_object) + " for field idx " + std::to_string(field_idx));
+			}
+#endif
+			char* b = &bytes[jcf.offset];
+			jlist jerry(schema, jcf.field_id, b);
+			return jerry;
+		}
+
 		collection_id_box jslice::get_collection_id(int field_idx)
 		{
 			return jslice::get_boxed<collection_id_box>(jtype::type_collection_id, field_idx);

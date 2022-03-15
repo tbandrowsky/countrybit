@@ -277,7 +277,8 @@ namespace countrybit
 			object_name				name;
 			object_description		description;
 
-			union {
+			union 
+			{
 				string_properties_type		string_properties;
 				int_properties_type			int_properties;
 				double_properties_type		double_properties;

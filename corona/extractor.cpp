@@ -8,9 +8,13 @@ namespace countrybit
 {
 	namespace system
 	{
-		void string_extractor::skip_whitespace()
+		bool string_extractor::skip_whitespace()
 		{
-			while (get_space());
+			char c, l;
+			while (c = get_space()) {
+				l = c;
+			}
+			return c == '\n';
 		}
 
 		int string_extractor::get_pattern_count(int& start_index, const std::function<bool(char c)>& matches)
@@ -215,6 +219,7 @@ namespace countrybit
 		}
 
 		const char* error_expected_string = "Expected string.";
+		const char* error_unknown_directive = "Unknown $ directive.";
 		const char* error_no_memory_for_string = "No memory. There was not enough space in the box for this string.  Make the parser memory larger.";
 		const char* error_string_too_long = "String too large.  The string was simply too big for us to accept.  Max size is 1 << 25 chars.";
 		const char* error_string_not_terminated = "String too large.  The string was simply too big for us to accept.  Max size is 1 << 25 chars.";
@@ -287,6 +292,7 @@ namespace countrybit
 		}
 
 		const char* error_expected_value = "Expected a value after the colon - either a string, another object, a number, or an array.";
+
 
 		parse_json_value_result string_extractor::parse_json_value()
 		{
@@ -379,6 +385,56 @@ namespace countrybit
 				}
 			}
 			break;
+			case '$':
+			{
+				this->get_char();
+				auto gir = get_identifier();
+				if (gir.success)
+				{
+					if (strcmp(gir.value, "matrix") == 0) 
+					{
+						value->pvalue_type = pvalue::pvalue_types::array_value;
+						parse_json_array_result pjar = parse_matrix();
+						if (pjar.success) {
+							value->array_value = pjar.value;
+						}
+						else {
+							result.message = pjar.message;
+							result.line_number = pjar.line_number;
+							result.char_offset = pjar.char_offset;
+							return result;
+						}
+					}
+					else if (strcmp(gir.value, "csv") == 0)
+					{
+						parse_json_array_result pjar = parse_csv();
+						if (pjar.success) {
+							value->array_value = pjar.value;
+						}
+						else {
+							result.message = pjar.message;
+							result.line_number = pjar.line_number;
+							result.char_offset = pjar.char_offset;
+							return result;
+						}
+					}
+					else
+					{
+						result.message = error_unknown_directive;
+						result.line_number = line;
+						result.char_offset = index;
+						return result;
+					}
+				}
+				else 
+				{
+					result.message = gir.message;
+					result.line_number = gir.line_number;
+					result.char_offset = gir.char_offset;
+					return result;
+				}
+			}
+			break;
 			default:
 				result.message = error_expected_value;
 				result.line_number = line;
@@ -412,21 +468,12 @@ namespace countrybit
 				obj->line = line;
 				obj->index = index;
 
-				pmember* last_member = nullptr;
-
 				skip_whitespace();
 				c = at(index);
 				while (c != '}')
 				{
 					pmember* member = data.allocate<pmember>(1);
-					if (last_member) {
-						last_member->next = member;
-					}
-					last_member = member;
-					obj->num_members++;
-					if (!obj->first) {
-						obj->first = member;
-					}
+					obj->add(member);
 					member->name = nullptr;
 					member->value = nullptr;
 					member->next = nullptr;
@@ -512,8 +559,6 @@ namespace countrybit
 				pa->line = line;
 				pa->index = index;
 
-				pvalue* lastvalue = nullptr;
-
 				skip_whitespace();
 				while (c != ']' && c)
 				{
@@ -527,15 +572,8 @@ namespace countrybit
 
 					auto valresult = parse_json_value();
 					if (valresult.success) {
-						pa->num_elements++;
-						pvalue *v = valresult.value;
-						if (lastvalue) {
-							lastvalue->next = v;
-						}
-						lastvalue = v;
-						if (!pa->first) {
-							pa->first = v;
-						}
+						pvalue* v = valresult.value;
+						pa->add(v);
 					}
 					else {
 						result.line_number = valresult.line_number;
@@ -566,11 +604,312 @@ namespace countrybit
 			return result;
 		}
 
+		parse_json_array_result string_extractor::parse_matrix()
+		{
+			parse_json_array_result result;
+
+			result.success = false;
+			result.line_number = line;
+			result.char_offset = index;
+
+			skip_whitespace();
+			char c = get_array_start();
+
+			if (c)
+			{
+				parray* pa = data.allocate<parray>(1);
+				pa->num_elements = 0;
+				pa->first = nullptr;
+				pa->line = line;
+				pa->index = index;
+
+				skip_whitespace();
+
+				auto object_result = parse_json_object();
+
+				if (!object_result.success)
+				{
+					result.success = false;
+					result.line_number = object_result.line_number;
+					result.char_offset = object_result.char_offset;
+					result.message = "missing matrix object";
+					return result;
+				}
+
+				int x, y, z;
+
+				auto xm = object_result.value->get_member("x");
+				auto ym = object_result.value->get_member("y");
+				auto zm = object_result.value->get_member("z");
+				auto mapm = object_result.value->get_member("map");
+				const pobject* mm = nullptr;
+
+				if (mapm) 
+				{
+					mm = mapm->value->as_object();
+					if (!mm) {
+						result.success = false;
+						result.line_number = object_result.line_number;
+						result.char_offset = object_result.char_offset;
+						result.message = "an object map, if supplied, must be an object.  But if you tried to use an array, I get your point and will fix it eventually.";
+						return result;
+					}
+				}
+
+				if (!xm) {
+					result.success = false;
+					result.line_number = object_result.line_number;
+					result.char_offset = object_result.char_offset;
+					result.message = "missing x dimension";
+					return result;
+				}
+
+				const double *xmd = xm->value->as_double();
+				if (!xmd) {
+					result.success = false;
+					result.line_number = object_result.line_number;
+					result.char_offset = object_result.char_offset;
+					result.message = "x dimensions must be numbers";
+					return result;
+				}
+
+				if (!ym) {
+					result.success = false;
+					result.line_number = object_result.line_number;
+					result.char_offset = object_result.char_offset;
+					result.message = "missing y dimension";
+					return result;
+				}
+
+				const double* ymd = ym->value->as_double();
+				if (!ymd) {
+					result.success = false;
+					result.line_number = object_result.line_number;
+					result.char_offset = object_result.char_offset;
+					result.message = "y dimensions must be numbers";
+					return result;
+				}
+
+				if (zm) {
+					const double* zmd = zm->value->as_double();
+					if (zmd) 
+					{
+						y = (int64_t)*ymd;
+					}
+				}
+
+				x = (int64_t)*xmd;
+				if (x < 1) x = 1;
+
+				y = (int64_t)*ymd;
+				if (y < 1) y = 1;
+
+				if (z < 1) z = 1;
+
+				int64_t ix = 0, iy = 0, iz = 0;
+
+				while (c != ']' && c)
+				{
+					skip_whitespace();
+					c = at(index);
+					if (c == ']')
+					{
+						index++;
+						break;
+					}
+
+					auto valresult = parse_json_value();
+					if (valresult.success) {
+						pa->num_elements++;
+						pvalue* v = valresult.value;
+
+						if (mm && !v->as_array() && !v->as_object())
+						{
+							
+							countrybit::database::istring<2048> temp;
+
+							const char* s = v->as_string();
+
+							// cast the value to a member of the map
+
+							if (!s)
+							{
+								const double* d = v->as_double();
+								if (d)
+								{
+									temp = *d;
+									s = temp.c_str();
+								}
+							}
+
+							if (!s)
+							{
+								result.line_number = valresult.line_number;
+								result.char_offset = valresult.char_offset;
+								result.message = "value must be a castable as a member to be mapped";
+								return result;
+							}
+
+							auto mbr = mm->get_member(s);
+
+							if (!mbr)
+							{
+								result.line_number = valresult.line_number;
+								result.char_offset = valresult.char_offset;
+								result.message = "value not found as a member of the map";
+								return result;
+							}
+
+							// we make a shallow copy of the map member...
+
+							char* pv_bytes = data.place<pvalue>();
+							v = new (pv_bytes) pvalue(*mbr->value);
+						}
+
+						v->x = ix;
+						v->y = iy;
+						v->z = iz;
+
+						pa->add(v);
+					}
+					else {
+						result.line_number = valresult.line_number;
+						result.char_offset = valresult.char_offset;
+						result.message = valresult.message;
+						return result;
+					}
+					skip_whitespace();
+
+					ix++;
+					if (ix == x) {
+						ix = 0;
+						iy++;
+						if (iy == y) {
+							iy = 0;
+							iz++;
+						}
+					}
+				}
+
+				result.success = true;
+				result.value = pa;
+			}
+			else {
+				result.line_number = line;
+				result.char_offset = index;
+				result.message = error_expected_array;
+			}
+
+			return result;
+		}
+
+		parse_json_array_result string_extractor::parse_csv()
+		{
+			parse_json_array_result result;
+
+			transformer ts(data);
+
+			result.success = false;
+			result.line_number = line;
+			result.char_offset = index;
+
+			skip_whitespace();
+			char c = get_array_start();
+
+			result.value = data.allocate<parray>(1);
+
+			if (c)
+			{
+				parray* pa_header = data.allocate<parray>(1);
+				parray* pa_current = nullptr;
+				pobject* po_header = nullptr;
+
+				pa_header->num_elements = 0;
+				pa_header->first = nullptr;
+				pa_header->line = line;
+				pa_header->index = index;
+
+				enum parse_states 
+				{
+					building_object_template,
+					building_objects
+				} parse_state;
+
+				parse_state = parse_states::building_object_template;
+
+				while (c != ']' && c)
+				{
+					auto pvresult = parse_json_value();
+					if (!pvresult.success) {
+						result.success = false;
+						result.message = pvresult.message;
+						result.line_number = pvresult.line_number;
+						result.char_offset = pvresult.char_offset;
+						return result;
+					}
+					auto pv = pvresult.value;
+					bool eol = skip_whitespace();
+					switch (parse_state) {
+					case parse_states::building_object_template:
+						pa_header->add(pv);
+						if (eol) 
+						{
+							parse_state = parse_states::building_objects;
+							po_header = ts.array_to_object_template(pa_header);
+							pa_current = data.allocate<parray>(1);
+						}
+						break;
+					case parse_states::building_objects:
+						pa_header->add(pv);
+						if (eol)
+						{
+							parse_state = parse_states::building_objects;
+							pobject* tempo = ts.array_to_object(po_header, pa_current);
+							pvalue* tempv = data.allocate<pvalue>(1);
+							tempv->object_value = tempo;
+							tempv->pvalue_type = pvalue::pvalue_types::object_value;
+							tempv->index = index;
+							tempv->line = line;
+							result.value->add(tempv);
+							pa_current = data.allocate<parray>(1);
+						}
+						break;
+					}
+					c = get_char();
+					if (c == ',') {
+						eol = skip_whitespace();
+						if (eol) {
+							result.success = false;
+							result.message = "end of line with trailing comma not allowed";
+							result.line_number = line;
+							result.char_offset = index;
+							return result;
+						}
+					}
+					else if (c != ']') 
+					{
+						result.success = false;
+						result.message = "expected end of array or comma for next item";
+						result.line_number = line;
+						result.char_offset = index;
+						return result;
+					}
+				}
+			}
+			else {
+				result.line_number = line;
+				result.char_offset = index;
+				result.message = error_expected_array;
+			}
+
+			return result;
+		}
+
 		bool string_extractor::test_basics()
 		{
 			int count = 0;
 			std::string pattern_test1 = "12345";
-			string_extractor p1(pattern_test1, 200);
+			string_extractor p1(pattern_test1, 200, "type");
 			count = p1.get_pattern_count(p1.index, [](char c) {return std::isdigit(c); });
 			if (count != 5 || p1.index != 5) {
 				std::cout << __LINE__ << ":digit pattern count failed" << std::endl;
@@ -578,7 +917,7 @@ namespace countrybit
 			}
 
 			std::string pattern_test2 = "abc123";
-			string_extractor p2(pattern_test2, 200);
+			string_extractor p2(pattern_test2, 200, "type");
 			count = p2.get_pattern_count(p2.index, [](char c) {return std::isalpha(c); });
 
 			if (count != 3 || p2.index != 3) {
@@ -592,7 +931,7 @@ namespace countrybit
 			}
 
 			std::string good_identifier = "  Alpha42_Something  ";
-			string_extractor p3(good_identifier, 2000);
+			string_extractor p3(good_identifier, 2000, "type");
 			p3.skip_whitespace();
 			if (p3.at(p3.index) != 'A') {
 				std::cout << __LINE__ << ":expected to hit A in test" << std::endl;
@@ -606,7 +945,7 @@ namespace countrybit
 			}
 
 			std::string bad_identifier = "  0Alpha42_Something  ";
-			string_extractor p4(bad_identifier, 2000);
+			string_extractor p4(bad_identifier, 2000, "type");
 			p4.skip_whitespace();
 			auto p4r = p4.get_identifier();
 			if (p4r.success) {
@@ -615,7 +954,7 @@ namespace countrybit
 			}
 
 			std::string good_string1 = "   \"Alpha42_\\\"stuff\\\"Something\"  ";
-			string_extractor p5(good_string1, 2000);
+			string_extractor p5(good_string1, 2000, "type");
 			p5.skip_whitespace();
 			auto p5r = p5.get_string();
 			if (!p5r.success || strcmp("Alpha42_\"stuff\"Something", p5r.value)) {
@@ -624,7 +963,7 @@ namespace countrybit
 			}
 
 			std::string good_string2 = "   \"Alpha42\\\"_Some\"thing  ";
-			string_extractor p6(good_string2, 2000);
+			string_extractor p6(good_string2, 2000, "type");
 			p6.skip_whitespace();
 			auto p6r = p6.get_string();
 			if (!p6r.success || strcmp("Alpha42\"_Some", p6r.value)) {
@@ -633,7 +972,7 @@ namespace countrybit
 			}
 
 			std::string bad_string1 = "\"stuff";
-			string_extractor p7(bad_string1, 2000);
+			string_extractor p7(bad_string1, 2000, "type");
 			auto p7r = p7.get_string();
 			if (p7r.success) {
 				std::cout << __LINE__ << ":should not have extracted string" << std::endl;
@@ -645,7 +984,7 @@ namespace countrybit
   "age" : 42 }
   )^";
 
-			string_extractor p8(sampleJsonObject1, 4000);
+			string_extractor p8(sampleJsonObject1, 4000, "type");
 			auto p8r = p8.parse_json_object();
 			if (!p8r.success) {
 				std::cout << __LINE__ << ":should have extracted json object" << std::endl;
@@ -695,7 +1034,7 @@ namespace countrybit
 		bool string_extractor::test_json(int _case_line, const std::string& _src, int _expected_failure_line)
 		{
 			std::string_view sv(_src);
-			string_extractor p8(sv, 8000);
+			string_extractor p8(sv, 8000, "type");
 			auto p8r = p8.parse_json_object();
 			if (_expected_failure_line) {
 				if (p8r.success) {

@@ -98,6 +98,7 @@ namespace countrybit
 				return b;
 			}
 
+
 		public:
 
 			jslice();
@@ -128,6 +129,13 @@ namespace countrybit
 			sql_remote_box get_sql_remote(int field_idx);
 			http_remote_box get_http_remote(int field_idx);
 			file_remote_box get_file_remote(int field_idx);
+
+			template <typename boxed> void get_box(boxed& src, int field_idx)
+			{
+				size_t offset = get_offset(jt, field_idx);
+				src = &bytes[offset];
+			}
+
 			int size();
 		};
 

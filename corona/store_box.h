@@ -186,7 +186,7 @@ namespace countrybit
 
 			template <typename T>
 			requires (std::is_standard_layout<T>::value)
-			T* allocate_extracted(const T* base, int start, bool terminate = true)
+			T* copy(const T* base, int start, bool terminate = true)
 			{
 				int l = pack_extracted(base, start, terminate);
 				return unpack<char>(l);
@@ -194,7 +194,7 @@ namespace countrybit
 
 			template <typename T>
 				requires (std::is_standard_layout<T>::value)
-			T* allocate_extracted(const T* base, int start, int stop, bool terminate = true)
+			T* copy(const T* base, int start, int stop, bool terminate = true)
 			{
 				int l = pack_extracted(base, start, stop, terminate);
 				return unpack<char>(l);
@@ -360,16 +360,16 @@ namespace countrybit
 
 			template <typename T>
 				requires (std::is_standard_layout<T>::value)
-			T* allocate_extracted(const T* base, int start, bool terminate = true)
+			T* copy(const T* base, int start, bool terminate = true)
 			{
-				return get_box()->allocate_extracted(base, start, terminate);
+				return get_box()->copy(base, start, terminate);
 			}
 
 			template <typename T>
 				requires (std::is_standard_layout<T>::value)
-			T* allocate_extracted(const T* base, int start, int stop, bool terminate = true)
+			T* copy(const T* base, int start, int stop, bool terminate = true)
 			{
-				return get_box()->allocate_extracted(base, start, stop, terminate);
+				return get_box()->copy(base, start, stop, terminate);
 			}
 
 			template <typename T>
@@ -476,18 +476,18 @@ namespace countrybit
 
 			template <typename T>
 				requires (std::is_standard_layout<T>::value)
-			T* allocate_extracted(const T* base, int start, bool terminate = true)
+			T* copy(const T* base, int start, bool terminate = true)
 			{
 				if (!base) return nullptr;
-				return get_box()->allocate_extracted(base, start, terminate);
+				return get_box()->copy(base, start, terminate);
 			}
 
 			template <typename T>
 				requires (std::is_standard_layout<T>::value)
-			T* allocate_extracted(const T* base, int start, int stop, bool terminate = true)
+			T* copy(const T* base, int start, int stop, bool terminate = true)
 			{
 				if (!base) return nullptr;
-				return get_box()->allocate_extracted(base, start, stop, terminate);
+				return get_box()->copy(base, start, stop, terminate);
 			}
 
 			template <typename T>

@@ -10,6 +10,7 @@
 #include "time_box.h"
 #include "sorted_index.h"
 #include "pobject.h"
+#include "pobject_transformer.h"
 
 #include <functional>
 
@@ -22,6 +23,12 @@ namespace countrybit
 		{
 		public:
 			double value;
+		};
+
+		class get_dimension_result : public base_parse_result
+		{
+		public:
+			int x, y, z;
 		};
 
 		class get_string_result : public base_parse_result
@@ -120,6 +127,9 @@ namespace countrybit
 			{
 				
 			}
+
+			parse_json_array_result parse_matrix();
+			parse_json_array_result parse_csv();
 
 			inline char operator [](int idx)
 			{
@@ -280,7 +290,7 @@ namespace countrybit
 				return 0;
 			}
 
-			void skip_whitespace();
+			bool skip_whitespace();
 
 			get_number_result get_number();
 			get_identifier_result get_identifier();

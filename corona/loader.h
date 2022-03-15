@@ -16,6 +16,7 @@
 #include "pobject.h"
 #include "extractor.h"
 #include "jdatabase.h"
+#include <jobject.h>
 
 namespace countrybit
 {
@@ -85,7 +86,8 @@ namespace countrybit
 			}
 
 			virtual bool is_match(const pvalue* _src) = 0;
-			virtual bool set_value(char* _base, const pvalue* _src) = 0;
+			virtual bool set_value(char* _base, const pvalue* _src) { return false; }
+			virtual bool set_value(database::jslice& _base, const pvalue* _src) { return false; }
 		};
 
 		class propertyinfo
@@ -220,6 +222,21 @@ namespace countrybit
 
 				return true;
 			}
+
+			virtual bool set_value(database::jslice slice, const pobject* _src)
+			{
+				for (auto member = _src->first; member; member = member->next)
+				{
+					auto prop = find_property(member);
+					if (prop) {
+						auto setter = prop->get_setter(member->value);
+						if (setter) {
+							setter->set_value(slice, member->value);
+						}
+					}
+				}
+				return true;
+			}
 		};
 
 		template <typename MemberType>
@@ -244,7 +261,7 @@ namespace countrybit
 
 			virtual bool set_value(char* _base, const pvalue* _src)
 			{
-				if (_src->as_object() || _src->as_string()) {
+				if (_src->as_object() || _src->as_array()) {
 					throw std::logic_error("attempt to map non-scalar to scalar");
 				}
 				char* loc = _base + offset;
@@ -353,6 +370,151 @@ namespace countrybit
 			}
 		};
 
+		class corona_property_dest : public property_dest
+		{
+		protected:
+
+			database::row_id_type	class_id;
+			database::jclass		cls;
+			int						field_idx;
+			database::jclass_field	class_field;
+			database::jschema*		schema;
+
+			pvalue::pvalue_types match_type;
+
+		public:
+
+			corona_property_dest(database::jschema* _schema, const char* _class_name, const char* _dest_name, pvalue::pvalue_types _match_type) :
+				property_dest(_dest_name),
+				schema(_schema),
+				match_type(_match_type)
+			{
+				class_id = schema->find_class(_class_name);
+				cls = schema->get_class(class_id);
+
+				for (int i = 0; i < cls.size(); i++)
+				{
+					field_idx = i;
+					class_field = cls.child(i);
+				}
+			}
+
+			virtual bool is_match(const pvalue* _src)
+			{
+				return	_src->pvalue_type == match_type;
+			}
+
+		};
+
+		template <typename MemberType>
+		class corona_scalar_property_dest : public corona_property_dest
+		{
+		public:
+
+			corona_scalar_property_dest(database::jschema* _schema, const char* _class_name, const char* _dest_name, pvalue::pvalue_types _match_type) : 
+				corona_property_dest(_schema, _class_name, _dest_name, _match_type)
+			{
+
+			}
+
+			virtual bool set_value(database::jslice slice, const pvalue* _src)
+			{
+				if (_src->as_object() || _src->as_array()) {
+					throw std::logic_error("attempt to map non-scalar to scalar");
+				}
+				MemberType item;
+				slice.get_box(item, field_idx);
+				_src->set_value(item);
+				return true;
+			}
+		};
+
+		class corona_list_property_dest : public corona_property_dest
+		{
+			typeinfo* property_type;
+
+		public:
+
+			corona_list_property_dest(database::jschema* _schema, typeinfo* _property_type, const char* _class_name, const char* _dest_name, pvalue::pvalue_types _match_type) :
+				corona_property_dest(_schema, _class_name, _dest_name, _match_type)
+			{
+
+			}
+
+			virtual bool set_value(database::jslice slice, const pvalue* _src)
+			{
+				if (!_src->as_array()) {
+					throw std::logic_error("attempt to map non-scalar to scalar");
+				}
+
+				database::jlist list = slice.get_list(field_idx);
+				database::jslice new_slice = list.append_slice();
+
+				const pobject* pv = _src->as_object();
+
+				if (pv == nullptr)
+				{
+					throw std::logic_error("attempt to map non-object to object");
+				}
+
+				for (auto member = pv->first; member; member = member->next)
+				{
+					auto prop = property_type->find_property(member);
+					if (prop) {
+						auto setter = prop->get_setter(member->value);
+						if (setter) {
+							setter->set_value(new_slice, member->value);
+						}
+					}
+				}
+
+				return true;
+			}
+		};
+
+		class corona_array_property_dest : public corona_property_dest
+		{
+			typeinfo* property_type;
+
+		public:
+
+			corona_array_property_dest(database::jschema* _schema, typeinfo* _property_type, const char* _class_name, const char* _dest_name, pvalue::pvalue_types _match_type) :
+				corona_property_dest(_schema, _class_name, _dest_name, _match_type)
+			{
+
+			}
+
+			virtual bool set_value(database::jslice slice, const pvalue* _src)
+			{
+				if (!_src->as_array()) {
+					throw std::logic_error("attempt to map non-scalar to scalar");
+				}
+
+				database::jarray array = slice.get_object(field_idx);
+
+				const pobject* pv = _src->as_object();
+
+				if (pv == nullptr)
+				{
+					throw std::logic_error("attempt to map non-object to object");
+				}
+
+				auto update_slice = array.get_slice(_src->x, _src->y, _src->z);
+
+				for (auto member = pv->first; member; member = member->next)
+				{
+					auto prop = property_type->find_property(member);
+					if (prop) {
+						auto setter = prop->get_setter(member->value);
+						if (setter) {
+							setter->set_value(update_slice, member->value);
+						}
+					}
+				}
+
+				return true;
+			}
+		};
 
 		class loader 
 		{
@@ -603,7 +765,7 @@ namespace countrybit
 			}
 		};
 
-		class corona_schema_loader : loader
+		class corona_loader : loader
 		{
 		public:
 
@@ -614,8 +776,10 @@ namespace countrybit
 			};
 
 		private:
+
 			database::sorted_index<database::object_name, location> fields_by_name;
 			database::sorted_index<database::object_name, database::row_id_type> classes_by_name;
+			database::sorted_index<database::object_name, typeinfo*> class_types_by_name;
 
 			database::table<database::put_string_field_request> put_string_fields;
 			database::table<database::put_integer_field_request> put_integer_fields;
@@ -637,6 +801,8 @@ namespace countrybit
 			database::table<database::put_named_class_request> put_classes;
 
 			database::row_id_type fields_by_name_id;
+			database::row_id_type classes_by_name_id;
+			database::row_id_type class_types_by_name_id;
 			database::row_id_type put_string_fields_id;
 			database::row_id_type put_integer_fields_id;
 			database::row_id_type put_double_fields_id;
@@ -686,14 +852,23 @@ namespace countrybit
 			typeinfo* file_fields_ti;
 			typeinfo* http_fields_ti;
 
+			typeinfo* color_ti;
+			typeinfo* point_ti;
+			typeinfo* rectangle_ti;
+			typeinfo* wave_ti;
+			typeinfo* midi_ti;
+			typeinfo* image_ti;
+
 			const char* member_type_name = "type";
 
 		public:
 
-			corona_schema_loader(int _size, int _num_fields) : loader(_size, _num_fields)
+			corona_loader(int _size, int _num_fields) : loader(_size, _num_fields)
 			{
 
 				fields_by_name = database::sorted_index<database::object_name, location>::create_sorted_index(&data, _num_fields, fields_by_name_id);
+				classes_by_name = database::sorted_index<database::object_name, database::row_id_type>::create_sorted_index(&data, _num_fields, classes_by_name_id);
+				class_types_by_name = database::sorted_index<database::object_name, typeinfo *>::create_sorted_index(&data, _num_fields, class_types_by_name_id);
 				put_string_fields = database::table<database::put_string_field_request>::create_table(&data, _num_fields, put_string_fields_id);
 				put_integer_fields = database::table<database::put_integer_field_request>::create_table(&data, _num_fields, put_integer_fields_id);
 				put_double_fields = database::table<database::put_double_field_request>::create_table(&data, _num_fields, put_double_fields_id);
@@ -891,16 +1066,157 @@ namespace countrybit
 				create_scalar_property<database::string_box>(put_classes_ti, pvalue::pvalue_types::string_value, "name", "name", offsetof(database::put_named_class_request, class_name));
 				create_scalar_property<database::string_box>(put_classes_ti, pvalue::pvalue_types::string_value, "description", "description", offsetof(database::put_named_class_request, class_description));
 				create_object_iarray_property<database::member_field, database::max_class_fields >(put_classes_ti, put_class_fields_ti, "fields", "fields", offsetof(database::put_named_class_request, member_fields));
+
+				color_ti = create_typeinfo(member_type_name, "color", "color", 20);
+				create_scalar_property<database::color_box>(color_ti, pvalue::pvalue_types::double_value, "red", "red", offsetof(database::color, red));
+				create_scalar_property<database::color_box>(color_ti, pvalue::pvalue_types::double_value, "green", "green", offsetof(database::color, green));
+				create_scalar_property<database::color_box>(color_ti, pvalue::pvalue_types::double_value, "blue", "blue", offsetof(database::color, blue));
+				create_scalar_property<database::color_box>(color_ti, pvalue::pvalue_types::double_value, "alpha", "alpha", offsetof(database::color, alpha));
+
+				point_ti = create_typeinfo(member_type_name, "point", "point", 20);
+				create_scalar_property<database::point_box>(point_ti, pvalue::pvalue_types::double_value, "x", "x", offsetof(database::point, x));
+				create_scalar_property<database::point_box>(point_ti, pvalue::pvalue_types::double_value, "y", "y", offsetof(database::point, y));
+				create_scalar_property<database::point_box>(point_ti, pvalue::pvalue_types::double_value, "z", "z", offsetof(database::point, z));
+
+				rectangle_ti = create_typeinfo(member_type_name, "rectangle", "rectangle", 20);
+				create_scalar_property<database::rectangle_box>(point_ti, pvalue::pvalue_types::double_value, "x", "x", offsetof(database::rectangle, corner.x));
+				create_scalar_property<database::rectangle_box>(point_ti, pvalue::pvalue_types::double_value, "y", "y", offsetof(database::rectangle, corner.y));
+				create_scalar_property<database::rectangle_box>(point_ti, pvalue::pvalue_types::double_value, "w", "w", offsetof(database::rectangle, size.x));
+				create_scalar_property<database::rectangle_box>(point_ti, pvalue::pvalue_types::double_value, "h", "h", offsetof(database::rectangle, size.y));
+
+				image_ti = create_typeinfo(member_type_name, "image", "image", 20);
+				create_scalar_property<database::rectangle_box>(point_ti, pvalue::pvalue_types::double_value, "x", "x", offsetof(database::rectangle, corner.x));
+				create_scalar_property<database::rectangle_box>(point_ti, pvalue::pvalue_types::double_value, "y", "y", offsetof(database::rectangle, corner.y));
+				create_scalar_property<database::rectangle_box>(point_ti, pvalue::pvalue_types::double_value, "w", "w", offsetof(database::rectangle, size.x));
+				create_scalar_property<database::rectangle_box>(point_ti, pvalue::pvalue_types::double_value, "h", "h", offsetof(database::rectangle, size.y));
+
+				wave_ti = create_typeinfo(member_type_name, "wave", "wave", 20);
+				create_scalar_property<database::wave_box>(wave_ti, pvalue::pvalue_types::double_value, "start_seconds", "start_seconds", offsetof(database::wave_instance, start_seconds));
+				create_scalar_property<database::wave_box>(wave_ti, pvalue::pvalue_types::double_value, "stop_seconds", "stop_seconds", offsetof(database::wave_instance, stop_seconds));
+
+				midi_ti = create_typeinfo(member_type_name, "midi", "midi", 20);
+				create_scalar_property<database::wave_box>(midi_ti, pvalue::pvalue_types::double_value, "start_seconds", "start_seconds", offsetof(database::midi_instance, start_seconds));
+				create_scalar_property<database::wave_box>(midi_ti, pvalue::pvalue_types::double_value, "stop_seconds", "stop_seconds", offsetof(database::midi_instance, stop_seconds));
 			}
 
-			virtual void load_schema(database::jschema& schema, pobject *obj)
+			bool add_schema(pmember *member)
 			{
-				if (load(obj)) {
-					index_fields();
+				if (member->name == "schema") {
+					auto fields = member->value->as_array();
+					for (auto fld = fields->first; fld; fld = fld->next)
+					{
+						auto obj = fld->as_object();
+						if (obj)
+						{
+							load(obj);
+						}
+						else
+						{
+							put_error(errors::invalid_object_parse, obj);
+							return false;
+						}
+					}
+					return true;
 				}
+				else 
+				{
+					put_error(errors::invalid_object_parse, member->name);
+					return false;
+				}
+				return error_messages.size() == 0;
+			}
+
+			bool update_schema(database::jschema& schema)
+			{
+				index_fields();
+				for (auto fld : fields_by_name) {
+					put_field(schema, fld.second);
+				}				
+				return error_messages.size() == 0;
 			}
 
 			private:
+
+			typeinfo* get_type_info(database::jschema& schema, database::object_name class_name)
+			{
+				auto citer = class_types_by_name[class_name];
+				if (citer == std::end(class_types_by_name)) 
+				{
+					auto class_id = schema.find_class(class_name);
+					if (class_id != database::null_row) 
+					{
+						auto class_def = schema.get_class(class_id);
+						typeinfo *new_class_ti = create_typeinfo(member_type_name, class_name.c_str(), class_name.c_str(), class_def.size() + 4);
+						for (database::row_id_type id = 0; id < class_def.size(); id++)
+						{
+							auto& fld_ref = class_def.child(id);
+							auto& fld = schema.get_field(fld_ref.field_id);
+							switch (fld.type_id) {
+							case database::jtype::type_datetime:
+								create_scalar_property<database::basic_time_box>(new_class_ti, database::pvalue::pvalue_types::time_value, fld.name.c_str(), fld.name.c_str(), fld_ref.offset);
+								break;
+							case database::jtype::type_float32:
+								create_scalar_property<database::float_box>(new_class_ti, database::pvalue::pvalue_types::double_value, fld.name.c_str(), fld.name.c_str(), fld_ref.offset);
+								break;
+							case database::jtype::type_float64:
+								create_scalar_property<database::double_box>(new_class_ti, database::pvalue::pvalue_types::double_value, fld.name.c_str(), fld.name.c_str(), fld_ref.offset);
+								break;
+							case database::jtype::type_int64:
+								create_scalar_property<database::int64_box>(new_class_ti, database::pvalue::pvalue_types::double_value, fld.name.c_str(), fld.name.c_str(), fld_ref.offset);
+								break;
+							case database::jtype::type_int32:
+								create_scalar_property<database::int32_box>(new_class_ti, database::pvalue::pvalue_types::double_value, fld.name.c_str(), fld.name.c_str(), fld_ref.offset);
+								break;
+							case database::jtype::type_int16:
+								create_scalar_property<database::int16_box>(new_class_ti, database::pvalue::pvalue_types::double_value, fld.name.c_str(), fld.name.c_str(), fld_ref.offset);
+								break;
+							case database::jtype::type_int8:
+								create_scalar_property<database::int8_box>(new_class_ti, database::pvalue::pvalue_types::double_value, fld.name.c_str(), fld.name.c_str(), fld_ref.offset);
+								break;
+							case database::jtype::type_color:
+								create_object_property(new_class_ti, color_ti, fld.name.c_str(), fld.name.c_str(), fld_ref.offset);
+								break;
+							case database::jtype::type_point:
+								create_object_property(new_class_ti, point_ti, fld.name.c_str(), fld.name.c_str(), fld_ref.offset);
+								break;
+							case database::jtype::type_rectangle:
+								create_object_property(new_class_ti, rectangle_ti, fld.name.c_str(), fld.name.c_str(), fld_ref.offset);
+								break;
+							case database::jtype::type_string:
+								create_scalar_property<database::string_box>(new_class_ti, database::pvalue::pvalue_types::string_value, fld.name.c_str(), fld.name.c_str(), fld_ref.offset);
+								break;
+							case database::jtype::type_wave:
+								create_object_property(new_class_ti, wave_ti, fld.name.c_str(), fld.name.c_str(), fld_ref.offset);
+								break;
+							case database::jtype::type_image:
+								create_object_property(new_class_ti, image_ti, fld.name.c_str(), fld.name.c_str(), fld_ref.offset);
+								break;
+							case database::jtype::type_list:
+								break;
+							case database::jtype::type_object:
+								break;
+							case database::jtype::type_collection_id:
+								break;
+							case database::jtype::type_http:
+								break;
+							case database::jtype::type_file:
+								break;
+							case database::jtype::type_sql:
+								break;
+							}
+						}
+					}
+					else 
+					{
+						put_error(errors::class_not_defined, class_name.c_str());
+						return nullptr;
+					}
+				}
+				else 
+				{
+					return citer.get_value();
+				}
+			}
 
 			virtual char* place(typeinfo* ti)
 			{
@@ -968,6 +1284,13 @@ namespace countrybit
 					auto& aof = put_object_fields.create(1, rr);
 					aof.name.field_id = database::null_row;
 					aof.name.type_id = database::jtype::type_object;
+					t = (char*)&aof;
+				}
+				else if (ti == list_fields_ti)
+				{
+					auto& aof = put_list_fields.create(1, rr);
+					aof.name.field_id = database::null_row;
+					aof.name.type_id = database::jtype::type_list;
 					t = (char*)&aof;
 				}
 				else if (ti == query_fields_ti)
@@ -1045,10 +1368,6 @@ namespace countrybit
 					htf.name.field_id = database::null_row;
 					htf.name.type_id = database::jtype::type_http;
 					t = (char*)&htf;
-				}
-				else if (ti == query_projection_ti)
-				{
-					t = (char*)nullptr;
 				}
 				else if (ti == query_filter_ti)
 				{
@@ -1138,6 +1457,13 @@ namespace countrybit
 
 				loc.item_type = database::jtype::type_object;
 				for (auto off : put_object_fields)
+				{
+					loc.row_id = off.location;
+					fields_by_name.insert_or_assign(off.item.name.name, loc);
+				}
+
+				loc.item_type = database::jtype::type_list;
+				for (auto off : put_list_fields)
 				{
 					loc.row_id = off.location;
 					fields_by_name.insert_or_assign(off.item.name.name, loc);
@@ -1312,7 +1638,13 @@ namespace countrybit
 				case database::jtype::type_object:
 					{
 						auto fld = put_object_fields[loc.row_id];
-						put_object(schema, fld);
+						put_object_field(schema, fld);
+					}
+					break;
+				case database::jtype::type_list:
+					{
+						auto fld = put_list_fields[loc.row_id];
+						put_list_field(schema, fld);
 					}
 					break;
 				case database::jtype::type_point:
@@ -1432,24 +1764,6 @@ namespace countrybit
 					}
 				}
 
-				int projectionSize = aorf.options.projection.size();
-
-				for (int i = 0; i < projectionSize; i++)
-				{
-					auto& projection = aorf.options.projection[i];
-
-					auto projection_field_id = schema.find_field(projection.field_name);
-					if (projection_field_id != database::null_row)
-					{
-						projection.field_id = projection_field_id;
-					}
-					else
-					{
-						put_error(errors::field_not_defined, projection.field_name.c_str(), 0);
-						valid = false;
-					}
-				}
-
 				if (valid) 
 				{
 					schema.put_query_field(aorf);
@@ -1457,7 +1771,7 @@ namespace countrybit
 
 			}
 
-			void put_object(database::jschema& schema, database::put_object_field_request& aorf)
+			void put_object_field(database::jschema& schema, database::put_object_field_request& aorf)
 			{
 
 				bool valid = true;
@@ -1481,6 +1795,33 @@ namespace countrybit
 				if (valid) 
 				{
 					schema.put_object_field(aorf);
+				}
+			}
+
+			void put_list_field(database::jschema& schema, database::put_object_field_request& aorf)
+			{
+
+				bool valid = true;
+
+				auto class_row_id = schema.find_class(aorf.options.class_name);
+				if (class_row_id == database::null_row)
+				{
+					auto class_name_iter = classes_by_name[aorf.options.class_name];
+					if (class_name_iter == std::end(classes_by_name))
+					{
+						put_error(errors::class_not_defined, aorf.options.class_name.c_str(), 0);
+						valid = false;
+					}
+					else
+					{
+						auto def_row_id = class_name_iter.get_value();
+						auto& class_def = put_classes[def_row_id];
+						put_class(schema, class_def);
+					}
+				}
+				if (valid)
+				{
+					schema.put_list_field(aorf);
 				}
 			}
 
@@ -1526,11 +1867,62 @@ namespace countrybit
 
 				return schema.put_class(aorf);
 			}
-		};
 
-		class corona_data_loader
-		{
+			bool put_array(database::jschema& _schema, database::jslice& slice, parray *src_array)
+			{
 
+			}
+
+			bool put_value(database::jschema& _schema, database::jslice& slice, pvalue* src_pobj)
+			{
+
+			}
+
+			bool put_slice(database::jschema& _schema, database::jslice& slice, pobject* _obj)
+			{
+				for (auto m = _obj->first; m != nullptr; m = m->next)
+				{
+					switch (m->value->pvalue_type) 
+					{
+					case database::pvalue::pvalue_types::array_value:
+						break;
+					case database::pvalue::pvalue_types::object_value:
+						break;
+					case database::pvalue::pvalue_types::double_value:
+						break;
+					case database::pvalue::pvalue_types::string_value:
+						break;
+					case database::pvalue::pvalue_types::time_value:
+						break;
+					}
+				}
+			}
+
+			bool put_object(database::jschema& _schema, database::jcollection& _collection, pobject *_obj)
+			{
+				auto type_member = _obj->get_member(member_type_name);
+				if (type_member) {
+					database::row_id_type class_id = _schema.find_class(type_member->name);
+					if (class_id != database::null_row) 
+					{
+						database::jarray new_object = _collection.create_object(class_id);
+						if (new_object.get_bytes()) {
+							database::jslice slice = new_object.get_slice(0);
+							return put_slice(_schema, slice, _obj);
+						}
+					}
+					else 
+					{
+						put_error(errors::class_not_defined, _obj);
+						return false;
+					}
+				}
+				else 
+				{
+					put_error(errors::field_not_defined, _obj);
+					return false;
+				}
+			}
 		};
 	}
 }
