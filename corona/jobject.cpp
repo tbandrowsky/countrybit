@@ -400,6 +400,26 @@ namespace countrybit
 			return the_class.size();
 		}
 
+		jarray::jarray() : schema(nullptr), class_field_id(null_row), bytes(nullptr)
+		{
+			;
+		}
+
+		jarray::jarray(jschema* _schema, row_id_type _class_field_id, char* _bytes) : schema(_schema), class_field_id(_class_field_id), bytes(_bytes)
+		{
+
+		}
+
+		jarray::jarray(dynamic_box& _dest, jarray& _src)
+		{
+			schema = _src.schema;
+			class_field_id = _src.class_field_id;
+			auto fld = schema->get_field(class_field_id);
+			_dest.init(fld.size_bytes);
+			bytes = _dest.allocate<char>(fld.size_bytes);
+			std::copy(_src.bytes, _src.bytes + fld.size_bytes, bytes);
+		}
+
 		dimensions_type jarray::dimensions()
 		{
 			jfield& field = schema->get_field(class_field_id);
@@ -458,6 +478,35 @@ namespace countrybit
 		}
 
 		//
+
+		jlist::jlist() : schema(nullptr), class_field_id(null_row), data(nullptr)
+		{
+			;
+		}
+
+		jlist::jlist(jschema* _schema, row_id_type _class_field_id, char* _bytes, bool _init = false) : schema(_schema), class_field_id(_class_field_id)
+		{
+			data = (jlist_header*)_bytes;
+			jfield& field = schema->get_field(class_field_id);
+			dimensions_type& dim = field.object_properties.dim;
+			if (_init) {
+				data->selection_offset = 0;
+				data->slice_offset = sizeof(selection_flag_type) * dim.x;
+				data->allocated = 0;
+			}
+			selections = (selection_flag_type*)(char*)(data->bytes + data->selection_offset);
+			slices = (char*)(data->bytes + data->slice_offset);
+		}
+
+		jlist::jlist(dynamic_box& _dest, jlist& _src)
+		{
+			schema = _src.schema;
+			class_field_id = _src.class_field_id;
+			auto fld = schema->get_field(class_field_id);
+			_dest.init(fld.size_bytes);
+			data = (jlist_header*)_dest.allocate<char>(fld.size_bytes);
+			std::copy((char*)_src.data, (char*)_src.data + fld.size_bytes, (char*)data);
+		}
 
 		uint32_t jlist::capacity()
 		{

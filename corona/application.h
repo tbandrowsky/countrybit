@@ -6,7 +6,6 @@ namespace countrybit
 {
 	namespace system
 	{
-
 		using namespace std;
 
 		class application
@@ -38,7 +37,7 @@ namespace countrybit
 				queue.waitForEmptyQueue();
 			}
 
-			file open_file(file_path filename, system::file_open_types _file_open_type)
+			file open_file(file_path filename, file_open_types _file_open_type)
 			{
 				file f(&queue, filename, _file_open_type);
 				return f;
@@ -46,7 +45,7 @@ namespace countrybit
 
 			file create_file(file_path filename)
 			{
-				return file(&queue, filename, system::file_open_types::create_new);
+				return file(&queue, filename, file_open_types::create_new);
 			}
 
 			void add_job(job* _job)

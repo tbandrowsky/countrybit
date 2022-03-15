@@ -1,11 +1,10 @@
 #pragma once
-#pragma once
 
-#pragma once
-
-#include "store_box.h"
 #include <ostream>
 #include <bit>
+
+#include "store_box.h"
+#include "string_box.h"
 
 namespace countrybit
 {

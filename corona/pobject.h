@@ -222,7 +222,7 @@ namespace countrybit
 			{
 				for (pmember* mb = first; mb; mb = mb->next)
 				{
-					if (stricmp(mb->name,_name) == 0);
+					if (_stricmp(mb->name,_name) == 0)
 						return mb;
 				}
 				return nullptr;

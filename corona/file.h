@@ -3,6 +3,7 @@
 #include <vector>
 #include "queue.h"
 #include <coroutine>
+#include "function.h"
 #include "messages.h"
 #include "string_box.h"
 

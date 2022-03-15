@@ -15,23 +15,13 @@
 #include "constants.h"
 #include "store_box.h"
 #include "table.h"
+#include "sorted_index.h"
 #include "int_box.h"
 #include "float_box.h"
 #include "time_box.h"
 #include "string_box.h"
-#include "collection_id_box.h"
-#include "object_id_box.h"
-#include "query_box.h"
-#include "point_box.h"
-#include "rectangle_box.h"
-#include "midi_box.h"
-#include "image_box.h"
-#include "wave_box.h"
-#include "color_box.h"
-#include "sorted_index.h"
-#include "sql_remote_box.h"
-#include "file_remote_box.h"
-#include "http_remote_box.h"
+#include "array_box.h"
+#include "remote_box.h"
 
 namespace countrybit
 {
@@ -150,13 +140,6 @@ namespace countrybit
 
 			field_collection_id = 94,
 			field_object_id = 95;
-
-		using object_name = istring<32>;
-		using object_description = istring<250>;
-		using object_path = istring<260>;
-		using object_type = istring<16>;
-		using string_validation_pattern = istring<100>;
-		using string_validation_message = istring<100>;
 
 		const int max_class_fields = 128;
 
@@ -296,6 +279,177 @@ namespace countrybit
 				http_properties_type		http_properties;
 			};
 		};
+
+		const int max_query_filters = 32;
+		const int max_path_nodes = 64;
+
+		class path_root
+		{
+		public:
+			object_name collection_name;
+			object_name class_name;
+		};
+
+		class path_node
+		{
+		public:
+			object_name member_name;
+			row_id_type	member_id;
+		};
+
+		class path
+		{
+		public:
+			path_root							root;
+			iarray<path_node, max_path_nodes>	nodes;
+		};
+
+		enum class filter_comparison_types
+		{
+			eq,
+			ls,
+			gt,
+			lseq,
+			gteq,
+			contains,
+			inlist,
+			distance
+		};
+
+		struct filter_element_request
+		{
+		public:
+			object_name				target_field_name;
+			row_id_type				target_field_id;
+			object_name				comparison_name;
+			filter_comparison_types	comparison;
+			object_name				parameter_field_name;
+			row_id_type				parameter_field_id;
+			double					distance_threshold;
+			const char* error_message;
+		};
+
+		struct filter_element
+		{
+		public:
+			row_id_type				target_field_id;
+			filter_comparison_types	comparison;
+			row_id_type				parameter_field_id;
+			double					distance_threshold;
+		};
+
+		template <int max_filters>
+		class named_query_properties_t
+		{
+		public:
+			path		source_path;
+			object_name result_field;
+			iarray<filter_element_request, max_filters> filter;
+		};
+
+		using named_query_properties_type = named_query_properties_t<max_query_filters>;
+
+		class query_instance
+		{
+		public:
+			time_t						last_success;
+			time_t						last_error;
+			object_description			error_message;
+		};
+
+		struct named_file_properties_type
+		{
+			remote_file_path				file_path;
+			object_name						parameter_field;
+			object_name						result_field;
+			remote_parameter_fields_type	parameters;
+			remote_fields_type				fields;
+			time_t							last_success;
+			time_t							last_error;
+			object_description				error_message;
+		};
+
+		class file_remote_instance
+		{
+		public:
+			collection_id_type			collection;
+			time_t						last_success;
+			time_t						last_error;
+			object_description			error_message;
+		};
+
+		enum class http_login_types
+		{
+			no_authentication = 0,
+			windows_authentication = 1,
+			basic_authentication = 2,
+			jwt_authentication = 3,
+			certificate_authentication = 4
+		};
+
+		struct named_http_properties_type
+		{
+			object_name						field_name;
+			object_name						login_type_name;
+			http_login_types				login_type;
+			remote_http_url					login_url;
+			remote_http_method				login_method;
+			object_name						username;
+			object_name						password;
+			remote_http_url					data_url;
+			remote_http_method				data_method;
+			object_name						parameter_field;
+			object_name						result_field;
+			remote_parameter_fields_type	parameters;
+			remote_fields_type				fields;
+			time_t							last_success;
+			time_t							last_error;
+			object_description				error_message;
+		};
+
+		class http_remote_instance
+		{
+		public:
+			collection_id_type			collection;
+			time_t						last_success;
+			time_t						last_error;
+			object_description			error_message;
+		};
+
+
+
+		enum class sql_login_types
+		{
+			no_authentication = 0,
+			windows_authentication = 1,
+			basic_authentication = 2,
+			certificate_authentication = 3
+		};
+
+		struct named_sql_properties_type
+		{
+			object_name						login_type_name;
+			sql_login_types					login_type;
+			object_name						username;
+			object_name						password;
+			object_name						parameter_field;
+			object_name						result_field;
+			remote_parameter_fields_type	parameters;
+			remote_fields_type				fields;
+			remote_sql_query				query;
+			time_t							last_success;
+			time_t							last_error;
+			object_description				error_message;
+		};
+
+		class sql_remote_instance
+		{
+		public:
+			time_t						last_success;
+			time_t						last_error;
+			object_description			error_message;
+		};
+
 
 		class put_field_request_base {
 		public:
@@ -453,6 +607,37 @@ namespace countrybit
 			row_id_type			ancestor_class_id;
 			iarray<member_field, max_class_fields> member_fields;
 		};
+
+		class jlist_header
+		{
+		public:
+			int32_t   allocated;
+			int32_t   selection_offset;
+			int32_t   slice_offset;
+			char	  bytes[];
+		};
+
+		// a store id is in fact, a guid
+
+		class jclass_header
+		{
+		public:
+			row_id_type									class_id;
+			object_name									name;
+			object_description							description;
+			row_id_type									ancestor_class_id;
+			uint64_t									class_size_bytes;
+			row_id_type									ancestry_id;
+		};
+
+		class jclass_field
+		{
+		public:
+			row_id_type				field_id;
+			uint64_t				offset;
+		};
+
+		using jclass = parent_child_holder<jclass_header, jclass_field>;
 	}
 }
 

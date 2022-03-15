@@ -277,11 +277,12 @@ namespace countrybit
 		std::string operator+(const std::string& b, const string_box& a);
 		std::ostream& operator <<(std::ostream& output, string_box& src);
 		
-		template <int length_bytes> struct istring 
+		template <int length_bytes> class istring 
 		{
 			uint32_t length;
 			int last_char;
 			char data[length_bytes];
+		public:
 
 			istring() : last_char( length_bytes - 1 )
 			{
@@ -532,11 +533,12 @@ namespace countrybit
 		}
 
 
-		template <int length_wchars> struct iwstring
+		template <int length_wchars> class iwstring
 		{
 			uint32_t length;
 			int last_char;
 			wchar_t data[length_wchars];
+		public:
 
 			iwstring() : last_char(length_wchars - 1)
 			{
@@ -565,6 +567,11 @@ namespace countrybit
 				copy(s);
 			}
 
+			template <int src_length> iwstring(const istring<src_length>& srcp) : last_char(length_wchars - 1)
+			{
+				copy(srcp.c_str());
+			}
+
 			iwstring& operator = (const std::wstring& src)
 			{
 				const wchar_t* s = src.c_str();
@@ -588,6 +595,12 @@ namespace countrybit
 			iwstring& operator = (const char* s)
 			{
 				copy(s);
+				return *this;
+			}
+
+			template <int src_length> iwstring& operator = (const istring<src_length>& srcp)
+			{
+				copy(srcp.c_str());
 				return *this;
 			}
 
@@ -812,7 +825,7 @@ namespace countrybit
 		template<int l1, int l2> int compare(const istring<l1>& a, const iwstring<l2>& b)
 		{
 			iwstring<l2> temp = a;
-			return wcscmp(a.c_str(), temp.c_str());
+			return wcscmp(temp.c_str(), b.c_str());
 		}
 
 		template<int l1, int l2> bool operator<(const istring<l1>& a, const iwstring<l2>& b)
@@ -847,5 +860,12 @@ namespace countrybit
 
 
 		bool string_tests();
+
+		using object_name = istring<32>;
+		using object_description = istring<250>;
+		using object_path = istring<260>;
+		using object_type = istring<16>;
+		using string_validation_pattern = istring<100>;
+		using string_validation_message = istring<100>;
 	}
 }

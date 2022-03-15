@@ -1,6 +1,18 @@
 #pragma once
 
 #include "jfield.h"
+#include "collection_id_box.h"
+#include "object_id_box.h"
+#include "point_box.h"
+#include "rectangle_box.h"
+#include "image_box.h"
+#include "wave_box.h"
+#include "midi_box.h"
+#include "color_box.h"
+#include "sql_remote_box.h"
+#include "http_remote_box.h"
+#include "file_remote_box.h"
+#include "query_box.h"
 
 #include <cassert>
 
@@ -10,37 +22,6 @@ namespace countrybit
 	{
 
 		bool init_collection_id(collection_id_type& collection_id);
-
-		class jlist_header
-		{
-		public:
-			int32_t   allocated;
-			int32_t   selection_offset;
-			int32_t   slice_offset;
-			char	  bytes[];
-		};
-
-		// a store id is in fact, a guid
-
-		class jclass_header
-		{
-		public:
-			row_id_type									class_id;
-			object_name									name;
-			object_description							description;
-			row_id_type									ancestor_class_id;
-			uint64_t									class_size_bytes;
-			row_id_type									ancestry_id;
-		};
-
-		class jclass_field
-		{
-		public:
-			row_id_type				field_id;
-			uint64_t				offset;
-		};
-
-		using jclass = parent_child_holder<jclass_header, jclass_field>;
 
 		struct jschema_map
 		{
@@ -52,7 +33,7 @@ namespace countrybit
 			row_id_type sql_properties_id;
 			row_id_type file_properties_id;
 			row_id_type http_properties_id;
-			row_id_type ancestry_id;
+			row_id_type class_ancestry_id;
 		};
 
 		class jcollection_map
@@ -130,7 +111,7 @@ namespace countrybit
 			http_remote_box get_http_remote(int field_idx);
 			file_remote_box get_file_remote(int field_idx);
 
-			template <typename boxed> void get_box(boxed& src, int field_idx)
+			template <typename boxed> void get_boxed(jtype jt, boxed& src, int field_idx)
 			{
 				size_t offset = get_offset(jt, field_idx);
 				src = &bytes[offset];
@@ -147,26 +128,9 @@ namespace countrybit
 
 		public:
 
-			jarray() : schema(nullptr), class_field_id(null_row), bytes(nullptr)
-			{
-				;
-			}
-
-			jarray(jschema* _schema, row_id_type _class_field_id, char* _bytes) : schema( _schema ), class_field_id( _class_field_id ), bytes( _bytes )
-			{
-
-			}
-
-			jarray(dynamic_box& _dest, jarray& _src)
-			{
-				schema = _src.schema;
-				class_field_id = _src.class_field_id;
-				auto fld = schema->get_field(class_field_id);
-				_dest.init(fld.size_bytes);
-				bytes = _dest.allocate<char>(fld.size_bytes);
-				std::copy(_src.bytes, _src.bytes + fld.size_bytes, bytes);
-			}
-
+			jarray();
+			jarray(jschema* _schema, row_id_type _class_field_id, char* _bytes);
+			jarray(dynamic_box& _dest, jarray& _src);
 			dimensions_type dimensions();
 
 			jslice get_slice(int x, int y = 0, int z = 0);
@@ -305,34 +269,9 @@ namespace countrybit
 
 		public:
 
-			jlist() : schema(nullptr), class_field_id(null_row), data(nullptr)
-			{
-				;
-			}
-
-			jlist(jschema* _schema, row_id_type _class_field_id, char* _bytes, bool _init = false) : schema(_schema), class_field_id(_class_field_id)
-			{
-				data = (jlist_header*)_bytes;
-				jfield & field = schema->get_field(class_field_id);
-				dimensions_type& dim = field.object_properties.dim;
-				if (_init) {
-					data->selection_offset = 0;
-					data->slice_offset = sizeof(selection_flag_type) * dim.x;
-					data->allocated = 0;
-				}
-				selections = (selection_flag_type *)(char*)(data->bytes + data->selection_offset);
-				slices = (char*)(data->bytes + data->slice_offset);
-			}
-
-			jlist(dynamic_box& _dest, jlist& _src)
-			{
-				schema = _src.schema;
-				class_field_id = _src.class_field_id;
-				auto fld = schema->get_field(class_field_id);
-				_dest.init(fld.size_bytes);
-				data = (jlist_header *)_dest.allocate<char>(fld.size_bytes);
-				std::copy((char *)_src.data, (char*)_src.data + fld.size_bytes, (char*)data);
-			}
+			jlist();
+			jlist(jschema* _schema, row_id_type _class_field_id, char* _bytes, bool _init = false);
+			jlist(dynamic_box& _dest, jlist& _src);
 
 			uint32_t capacity();
 			uint32_t size();
@@ -657,7 +596,7 @@ namespace countrybit
 				pschema_map = _b->unpack<jschema_map>(_row);
 				schema.fields = field_store_type::get_table(_b, pschema_map->fields_table_id);
 				schema.classes = class_store_type::get_table(_b, pschema_map->classes_table_id);
-				schema.ancestry = ancestry_store_type::get_table(_b, pschema_map->ancestry_id);
+				schema.ancestry = ancestry_store_type::get_table(_b, pschema_map->class_ancestry_id);
 				schema.classes_by_name = class_index_type::get_sorted_index(_b, pschema_map->classes_by_name_id);
 				schema.fields_by_name = field_index_type::get_sorted_index(_b, pschema_map->fields_by_name_id);
 				schema.queries = query_store_type::get_table(_b, pschema_map->query_properties_id);
@@ -690,7 +629,7 @@ namespace countrybit
 				)
 			static jschema create_schema(B* _b, int _num_classes, int _num_fields, int _num_class_fields, int _num_queries, int _num_sql_remotes, int _num_http_remotes, int _num_file_remotes, row_id_type& _row)
 			{
-				_row = reserve_schema(_b, _num_classes, _num_fields, _num_class_fields, int _num_queries, int _num_sql_remotes, int _num_http_remotes, int _num_file_remotes);
+				_row = reserve_schema(_b, _num_classes, _num_fields, _num_class_fields, _num_queries, _num_sql_remotes, _num_http_remotes, _num_file_remotes);
 				jschema schema = get_schema(_b, _row);
 				return schema;
 			}

@@ -531,9 +531,9 @@ namespace countrybit
 				}
 
 				auto pcr = parents.get_at(location);
-				parent_child& pc = parents[pcr.start];
+				parent_child& pc = parents[pcr.children.start];
 
-				if (pc.start == 0 && pc.stop == 0 && pc.reserved_stop == 0)
+				if (pc.children.start == 0 && pc.children.stop == 0 && pc.children.reserved_stop == 0)
 				{
 					throw std::invalid_argument("can't extend an uncreated");
 				}
@@ -567,11 +567,11 @@ namespace countrybit
 					}
 					else 
 					{
-						return parent_child_holder<P, C>(nullptr, nullptr, nullptr, 0);
+						return parent_child_holder<P,C>(nullptr, nullptr, nullptr, 0);
 					}
 				}
 
-				return parent_child_holder<P, C>(&pc.parent, &children[pc.children.start], pcr.start, new_base);
+				return parent_child_holder<P, C>(&pc.parent, &children[pc.children.start], pcr.children.start, new_base);
 			}
 
 			parent_child_holder<P, C> operator[](row_id_type row_id)

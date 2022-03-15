@@ -169,7 +169,7 @@ namespace countrybit
 					std::cout << "task promise_type:" << this << " " << GetCurrentThreadId() << std::endl;
 				}
 
-				task get_return_object()
+				async_io_task get_return_object()
 				{
 					std::cout << "task get_return_object:" << this << " " << GetCurrentThreadId() << std::endl;
 					async_io_task my_task;
@@ -211,7 +211,7 @@ namespace countrybit
 				std::cout << this << ", async_io_task await_suspend away:" << GetCurrentThreadId() << std::endl;
 				::WaitForSingleObject(hevent, INFINITE);
 				std::cout << "async_io_task await_suspend finished:" << GetCurrentThreadId() << std::endl;
-				_handle.resume();
+				handle.resume();
 			}
 
 			IOParams await_resume()

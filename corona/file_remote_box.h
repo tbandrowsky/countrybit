@@ -16,26 +16,6 @@ namespace countrybit
 	namespace database
 	{
 
-		struct named_file_properties_type
-		{
-			remote_file_path				file_path;
-			object_name						parameter_field;
-			object_name						result_field;
-			remote_parameter_fields_type	parameters;
-			remote_fields_type				fields;
-			time_t							last_success;
-			time_t							last_error;
-			object_description				error_message;
-		};
-
-		class file_remote_instance
-		{
-		public:
-			collection_id_type			collection;
-			time_t						last_success;
-			time_t						last_error;
-			object_description			error_message;
-		};
 
 		class file_remote_box
 		{

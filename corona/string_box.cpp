@@ -119,6 +119,7 @@ namespace countrybit
 			{
 				type_code = type_code * 23 + *c;
 			}
+			return type_code;
 		}
 
 		bool string_tests()
