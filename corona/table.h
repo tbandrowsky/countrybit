@@ -34,7 +34,7 @@ namespace countrybit
 
 		public:
 
-			parent_child_holder(P* _parent, C* _children, row_id_type _id, row_id_type _length, row_id_type _begin = 0) :
+			parent_child_holder(P* _parent, C* _children, row_id_type _id, row_id_type _length, row_id_type _begin) :
 				the_parent(_parent),
 				the_children(_children),
 				id(_id),
@@ -436,8 +436,9 @@ namespace countrybit
 
 			bool move_child(row_id_type location, int shift)
 			{
-				auto pcr = parents.get_at(location);
-				auto& pc = parents[pcr.start];
+				auto& pcr = parents.get_at(location);
+				auto& pc = parents[pcr.children.start];
+
 				row_range new_pos{ pc.children.start + shift, pc.children.stop + shift, pc.children.reserved_stop + shift };
 
 				if (new_pos.reserved_stop >= children.size())
@@ -503,11 +504,11 @@ namespace countrybit
 				{
 					auto& pc = parents[pcr.start];
 					pc.children = children.create(child_count);
-					return parent_child_holder<P, C>(&pc.parent, &children[pc.children.start], pcr.start, child_count);
+					return parent_child_holder<P, C>(&pc.parent, &children[pc.children.start], pcr.start, child_count, 0 );
 				}
 				else 
 				{
-					return parent_child_holder<P, C>(nullptr, nullptr, 0, 0);
+					return parent_child_holder<P, C>(nullptr, nullptr, null_row, null_row, null_row);
 				}
 			}
 
@@ -517,10 +518,9 @@ namespace countrybit
 				{
 					return create(child_count);
 				}
-				auto pcr = parents.get_at(location);
-				auto& pc = parents[pcr.start];
+				auto& pc = parents.get_at(location);
 				pc.children = children.create(child_count);
-				return parent_child_holder<P, C>(&pc.parent, &children[pc.children.start], pcr.start, child_count);
+				return parent_child_holder<P, C>(&pc.parent, &children[pc.children.start], location, child_count, 0);
 			}
 
 			parent_child_holder<P, C> append_child(row_id_type location, int add_child_count)
@@ -530,8 +530,7 @@ namespace countrybit
 					return create(add_child_count);
 				}
 
-				auto pcr = parents.get_at(location);
-				parent_child& pc = parents[pcr.children.start];
+				auto& pc = parents.get_at(location);
 
 				if (pc.children.start == 0 && pc.children.stop == 0 && pc.children.reserved_stop == 0)
 				{
@@ -539,6 +538,7 @@ namespace countrybit
 				}
 
 				row_id_type new_base = pc.children.stop;
+				row_id_type new_start = pc.children.stop;
 
 				row_id_type capacity_in_node = pc.children.reserved_stop - pc.children.start;
 				if (capacity_in_node >= add_child_count)
@@ -567,11 +567,13 @@ namespace countrybit
 					}
 					else 
 					{
-						return parent_child_holder<P,C>(nullptr, nullptr, nullptr, 0);
+						return parent_child_holder<P,C>(nullptr, nullptr, null_row, null_row, null_row);
 					}
 				}
 
-				return parent_child_holder<P, C>(&pc.parent, &children[pc.children.start], pcr.children.start, new_base);
+				int new_size = pc.children.stop - pc.children.start;
+
+				return parent_child_holder<P, C>( &pc.parent, &children[pc.children.start], location, new_size, new_start);
 			}
 
 			parent_child_holder<P, C> operator[](row_id_type row_id)
@@ -579,7 +581,7 @@ namespace countrybit
 				parent_child_holder<P, C> nullpc;
 				if (row_id == null_row) return nullpc;
 				auto& pc = parents[ row_id ];
-				return parent_child_holder<P, C>(&pc.parent, &children[pc.children.start], row_id, pc.children.size());
+				return parent_child_holder<P, C>(&pc.parent, &children[pc.children.start],  row_id, pc.children.size(), 0);
 			}
 
 			parent_child_holder<P, C> get(row_id_type row_id)
@@ -587,7 +589,7 @@ namespace countrybit
 				parent_child_holder<P, C> nullpc;
 				if (row_id == null_row) return nullpc;
 				auto& pc = parents[row_id];
-				return parent_child_holder<P, C>(&pc.parent, &children[pc.children.start], row_id, pc.children.size());
+				return parent_child_holder<P, C>(&pc.parent, &children[pc.children.start], row_id, pc.children.size(), 0);
 			}
 
 			static int get_box_size(int _parent_rows, int _child_rows)
