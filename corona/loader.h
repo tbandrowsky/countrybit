@@ -798,7 +798,7 @@ namespace countrybit
 			database::table<database::put_sql_field_request> put_sql_fields;
 			database::table<database::put_http_field_request> put_http_fields;
 			database::table<database::put_file_field_request> put_file_fields;
-			database::table<database::put_named_class_request> put_classes;
+			database::table<database::put_class_request> put_classes;
 
 			database::row_id_type fields_by_name_id;
 			database::row_id_type classes_by_name_id;
@@ -881,7 +881,7 @@ namespace countrybit
 				put_image_fields = database::table<database::put_image_field_request>::create_table(&data, _num_fields, put_image_fields_id);
 				put_wave_fields = database::table<database::put_wave_field_request>::create_table(&data, _num_fields, put_wave_fields_id);
 				put_midi_fields = database::table<database::put_midi_field_request>::create_table(&data, _num_fields, put_midi_fields_id);
-				put_classes = database::table<database::put_named_class_request>::create_table(&data, _num_fields, put_classes_id);
+				put_classes = database::table<database::put_class_request>::create_table(&data, _num_fields, put_classes_id);
 
 				string_fields_ti = create_typeinfo(member_type_name, "string", "string", 20);
 				create_scalar_property<database::int32_box>(string_fields_ti, pvalue::pvalue_types::double_value, "id", "id", offsetof(database::put_string_field_request, name.field_id));
@@ -1062,10 +1062,10 @@ namespace countrybit
 				create_scalar_property<database::string_box>(put_class_fields_ti, pvalue::pvalue_types::string_value, "dim_z", "dim_z", offsetof(database::member_field, dimensions.z));
 
 				put_classes_ti = create_typeinfo(member_type_name, "class", "class", 20);
-				create_scalar_property<database::int32_box>(put_classes_ti, pvalue::pvalue_types::double_value, "id", "id", offsetof(database::put_named_class_request, class_id));
-				create_scalar_property<database::string_box>(put_classes_ti, pvalue::pvalue_types::string_value, "name", "name", offsetof(database::put_named_class_request, class_name));
-				create_scalar_property<database::string_box>(put_classes_ti, pvalue::pvalue_types::string_value, "description", "description", offsetof(database::put_named_class_request, class_description));
-				create_object_iarray_property<database::member_field, database::max_class_fields >(put_classes_ti, put_class_fields_ti, "fields", "fields", offsetof(database::put_named_class_request, member_fields));
+				create_scalar_property<database::int32_box>(put_classes_ti, pvalue::pvalue_types::double_value, "id", "id", offsetof(database::put_class_request, class_id));
+				create_scalar_property<database::string_box>(put_classes_ti, pvalue::pvalue_types::string_value, "name", "name", offsetof(database::put_class_request, class_name));
+				create_scalar_property<database::string_box>(put_classes_ti, pvalue::pvalue_types::string_value, "description", "description", offsetof(database::put_class_request, class_description));
+				create_object_iarray_property<database::member_field, database::max_class_fields >(put_classes_ti, put_class_fields_ti, "fields", "fields", offsetof(database::put_class_request, member_fields));
 
 				color_ti = create_typeinfo(member_type_name, "color", "color", 20);
 				create_scalar_property<database::color_box>(color_ti, pvalue::pvalue_types::double_value, "red", "red", offsetof(database::color, red));
@@ -1825,7 +1825,7 @@ namespace countrybit
 				}
 			}
 
-			database::row_id_type put_class(database::jschema& schema, database::put_named_class_request& aorf)
+			database::row_id_type put_class(database::jschema& schema, database::put_class_request& aorf)
 			{
 				for (auto fn : aorf.member_fields) 
 				{

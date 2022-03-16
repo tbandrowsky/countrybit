@@ -24,6 +24,7 @@ namespace countrybit
 			iarray& operator = (const std::vector<item_type>& src)
 			{
 				copy(src.data(), src.size());
+				return *this;
 			}
 
 			const item_type* value() const
@@ -51,7 +52,7 @@ namespace countrybit
 				return &data[idx];
 			}
 
-			void copy(int srclength, item_type* src)
+			void copy(const item_type* src, int srclength)
 			{
 				item_type* d = &data[0];
 				length = 0;

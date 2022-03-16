@@ -343,7 +343,7 @@ namespace countrybit
 				return &data[0];
 			}
 
-			char* c_str_w() const
+			char* c_str_w()
 			{
 				return &data[0];
 			}

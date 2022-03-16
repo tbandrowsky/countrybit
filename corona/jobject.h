@@ -401,7 +401,7 @@ namespace countrybit
 				;
 			}
 
-			jarray create_object(row_id_type _class_field_id);
+			jarray create_object(row_id_type _class_id);
 
 			jarray get_object(row_id_type _object_id)
 			{
@@ -602,7 +602,7 @@ namespace countrybit
 				schema.queries = query_store_type::get_table(_b, pschema_map->query_properties_id);
 				schema.sql_remotes = sql_store_type::get_table(_b, pschema_map->sql_properties_id);
 				schema.file_remotes = file_store_type::get_table(_b, pschema_map->file_properties_id);
-				schema.http_remotes = file_store_type::get_table(_b, pschema_map->http_properties_id);
+				schema.http_remotes = http_store_type::get_table(_b, pschema_map->http_properties_id);
 				return schema;
 			}
 
@@ -615,8 +615,8 @@ namespace countrybit
 				int64_t fields_by_name_size = field_index_type::get_box_size(_num_fields);
 				int64_t query_size = query_store_type::get_box_size(_num_queries);
 				int64_t sql_size = sql_store_type::get_box_size(_num_sql_remotes);
-				int64_t http_size = http_store_type::get_box_size(_num_http_remotes);
 				int64_t file_size = file_store_type::get_box_size(_num_file_remotes);
+				int64_t http_size = http_store_type::get_box_size(_num_http_remotes);
 				int64_t total_size = field_size + class_size + ancestry_size + classes_by_name_size + fields_by_name_size + query_size + sql_size + http_size + file_size;
 				return total_size;
 			}
@@ -879,7 +879,7 @@ namespace countrybit
 				return put_field(request.name.field_id, type_query, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, sizeof(color));
 			}
 
-			row_id_type put_class(put_named_class_request request)
+			row_id_type put_class(put_class_request request)
 			{
 				auto sz = request.class_name.size();
 
@@ -918,13 +918,20 @@ namespace countrybit
 
 					switch (field.membership_type) 
 					{
-						case membership_types::member_class:
+						case membership_types::member_field:
 							{
-								auto fname = fields_by_name[field.field_name];
-								if (fname == std::end(fields_by_name)) {
-									return null_row;
+								row_id_type fid;
+								if (!field.use_id) {
+									auto fname = fields_by_name[field.field_name];
+									if (fname == std::end(fields_by_name)) {
+										return null_row;
+									}
+									fid = fname->second;
 								}
-								auto fid = fname->second;
+								else 
+								{
+									fid = field.field_id;
+								}
 								auto& existing_field = fields[fid];
 								auto& ref = pcr.child(i);
 								ref.field_id = fid;
@@ -932,20 +939,33 @@ namespace countrybit
 								p.class_size_bytes += existing_field.size_bytes;
 							}
 							break;
-						case membership_types::member_field:
+						case membership_types::member_class:
 							{
-								auto class_name = classes_by_name[field.field_name];
-								if (class_name == std::end(classes_by_name)) {
-									return null_row;
-								}
 								put_object_field_request porf;
-								porf.name.name = class_name.get_key();
-								porf.name.field_id = null_row;
-								porf.name.type_id = jtype::type_object;
-								porf.options.class_name = class_name.get_key();
-								porf.options.class_id = class_name.get_value();
-								porf.options.class_size_bytes = classes[class_name.get_value()].pparent()->class_size_bytes;
-								porf.options.dim = field.dimensions;
+								if (!field.use_id) {
+									auto class_name = classes_by_name[field.field_name];
+									if (class_name == std::end(classes_by_name)) {
+										return null_row;
+									}
+									porf.name.name = class_name.get_key();
+									porf.name.field_id = null_row;
+									porf.name.type_id = jtype::type_object;
+									porf.options.class_name = class_name.get_key();
+									porf.options.class_id = class_name.get_value();
+									porf.options.class_size_bytes = classes[class_name.get_value()].pparent()->class_size_bytes;
+									porf.options.dim = field.dimensions;
+								}
+								else 
+								{
+									auto class_cls = classes[field.class_id];
+									porf.name.name = class_cls.parent().name;
+									porf.name.field_id = null_row;
+									porf.name.type_id = jtype::type_object;
+									porf.options.class_name = class_cls.parent().name;
+									porf.options.class_id = field.class_id;
+									porf.options.class_size_bytes = classes[field.class_id].pparent()->class_size_bytes;
+									porf.options.dim = field.dimensions;
+								}
 								auto class_field_id = put_object_field(porf);
 								if (class_field_id == null_row) {
 									return null_row;
@@ -994,21 +1014,21 @@ namespace countrybit
 				return the_field;
 			}
 
-			uint64_t estimate_collection_size(int _number_of_objects, int* _class_field_ids)
+			uint64_t estimate_collection_size(int _number_of_objects, int* _class_ids)
 			{
-				if (!_class_field_ids)
+				if (!_class_ids)
 				{
 					return 0;
 				}
 
 				int max_size = 0;
-				while (*_class_field_ids != null_row)
+				while (*_class_ids != null_row)
 				{
-					auto myclassfield = get_field(*_class_field_ids);
-					if (myclassfield.size_bytes > max_size) {
-						max_size = myclassfield.size_bytes;
+					auto myclassfield = get_class(*_class_ids);
+					if (myclassfield.parent().class_size_bytes > max_size) {
+						max_size = myclassfield.parent().class_size_bytes;
 					}
-					_class_field_ids++;
+					_class_ids++;
 				}
 
 				return max_size;
@@ -1016,24 +1036,9 @@ namespace countrybit
 
 			template <typename B>
 			requires (box<B, jcollection_map>)
-			row_id_type reserve_collection(B* _b, collection_id_type _collection_id, int _number_of_objects, int* _class_field_ids)
+			row_id_type reserve_collection(B* _b, collection_id_type _collection_id, int _number_of_objects, int* _class_ids)
 			{
-				uint64_t max_size = estimate_collection_size(_number_of_objects, _class_field_ids);
-				if (!max_size)
-				{
-					return null_row;
-				}
-
-				int max_size = 0;
-				while (*_class_field_ids != null_row)
-				{
-					auto myclassfield = get_field(*_class_field_ids);
-					if (myclassfield.size_bytes > max_size) {
-						max_size = myclassfield.size_bytes;
-					}
-					_class_field_ids++;
-				}
-
+				uint64_t max_size = estimate_collection_size(_number_of_objects, _class_ids);
 				if (!max_size)
 				{
 					return null_row;
@@ -1059,19 +1064,19 @@ namespace countrybit
 
 			template <typename B>
 			requires (box<B, jcollection_map>)
-			jcollection create_collection(B* _b, collection_id_type _collection_id, int _number_of_objects, row_id_type* _class_field_ids)
+			jcollection create_collection(B* _b, collection_id_type _collection_id, int _number_of_objects, row_id_type* _class_ids)
 			{
-				auto reserved_id = reserve_collection(_b, _collection_id, _number_of_objects, _class_field_ids);
+				auto reserved_id = reserve_collection(_b, _collection_id, _number_of_objects, _class_ids);
 				jcollection tmp = get_collection(_b, reserved_id);
 				return tmp;
 			}
 
 			template <typename B>
 			requires (box<B, jcollection_map>)
-			jcollection create_collection(B* _b, collection_id_type _collection_id, int _number_of_objects, row_id_type _class_field_id)
+			jcollection create_collection(B* _b, collection_id_type _collection_id, int _number_of_objects, row_id_type _class_id)
 			{
-				row_id_type class_field_ids[2] = { _class_field_id, null_row };
-				row_id_type reserved_id = reserve_collection(_b, _collection_id, _number_of_objects, class_field_ids);
+				row_id_type class_ids[2] = { _class_id, null_row };
+				row_id_type reserved_id = reserve_collection(_b, _collection_id, _number_of_objects, class_ids);
 				jcollection tmp = get_collection(_b, reserved_id);
 				return tmp;
 			}

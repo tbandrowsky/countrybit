@@ -578,7 +578,8 @@ namespace countrybit
 		enum class membership_types
 		{
 			member_field = 1,
-			member_class = 2
+			member_class = 2,
+			member_list = 3
 		};
 
 		struct member_field
@@ -587,6 +588,7 @@ namespace countrybit
 			object_name			field_name;
 			object_name			membership_type_name;
 			membership_types	membership_type;
+			bool				use_id;
 
 			union
 			{
@@ -595,9 +597,66 @@ namespace countrybit
 			};
 
 			dimensions_type dimensions;
+
+			member_field() : use_id(false) { ; }
+
+			member_field(row_id_type _field_id) : use_id(true), membership_type(membership_types::member_field), field_id(_field_id) 
+			{ 
+				; 
+			}
+
+			member_field(membership_types _member_ship_type, row_id_type _id) :
+				membership_type(_member_ship_type),
+				use_id(true),
+				dimensions { 1, 1, 1 }
+			{
+				switch (membership_type) 
+				{
+				case membership_types::member_class:
+					class_id = _id;
+					break;
+				case membership_types::member_field:
+					field_id = _id;
+					break;
+				}
+			}
+
+			member_field(membership_types _member_ship_type, object_name _name) :
+				membership_type(_member_ship_type),
+				use_id(false),
+				field_name(_name),
+				dimensions{ 1, 1, 1 }
+			{
+
+			}
+
+			member_field(row_id_type _class_id, int _maximum) :
+				membership_type(membership_types::member_list),
+				use_id(true),
+				class_id(_class_id)
+			{
+				dimensions = { _maximum, 1, 1 };
+			}
+
+			member_field(row_id_type _class_id, dimensions_type dims) :
+				membership_type(membership_types::member_class),
+				use_id(true),
+				class_id(_class_id)
+			{
+				dimensions = dims;
+			}
+
+			member_field(membership_types _member_ship_type, object_name _name, int _maximum) :
+				membership_type(membership_types::member_list),
+				use_id(false),
+				field_name(_name)
+			{
+				dimensions = { _maximum, 1, 1 };
+			}
+
 		};
 
-		class put_named_class_request 
+		class put_class_request 
 		{
 		public:
 			row_id_type			class_id;

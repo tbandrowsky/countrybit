@@ -55,19 +55,30 @@ namespace countrybit
 			return hr == S_OK;
 		}
 
-		jarray jcollection::create_object(row_id_type _class_field_id)
+		jarray jcollection::create_object(row_id_type _class_id)
 		{
-			auto myclassfield = schema->get_field(_class_field_id);
-			if (myclassfield.type_id != jtype::type_object) {
-				throw std::logic_error("Attempt to create an object from a non-object field.  You must use an object field to create an object.");
+			auto myclass = schema->get_class(_class_id);
+
+			object_name composed_class_field_name;
+			dimensions_type d{ 1, 1, 1 };
+			schema->get_class_field_name(composed_class_field_name, myclass.parent().name, d);
+			auto find_field_id = schema->find_field(composed_class_field_name);
+			if (find_field_id == null_row) 
+			{
+				put_object_field_request porf;
+				porf.name.name = composed_class_field_name;
+				porf.options.class_id = _class_id;
+				porf.options.class_name = myclass.parent().name;
+				porf.options.class_size_bytes = myclass.parent().class_size_bytes;
+				porf.options.dim = d;
+				find_field_id = schema->put_object_field(porf);
 			}
-			auto myclass = schema->get_class(myclassfield.object_properties.class_id);
 			auto bytes_to_allocate = myclass.parent().class_size_bytes;
 			auto new_object = objects.create(bytes_to_allocate);
 			new_object.parent().oid.collection_id = collection_id;
 			new_object.parent().oid.row_id = new_object.row_id();
-			new_object.parent().class_field_id = _class_field_id;
-			jarray ja(schema, _class_field_id, new_object.pchild());
+			new_object.parent().class_field_id = find_field_id;	
+			jarray ja(schema, find_field_id, new_object.pchild());
 
 			for (auto jai : ja) 
 			{
@@ -484,7 +495,7 @@ namespace countrybit
 			;
 		}
 
-		jlist::jlist(jschema* _schema, row_id_type _class_field_id, char* _bytes, bool _init = false) : schema(_schema), class_field_id(_class_field_id)
+		jlist::jlist(jschema* _schema, row_id_type _class_field_id, char* _bytes, bool _init) : schema(_schema), class_field_id(_class_field_id)
 		{
 			data = (jlist_header*)_bytes;
 			jfield& field = schema->get_field(class_field_id);
@@ -757,7 +768,7 @@ namespace countrybit
 				return false;
 			}
 
-			countrybit::database::jschema::put_class_request person;
+			countrybit::database::put_class_request person;
 
 			person.class_name = "person";
 			person.class_description = "a person";
@@ -788,24 +799,11 @@ namespace countrybit
 				offset_start += fld.size_bytes;
 			}
 
-			countrybit::database::add_object_field_request people;
-			people.options.class_id = person_class_id;
-			people.name.description = "People";
-			people.name.name = "people";
-			people.options.dim = { 100, 1, 1 };
-			people.name.field_id = schema.add_field();
-			row_id_type people_field = schema.add_object_field(people);
-
-			if (people_field == null_row) {
-				std::cout << __LINE__ << ":field create failed failed" << std::endl;
-				return false;
-			}
-
-			countrybit::database::jschema::add_class_request company;
+			countrybit::database::put_class_request company;
 			company.class_name = "company";
 			company.class_description = "a company is a collection of people";
-			company.member_fields = { field_last_name, field_first_name, field_birthday, people_field };
-			row_id_type company_class_id = schema.add_class(company);
+			company.member_fields = { field_institution_name, member_field(person_class_id, dimensions_type { 10, 1, 1 })};
+			row_id_type company_class_id = schema.put_class(company);
 
 			if (company_class_id == null_row) {
 				std::cout << __LINE__ << ":class create failed failed" << std::endl;
@@ -823,7 +821,7 @@ namespace countrybit
 			jschema schema;
 			row_id_type schema_id;
 
-			schema = jschema::create_schema(&box, 10, 200, 500, schema_id);
+			schema = jschema::create_schema( &box, 10, 200, 500, 20, 20, 20, 20, schema_id);
 			schema.add_standard_fields();
 
 			countrybit::database::put_class_request person;
@@ -838,19 +836,10 @@ namespace countrybit
 				return false;
 			}
 
-			countrybit::database::put_object_field_request people_field;
-			people_field.options.class_id = person_class_id;
-			people_field.name.description = "People";
-			people_field.name.name = "people";
-			people_field.options.dim = { 1, 0, 0 };
-			people_field.name.field_id = null_row;
-			row_id_type people_field_id = schema.put_object_field(people_field);
-
 			collection_id_type colid;
-
 			init_collection_id(colid);
 			
-			jcollection people = schema.create_collection(&box, colid, 50, people_field_id);
+			jcollection people = schema.create_collection(&box, colid, 50, person_class_id);
 
 			jarray pa;
 
@@ -859,7 +848,7 @@ namespace countrybit
 			double quantitystart = 10.22;
 			int increment = 5;
 			
-			pa = people.create_object(people_field_id);			
+			pa = people.create_object(person_class_id);
 			auto sl = pa.get_slice(0);
 			auto last_name = sl.get_string(0);
 			auto first_name = sl.get_string(1);
@@ -872,7 +861,7 @@ namespace countrybit
 			count = countstart + increment * 0;
 			qty = quantitystart + increment * 0;
 
-			pa = people.create_object(people_field_id);
+			pa = people.create_object(person_class_id);
 			sl = pa.get_slice(0);
 			last_name = sl.get_string(0);
 			first_name = sl.get_string(1);
@@ -885,7 +874,7 @@ namespace countrybit
 			count = countstart + increment * 1;
 			qty = quantitystart + increment * 1;
 
-			pa = people.create_object(people_field_id);
+			pa = people.create_object(person_class_id);
 			sl = pa.get_slice(0);
 			last_name = sl.get_string(0);
 			first_name = sl.get_string(1);
@@ -898,7 +887,7 @@ namespace countrybit
 			count = countstart + increment * 2;
 			qty = quantitystart + increment * 2;
 
-			pa = people.create_object(people_field_id);
+			pa = people.create_object(person_class_id);
 			sl = pa.get_slice(0);
 			last_name = sl.get_string(0);
 			first_name = sl.get_string(1);
@@ -911,7 +900,7 @@ namespace countrybit
 			count = countstart + increment * 3;
 			qty = quantitystart + increment * 3;
 
-			pa = people.create_object(people_field_id);
+			pa = people.create_object(person_class_id);
 			sl = pa.get_slice(0);
 			last_name = sl.get_string(0);
 			first_name = sl.get_string(1);
@@ -975,7 +964,7 @@ namespace countrybit
 			jschema schema;
 			row_id_type schema_id;
 
-			schema = jschema::create_schema(&box, 10, 200, 500, schema_id);
+			schema = jschema::create_schema(&box, 10, 200, 500, 20, 20, 20, 20, schema_id);
 			schema.add_standard_fields();
 
 			countrybit::database::put_class_request sprite_frame_request;
@@ -1015,22 +1004,14 @@ namespace countrybit
 				return false;
 			}
 
-			countrybit::database::put_object_field_request sprite_field;
-			sprite_field.name.field_id = null_row;
-			sprite_field.options.class_id = sprite_class_id;
-			sprite_field.name.description = "sprite field with 20 frames";
-			sprite_field.name.name = "sprite20";
-			sprite_field.options.dim = { 1, 1, 1 };
-			row_id_type sprite_field_id = schema.put_object_field(sprite_field);
-
 			collection_id_type colid;
 
 			init_collection_id(colid);
 
-			jcollection sprites = schema.create_collection(&box, colid, 50, sprite_field_id);
+			jcollection sprites = schema.create_collection(&box, colid, 50, sprite_class_id);
 
 			for (int i = 0; i < 10; i++) {
-				auto new_object = sprites.create_object(sprite_field_id);
+				auto new_object = sprites.create_object(sprite_class_id);
 				auto slice = new_object.get_slice(0);
 
 				auto image_name = slice.get_string(0);
