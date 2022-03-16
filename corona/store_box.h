@@ -219,7 +219,7 @@ namespace countrybit
 			}
 
 			template <typename T>
-			T* place()
+			char* place()
 			{
 				int sz = sizeof(T);
 				int l = size() - top();
@@ -229,9 +229,9 @@ namespace countrybit
 					return nullptr;
 				}
 
-				char* sz = data() + top();
+				char* szn = data();
 				_top += sz;
-				return sz;
+				return szn;
 			}
 
 			template <typename T>

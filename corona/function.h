@@ -6,7 +6,6 @@
 #include <coroutine>
 #include "messages.h"
 #include <functional>
-#include "application.h"
 
 namespace countrybit
 {

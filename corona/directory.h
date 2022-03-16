@@ -15,14 +15,14 @@ namespace countrybit
 		class directory_change_instance
 		{
 		public:
-			job_queue*  queue;
-			file_path	directory_name;
-			HANDLE		hdirectory;
-			char		*buffer_bytes;
-			DWORD		buffer_size;
-			os_result	last_result;
-			DWORD		bytes_transferred;
-			BOOL		success;
+			job_queue*				queue;
+			database::object_path	directory_name;
+			HANDLE					hdirectory;
+			char					*buffer_bytes;
+			DWORD					buffer_size;
+			os_result				last_result;
+			DWORD					bytes_transferred;
+			BOOL					success;
 
 			directory_change_instance() :
 				queue(nullptr),
@@ -38,7 +38,7 @@ namespace countrybit
 
 			~directory_change_instance() = default;
 
-			directory_change_instance(job_queue* _queue, const file_path& _directory_name, HANDLE _hdirectory) :
+			directory_change_instance(job_queue* _queue, const database::object_path& _directory_name, HANDLE _hdirectory) :
 				queue(_queue),
 				directory_name(_directory_name),
 				hdirectory(_hdirectory),
@@ -59,8 +59,8 @@ namespace countrybit
 
 				struct value_ref
 				{
-					file_path directory_name;
-					file_path file_name;
+					database::object_path directory_name;
+					database::object_path file_name;
 
 					value_ref& from(directory_change_instance* _base, FILE_NOTIFY_INFORMATION* change)
 					{
@@ -180,7 +180,7 @@ namespace countrybit
 
 		protected:
 
-			directory(job_queue* _queue, const file_path& _directory_name )
+			directory(job_queue* _queue, const database::object_path& _directory_name )
 				: instance(_queue, _directory_name, INVALID_HANDLE_VALUE)
 			{
 				DWORD disposition;

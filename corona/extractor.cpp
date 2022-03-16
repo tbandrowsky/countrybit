@@ -488,7 +488,7 @@ namespace countrybit
 						return result;
 					}
 					member->name = gsr.value;
-					if (type_member_name && !stricmp(member->name, type_member_name)) {
+					if (type_member_name && !strcmp(member->name, type_member_name)) {
 						obj->type_member = member;
 					}
 
@@ -636,7 +636,7 @@ namespace countrybit
 					return result;
 				}
 
-				int x, y, z;
+				int64_t x=1, y=1, z=1;
 
 				auto xm = object_result.value->get_member("x");
 				auto ym = object_result.value->get_member("y");
@@ -673,38 +673,31 @@ namespace countrybit
 					return result;
 				}
 
-				if (!ym) {
-					result.success = false;
-					result.line_number = object_result.line_number;
-					result.char_offset = object_result.char_offset;
-					result.message = "missing y dimension";
-					return result;
-				}
-
-				const double* ymd = ym->value->as_double();
-				if (!ymd) {
-					result.success = false;
-					result.line_number = object_result.line_number;
-					result.char_offset = object_result.char_offset;
-					result.message = "y dimensions must be numbers";
-					return result;
+				if (ym) {
+					const double* ymd = ym->value->as_double();
+					if (!ymd) {
+						result.success = false;
+						result.line_number = object_result.line_number;
+						result.char_offset = object_result.char_offset;
+						result.message = "y dimensions must be numbers";
+						return result;
+					}
+					y = (int64_t)*ymd;
+					if (y < 1) y = 1;
 				}
 
 				if (zm) {
 					const double* zmd = zm->value->as_double();
-					if (zmd) 
-					{
-						y = (int64_t)*ymd;
+					if (!zmd) {
+						result.success = false;
+						result.line_number = object_result.line_number;
+						result.char_offset = object_result.char_offset;
+						result.message = "z dimensions must be numbers";
+						return result;
 					}
+					z = (int64_t)*zmd;
+					if (z < 1) z = 1;
 				}
-
-				x = (int64_t)*xmd;
-				if (x < 1) x = 1;
-
-				y = (int64_t)*ymd;
-				if (y < 1) y = 1;
-
-				if (z < 1) z = 1;
 
 				int64_t ix = 0, iy = 0, iz = 0;
 

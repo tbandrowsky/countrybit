@@ -123,7 +123,7 @@ namespace countrybit
 				data.init(_data_length);
 			}
 
-			string_extractor(const string_extractor& _ctx) : view(_ctx.view), index(_ctx.index), data(_ctx.data), line(_ctx.line), type_member_name(_type_member_name)
+			string_extractor(const string_extractor& _ctx) : view(_ctx.view), index(_ctx.index), data(_ctx.data), line(_ctx.line), type_member_name(_ctx.type_member_name)
 			{
 				
 			}
