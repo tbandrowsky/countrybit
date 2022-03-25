@@ -25,7 +25,7 @@
 
 namespace countrybit
 {
-	namespace database 
+	namespace database
 	{
 		const static int
 
@@ -212,7 +212,7 @@ namespace countrybit
 		struct image_properties_type
 		{
 			object_path				image_path;
-			emphemeral_handle_type	handle;			
+			emphemeral_handle_type	handle;
 		};
 
 		struct midi_properties_type
@@ -249,6 +249,13 @@ namespace countrybit
 			int64_t				total_size_bytes;
 		};
 
+		struct model_properties_type
+		{
+			row_id_type			class_id;
+			object_name			class_name;
+			int64_t				model_size_bytes;
+		};
+
 		class jfield
 		{
 		public:
@@ -260,7 +267,7 @@ namespace countrybit
 			object_name				name;
 			object_description		description;
 
-			union 
+			union
 			{
 				string_properties_type		string_properties;
 				int_properties_type			int_properties;
@@ -286,15 +293,23 @@ namespace countrybit
 		class path_root
 		{
 		public:
-			object_name collection_name;
-			object_name class_name;
+			object_name		collection_name;
+			object_id_type	object_id;
+		};
+
+		enum class node_operations
+		{
+			group_by,
+			calc_min,
+			calc_max,
+			calc_sum
 		};
 
 		class path_node
 		{
 		public:
-			object_name member_name;
 			row_id_type	member_id;
+			node_operations node_operation;
 		};
 
 		class path
@@ -348,6 +363,15 @@ namespace countrybit
 		};
 
 		using named_query_properties_type = named_query_properties_t<max_query_filters>;
+
+		template <int max_filters>
+		class query_properties_t
+		{
+		public:
+			path		source_path;
+			object_name result_field;
+			iarray<filter_element, max_filters> filter;
+		};
 
 		class query_instance
 		{
@@ -466,19 +490,19 @@ namespace countrybit
 			string_properties_type options;
 		};
 
-		class put_integer_field_request  {
+		class put_integer_field_request {
 		public:
 			put_field_request_base name;
 			int_properties_type options;
 		};
 
-		class put_double_field_request  {
+		class put_double_field_request {
 		public:
 			put_field_request_base name;
 			double_properties_type options;
 		};
 
-		class put_time_field_request  {
+		class put_time_field_request {
 		public:
 			put_field_request_base name;
 			time_properties_type options;
@@ -490,7 +514,7 @@ namespace countrybit
 			object_properties_type options;
 		};
 
-		class put_query_field_request  {
+		class put_query_field_request {
 		public:
 			put_field_request_base name;
 			query_properties_type options;
@@ -514,7 +538,7 @@ namespace countrybit
 			sql_properties_type options;
 		};
 
-		class put_named_http_import_field_request 
+		class put_named_http_import_field_request
 		{
 		public:
 			put_field_request_base name;
@@ -575,7 +599,7 @@ namespace countrybit
 			named_http_properties_type options;
 		};
 
-		enum class membership_types
+		enum class member_field_types
 		{
 			member_field = 1,
 			member_class = 2,
@@ -585,10 +609,10 @@ namespace countrybit
 		struct member_field
 		{
 		public:
+			member_field_types	membership_type;
 			object_name			field_name;
-			object_name			membership_type_name;
-			membership_types	membership_type;
 			bool				use_id;
+			object_name			membership_type_name;
 
 			union
 			{
@@ -600,28 +624,32 @@ namespace countrybit
 
 			member_field() : use_id(false) { ; }
 
-			member_field(row_id_type _field_id) : use_id(true), membership_type(membership_types::member_field), field_id(_field_id) 
-			{ 
-				; 
+			member_field(row_id_type _field_id) :
+				membership_type(member_field_types::member_field),
+				use_id(true),
+				field_id(_field_id),
+				dimensions{ 1, 1, 1 }
+			{
+				;
 			}
 
-			member_field(membership_types _member_ship_type, row_id_type _id) :
+			member_field(member_field_types _member_ship_type, row_id_type _id) :
 				membership_type(_member_ship_type),
 				use_id(true),
-				dimensions { 1, 1, 1 }
+				dimensions{ 1, 1, 1 }
 			{
-				switch (membership_type) 
+				switch (membership_type)
 				{
-				case membership_types::member_class:
+				case member_field_types::member_class:
 					class_id = _id;
 					break;
-				case membership_types::member_field:
+				case member_field_types::member_field:
 					field_id = _id;
 					break;
 				}
 			}
 
-			member_field(membership_types _member_ship_type, object_name _name) :
+			member_field(member_field_types _member_ship_type, object_name _name) :
 				membership_type(_member_ship_type),
 				use_id(false),
 				field_name(_name),
@@ -631,7 +659,7 @@ namespace countrybit
 			}
 
 			member_field(row_id_type _class_id, int _maximum) :
-				membership_type(membership_types::member_list),
+				membership_type(member_field_types::member_list),
 				use_id(true),
 				class_id(_class_id)
 			{
@@ -639,44 +667,96 @@ namespace countrybit
 			}
 
 			member_field(row_id_type _class_id, dimensions_type dims) :
-				membership_type(membership_types::member_class),
+				membership_type(member_field_types::member_class),
 				use_id(true),
 				class_id(_class_id)
 			{
 				dimensions = dims;
 			}
 
-			member_field(membership_types _member_ship_type, object_name _name, int _maximum) :
-				membership_type(membership_types::member_list),
+			member_field(object_name _name, int _maximum) :
+				membership_type(member_field_types::member_list),
 				use_id(false),
 				field_name(_name)
 			{
 				dimensions = { _maximum, 1, 1 };
 			}
 
+			member_field(object_name _name, dimensions_type dims) :
+				membership_type(member_field_types::member_class),
+				use_id(true),
+				field_name(_name)
+			{
+				dimensions = dims;
+			}
 		};
 
-		class put_class_request 
+		class put_class_request
 		{
 		public:
 			row_id_type			class_id;
 			object_name			class_name;
 			object_description	class_description;
-			object_name			ancestor_class_name;
-			row_id_type			ancestor_class_id;
 			iarray<member_field, max_class_fields> member_fields;
 		};
 
-		class jlist_header
+		struct model_state
+		{
+		public:
+			object_name			class_name;
+			row_id_type			class_id;
+			bool				use_id;
+		};
+
+		class put_model_request
+		{
+		public:
+			row_id_type			class_id;
+			object_name			class_name;
+			object_description	class_description;
+			iarray<member_field, max_class_fields> member_fields;
+			iarray<model_state, max_class_fields> model_states;
+			int					number_of_actors;
+			object_name			actor_id_field_name;
+			row_id_type			actor_id_field_id;
+		};
+
+		class jlist_instance
 		{
 		public:
 			int32_t   allocated;
 			int32_t   selection_offset;
 			int32_t   slice_offset;
-			char	  bytes[];
+		};
+
+		class jlist_state
+		{
+		public:
+			array_box<row_id_type> selections;
+			jlist_instance* instance;
+			char	  *list_bytes;
+		};
+
+		class jmodel_instance
+		{
+		public:
+			int32_t			number_of_actors;
+			row_id_type		selection_offset;
+			row_id_type		slice_offset;
+			row_id_type		actor_id;
+		};
+
+		class jmodel_state
+		{
+		public:
+			int32_t			number_of_actors;
+			array_box<row_id_type> selections;
+			char		    *model_bytes;
+			jmodel_instance* instance;
 		};
 
 		// a store id is in fact, a guid
+		// some overlap between a model and a class
 
 		class jclass_header
 		{
@@ -684,9 +764,9 @@ namespace countrybit
 			row_id_type									class_id;
 			object_name									name;
 			object_description							description;
-			row_id_type									ancestor_class_id;
+			row_id_type									model_field_id;
 			uint64_t									class_size_bytes;
-			row_id_type									ancestry_id;
+			uint32_t									number_actors;
 		};
 
 		class jclass_field
@@ -694,6 +774,8 @@ namespace countrybit
 		public:
 			row_id_type				field_id;
 			uint64_t				offset;
+			bool					model_state;
+			int						actor_field_index;
 		};
 
 		using jclass = parent_child_holder<jclass_header, jclass_field>;

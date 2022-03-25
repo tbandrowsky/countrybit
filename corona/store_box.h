@@ -259,7 +259,16 @@ namespace countrybit
 				int new_top = placement + sz;
 				if (new_top > _size)
 					return -1;
+				_top = new_top;
 				return placement;
+			}
+
+			int reserve_all_free()
+			{
+				int new_top = _size;
+				int r = _top;
+				_top = new_top;
+				return r;
 			}
 
 		};
@@ -406,10 +415,20 @@ namespace countrybit
 				return (serialized_box*)stuff.data();
 			}
 
-			void init(int _length)
+			void init(int _length, serialized_box *_src = nullptr)
 			{
 				stuff.resize(_length + sizeof(serialized_box));
 				get_box()->init(_length);
+				if (_src) {
+					std::copy(_src->data(), _src->data() + _length, get_box()->data());
+				}
+			}
+
+			void copy(serialized_box* _src = nullptr)
+			{
+				stuff.resize(_src->size());
+				get_box()->init(_src->size());
+				std::copy(_src->data(), _src->data() + _src->size(), get_box()->data());
 			}
 
 			template <typename bx>
@@ -513,6 +532,11 @@ namespace countrybit
 			size_t reserve(int length)
 			{
 				return get_box()->reserve(length);
+			}
+
+			size_t reserve_all_free()
+			{
+				return get_box()->reserve_all_free();
 			}
 
 		};

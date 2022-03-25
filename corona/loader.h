@@ -1829,7 +1829,7 @@ namespace countrybit
 			{
 				for (auto fn : aorf.member_fields) 
 				{
-					if (fn.item.membership_type == database::membership_types::member_field) 
+					if (fn.item.membership_type == database::member_field_types::member_field) 
 					{
 						auto field_name_iter = fields_by_name[fn.item.field_name];
 						if (field_name_iter == std::end(fields_by_name))
@@ -1845,7 +1845,7 @@ namespace countrybit
 							}
 						}
 					}
-					else if (fn.item.membership_type == database::membership_types::member_class)
+					else if (fn.item.membership_type == database::member_field_types::member_class)
 					{
 						auto found_class_id = schema.find_class(fn.item.field_name);
 						if (found_class_id == database::null_row)

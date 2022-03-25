@@ -17,6 +17,8 @@ namespace countrybit
 			row_id_type			reserved_stop;
 
 			row_id_type size() { return stop - start;  }
+			row_id_type reserved_size() { return reserved_stop - start; }
+			row_id_type free() { return reserved_stop - stop; }
 
 			bool success() const 
 			{
@@ -273,6 +275,13 @@ namespace countrybit
 				return hdr->rows[rr.start];
 			}
 
+			void erase(row_range& rr)
+			{
+				row_id_type isize = rr.size();
+				copy_rows(rr.start, rr.stop, -isize);
+				hdr->last_row -= isize;
+			}
+
 			T& append(T& src, row_range& rr)
 			{
 				auto x = hdr->last_row + 1;
@@ -419,7 +428,7 @@ namespace countrybit
 		class parent_child_table
 		{
 
-			struct parent_child
+			struct actors
 			{
 				P parent;
 				row_range children;
@@ -431,7 +440,7 @@ namespace countrybit
 				row_id_type children;
 			};
 
-			table<parent_child> parents;
+			table<actors> parents;
 			table<C> children;
 
 			bool move_child(row_id_type location, int shift)
@@ -462,33 +471,33 @@ namespace countrybit
 			}
 
 			template <typename B>
-			requires (box<B, P> && box<B, parent_child_table<P, C>::parent_child>)
-			static row_id_type reserve_table( B *b, int parent_rows, int child_rows )
+				requires (box<B, P>&& box<B, parent_child_table<P, C>::actors>)
+			static row_id_type reserve_table(B* b, int parent_rows, int child_rows)
 			{
 				parent_child_table_header hdr;
 				hdr.parents = null_row;
 				hdr.children = null_row;
 				row_id_type r = b->pack(hdr);
 				auto* phdr = b->unpack<parent_child_table_header>(r);
-				phdr->parents = table< parent_child_table<P,C>::parent_child >::reserve_table(b, parent_rows);
+				phdr->parents = table< parent_child_table<P, C>::actors >::reserve_table(b, parent_rows);
 				phdr->children = table< C >::reserve_table(b, child_rows);
 				return r;
 			}
 
 			template <typename B>
-			requires (box<B, P> && box<B, parent_child_table<P, C>::parent_child>)
+				requires (box<B, P>&& box<B, parent_child_table<P, C>::actors>)
 			static parent_child_table get_table(B* b, row_id_type row)
 			{
 				parent_child_table pct;
 				parent_child_table_header* hdr;
 				hdr = b->unpack<parent_child_table<P, C>::parent_child_table_header>(row);
-				pct.parents = table< parent_child_table<P, C>::parent_child >::get_table(b, hdr->parents);
-				pct.children = table< C >::get_table (b, hdr->children);
+				pct.parents = table< parent_child_table<P, C>::actors >::get_table(b, hdr->parents);
+				pct.children = table< C >::get_table(b, hdr->children);
 				return pct;
 			}
 
 			template <typename B>
-			requires (box<B, P>&& box<B, parent_child_table<P, C>::parent_child>)
+				requires (box<B, P>&& box<B, parent_child_table<P, C>::actors>)
 			static parent_child_table create_table(B* b, int parent_rows, int child_rows, row_id_type& row)
 			{
 				parent_child_table pct;
@@ -500,13 +509,13 @@ namespace countrybit
 			parent_child_holder<P, C> create(row_id_type child_count)
 			{
 				auto pcr = parents.create(1);
-				if (pcr.success()) 
+				if (pcr.success())
 				{
 					auto& pc = parents[pcr.start];
 					pc.children = children.create(child_count);
-					return parent_child_holder<P, C>(&pc.parent, &children[pc.children.start], pcr.start, child_count, 0 );
+					return parent_child_holder<P, C>(&pc.parent, &children[pc.children.start], pcr.start, child_count, 0);
 				}
-				else 
+				else
 				{
 					return parent_child_holder<P, C>(nullptr, nullptr, null_row, null_row, null_row);
 				}
@@ -521,6 +530,35 @@ namespace countrybit
 				auto& pc = parents.get_at(location);
 				pc.children = children.create(child_count);
 				return parent_child_holder<P, C>(&pc.parent, &children[pc.children.start], location, child_count, 0);
+			}
+
+			parent_child_holder<P, C> clone(row_id_type location)
+			{
+				auto& src = parents.get_at(location);
+				auto dest = create(src.children.reserved_size());
+				int shift = dest.parent().children.start - src.children.start;
+				children.copy_rows(src.children.start, src.children.reserved_stop, shift );
+			}
+
+			parent_child_holder<P, C> put_at(row_id_type location, row_id_type child_count)
+			{
+				if (location == null_row)
+				{
+					return create(child_count);
+				}
+
+				auto& pc = parents.get_at(location);
+
+				if (child_count > pc.children.size()) 
+				{
+					int add_count = child_count - pc.children.size();
+					return append_child(location, add_count);
+				}
+				else 
+				{
+					pc.children.stop = pc.children.start + child_count;
+					return parent_child_holder<P, C>(&pc.parent, &children[pc.children.start], location, child_count, 0);
+				}
 			}
 
 			parent_child_holder<P, C> append_child(row_id_type location, int add_child_count)
@@ -540,7 +578,7 @@ namespace countrybit
 				row_id_type new_base = pc.children.stop;
 				row_id_type new_start = pc.children.stop;
 
-				row_id_type capacity_in_node = pc.children.reserved_stop - pc.children.start;
+				row_id_type capacity_in_node = pc.children.reserved_size();
 				if (capacity_in_node >= add_child_count)
 				{
 					pc.children.stop = pc.children.stop + add_child_count;
@@ -576,6 +614,22 @@ namespace countrybit
 				return parent_child_holder<P, C>( &pc.parent, &children[pc.children.start], location, new_size, new_start);
 			}
 
+			void erase_child(row_id_type location, int child_index)
+			{
+				auto& pc = parents.get_at(location);
+				children.copy_rows(pc.children.start + child_index, pc.children.stop, -1);
+			}
+
+			void erase(row_id_type location)
+			{
+				auto& pc = parents.get_at(location);
+				for (row_id_type i = location; i > location; i--)
+				{
+					move_child(i, -1);
+				}
+				parents.erase({ location, location });
+			}
+
 			parent_child_holder<P, C> operator[](row_id_type row_id)
 			{
 				parent_child_holder<P, C> nullpc;
@@ -594,7 +648,7 @@ namespace countrybit
 
 			static int get_box_size(int _parent_rows, int _child_rows)
 			{
-				return table<parent_child>::get_box_size(_parent_rows) + table<C>::get_box_size(_child_rows);
+				return table<actors>::get_box_size(_parent_rows) + table<C>::get_box_size(_child_rows);
 			}
 
 			row_id_type size() const

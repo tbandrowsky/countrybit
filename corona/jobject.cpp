@@ -88,21 +88,20 @@ namespace countrybit
 			return ja;
 		}
 
-		jslice::jslice() : schema(nullptr), class_field_id(null_row), bytes(nullptr)
+		jslice::jslice() : schema(nullptr), class_id(null_row), bytes(nullptr)
 		{
 			;
 		}
 
-		jslice::jslice(jschema* _schema, row_id_type _class_field_id, char* _bytes, dimensions_type _dim) : schema(_schema), class_field_id(_class_field_id), bytes(_bytes), dim(_dim)
+		jslice::jslice(jschema* _schema, row_id_type _class_id, char* _bytes, dimensions_type _dim) : schema(_schema), class_id(_class_id), bytes(_bytes), dim(_dim)
 		{
-			class_field = &schema->get_field(class_field_id);
-			the_class = schema->get_class(class_field->object_properties.class_id);
+			the_class = schema->get_class(_class_id);
 		}
 
 		size_t jslice::get_offset(jtype field_type_id, int field_idx)
 		{
 #if _DEBUG
-			if (schema == nullptr || class_field_id == null_row || bytes == nullptr) {
+			if (schema == nullptr || class_id == null_row || bytes == nullptr) {
 				throw std::logic_error("slice is not initialized");
 			}
 #endif
@@ -184,6 +183,11 @@ namespace countrybit
 						{
 							jai.construct();
 						}
+					}
+					break;
+				case jtype::type_list:
+					{
+						jlist jax(schema, jcf.field_id, c, true);
 					}
 					break;
 				case jtype::type_object_id:
@@ -360,7 +364,7 @@ namespace countrybit
 		jarray jslice::get_object(int field_idx)
 		{
 #if _DEBUG
-			if (schema == nullptr || class_field_id == null_row || bytes == nullptr) {
+			if (schema == nullptr || class_id == null_row || bytes == nullptr) {
 				throw std::logic_error("slice is not initialized");
 			}
 #endif
@@ -379,7 +383,7 @@ namespace countrybit
 		jlist jslice::get_list(int field_idx)
 		{
 #if _DEBUG
-			if (schema == nullptr || class_field_id == null_row || bytes == nullptr) {
+			if (schema == nullptr || class_id == null_row || bytes == nullptr) {
 				throw std::logic_error("slice is not initialized");
 			}
 #endif
@@ -407,7 +411,7 @@ namespace countrybit
 
 		int jslice::size()
 		{
-			auto the_class = schema->get_class(class_field_id);
+			auto the_class = schema->get_class(class_id);
 			return the_class.size();
 		}
 
@@ -416,7 +420,7 @@ namespace countrybit
 			;
 		}
 
-		jarray::jarray(jschema* _schema, row_id_type _class_field_id, char* _bytes) : schema(_schema), class_field_id(_class_field_id), bytes(_bytes)
+		jarray::jarray(jschema* _schema, row_id_type _class_field_id, char* _bytes, bool _init) : schema(_schema), class_field_id(_class_field_id), bytes(_bytes)
 		{
 
 		}
@@ -454,10 +458,10 @@ namespace countrybit
 			if ((pos.x >= dim.x) ||
 				(pos.y >= dim.y) ||
 				(pos.z >= dim.z)) {
-					return jslice(schema, class_field_id, nullptr, dim);
+					return jslice(schema, field.object_properties.class_id, nullptr, dim);
 			}
 			char* b = &bytes[ ((pos.z * dim.y * dim.x) + (pos.y * dim.x) + pos.x ) * field.object_properties.class_size_bytes ];
-			jslice slice(schema, class_field_id, b, pos);
+			jslice slice(schema, field.object_properties.class_id, b, pos);
 			return slice;
 		}
 
@@ -490,33 +494,49 @@ namespace countrybit
 
 		//
 
-		jlist::jlist() : schema(nullptr), class_field_id(null_row), data(nullptr)
+		jlist::jlist() : schema(nullptr), class_field_id(null_row)
 		{
 			;
 		}
 
-		jlist::jlist(jschema* _schema, row_id_type _class_field_id, char* _bytes, bool _init) : schema(_schema), class_field_id(_class_field_id)
+		jlist::jlist(jschema* _schema, row_id_type _class_field_id, char* _bytes, bool _init) 
+			: schema(_schema), class_field_id(_class_field_id)
 		{
-			data = (jlist_header*)_bytes;
-			jfield& field = schema->get_field(class_field_id);
-			dimensions_type& dim = field.object_properties.dim;
-			if (_init) {
-				data->selection_offset = 0;
-				data->slice_offset = sizeof(selection_flag_type) * dim.x;
-				data->allocated = 0;
+			auto& field_def = schema->get_field(_class_field_id);
+			jclass model_class_def = schema->get_class(field_def.object_properties.class_id);
+			auto box_size = field_def.size_bytes;
+
+			data.instance = nullptr;
+
+			if (_init)
+			{
+				model_box->init(box_size);
+				data.instance = model_box->allocate<jlist_instance>(1);
+				data.instance->selection_offset = array_box<row_id_type>::create(model_box, field_def.object_properties.dim.x);
+				data.instance->slice_offset = model_box->reserve(box_size);
+				data.instance->allocated = 0;
 			}
-			selections = (selection_flag_type*)(char*)(data->bytes + data->selection_offset);
-			slices = (char*)(data->bytes + data->slice_offset);
+			else
+			{
+				data.instance = model_box->unpack<jlist_instance>(0);
+			}
+
+			data.list_bytes = model_box->unpack<char>(data.instance->slice_offset);
+			data.selections = array_box<row_id_type>::get(model_box, data.instance->selection_offset);
 		}
 
 		jlist::jlist(dynamic_box& _dest, jlist& _src)
+			: schema(_src.schema), class_field_id(_src.class_field_id)
 		{
-			schema = _src.schema;
-			class_field_id = _src.class_field_id;
-			auto fld = schema->get_field(class_field_id);
-			_dest.init(fld.size_bytes);
-			data = (jlist_header*)_dest.allocate<char>(fld.size_bytes);
-			std::copy((char*)_src.data, (char*)_src.data + fld.size_bytes, (char*)data);
+			auto& field_def = schema->get_field(_src.class_field_id);
+			auto box_size = field_def.size_bytes;
+
+			model_box = _dest.get_box();
+			_dest.init(box_size);
+			std::copy((char*)_src.data.instance, (char*)_src.data.instance + box_size, (char*)data.instance);
+			data.instance = model_box->unpack<jlist_instance>(0);
+			data.list_bytes = model_box->unpack<char>(data.instance->slice_offset);
+			data.selections = array_box<row_id_type>::get(model_box, data.instance->selection_offset);
 		}
 
 		uint32_t jlist::capacity()
@@ -528,19 +548,19 @@ namespace countrybit
 
 		uint32_t jlist::size()
 		{
-			return data->allocated;
+			return data.instance->allocated;
 		}
 
 		jslice jlist::get_slice(int idx)
 		{
 			jfield& field = schema->get_field(class_field_id);
 			dimensions_type dim = field.object_properties.dim;
-			if ((idx >= data->allocated) || (idx < 0)) {
-				return jslice(schema, class_field_id, nullptr, dim);
+			if ((idx >= data.instance->allocated) || (idx < 0)) {
+				return jslice(schema, field.object_properties.class_id, nullptr, dim);
 			}
 			dimensions_type pos = { idx, 0, 0 };
-			char* b = &slices[idx * field.object_properties.class_size_bytes];
-			jslice slice(schema, class_field_id, b, pos);
+			char* b = &data.list_bytes[idx * field.object_properties.class_size_bytes];
+			jslice slice(schema, field.object_properties.class_id, b, pos);
 			return slice;
 		}
 
@@ -552,79 +572,218 @@ namespace countrybit
 			{
 				return false;
 			}
-			else if (data->allocated <= 0)
+			else if (data.instance->allocated <= 0)
 			{
-				data->allocated = 0;
+				data.instance->allocated = 0;
 				return false;
 			}
-			else if (idx >= data->allocated)
+			else if (idx >= data.instance->allocated)
 			{
-				data->allocated--;
+				data.instance->allocated--;
 			}
 			else 
 			{
 				auto class_size = field.object_properties.class_size_bytes;
-				char* b1 = &slices[idx * class_size];
-				char* b2 = &slices[(idx + 1) * class_size];
-				int32_t length_objects = data->allocated - idx;
+				char* b1 = &data.list_bytes[idx * class_size];
+				char* b2 = &data.list_bytes[(idx + 1) * class_size];
+				int32_t length_objects = data.instance->allocated - idx;
 				int32_t length_bytes = length_objects * class_size;
 				std::copy(b2, b2 + length_bytes, b1);
-				data->allocated--;
+				data.instance->allocated--;
 			}
 			return true;
 		}
 
 		jslice jlist::append_slice()
 		{
-			if (data->allocated < capacity()) {
-				auto index = data->allocated;
-				data->allocated++;
-				return get_slice(index);
+			if (data.instance->allocated < capacity()) {
+				auto index = data.instance->allocated;
+				data.instance->allocated++;
+				jslice new_slice = get_slice(index);
+				new_slice.construct();
+				return new_slice;
 			}
 			return get_slice(-1);
 		}
 
 		bool jlist::select_slice(int idx)
 		{
-			if (idx < 0 || idx >= data->allocated)
+			if (idx < 0 || idx >= data.instance->allocated)
 				return false;
-			selections[idx] = 1;
+			data.selections[idx] = 1;
 			return true;
 		}
 
 		bool jlist::deselect_slice(int idx)
 		{
-			if (idx < 0 || idx >= data->allocated)
+			if (idx < 0 || idx >= data.instance->allocated)
 				return false;
-			selections[idx] = 0;
+			data.selections[idx] = 0;
 			return true;
 		}
 
 		void jlist::deselect_all()
 		{
-			for (int i = 0; i < data->allocated; i++) 
+			for (int i = 0; i < data.instance->allocated; i++) 
 			{
-				selections[i] = 0;
+				data.selections[i] = 0;
 			}
 		}
 
 		void jlist::select_all()
 		{
-			for (int i = 0; i < data->allocated; i++) 
+			for (int i = 0; i < data.instance->allocated; i++)
 			{
-				selections[i] = 1;
+				data.selections[i] = 1;
 			}
 		}
 
 		char* jlist::get_bytes()
 		{
-			return (char *)data;
+			return (char *)model_box;
 		}
 
 		uint64_t jlist::get_size_bytes()
 		{
 			jfield& field = schema->get_field(class_field_id);
 			return field.size_bytes;
+		}
+
+		// - jmodel
+
+		jmodel::jmodel() : 
+			schema(nullptr), 
+			class_id(null_row), 
+			model_box(nullptr)
+		{
+			;
+		}
+
+		jmodel::jmodel(jschema* _schema, row_id_type _class_id, char* _bytes, bool _init) : 
+			schema(_schema), 
+			class_id(_class_id),
+			model_box( (serialized_box*) _bytes )
+		{
+
+			jclass model_class_def = schema->get_class(_class_id);
+			jclass_header *model_class = model_class_def.pparent();
+			auto box_size = model_class->class_size_bytes;
+			auto num_actors = model_class->number_actors;
+
+			data.instance = nullptr;
+
+			if (_init) 
+			{
+				model_box->init(box_size);
+				data.instance = model_box->allocate<jmodel_instance>(1);
+				data.instance->selection_offset = array_box<row_id_type>::create(model_box, num_actors);
+				data.instance->slice_offset = model_box->reserve(box_size);
+				data.instance->actor_id = 0;
+			}
+			else 
+			{
+				data.instance = model_box->unpack<jmodel_instance>(0);
+			}
+
+			data.model_bytes = model_box->unpack<char>(data.instance->slice_offset);
+			data.selections = array_box<row_id_type>::get(model_box, data.instance->selection_offset);
+		}
+
+		jmodel::jmodel(dynamic_box& _dest, jmodel& _src) 
+		{
+			jclass model_class_def = _src.schema->get_class(_src.class_id);
+			jclass_header* model_class = model_class_def.pparent();
+			auto box_size = model_class->class_size_bytes;
+			auto num_actors = model_class->number_actors;
+
+			model_box = _dest.get_box();
+			model_box->init(box_size);
+			_dest.copy(_src.model_box);
+			data.instance = model_box->unpack<jmodel_instance>(0);
+			data.model_bytes = model_box->unpack<char>(data.instance->slice_offset);
+			data.selections = array_box<row_id_type>::get(model_box, data.instance->selection_offset);
+		}
+
+		size_t jmodel::estimate_size(put_model_request& _request, uint32_t base_class_bytes)
+		{
+			size_t estimated_size = base_class_bytes;
+			estimated_size += sizeof(jmodel_instance);
+			estimated_size += 32;
+			return estimated_size;
+		}
+
+		size_t jmodel::size()
+		{
+			return data.number_of_actors;
+		}
+
+		row_id_type	jmodel::get_field_index(row_id_type state_field_id)
+		{
+			jclass model_class_def = schema->get_class(class_id);
+			for (int i = 0; i < model_class_def.size(); i++)
+			{
+				auto& fld = model_class_def.child(i);
+				if (fld.field_id == state_field_id && fld.model_state) {
+					return i;
+				}
+			}
+			return null_row;
+		}
+
+		jslice jmodel::get_model()
+		{
+			jslice slice(schema, class_id, data.model_bytes, { 0, 0, 0 } );
+			return slice;
+		}
+
+		jlist jmodel::get_state(row_id_type state_field_id)
+		{
+			auto slice = get_model();
+			auto field_idx = get_field_index(state_field_id);
+			slice.get_list(field_idx);
+		}
+
+		row_id_type jmodel::create_actor()
+		{
+			data.instance->actor_id++;
+			return data.instance->actor_id;
+		}
+
+		jslice jmodel::set_actor(row_id_type state_field_id, row_id_type actor_id)
+		{
+			;
+		}
+
+		jslice jmodel::get_actor(row_id_type state_field_id, row_id_type actor_id)
+		{
+			jlist state = get_state(state_field_id);
+
+		}
+
+		void jmodel::delete_actor(row_id_type state_field_id, row_id_type actor_id)
+		{
+			;
+		}
+
+		void jmodel::move_actor(row_id_type source_state_field_id, row_id_type dest_state_field_id, row_id_type actor_id)
+		{
+			;
+		}
+
+		void jmodel::delete_actor(row_id_type state_field_id)
+		{
+			;
+		}
+
+		char* jmodel::get_bytes()
+		{
+			return (char*)model_box;
+		}
+
+		uint64_t jmodel::get_size_bytes()
+		{
+			jclass model_class_def = schema->get_class(class_id);
+			return model_class_def.parent().class_size_bytes;
 		}
 
 		void jschema::add_standard_fields() 

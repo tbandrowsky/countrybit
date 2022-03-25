@@ -28,14 +28,13 @@ namespace countrybit
 			type_midi = 15,
 			type_point = 16,
 			type_rectangle = 17,
-
 			type_color = 18,
-
 			type_sql = 19,
 			type_http = 20,
 			type_file = 21,
+			type_list = 22,
 
-			type_list = 22
+			type_model = 23
 		};
 
 		typedef int32_t row_id_type;
