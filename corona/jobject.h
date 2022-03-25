@@ -1001,6 +1001,13 @@ namespace countrybit
 				sql_properties_type options;
 				row_range rr;
 
+				auto& params = request.options.parameters;
+				for (auto param : params) {
+					auto& pi = param.item;
+					if (!bind_field(pi.corona_field, pi.corona_field_id))
+						return null_row;
+				}
+
 				sql_remotes.append(request.options, rr);
 				options.properties_id = rr.start;
 
@@ -1012,6 +1019,13 @@ namespace countrybit
 				http_properties_type options;
 				row_range rr;
 
+				auto& params = request.options.parameters;
+				for (auto param : params) {
+					auto& pi = param.item;
+					if (!bind_field(pi.corona_field, pi.corona_field_id))
+						return null_row;
+				}
+
 				http_remotes.append(request.options, rr);
 				options.properties_id = rr.start;
 
@@ -1022,6 +1036,13 @@ namespace countrybit
 			{
 				file_properties_type options;
 				row_range rr;
+
+				auto& params = request.options.parameters;
+				for (auto param : params) {
+					auto& pi = param.item;
+					if (!bind_field(pi.corona_field, pi.corona_field_id))
+						return null_row;
+				}
 
 				file_remotes.append(request.options, rr);
 				options.properties_id = rr.start;
