@@ -290,11 +290,24 @@ namespace countrybit
 		const int max_query_filters = 32;
 		const int max_path_nodes = 64;
 
+		enum class path_root_starts
+		{
+			own_self,
+			own_model,
+			own_collection,
+			named_collection,
+			named_class
+		};
+
 		class path_root
 		{
 		public:
-			object_name		collection_name;
-			object_id_type	object_id;
+			operation_name			path_root_start_name;
+			path_root_starts		path_root_start;
+			object_name				collection_name;
+			object_name				class_name;
+			row_id_type				class_id;
+			object_id_type			object_id;
 		};
 
 		enum class node_operations
@@ -302,13 +315,17 @@ namespace countrybit
 			group_by,
 			calc_min,
 			calc_max,
-			calc_sum
+			calc_sum,
+			calc_count,
+			calc_stddev
 		};
 
 		class path_node
 		{
 		public:
-			row_id_type	member_id;
+			object_name		member_name;
+			row_id_type		member_id;
+			operation_name	node_operation_name;
 			node_operations node_operation;
 		};
 
@@ -331,12 +348,12 @@ namespace countrybit
 			distance
 		};
 
-		struct filter_element_request
+		struct filter_element
 		{
 		public:
 			object_name				target_field_name;
 			row_id_type				target_field_id;
-			object_name				comparison_name;
+			operation_name			comparison_name;
 			filter_comparison_types	comparison;
 			object_name				parameter_field_name;
 			row_id_type				parameter_field_id;
@@ -344,34 +361,17 @@ namespace countrybit
 			const char* error_message;
 		};
 
-		struct filter_element
-		{
-		public:
-			row_id_type				target_field_id;
-			filter_comparison_types	comparison;
-			row_id_type				parameter_field_id;
-			double					distance_threshold;
-		};
-
 		template <int max_filters>
-		class named_query_properties_t
+		class query_definition_t
 		{
 		public:
 			path		source_path;
 			object_name result_field;
-			iarray<filter_element_request, max_filters> filter;
-		};
-
-		using named_query_properties_type = named_query_properties_t<max_query_filters>;
-
-		template <int max_filters>
-		class query_properties_t
-		{
-		public:
-			path		source_path;
-			object_name result_field;
+			row_id_type result_field_id;
 			iarray<filter_element, max_filters> filter;
 		};
+
+		using query_definition_type = query_definition_t<max_query_filters>;
 
 		class query_instance
 		{
@@ -381,11 +381,13 @@ namespace countrybit
 			object_description			error_message;
 		};
 
-		struct named_file_properties_type
+		struct file_definition_type
 		{
 			remote_file_path				file_path;
 			object_name						parameter_field;
+			row_id_type						paramter_field_id;
 			object_name						result_field;
+			row_id_type						result_field_id;
 			remote_parameter_fields_type	parameters;
 			remote_fields_type				fields;
 			time_t							last_success;
@@ -411,10 +413,9 @@ namespace countrybit
 			certificate_authentication = 4
 		};
 
-		struct named_http_properties_type
+		struct http_definition_type
 		{
-			object_name						field_name;
-			object_name						login_type_name;
+			operation_name					login_type_name;
 			http_login_types				login_type;
 			remote_http_url					login_url;
 			remote_http_method				login_method;
@@ -422,8 +423,8 @@ namespace countrybit
 			object_name						password;
 			remote_http_url					data_url;
 			remote_http_method				data_method;
-			object_name						parameter_field;
 			object_name						result_field;
+			row_id_type						result_field_id;
 			remote_parameter_fields_type	parameters;
 			remote_fields_type				fields;
 			time_t							last_success;
@@ -440,8 +441,6 @@ namespace countrybit
 			object_description			error_message;
 		};
 
-
-
 		enum class sql_login_types
 		{
 			no_authentication = 0,
@@ -450,14 +449,14 @@ namespace countrybit
 			certificate_authentication = 3
 		};
 
-		struct named_sql_properties_type
+		struct sql_definition_type
 		{
-			object_name						login_type_name;
+			operation_name					login_type_name;
 			sql_login_types					login_type;
 			object_name						username;
 			object_name						password;
-			object_name						parameter_field;
 			object_name						result_field;
+			row_id_type						result_field_id;
 			remote_parameter_fields_type	parameters;
 			remote_fields_type				fields;
 			remote_sql_query				query;
@@ -514,35 +513,29 @@ namespace countrybit
 			object_properties_type options;
 		};
 
-		class put_query_field_request {
-		public:
-			put_field_request_base name;
-			query_properties_type options;
-		};
-
 		class put_named_query_field_request {
 		public:
 			put_field_request_base name;
-			named_query_properties_type options;
+			query_definition_type options;
 		};
 
 		class put_named_sql_remote_field_request {
 		public:
 			put_field_request_base name;
-			sql_properties_type options;
+			sql_definition_type options;
 		};
 
 		class put_named_file_import_field_request {
 		public:
 			put_field_request_base name;
-			sql_properties_type options;
+			file_definition_type options;
 		};
 
 		class put_named_http_import_field_request
 		{
 		public:
 			put_field_request_base name;
-			sql_properties_type options;
+			http_definition_type options;
 		};
 
 		class put_point_field_request {
@@ -584,19 +577,19 @@ namespace countrybit
 		class put_file_field_request {
 		public:
 			put_field_request_base name;
-			named_file_properties_type options;
+			file_properties_type options;
 		};
 
 		class put_sql_field_request {
 		public:
 			put_field_request_base name;
-			named_sql_properties_type options;
+			sql_properties_type options;
 		};
 
 		class put_http_field_request {
 		public:
 			put_field_request_base name;
-			named_http_properties_type options;
+			http_properties_type options;
 		};
 
 		enum class member_field_types

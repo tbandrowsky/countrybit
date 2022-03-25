@@ -153,7 +153,7 @@ namespace countrybit
 
 		}
 
-		jcollection jdatabase::query(named_query_properties_type& query)
+		jcollection jdatabase::query(query_definition_type& query)
 		{
 
 		}

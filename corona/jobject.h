@@ -557,10 +557,10 @@ namespace countrybit
 			using class_store_type = parent_child_table<jclass_header, jclass_field>;
 			using class_index_type = sorted_index<object_name, row_id_type>;
 			using field_index_type = sorted_index<object_name, row_id_type>;
-			using query_store_type = table<named_query_properties_type>;
-			using sql_store_type = table<named_sql_properties_type>;
-			using file_store_type = table<named_file_properties_type>;
-			using http_store_type = table<named_http_properties_type>;
+			using query_store_type = table<query_definition_type>;
+			using sql_store_type = table<sql_definition_type>;
+			using file_store_type = table<file_definition_type>;
+			using http_store_type = table<http_definition_type>;
 
 			field_store_type		fields;
 			class_store_type		classes;
@@ -827,10 +827,168 @@ namespace countrybit
 			const char* invalid_target_field = "Invalid target field";
 			const char* invalid_projection_field = "Invalid projection field";
 
+			bool bind_field(object_name& _field_name, row_id_type& _field_id)
+			{
+				auto fiter = fields_by_name[_field_name];
+				if (fiter != std::end(fields_by_name)) {
+					_field_id = fiter->second;
+					return true;
+				}
+				_field_id = null_row;
+				return false;
+			}
+
+			bool bind_class(object_name& _class_name, row_id_type& _class_id)
+			{
+				auto fiter = classes_by_name[_class_name];
+				if (fiter != std::end(classes_by_name)) {
+					_class_id = fiter->second;
+					return true;
+				}
+				_class_id = null_row;
+				return false;
+			}
+
+			bool bind_path_root_start(operation_name& _path, path_root_starts& _prs)
+			{
+				_prs = path_root_starts::own_self;
+				if (_path == "own_self")
+				{
+					_prs = path_root_starts::own_self;
+					return true;
+				}
+				else if (_path == "own_model")
+				{
+					_prs = path_root_starts::own_model;
+					return true;
+				}
+				else if (_path == "own_collection")
+				{
+					_prs = path_root_starts::own_collection;
+					return true;
+				}
+				else if (_path == "named_collection")
+				{
+					_prs = path_root_starts::named_collection;
+					return true;
+				}
+				else if (_path == "named_class")
+				{
+					_prs = path_root_starts::named_class;
+					return true;
+				}
+				return false;
+			}
+
+			bool bind_node_operation(operation_name& _operation, node_operations& _nt)
+			{
+				_nt = node_operations::group_by;
+
+				if (_operation == "group_by")
+				{
+					_nt = node_operations::group_by;
+					return true;
+				}
+				else if (_operation == "calc_min")
+				{
+					_nt = node_operations::calc_min;
+					return true;
+				}
+				else if (_operation == "calc_max")
+				{
+					_nt = node_operations::calc_max;
+					return true;
+				}
+				else if (_operation == "calc_count")
+				{
+					_nt = node_operations::calc_count;
+					return true;
+				}
+				else if (_operation == "calc_stddev")
+				{
+					_nt = node_operations::calc_stddev;
+					return true;
+				}
+				return false;
+			}
+
+			bool bind_filter_comparison_type(operation_name& _comparison, filter_comparison_types& _fct)
+			{
+				_fct = filter_comparison_types::eq;
+				if (_comparison == "eq")
+				{
+					_fct = filter_comparison_types::eq;
+					return true;
+				}
+				else if (_comparison == "ls")
+				{
+					_fct = filter_comparison_types::ls;
+					return true;
+				}
+				else if (_comparison == "gt")
+				{
+					_fct = filter_comparison_types::gt;
+					return true;
+				}
+				else if (_comparison == "lseq")
+				{
+					_fct = filter_comparison_types::lseq;
+					return true;
+				}
+				else if (_comparison == "gteq")
+				{
+					_fct = filter_comparison_types::gteq;
+					return true;
+				}
+				else if (_comparison == "contains")
+				{
+					_fct = filter_comparison_types::contains;
+					return true;
+				}
+				else if (_comparison == "inlist")
+				{
+					_fct = filter_comparison_types::inlist;
+					return true;
+				}
+				else if (_comparison == "distance")
+				{
+					_fct = filter_comparison_types::distance;
+					return true;
+				}
+				return false;
+			}
+
 			row_id_type put_query_field(put_named_query_field_request request)
 			{
 				query_properties_type options;
 				row_range rr;
+
+				if (!bind_field(request.options.result_field, request.options.result_field_id))
+					return null_row;
+
+				auto& path = request.options.source_path;
+				bind_class(path.root.class_name, path.root.class_id);
+
+				for (auto nd : path.nodes) 
+				{
+					auto &ndi = nd.item;
+					if (!bind_field(ndi.member_name, ndi.member_id))
+						return null_row;
+					if (!bind_node_operation(ndi.node_operation_name, ndi.node_operation))
+						return null_row;
+				}
+
+				auto& filter = request.options.filter;
+				for (auto fil : filter)
+				{
+					auto& fili = fil.item;
+					if (!bind_filter_comparison_type(fili.comparison_name, fili.comparison))
+						return null_row;
+					if (!bind_field(fili.parameter_field_name, fili.parameter_field_id))
+						return null_row;
+					if (!bind_field(fili.target_field_name, fili.target_field_id))
+						return null_row;
+				}
 
 				queries.append(request.options, rr);
 				options.properties_id = rr.start;
@@ -838,7 +996,7 @@ namespace countrybit
 				return put_field(request.name.field_id, type_query, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, &options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(query_instance));
 			}
 
-			row_id_type put_sql_remote_field(put_sql_field_request request)
+			row_id_type put_sql_remote_field(put_named_sql_remote_field_request request)
 			{
 				sql_properties_type options;
 				row_range rr;
@@ -849,7 +1007,7 @@ namespace countrybit
 				return put_field(request.name.field_id, type_sql, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &options, nullptr, nullptr, sizeof(sql_remote_instance));
 			}
 
-			row_id_type put_http_remote_field(put_http_field_request request)
+			row_id_type put_http_remote_field(put_named_http_import_field_request request)
 			{
 				http_properties_type options;
 				row_range rr;
@@ -857,10 +1015,10 @@ namespace countrybit
 				http_remotes.append(request.options, rr);
 				options.properties_id = rr.start;
 
-				return put_field(request.name.field_id, type_sql, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &options, sizeof(http_remote_instance));
+				return put_field(request.name.field_id, type_http, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &options, sizeof(http_remote_instance));
 			}
 
-			row_id_type put_file_remote_field(put_file_field_request request)
+			row_id_type put_file_remote_field(put_named_file_import_field_request request)
 			{
 				file_properties_type options;
 				row_range rr;
@@ -873,32 +1031,32 @@ namespace countrybit
 
 			row_id_type put_point_field(put_point_field_request request)
 			{
-				return put_field(request.name.field_id, type_query, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(point));
+				return put_field(request.name.field_id, type_point, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(point));
 			}
 
 			row_id_type put_rectangle_field(put_rectangle_field_request request)
 			{
-				return put_field(request.name.field_id, type_query, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(rectangle));
+				return put_field(request.name.field_id, type_rectangle, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(rectangle));
 			}
 
 			row_id_type put_image_field(put_image_field_request request)
 			{
-				return put_field(request.name.field_id, type_query, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(image_instance));
+				return put_field(request.name.field_id, type_image, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(image_instance));
 			}
 
 			row_id_type put_wave_field(put_wave_field_request request)
 			{
-				return put_field(request.name.field_id, type_query, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(wave_instance));
+				return put_field(request.name.field_id, type_wave, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(wave_instance));
 			}
 
 			row_id_type put_midi_field(put_midi_field_request request)
 			{
-				return put_field(request.name.field_id, type_query, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, sizeof(midi_instance));
+				return put_field(request.name.field_id, type_midi, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, sizeof(midi_instance));
 			}
 
 			row_id_type put_color_field(put_color_field_request request)
 			{
-				return put_field(request.name.field_id, type_query, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, sizeof(color));
+				return put_field(request.name.field_id, type_color, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, sizeof(color));
 			}
 
 			row_id_type put_class(put_class_request request)
@@ -1165,6 +1323,34 @@ namespace countrybit
 			{
 				auto& the_field = fields[field_id];
 				return the_field;
+			}
+
+			const query_definition_type& get_query_definition(row_id_type field_id)
+			{
+				auto& f = fields[field_id];
+				auto xid = f.query_properties.properties_id;
+				return queries[xid];
+			}
+
+			const sql_definition_type& get_sql_definition(row_id_type field_id)
+			{
+				auto& f = fields[field_id];
+				auto xid = f.sql_properties.properties_id;
+				return sql_remotes[xid];
+			}
+
+			const file_definition_type& get_file_definition(row_id_type field_id)
+			{
+				auto& f = fields[field_id];
+				auto xid = f.file_properties.properties_id;
+				return file_remotes[xid];
+			}
+
+			const http_definition_type& get_http_definition(row_id_type field_id)
+			{
+				auto& f = fields[field_id];
+				auto xid = f.http_properties.properties_id;
+				return http_remotes[xid];
 			}
 
 			uint64_t estimate_collection_size(int _number_of_objects, int* _class_ids)

@@ -57,6 +57,11 @@ namespace countrybit
 			}
 
 			query_instance value() const { return instance.get_value(); }
+
+			jcollection execute()
+			{
+
+			}
 		};
 
 	}

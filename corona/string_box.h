@@ -861,7 +861,8 @@ namespace countrybit
 
 		bool string_tests();
 
-		using object_name = istring<32>;
+		using object_name = istring<64>;
+		using operation_name = istring<16>;
 		using object_description = istring<250>;
 		using object_path = istring<260>;
 		using object_type = istring<16>;
