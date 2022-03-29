@@ -7,72 +7,138 @@ namespace countrybit
 	namespace database
 	{
 
-		filter_element filter_element::filter_eq(row_id_type _target_field_id, row_id_type _parameter_field_id)
+		query_box::query_box(char* t, jschema* _schema, jclass* _class, jslice* _slice, int _field_index) :
+			instance(t),
+			schema(_schema),
+			the_class(_class),
+			slice(_slice),
+			field_index(_field_index)
 		{
-			filter_element fe;
-			fe.comparison = filter_comparison_types::eq;
-			fe.target_field_id = _target_field_id;
-			fe.parameter_field_id = _parameter_field_id;
-			return fe;
-		}
-		filter_element filter_element::filter_ls(row_id_type _target_field_id, row_id_type _parameter_field_id)
-		{
-			filter_element fe;
-			fe.comparison = filter_comparison_types::ls;
-			fe.target_field_id = _target_field_id;
-			fe.parameter_field_id = _parameter_field_id;
-			return fe;
-		}
-		filter_element filter_element::filter_gt(row_id_type _target_field_id, row_id_type _parameter_field_id)
-		{
-			filter_element fe;
-			fe.comparison = filter_comparison_types::gt;
-			fe.target_field_id = _target_field_id;
-			fe.parameter_field_id = _parameter_field_id;
-			return fe;
-		}
-		filter_element filter_element::filter_lseq(row_id_type _target_field_id, row_id_type _parameter_field_id)
-		{
-			filter_element fe;
-			fe.comparison = filter_comparison_types::lseq;
-			fe.target_field_id = _target_field_id;
-			fe.parameter_field_id = _parameter_field_id;
-			return fe;
-		}
-		filter_element filter_element::filter_gteq(row_id_type _target_field_id, row_id_type _parameter_field_id)
-		{
-			filter_element fe;
-			fe.comparison = filter_comparison_types::gteq;
-			fe.target_field_id = _target_field_id;
-			fe.parameter_field_id = _parameter_field_id;
-			return fe;
-
-		}
-		filter_element filter_element::filter_contains(row_id_type _target_field_id, row_id_type _parameter_field_id)
-		{
-			filter_element fe;
-			fe.comparison = filter_comparison_types::contains;
-			fe.target_field_id = _target_field_id;
-			fe.parameter_field_id = _parameter_field_id;
-			return fe;
-		}
-		filter_element filter_element::filter_inlist(row_id_type _target_field_id, row_id_type _parameter_field_id)
-		{
-			filter_element fe;
-			fe.comparison = filter_comparison_types::inlist;
-			fe.target_field_id = _target_field_id;
-			fe.parameter_field_id = _parameter_field_id;
-			return fe;
-		}
-		filter_element filter_element::filter_distance(row_id_type _target_field_id, row_id_type _parameter_field_id, double _distance)
-		{
-			filter_element fe;
-			fe.comparison = filter_comparison_types::inlist;
-			fe.target_field_id = _target_field_id;
-			fe.parameter_field_id = _parameter_field_id;
-			fe.distance_threshold = _distance;
-			return fe;
+			;
 		}
 
+		query_box::query_box(query_box& _src) : instance(_src.instance)
+		{
+			;
+		}
+
+		query_box query_box::operator = (const query_box& _src)
+		{
+			instance = _src.instance;
+			return *this;
+		}
+
+		query_box query_box::operator = (query_instance _src)
+		{
+			instance = _src;
+			return *this;
+		}
+
+		query_box::operator query_instance& ()
+		{
+			query_instance& t = instance.get_data_ref();
+			return t;
+		}
+
+		query_instance query_box::value() const 
+		{ 
+			return instance.get_value(); 
+		}
+
+		void visit(path_nodes::iterator pn, path_nodes::iterator pne, jmodel list, jslice dest_slice)
+		{
+			auto li = list.get_model_slice();
+			visit(pn, pne, list, dest_slice);
+		}
+
+		void visit(path_nodes::iterator pn, path_nodes::iterator pne, jarray list, jslice dest_slice)
+		{
+			for (auto li : list) 
+			{
+				visit(pn, pne, li, dest_slice);
+			}
+		}
+
+		void visit(path_nodes::iterator pn, path_nodes::iterator pne, jlist list, jslice dest_slice)
+		{
+			for (auto li : list) 
+			{
+				visit( pn, pne, li, dest_slice);
+			}
+		}
+
+		void visit(path_nodes::iterator pn, path_nodes::iterator pne, jslice source_slice, jslice dest_slice)
+		{
+			path_nodes::iterator pstart;
+			pstart = pn;
+
+			while (pstart != pne && (*pstart).item.node_operation != node_operations::traverse)
+			{
+				pstart++;
+			}
+
+			dest_slice.copy(source_slice);
+
+			if (pstart != pne) 
+			{
+				auto pitem = *pstart;
+				auto& mf = source_slice.get_field(pitem.item.member_id);
+				switch (mf.type_id)
+				{
+				case jtype::type_list:
+					break;
+				case jtype::type_object:
+					break;
+				case jtype::type_model:
+					break;
+				}
+			}
+			else 
+			{
+
+			}
+		}
+
+		void query_box::run()
+		{
+			auto& fldref = the_class->detail(field_index);
+			auto& fld = schema->get_field(fldref.field_id);
+			auto query = schema->get_query_definition(fld.query_properties.properties_id);
+
+			jclass_header *root_hdr;
+			jmodel root_model;
+			jslice root_slice;
+
+			root_hdr = the_class->pitem();
+
+			while (root_hdr && root_hdr->class_id != query.source_path.root.model_id)
+			{
+				root_model = slice->get_parent_model();
+				if (root_model.is_empty()) {
+					return;
+				}
+				root_slice = root_model.get_model_slice();
+				root_hdr = root_slice.get_class().pitem();
+			}
+
+			if (!root_hdr)
+				return;
+
+			path_nodes traversal;
+
+			for (auto pn : query.source_path.nodes) 
+			{
+				traversal.push_back(pn.item);
+			}
+
+			path_nodes::iterator pn = traversal.begin();
+			path_nodes::iterator pne = traversal.end();
+
+			auto new_class = schema->get_class(query.result_class_id);
+			new_class.pitem()->class_size_bytes;
+
+
+
+		}
 	}
 }

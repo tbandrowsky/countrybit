@@ -26,19 +26,19 @@ namespace countrybit
 			}
 		};
 
-		template <typename P, typename C> class parent_child_holder
+		template <typename P, typename C> class item_details_holder
 		{
-			P* the_parent;
-			C* the_children;
+			P* the_object;
+			C* the_details;
 			row_id_type id;
 			row_id_type length;
 			row_id_type base;
 
 		public:
 
-			parent_child_holder(P* _parent, C* _children, row_id_type _id, row_id_type _length, row_id_type _begin) :
-				the_parent(_parent),
-				the_children(_children),
+			item_details_holder(P* _parent, C* _children, row_id_type _id, row_id_type _length, row_id_type _begin) :
+				the_object(_parent),
+				the_details(_children),
 				id(_id),
 				length(_length),
 				base(_begin)
@@ -46,9 +46,9 @@ namespace countrybit
 				;
 			}
 
-			parent_child_holder() :
-				the_parent(nullptr),
-				the_children(nullptr),
+			item_details_holder() :
+				the_object(nullptr),
+				the_details(nullptr),
 				id(null_row),
 				length(0),
 				base(0)
@@ -56,35 +56,51 @@ namespace countrybit
 				;
 			}
 
-			P& parent()
+			item_details_holder(const item_details_holder& _src) :
+				the_object(_src.the_object),
+				the_details(_src.the_details),
+				id(_src.id),
+				length(_src.length),
+				base(_src.base)
+			{
+				;
+			}
+
+			item_details_holder operator = (const item_details_holder& _src) 
+			{
+				item_details_holder temp(_src);
+				return temp;
+			}
+
+			P& item()
 			{
 				if (is_null())
 					throw std::invalid_argument("is null");
-				return *the_parent;
+				return *the_object;
 			}
 
-			C& child(row_id_type idx)
+			C& detail(row_id_type idx)
 			{
 				if (is_null())
 					throw std::invalid_argument("is null");
 				if (idx >= length)
 					throw std::invalid_argument("idx out of range");
-				return the_children[idx];
+				return the_details[idx];
 			}
 
-			P* pparent()
+			P* pitem()
 			{
-				return the_parent;
+				return the_object;
 			}
 
-			C* pchild()
+			C* pdetails()
 			{
-				return the_children;
+				return the_details;
 			}
 
 			bool is_null() const
 			{
-				return !the_parent;
+				return !the_object;
 			}
 
 			row_id_type row_id() const
@@ -104,7 +120,7 @@ namespace countrybit
 
 			bool success() const
 			{
-				return the_parent != nullptr && the_children != nullptr;
+				return the_object != nullptr && the_details != nullptr;
 			}
 		};
 
@@ -425,240 +441,240 @@ namespace countrybit
 
 		template <typename P, typename C>
 		requires (std::is_standard_layout<P>::value && std::is_standard_layout<C>::value)
-		class parent_child_table
+		class item_details_table
 		{
 
-			struct actors
+			struct item_type
 			{
-				P parent;
-				row_range children;
+				P item;
+				row_range details;
 			};
 
-			struct parent_child_table_header
+			struct item_detail_table_header
 			{
-				row_id_type parents;
-				row_id_type children;
+				row_id_type item;
+				row_id_type details;
 			};
 
-			table<actors> parents;
-			table<C> children;
+			table<item_type> item;
+			table<C> details;
 
-			bool move_child(row_id_type location, int shift)
+			bool move_details(row_id_type location, int shift)
 			{
-				auto& pcr = parents.get_at(location);
-				auto& pc = parents[pcr.children.start];
+				auto& pcr = item.get_at(location);
+				auto& pc = item[pcr.details.start];
 
-				row_range new_pos{ pc.children.start + shift, pc.children.stop + shift, pc.children.reserved_stop + shift };
+				row_range new_pos{ pc.details.start + shift, pc.details.stop + shift, pc.details.reserved_stop + shift };
 
-				if (new_pos.reserved_stop >= children.size())
+				if (new_pos.reserved_stop >= details.size())
 				{
 					return false;
 				}
 
-				bool success = children.copy_rows(pc.children.start, pc.children.stop, shift);
+				bool success = details.copy_rows(pc.details.start, pc.details.stop, shift);
 				if (success)
 				{
-					pc.children = new_pos;
+					pc.details = new_pos;
 				}
 				return success;
 			}
 
 		public:
 
-			parent_child_table()
+			item_details_table()
 			{
 				;
 			}
 
 			template <typename B>
-				requires (box<B, P>&& box<B, parent_child_table<P, C>::actors>)
-			static row_id_type reserve_table(B* b, int parent_rows, int child_rows)
+				requires (box<B, P>&& box<B, item_details_table<P, C>::item_type>)
+			static row_id_type reserve_table(B* b, int item_rows, int detail_rows)
 			{
-				parent_child_table_header hdr;
-				hdr.parents = null_row;
-				hdr.children = null_row;
+				item_detail_table_header hdr;
+				hdr.item = null_row;
+				hdr.details = null_row;
 				row_id_type r = b->pack(hdr);
-				auto* phdr = b->unpack<parent_child_table_header>(r);
-				phdr->parents = table< parent_child_table<P, C>::actors >::reserve_table(b, parent_rows);
-				phdr->children = table< C >::reserve_table(b, child_rows);
+				auto* phdr = b->unpack<item_detail_table_header>(r);
+				phdr->item = table< item_details_table<P, C>::item_type >::reserve_table(b, item_rows);
+				phdr->details = table< C >::reserve_table(b, detail_rows);
 				return r;
 			}
 
 			template <typename B>
-				requires (box<B, P>&& box<B, parent_child_table<P, C>::actors>)
-			static parent_child_table get_table(B* b, row_id_type row)
+				requires (box<B, P>&& box<B, item_details_table<P, C>::item_type>)
+			static item_details_table get_table(B* b, row_id_type row)
 			{
-				parent_child_table pct;
-				parent_child_table_header* hdr;
-				hdr = b->unpack<parent_child_table<P, C>::parent_child_table_header>(row);
-				pct.parents = table< parent_child_table<P, C>::actors >::get_table(b, hdr->parents);
-				pct.children = table< C >::get_table(b, hdr->children);
+				item_details_table pct;
+				item_detail_table_header* hdr;
+				hdr = b->unpack<item_details_table<P, C>::item_detail_table_header>(row);
+				pct.item = table< item_details_table<P, C>::item_type >::get_table(b, hdr->item);
+				pct.details = table< C >::get_table(b, hdr->details);
 				return pct;
 			}
 
 			template <typename B>
-				requires (box<B, P>&& box<B, parent_child_table<P, C>::actors>)
-			static parent_child_table create_table(B* b, int parent_rows, int child_rows, row_id_type& row)
+				requires (box<B, P>&& box<B, item_details_table<P, C>::item_type>)
+			static item_details_table create_table(B* b, int item_rows, int detail_rows, row_id_type& row)
 			{
-				parent_child_table pct;
-				row = reserve_table(b, parent_rows, child_rows);
+				item_details_table pct;
+				row = reserve_table(b, item_rows, detail_rows);
 				pct = get_table(b, row);
 				return pct;
 			}
 
-			parent_child_holder<P, C> create(row_id_type child_count)
+			item_details_holder<P, C> create(row_id_type detail_count)
 			{
-				auto pcr = parents.create(1);
+				auto pcr = item.create(1);
 				if (pcr.success())
 				{
-					auto& pc = parents[pcr.start];
-					pc.children = children.create(child_count);
-					return parent_child_holder<P, C>(&pc.parent, &children[pc.children.start], pcr.start, child_count, 0);
+					auto& pc = item[pcr.start];
+					pc.details = details.create(detail_count);
+					return item_details_holder<P, C>(&pc.item, &details[pc.details.start], pcr.start, detail_count, 0);
 				}
 				else
 				{
-					return parent_child_holder<P, C>(nullptr, nullptr, null_row, null_row, null_row);
+					return item_details_holder<P, C>(nullptr, nullptr, null_row, null_row, null_row);
 				}
 			}
 
-			parent_child_holder<P, C> create_at(row_id_type location, row_id_type child_count)
+			item_details_holder<P, C> create_at(row_id_type location, row_id_type detail_count)
 			{
 				if (location == null_row)
 				{
-					return create(child_count);
+					return create(detail_count);
 				}
-				auto& pc = parents.get_at(location);
-				pc.children = children.create(child_count);
-				return parent_child_holder<P, C>(&pc.parent, &children[pc.children.start], location, child_count, 0);
+				auto& pc = item.get_at(location);
+				pc.details = details.create(detail_count);
+				return item_details_holder<P, C>(&pc.item, &details[pc.details.start], location, detail_count, 0);
 			}
 
-			parent_child_holder<P, C> clone(row_id_type location)
+			item_details_holder<P, C> clone(row_id_type location)
 			{
-				auto& src = parents.get_at(location);
-				auto dest = create(src.children.reserved_size());
-				int shift = dest.parent().children.start - src.children.start;
-				children.copy_rows(src.children.start, src.children.reserved_stop, shift );
+				auto& src = item.get_at(location);
+				auto dest = create(src.details.reserved_size());
+				int shift = dest.item().details.start - src.details.start;
+				details.copy_rows(src.details.start, src.details.reserved_stop, shift );
 			}
 
-			parent_child_holder<P, C> put_at(row_id_type location, row_id_type child_count)
+			item_details_holder<P, C> put_at(row_id_type location, row_id_type detail_count)
 			{
 				if (location == null_row)
 				{
-					return create(child_count);
+					return create(detail_count);
 				}
 
-				auto& pc = parents.get_at(location);
+				auto& pc = item.get_at(location);
 
-				if (child_count > pc.children.size()) 
+				if (detail_count > pc.details.size()) 
 				{
-					int add_count = child_count - pc.children.size();
+					int add_count = detail_count - pc.details.size();
 					return append_child(location, add_count);
 				}
 				else 
 				{
-					pc.children.stop = pc.children.start + child_count;
-					return parent_child_holder<P, C>(&pc.parent, &children[pc.children.start], location, child_count, 0);
+					pc.details.stop = pc.details.start + detail_count;
+					return item_details_holder<P, C>(&pc.item, &details[pc.details.start], location, detail_count, 0);
 				}
 			}
 
-			parent_child_holder<P, C> append_child(row_id_type location, int add_child_count)
+			item_details_holder<P, C> append_child(row_id_type location, int add_detail_count)
 			{
 				if (location == null_row)
 				{
-					return create(add_child_count);
+					return create(add_detail_count);
 				}
 
-				auto& pc = parents.get_at(location);
+				auto& pc = item.get_at(location);
 
-				if (pc.children.start == 0 && pc.children.stop == 0 && pc.children.reserved_stop == 0)
+				if (pc.details.start == 0 && pc.details.stop == 0 && pc.details.reserved_stop == 0)
 				{
 					throw std::invalid_argument("can't extend an uncreated");
 				}
 
-				row_id_type new_base = pc.children.stop;
-				row_id_type new_start = pc.children.stop;
+				row_id_type new_base = pc.details.stop;
+				row_id_type new_start = pc.details.stop;
 
-				row_id_type capacity_in_node = pc.children.reserved_size();
-				if (capacity_in_node >= add_child_count)
+				row_id_type capacity_in_node = pc.details.reserved_size();
+				if (capacity_in_node >= add_detail_count)
 				{
-					pc.children.stop = pc.children.stop + add_child_count;
+					pc.details.stop = pc.details.stop + add_detail_count;
 				}
 				else
 				{
-					int capacity_ask = capacity_in_node + add_child_count;
+					int capacity_ask = capacity_in_node + add_detail_count;
 					int capacity_allocate = 1;
 					while (capacity_allocate < capacity_ask)
 						capacity_allocate *= 2;
 
-					row_id_type new_stop = pc.children.start + capacity_allocate;
-					row_id_type shift = new_stop - pc.children.reserved_stop;
+					row_id_type new_stop = pc.details.start + capacity_allocate;
+					row_id_type shift = new_stop - pc.details.reserved_stop;
 
-					if (new_stop < children.max()) 
+					if (new_stop < details.max()) 
 					{
 						for (row_id_type i = size()-1; i > location; i--) 
 						{
-							move_child(i, shift);
+							move_details(i, shift);
 						}
 
-						pc.children.reserved_stop = new_stop;
-						pc.children.stop += add_child_count;
+						pc.details.reserved_stop = new_stop;
+						pc.details.stop += add_detail_count;
 					}
 					else 
 					{
-						return parent_child_holder<P,C>(nullptr, nullptr, null_row, null_row, null_row);
+						return item_details_holder<P,C>(nullptr, nullptr, null_row, null_row, null_row);
 					}
 				}
 
-				int new_size = pc.children.stop - pc.children.start;
+				int new_size = pc.details.stop - pc.details.start;
 
-				return parent_child_holder<P, C>( &pc.parent, &children[pc.children.start], location, new_size, new_start);
+				return item_details_holder<P, C>( &pc.item, &details[pc.details.start], location, new_size, new_start);
 			}
 
-			void erase_child(row_id_type location, int child_index)
+			void erase_detail(row_id_type location, int detail_index)
 			{
-				auto& pc = parents.get_at(location);
-				children.copy_rows(pc.children.start + child_index, pc.children.stop, -1);
+				auto& pc = item.get_at(location);
+				details.copy_rows(pc.details.start + detail_index, pc.details.stop, -1);
 			}
 
 			void erase(row_id_type location)
 			{
-				auto& pc = parents.get_at(location);
+				auto& pc = item.get_at(location);
 				for (row_id_type i = location; i > location; i--)
 				{
-					move_child(i, -1);
+					move_details(i, -1);
 				}
-				parents.erase({ location, location });
+				item.erase({ location, location });
 			}
 
-			parent_child_holder<P, C> operator[](row_id_type row_id)
+			item_details_holder<P, C> operator[](row_id_type row_id)
 			{
-				parent_child_holder<P, C> nullpc;
+				item_details_holder<P, C> nullpc;
 				if (row_id == null_row) return nullpc;
-				auto& pc = parents[ row_id ];
-				return parent_child_holder<P, C>(&pc.parent, &children[pc.children.start],  row_id, pc.children.size(), 0);
+				auto& pc = item[ row_id ];
+				return item_details_holder<P, C>(&pc.item, &details[pc.details.start],  row_id, pc.details.size(), 0);
 			}
 
-			parent_child_holder<P, C> get(row_id_type row_id)
+			item_details_holder<P, C> get(row_id_type row_id)
 			{
-				parent_child_holder<P, C> nullpc;
+				item_details_holder<P, C> nullpc;
 				if (row_id == null_row) return nullpc;
-				auto& pc = parents[row_id];
-				return parent_child_holder<P, C>(&pc.parent, &children[pc.children.start], row_id, pc.children.size(), 0);
+				auto& pc = item[row_id];
+				return item_details_holder<P, C>(&pc.item, &details[pc.details.start], row_id, pc.details.size(), 0);
 			}
 
 			static int get_box_size(int _parent_rows, int _child_rows)
 			{
-				return table<actors>::get_box_size(_parent_rows) + table<C>::get_box_size(_child_rows);
+				return table<item_type>::get_box_size(_parent_rows) + table<C>::get_box_size(_child_rows);
 			}
 
 			row_id_type size() const
 			{
-				return parents.size();
+				return item.size();
 			}
 
 			row_id_type max() const
 			{
-				return parents.max();
+				return item.max();
 			}
 
 		};

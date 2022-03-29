@@ -45,17 +45,20 @@ namespace countrybit
 		class jcollection_object
 		{
 		public:
-			object_id_type oid;
-			jtype		   otype;
-			row_id_type	   class_id;
+			object_id_type	oid;
+			jtype			otype;
+			row_id_type		class_id;
+			row_id_type		class_field_id;
 		};
 
 		class jschema;
 		class jarray;
 		class jlist;
+		class jmodel;
 
 		class jslice
 		{
+			jslice* parent;
 			jschema* schema;
 			row_id_type class_id;
 			char* bytes;
@@ -74,19 +77,29 @@ namespace countrybit
 			template <typename T> T get_boxed_ex(jtype jt, int field_idx)
 			{
 				size_t offset = get_offset(jt, field_idx);
-				T b(&bytes[offset], schema, &the_class, this );
+				T b(&bytes[offset], schema, &the_class, this, field_idx);
 				return b;
 			}
 
-
 		public:
 
+
 			jslice();
-			jslice(jschema* _schema, row_id_type _class_id, char* _bytes, dimensions_type _dim);
+			jslice(jslice* _parent, jschema* _schema, row_id_type _class_id, char* _bytes, dimensions_type _dim);
 
 			void construct();
+
+			jslice& get_parent_slice();
+			jmodel& get_parent_model();
+			jclass get_class();
+
 			dimensions_type get_dim();
+
+			int get_field_index_by_id(row_id_type field_id);
+			jfield& get_field_by_id(row_id_type field_id);
+			jclass_field& get_class_field(int field_idx);
 			jfield& get_field(int field_idx);
+
 			int8_box get_int8(int field_idx);
 			int16_box get_int16(int field_idx);
 			int32_box get_int32(int field_idx);
@@ -97,6 +110,7 @@ namespace countrybit
 			string_box get_string(int field_idx);
 			jarray get_object(int field_idx);
 			jlist get_list(int field_idx);
+			jmodel get_model(int field_idx);
 			collection_id_box get_collection_id(int field_idx);
 			object_id_box get_object_id(int field_idx);
 			point_box get_point(int field_idx);
@@ -109,6 +123,13 @@ namespace countrybit
 			sql_remote_box get_sql_remote(int field_idx);
 			http_remote_box get_http_remote(int field_idx);
 			file_remote_box get_file_remote(int field_idx);
+
+			void copy(jslice& _src_slice);
+
+			void visit(std::function<bool(jslice&)> visitor)
+			{
+				visitor(*this);
+			}
 
 			template <typename boxed> void get_boxed(jtype jt, boxed& src, int field_idx)
 			{
@@ -124,11 +145,12 @@ namespace countrybit
 			jschema* schema;
 			row_id_type class_field_id;
 			char* bytes;
+			jslice* item;
 
 		public:
 
 			jarray();
-			jarray(jschema* _schema, row_id_type _class_field_id, char* _bytes, bool _init = false);
+			jarray(jslice* _parent, jschema* _schema, row_id_type _class_field_id, char* _bytes, bool _init = false);
 			jarray(dynamic_box& _dest, jarray& _src);
 			dimensions_type dimensions();
 
@@ -264,11 +286,11 @@ namespace countrybit
 			serialized_box* model_box;
 			row_id_type class_field_id;
 			jlist_state data;
-
+			jslice* item;
 		public:
 
 			jlist();
-			jlist(jschema* _schema, row_id_type _class_field_id, char* _bytes, bool _init = false);
+			jlist(jslice* _parent, jschema* _schema, row_id_type _class_field_id, char* _bytes, bool _init = false);
 			jlist(dynamic_box& _dest, jlist& _src);
 
 			uint32_t capacity();
@@ -375,6 +397,14 @@ namespace countrybit
 			{
 				return iterator(this, capacity());
 			}
+
+			void visit(std::function<bool(jslice&)> visitor)
+			{
+				for (auto item : *this)
+				{
+					visitor(item);
+				}
+			}
 		};
 
 		class jmodel
@@ -383,20 +413,22 @@ namespace countrybit
 			row_id_type								class_id;
 			serialized_box							*model_box;
 			jmodel_state							data;
-
+			jslice									*parent;
 			row_id_type		get_field_index(row_id_type state_field_id);
 
 		public:
 
 			jmodel();
-			jmodel(jschema* _schema, row_id_type _class_id, char* _bytes, bool _init = false);
+			jmodel(jslice* _parent, jschema* _schema, row_id_type _class_id, char* _bytes, bool _init = false);
 			jmodel(dynamic_box& _dest, jmodel& _src);
+
+			bool is_empty();
 
 			static size_t estimate_size(put_model_request& _request, uint32_t base_class_bytes);
 
 			size_t  size();
 
-			jslice get_model();
+			jslice get_model_slice();
 
 			jlist get_state(row_id_type state_field_id);
 			row_id_type create_actor();
@@ -409,6 +441,20 @@ namespace countrybit
 			size_t  get_size_bytes();
 			char* get_bytes();
 
+			void visit(std::function<bool(jslice&)> visitor)
+			{
+				auto slice = get_model_slice();
+				visitor(slice);
+			}
+		};
+
+		class jcollection_item
+		{
+		public:
+			jcollection_object item_info;
+			jlist item_list;
+			jarray item_array;
+			jmodel item_model;
 		};
 
 		class jcollection
@@ -416,7 +462,7 @@ namespace countrybit
 
 			jschema* schema;
 			collection_id_type collection_id;
-			parent_child_table<jcollection_object, char> objects;
+			item_details_table<jcollection_object, char> objects;
 
 		public:
 
@@ -425,7 +471,7 @@ namespace countrybit
 				;
 			}
 
-			jcollection(jschema* _schema, collection_id_type _collection_id, parent_child_table<jcollection_object, char>& _objects) :
+			jcollection(jschema* _schema, collection_id_type _collection_id, item_details_table<jcollection_object, char>& _objects) :
 				schema(_schema),
 				collection_id(_collection_id),
 				objects(_objects)
@@ -433,28 +479,14 @@ namespace countrybit
 				;
 			}
 
+			jarray create_object(row_id_type _class_id, dimensions_type _dims);
 
+			jarray get_object(row_id_type _object_id);
 			jmodel create_model(row_id_type _class_id);
-
-			jmodel get_model(row_id_type _object_id)
-			{
-				auto new_object = objects.get(_object_id);
-				return jmodel(schema, new_object.parent().class_id, new_object.pchild());
-			}
-
-			jlist create_list(row_id_type _class_id);
-
-			jlist get_list(row_id_type _object_id)
-			{
-				auto new_object = objects.get(_object_id);
-				return jlist(schema, new_object.parent().class_id, new_object.pchild());
-			}
-
-			object_id_type get_object_id(row_id_type _object_id)
-			{
-				auto new_object = objects.get(_object_id);
-				return new_object.parent().oid;
-			}
+			jmodel get_model(row_id_type _object_id);
+			jlist create_list(row_id_type _class_id, int _capacity);
+			jlist get_list(row_id_type _object_id);
+			jcollection_item get_item(row_id_type _object_id);
 
 			int size()
 			{
@@ -469,9 +501,9 @@ namespace countrybit
 			public:
 				using iterator_category = std::forward_iterator_tag;
 				using difference_type = std::ptrdiff_t;
-				using value_type = jarray;
-				using pointer = jarray*;  // or also value_type*
-				using reference = jarray&;  // or also value_type&
+				using value_type = row_id_type;
+				using pointer = row_id_type*;  // or also value_type*
+				using reference = row_id_type&;  // or also value_type&
 
 				iterator(jcollection* _base, row_id_type _current) :
 					base(_base),
@@ -492,14 +524,14 @@ namespace countrybit
 					return *this;
 				}
 
-				inline jmodel operator *()
+				inline jcollection_item operator *()
 				{
-					return base->get_model(current);
+					return base->get_item(current);
 				}
 
-				inline jmodel operator->()
+				inline jcollection_item operator->()
 				{
-					return base->get_model(current);
+					return base->get_item(current);
 				}
 
 				iterator begin() const
@@ -515,6 +547,8 @@ namespace countrybit
 				inline iterator operator++()
 				{
 					current++;
+					if (current > base->size())
+						current = base->size();
 					return iterator(base, current);
 				}
 
@@ -554,7 +588,7 @@ namespace countrybit
 		protected:
 
 			using field_store_type = table<jfield>;
-			using class_store_type = parent_child_table<jclass_header, jclass_field>;
+			using class_store_type = item_details_table<jclass_header, jclass_field>;
 			using class_index_type = sorted_index<object_name, row_id_type>;
 			using field_index_type = sorted_index<object_name, row_id_type>;
 			using query_store_type = table<query_definition_type>;
@@ -569,12 +603,19 @@ namespace countrybit
 			query_store_type		queries;
 			sql_store_type			sql_remotes;
 			file_store_type			file_remotes;
-			http_store_type			http_remotes;
+			http_store_type			http_remotes;			
+
+			jfield					empty;
 
 		public:
 
 			jschema() = default;
 			~jschema() = default;
+
+			jfield& get_empty()
+			{
+				return empty;
+			}
 
 			template <typename B>
 				requires (box<B, jfield>
@@ -626,6 +667,10 @@ namespace countrybit
 				schema.sql_remotes = sql_store_type::get_table(_b, pschema_map->sql_properties_id);
 				schema.file_remotes = file_store_type::get_table(_b, pschema_map->file_properties_id);
 				schema.http_remotes = http_store_type::get_table(_b, pschema_map->http_properties_id);
+				schema.empty.field_id = null_row;
+				schema.empty.type_id = jtype::type_null;
+				schema.empty.name = "empty";
+				schema.empty.description = "indicates a field not found";
 				return schema;
 			}
 
@@ -657,6 +702,11 @@ namespace countrybit
 			}
 
 			void add_standard_fields();
+
+			bool is_empty(jfield& fld)
+			{
+				return fld.field_id == null_row && fld.type_id == jtype::type_null;
+			}
 
 			row_id_type new_field_id()
 			{
@@ -790,14 +840,14 @@ namespace countrybit
 			row_id_type put_object_field(put_object_field_request request)
 			{
 				auto pcr = classes[request.options.class_id];
-				auto& p = pcr.parent();
-				int64_t sizeb = pcr.parent().class_size_bytes;
+				auto& p = pcr.item();
+				int64_t sizeb = pcr.item().class_size_bytes;
 				request.options.class_size_bytes = sizeb;
 				if (request.options.dim.x == 0) request.options.dim.x = 1;
 				if (request.options.dim.y == 0) request.options.dim.y = 1;
 				if (request.options.dim.z == 0) request.options.dim.z = 1;
 				object_name field_name;
-				get_class_field_name(field_name, pcr.pparent()->name, request.options.dim);
+				get_class_field_name(field_name, pcr.pitem()->name, request.options.dim);
 				request.options.total_size_bytes = request.options.dim.x * request.options.dim.y * request.options.dim.z * sizeb;
 				return put_field(request.name.field_id, type_object, field_name, request.name.description, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, request.options.total_size_bytes);
 			}
@@ -805,8 +855,8 @@ namespace countrybit
 			row_id_type put_list_field(put_object_field_request request)
 			{
 				auto pcr = classes[request.options.class_id];
-				auto& p = pcr.parent();
-				int64_t sizeb = pcr.parent().class_size_bytes;
+				auto& p = pcr.item();
+				int64_t sizeb = pcr.item().class_size_bytes;
 				request.options.class_size_bytes = sizeb;
 				if (request.options.dim.x == 0) request.options.dim.x = 1;
 				int64_t power_of_two = 1;
@@ -817,7 +867,7 @@ namespace countrybit
 				request.options.dim.y = 1;
 				request.options.dim.z = 1;
 				object_name field_name;
-				get_class_field_name(field_name, pcr.pparent()->name + "list", request.options.dim);
+				get_class_field_name(field_name, pcr.pitem()->name + "list", request.options.dim);
 				request.options.total_size_bytes = request.options.dim.x * request.options.dim.y * request.options.dim.z * sizeb + sizeof(jlist_instance) + sizeof(selection_flag_type) * request.options.dim.x + 32;
 				return put_field(request.name.field_id, type_list, field_name, request.name.description, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, request.options.total_size_bytes);
 			}
@@ -849,42 +899,16 @@ namespace countrybit
 				return false;
 			}
 
-			bool bind_path_root_start(operation_name& _path, path_root_starts& _prs)
-			{
-				_prs = path_root_starts::own_self;
-				if (_path == "own_self")
-				{
-					_prs = path_root_starts::own_self;
-					return true;
-				}
-				else if (_path == "own_model")
-				{
-					_prs = path_root_starts::own_model;
-					return true;
-				}
-				else if (_path == "own_collection")
-				{
-					_prs = path_root_starts::own_collection;
-					return true;
-				}
-				else if (_path == "named_collection")
-				{
-					_prs = path_root_starts::named_collection;
-					return true;
-				}
-				else if (_path == "named_class")
-				{
-					_prs = path_root_starts::named_class;
-					return true;
-				}
-				return false;
-			}
-
 			bool bind_node_operation(operation_name& _operation, node_operations& _nt)
 			{
 				_nt = node_operations::group_by;
 
-				if (_operation == "group_by")
+				if (_operation == "traverse")
+				{
+					_nt = node_operations::traverse;
+					return true;
+				}
+				else if (_operation == "group_by")
 				{
 					_nt = node_operations::group_by;
 					return true;
@@ -962,12 +986,14 @@ namespace countrybit
 			{
 				query_properties_type options;
 				row_range rr;
+				put_class_request pcr;
 
-				if (!bind_field(request.options.result_field, request.options.result_field_id))
-					return null_row;
+				pcr.class_name = request.options.result_class_name;
 
 				auto& path = request.options.source_path;
-				bind_class(path.root.class_name, path.root.class_id);
+				bind_class(path.root.model_name, path.root.model_id);
+
+				row_id_type member_index = 0;
 
 				for (auto nd : path.nodes) 
 				{
@@ -976,6 +1002,12 @@ namespace countrybit
 						return null_row;
 					if (!bind_node_operation(ndi.node_operation_name, ndi.node_operation))
 						return null_row;
+					if (ndi.node_operation != node_operations::traverse) {
+						member_field mf(ndi.member_id);
+						ndi.member_index = member_index;
+						pcr.member_fields.push_back(mf);
+						member_index++;
+					}
 				}
 
 				auto& filter = request.options.filter;
@@ -988,7 +1020,20 @@ namespace countrybit
 						return null_row;
 					if (!bind_field(fili.target_field_name, fili.target_field_id))
 						return null_row;
+					member_field mf(fili.target_field_id);
+					pcr.member_fields.push_back(mf);
 				}
+
+ 				request.options.result_class_id = put_class(pcr);
+				if (request.options.result_class_id == null_row)
+					return null_row;
+
+				put_object_field_request porf;
+				porf.name.name = request.options.result_class_name;
+				porf.name.type = jtype::type_list;
+				porf.options.dim = { request.options.max_result_objects, 1, 1 };
+				porf.options.class_id = request.options.result_class_id;
+				porf.options.class_name = request.options.result_class_name;
 
 				queries.append(request.options, rr);
 				options.properties_id = rr.start;
@@ -1080,29 +1125,74 @@ namespace countrybit
 				return put_field(request.name.field_id, type_color, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, sizeof(color));
 			}
 
-			row_id_type put_class(put_class_request request)
+			row_id_type put_list_field(row_id_type class_id, int max_rows )
 			{
-				auto sz = request.member_fields.size();
+				object_name result_class_name;
+				int max_rows;
 
-				row_id_type class_id = find_class(request.class_name);
-
-				if (class_id != null_row)
-				{
-					request.class_id = class_id;
+				put_object_field_request porf;
+				auto class_cls = classes[class_id];
+				porf.name.name = class_cls.item().name;
+				porf.name.field_id = null_row;
+				porf.name.type_id = jtype::type_list;
+				porf.options.class_name = class_cls.item().name;
+				porf.options.class_id = class_id;
+				porf.options.class_size_bytes = class_cls.pitem()->class_size_bytes;
+				porf.options.dim = { max_rows, 1, 1 };
+				auto class_field_id = put_object_field(porf);
+				if (class_field_id == null_row) {
+					return null_row;
 				}
+				return class_field_id;
+			}
 
-				auto pcr = classes.put_at(request.class_id, sz);
-				auto& p = pcr.parent();
+			row_id_type get_result_field_class(jfield fld, row_id_type &_max_result_rows)
+			{
+				row_id_type result_class_id = null_row;
+				switch (fld.type_id) {
+				case jtype::type_query:
+					{
+						auto qd = get_query_definition(fld.field_id);
+						result_class_id = qd.result_class_id;
+						_max_result_rows = qd.max_result_objects;
+						break;
+					}
+				case jtype::type_file:
+					{
+						auto fd = get_file_definition(fld.field_id);
+						result_class_id = fd.result_class_id;
+						_max_result_rows = fd.max_result_objects;
+						break;
+					}
+					break;
+				case jtype::type_http:
+					{
+						auto hd = get_http_definition(fld.field_id);
+						result_class_id = hd.result_class_id;
+						_max_result_rows = hd.max_result_objects;
+						break;
+					}
+					break;
+				case jtype::type_sql:
+					{
+						auto sd = get_sql_definition(fld.field_id);
+						result_class_id = sd.result_class_id;
+						_max_result_rows = sd.max_result_objects;
+						break;
+					}
+					break;
+				}
+			}
 
-				p.class_id = pcr.row_id();
-				p.name = request.class_name;
-				p.description = request.class_description;
-				p.class_size_bytes = 0;
-				p.number_actors = 0;
+			row_id_type build_class_members(jclass pcr, member_field_collection &mfs)
+			{
+				int field_idx = 0;
+				int sz = mfs.size();
+				auto& p = pcr.item();
 
-				for (int i = 0; i < pcr.size(); i++)
+				for (int i = 0; i < sz; i++)
 				{
-					auto& field = request.member_fields[i];
+					auto& field = mfs[i];
 
 					switch (field.membership_type)
 					{
@@ -1121,10 +1211,21 @@ namespace countrybit
 							fid = field.field_id;
 						}
 						auto& existing_field = fields[fid];
-						auto& ref = pcr.child(i);
+						auto& ref = pcr.detail(field_idx);
+						field_idx++;
 						ref.field_id = fid;
 						ref.offset = p.class_size_bytes;
 						p.class_size_bytes += existing_field.size_bytes;
+
+						if (existing_field.is_data_generator()) {
+							row_id_type max_result_rows = 0;
+							row_id_type result_class_field = this->get_result_field_class(existing_field, max_result_rows);
+							auto& ref = pcr.detail(field_idx);
+							field_idx++;
+							ref.field_id = result_class_field;
+							ref.offset = p.class_size_bytes;
+							p.class_size_bytes += existing_field.size_bytes;
+						}
 					}
 					break;
 					case member_field_types::member_class:
@@ -1140,18 +1241,18 @@ namespace countrybit
 							porf.name.type_id = jtype::type_object;
 							porf.options.class_name = class_name.get_key();
 							porf.options.class_id = class_name.get_value();
-							porf.options.class_size_bytes = classes[class_name.get_value()].pparent()->class_size_bytes;
+							porf.options.class_size_bytes = classes[class_name.get_value()].pitem()->class_size_bytes;
 							porf.options.dim = field.dimensions;
 						}
 						else
 						{
 							auto class_cls = classes[field.class_id];
-							porf.name.name = class_cls.parent().name;
+							porf.name.name = class_cls.item().name;
 							porf.name.field_id = null_row;
 							porf.name.type_id = jtype::type_object;
-							porf.options.class_name = class_cls.parent().name;
+							porf.options.class_name = class_cls.item().name;
 							porf.options.class_id = field.class_id;
-							porf.options.class_size_bytes = classes[field.class_id].pparent()->class_size_bytes;
+							porf.options.class_size_bytes = classes[field.class_id].pitem()->class_size_bytes;
 							porf.options.dim = field.dimensions;
 						}
 						auto class_field_id = put_object_field(porf);
@@ -1159,7 +1260,8 @@ namespace countrybit
 							return null_row;
 						}
 						auto& existing_field = fields[class_field_id];
-						auto& ref = pcr.child(i);
+						auto& ref = pcr.detail(field_idx);
+						field_idx++;
 						ref.field_id = class_field_id;
 						ref.offset = p.class_size_bytes;
 						p.class_size_bytes += existing_field.size_bytes;
@@ -1168,12 +1270,51 @@ namespace countrybit
 					}
 
 				}
+			}
+
+			row_id_type put_class(put_class_request request)
+			{
+				row_id_type class_id = find_class(request.class_name);
+
+				if (class_id != null_row)
+				{
+					request.class_id = class_id;
+				}
+
+				auto& mfs = request.member_fields;
+				auto sz = mfs.size();
+				int num_integration_fields = mfs.count([this](member_field& src) {
+					auto& f = this->get_field(src.field_id);
+					return f.is_data_generator();
+					});
+
+				auto pcr = classes.put_at(request.class_id, sz + num_integration_fields);
+
+				build_class_members(pcr, request.member_fields);
+
+				auto& p = pcr.item();
+				p.class_id = pcr.row_id();
+				p.name = request.class_name;
+				p.description = request.class_description;
+				p.class_size_bytes = 0;
+				p.is_model = false;
 
 				return p.class_id;
 			}
 
+			bool class_has_field(row_id_type class_id, row_id_type field_id)
+			{
+				auto cls = classes[class_id];
+				for (int i = 0; i < cls.size(); i++)
+				{
+					if (cls.detail(i).field_id == field_id) return true;
+				}
+				return false;
+			}
+
 			row_id_type put_model_request(put_model_request request)
 			{
+				auto& mfs = request.member_fields;
 				auto sz = request.member_fields.size() + request.model_states.size();
 
 				row_id_type class_id = find_class(request.class_name);
@@ -1183,89 +1324,25 @@ namespace countrybit
 					request.class_id = class_id;
 				}
 
+				int num_integration_fields = mfs.count([this](member_field& src) {
+					auto& f = this->get_field(src.field_id);
+					return f.is_data_generator();
+					});
+
+				sz += num_integration_fields;
+
 				auto pcr = classes.put_at(request.class_id, sz);
-				auto& p = pcr.parent();
+
+				auto& p = pcr.item();
 
 				p.class_id = pcr.row_id();
 				p.name = request.class_name;
 				p.description = request.class_description;
 				p.class_size_bytes = 0;
-				p.number_actors = request.number_of_actors;
 
+				bind_field(request.actor_id_field_name, request.actor_id_field_id);
 
-				if (request.actor_id_field_id == null_row) 
-				{
-					request.actor_id_field_id = find_field(request.actor_id_field_name);
-				}
-
-				for (int i = 0; i < request.member_fields.size(); i++)
-				{
-					auto& field = request.member_fields[i];
-
-					switch (field.membership_type)
-					{
-					case member_field_types::member_field:
-					{
-						row_id_type fid;
-						if (!field.use_id) {
-							auto fname = fields_by_name[field.field_name];
-							if (fname == std::end(fields_by_name)) {
-								return null_row;
-							}
-							fid = fname->second;
-						}
-						else
-						{
-							fid = field.field_id;
-						}
-						auto& existing_field = fields[fid];
-						auto& ref = pcr.child(i);
-						ref.field_id = fid;
-						ref.offset = p.class_size_bytes;
-						p.class_size_bytes += existing_field.size_bytes;
-					}
-					break;
-					case member_field_types::member_class:
-					{
-						put_object_field_request porf;
-						if (!field.use_id) {
-							auto class_name = classes_by_name[field.field_name];
-							if (class_name == std::end(classes_by_name)) {
-								return null_row;
-							}
-							porf.name.name = class_name.get_key();
-							porf.name.field_id = null_row;
-							porf.name.type_id = jtype::type_object;
-							porf.options.class_name = class_name.get_key();
-							porf.options.class_id = class_name.get_value();
-							porf.options.class_size_bytes = classes[class_name.get_value()].pparent()->class_size_bytes;
-							porf.options.dim = field.dimensions;
-						}
-						else
-						{
-							auto class_cls = classes[field.class_id];
-							porf.name.name = class_cls.parent().name;
-							porf.name.field_id = null_row;
-							porf.name.type_id = jtype::type_object;
-							porf.options.class_name = class_cls.parent().name;
-							porf.options.class_id = field.class_id;
-							porf.options.class_size_bytes = classes[field.class_id].pparent()->class_size_bytes;
-							porf.options.dim = field.dimensions;
-						}
-						auto class_field_id = put_object_field(porf);
-						if (class_field_id == null_row) {
-							return null_row;
-						}
-						auto& existing_field = fields[class_field_id];
-						auto& ref = pcr.child(i);
-						ref.field_id = class_field_id;
-						ref.offset = p.class_size_bytes;
-						p.class_size_bytes += existing_field.size_bytes;
-					}
-					break;
-					}
-				}
-
+				build_class_members(pcr, mfs);
 
 				for (int i = 0; i < request.model_states.size(); i++)
 				{
@@ -1278,24 +1355,30 @@ namespace countrybit
 						if (class_name == std::end(classes_by_name)) {
 							return null_row;
 						}
+						if (!class_has_field(class_name.get_value(), request.actor_id_field_id)) {
+							return null_row;
+						}
 						porf.name.name = class_name.get_key();
 						porf.name.field_id = null_row;
 						porf.name.type_id = jtype::type_list;
 						porf.options.class_name = class_name.get_key();
 						porf.options.class_id = class_name.get_value();
-						porf.options.class_size_bytes = classes[class_name.get_value()].pparent()->class_size_bytes;
-						porf.options.dim = { request.number_of_actors, 1, 1 };
+						porf.options.class_size_bytes = classes[class_name.get_value()].pitem()->class_size_bytes;
+						porf.options.dim = { field.number_of_actors, 1, 1 };
 					}
 					else
 					{
 						auto class_cls = classes[field.class_id];
-						porf.name.name = class_cls.parent().name;
+						if (!class_has_field(field.class_id, request.actor_id_field_id)) {
+							return null_row;
+						}
+						porf.name.name = class_cls.item().name;
 						porf.name.field_id = null_row;
 						porf.name.type_id = jtype::type_list;
-						porf.options.class_name = class_cls.parent().name;
+						porf.options.class_name = class_cls.item().name;
 						porf.options.class_id = field.class_id;
-						porf.options.class_size_bytes = classes[field.class_id].pparent()->class_size_bytes;
-						porf.options.dim = { request.number_of_actors, 1, 1 };
+						porf.options.class_size_bytes = classes[field.class_id].pitem()->class_size_bytes;
+						porf.options.dim = { field.number_of_actors, 1, 1 };
 					}
 
 					auto class_field_id = put_object_field(porf);
@@ -1305,13 +1388,14 @@ namespace countrybit
 					}
 
 					auto& existing_field = fields[class_field_id];
-					auto& ref = pcr.child(class_field_index);
+					auto& ref = pcr.detail(class_field_index);
 					ref.field_id = class_field_id;
 					ref.offset = p.class_size_bytes;
 					p.class_size_bytes += existing_field.size_bytes;
 				}
 
 				p.class_size_bytes = jmodel::estimate_size(request, p.class_size_bytes);
+				p.is_model = true;
 
 				return p.class_id;
 			}
@@ -1385,8 +1469,8 @@ namespace countrybit
 				while (*_class_ids != null_row)
 				{
 					auto myclassfield = get_class(*_class_ids);
-					if (myclassfield.parent().class_size_bytes > max_size) {
-						max_size = myclassfield.parent().class_size_bytes;
+					if (myclassfield.item().class_size_bytes > max_size) {
+						max_size = myclassfield.item().class_size_bytes;
 					}
 					_class_ids++;
 				}
@@ -1406,7 +1490,7 @@ namespace countrybit
 
 				jcollection_map jcm;
 				jcm.collection_id = _collection_id;
-				jcm.table_id = parent_child_table<jcollection_object, char>::reserve_table(_b, _number_of_objects, max_size * _number_of_objects);
+				jcm.table_id = item_details_table<jcollection_object, char>::reserve_table(_b, _number_of_objects, max_size * _number_of_objects);
 				row_id_type jcm_row = _b->pack(jcm);
 				return jcm_row;
 			}
@@ -1417,7 +1501,7 @@ namespace countrybit
 			{
 				jcollection_map *jcm;
 				jcm = _b->unpack<jcollection_map>(_location);
-				auto obj = parent_child_table<jcollection_object, char>::get_table(_b, jcm->table_id);
+				auto obj = item_details_table<jcollection_object, char>::get_table(_b, jcm->table_id);
 				jcollection collection(this, jcm->collection_id, obj);
 				return collection;
 			}

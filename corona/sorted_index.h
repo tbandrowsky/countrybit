@@ -36,8 +36,8 @@ namespace countrybit
 		{
 		public:
 
-			using index_node = parent_child_holder<std::pair<KEY, VALUE>, index_ref>;
-			using data_table_type = parent_child_table<std::pair<KEY, VALUE>, index_ref>;
+			using index_node = item_details_holder<std::pair<KEY, VALUE>, index_ref>;
+			using data_table_type = item_details_table<std::pair<KEY, VALUE>, index_ref>;
 
 		private:
 
@@ -63,7 +63,7 @@ namespace countrybit
 				index_node in = data_table.create(_num_levels + 1);
 				for (int i = 0; i < in.size(); i++)
 				{
-					in.child(i) = null_row;
+					in.detail(i) = null_row;
 				}
 				return in;
 			}
@@ -126,14 +126,14 @@ namespace countrybit
 
 			static size_t get_box_size( row_id_type _max_items )
 			{
-				return parent_child_table<std::pair<KEY, VALUE>, index_ref>::get_box_size(_max_items, _max_items * MaxNumberOfLevels);
+				return item_details_table<std::pair<KEY, VALUE>, index_ref>::get_box_size(_max_items, _max_items * MaxNumberOfLevels);
 			}
 
 			class iterator
 			{
 				sorted_index<KEY, VALUE, SORT_ORDER>* base;
 				row_id_type current;
-				using index_node = parent_child_holder<std::pair<KEY, VALUE>, index_ref>;
+				using index_node = item_details_holder<std::pair<KEY, VALUE>, index_ref>;
 
 			public:
 				using iterator_category = std::forward_iterator_tag;
@@ -163,23 +163,23 @@ namespace countrybit
 
 				inline std::pair<KEY, VALUE>& operator *()
 				{
-					return base->get_node(current).parent();
+					return base->get_node(current).item();
 				}
 
 				inline std::pair<KEY, VALUE>* operator->()
 				{
-					return &base->get_node(current).parent();
+					return &base->get_node(current).item();
 				}
 
 				inline KEY& get_key()
 				{
-					std::pair<KEY, VALUE>& p = base->get_node(current).parent();
+					std::pair<KEY, VALUE>& p = base->get_node(current).item();
 					return p.first;
 				}
 
 				inline VALUE& get_value()
 				{
-					std::pair<KEY, VALUE>& p = base->get_node(current).parent();
+					std::pair<KEY, VALUE>& p = base->get_node(current).item();
 					return p.second;
 				}
 
@@ -225,13 +225,13 @@ namespace countrybit
 				index_node q = get_header();
 				row_id_type qr;
 
-				qr = q.child(0);
+				qr = q.detail(0);
 
 				if (qr != null_row)
 				{
 					q = get_node(qr);
 					result = true;
-					remove_node(q.parent().key);
+					remove_node(q.item().key);
 				}
 				return result;
 			}
@@ -239,7 +239,7 @@ namespace countrybit
 			sorted_index<KEY, VALUE, SORT_ORDER>::iterator begin()
 			{
 				index_node q = get_header();
-				row_id_type qr = q.child(0);
+				row_id_type qr = q.detail(0);
 
 				return iterator(this, qr);
 			}
@@ -277,19 +277,19 @@ namespace countrybit
 			bool has(const KEY& key, VALUE& value)
 			{
 				auto n = this->find_node(key);
-				return (n != null_row && get<index_node>(n).parent().key_value.second == value);
+				return (n != null_row && get<index_node>(n).item().key_value.second == value);
 			}
 
 			bool has(const KEY& key, std::function<bool(VALUE& src)> pred)
 			{
 				auto n = this->find_node(key);
-				return (n != null_row && pred(get<index_node>(n).parent().key_value.second));
+				return (n != null_row && pred(get<index_node>(n).item().key_value.second));
 			}
 
 			VALUE& first_value()
 			{
 				auto n = first_node();
-				return get_node(n).parent().key_value;
+				return get_node(n).item().key_value;
 			}
 
 			sorted_index<KEY, VALUE, SORT_ORDER>::iterator insert_or_assign(std::pair<KEY, VALUE>& kvp)
@@ -354,7 +354,7 @@ namespace countrybit
 				if (_node != null_row)
 				{
 					auto nd = get_node(_node);
-					auto ndkey = nd.parent().first;
+					auto ndkey = nd.item().first;
 
 					if (ndkey < key)
 						return -SORT_ORDER;
@@ -377,12 +377,12 @@ namespace countrybit
 				for (int k = index_header->level; k >= 0; k--)
 				{
 					p = index_header->header_id;
-					q = hdr.child(k);
+					q = hdr.detail(k);
 					auto comp = compare(q, key);
 					while (comp < 0)
 					{
 						p = q;
-						q = get_node(q).child(k);
+						q = get_node(q).detail(k);
 						comp = compare(q, key);
 					}
 					if (comp == 0)
@@ -400,14 +400,14 @@ namespace countrybit
 				for (int k = index_header->level; k >= 0; k--)
 				{
 					p = index_header->header_id;
-					q = get_node(p).child(k);
+					q = get_node(p).detail(k);
 					last = q;
 					auto comp = compare(q, key);
 					while (comp < 0)
 					{
 						p = q;
 						last = q;
-						q = get_node(q).child(k);
+						q = get_node(q).detail(k);
 						comp = compare(q, key);
 					}
 					if (comp == 0)
@@ -430,7 +430,7 @@ namespace countrybit
 				if (q != null_row)
 				{
 					qnd = get_node(q);
-					qnd.parent().second = kvp.second;
+					qnd.item().second = kvp.second;
 					return q;
 				}
 
@@ -445,13 +445,13 @@ namespace countrybit
 
 				if (!qnd.is_null()) 
 				{
-					qnd.parent() = kvp;
+					qnd.item() = kvp;
 					index_header->count++;
 
 					do {
 						auto pnd = get_node(update[k]);
-						qnd.child(k) = pnd.child(k);
-						pnd.child(k) = qnd.row_id();
+						qnd.detail(k) = pnd.detail(k);
+						pnd.detail(k) = qnd.row_id();
 					} while (--k >= 0);
 
 					return qnd.row_id();
@@ -475,9 +475,9 @@ namespace countrybit
 					qnd = get_node(q);
 					pnd = get_node(p);
 					int m = index_header->level;
-					while (k <= m && pnd.child(k) == q)
+					while (k <= m && pnd.detail(k) == q)
 					{
-						pnd.child(k) = qnd.child(k);
+						pnd.detail(k) = qnd.detail(k);
 						k++;
 						if (k <= m) {
 							p = update[k];
@@ -485,7 +485,7 @@ namespace countrybit
 						}
 					}
 					index_header->count--;
-					while (get_header().child(m) == null_row && m > 0) {
+					while (get_header().detail(m) == null_row && m > 0) {
 						m--;
 					}
 					index_header->level = m;
@@ -517,7 +517,7 @@ namespace countrybit
 
 			row_id_type first_node()
 			{
-				return get_header().child(0);
+				return get_header().detail(0);
 			}
 
 			row_id_type next_node(row_id_type _node)
@@ -526,7 +526,7 @@ namespace countrybit
 					return _node;
 
 				auto nd = get_node(_node);
-				_node = nd.child(0);
+				_node = nd.detail(0);
 				return _node;
 			}
 		};

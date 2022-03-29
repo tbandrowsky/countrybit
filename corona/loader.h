@@ -165,8 +165,7 @@ namespace countrybit
 				type_key = _type_key;
 				type_value = _type_value;
 				class_name = _class_name;
-				create_object = _create_object;
-				property_index = object_member_index_type::create_sorted_index(_b, _max_items, property_index_id);
+				property_index = property_index_type::create_sorted_index(_b, _max_items, property_index_id);
 
 				key = type_key;
 				key = key + "_";
@@ -395,7 +394,7 @@ namespace countrybit
 				for (int i = 0; i < cls.size(); i++)
 				{
 					field_idx = i;
-					class_field = cls.child(i);
+					class_field = cls.detail(i);
 				}
 			}
 
@@ -423,7 +422,7 @@ namespace countrybit
 					throw std::logic_error("attempt to map non-scalar to scalar");
 				}
 				MemberType item;
-				slice.get_box(item, field_idx);
+				slice.get_boxed(item, field_idx);
 				_src->set_value(item);
 				return true;
 			}
@@ -671,10 +670,10 @@ namespace countrybit
 			}
 
 			template <typename MemberType>
-			propertyinfo* create_scalar_property(typeinfo *parent, pvalue::pvalue_types _match_type, const char* _source_name, const char* _dest_name, int _offset)
+			propertyinfo* create_scalar_property(typeinfo *item, pvalue::pvalue_types _match_type, const char* _source_name, const char* _dest_name, int _offset)
 			{
 				propertyinfo* sp = create_scalar_property(_match_type, _source_name, _dest_name, _offset);
-				parent->put_property(sp);
+				item->put_property(sp);
 			}
 
 			propertyinfo* create_object_property(typeinfo* _property_type, const char* _source_name, const char* _dest_name, int _offset)
@@ -690,10 +689,10 @@ namespace countrybit
 				return pi;
 			}
 
-			propertyinfo* create_object_property(typeinfo *parent, typeinfo* _property_type, const char* _source_name, const char* _dest_name, int _offset)
+			propertyinfo* create_object_property(typeinfo *item, typeinfo* _property_type, const char* _source_name, const char* _dest_name, int _offset)
 			{
 				propertyinfo* op = create_object_property(_property_type, _source_name, _dest_name, _offset);
-				parent->put_property(op);
+				item->put_property(op);
 				return op;
 			}
 
@@ -714,10 +713,10 @@ namespace countrybit
 			}
 
 			template <typename ArrayMemberType, int ArraySize>
-			propertyinfo* create_object_iarray_property(typeinfo* parent, typeinfo* _property_type, const char* _source_name, const char* _dest_name, int _offset)
+			propertyinfo* create_object_iarray_property(typeinfo* item, typeinfo* _property_type, const char* _source_name, const char* _dest_name, int _offset)
 			{
 				propertyinfo* op = create_object_iarray_property<ArrayMemberType,ArraySize>(_property_type, _source_name, _dest_name, _offset);
-				parent->put_property(op);
+				item->put_property(op);
 				return op;
 			}
 
@@ -733,10 +732,10 @@ namespace countrybit
 				return pi;
 			}
 
-			propertyinfo* create_polymorphic_property(typeinfo* parent, const char* _source_name, int _num_dests, property_dest** _dests)
+			propertyinfo* create_polymorphic_property(typeinfo* item, const char* _source_name, int _num_dests, property_dest** _dests)
 			{
 				propertyinfo* op = create_polymorphic_property(_source_name, _num_dests, _dests);
-				parent->put_property(op);
+				item->put_property(op);
 				return op;
 			}
 
@@ -793,7 +792,6 @@ namespace countrybit
 			database::table<database::put_image_field_request> put_image_fields;
 			database::table<database::put_wave_field_request> put_wave_fields;
 			database::table<database::put_midi_field_request> put_midi_fields;
-			database::table<database::put_color_field_request> put_color_fields;
 			database::table<database::put_named_query_field_request> put_query_fields;
 			database::table<database::put_sql_field_request> put_sql_fields;
 			database::table<database::put_http_field_request> put_http_fields;
@@ -1149,7 +1147,7 @@ namespace countrybit
 						typeinfo *new_class_ti = create_typeinfo(member_type_name, class_name.c_str(), class_name.c_str(), class_def.size() + 4);
 						for (database::row_id_type id = 0; id < class_def.size(); id++)
 						{
-							auto& fld_ref = class_def.child(id);
+							auto& fld_ref = class_def.detail(id);
 							auto& fld = schema.get_field(fld_ref.field_id);
 							switch (fld.type_id) {
 							case database::jtype::type_datetime:
@@ -1518,7 +1516,7 @@ namespace countrybit
 
 				for (int i = 0; i < the_class.size(); i++) 
 				{
-					auto &c = the_class.child(i);
+					auto &c = the_class.detail(i);
 					auto &f = pschema->get_field(c.field_id);
 					if (remote.corona_field == f.name) {
 						valid = true;
@@ -1540,7 +1538,7 @@ namespace countrybit
 			{
 				database::jschema* pschema = &schema;
 				database::row_id_type class_row = schema.find_class(class_name);
-				if (class_row == null_row) 
+				if (class_row == database::null_row) 
 				{
 					auto class_name_iter = classes_by_name[class_name];
 					if (class_name_iter == std::end(classes_by_name))

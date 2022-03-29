@@ -172,8 +172,6 @@ namespace countrybit
 			task<jdatabase_object_response> put_object(jdatabase_put_object _request);
 			task<jdatabase_object_response> update_object(jdatabase_update_object _request);
 
-			jcollection query(named_query_properties_type& query);
-
 		};
 	}
 };

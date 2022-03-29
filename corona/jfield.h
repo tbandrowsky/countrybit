@@ -285,33 +285,30 @@ namespace countrybit
 				file_properties_type		file_properties;
 				http_properties_type		http_properties;
 			};
+
+			jfield() { ; }
+			~jfield() { ; }
+
+			bool is_data_generator() 
+			{
+				return type_id == jtype::type_query || type_id == jtype::type_sql || type_id == jtype::type_http || type_id == jtype::type_file;
+			}
+
 		};
 
 		const int max_query_filters = 32;
 		const int max_path_nodes = 64;
 
-		enum class path_root_starts
-		{
-			own_self,
-			own_model,
-			own_collection,
-			named_collection,
-			named_class
-		};
-
 		class path_root
 		{
 		public:
-			operation_name			path_root_start_name;
-			path_root_starts		path_root_start;
-			object_name				collection_name;
-			object_name				class_name;
-			row_id_type				class_id;
-			object_id_type			object_id;
+			object_name				model_name;
+			row_id_type				model_id;
 		};
 
 		enum class node_operations
 		{
+			traverse,
 			group_by,
 			calc_min,
 			calc_max,
@@ -325,15 +322,18 @@ namespace countrybit
 		public:
 			object_name		member_name;
 			row_id_type		member_id;
+			row_id_type		member_index;
 			operation_name	node_operation_name;
 			node_operations node_operation;
 		};
 
+		using path_nodes = iarray<path_node, max_path_nodes>;
+
 		class path
 		{
 		public:
-			path_root							root;
-			iarray<path_node, max_path_nodes>	nodes;
+			path_root		root;
+			path_nodes		nodes;
 		};
 
 		enum class filter_comparison_types
@@ -366,8 +366,10 @@ namespace countrybit
 		{
 		public:
 			path		source_path;
-			object_name result_field;
+			object_name result_class_name;
+			row_id_type result_class_id;
 			row_id_type result_field_id;
+			row_id_type	max_result_objects;
 			iarray<filter_element, max_filters> filter;
 		};
 
@@ -385,9 +387,11 @@ namespace countrybit
 		{
 			remote_file_path				file_path;
 			object_name						parameter_field;
-			row_id_type						paramter_field_id;
-			object_name						result_field;
+			row_id_type						parameter_field_id;
 			row_id_type						result_field_id;
+			object_name						result_class_name;
+			row_id_type						result_class_id;
+			int								max_result_objects;
 			remote_parameter_fields_type	parameters;
 			remote_fields_type				fields;
 			time_t							last_success;
@@ -423,8 +427,10 @@ namespace countrybit
 			object_name						password;
 			remote_http_url					data_url;
 			remote_http_method				data_method;
-			object_name						result_field;
 			row_id_type						result_field_id;
+			object_name						result_class_name;
+			row_id_type						result_class_id;
+			row_id_type						max_result_objects;
 			remote_parameter_fields_type	parameters;
 			remote_fields_type				fields;
 			time_t							last_success;
@@ -455,8 +461,10 @@ namespace countrybit
 			sql_login_types					login_type;
 			object_name						username;
 			object_name						password;
-			object_name						result_field;
 			row_id_type						result_field_id;
+			object_name						result_class_name;
+			row_id_type						result_class_id;
+			row_id_type						max_result_objects;
 			remote_parameter_fields_type	parameters;
 			remote_fields_type				fields;
 			remote_sql_query				query;
@@ -684,13 +692,15 @@ namespace countrybit
 			}
 		};
 
+		using member_field_collection = iarray<member_field, max_class_fields>;
+
 		class put_class_request
 		{
 		public:
-			row_id_type			class_id;
-			object_name			class_name;
-			object_description	class_description;
-			iarray<member_field, max_class_fields> member_fields;
+			row_id_type				 class_id;
+			object_name				 class_name;
+			object_description		 class_description;
+			member_field_collection member_fields;
 		};
 
 		struct model_state
@@ -699,19 +709,21 @@ namespace countrybit
 			object_name			class_name;
 			row_id_type			class_id;
 			bool				use_id;
+			row_id_type			number_of_actors;
 		};
+
+		using model_state_collection = iarray<model_state, max_class_fields>;
 
 		class put_model_request
 		{
 		public:
-			row_id_type			class_id;
-			object_name			class_name;
-			object_description	class_description;
-			iarray<member_field, max_class_fields> member_fields;
-			iarray<model_state, max_class_fields> model_states;
-			int					number_of_actors;
-			object_name			actor_id_field_name;
-			row_id_type			actor_id_field_id;
+			row_id_type				 class_id;
+			object_name				 class_name;
+			object_description		 class_description;
+			member_field_collection  member_fields;
+			model_state_collection   model_states;
+			object_name				 actor_id_field_name;
+			row_id_type				 actor_id_field_id;
 		};
 
 		class jlist_instance
@@ -757,9 +769,8 @@ namespace countrybit
 			row_id_type									class_id;
 			object_name									name;
 			object_description							description;
-			row_id_type									model_field_id;
 			uint64_t									class_size_bytes;
-			uint32_t									number_actors;
+			bool										is_model;
 		};
 
 		class jclass_field
@@ -771,7 +782,7 @@ namespace countrybit
 			int						actor_field_index;
 		};
 
-		using jclass = parent_child_holder<jclass_header, jclass_field>;
+		using jclass = item_details_holder<jclass_header, jclass_field>;
 	}
 }
 

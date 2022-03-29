@@ -55,32 +55,36 @@ namespace countrybit
 			return hr == S_OK;
 		}
 
-		jarray jcollection::create_object(row_id_type _class_id)
+		jarray jcollection::create_object(row_id_type _class_id, dimensions_type _dims)
 		{
 			auto myclass = schema->get_class(_class_id);
 
 			object_name composed_class_field_name;
-			dimensions_type d{ 1, 1, 1 };
-			schema->get_class_field_name(composed_class_field_name, myclass.parent().name, d);
+			dimensions_type d = _dims;
+			schema->get_class_field_name(composed_class_field_name, myclass.item().name, d);
 			auto find_field_id = schema->find_field(composed_class_field_name);
-			if (find_field_id == null_row) 
+			if (find_field_id == null_row)
 			{
 				put_object_field_request porf;
 				porf.name.name = composed_class_field_name;
+				porf.name.type_id = jtype::type_object;
 				porf.options.class_id = _class_id;
-				porf.options.class_name = myclass.parent().name;
-				porf.options.class_size_bytes = myclass.parent().class_size_bytes;
+				porf.options.class_name = myclass.item().name;
+				porf.options.class_size_bytes = myclass.item().class_size_bytes;
 				porf.options.dim = d;
 				find_field_id = schema->put_object_field(porf);
 			}
-			auto bytes_to_allocate = myclass.parent().class_size_bytes;
+			find_field_id = schema->find_field(composed_class_field_name);
+			auto find_field = schema->get_field(find_field_id);
+			auto bytes_to_allocate = find_field.size_bytes;
 			auto new_object = objects.create(bytes_to_allocate);
-			new_object.parent().oid.collection_id = collection_id;
-			new_object.parent().oid.row_id = new_object.row_id();
-			new_object.parent().class_field_id = find_field_id;	
-			jarray ja(schema, find_field_id, new_object.pchild());
+			new_object.item().oid.collection_id = collection_id;
+			new_object.item().oid.row_id = new_object.row_id();
+			new_object.item().class_field_id = find_field_id;
+			new_object.item().class_id = _class_id;
+			jarray ja(nullptr, schema, find_field_id, new_object.pdetails());
 
-			for (auto jai : ja) 
+			for (auto jai : ja)
 			{
 				jai.construct();
 			}
@@ -88,14 +92,104 @@ namespace countrybit
 			return ja;
 		}
 
+		jarray jcollection::get_object(row_id_type _object_id)
+		{
+			auto new_object = objects.get(_object_id);
+			return jarray(nullptr, schema, new_object.item().class_field_id, new_object.pdetails());
+		}
+
+		jmodel jcollection::create_model(row_id_type _class_id)
+		{
+			auto myclass = schema->get_class(_class_id);
+
+			object_name composed_class_field_name;
+			dimensions_type d = { 1, 0, 0 };
+			auto bytes_to_allocate = myclass.item().class_size_bytes;
+			auto new_object = objects.create(bytes_to_allocate);
+			new_object.item().oid.collection_id = collection_id;
+			new_object.item().oid.row_id = new_object.row_id();
+			new_object.item().class_id = _class_id;
+			new_object.item().class_field_id = null_row;
+			jmodel jm(nullptr, schema, _class_id, new_object.pdetails(), true);
+			return jm;
+		}
+
+		jmodel jcollection::get_model(row_id_type _object_id)
+		{
+			auto new_object = objects.get(_object_id);
+			return jmodel(nullptr, schema, new_object.item().class_id, new_object.pdetails());
+		}
+
+		jlist jcollection::create_list(row_id_type _class_id, int _capacity)
+		{
+			auto myclass = schema->get_class(_class_id);
+
+			object_name composed_class_field_name;
+			dimensions_type d = { _capacity, 1, 1 };
+			schema->get_class_field_name(composed_class_field_name, myclass.item().name, d);
+			auto find_field_id = schema->find_field(composed_class_field_name);
+			if (find_field_id == null_row)
+			{
+				put_object_field_request porf;
+				porf.name.name = composed_class_field_name;
+				porf.name.type_id = jtype::type_object;
+				porf.options.class_id = _class_id;
+				porf.options.class_name = myclass.item().name;
+				porf.options.class_size_bytes = myclass.item().class_size_bytes;
+				porf.options.dim = d;
+				find_field_id = schema->put_list_field(porf);
+			}
+			find_field_id = schema->find_field(composed_class_field_name);
+			auto find_field = schema->get_field(find_field_id);
+			auto new_object = objects.create(find_field.size_bytes);
+			new_object.item().oid.collection_id = collection_id;
+			new_object.item().oid.row_id = new_object.row_id();
+			new_object.item().class_field_id = find_field_id;
+			new_object.item().class_id = _class_id;
+			jlist jl(nullptr, schema, find_field_id, new_object.pdetails());
+
+			return jl;
+		}
+
+		jlist jcollection::get_list(row_id_type _object_id)
+		{
+			auto new_object = objects.get(_object_id);
+			return jlist(nullptr, schema, new_object.item().class_field_id, new_object.pdetails());
+		}
+
 		jslice::jslice() : schema(nullptr), class_id(null_row), bytes(nullptr)
 		{
 			;
 		}
 
-		jslice::jslice(jschema* _schema, row_id_type _class_id, char* _bytes, dimensions_type _dim) : schema(_schema), class_id(_class_id), bytes(_bytes), dim(_dim)
+		jslice::jslice(jslice *_parent, jschema* _schema, row_id_type _class_id, char* _bytes, dimensions_type _dim) : parent(_parent), schema(_schema), class_id(_class_id), bytes(_bytes), dim(_dim)
 		{
 			the_class = schema->get_class(_class_id);
+		}
+
+		jslice& jslice::get_parent_slice()
+		{
+			return *parent;
+		}
+
+		jmodel& jslice::get_parent_model()
+		{
+			auto p = parent;
+			while (p) {
+				if (p->the_class.pitem()->is_model()) {
+					jmodel jam(p, p->schema, p->class_id, p->bytes, false);
+					return jam;
+				}
+				p = p->parent;
+			}
+
+			jmodel denied;
+			return denied;
+		}
+
+		jclass jslice::get_class()
+		{
+			return the_class;
 		}
 
 		size_t jslice::get_offset(jtype field_type_id, int field_idx)
@@ -105,7 +199,7 @@ namespace countrybit
 				throw std::logic_error("slice is not initialized");
 			}
 #endif
-			jclass_field& jcf = the_class.child(field_idx);
+			jclass_field& jcf = the_class.detail(field_idx);
 #if _DEBUG
 			jfield jf = schema->get_field(jcf.field_id);
 			if (jf.type_id != field_type_id) 
@@ -125,7 +219,7 @@ namespace countrybit
 		{
 			for (int i = 0; i < the_class.size(); i++)
 			{
-				jclass_field& jcf = the_class.child(i);
+				jclass_field& jcf = the_class.detail(i);
 				jfield jf = schema->get_field(jcf.field_id);
 				int offset = jcf.offset;
 				char* c = &bytes[offset];
@@ -177,7 +271,7 @@ namespace countrybit
 					break;
 				case jtype::type_object:
 					{
-						jarray ja(schema, jcf.field_id, c);
+						jarray ja(this, schema, jcf.field_id, c);
 
 						for (auto jai : ja)
 						{
@@ -187,7 +281,12 @@ namespace countrybit
 					break;
 				case jtype::type_list:
 					{
-						jlist jax(schema, jcf.field_id, c, true);
+						jlist jax(this, schema, jcf.field_id, c, true);
+					}
+					break;
+				case jtype::type_model:
+					{
+						jmodel jax(this, schema, jcf.field_id, c, true);
 					}
 					break;
 				case jtype::type_object_id:
@@ -263,9 +362,42 @@ namespace countrybit
 
 		jfield& jslice::get_field(int field_idx)
 		{
-			jclass_field& jcf = the_class.child(field_idx);
+			jclass_field& jcf = the_class.detail(field_idx);
 			jfield &jf = schema->get_field(jcf.field_id);
 			return jf;
+		}
+
+		int jslice::get_field_index_by_id(row_id_type field_id)
+		{
+			for (int i = 0; i < the_class.size(); i++)
+			{
+				jclass_field& jcf = the_class.detail(i);
+				if (jcf.field_id == field_id)
+				{
+					return i;
+				}
+			}
+			return -1;
+		}
+
+		jclass_field& jslice::get_class_field(int field_idx)
+		{
+			jclass_field& jcf = the_class.detail(field_idx);
+			return jcf;
+		}
+
+		jfield& jslice::get_field_by_id(row_id_type field_id)
+		{
+			for (int i = 0; i < the_class.size(); i++)
+			{
+				jclass_field& jcf = the_class.detail(i);
+				if (jcf.field_id == field_id)
+				{
+					jfield& jf = schema->get_field(jcf.field_id);
+					return jf;
+				}
+			}
+			return schema->get_empty();
 		}
 
 		int8_box jslice::get_int8(int field_idx)
@@ -368,15 +500,15 @@ namespace countrybit
 				throw std::logic_error("slice is not initialized");
 			}
 #endif
-			jclass_field& jcf = the_class.child(field_idx);
+			jclass_field& jcf = the_class.detail(field_idx);
 #if _DEBUG
 			jfield jf = schema->get_field(jcf.field_id);
 			if (jf.type_id != jtype::type_object) {
-				throw std::invalid_argument("Invalid field type " + std::to_string(jtype::type_object) + " for field idx " + std::to_string(field_idx));
+				throw std::invalid_argument("Invalid field type " + std::to_string(jf.type_id) + " for field idx " + std::to_string(field_idx));
 			}
 #endif
 			char *b = &bytes[jcf.offset];
-			jarray jerry(schema, jcf.field_id, b);
+			jarray jerry(this, schema, jcf.field_id, b);
 			return jerry;
 		}
 
@@ -387,15 +519,15 @@ namespace countrybit
 				throw std::logic_error("slice is not initialized");
 			}
 #endif
-			jclass_field& jcf = the_class.child(field_idx);
+			jclass_field& jcf = the_class.detail(field_idx);
 #if _DEBUG
 			jfield jf = schema->get_field(jcf.field_id);
-			if (jf.type_id != jtype::type_object) {
-				throw std::invalid_argument("Invalid field type " + std::to_string(jtype::type_object) + " for field idx " + std::to_string(field_idx));
+			if (jf.type_id != jtype::type_list) {
+				throw std::invalid_argument("Invalid field type " + std::to_string(jf.type_id) + " for field idx " + std::to_string(field_idx));
 			}
 #endif
 			char* b = &bytes[jcf.offset];
-			jlist jerry(schema, jcf.field_id, b);
+			jlist jerry(this, schema, jcf.field_id, b);
 			return jerry;
 		}
 
@@ -415,12 +547,30 @@ namespace countrybit
 			return the_class.size();
 		}
 
+		void jslice::copy(jslice& _src_slice)
+		{
+			row_id_type fis, fid, ssf;
+
+			ssf = _src_slice.size();
+			for (fis = 0; fis < ssf; fis++)
+			{
+				auto fld_source = _src_slice.get_field(fis);
+				auto fld_dest_idx = get_field_index_by_id(fld_source.field_id);
+				if (fld_dest_idx != null_row) 
+				{
+					auto& sf = _src_slice.get_class_field(fis);
+					auto &df = get_class_field(fld_dest_idx);
+					std::copy(_src_slice.bytes + sf.offset, _src_slice.bytes + sf.offset + fld_source.size_bytes, bytes + df.offset);
+				}
+			}
+		}
+
 		jarray::jarray() : schema(nullptr), class_field_id(null_row), bytes(nullptr)
 		{
 			;
 		}
 
-		jarray::jarray(jschema* _schema, row_id_type _class_field_id, char* _bytes, bool _init) : schema(_schema), class_field_id(_class_field_id), bytes(_bytes)
+		jarray::jarray(jslice *_parent, jschema* _schema, row_id_type _class_field_id, char* _bytes, bool _init) : item(_parent), schema(_schema), class_field_id(_class_field_id), bytes(_bytes)
 		{
 
 		}
@@ -433,6 +583,7 @@ namespace countrybit
 			_dest.init(fld.size_bytes);
 			bytes = _dest.allocate<char>(fld.size_bytes);
 			std::copy(_src.bytes, _src.bytes + fld.size_bytes, bytes);
+			item = _src.item;
 		}
 
 		dimensions_type jarray::dimensions()
@@ -458,10 +609,10 @@ namespace countrybit
 			if ((pos.x >= dim.x) ||
 				(pos.y >= dim.y) ||
 				(pos.z >= dim.z)) {
-					return jslice(schema, field.object_properties.class_id, nullptr, dim);
+					return jslice(item, schema, field.object_properties.class_id, nullptr, dim);
 			}
 			char* b = &bytes[ ((pos.z * dim.y * dim.x) + (pos.y * dim.x) + pos.x ) * field.object_properties.class_size_bytes ];
-			jslice slice(schema, field.object_properties.class_id, b, pos);
+			jslice slice(item, schema, field.object_properties.class_id, b, pos);
 			return slice;
 		}
 
@@ -499,8 +650,8 @@ namespace countrybit
 			;
 		}
 
-		jlist::jlist(jschema* _schema, row_id_type _class_field_id, char* _bytes, bool _init) 
-			: schema(_schema), class_field_id(_class_field_id)
+		jlist::jlist(jslice *_parent, jschema* _schema, row_id_type _class_field_id, char* _bytes, bool _init) 
+			: item(_parent), schema(_schema), class_field_id(_class_field_id)
 		{
 			auto& field_def = schema->get_field(_class_field_id);
 			jclass model_class_def = schema->get_class(field_def.object_properties.class_id);
@@ -537,6 +688,7 @@ namespace countrybit
 			data.instance = model_box->unpack<jlist_instance>(0);
 			data.list_bytes = model_box->unpack<char>(data.instance->slice_offset);
 			data.selections = array_box<row_id_type>::get(model_box, data.instance->selection_offset);
+			item = _src.item;
 		}
 
 		uint32_t jlist::capacity()
@@ -556,11 +708,11 @@ namespace countrybit
 			jfield& field = schema->get_field(class_field_id);
 			dimensions_type dim = field.object_properties.dim;
 			if ((idx >= data.instance->allocated) || (idx < 0)) {
-				return jslice(schema, field.object_properties.class_id, nullptr, dim);
+				return jslice(item, schema, field.object_properties.class_id, nullptr, dim);
 			}
 			dimensions_type pos = { idx, 0, 0 };
 			char* b = &data.list_bytes[idx * field.object_properties.class_size_bytes];
-			jslice slice(schema, field.object_properties.class_id, b, pos);
+			jslice slice(item, schema, field.object_properties.class_id, b, pos);
 			return slice;
 		}
 
@@ -652,6 +804,7 @@ namespace countrybit
 		// - jmodel
 
 		jmodel::jmodel() : 
+			parent(nullptr),
 			schema(nullptr), 
 			class_id(null_row), 
 			model_box(nullptr)
@@ -659,14 +812,15 @@ namespace countrybit
 			;
 		}
 
-		jmodel::jmodel(jschema* _schema, row_id_type _class_id, char* _bytes, bool _init) : 
+		jmodel::jmodel(jslice *_parent, jschema* _schema, row_id_type _class_id, char* _bytes, bool _init) : 
+			parent(_parent),
 			schema(_schema), 
 			class_id(_class_id),
 			model_box( (serialized_box*) _bytes )
 		{
 
 			jclass model_class_def = schema->get_class(_class_id);
-			jclass_header *model_class = model_class_def.pparent();
+			jclass_header *model_class = model_class_def.pitem();
 			auto box_size = model_class->class_size_bytes;
 			auto num_actors = model_class->number_actors;
 
@@ -692,7 +846,7 @@ namespace countrybit
 		jmodel::jmodel(dynamic_box& _dest, jmodel& _src) 
 		{
 			jclass model_class_def = _src.schema->get_class(_src.class_id);
-			jclass_header* model_class = model_class_def.pparent();
+			jclass_header* model_class = model_class_def.pitem();
 			auto box_size = model_class->class_size_bytes;
 			auto num_actors = model_class->number_actors;
 
@@ -702,6 +856,12 @@ namespace countrybit
 			data.instance = model_box->unpack<jmodel_instance>(0);
 			data.model_bytes = model_box->unpack<char>(data.instance->slice_offset);
 			data.selections = array_box<row_id_type>::get(model_box, data.instance->selection_offset);
+			parent = _src.parent;
+		}
+
+		bool jmodel::is_empty()
+		{
+			return schema == nullptr || model_box == nullptr;
 		}
 
 		size_t jmodel::estimate_size(put_model_request& _request, uint32_t base_class_bytes)
@@ -722,7 +882,7 @@ namespace countrybit
 			jclass model_class_def = schema->get_class(class_id);
 			for (int i = 0; i < model_class_def.size(); i++)
 			{
-				auto& fld = model_class_def.child(i);
+				auto& fld = model_class_def.detail(i);
 				if (fld.field_id == state_field_id && fld.model_state) {
 					return i;
 				}
@@ -730,15 +890,15 @@ namespace countrybit
 			return null_row;
 		}
 
-		jslice jmodel::get_model()
+		jslice jmodel::get_model_slice()
 		{
-			jslice slice(schema, class_id, data.model_bytes, { 0, 0, 0 } );
+			jslice slice(parent, schema, class_id, data.model_bytes, { 0, 0, 0 } );
 			return slice;
 		}
 
 		jlist jmodel::get_state(row_id_type state_field_id)
 		{
-			auto slice = get_model();
+			auto slice = get_model_slice();
 			auto field_idx = get_field_index(state_field_id);
 			slice.get_list(field_idx);
 		}
@@ -783,7 +943,7 @@ namespace countrybit
 		uint64_t jmodel::get_size_bytes()
 		{
 			jclass model_class_def = schema->get_class(class_id);
-			return model_class_def.parent().class_size_bytes;
+			return model_class_def.item().class_size_bytes;
 		}
 
 		void jschema::add_standard_fields() 
@@ -948,7 +1108,7 @@ namespace countrybit
 
 			int offset_start = 0;
 			for (int i = 0; i < person_class.size(); i++) {
-				auto& fldref = person_class.child(i);
+				auto& fldref = person_class.detail(i);
 				auto& fld = schema.get_field(fldref.field_id);
 //				std::cout << fld.name << " " << fld.description << " " << fldref.offset << " " << fld.size_bytes << std::endl;
 				if (offset_start && offset_start != fldref.offset) {
@@ -1007,7 +1167,7 @@ namespace countrybit
 			double quantitystart = 10.22;
 			int increment = 5;
 			
-			pa = people.create_object(person_class_id);
+			pa = people.create_object(person_class_id, { 1, 1, 1 });
 			auto sl = pa.get_slice(0);
 			auto last_name = sl.get_string(0);
 			auto first_name = sl.get_string(1);
@@ -1020,7 +1180,7 @@ namespace countrybit
 			count = countstart + increment * 0;
 			qty = quantitystart + increment * 0;
 
-			pa = people.create_object(person_class_id);
+			pa = people.create_object(person_class_id, { 1, 1, 1 });
 			sl = pa.get_slice(0);
 			last_name = sl.get_string(0);
 			first_name = sl.get_string(1);
@@ -1033,7 +1193,7 @@ namespace countrybit
 			count = countstart + increment * 1;
 			qty = quantitystart + increment * 1;
 
-			pa = people.create_object(person_class_id);
+			pa = people.create_object(person_class_id, { 1, 1, 1 });
 			sl = pa.get_slice(0);
 			last_name = sl.get_string(0);
 			first_name = sl.get_string(1);
@@ -1046,7 +1206,7 @@ namespace countrybit
 			count = countstart + increment * 2;
 			qty = quantitystart + increment * 2;
 
-			pa = people.create_object(person_class_id);
+			pa = people.create_object(person_class_id, { 1, 1, 1 });
 			sl = pa.get_slice(0);
 			last_name = sl.get_string(0);
 			first_name = sl.get_string(1);
@@ -1059,7 +1219,7 @@ namespace countrybit
 			count = countstart + increment * 3;
 			qty = quantitystart + increment * 3;
 
-			pa = people.create_object(person_class_id);
+			pa = people.create_object(person_class_id, { 1, 1, 1 });
 			sl = pa.get_slice(0);
 			last_name = sl.get_string(0);
 			first_name = sl.get_string(1);
@@ -1076,7 +1236,7 @@ namespace countrybit
 
 			for (auto pers : people)
 			{
-				sl = pers.get_slice(0);
+				sl = pers.item_array.get_slice(0);
 				last_name = sl.get_string(0);
 				if (!last_name.starts_with("last")) {
 					std::cout << __LINE__ << ":last name failed" << std::endl;
@@ -1170,7 +1330,7 @@ namespace countrybit
 			jcollection sprites = schema.create_collection(&box, colid, 50, sprite_class_id);
 
 			for (int i = 0; i < 10; i++) {
-				auto new_object = sprites.create_object(sprite_class_id);
+				auto new_object = sprites.create_object(sprite_class_id, {1,1,1});
 				auto slice = new_object.get_slice(0);
 
 				auto image_name = slice.get_string(0);
@@ -1203,7 +1363,7 @@ namespace countrybit
 
 			for (auto item : sprites)
 			{
-				auto slice = item.get_slice(0);
+				auto slice = item.item_array.get_slice(0);
 
 				auto frame_width = slice.get_float(1);
 				auto frame_height = slice.get_float(2);

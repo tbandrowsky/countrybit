@@ -180,6 +180,16 @@ namespace countrybit
 				return iterator(this, null_row);
 			}
 
+			bool any_of(std::function<bool, item_type&> predicate)
+			{
+				return std::any_of(begin(), end(), predicate);
+			}
+
+			bool count(std::function<bool, item_type&> predicate)
+			{
+				return std::count(begin(), end(), predicate);
+			}
+
 		};
 
 		template <typename item_type>
@@ -321,6 +331,16 @@ namespace countrybit
 					hdr->data[hdr->length] = t;
 					hdr->length++;
 				}
+			}
+
+			bool any_of(std::function<bool, item_type&> predicate)
+			{
+				return std::any_of(begin(), end(), predicate);
+			}
+
+			bool count(std::function<bool, item_type&> predicate)
+			{
+				return std::count(begin(), end(), predicate);
 			}
 
 		};
