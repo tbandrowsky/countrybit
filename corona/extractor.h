@@ -37,6 +37,26 @@ namespace countrybit
 			const char *value;
 		};
 
+		class get_datetime_result : public base_parse_result
+		{
+		public:
+			int years;
+			int months;
+			int days;
+			int hours;
+			int minutes;
+			int seconds;
+			int milliseconds;
+		};
+
+		class get_color_result : public base_parse_result
+		{
+		public:
+			double red;
+			double green;
+			double blue;
+		};
+
 		class get_identifier_result : public base_parse_result
 		{
 		public:
@@ -84,14 +104,91 @@ namespace countrybit
 					dollar,
 					comma,
 					alpha,
-					identifier
+					identifier,
+					datesep
 				} search_type;
 
 				int match;
+				int count;
+			};
+
+			class match_result 
+			{
+				const char* src;
+				match_group* groups;
+				int start_index;
+				int num_groups;
+
+			public:
+
+				int end_index;
+
+				match_result() :
+					src(nullptr),
+					num_groups(0),
+					groups(nullptr),
+					start_index(0)
+				{
+
+				}
+
+				bool is_empty()
+				{
+					return src == nullptr;
+				}
+
+				static match_result empty()
+				{
+					match_result empty_result;
+					return empty_result;
+				}
+
+				match_result(const char* _src, int _num_groups, match_group* _groups, int _start_index) : 
+					src(_src),
+					num_groups(_num_groups),
+					groups(_groups),
+					start_index(_start_index)
+				{
+					;
+				}
+
+				int get_number(int group_index)
+				{
+					if (group_index >= num_groups || group_index < 0) {
+						return 0;
+					}
+					auto g = groups[group_index];
+					const char* first = g.match + src;
+					const char* last = g.count + first;
+					int value = 0;
+					auto fcr = std::from_chars(first, last, value);
+					return value;
+				}
+
+				std::string_view get_string(int group_index)
+				{
+					if (group_index >= num_groups || group_index < 0) {
+						return std::string_view("");
+					}
+					auto g = groups[group_index];
+					const char* first = g.match + src;
+					return std::string_view(first, g.count);
+				}
+
+				const char* begin()
+				{
+					return start_index + src;
+				}
+
+				const char* end()
+				{
+					return end_index + src;
+				}
+
 			};
 
 			int get_pattern_count(int& start_index, const std::function<bool(char c)>& item);
-			int match(int start_index, int num_groups, match_group* group);
+			match_result match(int start_index, int num_groups, match_group* group);
 
 		public:
 
@@ -295,6 +392,9 @@ namespace countrybit
 			get_number_result get_number();
 			get_identifier_result get_identifier();
 			get_string_result get_string();
+			get_dimension_result get_dimensions();
+			get_datetime_result get_date();
+			get_color_result get_color();
 
 			parse_json_value_result parse_json_value();
 			parse_json_object_result parse_json_object();

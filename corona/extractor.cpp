@@ -29,9 +29,11 @@ namespace countrybit
 			return count;
 		}
 
-		int string_extractor::match(int start_index, int num_groups, match_group* group)
+		string_extractor::match_result string_extractor::match(int start_index, int num_groups, match_group* group)
 		{
 			int original_start = start_index;
+
+			match_result result(view.data(), num_groups, group, start_index);
 
 			while (num_groups)
 			{
@@ -39,6 +41,8 @@ namespace countrybit
 				int start = start_index;
 
 				group->match = 0;
+				group->count = 0;
+
 				switch (group->search_type)
 				{
 				case match_group::search_types::digits:
@@ -71,40 +75,47 @@ namespace countrybit
 				case match_group::search_types::identifier:
 					count = get_pattern_count(start_index, [](char c) { return std::isalnum(c) || c == '_'; });
 					break;
+				case match_group::search_types::datesep:
+					count = get_pattern_count(start_index, [](char c) { return c == '/' || c == '_' || c == '-' || c == ':' || c == '.'; });
+					break;
 				}
 
 				switch (group->search_counts)
 				{
 				case match_group::search_counts::search_optional_one:
 					if (count < 0 || count > 1) {
-						return 0;
+						return match_result::empty();
 					}
 					else {
 						group->match = start;
+						group->count = count;
 					}
 					break;
 				case match_group::search_counts::search_one:
 					if (count != 1) {
-						return 0;
+						return match_result::empty();
 					}
 					else {
 						group->match = start;
+						group->count = count;
 					}
 					break;
 				case match_group::search_counts::search_optional_many:
 					if (count < 0) {
-						return 0;
+						return match_result::empty();
 					}
 					else {
 						group->match = start;
+						group->count = count;
 					}
 					break;
 				case match_group::search_counts::search_many:
 					if (count < 1) {
-						return 0;
+						return match_result::empty();
 					}
 					else {
 						group->match = start;
+						group->count = count;
 					}
 					break;
 				}
@@ -112,7 +123,9 @@ namespace countrybit
 				group++;
 			}
 
-			return start_index;
+			result.end_index = start_index;
+
+			return result;
 		}
 
 		const char* error_invalid_number = "Bad Number.  The parser thought this was a number, but, this text could not be converted to a double.";
@@ -128,30 +141,6 @@ namespace countrybit
 			result.line_number = line;
 			result.char_offset = index;
 
-			/*				enum class search_counts
-				{
-					search_optional_one,
-					search_one,
-					search_optional_many,
-					search_many
-				} search_counts;
-
-				enum class search_types
-				{
-					digits,
-					digits_and_seps,
-					period,
-					plusminus,
-					E,
-					dollar,
-					comma,
-					alpha,
-					space
-				} search_type;
-
-				int match;
-*/
-
 			match_group groups[5] = {
 				{ match_group::search_counts::search_optional_one, match_group::search_types::plusminus, 0 },
 				{ match_group::search_counts::search_optional_many, match_group::search_types::space, 0 },
@@ -160,16 +149,16 @@ namespace countrybit
 				{ match_group::search_counts::search_optional_many, match_group::search_types::digits, 0 }
 			};
 
-			int match_end = match(index, 5, groups);
-			if (match_end)
+			auto matches = match(index, 5, groups);
+			if (!matches.is_empty())
 			{
-				const char* first = view.data() + index;
-				const char* last = view.data() + match_end;
+				const char* first = matches.begin();
+				const char* last = matches.end();
 				auto fcr = std::from_chars(first, last, result.value);
 				if (fcr.ptr == last)
 				{
 					result.success = true;
-					index = match_end;
+					index = matches.end_index;
 				}
 				else
 				{
@@ -199,20 +188,138 @@ namespace countrybit
 			result.line_number = line;
 			result.char_offset = index;
 
-			int match_end = match(index, 2, groups);
-			if (match_end)
+			auto matches = match(index, 2, groups);
+			if (!matches.is_empty())
 			{
-				int dest = data.pack_extracted(view.data(), index, match_end, true);
+				int dest = data.pack_extracted(view.data(), index, matches.end_index, true);
 				char* c = data.unpack<char>(dest);
 				result.success = true;
 				result.value = c;
-				index = match_end;
+				index = matches.end_index;
 			}
 			else
 			{
 				result.message = error_expected_identifer;
 				result.line_number = line;
 				result.char_offset = index;
+			}
+
+			return result;
+		}
+
+		get_dimension_result string_extractor::get_dimensions()
+		{
+			get_dimension_result result;
+
+			result.success = false;
+
+			result.line_number = line;
+			result.char_offset = index;
+
+			match_group groups[9] = {
+				{ match_group::search_counts::search_many, match_group::search_types::digits, 0 },
+				{ match_group::search_counts::search_optional_many, match_group::search_types::space, 0 },
+				{ match_group::search_counts::search_one, match_group::search_types::comma, 0 },
+				{ match_group::search_counts::search_optional_many, match_group::search_types::space, 0 },
+				{ match_group::search_counts::search_many, match_group::search_types::digits, 0 },
+				{ match_group::search_counts::search_optional_many, match_group::search_types::space, 0 },
+				{ match_group::search_counts::search_one, match_group::search_types::comma, 0 },
+				{ match_group::search_counts::search_optional_many, match_group::search_types::space, 0 },
+				{ match_group::search_counts::search_many, match_group::search_types::digits, 0 }
+			};
+
+			auto matches = match(index, 9, groups);
+			if (!matches.is_empty())
+			{
+				result.x = matches.get_number(0);
+				result.y = matches.get_number(4);
+				result.z = matches.get_number(7);
+			}
+			else
+			{
+				result.message = error_expected_number;
+			}
+
+			return result;
+		}
+
+		get_datetime_result string_extractor::get_date()
+		{
+			get_datetime_result result;
+
+			result.success = false;
+
+			result.line_number = line;
+			result.char_offset = index;
+
+			match_group groups[12] = {
+				{ match_group::search_counts::search_many, match_group::search_types::digits, 0 },
+				{ match_group::search_counts::search_optional_many, match_group::search_types::space, 0 },
+				{ match_group::search_counts::search_one, match_group::search_types::datesep, 0 },
+				{ match_group::search_counts::search_optional_many, match_group::search_types::space, 0 },
+
+				{ match_group::search_counts::search_many, match_group::search_types::digits, 0 },
+				{ match_group::search_counts::search_optional_many, match_group::search_types::space, 0 },
+				{ match_group::search_counts::search_one, match_group::search_types::datesep, 0 },
+				{ match_group::search_counts::search_optional_many, match_group::search_types::space, 0 },
+
+				{ match_group::search_counts::search_many, match_group::search_types::digits, 0 },
+				{ match_group::search_counts::search_optional_many, match_group::search_types::space, 0 },
+				{ match_group::search_counts::search_one, match_group::search_types::datesep, 0 },
+				{ match_group::search_counts::search_optional_many, match_group::search_types::space, 0 }
+			};
+
+			auto matches = match(index, 12, groups);
+			if (!matches.is_empty())
+			{
+				result.months = matches.get_number(0);
+				result.days = matches.get_number(4);
+				result.years = matches.get_number(7);
+			}
+			else
+			{
+				result.message = error_expected_number;
+			}
+
+			return result;
+		}
+
+		get_color_result string_extractor::get_color()
+		{
+			get_color_result result;
+
+			result.success = false;
+
+			result.line_number = line;
+			result.char_offset = index;
+
+			match_group groups[12] = {
+				{ match_group::search_counts::search_many, match_group::search_types::digits, 0 },
+				{ match_group::search_counts::search_optional_many, match_group::search_types::space, 0 },
+				{ match_group::search_counts::search_one, match_group::search_types::comma, 0 },
+				{ match_group::search_counts::search_optional_many, match_group::search_types::space, 0 },
+
+				{ match_group::search_counts::search_many, match_group::search_types::digits, 0 },
+				{ match_group::search_counts::search_optional_many, match_group::search_types::space, 0 },
+				{ match_group::search_counts::search_one, match_group::search_types::comma, 0 },
+				{ match_group::search_counts::search_optional_many, match_group::search_types::space, 0 },
+
+				{ match_group::search_counts::search_many, match_group::search_types::digits, 0 },
+				{ match_group::search_counts::search_optional_many, match_group::search_types::space, 0 },
+				{ match_group::search_counts::search_one, match_group::search_types::comma, 0 },
+				{ match_group::search_counts::search_optional_many, match_group::search_types::space, 0 }
+			};
+
+			auto matches = match(index, 9, groups);
+			if (!matches.is_empty())
+			{
+				result.red = matches.get_number(0);
+				result.green = matches.get_number(4);
+				result.blue = matches.get_number(7);
+			}
+			else
+			{
+				result.message = error_expected_number;
 			}
 
 			return result;

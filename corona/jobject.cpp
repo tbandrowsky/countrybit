@@ -210,6 +210,77 @@ namespace countrybit
 			return jcf.offset;
 		}
 
+		/*
+					auto offset1 = get_offset(_type, _src_idx);
+			auto offset2 = _src_slice.get_offset(_type, _dst_idx);
+			char* c1 = bytes + offset1;
+			char* c2 = bytes + offset2;
+*/
+		int jslice::compare_express(jtype _type, char *c1, char *c2)
+		{
+			switch (_type)
+			{
+			case jtype::type_int8:
+				{
+					boxed<int8_t> b1(c1);
+					boxed<int8_t> b2(c2);
+					return countrybit::database::compare(b1, b2);
+				}
+				break;
+			case jtype::type_int16:
+				{
+					boxed<int16_t> b1(c1);
+					boxed<int16_t> b2(c2);
+					return countrybit::database::compare(b1, b2);
+				}
+				break;
+			case jtype::type_int32:
+				{
+					boxed<int32_t> b1(c1);
+					boxed<int32_t> b2(c2);
+					return countrybit::database::compare(b1, b2);
+				}
+				break;
+			case jtype::type_int64:
+				{
+					boxed<int64_t> b1(c1);
+					boxed<int64_t> b2(c2);
+					return countrybit::database::compare(b1, b2);
+				}
+				break;
+			case jtype::type_float32:
+				{
+					boxed<float> b1(c1);
+					boxed<float> b2(c2);
+					return countrybit::database::compare(b1, b2);
+				}
+				break;
+			case jtype::type_float64:
+				{
+					boxed<double> b1(c1);
+					boxed<double> b2(c2);
+					return countrybit::database::compare(b1, b2);
+				}
+				break;
+			case jtype::type_datetime:
+				{
+					boxed<time_t> b1(c1);
+					boxed<time_t> b2(c2);
+					return countrybit::database::compare(b1, b2);
+				}
+				break;
+			case jtype::type_string:
+				{
+					auto b1 = string_box::get(c1);
+					auto b2 = string_box::get(c2);
+					return countrybit::database::compare(b1, b2);
+				}
+				break;
+			default:
+				return c1 - c2;
+			}
+		}
+
 		dimensions_type jslice::get_dim() 
 		{
 			return dim; 
@@ -564,6 +635,343 @@ namespace countrybit
 				}
 			}
 		}
+		
+		int jslice::compare(jtype _type, int _src_idx, jslice& _src_slice, int _dst_idx)
+		{
+			auto offset1 = get_offset(_type, _src_idx);
+			auto offset2 = _src_slice.get_offset(_type, _dst_idx);
+			char* c1 = bytes + offset1;
+			char* c2 = bytes + offset2;
+			return compare_express(_type, c1, c2);
+		}
+
+		int jslice::compare(jslice& _src_slice)
+		{
+			if (_src_slice.class_id == class_id) 
+			{
+				row_id_type fis, fid, ssf;
+				ssf = _src_slice.size();
+				for (fis = 0; fis < ssf; fis++)
+				{
+					auto &fld_source = _src_slice.get_field(fis);
+					auto &fld_dest = get_field(fis);
+					auto offset1 = get_offset(fld_source.type_id, fis);
+					auto offset2 = _src_slice.get_offset(fld_dest.type_id, fis);
+					char* c1 = bytes + offset1;
+					char* c2 = bytes + offset2;
+					int x = compare_express(fld_source.type_id, c1, c2);
+					if (x) {
+						return x;
+					}
+				}
+				return 0;
+			}
+			else 
+			{
+				row_id_type fis, fid, ssf;
+				ssf = _src_slice.size();
+				for (fis = 0; fis < ssf; fis++)
+				{
+					auto& fld_source = _src_slice.get_field(fis);
+					fid = get_field_index_by_id(fld_source.field_id);
+					auto& fld_dest = get_field(fid);
+					if (!schema->is_empty(fld_dest)) {
+						auto offset1 = get_offset(fld_source.type_id, fis);
+						auto offset2 = _src_slice.get_offset(fld_dest.type_id, fid);
+						char* c1 = bytes + offset1;
+						char* c2 = bytes + offset2;
+						int x = compare_express(fld_source.type_id, c1, c2);
+						if (x) {
+							return x;
+						}
+					}
+				}
+				return 0;
+			}
+		}
+
+		template <typename BoxAType, typename BoxBType> void implement_comparison(filter_element* _src)
+		{
+			switch (_src->comparison) {
+			case filter_comparison_types::eq:
+				_src->compare = [](char* a, char* b) {
+					BoxAType boxa(a);
+					BoxBType boxb(b);
+					return boxa == boxb;
+				};
+				break;
+			case filter_comparison_types::ls:
+				_src->compare = [](char* a, char* b) {
+					BoxAType boxa(a);
+					BoxBType boxb(b);
+					return boxa < boxb;
+				};
+				break;
+			case filter_comparison_types::gt:
+				_src->compare = [](char* a, char* b) {
+					BoxAType boxa(a);
+					BoxBType boxb(b);
+					return boxa > boxb;
+				};
+				break;
+			case filter_comparison_types::lseq:
+				_src->compare = [](char* a, char* b) {
+					BoxAType boxa(a);
+					BoxBType boxb(b);
+					return boxa <= boxb;
+				};
+				break;
+			case filter_comparison_types::gteq:
+				_src->compare = [](char* a, char* b) {
+					BoxAType boxa(a);
+					BoxBType boxb(b);
+					return boxa >= boxb;
+				};
+				break;
+			case filter_comparison_types::distance:
+				_src->compare = [_src](char* a, char* b) {
+					BoxAType boxa(a);
+					BoxBType boxb(b);
+					return abs(boxa - boxb) <= _src->distance_threshold;
+				};
+				break;
+			}
+		}
+
+		template <typename BoxBType, typename BoxBPrimitive> void implement_string_a_numeric_comparison(filter_element* _src)
+		{
+			switch (_src->comparison) {
+			case filter_comparison_types::eq:
+				_src->compare = [](char* a, char* b) {
+					string_box boxa = string_box::get(a);
+					BoxBPrimitive f = boxa.to_double();
+					BoxBType boxb(b);
+					return f == boxb;
+				};
+				break;
+			case filter_comparison_types::ls:
+				_src->compare = [](char* a, char* b) {
+					string_box boxa = string_box::get(a);
+					BoxBPrimitive f = boxa.to_double();
+					BoxBType boxb(b);
+					return f < boxb;
+				};
+				break;
+			case filter_comparison_types::gt:
+				_src->compare = [](char* a, char* b) {
+					string_box boxa = string_box::get(a);
+					BoxBPrimitive f = boxa.to_double();
+					BoxBType boxb(b);
+					return f > boxb;
+				};
+				break;
+			case filter_comparison_types::lseq:
+				_src->compare = [](char* a, char* b) {
+					string_box boxa = string_box::get(a);
+					BoxBPrimitive f = boxa.to_double();
+					BoxBType boxb(b);
+					return f <= boxb;
+				};
+				break;
+			case filter_comparison_types::gteq:
+				_src->compare = [](char* a, char* b) {
+					string_box boxa = string_box::get(a);
+					BoxBPrimitive f = boxa.to_double();
+					BoxBType boxb(b);
+					return f >= boxb;
+				};
+				break;
+			case filter_comparison_types::distance:
+				_src->compare = [_src](char* a, char* b) {
+					string_box boxa = string_box::get(a);
+					BoxBPrimitive f = boxa.to_double();
+					BoxBType boxb(b);
+					return abs(f - boxb) <= _src->distance_threshold;
+				};
+				break;
+			}
+		}
+
+		template <typename BoxAType, typename BoxAPrimitive> void implement_string_b_numeric_comparison(filter_element* _src)
+		{
+			switch (_src->comparison) {
+			case filter_comparison_types::eq:
+				_src->compare = [](char* a, char* b) {
+					BoxAType boxa(a);
+					string_box boxb = string_box::get(b);
+					BoxAPrimitive f = boxb.to_double();
+					return boxa == f;
+				};
+				break;
+			case filter_comparison_types::ls:
+				_src->compare = [](char* a, char* b) {
+					BoxAType boxa(a);
+					string_box boxb = string_box::get(b);
+					BoxAPrimitive f = boxb.to_double();
+					return boxa < f;
+				};
+				break;
+			case filter_comparison_types::gt:
+				_src->compare = [](char* a, char* b) {
+					BoxAType boxa(a);
+					string_box boxb = string_box::get(b);
+					BoxAPrimitive f = boxb.to_double();
+					return boxa > f;
+				};
+				break;
+			case filter_comparison_types::lseq:
+				_src->compare = [](char* a, char* b) {
+					BoxAType boxa(a);
+					string_box boxb = string_box::get(b);
+					BoxAPrimitive f = boxb.to_double();
+					return boxa <= f;
+				};
+				break;
+			case filter_comparison_types::gteq:
+				_src->compare = [](char* a, char* b) {
+					BoxAType boxa(a);
+					string_box boxb = string_box::get(b);
+					BoxAPrimitive f = boxb.to_double();
+					return boxa >= f;
+				};
+				break;
+			case filter_comparison_types::distance:
+				_src->compare = [_src](char* a, char* b) {
+					BoxAType boxa(a);
+					string_box boxb = string_box::get(b);
+					BoxAPrimitive f = boxb.to_double();
+					return abs(boxa - f) <= _src->distance_threshold;
+				};
+				break;
+			}
+		}
+
+		bool jslice::set_filters(filter_element* _src, int _num_filters, jslice& _parameters)
+		{
+			for (int i = 0; i < _num_filters; i++)
+			{
+				row_id_type fis = _parameters.get_field_index_by_id(_src->parameter_field_id);
+				row_id_type fid = get_field_index_by_id(_src->parameter_field_id);
+				auto fld_source = _parameters.get_field(fis);
+				auto fld_dest = get_field(fid);
+
+				auto offset1 = get_offset(fld_source.type_id, fis);
+				auto offset2 = _parameters.get_offset(fld_dest.type_id, fid);
+
+				if (fld_source.is_int64() && fld_dest.is_int8())
+				{
+					implement_comparison<int64_box, int8_box>(_src);
+				}
+				else if (fld_source.is_int64() && fld_dest.is_int16())
+				{
+					implement_comparison<int64_box, int16_box>(_src);
+				}
+				else if (fld_source.is_int64() && fld_dest.is_int32())
+				{
+					implement_comparison<int64_box, int32_box>(_src);
+				}
+				else if (fld_source.is_int64() && fld_dest.is_int64())
+				{
+					implement_comparison<int64_box, int64_box>(_src);
+				}
+				else if (fld_source.is_int32() && fld_dest.is_int8())
+				{
+					implement_comparison<int32_box, int8_box>(_src);
+				}
+				else if (fld_source.is_int32() && fld_dest.is_int16())
+				{
+					implement_comparison<int32_box, int16_box>(_src);
+				}
+				else if (fld_source.is_int32() && fld_dest.is_int32())
+				{
+					implement_comparison<int32_box, int32_box>(_src);
+				}
+				else if (fld_source.is_int32() && fld_dest.is_int64())
+				{
+					implement_comparison<int32_box, int64_box>(_src);
+				}
+				else if (fld_source.is_int16() && fld_dest.is_int8())
+				{
+					implement_comparison<int16_box, int8_box>(_src);
+				}
+				else if (fld_source.is_int16() && fld_dest.is_int16())
+				{
+					implement_comparison<int16_box, int16_box>(_src);
+				}
+				else if (fld_source.is_int16() && fld_dest.is_int32())
+				{
+					implement_comparison<int16_box, int32_box>(_src);
+				}
+				else if (fld_source.is_int16() && fld_dest.is_int64())
+				{
+					implement_comparison<int16_box, int64_box>(_src);
+				}
+				else if (fld_source.is_int8() && fld_dest.is_int8())
+				{
+					implement_comparison<int8_box, int8_box>(_src);
+				}
+				else if (fld_source.is_int8() && fld_dest.is_int16())
+				{
+					implement_comparison<int8_box, int16_box>(_src);
+				}
+				else if (fld_source.is_int8() && fld_dest.is_int32())
+				{
+					implement_comparison<int8_box, int32_box>(_src);
+				}
+				else if (fld_source.is_int8() && fld_dest.is_int64())
+				{
+					implement_comparison<int8_box, int64_box>(_src);
+				}
+				else if (fld_source.is_float64() && fld_dest.is_float32())
+				{
+					implement_comparison<double_box, float_box>(_src);
+				}
+				else if (fld_source.is_float32() && fld_dest.is_float64())
+				{
+					implement_comparison<float_box, double_box>(_src);
+				}
+				else if (fld_source.is_float32() && fld_dest.is_float32())
+				{
+					implement_comparison<float_box, float_box>(_src);
+				}
+				else if (fld_source.is_float64() && fld_dest.is_float64())
+				{
+					implement_comparison<double_box, double_box>(_src);
+				}
+				else if (fld_source.is_float32() && fld_dest.is_string())
+				{
+					implement_string_b_numeric_comparison<float_box, float>(_src);
+				}
+				else if (fld_source.is_float64() && fld_dest.is_string())
+				{
+					implement_string_b_numeric_comparison<double_box, double>(_src);
+				}
+				else if (fld_source.is_string() && fld_dest.is_float32())
+				{
+					implement_string_a_numeric_comparison<float_box, float>(_src);
+				}
+				else if (fld_source.is_string() && fld_dest.is_float64())
+				{
+					implement_string_a_numeric_comparison<double_box, double>(_src);
+				}
+				else if (fld_source.is_integer() && fld_dest.is_string())
+				{
+					implement_string_b_numeric_comparison<int, float>(_src);
+				}
+				_src++;
+			}
+		}
+
+		bool jslice::filter(filter_element* _src, int _num_filters, jslice& _parameters)
+		{
+			for (int i = 0; i < _num_filters; i++)
+			{
+				auto fld_source = _parameters.get_field_by_id(_src->parameter_field_id);
+				auto fld_dest = get_field_by_id(_src->target_field_id);
+
+				_src++;
+			}
+		}
 
 		jarray::jarray() : schema(nullptr), class_field_id(null_row), bytes(nullptr)
 		{
@@ -746,6 +1154,11 @@ namespace countrybit
 			return true;
 		}
 
+		bool jlist::chop()
+		{
+			;
+		}
+
 		jslice jlist::append_slice()
 		{
 			if (data.instance->allocated < capacity()) {
@@ -790,6 +1203,12 @@ namespace countrybit
 			}
 		}
 
+		void jlist::clear()
+		{
+			data.instance->allocated = 0;
+			deselect_all();
+		}
+
 		char* jlist::get_bytes()
 		{
 			return (char *)model_box;
@@ -822,7 +1241,7 @@ namespace countrybit
 			jclass model_class_def = schema->get_class(_class_id);
 			jclass_header *model_class = model_class_def.pitem();
 			auto box_size = model_class->class_size_bytes;
-			auto num_actors = model_class->number_actors;
+			auto num_actors = model_class->number_of_actors;
 
 			data.instance = nullptr;
 
@@ -848,7 +1267,7 @@ namespace countrybit
 			jclass model_class_def = _src.schema->get_class(_src.class_id);
 			jclass_header* model_class = model_class_def.pitem();
 			auto box_size = model_class->class_size_bytes;
-			auto num_actors = model_class->number_actors;
+			auto num_actors = model_class->number_of_actors;
 
 			model_box = _dest.get_box();
 			model_box->init(box_size);
@@ -868,6 +1287,7 @@ namespace countrybit
 		{
 			size_t estimated_size = base_class_bytes;
 			estimated_size += sizeof(jmodel_instance);
+			estimated_size += array_box<row_id_type>::get_box_size(_request.number_of_actors);
 			estimated_size += 32;
 			return estimated_size;
 		}

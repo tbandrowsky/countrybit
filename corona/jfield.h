@@ -294,6 +294,56 @@ namespace countrybit
 				return type_id == jtype::type_query || type_id == jtype::type_sql || type_id == jtype::type_http || type_id == jtype::type_file;
 			}
 
+			bool is_integer()
+			{
+				return type_id == jtype::type_int16 || type_id == jtype::type_int32 || type_id == jtype::type_int64 || type_id == jtype::type_int8;
+			}
+
+			bool is_int8()
+			{
+				return type_id == jtype::type_int8;
+			}
+
+			bool is_int16()
+			{
+				return type_id == jtype::type_int16;
+			}
+
+			bool is_int32()
+			{
+				return type_id == jtype::type_int32;
+			}
+
+			bool is_int64()
+			{
+				return type_id == jtype::type_int64;
+			}
+
+			bool is_float()
+			{
+				return type_id == jtype::type_float32 || type_id == jtype::type_float64;
+			}
+
+			bool is_float32()
+			{
+				return type_id == jtype::type_float32;
+			}
+
+			bool is_float64()
+			{
+				return type_id == jtype::type_float64;
+			}
+
+			bool is_string()
+			{
+				return type_id == jtype::type_string;
+			}
+
+			bool is_datetime()
+			{
+				return type_id == jtype::type_datetime;
+			}
+
 		};
 
 		const int max_query_filters = 32;
@@ -338,14 +388,14 @@ namespace countrybit
 
 		enum class filter_comparison_types
 		{
-			eq,
-			ls,
-			gt,
-			lseq,
-			gteq,
-			contains,
-			inlist,
-			distance
+			eq = 0,
+			ls = 1,
+			gt = 2,
+			lseq = 3,
+			gteq = 4,
+			contains = 5,
+			inlist = 6,
+			distance = 7
 		};
 
 		struct filter_element
@@ -355,22 +405,27 @@ namespace countrybit
 			row_id_type				target_field_id;
 			operation_name			comparison_name;
 			filter_comparison_types	comparison;
-			object_name				parameter_field_name;
 			row_id_type				parameter_field_id;
+			object_name				parameter_field_name;
+			int64_t					parameter_offset;
+			int64_t					target_offset;
 			double					distance_threshold;
+			std::function<bool(char* a, char* b)> compare;
 			const char* error_message;
 		};
+
+		using filter_element_collection = iarray<filter_element, max_filters>;
 
 		template <int max_filters>
 		class query_definition_t
 		{
 		public:
-			path		source_path;
-			object_name result_class_name;
-			row_id_type result_class_id;
-			row_id_type result_field_id;
-			row_id_type	max_result_objects;
-			iarray<filter_element, max_filters> filter;
+			path						source_path;
+			object_name					result_class_name;
+			row_id_type					result_class_id;
+			row_id_type					result_field_id;
+			row_id_type					max_result_objects;
+			filter_element_collection	filter;
 		};
 
 		using query_definition_type = query_definition_t<max_query_filters>;
@@ -709,7 +764,7 @@ namespace countrybit
 			object_name			class_name;
 			row_id_type			class_id;
 			bool				use_id;
-			row_id_type			number_of_actors;
+			row_id_type			number_of_visits;
 		};
 
 		using model_state_collection = iarray<model_state, max_class_fields>;
@@ -724,6 +779,7 @@ namespace countrybit
 			model_state_collection   model_states;
 			object_name				 actor_id_field_name;
 			row_id_type				 actor_id_field_id;
+			row_id_type				 number_of_actors;
 		};
 
 		class jlist_instance
@@ -771,6 +827,7 @@ namespace countrybit
 			object_description							description;
 			uint64_t									class_size_bytes;
 			bool										is_model;
+			row_id_type									number_of_actors;
 		};
 
 		class jclass_field

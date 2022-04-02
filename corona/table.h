@@ -343,6 +343,11 @@ namespace countrybit
 				return hdr->max_rows;
 			}
 
+			void clear()
+			{
+				hdr->last_row = 0;
+			}
+
 			class iterator
 			{
 				table<T>* base;
@@ -675,6 +680,12 @@ namespace countrybit
 			row_id_type max() const
 			{
 				return item.max();
+			}
+
+			void clear()
+			{
+				item.clear();
+				details.clear();
 			}
 
 		};

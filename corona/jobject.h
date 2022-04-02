@@ -13,6 +13,8 @@
 #include "http_remote_box.h"
 #include "file_remote_box.h"
 #include "query_box.h"
+#include "store_box.h"
+#include "float_box.h"
 
 #include <cassert>
 
@@ -81,6 +83,8 @@ namespace countrybit
 				return b;
 			}
 
+			int compare_express(jtype _type, char* c1, char* c2);
+
 		public:
 
 
@@ -124,7 +128,11 @@ namespace countrybit
 			http_remote_box get_http_remote(int field_idx);
 			file_remote_box get_file_remote(int field_idx);
 
+			bool set_filters(filter_element* _src, int _num_filters, jslice& _parameters);
+			bool filter(filter_element *_src, int _num_filters, jslice& _parameters);
+			int compare(jtype _type, int _src_idx, jslice& _src_slice, int _dst_idx);
 			void copy(jslice& _src_slice);
+			int compare(jslice& _src_slice);
 
 			void visit(std::function<bool(jslice&)> visitor)
 			{
@@ -298,12 +306,14 @@ namespace countrybit
 
 			jslice get_slice(int x);
 			bool erase_slice(int x);
+			bool chop();
 
 			jslice append_slice();
 			bool select_slice(int x);
 			bool deselect_slice(int x);
 			void deselect_all();
 			void select_all();
+			void clear();
 
 			uint64_t get_size_bytes();
 			char* get_bytes();
@@ -1339,6 +1349,7 @@ namespace countrybit
 				p.name = request.class_name;
 				p.description = request.class_description;
 				p.class_size_bytes = 0;
+				p.number_of_actors = request.number_of_actors;
 
 				bind_field(request.actor_id_field_name, request.actor_id_field_id);
 
@@ -1364,7 +1375,7 @@ namespace countrybit
 						porf.options.class_name = class_name.get_key();
 						porf.options.class_id = class_name.get_value();
 						porf.options.class_size_bytes = classes[class_name.get_value()].pitem()->class_size_bytes;
-						porf.options.dim = { field.number_of_actors, 1, 1 };
+						porf.options.dim = { field.number_of_visits, 1, 1 };
 					}
 					else
 					{
@@ -1378,7 +1389,7 @@ namespace countrybit
 						porf.options.class_name = class_cls.item().name;
 						porf.options.class_id = field.class_id;
 						porf.options.class_size_bytes = classes[field.class_id].pitem()->class_size_bytes;
-						porf.options.dim = { field.number_of_actors, 1, 1 };
+						porf.options.dim = { field.number_of_visits, 1, 1 };
 					}
 
 					auto class_field_id = put_object_field(porf);

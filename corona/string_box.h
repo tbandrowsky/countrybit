@@ -348,6 +348,18 @@ namespace countrybit
 				return &data[0];
 			}
 
+			double to_double()
+			{
+				double d = std::strtod(c_str(), nullptr);
+				return d;
+			}
+
+			long to_long()
+			{
+				long l = std::strtol(c_str(), nullptr, 10);
+				return l;
+			}
+
 			const char* value() const
 			{
 				return &data[0];
@@ -613,6 +625,7 @@ namespace countrybit
 			{
 				return &data[0];
 			}
+
 
 			const wchar_t* value() const
 			{
