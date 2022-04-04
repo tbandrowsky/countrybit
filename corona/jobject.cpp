@@ -1016,6 +1016,18 @@ namespace countrybit
 			};
 		}
 
+		template <typename BoxType> void implement_update_number_from_string(update_element* _src)
+		{
+			_src->assignment = [_src](char* a, char* b) {
+				BoxType boxa(a);
+				string_box boxb(b);
+				system::string_extractor extractor(boxb, 100, nullptr);
+				auto result = extractor.get_number();
+				if (result.success) {
+					boxa = result.value;
+				}
+			};
+		}
 
 		void implement_update_color_from_string(update_element* _src)
 		{
@@ -1204,7 +1216,7 @@ namespace countrybit
 
 				else if (fld_param.is_string() && fld_dest.is_int8())
 				{
-					implement_update_number_from_string<int16_box>(_src);
+					implement_update_number_from_string<int8_box>(_src);
 				}
 				else if (fld_param.is_string() && fld_dest.is_int16())
 				{
@@ -1311,6 +1323,19 @@ namespace countrybit
 					if (!result) {
 						return false;
 					}
+				}
+				_src++;
+			}
+			return true;
+		}
+
+		bool jslice::update(update_element* _src, int _num_updates, jslice& _parameters)
+		{
+			for (int i = 0; i < _num_updates; i++)
+			{
+				if (_src->assignment)
+				{
+					_src->assignment(bytes + _src->target_offset, _parameters.bytes + _src->parameter_offset);
 				}
 				_src++;
 			}
