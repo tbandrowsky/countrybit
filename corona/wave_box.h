@@ -14,6 +14,9 @@ namespace countrybit
 		{
 			double	start_seconds,
 					stop_seconds;
+			double	pitch_adjust,
+					volume_adjust;
+			bool	playing;
 		};
 
 		class wave_box : protected boxed<wave_instance>

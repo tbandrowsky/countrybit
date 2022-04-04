@@ -299,6 +299,36 @@ namespace countrybit
 				return type_id == jtype::type_int16 || type_id == jtype::type_int32 || type_id == jtype::type_int64 || type_id == jtype::type_int8;
 			}
 
+			bool is_point()
+			{
+				return type_id == jtype::type_point;
+			}
+
+			bool is_rectangle()
+			{
+				return type_id == jtype::type_rectangle;
+			}
+
+			bool is_color()
+			{
+				return type_id == jtype::type_color;
+			}
+
+			bool is_image()
+			{
+				return type_id == jtype::type_image;
+			}
+
+			bool is_wave()
+			{
+				return type_id == jtype::type_wave;
+			}
+
+			bool is_midi()
+			{
+				return type_id == jtype::type_midi;
+			}
+
 			bool is_int8()
 			{
 				return type_id == jtype::type_int8;
@@ -416,7 +446,6 @@ namespace countrybit
 
 		using filter_element_collection = iarray<filter_element, max_filters>;
 
-		template <int max_filters>
 		class query_definition_t
 		{
 		public:
@@ -428,7 +457,7 @@ namespace countrybit
 			filter_element_collection	filter;
 		};
 
-		using query_definition_type = query_definition_t<max_query_filters>;
+		using query_definition_type = query_definition_t;
 
 		class query_instance
 		{
@@ -840,6 +869,32 @@ namespace countrybit
 		};
 
 		using jclass = item_details_holder<jclass_header, jclass_field>;
+
+		struct update_element
+		{
+		public:
+			object_name				target_field_name;
+			row_id_type				target_field_id;
+			row_id_type				parameter_field_id;
+			object_name				parameter_field_name;
+			int64_t					parameter_offset;
+			int64_t					target_offset;
+			std::function<void(char* a, char* b)> assignment;
+			const char* error_message;
+		};
+
+		using update_element_collection = iarray<update_element, max_filters>;
+
+		class update_definition_t
+		{
+		public:
+			path						source_path;
+			filter_element_collection	filter;
+			update_element_collection	update;
+		};
+
+		using update_definition_type = update_definition_t;
+
 	}
 }
 

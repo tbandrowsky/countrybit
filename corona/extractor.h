@@ -37,6 +37,28 @@ namespace countrybit
 			const char *value;
 		};
 
+		class get_point_result : public base_parse_result
+		{
+		public:
+			int x, y, z;
+		};
+
+		class get_rectangle_result : public base_parse_result
+		{
+		public:
+			int x, y, w, h;
+		};
+
+		class get_audio_result : public base_parse_result
+		{
+		public:
+			double	start_seconds,
+					stop_seconds;
+			double	pitch_adjust,
+					volume_adjust;
+			bool	playing;
+		};
+
 		class get_datetime_result : public base_parse_result
 		{
 		public:
@@ -55,6 +77,7 @@ namespace countrybit
 			double red;
 			double green;
 			double blue;
+			double alpha;
 		};
 
 		class get_identifier_result : public base_parse_result
@@ -203,6 +226,11 @@ namespace countrybit
 			{
 				currentChar[0] = 0;
 				currentChar[1] = 1;
+			}
+
+			string_extractor(database::string_box& src, int _data_length, const char* _type_member_name) : view(src.c_str(), src.size()), index(0), line(1), type_member_name(_type_member_name)
+			{
+				data.init(_data_length);
 			}
 
 			string_extractor(char *_str, int _length, int _data_length, const char *_type_member_name) : view(_str, _length), index(0), line(1), type_member_name(_type_member_name)
@@ -395,6 +423,9 @@ namespace countrybit
 			get_dimension_result get_dimensions();
 			get_datetime_result get_date();
 			get_color_result get_color();
+			get_rectangle_result get_rectangle();
+			get_point_result get_point();
+			get_audio_result get_audio();
 
 			parse_json_value_result parse_json_value();
 			parse_json_object_result parse_json_object();

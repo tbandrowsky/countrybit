@@ -54,6 +54,11 @@ namespace countrybit
 				return std::fdim(m1, m2);
 			}
 
+			static floating_point distance(floating_point m1, floating_point m2)
+			{
+				return std::abs(m1 - m2);
+			}
+
 			static floating_point is_nan(floating_point m1)
 			{
 				return std::isnan(m1);
@@ -451,6 +456,11 @@ namespace countrybit
 
 		};
 
+		template<typename T> T distance(const fp_box<T>& a, const fp_box<T>& b)
+		{
+			return std::abs(a - b);
+		}
+
 		template<typename T> int compare(const fp_box<T>& a, const fp_box<T>& b)
 		{
 			return (T)a <=> (T)b;
@@ -488,7 +498,10 @@ namespace countrybit
 
 		template<typename T> int compare(const fp_box<T>& a, T& b)
 		{
-			return compare(a, boxed(b));
+			char dummy[sizeof(T)];
+			fp_box<T> pb(dummy);
+			pb = b;
+			return compare(a, pb);
 		}
 
 		template<typename T> int operator<(const fp_box<T>& a, T& b)

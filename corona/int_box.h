@@ -155,6 +155,11 @@ namespace countrybit
 			}
 		};
 
+		template<typename T> T distance(const integer_box<T>& a, const integer_box<T>& b)
+		{
+			return std::abs(a - b);
+		}
+
 		template<typename T> int compare(const integer_box<T>& a, const integer_box<T>& b)
 		{
 			return (T)a <=> (T)b;
@@ -192,7 +197,10 @@ namespace countrybit
 
 		template<typename T> int compare(const integer_box<T>& a, T& b)
 		{
-			return compare(a, boxed(b));
+			char dummy[sizeof(T)];
+			integer_box<T> pb(dummy);
+			pb = b;
+			return compare(a, pb);
 		}
 
 		template<typename T> int operator<(const integer_box<T>& a, T& b)

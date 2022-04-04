@@ -130,6 +130,9 @@ namespace countrybit
 
 			bool set_filters(filter_element* _src, int _num_filters, jslice& _parameters);
 			bool filter(filter_element *_src, int _num_filters, jslice& _parameters);
+			bool set_updates(update_element* _src, int _num_filters, jslice& _parameters);
+			bool update(update_element* _src, int _num_filters, jslice& _parameters);
+
 			int compare(jtype _type, int _src_idx, jslice& _src_slice, int _dst_idx);
 			void copy(jslice& _src_slice);
 			int compare(jslice& _src_slice);

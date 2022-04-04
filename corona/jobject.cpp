@@ -1,6 +1,7 @@
 
 #include "jobject.h"
 #include "combaseapi.h"
+#include "extractor.h"
 
 namespace countrybit
 {
@@ -690,6 +691,42 @@ namespace countrybit
 			}
 		}
 
+		void implement_pointer_comparison(filter_element* _src)
+		{
+			switch (_src->comparison) {
+			case filter_comparison_types::eq:
+				_src->compare = [](char* a, char* b) {
+					return a == b;
+				};
+				break;
+			case filter_comparison_types::ls:
+				_src->compare = [](char* a, char* b) {
+					return a < b;
+				};
+				break;
+			case filter_comparison_types::gt:
+				_src->compare = [](char* a, char* b) {
+					return a > b;
+				};
+				break;
+			case filter_comparison_types::lseq:
+				_src->compare = [](char* a, char* b) {
+					return a <= b;
+				};
+				break;
+			case filter_comparison_types::gteq:
+				_src->compare = [](char* a, char* b) {
+					return a >= b;
+				};
+				break;
+			case filter_comparison_types::distance:
+				_src->compare = [_src](char* a, char* b) {
+					return abs(a - b) <= _src->distance_threshold;
+				};
+				break;
+			}
+		}
+
 		template <typename BoxAType, typename BoxBType> void implement_comparison(filter_element* _src)
 		{
 			switch (_src->comparison) {
@@ -732,7 +769,7 @@ namespace countrybit
 				_src->compare = [_src](char* a, char* b) {
 					BoxAType boxa(a);
 					BoxBType boxb(b);
-					return abs(boxa - boxb) <= _src->distance_threshold;
+					return distance(boxa, boxb) <= _src->distance_threshold;
 				};
 				break;
 			}
@@ -786,7 +823,7 @@ namespace countrybit
 					string_box boxa = string_box::get(a);
 					BoxBPrimitive f = boxa.to_double();
 					BoxBType boxb(b);
-					return abs(f - boxb) <= _src->distance_threshold;
+					return distance(f, boxb) <= _src->distance_threshold;
 				};
 				break;
 			}
@@ -840,7 +877,7 @@ namespace countrybit
 					BoxAType boxa(a);
 					string_box boxb = string_box::get(b);
 					BoxAPrimitive f = boxb.to_double();
-					return abs(boxa - f) <= _src->distance_threshold;
+					return distance(boxa, f) <= _src->distance_threshold;
 				};
 				break;
 			}
@@ -850,115 +887,417 @@ namespace countrybit
 		{
 			for (int i = 0; i < _num_filters; i++)
 			{
-				row_id_type fis = _parameters.get_field_index_by_id(_src->parameter_field_id);
+				row_id_type fip = _parameters.get_field_index_by_id(_src->parameter_field_id);
 				row_id_type fid = get_field_index_by_id(_src->parameter_field_id);
-				auto fld_source = _parameters.get_field(fis);
+				auto fld_param = _parameters.get_field(fip);
 				auto fld_dest = get_field(fid);
 
-				auto offset1 = get_offset(fld_source.type_id, fis);
-				auto offset2 = _parameters.get_offset(fld_dest.type_id, fid);
+				_src->parameter_offset = get_offset(fld_param.type_id, fip);
+				_src->target_offset = _parameters.get_offset(fld_dest.type_id, fid);
 
-				if (fld_source.is_int64() && fld_dest.is_int8())
+				if (fld_param.is_int64() && fld_dest.is_int8())
 				{
 					implement_comparison<int64_box, int8_box>(_src);
 				}
-				else if (fld_source.is_int64() && fld_dest.is_int16())
+				else if (fld_param.is_int64() && fld_dest.is_int16())
 				{
 					implement_comparison<int64_box, int16_box>(_src);
 				}
-				else if (fld_source.is_int64() && fld_dest.is_int32())
+				else if (fld_param.is_int64() && fld_dest.is_int32())
 				{
 					implement_comparison<int64_box, int32_box>(_src);
 				}
-				else if (fld_source.is_int64() && fld_dest.is_int64())
+				else if (fld_param.is_int64() && fld_dest.is_int64())
 				{
 					implement_comparison<int64_box, int64_box>(_src);
 				}
-				else if (fld_source.is_int32() && fld_dest.is_int8())
+				else if (fld_param.is_int32() && fld_dest.is_int8())
 				{
 					implement_comparison<int32_box, int8_box>(_src);
 				}
-				else if (fld_source.is_int32() && fld_dest.is_int16())
+				else if (fld_param.is_int32() && fld_dest.is_int16())
 				{
 					implement_comparison<int32_box, int16_box>(_src);
 				}
-				else if (fld_source.is_int32() && fld_dest.is_int32())
+				else if (fld_param.is_int32() && fld_dest.is_int32())
 				{
 					implement_comparison<int32_box, int32_box>(_src);
 				}
-				else if (fld_source.is_int32() && fld_dest.is_int64())
+				else if (fld_param.is_int32() && fld_dest.is_int64())
 				{
 					implement_comparison<int32_box, int64_box>(_src);
 				}
-				else if (fld_source.is_int16() && fld_dest.is_int8())
+				else if (fld_param.is_int16() && fld_dest.is_int8())
 				{
 					implement_comparison<int16_box, int8_box>(_src);
 				}
-				else if (fld_source.is_int16() && fld_dest.is_int16())
+				else if (fld_param.is_int16() && fld_dest.is_int16())
 				{
 					implement_comparison<int16_box, int16_box>(_src);
 				}
-				else if (fld_source.is_int16() && fld_dest.is_int32())
+				else if (fld_param.is_int16() && fld_dest.is_int32())
 				{
 					implement_comparison<int16_box, int32_box>(_src);
 				}
-				else if (fld_source.is_int16() && fld_dest.is_int64())
+				else if (fld_param.is_int16() && fld_dest.is_int64())
 				{
 					implement_comparison<int16_box, int64_box>(_src);
 				}
-				else if (fld_source.is_int8() && fld_dest.is_int8())
+				else if (fld_param.is_int8() && fld_dest.is_int8())
 				{
 					implement_comparison<int8_box, int8_box>(_src);
 				}
-				else if (fld_source.is_int8() && fld_dest.is_int16())
+				else if (fld_param.is_int8() && fld_dest.is_int16())
 				{
 					implement_comparison<int8_box, int16_box>(_src);
 				}
-				else if (fld_source.is_int8() && fld_dest.is_int32())
+				else if (fld_param.is_int8() && fld_dest.is_int32())
 				{
 					implement_comparison<int8_box, int32_box>(_src);
 				}
-				else if (fld_source.is_int8() && fld_dest.is_int64())
+				else if (fld_param.is_int8() && fld_dest.is_int64())
 				{
 					implement_comparison<int8_box, int64_box>(_src);
 				}
-				else if (fld_source.is_float64() && fld_dest.is_float32())
+				else if (fld_param.is_float64() && fld_dest.is_float32())
 				{
 					implement_comparison<double_box, float_box>(_src);
 				}
-				else if (fld_source.is_float32() && fld_dest.is_float64())
+				else if (fld_param.is_float32() && fld_dest.is_float64())
 				{
 					implement_comparison<float_box, double_box>(_src);
 				}
-				else if (fld_source.is_float32() && fld_dest.is_float32())
+				else if (fld_param.is_float32() && fld_dest.is_float32())
 				{
 					implement_comparison<float_box, float_box>(_src);
 				}
-				else if (fld_source.is_float64() && fld_dest.is_float64())
+				else if (fld_param.is_float64() && fld_dest.is_float64())
 				{
 					implement_comparison<double_box, double_box>(_src);
 				}
-				else if (fld_source.is_float32() && fld_dest.is_string())
+				else if (fld_param.is_float32() && fld_dest.is_string())
 				{
 					implement_string_b_numeric_comparison<float_box, float>(_src);
 				}
-				else if (fld_source.is_float64() && fld_dest.is_string())
+				else if (fld_param.is_float64() && fld_dest.is_string())
 				{
 					implement_string_b_numeric_comparison<double_box, double>(_src);
 				}
-				else if (fld_source.is_string() && fld_dest.is_float32())
+				else if (fld_param.is_string() && fld_dest.is_float32())
 				{
 					implement_string_a_numeric_comparison<float_box, float>(_src);
 				}
-				else if (fld_source.is_string() && fld_dest.is_float64())
+				else if (fld_param.is_string() && fld_dest.is_float64())
 				{
 					implement_string_a_numeric_comparison<double_box, double>(_src);
 				}
-				else if (fld_source.is_integer() && fld_dest.is_string())
+				else if (fld_param.is_point() && fld_dest.is_point())
 				{
-					implement_string_b_numeric_comparison<int, float>(_src);
+					implement_comparison<point_box, point_box>(_src);
+				}
+				else if (fld_param.is_datetime() && fld_dest.is_datetime())
+				{
+					implement_comparison<time_box, time_box>(_src);
+				}
+				else
+				{
+					implement_pointer_comparison(_src);
 				}
 				_src++;
+			}
+		}
+
+		template <typename BoxAType, typename BoxBType> void implement_update(update_element* _src)
+		{
+			_src->assignment = [_src](char* a, char* b) {
+				BoxAType boxa(a);
+				BoxBType boxb(b);
+				boxa = boxb.value();
+			};
+		}
+
+
+		void implement_update_color_from_string(update_element* _src)
+		{
+			_src->assignment = [_src](char* a, char* b) {
+				color_box boxa(a);
+				string_box boxb(b);
+				system::string_extractor extractor(boxb, 100, nullptr);
+				auto result = extractor.get_color();
+				if (result.success) {
+					color c;
+					c.alpha = result.alpha / 256.0;
+					c.blue = result.blue / 256.0;
+					c.green = result.green / 256.0;
+					c.red = result.red / 256.0;
+					boxa = c;
+				}
+			};
+		}
+
+		void implement_update_point_from_string(update_element* _src)
+		{
+			_src->assignment = [_src](char* a, char* b) {
+				point_box boxa(a);
+				string_box boxb(b);
+				system::string_extractor extractor(boxb, 100, nullptr);
+				auto result = extractor.get_point();
+				if (result.success) {
+					point c;
+					c.x = result.x;
+					c.y = result.y;
+					boxa = c;
+				}
+			};
+		}
+
+		void implement_update_rectangle_from_string(update_element* _src)
+		{
+			_src->assignment = [_src](char* a, char* b) {
+				rectangle_box boxa(a);
+				string_box boxb(b);
+				system::string_extractor extractor(boxb, 100, nullptr);
+				auto result = extractor.get_rectangle();
+				if (result.success) {
+					rectangle c;
+					c.corner.x = result.x;
+					c.corner.y = result.y;
+					c.size.x = result.w;
+					c.size.y = result.h;
+					boxa = c;
+				}
+			};
+		}
+
+		void implement_update_image_from_string(update_element* _src)
+		{
+			_src->assignment = [_src](char* a, char* b) {
+				image_box boxa(a);
+				string_box boxb(b);
+				system::string_extractor extractor(boxb, 100, nullptr);
+				auto result = extractor.get_rectangle();
+				if (result.success) {
+					image_instance c;
+					c.source.corner.x = result.x;
+					c.source.corner.y = result.y;
+					c.source.size.x = result.w;
+					c.source.size.y = result.h;
+					boxa = c;
+				}
+			};
+		}
+
+		void implement_update_midi_from_string(update_element* _src)
+		{
+			_src->assignment = [_src](char* a, char* b) {
+				midi_box boxa(a);
+				string_box boxb(b);
+				system::string_extractor extractor(boxb, 100, nullptr);
+				auto result = extractor.get_audio();
+				if (result.success) {
+					midi_instance c;
+					c.start_seconds = result.start_seconds;
+					c.stop_seconds = result.stop_seconds;
+					c.pitch_adjust = result.pitch_adjust;
+					c.volume_adjust = result.volume_adjust;
+					c.playing = result.playing;
+					boxa = c;
+				}
+			};
+		}
+
+		void implement_update_wave_from_string(update_element* _src)
+		{
+			_src->assignment = [_src](char* a, char* b) {
+				wave_box boxa(a);
+				string_box boxb(b);
+				system::string_extractor extractor(boxb, 100, nullptr);
+				auto result = extractor.get_audio();
+				if (result.success) {
+					wave_instance c;
+					c.start_seconds = result.start_seconds;
+					c.stop_seconds = result.stop_seconds;
+					c.pitch_adjust = result.pitch_adjust;
+					c.volume_adjust = result.volume_adjust;
+					c.playing = result.playing;
+					boxa = c;
+				}
+			};
+		}
+
+		bool jslice::set_updates(update_element* _src, int _num_updates, jslice& _parameters)
+		{
+			for (int i = 0; i < _num_updates; i++)
+			{
+				row_id_type fip = _parameters.get_field_index_by_id(_src->parameter_field_id);
+				row_id_type fid = get_field_index_by_id(_src->parameter_field_id);
+				auto fld_param = _parameters.get_field(fip);
+				auto fld_dest = get_field(fid);
+
+				_src->parameter_offset = get_offset(fld_param.type_id, fip);
+				_src->target_offset = _parameters.get_offset(fld_dest.type_id, fid);
+
+				if (fld_param.is_int64() && fld_dest.is_int8())
+				{
+					implement_update<int64_box, int8_box>(_src);
+				}
+				else if (fld_param.is_int64() && fld_dest.is_int16())
+				{
+					implement_update<int64_box, int16_box>(_src);
+				}
+				else if (fld_param.is_int64() && fld_dest.is_int32())
+				{
+					implement_update<int64_box, int32_box>(_src);
+				}
+				else if (fld_param.is_int64() && fld_dest.is_int64())
+				{
+					implement_update<int64_box, int64_box>(_src);
+				}
+				else if (fld_param.is_int32() && fld_dest.is_int8())
+				{
+					implement_update<int32_box, int8_box>(_src);
+				}
+				else if (fld_param.is_int32() && fld_dest.is_int16())
+				{
+					implement_update<int32_box, int16_box>(_src);
+				}
+				else if (fld_param.is_int32() && fld_dest.is_int32())
+				{
+					implement_update<int32_box, int32_box>(_src);
+				}
+				else if (fld_param.is_int32() && fld_dest.is_int64())
+				{
+					implement_update<int32_box, int64_box>(_src);
+				}
+				else if (fld_param.is_int16() && fld_dest.is_int8())
+				{
+					implement_update<int16_box, int8_box>(_src);
+				}
+				else if (fld_param.is_int16() && fld_dest.is_int16())
+				{
+					implement_update<int16_box, int16_box>(_src);
+				}
+				else if (fld_param.is_int16() && fld_dest.is_int32())
+				{
+					implement_update<int16_box, int32_box>(_src);
+				}
+				else if (fld_param.is_int16() && fld_dest.is_int64())
+				{
+					implement_update<int16_box, int64_box>(_src);
+				}
+				else if (fld_param.is_int8() && fld_dest.is_int8())
+				{
+					implement_update<int8_box, int8_box>(_src);
+				}
+				else if (fld_param.is_int8() && fld_dest.is_int16())
+				{
+					implement_update<int8_box, int16_box>(_src);
+				}
+				else if (fld_param.is_int8() && fld_dest.is_int32())
+				{
+					implement_update<int8_box, int32_box>(_src);
+				}
+				else if (fld_param.is_int8() && fld_dest.is_int64())
+				{
+					implement_update<int8_box, int64_box>(_src);
+				}
+
+				else if (fld_param.is_string() && fld_dest.is_int8())
+				{
+					implement_update_number_from_string<int16_box>(_src);
+				}
+				else if (fld_param.is_string() && fld_dest.is_int16())
+				{
+					implement_update_number_from_string<int16_box>(_src);
+				}
+				else if (fld_param.is_string() && fld_dest.is_int32())
+				{
+					implement_update_number_from_string<int32_box>(_src);
+				}
+				else if (fld_param.is_string() && fld_dest.is_int64())
+				{
+					implement_update_number_from_string<int64_box>(_src);
+				}
+
+				else if (fld_param.is_float64() && fld_dest.is_float32())
+				{
+					implement_update<double_box, float_box>(_src);
+				}
+				else if (fld_param.is_float32() && fld_dest.is_float64())
+				{
+					implement_update<float_box, double_box>(_src);
+				}
+				else if (fld_param.is_float32() && fld_dest.is_float32())
+				{
+					implement_update<float_box, float_box>(_src);
+				}
+				else if (fld_param.is_string() && fld_dest.is_float32())
+				{
+					implement_update_number_from_string<float_box>(_src);
+				}
+				else if (fld_param.is_float64() && fld_dest.is_float64())
+				{
+					implement_update<double_box, double_box>(_src);
+				}
+				else if (fld_param.is_string() && fld_dest.is_float64())
+				{
+					implement_update_number_from_string<double_box>(_src);
+				}
+
+
+
+				else if (fld_param.is_point() && fld_dest.is_point())
+				{
+					implement_update<point_box, point_box>(_src);
+				}
+				else if (fld_param.is_color() && fld_dest.is_color())
+				{
+					implement_update<color_box, color_box>(_src);
+				}
+				else if (fld_param.is_rectangle() && fld_dest.is_rectangle())
+				{
+					implement_update<rectangle_box, rectangle_box>(_src);
+				}
+				else if (fld_param.is_image() && fld_dest.is_image())
+				{
+					implement_update<image_box, image_box>(_src);
+				}
+				else if (fld_param.is_wave() && fld_dest.is_wave())
+				{
+					implement_update<wave_box, wave_box>(_src);
+				}
+				else if (fld_param.is_midi() && fld_dest.is_midi())
+				{
+					implement_update<midi_box, midi_box>(_src);
+				}
+				else if (fld_param.is_string() && fld_dest.is_point())
+				{
+					implement_update_point_from_string(_src);
+				}
+				else if (fld_param.is_string() && fld_dest.is_color())
+				{
+					implement_update_color_from_string(_src);
+				}
+				else if (fld_param.is_string() && fld_dest.is_rectangle())
+				{
+					implement_update_rectangle_from_string(_src);
+				}
+				else if (fld_param.is_string() && fld_dest.is_image())
+				{
+					implement_update_image_from_string(_src);
+				}
+				else if (fld_param.is_string() && fld_dest.is_wave())
+				{
+					implement_update_wave_from_string(_src);
+				}
+				else if (fld_param.is_string() && fld_dest.is_midi())
+				{
+					implement_update_midi_from_string(_src);
+				}
+				else if (fld_param.is_string() && fld_dest.is_string())
+				{
+					implement_update<string_box, string_box>(_src);
+				}
 			}
 		}
 
@@ -966,11 +1305,16 @@ namespace countrybit
 		{
 			for (int i = 0; i < _num_filters; i++)
 			{
-				auto fld_source = _parameters.get_field_by_id(_src->parameter_field_id);
-				auto fld_dest = get_field_by_id(_src->target_field_id);
-
+				if (_src->compare) 
+				{
+					bool result = _src->compare(bytes + _src->target_offset, _parameters.bytes + _src->parameter_offset);
+					if (!result) {
+						return false;
+					}
+				}
 				_src++;
 			}
+			return true;
 		}
 
 		jarray::jarray() : schema(nullptr), class_field_id(null_row), bytes(nullptr)

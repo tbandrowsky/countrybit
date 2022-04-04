@@ -576,6 +576,7 @@ namespace countrybit
 			T get_value() const { return *data; }
 			T* get_data() { return data; }
 			T& get_data_ref() { return *data; }
+			const T& get_data_ref() const { return *data; }
 		};
 
 		template<typename T> int compare(const boxed<T>& a, const boxed<T>& b)

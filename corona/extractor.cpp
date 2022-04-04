@@ -221,10 +221,12 @@ namespace countrybit
 				{ match_group::search_counts::search_optional_many, match_group::search_types::space, 0 },
 				{ match_group::search_counts::search_one, match_group::search_types::comma, 0 },
 				{ match_group::search_counts::search_optional_many, match_group::search_types::space, 0 },
+
 				{ match_group::search_counts::search_many, match_group::search_types::digits, 0 },
-				{ match_group::search_counts::search_optional_many, match_group::search_types::space, 0 },
+				{ match_group::search_counts::search_optional_many, match_group::search_types::space, 0 },			
 				{ match_group::search_counts::search_one, match_group::search_types::comma, 0 },
 				{ match_group::search_counts::search_optional_many, match_group::search_types::space, 0 },
+
 				{ match_group::search_counts::search_many, match_group::search_types::digits, 0 }
 			};
 
@@ -252,7 +254,7 @@ namespace countrybit
 			result.line_number = line;
 			result.char_offset = index;
 
-			match_group groups[12] = {
+			match_group groups[9] = {
 				{ match_group::search_counts::search_many, match_group::search_types::digits, 0 },
 				{ match_group::search_counts::search_optional_many, match_group::search_types::space, 0 },
 				{ match_group::search_counts::search_one, match_group::search_types::datesep, 0 },
@@ -263,18 +265,15 @@ namespace countrybit
 				{ match_group::search_counts::search_one, match_group::search_types::datesep, 0 },
 				{ match_group::search_counts::search_optional_many, match_group::search_types::space, 0 },
 
-				{ match_group::search_counts::search_many, match_group::search_types::digits, 0 },
-				{ match_group::search_counts::search_optional_many, match_group::search_types::space, 0 },
-				{ match_group::search_counts::search_one, match_group::search_types::datesep, 0 },
-				{ match_group::search_counts::search_optional_many, match_group::search_types::space, 0 }
+				{ match_group::search_counts::search_many, match_group::search_types::digits, 0 }
 			};
 
-			auto matches = match(index, 12, groups);
+			auto matches = match(index, 9, groups);
 			if (!matches.is_empty())
 			{
 				result.months = matches.get_number(0);
 				result.days = matches.get_number(4);
-				result.years = matches.get_number(7);
+				result.years = matches.get_number(8);
 			}
 			else
 			{
@@ -293,7 +292,7 @@ namespace countrybit
 			result.line_number = line;
 			result.char_offset = index;
 
-			match_group groups[12] = {
+			match_group groups[13] = {
 				{ match_group::search_counts::search_many, match_group::search_types::digits, 0 },
 				{ match_group::search_counts::search_optional_many, match_group::search_types::space, 0 },
 				{ match_group::search_counts::search_one, match_group::search_types::comma, 0 },
@@ -307,15 +306,18 @@ namespace countrybit
 				{ match_group::search_counts::search_many, match_group::search_types::digits, 0 },
 				{ match_group::search_counts::search_optional_many, match_group::search_types::space, 0 },
 				{ match_group::search_counts::search_one, match_group::search_types::comma, 0 },
-				{ match_group::search_counts::search_optional_many, match_group::search_types::space, 0 }
+				{ match_group::search_counts::search_optional_many, match_group::search_types::space, 0 },
+
+				{ match_group::search_counts::search_many, match_group::search_types::digits, 0 },
 			};
 
-			auto matches = match(index, 9, groups);
+			auto matches = match(index, 13, groups);
 			if (!matches.is_empty())
 			{
 				result.red = matches.get_number(0);
 				result.green = matches.get_number(4);
-				result.blue = matches.get_number(7);
+				result.blue = matches.get_number(8);
+				result.alpha = matches.get_number(12);
 			}
 			else
 			{
@@ -324,6 +326,134 @@ namespace countrybit
 
 			return result;
 		}
+
+		get_rectangle_result string_extractor::get_rectangle()
+		{
+			get_rectangle_result result;
+
+			result.success = false;
+
+			result.line_number = line;
+			result.char_offset = index;
+
+			match_group groups[16] = {
+				{ match_group::search_counts::search_many, match_group::search_types::digits, 0 },
+				{ match_group::search_counts::search_optional_many, match_group::search_types::space, 0 },
+				{ match_group::search_counts::search_one, match_group::search_types::comma, 0 },
+				{ match_group::search_counts::search_optional_many, match_group::search_types::space, 0 },
+
+				{ match_group::search_counts::search_many, match_group::search_types::digits, 0 },
+				{ match_group::search_counts::search_optional_many, match_group::search_types::space, 0 },
+				{ match_group::search_counts::search_one, match_group::search_types::comma, 0 },
+				{ match_group::search_counts::search_optional_many, match_group::search_types::space, 0 },
+
+				{ match_group::search_counts::search_many, match_group::search_types::digits, 0 },
+				{ match_group::search_counts::search_optional_many, match_group::search_types::space, 0 },
+				{ match_group::search_counts::search_one, match_group::search_types::comma, 0 },
+				{ match_group::search_counts::search_optional_many, match_group::search_types::space, 0 },
+
+				{ match_group::search_counts::search_many, match_group::search_types::digits, 0 }
+			};
+
+			auto matches = match(index, 13, groups);
+			if (!matches.is_empty())
+			{
+				result.x = matches.get_number(0);
+				result.y = matches.get_number(4);
+				result.w = matches.get_number(8);
+				result.h = matches.get_number(12);
+			}
+			else
+			{
+				result.message = error_expected_number;
+			}
+
+			return result;
+		}
+
+		get_point_result string_extractor::get_point()
+		{
+			get_point_result result;
+
+			result.success = false;
+
+			result.line_number = line;
+			result.char_offset = index;
+
+			match_group groups[5] = {
+				{ match_group::search_counts::search_many, match_group::search_types::digits, 0 },
+				{ match_group::search_counts::search_optional_many, match_group::search_types::space, 0 },
+				{ match_group::search_counts::search_one, match_group::search_types::comma, 0 },
+				{ match_group::search_counts::search_optional_many, match_group::search_types::space, 0 },
+
+				{ match_group::search_counts::search_many, match_group::search_types::digits, 0 }
+			};
+
+			auto matches = match(index, 5, groups);
+			if (!matches.is_empty())
+			{
+				result.x = matches.get_number(0);
+				result.y = matches.get_number(4);
+				result.z = 0;
+			}
+			else
+			{
+				result.message = error_expected_number;
+			}
+
+			return result;
+		}
+
+		get_audio_result string_extractor::get_audio()
+		{
+			get_audio_result result;
+
+			result.success = false;
+
+			result.line_number = line;
+			result.char_offset = index;
+
+			match_group groups[17] = {
+				{ match_group::search_counts::search_many, match_group::search_types::digits, 0 },
+				{ match_group::search_counts::search_optional_many, match_group::search_types::space, 0 },
+				{ match_group::search_counts::search_one, match_group::search_types::comma, 0 },
+				{ match_group::search_counts::search_optional_many, match_group::search_types::space, 0 },
+
+				{ match_group::search_counts::search_many, match_group::search_types::digits, 0 },
+				{ match_group::search_counts::search_optional_many, match_group::search_types::space, 0 },
+				{ match_group::search_counts::search_one, match_group::search_types::comma, 0 },
+				{ match_group::search_counts::search_optional_many, match_group::search_types::space, 0 },
+
+				{ match_group::search_counts::search_many, match_group::search_types::digits, 0 },
+				{ match_group::search_counts::search_optional_many, match_group::search_types::space, 0 },
+				{ match_group::search_counts::search_one, match_group::search_types::comma, 0 },
+				{ match_group::search_counts::search_optional_many, match_group::search_types::space, 0 },
+
+				{ match_group::search_counts::search_many, match_group::search_types::digits, 0 },
+				{ match_group::search_counts::search_optional_many, match_group::search_types::space, 0 },
+				{ match_group::search_counts::search_one, match_group::search_types::comma, 0 },
+				{ match_group::search_counts::search_optional_many, match_group::search_types::space, 0 },
+
+				{ match_group::search_counts::search_many, match_group::search_types::digits, 0 }
+			};
+
+			auto matches = match(index, 8, groups);
+			if (!matches.is_empty())
+			{
+				result.start_seconds = matches.get_number(0);
+				result.stop_seconds = matches.get_number(4);
+				result.pitch_adjust = matches.get_number(8);
+				result.volume_adjust = matches.get_number(12);
+				result.playing = matches.get_number(16);
+			}
+			else
+			{
+				result.message = error_expected_number;
+			}
+
+			return result;
+		}
+
 
 		const char* error_expected_string = "Expected string.";
 		const char* error_unknown_directive = "Unknown $ directive.";

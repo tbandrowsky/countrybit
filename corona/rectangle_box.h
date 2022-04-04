@@ -51,6 +51,12 @@ namespace countrybit
 				return *this;
 			}
 
+			rectangle_box operator = (rectangle _src)
+			{
+				boxed<rectangle>::operator =(_src);
+				return *this;
+			}
+
 			operator rectangle& ()
 			{
 				rectangle& t = boxed<rectangle>::get_data_ref();
