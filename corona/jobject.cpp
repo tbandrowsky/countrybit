@@ -1947,7 +1947,7 @@ namespace countrybit
 			collection_id_type colid;
 			init_collection_id(colid);
 			
-			jcollection people = schema.create_collection(&box, colid, 50, person_class_id);
+			jcollection people = schema.create_collection_by_class(&box, colid, 50, person_class_id);
 
 			jarray pa;
 
@@ -2116,7 +2116,7 @@ namespace countrybit
 
 			init_collection_id(colid);
 
-			jcollection sprites = schema.create_collection(&box, colid, 50, sprite_class_id);
+			jcollection sprites = schema.create_collection_by_class(&box, colid, 50, sprite_class_id);
 
 			for (int i = 0; i < 10; i++) {
 				auto new_object = sprites.create_object(sprite_class_id, {1,1,1});

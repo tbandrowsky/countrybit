@@ -128,6 +128,11 @@ namespace countrybit
 					return value_ref{ base->get_at(current), current };
 				}
 
+				inline item_type *operator ->()
+				{
+					return &base->get_at(current);
+				}
+
 				inline row_id_type get_index()
 				{
 					return current;

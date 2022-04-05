@@ -1510,6 +1510,17 @@ namespace countrybit
 			}
 
 			template <typename B>
+				requires (box<B, jcollection_map>)
+			row_id_type reserve_collection(B* _b, collection_id_type _collection_id, int _number_of_objects, int64_t _total_bytes)
+			{
+				jcollection_map jcm;
+				jcm.collection_id = _collection_id;
+				jcm.table_id = item_details_table<jcollection_object, char>::reserve_table(_b, _number_of_objects, _total_bytes);
+				row_id_type jcm_row = _b->pack(jcm);
+				return jcm_row;
+			}
+
+			template <typename B>
 			requires (box<B, jcollection_map>)
 			jcollection get_collection(B* _b, row_id_type _location)
 			{
@@ -1522,7 +1533,7 @@ namespace countrybit
 
 			template <typename B>
 			requires (box<B, jcollection_map>)
-			jcollection create_collection(B* _b, collection_id_type _collection_id, int _number_of_objects, row_id_type* _class_ids)
+			jcollection create_collection_by_class(B* _b, collection_id_type _collection_id, int _number_of_objects, row_id_type* _class_ids)
 			{
 				auto reserved_id = reserve_collection(_b, _collection_id, _number_of_objects, _class_ids);
 				jcollection tmp = get_collection(_b, reserved_id);
@@ -1531,10 +1542,19 @@ namespace countrybit
 
 			template <typename B>
 			requires (box<B, jcollection_map>)
-			jcollection create_collection(B* _b, collection_id_type _collection_id, int _number_of_objects, row_id_type _class_id)
+			jcollection create_collection_by_class(B* _b, collection_id_type _collection_id, int _number_of_objects, row_id_type _class_id)
 			{
 				row_id_type class_ids[2] = { _class_id, null_row };
 				row_id_type reserved_id = reserve_collection(_b, _collection_id, _number_of_objects, class_ids);
+				jcollection tmp = get_collection(_b, reserved_id);
+				return tmp;
+			}
+
+			template <typename B>
+				requires (box<B, jcollection_map>)
+			jcollection create_collection(B* _b, collection_id_type _collection_id, int _number_of_objects, int _total_bytes)
+			{
+				row_id_type reserved_id = reserve_collection(_b, _collection_id, _number_of_objects, _total_bytes);
 				jcollection tmp = get_collection(_b, reserved_id);
 				return tmp;
 			}

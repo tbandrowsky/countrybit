@@ -405,6 +405,7 @@ namespace countrybit
 			row_id_type		member_index;
 			operation_name	node_operation_name;
 			node_operations node_operation;
+			row_id_type 	traversal_index;
 		};
 
 		using path_nodes = iarray<path_node, max_path_nodes>;
