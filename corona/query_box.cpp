@@ -188,8 +188,6 @@ namespace countrybit
 
 				run_implement(target, *_slice, root_slice, query_copy);
 			}
-
-
 		};
 
 		query_box::query_box(char* t, jschema* _schema, jclass* _class, jslice* _slice, int _field_index) :
@@ -232,7 +230,9 @@ namespace countrybit
 
 		void query_box::run()
 		{
-			jlist results;
+			query_runner runner;
+
+			runner.run(schema, the_class, slice, field_index);
 		}
 	}
 }
