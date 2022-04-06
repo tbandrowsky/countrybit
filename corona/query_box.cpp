@@ -84,20 +84,10 @@ namespace countrybit
 				}
 			}
 
-			void run_implement(jlist _target, jslice _parameters, jslice _root_slice, query_definition_type _query_copy)
+			void run_implement(jlist _target, jslice _parameters, jslice _root_slice, query_definition_type& _query_copy)
 			{
-				path_nodes traversal;
-
-				for (auto pn : _query_copy.source_path.nodes)
-				{
-					if (pn.item.node_operation == node_operations::traverse)
-					{
-						traversal.push_back(pn.item);
-					}
-				}
-
-				path_nodes::iterator pb = traversal.begin();
-				path_nodes::iterator pe = traversal.end();
+				path_nodes::iterator pb = _query_copy.source_path.nodes.begin();
+				path_nodes::iterator pe = _query_copy.source_path.nodes.end();
 
 				parameters = _parameters;
 

@@ -883,6 +883,17 @@ namespace countrybit
 			}
 		}
 
+		bool jslice::set_projection(projection_element* _src, int _num_projections)
+		{
+			for (int i = 0; i < _num_projections; i++)
+			{
+				row_id_type fid = get_field_index_by_id(_src->field_id);
+				auto fld_dest = get_field(fid);
+				_src->field_offset = get_offset(fld_dest.type_id, fid);
+				_src->field_type = fld_dest.type_id;
+			}
+		}
+
 		bool jslice::set_filters(filter_element* _src, int _num_filters, jslice& _parameters)
 		{
 			for (int i = 0; i < _num_filters; i++)
@@ -1342,6 +1353,23 @@ namespace countrybit
 			return true;
 		}
 
+		int jslice::compare(projection_element* _src, int _num_projections, jslice& _dest_slice)
+		{
+			for (int i = 0; i < _num_projections; i++)
+			{
+				char* this_bytes = _src->field_offset + bytes;
+				char* dest_bytes = _src->field_offset + _dest_slice.bytes;
+
+				int result = compare_express(_src->field_type, this_bytes, dest_bytes);
+				if (result) 
+				{
+					return result;
+				}
+				_src++;
+			}
+			return 0;
+		}
+
 		jarray::jarray() : schema(nullptr), class_field_id(null_row), bytes(nullptr)
 		{
 			;
@@ -1441,6 +1469,7 @@ namespace countrybit
 				model_box->init(box_size);
 				data.instance = model_box->allocate<jlist_instance>(1);
 				data.instance->selection_offset = array_box<row_id_type>::create(model_box, field_def.object_properties.dim.x);
+				data.instance->sort_offset = array_box<row_id_type>::create(model_box, field_def.object_properties.dim.x);
 				data.instance->slice_offset = model_box->reserve(box_size);
 				data.instance->allocated = 0;
 			}
@@ -1451,6 +1480,7 @@ namespace countrybit
 
 			data.list_bytes = model_box->unpack<char>(data.instance->slice_offset);
 			data.selections = array_box<row_id_type>::get(model_box, data.instance->selection_offset);
+			data.sort = array_box<row_id_type>::get(model_box, data.instance->sort_offset);
 		}
 
 		jlist::jlist(dynamic_box& _dest, jlist& _src)
@@ -1465,6 +1495,7 @@ namespace countrybit
 			data.instance = model_box->unpack<jlist_instance>(0);
 			data.list_bytes = model_box->unpack<char>(data.instance->slice_offset);
 			data.selections = array_box<row_id_type>::get(model_box, data.instance->selection_offset);
+			data.sort = array_box<row_id_type>::get(model_box, data.instance->sort_offset);
 			item = _src.item;
 		}
 
@@ -1532,6 +1563,7 @@ namespace countrybit
 		{
 			if (data.instance->allocated < capacity()) {
 				auto index = data.instance->allocated;
+				data.sort.push_back(index);
 				data.instance->allocated++;
 				jslice new_slice = get_slice(index);
 				new_slice.construct();

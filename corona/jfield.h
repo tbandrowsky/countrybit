@@ -378,6 +378,7 @@ namespace countrybit
 
 		const int max_query_filters = 32;
 		const int max_path_nodes = 64;
+		const int max_projection_fields = 128;
 
 		class path_root
 		{
@@ -386,25 +387,12 @@ namespace countrybit
 			row_id_type				model_id;
 		};
 
-		enum class node_operations
-		{
-			traverse,
-			group_by,
-			calc_min,
-			calc_max,
-			calc_sum,
-			calc_count,
-			calc_stddev
-		};
-
 		class path_node
 		{
 		public:
 			object_name		member_name;
 			row_id_type		member_id;
 			row_id_type		member_index;
-			operation_name	node_operation_name;
-			node_operations node_operation;
 			row_id_type 	traversal_index;
 		};
 
@@ -447,15 +435,40 @@ namespace countrybit
 
 		using filter_element_collection = iarray<filter_element, max_filters>;
 
+		enum class projection_operations
+		{
+			group_by,
+			calc_min,
+			calc_max,
+			calc_sum,
+			calc_count,
+			calc_stddev
+		};
+
+		struct projection_element
+		{
+		public:
+			object_name				field_name;
+			row_id_type				field_id;
+			operation_name			projection_name;
+			projection_operations   projection;
+			int64_t					field_offset;
+			jtype					field_type;
+			const char* error_message;
+		};
+
+		using projection_element_collection = iarray<projection_element, max_projection_fields>;
+
 		class query_definition_t
 		{
 		public:
-			path						source_path;
-			object_name					result_class_name;
-			row_id_type					result_class_id;
-			row_id_type					result_field_id;
-			row_id_type					max_result_objects;
-			filter_element_collection	filter;
+			path							source_path;
+			object_name						result_class_name;
+			row_id_type						result_class_id;
+			row_id_type						result_field_id;
+			row_id_type						max_result_objects;
+			filter_element_collection		filter;
+			projection_element_collection	projection;
 		};
 
 		using query_definition_type = query_definition_t;
@@ -618,13 +631,13 @@ namespace countrybit
 			sql_definition_type options;
 		};
 
-		class put_named_file_import_field_request {
+		class put_named_file_remote_field_request {
 		public:
 			put_field_request_base name;
 			file_definition_type options;
 		};
 
-		class put_named_http_import_field_request
+		class put_named_http_remote_field_request
 		{
 		public:
 			put_field_request_base name;
@@ -817,6 +830,7 @@ namespace countrybit
 		public:
 			int32_t   allocated;
 			int32_t   selection_offset;
+			int32_t   sort_offset;
 			int32_t   slice_offset;
 		};
 
@@ -824,6 +838,7 @@ namespace countrybit
 		{
 		public:
 			array_box<row_id_type> selections;
+			array_box<row_id_type> sort;
 			jlist_instance* instance;
 			char	  *list_bytes;
 		};

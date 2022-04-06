@@ -133,6 +133,8 @@ namespace countrybit
 			bool set_updates(update_element* _src, int _num_filters, jslice& _parameters);
 			bool update(update_element* _src, int _num_filters, jslice& _parameters);
 
+			int compare(projection_element* _src, int _num_projections, jslice& _dest_slice);
+			bool set_projection(projection_element* _src, int _num_projections);
 			int compare(jtype _type, int _src_idx, jslice& _src_slice, int _dst_idx);
 			void copy(jslice& _src_slice);
 			int compare(jslice& _src_slice);
@@ -912,38 +914,33 @@ namespace countrybit
 				return false;
 			}
 
-			bool bind_node_operation(operation_name& _operation, node_operations& _nt)
+			bool bind_projection_operation(operation_name& _operation, projection_operations& _nt)
 			{
-				_nt = node_operations::group_by;
+				_nt = projection_operations::group_by;
 
-				if (_operation == "traverse")
+				if (_operation == "group_by")
 				{
-					_nt = node_operations::traverse;
-					return true;
-				}
-				else if (_operation == "group_by")
-				{
-					_nt = node_operations::group_by;
+					_nt = projection_operations::group_by;
 					return true;
 				}
 				else if (_operation == "calc_min")
 				{
-					_nt = node_operations::calc_min;
+					_nt = projection_operations::calc_min;
 					return true;
 				}
 				else if (_operation == "calc_max")
 				{
-					_nt = node_operations::calc_max;
+					_nt = projection_operations::calc_max;
 					return true;
 				}
 				else if (_operation == "calc_count")
 				{
-					_nt = node_operations::calc_count;
+					_nt = projection_operations::calc_count;
 					return true;
 				}
 				else if (_operation == "calc_stddev")
 				{
-					_nt = node_operations::calc_stddev;
+					_nt = projection_operations::calc_stddev;
 					return true;
 				}
 				return false;
@@ -1013,14 +1010,21 @@ namespace countrybit
 					auto &ndi = nd.item;
 					if (!bind_field(ndi.member_name, ndi.member_id))
 						return null_row;
-					if (!bind_node_operation(ndi.node_operation_name, ndi.node_operation))
+				}
+
+				auto& projections = request.options.projection;
+
+				for (auto proj : projections)
+				{
+					auto& proji = proj.item;
+					if (!bind_field(proji.field_name, proji.field_id))
 						return null_row;
-					if (ndi.node_operation != node_operations::traverse) {
-						member_field mf(ndi.member_id);
-						ndi.member_index = member_index;
-						pcr.member_fields.push_back(mf);
-						member_index++;
-					}
+					if (!bind_projection_operation(proji.projection_name, proji.projection))
+						return null_row;
+					member_field mf(proji.field_id);
+					mf.field_name = proji.field_name;
+					pcr.member_fields.push_back(mf);
+					member_index++;
 				}
 
 				auto& filter = request.options.filter;
@@ -1033,8 +1037,6 @@ namespace countrybit
 						return null_row;
 					if (!bind_field(fili.target_field_name, fili.target_field_id))
 						return null_row;
-					member_field mf(fili.target_field_id);
-					pcr.member_fields.push_back(mf);
 				}
 
  				request.options.result_class_id = put_class(pcr);
@@ -1072,7 +1074,7 @@ namespace countrybit
 				return put_field(request.name.field_id, type_sql, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &options, nullptr, nullptr, sizeof(sql_remote_instance));
 			}
 
-			row_id_type put_http_remote_field(put_named_http_import_field_request request)
+			row_id_type put_http_remote_field(put_named_http_remote_field_request request)
 			{
 				http_properties_type options;
 				row_range rr;
@@ -1090,7 +1092,7 @@ namespace countrybit
 				return put_field(request.name.field_id, type_http, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &options, sizeof(http_remote_instance));
 			}
 
-			row_id_type put_file_remote_field(put_named_file_import_field_request request)
+			row_id_type put_file_remote_field(put_named_file_remote_field_request request)
 			{
 				file_properties_type options;
 				row_range rr;
