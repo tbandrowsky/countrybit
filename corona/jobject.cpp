@@ -691,82 +691,82 @@ namespace countrybit
 			}
 		}
 
-		void implement_pointer_comparison(filter_element* _src)
+		void implement_pointer_comparison(filter_element& _src)
 		{
-			switch (_src->comparison) {
+			switch (_src.comparison) {
 			case filter_comparison_types::eq:
-				_src->compare = [](char* a, char* b) {
+				_src.compare = [](char* a, char* b) {
 					return a == b;
 				};
 				break;
 			case filter_comparison_types::ls:
-				_src->compare = [](char* a, char* b) {
+				_src.compare = [](char* a, char* b) {
 					return a < b;
 				};
 				break;
 			case filter_comparison_types::gt:
-				_src->compare = [](char* a, char* b) {
+				_src.compare = [](char* a, char* b) {
 					return a > b;
 				};
 				break;
 			case filter_comparison_types::lseq:
-				_src->compare = [](char* a, char* b) {
+				_src.compare = [](char* a, char* b) {
 					return a <= b;
 				};
 				break;
 			case filter_comparison_types::gteq:
-				_src->compare = [](char* a, char* b) {
+				_src.compare = [](char* a, char* b) {
 					return a >= b;
 				};
 				break;
 			case filter_comparison_types::distance:
-				_src->compare = [_src](char* a, char* b) {
+				_src.compare = [_src](char* a, char* b) {
 					return abs(a - b) <= _src->distance_threshold;
 				};
 				break;
 			}
 		}
 
-		template <typename BoxAType, typename BoxBType> void implement_comparison(filter_element* _src)
+		template <typename BoxAType, typename BoxBType> void implement_comparison(filter_element& _src)
 		{
-			switch (_src->comparison) {
+			switch (_src.comparison) {
 			case filter_comparison_types::eq:
-				_src->compare = [](char* a, char* b) {
+				_src.compare = [](char* a, char* b) {
 					BoxAType boxa(a);
 					BoxBType boxb(b);
 					return boxa == boxb;
 				};
 				break;
 			case filter_comparison_types::ls:
-				_src->compare = [](char* a, char* b) {
+				_src.compare = [](char* a, char* b) {
 					BoxAType boxa(a);
 					BoxBType boxb(b);
 					return boxa < boxb;
 				};
 				break;
 			case filter_comparison_types::gt:
-				_src->compare = [](char* a, char* b) {
+				_src.compare = [](char* a, char* b) {
 					BoxAType boxa(a);
 					BoxBType boxb(b);
 					return boxa > boxb;
 				};
 				break;
 			case filter_comparison_types::lseq:
-				_src->compare = [](char* a, char* b) {
+				_src.compare = [](char* a, char* b) {
 					BoxAType boxa(a);
 					BoxBType boxb(b);
 					return boxa <= boxb;
 				};
 				break;
 			case filter_comparison_types::gteq:
-				_src->compare = [](char* a, char* b) {
+				_src.compare = [](char* a, char* b) {
 					BoxAType boxa(a);
 					BoxBType boxb(b);
 					return boxa >= boxb;
 				};
 				break;
 			case filter_comparison_types::distance:
-				_src->compare = [_src](char* a, char* b) {
+				_src.compare = [_src](char* a, char* b) {
 					BoxAType boxa(a);
 					BoxBType boxb(b);
 					return distance(boxa, boxb) <= _src->distance_threshold;
@@ -775,11 +775,11 @@ namespace countrybit
 			}
 		}
 
-		template <typename BoxBType, typename BoxBPrimitive> void implement_string_a_numeric_comparison(filter_element* _src)
+		template <typename BoxBType, typename BoxBPrimitive> void implement_string_a_numeric_comparison(filter_element& _src)
 		{
-			switch (_src->comparison) {
+			switch (_src.comparison) {
 			case filter_comparison_types::eq:
-				_src->compare = [](char* a, char* b) {
+				_src.compare = [](char* a, char* b) {
 					string_box boxa = string_box::get(a);
 					BoxBPrimitive f = boxa.to_double();
 					BoxBType boxb(b);
@@ -787,7 +787,7 @@ namespace countrybit
 				};
 				break;
 			case filter_comparison_types::ls:
-				_src->compare = [](char* a, char* b) {
+				_src.compare = [](char* a, char* b) {
 					string_box boxa = string_box::get(a);
 					BoxBPrimitive f = boxa.to_double();
 					BoxBType boxb(b);
@@ -795,7 +795,7 @@ namespace countrybit
 				};
 				break;
 			case filter_comparison_types::gt:
-				_src->compare = [](char* a, char* b) {
+				_src.compare = [](char* a, char* b) {
 					string_box boxa = string_box::get(a);
 					BoxBPrimitive f = boxa.to_double();
 					BoxBType boxb(b);
@@ -803,7 +803,7 @@ namespace countrybit
 				};
 				break;
 			case filter_comparison_types::lseq:
-				_src->compare = [](char* a, char* b) {
+				_src.compare = [](char* a, char* b) {
 					string_box boxa = string_box::get(a);
 					BoxBPrimitive f = boxa.to_double();
 					BoxBType boxb(b);
@@ -811,7 +811,7 @@ namespace countrybit
 				};
 				break;
 			case filter_comparison_types::gteq:
-				_src->compare = [](char* a, char* b) {
+				_src.compare = [](char* a, char* b) {
 					string_box boxa = string_box::get(a);
 					BoxBPrimitive f = boxa.to_double();
 					BoxBType boxb(b);
@@ -819,7 +819,7 @@ namespace countrybit
 				};
 				break;
 			case filter_comparison_types::distance:
-				_src->compare = [_src](char* a, char* b) {
+				_src.compare = [_src](char* a, char* b) {
 					string_box boxa = string_box::get(a);
 					BoxBPrimitive f = boxa.to_double();
 					BoxBType boxb(b);
@@ -829,11 +829,11 @@ namespace countrybit
 			}
 		}
 
-		template <typename BoxAType, typename BoxAPrimitive> void implement_string_b_numeric_comparison(filter_element* _src)
+		template <typename BoxAType, typename BoxAPrimitive> void implement_string_b_numeric_comparison(filter_element& _src)
 		{
-			switch (_src->comparison) {
+			switch (_src.comparison) {
 			case filter_comparison_types::eq:
-				_src->compare = [](char* a, char* b) {
+				_src.compare = [](char* a, char* b) {
 					BoxAType boxa(a);
 					string_box boxb = string_box::get(b);
 					BoxAPrimitive f = boxb.to_double();
@@ -841,7 +841,7 @@ namespace countrybit
 				};
 				break;
 			case filter_comparison_types::ls:
-				_src->compare = [](char* a, char* b) {
+				_src.compare = [](char* a, char* b) {
 					BoxAType boxa(a);
 					string_box boxb = string_box::get(b);
 					BoxAPrimitive f = boxb.to_double();
@@ -849,7 +849,7 @@ namespace countrybit
 				};
 				break;
 			case filter_comparison_types::gt:
-				_src->compare = [](char* a, char* b) {
+				_src.compare = [](char* a, char* b) {
 					BoxAType boxa(a);
 					string_box boxb = string_box::get(b);
 					BoxAPrimitive f = boxb.to_double();
@@ -857,7 +857,7 @@ namespace countrybit
 				};
 				break;
 			case filter_comparison_types::lseq:
-				_src->compare = [](char* a, char* b) {
+				_src.compare = [](char* a, char* b) {
 					BoxAType boxa(a);
 					string_box boxb = string_box::get(b);
 					BoxAPrimitive f = boxb.to_double();
@@ -865,7 +865,7 @@ namespace countrybit
 				};
 				break;
 			case filter_comparison_types::gteq:
-				_src->compare = [](char* a, char* b) {
+				_src.compare = [](char* a, char* b) {
 					BoxAType boxa(a);
 					string_box boxb = string_box::get(b);
 					BoxAPrimitive f = boxb.to_double();
@@ -873,7 +873,7 @@ namespace countrybit
 				};
 				break;
 			case filter_comparison_types::distance:
-				_src->compare = [_src](char* a, char* b) {
+				_src.compare = [_src](char* a, char* b) {
 					BoxAType boxa(a);
 					string_box boxb = string_box::get(b);
 					BoxAPrimitive f = boxb.to_double();
@@ -883,28 +883,30 @@ namespace countrybit
 			}
 		}
 
-		bool jslice::set_projection(projection_element* _src, int _num_projections)
+		bool jslice::set_projection(projection_element_collection& _src)
 		{
-			for (int i = 0; i < _num_projections; i++)
+			for (int i = 0; i < _src.size(); i++)
 			{
-				row_id_type fid = get_field_index_by_id(_src->field_id);
+				auto sc = _src[i];
+				row_id_type fid = get_field_index_by_id(sc.field_id);
 				auto fld_dest = get_field(fid);
-				_src->field_offset = get_offset(fld_dest.type_id, fid);
-				_src->field_type = fld_dest.type_id;
+				sc.field_offset = get_offset(fld_dest.type_id, fid);
+				sc.field_type = fld_dest.type_id;
 			}
 		}
 
-		bool jslice::set_filters(filter_element* _src, int _num_filters, jslice& _parameters)
+		bool jslice::set_filters(filter_element_collection& _srcz, jslice& _parameters)
 		{
-			for (int i = 0; i < _num_filters; i++)
+			for (int i = 0; i < _srcz.size(); i++)
 			{
-				row_id_type fip = _parameters.get_field_index_by_id(_src->parameter_field_id);
-				row_id_type fid = get_field_index_by_id(_src->parameter_field_id);
+				auto& _src = _srcz[i];
+				row_id_type fip = _parameters.get_field_index_by_id(_src.parameter_field_id);
+				row_id_type fid = get_field_index_by_id(_src.parameter_field_id);
 				auto fld_param = _parameters.get_field(fip);
 				auto fld_dest = get_field(fid);
 
-				_src->parameter_offset = get_offset(fld_param.type_id, fip);
-				_src->target_offset = _parameters.get_offset(fld_dest.type_id, fid);
+				_src.parameter_offset = get_offset(fld_param.type_id, fip);
+				_src.target_offset = _parameters.get_offset(fld_dest.type_id, fid);
 
 				if (fld_param.is_int64() && fld_dest.is_int8())
 				{
@@ -1014,11 +1016,11 @@ namespace countrybit
 				{
 					implement_pointer_comparison(_src);
 				}
-				_src++;
 			}
+			return true;
 		}
 
-		template <typename BoxAType, typename BoxBType> void implement_update(update_element* _src)
+		template <typename BoxAType, typename BoxBType> void implement_update(update_element& _src)
 		{
 			_src->assignment = [_src](char* a, char* b) {
 				BoxAType boxa(a);
@@ -1027,9 +1029,9 @@ namespace countrybit
 			};
 		}
 
-		template <typename BoxType> void implement_update_number_from_string(update_element* _src)
+		template <typename BoxType> void implement_update_number_from_string(update_element& _src)
 		{
-			_src->assignment = [_src](char* a, char* b) {
+			_src.assignment = [_src](char* a, char* b) {
 				BoxType boxa(a);
 				string_box boxb(b);
 				system::string_extractor extractor(boxb, 100, nullptr);
@@ -1040,9 +1042,9 @@ namespace countrybit
 			};
 		}
 
-		void implement_update_color_from_string(update_element* _src)
+		void implement_update_color_from_string(update_element& _src)
 		{
-			_src->assignment = [_src](char* a, char* b) {
+			_src.assignment = [_src](char* a, char* b) {
 				color_box boxa(a);
 				string_box boxb(b);
 				system::string_extractor extractor(boxb, 100, nullptr);
@@ -1058,9 +1060,9 @@ namespace countrybit
 			};
 		}
 
-		void implement_update_point_from_string(update_element* _src)
+		void implement_update_point_from_string(update_element& _src)
 		{
-			_src->assignment = [_src](char* a, char* b) {
+			_src.assignment = [_src](char* a, char* b) {
 				point_box boxa(a);
 				string_box boxb(b);
 				system::string_extractor extractor(boxb, 100, nullptr);
@@ -1074,9 +1076,9 @@ namespace countrybit
 			};
 		}
 
-		void implement_update_rectangle_from_string(update_element* _src)
+		void implement_update_rectangle_from_string(update_element& _src)
 		{
-			_src->assignment = [_src](char* a, char* b) {
+			_src.assignment = [_src](char* a, char* b) {
 				rectangle_box boxa(a);
 				string_box boxb(b);
 				system::string_extractor extractor(boxb, 100, nullptr);
@@ -1092,9 +1094,9 @@ namespace countrybit
 			};
 		}
 
-		void implement_update_image_from_string(update_element* _src)
+		void implement_update_image_from_string(update_element& _src)
 		{
-			_src->assignment = [_src](char* a, char* b) {
+			_src.assignment = [_src](char* a, char* b) {
 				image_box boxa(a);
 				string_box boxb(b);
 				system::string_extractor extractor(boxb, 100, nullptr);
@@ -1110,9 +1112,9 @@ namespace countrybit
 			};
 		}
 
-		void implement_update_midi_from_string(update_element* _src)
+		void implement_update_midi_from_string(update_element& _src)
 		{
-			_src->assignment = [_src](char* a, char* b) {
+			_src.assignment = [_src](char* a, char* b) {
 				midi_box boxa(a);
 				string_box boxb(b);
 				system::string_extractor extractor(boxb, 100, nullptr);
@@ -1129,9 +1131,9 @@ namespace countrybit
 			};
 		}
 
-		void implement_update_wave_from_string(update_element* _src)
+		void implement_update_wave_from_string(update_element& _src)
 		{
-			_src->assignment = [_src](char* a, char* b) {
+			_src.assignment = [_src](char* a, char* b) {
 				wave_box boxa(a);
 				string_box boxb(b);
 				system::string_extractor extractor(boxb, 100, nullptr);
@@ -1148,17 +1150,18 @@ namespace countrybit
 			};
 		}
 
-		bool jslice::set_updates(update_element* _src, int _num_updates, jslice& _parameters)
+		bool jslice::set_updates(update_element_collection& _srcx, jslice& _parameters)
 		{
-			for (int i = 0; i < _num_updates; i++)
+			for (int i = 0; i < _srcx.size(); i++)
 			{
-				row_id_type fip = _parameters.get_field_index_by_id(_src->parameter_field_id);
-				row_id_type fid = get_field_index_by_id(_src->parameter_field_id);
+				auto& _src = _srcx[i];
+				row_id_type fip = _parameters.get_field_index_by_id(_src.parameter_field_id);
+				row_id_type fid = get_field_index_by_id(_src.parameter_field_id);
 				auto fld_param = _parameters.get_field(fip);
 				auto fld_dest = get_field(fid);
 
-				_src->parameter_offset = get_offset(fld_param.type_id, fip);
-				_src->target_offset = _parameters.get_offset(fld_dest.type_id, fid);
+				_src.parameter_offset = get_offset(fld_param.type_id, fip);
+				_src.target_offset = _parameters.get_offset(fld_dest.type_id, fid);
 
 				if (fld_param.is_int64() && fld_dest.is_int8())
 				{
@@ -1324,48 +1327,50 @@ namespace countrybit
 			}
 		}
 
-		bool jslice::filter(filter_element* _src, int _num_filters, jslice& _parameters)
+		bool jslice::filter(filter_element_collection& _srcc, jslice& _parameters)
 		{
-			for (int i = 0; i < _num_filters; i++)
+			for (int i = 0; i < _srcc.size(); i++)
 			{
-				if (_src->compare) 
+				auto& _src = _srcc[i];
+				if (_src.compare) 
 				{
-					bool result = _src->compare(bytes + _src->target_offset, _parameters.bytes + _src->parameter_offset);
+					bool result = _src.compare(bytes + _src.target_offset, _parameters.bytes + _src.parameter_offset);
 					if (!result) {
 						return false;
 					}
 				}
-				_src++;
 			}
 			return true;
 		}
 
-		bool jslice::update(update_element* _src, int _num_updates, jslice& _parameters)
+		bool jslice::update(update_element_collection& _srcc, jslice& _parameters)
 		{
-			for (int i = 0; i < _num_updates; i++)
+			for (int i = 0; i < _srcc.size(); i++)
 			{
-				if (_src->assignment)
+				auto& _src = _srcc[i];
+				if (_src.assignment)
 				{
-					_src->assignment(bytes + _src->target_offset, _parameters.bytes + _src->parameter_offset);
+					_src.assignment(bytes + _src.target_offset, _parameters.bytes + _src.parameter_offset);
 				}
-				_src++;
 			}
 			return true;
 		}
 
-		int jslice::compare(projection_element* _src, int _num_projections, jslice& _dest_slice)
+		int jslice::compare(projection_element_collection& collection, jslice& _dest_slice)
 		{
-			for (int i = 0; i < _num_projections; i++)
+			for (int i = 0; i < collection.size(); i++)
 			{
-				char* this_bytes = _src->field_offset + bytes;
-				char* dest_bytes = _src->field_offset + _dest_slice.bytes;
+				auto& src = collection[i];
+				if (src.projection == projection_operations::group_by) {
+					char* this_bytes = src.field_offset + bytes;
+					char* dest_bytes = src.field_offset + _dest_slice.bytes;
 
-				int result = compare_express(_src->field_type, this_bytes, dest_bytes);
-				if (result) 
-				{
-					return result;
+					int result = compare_express(src.field_type, this_bytes, dest_bytes);
+					if (result)
+					{
+						return result;
+					}
 				}
-				_src++;
 			}
 			return 0;
 		}
@@ -1480,7 +1485,7 @@ namespace countrybit
 
 			data.list_bytes = model_box->unpack<char>(data.instance->slice_offset);
 			data.selections = array_box<row_id_type>::get(model_box, data.instance->selection_offset);
-			data.sort = array_box<row_id_type>::get(model_box, data.instance->sort_offset);
+			data.sort_order = array_box<row_id_type>::get(model_box, data.instance->sort_offset);
 		}
 
 		jlist::jlist(dynamic_box& _dest, jlist& _src)
@@ -1495,7 +1500,7 @@ namespace countrybit
 			data.instance = model_box->unpack<jlist_instance>(0);
 			data.list_bytes = model_box->unpack<char>(data.instance->slice_offset);
 			data.selections = array_box<row_id_type>::get(model_box, data.instance->selection_offset);
-			data.sort = array_box<row_id_type>::get(model_box, data.instance->sort_offset);
+			data.sort_order = array_box<row_id_type>::get(model_box, data.instance->sort_offset);
 			item = _src.item;
 		}
 
@@ -1513,6 +1518,20 @@ namespace countrybit
 
 		jslice jlist::get_slice(int idx)
 		{
+			idx = data.sort_order[idx];
+			jfield& field = schema->get_field(class_field_id);
+			dimensions_type dim = field.object_properties.dim;
+			if ((idx >= data.instance->allocated) || (idx < 0)) {
+				return jslice(item, schema, field.object_properties.class_id, nullptr, dim);
+			}
+			dimensions_type pos = { idx, 0, 0 };
+			char* b = &data.list_bytes[idx * field.object_properties.class_size_bytes];
+			jslice slice(item, schema, field.object_properties.class_id, b, pos);
+			return slice;
+		}
+
+		jslice jlist::get_slice_direct(int idx)
+		{
 			jfield& field = schema->get_field(class_field_id);
 			dimensions_type dim = field.object_properties.dim;
 			if ((idx >= data.instance->allocated) || (idx < 0)) {
@@ -1526,6 +1545,8 @@ namespace countrybit
 
 		bool jlist::erase_slice(int idx)
 		{
+			int oidx = idx;
+			idx = data.sort_order[idx];
 			jfield& field = schema->get_field(class_field_id);
 			dimensions_type dim = field.object_properties.dim;
 			if ((idx >= dim.x) || (idx < 0)) 
@@ -1543,6 +1564,15 @@ namespace countrybit
 			}
 			else 
 			{
+				for (int i = oidx; i < data.instance->allocated-1; i++)
+				{
+					data.sort_order[i] = data.sort_order[i + 1];
+				}
+				for (int i = 0; i < data.instance->allocated; i++) {
+					if (data.sort_order[i] > idx) {
+						data.sort_order[i]--;
+					}
+				}
 				auto class_size = field.object_properties.class_size_bytes;
 				char* b1 = &data.list_bytes[idx * class_size];
 				char* b2 = &data.list_bytes[(idx + 1) * class_size];
@@ -1563,7 +1593,7 @@ namespace countrybit
 		{
 			if (data.instance->allocated < capacity()) {
 				auto index = data.instance->allocated;
-				data.sort.push_back(index);
+				data.sort_order.push_back(index);
 				data.instance->allocated++;
 				jslice new_slice = get_slice(index);
 				new_slice.construct();
@@ -1576,6 +1606,7 @@ namespace countrybit
 		{
 			if (idx < 0 || idx >= data.instance->allocated)
 				return false;
+			idx = data.sort_order[idx];
 			data.selections[idx] = 1;
 			return true;
 		}
@@ -1584,6 +1615,7 @@ namespace countrybit
 		{
 			if (idx < 0 || idx >= data.instance->allocated)
 				return false;
+			idx = data.sort_order[idx];
 			data.selections[idx] = 0;
 			return true;
 		}
@@ -1619,6 +1651,26 @@ namespace countrybit
 		{
 			jfield& field = schema->get_field(class_field_id);
 			return field.size_bytes;
+		}
+
+		void jlist::sort(projection_element_collection& projections)
+		{
+			if (size()) 
+			{
+				jslice slice = get_slice(0);
+				slice.set_projection(projections);			
+				projection_element_collection* pprojection = &projections;
+
+				data.sort_order.sort([this, pprojection](row_id_type& a, row_id_type& b)
+					{
+						jslice aslice = this->get_slice_direct(a);
+						jslice bslice = this->get_slice_direct(b);
+
+						int compare_result = aslice.compare(*pprojection, bslice);
+
+						return compare_result < 0;
+					});
+			}
 		}
 
 		// - jmodel

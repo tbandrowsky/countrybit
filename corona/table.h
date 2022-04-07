@@ -409,7 +409,7 @@ namespace countrybit
 				inline iterator operator++()
 				{
 					current++;
-					if (current >= size())
+					if (current >= base->size())
 						return iterator(base, null_row);
 					return iterator(base, current);
 				}

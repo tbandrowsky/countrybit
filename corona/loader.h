@@ -1383,6 +1383,7 @@ namespace countrybit
 					t = (char*)nullptr;
 				}
 				else if (ti == remote_parameters_ti)
+
 				{
 					t = (char*)nullptr;
 				}
@@ -1533,7 +1534,7 @@ namespace countrybit
 			{
 				database::jschema* pschema = &schema;
 				bool valid = std::all_of(remotes.begin(), remotes.end(), [pschema](database::remote_field_map_type& src) {
-					return is_field_mapping_valid(pschema, r.item);
+					return is_field_mapping_valid(pschema, src.item);
 					});
 				return valid;
 			}

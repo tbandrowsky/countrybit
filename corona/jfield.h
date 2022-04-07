@@ -27,6 +27,12 @@ namespace countrybit
 {
 	namespace database
 	{
+
+		const int max_query_filters = 32;
+		const int max_path_nodes = 64;
+		const int max_projection_fields = 128;
+		const int max_update_elements = 32;
+
 		const static int
 
 			field_none = 0,
@@ -376,10 +382,6 @@ namespace countrybit
 
 		};
 
-		const int max_query_filters = 32;
-		const int max_path_nodes = 64;
-		const int max_projection_fields = 128;
-
 		class path_root
 		{
 		public:
@@ -433,7 +435,7 @@ namespace countrybit
 			const char* error_message;
 		};
 
-		using filter_element_collection = iarray<filter_element, max_filters>;
+		using filter_element_collection = iarray<filter_element, max_query_filters>;
 
 		enum class projection_operations
 		{
@@ -798,7 +800,7 @@ namespace countrybit
 			row_id_type				 class_id;
 			object_name				 class_name;
 			object_description		 class_description;
-			member_field_collection member_fields;
+			member_field_collection  member_fields;
 		};
 
 		struct model_state
@@ -838,7 +840,7 @@ namespace countrybit
 		{
 		public:
 			array_box<row_id_type> selections;
-			array_box<row_id_type> sort;
+			array_box<row_id_type> sort_order;
 			jlist_instance* instance;
 			char	  *list_bytes;
 		};
@@ -899,7 +901,7 @@ namespace countrybit
 			const char* error_message;
 		};
 
-		using update_element_collection = iarray<update_element, max_filters>;
+		using update_element_collection = iarray<update_element, max_update_elements>;
 
 		class update_definition_t
 		{

@@ -3,6 +3,8 @@
 #include "store_box.h"
 #include <ostream>
 #include <bit>
+#include <functional>
+#include <algorithm>
 
 namespace countrybit
 {
@@ -151,7 +153,7 @@ namespace countrybit
 				inline iterator operator++()
 				{
 					current++;
-					if (current >= size())
+					if (current >= base->size())
 						return iterator(base, null_row);
 					return iterator(base, current);
 				}
@@ -185,14 +187,19 @@ namespace countrybit
 				return iterator(this, null_row);
 			}
 
-			bool any_of(std::function<bool, item_type&> predicate)
+			bool any_of(std::function<bool(item_type&)> predicate)
 			{
-				return std::any_of(begin(), end(), predicate);
+				return std::any_of(data, data + length, predicate);
 			}
 
-			bool count(std::function<bool, item_type&> predicate)
+			int count_if(std::function<bool(item_type&)> predicate)
 			{
-				return std::count(begin(), end(), predicate);
+				return std::count_if(data, data + length, predicate);
+			}
+
+			void sort(std::function<bool(item_type& a, item_type& b)> fn)
+			{
+				std::sort(data, data + length, fn);
 			}
 
 		};
@@ -338,14 +345,19 @@ namespace countrybit
 				}
 			}
 
-			bool any_of(std::function<bool, item_type&> predicate)
+			bool any_of(std::function<bool(item_type&)> predicate)
 			{
-				return std::any_of(begin(), end(), predicate);
+				return std::any_of(hdr->data, hdr->data + hdr->length, predicate);
 			}
 
-			bool count(std::function<bool, item_type&> predicate)
+			int count_if(std::function<bool(item_type&)> predicate)
 			{
-				return std::count(begin(), end(), predicate);
+				return std::count_if(hdr->data, hdr->data + hdr->length, predicate);
+			}
+
+			void sort(std::function<bool(item_type& a, item_type& b)> fn)
+			{
+				std::sort(hdr->data, hdr->data + hdr->length, fn);
 			}
 
 		};

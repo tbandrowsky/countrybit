@@ -128,21 +128,16 @@ namespace countrybit
 			http_remote_box get_http_remote(int field_idx);
 			file_remote_box get_file_remote(int field_idx);
 
-			bool set_filters(filter_element* _src, int _num_filters, jslice& _parameters);
-			bool filter(filter_element *_src, int _num_filters, jslice& _parameters);
-			bool set_updates(update_element* _src, int _num_filters, jslice& _parameters);
-			bool update(update_element* _src, int _num_filters, jslice& _parameters);
+			bool set_filters(filter_element_collection& _src, jslice& _parameters);
+			bool filter(filter_element_collection& _src, jslice& _parameters);
+			bool set_updates(update_element_collection& _src, jslice& _parameters);
+			bool update(update_element_collection& _src, jslice& _parameters);
 
-			int compare(projection_element* _src, int _num_projections, jslice& _dest_slice);
-			bool set_projection(projection_element* _src, int _num_projections);
+			int compare(projection_element_collection& collection, jslice& _dest_slice);
+			bool set_projection(projection_element_collection& collection);
 			int compare(jtype _type, int _src_idx, jslice& _src_slice, int _dst_idx);
 			void copy(jslice& _src_slice);
 			int compare(jslice& _src_slice);
-
-			void visit(std::function<bool(jslice&)> visitor)
-			{
-				visitor(*this);
-			}
 
 			template <typename boxed> void get_boxed(jtype jt, boxed& src, int field_idx)
 			{
@@ -300,6 +295,7 @@ namespace countrybit
 			row_id_type class_field_id;
 			jlist_state data;
 			jslice* item;
+
 		public:
 
 			jlist();
@@ -309,6 +305,7 @@ namespace countrybit
 			uint32_t capacity();
 			uint32_t size();
 
+			jslice get_slice_direct(int idx);
 			jslice get_slice(int x);
 			bool erase_slice(int x);
 			bool chop();
@@ -322,6 +319,8 @@ namespace countrybit
 
 			uint64_t get_size_bytes();
 			char* get_bytes();
+
+			void sort(projection_element_collection& projections);
 
 			class iterator
 			{
@@ -371,15 +370,15 @@ namespace countrybit
 
 				inline iterator end()
 				{
-					return iterator(base, base->capacity());
+					return iterator(base, base->size());
 				}
 
 				inline iterator operator++()
 				{
 					current++;
-					if (current > base->capacity()) 
+					if (current > base->size()) 
 					{
-						current = base->capacity();
+						current = base->size();
 					}
 					return iterator(base, current);
 				}
@@ -413,13 +412,6 @@ namespace countrybit
 				return iterator(this, capacity());
 			}
 
-			void visit(std::function<bool(jslice&)> visitor)
-			{
-				for (auto item : *this)
-				{
-					visitor(item);
-				}
-			}
 		};
 
 		class jmodel
@@ -456,11 +448,6 @@ namespace countrybit
 			size_t  get_size_bytes();
 			char* get_bytes();
 
-			void visit(std::function<bool(jslice&)> visitor)
-			{
-				auto slice = get_model_slice();
-				visitor(slice);
-			}
 		};
 
 		class jcollection_item
@@ -1143,7 +1130,6 @@ namespace countrybit
 			row_id_type put_list_field(row_id_type class_id, int max_rows )
 			{
 				object_name result_class_name;
-				int max_rows;
 
 				put_object_field_request porf;
 				auto class_cls = classes[class_id];
@@ -1298,7 +1284,7 @@ namespace countrybit
 
 				auto& mfs = request.member_fields;
 				auto sz = mfs.size();
-				int num_integration_fields = mfs.count([this](member_field& src) {
+				int num_integration_fields = mfs.count_if([this](member_field& src) {
 					auto& f = this->get_field(src.field_id);
 					return f.is_data_generator();
 					});
@@ -1339,7 +1325,7 @@ namespace countrybit
 					request.class_id = class_id;
 				}
 
-				int num_integration_fields = mfs.count([this](member_field& src) {
+				int num_integration_fields = mfs.count_if([this](member_field& src) {
 					auto& f = this->get_field(src.field_id);
 					return f.is_data_generator();
 					});
