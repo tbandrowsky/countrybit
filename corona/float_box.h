@@ -268,11 +268,6 @@ namespace countrybit
 				return *this;
 			}
 
-			floating_point value() const 
-			{ 
-				return boxed<floating_point>::get_value(); 
-			}
-
 			floating_point abs() const
 			{
 				return std::abs(*this);
@@ -454,85 +449,21 @@ namespace countrybit
 				return t;
 			}
 
+			operator const floating_point& () const
+			{
+				floating_point& t = boxed<floating_point>::get_data_ref();
+				return t;
+			}
+
+			floating_point value() const
+			{
+				return boxed<floating_point>::get_value();
+			}
+
+
 		};
 
-		template<typename T> T distance(const fp_box<T>& a, const fp_box<T>& b)
-		{
-			return std::abs(a - b);
-		}
-
-		template<typename T> int compare(const fp_box<T>& a, const fp_box<T>& b)
-		{
-			return (T)a <=> (T)b;
-		}
-
-		template<typename T> int operator<(const fp_box<T>& a, const fp_box<T>& b)
-		{
-			return compare(a, b) < 0;
-		}
-
-		template<typename T> int operator>(const fp_box<T>& a, const fp_box<T>& b)
-		{
-			return compare(a, b) > 0;
-		}
-
-		template<typename T> int operator>=(const fp_box<T>& a, const fp_box<T>& b)
-		{
-			return compare(a, b) >= 0;
-		}
-
-		template<typename T> int operator<=(const fp_box<T>& a, const fp_box<T>& b)
-		{
-			return compare(a, b) <= 0;
-		}
-
-		template<typename T> int operator==(const fp_box<T>& a, const fp_box<T>& b)
-		{
-			return compare(a, b) == 0;
-		}
-
-		template<typename T> int operator!=(const fp_box<T>& a, const fp_box<T>& b)
-		{
-			return compare(a, b) != 0;
-		}
-
-		template<typename T> int compare(const fp_box<T>& a, T& b)
-		{
-			char dummy[sizeof(T)];
-			fp_box<T> pb(dummy);
-			pb = b;
-			return compare(a, pb);
-		}
-
-		template<typename T> int operator<(const fp_box<T>& a, T& b)
-		{
-			return compare(a, b) < 0;
-		}
-
-		template<typename T> int operator>(const fp_box<T>& a, T& b)
-		{
-			return compare(a, b) > 0;
-		}
-
-		template<typename T> int operator>=(const fp_box<T>& a, T& b)
-		{
-			return compare(a, b) >= 0;
-		}
-
-		template<typename T> int operator<=(const fp_box<T>& a, T& b)
-		{
-			return compare(a, b) <= 0;
-		}
-
-		template<typename T> int operator==(const fp_box<T>& a, T& b)
-		{
-			return compare(a, b) == 0;
-		}
-
-		template<typename T> int operator!=(const fp_box<T>& a, T& b)
-		{
-			return compare(a, b) != 0;
-		}
+		double distance(double a, double b);
 
 		template<typename T> std::ostream& operator <<(std::ostream& output, fp_box<T>& src)
 		{

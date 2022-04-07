@@ -96,18 +96,10 @@ namespace countrybit
 				return *this;
 			}
 
-			operator integer& () 
-			{ 
-				integer& t = boxed<integer>::get_data_ref();
-				return t; 
-			}
-
 			static integer random()
 			{
 				return ::random();
 			}
-
-			integer value() const { return boxed<integer>::get_value(); }
 
 			bool has_single_bit()
 			{
@@ -153,96 +145,33 @@ namespace countrybit
 			{
 				return int_math::pop_count(*this);
 			}
+
+			operator integer& ()
+			{
+				integer& t = boxed<integer>::get_data_ref();
+				return t;
+			}
+
+			operator const integer& () const
+			{
+				const integer& t = boxed<integer>::get_data_ref();
+				return t;
+			}
+
+			integer value() const { return boxed<integer>::get_value(); }
 		};
 
-		template<typename T> T distance(const integer_box<T>& a, const integer_box<T>& b)
-		{
-			return std::abs(a - b);
-		}
-
-		template<typename T> int compare(const integer_box<T>& a, const integer_box<T>& b)
-		{
-			return (T)a <=> (T)b;
-		}
-
-		template<typename T> int operator<(const integer_box<T>& a, const integer_box<T>& b)
-		{
-			return compare(a, b) < 0;
-		}
-
-		template<typename T> int operator>(const integer_box<T>& a, const integer_box<T>& b)
-		{
-			return compare(a, b) > 0;
-		}
-
-		template<typename T> int operator>=(const integer_box<T>& a, const integer_box<T>& b)
-		{
-			return compare(a, b) >= 0;
-		}
-
-		template<typename T> int operator<=(const integer_box<T>& a, const integer_box<T>& b)
-		{
-			return compare(a, b) <= 0;
-		}
-
-		template<typename T> int operator==(const integer_box<T>& a, const integer_box<T>& b)
-		{
-			return compare(a, b) == 0;
-		}
-
-		template<typename T> int operator!=(const integer_box<T>& a, const integer_box<T>& b)
-		{
-			return compare(a, b) != 0;
-		}
-
-		template<typename T> int compare(const integer_box<T>& a, T& b)
-		{
-			char dummy[sizeof(T)];
-			integer_box<T> pb(dummy);
-			pb = b;
-			return compare(a, pb);
-		}
-
-		template<typename T> int operator<(const integer_box<T>& a, T& b)
-		{
-			return compare(a, b) < 0;
-		}
-
-		template<typename T> int operator>(const integer_box<T>& a, T& b)
-		{
-			return compare(a, b) > 0;
-		}
-
-		template<typename T> int operator>=(const integer_box<T>& a, T& b)
-		{
-			return compare(a, b) >= 0;
-		}
-
-		template<typename T> int operator<=(const integer_box<T>& a, T& b)
-		{
-			return compare(a, b) <= 0;
-		}
-
-		template<typename T> int operator==(const integer_box<T>& a, T& b)
-		{
-			return compare(a, b) == 0;
-		}
-
-		template<typename T> int operator!=(const integer_box<T>& a, T& b)
-		{
-			return compare(a, b) != 0;
-		}
-
-		template<typename T> std::ostream& operator <<(std::ostream& output, integer_box<T>& src)
-		{
-			output << (T)src;
-			return output;
-		}
+		int64_t distance(int64_t a, int64_t b);
 
 		using int8_box = integer_box<int8_t>;
 		using int16_box = integer_box<int16_t>;
 		using int32_box = integer_box<int32_t>;
 		using int64_box = integer_box<int64_t>;
 
+		template<typename T> std::ostream& operator <<(std::ostream& output, integer_box<T>& src)
+		{
+			output << (T)src;
+			return output;
+		}
 	}
 } 

@@ -1,0 +1,52 @@
+#pragma once
+
+#include "store_box.h"
+#include "int_box.h"
+#include <ostream>
+#include <bit>
+#include <iostream>
+
+namespace countrybit
+{
+	namespace database
+	{
+		int64_t distance(int64_t a, int64_t b)
+		{
+			return std::abs(a - b);
+		}
+
+		bool test_ints()
+		{
+			char test_buffer64[sizeof(int64_t)];
+			char test_buffer32[sizeof(int32_t)];
+			char test_buffer16[sizeof(int16_t)];
+			char test_buffer8[sizeof(int8_t)];
+
+			int64_box box64(test_buffer64);
+			int32_box box32(test_buffer32);
+			int16_box box16(test_buffer16);
+			int8_box box8(test_buffer8);
+
+			box64 = 1024;
+			box32 = 2048;
+			box16 = 2048;
+
+			if (box64 > box32) return false;
+			if (box64 >= box32) return false;
+			if (box32 < box64) return false;
+			if (box32 <= box64) return false;
+			if (box32 == box64) return false;
+			if (box16 != box32) return false;
+			if (box16 < box32) return false;
+			if (box16 > box32) return false;
+			if (!(box16 == box32)) return false;
+			if (!(box16 >= box32)) return false;
+			if (!(box16 <= box32)) return false;
+
+			auto d = distance(box64, box32);
+			if (d != 1024) return false;
+
+			return true;
+		}
+	}
+}

@@ -17,6 +17,7 @@ namespace countrybit
 			double z;
 		};
 
+		double distance(const point& a, const point& b);
 		int compare(const point& a, const point& b);
 		int operator<(const point& a, const point& b);
 		int operator>(const point& a, const point& b);
@@ -115,100 +116,6 @@ namespace countrybit
 
 		std::ostream& operator <<(std::ostream& output, point_box& src);
 
-
-		int compare(const point_box& a, const point_box& b)
-		{
-			double d = point_math::magnitude(a)-point_math::magnitude(b);
-			if (d < 0.0) 
-			{
-				return -1;
-			} 
-			else if (d == 0.0)
-			{
-				double an = point_math::angle(a, b);
-				if (an < 0.0)
-				{
-					return -1;
-				}
-				else if (an > 0.0)
-				{
-					return 1.0;
-				}
-				return 0;
-			}
-			else if (d > 0.0)
-			{
-				return 1;
-			}
-		}
-
-		int operator<(const point_box& a, const point_box& b)
-		{
-			return compare(a, b) < 0;
-		}
-
-		int operator>(const point_box& a, const point_box& b)
-		{
-			return compare(a, b) > 0;
-		}
-
-		int operator>=(const point_box& a, const point_box& b)
-		{
-			return compare(a, b) >= 0;
-		}
-
-		int operator<=(const point_box& a, const point_box& b)
-		{
-			return compare(a, b) <= 0;
-		}
-
-		int operator==(const point_box& a, const point_box& b)
-		{
-			return compare(a, b) == 0;
-		}
-
-		int operator!=(const point_box& a, const point_box& b)
-		{
-			return compare(a, b) != 0;
-		}
-
-		int compare(const point_box& a, const point& b)
-		{
-			char dummy[sizeof(point)];
-			point_box pb(dummy);
-			pb = b;
-			return compare(a, pb);
-		}
-
-		int operator<(const point_box& a, const point& b)
-		{
-			return compare(a, b) < 0;
-		}
-
-		int operator>(const point_box& a, const point& b)
-		{
-			return compare(a, b) > 0;
-		}
-
-		int operator>=(const point_box& a, const point& b)
-		{
-			return compare(a, b) >= 0;
-		}
-
-		int operator<=(const point_box& a, const point& b)
-		{
-			return compare(a, b) <= 0;
-		}
-
-		int operator==(const point_box& a, const point& b)
-		{
-			return compare(a, b) == 0;
-		}
-
-		int operator!=(const point_box& a, const point& b)
-		{
-			return compare(a, b) != 0;
-		}
 
 		bool test_points();
 	}

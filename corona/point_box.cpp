@@ -11,6 +11,10 @@ namespace countrybit
 {
 	namespace database
 	{
+		double distance(const point& a, const point& b)
+		{
+			return point_math::distance(a, b);
+		}
 
 		int compare(const point& a, const point& b)
 		{

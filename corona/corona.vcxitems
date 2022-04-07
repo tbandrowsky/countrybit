@@ -65,9 +65,11 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)directory.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)file.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)file_remote_box.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)float_box.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)function.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)extractor.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)http_remote_box.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)int_box.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)jdatabase.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)loader.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)messages.cpp" />

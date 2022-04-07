@@ -727,7 +727,7 @@ namespace countrybit
 			}
 		}
 
-		template <typename BoxAType, typename BoxBType> void implement_comparison(filter_element& _src)
+		template <typename BoxAType, typename BoxBType, typename AType, typename BType> void implement_comparison(filter_element& _src)
 		{
 			switch (_src.comparison) {
 			case filter_comparison_types::eq:
@@ -876,8 +876,9 @@ namespace countrybit
 				_src.compare = [_src](char* a, char* b) {
 					BoxAType boxa(a);
 					string_box boxb = string_box::get(b);
-					BoxAPrimitive f = boxb.to_double();
-					return distance(boxa, f) <= _src->distance_threshold;
+					BoxAPrimitive f1 = (double)boxa.get_value();
+					BoxAPrimitive f2 = boxb.to_double();
+					return distance(f1, f2) <= _src->distance_threshold;
 				};
 				break;
 			}
@@ -910,83 +911,83 @@ namespace countrybit
 
 				if (fld_param.is_int64() && fld_dest.is_int8())
 				{
-					implement_comparison<int64_box, int8_box>(_src);
+					implement_comparison<int64_box, int8_box, int64_t, int8_t>(_src);
 				}
 				else if (fld_param.is_int64() && fld_dest.is_int16())
 				{
-					implement_comparison<int64_box, int16_box>(_src);
+					implement_comparison<int64_box, int16_box, int64_t, int16_t>(_src);
 				}
 				else if (fld_param.is_int64() && fld_dest.is_int32())
 				{
-					implement_comparison<int64_box, int32_box>(_src);
+					implement_comparison<int64_box, int32_box, int64_t, int32_t>(_src);
 				}
 				else if (fld_param.is_int64() && fld_dest.is_int64())
 				{
-					implement_comparison<int64_box, int64_box>(_src);
+					implement_comparison<int64_box, int64_box, int64_t, int32_t>(_src);
 				}
 				else if (fld_param.is_int32() && fld_dest.is_int8())
 				{
-					implement_comparison<int32_box, int8_box>(_src);
+					implement_comparison<int32_box, int8_box, int32_t, int8_t>(_src);
 				}
 				else if (fld_param.is_int32() && fld_dest.is_int16())
 				{
-					implement_comparison<int32_box, int16_box>(_src);
+					implement_comparison<int32_box, int16_box, int32_t, int16_t>(_src);
 				}
 				else if (fld_param.is_int32() && fld_dest.is_int32())
 				{
-					implement_comparison<int32_box, int32_box>(_src);
+					implement_comparison<int32_box, int32_box, int32_t, int32_t>(_src);
 				}
 				else if (fld_param.is_int32() && fld_dest.is_int64())
 				{
-					implement_comparison<int32_box, int64_box>(_src);
+					implement_comparison<int32_box, int64_box, int32_t, int64_t>(_src);
 				}
 				else if (fld_param.is_int16() && fld_dest.is_int8())
 				{
-					implement_comparison<int16_box, int8_box>(_src);
+					implement_comparison<int16_box, int8_box, int16_t, int8_t>(_src);
 				}
 				else if (fld_param.is_int16() && fld_dest.is_int16())
 				{
-					implement_comparison<int16_box, int16_box>(_src);
+					implement_comparison<int16_box, int16_box, int16_t, int16_t>(_src);
 				}
 				else if (fld_param.is_int16() && fld_dest.is_int32())
 				{
-					implement_comparison<int16_box, int32_box>(_src);
+					implement_comparison<int16_box, int32_box, int16_t, int32_t>(_src);
 				}
 				else if (fld_param.is_int16() && fld_dest.is_int64())
 				{
-					implement_comparison<int16_box, int64_box>(_src);
+					implement_comparison<int16_box, int64_box, int16_t, int64_t>(_src);
 				}
 				else if (fld_param.is_int8() && fld_dest.is_int8())
 				{
-					implement_comparison<int8_box, int8_box>(_src);
+					implement_comparison<int8_box, int8_box, int8_t, int8_t>(_src);
 				}
 				else if (fld_param.is_int8() && fld_dest.is_int16())
 				{
-					implement_comparison<int8_box, int16_box>(_src);
+					implement_comparison<int8_box, int16_box, int8_t, int16_t>(_src);
 				}
 				else if (fld_param.is_int8() && fld_dest.is_int32())
 				{
-					implement_comparison<int8_box, int32_box>(_src);
+					implement_comparison<int8_box, int32_box, int8_t, int32_t>(_src);
 				}
 				else if (fld_param.is_int8() && fld_dest.is_int64())
 				{
-					implement_comparison<int8_box, int64_box>(_src);
+					implement_comparison<int8_box, int64_box, int8_t, int64_t>(_src);
 				}
 				else if (fld_param.is_float64() && fld_dest.is_float32())
 				{
-					implement_comparison<double_box, float_box>(_src);
+					implement_comparison<double_box, float_box, double, float>(_src);
 				}
 				else if (fld_param.is_float32() && fld_dest.is_float64())
 				{
-					implement_comparison<float_box, double_box>(_src);
+					implement_comparison<float_box, double_box, float, double>(_src);
 				}
 				else if (fld_param.is_float32() && fld_dest.is_float32())
 				{
-					implement_comparison<float_box, float_box>(_src);
+					implement_comparison<float_box, float_box, float, float>(_src);
 				}
 				else if (fld_param.is_float64() && fld_dest.is_float64())
 				{
-					implement_comparison<double_box, double_box>(_src);
+					implement_comparison<double_box, double_box, double, double>(_src);
 				}
 				else if (fld_param.is_float32() && fld_dest.is_string())
 				{
@@ -1006,11 +1007,11 @@ namespace countrybit
 				}
 				else if (fld_param.is_point() && fld_dest.is_point())
 				{
-					implement_comparison<point_box, point_box>(_src);
+					implement_comparison<point_box, point_box, point, point>(_src);
 				}
 				else if (fld_param.is_datetime() && fld_dest.is_datetime())
 				{
-					implement_comparison<time_box, time_box>(_src);
+					implement_comparison<time_box, time_box, time_t, time_t>(_src);
 				}
 				else
 				{
@@ -2309,3 +2310,4 @@ namespace countrybit
 
 	}
 }
+
