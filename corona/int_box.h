@@ -161,8 +161,6 @@ namespace countrybit
 			integer value() const { return boxed<integer>::get_value(); }
 		};
 
-		int64_t distance(int64_t a, int64_t b);
-
 		using int8_box = integer_box<int8_t>;
 		using int16_box = integer_box<int16_t>;
 		using int32_box = integer_box<int32_t>;

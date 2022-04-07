@@ -2,6 +2,7 @@
 
 #include "store_box.h"
 #include "int_box.h"
+#include "float_box.h"
 #include <ostream>
 #include <bit>
 #include <iostream>
@@ -10,10 +11,6 @@ namespace countrybit
 {
 	namespace database
 	{
-		int64_t distance(int64_t a, int64_t b)
-		{
-			return std::abs(a - b);
-		}
 
 		bool test_ints()
 		{
