@@ -6,7 +6,7 @@ namespace countrybit
 {
 	namespace database
 	{
-		file_remote_box::file_remote_box(char* t, jschema* _schema, jclass* _class, jslice* _slice) : instance(t), schema(_schema), the_class(_class), slice(_slice)
+		file_remote_box::file_remote_box(char* t, jschema* _schema, jclass* _class, jslice* _slice, int _field_idx) : instance(t), schema(_schema), the_class(_class), slice(_slice)
 		{
 			;
 		}

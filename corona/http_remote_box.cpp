@@ -7,7 +7,7 @@ namespace countrybit
 	{
 
 
-		http_remote_box::http_remote_box(char* t, jschema* _schema, jclass* _class, jslice* _slice) : instance(t), schema(_schema), the_class(_class), slice(_slice)
+		http_remote_box::http_remote_box(char* t, jschema* _schema, jclass* _class, jslice* _slice, int _field_idx) : instance(t), schema(_schema), the_class(_class), slice(_slice)
 		{
 			;
 		}

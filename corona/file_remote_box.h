@@ -1,7 +1,5 @@
 #pragma once
 
-#pragma once
-
 #include "store_box.h"
 #include "array_box.h"
 #include "string_box.h"
@@ -26,7 +24,7 @@ namespace countrybit
 
 		public:
 
-			file_remote_box(char* t, jschema* _schema, jclass* _class, jslice* _slice);
+			file_remote_box(char* t, jschema* _schema, jclass* _class, jslice* _slice, int _field_idx);
 			file_remote_box(file_remote_box& _src);
 			file_remote_box operator = (const file_remote_box& _src);
 			file_remote_box operator = (file_remote_instance _src);

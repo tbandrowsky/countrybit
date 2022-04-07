@@ -253,6 +253,17 @@ namespace countrybit
 			{
 				return countrybit::database::has_any(hdr->data, _pattern);
 			}
+
+			double to_double()
+			{
+				return std::strtod(c_str(), nullptr);
+			}
+
+			long to_long()
+			{
+				long l = std::strtol(c_str(), nullptr, 10);
+				return l;
+			}
 		};
 
 		int get_hash_code(const char* _src);

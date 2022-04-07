@@ -248,7 +248,7 @@ namespace countrybit
 
 		template <typename floating_point> 
 		requires (std::is_floating_point<floating_point>::value)
-		class fp_box : protected boxed<floating_point>
+		class fp_box : public boxed<floating_point>
 		{
 		public:
 			fp_box(char* t) : boxed<floating_point>(t)

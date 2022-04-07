@@ -256,7 +256,7 @@ namespace countrybit
 			static row_id_type create(BOX* b, int items_length)
 			{
 				array_box temp;
-				auto location = b->pack<char>(sizeof(array_box_data) + items_length * sizeof(item_type));
+				auto location = b->pack<char>(0, sizeof(array_box_data) + items_length * sizeof(item_type));
 				temp.hdr = b->unpack<array_box_data>(location);
 				temp.hdr->max_items = items_length;
 				temp.hdr->length = 0;

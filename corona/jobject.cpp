@@ -177,7 +177,7 @@ namespace countrybit
 		{
 			auto p = parent;
 			while (p) {
-				if (p->the_class.pitem()->is_model()) {
+				if (p->the_class.pitem()->is_model) {
 					jmodel jam(p, p->schema, p->class_id, p->bytes, false);
 					return jam;
 				}
@@ -721,7 +721,7 @@ namespace countrybit
 				break;
 			case filter_comparison_types::distance:
 				_src.compare = [_src](char* a, char* b) {
-					return abs(a - b) <= _src->distance_threshold;
+					return abs(a - b) <= _src.distance_threshold;
 				};
 				break;
 			}
@@ -769,7 +769,7 @@ namespace countrybit
 				_src.compare = [_src](char* a, char* b) {
 					BoxAType boxa(a);
 					BoxBType boxb(b);
-					return distance(boxa, boxb) <= _src->distance_threshold;
+					return distance(boxa, boxb) <= _src.distance_threshold;
 				};
 				break;
 			}
@@ -823,7 +823,7 @@ namespace countrybit
 					string_box boxa = string_box::get(a);
 					BoxBPrimitive f = boxa.to_double();
 					BoxBType boxb(b);
-					return distance(f, boxb) <= _src->distance_threshold;
+					return distance(f, boxb) <= _src.distance_threshold;
 				};
 				break;
 			}
@@ -895,9 +895,9 @@ namespace countrybit
 			}
 		}
 
-		bool jslice::set_filters(filter_element_collection& _srcz, jslice& _parameters)
+		bool jslice::set_filters(filter_element* _srcz, int _count, jslice& _parameters)
 		{
-			for (int i = 0; i < _srcz.size(); i++)
+			for (int i = 0; i < _count; i++)
 			{
 				auto& _src = _srcz[i];
 				row_id_type fip = _parameters.get_field_index_by_id(_src.parameter_field_id);
@@ -1022,7 +1022,7 @@ namespace countrybit
 
 		template <typename BoxAType, typename BoxBType> void implement_update(update_element& _src)
 		{
-			_src->assignment = [_src](char* a, char* b) {
+			_src.assignment = [_src](char* a, char* b) {
 				BoxAType boxa(a);
 				BoxBType boxb(b);
 				boxa = boxb.value();
@@ -1325,6 +1325,27 @@ namespace countrybit
 					implement_update<string_box, string_box>(_src);
 				}
 			}
+		}
+
+		bool jslice::set_filters(filter_element_collection& _srcz, jslice& _parameters)
+		{
+			return set_filters(_srcz.get_ptr(0), _srcz.size(), _parameters);
+		}
+
+		bool jslice::filter(filter_element* _src, int _count, jslice& _parameters)
+		{
+			for (int i = 0; i < _count; i++)
+			{
+				if (_src->compare)
+				{
+					bool result = _src->compare(bytes + _src->target_offset, _parameters.bytes + _src->parameter_offset);
+					if (!result) {
+						return false;
+					}
+				}
+				_src++;
+			}
+			return true;
 		}
 
 		bool jslice::filter(filter_element_collection& _srcc, jslice& _parameters)

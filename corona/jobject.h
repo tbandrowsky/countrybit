@@ -1,6 +1,7 @@
 #pragma once
 
 #include "jfield.h"
+#include "store_box.h"
 #include "collection_id_box.h"
 #include "object_id_box.h"
 #include "point_box.h"
@@ -13,7 +14,6 @@
 #include "http_remote_box.h"
 #include "file_remote_box.h"
 #include "query_box.h"
-#include "store_box.h"
 #include "float_box.h"
 
 #include <cassert>
@@ -130,6 +130,8 @@ namespace countrybit
 
 			bool set_filters(filter_element_collection& _src, jslice& _parameters);
 			bool filter(filter_element_collection& _src, jslice& _parameters);
+			bool set_filters(filter_element *_src, int _count, jslice& _parameters);
+			bool filter(filter_element* _src, int _count, jslice& _parameters);
 			bool set_updates(update_element_collection& _src, jslice& _parameters);
 			bool update(update_element_collection& _src, jslice& _parameters);
 

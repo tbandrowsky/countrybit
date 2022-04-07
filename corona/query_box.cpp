@@ -63,16 +63,22 @@ namespace countrybit
 					switch (mf.type_id)
 					{
 					case jtype::type_list:
-						auto lst = source_slice.get_list(pitem.item.member_index);
-						visit(pb, pe, lst);
+						{
+							auto lst = source_slice.get_list(pitem.item.member_index);
+							visit(pb, pe, lst);
+						}
 						break;
 					case jtype::type_object:
-						auto obj = source_slice.get_object(pitem.item.member_index);
-						visit(pb, pe, obj);
+						{
+							auto obj = source_slice.get_object(pitem.item.member_index);
+							visit(pb, pe, obj);
+						}
 						break;
 					case jtype::type_model:
-						auto mdl = source_slice.get_model(pitem.item.member_index);
-						visit(pb, pe, mdl);
+						{
+							auto mdl = source_slice.get_model(pitem.item.member_index);
+							visit(pb, pe, mdl);
+						}
 						break;
 					}
 

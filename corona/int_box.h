@@ -76,7 +76,7 @@ namespace countrybit
 
 		template <typename integer> 
 		requires (std::numeric_limits<integer>::is_integer)
-		class integer_box : protected boxed<integer>
+		class integer_box : public boxed<integer>
 		{
 		public:
 			integer_box(char* t) : boxed<integer>(t)

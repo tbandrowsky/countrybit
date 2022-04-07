@@ -77,7 +77,7 @@ namespace countrybit
 			}
 		};
 
-		class point_box : protected boxed<point>
+		class point_box : public boxed<point>
 		{
 		public:
 			point_box(char* t) : boxed<point>(t)
@@ -115,10 +115,6 @@ namespace countrybit
 
 		std::ostream& operator <<(std::ostream& output, point_box& src);
 
-		double distance(const point_box& a, const point_box& b)
-		{
-			return point_math::distance(a, b);
-		}
 
 		int compare(const point_box& a, const point_box& b)
 		{

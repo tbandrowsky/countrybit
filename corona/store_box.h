@@ -573,6 +573,11 @@ namespace countrybit
 				return *this;
 			}
 
+			operator T() const
+			{
+				return *data;
+			}
+
 			T get_value() const { return *data; }
 			T* get_data() { return data; }
 			T& get_data_ref() { return *data; }
@@ -581,7 +586,11 @@ namespace countrybit
 
 		template<typename T> int compare(const boxed<T>& a, const boxed<T>& b)
 		{
-			return (T)a <=> (T)b;
+			if (a.get_value() < b.get_value())
+				return -1;
+			else if (a.get_value() > b.get_value())
+				return 1;
+			return 0;
 		}
 
 		template<typename T> int operator<(const boxed<T>& a, const boxed<T>& b)
