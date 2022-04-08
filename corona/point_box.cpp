@@ -98,6 +98,7 @@ namespace countrybit
 			point_box pb(box);
 
 			pb = ptA;
+
 			ptD = pb;
 			if (ptD != ptA) {
 				std::cout << "box test failed" << std::endl;

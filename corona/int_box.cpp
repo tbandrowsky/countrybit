@@ -22,6 +22,7 @@ namespace countrybit
 			int64_box box64(test_buffer64);
 			int32_box box32(test_buffer32);
 			int16_box box16(test_buffer16);
+			int16_box box16b(test_buffer16);
 			int8_box box8(test_buffer8);
 
 			box64 = 1024;
@@ -42,6 +43,10 @@ namespace countrybit
 
 			auto d = distance(box64, box32);
 			if (d != 1024) return false;
+
+			box16b = 512;
+			box16 = box16b;
+			if (box16 != box16b) return false;
 
 			return true;
 		}

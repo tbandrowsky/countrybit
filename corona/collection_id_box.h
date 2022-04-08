@@ -29,13 +29,13 @@ namespace countrybit
 
 			collection_id_box operator = (const collection_id_box& _src)
 			{
-				boxed<collection_id_type>::operator =(_src);
+				set_data(_src);
 				return *this;
 			}
 
 			collection_id_box operator = (collection_id_type _src)
 			{
-				boxed<collection_id_type>::operator =(_src);
+				set_value(_src);
 				return *this;
 			}
 

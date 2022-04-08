@@ -29,13 +29,13 @@ namespace countrybit
 
 			midi_box operator = (const midi_box& _src)
 			{
-				boxed<midi_instance>::operator =(_src);
+				boxed<midi_instance>::set_data(_src);
 				return *this;
 			}
 
 			midi_box operator = (midi_instance _src)
 			{
-				boxed<midi_instance>::operator =(_src);
+				boxed<midi_instance>::set_value(_src);
 				return *this;
 			}
 

@@ -86,13 +86,13 @@ namespace countrybit
 
 			integer_box operator = (const integer_box & _src)
 			{
-				boxed<integer>::operator =(_src);
+				boxed<integer>::set_data(_src);
 				return *this;
 			}
 
 			integer_box operator = (integer _src)
 			{
-				boxed<integer>::operator =(_src);
+				boxed<integer>::set_value(_src);
 				return *this;
 			}
 
@@ -165,6 +165,8 @@ namespace countrybit
 		using int16_box = integer_box<int16_t>;
 		using int32_box = integer_box<int32_t>;
 		using int64_box = integer_box<int64_t>;
+
+		int compare_int(int64_t a, int64_t b);
 
 		template<typename T> std::ostream& operator <<(std::ostream& output, integer_box<T>& src)
 		{

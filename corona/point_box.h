@@ -88,13 +88,13 @@ namespace countrybit
 
 			point_box operator = (const point_box& _src)
 			{
-				boxed<point>::operator =(_src);
+				set_data(_src);
 				return *this;
 			}
 
-			point_box operator = (point _src)
+			point_box operator = (const point& _src)
 			{
-				boxed<point>::operator =(_src);
+				set_value(_src);
 				return *this;
 			}
 
@@ -115,7 +115,6 @@ namespace countrybit
 		};
 
 		std::ostream& operator <<(std::ostream& output, point_box& src);
-
 
 		bool test_points();
 	}

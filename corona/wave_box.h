@@ -19,7 +19,7 @@ namespace countrybit
 			bool	playing;
 		};
 
-		class wave_box : protected boxed<wave_instance>
+		class wave_box : public boxed<wave_instance>
 		{
 		public:
 			wave_box(char* t) : boxed<wave_instance>(t)
@@ -29,13 +29,13 @@ namespace countrybit
 
 			wave_box operator = (const wave_box& _src)
 			{
-				boxed<wave_instance>::operator =(_src);
+				set_data(_src);
 				return *this;
 			}
 
 			wave_box operator = (wave_instance _src)
 			{
-				boxed<wave_instance>::operator =(_src);
+				set_value(_src);
 				return *this;
 			}
 

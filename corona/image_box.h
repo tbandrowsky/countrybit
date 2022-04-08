@@ -17,7 +17,7 @@ namespace countrybit
 			rectangle	source;
 		};
 
-		class image_box : protected boxed<image_instance>
+		class image_box : public boxed<image_instance>
 		{
 		public:
 			image_box(char* t) : boxed<image_instance>(t)
@@ -27,13 +27,13 @@ namespace countrybit
 
 			image_box operator = (const image_box& _src)
 			{
-				boxed<image_instance>::operator =(_src);
+				boxed<image_instance>::set_data(_src);
 				return *this;
 			}
 
 			image_box operator = (image_instance _src)
 			{
-				boxed<image_instance>::operator =(_src);
+				boxed<image_instance>::set_value(_src);
 				return *this;
 			}
 

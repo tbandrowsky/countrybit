@@ -217,68 +217,68 @@ namespace countrybit
 			char* c1 = bytes + offset1;
 			char* c2 = bytes + offset2;
 */
-		int jslice::compare_express(jtype _type, char *c1, char *c2)
+		std::strong_ordering jslice::compare_express(jtype _type, char *c1, char *c2)
 		{
 			switch (_type)
 			{
 			case jtype::type_int8:
 				{
-					boxed<int8_t> b1(c1);
-					boxed<int8_t> b2(c2);
-					return countrybit::database::compare(b1, b2);
+					int8_box b1(c1);
+					int8_box b2(c2);
+					return b1 <=> b2;
 				}
 				break;
 			case jtype::type_int16:
 				{
-					boxed<int16_t> b1(c1);
-					boxed<int16_t> b2(c2);
-					return countrybit::database::compare(b1, b2);
+					int16_box b1(c1);
+					int16_box b2(c2);
+					return b1 <=> b2;
 				}
 				break;
 			case jtype::type_int32:
 				{
-					boxed<int32_t> b1(c1);
-					boxed<int32_t> b2(c2);
-					return countrybit::database::compare(b1, b2);
+					int32_box b1(c1);
+					int32_box b2(c2);
+					return b1 <=> b2;
 				}
 				break;
 			case jtype::type_int64:
 				{
-					boxed<int64_t> b1(c1);
-					boxed<int64_t> b2(c2);
-					return countrybit::database::compare(b1, b2);
+					int64_box b1(c1);
+					int64_box b2(c2);
+					return b1 <=> b2;
 				}
 				break;
 			case jtype::type_float32:
 				{
-					boxed<float> b1(c1);
-					boxed<float> b2(c2);
-					return countrybit::database::compare(b1, b2);
+					float_box b1(c1);
+					float_box b2(c2);
+					return b1 <=> b2;
 				}
 				break;
 			case jtype::type_float64:
 				{
-					boxed<double> b1(c1);
-					boxed<double> b2(c2);
-					return countrybit::database::compare(b1, b2);
+					double_box b1(c1);
+					double_box b2(c2);
+					return b1 <=> b2;
 				}
 				break;
 			case jtype::type_datetime:
 				{
-					boxed<time_t> b1(c1);
-					boxed<time_t> b2(c2);
-					return countrybit::database::compare(b1, b2);
+					time_box b1(c1);
+					time_box b2(c2);
+					return b1 <=> b2;
 				}
 				break;
 			case jtype::type_string:
 				{
 					auto b1 = string_box::get(c1);
 					auto b2 = string_box::get(c2);
-					return countrybit::database::compare(b1, b2);
+					return b1 <=> b2;
 				}
 				break;
 			default:
-				return c1 - c2;
+				return c1 <=> c2;
 			}
 		}
 
@@ -301,43 +301,43 @@ namespace countrybit
 					break;
 				case jtype::type_int8:
 					{
-						boxed<__int8> b(c);
+						int8_box b(c);
 						b = 0;
 					}
 					break;
 				case jtype::type_int16:
 					{
-						boxed<__int16> b(c);
+						int16_box b(c);
 						b = 0;
 					}
 					break;
 				case jtype::type_int32:
 					{
-						boxed<__int32> b(c);
+						int32_box b(c);
 						b = 0;
 					}
 					break;
 				case jtype::type_int64:
 					{
-						boxed<__int64> b(c);
+						int64_box b(c);
 						b = 0;
 					}
 					break;
 				case jtype::type_float32:
 					{
-						boxed<float> b(c);
+						float_box b(c);
 						b = 0.0;
 					}
 					break;
 				case jtype::type_float64:
 					{
-						boxed<float> b(c);
+						double_box b(c);
 						b = 0.0;
 					}
 					break;
 				case jtype::type_datetime:
 					{
-						boxed<time_t> b(c);
+						time_box b(c);
 						b = 0.0;
 					}
 					break;
@@ -370,61 +370,61 @@ namespace countrybit
 					break;
 				case jtype::type_point:
 					{
-						boxed<point> b(c);
+						point_box b(c);
 						b = point { };
 					}
 					break;
 				case jtype::type_rectangle:
 					{
-						boxed<rectangle> b(c);
+						rectangle_box b(c);
 						b = rectangle {};
 					}
 					break;
 				case jtype::type_color:
 					{
-						boxed<color> b(c);
+						color_box b(c);
 						b = color{};
 					}
 					break;
 				case jtype::type_image:
 					{
-						boxed<image_instance> b(c);
+						image_box b(c);
 						b = image_instance {};
 					}
 					break;
 				case jtype::type_wave:
 					{
-						boxed<wave_instance> b(c);
+						wave_box b(c);
 						b = wave_instance {};
 					}
 					break;
 				case jtype::type_midi:
 					{
-						boxed<midi_instance> b(c);
+						midi_box b(c);
 						b = midi_instance {};
 					}
 					break;
 				case jtype::type_query:
 					{
-						boxed<query_instance> b(c);
+						query_box b(c);
 						b = query_instance{};
 					}
 					break;
 				case jtype::type_sql:
 					{
-						boxed<sql_remote_instance> b(c);
+						sql_remote_box b(c);
 						b = sql_remote_instance{};
 					}
 					break;
 				case jtype::type_file:
 					{
-						boxed<file_remote_instance> b(c);
+						file_remote_box b(c);
 						b = file_remote_instance{};
 					}
 					break;
 				case jtype::type_http:
 					{
-						boxed<http_remote_instance> b(c);
+						http_remote_box b(c);
 						b = http_remote_instance{};
 					}
 					break;
@@ -637,7 +637,7 @@ namespace countrybit
 			}
 		}
 		
-		int jslice::compare(jtype _type, int _src_idx, jslice& _src_slice, int _dst_idx)
+		std::strong_ordering jslice::compare(jtype _type, int _src_idx, jslice& _src_slice, int _dst_idx)
 		{
 			auto offset1 = get_offset(_type, _src_idx);
 			auto offset2 = _src_slice.get_offset(_type, _dst_idx);
@@ -646,7 +646,7 @@ namespace countrybit
 			return compare_express(_type, c1, c2);
 		}
 
-		int jslice::compare(jslice& _src_slice)
+		std::strong_ordering jslice::compare(jslice& _src_slice)
 		{
 			if (_src_slice.class_id == class_id) 
 			{
@@ -660,12 +660,12 @@ namespace countrybit
 					auto offset2 = _src_slice.get_offset(fld_dest.type_id, fis);
 					char* c1 = bytes + offset1;
 					char* c2 = bytes + offset2;
-					int x = compare_express(fld_source.type_id, c1, c2);
-					if (x) {
+					std::strong_ordering x = compare_express(fld_source.type_id, c1, c2);
+					if (x != std::strong_ordering::equal) {
 						return x;
 					}
 				}
-				return 0;
+				return std::strong_ordering::equal;
 			}
 			else 
 			{
@@ -681,13 +681,13 @@ namespace countrybit
 						auto offset2 = _src_slice.get_offset(fld_dest.type_id, fid);
 						char* c1 = bytes + offset1;
 						char* c2 = bytes + offset2;
-						int x = compare_express(fld_source.type_id, c1, c2);
-						if (x) {
+						std::strong_ordering x;
+						if (x != std::strong_ordering::equal) {
 							return x;
 						}
 					}
 				}
-				return 0;
+				return std::strong_ordering::equal;
 			}
 		}
 
@@ -878,7 +878,7 @@ namespace countrybit
 					string_box boxb = string_box::get(b);
 					BoxAPrimitive f1 = (double)boxa.get_value();
 					BoxAPrimitive f2 = boxb.to_double();
-					return distance(f1, f2) <= _src->distance_threshold;
+					return distance(f1, f2) <= _src.distance_threshold;
 				};
 				break;
 			}

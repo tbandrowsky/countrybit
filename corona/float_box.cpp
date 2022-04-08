@@ -15,6 +15,11 @@ namespace countrybit
 			return std::abs(a - b);
 		}
 
+		int compare(double a, double b)
+		{
+			return (a <=> b)._Value;
+		}
+
 		bool test_doubles()
 		{
 			char test_buffer64[sizeof(double)];
@@ -43,6 +48,10 @@ namespace countrybit
 
 			auto d = distance(box64, box32);
 			if (d != 1024) return false;
+
+			box32 = 512;
+			box32b = box32;
+			if (box32b != box32) return false;
 
 			return true;
 		}

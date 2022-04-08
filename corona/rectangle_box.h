@@ -47,13 +47,13 @@ namespace countrybit
 
 			rectangle_box operator = (rectangle_box _src)
 			{
-				boxed<rectangle>::operator =(_src);
+				set_data(_src);
 				return *this;
 			}
 
 			rectangle_box operator = (rectangle _src)
 			{
-				boxed<rectangle>::operator =(_src);
+				set_value(_src);
 				return *this;
 			}
 

@@ -264,23 +264,44 @@ namespace countrybit
 				long l = std::strtol(c_str(), nullptr, 10);
 				return l;
 			}
+
+			std::strong_ordering operator<=>(const string_box& _src) const
+			{
+				int x = std::strcmp(hdr->data, _src.hdr->data);
+				if (x < 0) 
+				{
+					return std::strong_ordering::less;
+				}
+				else if (x == 0)
+				{
+					return std::strong_ordering::equal;
+				}
+				else if (x > 0)
+				{
+					return std::strong_ordering::greater;
+				}
+			}
+
+			std::strong_ordering operator<=>(const char *_src) const
+			{
+				int x = std::strcmp(hdr->data, _src);
+				if (x < 0)
+				{
+					return std::strong_ordering::less;
+				}
+				else if (x == 0)
+				{
+					return std::strong_ordering::equal;
+				}
+				else if (x > 0)
+				{
+					return std::strong_ordering::greater;
+				}
+			}
+
 		};
 
 		int get_hash_code(const char* _src);
-		int compare(const string_box& a, const string_box& b);
-		bool operator<(const string_box& a, const string_box& b);
-		bool operator>(const string_box& a, const string_box& b);
-		bool operator>=(const string_box& a, const string_box& b);
-		bool operator<=(const string_box& a, const string_box& b);
-		bool operator==(const string_box& a, const string_box& b);
-		bool operator!=(const string_box& a, const string_box& b);
-		int compare(const string_box& a, const char* b);
-		bool operator<(const string_box& a, const char* b);
-		bool operator>(const string_box& a, const char* b);
-		bool operator>=(const string_box& a, const char* b);
-		bool operator<=(const string_box& a, const char* b);
-		bool operator==(const string_box& a, const char* b);
-		bool operator!=(const string_box& a, const char* b);
 
 		std::string operator+(const string_box& a, const char* b);
 		std::string operator+(const char* b, const string_box& a);

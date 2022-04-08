@@ -258,13 +258,13 @@ namespace countrybit
 
 			fp_box operator = (const fp_box & _src)
 			{
-				boxed<floating_point>::operator=(_src);
+				boxed<floating_point>::set_data(_src);
 				return *this;
 			}
 
 			fp_box operator = (floating_point _src)
 			{
-				boxed<floating_point>::operator=(_src);
+				boxed<floating_point>::set_value(_src);
 				return *this;
 			}
 
@@ -464,6 +464,7 @@ namespace countrybit
 		};
 
 		double distance(double a, double b);
+		int compare(double a, double b);
 
 		template<typename T> std::ostream& operator <<(std::ostream& output, fp_box<T>& src)
 		{

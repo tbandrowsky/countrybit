@@ -197,8 +197,9 @@ namespace countrybit
 			requires (box<B, T>&& box<B, table_header>)
 			static table create_table(B* _b, int _max_rows, row_id_type& offset)
 			{
+				table t;
 				offset = reserve_table(_b, _max_rows);
-				table t = _b->unpack(offset);
+				t.hdr = _b->unpack<table_header>(offset);
 				return t;
 			}
 

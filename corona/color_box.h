@@ -23,7 +23,7 @@ namespace countrybit
 		public:
 		};
 
-		class color_box : protected boxed<color>
+		class color_box : public boxed<color>
 		{
 		public:
 			color_box(char* t) : boxed<color>(t)
@@ -33,13 +33,13 @@ namespace countrybit
 
 			color_box operator = (const color_box& _src)
 			{
-				boxed<color>::operator =(_src);
+				set_data(_src);
 				return *this;
 			}
 
 			color_box operator = (color _src)
 			{
-				boxed<color>::operator =(_src);
+				set_value(_src);
 				return *this;
 			}
 

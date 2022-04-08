@@ -14,9 +14,8 @@ namespace countrybit
 	namespace database
 	{
 
-		class sql_remote_box
+		class sql_remote_box : public boxed<sql_remote_instance>
 		{
-			boxed<sql_remote_instance> instance;
 			jslice* slice;
 			jschema* schema;
 			jclass* the_class;

@@ -561,21 +561,14 @@ namespace countrybit
 				data = _src.data;
 			}
 
-			boxed operator = (const boxed& _src)
+			void set_data(const boxed& _src)
 			{
 				data = _src.data;
-				return *this;
 			}
 
-			boxed operator = (const T& _src)
+			void set_value(const T& _src)
 			{
 				*data = _src;
-				return *this;
-			}
-
-			operator T() const
-			{
-				return *data;
 			}
 
 			T get_value() const { return *data; }
@@ -584,84 +577,15 @@ namespace countrybit
 			const T& get_data_ref() const { return *data; }
 		};
 
-		template<typename T> int compare(const boxed<T>& a, const boxed<T>& b)
-		{
-			if (a.get_value() < b.get_value())
-				return -1;
-			else if (a.get_value() > b.get_value())
-				return 1;
-			return 0;
-		}
-
-		template<typename T> int operator<(const boxed<T>& a, const boxed<T>& b)
-		{
-			return compare(a, b) < 0;
-		}
-
-		template<typename T> int operator>(const boxed<T>& a, const boxed<T>& b)
-		{
-			return compare(a, b) > 0;
-		}
-
-		template<typename T> int operator>=(const boxed<T>& a, const boxed<T>& b)
-		{
-			return compare(a, b) >= 0;
-		}
-
-		template<typename T> int operator<=(const boxed<T>& a, const boxed<T>& b)
-		{
-			return compare(a, b) <= 0;
-		}
-
-		template<typename T> int operator==(const boxed<T>& a, const boxed<T>& b)
-		{
-			return compare(a, b) == 0;
-		}
-
-		template<typename T> int operator!=(const boxed<T>& a, const boxed<T>& b)
-		{
-			return compare(a, b) != 0;
-		}
-
-		template<typename T> int compare(const boxed<T>& a, T& b)
-		{
-			return compare(a, boxed(b));
-		}
-
-		template<typename T> int operator<(const boxed<T>& a, T& b)
-		{
-			return compare(a, b) < 0;
-		}
-
-		template<typename T> int operator>(const boxed<T>& a, T& b)
-		{
-			return compare(a, b) > 0;
-		}
-
-		template<typename T> int operator>=(const boxed<T>& a, T& b)
-		{
-			return compare(a, b) >= 0;
-		}
-
-		template<typename T> int operator<=(const boxed<T>& a, T& b)
-		{
-			return compare(a, b) <= 0;
-		}
-
-		template<typename T> int operator==(const boxed<T>& a, T& b)
-		{
-			return compare(a, b) == 0;
-		}
-
-		template<typename T> int operator!=(const boxed<T>& a, T& b)
-		{
-			return compare(a, b) != 0;
-		}
-
 		template<typename T> std::ostream& operator <<(std::ostream& output, boxed<T>& src)
 		{
 			output << (T)src;
 			return output;
+		}
+
+		template <typename boxed_type> std::strong_ordering operator <=>(const boxed<boxed_type>& a, const boxed<boxed_type>& b)
+		{
+			return a.get_value() <=> b.get_value();
 		}
 
 		using basic_int8_box = boxed<int8_t>;

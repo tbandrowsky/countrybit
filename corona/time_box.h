@@ -52,13 +52,13 @@ namespace countrybit
 
 			time_box operator = (const time_box& _src)
 			{
-				data = _src.data;
+				set_data(_src);
 				return *this;
 			}
 
 			time_box operator = (time_t _src)
 			{
-				*data = _src;
+				set_value(_src);
 				return *this;
 			}
 

@@ -17,9 +17,8 @@ namespace countrybit
 	{
 
 
-		class http_remote_box
+		class http_remote_box : boxed<http_remote_instance>
 		{
-			boxed<http_remote_instance> instance;
 			jslice* slice;
 			jschema* schema;
 			jclass* the_class;

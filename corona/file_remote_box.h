@@ -15,9 +15,8 @@ namespace countrybit
 	{
 
 
-		class file_remote_box
+		class file_remote_box : public boxed<file_remote_instance>
 		{
-			boxed<file_remote_instance> instance;
 			jslice* slice;
 			jschema* schema;
 			jclass* the_class;
