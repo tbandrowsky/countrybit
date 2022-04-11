@@ -1,93 +1,32 @@
 
 #include "query_box.h"
 #include "jdatabase.h"
+#include "jfield.h"
+#include "navigator.h"
 
 namespace countrybit
 {
 	namespace database
 	{
 
-		class query_runner
+		class query_navigator : public navigator
 		{
 
 			jslice		dest_slice;
-			jslice		parameters;
 			jlist		target;
 			jcollection collection;
 
-			dynamic_box data;			
-
 			using filter_details_type = item_details_table<row_id_type, filter_element>;
-
 			filter_details_type filters;
 
-			void visit(path_nodes::iterator pb, path_nodes::iterator pe, jmodel list)
+			virtual void on_node(jslice& _slice)
 			{
-				auto li = list.get_model_slice();
-				visit(pb, pe, li);
+				dest_slice.copy(_slice);
 			}
 
-			void visit(path_nodes::iterator pb, path_nodes::iterator pe, jarray list)
+			virtual void on_tail(jslice& _slice)
 			{
-				for (auto li : list)
-				{
-					visit(pb, pe, li);
-				}
-			}
-
-			void visit(path_nodes::iterator pb, path_nodes::iterator pe, jlist list)
-			{
-				for (auto li : list)
-				{
-					visit(pb, pe, li);
-				}
-			}
-
-			void visit(path_nodes::iterator pb, path_nodes::iterator pe, jslice source_slice)
-			{
-				path_nodes::iterator pstart;
-
-				if (pb != pe)
-				{
-					auto fe = filters[pb->traversal_index];
-					if (fe.detail(0).target_field_id != null_row) {
-						if (!source_slice.filter(fe.pdetails(), fe.size(), parameters))
-							return;
-					}
-
-					auto pitem = *pstart;
-					auto& mf = source_slice.get_field(pitem.item.member_id);
-
-					pb++;
-
-					switch (mf.type_id)
-					{
-					case jtype::type_list:
-						{
-							auto lst = source_slice.get_list(pitem.item.member_index);
-							visit(pb, pe, lst);
-						}
-						break;
-					case jtype::type_object:
-						{
-							auto obj = source_slice.get_object(pitem.item.member_index);
-							visit(pb, pe, obj);
-						}
-						break;
-					case jtype::type_model:
-						{
-							auto mdl = source_slice.get_model(pitem.item.member_index);
-							visit(pb, pe, mdl);
-						}
-						break;
-					}
-
-					dest_slice.copy(source_slice);
-				}
-				else
-				{
-					dest_slice = target.append_slice();
-				}
+				dest_slice = target.append_slice();
 			}
 
 			void run_implement(jlist _target, jslice _parameters, jslice _root_slice, query_definition_type& _query_copy)
@@ -135,7 +74,7 @@ namespace countrybit
 
 		public:
 
-			query_runner()
+			query_navigator()
 			{
 				;
 			}
@@ -179,12 +118,13 @@ namespace countrybit
 
 				data.init(size_bytes);
 
-				collection = _schema->create_collection(&data, collection_id, 2, root_hdr->class_size_bytes );
+				collection = _schema->create_collection(&data, collection_id, 2, root_hdr->class_size_bytes);
 				target = collection.create_list(query_copy.result_class_id, estimated_rows);
 
 				run_implement(target, *_slice, root_slice, query_copy);
 			}
 		};
+
 
 		query_box::query_box(char* t, jschema* _schema, jclass* _class, jslice* _slice, int _field_index) :
 			boxed<query_instance>(t),
@@ -226,7 +166,7 @@ namespace countrybit
 
 		void query_box::run()
 		{
-			query_runner runner;
+			query_navigator runner;
 
 			runner.run(schema, the_class, slice, field_index);
 		}

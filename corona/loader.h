@@ -846,7 +846,7 @@ namespace countrybit
 			}
 		};
 
-		class corona_loader : loader
+		class schema_loader : loader
 		{
 		public:
 
@@ -946,7 +946,7 @@ namespace countrybit
 
 		public:
 
-			corona_loader(int _size, int _num_fields) : loader(_size, _num_fields)
+			schema_loader(int _size, int _num_fields) : loader(_size, _num_fields)
 			{
 
 				fields_by_name = database::sorted_index<database::object_name, location>::create_sorted_index(&data, _num_fields, fields_by_name_id);
@@ -1783,6 +1783,12 @@ namespace countrybit
 				return schema.put_class(aorf);
 			}
 
+		};
+
+		class data_loader : loader
+		{
+		public:
+
 			typeinfo* map_corona_class(database::jschema& _schema, database::row_id_type class_id)
 			{
 				auto class_data = _schema.get_class(class_id);
@@ -1797,93 +1803,100 @@ namespace countrybit
 				{
 					auto class_field = class_data.detail(i);
 					auto field = _schema.get_field(class_field.field_id);
-					switch (field.type_id) 
+					switch (field.type_id)
 					{
-						case database::jtype::type_int8:
-							map_corona_scalar<database::int8_box>(class_type, &_schema, i, field.name.c_str(), pvalue::pvalue_types::double_value);
-							break;
-						case database::jtype::type_int16:
-							map_corona_scalar<database::int16_box>(class_type, &_schema, i, field.name.c_str(), pvalue::pvalue_types::double_value);
-							break;
-						case database::jtype::type_int32:
-							map_corona_scalar<database::int32_box>(class_type, &_schema, i, field.name.c_str(), pvalue::pvalue_types::double_value);
-							break;
-						case database::jtype::type_int64:
-							map_corona_scalar<database::int64_box>(class_type, &_schema, i, field.name.c_str(), pvalue::pvalue_types::double_value);
-							break;
-						case database::jtype::type_float32:
-							map_corona_scalar<database::float_box>(class_type, &_schema, i, field.name.c_str(), pvalue::pvalue_types::double_value);
-							break;
-						case database::jtype::type_float64:
-							map_corona_scalar<database::double_box>(class_type, &_schema, i, field.name.c_str(), pvalue::pvalue_types::double_value);
-							break;
-						case database::jtype::type_datetime:
-							map_corona_scalar<database::time_box>(class_type, &_schema, i, field.name.c_str(), pvalue::pvalue_types::time_value);
-							break;
-						case database::jtype::type_object:
-							{
-								typeinfo* item_type_info = map_corona_class(_schema, field.object_properties.class_id);
-								map_corona_array(class_type, &_schema, i, field.name.c_str(), item_type_info);
-							}
-							break;
-						case database::jtype::type_list:
-							{
-								typeinfo* item_type_info = map_corona_class(_schema, field.object_properties.class_id);
-								map_corona_list(class_type, &_schema, i, field.name.c_str(), item_type_info);
-							}
-							break;
-						case database::jtype::type_model:
-							{
-								typeinfo* item_type_info = map_corona_class(_schema, field.object_properties.class_id);
-								map_corona_array(class_type, &_schema, i, field.name.c_str(), item_type_info);
-							}
-							break;
-						case database::jtype::type_object_id:
-							map_corona_scalar<database::object_id_box>(class_type, &_schema, i, field.name.c_str(), pvalue::pvalue_types::string_value);
-							break;
-						case database::jtype::type_collection_id:
-							map_corona_scalar<database::collection_id_box>(class_type, &_schema, i, field.name.c_str(), pvalue::pvalue_types::string_value);
-							break;
-						case database::jtype::type_string:
-							map_corona_scalar<database::string_box>(class_type, &_schema, i, field.name.c_str(), pvalue::pvalue_types::string_value);
-							break;
-						case database::jtype::type_image:
-							map_corona_scalar<database::image_box>(class_type, &_schema, i, field.name.c_str(), pvalue::pvalue_types::string_value);
-							break;
-						case database::jtype::type_wave:
-							map_corona_scalar<database::wave_box>(class_type, &_schema, i, field.name.c_str(), pvalue::pvalue_types::string_value);
-							break;
-						case database::jtype::type_midi:
-							map_corona_scalar<database::midi_box>(class_type, &_schema, i, field.name.c_str(), pvalue::pvalue_types::string_value);
-							break;
-						case database::jtype::type_point:
-							map_corona_scalar<database::point_box>(class_type, &_schema, i, field.name.c_str(), pvalue::pvalue_types::string_value);
-							break;
-						case database::jtype::type_rectangle:
-							map_corona_scalar<database::rectangle_box>(class_type, &_schema, i, field.name.c_str(), pvalue::pvalue_types::string_value);
-							break;
-						case database::jtype::type_color:
-							map_corona_scalar<database::color_box>(class_type, &_schema, i, field.name.c_str(), pvalue::pvalue_types::string_value);
-							break;
-						case database::jtype::type_sql:
-							break;
-						case database::jtype::type_http:
-							break;
-						case database::jtype::type_file:
-							break;
-						case database::jtype::type_query:
-							break;
+					case database::jtype::type_int8:
+						map_corona_scalar<database::int8_box>(class_type, &_schema, i, field.name.c_str(), pvalue::pvalue_types::double_value);
+						break;
+					case database::jtype::type_int16:
+						map_corona_scalar<database::int16_box>(class_type, &_schema, i, field.name.c_str(), pvalue::pvalue_types::double_value);
+						break;
+					case database::jtype::type_int32:
+						map_corona_scalar<database::int32_box>(class_type, &_schema, i, field.name.c_str(), pvalue::pvalue_types::double_value);
+						break;
+					case database::jtype::type_int64:
+						map_corona_scalar<database::int64_box>(class_type, &_schema, i, field.name.c_str(), pvalue::pvalue_types::double_value);
+						break;
+					case database::jtype::type_float32:
+						map_corona_scalar<database::float_box>(class_type, &_schema, i, field.name.c_str(), pvalue::pvalue_types::double_value);
+						break;
+					case database::jtype::type_float64:
+						map_corona_scalar<database::double_box>(class_type, &_schema, i, field.name.c_str(), pvalue::pvalue_types::double_value);
+						break;
+					case database::jtype::type_datetime:
+						map_corona_scalar<database::time_box>(class_type, &_schema, i, field.name.c_str(), pvalue::pvalue_types::time_value);
+						break;
+					case database::jtype::type_object:
+					{
+						typeinfo* item_type_info = map_corona_class(_schema, field.object_properties.class_id);
+						map_corona_array(class_type, &_schema, i, field.name.c_str(), item_type_info);
+					}
+					break;
+					case database::jtype::type_list:
+					{
+						typeinfo* item_type_info = map_corona_class(_schema, field.object_properties.class_id);
+						map_corona_list(class_type, &_schema, i, field.name.c_str(), item_type_info);
+					}
+					break;
+					case database::jtype::type_model:
+					{
+						typeinfo* item_type_info = map_corona_class(_schema, field.object_properties.class_id);
+						map_corona_array(class_type, &_schema, i, field.name.c_str(), item_type_info);
+					}
+					break;
+					case database::jtype::type_object_id:
+						map_corona_scalar<database::object_id_box>(class_type, &_schema, i, field.name.c_str(), pvalue::pvalue_types::string_value);
+						break;
+					case database::jtype::type_collection_id:
+						map_corona_scalar<database::collection_id_box>(class_type, &_schema, i, field.name.c_str(), pvalue::pvalue_types::string_value);
+						break;
+					case database::jtype::type_string:
+						map_corona_scalar<database::string_box>(class_type, &_schema, i, field.name.c_str(), pvalue::pvalue_types::string_value);
+						break;
+					case database::jtype::type_image:
+						map_corona_scalar<database::image_box>(class_type, &_schema, i, field.name.c_str(), pvalue::pvalue_types::string_value);
+						break;
+					case database::jtype::type_wave:
+						map_corona_scalar<database::wave_box>(class_type, &_schema, i, field.name.c_str(), pvalue::pvalue_types::string_value);
+						break;
+					case database::jtype::type_midi:
+						map_corona_scalar<database::midi_box>(class_type, &_schema, i, field.name.c_str(), pvalue::pvalue_types::string_value);
+						break;
+					case database::jtype::type_point:
+						map_corona_scalar<database::point_box>(class_type, &_schema, i, field.name.c_str(), pvalue::pvalue_types::string_value);
+						break;
+					case database::jtype::type_rectangle:
+						map_corona_scalar<database::rectangle_box>(class_type, &_schema, i, field.name.c_str(), pvalue::pvalue_types::string_value);
+						break;
+					case database::jtype::type_color:
+						map_corona_scalar<database::color_box>(class_type, &_schema, i, field.name.c_str(), pvalue::pvalue_types::string_value);
+						break;
+					case database::jtype::type_sql:
+						break;
+					case database::jtype::type_http:
+						break;
+					case database::jtype::type_file:
+						break;
+					case database::jtype::type_query:
+						break;
 					}
 				}
 			}
 
-			public:
+			const char* member_type_name = "type";
 
-			bool put_slice(database::jschema& _schema, database::jslice& _slice, pobject *_obj)
+		public:
+
+			data_loader(int _size, int _num_fields) : loader(_size, _num_fields)
+			{
+
+			}
+
+			bool put_slice(database::jschema& _schema, database::jslice& _slice, pobject* _obj)
 			{
 				auto type_member = _obj->get_member(member_type_name);
 				if (type_member) {
-					const char *class_name = type_member->value->as_string();
+					const char* class_name = type_member->value->as_string();
 					auto class_id = _schema.find_class(class_name);
 					if (class_id == database::null_row)
 					{
@@ -1891,12 +1904,13 @@ namespace countrybit
 						return false;
 					}
 				}
-				else 
+				else
 				{
 					put_error(errors::class_not_defined, _obj);
 					return false;
 				}
 			}
+
 		};
 	}
 }

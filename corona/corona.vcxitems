@@ -21,6 +21,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)collection_id_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)color_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)constants.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)navigator.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)desktop_application.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)directory.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)file_remote_box.h" />
@@ -61,6 +62,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)array_box.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)assert_if.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)collection_id_box.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)navigator.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)desktop_application.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)directory.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)file.cpp" />
