@@ -217,7 +217,7 @@ namespace countrybit
 			char* c1 = bytes + offset1;
 			char* c2 = bytes + offset2;
 */
-		std::strong_ordering jslice::compare_express(jtype _type, char *c1, char *c2)
+		std::partial_ordering jslice::compare_express(jtype _type, char *c1, char *c2)
 		{
 			switch (_type)
 			{
@@ -637,7 +637,7 @@ namespace countrybit
 			}
 		}
 		
-		std::strong_ordering jslice::compare(jtype _type, int _src_idx, jslice& _src_slice, int _dst_idx)
+		std::partial_ordering jslice::compare(jtype _type, int _src_idx, jslice& _src_slice, int _dst_idx)
 		{
 			auto offset1 = get_offset(_type, _src_idx);
 			auto offset2 = _src_slice.get_offset(_type, _dst_idx);
@@ -646,7 +646,7 @@ namespace countrybit
 			return compare_express(_type, c1, c2);
 		}
 
-		std::strong_ordering jslice::compare(jslice& _src_slice)
+		std::partial_ordering jslice::compare(jslice& _src_slice)
 		{
 			if (_src_slice.class_id == class_id) 
 			{
@@ -660,7 +660,7 @@ namespace countrybit
 					auto offset2 = _src_slice.get_offset(fld_dest.type_id, fis);
 					char* c1 = bytes + offset1;
 					char* c2 = bytes + offset2;
-					std::strong_ordering x = compare_express(fld_source.type_id, c1, c2);
+					auto x = compare_express(fld_source.type_id, c1, c2);
 					if (x != std::strong_ordering::equal) {
 						return x;
 					}
@@ -681,7 +681,7 @@ namespace countrybit
 						auto offset2 = _src_slice.get_offset(fld_dest.type_id, fid);
 						char* c1 = bytes + offset1;
 						char* c2 = bytes + offset2;
-						std::strong_ordering x;
+						auto x = compare_express(fld_source.type_id, c1, c2);
 						if (x != std::strong_ordering::equal) {
 							return x;
 						}
@@ -1378,7 +1378,7 @@ namespace countrybit
 			return true;
 		}
 
-		int jslice::compare(projection_element_collection& collection, jslice& _dest_slice)
+		std::partial_ordering jslice::compare(projection_element_collection& collection, jslice& _dest_slice)
 		{
 			for (int i = 0; i < collection.size(); i++)
 			{
@@ -1387,14 +1387,14 @@ namespace countrybit
 					char* this_bytes = src.field_offset + bytes;
 					char* dest_bytes = src.field_offset + _dest_slice.bytes;
 
-					int result = compare_express(src.field_type, this_bytes, dest_bytes);
-					if (result)
+					auto result = compare_express(src.field_type, this_bytes, dest_bytes);
+					if (result != std::strong_ordering::equal)
 					{
 						return result;
 					}
 				}
 			}
-			return 0;
+			return std::strong_ordering::equal;
 		}
 
 		jarray::jarray() : schema(nullptr), class_field_id(null_row), bytes(nullptr)
@@ -1688,9 +1688,9 @@ namespace countrybit
 						jslice aslice = this->get_slice_direct(a);
 						jslice bslice = this->get_slice_direct(b);
 
-						int compare_result = aslice.compare(*pprojection, bslice);
+						auto compare_result = aslice.compare(*pprojection, bslice);
 
-						return compare_result < 0;
+						return compare_result == std::partial_ordering::less;
 					});
 			}
 		}

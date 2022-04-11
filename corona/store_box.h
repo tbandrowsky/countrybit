@@ -583,7 +583,7 @@ namespace countrybit
 			return output;
 		}
 
-		template <typename boxed_type> std::strong_ordering operator <=>(const boxed<boxed_type>& a, const boxed<boxed_type>& b)
+		template <typename boxed_type> auto operator <=>(const boxed<boxed_type>& a, const boxed<boxed_type>& b)
 		{
 			return a.get_value() <=> b.get_value();
 		}

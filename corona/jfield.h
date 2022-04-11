@@ -295,6 +295,16 @@ namespace countrybit
 			jfield() { ; }
 			~jfield() { ; }
 
+			bool is_container()
+			{
+				return type_id == jtype::type_list || type_id == jtype::type_object || type_id == jtype::type_model;
+			}
+
+			bool is_scalar()
+			{
+				return !is_container();
+			}
+
 			bool is_data_generator() 
 			{
 				return type_id == jtype::type_query || type_id == jtype::type_sql || type_id == jtype::type_http || type_id == jtype::type_file;

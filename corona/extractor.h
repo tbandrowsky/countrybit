@@ -4,6 +4,7 @@
 #include <string_view>
 #include <vector>
 #include <map>
+#include <charconv>
 #include "messages.h"
 #include "store_box.h"
 #include "string_box.h"
@@ -11,7 +12,6 @@
 #include "sorted_index.h"
 #include "pobject.h"
 #include "pobject_transformer.h"
-
 #include <functional>
 
 namespace countrybit
@@ -229,11 +229,11 @@ namespace countrybit
 			}
 
 			string_extractor(database::string_box& src, int _data_length, const char* _type_member_name) : view(src.c_str(), src.size()), index(0), line(1), type_member_name(_type_member_name)
-			{
+			{				
 				data.init(_data_length);
 			}
 
-			string_extractor(char *_str, int _length, int _data_length, const char *_type_member_name) : view(_str, _length), index(0), line(1), type_member_name(_type_member_name)
+			string_extractor(const char *_str, int _length, int _data_length, const char *_type_member_name) : view(_str, _length), index(0), line(1), type_member_name(_type_member_name)
 			{
 				data.init(_data_length);
 			}

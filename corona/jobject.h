@@ -83,7 +83,7 @@ namespace countrybit
 				return b;
 			}
 
-			std::strong_ordering compare_express(jtype _type, char* c1, char* c2);
+			std::partial_ordering compare_express(jtype _type, char* c1, char* c2);
 
 		public:
 
@@ -135,11 +135,11 @@ namespace countrybit
 			bool set_updates(update_element_collection& _src, jslice& _parameters);
 			bool update(update_element_collection& _src, jslice& _parameters);
 
-			std::strong_ordering compare(projection_element_collection& collection, jslice& _dest_slice);
+			std::partial_ordering compare(projection_element_collection& collection, jslice& _dest_slice);
 			bool set_projection(projection_element_collection& collection);
-			std::strong_ordering compare(jtype _type, int _src_idx, jslice& _src_slice, int _dst_idx);
+			std::partial_ordering compare(jtype _type, int _src_idx, jslice& _src_slice, int _dst_idx);
 			void copy(jslice& _src_slice);
-			std::strong_ordering compare(jslice& _src_slice);
+			std::partial_ordering compare(jslice& _src_slice);
 
 			template <typename boxed> void get_boxed(jtype jt, boxed& src, int field_idx)
 			{

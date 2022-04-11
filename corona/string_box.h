@@ -542,6 +542,13 @@ namespace countrybit
 			return compare(a, b) != 0;
 		}
 
+		template<int l1, int l2> std::string operator+(const istring<l1>& a, const istring<l1>& b)
+		{
+			std::string temp = a.c_str();
+			temp += b;
+			return temp;
+		}
+
 		template<int l1> std::string operator+(const istring<l1>& a, const char* b)
 		{
 			std::string temp = a.c_str();

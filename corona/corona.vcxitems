@@ -74,6 +74,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)loader.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)messages.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)object_id_box.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)pobject.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)point_box.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)query_box.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)sql_remote_box.cpp" />

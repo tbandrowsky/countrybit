@@ -18,9 +18,9 @@ namespace countrybit
 		class jschema;
 		class jslice;
 
-		class query_box 
+		class query_box : public boxed<query_instance>
 		{
-			boxed<query_instance> instance;
+		
 			jslice* slice;
 			jschema* schema;
 			jclass* the_class;

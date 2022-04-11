@@ -187,7 +187,7 @@ namespace countrybit
 		};
 
 		query_box::query_box(char* t, jschema* _schema, jclass* _class, jslice* _slice, int _field_index) :
-			instance(t),
+			boxed<query_instance>(t),
 			schema(_schema),
 			the_class(_class),
 			slice(_slice),
@@ -196,32 +196,32 @@ namespace countrybit
 			;
 		}
 
-		query_box::query_box(query_box& _src) : instance(_src.instance)
+		query_box::query_box(query_box& _src) : boxed<query_instance>(_src)
 		{
 			;
 		}
 
 		query_box query_box::operator = (const query_box& _src)
 		{
-			instance = _src.instance;
+			set_data(_src);
 			return *this;
 		}
 
 		query_box query_box::operator = (query_instance _src)
 		{
-			instance = _src;
+			set_value(_src);
 			return *this;
 		}
 
 		query_box::operator query_instance& ()
 		{
-			query_instance& t = instance.get_data_ref();
+			query_instance& t = get_data_ref();
 			return t;
 		}
 
 		query_instance query_box::value() const 
 		{ 
-			return instance.get_value(); 
+			return get_value(); 
 		}
 
 		void query_box::run()

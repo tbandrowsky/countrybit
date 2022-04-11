@@ -9,6 +9,14 @@
 #include "string_box.h"
 #include "time_box.h"
 #include "sorted_index.h"
+#include "color_box.h"
+#include "image_box.h"
+#include "point_box.h"
+#include "rectangle_box.h"
+#include "wave_box.h"
+#include "midi_box.h"
+#include "object_id_box.h"
+#include "collection_id_box.h"
 
 #include <functional>
 
@@ -67,99 +75,31 @@ namespace countrybit
 				return (pvalue_type == pvalue_types::array_value) ? array_value : nullptr;
 			}
 
-			bool set_value(database::string_box& dest) const
-			{
-				switch (pvalue_type) {
-				case pvalue_types::string_value:
-					dest = string_value;
-					break;
-				case pvalue_types::double_value:
-					dest = double_value;
-					break;
-				}
-			}
-
-			void set_value(database::double_box& dest) const
-			{
-				switch (pvalue_type) {
-				case pvalue_types::double_value:
-					dest = double_value;
-					break;
-				default:
-					dest = 0.0;
-					break;
-				}
-			}
-
-			void set_value(database::float_box& dest) const
-			{
-				switch (pvalue_type) {
-				case pvalue_types::double_value:
-					dest = double_value;
-					break;
-				default:
-					dest = 0;
-					break;
-				}
-			}
-
-			void set_value(database::int8_box& dest) const
-			{
-				switch (pvalue_type) {
-				case pvalue_types::double_value:
-					dest = (int8_t)double_value;
-					break;
-				default:
-					dest = 0;
-					break;
-				}
-			}
-
-			void set_value(database::int16_box& dest) const
-			{
-				switch (pvalue_type) {
-				case pvalue_types::double_value:
-					dest = (int16_t)double_value;
-					break;
-				default:
-					dest = 0;
-					break;
-				}
-			}
-
-			void set_value(database::int32_box& dest) const
-			{
-				switch (pvalue_type) {
-				case pvalue_types::double_value:
-					dest = (int32_t)double_value;
-					break;
-				default:
-					dest = 0;
-					break;
-				}
-			}
-
-			void set_value(database::int64_box& dest) const
-			{
-				switch (pvalue_type) {
-				case pvalue_types::double_value:
-					dest = (int64_t)double_value;
-					break;
-				}
-			}
-
-			void set_value(database::time_box& dest) const
-			{
-				switch (pvalue_type) {
-				case pvalue_types::time_value:
-					dest = (int64_t)time_value;
-					break;
-				}
-			}
+			bool set_value(database::string_box& dest) const;
+			void set_value(database::double_box& dest) const;
+			void set_value(database::float_box& dest) const;
+			void set_value(database::int8_box& dest) const;
+			void set_value(database::int16_box& dest) const;
+			void set_value(database::int32_box& dest) const;
+			void set_value(database::int64_box& dest) const;
+			void set_value(database::time_box& dest) const;
+			void set_value(database::object_id_box& dest) const;
+			void set_value(database::collection_id_box& dest) const;
+			void set_value(database::color_box& dest) const;
+			void set_value(database::point_box& dest) const;
+			void set_value(database::rectangle_box& dest) const;
+			void set_value(database::image_box& dest) const;
+			void set_value(database::wave_box& dest) const;
+			void set_value(database::midi_box& dest) const;
 
 			bool is_container() const
 			{
 				return (pvalue_type == pvalue_types::array_value || pvalue_type == pvalue_types::object_value);
+			}
+
+			bool is_scalar() const
+			{
+				return !is_container();
 			}
 
 			pvalue* next;
