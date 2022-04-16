@@ -7,7 +7,7 @@ namespace countrybit
 {
 	namespace system
 	{
-		bool pvalue::set_value(database::string_box& dest) const
+		void pvalue::set_value(database::string_box& dest) const
 		{
 			switch (pvalue_type) {
 			case pvalue_types::string_value:

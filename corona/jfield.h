@@ -297,7 +297,7 @@ namespace countrybit
 
 			bool is_container()
 			{
-				return type_id == jtype::type_list || type_id == jtype::type_object || type_id == jtype::type_model;
+				return type_id == jtype::type_list || type_id == jtype::type_object;
 			}
 
 			bool is_scalar()
@@ -854,27 +854,6 @@ namespace countrybit
 			jlist_instance* instance;
 			char	  *list_bytes;
 		};
-
-		class jmodel_instance
-		{
-		public:
-			int32_t			number_of_actors;
-			row_id_type		selection_offset;
-			row_id_type		slice_offset;
-			row_id_type		actor_id;
-		};
-
-		class jmodel_state
-		{
-		public:
-			int32_t			number_of_actors;
-			array_box<row_id_type> selections;
-			char		    *model_bytes;
-			jmodel_instance* instance;
-		};
-
-		// a store id is in fact, a guid
-		// some overlap between a model and a class
 
 		class jclass_header
 		{

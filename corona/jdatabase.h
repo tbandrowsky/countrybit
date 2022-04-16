@@ -74,48 +74,17 @@ namespace countrybit
 			object_path database_folder;
 		};
 
-		class jdatabase_get_object
-		{
-		public:
-			object_id_type object_id;
-		};
-
-		class jdatabase_put_object
-		{
-		public:
-			object_id_type object_id;
-			jarray_container updated;
-		};
-
-		class jdatabase_update_object
-		{
-		public:
-			object_id_type object_id;
-			update_function_type update_function;
-		};
-
-		class collection_class_type
-		{
-		public:
-			row_id_type			class_id;
-			object_name			class_name;
-		};
-
 		class jdatabase_create_collection
 		{
 		public:
 			object_name				collection_name;
-			collection_class_type	collection_class;
-			uint32_t				number_of_objects;
+			uint64_t				size_bytes;
 		};
 
-		class jdatabase_create_object
+		class jdatabase_get_collection
 		{
 		public:
-			object_name			collection_name;
-			object_name			class_name;
-			dimensions_type		dim;
-			update_function_type update_function;
+			object_name				collection_name;
 		};
 
 		class jdatabase_file_response : public base_result
@@ -166,12 +135,7 @@ namespace countrybit
 			task<jdatabase_file_response> create(jdatabase_create _create);
 
 			task<jdatabase_collection_response> create_collection(jdatabase_create_collection _create_collection);
-
-			task<jdatabase_object_response> create_object(jdatabase_create_object _request);
-			task<jdatabase_object_response> get_object(jdatabase_get_object _request);
-			task<jdatabase_object_response> put_object(jdatabase_put_object _request);
-			task<jdatabase_object_response> update_object(jdatabase_update_object _request);
-
+			task<jdatabase_collection_response> get_collection(jdatabase_get_collection _create_collection);
 		};
 	}
 };

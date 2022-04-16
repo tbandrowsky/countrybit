@@ -413,9 +413,8 @@ namespace countrybit
 					throw std::logic_error("attempt to map non-scalar to scalar");
 				}
 				if (field_idx >= 0) {
-					MemberType item;
-					slice.get_boxed(item, field_idx);
-					_src->set_value(item);
+					MemberType t = slice.get<MemberType>(field_idx);
+					_src->set_value(t);
 					return true;
 				}
 				return false;
@@ -763,7 +762,7 @@ namespace countrybit
 				propertyinfo* pi = new (t) propertyinfo(_member_name);
 
 				t = data.place<scalar_dest>();
-				scalar_dest* new_dest = new (t) scalar_dest(_schema, _member_idx, member_name, _match_type);
+				scalar_dest* new_dest = new (t) scalar_dest(_schema, _member_idx, _member_name, _match_type);
 
 				pi->put_setter(new_dest);
 				return pi;
@@ -1836,12 +1835,6 @@ namespace countrybit
 					{
 						typeinfo* item_type_info = map_corona_class(_schema, field.object_properties.class_id);
 						map_corona_list(class_type, &_schema, i, field.name.c_str(), item_type_info);
-					}
-					break;
-					case database::jtype::type_model:
-					{
-						typeinfo* item_type_info = map_corona_class(_schema, field.object_properties.class_id);
-						map_corona_array(class_type, &_schema, i, field.name.c_str(), item_type_info);
 					}
 					break;
 					case database::jtype::type_object_id:

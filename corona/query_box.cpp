@@ -29,48 +29,6 @@ namespace countrybit
 				dest_slice = target.append_slice();
 			}
 
-			void run_implement(jlist _target, jslice _parameters, jslice _root_slice, query_definition_type& _query_copy)
-			{
-				path_nodes::iterator pb = _query_copy.source_path.nodes.begin();
-				path_nodes::iterator pe = _query_copy.source_path.nodes.end();
-
-				parameters = _parameters;
-
-				jslice path_slice = _root_slice;
-
-				for (auto pni = pb; pni != pe; pni++)
-				{
-					pni->traversal_index = null_row;
-					filter_element_collection temp;
-					for (int i = 0; i < path_slice.size(); i++)
-					{
-						auto& fld = path_slice.get_field(i);
-						for (auto filter : _query_copy.filter)
-						{
-							if (filter.item.target_field_id == fld.field_id) {
-								auto new_filter = temp.append();
-								*new_filter = filter.item;
-							}
-						}
-					}
-
-					int ts = temp.size();
-					if (ts > 0) {
-						auto filter_stuff = filters.create(ts);
-						auto node = *pni;
-						filter_stuff.item() = node.item.member_id;
-						for (row_id_type i = 0; i < filter_stuff.size(); i++)
-						{
-							filter_stuff.detail(i) = temp[i];
-						}
-						pni->traversal_index = filter_stuff.row_id();
-						path_slice.set_filters(filter_stuff.pdetails(), ts, _parameters);
-					}
-				}
-
-				visit(pb, pe, _root_slice);
-
-			}
 
 		public:
 
@@ -92,7 +50,6 @@ namespace countrybit
 				query_definition_type query_copy = _schema->get_query_definition(fld.query_properties.properties_id);
 
 				jclass_header* root_hdr;
-				jmodel root_model;
 				jslice root_slice;
 
 				root_hdr = _class->pitem();
@@ -121,7 +78,7 @@ namespace countrybit
 				collection = _schema->create_collection(&data, collection_id, 2, root_hdr->class_size_bytes);
 				target = collection.create_list(query_copy.result_class_id, estimated_rows);
 
-				run_implement(target, *_slice, root_slice, query_copy);
+			    visit(*_slice, root_slice, query_copy);
 			}
 		};
 

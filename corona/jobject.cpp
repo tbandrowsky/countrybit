@@ -99,28 +99,6 @@ namespace countrybit
 			return jarray(nullptr, schema, new_object.item().class_field_id, new_object.pdetails());
 		}
 
-		jmodel jcollection::create_model(row_id_type _class_id)
-		{
-			auto myclass = schema->get_class(_class_id);
-
-			object_name composed_class_field_name;
-			dimensions_type d = { 1, 0, 0 };
-			auto bytes_to_allocate = myclass.item().class_size_bytes;
-			auto new_object = objects.create(bytes_to_allocate);
-			new_object.item().oid.collection_id = collection_id;
-			new_object.item().oid.row_id = new_object.row_id();
-			new_object.item().class_id = _class_id;
-			new_object.item().class_field_id = null_row;
-			jmodel jm(nullptr, schema, _class_id, new_object.pdetails(), true);
-			return jm;
-		}
-
-		jmodel jcollection::get_model(row_id_type _object_id)
-		{
-			auto new_object = objects.get(_object_id);
-			return jmodel(nullptr, schema, new_object.item().class_id, new_object.pdetails());
-		}
-
 		jlist jcollection::create_list(row_id_type _class_id, int _capacity)
 		{
 			auto myclass = schema->get_class(_class_id);
@@ -173,27 +151,12 @@ namespace countrybit
 			return *parent;
 		}
 
-		jmodel& jslice::get_parent_model()
-		{
-			auto p = parent;
-			while (p) {
-				if (p->the_class.pitem()->is_model) {
-					jmodel jam(p, p->schema, p->class_id, p->bytes, false);
-					return jam;
-				}
-				p = p->parent;
-			}
-
-			jmodel denied;
-			return denied;
-		}
-
 		jclass jslice::get_class()
 		{
 			return the_class;
 		}
 
-		size_t jslice::get_offset(jtype field_type_id, int field_idx)
+		size_t jslice::get_offset(int field_idx)
 		{
 #if _DEBUG
 			if (schema == nullptr || class_id == null_row || bytes == nullptr) {
@@ -201,13 +164,6 @@ namespace countrybit
 			}
 #endif
 			jclass_field& jcf = the_class.detail(field_idx);
-#if _DEBUG
-			jfield jf = schema->get_field(jcf.field_id);
-			if (jf.type_id != field_type_id) 
-			{
-				throw std::invalid_argument("Invalid field type " + std::to_string(field_type_id) + " for field idx " + std::to_string(field_idx));
-			}
-#endif
 			return jcf.offset;
 		}
 
@@ -356,11 +312,6 @@ namespace countrybit
 						jlist jax(this, schema, jcf.field_id, c, true);
 					}
 					break;
-				case jtype::type_model:
-					{
-						jmodel jax(this, schema, jcf.field_id, c, true);
-					}
-					break;
 				case jtype::type_object_id:
 					break;
 				case jtype::type_string:
@@ -406,25 +357,25 @@ namespace countrybit
 					break;
 				case jtype::type_query:
 					{
-						query_box b(c);
+						query_box b(c, schema, &the_class, this, i);
 						b = query_instance{};
 					}
 					break;
 				case jtype::type_sql:
 					{
-						sql_remote_box b(c);
+						sql_remote_box b(c, schema, &the_class, this, i);
 						b = sql_remote_instance{};
 					}
 					break;
 				case jtype::type_file:
 					{
-						file_remote_box b(c);
+						file_remote_box b(c, schema, &the_class, this, i);;
 						b = file_remote_instance{};
 					}
 					break;
 				case jtype::type_http:
 					{
-						http_remote_box b(c);
+						http_remote_box b(c, schema, &the_class, this, i);;
 						b = http_remote_instance{};
 					}
 					break;
@@ -474,92 +425,92 @@ namespace countrybit
 
 		int8_box jslice::get_int8(int field_idx)
 		{
-			return get_boxed<int8_box>(jtype::type_int8, field_idx);
+			return get_boxed<int8_box>(field_idx);
 		}
 
 		int16_box jslice::get_int16(int field_idx)
 		{
-			return get_boxed<int16_box>(jtype::type_int16, field_idx);
+			return get_boxed<int16_box>(field_idx);
 		}
 
 		int32_box jslice::get_int32(int field_idx)
 		{
-			return jslice::get_boxed<int32_box>(jtype::type_int32, field_idx);
+			return jslice::get_boxed<int32_box>(field_idx);
 		}
 
 		int64_box jslice::get_int64(int field_idx)
 		{
-			return jslice::get_boxed<int64_box>(jtype::type_int64, field_idx);
+			return jslice::get_boxed<int64_box>(field_idx);
 		}
 
 		float_box jslice::get_float(int field_idx)
 		{
-			return jslice::get_boxed<float_box>(jtype::type_float32, field_idx);
+			return jslice::get_boxed<float_box>(field_idx);
 		}
 
 		double_box jslice::get_double(int field_idx)
 		{
-			return jslice::get_boxed<double_box>(jtype::type_float64, field_idx);
+			return jslice::get_boxed<double_box>(field_idx);
 		}
 
 		time_box jslice::get_time(int field_idx)
 		{
-			return get_boxed<time_box>(jtype::type_datetime, field_idx);
+			return get_boxed<time_box>(field_idx);
 		}
 
 		point_box jslice::get_point(int field_idx)
 		{
-			return get_boxed<point_box>(jtype::type_datetime, field_idx);
+			return get_boxed<point_box>(field_idx);
 		}
 
 		rectangle_box jslice::get_rectangle(int field_idx)
 		{
-			return get_boxed<rectangle_box>(jtype::type_datetime, field_idx);
+			return get_boxed<rectangle_box>(field_idx);
 		}
 
 		image_box jslice::get_image(int field_idx)
 		{
-			return get_boxed<image_box>(jtype::type_datetime, field_idx);
+			return get_boxed<image_box>(field_idx);
 		}
 
 		wave_box jslice::get_wave(int field_idx)
 		{
-			return get_boxed<wave_box>(jtype::type_datetime, field_idx);
+			return get_boxed<wave_box>(field_idx);
 		}
 
 		midi_box jslice::get_midi(int field_idx)
 		{
-			return get_boxed<midi_box>(jtype::type_datetime, field_idx);
+			return get_boxed<midi_box>(field_idx);
 		}
 
 		color_box jslice::get_color(int field_idx)
 		{
-			return get_boxed<color_box>(jtype::type_datetime, field_idx);
+			return get_boxed<color_box>(field_idx);
 		}
 
 		query_box jslice::get_query(int field_idx)
 		{
-			return get_boxed_ex<query_box>(jtype::type_query, field_idx);
+			return get_boxed_ex<query_box>(field_idx);
 		}
 
 		sql_remote_box jslice::get_sql_remote(int field_idx)
 		{
-			return get_boxed_ex<sql_remote_box>(jtype::type_sql, field_idx);
+			return get_boxed_ex<sql_remote_box>(field_idx);
 		}
 
 		http_remote_box jslice::get_http_remote(int field_idx)
 		{
-			return get_boxed_ex<http_remote_box>(jtype::type_http, field_idx);
+			return get_boxed_ex<http_remote_box>(field_idx);
 		}
 
 		file_remote_box jslice::get_file_remote(int field_idx)
 		{
-			return get_boxed_ex<file_remote_box>(jtype::type_file, field_idx);
+			return get_boxed_ex<file_remote_box>(field_idx);
 		}
 
 		string_box jslice::get_string(int field_idx)
 		{
-			size_t offset = get_offset(jtype::type_string, field_idx);
+			size_t offset = get_offset(field_idx);
 			char *b = &bytes[offset];
 			auto temp = string_box::get(b);
 			return temp;
@@ -605,12 +556,12 @@ namespace countrybit
 
 		collection_id_box jslice::get_collection_id(int field_idx)
 		{
-			return jslice::get_boxed<collection_id_box>(jtype::type_collection_id, field_idx);
+			return jslice::get_boxed<collection_id_box>(field_idx);
 		}
 
 		object_id_box jslice::get_object_id(int field_idx)
 		{
-			return jslice::get_boxed<object_id_box>(jtype::type_object_id, field_idx);
+			return jslice::get_boxed<object_id_box>(field_idx);
 		}
 
 		int jslice::size()
@@ -637,13 +588,14 @@ namespace countrybit
 			}
 		}
 		
-		std::partial_ordering jslice::compare(jtype _type, int _src_idx, jslice& _src_slice, int _dst_idx)
+		std::partial_ordering jslice::compare(int _src_idx, jslice& _src_slice, int _dst_idx)
 		{
-			auto offset1 = get_offset(_type, _src_idx);
-			auto offset2 = _src_slice.get_offset(_type, _dst_idx);
+			auto field_type = get_field(_dst_idx).type_id;
+			auto offset1 = get_offset(_src_idx);
+			auto offset2 = _src_slice.get_offset(_dst_idx);
 			char* c1 = bytes + offset1;
 			char* c2 = bytes + offset2;
-			return compare_express(_type, c1, c2);
+			return compare_express(field_type, c1, c2);
 		}
 
 		std::partial_ordering jslice::compare(jslice& _src_slice)
@@ -655,9 +607,8 @@ namespace countrybit
 				for (fis = 0; fis < ssf; fis++)
 				{
 					auto &fld_source = _src_slice.get_field(fis);
-					auto &fld_dest = get_field(fis);
-					auto offset1 = get_offset(fld_source.type_id, fis);
-					auto offset2 = _src_slice.get_offset(fld_dest.type_id, fis);
+					auto offset1 = get_offset(fis);
+					auto offset2 = _src_slice.get_offset(fis);
 					char* c1 = bytes + offset1;
 					char* c2 = bytes + offset2;
 					auto x = compare_express(fld_source.type_id, c1, c2);
@@ -677,8 +628,8 @@ namespace countrybit
 					fid = get_field_index_by_id(fld_source.field_id);
 					auto& fld_dest = get_field(fid);
 					if (!schema->is_empty(fld_dest)) {
-						auto offset1 = get_offset(fld_source.type_id, fis);
-						auto offset2 = _src_slice.get_offset(fld_dest.type_id, fid);
+						auto offset1 = get_offset(fld_source.type_id);
+						auto offset2 = _src_slice.get_offset(fld_dest.type_id);
 						char* c1 = bytes + offset1;
 						char* c2 = bytes + offset2;
 						auto x = compare_express(fld_source.type_id, c1, c2);
@@ -891,9 +842,10 @@ namespace countrybit
 				auto sc = _src[i];
 				row_id_type fid = get_field_index_by_id(sc.field_id);
 				auto fld_dest = get_field(fid);
-				sc.field_offset = get_offset(fld_dest.type_id, fid);
+				sc.field_offset = get_offset(fid);
 				sc.field_type = fld_dest.type_id;
 			}
+			return true;
 		}
 
 		bool jslice::set_filters(filter_element* _srcz, int _count, jslice& _parameters)
@@ -906,8 +858,8 @@ namespace countrybit
 				auto fld_param = _parameters.get_field(fip);
 				auto fld_dest = get_field(fid);
 
-				_src.parameter_offset = get_offset(fld_param.type_id, fip);
-				_src.target_offset = _parameters.get_offset(fld_dest.type_id, fid);
+				_src.parameter_offset = get_offset(fip);
+				_src.target_offset = _parameters.get_offset(fid);
 
 				if (fld_param.is_int64() && fld_dest.is_int8())
 				{
@@ -1161,8 +1113,8 @@ namespace countrybit
 				auto fld_param = _parameters.get_field(fip);
 				auto fld_dest = get_field(fid);
 
-				_src.parameter_offset = get_offset(fld_param.type_id, fip);
-				_src.target_offset = _parameters.get_offset(fld_dest.type_id, fid);
+				_src.parameter_offset = get_offset(fip);
+				_src.target_offset = _parameters.get_offset(fid);
 
 				if (fld_param.is_int64() && fld_dest.is_int8())
 				{
@@ -1326,6 +1278,7 @@ namespace countrybit
 					implement_update<string_box, string_box>(_src);
 				}
 			}
+			return true;
 		}
 
 		bool jslice::set_filters(filter_element_collection& _srcz, jslice& _parameters)
@@ -1608,7 +1561,12 @@ namespace countrybit
 
 		bool jlist::chop()
 		{
-			;
+			bool result = false;
+			if (data.instance->allocated > 0) {
+				data.instance->allocated--;
+				result = true;
+			}
+			return result;
 		}
 
 		jslice jlist::append_slice()
@@ -1693,152 +1651,6 @@ namespace countrybit
 						return compare_result == std::partial_ordering::less;
 					});
 			}
-		}
-
-		// - jmodel
-
-		jmodel::jmodel() : 
-			parent(nullptr),
-			schema(nullptr), 
-			class_id(null_row), 
-			model_box(nullptr)
-		{
-			;
-		}
-
-		jmodel::jmodel(jslice *_parent, jschema* _schema, row_id_type _class_id, char* _bytes, bool _init) : 
-			parent(_parent),
-			schema(_schema), 
-			class_id(_class_id),
-			model_box( (serialized_box*) _bytes )
-		{
-
-			jclass model_class_def = schema->get_class(_class_id);
-			jclass_header *model_class = model_class_def.pitem();
-			auto box_size = model_class->class_size_bytes;
-			auto num_actors = model_class->number_of_actors;
-
-			data.instance = nullptr;
-
-			if (_init) 
-			{
-				model_box->init(box_size);
-				data.instance = model_box->allocate<jmodel_instance>(1);
-				data.instance->selection_offset = array_box<row_id_type>::create(model_box, num_actors);
-				data.instance->slice_offset = model_box->reserve(box_size);
-				data.instance->actor_id = 0;
-			}
-			else 
-			{
-				data.instance = model_box->unpack<jmodel_instance>(0);
-			}
-
-			data.model_bytes = model_box->unpack<char>(data.instance->slice_offset);
-			data.selections = array_box<row_id_type>::get(model_box, data.instance->selection_offset);
-		}
-
-		jmodel::jmodel(dynamic_box& _dest, jmodel& _src) 
-		{
-			jclass model_class_def = _src.schema->get_class(_src.class_id);
-			jclass_header* model_class = model_class_def.pitem();
-			auto box_size = model_class->class_size_bytes;
-			auto num_actors = model_class->number_of_actors;
-
-			model_box = _dest.get_box();
-			model_box->init(box_size);
-			_dest.copy(_src.model_box);
-			data.instance = model_box->unpack<jmodel_instance>(0);
-			data.model_bytes = model_box->unpack<char>(data.instance->slice_offset);
-			data.selections = array_box<row_id_type>::get(model_box, data.instance->selection_offset);
-			parent = _src.parent;
-		}
-
-		bool jmodel::is_empty()
-		{
-			return schema == nullptr || model_box == nullptr;
-		}
-
-		size_t jmodel::estimate_size(put_model_request& _request, uint32_t base_class_bytes)
-		{
-			size_t estimated_size = base_class_bytes;
-			estimated_size += sizeof(jmodel_instance);
-			estimated_size += array_box<row_id_type>::get_box_size(_request.number_of_actors);
-			estimated_size += 32;
-			return estimated_size;
-		}
-
-		size_t jmodel::size()
-		{
-			return data.number_of_actors;
-		}
-
-		row_id_type	jmodel::get_field_index(row_id_type state_field_id)
-		{
-			jclass model_class_def = schema->get_class(class_id);
-			for (int i = 0; i < model_class_def.size(); i++)
-			{
-				auto& fld = model_class_def.detail(i);
-				if (fld.field_id == state_field_id && fld.model_state) {
-					return i;
-				}
-			}
-			return null_row;
-		}
-
-		jslice jmodel::get_model_slice()
-		{
-			jslice slice(parent, schema, class_id, data.model_bytes, { 0, 0, 0 } );
-			return slice;
-		}
-
-		jlist jmodel::get_state(row_id_type state_field_id)
-		{
-			auto slice = get_model_slice();
-			auto field_idx = get_field_index(state_field_id);
-			slice.get_list(field_idx);
-		}
-
-		row_id_type jmodel::create_actor()
-		{
-			data.instance->actor_id++;
-			return data.instance->actor_id;
-		}
-
-		jslice jmodel::set_actor(row_id_type state_field_id, row_id_type actor_id)
-		{
-			;
-		}
-
-		jslice jmodel::get_actor(row_id_type state_field_id, row_id_type actor_id)
-		{
-			jlist state = get_state(state_field_id);
-
-		}
-
-		void jmodel::delete_actor(row_id_type state_field_id, row_id_type actor_id)
-		{
-			;
-		}
-
-		void jmodel::move_actor(row_id_type source_state_field_id, row_id_type dest_state_field_id, row_id_type actor_id)
-		{
-			;
-		}
-
-		void jmodel::delete_actor(row_id_type state_field_id)
-		{
-			;
-		}
-
-		char* jmodel::get_bytes()
-		{
-			return (char*)model_box;
-		}
-
-		uint64_t jmodel::get_size_bytes()
-		{
-			jclass model_class_def = schema->get_class(class_id);
-			return model_class_def.item().class_size_bytes;
 		}
 
 		void jschema::add_standard_fields() 

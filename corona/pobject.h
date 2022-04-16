@@ -75,7 +75,7 @@ namespace countrybit
 				return (pvalue_type == pvalue_types::array_value) ? array_value : nullptr;
 			}
 
-			bool set_value(database::string_box& dest) const;
+			void set_value(database::string_box& dest) const;
 			void set_value(database::double_box& dest) const;
 			void set_value(database::float_box& dest) const;
 			void set_value(database::int8_box& dest) const;

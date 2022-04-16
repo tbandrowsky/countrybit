@@ -445,6 +445,7 @@ namespace countrybit
 			}
 		};
 
+
 		template <typename P, typename C>
 		requires (std::is_standard_layout<P>::value && std::is_standard_layout<C>::value)
 		class item_details_table
