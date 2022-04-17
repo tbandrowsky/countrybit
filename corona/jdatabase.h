@@ -78,7 +78,8 @@ namespace countrybit
 		{
 		public:
 			object_name				collection_name;
-			uint64_t				size_bytes;
+			uint32_t				max_actors;
+			uint32_t				history_length;
 		};
 
 		class jdatabase_get_collection
@@ -136,6 +137,7 @@ namespace countrybit
 
 			task<jdatabase_collection_response> create_collection(jdatabase_create_collection _create_collection);
 			task<jdatabase_collection_response> get_collection(jdatabase_get_collection _create_collection);
+			task<jdatabase_collection_response> query(query_definition_type _query);
 		};
 	}
 };

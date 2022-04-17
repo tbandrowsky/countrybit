@@ -103,7 +103,7 @@ namespace countrybit
 			}
 
 			row_id_type classes[2] = { clsid, null_row };
-			uint64_t box_size = schema.estimate_collection_size(_create_collection.number_of_objects, classes);
+			uint64_t box_size = schema.get_max_object_size(_create_collection.number_of_objects, classes);
 
 			if (box_size == null_row) 
 			{

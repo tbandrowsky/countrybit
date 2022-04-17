@@ -42,7 +42,11 @@ namespace countrybit
 		public:
 			collection_id_type collection_id;
 			row_id_type table_id;
+			row_id_type actor_index_id;
+			row_id_type actor_id;
 		};
+
+		using actor_id_type = row_id_type;
 
 		class jcollection_object
 		{
@@ -51,6 +55,7 @@ namespace countrybit
 			jtype			otype;
 			row_id_type		class_id;
 			row_id_type		class_field_id;
+			row_id_type		actor_id_type;
 		};
 
 		class jschema;
@@ -415,20 +420,24 @@ namespace countrybit
 
 		};
 
-		class jcollection_item
+		class actor_step_type
 		{
 		public:
-			jcollection_object item_info;
-			jlist item_list;
-			jarray item_array;
+			row_id_type class_id;
+			time_t		occurred;
+			bool		is_cancel;
 		};
+
+		using actors_type = sorted_index<actor_id_type, actor_step_type>;
+		using actor_history_type = item_details_table<jcollection_object, char>;
 
 		class jcollection
 		{
 
 			jschema* schema;
 			collection_id_type collection_id;
-			item_details_table<jcollection_object, char> objects;
+			actors_type actors;
+			actor_history_type objects;
 
 		public:
 
@@ -437,21 +446,28 @@ namespace countrybit
 				;
 			}
 
-			jcollection(jschema* _schema, collection_id_type _collection_id, item_details_table<jcollection_object, char>& _objects) :
+			jcollection(jschema* _schema, collection_id_type _collection_id, actor_history_type& _history, actors_type& _actors) :
 				schema(_schema),
 				collection_id(_collection_id),
-				objects(_objects)
+				objects(_history),
+				actors(_actors)
 			{
 				;
 			}
 
-			jarray create_object(row_id_type _class_id, dimensions_type _dims);
-			jarray get_object(row_id_type _object_id);
-			jlist create_list(row_id_type _class_id, int _capacity);
-			jlist get_list(row_id_type _object_id);
-			jcollection_item get_item(row_id_type _object_id);
+			jcollection(jcollection&& _src) 
+			{
+				schema = std::move(_src.schema);
+				collection_id = std::move(_src.collection_id);
+				objects = std::move(_src.objects);
+				actors = std::move(_src.actors);
+			}
 
-			int size()
+			row_id_type create_actor();
+			jarray create_object(row_id_type _actor_id, row_id_type _class_id, dimensions_type _dims);
+			jarray get_object(row_id_type _actor_id, row_id_type _object_id);
+
+			row_id_type size()
 			{
 				return objects.size();
 			}
@@ -949,7 +965,7 @@ namespace countrybit
 				pcr.class_name = request.options.result_class_name;
 
 				auto& path = request.options.source_path;
-				bind_class(path.root.model_name, path.root.model_id);
+				bind_class(path.root.class_name, path.root.class_id);
 
 				row_id_type member_index = 0;
 
@@ -1333,7 +1349,7 @@ namespace countrybit
 				return http_remotes[xid];
 			}
 
-			uint64_t estimate_collection_size(int _number_of_objects, int* _class_ids)
+			uint64_t get_max_object_size(row_id_type* _class_ids)
 			{
 				if (!_class_ids)
 				{
@@ -1355,9 +1371,9 @@ namespace countrybit
 
 			template <typename B>
 			requires (box<B, jcollection_map>)
-			row_id_type reserve_collection(B* _b, collection_id_type _collection_id, int _number_of_objects, int* _class_ids)
+			row_id_type reserve_collection(B* _b, collection_id_type _collection_id, int _number_of_actors, int _max_history_length, row_id_type* _class_ids)
 			{
-				uint64_t max_size = estimate_collection_size(_number_of_objects, _class_ids);
+				uint64_t max_size = get_max_object_size(_class_ids);
 				if (!max_size)
 				{
 					return null_row;
@@ -1365,18 +1381,8 @@ namespace countrybit
 
 				jcollection_map jcm;
 				jcm.collection_id = _collection_id;
-				jcm.table_id = item_details_table<jcollection_object, char>::reserve_table(_b, _number_of_objects, max_size * _number_of_objects);
-				row_id_type jcm_row = _b->pack(jcm);
-				return jcm_row;
-			}
-
-			template <typename B>
-				requires (box<B, jcollection_map>)
-			row_id_type reserve_collection(B* _b, collection_id_type _collection_id, int _number_of_objects, int64_t _total_bytes)
-			{
-				jcollection_map jcm;
-				jcm.collection_id = _collection_id;
-				jcm.table_id = item_details_table<jcollection_object, char>::reserve_table(_b, _number_of_objects, _total_bytes);
+				jcm.table_id = item_details_table<jcollection_object, char>::reserve_table(_b, _max_history_length, max_size * _number_of_objects);
+				jcm.actor_index_id = table<row_id_type>::::reserve_table(_b, _number_of_actors);
 				row_id_type jcm_row = _b->pack(jcm);
 				return jcm_row;
 			}
@@ -1394,32 +1400,12 @@ namespace countrybit
 
 			template <typename B>
 			requires (box<B, jcollection_map>)
-			jcollection create_collection_by_class(B* _b, collection_id_type _collection_id, int _number_of_objects, row_id_type* _class_ids)
+			jcollection create_collection(B* _b, collection_id_type _collection_id, int _number_of_actors, int _max_history_length, row_id_type* _class_ids)
 			{
-				auto reserved_id = reserve_collection(_b, _collection_id, _number_of_objects, _class_ids);
+				auto reserved_id = reserve_collection(_b, _collection_id, _number_of_actors, _number_of_objects, _class_ids);
 				jcollection tmp = get_collection(_b, reserved_id);
 				return tmp;
 			}
-
-			template <typename B>
-			requires (box<B, jcollection_map>)
-			jcollection create_collection_by_class(B* _b, collection_id_type _collection_id, int _number_of_objects, row_id_type _class_id)
-			{
-				row_id_type class_ids[2] = { _class_id, null_row };
-				row_id_type reserved_id = reserve_collection(_b, _collection_id, _number_of_objects, class_ids);
-				jcollection tmp = get_collection(_b, reserved_id);
-				return tmp;
-			}
-
-			template <typename B>
-				requires (box<B, jcollection_map>)
-			jcollection create_collection(B* _b, collection_id_type _collection_id, int _number_of_objects, int _total_bytes)
-			{
-				row_id_type reserved_id = reserve_collection(_b, _collection_id, _number_of_objects, _total_bytes);
-				jcollection tmp = get_collection(_b, reserved_id);
-				return tmp;
-			}
-
 		};
 
 		class jarray;

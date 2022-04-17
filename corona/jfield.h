@@ -395,8 +395,9 @@ namespace countrybit
 		class path_root
 		{
 		public:
-			object_name				model_name;
-			row_id_type				model_id;
+			object_name				collection_name;
+			object_name				class_name;
+			row_id_type				class_id;
 		};
 
 		class path_node

@@ -56,7 +56,12 @@ namespace countrybit
 			return hr == S_OK;
 		}
 
-		jarray jcollection::create_object(row_id_type _class_id, dimensions_type _dims)
+		row_id_type jcollection::create_actor()
+		{
+			;
+		}
+
+		jarray jcollection::create_object(row_id_type _actor_id, row_id_type _class_id, dimensions_type _dims)
 		{
 			auto myclass = schema->get_class(_class_id);
 
@@ -93,48 +98,12 @@ namespace countrybit
 			return ja;
 		}
 
-		jarray jcollection::get_object(row_id_type _object_id)
+		jarray jcollection::get_object(row_id_type _actor_id, row_id_type _object_id)
 		{
 			auto new_object = objects.get(_object_id);
 			return jarray(nullptr, schema, new_object.item().class_field_id, new_object.pdetails());
 		}
 
-		jlist jcollection::create_list(row_id_type _class_id, int _capacity)
-		{
-			auto myclass = schema->get_class(_class_id);
-
-			object_name composed_class_field_name;
-			dimensions_type d = { _capacity, 1, 1 };
-			schema->get_class_field_name(composed_class_field_name, myclass.item().name, d);
-			auto find_field_id = schema->find_field(composed_class_field_name);
-			if (find_field_id == null_row)
-			{
-				put_object_field_request porf;
-				porf.name.name = composed_class_field_name;
-				porf.name.type_id = jtype::type_object;
-				porf.options.class_id = _class_id;
-				porf.options.class_name = myclass.item().name;
-				porf.options.class_size_bytes = myclass.item().class_size_bytes;
-				porf.options.dim = d;
-				find_field_id = schema->put_list_field(porf);
-			}
-			find_field_id = schema->find_field(composed_class_field_name);
-			auto find_field = schema->get_field(find_field_id);
-			auto new_object = objects.create(find_field.size_bytes);
-			new_object.item().oid.collection_id = collection_id;
-			new_object.item().oid.row_id = new_object.row_id();
-			new_object.item().class_field_id = find_field_id;
-			new_object.item().class_id = _class_id;
-			jlist jl(nullptr, schema, find_field_id, new_object.pdetails());
-
-			return jl;
-		}
-
-		jlist jcollection::get_list(row_id_type _object_id)
-		{
-			auto new_object = objects.get(_object_id);
-			return jlist(nullptr, schema, new_object.item().class_field_id, new_object.pdetails());
-		}
 
 		jslice::jslice() : schema(nullptr), class_id(null_row), bytes(nullptr)
 		{
@@ -1865,7 +1834,9 @@ namespace countrybit
 			collection_id_type colid;
 			init_collection_id(colid);
 			
-			jcollection people = schema.create_collection_by_class(&box, colid, 50, person_class_id);
+			row_id_type classes[2] = {person_class_id, null_row};
+
+			jcollection people = schema.create_collection(&box, colid, 1, 50, classes);
 
 			jarray pa;
 
@@ -2034,7 +2005,9 @@ namespace countrybit
 
 			init_collection_id(colid);
 
-			jcollection sprites = schema.create_collection_by_class(&box, colid, 50, sprite_class_id);
+			row_id_type classesb[2] = { sprite_class_id, null_row };
+
+			jcollection sprites = schema.create_collection(&box, colid, 50, 50, classesb);
 
 			for (int i = 0; i < 10; i++) {
 				auto new_object = sprites.create_object(sprite_class_id, {1,1,1});
