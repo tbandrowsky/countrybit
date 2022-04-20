@@ -1,7 +1,8 @@
 
-#include "jdatabase.h"
-
 #include <filesystem>
+
+#include "application.h"
+#include "jdatabase.h"
 
 namespace countrybit 
 {
@@ -131,31 +132,6 @@ namespace countrybit
 			jref.collection_file_name = collection_path;
 
 			co_return response;
-		}
-
-		task<jdatabase_object_response> jdatabase::create_object(jdatabase_create_object _request)
-		{
-
-		}
-
-		task<jdatabase_object_response> jdatabase::get_object(jdatabase_get_object _request)
-		{
-
-		}
-
-		task<jdatabase_object_response> jdatabase::put_object(jdatabase_put_object _request)
-		{
-
-		}
-
-		task<jdatabase_object_response> jdatabase::update_object(jdatabase_update_object _request)
-		{
-
-		}
-
-		jcollection jdatabase::query(query_definition_type& query)
-		{
-
 		}
 
 		jdatabase::~jdatabase()

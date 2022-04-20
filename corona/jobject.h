@@ -1,4 +1,4 @@
-a#pragma once
+#pragma once
 
 #include "jfield.h"
 #include "store_box.h"
@@ -14,6 +14,7 @@ a#pragma once
 #include "sql_remote_box.h"
 #include "http_remote_box.h"
 #include "file_remote_box.h"
+#include "sorted_index.h"
 #include "query_box.h"
 #include "float_box.h"
 
@@ -851,12 +852,7 @@ namespace countrybit
 				int64_t _size_bytes)
 			{
 
-				auto row_id_iter = fields_by_name[_name];
-
-				if (row_id_iter != std::end(fields_by_name))
-				{
-					_field_id = row_id_iter.get_value();
-				}
+				_field_id = find_field(_name);
 
 				if (_field_id == null_row)
 				{
@@ -1390,11 +1386,7 @@ namespace countrybit
 			row_id_type put_class(put_class_request request)
 			{
 				row_id_type class_id = find_class(request.class_name);
-
-				if (class_id != null_row)
-				{
-					request.class_id = class_id;
-				}
+				request.class_id = class_id;
 
 				auto& mfs = request.member_fields;
 				auto sz = mfs.size();
@@ -1427,21 +1419,37 @@ namespace countrybit
 				return false;
 			}
 
-			row_id_type put_model(jmodel request)
+			jmodel put_model(jmodel request)
 			{
 				row_id_type model_id = find_model(request.model_name);
+				request.model_id = model_id;
 
-				if (model_id != null_row)
+				for (auto opt : request.create_options)
 				{
-					request.model_id = model_id;
-				}
-
-				for (auto opt : request.object_options)
-				{
-					for (auto sel : opt.item.selectors) 
+					for (auto sel : opt.item.selectors.rules) 
 					{
 						bind_class(sel.item.class_name, sel.item.class_id);
 					}
+					bind_class(opt.item.create_class_name, opt.item.create_class_id);
+					bind_class(opt.item.item_id_class_name, opt.item.item_id_class);
+				}
+
+				for (auto opt : request.select_options)
+				{
+					for (auto sel : opt.item.selectors.rules)
+					{
+						bind_class(sel.item.class_name, sel.item.class_id);
+					}
+					bind_class(opt.item.select_class_name, opt.item.select_class_id);
+				}
+
+				for (auto opt : request.update_options)
+				{
+					for (auto sel : opt.item.selectors.rules)
+					{
+						bind_class(sel.item.class_name, sel.item.class_id);
+					}
+					bind_class(opt.item.update_class_name, opt.item.update_class_id);
 				}
 
 				row_id_type model_id;
@@ -1589,7 +1597,7 @@ namespace countrybit
 				if (jcm_row != null_row) {
 					jcollection_header* hdr = _b->unpack<jcollection_header>(jcm_row);
 					hdr->actors_id = actor_collection::reserve_table(_b, _number_of_actors);
-					hdr->objects_id =  objects_collection::reserve_table(_b, _max_history_length, max_size * _max_history_length);
+					hdr->objects_id =  object_collection::reserve_table(_b, _max_history_length, max_size * _max_history_length);
 				}
 				return jcm_row;
 			}
@@ -1600,17 +1608,17 @@ namespace countrybit
 			{
 				jcollection_header *jcm;
 				jcm = _b->unpack<jcollection_header>(_location);
-				auto actor_history = actor_history_type::get_table(_b, jcm->actor_history_id);
-				auto collection_object = collection_objects_type::get_table(_b, jcm->collection_object_id);
-				jcollection collection(this, jcm->collection_id, actor_history, collection_object);
+				auto actors = actor_collection::get_table(_b, jcm->actors_id);
+				auto objects = object_collection::get_table(_b, jcm->objects_id);
+				jcollection collection(this, jcm->model_id, jcm->collection_id, actors, objects);
 				return collection;
 			}
 
 			template <typename B>
 			requires (box<B, jcollection_header>)
-			jcollection create_collection(B* _b, collection_id_type _collection_id, int _number_of_actors, int _max_history_length, row_id_type* _class_ids)
+			jcollection create_collection(B* _b, collection_id_type _collection_id, int _model_id, int _number_of_actors, int _max_history_length, row_id_type* _class_ids)
 			{
-				auto reserved_id = reserve_collection(_b, _collection_id, _number_of_actors, _max_history_length, _class_ids);
+				auto reserved_id = reserve_collection(_b, _collection_id, _model_id, _number_of_actors, _max_history_length, _class_ids);
 				jcollection tmp = get_collection(_b, reserved_id);
 				return tmp;
 			}

@@ -9,7 +9,7 @@
 #include <atomic>
 
 #include "jobject.h"
-#include "application.h"
+#include <string_box.h>
 #include "messages.h"
 #include "function.h"
 
@@ -17,7 +17,6 @@ namespace countrybit
 {
 	namespace database
 	{
-
 		using namespace countrybit::system;
 
 		class jcollection_ref
@@ -69,6 +68,8 @@ namespace countrybit
 			int num_http_remotes;
 			int num_file_remotes;
 			int num_sql_remotes;
+			int num_actors;
+			int num_models;
 
 			object_path database_filename;
 			object_path database_folder;
@@ -78,8 +79,9 @@ namespace countrybit
 		{
 		public:
 			object_name				collection_name;
+			uint32_t				model_name;
 			uint32_t				max_actors;
-			uint32_t				history_length;
+			uint32_t				max_objects;
 		};
 
 		class jdatabase_get_collection
@@ -88,31 +90,32 @@ namespace countrybit
 			object_name				collection_name;
 		};
 
-		class jdatabase_file_response : public base_result
+		class jdatabase_file_response : public os_result
 		{
 		public:
-			os_result			result;
+			
 		};
 
-		class jdatabase_collection_response : public base_result
+		class jdatabase_collection_response : public os_result
 		{
 		public:
 			collection_id_type	collection_id;
-			os_result			result;
 		};
 
-		class jdatabase_size_response : public base_result
+		class jdatabase_size_response : public os_result
 		{
 		public:
 			uint64_t size_bytes;
 		};
 
-		class jdatabase_object_response : public base_result
+		class jdatabase_object_response : public os_result
 		{
 		public:
 			object_id_type		object_id;
 			jarray_container	items;
 		};
+
+		class application;
 
 		class jdatabase
 		{
@@ -129,8 +132,10 @@ namespace countrybit
 
 		public:
 
-			jdatabase(system::application* _application);
+			jdatabase(application* _application);
 			~jdatabase();
+
+			bool alter_schema(std::function<bool(jschema* _schema)> schema_proc);
 
 			task<jdatabase_file_response> open(jdatabase_open _open);
 			task<jdatabase_file_response> create(jdatabase_create _create);

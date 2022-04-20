@@ -2287,9 +2287,21 @@ namespace countrybit
 
 			row_id_type classesb[2] = { sprite_class_id, null_row };
 
-			jcollection sprites = schema.create_collection(&box, colid, 50, 50, classesb);
 
-			actor_id_type actor_id = sprites.create_actor("spriteboy");
+			model_type sprite_model;
+
+			sprite_model.model_id = null_row;
+			sprite_model.model_name = "sprite model";
+			
+			sprite_model = schema.put_model(sprite_model);
+
+			jcollection sprites = schema.create_collection( &box, colid, sprite_model.model_id, 50, 50, classesb);
+
+			actor_type sprite_boy;
+			sprite_boy.actor_id = null_row;
+			sprite_boy.actor_name = "sprite_boy";
+
+			sprite_boy = sprites.create_actor(sprite_boy);
 			row_id_type new_sprite_id;
 
 			for (int i = 0; i < 10; i++) {

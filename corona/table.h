@@ -302,7 +302,7 @@ namespace countrybit
 
 			bool check(int index)
 			{
-				if (r == null_row || r >= size() || r < 0)
+				if (index == null_row || index >= size() || index < 0)
 				{
 					return false;
 				}

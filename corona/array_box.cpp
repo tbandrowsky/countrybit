@@ -40,6 +40,19 @@ namespace countrybit
 				}
 			}
 
+			iarray<int, 100> test_iarray;
+
+			for (int i = 0; i < 10; i++)
+				test_iarray.push_back(i);
+
+			for (auto r : test_iarray)
+			{
+				if (r.item != r.location || test_iarray[r.location] != r.item) {
+					std::cout << __LINE__ << ": iarray failed" << std::endl;
+					return false;
+				}
+			}
+
 			return true;
 		}
 	}

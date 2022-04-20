@@ -74,7 +74,7 @@ namespace countrybit
 				length = 0;
 			}
 
-			void push_back(item_type& t)
+			void push_back(const item_type& t)
 			{
 				if (length < max_items) {
 					data[length] = t;
