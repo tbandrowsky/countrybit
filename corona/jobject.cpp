@@ -48,7 +48,6 @@ namespace countrybit
 			return compare(a, b) != 0;
 		}
 
-
 		bool init_collection_id(collection_id_type &collection_id)
 		{
 			::GUID gidReference;
@@ -56,17 +55,181 @@ namespace countrybit
 			return hr == S_OK;
 		}
 
-		row_id_type jcollection::create_actor()
+		jslice actor_command_result::create_object(jschema* _schema, row_id_type _class_id)
+		{
+			auto myclass = _schema->get_class(_class_id);
+			auto bytes_to_allocate = myclass.item().class_size_bytes;
+
+			data.expand_check(bytes_to_allocate);
+			row_id_type location = data.reserve(bytes_to_allocate);
+
+			dimensions_type d = { 0,0,0 };
+
+			jslice ja(nullptr, _schema, _class_id, data.get_box(), location, d);
+			ja.construct();
+			return ja;
+		}
+
+		jslice actor_command_result::copy_object(jschema* _schema, jslice& _src)
+		{
+			jslice dest = create_object(_schema, _src.get_class().item().class_id);
+			dest.update(_src);
+			return dest;
+		}
+
+		bool jcollection::selector_applies(selector_collection* _selector, actor_id_type& _actor)
+		{
+			auto& actor = actors[_actor];
+			auto selections = &actor.selections;
+			selector_rule_collection* required = &_selector->rules;
+
+			// we can allow the option to create a class if there are no rules for selection.
+			// if we do create the option here, it will in fact be a new item.
+			if (required->size() == 0)
+			{
+				return true;
+			}
+			// we can allow the option to create a class, if and only if we exactly satisfy the 
+			// selectors on this option. if we do create on the option here, it will have the item id
+			// of the class specified in the rule so that continuity will be preserved.
+			else if (
+				required->all_of([this, selections](selector_rule& src) {
+					int c = selections->count_if(
+						[src, this](row_id_type& dest) {
+							auto obj = this->objects[dest];
+							row_id_type class_id = obj.item().class_id;
+							return class_id == src.class_id;
+						});
+					return c == 1;
+					})
+				&&
+				selections->all_of([this, required](row_id_type& dest) {
+				return required->any_of([this, dest](selector_rule& src) {
+					return src.class_id == dest;
+					});
+					})
+				)
+			{
+				return true;
+			}
+
+			return false;
+		}
+
+		actor_command_result jcollection::get_command_result(row_id_type _actor)
+		{
+			actor_command_result acr;
+			auto model = schema->get_model(model_id);
+			auto& actor = actors[ _actor ];
+
+			auto& create_options = model.create_options;
+			auto& select_options = model.select_options;
+			auto& update_options = model.update_options;
+			auto selections = &actor.selections;
+
+			// first figure out our create_options
+
+			for (auto oi : create_options)
+			{
+				auto rule = &oi.item;
+				auto required = &oi.item.selectors;
+
+				if (selector_applies(&oi.item.selectors, _actor)) {
+					actor_create_object aco;
+					auto selected_create = selections->where([rule, this](row_id_type& src) {
+						return objects[src].item().class_id == rule->item_id_class;
+						});
+					if (selected_create != std::end(*selections)) {
+						row_id_type object_id = selected_create.get_value().item;
+						row_id_type item_id = objects[object_id].item().item_id;
+						aco.item_id = item_id;
+					}
+					else 
+					{
+						aco.item_id = null_row;
+					}
+					aco.class_id = oi.item.create_class_id;
+					aco.item = acr.create_object(schema, aco.class_id);
+					aco.select_on_create = oi.item.select_on_create;
+					acr.create_options.push_back(aco);
+				}
+			}
+
+			// now to our select options
+			
+			for (auto oi : select_options)
+			{
+				auto rule = &oi.item;
+				auto required = &oi.item.selectors;
+
+				if (selector_applies(&oi.item.selectors, _actor)) 
+				{
+					// we can now select objects of this class
+					for (row_id_type oid = 0; oid < objects.size(); oid++)
+					{
+						actor_select_object aso;
+						auto obj = objects[oid];
+						if (obj.item().class_id == rule->select_class_id) 
+						{
+							aso.object_id = oid;
+							aso.extend = false;
+							acr.select_options.push_back(aso);
+						}
+					}
+				}
+			}
+
+			// and to our update options
+
+			for (auto oi : update_options)
+			{
+				auto rule = &oi.item;
+				auto required = &oi.item.selectors;
+
+				if (selector_applies(&oi.item.selectors, _actor))
+				{
+					actor_update_object auo;
+
+					for (auto sel : actor.selections) 
+					{
+						auo.object_id = sel.item;
+						auo.selected = true;
+						auo.item = get_object(auo.object_id);
+						acr.update_options.push_back(auo);
+					}
+				}
+			}
+		}
+
+		actor_command_result jcollection::create_actor(const actor_type& _actor)
+		{
+			auto new_actor = actor_history.create_item(8);
+			new_actor.item() = _actor;
+			new_actor.item().actor_id = new_actor.row_id();
+			return get_command_result( new_actor.row_id() );
+		}
+
+		actor_command_result actor_command(const actor_select_object& _select)
 		{
 			;
 		}
 
-		jarray jcollection::create_object(row_id_type _actor_id, row_id_type _class_id, dimensions_type _dims)
+		actor_command_result actor_command(const actor_create_object& _select)
+		{
+			;
+		}
+
+		actor_command_result actor_command(const actor_update_object& _select)
+		{
+		
+		}
+
+		jslice jcollection::create_object(row_id_type _actor_id, row_id_type _class_id, row_id_type& object_id)
 		{
 			auto myclass = schema->get_class(_class_id);
 
 			object_name composed_class_field_name;
-			dimensions_type d = _dims;
+			dimensions_type d = { 1, 1, 1 };
 			schema->get_class_field_name(composed_class_field_name, myclass.item().name, d);
 			auto find_field_id = schema->find_field(composed_class_field_name);
 			if (find_field_id == null_row)
@@ -83,25 +246,35 @@ namespace countrybit
 			find_field_id = schema->find_field(composed_class_field_name);
 			auto find_field = schema->get_field(find_field_id);
 			auto bytes_to_allocate = find_field.size_bytes;
-			auto new_object = objects.create(bytes_to_allocate);
+
+			auto new_object = collection_objects.create_item(bytes_to_allocate);
 			new_object.item().oid.collection_id = collection_id;
 			new_object.item().oid.row_id = new_object.row_id();
 			new_object.item().class_field_id = find_field_id;
 			new_object.item().class_id = _class_id;
-			jarray ja(nullptr, schema, find_field_id, new_object.pdetails());
+			new_object.item().otype = jtype::type_object;
+			auto detail = actor_history.append_detail(_actor_id, 1);
+			detail.object_id = new_object.row_id();
+			time(&detail.occurred);
 
-			for (auto jai : ja)
-			{
-				jai.construct();
-			}
+			jarray ja(nullptr, schema, find_field_id, new_object.pdetails(), true);
 
-			return ja;
+			return ja.get_slice(0);
 		}
 
-		jarray jcollection::get_object(row_id_type _actor_id, row_id_type _object_id)
+
+		jslice jcollection::get_object(row_id_type _object_id)
 		{
-			auto new_object = objects.get(_object_id);
-			return jarray(nullptr, schema, new_object.item().class_field_id, new_object.pdetails());
+			auto new_object = collection_objects.get_item(_object_id);
+			if (new_object.pitem()->otype == jtype::type_object) {
+				jarray jax(nullptr, schema, new_object.item().class_field_id, new_object.pdetails());
+				return jax.get_slice(0);
+			}
+			else 
+			{
+				jslice empty;
+				return empty;
+			}
 		}
 
 
@@ -110,7 +283,12 @@ namespace countrybit
 			;
 		}
 
-		jslice::jslice(jslice *_parent, jschema* _schema, row_id_type _class_id, char* _bytes, dimensions_type _dim) : parent(_parent), schema(_schema), class_id(_class_id), bytes(_bytes), dim(_dim)
+		jslice::jslice(jslice *_parent, jschema* _schema, row_id_type _class_id, char* _bytes, dimensions_type _dim) : parent(_parent), schema(_schema), class_id(_class_id), bytes(_bytes), dim(_dim), box(nullptr), location(null_row)
+		{
+			the_class = schema->get_class(_class_id);
+		}
+
+		jslice::jslice(jslice* _parent, jschema* _schema, row_id_type _class_id, serialized_box *_box, row_id_type _location, dimensions_type _dim) : parent(_parent), schema(_schema), class_id(_class_id), bytes(_nullptr), dim(_dim), box(_box), location(_location)
 		{
 			the_class = schema->get_class(_class_id);
 		}
@@ -219,7 +397,7 @@ namespace countrybit
 				jclass_field& jcf = the_class.detail(i);
 				jfield jf = schema->get_field(jcf.field_id);
 				int offset = jcf.offset;
-				char* c = &bytes[offset];
+				char* c = get_bytes() + offset;
 				switch (jf.type_id) 
 				{
 				case jtype::type_null:
@@ -480,7 +658,7 @@ namespace countrybit
 		string_box jslice::get_string(int field_idx)
 		{
 			size_t offset = get_offset(field_idx);
-			char *b = &bytes[offset];
+			char *b = get_bytes() + offset;
 			auto temp = string_box::get(b);
 			return temp;
 		}
@@ -488,7 +666,7 @@ namespace countrybit
 		jarray jslice::get_object(int field_idx)
 		{
 #if _DEBUG
-			if (schema == nullptr || class_id == null_row || bytes == nullptr) {
+			if (schema == nullptr || class_id == null_row) {
 				throw std::logic_error("slice is not initialized");
 			}
 #endif
@@ -499,7 +677,7 @@ namespace countrybit
 				throw std::invalid_argument("Invalid field type " + std::to_string(jf.type_id) + " for field idx " + std::to_string(field_idx));
 			}
 #endif
-			char *b = &bytes[jcf.offset];
+			char *b = get_bytes() + jcf.offset;
 			jarray jerry(this, schema, jcf.field_id, b);
 			return jerry;
 		}
@@ -518,7 +696,7 @@ namespace countrybit
 				throw std::invalid_argument("Invalid field type " + std::to_string(jf.type_id) + " for field idx " + std::to_string(field_idx));
 			}
 #endif
-			char* b = &bytes[jcf.offset];
+			char* b = get_bytes() + jcf.offset;
 			jlist jerry(this, schema, jcf.field_id, b);
 			return jerry;
 		}
@@ -539,31 +717,38 @@ namespace countrybit
 			return the_class.size();
 		}
 
-		void jslice::copy(jslice& _src_slice)
+		void jslice::update(jslice& _src_slice)
 		{
-			row_id_type fis, fid, ssf;
-
-			ssf = _src_slice.size();
-			for (fis = 0; fis < ssf; fis++)
+			if (_src_slice.class_id == class_id) 
 			{
-				auto fld_source = _src_slice.get_field(fis);
-				auto fld_dest_idx = get_field_index_by_id(fld_source.field_id);
-				if (fld_dest_idx != null_row) 
+				std::copy(_src_slice.get_bytes(), _src_slice.get_bytes() + size(), get_bytes());
+			}
+			else 
+			{
+				row_id_type fis, fid, ssf;
+
+				ssf = _src_slice.size();
+				for (fis = 0; fis < ssf; fis++)
 				{
-					auto& sf = _src_slice.get_class_field(fis);
-					auto &df = get_class_field(fld_dest_idx);
-					std::copy(_src_slice.bytes + sf.offset, _src_slice.bytes + sf.offset + fld_source.size_bytes, bytes + df.offset);
+					auto fld_source = _src_slice.get_field(fis);
+					auto fld_dest_idx = get_field_index_by_id(fld_source.field_id);
+					if (fld_dest_idx != null_row)
+					{
+						auto& sf = _src_slice.get_class_field(fis);
+						auto& df = get_class_field(fld_dest_idx);
+						std::copy(_src_slice.get_bytes() + sf.offset, _src_slice.get_bytes() + sf.offset + fld_source.size_bytes, get_bytes() + df.offset);
+					}
 				}
 			}
 		}
 		
-		std::partial_ordering jslice::compare(int _src_idx, jslice& _src_slice, int _dst_idx)
+		std::partial_ordering jslice::compare(int _dst_idx, jslice& _src_slice, int _src_idx)
 		{
 			auto field_type = get_field(_dst_idx).type_id;
-			auto offset1 = get_offset(_src_idx);
-			auto offset2 = _src_slice.get_offset(_dst_idx);
-			char* c1 = bytes + offset1;
-			char* c2 = bytes + offset2;
+			auto offset1 = get_offset(_dst_idx);
+			auto offset2 = _src_slice.get_offset(_src_idx);
+			char* c1 = get_bytes() + offset1;
+			char* c2 = _src_slice.get_bytes() + offset2;
 			return compare_express(field_type, c1, c2);
 		}
 
@@ -578,8 +763,8 @@ namespace countrybit
 					auto &fld_source = _src_slice.get_field(fis);
 					auto offset1 = get_offset(fis);
 					auto offset2 = _src_slice.get_offset(fis);
-					char* c1 = bytes + offset1;
-					char* c2 = bytes + offset2;
+					char* c1 = get_bytes() + offset1;
+					char* c2 = _src_slice.get_bytes() + offset2;
 					auto x = compare_express(fld_source.type_id, c1, c2);
 					if (x != std::strong_ordering::equal) {
 						return x;
@@ -599,8 +784,8 @@ namespace countrybit
 					if (!schema->is_empty(fld_dest)) {
 						auto offset1 = get_offset(fld_source.type_id);
 						auto offset2 = _src_slice.get_offset(fld_dest.type_id);
-						char* c1 = bytes + offset1;
-						char* c2 = bytes + offset2;
+						char* c1 = get_bytes() + offset1;
+						char* c2 = _src_slice.get_bytes() + offset2;
 						auto x = compare_express(fld_source.type_id, c1, c2);
 						if (x != std::strong_ordering::equal) {
 							return x;
@@ -1261,7 +1446,7 @@ namespace countrybit
 			{
 				if (_src->compare)
 				{
-					bool result = _src->compare(bytes + _src->target_offset, _parameters.bytes + _src->parameter_offset);
+					bool result = _src->compare(get_bytes() + _src->target_offset, _parameters.bytes + _src->parameter_offset);
 					if (!result) {
 						return false;
 					}
@@ -1278,7 +1463,7 @@ namespace countrybit
 				auto& _src = _srcc[i];
 				if (_src.compare) 
 				{
-					bool result = _src.compare(bytes + _src.target_offset, _parameters.bytes + _src.parameter_offset);
+					bool result = _src.compare(get_bytes() + _src.target_offset, _parameters.bytes + _src.parameter_offset);
 					if (!result) {
 						return false;
 					}
@@ -1294,7 +1479,7 @@ namespace countrybit
 				auto& _src = _srcc[i];
 				if (_src.assignment)
 				{
-					_src.assignment(bytes + _src.target_offset, _parameters.bytes + _src.parameter_offset);
+					_src.assignment(get_bytes() + _src.target_offset, _parameters.bytes + _src.parameter_offset);
 				}
 			}
 			return true;
@@ -1306,8 +1491,8 @@ namespace countrybit
 			{
 				auto& src = collection[i];
 				if (src.projection == projection_operations::group_by) {
-					char* this_bytes = src.field_offset + bytes;
-					char* dest_bytes = src.field_offset + _dest_slice.bytes;
+					char* this_bytes = src.field_offset + get_bytes();
+					char* dest_bytes = src.field_offset + _dest_slice.get_bytes();
 
 					auto result = compare_express(src.field_type, this_bytes, dest_bytes);
 					if (result != std::strong_ordering::equal)
@@ -1326,7 +1511,12 @@ namespace countrybit
 
 		jarray::jarray(jslice *_parent, jschema* _schema, row_id_type _class_field_id, char* _bytes, bool _init) : item(_parent), schema(_schema), class_field_id(_class_field_id), bytes(_bytes)
 		{
-
+			if (_init) {
+				for (auto jai : *this)
+				{
+					jai.construct();
+				}
+			}
 		}
 
 		jarray::jarray(dynamic_box& _dest, jarray& _src)
@@ -1838,14 +2028,18 @@ namespace countrybit
 
 			jcollection people = schema.create_collection(&box, colid, 1, 50, classes);
 
+			actor_id_type scott = people.create_actor("scott tiger");
+
 			jarray pa;
 
 			int birthdaystart = 1941;
 			int countstart = 12;
 			double quantitystart = 10.22;
 			int increment = 5;
+
+			row_id_type people_object_id;
 			
-			pa = people.create_object(person_class_id, { 1, 1, 1 });
+			pa = people.create_object(scott, person_class_id, { 1, 1, 1 }, people_object_id);
 			auto sl = pa.get_slice(0);
 			auto last_name = sl.get_string(0);
 			auto first_name = sl.get_string(1);
@@ -1858,7 +2052,7 @@ namespace countrybit
 			count = countstart + increment * 0;
 			qty = quantitystart + increment * 0;
 
-			pa = people.create_object(person_class_id, { 1, 1, 1 });
+			pa = people.create_object(scott, person_class_id, { 1, 1, 1 }, people_object_id);
 			sl = pa.get_slice(0);
 			last_name = sl.get_string(0);
 			first_name = sl.get_string(1);
@@ -1871,7 +2065,7 @@ namespace countrybit
 			count = countstart + increment * 1;
 			qty = quantitystart + increment * 1;
 
-			pa = people.create_object(person_class_id, { 1, 1, 1 });
+			pa = people.create_object(scott, person_class_id, { 1, 1, 1 }, people_object_id);
 			sl = pa.get_slice(0);
 			last_name = sl.get_string(0);
 			first_name = sl.get_string(1);
@@ -1884,7 +2078,7 @@ namespace countrybit
 			count = countstart + increment * 2;
 			qty = quantitystart + increment * 2;
 
-			pa = people.create_object(person_class_id, { 1, 1, 1 });
+			pa = people.create_object(scott, person_class_id, { 1, 1, 1 }, people_object_id);
 			sl = pa.get_slice(0);
 			last_name = sl.get_string(0);
 			first_name = sl.get_string(1);
@@ -1897,7 +2091,7 @@ namespace countrybit
 			count = countstart + increment * 3;
 			qty = quantitystart + increment * 3;
 
-			pa = people.create_object(person_class_id, { 1, 1, 1 });
+			pa = people.create_object(scott, person_class_id, { 1, 1, 1 }, people_object_id);
 			sl = pa.get_slice(0);
 			last_name = sl.get_string(0);
 			first_name = sl.get_string(1);
@@ -2009,8 +2203,11 @@ namespace countrybit
 
 			jcollection sprites = schema.create_collection(&box, colid, 50, 50, classesb);
 
+			actor_id_type actor_id = sprites.create_actor("spriteboy");
+			row_id_type new_sprite_id;
+
 			for (int i = 0; i < 10; i++) {
-				auto new_object = sprites.create_object(sprite_class_id, {1,1,1});
+				auto new_object = sprites.create_object(actor_id, sprite_class_id, {1,1,1}, new_sprite_id);
 				auto slice = new_object.get_slice(0);
 
 				auto image_name = slice.get_string(0);

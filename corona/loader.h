@@ -1080,7 +1080,7 @@ namespace countrybit
 				map_scalar<database::string_box>(path_node_ti, pvalue::pvalue_types::string_value, "member", "member", offsetof(database::path_node, member_name));
 
 				path_ti = create_map(member_type_name, "path", "path", 20);
-				map_scalar<database::string_box>(path_ti, pvalue::pvalue_types::string_value, "model", "model", offsetof(database::path, root.model_name));
+				map_scalar<database::string_box>(path_ti, pvalue::pvalue_types::string_value, "class", "class", offsetof(database::path, root.class_name));
 				map_iarray<database::path, database::max_path_nodes>(path_ti, path_node_ti, "nodes", "nodes", offsetof(database::path, nodes));
 
 				projection_field_ti = create_map(member_type_name, "projection", "projection", 20);

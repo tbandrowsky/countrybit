@@ -32,6 +32,10 @@ namespace countrybit
 		const int max_path_nodes = 64;
 		const int max_projection_fields = 128;
 		const int max_update_elements = 32;
+		const int max_creatable_options = 100;
+		const int max_selectable_options = 100;
+		const int max_updatable_options = 100;
+		const int max_selections = 1000;
 
 		const static int
 
@@ -814,30 +818,6 @@ namespace countrybit
 			member_field_collection  member_fields;
 		};
 
-		struct model_state
-		{
-		public:
-			object_name			class_name;
-			row_id_type			class_id;
-			bool				use_id;
-			row_id_type			number_of_visits;
-		};
-
-		using model_state_collection = iarray<model_state, max_class_fields>;
-
-		class put_model_request
-		{
-		public:
-			row_id_type				 class_id;
-			object_name				 class_name;
-			object_description		 class_description;
-			member_field_collection  member_fields;
-			model_state_collection   model_states;
-			object_name				 actor_id_field_name;
-			row_id_type				 actor_id_field_id;
-			row_id_type				 number_of_actors;
-		};
-
 		class jlist_instance
 		{
 		public:
@@ -903,6 +883,64 @@ namespace countrybit
 
 		using update_definition_type = update_definition_t;
 
+		using selections_collection = iarray<row_id_type, max_selections>;
+
+		class selector_rule
+		{
+		public:
+			object_name class_name;
+			row_id_type class_id;
+		};
+
+		using selector_rule_collection = iarray<selector_rule, 8>;
+
+		class selector_collection
+		{
+		public:
+			selector_rule_collection rules;
+		};
+
+		class model_creatable_class
+		{
+		public:
+			object_name						create_class_name;
+			row_id_type						create_class_id;
+			selector_collection				selectors;
+			object_name						item_id_class_name;
+			row_id_type						item_id_class;
+			bool							select_on_create;
+		};
+
+		class model_selectable_class
+		{
+		public:
+			object_name						select_class_name;
+			row_id_type						select_class_id;
+			selector_collection				selectors;
+		};
+
+		class model_updatable_class
+		{
+		public:
+			object_name						update_class_name;
+			row_id_type						update_class_id;
+			selector_collection				selectors;
+		};
+
+		using model_create_class_collection = iarray<model_creatable_class, max_creatable_options>;
+		using model_select_class_collection = iarray<model_selectable_class, max_selectable_options>;
+		using model_update_class_collection = iarray<model_updatable_class, max_updatable_options>;
+
+		class model_type
+		{
+		public:
+			row_id_type				model_id;
+			object_name				model_name;
+			model_create_class_collection create_options;
+			model_select_class_collection select_options;
+			model_update_class_collection update_options;
+		};
+
+		using jmodel = model_type;
 	}
 }
-

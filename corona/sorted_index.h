@@ -60,7 +60,7 @@ namespace countrybit
 
 			index_node create_node(int _num_levels)
 			{
-				index_node in = data_table.create(_num_levels + 1);
+				index_node in = data_table.create_item(_num_levels + 1);
 				for (int i = 0; i < in.size(); i++)
 				{
 					in.detail(i) = null_row;
@@ -70,7 +70,7 @@ namespace countrybit
 
 			index_node get_node(row_id_type _row_id)
 			{
-				return data_table.get(_row_id);
+				return data_table.get_item(_row_id);
 			}
 
 		public:

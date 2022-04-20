@@ -91,6 +91,7 @@ namespace countrybit
 			{
 				iarray<item_type, max_items>* base;
 				row_id_type current;
+				std::function<bool(item_type&)> predicate;
 
 			public:
 
@@ -106,16 +107,37 @@ namespace countrybit
 				using pointer = value_ref*;  // or also value_type*
 				using reference = value_ref&;  // or also value_type&
 
-				iterator(iarray<item_type, max_items>* _base, row_id_type _current) :
+				iterator(iarray<item_type, max_items>* _base, 
+					row_id_type _current,
+					std::function<bool(item_type&)> _predicate) :
+					base(_base),
+					current(_current),
+					predicate(_predicate)
+				{
+					if (current != null_row) {
+						while (!predicate(base->get_at(current)))
+						{
+							current++;
+							if (current >= base->size()) {
+								current = null_row;
+							}
+						}
+					}
+				}
+
+				iterator(iarray<item_type, max_items>* _base,
+					row_id_type _current) :
 					base(_base),
 					current(_current)
 				{
-
+					predicate = [](item_type& a) { return true;  };
 				}
 
-				iterator() : base(nullptr), current(null_row)
+				iterator() : 
+					base(nullptr), 
+					current(null_row)					
 				{
-
+					predicate = [](item_type& a) { return true;  };
 				}
 
 				iterator& operator = (const iterator& _src)
@@ -135,6 +157,11 @@ namespace countrybit
 					return &base->get_at(current);
 				}
 
+				inline value_ref get_value()
+				{
+					return value_ref{ base->get_at(current), current };
+				}
+
 				inline row_id_type get_index()
 				{
 					return current;
@@ -142,20 +169,24 @@ namespace countrybit
 
 				inline iterator begin() const
 				{
-					return iterator(base, current);
+					return iterator(base, current, predicate);
 				}
 
 				inline iterator end() const
 				{
-					return iterator(base, null_row);
+					return iterator(base, null_row, predicate);
 				}
 
 				inline iterator operator++()
 				{
-					current++;
-					if (current >= base->size())
-						return iterator(base, null_row);
-					return iterator(base, current);
+					do 
+					{
+						current++;
+						if (current >= base->size())
+							return iterator(base, null_row, predicate);
+					} 
+					while (!predicate(base->get_at(current)));
+					return iterator(base, current, predicate);
 				}
 
 				inline iterator operator++(int)
@@ -187,9 +218,19 @@ namespace countrybit
 				return iterator(this, null_row);
 			}
 
+			auto where(std::function<bool(item_type&)> predicate)
+			{
+				return iterator(this, null_row, predicate);
+			}
+
 			bool any_of(std::function<bool(item_type&)> predicate)
 			{
 				return std::any_of(data, data + length, predicate);
+			}
+
+			bool all_of(std::function<bool(item_type&)> predicate)
+			{
+				return std::all_of(data, data + length, predicate);
 			}
 
 			int count_if(std::function<bool(item_type&)> predicate)
@@ -345,9 +386,144 @@ namespace countrybit
 				}
 			}
 
+			class iterator
+			{
+				array_box<item_type>* base;
+				row_id_type current;
+				std::function<bool(item_type&)> predicate;
+
+			public:
+
+				struct value_ref
+				{
+					item_type& item;
+					row_id_type location;
+				};
+
+				using iterator_category = std::forward_iterator_tag;
+				using difference_type = std::ptrdiff_t;
+				using value_type = value_ref;
+				using pointer = value_ref*;  // or also value_type*
+				using reference = value_ref&;  // or also value_type&
+
+				iterator(array_box<item_type>* _base,
+					row_id_type _current,
+					std::function<bool(item_type&)> _predicate) :
+					base(_base),
+					current(_current),
+					predicate(_predicate)
+				{
+					if (current != null_row) {
+						while (!predicate(base->get_at(current)))
+						{
+							current++;
+							if (current >= base->size()) {
+								current = null_row;
+							}
+						}
+					}
+				}
+
+				iterator(array_box<item_type>* _base,
+					row_id_type _current) :
+					base(_base),
+					current(_current)
+				{
+					predicate = [](item_type& a) { return true;  };
+				}
+
+				iterator() :
+					base(nullptr),
+					current(null_row)
+				{
+					predicate = [](item_type& a) { return true;  };
+				}
+
+				iterator& operator = (const iterator& _src)
+				{
+					base = _src.base;
+					current = _src.current;
+					return *this;
+				}
+
+				inline value_ref operator *()
+				{
+					return value_ref{ base->get_at(current), current };
+				}
+
+				inline item_type* operator ->()
+				{
+					return &base->get_at(current);
+				}
+
+				inline row_id_type get_index()
+				{
+					return current;
+				}
+
+				inline iterator begin() const
+				{
+					return iterator(base, current, predicate);
+				}
+
+				inline iterator end() const
+				{
+					return iterator(base, null_row, predicate);
+				}
+
+				inline iterator operator++()
+				{
+					do
+					{
+						current++;
+						if (current >= base->size())
+							return iterator(base, null_row, predicate);
+					} while (!predicate(base->get_at(current)));
+					return iterator(base, current, predicate);
+				}
+
+				inline iterator operator++(int)
+				{
+					iterator tmp(*this);
+					operator++();
+					return tmp;
+				}
+
+				bool operator == (const iterator& _src) const
+				{
+					return _src.current == current;
+				}
+
+				bool operator != (const iterator& _src)
+				{
+					return _src.current != current;
+				}
+
+			};
+
+			array_box<item_type>::iterator begin()
+			{
+				return iterator(this, 0);
+			}
+
+			array_box<item_type>::iterator end()
+			{
+				return iterator(this, null_row);
+			}
+
+			auto where(std::function<bool(item_type&)> predicate)
+			{
+				return iterator(this, null_row, predicate);
+			}
+
 			bool any_of(std::function<bool(item_type&)> predicate)
 			{
 				return std::any_of(hdr->data, hdr->data + hdr->length, predicate);
+			}
+
+			bool all_of(std::function<bool(item_type&)> predicate)
+			{
+				return std::all_of(hdr->data, hdr->data + hdr->length, predicate);
 			}
 
 			int count_if(std::function<bool(item_type&)> predicate)

@@ -176,7 +176,8 @@ namespace countrybit
 				t.hdr->last_row = 0;
 
 				for (int i = 0; i < _max_rows; i++) {
-					t.hdr->rows[i] = {};
+					T item = {};
+					t.hdr->rows[i] = item;
 				}
 
 				return hdr_offset;
@@ -468,20 +469,19 @@ namespace countrybit
 
 			bool move_details(row_id_type location, int shift)
 			{
-				auto& pcr = item.get_at(location);
-				auto& pc = item[pcr.details.start];
+				auto& pcr = item[location];
 
-				row_range new_pos{ pc.details.start + shift, pc.details.stop + shift, pc.details.reserved_stop + shift };
+				row_range new_pos{ pcr.details.start + shift, pcr.details.stop + shift, pcr.details.reserved_stop + shift };
 
 				if (new_pos.reserved_stop >= details.size())
 				{
 					return false;
 				}
 
-				bool success = details.copy_rows(pc.details.start, pc.details.stop, shift);
+				bool success = details.copy_rows(pcr.details.start, pcr.details.stop, shift);
 				if (success)
 				{
-					pc.details = new_pos;
+					pcr.details = new_pos;
 				}
 				return success;
 			}
@@ -529,7 +529,7 @@ namespace countrybit
 				return pct;
 			}
 
-			item_details_holder<P, C> create(row_id_type detail_count)
+			item_details_holder<P, C> create_item(row_id_type detail_count)
 			{
 				auto pcr = item.create(1);
 				if (pcr.success())
@@ -544,18 +544,26 @@ namespace countrybit
 				}
 			}
 
-			item_details_holder<P, C> create_at(row_id_type location, row_id_type detail_count)
+			item_details_holder<P, C> put_item(row_id_type location, int detail_count)
 			{
-				if (location == null_row)
+				if (location == null_row) 
 				{
-					return create(detail_count);
+					return create_item(1);
 				}
-				auto& pc = item.get_at(location);
-				pc.details = details.create(detail_count);
-				return item_details_holder<P, C>(&pc.item, &details[pc.details.start], location, detail_count, 0);
+				else 
+				{
+					clear_details(location);
+					auto& pc = item[location];
+					int size = detail_count - pc.details.size();
+					if (size > 0) {
+						append_detail(location, size);
+						clear_details(location);
+					}
+					return get_item(location);
+				}
 			}
 
-			item_details_holder<P, C> clone(row_id_type location)
+			item_details_holder<P, C> clone_item(row_id_type location)
 			{
 				auto& src = item.get_at(location);
 				auto dest = create(src.details.reserved_size());
@@ -563,32 +571,18 @@ namespace countrybit
 				details.copy_rows(src.details.start, src.details.reserved_stop, shift );
 			}
 
-			item_details_holder<P, C> put_at(row_id_type location, row_id_type detail_count)
+			void clear_details(row_id_type location)
 			{
-				if (location == null_row)
-				{
-					return create(detail_count);
-				}
-
 				auto& pc = item.get_at(location);
-
-				if (detail_count > pc.details.size()) 
-				{
-					int add_count = detail_count - pc.details.size();
-					return append_child(location, add_count);
-				}
-				else 
-				{
-					pc.details.stop = pc.details.start + detail_count;
-					return item_details_holder<P, C>(&pc.item, &details[pc.details.start], location, detail_count, 0);
-				}
+				pc.details.stop = pc.details.start;				
 			}
 
-			item_details_holder<P, C> append_child(row_id_type location, int add_detail_count)
+			C& append_detail(row_id_type location, int add_detail_count = 1)
 			{
 				if (location == null_row)
 				{
-					return create(add_detail_count);
+					auto parent_child = create_item(add_detail_count);
+					return parent_child.detail(0);
 				}
 
 				auto& pc = item.get_at(location);
@@ -628,22 +622,23 @@ namespace countrybit
 					}
 					else 
 					{
-						return item_details_holder<P,C>(nullptr, nullptr, null_row, null_row, null_row);
+						throw std::invalid_argument("can't extend an uncreated");
 					}
 				}
 
 				int new_size = pc.details.stop - pc.details.start;
 
-				return item_details_holder<P, C>( &pc.item, &details[pc.details.start], location, new_size, new_start);
+				return this->details[new_start];
 			}
 
 			void erase_detail(row_id_type location, int detail_index)
 			{
 				auto& pc = item.get_at(location);
 				details.copy_rows(pc.details.start + detail_index, pc.details.stop, -1);
+				pc.details.stop--;
 			}
 
-			void erase(row_id_type location)
+			void erase_item(row_id_type location)
 			{
 				auto& pc = item.get_at(location);
 				for (row_id_type i = location; i > location; i--)
@@ -661,7 +656,7 @@ namespace countrybit
 				return item_details_holder<P, C>(&pc.item, &details[pc.details.start],  row_id, pc.details.size(), 0);
 			}
 
-			item_details_holder<P, C> get(row_id_type row_id)
+			item_details_holder<P, C> get_item(row_id_type row_id)
 			{
 				item_details_holder<P, C> nullpc;
 				if (row_id == null_row) return nullpc;

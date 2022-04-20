@@ -91,7 +91,7 @@ namespace countrybit
 
 				int ts = temp.size();
 				if (ts > 0) {
-					auto filter_stuff = filters.create(ts);
+					auto filter_stuff = filters.create_item(ts);
 					auto node = *pni;
 					filter_stuff.item() = node.item.member_id;
 					for (row_id_type i = 0; i < filter_stuff.size(); i++)

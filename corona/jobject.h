@@ -1,7 +1,8 @@
-#pragma once
+a#pragma once
 
 #include "jfield.h"
 #include "store_box.h"
+#include "list_box.h"
 #include "collection_id_box.h"
 #include "object_id_box.h"
 #include "point_box.h"
@@ -30,32 +31,24 @@ namespace countrybit
 			row_id_type fields_table_id;
 			row_id_type classes_table_id;
 			row_id_type classes_by_name_id;
+			row_id_type models_by_name_id;
 			row_id_type fields_by_name_id;
 			row_id_type	query_properties_id;
 			row_id_type sql_properties_id;
 			row_id_type file_properties_id;
 			row_id_type http_properties_id;
-		};
-
-		class jcollection_map
-		{
-		public:
-			collection_id_type collection_id;
-			row_id_type table_id;
-			row_id_type actor_index_id;
-			row_id_type actor_id;
+			row_id_type models_id;
 		};
 
 		using actor_id_type = row_id_type;
 
-		class jcollection_object
+		class jcollection_header
 		{
 		public:
-			object_id_type	oid;
-			jtype			otype;
-			row_id_type		class_id;
-			row_id_type		class_field_id;
-			row_id_type		actor_id_type;
+			collection_id_type	collection_id;
+			row_id_type			actors_id;
+			row_id_type			objects_id;
+			row_id_type			model_id;
 		};
 
 		class jschema;
@@ -71,19 +64,22 @@ namespace countrybit
 			dimensions_type dim;
 			jclass the_class;
 
+			serialized_box* box;
+			row_id_type location;
+
 			size_t get_offset(int field_idx);
 
 			template <typename T> T get_boxed(int field_idx)
 			{
 				size_t offset = get_offset(field_idx);
-				T b = &bytes[offset];
+				T b = get_bytes() + offset;
 				return b;
 			}
 
 			template <typename T> T get_boxed_ex(int field_idx)
 			{
 				size_t offset = get_offset(field_idx);
-				T b(&bytes[offset], schema, &the_class, this, field_idx);
+				T b(get_bytes() + offset, schema, &the_class, this, field_idx);
 				return b;
 			}
 
@@ -91,9 +87,9 @@ namespace countrybit
 
 		public:
 
-
 			jslice();
 			jslice(jslice* _parent, jschema* _schema, row_id_type _class_id, char* _bytes, dimensions_type _dim);
+			jslice(jslice* _parent, jschema* _schema, row_id_type _class_id, serialized_box *_box, row_id_type _location, dimensions_type _dim);
 
 			void construct();
 
@@ -136,22 +132,24 @@ namespace countrybit
 			bool filter(filter_element* _src, int _count, jslice& _parameters);
 			bool set_updates(update_element_collection& _src, jslice& _parameters);
 			bool update(update_element_collection& _src, jslice& _parameters);
+			void update(jslice& _src_slice);
 
 			std::partial_ordering compare(projection_element_collection& collection, jslice& _dest_slice);
 			bool set_projection(projection_element_collection& collection);
-			std::partial_ordering compare(int _src_idx, jslice& _src_slice, int _dst_idx);
-			void copy(jslice& _src_slice);
+			std::partial_ordering compare(int _dst_idx, jslice& _src_slice, int _src_idx);
 			std::partial_ordering compare(jslice& _src_slice);
 
 			template <typename boxed> boxed get(int field_idx)
 			{
 				size_t offset = get_offset(field_idx);
-				char *src = &bytes[offset];
+				char *src = get_bytes() + offset;
 				boxed temp(src);
 				return temp;
 			}
 
 			int size();
+			char* get_bytes() { return box ? box->unpack<char>(location) : bytes;  };
+			row_id_type size_bytes() { return get_class().item().class_size_bytes; }
 		};
 
 		class jarray
@@ -420,24 +418,125 @@ namespace countrybit
 
 		};
 
-		class actor_step_type
+		class actor_type
 		{
 		public:
-			row_id_type class_id;
-			time_t		occurred;
-			bool		is_cancel;
+			actor_id_type			actor_id;
+			object_name				actor_name;
+			selections_collection	selections;
 		};
 
-		using actors_type = sorted_index<actor_id_type, actor_step_type>;
-		using actor_history_type = item_details_table<jcollection_object, char>;
+		class collection_object_type
+		{
+		public:
+			object_id_type	oid;
+			jtype			otype;
+			row_id_type		class_id;
+			row_id_type		class_field_id;
+			actor_id_type	actor_id;
+			row_id_type		item_id;
+			bool			deleted;
+		};
+
+		class actor_select_object
+		{
+		public:
+			actor_id_type	actor_id;
+			row_id_type		object_id;
+			bool			extend;
+		};
+
+		class actor_create_object
+		{
+		public:
+			row_id_type			class_id;
+			row_id_type			item_id;
+			row_id_type			slice_data;
+			bool				select_on_create;
+			jslice				item;
+		};
+
+		class actor_update_object
+		{
+		public:
+			row_id_type			object_id;
+			bool				selected;
+			jslice				item;
+		};
+
+		class actor_view_object
+		{
+		public:
+			row_id_type			object_id;
+			bool				selected;
+			jslice				item;
+		};
+
+		using actor_create_option_collection = list_box<actor_create_object>;
+		using actor_update_option_collection = list_box<actor_update_object>;
+		using actor_select_option_collection = list_box<actor_select_object>;
+		using actor_view_collection = list_box<actor_view_object>;
+
+		class actor_command_result
+		{
+			row_id_type									create_options_id;
+			row_id_type									update_options_id;
+			row_id_type									select_options_id;
+			row_id_type									view_objects_id;
+			dynamic_box									data;
+
+		public:
+
+			row_id_type									actor_id;
+			actor_create_option_collection				create_options;
+			actor_update_option_collection				update_options;
+			actor_select_option_collection				select_options;
+			actor_view_collection						view_objects;
+
+			actor_command_result()
+			{
+				;
+			}
+
+			actor_command_result(int _size)
+			{
+				data.init(_size);
+				create_options_id = actor_create_option_collection::create(data.get_box());
+				update_options_id = actor_update_option_collection::create(data.get_box());
+				select_options_id = actor_select_option_collection::create(data.get_box());
+				view_objects_id = actor_view_collection::create(data.get_box());
+			}
+
+			actor_command_result(actor_command_result&& _src)
+			{
+				data = std::move(_src.data);
+			}
+
+			actor_command_result& operator=(actor_command_result&& _src)
+			{
+				data = std::move(_src.data);
+				return *this;
+			}
+
+			actor_command_result operator=(const actor_command_result& _src) = delete;
+			actor_command_result(const actor_command_result& _src) = delete;
+
+			jslice create_object(jschema* _schema, row_id_type _class_id);
+			jslice copy_object(jschema* _schema, jslice& _src);
+
+		};
+
+		using actor_collection = table<actor_type>;
+		using object_collection = item_details_table<collection_object_type, char>;
 
 		class jcollection
 		{
 
 			jschema* schema;
-			collection_id_type collection_id;
-			actors_type actors;
-			actor_history_type objects;
+			collection_id_type		collection_id;
+			row_id_type				model_id;
+			actor_collection		actors;
+			object_collection		objects;
 
 		public:
 
@@ -446,26 +545,43 @@ namespace countrybit
 				;
 			}
 
-			jcollection(jschema* _schema, collection_id_type _collection_id, actor_history_type& _history, actors_type& _actors) :
+			jcollection(jschema* _schema, collection_id_type _collection_id, row_id_type _model_id, actor_collection& _actors, object_collection& _objects) :
 				schema(_schema),
 				collection_id(_collection_id),
-				objects(_history),
-				actors(_actors)
+				model_id(_model_id),
+				actors(_actors),
+				objects(_objects)
 			{
 				;
+			}
+
+			jcollection(jschema* _schema, collection_id_type _collection_id, row_id_type _model_id, actor_collection&& _actors, object_collection&& _objects) :
+				schema(_schema),
+				collection_id(_collection_id),
+				model_id(_model_id)
+			{
+				actors = std::move(_actors);
+				objects = std::move(_objects);
 			}
 
 			jcollection(jcollection&& _src) 
 			{
 				schema = std::move(_src.schema);
 				collection_id = std::move(_src.collection_id);
-				objects = std::move(_src.objects);
 				actors = std::move(_src.actors);
+				objects = std::move(_src.objects);
 			}
 
-			row_id_type create_actor();
-			jarray create_object(row_id_type _actor_id, row_id_type _class_id, dimensions_type _dims);
-			jarray get_object(row_id_type _actor_id, row_id_type _object_id);
+			actor_command_result get_command_result(row_id_type _actor);
+			actor_command_result create_actor(const actor_type& _actor);
+			actor_command_result actor_command(const actor_select_object& _select);
+			actor_command_result actor_command(const actor_create_object& _select);
+			actor_command_result actor_command(const actor_update_object& _select);
+
+			jslice create_object(row_id_type _item_id, row_id_type _actor_id, row_id_type _class_id, row_id_type& object_id);
+			jslice get_object(row_id_type _object_id);
+
+			bool selector_applies(selector_collection* _selector, actor_id_type& _actor);
 
 			row_id_type size()
 			{
@@ -491,7 +607,9 @@ namespace countrybit
 
 				}
 
-				iterator() : base(nullptr), current(null_row)
+				iterator() 
+					: base(nullptr), 
+					current(null_row)
 				{
 
 				}
@@ -503,14 +621,14 @@ namespace countrybit
 					return *this;
 				}
 
-				inline jcollection_item operator *()
+				inline jslice operator *()
 				{
-					return base->get_item(current);
+					return base->get_object(current);
 				}
 
-				inline jcollection_item operator->()
+				inline jslice operator->()
 				{
-					return base->get_item(current);
+					return base->get_object(current);
 				}
 
 				iterator begin() const
@@ -559,6 +677,7 @@ namespace countrybit
 			{
 				return iterator(this, this->size());
 			}
+
 		};
 
 		class jschema
@@ -570,19 +689,23 @@ namespace countrybit
 			using class_store_type = item_details_table<jclass_header, jclass_field>;
 			using class_index_type = sorted_index<object_name, row_id_type>;
 			using field_index_type = sorted_index<object_name, row_id_type>;
+			using model_index_type = sorted_index<object_name, row_id_type>;
 			using query_store_type = table<query_definition_type>;
 			using sql_store_type = table<sql_definition_type>;
 			using file_store_type = table<file_definition_type>;
 			using http_store_type = table<http_definition_type>;
+			using model_store_type = table<model_type>;
 
 			field_store_type		fields;
 			class_store_type		classes;
 			class_index_type		classes_by_name;
 			field_index_type		fields_by_name;
+			model_index_type		models_by_name;
 			query_store_type		queries;
 			sql_store_type			sql_remotes;
 			file_store_type			file_remotes;
-			http_store_type			http_remotes;			
+			http_store_type			http_remotes;
+			model_store_type		models;
 
 			jfield					empty;
 
@@ -602,17 +725,19 @@ namespace countrybit
 				&& box<B, jclass_field>
 				&& box<B, object_name>
 				)
-				static row_id_type reserve_schema(B* _b, int _num_classes, int _num_fields, int _num_class_fields, int _num_queries, int _num_sql_remotes, int _num_http_remotes, int _num_file_remotes)
+				static row_id_type reserve_schema(B* _b, int _num_classes, int _num_fields, int _num_class_fields, int _num_queries, int _num_sql_remotes, int _num_http_remotes, int _num_file_remotes, int _num_models)
 			{
 				jschema_map schema_map, * pschema_map;
 				schema_map.fields_table_id = null_row;
 				schema_map.classes_table_id = null_row;
 				schema_map.classes_by_name_id = null_row;
 				schema_map.fields_by_name_id = null_row;
+				schema_map.models_by_name_id = null_row;
 				schema_map.query_properties_id = null_row;
 				schema_map.sql_properties_id = null_row;
 				schema_map.file_properties_id = null_row;
 				schema_map.http_properties_id = null_row;
+				schema_map.models_id = null_row;
 
 				row_id_type rit = _b->pack(schema_map);
 				pschema_map = _b->unpack<jschema_map>(rit);
@@ -620,10 +745,12 @@ namespace countrybit
 				pschema_map->classes_table_id = class_store_type::reserve_table(_b, _num_classes, _num_class_fields);
 				pschema_map->classes_by_name_id = field_index_type::reserve_sorted_index(_b, _num_classes);
 				pschema_map->fields_by_name_id = class_index_type::reserve_sorted_index(_b, _num_fields);
+				pschema_map->models_by_name_id = model_index_type::reserve_sorted_index(_b, _num_models);
 				pschema_map->query_properties_id = query_store_type::reserve_table(_b, _num_queries);
 				pschema_map->sql_properties_id = sql_store_type::reserve_table(_b, _num_sql_remotes);
 				pschema_map->file_properties_id = file_store_type::reserve_table(_b, _num_file_remotes);
 				pschema_map->http_properties_id = http_store_type::reserve_table(_b, _num_http_remotes);
+				pschema_map->models_id = model_store_type::reserve_table(_b, _num_models);
 				return rit;
 			}
 
@@ -642,10 +769,12 @@ namespace countrybit
 				schema.classes = class_store_type::get_table(_b, pschema_map->classes_table_id);
 				schema.classes_by_name = class_index_type::get_sorted_index(_b, pschema_map->classes_by_name_id);
 				schema.fields_by_name = field_index_type::get_sorted_index(_b, pschema_map->fields_by_name_id);
+				schema.models_by_name = model_index_type::get_sorted_index(_b, pschema_map->models_by_name_id);
 				schema.queries = query_store_type::get_table(_b, pschema_map->query_properties_id);
 				schema.sql_remotes = sql_store_type::get_table(_b, pschema_map->sql_properties_id);
 				schema.file_remotes = file_store_type::get_table(_b, pschema_map->file_properties_id);
 				schema.http_remotes = http_store_type::get_table(_b, pschema_map->http_properties_id);
+				schema.models = model_store_type::get_table(_b, pschema_map->models_id);
 				schema.empty.field_id = null_row;
 				schema.empty.type_id = jtype::type_null;
 				schema.empty.name = "empty";
@@ -653,7 +782,7 @@ namespace countrybit
 				return schema;
 			}
 
-			static int64_t get_box_size(int _num_classes, int _num_fields, int _num_class_fields, int _num_queries, int _num_sql_remotes, int _num_http_remotes, int _num_file_remotes)
+			static int64_t get_box_size(int _num_classes, int _num_fields, int _num_class_fields, int _num_queries, int _num_sql_remotes, int _num_http_remotes, int _num_file_remotes, int _num_models)
 			{
 				int64_t field_size = field_store_type::get_box_size(_num_fields);
 				int64_t class_size = class_store_type::get_box_size(_num_fields, _num_class_fields);
@@ -663,6 +792,7 @@ namespace countrybit
 				int64_t sql_size = sql_store_type::get_box_size(_num_sql_remotes);
 				int64_t file_size = file_store_type::get_box_size(_num_file_remotes);
 				int64_t http_size = http_store_type::get_box_size(_num_http_remotes);
+				int64_t model_size = model_store_type::get_box_size(_num_models);
 				int64_t total_size = field_size + class_size + classes_by_name_size + fields_by_name_size + query_size + sql_size + http_size + file_size;
 				return total_size;
 			}
@@ -673,9 +803,9 @@ namespace countrybit
 				&& box<B, jclass_field>
 				&& box<B, object_name>
 				)
-				static jschema create_schema(B* _b, int _num_classes, int _num_fields, int _num_class_fields, int _num_queries, int _num_sql_remotes, int _num_http_remotes, int _num_file_remotes, row_id_type& _row)
+				static jschema create_schema(B* _b, int _num_classes, int _num_fields, int _num_class_fields, int _num_queries, int _num_sql_remotes, int _num_http_remotes, int _num_file_remotes, int _num_models, row_id_type& _row)
 			{
-				_row = reserve_schema(_b, _num_classes, _num_fields, _num_class_fields, _num_queries, _num_sql_remotes, _num_http_remotes, _num_file_remotes);
+				_row = reserve_schema(_b, _num_classes, _num_fields, _num_class_fields, _num_queries, _num_sql_remotes, _num_http_remotes, _num_file_remotes, _num_models);
 				jschema schema = get_schema(_b, _row);
 				return schema;
 			}
@@ -1267,7 +1397,7 @@ namespace countrybit
 					return f.is_data_generator();
 					});
 
-				auto pcr = classes.put_at(request.class_id, sz + num_integration_fields);
+				auto pcr = classes.put_item(request.class_id, sz);
 
 				build_class_members(pcr, request.member_fields);
 
@@ -1291,6 +1421,42 @@ namespace countrybit
 				return false;
 			}
 
+			row_id_type put_model(jmodel request)
+			{
+				row_id_type model_id = find_model(request.model_name);
+
+				if (model_id != null_row)
+				{
+					request.model_id = model_id;
+				}
+
+				for (auto opt : request.object_options)
+				{
+					for (auto sel : opt.item.selectors) 
+					{
+						bind_class(sel.item.class_name, sel.item.class_id);
+					}
+				}
+
+				row_id_type model_id;
+
+				if (request.model_id != null_row) 
+				{
+					models[request.model_id] = request;
+					model_id = request.model_id;
+				}
+				else 
+				{
+					row_range rr;
+					models.append(request, rr);
+					model_id = rr.start;
+					request.model_id = model_id;
+					models[model_id].model_id = model_id;
+					models_by_name.insert_or_assign(request.model_name, model_id);
+				}
+				return model_id;
+			}
+
 			row_id_type find_class(const object_name& class_name)
 			{
 				auto citer = classes_by_name[class_name];
@@ -1307,6 +1473,21 @@ namespace countrybit
 					return citer->second;
 				}
 				return null_row;
+			}
+
+			row_id_type find_model(const object_name& field_name)
+			{
+				auto citer = models_by_name[field_name];
+				if (citer != std::end(citer)) {
+					return citer->second;
+				}
+				return null_row;
+			}
+
+			jmodel get_model(row_id_type model_id)
+			{
+				auto the_model = models[model_id];
+				return the_model;
 			}
 
 			jclass get_class(row_id_type class_id)
@@ -1369,9 +1550,23 @@ namespace countrybit
 				return max_size;
 			}
 
+			int64_t get_collection_size(int _number_of_actors, int _max_history_length, row_id_type* _class_ids)
+			{
+				int64_t max_size = get_max_object_size(_class_ids);
+				if (!max_size)
+				{
+					return null_row;
+				}
+				int64_t total_size = 0;
+				total_size += actor_collection::get_box_size(_number_of_actors);
+				total_size += object_collection::get_box_size(_max_history_length, max_size * _max_history_length);
+				total_size += sizeof(jcollection_header);
+				return total_size;
+			}
+
 			template <typename B>
-			requires (box<B, jcollection_map>)
-			row_id_type reserve_collection(B* _b, collection_id_type _collection_id, int _number_of_actors, int _max_history_length, row_id_type* _class_ids)
+			requires (box<B, jcollection_header>)
+			row_id_type reserve_collection(B* _b, collection_id_type _collection_id, row_id_type _model_id,  int _number_of_actors, int _max_history_length, row_id_type* _class_ids)
 			{
 				uint64_t max_size = get_max_object_size(_class_ids);
 				if (!max_size)
@@ -1379,30 +1574,37 @@ namespace countrybit
 					return null_row;
 				}
 
-				jcollection_map jcm;
+				jcollection_header jcm;
 				jcm.collection_id = _collection_id;
-				jcm.table_id = item_details_table<jcollection_object, char>::reserve_table(_b, _max_history_length, max_size * _number_of_objects);
-				jcm.actor_index_id = table<row_id_type>::::reserve_table(_b, _number_of_actors);
+				jcm.model_id = _model_id;
+				jcm.actors_id = null_row;
+				jcm.objects_id = null_row;
 				row_id_type jcm_row = _b->pack(jcm);
+				if (jcm_row != null_row) {
+					jcollection_header* hdr = _b->unpack<jcollection_header>(jcm_row);
+					hdr->actors_id = actor_collection::reserve_table(_b, _number_of_actors);
+					hdr->objects_id =  objects_collection::reserve_table(_b, _max_history_length, max_size * _max_history_length);
+				}
 				return jcm_row;
 			}
 
 			template <typename B>
-			requires (box<B, jcollection_map>)
+			requires (box<B, jcollection_header>)
 			jcollection get_collection(B* _b, row_id_type _location)
 			{
-				jcollection_map *jcm;
-				jcm = _b->unpack<jcollection_map>(_location);
-				auto obj = item_details_table<jcollection_object, char>::get_table(_b, jcm->table_id);
-				jcollection collection(this, jcm->collection_id, obj);
+				jcollection_header *jcm;
+				jcm = _b->unpack<jcollection_header>(_location);
+				auto actor_history = actor_history_type::get_table(_b, jcm->actor_history_id);
+				auto collection_object = collection_objects_type::get_table(_b, jcm->collection_object_id);
+				jcollection collection(this, jcm->collection_id, actor_history, collection_object);
 				return collection;
 			}
 
 			template <typename B>
-			requires (box<B, jcollection_map>)
+			requires (box<B, jcollection_header>)
 			jcollection create_collection(B* _b, collection_id_type _collection_id, int _number_of_actors, int _max_history_length, row_id_type* _class_ids)
 			{
-				auto reserved_id = reserve_collection(_b, _collection_id, _number_of_actors, _number_of_objects, _class_ids);
+				auto reserved_id = reserve_collection(_b, _collection_id, _number_of_actors, _max_history_length, _class_ids);
 				jcollection tmp = get_collection(_b, reserved_id);
 				return tmp;
 			}

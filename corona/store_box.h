@@ -32,10 +32,18 @@ namespace countrybit
 //			pd = c.unpack(l);
 		};
 
+
+		class expandable_box
+		{
+		public:
+			virtual bool expand_check(int _bytes) { return false; }
+		};
+
 		class serialized_box 
 		{
 			int _size;
 			int _top;
+			expandable_box* owner;
 			char _data[1];
 
 		public:
@@ -70,9 +78,15 @@ namespace countrybit
 				return *this;
 			}
 
-			void init(int _length)
+			void init(int _length, expandable_box *_owner = nullptr)
 			{
 				_top = 0;
+				_size = _length;
+				owner = _owner;
+			}
+
+			void adjust(int _length)
+			{
 				_size = _length;
 			}
 
@@ -89,6 +103,12 @@ namespace countrybit
 			char* data()
 			{
 				return &_data[0];
+			}
+
+			bool expand_check(int _extra_bytes)
+			{
+				if (!owner) return false;
+				return owner->expand_check(_extra_bytes);
 			}
 
 			template <typename T>
@@ -271,7 +291,13 @@ namespace countrybit
 				return r;
 			}
 
+			int free()
+			{
+				return size() - top();
+			}
+
 		};
+
 
 		template <size_t bytes> 
 		class static_box 
@@ -400,7 +426,7 @@ namespace countrybit
 			}
 		};
 
-		class dynamic_box
+		class dynamic_box : public expandable_box
 		{
 			std::vector<char> stuff;
 
@@ -418,7 +444,7 @@ namespace countrybit
 			void init(int _length, serialized_box *_src = nullptr)
 			{
 				stuff.resize(_length + sizeof(serialized_box));
-				get_box()->init(_length);
+				get_box()->init(_length, this);
 				if (_src) {
 					std::copy(_src->data(), _src->data() + _length, get_box()->data());
 				}
@@ -460,9 +486,21 @@ namespace countrybit
 				return get_box()->size();
 			}
 
+			size_t free()
+			{
+				return get_box()->size();
+			}
+
 			char* data()
 			{
 				return get_box()->data();
+			}
+
+			char* move_ptr(serialized_box* _src, char* _srcp)
+			{
+				int offset = _srcp - _src->data();
+				char* t = data() + offset;
+				return t;
 			}
 
 			template <typename T>
@@ -539,6 +577,18 @@ namespace countrybit
 				return get_box()->reserve_all_free();
 			}
 
+			virtual bool expand_check(int _bytes)
+			{
+				bool adjusted = false;
+				if (_bytes > get_box()->free())
+				{
+					int d = get_box()->size() * 2;
+					stuff.resize(d + sizeof(serialized_box));
+					get_box()->adjust(d);
+					adjusted = true;
+				}
+				return adjusted;
+			}
 		};
 
 		template <typename T>
