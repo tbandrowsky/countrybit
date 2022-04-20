@@ -138,18 +138,17 @@ namespace countrybit
 
 			field_mime_type = 83,
 			field_file_name = 84,
-			field_width = 85,
-			field_height = 86,
-			field_x = 87,
-			field_y = 88,
-			field_z = 89,
-			field_red = 90,
-			field_green = 91,
-			field_blue = 92,
-			field_alpha = 93,
 
-			field_collection_id = 94,
-			field_object_id = 95;
+			field_rectangle = 85,
+			field_selection_rectangle = 86,
+			field_position_rectangle = 87,
+			field_point = 88,
+			field_position_point = 89,
+			field_selection_point = 90,
+			field_color = 91,
+
+			field_collection_id = 91,
+			field_object_id = 92;
 
 		const int max_class_fields = 128;
 

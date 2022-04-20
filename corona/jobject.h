@@ -68,16 +68,16 @@ namespace countrybit
 			serialized_box* box;
 			row_id_type location;
 
-			size_t get_offset(int field_idx);
+			size_t get_offset(int field_idx, jtype _type = jtype::type_null);
 
-			template <typename T> T get_boxed(int field_idx)
+			template <typename T> T get_boxed(int field_idx, jtype _type = jtype::type_null)
 			{
-				size_t offset = get_offset(field_idx);
+				size_t offset = get_offset(field_idx, _type);
 				T b = get_bytes() + offset;
 				return b;
 			}
 
-			template <typename T> T get_boxed_ex(int field_idx)
+			template <typename T> T get_boxed_ex(int field_idx, jtype _type = jtype::type_null)
 			{
 				size_t offset = get_offset(field_idx);
 				T b(get_bytes() + offset, schema, &the_class, this, field_idx);
@@ -427,6 +427,8 @@ namespace countrybit
 			selections_collection	selections;
 		};
 
+		using jactor = actor_type;
+
 		class collection_object_type
 		{
 		public:
@@ -726,15 +728,15 @@ namespace countrybit
 				return empty;
 			}
 
-			template <typename B>
-				requires (box<B, jfield>
-			&& box<B, jclass_header>
-				&& box<B, jclass_field>
-				&& box<B, object_name>
-				)
-				static row_id_type reserve_schema(B* _b, int _num_classes, int _num_fields, int _num_class_fields, int _num_queries, int _num_sql_remotes, int _num_http_remotes, int _num_file_remotes, int _num_models)
+			static row_id_type reserve_schema(serialized_box* _b, int _num_classes, int _num_models, bool _use_standard_fields)
 			{
-				jschema_map schema_map, * pschema_map;
+				int _num_class_fields = _num_classes * 64 + ( _use_standard_fields ? 200 : 0 );
+				int _num_queries = _num_classes * 4;
+				int _num_sql_remotes = _num_classes * 4;
+				int _num_http_remotes = _num_classes * 4;
+				int _num_file_remotes = _num_classes * 4;
+
+				jschema_map schema_map, *pschema_map;
 				schema_map.fields_table_id = null_row;
 				schema_map.classes_table_id = null_row;
 				schema_map.classes_by_name_id = null_row;
@@ -746,12 +748,15 @@ namespace countrybit
 				schema_map.http_properties_id = null_row;
 				schema_map.models_id = null_row;
 
+				auto total_size = jschema::get_box_size(_num_classes, _num_models, _use_standard_fields);
+				_b->expand_check(total_size);
+
 				row_id_type rit = _b->pack(schema_map);
 				pschema_map = _b->unpack<jschema_map>(rit);
-				pschema_map->fields_table_id = field_store_type::reserve_table(_b, _num_fields);
+				pschema_map->fields_table_id = field_store_type::reserve_table(_b, _num_class_fields);
 				pschema_map->classes_table_id = class_store_type::reserve_table(_b, _num_classes, _num_class_fields);
 				pschema_map->classes_by_name_id = field_index_type::reserve_sorted_index(_b, _num_classes);
-				pschema_map->fields_by_name_id = class_index_type::reserve_sorted_index(_b, _num_fields);
+				pschema_map->fields_by_name_id = class_index_type::reserve_sorted_index(_b, _num_class_fields);
 				pschema_map->models_by_name_id = model_index_type::reserve_sorted_index(_b, _num_models);
 				pschema_map->query_properties_id = query_store_type::reserve_table(_b, _num_queries);
 				pschema_map->sql_properties_id = sql_store_type::reserve_table(_b, _num_sql_remotes);
@@ -761,13 +766,7 @@ namespace countrybit
 				return rit;
 			}
 
-			template <typename B>
-				requires (box<B, jfield>
-			&& box<B, jclass_header>
-				&& box<B, jclass_field>
-				&& box<B, object_name>
-				)
-				static jschema get_schema(B* _b, row_id_type _row)
+			static jschema get_schema(serialized_box* _b, row_id_type _row)
 			{
 				jschema schema;
 				jschema_map* pschema_map;
@@ -789,31 +788,33 @@ namespace countrybit
 				return schema;
 			}
 
-			static int64_t get_box_size(int _num_classes, int _num_fields, int _num_class_fields, int _num_queries, int _num_sql_remotes, int _num_http_remotes, int _num_file_remotes, int _num_models)
+			static int64_t get_box_size(int _num_classes, int _num_models, bool _use_standard_fields)
 			{
-				int64_t field_size = field_store_type::get_box_size(_num_fields);
-				int64_t class_size = class_store_type::get_box_size(_num_fields, _num_class_fields);
+				int _num_class_fields = _num_classes * 64 + (_use_standard_fields ? 200 : 0);
+				int _num_queries = _num_classes * 4;
+				int _num_sql_remotes = _num_classes * 4;
+				int _num_http_remotes = _num_classes * 4;
+				int _num_file_remotes = _num_classes * 4;
+
+				int64_t field_size = field_store_type::get_box_size(_num_class_fields);
+				int64_t class_size = class_store_type::get_box_size(_num_classes, _num_class_fields);
 				int64_t classes_by_name_size = class_index_type::get_box_size(_num_classes);
-				int64_t fields_by_name_size = field_index_type::get_box_size(_num_fields);
+				int64_t fields_by_name_size = field_index_type::get_box_size(_num_class_fields);
+				int64_t models_by_name_size = field_index_type::get_box_size(_num_class_fields);
 				int64_t query_size = query_store_type::get_box_size(_num_queries);
 				int64_t sql_size = sql_store_type::get_box_size(_num_sql_remotes);
 				int64_t file_size = file_store_type::get_box_size(_num_file_remotes);
 				int64_t http_size = http_store_type::get_box_size(_num_http_remotes);
 				int64_t model_size = model_store_type::get_box_size(_num_models);
-				int64_t total_size = field_size + class_size + classes_by_name_size + fields_by_name_size + query_size + sql_size + http_size + file_size;
-				return total_size;
+				int64_t total_size = field_size + class_size + models_by_name_size + classes_by_name_size + fields_by_name_size + query_size + sql_size + http_size + file_size;
+				return total_size * 3 / 2;
 			}
 
-			template <typename B>
-				requires (box<B, jfield>
-			&& box<B, jclass_header>
-				&& box<B, jclass_field>
-				&& box<B, object_name>
-				)
-				static jschema create_schema(B* _b, int _num_classes, int _num_fields, int _num_class_fields, int _num_queries, int _num_sql_remotes, int _num_http_remotes, int _num_file_remotes, int _num_models, row_id_type& _row)
+			static jschema create_schema(serialized_box* _b, int _num_classes, int _num_fields, bool _use_standard_fields, row_id_type& _location)
 			{
-				_row = reserve_schema(_b, _num_classes, _num_fields, _num_class_fields, _num_queries, _num_sql_remotes, _num_http_remotes, _num_file_remotes, _num_models);
-				jschema schema = get_schema(_b, _row);
+				_location = reserve_schema(_b, _num_classes, _num_fields, _use_standard_fields);
+				jschema schema = get_schema(_b, _location);
+				schema.add_standard_fields();
 				return schema;
 			}
 
@@ -1452,8 +1453,6 @@ namespace countrybit
 					bind_class(opt.item.update_class_name, opt.item.update_class_id);
 				}
 
-				row_id_type model_id;
-
 				if (request.model_id != null_row) 
 				{
 					models[request.model_id] = request;
@@ -1468,7 +1467,7 @@ namespace countrybit
 					models[model_id].model_id = model_id;
 					models_by_name.insert_or_assign(request.model_name, model_id);
 				}
-				return model_id;
+				return get_model(model_id);
 			}
 
 			row_id_type find_class(const object_name& class_name)
@@ -1548,17 +1547,23 @@ namespace countrybit
 			{
 				if (!_class_ids)
 				{
-					return 0;
+					return 256;
 				}
 
 				int max_size = 0;
 				while (*_class_ids != null_row)
 				{
 					auto myclassfield = get_class(*_class_ids);
-					if (myclassfield.item().class_size_bytes > max_size) {
+					if (myclassfield.item().class_size_bytes > max_size) 
+					{
 						max_size = myclassfield.item().class_size_bytes;
 					}
 					_class_ids++;
+				}
+
+				if (max_size == 0)
+				{
+					max_size = 256;
 				}
 
 				return max_size;
@@ -1567,56 +1572,51 @@ namespace countrybit
 			int64_t get_collection_size(int _number_of_actors, int _max_history_length, row_id_type* _class_ids)
 			{
 				int64_t max_size = get_max_object_size(_class_ids);
-				if (!max_size)
-				{
-					return null_row;
-				}
+
 				int64_t total_size = 0;
 				total_size += actor_collection::get_box_size(_number_of_actors);
 				total_size += object_collection::get_box_size(_max_history_length, max_size * _max_history_length);
 				total_size += sizeof(jcollection_header);
+
 				return total_size;
 			}
 
-			template <typename B>
-			requires (box<B, jcollection_header>)
-			row_id_type reserve_collection(B* _b, collection_id_type _collection_id, row_id_type _model_id,  int _number_of_actors, int _max_history_length, row_id_type* _class_ids)
+			row_id_type reserve_collection(serialized_box* _b, collection_id_type _collection_id, row_id_type _model_id,  int _number_of_actors, int _max_history_length, row_id_type* _class_ids)
 			{
+				uint64_t total_size = get_collection_size(_number_of_actors, _max_history_length, _class_ids);
+
+				_b->expand_check(total_size);
+
 				uint64_t max_size = get_max_object_size(_class_ids);
-				if (!max_size)
-				{
-					return null_row;
-				}
 
 				jcollection_header jcm;
 				jcm.collection_id = _collection_id;
 				jcm.model_id = _model_id;
 				jcm.actors_id = null_row;
 				jcm.objects_id = null_row;
+
 				row_id_type jcm_row = _b->pack(jcm);
+
 				if (jcm_row != null_row) {
 					jcollection_header* hdr = _b->unpack<jcollection_header>(jcm_row);
 					hdr->actors_id = actor_collection::reserve_table(_b, _number_of_actors);
 					hdr->objects_id =  object_collection::reserve_table(_b, _max_history_length, max_size * _max_history_length);
 				}
+
 				return jcm_row;
 			}
 
-			template <typename B>
-			requires (box<B, jcollection_header>)
-			jcollection get_collection(B* _b, row_id_type _location)
+			jcollection get_collection(serialized_box* _b, row_id_type _location)
 			{
 				jcollection_header *jcm;
 				jcm = _b->unpack<jcollection_header>(_location);
 				auto actors = actor_collection::get_table(_b, jcm->actors_id);
 				auto objects = object_collection::get_table(_b, jcm->objects_id);
-				jcollection collection(this, jcm->model_id, jcm->collection_id, actors, objects);
+				jcollection collection(this,  jcm->collection_id, jcm->model_id, actors, objects);
 				return collection;
 			}
 
-			template <typename B>
-			requires (box<B, jcollection_header>)
-			jcollection create_collection(B* _b, collection_id_type _collection_id, int _model_id, int _number_of_actors, int _max_history_length, row_id_type* _class_ids)
+			jcollection create_collection(serialized_box* _b, collection_id_type _collection_id, int _model_id, int _number_of_actors, int _max_history_length, row_id_type* _class_ids)
 			{
 				auto reserved_id = reserve_collection(_b, _collection_id, _model_id, _number_of_actors, _max_history_length, _class_ids);
 				jcollection tmp = get_collection(_b, reserved_id);

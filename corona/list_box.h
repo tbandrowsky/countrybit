@@ -100,13 +100,9 @@ namespace countrybit
 			static row_id_type create(serialized_box* b)
 			{
 				list_box temp;
-				box->expand_check(sizeof(list_box_data));
+				b->expand_check(sizeof(list_box_data));
 				auto location = b->pack<char>(0, sizeof(list_box_data));
-				temp.hdr = b->unpack<list_box_data>(location);
-				temp.hdr->length = 0;
 				temp.header_loc = location;
-				temp.hdr->root_item = null_row;
-				temp.hdr->last_item = null_row;
 				temp.box = b;
 				return location;
 			}

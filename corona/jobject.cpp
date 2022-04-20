@@ -200,6 +200,8 @@ namespace countrybit
 					}
 				}
 			}
+
+			return acr;
 		}
 
 		actor_type jcollection::create_actor(actor_type _actor)
@@ -374,7 +376,7 @@ namespace countrybit
 			the_class = schema->get_class(_class_id);
 		}
 
-		jslice::jslice(jslice* _parent, jschema* _schema, row_id_type _class_id, serialized_box *_box, row_id_type _location, dimensions_type _dim) : parent(_parent), schema(_schema), class_id(_class_id), bytes(_nullptr), dim(_dim), box(_box), location(_location)
+		jslice::jslice(jslice* _parent, jschema* _schema, row_id_type _class_id, serialized_box *_box, row_id_type _location, dimensions_type _dim) : parent(_parent), schema(_schema), class_id(_class_id), bytes(nullptr), dim(_dim), box(_box), location(_location)
 		{
 			the_class = schema->get_class(_class_id);
 		}
@@ -389,7 +391,7 @@ namespace countrybit
 			return the_class;
 		}
 
-		size_t jslice::get_offset(int field_idx)
+		size_t jslice::get_offset(int field_idx, jtype _type)
 		{
 #if _DEBUG
 			if (schema == nullptr || class_id == null_row || bytes == nullptr) {
@@ -397,6 +399,15 @@ namespace countrybit
 			}
 #endif
 			jclass_field& jcf = the_class.detail(field_idx);
+#if _DEBUG
+			if (_type != jtype::type_null) {
+				jfield& f = schema->get_field(jcf.field_id);
+				if (f.type_id != _type) {
+					istring<100> error = f.name + " accessed incorrectly.";
+					throw std::logic_error(error.c_str());
+				}
+			}
+#endif
 			return jcf.offset;
 		}
 
@@ -658,92 +669,92 @@ namespace countrybit
 
 		int8_box jslice::get_int8(int field_idx)
 		{
-			return get_boxed<int8_box>(field_idx);
+			return get_boxed<int8_box>(field_idx, jtype::type_int8);
 		}
 
 		int16_box jslice::get_int16(int field_idx)
 		{
-			return get_boxed<int16_box>(field_idx);
+			return get_boxed<int16_box>(field_idx, jtype::type_int16);
 		}
 
 		int32_box jslice::get_int32(int field_idx)
 		{
-			return jslice::get_boxed<int32_box>(field_idx);
+			return jslice::get_boxed<int32_box>(field_idx, jtype::type_int32);
 		}
 
 		int64_box jslice::get_int64(int field_idx)
 		{
-			return jslice::get_boxed<int64_box>(field_idx);
+			return jslice::get_boxed<int64_box>(field_idx, jtype::type_int64);
 		}
 
 		float_box jslice::get_float(int field_idx)
 		{
-			return jslice::get_boxed<float_box>(field_idx);
+			return jslice::get_boxed<float_box>(field_idx, jtype::type_float32);
 		}
 
 		double_box jslice::get_double(int field_idx)
 		{
-			return jslice::get_boxed<double_box>(field_idx);
+			return jslice::get_boxed<double_box>(field_idx, jtype::type_float64);
 		}
 
 		time_box jslice::get_time(int field_idx)
 		{
-			return get_boxed<time_box>(field_idx);
+			return get_boxed<time_box>(field_idx, jtype::type_datetime);
 		}
 
 		point_box jslice::get_point(int field_idx)
 		{
-			return get_boxed<point_box>(field_idx);
+			return get_boxed<point_box>(field_idx, jtype::type_point);
 		}
 
 		rectangle_box jslice::get_rectangle(int field_idx)
 		{
-			return get_boxed<rectangle_box>(field_idx);
+			return get_boxed<rectangle_box>(field_idx, jtype::type_rectangle);
 		}
 
 		image_box jslice::get_image(int field_idx)
 		{
-			return get_boxed<image_box>(field_idx);
+			return get_boxed<image_box>(field_idx, jtype::type_image);
 		}
 
 		wave_box jslice::get_wave(int field_idx)
 		{
-			return get_boxed<wave_box>(field_idx);
+			return get_boxed<wave_box>(field_idx, jtype::type_wave);
 		}
 
 		midi_box jslice::get_midi(int field_idx)
 		{
-			return get_boxed<midi_box>(field_idx);
+			return get_boxed<midi_box>(field_idx, jtype::type_midi);
 		}
 
 		color_box jslice::get_color(int field_idx)
 		{
-			return get_boxed<color_box>(field_idx);
+			return get_boxed<color_box>(field_idx, jtype::type_color);
 		}
 
 		query_box jslice::get_query(int field_idx)
 		{
-			return get_boxed_ex<query_box>(field_idx);
+			return get_boxed_ex<query_box>(field_idx, jtype::type_query);
 		}
 
 		sql_remote_box jslice::get_sql_remote(int field_idx)
 		{
-			return get_boxed_ex<sql_remote_box>(field_idx);
+			return get_boxed_ex<sql_remote_box>(field_idx, jtype::type_sql);
 		}
 
 		http_remote_box jslice::get_http_remote(int field_idx)
 		{
-			return get_boxed_ex<http_remote_box>(field_idx);
+			return get_boxed_ex<http_remote_box>(field_idx, jtype::type_http);
 		}
 
 		file_remote_box jslice::get_file_remote(int field_idx)
 		{
-			return get_boxed_ex<file_remote_box>(field_idx);
+			return get_boxed_ex<file_remote_box>(field_idx, jtype::type_file);
 		}
 
 		string_box jslice::get_string(int field_idx)
 		{
-			size_t offset = get_offset(field_idx);
+			size_t offset = get_offset(field_idx, jtype::type_string);
 			char *b = get_bytes() + offset;
 			auto temp = string_box::get(b);
 			return temp;
@@ -789,12 +800,12 @@ namespace countrybit
 
 		collection_id_box jslice::get_collection_id(int field_idx)
 		{
-			return jslice::get_boxed<collection_id_box>(field_idx);
+			return jslice::get_boxed<collection_id_box>(field_idx, jtype::type_collection_id);
 		}
 
 		object_id_box jslice::get_object_id(int field_idx)
 		{
-			return jslice::get_boxed<object_id_box>(field_idx);
+			return jslice::get_boxed<object_id_box>(field_idx, jtype::type_object_id);
 		}
 
 		int jslice::size()
@@ -1945,7 +1956,7 @@ namespace countrybit
 				{ { field_count, jtype::type_int64, "count", "Count" }, 0, INT64_MAX },
 			};
 
-			put_double_field_request double_fields[22] = {
+			put_double_field_request double_fields[13] = {
 				{ { field_quantity, jtype::type_float64, "quantity", "Quantity" }, -1E40, 1E40 },
 				{ { field_latitude, jtype::type_float64, "latitude", "Latitude" }, -90, 90 },
 				{ { field_longitude, jtype::type_float64, "longitude", "Longitude" }, -180, 180 },
@@ -1959,15 +1970,6 @@ namespace countrybit
 				{ { field_amperes, jtype::type_float64, "amperes", "Amperes" }, -1E40, 1E40 },
 				{ { field_kelvin, jtype::type_float64, "kelvin", "Kelvin" }, -1E40, 1E40 },
 				{ { field_mole, jtype::type_float64, "moles", "Moles" }, -1E40, 1E40 },
-				{ { field_height, jtype::type_float32, "height", "Height" }, 0, 100000 },
-				{ { field_width, jtype::type_float32, "width", "Width" }, 0, 100000 },
-				{ { field_x, jtype::type_float32, "x", "X" }, -100000, 100000 },
-				{ { field_y, jtype::type_float32, "y", "Y" }, -100000, 100000 },
-				{ { field_z, jtype::type_float32, "z", "Z" }, -100000, 100000 },
-				{ { field_red, jtype::type_float32, "red", "red" }, 0, 1 },
-				{ { field_green, jtype::type_float32, "green", "green" }, 0, 1 },
-				{ { field_blue, jtype::type_float32, "blue", "blue" }, 0, 1 },
-				{ { field_alpha, jtype::type_float32, "alpha", "alpha" }, 0, 1 }
 			};
 
 			for (int i = 0; i < sizeof(string_fields) / sizeof(string_fields[0]); i++) {
@@ -1985,6 +1987,17 @@ namespace countrybit
 			for (int i = 0; i < sizeof(double_fields) / sizeof(double_fields[0]); i++) {
 				put_double_field(double_fields[i]);
 			}
+
+			put_color_field({ field_color, jtype::type_color, "color", "color" });
+
+			put_point_field({ field_point, jtype::type_point, "point", "point" });
+			put_point_field({ field_position_point, jtype::type_point, "position_point", "position_point" });
+			put_point_field({ field_selection_point, jtype::type_point, "selection_point", "selection_point" });
+
+			put_rectangle_field({ field_rectangle, jtype::type_rectangle, "rectangle", "rectangle" });
+			put_rectangle_field({ field_position_rectangle, jtype::type_rectangle, "position_rectangle", "position_rectangle" });
+			put_rectangle_field({ field_selection_rectangle, jtype::type_rectangle, "selection_rectangle", "selection_rectangle" });
+
 		}
 
 		bool schema_tests()
@@ -1995,8 +2008,7 @@ namespace countrybit
 			jschema schema;
 			row_id_type schema_id;
 
-			schema = jschema::create_schema(&box, 10, 200, 500, 20, 20, 20, 20, schema_id);
-			schema.add_standard_fields();
+			schema = jschema::create_schema(box.get_box(), 20, 5, true, schema_id);
 
 			row_id_type quantity_field_id = schema.find_field("quantity");
 			row_id_type last_name_field_id = schema.find_field("lastName");
@@ -2092,8 +2104,7 @@ namespace countrybit
 			jschema schema;
 			row_id_type schema_id;
 
-			schema = jschema::create_schema( &box, 10, 200, 500, 20, 20, 20, 20, schema_id);
-			schema.add_standard_fields();
+			schema = jschema::create_schema( box.get_box(), 20, 1, true, schema_id );
 
 			countrybit::database::put_class_request person;
 
@@ -2107,14 +2118,21 @@ namespace countrybit
 				return false;
 			}
 
+			jmodel sample_model;
+			sample_model.model_name = "my model";
+			sample_model.model_id = null_row;
+
+			sample_model = schema.put_model(sample_model);
+
 			collection_id_type colid;
 			init_collection_id(colid);
-			
-			row_id_type classes[2] = {person_class_id, null_row};
 
-			jcollection people = schema.create_collection(&box, colid, 1, 50, classes);
+			jactor sample_actor;
+			sample_actor.actor_name = "sample actor";
+			sample_actor.actor_id = null_row;
 
-			actor_id_type scott = people.create_actor("scott tiger");
+			jcollection people = schema.create_collection(box.get_box(), colid, sample_model.model_id, 1, 50, nullptr);
+			sample_actor = people.create_actor(sample_actor);	
 
 			jarray pa;
 
@@ -2125,8 +2143,7 @@ namespace countrybit
 
 			row_id_type people_object_id;
 			
-			pa = people.create_object(scott, person_class_id, { 1, 1, 1 }, people_object_id);
-			auto sl = pa.get_slice(0);
+			auto sl = people.create_object(0, sample_actor.actor_id, person_class_id, people_object_id);
 			auto last_name = sl.get_string(0);
 			auto first_name = sl.get_string(1);
 			auto birthday = sl.get_time(2);
@@ -2138,8 +2155,7 @@ namespace countrybit
 			count = countstart + increment * 0;
 			qty = quantitystart + increment * 0;
 
-			pa = people.create_object(scott, person_class_id, { 1, 1, 1 }, people_object_id);
-			sl = pa.get_slice(0);
+			sl = people.create_object(1, sample_actor.actor_id, person_class_id, people_object_id);
 			last_name = sl.get_string(0);
 			first_name = sl.get_string(1);
 			birthday = sl.get_time(2);
@@ -2151,8 +2167,7 @@ namespace countrybit
 			count = countstart + increment * 1;
 			qty = quantitystart + increment * 1;
 
-			pa = people.create_object(scott, person_class_id, { 1, 1, 1 }, people_object_id);
-			sl = pa.get_slice(0);
+			sl = people.create_object(2, sample_actor.actor_id, person_class_id, people_object_id);
 			last_name = sl.get_string(0);
 			first_name = sl.get_string(1);
 			birthday = sl.get_time(2);
@@ -2164,8 +2179,7 @@ namespace countrybit
 			count = countstart + increment * 2;
 			qty = quantitystart + increment * 2;
 
-			pa = people.create_object(scott, person_class_id, { 1, 1, 1 }, people_object_id);
-			sl = pa.get_slice(0);
+			sl = people.create_object(3, sample_actor.actor_id, person_class_id, people_object_id);
 			last_name = sl.get_string(0);
 			first_name = sl.get_string(1);
 			birthday = sl.get_time(2);
@@ -2177,8 +2191,7 @@ namespace countrybit
 			count = countstart + increment * 3;
 			qty = quantitystart + increment * 3;
 
-			pa = people.create_object(scott, person_class_id, { 1, 1, 1 }, people_object_id);
-			sl = pa.get_slice(0);
+			sl = people.create_object(4, sample_actor.actor_id, person_class_id, people_object_id);
 			last_name = sl.get_string(0);
 			first_name = sl.get_string(1);
 			birthday = sl.get_time(2);
@@ -2192,9 +2205,8 @@ namespace countrybit
 
 			int inc_count = 0;
 
-			for (auto pers : people)
+			for (auto sl : people)
 			{
-				sl = pers.item_array.get_slice(0);
 				last_name = sl.get_string(0);
 				if (!last_name.starts_with("last")) {
 					std::cout << __LINE__ << ":last name failed" << std::endl;
@@ -2212,13 +2224,11 @@ namespace countrybit
 				if (birthday != birthdaystart + increment * inc_count) {
 					std::cout << __LINE__ << ":birthday failed" << std::endl;
 					return false;
-
 				}
 
 				if (count != countstart + increment * inc_count) {
 					std::cout << __LINE__ << ":count failed" << std::endl;
 					return false;
-
 				}
 
 				if (qty != quantitystart + increment * inc_count) {
@@ -2241,14 +2251,13 @@ namespace countrybit
 			jschema schema;
 			row_id_type schema_id;
 
-			schema = jschema::create_schema(&box, 10, 200, 500, 20, 20, 20, 20, schema_id);
-			schema.add_standard_fields();
+			schema = jschema::create_schema(box.get_box(), 50, 2, true, schema_id);
 
 			countrybit::database::put_class_request sprite_frame_request;
 
 			sprite_frame_request.class_name = "spriteframe";
 			sprite_frame_request.class_description = "sprite frame";
-			sprite_frame_request.member_fields = { field_shortname, field_x, field_y, field_width, field_height };
+			sprite_frame_request.member_fields = { field_shortname, field_rectangle, field_color };
 			row_id_type sprite_frame_class_id = schema.put_class(sprite_frame_request);
 
 			if (sprite_frame_class_id == null_row) {
@@ -2256,24 +2265,10 @@ namespace countrybit
 				return false;
 			}
 
-			countrybit::database::put_object_field_request of;
-			of.name.field_id = null_row;
-			of.options.class_id = sprite_frame_class_id;
-			of.options.dim = { 10, 10, 1 };
-			of.name.name = "spriteframe20";
-			of.name.description = "spriteframe20";
-
-			row_id_type sprite_frame_field_id = schema.put_object_field(of);
-
-			if (sprite_frame_field_id == null_row) {
-				std::cout << __LINE__ << ":object field create failed" << std::endl;
-				return false;
-			}
-
 			countrybit::database::put_class_request sprite_class_request;
 			sprite_class_request.class_name = "sprite";
 			sprite_class_request.class_description = "sprite";
-			sprite_class_request.member_fields = { field_shortname, field_width, field_height, sprite_frame_field_id };
+			sprite_class_request.member_fields = { field_shortname, field_rectangle, member_field(sprite_frame_class_id, { 10, 10, 1 }) };
 			row_id_type sprite_class_id = schema.put_class(sprite_class_request);
 
 			if (sprite_class_id == null_row) {
@@ -2287,7 +2282,6 @@ namespace countrybit
 
 			row_id_type classesb[2] = { sprite_class_id, null_row };
 
-
 			model_type sprite_model;
 
 			sprite_model.model_id = null_row;
@@ -2295,7 +2289,7 @@ namespace countrybit
 			
 			sprite_model = schema.put_model(sprite_model);
 
-			jcollection sprites = schema.create_collection( &box, colid, sprite_model.model_id, 50, 50, classesb);
+			jcollection sprites = schema.create_collection( box.get_box(), colid, sprite_model.model_id, 50, 50, classesb);
 
 			actor_type sprite_boy;
 			sprite_boy.actor_id = null_row;
@@ -2305,9 +2299,7 @@ namespace countrybit
 			row_id_type new_sprite_id;
 
 			for (int i = 0; i < 10; i++) {
-				auto new_object = sprites.create_object(actor_id, sprite_class_id, {1,1,1}, new_sprite_id);
-				auto slice = new_object.get_slice(0);
-
+				auto slice = sprites.create_object( i, sprite_boy.actor_id, sprite_class_id, new_sprite_id);
 				auto image_name = slice.get_string(0);
 				auto frame_width = slice.get_float(1);
 				auto frame_height = slice.get_float(2);
@@ -2336,10 +2328,8 @@ namespace countrybit
 
 			int scount = 0;
 
-			for (auto item : sprites)
+			for (auto slice : sprites)
 			{
-				auto slice = item.item_array.get_slice(0);
-
 				auto frame_width = slice.get_float(1);
 				auto frame_height = slice.get_float(2);
 
