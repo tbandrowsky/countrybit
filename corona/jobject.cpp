@@ -148,6 +148,7 @@ namespace countrybit
 					{
 						aco.item_id = null_row;
 					}
+					aco.actor_id = _actor;
 					aco.class_id = oi.item.create_class_id;
 					aco.item = acr.create_object(schema, aco.class_id);
 					aco.select_on_create = oi.item.select_on_create;
@@ -201,30 +202,119 @@ namespace countrybit
 			}
 		}
 
-		actor_command_result jcollection::create_actor(const actor_type& _actor)
+		actor_type jcollection::create_actor(actor_type _actor)
 		{
-			auto new_actor = actor_history.create_item(8);
-			new_actor.item() = _actor;
-			new_actor.item().actor_id = new_actor.row_id();
-			return get_command_result( new_actor.row_id() );
+			row_range actor_location;
+			auto new_actor = actors.append(_actor, actor_location);
+			new_actor.actor_id = actor_location.start;
+			return get_actor(new_actor.actor_id);
 		}
 
-		actor_command_result actor_command(const actor_select_object& _select)
+		actor_type jcollection::get_actor(actor_id_type _actor_id)
 		{
-			;
+			if (actors.check(_actor_id)) {
+				return actors[_actor_id];
+			}
+			else {
+				actor_type err;
+				return err;
+			}
 		}
 
-		actor_command_result actor_command(const actor_create_object& _select)
+		actor_type jcollection::update_actor(actor_type _actor)
 		{
-			;
+			if (actors.check(_actor.actor_id)) {
+				actors[_actor.actor_id] = _actor;
+				return actors[_actor.actor_id];
+			}
+			else {
+				actor_type err;
+				return err;
+			}
 		}
 
-		actor_command_result actor_command(const actor_update_object& _select)
+		actor_type jcollection::put_actor(actor_type _actor)
 		{
-		
+			actor_type modified;
+
+			if (_actor.actor_id == null_row) 
+			{
+				modified = create_actor(_actor);
+			}
+			else 
+			{
+				modified = update_actor(_actor);
+			}
+			return modified;
 		}
 
-		jslice jcollection::create_object(row_id_type _actor_id, row_id_type _class_id, row_id_type& object_id)
+		actor_command_result jcollection::select_object(const actor_select_object& _select)
+		{
+			actor_command_result acr;
+			if (!actors.check(_select.actor_id))
+			{
+				return acr;
+			}
+			actor_type ac = get_actor(_select.actor_id);
+			if (!_select.extend) {
+				ac.selections.clear();
+			}
+			if (objects.check(_select.object_id)) {
+				row_id_type selection = _select.object_id;
+				ac.selections.push_back(selection);
+			}
+			acr = get_command_result(_select.actor_id);
+			return acr;
+		}
+
+		actor_command_result jcollection::create_object(actor_create_object& _create)
+		{
+			actor_command_result acr;
+			if (!actors.check(_create.actor_id))
+			{
+				return acr;
+			}
+			actor_type ac = get_actor(_create.actor_id);
+			row_id_type item_id = _create.item_id;
+			row_id_type object_id = null_row;
+
+			create_object(item_id, _create.actor_id, _create.class_id, object_id);
+			if (object_id != null_row) 
+			{
+				auto slice = get_object(object_id);
+				update_object(object_id, slice);
+				if (_create.select_on_create) {
+					ac.selections.clear();
+					ac.selections.push_back(object_id);
+					put_actor(ac);
+				}
+			}
+
+			acr = get_command_result(_create.actor_id);
+			return acr;
+		}
+
+		actor_command_result jcollection::update_object(actor_update_object& _update)
+		{
+			actor_command_result acr;
+			if (!actors.check(_update.actor_id))
+			{
+				return acr;
+			}
+			actor_type ac = get_actor(_update.actor_id);
+			row_id_type object_id = _update.object_id;
+
+			if (object_id != null_row && objects.check(object_id))
+			{
+				auto slice = get_object(object_id);
+				update_object(object_id, slice);
+			}
+
+			acr = get_command_result(_update.actor_id);
+			return acr;
+		}
+
+		jslice jcollection::create_object(row_id_type _item_id, row_id_type _actor_id, row_id_type _class_id, row_id_type& object_id)
 		{
 			auto myclass = schema->get_class(_class_id);
 
@@ -247,25 +337,22 @@ namespace countrybit
 			auto find_field = schema->get_field(find_field_id);
 			auto bytes_to_allocate = find_field.size_bytes;
 
-			auto new_object = collection_objects.create_item(bytes_to_allocate);
+			auto new_object = objects.create_item(bytes_to_allocate);
 			new_object.item().oid.collection_id = collection_id;
 			new_object.item().oid.row_id = new_object.row_id();
 			new_object.item().class_field_id = find_field_id;
 			new_object.item().class_id = _class_id;
+			new_object.item().item_id = _item_id;
 			new_object.item().otype = jtype::type_object;
-			auto detail = actor_history.append_detail(_actor_id, 1);
-			detail.object_id = new_object.row_id();
-			time(&detail.occurred);
 
 			jarray ja(nullptr, schema, find_field_id, new_object.pdetails(), true);
 
 			return ja.get_slice(0);
 		}
 
-
 		jslice jcollection::get_object(row_id_type _object_id)
 		{
-			auto new_object = collection_objects.get_item(_object_id);
+			auto new_object = objects.get_item(_object_id);
 			if (new_object.pitem()->otype == jtype::type_object) {
 				jarray jax(nullptr, schema, new_object.item().class_field_id, new_object.pdetails());
 				return jax.get_slice(0);
@@ -276,7 +363,6 @@ namespace countrybit
 				return empty;
 			}
 		}
-
 
 		jslice::jslice() : schema(nullptr), class_id(null_row), bytes(nullptr)
 		{

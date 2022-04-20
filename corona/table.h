@@ -300,6 +300,16 @@ namespace countrybit
 				hdr->last_row -= isize;
 			}
 
+			bool check(int index)
+			{
+				if (r == null_row || r >= size() || r < 0)
+				{
+					return false;
+				}
+				return true;
+			}
+
+			// src here should be const
 			T& append(T& src, row_range& rr)
 			{
 				auto x = hdr->last_row + 1;
@@ -646,6 +656,11 @@ namespace countrybit
 					move_details(i, -1);
 				}
 				item.erase({ location, location });
+			}
+
+			bool check(int index)
+			{
+				return item.check(index);
 			}
 
 			item_details_holder<P, C> operator[](row_id_type row_id)

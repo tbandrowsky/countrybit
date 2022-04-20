@@ -69,6 +69,11 @@ namespace countrybit
 				}
 			}
 
+			void clear()
+			{
+				length = 0;
+			}
+
 			void push_back(item_type& t)
 			{
 				if (length < max_items) {

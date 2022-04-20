@@ -449,9 +449,9 @@ namespace countrybit
 		class actor_create_object
 		{
 		public:
+			actor_id_type		actor_id;
 			row_id_type			class_id;
 			row_id_type			item_id;
-			row_id_type			slice_data;
 			bool				select_on_create;
 			jslice				item;
 		};
@@ -459,6 +459,7 @@ namespace countrybit
 		class actor_update_object
 		{
 		public:
+			actor_id_type		actor_id;
 			row_id_type			object_id;
 			bool				selected;
 			jslice				item;
@@ -572,14 +573,19 @@ namespace countrybit
 				objects = std::move(_src.objects);
 			}
 
+			actor_type create_actor(actor_type _actor);
+			actor_type get_actor(actor_id_type _actor_id);
+			actor_type update_actor(actor_type _actor);
+			actor_type put_actor(actor_type _actor);
+
 			actor_command_result get_command_result(row_id_type _actor);
-			actor_command_result create_actor(const actor_type& _actor);
-			actor_command_result actor_command(const actor_select_object& _select);
-			actor_command_result actor_command(const actor_create_object& _select);
-			actor_command_result actor_command(const actor_update_object& _select);
+			actor_command_result select_object(const actor_select_object& _select);
+			actor_command_result create_object(actor_create_object& _create);
+			actor_command_result update_object(actor_update_object& _update);
 
 			jslice create_object(row_id_type _item_id, row_id_type _actor_id, row_id_type _class_id, row_id_type& object_id);
 			jslice get_object(row_id_type _object_id);
+			jslice update_object(row_id_type _object_id, jslice _slice);
 
 			bool selector_applies(selector_collection* _selector, actor_id_type& _actor);
 
