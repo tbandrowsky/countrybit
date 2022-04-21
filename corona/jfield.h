@@ -36,6 +36,7 @@ namespace countrybit
 		const int max_selectable_options = 100;
 		const int max_updatable_options = 100;
 		const int max_selections = 1000;
+		const int default_collection_object_size = 512;
 
 		const static int
 

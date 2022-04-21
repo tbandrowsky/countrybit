@@ -27,6 +27,28 @@ namespace countrybit
 
 		bool init_collection_id(collection_id_type& collection_id);
 
+		class jcollection_ref
+		{
+		public:
+
+			object_name			collection_name;
+			object_path			collection_file_name;
+			collection_id_type	collection_id;
+
+			row_id_type			collection_location;
+
+			object_name			model_name;
+			uint32_t			max_actors;
+			uint32_t			max_objects;
+			uint64_t			collection_size_bytes;
+
+			row_id_type			actors_id;
+			row_id_type			objects_id;
+			row_id_type			model_id;
+
+			dynamic_box*		data;
+		};
+
 		struct jschema_map
 		{
 			row_id_type fields_table_id;
@@ -42,15 +64,6 @@ namespace countrybit
 		};
 
 		using actor_id_type = row_id_type;
-
-		class jcollection_header
-		{
-		public:
-			collection_id_type	collection_id;
-			row_id_type			actors_id;
-			row_id_type			objects_id;
-			row_id_type			model_id;
-		};
 
 		class jschema;
 		class jarray;
@@ -543,6 +556,8 @@ namespace countrybit
 		{
 
 			jschema* schema;
+			jcollection_ref* ref;
+
 			collection_id_type		collection_id;
 			row_id_type				model_id;
 			actor_collection		actors;
@@ -555,31 +570,56 @@ namespace countrybit
 				;
 			}
 
-			jcollection(jschema* _schema, collection_id_type _collection_id, row_id_type _model_id, actor_collection& _actors, object_collection& _objects) :
+			jcollection(jschema* _schema, jcollection_ref *_ref) :
 				schema(_schema),
-				collection_id(_collection_id),
-				model_id(_model_id),
-				actors(_actors),
-				objects(_objects)
+				ref(_ref),
+				collection_id(_ref->collection_id),
+				model_id(_ref->model_id)
 			{
-				;
+				actors = actor_collection::get_table(_ref->data, _ref->actors_id );
+				objects = object_collection::get_table(_ref->data, _ref->objects_id );
 			}
 
-			jcollection(jschema* _schema, collection_id_type _collection_id, row_id_type _model_id, actor_collection&& _actors, object_collection&& _objects) :
-				schema(_schema),
-				collection_id(_collection_id),
-				model_id(_model_id)
+			jcollection(jcollection& _src) :
+				schema(_src.schema),
+				ref(_src.ref),
+				collection_id(_src.collection_id),
+				model_id(_src.model_id)
 			{
-				actors = std::move(_actors);
-				objects = std::move(_objects);
+				actors = actor_collection::get_table(ref->data, ref->actors_id);
+				objects = object_collection::get_table(ref->data, ref->objects_id);
 			}
 
-			jcollection(jcollection&& _src) 
+			jcollection(jcollection&& _src) :
+				schema(_src.schema),
+				ref(_src.ref),
+				collection_id(_src.collection_id),
+				model_id(_src.model_id)
 			{
-				schema = std::move(_src.schema);
-				collection_id = std::move(_src.collection_id);
-				actors = std::move(_src.actors);
-				objects = std::move(_src.objects);
+				actors = actor_collection::get_table(ref->data, ref->actors_id);
+				objects = object_collection::get_table(ref->data, ref->objects_id);
+			}
+
+			jcollection operator =(jcollection&& _src) 
+			{
+				schema = _src.schema;
+				ref = _src.ref;
+				collection_id = _src.collection_id;
+				model_id = _src.model_id;
+				actors = actor_collection::get_table(ref->data, ref->actors_id);
+				objects = object_collection::get_table(ref->data, ref->objects_id);
+				return *this;
+			}
+
+			jcollection operator =(jcollection& _src)
+			{
+				schema = _src.schema;
+				ref = _src.ref;
+				collection_id = _src.collection_id;
+				model_id = _src.model_id;
+				actors = actor_collection::get_table(ref->data, ref->actors_id);
+				objects = object_collection::get_table(ref->data, ref->objects_id);
+				return *this;
 			}
 
 			actor_type create_actor(actor_type _actor);
@@ -1551,9 +1591,10 @@ namespace countrybit
 
 			uint64_t get_max_object_size(row_id_type* _class_ids)
 			{
+
 				if (!_class_ids)
 				{
-					return 256;
+					return default_collection_object_size;
 				}
 
 				int max_size = 0;
@@ -1569,63 +1610,49 @@ namespace countrybit
 
 				if (max_size == 0)
 				{
-					max_size = 256;
+					max_size = default_collection_object_size;
 				}
 
 				return max_size;
 			}
 
-			int64_t get_collection_size(int _number_of_actors, int _max_history_length, row_id_type* _class_ids)
+			int64_t get_collection_size(jcollection_ref *ref, row_id_type* _class_ids)
 			{
 				int64_t max_size = get_max_object_size(_class_ids);
 
 				int64_t total_size = 0;
-				total_size += actor_collection::get_box_size(_number_of_actors);
-				total_size += object_collection::get_box_size(_max_history_length, max_size * _max_history_length);
-				total_size += sizeof(jcollection_header);
-
+				total_size += actor_collection::get_box_size(ref->max_actors);
+				total_size += object_collection::get_box_size(ref->max_objects, max_size * ref->max_objects);
 				return total_size;
 			}
 
-			row_id_type reserve_collection(serialized_box* _b, collection_id_type _collection_id, row_id_type _model_id,  int _number_of_actors, int _max_history_length, row_id_type* _class_ids)
+			bool reserve_collection(jcollection_ref *ref, row_id_type* _class_ids)
 			{
-				uint64_t total_size = get_collection_size(_number_of_actors, _max_history_length, _class_ids);
+				uint64_t total_size = get_collection_size(ref, _class_ids);
 
-				_b->expand_check(total_size);
+				ref->data->expand_check(total_size);
 
 				uint64_t max_size = get_max_object_size(_class_ids);
 
-				jcollection_header jcm;
-				jcm.collection_id = _collection_id;
-				jcm.model_id = _model_id;
-				jcm.actors_id = null_row;
-				jcm.objects_id = null_row;
+				ref->actors_id = actor_collection::reserve_table(ref->data, ref->max_actors);
+				ref->objects_id =  object_collection::reserve_table(ref->data, ref->max_objects, max_size * ref->max_objects);
 
-				row_id_type jcm_row = _b->pack(jcm);
-
-				if (jcm_row != null_row) {
-					jcollection_header* hdr = _b->unpack<jcollection_header>(jcm_row);
-					hdr->actors_id = actor_collection::reserve_table(_b, _number_of_actors);
-					hdr->objects_id =  object_collection::reserve_table(_b, _max_history_length, max_size * _max_history_length);
-				}
-
-				return jcm_row;
+				return ref->actors_id != null_row && ref->objects_id != null_row;
 			}
 
-			jcollection get_collection(serialized_box* _b, row_id_type _location)
+			jcollection get_collection(jcollection_ref* ref)
 			{
-				jcollection_header *jcm;
-				jcm = _b->unpack<jcollection_header>(_location);
-				auto actors = actor_collection::get_table(_b, jcm->actors_id);
-				auto objects = object_collection::get_table(_b, jcm->objects_id);
-				jcollection collection(this,  jcm->collection_id, jcm->model_id, actors, objects);
+				jcollection collection(this, ref);
 				return collection;
 			}
 
-			jcollection create_collection(serialized_box* _b, collection_id_type _collection_id, int _model_id, int _number_of_actors, int _max_history_length, row_id_type* _class_ids)
+			jcollection create_collection(jcollection_ref* ref, row_id_type* _class_ids)
 			{
-				auto reserved_id = reserve_collection(_b, _collection_id, _model_id, _number_of_actors, _max_history_length, _class_ids);
-				jcollection tmp = get_collection(_b, reserved_id);
+				bool reserved = reserve_collection(ref, _class_ids);
+				jcollection tmp;
+				if (reserved) {
+					tmp = get_collection(ref);
+				}
 				return tmp;
 			}
 		};

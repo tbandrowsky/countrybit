@@ -2116,6 +2116,28 @@ namespace countrybit
 
 			schema = jschema::create_schema( box.get_box(), 20, 1, true, schema_id );
 
+			jmodel sample_model;
+			sample_model.model_name = "my model";
+			sample_model.model_id = null_row;
+
+			sample_model = schema.put_model(sample_model);
+
+			jcollection_ref ref;
+			ref.data = &box;
+			ref.model_name = sample_model.model_name;
+			ref.model_id = sample_model.model_id;
+			ref.max_actors = 2;
+			ref.max_objects = 50;
+
+			init_collection_id(ref.collection_id);
+
+			jcollection people = schema.create_collection(&ref, nullptr);
+
+			jactor sample_actor;
+			sample_actor.actor_name = "sample actor";
+			sample_actor.actor_id = null_row;
+			sample_actor = people.create_actor(sample_actor);	
+
 			countrybit::database::put_class_request person;
 
 			person.class_name = "person";
@@ -2123,26 +2145,11 @@ namespace countrybit
 			person.member_fields = { field_last_name, field_first_name, field_birthday, field_count, field_quantity };
 			row_id_type person_class_id = schema.put_class(person);
 
-			if (person_class_id == null_row) {
+			if (person_class_id == null_row) 
+			{
 				std::cout << __LINE__ << ":class create failed failed" << std::endl;
 				return false;
 			}
-
-			jmodel sample_model;
-			sample_model.model_name = "my model";
-			sample_model.model_id = null_row;
-
-			sample_model = schema.put_model(sample_model);
-
-			collection_id_type colid;
-			init_collection_id(colid);
-
-			jactor sample_actor;
-			sample_actor.actor_name = "sample actor";
-			sample_actor.actor_id = null_row;
-
-			jcollection people = schema.create_collection(box.get_box(), colid, sample_model.model_id, 1, 50, nullptr);
-			sample_actor = people.create_actor(sample_actor);	
 
 			jarray pa;
 
@@ -2299,7 +2306,16 @@ namespace countrybit
 			
 			sprite_model = schema.put_model(sprite_model);
 
-			jcollection sprites = schema.create_collection( box.get_box(), colid, sprite_model.model_id, 50, 50, classesb);
+			jcollection_ref ref;
+			ref.data = &box;
+			ref.model_name = sprite_model.model_name;
+			ref.model_id = sprite_model.model_id;
+			ref.max_actors = 2;
+			ref.max_objects = 50;
+
+			init_collection_id(ref.collection_id);
+
+			jcollection sprites = schema.create_collection(&ref, nullptr);
 
 			actor_type sprite_boy;
 			sprite_boy.actor_id = null_row;

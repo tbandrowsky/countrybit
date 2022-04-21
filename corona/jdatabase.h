@@ -17,22 +17,6 @@ namespace countrybit
 	namespace database
 	{
 
-		class jcollection_ref
-		{
-		public:
-
-			object_name			collection_name;
-			object_path			collection_file_name;
-			collection_id_type	collection_id;
-			uint64_t			collection_size_bytes;
-			uint32_t			collection_size_items;
-
-			row_id_type			collection_location;
-			dynamic_box			data;
-
-			jcollection_ref() = default;
-		};
-
 		using collection_table_type = table<jcollection_ref>;
 		using collections_by_name_type = sorted_index<object_name, row_id_type, 1>;
 		using collections_by_id_type = sorted_index<collection_id_type, row_id_type, 1>;
@@ -49,40 +33,50 @@ namespace countrybit
 			object_path filename;
 		};
 
-		class jdatabase_open 
+		class open_db_request
 		{
 		public:
 			object_path filename;
 		};
 
-		class jdatabase_create 
+		class create_db_request
 		{
 		public:
 			int num_collections;
+			int num_classes;
+			int num_models;
 
 			object_path database_filename;
 			object_path database_folder;
 		};
 
-		class jdatabase_response : public system::base_result
+		class db_response : public system::base_result
 		{
 		public:
+			dynamic_box response_data;
 			system::os_result os_code;
 		};
 
-		class jdatabase_create_collection
+		class create_collection_request 
 		{
 		public:
-			object_name				collection_name;
-			uint32_t				model_name;
-			uint32_t				max_actors;
-			uint32_t				max_objects;
+			object_name model_name;
+			object_name collection_name;
+			int max_actors;
+			int max_objects;
 		};
 
-		class jdatabase_collection_response : public jdatabase_response
+		class get_collection_request
 		{
 		public:
-			collection_id_type	collection_id;
+			object_name collection_name;
+			collection_id_type collection_id;
+		};
+
+		class collection_response : public db_response
+		{
+		public:
+			jcollection collection;
 		};
 
 		class jdatabase
@@ -103,22 +97,43 @@ namespace countrybit
 			jdatabase(system::application* _application);
 			~jdatabase();
 
-			bool alter_schema(std::function<bool(jschema* _schema)> schema_proc);
+			system::task<db_response> open(open_db_request _open);
+			system::task<db_response> create(create_db_request _create);
 
-			system::task<jdatabase_response> open(jdatabase_open _open);
-			system::task<jdatabase_response> create(jdatabase_create _create);
+			row_id_type put_string_field(put_string_field_request request);
+			row_id_type put_time_field(put_time_field_request request);
+			row_id_type put_integer_field(put_integer_field_request request);
+			row_id_type put_double_field(put_double_field_request request);
+			row_id_type put_query_field(put_named_query_field_request request);
+			row_id_type put_sql_remote_field(put_named_sql_remote_field_request request);
+			row_id_type put_http_remote_field(put_named_http_remote_field_request request);
+			row_id_type put_file_remote_field(put_named_file_remote_field_request request);
+			row_id_type put_point_field(put_point_field_request request);
+			row_id_type put_rectangle_field(put_rectangle_field_request request);
+			row_id_type put_image_field(put_image_field_request request);
+			row_id_type put_wave_field(put_wave_field_request request);
+			row_id_type put_midi_field(put_midi_field_request request);
+			row_id_type put_color_field(put_color_field_request request);
+			jfield get_field(object_name name);
 
-			system::task<jdatabase_collection_response> create_collection(jdatabase_create_collection _create_collection);
+			row_id_type put_class(put_class_request request);		
+			jclass get_class(object_name name);
 
-			system::task<actor_type> create_actor(actor_type _actor);
-			system::task<actor_type> get_actor(actor_id_type _actor_id);
-			system::task<actor_type> update_actor(actor_type _actor);
-			system::task<actor_type> put_actor(actor_type _actor);
+			jmodel put_model(jmodel request);
+			jmodel get_model(object_name name);
 
-			system::task<actor_command_response> get_command_result(row_id_type _actor);
-			system::task<actor_command_response> select_object(const actor_select_object& _select);
-			system::task<actor_command_response> create_object(actor_create_object& _create);
-			system::task<actor_command_response> update_object(actor_update_object& _update);
+			collection_response create_collection(create_collection_request _create_collection);
+			collection_response get_collection(get_collection_request _get_collection);
+
+			actor_type create_actor(actor_type _actor);
+			actor_type get_actor(actor_id_type _actor_id);
+			actor_type update_actor(actor_type _actor);
+			actor_type put_actor(actor_type _actor);
+
+			actor_command_response get_command_result(row_id_type _actor);
+			actor_command_response select_object(const actor_select_object& _select);
+			actor_command_response create_object(actor_create_object& _create);
+			actor_command_response update_object(actor_update_object& _update);
 			
 		};
 	}
