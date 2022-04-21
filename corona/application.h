@@ -6,8 +6,6 @@ namespace countrybit
 {
 	namespace system
 	{
-		using namespace std;
-
 		class application
 		{
 			job_queue queue;
@@ -57,8 +55,6 @@ namespace countrybit
 			{
 				std::cout << _msg << std::endl;
 			}
-
-		private:
 
 		};
 

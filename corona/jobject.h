@@ -422,6 +422,7 @@ namespace countrybit
 		class actor_type
 		{
 		public:
+			collection_id_type		collection_id;
 			actor_id_type			actor_id;
 			object_name				actor_name;
 			selections_collection	selections;
@@ -444,14 +445,16 @@ namespace countrybit
 		class actor_select_object
 		{
 		public:
-			actor_id_type	actor_id;
-			row_id_type		object_id;
-			bool			extend;
+			collection_id_type	collection_id;
+			actor_id_type		actor_id;
+			row_id_type			object_id;
+			bool				extend;
 		};
 
 		class actor_create_object
 		{
 		public:
+			collection_id_type	collection_id;
 			actor_id_type		actor_id;
 			row_id_type			class_id;
 			row_id_type			item_id;
@@ -462,6 +465,7 @@ namespace countrybit
 		class actor_update_object
 		{
 		public:
+			collection_id_type	collection_id;
 			actor_id_type		actor_id;
 			row_id_type			object_id;
 			bool				selected;
@@ -471,6 +475,7 @@ namespace countrybit
 		class actor_view_object
 		{
 		public:
+			collection_id_type	collection_id;
 			row_id_type			object_id;
 			bool				selected;
 			jslice				item;
@@ -481,7 +486,7 @@ namespace countrybit
 		using actor_select_option_collection = list_box<actor_select_object>;
 		using actor_view_collection = list_box<actor_view_object>;
 
-		class actor_command_result
+		class actor_command_response
 		{
 			row_id_type									create_options_id;
 			row_id_type									update_options_id;
@@ -491,18 +496,19 @@ namespace countrybit
 
 		public:
 
+			collection_id_type							collection_id;
 			row_id_type									actor_id;
 			actor_create_option_collection				create_options;
 			actor_update_option_collection				update_options;
 			actor_select_option_collection				select_options;
 			actor_view_collection						view_objects;
 
-			actor_command_result()
+			actor_command_response()
 			{
 				;
 			}
 
-			actor_command_result(int _size)
+			actor_command_response(int _size)
 			{
 				data.init(_size);
 				create_options_id = actor_create_option_collection::create(data.get_box());
@@ -511,19 +517,19 @@ namespace countrybit
 				view_objects_id = actor_view_collection::create(data.get_box());
 			}
 
-			actor_command_result(actor_command_result&& _src)
+			actor_command_response(actor_command_response&& _src)
 			{
 				data = std::move(_src.data);
 			}
 
-			actor_command_result& operator=(actor_command_result&& _src)
+			actor_command_response& operator=(actor_command_response&& _src)
 			{
 				data = std::move(_src.data);
 				return *this;
 			}
 
-			actor_command_result operator=(const actor_command_result& _src) = delete;
-			actor_command_result(const actor_command_result& _src) = delete;
+			actor_command_response operator=(const actor_command_response& _src) = delete;
+			actor_command_response(const actor_command_response& _src) = delete;
 
 			jslice create_object(jschema* _schema, row_id_type _class_id);
 			jslice copy_object(jschema* _schema, jslice& _src);
@@ -581,10 +587,10 @@ namespace countrybit
 			actor_type update_actor(actor_type _actor);
 			actor_type put_actor(actor_type _actor);
 
-			actor_command_result get_command_result(row_id_type _actor);
-			actor_command_result select_object(const actor_select_object& _select);
-			actor_command_result create_object(actor_create_object& _create);
-			actor_command_result update_object(actor_update_object& _update);
+			actor_command_response get_command_result(row_id_type _actor);
+			actor_command_response select_object(const actor_select_object& _select);
+			actor_command_response create_object(actor_create_object& _create);
+			actor_command_response update_object(actor_update_object& _update);
 
 			jslice create_object(row_id_type _item_id, row_id_type _actor_id, row_id_type _class_id, row_id_type& object_id);
 			jslice get_object(row_id_type _object_id);

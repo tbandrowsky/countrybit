@@ -421,6 +421,59 @@ namespace countrybit
 			path_nodes		nodes;
 		};
 
+		/* a new filter mechanism will look more like this
+
+		enum class expression_operators
+		{
+			eq = 0,
+			ls = 1,
+			gt = 2,
+			lseq = 3,
+			gteq = 4,
+			contains = 5,
+			inlist = 6,
+			distance = 7,
+			and = 8,
+			or = 9,
+			not = 10
+		};
+
+		enum class expression_load_ops
+		{
+			op_parameter_slice,
+			op_target_slice,
+			op_expression_operator,
+		};
+
+		struct expression_frame
+		{
+			expression_load_ops		load_op;
+			row_id_type				field_id;
+			int64_t					offset;
+			row_id_type				stack_field_id;
+		};
+
+		struct expression_operator
+		{
+		public:
+			expression_operators	op;
+			double					distance_threshold;
+			row_id_type				operand1;
+			row_id_type				operand2;
+		};
+
+		using expression_frame_collection = iarray<expression_frame, 100>;
+		using expression_operator_collection = iarray<expression_operator, 100>;
+
+		class expression
+		{
+		public:
+			expression_frame_collection		stack;
+			expression_operator_collection	operations;
+		}
+
+		*/
+
 		enum class filter_comparison_types
 		{
 			eq = 0,

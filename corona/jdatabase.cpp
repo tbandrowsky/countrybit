@@ -15,7 +15,7 @@ namespace countrybit
 
 		}
 
-		task<jdatabase_file_response> jdatabase::open(jdatabase_open _open)
+		system::task<jdatabase_response> jdatabase::open(jdatabase_open _open)
 		{
 			int success = 1;
 			countrybit::system::file dbfile = application->open_file(_open.filename.c_str(), countrybit::system::file_open_types::open_existing);
@@ -31,15 +31,15 @@ namespace countrybit
 					collections_by_name = collections_by_name_type::get_sorted_index(&database_box, map->collections_by_name_location);
 				}
 			} 
-			jdatabase_file_response jfr;
-			jfr.result = dbfile.result();
+			jdatabase_response jfr;
+			jfr.os_code = dbfile.result();
 			jfr.success = true;
 			co_return jfr;
 		}
 
-		task<jdatabase_file_response> jdatabase::create(jdatabase_create _create)
+		system::task<jdatabase_response> jdatabase::create(jdatabase_create _create)
 		{
-			os_result last_err;
+			system::os_result last_err;
 
 			int success = 1;
 
@@ -69,13 +69,13 @@ namespace countrybit
 				auto result = co_await dbfile.write(0, database_box.data(), database_box.size());
 			}
 
-			jdatabase_file_response jfr;
+			jdatabase_response jfr;
 			jfr.result = dbfile.result();
 			jfr.success = true;
 			co_return jfr;
 		}
 
-		task<jdatabase_collection_response> jdatabase::create_collection(jdatabase_create_collection _create_collection)
+		system::task<jdatabase_collection_response> jdatabase::create_collection(jdatabase_create_collection _create_collection)
 		{
 			jdatabase_collection_response response;
 
@@ -132,6 +132,46 @@ namespace countrybit
 			jref.collection_file_name = collection_path;
 
 			co_return response;
+		}
+
+		system::task<actor_type> jdatabase::create_actor(actor_type _actor)
+		{
+			;
+		}
+
+		system::task<actor_type> jdatabase::get_actor(actor_id_type _actor_id)
+		{
+			;
+		}
+
+		system::task<actor_type> jdatabase::update_actor(actor_type _actor)
+		{
+			;
+		}
+
+		system::task<actor_type> jdatabase::put_actor(actor_type _actor)
+		{
+			;
+		}
+
+		system::task<actor_command_response> get_command_result(row_id_type _actor)
+		{
+			;
+		}
+
+		system::task<actor_command_response> select_object(const actor_select_object& _select)
+		{
+			;
+		}
+
+		system::task<actor_command_response> create_object(actor_create_object& _create)
+		{
+			;
+		}
+
+		system::task<actor_command_response> update_object(actor_update_object& _update)
+		{
+			;
 		}
 
 		jdatabase::~jdatabase()

@@ -55,7 +55,7 @@ namespace countrybit
 			return hr == S_OK;
 		}
 
-		jslice actor_command_result::create_object(jschema* _schema, row_id_type _class_id)
+		jslice actor_command_response::create_object(jschema* _schema, row_id_type _class_id)
 		{
 			auto myclass = _schema->get_class(_class_id);
 			auto bytes_to_allocate = myclass.item().class_size_bytes;
@@ -70,7 +70,7 @@ namespace countrybit
 			return ja;
 		}
 
-		jslice actor_command_result::copy_object(jschema* _schema, jslice& _src)
+		jslice actor_command_response::copy_object(jschema* _schema, jslice& _src)
 		{
 			jslice dest = create_object(_schema, _src.get_class().item().class_id);
 			dest.update(_src);
@@ -116,9 +116,12 @@ namespace countrybit
 			return false;
 		}
 
-		actor_command_result jcollection::get_command_result(row_id_type _actor)
+		actor_command_response jcollection::get_command_result(row_id_type _actor)
 		{
-			actor_command_result acr;
+			actor_command_response acr;
+
+			acr.collection_id = collection_id;
+
 			auto model = schema->get_model(model_id);
 			auto& actor = actors[ _actor ];
 
@@ -148,6 +151,7 @@ namespace countrybit
 					{
 						aco.item_id = null_row;
 					}
+					aco.collection_id = collection_id;
 					aco.actor_id = _actor;
 					aco.class_id = oi.item.create_class_id;
 					aco.item = acr.create_object(schema, aco.class_id);
@@ -172,6 +176,7 @@ namespace countrybit
 						auto obj = objects[oid];
 						if (obj.item().class_id == rule->select_class_id) 
 						{
+							aso.collection_id = collection_id;
 							aso.object_id = oid;
 							aso.extend = false;
 							acr.select_options.push_back(aso);
@@ -193,6 +198,7 @@ namespace countrybit
 
 					for (auto sel : actor.selections) 
 					{
+						auo.collection_id = collection_id;
 						auo.object_id = sel.item;
 						auo.selected = true;
 						auo.item = get_object(auo.object_id);
@@ -208,6 +214,7 @@ namespace countrybit
 		{
 			row_range actor_location;
 			auto new_actor = actors.append(_actor, actor_location);
+			new_actor.collection_id = collection_id;
 			new_actor.actor_id = actor_location.start;
 			return get_actor(new_actor.actor_id);
 		}
@@ -250,9 +257,10 @@ namespace countrybit
 			return modified;
 		}
 
-		actor_command_result jcollection::select_object(const actor_select_object& _select)
+		actor_command_response jcollection::select_object(const actor_select_object& _select)
 		{
-			actor_command_result acr;
+			actor_command_response acr;
+			acr.collection_id = collection_id;
 			if (!actors.check(_select.actor_id))
 			{
 				return acr;
@@ -269,9 +277,10 @@ namespace countrybit
 			return acr;
 		}
 
-		actor_command_result jcollection::create_object(actor_create_object& _create)
+		actor_command_response jcollection::create_object(actor_create_object& _create)
 		{
-			actor_command_result acr;
+			actor_command_response acr;
+			acr.collection_id = collection_id;
 			if (!actors.check(_create.actor_id))
 			{
 				return acr;
@@ -296,9 +305,10 @@ namespace countrybit
 			return acr;
 		}
 
-		actor_command_result jcollection::update_object(actor_update_object& _update)
+		actor_command_response jcollection::update_object(actor_update_object& _update)
 		{
-			actor_command_result acr;
+			actor_command_response acr;
+			acr.collection_id = collection_id;
 			if (!actors.check(_update.actor_id))
 			{
 				return acr;
