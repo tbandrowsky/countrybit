@@ -132,210 +132,124 @@ namespace countrybit
 			return response;
 		}
 
-		row_id_type jdatabase::put_string_field(put_string_field_request request)
+		field_response jdatabase::put_string_field(put_string_field_request request)
 		{
-			return schema.put_string_field(request);
+			field_invoke<put_string_field_request>([this](auto& r) { return schema.put_string_field(r); }, request);
 		}
 
-		row_id_type jdatabase::put_time_field(put_time_field_request request)
+		field_response jdatabase::put_time_field(put_time_field_request request)
 		{
-			return schema.put_time_field(request);
+			field_invoke<put_time_field_request>([this](auto& r) { return schema.put_time_field(r); }, request);
 		}
 
-		row_id_type jdatabase::put_integer_field(put_integer_field_request request)
+		field_response jdatabase::put_integer_field(put_integer_field_request request)
 		{
-			return schema.put_integer_field(request);
+			field_invoke<put_integer_field_request>([this](auto& r) { return schema.put_integer_field(r); }, request);
 		}
 
-		row_id_type jdatabase::put_double_field(put_double_field_request request)
+		field_response jdatabase::put_double_field(put_double_field_request request)
 		{
-			return schema.put_double_field(request);
+			field_invoke<put_double_field_request>([this](auto& r) { return schema.put_double_field(r); }, request);
 		}
 
-		row_id_type jdatabase::put_query_field(put_named_query_field_request request)
+		field_response jdatabase::put_query_field(put_named_query_field_request request)
 		{
-			return schema.put_query_field(request);
+			return field_invoke<put_named_query_field_request>([this](auto& r) { return schema.put_query_field(r); }, request);
 		}
 
-		row_id_type jdatabase::put_sql_remote_field(put_named_sql_remote_field_request request)
+		field_response jdatabase::put_string_field(put_string_field_request request)
 		{
-			return schema.put_sql_remote_field(request);
+			return field_invoke<put_string_field_request>([this](auto& r) { return schema.put_string_field(r); }, request);
 		}
 
-		row_id_type jdatabase::put_http_remote_field(put_named_http_remote_field_request request)
+		field_response jdatabase::put_time_field(put_time_field_request request)
 		{
-			return schema.put_http_remote_field(request);
+			return field_invoke<put_time_field_request>([this](auto& r) { return schema.put_time_field(r); }, request);
 		}
 
-		row_id_type jdatabase::put_file_remote_field(put_named_file_remote_field_request request)
+		field_response jdatabase::put_integer_field(put_integer_field_request request)
 		{
-			return schema.put_file_remote_field(request);
+			return field_invoke<put_integer_field_request>([this](auto& r) { return schema.put_integer_field(r); }, request);
 		}
 
-		row_id_type jdatabase::put_point_field(put_point_field_request request)
+		field_response jdatabase::put_double_field(put_double_field_request request)
 		{
-			return schema.put_point_field(request);
+			return field_invoke<put_double_field_request>([this](auto& r) { return schema.put_double_field(r); }, request);
 		}
 
-		row_id_type jdatabase::put_rectangle_field(put_rectangle_field_request request)
+		field_response jdatabase::put_sql_remote_field(put_named_sql_remote_field_request request)
 		{
-			return schema.put_rectangle_field(request);
+			return field_invoke<put_named_sql_remote_field_request>([this](auto& r) { return schema.put_sql_remote_field(r); }, request);
 		}
 
-		row_id_type jdatabase::put_image_field(put_image_field_request request)
+		field_response jdatabase::put_http_remote_field(put_named_http_remote_field_request request)
 		{
-			return schema.put_image_field(request);
+			return field_invoke<put_named_http_remote_field_request>([this](auto& r) { return schema.put_http_remote_field(r); }, request);
 		}
 
-		row_id_type jdatabase::put_wave_field(put_wave_field_request request) 
+		field_response jdatabase::put_file_remote_field(put_named_file_remote_field_request request)
 		{
-			return schema.put_wave_field(request);
+			return field_invoke<put_named_file_remote_field_request>([this](auto& r) { return schema.put_file_remote_field(r); }, request);
 		}
 
-		row_id_type jdatabase::put_sql_remote_field(put_named_sql_remote_field_request request)
+		field_response jdatabase::put_point_field(put_point_field_request request)
 		{
-			return schema.put_sql_remote_field(request);
+			return field_invoke<put_point_field_request>([this](auto& r) { return schema.put_point_field(r); }, request);
 		}
 
-		row_id_type jdatabase::put_http_remote_field(put_named_http_remote_field_request request)
+		field_response jdatabase::put_rectangle_field(put_rectangle_field_request request)
 		{
-			return schema.put_http_remote_field(request);
+			return field_invoke<put_rectangle_field_request>([this](auto& r) { return schema.put_rectangle_field(r); }, request);
 		}
 
-		row_id_type jdatabase::put_file_remote_field(put_named_file_remote_field_request request)
+		field_response jdatabase::put_image_field(put_image_field_request request)
 		{
-			return schema.put_file_remote_field(request);
+			return field_invoke<put_image_field_request>([this](auto& r) { return schema.put_image_field(r); }, request);
 		}
 
-		row_id_type jdatabase::put_point_field(put_point_field_request request)
+		field_response jdatabase::put_wave_field(put_wave_field_request request)
 		{
-			return schema.put_point_field(request);
+			return field_invoke<put_wave_field_request>([this](auto& r) { return schema.put_wave_field(r); }, request);
 		}
 
-		row_id_type jdatabase::put_rectangle_field(put_rectangle_field_request request)
+		field_response jdatabase::put_color_field(put_color_field_request request)
 		{
-			return schema.put_rectangle_field(request);
+			return field_invoke<put_color_field_request>([this](auto& r) { return schema.put_color_field(r); }, request);
 		}
 
-		row_id_type jdatabase::put_image_field(put_image_field_request request)
+		field_response jdatabase::get_field(object_name name)
 		{
-			return schema.put_image_field(request); 
+			return field_invoke<object_name>([this](auto& r) {
+				return schema.find_field(r);
+			; }, name);
 		}
 
-		row_id_type jdatabase::put_sql_remote_field(put_named_sql_remote_field_request request)
+		class_response jdatabase::put_class(put_class_request request)
 		{
-			return schema.put_sql_remote_field(request);
+			return class_invoke<put_class_request>([this](auto& r) { return schema.put_class(r); }, request);
 		}
 
-		row_id_type jdatabase::put_http_remote_field(put_named_http_remote_field_request request)
+		class_response jdatabase::get_class(object_name name)
 		{
-			return schema.put_http_remote_field(request);
+			return class_invoke<object_name>([this](auto& r) { return schema.find_class(r); }, name);
 		}
 
-		row_id_type jdatabase::put_file_remote_field(put_named_file_remote_field_request request)
+		model_response jdatabase::put_model(jmodel request)
 		{
-			return schema.put_file_remote_field(request);
+			return model_invoke<jmodel>([this](auto& r) { return schema.put_model(r); }, request);
 		}
 
-		row_id_type jdatabase::put_point_field(put_point_field_request request)
+		model_response jdatabase::get_model(object_name name)
 		{
-			return schema.put_point_field(request);
-		}
-
-		row_id_type jdatabase::put_rectangle_field(put_rectangle_field_request request)
-		{
-			return schema.put_rectangle_field(request);
-		}
-
-		row_id_type jdatabase::put_image_field(put_image_field_request request)
-		{
-			return schema.put_image_field(request);;
-		}
-
-		row_id_type jdatabase::put_midi_field(put_midi_field_request request)
-		{
-			return schema.put_midi_field(request);
-		}
-
-		row_id_type jdatabase::put_sql_remote_field(put_named_sql_remote_field_request request)
-		{
-			return schema.put_sql_remote_field(request);
-		}
-
-		row_id_type jdatabase::put_http_remote_field(put_named_http_remote_field_request request)
-		{
-			return schema.put_http_remote_field(request);
-		}
-
-		row_id_type jdatabase::put_file_remote_field(put_named_file_remote_field_request request)
-		{
-			return schema.put_file_remote_field(request);
-		}
-
-		row_id_type jdatabase::put_point_field(put_point_field_request request)
-		{
-			return schema.put_point_field(request);
-		}
-
-		row_id_type jdatabase::put_rectangle_field(put_rectangle_field_request request)
-		{
-			return schema.put_rectangle_field(request);
-		}
-
-		row_id_type jdatabase::put_image_field(put_image_field_request request)
-		{
-			return schema.put_image_field(request);
-		}
-
-		row_id_type jdatabase::put_color_field(put_color_field_request request)
-		{
-			return schema.put_color_field(request);
-		}
-
-		jfield jdatabase::get_field(object_name name)
-		{
-			auto field_id = schema.find_field(name);
-			return schema.get_field(field_id);
-		}
-
-		row_id_type jdatabase::put_class(put_class_request request)
-		{
-			return schema.put_class(request);
-		}
-
-		jmodel jdatabase::put_model(jmodel request)
-		{
-			return schema.put_model(request);
-		}
-
-		jclass jdatabase::get_class(object_name name)
-		{
-			auto id = schema.find_class(name);
-			return schema.get_class(id);
-		}
-
-		jmodel jdatabase::get_model(object_name name) 
-		{
-			auto id = schema.find_model(name);
-			return schema.get_model(id);
-		}
-
-		actor_type jdatabase::create_actor(actor_type _actor)
-		{
-			
-		}
-
-		actor_type jdatabase::get_actor(actor_id_type _actor_id)
-		{
-			;
-		}
-
-		actor_type jdatabase::update_actor(actor_type _actor)
-		{
-			;
+			return model_invoke<object_name>([this](auto& r) { return schema.find_model(r); }, name);
 		}
 
 		actor_type jdatabase::put_actor(actor_type _actor)
+		{
+			;
+		}
+
+		actor_type jdatabase::get_actor(actor_id_type _actor_id)
 		{
 			;
 		}

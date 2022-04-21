@@ -1035,104 +1035,96 @@ namespace countrybit
 			const char* invalid_target_field = "Invalid target field";
 			const char* invalid_projection_field = "Invalid projection field";
 
-			bool bind_field(object_name& _field_name, row_id_type& _field_id)
+			void bind_field(object_name& _field_name, row_id_type& _field_id)
 			{
 				auto fiter = fields_by_name[_field_name];
 				if (fiter != std::end(fields_by_name)) {
 					_field_id = fiter->second;
-					return true;
+					return;
 				}
 				_field_id = null_row;
-				return false;
+				throw std::logic_error("[" + _field_name + "] not found.");
 			}
 
-			bool bind_class(object_name& _class_name, row_id_type& _class_id)
+			void bind_class(object_name& _class_name, row_id_type& _class_id)
 			{
 				auto fiter = classes_by_name[_class_name];
 				if (fiter != std::end(classes_by_name)) {
 					_class_id = fiter->second;
-					return true;
+					return;
 				}
 				_class_id = null_row;
-				return false;
+				throw std::logic_error("[" + _class_name + "] not found.");
 			}
 
-			bool bind_projection_operation(operation_name& _operation, projection_operations& _nt)
+			void bind_projection_operation(operation_name& _operation, projection_operations& _nt)
 			{
 				_nt = projection_operations::group_by;
 
 				if (_operation == "group_by")
 				{
 					_nt = projection_operations::group_by;
-					return true;
 				}
 				else if (_operation == "calc_min")
 				{
 					_nt = projection_operations::calc_min;
-					return true;
 				}
 				else if (_operation == "calc_max")
 				{
 					_nt = projection_operations::calc_max;
-					return true;
 				}
 				else if (_operation == "calc_count")
 				{
 					_nt = projection_operations::calc_count;
-					return true;
 				}
 				else if (_operation == "calc_stddev")
 				{
 					_nt = projection_operations::calc_stddev;
-					return true;
 				}
-				return false;
+				else 
+				{
+					throw std::logic_error("[" + _operation + "] not found.");
+				}
 			}
 
-			bool bind_filter_comparison_type(operation_name& _comparison, filter_comparison_types& _fct)
+			void bind_filter_comparison_type(operation_name& _comparison, filter_comparison_types& _fct)
 			{
 				_fct = filter_comparison_types::eq;
 				if (_comparison == "eq")
 				{
 					_fct = filter_comparison_types::eq;
-					return true;
 				}
 				else if (_comparison == "ls")
 				{
 					_fct = filter_comparison_types::ls;
-					return true;
 				}
 				else if (_comparison == "gt")
 				{
 					_fct = filter_comparison_types::gt;
-					return true;
 				}
 				else if (_comparison == "lseq")
 				{
 					_fct = filter_comparison_types::lseq;
-					return true;
 				}
 				else if (_comparison == "gteq")
 				{
 					_fct = filter_comparison_types::gteq;
-					return true;
 				}
 				else if (_comparison == "contains")
 				{
 					_fct = filter_comparison_types::contains;
-					return true;
 				}
 				else if (_comparison == "inlist")
 				{
 					_fct = filter_comparison_types::inlist;
-					return true;
 				}
 				else if (_comparison == "distance")
 				{
 					_fct = filter_comparison_types::distance;
-					return true;
 				}
-				return false;
+				else {
+					throw std::logic_error("[" + _comparison + "] not found.");
+				}
 			}
 
 			row_id_type put_query_field(put_named_query_field_request request)
@@ -1151,8 +1143,7 @@ namespace countrybit
 				for (auto nd : path.nodes) 
 				{
 					auto &ndi = nd.item;
-					if (!bind_field(ndi.member_name, ndi.member_id))
-						return null_row;
+					bind_field(ndi.member_name, ndi.member_id);
 				}
 
 				auto& projections = request.options.projection;
@@ -1160,10 +1151,8 @@ namespace countrybit
 				for (auto proj : projections)
 				{
 					auto& proji = proj.item;
-					if (!bind_field(proji.field_name, proji.field_id))
-						return null_row;
-					if (!bind_projection_operation(proji.projection_name, proji.projection))
-						return null_row;
+					bind_field(proji.field_name, proji.field_id);
+					bind_projection_operation(proji.projection_name, proji.projection);
 					member_field mf(proji.field_id);
 					mf.field_name = proji.field_name;
 					pcr.member_fields.push_back(mf);
@@ -1174,12 +1163,9 @@ namespace countrybit
 				for (auto fil : filter)
 				{
 					auto& fili = fil.item;
-					if (!bind_filter_comparison_type(fili.comparison_name, fili.comparison))
-						return null_row;
-					if (!bind_field(fili.parameter_field_name, fili.parameter_field_id))
-						return null_row;
-					if (!bind_field(fili.target_field_name, fili.target_field_id))
-						return null_row;
+					bind_filter_comparison_type(fili.comparison_name, fili.comparison);
+					bind_field(fili.parameter_field_name, fili.parameter_field_id);
+					bind_field(fili.target_field_name, fili.target_field_id);
 				}
 
  				request.options.result_class_id = put_class(pcr);
@@ -1207,8 +1193,7 @@ namespace countrybit
 				auto& params = request.options.parameters;
 				for (auto param : params) {
 					auto& pi = param.item;
-					if (!bind_field(pi.corona_field, pi.corona_field_id))
-						return null_row;
+					bind_field(pi.corona_field, pi.corona_field_id);
 				}
 
 				sql_remotes.append(request.options, rr);
@@ -1225,8 +1210,7 @@ namespace countrybit
 				auto& params = request.options.parameters;
 				for (auto param : params) {
 					auto& pi = param.item;
-					if (!bind_field(pi.corona_field, pi.corona_field_id))
-						return null_row;
+					bind_field(pi.corona_field, pi.corona_field_id);
 				}
 
 				http_remotes.append(request.options, rr);
@@ -1243,8 +1227,7 @@ namespace countrybit
 				auto& params = request.options.parameters;
 				for (auto param : params) {
 					auto& pi = param.item;
-					if (!bind_field(pi.corona_field, pi.corona_field_id))
-						return null_row;
+					bind_field(pi.corona_field, pi.corona_field_id);
 				}
 
 				file_remotes.append(request.options, rr);
@@ -1360,7 +1343,7 @@ namespace countrybit
 						if (!field.use_id) {
 							auto fname = fields_by_name[field.field_name];
 							if (fname == std::end(fields_by_name)) {
-								return null_row;
+								throw std::logic_error("[" + field.field_name + " ] not found");
 							}
 							fid = fname->second;
 						}
@@ -1392,7 +1375,7 @@ namespace countrybit
 						if (!field.use_id) {
 							auto class_name = classes_by_name[field.field_name];
 							if (class_name == std::end(classes_by_name)) {
-								return null_row;
+								throw std::logic_error("[" + field.field_name + " ] not found");
 							}
 							porf.name.name = class_name.get_key();
 							porf.name.field_id = null_row;
@@ -1466,7 +1449,7 @@ namespace countrybit
 				return false;
 			}
 
-			jmodel put_model(jmodel request)
+			row_id_type put_model(jmodel request)
 			{
 				row_id_type model_id = find_model(request.model_name);
 				request.model_id = model_id;
@@ -1513,7 +1496,7 @@ namespace countrybit
 					models[model_id].model_id = model_id;
 					models_by_name.insert_or_assign(request.model_name, model_id);
 				}
-				return get_model(model_id);
+				return model_id;
 			}
 
 			row_id_type find_class(const object_name& class_name)

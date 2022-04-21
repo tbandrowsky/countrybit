@@ -79,6 +79,36 @@ namespace countrybit
 			jcollection collection;
 		};
 
+		class field_response : public db_response
+		{
+		public:
+			jfield info;
+		};
+
+		class class_response : public db_response
+		{
+		public:
+			jclass info;
+		};
+
+		class model_response : public db_response
+		{
+		public:
+			jmodel info;
+		};
+
+		class actor_response : public db_response
+		{
+		public:
+			jactor info;
+		};
+
+		class command_response : public db_response
+		{
+		public:
+			actor_command_response info;
+		};
+
 		class jdatabase
 		{
 
@@ -92,6 +122,102 @@ namespace countrybit
 			system::application				*application;
 			jdatabase_control_map			*map;
 
+			template<typename request_type> field_response field_invoke(std::function<row_id_type(request_type& _request)> fn, request_type& _request)
+			{
+				field_response response;
+
+				try 
+				{
+					row_id_type fid = fn(_request);
+					if (fid != null_row) 
+					{
+						response.info = schema.get_field(fid);
+					}
+					else 
+					{
+						response.message = "Could not manage field [" + _request.name + "]";
+					}
+				}
+				catch (std::logic_error& le)
+				{
+					response.message = "Could not manage field [" + _request.name + "]: " + le.what();
+				}
+				catch (std::invalid_argument& ie)
+				{
+					response.message = "Could not manage field [" + _request.name + "]: " + ie.what();
+				}
+				catch (std::exception& exc)
+				{
+					response.message = "Could not manage field [" + _request.name + "]: " + exc.what();
+				}
+
+				return response;
+			}
+
+			template<typename request_type> class_response class_invoke(std::function<row_id_type(request_type& _request)> fn, request_type& _request)
+			{
+				class_response response;
+
+				try
+				{
+					row_id_type cid = fn(_request);
+					if (cid != null_row)
+					{
+						response.info = schema.get_class(cid);
+					}
+					else
+					{
+						response.message = "Could not manage class [" + _request.name + "]";
+					}
+				}
+				catch (std::logic_error& le)
+				{
+					response.message = "Could not manage class [" + _request.name + "]: " + le.what();
+				}
+				catch (std::invalid_argument& ie)
+				{
+					response.message = "Could not manage class [" + _request.name + "]: " + ie.what();
+				}
+				catch (std::exception& exc)
+				{
+					response.message = "Could not manage class [" + _request.name + "]: " + exc.what();
+				}
+
+				return response;
+			}
+
+			template<typename request_type> model_response model_invoke(std::function<row_id_type(request_type& _request)> fn, request_type& _request)
+			{
+				model_response response;
+
+				try
+				{
+					row_id_type cid = fn(_request);
+					if (cid != null_row)
+					{
+						response.info = schema.get_model(cid);
+					}
+					else
+					{
+						response.message = "Could not manage model [" + _request.name + "]";
+					}
+				}
+				catch (std::logic_error& le)
+				{
+					response.message = "Could not manage model [" + _request.name + "]: " + le.what();
+				}
+				catch (std::invalid_argument& ie)
+				{
+					response.message = "Could not manage model [" + _request.name + "]: " + ie.what();
+				}
+				catch (std::exception& exc)
+				{
+					response.message = "Could not manage model [" + _request.name + "]: " + exc.what();
+				}
+
+				return response;
+			}
+
 		public:
 
 			jdatabase(system::application* _application);
@@ -100,40 +226,38 @@ namespace countrybit
 			system::task<db_response> open(open_db_request _open);
 			system::task<db_response> create(create_db_request _create);
 
-			row_id_type put_string_field(put_string_field_request request);
-			row_id_type put_time_field(put_time_field_request request);
-			row_id_type put_integer_field(put_integer_field_request request);
-			row_id_type put_double_field(put_double_field_request request);
-			row_id_type put_query_field(put_named_query_field_request request);
-			row_id_type put_sql_remote_field(put_named_sql_remote_field_request request);
-			row_id_type put_http_remote_field(put_named_http_remote_field_request request);
-			row_id_type put_file_remote_field(put_named_file_remote_field_request request);
-			row_id_type put_point_field(put_point_field_request request);
-			row_id_type put_rectangle_field(put_rectangle_field_request request);
-			row_id_type put_image_field(put_image_field_request request);
-			row_id_type put_wave_field(put_wave_field_request request);
-			row_id_type put_midi_field(put_midi_field_request request);
-			row_id_type put_color_field(put_color_field_request request);
-			jfield get_field(object_name name);
+			field_response put_string_field(put_string_field_request request);
+			field_response put_time_field(put_time_field_request request);
+			field_response put_integer_field(put_integer_field_request request);
+			field_response put_double_field(put_double_field_request request);
+			field_response put_query_field(put_named_query_field_request request);
+			field_response put_sql_remote_field(put_named_sql_remote_field_request request);
+			field_response put_http_remote_field(put_named_http_remote_field_request request);
+			field_response put_file_remote_field(put_named_file_remote_field_request request);
+			field_response put_point_field(put_point_field_request request);
+			field_response put_rectangle_field(put_rectangle_field_request request);
+			field_response put_image_field(put_image_field_request request);
+			field_response put_wave_field(put_wave_field_request request);
+			field_response put_midi_field(put_midi_field_request request);
+			field_response put_color_field(put_color_field_request request);
+			field_response get_field(object_name name);
 
-			row_id_type put_class(put_class_request request);		
-			jclass get_class(object_name name);
+			class_response put_class(put_class_request request);		
+			class_response get_class(object_name name);
 
-			jmodel put_model(jmodel request);
-			jmodel get_model(object_name name);
+			model_response put_model(jmodel request);
+			model_response get_model(object_name name);
 
 			collection_response create_collection(create_collection_request _create_collection);
 			collection_response get_collection(get_collection_request _get_collection);
 
-			actor_type create_actor(actor_type _actor);
-			actor_type get_actor(actor_id_type _actor_id);
-			actor_type update_actor(actor_type _actor);
-			actor_type put_actor(actor_type _actor);
+			actor_response put_actor(jactor _actor);
+			actor_response get_actor(jactor _actor_id);
 
-			actor_command_response get_command_result(row_id_type _actor);
-			actor_command_response select_object(const actor_select_object& _select);
-			actor_command_response create_object(actor_create_object& _create);
-			actor_command_response update_object(actor_update_object& _update);
+			command_response get_command_result(row_id_type _actor);
+			command_response select_object(const actor_select_object& _select);
+			command_response create_object(actor_create_object& _create);
+			command_response update_object(actor_update_object& _update);
 			
 		};
 	}
