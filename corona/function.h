@@ -89,7 +89,7 @@ namespace countrybit
 				};
 
 				void return_value(T value) {
-					std::cout << "task return_value:" << value << " " << this << GetCurrentThreadId() << std::endl;
+					//std::cout << "task return_value:" << value << " " << this << GetCurrentThreadId() << std::endl;
 					m_value = value;
 				}
 
@@ -150,7 +150,7 @@ namespace countrybit
 
 		template <typename JobType, typename IOParams> struct async_io_task : public std::suspend_always
 		{
-
+		public:
 			job_queue*  queue;
 			IOParams	params;
 

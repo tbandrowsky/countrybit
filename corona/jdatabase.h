@@ -118,6 +118,7 @@ namespace countrybit
 			template<typename request_type> field_response field_invoke(std::function<row_id_type(request_type& _request)> fn, request_type& _request)
 			{
 				field_response response;
+				response.success = false;
 
 				try 
 				{
@@ -125,6 +126,7 @@ namespace countrybit
 					if (fid != null_row) 
 					{
 						response.info = schema.get_field(fid);
+						response.success = true;
 					}
 					else 
 					{
@@ -150,6 +152,7 @@ namespace countrybit
 			template<typename request_type> class_response class_invoke(std::function<row_id_type(request_type& _request)> fn, request_type& _request)
 			{
 				class_response response;
+				response.success = false;
 
 				try
 				{
@@ -157,6 +160,7 @@ namespace countrybit
 					if (cid != null_row)
 					{
 						response.info = schema.get_class(cid);
+						response.success = true;
 					}
 					else
 					{
@@ -182,6 +186,7 @@ namespace countrybit
 			template<typename request_type> model_response model_invoke(std::function<row_id_type(request_type& _request)> fn, request_type& _request)
 			{
 				model_response response;
+				response.success = false;
 
 				try
 				{
@@ -189,6 +194,7 @@ namespace countrybit
 					if (cid != null_row)
 					{
 						response.info = schema.get_model(cid);
+						response.success = true;
 					}
 					else
 					{
@@ -211,50 +217,33 @@ namespace countrybit
 				return response;
 			}
 
-			template<typename request_type> model_response model_invoke(std::function<row_id_type(request_type& _request)> fn, request_type& _request)
-			{
-				model_response response;
-
-				try
-				{
-					row_id_type cid = fn(_request);
-					if (cid != null_row)
-					{
-						response.info = schema.get_model(cid);
-					}
-					else
-					{
-						response.message = "Could not manage model [" + _request.name + "]";
-					}
-				}
-				catch (std::logic_error& le)
-				{
-					response.message = "Could not manage model [" + _request.name + "]: " + le.what();
-				}
-				catch (std::invalid_argument& ie)
-				{
-					response.message = "Could not manage model [" + _request.name + "]: " + ie.what();
-				}
-				catch (std::exception& exc)
-				{
-					response.message = "Could not manage model [" + _request.name + "]: " + exc.what();
-				}
-
-				return response;
-			}
-
-			template<typename request_type> actor_response actor_invoke(std::function<row_id_type(request_type& _request)> fn, request_type& _request)
+			template<typename request_type> actor_response actor_invoke(std::function<row_id_type(jcollection&, request_type& _request)> fn, request_type& _request)
 			{
 				actor_response response;
+				response.success = false;
 
 				try
 				{
-					auto collection_iter = collections_by_id[_request.collection_id];
-					if (collection_iter == std::end(collections_by_id))
+					auto collection_response = get_collection(_request.collection_id);
+					if (!collection_response.success)
 					{
 						response.message = "Invalid collection";
+						return response;
 					}
-				
+					jcollection& collection = collection_response.collection;
+
+					row_id_type cid = fn(collection, _request);
+					if (cid != null_row)
+					{
+						response.info = collection.get_actor(cid);
+						response.success = true;
+					}
+					else
+					{
+						response.message = "Could not manage actor [" + _request.name + "]";
+					}
+
+					return response;			
 				}
 				catch (std::logic_error& le)
 				{

@@ -50,9 +50,9 @@ namespace countrybit
 
 		class file_write_job : public task_job
 		{
-			file_instance* params;
-
 		public:
+
+			file_instance* params;
 
 			void run()
 			{
@@ -62,9 +62,8 @@ namespace countrybit
 
 		class file_read_job : public task_job
 		{
-			file_instance* params;
-
 		public:
+			file_instance* params;
 
 			void run()
 			{

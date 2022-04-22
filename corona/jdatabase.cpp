@@ -1,4 +1,4 @@
-get
+
 #include <filesystem>
 
 #include "application.h"
@@ -135,22 +135,50 @@ namespace countrybit
 		collection_response jdatabase::get_collection(object_name _name)
 		{
 			collection_response response;
+			response.success = false;
 			auto itr = collections_by_name[_name];
-			if (itr != std::end(collections_by_name)) {
+			if (itr == std::end(collections_by_name)) {
 				response.message = "[" + _name + "] not found";
+				return response;
 			}
-			auto &ref = itr.get_value();
-			if (ref.data != nullptr) {
+			row_id_type row = itr.get_value();
+			if (row != null_row) {
+				auto& ref = collections[row];
 				ref.data = new dynamic_box();
-				ref.data->init(ref.collection_size);
+				ref.data->init(ref.collection_size_bytes);
+				response.collection = jcollection(&schema, &ref);
+				response.success = true;
 			}
-			response.collection = jcollection(&schema, );
-			return 
+			return response;
 		}
 
 		collection_response jdatabase::get_collection(collection_id_type _id)
 		{
-			;
+			collection_response response;
+			auto itr = collections_by_id[_id];
+			if (itr == std::end(collections_by_id)) {
+				response.message = "collection not found";
+				return response;
+			}
+			row_id_type row = itr.get_value();
+			if (row != null_row) {
+				auto& ref = collections[row];
+				ref.data = new dynamic_box();
+				ref.data->init(ref.collection_size_bytes);
+				response.collection = jcollection(&schema, &ref);
+				response.success = true;
+			}
+			return response;
+		}
+
+		field_response jdatabase::put_point_field(put_point_field_request request)
+		{
+			return field_invoke<put_point_field_request>([this](auto& r) { return schema.put_point_field(r); }, request);
+		}
+
+		field_response jdatabase::put_rectangle_field(put_rectangle_field_request request)
+		{
+			return field_invoke<put_rectangle_field_request>([this](auto& r) { return schema.put_rectangle_field(r); }, request);
 		}
 
 		field_response jdatabase::put_string_field(put_string_field_request request)
@@ -173,29 +201,14 @@ namespace countrybit
 			field_invoke<put_double_field_request>([this](auto& r) { return schema.put_double_field(r); }, request);
 		}
 
+		field_response jdatabase::put_color_field(put_color_field_request request)
+		{
+			return field_invoke<put_color_field_request>([this](auto& r) { return schema.put_color_field(r); }, request);
+		}
+
 		field_response jdatabase::put_query_field(put_named_query_field_request request)
 		{
 			return field_invoke<put_named_query_field_request>([this](auto& r) { return schema.put_query_field(r); }, request);
-		}
-
-		field_response jdatabase::put_string_field(put_string_field_request request)
-		{
-			return field_invoke<put_string_field_request>([this](auto& r) { return schema.put_string_field(r); }, request);
-		}
-
-		field_response jdatabase::put_time_field(put_time_field_request request)
-		{
-			return field_invoke<put_time_field_request>([this](auto& r) { return schema.put_time_field(r); }, request);
-		}
-
-		field_response jdatabase::put_integer_field(put_integer_field_request request)
-		{
-			return field_invoke<put_integer_field_request>([this](auto& r) { return schema.put_integer_field(r); }, request);
-		}
-
-		field_response jdatabase::put_double_field(put_double_field_request request)
-		{
-			return field_invoke<put_double_field_request>([this](auto& r) { return schema.put_double_field(r); }, request);
 		}
 
 		field_response jdatabase::put_sql_remote_field(put_named_sql_remote_field_request request)
@@ -213,16 +226,6 @@ namespace countrybit
 			return field_invoke<put_named_file_remote_field_request>([this](auto& r) { return schema.put_file_remote_field(r); }, request);
 		}
 
-		field_response jdatabase::put_point_field(put_point_field_request request)
-		{
-			return field_invoke<put_point_field_request>([this](auto& r) { return schema.put_point_field(r); }, request);
-		}
-
-		field_response jdatabase::put_rectangle_field(put_rectangle_field_request request)
-		{
-			return field_invoke<put_rectangle_field_request>([this](auto& r) { return schema.put_rectangle_field(r); }, request);
-		}
-
 		field_response jdatabase::put_image_field(put_image_field_request request)
 		{
 			return field_invoke<put_image_field_request>([this](auto& r) { return schema.put_image_field(r); }, request);
@@ -231,11 +234,6 @@ namespace countrybit
 		field_response jdatabase::put_wave_field(put_wave_field_request request)
 		{
 			return field_invoke<put_wave_field_request>([this](auto& r) { return schema.put_wave_field(r); }, request);
-		}
-
-		field_response jdatabase::put_color_field(put_color_field_request request)
-		{
-			return field_invoke<put_color_field_request>([this](auto& r) { return schema.put_color_field(r); }, request);
 		}
 
 		field_response jdatabase::get_field(object_name name)
@@ -267,26 +265,26 @@ namespace countrybit
 
 		actor_response jdatabase::put_actor(jactor _actor)
 		{
-			return actor_invoke<jactor>([this](auto& r) { return schema.put_actor(r); }, _actor);
+			return actor_invoke<jactor>([this](jcollection& col, auto& r) { return col.put_actor(r); }, _actor);
 		}
 
 		actor_response jdatabase::get_actor(object_name name)
 		{
-			return actor_invoke<object_name>([this](auto& r) { return schema.find_actor(r); }, name);
+			return actor_invoke<object_name>([this](jcollection& col, auto& r) { return col.find_actor(r); }, name);
 		}
 
 
-		actor_type jdatabase::select_object(const actor_select_object& _select)
+		command_response jdatabase::select_object(const actor_select_object& _select)
 		{
 			;
 		}
 
-		actor_command_response jdatabase::create_object(actor_create_object& _create)
+		command_response jdatabase::create_object(actor_create_object& _create)
 		{
 			;
 		}
 
-		actor_command_response jdatabase::update_object(actor_update_object& _update)
+		command_response jdatabase::update_object(actor_update_object& _update)
 		{
 			;
 		}
