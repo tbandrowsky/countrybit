@@ -1,6 +1,7 @@
 
 #include "array_box.h"
 #include <iostream>
+#include "assert_if.h"
 
 namespace countrybit
 {
@@ -52,6 +53,21 @@ namespace countrybit
 					return false;
 				}
 			}
+
+			auto count = test_iarray.count_if([](auto& t) { return t < 3;  });
+			assert_if([count]() { return count == 3; }, "Wrong count");
+
+			auto items = test_iarray.where([](auto& t) { return t < 3;  });
+
+			count = 0;
+			for (auto r : items)
+			{
+				auto rti = r.item;
+				assert_if([rti]() { return rti < 3;  }, "Wrong values");
+				count++;
+			}
+			assert_if([count]() { return count == 3; }, "Wrong count");
+
 
 			return true;
 		}

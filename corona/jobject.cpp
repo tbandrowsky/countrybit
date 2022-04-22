@@ -219,12 +219,19 @@ namespace countrybit
 			return get_actor(new_actor.actor_id);
 		}
 
+		actor_id_type jcollection::find_actor(object_name& _name)
+		{
+			auto id = actors.first_index([_name](auto& t) { return t.actor_name == _name; });
+			return id;
+		}
+
 		actor_type jcollection::get_actor(actor_id_type _actor_id)
 		{
 			if (actors.check(_actor_id)) {
 				return actors[_actor_id];
 			}
-			else {
+			else 
+			{
 				actor_type err;
 				return err;
 			}
@@ -242,7 +249,7 @@ namespace countrybit
 			}
 		}
 
-		actor_type jcollection::put_actor(actor_type _actor)
+		row_id_type jcollection::put_actor(actor_type _actor)
 		{
 			actor_type modified;
 
@@ -254,7 +261,7 @@ namespace countrybit
 			{
 				modified = update_actor(_actor);
 			}
-			return modified;
+			return modified.actor_id;
 		}
 
 		actor_command_response jcollection::select_object(const actor_select_object& _select)
@@ -2120,7 +2127,7 @@ namespace countrybit
 			sample_model.model_name = "my model";
 			sample_model.model_id = null_row;
 
-			sample_model = schema.put_model(sample_model);
+			sample_model.model_id = schema.put_model(sample_model);
 
 			jcollection_ref ref;
 			ref.data = &box;
@@ -2304,7 +2311,7 @@ namespace countrybit
 			sprite_model.model_id = null_row;
 			sprite_model.model_name = "sprite model";
 			
-			sprite_model = schema.put_model(sprite_model);
+			sprite_model.model_id = schema.put_model(sprite_model);
 
 			jcollection_ref ref;
 			ref.data = &box;

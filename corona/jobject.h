@@ -623,9 +623,10 @@ namespace countrybit
 			}
 
 			actor_type create_actor(actor_type _actor);
+			actor_id_type put_actor(actor_type _actor);
 			actor_type get_actor(actor_id_type _actor_id);
+			actor_id_type find_actor(object_name& name);
 			actor_type update_actor(actor_type _actor);
-			actor_type put_actor(actor_type _actor);
 
 			actor_command_response get_command_result(row_id_type _actor);
 			actor_command_response select_object(const actor_select_object& _select);

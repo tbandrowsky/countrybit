@@ -3,6 +3,8 @@
 #include <cstdint>
 #include <exception>
 #include <stdexcept>
+#include <algorithm>
+#include <functional>
 #include "store_box.h"
 
 namespace countrybit
@@ -364,6 +366,7 @@ namespace countrybit
 			{
 				table<T>* base;
 				row_id_type current;
+				std::function<bool(T&)> predicate;
 
 			public:
 
@@ -383,7 +386,23 @@ namespace countrybit
 					base(_base),
 					current(_current)
 				{
+					predicate = [](T& a) { return true;  };
+				}
 
+				iterator(table<T>* _base, row_id_type _current, std::function<bool(T&)> _predicate) :
+					base(_base),
+					current(_current),
+					predicate(_predicate)
+				{
+					if (current != null_row) {
+						while (!predicate(base->get_at(current)))
+						{
+							current++;
+							if (current >= base->size()) {
+								current = null_row;
+							}
+						}
+					}
 				}
 
 				iterator() : base(nullptr), current(null_row)
@@ -408,22 +427,30 @@ namespace countrybit
 					return current;
 				}
 
+				inline T& get_value()
+				{
+					return base->get_at(current);
+				}
+
 				inline iterator begin() const
 				{
-					return iterator(base, current);
+					return iterator(base, current, predicate);
 				}
 
 				inline iterator end() const
 				{
-					return iterator(base, null_row);
+					return iterator(base, null_row, predicate);
 				}
 
 				inline iterator operator++()
 				{
-					current++;
-					if (current >= base->size())
-						return iterator(base, null_row);
-					return iterator(base, current);
+					do
+					{
+						current++;
+						if (current >= base->size())
+							return iterator(base, null_row, predicate);
+					} while (!predicate(base->get_at(current)));
+					return iterator(base, current, predicate);
 				}
 
 				inline iterator operator++(int)
@@ -454,6 +481,50 @@ namespace countrybit
 			{
 				return iterator(this, null_row);
 			}
+
+			auto where(std::function<bool(T&)> predicate)
+			{
+				return iterator(this, null_row, predicate);
+			}
+
+			T& first(std::function<bool(T&)> predicate)
+			{
+				auto w = this->where(predicate);
+				if (w == end()) {
+					throw std::logic_error("sequence has no elements");
+				}
+				return w->get_value();
+			}
+
+			row_id_type first_index(std::function<bool(T&)> predicate)
+			{
+				auto w = this->where(predicate);
+				if (w == end()) {
+					return null_row;
+				}
+				return w.get_row_id();
+			}
+
+			bool any_of(std::function<bool(T&)> predicate)
+			{
+				return std::any_of(hdr->rows, hdr->rows + size(), predicate);
+			}
+
+			bool all_of(std::function<bool(T&)> predicate)
+			{
+				return std::all_of(hdr->rows, hdr->rows + size(), predicate);
+			}
+
+			int count_if(std::function<bool(T&)> predicate)
+			{
+				return std::count_if(hdr->rows, hdr->rows + size(), predicate);
+			}
+
+			void sort(std::function<bool(T& a, T& b)> fn)
+			{
+				std::sort(hdr->rows, hdr->rows + size(), fn);
+			}
+
 		};
 
 

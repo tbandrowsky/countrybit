@@ -53,6 +53,18 @@ namespace countrybit
                 r = r && assert_if([nr, i, ti]() { return ti[i].id == nr.id && ti[i].description == nr.description && ti[i].name == nr.name; }, "item not stored correctly");
             }
 
+            auto count = basic.count_if([](auto& t) { return t.name == "yes" || t.name == "no";  });
+            assert_if([count]() { return count == 2; }, "Wrong count");
+
+            auto items = basic.where([](auto& t) { return t.name == "yes" || t.name == "no";  });
+            count = 0;
+            for (auto r : items) 
+            {
+                auto* rti = &r.item;
+                count++;
+            }
+            assert_if([count]() { return count == 2; }, "Wrong count");
+
             for (countrybit::database::row_id_type i = 0; i < basic.size(); i++) {
                 auto nr = basic[i];
                 r = r && assert_if([nr, i, ti]() { return ti[i].id == nr.id && ti[i].description == nr.description && ti[i].name == nr.name; }, "item not stored correctly");

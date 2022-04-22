@@ -1,4 +1,4 @@
-
+get
 #include <filesystem>
 
 #include "application.h"
@@ -132,6 +132,27 @@ namespace countrybit
 			return response;
 		}
 
+		collection_response jdatabase::get_collection(object_name _name)
+		{
+			collection_response response;
+			auto itr = collections_by_name[_name];
+			if (itr != std::end(collections_by_name)) {
+				response.message = "[" + _name + "] not found";
+			}
+			auto &ref = itr.get_value();
+			if (ref.data != nullptr) {
+				ref.data = new dynamic_box();
+				ref.data->init(ref.collection_size);
+			}
+			response.collection = jcollection(&schema, );
+			return 
+		}
+
+		collection_response jdatabase::get_collection(collection_id_type _id)
+		{
+			;
+		}
+
 		field_response jdatabase::put_string_field(put_string_field_request request)
 		{
 			field_invoke<put_string_field_request>([this](auto& r) { return schema.put_string_field(r); }, request);
@@ -244,32 +265,28 @@ namespace countrybit
 			return model_invoke<object_name>([this](auto& r) { return schema.find_model(r); }, name);
 		}
 
-		actor_type jdatabase::put_actor(actor_type _actor)
+		actor_response jdatabase::put_actor(jactor _actor)
+		{
+			return actor_invoke<jactor>([this](auto& r) { return schema.put_actor(r); }, _actor);
+		}
+
+		actor_response jdatabase::get_actor(object_name name)
+		{
+			return actor_invoke<object_name>([this](auto& r) { return schema.find_actor(r); }, name);
+		}
+
+
+		actor_type jdatabase::select_object(const actor_select_object& _select)
 		{
 			;
 		}
 
-		actor_type jdatabase::get_actor(actor_id_type _actor_id)
+		actor_command_response jdatabase::create_object(actor_create_object& _create)
 		{
 			;
 		}
 
-		actor_type get_command_result(row_id_type _actor)
-		{
-			;
-		}
-
-		actor_type select_object(const actor_select_object& _select)
-		{
-			;
-		}
-
-		actor_command_response create_object(actor_create_object& _create)
-		{
-			;
-		}
-
-		actor_command_response update_object(actor_update_object& _update)
+		actor_command_response jdatabase::update_object(actor_update_object& _update)
 		{
 			;
 		}

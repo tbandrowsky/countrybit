@@ -66,13 +66,6 @@ namespace countrybit
 			int max_objects;
 		};
 
-		class get_collection_request
-		{
-		public:
-			object_name collection_name;
-			collection_id_type collection_id;
-		};
-
 		class collection_response : public db_response
 		{
 		public:
@@ -218,6 +211,67 @@ namespace countrybit
 				return response;
 			}
 
+			template<typename request_type> model_response model_invoke(std::function<row_id_type(request_type& _request)> fn, request_type& _request)
+			{
+				model_response response;
+
+				try
+				{
+					row_id_type cid = fn(_request);
+					if (cid != null_row)
+					{
+						response.info = schema.get_model(cid);
+					}
+					else
+					{
+						response.message = "Could not manage model [" + _request.name + "]";
+					}
+				}
+				catch (std::logic_error& le)
+				{
+					response.message = "Could not manage model [" + _request.name + "]: " + le.what();
+				}
+				catch (std::invalid_argument& ie)
+				{
+					response.message = "Could not manage model [" + _request.name + "]: " + ie.what();
+				}
+				catch (std::exception& exc)
+				{
+					response.message = "Could not manage model [" + _request.name + "]: " + exc.what();
+				}
+
+				return response;
+			}
+
+			template<typename request_type> actor_response actor_invoke(std::function<row_id_type(request_type& _request)> fn, request_type& _request)
+			{
+				actor_response response;
+
+				try
+				{
+					auto collection_iter = collections_by_id[_request.collection_id];
+					if (collection_iter == std::end(collections_by_id))
+					{
+						response.message = "Invalid collection";
+					}
+				
+				}
+				catch (std::logic_error& le)
+				{
+					response.message = "Could not manage actor [" + _request.name + "]: " + le.what();
+				}
+				catch (std::invalid_argument& ie)
+				{
+					response.message = "Could not manage actor [" + _request.name + "]: " + ie.what();
+				}
+				catch (std::exception& exc)
+				{
+					response.message = "Could not manage actor [" + _request.name + "]: " + exc.what();
+				}
+
+				return response;
+			}
+
 		public:
 
 			jdatabase(system::application* _application);
@@ -249,12 +303,13 @@ namespace countrybit
 			model_response get_model(object_name name);
 
 			collection_response create_collection(create_collection_request _create_collection);
-			collection_response get_collection(get_collection_request _get_collection);
+			collection_response get_collection(object_name _name);
+			collection_response get_collection(collection_id_type _id);
 
 			actor_response put_actor(jactor _actor);
-			actor_response get_actor(jactor _actor_id);
+			actor_response get_actor(object_name name);
 
-			command_response get_command_result(row_id_type _actor);
+			command_response get_actor_options(row_id_type _actor);
 			command_response select_object(const actor_select_object& _select);
 			command_response create_object(actor_create_object& _create);
 			command_response update_object(actor_update_object& _update);

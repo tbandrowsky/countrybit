@@ -61,10 +61,17 @@ namespace countrybit
 			index_node create_node(int _num_levels)
 			{
 				index_node in = data_table.create_item(_num_levels + 1);
+
+				if (in.is_null()) 
+				{
+					throw std::logic_error("sorted index exhausted.");
+				}
+
 				for (int i = 0; i < in.size(); i++)
 				{
 					in.detail(i) = null_row;
 				}
+
 				return in;
 			}
 
@@ -456,8 +463,6 @@ namespace countrybit
 
 					return qnd.row_id();
 				}
-
-				return null_row;
 			}
 
 			bool remove_node(const KEY& key)

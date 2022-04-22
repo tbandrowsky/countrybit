@@ -228,6 +228,24 @@ namespace countrybit
 				return iterator(this, null_row, predicate);
 			}
 
+			item_type& first(std::function<bool(item_type&)> predicate)
+			{
+				auto w = this->where(predicate);
+				if (w == end()) {
+					throw std::logic_error("sequence has no elements");
+				}
+				return w->get_value();
+			}
+
+			row_id_type first_index(std::function<bool(item_type&)> predicate)
+			{
+				auto w = this->where(predicate);
+				if (w == end()) {
+					return null_row;
+				}
+				return w->get_row_id();
+			}
+
 			bool any_of(std::function<bool(item_type&)> predicate)
 			{
 				return std::any_of(data, data + length, predicate);
@@ -519,6 +537,24 @@ namespace countrybit
 			auto where(std::function<bool(item_type&)> predicate)
 			{
 				return iterator(this, null_row, predicate);
+			}
+
+			item_type& first(std::function<bool(item_type&)> predicate)
+			{
+				auto w = this->where(predicate);
+				if (w == end()) {
+					throw std::logic_error("sequence has no elements");
+				}
+				return w->get_index();
+			}
+
+			row_id_type first_index(std::function<bool(item_type&)> predicate)
+			{
+				auto w = this->where(predicate);
+				if (w == end()) {
+					return null_row;
+				}
+				return w->get_index();
 			}
 
 			bool any_of(std::function<bool(item_type&)> predicate)
