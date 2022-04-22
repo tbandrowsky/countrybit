@@ -13,6 +13,21 @@ namespace countrybit
 		class jcollection;
 		class jdatabase;
 
+		auto operator<=>(const collection_id_type& a, const collection_id_type& b)
+		{
+			int64_t ap = *((int64_t *)a.Data4);
+			int64_t bp = *((int64_t*)b.Data4);
+			return std::tie(a.Data1, a.Data2, a.Data3, ap) <=> std::tie(b.Data1, b.Data2, b.Data3, bp);
+		}
+
+		int operator<(const collection_id_type& a, const collection_id_type& b);
+		int operator>(const collection_id_type& a, const collection_id_type& b);
+		int operator>=(const collection_id_type& a, const collection_id_type& b);
+		int operator<=(const collection_id_type& a, const collection_id_type& b);
+		int operator==(const collection_id_type& a, const collection_id_type& b);
+		int operator!=(const collection_id_type& a, const collection_id_type& b);
+
+
 		class collection_id_math
 		{
 		public:
@@ -45,20 +60,17 @@ namespace countrybit
 				return t;
 			}
 
+			operator collection_id_type () const 
+			{
+				collection_id_type t = boxed<collection_id_type>::get_data_ref();
+				return t;
+			}
+
 			collection_id_type value() const { return boxed<collection_id_type>::get_value(); }
 
 			static jcollection get_collection(jdatabase* _database);
 
 		};
-
-		int compare(const collection_id_box& a, const collection_id_box& b);
-
-		int operator<(const collection_id_box& a, const collection_id_box& b);
-		int operator>(const collection_id_box& a, const collection_id_box& b);
-		int operator>=(const collection_id_box& a, const collection_id_box& b);
-		int operator<=(const collection_id_box& a, const collection_id_box& b);
-		int operator==(const collection_id_box& a, const collection_id_box& b);
-		int operator!=(const collection_id_box& a, const collection_id_box& b);
 
 		template<typename T> std::ostream& operator <<(std::ostream& output, collection_id_box& src)
 		{
