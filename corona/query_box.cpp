@@ -21,7 +21,7 @@ namespace countrybit
 
 			virtual void on_node(jslice& _slice)
 			{
-				dest_slice.copy(_slice);
+				dest_slice.update(_slice);
 			}
 
 			virtual void on_tail(jslice& _slice)
@@ -49,36 +49,6 @@ namespace countrybit
 
 				query_definition_type query_copy = _schema->get_query_definition(fld.query_properties.properties_id);
 
-				jclass_header* root_hdr;
-				jslice root_slice;
-
-				root_hdr = _class->pitem();
-
-				while (root_hdr && root_hdr->class_id != query_copy.source_path.root.model_id)
-				{
-					root_model = _slice->get_parent_model();
-					if (root_model.is_empty()) {
-						return;
-					}
-					root_slice = root_model.get_model_slice();
-					root_hdr = root_slice.get_class().pitem();
-				}
-
-				if (!root_hdr)
-					return;
-
-				auto result_field = _schema->get_field(query_copy.result_field_id);
-				auto result_class = _schema->get_class(query_copy.result_class_id);
-
-				int64_t size_bytes = root_hdr->class_size_bytes * 5 / 2;
-				int64_t estimated_rows = root_hdr->class_size_bytes / result_class.pitem()->class_size_bytes;
-
-				data.init(size_bytes);
-
-				collection = _schema->create_collection(&data, collection_id, 2, root_hdr->class_size_bytes);
-				target = collection.create_list(query_copy.result_class_id, estimated_rows);
-
-			    visit(*_slice, root_slice, query_copy);
 			}
 		};
 

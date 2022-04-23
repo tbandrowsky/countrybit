@@ -633,11 +633,6 @@ namespace countrybit
 			return output;
 		}
 
-		template <typename boxed_type> auto operator <=>(const boxed<boxed_type>& a, const boxed<boxed_type>& b)
-		{
-			return a.get_value() <=> b.get_value();
-		}
-
 		using basic_int8_box = boxed<int8_t>;
 		using basic_int16_box = boxed<int16_t>;
 		using basic_int32_box = boxed<int32_t>;

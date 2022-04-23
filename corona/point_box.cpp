@@ -11,6 +11,11 @@ namespace countrybit
 {
 	namespace database
 	{
+		auto operator<=>(const point& a, const point& b)
+		{
+			return std::tie(a.z, a.y, a.x) <=> std::tie(b.z, b.y, b.x);
+		}
+
 		double distance(const point& a, const point& b)
 		{
 			return point_math::distance(a, b);

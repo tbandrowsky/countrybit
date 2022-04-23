@@ -371,12 +371,24 @@ namespace countrybit
 
 		jslice jcollection::get_object(row_id_type _object_id)
 		{
-			auto new_object = objects.get_item(_object_id);
-			if (new_object.pitem()->otype == jtype::type_object) {
-				jarray jax(nullptr, schema, new_object.item().class_field_id, new_object.pdetails());
+			auto existing_object = objects.get_item(_object_id);
+			if (existing_object.pitem()->otype == jtype::type_object) {
+				jarray jax(nullptr, schema, existing_object.item().class_field_id, existing_object.pdetails());
 				return jax.get_slice(0);
 			}
 			else 
+			{
+				jslice empty;
+				return empty;
+			}
+		}
+
+		jslice jcollection::update_object(row_id_type _object_id, jslice _slice)
+		{
+			auto existing_object = objects.get_item(_object_id);
+			if (existing_object.pitem()->otype == jtype::type_object) {
+			}
+			else
 			{
 				jslice empty;
 				return empty;
@@ -957,7 +969,8 @@ namespace countrybit
 				};
 				break;
 			case filter_comparison_types::ls:
-				_src.compare = [](char* a, char* b) {
+				_src
+					.compare = [](char* a, char* b) {
 					BoxAType boxa(a);
 					BoxBType boxb(b);
 					return boxa < boxb;

@@ -27,17 +27,7 @@ namespace countrybit
 			char data[1];
 		};
 
-		bool has_any(const char* _src, const char* _charlist)
-		{
-			for (const char *s = _src; *s; s++) 
-			{
-				for (const char* c = _charlist; *c; c++)
-				{
-					if (*c == *s) return true;
-				}
-			}
-			return false;
-		}
+		bool has_any(const char* _src, const char* _charlist);
 
 		template <int len> class istring;
 		template <int len> class iwstring;

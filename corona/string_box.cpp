@@ -6,6 +6,17 @@ namespace countrybit
 {
 	namespace database
 	{
+		bool has_any(const char* _src, const char* _charlist)
+		{
+			for (const char* s = _src; *s; s++)
+			{
+				for (const char* c = _charlist; *c; c++)
+				{
+					if (*c == *s) return true;
+				}
+			}
+			return false;
+		}
 
 		std::string operator+(const string_box& a, const char* b)
 		{

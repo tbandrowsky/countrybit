@@ -20,10 +20,7 @@ namespace countrybit
 		double distance(const point& a, const point& b);
 		int compare(const point& a, const point& b);
 
-		auto operator<=>(const point& a, const point& b)
-		{
-			return std::tie(a.z, a.y, a.x) <=> std::tie(b.z, b.y, b.x);
-		}
+		auto operator<=>(const point& a, const point& b);
 
 		int operator<(const point& a, const point& b);
 		int operator>(const point& a, const point& b);

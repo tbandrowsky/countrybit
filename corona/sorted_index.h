@@ -54,7 +54,7 @@ namespace countrybit
 
 			index_node get_header()
 			{
-				index_node in = data_table.get(index_header->header_id);
+				index_node in = data_table[index_header->header_id];
 				return in;
 			}
 
