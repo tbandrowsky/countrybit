@@ -387,6 +387,10 @@ namespace countrybit
 		{
 			auto existing_object = objects.get_item(_object_id);
 			if (existing_object.pitem()->otype == jtype::type_object) {
+				jarray jax(nullptr, schema, existing_object.item().class_field_id, existing_object.pdetails());
+				auto slice_to_update = jax.get_slice(0);
+				slice_to_update.update(_slice);
+				return slice_to_update;
 			}
 			else
 			{
