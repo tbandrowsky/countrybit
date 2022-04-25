@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iostream>
 #include <cstdint>
 #include <exception>
 #include <stdexcept>
@@ -34,16 +35,14 @@ namespace countrybit
 			C* the_details;
 			row_id_type id;
 			row_id_type length;
-			row_id_type base;
 
 		public:
 
-			item_details_holder(P* _parent, C* _children, row_id_type _id, row_id_type _length, row_id_type _begin) :
+			item_details_holder(P* _parent, C* _children, row_id_type _id, row_id_type _length) :
 				the_object(_parent),
 				the_details(_children),
 				id(_id),
-				length(_length),
-				base(_begin)
+				length(_length)
 			{
 				;
 			}
@@ -52,8 +51,7 @@ namespace countrybit
 				the_object(nullptr),
 				the_details(nullptr),
 				id(null_row),
-				length(0),
-				base(0)
+				length(0)
 			{
 				;
 			}
@@ -62,8 +60,7 @@ namespace countrybit
 				the_object(_src.the_object),
 				the_details(_src.the_details),
 				id(_src.id),
-				length(_src.length),
-				base(_src.base)
+				length(_src.length)
 			{
 				;
 			}
@@ -108,11 +105,6 @@ namespace countrybit
 			row_id_type row_id() const
 			{
 				return id;
-			}
-
-			size_t get_base() const
-			{
-				return base;
 			}
 
 			size_t size() const
@@ -342,7 +334,7 @@ namespace countrybit
 				return hdr->rows[r];
 			}
 
-			T& operator[](row_id_type & r)
+			T& operator[](row_id_type r)
 			{
 				return get_at(r);
 			}
@@ -394,13 +386,12 @@ namespace countrybit
 					current(_current),
 					predicate(_predicate)
 				{
-					if (current != null_row) {
-						while (!predicate(base->get_at(current)))
-						{
-							current++;
-							if (current >= base->size()) {
-								current = null_row;
-							}
+					while (current != null_row && !predicate(base->get_at(current)))
+					{
+						current++;
+						if (current >= base->size()) {
+							current = null_row;
+							break;
 						}
 					}
 				}
@@ -444,12 +435,18 @@ namespace countrybit
 
 				inline iterator operator++()
 				{
-					do
+					if (current == null_row)
+						return end();
+					current++;
+					while (current < base->size() && !predicate(base->get_at(current)))
 					{
 						current++;
-						if (current >= base->size())
-							return iterator(base, null_row, predicate);
-					} while (!predicate(base->get_at(current)));
+					}
+
+					if (current >= base->size()) {
+						current = null_row;
+					}
+
 					return iterator(base, current, predicate);
 				}
 
@@ -484,7 +481,7 @@ namespace countrybit
 
 			auto where(std::function<bool(T&)> predicate)
 			{
-				return iterator(this, null_row, predicate);
+				return iterator(this, 0, predicate);
 			}
 
 			T& first(std::function<bool(T&)> predicate)
@@ -536,13 +533,13 @@ namespace countrybit
 			struct item_type
 			{
 				P item;
-				row_range details;
+				row_range detail_range;
 			};
 
 			struct item_detail_table_header
 			{
-				row_id_type item;
-				row_id_type details;
+				row_id_type item_location;
+				row_id_type detail_location;
 			};
 
 			table<item_type> item;
@@ -552,17 +549,17 @@ namespace countrybit
 			{
 				auto& pcr = item[location];
 
-				row_range new_pos{ pcr.details.start + shift, pcr.details.stop + shift, pcr.details.reserved_stop + shift };
+				row_range new_pos{ pcr.detail_range.start + shift, pcr.detail_range.stop + shift, pcr.detail_range.reserved_stop + shift };
 
 				if (new_pos.reserved_stop >= details.size())
 				{
 					return false;
 				}
 
-				bool success = details.copy_rows(pcr.details.start, pcr.details.stop, shift);
+				bool success = details.copy_rows(pcr.detail_range.start, pcr.detail_range.stop, shift);
 				if (success)
 				{
-					pcr.details = new_pos;
+					pcr.detail_range = new_pos;
 				}
 				return success;
 			}
@@ -579,12 +576,12 @@ namespace countrybit
 			static row_id_type reserve_table(B* b, int item_rows, int detail_rows)
 			{
 				item_detail_table_header hdr;
-				hdr.item = null_row;
-				hdr.details = null_row;
+				hdr.item_location = null_row;
+				hdr.detail_location = null_row;
 				row_id_type r = b->pack(hdr);
 				auto* phdr = b->unpack<item_detail_table_header>(r);
-				phdr->item = table< item_details_table<P, C>::item_type >::reserve_table(b, item_rows);
-				phdr->details = table< C >::reserve_table(b, detail_rows);
+				phdr->item_location = table< item_details_table<P, C>::item_type >::reserve_table(b, item_rows);
+				phdr->detail_location = table< C >::reserve_table(b, detail_rows);
 				return r;
 			}
 
@@ -595,8 +592,8 @@ namespace countrybit
 				item_details_table pct;
 				item_detail_table_header* hdr;
 				hdr = b->unpack<item_details_table<P, C>::item_detail_table_header>(row);
-				pct.item = table< item_details_table<P, C>::item_type >::get_table(b, hdr->item);
-				pct.details = table< C >::get_table(b, hdr->details);
+				pct.item = table< item_details_table<P, C>::item_type >::get_table(b, hdr->item_location);
+				pct.details = table< C >::get_table(b, hdr->detail_location);
 				return pct;
 			}
 
@@ -610,86 +607,85 @@ namespace countrybit
 				return pct;
 			}
 
-			item_details_holder<P, C> create_item(row_id_type detail_count)
+			item_details_holder<P, C> create_item(int detail_count, C* new_details)
 			{
 				auto pcr = item.create(1);
 				if (pcr.success())
 				{
 					auto& pc = item[pcr.start];
-					pc.details = details.create(detail_count);
-					return item_details_holder<P, C>(&pc.item, &details[pc.details.start], pcr.start, detail_count, 0);
+					pc.detail_range = details.create(detail_count);
+					if (new_details) {
+						append_detail(pcr.start, detail_count, new_details);
+					}
+					return item_details_holder<P, C>(&pc.item, &details[pc.detail_range.start], pcr.start, detail_count);
 				}
 				else
 				{
-					return item_details_holder<P, C>(nullptr, nullptr, null_row, null_row, null_row);
+					return item_details_holder<P, C>(nullptr, nullptr, null_row, null_row);
 				}
 			}
 
-			item_details_holder<P, C> put_item(row_id_type location, int detail_count)
+			item_details_holder<P, C> put_item(row_id_type location, int detail_count, C *detail_range)
 			{
 				if (location == null_row) 
 				{
-					return create_item(1);
+					auto pcr = create_item(detail_count, detail_range);
+					location = pcr.row_id();
 				}
-				else 
-				{
-					clear_details(location);
-					auto& pc = item[location];
-					int size = detail_count - pc.details.size();
-					if (size > 0) {
-						append_detail(location, size);
-						clear_details(location);
-					}
-					return get_item(location);
+
+				clear_details(location);
+				if (detail_range) {
+					append_detail(location, detail_count, detail_range);
 				}
+				return get_item(location);
 			}
 
 			item_details_holder<P, C> clone_item(row_id_type location)
 			{
 				auto& src = item.get_at(location);
-				auto dest = create(src.details.reserved_size());
-				int shift = dest.item().details.start - src.details.start;
-				details.copy_rows(src.details.start, src.details.reserved_stop, shift );
+				auto dest = create(src.detail_range.reserved_size());
+				int shift = dest.item().detail_range.start - src.detail_range.start;
+				details.copy_rows(src.detail_range.start, src.detail_range.reserved_stop, shift );
 			}
 
 			void clear_details(row_id_type location)
 			{
 				auto& pc = item.get_at(location);
-				pc.details.stop = pc.details.start;				
+				pc.detail_range.stop = pc.detail_range.start;
 			}
 
-			C& append_detail(row_id_type location, int add_detail_count = 1)
+			void append_detail(row_id_type location, int add_detail_count, C *new_details)
 			{
 				if (location == null_row)
 				{
-					auto parent_child = create_item(add_detail_count);
-					return parent_child.detail(0);
+					auto parent_child = create_item(add_detail_count, new_details);
+					return;
 				}
 
 				auto& pc = item.get_at(location);
 
-				if (pc.details.start == 0 && pc.details.stop == 0 && pc.details.reserved_stop == 0)
+				if (pc.detail_range.start == 0 && pc.detail_range.stop == 0 && pc.detail_range.reserved_stop == 0)
 				{
 					throw std::invalid_argument("can't extend an uncreated");
 				}
 
-				row_id_type new_base = pc.details.stop;
-				row_id_type new_start = pc.details.stop;
+				row_id_type new_base = pc.detail_range.stop;
+				row_id_type new_start = pc.detail_range.stop;
 
-				row_id_type capacity_in_node = pc.details.reserved_size();
+				row_id_type capacity_in_node = pc.detail_range.free();
 				if (capacity_in_node >= add_detail_count)
 				{
-					pc.details.stop = pc.details.stop + add_detail_count;
+					pc.detail_range.stop = pc.detail_range.stop + add_detail_count;
 				}
 				else
 				{
 					int capacity_ask = capacity_in_node + add_detail_count;
-					int capacity_allocate = 1;
+					int capacity_allocate = pc.detail_range.reserved_size() * 2;
 					while (capacity_allocate < capacity_ask)
 						capacity_allocate *= 2;
 
-					row_id_type new_stop = pc.details.start + capacity_allocate;
-					row_id_type shift = new_stop - pc.details.reserved_stop;
+					row_id_type new_stop = pc.detail_range.start + capacity_allocate;
+					row_id_type shift = new_stop - pc.detail_range.reserved_stop;
 
 					if (new_stop < details.max()) 
 					{
@@ -698,8 +694,8 @@ namespace countrybit
 							move_details(i, shift);
 						}
 
-						pc.details.reserved_stop = new_stop;
-						pc.details.stop += add_detail_count;
+						pc.detail_range.reserved_stop = new_stop;
+						pc.detail_range.stop += add_detail_count;
 					}
 					else 
 					{
@@ -707,16 +703,17 @@ namespace countrybit
 					}
 				}
 
-				int new_size = pc.details.stop - pc.details.start;
-
-				return this->details[new_start];
+				for (row_id_type i = 0; i < add_detail_count; i++) {
+					auto& new_detail = details[new_start + i];
+					new_detail = new_details[i];
+				}
 			}
 
 			void erase_detail(row_id_type location, int detail_index)
 			{
 				auto& pc = item.get_at(location);
-				details.copy_rows(pc.details.start + detail_index, pc.details.stop, -1);
-				pc.details.stop--;
+				details.copy_rows(pc.detail_range.start + detail_index, pc.detail_range.stop, -1);
+				pc.detail_range.stop--;
 			}
 
 			void erase_item(row_id_type location)
@@ -739,7 +736,7 @@ namespace countrybit
 				item_details_holder<P, C> nullpc;
 				if (row_id == null_row) return nullpc;
 				auto& pc = item[ row_id ];
-				return item_details_holder<P, C>(&pc.item, &details[pc.details.start],  row_id, pc.details.size(), 0);
+				return item_details_holder<P, C>(&pc.item, &details[pc.detail_range.start],  row_id, pc.detail_range.size());
 			}
 
 			item_details_holder<P, C> get_item(row_id_type row_id)
@@ -747,7 +744,7 @@ namespace countrybit
 				item_details_holder<P, C> nullpc;
 				if (row_id == null_row) return nullpc;
 				auto& pc = item[row_id];
-				return item_details_holder<P, C>(&pc.item, &details[pc.details.start], row_id, pc.details.size(), 0);
+				return item_details_holder<P, C>(&pc.item, &details[pc.detail_range.start], row_id, pc.detail_range.size());
 			}
 
 			static int get_box_size(int _parent_rows, int _child_rows)

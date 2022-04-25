@@ -1326,11 +1326,12 @@ namespace countrybit
 				return result_class_id;
 			}
 
-			row_id_type build_class_members(jclass pcr, member_field_collection &mfs)
+
+			row_id_type build_class_members(field_array& pcr, int64_t& class_size_bytes, member_field_collection &mfs)
 			{
 				int field_idx = 0;
 				int sz = mfs.size();
-				auto& p = pcr.item();
+				class_size_bytes = 0;
 
 				for (int i = 0; i < sz; i++)
 				{
@@ -1353,20 +1354,22 @@ namespace countrybit
 							fid = field.field_id;
 						}
 						auto& existing_field = fields[fid];
-						auto& ref = pcr.detail(field_idx);
+						jclass_field *ref = pcr.append();
+						ref->field_id = fid;
+						ref->offset = class_size_bytes;
 						field_idx++;
-						ref.field_id = fid;
-						ref.offset = p.class_size_bytes;
-						p.class_size_bytes += existing_field.size_bytes;
+						class_size_bytes += existing_field.size_bytes;
 
 						if (existing_field.is_data_generator()) {
 							row_id_type max_result_rows = 0;
 							row_id_type result_class_field = this->get_result_field_class(existing_field, max_result_rows);
-							auto& ref = pcr.detail(field_idx);
+
+							jclass_field* ref = pcr.append();
+							ref->field_id = result_class_field;
+							ref->offset = class_size_bytes;
 							field_idx++;
-							ref.field_id = result_class_field;
-							ref.offset = p.class_size_bytes;
-							p.class_size_bytes += existing_field.size_bytes;
+							auto& result_field = fields[result_class_field];
+							class_size_bytes += result_field.size_bytes;
 						}
 					}
 					break;
@@ -1402,11 +1405,12 @@ namespace countrybit
 							return null_row;
 						}
 						auto& existing_field = fields[class_field_id];
-						auto& ref = pcr.detail(field_idx);
+
+						jclass_field* ref = pcr.append();
+						ref->field_id = class_field_id;
+						ref->offset = class_size_bytes;
 						field_idx++;
-						ref.field_id = class_field_id;
-						ref.offset = p.class_size_bytes;
-						p.class_size_bytes += existing_field.size_bytes;
+						class_size_bytes += existing_field.size_bytes;
 					}
 					break;
 					}
@@ -1426,16 +1430,18 @@ namespace countrybit
 					return f.is_data_generator();
 					});
 
-				auto pcr = classes.put_item(request.class_id, sz);
+				field_array af;
+				int64_t total_size_bytes = 0;
 
-				build_class_members(pcr, request.member_fields);
+				build_class_members(af, total_size_bytes, mfs);
+
+				auto pcr = classes.put_item(class_id, af.size(), af.data);
 
 				auto& p = pcr.item();
 				p.class_id = pcr.row_id();
 				p.name = request.class_name;
 				p.description = request.class_description;
-				p.class_size_bytes = 0;
-				p.is_model = false;
+				p.class_size_bytes = total_size_bytes;
 
 				return p.class_id;
 			}

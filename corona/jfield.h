@@ -36,6 +36,7 @@ namespace countrybit
 		const int max_selectable_options = 100;
 		const int max_updatable_options = 100;
 		const int max_selections = 1000;
+		const int max_class_fields = 512;
 		const int default_collection_object_size = 512;
 
 		const static int
@@ -150,8 +151,6 @@ namespace countrybit
 
 			field_collection_id = 91,
 			field_object_id = 92;
-
-		const int max_class_fields = 128;
 
 		struct string_properties_type
 		{
@@ -896,8 +895,6 @@ namespace countrybit
 			object_name									name;
 			object_description							description;
 			uint64_t									class_size_bytes;
-			bool										is_model;
-			row_id_type									number_of_actors;
 		};
 
 		class jclass_field
@@ -905,11 +902,10 @@ namespace countrybit
 		public:
 			row_id_type				field_id;
 			uint64_t				offset;
-			bool					model_state;
-			int						actor_field_index;
 		};
 
 		using jclass = item_details_holder<jclass_header, jclass_field>;
+		using field_array = iarray<jclass_field, max_class_fields>;
 
 		struct update_element
 		{

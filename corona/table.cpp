@@ -70,32 +70,68 @@ namespace countrybit
                 r = r && assert_if([nr, i, ti]() { return ti[i].id == nr.id && ti[i].description == nr.description && ti[i].name == nr.name; }, "item not stored correctly");
             }
 
-            item_details_table<test_item, object_name> item_stuff;
-
             row_id_type table_location;
+            row_id_type simple_test_location;
+            auto simple_test = item_details_table<test_item, object_name>::create_table(&box, 10, 100, simple_test_location);
+
+            auto new_item = simple_test.create_item(2, nullptr);
+            new_item.item().name = "test1";
+            new_item.item().description = "test1 description";
+            new_item.item().id = 1;
+            auto idx = new_item.row_id();
+
+            auto pi = simple_test[idx].item();
+            bool all_good;
+            all_good = pi.name == "test1" && pi.description == "test1 description" && pi.id == 1;
+            assert_if([all_good]() { return all_good;  }, "table didn't store round trip");
+
+            auto ppi = simple_test[idx].pitem();
+            all_good = ppi->name == "test1" && ppi->description == "test1 description" && ppi->id == 1;
+            assert_if([all_good]() { return all_good;  }, "table didn't store round trip ptr");
+
+            auto py = simple_test[idx];
+            auto px = &py;
+            std::cout << " child count: " << px->size() << std::endl;
+            assert_if([px]() { return px->size() == 2; }, "detail count incorrect");
+
+            object_name detail = "child 1";
+            simple_test.append_detail(idx, 1, &detail);
+            detail = "child 2";
+            simple_test.append_detail(idx, 1, &detail);
+
+            py = simple_test[idx];
+            px = &py;
+            std::cout << " child count: " << px->size() << std::endl;
+            assert_if([px]() { return px->size() == 2; }, "detail count incorrect");
+
+            for (int i = 0; i < px->size(); i++) {
+                std::cout << px->detail(i) << std::endl;
+            }
+
+            item_details_table<test_item, object_name> item_stuff;
             item_stuff = item_details_table<test_item, object_name>::create_table(&box, 10, 100, table_location);
 
             row_id_type ids[4];
 
-            auto new_item = item_stuff.create_item(1);
+            new_item = item_stuff.create_item(1, nullptr);
             new_item.item().name = "first";
             new_item.item().description = "first description";
             new_item.item().id = 1;
             ids[0] = new_item.row_id();
 
-            new_item = item_stuff.create_item(1);
+            new_item = item_stuff.create_item(1, nullptr);
             new_item.item().name = "second";
             new_item.item().description = "second description";
             new_item.item().id = 2;
             ids[1] = new_item.row_id();
 
-            new_item = item_stuff.create_item(1);
+            new_item = item_stuff.create_item(1, nullptr);
             new_item.item().name = "third";
             new_item.item().description = "third description";
             new_item.item().id = 3;
             ids[2] = new_item.row_id();
 
-            new_item = item_stuff.create_item(4);
+            new_item = item_stuff.create_item(1, nullptr);
             new_item.item().name = "fourth";
             new_item.item().description = "fourth description";
             new_item.item().id = 4;
@@ -106,9 +142,8 @@ namespace countrybit
                 auto testx = ids[xid];
                 for (int jid = 0; jid < 8; jid++)
                 {
-                    auto& child = item_stuff.append_detail(testx, 1);
                     object_name test = "test child " + std::to_string(xid) + "," + std::to_string(jid);
-                    child = test;
+                    item_stuff.append_detail(testx, 1, &test);
                 }
             }
 
@@ -116,7 +151,7 @@ namespace countrybit
             {
                 auto testx = ids[xid];
                 auto tc = item_stuff[testx];
-                for (int jid = 0; tc.size(); jid++)
+                for (int jid = 0; jid < tc.size(); jid++)
                 {
                     auto& child = tc.detail(jid);
                     object_name test = "test child " + std::to_string(xid) + "," + std::to_string(jid);

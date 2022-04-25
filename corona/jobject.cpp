@@ -356,7 +356,7 @@ namespace countrybit
 			auto find_field = schema->get_field(find_field_id);
 			auto bytes_to_allocate = find_field.size_bytes;
 
-			auto new_object = objects.create_item(bytes_to_allocate);
+			auto new_object = objects.create_item(bytes_to_allocate, nullptr);
 			new_object.item().oid.collection_id = collection_id;
 			new_object.item().oid.row_id = new_object.row_id();
 			new_object.item().class_field_id = find_field_id;

@@ -119,13 +119,12 @@ namespace countrybit
 					current(_current),
 					predicate(_predicate)
 				{
-					if (current != null_row) {
-						while (!predicate(base->get_at(current)))
-						{
-							current++;
-							if (current >= base->size()) {
-								current = null_row;
-							}
+					while (current != null_row && !predicate(base->get_at(current)))
+					{
+						current++;
+						if (current >= base->size()) {
+							current = null_row;
+							break;
 						}
 					}
 				}
@@ -184,13 +183,18 @@ namespace countrybit
 
 				inline iterator operator++()
 				{
-					do 
+					if (current == null_row)
+						return end();
+					current++;
+					while (current < base->size() && !predicate(base->get_at(current)))
 					{
 						current++;
-						if (current >= base->size())
-							return iterator(base, null_row, predicate);
-					} 
-					while (!predicate(base->get_at(current)));
+					}
+
+					if (current >= base->size()) {
+						current = null_row;
+					}
+
 					return iterator(base, current, predicate);
 				}
 
@@ -225,7 +229,7 @@ namespace countrybit
 
 			auto where(std::function<bool(item_type&)> predicate)
 			{
-				return iterator(this, null_row, predicate);
+				return iterator(this, 0, predicate);
 			}
 
 			item_type& first(std::function<bool(item_type&)> predicate)
@@ -436,13 +440,12 @@ namespace countrybit
 					current(_current),
 					predicate(_predicate)
 				{
-					if (current != null_row) {
-						while (!predicate(base->get_at(current)))
-						{
-							current++;
-							if (current >= base->size()) {
-								current = null_row;
-							}
+					while (current != null_row && !predicate(base->get_at(current)))
+					{
+						current++;
+						if (current >= base->size()) {
+							current = null_row;
+							break;
 						}
 					}
 				}
@@ -496,12 +499,18 @@ namespace countrybit
 
 				inline iterator operator++()
 				{
-					do
+					if (current == null_row)
+						return end();
+					current++;
+					while (current < base->size() && !predicate(base->get_at(current)))
 					{
 						current++;
-						if (current >= base->size())
-							return iterator(base, null_row, predicate);
-					} while (!predicate(base->get_at(current)));
+					}
+
+					if (current >= base->size()) {
+						current = null_row;
+					}
+
 					return iterator(base, current, predicate);
 				}
 
@@ -536,7 +545,7 @@ namespace countrybit
 
 			auto where(std::function<bool(item_type&)> predicate)
 			{
-				return iterator(this, null_row, predicate);
+				return iterator(this, 0, predicate);
 			}
 
 			item_type& first(std::function<bool(item_type&)> predicate)
