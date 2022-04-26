@@ -45,6 +45,12 @@ namespace countrybit
 				return t;
 			}
 
+			wave_instance* operator->()
+			{
+				wave_instance& t = boxed<wave_instance>::get_data_ref();
+				return &t;
+			}
+
 			wave_instance value() const { return boxed<wave_instance>::get_value(); }
 
 		};

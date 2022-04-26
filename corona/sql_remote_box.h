@@ -27,6 +27,7 @@ namespace countrybit
 			sql_remote_box operator = (const sql_remote_box& _src);
 			sql_remote_box operator = (sql_remote_instance _src);
 			operator sql_remote_instance& ();
+			sql_remote_instance* operator->();
 			sql_remote_instance value();
 		};
 

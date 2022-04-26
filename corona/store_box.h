@@ -32,11 +32,12 @@ namespace countrybit
 //			pd = c.unpack(l);
 		};
 
+		class serialized_box;
 
 		class expandable_box
 		{
 		public:
-			virtual bool expand_check(int _bytes) { return false; }
+			virtual serialized_box *expand_check(int _bytes) { return nullptr; }
 		};
 
 		class serialized_box 
@@ -105,9 +106,9 @@ namespace countrybit
 				return &_data[0];
 			}
 
-			bool expand_check(int _extra_bytes)
+			serialized_box *expand_check(int _extra_bytes)
 			{
-				if (!owner) return false;
+				if (!owner) return nullptr;
 				return owner->expand_check(_extra_bytes);
 			}
 
@@ -577,17 +578,23 @@ namespace countrybit
 				return get_box()->reserve_all_free();
 			}
 
-			virtual bool expand_check(int _bytes)
+			virtual serialized_box *expand_check(int _bytes)
 			{
-				bool adjusted = false;
-				if (_bytes > get_box()->free())
+				serialized_box *b, temp;
+				b = get_box();
+				if (_bytes > b->free())
 				{
-					int d = get_box()->size() * 2;
+					temp = *b;
+					int d = b->size() * 2;
+					while ((d - b->top()) < _bytes)
+						d *= 2;
 					stuff.resize(d + sizeof(serialized_box));
-					get_box()->adjust(d);
-					adjusted = true;
+					b = get_box();
+					*b = temp;
+					b->adjust(d);
+					return b;
 				}
-				return adjusted;
+				return nullptr;
 			}
 		};
 

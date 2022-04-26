@@ -33,6 +33,7 @@ namespace countrybit
 			query_box operator = (const query_box& _src);
 			query_box operator = (query_instance _src);
 			operator query_instance& ();
+			query_instance* operator->();
 			query_instance value() const;
 
 			void run();

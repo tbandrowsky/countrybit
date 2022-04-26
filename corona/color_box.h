@@ -49,6 +49,12 @@ namespace countrybit
 				return t;
 			}
 
+			color* operator->()
+			{
+				color& t = boxed<color>::get_data_ref();
+				return &t;
+			}
+
 			color value() const { return boxed<color>::get_value(); }
 
 		};

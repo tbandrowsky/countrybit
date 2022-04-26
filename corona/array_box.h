@@ -16,7 +16,14 @@ namespace countrybit
 			item_type data[max_items];
 			uint32_t length;
 
-			iarray() = default;
+			iarray() 
+			{
+				length = 0;
+				for (int i = 0; i < max_items; i++)
+				{
+					data[i] = {};
+				}
+			};
 
 			iarray(const std::vector<item_type>& src)
 			{
@@ -119,6 +126,7 @@ namespace countrybit
 					current(_current),
 					predicate(_predicate)
 				{
+					if (base->size() == 0) current = null_row;
 					while (current != null_row && !predicate(base->get_at(current)))
 					{
 						current++;
@@ -134,6 +142,7 @@ namespace countrybit
 					base(_base),
 					current(_current)
 				{
+					if (base->size() == 0) current = null_row;
 					predicate = [](item_type& a) { return true;  };
 				}
 
@@ -392,6 +401,15 @@ namespace countrybit
 
 			item_type& operator[](int _idx)
 			{
+				if (_idx < 0 || _idx >= hdr->max_items)
+					throw std::invalid_argument("range error");
+				return hdr->data[_idx];
+			}
+
+			item_type& get_at(int _idx)
+			{
+				if (_idx < 0 || _idx >= hdr->max_items)
+					throw std::invalid_argument("range error");
 				return hdr->data[_idx];
 			}
 
@@ -440,6 +458,7 @@ namespace countrybit
 					current(_current),
 					predicate(_predicate)
 				{
+					if (base->size() == 0) current = null_row;
 					while (current != null_row && !predicate(base->get_at(current)))
 					{
 						current++;
@@ -455,6 +474,7 @@ namespace countrybit
 					base(_base),
 					current(_current)
 				{
+					if (base->size() == 0) current = null_row;
 					predicate = [](item_type& a) { return true;  };
 				}
 

@@ -45,6 +45,12 @@ namespace countrybit
 				return t;
 			}
 
+			midi_instance* operator->()
+			{
+				midi_instance& t = boxed<midi_instance>::get_data_ref();
+				return &t;
+			}
+
 			midi_instance value() const { return boxed<midi_instance>::get_value(); }
 
 		};

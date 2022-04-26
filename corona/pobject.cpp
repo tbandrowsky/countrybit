@@ -152,12 +152,10 @@ namespace countrybit
 				auto result = extractor.get_rectangle();
 				if (result.success) {
 					database::rectangle c;
-					c.corner.x = result.x;
-					c.corner.y = result.y;
-					c.corner.z = 0.0;
-					c.size.x = result.w;
-					c.size.y = result.h;
-					c.size.z = 0.0;
+					c.x = result.x;
+					c.y = result.y;
+					c.w = result.w;
+					c.h = result.h;
 					dest = c;
 				}
 			}
@@ -171,12 +169,10 @@ namespace countrybit
 				auto result = extractor.get_rectangle();
 				if (result.success) {
 					database::rectangle c;
-					c.corner.x = result.x;
-					c.corner.y = result.y;
-					c.corner.z = 0.0;
-					c.size.x = result.w;
-					c.size.y = result.h;
-					c.size.z = 0.0;
+					c.x = result.x;
+					c.y = result.y;
+					c.w = result.w;
+					c.h = result.h;
 					dest.get_data_ref().source = c;
 				}
 			}

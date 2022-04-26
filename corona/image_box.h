@@ -43,6 +43,12 @@ namespace countrybit
 				return t;
 			}
 
+			image_instance* operator->()
+			{
+				image_instance& t = boxed<image_instance>::get_data_ref();
+				return &t;
+			}
+
 			image_instance value() const { return boxed<image_instance>::get_value(); }
 
 		};

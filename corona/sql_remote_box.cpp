@@ -34,6 +34,12 @@ namespace countrybit
 			return t;
 		}
 
+		sql_remote_instance* sql_remote_box::operator->()
+		{
+			sql_remote_instance& t = get_data_ref();
+			return &t;
+		}
+
 		sql_remote_instance sql_remote_box::value()
 		{
 			return get_value(); 

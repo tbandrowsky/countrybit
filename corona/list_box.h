@@ -56,7 +56,8 @@ namespace countrybit
 				temp.data = _src;
 				temp.next = null_row;
 
-				box->expand_check(sizeof(list_link));
+				auto tbox = box->expand_check(sizeof(list_link));
+				if (tbox) box = tbox;
 
 				row_id_type loc = box->pack(temp);
 

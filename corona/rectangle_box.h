@@ -18,8 +18,7 @@ namespace countrybit
 
 		struct rectangle 
 		{
-			point corner;
-			point size;
+			double x, y, w, h;
 		};
 
 		class rectangle_math
@@ -27,7 +26,7 @@ namespace countrybit
 		public:
 			static point center(rectangle i)
 			{
-				return point{ std::midpoint(i.corner.x, i.corner.x + i.size.x), std::midpoint(i.corner.y, i.corner.y + i.size.y)};
+				return point{ std::midpoint(i.x, i.x + i.w), std::midpoint(i.y, i.y + i.h)};
 			}
 		};
 
@@ -55,6 +54,12 @@ namespace countrybit
 			{
 				set_value(_src);
 				return *this;
+			}
+
+			rectangle* operator->()
+			{
+				rectangle& t = boxed<rectangle>::get_data_ref();
+				return &t;
 			}
 
 			operator rectangle& ()

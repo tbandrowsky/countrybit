@@ -1324,10 +1324,10 @@ namespace countrybit
 				auto result = extractor.get_rectangle();
 				if (result.success) {
 					rectangle c;
-					c.corner.x = result.x;
-					c.corner.y = result.y;
-					c.size.x = result.w;
-					c.size.y = result.h;
+					c.x = result.x;
+					c.y = result.y;
+					c.w = result.w;
+					c.h = result.h;
 					boxa = c;
 				}
 			};
@@ -1342,10 +1342,10 @@ namespace countrybit
 				auto result = extractor.get_rectangle();
 				if (result.success) {
 					image_instance c;
-					c.source.corner.x = result.x;
-					c.source.corner.y = result.y;
-					c.source.size.x = result.w;
-					c.source.size.y = result.h;
+					c.source.x = result.x;
+					c.source.y = result.y;
+					c.source.w = result.w;
+					c.source.h = result.h;
 					boxa = c;
 				}
 			};
@@ -1947,64 +1947,64 @@ namespace countrybit
 		void jschema::add_standard_fields() 
 		{
 			put_string_field_request string_fields[33] = {
-				{ { field_full_name, jtype::type_string , "fullName", "Full Name" }, { 75, "", "" } },
-				{ { field_first_name, jtype::type_string , "firstName", "First Name" }, { 50, "", "" } },
-				{ { field_last_name, jtype::type_string , "lastName", "Last Name" }, { 50, "", "" } },
-				{ { field_middle_name, jtype::type_string , "middleName", "Middle Name" }, { 50, "", "" } },
-				{ { field_ssn, jtype::type_string , "ssn", "SSN" }, { 10, "", "" }},
-				{ { field_email, jtype::type_string, "email", "eEmail" }, { 200, "", ""  }},
-				{ { field_title, jtype::type_string, "title", "Title" }, { 200, "", "" } },
-				{ { field_street, jtype::type_string, "street", "Street" },{  200, "", "" } },
-				{ { field_substreet, jtype::type_string, "suiteapt", "Suite/Apt" }, { 100, "", ""  }},
-				{ { field_city, jtype::type_string, "city", "City" }, { 100, "", "" } },
-				{ { field_state, jtype::type_string, "state", "State" }, { 100, "", "" } },
-				{ { field_postal, jtype::type_string, "postal", "Postal Code" }, { 50, "", ""  }},
-				{ { field_country_name, jtype::type_string, "countryName", "Country Name" }, { 50, "", "" } },
-				{ { field_country_code, jtype::type_string, "countryCode", "Country Code" }, { 3, "", ""  }},
-				{ { field_institution_name, jtype::type_string, "institutionName", "Institution Name" }, { 100, "", "" } },
-				{ { field_longname, jtype::type_string, "longName", "Long Name" }, { 200, "", ""  }},
-				{ { field_shortname, jtype::type_string, "shortName", "Short Name" },{  50, "", ""  }},
-				{ { field_unit, jtype::type_string, "unit", "Unit" }, { 10, "", "" } },
-				{ { field_code_symbol, jtype::type_string, "symbol", "Symbol" }, { 10, "", "" } },
-				{ { field_code_operator, jtype::type_string, "operator", "Operator" }, { 10, "", ""  }},
-				{ { field_windows_path, jtype::type_string, "windowsPath", "Windows Path" }, { 512, "", ""  }},
-				{ { field_linux_path, jtype::type_string, "linuxPath", "Linux Path" }, { 512, "", "" } },
-				{ { field_url, jtype::type_string, "url", "Url" }, { 512, "", "" } },
-				{ { field_user_name, jtype::type_string, "userName", "User Name" }, { 100, "", ""  }},
-				{ { field_password, jtype::type_string, "passWord", "Password" }, { 100, "", ""  }},
-				{ { field_document_title, jtype::type_string, "docTitle", "Document Title" }, { 200, "", "" } },
-				{ { field_section_title, jtype::type_string, "sectionTitle", "Section Title" }, { 200, "", "" } },
-				{ { field_block_title, jtype::type_string, "blockTitle", "Block Title" }, { 200, "", "" } },
-				{ { field_caption, jtype::type_string, "caption", "Caption" }, { 200, "", "" } },
-				{ { field_paragraph, jtype::type_string, "paragraph", "Paragraph" }, { 4000, "", "" } },
-				{ { field_mime_type, jtype::type_string, "mimeType", "MimeType" }, { 100, "", "" } },
-				{ { field_base64_block, jtype::type_string, "base64", "Base64" }, { 100, "", "" } },
-				{ { field_file_name, jtype::type_string, "fileName", "fileName" }, { 512, "", "" } }
+				{ { null_row, jtype::type_string , "fullName", "Full Name" }, { 75, "", "" } },
+				{ { null_row, jtype::type_string , "firstName", "First Name" }, { 50, "", "" } },
+				{ { null_row, jtype::type_string , "lastName", "Last Name" }, { 50, "", "" } },
+				{ { null_row, jtype::type_string , "middleName", "Middle Name" }, { 50, "", "" } },
+				{ { null_row, jtype::type_string , "ssn", "SSN" }, { 10, "", "" }},
+				{ { null_row, jtype::type_string, "email", "eEmail" }, { 200, "", ""  }},
+				{ { null_row, jtype::type_string, "title", "Title" }, { 200, "", "" } },
+				{ { null_row, jtype::type_string, "street", "Street" },{  200, "", "" } },
+				{ { null_row, jtype::type_string, "suiteapt", "Suite/Apt" }, { 100, "", ""  }},
+				{ { null_row, jtype::type_string, "city", "City" }, { 100, "", "" } },
+				{ { null_row, jtype::type_string, "state", "State" }, { 100, "", "" } },
+				{ { null_row, jtype::type_string, "postal", "Postal Code" }, { 50, "", ""  }},
+				{ { null_row, jtype::type_string, "countryName", "Country Name" }, { 50, "", "" } },
+				{ { null_row, jtype::type_string, "countryCode", "Country Code" }, { 3, "", ""  }},
+				{ { null_row, jtype::type_string, "institutionName", "Institution Name" }, { 100, "", "" } },
+				{ { null_row, jtype::type_string, "longName", "Long Name" }, { 200, "", ""  }},
+				{ { null_row, jtype::type_string, "shortName", "Short Name" },{  50, "", ""  }},
+				{ { null_row, jtype::type_string, "unit", "Unit" }, { 10, "", "" } },
+				{ { null_row, jtype::type_string, "symbol", "Symbol" }, { 10, "", "" } },
+				{ { null_row, jtype::type_string, "operator", "Operator" }, { 10, "", ""  }},
+				{ { null_row, jtype::type_string, "windowsPath", "Windows Path" }, { 512, "", ""  }},
+				{ { null_row, jtype::type_string, "linuxPath", "Linux Path" }, { 512, "", "" } },
+				{ { null_row, jtype::type_string, "url", "Url" }, { 512, "", "" } },
+				{ { null_row, jtype::type_string, "userName", "User Name" }, { 100, "", ""  }},
+				{ { null_row, jtype::type_string, "passWord", "Password" }, { 100, "", ""  }},
+				{ { null_row, jtype::type_string, "docTitle", "Document Title" }, { 200, "", "" } },
+				{ { null_row, jtype::type_string, "sectionTitle", "Section Title" }, { 200, "", "" } },
+				{ { null_row, jtype::type_string, "blockTitle", "Block Title" }, { 200, "", "" } },
+				{ { null_row, jtype::type_string, "caption", "Caption" }, { 200, "", "" } },
+				{ { null_row, jtype::type_string, "paragraph", "Paragraph" }, { 4000, "", "" } },
+				{ { null_row, jtype::type_string, "mimeType", "MimeType" }, { 100, "", "" } },
+				{ { null_row, jtype::type_string, "base64", "Base64" }, { 100, "", "" } },
+				{ { null_row, jtype::type_string, "fileName", "fileName" }, { 512, "", "" } }
 			};
 
 			put_time_field_request time_fields[2] = {
-				{ { field_birthday, jtype::type_datetime, "birthday", "Birthday" }, 0, INT64_MAX },
-				{ { field_scheduled, jtype::type_datetime, "scheduled", "Scheduled" }, 0, INT64_MAX },
+				{ { null_row, jtype::type_datetime, "birthday", "Birthday" }, 0, INT64_MAX },
+				{ { null_row, jtype::type_datetime, "scheduled", "Scheduled" }, 0, INT64_MAX },
 			};
 
 			put_integer_field_request int_fields[1] = {
-				{ { field_count, jtype::type_int64, "count", "Count" }, 0, INT64_MAX },
+				{ { null_row, jtype::type_int64, "count", "Count" }, 0, INT64_MAX },
 			};
 
 			put_double_field_request double_fields[13] = {
-				{ { field_quantity, jtype::type_float64, "quantity", "Quantity" }, -1E40, 1E40 },
-				{ { field_latitude, jtype::type_float64, "latitude", "Latitude" }, -90, 90 },
-				{ { field_longitude, jtype::type_float64, "longitude", "Longitude" }, -180, 180 },
-				{ { field_meters, jtype::type_float64, "meters", "Meters" }, -1E40, 1E40 },
-				{ { field_feet, jtype::type_float64, "feet", "Feet" }, -1E40, 1E40 },
-				{ { field_kilograms, jtype::type_float64, "kilograms", "Kilograms" }, -1E40, 1E40 },
-				{ { field_pounds, jtype::type_float64, "pounds", "Pounds" }, -1E40, 1E40 },
-				{ { field_seconds, jtype::type_float64, "seconds", "Seconds" }, -1E40, 1E40 },
-				{ { field_minutes, jtype::type_float64, "minutes", "Minutes" }, -1E40, 1E40 },
-				{ { field_hours, jtype::type_float64, "hours", "Hours" }, -1E40, 1E40 },
-				{ { field_amperes, jtype::type_float64, "amperes", "Amperes" }, -1E40, 1E40 },
-				{ { field_kelvin, jtype::type_float64, "kelvin", "Kelvin" }, -1E40, 1E40 },
-				{ { field_mole, jtype::type_float64, "moles", "Moles" }, -1E40, 1E40 },
+				{ { null_row, jtype::type_float64, "quantity", "Quantity" }, -1E40, 1E40 },
+				{ { null_row, jtype::type_float64, "latitude", "Latitude" }, -90, 90 },
+				{ { null_row, jtype::type_float64, "longitude", "Longitude" }, -180, 180 },
+				{ { null_row, jtype::type_float64, "meters", "Meters" }, -1E40, 1E40 },
+				{ { null_row, jtype::type_float64, "feet", "Feet" }, -1E40, 1E40 },
+				{ { null_row, jtype::type_float64, "kilograms", "Kilograms" }, -1E40, 1E40 },
+				{ { null_row, jtype::type_float64, "pounds", "Pounds" }, -1E40, 1E40 },
+				{ { null_row, jtype::type_float64, "seconds", "Seconds" }, -1E40, 1E40 },
+				{ { null_row, jtype::type_float64, "minutes", "Minutes" }, -1E40, 1E40 },
+				{ { null_row, jtype::type_float64, "hours", "Hours" }, -1E40, 1E40 },
+				{ { null_row, jtype::type_float64, "amperes", "Amperes" }, -1E40, 1E40 },
+				{ { null_row, jtype::type_float64, "kelvin", "Kelvin" }, -1E40, 1E40 },
+				{ { null_row, jtype::type_float64, "moles", "Moles" }, -1E40, 1E40 },
 			};
 
 			for (int i = 0; i < sizeof(string_fields) / sizeof(string_fields[0]); i++) {
@@ -2023,108 +2023,127 @@ namespace countrybit
 				put_double_field(double_fields[i]);
 			}
 
-			put_color_field({ field_color, jtype::type_color, "color", "color" });
+			put_color_field({ null_row, jtype::type_color, "color", "color" });
 
-			put_point_field({ field_point, jtype::type_point, "point", "point" });
-			put_point_field({ field_position_point, jtype::type_point, "position_point", "position_point" });
-			put_point_field({ field_selection_point, jtype::type_point, "selection_point", "selection_point" });
+			put_point_field({ null_row, jtype::type_point, "point", "point" });
+			put_point_field({ null_row, jtype::type_point, "position_point", "position_point" });
+			put_point_field({ null_row, jtype::type_point, "selection_point", "selection_point" });
 
-			put_rectangle_field({ field_rectangle, jtype::type_rectangle, "rectangle", "rectangle" });
-			put_rectangle_field({ field_position_rectangle, jtype::type_rectangle, "position_rectangle", "position_rectangle" });
-			put_rectangle_field({ field_selection_rectangle, jtype::type_rectangle, "selection_rectangle", "selection_rectangle" });
+			put_rectangle_field({ null_row, jtype::type_rectangle, "rectangle", "rectangle" });
+			put_rectangle_field({ null_row, jtype::type_rectangle, "position_rectangle", "position_rectangle" });
+			put_rectangle_field({ null_row, jtype::type_rectangle, "selection_rectangle", "selection_rectangle" });
 
 		}
 
 		bool schema_tests()
 		{
-			dynamic_box box;
-			box.init(1 << 21);
+			try {
+				dynamic_box box;
+				box.init(1 << 21);
 
-			jschema schema;
-			row_id_type schema_id;
+				jschema schema;
+				row_id_type schema_id;
 
-			schema = jschema::create_schema(box.get_box(), 20, 5, true, schema_id);
+				schema = jschema::create_schema(box.get_box(), 20, 5, true, schema_id);
 
-			row_id_type quantity_field_id = schema.find_field("quantity");
-			row_id_type last_name_field_id = schema.find_field("lastName");
-			row_id_type count_field_id = schema.find_field("count");
+				row_id_type quantity_field_id;
+				row_id_type last_name_field_id;
+				row_id_type first_name_field_id;
+				row_id_type birthday_field_id;
+				row_id_type count_field_id;
+				row_id_type title_field_id;
+				row_id_type institution_field_id;
 
-			if (quantity_field_id == null_row) {
-				std::cout << __LINE__ << ":find row failed:" << std::endl;
-				return false;
-			}
+				schema.bind_field("quantity", quantity_field_id);
+				schema.bind_field("lastName", last_name_field_id);
+				schema.bind_field("firstName", first_name_field_id);
+				schema.bind_field("birthday", birthday_field_id);
+				schema.bind_field("count", count_field_id);
+				schema.bind_field("title", title_field_id);
+				schema.bind_field("institutionName", institution_field_id);
 
-			if (quantity_field_id != field_quantity) {
-				std::cout << __LINE__ << ":field placement failed:" <<  std::endl;
-				return false;
-			}
-
-			if (last_name_field_id == null_row) {
-				std::cout << __LINE__ << ":find row failed" << std::endl;
-				return false;
-			}
-
-			if (last_name_field_id != field_last_name) {
-				std::cout << __LINE__ << ":field placement failed" << std::endl;
-				return false;
-			}
-
-			if (count_field_id == null_row) {
-				std::cout << __LINE__ << ":find row failed" << std::endl;
-				return false;
-			}
-
-			if (count_field_id != field_count) {
-				std::cout << __LINE__ << ":field placement failed:" << std::endl;
-				return false;
-			}
-
-			row_id_type failed_field_id = schema.find_field("badFieldName");
-
-			if (failed_field_id != null_row) {
-				std::cout << __LINE__ << ":find row failed" << std::endl;
-				return false;
-			}
-
-			countrybit::database::put_class_request person;
-
-			person.class_name = "person";
-			person.class_description = "a person";
-			person.member_fields = { field_last_name, field_first_name, field_birthday, field_title, field_count, field_quantity };
-			row_id_type person_class_id = schema.put_class(person);
-
-			if (person_class_id == null_row) {
-				std::cout << __LINE__ << ":class create failed failed" << std::endl;
-				return false;
-			}
-
-			jclass person_class = schema.get_class(person_class_id);
-
-			if (person_class.size() != 6) {
-				std::cout << __LINE__ << ":class size failed failed" << std::endl;
-				return false;
-			}
-
-			int offset_start = 0;
-			for (int i = 0; i < person_class.size(); i++) {
-				auto& fldref = person_class.detail(i);
-				auto& fld = schema.get_field(fldref.field_id);
-//				std::cout << fld.name << " " << fld.description << " " << fldref.offset << " " << fld.size_bytes << std::endl;
-				if (offset_start && offset_start != fldref.offset) {
-					std::cout << __LINE__ << ":class alignment failed" << std::endl;
-
+				if (quantity_field_id == null_row) {
+					std::cout << __LINE__ << ":find row failed:" << std::endl;
+					return false;
 				}
-				offset_start += fld.size_bytes;
+
+				if (last_name_field_id == null_row) {
+					std::cout << __LINE__ << ":find row failed" << std::endl;
+					return false;
+				}
+
+				if (first_name_field_id == null_row) {
+					std::cout << __LINE__ << ":find row failed" << std::endl;
+					return false;
+				}
+
+				if (birthday_field_id == null_row) {
+					std::cout << __LINE__ << ":find row failed" << std::endl;
+					return false;
+				}
+
+				if (title_field_id == null_row) {
+					std::cout << __LINE__ << ":find row failed" << std::endl;
+					return false;
+				}
+
+				if (count_field_id == null_row) {
+					std::cout << __LINE__ << ":find row failed" << std::endl;
+					return false;
+				}
+
+				row_id_type failed_field_id = schema.find_field("badFieldName");
+
+				if (failed_field_id != null_row) {
+					std::cout << __LINE__ << ":find row failed" << std::endl;
+					return false;
+				}
+
+				countrybit::database::put_class_request person;
+
+				person.class_name = "person";
+				person.class_description = "a person";
+				person.member_fields = { last_name_field_id, first_name_field_id, birthday_field_id, title_field_id, count_field_id, quantity_field_id };
+				row_id_type person_class_id = schema.put_class(person);
+
+				if (person_class_id == null_row) {
+					std::cout << __LINE__ << ":class create failed failed" << std::endl;
+					return false;
+				}
+
+				jclass person_class = schema.get_class(person_class_id);
+
+				if (person_class.size() != 6) {
+					std::cout << __LINE__ << ":class size failed failed" << std::endl;
+					return false;
+				}
+
+				int offset_start = 0;
+				for (int i = 0; i < person_class.size(); i++) {
+					auto& fldref = person_class.detail(i);
+					auto& fld = schema.get_field(fldref.field_id);
+					//				std::cout << fld.name << " " << fld.description << " " << fldref.offset << " " << fld.size_bytes << std::endl;
+					if (offset_start && offset_start != fldref.offset) {
+						std::cout << __LINE__ << ":class alignment failed" << std::endl;
+
+					}
+					offset_start += fld.size_bytes;
+				}
+
+				countrybit::database::put_class_request company;
+				company.class_name = "company";
+				company.class_description = "a company is a collection of people";
+				company.member_fields = { institution_field_id, member_field(person_class_id, dimensions_type { 10, 1, 1 }) };
+				row_id_type company_class_id = schema.put_class(company);
+
+				if (company_class_id == null_row) {
+					std::cout << __LINE__ << ":class create failed failed" << std::endl;
+					return false;
+				}
 			}
-
-			countrybit::database::put_class_request company;
-			company.class_name = "company";
-			company.class_description = "a company is a collection of people";
-			company.member_fields = { field_institution_name, member_field(person_class_id, dimensions_type { 10, 1, 1 })};
-			row_id_type company_class_id = schema.put_class(company);
-
-			if (company_class_id == null_row) {
-				std::cout << __LINE__ << ":class create failed failed" << std::endl;
+			catch (std::exception exc)
+			{
+				std::cout << exc.what() << std::endl;
 				return false;
 			}
 
@@ -2133,302 +2152,325 @@ namespace countrybit
 
 		bool collection_tests()
 		{
-			dynamic_box box;
-			box.init(1 << 21);
 
-			jschema schema;
-			row_id_type schema_id;
+			try {
+				dynamic_box box;
+				box.init(1 << 21);
 
-			schema = jschema::create_schema( box.get_box(), 20, 1, true, schema_id );
+				jschema schema;
+				row_id_type schema_id;
 
-			jmodel sample_model;
-			sample_model.model_name = "my model";
-			sample_model.model_id = null_row;
+				schema = jschema::create_schema(box.get_box(), 20, 15, true, schema_id);
 
-			sample_model.model_id = schema.put_model(sample_model);
+				row_id_type quantity_field_id;
+				row_id_type last_name_field_id;
+				row_id_type first_name_field_id;
+				row_id_type birthday_field_id;
+				row_id_type count_field_id;
+				row_id_type title_field_id;
+				row_id_type institution_field_id;
 
-			jcollection_ref ref;
-			ref.data = &box;
-			ref.model_name = sample_model.model_name;
-			ref.model_id = sample_model.model_id;
-			ref.max_actors = 2;
-			ref.max_objects = 50;
+				schema.bind_field("quantity", quantity_field_id);
+				schema.bind_field("lastName", last_name_field_id);
+				schema.bind_field("firstName", first_name_field_id);
+				schema.bind_field("birthday", birthday_field_id);
+				schema.bind_field("count", count_field_id);
+				schema.bind_field("title", title_field_id);
+				schema.bind_field("institutionName", institution_field_id);
 
-			init_collection_id(ref.collection_id);
+				jmodel sample_model;
+				sample_model.model_name = "my model";
+				sample_model.model_id = null_row;
 
-			jcollection people = schema.create_collection(&ref, nullptr);
+				sample_model.model_id = schema.put_model(sample_model);
 
-			jactor sample_actor;
-			sample_actor.actor_name = "sample actor";
-			sample_actor.actor_id = null_row;
-			sample_actor = people.create_actor(sample_actor);	
+				jcollection_ref ref;
+				ref.data = &box;
+				ref.model_name = sample_model.model_name;
+				ref.model_id = sample_model.model_id;
+				ref.max_actors = 2;
+				ref.max_objects = 50;
 
-			countrybit::database::put_class_request person;
+				init_collection_id(ref.collection_id);
 
-			person.class_name = "person";
-			person.class_description = "a person";
-			person.member_fields = { field_last_name, field_first_name, field_birthday, field_count, field_quantity };
-			row_id_type person_class_id = schema.put_class(person);
+				jcollection people = schema.create_collection(&ref, nullptr);
 
-			if (person_class_id == null_row) 
-			{
-				std::cout << __LINE__ << ":class create failed failed" << std::endl;
-				return false;
-			}
+				jactor sample_actor;
+				sample_actor.actor_name = "sample actor";
+				sample_actor.actor_id = null_row;
+				sample_actor = people.create_actor(sample_actor);
 
-			jarray pa;
+				countrybit::database::put_class_request person;
 
-			int birthdaystart = 1941;
-			int countstart = 12;
-			double quantitystart = 10.22;
-			int increment = 5;
+				person.class_name = "person";
+				person.class_description = "a person";
+				person.member_fields = { last_name_field_id, first_name_field_id, birthday_field_id, count_field_id, quantity_field_id };
+				row_id_type person_class_id = schema.put_class(person);
 
-			row_id_type people_object_id;
-			
-			auto sl = people.create_object(0, sample_actor.actor_id, person_class_id, people_object_id);
-			auto last_name = sl.get_string(0);
-			auto first_name = sl.get_string(1);
-			auto birthday = sl.get_time(2);
-			auto count = sl.get_int64(3);
-			auto qty = sl.get_double(4);
-			last_name = "last 1";
-			first_name = "first 1";
-			birthday = birthdaystart + increment * 0;
-			count = countstart + increment * 0;
-			qty = quantitystart + increment * 0;
+				if (person_class_id == null_row)
+				{
+					std::cout << __LINE__ << ":class create failed failed" << std::endl;
+					return false;
+				}
 
-			sl = people.create_object(1, sample_actor.actor_id, person_class_id, people_object_id);
-			last_name = sl.get_string(0);
-			first_name = sl.get_string(1);
-			birthday = sl.get_time(2);
-			count = sl.get_int64(3);
-			qty = sl.get_double(4);
-			last_name = "last 2";
-			first_name = "first 2";
-			birthday = birthdaystart + increment * 1;
-			count = countstart + increment * 1;
-			qty = quantitystart + increment * 1;
+				jarray pa;
 
-			sl = people.create_object(2, sample_actor.actor_id, person_class_id, people_object_id);
-			last_name = sl.get_string(0);
-			first_name = sl.get_string(1);
-			birthday = sl.get_time(2);
-			count = sl.get_int64(3);
-			qty = sl.get_double(4);
-			last_name = "last 3";
-			first_name = "first 3";
-			birthday = birthdaystart + increment * 2;
-			count = countstart + increment * 2;
-			qty = quantitystart + increment * 2;
+				int birthdaystart = 1941;
+				int countstart = 12;
+				double quantitystart = 10.22;
+				int increment = 5;
 
-			sl = people.create_object(3, sample_actor.actor_id, person_class_id, people_object_id);
-			last_name = sl.get_string(0);
-			first_name = sl.get_string(1);
-			birthday = sl.get_time(2);
-			count = sl.get_int64(3);
-			qty = sl.get_double(4);
-			last_name = "last 4";
-			first_name = "first 4";
-			birthday = birthdaystart + increment * 3;
-			count = countstart + increment * 3;
-			qty = quantitystart + increment * 3;
+				row_id_type people_object_id;
 
-			sl = people.create_object(4, sample_actor.actor_id, person_class_id, people_object_id);
-			last_name = sl.get_string(0);
-			first_name = sl.get_string(1);
-			birthday = sl.get_time(2);
-			count = sl.get_int64(3);
-			qty = sl.get_double(4);
-			last_name = "last 5 really long test 12345 abcde 67890 fghij 12345 klmno 67890 pqrst";
-			first_name = "first 5 really long test 12345 abcde 67890 fghij 12345 klmno 67890 pqrst";
-			birthday = birthdaystart + increment * 4;
-			count = countstart + increment * 4;
-			qty = quantitystart + increment * 4;
+				auto sl = people.create_object(0, sample_actor.actor_id, person_class_id, people_object_id);
+				auto last_name = sl.get_string(0);
+				auto first_name = sl.get_string(1);
+				auto birthday = sl.get_time(2);
+				auto count = sl.get_int64(3);
+				auto qty = sl.get_double(4);
+				last_name = "last 1";
+				first_name = "first 1";
+				birthday = birthdaystart + increment * 0;
+				count = countstart + increment * 0;
+				qty = quantitystart + increment * 0;
 
-			int inc_count = 0;
-
-			for (auto sl : people)
-			{
+				sl = people.create_object(1, sample_actor.actor_id, person_class_id, people_object_id);
 				last_name = sl.get_string(0);
-				if (!last_name.starts_with("last")) {
-					std::cout << __LINE__ << ":last name failed" << std::endl;
-					return false;
-				}
 				first_name = sl.get_string(1);
-				if (!first_name.starts_with("first")) {
-					std::cout << __LINE__ << ":first name failed" << std::endl;
-					return false;
-				}
 				birthday = sl.get_time(2);
 				count = sl.get_int64(3);
 				qty = sl.get_double(4);
+				last_name = "last 2";
+				first_name = "first 2";
+				birthday = birthdaystart + increment * 1;
+				count = countstart + increment * 1;
+				qty = quantitystart + increment * 1;
 
-				if (birthday != birthdaystart + increment * inc_count) {
-					std::cout << __LINE__ << ":birthday failed" << std::endl;
-					return false;
+				sl = people.create_object(2, sample_actor.actor_id, person_class_id, people_object_id);
+				last_name = sl.get_string(0);
+				first_name = sl.get_string(1);
+				birthday = sl.get_time(2);
+				count = sl.get_int64(3);
+				qty = sl.get_double(4);
+				last_name = "last 3";
+				first_name = "first 3";
+				birthday = birthdaystart + increment * 2;
+				count = countstart + increment * 2;
+				qty = quantitystart + increment * 2;
+
+				sl = people.create_object(3, sample_actor.actor_id, person_class_id, people_object_id);
+				last_name = sl.get_string(0);
+				first_name = sl.get_string(1);
+				birthday = sl.get_time(2);
+				count = sl.get_int64(3);
+				qty = sl.get_double(4);
+				last_name = "last 4";
+				first_name = "first 4";
+				birthday = birthdaystart + increment * 3;
+				count = countstart + increment * 3;
+				qty = quantitystart + increment * 3;
+
+				sl = people.create_object(4, sample_actor.actor_id, person_class_id, people_object_id);
+				last_name = sl.get_string(0);
+				first_name = sl.get_string(1);
+				birthday = sl.get_time(2);
+				count = sl.get_int64(3);
+				qty = sl.get_double(4);
+				last_name = "last 5 really long test 12345 abcde 67890 fghij 12345 klmno 67890 pqrst";
+				first_name = "first 5 really long test 12345 abcde 67890 fghij 12345 klmno 67890 pqrst";
+				birthday = birthdaystart + increment * 4;
+				count = countstart + increment * 4;
+				qty = quantitystart + increment * 4;
+
+				int inc_count = 0;
+
+				for (auto sl : people)
+				{
+					last_name = sl.get_string(0);
+					if (!last_name.starts_with("last")) {
+						std::cout << __LINE__ << ":last name failed" << std::endl;
+						return false;
+					}
+					first_name = sl.get_string(1);
+					if (!first_name.starts_with("first")) {
+						std::cout << __LINE__ << ":first name failed" << std::endl;
+						return false;
+					}
+					birthday = sl.get_time(2);
+					count = sl.get_int64(3);
+					qty = sl.get_double(4);
+
+					if (birthday != birthdaystart + increment * inc_count) {
+						std::cout << __LINE__ << ":birthday failed" << std::endl;
+						return false;
+					}
+
+					if (count != countstart + increment * inc_count) {
+						std::cout << __LINE__ << ":count failed" << std::endl;
+						return false;
+					}
+
+					if (qty != quantitystart + increment * inc_count) {
+
+						std::cout << __LINE__ << ":qty failed" << std::endl;
+						return false;
+					}
+
+					inc_count++;
 				}
 
-				if (count != countstart + increment * inc_count) {
-					std::cout << __LINE__ << ":count failed" << std::endl;
-					return false;
-				}
-
-				if (qty != quantitystart + increment * inc_count) {
-
-					std::cout << __LINE__ << ":qty failed" << std::endl;
-					return false;
-				}
-
-				inc_count++;
+				return true;
 			}
-
-			return true;
+			catch (std::exception exc)
+			{
+				std::cout << exc.what() << std::endl;
+				return false;
+			}
+			
 		}
 
 		bool array_tests()
 		{
-			dynamic_box box;
-			box.init(1 << 21);
 
-			jschema schema;
-			row_id_type schema_id;
+			try {
+				dynamic_box box;
+				box.init(1 << 21);
 
-			schema = jschema::create_schema(box.get_box(), 50, 2, true, schema_id);
+				jschema schema;
+				row_id_type schema_id;
 
-			countrybit::database::put_class_request sprite_frame_request;
+				schema = jschema::create_schema(box.get_box(), 50, 2, true, schema_id);
 
-			sprite_frame_request.class_name = "spriteframe";
-			sprite_frame_request.class_description = "sprite frame";
-			sprite_frame_request.member_fields = { field_shortname, field_rectangle, field_color };
-			row_id_type sprite_frame_class_id = schema.put_class(sprite_frame_request);
+				countrybit::database::put_class_request sprite_frame_request;
 
-			if (sprite_frame_class_id == null_row) {
-				std::cout << __LINE__ << ":class create failed failed" << std::endl;
-				return false;
-			}
+				sprite_frame_request.class_name = "spriteframe";
+				sprite_frame_request.class_description = "sprite frame";
+				sprite_frame_request.member_fields = { "shortName", "rectangle", "color" };
+				row_id_type sprite_frame_class_id = schema.put_class(sprite_frame_request);
 
-			countrybit::database::put_class_request sprite_class_request;
-			sprite_class_request.class_name = "sprite";
-			sprite_class_request.class_description = "sprite";
-			sprite_class_request.member_fields = { field_shortname, field_rectangle, member_field(sprite_frame_class_id, { 10, 10, 1 }) };
-			row_id_type sprite_class_id = schema.put_class(sprite_class_request);
-
-			if (sprite_class_id == null_row) {
-				std::cout << __LINE__ << ":class create failed failed" << std::endl;
-				return false;
-			}
-
-			collection_id_type colid;
-
-			init_collection_id(colid);
-
-			row_id_type classesb[2] = { sprite_class_id, null_row };
-
-			model_type sprite_model;
-
-			sprite_model.model_id = null_row;
-			sprite_model.model_name = "sprite model";
-			
-			sprite_model.model_id = schema.put_model(sprite_model);
-
-			jcollection_ref ref;
-			ref.data = &box;
-			ref.model_name = sprite_model.model_name;
-			ref.model_id = sprite_model.model_id;
-			ref.max_actors = 2;
-			ref.max_objects = 50;
-
-			init_collection_id(ref.collection_id);
-
-			jcollection sprites = schema.create_collection(&ref, nullptr);
-
-			actor_type sprite_boy;
-			sprite_boy.actor_id = null_row;
-			sprite_boy.actor_name = "sprite_boy";
-
-			sprite_boy = sprites.create_actor(sprite_boy);
-			row_id_type new_sprite_id;
-
-			for (int i = 0; i < 10; i++) {
-				auto slice = sprites.create_object( i, sprite_boy.actor_id, sprite_class_id, new_sprite_id);
-				auto image_name = slice.get_string(0);
-				auto frame_width = slice.get_float(1);
-				auto frame_height = slice.get_float(2);
-
-				auto frame_array = slice.get_object(3);
-
-				image_name = std::format("{} #{}", "image", i);
-				frame_width = 1000;
-				frame_height = 1000;
-
-				for (auto frame : frame_array) 
-				{
-					auto dim = frame.get_dim();
-					auto frame_name = frame.get_string(0);
-					auto x = frame.get_float(1);
-					auto y = frame.get_float(2);
-					auto width = frame.get_float(3);
-					auto height = frame.get_float(4);
-					frame_name = std::format("{} #{}", "frame", dim.x);
-					x = dim.x * 100.0;
-					y = dim.y * 100.0;
-					width = 100.0;
-					height = 100.0;
-				}
-			}
-
-			int scount = 0;
-
-			for (auto slice : sprites)
-			{
-				auto frame_width = slice.get_float(1);
-				auto frame_height = slice.get_float(2);
-
-				if (frame_width != 1000 || frame_height != 1000) {
-
-					std::cout << __LINE__ << ":array failed" << std::endl;
+				if (sprite_frame_class_id == null_row) {
+					std::cout << __LINE__ << ":class create failed failed" << std::endl;
 					return false;
 				}
 
-				auto frames = slice.get_object(3);
+				countrybit::database::put_class_request sprite_class_request;
+				sprite_class_request.class_name = "sprite";
+				sprite_class_request.class_description = "sprite";
+				sprite_class_request.member_fields = { "shortName", "rectangle", member_field(sprite_frame_class_id, { 10, 10, 1 }) };
+				row_id_type sprite_class_id = schema.put_class(sprite_class_request);
 
-				int fcount = 0;
-				for (auto frame : frames)
-				{
-					if (frame_width != 1000 || frame_height != 1000) {
+				if (sprite_class_id == null_row) {
+					std::cout << __LINE__ << ":class create failed failed" << std::endl;
+					return false;
+				}
 
-						std::cout << __LINE__ << ":array failed" << std::endl;
-						return false;
-					}
-//					std::cout << std::format("{} {}x{} - {}x{}", frame.get_string(0).value(), frame.get_float(1).value(), frame.get_float(2).value(), frame.get_float(3).value(), frame.get_float(4).value()) << std::endl;
-					auto dim = frame.get_dim();
-					auto x = frame.get_float(1);
-					auto y = frame.get_float(2);
-					auto width = frame.get_float(3);
-					auto height = frame.get_float(4);
-					if (x != dim.x * 100.0) {
-						std::cout << __LINE__ << ":array failed" << std::endl;
-						return false;
-					};
-					if (y != dim.y * 100.0) {
-						std::cout << __LINE__ << ":array failed" << std::endl;
-						return false;
-					}
-					if (width != 100.0) {
-						std::cout << __LINE__ << ":array failed" << std::endl;
-						return false;
+				collection_id_type colid;
 
-					}
-					if (height != 100.0) {
-						std::cout << __LINE__ << ":array failed" << std::endl;
-						return false;
+				init_collection_id(colid);
+
+				row_id_type classesb[2] = { sprite_class_id, null_row };
+
+				model_type sprite_model;
+
+				sprite_model.model_id = null_row;
+				sprite_model.model_name = "sprite model";
+
+				sprite_model.model_id = schema.put_model(sprite_model);
+
+				jcollection_ref ref;
+				ref.data = &box;
+				ref.model_name = sprite_model.model_name;
+				ref.model_id = sprite_model.model_id;
+				ref.max_actors = 2;
+				ref.max_objects = 50;
+
+				init_collection_id(ref.collection_id);
+
+				jcollection sprites = schema.create_collection(&ref, nullptr);
+
+				actor_type sprite_boy;
+				sprite_boy.actor_id = null_row;
+				sprite_boy.actor_name = "sprite_boy";
+
+				sprite_boy = sprites.create_actor(sprite_boy);
+				row_id_type new_sprite_id;
+
+				for (int i = 0; i < 10; i++) {
+					auto slice = sprites.create_object(i, sprite_boy.actor_id, sprite_class_id, new_sprite_id);
+					auto image_name = slice.get_string(0);
+					auto image_rect = slice.get_rectangle(1);
+					auto frame_array = slice.get_object(2);
+
+					image_name = std::format("{} #{}", "image", i);
+					image_rect->x = 0;
+					image_rect->y = 0;
+					image_rect->w = 1000;
+					image_rect->h = 1000;
+
+					for (auto frame : frame_array)
+					{
+						auto dim = frame.get_dim();
+						auto frame_name = frame.get_string(0);
+						auto frame_rect = slice.get_rectangle(1);
+						frame_name = std::format("{} #{}", "frame", dim.x);
+						frame_rect->x = dim.x * 100.0;
+						frame_rect->y = dim.y * 100.0;
+						frame_rect->w = 100.0;
+						frame_rect->h = 100.0;
 					}
 				}
+
+				int scount = 0;
+
+				for (auto slice : sprites)
+				{
+					auto image_rect = slice.get_rectangle(1);
+
+					if (image_rect->w != 1000 || image_rect->h != 1000) {
+
+						std::cout << __LINE__ << ":array failed" << std::endl;
+						return false;
+					}
+
+					auto frames = slice.get_object(3);
+
+					int fcount = 0;
+					for (auto frame : frames)
+					{
+						auto image_rect = slice.get_rectangle(1);
+						if (image_rect->w != 100 || image_rect->h != 100)
+						{
+							std::cout << __LINE__ << ":array failed" << std::endl;
+							return false;
+						}
+
+						auto frame_rect = frame.get_rectangle(1);
+						if (frame_rect->w != 100 || frame_rect->h != 100)
+						{
+							std::cout << __LINE__ << ":array failed" << std::endl;
+							return false;
+						}
+
+						//					std::cout << std::format("{} {}x{} - {}x{}", frame.get_string(0).value(), frame.get_float(1).value(), frame.get_float(2).value(), frame.get_float(3).value(), frame.get_float(4).value()) << std::endl;
+						auto dim = frame.get_dim();
+						if (frame_rect->x != dim.x * 100.0) {
+							std::cout << __LINE__ << ":array failed" << std::endl;
+							return false;
+						};
+						if (frame_rect->y != dim.y * 100.0) {
+							std::cout << __LINE__ << ":array failed" << std::endl;
+							return false;
+						}
+					}
+				}
+
+				return true;
 			}
-
-			return true;
+			catch (std::exception& exc)
+			{
+				std::cout << exc.what() << std::endl;
+				return false;
+			}
 		}
-
 	}
 }
-

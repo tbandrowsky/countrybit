@@ -89,26 +89,36 @@ namespace countrybit
                 r = r && assert_if([nr, i, ti]() { return ti[i].id == nr.id && ti[i].description == nr.description && ti[i].name == nr.name; }, "item not stored correctly");
             }
 
+#if DETAILS
             std::cout << " insert" << std::endl;
+#endif
 
             basic.insert(0, 1);
+
+#if DETAILS
+
             for (countrybit::database::row_id_type i = 0; i < basic.size(); i++) {
                 auto b = basic[i];
                 std::cout << b.id << " " << b.name << " " << b.description << std::endl;
             }
-
+#endif
             for (countrybit::database::row_id_type i = 0; i < basic.size(); i++) {
                 auto nr = basic[i];
                 r = r && assert_if([nr, i, tif]() { return tif[i].id == nr.id && tif[i].description == nr.description && tif[i].name == nr.name; }, "forward not moved correctly");
             }
             
+#if DETAILS
             std::cout << " remove" << std::endl;
+#endif
 
             basic.erase(0, 1);
+
+#if DETAILS
             for (countrybit::database::row_id_type i = 0; i < basic.size(); i++) {
                 auto b = basic[i];
                 std::cout << b.id << " " << b.name << " " << b.description << std::endl;
             }
+#endif
 
             for (countrybit::database::row_id_type i = 0; i < basic.size(); i++) {
                 auto nr = basic[i];
@@ -146,7 +156,6 @@ namespace countrybit
 
             auto py = simple_test[idx];
             auto px = &py;
-            std::cout << " child count: " << px->size() << std::endl;
             assert_if([px]() { return px->size() == 0; }, "detail count incorrect");
 
             object_name detail = "child 1";

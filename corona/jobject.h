@@ -777,11 +777,11 @@ namespace countrybit
 
 			static row_id_type reserve_schema(serialized_box* _b, int _num_classes, int _num_models, bool _use_standard_fields)
 			{
-				int _num_class_fields = _num_classes * 64 + ( _use_standard_fields ? 200 : 0 );
-				int _num_queries = _num_classes * 4;
-				int _num_sql_remotes = _num_classes * 4;
-				int _num_http_remotes = _num_classes * 4;
-				int _num_file_remotes = _num_classes * 4;
+				int _num_class_fields = _num_classes * 10 + ( _use_standard_fields ? 200 : 0 );
+				int _num_queries = _num_classes * 2;
+				int _num_sql_remotes = _num_classes * 2;
+				int _num_http_remotes = _num_classes * 2;
+				int _num_file_remotes = _num_classes * 2;
 
 				jschema_map schema_map, *pschema_map;
 				schema_map.fields_table_id = null_row;
@@ -795,15 +795,12 @@ namespace countrybit
 				schema_map.http_properties_id = null_row;
 				schema_map.models_id = null_row;
 
-				auto total_size = jschema::get_box_size(_num_classes, _num_models, _use_standard_fields);
-				_b->expand_check(total_size);
-
 				row_id_type rit = _b->pack(schema_map);
 				pschema_map = _b->unpack<jschema_map>(rit);
 				pschema_map->fields_table_id = field_store_type::reserve_table(_b, _num_class_fields);
 				pschema_map->classes_table_id = class_store_type::reserve_table(_b, _num_classes, _num_class_fields);
-				pschema_map->classes_by_name_id = field_index_type::reserve_sorted_index(_b, _num_classes);
-				pschema_map->fields_by_name_id = class_index_type::reserve_sorted_index(_b, _num_class_fields);
+				pschema_map->classes_by_name_id = class_index_type::reserve_sorted_index(_b, _num_classes);
+				pschema_map->fields_by_name_id = field_index_type::reserve_sorted_index(_b, _num_class_fields);
 				pschema_map->models_by_name_id = model_index_type::reserve_sorted_index(_b, _num_models);
 				pschema_map->query_properties_id = query_store_type::reserve_table(_b, _num_queries);
 				pschema_map->sql_properties_id = sql_store_type::reserve_table(_b, _num_sql_remotes);
@@ -811,7 +808,7 @@ namespace countrybit
 				pschema_map->http_properties_id = http_store_type::reserve_table(_b, _num_http_remotes);
 				pschema_map->models_id = model_store_type::reserve_table(_b, _num_models);
 				return rit;
-			}
+			} 
 
 			static jschema get_schema(serialized_box* _b, row_id_type _row)
 			{
@@ -837,29 +834,43 @@ namespace countrybit
 
 			static int64_t get_box_size(int _num_classes, int _num_models, bool _use_standard_fields)
 			{
-				int _num_class_fields = _num_classes * 64 + (_use_standard_fields ? 200 : 0);
-				int _num_queries = _num_classes * 4;
-				int _num_sql_remotes = _num_classes * 4;
-				int _num_http_remotes = _num_classes * 4;
-				int _num_file_remotes = _num_classes * 4;
+				int _num_class_fields = _num_classes * 10 + (_use_standard_fields ? 200 : 0);
+				int _num_queries = _num_classes * 2;
+				int _num_sql_remotes = _num_classes * 2;
+				int _num_http_remotes = _num_classes * 2;
+				int _num_file_remotes = _num_classes * 2;
 
 				int64_t field_size = field_store_type::get_box_size(_num_class_fields);
 				int64_t class_size = class_store_type::get_box_size(_num_classes, _num_class_fields);
 				int64_t classes_by_name_size = class_index_type::get_box_size(_num_classes);
 				int64_t fields_by_name_size = field_index_type::get_box_size(_num_class_fields);
-				int64_t models_by_name_size = field_index_type::get_box_size(_num_class_fields);
+				int64_t models_by_name_size = model_index_type::get_box_size(_num_models);
 				int64_t query_size = query_store_type::get_box_size(_num_queries);
 				int64_t sql_size = sql_store_type::get_box_size(_num_sql_remotes);
 				int64_t file_size = file_store_type::get_box_size(_num_file_remotes);
 				int64_t http_size = http_store_type::get_box_size(_num_http_remotes);
 				int64_t model_size = model_store_type::get_box_size(_num_models);
-				int64_t total_size = field_size + class_size + models_by_name_size + classes_by_name_size + fields_by_name_size + query_size + sql_size + http_size + file_size;
-				return total_size * 3 / 2;
+				int64_t total_size = field_size + 
+					class_size + 
+					models_by_name_size + 
+					classes_by_name_size + 
+					fields_by_name_size + 
+					models_by_name_size +
+					query_size + 
+					sql_size + 
+					file_size + 
+					http_size + 
+					model_size;
+				return total_size;
 			}
 
-			static jschema create_schema(serialized_box* _b, int _num_classes, int _num_fields, bool _use_standard_fields, row_id_type& _location)
+			static jschema create_schema(serialized_box* _b, int _num_classes, int _num_models, bool _use_standard_fields, row_id_type& _location)
 			{
-				_location = reserve_schema(_b, _num_classes, _num_fields, _use_standard_fields);
+				auto total_size = jschema::get_box_size(_num_classes, _num_models, _use_standard_fields);
+				auto temp = _b->expand_check(total_size);
+				if (temp) _b = temp;
+
+				_location = reserve_schema(_b, _num_classes, _num_models, _use_standard_fields);
 				jschema schema = get_schema(_b, _location);
 				schema.add_standard_fields();
 				return schema;
@@ -1038,7 +1049,7 @@ namespace countrybit
 			const char* invalid_target_field = "Invalid target field";
 			const char* invalid_projection_field = "Invalid projection field";
 
-			void bind_field(object_name& _field_name, row_id_type& _field_id)
+			void bind_field(const object_name& _field_name, row_id_type& _field_id)
 			{
 				auto fiter = fields_by_name[_field_name];
 				if (fiter != std::end(fields_by_name)) {
@@ -1049,7 +1060,7 @@ namespace countrybit
 				throw std::logic_error("[" + _field_name + "] not found.");
 			}
 
-			void bind_class(object_name& _class_name, row_id_type& _class_id)
+			void bind_class(const object_name& _class_name, row_id_type& _class_id)
 			{
 				auto fiter = classes_by_name[_class_name];
 				if (fiter != std::end(classes_by_name)) {
@@ -1344,7 +1355,7 @@ namespace countrybit
 					case member_field_types::member_field:
 					{
 						row_id_type fid;
-						if (!field.use_id) {
+						if (field.field_name.size()>0) {
 							auto fname = fields_by_name[field.field_name];
 							if (fname == std::end(fields_by_name)) {
 								throw std::logic_error("[" + field.field_name + " ] not found");
@@ -1378,7 +1389,7 @@ namespace countrybit
 					case member_field_types::member_class:
 					{
 						put_object_field_request porf;
-						if (!field.use_id) {
+						if (field.field_name.size()>0) {
 							auto class_name = classes_by_name[field.field_name];
 							if (class_name == std::end(classes_by_name)) {
 								throw std::logic_error("[" + field.field_name + " ] not found");
@@ -1426,6 +1437,14 @@ namespace countrybit
 				request.class_id = class_id;
 
 				auto& mfs = request.member_fields;
+
+				for (auto mfi : mfs)
+				{
+					if (mfi.item.field_name.size() > 0) {
+						bind_field(mfi.item.field_name, mfi.item.field_id);
+					}
+				}
+
 				auto sz = mfs.size();
 				int num_integration_fields = mfs.count_if([this](member_field& src) {
 					auto& f = this->get_field(src.field_id);

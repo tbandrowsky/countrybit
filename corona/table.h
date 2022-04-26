@@ -151,7 +151,7 @@ namespace countrybit
 
 			static int get_box_size( int _rows )
 			{
-				return sizeof(table_header) + sizeof(T) * _rows;
+				return sizeof(table_header) + sizeof(T) * (_rows + 8);
 			}
 
 			template <typename B>
@@ -166,6 +166,9 @@ namespace countrybit
 
 				char c = 0;
 				hdr_offset = _b->pack(c, bytes_size);
+
+				if (hdr_offset == null_row)
+					return hdr_offset;
 
 				t.hdr = _b->unpack<table_header>(hdr_offset);
 
@@ -609,6 +612,9 @@ namespace countrybit
 				{
 					if (_item) {
 						it->item = *_item;
+					}
+					else {
+						it->item = {};
 					}
 					C *dest_detail = details.create(detail_count, it->detail_range.start);
 					if (dest_detail) {

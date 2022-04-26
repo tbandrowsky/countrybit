@@ -1166,16 +1166,16 @@ namespace countrybit
 				map_scalar<database::point_box>(point_ti, pvalue::pvalue_types::double_value, "z", "z", offsetof(database::point, z));
 
 				rectangle_ti = create_map(member_type_name, "rectangle", "rectangle", 20);
-				map_scalar<database::rectangle_box>(point_ti, pvalue::pvalue_types::double_value, "x", "x", offsetof(database::rectangle, corner.x));
-				map_scalar<database::rectangle_box>(point_ti, pvalue::pvalue_types::double_value, "y", "y", offsetof(database::rectangle, corner.y));
-				map_scalar<database::rectangle_box>(point_ti, pvalue::pvalue_types::double_value, "w", "w", offsetof(database::rectangle, size.x));
-				map_scalar<database::rectangle_box>(point_ti, pvalue::pvalue_types::double_value, "h", "h", offsetof(database::rectangle, size.y));
+				map_scalar<database::rectangle_box>(point_ti, pvalue::pvalue_types::double_value, "x", "x", offsetof(database::rectangle, x));
+				map_scalar<database::rectangle_box>(point_ti, pvalue::pvalue_types::double_value, "y", "y", offsetof(database::rectangle, y));
+				map_scalar<database::rectangle_box>(point_ti, pvalue::pvalue_types::double_value, "w", "w", offsetof(database::rectangle, w));
+				map_scalar<database::rectangle_box>(point_ti, pvalue::pvalue_types::double_value, "h", "h", offsetof(database::rectangle, h));
 
 				image_ti = create_map(member_type_name, "image", "image", 20);
-				map_scalar<database::rectangle_box>(point_ti, pvalue::pvalue_types::double_value, "x", "x", offsetof(database::rectangle, corner.x));
-				map_scalar<database::rectangle_box>(point_ti, pvalue::pvalue_types::double_value, "y", "y", offsetof(database::rectangle, corner.y));
-				map_scalar<database::rectangle_box>(point_ti, pvalue::pvalue_types::double_value, "w", "w", offsetof(database::rectangle, size.x));
-				map_scalar<database::rectangle_box>(point_ti, pvalue::pvalue_types::double_value, "h", "h", offsetof(database::rectangle, size.y));
+				map_scalar<database::rectangle_box>(point_ti, pvalue::pvalue_types::double_value, "x", "x", offsetof(database::rectangle, x));
+				map_scalar<database::rectangle_box>(point_ti, pvalue::pvalue_types::double_value, "y", "y", offsetof(database::rectangle, y));
+				map_scalar<database::rectangle_box>(point_ti, pvalue::pvalue_types::double_value, "w", "w", offsetof(database::rectangle, w));
+				map_scalar<database::rectangle_box>(point_ti, pvalue::pvalue_types::double_value, "h", "h", offsetof(database::rectangle, h));
 
 				wave_ti = create_map(member_type_name, "wave", "wave", 20);
 				map_scalar<database::wave_box>(wave_ti, pvalue::pvalue_types::double_value, "start_seconds", "start_seconds", offsetof(database::wave_instance, start_seconds));

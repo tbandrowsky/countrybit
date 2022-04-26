@@ -101,6 +101,12 @@ namespace countrybit
 				return *this;
 			}
 
+			point* operator->()
+			{
+				point& t = boxed<point>::get_data_ref();
+				return &t;
+			}
+
 			operator point& ()
 			{
 				point& t = boxed<point>::get_data_ref();

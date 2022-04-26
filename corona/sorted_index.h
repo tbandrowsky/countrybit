@@ -67,9 +67,10 @@ namespace countrybit
 					throw std::logic_error("sorted index exhausted.");
 				}
 
-				for (int i = 0; i < in.size(); i++)
+				index_ref new_ref = null_row;
+				for (int i = 0; i <= _num_levels; i++)
 				{
-					in.detail(i) = null_row;
+					data_table.append_detail(in.row_id(), 1, &new_ref);
 				}
 
 				return in;
@@ -94,8 +95,8 @@ namespace countrybit
 
 				hdr.count = 0;
 				hdr.level = 0;
-				hdr.header_id = 0;
-				hdr.table_id = 0;
+				hdr.header_id = null_row;
+				hdr.table_id = null_row;
 
 				row_id_type header_location = _b->pack(hdr);
 
@@ -114,7 +115,7 @@ namespace countrybit
 				si.index_header = _b->unpack<index_header_type>(_header_location);
 				si.data_table = data_table_type::get_table(_b, si.index_header->table_id);
 
-				if (!si.index_header->header_id) {
+				if (si.index_header->header_id == null_row) {
 					index_node hdr = si.create_node(MaxNumberOfLevels);
 					si.index_header->header_id = hdr.row_id();
 				}
@@ -133,7 +134,7 @@ namespace countrybit
 
 			static size_t get_box_size( row_id_type _max_items )
 			{
-				return item_details_table<std::pair<KEY, VALUE>, index_ref>::get_box_size(_max_items, _max_items * MaxNumberOfLevels);
+				return data_table_type::get_box_size(_max_items, _max_items * MaxNumberOfLevels);
 			}
 
 			class iterator

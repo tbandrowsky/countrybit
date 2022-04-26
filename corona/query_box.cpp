@@ -86,6 +86,12 @@ namespace countrybit
 			return t;
 		}
 
+		query_instance* query_box::operator->()
+		{
+			query_instance& t = get_data_ref();
+			return &t;
+		}
+
 		query_instance query_box::value() const 
 		{ 
 			return get_value(); 
