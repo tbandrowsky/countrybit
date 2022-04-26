@@ -243,8 +243,8 @@ namespace countrybit
 			{
 				if (!check(index) || count < 0 || size()==0 || ((hdr->last_row + count) > hdr->max_rows)) return nullptr;				
 
-				row_id_type dest_idx = hdr->last_row;
-				row_id_type source_idx = dest_idx - count;
+				row_id_type dest_idx = hdr->last_row + count;
+				row_id_type source_idx = hdr->last_row;
 
 				/*
 				* rows = 5
@@ -256,7 +256,8 @@ namespace countrybit
 				
 				*/
 
-				while (source_idx >= index) {
+				while (source_idx >= index) 
+				{
 					hdr->rows[dest_idx] = hdr->rows[source_idx];
 					dest_idx--;
 					source_idx--;
@@ -671,36 +672,55 @@ namespace countrybit
 					throw std::invalid_argument("can't extend an uncreated");
 				}
 
-				row_id_type new_details_location = pc.detail_range.stop;
+#if DETAILS
+				std::cout << "append_detail " << location << ", start " << pc.detail_range.start << ", stop " << pc.detail_range.stop << ", reserved stop " << pc.detail_range.reserved_stop << std::endl;
+#endif
 
-				row_id_type capacity_in_node = pc.detail_range.free();
-				if (capacity_in_node >= add_detail_count)
+				row_id_type new_details_location = pc.detail_range.stop;
+				row_id_type existing_end = pc.detail_range.reserved_stop;
+				row_id_type minimum_end = new_details_location + add_detail_count;
+
+				if (minimum_end <= existing_end)
 				{
-					pc.detail_range.stop = pc.detail_range.stop + add_detail_count;
+					pc.detail_range.stop += add_detail_count;
 				}
 				else
 				{
-					int capacity_ask = capacity_in_node + add_detail_count;
-					int capacity_allocate = pc.detail_range.reserved_size() * 2;
-					while (capacity_allocate < capacity_ask)
+					row_id_type capacity_allocate = pc.detail_range.reserved_size() * 2;
+					row_id_type allocation_end = capacity_allocate + pc.detail_range.start;
+
+					while (allocation_end < minimum_end) {
 						capacity_allocate *= 2;
+						allocation_end = capacity_allocate + pc.detail_range.start;
+					}
 
-					row_id_type new_stop = pc.detail_range.start + capacity_allocate;
-					row_id_type shift = new_stop - pc.detail_range.reserved_stop;
+					row_id_type insert_rows = allocation_end - existing_end;
 
-					details.insert(pc.detail_range.reserved_stop, shift);
+#if DETAILS
+					std::cout << "new loc " << new_details_location << ", reserved end " << existing_end << ", new end " << allocation_end << ", insert count " << insert_rows << std::endl;
+#endif
+
+					details.insert(allocation_end, insert_rows);
+
+					pc.detail_range.stop += add_detail_count;
+					pc.detail_range.reserved_stop = allocation_end;
 
 					for (row_id_type i = location+1; i < size(); i++)
 					{
-						auto& pcx = item[location];
-						pcx.detail_range.start += shift;
-						pcx.detail_range.stop += shift;
-						pcx.detail_range.reserved_stop += shift;
+						auto& pcx = item[i];
+						pcx.detail_range.start += insert_rows;
+						pcx.detail_range.stop += insert_rows;
+						pcx.detail_range.reserved_stop += insert_rows;
+					}
+
+					for (row_id_type i = pc.detail_range.stop; i < pc.detail_range.reserved_stop; i++) {
+						C temp = {};
+						details[i] = temp;
 					}
 				}
 
 				for (row_id_type i = 0; i < add_detail_count; i++) {
-					auto& new_detail = details[new_details_location + i];
+					auto& new_detail = details[new_details_location];
 					if (new_details) {
 						new_detail = new_details[i];
 					}
@@ -708,7 +728,9 @@ namespace countrybit
 						C temp = {};
 						new_detail = temp;
 					}
+					new_details_location++;
 				}
+
 			}
 
 			void erase_item(row_id_type location)

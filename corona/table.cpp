@@ -154,6 +154,8 @@ namespace countrybit
             detail = "child 2";
             simple_test.append_detail(idx, 1, &detail);
 
+#if DETAILS
+
             py = simple_test[idx];
             px = &py;
 
@@ -163,6 +165,36 @@ namespace countrybit
             for (int i = 0; i < px->size(); i++) {
                 std::cout << px->detail(i) << std::endl;
             }
+
+#endif
+
+            row_id_type insert_test2_location;
+            auto insert_test2 = table<test_item>::create_table(&box, 20, insert_test2_location);
+
+            tix.name = "test 1";
+            tix.description = "test1 description";
+            tix.id = 1;
+            insert_test2.create(1, &tix);
+            tix.name = "test 2";
+            tix.description = "test2 description";
+            tix.id = 1;
+            insert_test2.create(1, &tix);
+
+            insert_test2.insert(1, 3);
+            for (row_id_type x = 1; x < 4; x++)
+            {
+                auto* tic = insert_test2.get_ptr(x);
+                tic->name = "test x";
+                tic->description = "testx description";
+                tic->id = 1;
+            }
+
+#if DETAILS
+            for (int i = 0; i < insert_test2.size(); i++) 
+            {
+                std::cout << insert_test2[i].name << std::endl;
+            }
+#endif
 
             item_details_table<test_item, object_name> item_stuff;
             item_stuff = item_details_table<test_item, object_name>::create_table(&box, 10, 100, table_location);
@@ -200,15 +232,10 @@ namespace countrybit
                 {
                     object_name test = "test detail " + std::to_string(xid) + "," + std::to_string(jid);
                     item_stuff.append_detail(testx, 1, &test);
-                }
-                auto testy = item_stuff[testx];
-                for (int jid = 0; jid < testy.size(); jid++)
-                {
-                    auto& child = testy.detail(jid);
-                    object_name test = "test detail " + std::to_string(xid) + "," + std::to_string(jid);
-
-                    if (child != test) {
-                        std::cout << " test A didn't match " << xid << ", " << jid << " " << child << " vs " << test << std::endl;
+                    auto testy = item_stuff[testx];
+                    auto& det = testy.detail(jid);
+                    if (det != test) {
+                        std::cout << " test A didn't match " << xid << ", " << jid << " " << det << " vs " << test << std::endl;
                         r = false;
                     }
                 }
@@ -220,11 +247,11 @@ namespace countrybit
                 auto tc = item_stuff[testx];
                 for (int jid = 0; jid < tc.size(); jid++)
                 {
-                    auto& child = tc.detail(jid);
+                    auto& det = tc.detail(jid);
                     object_name test = "test detail " + std::to_string(xid) + "," + std::to_string(jid);
                     
-                    if (child != test) {
-                        std::cout << " test B didn't match " << xid << ", " << jid << " " << child << " vs " << test << std::endl;
+                    if (det != test) {
+                        std::cout << " test B didn't match " << xid << ", " << jid << " " << det << " vs " << test << std::endl;
                         r = false;
                     }
                 }
