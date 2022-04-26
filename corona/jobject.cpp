@@ -356,16 +356,17 @@ namespace countrybit
 			auto find_field = schema->get_field(find_field_id);
 			auto bytes_to_allocate = find_field.size_bytes;
 
-			auto new_object = objects.create_item(bytes_to_allocate, nullptr);
-			new_object.item().oid.collection_id = collection_id;
-			new_object.item().oid.row_id = new_object.row_id();
-			new_object.item().class_field_id = find_field_id;
-			new_object.item().class_id = _class_id;
-			new_object.item().item_id = _item_id;
-			new_object.item().otype = jtype::type_object;
+			collection_object_type co;
+			co.oid.collection_id = collection_id;
+			co.class_field_id = find_field_id;
+			co.class_id = _class_id;
+			co.item_id = _item_id;
+			co.otype = jtype::type_object;
 
-			jarray ja(nullptr, schema, find_field_id, new_object.pdetails(), true);
-
+			auto new_object = objects.create_item( &co, bytes_to_allocate, nullptr);
+			co.oid.row_id = new_object.row_id();
+			char* bytes = new_object.pdetails();
+			jarray ja(nullptr, schema, find_field_id, bytes, true);
 			return ja.get_slice(0);
 		}
 

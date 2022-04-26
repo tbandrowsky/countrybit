@@ -1232,153 +1232,153 @@ namespace countrybit
 			virtual char* place(typeinfo* ti)
 			{
 				char* t = nullptr;
-				database::row_range rr;
+				database::row_id_type rr;
 
 				if (ti == string_fields_ti)
 				{
-					auto& asf = put_string_fields.create(1, rr);
-					asf.name.field_id = database::null_row;
-					asf.name.type_id = database::jtype::type_string;
-					t = (char*) &asf;
+					auto* asf = put_string_fields.create(1, rr);
+					asf->name.field_id = database::null_row;
+					asf->name.type_id = database::jtype::type_string;
+					t = (char*)asf;
 				}
 				else if (ti == int8_fields_ti)
 				{
-					auto& ai8f = put_integer_fields.create(1, rr);
-					ai8f.name.field_id = database::null_row;
-					ai8f.name.type_id = database::jtype::type_int8;
-					t = (char*)&ai8f;
+					auto* ai8f = put_integer_fields.create(1, rr);
+					ai8f->name.field_id = database::null_row;
+					ai8f->name.type_id = database::jtype::type_int8;
+					t = (char*)ai8f;
 				}
 				else if (ti == int16_fields_ti)
 				{
-					auto& ai16f = put_integer_fields.create(1, rr);
-					ai16f.name.field_id = database::null_row;
-					ai16f.name.type_id = database::jtype::type_int16;
-					t = (char*)&ai16f;
+					auto* ai16f = put_integer_fields.create(1, rr);
+					ai16f->name.field_id = database::null_row;
+					ai16f->name.type_id = database::jtype::type_int16;
+					t = (char*)ai16f;
 				}
 				else if (ti == int32_fields_ti)
 				{
-					auto& ai32f = put_integer_fields.create(1, rr);
-					ai32f.name.field_id = database::null_row;
-					ai32f.name.type_id = database::jtype::type_int32;
-					t = (char*)&ai32f;
+					auto* ai32f = put_integer_fields.create(1, rr);
+					ai32f->name.field_id = database::null_row;
+					ai32f->name.type_id = database::jtype::type_int32;
+					t = (char*)ai32f;
 				}
 				else if (ti == int64_fields_ti)
 				{
-					auto& ai64f = put_integer_fields.create(1, rr);
-					ai64f.name.field_id = database::null_row;
-					ai64f.name.type_id = database::jtype::type_int64;
-					t = (char*)&ai64f;
+					auto* ai64f = put_integer_fields.create(1, rr);
+					ai64f->name.field_id = database::null_row;
+					ai64f->name.type_id = database::jtype::type_int64;
+					t = (char*)ai64f;
 				}
 				else if (ti == float_fields_ti)
 				{
-					auto& af32f = put_double_fields.create(1, rr);
-					af32f.name.field_id = database::null_row;
-					af32f.name.type_id = database::jtype::type_float32;
-					t = (char*)&af32f;
+					auto* af32f = put_double_fields.create(1, rr);
+					af32f->name.field_id = database::null_row;
+					af32f->name.type_id = database::jtype::type_float32;
+					t = (char*)af32f;
 				}
 				else if (ti == double_fields_ti)
 				{
-					auto& af64f = put_double_fields.create(1, rr);
-					af64f.name.field_id = database::null_row;
-					af64f.name.type_id = database::jtype::type_float64;
-					t = (char*)&af64f;
+					auto* af64f = put_double_fields.create(1, rr);
+					af64f->name.field_id = database::null_row;
+					af64f->name.type_id = database::jtype::type_float64;
+					t = (char*)af64f;
 				}
 				else if (ti == time_fields_ti)
 				{
-					auto& at64f = put_time_fields.create(1, rr);
-					at64f.name.field_id = database::null_row;
-					at64f.name.type_id = database::jtype::type_datetime;
-					t = (char*)&at64f;
+					auto* at64f = put_time_fields.create(1, rr);
+					at64f->name.field_id = database::null_row;
+					at64f->name.type_id = database::jtype::type_datetime;
+					t = (char*)at64f;
 				}
 				else if (ti == object_fields_ti)
 				{
-					auto& aof = put_object_fields.create(1, rr);
-					aof.name.field_id = database::null_row;
-					aof.name.type_id = database::jtype::type_object;
-					t = (char*)&aof;
+					auto* aof = put_object_fields.create(1, rr);
+					aof->name.field_id = database::null_row;
+					aof->name.type_id = database::jtype::type_object;
+					t = (char*)aof;
 				}
 				else if (ti == list_fields_ti)
 				{
-					auto& aof = put_list_fields.create(1, rr);
-					aof.name.field_id = database::null_row;
-					aof.name.type_id = database::jtype::type_list;
-					t = (char*)&aof;
+					auto* aof = put_list_fields.create(1, rr);
+					aof->name.field_id = database::null_row;
+					aof->name.type_id = database::jtype::type_list;
+					t = (char*)aof;
 				}
 				else if (ti == query_fields_ti)
 				{
-					auto& aqf = put_query_fields.create(1, rr);
-					aqf.name.field_id = database::null_row;
-					aqf.name.type_id = database::jtype::type_query;
-					t = (char*)&aqf;
+					auto* aqf = put_query_fields.create(1, rr);
+					aqf->name.field_id = database::null_row;
+					aqf->name.type_id = database::jtype::type_query;
+					t = (char*)aqf;
 				}
 				else if (ti == point_fields_ti)
 				{
-					auto& apf = put_point_fields.create(1, rr);
-					apf.name.field_id = database::null_row;
-					apf.name.type_id = database::jtype::type_point;
-					t = (char*)&apf;
+					auto* apf = put_point_fields.create(1, rr);
+					apf->name.field_id = database::null_row;
+					apf->name.type_id = database::jtype::type_point;
+					t = (char*)apf;
 				}
 				else if (ti == rectangle_fields_ti)
 				{
-					auto& arf = put_rectangle_fields.create(1, rr);
-					arf.name.field_id = database::null_row;
-					arf.name.type_id = database::jtype::type_rectangle;
-					t = (char*)&arf;
+					auto* arf = put_rectangle_fields.create(1, rr);
+					arf->name.field_id = database::null_row;
+					arf->name.type_id = database::jtype::type_rectangle;
+					t = (char*)arf;
 				}
 				else if (ti == color_fields_ti)
 				{
-					auto& acf = put_color_fields.create(1, rr);
-					acf.name.field_id = database::null_row;
-					acf.name.type_id = database::jtype::type_color;
-					t = (char*)&acf;
+					auto* acf = put_color_fields.create(1, rr);
+					acf->name.field_id = database::null_row;
+					acf->name.type_id = database::jtype::type_color;
+					t = (char*)acf;
 				}
 				else if (ti == image_fields_ti)
 				{
-					auto& aimf = put_image_fields.create(1, rr);
-					aimf.name.field_id = database::null_row;
-					aimf.name.type_id = database::jtype::type_image;
-					t = (char*)&aimf;
+					auto* aimf = put_image_fields.create(1, rr);
+					aimf->name.field_id = database::null_row;
+					aimf->name.type_id = database::jtype::type_image;
+					t = (char*)aimf;
 				}
 				else if (ti == wave_fields_ti)
 				{
-					auto& awf = put_wave_fields.create(1, rr);
-					awf.name.field_id = database::null_row;
-					awf.name.type_id = database::jtype::type_wave;
-					t = (char*)&awf;
+					auto* awf = put_wave_fields.create(1, rr);
+					awf->name.field_id = database::null_row;
+					awf->name.type_id = database::jtype::type_wave;
+					t = (char*)awf;
 				}
 				else if (ti == midi_fields_ti)
 				{
-					auto& amf = put_midi_fields.create(1, rr);
-					amf.name.field_id = database::null_row;
-					amf.name.type_id = database::jtype::type_midi;
-					t = (char*)&amf;
+					auto* amf = put_midi_fields.create(1, rr);
+					amf->name.field_id = database::null_row;
+					amf->name.type_id = database::jtype::type_midi;
+					t = (char*)amf;
 				}
 				else if (ti == put_classes_ti)
 				{
-					auto& amf = put_classes.create(1, rr);
-					amf.class_id = database::null_row;
-					t = (char*)&amf;
+					auto *amf = put_classes.create(1, rr);
+					amf->class_id = database::null_row;
+					t = (char*)amf;
 				}
 				else if (ti == sql_fields_ti)
 				{
-					auto& sqf = put_sql_fields.create(1, rr);
-					sqf.name.field_id = database::null_row;
-					sqf.name.type_id = database::jtype::type_sql;
-					t = (char*)&sqf;
+					auto* sqf = put_sql_fields.create(1, rr);
+					sqf->name.field_id = database::null_row;
+					sqf->name.type_id = database::jtype::type_sql;
+					t = (char*)sqf;
 				}
 				else if (ti == file_fields_ti)
 				{
-					auto& flf = put_file_fields.create(1, rr);
-					flf.name.field_id = database::null_row;
-					flf.name.type_id = database::jtype::type_file;
-					t = (char*)&flf;
+					auto* flf = put_file_fields.create(1, rr);
+					flf->name.field_id = database::null_row;
+					flf->name.type_id = database::jtype::type_file;
+					t = (char*)flf;
 				}
 				else if (ti == http_fields_ti)
 				{
-					auto& htf = put_http_fields.create(1, rr);
-					htf.name.field_id = database::null_row;
-					htf.name.type_id = database::jtype::type_http;
-					t = (char*)&htf;
+					auto* htf = put_http_fields.create(1, rr);
+					htf->name.field_id = database::null_row;
+					htf->name.type_id = database::jtype::type_http;
+					t = (char*)htf;
 				}
 				else if (ti == query_filter_ti)
 				{

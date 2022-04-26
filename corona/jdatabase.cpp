@@ -120,14 +120,14 @@ namespace countrybit
 				return response;
 			}
 
-			row_range rr;
-			jcollection_ref& jref = collections.create(1, rr);
-			jref = new_collection;
-			jref.data = new dynamic_box();
-			response.collection = schema.create_collection(&jref, nullptr);
+			row_id_type rr;
+			jcollection_ref* jref = collections.create(1, rr);
+			*jref = new_collection;
+			jref->data = new dynamic_box();
+			response.collection = schema.create_collection(jref, nullptr);
 
-			collections_by_id.insert_or_assign(jref.collection_id, rr.start);
-			collections_by_name.insert_or_assign(jref.collection_name, rr.start);
+			collections_by_id.insert_or_assign(jref->collection_id, rr);
+			collections_by_name.insert_or_assign(jref->collection_name, rr);
 
 			return response;
 		}

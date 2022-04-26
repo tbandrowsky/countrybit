@@ -874,7 +874,9 @@ namespace countrybit
 
 			row_id_type new_field_id()
 			{
-				return fields.create(1).start;
+				row_id_type field_id;
+				fields.create(1, field_id);
+				return field_id;
 			}
 
 			row_id_type put_field(
@@ -1435,15 +1437,15 @@ namespace countrybit
 
 				build_class_members(af, total_size_bytes, mfs);
 
-				auto pcr = classes.put_item(class_id, af.size(), af.data);
+				auto pcr = classes.put_item(class_id, nullptr, af.size(), af.data);
 
 				auto& p = pcr.item();
-				p.class_id = pcr.row_id();
+				p.class_id = class_id;
 				p.name = request.class_name;
 				p.description = request.class_description;
 				p.class_size_bytes = total_size_bytes;
 
-				return p.class_id;
+				return class_id;
 			}
 
 			bool class_has_field(row_id_type class_id, row_id_type field_id)

@@ -91,13 +91,8 @@ namespace countrybit
 
 				int ts = temp.size();
 				if (ts > 0) {
-					auto filter_stuff = filters.create_item(ts);
 					auto node = *pni;
-					filter_stuff.item() = node.item.member_id;
-					for (row_id_type i = 0; i < filter_stuff.size(); i++)
-					{
-						filter_stuff.detail(i) = temp[i];
-					}
+					auto filter_stuff = filters.create_item(&node.item.member_id, ts, temp.data);
 					pni->traversal_index = filter_stuff.row_id();
 					path_slice.set_filters(filter_stuff.pdetails(), ts, _parameters);
 				}
