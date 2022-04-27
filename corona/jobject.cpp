@@ -2436,8 +2436,10 @@ namespace countrybit
 					auto image_name = slice.get_string(0);
 					auto image_rect = slice.get_rectangle(1);
 
+#if _DETAIL
 					std::cout << image_name << std::endl;
 					std::cout << image_rect->w << " " << image_rect->h << " " << image_rect->x << " " << image_rect->y << std::endl;
+#endif
 
 					if (image_rect->w != 1000 || image_rect->h != 1000) {
 
