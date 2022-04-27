@@ -78,7 +78,7 @@ namespace countrybit
 			dimensions_type dim;
 			jclass the_class;
 
-			serialized_box* box;
+			serialized_box_container* box;
 			row_id_type location;
 
 			size_t get_offset(int field_idx, jtype _type = jtype::type_null);
@@ -103,7 +103,7 @@ namespace countrybit
 
 			jslice();
 			jslice(jslice* _parent, jschema* _schema, row_id_type _class_id, char* _bytes, dimensions_type _dim);
-			jslice(jslice* _parent, jschema* _schema, row_id_type _class_id, serialized_box *_box, row_id_type _location, dimensions_type _dim);
+			jslice(jslice* _parent, jschema* _schema, row_id_type _class_id, serialized_box_container *_box, row_id_type _location, dimensions_type _dim);
 
 			void construct();
 
@@ -309,16 +309,16 @@ namespace countrybit
 		class jlist
 		{
 			jschema* schema;
-			serialized_box* model_box;
 			row_id_type class_field_id;
 			jlist_state data;
 			jslice* item;
+			inline_box model_box;
 
 		public:
 
 			jlist();
 			jlist(jslice* _parent, jschema* _schema, row_id_type _class_field_id, char* _bytes, bool _init = false);
-			jlist(dynamic_box& _dest, jlist& _src);
+			jlist(serialized_box_container& _dest, jlist& _src);
 
 			uint32_t capacity();
 			uint32_t size();
@@ -524,10 +524,10 @@ namespace countrybit
 			actor_command_response(int _size)
 			{
 				data.init(_size);
-				create_options_id = actor_create_option_collection::create(data.get_box());
-				update_options_id = actor_update_option_collection::create(data.get_box());
-				select_options_id = actor_select_option_collection::create(data.get_box());
-				view_objects_id = actor_view_collection::create(data.get_box());
+				create_options_id = actor_create_option_collection::create(&data);
+				update_options_id = actor_update_option_collection::create(&data);
+				select_options_id = actor_select_option_collection::create(&data);
+				view_objects_id = actor_view_collection::create(&data);
 			}
 
 			actor_command_response(actor_command_response&& _src)
@@ -775,7 +775,7 @@ namespace countrybit
 				return empty;
 			}
 
-			static row_id_type reserve_schema(serialized_box* _b, int _num_classes, int _num_models, bool _use_standard_fields)
+			static row_id_type reserve_schema(serialized_box_container* _b, int _num_classes, int _num_models, bool _use_standard_fields)
 			{
 				int _num_class_fields = _num_classes * 10 + ( _use_standard_fields ? 200 : 0 );
 				int _num_queries = _num_classes * 2;
@@ -796,21 +796,22 @@ namespace countrybit
 				schema_map.models_id = null_row;
 
 				row_id_type rit = _b->pack(schema_map);
+				schema_map.fields_table_id = field_store_type::reserve_table(_b, _num_class_fields);
+				schema_map.classes_table_id = class_store_type::reserve_table(_b, _num_classes, _num_class_fields);
+				schema_map.classes_by_name_id = class_index_type::reserve_sorted_index(_b, _num_classes);
+				schema_map.fields_by_name_id = field_index_type::reserve_sorted_index(_b, _num_class_fields);
+				schema_map.models_by_name_id = model_index_type::reserve_sorted_index(_b, _num_models);
+				schema_map.query_properties_id = query_store_type::reserve_table(_b, _num_queries);
+				schema_map.sql_properties_id = sql_store_type::reserve_table(_b, _num_sql_remotes);
+				schema_map.file_properties_id = file_store_type::reserve_table(_b, _num_file_remotes);
+				schema_map.http_properties_id = http_store_type::reserve_table(_b, _num_http_remotes);
+				schema_map.models_id = model_store_type::reserve_table(_b, _num_models);
 				pschema_map = _b->unpack<jschema_map>(rit);
-				pschema_map->fields_table_id = field_store_type::reserve_table(_b, _num_class_fields);
-				pschema_map->classes_table_id = class_store_type::reserve_table(_b, _num_classes, _num_class_fields);
-				pschema_map->classes_by_name_id = class_index_type::reserve_sorted_index(_b, _num_classes);
-				pschema_map->fields_by_name_id = field_index_type::reserve_sorted_index(_b, _num_class_fields);
-				pschema_map->models_by_name_id = model_index_type::reserve_sorted_index(_b, _num_models);
-				pschema_map->query_properties_id = query_store_type::reserve_table(_b, _num_queries);
-				pschema_map->sql_properties_id = sql_store_type::reserve_table(_b, _num_sql_remotes);
-				pschema_map->file_properties_id = file_store_type::reserve_table(_b, _num_file_remotes);
-				pschema_map->http_properties_id = http_store_type::reserve_table(_b, _num_http_remotes);
-				pschema_map->models_id = model_store_type::reserve_table(_b, _num_models);
+				*pschema_map = schema_map;
 				return rit;
 			} 
 
-			static jschema get_schema(serialized_box* _b, row_id_type _row)
+			static jschema get_schema(serialized_box_container* _b, row_id_type _row)
 			{
 				jschema schema;
 				jschema_map* pschema_map;
@@ -864,12 +865,9 @@ namespace countrybit
 				return total_size;
 			}
 
-			static jschema create_schema(serialized_box* _b, int _num_classes, int _num_models, bool _use_standard_fields, row_id_type& _location)
+			static jschema create_schema(serialized_box_container* _b, int _num_classes, int _num_models, bool _use_standard_fields, row_id_type& _location)
 			{
 				auto total_size = jschema::get_box_size(_num_classes, _num_models, _use_standard_fields);
-				auto temp = _b->expand_check(total_size);
-				if (temp) _b = temp;
-
 				_location = reserve_schema(_b, _num_classes, _num_models, _use_standard_fields);
 				jschema schema = get_schema(_b, _location);
 				schema.add_standard_fields();
@@ -1456,6 +1454,15 @@ namespace countrybit
 
 				build_class_members(af, total_size_bytes, mfs);
 
+#if _DEBUG && false
+				std::cout << std::endl << request.class_name << " layout" << std::endl;
+				for (auto f : af)
+				{
+					auto& fld = fields[f.item.field_id];
+					std::cout << " " << f.item.field_id << ") " << fld.name << " " << f.item.offset << " " << fld.size_bytes << std::endl;
+				}
+#endif
+
 				auto pcr = classes.put_item(class_id, nullptr, af.size(), af.data);
 
 				auto& p = pcr.item();
@@ -1640,13 +1647,10 @@ namespace countrybit
 			bool reserve_collection(jcollection_ref *ref, row_id_type* _class_ids)
 			{
 				uint64_t total_size = get_collection_size(ref, _class_ids);
-
-				ref->data->expand_check(total_size);
-
 				uint64_t max_size = get_max_object_size(_class_ids);
 
 				ref->actors_id = actor_collection::reserve_table(ref->data, ref->max_actors);
-				ref->objects_id =  object_collection::reserve_table(ref->data, ref->max_objects, max_size * ref->max_objects);
+				ref->objects_id =  object_collection::reserve_table(ref->data, ref->max_objects, max_size * ref->max_objects, true);
 
 				return ref->actors_id != null_row && ref->objects_id != null_row;
 			}

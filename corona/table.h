@@ -129,22 +129,27 @@ namespace countrybit
 			struct table_header
 			{
 				row_id_type
+					offset;
+				row_id_type
 					max_rows,
 					last_row;
+				bool dynamic;
 				T   rows[1];
 			};
 
 			table_header* hdr;
+			serialized_box_container* box;
 
 		public:
 
 			table(  ) : 
-				hdr(nullptr)
+				hdr(nullptr),
+				box(nullptr)
 			{
 				
 			}
 
-			table(const table& src) : hdr(src.hdr)
+			table(const table& src) : hdr(src.hdr), box(src.box)
 			{
 
 			}
@@ -154,9 +159,7 @@ namespace countrybit
 				return sizeof(table_header) + sizeof(T) * (_rows + 8);
 			}
 
-			template <typename B>
-			requires (box<B, T>&& box<B, table_header>)
-			static row_id_type reserve_table(B* _b, int _max_rows)
+			static row_id_type reserve_table(serialized_box_container* _b, int _max_rows, bool _dynamic = false)
 			{
 				table t;
 
@@ -171,7 +174,8 @@ namespace countrybit
 					return hdr_offset;
 
 				t.hdr = _b->unpack<table_header>(hdr_offset);
-
+				t.hdr->offset = hdr_offset;
+				t.hdr->dynamic = _dynamic;
 				t.hdr->max_rows = _max_rows;
 				t.hdr->last_row = 0;
 
@@ -183,35 +187,49 @@ namespace countrybit
 				return hdr_offset;
 			}
 
-			template <typename B>
-			requires (box<B, T>&& box<B, table_header>)
-			static table get_table(B* _b, row_id_type offset)
+			static table get_table(serialized_box_container* _b, row_id_type offset)
 			{
 				table t;
 
 				t.hdr = _b->unpack<table_header>(offset);
+				t.box = _b;
 
 				return t;
 			}
 
-			template <typename B>
-			requires (box<B, T>&& box<B, table_header>)
-			static table create_table(B* _b, int _max_rows, row_id_type& offset)
+			static table create_table(serialized_box_container* _b, int _max_rows, row_id_type& offset, bool _dynamic = false)
 			{
 				table t;
-				offset = reserve_table(_b, _max_rows);
+				offset = reserve_table(_b, _max_rows, _dynamic);
 				t.hdr = _b->unpack<table_header>(offset);
+				t.box = _b;
 				return t;
+			}
+
+			bool storage_check(uint32_t new_rows)
+			{
+				row_id_type new_end_row = hdr->last_row + new_rows;
+				if (new_end_row < hdr->max_rows)
+				{
+					return true;
+				}
+				else if (hdr->dynamic)
+				{
+					row_id_type demand_bytes = new_rows * sizeof(T);
+					if (box->check(demand_bytes)) {
+						hdr->max_rows += new_rows;
+						return true;
+					}
+				}
+				return false;
 			}
 
 			row_id_type create(uint32_t count, T* items)
 			{
 				row_id_type new_row;
-				auto x = hdr->last_row + count;
-				if (x > hdr->max_rows) 
-				{
+				if (!storage_check(count))
 					return null_row;
-				}
+				auto x = hdr->last_row + count;
 				new_row = hdr->last_row;
 				hdr->last_row = x;
 				if (items) {
@@ -231,12 +249,11 @@ namespace countrybit
 
 			T* create(uint32_t count, row_id_type& _new_row)
 			{
-				auto x = hdr->last_row + count;
-				if (x > hdr->max_rows)
-				{
+				if (!storage_check(count)) {
 					_new_row = null_row;
 					return nullptr;
 				}
+				auto x = hdr->last_row + count;
 				_new_row = hdr->last_row;
 				hdr->last_row = x;
 				return &hdr->rows[_new_row];
@@ -244,20 +261,13 @@ namespace countrybit
 
 			T* insert(row_id_type index, uint32_t count)
 			{
-				if (!check(index) || count < 0 || size()==0 || ((hdr->last_row + count) > hdr->max_rows)) return nullptr;				
+				if (!storage_check(count))
+					return nullptr;
+
+				if (!check(index) || count < 0 || size()==0) return nullptr;
 
 				row_id_type dest_idx = hdr->last_row + count;
 				row_id_type source_idx = hdr->last_row;
-
-				/*
-				* rows = 5
-				dest	source
-				4		3
-				3		2
-				2		1
-				1		0
-				
-				*/
 
 				while (source_idx >= index) 
 				{
@@ -310,12 +320,11 @@ namespace countrybit
 			// src here should be const
 			T& append(T& src, row_range& rr)
 			{
-				auto x = hdr->last_row + 1;
-				if (x > hdr->max_rows) {
+				if (!storage_check(1)) {
 					rr = { null_row, null_row, null_row };
 					return hdr->rows[0];
 				}
-
+				auto x = hdr->last_row + 1;
 				rr.start = hdr->last_row;
 				rr.stop = x;
 				rr.reserved_stop = x;
@@ -570,7 +579,7 @@ namespace countrybit
 
 			template <typename B>
 				requires (box<B, P>&& box<B, item_details_table<P, C>::item_type>)
-			static row_id_type reserve_table(B* b, int item_rows, int detail_rows)
+			static row_id_type reserve_table(B* b, int item_rows, int detail_rows, bool dynamic = false)
 			{
 				item_detail_table_header hdr;
 				hdr.item_location = null_row;
@@ -578,7 +587,7 @@ namespace countrybit
 				row_id_type r = b->pack(hdr);
 				auto* phdr = b->unpack<item_detail_table_header>(r);
 				phdr->item_location = table< item_details_table<P, C>::item_type >::reserve_table(b, item_rows);
-				phdr->detail_location = table< C >::reserve_table(b, detail_rows);
+				phdr->detail_location = table< C >::reserve_table(b, detail_rows, dynamic);
 				return r;
 			}
 
@@ -596,10 +605,10 @@ namespace countrybit
 
 			template <typename B>
 				requires (box<B, P>&& box<B, item_details_table<P, C>::item_type>)
-			static item_details_table create_table(B* b, int item_rows, int detail_rows, row_id_type& row)
+			static item_details_table create_table(B* b, int item_rows, int detail_rows, row_id_type& row, bool dynamic = false)
 			{
 				item_details_table pct;
-				row = reserve_table(b, item_rows, detail_rows);
+				row = reserve_table(b, item_rows, detail_rows, dynamic);
 				pct = get_table(b, row);
 				return pct;
 			}

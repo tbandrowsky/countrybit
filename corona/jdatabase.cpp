@@ -25,7 +25,7 @@ namespace countrybit
 				co_await dbfile.read(0, database_box.data(), sz);
 				if (dbfile.success()) {
 					map = database_box.unpack<jdatabase_control_map>(0);
-					schema = jschema::get_schema(database_box.get_box(), map->schema_location);
+					schema = jschema::get_schema(&database_box, map->schema_location);
 					collections = collection_table_type::get_table(&database_box, map->collections_location);
 					collections_by_id = collections_by_id_type::get_sorted_index(&database_box, map->collections_by_id_location);
 					collections_by_name = collections_by_name_type::get_sorted_index(&database_box, map->collections_by_name_location);
@@ -57,7 +57,7 @@ namespace countrybit
 			map->filename = dbpath;
 			map->database_folder = dbfolder;
 
-			schema = jschema::create_schema(database_box.get_box(), _create.num_classes, _create.num_models, true, map->schema_location);
+			schema = jschema::create_schema(&database_box, _create.num_classes, _create.num_models, true, map->schema_location);
 			collections = collection_table_type::create_table(&database_box, _create.num_collections, map->collections_location);
 			collections_by_id = collections_by_id_type::create_sorted_index(&database_box, _create.num_collections, map->collections_by_id_location);
 			collections_by_name = collections_by_name_type::create_sorted_index(&database_box, _create.num_collections, map->collections_by_name_location);

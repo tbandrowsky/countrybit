@@ -30,7 +30,7 @@ namespace countrybit
 			};
 
 			row_id_type		header_loc;
-			serialized_box* box;
+			serialized_box_container* box;
 
 			list_box_data* get_hdr()
 			{
@@ -55,9 +55,6 @@ namespace countrybit
 
 				temp.data = _src;
 				temp.next = null_row;
-
-				auto tbox = box->expand_check(sizeof(list_link));
-				if (tbox) box = tbox;
 
 				row_id_type loc = box->pack(temp);
 
@@ -98,17 +95,16 @@ namespace countrybit
 			{
 			}
 
-			static row_id_type create(serialized_box* b)
+			static row_id_type create(serialized_box_container* b)
 			{
 				list_box temp;
-				b->expand_check(sizeof(list_box_data));
 				auto location = b->pack<char>(0, sizeof(list_box_data));
 				temp.header_loc = location;
 				temp.box = b;
 				return location;
 			}
 
-			static list_box get(serialized_box* b, int location)
+			static list_box get(serialized_box_container* b, int location)
 			{
 				list_box temp;
 				temp.box = b;

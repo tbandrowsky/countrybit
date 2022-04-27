@@ -59,13 +59,11 @@ namespace countrybit
 		{
 			auto myclass = _schema->get_class(_class_id);
 			auto bytes_to_allocate = myclass.item().class_size_bytes;
-
-			data.expand_check(bytes_to_allocate);
 			row_id_type location = data.reserve(bytes_to_allocate);
 
 			dimensions_type d = { 0,0,0 };
 
-			jslice ja(nullptr, _schema, _class_id, data.get_box(), location, d);
+			jslice ja(nullptr, _schema, _class_id, &data, location, d);
 			ja.construct();
 			return ja;
 		}
@@ -410,7 +408,7 @@ namespace countrybit
 			the_class = schema->get_class(_class_id);
 		}
 
-		jslice::jslice(jslice* _parent, jschema* _schema, row_id_type _class_id, serialized_box *_box, row_id_type _location, dimensions_type _dim) : parent(_parent), schema(_schema), class_id(_class_id), bytes(nullptr), dim(_dim), box(_box), location(_location)
+		jslice::jslice(jslice* _parent, jschema* _schema, row_id_type _class_id, serialized_box_container *_box, row_id_type _location, dimensions_type _dim) : parent(_parent), schema(_schema), class_id(_class_id), bytes(nullptr), dim(_dim), box(_box), location(_location)
 		{
 			the_class = schema->get_class(_class_id);
 		}
@@ -1734,39 +1732,39 @@ namespace countrybit
 			auto box_size = field_def.size_bytes;
 
 			data.instance = nullptr;
+			model_box = inline_box(_bytes, box_size);
 
 			if (_init)
 			{
-				model_box->init(box_size);
-				data.instance = model_box->allocate<jlist_instance>(1);
-				data.instance->selection_offset = array_box<row_id_type>::create(model_box, field_def.object_properties.dim.x);
-				data.instance->sort_offset = array_box<row_id_type>::create(model_box, field_def.object_properties.dim.x);
-				data.instance->slice_offset = model_box->reserve(box_size);
+				data.instance = model_box.allocate<jlist_instance>(1);
+				data.instance->selection_offset = array_box<row_id_type>::create(&model_box, field_def.object_properties.dim.x);
+				data.instance->sort_offset = array_box<row_id_type>::create(&model_box, field_def.object_properties.dim.x);
+				data.instance->slice_offset = model_box.reserve(0);
 				data.instance->allocated = 0;
 			}
 			else
 			{
-				data.instance = model_box->unpack<jlist_instance>(0);
+				data.instance = model_box.unpack<jlist_instance>(0);
 			}
 
-			data.list_bytes = model_box->unpack<char>(data.instance->slice_offset);
-			data.selections = array_box<row_id_type>::get(model_box, data.instance->selection_offset);
-			data.sort_order = array_box<row_id_type>::get(model_box, data.instance->sort_offset);
+			data.list_bytes = model_box.unpack<char>(data.instance->slice_offset);
+			data.selections = array_box<row_id_type>::get(&model_box, data.instance->selection_offset);
+			data.sort_order = array_box<row_id_type>::get(&model_box, data.instance->sort_offset);
 		}
 
-		jlist::jlist(dynamic_box& _dest, jlist& _src)
+		jlist::jlist(serialized_box_container& _dest, jlist& _src)
 			: schema(_src.schema), class_field_id(_src.class_field_id)
 		{
 			auto& field_def = schema->get_field(_src.class_field_id);
 			auto box_size = field_def.size_bytes;
 
-			model_box = _dest.get_box();
-			_dest.init(box_size);
+			char* t = _dest.allocate<char>(box_size);
+			model_box = inline_box(t, box_size);
 			std::copy((char*)_src.data.instance, (char*)_src.data.instance + box_size, (char*)data.instance);
-			data.instance = model_box->unpack<jlist_instance>(0);
-			data.list_bytes = model_box->unpack<char>(data.instance->slice_offset);
-			data.selections = array_box<row_id_type>::get(model_box, data.instance->selection_offset);
-			data.sort_order = array_box<row_id_type>::get(model_box, data.instance->sort_offset);
+			data.instance = model_box.unpack<jlist_instance>(0);
+			data.list_bytes = model_box.unpack<char>(data.instance->slice_offset);
+			data.selections = array_box<row_id_type>::get(&model_box, data.instance->selection_offset);
+			data.sort_order = array_box<row_id_type>::get(&model_box, data.instance->sort_offset);
 			item = _src.item;
 		}
 
@@ -1915,7 +1913,7 @@ namespace countrybit
 
 		char* jlist::get_bytes()
 		{
-			return (char *)model_box;
+			return model_box.data();
 		}
 
 		uint64_t jlist::get_size_bytes()
@@ -2044,7 +2042,7 @@ namespace countrybit
 				jschema schema;
 				row_id_type schema_id;
 
-				schema = jschema::create_schema(box.get_box(), 20, 5, true, schema_id);
+				schema = jschema::create_schema(&box, 20, 5, true, schema_id);
 
 				row_id_type quantity_field_id;
 				row_id_type last_name_field_id;
@@ -2160,7 +2158,7 @@ namespace countrybit
 				jschema schema;
 				row_id_type schema_id;
 
-				schema = jschema::create_schema(box.get_box(), 20, 15, true, schema_id);
+				schema = jschema::create_schema(&box, 20, 15, true, schema_id);
 
 				row_id_type quantity_field_id;
 				row_id_type last_name_field_id;
@@ -2339,7 +2337,7 @@ namespace countrybit
 				jschema schema;
 				row_id_type schema_id;
 
-				schema = jschema::create_schema(box.get_box(), 50, 2, true, schema_id);
+				schema = jschema::create_schema(&box, 50, 5, true, schema_id);
 
 				countrybit::database::put_class_request sprite_frame_request;
 
@@ -2407,24 +2405,39 @@ namespace countrybit
 					image_rect->w = 1000;
 					image_rect->h = 1000;
 
+#if _DETAIL
+					std::cout << "before:" << image_name << std::endl;
+					std::cout << image_rect->w << " " << image_rect->h << " " << image_rect->x << " " << image_rect->y << std::endl;
+#endif
+
 					for (auto frame : frame_array)
 					{
 						auto dim = frame.get_dim();
 						auto frame_name = frame.get_string(0);
-						auto frame_rect = slice.get_rectangle(1);
+						auto frame_rect = frame.get_rectangle(1);
 						frame_name = std::format("{} #{}", "frame", dim.x);
 						frame_rect->x = dim.x * 100.0;
 						frame_rect->y = dim.y * 100.0;
 						frame_rect->w = 100.0;
 						frame_rect->h = 100.0;
 					}
+
+#if _DETAIL
+					std::cout << "after:" << image_name << std::endl;
+					std::cout << image_rect->w << " " << image_rect->h << " " << image_rect->x << " " << image_rect->y << std::endl;
+#endif
+
 				}
 
 				int scount = 0;
 
 				for (auto slice : sprites)
 				{
+					auto image_name = slice.get_string(0);
 					auto image_rect = slice.get_rectangle(1);
+
+					std::cout << image_name << std::endl;
+					std::cout << image_rect->w << " " << image_rect->h << " " << image_rect->x << " " << image_rect->y << std::endl;
 
 					if (image_rect->w != 1000 || image_rect->h != 1000) {
 
@@ -2432,13 +2445,13 @@ namespace countrybit
 						return false;
 					}
 
-					auto frames = slice.get_object(3);
+					auto frames = slice.get_object(2);
 
 					int fcount = 0;
 					for (auto frame : frames)
 					{
 						auto image_rect = slice.get_rectangle(1);
-						if (image_rect->w != 100 || image_rect->h != 100)
+						if (image_rect->w != 1000 || image_rect->h != 1000)
 						{
 							std::cout << __LINE__ << ":array failed" << std::endl;
 							return false;

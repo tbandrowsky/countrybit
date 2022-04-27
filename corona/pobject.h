@@ -182,37 +182,6 @@ namespace countrybit
 
 		};
 
-		class pstore
-		{
-			database::dynamic_box data;
-
-		public:
-
-			pstore(int _size)
-			{
-				data.init(_size);
-			}
-
-			template <typename T> T* allocate()
-			{
-				char* t = data.place<T>();
-				T* d = new (t) T();
-				return d;
-			}
-
-			const char* allocate(const char* src)
-			{
-				char* t = data.copy(src, 0);
-				return t;
-			}
-
-			const char* allocate(const char* src, int start, int stop)
-			{
-				char* t = data.copy(src, start, stop, true);
-				return t;
-			}
-
-		};
 
 	}
 }

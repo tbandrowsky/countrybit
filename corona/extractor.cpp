@@ -192,8 +192,7 @@ namespace countrybit
 			auto matches = match(index, 2, groups);
 			if (!matches.is_empty())
 			{
-				int dest = data.pack_extracted(view.data(), index, matches.end_index, true);
-				char* c = data.unpack<char>(dest);
+				char *c = data.copy(view.data(), index, matches.end_index, true);
 				result.success = true;
 				result.value = c;
 				index = matches.end_index;

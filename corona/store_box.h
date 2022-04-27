@@ -32,19 +32,10 @@ namespace countrybit
 //			pd = c.unpack(l);
 		};
 
-		class serialized_box;
-
-		class expandable_box
-		{
-		public:
-			virtual serialized_box *expand_check(int _bytes) { return nullptr; }
-		};
-
 		class serialized_box 
 		{
 			int _size;
 			int _top;
-			expandable_box* owner;
 			char _data[1];
 
 		public:
@@ -79,11 +70,10 @@ namespace countrybit
 				return *this;
 			}
 
-			void init(int _length, expandable_box *_owner = nullptr)
+			void init(int _length)
 			{
 				_top = 0;
 				_size = _length;
-				owner = _owner;
 			}
 
 			void adjust(int _length)
@@ -104,12 +94,6 @@ namespace countrybit
 			char* data()
 			{
 				return &_data[0];
-			}
-
-			serialized_box *expand_check(int _extra_bytes)
-			{
-				if (!owner) return nullptr;
-				return owner->expand_check(_extra_bytes);
 			}
 
 			template <typename T>
@@ -156,7 +140,7 @@ namespace countrybit
 
 			template <typename T> 
 			requires (std::is_standard_layout<T>::value)
-			int pack_extracted(const T* base, int start, int stop, bool terminate = true)
+			int pack_slice(const T* base, int start, int stop, bool terminate = true)
 			{
 				int length = stop - start;
 				size_t sz = sizeof(T) * length;
@@ -167,12 +151,14 @@ namespace countrybit
 				int i = start;
 				while (i < stop)
 				{
-					T* item = unpack<T>(_top);
-					*item = base[i];
+					T* temp = unpack<T>(_top);
+					*temp = base[i];
 					i++;
 					_top += sizeof(T);
 				}
-				if (terminate) {
+
+				if (terminate) 
+				{
 					T temp = {};
 					pack(temp);
 				}
@@ -182,7 +168,7 @@ namespace countrybit
 
 			template <typename T>
 				requires (std::is_standard_layout<T>::value)
-			int pack_extracted(const T* base, int start, bool terminate = true)
+			int pack_terminated(const T* base, int start, bool terminate = true)
 			{
 				T defaulto = {};
 				size_t placement = _top;
@@ -190,7 +176,7 @@ namespace countrybit
 				while (base[i] != defaulto)
 				{
 					T* item = unpack<T>(_top);
-					*item = base[i];
+					*item = {}; // base[i];
 					i++;
 					_top += sizeof(T);
 					if (_top >= _size) {
@@ -209,16 +195,16 @@ namespace countrybit
 			requires (std::is_standard_layout<T>::value)
 			T* copy(const T* base, int start, bool terminate = true)
 			{
-				int l = pack_extracted(base, start, terminate);
-				return unpack<char>(l);
+				int l = pack_terminated(base, start, terminate);
+				return unpack<T>(l);
 			}
 
 			template <typename T>
 				requires (std::is_standard_layout<T>::value)
 			T* copy(const T* base, int start, int stop, bool terminate = true)
 			{
-				int l = pack_extracted(base, start, stop, terminate);
-				return unpack<char>(l);
+				int l = pack_slice(base, start, stop, terminate);
+				return unpack<T>(l);
 			}
 
 			template <typename T>
@@ -299,9 +285,128 @@ namespace countrybit
 
 		};
 
+		class serialized_box_container
+		{
+		public:
+			virtual serialized_box* get_box() { return nullptr; }
+			virtual serialized_box* check(int _bytes) { return nullptr; }
+
+			size_t top()
+			{
+				return get_box()->top();
+			}
+
+			size_t free()
+			{
+				return get_box()->size();
+			}
+
+			size_t size()
+			{
+				return get_box()->size();
+			}
+
+			char* data()
+			{
+				return get_box()->data();
+			}
+
+			char* move_ptr(serialized_box* _src, char* _srcp)
+			{
+				int offset = _srcp - _src->data();
+				char* t = data() + offset;
+				return t;
+			}
+
+			template <typename T>
+				requires (std::is_standard_layout<T>::value)
+			T* unpack(int offset)
+			{
+				return get_box()->unpack<T>(offset);
+			}
+
+			template <typename T>
+				requires (std::is_standard_layout<T>::value)
+			int pack(T& src)
+			{
+				check(sizeof(T));
+				return get_box()->pack<T>(src);
+			}
+
+			template <typename T>
+				requires (std::is_standard_layout<T>::value)
+			int pack(T& src, int length)
+			{
+				check(sizeof(T) * length);
+				return get_box()->pack<T>(src, length);
+			}
+
+			template <typename T>
+				requires (std::is_standard_layout<T>::value)
+			int pack(const T* src, int length)
+			{
+				check(sizeof(T) * length);
+				return get_box()->pack<T>(src, length);
+			}
+
+			template <typename T>
+				requires (std::is_standard_layout<T>::value)
+			int pack_terminated(const T* src, int start, bool terminate = true)
+			{
+				return get_box()->pack_terminated<T>(src, start, terminate);
+			}
+
+			template <typename T>
+				requires (std::is_standard_layout<T>::value)
+			int pack_slice(const T* src, int start, int stop, bool terminate = true)
+			{
+				check(sizeof(T) * (stop - start + 1));
+				return get_box()->pack_slice<T>(src, start, stop, terminate);
+			}
+
+			template <typename T>
+				requires (std::is_standard_layout<T>::value)
+			T *copy(const T* src, int start, int stop, bool terminate = true)
+			{
+				row_id_type t = pack_slice<T>(src, start, stop, terminate);
+				return unpack<T>(t);
+			}
+
+			template <typename T>
+				requires (std::is_standard_layout<T>::value)
+			T* copy(const T* base, int start, bool terminate = true)
+			{
+				return get_box()->copy(base, start, terminate);
+			}
+
+			template <typename T>
+				requires (std::is_standard_layout<T>::value)
+			T* allocate(int count)
+			{
+				check(sizeof(T) * count);
+				return get_box()->allocate<T>(count);
+			}
+
+			template <typename T>
+			char* place()
+			{
+				check(sizeof(T));
+				return get_box()->place<T>();
+			}
+
+			int reserve(int length)
+			{
+				if (!length)
+					length = get_box()->free();
+				check(length);
+				return get_box()->reserve(length);
+			}
+
+		};
+
 
 		template <size_t bytes> 
-		class static_box 
+		class static_box  : public serialized_box_container
 		{
 			static const int length = bytes;
 			char stuff[length];
@@ -313,10 +418,8 @@ namespace countrybit
 				init();
 			}
 
-			inline serialized_box* get_box()
-			{
-				return (serialized_box*)&stuff;
-			}
+			virtual serialized_box* get_box() { return (serialized_box*)&stuff; }
+			virtual serialized_box* check(int _bytes) { return _bytes < get_box()->free() ? get_box() : nullptr; }
 
 			template <typename bx>
 			requires (box_data<bx>)
@@ -344,90 +447,43 @@ namespace countrybit
 				get_box()->init(length - sizeof(serialized_box));
 			}
 
-			size_t top()
-			{
-				return get_box()->top();
-			}
-
-			size_t size()
-			{
-				return get_box()->size();
-			}
-
-			char* data()
-			{
-				return get_box()->data();
-			}
-
-			template <typename T>
-			requires (std::is_standard_layout<T>::value)
-				T* unpack(int offset)
-			{
-				return get_box()->unpack<T>(offset);
-			}
-
-			template <typename T>
-			requires (std::is_standard_layout<T>::value)
-				int pack(T& src)
-			{
-				return get_box()->pack<T>(src);
-			}
-
-			template <typename T>
-			requires (std::is_standard_layout<T>::value)
-				int pack(T& src, int length)
-			{
-				return get_box()->pack<T>(src, length);
-			}
-
-			template <typename T>
-			requires (std::is_standard_layout<T>::value)
-				int pack(T* src, int length)
-			{
-				return get_box()->pack<T>(src, length);
-			}
-
-			template <typename T>
-			requires (std::is_standard_layout<T>::value)
-			int pack_extracted(T* src, int start, int stop, bool terminate = true)
-			{
-				return get_box()->pack_extracted<T>(src, start, stop, terminate);
-			}
-
-			template <typename T>
-				requires (std::is_standard_layout<T>::value)
-			T* copy(const T* base, int start, bool terminate = true)
-			{
-				return get_box()->copy(base, start, terminate);
-			}
-
-			template <typename T>
-				requires (std::is_standard_layout<T>::value)
-			T* copy(const T* base, int start, int stop, bool terminate = true)
-			{
-				return get_box()->copy(base, start, stop, terminate);
-			}
-
-			template <typename T>
-			requires (std::is_standard_layout<T>::value)
-			T* allocate(int count)
-			{
-				return get_box()->allocate<T>(count);
-			}
-
-			template <typename T>
-			char* place()
-			{
-				return get_box()->place<T>();
-			}
-
-			int reserve(int length)
-			{
-				return get_box()->reserve(length);
-			}
 		};
 
-		class dynamic_box : public expandable_box
+		class inline_box : public serialized_box_container
+		{
+			char* stuff;
+			int64_t length;
+
+		public:
+
+			inline_box() : stuff(nullptr), length(0)
+			{
+				
+			}
+
+			inline_box(char* _stuff, int _length) : stuff(_stuff), length(_length)
+			{
+				get_box()->init(length - sizeof(serialized_box));
+			}
+
+			inline_box(const inline_box& _src) : stuff(_src.stuff), length(_src.length)
+			{
+
+			}
+
+			inline_box& operator =(const inline_box& _src) 
+			{
+				stuff = _src.stuff;
+				length = _src.length;
+				return *this;
+			}
+
+			virtual serialized_box* get_box() { return (serialized_box*)stuff; }
+			virtual serialized_box* check(int _bytes) { return _bytes < get_box()->free() ? get_box() : nullptr; }
+
+		};
+
+		class dynamic_box : public serialized_box_container
 		{
 			std::vector<char> stuff;
 
@@ -437,21 +493,39 @@ namespace countrybit
 			{
 			}
 
-			inline serialized_box* get_box()
+			virtual serialized_box* get_box() 
 			{
-				return (serialized_box*)stuff.data();
+				return (serialized_box*)stuff.data(); 
+			}
+
+			virtual serialized_box* check(int _bytes) 
+			{ 				
+				serialized_box* b, temp;
+				b = get_box();
+				if (_bytes > b->free())
+				{
+					temp = *b;
+					int d = b->size() * 2;
+					while ((d - b->top()) < _bytes)
+						d *= 2;
+					stuff.resize(d + sizeof(serialized_box));
+					b = get_box();
+					*b = temp;
+					b->adjust(d);
+				}
+				return b;
 			}
 
 			void init(int _length, serialized_box *_src = nullptr)
 			{
 				stuff.resize(_length + sizeof(serialized_box));
-				get_box()->init(_length, this);
+				get_box()->init(_length);
 				if (_src) {
 					std::copy(_src->data(), _src->data() + _length, get_box()->data());
 				}
 			}
 
-			void copy(serialized_box* _src = nullptr)
+			void copy_box(serialized_box* _src = nullptr)
 			{
 				stuff.resize(_src->size());
 				get_box()->init(_src->size());
@@ -477,125 +551,6 @@ namespace countrybit
 				return *this;
 			}
 
-			size_t top()
-			{
-				return get_box()->top();
-			}
-
-			size_t size()
-			{
-				return get_box()->size();
-			}
-
-			size_t free()
-			{
-				return get_box()->size();
-			}
-
-			char* data()
-			{
-				return get_box()->data();
-			}
-
-			char* move_ptr(serialized_box* _src, char* _srcp)
-			{
-				int offset = _srcp - _src->data();
-				char* t = data() + offset;
-				return t;
-			}
-
-			template <typename T>
-			requires (std::is_standard_layout<T>::value)
-				T* unpack(int offset)
-			{
-				return get_box()->unpack<T>(offset);
-			}
-
-			template <typename T>
-			requires (std::is_standard_layout<T>::value)
-				int pack(T& src)
-			{
-				return get_box()->pack<T>(src);
-			}
-
-			template <typename T>
-			requires (std::is_standard_layout<T>::value)
-				int pack(T& src, int length)
-			{
-				return get_box()->pack<T>(src, length);
-			}
-
-			template <typename T>
-			requires (std::is_standard_layout<T>::value)
-			int pack_extracted(T* src, int start, int stop, bool terminate = true)
-			{
-				return get_box()->pack_extracted(src, start, stop, terminate);
-			}
-
-			template <typename T>
-				requires (std::is_standard_layout<T>::value)
-			T* copy(const T* base, int start, bool terminate = true)
-			{
-				if (!base) return nullptr;
-				return get_box()->copy(base, start, terminate);
-			}
-
-			template <typename T>
-				requires (std::is_standard_layout<T>::value)
-			T* copy(const T* base, int start, int stop, bool terminate = true)
-			{
-				if (!base) return nullptr;
-				return get_box()->copy(base, start, stop, terminate);
-			}
-
-			template <typename T>
-			requires (std::is_standard_layout<T>::value)
-				int pack(T* src, int length)
-			{
-				return get_box()->pack<T>(src, length);
-			}
-
-			template <typename T>
-				requires (std::is_standard_layout<T>::value)
-			T* allocate(int count)
-			{
-				return get_box()->allocate<T>(count);
-			}
-
-			template <typename T>
-			char* place()
-			{
-				return get_box()->place<T>();
-			}
-
-			size_t reserve(int length)
-			{
-				return get_box()->reserve(length);
-			}
-
-			size_t reserve_all_free()
-			{
-				return get_box()->reserve_all_free();
-			}
-
-			virtual serialized_box *expand_check(int _bytes)
-			{
-				serialized_box *b, temp;
-				b = get_box();
-				if (_bytes > b->free())
-				{
-					temp = *b;
-					int d = b->size() * 2;
-					while ((d - b->top()) < _bytes)
-						d *= 2;
-					stuff.resize(d + sizeof(serialized_box));
-					b = get_box();
-					*b = temp;
-					b->adjust(d);
-					return b;
-				}
-				return nullptr;
-			}
 		};
 
 		template <typename T>
