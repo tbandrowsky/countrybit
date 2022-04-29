@@ -50,18 +50,23 @@ namespace countrybit
 
 			list_link* put(const item_type& _src)
 			{
-				list_link temp;
 				list_box_data* hdr = get_hdr();
 
+				list_link temp;
 				temp.data = _src;
 				temp.next = null_row;
 
 				row_id_type loc = box->pack(temp);
 
+				if (loc == null_row) {
+					return nullptr;
+				}
+
 				if (hdr->last_item != null_row) 
 				{
 					list_link* last = box->unpack<list_link>(hdr->last_item);
 					last->next = loc;
+					hdr->last_item = loc;
 				}
 				else
 				{
@@ -95,12 +100,26 @@ namespace countrybit
 			{
 			}
 
-			static row_id_type create(serialized_box_container* b)
+			list_box(const list_box& _src) : box(_src.box), header_loc(_src.header_loc)
+			{
+
+			}
+
+			list_box operator = ( const list_box& _src )
+			{
+				box = _src.box;
+				header_loc = _src.header_loc;
+				return *this;
+			}
+
+			static row_id_type reserve(serialized_box_container* b)
 			{
 				list_box temp;
-				auto location = b->pack<char>(0, sizeof(list_box_data));
-				temp.header_loc = location;
-				temp.box = b;
+				list_box_data hdr;
+				hdr.length = 0;
+				hdr.root_item = null_row;
+				hdr.last_item = null_row;
+				auto location = b->pack<list_box_data>(hdr);
 				return location;
 			}
 
@@ -108,8 +127,14 @@ namespace countrybit
 			{
 				list_box temp;
 				temp.box = b;
-				temp.hdr = b->unpack<list_box_data>(location);
 				temp.header_loc = location;
+				return temp;
+			}
+
+			static list_box create(serialized_box_container* b)
+			{
+				row_id_type loc = reserve(b);
+				list_box temp = get(b, loc);
 				return temp;
 			}
 
@@ -150,25 +175,20 @@ namespace countrybit
 				using pointer = item_type*;  // or also value_type*
 				using reference = item_type&;  // or also value_type&
 
-				iterator(array_box<item_type>* _base,
+				iterator(list_box<item_type>* _base,
 					list_box<item_type>::list_link* _current,
 					std::function<bool(item_type&)> _predicate) :
 					base(_base),
 					current(_current),
 					predicate(_predicate)
 				{
-					if (current != null_row) {
-						while (!predicate(base->get_at(current)))
-						{
-							current++;
-							if (current >= base->size()) {
-								current = null_row;
-							}
-						}
+					while (current && !predicate(current->data))
+					{
+						current = _base->next(current);
 					}
 				}
 
-				iterator(array_box<item_type>* _base,
+				iterator(list_box<item_type>* _base,
 					list_box<item_type>::list_link* _current) :
 					base(_base),
 					current(_current)
@@ -192,17 +212,17 @@ namespace countrybit
 
 				inline item_type& operator *()
 				{
-					return current->item;
+					return current->data;
 				}
 
 				inline item_type* operator ->()
 				{
-					return current ? current->item : nullptr;
+					return &current->data;
 				}
 
-				inline item_type* get_value()
+				inline item_type& get_value()
 				{
-					return current ? &current->item : nullptr;;
+					return &current->data;
 				}
 
 				inline iterator begin() const
@@ -222,7 +242,7 @@ namespace countrybit
 						current = base->next(current);
 						if (!current)
 							return iterator(base, nullptr, predicate);
-					} while (!predicate(base->get_at(current)));
+					} while (!predicate(current->data));
 					return iterator(base, current, predicate);
 				}
 
@@ -245,22 +265,34 @@ namespace countrybit
 
 			};
 
-			array_box<item_type>::iterator begin()
+			list_box<item_type>::iterator begin()
 			{
-				list_box_data* hdr = get_hdr();
-				return iterator(this, hdr->root_item);
+				return iterator(this, first());
 			}
 
-			array_box<item_type>::iterator end()
+			list_box<item_type>::iterator end()
 			{
-				list_box_data* hdr = get_hdr();
-				return iterator(this, null_row);
+				return iterator(this, nullptr);
 			}
 
 			auto where(std::function<bool(item_type&)> predicate)
 			{
-				list_box_data* hdr = get_hdr();
-				return iterator(this, hdr->root_item, predicate);
+				return iterator(this, first(), predicate);
+			}
+
+			bool any_of(std::function<bool(item_type&)> predicate)
+			{
+				return std::any_of(begin(), end(), predicate);
+			}
+
+			bool all_of(std::function<bool(item_type&)> predicate)
+			{
+				return std::all_of(begin(), end(), predicate);
+			}
+
+			int count_if(std::function<bool(item_type&)> predicate)
+			{
+				return std::count_if(begin(), end(), predicate);
 			}
 		};
 

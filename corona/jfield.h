@@ -81,22 +81,22 @@ namespace countrybit
 
 		struct query_properties_type
 		{
-			row_id_type properties_id;
+			;
 		};
 
 		struct sql_properties_type
 		{
-			row_id_type properties_id;
+			;
 		};
 
 		struct file_properties_type
 		{
-			row_id_type properties_id;
+			;
 		};
 
 		struct http_properties_type
 		{
-			row_id_type properties_id;
+			;
 		};
 
 		struct emphemeral_handle_type
@@ -856,33 +856,80 @@ namespace countrybit
 		{
 		public:
 			selector_rule_collection rules;
+
+			void always()
+			{
+				rules.clear();
+			}
+
+			void when(row_id_type _class_id0)
+			{
+				auto *sr = rules.append();
+				sr->class_id = _class_id0;
+			}
+
+			void when(row_id_type _class_id0, row_id_type _class_id1)
+			{
+				when(_class_id0);
+				when(_class_id1);
+			}
+
+			void when(row_id_type _class_id0, row_id_type _class_id1, row_id_type _class_id2)
+			{
+				when(_class_id0);
+				when(_class_id1);
+				when(_class_id2);
+			}
 		};
 
 		class model_creatable_class
 		{
 		public:
+			object_name						rule_name;
 			object_name						create_class_name;
 			row_id_type						create_class_id;
 			selector_collection				selectors;
 			object_name						item_id_class_name;
 			row_id_type						item_id_class;
 			bool							select_on_create;
+			bool							replace_selected;
+
+			model_creatable_class()
+			{
+				create_class_id = null_row;
+				item_id_class = null_row;
+				select_on_create = false;
+				replace_selected = false;
+			}
 		};
 
 		class model_selectable_class
 		{
-		public:
+		public:	
+			object_name						rule_name;
 			object_name						select_class_name;
 			row_id_type						select_class_id;
 			selector_collection				selectors;
+
+			model_selectable_class()
+			{
+				select_class_id = null_row;
+			}
 		};
 
 		class model_updatable_class
 		{
 		public:
+			object_name						rule_name;
 			object_name						update_class_name;
 			row_id_type						update_class_id;
 			selector_collection				selectors;
+
+			model_updatable_class()
+			{
+				update_class_id = null_row;
+			}
+
 		};
 
 		using model_create_class_collection = iarray<model_creatable_class, max_creatable_options>;
@@ -892,7 +939,6 @@ namespace countrybit
 		class model_type
 		{
 		public:
-			row_id_type				model_id;
 			object_name				model_name;
 			model_create_class_collection create_options;
 			model_select_class_collection select_options;

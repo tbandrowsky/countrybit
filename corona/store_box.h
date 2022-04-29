@@ -98,8 +98,11 @@ namespace countrybit
 
 			template <typename T>
 			requires (std::is_standard_layout<T>::value)
-			T* unpack(int offset, T* dummy = nullptr)
+			T* unpack(row_id_type offset, T* dummy = nullptr)
 			{
+				if (offset == null_row) {
+					return nullptr;
+				}
 				T* temptress = (T*)&_data[offset];
 				return temptress;
 			}

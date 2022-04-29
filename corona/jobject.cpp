@@ -120,7 +120,7 @@ namespace countrybit
 
 			acr.collection_id = collection_id;
 
-			auto model = schema->get_model(model_id);
+			auto model = schema->get_model(ref->model_name);
 			auto& actor = actors[ _actor ];
 
 			auto& create_options = model.create_options;
@@ -154,7 +154,8 @@ namespace countrybit
 					aco.class_id = oi.item.create_class_id;
 					aco.item = acr.create_object(schema, aco.class_id);
 					aco.select_on_create = oi.item.select_on_create;
-					acr.create_options.push_back(aco);
+					row_id_type create_id = acr.create_objects.size();
+					acr.create_objects.insert_or_assign(create_id, aco);
 				}
 			}
 
@@ -170,14 +171,16 @@ namespace countrybit
 					// we can now select objects of this class
 					for (row_id_type oid = 0; oid < objects.size(); oid++)
 					{
-						actor_select_object aso;
 						auto obj = objects[oid];
 						if (obj.item().class_id == rule->select_class_id) 
 						{
-							aso.collection_id = collection_id;
-							aso.object_id = oid;
-							aso.extend = false;
-							acr.select_options.push_back(aso);
+							actor_view_object avo;
+							avo.collection_id = collection_id;
+							avo.object_id = oid;
+							avo.selectable = false;
+							avo.selected = false;
+							avo.updateable = false;
+							acr.view_objects.put(oid, avo, [](actor_view_object& _dest) { _dest.selectable = true;  });
 						}
 					}
 				}
@@ -192,15 +195,20 @@ namespace countrybit
 
 				if (selector_applies(&oi.item.selectors, _actor))
 				{
-					actor_update_object auo;
-
-					for (auto sel : actor.selections) 
+					// we can now select objects of this class
+					for (row_id_type oid = 0; oid < objects.size(); oid++)
 					{
-						auo.collection_id = collection_id;
-						auo.object_id = sel.item;
-						auo.selected = true;
-						auo.item = get_object(auo.object_id);
-						acr.update_options.push_back(auo);
+						auto obj = objects[oid];
+						if (obj.item().class_id == rule->update_class_id)
+						{
+							actor_view_object avo;
+							avo.collection_id = collection_id;
+							avo.object_id = oid;
+							avo.selectable = false;
+							avo.selected = false;
+							avo.updateable = false;
+							acr.view_objects.put(oid, avo, [](actor_view_object& _dest) { _dest.updateable = true;  });
+						}
 					}
 				}
 			}
@@ -211,7 +219,7 @@ namespace countrybit
 		actor_type jcollection::create_actor(actor_type _actor)
 		{
 			row_range actor_location;
-			auto new_actor = actors.append(_actor, actor_location);
+			auto &new_actor = actors.append(_actor, actor_location);
 			new_actor.collection_id = collection_id;
 			new_actor.actor_id = actor_location.start;
 			return get_actor(new_actor.actor_id);
@@ -1737,8 +1745,8 @@ namespace countrybit
 			if (_init)
 			{
 				data.instance = model_box.allocate<jlist_instance>(1);
-				data.instance->selection_offset = array_box<row_id_type>::create(&model_box, field_def.object_properties.dim.x);
-				data.instance->sort_offset = array_box<row_id_type>::create(&model_box, field_def.object_properties.dim.x);
+				array_box<row_id_type>::create(&model_box, field_def.object_properties.dim.x, data.instance->selection_offset);
+				array_box<row_id_type>::create(&model_box, field_def.object_properties.dim.x, data.instance->sort_offset);
 				data.instance->slice_offset = model_box.reserve(0);
 				data.instance->allocated = 0;
 			}
@@ -2042,15 +2050,15 @@ namespace countrybit
 				jschema schema;
 				row_id_type schema_id;
 
-				schema = jschema::create_schema(&box, 20, 5, true, schema_id);
+				schema = jschema::create_schema( & box, 20, true, schema_id);
 
-				row_id_type quantity_field_id;
-				row_id_type last_name_field_id;
-				row_id_type first_name_field_id;
-				row_id_type birthday_field_id;
-				row_id_type count_field_id;
-				row_id_type title_field_id;
-				row_id_type institution_field_id;
+				row_id_type quantity_field_id = null_row;
+				row_id_type last_name_field_id = null_row;
+				row_id_type first_name_field_id = null_row;
+				row_id_type birthday_field_id = null_row;
+				row_id_type count_field_id = null_row;
+				row_id_type title_field_id = null_row;
+				row_id_type institution_field_id = null_row;
 
 				schema.bind_field("quantity", quantity_field_id);
 				schema.bind_field("lastName", last_name_field_id);
@@ -2158,15 +2166,15 @@ namespace countrybit
 				jschema schema;
 				row_id_type schema_id;
 
-				schema = jschema::create_schema(&box, 20, 15, true, schema_id);
+				schema = jschema::create_schema(&box, 20, true, schema_id);
 
-				row_id_type quantity_field_id;
-				row_id_type last_name_field_id;
-				row_id_type first_name_field_id;
-				row_id_type birthday_field_id;
-				row_id_type count_field_id;
-				row_id_type title_field_id;
-				row_id_type institution_field_id;
+				row_id_type quantity_field_id = null_row;
+				row_id_type last_name_field_id = null_row;
+				row_id_type first_name_field_id = null_row;
+				row_id_type birthday_field_id = null_row;
+				row_id_type count_field_id = null_row;
+				row_id_type title_field_id = null_row;
+				row_id_type institution_field_id = null_row;
 
 				schema.bind_field("quantity", quantity_field_id);
 				schema.bind_field("lastName", last_name_field_id);
@@ -2178,14 +2186,12 @@ namespace countrybit
 
 				jmodel sample_model;
 				sample_model.model_name = "my model";
-				sample_model.model_id = null_row;
 
-				sample_model.model_id = schema.put_model(sample_model);
+				schema.put_model(sample_model);
 
 				jcollection_ref ref;
 				ref.data = &box;
 				ref.model_name = sample_model.model_name;
-				ref.model_id = sample_model.model_id;
 				ref.max_actors = 2;
 				ref.max_objects = 50;
 
@@ -2337,7 +2343,7 @@ namespace countrybit
 				jschema schema;
 				row_id_type schema_id;
 
-				schema = jschema::create_schema(&box, 50, 5, true, schema_id);
+				schema = jschema::create_schema(&box, 50, true, schema_id);
 
 				countrybit::database::put_class_request sprite_frame_request;
 
@@ -2370,15 +2376,12 @@ namespace countrybit
 
 				model_type sprite_model;
 
-				sprite_model.model_id = null_row;
 				sprite_model.model_name = "sprite model";
-
-				sprite_model.model_id = schema.put_model(sprite_model);
+				schema.put_model(sprite_model);
 
 				jcollection_ref ref;
 				ref.data = &box;
 				ref.model_name = sprite_model.model_name;
-				ref.model_id = sprite_model.model_id;
 				ref.max_actors = 2;
 				ref.max_objects = 50;
 
@@ -2487,5 +2490,276 @@ namespace countrybit
 				return false;
 			}
 		}
+
+		bool model_tests()
+		{
+			try 
+			{
+				dynamic_box box;
+				box.init(1 << 21);
+
+				jschema schema;
+				row_id_type schema_id;
+
+				schema = jschema::create_schema(&box, 50, true, schema_id);
+
+				put_double_field_request dfr;
+				dfr.name.name = "limit";
+				dfr.name.description = "Maximum amount paid by policy";
+				dfr.name.type_id = jtype::type_float64;
+				dfr.options.minimum_double = 0.0;
+				dfr.options.maximum_double = 1E10;
+				row_id_type limit_field_id = schema.put_double_field(dfr);
+
+				dfr.name.name = "attachment";
+				dfr.name.description = "Point at which policy begins coverage";
+				dfr.name.type_id = jtype::type_float64; 
+				dfr.options.minimum_double = 0.0;
+				dfr.options.maximum_double = 1E10;
+				row_id_type attachment_field_id = schema.put_double_field(dfr);
+
+				dfr.name.name = "deductible";
+				dfr.name.description = "Point at which policy begins paying";
+				dfr.name.type_id = jtype::type_float64; 
+				dfr.options.minimum_double = 0.0;
+				dfr.options.maximum_double = 1E10;
+				row_id_type deductible_field_id = schema.put_double_field(dfr);
+
+				put_string_field_request sfr;
+				sfr.name.name = "comment";
+				sfr.name.description = "Descriptive text";
+				sfr.options.length = 512;
+				row_id_type comment_field_id = schema.put_string_field(sfr);
+
+				sfr.name.name = "program_name";
+				sfr.name.description = "name of a program";
+				sfr.options.length = 200;
+				row_id_type program_name_field_id = schema.put_string_field(sfr);
+
+				sfr.name.name = "program_description";
+				sfr.name.description = "name of a program";
+				sfr.options.length = 512;
+				row_id_type program_description_field_id = schema.put_string_field(sfr);
+
+				sfr.name.name = "coverage_name";
+				sfr.name.description = "name of a coverage";
+				sfr.options.length = 200;
+				row_id_type coverage_field_id = schema.put_string_field(sfr);
+
+				sfr.name.name = "carrier_name";
+				sfr.name.description = "name of a carrier";
+				sfr.options.length = 200;
+				row_id_type carrier_field_id = schema.put_string_field(sfr);
+
+				countrybit::database::put_class_request pcr;
+
+				pcr.class_name = "program";
+				pcr.class_description = "program summary";
+				pcr.member_fields = { "program_name", "program_description" };
+				row_id_type program_class_id = schema.put_class(pcr);
+
+				if (program_class_id == null_row) {
+					std::cout << __LINE__ << ":class create failed failed" << std::endl;
+					return false;
+				}
+
+				pcr.class_name = "coverage";
+				pcr.class_description = "coverage frame";
+				pcr.member_fields = { "coverage_name", "comment", "rectangle" };
+				row_id_type coverage_class_id = schema.put_class(pcr);
+
+				if (coverage_class_id == null_row) {
+					std::cout << __LINE__ << ":class create failed failed" << std::endl;
+					return false;
+				}
+
+				pcr.class_name = "coverage_spacer";
+				pcr.class_description = "spacer frame";
+				pcr.member_fields = { "rectangle" };
+				row_id_type coverage_spacer_id = schema.put_class(pcr);
+
+				if (coverage_spacer_id == null_row) {
+					std::cout << __LINE__ << ":class create failed failed" << std::endl;
+					return false;
+				}
+
+				pcr.class_name = "carrier";
+				pcr.class_description = "carrier frame";
+				pcr.member_fields = { "carrier_name", "comment", "rectangle", "color" };
+				row_id_type carrier_class_id = schema.put_class(pcr);
+
+				if (coverage_class_id == null_row) {
+					std::cout << __LINE__ << ":class create failed failed" << std::endl;
+					return false;
+				}
+
+				pcr.class_name = "policy";
+				pcr.class_description = "policy block";
+				pcr.member_fields = { "coverage_name", "carrier_name", "comment", "rectangle", "color", "limit", "attachment" };
+				row_id_type policy_class_id = schema.put_class(pcr);
+
+				if (policy_class_id == null_row) {
+					std::cout << __LINE__ << ":class create failed failed" << std::endl;
+					return false;
+				}
+
+				pcr.class_name = "policy_deductible";
+				pcr.class_description = "deductible block";
+				pcr.member_fields = { "coverage_name", "comment", "rectangle", "color", "deductible" };
+				row_id_type policy_deductible_class_id = schema.put_class(pcr);
+
+				if (policy_deductible_class_id == null_row) {
+					std::cout << __LINE__ << ":class create failed failed" << std::endl;
+					return false;
+				}
+
+				pcr.class_name = "policy_umbrella";
+				pcr.class_description = "deductible block";
+				pcr.member_fields = { "comment", "rectangle", "color", "limit", "attachment"};
+				row_id_type policy_umbrella_class_id = schema.put_class(pcr);
+
+				if (policy_deductible_class_id == null_row) {
+					std::cout << __LINE__ << ":class create failed failed" << std::endl;
+					return false;
+				}
+
+				jmodel jm;
+
+				jm.model_name = "program_chart";
+
+				model_creatable_class* mcr;
+				model_selectable_class* msr;
+				model_updatable_class* mur;
+				selector_rule* sr;
+
+				mcr = jm.create_options.append();
+				mcr->rule_name = "add coverage";
+				mcr->selectors.always();
+				mcr->create_class_id = coverage_class_id;
+				mcr->replace_selected = false;
+				mcr->select_on_create = true;
+				mcr->item_id_class = null_row;
+
+				mcr = jm.create_options.append();
+				mcr->rule_name = "add carrier";
+				mcr->selectors.always();
+				mcr->create_class_id = carrier_class_id;
+				mcr->replace_selected = false;
+				mcr->select_on_create = true;
+				mcr->item_id_class = null_row;
+
+				mcr = jm.create_options.append();
+				mcr->rule_name = "add coverage spacer";
+				mcr->selectors.when(coverage_class_id);
+				mcr->create_class_id = coverage_spacer_id;
+				mcr->select_on_create = false;
+				mcr->replace_selected = false;
+				mcr->item_id_class = null_row;
+
+				mcr = jm.create_options.append();
+				mcr->rule_name = "add policy";
+				mcr->selectors.when(coverage_class_id, carrier_class_id);
+				mcr->create_class_id = policy_class_id;
+				mcr->select_on_create = true;
+				mcr->replace_selected = false;
+				mcr->item_id_class = null_row;
+
+				mcr = jm.create_options.append();
+				mcr->rule_name = "add deductible";
+				mcr->selectors.when(coverage_class_id);
+				mcr->create_class_id = policy_deductible_class_id;
+				mcr->select_on_create = true;
+				mcr->replace_selected = false;
+				mcr->item_id_class = null_row;
+
+				mcr = jm.create_options.append();
+				mcr->rule_name = "add umbrella";
+				mcr->selectors.when(policy_class_id);
+				mcr->create_class_id = policy_umbrella_class_id;
+				mcr->select_on_create = true;
+				mcr->replace_selected = true;
+				mcr->item_id_class = null_row;
+
+				msr = jm.select_options.append();
+				msr->rule_name = "select coverage";
+				msr->select_class_id = coverage_class_id;
+
+				msr = jm.select_options.append();
+				msr->rule_name = "select carrier";
+				msr->select_class_id = carrier_class_id;
+
+				msr = jm.select_options.append();
+				msr->rule_name = "select coverage spacer";
+				msr->select_class_id = coverage_spacer_id;
+
+				msr = jm.select_options.append();
+				msr->rule_name = "select policy";
+				msr->select_class_id = policy_class_id;
+
+				msr = jm.select_options.append();
+				msr->rule_name = "select deductible";
+				msr->select_class_id = policy_deductible_class_id;
+
+				msr = jm.select_options.append();
+				msr->rule_name = "select umbrella";
+				msr->select_class_id = policy_umbrella_class_id;
+
+				mur = jm.update_options.append();
+				mur->rule_name = "update coverage";
+				mur->update_class_id = coverage_class_id;
+
+				mur = jm.update_options.append();
+				mur->rule_name = "update carrier";
+				mur->update_class_id = carrier_class_id;
+
+				mur = jm.update_options.append();
+				mur->rule_name = "update coverage spacer";
+				mur->update_class_id = coverage_spacer_id;
+
+				mur = jm.update_options.append();
+				mur->rule_name = "update policy";
+				mur->update_class_id = policy_class_id;
+
+				mur = jm.update_options.append();
+				mur->rule_name = "update deductible";
+				mur->update_class_id = policy_deductible_class_id;
+
+				mur = jm.update_options.append();
+				mur->rule_name = "update umbrella";
+				mur->update_class_id = policy_umbrella_class_id;
+
+				schema.put_model(jm);
+
+				jcollection_ref ref;
+				ref.data = &box;
+				ref.model_name = jm.model_name;
+				ref.max_actors = 2;
+				ref.max_objects = 100;
+
+				if (!init_collection_id(ref.collection_id))
+				{
+					std::cout << __LINE__ << "collection id failed" << std::endl;
+				}
+
+				jcollection program_chart = schema.create_collection(&ref, nullptr);
+
+				jactor sample_actor;
+				sample_actor.actor_name = "sample actor";
+				sample_actor.actor_id = null_row;
+				sample_actor = program_chart.create_actor(sample_actor);
+
+				auto result = program_chart.get_command_result(sample_actor.actor_id);
+
+				
+
+				return true;
+			}
+			catch (std::exception& exc)
+			{
+				std::cout << exc.what() << std::endl;
+				return false;
+			}
+		}
+
 	}
 }

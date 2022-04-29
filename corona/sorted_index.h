@@ -1,6 +1,7 @@
 #pragma once
 
 #include "table.h"
+#include "array_box.h"
 
 /*********************************************************************
   Countrybit SAT
@@ -34,107 +35,168 @@ namespace countrybit
 
 		template <typename KEY, typename VALUE, int SORT_ORDER = 1> class sorted_index
 		{
-		public:
-
-			using index_node = item_details_holder<std::pair<KEY, VALUE>, index_ref>;
-			using data_table_type = item_details_table<std::pair<KEY, VALUE>, index_ref>;
-
 		private:
 
 			struct index_header_type
 			{
 				int count;
 				int level;
-				row_id_type table_id;
 				row_id_type header_id;
 			};
 
-			data_table_type data_table;
-			index_header_type* index_header;
+			class index_node_holder
+			{
+			public:
+				row_id_type					header_id;
+				row_id_type					details_id;
+			};
+
+		public:
+
+			using forward_pointer_collection = array_box<row_id_type>;
+			using data_pair = std::pair<KEY, VALUE>;
+
+			class index_node
+			{
+			public:
+				row_id_type					id;
+				data_pair					*data;
+				forward_pointer_collection	details;
+
+				row_id_type					row_id()
+				{
+					return id;
+				}
+
+				inline row_id_type& detail(int idx)
+				{
+					return details.get_at(idx);
+				}
+
+				inline data_pair&			item()
+				{
+					return *data;
+				}
+			};
+
+		private:
+
+			row_id_type header_location;
+			serialized_box_container* box;
+
+			index_header_type* get_index_header()
+			{
+				return box->unpack<index_header_type>(header_location);
+			};
 
 			index_node get_header()
 			{
-				index_node in = data_table[index_header->header_id];
+				auto hdr = get_index_header();
+				index_node in = get_node(hdr->header_id);
 				return in;
 			}
 
 			index_node create_node(int _num_levels)
 			{
-				index_node in = data_table.create_item(nullptr, _num_levels + 1, nullptr);
+				index_node_holder holder, * hd;
 
-				if (in.is_null()) 
+				data_pair dp;
+				row_id_type r = box->pack<index_node_holder>(holder);
+
+				if (r == null_row)
 				{
 					throw std::logic_error("sorted index exhausted.");
 				}
 
-				index_ref new_ref = null_row;
-				for (int i = 0; i <= _num_levels; i++)
+				hd = box->unpack<index_node_holder>(r);
+				hd->header_id = box->pack<data_pair>(dp);
+				hd->details_id = forward_pointer_collection::reserve(box, _num_levels);
+
+				if (hd->header_id == null_row || hd->details_id == null_row)
 				{
-					data_table.append_detail(in.row_id(), 1, &new_ref);
+					throw std::logic_error("sorted index exhausted.");
 				}
 
-				return in;
+				index_node		  node;
+				node.data = box->unpack<data_pair>(hd->header_id);
+				node.details = forward_pointer_collection::get(box, hd->details_id);
+
+				for (int i = 0; i < _num_levels; i++)
+				{
+					row_id_type rit = null_row;
+					node.details.push_back(rit);
+				}
+
+				return node;
 			}
 
-			index_node get_node(row_id_type _row_id)
+			index_node get_node(row_id_type _node_id)
 			{
-				return data_table.get_item(_row_id);
+				index_node_holder *hd;
+				hd = box->unpack<index_node_holder>(_node_id);
+				index_node		  node;
+				node.data = box->unpack<data_pair>(hd->header_id);
+				node.details = forward_pointer_collection::get(box, hd->details_id);
+				return node;
 			}
 
 		public:
 
-			sorted_index() : index_header( nullptr )
+			sorted_index() : header_location(null_row), box(nullptr)
 			{
 			}
 
-			template <typename B>
-			requires (box<B, index_header_type>)
-			static row_id_type reserve_sorted_index(B *_b, int _max_items)
+			sorted_index(serialized_box_container* _box, row_id_type _location) : box(_box), header_location(_location)
+			{
+				auto* ihdr = get_index_header();
+
+				if (ihdr->header_id == null_row) {
+					index_node hdr = create_node(MaxNumberOfLevels);
+					ihdr->header_id = hdr.row_id();
+				}
+			}
+
+			sorted_index(const sorted_index& _src) : box(_src.box), header_location(_src.header_location)
+			{
+				
+			}
+
+			sorted_index operator = (const sorted_index& _src) 
+			{
+				box = _src.box;
+				header_location = _src.header_location;
+				return *this;
+			}
+
+			static row_id_type reserve_sorted_index(serialized_box_container *_b)
 			{
 				index_header_type hdr, *phdr;
 
 				hdr.count = 0;
 				hdr.level = 0;
 				hdr.header_id = null_row;
-				hdr.table_id = null_row;
 
 				row_id_type header_location = _b->pack(hdr);
-
 				phdr = _b->unpack<index_header_type>(header_location);
-				phdr->table_id = data_table_type::reserve_table (_b, _max_items, _max_items * MaxNumberOfLevels);
 				return header_location;
 			}
 
-			template <typename B>
-			requires (box<B, index_header_type>)
-			static sorted_index get_sorted_index(B* _b, row_id_type _header_location)
+			static sorted_index get_sorted_index(serialized_box_container* _b, row_id_type _header_location)
 			{
-
-				sorted_index si;
-
-				si.index_header = _b->unpack<index_header_type>(_header_location);
-				si.data_table = data_table_type::get_table(_b, si.index_header->table_id);
-
-				if (si.index_header->header_id == null_row) {
-					index_node hdr = si.create_node(MaxNumberOfLevels);
-					si.index_header->header_id = hdr.row_id();
-				}
-
+				sorted_index si(_b, _header_location);
 				return si;
 			}
 
-			template <typename B> 
-			requires (box<B, index_header_type>)
-			static sorted_index create_sorted_index(B* _b, int _max_items, row_id_type& _header_location)
+			static sorted_index create_sorted_index(serialized_box_container* _b, row_id_type& _header_location)
 			{
-				_header_location = reserve_sorted_index(_b, _max_items);
+				_header_location = reserve_sorted_index(_b);
 				sorted_index new_index = get_sorted_index(_b, _header_location);
 				return new_index;
 			}
 
-			static size_t get_box_size( row_id_type _max_items )
+			static int64_t get_box_size()
 			{
-				return data_table_type::get_box_size(_max_items, _max_items * MaxNumberOfLevels);
+				return sizeof(index_header_type) + sizeof(row_id_type) * MaxNumberOfLevels + sizeof(data_pair);
 			}
 
 			class iterator
@@ -282,27 +344,39 @@ namespace countrybit
 				return iterator(this, this->find_node(key));
 			}
 
+			bool contains(const KEY& key)
+			{
+				auto iter = iterator(this, this->find_node(key));
+				return iter != std::end(*this);
+			}
+
+			data_pair& get(const KEY& key)
+			{
+				auto iter = iterator(this, this->find_node(key));
+				return *iter;
+			}
+
 			bool has(const KEY& key, VALUE& value)
 			{
 				auto n = this->find_node(key);
-				return (n != null_row && get<index_node>(n).item().key_value.second == value);
+				return (n != null_row && n.item().second == value);
 			}
 
 			bool has(const KEY& key, std::function<bool(VALUE& src)> pred)
 			{
 				auto n = this->find_node(key);
-				return (n != null_row && pred(get<index_node>(n).item().key_value.second));
+				return (n != null_row && pred(n.item().second));
 			}
 
 			VALUE& first_value()
 			{
 				auto n = first_node();
-				return get_node(n).item().key_value;
+				return get_node(n).item().second;
 			}
 
 			sorted_index<KEY, VALUE, SORT_ORDER>::iterator insert_or_assign(std::pair<KEY, VALUE>& kvp)
 			{
-				row_id_type modified_node = this->update_node(kvp);
+				row_id_type modified_node = this->update_node(kvp, [](VALUE& dest) { });
 				return iterator(this, modified_node);
 			}
 
@@ -324,6 +398,13 @@ namespace countrybit
 				return insert_or_assign(kvp);
 			}
 
+			inline sorted_index<KEY, VALUE, SORT_ORDER>::iterator put(KEY& key, VALUE& _default_value, std::function<void(VALUE& existing_value)> predicate)
+			{
+				std::pair<KEY, VALUE> kvp(key, _default_value);
+				row_id_type modified_node = this->update_node(kvp, predicate);
+				return insert_or_assign(kvp);
+			}
+
 		private:
 
 			int randomLevel()
@@ -337,7 +418,7 @@ namespace countrybit
 
 		public:
 
-			inline int size() { return index_header->count; }
+			inline int size() { return get_index_header()->count; }
 
 			template <int SORT_ORDER> bool contains(sorted_index<KEY, VALUE, SORT_ORDER>& _src)
 			{
@@ -380,11 +461,11 @@ namespace countrybit
 			row_id_type find_node(row_id_type* update, const KEY& key)
 			{
 				row_id_type found = null_row, p, q;
-				auto hdr = get_node(this->index_header->header_id);
+				auto hdr = get_header();
 
-				for (int k = index_header->level; k >= 0; k--)
+				for (int k = get_index_header()->level; k >= 0; k--)
 				{
-					p = index_header->header_id;
+					p = get_index_header()->header_id;
 					q = hdr.detail(k);
 					auto comp = compare(q, key);
 					while (comp < 0)
@@ -405,9 +486,9 @@ namespace countrybit
 			{
 				row_id_type found = null_row, p, q, last;
 
-				for (int k = index_header->level; k >= 0; k--)
+				for (int k = get_index_header()->level; k >= 0; k--)
 				{
-					p = index_header->header_id;
+					p = get_index_header()->header_id;
 					q = get_node(p).detail(k);
 					last = q;
 					auto comp = compare(q, key);
@@ -428,7 +509,7 @@ namespace countrybit
 				return found;
 			}
 
-			row_id_type update_node(const std::pair<KEY, VALUE>& kvp)
+			row_id_type update_node(data_pair& kvp, std::function<void(VALUE& existing_value)> predicate)
 			{
 				int k;
 				row_id_type update[MaxNumberOfLevels];
@@ -438,32 +519,30 @@ namespace countrybit
 				if (q != null_row)
 				{
 					qnd = get_node(q);
-					qnd.item().second = kvp.second;
+					predicate( qnd.item().second );
 					return q;
 				}
 
 				k = randomLevel();
-				if (k > index_header->level)
+				if (k > get_index_header()->level)
 				{
-					k = ++index_header->level;
-					update[k] = index_header->header_id;
+					k = ++(get_index_header()->level);
+					update[k] = get_index_header()->header_id;
 				}
 
 				qnd = create_node(k);
 
-				if (!qnd.is_null()) 
-				{
-					qnd.item() = kvp;
-					index_header->count++;
+				qnd.item() = kvp;
+				predicate(qnd.item().second);
+				get_index_header()->count++;
 
-					do {
-						auto pnd = get_node(update[k]);
-						qnd.detail(k) = pnd.detail(k);
-						pnd.detail(k) = qnd.row_id();
-					} while (--k >= 0);
+				do {
+					auto pnd = get_node(update[k]);
+					qnd.detail(k) = pnd.detail(k);
+					pnd.detail(k) = qnd.row_id();
+				} while (--k >= 0);
 
-					return qnd.row_id();
-				}
+				return qnd.row_id();
 			}
 
 			bool remove_node(const KEY& key)
@@ -480,7 +559,7 @@ namespace countrybit
 					p = update[k];
 					qnd = get_node(q);
 					pnd = get_node(p);
-					int m = index_header->level;
+					int m = get_index_header()->level;
 					while (k <= m && pnd.detail(k) == q)
 					{
 						pnd.detail(k) = qnd.detail(k);
@@ -490,11 +569,11 @@ namespace countrybit
 							pnd = get_node(p);
 						}
 					}
-					index_header->count--;
+					get_index_header()->count--;
 					while (get_header().detail(m) == null_row && m > 0) {
 						m--;
 					}
-					index_header->level = m;
+					get_index_header()->level = m;
 					return true;
 				}
 				else 

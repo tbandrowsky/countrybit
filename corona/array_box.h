@@ -328,9 +328,7 @@ namespace countrybit
 			{
 			}
 
-			template <typename BOX>
-				requires(box<BOX, char>)
-			static row_id_type create(BOX* b, int items_length)
+			static row_id_type reserve(serialized_box_container* b, int items_length)
 			{
 				array_box temp;
 				auto location = b->pack<char>(0, sizeof(array_box_data) + items_length * sizeof(item_type));
@@ -341,12 +339,17 @@ namespace countrybit
 				return location;
 			}
 
-			template <typename BOX>
-				requires(box<BOX, char>)
-			static array_box get(BOX* b, int location)
+			static array_box get(serialized_box_container* b, int location)
 			{
 				array_box temp;
 				temp.hdr = b->unpack<array_box_data>(location);
+				return temp;
+			}
+
+			static array_box create(serialized_box_container* b, int items_length, row_id_type& _dest)
+			{
+				_dest = reserve(b, items_length);
+				auto temp = get(b, _dest);
 				return temp;
 			}
 

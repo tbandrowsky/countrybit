@@ -26,11 +26,13 @@ int main()
     if (countrybit::database::table_tests()) std::cout << "table passed" << std::endl;
     if (countrybit::database::test_index()) std::cout << "index passed" << std::endl;
     if (countrybit::database::array_box_tests()) std::cout << "array box passed" << std::endl;
+    if (countrybit::database::list_box_tests()) std::cout << "list box passed" << std::endl;
     if (countrybit::database::schema_tests()) std::cout << "schema passed" << std::endl;
     if (countrybit::database::collection_tests()) std::cout << "collection passed" << std::endl;
     if (countrybit::database::array_tests()) std::cout << "array object passed" << std::endl;
     if (countrybit::system::string_extractor::test_basics()) std::cout << "parser basics passed" << std::endl;
     if (countrybit::system::string_extractor::test_json()) std::cout << "parser json passed" << std::endl;
+    if (countrybit::database::model_tests()) std::cout << "model passed" << std::endl;
 //    queue_tests();
 }
 

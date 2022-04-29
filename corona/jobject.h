@@ -44,7 +44,6 @@ namespace countrybit
 
 			row_id_type			actors_id;
 			row_id_type			objects_id;
-			row_id_type			model_id;
 
 			dynamic_box*		data;
 		};
@@ -455,15 +454,6 @@ namespace countrybit
 			bool			deleted;
 		};
 
-		class actor_select_object
-		{
-		public:
-			collection_id_type	collection_id;
-			actor_id_type		actor_id;
-			row_id_type			object_id;
-			bool				extend;
-		};
-
 		class actor_create_object
 		{
 		public:
@@ -475,13 +465,21 @@ namespace countrybit
 			jslice				item;
 		};
 
+		class actor_select_object
+		{
+		public:
+			collection_id_type	collection_id;
+			actor_id_type		actor_id;
+			row_id_type			object_id;
+			bool				extend;
+		};
+
 		class actor_update_object
 		{
 		public:
 			collection_id_type	collection_id;
 			actor_id_type		actor_id;
 			row_id_type			object_id;
-			bool				selected;
 			jslice				item;
 		};
 
@@ -490,54 +488,47 @@ namespace countrybit
 		public:
 			collection_id_type	collection_id;
 			row_id_type			object_id;
+			bool				selectable;
 			bool				selected;
+			bool				updateable;
 			jslice				item;
 		};
 
-		using actor_create_option_collection = list_box<actor_create_object>;
-		using actor_update_option_collection = list_box<actor_update_object>;
-		using actor_select_option_collection = list_box<actor_select_object>;
-		using actor_view_collection = list_box<actor_view_object>;
+		using actor_create_collection = sorted_index<row_id_type, actor_create_object>;
+		using actor_view_collection = sorted_index<row_id_type, actor_view_object>;
 
 		class actor_command_response
 		{
-			row_id_type									create_options_id;
-			row_id_type									update_options_id;
-			row_id_type									select_options_id;
-			row_id_type									view_objects_id;
 			dynamic_box									data;
 
 		public:
 
 			collection_id_type							collection_id;
 			row_id_type									actor_id;
-			actor_create_option_collection				create_options;
-			actor_update_option_collection				update_options;
-			actor_select_option_collection				select_options;
+			actor_create_collection						create_objects;
 			actor_view_collection						view_objects;
+			row_id_type create_objects_location;
+			row_id_type view_objects_location;
 
 			actor_command_response()
 			{
-				;
-			}
-
-			actor_command_response(int _size)
-			{
-				data.init(_size);
-				create_options_id = actor_create_option_collection::create(&data);
-				update_options_id = actor_update_option_collection::create(&data);
-				select_options_id = actor_select_option_collection::create(&data);
-				view_objects_id = actor_view_collection::create(&data);
+				data.init(100000);
+				create_objects = actor_create_collection::create_sorted_index(&data, create_objects_location);
+				view_objects = actor_view_collection::create_sorted_index(&data, view_objects_location);
 			}
 
 			actor_command_response(actor_command_response&& _src)
 			{
-				data = std::move(_src.data);
+				data= std::move(_src.data);
+				create_objects = _src.create_objects;
+				view_objects = _src.view_objects;
 			}
 
 			actor_command_response& operator=(actor_command_response&& _src)
 			{
 				data = std::move(_src.data);
+				create_objects = _src.create_objects;
+				view_objects = _src.view_objects;
 				return *this;
 			}
 
@@ -559,7 +550,6 @@ namespace countrybit
 			jcollection_ref* ref;
 
 			collection_id_type		collection_id;
-			row_id_type				model_id;
 			actor_collection		actors;
 			object_collection		objects;
 
@@ -573,8 +563,7 @@ namespace countrybit
 			jcollection(jschema* _schema, jcollection_ref *_ref) :
 				schema(_schema),
 				ref(_ref),
-				collection_id(_ref->collection_id),
-				model_id(_ref->model_id)
+				collection_id(_ref->collection_id)
 			{
 				actors = actor_collection::get_table(_ref->data, _ref->actors_id );
 				objects = object_collection::get_table(_ref->data, _ref->objects_id );
@@ -583,8 +572,7 @@ namespace countrybit
 			jcollection(jcollection& _src) :
 				schema(_src.schema),
 				ref(_src.ref),
-				collection_id(_src.collection_id),
-				model_id(_src.model_id)
+				collection_id(_src.collection_id)
 			{
 				actors = actor_collection::get_table(ref->data, ref->actors_id);
 				objects = object_collection::get_table(ref->data, ref->objects_id);
@@ -593,8 +581,7 @@ namespace countrybit
 			jcollection(jcollection&& _src) :
 				schema(_src.schema),
 				ref(_src.ref),
-				collection_id(_src.collection_id),
-				model_id(_src.model_id)
+				collection_id(_src.collection_id)
 			{
 				actors = actor_collection::get_table(ref->data, ref->actors_id);
 				objects = object_collection::get_table(ref->data, ref->objects_id);
@@ -605,7 +592,6 @@ namespace countrybit
 				schema = _src.schema;
 				ref = _src.ref;
 				collection_id = _src.collection_id;
-				model_id = _src.model_id;
 				actors = actor_collection::get_table(ref->data, ref->actors_id);
 				objects = object_collection::get_table(ref->data, ref->objects_id);
 				return *this;
@@ -616,7 +602,6 @@ namespace countrybit
 				schema = _src.schema;
 				ref = _src.ref;
 				collection_id = _src.collection_id;
-				model_id = _src.model_id;
 				actors = actor_collection::get_table(ref->data, ref->actors_id);
 				objects = object_collection::get_table(ref->data, ref->objects_id);
 				return *this;
@@ -745,18 +730,16 @@ namespace countrybit
 			using class_store_type = item_details_table<jclass_header, jclass_field>;
 			using class_index_type = sorted_index<object_name, row_id_type>;
 			using field_index_type = sorted_index<object_name, row_id_type>;
-			using model_index_type = sorted_index<object_name, row_id_type>;
-			using query_store_type = table<query_definition_type>;
-			using sql_store_type = table<sql_definition_type>;
-			using file_store_type = table<file_definition_type>;
-			using http_store_type = table<http_definition_type>;
-			using model_store_type = table<model_type>;
+			using query_store_type = sorted_index<row_id_type, query_definition_type>;
+			using sql_store_type = sorted_index<row_id_type, sql_definition_type>;
+			using file_store_type = sorted_index<row_id_type, file_definition_type>;
+			using http_store_type = sorted_index<row_id_type, http_definition_type>;
+			using model_store_type = sorted_index<object_name, model_type>;
 
 			field_store_type		fields;
 			class_store_type		classes;
 			class_index_type		classes_by_name;
 			field_index_type		fields_by_name;
-			model_index_type		models_by_name;
 			query_store_type		queries;
 			sql_store_type			sql_remotes;
 			file_store_type			file_remotes;
@@ -775,20 +758,13 @@ namespace countrybit
 				return empty;
 			}
 
-			static row_id_type reserve_schema(serialized_box_container* _b, int _num_classes, int _num_models, bool _use_standard_fields)
+			static row_id_type reserve_schema(serialized_box_container* _b, int _num_classes, int _num_fields, int _total_class_fields, bool _use_standard_fields)
 			{
-				int _num_class_fields = _num_classes * 10 + ( _use_standard_fields ? 200 : 0 );
-				int _num_queries = _num_classes * 2;
-				int _num_sql_remotes = _num_classes * 2;
-				int _num_http_remotes = _num_classes * 2;
-				int _num_file_remotes = _num_classes * 2;
-
 				jschema_map schema_map, *pschema_map;
 				schema_map.fields_table_id = null_row;
 				schema_map.classes_table_id = null_row;
 				schema_map.classes_by_name_id = null_row;
 				schema_map.fields_by_name_id = null_row;
-				schema_map.models_by_name_id = null_row;
 				schema_map.query_properties_id = null_row;
 				schema_map.sql_properties_id = null_row;
 				schema_map.file_properties_id = null_row;
@@ -796,16 +772,15 @@ namespace countrybit
 				schema_map.models_id = null_row;
 
 				row_id_type rit = _b->pack(schema_map);
-				schema_map.fields_table_id = field_store_type::reserve_table(_b, _num_class_fields);
-				schema_map.classes_table_id = class_store_type::reserve_table(_b, _num_classes, _num_class_fields);
-				schema_map.classes_by_name_id = class_index_type::reserve_sorted_index(_b, _num_classes);
-				schema_map.fields_by_name_id = field_index_type::reserve_sorted_index(_b, _num_class_fields);
-				schema_map.models_by_name_id = model_index_type::reserve_sorted_index(_b, _num_models);
-				schema_map.query_properties_id = query_store_type::reserve_table(_b, _num_queries);
-				schema_map.sql_properties_id = sql_store_type::reserve_table(_b, _num_sql_remotes);
-				schema_map.file_properties_id = file_store_type::reserve_table(_b, _num_file_remotes);
-				schema_map.http_properties_id = http_store_type::reserve_table(_b, _num_http_remotes);
-				schema_map.models_id = model_store_type::reserve_table(_b, _num_models);
+				schema_map.fields_table_id = field_store_type::reserve_table(_b, _num_fields);
+				schema_map.classes_table_id = class_store_type::reserve_table(_b, _num_classes, _total_class_fields);
+				schema_map.classes_by_name_id = class_index_type::reserve_sorted_index(_b);
+				schema_map.fields_by_name_id = field_index_type::reserve_sorted_index(_b);
+				schema_map.query_properties_id = query_store_type::reserve_sorted_index(_b);
+				schema_map.sql_properties_id = sql_store_type::reserve_sorted_index(_b);
+				schema_map.file_properties_id = file_store_type::reserve_sorted_index(_b);
+				schema_map.http_properties_id = http_store_type::reserve_sorted_index(_b);
+				schema_map.models_id = model_store_type::reserve_sorted_index(_b);
 				pschema_map = _b->unpack<jschema_map>(rit);
 				*pschema_map = schema_map;
 				return rit;
@@ -820,12 +795,11 @@ namespace countrybit
 				schema.classes = class_store_type::get_table(_b, pschema_map->classes_table_id);
 				schema.classes_by_name = class_index_type::get_sorted_index(_b, pschema_map->classes_by_name_id);
 				schema.fields_by_name = field_index_type::get_sorted_index(_b, pschema_map->fields_by_name_id);
-				schema.models_by_name = model_index_type::get_sorted_index(_b, pschema_map->models_by_name_id);
-				schema.queries = query_store_type::get_table(_b, pschema_map->query_properties_id);
-				schema.sql_remotes = sql_store_type::get_table(_b, pschema_map->sql_properties_id);
-				schema.file_remotes = file_store_type::get_table(_b, pschema_map->file_properties_id);
-				schema.http_remotes = http_store_type::get_table(_b, pschema_map->http_properties_id);
-				schema.models = model_store_type::get_table(_b, pschema_map->models_id);
+				schema.queries = query_store_type::get_sorted_index(_b, pschema_map->query_properties_id);
+				schema.sql_remotes = sql_store_type::get_sorted_index(_b, pschema_map->sql_properties_id);
+				schema.file_remotes = file_store_type::get_sorted_index(_b, pschema_map->file_properties_id);
+				schema.http_remotes = http_store_type::get_sorted_index(_b, pschema_map->http_properties_id);
+				schema.models = model_store_type::get_sorted_index(_b, pschema_map->models_id);
 				schema.empty.field_id = null_row;
 				schema.empty.type_id = jtype::type_null;
 				schema.empty.name = "empty";
@@ -833,30 +807,21 @@ namespace countrybit
 				return schema;
 			}
 
-			static int64_t get_box_size(int _num_classes, int _num_models, bool _use_standard_fields)
+			static int64_t get_box_size(int _num_classes, int _num_fields, int _total_class_fields, bool _use_standard_fields)
 			{
-				int _num_class_fields = _num_classes * 10 + (_use_standard_fields ? 200 : 0);
-				int _num_queries = _num_classes * 2;
-				int _num_sql_remotes = _num_classes * 2;
-				int _num_http_remotes = _num_classes * 2;
-				int _num_file_remotes = _num_classes * 2;
-
-				int64_t field_size = field_store_type::get_box_size(_num_class_fields);
-				int64_t class_size = class_store_type::get_box_size(_num_classes, _num_class_fields);
-				int64_t classes_by_name_size = class_index_type::get_box_size(_num_classes);
-				int64_t fields_by_name_size = field_index_type::get_box_size(_num_class_fields);
-				int64_t models_by_name_size = model_index_type::get_box_size(_num_models);
-				int64_t query_size = query_store_type::get_box_size(_num_queries);
-				int64_t sql_size = sql_store_type::get_box_size(_num_sql_remotes);
-				int64_t file_size = file_store_type::get_box_size(_num_file_remotes);
-				int64_t http_size = http_store_type::get_box_size(_num_http_remotes);
-				int64_t model_size = model_store_type::get_box_size(_num_models);
+				int64_t field_size = field_store_type::get_box_size(_num_fields);
+				int64_t class_size = class_store_type::get_box_size(_num_classes, _total_class_fields);
+				int64_t classes_by_name_size = class_index_type::get_box_size();
+				int64_t fields_by_name_size = field_index_type::get_box_size();
+				int64_t query_size = query_store_type::get_box_size();
+				int64_t sql_size = sql_store_type::get_box_size();
+				int64_t file_size = file_store_type::get_box_size();
+				int64_t http_size = http_store_type::get_box_size();
+				int64_t model_size = model_store_type::get_box_size();
 				int64_t total_size = field_size + 
 					class_size + 
-					models_by_name_size + 
 					classes_by_name_size + 
 					fields_by_name_size + 
-					models_by_name_size +
 					query_size + 
 					sql_size + 
 					file_size + 
@@ -865,10 +830,12 @@ namespace countrybit
 				return total_size;
 			}
 
-			static jschema create_schema(serialized_box_container* _b, int _num_classes, int _num_models, bool _use_standard_fields, row_id_type& _location)
+			static jschema create_schema(serialized_box_container* _b, int _num_classes, bool _use_standard_fields, row_id_type& _location)
 			{
-				auto total_size = jschema::get_box_size(_num_classes, _num_models, _use_standard_fields);
-				_location = reserve_schema(_b, _num_classes, _num_models, _use_standard_fields);
+				int _num_fields = _num_classes * 5 + _use_standard_fields ? 200 : 0;
+				int _total_class_fields = _num_classes * 100;
+				auto total_size = jschema::get_box_size(_num_classes, _num_fields, _total_class_fields, _use_standard_fields);
+				_location = reserve_schema(_b, _num_classes, _num_fields, _total_class_fields, _use_standard_fields);
 				jschema schema = get_schema(_b, _location);
 				schema.add_standard_fields();
 				return schema;
@@ -1047,26 +1014,53 @@ namespace countrybit
 			const char* invalid_target_field = "Invalid target field";
 			const char* invalid_projection_field = "Invalid projection field";
 
-			void bind_field(const object_name& _field_name, row_id_type& _field_id)
+			void bind_field(const char *_field_name, row_id_type& _field_id)
 			{
+				object_name fn = _field_name;
+				bind_field(fn, _field_id);
+			}
+
+			void bind_field(object_name& _field_name, row_id_type& _field_id)
+			{
+				if (_field_id != null_row)
+				{
+					_field_name = fields[_field_id].name;
+					return;
+				}
+
 				auto fiter = fields_by_name[_field_name];
 				if (fiter != std::end(fields_by_name)) {
 					_field_id = fiter->second;
 					return;
 				}
 				_field_id = null_row;
-				throw std::logic_error("[" + _field_name + "] not found.");
+				throw std::logic_error("field [" + _field_name + "] not found.");
 			}
 
-			void bind_class(const object_name& _class_name, row_id_type& _class_id)
+			void bind_class(object_name& _class_name, row_id_type& _class_id, bool _optional = false)
 			{
+				if (_optional && _class_name.size() == 0 && _class_id == null_row)
+					return;
+
+				if (_class_id != null_row)
+				{
+					_class_name = classes[_class_id].pitem()->name;
+					return;
+				}
+
 				auto fiter = classes_by_name[_class_name];
 				if (fiter != std::end(classes_by_name)) {
 					_class_id = fiter->second;
 					return;
 				}
 				_class_id = null_row;
-				throw std::logic_error("[" + _class_name + "] not found.");
+				throw std::logic_error("class [" + _class_name + "] not found.");
+			}
+
+			void bind_class(const char* _class_name, row_id_type& _class_id)
+			{
+				object_name fn = _class_name;
+				bind_class(fn, _class_id);
 			}
 
 			void bind_projection_operation(operation_name& _operation, projection_operations& _nt)
@@ -1191,10 +1185,10 @@ namespace countrybit
 				porf.options.class_id = request.options.result_class_id;
 				porf.options.class_name = request.options.result_class_name;
 
-				queries.append(request.options, rr);
-				options.properties_id = rr.start;
+				row_id_type query_location = put_field(request.name.field_id, type_query, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, &options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(query_instance));
+				queries.insert_or_assign(query_location, request.options);
 
-				return put_field(request.name.field_id, type_query, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, &options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(query_instance));
+				return query_location;
 			}
 
 			row_id_type put_sql_remote_field(put_named_sql_remote_field_request request)
@@ -1208,10 +1202,8 @@ namespace countrybit
 					bind_field(pi.corona_field, pi.corona_field_id);
 				}
 
-				sql_remotes.append(request.options, rr);
-				options.properties_id = rr.start;
-
-				return put_field(request.name.field_id, type_sql, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &options, nullptr, nullptr, sizeof(sql_remote_instance));
+				row_id_type remote_location = put_field(request.name.field_id, type_sql, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &options, nullptr, nullptr, sizeof(sql_remote_instance));
+				sql_remotes.insert_or_assign(remote_location, request.options);
 			}
 
 			row_id_type put_http_remote_field(put_named_http_remote_field_request request)
@@ -1225,10 +1217,10 @@ namespace countrybit
 					bind_field(pi.corona_field, pi.corona_field_id);
 				}
 
-				http_remotes.append(request.options, rr);
-				options.properties_id = rr.start;
+				row_id_type remote_location = put_field(request.name.field_id, type_http, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &options, sizeof(http_remote_instance));
+				http_remotes.insert_or_assign(remote_location, request.options);
 
-				return put_field(request.name.field_id, type_http, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &options, sizeof(http_remote_instance));
+				return remote_location;
 			}
 
 			row_id_type put_file_remote_field(put_named_file_remote_field_request request)
@@ -1242,10 +1234,9 @@ namespace countrybit
 					bind_field(pi.corona_field, pi.corona_field_id);
 				}
 
-				file_remotes.append(request.options, rr);
-				options.properties_id = rr.start;
-
-				return put_field(request.name.field_id, type_sql, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &options, nullptr, sizeof(file_remote_instance));
+				row_id_type remote_location = put_field(request.name.field_id, type_sql, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &options, nullptr, sizeof(file_remote_instance));
+				file_remotes.insert_or_assign(remote_location, request.options);
+				return remote_location;
 			}
 
 			row_id_type put_point_field(put_point_field_request request)
@@ -1484,11 +1475,8 @@ namespace countrybit
 				return false;
 			}
 
-			row_id_type put_model(jmodel request)
+			void put_model(jmodel request)
 			{
-				row_id_type model_id = find_model(request.model_name);
-				request.model_id = model_id;
-
 				for (auto opt : request.create_options)
 				{
 					for (auto sel : opt.item.selectors.rules) 
@@ -1496,7 +1484,7 @@ namespace countrybit
 						bind_class(sel.item.class_name, sel.item.class_id);
 					}
 					bind_class(opt.item.create_class_name, opt.item.create_class_id);
-					bind_class(opt.item.item_id_class_name, opt.item.item_id_class);
+					bind_class(opt.item.item_id_class_name, opt.item.item_id_class, true);
 				}
 
 				for (auto opt : request.select_options)
@@ -1517,21 +1505,7 @@ namespace countrybit
 					bind_class(opt.item.update_class_name, opt.item.update_class_id);
 				}
 
-				if (request.model_id != null_row) 
-				{
-					models[request.model_id] = request;
-					model_id = request.model_id;
-				}
-				else 
-				{
-					row_range rr;
-					models.append(request, rr);
-					model_id = rr.start;
-					request.model_id = model_id;
-					models[model_id].model_id = model_id;
-					models_by_name.insert_or_assign(request.model_name, model_id);
-				}
-				return model_id;
+				models.insert_or_assign(request.model_name, request);
 			}
 
 			row_id_type find_class(const object_name& class_name)
@@ -1552,19 +1526,13 @@ namespace countrybit
 				return null_row;
 			}
 
-			row_id_type find_model(const object_name& field_name)
+
+			jmodel get_model(object_name model_name)
 			{
-				auto citer = models_by_name[field_name];
+				auto citer = models[model_name];
 				if (citer != std::end(citer)) {
 					return citer->second;
 				}
-				return null_row;
-			}
-
-			jmodel get_model(row_id_type model_id)
-			{
-				auto the_model = models[model_id];
-				return the_model;
 			}
 
 			jclass get_class(row_id_type class_id)
@@ -1582,29 +1550,25 @@ namespace countrybit
 			const query_definition_type& get_query_definition(row_id_type field_id)
 			{
 				auto& f = fields[field_id];
-				auto xid = f.query_properties.properties_id;
-				return queries[xid];
+				return queries[field_id].get_value();
 			}
 
 			const sql_definition_type& get_sql_definition(row_id_type field_id)
 			{
 				auto& f = fields[field_id];
-				auto xid = f.sql_properties.properties_id;
-				return sql_remotes[xid];
+				return sql_remotes[field_id].get_value();
 			}
 
 			const file_definition_type& get_file_definition(row_id_type field_id)
 			{
 				auto& f = fields[field_id];
-				auto xid = f.file_properties.properties_id;
-				return file_remotes[xid];
+				return file_remotes[field_id].get_value();
 			}
 
 			const http_definition_type& get_http_definition(row_id_type field_id)
 			{
 				auto& f = fields[field_id];
-				auto xid = f.http_properties.properties_id;
-				return http_remotes[xid];
+				return http_remotes[field_id].get_value();
 			}
 
 			uint64_t get_max_object_size(row_id_type* _class_ids)
@@ -1677,6 +1641,6 @@ namespace countrybit
 		bool schema_tests();
 		bool collection_tests();
 		bool array_tests();
-
+		bool model_tests();
 	}
 }
