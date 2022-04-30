@@ -120,6 +120,7 @@ namespace countrybit
 				index_node		  node;
 				node.data = box->unpack<data_pair>(hd->header_id);
 				node.details = forward_pointer_collection::get(box, hd->details_id);
+				node.id = r;
 
 				for (int i = 0; i < _num_levels; i++)
 				{
