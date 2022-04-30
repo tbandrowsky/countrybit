@@ -8,9 +8,7 @@ namespace countrybit
 	{
 
 
-		template <typename BOX>
-		requires box<BOX,char>
-		bool test_box(BOX& b)
+		bool test_box(serialized_box_container *b)
 		{
 			struct test_struct {
 				int i1,
@@ -30,7 +28,7 @@ namespace countrybit
 			while (l >= 0) 
 			{
 				int i = c % 3;
-				l = b.pack(tests[i]);
+				l = b->pack(tests[i]);
 				if (l >= 0) {
 					locations[i] = l;
 					c++;
@@ -40,7 +38,7 @@ namespace countrybit
 			while (c >= 0)
 			{
 				int i = c % 3;
-				test_struct *ts = b.unpack<test_struct>(locations[i]);
+				test_struct *ts = b->unpack<test_struct>(locations[i]);
 				test_struct& item = tests[i];
 				if (ts->i1 != item.i1 ||
 					ts->i2 != item.i2 ||
@@ -61,14 +59,14 @@ namespace countrybit
 		{
 			dynamic_box dbox;
 			dbox.init(500);
-			if (!test_box(dbox))
+			if (!test_box(&dbox))
 			{
 				std::cout << __LINE__ << ": dynamic box failed" << std::endl;
 				return false;
 			}
 
 			static_box<500> sbox;
-			if (!test_box(sbox))
+			if (!test_box(&sbox))
 			{
 				std::cout << __LINE__ << ": static box failed" << std::endl;
 				return false;

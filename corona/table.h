@@ -168,7 +168,7 @@ namespace countrybit
 				row_id_type bytes_size = get_box_size(_max_rows);
 
 				char c = 0;
-				hdr_offset = _b->pack(c, bytes_size);
+				hdr_offset = _b->fill(c, bytes_size);
 
 				if (hdr_offset == null_row)
 					return hdr_offset;
@@ -577,9 +577,7 @@ namespace countrybit
 				;
 			}
 
-			template <typename B>
-				requires (box<B, P>&& box<B, item_details_table<P, C>::item_type>)
-			static row_id_type reserve_table(B* b, int item_rows, int detail_rows, bool dynamic = false)
+			static row_id_type reserve_table(serialized_box_container* b, int item_rows, int detail_rows, bool dynamic = false)
 			{
 				item_detail_table_header hdr;
 				hdr.item_location = null_row;
@@ -591,9 +589,7 @@ namespace countrybit
 				return r;
 			}
 
-			template <typename B>
-				requires (box<B, P>&& box<B, item_details_table<P, C>::item_type>)
-			static item_details_table get_table(B* b, row_id_type row)
+			static item_details_table get_table(serialized_box_container* b, row_id_type row)
 			{
 				item_details_table pct;
 				item_detail_table_header* hdr;
@@ -603,9 +599,7 @@ namespace countrybit
 				return pct;
 			}
 
-			template <typename B>
-				requires (box<B, P>&& box<B, item_details_table<P, C>::item_type>)
-			static item_details_table create_table(B* b, int item_rows, int detail_rows, row_id_type& row, bool dynamic = false)
+			static item_details_table create_table(serialized_box_container* b, int item_rows, int detail_rows, row_id_type& row, bool dynamic = false)
 			{
 				item_details_table pct;
 				row = reserve_table(b, item_rows, detail_rows, dynamic);

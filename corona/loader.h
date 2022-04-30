@@ -154,9 +154,7 @@ namespace countrybit
 
 			database::object_name			key;
 
-			template <typename BOX>
-				requires database::box<BOX, char>
-			typeinfo(BOX* _b,
+			typeinfo(database::serialized_box_container* _b,
 				const char* _type_key,
 				const char* _type_value,
 				const char* _class_name,
@@ -165,7 +163,7 @@ namespace countrybit
 				type_key = _type_key;
 				type_value = _type_value;
 				class_name = _class_name;
-				property_index = property_index_type::create_sorted_index(_b, _max_items, property_index_id);
+				property_index = property_index_type::create_sorted_index(_b, property_index_id);
 
 				key = type_key;
 				key = key + "_";
@@ -551,7 +549,7 @@ namespace countrybit
 			{
 				database::row_id_type header_location;
 				data.init(_size);
-				bindings_by_name.create_sorted_index(&data, _max_types, header_location);
+				bindings_by_name.create_sorted_index(&data, header_location);
 				error_messages = database::table<error_message>::create_table(&data, 250, error_messages_id);
 			}
 
@@ -948,9 +946,9 @@ namespace countrybit
 			schema_loader(int _size, int _num_fields) : loader(_size, _num_fields)
 			{
 
-				fields_by_name = database::sorted_index<database::object_name, location>::create_sorted_index(&data, _num_fields, fields_by_name_id);
-				classes_by_name = database::sorted_index<database::object_name, database::row_id_type>::create_sorted_index(&data, _num_fields, classes_by_name_id);
-				class_types_by_name = database::sorted_index<database::object_name, typeinfo *>::create_sorted_index(&data, _num_fields, class_types_by_name_id);
+				fields_by_name = database::sorted_index<database::object_name, location>::create_sorted_index(&data, fields_by_name_id);
+				classes_by_name = database::sorted_index<database::object_name, database::row_id_type>::create_sorted_index(&data, classes_by_name_id);
+				class_types_by_name = database::sorted_index<database::object_name, typeinfo *>::create_sorted_index(&data, class_types_by_name_id);
 				put_string_fields = database::table<database::put_string_field_request>::create_table(&data, _num_fields, put_string_fields_id);
 				put_integer_fields = database::table<database::put_integer_field_request>::create_table(&data, _num_fields, put_integer_fields_id);
 				put_double_fields = database::table<database::put_double_field_request>::create_table(&data, _num_fields, put_double_fields_id);

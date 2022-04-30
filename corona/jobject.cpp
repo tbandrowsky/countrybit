@@ -213,6 +213,11 @@ namespace countrybit
 				}
 			}
 
+			for (auto oi : acr.view_objects)
+			{
+				;
+			}
+
 			return acr;
 		}
 
@@ -2185,13 +2190,13 @@ namespace countrybit
 				schema.bind_field("institutionName", institution_field_id);
 
 				jmodel sample_model;
-				sample_model.model_name = "my model";
+				sample_model.name = "my model";
 
 				schema.put_model(sample_model);
 
 				jcollection_ref ref;
 				ref.data = &box;
-				ref.model_name = sample_model.model_name;
+				ref.model_name = sample_model.name;
 				ref.max_actors = 2;
 				ref.max_objects = 50;
 
@@ -2376,12 +2381,12 @@ namespace countrybit
 
 				model_type sprite_model;
 
-				sprite_model.model_name = "sprite model";
+				sprite_model.name = "sprite model";
 				schema.put_model(sprite_model);
 
 				jcollection_ref ref;
 				ref.data = &box;
-				ref.model_name = sprite_model.model_name;
+				ref.model_name = sprite_model.name;
 				ref.max_actors = 2;
 				ref.max_objects = 50;
 
@@ -2625,7 +2630,7 @@ namespace countrybit
 
 				jmodel jm;
 
-				jm.model_name = "program_chart";
+				jm.name = "program_chart";
 
 				model_creatable_class* mcr;
 				model_selectable_class* msr;
@@ -2732,7 +2737,7 @@ namespace countrybit
 
 				jcollection_ref ref;
 				ref.data = &box;
-				ref.model_name = jm.model_name;
+				ref.model_name = jm.name;
 				ref.max_actors = 2;
 				ref.max_objects = 100;
 

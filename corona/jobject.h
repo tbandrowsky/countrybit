@@ -1204,6 +1204,7 @@ namespace countrybit
 
 				row_id_type remote_location = put_field(request.name.field_id, type_sql, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &options, nullptr, nullptr, sizeof(sql_remote_instance));
 				sql_remotes.insert_or_assign(remote_location, request.options);
+				return remote_location;
 			}
 
 			row_id_type put_http_remote_field(put_named_http_remote_field_request request)
@@ -1505,7 +1506,7 @@ namespace countrybit
 					bind_class(opt.item.update_class_name, opt.item.update_class_id);
 				}
 
-				models.insert_or_assign(request.model_name, request);
+				models.insert_or_assign(request.name, request);
 			}
 
 			row_id_type find_class(const object_name& class_name)
@@ -1525,7 +1526,6 @@ namespace countrybit
 				}
 				return null_row;
 			}
-
 
 			jmodel get_model(object_name model_name)
 			{

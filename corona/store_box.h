@@ -141,6 +141,24 @@ namespace countrybit
 				return placement;
 			}
 
+			template <typename T>
+				requires (std::is_standard_layout<T>::value)
+			int fill(T src, int length)
+			{
+				size_t sz = sizeof(T) * length;
+				size_t placement = _top;
+				size_t new_top = placement + sz;
+				if (new_top >= _size)
+					return -1;
+				while (_top < new_top)
+				{
+					T* item = unpack<T>(_top);
+					*item = src;
+					_top += sizeof(T);
+				}
+				return placement;
+			}
+
 			template <typename T> 
 			requires (std::is_standard_layout<T>::value)
 			int pack_slice(const T* base, int start, int stop, bool terminate = true)
@@ -338,10 +356,10 @@ namespace countrybit
 
 			template <typename T>
 				requires (std::is_standard_layout<T>::value)
-			int pack(T& src, int length)
+			int fill(const T& src, int length)
 			{
 				check(sizeof(T) * length);
-				return get_box()->pack<T>(src, length);
+				return get_box()->fill<T>(src, length);
 			}
 
 			template <typename T>

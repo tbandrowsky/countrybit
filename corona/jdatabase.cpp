@@ -26,9 +26,7 @@ namespace countrybit
 				if (dbfile.success()) {
 					map = database_box.unpack<jdatabase_control_map>(0);
 					schema = jschema::get_schema(&database_box, map->schema_location);
-					collections = collection_table_type::get_table(&database_box, map->collections_location);
 					collections_by_id = collections_by_id_type::get_sorted_index(&database_box, map->collections_by_id_location);
-					collections_by_name = collections_by_name_type::get_sorted_index(&database_box, map->collections_by_name_location);
 				}
 			} 
 			db_response jfr;
@@ -43,12 +41,11 @@ namespace countrybit
 
 			int success = 1;
 
-			int64_t schema_size_bytes =	jschema::get_box_size(_create.num_classes, _create.num_models, true);
-			int64_t collection_size_bytes = collection_table_type::get_box_size(_create.num_collections);
-			int64_t collection_by_name_bytes = collections_by_name_type::get_box_size(_create.num_collections);
-			int64_t collection_by_id_bytes = collections_by_id_type::get_box_size(_create.num_collections);
+			int64_t schema_size_bytes =	jschema::get_box_size(_create.num_classes, _create.num_fields, _create.total_class_fields, true);
+			int64_t collection_by_name_bytes = collections_by_name_type::get_box_size();
+			int64_t collection_by_id_bytes = collections_by_id_type::get_box_size();
 
-			database_box.init(collection_size_bytes + schema_size_bytes + collection_by_name_bytes + collection_by_id_bytes + sizeof(jdatabase_control_map));
+			database_box.init(collection_by_name_bytes + collection_by_id_bytes + sizeof(jdatabase_control_map) + schema_size_bytes);
 			map = database_box.allocate<jdatabase_control_map>(1);
 
 			std::filesystem::path dbpath = _create.database_filename.c_str();
@@ -57,10 +54,9 @@ namespace countrybit
 			map->filename = dbpath;
 			map->database_folder = dbfolder;
 
-			schema = jschema::create_schema(&database_box, _create.num_classes, _create.num_models, true, map->schema_location);
-			collections = collection_table_type::create_table(&database_box, _create.num_collections, map->collections_location);
-			collections_by_id = collections_by_id_type::create_sorted_index(&database_box, _create.num_collections, map->collections_by_id_location);
-			collections_by_name = collections_by_name_type::create_sorted_index(&database_box, _create.num_collections, map->collections_by_name_location);
+			schema = jschema::create_schema(&database_box, _create.num_classes, true, map->schema_location);
+			collections_by_id = collections_by_id_type::create_sorted_index(&database_box, map->collections_by_id_location);
+			collections_by_name = collections_by_name_type::create_sorted_index(&database_box, map->collections_by_name_location);
 
 			countrybit::system::file dbfile = application->create_file(_create.database_filename);
 
@@ -78,56 +74,59 @@ namespace countrybit
 		{
 			collection_response response;
 
-			if (_create_collection.collection_name.has_any("./\\:"))
+			try {
+
+				if (_create_collection.collection_name.has_any("./\\:"))
+				{
+					response.success = false;
+					response.message = "Invalid collection name.  Collection names may not contain path characters.";
+					return response;
+				}
+
+				if (collections_by_name.contains(_create_collection.collection_name))
+				{
+					response.success = false;
+					response.message = "Collection exists";
+					return response;
+				}
+
+				jcollection_ref new_collection;
+				new_collection.collection_name = _create_collection.collection_name;
+				new_collection.model_name = _create_collection.model_name;
+				new_collection.max_actors = _create_collection.max_actors;
+				new_collection.max_objects = _create_collection.max_objects;
+				new_collection.data = nullptr;
+
+				if (!init_collection_id(new_collection.collection_id))
+				{
+					response.success = false;
+					response.message = "Could not create collection id.";
+					return response;
+				}
+
+				std::filesystem::path collection_path = map->database_folder.c_str();
+				collection_path /= new_collection.collection_name.c_str();
+				collection_path /= ".corc";
+				new_collection.collection_file_name = collection_path;
+
+				new_collection.collection_size_bytes = schema.get_collection_size(&new_collection, nullptr);
+				if (new_collection.collection_size_bytes == null_row)
+				{
+					response.success = false;
+					response.message = "Could not estimate collection size.";
+					return response;
+				}
+
+				collections_by_id.insert_or_assign(new_collection.collection_id, new_collection);
+				collections_by_name.insert_or_assign(new_collection.collection_name, new_collection.collection_id);
+
+				response = get_collection( new_collection.collection_id);
+			}
+			catch (std::exception exc)
 			{
 				response.success = false;
-				response.message = "Invalid collection name.  Collection names may not contain path characters.";
-				return response;
+				response.message = exc.what();
 			}
-
-			auto iter = collections_by_name[_create_collection.collection_name];
-
-			if (iter != std::end(collections_by_name)) 
-			{
-				response.success = false;
-				response.message = "Collection exists";
-				return response;
-			}
-			
-			jcollection_ref new_collection;
-			new_collection.collection_name = _create_collection.collection_name;
-			new_collection.model_name = _create_collection.model_name;
-			new_collection.max_actors = _create_collection.max_actors;
-			new_collection.max_objects = _create_collection.max_objects;
-
-			if (!init_collection_id(new_collection.collection_id))
-			{
-				response.success = false;
-				response.message = "Could not create collection id.";
-				return response;
-			}
-
-			std::filesystem::path collection_path = map->database_folder.c_str();
-			collection_path /= new_collection.collection_name.c_str();
-			collection_path /= ".corc";
-			new_collection.collection_file_name = collection_path;
-
-			new_collection.collection_size_bytes = schema.get_collection_size(&new_collection, nullptr);
-			if (new_collection.collection_size_bytes == null_row)
-			{
-				response.success = false;
-				response.message = "Could not estimate collection size.";
-				return response;
-			}
-
-			row_id_type rr;
-			jcollection_ref* jref = collections.create(1, rr);
-			*jref = new_collection;
-			jref->data = new dynamic_box();
-			response.collection = schema.create_collection(jref, nullptr);
-
-			collections_by_id.insert_or_assign(jref->collection_id, rr);
-			collections_by_name.insert_or_assign(jref->collection_name, rr);
 
 			return response;
 		}
@@ -135,19 +134,21 @@ namespace countrybit
 		collection_response jdatabase::get_collection(object_name _name)
 		{
 			collection_response response;
-			response.success = false;
-			auto itr = collections_by_name[_name];
-			if (itr == std::end(collections_by_name)) {
-				response.message = "[" + _name + "] not found";
-				return response;
+			try {
+
+				response.success = false;
+				auto itr = collections_by_name[_name];
+				if (itr == std::end(collections_by_name)) {
+					response.message = "[" + _name + "] not found";
+					return response;
+				}
+				auto collection_id = itr.get_value();
+				response = get_collection(collection_id);
 			}
-			row_id_type row = itr.get_value();
-			if (row != null_row) {
-				auto& ref = collections[row];
-				ref.data = new dynamic_box();
-				ref.data->init(ref.collection_size_bytes);
-				response.collection = jcollection(&schema, &ref);
-				response.success = true;
+			catch (std::exception exc)
+			{
+				response.success = false;
+				response.message = exc.what();
 			}
 			return response;
 		}
@@ -160,14 +161,13 @@ namespace countrybit
 				response.message = "collection not found";
 				return response;
 			}
-			row_id_type row = itr.get_value();
-			if (row != null_row) {
-				auto& ref = collections[row];
+			auto& ref = itr.get_value();
+			if (ref.data == nullptr) {
 				ref.data = new dynamic_box();
 				ref.data->init(ref.collection_size_bytes);
-				response.collection = jcollection(&schema, &ref);
-				response.success = true;
 			}
+			response.collection = jcollection(&schema, &ref);
+			response.success = true;
 			return response;
 		}
 
@@ -253,12 +253,12 @@ namespace countrybit
 
 		model_response jdatabase::put_model(jmodel request)
 		{
-			return model_invoke<jmodel>(request.model_name.c_str(), [this](auto& r) { return schema.put_model(r); }, request);
+			return schema_put_named<model_response, jmodel>(request, [this](jmodel& r) { schema.put_model(r); }, [this](object_name& r) { return schema.get_model(r); });
 		}
 
 		model_response jdatabase::get_model(object_name name)
 		{
-			return model_invoke<object_name>(name.c_str(), [this](auto& r) { return schema.find_model(r); }, name);
+			return schema_get_by_name<model_response, jmodel>(name, [this](object_name& r) { return schema.get_model(r); });
 		}
 
 		actor_response jdatabase::put_actor(jactor _actor)

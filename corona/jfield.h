@@ -939,7 +939,7 @@ namespace countrybit
 		class model_type
 		{
 		public:
-			object_name				model_name;
+			object_name					  name;
 			model_create_class_collection create_options;
 			model_select_class_collection select_options;
 			model_update_class_collection update_options;

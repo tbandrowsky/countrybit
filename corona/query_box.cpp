@@ -42,12 +42,11 @@ namespace countrybit
 				filters.clear();
 
 				auto& fldref = _class->detail(_field_index);
-				auto& fld = _schema->get_field(fldref.field_id);
 
 				collection_id_type collection_id;
 				init_collection_id(collection_id);
 
-				query_definition_type query_copy = _schema->get_query_definition(fld.query_properties.properties_id);
+				query_definition_type query_copy = _schema->get_query_definition(fldref.field_id);
 
 			}
 		};

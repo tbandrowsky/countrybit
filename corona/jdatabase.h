@@ -18,8 +18,8 @@ namespace countrybit
 	{
 
 		using collection_table_type = table<jcollection_ref>;
-		using collections_by_name_type = sorted_index<object_name, row_id_type, 1>;
-		using collections_by_id_type = sorted_index<collection_id_type, row_id_type, 1>;
+		using collections_by_name_type = sorted_index<object_name, collection_id_type, 1>;
+		using collections_by_id_type = sorted_index<collection_id_type, jcollection_ref, 1>;
 
 		struct jdatabase_control_map
 		{
@@ -42,9 +42,9 @@ namespace countrybit
 		class create_db_request
 		{
 		public:
-			int num_collections;
 			int num_classes;
-			int num_models;
+			int num_fields;
+			int total_class_fields;
 
 			object_path database_filename;
 			object_path database_folder;
@@ -138,11 +138,9 @@ namespace countrybit
 		{
 
 			dynamic_box						database_box;
-
 			jschema							schema;
-			collection_table_type			collections;
-			collections_by_name_type		collections_by_name;
 			collections_by_id_type			collections_by_id;
+			collections_by_name_type		collections_by_name;
 
 			system::application				*application;
 			jdatabase_control_map			*map;
@@ -182,6 +180,56 @@ namespace countrybit
 				return response;
 			}
 
+			template <typename response_type, typename object_type> response_type schema_put_named(
+				object_type& _request,
+				std::function<void(object_type& _request)> process_fn,
+				std::function<object_type(object_name& _name)> get_fn
+			)
+			{
+				response_type response;
+				response.success = false;
+
+				try
+				{
+					process_fn(_request);
+					response.info = get_fn(_request.name);
+				}
+				catch (std::logic_error& le)
+				{
+					response.message = std::format("Could not manage [{}] :{}", _request.name.c_str(), le.what());
+				}
+				catch (std::exception& exc)
+				{
+					response.message = std::format("Could not manage [{}] :{}", _request.name.c_str(), exc.what());
+				}
+
+				return response;
+			}
+
+			template <typename response_type, typename object_type> response_type schema_get_by_name(
+				object_name& _name,
+				std::function<object_type(object_name& _name)> get_fn
+			)
+			{
+				response_type response;
+				response.success = false;
+
+				try
+				{
+					response.info = get_fn(_name);
+				}
+				catch (std::logic_error& le)
+				{
+					response.message = std::format("Could not manage [{}] :{}", _name.c_str(), le.what());
+				}
+				catch (std::exception& exc)
+				{
+					response.message = std::format("Could not manage [{}] :{}", _name.c_str(), exc.what());
+				}
+
+				return response;
+			}
+
 			template<typename request_type> field_response field_invoke(const char * _name, std::function<row_id_type(request_type& _request)> fn, request_type& _request)
 			{
 				return schema_invoke<request_type, field_response, jfield>(_name, _request, fn, [this](row_id_type id) { return schema.get_field(id); });
@@ -190,11 +238,6 @@ namespace countrybit
 			template<typename request_type> class_response class_invoke(const char* _name, std::function<row_id_type(request_type& _request)> fn, request_type& _request)
 			{
 				return schema_invoke<request_type, class_response, jclass>(_name, _request, fn, [this](row_id_type id) { return schema.get_class(id); });
-			}
-
-			template<typename request_type> model_response model_invoke(const char* _name, std::function<row_id_type(request_type& _request)> fn, request_type& _request)
-			{
-				return schema_invoke<request_type, model_response, jmodel>(_name, _request, fn, [this](row_id_type id) { return schema.get_model(id); });
 			}
 
 			template <typename request_type, typename response_type, typename object_type> response_type collection_invoke(
