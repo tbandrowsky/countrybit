@@ -96,12 +96,13 @@ namespace countrybit
 				return in;
 			}
 
-			index_node create_node(int _num_levels)
+			index_node create_node(int _max_level)
 			{
 				index_node_holder holder, * hd;
-
 				data_pair dp;
 				row_id_type r = box->pack<index_node_holder>(holder);
+
+				int level_bounds = _max_level + 1;
 
 				if (r == null_row)
 				{
@@ -110,7 +111,7 @@ namespace countrybit
 
 				hd = box->unpack<index_node_holder>(r);
 				hd->header_id = box->pack<data_pair>(dp);
-				hd->details_id = forward_pointer_collection::reserve(box, _num_levels);
+				hd->details_id = forward_pointer_collection::reserve(box, level_bounds);
 
 				if (hd->header_id == null_row || hd->details_id == null_row)
 				{
@@ -122,7 +123,7 @@ namespace countrybit
 				node.details = forward_pointer_collection::get(box, hd->details_id);
 				node.id = r;
 
-				for (int i = 0; i < _num_levels; i++)
+				for (int i = 0; i < level_bounds; i++)
 				{
 					row_id_type rit = null_row;
 					node.details.push_back(rit);
