@@ -125,7 +125,7 @@ namespace countrybit
 
 		struct dimensions_type
 		{
-			int x, y, z;
+			corona_size_t x, y, z;
 		};
 
 		int compare(const dimensions_type& a, const dimensions_type& b);
@@ -139,7 +139,7 @@ namespace countrybit
 		struct object_properties_type
 		{
 			dimensions_type		dim;
-			row_id_type			class_id;
+			relative_ptr_type			class_id;
 			object_name			class_name;
 			int64_t				class_size_bytes;
 			int64_t				total_size_bytes;
@@ -147,7 +147,7 @@ namespace countrybit
 
 		struct model_properties_type
 		{
-			row_id_type			class_id;
+			relative_ptr_type			class_id;
 			object_name			class_name;
 			int64_t				model_size_bytes;
 		};
@@ -156,7 +156,7 @@ namespace countrybit
 		{
 		public:
 
-			row_id_type				field_id;
+			relative_ptr_type				field_id;
 			jtype					type_id;
 			int64_t					size_bytes;
 
@@ -287,16 +287,16 @@ namespace countrybit
 		public:
 			object_name				collection_name;
 			object_name				class_name;
-			row_id_type				class_id;
+			relative_ptr_type				class_id;
 		};
 
 		class path_node
 		{
 		public:
 			object_name		member_name;
-			row_id_type		member_id;
-			row_id_type		member_index;
-			row_id_type 	traversal_index;
+			relative_ptr_type		member_id;
+			relative_ptr_type		member_index;
+			relative_ptr_type 	traversal_index;
 		};
 
 		using path_nodes = iarray<path_node, max_path_nodes>;
@@ -335,9 +335,9 @@ namespace countrybit
 		struct expression_frame
 		{
 			expression_load_ops		load_op;
-			row_id_type				field_id;
+			relative_ptr_type				field_id;
 			int64_t					offset;
-			row_id_type				stack_field_id;
+			relative_ptr_type				stack_field_id;
 		};
 
 		struct expression_operator
@@ -345,8 +345,8 @@ namespace countrybit
 		public:
 			expression_operators	op;
 			double					distance_threshold;
-			row_id_type				operand1;
-			row_id_type				operand2;
+			relative_ptr_type				operand1;
+			relative_ptr_type				operand2;
 		};
 
 		using expression_frame_collection = iarray<expression_frame, 100>;
@@ -377,10 +377,10 @@ namespace countrybit
 		{
 		public:
 			object_name				target_field_name;
-			row_id_type				target_field_id;
+			relative_ptr_type				target_field_id;
 			operation_name			comparison_name;
 			filter_comparison_types	comparison;
-			row_id_type				parameter_field_id;
+			relative_ptr_type				parameter_field_id;
 			object_name				parameter_field_name;
 			int64_t					parameter_offset;
 			int64_t					target_offset;
@@ -405,7 +405,7 @@ namespace countrybit
 		{
 		public:
 			object_name				field_name;
-			row_id_type				field_id;
+			relative_ptr_type				field_id;
 			operation_name			projection_name;
 			projection_operations   projection;
 			int64_t					field_offset;
@@ -420,9 +420,9 @@ namespace countrybit
 		public:
 			path							source_path;
 			object_name						result_class_name;
-			row_id_type						result_class_id;
-			row_id_type						result_field_id;
-			row_id_type						max_result_objects;
+			relative_ptr_type						result_class_id;
+			relative_ptr_type						result_field_id;
+			relative_ptr_type						max_result_objects;
 			filter_element_collection		filter;
 			projection_element_collection	projection;
 		};
@@ -441,10 +441,10 @@ namespace countrybit
 		{
 			remote_file_path				file_path;
 			object_name						parameter_field;
-			row_id_type						parameter_field_id;
-			row_id_type						result_field_id;
+			relative_ptr_type						parameter_field_id;
+			relative_ptr_type						result_field_id;
 			object_name						result_class_name;
-			row_id_type						result_class_id;
+			relative_ptr_type						result_class_id;
 			int								max_result_objects;
 			remote_parameter_fields_type	parameters;
 			remote_fields_type				fields;
@@ -481,10 +481,10 @@ namespace countrybit
 			object_name						password;
 			remote_http_url					data_url;
 			remote_http_method				data_method;
-			row_id_type						result_field_id;
+			relative_ptr_type						result_field_id;
 			object_name						result_class_name;
-			row_id_type						result_class_id;
-			row_id_type						max_result_objects;
+			relative_ptr_type						result_class_id;
+			relative_ptr_type						max_result_objects;
 			remote_parameter_fields_type	parameters;
 			remote_fields_type				fields;
 			time_t							last_success;
@@ -515,10 +515,10 @@ namespace countrybit
 			sql_login_types					login_type;
 			object_name						username;
 			object_name						password;
-			row_id_type						result_field_id;
+			relative_ptr_type						result_field_id;
 			object_name						result_class_name;
-			row_id_type						result_class_id;
-			row_id_type						max_result_objects;
+			relative_ptr_type						result_class_id;
+			relative_ptr_type						max_result_objects;
 			remote_parameter_fields_type	parameters;
 			remote_fields_type				fields;
 			remote_sql_query				query;
@@ -538,7 +538,7 @@ namespace countrybit
 
 		class put_field_request_base {
 		public:
-			row_id_type field_id;
+			relative_ptr_type field_id;
 			jtype		type_id;
 			object_name name;
 			object_description description;
@@ -670,8 +670,8 @@ namespace countrybit
 
 			union
 			{
-				row_id_type field_id;
-				row_id_type class_id;
+				relative_ptr_type field_id;
+				relative_ptr_type class_id;
 			};
 
 			dimensions_type dimensions;
@@ -685,7 +685,7 @@ namespace countrybit
 				; 
 			}
 
-			member_field(row_id_type _field_id) :
+			member_field(relative_ptr_type _field_id) :
 				membership_type(member_field_types::member_field),
 				field_name(""),
 				field_id(_field_id),
@@ -694,7 +694,7 @@ namespace countrybit
 				;
 			}
 
-			member_field(member_field_types _member_ship_type, row_id_type _id) :
+			member_field(member_field_types _member_ship_type, relative_ptr_type _id) :
 				membership_type(_member_ship_type),
 				field_name(""),
 				dimensions{ 1, 1, 1 }
@@ -719,7 +719,7 @@ namespace countrybit
 
 			}
 
-			member_field(row_id_type _class_id, int _maximum) :
+			member_field(relative_ptr_type _class_id, int _maximum) :
 				membership_type(member_field_types::member_list),
 				field_name(""),
 				class_id(_class_id)
@@ -727,7 +727,7 @@ namespace countrybit
 				dimensions = { _maximum, 1, 1 };
 			}
 
-			member_field(row_id_type _class_id, dimensions_type dims) :
+			member_field(relative_ptr_type _class_id, dimensions_type dims) :
 				membership_type(member_field_types::member_class),
 				field_name(""),
 				class_id(_class_id)
@@ -773,7 +773,7 @@ namespace countrybit
 		class put_class_request
 		{
 		public:
-			row_id_type				 class_id;
+			relative_ptr_type				 class_id;
 			object_name				 class_name;
 			object_description		 class_description;
 			member_field_collection  member_fields;
@@ -782,17 +782,17 @@ namespace countrybit
 		class jlist_instance
 		{
 		public:
-			int32_t   allocated;
-			int32_t   selection_offset;
-			int32_t   sort_offset;
-			int32_t   slice_offset;
+			corona_size_t   allocated;
+			corona_size_t   selection_offset;
+			corona_size_t   sort_offset;
+			corona_size_t   slice_offset;
 		};
 
 		class jlist_state
 		{
 		public:
-			array_box<row_id_type> selections;
-			array_box<row_id_type> sort_order;
+			array_box<relative_ptr_type> selections;
+			array_box<relative_ptr_type> sort_order;
 			jlist_instance* instance;
 			char	  *list_bytes;
 		};
@@ -800,7 +800,7 @@ namespace countrybit
 		class jclass_header
 		{
 		public:
-			row_id_type									class_id;
+			relative_ptr_type									class_id;
 			object_name									name;
 			object_description							description;
 			uint64_t									class_size_bytes;
@@ -809,7 +809,7 @@ namespace countrybit
 		class jclass_field
 		{
 		public:
-			row_id_type				field_id;
+			relative_ptr_type				field_id;
 			uint64_t				offset;
 		};
 
@@ -820,8 +820,8 @@ namespace countrybit
 		{
 		public:
 			object_name				target_field_name;
-			row_id_type				target_field_id;
-			row_id_type				parameter_field_id;
+			relative_ptr_type				target_field_id;
+			relative_ptr_type				parameter_field_id;
 			object_name				parameter_field_name;
 			int64_t					parameter_offset;
 			int64_t					target_offset;
@@ -841,13 +841,13 @@ namespace countrybit
 
 		using update_definition_type = update_definition_t;
 
-		using selections_collection = iarray<row_id_type, max_selections>;
+		using selections_collection = iarray<relative_ptr_type, max_selections>;
 
 		class selector_rule
 		{
 		public:
 			object_name class_name;
-			row_id_type class_id;
+			relative_ptr_type class_id;
 		};
 
 		using selector_rule_collection = iarray<selector_rule, 8>;
@@ -862,19 +862,19 @@ namespace countrybit
 				rules.clear();
 			}
 
-			void when(row_id_type _class_id0)
+			void when(relative_ptr_type _class_id0)
 			{
 				auto *sr = rules.append();
 				sr->class_id = _class_id0;
 			}
 
-			void when(row_id_type _class_id0, row_id_type _class_id1)
+			void when(relative_ptr_type _class_id0, relative_ptr_type _class_id1)
 			{
 				when(_class_id0);
 				when(_class_id1);
 			}
 
-			void when(row_id_type _class_id0, row_id_type _class_id1, row_id_type _class_id2)
+			void when(relative_ptr_type _class_id0, relative_ptr_type _class_id1, relative_ptr_type _class_id2)
 			{
 				when(_class_id0);
 				when(_class_id1);
@@ -887,10 +887,10 @@ namespace countrybit
 		public:
 			object_name						rule_name;
 			object_name						create_class_name;
-			row_id_type						create_class_id;
+			relative_ptr_type						create_class_id;
 			selector_collection				selectors;
 			object_name						item_id_class_name;
-			row_id_type						item_id_class;
+			relative_ptr_type						item_id_class;
 			bool							select_on_create;
 			bool							replace_selected;
 
@@ -908,7 +908,7 @@ namespace countrybit
 		public:	
 			object_name						rule_name;
 			object_name						select_class_name;
-			row_id_type						select_class_id;
+			relative_ptr_type						select_class_id;
 			selector_collection				selectors;
 
 			model_selectable_class()
@@ -922,7 +922,7 @@ namespace countrybit
 		public:
 			object_name						rule_name;
 			object_name						update_class_name;
-			row_id_type						update_class_id;
+			relative_ptr_type						update_class_id;
 			selector_collection				selectors;
 
 			model_updatable_class()

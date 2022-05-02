@@ -3,6 +3,8 @@
 #include "combaseapi.h"
 #include "extractor.h"
 
+#define _DETAIL 1
+
 namespace countrybit
 {
 	namespace database
@@ -55,11 +57,11 @@ namespace countrybit
 			return hr == S_OK;
 		}
 
-		jslice actor_command_response::create_object(jschema* _schema, row_id_type _class_id)
+		jslice actor_command_response::create_object(jschema* _schema, relative_ptr_type _class_id)
 		{
 			auto myclass = _schema->get_class(_class_id);
 			auto bytes_to_allocate = myclass.item().class_size_bytes;
-			row_id_type location = data.reserve(bytes_to_allocate);
+			relative_ptr_type location = data.reserve(bytes_to_allocate);
 
 			dimensions_type d = { 0,0,0 };
 
@@ -93,15 +95,15 @@ namespace countrybit
 			else if (
 				required->all_of([this, selections](selector_rule& src) {
 					int c = selections->count_if(
-						[src, this](row_id_type& dest) {
+						[src, this](relative_ptr_type& dest) {
 							auto obj = this->objects[dest];
-							row_id_type class_id = obj.item().class_id;
+							relative_ptr_type class_id = obj.item().class_id;
 							return class_id == src.class_id;
 						});
 					return c == 1;
 					})
 				&&
-				selections->all_of([this, required](row_id_type& dest) {
+				selections->all_of([this, required](relative_ptr_type& dest) {
 				return required->any_of([this, dest](selector_rule& src) {
 					return src.class_id == dest;
 					});
@@ -114,7 +116,7 @@ namespace countrybit
 			return false;
 		}
 
-		actor_command_response jcollection::get_command_result(row_id_type _actor)
+		actor_command_response jcollection::get_command_result(relative_ptr_type _actor)
 		{
 			actor_command_response acr;
 
@@ -137,12 +139,12 @@ namespace countrybit
 
 				if (selector_applies(&oi.item.selectors, _actor)) {
 					actor_create_object aco;
-					auto selected_create = selections->where([rule, this](row_id_type& src) {
+					auto selected_create = selections->where([rule, this](relative_ptr_type& src) {
 						return objects[src].item().class_id == rule->item_id_class;
 						});
 					if (selected_create != std::end(*selections)) {
-						row_id_type object_id = selected_create.get_value().item;
-						row_id_type item_id = objects[object_id].item().item_id;
+						relative_ptr_type object_id = selected_create.get_value().item;
+						relative_ptr_type item_id = objects[object_id].item().item_id;
 						aco.item_id = item_id;
 					}
 					else 
@@ -154,7 +156,7 @@ namespace countrybit
 					aco.class_id = oi.item.create_class_id;
 					aco.item = acr.create_object(schema, aco.class_id);
 					aco.select_on_create = oi.item.select_on_create;
-					row_id_type create_id = acr.create_objects.size();
+					relative_ptr_type create_id = acr.create_objects.size();
 					acr.create_objects.insert_or_assign(create_id, aco);
 				}
 			}
@@ -169,7 +171,7 @@ namespace countrybit
 				if (selector_applies(&oi.item.selectors, _actor)) 
 				{
 					// we can now select objects of this class
-					for (row_id_type oid = 0; oid < objects.size(); oid++)
+					for (relative_ptr_type oid = 0; oid < objects.size(); oid++)
 					{
 						auto obj = objects[oid];
 						if (obj.item().class_id == rule->select_class_id) 
@@ -196,7 +198,7 @@ namespace countrybit
 				if (selector_applies(&oi.item.selectors, _actor))
 				{
 					// we can now select objects of this class
-					for (row_id_type oid = 0; oid < objects.size(); oid++)
+					for (relative_ptr_type oid = 0; oid < objects.size(); oid++)
 					{
 						auto obj = objects[oid];
 						if (obj.item().class_id == rule->update_class_id)
@@ -260,7 +262,7 @@ namespace countrybit
 			}
 		}
 
-		row_id_type jcollection::put_actor(actor_type _actor)
+		relative_ptr_type jcollection::put_actor(actor_type _actor)
 		{
 			actor_type modified;
 
@@ -288,7 +290,7 @@ namespace countrybit
 				ac.selections.clear();
 			}
 			if (objects.check(_select.object_id)) {
-				row_id_type selection = _select.object_id;
+				relative_ptr_type selection = _select.object_id;
 				ac.selections.push_back(selection);
 			}
 			acr = get_command_result(_select.actor_id);
@@ -304,8 +306,8 @@ namespace countrybit
 				return acr;
 			}
 			actor_type ac = get_actor(_create.actor_id);
-			row_id_type item_id = _create.item_id;
-			row_id_type object_id = null_row;
+			relative_ptr_type item_id = _create.item_id;
+			relative_ptr_type object_id = null_row;
 
 			create_object(item_id, _create.actor_id, _create.class_id, object_id);
 			if (object_id != null_row) 
@@ -332,7 +334,7 @@ namespace countrybit
 				return acr;
 			}
 			actor_type ac = get_actor(_update.actor_id);
-			row_id_type object_id = _update.object_id;
+			relative_ptr_type object_id = _update.object_id;
 
 			if (object_id != null_row && objects.check(object_id))
 			{
@@ -344,7 +346,7 @@ namespace countrybit
 			return acr;
 		}
 
-		jslice jcollection::create_object(row_id_type _item_id, row_id_type _actor_id, row_id_type _class_id, row_id_type& object_id)
+		jslice jcollection::create_object(relative_ptr_type _item_id, relative_ptr_type _actor_id, relative_ptr_type _class_id, relative_ptr_type& object_id)
 		{
 			auto myclass = schema->get_class(_class_id);
 
@@ -381,7 +383,7 @@ namespace countrybit
 			return ja.get_slice(0);
 		}
 
-		jslice jcollection::get_object(row_id_type _object_id)
+		jslice jcollection::get_object(relative_ptr_type _object_id)
 		{
 			auto existing_object = objects.get_item(_object_id);
 			if (existing_object.pitem()->otype == jtype::type_object) {
@@ -395,7 +397,7 @@ namespace countrybit
 			}
 		}
 
-		jslice jcollection::update_object(row_id_type _object_id, jslice _slice)
+		jslice jcollection::update_object(relative_ptr_type _object_id, jslice _slice)
 		{
 			auto existing_object = objects.get_item(_object_id);
 			if (existing_object.pitem()->otype == jtype::type_object) {
@@ -416,12 +418,12 @@ namespace countrybit
 			;
 		}
 
-		jslice::jslice(jslice *_parent, jschema* _schema, row_id_type _class_id, char* _bytes, dimensions_type _dim) : parent(_parent), schema(_schema), class_id(_class_id), bytes(_bytes), dim(_dim), box(nullptr), location(null_row)
+		jslice::jslice(jslice *_parent, jschema* _schema, relative_ptr_type _class_id, char* _bytes, dimensions_type _dim) : parent(_parent), schema(_schema), class_id(_class_id), bytes(_bytes), dim(_dim), box(nullptr), location(null_row)
 		{
 			the_class = schema->get_class(_class_id);
 		}
 
-		jslice::jslice(jslice* _parent, jschema* _schema, row_id_type _class_id, serialized_box_container *_box, row_id_type _location, dimensions_type _dim) : parent(_parent), schema(_schema), class_id(_class_id), bytes(nullptr), dim(_dim), box(_box), location(_location)
+		jslice::jslice(jslice* _parent, jschema* _schema, relative_ptr_type _class_id, serialized_box_container *_box, relative_ptr_type _location, dimensions_type _dim) : parent(_parent), schema(_schema), class_id(_class_id), bytes(nullptr), dim(_dim), box(_box), location(_location)
 		{
 			the_class = schema->get_class(_class_id);
 		}
@@ -679,7 +681,7 @@ namespace countrybit
 			return jf;
 		}
 
-		int jslice::get_field_index_by_id(row_id_type field_id)
+		int jslice::get_field_index_by_id(relative_ptr_type field_id)
 		{
 			for (int i = 0; i < the_class.size(); i++)
 			{
@@ -698,7 +700,7 @@ namespace countrybit
 			return jcf;
 		}
 
-		jfield& jslice::get_field_by_id(row_id_type field_id)
+		jfield& jslice::get_field_by_id(relative_ptr_type field_id)
 		{
 			for (int i = 0; i < the_class.size(); i++)
 			{
@@ -867,7 +869,7 @@ namespace countrybit
 			}
 			else 
 			{
-				row_id_type fis, fid, ssf;
+				relative_ptr_type fis, fid, ssf;
 
 				ssf = _src_slice.size();
 				for (fis = 0; fis < ssf; fis++)
@@ -898,7 +900,7 @@ namespace countrybit
 		{
 			if (_src_slice.class_id == class_id) 
 			{
-				row_id_type fis, fid, ssf;
+				relative_ptr_type fis, fid, ssf;
 				ssf = _src_slice.size();
 				for (fis = 0; fis < ssf; fis++)
 				{
@@ -916,7 +918,7 @@ namespace countrybit
 			}
 			else 
 			{
-				row_id_type fis, fid, ssf;
+				relative_ptr_type fis, fid, ssf;
 				ssf = _src_slice.size();
 				for (fis = 0; fis < ssf; fis++)
 				{
@@ -1137,7 +1139,7 @@ namespace countrybit
 			for (int i = 0; i < _src.size(); i++)
 			{
 				auto sc = _src[i];
-				row_id_type fid = get_field_index_by_id(sc.field_id);
+				relative_ptr_type fid = get_field_index_by_id(sc.field_id);
 				auto fld_dest = get_field(fid);
 				sc.field_offset = get_offset(fid);
 				sc.field_type = fld_dest.type_id;
@@ -1150,8 +1152,8 @@ namespace countrybit
 			for (int i = 0; i < _count; i++)
 			{
 				auto& _src = _srcz[i];
-				row_id_type fip = _parameters.get_field_index_by_id(_src.parameter_field_id);
-				row_id_type fid = get_field_index_by_id(_src.parameter_field_id);
+				relative_ptr_type fip = _parameters.get_field_index_by_id(_src.parameter_field_id);
+				relative_ptr_type fid = get_field_index_by_id(_src.parameter_field_id);
 				auto fld_param = _parameters.get_field(fip);
 				auto fld_dest = get_field(fid);
 
@@ -1405,8 +1407,8 @@ namespace countrybit
 			for (int i = 0; i < _srcx.size(); i++)
 			{
 				auto& _src = _srcx[i];
-				row_id_type fip = _parameters.get_field_index_by_id(_src.parameter_field_id);
-				row_id_type fid = get_field_index_by_id(_src.parameter_field_id);
+				relative_ptr_type fip = _parameters.get_field_index_by_id(_src.parameter_field_id);
+				relative_ptr_type fid = get_field_index_by_id(_src.parameter_field_id);
 				auto fld_param = _parameters.get_field(fip);
 				auto fld_dest = get_field(fid);
 
@@ -1652,7 +1654,7 @@ namespace countrybit
 			;
 		}
 
-		jarray::jarray(jslice *_parent, jschema* _schema, row_id_type _class_field_id, char* _bytes, bool _init) : item(_parent), schema(_schema), class_field_id(_class_field_id), bytes(_bytes)
+		jarray::jarray(jslice *_parent, jschema* _schema, relative_ptr_type _class_field_id, char* _bytes, bool _init) : item(_parent), schema(_schema), class_field_id(_class_field_id), bytes(_bytes)
 		{
 			if (_init) {
 				for (auto jai : *this)
@@ -1737,7 +1739,7 @@ namespace countrybit
 			;
 		}
 
-		jlist::jlist(jslice *_parent, jschema* _schema, row_id_type _class_field_id, char* _bytes, bool _init) 
+		jlist::jlist(jslice *_parent, jschema* _schema, relative_ptr_type _class_field_id, char* _bytes, bool _init) 
 			: item(_parent), schema(_schema), class_field_id(_class_field_id)
 		{
 			auto& field_def = schema->get_field(_class_field_id);
@@ -1750,8 +1752,8 @@ namespace countrybit
 			if (_init)
 			{
 				data.instance = model_box.allocate<jlist_instance>(1);
-				array_box<row_id_type>::create(&model_box, field_def.object_properties.dim.x, data.instance->selection_offset);
-				array_box<row_id_type>::create(&model_box, field_def.object_properties.dim.x, data.instance->sort_offset);
+				array_box<relative_ptr_type>::create(&model_box, field_def.object_properties.dim.x, data.instance->selection_offset);
+				array_box<relative_ptr_type>::create(&model_box, field_def.object_properties.dim.x, data.instance->sort_offset);
 				data.instance->slice_offset = model_box.reserve(0);
 				data.instance->allocated = 0;
 			}
@@ -1761,8 +1763,8 @@ namespace countrybit
 			}
 
 			data.list_bytes = model_box.unpack<char>(data.instance->slice_offset);
-			data.selections = array_box<row_id_type>::get(&model_box, data.instance->selection_offset);
-			data.sort_order = array_box<row_id_type>::get(&model_box, data.instance->sort_offset);
+			data.selections = array_box<relative_ptr_type>::get(&model_box, data.instance->selection_offset);
+			data.sort_order = array_box<relative_ptr_type>::get(&model_box, data.instance->sort_offset);
 		}
 
 		jlist::jlist(serialized_box_container& _dest, jlist& _src)
@@ -1776,8 +1778,8 @@ namespace countrybit
 			std::copy((char*)_src.data.instance, (char*)_src.data.instance + box_size, (char*)data.instance);
 			data.instance = model_box.unpack<jlist_instance>(0);
 			data.list_bytes = model_box.unpack<char>(data.instance->slice_offset);
-			data.selections = array_box<row_id_type>::get(&model_box, data.instance->selection_offset);
-			data.sort_order = array_box<row_id_type>::get(&model_box, data.instance->sort_offset);
+			data.selections = array_box<relative_ptr_type>::get(&model_box, data.instance->selection_offset);
+			data.sort_order = array_box<relative_ptr_type>::get(&model_box, data.instance->sort_offset);
 			item = _src.item;
 		}
 
@@ -1943,7 +1945,7 @@ namespace countrybit
 				slice.set_projection(projections);			
 				projection_element_collection* pprojection = &projections;
 
-				data.sort_order.sort([this, pprojection](row_id_type& a, row_id_type& b)
+				data.sort_order.sort([this, pprojection](relative_ptr_type& a, relative_ptr_type& b)
 					{
 						jslice aslice = this->get_slice_direct(a);
 						jslice bslice = this->get_slice_direct(b);
@@ -2053,17 +2055,17 @@ namespace countrybit
 				box.init(1 << 21);
 
 				jschema schema;
-				row_id_type schema_id;
+				relative_ptr_type schema_id;
 
 				schema = jschema::create_schema( & box, 20, true, schema_id);
 
-				row_id_type quantity_field_id = null_row;
-				row_id_type last_name_field_id = null_row;
-				row_id_type first_name_field_id = null_row;
-				row_id_type birthday_field_id = null_row;
-				row_id_type count_field_id = null_row;
-				row_id_type title_field_id = null_row;
-				row_id_type institution_field_id = null_row;
+				relative_ptr_type quantity_field_id = null_row;
+				relative_ptr_type last_name_field_id = null_row;
+				relative_ptr_type first_name_field_id = null_row;
+				relative_ptr_type birthday_field_id = null_row;
+				relative_ptr_type count_field_id = null_row;
+				relative_ptr_type title_field_id = null_row;
+				relative_ptr_type institution_field_id = null_row;
 
 				schema.bind_field("quantity", quantity_field_id);
 				schema.bind_field("lastName", last_name_field_id);
@@ -2103,7 +2105,7 @@ namespace countrybit
 					return false;
 				}
 
-				row_id_type failed_field_id = schema.find_field("badFieldName");
+				relative_ptr_type failed_field_id = schema.find_field("badFieldName");
 
 				if (failed_field_id != null_row) {
 					std::cout << __LINE__ << ":find row failed" << std::endl;
@@ -2115,7 +2117,7 @@ namespace countrybit
 				person.class_name = "person";
 				person.class_description = "a person";
 				person.member_fields = { last_name_field_id, first_name_field_id, birthday_field_id, title_field_id, count_field_id, quantity_field_id };
-				row_id_type person_class_id = schema.put_class(person);
+				relative_ptr_type person_class_id = schema.put_class(person);
 
 				if (person_class_id == null_row) {
 					std::cout << __LINE__ << ":class create failed failed" << std::endl;
@@ -2145,7 +2147,7 @@ namespace countrybit
 				company.class_name = "company";
 				company.class_description = "a company is a collection of people";
 				company.member_fields = { institution_field_id, member_field(person_class_id, dimensions_type { 10, 1, 1 }) };
-				row_id_type company_class_id = schema.put_class(company);
+				relative_ptr_type company_class_id = schema.put_class(company);
 
 				if (company_class_id == null_row) {
 					std::cout << __LINE__ << ":class create failed failed" << std::endl;
@@ -2169,17 +2171,17 @@ namespace countrybit
 				box.init(1 << 21);
 
 				jschema schema;
-				row_id_type schema_id;
+				relative_ptr_type schema_id;
 
 				schema = jschema::create_schema(&box, 20, true, schema_id);
 
-				row_id_type quantity_field_id = null_row;
-				row_id_type last_name_field_id = null_row;
-				row_id_type first_name_field_id = null_row;
-				row_id_type birthday_field_id = null_row;
-				row_id_type count_field_id = null_row;
-				row_id_type title_field_id = null_row;
-				row_id_type institution_field_id = null_row;
+				relative_ptr_type quantity_field_id = null_row;
+				relative_ptr_type last_name_field_id = null_row;
+				relative_ptr_type first_name_field_id = null_row;
+				relative_ptr_type birthday_field_id = null_row;
+				relative_ptr_type count_field_id = null_row;
+				relative_ptr_type title_field_id = null_row;
+				relative_ptr_type institution_field_id = null_row;
 
 				schema.bind_field("quantity", quantity_field_id);
 				schema.bind_field("lastName", last_name_field_id);
@@ -2214,7 +2216,7 @@ namespace countrybit
 				person.class_name = "person";
 				person.class_description = "a person";
 				person.member_fields = { last_name_field_id, first_name_field_id, birthday_field_id, count_field_id, quantity_field_id };
-				row_id_type person_class_id = schema.put_class(person);
+				relative_ptr_type person_class_id = schema.put_class(person);
 
 				if (person_class_id == null_row)
 				{
@@ -2229,7 +2231,7 @@ namespace countrybit
 				double quantitystart = 10.22;
 				int increment = 5;
 
-				row_id_type people_object_id;
+				relative_ptr_type people_object_id;
 
 				auto sl = people.create_object(0, sample_actor.actor_id, person_class_id, people_object_id);
 				auto last_name = sl.get_string(0);
@@ -2346,7 +2348,7 @@ namespace countrybit
 				box.init(1 << 21);
 
 				jschema schema;
-				row_id_type schema_id;
+				relative_ptr_type schema_id;
 
 				schema = jschema::create_schema(&box, 50, true, schema_id);
 
@@ -2355,7 +2357,7 @@ namespace countrybit
 				sprite_frame_request.class_name = "spriteframe";
 				sprite_frame_request.class_description = "sprite frame";
 				sprite_frame_request.member_fields = { "shortName", "rectangle", "color" };
-				row_id_type sprite_frame_class_id = schema.put_class(sprite_frame_request);
+				relative_ptr_type sprite_frame_class_id = schema.put_class(sprite_frame_request);
 
 				if (sprite_frame_class_id == null_row) {
 					std::cout << __LINE__ << ":class create failed failed" << std::endl;
@@ -2366,7 +2368,7 @@ namespace countrybit
 				sprite_class_request.class_name = "sprite";
 				sprite_class_request.class_description = "sprite";
 				sprite_class_request.member_fields = { "shortName", "rectangle", member_field(sprite_frame_class_id, { 10, 10, 1 }) };
-				row_id_type sprite_class_id = schema.put_class(sprite_class_request);
+				relative_ptr_type sprite_class_id = schema.put_class(sprite_class_request);
 
 				if (sprite_class_id == null_row) {
 					std::cout << __LINE__ << ":class create failed failed" << std::endl;
@@ -2377,7 +2379,7 @@ namespace countrybit
 
 				init_collection_id(colid);
 
-				row_id_type classesb[2] = { sprite_class_id, null_row };
+				relative_ptr_type classesb[2] = { sprite_class_id, null_row };
 
 				model_type sprite_model;
 
@@ -2399,7 +2401,7 @@ namespace countrybit
 				sprite_boy.actor_name = "sprite_boy";
 
 				sprite_boy = sprites.create_actor(sprite_boy);
-				row_id_type new_sprite_id;
+				relative_ptr_type new_sprite_id = null_row;
 
 				for (int i = 0; i < 10; i++) {
 					auto slice = sprites.create_object(i, sprite_boy.actor_id, sprite_class_id, new_sprite_id);
@@ -2468,13 +2470,17 @@ namespace countrybit
 						}
 
 						auto frame_rect = frame.get_rectangle(1);
+
+#if _DETAIL
+						std::cout << frame_rect->w << " " << frame_rect->h << " " << frame_rect->x << " " << frame_rect->y << std::endl;
+#endif
+
 						if (frame_rect->w != 100 || frame_rect->h != 100)
 						{
 							std::cout << __LINE__ << ":array failed" << std::endl;
 							return false;
 						}
 
-						//					std::cout << std::format("{} {}x{} - {}x{}", frame.get_string(0).value(), frame.get_float(1).value(), frame.get_float(2).value(), frame.get_float(3).value(), frame.get_float(4).value()) << std::endl;
 						auto dim = frame.get_dim();
 						if (frame_rect->x != dim.x * 100.0) {
 							std::cout << __LINE__ << ":array failed" << std::endl;
@@ -2504,7 +2510,7 @@ namespace countrybit
 				box.init(1 << 21);
 
 				jschema schema;
-				row_id_type schema_id;
+				relative_ptr_type schema_id;
 
 				schema = jschema::create_schema(&box, 50, true, schema_id);
 
@@ -2514,54 +2520,54 @@ namespace countrybit
 				dfr.name.type_id = jtype::type_float64;
 				dfr.options.minimum_double = 0.0;
 				dfr.options.maximum_double = 1E10;
-				row_id_type limit_field_id = schema.put_double_field(dfr);
+				relative_ptr_type limit_field_id = schema.put_double_field(dfr);
 
 				dfr.name.name = "attachment";
 				dfr.name.description = "Point at which policy begins coverage";
 				dfr.name.type_id = jtype::type_float64; 
 				dfr.options.minimum_double = 0.0;
 				dfr.options.maximum_double = 1E10;
-				row_id_type attachment_field_id = schema.put_double_field(dfr);
+				relative_ptr_type attachment_field_id = schema.put_double_field(dfr);
 
 				dfr.name.name = "deductible";
 				dfr.name.description = "Point at which policy begins paying";
 				dfr.name.type_id = jtype::type_float64; 
 				dfr.options.minimum_double = 0.0;
 				dfr.options.maximum_double = 1E10;
-				row_id_type deductible_field_id = schema.put_double_field(dfr);
+				relative_ptr_type deductible_field_id = schema.put_double_field(dfr);
 
 				put_string_field_request sfr;
 				sfr.name.name = "comment";
 				sfr.name.description = "Descriptive text";
 				sfr.options.length = 512;
-				row_id_type comment_field_id = schema.put_string_field(sfr);
+				relative_ptr_type comment_field_id = schema.put_string_field(sfr);
 
 				sfr.name.name = "program_name";
 				sfr.name.description = "name of a program";
 				sfr.options.length = 200;
-				row_id_type program_name_field_id = schema.put_string_field(sfr);
+				relative_ptr_type program_name_field_id = schema.put_string_field(sfr);
 
 				sfr.name.name = "program_description";
 				sfr.name.description = "name of a program";
 				sfr.options.length = 512;
-				row_id_type program_description_field_id = schema.put_string_field(sfr);
+				relative_ptr_type program_description_field_id = schema.put_string_field(sfr);
 
 				sfr.name.name = "coverage_name";
 				sfr.name.description = "name of a coverage";
 				sfr.options.length = 200;
-				row_id_type coverage_field_id = schema.put_string_field(sfr);
+				relative_ptr_type coverage_field_id = schema.put_string_field(sfr);
 
 				sfr.name.name = "carrier_name";
 				sfr.name.description = "name of a carrier";
 				sfr.options.length = 200;
-				row_id_type carrier_field_id = schema.put_string_field(sfr);
+				relative_ptr_type carrier_field_id = schema.put_string_field(sfr);
 
 				countrybit::database::put_class_request pcr;
 
 				pcr.class_name = "program";
 				pcr.class_description = "program summary";
 				pcr.member_fields = { "program_name", "program_description" };
-				row_id_type program_class_id = schema.put_class(pcr);
+				relative_ptr_type program_class_id = schema.put_class(pcr);
 
 				if (program_class_id == null_row) {
 					std::cout << __LINE__ << ":class create failed failed" << std::endl;
@@ -2571,7 +2577,7 @@ namespace countrybit
 				pcr.class_name = "coverage";
 				pcr.class_description = "coverage frame";
 				pcr.member_fields = { "coverage_name", "comment", "rectangle" };
-				row_id_type coverage_class_id = schema.put_class(pcr);
+				relative_ptr_type coverage_class_id = schema.put_class(pcr);
 
 				if (coverage_class_id == null_row) {
 					std::cout << __LINE__ << ":class create failed failed" << std::endl;
@@ -2581,7 +2587,7 @@ namespace countrybit
 				pcr.class_name = "coverage_spacer";
 				pcr.class_description = "spacer frame";
 				pcr.member_fields = { "rectangle" };
-				row_id_type coverage_spacer_id = schema.put_class(pcr);
+				relative_ptr_type coverage_spacer_id = schema.put_class(pcr);
 
 				if (coverage_spacer_id == null_row) {
 					std::cout << __LINE__ << ":class create failed failed" << std::endl;
@@ -2591,7 +2597,7 @@ namespace countrybit
 				pcr.class_name = "carrier";
 				pcr.class_description = "carrier frame";
 				pcr.member_fields = { "carrier_name", "comment", "rectangle", "color" };
-				row_id_type carrier_class_id = schema.put_class(pcr);
+				relative_ptr_type carrier_class_id = schema.put_class(pcr);
 
 				if (coverage_class_id == null_row) {
 					std::cout << __LINE__ << ":class create failed failed" << std::endl;
@@ -2601,7 +2607,7 @@ namespace countrybit
 				pcr.class_name = "policy";
 				pcr.class_description = "policy block";
 				pcr.member_fields = { "coverage_name", "carrier_name", "comment", "rectangle", "color", "limit", "attachment" };
-				row_id_type policy_class_id = schema.put_class(pcr);
+				relative_ptr_type policy_class_id = schema.put_class(pcr);
 
 				if (policy_class_id == null_row) {
 					std::cout << __LINE__ << ":class create failed failed" << std::endl;
@@ -2611,7 +2617,7 @@ namespace countrybit
 				pcr.class_name = "policy_deductible";
 				pcr.class_description = "deductible block";
 				pcr.member_fields = { "coverage_name", "comment", "rectangle", "color", "deductible" };
-				row_id_type policy_deductible_class_id = schema.put_class(pcr);
+				relative_ptr_type policy_deductible_class_id = schema.put_class(pcr);
 
 				if (policy_deductible_class_id == null_row) {
 					std::cout << __LINE__ << ":class create failed failed" << std::endl;
@@ -2621,7 +2627,7 @@ namespace countrybit
 				pcr.class_name = "policy_umbrella";
 				pcr.class_description = "deductible block";
 				pcr.member_fields = { "comment", "rectangle", "color", "limit", "attachment"};
-				row_id_type policy_umbrella_class_id = schema.put_class(pcr);
+				relative_ptr_type policy_umbrella_class_id = schema.put_class(pcr);
 
 				if (policy_deductible_class_id == null_row) {
 					std::cout << __LINE__ << ":class create failed failed" << std::endl;

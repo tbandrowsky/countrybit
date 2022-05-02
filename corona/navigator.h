@@ -15,7 +15,7 @@ namespace countrybit
 
 			jslice		parameters;
 			dynamic_box data;
-			using filter_details_type = item_details_table<row_id_type, filter_element>;
+			using filter_details_type = item_details_table<relative_ptr_type, filter_element>;
 			filter_details_type filters;
 
 			void visit(jslice _parameters, jslice _root_slice, path& source_path, filter_element_collection& source_filters);

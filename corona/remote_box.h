@@ -26,7 +26,7 @@ namespace countrybit
 		struct remote_field_map_type
 		{
 			object_name corona_field;
-			row_id_type corona_field_id;
+			relative_ptr_type corona_field_id;
 			object_name remote_field;
 		};
 

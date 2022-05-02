@@ -15,13 +15,13 @@ namespace countrybit
 
 		struct row_range 
 		{
-			row_id_type			start;
-			row_id_type			stop;
-			row_id_type			reserved_stop;
+			relative_ptr_type			start;
+			relative_ptr_type			stop;
+			relative_ptr_type			reserved_stop;
 
-			row_id_type size() { return stop - start;  }
-			row_id_type reserved_size() { return reserved_stop - start; }
-			row_id_type free() { return reserved_stop - stop; }
+			relative_ptr_type size() { return stop - start;  }
+			relative_ptr_type reserved_size() { return reserved_stop - start; }
+			relative_ptr_type free() { return reserved_stop - stop; }
 
 			bool success() const 
 			{
@@ -33,12 +33,12 @@ namespace countrybit
 		{
 			P* the_object;
 			C* the_details;
-			row_id_type id;
-			row_id_type length;
+			relative_ptr_type id;
+			relative_ptr_type length;
 
 		public:
 
-			item_details_holder(row_id_type _id, P* _parent, C* _children, row_id_type _length) :
+			item_details_holder(relative_ptr_type _id, P* _parent, C* _children, relative_ptr_type _length) :
 				id(_id),
 				the_object(_parent),
 				the_details(_children),
@@ -81,7 +81,7 @@ namespace countrybit
 				return *the_object;
 			}
 
-			C& detail(row_id_type idx)
+			C& detail(relative_ptr_type idx)
 			{
 				if (is_null())
 					throw std::invalid_argument("is null");
@@ -105,7 +105,7 @@ namespace countrybit
 				return !the_object;
 			}
 
-			row_id_type row_id() const
+			relative_ptr_type row_id() const
 			{
 				return id;
 			}
@@ -128,9 +128,10 @@ namespace countrybit
 
 			struct table_header
 			{
-				row_id_type
-					offset;
-				row_id_type
+				block_id block;
+				relative_ptr_type
+					id;
+				relative_ptr_type
 					max_rows,
 					last_row;
 				bool dynamic;
@@ -159,22 +160,23 @@ namespace countrybit
 				return sizeof(table_header) + sizeof(T) * (_rows + 8);
 			}
 
-			static row_id_type reserve_table(serialized_box_container* _b, int _max_rows, bool _dynamic = false)
+			static relative_ptr_type reserve_table(serialized_box_container* _b, int _max_rows, bool _dynamic = false)
 			{
 				table t;
 
-				row_id_type hdr_offset;
+				relative_ptr_type hdr_id;
 
-				row_id_type bytes_size = get_box_size(_max_rows);
+				relative_ptr_type bytes_size = get_box_size(_max_rows);
 
 				char c = 0;
-				hdr_offset = _b->fill(c, bytes_size);
+				hdr_id = _b->fill(c, bytes_size);
 
-				if (hdr_offset == null_row)
-					return hdr_offset;
+				if (hdr_id == null_row)
+					return hdr_id;
 
-				t.hdr = _b->unpack<table_header>(hdr_offset);
-				t.hdr->offset = hdr_offset;
+				t.hdr = _b->unpack<table_header>(hdr_id);
+				t.hdr->block = block_id::table();
+				t.hdr->id = hdr_id;
 				t.hdr->dynamic = _dynamic;
 				t.hdr->max_rows = _max_rows;
 				t.hdr->last_row = 0;
@@ -184,20 +186,24 @@ namespace countrybit
 					t.hdr->rows[i] = item;
 				}
 
-				return hdr_offset;
+				return hdr_id;
 			}
 
-			static table get_table(serialized_box_container* _b, row_id_type offset)
+			static table get_table(serialized_box_container* _b, relative_ptr_type offset)
 			{
 				table t;
 
 				t.hdr = _b->unpack<table_header>(offset);
+				if (!t.hdr->block.is_table())
+				{
+					throw std::logic_error("Did not read table correctly.");
+				}
 				t.box = _b;
 
 				return t;
 			}
 
-			static table create_table(serialized_box_container* _b, int _max_rows, row_id_type& offset, bool _dynamic = false)
+			static table create_table(serialized_box_container* _b, int _max_rows, relative_ptr_type& offset, bool _dynamic = false)
 			{
 				table t;
 				offset = reserve_table(_b, _max_rows, _dynamic);
@@ -208,14 +214,14 @@ namespace countrybit
 
 			bool storage_check(uint32_t new_rows)
 			{
-				row_id_type new_end_row = hdr->last_row + new_rows;
+				relative_ptr_type new_end_row = hdr->last_row + new_rows;
 				if (new_end_row < hdr->max_rows)
 				{
 					return true;
 				}
 				else if (hdr->dynamic)
 				{
-					row_id_type demand_bytes = new_rows * sizeof(T);
+					relative_ptr_type demand_bytes = new_rows * sizeof(T);
 					if (box->check(demand_bytes)) {
 						hdr->max_rows += new_rows;
 						return true;
@@ -224,9 +230,9 @@ namespace countrybit
 				return false;
 			}
 
-			row_id_type create(uint32_t count, T* items)
+			relative_ptr_type create(uint32_t count, T* items)
 			{
-				row_id_type new_row;
+				relative_ptr_type new_row;
 				if (!storage_check(count))
 					return null_row;
 				auto x = hdr->last_row + count;
@@ -247,7 +253,7 @@ namespace countrybit
 				return new_row;
 			}
 
-			T* create(uint32_t count, row_id_type& _new_row)
+			T* create(uint32_t count, relative_ptr_type& _new_row)
 			{
 				if (!storage_check(count)) {
 					_new_row = null_row;
@@ -259,15 +265,15 @@ namespace countrybit
 				return &hdr->rows[_new_row];
 			}
 
-			T* insert(row_id_type index, uint32_t count)
+			T* insert(relative_ptr_type index, uint32_t count)
 			{
 				if (!storage_check(count))
 					return nullptr;
 
 				if (!check(index) || count < 0 || size()==0) return nullptr;
 
-				row_id_type dest_idx = hdr->last_row + count;
-				row_id_type source_idx = hdr->last_row;
+				relative_ptr_type dest_idx = hdr->last_row + count;
+				relative_ptr_type source_idx = hdr->last_row;
 
 				while (source_idx >= index) 
 				{
@@ -281,12 +287,12 @@ namespace countrybit
 				return get_ptr(index);
 			}
 
-			T *erase(row_id_type index, uint32_t count)
+			T *erase(relative_ptr_type index, uint32_t count)
 			{
 				if (!check(index) || count < 0 || count > hdr->last_row) return nullptr;
 
-				row_id_type dest_idx = index;
-				row_id_type source_idx = index + count;
+				relative_ptr_type dest_idx = index;
+				relative_ptr_type source_idx = index + count;
 
 				/*
 					* rows = 5
@@ -333,7 +339,7 @@ namespace countrybit
 				return hdr->rows[rr.start];
 			}
 
-			T* get_ptr(row_id_type& r)
+			T* get_ptr(relative_ptr_type& r)
 			{
 				if (r == null_row || r >= hdr->max_rows || r < 0)
 					throw std::invalid_argument("invalid row id");
@@ -346,7 +352,7 @@ namespace countrybit
 				return &hdr->rows[r];
 			}
 
-			T& get_at(row_id_type& r)
+			T& get_at(relative_ptr_type& r)
 			{
 				if (r == null_row || r >= hdr->max_rows || r < 0)
 					throw std::invalid_argument("invalid row id");
@@ -359,17 +365,17 @@ namespace countrybit
 				return hdr->rows[r];
 			}
 
-			T& operator[](row_id_type r)
+			T& operator[](relative_ptr_type r)
 			{
 				return get_at(r);
 			}
 
-			row_id_type size() const
+			relative_ptr_type size() const
 			{
 				return hdr->last_row;
 			}
 
-			row_id_type max() const
+			relative_ptr_type max() const
 			{
 				return hdr->max_rows;
 			}
@@ -382,7 +388,7 @@ namespace countrybit
 			class iterator
 			{
 				table<T>* base;
-				row_id_type current;
+				relative_ptr_type current;
 				std::function<bool(T&)> predicate;
 
 			public:
@@ -390,7 +396,7 @@ namespace countrybit
 				struct value_ref 
 				{
 					T& item;
-					row_id_type location;
+					relative_ptr_type location;
 				};
 
 				using iterator_category = std::forward_iterator_tag;
@@ -399,14 +405,14 @@ namespace countrybit
 				using pointer = value_ref*;  // or also value_type*
 				using reference = value_ref&;  // or also value_type&
 
-				iterator(table<T>* _base, row_id_type _current) :
+				iterator(table<T>* _base, relative_ptr_type _current) :
 					base(_base),
 					current(_current)
 				{
 					predicate = [](T& a) { return true;  };
 				}
 
-				iterator(table<T>* _base, row_id_type _current, std::function<bool(T&)> _predicate) :
+				iterator(table<T>* _base, relative_ptr_type _current, std::function<bool(T&)> _predicate) :
 					base(_base),
 					current(_current),
 					predicate(_predicate)
@@ -438,7 +444,7 @@ namespace countrybit
 					return value_ref{ base->get_at(current), current };
 				}
 
-				inline row_id_type get_row_id()
+				inline relative_ptr_type get_row_id()
 				{
 					return current;
 				}
@@ -518,7 +524,7 @@ namespace countrybit
 				return w->get_value();
 			}
 
-			row_id_type first_index(std::function<bool(T&)> predicate)
+			relative_ptr_type first_index(std::function<bool(T&)> predicate)
 			{
 				auto w = this->where(predicate);
 				if (w == end()) {
@@ -563,8 +569,8 @@ namespace countrybit
 
 			struct item_detail_table_header
 			{
-				row_id_type item_location;
-				row_id_type detail_location;
+				relative_ptr_type item_location;
+				relative_ptr_type detail_location;
 			};
 
 			table<item_type> item;
@@ -577,19 +583,19 @@ namespace countrybit
 				;
 			}
 
-			static row_id_type reserve_table(serialized_box_container* b, int item_rows, int detail_rows, bool dynamic = false)
+			static relative_ptr_type reserve_table(serialized_box_container* b, int item_rows, int detail_rows, bool dynamic = false)
 			{
 				item_detail_table_header hdr;
 				hdr.item_location = null_row;
 				hdr.detail_location = null_row;
-				row_id_type r = b->pack(hdr);
+				relative_ptr_type r = b->pack(hdr);
 				auto* phdr = b->unpack<item_detail_table_header>(r);
 				phdr->item_location = table< item_details_table<P, C>::item_type >::reserve_table(b, item_rows);
 				phdr->detail_location = table< C >::reserve_table(b, detail_rows, dynamic);
 				return r;
 			}
 
-			static item_details_table get_table(serialized_box_container* b, row_id_type row)
+			static item_details_table get_table(serialized_box_container* b, relative_ptr_type row)
 			{
 				item_details_table pct;
 				item_detail_table_header* hdr;
@@ -599,7 +605,7 @@ namespace countrybit
 				return pct;
 			}
 
-			static item_details_table create_table(serialized_box_container* b, int item_rows, int detail_rows, row_id_type& row, bool dynamic = false)
+			static item_details_table create_table(serialized_box_container* b, int item_rows, int detail_rows, relative_ptr_type& row, bool dynamic = false)
 			{
 				item_details_table pct;
 				row = reserve_table(b, item_rows, detail_rows, dynamic);
@@ -609,7 +615,7 @@ namespace countrybit
 
 			item_details_holder<P, C> create_item(P* _item, int detail_count, C* _new_details)
 			{
-				row_id_type new_row;
+				relative_ptr_type new_row;
 				item_type *it = item.create(1, new_row);
 				if (it)
 				{
@@ -631,7 +637,7 @@ namespace countrybit
 					}
 					else 
 					{
-						return item_details_holder<P, C>(new_row, nullptr, nullptr, null_row);
+						return item_details_holder<P, C>(null_row, nullptr, nullptr, null_row);
 					}
 				}
 				else
@@ -640,7 +646,7 @@ namespace countrybit
 				}
 			}
 
-			item_details_holder<P, C> put_item(row_id_type& location, P* _item, int detail_count, C *mod_details)
+			item_details_holder<P, C> put_item(relative_ptr_type& location, P* _item, int detail_count, C *mod_details)
 			{
 				if (location == null_row) 
 				{
@@ -659,20 +665,20 @@ namespace countrybit
 				return get_item(location);
 			}
 
-			item_details_holder<P, C> clone_item(row_id_type location)
+			item_details_holder<P, C> clone_item(relative_ptr_type location)
 			{
 				auto src = item.get_at(location);
 				auto new_item = create_item(src.pitem(), src.detail_range.reserved_size(), src.pdetail());
 				return new_item;
 			}
 
-			void clear_details(row_id_type location)
+			void clear_details(relative_ptr_type location)
 			{
 				auto& pc = item.get_at(location);
 				pc.detail_range.stop = pc.detail_range.start;
 			}
 
-			void append_detail(row_id_type location, int add_detail_count, C *new_details)
+			void append_detail(relative_ptr_type location, int add_detail_count, C *new_details)
 			{
 				auto& pc = item[location];
 
@@ -685,9 +691,9 @@ namespace countrybit
 				std::cout << "append_detail " << location << ", start " << pc.detail_range.start << ", stop " << pc.detail_range.stop << ", reserved stop " << pc.detail_range.reserved_stop << std::endl;
 #endif
 
-				row_id_type new_details_location = pc.detail_range.stop;
-				row_id_type existing_end = pc.detail_range.reserved_stop;
-				row_id_type minimum_end = new_details_location + add_detail_count;
+				relative_ptr_type new_details_location = pc.detail_range.stop;
+				relative_ptr_type existing_end = pc.detail_range.reserved_stop;
+				relative_ptr_type minimum_end = new_details_location + add_detail_count;
 
 				if (minimum_end <= existing_end)
 				{
@@ -695,15 +701,15 @@ namespace countrybit
 				}
 				else
 				{
-					row_id_type capacity_allocate = pc.detail_range.reserved_size() * 2;
-					row_id_type allocation_end = capacity_allocate + pc.detail_range.start;
+					relative_ptr_type capacity_allocate = pc.detail_range.reserved_size() * 2;
+					relative_ptr_type allocation_end = capacity_allocate + pc.detail_range.start;
 
 					while (allocation_end < minimum_end) {
 						capacity_allocate *= 2;
 						allocation_end = capacity_allocate + pc.detail_range.start;
 					}
 
-					row_id_type insert_rows = allocation_end - existing_end;
+					relative_ptr_type insert_rows = allocation_end - existing_end;
 
 #if DETAILS
 					std::cout << "new loc " << new_details_location << ", reserved end " << existing_end << ", new end " << allocation_end << ", insert count " << insert_rows << std::endl;
@@ -714,7 +720,7 @@ namespace countrybit
 					pc.detail_range.stop += add_detail_count;
 					pc.detail_range.reserved_stop = allocation_end;
 
-					for (row_id_type i = location+1; i < size(); i++)
+					for (relative_ptr_type i = location+1; i < size(); i++)
 					{
 						auto& pcx = item[i];
 						pcx.detail_range.start += insert_rows;
@@ -722,13 +728,13 @@ namespace countrybit
 						pcx.detail_range.reserved_stop += insert_rows;
 					}
 
-					for (row_id_type i = pc.detail_range.stop; i < pc.detail_range.reserved_stop; i++) {
+					for (relative_ptr_type i = pc.detail_range.stop; i < pc.detail_range.reserved_stop; i++) {
 						C temp = {};
 						details[i] = temp;
 					}
 				}
 
-				for (row_id_type i = 0; i < add_detail_count; i++) {
+				for (relative_ptr_type i = 0; i < add_detail_count; i++) {
 					auto& new_detail = details[new_details_location];
 					if (new_details) {
 						new_detail = new_details[i];
@@ -742,12 +748,12 @@ namespace countrybit
 
 			}
 
-			void erase_item(row_id_type location)
+			void erase_item(relative_ptr_type location)
 			{
 				auto& pc = item.get_at(location);
-				row_id_type shift = pc.detail_range.reserved_size();
+				relative_ptr_type shift = pc.detail_range.reserved_size();
 				details.erase(pc.detail_range.reserved_stop, shift);
-				for (row_id_type i = location + 1; i < size(); i++)
+				for (relative_ptr_type i = location + 1; i < size(); i++)
 				{
 					auto& pcx = item[location];
 					pcx.detail_range.start -= shift;
@@ -762,18 +768,18 @@ namespace countrybit
 				return item.check(index);
 			}
 
-			item_details_holder<P, C> operator[](row_id_type row_id)
+			item_details_holder<P, C> operator[](relative_ptr_type row_id)
 			{
 				return get_item(row_id);
 			}
 
-			item_details_holder<P, C> get_item(row_id_type row_id)
+			item_details_holder<P, C> get_item(relative_ptr_type row_id)
 			{
 				item_details_holder<P, C> nullpc;
 				if (row_id == null_row) return nullpc;
 				auto& pc = item[row_id];
-				row_id_type lsize = pc.detail_range.size();
-				row_id_type lstart = pc.detail_range.start;
+				relative_ptr_type lsize = pc.detail_range.size();
+				relative_ptr_type lstart = pc.detail_range.start;
 				return item_details_holder<P, C>(row_id, &pc.item, details.get_ptr(lstart), lsize);
 			}
 
@@ -782,12 +788,12 @@ namespace countrybit
 				return table<item_type>::get_box_size(_parent_rows) + table<C>::get_box_size(_child_rows);
 			}
 
-			row_id_type size() const
+			relative_ptr_type size() const
 			{
 				return item.size();
 			}
 
-			row_id_type max() const
+			relative_ptr_type max() const
 			{
 				return item.max();
 			}

@@ -1,4 +1,5 @@
 #pragma once
+#include <cstdint>
 
 namespace countrybit
 {
@@ -35,8 +36,10 @@ namespace countrybit
 			type_list = 22
 		};
 
-		typedef int32_t row_id_type;
-		const row_id_type null_row = -1;
+		typedef int64_t corona_size_t;
+		typedef corona_size_t relative_ptr_type;
+
+		const relative_ptr_type null_row = -1;
 
 		struct collection_id_type
 		{
@@ -49,7 +52,31 @@ namespace countrybit
 		struct object_id_type
 		{
 			collection_id_type collection_id;
-			row_id_type	  row_id;
+			relative_ptr_type	  row_id;
 		};
+
+		struct block_id
+		{
+		public:
+			char name[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+
+			static block_id box();
+			static block_id sorted_index_node();
+			static block_id sorted_index();
+			static block_id table();
+			static block_id item_detail_table();
+			static block_id collection();
+			static block_id database();
+
+			bool is_box();
+			bool is_sorted_index_node();
+			bool is_sorted_index();
+			bool is_table();
+			bool is_item_detail_table();
+			bool is_collection();
+			bool is_database();
+
+		};
+
 	}
 }

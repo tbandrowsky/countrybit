@@ -80,7 +80,7 @@ namespace countrybit
 
 			template <typename BOX>
 			requires(box<BOX, char>)
-			static row_id_type create(BOX* b, int chars_length)
+			static relative_ptr_type create(BOX* b, int chars_length)
 			{
 				string_box temp;
 				auto location = b->pack<char>(sizeof(string_box_data)+chars_length);

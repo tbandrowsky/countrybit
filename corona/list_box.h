@@ -18,18 +18,18 @@ namespace countrybit
 			{
 			public:
 				uint32_t	length;
-				row_id_type root_item;
-				row_id_type last_item;
+				relative_ptr_type root_item;
+				relative_ptr_type last_item;
 			};
 
 			struct list_link
 			{
 			public:
 				item_type   data;
-				row_id_type next;
+				relative_ptr_type next;
 			};
 
-			row_id_type		header_loc;
+			relative_ptr_type		header_loc;
 			serialized_box_container* box;
 
 			list_box_data* get_hdr()
@@ -56,7 +56,7 @@ namespace countrybit
 				temp.data = _src;
 				temp.next = null_row;
 
-				row_id_type loc = box->pack(temp);
+				relative_ptr_type loc = box->pack(temp);
 
 				if (loc == null_row) {
 					return nullptr;
@@ -112,7 +112,7 @@ namespace countrybit
 				return *this;
 			}
 
-			static row_id_type reserve(serialized_box_container* b)
+			static relative_ptr_type reserve(serialized_box_container* b)
 			{
 				list_box temp;
 				list_box_data hdr;
@@ -133,7 +133,7 @@ namespace countrybit
 
 			static list_box create(serialized_box_container* b)
 			{
-				row_id_type loc = reserve(b);
+				relative_ptr_type loc = reserve(b);
 				list_box temp = get(b, loc);
 				return temp;
 			}

@@ -143,7 +143,7 @@ namespace countrybit
 		class typeinfo
 		{
 			property_index_type				property_index;
-			database::row_id_type			property_index_id;
+			database::relative_ptr_type			property_index_id;
 
 			const char* type_key;
 			const char* type_value;
@@ -541,13 +541,13 @@ namespace countrybit
 			database::dynamic_box data;
 			database::sorted_index<database::object_name, typeinfo*> bindings_by_name;
 			database::table<error_message> error_messages;
-			database::row_id_type error_messages_id;
+			database::relative_ptr_type error_messages_id;
 
 		public:
 
 			loader(int _size, int _max_types) 
 			{
-				database::row_id_type header_location;
+				database::relative_ptr_type header_location;
 				data.init(_size);
 				bindings_by_name.create_sorted_index(&data, header_location);
 				error_messages = database::table<error_message>::create_table(&data, 250, error_messages_id);
@@ -850,13 +850,13 @@ namespace countrybit
 			struct location 
 			{
 				database::jtype item_type;
-				database::row_id_type row_id;					
+				database::relative_ptr_type row_id;					
 			};
 
 		private:
 
 			database::sorted_index<database::object_name, location> fields_by_name;
-			database::sorted_index<database::object_name, database::row_id_type> classes_by_name;
+			database::sorted_index<database::object_name, database::relative_ptr_type> classes_by_name;
 			database::sorted_index<database::object_name, typeinfo*> class_types_by_name;
 
 			database::table<database::put_string_field_request> put_string_fields;
@@ -877,26 +877,26 @@ namespace countrybit
 			database::table<database::put_named_file_remote_field_request> put_file_fields;
 			database::table<database::put_class_request> put_classes;
 
-			database::row_id_type fields_by_name_id;
-			database::row_id_type classes_by_name_id;
-			database::row_id_type class_types_by_name_id;
-			database::row_id_type put_string_fields_id;
-			database::row_id_type put_integer_fields_id;
-			database::row_id_type put_double_fields_id;
-			database::row_id_type put_time_fields_id;
-			database::row_id_type put_object_fields_id;
-			database::row_id_type put_list_fields_id;
-			database::row_id_type put_query_fields_id;
-			database::row_id_type put_sql_fields_id;
-			database::row_id_type put_http_fields_id;
-			database::row_id_type put_file_fields_id;
-			database::row_id_type put_point_fields_id;
-			database::row_id_type put_rectangle_fields_id;
-			database::row_id_type put_color_fields_id;
-			database::row_id_type put_image_fields_id;
-			database::row_id_type put_wave_fields_id;
-			database::row_id_type put_midi_fields_id;
-			database::row_id_type put_classes_id;
+			database::relative_ptr_type fields_by_name_id;
+			database::relative_ptr_type classes_by_name_id;
+			database::relative_ptr_type class_types_by_name_id;
+			database::relative_ptr_type put_string_fields_id;
+			database::relative_ptr_type put_integer_fields_id;
+			database::relative_ptr_type put_double_fields_id;
+			database::relative_ptr_type put_time_fields_id;
+			database::relative_ptr_type put_object_fields_id;
+			database::relative_ptr_type put_list_fields_id;
+			database::relative_ptr_type put_query_fields_id;
+			database::relative_ptr_type put_sql_fields_id;
+			database::relative_ptr_type put_http_fields_id;
+			database::relative_ptr_type put_file_fields_id;
+			database::relative_ptr_type put_point_fields_id;
+			database::relative_ptr_type put_rectangle_fields_id;
+			database::relative_ptr_type put_color_fields_id;
+			database::relative_ptr_type put_image_fields_id;
+			database::relative_ptr_type put_wave_fields_id;
+			database::relative_ptr_type put_midi_fields_id;
+			database::relative_ptr_type put_classes_id;
 
 			typeinfo* string_fields_ti;
 			typeinfo* int8_fields_ti;
@@ -947,7 +947,7 @@ namespace countrybit
 			{
 
 				fields_by_name = database::sorted_index<database::object_name, location>::create_sorted_index(&data, fields_by_name_id);
-				classes_by_name = database::sorted_index<database::object_name, database::row_id_type>::create_sorted_index(&data, classes_by_name_id);
+				classes_by_name = database::sorted_index<database::object_name, database::relative_ptr_type>::create_sorted_index(&data, classes_by_name_id);
 				class_types_by_name = database::sorted_index<database::object_name, typeinfo *>::create_sorted_index(&data, class_types_by_name_id);
 				put_string_fields = database::table<database::put_string_field_request>::create_table(&data, _num_fields, put_string_fields_id);
 				put_integer_fields = database::table<database::put_integer_field_request>::create_table(&data, _num_fields, put_integer_fields_id);
@@ -1230,7 +1230,7 @@ namespace countrybit
 			virtual char* place(typeinfo* ti)
 			{
 				char* t = nullptr;
-				database::row_id_type rr;
+				database::relative_ptr_type rr;
 
 				if (ti == string_fields_ti)
 				{
@@ -1518,7 +1518,7 @@ namespace countrybit
 
 				bool valid = false;
 
-				database::row_id_type field_id = pschema->find_field(remote.corona_field);
+				database::relative_ptr_type field_id = pschema->find_field(remote.corona_field);
 
 				if (!valid) 
 				{
@@ -1737,7 +1737,7 @@ namespace countrybit
 				}
 			}
 
-			database::row_id_type put_class(database::jschema& schema, database::put_class_request& aorf)
+			database::relative_ptr_type put_class(database::jschema& schema, database::put_class_request& aorf)
 			{
 				for (auto fn : aorf.member_fields) 
 				{
@@ -1786,7 +1786,7 @@ namespace countrybit
 		{
 		public:
 
-			typeinfo* map_corona_class(database::jschema& _schema, database::row_id_type class_id)
+			typeinfo* map_corona_class(database::jschema& _schema, database::relative_ptr_type class_id)
 			{
 				auto class_data = _schema.get_class(class_id);
 

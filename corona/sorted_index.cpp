@@ -16,7 +16,7 @@ namespace countrybit
 
 			test_sorted_index_type test;
 
-			row_id_type test_location;
+			relative_ptr_type test_location;
 			test = test_sorted_index_type::create_sorted_index( &box, test_location );
 
 			auto t1 = test.insert_or_assign(5, "hello");

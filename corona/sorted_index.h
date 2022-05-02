@@ -31,7 +31,7 @@ namespace countrybit
 		const int MaxNumberOfLevels = 20;
 		const int MaxLevel = MaxNumberOfLevels - 1;
 
-		using index_ref = row_id_type;
+		using index_ref = relative_ptr_type;
 
 		template <typename KEY, typename VALUE, int SORT_ORDER = 1> class sorted_index
 		{
@@ -39,36 +39,38 @@ namespace countrybit
 
 			struct index_header_type
 			{
+				block_id block;
 				int count;
 				int level;
-				row_id_type header_id;
+				relative_ptr_type header_id;
 			};
 
 			class index_node_holder
 			{
 			public:
-				row_id_type					header_id;
-				row_id_type					details_id;
+				block_id							block;
+				relative_ptr_type					header_id;
+				relative_ptr_type					details_id;
 			};
 
 		public:
 
-			using forward_pointer_collection = array_box<row_id_type>;
+			using forward_pointer_collection = array_box<relative_ptr_type>;
 			using data_pair = std::pair<KEY, VALUE>;
 
 			class index_node
 			{
 			public:
-				row_id_type					id;
-				data_pair					*data;
-				forward_pointer_collection	details;
+				relative_ptr_type					id;
+				data_pair							*data;
+				forward_pointer_collection			details;
 
-				row_id_type					row_id()
+				relative_ptr_type					row_id()
 				{
 					return id;
 				}
 
-				inline row_id_type& detail(int idx)
+				inline relative_ptr_type& detail(int idx)
 				{
 					return details.get_at(idx);
 				}
@@ -81,12 +83,17 @@ namespace countrybit
 
 		private:
 
-			row_id_type header_location;
+			relative_ptr_type header_location;
 			serialized_box_container* box;
 
 			index_header_type* get_index_header()
 			{
-				return box->unpack<index_header_type>(header_location);
+				index_header_type* t;
+				t = box->unpack<index_header_type>(header_location);
+				if (!t->block.is_sorted_index()) {
+					throw std::logic_error("did not read sorted index correctly");
+				}
+				return t;
 			};
 
 			index_node get_header()
@@ -96,11 +103,11 @@ namespace countrybit
 				return in;
 			}
 
-			index_node create_node(int _max_level)
+			static index_node create_node(serialized_box_container* box, int _max_level)
 			{
 				index_node_holder holder, * hd;
 				data_pair dp;
-				row_id_type r = box->pack<index_node_holder>(holder);
+				relative_ptr_type r = box->pack<index_node_holder>(holder);
 
 				int level_bounds = _max_level + 1;
 
@@ -110,6 +117,7 @@ namespace countrybit
 				}
 
 				hd = box->unpack<index_node_holder>(r);
+				hd->block = block_id::sorted_index_node();
 				hd->header_id = box->pack<data_pair>(dp);
 				hd->details_id = forward_pointer_collection::reserve(box, level_bounds);
 
@@ -125,21 +133,34 @@ namespace countrybit
 
 				for (int i = 0; i < level_bounds; i++)
 				{
-					row_id_type rit = null_row;
+					relative_ptr_type rit = null_row;
 					node.details.push_back(rit);
 				}
 
 				return node;
 			}
 
-			index_node get_node(row_id_type _node_id)
+			index_node create_node(int _max_level)
+			{
+				return create_node(box, _max_level);
+			}
+
+			static index_node get_node(serialized_box_container* box, relative_ptr_type _node_id)
 			{
 				index_node_holder *hd;
 				hd = box->unpack<index_node_holder>(_node_id);
+				if (!hd->block.is_sorted_index_node()) {
+					throw std::logic_error("did not read sorted index node correctly");
+				}
 				index_node		  node;
 				node.data = box->unpack<data_pair>(hd->header_id);
 				node.details = forward_pointer_collection::get(box, hd->details_id);
 				return node;
+			}
+
+			index_node get_node(int _max_level)
+			{
+				return get_node(box, _max_level);
 			}
 
 		public:
@@ -148,14 +169,8 @@ namespace countrybit
 			{
 			}
 
-			sorted_index(serialized_box_container* _box, row_id_type _location) : box(_box), header_location(_location)
+			sorted_index(serialized_box_container* _box, relative_ptr_type _location) : box(_box), header_location(_location)
 			{
-				auto* ihdr = get_index_header();
-
-				if (ihdr->header_id == null_row) {
-					index_node hdr = create_node(MaxNumberOfLevels);
-					ihdr->header_id = hdr.row_id();
-				}
 			}
 
 			sorted_index(const sorted_index& _src) : box(_src.box), header_location(_src.header_location)
@@ -170,26 +185,31 @@ namespace countrybit
 				return *this;
 			}
 
-			static row_id_type reserve_sorted_index(serialized_box_container *_b)
+			static relative_ptr_type reserve_sorted_index(serialized_box_container *_b)
 			{
 				index_header_type hdr, *phdr;
 
 				hdr.count = 0;
 				hdr.level = 0;
 				hdr.header_id = null_row;
+				hdr.block = block_id::sorted_index();
 
-				row_id_type header_location = _b->pack(hdr);
+				relative_ptr_type header_location = _b->pack(hdr);			
 				phdr = _b->unpack<index_header_type>(header_location);
+
+				index_node new_node = create_node(_b, MaxNumberOfLevels);
+				phdr->header_id = new_node.row_id();
+
 				return header_location;
 			}
 
-			static sorted_index get_sorted_index(serialized_box_container* _b, row_id_type _header_location)
+			static sorted_index get_sorted_index(serialized_box_container* _b, relative_ptr_type _header_location)
 			{
 				sorted_index si(_b, _header_location);
 				return si;
 			}
 
-			static sorted_index create_sorted_index(serialized_box_container* _b, row_id_type& _header_location)
+			static sorted_index create_sorted_index(serialized_box_container* _b, relative_ptr_type& _header_location)
 			{
 				_header_location = reserve_sorted_index(_b);
 				sorted_index new_index = get_sorted_index(_b, _header_location);
@@ -198,13 +218,13 @@ namespace countrybit
 
 			static int64_t get_box_size()
 			{
-				return sizeof(index_header_type) + sizeof(row_id_type) * MaxNumberOfLevels + sizeof(data_pair);
+				return sizeof(index_header_type) + sizeof(relative_ptr_type) * MaxNumberOfLevels + sizeof(data_pair);
 			}
 
 			class iterator
 			{
 				sorted_index<KEY, VALUE, SORT_ORDER>* base;
-				row_id_type current;
+				relative_ptr_type current;
 				using index_node = item_details_holder<std::pair<KEY, VALUE>, index_ref>;
 
 			public:
@@ -214,7 +234,7 @@ namespace countrybit
 				using pointer = std::pair<KEY, VALUE>*;  // or also value_type*
 				using reference = std::pair<KEY, VALUE>&;  // or also value_type&
 
-				iterator(sorted_index<KEY, VALUE, SORT_ORDER>* _base, row_id_type _current) :
+				iterator(sorted_index<KEY, VALUE, SORT_ORDER>* _base, relative_ptr_type _current) :
 					base(_base),
 					current(_current)
 				{
@@ -295,7 +315,7 @@ namespace countrybit
 				bool result = false;
 				
 				index_node q = get_header();
-				row_id_type qr;
+				relative_ptr_type qr;
 
 				qr = q.detail(0);
 
@@ -311,7 +331,7 @@ namespace countrybit
 			sorted_index<KEY, VALUE, SORT_ORDER>::iterator begin()
 			{
 				index_node q = get_header();
-				row_id_type qr = q.detail(0);
+				relative_ptr_type qr = q.detail(0);
 
 				return iterator(this, qr);
 			}
@@ -378,7 +398,7 @@ namespace countrybit
 
 			sorted_index<KEY, VALUE, SORT_ORDER>::iterator insert_or_assign(std::pair<KEY, VALUE>& kvp)
 			{
-				row_id_type modified_node = this->update_node(kvp, [](VALUE& dest) { });
+				relative_ptr_type modified_node = this->update_node(kvp, [kvp](VALUE& dest) { dest = kvp.second; });
 				return iterator(this, modified_node);
 			}
 
@@ -390,7 +410,7 @@ namespace countrybit
 
 			sorted_index<KEY, VALUE, SORT_ORDER>::iterator put(std::pair<KEY, VALUE>& kvp)
 			{
-				row_id_type modified_node = this->update_node(kvp);
+				relative_ptr_type modified_node = this->update_node(kvp);
 				return iterator(this, modified_node);
 			}
 
@@ -403,7 +423,7 @@ namespace countrybit
 			inline sorted_index<KEY, VALUE, SORT_ORDER>::iterator put(KEY& key, VALUE& _default_value, std::function<void(VALUE& existing_value)> predicate)
 			{
 				std::pair<KEY, VALUE> kvp(key, _default_value);
-				row_id_type modified_node = this->update_node(kvp, predicate);
+				relative_ptr_type modified_node = this->update_node(kvp, predicate);
 				return insert_or_assign(kvp);
 			}
 
@@ -440,7 +460,7 @@ namespace countrybit
 
 			// compare a node to a key for equality
 
-			inline int compare(row_id_type _node, const KEY& key)
+			inline int compare(relative_ptr_type _node, const KEY& key)
 			{
 				if (_node != null_row)
 				{
@@ -460,9 +480,9 @@ namespace countrybit
 				}
 			}
 
-			row_id_type find_node(row_id_type* update, const KEY& key)
+			relative_ptr_type find_node(relative_ptr_type* update, const KEY& key)
 			{
-				row_id_type found = null_row, p, q;
+				relative_ptr_type found = null_row, p, q;
 				auto hdr = get_header();
 
 				for (int k = get_index_header()->level; k >= 0; k--)
@@ -484,9 +504,9 @@ namespace countrybit
 				return found;
 			}
 
-			row_id_type find_first(row_id_type* update, const KEY& key)
+			relative_ptr_type find_first(relative_ptr_type* update, const KEY& key)
 			{
-				row_id_type found = null_row, p, q, last;
+				relative_ptr_type found = null_row, p, q, last;
 
 				for (int k = get_index_header()->level; k >= 0; k--)
 				{
@@ -511,11 +531,11 @@ namespace countrybit
 				return found;
 			}
 
-			row_id_type update_node(data_pair& kvp, std::function<void(VALUE& existing_value)> predicate)
+			relative_ptr_type update_node(data_pair& kvp, std::function<void(VALUE& existing_value)> predicate)
 			{
 				int k;
-				row_id_type update[MaxNumberOfLevels];
-				row_id_type q = find_node(update, kvp.first);
+				relative_ptr_type update[MaxNumberOfLevels];
+				relative_ptr_type q = find_node(update, kvp.first);
 				index_node qnd;
 
 				if (q != null_row)
@@ -550,10 +570,10 @@ namespace countrybit
 			bool remove_node(const KEY& key)
 			{
 				int k;
-				row_id_type update[MaxNumberOfLevels], p;
+				relative_ptr_type update[MaxNumberOfLevels], p;
 				index_node qnd, pnd;
 
-				row_id_type q = find_node(update, key);
+				relative_ptr_type q = find_node(update, key);
 
 				if (q != null_row)
 				{
@@ -584,30 +604,30 @@ namespace countrybit
 				}
 			}
 
-			row_id_type find_node(const KEY& key)
+			relative_ptr_type find_node(const KEY& key)
 			{
 #ifdef	TIME_SKIP_LIST
 				benchmark::auto_timer_type methodtimer("skip_list_type::search");
 #endif
-				row_id_type update[MaxNumberOfLevels];
+				relative_ptr_type update[MaxNumberOfLevels];
 				return find_node(update, key);
 			}
 
-			row_id_type find_first_node(const KEY& key)
+			relative_ptr_type find_first_node(const KEY& key)
 			{
 #ifdef	TIME_SKIP_LIST
 				benchmark::auto_timer_type methodtimer("skip_list_type::search");
 #endif
-				row_id_type update[MaxNumberOfLevels];
+				relative_ptr_type update[MaxNumberOfLevels];
 				return find_first(update, key);
 			}
 
-			row_id_type first_node()
+			relative_ptr_type first_node()
 			{
 				return get_header().detail(0);
 			}
 
-			row_id_type next_node(row_id_type _node)
+			relative_ptr_type next_node(relative_ptr_type _node)
 			{
 				if (_node == null_row)
 					return _node;

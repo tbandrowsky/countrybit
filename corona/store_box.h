@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ostream>
+#include <iostream>
 #include <vector>
 #include <cmath>
 #include <cstdlib>
@@ -21,7 +21,7 @@ namespace countrybit
 		};
 
 		template <typename box_class, typename data>
-		concept box = requires(box_class c, data d, data * pd, row_id_type l, size_t s, int x, char* b) {
+		concept box = requires(box_class c, data d, data * pd, relative_ptr_type l, corona_size_t s, int x, char* b) {
 			s = c.size();
 			x = c.top();
 			b = c.data();
@@ -34,22 +34,23 @@ namespace countrybit
 
 		class serialized_box 
 		{
-			int _size;
-			int _top;
+			block_id		 _box_id;
+			corona_size_t _size;
+			corona_size_t _top;
 			char _data[1];
 
 		public:
 
 			serialized_box()
 			{
-				;
+				_box_id = block_id::box();
 			}
 
 			template <typename bx> 
 			requires (box_data<bx>)
 			serialized_box(const bx& _src)
 			{
-				int new_size = _src.size();
+				int64_t new_size = _src.size();
 				if (_size < new_size)
 					throw std::invalid_argument("target box too small");
 				_top = _src.top();
@@ -61,7 +62,7 @@ namespace countrybit
 			requires (box_data<bx>)
 			serialized_box operator = (const bx& _src)
 			{
-				int new_size = _src.size();
+				int64_t new_size = _src.size();
 				if (_size < new_size)
 					throw std::invalid_argument("target box too small");
 				_top = _src.top();
@@ -70,23 +71,23 @@ namespace countrybit
 				return *this;
 			}
 
-			void init(int _length)
+			void init(corona_size_t _length)
 			{
 				_top = 0;
 				_size = _length;
 			}
 
-			void adjust(int _length)
+			void adjust(corona_size_t _length)
 			{
 				_size = _length;
 			}
 
-			int top()
+			relative_ptr_type top()
 			{
 				return _top;
 			}
 
-			int size()
+			corona_size_t size()
 			{
 				return _size;
 			}
@@ -98,7 +99,7 @@ namespace countrybit
 
 			template <typename T>
 			requires (std::is_standard_layout<T>::value)
-			T* unpack(row_id_type offset, T* dummy = nullptr)
+			T* unpack(relative_ptr_type offset, T* dummy = nullptr)
 			{
 				if (offset == null_row) {
 					return nullptr;
@@ -109,11 +110,11 @@ namespace countrybit
 
 			template <typename T> 
 			requires (std::is_standard_layout<T>::value)
-			int pack(T& src)
+			relative_ptr_type pack(T& src)
 			{
-				size_t sz = sizeof(T);
-				size_t placement = _top;
-				size_t new_top = placement + sz;
+				corona_size_t sz = sizeof(T);
+				corona_size_t placement = _top;
+				corona_size_t new_top = placement + sz;
 				if (new_top >= _size)
 					return -1;
 				T* item = unpack<T>(_top);
@@ -124,11 +125,11 @@ namespace countrybit
 
 			template <typename T>
 			requires (std::is_standard_layout<T>::value)
-			int pack(const T* src, int length)
+			relative_ptr_type pack(const T* src, int length)
 			{
-				size_t sz = sizeof(T) * length;
-				size_t placement = _top;
-				size_t new_top = placement + sz;
+				corona_size_t sz = sizeof(T) * length;
+				corona_size_t placement = _top;
+				corona_size_t new_top = placement + sz;
 				if (new_top >= _size)
 					return -1;
 				while (_top < new_top) 
@@ -143,7 +144,7 @@ namespace countrybit
 
 			template <typename T>
 				requires (std::is_standard_layout<T>::value)
-			int fill(T src, int length)
+			relative_ptr_type fill(T src, int length)
 			{
 				size_t sz = sizeof(T) * length;
 				size_t placement = _top;
@@ -161,7 +162,7 @@ namespace countrybit
 
 			template <typename T> 
 			requires (std::is_standard_layout<T>::value)
-			int pack_slice(const T* base, int start, int stop, bool terminate = true)
+			relative_ptr_type pack_slice(const T* base, int start, int stop, bool terminate = true)
 			{
 				int length = stop - start;
 				size_t sz = sizeof(T) * length;
@@ -189,7 +190,7 @@ namespace countrybit
 
 			template <typename T>
 				requires (std::is_standard_layout<T>::value)
-			int pack_terminated(const T* base, int start, bool terminate = true)
+			relative_ptr_type pack_terminated(const T* base, int start, bool terminate = true)
 			{
 				T defaulto = {};
 				size_t placement = _top;
@@ -216,7 +217,7 @@ namespace countrybit
 			requires (std::is_standard_layout<T>::value)
 			T* copy(const T* base, int start, bool terminate = true)
 			{
-				int l = pack_terminated(base, start, terminate);
+				corona_size_t l = pack_terminated(base, start, terminate);
 				return unpack<T>(l);
 			}
 
@@ -224,17 +225,17 @@ namespace countrybit
 				requires (std::is_standard_layout<T>::value)
 			T* copy(const T* base, int start, int stop, bool terminate = true)
 			{
-				int l = pack_slice(base, start, stop, terminate);
+				corona_size_t l = pack_slice(base, start, stop, terminate);
 				return unpack<T>(l);
 			}
 
 			template <typename T>
 			requires (std::is_standard_layout<T>::value)
-			int pack(T src, int length)
+			relative_ptr_type pack(T src, int length)
 			{
-				size_t sz = sizeof(T) * length;
-				size_t placement = _top;
-				size_t new_top = placement + sz;
+				corona_size_t sz = sizeof(T) * length;
+				corona_size_t placement = _top;
+				corona_size_t new_top = placement + sz;
 				if (new_top >= _size)
 					return -1;
 				while (_top < new_top)
@@ -249,8 +250,8 @@ namespace countrybit
 			template <typename T>
 			char* place()
 			{
-				int sz = sizeof(T);
-				int l = size() - top();
+				corona_size_t sz = sizeof(T);				
+				corona_size_t l = free();
 
 				if (l < sz) 
 				{
@@ -266,7 +267,7 @@ namespace countrybit
 			requires (std::is_standard_layout<T>::value)
 			T* allocate(int count)
 			{
-				int loc = -1;
+				corona_size_t loc = -1;
 				T dummy = {};
 				count--;
 				if (count >= 0) {
@@ -280,26 +281,26 @@ namespace countrybit
 				return unpack<T>(loc);
 			}
 
-			int reserve(int length)
+			relative_ptr_type reserve(int length)
 			{
-				int sz = length;
-				int placement = _top;
-				int new_top = placement + sz;
+				corona_size_t sz = length;
+				corona_size_t placement = _top;
+				corona_size_t new_top = placement + sz;
 				if (new_top > _size)
 					return -1;
 				_top = new_top;
 				return placement;
 			}
 
-			int reserve_all_free()
+			relative_ptr_type reserve_all_free()
 			{
-				int new_top = _size;
-				int r = _top;
+				corona_size_t new_top = _size;
+				corona_size_t r = _top;
 				_top = new_top;
 				return r;
 			}
 
-			int free()
+			corona_size_t free()
 			{
 				return size() - top();
 			}
@@ -312,17 +313,17 @@ namespace countrybit
 			virtual serialized_box* get_box() { return nullptr; }
 			virtual serialized_box* check(int _bytes) { return nullptr; }
 
-			size_t top()
+			relative_ptr_type top()
 			{
 				return get_box()->top();
 			}
 
-			size_t free()
+			corona_size_t free()
 			{
 				return get_box()->size();
 			}
 
-			size_t size()
+			corona_size_t size()
 			{
 				return get_box()->size();
 			}
@@ -334,21 +335,21 @@ namespace countrybit
 
 			char* move_ptr(serialized_box* _src, char* _srcp)
 			{
-				int offset = _srcp - _src->data();
+				corona_size_t offset = _srcp - _src->data();
 				char* t = data() + offset;
 				return t;
 			}
 
 			template <typename T>
 				requires (std::is_standard_layout<T>::value)
-			T* unpack(int offset)
+			T* unpack(corona_size_t offset)
 			{
 				return get_box()->unpack<T>(offset);
 			}
 
 			template <typename T>
 				requires (std::is_standard_layout<T>::value)
-			int pack(T& src)
+			relative_ptr_type pack(T& src)
 			{
 				check(sizeof(T));
 				return get_box()->pack<T>(src);
@@ -356,7 +357,7 @@ namespace countrybit
 
 			template <typename T>
 				requires (std::is_standard_layout<T>::value)
-			int fill(const T& src, int length)
+			relative_ptr_type fill(const T& src, int length)
 			{
 				check(sizeof(T) * length);
 				return get_box()->fill<T>(src, length);
@@ -364,7 +365,7 @@ namespace countrybit
 
 			template <typename T>
 				requires (std::is_standard_layout<T>::value)
-			int pack(const T* src, int length)
+			relative_ptr_type pack(const T* src, int length)
 			{
 				check(sizeof(T) * length);
 				return get_box()->pack<T>(src, length);
@@ -372,14 +373,14 @@ namespace countrybit
 
 			template <typename T>
 				requires (std::is_standard_layout<T>::value)
-			int pack_terminated(const T* src, int start, bool terminate = true)
+			relative_ptr_type pack_terminated(const T* src, int start, bool terminate = true)
 			{
 				return get_box()->pack_terminated<T>(src, start, terminate);
 			}
 
 			template <typename T>
 				requires (std::is_standard_layout<T>::value)
-			int pack_slice(const T* src, int start, int stop, bool terminate = true)
+			relative_ptr_type pack_slice(const T* src, int start, int stop, bool terminate = true)
 			{
 				check(sizeof(T) * (stop - start + 1));
 				return get_box()->pack_slice<T>(src, start, stop, terminate);
@@ -389,7 +390,7 @@ namespace countrybit
 				requires (std::is_standard_layout<T>::value)
 			T *copy(const T* src, int start, int stop, bool terminate = true)
 			{
-				row_id_type t = pack_slice<T>(src, start, stop, terminate);
+				corona_size_t t = pack_slice<T>(src, start, stop, terminate);
 				return unpack<T>(t);
 			}
 
@@ -415,7 +416,7 @@ namespace countrybit
 				return get_box()->place<T>();
 			}
 
-			int reserve(int length)
+			relative_ptr_type reserve(int length)
 			{
 				if (!length)
 					length = get_box()->free();
@@ -520,16 +521,21 @@ namespace countrybit
 			}
 
 			virtual serialized_box* check(int _bytes) 
-			{ 				
+			{
 				serialized_box* b, temp;
 				b = get_box();
 				if (_bytes > b->free())
 				{
 					temp = *b;
-					int d = b->size() * 2;
-					while ((d - b->top()) < _bytes)
+					corona_size_t s = b->size();
+					corona_size_t d = b->size() * 2;
+					corona_size_t a = d - b->free();
+					while (a < _bytes) {
 						d *= 2;
+						a = d - b->free();
+					}
 					stuff.resize(d + sizeof(serialized_box));
+					std::cout << "resized from " << s << " to " << d << std::endl;
 					b = get_box();
 					*b = temp;
 					b->adjust(d);
@@ -537,7 +543,7 @@ namespace countrybit
 				return b;
 			}
 
-			void init(int _length, serialized_box *_src = nullptr)
+			void init(corona_size_t _length, serialized_box *_src = nullptr)
 			{
 				stuff.resize(_length + sizeof(serialized_box));
 				get_box()->init(_length);
@@ -557,7 +563,7 @@ namespace countrybit
 			requires (box_data<bx>)
 			dynamic_box(const bx& _src)
 			{
-				int new_size = _src.size();
+				corona_size_t new_size = _src.size();
 				init(new_size);
 				memcpy(data(), _src.data(), new_size);
 			}
@@ -566,7 +572,7 @@ namespace countrybit
 			requires (box_data<bx>)
 			dynamic_box operator = (const bx& _src)
 			{
-				int new_size = _src.size();
+				corona_size_t new_size = _src.size();
 				init(new_size);
 				memcpy(data(), _src.data(), new_size);
 				return *this;

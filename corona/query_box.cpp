@@ -16,7 +16,7 @@ namespace countrybit
 			jlist		target;
 			jcollection collection;
 
-			using filter_details_type = item_details_table<row_id_type, filter_element>;
+			using filter_details_type = item_details_table<relative_ptr_type, filter_element>;
 			filter_details_type filters;
 
 			virtual void on_node(jslice& _slice)

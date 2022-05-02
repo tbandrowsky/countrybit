@@ -25,10 +25,10 @@ namespace countrybit
 		{
 		public:
 			char		file_kind[32];
-			row_id_type schema_location;
-			row_id_type collections_location;
-			row_id_type collections_by_name_location;
-			row_id_type collections_by_id_location;
+			relative_ptr_type schema_location;
+			relative_ptr_type collections_location;
+			relative_ptr_type collections_by_name_location;
+			relative_ptr_type collections_by_id_location;
 			object_path database_folder;
 			object_path filename;
 		};
@@ -148,8 +148,8 @@ namespace countrybit
 			template <typename request_type, typename response_type, typename object_type> response_type schema_invoke(
 				const char *_name,
 				request_type& _request,
-				std::function<row_id_type(request_type& _request)> process_fn, 
-				std::function<object_type(row_id_type)> get_fn
+				std::function<relative_ptr_type(request_type& _request)> process_fn, 
+				std::function<object_type(relative_ptr_type)> get_fn
 				)
 			{
 				response_type response;
@@ -157,7 +157,7 @@ namespace countrybit
 
 				try
 				{
-					row_id_type fid = process_fn(_request);
+					relative_ptr_type fid = process_fn(_request);
 					if (fid != null_row)
 					{
 						response.info = get_fn(fid);
@@ -230,21 +230,21 @@ namespace countrybit
 				return response;
 			}
 
-			template<typename request_type> field_response field_invoke(const char * _name, std::function<row_id_type(request_type& _request)> fn, request_type& _request)
+			template<typename request_type> field_response field_invoke(const char * _name, std::function<relative_ptr_type(request_type& _request)> fn, request_type& _request)
 			{
-				return schema_invoke<request_type, field_response, jfield>(_name, _request, fn, [this](row_id_type id) { return schema.get_field(id); });
+				return schema_invoke<request_type, field_response, jfield>(_name, _request, fn, [this](relative_ptr_type id) { return schema.get_field(id); });
 			}
 
-			template<typename request_type> class_response class_invoke(const char* _name, std::function<row_id_type(request_type& _request)> fn, request_type& _request)
+			template<typename request_type> class_response class_invoke(const char* _name, std::function<relative_ptr_type(request_type& _request)> fn, request_type& _request)
 			{
-				return schema_invoke<request_type, class_response, jclass>(_name, _request, fn, [this](row_id_type id) { return schema.get_class(id); });
+				return schema_invoke<request_type, class_response, jclass>(_name, _request, fn, [this](relative_ptr_type id) { return schema.get_class(id); });
 			}
 
 			template <typename request_type, typename response_type, typename object_type> response_type collection_invoke(
 				const char *_name,
 				request_type& _request,
-				std::function<row_id_type(jcollection& _collection, request_type& _request)> process_fn,
-				std::function<object_type(jcollection& _collection, row_id_type)> get_fn
+				std::function<relative_ptr_type(jcollection& _collection, request_type& _request)> process_fn,
+				std::function<object_type(jcollection& _collection, relative_ptr_type)> get_fn
 			)
 			{
 				response_type response;
@@ -261,7 +261,7 @@ namespace countrybit
 
 					jcollection collection = collection_response.collection;
 
-					row_id_type fid = process_fn(collection, _request);
+					relative_ptr_type fid = process_fn(collection, _request);
 					if (fid != null_row)
 					{
 						response.info = get_fn(collection, fid);
@@ -284,9 +284,9 @@ namespace countrybit
 				return response;
 			}
 
-			template<typename request_type> actor_response actor_invoke(const char *_name, std::function<row_id_type(jcollection&, request_type& _request)> fn, request_type& _request)
+			template<typename request_type> actor_response actor_invoke(const char *_name, std::function<relative_ptr_type(jcollection&, request_type& _request)> fn, request_type& _request)
 			{
-				return collection_invoke<request_type, actor_response, jactor>(_name, _request, fn, [this](jcollection&collection, row_id_type id) { return collection.get_actor(id); });
+				return collection_invoke<request_type, actor_response, jactor>(_name, _request, fn, [this](jcollection&collection, relative_ptr_type id) { return collection.get_actor(id); });
 			}
 
 			template <typename request_type> command_response command_invoke(

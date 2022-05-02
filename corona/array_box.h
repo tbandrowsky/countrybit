@@ -14,12 +14,12 @@ namespace countrybit
 		struct iarray
 		{
 			item_type data[max_items];
-			uint32_t length;
+			corona_size_t length;
 
 			iarray() 
 			{
 				length = 0;
-				for (int i = 0; i < max_items; i++)
+				for (corona_size_t i = 0; i < max_items; i++)
 				{
 					data[i] = {};
 				}
@@ -41,27 +41,27 @@ namespace countrybit
 				return &data[0];
 			}
 
-			uint16_t size() const
+			corona_size_t size() const
 			{
 				return length;
 			}
 
-			item_type& operator[](int idx)
+			item_type& operator[](corona_size_t idx)
 			{
 				return data[idx];
 			}
 
-			item_type& get_at(int idx)
+			item_type& get_at(corona_size_t idx)
 			{
 				return data[idx];
 			}
 
-			item_type* get_ptr(int idx)
+			item_type* get_ptr(corona_size_t idx)
 			{
 				return &data[idx];
 			}
 
-			void copy(const item_type* src, int srclength)
+			void copy(const item_type* src, corona_size_t srclength)
 			{
 				item_type* d = &data[0];
 				length = 0;
@@ -102,7 +102,7 @@ namespace countrybit
 			class iterator
 			{
 				iarray<item_type, max_items>* base;
-				row_id_type current;
+				relative_ptr_type current;
 				std::function<bool(item_type&)> predicate;
 
 			public:
@@ -110,7 +110,7 @@ namespace countrybit
 				struct value_ref
 				{
 					item_type& item;
-					row_id_type location;
+					relative_ptr_type location;
 				};
 
 				using iterator_category = std::forward_iterator_tag;
@@ -120,7 +120,7 @@ namespace countrybit
 				using reference = value_ref&;  // or also value_type&
 
 				iterator(iarray<item_type, max_items>* _base, 
-					row_id_type _current,
+					relative_ptr_type _current,
 					std::function<bool(item_type&)> _predicate) :
 					base(_base),
 					current(_current),
@@ -138,7 +138,7 @@ namespace countrybit
 				}
 
 				iterator(iarray<item_type, max_items>* _base,
-					row_id_type _current) :
+					relative_ptr_type _current) :
 					base(_base),
 					current(_current)
 				{
@@ -175,7 +175,7 @@ namespace countrybit
 					return value_ref{ base->get_at(current), current };
 				}
 
-				inline row_id_type get_index()
+				inline relative_ptr_type get_index()
 				{
 					return current;
 				}
@@ -250,7 +250,7 @@ namespace countrybit
 				return w->get_value();
 			}
 
-			row_id_type first_index(std::function<bool(item_type&)> predicate)
+			relative_ptr_type first_index(std::function<bool(item_type&)> predicate)
 			{
 				auto w = this->where(predicate);
 				if (w == end()) {
@@ -288,17 +288,17 @@ namespace countrybit
 			struct array_box_data 
 			{
 			public:
-				uint32_t length;
-				uint32_t max_items;
+				corona_size_t length;
+				corona_size_t max_items;
 				item_type data[1];
 			};
 
 			array_box_data* hdr;
 
-			void copy(int ls, const item_type* s)
+			void copy(corona_size_t ls, const item_type* s)
 			{
 				item_type* d = &hdr->data[0];
-				int l = 0;
+				corona_size_t l = 0;
 
 				while (l < hdr->max_items && l < ls)
 				{
@@ -328,7 +328,7 @@ namespace countrybit
 			{
 			}
 
-			static row_id_type reserve(serialized_box_container* b, int items_length)
+			static relative_ptr_type reserve(serialized_box_container* b, corona_size_t items_length)
 			{
 				array_box temp;
 				auto location = b->fill<char>(0, sizeof(array_box_data) + items_length * sizeof(item_type));
@@ -339,21 +339,21 @@ namespace countrybit
 				return location;
 			}
 
-			static array_box get(serialized_box_container* b, int location)
+			static array_box get(serialized_box_container* b, corona_size_t location)
 			{
 				array_box temp;
 				temp.hdr = b->unpack<array_box_data>(location);
 				return temp;
 			}
 
-			static array_box create(serialized_box_container* b, int items_length, row_id_type& _dest)
+			static array_box create(serialized_box_container* b, corona_size_t items_length, relative_ptr_type& _dest)
 			{
 				_dest = reserve(b, items_length);
 				auto temp = get(b, _dest);
 				return temp;
 			}
 
-			static array_box create(char* b, int chars_length)
+			static array_box create(char* b, corona_size_t chars_length)
 			{
 				array_box temp;
 				temp.hdr = (array_box_data*)(b);
@@ -369,7 +369,7 @@ namespace countrybit
 				return temp;
 			}
 
-			static int get_box_size(int length)
+			static corona_size_t get_box_size(corona_size_t length)
 			{
 				return sizeof(array_box_data) + sizeof(item_type) * length;
 			}
@@ -397,31 +397,31 @@ namespace countrybit
 				return &hdr->data[0];
 			}
 
-			item_type value(int _idx) const
+			item_type value(corona_size_t _idx) const
 			{
 				return hdr->data[_idx];
 			}
 
-			item_type& operator[](int _idx)
-			{
-				if (_idx < 0 || _idx >= hdr->max_items)
-					throw std::invalid_argument("range error");
-				return hdr->data[_idx];
-			}
-
-			item_type& get_at(int _idx)
+			item_type& operator[](corona_size_t _idx)
 			{
 				if (_idx < 0 || _idx >= hdr->max_items)
 					throw std::invalid_argument("range error");
 				return hdr->data[_idx];
 			}
 
-			uint16_t max_size() const
+			item_type& get_at(corona_size_t _idx)
+			{
+				if (_idx < 0 || _idx >= hdr->max_items)
+					throw std::invalid_argument("range error");
+				return hdr->data[_idx];
+			}
+
+			corona_size_t max_size() const
 			{
 				return hdr->max_items;
 			}
 
-			uint16_t size() const
+			corona_size_t size() const
 			{
 				return hdr->length;
 			}
@@ -437,7 +437,7 @@ namespace countrybit
 			class iterator
 			{
 				array_box<item_type>* base;
-				row_id_type current;
+				relative_ptr_type current;
 				std::function<bool(item_type&)> predicate;
 
 			public:
@@ -445,7 +445,7 @@ namespace countrybit
 				struct value_ref
 				{
 					item_type& item;
-					row_id_type location;
+					relative_ptr_type location;
 				};
 
 				using iterator_category = std::forward_iterator_tag;
@@ -455,7 +455,7 @@ namespace countrybit
 				using reference = value_ref&;  // or also value_type&
 
 				iterator(array_box<item_type>* _base,
-					row_id_type _current,
+					relative_ptr_type _current,
 					std::function<bool(item_type&)> _predicate) :
 					base(_base),
 					current(_current),
@@ -473,7 +473,7 @@ namespace countrybit
 				}
 
 				iterator(array_box<item_type>* _base,
-					row_id_type _current) :
+					relative_ptr_type _current) :
 					base(_base),
 					current(_current)
 				{
@@ -505,7 +505,7 @@ namespace countrybit
 					return &base->get_at(current);
 				}
 
-				inline row_id_type get_index()
+				inline relative_ptr_type get_index()
 				{
 					return current;
 				}
@@ -580,7 +580,7 @@ namespace countrybit
 				return w->get_index();
 			}
 
-			row_id_type first_index(std::function<bool(item_type&)> predicate)
+			relative_ptr_type first_index(std::function<bool(item_type&)> predicate)
 			{
 				auto w = this->where(predicate);
 				if (w == end()) {

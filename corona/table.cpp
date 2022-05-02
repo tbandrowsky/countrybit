@@ -84,7 +84,7 @@ namespace countrybit
             }
             assert_if([count]() { return count == 2; }, "Wrong count");
 
-            for (countrybit::database::row_id_type i = 0; i < basic.size(); i++) {
+            for (countrybit::database::relative_ptr_type i = 0; i < basic.size(); i++) {
                 auto nr = basic[i];
                 r = r && assert_if([nr, i, ti]() { return ti[i].id == nr.id && ti[i].description == nr.description && ti[i].name == nr.name; }, "item not stored correctly");
             }
@@ -97,12 +97,12 @@ namespace countrybit
 
 #if DETAILS
 
-            for (countrybit::database::row_id_type i = 0; i < basic.size(); i++) {
+            for (countrybit::database::relative_ptr_type i = 0; i < basic.size(); i++) {
                 auto b = basic[i];
                 std::cout << b.id << " " << b.name << " " << b.description << std::endl;
             }
 #endif
-            for (countrybit::database::row_id_type i = 0; i < basic.size(); i++) {
+            for (countrybit::database::relative_ptr_type i = 0; i < basic.size(); i++) {
                 auto nr = basic[i];
                 r = r && assert_if([nr, i, tif]() { return tif[i].id == nr.id && tif[i].description == nr.description && tif[i].name == nr.name; }, "forward not moved correctly");
             }
@@ -114,19 +114,19 @@ namespace countrybit
             basic.erase(0, 1);
 
 #if DETAILS
-            for (countrybit::database::row_id_type i = 0; i < basic.size(); i++) {
+            for (countrybit::database::relative_ptr_type i = 0; i < basic.size(); i++) {
                 auto b = basic[i];
                 std::cout << b.id << " " << b.name << " " << b.description << std::endl;
             }
 #endif
 
-            for (countrybit::database::row_id_type i = 0; i < basic.size(); i++) {
+            for (countrybit::database::relative_ptr_type i = 0; i < basic.size(); i++) {
                 auto nr = basic[i];
                 r = r && assert_if([nr, i, tib]() { return tib[i].id == nr.id && tib[i].description == nr.description && tib[i].name == nr.name; }, "backward not moved correctly");
             }
 
-            row_id_type table_location;
-            row_id_type simple_test_location;
+            relative_ptr_type table_location;
+            relative_ptr_type simple_test_location;
             auto simple_test = item_details_table<test_item, object_name>::create_table(&box, 10, 100, simple_test_location);
 
             test_item tix;
@@ -177,7 +177,7 @@ namespace countrybit
 
 #endif
 
-            row_id_type insert_test2_location;
+            relative_ptr_type insert_test2_location;
             auto insert_test2 = table<test_item>::create_table(&box, 20, insert_test2_location);
 
             tix.name = "test 1";
@@ -190,7 +190,7 @@ namespace countrybit
             insert_test2.create(1, &tix);
 
             insert_test2.insert(1, 3);
-            for (row_id_type x = 1; x < 4; x++)
+            for (relative_ptr_type x = 1; x < 4; x++)
             {
                 auto* tic = insert_test2.get_ptr(x);
                 tic->name = "test x";
@@ -208,7 +208,7 @@ namespace countrybit
             item_details_table<test_item, object_name> item_stuff;
             item_stuff = item_details_table<test_item, object_name>::create_table(&box, 10, 100, table_location);
 
-            row_id_type ids[4];
+            relative_ptr_type ids[4];
 
             new_item = item_stuff.create_item(nullptr, 1, nullptr);
             new_item.item().name = "first";
