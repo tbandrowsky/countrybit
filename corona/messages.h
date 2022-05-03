@@ -29,6 +29,7 @@ namespace countrybit
 		public:
 			int char_offset;
 			int line_number;
+			database::block_id block;
 
 			base_parse_result() : char_offset(0), line_number(0)
 			{

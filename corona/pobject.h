@@ -102,7 +102,7 @@ namespace countrybit
 				return !is_container();
 			}
 
-			pvalue* next;
+			pvalue* next_link;
 		};
 
 		class parray
@@ -112,17 +112,17 @@ namespace countrybit
 			int index;
 
 			int num_elements;
-			pvalue* first, *last;
+			pvalue* first_link, *last_link;
 
 			void add(pvalue* pv)
 			{
 				num_elements++;
-				if (!first) {
-					first = last = pv;
+				if (!first_link) {
+					first_link = last_link = pv;
 				}
 				else {
-					last->next = pv;
-					last = pv;
+					last_link->next_link = pv;
+					last_link = pv;
 				}
 			}
 		};
@@ -135,7 +135,7 @@ namespace countrybit
 
 			const char* name;
 			const pvalue* value;
-			pmember* next;
+			pmember* next_link;
 
 			int get_type_code() const
 			{
@@ -155,12 +155,12 @@ namespace countrybit
 			int index;
 
 			int num_members;
-			pmember* first, *last;
+			pmember* first_link, *last_link;
 			pmember* type_member;
 
 			pmember* get_member(const char* _name) const
 			{
-				for (pmember* mb = first; mb; mb = mb->next)
+				for (pmember* mb = first_link; mb; mb = mb->next_link)
 				{
 					if (_stricmp(mb->name,_name) == 0)
 						return mb;
@@ -171,12 +171,12 @@ namespace countrybit
 			void add(pmember* pv)
 			{
 				num_members++;
-				if (!first) {
-					first = last = pv;
+				if (!first_link) {
+					first_link = last_link = pv;
 				}
 				else {
-					last->next = pv;
-					last = pv;
+					last_link->next_link = pv;
+					last_link = pv;
 				}
 			}
 

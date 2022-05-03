@@ -198,7 +198,7 @@ namespace countrybit
 
 				inline KEY& get_key() const
 				{
-					return current->keyValue.first;
+					return current->keyValue.first_link;
 				}
 
 				inline VALUE& get_value()
@@ -253,7 +253,7 @@ namespace countrybit
 
 			bool erase(skip_list<KEY, VALUE, SORT_ORDER>::iterator& _iter)
 			{
-				return this->remove_node(_iter->first);
+				return this->remove_node(_iter->first_link);
 			}
 
 			bool erase(const KEY& key)
@@ -407,14 +407,14 @@ namespace countrybit
 
 				for (auto& item : test)
 				{
-					std::cout << item.first << " " << item.second << std::endl;
+					std::cout << item.first_link << " " << item.second << std::endl;
 				}
 
 				std::cout << "starting later loop" << std::endl;
 
 				for (auto& item : test[2])
 				{
-					std::cout << item.first << " " << item.second << std::endl;
+					std::cout << item.first_link << " " << item.second << std::endl;
 				}
 
 				auto x = test[1];
@@ -425,7 +425,7 @@ namespace countrybit
 
 				for (auto& item : test)
 				{
-					std::cout << item.first << " " << item.second << std::endl;
+					std::cout << item.first_link << " " << item.second << std::endl;
 				}
 
 				return result;
@@ -567,7 +567,7 @@ namespace countrybit
 				bool all = true;
 				for (auto& f : _src)
 				{
-					if (!find_node(f.first))
+					if (!find_node(f.first_link))
 					{
 						all = false;
 						break;
@@ -584,9 +584,9 @@ namespace countrybit
 			{
 				if (_node != nullptr)
 				{
-					if (_node->keyValue.first < key)
+					if (_node->keyValue.first_link < key)
 						return -SORT_ORDER;
-					else if (_node->keyValue.first > key)
+					else if (_node->keyValue.first_link > key)
 						return SORT_ORDER;
 					else
 						return 0;
@@ -622,25 +622,25 @@ namespace countrybit
 
 			node_type* find_first(node_type** update, const KEY& key)
 			{
-				node_type* p, * q, * found = nullptr, * last = nullptr;
+				node_type* p, * q, * found = nullptr, * last_link = nullptr;
 
 				for (int k = level; k >= 0; k--)
 				{
 					p = &header;
 					q = p->forward[k];
-					last = q;
+					last_link = q;
 					auto comp = compare(q, key);
 					while (comp < 0)
 					{
 						p = q;
-						last = q;
+						last_link = q;
 						q = q->forward[k];
 						comp = compare(q, key);
 					}
 					if (comp == 0)
 						found = q;
 					else if (comp < 0)
-						found = last;
+						found = last_link;
 					update[k] = p;
 				}
 
@@ -653,7 +653,7 @@ namespace countrybit
 				int k;
 				node_type* update[MaxNumberOfLevels], * p;
 
-				node_type* q = find_node(update, kvp.first);
+				node_type* q = find_node(update, kvp.first_link);
 
 				if (q)
 				{

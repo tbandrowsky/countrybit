@@ -515,7 +515,7 @@ namespace countrybit
 				return iterator(this, 0, predicate);
 			}
 
-			T& first(std::function<bool(T&)> predicate)
+			T& first_link(std::function<bool(T&)> predicate)
 			{
 				auto w = this->where(predicate);
 				if (w == end()) {

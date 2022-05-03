@@ -43,7 +43,7 @@ namespace countrybit
 
 			serialized_box()
 			{
-				_box_id = block_id::box();
+				_box_id = block_id::box_id();
 			}
 
 			template <typename bx> 
@@ -75,6 +75,7 @@ namespace countrybit
 			{
 				_top = 0;
 				_size = _length;
+				_box_id = block_id::box_id();
 			}
 
 			void adjust(corona_size_t _length)
@@ -98,28 +99,56 @@ namespace countrybit
 			}
 
 			template <typename T>
+			T* pack_start(int length, relative_ptr_type& dest)
+			{
+				relative_ptr_type alignment = sizeof(T);
+
+				if (sizeof(T) < 8)
+				{
+					alignment = sizeof(T);
+				}
+				else
+				{
+					alignment = 8;
+				}
+
+				relative_ptr_type start = _top + ((alignment - _top % alignment) % alignment);
+				relative_ptr_type stop = start + sizeof(T) * length;
+
+//				std::cout << "pack:" << start << " " << stop << " " << _size << std::endl;
+
+				if (stop > _size) 
+				{
+					dest = null_row;
+					return nullptr;
+				}
+
+				T *destptr = (T*)(data() + start);
+				_top = stop;
+				dest = start;
+
+				return destptr;
+			}
+
+			template <typename T>
 			requires (std::is_standard_layout<T>::value)
 			T* unpack(relative_ptr_type offset, T* dummy = nullptr)
 			{
 				if (offset == null_row) {
 					return nullptr;
 				}
-				T* temptress = (T*)&_data[offset];
-				return temptress;
+				T* item = (T*)&_data[offset];
+				return item;
 			}
 
 			template <typename T> 
 			requires (std::is_standard_layout<T>::value)
 			relative_ptr_type pack(T& src)
 			{
-				corona_size_t sz = sizeof(T);
-				corona_size_t placement = _top;
-				corona_size_t new_top = placement + sz;
-				if (new_top >= _size)
-					return -1;
-				T* item = unpack<T>(_top);
+				relative_ptr_type placement;
+				T* item = pack_start<T>(1, placement);
+				if (!item) return placement;
 				*item = src;
-				_top = new_top;
 				return placement;
 			}
 
@@ -127,17 +156,15 @@ namespace countrybit
 			requires (std::is_standard_layout<T>::value)
 			relative_ptr_type pack(const T* src, int length)
 			{
-				corona_size_t sz = sizeof(T) * length;
-				corona_size_t placement = _top;
-				corona_size_t new_top = placement + sz;
-				if (new_top >= _size)
-					return -1;
-				while (_top < new_top) 
+				relative_ptr_type placement;
+				T* item = pack_start<T>(length, placement);
+				if (!item) return placement;
+				while (length)
 				{
-					T *item = unpack<T>(_top);
 					*item = *src;
 					src++;
-					_top += sizeof(T);
+					item++;
+					length--;
 				}
 				return placement;
 			}
@@ -146,16 +173,14 @@ namespace countrybit
 				requires (std::is_standard_layout<T>::value)
 			relative_ptr_type fill(T src, int length)
 			{
-				size_t sz = sizeof(T) * length;
-				size_t placement = _top;
-				size_t new_top = placement + sz;
-				if (new_top >= _size)
-					return -1;
-				while (_top < new_top)
+				relative_ptr_type placement;
+				T* item = pack_start<T>(length, placement);
+				if (!item) return placement;
+				while (length)
 				{
-					T* item = unpack<T>(_top);
 					*item = src;
-					_top += sizeof(T);
+					item++;
+					length--;
 				}
 				return placement;
 			}
@@ -164,25 +189,22 @@ namespace countrybit
 			requires (std::is_standard_layout<T>::value)
 			relative_ptr_type pack_slice(const T* base, int start, int stop, bool terminate = true)
 			{
-				int length = stop - start;
-				size_t sz = sizeof(T) * length;
-				size_t placement = _top;
-				size_t new_top = placement + sz;
-				if (new_top >= _size)
-					return -1;
+				relative_ptr_type placement;
+				T* item = pack_start<T>((stop - start) + 1, placement);
+				if (!item) return placement;
+
 				int i = start;
 				while (i < stop)
 				{
-					T* temp = unpack<T>(_top);
-					*temp = base[i];
+					*item = base[i];
+					item++;
 					i++;
-					_top += sizeof(T);
 				}
 
 				if (terminate) 
 				{
 					T temp = {};
-					pack(temp);
+					*item = temp;
 				}
 
 				return placement;
@@ -190,24 +212,29 @@ namespace countrybit
 
 			template <typename T>
 				requires (std::is_standard_layout<T>::value)
-			relative_ptr_type pack_terminated(const T* base, int start, bool terminate = true)
+			relative_ptr_type pack_terminated(const T* base, int start)
 			{
+				int length = 0;
 				T defaulto = {};
-				size_t placement = _top;
-				int i = start;
-				while (base[i] != defaulto)
+
+				while (base[length] != defaulto)
 				{
-					T* item = unpack<T>(_top);
-					*item = {}; // base[i];
-					i++;
-					_top += sizeof(T);
-					if (_top >= _size) {
-						_top = placement;
-						return -1;
-					}
+					length++;
 				}
-				if (terminate) {
-					pack(defaulto);
+				length++;
+
+				relative_ptr_type placement;
+				T* item = pack_start<T>(length, placement);
+				if (!item) return placement;
+
+				T defaulto = {};
+
+				while (length) 
+				{
+					*item = base[start];
+					length--;
+					start++;
+					item++;
 				}
 
 				return placement;
@@ -215,9 +242,9 @@ namespace countrybit
 
 			template <typename T>
 			requires (std::is_standard_layout<T>::value)
-			T* copy(const T* base, int start, bool terminate = true)
+			T* copy(const T* base, int start)
 			{
-				corona_size_t l = pack_terminated(base, start, terminate);
+				corona_size_t l = pack_terminated(base, start);
 				return unpack<T>(l);
 			}
 
@@ -230,55 +257,42 @@ namespace countrybit
 			}
 
 			template <typename T>
-			requires (std::is_standard_layout<T>::value)
-			relative_ptr_type pack(T src, int length)
+			char* place()
 			{
-				corona_size_t sz = sizeof(T) * length;
-				corona_size_t placement = _top;
-				corona_size_t new_top = placement + sz;
-				if (new_top >= _size)
-					return -1;
-				while (_top < new_top)
-				{
-					T* item = unpack<T>(_top);
-					*item = src;
-					_top += sizeof(T);
-				}
-				return placement;
+				relative_ptr_type placement;
+				T* item = pack_start<T>(1, placement);
+				return (char *)item;
 			}
 
 			template <typename T>
-			char* place()
+			T* clone(T& source)
 			{
-				corona_size_t sz = sizeof(T);				
-				corona_size_t l = free();
-
-				if (l < sz) 
-				{
-					return nullptr;
-				}
-
-				char* szn = data();
-				_top += sz;
-				return szn;
+				// TODO: the cloned item here needs to have its destructor called,
+				// so, we shall have to track this with a list some kind down the road to 
+				// use this facility, and ideally create a special box
+				relative_ptr_type placement;
+				T* item = pack_start<T>(1, source);
+				if (!item) return item;				
+				item = new (item) T(source);
+				return item;
 			}
 
 			template <typename T>
 			requires (std::is_standard_layout<T>::value)
 			T* allocate(int count)
 			{
-				corona_size_t loc = -1;
-				T dummy = {};
-				count--;
-				if (count >= 0) {
-					loc = pack(dummy);
-				}
+				relative_ptr_type placement;
+				T* item = pack_start<T>(count, placement);
+				if (!item) return item;
+
+				T* it = item;
 				while (count) 
 				{
-					pack(dummy);
+					*it = {};
 					count--;
+					it++;
 				}
-				return unpack<T>(loc);
+				return item;
 			}
 
 			relative_ptr_type reserve(int length)
@@ -402,6 +416,12 @@ namespace countrybit
 			}
 
 			template <typename T>
+			T* clone(T& base)
+			{
+				return get_box()->clone(base);
+			}
+
+			template <typename T>
 				requires (std::is_standard_layout<T>::value)
 			T* allocate(int count)
 			{
@@ -507,45 +527,65 @@ namespace countrybit
 
 		class dynamic_box : public serialized_box_container
 		{
-			std::vector<char> stuff;
+			char *stuff;
+			corona_size_t stuff_size;
+
+			void resize(corona_size_t new_size)
+			{
+				char* temp = new char[new_size + sizeof(serialized_box)];
+				if (!temp) {
+					throw std::exception("Out of memory");
+				}
+				if (stuff) {
+					memcpy(temp, stuff, stuff_size);
+					delete[] stuff;
+				}
+				stuff = temp;
+				stuff_size = new_size;
+			}
 
 		public:
 
-			dynamic_box() 
+			dynamic_box() : stuff(nullptr), stuff_size(0)
 			{
+				
+			}
+
+			~dynamic_box()
+			{
+				if (stuff) delete[] stuff;
 			}
 
 			virtual serialized_box* get_box() 
 			{
-				return (serialized_box*)stuff.data(); 
+				return (serialized_box*)stuff;
 			}
 
 			virtual serialized_box* check(int _bytes) 
 			{
-				serialized_box* b, temp;
-				b = get_box();
-				if (_bytes > b->free())
+				serialized_box* ob, *nb;
+				ob = get_box();
+				nb = ob;
+				if (_bytes > ob->free())
 				{
-					temp = *b;
-					corona_size_t s = b->size();
-					corona_size_t d = b->size() * 2;
-					corona_size_t a = d - b->free();
+					corona_size_t s = ob->size();
+					corona_size_t d = ob->size() * 2;
+					corona_size_t a = d - ob->free();
 					while (a < _bytes) {
 						d *= 2;
-						a = d - b->free();
+						a = d - ob->free();
 					}
-					stuff.resize(d + sizeof(serialized_box));
+					resize(d);
 					std::cout << "resized from " << s << " to " << d << std::endl;
-					b = get_box();
-					*b = temp;
-					b->adjust(d);
+					serialized_box *nb = get_box();
+					nb->adjust(d);
 				}
-				return b;
+				return nb;
 			}
 
 			void init(corona_size_t _length, serialized_box *_src = nullptr)
 			{
-				stuff.resize(_length + sizeof(serialized_box));
+				resize(_length);
 				get_box()->init(_length);
 				if (_src) {
 					std::copy(_src->data(), _src->data() + _length, get_box()->data());
@@ -554,7 +594,7 @@ namespace countrybit
 
 			void copy_box(serialized_box* _src = nullptr)
 			{
-				stuff.resize(_src->size());
+				resize(_src->size());
 				get_box()->init(_src->size());
 				std::copy(_src->data(), _src->data() + _src->size(), get_box()->data());
 			}

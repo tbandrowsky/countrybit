@@ -26,7 +26,8 @@ namespace countrybit
 			{
 			public:
 				item_type   data;
-				relative_ptr_type next;
+				relative_ptr_type next_link;
+				relative_ptr_type previous_link;
 			};
 
 			relative_ptr_type		header_loc;
@@ -37,24 +38,36 @@ namespace countrybit
 				return box->unpack<list_box_data>(header_loc);
 			}
 
-			list_link* first()
+			list_link* first_link()
 			{
 				list_box_data* hdr = get_hdr();
 				return box->unpack<list_link>(hdr->root_item);
 			}
 
-			list_link* next(list_link* n)
+			list_link* last_link()
 			{
-				return box->unpack<list_link>(n->next);
+				list_box_data* hdr = get_hdr();
+				return box->unpack<list_link>(hdr->last_item);
+			}
+
+			list_link* next_link(list_link* n)
+			{
+				return box->unpack<list_link>(n->next_link);
+			}
+
+			list_link* previous_link(list_link* n)
+			{
+				return box->unpack<list_link>(n->previous_link);
 			}
 
 			list_link* put(const item_type& _src)
 			{
 				list_box_data* hdr = get_hdr();
 
-				list_link temp;
+				list_link temp, *n;
 				temp.data = _src;
-				temp.next = null_row;
+				temp.next_link = null_row;
+				temp.previous_link = null_row;
 
 				relative_ptr_type loc = box->pack(temp);
 
@@ -64,8 +77,10 @@ namespace countrybit
 
 				if (hdr->last_item != null_row) 
 				{
-					list_link* last = box->unpack<list_link>(hdr->last_item);
-					last->next = loc;
+					list_link* last_link = box->unpack<list_link>(hdr->last_item);
+					n = box->unpack<list_link>(loc);
+					n->previous_link = hdr->last_item;
+					last_link->next_link = loc;
 					hdr->last_item = loc;
 				}
 				else
@@ -169,7 +184,7 @@ namespace countrybit
 
 			public:
 
-				using iterator_category = std::forward_iterator_tag;
+				using iterator_category = std::bidirectional_iterator_tag;
 				using difference_type = std::ptrdiff_t;
 				using value_type = item_type;
 				using pointer = item_type*;  // or also value_type*
@@ -184,7 +199,7 @@ namespace countrybit
 				{
 					while (current && !predicate(current->data))
 					{
-						current = _base->next(current);
+						current = _base->next_link(current);
 					}
 				}
 
@@ -222,7 +237,7 @@ namespace countrybit
 
 				inline item_type& get_value()
 				{
-					return &current->data;
+					return current->data;
 				}
 
 				inline iterator begin() const
@@ -239,7 +254,7 @@ namespace countrybit
 				{
 					do
 					{
-						current = base->next(current);
+						current = base->next_link(current);
 						if (!current)
 							return iterator(base, nullptr, predicate);
 					} while (!predicate(current->data));
@@ -251,6 +266,32 @@ namespace countrybit
 					iterator tmp(*this);
 					operator++();
 					return tmp;
+				}
+
+				inline iterator operator--()
+				{
+					do
+					{
+						current = base->previous_link(current);
+						if (!current)
+							return iterator(base, nullptr, predicate);
+					} while (!predicate(current->data));
+					return iterator(base, current, predicate);
+				}
+
+				inline iterator operator--(int)
+				{
+					iterator tmp(*this);
+					operator--();
+					return tmp;
+				}
+
+				inline iterator operator[](int idx)
+				{
+					iterator temp(*this);
+					if (idx > 0) while (idx--) temp++;
+					else if (idx < 0) while (idx++) temp--;
+					return temp;
 				}
 
 				bool operator == (const iterator& _src) const
@@ -267,7 +308,7 @@ namespace countrybit
 
 			list_box<item_type>::iterator begin()
 			{
-				return iterator(this, first());
+				return iterator(this, first_link());
 			}
 
 			list_box<item_type>::iterator end()
@@ -275,9 +316,60 @@ namespace countrybit
 				return iterator(this, nullptr);
 			}
 
+			list_box<item_type>::iterator rbegin()
+			{
+				return iterator(this, last_link());
+			}
+
+			item_type &first()
+			{
+				auto t = first_link();
+				if (!t)
+					throw std::invalid_argument("list is empty");
+				return t->data;
+			}
+
+			item_type& last()
+			{
+				auto t = last_link();
+				if (!t)
+					throw std::invalid_argument("list is empty");
+				return t->data;
+			}
+
+			item_type& operator[](int idx)
+			{
+				if (idx < 0) 
+				{
+					auto itr = rbegin();
+					while (idx++) {
+						itr--;
+					}
+					if (itr == std::end(*this))
+						throw std::invalid_argument("index out of range for list");
+					return *itr;
+				}
+				else if (idx >= 0)
+				{
+					auto itr = begin();
+					while (idx--) {
+						itr++;
+					}
+					if (itr == std::end(*this))
+						throw std::invalid_argument("index out of range for list");
+					return *itr;
+				}
+			}
+
+			item_type& first(std::function<bool(item_type&)> predicate)
+			{
+				auto it = iterator(this, first_link(), predicate);
+				return *it;
+			}
+
 			auto where(std::function<bool(item_type&)> predicate)
 			{
-				return iterator(this, first(), predicate);
+				return iterator(this, first_link(), predicate);
 			}
 
 			bool any_of(std::function<bool(item_type&)> predicate)

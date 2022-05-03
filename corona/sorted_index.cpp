@@ -98,7 +98,7 @@ namespace countrybit
 			int k = 0;
 			for (auto& item : test)
 			{
-				if (tests[k] != item.first) {
+				if (tests[k] != item.first_link) {
 					std::cout << "loop failed" << std::endl;
 					return false;
 				}
@@ -110,7 +110,7 @@ namespace countrybit
 			k = 0; 
 			for (auto& item : test[2])
 			{
-				if (tests2[k] != item.first) {
+				if (tests2[k] != item.first_link) {
 					std::cout << "starting from key failed" << std::endl;
 					return false;
 				}
@@ -127,7 +127,7 @@ namespace countrybit
 
 			for (auto& item : test)
 			{
-				if (tests3[k] != item.first) {
+				if (tests3[k] != item.first_link) {
 					std::cout << "erasing iterator failed" << std::endl;
 					return false;
 				}

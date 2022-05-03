@@ -10,6 +10,7 @@
 #include "string_box.h"
 #include "time_box.h"
 #include "sorted_index.h"
+#include "list_box.h"
 #include "pobject.h"
 #include "pobject_transformer.h"
 #include <functional>
@@ -23,30 +24,89 @@ namespace countrybit
 		{
 		public:
 			double value;
+			get_number_result() {
+				block = database::block_id::number_id();
+				value = 0.0;
+			}
 		};
 
 		class get_dimension_result : public base_parse_result
 		{
 		public:
 			int x, y, z;
+			get_dimension_result() {
+				block = database::block_id::dimension_id();
+				x = y = z = 0;
+			}
 		};
 
 		class get_string_result : public base_parse_result
 		{
 		public:
 			const char *value;
+			get_string_result() {
+				block = database::block_id::string_id();
+				value = nullptr;
+			}
+		};
+
+		class get_operator_result : public base_parse_result
+		{
+		public:
+
+			const char* value;
+
+			get_operator_result() 
+			{
+				block = database::block_id::operator_id();
+				value = nullptr;
+			}
+
+			bool is_add() { return stricmp(value, "+") == 0; }
+			bool is_minus() { return stricmp(value, "-") == 0; }
+			bool is_multiply() { return stricmp(value, "*") == 0; }
+			bool is_divide() { return stricmp(value, "/") == 0; }
+			bool is_open() { return stricmp(value, "(") == 0; }
+			bool is_close() { return stricmp(value, ")") == 0; }
+			bool is_gt() { return stricmp(value, ">") == 0; }
+			bool is_lt() { return stricmp(value, "<") == 0; }
+			bool is_gte() { return stricmp(value, ">=") == 0; }
+			bool is_lte() { return stricmp(value, "<=") == 0; }
+			bool is_contains() { return stricmp(value, "@") == 0; }
+			bool is_period() { return stricmp(value, ".") == 0; }
+		};
+
+		class get_identifier_result: public base_parse_result
+		{
+		public:
+			const char* value;
+			get_identifier_result()
+			{
+				block = database::block_id::identifier_id();
+				value = nullptr;
+			}
 		};
 
 		class get_point_result : public base_parse_result
 		{
 		public:
-			int x, y, z;
+			double x, y, z;
+			get_point_result()
+			{
+				block = database::block_id::point_id();
+				x = y = z = 0;
+			}
 		};
 
 		class get_rectangle_result : public base_parse_result
 		{
 		public:
-			int x, y, w, h;
+			double x, y, w, h;
+			get_rectangle_result()
+			{
+				block = database::block_id::rectangle_id();
+				x = y = w = h = 0;
+			}
 		};
 
 		class get_audio_result : public base_parse_result
@@ -57,6 +117,13 @@ namespace countrybit
 			double	pitch_adjust,
 					volume_adjust;
 			bool	playing;
+
+			get_audio_result()
+			{
+				block = database::block_id::audio_id();
+				start_seconds = stop_seconds = pitch_adjust = volume_adjust = 0.0;
+				playing = false;
+			}
 		};
 
 		class get_datetime_result : public base_parse_result
@@ -69,6 +136,12 @@ namespace countrybit
 			int minutes;
 			int seconds;
 			int milliseconds;
+
+			get_datetime_result()
+			{
+				block = database::block_id::datetime_id();
+				years = months = days = hours = minutes = seconds = milliseconds = 0;
+			}
 		};
 
 		class get_color_result : public base_parse_result
@@ -78,12 +151,190 @@ namespace countrybit
 			double green;
 			double blue;
 			double alpha;
+
+			get_color_result()
+			{
+				block = database::block_id::color_id();
+				red = green = blue = 0.0;
+				alpha = 1.0;
+			}
 		};
 
-		class get_identifier_result : public base_parse_result
+		class get_expression_result;
+
+		using expression_term_collection = database::list_box<base_parse_result *>;
+
+		class get_path_result : public base_parse_result
 		{
 		public:
-			char *value;
+			database::serialized_box_container* box;
+			expression_term_collection terms;
+
+			get_path_result(database::serialized_box_container* _box) : box(_box)
+			{
+				block = database::block_id::path_id();
+				terms = expression_term_collection::create(box);
+			}
+
+			template <typename T>
+			requires (database::named_block<T>)
+			bool accept(T& gor)
+			{
+				T* item = box->clone(gore);							
+				terms.push_back(item);
+				return true;
+			}
+		};
+
+		class get_sub_expression_result : public base_parse_result
+		{
+		public:
+			database::serialized_box_container *box;
+			expression_term_collection terms;
+
+			get_sub_expression_result(database::serialized_box_container* _box) : box(_box)
+			{
+				terms = expression_term_collection::create(box);
+			}
+
+			template <typename T>
+			requires (database::named_block<T>)
+			bool accept(T& gor)
+			{
+				if (gor.block->is_identifer()) 
+				{
+					if (terms.size()) {
+						if (terms.last()->block.is_path())
+						{
+							auto* p = (get_path_result*)terms.last();
+							return p->accept(gor);
+						}
+						else
+						{
+							get_path_result gpr(box);
+							gpr.add_result(gor);
+							return accept(gpr);
+						}
+					}
+					else {
+						get_path_result gpr(box);
+						gpr.accept(gor);
+						return accept(gpr);
+					}
+				}
+				else if (gor.block->is_operator())
+				{
+					auto* p = (get_operator_result*)item;
+					if (p->is_period() && terms.size() && terms.last()->block.is_path()) {
+						auto* p = (get_path_result*)terms.last();
+						return p->add_result(gor);
+					}
+					else if (gor.is_open() || gor.is_close())
+					{
+						return false;
+					}
+					else 
+					{
+						terms.push_back(box->clone(gor));
+						return true;
+					}
+				}
+				else if (gor.block->is_string() ||
+					gor.block->is_number() || 
+					gor.block->is_path()
+					)
+				{
+					terms.push_back(box->clone(gor));
+					return true;
+				}
+				else
+				{
+					return false;
+				}
+			}
+		};
+
+		using expression_result_collection = std::vector<get_sub_expression_result*>;
+
+		class get_expression_result : public base_parse_result
+		{
+			database::dynamic_box box;
+			expression_result_collection stack;
+			get_sub_expression_result* current;
+
+		public:
+
+			get_expression_result()
+			{
+				;
+			}
+
+			void push()
+			{
+				get_sub_expression_result gsr(&box);
+				current = box.clone(gsr);
+				stack.push_back(current);
+			}
+
+			void pop()
+			{
+				stack.pop_back();
+				if (stack.size()) 
+				{
+					current = stack[stack.size()-1];
+				}
+			}
+
+		public:
+
+			get_expression_result(database::serialized_box_container* _box) : box(_box)
+			{
+				
+			}
+
+			void start()
+			{
+				push();
+			}
+
+			void stop()
+			{
+				pop();
+			}
+
+			template <typename T>
+			requires (database::named_block<T>)
+			bool accept(T& t)
+			{
+				if (!t.success)
+				{
+					message = t.message;
+					line_number = t.line_number;
+					char_offset = t.char_offset;
+					return false;
+				}
+
+				if (t.block.is_operator())
+				{
+					get_operator_result* p = (get_operator_result*)&t;
+					if (p->is_open())
+					{
+						push();
+					}
+					else if (p->is_close())
+					{						
+						pop();
+					}
+					else 
+					{
+						return current->accept(t);
+					}
+				}
+				else 
+				{
+					return current->accept(t);
+				}
+			}
 		};
 
 		class parse_json_object_result : public base_parse_result
@@ -128,7 +379,8 @@ namespace countrybit
 					comma,
 					alpha,
 					identifier,
-					datesep
+					datesep,
+					operchars
 				} search_type;
 
 				int match;
@@ -426,6 +678,8 @@ namespace countrybit
 			get_rectangle_result get_rectangle();
 			get_point_result get_point();
 			get_audio_result get_audio();
+			get_operator_result get_operator();
+			get_expression_result parse_expression();
 
 			parse_json_value_result parse_json_value();
 			parse_json_object_result parse_json_object();
@@ -434,6 +688,7 @@ namespace countrybit
 			static bool test_basics();
 			static bool test_json(int _case_line, const std::string& _src, int _expected_failure_line);
 			static bool test_json();
+			static bool test_parser();
 
 		};
 

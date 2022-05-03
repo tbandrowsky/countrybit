@@ -60,21 +60,80 @@ namespace countrybit
 		public:
 			char name[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
-			static block_id box();
-			static block_id sorted_index_node();
-			static block_id sorted_index();
-			static block_id table();
-			static block_id item_detail_table();
-			static block_id collection();
-			static block_id database();
+			static block_id box_id();
+			static block_id sorted_index_node_id();
+			static block_id sorted_index_id();
+			static block_id table_id();
+			static block_id item_detail_table_id();
+			static block_id expression_id();
+			static block_id expression_term_id();
+			static block_id collection_id();
+			static block_id database_id();
+
+			static block_id operator_id();
+			static block_id value_id();
+			static block_id identifier_id();
+			static block_id dimension_id();
+			static block_id string_id();
+			static block_id number_id();
+			static block_id color_id();
+			static block_id wave_id();
+			static block_id audio_id();
+			static block_id rectangle_id();
+			static block_id point_id();
+			static block_id datetime_id();
+			static block_id path_id();
 
 			bool is_box();
 			bool is_sorted_index_node();
 			bool is_sorted_index();
 			bool is_table();
 			bool is_item_detail_table();
+			bool is_expression();
 			bool is_collection();
 			bool is_database();
+
+			bool is_operator();
+			bool is_value();
+			bool is_identifer();
+			bool is_dimension();
+			bool is_string();
+			bool is_number();
+			bool is_color();
+			bool is_wave();
+			bool is_audio();
+			bool is_rectangle();
+			bool is_point();
+			bool is_datetime();
+			bool is_path();
+
+		};
+
+		template <typename blocked_type> concept named_block =
+			requires (blocked_type a) {
+			a.block.is_operator();
+			a.block.is_box();
+			a.block.is_sorted_index_node();
+			a.block.is_sorted_index();
+			a.block.is_table();
+			a.block.is_item_detail_table();
+			a.block.is_expression();
+			a.block.is_collection();
+			a.block.is_database();
+
+			a.block.is_operator();
+			a.block.is_value();
+			a.block.is_identifer();
+			a.block.is_dimension();
+			a.block.is_string();
+			a.block.is_number();
+			a.block.is_color();
+			a.block.is_wave();
+			a.block.is_audio();
+			a.block.is_rectangle();
+			a.block.is_point();
+			a.block.is_datetime();
+			a.block.is_path();
 
 		};
 

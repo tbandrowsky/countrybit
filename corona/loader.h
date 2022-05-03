@@ -74,13 +74,13 @@ namespace countrybit
 		{
 		public:
 			const char* dest_name;
-			property_dest* next;
+			property_dest* next_link;
 
 			property_dest() = default;
 
 			property_dest(const char *_dest_name) :
 				dest_name(_dest_name),
-				next(nullptr)
+				next_link(nullptr)
 			{
 				;
 			}
@@ -121,14 +121,14 @@ namespace countrybit
 				}
 				else
 				{
-					last_setter->next = _new_setter;
+					last_setter->next_link = _new_setter;
 					last_setter = _new_setter;
 				}
 			}
 
 			property_dest* get_setter(const pvalue* src)
 			{
-				for (auto pd = first_setter; pd; pd = pd->next)
+				for (auto pd = first_setter; pd; pd = pd->next_link)
 				{
 					if (pd->is_match(src))
 						return pd;
@@ -206,7 +206,7 @@ namespace countrybit
 			{
 				char* loc = _base;
 
-				for (auto member = _src->first; member; member = member->next)
+				for (auto member = _src->first_link; member; member = member->next_link)
 				{
 					auto prop = find_property(member);
 					if (prop) {
@@ -222,7 +222,7 @@ namespace countrybit
 
 			virtual bool set_value(database::jslice slice, const pobject* _src)
 			{
-				for (auto member = _src->first; member; member = member->next)
+				for (auto member = _src->first_link; member; member = member->next_link)
 				{
 					auto prop = find_property(member);
 					if (prop) {
@@ -299,7 +299,7 @@ namespace countrybit
 					throw std::logic_error("attempt to map non-object to object");
 				}
 
-				for (auto member = pv->first; member; member = member->next)
+				for (auto member = pv->first_link; member; member = member->next_link)
 				{
 					auto prop = property_type->find_property(member);
 					if (prop) {
@@ -352,7 +352,7 @@ namespace countrybit
 					throw std::logic_error("attempt to map non-object to object");
 				}
 
-				for (auto member = pv->first; member; member = member->next)
+				for (auto member = pv->first_link; member; member = member->next_link)
 				{
 					auto prop = property_type->find_property(member);
 					if (prop) {
@@ -448,7 +448,7 @@ namespace countrybit
 					throw std::logic_error("attempt to map non-object to object");
 				}
 
-				for (auto member = pv->first; member; member = member->next)
+				for (auto member = pv->first_link; member; member = member->next_link)
 				{
 					auto prop = item_property_type->find_property(member);
 					if (prop) {
@@ -493,7 +493,7 @@ namespace countrybit
 
 				auto update_slice = array.get_slice(_src->x, _src->y, _src->z);
 
-				for (auto member = pv->first; member; member = member->next)
+				for (auto member = pv->first_link; member; member = member->next_link)
 				{
 					auto prop = item_property_type->find_property(member);
 					if (prop) {
@@ -1192,7 +1192,7 @@ namespace countrybit
 			{
 				if (member->name == "schema") {
 					auto fields = member->value->as_array();
-					for (auto fld = fields->first; fld; fld = fld->next)
+					for (auto fld = fields->first_link; fld; fld = fld->next_link)
 					{
 						auto obj = fld->as_object();
 						if (obj)

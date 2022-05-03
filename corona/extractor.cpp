@@ -1,7 +1,9 @@
 
 
 #include "extractor.h"
+#include <cctype>
 #include <iostream>
+#include <format>
 
 // #define SHOW_ERROR_MESSAGES
 
@@ -79,6 +81,9 @@ namespace countrybit
 				case match_group::search_types::datesep:
 					count = get_pattern_count(start_index, [](char c) { return c == '/' || c == '_' || c == '-' || c == ':' || c == '.'; });
 					break;
+				case match_group::search_types::operchars:
+					count = get_pattern_count(start_index, [](char c) { return c == '+' || c == '^' || c == '&' || c == '!' || c == '-' || c == '*' || c == '/' || c == '(' || c == ')' || c == '.' || c == '=' || c == '<' || c == '>'; });
+					break;
 				}
 
 				switch (group->search_counts)
@@ -153,10 +158,10 @@ namespace countrybit
 			auto matches = match(index, 5, groups);
 			if (!matches.is_empty())
 			{
-				const char* first = matches.begin();
-				const char* last = matches.end();
-				auto fcr = std::from_chars(first, last, result.value);
-				if (fcr.ptr == last)
+				const char* first_link = matches.begin();
+				const char* last_link = matches.end();
+				auto fcr = std::from_chars(first_link, last_link, result.value);
+				if (fcr.ptr == last_link)
 				{
 					result.success = true;
 					index = matches.end_index;
@@ -175,6 +180,7 @@ namespace countrybit
 		}
 
 		const char* error_expected_identifer = "Expected identifier.  A token of the form 'SomeVariable_Name' was expected at this point, but instead, something else was found.";
+		const char* error_expected_operator = "An operator was expected, but somehow, you bolluxed that up.";
 
 		get_identifier_result string_extractor::get_identifier()
 		{
@@ -196,6 +202,38 @@ namespace countrybit
 				result.success = true;
 				result.value = c;
 				index = matches.end_index;
+				result.success = true;
+			}
+			else
+			{
+				result.message = error_expected_identifer;
+				result.line_number = line;
+				result.char_offset = index;
+			}
+
+			return result;
+		}
+
+		get_operator_result string_extractor::get_operator()
+		{
+			get_operator_result result;
+			result.success = false;
+
+			match_group groups[1] = {
+				{ match_group::search_counts::search_many, match_group::search_types::operchars, 0 }
+			};
+
+			result.line_number = line;
+			result.char_offset = index;
+
+			auto matches = match(index, 1, groups);
+			if (!matches.is_empty())
+			{
+				char* c = data.copy(view.data(), index, matches.end_index, true);
+				result.success = true;
+				result.value = c;
+				index = matches.end_index;
+				result.success = true;
 			}
 			else
 			{
@@ -236,6 +274,7 @@ namespace countrybit
 				result.x = matches.get_number(0);
 				result.y = matches.get_number(4);
 				result.z = matches.get_number(7);
+				result.success = true;
 			}
 			else
 			{
@@ -274,6 +313,7 @@ namespace countrybit
 				result.months = matches.get_number(0);
 				result.days = matches.get_number(4);
 				result.years = matches.get_number(8);
+				result.success = true;
 			}
 			else
 			{
@@ -318,6 +358,7 @@ namespace countrybit
 				result.green = matches.get_number(4);
 				result.blue = matches.get_number(8);
 				result.alpha = matches.get_number(12);
+				result.success = true;
 			}
 			else
 			{
@@ -362,6 +403,7 @@ namespace countrybit
 				result.y = matches.get_number(4);
 				result.w = matches.get_number(8);
 				result.h = matches.get_number(12);
+				result.success = true;
 			}
 			else
 			{
@@ -395,6 +437,7 @@ namespace countrybit
 				result.x = matches.get_number(0);
 				result.y = matches.get_number(4);
 				result.z = 0;
+				result.success = true;
 			}
 			else
 			{
@@ -445,15 +488,23 @@ namespace countrybit
 				result.pitch_adjust = matches.get_number(8);
 				result.volume_adjust = matches.get_number(12);
 				result.playing = matches.get_number(16);
+				result.success = true;
 			}
 			else
 			{
 				result.message = error_expected_number;
 			}
-
 			return result;
 		}
 
+		get_operator_result string_extractor::get_operator()
+		{
+			get_audio_result result;
+
+			result.success = false;
+
+			;
+		}
 
 		const char* error_expected_string = "Expected string.";
 		const char* error_unknown_directive = "Unknown $ directive.";
@@ -541,7 +592,7 @@ namespace countrybit
 			result.success = false;
 
 			pvalue* value = data.allocate<pvalue>(1);
-			value->next = nullptr;
+			value->next_link = nullptr;
 			result.value = value;
 			value->line = line;
 			value->index = index;
@@ -700,7 +751,7 @@ namespace countrybit
 			if (c)
 			{
 				pobject* obj = data.allocate<pobject>(1);
-				obj->first = nullptr;
+				obj->first_link = nullptr;
 				obj->num_members = 0;
 				obj->line = line;
 				obj->index = index;
@@ -713,7 +764,7 @@ namespace countrybit
 					obj->add(member);
 					member->name = nullptr;
 					member->value = nullptr;
-					member->next = nullptr;
+					member->next_link = nullptr;
 
 					skip_whitespace();
 
@@ -792,7 +843,7 @@ namespace countrybit
 			{
 				parray* pa = data.allocate<parray>(1);
 				pa->num_elements = 0;
-				pa->first = nullptr;
+				pa->first_link = nullptr;
 				pa->line = line;
 				pa->index = index;
 
@@ -856,7 +907,7 @@ namespace countrybit
 			{
 				parray* pa = data.allocate<parray>(1);
 				pa->num_elements = 0;
-				pa->first = nullptr;
+				pa->first_link = nullptr;
 				pa->line = line;
 				pa->index = index;
 
@@ -1055,7 +1106,7 @@ namespace countrybit
 				pobject* po_header = nullptr;
 
 				pa_header->num_elements = 0;
-				pa_header->first = nullptr;
+				pa_header->first_link = nullptr;
 				pa_header->line = line;
 				pa_header->index = index;
 
@@ -1133,6 +1184,42 @@ namespace countrybit
 			}
 
 			return result;
+		}
+
+		get_expression_result string_extractor::parse_expression()
+		{
+			get_expression_result ger;
+
+			skip_whitespace();
+
+			char c = at(index);
+			bool accepted = true;
+
+			while (c && accepted)
+			{
+				if (std::isdigit(c)) 
+				{
+					auto gxr = get_number();
+					accepted = ger.accept(gxr);
+				}
+				else if (std::isalpha(c))
+				{
+					auto gxr = get_identifier();
+					accepted = ger.accept(gxr);
+				}
+				else if (std::isdigit(c))
+				{
+					auto gxr = get_number();
+					accepted = ger.accept(gxr);
+				}
+				else if (c == '"')
+				{
+					auto gxr = get_string();
+					accepted = ger.accept(gxr);
+				}
+
+				skip_whitespace();
+			}
 		}
 
 		bool string_extractor::test_basics()
@@ -1226,7 +1313,7 @@ namespace countrybit
 				return false;
 			}
 
-			auto member1 = p8r.value->first;
+			auto member1 = p8r.value->first_link;
 			if (strcmp(member1->name, "name_user")) {
 				std::cout << __LINE__ << ":wrong member name 1" << std::endl;
 				return false;
@@ -1242,7 +1329,7 @@ namespace countrybit
 				return false;
 			}
 
-			auto member2 = member1->next;
+			auto member2 = member1->next_link;
 			if (strcmp(member2->name, "age")) {
 				std::cout << __LINE__ << ":wrong name member 2" << std::endl;
 				return false;

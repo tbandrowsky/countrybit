@@ -266,7 +266,7 @@ namespace countrybit
 				inline KEY& get_key()
 				{
 					std::pair<KEY, VALUE>& p = base->get_node(current).item();
-					return p.first;
+					return p.first_link;
 				}
 
 				inline VALUE& get_value()
@@ -343,7 +343,7 @@ namespace countrybit
 
 			bool erase(sorted_index<KEY, VALUE, SORT_ORDER>::iterator& _iter)
 			{
-				return this->remove_node(_iter->first);
+				return this->remove_node(_iter->first_link);
 			}
 
 			bool erase(const KEY& key)
@@ -447,7 +447,7 @@ namespace countrybit
 				bool all = true;
 				for (auto& f : _src)
 				{
-					if (find_node(f.first) == null_row)
+					if (find_node(f.first_link) == null_row)
 					{
 						all = false;
 						break;
@@ -465,7 +465,7 @@ namespace countrybit
 				if (_node != null_row)
 				{
 					auto nd = get_node(_node);
-					auto ndkey = nd.item().first;
+					auto ndkey = nd.item().first_link;
 
 					if (ndkey < key)
 						return -SORT_ORDER;
@@ -506,25 +506,25 @@ namespace countrybit
 
 			relative_ptr_type find_first(relative_ptr_type* update, const KEY& key)
 			{
-				relative_ptr_type found = null_row, p, q, last;
+				relative_ptr_type found = null_row, p, q, last_link;
 
 				for (int k = get_index_header()->level; k >= 0; k--)
 				{
 					p = get_index_header()->header_id;
 					q = get_node(p).detail(k);
-					last = q;
+					last_link = q;
 					auto comp = compare(q, key);
 					while (comp < 0)
 					{
 						p = q;
-						last = q;
+						last_link = q;
 						q = get_node(q).detail(k);
 						comp = compare(q, key);
 					}
 					if (comp == 0)
 						found = q;
 					else if (comp < 0)
-						found = last;
+						found = last_link;
 					update[k] = p;
 				}
 
@@ -535,7 +535,7 @@ namespace countrybit
 			{
 				int k;
 				relative_ptr_type update[MaxNumberOfLevels];
-				relative_ptr_type q = find_node(update, kvp.first);
+				relative_ptr_type q = find_node(update, kvp.first_link);
 				index_node qnd;
 
 				if (q != null_row)

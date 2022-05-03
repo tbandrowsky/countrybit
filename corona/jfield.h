@@ -308,58 +308,7 @@ namespace countrybit
 			path_nodes		nodes;
 		};
 
-		/* a new filter mechanism will look more like this
-
-		enum class expression_operators
-		{
-			eq = 0,
-			ls = 1,
-			gt = 2,
-			lseq = 3,
-			gteq = 4,
-			contains = 5,
-			inlist = 6,
-			distance = 7,
-			and = 8,
-			or = 9,
-			not = 10
-		};
-
-		enum class expression_load_ops
-		{
-			op_parameter_slice,
-			op_target_slice,
-			op_expression_operator,
-		};
-
-		struct expression_frame
-		{
-			expression_load_ops		load_op;
-			relative_ptr_type				field_id;
-			int64_t					offset;
-			relative_ptr_type				stack_field_id;
-		};
-
-		struct expression_operator
-		{
-		public:
-			expression_operators	op;
-			double					distance_threshold;
-			relative_ptr_type				operand1;
-			relative_ptr_type				operand2;
-		};
-
-		using expression_frame_collection = iarray<expression_frame, 100>;
-		using expression_operator_collection = iarray<expression_operator, 100>;
-
-		class expression
-		{
-		public:
-			expression_frame_collection		stack;
-			expression_operator_collection	operations;
-		}
-
-		*/
+		//  a new filter mechanism will look more like this
 
 		enum class filter_comparison_types
 		{
@@ -387,6 +336,11 @@ namespace countrybit
 			double					distance_threshold;
 			std::function<bool(char* a, char* b)> compare;
 			const char* error_message;
+
+			filter_element()
+			{
+				;
+			}
 		};
 
 		using filter_element_collection = iarray<filter_element, max_query_filters>;
@@ -405,12 +359,17 @@ namespace countrybit
 		{
 		public:
 			object_name				field_name;
-			relative_ptr_type				field_id;
+			relative_ptr_type		field_id;
 			operation_name			projection_name;
 			projection_operations   projection;
 			int64_t					field_offset;
 			jtype					field_type;
 			const char* error_message;
+
+			projection_element() : field_name(""), field_id(null_row), projection_name(""), projection( projection_operations::group_by ), field_offset(0), field_type(jtype::type_null), error_message(nullptr)
+			{
+				
+			}
 		};
 
 		using projection_element_collection = iarray<projection_element, max_projection_fields>;

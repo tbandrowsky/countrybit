@@ -166,6 +166,74 @@ namespace countrybit
 			relative_ptr_type size_bytes() { return get_class().item().class_size_bytes; }
 		};
 
+		namespace expr
+		{
+
+			enum class slop
+			{
+				eq = 0,
+				ls = 1,
+				gt = 2,
+				lseq = 3,
+				gteq = 4,
+				contains = 5,
+				inlist = 6,
+				distance = 7,
+				log_and = 8,
+				log_or = 9,
+				log_not = 10,
+				opadd = 11,
+				opsub = 12,
+				opmul = 13,
+				opdiv = 14
+			};
+
+			enum class slerm
+			{
+				op_parameter_slice,
+				op_target_slice,
+				op_slice_term,
+			};
+
+			struct sframe
+			{
+				slop					op;
+				relative_ptr_type		field_id;
+				corona_size_t			offset;
+				relative_ptr_type		stack_field_id;
+			};
+
+			class sexpression
+			{
+				serialized_box* box;
+
+				struct sexpression_hdr 
+				{
+					block_id block;
+
+					sexpression_hdr()
+					{
+						block = block_id::expression_id();
+					}
+				};
+
+			public:
+
+				sexpression() : box(nullptr) {
+					;
+				}
+
+				sexpression(serialized_box* _box) : box(_box)
+				{
+					;
+				}
+
+				bool parse(const char* _src);
+
+
+			};
+		}
+
 		class jarray
 		{
 			jschema* schema;
@@ -762,7 +830,7 @@ namespace countrybit
 			static relative_ptr_type reserve_schema(serialized_box_container* _b, int _num_classes, int _num_fields, int _total_class_fields, bool _use_standard_fields)
 			{
 				jschema_map schema_map, *pschema_map;
-				schema_map.block = block_id::collection();
+				schema_map.block = block_id::collection_id();
 				schema_map.fields_table_id = null_row;
 				schema_map.classes_table_id = null_row;
 				schema_map.classes_by_name_id = null_row;

@@ -24,7 +24,7 @@ namespace countrybit
 			{
 				pobject *ret = data.allocate<pobject>(1);
 				int column_index = 0;
-				for (auto pv = _arr->first; pv; pv = pv->next)
+				for (auto pv = _arr->first_link; pv; pv = pv->next_link)
 				{
 					const char *s = pv->as_string();
 					const double* d = pv->as_double();
@@ -58,15 +58,15 @@ namespace countrybit
 			pobject* array_to_object(pobject* _template, parray* _arr)
 			{
 				int column_index = 0;
-				pmember* member = _template->first;
-				pvalue* pv = _arr->first;
+				pmember* member = _template->first_link;
+				pvalue* pv = _arr->first_link;
 				pobject* ret = data.allocate<pobject>(1);
 
 				while (pv && member) 
 				{
 					while (member && (column_index > member->value->double_value))
 					{
-						member = member->next;
+						member = member->next_link;
 					}
 
 					if (member && (column_index == member->value->double_value))
@@ -77,7 +77,7 @@ namespace countrybit
 						ret->add(new_member);
 					}
 
-					pv = pv->next;
+					pv = pv->next_link;
 					column_index++;
 				}
 				return ret;

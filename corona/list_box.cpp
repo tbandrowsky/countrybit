@@ -27,7 +27,6 @@ namespace countrybit
 			{
 				ix.push_back(i);
 			}
-
 			int count = 0;
 			for (auto its : ix)
 			{
@@ -36,6 +35,28 @@ namespace countrybit
 					return false;
 				}
 				count++;
+			}
+
+			for (auto itb = ix.rbegin(); itb != std::end(ix); itb--)
+			{
+				count--;
+				if (*itb != count) {
+					std::cout << __LINE__ << ": list_box reverse read data wrong" << std::endl;
+					return false;
+				}
+			}
+
+			int check_prev1 = ix.rbegin()[-1].get_value();
+			int check_prev2 = ix.rbegin()[-2].get_value();
+
+			if (check_prev1 != 9) {
+				std::cout << __LINE__ << ": list_box reverse array read data wrong" << std::endl;
+				return false;
+			}
+
+			if (check_prev2 != 8) {
+				std::cout << __LINE__ << ": list_box reverse array read data wrong" << std::endl;
+				return false;
 			}
 
 			count = ix.count_if([](auto& t) { return t < 3;  });
