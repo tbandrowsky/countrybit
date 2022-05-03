@@ -271,7 +271,7 @@ namespace countrybit
 				// so, we shall have to track this with a list some kind down the road to 
 				// use this facility, and ideally create a special box
 				relative_ptr_type placement;
-				T* item = pack_start<T>(1, source);
+				T* item = pack_start<T>(1, placement);
 				if (!item) return item;				
 				item = new (item) T(source);
 				return item;
@@ -295,7 +295,7 @@ namespace countrybit
 				return item;
 			}
 
-			relative_ptr_type reserve(int length)
+			relative_ptr_type reserve(corona_size_t length)
 			{
 				corona_size_t sz = length;
 				corona_size_t placement = _top;
@@ -325,7 +325,7 @@ namespace countrybit
 		{
 		public:
 			virtual serialized_box* get_box() { return nullptr; }
-			virtual serialized_box* check(int _bytes) { return nullptr; }
+			virtual serialized_box* check(corona_size_t _bytes) { return nullptr; }
 
 			relative_ptr_type top()
 			{
@@ -436,7 +436,7 @@ namespace countrybit
 				return get_box()->place<T>();
 			}
 
-			relative_ptr_type reserve(int length)
+			relative_ptr_type reserve(corona_size_t length)
 			{
 				if (!length)
 					length = get_box()->free();

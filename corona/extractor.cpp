@@ -497,15 +497,6 @@ namespace countrybit
 			return result;
 		}
 
-		get_operator_result string_extractor::get_operator()
-		{
-			get_audio_result result;
-
-			result.success = false;
-
-			;
-		}
-
 		const char* error_expected_string = "Expected string.";
 		const char* error_unknown_directive = "Unknown $ directive.";
 		const char* error_no_memory_for_string = "No memory. There was not enough space in the box for this string.  Make the parser memory larger.";
@@ -1190,6 +1181,8 @@ namespace countrybit
 		{
 			get_expression_result ger;
 
+			ger.start();
+
 			skip_whitespace();
 
 			char c = at(index);
@@ -1220,6 +1213,10 @@ namespace countrybit
 
 				skip_whitespace();
 			}
+
+			ger.stop();
+
+			return ger;
 		}
 
 		bool string_extractor::test_basics()

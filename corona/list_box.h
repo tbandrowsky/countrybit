@@ -138,7 +138,7 @@ namespace countrybit
 				return location;
 			}
 
-			static list_box get(serialized_box_container* b, int location)
+			static list_box get(serialized_box_container* b, relative_ptr_type location)
 			{
 				list_box temp;
 				temp.box = b;
@@ -165,13 +165,13 @@ namespace countrybit
 				return *this;
 			}
 
-			uint16_t size() const
+			uint16_t size()
 			{
 				list_box_data* hdr = get_hdr();
 				return hdr->length;
 			}
 
-			void push_back(item_type& t)
+			void push_back(const item_type& t)
 			{
 				put(t);
 			}
@@ -341,19 +341,22 @@ namespace countrybit
 			{
 				if (idx < 0) 
 				{
+					idx--;
 					auto itr = rbegin();
-					while (idx++) {
+					while (idx) {
 						itr--;
+						idx++;
 					}
 					if (itr == std::end(*this))
 						throw std::invalid_argument("index out of range for list");
 					return *itr;
 				}
-				else if (idx >= 0)
+				else
 				{
 					auto itr = begin();
-					while (idx--) {
+					while (idx) {
 						itr++;
+						idx--;
 					}
 					if (itr == std::end(*this))
 						throw std::invalid_argument("index out of range for list");
@@ -382,7 +385,7 @@ namespace countrybit
 				return std::all_of(begin(), end(), predicate);
 			}
 
-			int count_if(std::function<bool(item_type&)> predicate)
+			corona_size_t count_if(std::function<bool(item_type&)> predicate)
 			{
 				return std::count_if(begin(), end(), predicate);
 			}

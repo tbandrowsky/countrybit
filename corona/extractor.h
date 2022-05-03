@@ -62,18 +62,18 @@ namespace countrybit
 				value = nullptr;
 			}
 
-			bool is_add() { return stricmp(value, "+") == 0; }
-			bool is_minus() { return stricmp(value, "-") == 0; }
-			bool is_multiply() { return stricmp(value, "*") == 0; }
-			bool is_divide() { return stricmp(value, "/") == 0; }
-			bool is_open() { return stricmp(value, "(") == 0; }
-			bool is_close() { return stricmp(value, ")") == 0; }
-			bool is_gt() { return stricmp(value, ">") == 0; }
-			bool is_lt() { return stricmp(value, "<") == 0; }
-			bool is_gte() { return stricmp(value, ">=") == 0; }
-			bool is_lte() { return stricmp(value, "<=") == 0; }
-			bool is_contains() { return stricmp(value, "@") == 0; }
-			bool is_period() { return stricmp(value, ".") == 0; }
+			bool is_add() { return _stricmp(value, "+") == 0; }
+			bool is_minus() { return _stricmp(value, "-") == 0; }
+			bool is_multiply() { return _stricmp(value, "*") == 0; }
+			bool is_divide() { return _stricmp(value, "/") == 0; }
+			bool is_open() { return _stricmp(value, "(") == 0; }
+			bool is_close() { return _stricmp(value, ")") == 0; }
+			bool is_gt() { return _stricmp(value, ">") == 0; }
+			bool is_lt() { return _stricmp(value, "<") == 0; }
+			bool is_gte() { return _stricmp(value, ">=") == 0; }
+			bool is_lte() { return _stricmp(value, "<=") == 0; }
+			bool is_contains() { return _stricmp(value, "@") == 0; }
+			bool is_period() { return _stricmp(value, ".") == 0; }
 		};
 
 		class get_identifier_result: public base_parse_result
@@ -180,7 +180,7 @@ namespace countrybit
 			requires (database::named_block<T>)
 			bool accept(T& gor)
 			{
-				T* item = box->clone(gore);							
+				T* item = box->clone(gor);							
 				terms.push_back(item);
 				return true;
 			}
@@ -201,7 +201,7 @@ namespace countrybit
 			requires (database::named_block<T>)
 			bool accept(T& gor)
 			{
-				if (gor.block->is_identifer()) 
+				if (gor.block.is_identifer()) 
 				{
 					if (terms.size()) {
 						if (terms.last()->block.is_path())
@@ -212,8 +212,13 @@ namespace countrybit
 						else
 						{
 							get_path_result gpr(box);
-							gpr.add_result(gor);
-							return accept(gpr);
+							if (gpr.accept(gor)) {
+								return accept(gpr);
+							}
+							else 
+							{
+								return false;
+							}
 						}
 					}
 					else {
@@ -222,29 +227,31 @@ namespace countrybit
 						return accept(gpr);
 					}
 				}
-				else if (gor.block->is_operator())
+				else if (gor.block.is_operator())
 				{
-					auto* p = (get_operator_result*)item;
+					auto* p = (get_operator_result*)&gor;
 					if (p->is_period() && terms.size() && terms.last()->block.is_path()) {
 						auto* p = (get_path_result*)terms.last();
-						return p->add_result(gor);
+						return p->accept(gor);
 					}
-					else if (gor.is_open() || gor.is_close())
+					else if (p->is_open() || p->is_close())
 					{
 						return false;
 					}
 					else 
 					{
-						terms.push_back(box->clone(gor));
+						auto t = box->clone(gor);
+						terms.push_back(t);
 						return true;
 					}
 				}
-				else if (gor.block->is_string() ||
-					gor.block->is_number() || 
-					gor.block->is_path()
+				else if (gor.block.is_string() ||
+					gor.block.is_number() || 
+					gor.block.is_path()
 					)
 				{
-					terms.push_back(box->clone(gor));
+					auto t = box->clone(gor);
+					terms.push_back(t);
 					return true;
 				}
 				else
@@ -261,13 +268,6 @@ namespace countrybit
 			database::dynamic_box box;
 			expression_result_collection stack;
 			get_sub_expression_result* current;
-
-		public:
-
-			get_expression_result()
-			{
-				;
-			}
 
 			void push()
 			{
@@ -287,7 +287,7 @@ namespace countrybit
 
 		public:
 
-			get_expression_result(database::serialized_box_container* _box) : box(_box)
+			get_expression_result() 
 			{
 				
 			}

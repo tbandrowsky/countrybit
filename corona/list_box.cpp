@@ -27,7 +27,7 @@ namespace countrybit
 			{
 				ix.push_back(i);
 			}
-			int count = 0;
+			corona_size_t count = 0;
 			for (auto its : ix)
 			{
 				if (its != count) {
@@ -55,6 +55,31 @@ namespace countrybit
 			}
 
 			if (check_prev2 != 8) {
+				std::cout << __LINE__ << ": list_box reverse array read data wrong" << std::endl;
+				return false;
+			}
+
+			int check_tail0 = ix[-1];
+			int check_tail1 = ix[-2];
+			int check_head0 = ix[0];
+			int check_head1 = ix[1];
+
+			if (check_tail0 != 9) {
+				std::cout << __LINE__ << ": list_box reverse array read data wrong" << std::endl;
+				return false;
+			}
+
+			if (check_tail1 != 8) {
+				std::cout << __LINE__ << ": list_box reverse array read data wrong" << std::endl;
+				return false;
+			}
+
+			if (check_head0 != 0) {
+				std::cout << __LINE__ << ": list_box reverse array read data wrong" << std::endl;
+				return false;
+			}
+
+			if (check_head1 != 1) {
 				std::cout << __LINE__ << ": list_box reverse array read data wrong" << std::endl;
 				return false;
 			}
