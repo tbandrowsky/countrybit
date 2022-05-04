@@ -510,11 +510,11 @@ namespace countrybit
 		public:
 
 			collection_id_type							collection_id;
-			relative_ptr_type									actor_id;
+			relative_ptr_type							actor_id;
 			actor_create_collection						create_objects;
 			actor_view_collection						view_objects;
-			relative_ptr_type create_objects_location;
-			relative_ptr_type view_objects_location;
+			relative_ptr_type							create_objects_location;
+			relative_ptr_type							view_objects_location;
 
 			actor_command_response()
 			{
@@ -526,15 +526,31 @@ namespace countrybit
 			actor_command_response(actor_command_response&& _src)
 			{
 				data= std::move(_src.data);
-				create_objects = _src.create_objects;
-				view_objects = _src.view_objects;
+
+				collection_id = _src.collection_id;
+				actor_id = _src.actor_id;
+				create_objects_location = _src.create_objects_location;
+				view_objects_location = _src.view_objects_location;
+
+				create_objects = actor_create_collection::get_sorted_index(&data, create_objects_location );
+				view_objects = actor_view_collection::get_sorted_index(&data, view_objects_location );
 			}
 
 			actor_command_response& operator=(actor_command_response&& _src)
 			{
 				data = std::move(_src.data);
-				create_objects = _src.create_objects;
-				view_objects = _src.view_objects;
+
+				collection_id = _src.collection_id;
+				actor_id = _src.actor_id;
+				create_objects_location = _src.create_objects_location;
+				view_objects_location = _src.view_objects_location;
+
+				create_objects = std::move(_src.create_objects);
+				view_objects = std::move(_src.view_objects);
+
+				create_objects = actor_create_collection::get_sorted_index(&data, create_objects_location);
+				view_objects = actor_view_collection::get_sorted_index(&data, view_objects_location);
+
 				return *this;
 			}
 
@@ -633,9 +649,12 @@ namespace countrybit
 			actor_command_response create_object(actor_create_object& _create);
 			actor_command_response update_object(actor_update_object& _update);
 
+			void print(actor_command_response& acr);
+
 			jslice create_object(relative_ptr_type _item_id, relative_ptr_type _actor_id, relative_ptr_type _class_id, relative_ptr_type& object_id);
 			jslice get_object(relative_ptr_type _object_id);
 			jslice update_object(relative_ptr_type _object_id, jslice _slice);
+			collection_object_type &get_object_reference(relative_ptr_type _object_id);
 
 			bool selector_applies(selector_collection* _selector, actor_id_type& _actor);
 
@@ -685,6 +704,11 @@ namespace countrybit
 				inline jslice operator->()
 				{
 					return base->get_object(current);
+				}
+
+				collection_object_type& get_reference()
+				{
+					return base->get_object_reference(current);
 				}
 
 				iterator begin() const

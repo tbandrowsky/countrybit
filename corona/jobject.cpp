@@ -116,6 +116,21 @@ namespace countrybit
 			return false;
 		}
 
+		void jcollection::print(actor_command_response& acr)
+		{
+			std::cout << std::endl << "actor options" << std::endl;
+
+			for (auto co : acr.create_objects)
+			{
+				std::cout << "create class " << schema->get_class( co.second.class_id ).item().name << std::endl;
+			}
+
+			for (auto vo : acr.view_objects)
+			{
+				std::cout << "existing object " << vo.second.object_id << " (" << vo.second.item.get_class().item().name << ") " << std::endl;
+			}
+		}
+
 		actor_command_response jcollection::get_command_result(relative_ptr_type _actor)
 		{
 			actor_command_response acr;
@@ -159,6 +174,21 @@ namespace countrybit
 					relative_ptr_type create_id = acr.create_objects.size();
 					acr.create_objects.insert_or_assign(create_id, aco);
 				}
+			}
+
+			// now for the moment, we just include all the objects in the view.  This can change for physical models, obviously.
+
+			for (auto iter = begin(); iter != end(); iter++)
+			{
+				auto ref = iter.get_reference();
+				actor_view_object avo;
+				avo.collection_id = collection_id;
+				avo.object_id = ref.oid.row_id;
+				avo.selectable = false;
+				avo.selected = false;
+				avo.updateable = false;
+				avo.item = *iter;
+				acr.view_objects.put(ref.oid.row_id, avo, [](actor_view_object& _dest) { ;  });
 			}
 
 			// now to our select options
@@ -213,11 +243,6 @@ namespace countrybit
 						}
 					}
 				}
-			}
-
-			for (auto oi : acr.view_objects)
-			{
-				;
 			}
 
 			return acr;
@@ -395,6 +420,12 @@ namespace countrybit
 				jslice empty;
 				return empty;
 			}
+		}
+
+		collection_object_type &jcollection::get_object_reference(relative_ptr_type _object_id)
+		{
+			auto existing_object = objects.get_item(_object_id);
+			return existing_object.item();
 		}
 
 		jslice jcollection::update_object(relative_ptr_type _object_id, jslice _slice)
@@ -2037,6 +2068,8 @@ namespace countrybit
 				sample_actor = program_chart.create_actor(sample_actor);
 
 				auto result = program_chart.get_command_result(sample_actor.actor_id);
+				program_chart.print(result);
+
 				return true;
 			}
 			catch (std::exception& exc)

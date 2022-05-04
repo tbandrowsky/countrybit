@@ -117,6 +117,17 @@ namespace countrybit
 				k++;
 			}
 
+			k = 0;
+			for (auto& item : test.where([](auto& kvpi) { return kvpi.first > 1; }))
+			{
+				if (tests2[k] != item.first) {
+					std::cout << "loop failed" << std::endl;
+					return false;
+				}
+				k++;
+			}
+
+
 			auto x = test[1];
 			test.erase(x);
 			test.erase(7);

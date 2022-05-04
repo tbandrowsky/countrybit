@@ -226,6 +226,12 @@ namespace countrybit
 				sorted_index<KEY, VALUE, SORT_ORDER>* base;
 				relative_ptr_type current;
 				using index_node = item_details_holder<std::pair<KEY, VALUE>, index_ref>;
+				std::function<bool(std::pair<KEY, VALUE>&)> predicate;
+
+				bool include(relative_ptr_type _location)
+				{
+					return predicate(base->get_node(_location).item());
+				}
 
 			public:
 				using iterator_category = std::forward_iterator_tag;
@@ -234,16 +240,27 @@ namespace countrybit
 				using pointer = std::pair<KEY, VALUE>*;  // or also value_type*
 				using reference = std::pair<KEY, VALUE>&;  // or also value_type&
 
+				iterator(sorted_index<KEY, VALUE, SORT_ORDER>* _base, relative_ptr_type _current, std::function<bool(std::pair<KEY, VALUE>&)> _predicate) :
+					base(_base),
+					current(_current),
+					predicate(_predicate)
+				{
+					while (current != null_row && !include(current))
+					{
+						current = _base->next_node(current);
+					}
+				}
+
 				iterator(sorted_index<KEY, VALUE, SORT_ORDER>* _base, relative_ptr_type _current) :
 					base(_base),
 					current(_current)
 				{
-
+					predicate = [](auto& t) { return true; };
 				}
 
 				iterator() : base(nullptr), current(null_row)
 				{
-
+					predicate = [](auto& t) { return true; };
 				}
 
 				iterator& operator = (const iterator& _src)
@@ -287,8 +304,14 @@ namespace countrybit
 
 				inline iterator operator++()
 				{
-					current = base->next_node(current);
-					return iterator(base, current);
+					do
+					{
+						current = base->next_node(current);
+						if (current == null_row)
+							return iterator(base, current, predicate);
+					} while (!include(current));
+
+					return iterator(base, current, predicate);
 				}
 
 				inline iterator operator++(int)
@@ -340,6 +363,37 @@ namespace countrybit
 			{
 				return iterator(this, null_row);
 			}
+
+
+			sorted_index<KEY, VALUE, SORT_ORDER>::iterator  first(std::function<bool(std::pair<KEY,VALUE>&)> predicate)
+			{
+				auto n = first_node();
+				return get_node(n).item().second;
+
+				auto it = iterator(this, first_node(), predicate);
+				return *it;
+			}
+
+			auto where(std::function<bool(std::pair<KEY, VALUE>&)> predicate)
+			{
+				return iterator(this, first_node(), predicate);
+			}
+
+			bool any_of(std::function<bool(std::pair<KEY, VALUE>&)> predicate)
+			{
+				return std::any_of(begin(), end(), predicate);
+			}
+
+			bool all_of(std::function<bool(std::pair<KEY, VALUE>&)> predicate)
+			{
+				return std::all_of(begin(), end(), predicate);
+			}
+
+			corona_size_t count_if(std::function<bool(std::pair<KEY, VALUE>&)> predicate)
+			{
+				return std::count_if(begin(), end(), predicate);
+			}
+
 
 			bool erase(sorted_index<KEY, VALUE, SORT_ORDER>::iterator& _iter)
 			{

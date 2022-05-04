@@ -159,6 +159,7 @@ namespace countrybit
 			{
 				skip_list<KEY, VALUE, SORT_ORDER>* base;
 				skip_list<KEY, VALUE, SORT_ORDER>::node_type* current;
+				std::function<bool(std::pair<KEY, VALUE>&)> predicate;
 
 			public:
 				using iterator_category = std::forward_iterator_tag;
@@ -167,22 +168,40 @@ namespace countrybit
 				using pointer = std::pair<KEY, VALUE>*;  // or also value_type*
 				using reference = std::pair<KEY, VALUE>&;  // or also value_type&
 
-				iterator(skip_list<KEY, VALUE, SORT_ORDER>* _base, skip_list<KEY, VALUE, SORT_ORDER>::node_type* _current) :
+				iterator(skip_list<KEY, VALUE, SORT_ORDER>* _base, 
+					skip_list<KEY, VALUE, SORT_ORDER>::node_type* _current,
+					std::function<bool(std::pair<KEY, VALUE>&)> _predicate
+				) :
+					base(_base),
+					current(_current),
+					predicate(_predicate)					
+				{
+					while (current && !predicate(current->data))
+					{
+						current = _base->next_link(current);
+					}
+
+				}
+
+				iterator(skip_list<KEY, VALUE, SORT_ORDER>* _base,
+					skip_list<KEY, VALUE, SORT_ORDER>::node_type* _current
+				) :
 					base(_base),
 					current(_current)
 				{
-
+					predicate = [](item_type& a) { return true;  };
 				}
 
 				iterator() : base(nullptr), current(nullptr)
 				{
-
+					predicate = [](item_type& a) { return true;  };
 				}
 
 				iterator& operator = (const iterator& _src)
 				{
 					base = _src.base;
 					current = _src.current;
+					predicate = _src.predicate;
 					return *this;
 				}
 
@@ -218,8 +237,13 @@ namespace countrybit
 
 				inline iterator operator++()
 				{
-					current = base->next_node(current);
-					return iterator(base, current);
+					do
+					{
+						current = base->next_node(current);
+						if (!current)
+							return iterator(base, nullptr, predicate);
+					} while (!predicate(current->data));
+					return iterator(base, current, predicate);
 				}
 
 				inline iterator operator++(int)
