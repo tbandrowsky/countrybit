@@ -109,14 +109,6 @@ namespace countrybit
 				collection_path /= ".corc";
 				new_collection.collection_file_name = collection_path;
 
-				new_collection.collection_size_bytes = schema.get_collection_size(&new_collection, nullptr);
-				if (new_collection.collection_size_bytes == null_row)
-				{
-					response.success = false;
-					response.message = "Could not estimate collection size.";
-					return response;
-				}
-
 				collections_by_id.insert_or_assign(new_collection.collection_id, new_collection);
 				collections_by_name.insert_or_assign(new_collection.collection_name, new_collection.collection_id);
 
@@ -164,7 +156,7 @@ namespace countrybit
 			auto& ref = itr.get_value();
 			if (ref.data == nullptr) {
 				ref.data = new dynamic_box();
-				ref.data->init(ref.collection_size_bytes);
+				ref.data->init(ref.collection_size_bytes * 2);
 			}
 			response.collection = jcollection(&schema, &ref);
 			response.success = true;

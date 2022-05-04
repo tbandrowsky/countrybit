@@ -532,7 +532,10 @@ namespace countrybit
 
 			void resize(corona_size_t new_size)
 			{
-				char* temp = new char[new_size + sizeof(serialized_box)];
+				corona_size_t new_stuff_size = new_size + sizeof(serialized_box);
+				if (new_stuff_size < stuff_size)
+					return;
+				char* temp = new char[new_stuff_size];
 				if (!temp) {
 					throw std::exception("Out of memory");
 				}
@@ -553,7 +556,45 @@ namespace countrybit
 
 			~dynamic_box()
 			{
-				if (stuff) delete[] stuff;
+				if (stuff) 
+				{
+					delete[] stuff;
+					stuff = nullptr;
+				}
+			}
+
+			dynamic_box& operator = (const dynamic_box& _src)
+			{
+				if (_src.stuff) {
+					resize(_src.stuff_size);
+					std::copy(_src.stuff, _src.stuff + stuff_size, stuff);
+				}
+				return *this;
+			}
+
+			dynamic_box& operator = (dynamic_box&& _src)
+			{
+				stuff = _src.stuff;
+				stuff_size = _src.stuff_size;
+				_src.stuff = nullptr;
+				_src.stuff_size = 0;
+				return *this;
+			}
+
+			dynamic_box(const dynamic_box& _src)
+			{
+				if (_src.stuff) {
+					resize(_src.stuff_size);
+					std::copy(_src.stuff, _src.stuff + stuff_size, stuff);
+				}
+			}
+
+			dynamic_box(dynamic_box&& _src)
+			{
+				stuff = _src.stuff;
+				stuff_size = _src.stuff_size;
+				_src.stuff = nullptr;
+				_src.stuff_size = 0;
 			}
 
 			virtual serialized_box* get_box() 

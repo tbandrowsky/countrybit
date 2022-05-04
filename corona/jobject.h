@@ -46,6 +46,21 @@ namespace countrybit
 			relative_ptr_type			objects_id;
 
 			dynamic_box*		data;
+
+			jcollection_ref() : 
+				collection_name(""),
+				collection_file_name(""),
+				collection_location(null_row),
+				model_name(""),
+				max_actors(0),
+				max_objects(0),
+				collection_size_bytes(0),
+				actors_id(null_row),
+				objects_id(null_row),
+				data(nullptr)
+			{
+				;
+			}
 		};
 
 		struct jschema_map
@@ -546,7 +561,7 @@ namespace countrybit
 
 		public:
 
-			jcollection() : schema( nullptr )
+			jcollection() : schema( nullptr ), ref( nullptr )
 			{
 				;
 			}
@@ -556,6 +571,9 @@ namespace countrybit
 				ref(_ref),
 				collection_id(_ref->collection_id)
 			{
+				if (!ref || ref->data == nullptr) {
+					throw std::invalid_argument("jcollection ref must have data initialized");
+				}
 				actors = actor_collection::get_table(_ref->data, _ref->actors_id );
 				objects = object_collection::get_table(_ref->data, _ref->objects_id );
 			}
@@ -565,6 +583,9 @@ namespace countrybit
 				ref(_src.ref),
 				collection_id(_src.collection_id)
 			{
+				if (!ref || ref->data == nullptr) {
+					throw std::invalid_argument("jcollection ref must have data initialized");
+				}
 				actors = actor_collection::get_table(ref->data, ref->actors_id);
 				objects = object_collection::get_table(ref->data, ref->objects_id);
 			}
@@ -574,6 +595,9 @@ namespace countrybit
 				ref(_src.ref),
 				collection_id(_src.collection_id)
 			{
+				if (!ref || ref->data == nullptr) {
+					throw std::invalid_argument("jcollection ref must have data initialized");
+				}
 				actors = actor_collection::get_table(ref->data, ref->actors_id);
 				objects = object_collection::get_table(ref->data, ref->objects_id);
 			}
@@ -1475,23 +1499,12 @@ namespace countrybit
 				return max_size;
 			}
 
-			int64_t get_collection_size(jcollection_ref *ref, relative_ptr_type* _class_ids)
+			bool reserve_collection(jcollection_ref *ref)
 			{
-				int64_t max_size = get_max_object_size(_class_ids);
-
-				int64_t total_size = 0;
-				total_size += actor_collection::get_box_size(ref->max_actors);
-				total_size += object_collection::get_box_size(ref->max_objects, max_size * ref->max_objects);
-				return total_size;
-			}
-
-			bool reserve_collection(jcollection_ref *ref, relative_ptr_type* _class_ids)
-			{
-				uint64_t total_size = get_collection_size(ref, _class_ids);
-				uint64_t max_size = get_max_object_size(_class_ids);
+				uint64_t total_size = ref->collection_size_bytes;
 
 				ref->actors_id = actor_collection::reserve_table(ref->data, ref->max_actors);
-				ref->objects_id =  object_collection::reserve_table(ref->data, ref->max_objects, max_size * ref->max_objects, true);
+				ref->objects_id =  object_collection::reserve_table(ref->data, ref->max_objects, total_size, true);
 
 				return ref->actors_id != null_row && ref->objects_id != null_row;
 			}
@@ -1502,9 +1515,9 @@ namespace countrybit
 				return collection;
 			}
 
-			jcollection create_collection(jcollection_ref* ref, relative_ptr_type* _class_ids)
+			jcollection create_collection(jcollection_ref* ref)
 			{
-				bool reserved = reserve_collection(ref, _class_ids);
+				bool reserved = reserve_collection(ref);
 				jcollection tmp;
 				if (reserved) {
 					tmp = get_collection(ref);

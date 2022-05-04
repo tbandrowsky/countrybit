@@ -226,6 +226,10 @@ namespace countrybit
 						hdr->max_rows += new_rows;
 						return true;
 					}
+					throw std::logic_error("insufficient collection / table space, box full");
+				}
+				else {
+					throw std::logic_error("insufficient collection / table space");
 				}
 				return false;
 			}

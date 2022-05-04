@@ -1472,10 +1472,12 @@ namespace countrybit
 				ref.model_name = sample_model.name;
 				ref.max_actors = 2;
 				ref.max_objects = 50;
+				ref.collection_size_bytes = 1 << 19;
+
 
 				init_collection_id(ref.collection_id);
 
-				jcollection people = schema.create_collection(&ref, nullptr);
+				jcollection people = schema.create_collection(&ref);
 
 				jactor sample_actor;
 				sample_actor.actor_name = "sample actor";
@@ -1662,10 +1664,12 @@ namespace countrybit
 				ref.model_name = sprite_model.name;
 				ref.max_actors = 2;
 				ref.max_objects = 50;
+				ref.collection_size_bytes = 1 << 19;
+
 
 				init_collection_id(ref.collection_id);
 
-				jcollection sprites = schema.create_collection(&ref, nullptr);
+				jcollection sprites = schema.create_collection(&ref);
 
 				actor_type sprite_boy;
 				sprite_boy.actor_id = null_row;
@@ -1775,6 +1779,7 @@ namespace countrybit
 
 		bool model_tests()
 		{
+
 			try 
 			{
 				dynamic_box box;
@@ -2017,13 +2022,14 @@ namespace countrybit
 				ref.model_name = jm.name;
 				ref.max_actors = 2;
 				ref.max_objects = 100;
+				ref.collection_size_bytes = 1 << 19;
 
 				if (!init_collection_id(ref.collection_id))
 				{
 					std::cout << __LINE__ << "collection id failed" << std::endl;
 				}
 
-				jcollection program_chart = schema.create_collection(&ref, nullptr);
+				jcollection program_chart = schema.create_collection(&ref);
 
 				jactor sample_actor;
 				sample_actor.actor_name = "sample actor";
@@ -2031,9 +2037,6 @@ namespace countrybit
 				sample_actor = program_chart.create_actor(sample_actor);
 
 				auto result = program_chart.get_command_result(sample_actor.actor_id);
-
-				
-
 				return true;
 			}
 			catch (std::exception& exc)
