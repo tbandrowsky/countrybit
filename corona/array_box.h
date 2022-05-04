@@ -224,6 +224,16 @@ namespace countrybit
 					return _src.current != current;
 				}
 
+				bool eoi()
+				{
+					return begin() == end();
+				}
+
+				bool exists()
+				{
+					return begin() != end();
+				}
+
 			};
 
 			iarray<item_type, max_items>::iterator begin()
@@ -554,6 +564,15 @@ namespace countrybit
 					return _src.current != current;
 				}
 
+				bool eoi()
+				{
+					return begin() == end();
+				}
+
+				bool exists()
+				{
+					return begin() != end();
+				}
 			};
 
 			array_box<item_type>::iterator begin()

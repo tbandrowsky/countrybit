@@ -331,6 +331,16 @@ namespace countrybit
 					return _src.current != current;
 				}
 
+				bool eoi()
+				{
+					return begin() == end();
+				}
+
+				bool exists()
+				{
+					return begin() != end();
+				}
+
 			};
 
 			bool pop_front()
