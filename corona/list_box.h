@@ -341,8 +341,8 @@ namespace countrybit
 			{
 				if (idx < 0) 
 				{
-					idx--;
 					auto itr = rbegin();
+					idx++;
 					while (idx) {
 						itr--;
 						idx++;

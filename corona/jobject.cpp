@@ -3,7 +3,7 @@
 #include "combaseapi.h"
 #include "extractor.h"
 
-#define _DETAIL 1
+#define _DETAIL 0
 
 namespace countrybit
 {

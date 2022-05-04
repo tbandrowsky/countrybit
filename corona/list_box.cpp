@@ -49,12 +49,12 @@ namespace countrybit
 			int check_prev1 = ix.rbegin()[-1].get_value();
 			int check_prev2 = ix.rbegin()[-2].get_value();
 
-			if (check_prev1 != 9) {
+			if (check_prev1 != 8) {
 				std::cout << __LINE__ << ": list_box reverse array read data wrong" << std::endl;
 				return false;
 			}
 
-			if (check_prev2 != 8) {
+			if (check_prev2 != 7) {
 				std::cout << __LINE__ << ": list_box reverse array read data wrong" << std::endl;
 				return false;
 			}
