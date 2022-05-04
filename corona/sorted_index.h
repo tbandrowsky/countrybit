@@ -117,7 +117,7 @@ namespace countrybit
 				}
 
 				hd = box->unpack<index_node_holder>(r);
-				hd->block = block_id::sorted_index_node();
+				hd->block = block_id::sorted_index_node_id();
 				hd->header_id = box->pack<data_pair>(dp);
 				hd->details_id = forward_pointer_collection::reserve(box, level_bounds);
 
@@ -192,7 +192,7 @@ namespace countrybit
 				hdr.count = 0;
 				hdr.level = 0;
 				hdr.header_id = null_row;
-				hdr.block = block_id::sorted_index();
+				hdr.block = block_id::sorted_index_id();
 
 				relative_ptr_type header_location = _b->pack(hdr);			
 				phdr = _b->unpack<index_header_type>(header_location);
@@ -266,7 +266,7 @@ namespace countrybit
 				inline KEY& get_key()
 				{
 					std::pair<KEY, VALUE>& p = base->get_node(current).item();
-					return p.first_link;
+					return p.first;
 				}
 
 				inline VALUE& get_value()
@@ -343,7 +343,7 @@ namespace countrybit
 
 			bool erase(sorted_index<KEY, VALUE, SORT_ORDER>::iterator& _iter)
 			{
-				return this->remove_node(_iter->first_link);
+				return this->remove_node(_iter->first);
 			}
 
 			bool erase(const KEY& key)
@@ -447,7 +447,7 @@ namespace countrybit
 				bool all = true;
 				for (auto& f : _src)
 				{
-					if (find_node(f.first_link) == null_row)
+					if (find_node(f.first) == null_row)
 					{
 						all = false;
 						break;
@@ -465,7 +465,7 @@ namespace countrybit
 				if (_node != null_row)
 				{
 					auto nd = get_node(_node);
-					auto ndkey = nd.item().first_link;
+					auto ndkey = nd.item().first;
 
 					if (ndkey < key)
 						return -SORT_ORDER;
@@ -535,7 +535,7 @@ namespace countrybit
 			{
 				int k;
 				relative_ptr_type update[MaxNumberOfLevels];
-				relative_ptr_type q = find_node(update, kvp.first_link);
+				relative_ptr_type q = find_node(update, kvp.first);
 				index_node qnd;
 
 				if (q != null_row)

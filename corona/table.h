@@ -175,7 +175,7 @@ namespace countrybit
 					return hdr_id;
 
 				t.hdr = _b->unpack<table_header>(hdr_id);
-				t.hdr->block = block_id::table();
+				t.hdr->block = block_id::table_id();
 				t.hdr->id = hdr_id;
 				t.hdr->dynamic = _dynamic;
 				t.hdr->max_rows = _max_rows;

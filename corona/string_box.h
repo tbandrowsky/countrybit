@@ -910,5 +910,6 @@ namespace countrybit
 		using object_type = istring<16>;
 		using string_validation_pattern = istring<100>;
 		using string_validation_message = istring<100>;
+		using query_body = istring<8192>;
 	}
 }

@@ -68,6 +68,7 @@ namespace countrybit
 			bool is_divide() { return _stricmp(value, "/") == 0; }
 			bool is_open() { return _stricmp(value, "(") == 0; }
 			bool is_close() { return _stricmp(value, ")") == 0; }
+			bool is_eq() { return _stricmp(value, "=") == 0; }
 			bool is_gt() { return _stricmp(value, ">") == 0; }
 			bool is_lt() { return _stricmp(value, "<") == 0; }
 			bool is_gte() { return _stricmp(value, ">=") == 0; }

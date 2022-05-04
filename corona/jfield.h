@@ -282,108 +282,14 @@ namespace countrybit
 
 		};
 
-		class path_root
-		{
-		public:
-			object_name				collection_name;
-			object_name				class_name;
-			relative_ptr_type				class_id;
-		};
-
-		class path_node
-		{
-		public:
-			object_name		member_name;
-			relative_ptr_type		member_id;
-			relative_ptr_type		member_index;
-			relative_ptr_type 	traversal_index;
-		};
-
-		using path_nodes = iarray<path_node, max_path_nodes>;
-
-		class path
-		{
-		public:
-			path_root		root;
-			path_nodes		nodes;
-		};
-
-		//  a new filter mechanism will look more like this
-
-		enum class filter_comparison_types
-		{
-			eq = 0,
-			ls = 1,
-			gt = 2,
-			lseq = 3,
-			gteq = 4,
-			contains = 5,
-			inlist = 6,
-			distance = 7
-		};
-
-		struct filter_element
-		{
-		public:
-			object_name				target_field_name;
-			relative_ptr_type				target_field_id;
-			operation_name			comparison_name;
-			filter_comparison_types	comparison;
-			relative_ptr_type				parameter_field_id;
-			object_name				parameter_field_name;
-			int64_t					parameter_offset;
-			int64_t					target_offset;
-			double					distance_threshold;
-			std::function<bool(char* a, char* b)> compare;
-			const char* error_message;
-
-			filter_element()
-			{
-				;
-			}
-		};
-
-		using filter_element_collection = iarray<filter_element, max_query_filters>;
-
-		enum class projection_operations
-		{
-			group_by,
-			calc_min,
-			calc_max,
-			calc_sum,
-			calc_count,
-			calc_stddev
-		};
-
-		struct projection_element
-		{
-		public:
-			object_name				field_name;
-			relative_ptr_type		field_id;
-			operation_name			projection_name;
-			projection_operations   projection;
-			int64_t					field_offset;
-			jtype					field_type;
-			const char* error_message;
-
-			projection_element() : field_name(""), field_id(null_row), projection_name(""), projection( projection_operations::group_by ), field_offset(0), field_type(jtype::type_null), error_message(nullptr)
-			{
-				
-			}
-		};
-
-		using projection_element_collection = iarray<projection_element, max_projection_fields>;
-
 		class query_definition_t
 		{
 		public:
-			path							source_path;
-			object_name						result_class_name;
+			object_name								result_class_name;
 			relative_ptr_type						result_class_id;
 			relative_ptr_type						result_field_id;
-			relative_ptr_type						max_result_objects;
-			filter_element_collection		filter;
-			projection_element_collection	projection;
+			query_body								body;
+			corona_size_t							max_result_objects;
 		};
 
 		using query_definition_type = query_definition_t;
@@ -474,10 +380,10 @@ namespace countrybit
 			sql_login_types					login_type;
 			object_name						username;
 			object_name						password;
-			relative_ptr_type						result_field_id;
+			relative_ptr_type				result_field_id;
 			object_name						result_class_name;
-			relative_ptr_type						result_class_id;
-			relative_ptr_type						max_result_objects;
+			relative_ptr_type				result_class_id;
+			relative_ptr_type				max_result_objects;
 			remote_parameter_fields_type	parameters;
 			remote_fields_type				fields;
 			remote_sql_query				query;
@@ -774,32 +680,6 @@ namespace countrybit
 
 		using jclass = item_details_holder<jclass_header, jclass_field>;
 		using field_array = iarray<jclass_field, max_class_fields>;
-
-		struct update_element
-		{
-		public:
-			object_name				target_field_name;
-			relative_ptr_type				target_field_id;
-			relative_ptr_type				parameter_field_id;
-			object_name				parameter_field_name;
-			int64_t					parameter_offset;
-			int64_t					target_offset;
-			std::function<void(char* a, char* b)> assignment;
-			const char* error_message;
-		};
-
-		using update_element_collection = iarray<update_element, max_update_elements>;
-
-		class update_definition_t
-		{
-		public:
-			path						source_path;
-			filter_element_collection	filter;
-			update_element_collection	update;
-		};
-
-		using update_definition_type = update_definition_t;
-
 		using selections_collection = iarray<relative_ptr_type, max_selections>;
 
 		class selector_rule

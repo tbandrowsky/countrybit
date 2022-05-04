@@ -140,16 +140,8 @@ namespace countrybit
 			http_remote_box get_http_remote(int field_idx);
 			file_remote_box get_file_remote(int field_idx);
 
-			bool set_filters(filter_element_collection& _src, jslice& _parameters);
-			bool filter(filter_element_collection& _src, jslice& _parameters);
-			bool set_filters(filter_element *_src, int _count, jslice& _parameters);
-			bool filter(filter_element* _src, int _count, jslice& _parameters);
-			bool set_updates(update_element_collection& _src, jslice& _parameters);
-			bool update(update_element_collection& _src, jslice& _parameters);
 			void update(jslice& _src_slice);
 
-			std::partial_ordering compare(projection_element_collection& collection, jslice& _dest_slice);
-			bool set_projection(projection_element_collection& collection);
 			std::partial_ordering compare(int _dst_idx, jslice& _src_slice, int _src_idx);
 			std::partial_ordering compare(jslice& _src_slice);
 
@@ -165,74 +157,6 @@ namespace countrybit
 			char* get_bytes() { return box ? box->unpack<char>(location) : bytes;  };
 			relative_ptr_type size_bytes() { return get_class().item().class_size_bytes; }
 		};
-
-		namespace expr
-		{
-
-			enum class slop
-			{
-				eq = 0,
-				ls = 1,
-				gt = 2,
-				lseq = 3,
-				gteq = 4,
-				contains = 5,
-				inlist = 6,
-				distance = 7,
-				log_and = 8,
-				log_or = 9,
-				log_not = 10,
-				opadd = 11,
-				opsub = 12,
-				opmul = 13,
-				opdiv = 14
-			};
-
-			enum class slerm
-			{
-				op_parameter_slice,
-				op_target_slice,
-				op_slice_term,
-			};
-
-			struct sframe
-			{
-				slop					op;
-				relative_ptr_type		field_id;
-				corona_size_t			offset;
-				relative_ptr_type		stack_field_id;
-			};
-
-			class sexpression
-			{
-				serialized_box* box;
-
-				struct sexpression_hdr 
-				{
-					block_id block;
-
-					sexpression_hdr()
-					{
-						block = block_id::expression_id();
-					}
-				};
-
-			public:
-
-				sexpression() : box(nullptr) {
-					;
-				}
-
-				sexpression(serialized_box* _box) : box(_box)
-				{
-					;
-				}
-
-				bool parse(const char* _src);
-
-
-			};
-		}
 
 		class jarray
 		{
@@ -405,8 +329,6 @@ namespace countrybit
 
 			uint64_t get_size_bytes();
 			char* get_bytes();
-
-			void sort(projection_element_collection& projections);
 
 			class iterator
 			{
@@ -1136,127 +1058,9 @@ namespace countrybit
 				bind_class(fn, _class_id);
 			}
 
-			void bind_projection_operation(operation_name& _operation, projection_operations& _nt)
-			{
-				_nt = projection_operations::group_by;
-
-				if (_operation == "group_by")
-				{
-					_nt = projection_operations::group_by;
-				}
-				else if (_operation == "calc_min")
-				{
-					_nt = projection_operations::calc_min;
-				}
-				else if (_operation == "calc_max")
-				{
-					_nt = projection_operations::calc_max;
-				}
-				else if (_operation == "calc_count")
-				{
-					_nt = projection_operations::calc_count;
-				}
-				else if (_operation == "calc_stddev")
-				{
-					_nt = projection_operations::calc_stddev;
-				}
-				else 
-				{
-					throw std::logic_error("[" + _operation + "] not found.");
-				}
-			}
-
-			void bind_filter_comparison_type(operation_name& _comparison, filter_comparison_types& _fct)
-			{
-				_fct = filter_comparison_types::eq;
-				if (_comparison == "eq")
-				{
-					_fct = filter_comparison_types::eq;
-				}
-				else if (_comparison == "ls")
-				{
-					_fct = filter_comparison_types::ls;
-				}
-				else if (_comparison == "gt")
-				{
-					_fct = filter_comparison_types::gt;
-				}
-				else if (_comparison == "lseq")
-				{
-					_fct = filter_comparison_types::lseq;
-				}
-				else if (_comparison == "gteq")
-				{
-					_fct = filter_comparison_types::gteq;
-				}
-				else if (_comparison == "contains")
-				{
-					_fct = filter_comparison_types::contains;
-				}
-				else if (_comparison == "inlist")
-				{
-					_fct = filter_comparison_types::inlist;
-				}
-				else if (_comparison == "distance")
-				{
-					_fct = filter_comparison_types::distance;
-				}
-				else {
-					throw std::logic_error("[" + _comparison + "] not found.");
-				}
-			}
-
 			relative_ptr_type put_query_field(put_named_query_field_request request)
 			{
 				query_properties_type options;
-				row_range rr;
-				put_class_request pcr;
-
-				pcr.class_name = request.options.result_class_name;
-
-				auto& path = request.options.source_path;
-				bind_class(path.root.class_name, path.root.class_id);
-
-				relative_ptr_type member_index = 0;
-
-				for (auto nd : path.nodes) 
-				{
-					auto &ndi = nd.item;
-					bind_field(ndi.member_name, ndi.member_id);
-				}
-
-				auto& projections = request.options.projection;
-
-				for (auto proj : projections)
-				{
-					auto& proji = proj.item;
-					bind_field(proji.field_name, proji.field_id);
-					bind_projection_operation(proji.projection_name, proji.projection);
-					member_field mf(proji.field_id);
-					mf.field_name = proji.field_name;
-					pcr.member_fields.push_back(mf);
-					member_index++;
-				}
-
-				auto& filter = request.options.filter;
-				for (auto fil : filter)
-				{
-					auto& fili = fil.item;
-					bind_filter_comparison_type(fili.comparison_name, fili.comparison);
-					bind_field(fili.parameter_field_name, fili.parameter_field_id);
-					bind_field(fili.target_field_name, fili.target_field_id);
-				}
-
- 				request.options.result_class_id = put_class(pcr);
-				if (request.options.result_class_id == null_row)
-					return null_row;
-
-				put_object_field_request porf;
-				porf.name.name = request.options.result_class_name;
-				porf.name.type = jtype::type_list;
-				porf.options.dim = { request.options.max_result_objects, 1, 1 };
-				porf.options.class_id = request.options.result_class_id;
-				porf.options.class_name = request.options.result_class_name;
 
 				relative_ptr_type query_location = put_field(request.name.field_id, type_query, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, &options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(query_instance));
 				queries.insert_or_assign(query_location, request.options);
