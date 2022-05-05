@@ -1361,7 +1361,7 @@ namespace countrybit
 				}
 
 				auto sz = mfs.size();
-				int num_integration_fields = mfs.count_if([this](member_field& src) {
+				int num_integration_fields = mfs.count_if([this](const member_field& src) {
 					auto& f = this->get_field(src.field_id);
 					return f.is_data_generator();
 					});

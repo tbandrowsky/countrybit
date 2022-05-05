@@ -242,7 +242,7 @@ namespace countrybit
 
 				inline iterator begin() const
 				{
-					return iterator(base, current, predicate);
+					return iterator(base, base->first_link(), predicate);
 				}
 
 				inline iterator end() const
@@ -302,6 +302,37 @@ namespace countrybit
 				bool operator != (const iterator& _src)
 				{
 					return _src.current != current;
+				}
+
+				item_type& first(std::function<bool(item_type&)> _predicate)
+				{
+					auto new_predicate = [this, _predicate](item_type& kp) { return this->predicate(kp) && _predicate(kp); };
+					auto it = iterator(base, first_link(), new_predicate);
+					return *it;
+				}
+
+				auto where(std::function<bool(item_type&)> _predicate)
+				{
+					auto new_predicate = [this, _predicate](item_type& kp) { return this->predicate(kp) && _predicate(kp); };
+					return iterator(base, first_link(), new_predicate);
+				}
+
+				bool any_of(std::function<bool(item_type&)> _predicate)
+				{
+					auto new_predicate = [this, _predicate](item_type& kp) { return this->predicate(kp) && _predicate(kp); };
+					return std::any_of(begin(), end(), new_predicate);
+				}
+
+				bool all_of(std::function<bool(item_type&)> _predicate)
+				{
+					auto new_predicate = [this, _predicate](item_type& kp) { return this->predicate(kp) && _predicate(kp); };
+					return std::all_of(begin(), end(), new_predicate);
+				}
+
+				corona_size_t count_if(std::function<bool(item_type&)> _predicate)
+				{
+					auto new_predicate = [this, _predicate](item_type& kp) { return this->predicate(kp) && _predicate(kp); };
+					return std::count_if(begin(), end(), new_predicate);
 				}
 
 			};

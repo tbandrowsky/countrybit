@@ -103,7 +103,20 @@ namespace countrybit
 			{
 				iarray<item_type, max_items>* base;
 				relative_ptr_type current;
-				std::function<bool(item_type&)> predicate;
+				and_functions<item_type> predicate;
+
+				void move_first()
+				{
+					if (base->size() == 0) current = null_row;
+					while (current != null_row && !predicate(base->get_at(current)))
+					{
+						current++;
+						if (current >= base->size()) {
+							current = null_row;
+							break;
+						}
+					}
+				}
 
 			public:
 
@@ -119,31 +132,37 @@ namespace countrybit
 				using pointer = value_ref*;  // or also value_type*
 				using reference = value_ref&;  // or also value_type&
 
-				iterator(iarray<item_type, max_items>* _base, 
-					relative_ptr_type _current,
-					std::function<bool(item_type&)> _predicate) :
-					base(_base),
-					current(_current),
-					predicate(_predicate)
+				iterator(const iterator* _src,
+					std::function<bool(const item_type&)> _predicate) :
+					base(_src->base),
+					predicate(_src->predicate),
+					current(0)
 				{
-					if (base->size() == 0) current = null_row;
-					while (current != null_row && !predicate(base->get_at(current)))
-					{
-						current++;
-						if (current >= base->size()) {
-							current = null_row;
-							break;
-						}
-					}
+					predicate.and_fn(_predicate);
+					move_first();
 				}
 
-				iterator(iarray<item_type, max_items>* _base,
-					relative_ptr_type _current) :
+				iterator(const iterator* _src, relative_ptr_type _current) :
+					base(_src->base),
+					current(_current),
+					predicate(_src->predicate)
+				{
+					move_first();
+				}
+
+				iterator(iarray<item_type, max_items>* _base, std::function<bool(const item_type&)> _predicate) :
+					base(_base),
+					current(0),
+					predicate(_predicate)
+				{
+					move_first();
+				}
+
+				iterator(iarray<item_type, max_items>* _base, relative_ptr_type _current) :
 					base(_base),
 					current(_current)
 				{
-					if (base->size() == 0) current = null_row;
-					predicate = [](item_type& a) { return true;  };
+					move_first();
 				}
 
 				iterator() : 
@@ -153,10 +172,18 @@ namespace countrybit
 					predicate = [](item_type& a) { return true;  };
 				}
 
+				iterator(const iterator& _src)
+				{
+					base = _src.base;
+					current = _src.current;
+					predicate = _src.predicate;
+				}
+
 				iterator& operator = (const iterator& _src)
 				{
 					base = _src.base;
 					current = _src.current;
+					predicate = _src.predicate;
 					return *this;
 				}
 
@@ -182,18 +209,19 @@ namespace countrybit
 
 				inline iterator begin() const
 				{
-					return iterator(base, current, predicate);
+					return iterator(this, 0);
 				}
 
 				inline iterator end() const
 				{
-					return iterator(base, null_row, predicate);
+					return iterator(this, null_row);
 				}
 
 				inline iterator operator++()
 				{
 					if (current == null_row)
 						return end();
+
 					current++;
 					while (current < base->size() && !predicate(base->get_at(current)))
 					{
@@ -204,7 +232,7 @@ namespace countrybit
 						current = null_row;
 					}
 
-					return iterator(base, current, predicate);
+					return iterator(this, current);
 				}
 
 				inline iterator operator++(int)
@@ -234,24 +262,47 @@ namespace countrybit
 					return begin() != end();
 				}
 
+				iterator where(std::function<bool(const item_type&)> _predicate)
+				{
+					return iterator(this,  _predicate);
+				}
+
+				bool any_of(std::function<bool(const item_type&)> _predicate)
+				{
+					auto new_predicate = [this, _predicate](auto& kp) { return predicate(kp) && _predicate(kp); };
+					return std::any_of(data, data + length, new_predicate);
+				}
+
+				bool all_of(std::function<bool(const item_type&)> _predicate)
+				{
+					auto new_predicate = [this, _predicate](auto& kp) { return predicate(kp) && _predicate(kp); };
+					return std::all_of(data, data + length, new_predicate);
+				}
+
+				int count_if(std::function<bool(const item_type&)> _predicate)
+				{
+					auto new_predicate = [this, _predicate](auto& kp) { return predicate(kp) && _predicate(kp); };
+					return std::count_if(data, data + length, new_predicate);
+				}
+
 			};
 
 			iarray<item_type, max_items>::iterator begin()
 			{
-				return iterator(this, 0);
+				return iarray<item_type, max_items>::iterator(this, first_row);
 			}
 
 			iarray<item_type, max_items>::iterator end()
 			{
-				return iterator(this, null_row);
+				return iarray<item_type, max_items>::iterator(this, null_row);
 			}
 
-			auto where(std::function<bool(item_type&)> predicate)
+			auto where(std::function<bool(const item_type&)> _predicate)
 			{
-				return iterator(this, 0, predicate);
+				return iterator(this, _predicate);
 			}
 
-			item_type& first_link(std::function<bool(item_type&)> predicate)
+			item_type& first_link(std::function<bool(const item_type&)> predicate)
 			{
 				auto w = this->where(predicate);
 				if (w == end()) {
@@ -260,7 +311,7 @@ namespace countrybit
 				return w->get_value();
 			}
 
-			relative_ptr_type first_index(std::function<bool(item_type&)> predicate)
+			relative_ptr_type first_index(std::function<bool(const item_type&)> predicate)
 			{
 				auto w = this->where(predicate);
 				if (w == end()) {
@@ -269,22 +320,22 @@ namespace countrybit
 				return w->get_row_id();
 			}
 
-			bool any_of(std::function<bool(item_type&)> predicate)
+			bool any_of(std::function<bool(const item_type&)> predicate)
 			{
 				return std::any_of(data, data + length, predicate);
 			}
 
-			bool all_of(std::function<bool(item_type&)> predicate)
+			bool all_of(std::function<bool(const item_type&)> predicate)
 			{
 				return std::all_of(data, data + length, predicate);
 			}
 
-			int count_if(std::function<bool(item_type&)> predicate)
+			int count_if(std::function<bool(const item_type&)> predicate)
 			{
 				return std::count_if(data, data + length, predicate);
 			}
 
-			void sort(std::function<bool(item_type& a, item_type& b)> fn)
+			void sort(std::function<bool(const item_type& a, const item_type& b)> fn)
 			{
 				std::sort(data, data + length, fn);
 			}
@@ -522,7 +573,7 @@ namespace countrybit
 
 				inline iterator begin() const
 				{
-					return iterator(base, current, predicate);
+					return iterator(base, 0, predicate);
 				}
 
 				inline iterator end() const
@@ -573,6 +624,49 @@ namespace countrybit
 				{
 					return begin() != end();
 				}
+
+				auto where(std::function<bool(item_type&)> _predicate)
+				{
+					auto new_predicate = [this, _predicate](auto& kp) { return predicate(kp) && _predicate(kp); };
+					return iterator(base, 0, new_predicate);
+				}
+
+				item_type& first_link(std::function<bool(item_type&)> _predicate)
+				{
+					auto w = this->where(_predicate);
+					if (w == end()) {
+						throw std::logic_error("sequence has no elements");
+					}
+					return w->get_index();
+				}
+
+				relative_ptr_type first_index(std::function<bool(item_type&)> _predicate)
+				{
+					auto w = this->where(_predicate);
+					if (w == end()) {
+						return null_row;
+					}
+					return w->get_index();
+				}
+
+				bool any_of(std::function<bool(item_type&)> _predicate)
+				{
+					auto new_predicate = [this, _predicate](item_type& kp) { return this->predicate(kp) && _predicate(kp); };
+					return std::any_of(hdr->data, hdr->data + hdr->length, new_predicate);
+				}
+
+				bool all_of(std::function<bool(item_type&)> _predicate)
+				{
+					auto new_predicate = [this, _predicate](item_type& kp) { return this->predicate(kp) && _predicate(kp); };
+					return std::all_of(hdr->data, hdr->data + hdr->length, new_predicate);
+				}
+
+				int count_if(std::function<bool(item_type&)> _predicate)
+				{
+					auto new_predicate = [this, _predicate](item_type& kp) { return this->predicate(kp) && _predicate(kp); };
+					return std::count_if(hdr->data, hdr->data + hdr->length, new_predicate);
+				}
+
 			};
 
 			array_box<item_type>::iterator begin()

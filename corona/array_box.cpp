@@ -73,17 +73,36 @@ namespace countrybit
 			auto count = test_iarray.count_if([](auto& t) { return t < 3;  });
 			assert_if([count]() { return count == 3; }, "Wrong count");
 
-			auto items = test_iarray.where([](auto& t) { return t < 3;  });
+			auto items = test_iarray.where([](auto& t) { return t < 5;  });
 
 			count = 0;
 			for (auto r : items)
 			{
 				auto rti = r.item;
-				assert_if([rti]() { return rti < 3;  }, "Wrong values");
+				assert_if([rti]() { return rti < 5;  }, "Wrong values");
+				count++;
+			}
+			assert_if([count]() { return count == 5; }, "Wrong count");
+
+			items = test_iarray.where([](auto& t) { return true;  }); 		
+
+			items = items.where([](auto& t) { 
+				return t < 5;  
+			});
+
+			items = items.where([](auto& t) { 
+				auto v = (t % 2);
+				return v == 0;
+			});
+
+			count = 0;
+			for (auto r : items)
+			{
+				auto rti = r.item;
+				assert_if([rti]() { return rti < 5 && rti % 2 == 0;  }, "Wrong values");
 				count++;
 			}
 			assert_if([count]() { return count == 3; }, "Wrong count");
-
 
 			return true;
 		}

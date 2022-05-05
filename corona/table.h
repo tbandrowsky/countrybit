@@ -460,7 +460,7 @@ namespace countrybit
 
 				inline iterator begin() const
 				{
-					return iterator(base, current, predicate);
+					return iterator(base, 0, predicate);
 				}
 
 				inline iterator end() const
@@ -502,6 +502,11 @@ namespace countrybit
 					return _src.current != current;
 				}
 
+				auto where(std::function<bool(T&)> _predicate)
+				{
+					auto new_predicate = [this, _predicate](auto& kp) { return predicate(kp) && _predicate(kp); };
+					return iterator(base, 0, new_predicate);
+				}
 			};
 
 			table<T>::iterator begin()
@@ -514,9 +519,9 @@ namespace countrybit
 				return iterator(this, null_row);
 			}
 
-			auto where(std::function<bool(T&)> predicate)
+			auto where(std::function<bool(T&)> _predicate)
 			{
-				return iterator(this, 0, predicate);
+				return iterator(this, 0, _predicate);
 			}
 
 			T& first_link(std::function<bool(T&)> predicate)

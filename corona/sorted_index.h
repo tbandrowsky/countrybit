@@ -341,6 +341,30 @@ namespace countrybit
 					return begin() != end();
 				}
 
+				auto where(std::function<bool(std::pair<KEY, VALUE>&)> _predicate)
+				{
+					auto new_predicate = [this, _predicate](auto& kp) { return predicate(kp) && _predicate(kp); };
+					return iterator(base, first_node(), new_predicate);
+				}
+
+				auto any_of(std::function<bool(std::pair<KEY, VALUE>&)> _predicate)
+				{
+					auto new_predicate = [this, _predicate](auto& kp) { return predicate(kp) && _predicate(kp); };
+					return std::any_of(begin(), end(), new_predicate);
+				}
+
+				auto all_of(std::function<bool(std::pair<KEY, VALUE>&)> _predicate)
+				{
+					auto new_predicate = [this, _predicate](auto& kp) { return predicate(kp) && _predicate(kp); };
+					return std::all_of(begin(), end(), new_predicate);
+				}
+
+				corona_size_t count_if(std::function<bool(std::pair<KEY, VALUE>&)> _predicate)
+				{
+					auto new_predicate = [this, _predicate](auto& kp) { return predicate(kp) && _predicate(kp); };
+					return std::count_if(begin(), end(), new_predicate);
+				}
+
 			};
 
 			bool pop_front()
@@ -384,9 +408,9 @@ namespace countrybit
 				return *it;
 			}
 
-			auto where(std::function<bool(std::pair<KEY, VALUE>&)> predicate)
+			auto where(std::function<bool(std::pair<KEY, VALUE>&)> _predicate)
 			{
-				return iterator(this, first_node(), predicate);
+				return iterator(this, first_node(), _predicate);
 			}
 
 			bool any_of(std::function<bool(std::pair<KEY, VALUE>&)> predicate)

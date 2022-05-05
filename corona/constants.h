@@ -1,5 +1,9 @@
 #pragma once
+
 #include <cstdint>
+#include <functional>
+#include <algorithm>
+#include <iostream>
 
 namespace countrybit
 {
@@ -40,6 +44,7 @@ namespace countrybit
 		typedef corona_size_t relative_ptr_type;
 
 		const relative_ptr_type null_row = -1;
+		const relative_ptr_type first_row = 0;
 
 		struct collection_id_type
 		{
@@ -137,5 +142,57 @@ namespace countrybit
 
 		};
 
+		template <typename itemType> class and_functions {
+		public:
+
+			using boolean_fn = std::function<bool(const itemType&)>;
+
+		private:
+
+			std::vector<boolean_fn> functions;
+
+		public:
+
+			and_functions()
+			{
+			}
+
+			and_functions(boolean_fn fn)
+			{
+				functions.push_back(fn);
+			}
+
+			and_functions operator = (const and_functions& srcs)
+			{
+				functions = srcs.functions;
+				return *this;
+			}
+
+			and_functions& operator = (and_functions&& srcs)
+			{
+				functions = std::move(srcs.functions);
+				return *this;
+			}
+
+			and_functions(const and_functions& srcs)
+			{
+				functions = srcs.functions;
+			}
+
+			and_functions(and_functions&& srcs)
+			{
+				functions = std::move(srcs.functions);
+			}
+
+			void and_fn(boolean_fn fn)
+			{
+				functions.push_back(fn);
+			}
+
+			bool operator()(const itemType& x)
+			{
+				return std::all_of(functions.begin(), functions.end(), [x](boolean_fn fn) { return fn(x); });
+			}
+		};
 	}
 }

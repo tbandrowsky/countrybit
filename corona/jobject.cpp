@@ -93,9 +93,9 @@ namespace countrybit
 			// selectors on this option. if we do create on the option here, it will have the item id
 			// of the class specified in the rule so that continuity will be preserved.
 			else if (
-				required->all_of([this, selections](selector_rule& src) {
+				required->all_of([this, selections](const selector_rule& src) {
 					int c = selections->count_if(
-						[src, this](relative_ptr_type& dest) {
+						[src, this](const relative_ptr_type& dest) {
 							auto obj = this->objects[dest];
 							relative_ptr_type class_id = obj.item().class_id;
 							return class_id == src.class_id;
@@ -103,8 +103,8 @@ namespace countrybit
 					return c == 1;
 					})
 				&&
-				selections->all_of([this, required](relative_ptr_type& dest) {
-				return required->any_of([this, dest](selector_rule& src) {
+				selections->all_of([this, required](const relative_ptr_type& dest) {
+				return required->any_of([this, dest](const selector_rule& src) {
 					return src.class_id == dest;
 					});
 					})
@@ -154,7 +154,7 @@ namespace countrybit
 
 				if (selector_applies(&oi.item.selectors, _actor)) {
 					actor_create_object aco;
-					auto selected_create = selections->where([rule, this](relative_ptr_type& src) {
+					auto selected_create = selections->where([rule, this](const relative_ptr_type& src) {
 						return objects[src].item().class_id == rule->item_id_class;
 						});
 					if (selected_create != std::end(*selections)) {
@@ -2069,6 +2069,17 @@ namespace countrybit
 
 				auto result = program_chart.get_command_result(sample_actor.actor_id);
 				program_chart.print(result);
+
+				// now, we want to get the command for creating a pair of objects and test.
+				// first we shall see if we can create a carrier
+				auto& create_carrier_option = result.create_objects
+					.where([carrier_class_id](std::pair<relative_ptr_type, actor_create_object>& acokp) { return acokp.second.class_id == carrier_class_id; })
+					.get_value();
+
+				// then we shall see if we can create a coverage
+				auto& create_coverage_option = result.create_objects
+					.where([coverage_class_id](std::pair<relative_ptr_type, actor_create_object>& acokp) { return acokp.second.class_id == coverage_class_id; })
+					.get_value();
 
 				return true;
 			}

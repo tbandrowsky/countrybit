@@ -227,7 +227,7 @@ namespace countrybit
 
 				inline iterator begin() const
 				{
-					return iterator(base, current);
+					return iterator(base, base->first_node());
 				}
 
 				inline iterator end() const
