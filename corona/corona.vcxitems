@@ -21,6 +21,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)collection_id_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)color_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)constants.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)filterable_iterator.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)list_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)desktop_application.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)directory.h" />

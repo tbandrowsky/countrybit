@@ -5,6 +5,7 @@
 #include <bit>
 #include <functional>
 #include <algorithm>
+#include "filterable_iterator.h"
 
 namespace countrybit
 {
@@ -15,6 +16,9 @@ namespace countrybit
 		{
 			item_type data[max_items];
 			corona_size_t length;
+
+			using collection_type = iarray<item_type, max_items>;
+			using iterator_type = filterable_iterator<item_type, collection_type>;
 
 			iarray() 
 			{
@@ -99,207 +103,19 @@ namespace countrybit
 				return d;
 			}
 
-			class iterator
+			iterator_type begin()
 			{
-				iarray<item_type, max_items>* base;
-				relative_ptr_type current;
-				and_functions<item_type> predicate;
-
-				void move_first()
-				{
-					if (base->size() == 0) current = null_row;
-					while (current != null_row && !predicate(base->get_at(current)))
-					{
-						current++;
-						if (current >= base->size()) {
-							current = null_row;
-							break;
-						}
-					}
-				}
-
-			public:
-
-				struct value_ref
-				{
-					item_type& item;
-					relative_ptr_type location;
-				};
-
-				using iterator_category = std::forward_iterator_tag;
-				using difference_type = std::ptrdiff_t;
-				using value_type = value_ref;
-				using pointer = value_ref*;  // or also value_type*
-				using reference = value_ref&;  // or also value_type&
-
-				iterator(const iterator* _src,
-					std::function<bool(const item_type&)> _predicate) :
-					base(_src->base),
-					predicate(_src->predicate),
-					current(0)
-				{
-					predicate.and_fn(_predicate);
-					move_first();
-				}
-
-				iterator(const iterator* _src, relative_ptr_type _current) :
-					base(_src->base),
-					current(_current),
-					predicate(_src->predicate)
-				{
-					move_first();
-				}
-
-				iterator(iarray<item_type, max_items>* _base, std::function<bool(const item_type&)> _predicate) :
-					base(_base),
-					current(0),
-					predicate(_predicate)
-				{
-					move_first();
-				}
-
-				iterator(iarray<item_type, max_items>* _base, relative_ptr_type _current) :
-					base(_base),
-					current(_current)
-				{
-					move_first();
-				}
-
-				iterator() : 
-					base(nullptr), 
-					current(null_row)					
-				{
-					predicate = [](item_type& a) { return true;  };
-				}
-
-				iterator(const iterator& _src)
-				{
-					base = _src.base;
-					current = _src.current;
-					predicate = _src.predicate;
-				}
-
-				iterator& operator = (const iterator& _src)
-				{
-					base = _src.base;
-					current = _src.current;
-					predicate = _src.predicate;
-					return *this;
-				}
-
-				inline value_ref operator *()
-				{
-					return value_ref{ base->get_at(current), current };
-				}
-
-				inline item_type *operator ->()
-				{
-					return &base->get_at(current);
-				}
-
-				inline value_ref get_value()
-				{
-					return value_ref{ base->get_at(current), current };
-				}
-
-				inline relative_ptr_type get_index()
-				{
-					return current;
-				}
-
-				inline iterator begin() const
-				{
-					return iterator(this, 0);
-				}
-
-				inline iterator end() const
-				{
-					return iterator(this, null_row);
-				}
-
-				inline iterator operator++()
-				{
-					if (current == null_row)
-						return end();
-
-					current++;
-					while (current < base->size() && !predicate(base->get_at(current)))
-					{
-						current++;
-					}
-
-					if (current >= base->size()) {
-						current = null_row;
-					}
-
-					return iterator(this, current);
-				}
-
-				inline iterator operator++(int)
-				{
-					iterator tmp(*this);
-					operator++();
-					return tmp;
-				}
-
-				bool operator == (const iterator& _src) const
-				{
-					return _src.current == current;
-				}
-
-				bool operator != (const iterator& _src)
-				{
-					return _src.current != current;
-				}
-
-				bool eoi()
-				{
-					return begin() == end();
-				}
-
-				bool exists()
-				{
-					return begin() != end();
-				}
-
-				iterator where(std::function<bool(const item_type&)> _predicate)
-				{
-					return iterator(this,  _predicate);
-				}
-
-				bool any_of(std::function<bool(const item_type&)> _predicate)
-				{
-					auto new_predicate = [this, _predicate](auto& kp) { return predicate(kp) && _predicate(kp); };
-					return std::any_of(data, data + length, new_predicate);
-				}
-
-				bool all_of(std::function<bool(const item_type&)> _predicate)
-				{
-					auto new_predicate = [this, _predicate](auto& kp) { return predicate(kp) && _predicate(kp); };
-					return std::all_of(data, data + length, new_predicate);
-				}
-
-				int count_if(std::function<bool(const item_type&)> _predicate)
-				{
-					auto new_predicate = [this, _predicate](auto& kp) { return predicate(kp) && _predicate(kp); };
-					return std::count_if(data, data + length, new_predicate);
-				}
-
-			};
-
-			iarray<item_type, max_items>::iterator begin()
-			{
-				return iarray<item_type, max_items>::iterator(this, first_row);
+				return iterator_type(this, first_row);
 			}
 
-			iarray<item_type, max_items>::iterator end()
+			iterator_type end()
 			{
-				return iarray<item_type, max_items>::iterator(this, null_row);
+				return iterator_type(this, null_row);
 			}
 
 			auto where(std::function<bool(const item_type&)> _predicate)
 			{
-				return iterator(this, _predicate);
+				return iterator_type(this, _predicate);
 			}
 
 			item_type& first_link(std::function<bool(const item_type&)> predicate)
@@ -345,6 +161,8 @@ namespace countrybit
 		template <typename item_type>
 		class array_box
 		{
+			using collection_type = array_box<item_type>;
+			using iterator_type = filterable_iterator<item_type, collection_type>;
 
 			struct array_box_data 
 			{
@@ -495,188 +313,14 @@ namespace countrybit
 				}
 			}
 
-			class iterator
+			iterator_type begin()
 			{
-				array_box<item_type>* base;
-				relative_ptr_type current;
-				std::function<bool(item_type&)> predicate;
-
-			public:
-
-				struct value_ref
-				{
-					item_type& item;
-					relative_ptr_type location;
-				};
-
-				using iterator_category = std::forward_iterator_tag;
-				using difference_type = std::ptrdiff_t;
-				using value_type = value_ref;
-				using pointer = value_ref*;  // or also value_type*
-				using reference = value_ref&;  // or also value_type&
-
-				iterator(array_box<item_type>* _base,
-					relative_ptr_type _current,
-					std::function<bool(item_type&)> _predicate) :
-					base(_base),
-					current(_current),
-					predicate(_predicate)
-				{
-					if (base->size() == 0) current = null_row;
-					while (current != null_row && !predicate(base->get_at(current)))
-					{
-						current++;
-						if (current >= base->size()) {
-							current = null_row;
-							break;
-						}
-					}
-				}
-
-				iterator(array_box<item_type>* _base,
-					relative_ptr_type _current) :
-					base(_base),
-					current(_current)
-				{
-					if (base->size() == 0) current = null_row;
-					predicate = [](item_type& a) { return true;  };
-				}
-
-				iterator() :
-					base(nullptr),
-					current(null_row)
-				{
-					predicate = [](item_type& a) { return true;  };
-				}
-
-				iterator& operator = (const iterator& _src)
-				{
-					base = _src.base;
-					current = _src.current;
-					return *this;
-				}
-
-				inline value_ref operator *()
-				{
-					return value_ref{ base->get_at(current), current };
-				}
-
-				inline item_type* operator ->()
-				{
-					return &base->get_at(current);
-				}
-
-				inline relative_ptr_type get_index()
-				{
-					return current;
-				}
-
-				inline iterator begin() const
-				{
-					return iterator(base, 0, predicate);
-				}
-
-				inline iterator end() const
-				{
-					return iterator(base, null_row, predicate);
-				}
-
-				inline iterator operator++()
-				{
-					if (current == null_row)
-						return end();
-					current++;
-					while (current < base->size() && !predicate(base->get_at(current)))
-					{
-						current++;
-					}
-
-					if (current >= base->size()) {
-						current = null_row;
-					}
-
-					return iterator(base, current, predicate);
-				}
-
-				inline iterator operator++(int)
-				{
-					iterator tmp(*this);
-					operator++();
-					return tmp;
-				}
-
-				bool operator == (const iterator& _src) const
-				{
-					return _src.current == current;
-				}
-
-				bool operator != (const iterator& _src)
-				{
-					return _src.current != current;
-				}
-
-				bool eoi()
-				{
-					return begin() == end();
-				}
-
-				bool exists()
-				{
-					return begin() != end();
-				}
-
-				auto where(std::function<bool(item_type&)> _predicate)
-				{
-					auto new_predicate = [this, _predicate](auto& kp) { return predicate(kp) && _predicate(kp); };
-					return iterator(base, 0, new_predicate);
-				}
-
-				item_type& first_link(std::function<bool(item_type&)> _predicate)
-				{
-					auto w = this->where(_predicate);
-					if (w == end()) {
-						throw std::logic_error("sequence has no elements");
-					}
-					return w->get_index();
-				}
-
-				relative_ptr_type first_index(std::function<bool(item_type&)> _predicate)
-				{
-					auto w = this->where(_predicate);
-					if (w == end()) {
-						return null_row;
-					}
-					return w->get_index();
-				}
-
-				bool any_of(std::function<bool(item_type&)> _predicate)
-				{
-					auto new_predicate = [this, _predicate](item_type& kp) { return this->predicate(kp) && _predicate(kp); };
-					return std::any_of(hdr->data, hdr->data + hdr->length, new_predicate);
-				}
-
-				bool all_of(std::function<bool(item_type&)> _predicate)
-				{
-					auto new_predicate = [this, _predicate](item_type& kp) { return this->predicate(kp) && _predicate(kp); };
-					return std::all_of(hdr->data, hdr->data + hdr->length, new_predicate);
-				}
-
-				int count_if(std::function<bool(item_type&)> _predicate)
-				{
-					auto new_predicate = [this, _predicate](item_type& kp) { return this->predicate(kp) && _predicate(kp); };
-					return std::count_if(hdr->data, hdr->data + hdr->length, new_predicate);
-				}
-
-			};
-
-			array_box<item_type>::iterator begin()
-			{
-				return iterator(this, 0);
+				return iterator_type(this, first_row);
 			}
 
-			array_box<item_type>::iterator end()
+			iterator_type end()
 			{
-				return iterator(this, null_row);
+				return iterator_type(this, null_row);
 			}
 
 			auto where(std::function<bool(item_type&)> predicate)
