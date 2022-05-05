@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <functional>
 #include "store_box.h"
+#include "filterable_iterator.h"
 
 namespace countrybit
 {
@@ -140,6 +141,9 @@ namespace countrybit
 
 			table_header* hdr;
 			serialized_box_container* box;
+
+			using collection_type = table<T>;
+			using iterator_type = filterable_iterator<T, collection_type>;
 
 		public:
 
@@ -389,157 +393,37 @@ namespace countrybit
 				hdr->last_row = 0;
 			}
 
-			class iterator
+			iterator_type begin()
 			{
-				table<T>* base;
-				relative_ptr_type current;
-				std::function<bool(T&)> predicate;
-
-			public:
-
-				struct value_ref 
-				{
-					T& item;
-					relative_ptr_type location;
-				};
-
-				using iterator_category = std::forward_iterator_tag;
-				using difference_type = std::ptrdiff_t;
-				using value_type = value_ref;
-				using pointer = value_ref*;  // or also value_type*
-				using reference = value_ref&;  // or also value_type&
-
-				iterator(table<T>* _base, relative_ptr_type _current) :
-					base(_base),
-					current(_current)
-				{
-					predicate = [](T& a) { return true;  };
-				}
-
-				iterator(table<T>* _base, relative_ptr_type _current, std::function<bool(T&)> _predicate) :
-					base(_base),
-					current(_current),
-					predicate(_predicate)
-				{
-					while (current != null_row && !predicate(base->get_at(current)))
-					{
-						current++;
-						if (current >= base->size()) {
-							current = null_row;
-							break;
-						}
-					}
-				}
-
-				iterator() : base(nullptr), current(null_row)
-				{
-
-				}
-
-				iterator& operator = (const iterator& _src)
-				{
-					base = _src.base;
-					current = _src.current;
-					return *this;
-				}
-
-				inline value_ref operator *()
-				{
-					return value_ref{ base->get_at(current), current };
-				}
-
-				inline relative_ptr_type get_row_id()
-				{
-					return current;
-				}
-
-				inline T& get_value()
-				{
-					return base->get_at(current);
-				}
-
-				inline iterator begin() const
-				{
-					return iterator(base, 0, predicate);
-				}
-
-				inline iterator end() const
-				{
-					return iterator(base, null_row, predicate);
-				}
-
-				inline iterator operator++()
-				{
-					if (current == null_row)
-						return end();
-					current++;
-					while (current < base->size() && !predicate(base->get_at(current)))
-					{
-						current++;
-					}
-
-					if (current >= base->size()) {
-						current = null_row;
-					}
-
-					return iterator(base, current, predicate);
-				}
-
-				inline iterator operator++(int)
-				{
-					iterator tmp(*this);
-					operator++();
-					return tmp;
-				}
-
-				bool operator == (const iterator& _src) const
-				{
-					return _src.current == current;
-				}
-
-				bool operator != (const iterator& _src)
-				{
-					return _src.current != current;
-				}
-
-				auto where(std::function<bool(T&)> _predicate)
-				{
-					auto new_predicate = [this, _predicate](auto& kp) { return predicate(kp) && _predicate(kp); };
-					return iterator(base, 0, new_predicate);
-				}
-			};
-
-			table<T>::iterator begin()
-			{
-				return iterator(this, 0);
+				return iterator_type(this, first_row);
 			}
 
-			table<T>::iterator end()
+			iterator_type end()
 			{
-				return iterator(this, null_row);
+				return iterator_type(this, null_row);
 			}
 
-			auto where(std::function<bool(T&)> _predicate)
+			auto where(std::function<bool(const T&)> _predicate)
 			{
-				return iterator(this, 0, _predicate);
+				return iterator_type(this, _predicate);
 			}
 
-			T& first_link(std::function<bool(T&)> predicate)
+			T& first_item(std::function<bool(const T&)> predicate)
 			{
 				auto w = this->where(predicate);
 				if (w == end()) {
 					throw std::logic_error("sequence has no elements");
 				}
-				return w->get_value();
+				return w.get_value();
 			}
 
-			relative_ptr_type first_index(std::function<bool(T&)> predicate)
+			relative_ptr_type first_index(std::function<bool(const T&)> predicate)
 			{
 				auto w = this->where(predicate);
 				if (w == end()) {
 					return null_row;
 				}
-				return w.get_row_id();
+				return w.get_index();
 			}
 
 			bool any_of(std::function<bool(T&)> predicate)

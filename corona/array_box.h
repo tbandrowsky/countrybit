@@ -118,7 +118,7 @@ namespace countrybit
 				return iterator_type(this, _predicate);
 			}
 
-			item_type& first_link(std::function<bool(const item_type&)> predicate)
+			item_type& first_value(std::function<bool(const item_type&)> predicate)
 			{
 				auto w = this->where(predicate);
 				if (w == end()) {
@@ -328,7 +328,7 @@ namespace countrybit
 				return iterator(this, 0, predicate);
 			}
 
-			item_type& first_link(std::function<bool(item_type&)> predicate)
+			item_type& first_value(std::function<bool(item_type&)> predicate)
 			{
 				auto w = this->where(predicate);
 				if (w == end()) {
