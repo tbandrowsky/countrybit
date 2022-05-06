@@ -127,33 +127,57 @@ namespace countrybit
 
 			dimensions_type get_dim();
 
+			int get_field_index_by_name(const object_name& name);
 			int get_field_index_by_id(relative_ptr_type field_id);
 			jfield& get_field_by_id(relative_ptr_type field_id);
 			jclass_field& get_class_field(int field_idx);
 			jfield& get_field(int field_idx);
 
-			int8_box get_int8(int field_idx);
-			int16_box get_int16(int field_idx);
-			int32_box get_int32(int field_idx);
-			int64_box get_int64(int field_idx);
-			float_box get_float(int field_idx);
-			double_box get_double(int field_idx);
-			time_box get_time(int field_idx);
-			string_box get_string(int field_idx);
-			jarray get_object(int field_idx);
-			jlist get_list(int field_idx);
-			collection_id_box get_collection_id(int field_idx);
-			object_id_box get_object_id(int field_idx);
-			point_box get_point(int field_idx);
-			rectangle_box get_rectangle(int field_idx);
-			image_box get_image(int field_idx);
-			wave_box get_wave(int field_idx);
-			midi_box get_midi(int field_idx);
-			color_box get_color(int field_idx);
-			query_box get_query(int field_idx);
-			sql_remote_box get_sql_remote(int field_idx);
-			http_remote_box get_http_remote(int field_idx);
-			file_remote_box get_file_remote(int field_idx);
+			int8_box get_int8(int field_idx, bool _use_id = false);
+			int16_box get_int16(int field_idx, bool _use_id = false);
+			int32_box get_int32(int field_idx, bool _use_id = false);
+			int64_box get_int64(int field_idx, bool _use_id = false);
+			float_box get_float(int field_idx, bool _use_id = false);
+			double_box get_double(int field_idx, bool _use_id = false);
+			time_box get_time(int field_idx, bool _use_id = false);
+			string_box get_string(int field_idx, bool _use_id = false);
+			jarray get_object(int field_idx, bool _use_id = false);
+			jlist get_list(int field_idx, bool _use_id = false);
+			collection_id_box get_collection_id(int field_idx, bool _use_id = false);
+			object_id_box get_object_id(int field_idx, bool _use_id = false);
+			point_box get_point(int field_idx, bool _use_id = false);
+			rectangle_box get_rectangle(int field_idx, bool _use_id = false);
+			image_box get_image(int field_idx, bool _use_id = false);
+			wave_box get_wave(int field_idx, bool _use_id = false);
+			midi_box get_midi(int field_idx, bool _use_id = false);
+			color_box get_color(int field_idx, bool _use_id = false);
+			query_box get_query(int field_idx, bool _use_id = false);
+			sql_remote_box get_sql_remote(int field_idx, bool _use_id = false);
+			http_remote_box get_http_remote(int field_idx, bool _use_id = false);
+			file_remote_box get_file_remote(int field_idx, bool _use_id = false);
+
+			int8_box get_int8(object_name field_name);
+			int16_box get_int16(object_name field_name);
+			int32_box get_int32(object_name field_name);
+			int64_box get_int64(object_name field_name);
+			float_box get_float(object_name field_name);
+			double_box get_double(object_name field_name);
+			time_box get_time(object_name field_name);
+			string_box get_string(object_name field_name);
+			jarray get_object(object_name field_name);
+			jlist get_list(object_name field_name);
+			collection_id_box get_collection_id(object_name field_name);
+			object_id_box get_object_id(object_name field_name);
+			point_box get_point(object_name field_name);
+			rectangle_box get_rectangle(object_name field_name);
+			image_box get_image(object_name field_name);
+			wave_box get_wave(object_name field_name);
+			midi_box get_midi(object_name field_name);
+			color_box get_color(object_name field_name);
+			query_box get_query(object_name field_name);
+			sql_remote_box get_sql_remote(object_name field_name);
+			http_remote_box get_http_remote(object_name field_name);
+			file_remote_box get_file_remote(object_name field_name);
 
 			void update(jslice& _src_slice);
 
@@ -182,6 +206,9 @@ namespace countrybit
 
 		public:
 
+			using collection_type = jarray;
+			using iterator_type = filterable_iterator<jslice, collection_type, value_assign_ref<jslice>>;
+
 			jarray();
 			jarray(jslice* _parent, jschema* _schema, relative_ptr_type _class_field_id, char* _bytes, bool _init = false);
 			jarray(dynamic_box& _dest, jarray& _src);
@@ -191,109 +218,18 @@ namespace countrybit
 			jslice get_slice(dimensions_type dims);
 			uint64_t get_size_bytes();
 			char* get_bytes();
-		
-			class iterator
+
+			jslice get_at(relative_ptr_type _index);
+			corona_size_t size();
+
+			inline iterator_type begin()
 			{
-				jarray* base;
-				dimensions_type current;
-				dimensions_type maxd;
-
-			public:
-				using iterator_category = std::forward_iterator_tag;
-				using difference_type = std::ptrdiff_t;
-				using value_type = jslice;
-				using pointer = jslice*;  // or also value_type*
-				using reference = jslice&;  // or also value_type&
-
-				iterator(jarray* _base, dimensions_type _current) :
-					base(_base),
-					current(_current)
-				{
-					maxd = base->dimensions();
-				}
-
-				iterator() : base(nullptr), current({ 0, 0, 0 }), maxd( { 0, 0, 0 })
-				{
-
-				}
-
-				iterator& operator = (const iterator& _src)
-				{
-					base = _src.base;
-					current = _src.current;
-					return *this;
-				}
-
-				inline jslice operator *()
-				{
-					return base->get_slice(current);
-				}
-
-				inline jslice operator->()
-				{
-					return base->get_slice(current);
-				}
-
-				inline iterator begin() const
-				{
-					return iterator(base, current);
-				}
-
-				inline iterator end()
-				{
-					return iterator(base, maxd);
-				}
-
-				inline iterator operator++()
-				{
-					current.x++;
-					if (current.x >= maxd.x) {
-						current.y++;
-						current.x = 0;
-						if (current.y >= maxd.y) {
-							current.z++;
-							if (current.z >= maxd.z) {
-								current = maxd;
-							}
-							else 
-							{
-								current.y = 0;
-							}
-						}
-					}
-					return iterator(base, current);
-				}
-
-				inline iterator operator++(int)
-				{
-					iterator tmp(*this);
-					operator++();
-					return tmp;
-				}
-
-				bool operator == (const iterator& _src) const
-				{
-					return _src.current == current;
-				}
-
-				bool operator != (const iterator& _src)
-				{
-					return _src.current != current;
-				}
-
-			};
-
-			inline iterator begin()
-			{
-				dimensions_type dt = { 0, 0, 0 };
-
-				return iterator(this, dt);
+				return iterator_type(this, 0);
 			}
 
-			inline iterator end()
+			inline iterator_type end()
 			{
-				auto temp = this->dimensions();
-				return iterator(this, temp);
+				return iterator_type(this, null_row);
 			}
 		};
 
@@ -323,21 +259,23 @@ namespace countrybit
 
 		public:
 
+			using collection_type = jlist;
+			using iterator_type = filterable_iterator<jslice, collection_type, value_assign_ref<jslice>>;
+
 			jlist();
 			jlist(jslice* _parent, jschema* _schema, relative_ptr_type _class_field_id, char* _bytes, bool _init = false);
 			jlist(serialized_box_container& _dest, jlist& _src);
 
-			uint32_t capacity();
-			uint32_t size();
+			corona_size_t capacity();
+			corona_size_t size();
 
-			jslice get_slice_direct(int idx);
-			jslice get_slice(int x);
-			bool erase_slice(int x);
+			jslice get_at(relative_ptr_type x);
+			bool erase(relative_ptr_type x);
 			bool chop();
 
 			jslice append_slice();
-			bool select_slice(int x);
-			bool deselect_slice(int x);
+			bool select_slice(relative_ptr_type x);
+			bool deselect_slice(relative_ptr_type x);
 			void deselect_all();
 			void select_all();
 			void clear();
@@ -345,96 +283,15 @@ namespace countrybit
 			uint64_t get_size_bytes();
 			char* get_bytes();
 
-			class iterator
+			inline iterator_type begin()
 			{
-				jlist* base;
-				uint32_t current;
-
-			public:
-				using iterator_category = std::forward_iterator_tag;
-				using difference_type = std::ptrdiff_t;
-				using value_type = jslice;
-				using pointer = jslice*;  // or also value_type*
-				using reference = jslice&;  // or also value_type&
-
-				iterator(jlist* _base, uint32_t _current) :
-					base(_base),
-					current(_current)
-				{
-					;
-				}
-
-				iterator() : base(nullptr), current(0)
-				{
-
-				}
-
-				iterator& operator = (const iterator& _src)
-				{
-					base = _src.base;
-					current = _src.current;
-					return *this;
-				}
-
-				inline jslice operator *()
-				{
-					return base->get_slice(current);
-				}
-
-				inline jslice operator->()
-				{
-					return base->get_slice(current);
-				}
-
-				inline iterator begin() const
-				{
-					return iterator(base, current);
-				}
-
-				inline iterator end()
-				{
-					return iterator(base, base->size());
-				}
-
-				inline iterator operator++()
-				{
-					current++;
-					if (current > base->size()) 
-					{
-						current = base->size();
-					}
-					return iterator(base, current);
-				}
-
-				inline iterator operator++(int)
-				{
-					iterator tmp(*this);
-					operator++();
-					return tmp;
-				}
-
-				bool operator == (const iterator& _src) const
-				{
-					return _src.current == current;
-				}
-
-				bool operator != (const iterator& _src)
-				{
-					return _src.current != current;
-				}
-
-			};
-
-			inline iterator begin()
-			{
-				return iterator(this, 0);
+				return iterator_type(this, 0);
 			}
 
-			inline iterator end()
+			inline iterator_type end()
 			{
-				return iterator(this, capacity());
+				return iterator_type(this, null_row);
 			}
-
 		};
 
 		class actor_type
@@ -506,6 +363,8 @@ namespace countrybit
 		class actor_command_response
 		{
 			dynamic_box									data;
+			relative_ptr_type							create_objects_location;
+			relative_ptr_type							view_objects_location;
 
 		public:
 
@@ -513,14 +372,16 @@ namespace countrybit
 			relative_ptr_type							actor_id;
 			actor_create_collection						create_objects;
 			actor_view_collection						view_objects;
-			relative_ptr_type							create_objects_location;
-			relative_ptr_type							view_objects_location;
+
+			relative_ptr_type							modified_object_id;
 
 			actor_command_response()
 			{
 				data.init(100000);
 				create_objects = actor_create_collection::create_sorted_index(&data, create_objects_location);
 				view_objects = actor_view_collection::create_sorted_index(&data, view_objects_location);
+				modified_object_id = null_row;
+
 			}
 
 			actor_command_response(actor_command_response&& _src)
@@ -531,7 +392,7 @@ namespace countrybit
 				actor_id = _src.actor_id;
 				create_objects_location = _src.create_objects_location;
 				view_objects_location = _src.view_objects_location;
-
+				modified_object_id = _src.modified_object_id;
 				create_objects = actor_create_collection::get_sorted_index(&data, create_objects_location );
 				view_objects = actor_view_collection::get_sorted_index(&data, view_objects_location );
 			}
@@ -544,6 +405,7 @@ namespace countrybit
 				actor_id = _src.actor_id;
 				create_objects_location = _src.create_objects_location;
 				view_objects_location = _src.view_objects_location;
+				modified_object_id = _src.modified_object_id;
 
 				create_objects = std::move(_src.create_objects);
 				view_objects = std::move(_src.view_objects);
@@ -559,6 +421,7 @@ namespace countrybit
 
 			jslice create_object(jschema* _schema, relative_ptr_type _class_id);
 			jslice copy_object(jschema* _schema, jslice& _src);
+			actor_view_object get_modified_object();
 
 		};
 
@@ -576,6 +439,9 @@ namespace countrybit
 			object_collection		objects;
 
 		public:
+
+			using collection_type = jcollection;
+			using iterator_type = filterable_iterator<jslice, collection_type, value_assign_ref<jslice>>;
 
 			jcollection() : schema( nullptr ), ref( nullptr )
 			{
@@ -658,104 +524,21 @@ namespace countrybit
 
 			bool selector_applies(selector_collection* _selector, actor_id_type& _actor);
 
+			jslice get_at(relative_ptr_type _object_id);
+
 			relative_ptr_type size()
 			{
 				return objects.size();
 			}
 
-			class iterator
+			inline iterator_type begin()
 			{
-				jcollection* base;
-				relative_ptr_type current;
-
-			public:
-				using iterator_category = std::forward_iterator_tag;
-				using difference_type = std::ptrdiff_t;
-				using value_type = relative_ptr_type;
-				using pointer = relative_ptr_type*;  // or also value_type*
-				using reference = relative_ptr_type&;  // or also value_type&
-
-				iterator(jcollection* _base, relative_ptr_type _current) :
-					base(_base),
-					current(_current)
-				{
-
-				}
-
-				iterator() 
-					: base(nullptr), 
-					current(null_row)
-				{
-
-				}
-
-				iterator& operator = (const iterator& _src)
-				{
-					base = _src.base;
-					current = _src.current;
-					return *this;
-				}
-
-				inline jslice operator *()
-				{
-					return base->get_object(current);
-				}
-
-				inline jslice operator->()
-				{
-					return base->get_object(current);
-				}
-
-				collection_object_type& get_reference()
-				{
-					return base->get_object_reference(current);
-				}
-
-				iterator begin() const
-				{
-					return iterator(base, current);
-				}
-
-				iterator end() const
-				{
-					return iterator(base, base->size());
-				}
-
-				inline iterator operator++()
-				{
-					current++;
-					if (current > base->size())
-						current = base->size();
-					return iterator(base, current);
-				}
-
-				inline iterator operator++(int)
-				{
-					iterator tmp(*this);
-					operator++();
-					return tmp;
-				}
-
-				bool operator == (const iterator& _src) const
-				{
-					return _src.current == current;
-				}
-
-				bool operator != (const iterator& _src)
-				{
-					return _src.current != current;
-				}
-
-			};
-
-			inline iterator begin()
-			{
-				return iterator(this, 0);
+				return iterator_type(this, 0);
 			}
 
-			inline iterator end()
+			inline iterator_type end()
 			{
-				return iterator(this, this->size());
+				return iterator_type(this, null_row);
 			}
 
 		};

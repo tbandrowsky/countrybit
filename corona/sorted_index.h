@@ -508,7 +508,7 @@ namespace countrybit
 				return insert_or_assign(kvp);
 			}
 
-			inline sorted_index<KEY, VALUE, SORT_ORDER>::iterator put(KEY& key, VALUE& _default_value, std::function<void(VALUE& existing_value)> predicate)
+			inline sorted_index<KEY, VALUE, SORT_ORDER>::iterator put(const KEY& key, VALUE& _default_value, std::function<void(VALUE& existing_value)> predicate)
 			{
 				std::pair<KEY, VALUE> kvp(key, _default_value);
 				relative_ptr_type modified_node = this->update_node(kvp, predicate);

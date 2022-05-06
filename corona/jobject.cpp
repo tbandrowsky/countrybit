@@ -77,6 +77,11 @@ namespace countrybit
 			return dest;
 		}
 
+		actor_view_object actor_command_response::get_modified_object()
+		{
+			return view_objects[ modified_object_id ].get_value();
+		}
+
 		bool jcollection::selector_applies(selector_collection* _selector, actor_id_type& _actor)
 		{
 			auto& actor = actors[_actor];
@@ -180,15 +185,14 @@ namespace countrybit
 
 			for (auto iter = begin(); iter != end(); iter++)
 			{
-				auto ref = iter.get_reference();
 				actor_view_object avo;
 				avo.collection_id = collection_id;
-				avo.object_id = ref.oid.row_id;
+				avo.object_id = iter.get_index();
 				avo.selectable = false;
 				avo.selected = false;
 				avo.updateable = false;
-				avo.item = *iter;
-				acr.view_objects.put(ref.oid.row_id, avo, [](actor_view_object& _dest) { ;  });
+				avo.item = iter.get_value().item;
+				acr.view_objects.put(iter.get_index(), avo, [](actor_view_object& _dest) { ;  });
 			}
 
 			// now to our select options
@@ -317,6 +321,7 @@ namespace countrybit
 			if (objects.check(_select.object_id)) {
 				relative_ptr_type selection = _select.object_id;
 				ac.selections.push_back(selection);
+				acr.modified_object_id = _select.object_id;
 			}
 			acr = get_command_result(_select.actor_id);
 			return acr;
@@ -337,6 +342,7 @@ namespace countrybit
 			create_object(item_id, _create.actor_id, _create.class_id, object_id);
 			if (object_id != null_row) 
 			{
+				acr.modified_object_id = object_id;
 				auto slice = get_object(object_id);
 				update_object(object_id, slice);
 				if (_create.select_on_create) {
@@ -363,6 +369,7 @@ namespace countrybit
 
 			if (object_id != null_row && objects.check(object_id))
 			{
+				acr.modified_object_id = object_id;
 				auto slice = get_object(object_id);
 				update_object(object_id, slice);
 			}
@@ -420,6 +427,11 @@ namespace countrybit
 				jslice empty;
 				return empty;
 			}
+		}
+
+		jslice jcollection::get_at(relative_ptr_type _object_id)
+		{
+			return get_object(_object_id);
 		}
 
 		collection_object_type &jcollection::get_object_reference(relative_ptr_type _object_id)
@@ -625,7 +637,7 @@ namespace countrybit
 
 						for (auto jai : ja)
 						{
-							jai.construct();
+							jai.item.construct();
 						}
 					}
 					break;
@@ -725,6 +737,12 @@ namespace countrybit
 			return -1;
 		}
 
+		int jslice::get_field_index_by_name(const object_name& name)
+		{
+			relative_ptr_type field_id = schema->find_field(name);
+			return get_field_index_by_id(field_id);
+		}
+
 		jclass_field& jslice::get_class_field(int field_idx)
 		{
 			jclass_field& jcf = the_class.detail(field_idx);
@@ -745,101 +763,121 @@ namespace countrybit
 			return schema->get_empty();
 		}
 
-		int8_box jslice::get_int8(int field_idx)
+		int8_box jslice::get_int8(int field_idx, bool _use_id)
 		{
+			if (_use_id) field_idx = get_field_index_by_id(field_idx);
 			return get_boxed<int8_box>(field_idx, jtype::type_int8);
 		}
 
-		int16_box jslice::get_int16(int field_idx)
+		int16_box jslice::get_int16(int field_idx, bool _use_id)
 		{
+			if (_use_id) field_idx = get_field_index_by_id(field_idx);
 			return get_boxed<int16_box>(field_idx, jtype::type_int16);
 		}
 
-		int32_box jslice::get_int32(int field_idx)
+		int32_box jslice::get_int32(int field_idx, bool _use_id)
 		{
+			if (_use_id) field_idx = get_field_index_by_id(field_idx);
 			return jslice::get_boxed<int32_box>(field_idx, jtype::type_int32);
 		}
 
-		int64_box jslice::get_int64(int field_idx)
+		int64_box jslice::get_int64(int field_idx, bool _use_id)
 		{
+			if (_use_id) field_idx = get_field_index_by_id(field_idx);
 			return jslice::get_boxed<int64_box>(field_idx, jtype::type_int64);
 		}
 
-		float_box jslice::get_float(int field_idx)
+		float_box jslice::get_float(int field_idx, bool _use_id)
 		{
+			if (_use_id) field_idx = get_field_index_by_id(field_idx);
 			return jslice::get_boxed<float_box>(field_idx, jtype::type_float32);
 		}
 
-		double_box jslice::get_double(int field_idx)
+		double_box jslice::get_double(int field_idx, bool _use_id)
 		{
+			if (_use_id) field_idx = get_field_index_by_id(field_idx);
 			return jslice::get_boxed<double_box>(field_idx, jtype::type_float64);
 		}
 
-		time_box jslice::get_time(int field_idx)
+		time_box jslice::get_time(int field_idx, bool _use_id)
 		{
+			if (_use_id) field_idx = get_field_index_by_id(field_idx);
 			return get_boxed<time_box>(field_idx, jtype::type_datetime);
 		}
 
-		point_box jslice::get_point(int field_idx)
+		point_box jslice::get_point(int field_idx, bool _use_id)
 		{
+			if (_use_id) field_idx = get_field_index_by_id(field_idx);
 			return get_boxed<point_box>(field_idx, jtype::type_point);
 		}
 
-		rectangle_box jslice::get_rectangle(int field_idx)
+		rectangle_box jslice::get_rectangle(int field_idx, bool _use_id)
 		{
+			if (_use_id) field_idx = get_field_index_by_id(field_idx);
 			return get_boxed<rectangle_box>(field_idx, jtype::type_rectangle);
 		}
 
-		image_box jslice::get_image(int field_idx)
+		image_box jslice::get_image(int field_idx, bool _use_id)
 		{
+			if (_use_id) field_idx = get_field_index_by_id(field_idx);
 			return get_boxed<image_box>(field_idx, jtype::type_image);
 		}
 
-		wave_box jslice::get_wave(int field_idx)
+		wave_box jslice::get_wave(int field_idx, bool _use_id)
 		{
+			if (_use_id) field_idx = get_field_index_by_id(field_idx);
 			return get_boxed<wave_box>(field_idx, jtype::type_wave);
 		}
 
-		midi_box jslice::get_midi(int field_idx)
+		midi_box jslice::get_midi(int field_idx, bool _use_id)
 		{
+			if (_use_id) field_idx = get_field_index_by_id(field_idx);
 			return get_boxed<midi_box>(field_idx, jtype::type_midi);
 		}
 
-		color_box jslice::get_color(int field_idx)
+		color_box jslice::get_color(int field_idx, bool _use_id)
 		{
+			if (_use_id) field_idx = get_field_index_by_id(field_idx);
 			return get_boxed<color_box>(field_idx, jtype::type_color);
 		}
 
-		query_box jslice::get_query(int field_idx)
+		query_box jslice::get_query(int field_idx, bool _use_id)
 		{
+			if (_use_id) field_idx = get_field_index_by_id(field_idx);
 			return get_boxed_ex<query_box>(field_idx, jtype::type_query);
 		}
 
-		sql_remote_box jslice::get_sql_remote(int field_idx)
+		sql_remote_box jslice::get_sql_remote(int field_idx, bool _use_id)
 		{
+			if (_use_id) field_idx = get_field_index_by_id(field_idx);
 			return get_boxed_ex<sql_remote_box>(field_idx, jtype::type_sql);
 		}
 
-		http_remote_box jslice::get_http_remote(int field_idx)
+		http_remote_box jslice::get_http_remote(int field_idx, bool _use_id)
 		{
+			if (_use_id) field_idx = get_field_index_by_id(field_idx);
 			return get_boxed_ex<http_remote_box>(field_idx, jtype::type_http);
 		}
 
-		file_remote_box jslice::get_file_remote(int field_idx)
+		file_remote_box jslice::get_file_remote(int field_idx, bool _use_id)
 		{
+			if (_use_id) field_idx = get_field_index_by_id(field_idx);
 			return get_boxed_ex<file_remote_box>(field_idx, jtype::type_file);
 		}
 
-		string_box jslice::get_string(int field_idx)
+		string_box jslice::get_string(int field_idx, bool _use_id)
 		{
+			if (_use_id) field_idx = get_field_index_by_id(field_idx);
 			size_t offset = get_offset(field_idx, jtype::type_string);
 			char *b = get_bytes() + offset;
 			auto temp = string_box::get(b);
 			return temp;
 		}
 
-		jarray jslice::get_object(int field_idx)
+		jarray jslice::get_object(int field_idx, bool _use_id)
 		{
+			if (_use_id) field_idx = get_field_index_by_id(field_idx);
+
 #if _DEBUG
 			if (schema == nullptr || class_id == null_row) {
 				throw std::logic_error("slice is not initialized");
@@ -857,8 +895,10 @@ namespace countrybit
 			return jerry;
 		}
 
-		jlist jslice::get_list(int field_idx)
+		jlist jslice::get_list(int field_idx, bool _use_id)
 		{
+			if (_use_id) field_idx = get_field_index_by_id(field_idx);
+
 #if _DEBUG
 			if (schema == nullptr || class_id == null_row || bytes == nullptr) {
 				throw std::logic_error("slice is not initialized");
@@ -876,14 +916,146 @@ namespace countrybit
 			return jerry;
 		}
 
-		collection_id_box jslice::get_collection_id(int field_idx)
+		collection_id_box jslice::get_collection_id(int field_idx, bool _use_id)
 		{
+			if (_use_id) field_idx = get_field_index_by_id(field_idx);
+
 			return jslice::get_boxed<collection_id_box>(field_idx, jtype::type_collection_id);
 		}
 
-		object_id_box jslice::get_object_id(int field_idx)
+		object_id_box jslice::get_object_id(int field_idx, bool _use_id)
 		{
+			if (_use_id) field_idx = get_field_index_by_id(field_idx);
 			return jslice::get_boxed<object_id_box>(field_idx, jtype::type_object_id);
+		}
+
+		int8_box jslice::get_int8(object_name field_name)
+		{
+			relative_ptr_type index = get_field_index_by_name(field_name);
+			return get_int8(index);
+		}
+
+		int16_box jslice::get_int16(object_name field_name)
+		{
+			relative_ptr_type index = get_field_index_by_name(field_name);
+			return get_int16(index);
+		}
+
+		int32_box jslice::get_int32(object_name field_name)
+		{
+			relative_ptr_type index = get_field_index_by_name(field_name);;
+			return get_int32(index);
+		}
+
+		int64_box jslice::get_int64(object_name field_name)
+		{
+			relative_ptr_type index = get_field_index_by_name(field_name);;
+			return get_int64(index);
+		}
+
+		float_box jslice::get_float(object_name field_name)
+		{
+			relative_ptr_type index = get_field_index_by_name(field_name);;
+			return get_float(index);
+		}
+
+		double_box jslice::get_double(object_name field_name)
+		{
+			relative_ptr_type index = get_field_index_by_name(field_name);;
+			return get_double(index);
+		}
+
+		time_box jslice::get_time(object_name field_name)
+		{
+			relative_ptr_type index = get_field_index_by_name(field_name);;
+			return get_time(index);
+		}
+
+		string_box jslice::get_string(object_name field_name)
+		{
+			relative_ptr_type index = get_field_index_by_name(field_name);;
+			return get_string(index);
+		}
+
+		jarray jslice::get_object(object_name field_name)
+		{
+			relative_ptr_type index = get_field_index_by_name(field_name);
+			return get_object(index);
+		}
+
+		jlist jslice::get_list(object_name field_name)
+		{
+			relative_ptr_type index = get_field_index_by_name(field_name);
+			return get_list(index);
+		}
+
+		collection_id_box jslice::get_collection_id(object_name field_name)
+		{
+			relative_ptr_type index = get_field_index_by_name(field_name);
+			return get_collection_id(index);
+		}
+
+		object_id_box jslice::get_object_id(object_name field_name)
+		{
+			relative_ptr_type index = get_field_index_by_name(field_name);
+			return get_object_id(index);
+		}
+
+		point_box jslice::get_point(object_name field_name)
+		{
+			relative_ptr_type index = get_field_index_by_name(field_name);
+			return get_point(index);
+		}
+
+		rectangle_box jslice::get_rectangle(object_name field_name)
+		{
+			relative_ptr_type index = get_field_index_by_name(field_name);
+			return get_rectangle(index);
+		}
+
+		image_box jslice::get_image(object_name field_name)
+		{
+			relative_ptr_type index = get_field_index_by_name(field_name);
+			return get_image(index);
+		}
+
+		wave_box jslice::get_wave(object_name field_name) {
+			relative_ptr_type index = get_field_index_by_name(field_name);
+			return get_wave(index);
+		}
+
+		midi_box jslice::get_midi(object_name field_name) {
+			relative_ptr_type index = get_field_index_by_name(field_name);
+			return get_midi(index);
+		}
+
+		color_box jslice::get_color(object_name field_name) {
+			relative_ptr_type index = get_field_index_by_name(field_name);
+			return get_color(index);
+		}
+
+		query_box jslice::get_query(object_name field_name)
+		{
+			relative_ptr_type index = get_field_index_by_name(field_name);
+			return get_query(index);
+		}
+
+		sql_remote_box jslice::get_sql_remote(object_name field_name)
+		{
+			relative_ptr_type index = get_field_index_by_name(field_name);
+			return get_sql_remote(index);
+		}
+
+		http_remote_box jslice::get_http_remote(object_name field_name)
+		{
+			relative_ptr_type index = get_field_index_by_name(field_name);
+			return get_http_remote(index);
+		}
+
+		file_remote_box jslice::get_file_remote(object_name field_name)
+		{
+			relative_ptr_type index = get_field_index_by_name(field_name);
+			return get_file_remote(index);
 		}
 
 		int jslice::size()
@@ -981,7 +1153,7 @@ namespace countrybit
 			if (_init) {
 				for (auto jai : *this)
 				{
-					jai.construct();
+					jai.item.construct();
 				}
 			}
 		}
@@ -1020,7 +1192,7 @@ namespace countrybit
 			if ((pos.x >= dim.x) ||
 				(pos.y >= dim.y) ||
 				(pos.z >= dim.z)) {
-					return jslice(item, schema, field.object_properties.class_id, nullptr, dim);
+					throw std::invalid_argument("dimension out of range on jarray");
 			}
 			char* b = &bytes[ ((pos.z * dim.y * dim.x) + (pos.y * dim.x) + pos.x ) * field.object_properties.class_size_bytes ];
 			jslice slice(item, schema, field.object_properties.class_id, b, pos);
@@ -1031,6 +1203,31 @@ namespace countrybit
 		{
 			jfield& field = schema->get_field(class_field_id);
 			return field.size_bytes;
+		}
+
+		jslice jarray::get_at(relative_ptr_type _index)
+		{
+			if (_index < 0) throw std::invalid_argument("index out of range on jarray");
+			jfield& field = schema->get_field(class_field_id);
+			dimensions_type index_dim;
+			relative_ptr_type index_calc = _index;
+			auto array_bounds = dimensions();
+			index_dim.x = index_calc % array_bounds.x;
+			index_calc /= array_bounds.x;
+			index_dim.y = index_calc % array_bounds.y;
+			index_calc /= array_bounds.y;
+			index_dim.z = index_calc % array_bounds.z;
+			char* b = &bytes[_index * field.object_properties.class_size_bytes];
+			jslice slice(item, schema, field.object_properties.class_id, b, index_dim);
+			return slice;
+		}
+
+		corona_size_t jarray::size()
+		{
+			corona_size_t the_size;
+			auto array_bounds = dimensions();
+			the_size = array_bounds.x * array_bounds.y * array_bounds.z;
+			return the_size;
 		}
 
 		jarray_container::jarray_container()
@@ -1075,7 +1272,6 @@ namespace countrybit
 			{
 				data.instance = model_box.allocate<jlist_instance>(1);
 				array_box<relative_ptr_type>::create(&model_box, field_def.object_properties.dim.x, data.instance->selection_offset);
-				array_box<relative_ptr_type>::create(&model_box, field_def.object_properties.dim.x, data.instance->sort_offset);
 				data.instance->slice_offset = model_box.reserve(0);
 				data.instance->allocated = 0;
 			}
@@ -1086,7 +1282,6 @@ namespace countrybit
 
 			data.list_bytes = model_box.unpack<char>(data.instance->slice_offset);
 			data.selections = array_box<relative_ptr_type>::get(&model_box, data.instance->selection_offset);
-			data.sort_order = array_box<relative_ptr_type>::get(&model_box, data.instance->sort_offset);
 		}
 
 		jlist::jlist(serialized_box_container& _dest, jlist& _src)
@@ -1101,37 +1296,22 @@ namespace countrybit
 			data.instance = model_box.unpack<jlist_instance>(0);
 			data.list_bytes = model_box.unpack<char>(data.instance->slice_offset);
 			data.selections = array_box<relative_ptr_type>::get(&model_box, data.instance->selection_offset);
-			data.sort_order = array_box<relative_ptr_type>::get(&model_box, data.instance->sort_offset);
 			item = _src.item;
 		}
 
-		uint32_t jlist::capacity()
+		corona_size_t jlist::capacity()
 		{
 			jfield& field = schema->get_field(class_field_id);
 			dimensions_type& dim = field.object_properties.dim;
 			return dim.x;
 		}
 
-		uint32_t jlist::size()
+		corona_size_t jlist::size()
 		{
 			return data.instance->allocated;
 		}
 
-		jslice jlist::get_slice(int idx)
-		{
-			idx = data.sort_order[idx];
-			jfield& field = schema->get_field(class_field_id);
-			dimensions_type dim = field.object_properties.dim;
-			if ((idx >= data.instance->allocated) || (idx < 0)) {
-				return jslice(item, schema, field.object_properties.class_id, nullptr, dim);
-			}
-			dimensions_type pos = { idx, 0, 0 };
-			char* b = &data.list_bytes[idx * field.object_properties.class_size_bytes];
-			jslice slice(item, schema, field.object_properties.class_id, b, pos);
-			return slice;
-		}
-
-		jslice jlist::get_slice_direct(int idx)
+		jslice jlist::get_at(corona_size_t idx)
 		{
 			jfield& field = schema->get_field(class_field_id);
 			dimensions_type dim = field.object_properties.dim;
@@ -1144,10 +1324,9 @@ namespace countrybit
 			return slice;
 		}
 
-		bool jlist::erase_slice(int idx)
+		bool jlist::erase(corona_size_t idx)
 		{
 			int oidx = idx;
-			idx = data.sort_order[idx];
 			jfield& field = schema->get_field(class_field_id);
 			dimensions_type dim = field.object_properties.dim;
 			if ((idx >= dim.x) || (idx < 0)) 
@@ -1165,15 +1344,6 @@ namespace countrybit
 			}
 			else 
 			{
-				for (int i = oidx; i < data.instance->allocated-1; i++)
-				{
-					data.sort_order[i] = data.sort_order[i + 1];
-				}
-				for (int i = 0; i < data.instance->allocated; i++) {
-					if (data.sort_order[i] > idx) {
-						data.sort_order[i]--;
-					}
-				}
 				auto class_size = field.object_properties.class_size_bytes;
 				char* b1 = &data.list_bytes[idx * class_size];
 				char* b2 = &data.list_bytes[(idx + 1) * class_size];
@@ -1199,29 +1369,26 @@ namespace countrybit
 		{
 			if (data.instance->allocated < capacity()) {
 				auto index = data.instance->allocated;
-				data.sort_order.push_back(index);
 				data.instance->allocated++;
-				jslice new_slice = get_slice(index);
+				jslice new_slice = get_at(index);
 				new_slice.construct();
 				return new_slice;
 			}
-			return get_slice(-1);
+			return get_at(-1);
 		}
 
-		bool jlist::select_slice(int idx)
+		bool jlist::select_slice(corona_size_t idx)
 		{
 			if (idx < 0 || idx >= data.instance->allocated)
 				return false;
-			idx = data.sort_order[idx];
 			data.selections[idx] = 1;
 			return true;
 		}
 
-		bool jlist::deselect_slice(int idx)
+		bool jlist::deselect_slice(corona_size_t idx)
 		{
 			if (idx < 0 || idx >= data.instance->allocated)
 				return false;
-			idx = data.sort_order[idx];
 			data.selections[idx] = 0;
 			return true;
 		}
@@ -1601,19 +1768,19 @@ namespace countrybit
 
 				for (auto sl : people)
 				{
-					last_name = sl.get_string(0);
+					last_name = sl.item.get_string(0);
 					if (!last_name.starts_with("last")) {
 						std::cout << __LINE__ << ":last name failed" << std::endl;
 						return false;
 					}
-					first_name = sl.get_string(1);
+					first_name = sl.item.get_string(1);
 					if (!first_name.starts_with("first")) {
 						std::cout << __LINE__ << ":first name failed" << std::endl;
 						return false;
 					}
-					birthday = sl.get_time(2);
-					count = sl.get_int64(3);
-					qty = sl.get_double(4);
+					birthday = sl.item.get_time(2);
+					count = sl.item.get_int64(3);
+					qty = sl.item.get_double(4);
 
 					if (birthday != birthdaystart + increment * inc_count) {
 						std::cout << __LINE__ << ":birthday failed" << std::endl;
@@ -1728,9 +1895,9 @@ namespace countrybit
 
 					for (auto frame : frame_array)
 					{
-						auto dim = frame.get_dim();
-						auto frame_name = frame.get_string(0);
-						auto frame_rect = frame.get_rectangle(1);
+						auto dim = frame.item.get_dim();
+						auto frame_name = frame.item.get_string(0);
+						auto frame_rect = frame.item.get_rectangle(1);
 						frame_name = std::format("{} #{}", "frame", dim.x);
 						frame_rect->x = dim.x * 100.0;
 						frame_rect->y = dim.y * 100.0;
@@ -1749,8 +1916,8 @@ namespace countrybit
 
 				for (auto slice : sprites)
 				{
-					auto image_name = slice.get_string(0);
-					auto image_rect = slice.get_rectangle(1);
+					auto image_name = slice.item.get_string(0);
+					auto image_rect = slice.item.get_rectangle(1);
 
 #if _DETAIL
 					std::cout << image_name << std::endl;
@@ -1763,19 +1930,19 @@ namespace countrybit
 						return false;
 					}
 
-					auto frames = slice.get_object(2);
+					auto frames = slice.item.get_object(2);
 
 					int fcount = 0;
 					for (auto frame : frames)
 					{
-						auto image_rect = slice.get_rectangle(1);
+						auto image_rect = slice.item.get_rectangle(1);
 						if (image_rect->w != 1000 || image_rect->h != 1000)
 						{
 							std::cout << __LINE__ << ":array failed" << std::endl;
 							return false;
 						}
 
-						auto frame_rect = frame.get_rectangle(1);
+						auto frame_rect = frame.item.get_rectangle(1);
 
 #if _DETAIL
 						std::cout << frame_rect->w << " " << frame_rect->h << " " << frame_rect->x << " " << frame_rect->y << std::endl;
@@ -1787,7 +1954,7 @@ namespace countrybit
 							return false;
 						}
 
-						auto dim = frame.get_dim();
+						auto dim = frame.item.get_dim();
 						if (frame_rect->x != dim.x * 100.0) {
 							std::cout << __LINE__ << ":array failed" << std::endl;
 							return false;
@@ -1862,12 +2029,12 @@ namespace countrybit
 				sfr.name.name = "coverage_name";
 				sfr.name.description = "name of a coverage";
 				sfr.options.length = 200;
-				relative_ptr_type coverage_field_id = schema.put_string_field(sfr);
+				relative_ptr_type coverage_name_id = schema.put_string_field(sfr);
 
 				sfr.name.name = "carrier_name";
 				sfr.name.description = "name of a carrier";
 				sfr.options.length = 200;
-				relative_ptr_type carrier_field_id = schema.put_string_field(sfr);
+				relative_ptr_type carrier_name_id = schema.put_string_field(sfr);
 
 				countrybit::database::put_class_request pcr;
 
@@ -2074,12 +2241,51 @@ namespace countrybit
 				// first we shall see if we can create a carrier
 				auto& create_carrier_option = result.create_objects
 					.where([carrier_class_id](std::pair<relative_ptr_type, actor_create_object>& acokp) { return acokp.second.class_id == carrier_class_id; })
-					.get_value();
+					.get_value();				
 
 				// then we shall see if we can create a coverage
 				auto& create_coverage_option = result.create_objects
 					.where([coverage_class_id](std::pair<relative_ptr_type, actor_create_object>& acokp) { return acokp.second.class_id == coverage_class_id; })
 					.get_value();
+
+				// now, we will create a carrier
+				auto name = create_carrier_option.item.get_string(carrier_name_id, true);
+				name = "Test Carrier";
+				auto result2 = program_chart.create_object(create_carrier_option);
+
+				program_chart.print(result2);
+
+				// and we should have a created carrier
+				auto new_carrier = result2.get_modified_object();
+				auto new_carrier_name = new_carrier.item.get_string(carrier_name_id, true);
+
+				if (new_carrier_name.value() != "Test Carrier")
+				{
+					std::cout << "new carrier does not have right text" << std::endl;
+				}
+
+
+
+				// and now we should also be able to create a coverage
+				create_coverage_option = result.create_objects
+					.where([coverage_class_id](std::pair<relative_ptr_type, actor_create_object>& acokp) { return acokp.second.class_id == coverage_class_id; })
+					.get_value();
+
+				auto coverage_name = create_coverage_option.item.get_string(coverage_name_id, true);
+				coverage_name = "Test Coverage";
+
+				auto result3 = program_chart.create_object(create_coverage_option);
+
+				program_chart.print(result3);
+
+				// and we should have a created coverage
+				auto new_coverage = result2.get_modified_object();
+				auto new_coverage_name = new_carrier.item.get_string(coverage_name_id, true);
+
+				if (new_coverage_name.value() != "Test Coverage")
+				{
+					std::cout << "new coverage does not have right text" << std::endl;
+				}
 
 				return true;
 			}

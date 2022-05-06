@@ -6,9 +6,28 @@ namespace countrybit
 {
 	namespace database
 	{
+
+		template <typename item_type>
+		class value_reference_ref 
+		{
+		public:
+			item_type&		  item;
+			relative_ptr_type location;
+		};
+
+		template <typename item_type>
+		class value_assign_ref
+		{
+		public:
+			item_type item;
+			relative_ptr_type location;
+		};
+
 		template 
 			<typename item_type, 
-			typename collection_type> class filterable_iterator
+			typename collection_type, 
+			typename value_ref= value_reference_ref<item_type>>
+		class filterable_iterator
 		{
 			collection_type* base;
 			relative_ptr_type current;
@@ -28,12 +47,6 @@ namespace countrybit
 			}
 
 		public:
-
-			struct value_ref
-			{
-				item_type& item;
-				relative_ptr_type location;
-			};
 
 			using iterator_category = std::forward_iterator_tag;
 			using difference_type = std::ptrdiff_t;
