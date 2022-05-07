@@ -79,6 +79,9 @@ namespace countrybit
 
 		actor_view_object actor_command_response::get_modified_object()
 		{
+			if (modified_object_id == null_row) {
+				throw std::logic_error("No modified object");
+			}
 			return view_objects[ modified_object_id ].get_value();
 		}
 
@@ -132,7 +135,8 @@ namespace countrybit
 
 			for (auto vo : acr.view_objects)
 			{
-				std::cout << "existing object " << vo.second.object_id << " (" << vo.second.item.get_class().item().name << ") " << std::endl;
+				auto slice = get_at(vo.second.object_id);
+				std::cout << "existing object " << vo.second.object_id << " (" << slice.get_class().item().name << ") " << std::endl;
 			}
 		}
 
@@ -174,7 +178,6 @@ namespace countrybit
 					aco.collection_id = collection_id;
 					aco.actor_id = _actor;
 					aco.class_id = oi.item.create_class_id;
-					aco.item = acr.create_object(schema, aco.class_id);
 					aco.select_on_create = oi.item.select_on_create;
 					relative_ptr_type create_id = acr.create_objects.size();
 					acr.create_objects.insert_or_assign(create_id, aco);
@@ -190,8 +193,7 @@ namespace countrybit
 				avo.object_id = iter.get_index();
 				avo.selectable = false;
 				avo.selected = false;
-				avo.updateable = false;
-				avo.item = iter.get_value().item;
+				avo.updatable = false;
 				acr.view_objects.put(iter.get_index(), avo, [](actor_view_object& _dest) { ;  });
 			}
 
@@ -215,7 +217,7 @@ namespace countrybit
 							avo.object_id = oid;
 							avo.selectable = false;
 							avo.selected = false;
-							avo.updateable = false;
+							avo.updatable = false;
 							acr.view_objects.put(oid, avo, [](actor_view_object& _dest) { _dest.selectable = true;  });
 						}
 					}
@@ -242,8 +244,8 @@ namespace countrybit
 							avo.object_id = oid;
 							avo.selectable = false;
 							avo.selected = false;
-							avo.updateable = false;
-							acr.view_objects.put(oid, avo, [](actor_view_object& _dest) { _dest.updateable = true;  });
+							avo.updatable = false;
+							acr.view_objects.put(oid, avo, [](actor_view_object& _dest) { _dest.updatable = true;  });
 						}
 					}
 				}
@@ -342,9 +344,6 @@ namespace countrybit
 			create_object(item_id, _create.actor_id, _create.class_id, object_id);
 			if (object_id != null_row) 
 			{
-				acr.modified_object_id = object_id;
-				auto slice = get_object(object_id);
-				update_object(object_id, slice);
 				if (_create.select_on_create) {
 					ac.selections.clear();
 					ac.selections.push_back(object_id);
@@ -353,6 +352,7 @@ namespace countrybit
 			}
 
 			acr = get_command_result(_create.actor_id);
+			acr.modified_object_id = object_id;
 			return acr;
 		}
 
@@ -456,19 +456,83 @@ namespace countrybit
 			}
 		}
 
-		jslice::jslice() : schema(nullptr), class_id(null_row), bytes(nullptr)
+		jslice::jslice() : schema(nullptr), class_id(null_row), bytes(nullptr), box(nullptr)
 		{
 			;
 		}
 
-		jslice::jslice(jslice *_parent, jschema* _schema, relative_ptr_type _class_id, char* _bytes, dimensions_type _dim) : parent(_parent), schema(_schema), class_id(_class_id), bytes(_bytes), dim(_dim), box(nullptr), location(null_row)
+		jslice::jslice(jslice *_parent, jschema* _schema, relative_ptr_type _class_id, char* _bytes, dimensions_type _dim) 
+			: parent(_parent), 
+			schema(_schema), 
+			class_id(_class_id), 
+			bytes(_bytes), 
+			dim(_dim), 
+			box(nullptr), 
+			location(null_row)
 		{
 			the_class = schema->get_class(_class_id);
 		}
 
-		jslice::jslice(jslice* _parent, jschema* _schema, relative_ptr_type _class_id, serialized_box_container *_box, relative_ptr_type _location, dimensions_type _dim) : parent(_parent), schema(_schema), class_id(_class_id), bytes(nullptr), dim(_dim), box(_box), location(_location)
+		jslice::jslice(jslice* _parent, jschema* _schema, relative_ptr_type _class_id, serialized_box_container *_box, relative_ptr_type _location, dimensions_type _dim) : 
+			parent(_parent), 
+			schema(_schema), 
+			class_id(_class_id), 
+			bytes(nullptr), 
+			dim(_dim), 
+			box(_box), 
+			location(_location)
 		{
-			the_class = schema->get_class(_class_id);
+			the_class = schema->get_class(class_id);
+		}
+
+		jslice::jslice(const jslice& _src) :
+			parent(_src.parent),
+			schema(_src.schema),
+			class_id(_src.class_id),
+			bytes(_src.bytes),
+			dim(_src.dim),
+			box(_src.box),
+			location(_src.location)
+		{
+			the_class = schema->get_class(class_id);
+		}
+
+		jslice jslice::operator =(const jslice& _src)
+		{
+			parent = _src.parent;
+			schema = _src.schema;
+			class_id = _src.class_id;
+			bytes = _src.bytes;
+			dim = _src.dim;
+			box = _src.box;
+			location = _src.location;
+			the_class = schema->get_class(class_id);
+			return *this;
+		}
+
+		jslice::jslice(jslice&& _src) : 
+			parent(_src.parent),
+			schema(_src.schema),
+			class_id(_src.class_id),
+			bytes(_src.bytes),
+			dim(_src.dim),
+			box(_src.box),
+			location(_src.location)
+		{
+			the_class = schema->get_class(class_id);
+		}
+
+		jslice& jslice::operator =(jslice&& _src)
+		{
+			parent = _src.parent;
+			schema = _src.schema;
+			class_id = _src.class_id;
+			bytes = _src.bytes;
+			dim = _src.dim;
+			box = _src.box;
+			location = _src.location;
+			the_class = schema->get_class(class_id);
+			return *this;
 		}
 
 		jslice& jslice::get_parent_slice()
@@ -484,7 +548,7 @@ namespace countrybit
 		size_t jslice::get_offset(int field_idx, jtype _type)
 		{
 #if _DEBUG
-			if (schema == nullptr || class_id == null_row || bytes == nullptr) {
+			if (schema == nullptr || class_id == null_row || get_bytes() == nullptr) {
 				throw std::logic_error("slice is not initialized");
 			}
 #endif
@@ -2249,30 +2313,24 @@ namespace countrybit
 					.get_value();
 
 				// now, we will create a carrier
-				auto name = create_carrier_option.item.get_string(carrier_name_id, true);
-				name = "Test Carrier";
 				auto result2 = program_chart.create_object(create_carrier_option);
 
 				program_chart.print(result2);
 
 				// and we should have a created carrier
 				auto new_carrier = result2.get_modified_object();
-				auto new_carrier_name = new_carrier.item.get_string(carrier_name_id, true);
+				auto new_carrier_name = program_chart.get_at(new_carrier.object_id).get_string(carrier_name_id, true);
+				new_carrier_name = "Test Carrier";
 
 				if (new_carrier_name.value() != "Test Carrier")
 				{
 					std::cout << "new carrier does not have right text" << std::endl;
 				}
 
-
-
 				// and now we should also be able to create a coverage
 				create_coverage_option = result.create_objects
 					.where([coverage_class_id](std::pair<relative_ptr_type, actor_create_object>& acokp) { return acokp.second.class_id == coverage_class_id; })
 					.get_value();
-
-				auto coverage_name = create_coverage_option.item.get_string(coverage_name_id, true);
-				coverage_name = "Test Coverage";
 
 				auto result3 = program_chart.create_object(create_coverage_option);
 
@@ -2280,7 +2338,8 @@ namespace countrybit
 
 				// and we should have a created coverage
 				auto new_coverage = result2.get_modified_object();
-				auto new_coverage_name = new_carrier.item.get_string(coverage_name_id, true);
+				auto new_coverage_name = program_chart.get_at(new_coverage.object_id).get_string(coverage_name_id, true);
+				new_coverage_name = "Test Coverage";
 
 				if (new_coverage_name.value() != "Test Coverage")
 				{

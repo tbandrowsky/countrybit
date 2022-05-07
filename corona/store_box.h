@@ -529,6 +529,7 @@ namespace countrybit
 		{
 			char *stuff;
 			corona_size_t stuff_size;
+			bool own_the_data;
 
 			void resize(corona_size_t new_size)
 			{
@@ -541,22 +542,25 @@ namespace countrybit
 				}
 				if (stuff) {
 					memcpy(temp, stuff, stuff_size);
-					delete[] stuff;
+					if (own_the_data) {
+						delete[] stuff;
+					}
 				}
 				stuff = temp;
 				stuff_size = new_size;
+				own_the_data = true;
 			}
 
 		public:
 
 			dynamic_box() : stuff(nullptr), stuff_size(0)
 			{
-				
+				own_the_data = true;
 			}
 
 			~dynamic_box()
 			{
-				if (stuff) 
+				if (own_the_data && stuff) 
 				{
 					delete[] stuff;
 					stuff = nullptr;
@@ -565,10 +569,9 @@ namespace countrybit
 
 			dynamic_box& operator = (const dynamic_box& _src)
 			{
-				if (_src.stuff) {
-					resize(_src.stuff_size);
-					std::copy(_src.stuff, _src.stuff + stuff_size, stuff);
-				}
+				stuff = _src.stuff;
+				stuff_size = _src.stuff_size;
+				own_the_data = false;
 				return *this;
 			}
 
@@ -576,25 +579,28 @@ namespace countrybit
 			{
 				stuff = _src.stuff;
 				stuff_size = _src.stuff_size;
+				own_the_data = true;
 				_src.stuff = nullptr;
 				_src.stuff_size = 0;
+				_src.own_the_data = false;
 				return *this;
 			}
 
 			dynamic_box(const dynamic_box& _src)
 			{
-				if (_src.stuff) {
-					resize(_src.stuff_size);
-					std::copy(_src.stuff, _src.stuff + stuff_size, stuff);
-				}
+				stuff = _src.stuff;
+				stuff_size = _src.stuff_size;
+				own_the_data = false;
 			}
 
 			dynamic_box(dynamic_box&& _src)
 			{
 				stuff = _src.stuff;
 				stuff_size = _src.stuff_size;
+				own_the_data = true;
 				_src.stuff = nullptr;
 				_src.stuff_size = 0;
+				_src.own_the_data = false;
 			}
 
 			virtual serialized_box* get_box() 

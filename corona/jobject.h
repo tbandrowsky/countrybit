@@ -120,6 +120,12 @@ namespace countrybit
 			jslice(jslice* _parent, jschema* _schema, relative_ptr_type _class_id, char* _bytes, dimensions_type _dim);
 			jslice(jslice* _parent, jschema* _schema, relative_ptr_type _class_id, serialized_box_container *_box, relative_ptr_type _location, dimensions_type _dim);
 
+			jslice(const jslice& src);
+			jslice operator =(const jslice& src);
+
+			jslice(jslice&& src);
+			jslice& operator =(jslice&& src);
+
 			void construct();
 
 			jslice& get_parent_slice();
@@ -194,7 +200,7 @@ namespace countrybit
 
 			int size();
 			char* get_bytes() { return box ? box->unpack<char>(location) : bytes;  };
-			relative_ptr_type size_bytes() { return get_class().item().class_size_bytes; }
+			relative_ptr_type size_bytes() { return get_class().item().class_size_bytes; };
 		};
 
 		class jarray
@@ -308,13 +314,13 @@ namespace countrybit
 		class collection_object_type
 		{
 		public:
-			object_id_type	oid;
-			jtype			otype;
+			object_id_type			oid;
+			jtype					otype;
 			relative_ptr_type		class_id;
 			relative_ptr_type		class_field_id;
-			actor_id_type	actor_id;
+			actor_id_type			actor_id;
 			relative_ptr_type		item_id;
-			bool			deleted;
+			bool					deleted;
 		};
 
 		class actor_create_object
@@ -322,10 +328,20 @@ namespace countrybit
 		public:
 			collection_id_type	collection_id;
 			actor_id_type		actor_id;
-			relative_ptr_type			class_id;
-			relative_ptr_type			item_id;
+			relative_ptr_type	class_id;
+			relative_ptr_type	item_id;
 			bool				select_on_create;
-			jslice				item;
+		};
+
+		class actor_view_object
+		{
+		public:
+			collection_id_type	collection_id;
+			actor_id_type		actor_id;
+			relative_ptr_type	object_id;
+			bool				selectable;
+			bool				updatable;
+			bool				selected;
 		};
 
 		class actor_select_object
@@ -333,7 +349,7 @@ namespace countrybit
 		public:
 			collection_id_type	collection_id;
 			actor_id_type		actor_id;
-			relative_ptr_type			object_id;
+			relative_ptr_type	object_id;
 			bool				extend;
 		};
 
@@ -342,29 +358,19 @@ namespace countrybit
 		public:
 			collection_id_type	collection_id;
 			actor_id_type		actor_id;
-			relative_ptr_type			object_id;
+			relative_ptr_type	object_id;
 			jslice				item;
 		};
 
-		class actor_view_object
-		{
-		public:
-			collection_id_type	collection_id;
-			relative_ptr_type			object_id;
-			bool				selectable;
-			bool				selected;
-			bool				updateable;
-			jslice				item;
-		};
-
-		using actor_create_collection = sorted_index<relative_ptr_type, actor_create_object>;
 		using actor_view_collection = sorted_index<relative_ptr_type, actor_view_object>;
+		using actor_create_collection = sorted_index<relative_ptr_type, actor_create_object>;
 
 		class actor_command_response
 		{
 			dynamic_box									data;
 			relative_ptr_type							create_objects_location;
 			relative_ptr_type							view_objects_location;
+			jschema* schema;
 
 		public:
 
@@ -381,13 +387,11 @@ namespace countrybit
 				create_objects = actor_create_collection::create_sorted_index(&data, create_objects_location);
 				view_objects = actor_view_collection::create_sorted_index(&data, view_objects_location);
 				modified_object_id = null_row;
-
 			}
 
 			actor_command_response(actor_command_response&& _src)
 			{
-				data= std::move(_src.data);
-
+				data = std::move(_src.data);
 				collection_id = _src.collection_id;
 				actor_id = _src.actor_id;
 				create_objects_location = _src.create_objects_location;
@@ -400,24 +404,41 @@ namespace countrybit
 			actor_command_response& operator=(actor_command_response&& _src)
 			{
 				data = std::move(_src.data);
-
 				collection_id = _src.collection_id;
 				actor_id = _src.actor_id;
 				create_objects_location = _src.create_objects_location;
 				view_objects_location = _src.view_objects_location;
 				modified_object_id = _src.modified_object_id;
-
-				create_objects = std::move(_src.create_objects);
-				view_objects = std::move(_src.view_objects);
-
 				create_objects = actor_create_collection::get_sorted_index(&data, create_objects_location);
 				view_objects = actor_view_collection::get_sorted_index(&data, view_objects_location);
 
 				return *this;
 			}
 
-			actor_command_response operator=(const actor_command_response& _src) = delete;
-			actor_command_response(const actor_command_response& _src) = delete;
+			actor_command_response operator=(const actor_command_response& _src)
+			{
+				data = _src.data;
+				collection_id = _src.collection_id;
+				actor_id = _src.actor_id;
+				create_objects_location = _src.create_objects_location;
+				view_objects_location = _src.view_objects_location;
+				modified_object_id = _src.modified_object_id;
+				create_objects = actor_create_collection::get_sorted_index(&data, create_objects_location);
+				view_objects = actor_view_collection::get_sorted_index(&data, view_objects_location);
+				return *this;
+			}
+
+			actor_command_response(const actor_command_response& _src) 
+			{
+				data = _src.data;
+				collection_id = _src.collection_id;
+				actor_id = _src.actor_id;
+				create_objects_location = _src.create_objects_location;
+				view_objects_location = _src.view_objects_location;
+				modified_object_id = _src.modified_object_id;
+				create_objects = actor_create_collection::get_sorted_index(&data, create_objects_location);
+				view_objects = actor_view_collection::get_sorted_index(&data, view_objects_location);
+			}
 
 			jslice create_object(jschema* _schema, relative_ptr_type _class_id);
 			jslice copy_object(jschema* _schema, jslice& _src);
