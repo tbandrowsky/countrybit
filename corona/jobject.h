@@ -562,6 +562,59 @@ namespace countrybit
 				return iterator_type(this, null_row);
 			}
 
+			iterator_type begin()
+			{
+				return iterator_type(this, first_row);
+			}
+
+			iterator_type end()
+			{
+				return iterator_type(this, null_row);
+			}
+
+			auto where(std::function<bool(const jslice&)> _predicate)
+			{
+				return iterator_type(this, _predicate);
+			}
+
+			jslice first_value(std::function<bool(const jslice&)> predicate)
+			{
+				auto w = this->where(predicate);
+				if (w == end()) {
+					throw std::logic_error("sequence has no elements");
+				}
+				return w.get_value().item;
+			}
+
+			relative_ptr_type first_index(std::function<bool(const jslice&)> predicate)
+			{
+				auto w = this->where(predicate);
+				if (w == end()) {
+					return null_row;
+				}
+				return w.get_value().location;
+			}
+
+			bool any_of(std::function<bool(const jslice&)> predicate)
+			{
+				return std::any_of(begin(), end(), predicate);
+			}
+
+			bool all_of(std::function<bool(const jslice&)> predicate)
+			{
+				return std::all_of(begin(), end(), predicate);
+			}
+
+			int count_if(std::function<bool(const jslice&)> predicate)
+			{
+				return std::count_if(begin(), end(), predicate);
+			}
+
+			void sort(std::function<bool(const jslice& a, const jslice& b)> fn)
+			{
+				std::sort(begin(), end(), fn);
+			}
+
 		};
 
 		class jschema

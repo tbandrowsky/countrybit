@@ -2347,6 +2347,9 @@ namespace countrybit
 					std::cout << "new coverage does not have right text" << std::endl;
 				}
 
+				// and now that we have a coverage and a carrier, we should be able to select them both to create a program chart item
+
+
 				return true;
 			}
 			catch (std::exception& exc)
