@@ -410,6 +410,7 @@ namespace countrybit
 
 			auto new_object = objects.create_item( &co, bytes_to_allocate, nullptr);
 			co.oid.row_id = new_object.row_id();
+			object_id = new_object.row_id();
 			char* bytes = new_object.pdetails();
 			jarray ja(nullptr, schema, find_field_id, bytes, true);
 			return ja.get_slice(0);
@@ -2337,7 +2338,7 @@ namespace countrybit
 				program_chart.print(result3);
 
 				// and we should have a created coverage
-				auto new_coverage = result2.get_modified_object();
+				auto new_coverage = result3.get_modified_object();
 				auto new_coverage_name = program_chart.get_at(new_coverage.object_id).get_string(coverage_name_id, true);
 				new_coverage_name = "Test Coverage";
 
