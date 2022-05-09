@@ -8,7 +8,7 @@ namespace countrybit
 	{
 
 		template <typename item_type>
-		class value_reference_ref 
+		class value_reference 
 		{
 		public:
 			item_type&		  item;
@@ -16,7 +16,7 @@ namespace countrybit
 		};
 
 		template <typename item_type>
-		class value_assign_ref
+		class value_object
 		{
 		public:
 			item_type item;
@@ -26,17 +26,17 @@ namespace countrybit
 		template 
 			<typename item_type, 
 			typename collection_type, 
-			typename value_ref= value_reference_ref<item_type>>
+			typename value_ref= value_reference<item_type>>
 		class filterable_iterator
 		{
 			collection_type* base;
 			relative_ptr_type current;
-			and_functions<item_type> predicate;
+			and_functions<value_ref> predicate;
 
 			void move_first()
 			{
 				if (base->size() == 0) current = null_row;
-				while (current != null_row && !predicate(base->get_at(current)))
+				while (current != null_row && !predicate(get_value(current)))
 				{
 					current++;
 					if (current >= base->size()) {
@@ -55,7 +55,7 @@ namespace countrybit
 			using reference = value_ref&;  // or also value_type&
 
 			filterable_iterator(const filterable_iterator* _src,
-				std::function<bool(const item_type&)> _predicate) :
+				std::function<bool(const value_ref&)> _predicate) :
 				base(_src->base),
 				predicate(_src->predicate),
 				current(0)
@@ -72,7 +72,7 @@ namespace countrybit
 				move_first();
 			}
 
-			filterable_iterator(collection_type *_base, std::function<bool(const item_type&)> _predicate) :
+			filterable_iterator(collection_type *_base, std::function<bool(const value_ref&)> _predicate) :
 				base(_base),
 				current(0),
 				predicate(_predicate)
@@ -91,7 +91,7 @@ namespace countrybit
 				base(nullptr),
 				current(null_row)
 			{
-				predicate = [](item_type& a) { return true;  };
+				predicate = [](const value_ref& a) { return true;  };
 			}
 
 			filterable_iterator(const filterable_iterator& _src)
@@ -124,6 +124,11 @@ namespace countrybit
 				return value_ref{ base->get_at(current), current };
 			}
 
+			inline value_ref get_value(relative_ptr_type _idx)
+			{
+				return value_ref{ base->get_at(_idx), _idx };
+			}
+
 			inline relative_ptr_type get_index()
 			{
 				return current;
@@ -145,7 +150,7 @@ namespace countrybit
 					return end();
 
 				current++;
-				while (current < base->size() && !predicate(base->get_at(current)))
+				while (current < base->size() && !predicate(get_value(current)))
 				{
 					current++;
 				}
@@ -184,26 +189,26 @@ namespace countrybit
 				return begin() != end();
 			}
 
-			filterable_iterator where(std::function<bool(const item_type&)> _predicate)
+			filterable_iterator where(std::function<bool(const value_ref&)> _predicate)
 			{
 				return filterable_iterator(this, _predicate);
 			}
 
-			bool any_of(std::function<bool(const item_type&)> _predicate)
+			bool any_of(std::function<bool(const value_ref&)> _predicate)
 			{
-				auto new_predicate = [this, _predicate](auto& kp) { return predicate(kp) && _predicate(kp); };
+				auto new_predicate = [this, _predicate](auto& kp) { return predicate(kp.item) && _predicate(kp.item); };
 				return std::any_of(begin(), end(), new_predicate);
 			}
 
-			bool all_of(std::function<bool(const item_type&)> _predicate)
+			bool all_of(std::function<bool(const value_ref&)> _predicate)
 			{
-				auto new_predicate = [this, _predicate](auto& kp) { return predicate(kp) && _predicate(kp); };
+				auto new_predicate = [this, _predicate](auto& kp) { return predicate(kp.item) && _predicate(kp.item); };
 				return std::all_of(begin(), end(), new_predicate);
 			}
 
-			int count_if(std::function<bool(const item_type&)> _predicate)
+			int count_if(std::function<bool(const value_ref&)> _predicate)
 			{
-				auto new_predicate = [this, _predicate](auto& kp) { return predicate(kp) && _predicate(kp); };
+				auto new_predicate = [this, _predicate](auto& kp) { return predicate(kp.item) && _predicate(kp.item); };
 				return std::count_if(begin(), end(), new_predicate);
 			}
 

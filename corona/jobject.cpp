@@ -12,7 +12,7 @@ namespace countrybit
 
 		int compare(const dimensions_type& a, const dimensions_type& b)
 		{
-			int t = a.z - b.z;
+			corona_size_t t = a.z - b.z;
 			if (t) return t;
 			t = a.y - b.y;
 			if (t) return t;
@@ -162,7 +162,7 @@ namespace countrybit
 				auto required = &oi.item.selectors;
 
 				if (selector_applies(&oi.item.selectors, _actor)) {
-					actor_create_object aco;
+					create_object_request aco;
 					auto selected_create = selections->where([rule, this](const relative_ptr_type& src) {
 						return objects[src].item().class_id == rule->item_id_class;
 						});
@@ -179,8 +179,7 @@ namespace countrybit
 					aco.actor_id = _actor;
 					aco.class_id = oi.item.create_class_id;
 					aco.select_on_create = oi.item.select_on_create;
-					relative_ptr_type create_id = acr.create_objects.size();
-					acr.create_objects.insert_or_assign(create_id, aco);
+					acr.create_objects.insert_or_assign(aco.class_id, aco);
 				}
 			}
 
@@ -308,7 +307,7 @@ namespace countrybit
 			return modified.actor_id;
 		}
 
-		actor_command_response jcollection::select_object(const actor_select_object& _select)
+		actor_command_response jcollection::select_object(const select_object_request& _select)
 		{
 			actor_command_response acr;
 			acr.collection_id = collection_id;
@@ -329,7 +328,7 @@ namespace countrybit
 			return acr;
 		}
 
-		actor_command_response jcollection::create_object(actor_create_object& _create)
+		actor_command_response jcollection::create_object(create_object_request& _create)
 		{
 			actor_command_response acr;
 			acr.collection_id = collection_id;
@@ -2305,12 +2304,12 @@ namespace countrybit
 				// now, we want to get the command for creating a pair of objects and test.
 				// first we shall see if we can create a carrier
 				auto& create_carrier_option = result.create_objects
-					.where([carrier_class_id](std::pair<relative_ptr_type, actor_create_object>& acokp) { return acokp.second.class_id == carrier_class_id; })
+					.where([carrier_class_id](std::pair<relative_ptr_type, create_object_request>& acokp) { return acokp.second.class_id == carrier_class_id; })
 					.get_value();				
 
 				// then we shall see if we can create a coverage
 				auto& create_coverage_option = result.create_objects
-					.where([coverage_class_id](std::pair<relative_ptr_type, actor_create_object>& acokp) { return acokp.second.class_id == coverage_class_id; })
+					.where([coverage_class_id](std::pair<relative_ptr_type, create_object_request>& acokp) { return acokp.second.class_id == coverage_class_id; })
 					.get_value();
 
 				// now, we will create a carrier
@@ -2330,7 +2329,7 @@ namespace countrybit
 
 				// and now we should also be able to create a coverage
 				create_coverage_option = result.create_objects
-					.where([coverage_class_id](std::pair<relative_ptr_type, actor_create_object>& acokp) { return acokp.second.class_id == coverage_class_id; })
+					.where([coverage_class_id](std::pair<relative_ptr_type, create_object_request>& acokp) { return acokp.second.class_id == coverage_class_id; })
 					.get_value();
 
 				auto result3 = program_chart.create_object(create_coverage_option);
@@ -2348,7 +2347,6 @@ namespace countrybit
 				}
 
 				// and now that we have a coverage and a carrier, we should be able to select them both to create a program chart item
-
 
 				return true;
 			}

@@ -72,10 +72,10 @@ namespace countrybit
                 r = r && assert_if([nr, i, ti]() { return ti[i].id == nr.id && ti[i].description == nr.description && ti[i].name == nr.name; }, "item not stored correctly");
             }
 
-            auto count = basic.count_if([](auto& t) { return t.name == "yes" || t.name == "no";  });
+            auto count = basic.count_if([](auto& t) { return t.item.name == "yes" || t.item.name == "no";  });
             assert_if([count]() { return count == 2; }, "Wrong count");
 
-            auto items = basic.where([](auto& t) { return t.name == "yes" || t.name == "no";  });
+            auto items = basic.where([](auto& t) { return t.item.name == "yes" || t.item.name == "no";  });
             count = 0;
             for (auto r : items) 
             {

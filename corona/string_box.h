@@ -122,7 +122,7 @@ namespace countrybit
 				return sizeof(string_box_data) + length;
 			}
 
-			void copy(const wchar_t* _src, int max_len = -1)
+			void copy(const wchar_t* _src, corona_size_t max_len = -1)
 			{
 				if (max_len < 0)
 					max_len = wcslen(_src);

@@ -158,9 +158,9 @@ namespace countrybit
 				return node;
 			}
 
-			index_node get_node(int _max_level)
+			index_node get_node(relative_ptr_type _node_id)
 			{
-				return get_node(box, _max_level);
+				return get_node(box, _node_id);
 			}
 
 		public:
@@ -407,6 +407,7 @@ namespace countrybit
 				auto it = iterator(this, first_node(), predicate);
 				return *it;
 			}
+
 
 			auto where(std::function<bool(std::pair<KEY, VALUE>&)> _predicate)
 			{

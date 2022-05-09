@@ -143,7 +143,9 @@ namespace countrybit
 			serialized_box_container* box;
 
 			using collection_type = table<T>;
-			using iterator_type = filterable_iterator<T, collection_type>;
+			using iterator_item_type = value_reference<T>;
+			using iterator_type = filterable_iterator<T, collection_type, iterator_item_type>;
+
 
 		public:
 
@@ -216,7 +218,7 @@ namespace countrybit
 				return t;
 			}
 
-			bool storage_check(uint32_t new_rows)
+			bool storage_check(corona_size_t new_rows)
 			{
 				relative_ptr_type new_end_row = hdr->last_row + new_rows;
 				if (new_end_row < hdr->max_rows)
@@ -238,7 +240,7 @@ namespace countrybit
 				return false;
 			}
 
-			relative_ptr_type create(uint32_t count, T* items)
+			relative_ptr_type create(corona_size_t count, T* items)
 			{
 				relative_ptr_type new_row;
 				if (!storage_check(count))
@@ -261,7 +263,7 @@ namespace countrybit
 				return new_row;
 			}
 
-			T* create(uint32_t count, relative_ptr_type& _new_row)
+			T* create(corona_size_t count, relative_ptr_type& _new_row)
 			{
 				if (!storage_check(count)) {
 					_new_row = null_row;
@@ -273,7 +275,7 @@ namespace countrybit
 				return &hdr->rows[_new_row];
 			}
 
-			T* insert(relative_ptr_type index, uint32_t count)
+			T* insert(relative_ptr_type index, corona_size_t count)
 			{
 				if (!storage_check(count))
 					return nullptr;
@@ -403,12 +405,12 @@ namespace countrybit
 				return iterator_type(this, null_row);
 			}
 
-			auto where(std::function<bool(const T&)> _predicate)
+			auto where(std::function<bool(const iterator_item_type&)> _predicate)
 			{
 				return iterator_type(this, _predicate);
 			}
 
-			T& first_item(std::function<bool(const T&)> predicate)
+			T& first_item(std::function<bool(const iterator_item_type&)> predicate)
 			{
 				auto w = this->where(predicate);
 				if (w == end()) {
@@ -417,7 +419,7 @@ namespace countrybit
 				return w.get_value();
 			}
 
-			relative_ptr_type first_index(std::function<bool(const T&)> predicate)
+			relative_ptr_type first_index(std::function<bool(const iterator_item_type&)> predicate)
 			{
 				auto w = this->where(predicate);
 				if (w == end()) {
@@ -426,19 +428,19 @@ namespace countrybit
 				return w.get_index();
 			}
 
-			bool any_of(std::function<bool(T&)> predicate)
+			bool any_of(std::function<bool(const iterator_item_type&)> predicate)
 			{
-				return std::any_of(hdr->rows, hdr->rows + size(), predicate);
+				return std::any_of(begin(), end(), predicate);
 			}
 
-			bool all_of(std::function<bool(T&)> predicate)
+			bool all_of(std::function<bool(const iterator_item_type&)> predicate)
 			{
-				return std::all_of(hdr->rows, hdr->rows + size(), predicate);
+				return std::all_of(begin(), end(), predicate);
 			}
 
-			int count_if(std::function<bool(T&)> predicate)
+			int count_if(std::function<bool(const iterator_item_type&)> predicate)
 			{
-				return std::count_if(hdr->rows, hdr->rows + size(), predicate);
+				return std::count_if(begin(), end(), predicate);
 			}
 
 			void sort(std::function<bool(T& a, T& b)> fn)

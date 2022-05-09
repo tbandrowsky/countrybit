@@ -17,7 +17,7 @@
 #include "sorted_index.h"
 #include "query_box.h"
 #include "float_box.h"
-
+#include <functional>
 #include <cassert>
 
 namespace countrybit
@@ -83,6 +83,12 @@ namespace countrybit
 		class jschema;
 		class jarray;
 		class jlist;
+
+		class slice_enumerable {
+		public:
+			virtual jslice get_at(relative_ptr_type object_id) = 0;
+			virtual corona_size_t size() = 0;
+		};
 
 		class jslice
 		{
@@ -203,7 +209,7 @@ namespace countrybit
 			relative_ptr_type size_bytes() { return get_class().item().class_size_bytes; };
 		};
 
-		class jarray
+		class jarray : public slice_enumerable
 		{
 			jschema* schema;
 			relative_ptr_type class_field_id;
@@ -255,7 +261,7 @@ namespace countrybit
 
 		using selection_flag_type = uint32_t;
 
-		class jlist
+		class jlist : public slice_enumerable
 		{
 			jschema* schema;
 			relative_ptr_type class_field_id;
@@ -323,7 +329,7 @@ namespace countrybit
 			bool					deleted;
 		};
 
-		class actor_create_object
+		class create_object_request
 		{
 		public:
 			collection_id_type	collection_id;
@@ -344,7 +350,7 @@ namespace countrybit
 			bool				selected;
 		};
 
-		class actor_select_object
+		class select_object_request
 		{
 		public:
 			collection_id_type	collection_id;
@@ -363,7 +369,58 @@ namespace countrybit
 		};
 
 		using actor_view_collection = sorted_index<relative_ptr_type, actor_view_object>;
-		using actor_create_collection = sorted_index<relative_ptr_type, actor_create_object>;
+		using actor_create_collection = sorted_index<relative_ptr_type, create_object_request>;
+
+		class actor_object_option
+		{
+		public:
+			actor_view_object	avo;
+			jslice				slice;
+		};
+
+		class actor_query_base 
+		{
+		public:
+			slice_enumerable *objects;
+			actor_view_collection& view;
+
+			using collection_type = actor_query_base;
+			using iterator_type = filterable_iterator<actor_object_option, collection_type, value_assign_ref<actor_object_option>>;
+
+			actor_query_base(actor_view_collection& _view, slice_enumerable* _objects):
+				view(_view),
+				objects(_objects)
+			{
+				;
+			}
+
+			corona_size_t size()
+			{
+				return objects->size();
+			}
+			actor_object_option get_at(relative_ptr_type _id)
+			{
+				actor_object_option aoo;
+				aoo.slice = objects->get_at(_id);
+				aoo.avo = view.get(_id).second;
+				return aoo;
+			}
+
+			iterator_type begin()
+			{
+				return iterator_type(this, first_row);
+			}
+
+			iterator_type end()
+			{
+				return iterator_type(this, null_row);
+			}
+
+			auto where(std::function<bool(const actor_object_option&)> _predicate)
+			{
+				return iterator_type(this, _predicate);
+			}
+		};
 
 		class actor_command_response
 		{
@@ -444,6 +501,37 @@ namespace countrybit
 			jslice copy_object(jschema* _schema, jslice& _src);
 			actor_view_object get_modified_object();
 
+			actor_query_base query(slice_enumerable *collection)
+			{
+				actor_query_base new_base(view_objects, collection);
+				return new_base;
+			}
+
+			create_object_request create_create_request(relative_ptr_type _class_id)
+			{
+				if (!create_objects.contains(_class_id)) {
+					throw new std::invalid_argument("class is not creatable");
+				}
+				create_object_request aco = create_objects[_class_id].get_value();
+				return aco;
+			}
+
+			select_object_request create_select_request(relative_ptr_type _object_id, bool _extend)
+			{
+				if (!view_objects.contains(_object_id)) {
+					throw new std::invalid_argument("object not found");
+				}
+				actor_view_object avo = view_objects[_object_id].get_value();
+				if (!avo.selectable) {
+					throw new std::invalid_argument("object is not selectable");
+				}
+				select_object_request aso;
+				aso.collection_id = collection_id;
+				aso.actor_id = actor_id;
+				aso.extend = _extend;
+				aso.object_id = _object_id;
+				return aso;
+			}
 		};
 
 		using actor_collection = table<actor_type>;
@@ -532,8 +620,8 @@ namespace countrybit
 			actor_type update_actor(actor_type _actor);
 
 			actor_command_response get_command_result(relative_ptr_type _actor);
-			actor_command_response select_object(const actor_select_object& _select);
-			actor_command_response create_object(actor_create_object& _create);
+			actor_command_response select_object(const select_object_request& _select);
+			actor_command_response create_object(create_object_request& _create);
 			actor_command_response update_object(actor_update_object& _update);
 
 			void print(actor_command_response& acr);
@@ -552,16 +640,6 @@ namespace countrybit
 				return objects.size();
 			}
 
-			inline iterator_type begin()
-			{
-				return iterator_type(this, 0);
-			}
-
-			inline iterator_type end()
-			{
-				return iterator_type(this, null_row);
-			}
-
 			iterator_type begin()
 			{
 				return iterator_type(this, first_row);
@@ -572,12 +650,12 @@ namespace countrybit
 				return iterator_type(this, null_row);
 			}
 
-			auto where(std::function<bool(const jslice&)> _predicate)
+			auto where(std::function<bool(jslice)> _predicate)
 			{
 				return iterator_type(this, _predicate);
 			}
 
-			jslice first_value(std::function<bool(const jslice&)> predicate)
+			jslice first_value(std::function<bool(jslice)> predicate)
 			{
 				auto w = this->where(predicate);
 				if (w == end()) {
@@ -586,7 +664,7 @@ namespace countrybit
 				return w.get_value().item;
 			}
 
-			relative_ptr_type first_index(std::function<bool(const jslice&)> predicate)
+			relative_ptr_type first_index(std::function<bool(jslice)> predicate)
 			{
 				auto w = this->where(predicate);
 				if (w == end()) {
@@ -595,24 +673,19 @@ namespace countrybit
 				return w.get_value().location;
 			}
 
-			bool any_of(std::function<bool(const jslice&)> predicate)
+			bool any_of(std::function<bool(value_assign_ref<jslice>&)> predicate)
 			{
-				return std::any_of(begin(), end(), predicate);
+				return std::any_of(begin(), end(), [predicate](value_assign_ref<jslice>& it) { return predicate(it); });
 			}
 
-			bool all_of(std::function<bool(const jslice&)> predicate)
+			bool all_of(std::function<bool(value_assign_ref<jslice>&)> predicate)
 			{
-				return std::all_of(begin(), end(), predicate);
+				return std::all_of(begin(), end(), [predicate](value_assign_ref<jslice>& it) { return predicate(it); });
 			}
 
-			int count_if(std::function<bool(const jslice&)> predicate)
+			corona_size_t count_if(std::function<bool(value_assign_ref<jslice>&)> predicate)
 			{
-				return std::count_if(begin(), end(), predicate);
-			}
-
-			void sort(std::function<bool(const jslice& a, const jslice& b)> fn)
-			{
-				std::sort(begin(), end(), fn);
+				return std::count_if(begin(), end(), [predicate](value_assign_ref<jslice>& it) { return predicate(it); });
 			}
 
 		};
@@ -976,7 +1049,6 @@ namespace countrybit
 			relative_ptr_type put_sql_remote_field(put_named_sql_remote_field_request request)
 			{
 				sql_properties_type options;
-				row_range rr;
 
 				auto& params = request.options.parameters;
 				for (auto param : params) {
@@ -992,7 +1064,6 @@ namespace countrybit
 			relative_ptr_type put_http_remote_field(put_named_http_remote_field_request request)
 			{
 				http_properties_type options;
-				row_range rr;
 
 				auto& params = request.options.parameters;
 				for (auto param : params) {
@@ -1009,7 +1080,6 @@ namespace countrybit
 			relative_ptr_type put_file_remote_field(put_named_file_remote_field_request request)
 			{
 				file_properties_type options;
-				row_range rr;
 
 				auto& params = request.options.parameters;
 				for (auto param : params) {
@@ -1115,7 +1185,7 @@ namespace countrybit
 			relative_ptr_type build_class_members(field_array& pcr, int64_t& class_size_bytes, member_field_collection &mfs)
 			{
 				int field_idx = 0;
-				int sz = mfs.size();
+				corona_size_t sz = mfs.size();
 				class_size_bytes = 0;
 
 				for (int i = 0; i < sz; i++)

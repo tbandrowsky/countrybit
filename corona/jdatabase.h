@@ -365,8 +365,8 @@ namespace countrybit
 			actor_response get_actor(get_actor_request _request);
 
 			command_response get_actor_options(get_actor_request _request);
-			command_response select_object(actor_select_object _select);
-			command_response create_object(actor_create_object _create);
+			command_response select_object(select_object_request _select);
+			command_response create_object(create_object_request _create);
 			command_response update_object(actor_update_object _update);
 			
 		};

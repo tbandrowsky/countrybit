@@ -70,10 +70,10 @@ namespace countrybit
 			}
 			assert_if([iteration_count]() { return iteration_count == 10; }, "Wrong count");
 
-			auto count = test_iarray.count_if([](auto& t) { return t < 3;  });
+			auto count = test_iarray.count_if([](auto& t) { return t.item < 3;  });
 			assert_if([count]() { return count == 3; }, "Wrong count");
 
-			auto items = test_iarray.where([](auto& t) { return t < 5;  });
+			auto items = test_iarray.where([](auto& t) { return t.item < 5;  });
 
 			count = 0;
 			for (auto r : items)
@@ -87,11 +87,11 @@ namespace countrybit
 			items = test_iarray.where([](auto& t) { return true;  }); 		
 
 			items = items.where([](auto& t) { 
-				return t < 5;  
+				return t.item < 5;
 			});
 
 			items = items.where([](auto& t) { 
-				auto v = (t % 2);
+				auto v = (t.item % 2);
 				return v == 0;
 			});
 
