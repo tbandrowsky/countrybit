@@ -514,7 +514,7 @@ namespace countrybit
 			create_object_request create_create_request(relative_ptr_type _class_id)
 			{
 				if (!create_objects.contains(_class_id)) {
-					throw new std::invalid_argument("class is not creatable");
+					throw std::invalid_argument("class is not creatable");
 				}
 				create_object_request aco = create_objects[_class_id].get_value();
 				return aco;
@@ -523,11 +523,11 @@ namespace countrybit
 			select_object_request create_select_request(relative_ptr_type _object_id, bool _extend)
 			{
 				if (!view_objects.contains(_object_id)) {
-					throw new std::invalid_argument("object not found");
+					throw std::invalid_argument("object not found");
 				}
 				actor_view_object avo = view_objects[_object_id].get_value();
-				if (!avo.selectable) {
-					throw new std::invalid_argument("object is not selectable");
+				if (!avo.selectable && !avo.selected) {
+					throw std::invalid_argument("object is not selectable");
 				}
 				select_object_request aso;
 				aso.collection_id = collection_id;
@@ -630,7 +630,7 @@ namespace countrybit
 			actor_command_response create_object(create_object_request& _create);
 			actor_command_response update_object(actor_update_object& _update);
 
-			void print(actor_command_response& acr);
+			void print(const char *_trace, actor_command_response& acr);
 
 			jslice create_object(relative_ptr_type _item_id, relative_ptr_type _actor_id, relative_ptr_type _class_id, relative_ptr_type& object_id);
 			jslice get_object(relative_ptr_type _object_id);

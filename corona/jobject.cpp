@@ -124,10 +124,9 @@ namespace countrybit
 			return false;
 		}
 
-		void jcollection::print(actor_command_response& acr)
+		void jcollection::print(const char *_trace, actor_command_response& acr)
 		{
-			std::cout << std::endl << "actor options" << std::endl;
-
+			std::cout << _trace << std::endl;
 			for (auto co : acr.create_objects)
 			{
 				std::cout << "create class " << schema->get_class( co.second.class_id ).item().name << std::endl;
@@ -136,7 +135,7 @@ namespace countrybit
 			for (auto vo : acr.view_objects)
 			{
 				auto slice = get_at(vo.second.object_id);
-				std::cout << "existing object " << vo.second.object_id << " (" << slice.get_class().item().name << ") " << std::endl;
+				std::cout << "existing object " << vo.second.object_id << " (" << slice.get_class().item().name << ") selectable:" <<  vo.second.selectable << " selected:" << vo.second.selected << " updatable:" << vo.second.updatable << std::endl;
 			}
 		}
 
@@ -196,6 +195,19 @@ namespace countrybit
 				acr.view_objects.put(iter.get_index(), avo, [](actor_view_object& _dest) { ;  });
 			}
 
+			// now to select whatever is selected
+
+			for (auto sel : actor.selections) {
+				auto obj = objects[sel.item];
+				actor_view_object avo;
+				avo.collection_id = collection_id;
+				avo.object_id = sel.item;
+				avo.selectable = false;
+				avo.selected = true;
+				avo.updatable = false;
+				acr.view_objects.put(sel.item, avo, [](actor_view_object& _dest) { _dest.selected = true; });
+			}
+
 			// now to our select options
 			
 			for (auto oi : select_options)
@@ -214,10 +226,11 @@ namespace countrybit
 							actor_view_object avo;
 							avo.collection_id = collection_id;
 							avo.object_id = oid;
-							avo.selectable = false;
+							avo.selectable = true;
 							avo.selected = false;
 							avo.updatable = false;
-							acr.view_objects.put(oid, avo, [](actor_view_object& _dest) { _dest.selectable = true;  });
+							acr.view_objects.put(oid, avo, [](actor_view_object& _dest) { 
+								_dest.selectable = !_dest.selected;  });
 						}
 					}
 				}
@@ -243,8 +256,11 @@ namespace countrybit
 							avo.object_id = oid;
 							avo.selectable = false;
 							avo.selected = false;
-							avo.updatable = false;
-							acr.view_objects.put(oid, avo, [](actor_view_object& _dest) { _dest.updatable = true;  });
+							avo.updatable = true;
+							acr.view_objects.put(oid, avo, [](actor_view_object& _dest) { 								
+								std::cout << "   updateable " << _dest.object_id << "selectable:" << _dest.selectable << " selected : " << _dest.selected << " updatable : " << _dest.updatable << std::endl;
+								_dest.updatable = true; 																						
+								});
 						}
 					}
 				}
@@ -2299,7 +2315,7 @@ namespace countrybit
 				sample_actor = program_chart.create_actor(sample_actor);
 
 				auto result = program_chart.get_command_result(sample_actor.actor_id);
-				program_chart.print(result);
+				program_chart.print("empty chart", result);
 
 				// now, we want to get the command for creating a pair of objects and test.
 				// first we shall see if we can create a carrier
@@ -2315,7 +2331,7 @@ namespace countrybit
 				// now, we will create a carrier
 				auto result2 = program_chart.create_object(create_carrier_option);
 
-				program_chart.print(result2);
+				program_chart.print("created carrier", result2);
 
 				// and we should have a created carrier
 				auto new_carrier = result2.get_modified_object();
@@ -2334,7 +2350,7 @@ namespace countrybit
 
 				auto result3 = program_chart.create_object(create_coverage_option);
 
-				program_chart.print(result3);
+				program_chart.print("created coverage", result3);
 
 				// and we should have a created coverage
 				auto new_coverage = result3.get_modified_object();
@@ -2347,6 +2363,17 @@ namespace countrybit
 				}
 
 				// and now that we have a coverage and a carrier, we should be able to select them both to create a program chart item
+
+				auto select_coverage = result3.create_select_request(new_coverage.object_id, false);
+				auto result4 = program_chart.select_object(select_coverage);
+
+				program_chart.print("selected coverage", result4);
+
+				auto select_carrier = result4.create_select_request(new_carrier.object_id, true);
+				auto result5 = program_chart.select_object(select_carrier);
+
+				program_chart.print("selected carrier", result5);
+
 
 				return true;
 			}

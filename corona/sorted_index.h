@@ -513,7 +513,7 @@ namespace countrybit
 			{
 				std::pair<KEY, VALUE> kvp(key, _default_value);
 				relative_ptr_type modified_node = this->update_node(kvp, predicate);
-				return insert_or_assign(kvp);
+				return iterator(this, modified_node);
 			}
 
 		private:
