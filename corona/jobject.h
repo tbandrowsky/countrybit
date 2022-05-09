@@ -219,7 +219,8 @@ namespace countrybit
 		public:
 
 			using collection_type = jarray;
-			using iterator_type = filterable_iterator<jslice, collection_type, value_assign_ref<jslice>>;
+			using iterator_item_type = value_object<jslice>;
+			using iterator_type = filterable_iterator<jslice, collection_type, iterator_item_type>;
 
 			jarray();
 			jarray(jslice* _parent, jschema* _schema, relative_ptr_type _class_field_id, char* _bytes, bool _init = false);
@@ -272,7 +273,9 @@ namespace countrybit
 		public:
 
 			using collection_type = jlist;
-			using iterator_type = filterable_iterator<jslice, collection_type, value_assign_ref<jslice>>;
+			using iterator_item_type = value_object<jslice>;
+			using iterator_type = filterable_iterator<jslice, collection_type, iterator_item_type>;
+
 
 			jlist();
 			jlist(jslice* _parent, jschema* _schema, relative_ptr_type _class_field_id, char* _bytes, bool _init = false);
@@ -385,7 +388,8 @@ namespace countrybit
 			actor_view_collection& view;
 
 			using collection_type = actor_query_base;
-			using iterator_type = filterable_iterator<actor_object_option, collection_type, value_assign_ref<actor_object_option>>;
+			using iterator_item_type = value_object<actor_object_option>;
+			using iterator_type = filterable_iterator<actor_object_option, collection_type, iterator_item_type>;
 
 			actor_query_base(actor_view_collection& _view, slice_enumerable* _objects):
 				view(_view),
@@ -416,7 +420,7 @@ namespace countrybit
 				return iterator_type(this, null_row);
 			}
 
-			auto where(std::function<bool(const actor_object_option&)> _predicate)
+			auto where(std::function<bool(const iterator_item_type&)> _predicate)
 			{
 				return iterator_type(this, _predicate);
 			}
@@ -549,8 +553,10 @@ namespace countrybit
 
 		public:
 
+
 			using collection_type = jcollection;
-			using iterator_type = filterable_iterator<jslice, collection_type, value_assign_ref<jslice>>;
+			using iterator_item_type = value_object<jslice>;
+			using iterator_type = filterable_iterator<jslice, collection_type, iterator_item_type>;
 
 			jcollection() : schema( nullptr ), ref( nullptr )
 			{
@@ -650,12 +656,12 @@ namespace countrybit
 				return iterator_type(this, null_row);
 			}
 
-			auto where(std::function<bool(jslice)> _predicate)
+			auto where(std::function<bool(const iterator_item_type&)> _predicate)
 			{
 				return iterator_type(this, _predicate);
 			}
 
-			jslice first_value(std::function<bool(jslice)> predicate)
+			jslice first_value(std::function<bool(const iterator_item_type&)> predicate)
 			{
 				auto w = this->where(predicate);
 				if (w == end()) {
@@ -664,7 +670,7 @@ namespace countrybit
 				return w.get_value().item;
 			}
 
-			relative_ptr_type first_index(std::function<bool(jslice)> predicate)
+			relative_ptr_type first_index(std::function<bool(const iterator_item_type&)> predicate)
 			{
 				auto w = this->where(predicate);
 				if (w == end()) {
@@ -673,19 +679,19 @@ namespace countrybit
 				return w.get_value().location;
 			}
 
-			bool any_of(std::function<bool(value_assign_ref<jslice>&)> predicate)
+			bool any_of(std::function<bool(const iterator_item_type&)> predicate)
 			{
-				return std::any_of(begin(), end(), [predicate](value_assign_ref<jslice>& it) { return predicate(it); });
+				return std::any_of(begin(), end(), predicate);
 			}
 
-			bool all_of(std::function<bool(value_assign_ref<jslice>&)> predicate)
+			bool all_of(std::function<bool(const iterator_item_type&)> predicate)
 			{
-				return std::all_of(begin(), end(), [predicate](value_assign_ref<jslice>& it) { return predicate(it); });
+				return std::all_of(begin(), end(), predicate);
 			}
 
-			corona_size_t count_if(std::function<bool(value_assign_ref<jslice>&)> predicate)
+			corona_size_t count_if(std::function<bool(const iterator_item_type&)> predicate)
 			{
-				return std::count_if(begin(), end(), [predicate](value_assign_ref<jslice>& it) { return predicate(it); });
+				return std::count_if(begin(), end(), predicate);
 			}
 
 		};
@@ -1288,8 +1294,8 @@ namespace countrybit
 				}
 
 				auto sz = mfs.size();
-				int num_integration_fields = mfs.count_if([this](const member_field& src) {
-					auto& f = this->get_field(src.field_id);
+				int num_integration_fields = mfs.count_if([this](auto& src) {
+					auto& f = this->get_field(src.item.field_id);
 					return f.is_data_generator();
 					});
 

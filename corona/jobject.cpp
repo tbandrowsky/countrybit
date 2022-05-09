@@ -101,19 +101,19 @@ namespace countrybit
 			// selectors on this option. if we do create on the option here, it will have the item id
 			// of the class specified in the rule so that continuity will be preserved.
 			else if (
-				required->all_of([this, selections](const selector_rule& src) {
+				required->all_of([this, selections](auto& src) {
 					int c = selections->count_if(
-						[src, this](const relative_ptr_type& dest) {
-							auto obj = this->objects[dest];
+						[src, this](auto& dest) {
+							auto obj = this->objects[dest.item];
 							relative_ptr_type class_id = obj.item().class_id;
-							return class_id == src.class_id;
+							return class_id == src.item.class_id;
 						});
 					return c == 1;
 					})
 				&&
-				selections->all_of([this, required](const relative_ptr_type& dest) {
-				return required->any_of([this, dest](const selector_rule& src) {
-					return src.class_id == dest;
+				selections->all_of([this, required](auto& dest) {
+				return required->any_of([this, dest](auto& src) {
+					return src.item.class_id == dest.item;
 					});
 					})
 				)
@@ -163,8 +163,8 @@ namespace countrybit
 
 				if (selector_applies(&oi.item.selectors, _actor)) {
 					create_object_request aco;
-					auto selected_create = selections->where([rule, this](const relative_ptr_type& src) {
-						return objects[src].item().class_id == rule->item_id_class;
+					auto selected_create = selections->where([rule, this](auto& src) {
+						return objects[src.item].item().class_id == rule->item_id_class;
 						});
 					if (selected_create != std::end(*selections)) {
 						relative_ptr_type object_id = selected_create.get_value().item;
@@ -264,7 +264,7 @@ namespace countrybit
 
 		actor_id_type jcollection::find_actor(object_name& _name)
 		{
-			auto id = actors.first_index([_name](auto& t) { return t.actor_name == _name; });
+			auto id = actors.first_index([_name](auto& t) { return t.item.actor_name == _name; });
 			return id;
 		}
 
