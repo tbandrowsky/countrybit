@@ -1,16 +1,5 @@
 #pragma once
 
-#include <cstdint>
-#include <cstring>
-#include <exception>
-#include <stdexcept>
-#include <iostream>
-
-#include "store_box.h"
-#include "point_box.h"
-#include "float_box.h"
-#include "constants.h"
-
 namespace corona
 {
 	namespace database

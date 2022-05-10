@@ -1,13 +1,5 @@
 #pragma once
 
-#include "store_box.h"
-#include "float_box.h"
-#include "point_box.h"
-#include "rectangle_box.h"
-
-#include <ostream>
-#include <bit>
-
 namespace corona
 {
 	namespace database

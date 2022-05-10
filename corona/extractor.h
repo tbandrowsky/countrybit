@@ -1,20 +1,5 @@
 #pragma once
 
-#include <string>
-#include <string_view>
-#include <vector>
-#include <map>
-#include <charconv>
-#include "messages.h"
-#include "store_box.h"
-#include "string_box.h"
-#include "time_box.h"
-#include "sorted_index.h"
-#include "list_box.h"
-#include "pobject.h"
-#include "pobject_transformer.h"
-#include <functional>
-
 namespace corona
 {
 	namespace system

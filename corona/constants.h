@@ -1,10 +1,5 @@
 #pragma once
 
-#include <cstdint>
-#include <functional>
-#include <algorithm>
-#include <iostream>
-
 namespace corona
 {
 	namespace database

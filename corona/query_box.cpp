@@ -1,7 +1,5 @@
 
-#include "query_box.h"
-#include "jdatabase.h"
-#include "jfield.h"
+#include "corona.h"
 
 namespace corona
 {

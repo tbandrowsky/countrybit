@@ -1,9 +1,6 @@
 #pragma once
 
-#include <string>
-#include <functional>
-#include <iostream>
-#include "assert_if.h"
+#include "corona.h"
 
 bool assert_if(std::function<bool()> test, const char* fail)
 {

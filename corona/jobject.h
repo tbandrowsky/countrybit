@@ -1,24 +1,6 @@
 #pragma once
 
-#include "jfield.h"
-#include "store_box.h"
-#include "list_box.h"
-#include "collection_id_box.h"
-#include "object_id_box.h"
-#include "point_box.h"
-#include "rectangle_box.h"
-#include "image_box.h"
-#include "wave_box.h"
-#include "midi_box.h"
-#include "color_box.h"
-#include "sql_remote_box.h"
-#include "http_remote_box.h"
-#include "file_remote_box.h"
-#include "sorted_index.h"
-#include "query_box.h"
-#include "float_box.h"
-#include <functional>
-#include <cassert>
+#include "corona.h"
 
 namespace corona
 {

@@ -1,13 +1,5 @@
 #pragma once
 
-#include "store_box.h"
-#include "array_box.h"
-#include "string_box.h"
-#include "jfield.h"
-
-#include <ostream>
-#include <bit>
-
 namespace corona
 {
 	namespace database

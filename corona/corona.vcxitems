@@ -21,11 +21,11 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)collection_id_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)color_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)constants.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)filterable_iterator.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)jdatabase_client.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)jdatabase_server.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)list_box.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)desktop_application.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)directory.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)file_remote_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)http_remote_box.h" />
@@ -66,11 +66,36 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)assert_if.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)collection_id_box.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)constants.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)corona.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">corona.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)$(TargetName).pch</PrecompiledHeaderOutputFile>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">corona.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)$(TargetName).pch</PrecompiledHeaderOutputFile>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">corona.h</PrecompiledHeaderFile>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">Create</PrecompiledHeader>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">corona.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">$(IntDir)$(TargetName).pch</PrecompiledHeaderOutputFile>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">Create</PrecompiledHeader>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">corona.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">$(IntDir)$(TargetName).pch</PrecompiledHeaderOutputFile>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">corona.h</PrecompiledHeaderFile>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">Create</PrecompiledHeader>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">corona.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">$(IntDir)$(TargetName).pch</PrecompiledHeaderOutputFile>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">Create</PrecompiledHeader>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">corona.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">$(IntDir)$(TargetName).pch</PrecompiledHeaderOutputFile>
+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)$(TargetName).pch</PrecompiledHeaderOutputFile>
+      <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)$(TargetName).pch</PrecompiledHeaderOutputFile>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)jdatabase_client.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)jdatabase_server.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)jfield.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)list_box.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)desktop_application.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)directory.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)file.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)file_remote_box.cpp" />
@@ -86,6 +111,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)pobject.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)point_box.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)query_box.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)read_all_string.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)sql_remote_box.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)store_box.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)string_box.cpp" />

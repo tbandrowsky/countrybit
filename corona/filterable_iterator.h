@@ -1,7 +1,5 @@
 #pragma once
 
-#include "constants.h"
-
 namespace corona
 {
 	namespace database

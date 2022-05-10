@@ -1,8 +1,7 @@
 
 #pragma once
 
-#include "constants.h"
-#include <cstring>
+#include "corona.h"
 
 namespace corona
 {

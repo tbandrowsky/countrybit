@@ -1,14 +1,5 @@
 #pragma once
 
-#include <iostream>
-#include <cstdint>
-#include <exception>
-#include <stdexcept>
-#include <algorithm>
-#include <functional>
-#include "store_box.h"
-#include "filterable_iterator.h"
-
 namespace corona
 {
 	namespace database
@@ -385,7 +376,7 @@ namespace corona
 				return hdr->last_row;
 			}
 
-			relative_ptr_type max() const
+			relative_ptr_type capacity() const
 			{
 				return hdr->max_rows;
 			}
@@ -688,9 +679,9 @@ namespace corona
 				return item.size();
 			}
 
-			relative_ptr_type max() const
+			relative_ptr_type capacity() const
 			{
-				return item.max();
+				return item.capacity();
 			}
 
 			void clear()

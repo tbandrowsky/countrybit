@@ -1,7 +1,5 @@
 
-#include "jobject.h"
-#include "combaseapi.h"
-#include "extractor.h"
+#include "corona.h"
 
 #define _DETAIL 0
 #define _TRACE_RULE 0

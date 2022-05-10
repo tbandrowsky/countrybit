@@ -1,23 +1,5 @@
 #pragma once
 
-#include <string>
-#include <string_view>
-#include <vector>
-#include <map>
-
-#include "messages.h"
-#include "store_box.h"
-#include "string_box.h"
-#include "time_box.h"
-#include "sorted_index.h"
-
-#include <functional>
-
-#include "pobject.h"
-#include "extractor.h"
-#include "jdatabase.h"
-#include <jobject.h>
-
 namespace corona
 {
 	namespace system

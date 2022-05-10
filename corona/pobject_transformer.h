@@ -1,8 +1,5 @@
 #pragma once
 
-#include "pobject.h"
-#include "store_box.h"
-
 namespace corona
 {
 	namespace system

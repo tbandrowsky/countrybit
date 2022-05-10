@@ -1,15 +1,7 @@
 // cbstoretest.cpp : This file contains the 'main' function. Program execution begins and ends there.
 //
 
-#include <iostream>
-#include "application.h"
-#include "queue.h"
-#include "function.h"
-#include "jobject.h"
-#include "sorted_index.h"
-#include "array_box.h"
-#include "extractor.h"
-#include "assert_if.h"
+#include "corona.h"
 
 corona::system::sync<int> test_queue();
 corona::system::task<int> calc();

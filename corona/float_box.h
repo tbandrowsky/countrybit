@@ -1,10 +1,5 @@
 #pragma once
 
-#include "store_box.h"
-#include <ostream>
-#include <cmath>
-#include <numbers>
-
 #undef max
 #undef min
 

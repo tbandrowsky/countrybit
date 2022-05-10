@@ -1,10 +1,6 @@
 #pragma once
 
-#include <string>
-#include <cstdint>
-#include <coroutine>
-#include "messages.h"
-#include "windows.h"
+#include "corona.h"
 
 namespace corona
 {

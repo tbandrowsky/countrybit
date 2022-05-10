@@ -1,9 +1,6 @@
 
 
-#include "extractor.h"
-#include <cctype>
-#include <iostream>
-#include <format>
+#include "corona.h"
 
 // #define SHOW_ERROR_MESSAGES
 

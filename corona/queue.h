@@ -1,10 +1,5 @@
 #pragma once
 
-#include "windows.h"
-#include "windowsx.h"
-#include <thread>
-#include <coroutine>
-
 namespace corona
 {
 	namespace system

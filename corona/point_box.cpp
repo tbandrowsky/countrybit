@@ -1,11 +1,6 @@
 #pragma once
 
-#include "store_box.h"
-#include "float_box.h"
-#include "point_box.h"
-#include <ostream>
-#include <bit>
-#include <iostream>
+#include "corona.h"
 
 namespace corona
 {

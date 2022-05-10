@@ -1,8 +1,5 @@
 #pragma once
 
-#include "store_box.h"
-#include <ostream>
-
 namespace corona
 {
 	namespace database

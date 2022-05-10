@@ -1,6 +1,5 @@
 
-#include "process.h"
-#include "queue.h"
+#include "corona.h"
 
 // #define COM_INITIALIZATION
 

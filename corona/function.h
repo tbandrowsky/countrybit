@@ -1,12 +1,5 @@
 #pragma once
 
-#include <iostream>
-#include <vector>
-#include "queue.h"
-#include <coroutine>
-#include "messages.h"
-#include <functional>
-
 namespace corona
 {
 	namespace system 

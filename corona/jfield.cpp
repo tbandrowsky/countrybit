@@ -1,6 +1,6 @@
 
 
-#include "jobject.h"
+#include "corona.h"
 
 namespace corona
 {

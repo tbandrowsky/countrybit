@@ -1,7 +1,5 @@
 
-#include <iostream>
-#include "list_box.h"
-#include "assert_if.h"
+#include "corona.h"
 
 namespace corona
 {

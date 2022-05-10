@@ -1,28 +1,5 @@
 #pragma once
 
-#include <cstdint>
-#include <ctime>
-#include <vector>
-#include <list>
-#include <fstream>
-#include <algorithm>
-#include <thread>
-#include <atomic>
-#include <stdexcept>
-#include <format>
-#include <ctime>
-
-#include "constants.h"
-#include "store_box.h"
-#include "table.h"
-#include "sorted_index.h"
-#include "int_box.h"
-#include "float_box.h"
-#include "time_box.h"
-#include "string_box.h"
-#include "array_box.h"
-#include "remote_box.h"
-
 namespace corona
 {
 	namespace database

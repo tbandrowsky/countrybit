@@ -1,6 +1,5 @@
 
-#include "sorted_index.h"
-#include "string_box.h"
+#include "corona.h"
 
 namespace corona
 {

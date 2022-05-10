@@ -1,12 +1,5 @@
 #pragma once
 
-#include "store_box.h"
-#include <ostream>
-#include <bit>
-#include <functional>
-#include <algorithm>
-#include "filterable_iterator.h"
-
 namespace corona
 {
 	namespace database

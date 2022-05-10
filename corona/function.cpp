@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "function.h"
+#include "corona.h"
 
 namespace corona
 {

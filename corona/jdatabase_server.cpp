@@ -1,8 +1,5 @@
 
-#include <filesystem>
-
-#include "application.h"
-#include "jdatabase.h"
+#include "corona.h"
 
 namespace corona
 {

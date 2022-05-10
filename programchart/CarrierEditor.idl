@@ -1,0 +1,9 @@
+namespace programchart
+{
+    [default_interface]
+    runtimeclass CarrierEditor : Windows.UI.Xaml.Controls.UserControl
+    {
+        CarrierEditor();
+        Int32 MyProperty;
+    }
+}

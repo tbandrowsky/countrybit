@@ -1,28 +1,8 @@
 #pragma once
 
-#include "table.h"
-#include "array_box.h"
-
-/*********************************************************************
-  Countrybit SAT
-  (c) 2021 TJ Bandrowsky
-  MIT License
-**********************************************************************/
-
-#pragma once
-
 /**********************************************************
-Implementation of design by Bill Pugh.
+Skip List Based on Implementation of design by Bill Pugh.
 ***********************************************************/
-
-#include <functional>
-#include <string>
-#include <iterator> // For std::forward_iterator
-#include <cstddef>  // For std::ptrdiff_t
-#include <algorithm>
-#include <iostream>
-#include <cmath>
-#include "table.h"
 
 namespace corona
 {

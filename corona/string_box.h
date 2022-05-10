@@ -1,18 +1,5 @@
 #pragma once
 
-#include "windows.h"
-
-#include <cstdint>
-#include <cstring>
-#include <exception>
-#include <stdexcept>
-#include <iostream>
-
-#include "store_box.h"
-#include "constants.h"
-#include "int_box.h"
-#include "float_box.h"
-
 #define _CRT_SECURE_NO_WARNINGS
 
 namespace corona

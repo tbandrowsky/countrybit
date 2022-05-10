@@ -1,0 +1,9 @@
+namespace programchart
+{
+    [default_interface]
+    runtimeclass CoverageEditor : Windows.UI.Xaml.Controls.UserControl
+    {
+        CoverageEditor();
+        Int32 MyProperty;
+    }
+}

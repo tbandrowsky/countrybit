@@ -1,7 +1,6 @@
 #pragma once
 
-#include "pobject.h"
-#include <extractor.h>
+#include "corona.h"
 
 namespace corona
 {

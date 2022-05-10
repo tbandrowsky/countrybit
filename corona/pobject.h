@@ -1,25 +1,5 @@
 #pragma once
 
-#include <string>
-#include <string_view>
-#include <vector>
-#include <map>
-#include "messages.h"
-#include "store_box.h"
-#include "string_box.h"
-#include "time_box.h"
-#include "sorted_index.h"
-#include "color_box.h"
-#include "image_box.h"
-#include "point_box.h"
-#include "rectangle_box.h"
-#include "wave_box.h"
-#include "midi_box.h"
-#include "object_id_box.h"
-#include "collection_id_box.h"
-
-#include <functional>
-
 namespace corona 
 {
 	namespace system 

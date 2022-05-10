@@ -1,8 +1,6 @@
 
 
-#include "table.h"
-#include "string_box.h"
-#include "assert_if.h"
+#include "corona.h"
 
 namespace corona
 {

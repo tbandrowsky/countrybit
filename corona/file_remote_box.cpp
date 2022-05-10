@@ -1,6 +1,5 @@
 
-#include "file_remote_box.h"
-
+#include "corona.h"
 
 namespace corona
 {
