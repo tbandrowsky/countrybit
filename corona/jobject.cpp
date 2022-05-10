@@ -111,7 +111,9 @@ namespace countrybit
 							relative_ptr_type class_id = obj.item().class_id;
 							return class_id == src.item.class_id;
 						});
+#if _TRACE_RULE
 					std::cout << "  selected count of " << src.item.class_id << " " << c << std::endl;
+#endif
 					return c == 1;
 					});
 
@@ -121,11 +123,15 @@ namespace countrybit
 						relative_ptr_type class_id = obj.item().class_id;
 						return src.item.class_id == class_id;
 						});
-						std::cout << "   check " << dest.item << " " << result << std::endl;
+#if _TRACE_RULE						
+					std::cout << "   check " << dest.item << " " << result << std::endl;
+#endif
 						return result;
 					});
 
+#if _TRACE_RULE
 				std::cout << "  all_required " << all_required_items_satisfied << " " << "all_selected " << all_selections_required << std::endl;
+#endif
 
 				return all_required_items_satisfied && all_selections_required;
 			}
