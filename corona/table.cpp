@@ -4,17 +4,17 @@
 #include "string_box.h"
 #include "assert_if.h"
 
-namespace countrybit
+namespace corona
 {
     namespace database
     {
         bool table_tests()
         {
             int r = true;
-            using countrybit::database::istring;
-            using countrybit::database::table;
-            using countrybit::database::row_range;
-            using countrybit::database::static_box;
+            using corona::database::istring;
+            using corona::database::table;
+            using corona::database::row_range;
+            using corona::database::static_box;
 
             struct test_item {
                 int id;
@@ -84,7 +84,7 @@ namespace countrybit
             }
             assert_if([count]() { return count == 2; }, "Wrong count");
 
-            for (countrybit::database::relative_ptr_type i = 0; i < basic.size(); i++) {
+            for (corona::database::relative_ptr_type i = 0; i < basic.size(); i++) {
                 auto nr = basic[i];
                 r = r && assert_if([nr, i, ti]() { return ti[i].id == nr.id && ti[i].description == nr.description && ti[i].name == nr.name; }, "item not stored correctly");
             }
@@ -97,12 +97,12 @@ namespace countrybit
 
 #if DETAILS
 
-            for (countrybit::database::relative_ptr_type i = 0; i < basic.size(); i++) {
+            for (corona::database::relative_ptr_type i = 0; i < basic.size(); i++) {
                 auto b = basic[i];
                 std::cout << b.id << " " << b.name << " " << b.description << std::endl;
             }
 #endif
-            for (countrybit::database::relative_ptr_type i = 0; i < basic.size(); i++) {
+            for (corona::database::relative_ptr_type i = 0; i < basic.size(); i++) {
                 auto nr = basic[i];
                 r = r && assert_if([nr, i, tif]() { return tif[i].id == nr.id && tif[i].description == nr.description && tif[i].name == nr.name; }, "forward not moved correctly");
             }
@@ -114,13 +114,13 @@ namespace countrybit
             basic.erase(0, 1);
 
 #if DETAILS
-            for (countrybit::database::relative_ptr_type i = 0; i < basic.size(); i++) {
+            for (corona::database::relative_ptr_type i = 0; i < basic.size(); i++) {
                 auto b = basic[i];
                 std::cout << b.id << " " << b.name << " " << b.description << std::endl;
             }
 #endif
 
-            for (countrybit::database::relative_ptr_type i = 0; i < basic.size(); i++) {
+            for (corona::database::relative_ptr_type i = 0; i < basic.size(); i++) {
                 auto nr = basic[i];
                 r = r && assert_if([nr, i, tib]() { return tib[i].id == nr.id && tib[i].description == nr.description && tib[i].name == nr.name; }, "backward not moved correctly");
             }

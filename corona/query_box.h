@@ -8,7 +8,7 @@
 #include <ostream>
 #include <bit>
 
-namespace countrybit
+namespace corona
 {
 	namespace database
 	{

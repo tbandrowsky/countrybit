@@ -23,7 +23,7 @@
 #include "array_box.h"
 #include "remote_box.h"
 
-namespace countrybit
+namespace corona
 {
 	namespace database
 	{

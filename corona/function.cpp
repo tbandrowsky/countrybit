@@ -3,7 +3,7 @@
 
 #include "function.h"
 
-namespace countrybit
+namespace corona
 {
 	namespace system
 	{

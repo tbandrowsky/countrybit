@@ -13,7 +13,7 @@
 #include <locale>
 #include "sys/stat.h"
 
-namespace countrybit
+namespace corona
 {
 	namespace util
 	{

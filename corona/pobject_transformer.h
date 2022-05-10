@@ -3,7 +3,7 @@
 #include "pobject.h"
 #include "store_box.h"
 
-namespace countrybit
+namespace corona
 {
 	namespace system
 	{

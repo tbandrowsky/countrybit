@@ -1,7 +1,7 @@
 
 #include "desktop_application.h"
 
-namespace countrybit
+namespace corona
 {
 	namespace system
 	{

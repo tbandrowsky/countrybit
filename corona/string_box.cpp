@@ -2,7 +2,7 @@
 #include "string_box.h"
 #include "assert_if.h"
 
-namespace countrybit
+namespace corona
 {
 	namespace database
 	{
@@ -65,12 +65,12 @@ namespace countrybit
 		bool string_tests()
 		{
 			int r = true;
-			countrybit::database::istring<5> test1 = "1234567";
+			corona::database::istring<5> test1 = "1234567";
 
 			r = r && assert_if([test1]() { return test1.size() == 4; }, "Size incorrect.");
 			r = r && assert_if([test1]() { return test1 == "1234"; }, "truncation incorrect.");
 
-			countrybit::database::iwstring<5> test2 = L"1234567";
+			corona::database::iwstring<5> test2 = L"1234567";
 
 			r = r && assert_if([test2]() { return test2.size() == 4; }, L"Size incorrect.");
 			r = r && assert_if([test2]() { return test2 == L"1234"; }, L"truncation incorrect.");

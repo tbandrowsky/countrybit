@@ -2,7 +2,7 @@
 #include "sorted_index.h"
 #include "string_box.h"
 
-namespace countrybit
+namespace corona
 {
 	namespace database
 	{

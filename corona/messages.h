@@ -6,11 +6,11 @@
 
 #include "string_box.h"
 
-namespace countrybit
+namespace corona
 {
 	namespace system
 	{
-		using error_string = countrybit::database::istring<256>;
+		using error_string = corona::database::istring<256>;
 
 		class base_result
 		{

@@ -18,7 +18,7 @@
 #include "jdatabase.h"
 #include <jobject.h>
 
-namespace countrybit
+namespace corona
 {
 	namespace system
 	{

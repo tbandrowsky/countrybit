@@ -9,7 +9,7 @@
 
 #include "constants.h"
 
-namespace countrybit
+namespace corona
 {
 	namespace database
 	{

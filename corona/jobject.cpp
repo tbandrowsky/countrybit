@@ -6,7 +6,7 @@
 #define _DETAIL 0
 #define _TRACE_RULE 0
 
-namespace countrybit
+namespace corona
 {
 	namespace database
 	{
@@ -1710,7 +1710,7 @@ namespace countrybit
 					return false;
 				}
 
-				countrybit::database::put_class_request person;
+				corona::database::put_class_request person;
 
 				person.class_name = "person";
 				person.class_description = "a person";
@@ -1741,7 +1741,7 @@ namespace countrybit
 					offset_start += fld.size_bytes;
 				}
 
-				countrybit::database::put_class_request company;
+				corona::database::put_class_request company;
 				company.class_name = "company";
 				company.class_description = "a company is a collection of people";
 				company.member_fields = { institution_field_id, member_field(person_class_id, dimensions_type { 10, 1, 1 }) };
@@ -1811,7 +1811,7 @@ namespace countrybit
 				sample_actor.actor_id = null_row;
 				sample_actor = people.create_actor(sample_actor);
 
-				countrybit::database::put_class_request person;
+				corona::database::put_class_request person;
 
 				person.class_name = "person";
 				person.class_description = "a person";
@@ -1952,7 +1952,7 @@ namespace countrybit
 
 				schema = jschema::create_schema(&box, 50, true, schema_id);
 
-				countrybit::database::put_class_request sprite_frame_request;
+				corona::database::put_class_request sprite_frame_request;
 
 				sprite_frame_request.class_name = "spriteframe";
 				sprite_frame_request.class_description = "sprite frame";
@@ -1964,7 +1964,7 @@ namespace countrybit
 					return false;
 				}
 
-				countrybit::database::put_class_request sprite_class_request;
+				corona::database::put_class_request sprite_class_request;
 				sprite_class_request.class_name = "sprite";
 				sprite_class_request.class_description = "sprite";
 				sprite_class_request.member_fields = { "shortName", "rectangle", member_field(sprite_frame_class_id, { 10, 10, 1 }) };
@@ -2165,7 +2165,7 @@ namespace countrybit
 				sfr.options.length = 200;
 				relative_ptr_type carrier_name_id = schema.put_string_field(sfr);
 
-				countrybit::database::put_class_request pcr;
+				corona::database::put_class_request pcr;
 
 				pcr.class_name = "program";
 				pcr.class_description = "program summary";

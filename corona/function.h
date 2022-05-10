@@ -7,7 +7,7 @@
 #include "messages.h"
 #include <functional>
 
-namespace countrybit
+namespace corona
 {
 	namespace system 
 	{

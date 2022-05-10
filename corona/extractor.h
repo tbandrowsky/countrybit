@@ -15,7 +15,7 @@
 #include "pobject_transformer.h"
 #include <functional>
 
-namespace countrybit
+namespace corona
 {
 	namespace system
 	{

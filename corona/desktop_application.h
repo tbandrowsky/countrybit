@@ -5,7 +5,7 @@
 #include "loader.h"
 #include "application.h"
 
-namespace countrybit
+namespace corona
 {
 	namespace system
 	{

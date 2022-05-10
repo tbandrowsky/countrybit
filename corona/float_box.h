@@ -8,7 +8,7 @@
 #undef max
 #undef min
 
-namespace countrybit
+namespace corona
 {
 	namespace database
 	{

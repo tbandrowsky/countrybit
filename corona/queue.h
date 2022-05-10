@@ -5,7 +5,7 @@
 #include <thread>
 #include <coroutine>
 
-namespace countrybit
+namespace corona
 {
 	namespace system
 	{

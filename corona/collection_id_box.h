@@ -6,7 +6,7 @@
 #include "store_box.h"
 #include "string_box.h"
 
-namespace countrybit
+namespace corona
 {
 	namespace database
 	{

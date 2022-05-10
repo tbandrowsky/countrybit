@@ -7,7 +7,7 @@
 
 // #define SHOW_ERROR_MESSAGES
 
-namespace countrybit
+namespace corona
 {
 	namespace system
 	{
@@ -998,7 +998,7 @@ namespace countrybit
 						if (mm && !v->as_array() && !v->as_object())
 						{
 							
-							countrybit::database::istring<2048> temp;
+							corona::database::istring<2048> temp;
 
 							const char* s = v->as_string();
 

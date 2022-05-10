@@ -4,7 +4,7 @@
 #include "application.h"
 #include "jdatabase.h"
 
-namespace countrybit 
+namespace corona 
 {
 	namespace database 
 	{
@@ -18,7 +18,7 @@ namespace countrybit
 		system::task<db_response> jdatabase::open(open_db_request _open)
 		{
 			int success = 1;
-			countrybit::system::file dbfile = application->open_file(_open.filename.c_str(), countrybit::system::file_open_types::open_existing);
+			corona::system::file dbfile = application->open_file(_open.filename.c_str(), corona::system::file_open_types::open_existing);
 			if (dbfile.success()) {
 				auto sz = dbfile.size();
 				database_box.init(sz);
@@ -58,7 +58,7 @@ namespace countrybit
 			collections_by_id = collections_by_id_type::create_sorted_index(&database_box, map->collections_by_id_location);
 			collections_by_name = collections_by_name_type::create_sorted_index(&database_box, map->collections_by_name_location);
 
-			countrybit::system::file dbfile = application->create_file(_create.database_filename);
+			corona::system::file dbfile = application->create_file(_create.database_filename);
 
 			if (dbfile.success()) {
 				auto result = co_await dbfile.write(0, database_box.data(), database_box.size());

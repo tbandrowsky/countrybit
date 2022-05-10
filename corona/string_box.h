@@ -15,7 +15,7 @@
 
 #define _CRT_SECURE_NO_WARNINGS
 
-namespace countrybit
+namespace corona
 {
 	namespace database
 	{
@@ -241,7 +241,7 @@ namespace countrybit
 
 			bool has_any(const char* _pattern)
 			{
-				return countrybit::database::has_any(hdr->data, _pattern);
+				return corona::database::has_any(hdr->data, _pattern);
 			}
 
 			double to_double()
@@ -451,7 +451,7 @@ namespace countrybit
 
 			bool has_any(const char* _pattern)
 			{
-				return countrybit::database::has_any(data, _pattern);
+				return corona::database::has_any(data, _pattern);
 			}
 
 			istring& operator = (double d)

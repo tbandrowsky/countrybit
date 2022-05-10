@@ -7,11 +7,11 @@
 #include "messages.h"
 #include "string_box.h"
 
-namespace countrybit
+namespace corona
 {
 	namespace system 
 	{
-		using file_path = countrybit::database::istring<260>;
+		using file_path = corona::database::istring<260>;
 
 		class file_instance
 		{

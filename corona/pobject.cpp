@@ -3,7 +3,7 @@
 #include "pobject.h"
 #include <extractor.h>
 
-namespace countrybit
+namespace corona
 {
 	namespace system
 	{

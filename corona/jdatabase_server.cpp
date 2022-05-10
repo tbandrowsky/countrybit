@@ -4,7 +4,7 @@
 #include "application.h"
 #include "jdatabase.h"
 
-namespace countrybit
+namespace corona
 {
 	namespace database
 	{

@@ -3,7 +3,7 @@
 #include "list_box.h"
 #include "assert_if.h"
 
-namespace countrybit
+namespace corona
 {
 	namespace database
 	{

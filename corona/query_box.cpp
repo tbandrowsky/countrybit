@@ -3,7 +3,7 @@
 #include "jdatabase.h"
 #include "jfield.h"
 
-namespace countrybit
+namespace corona
 {
 	namespace database
 	{

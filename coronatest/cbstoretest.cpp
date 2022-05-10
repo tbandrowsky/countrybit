@@ -11,28 +11,28 @@
 #include "extractor.h"
 #include "assert_if.h"
 
-countrybit::system::sync<int> test_queue();
-countrybit::system::task<int> calc();
+corona::system::sync<int> test_queue();
+corona::system::task<int> calc();
 
 void queue_tests();
 
 int main()
 {
 
-    countrybit::system::application aw;
+    corona::system::application aw;
 
-    if (countrybit::database::box_tests()) std::cout << "boxes passed" << std::endl;
-    if (countrybit::database::string_tests()) std::cout << "string passed" << std::endl;
-    if (countrybit::database::table_tests()) std::cout << "table passed" << std::endl;
-    if (countrybit::database::test_index()) std::cout << "index passed" << std::endl;
-    if (countrybit::database::array_box_tests()) std::cout << "array box passed" << std::endl;
-    if (countrybit::database::list_box_tests()) std::cout << "list box passed" << std::endl;
-    if (countrybit::database::schema_tests()) std::cout << "schema passed" << std::endl;
-    if (countrybit::database::collection_tests()) std::cout << "collection passed" << std::endl;
-    if (countrybit::database::array_tests()) std::cout << "array object passed" << std::endl;
-    if (countrybit::system::string_extractor::test_basics()) std::cout << "parser basics passed" << std::endl;
-    if (countrybit::system::string_extractor::test_json()) std::cout << "parser json passed" << std::endl;
-    if (countrybit::database::model_tests()) std::cout << "model passed" << std::endl;
+    if (corona::database::box_tests()) std::cout << "boxes passed" << std::endl;
+    if (corona::database::string_tests()) std::cout << "string passed" << std::endl;
+    if (corona::database::table_tests()) std::cout << "table passed" << std::endl;
+    if (corona::database::test_index()) std::cout << "index passed" << std::endl;
+    if (corona::database::array_box_tests()) std::cout << "array box passed" << std::endl;
+    if (corona::database::list_box_tests()) std::cout << "list box passed" << std::endl;
+    if (corona::database::schema_tests()) std::cout << "schema passed" << std::endl;
+    if (corona::database::collection_tests()) std::cout << "collection passed" << std::endl;
+    if (corona::database::array_tests()) std::cout << "array object passed" << std::endl;
+    if (corona::system::string_extractor::test_basics()) std::cout << "parser basics passed" << std::endl;
+    if (corona::system::string_extractor::test_json()) std::cout << "parser json passed" << std::endl;
+    if (corona::database::model_tests()) std::cout << "model passed" << std::endl;
 //    queue_tests();
 }
 
@@ -47,7 +47,7 @@ void queue_tests()
     std::cout << "done:" << GetCurrentThreadId() << std::endl;
 }
 
-countrybit::system::task<int> calc()
+corona::system::task<int> calc()
 {
     std::cout << "calc start:" << GetCurrentThreadId() << std::endl;
     std::cout << "calc sleeps:" << GetCurrentThreadId() << std::endl;
@@ -56,7 +56,7 @@ countrybit::system::task<int> calc()
     co_return 10;
 }
 
-countrybit::system::sync<int> test_queue()
+corona::system::sync<int> test_queue()
 {
     std::cout << "test start:" << GetCurrentThreadId() << std::endl;
 

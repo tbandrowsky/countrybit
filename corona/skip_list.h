@@ -18,7 +18,7 @@ Implementation of design by Bill Pugh.
 #include <iostream>
 #include <cmath>
 
-namespace countrybit
+namespace corona
 {
 	namespace collections
 	{

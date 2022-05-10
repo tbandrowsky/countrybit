@@ -4,7 +4,7 @@
 #include "constants.h"
 #include <cstring>
 
-namespace countrybit
+namespace corona
 {
 	namespace database
 	{

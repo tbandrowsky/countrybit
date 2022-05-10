@@ -3,7 +3,7 @@
 #include "store_box.h"
 #include <ostream>
 
-namespace countrybit
+namespace corona
 {
 	namespace database
 	{

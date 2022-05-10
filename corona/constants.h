@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <iostream>
 
-namespace countrybit
+namespace corona
 {
 	namespace database
 	{

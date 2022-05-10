@@ -19,7 +19,7 @@
 #include <cmath>
 #include "table.h"
 
-namespace countrybit
+namespace corona
 {
 	namespace database
 	{

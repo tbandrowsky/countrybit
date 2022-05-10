@@ -4,7 +4,7 @@
 
 // #define COM_INITIALIZATION
 
-namespace countrybit
+namespace corona
 {
 	namespace system
 	{

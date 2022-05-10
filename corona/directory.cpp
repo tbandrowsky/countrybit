@@ -1,7 +1,7 @@
 
 #include "directory.h"
 
-namespace countrybit
+namespace corona
 {
 
 	namespace system

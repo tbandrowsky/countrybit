@@ -2,7 +2,7 @@
 #include "file_remote_box.h"
 
 
-namespace countrybit
+namespace corona
 {
 	namespace database
 	{

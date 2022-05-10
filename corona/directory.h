@@ -7,7 +7,7 @@
 #include "string_box.h"
 #include "function.h"
 
-namespace countrybit
+namespace corona
 {
 	namespace system 
 	{

@@ -7,7 +7,7 @@
 #include <algorithm>
 #include "filterable_iterator.h"
 
-namespace countrybit
+namespace corona
 {
 	namespace database
 	{

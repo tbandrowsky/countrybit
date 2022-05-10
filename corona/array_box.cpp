@@ -3,7 +3,7 @@
 #include <iostream>
 #include "assert_if.h"
 
-namespace countrybit
+namespace corona
 {
 	namespace database
 	{

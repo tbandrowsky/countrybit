@@ -20,7 +20,7 @@
 #include <functional>
 #include <cassert>
 
-namespace countrybit
+namespace corona
 {
 	namespace database
 	{
