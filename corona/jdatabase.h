@@ -127,10 +127,10 @@ namespace countrybit
 			jactor info;
 		};
 
-		class command_response : public db_response
+		class actor_state_response : public db_response
 		{
 		public:
-			actor_command_response info;
+			actor_state info;
 		};
 
 
@@ -289,12 +289,12 @@ namespace countrybit
 				return collection_invoke<request_type, actor_response, jactor>(_name, _request, fn, [this](jcollection&collection, relative_ptr_type id) { return collection.get_actor(id); });
 			}
 
-			template <typename request_type> command_response command_invoke(
+			template <typename request_type> actor_state_response command_invoke(
 				request_type& _request,
-				std::function<actor_command_response(jcollection& _collection, request_type& _request)> process_fn
+				std::function<actor_state(jcollection& _collection, request_type& _request)> process_fn
 			)
 			{
-				command_response response;
+				actor_state_response response;
 				response.success = false;
 
 				try
@@ -364,10 +364,10 @@ namespace countrybit
 			actor_response put_actor(jactor _actor);
 			actor_response get_actor(get_actor_request _request);
 
-			command_response get_actor_options(get_actor_request _request);
-			command_response select_object(select_object_request _select);
-			command_response create_object(create_object_request _create);
-			command_response update_object(actor_update_object _update);
+			actor_state_response get_actor_options(get_actor_request _request);
+			actor_state_response select_object(select_object_request _select);
+			actor_state_response create_object(create_object_request _create);
+			actor_state_response update_object(actor_update_object _update);
 			
 		};
 	}

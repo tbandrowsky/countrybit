@@ -263,21 +263,21 @@ namespace countrybit
 			return actor_invoke<get_actor_request>(_request.name.c_str(), [this](jcollection& col, auto& r) { return col.find_actor(r.name); }, _request);
 		}
 
-		command_response jdatabase::select_object(select_object_request _select)
+		actor_state_response jdatabase::select_object(select_object_request _select)
 		{
 			return command_invoke<select_object_request>(_select, [](jcollection& _collection, select_object_request& p) {
 				return _collection.select_object(p);
 				});
 		}
 
-		command_response jdatabase::create_object(create_object_request _create)
+		actor_state_response jdatabase::create_object(create_object_request _create)
 		{
 			return command_invoke<create_object_request>(_create, [](jcollection& _collection, create_object_request& p) {
 				return _collection.create_object(p);
 				});
 		}
 
-		command_response jdatabase::update_object(actor_update_object _update)
+		actor_state_response jdatabase::update_object(actor_update_object _update)
 		{
 			return command_invoke<actor_update_object>(_update, [](jcollection& _collection, actor_update_object& p) {
 				return _collection.update_object(p);

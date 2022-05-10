@@ -4,6 +4,7 @@
 #include "extractor.h"
 
 #define _DETAIL 0
+#define _TRACE_RULE 0
 
 namespace countrybit
 {
@@ -57,7 +58,7 @@ namespace countrybit
 			return hr == S_OK;
 		}
 
-		jslice actor_command_response::create_object(jschema* _schema, relative_ptr_type _class_id)
+		jslice actor_state::create_object(jschema* _schema, relative_ptr_type _class_id)
 		{
 			auto myclass = _schema->get_class(_class_id);
 			auto bytes_to_allocate = myclass.item().class_size_bytes;
@@ -70,14 +71,14 @@ namespace countrybit
 			return ja;
 		}
 
-		jslice actor_command_response::copy_object(jschema* _schema, jslice& _src)
+		jslice actor_state::copy_object(jschema* _schema, jslice& _src)
 		{
 			jslice dest = create_object(_schema, _src.get_class().item().class_id);
 			dest.update(_src);
 			return dest;
 		}
 
-		actor_view_object actor_command_response::get_modified_object()
+		actor_view_object actor_state::get_modified_object()
 		{
 			if (modified_object_id == null_row) {
 				throw std::logic_error("No modified object");
@@ -100,7 +101,9 @@ namespace countrybit
 			// we can allow the option to create a class, if and only if we exactly satisfy the 
 			// selectors on this option. if we do create on the option here, it will have the item id
 			// of the class specified in the rule so that continuity will be preserved.
-			else if (
+			else 
+			{
+				bool all_required_items_satisfied = 
 				required->all_of([this, selections](auto& src) {
 					int c = selections->count_if(
 						[src, this](auto& dest) {
@@ -108,25 +111,30 @@ namespace countrybit
 							relative_ptr_type class_id = obj.item().class_id;
 							return class_id == src.item.class_id;
 						});
+					std::cout << "  selected count of " << src.item.class_id << " " << c << std::endl;
 					return c == 1;
-					})
-				&&
-				selections->all_of([this, required](auto& dest) {
-				return required->any_of([this, dest](auto& src) {
-					return src.item.class_id == dest.item;
 					});
-					})
-				)
-			{
-				return true;
+
+				bool all_selections_required = selections->all_of([this, required](auto& dest) {
+					bool result = required->any_of([this, dest](auto& src) {
+						auto obj = this->objects[dest.item];
+						relative_ptr_type class_id = obj.item().class_id;
+						return src.item.class_id == class_id;
+						});
+						std::cout << "   check " << dest.item << " " << result << std::endl;
+						return result;
+					});
+
+				std::cout << "  all_required " << all_required_items_satisfied << " " << "all_selected " << all_selections_required << std::endl;
+
+				return all_required_items_satisfied && all_selections_required;
 			}
 
 			return false;
 		}
 
-		void jcollection::print(const char *_trace, actor_command_response& acr)
+		void jcollection::print(const char *_trace, actor_state& acr)
 		{
-			std::cout << _trace << std::endl;
 			for (auto co : acr.create_objects)
 			{
 				std::cout << "create class " << schema->get_class( co.second.class_id ).item().name << std::endl;
@@ -137,11 +145,18 @@ namespace countrybit
 				auto slice = get_at(vo.second.object_id);
 				std::cout << "existing object " << vo.second.object_id << " (" << slice.get_class().item().name << ") selectable:" <<  vo.second.selectable << " selected:" << vo.second.selected << " updatable:" << vo.second.updatable << std::endl;
 			}
+			if (_trace) {
+				std::cout << _trace << std::endl;
+			}
 		}
 
-		actor_command_response jcollection::get_command_result(relative_ptr_type _actor)
+		actor_state jcollection::get_actor_state(relative_ptr_type _actor, const char* _trace_msg)
 		{
-			actor_command_response acr;
+			actor_state acr;
+
+			if (_trace_msg) {
+				std::cout << _trace_msg << std::endl;
+			}
 
 			acr.collection_id = collection_id;
 
@@ -160,7 +175,14 @@ namespace countrybit
 				auto rule = &oi.item;
 				auto required = &oi.item.selectors;
 
+#if _TRACE_RULE
+				std::cout << "check rule " << oi.item.rule_name << std::endl;
+#endif
+
 				if (selector_applies(&oi.item.selectors, _actor)) {
+#if _TRACE_RULE
+					std::cout << " " << oi.item.rule_name << " applies " << std::endl;
+#endif
 					create_object_request aco;
 					auto selected_create = selections->where([rule, this](auto& src) {
 						return objects[src.item].item().class_id == rule->item_id_class;
@@ -179,6 +201,11 @@ namespace countrybit
 					aco.class_id = oi.item.create_class_id;
 					aco.select_on_create = oi.item.select_on_create;
 					acr.create_objects.insert_or_assign(aco.class_id, aco);
+				}
+				else {
+#if _TRACE_RULE
+					std::cout << " " << oi.item.rule_name << " does not apply " << std::endl;
+#endif
 				}
 			}
 
@@ -258,7 +285,6 @@ namespace countrybit
 							avo.selected = false;
 							avo.updatable = true;
 							acr.view_objects.put(oid, avo, [](actor_view_object& _dest) { 								
-								std::cout << "   updateable " << _dest.object_id << "selectable:" << _dest.selectable << " selected : " << _dest.selected << " updatable : " << _dest.updatable << std::endl;
 								_dest.updatable = true; 																						
 								});
 						}
@@ -266,6 +292,10 @@ namespace countrybit
 				}
 			}
 
+			if (_trace_msg)
+			{
+				print("-------", acr);
+			}
 			return acr;
 		}
 
@@ -323,9 +353,13 @@ namespace countrybit
 			return modified.actor_id;
 		}
 
-		actor_command_response jcollection::select_object(const select_object_request& _select)
+		actor_state jcollection::select_object(const select_object_request& _select, const char* _trace_msg)
 		{
-			actor_command_response acr;
+			if (_trace_msg) {
+				std::cout << _trace_msg << std::endl;
+			}
+
+			actor_state acr;
 			acr.collection_id = collection_id;
 			if (!actors.check(_select.actor_id))
 			{
@@ -338,15 +372,20 @@ namespace countrybit
 			if (objects.check(_select.object_id)) {
 				relative_ptr_type selection = _select.object_id;
 				ac.selections.push_back(selection);
+				put_actor(ac);
 				acr.modified_object_id = _select.object_id;
 			}
-			acr = get_command_result(_select.actor_id);
+			acr = get_actor_state(_select.actor_id, _trace_msg);
 			return acr;
 		}
 
-		actor_command_response jcollection::create_object(create_object_request& _create)
+		actor_state jcollection::create_object(create_object_request& _create, const char* _trace_msg)
 		{
-			actor_command_response acr;
+			if (_trace_msg) {
+				std::cout << _trace_msg << std::endl;
+			}
+
+			actor_state acr;
 			acr.collection_id = collection_id;
 			if (!actors.check(_create.actor_id))
 			{
@@ -366,14 +405,18 @@ namespace countrybit
 				}
 			}
 
-			acr = get_command_result(_create.actor_id);
+			acr = get_actor_state(_create.actor_id, _trace_msg);
 			acr.modified_object_id = object_id;
 			return acr;
 		}
 
-		actor_command_response jcollection::update_object(actor_update_object& _update)
+		actor_state jcollection::update_object(actor_update_object& _update, const char* _trace_msg)
 		{
-			actor_command_response acr;
+			if (_trace_msg) {
+				std::cout << _trace_msg << std::endl;
+			}
+
+			actor_state acr;
 			acr.collection_id = collection_id;
 			if (!actors.check(_update.actor_id))
 			{
@@ -389,7 +432,7 @@ namespace countrybit
 				update_object(object_id, slice);
 			}
 
-			acr = get_command_result(_update.actor_id);
+			acr = get_actor_state(_update.actor_id, _trace_msg);
 			return acr;
 		}
 
@@ -2314,8 +2357,7 @@ namespace countrybit
 				sample_actor.actor_id = null_row;
 				sample_actor = program_chart.create_actor(sample_actor);
 
-				auto result = program_chart.get_command_result(sample_actor.actor_id);
-				program_chart.print("empty chart", result);
+				auto result = program_chart.get_actor_state(sample_actor.actor_id, "initial state");
 
 				// now, we want to get the command for creating a pair of objects and test.
 				// first we shall see if we can create a carrier
@@ -2329,9 +2371,7 @@ namespace countrybit
 					.get_value();
 
 				// now, we will create a carrier
-				auto result2 = program_chart.create_object(create_carrier_option);
-
-				program_chart.print("created carrier", result2);
+				auto result2 = program_chart.create_object(create_carrier_option, "create a carrier");
 
 				// and we should have a created carrier
 				auto new_carrier = result2.get_modified_object();
@@ -2348,9 +2388,7 @@ namespace countrybit
 					.where([coverage_class_id](std::pair<relative_ptr_type, create_object_request>& acokp) { return acokp.second.class_id == coverage_class_id; })
 					.get_value();
 
-				auto result3 = program_chart.create_object(create_coverage_option);
-
-				program_chart.print("created coverage", result3);
+				auto result3 = program_chart.create_object(create_coverage_option, "create a coverage");
 
 				// and we should have a created coverage
 				auto new_coverage = result3.get_modified_object();
@@ -2365,15 +2403,10 @@ namespace countrybit
 				// and now that we have a coverage and a carrier, we should be able to select them both to create a program chart item
 
 				auto select_coverage = result3.create_select_request(new_coverage.object_id, false);
-				auto result4 = program_chart.select_object(select_coverage);
-
-				program_chart.print("selected coverage", result4);
+				auto result4 = program_chart.select_object(select_coverage, "select a coverage");
 
 				auto select_carrier = result4.create_select_request(new_carrier.object_id, true);
-				auto result5 = program_chart.select_object(select_carrier);
-
-				program_chart.print("selected carrier", result5);
-
+				auto result5 = program_chart.select_object(select_carrier, "select a carrier");
 
 				return true;
 			}

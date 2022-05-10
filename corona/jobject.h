@@ -426,7 +426,7 @@ namespace countrybit
 			}
 		};
 
-		class actor_command_response
+		class actor_state
 		{
 			dynamic_box									data;
 			relative_ptr_type							create_objects_location;
@@ -442,7 +442,7 @@ namespace countrybit
 
 			relative_ptr_type							modified_object_id;
 
-			actor_command_response()
+			actor_state()
 			{
 				data.init(100000);
 				create_objects = actor_create_collection::create_sorted_index(&data, create_objects_location);
@@ -450,7 +450,7 @@ namespace countrybit
 				modified_object_id = null_row;
 			}
 
-			actor_command_response(actor_command_response&& _src)
+			actor_state(actor_state&& _src)
 			{
 				data = std::move(_src.data);
 				collection_id = _src.collection_id;
@@ -462,7 +462,7 @@ namespace countrybit
 				view_objects = actor_view_collection::get_sorted_index(&data, view_objects_location );
 			}
 
-			actor_command_response& operator=(actor_command_response&& _src)
+			actor_state& operator=(actor_state&& _src)
 			{
 				data = std::move(_src.data);
 				collection_id = _src.collection_id;
@@ -476,7 +476,7 @@ namespace countrybit
 				return *this;
 			}
 
-			actor_command_response operator=(const actor_command_response& _src)
+			actor_state operator=(const actor_state& _src)
 			{
 				data = _src.data;
 				collection_id = _src.collection_id;
@@ -489,7 +489,7 @@ namespace countrybit
 				return *this;
 			}
 
-			actor_command_response(const actor_command_response& _src) 
+			actor_state(const actor_state& _src)
 			{
 				data = _src.data;
 				collection_id = _src.collection_id;
@@ -625,12 +625,12 @@ namespace countrybit
 			actor_id_type find_actor(object_name& name);
 			actor_type update_actor(actor_type _actor);
 
-			actor_command_response get_command_result(relative_ptr_type _actor);
-			actor_command_response select_object(const select_object_request& _select);
-			actor_command_response create_object(create_object_request& _create);
-			actor_command_response update_object(actor_update_object& _update);
+			actor_state get_actor_state(relative_ptr_type _actor, const char *_trace_msg = nullptr);
+			actor_state select_object(const select_object_request& _select, const char* _trace_msg = nullptr);
+			actor_state create_object(create_object_request& _create, const char* _trace_msg = nullptr);
+			actor_state update_object(actor_update_object& _update, const char* _trace_msg = nullptr);
 
-			void print(const char *_trace, actor_command_response& acr);
+			void print(const char *_trace, actor_state& acr);
 
 			jslice create_object(relative_ptr_type _item_id, relative_ptr_type _actor_id, relative_ptr_type _class_id, relative_ptr_type& object_id);
 			jslice get_object(relative_ptr_type _object_id);
