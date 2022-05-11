@@ -1,9 +1,0 @@
-namespace programchart
-{
-    [default_interface]
-    runtimeclass DeductibleEditor : Windows.UI.Xaml.Controls.UserControl
-    {
-        DeductibleEditor();
-        Int32 MyProperty;
-    }
-}

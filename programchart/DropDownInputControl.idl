@@ -1,9 +1,0 @@
-namespace programchart
-{
-    [default_interface]
-    runtimeclass DropDownInputControl : Windows.UI.Xaml.Controls.UserControl
-    {
-        DropDownInputControl();
-        Int32 MyProperty;
-    }
-}

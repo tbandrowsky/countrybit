@@ -5,14 +5,6 @@
   </ItemGroup>
   <ItemGroup>
     <Page Include="MainPage.xaml" />
-    <Page Include="CarrierEditor.xaml" />
-    <Page Include="CoverageEditor.xaml" />
-    <Page Include="ProgramTitleEditor.xaml" />
-    <Page Include="DeductibleEditor.xaml" />
-    <Page Include="TextInputControl.xaml" />
-    <Page Include="DropDownInputControl.xaml" />
-    <Page Include="ColorInputControl.xaml" />
-    <Page Include="CommentInputControl.xaml" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="App.idl" />

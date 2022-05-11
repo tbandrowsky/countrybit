@@ -2,10 +2,8 @@
 
 namespace corona
 {
-	namespace system 
+	namespace database 
 	{
-		using file_path = corona::database::istring<260>;
-
 		class file_instance
 		{
 		public:
@@ -14,6 +12,7 @@ namespace corona
 			HANDLE		hfile;
 			char*		buffer_bytes;
 			DWORD		buffer_size;
+			uint64_t	location;
 			DWORD		bytes_transferred;
 			BOOL		success;
 			os_result	last_result;
@@ -34,6 +33,7 @@ namespace corona
 				hfile(_hfile),
 				buffer_bytes(nullptr),
 				buffer_size(0),
+				location(0),
 				bytes_transferred(0),
 				success(false)
 			{
@@ -47,9 +47,16 @@ namespace corona
 
 			file_instance* params;
 
-			void run()
+			bool run()
 			{
-				::WriteFile(params->hfile, params->buffer_bytes, params->buffer_size, NULL, (LPOVERLAPPED)this);
+				LARGE_INTEGER li;
+				li.QuadPart = params->location;
+				container.ovp.Offset = li.LowPart;
+				container.ovp.OffsetHigh = li.HighPart;
+				BOOL success = ::WriteFile(params->hfile, params->buffer_bytes, params->buffer_size, NULL, (LPOVERLAPPED)&container);
+				os_result result;
+				std::cout << "Write:" << success << " "  << result.message << std::endl;
+				return result.error_code == ERROR_IO_PENDING || result.error_code == ERROR_SUCCESS;
 			}
 		};
 
@@ -58,9 +65,16 @@ namespace corona
 		public:
 			file_instance* params;
 
-			void run()
+			bool run()
 			{
-				::ReadFile(params->hfile, params->buffer_bytes, params->buffer_size, NULL, (LPOVERLAPPED)this);
+				LARGE_INTEGER li;
+				li.QuadPart = params->location;
+				container.ovp.Offset = li.LowPart;
+				container.ovp.OffsetHigh = li.HighPart;
+				BOOL success = ::ReadFile(params->hfile, params->buffer_bytes, params->buffer_size, NULL, (LPOVERLAPPED)&container);
+				os_result result;
+				std::cout << "Read:" << success << " " << result.message << std::endl;
+				return result.error_code == ERROR_IO_PENDING || result.error_code == ERROR_SUCCESS;
 			}
 		};
 
@@ -97,7 +111,7 @@ namespace corona
 					disposition = OPEN_ALWAYS;
 					break;
 				default:
-					throw std::runtime_error("Invalid enum to open file " + instance.file_name);
+					throw std::runtime_error("Invalid enum to open file ");
 				}
 
 				resize_event = ::CreateEvent(NULL, TRUE, TRUE, NULL);
@@ -108,16 +122,28 @@ namespace corona
 						return;
 					}
 				}
-				instance.hfile = ::CreateFileA(instance.file_name.c_str(), (GENERIC_READ | GENERIC_WRITE), 0, NULL, disposition, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OVERLAPPED, NULL);
+				iwstring<600> file_name = instance.file_name;
+
+				CREATEFILE2_EXTENDED_PARAMETERS params = {0};
+
+				params.dwSize = sizeof(params);
+				params.dwFileAttributes = FILE_ATTRIBUTE_NORMAL;
+				params.dwSecurityQosFlags = 0;
+				params.hTemplateFile = NULL;
+				params.lpSecurityAttributes = NULL;
+				params.dwFileFlags = FILE_FLAG_OVERLAPPED;
+
+				instance.hfile = ::CreateFile2(file_name.c_str(), (GENERIC_READ | GENERIC_WRITE), 0, disposition, &params);
 				if (instance.hfile == INVALID_HANDLE_VALUE) {
 					os_result osr;
 					{
 						CloseHandle(resize_event);
 						instance.last_result = osr;
-						return;
+						throw std::logic_error(osr.message.c_str());
 					}
 				}
-				auto hfileport = ::CreateIoCompletionPort(instance.hfile, instance.queue->getPort(), 0, instance.queue->getThreadCount());
+				HANDLE hport = instance.queue->getPort();
+				auto hfileport = ::CreateIoCompletionPort(instance.hfile, hport, 0, 0);
 				if (hfileport == NULL)
 				{
 					os_result osr;
@@ -127,7 +153,7 @@ namespace corona
 						instance.hfile = INVALID_HANDLE_VALUE;
 						resize_event = NULL;
 						instance.last_result = osr;
-						return;
+						throw std::logic_error(osr.message.c_str());
 					}
 				}
 			}
@@ -165,11 +191,13 @@ namespace corona
 				if (resize_event != NULL)
 				{
 					::CloseHandle(resize_event);
+					resize_event = INVALID_HANDLE_VALUE;
 				}
 
 				if (instance.hfile != INVALID_HANDLE_VALUE)
 				{
 					CloseHandle(instance.hfile);
+					instance.hfile = INVALID_HANDLE_VALUE;
 				}
 			}
 
@@ -197,6 +225,9 @@ namespace corona
 			auto write(uint64_t location, void* _buffer, int _buffer_length)
 			{
 				::WaitForSingleObject(resize_event, INFINITE);
+				instance.location = location;
+				instance.buffer_bytes = (char*)_buffer;
+				instance.buffer_size = _buffer_length;
 				async_io_task<file_write_job, file_instance> aw;
 				aw.configure(instance.queue, instance);
 				return aw;
@@ -205,6 +236,9 @@ namespace corona
 			auto read(uint64_t location, void* _buffer, int _buffer_length)
 			{
 				async_io_task<file_read_job, file_instance> aw;
+				instance.location = location;
+				instance.buffer_bytes = (char *)_buffer;
+				instance.buffer_size = _buffer_length;
 				aw.configure(instance.queue, instance);
 				return aw;
 			}

@@ -2,7 +2,7 @@
 
 namespace corona
 {
-	namespace system
+	namespace database
 	{
 
 		class get_number_result : public base_parse_result 

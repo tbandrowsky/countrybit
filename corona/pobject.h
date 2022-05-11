@@ -2,7 +2,7 @@
 
 namespace corona 
 {
-	namespace system 
+	namespace database
 	{
 
 		class pobject;

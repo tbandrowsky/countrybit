@@ -1,12 +1,12 @@
 
 
-#include "corona.h"
+#include "pch.h"
 
 // #define SHOW_ERROR_MESSAGES
 
 namespace corona
 {
-	namespace system
+	namespace database
 	{
 		bool string_extractor::skip_whitespace()
 		{
@@ -995,7 +995,7 @@ namespace corona
 						if (mm && !v->as_array() && !v->as_object())
 						{
 							
-							corona::database::istring<2048> temp;
+							istring<2048> temp;
 
 							const char* s = v->as_string();
 

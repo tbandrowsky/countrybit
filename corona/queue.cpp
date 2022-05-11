@@ -1,18 +1,18 @@
 
-#include "corona.h"
+#include "pch.h"
 
 // #define COM_INITIALIZATION
 
 namespace corona
 {
-	namespace system
+	namespace database
 	{
 
 		void job_notify::notify()
 		{
 			switch (notification) {
 			case postmessage:
-				::PostMessage(msg.hwnd, msg.message, msg.wParam, msg.lParam);
+				// ::PostMessage(msg.hwnd, msg.message, msg.wParam, msg.lParam);
 				break;
 			case setevent:
 				SetEvent((HANDLE)msg.lParam);
@@ -75,7 +75,7 @@ namespace corona
 
 		job::job()
 		{
-			::ZeroMemory(&ovp, sizeof(ovp));
+			container.jobdata = this;			
 		}
 
 		job::~job()
@@ -203,14 +203,6 @@ namespace corona
 			}
 		}
 
-		void job_queue::postJobMessage(job* _jobMessage)
-		{
-			LONG result;
-			::InterlockedIncrement((LONG*)&num_outstanding_jobs);
-			::ResetEvent(empty_queue_event);
-			result = ::PostQueuedCompletionStatus(ioCompPort, 0, 0, (LPOVERLAPPED)(_jobMessage));
-		}
-
 		void job_queue::shutDown()
 		{
 			int i;
@@ -234,11 +226,20 @@ namespace corona
 			shutDown();
 		}
 
+		void job_queue::postJobMessage(job* _jobMessage)
+		{
+			LONG result;
+			::InterlockedIncrement((LONG*)&num_outstanding_jobs);
+			::ResetEvent(empty_queue_event);
+			result = ::PostQueuedCompletionStatus(ioCompPort, 0, 0, (LPOVERLAPPED)(&_jobMessage->container));
+		}
+
 		unsigned int job_queue::jobQueueThread(job_queue* jobQueue)
 		{
 
 			LPOVERLAPPED lpov;
 			job* waiting_job;
+			job_container* container;
 
 			BOOL success;
 			DWORD bytesTransferred;
@@ -254,16 +255,21 @@ namespace corona
 			while (!jobQueue->wasShutDownOrdered()) {
 				success = ::GetQueuedCompletionStatus(jobQueue->ioCompPort, &bytesTransferred, &compKey, &lpov, 1000);
 				if (success && lpov) {
-					waiting_job  = (job*)lpov;
+					container = (job_container*)lpov;
+					if (container) {
+						waiting_job = container->jobdata;
 
-					if (waiting_job) {
-						jobNotify = waiting_job->execute(jobQueue, bytesTransferred, success);
-						jobNotify.notify();
-						if (jobNotify.repost && (!jobQueue->wasShutDownOrdered())) {
-							jobQueue->postJobMessage(waiting_job);
+						if (waiting_job) {
+							jobNotify = waiting_job->execute(jobQueue, bytesTransferred, success);
+							jobNotify.notify();
+							if (jobNotify.repost && (!jobQueue->wasShutDownOrdered())) {
+								jobQueue->postJobMessage(waiting_job);
+							}
 						}
+
 						if (jobNotify.shouldDelete) {
 							delete waiting_job;
+							delete container;
 						}
 					}
 
@@ -284,10 +290,9 @@ namespace corona
 
 		void job_queue::waitForThreadFinished()
 		{
-			finish_job finishJob;
-
-			postJobMessage(&finishJob);
-			::WaitForSingleObject(finishJob.handle, INFINITE);
+			finish_job fj;
+			postJobMessage(&fj);
+			::WaitForSingleObject(fj.handle, INFINITE);
 		}
 
 		void job_queue::waitForEmptyQueue()

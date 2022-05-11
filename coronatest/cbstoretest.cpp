@@ -1,18 +1,19 @@
 // cbstoretest.cpp : This file contains the 'main' function. Program execution begins and ends there.
 //
 
-#include "corona.h"
+#include "pch.h"
 
-corona::system::sync<int> test_queue();
-corona::system::task<int> calc();
+corona::database::sync<int> test_queue();
+corona::database::task<int> calc();
 
 void queue_tests();
 
 int main()
 {
 
-    corona::system::application aw;
+    corona::database::application aw;
 
+    if (corona::database::application_tests()) std::cout << "i/o passed" << std::endl;
     if (corona::database::box_tests()) std::cout << "boxes passed" << std::endl;
     if (corona::database::string_tests()) std::cout << "string passed" << std::endl;
     if (corona::database::table_tests()) std::cout << "table passed" << std::endl;
@@ -22,8 +23,8 @@ int main()
     if (corona::database::schema_tests()) std::cout << "schema passed" << std::endl;
     if (corona::database::collection_tests()) std::cout << "collection passed" << std::endl;
     if (corona::database::array_tests()) std::cout << "array object passed" << std::endl;
-    if (corona::system::string_extractor::test_basics()) std::cout << "parser basics passed" << std::endl;
-    if (corona::system::string_extractor::test_json()) std::cout << "parser json passed" << std::endl;
+    if (corona::database::string_extractor::test_basics()) std::cout << "parser basics passed" << std::endl;
+    if (corona::database::string_extractor::test_json()) std::cout << "parser json passed" << std::endl;
     if (corona::database::model_tests()) std::cout << "model passed" << std::endl;
 //    queue_tests();
 }
@@ -39,7 +40,7 @@ void queue_tests()
     std::cout << "done:" << GetCurrentThreadId() << std::endl;
 }
 
-corona::system::task<int> calc()
+corona::database::task<int> calc()
 {
     std::cout << "calc start:" << GetCurrentThreadId() << std::endl;
     std::cout << "calc sleeps:" << GetCurrentThreadId() << std::endl;
@@ -48,7 +49,7 @@ corona::system::task<int> calc()
     co_return 10;
 }
 
-corona::system::sync<int> test_queue()
+corona::database::sync<int> test_queue()
 {
     std::cout << "test start:" << GetCurrentThreadId() << std::endl;
 

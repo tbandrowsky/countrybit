@@ -8,9 +8,9 @@
 
 namespace corona
 {
-	namespace system
+	namespace database
 	{
-		using error_string = corona::database::istring<256>;
+		using error_string = istring<256>;
 
 		class base_result
 		{
@@ -40,7 +40,6 @@ namespace corona
 		class os_result : public base_result
 		{
 		public:
-
 			uint64_t error_code;
 			os_result();
 		};

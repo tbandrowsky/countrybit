@@ -14,11 +14,11 @@ namespace corona
 			char data[1];
 		};
 
-		bool has_any(const char* _src, const char* _charlist);
+		bool str_has_any(const char* _src, const char* _charlist);
+		bool str_has_any(const wchar_t* _src, const wchar_t* _charlist);
 
 		template <int len> class istring;
 		template <int len> class iwstring;
-
 
 		class string_box
 		{
@@ -228,7 +228,7 @@ namespace corona
 
 			bool has_any(const char* _pattern)
 			{
-				return corona::database::has_any(hdr->data, _pattern);
+				return str_has_any(hdr->data, _pattern);
 			}
 
 			double to_double()
@@ -379,6 +379,11 @@ namespace corona
 				return length;
 			}
 
+			uint32_t capacity() const
+			{
+				return length_bytes - 1;
+			}
+
 			void copy(const wchar_t* _src, int max_len = -1)
 			{
 				if (max_len < 0)
@@ -438,7 +443,7 @@ namespace corona
 
 			bool has_any(const char* _pattern)
 			{
-				return corona::database::has_any(data, _pattern);
+				return str_has_any(data, _pattern);
 			}
 
 			istring& operator = (double d)
@@ -642,7 +647,6 @@ namespace corona
 				return &data[0];
 			}
 
-
 			const wchar_t* value() const
 			{
 				return &data[0];
@@ -651,6 +655,11 @@ namespace corona
 			uint32_t size() const
 			{
 				return length;
+			}
+
+			uint32_t capacity() const
+			{
+				return length_wchars -1;
 			}
 
 			void copy(const char* s)
@@ -706,6 +715,11 @@ namespace corona
 					length = last_char;
 					data[last_char] = 0;
 				}
+			}
+
+			bool has_any(const wchar_t* _pattern)
+			{
+				return str_has_any(data, _pattern);
 			}
 
 		};
@@ -898,5 +912,7 @@ namespace corona
 		using string_validation_pattern = istring<100>;
 		using string_validation_message = istring<100>;
 		using query_body = istring<8192>;
+		using file_path = istring<260>;
+
 	}
 }

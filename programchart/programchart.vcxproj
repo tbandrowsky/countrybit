@@ -86,7 +86,7 @@
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <PrecompiledHeaderOutputFile>$(IntDir)pch.pch</PrecompiledHeaderOutputFile>
+      <PrecompiledHeaderOutputFile>$(IntDir)$(TargetName).pch</PrecompiledHeaderOutputFile>
       <WarningLevel>Level4</WarningLevel>
       <AdditionalOptions>%(AdditionalOptions) /bigobj</AdditionalOptions>
       <!--Temporarily disable cppwinrt heap enforcement to work around xaml compiler generated std::shared_ptr use -->
@@ -100,11 +100,19 @@
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
     <ClCompile>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">stdcpplatest</LanguageStandard>
+      <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">stdcpplatest</LanguageStandard>
+      <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">stdcpplatest</LanguageStandard>
+      <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">stdcpplatest</LanguageStandard>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Release'">
     <ClCompile>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">stdcpplatest</LanguageStandard>
+      <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">stdcpplatest</LanguageStandard>
+      <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">stdcpplatest</LanguageStandard>
+      <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Release|x64'">stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -112,30 +120,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="CarrierEditor.h">
-      <DependentUpon>CarrierEditor.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </ClInclude>
-    <ClInclude Include="ColorInputControl.h">
-      <DependentUpon>ColorInputControl.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </ClInclude>
-    <ClInclude Include="CommentInputControl.h">
-      <DependentUpon>CommentInputControl.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </ClInclude>
-    <ClInclude Include="CoverageEditor.h">
-      <DependentUpon>CoverageEditor.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </ClInclude>
-    <ClInclude Include="DeductibleEditor.h">
-      <DependentUpon>DeductibleEditor.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </ClInclude>
-    <ClInclude Include="DropDownInputControl.h">
-      <DependentUpon>DropDownInputControl.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </ClInclude>
     <ClInclude Include="pch.h" />
     <ClInclude Include="App.h">
       <DependentUpon>App.xaml</DependentUpon>
@@ -143,44 +127,12 @@
     <ClInclude Include="MainPage.h">
       <DependentUpon>MainPage.xaml</DependentUpon>
     </ClInclude>
-    <ClInclude Include="ProgramTitleEditor.h">
-      <DependentUpon>ProgramTitleEditor.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </ClInclude>
-    <ClInclude Include="TextInputControl.h">
-      <DependentUpon>TextInputControl.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ApplicationDefinition Include="App.xaml">
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Page Include="CarrierEditor.xaml">
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="ColorInputControl.xaml">
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="CommentInputControl.xaml">
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="CoverageEditor.xaml">
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="DeductibleEditor.xaml">
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="DropDownInputControl.xaml">
-      <SubType>Designer</SubType>
-    </Page>
     <Page Include="MainPage.xaml">
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="ProgramTitleEditor.xaml">
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="TextInputControl.xaml">
       <SubType>Designer</SubType>
     </Page>
   </ItemGroup>
@@ -199,30 +151,6 @@
     <Image Include="Assets\Wide310x150Logo.scale-200.png" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="CarrierEditor.cpp">
-      <DependentUpon>CarrierEditor.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </ClCompile>
-    <ClCompile Include="ColorInputControl.cpp">
-      <DependentUpon>ColorInputControl.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </ClCompile>
-    <ClCompile Include="CommentInputControl.cpp">
-      <DependentUpon>CommentInputControl.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </ClCompile>
-    <ClCompile Include="CoverageEditor.cpp">
-      <DependentUpon>CoverageEditor.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </ClCompile>
-    <ClCompile Include="DeductibleEditor.cpp">
-      <DependentUpon>DeductibleEditor.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </ClCompile>
-    <ClCompile Include="DropDownInputControl.cpp">
-      <DependentUpon>DropDownInputControl.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </ClCompile>
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
@@ -233,53 +161,13 @@
       <DependentUpon>MainPage.xaml</DependentUpon>
     </ClCompile>
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
-    <ClCompile Include="ProgramTitleEditor.cpp">
-      <DependentUpon>ProgramTitleEditor.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </ClCompile>
-    <ClCompile Include="TextInputControl.cpp">
-      <DependentUpon>TextInputControl.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Midl Include="App.idl">
       <DependentUpon>App.xaml</DependentUpon>
     </Midl>
-    <Midl Include="CarrierEditor.idl">
-      <DependentUpon>CarrierEditor.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </Midl>
-    <Midl Include="ColorInputControl.idl">
-      <DependentUpon>ColorInputControl.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </Midl>
-    <Midl Include="CommentInputControl.idl">
-      <DependentUpon>CommentInputControl.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </Midl>
-    <Midl Include="CoverageEditor.idl">
-      <DependentUpon>CoverageEditor.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </Midl>
-    <Midl Include="DeductibleEditor.idl">
-      <DependentUpon>DeductibleEditor.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </Midl>
-    <Midl Include="DropDownInputControl.idl">
-      <DependentUpon>DropDownInputControl.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </Midl>
     <Midl Include="MainPage.idl">
       <DependentUpon>MainPage.xaml</DependentUpon>
-    </Midl>
-    <Midl Include="ProgramTitleEditor.idl">
-      <DependentUpon>ProgramTitleEditor.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </Midl>
-    <Midl Include="TextInputControl.idl">
-      <DependentUpon>TextInputControl.xaml</DependentUpon>
-      <SubType>Code</SubType>
     </Midl>
   </ItemGroup>
   <ItemGroup>

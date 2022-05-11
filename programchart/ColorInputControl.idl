@@ -1,9 +1,0 @@
-namespace programchart
-{
-    [default_interface]
-    runtimeclass ColorInputControl : Windows.UI.Xaml.Controls.UserControl
-    {
-        ColorInputControl();
-        Int32 MyProperty;
-    }
-}

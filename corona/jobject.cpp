@@ -1,5 +1,5 @@
 
-#include "corona.h"
+#include "pch.h"
 
 #define _DETAIL 0
 #define _TRACE_RULE 0
@@ -1708,7 +1708,7 @@ namespace corona
 					return false;
 				}
 
-				corona::database::put_class_request person;
+				put_class_request person;
 
 				person.class_name = "person";
 				person.class_description = "a person";
@@ -1739,7 +1739,7 @@ namespace corona
 					offset_start += fld.size_bytes;
 				}
 
-				corona::database::put_class_request company;
+				put_class_request company;
 				company.class_name = "company";
 				company.class_description = "a company is a collection of people";
 				company.member_fields = { institution_field_id, member_field(person_class_id, dimensions_type { 10, 1, 1 }) };
@@ -1809,7 +1809,7 @@ namespace corona
 				sample_actor.actor_id = null_row;
 				sample_actor = people.create_actor(sample_actor);
 
-				corona::database::put_class_request person;
+				put_class_request person;
 
 				person.class_name = "person";
 				person.class_description = "a person";
@@ -1950,7 +1950,7 @@ namespace corona
 
 				schema = jschema::create_schema(&box, 50, true, schema_id);
 
-				corona::database::put_class_request sprite_frame_request;
+				put_class_request sprite_frame_request;
 
 				sprite_frame_request.class_name = "spriteframe";
 				sprite_frame_request.class_description = "sprite frame";
@@ -1962,7 +1962,7 @@ namespace corona
 					return false;
 				}
 
-				corona::database::put_class_request sprite_class_request;
+				put_class_request sprite_class_request;
 				sprite_class_request.class_name = "sprite";
 				sprite_class_request.class_description = "sprite";
 				sprite_class_request.member_fields = { "shortName", "rectangle", member_field(sprite_frame_class_id, { 10, 10, 1 }) };
@@ -2163,7 +2163,7 @@ namespace corona
 				sfr.options.length = 200;
 				relative_ptr_type carrier_name_id = schema.put_string_field(sfr);
 
-				corona::database::put_class_request pcr;
+				put_class_request pcr;
 
 				pcr.class_name = "program";
 				pcr.class_description = "program summary";

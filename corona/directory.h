@@ -2,14 +2,14 @@
 
 namespace corona
 {
-	namespace system 
+	namespace database
 	{
 
 		class directory_change_instance
 		{
 		public:
 			job_queue*				queue;
-			database::object_path	directory_name;
+			database::file_path		directory_name;
 			HANDLE					hdirectory;
 			char					*buffer_bytes;
 			DWORD					buffer_size;
@@ -178,7 +178,17 @@ namespace corona
 			{
 				DWORD disposition;
 
-				instance.hdirectory = ::CreateFileA(instance.directory_name.c_str(), (GENERIC_READ | GENERIC_WRITE), 0, NULL, disposition, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OVERLAPPED, NULL);
+				iwstring<512> filename = instance.directory_name;
+
+				CREATEFILE2_EXTENDED_PARAMETERS params = { 0 };
+
+				params.dwSize = sizeof(params);
+				params.dwFileAttributes = FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OVERLAPPED | FILE_FLAG_BACKUP_SEMANTICS;
+				params.dwSecurityQosFlags = SECURITY_ANONYMOUS;
+				params.hTemplateFile = NULL;
+				params.lpSecurityAttributes = NULL;
+				instance.hdirectory= ::CreateFile2(filename.c_str(), (GENERIC_READ | GENERIC_WRITE), 0, disposition, &params);
+
 				if (instance.hdirectory == INVALID_HANDLE_VALUE) {
 					os_result osr;
 					{

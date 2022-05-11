@@ -2,7 +2,7 @@
 
 namespace corona
 {
-	namespace system
+	namespace database
 	{
 		class application
 		{
@@ -23,9 +23,9 @@ namespace corona
 				queue.shutDown();
 			}
 
-			static application& get_application()
+			static application* get_application()
 			{
-				return *home;
+				return home;
 			}
 
 			void wait()
@@ -56,6 +56,7 @@ namespace corona
 
 		};
 
+		corona::database::sync<int> application_tests();
 	}
 
 }

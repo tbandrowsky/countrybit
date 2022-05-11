@@ -1,9 +1,0 @@
-namespace programchart
-{
-    [default_interface]
-    runtimeclass TextInputControl : Windows.UI.Xaml.Controls.UserControl
-    {
-        TextInputControl();
-        Int32 MyProperty;
-    }
-}

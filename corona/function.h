@@ -2,7 +2,7 @@
 
 namespace corona
 {
-	namespace system 
+	namespace database
 	{
 
 		class task_job : public job
@@ -12,6 +12,10 @@ namespace corona
 			HANDLE					event;
 
 			task_job() : job()
+			{
+			}
+
+			task_job(std::coroutine_handle<> _handle, HANDLE _event) : handle(_handle), event(_event)
 			{
 				;
 			}
@@ -105,12 +109,10 @@ namespace corona
 
 			void await_suspend(std::coroutine_handle<> _handle)
 			{
-				task_job my_job;
 				HANDLE hevent = ::CreateEvent(NULL, FALSE, FALSE, NULL);
 				std::cout << this << ", task await_suspend:" << GetCurrentThreadId() << std::endl;
-				my_job.handle = coroutine;
-				my_job.event = hevent;
-				application::get_application().add_job(&my_job);
+				task_job tj(coroutine, hevent);
+				application::get_application()->add_job(&tj);
 				std::cout << this << ", task await_suspend away:" << GetCurrentThreadId() << std::endl;
 				::WaitForSingleObject(hevent, INFINITE);
 				std::cout << "task await_suspend finished:" << GetCurrentThreadId() << std::endl;
@@ -199,17 +201,24 @@ namespace corona
 				my_job.params = &params;
 				my_job.handle = coroutine;
 				my_job.event = hevent;
-				my_job.run();
-				std::cout << this << ", async_io_task await_suspend away:" << GetCurrentThreadId() << std::endl;
-				::WaitForSingleObject(hevent, INFINITE);
-				std::cout << "async_io_task await_suspend finished:" << GetCurrentThreadId() << std::endl;
+				if (my_job.run()) {
+					std::cout << this << ", async_io_task await_suspend away:" << GetCurrentThreadId() << std::endl;
+					::WaitForSingleObject(hevent, INFINITE);
+					std::cout << "async_io_task await_suspend finished:" << GetCurrentThreadId() << std::endl;
+				}
+				else {
+					std::cout << "error skipped finished:" << GetCurrentThreadId() << std::endl;
+				}
 				handle.resume();
 			}
 
 			IOParams await_resume()
 			{
+				IOParams t = {};
 				std::cout << "async_io_task await_resume:" << GetCurrentThreadId() << std::endl;
-				auto t = coroutine.promise().m_value;
+				if (coroutine) {
+					t = coroutine.promise().m_value;
+				}
 				return t;
 			}
 

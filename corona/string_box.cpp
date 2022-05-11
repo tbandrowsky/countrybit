@@ -1,15 +1,27 @@
 
-#include "corona.h"
+#include "pch.h"
 
 namespace corona
 {
 	namespace database
 	{
-		bool has_any(const char* _src, const char* _charlist)
+		bool str_has_any(const char* _src, const char* _charlist)
 		{
 			for (const char* s = _src; *s; s++)
 			{
 				for (const char* c = _charlist; *c; c++)
+				{
+					if (*c == *s) return true;
+				}
+			}
+			return false;
+		}
+
+		bool str_has_any(const wchar_t* _src, const wchar_t* _charlist)
+		{
+			for (const wchar_t* s = _src; *s; s++)
+			{
+				for (const wchar_t* c = _charlist; *c; c++)
 				{
 					if (*c == *s) return true;
 				}

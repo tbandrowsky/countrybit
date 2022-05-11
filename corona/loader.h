@@ -2,7 +2,7 @@
 
 namespace corona
 {
-	namespace system
+	namespace database
 	{
 		template <typename RemoteField>
 		concept remote_field = requires(RemoteField rf, 

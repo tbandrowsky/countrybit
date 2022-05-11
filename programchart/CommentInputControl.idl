@@ -1,9 +1,0 @@
-namespace programchart
-{
-    [default_interface]
-    runtimeclass CommentInputControl : Windows.UI.Xaml.Controls.UserControl
-    {
-        CommentInputControl();
-        Int32 MyProperty;
-    }
-}

@@ -1,9 +1,0 @@
-namespace programchart
-{
-    [default_interface]
-    runtimeclass ProgramTitleEditor : Windows.UI.Xaml.Controls.UserControl
-    {
-        ProgramTitleEditor();
-        Int32 MyProperty;
-    }
-}

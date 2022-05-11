@@ -2,7 +2,7 @@
 
 namespace corona
 {
-	namespace system
+	namespace database
 	{
 		class application;
 
@@ -33,13 +33,28 @@ namespace corona
 			friend class job_queue;
 		};
 
+		class job;
+
+		class job_container
+		{
+		public:
+			OVERLAPPED ovp;
+			job* jobdata;
+
+			job_container() :jobdata(nullptr)
+			{
+				::ZeroMemory(&ovp, sizeof(ovp));
+			}
+
+			~job_container()
+			{
+			}
+		};
+
 		class job
 		{
-		protected:
-
-			OVERLAPPED ovp;
-
 		public:
+			job_container container;
 			job();
 			virtual ~job();
 			virtual job_notify execute(job_queue* _callingQueue, DWORD _bytesTransferred, BOOL _success);
@@ -135,6 +150,7 @@ namespace corona
 			virtual ~job_queue();
 
 			void start(int _numThreads);
+
 			void postJobMessage(job* _jobMessage);
 			void shutDown();
 			void kill();

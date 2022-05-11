@@ -38,11 +38,11 @@ namespace corona
 			object_path database_folder;
 		};
 
-		class db_response : public system::base_result
+		class db_response : public base_result
 		{
 		public:
 			dynamic_box response_data;
-			system::os_result os_code;
+			os_result os_code;
 		};
 
 		class create_collection_request 
@@ -130,7 +130,7 @@ namespace corona
 			collections_by_id_type			collections_by_id;
 			collections_by_name_type		collections_by_name;
 
-			system::application				*application;
+			application						*current_application;
 			jdatabase_control_map			*map;
 
 			template <typename request_type, typename response_type, typename object_type> response_type schema_invoke(
@@ -312,11 +312,11 @@ namespace corona
 
 		public:
 
-			jdatabase(system::application* _application);
+			jdatabase(application* _application);
 			~jdatabase();
 
-			system::task<db_response> open(open_db_request _open);
-			system::task<db_response> create(create_db_request _create);
+			task<db_response> open(open_db_request _open);
+			task<db_response> create(create_db_request _create);
 
 			network_status_response get_network_status();
 			collection_status_response get_collection_status();

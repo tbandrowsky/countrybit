@@ -1,21 +1,20 @@
 
-#include "corona.h"
+#include "pch.h"
 
 namespace corona 
 {
 	namespace database 
 	{
 
-		jdatabase::jdatabase(system::application* _application) :
-			application( _application )
+		jdatabase::jdatabase(application* _application) : current_application( _application )
 		{
 
 		}
 
-		system::task<db_response> jdatabase::open(open_db_request _open)
+		task<db_response> jdatabase::open(open_db_request _open)
 		{
 			int success = 1;
-			corona::system::file dbfile = application->open_file(_open.filename.c_str(), corona::system::file_open_types::open_existing);
+			file dbfile = current_application->open_file(_open.filename.c_str(), file_open_types::open_existing);
 			if (dbfile.success()) {
 				auto sz = dbfile.size();
 				database_box.init(sz);
@@ -32,9 +31,9 @@ namespace corona
 			co_return jfr;
 		}
 
-		system::task<db_response> jdatabase::create(create_db_request _create)
+		task<db_response> jdatabase::create(create_db_request _create)
 		{
-			system::os_result last_err;
+			os_result last_err;
 
 			int success = 1;
 
@@ -55,7 +54,7 @@ namespace corona
 			collections_by_id = collections_by_id_type::create_sorted_index(&database_box, map->collections_by_id_location);
 			collections_by_name = collections_by_name_type::create_sorted_index(&database_box, map->collections_by_name_location);
 
-			corona::system::file dbfile = application->create_file(_create.database_filename);
+			file dbfile = current_application->create_file(_create.database_filename);
 
 			if (dbfile.success()) {
 				auto result = co_await dbfile.write(0, database_box.data(), database_box.size());
@@ -287,4 +286,3 @@ namespace corona
 		}
 	}
 }
-
