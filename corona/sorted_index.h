@@ -266,10 +266,34 @@ namespace corona
 					return p.first;
 				}
 
+				inline KEY get_key_or_default(KEY default_value)
+				{
+					if (current != null_row) {
+						std::pair<KEY, VALUE>& p = base->get_node(current).item();
+						return p.first;
+					}
+					else 
+					{
+						return default_value;
+					}
+				}
+
 				inline VALUE& get_value()
 				{
 					std::pair<KEY, VALUE>& p = base->get_node(current).item();
 					return p.second;
+				}
+
+				inline VALUE get_value_or_default(VALUE default_value)
+				{
+					if (current != null_row) {
+						std::pair<KEY, VALUE>& p = base->get_node(current).item();
+						return p.second;
+					}
+					else 
+					{
+						return default_value;
+					}
 				}
 
 				inline iterator begin() const

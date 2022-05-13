@@ -46,6 +46,7 @@
 #include "table.h"
 #include "list_box.h"
 #include "sorted_index.h"
+#include "grouping.h"
 
 #include "read_all_string.h"
 #include "messages.h"

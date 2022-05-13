@@ -355,7 +355,7 @@ namespace corona
 			actor_state_response get_actor_options(get_actor_request _request);
 			actor_state_response select_object(select_object_request _select);
 			actor_state_response create_object(create_object_request _create);
-			actor_state_response update_object(actor_update_object _update);
+			actor_state_response update_object(update_object_request _update);
 			
 		};
 	}

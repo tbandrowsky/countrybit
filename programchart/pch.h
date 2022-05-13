@@ -14,3 +14,4 @@
 #include <winrt/Windows.UI.Xaml.Markup.h>
 #include <winrt/Windows.UI.Xaml.Navigation.h>
 #include "corona.h"
+#include "program_chart_model.h"

@@ -273,9 +273,9 @@ namespace corona
 				});
 		}
 
-		actor_state_response jdatabase::update_object(actor_update_object _update)
+		actor_state_response jdatabase::update_object(update_object_request _update)
 		{
-			return command_invoke<actor_update_object>(_update, [](jcollection& _collection, actor_update_object& p) {
+			return command_invoke<update_object_request>(_update, [](jcollection& _collection, update_object_request& p) {
 				return _collection.update_object(p);
 				});
 		}

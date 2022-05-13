@@ -28,10 +28,24 @@ namespace corona
 			return box_id;
 		}
 
+		block_id block_id::list_id()
+		{
+			block_id box_id;
+			strncpy_s(box_id.name, "lst", sizeof(box_id.name));
+			return box_id;
+		}
+
 		block_id block_id::item_detail_table_id()
 		{
 			block_id box_id;
 			strncpy_s(box_id.name, "idtble", sizeof(box_id.name));
+			return box_id;
+		}
+
+		block_id block_id::grouping_id()
+		{
+			block_id box_id;
+			strncpy_s(box_id.name, "group", sizeof(box_id.name));
 			return box_id;
 		}
 
@@ -179,6 +193,12 @@ namespace corona
 			return strcmp(t.name, name) == 0;
 		}
 
+		bool block_id::is_list()
+		{
+			block_id t = block_id::list_id();
+			return strcmp(t.name, name) == 0;
+		}
+
 		bool block_id::is_item_detail_table()
 		{
 			block_id t = block_id::item_detail_table_id();
@@ -188,6 +208,12 @@ namespace corona
 		bool block_id::is_table()
 		{
 			block_id t = block_id::table_id();
+			return strcmp(t.name, name) == 0;
+		}
+
+		bool block_id::is_grouping()
+		{
+			block_id t = block_id::grouping_id();
 			return strcmp(t.name, name) == 0;
 		}
 

@@ -5,6 +5,14 @@ namespace corona
 {
 	namespace database
 	{
+		list_box_data::list_box_data()
+		{
+			id = block_id::list_id();
+			length = 0;
+			last_item = null_row;
+			root_item = null_row;
+		}
+
 		bool list_box_tests()
 		{
 			dynamic_box box;

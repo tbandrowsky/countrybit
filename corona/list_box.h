@@ -9,12 +9,16 @@ namespace corona
 		template <typename item_type>
 		class list_box
 		{
+
 			struct list_box_data
 			{
 			public:
-				uint32_t	length;
-				relative_ptr_type root_item;
-				relative_ptr_type last_item;
+				block_id			id;
+				uint32_t			length;
+				relative_ptr_type	root_item;
+				relative_ptr_type	last_item;
+
+				list_box_data();
 			};
 
 			struct list_link
@@ -120,6 +124,11 @@ namespace corona
 				box = _src.box;
 				header_loc = _src.header_loc;
 				return *this;
+			}
+
+			relative_pointer_type get_location()
+			{
+				return header_loc;
 			}
 
 			static relative_ptr_type reserve(serialized_box_container* b)

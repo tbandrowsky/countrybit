@@ -154,7 +154,7 @@ namespace corona
 			}
 		}
 
-		actor_state jcollection::get_actor_state(relative_ptr_type _actor, const char* _trace_msg)
+		actor_state jcollection::get_actor_state(relative_ptr_type _actor, relative_ptr_type _last_modified_object, const char* _trace_msg)
 		{
 			actor_state acr;
 
@@ -211,6 +211,7 @@ namespace corona
 					std::cout << " " << oi.item.rule_name << " does not apply " << std::endl;
 #endif
 				}
+		
 			}
 
 			// now for the moment, we just include all the objects in the view.  This can change for physical models, obviously.
@@ -296,6 +297,12 @@ namespace corona
 				}
 			}
 
+			if (acr.modified_object_id != null_row)
+			{
+				jslice slice = get_object(acr.modified_object_id);
+				acr.modified_object = acr.copy_object(schema, slice);
+			}
+
 			if (_trace_msg)
 			{
 				print("-------", acr);
@@ -379,7 +386,7 @@ namespace corona
 				put_actor(ac);
 				acr.modified_object_id = _select.object_id;
 			}
-			acr = get_actor_state(_select.actor_id, _trace_msg);
+			acr = get_actor_state(_select.actor_id, _select.object_id, _trace_msg);
 			return acr;
 		}
 
@@ -409,12 +416,11 @@ namespace corona
 				}
 			}
 
-			acr = get_actor_state(_create.actor_id, _trace_msg);
-			acr.modified_object_id = object_id;
+			acr = get_actor_state(_create.actor_id, object_id, _trace_msg);
 			return acr;
 		}
 
-		actor_state jcollection::update_object(actor_update_object& _update, const char* _trace_msg)
+		actor_state jcollection::update_object(update_object_request& _update, const char* _trace_msg)
 		{
 			if (_trace_msg) {
 				std::cout << _trace_msg << std::endl;
@@ -436,7 +442,7 @@ namespace corona
 				update_object(object_id, slice);
 			}
 
-			acr = get_actor_state(_update.actor_id, _trace_msg);
+			acr = get_actor_state(_update.actor_id, object_id, _trace_msg);
 			return acr;
 		}
 
@@ -1058,130 +1064,130 @@ namespace corona
 
 		int8_box jslice::get_int8(object_name field_name)
 		{
-			relative_ptr_type index = get_field_index_by_name(field_name);
+			int index = get_field_index_by_name(field_name);
 			return get_int8(index);
 		}
 
 		int16_box jslice::get_int16(object_name field_name)
 		{
-			relative_ptr_type index = get_field_index_by_name(field_name);
+			int  index = get_field_index_by_name(field_name);
 			return get_int16(index);
 		}
 
 		int32_box jslice::get_int32(object_name field_name)
 		{
-			relative_ptr_type index = get_field_index_by_name(field_name);;
+			int  index = get_field_index_by_name(field_name);;
 			return get_int32(index);
 		}
 
 		int64_box jslice::get_int64(object_name field_name)
 		{
-			relative_ptr_type index = get_field_index_by_name(field_name);;
+			int  index = get_field_index_by_name(field_name);;
 			return get_int64(index);
 		}
 
 		float_box jslice::get_float(object_name field_name)
 		{
-			relative_ptr_type index = get_field_index_by_name(field_name);;
+			int  index = get_field_index_by_name(field_name);;
 			return get_float(index);
 		}
 
 		double_box jslice::get_double(object_name field_name)
 		{
-			relative_ptr_type index = get_field_index_by_name(field_name);;
+			int  index = get_field_index_by_name(field_name);;
 			return get_double(index);
 		}
 
 		time_box jslice::get_time(object_name field_name)
 		{
-			relative_ptr_type index = get_field_index_by_name(field_name);;
+			int  index = get_field_index_by_name(field_name);;
 			return get_time(index);
 		}
 
 		string_box jslice::get_string(object_name field_name)
 		{
-			relative_ptr_type index = get_field_index_by_name(field_name);;
+			int  index = get_field_index_by_name(field_name);;
 			return get_string(index);
 		}
 
 		jarray jslice::get_object(object_name field_name)
 		{
-			relative_ptr_type index = get_field_index_by_name(field_name);
+			int  index = get_field_index_by_name(field_name);
 			return get_object(index);
 		}
 
 		jlist jslice::get_list(object_name field_name)
 		{
-			relative_ptr_type index = get_field_index_by_name(field_name);
+			int  index = get_field_index_by_name(field_name);
 			return get_list(index);
 		}
 
 		collection_id_box jslice::get_collection_id(object_name field_name)
 		{
-			relative_ptr_type index = get_field_index_by_name(field_name);
+			int  index = get_field_index_by_name(field_name);
 			return get_collection_id(index);
 		}
 
 		object_id_box jslice::get_object_id(object_name field_name)
 		{
-			relative_ptr_type index = get_field_index_by_name(field_name);
+			int  index = get_field_index_by_name(field_name);
 			return get_object_id(index);
 		}
 
 		point_box jslice::get_point(object_name field_name)
 		{
-			relative_ptr_type index = get_field_index_by_name(field_name);
+			int  index = get_field_index_by_name(field_name);
 			return get_point(index);
 		}
 
 		rectangle_box jslice::get_rectangle(object_name field_name)
 		{
-			relative_ptr_type index = get_field_index_by_name(field_name);
+			int  index = get_field_index_by_name(field_name);
 			return get_rectangle(index);
 		}
 
 		image_box jslice::get_image(object_name field_name)
 		{
-			relative_ptr_type index = get_field_index_by_name(field_name);
+			int  index = get_field_index_by_name(field_name);
 			return get_image(index);
 		}
 
 		wave_box jslice::get_wave(object_name field_name) {
-			relative_ptr_type index = get_field_index_by_name(field_name);
+			int  index = get_field_index_by_name(field_name);
 			return get_wave(index);
 		}
 
 		midi_box jslice::get_midi(object_name field_name) {
-			relative_ptr_type index = get_field_index_by_name(field_name);
+			int  index = get_field_index_by_name(field_name);
 			return get_midi(index);
 		}
 
 		color_box jslice::get_color(object_name field_name) {
-			relative_ptr_type index = get_field_index_by_name(field_name);
+			int  index = get_field_index_by_name(field_name);
 			return get_color(index);
 		}
 
 		query_box jslice::get_query(object_name field_name)
 		{
-			relative_ptr_type index = get_field_index_by_name(field_name);
+			int index = get_field_index_by_name(field_name);
 			return get_query(index);
 		}
 
 		sql_remote_box jslice::get_sql_remote(object_name field_name)
 		{
-			relative_ptr_type index = get_field_index_by_name(field_name);
+			int index = get_field_index_by_name(field_name);
 			return get_sql_remote(index);
 		}
 
 		http_remote_box jslice::get_http_remote(object_name field_name)
 		{
-			relative_ptr_type index = get_field_index_by_name(field_name);
+			int index = get_field_index_by_name(field_name);
 			return get_http_remote(index);
 		}
 
 		file_remote_box jslice::get_file_remote(object_name field_name)
 		{
-			relative_ptr_type index = get_field_index_by_name(field_name);
+			int index = get_field_index_by_name(field_name);
 			return get_file_remote(index);
 		}
 
@@ -2361,7 +2367,7 @@ namespace corona
 				sample_actor.actor_id = null_row;
 				sample_actor = program_chart.create_actor(sample_actor);
 
-				auto result = program_chart.get_actor_state(sample_actor.actor_id, "initial state");
+				auto result = program_chart.get_actor_state(sample_actor.actor_id, null_row, "initial state");
 
 				// now, we want to get the command for creating a pair of objects and test.
 				// first we shall see if we can create a carrier

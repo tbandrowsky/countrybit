@@ -344,7 +344,7 @@ namespace corona
 			bool				extend;
 		};
 
-		class actor_update_object
+		class update_object_request
 		{
 		public:
 			collection_id_type	collection_id;
@@ -384,6 +384,7 @@ namespace corona
 			{
 				return objects->size();
 			}
+
 			actor_object_option get_at(relative_ptr_type _id)
 			{
 				actor_object_option aoo;
@@ -423,6 +424,7 @@ namespace corona
 			actor_view_collection						view_objects;
 
 			relative_ptr_type							modified_object_id;
+			jslice										modified_object;
 
 			actor_state()
 			{
@@ -518,6 +520,17 @@ namespace corona
 				aso.object_id = _object_id;
 				return aso;
 			}
+
+			update_object_request create_update_request()
+			{
+				update_object_request uor;
+				uor.actor_id = actor_id;
+				uor.collection_id = collection_id;
+				uor.object_id = modified_object_id;
+				uor.item = modified_object;
+				return uor;
+			}
+
 		};
 
 		using actor_collection = table<actor_type>;
@@ -607,10 +620,10 @@ namespace corona
 			actor_id_type find_actor(object_name& name);
 			actor_type update_actor(actor_type _actor);
 
-			actor_state get_actor_state(relative_ptr_type _actor, const char *_trace_msg = nullptr);
+			actor_state get_actor_state(relative_ptr_type _actor, relative_ptr_type _last_modified_object = null_row, const char *_trace_msg = nullptr);
 			actor_state select_object(const select_object_request& _select, const char* _trace_msg = nullptr);
 			actor_state create_object(create_object_request& _create, const char* _trace_msg = nullptr);
-			actor_state update_object(actor_update_object& _update, const char* _trace_msg = nullptr);
+			actor_state update_object(update_object_request& _update, const char* _trace_msg = nullptr);
 
 			void print(const char *_trace, actor_state& acr);
 

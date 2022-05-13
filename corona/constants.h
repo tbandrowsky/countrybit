@@ -63,8 +63,10 @@ namespace corona
 			static block_id box_id();
 			static block_id sorted_index_node_id();
 			static block_id sorted_index_id();
+			static block_id list_id();
 			static block_id table_id();
 			static block_id item_detail_table_id();
+			static block_id grouping_id();
 			static block_id expression_id();
 			static block_id expression_term_id();
 			static block_id collection_id();
@@ -87,8 +89,10 @@ namespace corona
 			bool is_box();
 			bool is_sorted_index_node();
 			bool is_sorted_index();
+			bool is_list();
 			bool is_table();
 			bool is_item_detail_table();
+			bool is_grouping();
 			bool is_expression();
 			bool is_collection();
 			bool is_database();
