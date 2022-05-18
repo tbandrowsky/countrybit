@@ -13,6 +13,23 @@ namespace corona
 
 		using index_ref = relative_ptr_type;
 
+		template <typename KEY, typename VALUE> 
+		class key_value_pair
+		{
+		public:
+			KEY first;
+			VALUE second;
+
+			KEY& get_key() 
+			{
+				return first;
+			}
+			VALUE& get_value() 
+			{
+				return second;
+			}
+		};
+
 		template <typename KEY, typename VALUE, int SORT_ORDER = 1> class sorted_index
 		{
 		private:
@@ -36,7 +53,10 @@ namespace corona
 		public:
 
 			using forward_pointer_collection = array_box<relative_ptr_type>;
-			using data_pair = std::pair<KEY, VALUE>;
+			using data_pair = key_value_pair<KEY, VALUE>;
+			using collection_type = sorted_index<KEY, VALUE, SORT_ORDER>;
+			using iterator_item_type = data_pair;
+			using iterator_type = filterable_iterator<data_pair, collection_type, iterator_item_type, index_mapper>;
 
 			class index_node
 			{
@@ -65,6 +85,8 @@ namespace corona
 
 			relative_ptr_type header_location;
 			serialized_box_container* box;
+			index_mapper mapper;
+			bool mapper_dirty;
 
 			index_header_type* get_index_header()
 			{
@@ -116,12 +138,13 @@ namespace corona
 					relative_ptr_type rit = null_row;
 					node.details.push_back(rit);
 				}
-
+			
 				return node;
 			}
 
 			index_node create_node(int _max_level)
 			{
+				mapper_dirty = true;
 				return create_node(box, _max_level);
 			}
 
@@ -143,17 +166,33 @@ namespace corona
 				return get_node(box, _node_id);
 			}
 
+			void mapper_check()
+			{
+				if (!mapper_dirty)
+					return;
+
+				mapper.clear();
+
+				auto nd = first_node();
+				while (nd != null_row) {
+					mapper.add(nd);
+					nd = next_node(nd);
+				}
+
+				mapper_dirty = false;
+			}
+
 		public:
 
-			sorted_index() : header_location(null_row), box(nullptr)
+			sorted_index() : header_location(null_row), box(nullptr), mapper_dirty(true)
 			{
 			}
 
-			sorted_index(serialized_box_container* _box, relative_ptr_type _location) : box(_box), header_location(_location)
+			sorted_index(serialized_box_container* _box, relative_ptr_type _location) : box(_box), header_location(_location), mapper_dirty(true)
 			{
 			}
 
-			sorted_index(const sorted_index& _src) : box(_src.box), header_location(_src.header_location)
+			sorted_index(const sorted_index& _src) : box(_src.box), header_location(_src.header_location), mapper_dirty(true)
 			{
 				
 			}
@@ -162,6 +201,7 @@ namespace corona
 			{
 				box = _src.box;
 				header_location = _src.header_location;
+				mapper_dirty = true;
 				return *this;
 			}
 
@@ -201,176 +241,6 @@ namespace corona
 				return sizeof(index_header_type) + sizeof(relative_ptr_type) * MaxNumberOfLevels + sizeof(data_pair);
 			}
 
-			class iterator
-			{
-				sorted_index<KEY, VALUE, SORT_ORDER>* base;
-				relative_ptr_type current;
-				using index_node = item_details_holder<std::pair<KEY, VALUE>, index_ref>;
-				std::function<bool(std::pair<KEY, VALUE>&)> predicate;
-
-				bool include(relative_ptr_type _location)
-				{
-					return predicate(base->get_node(_location).item());
-				}
-
-			public:
-				using iterator_category = std::forward_iterator_tag;
-				using difference_type = std::ptrdiff_t;
-				using value_type = std::pair<KEY, VALUE>;
-				using pointer = std::pair<KEY, VALUE>*;  // or also value_type*
-				using reference = std::pair<KEY, VALUE>&;  // or also value_type&
-
-				iterator(sorted_index<KEY, VALUE, SORT_ORDER>* _base, relative_ptr_type _current, std::function<bool(std::pair<KEY, VALUE>&)> _predicate) :
-					base(_base),
-					current(_current),
-					predicate(_predicate)
-				{
-					while (current != null_row && !include(current))
-					{
-						current = _base->next_node(current);
-					}
-				}
-
-				iterator(sorted_index<KEY, VALUE, SORT_ORDER>* _base, relative_ptr_type _current) :
-					base(_base),
-					current(_current)
-				{
-					predicate = [](auto& t) { return true; };
-				}
-
-				iterator() : base(nullptr), current(null_row)
-				{
-					predicate = [](auto& t) { return true; };
-				}
-
-				iterator& operator = (const iterator& _src)
-				{
-					base = _src.base;
-					current = _src.current;
-					return *this;
-				}
-
-				inline std::pair<KEY, VALUE>& operator *()
-				{
-					return base->get_node(current).item();
-				}
-
-				inline std::pair<KEY, VALUE>* operator->()
-				{
-					return &base->get_node(current).item();
-				}
-
-				inline KEY& get_key()
-				{
-					std::pair<KEY, VALUE>& p = base->get_node(current).item();
-					return p.first;
-				}
-
-				inline KEY get_key_or_default(KEY default_value)
-				{
-					if (current != null_row) {
-						std::pair<KEY, VALUE>& p = base->get_node(current).item();
-						return p.first;
-					}
-					else 
-					{
-						return default_value;
-					}
-				}
-
-				inline VALUE& get_value()
-				{
-					std::pair<KEY, VALUE>& p = base->get_node(current).item();
-					return p.second;
-				}
-
-				inline VALUE get_value_or_default(VALUE default_value)
-				{
-					if (current != null_row) {
-						std::pair<KEY, VALUE>& p = base->get_node(current).item();
-						return p.second;
-					}
-					else 
-					{
-						return default_value;
-					}
-				}
-
-				inline iterator begin() const
-				{
-					return iterator(base, current);
-				}
-
-				inline iterator end() const
-				{
-					return iterator(base, null_row);
-				}
-
-				inline iterator operator++()
-				{
-					do
-					{
-						current = base->next_node(current);
-						if (current == null_row)
-							return iterator(base, current, predicate);
-					} while (!include(current));
-
-					return iterator(base, current, predicate);
-				}
-
-				inline iterator operator++(int)
-				{
-					iterator tmp(*this);
-					operator++();
-					return tmp;
-				}
-
-				bool operator == (const iterator& _src) const
-				{
-					return _src.current == current;
-				}
-
-				bool operator != (const iterator& _src)
-				{
-					return _src.current != current;
-				}
-
-				bool eoi()
-				{
-					return begin() == end();
-				}
-
-				bool exists()
-				{
-					return begin() != end();
-				}
-
-				auto where(std::function<bool(std::pair<KEY, VALUE>&)> _predicate)
-				{
-					auto new_predicate = [this, _predicate](auto& kp) { return predicate(kp) && _predicate(kp); };
-					return iterator(base, first_node(), new_predicate);
-				}
-
-				auto any_of(std::function<bool(std::pair<KEY, VALUE>&)> _predicate)
-				{
-					auto new_predicate = [this, _predicate](auto& kp) { return predicate(kp) && _predicate(kp); };
-					return std::any_of(begin(), end(), new_predicate);
-				}
-
-				auto all_of(std::function<bool(std::pair<KEY, VALUE>&)> _predicate)
-				{
-					auto new_predicate = [this, _predicate](auto& kp) { return predicate(kp) && _predicate(kp); };
-					return std::all_of(begin(), end(), new_predicate);
-				}
-
-				corona_size_t count_if(std::function<bool(std::pair<KEY, VALUE>&)> _predicate)
-				{
-					auto new_predicate = [this, _predicate](auto& kp) { return predicate(kp) && _predicate(kp); };
-					return std::count_if(begin(), end(), new_predicate);
-				}
-
-			};
-
 			bool pop_front()
 			{
 				bool result = false;
@@ -389,54 +259,48 @@ namespace corona
 				return result;
 			}
 
-			sorted_index<KEY, VALUE, SORT_ORDER>::iterator begin()
+			iterator_type begin()
 			{
 				index_node q = get_header();
 				relative_ptr_type qr = q.detail(0);
 
-				return iterator(this, qr);
+				return iterator_type(this, qr, &mapper);
 			}
 
-			sorted_index<KEY, VALUE, SORT_ORDER>::iterator end()
+			iterator_type end()
 			{
-				return iterator(this, null_row);
+				return iterator_type(this, null_row, &mapper);
 			}
 
-
-			sorted_index<KEY, VALUE, SORT_ORDER>::iterator  first(std::function<bool(std::pair<KEY,VALUE>&)> predicate)
+			data_pair& get_at(relative_ptr_type idx)
 			{
-				auto n = first_node();
-				return get_node(n).item().second;
-
-				auto it = iterator(this, first_node(), predicate);
-				return *it;
+				auto offset = mapper.map(idx);
+				return get_node(offset).item();
 			}
 
-
-			auto where(std::function<bool(std::pair<KEY, VALUE>&)> _predicate)
+			auto where(std::function<bool(const data_pair&)> _predicate)
 			{
-				return iterator(this, first_node(), _predicate);
+				return iterator_type(this, _predicate, &mapper);
 			}
 
-			bool any_of(std::function<bool(std::pair<KEY, VALUE>&)> predicate)
+			bool any_of(std::function<bool(const data_pair&)> predicate)
 			{
 				return std::any_of(begin(), end(), predicate);
 			}
 
-			bool all_of(std::function<bool(std::pair<KEY, VALUE>&)> predicate)
+			bool all_of(std::function<bool(const data_pair&)> predicate)
 			{
 				return std::all_of(begin(), end(), predicate);
 			}
 
-			corona_size_t count_if(std::function<bool(std::pair<KEY, VALUE>&)> predicate)
+			corona_size_t count_if(std::function<bool(const data_pair&)> predicate)
 			{
 				return std::count_if(begin(), end(), predicate);
 			}
 
-
-			bool erase(sorted_index<KEY, VALUE, SORT_ORDER>::iterator& _iter)
+			bool erase(iterator_type& _iter)
 			{
-				return this->remove_node(_iter->first);
+				return this->remove_node(_iter.get_object().get_key());
 			}
 
 			bool erase(const KEY& key)
@@ -444,43 +308,43 @@ namespace corona
 				return this->remove_node(key);
 			}
 
-			sorted_index<KEY, VALUE, SORT_ORDER>::iterator at(const KEY& key)
+			iterator_type at(const KEY& key)
 			{
-				return iterator(this, this->find_node(key));
+				return iterator_type(this, this->find_node(key), &mapper);
 			}
 
-			sorted_index<KEY, VALUE, SORT_ORDER>::iterator first_like(const KEY& key)
+			iterator_type first_like(const KEY& key)
 			{
-				return iterator(this, this->find_first_node(key));
+				return iterator_type(this, this->find_first_node(key), &mapper);
 			}
 
-			sorted_index<KEY, VALUE, SORT_ORDER>::iterator operator[](const KEY& key)
+			iterator_type operator[](const KEY& key)
 			{
-				return iterator(this, this->find_node(key));
+				return iterator_type(this, this->find_node(key), &mapper);
 			}
 
 			bool contains(const KEY& key)
 			{
-				auto iter = iterator(this, this->find_node(key));
+				auto iter = iterator_type(this, this->find_node(key), &mapper);
 				return iter != std::end(*this);
 			}
 
 			data_pair& get(const KEY& key)
 			{
-				auto iter = iterator(this, this->find_node(key));
-				return *iter;
+				auto n = this->find_node(key);
+				return get_node(n).item();
 			}
 
 			bool has(const KEY& key, VALUE& value)
 			{
 				auto n = this->find_node(key);
-				return (n != null_row && n.item().second == value);
+				return (n != null_row && get_node(n).item().second == value);
 			}
 
 			bool has(const KEY& key, std::function<bool(VALUE& src)> pred)
 			{
 				auto n = this->find_node(key);
-				return (n != null_row && pred(n.item().second));
+				return (n != null_row && pred(get_node(n).item().second));
 			}
 
 			VALUE& first_value()
@@ -489,33 +353,33 @@ namespace corona
 				return get_node(n).item().second;
 			}
 
-			sorted_index<KEY, VALUE, SORT_ORDER>::iterator insert_or_assign(std::pair<KEY, VALUE>& kvp)
+			iterator_type insert_or_assign(data_pair& kvp)
 			{
 				relative_ptr_type modified_node = this->update_node(kvp, [kvp](VALUE& dest) { dest = kvp.second; });
-				return iterator(this, modified_node);
+				return iterator_type(this, modified_node);
 			}
 
-			inline sorted_index<KEY, VALUE, SORT_ORDER>::iterator insert_or_assign(KEY key, VALUE value)
+			inline iterator_type insert_or_assign(KEY key, VALUE value)
 			{
-				std::pair<KEY, VALUE> kvp(key, value);
+				data_pair kvp(key, value);
 				return insert_or_assign(kvp);
 			}
 
-			sorted_index<KEY, VALUE, SORT_ORDER>::iterator put(std::pair<KEY, VALUE>& kvp)
+			iterator_type put(data_pair& kvp)
 			{
 				relative_ptr_type modified_node = this->update_node(kvp);
 				return iterator(this, modified_node);
 			}
 
-			inline sorted_index<KEY, VALUE, SORT_ORDER>::iterator put(KEY key, VALUE value)
+			inline iterator_type put(KEY key, VALUE value)
 			{
-				std::pair<KEY, VALUE> kvp(key, value);
+				data_pair kvp(key, value);
 				return insert_or_assign(kvp);
 			}
 
-			inline sorted_index<KEY, VALUE, SORT_ORDER>::iterator put(const KEY& key, VALUE& _default_value, std::function<void(VALUE& existing_value)> predicate)
+			inline iterator_type put(const KEY& key, VALUE& _default_value, std::function<void(VALUE& existing_value)> predicate)
 			{
-				std::pair<KEY, VALUE> kvp(key, _default_value);
+				data_pair kvp(key, _default_value);
 				relative_ptr_type modified_node = this->update_node(kvp, predicate);
 				return iterator(this, modified_node);
 			}
@@ -667,6 +531,8 @@ namespace corona
 				index_node qnd, pnd;
 
 				relative_ptr_type q = find_node(update, key);
+
+				mapper_dirty = true;
 
 				if (q != null_row)
 				{

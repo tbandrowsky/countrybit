@@ -42,7 +42,7 @@ namespace corona
 			return box_id;
 		}
 
-		block_id block_id::grouping_id()
+		block_id block_id::group_id()
 		{
 			block_id box_id;
 			strncpy_s(box_id.name, "group", sizeof(box_id.name));
@@ -211,9 +211,9 @@ namespace corona
 			return strcmp(t.name, name) == 0;
 		}
 
-		bool block_id::is_grouping()
+		bool block_id::is_group()
 		{
-			block_id t = block_id::grouping_id();
+			block_id t = block_id::group_id();
 			return strcmp(t.name, name) == 0;
 		}
 

@@ -21,20 +21,58 @@ namespace corona
 			relative_ptr_type location;
 		};
 
+		class index_mapper
+		{
+			std::vector<relative_ptr_type> index_map;
+
+		public:
+
+			index_mapper()
+			{
+				;
+			}
+
+			void clear()
+			{
+				index_map.clear();
+			}
+
+			void add(relative_ptr_type _target)
+			{
+				index_map.push_back(_target);
+			}
+
+			relative_ptr_type map(relative_ptr_type _index)
+			{
+				return index_map[_index];
+			}
+		};
+
 		template 
 			<typename item_type, 
 			typename collection_type, 
-			typename value_ref= value_reference<item_type>>
-		class filterable_iterator
+			typename value_ref= value_reference<item_type>,
+			typename mapper_type=void>
+			class filterable_iterator
 		{
+		public:
+
+			using iterator_category = std::forward_iterator_tag;
+			using difference_type = std::ptrdiff_t;
+			using value_type = value_ref;
+			using pointer = value_ref*;  // or also value_type*
+			using reference = value_ref&;  // or also value_type&
+
+		private:
 			collection_type* base;
 			relative_ptr_type current;
 			and_functions<value_ref> predicate;
+			mapper_type* mapper;
 
 			void move_first()
 			{
 				if (base->size() == 0) current = null_row;
-				while (current != null_row && !predicate(get_value(current)))
+				while (current != null_row && !predicate(get_object(current)))
 				{
 					current++;
 					if (current >= base->size()) {
@@ -44,18 +82,50 @@ namespace corona
 				}
 			}
 
-		public:
+			inline auto make_value_ref(value_reference<item_type>* ref, relative_ptr_type location)
+			{
+				return value_reference<item_type> { get_at_ref(mapper, location), location };
+			}
 
-			using iterator_category = std::forward_iterator_tag;
-			using difference_type = std::ptrdiff_t;
-			using value_type = value_ref;
-			using pointer = value_ref*;  // or also value_type*
-			using reference = value_ref&;  // or also value_type&
+			inline auto make_value_ref(value_object<item_type>* ref, relative_ptr_type location)
+			{
+				return value_object<item_type> { get_at_obj(mapper, location), location };
+			}
+
+			inline auto make_value_ref(item_type *ref, relative_ptr_type location)
+			{
+				return get_at_ref(mapper, location);
+			}
+
+			inline item_type& get_at_ref(void *mapper, relative_ptr_type location)
+			{
+				return base->get_at(location);
+			}
+
+			inline item_type& get_at_ref(index_mapper* mapper, relative_ptr_type location)
+			{
+				relative_ptr_type target = mapper->map(location);
+				return base->get_at(target);
+			}
+
+			inline item_type get_at_obj(void* mapper, relative_ptr_type location)
+			{
+				return base->get_at(location);
+			}
+
+			inline item_type get_at_obj(index_mapper* mapper, relative_ptr_type location)
+			{
+				relative_ptr_type target = mapper->map(location);
+				return base->get_at(target);
+			}
+
+		public:
 
 			filterable_iterator(const filterable_iterator* _src,
 				std::function<bool(const value_ref&)> _predicate) :
 				base(_src->base),
 				predicate(_src->predicate),
+				mapper(_src->mapper),
 				current(0)
 			{
 				predicate.and_fn(_predicate);
@@ -64,30 +134,34 @@ namespace corona
 
 			filterable_iterator(const filterable_iterator* _src, relative_ptr_type _current) :
 				base(_src->base),
-				current(_current),
-				predicate(_src->predicate)
+				predicate(_src->predicate),
+				mapper(_src->mapper),
+				current(_current)
 			{
 				move_first();
 			}
 
-			filterable_iterator(collection_type *_base, std::function<bool(const value_ref&)> _predicate) :
+			filterable_iterator(collection_type *_base, std::function<bool(const value_ref&)> _predicate, mapper_type *_mapper = nullptr ):
 				base(_base),
 				current(0),
-				predicate(_predicate)
+				predicate(_predicate),
+				mapper( _mapper )
 			{
 				move_first();
 			}
 
-			filterable_iterator(collection_type* _base, relative_ptr_type _current) :
+			filterable_iterator(collection_type* _base, relative_ptr_type _current, mapper_type *_mapper = nullptr) :
 				base(_base),
-				current(_current)
+				current(_current),
+				mapper( _mapper )
 			{
 				move_first();
 			}
 
 			filterable_iterator() :
 				base(nullptr),
-				current(null_row)
+				current(null_row),
+				mapper(nullptr)
 			{
 				predicate = [](const value_ref& a) { return true;  };
 			}
@@ -97,6 +171,7 @@ namespace corona
 				base = _src.base;
 				current = _src.current;
 				predicate = _src.predicate;
+				mapper = _src.mapper;
 			}
 
 			filterable_iterator& operator = (const filterable_iterator& _src)
@@ -107,24 +182,22 @@ namespace corona
 				return *this;
 			}
 
-			inline value_ref operator *()
+			inline auto operator *()
 			{
-				return value_ref{ base->get_at(current), current };
+				value_ref *ref = nullptr;
+				return make_value_ref(ref, current);
 			}
 
-			inline item_type* operator ->()
+			inline auto get_object()
 			{
-				return &base->get_at(current);
+				value_ref* ref = nullptr;
+				return make_value_ref(ref, current);
 			}
 
-			inline value_ref get_value()
+			inline auto get_object(relative_ptr_type _idx)
 			{
-				return value_ref{ base->get_at(current), current };
-			}
-
-			inline value_ref get_value(relative_ptr_type _idx)
-			{
-				return value_ref{ base->get_at(_idx), _idx };
+				value_ref* ref = nullptr;
+				return make_value_ref(ref, current);
 			}
 
 			inline relative_ptr_type get_index()
@@ -148,7 +221,7 @@ namespace corona
 					return end();
 
 				current++;
-				while (current < base->size() && !predicate(get_value(current)))
+				while (current < base->size() && !predicate(get_object(current)))
 				{
 					current++;
 				}

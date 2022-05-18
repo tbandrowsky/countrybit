@@ -126,7 +126,7 @@ namespace corona
 				return *this;
 			}
 
-			relative_pointer_type get_location()
+			relative_ptr_type get_location()
 			{
 				return header_loc;
 			}

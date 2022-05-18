@@ -500,7 +500,7 @@ namespace corona
 				if (!create_objects.contains(_class_id)) {
 					throw std::invalid_argument("class is not creatable");
 				}
-				create_object_request aco = create_objects[_class_id].get_value();
+				create_object_request aco = create_objects[_class_id].get_object().second;
 				return aco;
 			}
 
@@ -509,7 +509,7 @@ namespace corona
 				if (!view_objects.contains(_object_id)) {
 					throw std::invalid_argument("object not found");
 				}
-				actor_view_object avo = view_objects[_object_id].get_value();
+				actor_view_object avo = view_objects[_object_id].get_object().second;
 				if (!avo.selectable && !avo.selected) {
 					throw std::invalid_argument("object is not selectable");
 				}
@@ -662,7 +662,7 @@ namespace corona
 				if (w == end()) {
 					throw std::logic_error("sequence has no elements");
 				}
-				return w.get_value().item;
+				return w.get_object().item;
 			}
 
 			relative_ptr_type first_index(std::function<bool(const iterator_item_type&)> predicate)
@@ -671,7 +671,7 @@ namespace corona
 				if (w == end()) {
 					return null_row;
 				}
-				return w.get_value().location;
+				return w.get_object().location;
 			}
 
 			bool any_of(std::function<bool(const iterator_item_type&)> predicate)
@@ -1004,7 +1004,7 @@ namespace corona
 
 				auto fiter = fields_by_name[_field_name];
 				if (fiter != std::end(fields_by_name)) {
-					_field_id = fiter->second;
+					_field_id = fiter.get_object().second;
 					return;
 				}
 				_field_id = null_row;
@@ -1024,7 +1024,7 @@ namespace corona
 
 				auto fiter = classes_by_name[_class_name];
 				if (fiter != std::end(classes_by_name)) {
-					_class_id = fiter->second;
+					_class_id = fiter.get_object().second;
 					return;
 				}
 				_class_id = null_row;
@@ -1203,7 +1203,7 @@ namespace corona
 							if (fname == std::end(fields_by_name)) {
 								throw std::logic_error("[" + field.field_name + " ] not found");
 							}
-							fid = fname->second;
+							fid = fname.get_object().second;
 						}
 						else
 						{
@@ -1233,10 +1233,11 @@ namespace corona
 					{
 						put_object_field_request porf;
 						if (field.field_name.size()>0) {
-							auto class_name = classes_by_name[field.field_name];
-							if (class_name == std::end(classes_by_name)) {
+							auto class_name_iter = classes_by_name[field.field_name];
+							if (class_name_iter == std::end(classes_by_name)) {
 								throw std::logic_error("[" + field.field_name + " ] not found");
 							}
+							auto class_name = class_name_iter.get_object();
 							porf.name.name = class_name.get_key();
 							porf.name.field_id = null_row;
 							porf.name.type_id = jtype::type_object;
@@ -1366,7 +1367,7 @@ namespace corona
 			{
 				auto citer = classes_by_name[class_name];
 				if (citer != std::end(citer)) {
-					return citer->second;
+					return citer.get_object().second;
 				}
 				return null_row;
 			}
@@ -1375,7 +1376,7 @@ namespace corona
 			{
 				auto citer = fields_by_name[field_name];
 				if (citer != std::end(citer)) {
-					return citer->second;
+					return citer.get_object().second;
 				}
 				return null_row;
 			}
@@ -1384,7 +1385,7 @@ namespace corona
 			{
 				auto citer = models[model_name];
 				if (citer != std::end(citer)) {
-					return citer->second;
+					return citer.get_object().second;
 				}
 			}
 
@@ -1403,25 +1404,25 @@ namespace corona
 			const query_definition_type& get_query_definition(relative_ptr_type field_id)
 			{
 				auto& f = fields[field_id];
-				return queries[field_id].get_value();
+				return queries[field_id].get_object().second;
 			}
 
 			const sql_definition_type& get_sql_definition(relative_ptr_type field_id)
 			{
 				auto& f = fields[field_id];
-				return sql_remotes[field_id].get_value();
+				return sql_remotes[field_id].get_object().second;
 			}
 
 			const file_definition_type& get_file_definition(relative_ptr_type field_id)
 			{
 				auto& f = fields[field_id];
-				return file_remotes[field_id].get_value();
+				return file_remotes[field_id].get_object().second;
 			}
 
 			const http_definition_type& get_http_definition(relative_ptr_type field_id)
 			{
 				auto& f = fields[field_id];
-				return http_remotes[field_id].get_value();
+				return http_remotes[field_id].get_object().second;
 			}
 
 			uint64_t get_max_object_size(relative_ptr_type* _class_ids)

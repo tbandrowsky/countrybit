@@ -81,7 +81,7 @@ namespace corona
 			if (modified_object_id == null_row) {
 				throw std::logic_error("No modified object");
 			}
-			return view_objects[ modified_object_id ].get_value();
+			return view_objects[ modified_object_id ].get_object();
 		}
 
 		bool jcollection::selector_applies(selector_collection* _selector, actor_id_type& _actor)
@@ -177,7 +177,7 @@ namespace corona
 			for (auto oi : create_options)
 			{
 				auto rule = &oi.item;
-				auto required = &oi.item.selectors;
+				auto required = &oi.selectors;
 
 #if _TRACE_RULE
 				std::cout << "check rule " << oi.item.rule_name << std::endl;
@@ -192,7 +192,7 @@ namespace corona
 						return objects[src.item].item().class_id == rule->item_id_class;
 						});
 					if (selected_create != std::end(*selections)) {
-						relative_ptr_type object_id = selected_create.get_value().item;
+						relative_ptr_type object_id = selected_create.get_object();
 						relative_ptr_type item_id = objects[object_id].item().item_id;
 						aco.item_id = item_id;
 					}

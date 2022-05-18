@@ -25,6 +25,7 @@ namespace corona
 		template <typename KEY, typename VALUE> class grouping
 		{
 			using group_by_collection = sorted_index<KEY, relative_ptr_type, 1>;
+			using group_by_collection_iterator = group_by_collection::iterator;
 			using grouped_items = list_box<VALUE>;
 			using group = group_list<KEY, VALUE>;
 
@@ -96,20 +97,38 @@ namespace corona
 			group insert_or_assign(const KEY& _key, const VALUE& _value)
 			{
 				group_by_collection index = get_group_by();
-				group_by_collection::iterator iter = index[_key];
+				group_by_collection_iterator iter = index[_key];
 				group g;
+
+				g.key = _key;
 
 				if (iter != std::end(index))
 				{
-					g.key = _key;
 					relative_ptr_type location = iter->get_value();
-					g.items = grouped_items::get_list()
+					g.items = grouped_items::get(box, location);
 				}
+				else 
+				{
+					g.items = grouped_items::create(box);
+					index.insert_or_assign(_key, g.items.get_location());
+				}
+
+				g.items.push_back(_value);
+				return g;
 			}
 
-			group get_at(KEY key)
+			group get_at(KEY _key)
 			{
-				;
+				group g;
+
+				group_by_collection index = get_group_by();
+				group_by_collection_iterator iter = index[_key];
+
+				g.key = _key;
+				relative_ptr_type location = iter->get_value();
+				g.items = grouped_items::get(box, location);
+
+				return g;
 			}
 		};
 	}

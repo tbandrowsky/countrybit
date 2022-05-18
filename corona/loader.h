@@ -180,7 +180,7 @@ namespace corona
 			{
 				int idx = pm->get_type_code();
 				auto piter = property_index[idx];
-				propertyinfo* found = piter != std::end(property_index) ? piter->second : nullptr;
+				propertyinfo* found = piter != std::end(property_index) ? piter.get_object().second : nullptr;
 				return found;
 			}
 
@@ -599,7 +599,7 @@ namespace corona
 				auto iter = bindings_by_name[key];
 				if (iter != std::end(bindings_by_name))
 				{
-					ti = iter->second;
+					ti = iter.get_object().second;
 					return ti;
 				}
 
@@ -617,7 +617,7 @@ namespace corona
 				auto iter = bindings_by_name[key];
 				if (iter != std::end(bindings_by_name))
 				{
-					ti = iter->second;
+					ti = iter.get_object().second;
 					return ti;
 				}
 				return ti;
@@ -1651,7 +1651,7 @@ namespace corona
 					}
 					else 
 					{
-						auto def_row_id = class_name_iter.get_value();
+						auto def_row_id = class_name_iter.get_object().second;
 						auto &class_def = put_classes[def_row_id];
 						put_class( schema, class_def );
 					}
@@ -1678,7 +1678,7 @@ namespace corona
 					}
 					else
 					{
-						auto def_row_id = class_name_iter.get_value();
+						auto def_row_id = class_name_iter.get_object().second;
 						auto& class_def = put_classes[def_row_id];
 						put_class(schema, class_def);
 					}
@@ -1701,7 +1701,7 @@ namespace corona
 							put_error(errors::field_not_defined, fn.item.field_name.c_str(), 0);
 						}
 						else {
-							auto& loc = field_name_iter.get_value();
+							auto loc = field_name_iter.get_object().second;
 							auto found_field_id = schema.find_field(fn.item.field_name);
 							if (found_field_id == database::null_row)
 							{
@@ -1721,7 +1721,7 @@ namespace corona
 							}
 							else
 							{
-								auto def_row_id = class_name_iter.get_value();
+								auto def_row_id = class_name_iter.get_object().second;
 								auto& class_def = put_classes[def_row_id];
 								put_class(schema, class_def);
 							}

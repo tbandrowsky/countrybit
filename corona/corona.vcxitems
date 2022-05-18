@@ -77,6 +77,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)assert_if.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)collection_id_box.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)constants.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)grouping.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)jdatabase_client.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)jdatabase_server.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)jfield.cpp" />

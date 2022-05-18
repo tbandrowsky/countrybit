@@ -19,25 +19,25 @@ namespace corona
 			test = test_sorted_index_type::create_sorted_index( &box, test_location );
 
 			auto t1 = test.insert_or_assign(5, "hello");
-			if (t1.get_key() != 5 || t1.get_value() != "hello" || t1->second != "hello")
+			if (t1.get_object().get_key() != 5 || t1.get_object().second != "hello")
 			{
 				std::cout << __LINE__ << " fail: wrong inserted value." << std::endl;
 				return false;
 			}
 			auto t2 = test.insert_or_assign(7, "goodbye");
-			if (t2.get_key() != 7 || t2.get_value() != "goodbye" || t2->second != "goodbye")
+			if (t2.get_object().get_key() != 7 || t2.get_object().get_value() != "goodbye" || t2.get_object().get_value() != "goodbye")
 			{
 				std::cout << __LINE__ << " fail: wrong inserted value." << std::endl;
 				return false;
 			}
 			auto t3 = test.insert_or_assign(7, "something");
-			if (t3.get_key() != 7 || t3->second != "something")
+			if (t3.get_object().get_key() != 7 || t3.get_object().get_value() != "something")
 			{
 				std::cout << __LINE__ << " fail: wrong updated value." << std::endl;
 				return false;
 			}
 			auto t4 = test[7];
-			if (t4.get_key() != 7 || t4->second != "something")
+			if (t4.get_object().get_key() != 7 || t4.get_object().get_value() != "something")
 			{
 				std::cout << __LINE__ << " fail: wrong [] access." << std::endl;
 				return false;
@@ -63,21 +63,21 @@ namespace corona
 			}
 
 			auto t6 = test.put(2, "hello super");
-			if (t6.get_key() != 2 || t6.get_value() != "hello super")
+			if (t6.get_object().get_key() != 2 || t6.get_object().get_value() != "hello super")
 			{
 				std::cout << __LINE__ << " fail: wrong inserted value." << std::endl;
 				return false;
 			}
 
 			auto t7 = test.put(1, "first");
-			if (t7.get_key() != 1 || t7->second != "first")
+			if (t7.get_object().get_key() != 1 || t7.get_object().get_value() != "first")
 			{
 				std::cout << __LINE__ << " fail: wrong inserted value." << std::endl;
 				return false;
 			}
 
 			t7 = test.put(1, "second");
-			if (t7.get_key() != 1 || t7->second != "second")
+			if (t7.get_object().get_key() != 1 || t7.get_object().get_value() != "second")
 			{
 				std::cout << __LINE__ << " fail: wrong inserted value." << std::endl;
 				return false;
@@ -95,7 +95,7 @@ namespace corona
 
 			int tests[4] = { 1, 2, 5, 7 };
 			int k = 0;
-			for (auto& item : test)
+			for (auto item : test)
 			{
 				if (tests[k] != item.first) {
 					std::cout << __LINE__ << " loop failed" << std::endl;
@@ -107,7 +107,7 @@ namespace corona
 			int tests2[3] = { 2, 5, 7 };
 
 			k = 0; 
-			for (auto& item : test[2])
+			for (auto item : test[2])
 			{
 				if (tests2[k] != item.first) {
 					std::cout << __LINE__ << " starting from key failed" << std::endl;
@@ -117,7 +117,7 @@ namespace corona
 			}
 
 			k = 0;
-			for (auto& item : test.where([](auto& kvpi) { return kvpi.first > 1; }))
+			for (auto item : test.where([](auto& kvpi) { return kvpi.first > 1; }))
 			{
 				if (tests2[k] != item.first) {
 					std::cout << __LINE__ << " loop failed" << std::endl;
@@ -148,7 +148,7 @@ namespace corona
 
 			k = 0;
 
-			for (auto& item : test)
+			for (auto item : test)
 			{
 				if (tests3[k] != item.first) {
 					std::cout << __LINE__ << " erasing iterator failed" << std::endl;
