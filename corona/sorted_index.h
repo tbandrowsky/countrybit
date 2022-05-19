@@ -182,6 +182,7 @@ namespace corona
 				mapper_dirty = false;
 			}
 
+
 		public:
 
 			sorted_index() : header_location(null_row), box(nullptr), mapper_dirty(true)
@@ -261,10 +262,8 @@ namespace corona
 
 			iterator_type begin()
 			{
-				index_node q = get_header();
-				relative_ptr_type qr = q.detail(0);
-
-				return iterator_type(this, qr, &mapper);
+				mapper_check();
+				return iterator_type(this, 0, &mapper);
 			}
 
 			iterator_type end()
@@ -272,14 +271,14 @@ namespace corona
 				return iterator_type(this, null_row, &mapper);
 			}
 
-			data_pair& get_at(relative_ptr_type idx)
+			data_pair& get_at(relative_ptr_type offset)
 			{
-				auto offset = mapper.map(idx);
 				return get_node(offset).item();
 			}
 
 			auto where(std::function<bool(const data_pair&)> _predicate)
 			{
+				mapper_check();
 				return iterator_type(this, _predicate, &mapper);
 			}
 
@@ -308,29 +307,23 @@ namespace corona
 				return this->remove_node(key);
 			}
 
-			iterator_type at(const KEY& key)
+			data_pair& operator[](const KEY& key)
 			{
-				return iterator_type(this, this->find_node(key), &mapper);
-			}
-
-			iterator_type first_like(const KEY& key)
-			{
-				return iterator_type(this, this->find_first_node(key), &mapper);
-			}
-
-			iterator_type operator[](const KEY& key)
-			{
-				return iterator_type(this, this->find_node(key), &mapper);
+				relative_ptr_type n = find_node(key);
+				if (n == null_row) {
+					throw std::invalid_argument("bad key");
+				}
+				return get_node( n ).item();
 			}
 
 			bool contains(const KEY& key)
 			{
-				auto iter = iterator_type(this, this->find_node(key), &mapper);
-				return iter != std::end(*this);
+				return this->find_node(key) != null_row;
 			}
 
 			data_pair& get(const KEY& key)
 			{
+				mapper_check();
 				auto n = this->find_node(key);
 				return get_node(n).item();
 			}
@@ -353,35 +346,32 @@ namespace corona
 				return get_node(n).item().second;
 			}
 
-			iterator_type insert_or_assign(data_pair& kvp)
+			void insert_or_assign(data_pair& kvp)
 			{
 				relative_ptr_type modified_node = this->update_node(kvp, [kvp](VALUE& dest) { dest = kvp.second; });
-				return iterator_type(this, modified_node);
 			}
 
-			inline iterator_type insert_or_assign(KEY key, VALUE value)
+			void insert_or_assign(KEY key, VALUE value)
 			{
 				data_pair kvp(key, value);
-				return insert_or_assign(kvp);
+				insert_or_assign(kvp);
 			}
 
-			iterator_type put(data_pair& kvp)
+			void put(data_pair& kvp)
 			{
 				relative_ptr_type modified_node = this->update_node(kvp);
-				return iterator(this, modified_node);
 			}
 
-			inline iterator_type put(KEY key, VALUE value)
+			void put(KEY key, VALUE value)
 			{
 				data_pair kvp(key, value);
-				return insert_or_assign(kvp);
+				insert_or_assign(kvp);
 			}
 
-			inline iterator_type put(const KEY& key, VALUE& _default_value, std::function<void(VALUE& existing_value)> predicate)
+			void put(const KEY& key, VALUE& _default_value, std::function<void(VALUE& existing_value)> predicate)
 			{
 				data_pair kvp(key, _default_value);
 				relative_ptr_type modified_node = this->update_node(kvp, predicate);
-				return iterator(this, modified_node);
 			}
 
 		private:

@@ -81,7 +81,7 @@ namespace corona
 			if (modified_object_id == null_row) {
 				throw std::logic_error("No modified object");
 			}
-			return view_objects[ modified_object_id ].get_object();
+			return view_objects[ modified_object_id ].get_value();
 		}
 
 		bool jcollection::selector_applies(selector_collection* _selector, actor_id_type& _actor)
@@ -177,7 +177,7 @@ namespace corona
 			for (auto oi : create_options)
 			{
 				auto rule = &oi.item;
-				auto required = &oi.selectors;
+				auto required = rule->selectors;
 
 #if _TRACE_RULE
 				std::cout << "check rule " << oi.item.rule_name << std::endl;
@@ -192,7 +192,7 @@ namespace corona
 						return objects[src.item].item().class_id == rule->item_id_class;
 						});
 					if (selected_create != std::end(*selections)) {
-						relative_ptr_type object_id = selected_create.get_object();
+						relative_ptr_type object_id = selected_create.get_object().item;
 						relative_ptr_type item_id = objects[object_id].item().item_id;
 						aco.item_id = item_id;
 					}
@@ -206,12 +206,12 @@ namespace corona
 					aco.select_on_create = oi.item.select_on_create;
 					acr.create_objects.insert_or_assign(aco.class_id, aco);
 				}
-				else {
+				else 
+				{
 #if _TRACE_RULE
 					std::cout << " " << oi.item.rule_name << " does not apply " << std::endl;
 #endif
 				}
-		
 			}
 
 			// now for the moment, we just include all the objects in the view.  This can change for physical models, obviously.
@@ -2372,12 +2372,14 @@ namespace corona
 				// now, we want to get the command for creating a pair of objects and test.
 				// first we shall see if we can create a carrier
 				auto& create_carrier_option = result.create_objects
-					.where([carrier_class_id](std::pair<relative_ptr_type, create_object_request>& acokp) { return acokp.second.class_id == carrier_class_id; })
-					.get_value();				
+					.where([carrier_class_id](const auto& acokp) { return acokp.second.class_id == carrier_class_id; })
+					.get_object()
+					.get_value();
 
 				// then we shall see if we can create a coverage
 				auto& create_coverage_option = result.create_objects
-					.where([coverage_class_id](std::pair<relative_ptr_type, create_object_request>& acokp) { return acokp.second.class_id == coverage_class_id; })
+					.where([coverage_class_id](const auto& acokp) { return acokp.second.class_id == coverage_class_id; })
+					.get_object()
 					.get_value();
 
 				// now, we will create a carrier
@@ -2395,7 +2397,8 @@ namespace corona
 
 				// and now we should also be able to create a coverage
 				create_coverage_option = result.create_objects
-					.where([coverage_class_id](std::pair<relative_ptr_type, create_object_request>& acokp) { return acokp.second.class_id == coverage_class_id; })
+					.where([coverage_class_id](const auto& acokp) { return acokp.second.class_id == coverage_class_id; })
+					.get_object()
 					.get_value();
 
 				auto result3 = program_chart.create_object(create_coverage_option, "create a coverage");

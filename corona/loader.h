@@ -180,7 +180,7 @@ namespace corona
 			{
 				int idx = pm->get_type_code();
 				auto piter = property_index[idx];
-				propertyinfo* found = piter != std::end(property_index) ? piter.get_object().second : nullptr;
+				propertyinfo* found = property_index[idx].second;
 				return found;
 			}
 
@@ -570,11 +570,7 @@ namespace corona
 				char* loc = data.place<typeinfo>();
 				if (loc) {
 					nti = new (loc) typeinfo(&data, _type_key, _type_value, _class_name, _max_items);
-					auto inserted = bindings_by_name.insert_or_assign(nti->key, nti);
-					if (inserted == std::end(bindings_by_name))
-					{
-						nti = nullptr;
-					}
+					bindings_by_name.insert_or_assign(nti->key, nti);
 				}
 				return nti;
 			}
@@ -596,12 +592,7 @@ namespace corona
 				key = key + "_";
 				key = key + type_name;
 
-				auto iter = bindings_by_name[key];
-				if (iter != std::end(bindings_by_name))
-				{
-					ti = iter.get_object().second;
-					return ti;
-				}
+				ti = bindings_by_name[key].second;
 
 				return ti;
 			}
@@ -614,12 +605,7 @@ namespace corona
 				key = key + "_";
 				key = key + type_name;
 
-				auto iter = bindings_by_name[key];
-				if (iter != std::end(bindings_by_name))
-				{
-					ti = iter.get_object().second;
-					return ti;
-				}
+				ti = bindings_by_name[key].second;
 				return ti;
 			}
 
@@ -1643,15 +1629,14 @@ namespace corona
 				auto class_row_id = schema.find_class(aorf.options.class_name);
 				if (class_row_id == database::null_row)
 				{
-					auto class_name_iter = classes_by_name[ aorf.options.class_name ];
-					if (class_name_iter == std::end(classes_by_name)) 
+					if (!classes_by_name.contains(aorf.options.class_name)) 
 					{
 						put_error( errors::class_not_defined, aorf.options.class_name.c_str(), 0 );
 						valid = false;
 					}
 					else 
 					{
-						auto def_row_id = class_name_iter.get_object().second;
+						auto def_row_id = classes_by_name[aorf.options.class_name].second;
 						auto &class_def = put_classes[def_row_id];
 						put_class( schema, class_def );
 					}
@@ -1670,15 +1655,14 @@ namespace corona
 				auto class_row_id = schema.find_class(aorf.options.class_name);
 				if (class_row_id == database::null_row)
 				{
-					auto class_name_iter = classes_by_name[aorf.options.class_name];
-					if (class_name_iter == std::end(classes_by_name))
+					if (!classes_by_name.contains(aorf.options.class_name))
 					{
 						put_error(errors::class_not_defined, aorf.options.class_name.c_str(), 0);
 						valid = false;
 					}
 					else
 					{
-						auto def_row_id = class_name_iter.get_object().second;
+						auto def_row_id = classes_by_name[aorf.options.class_name].second;
 						auto& class_def = put_classes[def_row_id];
 						put_class(schema, class_def);
 					}
@@ -1695,13 +1679,13 @@ namespace corona
 				{
 					if (fn.item.membership_type == database::member_field_types::member_field) 
 					{
-						auto field_name_iter = fields_by_name[fn.item.field_name];
-						if (field_name_iter == std::end(fields_by_name))
+						if (!fields_by_name.contains(fn.item.field_name))
 						{
 							put_error(errors::field_not_defined, fn.item.field_name.c_str(), 0);
 						}
-						else {
-							auto loc = field_name_iter.get_object().second;
+						else 
+						{
+							auto loc = fields_by_name[fn.item.field_name].second;
 							auto found_field_id = schema.find_field(fn.item.field_name);
 							if (found_field_id == database::null_row)
 							{
@@ -1714,14 +1698,13 @@ namespace corona
 						auto found_class_id = schema.find_class(fn.item.field_name);
 						if (found_class_id == database::null_row)
 						{
-							auto class_name_iter = classes_by_name[fn.item.field_name];
-							if (class_name_iter == std::end(classes_by_name))
+							if (!classes_by_name.contains(fn.item.field_name))
 							{
 								put_error(errors::class_not_defined, fn.item.field_name.c_str());
 							}
 							else
 							{
-								auto def_row_id = class_name_iter.get_object().second;
+								auto def_row_id = classes_by_name[fn.item.field_name].second;
 								auto& class_def = put_classes[def_row_id];
 								put_class(schema, class_def);
 							}

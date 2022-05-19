@@ -125,12 +125,11 @@ namespace corona
 			try {
 
 				response.success = false;
-				auto itr = collections_by_name[_name];
-				if (itr == std::end(collections_by_name)) {
+				if (!collections_by_name.contains(_name)) {
 					response.message = "[" + _name + "] not found";
 					return response;
 				}
-				auto collection_id = itr.get_value();
+				auto collection_id = collections_by_name[_name].second;
 				response = get_collection(collection_id);
 			}
 			catch (std::exception exc)
@@ -144,17 +143,16 @@ namespace corona
 		collection_response jdatabase::get_collection(collection_id_type _id)
 		{
 			collection_response response;
-			auto itr = collections_by_id[_id];
-			if (itr == std::end(collections_by_id)) {
+			if (!collections_by_id.contains(_id)) {
 				response.message = "collection not found";
 				return response;
 			}
-			auto& ref = itr.get_value();
-			if (ref.data == nullptr) {
-				ref.data = new dynamic_box();
-				ref.data->init(ref.collection_size_bytes * 2);
+			auto ref = collections_by_id[_id];
+			if (ref.second.data == nullptr) {
+				ref.second.data = new dynamic_box();
+				ref.second.data->init(ref.second.collection_size_bytes * 2);
 			}
-			response.collection = jcollection(&schema, &ref);
+			response.collection = jcollection(&schema, &ref.second);
 			response.success = true;
 			return response;
 		}

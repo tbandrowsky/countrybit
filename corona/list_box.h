@@ -6,21 +6,21 @@ namespace corona
 {
 	namespace database
 	{
+
+		struct list_box_data
+		{
+		public:
+			block_id			id;
+			uint32_t			length;
+			relative_ptr_type	root_item;
+			relative_ptr_type	last_item;
+
+			list_box_data();
+		};
+
 		template <typename item_type>
 		class list_box
 		{
-
-			struct list_box_data
-			{
-			public:
-				block_id			id;
-				uint32_t			length;
-				relative_ptr_type	root_item;
-				relative_ptr_type	last_item;
-
-				list_box_data();
-			};
-
 			struct list_link
 			{
 			public:

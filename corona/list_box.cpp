@@ -5,12 +5,12 @@ namespace corona
 {
 	namespace database
 	{
-		list_box_data::list_box_data()
+		list_box_data::list_box_data() : 
+			length(0),
+			root_item(null_row),
+			last_item(null_row)
 		{
 			id = block_id::list_id();
-			length = 0;
-			last_item = null_row;
-			root_item = null_row;
 		}
 
 		bool list_box_tests()
