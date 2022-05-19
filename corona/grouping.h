@@ -131,5 +131,7 @@ namespace corona
 				return g;
 			}
 		};
+
+		void query_tests();
 	}
 }

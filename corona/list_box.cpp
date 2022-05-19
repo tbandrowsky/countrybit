@@ -43,24 +43,15 @@ namespace corona
 				count++;
 			}
 
-			for (auto itb = ix.rbegin(); itb != std::end(ix); itb--)
-			{
-				count--;
-				if (*itb != count) {
-					std::cout << __LINE__ << ": list_box reverse read data wrong" << std::endl;
-					return false;
-				}
-			}
+			int check_prev1 = ix[-1];
+			int check_prev2 = ix[-2];
 
-			int check_prev1 = ix.rbegin()[-1].get_value();
-			int check_prev2 = ix.rbegin()[-2].get_value();
-
-			if (check_prev1 != 8) {
+			if (check_prev1 != 9) {
 				std::cout << __LINE__ << ": list_box reverse array read data wrong" << std::endl;
 				return false;
 			}
 
-			if (check_prev2 != 7) {
+			if (check_prev2 != 8) {
 				std::cout << __LINE__ << ": list_box reverse array read data wrong" << std::endl;
 				return false;
 			}

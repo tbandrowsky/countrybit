@@ -31,6 +31,8 @@ namespace corona
 
 			relative_ptr_type		header_loc;
 			serialized_box_container* box;
+			index_mapper mapper;
+			bool mapper_dirty;
 
 			list_box_data* get_hdr()
 			{
@@ -61,6 +63,7 @@ namespace corona
 
 			list_link* put(const item_type& _src)
 			{
+				mapper_dirty = true;
 				list_box_data* hdr = get_hdr();
 
 				list_link temp, *n;
@@ -108,13 +111,36 @@ namespace corona
 				hdr->length += l;
 			}
 
+			void mapper_check()
+			{
+				if (!mapper_dirty)
+					return;
+
+				mapper.clear();
+				auto lbd = get_hdr();
+				lbd->length = 0;
+				relative_ptr_type ln = lbd->root_item;
+				while (ln != null_row) {
+					mapper.add(ln);
+					auto nd = box->unpack<list_link>(ln);
+					ln = nd->next_link;
+					lbd->length++;
+				}
+
+				mapper_dirty = false;
+			}
+
 		public:
 
-			list_box() : box(nullptr), header_loc(null_row)
+			using collection_type = list_box<item_type>;
+			using iterator_item_type = item_type;
+			using iterator_type = filterable_iterator<item_type, collection_type, iterator_item_type, index_mapper>;
+
+			list_box() : box(nullptr), header_loc(null_row), mapper_dirty(true)
 			{
 			}
 
-			list_box(const list_box& _src) : box(_src.box), header_loc(_src.header_loc)
+			list_box(const list_box& _src) : box(_src.box), header_loc(_src.header_loc), mapper_dirty(true)
 			{
 
 			}
@@ -180,180 +206,42 @@ namespace corona
 				put(t);
 			}
 
-			class iterator
+			iterator_type begin()
 			{
-				list_box<item_type>* base;
-				list_box<item_type>::list_link *current;
-				std::function<bool(item_type&)> predicate;
-
-			public:
-
-				using iterator_category = std::bidirectional_iterator_tag;
-				using difference_type = std::ptrdiff_t;
-				using value_type = item_type;
-				using pointer = item_type*;  // or also value_type*
-				using reference = item_type&;  // or also value_type&
-
-				iterator(list_box<item_type>* _base,
-					list_box<item_type>::list_link* _current,
-					std::function<bool(item_type&)> _predicate) :
-					base(_base),
-					current(_current),
-					predicate(_predicate)
-				{
-					while (current && !predicate(current->data))
-					{
-						current = _base->next_link(current);
-					}
-				}
-
-				iterator(list_box<item_type>* _base,
-					list_box<item_type>::list_link* _current) :
-					base(_base),
-					current(_current)
-				{
-					predicate = [](item_type& a) { return true;  };
-				}
-
-				iterator() :
-					base(nullptr),
-					current(nullptr)
-				{
-					predicate = [](item_type& a) { return true;  };
-				}
-
-				iterator& operator = (const iterator& _src)
-				{
-					base = _src.base;
-					current = _src.current;
-					return *this;
-				}
-
-				inline item_type& operator *()
-				{
-					return current->data;
-				}
-
-				inline item_type* operator ->()
-				{
-					return &current->data;
-				}
-
-				inline item_type& get_value()
-				{
-					return current->data;
-				}
-
-				inline iterator begin() const
-				{
-					return iterator(base, base->first_link(), predicate);
-				}
-
-				inline iterator end() const
-				{
-					return iterator(base, nullptr, predicate);
-				}
-
-				inline iterator operator++()
-				{
-					do
-					{
-						current = base->next_link(current);
-						if (!current)
-							return iterator(base, nullptr, predicate);
-					} while (!predicate(current->data));
-					return iterator(base, current, predicate);
-				}
-
-				inline iterator operator++(int)
-				{
-					iterator tmp(*this);
-					operator++();
-					return tmp;
-				}
-
-				inline iterator operator--()
-				{
-					do
-					{
-						current = base->previous_link(current);
-						if (!current)
-							return iterator(base, nullptr, predicate);
-					} while (!predicate(current->data));
-					return iterator(base, current, predicate);
-				}
-
-				inline iterator operator--(int)
-				{
-					iterator tmp(*this);
-					operator--();
-					return tmp;
-				}
-
-				inline iterator operator[](int idx)
-				{
-					iterator temp(*this);
-					if (idx > 0) while (idx--) temp++;
-					else if (idx < 0) while (idx++) temp--;
-					return temp;
-				}
-
-				bool operator == (const iterator& _src) const
-				{
-					return _src.current == current;
-				}
-
-				bool operator != (const iterator& _src)
-				{
-					return _src.current != current;
-				}
-
-				item_type& first(std::function<bool(item_type&)> _predicate)
-				{
-					auto new_predicate = [this, _predicate](item_type& kp) { return this->predicate(kp) && _predicate(kp); };
-					auto it = iterator(base, first_link(), new_predicate);
-					return *it;
-				}
-
-				auto where(std::function<bool(item_type&)> _predicate)
-				{
-					auto new_predicate = [this, _predicate](item_type& kp) { return this->predicate(kp) && _predicate(kp); };
-					return iterator(base, first_link(), new_predicate);
-				}
-
-				bool any_of(std::function<bool(item_type&)> _predicate)
-				{
-					auto new_predicate = [this, _predicate](item_type& kp) { return this->predicate(kp) && _predicate(kp); };
-					return std::any_of(begin(), end(), new_predicate);
-				}
-
-				bool all_of(std::function<bool(item_type&)> _predicate)
-				{
-					auto new_predicate = [this, _predicate](item_type& kp) { return this->predicate(kp) && _predicate(kp); };
-					return std::all_of(begin(), end(), new_predicate);
-				}
-
-				corona_size_t count_if(std::function<bool(item_type&)> _predicate)
-				{
-					auto new_predicate = [this, _predicate](item_type& kp) { return this->predicate(kp) && _predicate(kp); };
-					return std::count_if(begin(), end(), new_predicate);
-				}
-
-			};
-
-			list_box<item_type>::iterator begin()
-			{
-				return iterator(this, first_link());
+				mapper_check();
+				return iterator_type(this, 0, &mapper);
 			}
 
-			list_box<item_type>::iterator end()
+			iterator_type end()
 			{
-				return iterator(this, nullptr);
+				return iterator_type(this, null_row, &mapper);
 			}
 
-			list_box<item_type>::iterator rbegin()
+			item_type& get_at(relative_ptr_type offset)
 			{
-				return iterator(this, last_link());
+				list_link *l = box->unpack<list_link>(offset);
+				return l->data;
+			}
+
+			auto where(std::function<bool(const item_type&)> _predicate)
+			{
+				mapper_check();
+				return iterator_type(this, _predicate, &mapper);
+			}
+
+			bool any_of(std::function<bool(const item_type&)> predicate)
+			{
+				return std::any_of(begin(), end(), predicate);
+			}
+
+			bool all_of(std::function<bool(const item_type&)> predicate)
+			{
+				return std::all_of(begin(), end(), predicate);
+			}
+
+			corona_size_t count_if(std::function<bool(const item_type&)> predicate)
+			{
+				return std::count_if(begin(), end(), predicate);
 			}
 
 			item_type &first()
@@ -374,55 +262,23 @@ namespace corona
 
 			item_type& operator[](int idx)
 			{
+				mapper_check();
+				int base_idx = 0;
+				int sz = size();
 				if (idx < 0) 
 				{
-					auto itr = rbegin();
-					idx++;
-					while (idx) {
-						itr--;
-						idx++;
-					}
-					if (itr == std::end(*this))
-						throw std::invalid_argument("index out of range for list");
-					return *itr;
+					base_idx = sz + idx;
 				}
 				else
 				{
-					auto itr = begin();
-					while (idx) {
-						itr++;
-						idx--;
-					}
-					if (itr == std::end(*this))
-						throw std::invalid_argument("index out of range for list");
-					return *itr;
+					base_idx = idx;
 				}
-			}
-
-			item_type& first(std::function<bool(item_type&)> predicate)
-			{
-				auto it = iterator(this, first_link(), predicate);
-				return *it;
-			}
-
-			auto where(std::function<bool(item_type&)> predicate)
-			{
-				return iterator(this, first_link(), predicate);
-			}
-
-			bool any_of(std::function<bool(item_type&)> predicate)
-			{
-				return std::any_of(begin(), end(), predicate);
-			}
-
-			bool all_of(std::function<bool(item_type&)> predicate)
-			{
-				return std::all_of(begin(), end(), predicate);
-			}
-
-			corona_size_t count_if(std::function<bool(item_type&)> predicate)
-			{
-				return std::count_if(begin(), end(), predicate);
+				if (base_idx < 0 || base_idx >= size()) {
+					throw std::invalid_argument("idx out of range, and come on, we even let you do idx < 0 and you still got it wrong");
+				}
+				auto map_idx = mapper.map(base_idx);
+				auto link = box->unpack<list_link>(map_idx);
+				return link->data;
 			}
 		};
 
