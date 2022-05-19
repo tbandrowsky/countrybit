@@ -141,13 +141,13 @@ namespace corona
 		{
 			for (auto co : acr.create_objects)
 			{
-				std::cout << "create class " << schema->get_class( co.second.class_id ).item().name << std::endl;
+				std::cout << "create class: " << schema->get_class( co.second.class_id ).item().name << std::endl;
 			}
 
 			for (auto vo : acr.view_objects)
 			{
 				auto slice = get_at(vo.second.object_id);
-				std::cout << "existing object " << vo.second.object_id << " (" << slice.get_class().item().name << ") selectable:" <<  vo.second.selectable << " selected:" << vo.second.selected << " updatable:" << vo.second.updatable << std::endl;
+				std::cout << "existing object: " << vo.second.object_id << " (" << slice.get_class().item().name << ") selectable:" <<  vo.second.selectable << " selected:" << vo.second.selected << " updatable:" << vo.second.updatable << std::endl;
 			}
 			if (_trace) {
 				std::cout << _trace << std::endl;
@@ -219,6 +219,7 @@ namespace corona
 			for (auto iter = begin(); iter != end(); iter++)
 			{
 				actor_view_object avo;
+				avo.actor_id = _actor;
 				avo.collection_id = collection_id;
 				avo.object_id = iter.get_index();
 				avo.selectable = false;
@@ -297,6 +298,7 @@ namespace corona
 				}
 			}
 
+			acr.modified_object_id = _last_modified_object;
 			if (acr.modified_object_id != null_row)
 			{
 				jslice slice = get_object(acr.modified_object_id);
@@ -367,7 +369,7 @@ namespace corona
 		actor_state jcollection::select_object(const select_object_request& _select, const char* _trace_msg)
 		{
 			if (_trace_msg) {
-				std::cout << _trace_msg << std::endl;
+				std::cout << "\nstart:" << _trace_msg << std::endl;
 			}
 
 			actor_state acr;
@@ -393,7 +395,7 @@ namespace corona
 		actor_state jcollection::create_object(create_object_request& _create, const char* _trace_msg)
 		{
 			if (_trace_msg) {
-				std::cout << _trace_msg << std::endl;
+				std::cout << "\nstart:" << _trace_msg << std::endl;
 			}
 
 			actor_state acr;
@@ -423,7 +425,7 @@ namespace corona
 		actor_state jcollection::update_object(update_object_request& _update, const char* _trace_msg)
 		{
 			if (_trace_msg) {
-				std::cout << _trace_msg << std::endl;
+				std::cout << "\nstart:" << _trace_msg << std::endl;
 			}
 
 			actor_state acr;
