@@ -81,7 +81,7 @@ namespace corona
 				}
 			};
 
-		private:
+		protected:
 
 			relative_ptr_type header_location;
 			serialized_box_container* box;

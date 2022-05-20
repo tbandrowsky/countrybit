@@ -22,68 +22,51 @@ namespace corona
 			grouped_items items;
 		};
 
-		template <typename KEY, typename VALUE> class grouping
+		template <typename KEY, typename VALUE> class grouping : protected sorted_index<KEY, relative_ptr_type, 1>
 		{
+		protected:
 			using group_by_collection = sorted_index<KEY, relative_ptr_type, 1>;
-			using group_by_collection_iterator = group_by_collection::iterator;
+			using inner_type = group_by_collection::data_pair;
 			using grouped_items = list_box<VALUE>;
 			using group = group_list<KEY, VALUE>;
 
-			relative_ptr_type			header_location;
-			serialized_box_container* box;
-
-			grouping_header_type* get_group_header()
-			{
-				grouping_header_type* t;
-				t = box->unpack<grouping_header_type>(header_location);
-				if (!t->block.is_group()) {
-					throw std::logic_error("did not read grouping correctly");
-				}
-				return t;
-			};
-
-			group_by_collection get_group_by()
-			{
-				auto hdr = get_group_header();
-				return group_by_collection::get_sorted_index(box, hdr->group_by_items);
-			};
+			using collection_type = grouping<KEY, VALUE>;
+			using iterator_item_type = group;
+			using iterator_type = filterable_iterator<iterator_item_type, collection_type, iterator_item_type, index_mapper>;
 
 		public:
 
-			grouping() : header_location(null_row), box(nullptr)
+			grouping()
 			{
 			}
 
-			grouping(serialized_box_container* _box, relative_ptr_type _location) : box(_box), header_location(_location)
+			grouping(serialized_box_container* _box, relative_ptr_type _location) :
+				group_by_collection(_box,_location)
 			{
 			}
 
-			grouping(const grouping& _src) : box(_src.box), header_location(_src.header_location)
+			grouping(const grouping& _src) :
+				group_by_collection(_src)
 			{
 
 			}
 
 			grouping operator = (const grouping& _src)
 			{
-				box = _src.box;
-				header_location = _src.header_location;
+				group_by_collection::operator=(_src);
 				return *this;
 			}
 
 			static relative_ptr_type reserve_grouping(serialized_box_container* _b)
 			{
-				grouping_header_type hdr, *phdr;
-
-				hdr.block = block_id::grouping_id();
-				relative_ptr_type header_location = _b->pack(hdr);
-				phdr = _b->unpack<grouping_header_type>(header_location);
-				phdr->group_by_items = group_by_collection::reserve_sorted_index(_b);
-				return header_location;
+				relative_ptr_type location;
+				location = group_by_collection::reserve_sorted_index(_b);
+				return location;
 			}
 
 			static grouping get_grouping(serialized_box_container* _b, relative_ptr_type _header_location)
 			{
-				grouping si(_b, _header_location);
+				auto si = group_by_collection::get_sorted_index(_b, _header_location);
 				return si;
 			}
 
@@ -96,40 +79,85 @@ namespace corona
 
 			group insert_or_assign(const KEY& _key, const VALUE& _value)
 			{
-				group_by_collection index = get_group_by();
-				group_by_collection_iterator iter = index[_key];
-				group g;
+				relative_ptr_type list_location;
+				grouped_items lst;
+				group grp;
+				
+				grp.key = _key;
 
-				g.key = _key;
-
-				if (iter != std::end(index))
+				if (contains(_key)) 
 				{
-					relative_ptr_type location = iter->get_value();
-					g.items = grouped_items::get(box, location);
+					inner_type& dp = group_by_collection::get(_key);
+					list_location = dp.second;
+					lst = grouped_items::get(box, list_location);
 				}
 				else 
 				{
-					g.items = grouped_items::create(box);
-					index.insert_or_assign(_key, g.items.get_location());
+					lst = grouped_items::create(box);
+					list_location = lst.get_location();
+					group_by_collection::insert_or_assign(_key, list_location);
 				}
 
-				g.items.push_back(_value);
-				return g;
+				grp.items = lst;
+				grp.items.push_back(_value);
+
+				return grp;
 			}
 
 			group get_at(KEY _key)
 			{
 				group g;
 
-				group_by_collection index = get_group_by();
-				group_by_collection_iterator iter = index[_key];
-
 				g.key = _key;
-				relative_ptr_type location = iter->get_value();
+				relative_ptr_type location = group_by_collection::get(_key).second;
 				g.items = grouped_items::get(box, location);
 
 				return g;
 			}
+
+			group get_at(relative_ptr_type ptr)
+			{
+				grouped_items lst;
+				group grp;
+
+				auto dp = group_by_collection::get(ptr);
+				grp.key = dp.first;
+				relative_ptr_type location = dp.second;
+				grp.items = grouped_items::get(box, location);
+				return grp;
+			}
+
+			iterator_type begin()
+			{
+				return iterator_type(this, 0, &group_by_collection::mapper);
+			}
+
+			iterator_type end()
+			{
+				return iterator_type(this, null_row, &group_by_collection::mapper);
+			}
+
+			auto where(std::function<bool(const KEY&)> _predicate)
+			{
+				group_by_collection::mapper_check();
+				return iterator_type(this, _predicate, &group_by_collection::mapper);
+			}
+
+			bool any_of(std::function<bool(const group&)> predicate)
+			{
+				return std::any_of(begin(), end(), predicate);
+			}
+
+			bool all_of(std::function<bool(const group&)> predicate)
+			{
+				return std::all_of(begin(), end(), predicate);
+			}
+
+			corona_size_t count_if(std::function<bool(const group&)> predicate)
+			{
+				return std::count_if(begin(), end(), predicate);
+			}
+
 		};
 
 		void query_tests();
