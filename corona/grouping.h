@@ -137,7 +137,7 @@ namespace corona
 				return iterator_type(this, null_row, &group_by_collection::mapper);
 			}
 
-			auto where(std::function<bool(const KEY&)> _predicate)
+			auto where(std::function<bool(const group&)> _predicate)
 			{
 				group_by_collection::mapper_check();
 				return iterator_type(this, _predicate, &group_by_collection::mapper);

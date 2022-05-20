@@ -265,6 +265,20 @@ namespace corona
 				return filterable_iterator(this, _predicate);
 			}
 
+			template <typename new_key> grouping<new_key, item_type> group_by(serialized_box_container *_box, std::function<new_key(value_ref&)> _predicate)
+			{
+				grouping<new_key, value_ref> grp = grouping<new_key, value_ref>::create_grouping(box);
+
+				for (auto i = begin(); i != end(); i++)
+				{
+					auto f = i.get_object();
+					auto k = _predicate(f);
+					grp.insert_or_assign(k, f);
+				}
+
+				return grp;
+			}
+
 			bool any_of(std::function<bool(const value_ref&)> _predicate)
 			{
 				auto new_predicate = [this, _predicate](auto& kp) { return predicate(kp.item) && _predicate(kp.item); };
