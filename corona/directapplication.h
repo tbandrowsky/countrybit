@@ -1,5 +1,7 @@
 #pragma once
 
+#ifdef WINDESKTOP_GUI
+
 namespace corona
 {
 	namespace win32 
@@ -260,3 +262,5 @@ namespace corona
 
 	}
 }
+
+#endif
