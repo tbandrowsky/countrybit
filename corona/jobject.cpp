@@ -408,10 +408,17 @@ namespace corona
 			relative_ptr_type item_id = _create.item_id;
 			relative_ptr_type object_id = null_row;
 
-			create_object(item_id, _create.actor_id, _create.class_id, object_id);
+			jslice new_object = create_object(item_id, _create.actor_id, _create.class_id, object_id);
 			if (object_id != null_row) 
 			{
-				if (_create.select_on_create) {
+				for (auto js : ac.selections)
+				{
+					jslice src_obj = get_object(js.item);
+					new_object.update(src_obj);
+				}
+
+				if (_create.select_on_create) 
+				{
 					ac.selections.clear();
 					ac.selections.push_back(object_id);
 					put_actor(ac);
@@ -1224,7 +1231,7 @@ namespace corona
 			}
 		}
 		
-		std::partial_ordering jslice::compare(int _dst_idx, jslice& _src_slice, int _src_idx)
+		std::partial_ordering  jslice::compare(int _dst_idx, jslice& _src_slice, int _src_idx)
 		{
 			auto field_type = get_field(_dst_idx).type_id;
 			auto offset1 = get_offset(_dst_idx);
@@ -1276,6 +1283,26 @@ namespace corona
 				}
 				return std::strong_ordering::equal;
 			}
+		}
+
+		jslice jslice::convert(serialized_box_container* _box, row_id_type _class_id)
+		{
+			if (_class_id == class_id)
+				return *this;
+
+			jclass cls = schema->get_class(_class_id);
+
+			auto myclass = _schema->get_class(_class_id);
+			auto bytes_to_allocate = myclass.item().class_size_bytes;
+			relative_ptr_type location = _box->reserve(bytes_to_allocate);
+
+			dimensions_type d = { 0,0,0 };
+
+			jslice ja(nullptr, _schema, _class_id, box, location, d);
+			ja.construct();
+			ja.update(*this);
+
+			return ja;
 		}
 
 		jarray::jarray() : schema(nullptr), class_field_id(null_row), bytes(nullptr)

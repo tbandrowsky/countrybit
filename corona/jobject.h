@@ -178,6 +178,8 @@ namespace corona
 			std::partial_ordering compare(int _dst_idx, jslice& _src_slice, int _src_idx);
 			std::partial_ordering compare(jslice& _src_slice);
 
+			jslice convert(serialized_box_container* _box, row_id_type _class_id);
+
 			template <typename boxed> boxed get(int field_idx)
 			{
 				size_t offset = get_offset(field_idx);
@@ -189,6 +191,10 @@ namespace corona
 			int size();
 			char* get_bytes() { return box ? box->unpack<char>(location) : bytes;  };
 			relative_ptr_type size_bytes() { return get_class().item().class_size_bytes; };
+
+			std::partial_ordering operator<=>(jslice& src) const {
+				return compare(src);
+			}
 		};
 
 		class jarray : public slice_enumerable
