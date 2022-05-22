@@ -4,6 +4,20 @@
 #include "windowsx.h"
 #include "process.h"
 #include "combaseapi.h"
+#include "commctrl.h"
+#include "Shlwapi.h"
+#include "Shlobj.h"
+#include "Winhttp.h"
+#include "malloc.h" // for alloca
+
+#include <stdlib.h>
+#include <malloc.h>
+#include <memory.h>
+#include <tchar.h>
+#include <d2d1.h>
+#include <d2d1helper.h>
+#include <dwrite.h>
+#include <wincodec.h>
 
 #include <clocale>
 #include <locale>
@@ -21,6 +35,7 @@
 #include <ostream>
 #include <fstream>
 #include <iostream>
+#include <sstream>
 #include <bit>
 #include <cctype>
 #include <format>
@@ -36,6 +51,7 @@
 #include <stdexcept>
 #include <format>
 #include <ctime>
+#include <stack>
 
 #include "assert_if.h"
 #include "constants.h"
@@ -83,3 +99,17 @@
 #include "jdatabase_server.h"
 #include "loader.h"
 
+#ifdef WINDESKTOP_GUI
+
+#include "utility.h"
+#include "datatransfer.h"
+#include "controllerhost.h"
+#include "controller.h"
+#include "viewstyle.h"
+#include "directapplication.h"
+
+const int WM_SWITCH_CONTROLLER = WM_APP + 101;
+const int WM_PUSH_CONTROLLER = WM_APP + 102;
+const int WM_POP_CONTROLLER = WM_APP + 103;
+
+#endif

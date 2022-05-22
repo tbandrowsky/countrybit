@@ -1,9 +1,0 @@
-namespace programchart
-{
-    [default_interface]
-    runtimeclass CoronaSliceControl : Windows.UI.Xaml.Controls.UserControl
-    {
-        CoronaSliceControl();
-        Int64 ObjectId;
-    }
-}

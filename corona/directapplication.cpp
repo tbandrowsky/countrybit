@@ -1,0 +1,2906 @@
+
+#pragma once
+
+#include "pch.h"
+
+#ifdef WINDESKTOP_GUI
+
+namespace corona
+{
+	namespace win32
+	{
+
+
+
+		void throwOnFail(HRESULT hr, const char* _message)
+		{
+			directException exc;
+			if (!SUCCEEDED(hr)) {
+				exc.lastError = hr;
+				exc.message = _message;
+				throw exc;
+			}
+		}
+
+		void throwOnNull(void* _ptr, const char* _message)
+		{
+			directException exc;
+			if (!_ptr) {
+				exc.lastError = GetLastError();
+				exc.message = _message;
+				throw exc;
+			}
+		}
+
+		direct2dFactory::direct2dFactory() :
+			d2DFactory(NULL), wicFactory(NULL), dWriteFactory(NULL)
+		{
+			CoInitialize(NULL);
+			HRESULT hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &d2DFactory);
+			throwOnFail(hr, "Could not create D2D1 factory");
+
+			hr = CoCreateInstance(CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&wicFactory));
+			throwOnFail(hr, "Could not create WIC Imaging factory");
+
+			hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(dWriteFactory), reinterpret_cast<IUnknown**>(&dWriteFactory));
+			throwOnFail(hr, "Could not create direct write factory");
+		}
+
+		direct2dFactory::~direct2dFactory()
+		{
+			if (dWriteFactory) {
+				dWriteFactory->Release();
+				dWriteFactory = NULL;
+			}
+			if (wicFactory) {
+				wicFactory->Release();
+				wicFactory = NULL;
+			}
+			if (d2DFactory) {
+				d2DFactory->Release();
+				d2DFactory = NULL;
+			}
+			CoUninitialize();
+		}
+
+		direct2dContext::direct2dContext(direct2dFactory* _factory) :
+			factory(_factory),
+			renderTarget(NULL),
+			bitmapRenderTarget(NULL),
+			hwndRenderTarget(NULL)
+		{
+		}
+
+		direct2dContext::~direct2dContext()
+		{
+			clearPaths();
+			clearTextStyles();
+			clearBitmapsAndBrushes(true);
+
+			if (renderTarget) {
+				renderTarget->Release();
+				renderTarget = NULL;
+			}
+		}
+
+		bool direct2dContext::createRenderTarget(ID2D1RenderTarget* _renderTarget, D2D1_SIZE_F _size)
+		{
+			HRESULT hr = _renderTarget->CreateCompatibleRenderTarget(_size, &bitmapRenderTarget);
+			throwOnFail(hr, "Could not create render target");
+
+			renderTarget = bitmapRenderTarget;
+			return SUCCEEDED(hr);
+		}
+
+		bool direct2dContext::createRenderTarget(HWND hwnd)
+		{
+			RECT rc;
+			GetClientRect(hwnd, &rc);
+
+			D2D1_SIZE_U size = D2D1::SizeU(rc.right - rc.left, rc.bottom - rc.top);
+
+			HRESULT hr = factory->getD2DFactory()->CreateHwndRenderTarget(D2D1::RenderTargetProperties(), D2D1::HwndRenderTargetProperties(hwnd, size), &hwndRenderTarget);
+			renderTarget = hwndRenderTarget;
+			throwOnFail(hr, "Could not create render target");
+
+			return SUCCEEDED(hr);
+		}
+
+		void direct2dContext::destroyRenderTarget()
+		{
+			if (hwndRenderTarget) {
+				hwndRenderTarget->Release();
+				hwndRenderTarget = NULL;
+			}
+
+			if (bitmapRenderTarget) {
+				bitmapRenderTarget->Release();
+				bitmapRenderTarget = NULL;
+			}
+
+			renderTarget = NULL;
+		}
+
+		directBitmap::directBitmap(direct2dFactory* _factory, D2D1_SIZE_F _size)
+			: direct2dContext(_factory),
+			size(_size)
+		{
+			HRESULT hr;
+
+			hr = _factory->getWicFactory()->CreateBitmap(size.width, size.height, GUID_WICPixelFormat32bppPBGRA, WICBitmapCreateCacheOption::WICBitmapCacheOnDemand, &wicBitmap);
+			throwOnFail(hr, "Could not create WIC bitmap");
+		}
+
+		directBitmap::~directBitmap()
+		{
+			destroyRenderTarget();
+			if (wicBitmap) wicBitmap->Release();
+		}
+
+		bool directBitmap::createRenderTarget()
+		{
+			D2D1_RENDER_TARGET_PROPERTIES props = D2D1::RenderTargetProperties();
+			HRESULT hr;
+
+			hr = getFactory()->getD2DFactory()->CreateWicBitmapRenderTarget(wicBitmap, props, &wicTarget);
+			throwOnFail(hr, "Could not create WIC render target");
+
+			renderTarget = wicTarget;
+
+			return true;
+		}
+
+		void directBitmap::destroyRenderTarget()
+		{
+			if (wicTarget) wicTarget->Release();
+			wicTarget = NULL;
+			renderTarget = NULL;
+		}
+
+		class directBitmapSaveImpl {
+		public:
+
+			directBitmap* dBitmap;
+			IWICStream* fileStream;
+			IWICBitmapEncoder* bitmapEncoder;
+			IWICBitmapFrameEncode* bitmapFrameEncode;
+
+			directBitmapSaveImpl(directBitmap* _dbitmap) :
+				dBitmap(_dbitmap),
+				fileStream(NULL),
+				bitmapEncoder(NULL),
+				bitmapFrameEncode(NULL)
+			{
+
+			}
+
+			virtual ~directBitmapSaveImpl()
+			{
+				if (fileStream) fileStream->Release();
+				if (bitmapEncoder) bitmapEncoder->Release();
+				if (bitmapFrameEncode) bitmapFrameEncode->Release();
+			}
+
+			virtual void save(const wchar_t* _filename)
+			{
+
+				HRESULT hr;
+
+				hr = dBitmap->getFactory()->getWicFactory()->CreateStream(&fileStream);
+				throwOnFail(hr, "Could not create file stream");
+
+				hr = fileStream->InitializeFromFilename(_filename, GENERIC_WRITE);
+				throwOnFail(hr, "Could not initialize file stream");
+
+				hr = dBitmap->getFactory()->getWicFactory()->CreateEncoder(GUID_ContainerFormatPng, NULL, &bitmapEncoder);
+				throwOnFail(hr, "Could not create bitmap encoder");
+
+				hr = bitmapEncoder->Initialize(fileStream, WICBitmapEncoderCacheOption::WICBitmapEncoderNoCache);
+				throwOnFail(hr, "Could not intialize bitmap encoder");
+
+				hr = bitmapEncoder->CreateNewFrame(&bitmapFrameEncode, NULL);
+				throwOnFail(hr, "Could not create frame");
+
+				hr = bitmapFrameEncode->Initialize(NULL);
+				throwOnFail(hr, "Could not initialize bitmap frame encoder");
+
+				hr = bitmapFrameEncode->SetSize(dBitmap->size.width, dBitmap->size.height);
+				throwOnFail(hr, "Could not initialize set size");
+
+				WICPixelFormatGUID format = GUID_WICPixelFormatDontCare;
+
+				WICRect rect;
+				rect.X = 0;
+				rect.Y = 0;
+				rect.Width = dBitmap->size.width;
+				rect.Height = dBitmap->size.height;
+
+				hr = bitmapFrameEncode->WriteSource(dBitmap->getBitmap(), &rect);
+				throwOnFail(hr, "Could not write source");
+
+				hr = bitmapFrameEncode->Commit();
+				throwOnFail(hr, "Could not commit frame");
+
+				hr = bitmapEncoder->Commit();
+				throwOnFail(hr, "Could not commit bitmap");
+
+			}
+		};
+
+		IWICBitmap* directBitmap::getBitmap()
+		{
+			return wicBitmap;
+		}
+
+		void directBitmap::save(const char* _filename)
+		{
+			wchar_t buff[8192];
+			int ret = ::MultiByteToWideChar(CP_ACP, 0, _filename, -1, buff, sizeof(buff) - 1);
+			directBitmapSaveImpl saver(this);
+			saver.save(buff);
+		}
+
+		class deviceDependentAssetBase {
+		public:
+
+			bool stock;
+
+			deviceDependentAssetBase() : stock(false)
+			{
+				;
+			}
+
+			virtual ~deviceDependentAssetBase()
+			{
+				;
+			}
+
+			virtual bool create(direct2dContext* target) = 0;
+			virtual void release() = 0;
+
+			virtual ID2D1Brush* getBrush()
+			{
+				return NULL;
+			}
+
+		};
+
+		class textStyle : public deviceDependentAssetBase
+		{
+			IDWriteTextFormat* lpWriteTextFormat;
+
+			std::string fontName;
+			float size;
+			bool bold;
+			bool italic;
+
+		public:
+
+			textStyle(std::string& _fontName, float _size, bool _bold = false, bool _italic = false) :
+				fontName(_fontName),
+				size(_size),
+				bold(_bold),
+				italic(_italic),
+				lpWriteTextFormat(NULL)
+			{
+				;
+			}
+
+			virtual ~textStyle()
+			{
+				release();
+			}
+
+			virtual bool create(direct2dContext* target)
+			{
+				fontName.c_str();
+				wchar_t buff[512];
+				int ret = ::MultiByteToWideChar(CP_ACP, 0, fontName.c_str(), -1, buff, sizeof(buff) - 1);
+				lpWriteTextFormat = NULL;
+				HRESULT hr = target->factory->getDWriteFactory()->CreateTextFormat(buff,
+					NULL,
+					bold ? DWRITE_FONT_WEIGHT_BOLD : DWRITE_FONT_WEIGHT_REGULAR,
+					italic ? DWRITE_FONT_STYLE_ITALIC : DWRITE_FONT_STYLE_NORMAL,
+					DWRITE_FONT_STRETCH_NORMAL,
+					size * 96.0 / 72.0,
+					L"en-US",
+					&lpWriteTextFormat);
+				return SUCCEEDED(hr);
+			}
+
+			virtual void release()
+			{
+				if (lpWriteTextFormat)
+					lpWriteTextFormat->Release();
+				lpWriteTextFormat = NULL;
+			}
+
+			IDWriteTextFormat* getFormat()
+			{
+				return lpWriteTextFormat;
+			}
+
+		};
+
+		template <class T> class deviceDependentAsset : public deviceDependentAssetBase {
+		protected:
+			T asset;
+
+		public:
+
+			deviceDependentAsset() : asset(NULL)
+			{
+				;
+			}
+
+			virtual ~deviceDependentAsset()
+			{
+				release();
+			}
+
+			virtual bool create(direct2dContext* target) = 0;
+
+			bool recreate(direct2dContext* target)
+			{
+				release();
+				create(target);
+			}
+
+			inline T getAsset() { return asset; }
+
+		protected:
+
+			virtual void release()
+			{
+				if (asset) asset->Release();
+				asset = NULL;
+			}
+		};
+
+		struct sizeCrop {
+			D2D1_SIZE_U size;
+			bool cropEnabled;
+			D2D1_RECT_F crop;
+		};
+
+
+		sizeCrop toSizeC(sizeIntDto& _size, bool _cropEnabled, marginDto& _crop)
+		{
+			sizeCrop sz;
+			sz.size.width = _size.width;
+			sz.size.height = _size.height;
+			sz.cropEnabled = _cropEnabled;
+			sz.crop.left = _crop.left;
+			sz.crop.top = _crop.top;
+			sz.crop.right = _crop.right;
+			sz.crop.bottom = _crop.bottom;
+			return sz;
+		}
+
+		D2D1_SIZE_U toSizeU(sizeIntDto& _size)
+		{
+			D2D1_SIZE_U newSize;
+			newSize.width = _size.width;
+			newSize.height = _size.height;
+			return newSize;
+		}
+
+		D2D1_SIZE_F toSizeF(sizeIntDto& _size)
+		{
+			D2D1_SIZE_F newSize;
+			newSize.width = _size.width;
+			newSize.height = _size.height;
+			return newSize;
+		}
+
+		sizeIntDto toSize(D2D1_SIZE_U& _size)
+		{
+			sizeIntDto newSize;
+			newSize.width = _size.width;
+			newSize.height = _size.height;
+			return newSize;
+		}
+
+		class brush
+		{
+		public:
+			virtual ID2D1Brush* getBrush() = 0;
+		};
+
+		class filteredBitmap
+		{
+			filteredBitmap(direct2dContext* _targetContext, filteredBitmap* _src)
+				: size(_src->size),
+				cropEnabled(_src->cropEnabled),
+				crop(_src->crop),
+				filteredScaledBitmap(NULL),
+				originalScaledBitmap(_src->originalScaledBitmap),
+				wicFilteredScaledBitmap(_src->wicFilteredScaledBitmap),
+				originalWidth(_src->originalWidth),
+				originalHeight(_src->originalHeight)
+			{
+				HRESULT hr = wicFilteredScaledBitmap->AddRef();
+				throwOnFail(hr, "Could not clone wic filtered bitmap");
+				hr = originalScaledBitmap->AddRef();
+				throwOnFail(hr, "Could not clone original bitmap");
+				make(_targetContext);
+			}
+
+		public:
+			D2D1_SIZE_U size;
+			bool cropEnabled;
+			D2D1_RECT_F crop;
+			IWICBitmap* originalScaledBitmap,
+				* wicFilteredScaledBitmap;
+			ID2D1Bitmap* filteredScaledBitmap;
+			UINT originalWidth, originalHeight;
+
+			filteredBitmap(D2D1_SIZE_U _size, bool _cropEnabled, D2D1_RECT_F _crop)
+				: size(_size),
+				cropEnabled(_cropEnabled),
+				crop(_crop),
+				originalScaledBitmap(NULL),
+				wicFilteredScaledBitmap(NULL),
+				filteredScaledBitmap(NULL)
+			{
+
+			}
+
+			filteredBitmap* clone(direct2dContext* _targetContext)
+			{
+				return new filteredBitmap(_targetContext, this);
+			}
+
+			bool create(direct2dContext* _target, IWICBitmapSource* _source)
+			{
+				HRESULT hr;
+
+				IWICBitmapScaler* pScaler = NULL;
+				IWICBitmapClipper* pClipper = NULL;
+				IWICFormatConverter* pConverter = NULL;
+
+				if (originalScaledBitmap) {
+					originalScaledBitmap->Release();
+					originalScaledBitmap = NULL;
+				}
+
+				if (wicFilteredScaledBitmap) {
+					wicFilteredScaledBitmap->Release();
+					wicFilteredScaledBitmap = NULL;
+				}
+
+				hr = _target->getFactory()->getWicFactory()->CreateFormatConverter(&pConverter);
+				hr = _source->GetSize(&originalWidth, &originalHeight);
+
+				// If a new width or height was specified, create an
+				// IWICBitmapScaler and use it to resize the image.
+				if (size.width != 0 || size.height != 0)
+				{
+					if (SUCCEEDED(hr))
+					{
+						if (cropEnabled) {
+							hr = _target->getFactory()->getWicFactory()->CreateBitmapClipper(&pClipper);
+							if (SUCCEEDED(hr)) {
+								WICRect clipRect;
+								clipRect.X = crop.left * originalWidth;
+								clipRect.Y = crop.top * originalHeight;
+								clipRect.Height = originalHeight - (clipRect.Y + originalHeight * crop.bottom);
+								clipRect.Width = originalWidth - (clipRect.X + originalWidth * crop.right);
+								hr = pClipper->Initialize(_source, &clipRect);
+								_source = pClipper;
+								if (size.width == 0)
+								{
+									FLOAT scalar = static_cast<FLOAT>(size.height) / static_cast<FLOAT>(clipRect.Height);
+									size.width = static_cast<UINT>(scalar * static_cast<FLOAT>(clipRect.Width));
+								}
+								else if (size.height == 0)
+								{
+									FLOAT scalar = static_cast<FLOAT>(size.width) / static_cast<FLOAT>(clipRect.Width);
+									size.height = static_cast<UINT>(scalar * static_cast<FLOAT>(clipRect.Height));
+								}
+							}
+						}
+						else
+						{
+							if (size.width == 0)
+							{
+								FLOAT scalar = static_cast<FLOAT>(size.height) / static_cast<FLOAT>(originalHeight);
+								size.width = static_cast<UINT>(scalar * static_cast<FLOAT>(originalWidth));
+							}
+							else if (size.height == 0)
+							{
+								FLOAT scalar = static_cast<FLOAT>(size.width) / static_cast<FLOAT>(originalWidth);
+								size.height = static_cast<UINT>(scalar * static_cast<FLOAT>(originalHeight));
+							}
+						}
+
+
+						hr = _target->getFactory()->getWicFactory()->CreateBitmapScaler(&pScaler);
+						if (SUCCEEDED(hr))
+							hr = pScaler->Initialize(_source, size.width, size.height, WICBitmapInterpolationModeCubic);
+						if (SUCCEEDED(hr))
+							hr = pConverter->Initialize(pScaler, GUID_WICPixelFormat32bppPBGRA, WICBitmapDitherTypeNone, NULL, 0.f, WICBitmapPaletteTypeMedianCut);
+						if (SUCCEEDED(hr)) {
+							hr = _target->getFactory()->getWicFactory()->CreateBitmapFromSource(pConverter, WICBitmapCreateCacheOption::WICBitmapCacheOnDemand, &originalScaledBitmap);
+							hr = _target->getFactory()->getWicFactory()->CreateBitmapFromSource(pConverter, WICBitmapCreateCacheOption::WICBitmapCacheOnDemand, &wicFilteredScaledBitmap);
+						}
+					}
+				}
+				else // Don't scale the image.
+				{
+					hr = pConverter->Initialize(_source, GUID_WICPixelFormat32bppPBGRA, WICBitmapDitherTypeNone, NULL, 0.f, WICBitmapPaletteTypeMedianCut);
+					if (SUCCEEDED(hr)) {
+						if (cropEnabled) {
+							hr = _target->getFactory()->getWicFactory()->CreateBitmapClipper(&pClipper);
+							if (SUCCEEDED(hr)) {
+								WICRect clipRect;
+								clipRect.X = crop.left * originalWidth;
+								clipRect.Y = crop.top * originalHeight;
+								clipRect.Height = (originalHeight - (crop.bottom * originalHeight)) - clipRect.Y;
+								clipRect.Width = (originalWidth - (crop.right * originalWidth)) - clipRect.X;
+								hr = pClipper->Initialize(_source, &clipRect);
+								_source = pClipper;
+							}
+						}
+						else {
+							_source = pConverter;
+						}
+						hr = _target->getFactory()->getWicFactory()->CreateBitmapFromSource(_source, WICBitmapCreateCacheOption::WICBitmapCacheOnDemand, &originalScaledBitmap);
+						hr = _target->getFactory()->getWicFactory()->CreateBitmapFromSource(_source, WICBitmapCreateCacheOption::WICBitmapCacheOnDemand, &wicFilteredScaledBitmap);
+					}
+				}
+
+				if (pConverter) { pConverter->Release(); pConverter = NULL; }
+				if (pScaler) { pScaler->Release(); pScaler = NULL; }
+				if (pClipper) { pClipper->Release(); pClipper = NULL; }
+
+				return SUCCEEDED(hr);
+			}
+
+			bool make(direct2dContext* _target)
+			{
+				HRESULT hr = 0;
+				if (filteredScaledBitmap) {
+					filteredScaledBitmap->Release();
+					filteredScaledBitmap = NULL;
+				}
+
+				if (wicFilteredScaledBitmap) {
+					hr = _target->getRenderTarget()->CreateBitmapFromWicBitmap(wicFilteredScaledBitmap, &filteredScaledBitmap);
+				}
+				return hr == S_OK;
+			}
+
+			virtual ~filteredBitmap()
+			{
+				release();
+			}
+
+			void release()
+			{
+				if (originalScaledBitmap)
+					originalScaledBitmap->Release();
+				originalScaledBitmap = NULL;
+				if (wicFilteredScaledBitmap)
+					wicFilteredScaledBitmap->Release();
+				wicFilteredScaledBitmap = NULL;
+				if (filteredScaledBitmap)
+					filteredScaledBitmap->Release();
+				filteredScaledBitmap = NULL;
+			}
+		};
+
+		class nullFilterFunction {
+		public:
+			bool operator()(sizeIntDto, int, int, char*)
+			{
+				return true;
+			}
+		};
+
+		class bitmap : public deviceDependentAssetBase
+		{
+			bool useFile;
+			std::string filename;
+			std::list<filteredBitmap*> filteredBitmaps;
+			std::function<bool(sizeIntDto, int, int, char*)> filterFunction;
+
+			void clearFilteredBitmaps()
+			{
+				for (auto ifb = filteredBitmaps.begin(); ifb != filteredBitmaps.end(); ifb++) {
+					filteredBitmap* bm = *ifb;
+					delete bm;
+				}
+				filteredBitmaps.clear();
+			}
+
+			void setFilteredBitmaps(std::list<sizeCrop>& _sizes)
+			{
+				for (auto i = _sizes.begin(); i != _sizes.end(); i++) {
+					auto sizeCrop = *i;
+					filteredBitmap* bm = new filteredBitmap(sizeCrop.size, sizeCrop.cropEnabled, sizeCrop.crop);
+					filteredBitmaps.push_back(bm);
+				}
+			}
+
+			void copyFilteredBitmaps(direct2dContext* _targetContext, bitmap* _src)
+			{
+				for (auto i = _src->filteredBitmaps.begin(); i != _src->filteredBitmaps.end(); i++) {
+					auto srcfiltered = *i;
+					filteredBitmap* bm = srcfiltered->clone(_targetContext);
+					filteredBitmaps.push_back(bm);
+				}
+			}
+
+			bitmap(direct2dContext* _targetContext, bitmap* _src)
+				: useFile(_src->useFile),
+				filename(_src->filename),
+				filterFunction(_src->filterFunction)
+			{
+				copyFilteredBitmaps(_targetContext, _src);
+				applyFilters(_targetContext);
+			}
+
+		public:
+
+			bitmap(std::string& _filename, std::list<sizeCrop>& _sizes) :
+				useFile(true),
+				filename(_filename)
+			{
+				nullFilterFunction defaultFunc;
+				filterFunction = defaultFunc;
+				setFilteredBitmaps(_sizes);
+			}
+
+			virtual ~bitmap()
+			{
+				clearFilteredBitmaps();
+			}
+
+			virtual bitmap* clone(direct2dContext* _src)
+			{
+				return new bitmap(_src, this);
+			}
+
+			void setSizes(std::list<sizeCrop>& _sizes)
+			{
+				clearFilteredBitmaps();
+				setFilteredBitmaps(_sizes);
+			}
+
+			bool getSize(int* _sizex, int* _sizey)
+			{
+				bool success = false;
+				if (filteredBitmaps.size() > 0) {
+					if (*_sizex == 0 && *_sizey == 0) {
+						auto bm = filteredBitmaps.front();
+						*_sizex = bm->originalWidth;
+						*_sizey = bm->originalHeight;
+						success = true;
+					}
+					else if (*_sizey == 0) {
+						auto iter = std::find_if(filteredBitmaps.begin(), filteredBitmaps.end(), [_sizex](filteredBitmap* _bm) { return _bm->size.width == *_sizex; });
+						if (iter != filteredBitmaps.end()) {
+							auto ix = *iter;
+							*_sizex = ix->size.width;
+							*_sizey = ix->size.height;
+							success = true;
+						}
+					}
+				}
+				return success;
+			}
+
+			ID2D1Bitmap* getFirst()
+			{
+				auto afb = filteredBitmaps.front();
+				return afb->filteredScaledBitmap;
+			}
+
+			ID2D1Bitmap* getBySize(int _width, int _height)
+			{
+				auto iter = std::find_if(filteredBitmaps.begin(), filteredBitmaps.end(), [_width, _height](filteredBitmap* _bm) { return _bm->size.width == _width && _bm->size.height == _height; });
+				if (iter != filteredBitmaps.end()) {
+					return (*iter)->filteredScaledBitmap;
+				}
+				else {
+					return NULL;
+				}
+			}
+
+			colorDto getColorAtPoint(int _width, int _height, pointDto point)
+			{
+				colorDto color;
+				IWICBitmap* bm = NULL;
+				auto iter = std::find_if(filteredBitmaps.begin(), filteredBitmaps.end(), [_width, _height](filteredBitmap* _bm) { return _bm->size.width == _width && _bm->size.height == _height; });
+				if (iter != filteredBitmaps.end()) {
+					auto fbm = *iter;
+					bm = fbm->wicFilteredScaledBitmap;
+
+					HRESULT hr;
+					if (point.x >= 0 && (int)point.x < fbm->size.width && (int)point.y < fbm->size.height && point.y >= 0 && bm) {
+						WICRect rcLock = { 0, 0, fbm->size.width, fbm->size.height };
+						IWICBitmapLock* pLock = NULL;
+
+						hr = bm->Lock(&rcLock, WICBitmapLockWrite | WICBitmapLockRead, &pLock);
+
+						if (SUCCEEDED(hr))
+						{
+							UINT cbBufferSize = 0;
+							UINT cbStride = 0;
+							BYTE* pv = NULL;
+
+							hr = pLock->GetStride(&cbStride);
+
+							if (SUCCEEDED(hr))
+							{
+								hr = pLock->GetDataPointer(&cbBufferSize, &pv);
+								if (SUCCEEDED(hr) && pv && cbBufferSize) {
+									auto row = (PBGRAPixel*)(pv + cbStride * (int)point.y);
+									auto pix = row[(int)point.x];
+									color.alpha = pix.alpha / 255.0;
+									color.blue = pix.blue / 255.0;
+									color.red = pix.red / 255.0;
+									color.green = pix.green / 255.0;
+									// because this is premultiplied alpha
+									if (color.alpha >= 0.0) {
+										color.blue /= color.alpha;
+										color.green /= color.alpha;
+										color.red /= color.alpha;
+									}
+								}
+							}
+
+							// Release the bitmap lock.
+							pLock->Release();
+						}
+					}
+				}
+				return color;
+			}
+
+			void setFilter(std::function<bool(sizeIntDto, int, int, char* bytes)> _filter)
+			{
+				filterFunction = _filter;
+			}
+
+			void filter()
+			{
+				HRESULT hr;
+				for (auto ifb = filteredBitmaps.begin(); ifb != filteredBitmaps.end(); ifb++) {
+					filteredBitmap* bm = *ifb;
+					WICRect rcLock = { 0, 0, bm->size.width, bm->size.height };
+					IWICBitmapLock* pLockOriginal = NULL;
+					IWICBitmapLock* pLockFiltered = NULL;
+
+					if (bm->originalScaledBitmap == NULL)
+						continue;
+
+					hr = bm->originalScaledBitmap->Lock(&rcLock, WICBitmapLockWrite | WICBitmapLockRead, &pLockOriginal);
+
+					if (SUCCEEDED(hr))
+					{
+						hr = bm->wicFilteredScaledBitmap->Lock(&rcLock, WICBitmapLockWrite | WICBitmapLockRead, &pLockFiltered);
+
+						if (SUCCEEDED(hr)) {
+
+							UINT cbBufferSizeSrc = 0;
+							UINT cbBufferSizeDst = 0;
+							UINT cbStride = 0;
+							BYTE* pvSrc = NULL;
+							BYTE* pvDst = NULL;
+
+							hr = pLockFiltered->GetStride(&cbStride);
+
+							if (SUCCEEDED(hr))
+							{
+								hr = pLockOriginal->GetDataPointer(&cbBufferSizeSrc, &pvSrc);
+								if (SUCCEEDED(hr)) {
+									hr = pLockFiltered->GetDataPointer(&cbBufferSizeDst, &pvDst);
+
+									if (SUCCEEDED(hr) && pvSrc && pvDst && cbBufferSizeDst && cbBufferSizeSrc && (cbBufferSizeSrc == cbBufferSizeDst)) {
+										memcpy(pvDst, pvSrc, cbBufferSizeSrc);
+										sizeIntDto size = toSize(bm->size);
+										filterFunction(size, (int)cbBufferSizeDst, (int)cbStride, (char*)pvDst);
+									}
+								}
+							}
+
+						}
+
+						// Release the bitmap lock.
+						pLockOriginal->Release();
+						pLockFiltered->Release();
+					}
+				}
+			}
+
+			virtual bool applyFilters(direct2dContext* _target)
+			{
+				filter();
+
+				for (auto ifb = filteredBitmaps.begin(); ifb != filteredBitmaps.end(); ifb++) {
+					filteredBitmap* bm = *ifb;
+					bm->make(_target);
+				}
+
+				return true;
+			}
+
+			virtual bool create(direct2dContext* _target)
+			{
+
+				HRESULT hr;
+				IWICBitmapDecoder* pDecoder = NULL;
+				IWICBitmapFrameDecode* pSource = NULL;
+
+				wchar_t fileBuff[1024];
+				int ret = ::MultiByteToWideChar(CP_ACP, 0, filename.c_str(), -1, fileBuff, sizeof(fileBuff) / sizeof(wchar_t) - 1);
+
+				hr = _target->getFactory()->getWicFactory()->CreateDecoderFromFilename(fileBuff, NULL, GENERIC_READ, WICDecodeMetadataCacheOnLoad, &pDecoder);
+
+				if (SUCCEEDED(hr))
+					hr = pDecoder->GetFrame(0, &pSource);
+
+				if (SUCCEEDED(hr))
+				{
+					for (auto ifb = filteredBitmaps.begin(); ifb != filteredBitmaps.end(); ifb++) {
+						filteredBitmap* bm = *ifb;
+						bm->create(_target, pSource);
+					}
+
+					filter();
+
+					for (auto ifb = filteredBitmaps.begin(); ifb != filteredBitmaps.end(); ifb++) {
+						filteredBitmap* bm = *ifb;
+						bm->make(_target);
+					}
+
+				}
+
+				if (pDecoder) { pDecoder->Release(); pDecoder = NULL; }
+				if (pSource) { pSource->Release(); pSource = NULL; }
+
+				return SUCCEEDED(hr);
+			}
+
+			virtual void release()
+			{
+				for (auto ifb = filteredBitmaps.begin(); ifb != filteredBitmaps.end(); ifb++) {
+					filteredBitmap* bm = *ifb;
+					bm->release();
+				}
+			}
+		};
+
+		class bitmapBrush : public deviceDependentAsset<ID2D1BitmapBrush*>, brush {
+		public:
+
+			bitmap* bm;
+
+			bitmapBrush() : deviceDependentAsset()
+			{
+				;
+			}
+
+			virtual ~bitmapBrush()
+			{
+
+			}
+
+			virtual bool create(direct2dContext* target)
+			{
+				HRESULT hr = target->renderTarget->CreateBitmapBrush(bm->getFirst(), &asset);
+
+				return SUCCEEDED(hr);
+			}
+
+			virtual ID2D1Brush* getBrush()
+			{
+				return asset;
+			}
+		};
+
+		class solidColorBrush : public deviceDependentAsset<ID2D1SolidColorBrush*>, brush {
+		public:
+
+			D2D1_COLOR_F color;
+
+			solidColorBrush() : deviceDependentAsset()
+			{
+				;
+			}
+
+			virtual ~solidColorBrush()
+			{
+
+			}
+
+			bool create(direct2dContext* target)
+			{
+				HRESULT hr = target->renderTarget->CreateSolidColorBrush(color, &asset);
+				return SUCCEEDED(hr);
+			}
+
+			ID2D1Brush* getBrush()
+			{
+				return asset;
+			}
+
+		};
+
+		class linearGradientBrush : public deviceDependentAsset<ID2D1LinearGradientBrush*>, brush {
+		public:
+			std::vector<D2D1_GRADIENT_STOP> stops;
+			D2D1_POINT_2F					start,
+				stop;
+
+			virtual bool create(direct2dContext* target)
+			{
+				ID2D1GradientStopCollection* pGradientStops = NULL;
+
+				HRESULT hr = target->renderTarget->CreateGradientStopCollection(&stops[0], stops.size(), &pGradientStops);
+
+				if (SUCCEEDED(hr))
+				{
+					hr = target->renderTarget->CreateLinearGradientBrush(
+						D2D1::LinearGradientBrushProperties(start, stop),
+						D2D1::BrushProperties(),
+						pGradientStops,
+						&asset
+					);
+					pGradientStops->Release();
+				}
+				return SUCCEEDED(hr);
+			}
+
+			virtual ID2D1Brush* getBrush()
+			{
+				return asset;
+			}
+
+		};
+
+		class radialGradientBrush : public deviceDependentAsset<ID2D1RadialGradientBrush*>, brush {
+		public:
+			std::vector<D2D1_GRADIENT_STOP> stops;
+			D2D1_RADIAL_GRADIENT_BRUSH_PROPERTIES radialProperties;
+
+			bool create(direct2dContext* target)
+			{
+				ID2D1GradientStopCollection* pGradientStops = NULL;
+
+				HRESULT hr = target->renderTarget->CreateGradientStopCollection(&stops[0], stops.size(), &pGradientStops);
+
+				if (SUCCEEDED(hr))
+				{
+					hr = target->renderTarget->CreateRadialGradientBrush(
+						radialProperties,
+						D2D1::BrushProperties(),
+						pGradientStops,
+						&asset
+					);
+					pGradientStops->Release();
+				}
+				return SUCCEEDED(hr);
+			}
+
+			virtual ID2D1Brush* getBrush()
+			{
+				return asset;
+			}
+		};
+
+		class path {
+		public:
+			ID2D1PathGeometry* geometry;
+			ID2D1GeometrySink* sink;
+
+			path(direct2dContext* target) : geometry(NULL), sink(NULL)
+			{
+				HRESULT hr = target->factory->getD2DFactory()->CreatePathGeometry(&geometry);
+				if (!SUCCEEDED(hr)) {
+					// UH, SOMETHING;
+				}
+			}
+
+			virtual ~path()
+			{
+				if (sink) sink->Release();
+				if (geometry) geometry->Release();
+				sink = NULL;
+				geometry = NULL;
+			}
+
+			void start_figure(D2D1_POINT_2F point)
+			{
+				if (geometry) {
+					geometry->Open(&sink);
+					if (sink)
+						sink->BeginFigure(point, D2D1_FIGURE_BEGIN_FILLED);
+				}
+			}
+
+			void add_line(D2D1_POINT_2F point)
+			{
+				if (sink) sink->AddLine(point);
+			}
+
+			void add_arc(D2D1_POINT_2F point1, D2D1_SIZE_F size1, FLOAT rotationAngle)
+			{
+				D2D1_SWEEP_DIRECTION direction = rotationAngle > 0.0 ? D2D1_SWEEP_DIRECTION::D2D1_SWEEP_DIRECTION_COUNTER_CLOCKWISE : D2D1_SWEEP_DIRECTION::D2D1_SWEEP_DIRECTION_CLOCKWISE;
+				rotationAngle = fabs(rotationAngle);
+				D2D1_ARC_SIZE arcSize = rotationAngle > 180.0 ? D2D1_ARC_SIZE::D2D1_ARC_SIZE_LARGE : D2D1_ARC_SIZE::D2D1_ARC_SIZE_SMALL;
+				if (sink) sink->AddArc(D2D1::ArcSegment(point1, size1, fabs(rotationAngle), direction, arcSize));
+			}
+
+			void add_bezier(D2D1_POINT_2F point1, D2D1_POINT_2F point2, D2D1_POINT_2F point3)
+			{
+				if (sink) sink->AddBezier(D2D1::BezierSegment(point1, point2, point3));
+			}
+
+			void add_quadratic_bezier(D2D1_POINT_2F point1, D2D1_POINT_2F point2)
+			{
+				if (sink) sink->AddQuadraticBezier(D2D1::QuadraticBezierSegment(point1, point2));
+			}
+
+			void close_figure(bool closed = true)
+			{
+				if (sink) {
+					sink->EndFigure(closed ? D2D1_FIGURE_END_CLOSED : D2D1_FIGURE_END_OPEN);
+					sink->Close();
+					sink->Release();
+					sink = NULL;
+				}
+			}
+		};
+
+		D2D1_COLOR_F toColor(colorDto& _color)
+		{
+			D2D1_COLOR_F newColor;
+			newColor.a = _color.alpha;
+			newColor.b = _color.blue;
+			newColor.r = _color.red;
+			newColor.g = _color.green;
+			return newColor;
+		}
+
+		D2D1_POINT_2F toPoint(pointDto& _point)
+		{
+			D2D1_POINT_2F point2;
+			point2.x = _point.x;
+			point2.y = _point.y;
+			return point2;
+		}
+
+		D2D1_GRADIENT_STOP toGradientStop(gradientStopDto& _gradientStop)
+		{
+			D2D1_GRADIENT_STOP stop;
+
+			stop.position = _gradientStop.position;
+			stop.color = toColor(_gradientStop.color);
+			return stop;
+		}
+
+		// -------------------------------------------------------
+
+		directApplication* directApplication::current;
+
+		directApplication::directApplication(direct2dFactory* _factory) : direct2dContext(_factory), colorCapture(false)
+		{
+			current = this;
+			previousController = NULL;
+			currentController = NULL;
+			controllerLoaded = true;
+			ZeroMemory(&ofn, sizeof(ofn));
+		}
+
+		directApplication::~directApplication()
+		{
+
+		}
+
+		sizeIntDto direct2dContext::getSize()
+		{
+			sizeIntDto asize;
+			asize.height = size.cy;
+			asize.width = size.cx;
+			return asize;
+		}
+
+		void direct2dContext::clear(colorDto* _color)
+		{
+			D2D1_COLOR_F color;
+
+			color.a = _color->alpha;
+			color.b = _color->blue;
+			color.g = _color->green;
+			color.r = _color->red;
+
+			this->renderTarget->Clear(color);
+		}
+
+		void direct2dContext::addBitmap(bitmapDto* _bitmap)
+		{
+			std::string filename, name;
+			filename = _bitmap->filename;
+			name = _bitmap->name;
+			std::list<sizeCrop> sizes;
+			for (auto it = _bitmap->sizes.begin(); it != _bitmap->sizes.end(); it++) {
+				sizes.push_back(toSizeC(*it, _bitmap->cropEnabled, _bitmap->crop));
+			}
+			bitmap* bm = new bitmap(filename, sizes);
+			bitmaps[name] = bm;
+			bm->create(this);
+
+			for (auto it = _bitmap->sizes.begin(); it != _bitmap->sizes.end(); it++) {
+				bm->getSize(&it->width, &it->height);
+			}
+		}
+
+		bool direct2dContext::getBitmapSize(bitmapDto* _bitmap, sizeIntDto* _size)
+		{
+			bool success = false;
+			auto i = bitmaps[_bitmap->name];
+			if (i) {
+				success = i->getSize(&_size->width, &_size->height);
+			}
+			return success;
+		}
+
+		colorDto direct2dContext::getColorAtPoint(bitmapInstanceDto* _bitmap, pointDto& _point)
+		{
+			colorDto color;
+			auto i = bitmaps[_bitmap->bitmapName];
+			if (i) {
+				color = i->getColorAtPoint(_bitmap->width, _bitmap->height, _point);
+			}
+			return color;
+		}
+
+		bool direct2dContext::setBitmapSizes(bitmapDto* _bitmap, bool _forceResize)
+		{
+			bool success = false;
+			auto bm = bitmaps[_bitmap->name];
+			if (bm) {
+
+				// first, check to see if we really need to do this
+				bool allGood = true;
+				if (_forceResize)
+					allGood = false;
+				else
+					for (auto it = _bitmap->sizes.begin(); it != _bitmap->sizes.end(); it++) {
+						int width = it->width;
+						int height = it->height;
+						allGood = bm->getSize(&it->width, &it->height);
+						if (!allGood) break;
+					}
+
+				// then, if we do, go ahead and create the bitmaps
+				if (!allGood) {
+					std::list<sizeCrop> sizes;
+					for (auto it = _bitmap->sizes.begin(); it != _bitmap->sizes.end(); it++) {
+						sizes.push_back(toSizeC(*it, _bitmap->cropEnabled, _bitmap->crop));
+					}
+					bm->setSizes(sizes);
+					bm->create(this);
+					for (auto it = _bitmap->sizes.begin(); it != _bitmap->sizes.end(); it++) {
+						bm->getSize(&it->width, &it->height);
+					}
+				}
+
+				success = true;
+			}
+			return success;
+		}
+
+		bool direct2dContext::setBitmapFilter(bitmapDto* _bitmap, std::function<bool(sizeIntDto, int, int, char* bytes)> _filter)
+		{
+			bool success = false;
+			auto bm = bitmaps[_bitmap->name];
+			if (bm) {
+				bm->setFilter(_filter);
+				success = bm->applyFilters(this);
+			}
+			return success;
+		}
+
+		void direct2dContext::addBitmapBrush(bitmapBrushDto* _bitmapBrush)
+		{
+			bitmapBrush* brush = new bitmapBrush();
+			std::string name, bitmapName;
+			name = _bitmapBrush->name;
+			bitmapName = _bitmapBrush->bitmapName;
+			brush->bm = bitmaps[bitmapName];
+			brushes[name] = brush;
+			brush->create(this);
+		}
+
+		void direct2dContext::addSolidColorBrush(solidBrushDto* _solidBrushDto)
+		{
+			solidColorBrush* brush = new solidColorBrush();
+			brush->stock = _solidBrushDto->stock;
+			brush->color = toColor(_solidBrushDto->color);
+			brushes[_solidBrushDto->name] = brush;
+			brush->create(this);
+		}
+
+		void direct2dContext::addLinearGradientBrush(linearGradientBrushDto* _linearGradientBrushDto)
+		{
+			D2D1_GRADIENT_STOP gradientStop;
+			linearGradientBrush* brush = new linearGradientBrush();
+			brush->stock = _linearGradientBrushDto->stock;
+			brush->start = toPoint(_linearGradientBrushDto->start);
+			brush->stop = toPoint(_linearGradientBrushDto->stop);
+			for (auto i = _linearGradientBrushDto->gradientStops.begin(); i != _linearGradientBrushDto->gradientStops.end(); i++) {
+				gradientStop = toGradientStop(*i);
+				brush->stops.push_back(gradientStop);
+			}
+			brushes[_linearGradientBrushDto->name] = brush;
+			brush->create(this);
+		}
+
+		void direct2dContext::addRadialGradientBrush(radialGradientBrushDto* _radialGradientBrushDto)
+		{
+			D2D1_GRADIENT_STOP gradientStop;
+			radialGradientBrush* brush = new radialGradientBrush();
+			brush->stock = _radialGradientBrushDto->stock;
+			brush->radialProperties.center = toPoint(_radialGradientBrushDto->center);
+			brush->radialProperties.gradientOriginOffset = toPoint(_radialGradientBrushDto->offset);
+			brush->radialProperties.radiusX = _radialGradientBrushDto->radiusX;
+			brush->radialProperties.radiusY = _radialGradientBrushDto->radiusY;
+			for (auto i = _radialGradientBrushDto->gradientStops.begin(); i != _radialGradientBrushDto->gradientStops.end(); i++) {
+				gradientStop = toGradientStop(*i);
+				brush->stops.push_back(gradientStop);
+			}
+			brushes[_radialGradientBrushDto->name] = brush;
+			brush->create(this);
+		}
+
+		void direct2dContext::clearBitmapsAndBrushes(bool deleteStock)
+		{
+			std::list<std::string> brushesToRemove, bitmapsToRemove;
+			for (auto i = brushes.begin(); i != brushes.end(); i++)
+			{
+				if (i->second && (deleteStock || !i->second->stock)) {
+					delete i->second;
+					brushesToRemove.push_back(i->first);
+				}
+			};
+
+			for (auto i = bitmaps.begin(); i != bitmaps.end(); i++)
+			{
+				if (i->second && (deleteStock || !i->second->stock)) {
+					delete i->second;
+					bitmapsToRemove.push_back(i->first);
+				}
+			};
+
+			std::for_each(brushesToRemove.begin(), brushesToRemove.end(), [this](std::string ib) {
+				brushes.erase(ib);
+				});
+
+			std::for_each(bitmapsToRemove.begin(), bitmapsToRemove.end(), [this](std::string ib) {
+				bitmaps.erase(ib);
+				});
+		}
+
+		path* direct2dContext::createPath(pathDto* _pathDto, bool _closed)
+		{
+			path* newPath = new path(this);
+			std::list<pathBaseDto*>::iterator i;
+
+			// skip everything until we get to the starting point
+			for (i = _pathDto->points.begin(); i != _pathDto->points.end(); i++) {
+				pathBaseDto* t = *i;
+				pathLineDto* l = t->asPathLineDto();
+				if (l) {
+					D2D1_POINT_2F point = toPoint(t->asPathLineDto()->point);
+					newPath->start_figure(point);
+					break;
+				}
+			}
+
+			// now draw the rest of the path
+			D2D1_POINT_2F point1, point2, point3;
+			D2D1_SIZE_F size1;
+			FLOAT float1;
+			pathLineDto* pline;
+			pathArcDto* parc;
+			pathBezierDto* pbezier;
+			pathQuadraticBezierDto* pquadraticbezier;
+
+			while (i != _pathDto->points.end()) {
+				pathBaseDto* t = *i;
+				switch (t->eType) {
+				case e_line:
+					pline = t->asPathLineDto();
+					point1 = toPoint(pline->point);
+					newPath->add_line(point1);
+					break;
+				case e_arc:
+					parc = t->asPathArcDto();
+					point1 = toPoint(parc->point);
+					size1.height = parc->radiusX;
+					size1.width = parc->radiusY;
+					newPath->add_arc(point1, size1, parc->angleDegrees);
+					break;
+				case e_bezier:
+					pbezier = t->asPathBezierDto();
+					point1 = toPoint(pbezier->point1);
+					point2 = toPoint(pbezier->point2);
+					point3 = toPoint(pbezier->point3);
+					newPath->add_bezier(point1, point2, point3);
+					break;
+				case e_quadractic_bezier:
+					pquadraticbezier = t->asPathQuadraticBezierDto();
+					point1 = toPoint(pquadraticbezier->point1);
+					point2 = toPoint(pquadraticbezier->point2);
+					newPath->add_quadratic_bezier(point1, point2);
+					break;
+				}
+				i++;
+			}
+
+			newPath->close_figure(_closed);
+			return newPath;
+		}
+
+		void direct2dContext::addPath(pathDto* _pathDto, bool _closed)
+		{
+			path* newPath = createPath(_pathDto, _closed);
+			paths[_pathDto->name] = newPath;
+		}
+
+		void direct2dContext::clearPaths()
+		{
+			std::for_each(paths.begin(), paths.end(), [this](std::pair<std::string, path*> ib) {
+				delete ib.second;
+				});
+
+			paths.clear();
+		}
+
+		void direct2dContext::addTextStyle(textStyleDto* _textStyleDto)
+		{
+			textStyle* newStyle = new textStyle(_textStyleDto->fontName, _textStyleDto->fontSize, _textStyleDto->bold, _textStyleDto->italics);
+			textStyles[_textStyleDto->name] = newStyle;
+			newStyle->create(this);
+		}
+
+		void direct2dContext::clearTextStyles()
+		{
+			std::for_each(textStyles.begin(), textStyles.end(), [this](std::pair<std::string, textStyle*> ib) {
+				delete ib.second;
+				});
+
+			textStyles.clear();
+		}
+
+		void direct2dContext::drawPath(pathInstance2dDto* _pathInstanceDto)
+		{
+			auto fill = brushes[_pathInstanceDto->fillBrushName];
+			auto border = brushes[_pathInstanceDto->borderBrushName];
+			auto p = paths[_pathInstanceDto->pathName];
+
+			if ((!border && !fill) || !p)
+				return;
+
+			D2D1::Matrix3x2F product = currentTransform * D2D1::Matrix3x2F::Rotation(_pathInstanceDto->rotation) * D2D1::Matrix3x2F::Translation(_pathInstanceDto->position.x, _pathInstanceDto->position.y);
+			renderTarget->SetTransform(product);
+
+			if (fill) {
+				renderTarget->FillGeometry(p->geometry, fill->getBrush());
+			}
+			if (border && _pathInstanceDto->strokeWidth > 0.0) {
+				renderTarget->DrawGeometry(p->geometry, border->getBrush(), _pathInstanceDto->strokeWidth);
+			}
+		}
+
+		void direct2dContext::drawPath(pathImmediateDto* _pathImmediateDto)
+		{
+			auto fill = brushes[_pathImmediateDto->fillBrushName];
+			auto border = brushes[_pathImmediateDto->borderBrushName];
+
+			if (!border && !fill)
+				return;
+
+			auto p = createPath(&_pathImmediateDto->path, _pathImmediateDto->closed);
+			if (!p)
+				return;
+
+			D2D1::Matrix3x2F product = currentTransform * D2D1::Matrix3x2F::Rotation(_pathImmediateDto->rotation) * D2D1::Matrix3x2F::Translation(_pathImmediateDto->position.x, _pathImmediateDto->position.y);
+			renderTarget->SetTransform(product);
+
+			if (fill) {
+				renderTarget->FillGeometry(p->geometry, fill->getBrush());
+			}
+			if (border && _pathImmediateDto->strokeWidth > 0.0) {
+				renderTarget->DrawGeometry(p->geometry, border->getBrush(), _pathImmediateDto->strokeWidth);
+			}
+
+			delete p;
+		}
+
+		void direct2dContext::drawText(textInstance2dDto* _textInstanceDto)
+		{
+			auto style = textStyles[_textInstanceDto->styleName];
+			auto fill = brushes[_textInstanceDto->fillBrushName];
+
+			if (!style || !fill)
+				return;
+
+			D2D1::Matrix3x2F product = currentTransform * D2D1::Matrix3x2F::Rotation(_textInstanceDto->rotation) * D2D1::Matrix3x2F::Translation(_textInstanceDto->position.x, _textInstanceDto->position.y);
+			renderTarget->SetTransform(product);
+
+			D2D1_RECT_F rect;
+
+			rect.left = _textInstanceDto->layout.left;
+			rect.top = _textInstanceDto->layout.top;
+			rect.right = _textInstanceDto->layout.left + _textInstanceDto->layout.width;
+			rect.bottom = _textInstanceDto->layout.top + _textInstanceDto->layout.height;
+
+			auto brush = fill->getBrush();
+			int l = (_textInstanceDto->text.length() + 1) * 2;
+			wchar_t* buff = new wchar_t[l];
+			int ret = ::MultiByteToWideChar(CP_ACP, NULL, _textInstanceDto->text.c_str(), -1, buff, l - 1);
+			renderTarget->DrawText(buff, ret, style->getFormat(), &rect, brush);
+			delete[] buff;
+		}
+
+		void direct2dContext::drawBitmap(bitmapInstanceDto* _bitmapInstanceDto)
+		{
+			auto bm = bitmaps[_bitmapInstanceDto->bitmapName];
+			throwOnNull(bm, "Bitmap not found in context");
+			auto ibm = bm->getBySize(_bitmapInstanceDto->width, _bitmapInstanceDto->height);
+			throwOnNull(ibm, "Bitmap size not found in context");
+			D2D1_RECT_F rect;
+			rect.left = _bitmapInstanceDto->x;
+			rect.top = _bitmapInstanceDto->y;
+			rect.right = rect.left + _bitmapInstanceDto->width;
+			rect.bottom = rect.top + _bitmapInstanceDto->height;
+			renderTarget->DrawBitmap(ibm, rect);
+		}
+
+
+
+		void direct2dContext::popCamera()
+		{
+			if (transforms.empty())
+				currentTransform = D2D1::Matrix3x2F::Identity();
+			else {
+				currentTransform = transforms.top();
+				transforms.pop();
+			}
+		}
+
+		void direct2dContext::pushCamera(pointDto* _position, float _rotation, float _scale)
+		{
+			transforms.push(currentTransform);
+			currentTransform = currentTransform * D2D1::Matrix3x2F::Rotation(_rotation)
+				* D2D1::Matrix3x2F::Translation(_position->x, _position->y)
+				* D2D1::Matrix3x2F::Scale(_scale, _scale);
+			renderTarget->SetTransform(currentTransform);
+		}
+
+		void direct2dContext::beginDraw()
+		{
+			currentTransform = D2D1::Matrix3x2F::Identity();
+
+			if (!renderTarget && createRenderTarget()) {
+				std::for_each(bitmaps.begin(), bitmaps.end(), [this](std::pair<std::string, deviceDependentAssetBase*> ib) {
+					ib.second->create(this);
+					});
+				std::for_each(brushes.begin(), brushes.end(), [this](std::pair<std::string, deviceDependentAssetBase*> ib) {
+					ib.second->create(this);
+					});
+				std::for_each(textStyles.begin(), textStyles.end(), [this](std::pair<std::string, textStyle*> ib) {
+					ib.second->create(this);
+					});
+			}
+			if (renderTarget) {
+				renderTarget->BeginDraw();
+			}
+		}
+
+		void direct2dContext::endDraw() {
+			HRESULT hr = renderTarget->EndDraw();
+			if (hr == D2DERR_RECREATE_TARGET) {
+				std::for_each(brushes.begin(), brushes.end(), [this](std::pair<std::string, deviceDependentAssetBase*> ib) {
+					if (ib.second)
+						ib.second->release();
+					});
+				std::for_each(bitmaps.begin(), bitmaps.end(), [this](std::pair<std::string, deviceDependentAssetBase*> ib) {
+					if (ib.second)
+						ib.second->release();
+					});
+				std::for_each(textStyles.begin(), textStyles.end(), [this](std::pair<std::string, textStyle*> ib) {
+					if (ib.second)
+						ib.second->release();
+					});
+				destroyRenderTarget();
+			}
+		}
+
+		drawableHost* direct2dContext::createBitmap(sizeIntDto& _size)
+		{
+			directBitmap* bp = new directBitmap(getFactory(), toSizeF(_size));
+			bp->createRenderTarget();
+
+			// now for the fun thing.  we need copy all of the objects over that we created from this context into the new one.  
+			// i guess every architecture has its unforseen ugh moment, and this one is mine.
+
+			std::for_each(bitmaps.begin(), bitmaps.end(), [this, bp](std::pair<std::string, deviceDependentAssetBase*> ib) {
+				bp->bitmaps[ib.first] = ((bitmap*)ib.second)->clone(bp);
+				});
+
+			// will need this for all objects
+			/*
+			std::for_each( brushes.begin(), brushes.end(), [ this, bp ]( std::pair<std::string, deviceDependentAssetBase *> ib ) {
+				ib.second->create(this);
+			});
+			std::for_each( textStyles.begin(), textStyles.end(), [ this, bp ]( std::pair<std::string, textStyle *> ib ) {
+				ib.second->create(this);
+			});
+			*/
+
+			return bp;
+		}
+
+		void direct2dContext::drawBitmap(drawableHost* _drawableHost, pointDto& _dest, sizeIntDto& _size)
+		{
+			if (_drawableHost->isBitmap()) {
+				directBitmap* bp = (directBitmap*)_drawableHost;
+				auto wicbitmap = bp->getBitmap();
+				ID2D1Bitmap* bitmap = NULL;
+				HRESULT hr = this->hwndRenderTarget->CreateBitmapFromWicBitmap(wicbitmap, &bitmap);
+				throwOnFail(hr, "Could not create bitmap from wic bitmap");
+				D2D1_RECT_F rect;
+				rect.left = _dest.x;
+				rect.top = _dest.y;
+				rect.right = rect.left += _size.width > 0 ? _size.width : bp->size.width;
+				rect.bottom = rect.top += _size.height > 0 ? _size.height : bp->size.height;
+				hwndRenderTarget->DrawBitmap(bitmap, &rect);
+				bitmap->Release();
+				bitmap = NULL;
+			}
+		}
+
+		void direct2dContext::save(const char* _filename)
+		{
+			;
+		}
+
+		void directApplication::redraw()
+		{
+			if (currentController) {
+				if (!controllerLoaded && renderTarget) {
+					currentController->baseLoadController();
+					controllerLoaded = true;
+				}
+				beginDraw();
+				currentController->drawFrame();
+				endDraw();
+			}
+		}
+
+		LRESULT CALLBACK directApplication::d2dWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+		{
+			return current->d2dWindowProcHandler(hwnd, message, wParam, lParam);
+		}
+
+		LRESULT directApplication::d2dWindowProcHandler(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+		{
+			bool found = false;
+			pointDto point;
+
+			switch (message)
+			{
+			case WM_CREATE:
+				this->hwndDirect2d = hwnd;
+				break;
+			case WM_SWITCH_CONTROLLER:
+				setController((controller*)lParam);
+				return 0;
+			case WM_PUSH_CONTROLLER:
+				pushController((controller*)lParam);
+				return 0;
+			case WM_POP_CONTROLLER:
+				popController();
+				return 0;
+			case WM_DESTROY:
+				destroyRenderTarget();
+				PostQuitMessage(0);
+				return 0;
+			case WM_SIZE:
+				size.cx = LOWORD(lParam);
+				size.cy = HIWORD(lParam);
+				if (hwndRenderTarget)
+					hwndRenderTarget->Resize(D2D1::SizeU(size.cx, size.cy));
+				return 0;
+			case WM_CLOSE:
+				DestroyWindow(hwnd);
+				return 0;
+			case WM_ERASEBKGND:
+				return 0;
+
+			case WM_PAINT:
+				redraw();
+				::ValidateRect(hwnd, NULL);
+				return 0;
+
+				// <------------mouse management------------------->
+
+			case WM_LBUTTONDOWN:
+				point.x = GET_X_LPARAM(lParam);
+				point.y = GET_Y_LPARAM(lParam);
+				if (currentController)
+					currentController->mouseClick(&point);
+				break;
+
+			case WM_MOUSEMOVE:
+				point.x = GET_X_LPARAM(lParam);
+				point.y = GET_Y_LPARAM(lParam);
+				if (currentController)
+					currentController->mouseMove(&point);
+				break;
+
+				// <------------keyboard management------------------->
+
+			case WM_KILLFOCUS:
+				pressedKeys.clear();
+				return 0;
+			case WM_KEYDOWN:
+				switch (wParam)
+				{
+				case VK_ESCAPE:
+					DestroyWindow(hwnd);
+					break;
+				default:
+					for (std::list<int>::iterator i = pressedKeys.begin(); i != pressedKeys.end(); i++) {
+						if (*i == wParam) {
+							found = true;
+							break;
+						}
+					}
+					if (!found) {
+						pressedKeys.push_back(wParam);
+						if (currentController) {
+							currentController->keyDown(wParam);
+							::UpdateWindow(hwnd);
+						}
+					}
+					break;
+				}
+				break;
+			case WM_KEYUP:
+				pressedKeys.remove(wParam);
+				if (currentController) {
+					currentController->keyUp(wParam);
+					::UpdateWindow(hwnd);
+				}
+				return 0;
+
+			case WM_HSCROLL:
+				if (currentController) {
+					int ctrlId = ::GetDlgCtrlID(hwnd);
+					int pos = 0;
+					switch (LOWORD(wParam)) {
+					case SB_LINELEFT:
+						pos = currentController->onHScroll(ctrlId, scrollTypes::ScrollLineUp);
+						::SetScrollPos(hwnd, SB_HORZ, pos, TRUE);
+						break;
+					case SB_LINERIGHT:
+						pos = currentController->onHScroll(ctrlId, scrollTypes::ScrollLineDown);
+						::SetScrollPos(hwnd, SB_HORZ, pos, TRUE);
+						break;
+					case SB_PAGELEFT:
+						pos = currentController->onHScroll(ctrlId, scrollTypes::ScrollPageUp);
+						::SetScrollPos(hwnd, SB_HORZ, pos, TRUE);
+						break;
+					case SB_PAGERIGHT:
+						pos = currentController->onHScroll(ctrlId, scrollTypes::ScrollPageDown);
+						::SetScrollPos(hwnd, SB_HORZ, pos, TRUE);
+						break;
+						//			case SB_THUMBPOSITION:
+					case SB_THUMBTRACK:
+						pos = currentController->onHScroll(ctrlId, scrollTypes::ThumbTrack);
+						::SetScrollPos(hwnd, SB_HORZ, pos, TRUE);
+						break;
+					}
+				}
+				break;
+			case WM_VSCROLL:
+				if (currentController) {
+					int ctrlId = ::GetDlgCtrlID(hwnd);
+					int pos = 0;
+					switch (LOWORD(wParam)) {
+					case SB_LINELEFT:
+						pos = currentController->onVScroll(ctrlId, scrollTypes::ScrollLineUp);
+						::SetScrollPos(hwnd, SB_VERT, pos, TRUE);
+						break;
+					case SB_LINERIGHT:
+						pos = currentController->onVScroll(ctrlId, scrollTypes::ScrollLineDown);
+						::SetScrollPos(hwnd, SB_VERT, pos, TRUE);
+						break;
+					case SB_PAGELEFT:
+						pos = currentController->onVScroll(ctrlId, scrollTypes::ScrollPageUp);
+						::SetScrollPos(hwnd, SB_VERT, pos, TRUE);
+						break;
+					case SB_PAGERIGHT:
+						pos = currentController->onVScroll(ctrlId, scrollTypes::ScrollPageDown);
+						::SetScrollPos(hwnd, SB_VERT, pos, TRUE);
+						break;
+						//			case SB_THUMBPOSITION:
+					case SB_THUMBTRACK:
+						pos = currentController->onVScroll(ctrlId, scrollTypes::ThumbTrack);
+						::SetScrollPos(hwnd, SB_VERT, pos, TRUE);
+						break;
+					}
+				}
+				break;
+			}
+
+			return DefWindowProc(hwnd, message, wParam, lParam);
+		}
+
+		LRESULT CALLBACK directApplication::windowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+		{
+			return current->windowProcHandler(hwnd, message, wParam, lParam);
+		}
+
+		LRESULT directApplication::windowProcHandler(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+		{
+			bool found = false;
+			pointDto point;
+			static HBRUSH hbrBkgnd = NULL;
+			static HBRUSH hbrBkgnd2 = NULL;
+			char className[256];
+
+			switch (message)
+			{
+			case WM_CREATE:
+				hwndRoot = hwnd;
+				break;
+			case WM_INITDIALOG:
+				break;
+			case WM_DESTROY:
+				PostQuitMessage(0);
+				return 0;
+			case WM_COMMAND:
+				if (currentController)
+				{
+					UINT controlId = LOWORD(wParam);
+					UINT notificationCode = HIWORD(wParam);
+					switch (notificationCode) {
+					case BN_CLICKED: // button or menu
+						currentController->onCommand(controlId);
+						break;
+					case EN_UPDATE:
+						currentController->onTextChanged(controlId);
+						break;
+					case CBN_SELCHANGE:
+						currentController->onDropDownChanged(controlId);
+						break;
+					}
+					break;
+				}
+			case WM_NOTIFY:
+				if (currentController)
+				{
+					//LVN_ITEMACTIVATE
+					LPNMHDR lpnm = (LPNMHDR)lParam;
+					switch (lpnm->code) {
+					case UDN_DELTAPOS:
+					{
+						auto lpnmud = (LPNMUPDOWN)lParam;
+						currentController->onSpin(lpnm->idFrom, lpnmud->iPos + lpnmud->iDelta);
+						return 0;
+					}
+					break;
+					case LVN_ITEMCHANGED:
+					{
+						auto lpmnlv = (LPNMLISTVIEW)lParam;
+						if (lpmnlv->uNewState & LVIS_SELECTED)
+							currentController->onListViewChanged(lpnm->idFrom);
+					}
+					break;
+					case NM_CLICK:
+					{
+
+						::GetClassNameA(lpnm->hwndFrom, className, sizeof(className) - 1);
+						if (strcmp(className, "SysLink") == 0) {
+							auto plink = (PNMLINK)lParam;
+							auto r = ::ShellExecuteW(NULL, L"open", plink->item.szUrl, NULL, NULL, SW_SHOWNORMAL);
+						}
+					}
+					break;
+					case NM_CUSTOMDRAW:
+					{
+						LPNMLVCUSTOMDRAW  lplvcd = (LPNMLVCUSTOMDRAW)lParam;
+						switch (lplvcd->nmcd.dwDrawStage) {
+						case CDDS_PREPAINT:
+							return CDRF_NOTIFYITEMDRAW;
+						case CDDS_ITEMPREPAINT:
+							LVITEM lvitem;
+							char buff[16384];
+							ZeroMemory(&lvitem, sizeof(lvitem));
+							lvitem.iItem = lplvcd->nmcd.dwItemSpec;
+							lvitem.stateMask = LVIS_SELECTED;
+							lvitem.mask = LVIF_STATE | LVIF_TEXT;
+							lvitem.cchTextMax = sizeof(buff) - 1;
+							lvitem.pszText = buff;
+							HWND control = ::GetDlgItem(hwndRoot, lplvcd->nmcd.hdr.idFrom);
+							ListView_GetItem(control, &lvitem);
+
+							RECT area = lplvcd->nmcd.rc;
+
+							if (lvitem.state & LVIS_SELECTED) {
+								::FillRect(lplvcd->nmcd.hdc, &area, GetSysColorBrush(COLOR_HIGHLIGHT));
+								::SetTextColor(lplvcd->nmcd.hdc, ::GetSysColor(COLOR_HIGHLIGHTTEXT));
+								::DrawTextA(lplvcd->nmcd.hdc, lvitem.pszText, strlen(lvitem.pszText), &area, DT_CENTER);
+							}
+							else {
+								::FillRect(lplvcd->nmcd.hdc, &area, GetSysColorBrush(COLOR_WINDOW));
+								::SetTextColor(lplvcd->nmcd.hdc, ::GetSysColor(COLOR_WINDOWTEXT));
+								::DrawTextA(lplvcd->nmcd.hdc, lvitem.pszText, strlen(lvitem.pszText), &area, DT_CENTER);
+							}
+							return CDRF_SKIPDEFAULT;
+						}
+					}
+					}
+				}
+				break;
+			case WM_GETMINMAXINFO:
+				if (minimumWindowSize.width > 0) {
+					auto minmaxinfo = (LPMINMAXINFO)lParam;
+					minmaxinfo->ptMinTrackSize.x = minimumWindowSize.width;
+					minmaxinfo->ptMinTrackSize.y = minimumWindowSize.height;
+					return 0;
+				}
+				break;
+				/*
+					case WM_CTLCOLORLISTBOX:
+					case WM_CTLCOLOREDIT:
+						{
+							HDC hdcStatic = (HDC) wParam;
+							SetTextColor(hdcStatic, RGB(255,255,255));
+							SetBkColor(hdcStatic, RGB(0,0,0));
+							if (hbrBkgnd == NULL)
+							{
+								hbrBkgnd = CreateSolidBrush(RGB(0,0,0));
+							}
+							return (INT_PTR)hbrBkgnd;
+						}
+						break;
+					case WM_CTLCOLORBTN:
+					case WM_CTLCOLORSTATIC:
+						{
+							HDC hdcStatic = (HDC) wParam;
+							SetTextColor(hdcStatic, RGB(255,255,255));
+							SetBkColor(hdcStatic, RGB(0,0,0));
+
+							if (hbrBkgnd == NULL)
+							{
+								hbrBkgnd = CreateSolidBrush(RGB(0,0,0));
+							}
+							return (INT_PTR)hbrBkgnd;
+						}
+						*/
+			case WM_ERASEBKGND:
+			{
+				RECT rect, rect2;
+				if (hbrBkgnd == NULL)
+				{
+					hbrBkgnd = CreateSolidBrush(RGB(255, 255, 255));
+				}
+				if (hbrBkgnd2 == NULL)
+				{
+					hbrBkgnd2 = CreateSolidBrush(RGB(192, 192, 192));
+				}
+				::GetClientRect(hwnd, &rect);
+				::FillRect((HDC)wParam, &rect, hbrBkgnd2);
+
+				rect2.left = 8;
+				rect2.right = 433;
+				rect2.top = 8;
+				rect2.bottom = rect.bottom - 8;
+				::FillRect((HDC)wParam, &rect2, hbrBkgnd);
+
+				rect2.left = 441;
+				rect2.right = rect.right - 8;
+				rect2.top = 8;
+				rect2.bottom = rect.bottom - 8;
+				::FillRect((HDC)wParam, &rect2, hbrBkgnd);
+
+				return 1;
+			}
+			break;
+
+			case WM_CHAR:
+			case WM_RBUTTONDOWN:
+			case WM_CANCELMODE:
+				if (colorCapture) {
+					colorCapture = false;
+					::ReleaseCapture();
+					::SetCursor(LoadCursor(NULL, IDC_ARROW));
+				}
+				break;
+
+			case WM_CAPTURECHANGED:
+				colorCapture = false;
+				break;
+
+			case WM_LBUTTONDOWN:
+				if (colorCapture) {
+					colorCapture = false;
+					::ReleaseCapture();
+					::SetCursor(LoadCursor(NULL, IDC_ARROW));
+					POINT p;
+					if (GetCursorPos(&p))
+					{
+						HDC hdc = ::GetDC(NULL);
+						if (hdc) {
+							COLORREF cr = ::GetPixel(hdc, p.x, p.y);
+							colorDto pickedColor;
+							pickedColor.red = GetRValue(cr) / 255.0;
+							pickedColor.green = GetGValue(cr) / 255.0;
+							pickedColor.blue = GetBValue(cr) / 255.0;
+							pointDto point;
+							point.x = p.x;
+							point.y = p.y;
+							if (currentController)
+								currentController->pointSelected(&point, &pickedColor);
+						}
+					}
+				}
+				break;
+			case WM_SIZE:
+				if (currentController) {
+					rectDto rect;
+					rect.left = 0;
+					rect.top = 0;
+					rect.width = LOWORD(lParam);
+					rect.height = HIWORD(lParam);
+					currentController->onResize(rect);
+				}
+				break;
+			}
+
+			return DefWindowProc(hwnd, message, wParam, lParam);
+		}
+
+		drawableHost* directApplication::getDrawable(int i)
+		{
+			return static_cast<drawableHost*>(this);
+		}
+
+		bool directApplication::createRenderTarget()
+		{
+			return direct2dContext::createRenderTarget(hwndDirect2d);
+		}
+
+
+		void directApplication::setController(controller* _newCurrentController)
+		{
+			pressedKeys.clear();
+			if (currentController)
+				delete currentController;
+			currentController = _newCurrentController;
+			currentController->attach(this);
+			controllerLoaded = false;
+			::QueryPerformanceCounter((LARGE_INTEGER*)&startCounter);
+			::QueryPerformanceCounter((LARGE_INTEGER*)&lastCounter);
+		}
+
+		void directApplication::pushController(controller* _newCurrentController)
+		{
+			pressedKeys.clear();
+			if (previousController)
+				delete previousController;
+			previousController = currentController;
+			currentController = _newCurrentController;
+			currentController->attach(this);
+			controllerLoaded = false;
+			::QueryPerformanceCounter((LARGE_INTEGER*)&startCounter);
+			::QueryPerformanceCounter((LARGE_INTEGER*)&lastCounter);
+		}
+
+		void directApplication::popController()
+		{
+			pressedKeys.clear();
+			if (currentController)
+				delete currentController;
+			currentController = previousController;
+			previousController = NULL;
+			::QueryPerformanceCounter((LARGE_INTEGER*)&startCounter);
+			::QueryPerformanceCounter((LARGE_INTEGER*)&lastCounter);
+		}
+
+		bool directApplication::runFull(HINSTANCE _hinstance, const char* _title, int _iconId, bool _fullScreen, controller* _firstController)
+		{
+			if (!_firstController)
+				return false;
+
+			::InitCommonControls();
+
+			WNDCLASS wcD2D, wcMain;
+			MSG msg;
+			DWORD dwStyle, dwExStyle;
+
+			hinstance = _hinstance;
+
+			// register the control for the direct2d WINDOW - THIS is the main window this time.
+
+			wcD2D.style = CS_OWNDC;
+			wcD2D.lpfnWndProc = &directApplication::d2dWindowProc;
+			wcD2D.cbClsExtra = 0;
+			wcD2D.cbWndExtra = DLGWINDOWEXTRA;
+			wcD2D.hInstance = hinstance;
+			wcD2D.hIcon = LoadIcon(hinstance, MAKEINTRESOURCE(_iconId));
+			wcD2D.hCursor = LoadCursor(NULL, IDC_ARROW);
+			wcD2D.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
+			wcD2D.lpszMenuName = NULL;
+			wcD2D.lpszClassName = "YankeeRinoDirect2d";
+			if (!RegisterClass(&wcD2D)) {
+				::MessageBoxA(NULL, "Could not start because the direct 2d class could not be registered", "Couldn't Start", MB_ICONERROR);
+				return 0;
+			}
+
+			if (_fullScreen) {
+				dwStyle = WS_POPUP | WS_MAXIMIZE;
+				dwExStyle = WS_EX_APPWINDOW | WS_EX_TOPMOST;
+				ShowCursor(FALSE);
+			}
+			else {
+				dwStyle = WS_CAPTION | WS_OVERLAPPEDWINDOW;
+				dwExStyle = WS_EX_APPWINDOW | WS_EX_WINDOWEDGE;
+			}
+
+			hwndRoot = NULL;
+			hwndDirect2d = NULL;
+			hwndRenderTarget = NULL;
+
+			hwndRoot = CreateWindowEx(dwExStyle,
+				wcD2D.lpszClassName, _title,
+				dwStyle | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
+				CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+				NULL, NULL, hinstance, NULL);
+
+			if (!hwndRoot) {
+				MessageBox(NULL, "Could not start because of a problem creating the main window.", _title, MB_OK);
+				return FALSE;
+			}
+
+			setController(_firstController);
+
+			if (_firstController) _firstController->onInit();
+
+			::ShowWindow(hwndRoot, SW_SHOWNORMAL);
+			::UpdateWindow(hwndRoot);
+
+			::QueryPerformanceFrequency((LARGE_INTEGER*)&performanceFrequency);
+			::QueryPerformanceCounter((LARGE_INTEGER*)&lastCounter);
+
+			while (true) {
+				if (::PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE)) {
+					if (!::GetMessage(&msg, NULL, 0, 0))
+						break;
+					if (!::IsDialogMessage(hwndRoot, &msg)) {
+						::TranslateMessage(&msg);
+						::DispatchMessage(&msg);
+					}
+				}
+				else {
+					__int64 counter;
+					::QueryPerformanceCounter((LARGE_INTEGER*)&counter);
+					double elapsedSeconds = (double)(counter - lastCounter) / (double)performanceFrequency;
+					double totalSeconds = (double)(counter - startCounter) / (double)performanceFrequency;
+					lastCounter = counter;
+					if (currentController->update(elapsedSeconds, totalSeconds)) {
+						::InvalidateRect(hwndDirect2d, NULL, TRUE);
+						::UpdateWindow(hwndDirect2d);
+					}
+				}
+			}
+
+			return true;
+		}
+
+		bool directApplication::runDialog(HINSTANCE _hinstance, const char* _title, int _iconId, bool _fullScreen, controller* _firstController)
+		{
+			if (!_firstController)
+				return false;
+
+			::InitCommonControls();
+
+			WNDCLASS wcD2D, wcMain;
+			MSG msg;
+			DWORD dwStyle, dwExStyle;
+
+			hinstance = _hinstance;
+
+			// register the class for the main application window
+
+			wcMain.style = CS_HREDRAW | CS_VREDRAW;
+			wcMain.lpfnWndProc = &directApplication::windowProc;
+			wcMain.cbClsExtra = 0;
+			wcMain.cbWndExtra = DLGWINDOWEXTRA;
+			wcMain.hInstance = hinstance;
+			wcMain.hIcon = LoadIcon(hinstance, MAKEINTRESOURCE(_iconId));
+			wcMain.hCursor = LoadCursor(NULL, IDC_ARROW);
+			wcMain.hbrBackground = (HBRUSH)(COLOR_BTNFACE + 1);
+			wcMain.lpszMenuName = NULL;
+			wcMain.lpszClassName = "Corona2dBase";
+			if (!RegisterClass(&wcMain)) {
+				::MessageBoxA(NULL, "Could not start because the main window class could not be registered", "Couldn't Start", MB_ICONERROR);
+				return 0;
+			}
+
+			// register the control for the direct2d instance in the window
+
+			wcD2D.style = CS_OWNDC;
+			wcD2D.lpfnWndProc = &directApplication::d2dWindowProc;
+			wcD2D.cbClsExtra = 0;
+			wcD2D.cbWndExtra = DLGWINDOWEXTRA;
+			wcD2D.hInstance = hinstance;
+			wcD2D.hIcon = LoadIcon(hinstance, MAKEINTRESOURCE(_iconId));
+			wcD2D.hCursor = LoadCursor(NULL, IDC_ARROW);
+			wcD2D.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
+			wcD2D.lpszMenuName = NULL;
+			wcD2D.lpszClassName = "CoronaDirect2d";
+			if (!RegisterClass(&wcD2D)) {
+				::MessageBoxA(NULL, "Could not start because the direct 2d class could not be registered", "Couldn't Start", MB_ICONERROR);
+				return 0;
+			}
+
+			hwndRoot = NULL;
+			hwndDirect2d = NULL;
+			hwndRenderTarget = NULL;
+
+			if (_fullScreen) {
+				dwStyle = WS_POPUP | WS_MAXIMIZE;
+				dwExStyle = WS_EX_APPWINDOW | WS_EX_TOPMOST;
+				ShowCursor(FALSE);
+			}
+			else {
+				dwStyle = WS_CAPTION | WS_OVERLAPPEDWINDOW;
+				dwExStyle = WS_EX_APPWINDOW | WS_EX_WINDOWEDGE;
+			}
+
+			hwndRoot = CreateWindowEx(dwExStyle,
+				wcMain.lpszClassName, _title,
+				dwStyle | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
+				CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+				NULL, NULL, hinstance, NULL);
+
+			if (!hwndRoot) {
+				MessageBox(NULL, "Could not start because of a problem creating the main window.", _title, MB_OK);
+				return FALSE;
+			}
+
+			setController(_firstController);
+
+			if (_firstController) _firstController->onInit();
+
+			::ShowWindow(hwndRoot, SW_SHOWNORMAL);
+			::UpdateWindow(hwndRoot);
+
+			::QueryPerformanceFrequency((LARGE_INTEGER*)&performanceFrequency);
+			::QueryPerformanceCounter((LARGE_INTEGER*)&lastCounter);
+
+			while (true) {
+				if (::PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE)) {
+					if (!::GetMessage(&msg, NULL, 0, 0))
+						break;
+					if (!::IsDialogMessage(hwndRoot, &msg)) {
+						::TranslateMessage(&msg);
+						::DispatchMessage(&msg);
+					}
+				}
+				else {
+					__int64 counter;
+					::QueryPerformanceCounter((LARGE_INTEGER*)&counter);
+					double elapsedSeconds = (double)(counter - lastCounter) / (double)performanceFrequency;
+					double totalSeconds = (double)(counter - startCounter) / (double)performanceFrequency;
+					lastCounter = counter;
+					if (currentController->update(elapsedSeconds, totalSeconds)) {
+						::InvalidateRect(hwndDirect2d, NULL, TRUE);
+						::UpdateWindow(hwndDirect2d);
+					}
+				}
+			}
+
+			return true;
+		}
+
+		void directApplication::setPictureIcon(int controlId, dtoIconId iconId)
+		{
+			SHSTOCKICONINFO iconInfo;
+			ZeroMemory(&iconInfo, sizeof(iconInfo));
+			iconInfo.cbSize = sizeof(iconInfo);
+			HWND control = ::GetDlgItem(hwndRoot, controlId);
+			HRESULT hresult = ::SHGetStockIconInfo((SHSTOCKICONID)iconId, SHGSI_ICON, &iconInfo);
+			if (hresult == S_OK)
+				::SendMessage(control, STM_SETICON, (WPARAM)iconInfo.hIcon, NULL);
+		}
+
+		void directApplication::setButtonIcon(int controlId, dtoIconId iconId)
+		{
+			SHSTOCKICONINFO iconInfo;
+			ZeroMemory(&iconInfo, sizeof(iconInfo));
+			iconInfo.cbSize = sizeof(iconInfo);
+
+			HWND control = ::GetDlgItem(hwndRoot, controlId);
+			HRESULT hresult = ::SHGetStockIconInfo((SHSTOCKICONID)iconId, SHGSI_ICON | SHGSI_SMALLICON, &iconInfo);
+			if (hresult == S_OK)
+				::SendMessage(control, BM_SETIMAGE, IMAGE_ICON, (WPARAM)iconInfo.hIcon);
+		}
+
+		void directApplication::setVisible(int controlId, bool visible)
+		{
+			HWND control = ::GetDlgItem(hwndRoot, controlId);
+			::ShowWindow(control, visible ? SW_SHOW : SW_HIDE);
+		}
+
+		void directApplication::setEnable(int controlId, bool enabled)
+		{
+			HWND control = ::GetDlgItem(hwndRoot, controlId);
+			::EnableWindow(control, enabled);
+		}
+
+		void directApplication::setEditText(int textControlId, std::string& _string)
+		{
+			HWND control = ::GetDlgItem(hwndRoot, textControlId);
+			::SetWindowTextA(control, _string.c_str());
+		}
+
+		void directApplication::setEditText(int textControlId, const char* _string)
+		{
+			HWND control = ::GetDlgItem(hwndRoot, textControlId);
+			::SetWindowTextA(control, _string);
+		}
+
+		std::string directApplication::getEditText(int textControlId)
+		{
+			std::string value = "";
+			HWND control = ::GetDlgItem(hwndRoot, textControlId);
+			int length = ::GetWindowTextLengthA(control) + 1;
+			char* buffer = new char[length];
+			if (buffer) {
+				::GetWindowTextA(control, buffer, length);
+				value = buffer;
+				delete[] buffer;
+			}
+			return value;
+		}
+
+		std::string directApplication::getComboSelectedText(int ddlControlId)
+		{
+			std::string value = "";
+			HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
+			int newSelection = (int)::SendMessage(control, CB_GETCURSEL, 0, 0);
+			if (newSelection > -1) {
+				int length = (int)::SendMessage(control, CB_GETLBTEXTLEN, newSelection, 0);
+				char* buffer = new char[length + 16];
+				if (buffer) {
+					::SendMessage(control, CB_GETLBTEXT, newSelection, (LPARAM)buffer);
+					value = buffer;
+					delete[] buffer;
+				}
+			}
+			return value;
+		}
+
+		int directApplication::getComboSelectedIndex(int ddlControlId)
+		{
+			HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
+			int newSelection = (int)::SendMessage(control, CB_GETCURSEL, 0, 0);
+			return newSelection;
+		}
+
+		int directApplication::getComboSelectedValue(int ddlControlId)
+		{
+			HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
+			int newSelection = (int)::SendMessage(control, CB_GETCURSEL, 0, 0);
+			int data = (int)::SendMessage(control, CB_GETITEMDATA, newSelection, 0);
+			return data;
+		}
+
+		void directApplication::setComboSelectedIndex(int ddlControlId, int index)
+		{
+			HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
+			::SendMessageA(control, CB_SETCURSEL, index, NULL);
+		}
+
+		void directApplication::setComboSelectedText(int ddlControlId, std::string& _text)
+		{
+			setComboSelectedText(ddlControlId, _text.c_str());
+		}
+
+		void directApplication::setComboSelectedText(int ddlControlId, const char* _text)
+		{
+			HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
+			int index = ::SendMessageA(control, CB_FINDSTRINGEXACT, (WPARAM)-1, (LPARAM)_text);
+			::SendMessageA(control, CB_SETCURSEL, index, NULL);
+		}
+
+		void directApplication::setComboSelectedValue(int ddlControlId, int value)
+		{
+			HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
+			int count = ::SendMessageA(control, CB_GETCOUNT, NULL, NULL);
+			for (int i = 0; i < count; i++) {
+				int data = (int)::SendMessageA(control, CB_GETITEMDATA, i, 0);
+				if (data == value) {
+					::SendMessageA(control, CB_SETCURSEL, i, NULL);
+					break;
+				}
+			}
+		}
+
+		void directApplication::clearComboItems(int ddlControlId)
+		{
+			HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
+			::SendMessageA(control, CB_RESETCONTENT, NULL, NULL);
+		}
+
+		void directApplication::addComboItem(int ddlControlId, std::string& _text, int _data)
+		{
+			addComboItem(ddlControlId, _text.c_str(), _data);
+		}
+
+		void directApplication::addComboItem(int ddlControlId, const char* _text, int _data)
+		{
+			HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
+			int newItemIndex = (int)::SendMessageA(control, CB_ADDSTRING, NULL, (LPARAM)_text);
+			if (newItemIndex != CB_ERR) {
+				int err = ::SendMessageA(control, CB_SETITEMDATA, newItemIndex, (LPARAM)_data);
+			}
+		}
+
+		void directApplication::setFocus(int ddlControlId)
+		{
+			HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
+			::SetFocus(control);
+		}
+
+		void directApplication::addFoldersToCombo(int ddlControlId, const char* _path)
+		{
+			HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
+
+			char searchPath[MAX_PATH + 8];
+			strncpy_s(searchPath, _path, MAX_PATH);
+			searchPath[MAX_PATH] = 0;
+
+			char* lastChar = getLastChar(searchPath);
+			if (!lastChar)
+				return;
+
+			if (*lastChar == '\\') {
+				lastChar++;
+				*lastChar = '*';
+				lastChar++;
+				*lastChar = 0;
+			}
+			else if (*lastChar != '*') {
+				lastChar++;
+				*lastChar = '\\';
+				lastChar++;
+				*lastChar = '*';
+				lastChar++;
+				*lastChar = 0;
+			}
+
+			WIN32_FIND_DATA findData;
+			ZeroMemory(&findData, sizeof(findData));
+
+			HANDLE hfind = INVALID_HANDLE_VALUE;
+
+			hfind = ::FindFirstFileA(searchPath, &findData);
+			if (hfind != INVALID_HANDLE_VALUE) {
+				do
+				{
+					// oh windows, . is really a directory, seriously!
+					if (strcmp(findData.cFileName, ".") == 0)
+						continue;
+
+					if (strcmp(findData.cFileName, "..") == 0)
+						continue;
+
+					if (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+					{
+						char recurseBuff[MAX_PATH + 8];
+						strncpy_s(recurseBuff, _path, MAX_PATH);
+						recurseBuff[MAX_PATH] = 0;
+						::PathAddBackslashA(recurseBuff);
+						::PathAppendA(recurseBuff, findData.cFileName);
+						addComboItem(ddlControlId, recurseBuff, 0);
+						addFoldersToCombo(ddlControlId, recurseBuff);
+					}
+				} while (FindNextFile(hfind, &findData) != 0);
+			}
+		}
+
+		void directApplication::addPicturesFoldersToCombo(int ddlControlId)
+		{
+			char picturesPath[MAX_PATH * 2];
+			::SHGetFolderPath(NULL, CSIDL_MYPICTURES, NULL, SHGFP_TYPE_CURRENT, picturesPath);
+			addFoldersToCombo(ddlControlId, picturesPath);
+		}
+
+		void directApplication::setButtonChecked(int controlId, bool enabled)
+		{
+			::CheckDlgButton(hwndRoot, controlId, enabled ? BST_CHECKED : BST_UNCHECKED);
+		}
+
+		bool directApplication::getButtonChecked(int controlId)
+		{
+			return ::IsDlgButtonChecked(hwndRoot, controlId) == BST_CHECKED;
+		}
+
+		void directApplication::clearListView(int ddlControlId)
+		{
+			HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
+			ListView_DeleteAllItems(control);
+		}
+
+		void directApplication::addListViewItem(int ddlControlId, std::string& _text, int _data)
+		{
+			addListViewItem(ddlControlId, _text.c_str(), _data);
+		}
+
+		void directApplication::addListViewItem(int ddlControlId, const char* _text, int _data)
+		{
+			HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
+			LVITEM lvitem;
+			ZeroMemory(&lvitem, sizeof(lvitem));
+			lvitem.mask = LVIF_TEXT | LVIF_STATE | LVIF_PARAM;
+			lvitem.iItem = ListView_GetItemCount(control);
+			lvitem.pszText = (LPSTR)_text;
+			lvitem.lParam = _data;
+			ListView_InsertItem(control, &lvitem);
+		}
+
+		int directApplication::getListViewSelectedIndex(int ddlControlId)
+		{
+			HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
+			int iPos = ListView_GetNextItem(control, -1, LVNI_SELECTED);
+			return iPos;
+		}
+
+		int directApplication::getListViewSelectedValue(int ddlControlId)
+		{
+			HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
+			int pos = getListViewSelectedIndex(ddlControlId);
+			if (pos > -1) {
+				LVITEM lvitem;
+				ZeroMemory(&lvitem, sizeof(lvitem));
+				lvitem.iItem = pos;
+				lvitem.mask = LVIF_TEXT | LVIF_STATE | LVIF_PARAM;
+				ListView_GetItem(control, &lvitem);
+				return lvitem.lParam;
+			}
+			return -1;
+		}
+
+		std::string directApplication::getListViewSelectedText(int ddlControlId)
+		{
+			char buffer[16384];
+			std::string result;
+			HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
+			int pos = getListViewSelectedIndex(ddlControlId);
+			if (pos > -1) {
+				LVITEM lvitem;
+				ZeroMemory(&lvitem, sizeof(lvitem));
+				lvitem.iItem = pos;
+				lvitem.mask = LVIF_TEXT | LVIF_STATE | LVIF_PARAM;
+				lvitem.pszText = buffer;
+				lvitem.cchTextMax = sizeof(buffer) - 1;
+				ListView_GetItem(control, &lvitem);
+				result = lvitem.pszText;
+			}
+			return result;
+		}
+
+		std::list<std::string> directApplication::getListViewSelectedTexts(int ddlControlId)
+		{
+			char buffer[16384];
+			std::list<std::string> ret;
+
+			std::list<int> indeces = getListViewSelectedIndexes(ddlControlId);
+			HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
+
+			for (auto ix = indeces.begin(); ix != indeces.end(); ix++) {
+				LVITEM lvitem;
+				ZeroMemory(&lvitem, sizeof(lvitem));
+				lvitem.iItem = *ix;
+				lvitem.mask = LVIF_TEXT | LVIF_STATE | LVIF_PARAM;
+				lvitem.pszText = buffer;
+				lvitem.cchTextMax = sizeof(buffer) - 1;
+				ListView_GetItem(control, &lvitem);
+				ret.push_back(lvitem.pszText);
+			}
+
+			return ret;
+		}
+
+		std::list<int> directApplication::getListViewSelectedIndexes(int ddlControlId)
+		{
+			std::list<int> ret;
+
+			HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
+
+			int iPos = ListView_GetNextItem(control, -1, LVNI_SELECTED);
+			while (iPos > -1) {
+				ret.push_back(iPos);
+				iPos = ListView_GetNextItem(control, iPos, LVNI_SELECTED);
+			}
+
+			return ret;
+		}
+
+		std::list<int> directApplication::getListViewSelectedValues(int ddlControlId)
+		{
+			std::list<int> ret;
+
+			std::list<int> indeces = getListViewSelectedIndexes(ddlControlId);
+			HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
+
+			for (auto ix = indeces.begin(); ix != indeces.end(); ix++) {
+				LVITEM lvitem;
+				ZeroMemory(&lvitem, sizeof(lvitem));
+				lvitem.iItem = *ix;
+				lvitem.mask = LVIF_TEXT | LVIF_STATE | LVIF_PARAM;
+				ListView_GetItem(control, &lvitem);
+				ret.push_back(lvitem.lParam);
+			}
+
+			return ret;
+		}
+
+
+		void directApplication::clearListViewSelection(int ddlControlId)
+		{
+			HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
+			// deselect the items
+			std::list<int> indeces = getListViewSelectedIndexes(ddlControlId);
+			for (auto idx = indeces.begin(); idx != indeces.end(); idx++) {
+				int pos = *idx;
+				if (pos > -1) {
+					LVITEM lvitem;
+					ZeroMemory(&lvitem, sizeof(lvitem));
+					lvitem.iItem = pos;
+					lvitem.mask = LVIF_STATE;
+					lvitem.state = 0;
+					lvitem.stateMask = LVIS_SELECTED;
+					ListView_SetItem(control, &lvitem);
+				}
+			}
+		}
+
+		void directApplication::setListViewSelectedIndex(int ddlControlId, int indexId)
+		{
+			clearListViewSelection(ddlControlId);
+
+			HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
+			LVITEM lvitem;
+			ZeroMemory(&lvitem, sizeof(lvitem));
+			lvitem.iItem = indexId;
+			lvitem.mask = LVIF_STATE;
+			lvitem.state = LVIS_SELECTED;
+			lvitem.stateMask = LVIS_SELECTED;
+			ListView_SetItem(control, &lvitem);
+		}
+
+		void directApplication::setListViewSelectedText(int ddlControlId, std::string& _text)
+		{
+			setListViewSelectedText(ddlControlId, _text.c_str());
+		}
+
+		void directApplication::setListViewSelectedText(int ddlControlId, const char* _text)
+		{
+			clearListViewSelection(ddlControlId);
+
+			HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
+
+			LVFINDINFO lvfi;
+
+			ZeroMemory(&lvfi, sizeof(lvfi));
+
+			lvfi.flags = LVFI_STRING;
+			lvfi.psz = _text;
+
+			int pos = ListView_FindItem(control, -1, &lvfi);
+
+			if (pos > -1) {
+				LVITEM lvitem;
+				ZeroMemory(&lvitem, sizeof(lvitem));
+				lvitem.iItem = pos;
+				lvitem.mask = LVIF_STATE;
+				lvitem.state = LVIS_SELECTED;
+				lvitem.stateMask = LVIS_SELECTED;
+				ListView_SetItem(control, &lvitem);
+				ListView_EnsureVisible(control, pos, false);
+			}
+
+		}
+
+		void directApplication::setListViewSelectedValue(int ddlControlId, int value)
+		{
+			clearListViewSelection(ddlControlId);
+
+			HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
+
+			LVFINDINFO lvfi;
+
+			ZeroMemory(&lvfi, sizeof(lvfi));
+
+			lvfi.flags = LVIF_PARAM;
+			lvfi.lParam = value;
+
+			int pos = ListView_FindItem(control, -1, &lvfi);
+
+			if (pos > -1) {
+				LVITEM lvitem;
+				ZeroMemory(&lvitem, sizeof(lvitem));
+				lvitem.iItem = pos;
+				lvitem.mask = LVIF_STATE;
+				lvitem.state = LVIS_SELECTED;
+				lvitem.stateMask = LVIS_SELECTED;
+				ListView_SetItem(control, &lvitem);
+			}
+		}
+
+		void directApplication::setScrollHeight(int ddlControlId, int height)
+		{
+			HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
+			::SetScrollRange(control, SB_VERT, 0, height, TRUE);
+		}
+
+		void directApplication::setScrollWidth(int ddlControlId, int width)
+		{
+			HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
+			::SetScrollRange(control, SB_HORZ, 0, width, TRUE);
+		}
+
+		pointDto directApplication::getScrollPos(int ddlControlId)
+		{
+			HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
+			pointDto pt;
+			pt.x = ::GetScrollPos(control, SB_HORZ);
+			pt.y = ::GetScrollPos(control, SB_VERT);
+			return pt;
+		}
+
+		pointDto directApplication::getScrollTrackPos(int ddlControlId)
+		{
+			HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
+			pointDto pt;
+
+			SCROLLINFO info;
+			info.cbSize = sizeof(SCROLLINFO);
+			info.fMask = SIF_TRACKPOS | SIF_POS;
+			::GetScrollInfo(control, SB_HORZ, &info);
+			pt.x = info.nTrackPos;
+			::GetScrollInfo(control, SB_VERT, &info);
+			pt.y = info.nTrackPos;
+
+			return pt;
+		}
+
+		void directApplication::setScrollPos(int ddlControlId, pointDto pt)
+		{
+			HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
+			pt.x = ::SetScrollPos(control, SB_HORZ, pt.x, TRUE);
+			pt.y = ::SetScrollPos(control, SB_VERT, pt.y, TRUE);
+		}
+
+		sizeIntDto directApplication::getScrollRange(int ddlControlId)
+		{
+			HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
+			sizeIntDto sz;
+			int dummy;
+			::GetScrollRange(control, SB_HORZ, &dummy, &sz.width);
+			::GetScrollRange(control, SB_VERT, &dummy, &sz.height);
+			return sz;
+		}
+
+		rectDto directApplication::getWindowPos(int ddlControlId)
+		{
+			HWND control = ddlControlId > 0 ? ::GetDlgItem(hwndRoot, ddlControlId) : hwndRoot;
+
+			RECT r;
+			rectDto rd;
+
+			::GetWindowRect(control, &r);
+
+			if (ddlControlId >= 0) {
+				::ScreenToClient(hwndRoot, (LPPOINT)&r.left);
+				::ScreenToClient(hwndRoot, (LPPOINT)&r.right);
+			}
+
+			rd.left = r.left;
+			rd.top = r.top;
+			rd.width = r.right - r.left;
+			rd.height = r.bottom - r.top;
+
+			return rd;
+		}
+
+		void directApplication::setWindowPos(int ddlControlId, rectDto rect)
+		{
+			HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
+
+			::MoveWindow(control, rect.left, rect.top, rect.width, rect.height, true);
+		}
+
+		void directApplication::setMinimumWindowSize(sizeIntDto size)
+		{
+			this->minimumWindowSize = size;
+		}
+
+		void directApplication::setSpinRange(int ddlControlId, int lo, int high)
+		{
+			HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
+			::SendMessage(control, UDM_SETRANGE32, lo, high);
+		}
+
+		void directApplication::setSpinPos(int ddlControlId, int pos)
+		{
+			HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
+			::SendMessage(control, UDM_SETPOS32, 0, pos);
+		}
+
+		void directApplication::setSysLinkText(int ddlControlId, const char* _text)
+		{
+			HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
+			::SetWindowTextA(control, _text);
+		}
+
+		class WinHttpSession {
+		private:
+
+			HINTERNET	hSession,
+				hConnect,
+				hRequest;
+		public:
+
+			WinHttpSession() : hSession(NULL), hConnect(NULL), hRequest(NULL)
+			{
+				// Use WinHttpOpen to obtain a session handle.
+				hSession = ::WinHttpOpen(L"YankeeRino Direct2d/1.0",
+					WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
+					WINHTTP_NO_PROXY_NAME,
+					WINHTTP_NO_PROXY_BYPASS, 0);
+
+				throwOnNull(hSession, "Could not create WinHttpSession");
+			}
+
+			virtual std::string Get(const char* _domain, const char* _path)
+			{
+				wchar_t domain[2048], path[2048];
+
+				std::string result = "";
+
+				::MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, _domain, strlen(_domain) + 1, domain, sizeof(domain) / sizeof(wchar_t));
+
+				if (_path)
+					::MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, _path, strlen(_path) + 1, path, sizeof(path) / sizeof(wchar_t));
+				else
+					path[0] = 0;
+
+				if (hSession) {
+					hConnect = ::WinHttpConnect(hSession, domain, INTERNET_DEFAULT_HTTP_PORT, 0);
+					throwOnNull(hConnect, "Could not connect to domain");
+
+					hRequest = ::WinHttpOpenRequest(hConnect, L"GET", _path ? path : NULL, NULL, WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, 0);
+					throwOnNull(hRequest, "Could not open http request");
+
+					bool success = ::WinHttpSendRequest(hRequest, WINHTTP_NO_ADDITIONAL_HEADERS, 0, WINHTTP_NO_REQUEST_DATA, 0, 0, 0);
+					if (success) {
+						DWORD dwSize = 0;
+						DWORD dwDownloaded = 0;
+						LPSTR pszOutBuffer;
+						BOOL  bResults = FALSE;
+
+						if (!WinHttpReceiveResponse(hRequest, NULL)) {
+							throwOnNull(hRequest, "Could not open receive http response");
+						}
+
+						do
+						{
+							// Check for available data.
+							dwSize = 0;
+							if (!WinHttpQueryDataAvailable(hRequest, &dwSize))
+							{
+								throwOnNull(NULL, "Could not query data available");
+							}
+
+							// Allocate space for the buffer.
+							pszOutBuffer = new char[dwSize + 1];
+							throwOnNull(pszOutBuffer, "Out of Memory");
+							// Read the data.
+							ZeroMemory(pszOutBuffer, dwSize + 1);
+
+							if (!WinHttpReadData(hRequest, (LPVOID)pszOutBuffer, dwSize, &dwDownloaded)) {
+								delete[] pszOutBuffer;
+								throwOnNull(NULL, "Could not read");
+							}
+
+							result += pszOutBuffer;
+
+							delete[] pszOutBuffer;
+
+						} while (dwSize > 0);
+					}
+				}
+
+				return result;
+			}
+
+			virtual ~WinHttpSession()
+			{
+				// Close any open handles.
+				if (hRequest) WinHttpCloseHandle(hRequest);
+				if (hConnect) WinHttpCloseHandle(hConnect);
+				if (hSession) WinHttpCloseHandle(hSession);
+			}
+		};
+
+		std::vector<std::string> directApplication::readInternet(const char* _domain, const char* _path)
+		{
+			WinHttpSession session;
+
+			std::string resultString = session.Get(_domain, _path);
+
+			return split(resultString, '\n');
+		}
+
+		// utility
+		char* directApplication::getLastChar(char* _str)
+		{
+			char* pc = NULL;
+			while (*_str) {
+				pc = _str;
+				_str++;
+			}
+			return pc;
+		}
+
+		bool directApplication::getSaveFilename(std::string& _saveFileName, const char* _pathExtensions, const char* _defaultExtension)
+		{
+			char szFileName[MAX_PATH + 1] = "";
+			bool retval;
+
+			ZeroMemory(&ofn, sizeof(ofn));
+
+			ofn.lStructSize = sizeof(ofn);
+			ofn.hwndOwner = hwndRoot;
+			ofn.lpstrFilter = _pathExtensions;
+			ofn.lpstrFile = szFileName;
+			ofn.nMaxFile = MAX_PATH;
+			ofn.Flags = OFN_EXPLORER | OFN_HIDEREADONLY;
+			ofn.lpstrDefExt = _defaultExtension;
+
+			retval = GetSaveFileName(&ofn);
+			if (retval)
+				_saveFileName = szFileName;
+
+			return retval;
+		}
+
+		void directApplication::setColorCapture(int _iconResourceId)
+		{
+			::SetCapture(hwndRoot);
+			colorCapture = true;
+			SetCursor(LoadCursor(hinstance, MAKEINTRESOURCE(_iconResourceId)));
+		}
+
+	}
+}
+
+#pragma comment(linker,"\"/manifestdependency:type='win32' \
+name='Microsoft.Windows.Common-Controls' version='6.0.0.0' \
+processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
+
+#endif

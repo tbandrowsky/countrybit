@@ -155,10 +155,6 @@ namespace corona
 		template <typename item_type>
 		class array_box
 		{
-			using collection_type = array_box<item_type>;
-			using iterator_item_type = value_reference<item_type>;
-			using iterator_type = filterable_iterator<item_type, collection_type, iterator_item_type>;
-
 			struct array_box_data 
 			{
 			public:
@@ -193,6 +189,9 @@ namespace corona
 			}
 
 		public:
+			using collection_type = array_box<item_type>;
+			using iterator_item_type = value_reference<item_type>;
+			using iterator_type = filterable_iterator<item_type, collection_type, iterator_item_type>;
 
 			array_box() : hdr(nullptr)
 			{

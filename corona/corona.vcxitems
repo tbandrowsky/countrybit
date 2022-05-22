@@ -21,7 +21,11 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)collection_id_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)color_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)constants.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)controller.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)controllerhost.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)datatransfer.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)directapplication.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)file_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)filterable_iterator.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)grouping.h" />
@@ -60,6 +64,8 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)skip_list.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)store_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)table.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)utility.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)viewstyle.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)wave_box.h" />
   </ItemGroup>
   <ItemGroup>
@@ -77,6 +83,10 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)assert_if.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)collection_id_box.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)constants.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)controller.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)controllerhost.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)datatransfer.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)directapplication.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)grouping.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)jdatabase_client.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)jdatabase_server.cpp" />
@@ -106,5 +116,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)queue.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)table.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)time_box.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)utility.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)viewstyle.cpp" />
   </ItemGroup>
 </Project>

@@ -13,7 +13,7 @@ namespace corona
 		};
 
 		template <typename KEY, typename VALUE> 
-		class group_list
+		class group
 		{
 		public:
 			using grouped_items = list_box<VALUE>;
@@ -22,66 +22,65 @@ namespace corona
 			grouped_items items;
 		};
 
-		template <typename KEY, typename VALUE> class grouping : protected sorted_index<KEY, relative_ptr_type, 1>
+		template <typename KEY, typename VALUE> class grouped : protected sorted_index<KEY, relative_ptr_type, 1>
 		{
 		protected:
 			using group_by_collection = sorted_index<KEY, relative_ptr_type, 1>;
 			using inner_type = group_by_collection::data_pair;
 			using grouped_items = list_box<VALUE>;
-			using group = group_list<KEY, VALUE>;
 
-			using collection_type = grouping<KEY, VALUE>;
-			using iterator_item_type = group;
+			using collection_type = grouped<KEY, VALUE>;
+			using iterator_item_type = group<KEY, VALUE>;
 			using iterator_type = filterable_iterator<iterator_item_type, collection_type, iterator_item_type, index_mapper>;
 
 		public:
 
-			grouping()
+			grouped()
 			{
 			}
 
-			grouping(serialized_box_container* _box, relative_ptr_type _location) :
+			grouped(serialized_box_container* _box, relative_ptr_type _location) :
 				group_by_collection(_box,_location)
 			{
 			}
 
-			grouping(const grouping& _src) :
+			grouped(const grouped& _src) :
 				group_by_collection(_src)
 			{
 
 			}
 
-			grouping operator = (const grouping& _src)
+			grouped operator = (const grouped& _src)
 			{
 				group_by_collection::operator=(_src);
 				return *this;
 			}
 
-			static relative_ptr_type reserve_grouping(serialized_box_container* _b)
+			static relative_ptr_type reserve_grouped(serialized_box_container* _b)
 			{
 				relative_ptr_type location;
 				location = group_by_collection::reserve_sorted_index(_b);
 				return location;
 			}
 
-			static grouping get_grouping(serialized_box_container* _b, relative_ptr_type _header_location)
+			static grouped get_grouped(serialized_box_container* _b, relative_ptr_type _header_location)
 			{
 				auto si = group_by_collection::get_sorted_index(_b, _header_location);
 				return si;
 			}
 
-			static grouping create_grouping(serialized_box_container* _b, relative_ptr_type& _header_location)
+			static grouped create_grouped(serialized_box_container* _b, relative_ptr_type& _header_location)
 			{
-				_header_location = reserve_grouping(_b);
-				grouping new_index = get_grouping(_b, _header_location);
+				_header_location = reserve_grouped(_b);
+				grouped new_index = get_grouped(_b, _header_location);
 				return new_index;
 			}
 
-			group insert_or_assign(const KEY& _key, const VALUE& _value)
+			iterator_item_type insert_or_assign(const KEY& _key, const VALUE& _value)
 			{
 				relative_ptr_type list_location;
 				grouped_items lst;
-				group grp;
+				iterator_item_type grp;
 				
 				grp.key = _key;
 
@@ -104,9 +103,9 @@ namespace corona
 				return grp;
 			}
 
-			group get_at(KEY _key)
+			iterator_item_type get_at(KEY _key)
 			{
-				group g;
+				iterator_item_type g;
 
 				g.key = _key;
 				relative_ptr_type location = group_by_collection::get(_key).second;
@@ -115,10 +114,10 @@ namespace corona
 				return g;
 			}
 
-			group get_at(relative_ptr_type ptr)
+			iterator_item_type get_at(relative_ptr_type ptr)
 			{
 				grouped_items lst;
-				group grp;
+				iterator_item_type grp;
 
 				auto dp = group_by_collection::get(ptr);
 				grp.key = dp.first;
@@ -137,23 +136,23 @@ namespace corona
 				return iterator_type(this, null_row, &group_by_collection::mapper);
 			}
 
-			auto where(std::function<bool(const group&)> _predicate)
+			auto where(std::function<bool(const iterator_item_type&)> _predicate)
 			{
 				group_by_collection::mapper_check();
 				return iterator_type(this, _predicate, &group_by_collection::mapper);
 			}
 
-			bool any_of(std::function<bool(const group&)> predicate)
+			bool any_of(std::function<bool(const iterator_item_type&)> predicate)
 			{
 				return std::any_of(begin(), end(), predicate);
 			}
 
-			bool all_of(std::function<bool(const group&)> predicate)
+			bool all_of(std::function<bool(const iterator_item_type&)> predicate)
 			{
 				return std::all_of(begin(), end(), predicate);
 			}
 
-			corona_size_t count_if(std::function<bool(const group&)> predicate)
+			corona_size_t count_if(std::function<bool(const iterator_item_type&)> predicate)
 			{
 				return std::count_if(begin(), end(), predicate);
 			}
