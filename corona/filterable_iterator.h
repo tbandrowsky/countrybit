@@ -283,8 +283,33 @@ namespace corona
 				return std::count_if(begin(), end(), new_predicate);
 			}
 
-		};
+			template <typename new_key> grouped<new_key, value_ref> group_by(serialized_box_container *_box, std::function<new_key(const value_ref&)> _transform)
+			{
+				grouped<new_key, value_ref> new_group = grouped<new_key, value_ref>::create_grouped(_box);
 
+				for (auto iter = begin(); iter != end(); iter++) {
+					auto obj = iter.get_object();
+					auto key = _transform(obj);
+					new_group.insert_or_assign(key);
+				}
+
+				return new_group;
+			}
+
+			template <typename new_value> list_box<new_value> select(serialized_box_container* _box, std::function<new_value(const value_ref&)> _transform)
+			{
+				list_box<new_value> new_list = grouped<new_key, value_ref>::create_grouped(_box);
+
+				for (auto iter = begin(); iter != end(); iter++) {
+					auto obj = iter.get_object();
+					auto key = _transform(obj);
+					new_group.insert_or_assign(key);
+				}
+
+				return new_group;
+			}
+
+		};
 	}
 }
 

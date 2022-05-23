@@ -144,6 +144,12 @@ namespace corona
 
 		};
 
+		class view 
+		{
+		public:
+
+		};
+
 		class directApplication : public direct2dContext, public controllerHost
 		{
 		protected:
