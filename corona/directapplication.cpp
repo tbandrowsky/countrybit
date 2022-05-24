@@ -3,7 +3,7 @@
 
 #include "pch.h"
 
-#ifdef WINDESKTOP_GUI
+//#ifdef WINDESKTOP_GUI
 
 namespace corona
 {
@@ -1584,6 +1584,76 @@ namespace corona
 			}
 		}
 
+		void directApplication::destroyChildren()
+		{
+			for (auto child : childWindows)
+			{
+				DestroyWindow(child);
+			}
+			childWindows.clear();
+			windowControlMap.clear();
+		}
+
+		void directApplication::createChildWindow(
+			LPCTSTR		lpClassName,
+			LPCTSTR		lpWindowName,
+			DWORD       dwStyle,
+			int         x,
+			int         y,
+			int         nWidth,
+			int         nHeight,
+			int			windowId,
+			LPVOID		lpParam
+		)
+		{
+			HWND hwnd = CreateWindow(lpClassName, lpWindowName, dwStyle, x, y, nWidth, nHeight, hwndRoot, (HMENU)windowId, hInstance, lpParam);
+			childWindows.push_back(hwnd);
+		}
+
+		void directApplication::createChildWindow(
+			database::jslice slice,
+			int			field_id,
+			LPCTSTR		lpClassName,
+			LPCTSTR		lpWindowName,
+			DWORD       dwStyle,
+			int         x,
+			int         y,
+			int         nWidth,
+			int         nHeight,
+			LPVOID		lpParam
+		)
+		{
+			field_map new_map;
+			new_map.slice = slice;
+			new_map.field_id = field_id;
+			int windowId = childWindows.size();
+			windowControlMap.insert_or_assign(windowId, new_map);
+			HWND hwnd = CreateWindow(lpClassName, lpWindowName, dwStyle, x, y, nWidth, nHeight, hwndRoot, (HMENU)windowId, hInstance, lpParam);
+			childWindows.push_back(hwnd);
+		}
+
+		void directApplication::renderPage(database::page& _page, database::jschema* _schema, database::actor_state& _state, database::jcollection& _collection)
+		{
+			destroyChildren();
+			for (auto pi : _page)
+			{
+				switch (pi.layout)
+				{
+				case database::layout_types::canvas2d:
+					createChildWindow("CoronaDirect2d", "", WS_CHILD | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, NULL);
+					break;
+				case database::layout_types::field:
+					{
+						auto slc = _collection.get_object(pi.object_id);
+						auto fld = slice.get_field_by_id(pi.field_id);
+						createChildWindow(WC_STATIC, fld.name.c_str(), WS_CHILD | WS_BORDER | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, 20, NULL);
+						createChildWindow(WC_EDIT, fld.name.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y+20, pi.bounds.w, 20, NULL);
+				}
+					break;
+				}
+			}
+		}
+
 		LRESULT CALLBACK directApplication::d2dWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 		{
 			return current->d2dWindowProcHandler(hwnd, message, wParam, lParam);
@@ -2041,7 +2111,7 @@ namespace corona
 			wcD2D.hCursor = LoadCursor(NULL, IDC_ARROW);
 			wcD2D.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
 			wcD2D.lpszMenuName = NULL;
-			wcD2D.lpszClassName = "YankeeRinoDirect2d";
+			wcD2D.lpszClassName = "CoronaDirect2d";
 			if (!RegisterClass(&wcD2D)) {
 				::MessageBoxA(NULL, "Could not start because the direct 2d class could not be registered", "Couldn't Start", MB_ICONERROR);
 				return 0;

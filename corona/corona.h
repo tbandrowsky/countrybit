@@ -5,10 +5,10 @@
 #include "process.h"
 #include "combaseapi.h"
 #include "commctrl.h"
+#include "commdlg.h"
 #include "Shlwapi.h"
 #include "Shlobj.h"
 #include "Winhttp.h"
-#include "malloc.h" // for alloca
 
 #include <stdlib.h>
 #include <malloc.h>

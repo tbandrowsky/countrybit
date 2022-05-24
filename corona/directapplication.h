@@ -1,7 +1,5 @@
 #pragma once
 
-#ifdef WINDESKTOP_GUI
-
 namespace corona
 {
 	namespace win32 
@@ -51,7 +49,7 @@ namespace corona
 
 			direct2dFactory* factory;
 
-			OPENFILENAME ofn;
+			OPENFILENAMEA ofn;
 
 		protected:
 
@@ -150,13 +148,20 @@ namespace corona
 
 		};
 
+		class field_map
+		{
+		public:
+			database::relative_ptr_type field_id;
+			database::jslice			slice;
+		};
+
 		class directApplication : public direct2dContext, public controllerHost
 		{
 		protected:
 			bool controllerLoaded;
 
-			controller* currentController,
-				* previousController;
+			controller	*currentController,
+						*previousController;
 
 			static directApplication* current;
 			static LRESULT CALLBACK windowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
@@ -174,10 +179,47 @@ namespace corona
 			bool colorCapture;
 			int iconResourceId;
 
+			std::map<int, field_map>	windowControlMap;
+			std::vector<HWND>			childWindows;
+
+			void destroyChildren();
+
+			void createChildWindow(
+					LPCTSTR		lpClassName,
+					LPCTSTR		lpWindowName,
+					DWORD       dwStyle,
+					int         x,
+					int         y,
+					int         nWidth,
+					int         nHeight,
+					HWND		hWndParent,
+					HMENU		hMenu,
+					HINSTANCE	hInstance,
+					LPVOID		lpParam
+			);
+
+			void createChildWindow(
+				database::jslice slice,
+				int			field_id,
+				LPCTSTR		lpClassName,
+				LPCTSTR		lpWindowName,
+				DWORD       dwStyle,
+				int         x,
+				int         y,
+				int         nWidth,
+				int         nHeight,
+				HWND		hWndParent,
+				HMENU		hMenu,
+				HINSTANCE	hInstance,
+				LPVOID		lpParam
+			);
+
 		public:
 
 			directApplication(direct2dFactory* _factory);
 			virtual ~directApplication();
+
+			virtual void renderPage(database::page& _page, database::jschema* _schema, database::actor_state& _state);
 
 			virtual drawableHost* getDrawable(int i);
 
@@ -269,4 +311,3 @@ namespace corona
 	}
 }
 
-#endif
