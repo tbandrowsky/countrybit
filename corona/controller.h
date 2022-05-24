@@ -49,6 +49,7 @@ namespace corona
 			virtual bool update(double _elapsedSeconds, double _totalSeconds) = 0;
 
 			virtual void onInit() = 0;
+			virtual void onCreated(const rectDto& newSize) = 0;
 			virtual void onCommand(int buttonId) = 0;
 			virtual void onTextChanged(int textControlId) = 0;
 			virtual void onDropDownChanged(int dropDownId) = 0;

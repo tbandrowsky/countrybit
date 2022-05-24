@@ -57,9 +57,6 @@ namespace corona
 
 		public:
 
-			page();
-			~page();
-
 			page_item* row(page_item* _parent, measure_box _box = { 0.0px, 0.0px, 100.0pct, 100.0pct });
 			page_item* column( page_item* _parent, measure_box _box = { 0.0px, 0.0px, 100.0pct, 100.0pct });
 			page_item* absolute(page_item* _parent, measure_box _box = { 0.0px, 0.0px, 100.0pct, 100.0px });

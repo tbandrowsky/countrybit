@@ -110,6 +110,8 @@ namespace corona
 
 			virtual void setColorCapture(int _iconResourceId) = 0;
 
+			virtual int renderPage(database::page& _page, database::jschema* _schema, database::actor_state& _state, database::jcollection& _collection) = 0;
+
 		};
 
 	}

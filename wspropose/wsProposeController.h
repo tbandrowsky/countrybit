@@ -41,11 +41,20 @@ namespace proposal
 
 		void randomAdvertisement();
 
+		corona::database::dynamic_box box;
+		corona::database::jschema schema;
+		corona::database::relative_ptr_type schema_id;
+		corona::database::jcollection program_chart;
+		corona::database::jactor sample_actor;
+
+		int canvasWindowsId;
+
 	public:
 
 		wsProposalController(viewStyle* _vs);
 		virtual ~wsProposalController();
 
+		virtual void updateState(corona::database::actor_state& state, const rectDto& newSize);
 		virtual void loadController();
 		virtual void keyDown(short _key);
 		virtual void keyUp(short _key);
@@ -55,6 +64,7 @@ namespace proposal
 		virtual bool update(double _elapsedSeconds, double _totalSeconds);
 
 		virtual void onInit();
+		virtual void onCreated(const rectDto& newSize);
 		virtual void onCommand(int buttonId);
 		virtual void onTextChanged(int textControlId);
 		virtual void onDropDownChanged(int dropDownId);

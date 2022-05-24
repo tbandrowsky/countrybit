@@ -20,7 +20,10 @@ namespace corona
 		{
 			page_item* v = append();
 			v->id = size();
-			v->parent_id = _parent->id;
+			if (_parent)
+				v->parent_id = _parent->id;
+			else
+				v->parent_id = -1;
 			v->layout = layout_types::row;
 			v->field_id = null_row;
 			v->object_id = null_row;
@@ -32,7 +35,10 @@ namespace corona
 		{
 			page_item* v = append();
 			v->id = size();
-			v->parent_id = _parent->id;
+			if (_parent)
+				v->parent_id = _parent->id;
+			else
+				v->parent_id = -1;
 			v->layout = layout_types::column;
 			v->field_id = null_row;
 			v->object_id = null_row;
@@ -44,7 +50,10 @@ namespace corona
 		{
 			page_item* v = append();
 			v->id = size();
-			v->parent_id = _parent->id;
+			if (_parent)
+				v->parent_id = _parent->id;
+			else
+				v->parent_id = -1;
 			v->layout = layout_types::absolute;
 			v->field_id = null_row;
 			v->object_id = null_row;
@@ -56,7 +65,10 @@ namespace corona
 		{
 			page_item* v = append();
 			v->id = size();
-			v->parent_id = _parent->id;
+			if (_parent)
+				v->parent_id = _parent->id;
+			else
+				v->parent_id = -1;
 			v->layout = layout_types::canvas2d;
 			v->field_id = null_row;
 			v->object_id = null_row;
@@ -69,7 +81,10 @@ namespace corona
 			page_item* v = append();
 			v->id = size();
 			v->layout = layout_types::field;
-			v->parent_id = _parent->id;
+			if (_parent)
+				v->parent_id = _parent->id;
+			else
+				v->parent_id = -1;
 			v->field_id = field_id;
 			v->object_id = object_id;
 			v->box = { 0.0pct, 0.0pct, 100.0pct, 50.0px };
@@ -81,7 +96,10 @@ namespace corona
 			page_item* v = append();
 			v->id = size();
 			v->layout = layout_types::column;
-			v->parent_id = _parent->id;
+			if (_parent)
+				v->parent_id = _parent->id;
+			else
+				v->parent_id = -1;
 			v->field_id = null_row;
 			v->object_id = null_row;
 			v->box = { 0.0pct, 0.0pct, 200.0px, 100.0pct };
@@ -105,15 +123,23 @@ namespace corona
 		{
 			if (_item->box.x.units == measure_units::percent)
 				_item->bounds.x = _item->box.x.amount * width / 100.0 + x;
+			else
+				_item->bounds.x = _item->box.x.amount + x + offx;
 
 			if (_item->box.y.units == measure_units::percent)
 				_item->bounds.y = _item->box.y.amount * height / 100.0 + y;
+			else
+				_item->bounds.y = _item->box.y.amount + y + offy;
 
 			if (_item->box.height.units == measure_units::percent)
 				_item->bounds.h = _item->box.height.amount * height / 100.0;
+			else
+				_item->bounds.h = _item->box.height.amount;
 
 			if (_item->box.width.units == measure_units::percent)
 				_item->bounds.w = _item->box.width.amount * width / 100.0;
+			else
+				_item->bounds.w = _item->box.width.amount;
 
 			auto children = where([_item](const auto& it) {
 				return it.item.parent_id == _item->id;

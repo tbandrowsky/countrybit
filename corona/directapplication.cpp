@@ -1480,13 +1480,16 @@ namespace corona
 
 			if (!renderTarget && createRenderTarget()) {
 				std::for_each(bitmaps.begin(), bitmaps.end(), [this](std::pair<std::string, deviceDependentAssetBase*> ib) {
-					ib.second->create(this);
+					if (ib.second)
+						ib.second->create(this);
 					});
 				std::for_each(brushes.begin(), brushes.end(), [this](std::pair<std::string, deviceDependentAssetBase*> ib) {
-					ib.second->create(this);
+					if (ib.second)
+						ib.second->create(this);
 					});
 				std::for_each(textStyles.begin(), textStyles.end(), [this](std::pair<std::string, textStyle*> ib) {
-					ib.second->create(this);
+					if (ib.second)
+						ib.second->create(this);
 					});
 			}
 			if (renderTarget) {
@@ -1675,7 +1678,6 @@ namespace corona
 				return 0;
 			case WM_DESTROY:
 				destroyRenderTarget();
-				PostQuitMessage(0);
 				return 0;
 			case WM_SIZE:
 				size.cx = LOWORD(lParam);
@@ -1821,11 +1823,17 @@ namespace corona
 			static HBRUSH hbrBkgnd = NULL;
 			static HBRUSH hbrBkgnd2 = NULL;
 			char className[256];
+			LPCREATESTRUCT lpcr;
 
 			switch (message)
 			{
 			case WM_CREATE:
 				hwndRoot = hwnd;
+				if (currentController) {
+					lpcr = (LPCREATESTRUCT)lParam;
+					rectDto r{ 0, 0, (float)lpcr->cx, (float)lpcr->cy };
+					currentController->onCreated(r);
+				}
 				break;
 			case WM_INITDIALOG:
 				break;
@@ -2269,7 +2277,7 @@ namespace corona
 					double elapsedSeconds = (double)(counter - lastCounter) / (double)performanceFrequency;
 					double totalSeconds = (double)(counter - startCounter) / (double)performanceFrequency;
 					lastCounter = counter;
-					if (currentController->update(elapsedSeconds, totalSeconds)) {
+					if (hwndDirect2d != nullptr && currentController->update(elapsedSeconds, totalSeconds)) {
 						::InvalidateRect(hwndDirect2d, NULL, TRUE);
 						::UpdateWindow(hwndDirect2d);
 					}
