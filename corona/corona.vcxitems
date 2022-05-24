@@ -64,7 +64,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)skip_list.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)store_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)table.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)view_box.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)presentation.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)utility.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)viewstyle.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)wave_box.h" />
@@ -119,5 +119,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)time_box.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)utility.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)viewstyle.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)presentation.cpp" />
   </ItemGroup>
 </Project>

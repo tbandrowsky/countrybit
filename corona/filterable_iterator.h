@@ -4,6 +4,9 @@ namespace corona
 {
 	namespace database
 	{
+		template <typename new_key, typename value_ref> class grouped;
+		template <typename new_value> class list_box;
+		template <typename new_type, typename value_ref, typename iter_type> grouped<new_type, value_ref> create_new_group(serialized_box_container* _box, iter_type begin_iter, iter_type stop_iter, std::function<new_type(value_ref&)> _transform);
 
 		template <typename item_type>
 		class value_reference 
@@ -285,28 +288,12 @@ namespace corona
 
 			template <typename new_key> grouped<new_key, value_ref> group_by(serialized_box_container *_box, std::function<new_key(const value_ref&)> _transform)
 			{
-				grouped<new_key, value_ref> new_group = grouped<new_key, value_ref>::create_grouped(_box);
-
-				for (auto iter = begin(); iter != end(); iter++) {
-					auto obj = iter.get_object();
-					auto key = _transform(obj);
-					new_group.insert_or_assign(key);
-				}
-
-				return new_group;
+				return create_grouped<new_key, value_ref, filterable_iterator>(_box, begin(), end(), _transform);
 			}
 
-			template <typename new_value> list_box<new_value> select(serialized_box_container* _box, std::function<new_value(const value_ref&)> _transform)
+			template <typename new_key> list_box<new_key> select(serialized_box_container* _box, std::function<new_key(const value_ref&)> _transform)
 			{
-				list_box<new_value> new_list = grouped<new_key, value_ref>::create_grouped(_box);
-
-				for (auto iter = begin(); iter != end(); iter++) {
-					auto obj = iter.get_object();
-					auto key = _transform(obj);
-					new_group.insert_or_assign(key);
-				}
-
-				return new_group;
+				return create_list<new_key, value_ref, filterable_iterator>(_box, begin(), end(), _transform);
 			}
 
 		};

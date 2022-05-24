@@ -93,6 +93,7 @@
 #include "pobject.h"
 #include "pobject_transformer.h"
 #include "extractor.h"
+#include "presentation.h"
 #include "jobject.h"
 #include "jdatabase.h"
 #include "jdatabase_client.h"

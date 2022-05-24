@@ -1285,20 +1285,18 @@ namespace corona
 			}
 		}
 
-		jslice jslice::convert(serialized_box_container* _box, row_id_type _class_id)
+		jslice jslice::convert(serialized_box_container* _box, relative_ptr_type _class_id)
 		{
 			if (_class_id == class_id)
 				return *this;
 
-			jclass cls = schema->get_class(_class_id);
-
-			auto myclass = _schema->get_class(_class_id);
+			auto myclass = schema->get_class(_class_id);
 			auto bytes_to_allocate = myclass.item().class_size_bytes;
 			relative_ptr_type location = _box->reserve(bytes_to_allocate);
 
 			dimensions_type d = { 0,0,0 };
 
-			jslice ja(nullptr, _schema, _class_id, box, location, d);
+			jslice ja(nullptr, schema, _class_id, box, location, d);
 			ja.construct();
 			ja.update(*this);
 

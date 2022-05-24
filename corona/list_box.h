@@ -283,6 +283,18 @@ namespace corona
 		};
 
 		bool list_box_tests();
+
+		template <typename new_type, typename value_ref, typename iter_type>
+		list_box<new_type> create_list(serialized_box_container* _box, iter_type begin_iter, iter_type end_iter, std::function<new_type(value_ref&)> _transform)
+		{
+			auto new_list = list_box<new_type>::create(_box);
+			for (auto iter = begin_iter; iter != end_iter; iter++) {
+				auto obj = iter.get_object();
+				auto key = _transform(obj);
+				new_list.push_back(key);
+			}
+			return new_list;
+		}
 	}
 }
 

@@ -12,7 +12,7 @@ namespace corona
 			relative_ptr_type	group_by_items;
 		};
 
-		template <typename KEY, typename VALUE> 
+		template <typename KEY, typename VALUE>
 		class group
 		{
 		public:
@@ -40,7 +40,7 @@ namespace corona
 			}
 
 			grouped(serialized_box_container* _box, relative_ptr_type _location) :
-				group_by_collection(_box,_location)
+				group_by_collection(_box, _location)
 			{
 			}
 
@@ -81,16 +81,16 @@ namespace corona
 				relative_ptr_type list_location;
 				grouped_items lst;
 				iterator_item_type grp;
-				
+
 				grp.key = _key;
 
-				if (contains(_key)) 
+				if (contains(_key))
 				{
 					inner_type& dp = group_by_collection::get(_key);
 					list_location = dp.second;
 					lst = grouped_items::get(box, list_location);
 				}
-				else 
+				else
 				{
 					lst = grouped_items::create(box);
 					list_location = lst.get_location();
@@ -158,6 +158,18 @@ namespace corona
 			}
 
 		};
+
+		template <typename new_type, typename value_ref, typename iter_type> 
+		grouped<new_type,value_ref> create_grouped(serialized_box_container *_box, iter_type begin_iter, iter_type end_iter, std::function<new_type(value_ref&)> _transform )
+		{
+			auto new_group = grouped<new_type, value_ref>::create_grouped(_box);
+			for (auto iter = begin_iter; iter != end_iter; iter++) {
+				auto obj = iter.get_object();
+				auto key = _transform(obj);
+				new_group.insert_or_assign(key);
+			}
+			return new_group;
+		}
 
 		void query_tests();
 	}
