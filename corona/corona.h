@@ -1,5 +1,7 @@
 #pragma once
 
+#define WINDESKTOP_GUI 1
+
 #include "windows.h"
 #include "windowsx.h"
 #include "process.h"
@@ -9,6 +11,8 @@
 #include "Shlwapi.h"
 #include "Shlobj.h"
 #include "Winhttp.h"
+#include "shellapi.h"
+
 
 #include <stdlib.h>
 #include <malloc.h>

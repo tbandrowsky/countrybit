@@ -185,17 +185,15 @@ namespace corona
 			void destroyChildren();
 
 			void createChildWindow(
-					LPCTSTR		lpClassName,
-					LPCTSTR		lpWindowName,
-					DWORD       dwStyle,
-					int         x,
-					int         y,
-					int         nWidth,
-					int         nHeight,
-					HWND		hWndParent,
-					HMENU		hMenu,
-					HINSTANCE	hInstance,
-					LPVOID		lpParam
+				LPCTSTR		lpClassName,
+				LPCTSTR		lpWindowName,
+				DWORD       dwStyle,
+				int         x,
+				int         y,
+				int         nWidth,
+				int         nHeight,
+				int			windowId,
+				LPVOID		lpParam
 			);
 
 			void createChildWindow(
@@ -208,9 +206,6 @@ namespace corona
 				int         y,
 				int         nWidth,
 				int         nHeight,
-				HWND		hWndParent,
-				HMENU		hMenu,
-				HINSTANCE	hInstance,
 				LPVOID		lpParam
 			);
 
@@ -219,7 +214,7 @@ namespace corona
 			directApplication(direct2dFactory* _factory);
 			virtual ~directApplication();
 
-			virtual void renderPage(database::page& _page, database::jschema* _schema, database::actor_state& _state);
+			int renderPage(database::page& _page, database::jschema* _schema, database::actor_state& _state, database::jcollection& _collection);
 
 			virtual drawableHost* getDrawable(int i);
 

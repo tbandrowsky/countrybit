@@ -1,6 +1,7 @@
 
 #include "pch.h"
 #include "resource.h"
+#include "wsProposeController.h"
 
 int __stdcall WinMain(HINSTANCE hInstance,
 	HINSTANCE hPrevInstance,
@@ -8,8 +9,8 @@ int __stdcall WinMain(HINSTANCE hInstance,
 	int    nCmdShow)
 {
 
-	direct2dFactory factory;
-	directApplication wsPropose(&factory);
+	corona::win32::direct2dFactory factory;
+	corona::win32::directApplication wsPropose(&factory);
 
 	bool forceWindowed = false;
 
@@ -21,8 +22,8 @@ int __stdcall WinMain(HINSTANCE hInstance,
 	forceWindowed = true;
 #endif
 
-	viewStyle* styleSheet = new viewStyle();
-	wsProposeController* mainController = new wsProposeController(styleSheet);
+	corona::win32::viewStyle* styleSheet = new corona::win32::viewStyle();
+	proposal::wsProposalController* mainController = new proposal::wsProposalController(styleSheet);
 
 	if (forceWindowed) {
 		wsPropose.runDialog(hInstance, "Woodruff Sawyer Proposal", IDI_WSPROPOSE, false, mainController);

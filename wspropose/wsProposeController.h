@@ -1,71 +1,70 @@
 #pragma once
 
-namespace corona
+namespace proposal
 {
-	namespace win32
-	{
-		enum currentWindowViews {
-			viewEmpty,
-			viewLoading,
-			viewProcessing,
-			viewRunning
-		};
+	using namespace corona::win32;
 
-		struct yankeeRinoAdvertisement {
-			std::string url;
-			std::string description;
-		};
+	enum currentWindowViews {
+		viewEmpty,
+		viewLoading,
+		viewProcessing,
+		viewRunning
+	};
 
-		class wsProposalController : public win32::controller {
+	struct yankeeRinoAdvertisement {
+		std::string url;
+		std::string description;
+	};
 
-			currentWindowViews currentWindowView;
-			std::string currentImageStatus;
-			std::vector<std::string> yankeerinoStuff;
-			std::vector<yankeeRinoAdvertisement> yankeerinoAdvertisements;
+	class wsProposalController : public controller {
 
-			bool enableEditMessages;
-			bool showUpdate;
-			bool previewMode;
-			int magnification;
+		currentWindowViews currentWindowView;
+		std::string currentImageStatus;
+		std::vector<std::string> yankeerinoStuff;
+		std::vector<yankeeRinoAdvertisement> yankeerinoAdvertisements;
 
-			void fromImage();
-			void clearErrors(errorDto* _error);
-			void addError(errorDto* _error);
-			void setScrollBars();
+		bool enableEditMessages;
+		bool showUpdate;
+		bool previewMode;
+		int magnification;
 
-			// for sprite sheets
-			void exportBitmap(const char* _filenameImage);
-			void exportBitmapRectangles(const char* _filenameImage, const char* _templateFile);
+		void fromImage();
+		void clearErrors(errorDto* _error);
+		void addError(errorDto* _error);
+		void setScrollBars();
 
-			pointDto currentScroll;
+		// for sprite sheets
+		void exportBitmap(const char* _filenameImage);
+		void exportBitmapRectangles(const char* _filenameImage, const char* _templateFile);
 
-			void randomAdvertisement();
+		pointDto currentScroll;
 
-		public:
+		void randomAdvertisement();
 
-			wsProposalController(viewStyle* _vs);
-			virtual ~wsProposalController();
+	public:
 
-			virtual void loadController();
-			virtual void keyDown(short _key);
-			virtual void keyUp(short _key);
-			virtual void mouseMove(pointDto* _point);
-			virtual void mouseClick(pointDto* _point);
-			virtual void drawFrame();
-			virtual bool update(double _elapsedSeconds, double _totalSeconds);
+		wsProposalController(viewStyle* _vs);
+		virtual ~wsProposalController();
 
-			virtual void onInit();
-			virtual void onCommand(int buttonId);
-			virtual void onTextChanged(int textControlId);
-			virtual void onDropDownChanged(int dropDownId);
-			virtual void onListViewChanged(int listViewId);
-			virtual int onHScroll(int controlId, scrollTypes scrollType);
-			virtual int onVScroll(int controlId, scrollTypes scrollType);
-			virtual int onResize(const rectDto& newSize);
-			virtual int onSpin(int controlId, int newPosition);
-			virtual void pointSelected(pointDto* _point, colorDto* _color);
+		virtual void loadController();
+		virtual void keyDown(short _key);
+		virtual void keyUp(short _key);
+		virtual void mouseMove(pointDto* _point);
+		virtual void mouseClick(pointDto* _point);
+		virtual void drawFrame();
+		virtual bool update(double _elapsedSeconds, double _totalSeconds);
 
-		};
-	}
+		virtual void onInit();
+		virtual void onCommand(int buttonId);
+		virtual void onTextChanged(int textControlId);
+		virtual void onDropDownChanged(int dropDownId);
+		virtual void onListViewChanged(int listViewId);
+		virtual int onHScroll(int controlId, scrollTypes scrollType);
+		virtual int onVScroll(int controlId, scrollTypes scrollType);
+		virtual int onResize(const rectDto& newSize);
+		virtual int onSpin(int controlId, int newPosition);
+		virtual void pointSelected(pointDto* _point, colorDto* _color);
+
+	};
 
 }

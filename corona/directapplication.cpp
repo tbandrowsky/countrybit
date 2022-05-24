@@ -3,32 +3,23 @@
 
 #include "pch.h"
 
-//#ifdef WINDESKTOP_GUI
+#ifdef WINDESKTOP_GUI
 
 namespace corona
 {
 	namespace win32
 	{
-
-
-
 		void throwOnFail(HRESULT hr, const char* _message)
 		{
-			directException exc;
 			if (!SUCCEEDED(hr)) {
-				exc.lastError = hr;
-				exc.message = _message;
-				throw exc;
+				throw std::exception("COM failure");
 			}
 		}
 
 		void throwOnNull(void* _ptr, const char* _message)
 		{
-			directException exc;
 			if (!_ptr) {
-				exc.lastError = GetLastError();
-				exc.message = _message;
-				throw exc;
+				throw std::exception("null reference failure");
 			}
 		}
 
@@ -1606,7 +1597,7 @@ namespace corona
 			LPVOID		lpParam
 		)
 		{
-			HWND hwnd = CreateWindow(lpClassName, lpWindowName, dwStyle, x, y, nWidth, nHeight, hwndRoot, (HMENU)windowId, hInstance, lpParam);
+			HWND hwnd = CreateWindow(lpClassName, lpWindowName, dwStyle, x, y, nWidth, nHeight, directApplication::hwndRoot, (HMENU)windowId, hinstance, lpParam);
 			childWindows.push_back(hwnd);
 		}
 
@@ -1628,30 +1619,34 @@ namespace corona
 			new_map.field_id = field_id;
 			int windowId = childWindows.size();
 			windowControlMap.insert_or_assign(windowId, new_map);
-			HWND hwnd = CreateWindow(lpClassName, lpWindowName, dwStyle, x, y, nWidth, nHeight, hwndRoot, (HMENU)windowId, hInstance, lpParam);
+			HWND hwnd = CreateWindow(lpClassName, lpWindowName, dwStyle, x, y, nWidth, nHeight, directApplication::hwndRoot, (HMENU)windowId, hinstance, lpParam);
 			childWindows.push_back(hwnd);
 		}
 
-		void directApplication::renderPage(database::page& _page, database::jschema* _schema, database::actor_state& _state, database::jcollection& _collection)
+		int directApplication::renderPage(database::page& _page, database::jschema* _schema, database::actor_state& _state, database::jcollection& _collection)
 		{
+			int canvasWindowId = -1;
 			destroyChildren();
-			for (auto pi : _page)
+			for (auto piter : _page)
 			{
+				auto pi = piter.item;
 				switch (pi.layout)
 				{
 				case database::layout_types::canvas2d:
-					createChildWindow("CoronaDirect2d", "", WS_CHILD | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, NULL);
+					canvasWindowId = childWindows.size();
+					createChildWindow("CoronaDirect2d", "", WS_CHILD | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, canvasWindowId, NULL);
 					break;
 				case database::layout_types::field:
 					{
-						auto slc = _collection.get_object(pi.object_id);
+						auto slice = _collection.get_object(pi.object_id);
 						auto fld = slice.get_field_by_id(pi.field_id);
-						createChildWindow(WC_STATIC, fld.name.c_str(), WS_CHILD | WS_BORDER | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, 20, NULL);
-						createChildWindow(WC_EDIT, fld.name.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y+20, pi.bounds.w, 20, NULL);
-				}
+						createChildWindow(WC_STATIC, fld.name.c_str(), WS_CHILD | WS_BORDER | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, 20, 0, NULL);
+						createChildWindow(slice, pi.field_id, WC_EDIT, fld.name.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y+20, pi.bounds.w, 20, NULL);
+					}
 					break;
 				}
 			}
+			return canvasWindowId;
 		}
 
 		LRESULT CALLBACK directApplication::d2dWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)

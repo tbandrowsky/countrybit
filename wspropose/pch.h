@@ -7,12 +7,7 @@
 #ifndef PCH_H
 #define PCH_H
 
-// add headers that you want to pre-compile here
 #include "framework.h"
-
-#define WINDESKTOP_GUI 1
-
 #include "corona.h"
-#include "wsProposeController.h"
 
 #endif //PCH_H
