@@ -11,7 +11,9 @@ namespace corona
 			absolute = 3,
 			canvas2d = 4,
 			canvas3d = 5,
-			field = 6
+			field = 6,
+			create = 7,
+			select = 8
 		};
 
 		enum class measure_units
@@ -61,8 +63,12 @@ namespace corona
 			page_item* column( page_item* _parent, measure_box _box = { 0.0px, 0.0px, 100.0pct, 100.0pct });
 			page_item* absolute(page_item* _parent, measure_box _box = { 0.0px, 0.0px, 100.0pct, 100.0px });
 			page_item* canvas2d(page_item* _parent, measure_box _box = { 0.0px, 0.0px, 100.0pct, 100.0px });
+
 			page_item* field(page_item* _parent, int object_id, int field_id);
-			page_item* slice(page_item* _parent, int object_id, jslice& slice );
+
+			page_item* actor_update_fields(page_item* _parent, actor_state& _state, jschema* _schema, jcollection* _collection);
+			page_item* actor_create_buttons(page_item* _parent, actor_state& _state, jschema* _schema, jcollection* _collection);
+			page_item* actor_select_buttons(page_item* _parent, actor_state& _state, jschema* _schema, jcollection* _collection);
 
 			void arrange( double width, double height );
 			void visit(std::function<bool(page_item* _parent)> fn);

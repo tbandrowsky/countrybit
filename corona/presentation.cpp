@@ -179,6 +179,21 @@ namespace corona
 			}
 		}
 
+		page_item* page::actor_update_fields(page_item* _parent, actor_state& _state, jschema* _schema, jcollection* _collection)
+		{
+			;
+		}
+
+		page_item* page::actor_create_buttons(page_item* _parent, actor_state& _state, jschema* _schema, jcollection* _collection)
+		{
+			;
+		}
+
+		page_item* page::actor_select_buttons(page_item* _parent, actor_state& _state, jschema* _schema, jcollection* _collection)
+		{
+			;
+		}
+
 		void page::arrange(double width, double height)
 		{
 			sort([](auto& a, auto& b) {

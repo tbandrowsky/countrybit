@@ -297,6 +297,9 @@ namespace proposal
 
 		auto mainr = pg.row(nullptr);
 		auto controlcolumn = pg.column(mainr, { 0.0px,0.0px,25.0pct,100.0pct });
+
+
+
 		auto d2dcolumn = pg.column(mainr, { 0.0px,0.0px,75.0pct,100.0pct });
 		auto d2dwin = pg.canvas2d(d2dcolumn, { 0.0px,0.0px,100.0pct,100.0pct });
 
@@ -305,6 +308,7 @@ namespace proposal
 			pg.slice(controlcolumn, state.modified_object_id, state.modified_object);
 		}
 		pg.arrange(newSize.width, newSize.height);
+
 		canvasWindowsId = host->renderPage(pg, &schema, state, program_chart);
 		host->redraw();
 	}
@@ -455,7 +459,7 @@ namespace proposal
 			switch (currentWindowView) {
 				case currentWindowViews::viewEmpty:
 				{
-					int mx = 260, my = 80;
+					int mx = 100, my = 80;
 					fact.colorMake(f, f, f, 1.0);
 					host->getDrawable(0)->clear(&fact.color);
 
@@ -467,12 +471,38 @@ namespace proposal
 
 					textInstance2dDto txt;
 					getH1Styles(&txt);
-					txt.position.x = (frameLayout.width - mx) / 2.0 + 25;
-					txt.position.y = (frameLayout.height - my) / 2.0 + 25;
+					txt.position.x = 100;
+					txt.position.y = 100;
 					txt.rotation = 0.0;
-					txt.text = "No Folder Selected.";
+					txt.text = "Carrier 1.";
 					txt.layout = frameLayout;
 					host->getDrawable(0)->drawText(&txt);
+
+					getH2Styles(&txt);
+					txt.position.x = 100;
+					txt.position.y = 200;
+					txt.rotation = 0.0;
+					txt.text = "Carrier 2.";
+					txt.layout = frameLayout;
+					host->getDrawable(0)->drawText(&txt);
+
+					getH3Styles(&txt);
+					txt.position.x = 100;
+					txt.position.y = 300;
+					txt.rotation = 0.0;
+					txt.text = "Carrier 3.";
+					txt.layout = frameLayout;
+					host->getDrawable(0)->drawText(&txt);
+
+					this->getLabelStyles(&txt);
+					txt.position.x = 100;
+					txt.position.y = 400;
+					txt.rotation = 0.0;
+					txt.text = "Add Carrier";
+					txt.layout = frameLayout;
+					host->getDrawable(0)->drawText(&txt);
+
+					
 				}
 				break;
 			}

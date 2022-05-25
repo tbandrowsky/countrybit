@@ -15,7 +15,6 @@ namespace corona
 		int operator==(const collection_id_type& a, const collection_id_type& b);
 		int operator!=(const collection_id_type& a, const collection_id_type& b);
 
-
 		class collection_id_math
 		{
 		public:

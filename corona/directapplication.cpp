@@ -1374,6 +1374,16 @@ namespace corona
 			auto border = brushes[_pathInstanceDto->borderBrushName];
 			auto p = paths[_pathInstanceDto->pathName];
 
+			if (!fill) {
+				std::cout << "missing " << _pathInstanceDto->fillBrushName << std::endl;
+				return;
+			}
+
+			if (!border) {
+				std::cout << "missing " << _pathInstanceDto->borderBrushName << std::endl;
+				return;
+			}
+
 			if ((!border && !fill) || !p)
 				return;
 
@@ -1393,8 +1403,15 @@ namespace corona
 			auto fill = brushes[_pathImmediateDto->fillBrushName];
 			auto border = brushes[_pathImmediateDto->borderBrushName];
 
-			if (!border && !fill)
+			if (!fill) {
+				std::cout << "missing " << _pathImmediateDto->fillBrushName << std::endl;
 				return;
+			}
+
+			if (!border) {
+				std::cout << "missing " << _pathImmediateDto->borderBrushName << std::endl;
+				return;
+			}
 
 			auto p = createPath(&_pathImmediateDto->path, _pathImmediateDto->closed);
 			if (!p)
@@ -1418,8 +1435,15 @@ namespace corona
 			auto style = textStyles[_textInstanceDto->styleName];
 			auto fill = brushes[_textInstanceDto->fillBrushName];
 
-			if (!style || !fill)
+			if (!style) {
+				std::cout << "missing " << _textInstanceDto->styleName << std::endl;
 				return;
+			}
+
+			if (!fill) {
+				std::cout << "missing " << _textInstanceDto->fillBrushName << std::endl;
+				return;
+			}
 
 			D2D1::Matrix3x2F product = currentTransform * D2D1::Matrix3x2F::Rotation(_textInstanceDto->rotation) * D2D1::Matrix3x2F::Translation(_textInstanceDto->position.x, _textInstanceDto->position.y);
 			renderTarget->SetTransform(product);
