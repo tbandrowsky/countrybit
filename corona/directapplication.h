@@ -142,19 +142,6 @@ namespace corona
 
 		};
 
-		class view 
-		{
-		public:
-
-		};
-
-		class field_map
-		{
-		public:
-			database::relative_ptr_type field_id;
-			database::jslice			slice;
-		};
-
 		class directApplication : public direct2dContext, public controllerHost
 		{
 		protected:
@@ -179,10 +166,17 @@ namespace corona
 			bool colorCapture;
 			int iconResourceId;
 
-			std::map<int, field_map>	windowControlMap;
+			std::map<int, database::page_item>	windowControlMap;
 			std::vector<HWND>			childWindows;
 
-			void destroyChildren();
+		public:
+
+			directApplication(direct2dFactory* _factory);
+			virtual ~directApplication();
+
+			int renderPage(database::page& _page, database::jschema* _schema, database::actor_state& _state, database::jcollection& _collection);
+
+			virtual drawableHost* getDrawable(int i);
 
 			void createChildWindow(
 				LPCTSTR		lpClassName,
@@ -195,28 +189,7 @@ namespace corona
 				int			windowId,
 				LPVOID		lpParam
 			);
-
-			void createChildWindow(
-				database::jslice slice,
-				int			field_id,
-				LPCTSTR		lpClassName,
-				LPCTSTR		lpWindowName,
-				DWORD       dwStyle,
-				int         x,
-				int         y,
-				int         nWidth,
-				int         nHeight,
-				LPVOID		lpParam
-			);
-
-		public:
-
-			directApplication(direct2dFactory* _factory);
-			virtual ~directApplication();
-
-			int renderPage(database::page& _page, database::jschema* _schema, database::actor_state& _state, database::jcollection& _collection);
-
-			virtual drawableHost* getDrawable(int i);
+			void destroyChildren();
 
 			virtual bool runFull(HINSTANCE _hinstance, const char* _title, int _iconId, bool _fullScreen, controller* _firstController);
 			virtual bool runDialog(HINSTANCE _hinstance, const char* _title, int _iconId, bool _fullScreen, controller* _firstController);

@@ -6,12 +6,12 @@ namespace corona
 	namespace database
 	{
 
-		measure operator ""px(long double px)
+		measure operator ""_px(long double px)
 		{
 			return measure{ px, measure_units::pixels };
 		}
 
-		measure operator ""pct(long double pct)
+		measure operator ""_pct(long double pct)
 		{
 			return measure{ pct, measure_units::percent };
 		}
@@ -25,7 +25,7 @@ namespace corona
 			else
 				v->parent_id = -1;
 			v->layout = layout_types::row;
-			v->field_id = null_row;
+			v->field = nullptr;
 			v->object_id = null_row;
 			v->box = _box;
 			return v;
@@ -40,7 +40,7 @@ namespace corona
 			else
 				v->parent_id = -1;
 			v->layout = layout_types::column;
-			v->field_id = null_row;
+			v->field = nullptr;
 			v->object_id = null_row;
 			v->box = _box;
 			return v;
@@ -55,7 +55,7 @@ namespace corona
 			else
 				v->parent_id = -1;
 			v->layout = layout_types::absolute;
-			v->field_id = null_row;
+			v->field = nullptr;
 			v->object_id = null_row;
 			v->box = _box;
 			return v;
@@ -70,28 +70,13 @@ namespace corona
 			else
 				v->parent_id = -1;
 			v->layout = layout_types::canvas2d;
-			v->field_id = null_row;
+			v->field = nullptr;
 			v->object_id = null_row;
 			v->box = _box;
 			return v;
 		}
 
-		page_item* page::field(page_item* _parent, int object_id, int field_id)
-		{
-			page_item* v = append();
-			v->id = size();
-			v->layout = layout_types::field;
-			if (_parent)
-				v->parent_id = _parent->id;
-			else
-				v->parent_id = -1;
-			v->field_id = field_id;
-			v->object_id = object_id;
-			v->box = { 0.0pct, 0.0pct, 100.0pct, 50.0px };
-			return v;
-		}
-
-		page_item* page::slice(page_item* _parent, int object_id, jslice& slice)
+		page_item* page::field(page_item* _parent, int object_id, int field_id, jslice slice)
 		{
 			page_item* v = append();
 			v->id = size();
@@ -100,11 +85,114 @@ namespace corona
 				v->parent_id = _parent->id;
 			else
 				v->parent_id = -1;
-			v->field_id = null_row;
+			v->field = nullptr;
+			v->object_id = object_id;
+			v->box = { 0.0_pct, 0.0_pct, 100.0_pct, 50.0_px };
+			v->slice = slice;
+			return v;
+		}
+
+		page_item* page::actor_update_fields(page_item* _parent, actor_state* _state, jschema* _schema, jcollection* _collection)
+		{
+			page_item* v = append();
+			v->id = size();
+			v->layout = layout_types::column;
+
+			if (_parent)
+				v->parent_id = _parent->id;
+			else
+				v->parent_id = -1;
+
+			v->field = nullptr;
 			v->object_id = null_row;
-			v->box = { 0.0pct, 0.0pct, 200.0px, 100.0pct };
+
+			measure height = 0.0_px;
+
+			if (_state->modified_object_id != null_row)
+			{
+				auto avo = _state->get_modified_object();
+				auto slice = _collection->get_object(avo.object_id);
+				for (int i = 0; i < slice.size(); i++)
+				{
+					jfield& fld = slice.get_field(i);
+					page_item* label = append();
+					label->id = size();
+					label->parent_id = v->id;
+					label->layout = layout_types::label;
+					label->field = &fld;
+					label->box = { 0.0_pct, 0.0_pct, 200.0_px, 20.0_px };
+					label->slice = slice;
+					height.amount += 20.0;
+					page_item* control = append();
+					control->id = size();
+					control->parent_id = v->id;
+					control->layout = layout_types::field;
+					control->field = &fld;
+					control->box = { 0.0_pct, 0.0_pct, 200.0_px, 20.0_px };
+					control->slice = slice;
+					height.amount += 20.0;
+				}
+			}
+
+			v->box = { 0.0_pct, 0.0_pct, 200.0_px, height };
 
 			return v;
+		}
+
+		page_item* page::actor_create_buttons(page_item* _parent, actor_state* _state, jschema* _schema, jcollection* _collection)
+		{
+			page_item* v = append();
+			v->id = size();
+			v->layout = layout_types::column;
+
+			if (_parent)
+				v->parent_id = _parent->id;
+			else
+				v->parent_id = -1;
+
+			measure height = 0.0_px;
+
+			for (auto aco : _state->create_objects)
+			{
+				page_item* button = append();
+				button->parent_id = v->id;
+				button->id = size();
+				button->layout = layout_types::create;
+				button->field = nullptr;
+				button->object_id = null_row;
+				button->box = { 0.0_pct, 0.0_pct, 200.0_px, 20.0_px };
+				height.amount += 20.0;
+			}
+
+			v->box = { 0.0_pct, 0.0_pct, 200.0_px, height };
+			return v;
+		}
+
+		page_item* page::actor_select_items(page_item* _parent, actor_state* _state, jschema* _schema, jcollection* _collection)
+		{
+			for (auto st : _state->view_objects) 
+			{
+				page_item* v = append();
+				v->id = size();
+				v->parent_id = _parent->id;
+				v->layout = layout_types::select;
+				v->field = nullptr;
+				v->object_id = st.second.object_id;
+				v->box.height.units = measure_units::pixels;
+				v->box.width.units = measure_units::pixels;
+				v->box.x.units = measure_units::pixels;
+				v->box.y.units = measure_units::pixels;
+				auto slice = _collection->get_object(st.second.object_id);
+				auto rect_field = _schema->find_field("rectangle");
+				auto rf = slice.get_rectangle(rect_field);
+				v->box.x.amount = rf->x;
+				v->box.y.amount = rf->y;
+				v->box.width.amount = rf->w;
+				v->box.height.amount = rf->h;
+				v->select_request = _state->create_select_request(v->object_id, false);
+				return v;
+			}
+			return _parent;
 		}
 
 		void page::visit_impl(page_item *r, std::function<bool(page_item* _item)> fn)
@@ -177,21 +265,6 @@ namespace corona
 					arrange_impl(&child.item, 0, 0, _item->bounds.x, _item->bounds.y, _item->bounds.w, _item->bounds.h);
 				}
 			}
-		}
-
-		page_item* page::actor_update_fields(page_item* _parent, actor_state& _state, jschema* _schema, jcollection* _collection)
-		{
-			;
-		}
-
-		page_item* page::actor_create_buttons(page_item* _parent, actor_state& _state, jschema* _schema, jcollection* _collection)
-		{
-			;
-		}
-
-		page_item* page::actor_select_buttons(page_item* _parent, actor_state& _state, jschema* _schema, jcollection* _collection)
-		{
-			;
 		}
 
 		void page::arrange(double width, double height)

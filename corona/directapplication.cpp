@@ -1628,48 +1628,89 @@ namespace corona
 			childWindows.push_back(hwnd);
 		}
 
-		void directApplication::createChildWindow(
-			database::jslice slice,
-			int			field_id,
-			LPCTSTR		lpClassName,
-			LPCTSTR		lpWindowName,
-			DWORD       dwStyle,
-			int         x,
-			int         y,
-			int         nWidth,
-			int         nHeight,
-			LPVOID		lpParam
-		)
-		{
-			field_map new_map;
-			new_map.slice = slice;
-			new_map.field_id = field_id;
-			int windowId = childWindows.size();
-			windowControlMap.insert_or_assign(windowId, new_map);
-			HWND hwnd = CreateWindow(lpClassName, lpWindowName, dwStyle, x, y, nWidth, nHeight, directApplication::hwndRoot, (HMENU)windowId, hinstance, lpParam);
-			childWindows.push_back(hwnd);
-		}
-
 		int directApplication::renderPage(database::page& _page, database::jschema* _schema, database::actor_state& _state, database::jcollection& _collection)
 		{
 			int canvasWindowId = -1;
 			destroyChildren();
+			database::jslice slice;
 			for (auto piter : _page)
 			{
 				auto pi = piter.item;
+
 				switch (pi.layout)
 				{
 				case database::layout_types::canvas2d:
-					canvasWindowId = childWindows.size();
+					canvasWindowId = pi.id;
 					createChildWindow("CoronaDirect2d", "", WS_CHILD | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, canvasWindowId, NULL);
+					break;
+				case database::layout_types::label:
+					createChildWindow(WC_STATIC, pi.field->name.c_str(), WS_CHILD | WS_BORDER | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL);
 					break;
 				case database::layout_types::field:
 					{
+						database::istring<256> x;
 						auto slice = _collection.get_object(pi.object_id);
-						auto fld = slice.get_field_by_id(pi.field_id);
-						createChildWindow(WC_STATIC, fld.name.c_str(), WS_CHILD | WS_BORDER | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, 20, 0, NULL);
-						createChildWindow(slice, pi.field_id, WC_EDIT, fld.name.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y+20, pi.bounds.w, 20, NULL);
+						int idx = slice.get_field_index_by_id(pi.field->field_id);
+						switch (pi.field->type_id)
+						{
+						case database::type_int8:
+							{
+								auto bx = slice.get_int8(idx);
+								x = bx;
+								createChildWindow(WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.id, NULL);
+							}
+							break;
+						case database::type_int16:
+							{
+								auto bx = slice.get_int16(idx);
+								x = bx;
+								createChildWindow(WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.id, NULL);
+							}
+							break;
+						case database::type_int32:
+							{
+								auto bx = slice.get_int32(idx);
+								x = bx;
+								createChildWindow(WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.id, NULL);
+							}
+							break;
+						case database::type_int64:
+							{
+								auto bx = slice.get_int64(idx);
+								x = bx;
+								createChildWindow(WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.id, NULL);
+							}
+							break;
+						case database::type_float32:
+							{
+								auto bx = slice.get_float(idx);
+								x = bx;
+								createChildWindow(WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.id, NULL);
+							}
+							break;
+						case database::type_float64:
+							{
+								auto bx = slice.get_double(idx);
+								x = bx;
+								createChildWindow(WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.id, NULL);
+							}
+							break;
+						case database::type_string:
+							{
+								auto bx = slice.get_string(idx);
+								createChildWindow(WC_EDIT, bx.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.id, NULL);
+							}
+							break;
+						default:
+							createChildWindow(WC_STATIC, "Type not supported", WS_CHILD | WS_BORDER | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL);
+							break;
+						}
 					}
+					break;
+				case database::layout_types::create:
+					createChildWindow(WC_BUTTON, pi.field->name.c_str(), BS_PUSHBUTTON | WS_CHILD | WS_BORDER | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL);
+					break;
+				case database::layout_types::select:
 					break;
 				}
 			}
