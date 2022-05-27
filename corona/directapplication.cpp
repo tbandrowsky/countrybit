@@ -1477,8 +1477,6 @@ namespace corona
 			renderTarget->DrawBitmap(ibm, rect);
 		}
 
-
-
 		void direct2dContext::popCamera()
 		{
 			if (transforms.empty())
@@ -1657,48 +1655,48 @@ namespace corona
 							{
 								auto bx = slice.get_int8(idx);
 								x = bx;
-								createChildWindow(WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.id, NULL);
+								createChildWindow(WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL);
 							}
 							break;
 						case database::type_int16:
 							{
 								auto bx = slice.get_int16(idx);
 								x = bx;
-								createChildWindow(WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.id, NULL);
+								createChildWindow(WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL);
 							}
 							break;
 						case database::type_int32:
 							{
 								auto bx = slice.get_int32(idx);
 								x = bx;
-								createChildWindow(WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.id, NULL);
+								createChildWindow(WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL);
 							}
 							break;
 						case database::type_int64:
 							{
 								auto bx = slice.get_int64(idx);
 								x = bx;
-								createChildWindow(WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.id, NULL);
+								createChildWindow(WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL);
 							}
 							break;
 						case database::type_float32:
 							{
 								auto bx = slice.get_float(idx);
 								x = bx;
-								createChildWindow(WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.id, NULL);
+								createChildWindow(WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL);
 							}
 							break;
 						case database::type_float64:
 							{
 								auto bx = slice.get_double(idx);
 								x = bx;
-								createChildWindow(WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.id, NULL);
+								createChildWindow(WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL);
 							}
 							break;
 						case database::type_string:
 							{
 								auto bx = slice.get_string(idx);
-								createChildWindow(WC_EDIT, bx.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.id, NULL);
+								createChildWindow(WC_EDIT, bx.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL);
 							}
 							break;
 						default:

@@ -69,6 +69,11 @@ namespace corona
 			_dto->backgroundBrushName = style->getDataBackgroundBrushName();
 		}
 
+		corona_controller::~corona_controller()
+		{
+			;
+		}
+
 		void corona_controller::onCreated(const rectDto& newSize)
 		{
 			auto state = this->program_chart.get_actor_state(this->sample_actor.actor_id);
@@ -185,7 +190,7 @@ namespace corona
 
 			setScrollBars();
 
-			auto result = program_chart.get_actor_state(sample_actor.actor_id, null_row, "state");
+			auto result = program_chart.get_actor_state(sample_actor.actor_id, database::null_row, "state");
 			updateState(result, newSize);
 
 			return 0;

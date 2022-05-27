@@ -30,7 +30,7 @@
     <ClInclude Include="pch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="wsProposeController.h">
+    <ClInclude Include="wspropose_controller.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -41,7 +41,7 @@
     <ClCompile Include="pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="wsProposeController.cpp">
+    <ClCompile Include="wspropose_controller.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

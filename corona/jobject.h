@@ -336,6 +336,7 @@ namespace corona
 			collection_id_type	collection_id;
 			actor_id_type		actor_id;
 			relative_ptr_type	object_id;
+			relative_ptr_type	class_id;
 			bool				selectable;
 			bool				updatable;
 			bool				selected;

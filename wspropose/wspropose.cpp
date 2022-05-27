@@ -1,7 +1,7 @@
 
 #include "pch.h"
 #include "resource.h"
-#include "wsProposeController.h"
+#include "ws_proposecontroller.h"
 
 int __stdcall WinMain(HINSTANCE hInstance,
 	HINSTANCE hPrevInstance,
@@ -23,7 +23,7 @@ int __stdcall WinMain(HINSTANCE hInstance,
 #endif
 
 	corona::win32::viewStyle* styleSheet = new corona::win32::viewStyle();
-	proposal::wsProposalController* mainController = new proposal::wsProposalController(styleSheet);
+	proposal::ws_proposal_controller* mainController = new proposal::ws_proposal_controller(styleSheet);
 
 	if (forceWindowed) {
 		wsPropose.runDialog(hInstance, "Woodruff Sawyer Proposal", IDI_WSPROPOSE, false, mainController);

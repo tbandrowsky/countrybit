@@ -21,6 +21,8 @@ namespace corona
 			int32_t						length;
 			string_validation_pattern	validation_pattern;
 			string_validation_message	validation_message;
+			bool						full_text_editor;
+			bool						rich_text_editor;
 		};
 
 		struct int_properties_type

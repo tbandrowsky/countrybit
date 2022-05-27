@@ -4,7 +4,7 @@
 
 #include "pch.h"
 #include "resource.h"
-#include "wsProposeController.h"
+#include "wspropose_controller.h"
 
 const int IDC_DIRECT2D = -1;
 
@@ -13,22 +13,22 @@ namespace proposal
 
 	using namespace corona::database;
 
-	wsProposalController::wsProposalController(viewStyle* _vs) : corona_controller(_vs)
+	wsproposal_controller::wsproposal_controller(viewStyle* _vs) : corona_controller(_vs)
 	{
 		;
 	}
 
-	wsProposalController::~wsProposalController()
+	wsproposal_controller::~wsproposal_controller()
 	{
 		;
 	}
 
-	void wsProposalController::loadController()
+	void wsproposal_controller::loadController()
 	{
 		;
 	}
 
-	void wsProposalController::onInit()
+	void wsproposal_controller::onInit()
 	{
 		enableEditMessages = false;
 
@@ -52,47 +52,47 @@ namespace proposal
 		dfr.name.type_id = jtype::type_float64;
 		dfr.options.minimum_double = 0.0;
 		dfr.options.maximum_double = 1E10;
-		relative_ptr_type attachment_field_id = schema.put_double_field(dfr);
+		attachment_field_id = schema.put_double_field(dfr);
 
 		dfr.name.name = "deductible";
 		dfr.name.description = "Point at which policy begins paying";
 		dfr.name.type_id = jtype::type_float64;
 		dfr.options.minimum_double = 0.0;
 		dfr.options.maximum_double = 1E10;
-		relative_ptr_type deductible_field_id = schema.put_double_field(dfr);
+		deductible_field_id = schema.put_double_field(dfr);
 
 		put_string_field_request sfr;
 		sfr.name.name = "comment";
 		sfr.name.description = "Descriptive text";
 		sfr.options.length = 512;
-		relative_ptr_type comment_field_id = schema.put_string_field(sfr);
+		comment_field_id = schema.put_string_field(sfr);
 
 		sfr.name.name = "program_name";
 		sfr.name.description = "name of a program";
 		sfr.options.length = 200;
-		relative_ptr_type program_name_field_id = schema.put_string_field(sfr);
+		program_name_field_id = schema.put_string_field(sfr);
 
 		sfr.name.name = "program_description";
 		sfr.name.description = "name of a program";
 		sfr.options.length = 512;
-		relative_ptr_type program_description_field_id = schema.put_string_field(sfr);
+		program_description_field_id = schema.put_string_field(sfr);
 
 		sfr.name.name = "coverage_name";
 		sfr.name.description = "name of a coverage";
 		sfr.options.length = 200;
-		relative_ptr_type coverage_name_id = schema.put_string_field(sfr);
+		coverage_name_id = schema.put_string_field(sfr);
 
 		sfr.name.name = "carrier_name";
 		sfr.name.description = "name of a carrier";
 		sfr.options.length = 200;
-		relative_ptr_type carrier_name_id = schema.put_string_field(sfr);
+		carrier_name_id = schema.put_string_field(sfr);
 
 		put_class_request pcr;
 
 		pcr.class_name = "program";
 		pcr.class_description = "program summary";
 		pcr.member_fields = { "program_name", "program_description", "rectangle" };
-		relative_ptr_type program_class_id = schema.put_class(pcr);
+		program_class_id = schema.put_class(pcr);
 
 		if (program_class_id == null_row) {
 			std::cout << __LINE__ << ":class create failed failed" << std::endl;
@@ -102,7 +102,7 @@ namespace proposal
 		pcr.class_name = "coverage";
 		pcr.class_description = "coverage frame";
 		pcr.member_fields = { "coverage_name", "comment", "rectangle" };
-		relative_ptr_type coverage_class_id = schema.put_class(pcr);
+		coverage_class_id = schema.put_class(pcr);
 
 		if (coverage_class_id == null_row) {
 			std::cout << __LINE__ << ":class create failed failed" << std::endl;
@@ -112,7 +112,7 @@ namespace proposal
 		pcr.class_name = "coverage_spacer";
 		pcr.class_description = "spacer frame";
 		pcr.member_fields = { "rectangle" };
-		relative_ptr_type coverage_spacer_id = schema.put_class(pcr);
+		coverage_spacer_id = schema.put_class(pcr);
 
 		if (coverage_spacer_id == null_row) {
 			std::cout << __LINE__ << ":class create failed failed" << std::endl;
@@ -122,7 +122,7 @@ namespace proposal
 		pcr.class_name = "carrier";
 		pcr.class_description = "carrier frame";
 		pcr.member_fields = { "carrier_name", "comment", "rectangle", "color" };
-		relative_ptr_type carrier_class_id = schema.put_class(pcr);
+		carrier_class_id = schema.put_class(pcr);
 
 		if (coverage_class_id == null_row) {
 			std::cout << __LINE__ << ":class create failed failed" << std::endl;
@@ -132,7 +132,7 @@ namespace proposal
 		pcr.class_name = "policy";
 		pcr.class_description = "policy block";
 		pcr.member_fields = { "coverage_name", "carrier_name", "comment", "rectangle", "color", "limit", "attachment" };
-		relative_ptr_type policy_class_id = schema.put_class(pcr);
+		policy_class_id = schema.put_class(pcr);
 
 		if (policy_class_id == null_row) {
 			std::cout << __LINE__ << ":class create failed failed" << std::endl;
@@ -142,7 +142,7 @@ namespace proposal
 		pcr.class_name = "policy_deductible";
 		pcr.class_description = "deductible block";
 		pcr.member_fields = { "coverage_name", "comment", "rectangle", "color", "deductible" };
-		relative_ptr_type policy_deductible_class_id = schema.put_class(pcr);
+		policy_deductible_class_id = schema.put_class(pcr);
 
 		if (policy_deductible_class_id == null_row) {
 			std::cout << __LINE__ << ":class create failed failed" << std::endl;
@@ -152,7 +152,7 @@ namespace proposal
 		pcr.class_name = "policy_umbrella";
 		pcr.class_description = "deductible block";
 		pcr.member_fields = { "comment", "rectangle", "color", "limit", "attachment" };
-		relative_ptr_type policy_umbrella_class_id = schema.put_class(pcr);
+		policy_umbrella_class_id = schema.put_class(pcr);
 
 		if (policy_deductible_class_id == null_row) {
 			std::cout << __LINE__ << ":class create failed failed" << std::endl;
@@ -286,9 +286,9 @@ namespace proposal
 		enableEditMessages = true;
 	}
 
-	void wsProposalController::updateState(corona::database::actor_state& state, const rectDto& newSize)
+	void wsproposal_controller::updateState(corona::database::actor_state& state, const rectDto& newSize)
 	{
-		corona::database::page pg;
+		pg.clear();
 
 		auto mainr = pg.row(nullptr);
 		auto controlcolumn = pg.column(mainr, { 0.0_px,0.0_px,25.0_pct,100.0_pct });
@@ -296,10 +296,23 @@ namespace proposal
 		auto d2dcolumn = pg.column(mainr, { 0.0_px,0.0_px,75.0_pct,100.0_pct });
 		auto d2dwin = pg.canvas2d(d2dcolumn, { 0.0_px,0.0_px,100.0_pct,100.0_pct });
 
+		auto title = state.view_objects.where([](const auto& vo ) { return vo.second.class_id == program_class_id; });
+
+		auto carriers = state.view_objects.where([](const& vo) { });
+
+		pg.actor_update_fields(controlcolumn, &state, &schema, &program_chart);
+		pg.actor_create_buttons(controlcolumn, &state, &schema, &program_chart);
+		pg.actor_select_items(d2dwin, &state, &schema, &program_chart);
+
 		pg.arrange(newSize.width, newSize.height);
 
 		canvasWindowsId = host->renderPage(pg, &schema, state, program_chart);
 		host->redraw();
+	}
+
+	void wsproposal_controller::drawFrame()
+	{
+		;
 	}
 
 }

@@ -111,6 +111,7 @@ namespace corona
 			corona::database::relative_ptr_type schema_id;
 			corona::database::jcollection program_chart;
 			corona::database::jactor sample_actor;
+			corona::database::page pg;
 
 			int canvasWindowsId;
 
