@@ -296,9 +296,9 @@ namespace proposal
 		auto d2dcolumn = pg.column(mainr, { 0.0_px,0.0_px,75.0_pct,100.0_pct });
 		auto d2dwin = pg.canvas2d(d2dcolumn, { 0.0_px,0.0_px,100.0_pct,100.0_pct });
 
-		auto title = state.view_objects.where([](const auto& vo ) { return vo.second.class_id == program_class_id; });
-
-		auto carriers = state.view_objects.where([](const& vo) { });
+		auto titles = state.view_objects.where([this](const auto& vo ) { return vo.second.class_id == program_class_id; });
+		auto carriers = state.view_objects.where([this](const auto& vo) { return vo.second.class_id == carrier_class_id; });
+		auto coverages = state.view_objects.where([this](const auto& vo) { return vo.second.class_id == coverage_class_id; });
 
 		pg.actor_update_fields(controlcolumn, &state, &schema, &program_chart);
 		pg.actor_create_buttons(controlcolumn, &state, &schema, &program_chart);

@@ -32,7 +32,6 @@ namespace proposal
 		virtual void loadController();
 		virtual void onInit();
 		virtual void drawFrame();
-
 	};
 
 }

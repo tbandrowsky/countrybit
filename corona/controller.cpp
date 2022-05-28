@@ -288,6 +288,25 @@ namespace corona
 			;
 		}
 
+		void corona_controller::for_each(database::actor_state& state, std::function<bool(const database::actor_view_collection::iterator_item_type& _item)> selector, std::function<bool(database::actor_view_object& avo, database::jslice& slice)> updator)
+		{
+			auto selections = state.view_objects.where(selector);
+			for (auto selection : selections)
+			{
+				database::jslice slice = program_chart.get_object(selection.second.object_id);
+				updator(selection.second, slice);
+			}
+		}
+
+		void corona_controller::for_each(database::actor_state& state, database::relative_ptr_type class_id, std::function<bool(const database::actor_view_object& avo, database::jslice& slice)>  updator)
+		{
+			auto selections = state.view_objects.where([class_id](auto& kp) {return kp.second.class_id == class_id; });
+			for (auto selection : selections)
+			{
+				database::jslice slice = program_chart.get_object(selection.second.object_id);
+				updator(selection.second, slice);
+			}
+		}
 	}
 }
 

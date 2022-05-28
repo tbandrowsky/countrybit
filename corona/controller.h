@@ -129,6 +129,9 @@ namespace corona
 
 			virtual ~corona_controller();
 
+			virtual void for_each(database::actor_state& state, std::function<bool(const database::actor_view_collection::iterator_item_type& _item)> selector, std::function<bool(database::actor_view_object& avo, database::jslice& slice)> updator);
+			virtual void for_each(database::actor_state& state, database::relative_ptr_type class_id, std::function<bool(const database::actor_view_object& avo, database::jslice& slice)>  updator);
+
 			virtual void updateState(corona::database::actor_state& state, const rectDto& newSize) = 0;
 			virtual void loadController() = 0;
 			virtual void drawFrame() = 0;
