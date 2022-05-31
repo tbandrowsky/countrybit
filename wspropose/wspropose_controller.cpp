@@ -296,9 +296,56 @@ namespace proposal
 		auto d2dcolumn = pg.column(mainr, { 0.0_px,0.0_px,75.0_pct,100.0_pct });
 		auto d2dwin = pg.canvas2d(d2dcolumn, { 0.0_px,0.0_px,100.0_pct,100.0_pct });
 
-		auto titles = state.view_objects.where([this](const auto& vo ) { return vo.second.class_id == program_class_id; });
-		auto carriers = state.view_objects.where([this](const auto& vo) { return vo.second.class_id == carrier_class_id; });
-		auto coverages = state.view_objects.where([this](const auto& vo) { return vo.second.class_id == coverage_class_id; });
+		corona::database::rectangle title_box, *ptitle_box = &title_box;
+
+		auto left_margin = 20.0_px;
+		auto chart_top = 10.0_px;
+
+		title_box.w = 500.0;
+		title_box.h = 100.0;
+		title_box.x = left_margin.amount;
+		title_box.y = chart_top.amount;
+
+		//const database::actor_view_object& avo, database::jslice& slice
+		for_each(state, program_class_id, [ptitle_box](const corona::database::actor_view_object& avo, corona::database::jslice& slice) {
+			auto rbx = slice.get_rectangle("rectangle");
+			rbx = *ptitle_box;
+			return true;
+			});
+
+		corona::database::rectangle legend_box, *plegend_box = &legend_box;
+
+		legend_box.w = 300;
+		legend_box.h = 20;
+		legend_box.x = newSize.width - 300;
+		legend_box.y = chart_top.amount;
+
+		for_each(state, carrier_class_id, [plegend_box](const corona::database::actor_view_object& avo, corona::database::jslice& slice) {
+			auto rbx = slice.get_rectangle("rectangle");
+			rbx = *plegend_box;
+			plegend_box->y += 20;
+			return true;
+			});
+
+		int coverage_count = state.view_objects.count_if([this](auto& avokp) { return avokp.second.class_id == this->coverage_class_id; });
+		if (coverage_count < 3)
+			coverage_count = 3;
+		coverage_count += 2;
+		int coverage_width = newSize.width / coverage_count;
+
+		corona::database::rectangle coverage_box, *pcoverage_box = &coverage_box;
+
+		coverage_box.w = coverage_width;
+		coverage_box.h = 30;
+		coverage_box.x = coverage_width;
+		coverage_box.y = newSize.height - 30;
+
+		for_each(state, coverage_class_id, [pcoverage_box, coverage_width](const corona::database::actor_view_object& avo, corona::database::jslice& slice) {
+			auto rbx = slice.get_rectangle("rectangle");
+			rbx = *pcoverage_box;
+			pcoverage_box->x += coverage_width;
+			return true;
+			});
 
 		pg.actor_update_fields(controlcolumn, &state, &schema, &program_chart);
 		pg.actor_create_buttons(controlcolumn, &state, &schema, &program_chart);
