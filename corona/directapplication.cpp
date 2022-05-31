@@ -1084,6 +1084,16 @@ namespace corona
 			currentController = NULL;
 			controllerLoaded = true;
 			ZeroMemory(&ofn, sizeof(ofn));
+
+			controlFont = CreateFont(12, 0, 0, 0, FW_BOLD, FALSE, TRUE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS, 
+							CLEARTYPE_QUALITY, VARIABLE_PITCH, TEXT("Arial"));
+
+			labelFont = CreateFont(12, 0, 0, 0, FW_DONTCARE, FALSE, TRUE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS,
+				CLEARTYPE_QUALITY, VARIABLE_PITCH, TEXT("Arial"));
+
+			titleFont = CreateFont(14, 0, 0, 0, FW_DONTCARE, FALSE, TRUE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS,
+				CLEARTYPE_QUALITY, VARIABLE_PITCH, TEXT("Arial"));
+
 		}
 
 		directApplication::~directApplication()
@@ -1619,10 +1629,14 @@ namespace corona
 			int         nWidth,
 			int         nHeight,
 			int			windowId,
-			LPVOID		lpParam
+			LPVOID		lpParam,
+			HFONT		font
 		)
 		{
 			HWND hwnd = CreateWindow(lpClassName, lpWindowName, dwStyle, x, y, nWidth, nHeight, directApplication::hwndRoot, (HMENU)windowId, hinstance, lpParam);
+			if (font) {
+				SendMessage(hwnd, WM_SETFONT, (WPARAM)font, TRUE);
+			}
 			childWindows.push_back(hwnd);
 		}
 
@@ -1639,10 +1653,10 @@ namespace corona
 				{
 				case database::layout_types::canvas2d:
 					canvasWindowId = pi.id;
-					createChildWindow("CoronaDirect2d", "", WS_CHILD | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, canvasWindowId, NULL);
+					createChildWindow("CoronaDirect2d", "", WS_CHILD | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, canvasWindowId, NULL, NULL);
 					break;
 				case database::layout_types::label:
-					createChildWindow(WC_STATIC, pi.field->name.c_str(), WS_CHILD | WS_BORDER | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL);
+					createChildWindow(WC_STATIC, pi.field->name.c_str(), WS_CHILD | WS_BORDER | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, labelFont);
 					break;
 				case database::layout_types::field:
 					{
@@ -1655,58 +1669,58 @@ namespace corona
 							{
 								auto bx = slice.get_int8(idx);
 								x = bx;
-								createChildWindow(WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL);
+								createChildWindow(WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont);
 							}
 							break;
 						case database::type_int16:
 							{
 								auto bx = slice.get_int16(idx);
 								x = bx;
-								createChildWindow(WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL);
+								createChildWindow(WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont);
 							}
 							break;
 						case database::type_int32:
 							{
 								auto bx = slice.get_int32(idx);
 								x = bx;
-								createChildWindow(WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL);
+								createChildWindow(WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont);
 							}
 							break;
 						case database::type_int64:
 							{
 								auto bx = slice.get_int64(idx);
 								x = bx;
-								createChildWindow(WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL);
+								createChildWindow(WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont);
 							}
 							break;
 						case database::type_float32:
 							{
 								auto bx = slice.get_float(idx);
 								x = bx;
-								createChildWindow(WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL);
+								createChildWindow(WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont);
 							}
 							break;
 						case database::type_float64:
 							{
 								auto bx = slice.get_double(idx);
 								x = bx;
-								createChildWindow(WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL);
+								createChildWindow(WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont);
 							}
 							break;
 						case database::type_string:
 							{
 								auto bx = slice.get_string(idx);
-								createChildWindow(WC_EDIT, bx.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL);
+								createChildWindow(WC_EDIT, bx.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont);
 							}
 							break;
 						default:
-							createChildWindow(WC_STATIC, "Type not supported", WS_CHILD | WS_BORDER | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL);
+							createChildWindow(WC_STATIC, "Type not supported", WS_CHILD | WS_BORDER | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont);
 							break;
 						}
 					}
 					break;
 				case database::layout_types::create:
-					createChildWindow(WC_BUTTON, pi.field->name.c_str(), BS_PUSHBUTTON | WS_CHILD | WS_BORDER | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL);
+					createChildWindow(WC_BUTTON, pi.caption, BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont);
 					break;
 				case database::layout_types::select:
 					break;

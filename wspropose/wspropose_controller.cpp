@@ -364,7 +364,20 @@ namespace proposal
 
 	void wsproposal_controller::drawFrame()
 	{
-		;
+		corona::win32::dtoFactory factory;
+
+		factory.colorMake(1, 1, 1, 1);
+		host->getDrawable(0)->clear(&factory.color);
+
+		for (auto pgi : pg)
+		{
+			if (pgi.item.layout == layout_types::select)
+			{
+				corona::win32::pathImmediateDto pid;
+				factory.rectangleMake(&pid, pgi.item.bounds.x, pgi.item.bounds.y, pgi.item.bounds.w, pgi.item.bounds.h, "item", "whiteBrush", "blackBrush", 1);
+				host->getDrawable(0)->drawPath(&pid);
+			}
+		}
 	}
 
 }

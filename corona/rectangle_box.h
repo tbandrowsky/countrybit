@@ -17,6 +17,13 @@ namespace corona
 			{
 				return point{ std::midpoint(i.x, i.x + i.w), std::midpoint(i.y, i.y + i.h)};
 			}
+			static bool contains(rectangle r, double x, double y)
+			{
+				return (r.x <= x) &&
+					((r.x + r.w) > x) &&
+					(r.y <= y) &&
+					((r.y + r.h) > y);
+			}
 		};
 
 		class rectangle_box : protected boxed<rectangle>

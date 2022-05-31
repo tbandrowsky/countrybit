@@ -16,6 +16,17 @@ namespace corona
 			return measure{ pct, measure_units::percent };
 		}
 
+		page::page()
+		{
+			data.init(1 << 20);
+		}
+
+		void page::clear()
+		{
+			base_type::clear();
+			data.init(1 << 20);
+		}
+
 		page_item* page::row(page_item* _parent, measure_box _box)
 		{
 			page_item* v = append();
@@ -134,7 +145,7 @@ namespace corona
 				}
 			}
 
-			v->box = { 0.0_pct, 0.0_pct, 200.0_px, height };
+			v->box = { 10.0_px, 10.0_px, 200.0_px, height };
 
 			return v;
 		}
@@ -160,11 +171,14 @@ namespace corona
 				button->layout = layout_types::create;
 				button->field = nullptr;
 				button->object_id = null_row;
-				button->box = { 0.0_pct, 0.0_pct, 200.0_px, 20.0_px };
+				button->box = { 0.0_px, 0.0_px, 200.0_px, 20.0_px };
 				height.amount += 20.0;
+				object_description desc;
+				desc = "Add " + _schema->get_class(aco.second.class_id).pitem()->name;
+				button->caption = data.copy<char>(desc.c_str(), 0);
 			}
 
-			v->box = { 0.0_pct, 0.0_pct, 200.0_px, height };
+			v->box = { 10.0_px, 10.0_px, 200.0_px, height };
 			return v;
 		}
 
@@ -190,6 +204,7 @@ namespace corona
 				v->box.width.amount = rf->w;
 				v->box.height.amount = rf->h;
 				v->select_request = _state->create_select_request(v->object_id, false);
+				v->caption = slice.get_string("comment").c_str();
 				return v;
 			}
 			return _parent;

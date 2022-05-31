@@ -217,7 +217,7 @@ namespace corona
 				int length = 0;
 				T defaulto = {};
 
-				while (base[length] != defaulto)
+				while (base[start + length] != defaulto)
 				{
 					length++;
 				}
@@ -227,8 +227,6 @@ namespace corona
 				T* item = pack_start<T>(length, placement);
 				if (!item) return placement;
 
-				T defaulto = {};
-
 				while (length) 
 				{
 					*item = base[start];
@@ -236,6 +234,8 @@ namespace corona
 					start++;
 					item++;
 				}
+
+				*item = defaulto;
 
 				return placement;
 			}
@@ -410,9 +410,9 @@ namespace corona
 
 			template <typename T>
 				requires (std::is_standard_layout<T>::value)
-			T* copy(const T* base, int start, bool terminate = true)
+			T* copy(const T* base, int start)
 			{
-				return get_box()->copy(base, start, terminate);
+				return get_box()->copy(base, start);
 			}
 
 			template <typename T>

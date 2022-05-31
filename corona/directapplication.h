@@ -169,6 +169,10 @@ namespace corona
 			std::map<int, database::page_item>	windowControlMap;
 			std::vector<HWND>			childWindows;
 
+			HFONT	controlFont,
+					labelFont,
+					titleFont;
+
 		public:
 
 			directApplication(direct2dFactory* _factory);
@@ -187,8 +191,10 @@ namespace corona
 				int         nWidth,
 				int         nHeight,
 				int			windowId,
-				LPVOID		lpParam
+				LPVOID		lpParam,
+				HFONT		font
 			);
+
 			void destroyChildren();
 
 			virtual bool runFull(HINSTANCE _hinstance, const char* _title, int _iconId, bool _fullScreen, controller* _firstController);

@@ -53,15 +53,25 @@ namespace corona
 			jfield*					field;
 			create_object_request	create_request;
 			select_object_request	select_request;
-			jslice					slice;
+			jslice					slice;			
+
+			const char*				caption;
+			const char*				border;
+			const char*				fill;
+			int						border_width;
 		};
 
 		class page : public iarray<page_item, 1024>
 		{
 			void arrange_impl(page_item *_item, double offx, double offy, double x, double y, double width, double height);
-			void visit_impl(page_item* _item, std::function<bool(page_item* _parent)> fn);
+			void visit_impl(page_item* _item, std::function<bool(page_item* _parent)> fn);		
+			dynamic_box data;
+			using base_type = iarray<page_item, 1024>;
 
 		public:
+
+			page();
+			void clear();
 
 			page_item* row(page_item* _parent, measure_box _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
 			page_item* column( page_item* _parent, measure_box _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });

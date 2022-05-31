@@ -202,6 +202,15 @@ namespace corona
 
 		void corona_controller::mouseClick(pointDto* _point)
 		{
+			auto select_item_iter = pg.where([this, _point](const auto& pi) { return corona::database::rectangle_math::contains(pi.item.bounds, _point->x, _point->y); });
+
+			if (select_item_iter != std::end(pg)) 
+			{
+				auto select_item = select_item_iter.get_object();
+				auto new_state = this->program_chart.select_object(select_item.item.select_request);
+				auto size = host->getWindowPos(0);
+				updateState(new_state, size);
+			}
 		}
 
 		void corona_controller::drawFrame()
@@ -243,11 +252,13 @@ namespace corona
 
 		void corona_controller::onCommand(int buttonId)
 		{
+			auto command_item = pg.where([this, buttonId](const auto& pi) { return pi.item.id == buttonId; })
+				.get_object();
 
-			switch (buttonId) {
-			}
-			host->redraw();
+			auto new_state = this->program_chart.create_object(command_item.item.create_request);		
+			auto size = host->getWindowPos(0);
 
+			updateState(new_state, size);
 		}
 
 		void corona_controller::onTextChanged(int textControlId)
