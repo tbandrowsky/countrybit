@@ -65,8 +65,8 @@ namespace corona
 
 			static grouped get_grouped(serialized_box_container* _b, relative_ptr_type _header_location)
 			{
-				auto si = group_by_collection::get_sorted_index(_b, _header_location);
-				return si;
+				grouped grp(_b, _header_location);
+				return grp;
 			}
 
 			static grouped create_grouped(serialized_box_container* _b, relative_ptr_type& _header_location)
@@ -84,7 +84,9 @@ namespace corona
 
 				grp.key = _key;
 
-				if (contains(_key))
+				serialized_box_container *box = group_by_collection::get_box();
+
+				if (group_by_collection::contains(_key))
 				{
 					inner_type& dp = group_by_collection::get(_key);
 					list_location = dp.second;
@@ -162,11 +164,12 @@ namespace corona
 		template <typename new_type, typename value_ref, typename iter_type> 
 		grouped<new_type,value_ref> create_grouped(serialized_box_container *_box, iter_type begin_iter, iter_type end_iter, std::function<new_type(value_ref&)> _transform )
 		{
-			auto new_group = grouped<new_type, value_ref>::create_grouped(_box);
+			relative_ptr_type header_location;
+			auto new_group = grouped<new_type, value_ref>::create_grouped(_box, header_location);
 			for (auto iter = begin_iter; iter != end_iter; iter++) {
 				auto obj = iter.get_object();
 				auto key = _transform(obj);
-				new_group.insert_or_assign(key);
+				new_group.insert_or_assign(key, obj);
 			}
 			return new_group;
 		}

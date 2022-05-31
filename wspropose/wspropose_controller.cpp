@@ -340,12 +340,17 @@ namespace proposal
 		coverage_box.x = coverage_width;
 		coverage_box.y = newSize.height - 30;
 
-		for_each(state, coverage_class_id, [pcoverage_box, coverage_width](const corona::database::actor_view_object& avo, corona::database::jslice& slice) {
-			auto rbx = slice.get_rectangle("rectangle");
-			rbx = *pcoverage_box;
-			pcoverage_box->x += coverage_width;
-			return true;
-			});
+		dynamic_box group_by_box;
+		group_by_box.init(1 << 21);
+
+		auto policy_group = state.view_objects
+			.where([this](const corona::database::actor_view_collection::data_pair& dp) { return dp.second.class_id == this->coverage_class_id || dp.second.class_id == this->policy_class_id; })
+			.group_by<corona::database::object_name>(&group_by_box, [this](const corona::database::actor_view_collection::data_pair& dp) {
+				corona::database::object_name coverage_name;
+				auto slice = this->program_chart.get_object(dp.first);
+				coverage_name = slice.get_string("coverage_name").value();
+				return coverage_name;
+				});
 
 		pg.actor_update_fields(controlcolumn, &state, &schema, &program_chart);
 		pg.actor_create_buttons(controlcolumn, &state, &schema, &program_chart);

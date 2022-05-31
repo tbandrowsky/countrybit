@@ -206,6 +206,10 @@ namespace corona
 				return *this;
 			}
 
+			serialized_box_container* get_box() {
+				return box;
+			}
+
 			static relative_ptr_type reserve_sorted_index(serialized_box_container *_b)
 			{
 				index_header_type hdr, *phdr;
