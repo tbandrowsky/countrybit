@@ -90,6 +90,11 @@ namespace corona
 			virtual void drawText(textInstance2dDto* _textInstanceDto);
 			virtual void drawBitmap(bitmapInstanceDto* _bitmapInstanceDto);
 
+			virtual void drawLine(database::point* start, database::point* stop, const char* _fillBrush, double thickness);
+			virtual void drawRectangle(database::rectangle* _rectDto, const char* _borderBrush, double _borderWidth, const char* _fillBrush);
+			virtual void drawText(const char* _text, database::rectangle* _rectDto, const char* _textStyle, const char* _fillBrush);
+			virtual database::rectangle getCanvasSize();
+
 			virtual bool createRenderTarget() = 0;
 			virtual void destroyRenderTarget();
 
@@ -281,6 +286,8 @@ namespace corona
 			virtual void setColorCapture(int _iconResourceId);
 
 		};
+
+		void EnableGuiStdOuts();
 
 	}
 }

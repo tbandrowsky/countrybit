@@ -14,7 +14,11 @@ namespace corona
 			field = 6,
 			label = 7,
 			create = 8,
-			select = 9
+			select = 9,
+			h1 = 10,
+			h2 = 11,
+			h3 = 12,
+			space = 13
 		};
 
 		enum class measure_units
@@ -56,9 +60,37 @@ namespace corona
 			jslice					slice;			
 
 			const char*				caption;
-			const char*				border;
-			const char*				fill;
-			int						border_width;
+			int						canvas_id;
+
+			page_item() :
+				id(-1),
+				parent_id(-1),
+				layout(layout_types::space),
+				object_id(-1),
+				field(nullptr),
+				caption(nullptr),
+				canvas_id(-1)
+			{
+				;
+			}
+
+			void set_parent(page_item* _parent)
+			{
+				if (_parent) 
+				{
+					parent_id = _parent->id;
+					canvas_id = _parent->canvas_id;
+				}
+				else {
+					parent_id = -1;
+					canvas_id = ((layout == layout_types::canvas2d) ? id : -1);
+				}
+			}
+
+			bool is_drawable()
+			{
+				return canvas_id != -1 && canvas_id != id;
+			}
 		};
 
 		class page : public iarray<page_item, 1024>
@@ -77,6 +109,10 @@ namespace corona
 			page_item* column( page_item* _parent, measure_box _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
 			page_item* absolute(page_item* _parent, measure_box _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
 			page_item* canvas2d(page_item* _parent, measure_box _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
+			page_item* h1(page_item* _parent, const char* _text, measure_box _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
+			page_item* h2(page_item* _parent, const char* _text, measure_box _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
+			page_item* h3(page_item* _parent, const char* _text, measure_box _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
+			page_item* space(page_item* _parent, measure_box _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
 
 			page_item* field(page_item* _parent, int object_id, int field_id, jslice slice);
 

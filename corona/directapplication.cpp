@@ -264,14 +264,28 @@ namespace corona
 			float size;
 			bool bold;
 			bool italic;
+			double line_spacing;
+			visual_alignment horizontal_align;
+			visual_alignment vertical_align;
+			bool wrap_text;
 
 		public:
 
-			textStyle(std::string& _fontName, float _size, bool _bold = false, bool _italic = false) :
+			textStyle(std::string& _fontName, 
+				float _size, 
+				bool _bold, 
+				bool _italic,
+				double _line_spacing,
+				visual_alignment _horizontal_align,
+				visual_alignment _vertical_align,
+				bool _wrap_text) :
 				fontName(_fontName),
 				size(_size),
 				bold(_bold),
 				italic(_italic),
+				line_spacing(_line_spacing),
+				horizontal_align(_horizontal_align),
+				vertical_align(_vertical_align),
 				lpWriteTextFormat(NULL)
 			{
 				;
@@ -281,6 +295,15 @@ namespace corona
 			{
 				release();
 			}
+
+			std::string get_fontName() { return fontName;  };
+			float get_size() { return size; }
+			bool get_bold() { return bold; }
+			bool get_italic()  { return italic; }
+			double get_line_spacing() { return line_spacing; }
+			visual_alignment get_horizontal_align() { return horizontal_align; }
+			visual_alignment get_vertical_align() { return vertical_align; }
+			bool get_wrap_text() { return wrap_text;  }
 
 			virtual bool create(direct2dContext* target)
 			{
@@ -296,6 +319,67 @@ namespace corona
 					size * 96.0 / 72.0,
 					L"en-US",
 					&lpWriteTextFormat);
+
+				if (SUCCEEDED(hr) && lpWriteTextFormat != nullptr)
+				{
+					if (line_spacing > 0.0) {
+						lpWriteTextFormat->SetLineSpacing(DWRITE_LINE_SPACING_METHOD_UNIFORM, line_spacing, line_spacing * .8);
+					}
+
+					switch (horizontal_align) 
+					{
+					case visual_alignment::align_near:
+						lpWriteTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
+						break;
+					case visual_alignment::align_center:
+						lpWriteTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
+						break;
+					case visual_alignment::align_far:
+						lpWriteTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_TRAILING);
+						break;
+					case visual_alignment::align_justify:
+						lpWriteTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_JUSTIFIED);
+						break;
+					}
+
+					switch (horizontal_align)
+					{
+					case visual_alignment::align_near:
+						lpWriteTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
+						break;
+					case visual_alignment::align_center:
+						lpWriteTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
+						break;
+					case visual_alignment::align_far:
+						lpWriteTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_TRAILING);
+						break;
+					case visual_alignment::align_justify:
+						lpWriteTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_JUSTIFIED);
+						break;
+					}
+
+					switch (vertical_align)
+					{
+					case visual_alignment::align_near:
+						lpWriteTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_NEAR);
+						break;
+					case visual_alignment::align_center:
+						lpWriteTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+						break;
+					case visual_alignment::align_far:
+						lpWriteTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_FAR);
+						break;
+					case visual_alignment::align_justify:
+						lpWriteTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+						break;
+					}
+
+					if (wrap_text) 
+					{
+						lpWriteTextFormat->SetWordWrapping(DWRITE_WORD_WRAPPING_EMERGENCY_BREAK);
+					}
+				}
+
 				return SUCCEEDED(hr);
 			}
 
@@ -1083,17 +1167,11 @@ namespace corona
 			previousController = NULL;
 			currentController = NULL;
 			controllerLoaded = true;
+			controlFont = nullptr;
+			labelFont = nullptr,
+			titleFont = nullptr;
+
 			ZeroMemory(&ofn, sizeof(ofn));
-
-			controlFont = CreateFont(12, 0, 0, 0, FW_BOLD, FALSE, TRUE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS, 
-							CLEARTYPE_QUALITY, VARIABLE_PITCH, TEXT("Arial"));
-
-			labelFont = CreateFont(12, 0, 0, 0, FW_DONTCARE, FALSE, TRUE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS,
-				CLEARTYPE_QUALITY, VARIABLE_PITCH, TEXT("Arial"));
-
-			titleFont = CreateFont(14, 0, 0, 0, FW_DONTCARE, FALSE, TRUE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS,
-				CLEARTYPE_QUALITY, VARIABLE_PITCH, TEXT("Arial"));
-
 		}
 
 		directApplication::~directApplication()
@@ -1364,7 +1442,16 @@ namespace corona
 
 		void direct2dContext::addTextStyle(textStyleDto* _textStyleDto)
 		{
-			textStyle* newStyle = new textStyle(_textStyleDto->fontName, _textStyleDto->fontSize, _textStyleDto->bold, _textStyleDto->italics);
+			textStyle* newStyle = new textStyle(
+				_textStyleDto->fontName, 
+				_textStyleDto->fontSize, 
+				_textStyleDto->bold, 
+				_textStyleDto->italics, 
+				_textStyleDto->line_spacing,
+				_textStyleDto->horizontal_align,
+				_textStyleDto->vertical_align,
+				_textStyleDto->wrap_text
+				);
 			textStyles[_textStyleDto->name] = newStyle;
 			newStyle->create(this);
 		}
@@ -1440,6 +1527,91 @@ namespace corona
 			delete p;
 		}
 
+		void direct2dContext::drawLine(database::point* start, database::point* stop, const char* _fillBrush, double thickness)
+		{
+			auto fill = brushes[_fillBrush];
+
+			D2D1_POINT_2F dstart, dstop;
+
+			dstart.x = start->x;
+			dstart.y = start->y;
+			dstop.x = stop->x;
+			dstop.y = stop->y;
+
+			if (fill) {
+				renderTarget->DrawLine(dstart, dstop, fill->getBrush(), thickness, nullptr );
+			}
+		}
+
+		void direct2dContext::drawRectangle(database::rectangle* _rectDto, const char* _borderBrush, double _borderWidth, const char* _fillBrush)
+		{
+			auto fill = brushes[_fillBrush];
+			auto border = brushes[_borderBrush];
+
+			D2D1_RECT_F r;
+			r.left = _rectDto->x;
+			r.top = _rectDto->y;
+			r.right = _rectDto->x + _rectDto->w;
+			r.bottom = _rectDto->y + _rectDto->h;
+
+			if (fill) 
+			{
+				renderTarget->FillRectangle(r, fill->getBrush());
+			}
+
+			if (border)
+			{
+				renderTarget->DrawRectangle(&r, border->getBrush(), _borderWidth);
+			}
+		}
+
+		void direct2dContext::drawText(const char* _text, database::rectangle* _rectDto, const char* _textStyle, const char* _fillBrush)
+		{
+			auto style = textStyles[_textStyle];
+			auto fill = brushes[_fillBrush];
+
+			if (!style) {
+				std::cout << "missing " << _textStyle << std::endl;
+				return;
+			}
+
+			if (!fill) {
+				std::cout << "missing " << _fillBrush << std::endl;
+				return;
+			}
+
+			D2D1_RECT_F r;
+			r.left = _rectDto->x;
+			r.top = _rectDto->y;
+			r.right = _rectDto->x + _rectDto->w;
+			r.bottom = _rectDto->y + _rectDto->h;
+
+			auto brush = fill->getBrush();
+			int len = (strlen(_text) + 1) * 2;
+			wchar_t* buff = new wchar_t[len];
+			int ret = ::MultiByteToWideChar(CP_ACP, NULL, _text, -1, buff, len - 1);
+			renderTarget->DrawText(buff, ret, style->getFormat(), &r, brush);
+			delete[] buff;
+		}
+
+		database::rectangle direct2dContext::getCanvasSize()
+		{
+
+			D2D1_SIZE_F size;
+
+			if (renderTarget) 
+			{
+				size = renderTarget->GetSize();
+			}
+			else 
+			{
+				size.width = 0;
+				size.height = 0;
+			}
+
+			return database::rectangle{ 0, 0, size.width, size.height };
+		}
+
 		void direct2dContext::drawText(textInstance2dDto* _textInstanceDto)
 		{
 			auto style = textStyles[_textInstanceDto->styleName];
@@ -1460,10 +1632,10 @@ namespace corona
 
 			D2D1_RECT_F rect;
 
-			rect.left = _textInstanceDto->layout.left;
-			rect.top = _textInstanceDto->layout.top;
-			rect.right = _textInstanceDto->layout.left + _textInstanceDto->layout.width;
-			rect.bottom = _textInstanceDto->layout.top + _textInstanceDto->layout.height;
+			rect.left = _textInstanceDto->layout.x;
+			rect.top = _textInstanceDto->layout.y;
+			rect.right = _textInstanceDto->layout.x + _textInstanceDto->layout.w;
+			rect.bottom = _textInstanceDto->layout.y + _textInstanceDto->layout.h;
 
 			auto brush = fill->getBrush();
 			int l = (_textInstanceDto->text.length() + 1) * 2;
@@ -1642,6 +1814,29 @@ namespace corona
 
 		int directApplication::renderPage(database::page& _page, database::jschema* _schema, database::actor_state& _state, database::jcollection& _collection)
 		{
+			HFONT oldControlFont = controlFont;
+			HFONT oldLabelFont = labelFont;
+			HFONT oldTitleFont = titleFont;
+
+			textStyle* controlStyle = textStyles[viewStyle::DataText];
+			textStyle* labelStyle = textStyles[viewStyle::LabelText];
+			textStyle* titleStyle = textStyles[viewStyle::H2Text];
+
+			if (controlStyle) 
+			{
+				controlFont = CreateFont(controlStyle->get_size(), 0, 0, 0, FW_DONTCARE, controlStyle->get_italic(), FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH, controlStyle->get_fontName().c_str());
+			}
+
+			if (labelStyle) 
+			{
+				labelFont = CreateFont(labelStyle->get_size(), 0, 0, 0, FW_DONTCARE, controlStyle->get_italic(), FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH, labelStyle->get_fontName().c_str());
+			}
+
+			if (titleStyle) 
+			{
+				titleFont = CreateFont(titleStyle->get_size(), 0, 0, 0, FW_DONTCARE, controlStyle->get_italic(), TRUE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH, titleStyle->get_fontName().c_str());
+			}
+
 			int canvasWindowId = -1;
 			destroyChildren();
 			database::jslice slice;
@@ -1656,7 +1851,7 @@ namespace corona
 					createChildWindow("CoronaDirect2d", "", WS_CHILD | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, canvasWindowId, NULL, NULL);
 					break;
 				case database::layout_types::label:
-					createChildWindow(WC_STATIC, pi.field->name.c_str(), WS_CHILD | WS_BORDER | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, labelFont);
+					createChildWindow(WC_STATIC, pi.field->name.c_str(), WS_CHILD | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, labelFont);
 					break;
 				case database::layout_types::field:
 					{
@@ -1726,6 +1921,11 @@ namespace corona
 					break;
 				}
 			}
+
+			if (oldControlFont) DeleteObject(oldControlFont);
+			if (oldLabelFont) DeleteObject(oldLabelFont);
+			if (oldTitleFont) DeleteObject(oldTitleFont);
+
 			return canvasWindowId;
 		}
 
@@ -2009,34 +2209,29 @@ namespace corona
 					return 0;
 				}
 				break;
-				/*
-					case WM_CTLCOLORLISTBOX:
-					case WM_CTLCOLOREDIT:
-						{
-							HDC hdcStatic = (HDC) wParam;
-							SetTextColor(hdcStatic, RGB(255,255,255));
-							SetBkColor(hdcStatic, RGB(0,0,0));
-							if (hbrBkgnd == NULL)
-							{
-								hbrBkgnd = CreateSolidBrush(RGB(0,0,0));
-							}
-							return (INT_PTR)hbrBkgnd;
-						}
-						break;
-					case WM_CTLCOLORBTN:
-					case WM_CTLCOLORSTATIC:
-						{
-							HDC hdcStatic = (HDC) wParam;
-							SetTextColor(hdcStatic, RGB(255,255,255));
-							SetBkColor(hdcStatic, RGB(0,0,0));
-
-							if (hbrBkgnd == NULL)
-							{
-								hbrBkgnd = CreateSolidBrush(RGB(0,0,0));
-							}
-							return (INT_PTR)hbrBkgnd;
-						}
-						*/
+			case WM_CTLCOLORLISTBOX:
+			case WM_CTLCOLOREDIT:
+				{
+					HDC hdcStatic = (HDC) wParam;
+					SetBkColor(hdcStatic, RGB(255,255,255));
+					if (hbrBkgnd == NULL)
+					{
+						hbrBkgnd = CreateSolidBrush(RGB(255, 255, 255));
+					}
+					return (INT_PTR)hbrBkgnd;
+				}
+				break;
+			case WM_CTLCOLORBTN:
+			case WM_CTLCOLORSTATIC:
+				{
+					HDC hdcStatic = (HDC) wParam;
+					SetBkColor(hdcStatic, RGB(255, 255, 255));
+					if (hbrBkgnd == NULL)
+					{
+						hbrBkgnd = CreateSolidBrush(RGB(255, 255, 255));
+					}
+					return (INT_PTR)hbrBkgnd;
+				}
 			case WM_ERASEBKGND:
 			{
 				RECT rect, rect2;
@@ -2108,10 +2303,10 @@ namespace corona
 			case WM_SIZE:
 				if (currentController) {
 					rectDto rect;
-					rect.left = 0;
-					rect.top = 0;
-					rect.width = LOWORD(lParam);
-					rect.height = HIWORD(lParam);
+					rect.x = 0;
+					rect.y = 0;
+					rect.w = LOWORD(lParam);
+					rect.h = HIWORD(lParam);
 					currentController->onResize(rect);
 				}
 				break;
@@ -2869,10 +3064,10 @@ namespace corona
 				::ScreenToClient(hwndRoot, (LPPOINT)&r.right);
 			}
 
-			rd.left = r.left;
-			rd.top = r.top;
-			rd.width = r.right - r.left;
-			rd.height = r.bottom - r.top;
+			rd.x = r.left;
+			rd.y = r.top;
+			rd.w = r.right - r.left;
+			rd.h = r.bottom - r.top;
 
 			return rd;
 		}
@@ -2881,7 +3076,7 @@ namespace corona
 		{
 			HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
 
-			::MoveWindow(control, rect.left, rect.top, rect.width, rect.height, true);
+			::MoveWindow(control, rect.x, rect.y, rect.w, rect.h, true);
 		}
 
 		void directApplication::setMinimumWindowSize(sizeIntDto size)
@@ -3046,11 +3241,132 @@ namespace corona
 			SetCursor(LoadCursor(hinstance, MAKEINTRESOURCE(_iconResourceId)));
 		}
 
+		// This was taken from a stack overflow article
+
+		void BindCrtHandlesToStdHandles(bool bindStdIn, bool bindStdOut, bool bindStdErr)
+		{
+			// Re-initialize the C runtime "FILE" handles with clean handles bound to "nul". We do this because it has been
+			// observed that the file number of our standard handle file objects can be assigned internally to a value of -2
+			// when not bound to a valid target, which represents some kind of unknown internal invalid state. In this state our
+			// call to "_dup2" fails, as it specifically tests to ensure that the target file number isn't equal to this value
+			// before allowing the operation to continue. We can resolve this issue by first "re-opening" the target files to
+			// use the "nul" device, which will place them into a valid state, after which we can redirect them to our target
+			// using the "_dup2" function.
+			if (bindStdIn)
+			{
+				FILE* dummyFile;
+				freopen_s(&dummyFile, "nul", "r", stdin);
+			}
+			if (bindStdOut)
+			{
+				FILE* dummyFile;
+				freopen_s(&dummyFile, "nul", "w", stdout);
+			}
+			if (bindStdErr)
+			{
+				FILE* dummyFile;
+				freopen_s(&dummyFile, "nul", "w", stderr);
+			}
+
+			// Redirect unbuffered stdin from the current standard input handle
+			if (bindStdIn)
+			{
+				HANDLE stdHandle = GetStdHandle(STD_INPUT_HANDLE);
+				if (stdHandle != INVALID_HANDLE_VALUE)
+				{
+					int fileDescriptor = _open_osfhandle((intptr_t)stdHandle, _O_TEXT);
+					if (fileDescriptor != -1)
+					{
+						FILE* file = _fdopen(fileDescriptor, "r");
+						if (file != NULL)
+						{
+							int dup2Result = _dup2(_fileno(file), _fileno(stdin));
+							if (dup2Result == 0)
+							{
+								setvbuf(stdin, NULL, _IONBF, 0);
+							}
+						}
+					}
+				}
+			}
+
+			// Redirect unbuffered stdout to the current standard output handle
+			if (bindStdOut)
+			{
+				HANDLE stdHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+				if (stdHandle != INVALID_HANDLE_VALUE)
+				{
+					int fileDescriptor = _open_osfhandle((intptr_t)stdHandle, _O_TEXT);
+					if (fileDescriptor != -1)
+					{
+						FILE* file = _fdopen(fileDescriptor, "w");
+						if (file != NULL)
+						{
+							int dup2Result = _dup2(_fileno(file), _fileno(stdout));
+							if (dup2Result == 0)
+							{
+								setvbuf(stdout, NULL, _IONBF, 0);
+							}
+						}
+					}
+				}
+			}
+
+			// Redirect unbuffered stderr to the current standard error handle
+			if (bindStdErr)
+			{
+				HANDLE stdHandle = GetStdHandle(STD_ERROR_HANDLE);
+				if (stdHandle != INVALID_HANDLE_VALUE)
+				{
+					int fileDescriptor = _open_osfhandle((intptr_t)stdHandle, _O_TEXT);
+					if (fileDescriptor != -1)
+					{
+						FILE* file = _fdopen(fileDescriptor, "w");
+						if (file != NULL)
+						{
+							int dup2Result = _dup2(_fileno(file), _fileno(stderr));
+							if (dup2Result == 0)
+							{
+								setvbuf(stderr, NULL, _IONBF, 0);
+							}
+						}
+					}
+				}
+			}
+
+			// Clear the error state for each of the C++ standard stream objects. We need to do this, as attempts to access the
+			// standard streams before they refer to a valid target will cause the iostream objects to enter an error state. In
+			// versions of Visual Studio after 2005, this seems to always occur during startup regardless of whether anything
+			// has been read from or written to the targets or not.
+			if (bindStdIn)
+			{
+				std::wcin.clear();
+				std::cin.clear();
+			}
+			if (bindStdOut)
+			{
+				std::wcout.clear();
+				std::cout.clear();
+			}
+			if (bindStdErr)
+			{
+				std::wcerr.clear();
+				std::cerr.clear();
+			}
+		}
+
+		void EnableGuiStdOuts()
+		{
+			AllocConsole();
+			BindCrtHandlesToStdHandles(true, true, true);
+		}
+
 	}
 }
 
 #pragma comment(linker,"\"/manifestdependency:type='win32' \
 name='Microsoft.Windows.Common-Controls' version='6.0.0.0' \
 processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
+
 
 #endif

@@ -29,6 +29,11 @@ namespace corona
 			virtual void drawText(textInstance2dDto* _textInstanceDto) = 0;
 			virtual void drawBitmap(bitmapInstanceDto* _bitmapInstanceDto) = 0;
 
+			virtual void drawLine(database::point* start, database::point* stop, const char* _fillBrush, double thickness) = 0;
+			virtual void drawRectangle(database::rectangle* _rectDto, const char* _borderBrush, double _borderWidth, const char* _fillBrush) = 0;
+			virtual void drawText(const char* _text, database::rectangle* _rectDto, const char* _textStyle, const char* _fillBrush) = 0;
+			virtual database::rectangle getCanvasSize() = 0;
+
 			virtual void popCamera() = 0;
 			virtual void pushCamera(pointDto* _position, float _rotation, float _scale = 1.0) = 0;
 

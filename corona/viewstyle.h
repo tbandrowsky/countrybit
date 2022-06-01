@@ -15,33 +15,32 @@ namespace corona
 		public:
 			virtual void setCommonStyles(controller* _controller);
 
-			inline const char* getH1TextStyleName() { return "h1text"; }
-			inline const char* getH2TextStyleName() { return "h2text"; }
-			inline const char* getH3TextStyleName() { return "h3text"; }
-			inline const char* getLabelTextStyleName() { return "plabel"; }
-			inline const char* getDataTextStyleName() { return "pdata"; }
+			inline static const  char* H1Text = "h1text";
+			inline static const  char* H2Text = "h2text";
+			inline static const  char* H3Text = "h3text";
+			inline static const  char* LabelText = "plabel";
+			inline static const  char* DataText = "pdata";
 
-			inline const char* getH1TextBrushName() { return "h1textbrush"; }
-			inline const char* getH2TextBrushName() { return "h2textbrush"; }
-			inline const char* getH3TextBrushName() { return "h3textbrush"; }
-			inline const char* getLabelTextBrushName() { return "plabelbrush"; }
-			inline const char* getDataTextBrushName() { return "pdatabrush"; }
+			inline static const  char* H1Fill = "h1textbrush";
+			inline static const  char* H2Fill = "h2textbrush";
+			inline static const  char* H3Fill = "h3textbrush";
+			inline static const  char* LabelFill = "plabelbrush";
+			inline static const  char* DataFill = "pdatabrush";
 
-			inline const char* getH1BackgroundBrushName() { return "h1backgroundbrush"; }
-			inline const char* getH2BackgroundBrushName() { return "h2backgroundbrush"; }
-			inline const char* getH3BackgroundBrushName() { return "h3backgroundbrush"; }
-			inline const char* getLabelBackgroundBrushName() { return "plabelbackgroundbrush"; }
-			inline const char* getDataBackgroundBrushName() { return "pdatabackgroundbrush"; }
+			inline static const  char* H1Background = "h1backgroundbrush";
+			inline static const  char* H2Background = "h2backgroundbrush";
+			inline static const  char* H3Background = "h3backgroundbrush";
+			inline static const  char* LabelBackground = "plabelbackgroundbrush";
+			inline static const  char* DataBackground = "pdatabackgroundbrush";
 
-			inline const char* getWhiteBrushName() { return "whiteBrush"; }
-			inline const char* getBlackBrushName() { return "blackBrush"; }
-			inline const char* getGreyBrushName() { return "greyBrush"; }
-			inline const char* getRedBrushName() { return "redBrush"; }
-			inline const char* getGreenBrushName() { return "greenBrush"; }
-			inline const char* getBlueBrushName() { return "blueBrush"; }
-			inline const char* getWhiteWashBrushName() { return "whiteWashBrush"; }
-			inline const char* getBlackWashBrushName() { return "blackWashBrush"; }
-
+			inline static const  char* WhiteFill = "whiteBrush";
+			inline static const  char* BlackFill = "blackBrush";
+			inline static const  char* GreyFill = "greyBrush";
+			inline static const  char* RedFill = "redBrush";
+			inline static const  char* GreenFill = "greenBrush";
+			inline static const  char* BlueFill = "blueBrush";
+			inline static const  char* WhiteWashFill = "whiteWashBrush";
+			inline static const  char* BlackWashFill = "blackWashBrush";
 		};
 
 	}

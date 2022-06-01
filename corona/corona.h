@@ -12,7 +12,8 @@
 #include "Shlobj.h"
 #include "Winhttp.h"
 #include "shellapi.h"
-
+#include <io.h>
+#include <fcntl.h>
 
 #include <stdlib.h>
 #include <malloc.h>

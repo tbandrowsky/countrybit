@@ -13,69 +13,69 @@ namespace corona
 
 		void viewStyle::setCommonStyles(controller* _controller)
 		{
-			dtoPad.textStyleMake(_controller->getDrawable(), getH1TextStyleName(), "Arial", 18, false, false)->
-				textStyleMake(_controller->getDrawable(), getH2TextStyleName(), "Arial", 14, false, false)->
-				textStyleMake(_controller->getDrawable(), getH3TextStyleName(), "Arial", 12, false, false)->
-				textStyleMake(_controller->getDrawable(), getLabelTextStyleName(), "Arial", 10, false, false)->
-				textStyleMake(_controller->getDrawable(), getDataTextStyleName(), "Arial", 10, false, false);
+			dtoPad.textStyleMake(_controller->getDrawable(), H1Text, "Arial", 20, false, false, 0.0, visual_alignment::align_near, visual_alignment::align_center, true)->
+				textStyleMake(_controller->getDrawable(), H2Text, "Arial", 18, false, false, 0.0, visual_alignment::align_near, visual_alignment::align_center, true)->
+				textStyleMake(_controller->getDrawable(), H3Text, "Arial", 14, false, false, 0.0, visual_alignment::align_near, visual_alignment::align_center, true)->
+				textStyleMake(_controller->getDrawable(), LabelText, "Arial", 12, false, false, 0.0, visual_alignment::align_near, visual_alignment::align_center, true)->
+				textStyleMake(_controller->getDrawable(), DataText, "Arial", 12, true, false, 0.0, visual_alignment::align_near, visual_alignment::align_center, true);
 
 			// some stock brushes to go with our style
 
 			dtoPad.colorMake(0.0, 0.0, 0.0, 1.0)
-				->solidBrushMake(_controller->getDrawable(), getH1TextBrushName(), true);
+				->solidBrushMake(_controller->getDrawable(), H1Fill, true);
 
 			dtoPad.colorMake(1.0, 1.0, 1.0, 1.0)
-				->solidBrushMake(_controller->getDrawable(), getH1BackgroundBrushName(), true);
+				->solidBrushMake(_controller->getDrawable(), H1Background, true);
 
 			dtoPad.colorMake(0.0, 0.0, 0.0, 1.0)
-				->solidBrushMake(_controller->getDrawable(), getH2TextBrushName(), true);
+				->solidBrushMake(_controller->getDrawable(), H2Fill, true);
 
 			dtoPad.colorMake(1.0, 1.0, 1.0, 1.0)
-				->solidBrushMake(_controller->getDrawable(), getH2BackgroundBrushName(), true);
+				->solidBrushMake(_controller->getDrawable(), H2Background, true);
 
 			dtoPad.colorMake(0.0, 0.0, 0.0, 1.0)
-				->solidBrushMake(_controller->getDrawable(), getH3TextBrushName(), true);
+				->solidBrushMake(_controller->getDrawable(), H3Fill, true);
 
 			dtoPad.colorMake(1.0, 1.0, 1.0, 1.0)
-				->solidBrushMake(_controller->getDrawable(), getH3BackgroundBrushName(), true);
+				->solidBrushMake(_controller->getDrawable(), H3Background, true);
 
 			dtoPad.colorMake(0.0, 0.0, 0.0, 1.0)
-				->solidBrushMake(_controller->getDrawable(), getLabelTextBrushName(), true);
+				->solidBrushMake(_controller->getDrawable(), LabelFill, true);
 
 			dtoPad.colorMake(1.0, 1.0, 1.0, 1.0)
-				->solidBrushMake(_controller->getDrawable(), getLabelBackgroundBrushName(), true);
+				->solidBrushMake(_controller->getDrawable(), LabelBackground, true);
 
 			dtoPad.colorMake(0.0, 0.0, 0.0, 1.0)
-				->solidBrushMake(_controller->getDrawable(), getDataTextBrushName(), true);
+				->solidBrushMake(_controller->getDrawable(), DataFill, true);
 
 			dtoPad.colorMake(1.0, 1.0, 1.0, 1.0)
-				->solidBrushMake(_controller->getDrawable(), getDataBackgroundBrushName(), true);
+				->solidBrushMake(_controller->getDrawable(), DataBackground, true);
 
 			// some basic colors
 
 			dtoPad.colorMake(1.0, 1.0, 1.0, .5)
-				->solidBrushMake(_controller->getDrawable(), getWhiteWashBrushName(), true);
+				->solidBrushMake(_controller->getDrawable(), WhiteWashFill, true);
 
 			dtoPad.colorMake(0.0, 0.0, 0.0, .5)
-				->solidBrushMake(_controller->getDrawable(), getBlackWashBrushName(), true);
+				->solidBrushMake(_controller->getDrawable(), BlackWashFill, true);
 
 			dtoPad.colorMake(1.0, 1.0, 1.0, 1.0)
-				->solidBrushMake(_controller->getDrawable(), getWhiteBrushName(), true);
+				->solidBrushMake(_controller->getDrawable(), WhiteFill, true);
 
 			dtoPad.colorMake(0.0, 0.0, 0.0, 1.0)
-				->solidBrushMake(_controller->getDrawable(), getBlackBrushName(), true);
+				->solidBrushMake(_controller->getDrawable(), BlackFill, true);
 
 			dtoPad.colorMake(0.5, 0.5, 0.5, 1.0)
-				->solidBrushMake(_controller->getDrawable(), getGreyBrushName(), true);
+				->solidBrushMake(_controller->getDrawable(), GreyFill, true);
 
 			dtoPad.colorMake(1.0, 0.0, 0.0, 1.0)
-				->solidBrushMake(_controller->getDrawable(), getRedBrushName(), true);
+				->solidBrushMake(_controller->getDrawable(), RedFill, true);
 
 			dtoPad.colorMake(0.0, 1.0, 0.0, 1.0)
-				->solidBrushMake(_controller->getDrawable(), getGreenBrushName(), true);
+				->solidBrushMake(_controller->getDrawable(), GreenFill, true);
 
 			dtoPad.colorMake(0.0, 0.0, 1.0, 1.0)
-				->solidBrushMake(_controller->getDrawable(), getBlueBrushName(), true);
+				->solidBrushMake(_controller->getDrawable(), BlueFill, true);
 
 		}
 	}

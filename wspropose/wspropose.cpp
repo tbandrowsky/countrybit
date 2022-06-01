@@ -9,6 +9,8 @@ int __stdcall WinMain(HINSTANCE hInstance,
 	int    nCmdShow)
 {
 
+	corona::win32::EnableGuiStdOuts();
+
 	corona::win32::direct2dFactory factory;
 	corona::win32::directApplication wsPropose(&factory);
 
@@ -32,3 +34,4 @@ int __stdcall WinMain(HINSTANCE hInstance,
 		wsPropose.runDialog(hInstance, "Woodruff Sawyer Proposal", IDI_WSPROPOSE, true, mainController);
 	}
 }
+

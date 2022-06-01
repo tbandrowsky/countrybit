@@ -222,6 +222,7 @@ namespace corona
 				avo.actor_id = _actor;
 				avo.collection_id = collection_id;
 				avo.object_id = iter.get_index();
+				avo.class_id = iter.get_object().item.get_class_id();
 				avo.selectable = false;
 				avo.selected = false;
 				avo.updatable = false;

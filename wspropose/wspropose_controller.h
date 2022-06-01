@@ -28,7 +28,7 @@ namespace proposal
 		wsproposal_controller(viewStyle* _vs);
 		virtual ~wsproposal_controller();
 
-		virtual void updateState(corona::database::actor_state& state, const rectDto& newSize);
+		virtual void stateChanged(const rectDto& newSize);
 		virtual void loadController();
 		virtual void onInit();
 		virtual void drawFrame();

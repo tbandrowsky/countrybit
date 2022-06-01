@@ -31,10 +31,7 @@ namespace corona
 		{
 			page_item* v = append();
 			v->id = size();
-			if (_parent)
-				v->parent_id = _parent->id;
-			else
-				v->parent_id = -1;
+			v->set_parent(_parent);
 			v->layout = layout_types::row;
 			v->field = nullptr;
 			v->object_id = null_row;
@@ -46,10 +43,7 @@ namespace corona
 		{
 			page_item* v = append();
 			v->id = size();
-			if (_parent)
-				v->parent_id = _parent->id;
-			else
-				v->parent_id = -1;
+			v->set_parent(_parent);
 			v->layout = layout_types::column;
 			v->field = nullptr;
 			v->object_id = null_row;
@@ -61,10 +55,7 @@ namespace corona
 		{
 			page_item* v = append();
 			v->id = size();
-			if (_parent)
-				v->parent_id = _parent->id;
-			else
-				v->parent_id = -1;
+			v->set_parent(_parent);
 			v->layout = layout_types::absolute;
 			v->field = nullptr;
 			v->object_id = null_row;
@@ -76,11 +67,60 @@ namespace corona
 		{
 			page_item* v = append();
 			v->id = size();
-			if (_parent)
-				v->parent_id = _parent->id;
-			else
-				v->parent_id = -1;
+			v->set_parent(_parent);
 			v->layout = layout_types::canvas2d;
+			v->field = nullptr;
+			v->object_id = null_row;
+			v->box = _box;
+			v->canvas_id = v->id;
+			return v;
+		}
+
+		page_item* page::h1(page_item* _parent, const char* _text, measure_box _box)
+		{
+			page_item* v = append();
+			v->id = size();
+			v->set_parent(_parent);
+			v->layout = layout_types::h1;
+			v->field = nullptr;
+			v->object_id = null_row;
+			v->caption = data.copy(_text, 0);
+			v->box = _box;
+			return v;
+		}
+
+		page_item* page::h2(page_item* _parent, const char* _text, measure_box _box)
+		{
+			page_item* v = append();
+			v->id = size();
+			v->set_parent(_parent);
+			v->layout = layout_types::h2;
+			v->field = nullptr;
+			v->object_id = null_row;
+			v->caption = data.copy(_text, 0);
+			v->box = _box;
+			return v;
+		}
+
+		page_item* page::h3(page_item* _parent, const char* _text, measure_box _box)
+		{
+			page_item* v = append();
+			v->id = size();
+			v->set_parent(_parent);
+			v->layout = layout_types::h3;
+			v->field = nullptr;
+			v->object_id = null_row;
+			v->caption = data.copy(_text, 0);
+			v->box = _box;
+			return v;
+		}
+
+		page_item* page::space(page_item* _parent, measure_box _box)
+		{
+			page_item* v = append();
+			v->id = size();
+			v->set_parent(_parent);
+			v->layout = layout_types::space;
 			v->field = nullptr;
 			v->object_id = null_row;
 			v->box = _box;
@@ -92,10 +132,7 @@ namespace corona
 			page_item* v = append();
 			v->id = size();
 			v->layout = layout_types::column;
-			if (_parent)
-				v->parent_id = _parent->id;
-			else
-				v->parent_id = -1;
+			v->set_parent(_parent);
 			v->field = nullptr;
 			v->object_id = object_id;
 			v->box = { 0.0_pct, 0.0_pct, 100.0_pct, 50.0_px };
@@ -106,16 +143,12 @@ namespace corona
 		page_item* page::actor_update_fields(page_item* _parent, actor_state* _state, jschema* _schema, jcollection* _collection)
 		{
 			page_item* v = append();
+
 			v->id = size();
 			v->layout = layout_types::column;
-
-			if (_parent)
-				v->parent_id = _parent->id;
-			else
-				v->parent_id = -1;
-
 			v->field = nullptr;
 			v->object_id = null_row;
+			v->set_parent(_parent);
 
 			measure height = 0.0_px;
 
@@ -131,16 +164,18 @@ namespace corona
 					label->parent_id = v->id;
 					label->layout = layout_types::label;
 					label->field = &fld;
-					label->box = { 0.0_pct, 0.0_pct, 200.0_px, 20.0_px };
+					label->box = { 0.0_px, 0.0_px, 200.0_px, 20.0_px };
 					label->slice = slice;
+					label->object_id = avo.object_id;
 					height.amount += 20.0;
 					page_item* control = append();
 					control->id = size();
 					control->parent_id = v->id;
 					control->layout = layout_types::field;
 					control->field = &fld;
-					control->box = { 0.0_pct, 0.0_pct, 200.0_px, 20.0_px };
+					control->box = { 0.0_px, 0.0_px, 200.0_px, 20.0_px };
 					control->slice = slice;
+					control->object_id = avo.object_id;
 					height.amount += 20.0;
 				}
 			}
@@ -155,11 +190,7 @@ namespace corona
 			page_item* v = append();
 			v->id = size();
 			v->layout = layout_types::column;
-
-			if (_parent)
-				v->parent_id = _parent->id;
-			else
-				v->parent_id = -1;
+			v->set_parent(_parent);
 
 			measure height = 0.0_px;
 
@@ -172,7 +203,9 @@ namespace corona
 				button->field = nullptr;
 				button->object_id = null_row;
 				button->box = { 0.0_px, 0.0_px, 200.0_px, 20.0_px };
-				height.amount += 20.0;
+				button->create_request = _state->create_create_request(aco.second.class_id);
+				height.amount += 20.0;				
+
 				object_description desc;
 				desc = "Add " + _schema->get_class(aco.second.class_id).pitem()->name;
 				button->caption = data.copy<char>(desc.c_str(), 0);
@@ -197,14 +230,13 @@ namespace corona
 				v->box.x.units = measure_units::pixels;
 				v->box.y.units = measure_units::pixels;
 				auto slice = _collection->get_object(st.second.object_id);
-				auto rect_field = _schema->find_field("rectangle");
-				auto rf = slice.get_rectangle(rect_field);
+				auto rf = slice.get_rectangle("rectangle");
 				v->box.x.amount = rf->x;
 				v->box.y.amount = rf->y;
 				v->box.width.amount = rf->w;
 				v->box.height.amount = rf->h;
 				v->select_request = _state->create_select_request(v->object_id, false);
-				v->caption = slice.get_string("comment").c_str();
+				v->caption = data.copy(slice.get_string("comment").c_str(), 0);
 				return v;
 			}
 			return _parent;
@@ -244,6 +276,8 @@ namespace corona
 			else
 				_item->bounds.w = _item->box.width.amount;
 
+			std::cout << std::format("{},{} bounds {},{},{},{}", _item->parent_id, _item->id, _item->bounds.x, _item->bounds.y, _item->bounds.w, _item->bounds.h) << std::endl;
+
 			auto children = where([_item](const auto& it) {
 				return it.item.parent_id == _item->id;
 				});
@@ -254,7 +288,7 @@ namespace corona
 				for (auto child : children)
 				{
 					arrange_impl(&child.item, startx, 0, _item->bounds.x, _item->bounds.y, _item->bounds.w, _item->bounds.h);
-					startx += (child.item.bounds.x + child.item.bounds.w);
+					startx += (child.item.bounds.w);
 				}
 			}
 			else if (_item->layout == layout_types::column) 
@@ -263,7 +297,7 @@ namespace corona
 				for (auto child : children)
 				{
 					arrange_impl(&child.item, 0, starty, _item->bounds.x, _item->bounds.y, _item->bounds.w, _item->bounds.h);
-					starty += (child.item.bounds.y + child.item.bounds.h);
+					starty += (child.item.bounds.h);
 				}
 			}
 			else if (_item->layout == layout_types::canvas2d)

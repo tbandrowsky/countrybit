@@ -33,7 +33,7 @@ namespace proposal
 		enableEditMessages = false;
 
 		auto pos = host->getWindowPos(0);
-		sizeIntDto curSize(pos.width, pos.height);
+		sizeIntDto curSize(pos.w, pos.h);
 		host->setMinimumWindowSize(curSize);
 
 		box.init(1 << 22);
@@ -63,34 +63,36 @@ namespace proposal
 
 		put_string_field_request sfr;
 		sfr.name.name = "comment";
-		sfr.name.description = "Descriptive text";
+		sfr.name.description = "Description";
+		sfr.options.full_text_editor = true;
 		sfr.options.length = 512;
 		comment_field_id = schema.put_string_field(sfr);
 
 		sfr.name.name = "program_name";
-		sfr.name.description = "name of a program";
+		sfr.name.description = "Program name";
 		sfr.options.length = 200;
 		program_name_field_id = schema.put_string_field(sfr);
 
 		sfr.name.name = "program_description";
-		sfr.name.description = "name of a program";
+		sfr.name.description = "Name of a program";
 		sfr.options.length = 512;
+		sfr.options.full_text_editor = true;
 		program_description_field_id = schema.put_string_field(sfr);
 
 		sfr.name.name = "coverage_name";
-		sfr.name.description = "name of a coverage";
+		sfr.name.description = "Name of a coverage";
 		sfr.options.length = 200;
 		coverage_name_id = schema.put_string_field(sfr);
 
 		sfr.name.name = "carrier_name";
-		sfr.name.description = "name of a carrier";
+		sfr.name.description = "Name of a carrier";
 		sfr.options.length = 200;
 		carrier_name_id = schema.put_string_field(sfr);
 
 		put_class_request pcr;
 
 		pcr.class_name = "program";
-		pcr.class_description = "program summary";
+		pcr.class_description = "Program summary";
 		pcr.member_fields = { "program_name", "program_description", "rectangle" };
 		program_class_id = schema.put_class(pcr);
 
@@ -217,6 +219,10 @@ namespace proposal
 		mcr->item_id_class = null_row;
 
 		msr = jm.select_options.append();
+		msr->rule_name = "select program";
+		msr->select_class_id = program_class_id;
+
+		msr = jm.select_options.append();
 		msr->rule_name = "select coverage";
 		msr->select_class_id = coverage_class_id;
 
@@ -239,6 +245,10 @@ namespace proposal
 		msr = jm.select_options.append();
 		msr->rule_name = "select umbrella";
 		msr->select_class_id = policy_umbrella_class_id;
+
+		mur = jm.update_options.append();
+		mur->rule_name = "update program";
+		mur->update_class_id = program_class_id;
 
 		mur = jm.update_options.append();
 		mur->rule_name = "update coverage";
@@ -279,14 +289,17 @@ namespace proposal
 		}
 
 		program_chart = schema.create_collection(&ref);
-
 		sample_actor.actor_name = "sample actor";
 		sample_actor.actor_id = null_row;
 		sample_actor = program_chart.create_actor(sample_actor);
+
+		relative_ptr_type program_summary_id = null_row;
+		program_chart.create_object(0, sample_actor.actor_id, program_class_id, program_summary_id);
+
 		enableEditMessages = true;
 	}
 
-	void wsproposal_controller::updateState(corona::database::actor_state& state, const rectDto& newSize)
+	void wsproposal_controller::stateChanged(const rectDto& newSize)
 	{
 		pg.clear();
 
@@ -297,6 +310,7 @@ namespace proposal
 		auto d2dwin = pg.canvas2d(d2dcolumn, { 0.0_px,0.0_px,100.0_pct,100.0_pct });
 
 		corona::database::rectangle title_box, *ptitle_box = &title_box;
+		corona::database::rectangle canvasRect = host->getDrawable(0)->getCanvasSize();
 
 		auto left_margin = 20.0_px;
 		auto chart_top = 10.0_px;
@@ -307,7 +321,7 @@ namespace proposal
 		title_box.y = chart_top.amount;
 
 		//const database::actor_view_object& avo, database::jslice& slice
-		for_each(state, program_class_id, [ptitle_box](const corona::database::actor_view_object& avo, corona::database::jslice& slice) {
+		for_each(program_class_id, [ptitle_box](const corona::database::actor_view_object& avo, corona::database::jslice& slice) {
 			auto rbx = slice.get_rectangle("rectangle");
 			rbx = *ptitle_box;
 			return true;
@@ -317,10 +331,10 @@ namespace proposal
 
 		legend_box.w = 300;
 		legend_box.h = 20;
-		legend_box.x = newSize.width - 300;
+		legend_box.x = canvasRect.w - 300;
 		legend_box.y = chart_top.amount;
 
-		for_each(state, carrier_class_id, [plegend_box](const corona::database::actor_view_object& avo, corona::database::jslice& slice) {
+		for_each(carrier_class_id, [plegend_box](const corona::database::actor_view_object& avo, corona::database::jslice& slice) {
 			auto rbx = slice.get_rectangle("rectangle");
 			rbx = *plegend_box;
 			plegend_box->y += 20;
@@ -331,14 +345,14 @@ namespace proposal
 		if (coverage_count < 3)
 			coverage_count = 3;
 		coverage_count += 2;
-		int coverage_width = newSize.width / coverage_count;
+		int coverage_width = canvasRect.w / coverage_count;
 
 		corona::database::rectangle coverage_box, *pcoverage_box = &coverage_box;
 
 		coverage_box.w = coverage_width;
 		coverage_box.h = 30;
 		coverage_box.x = coverage_width;
-		coverage_box.y = newSize.height - 30;
+		coverage_box.y = canvasRect.h - 30;
 
 		dynamic_box group_by_box;
 		group_by_box.init(1 << 21);
@@ -356,7 +370,7 @@ namespace proposal
 		pg.actor_create_buttons(controlcolumn, &state, &schema, &program_chart);
 		pg.actor_select_items(d2dwin, &state, &schema, &program_chart);
 
-		pg.arrange(newSize.width, newSize.height);
+		pg.arrange(newSize.w, newSize.h);
 
 		canvasWindowsId = host->renderPage(pg, &schema, state, program_chart);
 		host->redraw();
@@ -369,16 +383,16 @@ namespace proposal
 		factory.colorMake(1, 1, 1, 1);
 		host->getDrawable(0)->clear(&factory.color);
 
-		for (auto pgi : pg)
+		auto drawables = pg.where([](const auto& pgi) { return pgi.item.is_drawable(); });
+
+		for (auto pgi : drawables)
 		{
-			if (pgi.item.layout == layout_types::select)
-			{
-				corona::win32::pathImmediateDto pid;
-				factory.rectangleMake(&pid, pgi.item.bounds.x, pgi.item.bounds.y, pgi.item.bounds.w, pgi.item.bounds.h, "item", "whiteBrush", "blackBrush", 1);
-				host->getDrawable(0)->drawPath(&pid);
-			}
+			corona::win32::pathImmediateDto pid;
+			corona::win32::textInstance2dDto tid;
+			factory.rectangleMake(&pid, pgi.item.bounds.x, pgi.item.bounds.y, pgi.item.bounds.w, pgi.item.bounds.h, "item", viewStyle::WhiteFill, viewStyle::BlackFill, 1);
+
+			host->getDrawable(0)->drawRectangle(&pgi.item.bounds, viewStyle::BlackFill, 3, viewStyle::GreenFill);
+			host->getDrawable(0)->drawText(pgi.item.caption ? pgi.item.caption : "empty", &pgi.item.bounds, viewStyle::H3Text, viewStyle::H3Fill);
 		}
 	}
-
 }
-

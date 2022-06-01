@@ -8,6 +8,14 @@ namespace corona
 
 		class drawableHost;
 
+		enum class visual_alignment 
+		{
+			align_near = 0,
+			align_center = 1,
+			align_justify = 2,
+			align_far = 3,
+		};
+
 		class directException {
 		public:
 			std::string message;
@@ -140,9 +148,9 @@ namespace corona
 		};
 
 		struct rectDto {
-			float left, top, width, height;
+			float x, y, w, h;
 			rectDto();
-			rectDto(float _left, float _top, float _width, float _height);
+			rectDto(float _x, float _y, float _w, float _h);
 		};
 
 		struct sizeIntDto {
@@ -285,6 +293,10 @@ namespace corona
 			std::string fontName;
 			float fontSize;
 			bool bold, italics;
+			double line_spacing;
+			visual_alignment horizontal_align;
+			visual_alignment vertical_align;
+			bool wrap_text;
 		};
 
 		struct textInstance2dDto {
@@ -385,7 +397,7 @@ namespace corona
 			dtoFactory* radialGradientBrushMake(drawableHost* _host, const char* _name, bool stock);
 			dtoFactory* linearGradientBrushMake(drawableHost* _host, pointDto point1, pointDto point2, const char* _name, bool stock);
 			dtoFactory* radialGradientBrushMake(drawableHost* _host, pointDto center, pointDto offset, pointDto radius, const char* _name, bool _stock);
-			dtoFactory* textStyleMake(drawableHost* _host, const char* _name, const char* _fontName, float _size, bool _bold, bool _italics);
+			dtoFactory* textStyleMake(drawableHost* _host, const char* _name, const char* _fontName, float _size, bool _bold, bool _italics, double _line_spacing, visual_alignment _horizontal_align, visual_alignment _vertical_align, bool _wrap_text);
 			dtoFactory* pathMake(drawableHost* _host, const char* _name, bool _closed = true);
 			dtoFactory* pathMake(pathImmediateDto* _dest, const char* _name, const char* _fillName, const char* _borderName, int _borderWidth, bool _closed = true);
 			dtoFactory* rectangleMake(pathImmediateDto* _dest, float _x1, float _y1, float _width, float _height, const char* _name, const char* _fillName, const char* _borderName, int _borderWidth);

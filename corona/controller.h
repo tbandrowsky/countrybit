@@ -112,6 +112,7 @@ namespace corona
 			corona::database::jcollection program_chart;
 			corona::database::jactor sample_actor;
 			corona::database::page pg;
+			corona::database::actor_state state;
 
 			int canvasWindowsId;
 
@@ -129,10 +130,10 @@ namespace corona
 
 			virtual ~corona_controller();
 
-			virtual void for_each(database::actor_state& state, std::function<bool(const database::actor_view_collection::iterator_item_type& _item)> selector, std::function<bool(database::actor_view_object& avo, database::jslice& slice)> updator);
-			virtual void for_each(database::actor_state& state, database::relative_ptr_type class_id, std::function<bool(const database::actor_view_object& avo, database::jslice& slice)>  updator);
+			virtual void for_each(std::function<bool(const database::actor_view_collection::iterator_item_type& _item)> selector, std::function<bool(database::actor_view_object& avo, database::jslice& slice)> updator);
+			virtual void for_each(database::relative_ptr_type class_id, std::function<bool(const database::actor_view_object& avo, database::jslice& slice)>  updator);
 
-			virtual void updateState(corona::database::actor_state& state, const rectDto& newSize) = 0;
+			virtual void stateChanged(const rectDto& newSize) = 0;
 			virtual void loadController() = 0;
 			virtual void drawFrame() = 0;
 			virtual void onInit() = 0;
@@ -153,14 +154,6 @@ namespace corona
 			virtual int onVScroll(int controlId, scrollTypes scrollType);
 			virtual int onResize(const rectDto& newSize);
 			virtual int onSpin(int controlId, int newPosition);
-
-			// helper stuff for views
-			void getH1Styles(textInstance2dDto* _dto);
-			void getH2Styles(textInstance2dDto* _dto);
-			void getH3Styles(textInstance2dDto* _dto);
-			void getLabelStyles(textInstance2dDto* _dto);
-			void getDataStyles(textInstance2dDto* _dto);
-			;
 		};
 
 	}

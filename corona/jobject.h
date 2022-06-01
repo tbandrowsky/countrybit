@@ -118,6 +118,9 @@ namespace corona
 
 			jslice& get_parent_slice();
 			jclass get_class();
+			relative_ptr_type get_class_id() {
+				return class_id;
+			}
 
 			dimensions_type get_dim();
 
@@ -517,9 +520,6 @@ namespace corona
 					throw std::invalid_argument("object not found");
 				}
 				actor_view_object avo = view_objects[_object_id].second;
-				if (!avo.selectable && !avo.selected) {
-					throw std::invalid_argument("object is not selectable");
-				}
 				select_object_request aso;
 				aso.collection_id = collection_id;
 				aso.actor_id = actor_id;
@@ -619,6 +619,11 @@ namespace corona
 				actors = actor_collection::get_table(ref->data, ref->actors_id);
 				objects = object_collection::get_table(ref->data, ref->objects_id);
 				return *this;
+			}
+
+			collection_id_type get_collection_id()
+			{
+				return collection_id;
 			}
 
 			actor_type create_actor(actor_type _actor);

@@ -29,12 +29,12 @@ namespace corona
 			;
 		}
 
-		rectDto::rectDto() : left(0), top(0), width(0), height(0)
+		rectDto::rectDto() : x(0), y(0), w(0), h(0)
 		{
 			;
 		}
 
-		rectDto::rectDto(float _left, float _top, float _width, float _height) : left(_left), top(_top), width(_width), height(_height)
+		rectDto::rectDto(float _x, float _y, float _w, float _h) : x(_x), y(_y), w(_w), h(_h)
 		{
 			;
 		}
@@ -378,7 +378,7 @@ namespace corona
 			return this;
 		}
 
-		dtoFactory* dtoFactory::textStyleMake(drawableHost* _host, const char* _name, const char* _fontName, float _size, bool _bold, bool _italics)
+		dtoFactory* dtoFactory::textStyleMake(drawableHost* _host, const char* _name, const char* _fontName, float _size, bool _bold, bool _italics, double _line_spacing, visual_alignment _horizontal_align, visual_alignment _vertical_align, bool _wrap_text)
 		{
 			textStyle.name = _name;
 			textStyle.bold = _bold;
@@ -387,6 +387,10 @@ namespace corona
 				textStyle.fontName = _fontName;
 			textStyle.fontSize = _size;
 			textStyle.italics = _italics;
+			textStyle.line_spacing = _line_spacing;
+			textStyle.horizontal_align = _horizontal_align;
+			textStyle.vertical_align = _vertical_align;
+			textStyle.wrap_text = _wrap_text;
 			_host->addTextStyle(&textStyle);
 			return this;
 		}
