@@ -1,5 +1,5 @@
 
-#include "pch.h"
+#include "corona.h"
 
 namespace corona
 {
@@ -8,12 +8,12 @@ namespace corona
 
 		measure operator ""_px(long double px)
 		{
-			return measure{ px, measure_units::pixels };
+			return measure(px, measure_units::pixels );
 		}
 
 		measure operator ""_pct(long double pct)
 		{
-			return measure{ pct, measure_units::percent };
+			return measure( pct, measure_units::percent );
 		}
 
 		page::page()
@@ -33,8 +33,6 @@ namespace corona
 			v->id = size();
 			v->set_parent(_parent);
 			v->layout = layout_types::row;
-			v->field = nullptr;
-			v->object_id = null_row;
 			v->box = _box;
 			return v;
 		}
@@ -45,8 +43,6 @@ namespace corona
 			v->id = size();
 			v->set_parent(_parent);
 			v->layout = layout_types::column;
-			v->field = nullptr;
-			v->object_id = null_row;
 			v->box = _box;
 			return v;
 		}
@@ -57,8 +53,6 @@ namespace corona
 			v->id = size();
 			v->set_parent(_parent);
 			v->layout = layout_types::absolute;
-			v->field = nullptr;
-			v->object_id = null_row;
 			v->box = _box;
 			return v;
 		}
@@ -69,8 +63,6 @@ namespace corona
 			v->id = size();
 			v->set_parent(_parent);
 			v->layout = layout_types::canvas2d;
-			v->field = nullptr;
-			v->object_id = null_row;
 			v->box = _box;
 			v->canvas_id = v->id;
 			return v;
@@ -83,7 +75,6 @@ namespace corona
 			v->set_parent(_parent);
 			v->layout = layout_types::h1;
 			v->field = nullptr;
-			v->object_id = null_row;
 			v->caption = data.copy(_text, 0);
 			v->box = _box;
 			return v;
@@ -95,8 +86,6 @@ namespace corona
 			v->id = size();
 			v->set_parent(_parent);
 			v->layout = layout_types::h2;
-			v->field = nullptr;
-			v->object_id = null_row;
 			v->caption = data.copy(_text, 0);
 			v->box = _box;
 			return v;
@@ -108,8 +97,6 @@ namespace corona
 			v->id = size();
 			v->set_parent(_parent);
 			v->layout = layout_types::h3;
-			v->field = nullptr;
-			v->object_id = null_row;
 			v->caption = data.copy(_text, 0);
 			v->box = _box;
 			return v;
@@ -121,8 +108,6 @@ namespace corona
 			v->id = size();
 			v->set_parent(_parent);
 			v->layout = layout_types::space;
-			v->field = nullptr;
-			v->object_id = null_row;
 			v->box = _box;
 			return v;
 		}
@@ -133,7 +118,6 @@ namespace corona
 			v->id = size();
 			v->layout = layout_types::column;
 			v->set_parent(_parent);
-			v->field = nullptr;
 			v->object_id = object_id;
 			v->box = { 0.0_pct, 0.0_pct, 100.0_pct, 50.0_px };
 			v->slice = slice;
@@ -146,8 +130,6 @@ namespace corona
 
 			v->id = size();
 			v->layout = layout_types::column;
-			v->field = nullptr;
-			v->object_id = null_row;
 			v->set_parent(_parent);
 
 			measure height = 0.0_px;
@@ -200,8 +182,6 @@ namespace corona
 				button->parent_id = v->id;
 				button->id = size();
 				button->layout = layout_types::create;
-				button->field = nullptr;
-				button->object_id = null_row;
 				button->box = { 0.0_px, 0.0_px, 200.0_px, 20.0_px };
 				button->create_request = _state->create_create_request(aco.second.class_id);
 				height.amount += 20.0;				
@@ -223,7 +203,6 @@ namespace corona
 				v->id = size();
 				v->parent_id = _parent->id;
 				v->layout = layout_types::select;
-				v->field = nullptr;
 				v->object_id = st.second.object_id;
 				v->box.height.units = measure_units::pixels;
 				v->box.width.units = measure_units::pixels;
@@ -236,8 +215,6 @@ namespace corona
 				v->box.width.amount = rf->w;
 				v->box.height.amount = rf->h;
 				v->select_request = _state->create_select_request(v->object_id, false);
-				v->caption = data.copy(slice.get_string("comment").c_str(), 0);
-				return v;
 			}
 			return _parent;
 		}

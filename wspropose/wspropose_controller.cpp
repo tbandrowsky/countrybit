@@ -2,7 +2,7 @@
 #pragma once
 
 
-#include "pch.h"
+#include "corona.h"
 #include "resource.h"
 #include "wspropose_controller.h"
 
@@ -25,7 +25,28 @@ namespace proposal
 
 	void wsproposal_controller::loadController()
 	{
-		;
+		dtoFactory factory;
+		auto dhost = host->getDrawable(0);
+
+		factory
+			.colorMake(0, 0, 0, 1)
+			->solidBrushMake(dhost, TitleFill, false)
+			->colorMake(0, 0, 0, 1)
+			->solidBrushMake(dhost, SubtitleFill, false)
+			->colorMake(.8, .8, .8, 1)
+			->solidBrushMake(dhost, DisclaimerFill, false)
+			->colorMake(0, 0, 0, 1)
+			->solidBrushMake(dhost, PolicyFill, false)
+			->colorMake(0, 0, 1, 1)
+			->solidBrushMake(dhost, LegendFill, false);
+
+		factory
+			.textStyleMake(dhost, TitleText, "Arial", 30, false, false, 0, visual_alignment::align_center, visual_alignment::align_center, true)
+			->textStyleMake(dhost, SubtitleText, "Arial", 20, false, false, 0, visual_alignment::align_center, visual_alignment::align_center, true)
+			->textStyleMake(dhost, DisclaimerText, "Arial", 12, false, false, 0, visual_alignment::align_center, visual_alignment::align_center, true)
+			->textStyleMake(dhost, PolicyText, "Arial", 14, false, false, 0, visual_alignment::align_center, visual_alignment::align_center, true)
+			->textStyleMake(dhost, LegendText, "Arial", 14, false, false, 0, visual_alignment::align_center, visual_alignment::align_center, true);
+
 	}
 
 	void wsproposal_controller::onInit()
@@ -41,28 +62,28 @@ namespace proposal
 
 		put_double_field_request dfr;
 		dfr.name.name = "limit";
-		dfr.name.description = "Maximum amount paid by policy";
+		dfr.name.description = "Policy Limit";
 		dfr.name.type_id = jtype::type_float64;
 		dfr.options.minimum_double = 0.0;
 		dfr.options.maximum_double = 1E10;
 		relative_ptr_type limit_field_id = schema.put_double_field(dfr);
 
 		dfr.name.name = "attachment";
-		dfr.name.description = "Point at which policy begins coverage";
+		dfr.name.description = "Attachment Point";
 		dfr.name.type_id = jtype::type_float64;
 		dfr.options.minimum_double = 0.0;
 		dfr.options.maximum_double = 1E10;
 		attachment_field_id = schema.put_double_field(dfr);
 
 		dfr.name.name = "deductible";
-		dfr.name.description = "Point at which policy begins paying";
+		dfr.name.description = "Deductible";
 		dfr.name.type_id = jtype::type_float64;
 		dfr.options.minimum_double = 0.0;
 		dfr.options.maximum_double = 1E10;
 		deductible_field_id = schema.put_double_field(dfr);
 
 		put_string_field_request sfr;
-		sfr.name.name = "comment";
+		sfr.name.name = "description";
 		sfr.name.description = "Description";
 		sfr.options.full_text_editor = true;
 		sfr.options.length = 512;
@@ -73,19 +94,13 @@ namespace proposal
 		sfr.options.length = 200;
 		program_name_field_id = schema.put_string_field(sfr);
 
-		sfr.name.name = "program_description";
-		sfr.name.description = "Name of a program";
-		sfr.options.length = 512;
-		sfr.options.full_text_editor = true;
-		program_description_field_id = schema.put_string_field(sfr);
-
 		sfr.name.name = "coverage_name";
-		sfr.name.description = "Name of a coverage";
+		sfr.name.description = "Coverage Name";
 		sfr.options.length = 200;
 		coverage_name_id = schema.put_string_field(sfr);
 
 		sfr.name.name = "carrier_name";
-		sfr.name.description = "Name of a carrier";
+		sfr.name.description = "Carrier Name";
 		sfr.options.length = 200;
 		carrier_name_id = schema.put_string_field(sfr);
 
@@ -93,7 +108,7 @@ namespace proposal
 
 		pcr.class_name = "program";
 		pcr.class_description = "Program summary";
-		pcr.member_fields = { "program_name", "program_description", "rectangle" };
+		pcr.member_fields = { "program_name", "description", "rectangle" };
 		program_class_id = schema.put_class(pcr);
 
 		if (program_class_id == null_row) {
@@ -113,7 +128,7 @@ namespace proposal
 
 		pcr.class_name = "coverage_spacer";
 		pcr.class_description = "spacer frame";
-		pcr.member_fields = { "rectangle" };
+		pcr.member_fields = { "coverage_name", "rectangle" };
 		coverage_spacer_id = schema.put_class(pcr);
 
 		if (coverage_spacer_id == null_row) {
@@ -153,7 +168,7 @@ namespace proposal
 
 		pcr.class_name = "policy_umbrella";
 		pcr.class_description = "deductible block";
-		pcr.member_fields = { "comment", "rectangle", "color", "limit", "attachment" };
+		pcr.member_fields = { "coverage_name", "comment", "rectangle", "color", "limit", "attachment" };
 		policy_umbrella_class_id = schema.put_class(pcr);
 
 		if (policy_deductible_class_id == null_row) {
@@ -354,17 +369,15 @@ namespace proposal
 		coverage_box.x = coverage_width;
 		coverage_box.y = canvasRect.h - 30;
 
-		dynamic_box group_by_box;
-		group_by_box.init(1 << 21);
-
-		auto policy_group = state.view_objects
-			.where([this](const corona::database::actor_view_collection::data_pair& dp) { return dp.second.class_id == this->coverage_class_id || dp.second.class_id == this->policy_class_id; })
-			.group_by<corona::database::object_name>(&group_by_box, [this](const corona::database::actor_view_collection::data_pair& dp) {
-				corona::database::object_name coverage_name;
-				auto slice = this->program_chart.get_object(dp.first);
-				coverage_name = slice.get_string("coverage_name").value();
-				return coverage_name;
-				});
+		for_each(coverage_class_id, [this,pcoverage_box,coverage_width](const corona::database::actor_view_object& avo, corona::database::jslice& slice) {
+			corona::database::rectangle policy_box, * ppolicy_box = &policy_box;
+			auto rbx = slice.get_rectangle("rectangle");
+			auto name = slice.get_rectangle("coverage_name");
+			rbx = *pcoverage_box;
+			policy_box = rbx;
+			pcoverage_box->x += coverage_width;
+			return true;
+			});
 
 		pg.actor_update_fields(controlcolumn, &state, &schema, &program_chart);
 		pg.actor_create_buttons(controlcolumn, &state, &schema, &program_chart);

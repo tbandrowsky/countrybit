@@ -92,6 +92,7 @@ namespace corona
 				item_type* d = nullptr;
 				if (length < max_items) {
 					d = &data[length];
+					d = new (d) item_type();
 					length++;
 				}
 				return d;

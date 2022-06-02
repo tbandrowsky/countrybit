@@ -6,6 +6,7 @@ namespace corona
 	{
 		enum class layout_types
 		{
+			space = 0,
 			row = 1,
 			column = 2,
 			absolute = 3,
@@ -17,8 +18,7 @@ namespace corona
 			select = 9,
 			h1 = 10,
 			h2 = 11,
-			h3 = 12,
-			space = 13
+			h3 = 12
 		};
 
 		enum class measure_units
@@ -32,6 +32,9 @@ namespace corona
 		public:
 			long double amount;
 			measure_units units;
+
+			measure() : amount(0), units(measure_units::pixels) { ; }
+			measure( long double _amount, measure_units _units ) : amount(_amount), units(_units) { ; }
 		};
 
 		measure operator ""_px(long double px);

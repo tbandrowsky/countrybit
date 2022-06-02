@@ -105,6 +105,9 @@ namespace corona
 		struct dimensions_type
 		{
 			corona_size_t x, y, z;
+
+			dimensions_type(corona_size_t _x, corona_size_t _y, corona_size_t _z) : x(_x), y(_y), z(_z) { ; }
+			dimensions_type() : x(0), y(0), z(0) { ; }
 		};
 
 		int compare(const dimensions_type& a, const dimensions_type& b);

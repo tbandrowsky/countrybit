@@ -244,6 +244,7 @@ namespace corona
 			requires (std::is_standard_layout<T>::value)
 			T* copy(const T* base, int start)
 			{
+				if (!base) return nullptr;
 				corona_size_t l = pack_terminated(base, start);
 				return unpack<T>(l);
 			}
@@ -252,6 +253,7 @@ namespace corona
 				requires (std::is_standard_layout<T>::value)
 			T* copy(const T* base, int start, int stop, bool terminate = true)
 			{
+				if (!base) return nullptr;
 				corona_size_t l = pack_slice(base, start, stop, terminate);
 				return unpack<T>(l);
 			}

@@ -130,6 +130,10 @@ namespace corona
 			jclass_field& get_class_field(int field_idx);
 			jfield& get_field(int field_idx);
 
+			bool has_field(const object_name& name);
+			bool has_field(relative_ptr_type field_id);
+			bool is_class(relative_ptr_type class_id);
+
 			int8_box get_int8(int field_idx, bool _use_id = false);
 			int16_box get_int16(int field_idx, bool _use_id = false);
 			int32_box get_int32(int field_idx, bool _use_id = false);
@@ -180,6 +184,7 @@ namespace corona
 
 			std::partial_ordering compare(int _dst_idx, jslice& _src_slice, int _src_idx);
 			std::partial_ordering compare(jslice& _src_slice);
+			std::partial_ordering compare(jslice& _src_slice, relative_ptr_type *field_ids);
 
 			jslice convert(serialized_box_container* _box, relative_ptr_type _class_id);
 

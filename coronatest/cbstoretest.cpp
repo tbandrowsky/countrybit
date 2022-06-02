@@ -1,7 +1,7 @@
 // cbstoretest.cpp : This file contains the 'main' function. Program execution begins and ends there.
 //
 
-#include "pch.h"
+#include "corona.h"
 
 corona::database::sync<int> test_queue();
 corona::database::task<int> calc();

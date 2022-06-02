@@ -1,5 +1,5 @@
 
-#include "pch.h"
+#include "corona.h"
 
 #define _DETAIL 0
 #define _TRACE_RULE 0
@@ -535,7 +535,7 @@ namespace corona
 			}
 		}
 
-		jslice::jslice() : schema(nullptr), class_id(null_row), bytes(nullptr), box(nullptr)
+		jslice::jslice() : schema(nullptr), class_id(null_row), bytes(nullptr), box(nullptr), location(null_row)
 		{
 			;
 		}
@@ -890,6 +890,21 @@ namespace corona
 		{
 			jclass_field& jcf = the_class.detail(field_idx);
 			return jcf;
+		}
+
+		bool jslice::has_field(const object_name& name)
+		{
+			return get_field_index_by_name( name ) > -1;
+		}
+
+		bool jslice::has_field(relative_ptr_type field_id)
+		{
+			return get_field_index_by_id(field_id) > -1;
+		}
+
+		bool jslice::is_class(relative_ptr_type class_id)
+		{
+			return the_class.pitem()->class_id == class_id;
 		}
 
 		jfield& jslice::get_field_by_id(relative_ptr_type field_id)
@@ -1268,22 +1283,58 @@ namespace corona
 				ssf = _src_slice.size();
 				for (fis = 0; fis < ssf; fis++)
 				{
-					auto& fld_source = _src_slice.get_field(fis);
-					fid = get_field_index_by_id(fld_source.field_id);
-					auto& fld_dest = get_field(fid);
-					if (!schema->is_empty(fld_dest)) {
-						auto offset1 = get_offset(fld_source.type_id);
-						auto offset2 = _src_slice.get_offset(fld_dest.type_id);
-						char* c1 = get_bytes() + offset1;
-						char* c2 = _src_slice.get_bytes() + offset2;
-						auto x = compare_express(fld_source.type_id, c1, c2);
-						if (x != std::strong_ordering::equal) {
-							return x;
-						}
+					auto fld_idx_source = fis;
+					auto& fld_source = _src_slice.get_field(fld_idx_source);
+					auto fld_idx_dest = get_field_index_by_id(fld_source.field_id);
+
+					if (fld_idx_dest == null_row) 
+					{
+						throw std::invalid_argument( "Invalid field index");
+					}
+
+					auto& fld_dest = get_field(fld_idx_dest);
+
+					auto offset1 = get_offset(fld_idx_dest, fld_source.type_id);
+					auto offset2 = _src_slice.get_offset(fld_idx_source, fld_dest.type_id);
+					char* c1 = get_bytes() + offset1;
+					char* c2 = _src_slice.get_bytes() + offset2;
+					auto x = compare_express(fld_source.type_id, c1, c2);
+					if (x != std::strong_ordering::equal) {
+						return x;
 					}
 				}
 				return std::strong_ordering::equal;
 			}
+		}
+
+		std::partial_ordering jslice::compare(jslice& _src_slice, relative_ptr_type* field_ids)
+		{
+			relative_ptr_type fid;
+			while (*field_ids != null_row)
+			{
+				auto fld_idx_source = _src_slice.get_field_index_by_id(*field_ids);
+				auto fld_idx_dest = get_field_index_by_id(*field_ids);
+
+				if ((fld_idx_source == null_row) || (fld_idx_dest == null_row)) 
+				{
+					throw std::invalid_argument( "Invalid field index");
+				}
+
+				auto& fld_source = _src_slice.get_field(fld_idx_source);
+				auto& fld_dest = get_field(fld_idx_dest);
+
+				auto offset1 = get_offset(fld_idx_dest, fld_source.type_id);
+				auto offset2 = _src_slice.get_offset(fld_idx_source, fld_dest.type_id);
+				char* c1 = get_bytes() + offset1;
+				char* c2 = _src_slice.get_bytes() + offset2;
+				auto x = compare_express(fld_source.type_id, c1, c2);
+				if (x != std::strong_ordering::equal) {
+					return x;
+				}
+
+				field_ids++;
+			}
+			return std::strong_ordering::equal;
 		}
 
 		jslice jslice::convert(serialized_box_container* _box, relative_ptr_type _class_id)
