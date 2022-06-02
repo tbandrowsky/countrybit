@@ -201,7 +201,7 @@ namespace corona
 			{
 				page_item* v = append();
 				v->id = size();
-				v->parent_id = _parent->id;
+				v->set_parent(_parent);
 				v->layout = layout_types::select;
 				v->object_id = st.second.object_id;
 				v->box.height.units = measure_units::pixels;
@@ -253,7 +253,7 @@ namespace corona
 			else
 				_item->bounds.w = _item->box.width.amount;
 
-			std::cout << std::format("{},{} bounds {},{},{},{}", _item->parent_id, _item->id, _item->bounds.x, _item->bounds.y, _item->bounds.w, _item->bounds.h) << std::endl;
+			std::cout << std::format("{},{} bounds {},{},{},{} canvas {}, is_draw {}", _item->parent_id, _item->id, _item->bounds.x, _item->bounds.y, _item->bounds.w, _item->bounds.h, _item->canvas_id, _item->is_drawable()) << std::endl;
 
 			auto children = where([_item](const auto& it) {
 				return it.item.parent_id == _item->id;

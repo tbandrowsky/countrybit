@@ -1315,9 +1315,13 @@ namespace corona
 				auto fld_idx_source = _src_slice.get_field_index_by_id(*field_ids);
 				auto fld_idx_dest = get_field_index_by_id(*field_ids);
 
-				if ((fld_idx_source == null_row) || (fld_idx_dest == null_row)) 
+				if (fld_idx_source == null_row) 
 				{
-					throw std::invalid_argument( "Invalid field index");
+					return std::partial_ordering::less;
+				}
+				else if (fld_idx_dest == null_row)
+				{
+					return std::partial_ordering::greater;
 				}
 
 				auto& fld_source = _src_slice.get_field(fld_idx_source);

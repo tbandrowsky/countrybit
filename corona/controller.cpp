@@ -324,7 +324,7 @@ namespace corona
 
 		void corona_controller::for_each(database::relative_ptr_type class_id, std::function<bool(const database::actor_view_object& avo, database::jslice& slice)>  updator)
 		{
-			auto selections = state.view_objects.where([class_id](auto& kp) {return kp.second.class_id == class_id; });
+			auto selections = state.view_objects.where([class_id](auto& kp) { return kp.second.class_id == class_id; });
 			for (auto selection : selections)
 			{
 				database::jslice slice = program_chart.get_object(selection.second.object_id);
@@ -332,14 +332,54 @@ namespace corona
 			}
 		}
 
-		void corona_controller::for_each(database::jslice _parent, database::relative_ptr_type* _join_fields, std::function<bool(const database::actor_view_object& avo, database::jslice& slice)>  updator)
+		void corona_controller::for_each(database::jslice& _parent, database::relative_ptr_type* _join_fields, std::function<bool(const database::actor_view_object& avo, database::jslice& slice)>  updator)
 		{
 			database::relative_ptr_type class_id = _parent.get_class_id();
-			auto selections = state.view_objects.where([class_id](auto& kp) {return kp.second.class_id != class_id; });
+			auto selections = state.view_objects.where([class_id](auto& kp) { return kp.second.class_id != class_id; });
 			for (auto selection : selections)
 			{
 				database::jslice slice = program_chart.get_object(selection.second.object_id);
-				updator(selection.second, slice);
+
+				if (slice.get_bytes() != _parent.get_bytes() && _parent.compare(slice, _join_fields) == 0)
+				{
+					updator(selection.second, slice);
+				}
+			}
+		}
+
+		void corona_controller::for_each(database::relative_ptr_type* _has_field_list, std::function<bool(const database::actor_view_object& avo, database::jslice& slice)>  updator)
+		{
+			auto selections = state.view_objects.where([](auto& kp) {return true; });
+
+			for (auto selection : selections)
+			{
+				auto clsid = selection.second.class_id;
+				auto cls = schema.get_class(clsid);
+
+				bool has_fields = true;
+				
+				while (*_has_field_list != database::null_row) 
+				{
+					bool has_field = false;
+					for (int i = 0; i < cls.size(); i++) {
+						if (cls.detail(0).field_id == *_has_field_list)
+						{
+							has_field = true;
+							break;
+						}
+					}
+					if (!has_field) {
+						has_fields = false;
+						break;
+					}
+					_has_field_list++;
+				}
+				
+				if (has_fields) 
+				{
+					database::jslice slice = program_chart.get_object(selection.second.object_id);
+					updator(selection.second, slice);
+				}
 			}
 		}
 	}

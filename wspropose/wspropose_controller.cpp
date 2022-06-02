@@ -118,7 +118,7 @@ namespace proposal
 
 		pcr.class_name = "coverage";
 		pcr.class_description = "coverage frame";
-		pcr.member_fields = { "coverage_name", "comment", "rectangle" };
+		pcr.member_fields = { "coverage_name", "description", "rectangle" };
 		coverage_class_id = schema.put_class(pcr);
 
 		if (coverage_class_id == null_row) {
@@ -138,7 +138,7 @@ namespace proposal
 
 		pcr.class_name = "carrier";
 		pcr.class_description = "carrier frame";
-		pcr.member_fields = { "carrier_name", "comment", "rectangle", "color" };
+		pcr.member_fields = { "carrier_name", "description", "rectangle", "color" };
 		carrier_class_id = schema.put_class(pcr);
 
 		if (coverage_class_id == null_row) {
@@ -148,7 +148,7 @@ namespace proposal
 
 		pcr.class_name = "policy";
 		pcr.class_description = "policy block";
-		pcr.member_fields = { "coverage_name", "carrier_name", "comment", "rectangle", "color", "limit", "attachment" };
+		pcr.member_fields = { "coverage_name", "carrier_name", "description", "rectangle", "color", "limit", "attachment" };
 		policy_class_id = schema.put_class(pcr);
 
 		if (policy_class_id == null_row) {
@@ -158,7 +158,7 @@ namespace proposal
 
 		pcr.class_name = "policy_deductible";
 		pcr.class_description = "deductible block";
-		pcr.member_fields = { "coverage_name", "comment", "rectangle", "color", "deductible" };
+		pcr.member_fields = { "coverage_name", "description", "rectangle", "color", "deductible" };
 		policy_deductible_class_id = schema.put_class(pcr);
 
 		if (policy_deductible_class_id == null_row) {
@@ -168,7 +168,7 @@ namespace proposal
 
 		pcr.class_name = "policy_umbrella";
 		pcr.class_description = "deductible block";
-		pcr.member_fields = { "coverage_name", "comment", "rectangle", "color", "limit", "attachment" };
+		pcr.member_fields = { "coverage_name", "description", "rectangle", "color", "limit", "attachment" };
 		policy_umbrella_class_id = schema.put_class(pcr);
 
 		if (policy_deductible_class_id == null_row) {
@@ -325,7 +325,7 @@ namespace proposal
 		auto d2dwin = pg.canvas2d(d2dcolumn, { 0.0_px,0.0_px,100.0_pct,100.0_pct });
 
 		corona::database::rectangle title_box, *ptitle_box = &title_box;
-		corona::database::rectangle canvasRect = host->getDrawable(0)->getCanvasSize();
+		corona::database::rectangle canvasRect = host->getDrawable(canvasWindowsId)->getCanvasSize();
 
 		auto left_margin = 20.0_px;
 		auto chart_top = 10.0_px;
@@ -353,8 +353,11 @@ namespace proposal
 			auto rbx = slice.get_rectangle("rectangle");
 			rbx = *plegend_box;
 			plegend_box->y += 20;
+			std::cout << std::format("carrier y:{} h:{}", plegend_box->y, plegend_box->h) << std::endl;
 			return true;
 			});
+
+		// get dimensions of the chart, the width
 
 		int coverage_count = state.view_objects.count_if([this](auto& avokp) { return avokp.second.class_id == this->coverage_class_id; });
 		if (coverage_count < 3)
@@ -362,20 +365,83 @@ namespace proposal
 		coverage_count += 2;
 		int coverage_width = canvasRect.w / coverage_count;
 
+		std::cout << std::format("coverages {} w:{}", coverage_count, coverage_width) << std::endl;
+
+		// and the height
+
+		corona::database::relative_ptr_type limit_fields[3], *plimit_fields = &limit_fields[0];
+		limit_fields[0] = limit_field_id;
+		limit_fields[1] = attachment_field_id;
+		limit_fields[2] = null_row;
+
+		double max_amount = 0.0, min_amount = 0.0, count = 0.0;
+		double *pmax_amount = &max_amount, *pmin_amount = &min_amount, *pcount = &count;
+
+		for_each(plimit_fields, [this, pmax_amount, pmin_amount, pcount, plimit_fields](const corona::database::actor_view_object& avo, corona::database::jslice& slice) {
+			corona::database::relative_ptr_type* pfield = plimit_fields;
+			std::cout << std::format("{} min:{} max:{}", *pmin_amount, *pmax_amount, *pcount) << std::endl;
+			while (*pfield != null_row) {
+				auto t = slice.get_double(*pfield, true);
+				if (t < *pmin_amount) {
+					*pmin_amount = t;
+				}
+				if (t > *pmax_amount) {
+					*pmax_amount = t;
+				}
+				*pcount+= 1.0;
+				pfield++;
+			}
+			return true;
+			});
+
 		corona::database::rectangle coverage_box, *pcoverage_box = &coverage_box;
+
+		double chartMargin = -60;
+		double chartHeight = canvasRect.h + chartMargin;
+		double scaley = *pmax_amount / chartHeight;
 
 		coverage_box.w = coverage_width;
 		coverage_box.h = 30;
 		coverage_box.x = coverage_width;
-		coverage_box.y = canvasRect.h - 30;
+		coverage_box.y = canvasRect.h + chartMargin;
 
-		for_each(coverage_class_id, [this,pcoverage_box,coverage_width](const corona::database::actor_view_object& avo, corona::database::jslice& slice) {
+		corona::database::relative_ptr_type comparison_fields[2], *pcomparison_fields = &comparison_fields[0];
+		comparison_fields[0] = coverage_name_id;
+		comparison_fields[1] = null_row;
+
+		double policyMax = 0.0;
+		double policyMin = 0.0;
+
+		for_each(coverage_class_id, [this, chartHeight, scaley, pcomparison_fields,pcoverage_box,coverage_width](const corona::database::actor_view_object& avo, corona::database::jslice& slice) {
 			corona::database::rectangle policy_box, * ppolicy_box = &policy_box;
 			auto rbx = slice.get_rectangle("rectangle");
-			auto name = slice.get_rectangle("coverage_name");
 			rbx = *pcoverage_box;
-			policy_box = rbx;
+			policy_box.w = pcoverage_box->w;
+			policy_box.x = pcoverage_box->x;
+			policy_box.h = 0;
+			policy_box.y = 0;
 			pcoverage_box->x += coverage_width;
+			std::cout << std::format("coverage x:{} w:{}", pcoverage_box->x, pcoverage_box->w) << std::endl;
+
+			for_each(slice, pcomparison_fields, [this, chartHeight, scaley, ppolicy_box](const corona::database::actor_view_object& avo, corona::database::jslice& slice) {
+
+				if (slice.has_field(limit_field_id) && slice.has_field(attachment_field_id)) 
+				{
+					auto pbx = slice.get_rectangle("rectangle");
+
+					double limit, attach;
+					limit = slice.get_double(limit_field_id, true);
+					attach = slice.get_double(attachment_field_id, true);
+
+					ppolicy_box->h = chartHeight - limit * scaley;
+					ppolicy_box->y = chartHeight - attach * scaley;
+
+					pbx = *ppolicy_box;
+				}
+
+				return true;
+				});
+
 			return true;
 			});
 
@@ -400,10 +466,6 @@ namespace proposal
 
 		for (auto pgi : drawables)
 		{
-			corona::win32::pathImmediateDto pid;
-			corona::win32::textInstance2dDto tid;
-			factory.rectangleMake(&pid, pgi.item.bounds.x, pgi.item.bounds.y, pgi.item.bounds.w, pgi.item.bounds.h, "item", viewStyle::WhiteFill, viewStyle::BlackFill, 1);
-
 			host->getDrawable(0)->drawRectangle(&pgi.item.bounds, viewStyle::BlackFill, 3, viewStyle::GreenFill);
 			host->getDrawable(0)->drawText(pgi.item.caption ? pgi.item.caption : "empty", &pgi.item.bounds, viewStyle::H3Text, viewStyle::H3Fill);
 		}
