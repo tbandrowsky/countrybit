@@ -28,7 +28,7 @@ namespace corona
 			int						parent_id;
 			layout_types			layout;
 
-			dyrect					box;
+			layout_rect					box;
 			rectangle				bounds;
 
 			relative_ptr_type		object_id;
@@ -83,14 +83,14 @@ namespace corona
 			page();
 			void clear();
 
-			page_item* row(page_item* _parent, dyrect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
-			page_item* column( page_item* _parent, dyrect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
-			page_item* absolute(page_item* _parent, dyrect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
-			page_item* canvas2d(page_item* _parent, dyrect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
-			page_item* h1(page_item* _parent, const char* _text, dyrect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
-			page_item* h2(page_item* _parent, const char* _text, dyrect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
-			page_item* h3(page_item* _parent, const char* _text, dyrect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
-			page_item* space(page_item* _parent, dyrect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
+			page_item* row(page_item* _parent, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
+			page_item* column( page_item* _parent, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
+			page_item* absolute(page_item* _parent, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
+			page_item* canvas2d(page_item* _parent, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
+			page_item* h1(page_item* _parent, const char* _text, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
+			page_item* h2(page_item* _parent, const char* _text, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
+			page_item* h3(page_item* _parent, const char* _text, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
+			page_item* space(page_item* _parent, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
 
 			page_item* field(page_item* _parent, int object_id, int field_id, jslice slice);
 

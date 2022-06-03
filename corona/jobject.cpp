@@ -808,10 +808,10 @@ namespace corona
 						b = rectangle {};
 					}
 					break;
-				case jtype::type_dynrect:
+				case jtype::type_layout_rect:
 					{
-						dyrect_box b(c);
-						b = dyrect{};
+						layout_rect_box b(c);
+						b = layout_rect{};
 					}
 					break;
 				case jtype::type_color:
@@ -981,10 +981,10 @@ namespace corona
 			return get_boxed<rectangle_box>(field_idx, jtype::type_rectangle);
 		}
 
-		dyrect_box jslice::get_dyrect(int field_idx, bool _use_id)
+		layout_rect_box jslice::get_layout_rect(int field_idx, bool _use_id)
 		{
 			if (_use_id) field_idx = get_field_index_by_id(field_idx);
-			return get_boxed<dyrect_box>(field_idx, jtype::type_dynrect);
+			return get_boxed<layout_rect_box>(field_idx, jtype::type_layout_rect);
 		}
 
 		image_box jslice::get_image(int field_idx, bool _use_id)
@@ -1183,10 +1183,10 @@ namespace corona
 			return get_rectangle(index);
 		}
 
-		dyrect_box jslice::get_dyrect(object_name field_name)
+		layout_rect_box jslice::get_layout_rect(object_name field_name)
 		{
 			int  index = get_field_index_by_name(field_name);
-			return get_dyrect(index);
+			return get_layout_rect(index);
 		}
 
 		image_box jslice::get_image(object_name field_name)
@@ -1746,8 +1746,8 @@ namespace corona
 			put_point_field({ null_row, jtype::type_point, "selection_point", "selection_point" });
 
 			put_rectangle_field({ null_row, jtype::type_rectangle, "rectangle", "rectangle" });
-			put_rectangle_field({ null_row, jtype::type_rectangle, "position_rectangle", "position_rectangle" });
-			put_rectangle_field({ null_row, jtype::type_rectangle, "selection_rectangle", "selection_rectangle" });
+
+			put_layout_rect_field({ null_row, jtype::type_layout_rect, "layout", "layout" });
 
 		}
 

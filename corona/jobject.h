@@ -148,7 +148,7 @@ namespace corona
 			object_id_box get_object_id(int field_idx, bool _use_id = false);
 			point_box get_point(int field_idx, bool _use_id = false);
 			rectangle_box get_rectangle(int field_idx, bool _use_id = false);
-			dyrect_box get_dyrect(int field_idx, bool _use_id = false);
+			layout_rect_box get_layout_rect(int field_idx, bool _use_id = false);
 			image_box get_image(int field_idx, bool _use_id = false);
 			wave_box get_wave(int field_idx, bool _use_id = false);
 			midi_box get_midi(int field_idx, bool _use_id = false);
@@ -172,7 +172,7 @@ namespace corona
 			object_id_box get_object_id(object_name field_name);
 			point_box get_point(object_name field_name);
 			rectangle_box get_rectangle(object_name field_name);
-			dyrect_box get_dyrect(object_name field_name);
+			layout_rect_box get_layout_rect(object_name field_name);
 			image_box get_image(object_name field_name);
 			wave_box get_wave(object_name field_name);
 			midi_box get_midi(object_name field_name);
@@ -868,7 +868,7 @@ namespace corona
 				sql_properties_type* _sql_properties,
 				file_properties_type* _file_properties,
 				http_properties_type* _http_properties,
-				dyrect_properties_type* _dyrect_properties,
+				layout_rect_properties_type* _layout_rect_properties,
 				int64_t _size_bytes)
 			{
 
@@ -916,8 +916,8 @@ namespace corona
 					jf.http_properties = *_http_properties;
 				if (_file_properties)
 					jf.file_properties = *_file_properties;
-				if (_dyrect_properties)
-					jf.dyrect_properties = *_dyrect_properties;
+				if (_layout_rect_properties)
+					jf.layout_rect_properties = *_layout_rect_properties;
 
 				jf.size_bytes = _size_bytes;
 
@@ -1113,9 +1113,9 @@ namespace corona
 				return put_field(request.name.field_id, type_rectangle, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(rectangle));
 			}
 
-			relative_ptr_type put_dyrect_field(put_dyrect_field_request request)
+			relative_ptr_type put_layout_rect_field(put_layout_rect_field_request request)
 			{
-				return put_field(request.name.field_id, type_dynrect, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &request.options, sizeof(dyrect));
+				return put_field(request.name.field_id, type_layout_rect, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &request.options, sizeof(layout_rect));
 			}
 
 			relative_ptr_type put_image_field(put_image_field_request request)

@@ -28,7 +28,7 @@ namespace corona
 			type_midi = 15,
 			type_point = 16,
 			type_rectangle = 17,
-			type_dynrect = 18,
+			type_layout_rect = 18,
 			type_color = 19,
 			type_sql = 20,
 			type_http = 21,

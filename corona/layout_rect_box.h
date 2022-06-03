@@ -25,58 +25,58 @@ namespace corona
 		measure operator ""_pct(long double pct);
 		measure operator ""_psz(long double pct);
 
-		class dyrect
+		class layout_rect
 		{
 		public:
 			measure x, y, width, height;
 
-			dyrect() { ; }
-			dyrect(measure _x, measure _y, measure _width, measure _height) :
+			layout_rect() { ; }
+			layout_rect(measure _x, measure _y, measure _width, measure _height) :
 				x(_x), y(_y), width(_width), height(_height)
 			{
 				;
 			}
 		};
 
-		class dyrect_box : protected boxed<dyrect>
+		class layout_rect_box : protected boxed<layout_rect>
 		{
 		public:
-			dyrect_box(char* t) : boxed<dyrect>(t)
+			layout_rect_box(char* t) : boxed<layout_rect>(t)
 			{
 				;
 			}
 
-			dyrect_box operator = (const dyrect_box& _src)
+			layout_rect_box operator = (const layout_rect_box& _src)
 			{
-				boxed<dyrect>::operator =(_src);
+				boxed<layout_rect>::operator =(_src);
 				return *this;
 			}
 
-			dyrect_box operator = (dyrect_box _src)
+			layout_rect_box operator = (layout_rect_box _src)
 			{
 				set_data(_src);
 				return *this;
 			}
 
-			dyrect_box operator = (dyrect _src)
+			layout_rect_box operator = (layout_rect _src)
 			{
 				set_value(_src);
 				return *this;
 			}
 
-			dyrect* operator->()
+			layout_rect* operator->()
 			{
-				dyrect& t = boxed<dyrect>::get_data_ref();
+				layout_rect& t = boxed<layout_rect>::get_data_ref();
 				return &t;
 			}
 
-			operator dyrect& ()
+			operator layout_rect& ()
 			{
-				dyrect& t = boxed<dyrect>::get_data_ref();
+				layout_rect& t = boxed<layout_rect>::get_data_ref();
 				return t;
 			}
 
-			dyrect value() const { return boxed<dyrect>::get_value(); }
+			layout_rect value() const { return boxed<layout_rect>::get_value(); }
 
 		};
 
