@@ -1747,7 +1747,7 @@ namespace corona
 
 			put_rectangle_field({ null_row, jtype::type_rectangle, "rectangle", "rectangle" });
 
-			put_layout_rect_field({ null_row, jtype::type_layout_rect, "layout", "layout" });
+			put_layout_rect_field({ null_row, jtype::type_layout_rect, "layout_rect", "layout_rect" });
 
 		}
 

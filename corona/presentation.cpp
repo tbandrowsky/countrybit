@@ -209,12 +209,12 @@ namespace corona
 				v->box.x.units = measure_units::pixels;
 				v->box.y.units = measure_units::pixels;
 				auto slice = _collection->get_object(st.second.object_id);
-				auto rf = slice.get_rectangle("rectangle");
-				v->box.x.amount = rf->x;
-				v->box.y.amount = rf->y;
-				v->box.width.amount = rf->w;
-				v->box.height.amount = rf->h;
-				v->select_request = _state->create_select_request(v->object_id, false);
+				if (slice.has_field("layout_rect"))
+				{
+					auto rf = slice.get_layout_rect("layout_rect");
+					v->box = rf;
+					v->select_request = _state->create_select_request(v->object_id, false);
+				}
 			}
 			return _parent;
 		}
@@ -342,6 +342,12 @@ namespace corona
 				for (auto child : children)
 				{
 					arrange_impl(&child.item, 0, 0, _item->bounds.x, _item->bounds.y, _item->bounds.w, _item->bounds.h);
+				}
+
+				if (_item->object_id != null_row && _item->slice.has_field("rectangle"))
+				{
+					auto rect = _item->slice.get_rectangle("rectangle");
+					rect = _item->bounds;
 				}
 			}
 		}

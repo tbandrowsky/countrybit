@@ -108,7 +108,7 @@ namespace proposal
 
 		pcr.class_name = "program";
 		pcr.class_description = "Program summary";
-		pcr.member_fields = { "program_name", "description", "rectangle" };
+		pcr.member_fields = { "program_name", "description", "rectangle", "layout_rect" };
 		program_class_id = schema.put_class(pcr);
 
 		if (program_class_id == null_row) {
@@ -118,7 +118,7 @@ namespace proposal
 
 		pcr.class_name = "coverage";
 		pcr.class_description = "coverage frame";
-		pcr.member_fields = { "coverage_name", "description", "rectangle" };
+		pcr.member_fields = { "coverage_name", "description", "rectangle", "layout_rect" };
 		coverage_class_id = schema.put_class(pcr);
 
 		if (coverage_class_id == null_row) {
@@ -128,7 +128,7 @@ namespace proposal
 
 		pcr.class_name = "coverage_spacer";
 		pcr.class_description = "spacer frame";
-		pcr.member_fields = { "coverage_name", "rectangle" };
+		pcr.member_fields = { "coverage_name", "rectangle", "layout_rect" };
 		coverage_spacer_id = schema.put_class(pcr);
 
 		if (coverage_spacer_id == null_row) {
@@ -138,7 +138,7 @@ namespace proposal
 
 		pcr.class_name = "carrier";
 		pcr.class_description = "carrier frame";
-		pcr.member_fields = { "carrier_name", "description", "rectangle", "color" };
+		pcr.member_fields = { "carrier_name", "description", "rectangle", "layout_rect", "color" };
 		carrier_class_id = schema.put_class(pcr);
 
 		if (coverage_class_id == null_row) {
@@ -148,7 +148,7 @@ namespace proposal
 
 		pcr.class_name = "policy";
 		pcr.class_description = "policy block";
-		pcr.member_fields = { "coverage_name", "carrier_name", "description", "rectangle", "color", "limit", "attachment" };
+		pcr.member_fields = { "coverage_name", "carrier_name", "description", "rectangle", "layout_rect", "color", "limit", "attachment" };
 		policy_class_id = schema.put_class(pcr);
 
 		if (policy_class_id == null_row) {
@@ -158,7 +158,7 @@ namespace proposal
 
 		pcr.class_name = "policy_deductible";
 		pcr.class_description = "deductible block";
-		pcr.member_fields = { "coverage_name", "description", "rectangle", "color", "deductible" };
+		pcr.member_fields = { "coverage_name", "description", "rectangle", "layout_rect", "color", "deductible" };
 		policy_deductible_class_id = schema.put_class(pcr);
 
 		if (policy_deductible_class_id == null_row) {
@@ -168,7 +168,7 @@ namespace proposal
 
 		pcr.class_name = "policy_umbrella";
 		pcr.class_description = "deductible block";
-		pcr.member_fields = { "coverage_name", "description", "rectangle", "color", "limit", "attachment" };
+		pcr.member_fields = { "coverage_name", "description", "rectangle", "layout_rect", "color", "limit", "attachment" };
 		policy_umbrella_class_id = schema.put_class(pcr);
 
 		if (policy_deductible_class_id == null_row) {
