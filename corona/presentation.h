@@ -21,31 +21,6 @@ namespace corona
 			h3 = 12
 		};
 
-		enum class measure_units
-		{
-			percent = 0,
-			pixels = 1
-		};
-
-		class measure
-		{
-		public:
-			long double amount;
-			measure_units units;
-
-			measure() : amount(0), units(measure_units::pixels) { ; }
-			measure( long double _amount, measure_units _units ) : amount(_amount), units(_units) { ; }
-		};
-
-		measure operator ""_px(long double px);
-		measure operator ""_pct(long double pct);
-
-		class measure_box
-		{
-		public:
-			measure x, y, width, height;
-		};
-
 		class page_item
 		{
 		public:
@@ -53,7 +28,7 @@ namespace corona
 			int						parent_id;
 			layout_types			layout;
 
-			measure_box				box;
+			dyrect					box;
 			rectangle				bounds;
 
 			relative_ptr_type		object_id;

@@ -28,11 +28,12 @@ namespace corona
 			type_midi = 15,
 			type_point = 16,
 			type_rectangle = 17,
-			type_color = 18,
-			type_sql = 19,
-			type_http = 20,
-			type_file = 21,
-			type_list = 22
+			type_dynrect = 18,
+			type_color = 19,
+			type_sql = 20,
+			type_http = 21,
+			type_file = 22,
+			type_list = 23
 		};
 
 		typedef int64_t corona_size_t;

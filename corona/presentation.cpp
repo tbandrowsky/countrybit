@@ -233,15 +233,6 @@ namespace corona
 
 		void page::arrange_impl(page_item* _item, double offx, double offy, double x, double y, double width, double height)
 		{
-			if (_item->box.x.units == measure_units::percent)
-				_item->bounds.x = _item->box.x.amount * width / 100.0 + x;
-			else
-				_item->bounds.x = _item->box.x.amount + x + offx;
-
-			if (_item->box.y.units == measure_units::percent)
-				_item->bounds.y = _item->box.y.amount * height / 100.0 + y;
-			else
-				_item->bounds.y = _item->box.y.amount + y + offy;
 
 			if (_item->box.height.units == measure_units::percent)
 				_item->bounds.h = _item->box.height.amount * height / 100.0;
@@ -252,6 +243,68 @@ namespace corona
 				_item->bounds.w = _item->box.width.amount * width / 100.0;
 			else
 				_item->bounds.w = _item->box.width.amount;
+
+			if (_item->box.x.amount >= 0.0)
+			{
+				switch (_item->box.x.units)
+				{
+				case measure_units::percent:
+					_item->bounds.x = _item->box.x.amount * width / 100.0 + x;
+					break;
+				case measure_units::pixels:
+					_item->bounds.x = _item->box.x.amount + x + offx;
+					break;
+				case measure_units::size:
+					_item->bounds.x = _item->box.x.amount * _item->bounds.w / 100.0 + x;
+					break;
+				}
+			}
+			else 
+			{
+				switch (_item->box.x.units)
+				{
+				case measure_units::percent:
+					_item->bounds.x = (width - (_item->box.x.amount * width / 100.0)) + x;
+					break;
+				case measure_units::pixels:
+					_item->bounds.x = (width - _item->box.x.amount) + x + offx;
+					break;
+				case measure_units::size:
+					_item->bounds.x = (width - (_item->box.x.amount * _item->bounds.w / 100.0)) + x;
+					break;
+				}
+			}
+
+			if (_item->box.y.amount >= 0.0)
+			{
+				switch (_item->box.y.units)
+				{
+				case measure_units::percent:
+					_item->bounds.y = _item->box.y.amount * height / 100.0 + y;
+					break;
+				case measure_units::pixels:
+					_item->bounds.y = _item->box.y.amount + y + offy;
+					break;
+				case measure_units::size:
+					_item->bounds.y = _item->box.y.amount * _item->bounds.h / 100.0 + y;
+					break;
+				}
+			}
+			else
+			{
+				switch (_item->box.y.units)
+				{
+				case measure_units::percent:
+					_item->bounds.y = (height - (_item->box.y.amount * height / 100.0)) + y;
+					break;
+				case measure_units::pixels:
+					_item->bounds.y = (height - _item->box.y.amount) + y + offx;
+					break;
+				case measure_units::size:
+					_item->bounds.y = (height - (_item->box.y.amount * _item->bounds.h / 100.0)) + y;
+					break;
+				}
+			}
 
 			std::cout << std::format("{},{} bounds {},{},{},{} canvas {}, is_draw {}", _item->parent_id, _item->id, _item->bounds.x, _item->bounds.y, _item->bounds.w, _item->bounds.h, _item->canvas_id, _item->is_drawable()) << std::endl;
 
@@ -326,7 +379,5 @@ namespace corona
 				}
 			}
 		}
-
-
 	}
 }

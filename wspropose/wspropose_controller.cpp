@@ -327,6 +327,15 @@ namespace proposal
 		corona::database::rectangle title_box, *ptitle_box = &title_box;
 		corona::database::rectangle canvasRect = host->getDrawable(canvasWindowsId)->getCanvasSize();
 
+		rectDto newDim = newSize;
+		newDim.w -= newDim.x;
+		newDim.x = 0;
+		newDim.y -= newDim.y;
+		newDim.y = 0;
+
+		std::cout << std::format("canvas w:{} h:{}", canvasRect.w, canvasRect.h) << std::endl;
+		std::cout << std::format("size w:{} h:{}", newDim.w, newDim.h) << std::endl;
+
 		auto left_margin = 20.0_px;
 		auto chart_top = 10.0_px;
 
@@ -397,7 +406,7 @@ namespace proposal
 		corona::database::rectangle coverage_box, *pcoverage_box = &coverage_box;
 
 		double chartMargin = -60;
-		double chartHeight = canvasRect.h + chartMargin;
+		double chartHeight = newSize.h + chartMargin;
 		double scaley = *pmax_amount / chartHeight;
 
 		coverage_box.w = coverage_width;

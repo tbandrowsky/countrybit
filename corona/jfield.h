@@ -53,6 +53,11 @@ namespace corona
 
 		};
 
+		struct dyrect_properties_type
+		{
+
+		};
+
 		struct color_properties_type
 		{
 
@@ -162,6 +167,7 @@ namespace corona
 				sql_properties_type			sql_properties;
 				file_properties_type		file_properties;
 				http_properties_type		http_properties;
+				dyrect_properties_type		dyrect_properties;
 			};
 
 			jfield() { ; }
@@ -457,6 +463,12 @@ namespace corona
 		public:
 			put_field_request_base name;
 			rectangle_properties_type options;
+		};
+
+		class put_dyrect_field_request {
+		public:
+			put_field_request_base name;
+			dyrect_properties_type options;
 		};
 
 		class put_image_field_request {

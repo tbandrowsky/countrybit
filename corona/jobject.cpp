@@ -808,6 +808,12 @@ namespace corona
 						b = rectangle {};
 					}
 					break;
+				case jtype::type_dynrect:
+					{
+						dyrect_box b(c);
+						b = dyrect{};
+					}
+					break;
 				case jtype::type_color:
 					{
 						color_box b(c);
@@ -973,6 +979,12 @@ namespace corona
 		{
 			if (_use_id) field_idx = get_field_index_by_id(field_idx);
 			return get_boxed<rectangle_box>(field_idx, jtype::type_rectangle);
+		}
+
+		dyrect_box jslice::get_dyrect(int field_idx, bool _use_id)
+		{
+			if (_use_id) field_idx = get_field_index_by_id(field_idx);
+			return get_boxed<dyrect_box>(field_idx, jtype::type_dynrect);
 		}
 
 		image_box jslice::get_image(int field_idx, bool _use_id)
@@ -1169,6 +1181,12 @@ namespace corona
 		{
 			int  index = get_field_index_by_name(field_name);
 			return get_rectangle(index);
+		}
+
+		dyrect_box jslice::get_dyrect(object_name field_name)
+		{
+			int  index = get_field_index_by_name(field_name);
+			return get_dyrect(index);
 		}
 
 		image_box jslice::get_image(object_name field_name)

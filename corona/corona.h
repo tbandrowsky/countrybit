@@ -84,6 +84,7 @@
 #include "point_box.h"
 #include "time_box.h"
 #include "rectangle_box.h"
+#include "dyrect_box.h"
 #include "collection_id_box.h"
 #include "object_id_box.h"
 #include "image_box.h"

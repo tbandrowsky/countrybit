@@ -89,6 +89,7 @@ namespace corona
 			GetClientRect(hwnd, &rc);
 
 			D2D1_SIZE_U size = D2D1::SizeU(rc.right - rc.left, rc.bottom - rc.top);
+			std::cout << "createRenderTarget: " << size.width << ", " << size.height << std::endl;
 
 			HRESULT hr = factory->getD2DFactory()->CreateHwndRenderTarget(D2D1::RenderTargetProperties(), D2D1::HwndRenderTargetProperties(hwnd, size), &hwndRenderTarget);
 			renderTarget = hwndRenderTarget;

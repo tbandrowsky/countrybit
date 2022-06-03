@@ -36,6 +36,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)file_remote_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)http_remote_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)image_box.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)dyrect_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)pobject_transformer.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)remote_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)jfield.h" />
