@@ -13,11 +13,11 @@ namespace corona
 
 		void viewStyle::setCommonStyles(controller* _controller)
 		{
-			dtoPad.textStyleMake(_controller->getDrawable(), H1Text, "Arial", 20, false, false, 0.0, visual_alignment::align_near, visual_alignment::align_center, true)->
+			dtoPad.textStyleMake(_controller->getDrawable(), H1Text, "Arial", 22, false, false, 0.0, visual_alignment::align_near, visual_alignment::align_center, true)->
 				textStyleMake(_controller->getDrawable(), H2Text, "Arial", 18, false, false, 0.0, visual_alignment::align_near, visual_alignment::align_center, true)->
-				textStyleMake(_controller->getDrawable(), H3Text, "Arial", 14, false, false, 0.0, visual_alignment::align_near, visual_alignment::align_center, true)->
-				textStyleMake(_controller->getDrawable(), LabelText, "Arial", 12, false, false, 0.0, visual_alignment::align_near, visual_alignment::align_center, true)->
-				textStyleMake(_controller->getDrawable(), DataText, "Arial", 12, true, false, 0.0, visual_alignment::align_near, visual_alignment::align_center, true);
+				textStyleMake(_controller->getDrawable(), H3Text, "Arial", 16, false, false, 0.0, visual_alignment::align_near, visual_alignment::align_center, true)->
+				textStyleMake(_controller->getDrawable(), LabelText, "Arial", 14, false, false, 0.0, visual_alignment::align_near, visual_alignment::align_center, true)->
+				textStyleMake(_controller->getDrawable(), DataText, "Arial", 14, true, false, 0.0, visual_alignment::align_near, visual_alignment::align_center, true);
 
 			// some stock brushes to go with our style
 

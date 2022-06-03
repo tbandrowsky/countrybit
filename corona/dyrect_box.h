@@ -29,6 +29,13 @@ namespace corona
 		{
 		public:
 			measure x, y, width, height;
+
+			dyrect() { ; }
+			dyrect(measure _x, measure _y, measure _width, measure _height) :
+				x(_x), y(_y), width(_width), height(_height)
+			{
+				;
+			}
 		};
 
 		class dyrect_box : protected boxed<dyrect>

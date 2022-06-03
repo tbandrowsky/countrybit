@@ -27,7 +27,7 @@ namespace corona
 			data.init(1 << 20);
 		}
 
-		page_item* page::row(page_item* _parent, measure_box _box)
+		page_item* page::row(page_item* _parent, dyrect _box)
 		{
 			page_item* v = append();
 			v->id = size();
@@ -37,7 +37,7 @@ namespace corona
 			return v;
 		}
 
-		page_item* page::column(page_item* _parent, measure_box _box)
+		page_item* page::column(page_item* _parent, dyrect _box)
 		{
 			page_item* v = append();
 			v->id = size();
@@ -47,7 +47,7 @@ namespace corona
 			return v;
 		}
 
-		page_item* page::absolute(page_item* _parent, measure_box _box)
+		page_item* page::absolute(page_item* _parent, dyrect _box)
 		{
 			page_item* v = append();
 			v->id = size();
@@ -57,7 +57,7 @@ namespace corona
 			return v;
 		}
 
-		page_item* page::canvas2d(page_item* _parent, measure_box _box)
+		page_item* page::canvas2d(page_item* _parent, dyrect _box)
 		{
 			page_item* v = append();
 			v->id = size();
@@ -68,7 +68,7 @@ namespace corona
 			return v;
 		}
 
-		page_item* page::h1(page_item* _parent, const char* _text, measure_box _box)
+		page_item* page::h1(page_item* _parent, const char* _text, dyrect _box)
 		{
 			page_item* v = append();
 			v->id = size();
@@ -80,7 +80,7 @@ namespace corona
 			return v;
 		}
 
-		page_item* page::h2(page_item* _parent, const char* _text, measure_box _box)
+		page_item* page::h2(page_item* _parent, const char* _text, dyrect _box)
 		{
 			page_item* v = append();
 			v->id = size();
@@ -91,7 +91,7 @@ namespace corona
 			return v;
 		}
 
-		page_item* page::h3(page_item* _parent, const char* _text, measure_box _box)
+		page_item* page::h3(page_item* _parent, const char* _text, dyrect _box)
 		{
 			page_item* v = append();
 			v->id = size();
@@ -102,7 +102,7 @@ namespace corona
 			return v;
 		}
 
-		page_item* page::space(page_item* _parent, measure_box _box)
+		page_item* page::space(page_item* _parent, dyrect _box)
 		{
 			page_item* v = append();
 			v->id = size();
