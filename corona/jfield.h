@@ -571,7 +571,7 @@ namespace corona
 
 			member_field(member_field_types _member_ship_type, object_name _name) :
 				membership_type(_member_ship_type),
-				field_name(""),
+				field_name(_name),
 				field_id(null_row),
 				dimensions{ 1, 1, 1 }
 			{
@@ -589,6 +589,14 @@ namespace corona
 			member_field(relative_ptr_type _class_id, dimensions_type dims) :
 				membership_type(member_field_types::member_class),
 				field_name(""),
+				class_id(_class_id)
+			{
+				dimensions = dims;
+			}
+
+			member_field(object_name _name, relative_ptr_type _class_id, dimensions_type dims) :
+				membership_type(member_field_types::member_class),
+				field_name(_name),
 				class_id(_class_id)
 			{
 				dimensions = dims;
@@ -779,5 +787,14 @@ namespace corona
 		};
 
 		using jmodel = model_type;
+
+		enum class visual_alignment
+		{
+			align_near = 0,
+			align_center = 1,
+			align_justify = 2,
+			align_far = 3,
+		};
+
 	}
 }

@@ -24,6 +24,9 @@ namespace corona
 			uint32_t			max_objects;
 			uint64_t			collection_size_bytes;
 
+			bool				create_style_sheet;
+
+			relative_ptr_type			style_sheet_id;
 			relative_ptr_type			actors_id;
 			relative_ptr_type			objects_id;
 
@@ -39,6 +42,8 @@ namespace corona
 				collection_size_bytes(0),
 				actors_id(null_row),
 				objects_id(null_row),
+				style_sheet_id(null_row),
+				create_style_sheet(false),
 				data(nullptr)
 			{
 				;
@@ -738,6 +743,112 @@ namespace corona
 			jfield					empty;
 
 		public:
+			
+			relative_ptr_type idfull_name;
+			relative_ptr_type idfirst_name;
+			relative_ptr_type idlast_name;
+			relative_ptr_type idmiddle_name;
+			relative_ptr_type idssn;
+			relative_ptr_type idemail;
+			relative_ptr_type idtitle;
+			relative_ptr_type idstreet;
+			relative_ptr_type idsuiteapt;
+			relative_ptr_type idcity;
+			relative_ptr_type idstate;
+			relative_ptr_type idpostal;
+			relative_ptr_type idcountry_name;
+			relative_ptr_type idcountry_code;
+			relative_ptr_type idinstitution_name;
+			relative_ptr_type idlong_name;
+			relative_ptr_type idshort_name;
+			relative_ptr_type idunit;
+			relative_ptr_type idsymbol;
+			relative_ptr_type idoperator;
+			relative_ptr_type idwindows_path;
+			relative_ptr_type idlinux_path;
+			relative_ptr_type idurl;
+			relative_ptr_type idusername;
+			relative_ptr_type idpassword;
+			relative_ptr_type iddoc_title;
+			relative_ptr_type idsection_title;
+			relative_ptr_type idblock_title;
+			relative_ptr_type idcaption;
+			relative_ptr_type idparagraph;
+			relative_ptr_type idmimeType;
+			relative_ptr_type idbase64;
+			relative_ptr_type idfile_name;
+			relative_ptr_type idfont_name;
+			relative_ptr_type idname;
+
+			relative_ptr_type idbirthday;
+			relative_ptr_type idscheduled;
+
+			relative_ptr_type idcount;
+
+			relative_ptr_type idquantity;
+			relative_ptr_type idlatitude;
+			relative_ptr_type idlongitude;
+			relative_ptr_type idmeters;
+			relative_ptr_type idfeet;
+			relative_ptr_type idkilograms;
+			relative_ptr_type idpounds;
+			relative_ptr_type idseconds;
+			relative_ptr_type idminutes;
+			relative_ptr_type idhours;
+			relative_ptr_type idamperes;
+			relative_ptr_type idkelvin;
+			relative_ptr_type idmoles;
+			relative_ptr_type idgradient_position;
+			relative_ptr_type idfont_size;
+			relative_ptr_type idline_spacing;
+			relative_ptr_type idbox_border_thickness;
+			relative_ptr_type idshape_border_thickness;
+
+			relative_ptr_type idcolor;
+			relative_ptr_type idshape_fill_color;
+			relative_ptr_type idbox_fill_color;
+			relative_ptr_type idshape_border_color;
+			relative_ptr_type idbox_border_color;
+			relative_ptr_type idpoint;
+			relative_ptr_type idposition_point;
+			relative_ptr_type idselection_point;
+			relative_ptr_type idrectangle;
+			relative_ptr_type idlayout_rect;
+
+			relative_ptr_type idbold;
+			relative_ptr_type iditalic;
+			relative_ptr_type idunderline;
+			relative_ptr_type idvertical_alignment;
+			relative_ptr_type idhorizontal_alignment;
+			relative_ptr_type idwrap_text;
+
+			relative_ptr_type id_solid_brush;
+			relative_ptr_type id_gradient_stop;
+			relative_ptr_type id_linear_gradient_brush;
+			relative_ptr_type id_round_gradient_brush;
+			relative_ptr_type id_bitmap_brush;
+			relative_ptr_type id_text_style;
+
+			relative_ptr_type id_view_title;
+			relative_ptr_type id_view_subtitle;
+			relative_ptr_type id_view_section;
+			relative_ptr_type id_view;
+			relative_ptr_type id_disclaimer;
+			relative_ptr_type id_copyright;
+			relative_ptr_type id_h1;
+			relative_ptr_type id_h2;
+			relative_ptr_type id_h3;
+			relative_ptr_type id_column_number_head;
+			relative_ptr_type id_column_text_head;
+			relative_ptr_type id_column_data;
+			relative_ptr_type id_label;
+			relative_ptr_type id_control;
+			relative_ptr_type id_chart_axis;
+			relative_ptr_type id_chart_legend;
+			relative_ptr_type id_chart_block;
+			relative_ptr_type id_tooltip;
+
+			relative_ptr_type id_style_sheet;
 
 			jschema() = default;
 			~jschema() = default;
@@ -1242,27 +1353,23 @@ namespace corona
 					case member_field_types::member_class:
 					{
 						put_object_field_request porf;
-						if (field.field_name.size()>0) {
-							auto class_name = classes_by_name[field.field_name];
-							porf.name.name = class_name.get_key();
-							porf.name.field_id = null_row;
-							porf.name.type_id = jtype::type_object;
-							porf.options.class_name = class_name.get_key();
-							porf.options.class_id = class_name.get_value();
-							porf.options.class_size_bytes = classes[class_name.get_value()].pitem()->class_size_bytes;
-							porf.options.dim = field.dimensions;
+						auto class_cls = classes[field.class_id];
+
+						if (field.field_name.size() > 0) {
+							porf.name.name = field.field_name;
 						}
-						else
+						else 
 						{
-							auto class_cls = classes[field.class_id];
 							porf.name.name = class_cls.item().name;
-							porf.name.field_id = null_row;
-							porf.name.type_id = jtype::type_object;
-							porf.options.class_name = class_cls.item().name;
-							porf.options.class_id = field.class_id;
-							porf.options.class_size_bytes = classes[field.class_id].pitem()->class_size_bytes;
-							porf.options.dim = field.dimensions;
 						}
+
+						porf.name.field_id = null_row;
+						porf.name.type_id = jtype::type_object;
+						porf.options.class_name = class_cls.item().name;
+						porf.options.class_id = field.class_id;
+						porf.options.class_size_bytes = classes[field.class_id].pitem()->class_size_bytes;
+						porf.options.dim = field.dimensions;
+
 						auto class_field_id = put_object_field(porf);
 						if (class_field_id == null_row) {
 							return null_row;
@@ -1469,6 +1576,14 @@ namespace corona
 				jcollection tmp;
 				if (reserved) {
 					tmp = get_collection(ref);
+					create_object_request cor;
+					cor.class_id = id_style_sheet;
+					cor.actor_id = null_row;
+					cor.select_on_create = false;
+					cor.collection_id = tmp.get_collection_id();
+					if (ref->create_style_sheet) {
+						tmp.create_object(0, null_row, id_style_sheet, ref->style_sheet_id);
+					}
 				}
 				return tmp;
 			}

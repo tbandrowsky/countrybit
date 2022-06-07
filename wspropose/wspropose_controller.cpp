@@ -13,7 +13,7 @@ namespace proposal
 
 	using namespace corona::database;
 
-	wsproposal_controller::wsproposal_controller(viewStyle* _vs) : corona_controller(_vs)
+	wsproposal_controller::wsproposal_controller() : corona_controller()
 	{
 		;
 	}
@@ -25,28 +25,6 @@ namespace proposal
 
 	void wsproposal_controller::loadController()
 	{
-		dtoFactory factory;
-		auto dhost = host->getDrawable(0);
-
-		factory
-			.colorMake(0, 0, 0, 1)
-			->solidBrushMake(dhost, TitleFill, false)
-			->colorMake(0, 0, 0, 1)
-			->solidBrushMake(dhost, SubtitleFill, false)
-			->colorMake(.8, .8, .8, 1)
-			->solidBrushMake(dhost, DisclaimerFill, false)
-			->colorMake(0, 0, 0, 1)
-			->solidBrushMake(dhost, PolicyFill, false)
-			->colorMake(0, 0, 1, 1)
-			->solidBrushMake(dhost, LegendFill, false);
-
-		factory
-			.textStyleMake(dhost, TitleText, "Arial", 30, false, false, 0, visual_alignment::align_center, visual_alignment::align_center, true)
-			->textStyleMake(dhost, SubtitleText, "Arial", 20, false, false, 0, visual_alignment::align_center, visual_alignment::align_center, true)
-			->textStyleMake(dhost, DisclaimerText, "Arial", 12, false, false, 0, visual_alignment::align_center, visual_alignment::align_center, true)
-			->textStyleMake(dhost, PolicyText, "Arial", 14, false, false, 0, visual_alignment::align_center, visual_alignment::align_center, true)
-			->textStyleMake(dhost, LegendText, "Arial", 14, false, false, 0, visual_alignment::align_center, visual_alignment::align_center, true);
-
 	}
 
 	void wsproposal_controller::onInit()
@@ -54,8 +32,7 @@ namespace proposal
 		enableEditMessages = false;
 
 		auto pos = host->getWindowPos(0);
-		sizeIntDto curSize(pos.w, pos.h);
-		host->setMinimumWindowSize(curSize);
+		host->setMinimumWindowSize(point{ pos.w - pos.x, pos.h - pos.y });
 
 		box.init(1 << 22);
 		schema = jschema::create_schema(&box, 50, true, schema_id);
@@ -314,55 +291,49 @@ namespace proposal
 		enableEditMessages = true;
 	}
 
-	void wsproposal_controller::stateChanged(const rectDto& newSize)
+	void wsproposal_controller::render(const rectangle& newSize)
 	{
 		pg.clear();
 
 		auto mainr = pg.row(nullptr);
 		auto controlcolumn = pg.column(mainr, { 0.0_px,0.0_px,25.0_pct,100.0_pct });
 
-		auto d2dcolumn = pg.column(mainr, { 0.0_px,0.0_px,75.0_pct,100.0_pct });
-		auto d2dwin = pg.canvas2d(d2dcolumn, { 0.0_px,0.0_px,100.0_pct,100.0_pct });
-
-		corona::database::rectangle title_box, *ptitle_box = &title_box;
-		corona::database::rectangle canvasRect = host->getDrawable(canvasWindowsId)->getCanvasSize();
-
-		rectDto newDim = newSize;
-		newDim.w -= newDim.x;
-		newDim.x = 0;
-		newDim.y -= newDim.y;
-		newDim.y = 0;
-
-		std::cout << std::format("canvas w:{} h:{}", canvasRect.w, canvasRect.h) << std::endl;
-		std::cout << std::format("size w:{} h:{}", newDim.w, newDim.h) << std::endl;
-
 		auto left_margin = 20.0_px;
 		auto chart_top = 10.0_px;
 
-		title_box.w = 500.0;
-		title_box.h = 100.0;
-		title_box.x = left_margin.amount;
-		title_box.y = chart_top.amount;
+		auto d2dcolumn = pg.column(mainr, { 0.0_px,0.0_px,75.0_pct,100.0_pct });
+		auto d2dwin = pg.canvas2d(d2dcolumn, { 0.0_px,0.0_px,100.0_pct,100.0_pct });
+
+		corona::database::layout_rect title_box, *ptitle_box = &title_box;
+
+		title_box.width = 500.0_px;
+		title_box.height = 100.0_px;
+		title_box.x = left_margin;
+		title_box.y = chart_top;
 
 		//const database::actor_view_object& avo, database::jslice& slice
 		for_each(program_class_id, [ptitle_box](const corona::database::actor_view_object& avo, corona::database::jslice& slice) {
-			auto rbx = slice.get_rectangle("rectangle");
+			auto rbx = slice.get_layout_rect("layout_rect");
 			rbx = *ptitle_box;
 			return true;
 			});
 
-		corona::database::rectangle legend_box, *plegend_box = &legend_box;
+		corona::database::layout_rect legend_box, *plegend_box = &legend_box;
+		int carrier_count = state.view_objects.count_if([this](const auto& avokp) { return avokp.second.class_id == carrier_class_id; });
 
-		legend_box.w = 300;
-		legend_box.h = 20;
-		legend_box.x = canvasRect.w - 300;
-		legend_box.y = chart_top.amount;
+		legend_box.width = 300.0_px;
+		legend_box.height = 20.0_px;
+		legend_box.height.amount;
+		legend_box.x = -1.1_psz;
+		legend_box.y = chart_top;
+
+		auto legend_area = pg.column(d2dwin, legend_box );
 
 		for_each(carrier_class_id, [plegend_box](const corona::database::actor_view_object& avo, corona::database::jslice& slice) {
-			auto rbx = slice.get_rectangle("rectangle");
+			auto rbx = slice.get_layout_rect(";la");
 			rbx = *plegend_box;
-			plegend_box->y += 20;
-			std::cout << std::format("carrier y:{} h:{}", plegend_box->y, plegend_box->h) << std::endl;
+			plegend_box->y.amount += 20.0;
+			std::cout << std::format("carrier y:{} h:{}", plegend_box->width.amount, plegend_box->height.amount) << std::endl;
 			return true;
 			});
 
@@ -372,7 +343,7 @@ namespace proposal
 		if (coverage_count < 3)
 			coverage_count = 3;
 		coverage_count += 2;
-		int coverage_width = canvasRect.w / coverage_count;
+		int coverage_width = 1.0 / coverage_count * 100;
 
 		std::cout << std::format("coverages {} w:{}", coverage_count, coverage_width) << std::endl;
 
@@ -412,7 +383,7 @@ namespace proposal
 		coverage_box.w = coverage_width;
 		coverage_box.h = 30;
 		coverage_box.x = coverage_width;
-		coverage_box.y = canvasRect.h + chartMargin;
+		coverage_box.y = chartHeight;
 
 		corona::database::relative_ptr_type comparison_fields[2], *pcomparison_fields = &comparison_fields[0];
 		comparison_fields[0] = coverage_name_id;
@@ -464,19 +435,4 @@ namespace proposal
 		host->redraw();
 	}
 
-	void wsproposal_controller::drawFrame()
-	{
-		corona::win32::dtoFactory factory;
-
-		factory.colorMake(1, 1, 1, 1);
-		host->getDrawable(0)->clear(&factory.color);
-
-		auto drawables = pg.where([](const auto& pgi) { return pgi.item.is_drawable(); });
-
-		for (auto pgi : drawables)
-		{
-			host->getDrawable(0)->drawRectangle(&pgi.item.bounds, viewStyle::BlackFill, 3, viewStyle::GreenFill);
-			host->getDrawable(0)->drawText(pgi.item.caption ? pgi.item.caption : "empty", &pgi.item.bounds, viewStyle::H3Text, viewStyle::H3Fill);
-		}
-	}
 }

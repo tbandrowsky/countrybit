@@ -6,16 +6,6 @@ namespace corona
 	namespace database
 	{
 
-		measure operator ""_px(long double px)
-		{
-			return measure(px, measure_units::pixels );
-		}
-
-		measure operator ""_pct(long double pct)
-		{
-			return measure( pct, measure_units::percent );
-		}
-
 		page::page()
 		{
 			data.init(1 << 20);
@@ -124,6 +114,25 @@ namespace corona
 			return v;
 		}
 
+		page_item* page::select(page_item* _parent, actor_state* _state, int object_id, jslice slice)
+		{
+			if (slice.has_field("layout_rect"))
+			{
+				page_item* v = append();
+				v->id = size();
+				v->set_parent(_parent);
+				v->layout = layout_types::select;
+				v->object_id = object_id;
+				auto rf = slice.get_layout_rect("layout_rect");
+				v->box = rf;
+				v->select_request = _state->create_select_request(v->object_id, false);
+				return v;
+			}
+			else {
+				return nullptr;
+			}
+		}
+
 		page_item* page::actor_update_fields(page_item* _parent, actor_state* _state, jschema* _schema, jcollection* _collection)
 		{
 			page_item* v = append();
@@ -201,7 +210,7 @@ namespace corona
 			{
 				page_item* v = append();
 				v->id = size();
-				v->set_parent(_parent);
+				v->set_parent(_parent);	
 				v->layout = layout_types::select;
 				v->object_id = st.second.object_id;
 				v->box.height.units = measure_units::pixels;
@@ -234,12 +243,12 @@ namespace corona
 		void page::arrange_impl(page_item* _item, double offx, double offy, double x, double y, double width, double height)
 		{
 
-			if (_item->box.height.units == measure_units::percent)
+			if (_item->box.height.units == measure_units::percent_container)
 				_item->bounds.h = _item->box.height.amount * height / 100.0;
 			else
 				_item->bounds.h = _item->box.height.amount;
 
-			if (_item->box.width.units == measure_units::percent)
+			if (_item->box.width.units == measure_units::percent_container)
 				_item->bounds.w = _item->box.width.amount * width / 100.0;
 			else
 				_item->bounds.w = _item->box.width.amount;
@@ -248,13 +257,13 @@ namespace corona
 			{
 				switch (_item->box.x.units)
 				{
-				case measure_units::percent:
+				case measure_units::percent_container:
 					_item->bounds.x = _item->box.x.amount * width / 100.0 + x;
 					break;
 				case measure_units::pixels:
 					_item->bounds.x = _item->box.x.amount + x + offx;
 					break;
-				case measure_units::size:
+				case measure_units::percent_size:
 					_item->bounds.x = _item->box.x.amount * _item->bounds.w / 100.0 + x;
 					break;
 				}
@@ -263,13 +272,13 @@ namespace corona
 			{
 				switch (_item->box.x.units)
 				{
-				case measure_units::percent:
+				case measure_units::percent_container:
 					_item->bounds.x = (width - (_item->box.x.amount * width / 100.0)) + x;
 					break;
 				case measure_units::pixels:
 					_item->bounds.x = (width - _item->box.x.amount) + x + offx;
 					break;
-				case measure_units::size:
+				case measure_units::percent_size:
 					_item->bounds.x = (width - (_item->box.x.amount * _item->bounds.w / 100.0)) + x;
 					break;
 				}
@@ -279,13 +288,13 @@ namespace corona
 			{
 				switch (_item->box.y.units)
 				{
-				case measure_units::percent:
+				case measure_units::percent_container:
 					_item->bounds.y = _item->box.y.amount * height / 100.0 + y;
 					break;
 				case measure_units::pixels:
 					_item->bounds.y = _item->box.y.amount + y + offy;
 					break;
-				case measure_units::size:
+				case measure_units::percent_size:
 					_item->bounds.y = _item->box.y.amount * _item->bounds.h / 100.0 + y;
 					break;
 				}
@@ -294,13 +303,13 @@ namespace corona
 			{
 				switch (_item->box.y.units)
 				{
-				case measure_units::percent:
+				case measure_units::percent_container:
 					_item->bounds.y = (height - (_item->box.y.amount * height / 100.0)) + y;
 					break;
 				case measure_units::pixels:
 					_item->bounds.y = (height - _item->box.y.amount) + y + offx;
 					break;
-				case measure_units::size:
+				case measure_units::percent_size:
 					_item->bounds.y = (height - (_item->box.y.amount * _item->bounds.h / 100.0)) + y;
 					break;
 				}

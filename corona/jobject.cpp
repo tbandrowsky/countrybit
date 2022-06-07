@@ -1662,12 +1662,12 @@ namespace corona
 
 		void jschema::add_standard_fields() 
 		{
-			put_string_field_request string_fields[33] = {
-				{ { null_row, jtype::type_string , "fullName", "Full Name" }, { 75, "", "" } },
-				{ { null_row, jtype::type_string , "firstName", "First Name" }, { 50, "", "" } },
-				{ { null_row, jtype::type_string , "lastName", "Last Name" }, { 50, "", "" } },
-				{ { null_row, jtype::type_string , "middleName", "Middle Name" }, { 50, "", "" } },
-				{ { null_row, jtype::type_string , "ssn", "SSN" }, { 10, "", "" }},
+			put_string_field_request string_fields[34] = {
+				{ { null_row, jtype::type_string ,"full_name", "Full Name" }, { 75, "", "" } },
+				{ { null_row, jtype::type_string ,"first_name", "First Name" }, { 50, "", "" } },
+				{ { null_row, jtype::type_string ,"last_name", "Last Name" }, { 50, "", "" } },
+				{ { null_row, jtype::type_string ,"middle_name", "Middle Name" }, { 50, "", "" } },
+				{ { null_row, jtype::type_string ,"ssn", "SSN" }, { 10, "", "" }},
 				{ { null_row, jtype::type_string, "email", "eEmail" }, { 200, "", ""  }},
 				{ { null_row, jtype::type_string, "title", "Title" }, { 200, "", "" } },
 				{ { null_row, jtype::type_string, "street", "Street" },{  200, "", "" } },
@@ -1675,27 +1675,28 @@ namespace corona
 				{ { null_row, jtype::type_string, "city", "City" }, { 100, "", "" } },
 				{ { null_row, jtype::type_string, "state", "State" }, { 100, "", "" } },
 				{ { null_row, jtype::type_string, "postal", "Postal Code" }, { 50, "", ""  }},
-				{ { null_row, jtype::type_string, "countryName", "Country Name" }, { 50, "", "" } },
-				{ { null_row, jtype::type_string, "countryCode", "Country Code" }, { 3, "", ""  }},
-				{ { null_row, jtype::type_string, "institutionName", "Institution Name" }, { 100, "", "" } },
-				{ { null_row, jtype::type_string, "longName", "Long Name" }, { 200, "", ""  }},
-				{ { null_row, jtype::type_string, "shortName", "Short Name" },{  50, "", ""  }},
+				{ { null_row, jtype::type_string, "country_name", "Country Name" }, { 50, "", "" } },
+				{ { null_row, jtype::type_string, "country_code", "Country Code" }, { 3, "", ""  }},
+				{ { null_row, jtype::type_string, "institution_name", "Institution Name" }, { 100, "", "" } },
+				{ { null_row, jtype::type_string, "long_name", "Long Name" }, { 200, "", ""  }},
+				{ { null_row, jtype::type_string, "short_name", "Short Name" },{  50, "", ""  }},
 				{ { null_row, jtype::type_string, "unit", "Unit" }, { 10, "", "" } },
 				{ { null_row, jtype::type_string, "symbol", "Symbol" }, { 10, "", "" } },
 				{ { null_row, jtype::type_string, "operator", "Operator" }, { 10, "", ""  }},
-				{ { null_row, jtype::type_string, "windowsPath", "Windows Path" }, { 512, "", ""  }},
-				{ { null_row, jtype::type_string, "linuxPath", "Linux Path" }, { 512, "", "" } },
+				{ { null_row, jtype::type_string, "windows_path", "Windows Path" }, { 512, "", ""  }},
+				{ { null_row, jtype::type_string, "linux_path", "Linux Path" }, { 512, "", "" } },
 				{ { null_row, jtype::type_string, "url", "Url" }, { 512, "", "" } },
-				{ { null_row, jtype::type_string, "userName", "User Name" }, { 100, "", ""  }},
-				{ { null_row, jtype::type_string, "passWord", "Password" }, { 100, "", ""  }},
-				{ { null_row, jtype::type_string, "docTitle", "Document Title" }, { 200, "", "" } },
-				{ { null_row, jtype::type_string, "sectionTitle", "Section Title" }, { 200, "", "" } },
-				{ { null_row, jtype::type_string, "blockTitle", "Block Title" }, { 200, "", "" } },
+				{ { null_row, jtype::type_string, "username", "User Name" }, { 100, "", ""  }},
+				{ { null_row, jtype::type_string, "password", "Password" }, { 100, "", ""  }},
+				{ { null_row, jtype::type_string, "doc_title", "Document Title" }, { 200, "", "" } },
+				{ { null_row, jtype::type_string, "section_title", "Section Title" }, { 200, "", "" } },
+				{ { null_row, jtype::type_string, "block_title", "Block Title" }, { 200, "", "" } },
 				{ { null_row, jtype::type_string, "caption", "Caption" }, { 200, "", "" } },
 				{ { null_row, jtype::type_string, "paragraph", "Paragraph" }, { 4000, "", "" } },
-				{ { null_row, jtype::type_string, "mimeType", "MimeType" }, { 100, "", "" } },
+				{ { null_row, jtype::type_string, "mime_type", "MimeType" }, { 100, "", "" } },
 				{ { null_row, jtype::type_string, "base64", "Base64" }, { 100, "", "" } },
-				{ { null_row, jtype::type_string, "fileName", "fileName" }, { 512, "", "" } }
+				{ { null_row, jtype::type_string, "font_name", "Font" }, { 32, "", "" } },
+				{ { null_row, jtype::type_string, "name", "Object Name" }, { 32, "", "" } }
 			};
 
 			put_time_field_request time_fields[2] = {
@@ -1703,11 +1704,17 @@ namespace corona
 				{ { null_row, jtype::type_datetime, "scheduled", "Scheduled" }, 0, INT64_MAX },
 			};
 
-			put_integer_field_request int_fields[1] = {
+			put_integer_field_request int_fields[7] = {
 				{ { null_row, jtype::type_int64, "count", "Count" }, 0, INT64_MAX },
+				{ { null_row, jtype::type_int8, "bold", "Bold" }, 0, INT8_MAX },
+				{ { null_row, jtype::type_int8, "italic", "Italic" }, 0, INT8_MAX },
+				{ { null_row, jtype::type_int8, "underline", "Underline" }, 0, INT8_MAX },
+				{ { null_row, jtype::type_int8, "vertical_alignment", "Vertical alignment" }, 0, INT8_MAX },
+				{ { null_row, jtype::type_int8, "horizontal_alignment", "Vertical alignment" }, 0, INT8_MAX }, 
+				{ { null_row, jtype::type_int8, "wrap_text", "Wrap text" }, 0, INT8_MAX }
 			};
 
-			put_double_field_request double_fields[13] = {
+			put_double_field_request double_fields[18] = {
 				{ { null_row, jtype::type_float64, "quantity", "Quantity" }, -1E40, 1E40 },
 				{ { null_row, jtype::type_float64, "latitude", "Latitude" }, -90, 90 },
 				{ { null_row, jtype::type_float64, "longitude", "Longitude" }, -180, 180 },
@@ -1721,7 +1728,26 @@ namespace corona
 				{ { null_row, jtype::type_float64, "amperes", "Amperes" }, -1E40, 1E40 },
 				{ { null_row, jtype::type_float64, "kelvin", "Kelvin" }, -1E40, 1E40 },
 				{ { null_row, jtype::type_float64, "moles", "Moles" }, -1E40, 1E40 },
+				{ { null_row, jtype::type_float32, "gradient_position", "Gradient stop position" }, 0, 1E3 },
+				{ { null_row, jtype::type_float32, "font_size", "Font size" }, 0, 1E3 },
+				{ { null_row, jtype::type_float32, "line_spacing", "Line Spacing" }, 0, 1E3 },
+				{ { null_row, jtype::type_float32, "box_border_thickness", "Box Border Thickness" }, 0, 1E3 },
+				{ { null_row, jtype::type_float32, "shape_border_thickness", "Shape Border Thickness" }, 0, 1E3 }
 			};
+
+			put_color_field({ null_row, jtype::type_color, "color", "color" });
+			put_color_field({ null_row, jtype::type_color, "shape_fill_color", "shape_fill_color" });
+			put_color_field({ null_row, jtype::type_color, "box_fill_color", "box_fill_color" });
+			put_color_field({ null_row, jtype::type_color, "shape_border_color", "shape_border_color" });
+			put_color_field({ null_row, jtype::type_color, "box_border_color", "box_border_color" });
+
+			put_point_field({ null_row, jtype::type_point, "point", "point" });
+			put_point_field({ null_row, jtype::type_point, "position_point", "position_point" });
+			put_point_field({ null_row, jtype::type_point, "selection_point", "selection_point" });
+
+			put_rectangle_field({ null_row, jtype::type_rectangle, "rectangle", "rectangle" });
+
+			put_layout_rect_field({ null_row, jtype::type_layout_rect, "layout_rect", "layout_rect" });
 
 			for (int i = 0; i < sizeof(string_fields) / sizeof(string_fields[0]); i++) {
 				put_string_field(string_fields[i]);
@@ -1739,15 +1765,197 @@ namespace corona
 				put_double_field(double_fields[i]);
 			}
 
-			put_color_field({ null_row, jtype::type_color, "color", "color" });
+			idfull_name = find_field("full_name");
+			idfirst_name = find_field("first_name");
+			idlast_name = find_field("last_name");
+			idmiddle_name = find_field("middle_name");
+			idssn = find_field("ssn");
+			idemail = find_field("email");
+			idtitle = find_field("title");
+			idstreet = find_field("street");
+			idsuiteapt = find_field("suiteapt");
+			idcity = find_field("city");
+			idstate = find_field("state");
+			idpostal = find_field("postal");
+			idcountry_name = find_field("country_name");
+			idcountry_code = find_field("country_code");
+			idinstitution_name = find_field("institution_name");
+			idlong_name = find_field("long_name");
+			idshort_name = find_field("short_name");
+			idunit = find_field("unit");
+			idsymbol = find_field("symbol");
+			idoperator = find_field("operator");
+			idwindows_path = find_field("windows_path");
+			idlinux_path = find_field("linux_path");
+			idurl = find_field("url");
+			idusername = find_field("username");
+			idpassword = find_field("password");
+			iddoc_title = find_field("doc_title");
+			idsection_title = find_field("section_title");
+			idblock_title = find_field("block_title");
+			idcaption = find_field("caption");
+			idparagraph = find_field("paragraph");
+			idmimeType = find_field("mime_type");
+			idbase64 = find_field("base64");
+			idfile_name = find_field("file_name");
+			idfont_name = find_field("font_name");
+			idname = find_field("name");
 
-			put_point_field({ null_row, jtype::type_point, "point", "point" });
-			put_point_field({ null_row, jtype::type_point, "position_point", "position_point" });
-			put_point_field({ null_row, jtype::type_point, "selection_point", "selection_point" });
+			idbirthday = find_field("birthday");
+			idscheduled = find_field("scheduled");
 
-			put_rectangle_field({ null_row, jtype::type_rectangle, "rectangle", "rectangle" });
+			idcount = find_field("count");
+			idbold = find_field("bold");
+			iditalic = find_field("italic");
+			idunderline = find_field("underline");
+			idvertical_alignment = find_field("vertical_alignment");
+			idhorizontal_alignment = find_field("horizontal_alignment");
+			idwrap_text = find_field("wrap_text");
 
-			put_layout_rect_field({ null_row, jtype::type_layout_rect, "layout_rect", "layout_rect" });
+			idquantity = find_field("quantity");
+			idlatitude = find_field("latitude");
+			idlongitude = find_field("longitude");
+			idmeters = find_field("meters");
+			idfeet = find_field("feet");
+			idkilograms = find_field("kilograms");
+			idpounds = find_field("pounds");
+			idseconds = find_field("seconds");
+			idminutes = find_field("minutes");
+			idhours = find_field("hours");
+			idamperes = find_field("amperes");
+			idkelvin = find_field("kelvin");
+			idmoles = find_field("moles");
+			idgradient_position = find_field("gradient_position");
+			idfont_size = find_field("font_size");
+			idline_spacing = find_field("line_spacing");
+			idbox_border_thickness = find_field("box_border_thickness");
+			idshape_border_thickness = find_field("shape_border_thickness");
+
+			idcolor = find_field("color");
+			idshape_fill_color = find_field("shape_fill_color");
+			idbox_fill_color = find_field("box_fill_color");
+			idshape_border_color = find_field("shape_border_color");
+			idbox_border_color = find_field("box_border_color");
+			idpoint = find_field("point");
+			idposition_point = find_field("position_point");
+			idselection_point = find_field("selection_point");
+			idrectangle = find_field("rectangle");
+			idlayout_rect = find_field("layout_rect");
+
+			put_class_request pcr;
+
+			id_solid_brush = null_row;
+			id_gradient_stop = null_row;
+			id_linear_gradient_brush = null_row;
+			id_round_gradient_brush = null_row;
+			id_bitmap_brush = null_row;
+
+			pcr.class_name = "text_style";
+			pcr.class_description = "styles of text for ui";
+			pcr.member_fields = { idname, idfont_name, idfont_size, idbold, iditalic, idline_spacing, idhorizontal_alignment, idvertical_alignment, 
+				idshape_fill_color, idshape_border_thickness, idshape_border_color, idbox_fill_color, idbox_border_thickness, idbox_border_color };
+			id_text_style = put_class(pcr);
+
+			put_object_field_request object_fields[18] = {
+				{ { null_row, jtype::type_object, "id_view_title", "View Title Style" }, { {1,1,1}, id_text_style }},
+				{ { null_row, jtype::type_object, "id_view_subtitle", "View Subtitle Style" }, { {1,1,1}, id_text_style }},
+				{ { null_row, jtype::type_object, "id_view_section", "View Section Style" }, { {1,1,1}, id_text_style }},
+				{ { null_row, jtype::type_object, "id_view", "View Style" }, { {1,1,1}, id_text_style }},
+				{ { null_row, jtype::type_object, "id_disclaimer", "Disclaimer Style" }, { {1,1,1}, id_text_style }},
+				{ { null_row, jtype::type_object, "id_copyright", "Copyright Style" }, { {1,1,1}, id_text_style }},
+				{ { null_row, jtype::type_object, "id_h1", "H1" }, { {1,1,1}, id_text_style }},
+				{ { null_row, jtype::type_object, "id_h2", "H2" }, { {1,1,1}, id_text_style }},
+				{ { null_row, jtype::type_object, "id_h3", "H3" }, { {1,1,1}, id_text_style }},
+				{ { null_row, jtype::type_object, "id_column_number_head", "Column Number Head" }, { {1,1,1}, id_text_style }},
+				{ { null_row, jtype::type_object, "id_column_text_head", "Column Text Head" }, { {1,1,1}, id_text_style }},
+				{ { null_row, jtype::type_object, "id_column_data", "Column Data" }, { {1,1,1}, id_text_style }},
+				{ { null_row, jtype::type_object, "id_label", "Label" }, { {1,1,1}, id_text_style }},
+				{ { null_row, jtype::type_object, "id_control", "Control" }, { {1,1,1}, id_text_style }},
+				{ { null_row, jtype::type_object, "id_chart_axis", "Chart Axis" }, { {1,1,1}, id_text_style }},
+				{ { null_row, jtype::type_object, "id_chart_legend", "Chart Legend" }, { {1,1,1}, id_text_style }},
+				{ { null_row, jtype::type_object, "id_chart_block", "Chart Block" }, { {1,1,1}, id_text_style }},
+				{ { null_row, jtype::type_object, "id_tooltip", "Tooltip" }, { {1,1,1}, id_text_style }}
+			};
+
+			for (int i = 0; i < sizeof(object_fields) / sizeof(object_fields[0]); i++) {
+				put_object_field(object_fields[i]);
+			}
+
+			/* TODO: improve accessibility here.  Try it with a "blast shield on" */
+
+			id_view_title = find_field("id_view_title");
+			id_view_subtitle = find_field("id_view_subtitle");
+			id_view_section = find_field("id_view_section");
+			id_view = find_field("id_view");
+			id_disclaimer = find_field("id_disclaimer");
+			id_copyright = find_field("id_copyright");
+			id_h1 = find_field("id_h1");
+			id_h2 = find_field("id_h2");
+			id_h3 = find_field("id_h3");
+			id_column_number_head = find_field("id_column_number_head");
+			id_column_text_head = find_field("id_column_text_head");
+			id_column_data = find_field("id_column_data");
+			id_label = find_field("id_label");
+			id_control = find_field("id_control");
+			id_chart_axis = find_field("id_chart_axis");
+			id_chart_legend = find_field("id_chart_legend");
+			id_chart_block = find_field("id_chart_block");
+			id_tooltip = find_field("id_tooltip");
+
+			put_class_request style_sheet;
+
+			pcr.class_name = "style_sheet";
+			pcr.class_description = "collection of styles for ui";
+			pcr.member_fields = { idname, id_view_title, id_view_subtitle, id_view_section, id_view, id_disclaimer, id_copyright,
+				id_h1, id_h2, id_h3,id_column_number_head,id_column_text_head,id_column_data,id_label,id_control,id_chart_axis,id_chart_legend,id_chart_block,id_tooltip };
+			id_style_sheet = put_class(pcr);
+
+			// TODO, these will have to be added later
+			/*
+			
+					struct gradientStopDto {
+			float position;
+			colorDto color;
+		};
+
+			struct bitmapDto {
+				std::string name;
+				std::string filename;
+				bool cropEnabled;
+				marginDto crop;
+				std::list<sizeIntDto> sizes;
+			};
+
+			struct bitmapBrushDto {
+				std::string name;
+				std::string bitmapName;
+			};
+
+			struct solidBrushDto {
+				std::string name;
+				colorDto color;
+				bool stock;
+			};
+
+			struct linearGradientBrushDto {
+				std::string name;
+				pointDto	start,
+					stop;
+				std::list<gradientStopDto> gradientStops;
+				bool stock;
+			};
+
+			struct radialGradientBrushDto {
+				std::string name;
+				pointDto	center,
+					offset;
+				float		radiusX,
+					radiusY;
+				bool stock;
+				std::list<gradientStopDto> gradientStops;
+			};
+			
+			*/
 
 		}
 

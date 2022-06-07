@@ -61,45 +61,45 @@ namespace corona
 			inline direct2dFactory* getFactory() { return factory; }
 			inline ID2D1RenderTarget* getRenderTarget() { return renderTarget; }
 
-			virtual sizeIntDto getSize();
+			virtual point getSize();
 
-			virtual void clear(colorDto* _color);
-			virtual void addBitmap(bitmapDto* _bitmap);
-			virtual bool getBitmapSize(bitmapDto* _bitmap, sizeIntDto* _size);
-			virtual colorDto getColorAtPoint(bitmapInstanceDto* _bitmap, pointDto& _point);
-			virtual bool setBitmapSizes(bitmapDto* _bitmap, bool _forceResize);
-			virtual bool setBitmapFilter(bitmapDto* _bitmap, std::function<bool(sizeIntDto, int, int, char* bytes)> _filter);
+			virtual void clear(color* _color);
+			virtual void addBitmap(bitmapRequest* _bitmap);
+			virtual bool getBitmapSize(bitmapRequest* _bitmap, point* _size);
+			virtual color getColorAtPoint(bitmapInstanceDto* _bitmap, point& _point);
+			virtual bool setBitmapSizes(bitmapRequest* _bitmap, bool _forceResize);
+			virtual bool setBitmapFilter(bitmapRequest* _bitmap, std::function<bool(point, int, int, char* bytes)> _filter);
 
-			virtual void addBitmapBrush(bitmapBrushDto* _bitmapBrush);
-			virtual void addSolidColorBrush(solidBrushDto* _solidBrushDto);
-			virtual void addLinearGradientBrush(linearGradientBrushDto* _linearGradientBrushDto);
-			virtual void addRadialGradientBrush(radialGradientBrushDto* _radialGradientBrushDto);
+			virtual void addBitmapBrush(bitmapBrushRequest* _bitmapBrush);
+			virtual void addSolidColorBrush(solidBrushRequest* _solidBrushDto);
+			virtual void addLinearGradientBrush(linearGradientBrushRequest* _linearGradientBrushDto);
+			virtual void addRadialGradientBrush(radialGradientBrushRequest* _radialGradientBrushDto);
 			virtual void clearBitmapsAndBrushes(bool deleteStockObjects);
 
 			virtual void addPath(pathDto* _pathDto, bool _closed);
 			virtual void clearPaths();
 
-			virtual void addTextStyle(textStyleDto* _textStyle);
-			virtual void clearTextStyles();
+			virtual void addViewStyle(viewStyleRequest* _textStyle);
+			virtual void clearViewStyles();
 
 			virtual void popCamera();
-			virtual void pushCamera(pointDto* _position, float _rotation, float _scale = 1.0);
+			virtual void pushCamera(point* _position, float _rotation, float _scale = 1.0);
 
 			virtual void drawPath(pathInstance2dDto* _pathInstanceDto);
 			virtual void drawPath(pathImmediateDto* _pathImmediateDto);
-			virtual void drawText(textInstance2dDto* _textInstanceDto);
+			virtual void drawText(drawTextRequest* _textInstanceDto);
 			virtual void drawBitmap(bitmapInstanceDto* _bitmapInstanceDto);
 
 			virtual void drawLine(database::point* start, database::point* stop, const char* _fillBrush, double thickness);
-			virtual void drawRectangle(database::rectangle* _rectDto, const char* _borderBrush, double _borderWidth, const char* _fillBrush);
-			virtual void drawText(const char* _text, database::rectangle* _rectDto, const char* _textStyle, const char* _fillBrush);
+			virtual void drawRectangle(database::rectangle* _rectangle, const char* _borderBrush, double _borderWidth, const char* _fillBrush);
+			virtual void drawText(const char* _text, database::rectangle* _rectangle, const char* _textStyle, const char* _fillBrush);
 			virtual database::rectangle getCanvasSize();
 
 			virtual bool createRenderTarget() = 0;
 			virtual void destroyRenderTarget();
 
-			virtual drawableHost* createBitmap(sizeIntDto& _size);
-			virtual void drawBitmap(drawableHost* _directBitmap, pointDto& _dest, sizeIntDto& _size);
+			virtual drawableHost* createBitmap(point& _size);
+			virtual void drawBitmap(drawableHost* _directBitmap, point& _dest, point& _size);
 			virtual void save(const char* _filename);
 
 		protected:
@@ -166,7 +166,7 @@ namespace corona
 
 			__int64 performanceFrequency;
 			__int64 startCounter, lastCounter;
-			sizeIntDto minimumWindowSize;
+			point minimumWindowSize;
 
 			bool colorCapture;
 			int iconResourceId;
@@ -216,9 +216,9 @@ namespace corona
 			virtual void setEnable(int controlId, bool enabled);
 			virtual void setFocus(int ddlControlId);
 
-			virtual rectDto getWindowPos(int ddlControlId);
-			virtual void setWindowPos(int ddlControlId, rectDto rect);
-			virtual void setMinimumWindowSize(sizeIntDto size);
+			virtual rectangle getWindowPos(int ddlControlId);
+			virtual void setWindowPos(int ddlControlId, rectangle rect);
+			virtual void setMinimumWindowSize(point size);
 
 			// icon control
 			virtual void setPictureIcon(int controlId, dtoIconId iconId);
@@ -267,10 +267,10 @@ namespace corona
 			// scroller
 			virtual void setScrollHeight(int ddlControlId, int height);
 			virtual void setScrollWidth(int ddlControlId, int width);
-			virtual pointDto getScrollPos(int ddlControlId);
-			virtual pointDto getScrollTrackPos(int ddlControlId);
-			virtual sizeIntDto getScrollRange(int ddlControlId);
-			virtual void setScrollPos(int ddlControlId, pointDto pt);
+			virtual point getScrollPos(int ddlControlId);
+			virtual point getScrollTrackPos(int ddlControlId);
+			virtual point getScrollRange(int ddlControlId);
+			virtual void setScrollPos(int ddlControlId, point pt);
 
 			// spinner
 			virtual void setSpinRange(int ddlControlId, int lo, int high);

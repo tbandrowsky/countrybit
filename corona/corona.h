@@ -96,6 +96,7 @@
 #include "file_remote_box.h"
 #include "sorted_index.h"
 #include "query_box.h"
+#include "visual.h"
 #include "pobject.h"
 #include "pobject_transformer.h"
 #include "extractor.h"
@@ -112,7 +113,6 @@
 #include "datatransfer.h"
 #include "controllerhost.h"
 #include "controller.h"
-#include "viewstyle.h"
 #include "directapplication.h"
 
 const int WM_SWITCH_CONTROLLER = WM_APP + 101;

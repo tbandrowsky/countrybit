@@ -65,7 +65,7 @@ namespace corona
 		direct2dContext::~direct2dContext()
 		{
 			clearPaths();
-			clearTextStyles();
+			clearViewStyles();
 			clearBitmapsAndBrushes(true);
 
 			if (renderTarget) {
@@ -272,7 +272,7 @@ namespace corona
 
 		public:
 
-			textStyle(std::string& _fontName, 
+			textStyle(std::string _fontName, 
 				float _size, 
 				bool _bold, 
 				bool _italic,
@@ -440,40 +440,40 @@ namespace corona
 		};
 
 
-		sizeCrop toSizeC(sizeIntDto& _size, bool _cropEnabled, marginDto& _crop)
+		sizeCrop toSizeC(point& _size, bool _cropEnabled, rectangle& _crop)
 		{
 			sizeCrop sz;
-			sz.size.width = _size.width;
-			sz.size.height = _size.height;
+			sz.size.width = _size.x;
+			sz.size.height = _size.y;
 			sz.cropEnabled = _cropEnabled;
-			sz.crop.left = _crop.left;
-			sz.crop.top = _crop.top;
-			sz.crop.right = _crop.right;
-			sz.crop.bottom = _crop.bottom;
+			sz.crop.left = _crop.x;
+			sz.crop.top = _crop.y;
+			sz.crop.right = _crop.x + _crop.w;
+			sz.crop.bottom = _crop.y + _crop.h;
 			return sz;
 		}
 
-		D2D1_SIZE_U toSizeU(sizeIntDto& _size)
+		D2D1_SIZE_U toSizeU(point& _size)
 		{
 			D2D1_SIZE_U newSize;
-			newSize.width = _size.width;
-			newSize.height = _size.height;
+			newSize.width = _size.x;
+			newSize.height = _size.y;
 			return newSize;
 		}
 
-		D2D1_SIZE_F toSizeF(sizeIntDto& _size)
+		D2D1_SIZE_F toSizeF(point& _size)
 		{
 			D2D1_SIZE_F newSize;
-			newSize.width = _size.width;
-			newSize.height = _size.height;
+			newSize.width = _size.x;
+			newSize.height = _size.y;
 			return newSize;
 		}
 
-		sizeIntDto toSize(D2D1_SIZE_U& _size)
+		point toSize(D2D1_SIZE_U& _size)
 		{
-			sizeIntDto newSize;
-			newSize.width = _size.width;
-			newSize.height = _size.height;
+			point newSize;
+			newSize.x = _size.width;
+			newSize.y = _size.height;
 			return newSize;
 		}
 
@@ -668,7 +668,7 @@ namespace corona
 
 		class nullFilterFunction {
 		public:
-			bool operator()(sizeIntDto, int, int, char*)
+			bool operator()(point, int, int, char*)
 			{
 				return true;
 			}
@@ -679,7 +679,7 @@ namespace corona
 			bool useFile;
 			std::string filename;
 			std::list<filteredBitmap*> filteredBitmaps;
-			std::function<bool(sizeIntDto, int, int, char*)> filterFunction;
+			std::function<bool(point, int, int, char*)> filterFunction;
 
 			void clearFilteredBitmaps()
 			{
@@ -784,9 +784,9 @@ namespace corona
 				}
 			}
 
-			colorDto getColorAtPoint(int _width, int _height, pointDto point)
+			color getColorAtPoint(int _width, int _height, point point)
 			{
-				colorDto color;
+				color color;
 				IWICBitmap* bm = NULL;
 				auto iter = std::find_if(filteredBitmaps.begin(), filteredBitmaps.end(), [_width, _height](filteredBitmap* _bm) { return _bm->size.width == _width && _bm->size.height == _height; });
 				if (iter != filteredBitmaps.end()) {
@@ -835,7 +835,7 @@ namespace corona
 				return color;
 			}
 
-			void setFilter(std::function<bool(sizeIntDto, int, int, char* bytes)> _filter)
+			void setFilter(std::function<bool(point, int, int, char* bytes)> _filter)
 			{
 				filterFunction = _filter;
 			}
@@ -876,7 +876,7 @@ namespace corona
 
 									if (SUCCEEDED(hr) && pvSrc && pvDst && cbBufferSizeDst && cbBufferSizeSrc && (cbBufferSizeSrc == cbBufferSizeDst)) {
 										memcpy(pvDst, pvSrc, cbBufferSizeSrc);
-										sizeIntDto size = toSize(bm->size);
+										point size = toSize(bm->size);
 										filterFunction(size, (int)cbBufferSizeDst, (int)cbStride, (char*)pvDst);
 									}
 								}
@@ -1131,7 +1131,7 @@ namespace corona
 			}
 		};
 
-		D2D1_COLOR_F toColor(colorDto& _color)
+		D2D1_COLOR_F toColor(color& _color)
 		{
 			D2D1_COLOR_F newColor;
 			newColor.a = _color.alpha;
@@ -1141,7 +1141,7 @@ namespace corona
 			return newColor;
 		}
 
-		D2D1_POINT_2F toPoint(pointDto& _point)
+		D2D1_POINT_2F toPoint(point& _point)
 		{
 			D2D1_POINT_2F point2;
 			point2.x = _point.x;
@@ -1149,7 +1149,7 @@ namespace corona
 			return point2;
 		}
 
-		D2D1_GRADIENT_STOP toGradientStop(gradientStopDto& _gradientStop)
+		D2D1_GRADIENT_STOP toGradientStop(gradientStop& _gradientStop)
 		{
 			D2D1_GRADIENT_STOP stop;
 
@@ -1167,7 +1167,6 @@ namespace corona
 			current = this;
 			previousController = NULL;
 			currentController = NULL;
-			controllerLoaded = true;
 			controlFont = nullptr;
 			labelFont = nullptr,
 			titleFont = nullptr;
@@ -1180,15 +1179,15 @@ namespace corona
 
 		}
 
-		sizeIntDto direct2dContext::getSize()
+		point direct2dContext::getSize()
 		{
-			sizeIntDto asize;
-			asize.height = size.cy;
-			asize.width = size.cx;
+			point asize;
+			asize.x = size.cy;
+			asize.y = size.cx;
 			return asize;
 		}
 
-		void direct2dContext::clear(colorDto* _color)
+		void direct2dContext::clear(color* _color)
 		{
 			D2D1_COLOR_F color;
 
@@ -1200,11 +1199,11 @@ namespace corona
 			this->renderTarget->Clear(color);
 		}
 
-		void direct2dContext::addBitmap(bitmapDto* _bitmap)
+		void direct2dContext::addBitmap(bitmapRequest* _bitmap)
 		{
 			std::string filename, name;
-			filename = _bitmap->filename;
-			name = _bitmap->name;
+			filename = _bitmap->file_name.c_str();
+			name = _bitmap->name.c_str();
 			std::list<sizeCrop> sizes;
 			for (auto it = _bitmap->sizes.begin(); it != _bitmap->sizes.end(); it++) {
 				sizes.push_back(toSizeC(*it, _bitmap->cropEnabled, _bitmap->crop));
@@ -1214,23 +1213,29 @@ namespace corona
 			bm->create(this);
 
 			for (auto it = _bitmap->sizes.begin(); it != _bitmap->sizes.end(); it++) {
-				bm->getSize(&it->width, &it->height);
+				int sx, sy;
+				bm->getSize(&sx, &sy);
+				it->x = sx;
+				it->y = sy;
 			}
 		}
 
-		bool direct2dContext::getBitmapSize(bitmapDto* _bitmap, sizeIntDto* _size)
+		bool direct2dContext::getBitmapSize(bitmapRequest* _bitmap, point* _size)
 		{
 			bool success = false;
-			auto i = bitmaps[_bitmap->name];
+			auto i = bitmaps[_bitmap->name.c_str()];
 			if (i) {
-				success = i->getSize(&_size->width, &_size->height);
+				int bsx, bsy;
+				success = i->getSize(&bsx, &bsy);
+				_size->x = bsx;
+				_size->y = bsy;
 			}
 			return success;
 		}
 
-		colorDto direct2dContext::getColorAtPoint(bitmapInstanceDto* _bitmap, pointDto& _point)
+		color direct2dContext::getColorAtPoint(bitmapInstanceDto* _bitmap, point& _point)
 		{
-			colorDto color;
+			color color;
 			auto i = bitmaps[_bitmap->bitmapName];
 			if (i) {
 				color = i->getColorAtPoint(_bitmap->width, _bitmap->height, _point);
@@ -1238,10 +1243,10 @@ namespace corona
 			return color;
 		}
 
-		bool direct2dContext::setBitmapSizes(bitmapDto* _bitmap, bool _forceResize)
+		bool direct2dContext::setBitmapSizes(bitmapRequest* _bitmap, bool _forceResize)
 		{
 			bool success = false;
-			auto bm = bitmaps[_bitmap->name];
+			auto bm = bitmaps[_bitmap->name.c_str()];
 			if (bm) {
 
 				// first, check to see if we really need to do this
@@ -1250,9 +1255,11 @@ namespace corona
 					allGood = false;
 				else
 					for (auto it = _bitmap->sizes.begin(); it != _bitmap->sizes.end(); it++) {
-						int width = it->width;
-						int height = it->height;
-						allGood = bm->getSize(&it->width, &it->height);
+						int width = it->x;
+						int height = it->y;
+						allGood = bm->getSize(&width, &height);
+						it->x = width;
+						it->y = height;
 						if (!allGood) break;
 					}
 
@@ -1265,7 +1272,11 @@ namespace corona
 					bm->setSizes(sizes);
 					bm->create(this);
 					for (auto it = _bitmap->sizes.begin(); it != _bitmap->sizes.end(); it++) {
-						bm->getSize(&it->width, &it->height);
+						int width = it->x;
+						int height = it->y;
+						bm->getSize(&width, &height);
+						it->x = width;
+						it->y = height;
 					}
 				}
 
@@ -1274,10 +1285,10 @@ namespace corona
 			return success;
 		}
 
-		bool direct2dContext::setBitmapFilter(bitmapDto* _bitmap, std::function<bool(sizeIntDto, int, int, char* bytes)> _filter)
+		bool direct2dContext::setBitmapFilter(bitmapRequest* _bitmap, std::function<bool(point, int, int, char* bytes)> _filter)
 		{
 			bool success = false;
-			auto bm = bitmaps[_bitmap->name];
+			auto bm = bitmaps[_bitmap->name.c_str()];
 			if (bm) {
 				bm->setFilter(_filter);
 				success = bm->applyFilters(this);
@@ -1285,42 +1296,42 @@ namespace corona
 			return success;
 		}
 
-		void direct2dContext::addBitmapBrush(bitmapBrushDto* _bitmapBrush)
+		void direct2dContext::addBitmapBrush(bitmapBrushRequest* _bitmapBrush)
 		{
 			bitmapBrush* brush = new bitmapBrush();
 			std::string name, bitmapName;
-			name = _bitmapBrush->name;
+			name = _bitmapBrush->name.c_str();
 			bitmapName = _bitmapBrush->bitmapName;
 			brush->bm = bitmaps[bitmapName];
 			brushes[name] = brush;
 			brush->create(this);
 		}
 
-		void direct2dContext::addSolidColorBrush(solidBrushDto* _solidBrushDto)
+		void direct2dContext::addSolidColorBrush(solidBrushRequest* _solidBrushDto)
 		{
 			solidColorBrush* brush = new solidColorBrush();
-			brush->stock = _solidBrushDto->stock;
-			brush->color = toColor(_solidBrushDto->color);
-			brushes[_solidBrushDto->name] = brush;
+			brush->stock = false;
+			brush->color = toColor(_solidBrushDto->brushColor);
+			brushes[_solidBrushDto->name.c_str()] = brush;
 			brush->create(this);
 		}
 
-		void direct2dContext::addLinearGradientBrush(linearGradientBrushDto* _linearGradientBrushDto)
+		void direct2dContext::addLinearGradientBrush(linearGradientBrushRequest* _linearGradientBrushDto)
 		{
 			D2D1_GRADIENT_STOP gradientStop;
 			linearGradientBrush* brush = new linearGradientBrush();
 			brush->stock = _linearGradientBrushDto->stock;
 			brush->start = toPoint(_linearGradientBrushDto->start);
 			brush->stop = toPoint(_linearGradientBrushDto->stop);
-			for (auto i = _linearGradientBrushDto->gradientStops.begin(); i != _linearGradientBrushDto->gradientStops.end(); i++) {
-				gradientStop = toGradientStop(*i);
+			for (auto i : _linearGradientBrushDto->gradientStops) {
+				gradientStop = toGradientStop(i.item);
 				brush->stops.push_back(gradientStop);
 			}
-			brushes[_linearGradientBrushDto->name] = brush;
+			brushes[_linearGradientBrushDto->name.c_str()] = brush;
 			brush->create(this);
 		}
 
-		void direct2dContext::addRadialGradientBrush(radialGradientBrushDto* _radialGradientBrushDto)
+		void direct2dContext::addRadialGradientBrush(radialGradientBrushRequest* _radialGradientBrushDto)
 		{
 			D2D1_GRADIENT_STOP gradientStop;
 			radialGradientBrush* brush = new radialGradientBrush();
@@ -1329,11 +1340,11 @@ namespace corona
 			brush->radialProperties.gradientOriginOffset = toPoint(_radialGradientBrushDto->offset);
 			brush->radialProperties.radiusX = _radialGradientBrushDto->radiusX;
 			brush->radialProperties.radiusY = _radialGradientBrushDto->radiusY;
-			for (auto i = _radialGradientBrushDto->gradientStops.begin(); i != _radialGradientBrushDto->gradientStops.end(); i++) {
-				gradientStop = toGradientStop(*i);
+			for (auto i : _radialGradientBrushDto->gradientStops) {
+				gradientStop = toGradientStop(i.item);
 				brush->stops.push_back(gradientStop);
 			}
-			brushes[_radialGradientBrushDto->name] = brush;
+			brushes[_radialGradientBrushDto->name.c_str()] = brush;
 			brush->create(this);
 		}
 
@@ -1429,7 +1440,7 @@ namespace corona
 		void direct2dContext::addPath(pathDto* _pathDto, bool _closed)
 		{
 			path* newPath = createPath(_pathDto, _closed);
-			paths[_pathDto->name] = newPath;
+			paths[_pathDto->name.c_str()] = newPath;
 		}
 
 		void direct2dContext::clearPaths()
@@ -1441,10 +1452,10 @@ namespace corona
 			paths.clear();
 		}
 
-		void direct2dContext::addTextStyle(textStyleDto* _textStyleDto)
+		void direct2dContext::addViewStyle(viewStyleRequest* _textStyleDto)
 		{
 			textStyle* newStyle = new textStyle(
-				_textStyleDto->fontName, 
+				_textStyleDto->fontName.c_str(),
 				_textStyleDto->fontSize, 
 				_textStyleDto->bold, 
 				_textStyleDto->italics, 
@@ -1453,11 +1464,11 @@ namespace corona
 				_textStyleDto->vertical_align,
 				_textStyleDto->wrap_text
 				);
-			textStyles[_textStyleDto->name] = newStyle;
+			textStyles[_textStyleDto->name.c_str()] = newStyle;
 			newStyle->create(this);
 		}
 
-		void direct2dContext::clearTextStyles()
+		void direct2dContext::clearViewStyles()
 		{
 			std::for_each(textStyles.begin(), textStyles.end(), [this](std::pair<std::string, textStyle*> ib) {
 				delete ib.second;
@@ -1544,16 +1555,16 @@ namespace corona
 			}
 		}
 
-		void direct2dContext::drawRectangle(database::rectangle* _rectDto, const char* _borderBrush, double _borderWidth, const char* _fillBrush)
+		void direct2dContext::drawRectangle(database::rectangle* _rectangle, const char* _borderBrush, double _borderWidth, const char* _fillBrush)
 		{
 			auto fill = brushes[_fillBrush];
 			auto border = brushes[_borderBrush];
 
 			D2D1_RECT_F r;
-			r.left = _rectDto->x;
-			r.top = _rectDto->y;
-			r.right = _rectDto->x + _rectDto->w;
-			r.bottom = _rectDto->y + _rectDto->h;
+			r.left = _rectangle->x;
+			r.top = _rectangle->y;
+			r.right = _rectangle->x + _rectangle->w;
+			r.bottom = _rectangle->y + _rectangle->h;
 
 			if (fill) 
 			{
@@ -1566,7 +1577,7 @@ namespace corona
 			}
 		}
 
-		void direct2dContext::drawText(const char* _text, database::rectangle* _rectDto, const char* _textStyle, const char* _fillBrush)
+		void direct2dContext::drawText(const char* _text, database::rectangle* _rectangle, const char* _textStyle, const char* _fillBrush)
 		{
 			auto style = textStyles[_textStyle];
 			auto fill = brushes[_fillBrush];
@@ -1582,10 +1593,10 @@ namespace corona
 			}
 
 			D2D1_RECT_F r;
-			r.left = _rectDto->x;
-			r.top = _rectDto->y;
-			r.right = _rectDto->x + _rectDto->w;
-			r.bottom = _rectDto->y + _rectDto->h;
+			r.left = _rectangle->x;
+			r.top = _rectangle->y;
+			r.right = _rectangle->x + _rectangle->w;
+			r.bottom = _rectangle->y + _rectangle->h;
 
 			auto brush = fill->getBrush();
 			int len = (strlen(_text) + 1) * 2;
@@ -1613,7 +1624,7 @@ namespace corona
 			return database::rectangle{ 0, 0, size.width, size.height };
 		}
 
-		void direct2dContext::drawText(textInstance2dDto* _textInstanceDto)
+		void direct2dContext::drawText(drawTextRequest* _textInstanceDto)
 		{
 			auto style = textStyles[_textInstanceDto->styleName];
 			auto fill = brushes[_textInstanceDto->fillBrushName];
@@ -1670,7 +1681,7 @@ namespace corona
 			}
 		}
 
-		void direct2dContext::pushCamera(pointDto* _position, float _rotation, float _scale)
+		void direct2dContext::pushCamera(point* _position, float _rotation, float _scale)
 		{
 			transforms.push(currentTransform);
 			currentTransform = currentTransform * D2D1::Matrix3x2F::Rotation(_rotation)
@@ -1721,7 +1732,7 @@ namespace corona
 			}
 		}
 
-		drawableHost* direct2dContext::createBitmap(sizeIntDto& _size)
+		drawableHost* direct2dContext::createBitmap(point& _size)
 		{
 			directBitmap* bp = new directBitmap(getFactory(), toSizeF(_size));
 			bp->createRenderTarget();
@@ -1746,7 +1757,7 @@ namespace corona
 			return bp;
 		}
 
-		void direct2dContext::drawBitmap(drawableHost* _drawableHost, pointDto& _dest, sizeIntDto& _size)
+		void direct2dContext::drawBitmap(drawableHost* _drawableHost, point& _dest, point& _size)
 		{
 			if (_drawableHost->isBitmap()) {
 				directBitmap* bp = (directBitmap*)_drawableHost;
@@ -1757,8 +1768,8 @@ namespace corona
 				D2D1_RECT_F rect;
 				rect.left = _dest.x;
 				rect.top = _dest.y;
-				rect.right = rect.left += _size.width > 0 ? _size.width : bp->size.width;
-				rect.bottom = rect.top += _size.height > 0 ? _size.height : bp->size.height;
+				rect.right = rect.left += _size.x > 0 ? _size.x : bp->size.width;
+				rect.bottom = rect.top += _size.y > 0 ? _size.y : bp->size.height;
 				hwndRenderTarget->DrawBitmap(bitmap, &rect);
 				bitmap->Release();
 				bitmap = NULL;
@@ -1773,10 +1784,6 @@ namespace corona
 		void directApplication::redraw()
 		{
 			if (currentController) {
-				if (!controllerLoaded && renderTarget) {
-					currentController->baseLoadController();
-					controllerLoaded = true;
-				}
 				beginDraw();
 				currentController->drawFrame();
 				endDraw();
@@ -1819,9 +1826,9 @@ namespace corona
 			HFONT oldLabelFont = labelFont;
 			HFONT oldTitleFont = titleFont;
 
-			textStyle* controlStyle = textStyles[viewStyle::DataText];
-			textStyle* labelStyle = textStyles[viewStyle::LabelText];
-			textStyle* titleStyle = textStyles[viewStyle::H2Text];
+			textStyle* controlStyle = textStyles[currentController->controlStyle];
+			textStyle* labelStyle = textStyles[currentController->labelStyle];
+			textStyle* titleStyle = textStyles[currentController->viewSectionStyle];
 
 			if (controlStyle) 
 			{
@@ -1938,7 +1945,7 @@ namespace corona
 		LRESULT directApplication::d2dWindowProcHandler(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 		{
 			bool found = false;
-			pointDto point;
+			point point;
 
 			switch (message)
 			{
@@ -2097,11 +2104,12 @@ namespace corona
 		LRESULT directApplication::windowProcHandler(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 		{
 			bool found = false;
-			pointDto point;
+			point point;
 			static HBRUSH hbrBkgnd = NULL;
 			static HBRUSH hbrBkgnd2 = NULL;
 			char className[256];
 			LPCREATESTRUCT lpcr;
+			database::point ptz;
 
 			switch (message)
 			{
@@ -2109,7 +2117,7 @@ namespace corona
 				hwndRoot = hwnd;
 				if (currentController) {
 					lpcr = (LPCREATESTRUCT)lParam;
-					rectDto r{ 0, 0, (float)lpcr->cx, (float)lpcr->cy };
+					rectangle r{ 0, 0, (float)lpcr->cx, (float)lpcr->cy };
 					currentController->onCreated(r);
 				}
 				break;
@@ -2203,10 +2211,10 @@ namespace corona
 				}
 				break;
 			case WM_GETMINMAXINFO:
-				if (minimumWindowSize.width > 0) {
+				if (minimumWindowSize.x > 0) {
 					auto minmaxinfo = (LPMINMAXINFO)lParam;
-					minmaxinfo->ptMinTrackSize.x = minimumWindowSize.width;
-					minmaxinfo->ptMinTrackSize.y = minimumWindowSize.height;
+					minmaxinfo->ptMinTrackSize.x = minimumWindowSize.x;
+					minmaxinfo->ptMinTrackSize.y = minimumWindowSize.y;
 					return 0;
 				}
 				break;
@@ -2288,22 +2296,21 @@ namespace corona
 						HDC hdc = ::GetDC(NULL);
 						if (hdc) {
 							COLORREF cr = ::GetPixel(hdc, p.x, p.y);
-							colorDto pickedColor;
+							color pickedColor;
 							pickedColor.red = GetRValue(cr) / 255.0;
 							pickedColor.green = GetGValue(cr) / 255.0;
 							pickedColor.blue = GetBValue(cr) / 255.0;
-							pointDto point;
-							point.x = p.x;
-							point.y = p.y;
+							ptz.x = p.x;
+							ptz.y = p.y;
 							if (currentController)
-								currentController->pointSelected(&point, &pickedColor);
+								currentController->pointSelected(&ptz, &pickedColor);
 						}
 					}
 				}
 				break;
 			case WM_SIZE:
 				if (currentController) {
-					rectDto rect;
+					rectangle rect;
 					rect.x = 0;
 					rect.y = 0;
 					rect.w = LOWORD(lParam);
@@ -2329,13 +2336,12 @@ namespace corona
 
 		void directApplication::setController(controller* _newCurrentController)
 		{
+			::QueryPerformanceCounter((LARGE_INTEGER*)&startCounter);
 			pressedKeys.clear();
 			if (currentController)
 				delete currentController;
 			currentController = _newCurrentController;
 			currentController->attach(this);
-			controllerLoaded = false;
-			::QueryPerformanceCounter((LARGE_INTEGER*)&startCounter);
 			::QueryPerformanceCounter((LARGE_INTEGER*)&lastCounter);
 		}
 
@@ -2347,7 +2353,6 @@ namespace corona
 			previousController = currentController;
 			currentController = _newCurrentController;
 			currentController->attach(this);
-			controllerLoaded = false;
 			::QueryPerformanceCounter((LARGE_INTEGER*)&startCounter);
 			::QueryPerformanceCounter((LARGE_INTEGER*)&lastCounter);
 		}
@@ -3009,19 +3014,19 @@ namespace corona
 			::SetScrollRange(control, SB_HORZ, 0, width, TRUE);
 		}
 
-		pointDto directApplication::getScrollPos(int ddlControlId)
+		point directApplication::getScrollPos(int ddlControlId)
 		{
 			HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
-			pointDto pt;
+			point pt;
 			pt.x = ::GetScrollPos(control, SB_HORZ);
 			pt.y = ::GetScrollPos(control, SB_VERT);
 			return pt;
 		}
 
-		pointDto directApplication::getScrollTrackPos(int ddlControlId)
+		point directApplication::getScrollTrackPos(int ddlControlId)
 		{
 			HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
-			pointDto pt;
+			point pt;
 
 			SCROLLINFO info;
 			info.cbSize = sizeof(SCROLLINFO);
@@ -3034,29 +3039,31 @@ namespace corona
 			return pt;
 		}
 
-		void directApplication::setScrollPos(int ddlControlId, pointDto pt)
+		void directApplication::setScrollPos(int ddlControlId, point pt)
 		{
 			HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
 			pt.x = ::SetScrollPos(control, SB_HORZ, pt.x, TRUE);
 			pt.y = ::SetScrollPos(control, SB_VERT, pt.y, TRUE);
 		}
 
-		sizeIntDto directApplication::getScrollRange(int ddlControlId)
+		point directApplication::getScrollRange(int ddlControlId)
 		{
 			HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
-			sizeIntDto sz;
-			int dummy;
-			::GetScrollRange(control, SB_HORZ, &dummy, &sz.width);
-			::GetScrollRange(control, SB_VERT, &dummy, &sz.height);
+			point sz;
+			int dummy, dx, dy;
+			::GetScrollRange(control, SB_HORZ, &dummy, &dx);
+			::GetScrollRange(control, SB_VERT, &dummy, &dy);
+			sz.x = dx;
+			sz.y = dy;
 			return sz;
 		}
 
-		rectDto directApplication::getWindowPos(int ddlControlId)
+		rectangle directApplication::getWindowPos(int ddlControlId)
 		{
 			HWND control = ddlControlId > 0 ? ::GetDlgItem(hwndRoot, ddlControlId) : hwndRoot;
 
 			RECT r;
-			rectDto rd;
+			rectangle rd;
 
 			::GetWindowRect(control, &r);
 
@@ -3073,14 +3080,14 @@ namespace corona
 			return rd;
 		}
 
-		void directApplication::setWindowPos(int ddlControlId, rectDto rect)
+		void directApplication::setWindowPos(int ddlControlId, rectangle rect)
 		{
 			HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
 
 			::MoveWindow(control, rect.x, rect.y, rect.w, rect.h, true);
 		}
 
-		void directApplication::setMinimumWindowSize(sizeIntDto size)
+		void directApplication::setMinimumWindowSize(point size)
 		{
 			this->minimumWindowSize = size;
 		}

@@ -6,9 +6,9 @@ namespace corona
 	{
 		enum class measure_units
 		{
-			percent = 0,
+			percent_container = 0,
 			pixels = 1,
-			size = 2
+			percent_size = 2
 		};
 
 		class measure
@@ -24,6 +24,7 @@ namespace corona
 		measure operator ""_px(long double px);
 		measure operator ""_pct(long double pct);
 		measure operator ""_psz(long double pct);
+		measure operator -(const measure& _src);
 
 		class layout_rect
 		{

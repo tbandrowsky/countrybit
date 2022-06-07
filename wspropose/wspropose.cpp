@@ -24,8 +24,7 @@ int __stdcall WinMain(HINSTANCE hInstance,
 	forceWindowed = true;
 #endif
 
-	corona::win32::viewStyle* styleSheet = new corona::win32::viewStyle();
-	proposal::wsproposal_controller* mainController = new proposal::wsproposal_controller(styleSheet);
+	proposal::wsproposal_controller* mainController = new proposal::wsproposal_controller();
 
 	if (forceWindowed) {
 		wsPropose.runDialog(hInstance, "Woodruff Sawyer Proposal", IDI_WSPROPOSE, false, mainController);

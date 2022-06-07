@@ -67,7 +67,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)table.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)presentation.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)utility.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)viewstyle.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)visual.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)wave_box.h" />
   </ItemGroup>
   <ItemGroup>
@@ -93,6 +93,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)jdatabase_client.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)jdatabase_server.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)jfield.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)layout_rect_box.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)list_box.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)directory.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)file.cpp" />
@@ -119,7 +120,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)table.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)time_box.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)utility.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)viewstyle.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)presentation.cpp" />
   </ItemGroup>
 </Project>

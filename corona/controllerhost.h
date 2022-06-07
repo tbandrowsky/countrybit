@@ -3,30 +3,33 @@
 
 namespace corona
 {
+
 	namespace win32
 	{
+		using namespace database;
 
 		class drawableHost {
 		public:
 			virtual void beginDraw() = 0;
 			virtual void endDraw() = 0;
-			virtual void clear(colorDto* _color) = 0;
-			virtual void addBitmap(bitmapDto* _bitmap) = 0;
-			virtual bool setBitmapSizes(bitmapDto* _bitmap, bool _forceResize) = 0;
-			virtual bool setBitmapFilter(bitmapDto* _bitmap, std::function<bool(sizeIntDto, int, int, char* bytes)> _filter) = 0;
-			virtual void addBitmapBrush(bitmapBrushDto* _bitmapBrush) = 0;
-			virtual void addSolidColorBrush(solidBrushDto* _solidBrushDto) = 0;
-			virtual void addLinearGradientBrush(linearGradientBrushDto* _linearGradientBrushDto) = 0;
-			virtual void addRadialGradientBrush(radialGradientBrushDto* _radialGradientBrushDto) = 0;
+			virtual void clear(color* _color) = 0;
+			virtual void addBitmap(bitmapRequest* _bitmap) = 0;
+			virtual bool setBitmapSizes(bitmapRequest* _bitmap, bool _forceResize) = 0;
+			virtual bool setBitmapFilter(bitmapRequest* _bitmap, std::function<bool(point, int, int, char* bytes)> _filter) = 0;
+			virtual void addBitmapBrush(bitmapBrushRequest* _bitmapBrush) = 0;
+			virtual void addSolidColorBrush(solidBrushRequest* _solidBrushDto) = 0;
+			virtual void addLinearGradientBrush(linearGradientBrushRequest* _linearGradientBrushDto) = 0;
+			virtual void addRadialGradientBrush(radialGradientBrushRequest* _radialGradientBrushDto) = 0;
 			virtual void clearBitmapsAndBrushes(bool deleteStockObjects = false) = 0;
 
 			virtual void addPath(pathDto* _pathDto, bool _closed = true) = 0;
+			virtual void addViewStyle(viewStyleRequest* _textStyle) = 0;
+
 			virtual void clearPaths() = 0;
 
-			virtual void addTextStyle(textStyleDto* _textStyle) = 0;
 			virtual void drawPath(pathInstance2dDto* _pathInstanceDto) = 0;
 			virtual void drawPath(pathImmediateDto* _pathImmediateDto) = 0;
-			virtual void drawText(textInstance2dDto* _textInstanceDto) = 0;
+			virtual void drawText(drawTextRequest* _textInstanceDto) = 0;
 			virtual void drawBitmap(bitmapInstanceDto* _bitmapInstanceDto) = 0;
 
 			virtual void drawLine(database::point* start, database::point* stop, const char* _fillBrush, double thickness) = 0;
@@ -35,15 +38,14 @@ namespace corona
 			virtual database::rectangle getCanvasSize() = 0;
 
 			virtual void popCamera() = 0;
-			virtual void pushCamera(pointDto* _position, float _rotation, float _scale = 1.0) = 0;
+			virtual void pushCamera(point* _position, float _rotation, float _scale = 1.0) = 0;
 
-			virtual sizeIntDto getSize() = 0;
+			virtual point getSize() = 0;
 
-			virtual drawableHost* createBitmap(sizeIntDto& _size) = 0;
-			virtual void drawBitmap(drawableHost* _directBitmap, pointDto& _dest, sizeIntDto& _size) = 0;
+			virtual drawableHost* createBitmap(point& _size) = 0;
+			virtual void drawBitmap(drawableHost* _directBitmap, point& _dest, point& _size) = 0;
 			virtual bool isBitmap() { return false; }
 			virtual void save(const char* _filename) = 0;
-
 		};
 
 		class controllerHost {
@@ -95,14 +97,14 @@ namespace corona
 
 			virtual void setScrollHeight(int ddlControlId, int height) = 0;
 			virtual void setScrollWidth(int ddlControlId, int width) = 0;
-			virtual pointDto getScrollPos(int ddlControlId) = 0;
-			virtual pointDto getScrollTrackPos(int ddlControlId) = 0;
-			virtual sizeIntDto getScrollRange(int ddlControlId) = 0;
-			virtual void setScrollPos(int ddlControlId, pointDto pt) = 0;
+			virtual point getScrollPos(int ddlControlId) = 0;
+			virtual point getScrollTrackPos(int ddlControlId) = 0;
+			virtual point getScrollRange(int ddlControlId) = 0;
+			virtual void setScrollPos(int ddlControlId, point pt) = 0;
 
-			virtual rectDto getWindowPos(int ddlControlId) = 0;
-			virtual void setWindowPos(int ddlControlId, rectDto rect) = 0;
-			virtual void setMinimumWindowSize(sizeIntDto size) = 0;
+			virtual rectangle getWindowPos(int ddlControlId) = 0;
+			virtual void setWindowPos(int ddlControlId, rectangle rect) = 0;
+			virtual void setMinimumWindowSize(point size) = 0;
 
 			virtual void setSpinRange(int ddlControlId, int lo, int high) = 0;
 			virtual void setSpinPos(int ddlControlId, int pos) = 0;

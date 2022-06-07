@@ -5,7 +5,8 @@ namespace corona
 {
 	namespace win32
 	{
-		class viewStyle;
+
+		using namespace database;
 
 		enum scrollTypes
 		{
@@ -22,13 +23,12 @@ namespace corona
 		protected:
 
 			controllerHost* host;
-			viewStyle* style;
 
 		public:
 
-			colorDto backgroundColor;
+			color backgroundColor;
 
-			controller(viewStyle* _style);
+			controller();
 			virtual ~controller();
 
 			inline controllerHost* getHost() { return host; }
@@ -42,29 +42,42 @@ namespace corona
 			virtual void loadController() = 0;
 			virtual void keyDown(short _key) = 0;
 			virtual void keyUp(short _key) = 0;
-			virtual void mouseMove(pointDto* _point) = 0;
-			virtual void mouseClick(pointDto* _point) = 0;
-			virtual void pointSelected(pointDto* _point, colorDto* _color) = 0;
+			virtual void mouseMove(point* _point) = 0;
+			virtual void mouseClick(point* _point) = 0;
+			virtual void pointSelected(point* _point, color* _color) = 0;
 			virtual void drawFrame() = 0;
 			virtual bool update(double _elapsedSeconds, double _totalSeconds) = 0;
 
 			virtual void onInit() = 0;
-			virtual void onCreated(const rectDto& newSize) = 0;
+			virtual void onCreated(const rectangle& newSize) = 0;
 			virtual void onCommand(int buttonId) = 0;
 			virtual void onTextChanged(int textControlId) = 0;
 			virtual void onDropDownChanged(int dropDownId) = 0;
 			virtual void onListViewChanged(int listViewId) = 0;
 			virtual int onHScroll(int controlId, scrollTypes scrollType) = 0;
 			virtual int onVScroll(int controlId, scrollTypes scrollType) = 0;
-			virtual int onResize(const rectDto& newSize) = 0;
+			virtual int onResize(const rectangle& newSize) = 0;
 			virtual int onSpin(int controlId, int newPosition) = 0;
 
-			// helper stuff for views
-			void getH1Styles(textInstance2dDto* _dto);
-			void getH2Styles(textInstance2dDto* _dto);
-			void getH3Styles(textInstance2dDto* _dto);
-			void getLabelStyles(textInstance2dDto* _dto);
-			void getDataStyles(textInstance2dDto* _dto);
+			const char* nameStyle = "name";
+			const char* viewTitleStyle = "view_title";
+			const char* viewSubTitleStyle = "view_subtitle";
+			const char* viewSectionStyle = "view_section";
+			const char* viewStyle = "view";
+			const char* disclaimerStyle = "disclaimer";
+			const char* copyrightStyle = "copyright";
+			const char* h1Style = "h1";
+			const char* h2Style = "h2";
+			const char* h3Style = "h3";
+			const char* columnNumberHeadStyle = "column_number_head";
+			const char* columnTextHeadStyle = "column_text_head";
+			const char* columnDataStyle = "column_data";
+			const char* labelStyle = "label";
+			const char* controlStyle = "control";
+			const char* chartAxisStyle = "chart_axis";
+			const char* chartLegendStyle = "chart_legend";
+			const char* chartBlockStyle = "chart_block";
+			const char* tooltipStyle = "tooltip";
 
 		};
 
@@ -94,32 +107,34 @@ namespace corona
 			int magnification;
 
 			void fromImage();
-			void clearErrors(errorDto* _error);
-			void addError(errorDto* _error);
+			void clearErrors(base_result* _error);
+			void addError(base_result* _error);
 			void setScrollBars();
 
 			// for sprite sheets
 			void exportBitmap(const char* _filenameImage);
 			void exportBitmapRectangles(const char* _filenameImage, const char* _templateFile);
 
-			pointDto currentScroll;
+			point currentScroll;
 
 			void randomAdvertisement();
 
-			corona::database::dynamic_box box;
-			corona::database::jschema schema;
-			corona::database::relative_ptr_type schema_id;
-			corona::database::jcollection program_chart;
-			corona::database::jactor sample_actor;
-			corona::database::page pg;
-			corona::database::actor_state state;
+			dynamic_box box;
+			jschema schema;
+			relative_ptr_type schema_id;
+			jcollection program_chart;
+			jactor sample_actor;
+			page pg;
+			actor_state state;
 
 			int canvasWindowsId;
 
+			void stateChanged(const rectangle& newSize);
+
 		public:
 
-			corona_controller(viewStyle* _style)
-				: controller(_style),
+			corona_controller()
+				: 
 				showUpdate(false),
 				currentWindowView(currentWindowViews::viewEmpty),
 				previewMode(false),
@@ -130,32 +145,56 @@ namespace corona
 
 			virtual ~corona_controller();
 
-			virtual void for_each(std::function<bool(const database::actor_view_collection::iterator_item_type& _item)> selector, std::function<bool(database::actor_view_object& avo, database::jslice& slice)> updator);
-			virtual void for_each(database::relative_ptr_type class_id, std::function<bool(const database::actor_view_object& avo, database::jslice& slice)>  updator);
-			virtual void for_each(database::jslice& _parent, database::relative_ptr_type* _join_fields, std::function<bool(const database::actor_view_object& avo, database::jslice& slice)>  updator);
-			virtual void for_each(database::relative_ptr_type* _has_field_list, std::function<bool(const database::actor_view_object& avo, database::jslice& slice)>  updator);
+			virtual void clear();
 
-			virtual void stateChanged(const rectDto& newSize) = 0;
+			page_item* row(page_item* _parent, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
+			page_item* column(page_item* _parent, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
+			page_item* absolute(page_item* _parent, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
+			page_item* canvas2d(page_item* _parent, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
+			page_item* h1(page_item* _parent, const char* _text, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
+			page_item* h2(page_item* _parent, const char* _text, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
+			page_item* h3(page_item* _parent, const char* _text, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
+			page_item* space(page_item* _parent, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
+
+			virtual void for_each(std::function<bool(const actor_view_collection::iterator_item_type& _item)> selector, std::function<bool(actor_view_object& avo, jslice& slice)> updator);
+			virtual void for_each(relative_ptr_type class_id, std::function<bool(const actor_view_object& avo, jslice& slice)>  updator);
+			virtual void for_each(jslice& _parent, relative_ptr_type* _join_fields, std::function<bool(const actor_view_object& avo, jslice& slice)>  updator);
+			virtual void for_each(relative_ptr_type* _has_field_list, std::function<bool(const actor_view_object& avo, jslice& slice)>  updator);
+
+			virtual page_item *row(page_item* _parent_ui, layout_rect _box, std::function<bool(const actor_view_collection::iterator_item_type& _item)> selector);
+			virtual page_item* row(page_item* _parent_ui, layout_rect _box, relative_ptr_type class_id);
+			virtual page_item* row(page_item* _parent_ui, layout_rect _box, jslice& _parent, relative_ptr_type* _join_fields);
+			virtual page_item* row(page_item* _parent_ui, layout_rect _box, relative_ptr_type* _has_field_list);
+
+			virtual page_item* column(page_item* _parent_ui, layout_rect _box, std::function<bool(const actor_view_collection::iterator_item_type& _item)> selector);
+			virtual page_item* column(page_item* _parent_ui, layout_rect _box, relative_ptr_type class_id);
+			virtual page_item* column(page_item* _parent_ui, layout_rect _box, jslice& _parent, relative_ptr_type* _join_fields);
+			virtual page_item* column(page_item* _parent_ui, layout_rect _box, relative_ptr_type* _has_field_list);
+
+			virtual void render(const rectangle& newSize) = 0;
+			virtual void render_item(drawableHost *_host, page_item& _item) = 0;
+			virtual void drawFrame();
+
 			virtual void loadController() = 0;
-			virtual void drawFrame() = 0;
 			virtual void onInit() = 0;
 
 			virtual void keyDown(short _key);
 			virtual void keyUp(short _key);
-			virtual void mouseMove(pointDto* _point);
-			virtual void mouseClick(pointDto* _point);
-			virtual void pointSelected(pointDto* _point, colorDto* _color);
+			virtual void mouseMove(point* _point);
+			virtual void mouseClick(point* _point);
+			virtual void pointSelected(point* _point, color* _color);
 			virtual bool update(double _elapsedSeconds, double _totalSeconds);
 
-			virtual void onCreated(const rectDto& newSize);
+			virtual void onCreated(const rectangle& newSize);
 			virtual void onCommand(int buttonId);
 			virtual void onTextChanged(int textControlId);
 			virtual void onDropDownChanged(int dropDownId);
 			virtual void onListViewChanged(int listViewId);
 			virtual int onHScroll(int controlId, scrollTypes scrollType);
 			virtual int onVScroll(int controlId, scrollTypes scrollType);
-			virtual int onResize(const rectDto& newSize);
+			virtual int onResize(const rectangle& newSize);
 			virtual int onSpin(int controlId, int newPosition);
+
 		};
 
 	}

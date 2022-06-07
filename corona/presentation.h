@@ -85,6 +85,7 @@ namespace corona
 
 			page_item* row(page_item* _parent, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
 			page_item* column( page_item* _parent, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
+
 			page_item* absolute(page_item* _parent, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
 			page_item* canvas2d(page_item* _parent, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
 			page_item* h1(page_item* _parent, const char* _text, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
@@ -93,6 +94,7 @@ namespace corona
 			page_item* space(page_item* _parent, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
 
 			page_item* field(page_item* _parent, int object_id, int field_id, jslice slice);
+			page_item* select(page_item* _parent, actor_state* _state, int object_id, jslice slice);
 
 			page_item* actor_update_fields(page_item* _parent, actor_state* _state, jschema* _schema, jcollection* _collection);
 			page_item* actor_create_buttons(page_item* _parent, actor_state* _state, jschema* _schema, jcollection* _collection);
