@@ -366,7 +366,9 @@ namespace corona
 					alpha,
 					identifier,
 					datesep,
-					operchars
+					operchars,
+					hex,
+					pound
 				} search_type;
 
 				int match;
@@ -423,6 +425,19 @@ namespace corona
 					const char* last = g.count + first;
 					int value = 0;
 					auto fcr = std::from_chars(first, last, value);
+					return value;
+				}
+
+				int get_hex(int group_index)
+				{
+					if (group_index >= num_groups || group_index < 0) {
+						return 0;
+					}
+					auto g = groups[group_index];
+					const char* first = g.match + src;
+					const char* last = g.count + first;
+					int value = 0;
+					auto fcr = std::from_chars(first, last, value, 16);
 					return value;
 				}
 
@@ -661,6 +676,7 @@ namespace corona
 			get_dimension_result get_dimensions();
 			get_datetime_result get_date();
 			get_color_result get_color();
+			get_color_result get_color_alpha();
 			get_rectangle_result get_rectangle();
 			get_point_result get_point();
 			get_audio_result get_audio();

@@ -187,6 +187,8 @@ namespace corona
 
 			virtual drawableHost* getDrawable(int i);
 
+			HFONT createFontFromStyleSheet(relative_ptr_type _style_id);
+
 			void createChildWindow(
 				LPCTSTR		lpClassName,
 				LPCTSTR		lpWindowName,

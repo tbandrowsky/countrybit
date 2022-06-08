@@ -535,6 +535,519 @@ namespace corona
 			}
 		}
 
+		void dynamic_value::copy(const dynamic_value& _src)
+		{
+			field_id = _src.field_id;
+			this_type = _src.this_type;
+			switch (this_type)
+			{
+			case jtype::type_int8:
+			case jtype::type_int16:
+			case jtype::type_int32:
+			case jtype::type_int64:
+				int_value = _src.int_value;
+				break;
+			case jtype::type_float32:
+			case jtype::type_float64:
+				double_value = _src.double_value;
+				break;
+			case jtype::type_collection_id:
+				throw std::logic_error("not implemented");
+				break;
+			case jtype::type_color:
+				color_value = _src.color_value;
+				break;
+			case jtype::type_datetime:
+				time_value = _src.time_value;
+				break;
+			case jtype::type_file:
+				throw std::logic_error("not implemented");
+				break;
+			case jtype::type_http:
+				throw std::logic_error("not implemented");
+				break;
+			case jtype::type_image:
+				throw std::logic_error("not implemented");
+				break;
+			case jtype::type_layout_rect:
+				layout_rect_value = _src.layout_rect_value;
+				break;
+			case jtype::type_list:
+				throw std::logic_error("not implemented");
+				break;
+			case jtype::type_midi:
+				throw std::logic_error("not implemented");
+				break;
+			case jtype::type_null:
+				break;
+			case jtype::type_object:
+				throw std::logic_error("not implemented");
+				break;
+			case jtype::type_object_id:
+				throw std::logic_error("not implemented");
+				break;
+			case jtype::type_point:
+				point_value = _src.point_value;
+				break;
+			case jtype::type_query:
+				throw std::logic_error("not implemented");
+				break;
+			case jtype::type_rectangle:
+				rectangle_value = _src.rectangle_value;
+				break;
+			case jtype::type_sql:
+				break;
+			case jtype::type_string:
+				string_value = _src.string_value;
+				break;
+			case jtype::type_wave:
+				break;
+			}
+		}
+
+		dynamic_value::dynamic_value(const dynamic_value& _src)
+		{
+			copy(_src);
+		}
+
+		dynamic_value dynamic_value::operator =(const dynamic_value& _src)
+		{
+			copy(_src);
+			return *this;
+		}
+
+		dynamic_value::operator std::string()
+		{
+			std::string z;
+			switch (this_type)
+			{
+			case jtype::type_int8:
+			case jtype::type_int16:
+			case jtype::type_int32:
+			case jtype::type_int64:
+				z = std::format("{}", int_value);
+				break;
+			case jtype::type_float32:
+			case jtype::type_float64:
+				z = std::format("{}", double_value);
+				break;
+			case jtype::type_collection_id:
+				throw std::logic_error("can't convert to string");
+				break;
+			case jtype::type_color:
+				throw std::logic_error("can't convert to string");
+				break;
+			case jtype::type_datetime:
+				throw std::logic_error("can't convert to string");
+				break;
+			case jtype::type_file:
+				throw std::logic_error("can't convert to string");
+				break;
+			case jtype::type_http:
+				throw std::logic_error("can't convert to string");
+				break;
+			case jtype::type_image:
+				throw std::logic_error("can't convert to string");
+				break;
+			case jtype::type_layout_rect:
+				throw std::logic_error("can't convert to string");
+				break;
+			case jtype::type_list:
+				throw std::logic_error("can't convert to string");
+				break;
+			case jtype::type_midi:
+				throw std::logic_error("can't convert to string");
+				break;
+			case jtype::type_null:
+				throw std::logic_error("can't convert to string");
+				break;
+			case jtype::type_object:
+				throw std::logic_error("can't convert to string");
+				break;
+			case jtype::type_object_id:
+				throw std::logic_error("can't convert to string");
+				break;
+			case jtype::type_point:
+				throw std::logic_error("can't convert to string");
+				break;
+			case jtype::type_query:
+				throw std::logic_error("can't convert to string");
+				break;
+			case jtype::type_rectangle:
+				throw std::logic_error("can't convert to string");
+				break;
+			case jtype::type_sql:
+				throw std::logic_error("can't convert to string");
+				break;
+			case jtype::type_string:
+				z = string_value;
+				break;
+			case jtype::type_wave:
+				throw std::logic_error("can't convert to string");
+				break;
+			}
+			return z;
+		}
+
+		dynamic_value::operator color ()
+		{
+			switch (this_type)
+			{
+			case jtype::type_int8:
+			case jtype::type_int16:
+			case jtype::type_int32:
+			case jtype::type_int64:
+				throw std::logic_error("can't convert to color");
+				break;
+			case jtype::type_float32:
+			case jtype::type_float64:
+				throw std::logic_error("can't convert to color");
+				break;
+			case jtype::type_collection_id:
+				throw std::logic_error("can't convert to color");
+				break;
+			case jtype::type_color:
+				return color_value;
+			case jtype::type_datetime:
+				throw std::logic_error("can't convert to color");
+				break;
+			case jtype::type_file:
+				throw std::logic_error("can't convert to color");
+				break;
+			case jtype::type_http:
+				throw std::logic_error("can't convert to color");
+				break;
+			case jtype::type_image:
+				throw std::logic_error("can't convert to color");
+				break;
+			case jtype::type_layout_rect:
+				throw std::logic_error("can't convert to color");
+				break;
+			case jtype::type_list:
+				throw std::logic_error("can't convert to color");
+				break;
+			case jtype::type_midi:
+				throw std::logic_error("can't convert to color");
+				break;
+			case jtype::type_null:
+				throw std::logic_error("can't convert to color");
+				break;
+			case jtype::type_object:
+				throw std::logic_error("can't convert to color");
+				break;
+			case jtype::type_object_id:
+				throw std::logic_error("can't convert to color");
+				break;
+			case jtype::type_point:
+				throw std::logic_error("can't convert to color");
+				break;
+			case jtype::type_query:
+				throw std::logic_error("can't convert to color");
+				break;
+			case jtype::type_rectangle:
+				throw std::logic_error("can't convert to color");
+				break;
+			case jtype::type_sql:
+				throw std::logic_error("can't convert to color");
+				break;
+			case jtype::type_string:
+				throw std::logic_error("can't convert to color");
+				break;
+			case jtype::type_wave:
+				throw std::logic_error("can't convert to color");
+				break;
+			}
+		}
+
+		dynamic_value::operator point()
+		{
+			switch (this_type)
+			{
+			case jtype::type_int8:
+			case jtype::type_int16:
+			case jtype::type_int32:
+			case jtype::type_int64:
+				throw std::logic_error("can't convert to point");
+				break;
+			case jtype::type_float32:
+			case jtype::type_float64:
+				throw std::logic_error("can't convert to point");
+				break;
+			case jtype::type_collection_id:
+				throw std::logic_error("can't convert to point");
+				break;
+			case jtype::type_color:
+				throw std::logic_error("can't convert to point");
+				break;
+			case jtype::type_datetime:
+				throw std::logic_error("can't convert to point");
+				break;
+			case jtype::type_file:
+				throw std::logic_error("can't convert to point");
+				break;
+			case jtype::type_http:
+				throw std::logic_error("can't convert to point");
+				break;
+			case jtype::type_image:
+				throw std::logic_error("can't convert to point");
+				break;
+			case jtype::type_layout_rect:
+				throw std::logic_error("can't convert to point");
+				break;
+			case jtype::type_list:
+				throw std::logic_error("can't convert to point");
+				break;
+			case jtype::type_midi:
+				throw std::logic_error("can't convert to point");
+				break;
+			case jtype::type_null:
+				throw std::logic_error("can't convert to point");
+				break;
+			case jtype::type_object:
+				throw std::logic_error("can't convert to point");
+				break;
+			case jtype::type_object_id:
+				throw std::logic_error("can't convert to point");
+				break;
+			case jtype::type_point:
+				return point_value;
+			case jtype::type_query:
+				throw std::logic_error("can't convert to point");
+				break;
+			case jtype::type_rectangle:
+				throw std::logic_error("can't convert to point");
+				break;
+			case jtype::type_sql:
+				throw std::logic_error("can't convert to point");
+				break;
+			case jtype::type_string:
+				throw std::logic_error("can't convert to point");
+				break;
+			case jtype::type_wave:
+				throw std::logic_error("can't convert to point");
+				break;
+			}
+		}
+
+		dynamic_value::operator rectangle()
+		{
+			switch (this_type)
+			{
+			case jtype::type_int8:
+			case jtype::type_int16:
+			case jtype::type_int32:
+			case jtype::type_int64:
+				throw std::logic_error("can't convert to rectangle");
+				break;
+			case jtype::type_float32:
+			case jtype::type_float64:
+				throw std::logic_error("can't convert to rectangle");
+				break;
+			case jtype::type_collection_id:
+				throw std::logic_error("can't convert to rectangle");
+				break;
+			case jtype::type_color:
+				throw std::logic_error("can't convert to rectangle");
+				break;
+			case jtype::type_datetime:
+				throw std::logic_error("can't convert to rectangle");
+				break;
+			case jtype::type_file:
+				throw std::logic_error("can't convert to rectangle");
+				break;
+			case jtype::type_http:
+				throw std::logic_error("can't convert to rectangle");
+				break;
+			case jtype::type_image:
+				throw std::logic_error("can't convert to rectangle");
+				break;
+			case jtype::type_layout_rect:
+				throw std::logic_error("can't convert to rectangle");
+				break;
+			case jtype::type_list:
+				throw std::logic_error("can't convert to rectangle");
+				break;
+			case jtype::type_midi:
+				throw std::logic_error("can't convert to rectangle");
+				break;
+			case jtype::type_null:
+				throw std::logic_error("can't convert to rectangle");
+				break;
+			case jtype::type_object:
+				throw std::logic_error("can't convert to rectangle");
+				break;
+			case jtype::type_object_id:
+				throw std::logic_error("can't convert to rectangle");
+				break;
+			case jtype::type_point:
+				throw std::logic_error("can't convert to rectangle");
+				break;
+			case jtype::type_query:
+				throw std::logic_error("can't convert to rectangle");
+				break;
+			case jtype::type_rectangle:
+				return rectangle_value;
+			case jtype::type_sql:
+				throw std::logic_error("can't convert to rectangle");
+				break;
+			case jtype::type_string:
+				throw std::logic_error("can't convert to rectangle");
+				break;
+			case jtype::type_wave:
+				throw std::logic_error("can't convert to rectangle");
+				break;
+			}
+		}
+
+		dynamic_value::operator layout_rect()
+		{
+			switch (this_type)
+			{
+			case jtype::type_int8:
+			case jtype::type_int16:
+			case jtype::type_int32:
+			case jtype::type_int64:
+				throw std::logic_error("can't convert to layout_rect");
+				break;
+			case jtype::type_float32:
+			case jtype::type_float64:
+				throw std::logic_error("can't convert to layout_rect");
+				break;
+			case jtype::type_collection_id:
+				throw std::logic_error("can't convert to layout_rect");
+				break;
+			case jtype::type_color:
+				throw std::logic_error("can't convert to layout_rect");
+				break;
+			case jtype::type_datetime:
+				throw std::logic_error("can't convert to layout_rect");
+				break;
+			case jtype::type_file:
+				throw std::logic_error("can't convert to layout_rect");
+				break;
+			case jtype::type_http:
+				throw std::logic_error("can't convert to layout_rect");
+				break;
+			case jtype::type_image:
+				throw std::logic_error("can't convert to layout_rect");
+				break;
+			case jtype::type_layout_rect:
+				return layout_rect_value;
+			case jtype::type_list:
+				throw std::logic_error("can't convert to layout_rect");
+				break;
+			case jtype::type_midi:
+				throw std::logic_error("can't convert to layout_rect");
+				break;
+			case jtype::type_null:
+				throw std::logic_error("can't convert to layout_rect");
+				break;
+			case jtype::type_object:
+				throw std::logic_error("can't convert to layout_rect");
+				break;
+			case jtype::type_object_id:
+				throw std::logic_error("can't convert to layout_rect");
+				break;
+			case jtype::type_point:
+				throw std::logic_error("can't convert to layout_rect");
+				break;
+			case jtype::type_query:
+				throw std::logic_error("can't convert to layout_rect");
+				break;
+			case jtype::type_rectangle:
+				throw std::logic_error("can't convert to layout_rect");
+				break;
+			case jtype::type_sql:
+				throw std::logic_error("can't convert to layout_rect");
+				break;
+			case jtype::type_string:
+				throw std::logic_error("can't convert to layout_rect");
+				break;
+			case jtype::type_wave:
+				throw std::logic_error("can't convert to layout_rect");
+				break;
+			}
+		}
+
+		dynamic_value jslice::get(relative_ptr_type _field_id)
+		{
+
+			dynamic_value sma;
+
+			int _field_idx = get_field_index_by_id(_field_id);
+			jfield& field = get_field(_field_idx);
+			switch (field.type_id)
+			{
+			case jtype::type_int8:
+				sma = dynamic_value( _field_idx, (int64_t)get_int8(_field_idx) );
+				break;
+			case jtype::type_int16:
+				sma = dynamic_value(_field_idx, (int64_t)get_int16(_field_idx) );
+				break;
+			case jtype::type_int32:
+				sma = dynamic_value(_field_idx, (int64_t)get_int32(_field_idx) );
+				break;
+			case jtype::type_int64:
+				sma = dynamic_value(_field_idx, (int64_t)get_int64(_field_idx) );
+				break;
+			case jtype::type_float32:
+				sma = dynamic_value(_field_idx, (double)get_float(_field_idx) );
+				break;
+			case jtype::type_float64:
+				sma = dynamic_value(_field_idx, (double)get_double(_field_idx) );
+				break;
+			case jtype::type_collection_id:
+				break;
+			case jtype::type_color:
+				sma = dynamic_value(_field_idx, (color)get_color(_field_idx));
+				break;
+			case jtype::type_datetime:
+				sma = dynamic_value(_field_idx, (time_t)get_time(_field_idx));
+				break;
+			case jtype::type_file:
+				break;
+			case jtype::type_http:
+				break;
+			case jtype::type_image:
+				break;
+			case jtype::type_layout_rect:
+				sma = dynamic_value(_field_idx, get_layout_rect(_field_idx));
+				break;
+			case jtype::type_list:
+				break;
+			case jtype::type_midi:
+				break;
+			case jtype::type_null:
+				break;
+			case jtype::type_object:
+				break;
+			case jtype::type_object_id:
+				break;
+			case jtype::type_point:
+				sma = dynamic_value(_field_idx, get_point(_field_idx));
+				break;
+			case jtype::type_query:
+				break;
+			case jtype::type_rectangle:
+				sma = dynamic_value(_field_idx, get_rectangle(_field_idx));
+				break;
+			case jtype::type_sql:
+				break;
+			case jtype::type_string:
+				sma = dynamic_value(_field_idx, get_string(_field_idx).c_str());
+				break;
+			case jtype::type_wave:
+				break;
+			}
+
+			return sma;
+		}
+
+		dynamic_value jslice::operator[](relative_ptr_type field_id)
+		{
+			return get(field_id);
+		}
+
 		jslice::jslice() : schema(nullptr), class_id(null_row), bytes(nullptr), box(nullptr), location(null_row)
 		{
 			;
@@ -622,6 +1135,11 @@ namespace corona
 		jclass jslice::get_class()
 		{
 			return the_class;
+		}
+
+		jschema *jslice::get_schema()
+		{
+			return schema;
 		}
 
 		size_t jslice::get_offset(int field_idx, jtype _type)
@@ -1065,6 +1583,12 @@ namespace corona
 			return jerry;
 		}
 
+		jslice jslice::get_slice(int field_idx, dimensions_type _dim, bool _use_id)
+		{
+			jarray arr = get_object(field_idx, _use_id);
+			return arr.get_slice(_dim);
+		}
+
 		jlist jslice::get_list(int field_idx, bool _use_id)
 		{
 			if (_use_id) field_idx = get_field_index_by_id(field_idx);
@@ -1232,6 +1756,240 @@ namespace corona
 		{
 			int index = get_field_index_by_name(field_name);
 			return get_file_remote(index);
+		}
+
+		void jslice::set_value(const dynamic_value& _member_assignment)
+		{
+			int index = get_field_index_by_id(_member_assignment.field_id);
+			auto fld = get_field(index);
+
+			switch (_member_assignment.this_type)
+			{
+			case jtype::type_float64:
+			case jtype::type_float32:
+				switch (fld.type_id)
+				{
+					case jtype::type_float64:
+					{
+						auto fb = get_double(index);
+						fb = _member_assignment.double_value;
+					}
+					break;
+					case jtype::type_float32:
+					{
+						auto fb = get_float(index);
+						fb = _member_assignment.double_value;
+					}
+					break;
+					case jtype::type_int64:
+					{
+						auto fb = get_int64(index);
+						fb = _member_assignment.double_value;
+					}
+					break;
+					case jtype::type_int32:
+					{
+						auto fb = get_int32(index);
+						fb = _member_assignment.double_value;
+					}
+					break;
+					case jtype::type_int16:
+					{
+						auto fb = get_int32(index);
+						fb = _member_assignment.double_value;
+					}
+					break;
+					case jtype::type_int8:
+					{
+						auto fb = get_int32(index);
+						fb = _member_assignment.double_value;
+					}
+					break;
+					case jtype::type_string:
+					{
+						auto fb = get_string(index);
+						fb = _member_assignment.double_value;
+					}
+					break;
+				}
+				break;
+			case jtype::type_int64:
+			case jtype::type_int32:
+			case jtype::type_int16:
+			case jtype::type_int8:
+				switch (fld.type_id)
+				{
+					case jtype::type_float64:
+					{
+						auto fb = get_double(index);
+						fb = _member_assignment.int_value;
+						break;
+					}
+					case jtype::type_float32:
+					{
+						auto fb = get_float(index);
+						fb = _member_assignment.int_value;
+						break;
+					}
+					case jtype::type_int64:
+					{
+						auto fb = get_int64(index);
+						fb = _member_assignment.int_value;
+						break;
+					}
+					case jtype::type_int32:
+					{
+						auto fb = get_int32(index);
+						fb = _member_assignment.int_value;
+						break;
+					}
+					case jtype::type_int16:
+					{
+						auto fb = get_int32(index);
+						fb = _member_assignment.int_value;
+						break;
+					}
+					case jtype::type_int8:
+					{
+						auto fb = get_int32(index);
+						fb = _member_assignment.int_value;
+						break;
+					}
+					case jtype::type_string:
+					{
+						auto fb = get_string(index);
+						fb = _member_assignment.int_value;
+						break;
+					}
+				}
+				break;
+			case jtype::type_datetime:
+				switch (fld.type_id)
+				{
+					case jtype::type_datetime:
+					{
+						auto fb = get_time(index);
+						fb = _member_assignment.time_value;
+					}
+				}
+				break;
+			case jtype::type_point:
+				switch (fld.type_id)
+				{
+					case jtype::type_point:
+					{
+						auto fb = get_point(index);
+						fb = _member_assignment.point_value;
+					}
+				}
+				break;
+			case jtype::type_rectangle:
+				switch (fld.type_id)
+				{
+					case jtype::type_rectangle:
+					{
+						auto fb = get_rectangle(index);
+						fb = _member_assignment.rectangle_value;
+					}
+				}
+				break;
+			case jtype::type_layout_rect:
+				switch (fld.type_id)
+				{
+					case jtype::type_layout_rect:
+					{
+						auto fb = get_layout_rect(index);
+						fb = _member_assignment.layout_rect_value;
+					}
+				}
+				break;
+			case jtype::type_string:
+				switch (fld.type_id)
+				{
+					case jtype::type_string:
+						{
+							auto fb = get_string(index);
+							fb = _member_assignment.string_value.c_str();
+						}
+						break;
+					case jtype::type_float64:
+						{
+							auto fb = get_double(index);
+							fb = _member_assignment.string_value.to_double();
+						}
+						break;
+					case jtype::type_float32:
+						{
+							auto fb = get_float(index);
+							fb = _member_assignment.string_value.to_double();
+						}
+						break;
+					case jtype::type_color:
+						{
+							auto fb = get_color(index);
+							string_extractor ex(_member_assignment.string_value.c_str(), _member_assignment.string_value.size(), 8192, nullptr);
+							if (_member_assignment.string_value.size() > 7) 
+							{
+								auto r = ex.get_color_alpha();
+								if (r.success) {
+									fb->red = r.red;
+									fb->green = r.green;
+									fb->blue = r.blue;
+									fb->alpha = r.alpha;
+								}
+								else 
+								{
+									fb->red = 0;
+									fb->green = 0;
+									fb->blue = 0;
+									fb->alpha = 1.0;
+								}
+							}
+							else 
+							{
+								auto r = ex.get_color();
+								if (r.success) {
+									fb->red = r.red;
+									fb->green = r.green;
+									fb->blue = r.blue;
+									fb->alpha = r.alpha;
+								}
+								else
+								{
+									fb->red = 0;
+									fb->green = 0;
+									fb->blue = 0;
+									fb->alpha = 1.0;
+								}
+							}
+						}
+						break;
+					case jtype::type_int64:
+						{
+							auto fb = get_int64(index);
+							fb = _member_assignment.string_value.to_long();
+						}
+						break;
+					case jtype::type_int32:
+						{
+							auto fb = get_int32(index);
+							fb = _member_assignment.string_value.to_long();
+						}
+						break;
+					case jtype::type_int16:
+						{
+							auto fb = get_int16(index);
+							fb = _member_assignment.string_value.to_long();
+						}
+						break;
+					case jtype::type_int8:
+						{
+							auto fb = get_int8(index);
+							fb = _member_assignment.string_value.to_long();
+						}
+						break;
+				}
+			}
 		}
 
 		int jslice::size()

@@ -242,6 +242,11 @@ namespace corona
 				return l;
 			}
 
+			operator const char* () const
+			{
+				return c_str();
+			}
+
 			std::strong_ordering operator<=>(const string_box& _src) const
 			{
 				int x = std::strcmp(hdr->data, _src.hdr->data);
@@ -346,7 +351,6 @@ namespace corona
 				return *this;
 			}
 
-
 			const char* c_str() const
 			{
 				return &data[0];
@@ -357,15 +361,20 @@ namespace corona
 				return &data[0];
 			}
 
-			double to_double()
+			operator const char* () const
 			{
-				double d = std::strtod(c_str(), nullptr);
+				return c_str();
+			}
+
+			double to_double() const
+			{
+				double d = std::strtod(value(), nullptr);
 				return d;
 			}
 
-			long to_long()
+			long to_long() const
 			{
-				long l = std::strtol(c_str(), nullptr, 10);
+				long l = std::strtol(value(), nullptr, 10);
 				return l;
 			}
 

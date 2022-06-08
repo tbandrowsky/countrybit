@@ -1820,30 +1820,28 @@ namespace corona
 			childWindows.push_back(hwnd);
 		}
 
+		HFONT directApplication::createFontFromStyleSheet(relative_ptr_type _style_id)
+		{
+			HFONT hfont = nullptr;
+
+			if (currentController) {
+				auto slice = currentController->getStyleSheet();
+				auto schema = slice.get_schema();
+				auto styleSlice = slice.get_slice(_style_id, {0,0,0}, true);
+				hfont = CreateFont(styleSlice.get(schema->idfont_size), 0, 0, 0, FW_DONTCARE, (int32_t)styleSlice.get(schema->iditalic), FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH, styleSlice.get(schema->idfont_name));
+			}
+			return hfont;
+		}
+
 		int directApplication::renderPage(database::page& _page, database::jschema* _schema, database::actor_state& _state, database::jcollection& _collection)
 		{
 			HFONT oldControlFont = controlFont;
 			HFONT oldLabelFont = labelFont;
 			HFONT oldTitleFont = titleFont;
 
-			textStyle* controlStyle = textStyles[currentController->controlStyle];
-			textStyle* labelStyle = textStyles[currentController->labelStyle];
-			textStyle* titleStyle = textStyles[currentController->viewSectionStyle];
-
-			if (controlStyle) 
-			{
-				controlFont = CreateFont(controlStyle->get_size(), 0, 0, 0, FW_DONTCARE, controlStyle->get_italic(), FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH, controlStyle->get_fontName().c_str());
-			}
-
-			if (labelStyle) 
-			{
-				labelFont = CreateFont(labelStyle->get_size(), 0, 0, 0, FW_DONTCARE, controlStyle->get_italic(), FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH, labelStyle->get_fontName().c_str());
-			}
-
-			if (titleStyle) 
-			{
-				titleFont = CreateFont(titleStyle->get_size(), 0, 0, 0, FW_DONTCARE, controlStyle->get_italic(), TRUE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH, titleStyle->get_fontName().c_str());
-			}
+			controlFont = createFontFromStyleSheet(_schema->id_control);
+			labelFont = createFontFromStyleSheet(_schema->id_label);
+			titleFont = createFontFromStyleSheet(_schema->id_view_subtitle);
 
 			int canvasWindowId = -1;
 			destroyChildren();
@@ -2425,8 +2423,6 @@ namespace corona
 
 			setController(_firstController);
 
-			if (_firstController) _firstController->onInit();
-
 			::ShowWindow(hwndRoot, SW_SHOWNORMAL);
 			::UpdateWindow(hwndRoot);
 
@@ -2531,8 +2527,6 @@ namespace corona
 			}
 
 			setController(_firstController);
-
-			if (_firstController) _firstController->onInit();
 
 			::ShowWindow(hwndRoot, SW_SHOWNORMAL);
 			::UpdateWindow(hwndRoot);

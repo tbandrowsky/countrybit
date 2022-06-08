@@ -77,6 +77,307 @@ namespace corona
 			virtual corona_size_t size() = 0;
 		};
 
+		class dynamic_value
+		{
+			relative_ptr_type		field_id;
+			jtype					this_type;
+			object_description		string_value;
+			double					double_value;
+			corona_size_t			int_value;
+			time_t					time_value;
+			rectangle				rectangle_value;
+			layout_rect				layout_rect_value;
+			point					point_value;
+			color					color_value;
+
+			void copy(const dynamic_value& _src);
+
+		public:
+			friend class jslice;
+
+			dynamic_value() : field_id(null_row), this_type(jtype::type_null), string_value(""), double_value(0.0), int_value(0), time_value(0)
+			{
+				;
+			}
+
+			dynamic_value(const dynamic_value& _src);
+			dynamic_value operator =(const dynamic_value& _src);
+
+			template <explicit_char_ptr t> dynamic_value(relative_ptr_type _field_id, t _string_value) : field_id(_field_id), string_value(_string_value), this_type(jtype::type_string)
+			{
+				;
+			}
+
+			dynamic_value(relative_ptr_type _field_id, object_description& _string_value) : field_id(_field_id), string_value(_string_value), this_type(jtype::type_string)
+			{
+				;
+			}
+
+			template <explicit_double t> dynamic_value(relative_ptr_type _field_id, t _double_value) : field_id(_field_id), double_value(_double_value), this_type(jtype::type_float64)
+			{
+				;
+			}
+
+			template <explicit_int64 t> dynamic_value(relative_ptr_type _field_id, t _int_value) : field_id(_field_id), int_value(_int_value), this_type(jtype::type_int64)
+			{
+				;
+			}
+
+			template <explicit_int32 t> dynamic_value(relative_ptr_type _field_id, t _int_value) : field_id(_field_id), int_value(_int_value), this_type(jtype::type_int64)
+			{
+				;
+			}
+
+			template <explicit_bool t> dynamic_value(relative_ptr_type _field_id, t _bool_value) : field_id(_field_id), int_value(_bool_value), this_type(jtype::type_int64)
+			{
+				;
+			}
+
+			dynamic_value(relative_ptr_type _field_id, rectangle _rectangle_value) : field_id(_field_id), rectangle_value(_rectangle_value), this_type(jtype::type_rectangle)
+			{
+				;
+			}
+
+			dynamic_value(relative_ptr_type _field_id, layout_rect _layout_rect_value) : field_id(_field_id), layout_rect_value(_layout_rect_value), this_type(jtype::type_layout_rect)
+			{
+				;
+			}
+
+			dynamic_value(relative_ptr_type _field_id, point _point_value) : field_id(_field_id), point_value(_point_value), this_type(jtype::type_point)
+			{
+				;
+			}
+
+			dynamic_value(relative_ptr_type _field_id, color _color_value) : field_id(_field_id), color_value(_color_value), this_type(jtype::type_color)
+			{
+				;
+			}
+
+			template <explicit_double t> operator t()
+			{
+				double r;
+				switch (this_type)
+				{
+				case jtype::type_int8:
+				case jtype::type_int16:
+				case jtype::type_int32:
+				case jtype::type_int64:
+					r = int_value;
+					break;
+				case jtype::type_float32:
+				case jtype::type_float64:
+					r = double_value;
+					break;
+				case jtype::type_collection_id:
+					throw std::logic_error("can't convert collection id to double");
+					break;
+				case jtype::type_color:
+					throw std::logic_error("can't convert color to double");
+					break;
+				case jtype::type_datetime:
+					r = time_value;
+					break;
+				case jtype::type_file:
+					throw std::logic_error("can't convert file to double");
+					break;
+				case jtype::type_http:
+					throw std::logic_error("can't convert http to double");
+					break;
+				case jtype::type_image:
+					throw std::logic_error("can't convert image to double");
+					break;
+				case jtype::type_layout_rect:
+					throw std::logic_error("can't convert layout_rect to double");
+					break;
+				case jtype::type_list:
+					throw std::logic_error("can't convert list to double");
+					break;
+				case jtype::type_midi:
+					throw std::logic_error("can't convert midi to double");
+					break;
+				case jtype::type_null:
+					throw std::logic_error("can't convert null to double");
+					break;
+				case jtype::type_object:
+					throw std::logic_error("can't convert object to double");
+					break;
+				case jtype::type_object_id:
+					throw std::logic_error("can't convert object_id to double");
+					break;
+				case jtype::type_point:
+					throw std::logic_error("can't convert point to double");
+					break;
+				case jtype::type_query:
+					throw std::logic_error("can't convert query to double");
+					break;
+				case jtype::type_rectangle:
+					throw std::logic_error("can't convert rectangle to double");
+					break;
+				case jtype::type_sql:
+					throw std::logic_error("can't convert sql to double");
+					break;
+				case jtype::type_string:
+					r = string_value.to_double();
+					break;
+				case jtype::type_wave:
+					throw std::logic_error("can't convert wave to double");
+					break;
+				}
+				return r;
+			}
+
+			template <explicit_int t> operator t()
+			{
+				int64_t z;
+				switch (this_type)
+				{
+				case jtype::type_int8:
+				case jtype::type_int16:
+				case jtype::type_int32:
+				case jtype::type_int64:
+					z = int_value;
+					break;
+				case jtype::type_float32:
+				case jtype::type_float64:
+					z = double_value;
+					break;
+				case jtype::type_collection_id:
+					throw std::logic_error("can't convert to int");
+					break;
+				case jtype::type_color:
+					throw std::logic_error("can't convert to int");
+					break;
+				case jtype::type_datetime:
+					z = time_value;
+					break;
+				case jtype::type_file:
+					throw std::logic_error("can't convert file to int");
+					break;
+				case jtype::type_http:
+					throw std::logic_error("can't convert http to int");
+					break;
+				case jtype::type_image:
+					throw std::logic_error("can't convert image to int");
+					break;
+				case jtype::type_layout_rect:
+					throw std::logic_error("can't convert layout_rect to int");
+					break;
+				case jtype::type_list:
+					throw std::logic_error("can't convert list to int");
+					break;
+				case jtype::type_midi:
+					throw std::logic_error("can't convert midi to int");
+					break;
+				case jtype::type_null:
+					throw std::logic_error("can't convert null to int");
+					break;
+				case jtype::type_object:
+					throw std::logic_error("can't convert object to int");
+					break;
+				case jtype::type_object_id:
+					throw std::logic_error("can't convert object_id to int");
+					break;
+				case jtype::type_point:
+					throw std::logic_error("can't convert point to int");
+					break;
+				case jtype::type_query:
+					throw std::logic_error("can't convert query to int");
+					break;
+				case jtype::type_rectangle:
+					throw std::logic_error("can't convert rectangle to int");
+					break;
+				case jtype::type_sql:
+					throw std::logic_error("can't convert sql to int");
+					break;
+				case jtype::type_string:
+					z = string_value.to_long();
+					break;
+				case jtype::type_wave:
+					throw std::logic_error("can't convert wave to int");
+					break;
+				}
+				return z;
+			}
+
+			template <explicit_char_ptr t> operator t()
+			{
+				switch (this_type)
+				{
+				case jtype::type_int8:
+				case jtype::type_int16:
+				case jtype::type_int32:
+				case jtype::type_int64:
+					string_value = std::format("{}", int_value);
+					break;
+				case jtype::type_float32:
+				case jtype::type_float64:
+					string_value = std::format("{}", double_value);
+					break;
+				case jtype::type_collection_id:
+					throw std::logic_error("can't convert to string");
+					break;
+				case jtype::type_color:
+					throw std::logic_error("can't convert to string");
+					break;
+				case jtype::type_datetime:
+					throw std::logic_error("can't convert to string");
+					break;
+				case jtype::type_file:
+					throw std::logic_error("can't convert to string");
+					break;
+				case jtype::type_http:
+					throw std::logic_error("can't convert to string");
+					break;
+				case jtype::type_image:
+					throw std::logic_error("can't convert to string");
+					break;
+				case jtype::type_layout_rect:
+					throw std::logic_error("can't convert to string");
+					break;
+				case jtype::type_list:
+					throw std::logic_error("can't convert to string");
+					break;
+				case jtype::type_midi:
+					throw std::logic_error("can't convert to string");
+					break;
+				case jtype::type_null:
+					throw std::logic_error("can't convert to string");
+					break;
+				case jtype::type_object:
+					throw std::logic_error("can't convert to string");
+					break;
+				case jtype::type_object_id:
+					throw std::logic_error("can't convert to string");
+					break;
+				case jtype::type_point:
+					throw std::logic_error("can't convert to string");
+					break;
+				case jtype::type_query:
+					throw std::logic_error("can't convert to string");
+					break;
+				case jtype::type_rectangle:
+					throw std::logic_error("can't convert to string");
+					break;
+				case jtype::type_sql:
+					throw std::logic_error("can't convert to string");
+					break;
+				case jtype::type_string:
+					break;
+				case jtype::type_wave:
+					throw std::logic_error("can't convert to string");
+					break;
+				}
+				return string_value.c_str();
+			}
+
+			operator std::string();
+			operator color ();
+			operator point();
+			operator rectangle();
+			operator layout_rect();
+
+		};
+
 		class jslice
 		{
 			jslice* parent;
@@ -123,6 +424,8 @@ namespace corona
 
 			jslice& get_parent_slice();
 			jclass get_class();
+			jschema* get_schema();
+
 			relative_ptr_type get_class_id() {
 				return class_id;
 			}
@@ -148,6 +451,7 @@ namespace corona
 			time_box get_time(int field_idx, bool _use_id = false);
 			string_box get_string(int field_idx, bool _use_id = false);
 			jarray get_object(int field_idx, bool _use_id = false);
+			jslice get_slice(int field_idx, dimensions_type _dim, bool _use_id = false);
 			jlist get_list(int field_idx, bool _use_id = false);
 			collection_id_box get_collection_id(int field_idx, bool _use_id = false);
 			object_id_box get_object_id(int field_idx, bool _use_id = false);
@@ -186,6 +490,33 @@ namespace corona
 			sql_remote_box get_sql_remote(object_name field_name);
 			http_remote_box get_http_remote(object_name field_name);
 			file_remote_box get_file_remote(object_name field_name);
+
+			void set_value(const dynamic_value& _member_assignment);
+
+			void set(std::initializer_list<dynamic_value> var)
+			{
+				for (auto item : var) {
+					set_value(item);
+				}
+			}
+
+			void set(std::initializer_list<relative_ptr_type> member_ids, std::initializer_list<dynamic_value> var)
+			{
+				jslice target_slice = *this;
+				
+				for (auto item : member_ids)
+				{
+					target_slice = target_slice.get_slice(item, {0,0,0}, true);
+				}
+
+				for (auto item : var) 
+				{
+					target_slice.set_value(item);
+				}
+			}
+
+			dynamic_value get(relative_ptr_type field_id);
+			dynamic_value operator[](relative_ptr_type field_idx);
 
 			void update(jslice& _src_slice);
 

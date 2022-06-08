@@ -81,6 +81,12 @@ namespace corona
 				case match_group::search_types::operchars:
 					count = get_pattern_count(start_index, [](char c) { return c == '+' || c == '^' || c == '&' || c == '!' || c == '-' || c == '*' || c == '/' || c == '(' || c == ')' || c == '.' || c == '=' || c == '<' || c == '>'; });
 					break;
+				case match_group::search_types::hex:
+					count = get_pattern_count(start_index, [](char c) { return std::isdigit(c) || c == 'A' || c == 'B' || c == 'C' || c == 'D' || c == 'E' || c == 'F' || c == 'a' || c == 'b' || c == 'c' || c == 'd' || c == 'e' || c == 'f'; });
+					break;
+				case match_group::search_types::pound:
+					count = get_pattern_count(start_index, [](char c) { return c == '#'; });
+					break;
 				}
 
 				switch (group->search_counts)
@@ -320,7 +326,7 @@ namespace corona
 			return result;
 		}
 
-		get_color_result string_extractor::get_color()
+		get_color_result string_extractor::get_color_alpha()
 		{
 			get_color_result result;
 
@@ -329,32 +335,25 @@ namespace corona
 			result.line_number = line;
 			result.char_offset = index;
 
-			match_group groups[13] = {
-				{ match_group::search_counts::search_many, match_group::search_types::digits, 0 },
-				{ match_group::search_counts::search_optional_many, match_group::search_types::space, 0 },
-				{ match_group::search_counts::search_one, match_group::search_types::comma, 0 },
-				{ match_group::search_counts::search_optional_many, match_group::search_types::space, 0 },
-
-				{ match_group::search_counts::search_many, match_group::search_types::digits, 0 },
-				{ match_group::search_counts::search_optional_many, match_group::search_types::space, 0 },
-				{ match_group::search_counts::search_one, match_group::search_types::comma, 0 },
-				{ match_group::search_counts::search_optional_many, match_group::search_types::space, 0 },
-
-				{ match_group::search_counts::search_many, match_group::search_types::digits, 0 },
-				{ match_group::search_counts::search_optional_many, match_group::search_types::space, 0 },
-				{ match_group::search_counts::search_one, match_group::search_types::comma, 0 },
-				{ match_group::search_counts::search_optional_many, match_group::search_types::space, 0 },
-
-				{ match_group::search_counts::search_many, match_group::search_types::digits, 0 },
+			match_group groups[9] = {
+				{ match_group::search_counts::search_one, match_group::search_types::pound, 0 },
+				{ match_group::search_counts::search_one, match_group::search_types::hex, 0 },
+				{ match_group::search_counts::search_one, match_group::search_types::hex, 0 },
+				{ match_group::search_counts::search_one, match_group::search_types::hex, 0 },
+				{ match_group::search_counts::search_one, match_group::search_types::hex, 0 },
+				{ match_group::search_counts::search_one, match_group::search_types::hex, 0 },
+				{ match_group::search_counts::search_one, match_group::search_types::hex, 0 },
+				{ match_group::search_counts::search_one, match_group::search_types::hex, 0 },
+				{ match_group::search_counts::search_one, match_group::search_types::hex, 0 },
 			};
 
-			auto matches = match(index, 13, groups);
+			auto matches = match(index, 7, groups);
 			if (!matches.is_empty())
 			{
-				result.red = matches.get_number(0);
-				result.green = matches.get_number(4);
-				result.blue = matches.get_number(8);
-				result.alpha = matches.get_number(12);
+				result.red = (matches.get_hex(1) * 16 + matches.get_hex(2)) / 256.0;
+				result.green = (matches.get_hex(3) * 16 + matches.get_hex(4)) / 256.0;
+				result.blue = (matches.get_hex(5) * 16 + matches.get_hex(5)) / 256.0;
+				result.alpha = (matches.get_hex(7) * 16 + matches.get_hex(7)) / 256.0;
 				result.success = true;
 			}
 			else
@@ -364,6 +363,43 @@ namespace corona
 
 			return result;
 		}
+
+		get_color_result string_extractor::get_color()
+		{
+			get_color_result result;
+
+			result.success = false;
+
+			result.line_number = line;
+			result.char_offset = index;
+
+			match_group groups[7] = {
+				{ match_group::search_counts::search_one, match_group::search_types::pound, 0 },
+				{ match_group::search_counts::search_one, match_group::search_types::hex, 0 },
+				{ match_group::search_counts::search_one, match_group::search_types::hex, 0 },
+				{ match_group::search_counts::search_one, match_group::search_types::hex, 0 },
+				{ match_group::search_counts::search_one, match_group::search_types::hex, 0 },
+				{ match_group::search_counts::search_one, match_group::search_types::hex, 0 },
+				{ match_group::search_counts::search_one, match_group::search_types::hex, 0 }
+			};
+
+			auto matches = match(index, 7, groups);
+			if (!matches.is_empty())
+			{
+				result.red = (matches.get_hex(1) * 16 + matches.get_hex(2)) / 256.0;
+				result.green = (matches.get_hex(3) * 16 + matches.get_hex(4)) / 256.0;
+				result.blue = (matches.get_hex(5) * 16 + matches.get_hex(5)) / 256.0;
+				result.alpha = 1.0;
+				result.success = true;
+			}
+			else
+			{
+				result.message = error_expected_number;
+			}
+
+			return result;
+		}
+
 
 		get_rectangle_result string_extractor::get_rectangle()
 		{

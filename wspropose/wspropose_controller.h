@@ -30,8 +30,6 @@ namespace proposal
 
 		virtual void render(const rectangle& newSize);
 		virtual void render_item(drawableHost* _host, page_item& _item);
-		virtual void loadController();
-		virtual void onInit();
 	};
 
 }

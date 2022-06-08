@@ -35,11 +35,9 @@ namespace corona
 			inline drawableHost* getDrawable() { return host->getDrawable(0); }
 			virtual void attach(controllerHost* _host);
 
-			void baseLoadController();
-
 			// these are for 
 
-			virtual void loadController() = 0;
+			virtual jslice getStyleSheet() = 0;
 			virtual void keyDown(short _key) = 0;
 			virtual void keyUp(short _key) = 0;
 			virtual void mouseMove(point* _point) = 0;
@@ -48,7 +46,6 @@ namespace corona
 			virtual void drawFrame() = 0;
 			virtual bool update(double _elapsedSeconds, double _totalSeconds) = 0;
 
-			virtual void onInit() = 0;
 			virtual void onCreated(const rectangle& newSize) = 0;
 			virtual void onCommand(int buttonId) = 0;
 			virtual void onTextChanged(int textControlId) = 0;
@@ -58,27 +55,6 @@ namespace corona
 			virtual int onVScroll(int controlId, scrollTypes scrollType) = 0;
 			virtual int onResize(const rectangle& newSize) = 0;
 			virtual int onSpin(int controlId, int newPosition) = 0;
-
-			const char* nameStyle = "name";
-			const char* viewTitleStyle = "view_title";
-			const char* viewSubTitleStyle = "view_subtitle";
-			const char* viewSectionStyle = "view_section";
-			const char* viewStyle = "view";
-			const char* disclaimerStyle = "disclaimer";
-			const char* copyrightStyle = "copyright";
-			const char* h1Style = "h1";
-			const char* h2Style = "h2";
-			const char* h3Style = "h3";
-			const char* columnNumberHeadStyle = "column_number_head";
-			const char* columnTextHeadStyle = "column_text_head";
-			const char* columnDataStyle = "column_data";
-			const char* labelStyle = "label";
-			const char* controlStyle = "control";
-			const char* chartAxisStyle = "chart_axis";
-			const char* chartLegendStyle = "chart_legend";
-			const char* chartBlockStyle = "chart_block";
-			const char* tooltipStyle = "tooltip";
-
 		};
 
 		enum currentWindowViews {
@@ -146,6 +122,7 @@ namespace corona
 			virtual ~corona_controller();
 
 			virtual void clear();
+			virtual jslice getStyleSheet();
 
 			page_item* row(page_item* _parent, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
 			page_item* column(page_item* _parent, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
@@ -174,9 +151,6 @@ namespace corona
 			virtual void render(const rectangle& newSize) = 0;
 			virtual void render_item(drawableHost *_host, page_item& _item) = 0;
 			virtual void drawFrame();
-
-			virtual void loadController() = 0;
-			virtual void onInit() = 0;
 
 			virtual void keyDown(short _key);
 			virtual void keyUp(short _key);

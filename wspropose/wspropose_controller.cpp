@@ -15,25 +15,6 @@ namespace proposal
 
 	wsproposal_controller::wsproposal_controller() : corona_controller()
 	{
-		;
-	}
-
-	wsproposal_controller::~wsproposal_controller()
-	{
-		;
-	}
-
-	void wsproposal_controller::loadController()
-	{
-	}
-
-	void wsproposal_controller::onInit()
-	{
-		enableEditMessages = false;
-
-		auto pos = host->getWindowPos(0);
-		host->setMinimumWindowSize(point{ pos.w - pos.x, pos.h - pos.y });
-
 		box.init(1 << 22);
 		schema = jschema::create_schema(&box, 50, true, schema_id);
 
@@ -285,10 +266,363 @@ namespace proposal
 		sample_actor.actor_id = null_row;
 		sample_actor = program_chart.create_actor(sample_actor);
 
+		relative_ptr_type style_sheet_id = null_row;
+		auto style_sheet = program_chart.create_object(0, null_row, schema.id_style_sheet, style_sheet_id);
+		style_sheet.set(
+			{ schema.id_view_title },
+			{
+				{ schema.idname, "view_title" },
+				{ schema.idfont_name, "Arial" },
+				{ schema.idfont_size, 30.0 },
+				{ schema.idbold, false },
+				{ schema.iditalic, false },
+				{ schema.idline_spacing, 0.0 },
+				{ schema.idhorizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idvertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idshape_fill_color, "" },
+				{ schema.idshape_border_thickness, "" },
+				{ schema.idshape_border_color, "" },
+				{ schema.idbox_fill_color, "" },
+				{ schema.idbox_border_thickness, "" },
+				{ schema.idbox_border_color, "" }
+			}
+			);
+		style_sheet.set(
+			{ schema.id_view_subtitle },
+			{
+				{ schema.idname, "view_subtitle" },
+				{ schema.idfont_name, "Arial" },
+				{ schema.idfont_size, 24.0 },
+				{ schema.idbold, false },
+				{ schema.iditalic, false },
+				{ schema.idline_spacing, 0.0 },
+				{ schema.idhorizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idvertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idshape_fill_color, "" },
+				{ schema.idshape_border_thickness, "" },
+				{ schema.idshape_border_color, "" },
+				{ schema.idbox_fill_color, "" },
+				{ schema.idbox_border_thickness, "" },
+				{ schema.idbox_border_color, "" }
+			}
+			);
+
+		style_sheet.set(
+			{ schema.id_view_section },
+			{
+				{ schema.idname, "view_section" },
+				{ schema.idfont_name, "Arial" },
+				{ schema.idfont_size, 20.0 },
+				{ schema.idbold, false },
+				{ schema.iditalic, false },
+				{ schema.idline_spacing, 0.0 },
+				{ schema.idhorizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idvertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idshape_fill_color, "" },
+				{ schema.idshape_border_thickness, "" },
+				{ schema.idshape_border_color, "" },
+				{ schema.idbox_fill_color, "" },
+				{ schema.idbox_border_thickness, "" },
+				{ schema.idbox_border_color, "" }
+			}
+			);
+
+		style_sheet.set(
+			{ schema.id_view },
+			{
+				{ schema.idname, "view" },
+				{ schema.idfont_name, "Arial" },
+				{ schema.idfont_size, 16.0 },
+				{ schema.idbold, false },
+				{ schema.iditalic, false },
+				{ schema.idline_spacing, 0.0 },
+				{ schema.idhorizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idvertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idshape_fill_color, "" },
+				{ schema.idshape_border_thickness, "" },
+				{ schema.idshape_border_color, "" },
+				{ schema.idbox_fill_color, "" },
+				{ schema.idbox_border_thickness, "" },
+				{ schema.idbox_border_color, "" }
+			}
+			);
+
+		style_sheet.set(
+			{ schema.id_disclaimer },
+			{
+				{ schema.idname, "disclaimer" },
+				{ schema.idfont_name, "Arial" },
+				{ schema.idfont_size, 12.0 },
+				{ schema.idbold, false },
+				{ schema.iditalic, false },
+				{ schema.idline_spacing, 0.0 },
+				{ schema.idhorizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idvertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idshape_fill_color, "" },
+				{ schema.idshape_border_thickness, "" },
+				{ schema.idshape_border_color, "" },
+				{ schema.idbox_fill_color, "" },
+				{ schema.idbox_border_thickness, "" },
+				{ schema.idbox_border_color, "" }
+			}
+			);
+
+		style_sheet.set(
+			{ schema.id_copyright },
+			{
+				{ schema.idname, "copyright" },
+				{ schema.idfont_name, "Arial" },
+				{ schema.idfont_size, 12.0 },
+				{ schema.idbold, false },
+				{ schema.iditalic, false },
+				{ schema.idline_spacing, 0.0 },
+				{ schema.idhorizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idvertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idshape_fill_color, "" },
+				{ schema.idshape_border_thickness, "" },
+				{ schema.idshape_border_color, "" },
+				{ schema.idbox_fill_color, "" },
+				{ schema.idbox_border_thickness, "" },
+				{ schema.idbox_border_color, "" }
+			}
+			);
+
+		style_sheet.set(
+			{ schema.id_h1 },
+			{
+				{ schema.idname, "h1" },
+				{ schema.idfont_name, "Arial" },
+				{ schema.idfont_size, 30.0 },
+				{ schema.idbold, false },
+				{ schema.iditalic, false },
+				{ schema.idline_spacing, 0.0 },
+				{ schema.idhorizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idvertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idshape_fill_color, "" },
+				{ schema.idshape_border_thickness, "" },
+				{ schema.idshape_border_color, "" },
+				{ schema.idbox_fill_color, "" },
+				{ schema.idbox_border_thickness, "" },
+				{ schema.idbox_border_color, "" }
+			}
+			);
+
+		style_sheet.set(
+			{ schema.id_h2 },
+			{
+				{ schema.idname, "h2" },
+				{ schema.idfont_name, "Arial" },
+				{ schema.idfont_size, 24.0 },
+				{ schema.idbold, false },
+				{ schema.iditalic, false },
+				{ schema.idline_spacing, 0.0 },
+				{ schema.idhorizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idvertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idshape_fill_color, "" },
+				{ schema.idshape_border_thickness, "" },
+				{ schema.idshape_border_color, "" },
+				{ schema.idbox_fill_color, "" },
+				{ schema.idbox_border_thickness, "" },
+				{ schema.idbox_border_color, "" }
+			}
+			);
+
+		style_sheet.set(
+			{ schema.id_h3 },
+			{
+				{ schema.idname, "h3" },
+				{ schema.idfont_name, "Arial" },
+				{ schema.idfont_size, 20.0 },
+				{ schema.idbold, false },
+				{ schema.iditalic, false },
+				{ schema.idline_spacing, 0.0 },
+				{ schema.idhorizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idvertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idshape_fill_color, "" },
+				{ schema.idshape_border_thickness, "" },
+				{ schema.idshape_border_color, "" },
+				{ schema.idbox_fill_color, "" },
+				{ schema.idbox_border_thickness, "" },
+				{ schema.idbox_border_color, "" }
+			}
+			);
+
+		style_sheet.set(
+			{ schema.id_column_number_head },
+			{
+				{ schema.idname, "column_number_head" },
+				{ schema.idfont_name, "Arial" },
+				{ schema.idfont_size, 14.0 },
+				{ schema.idbold, false },
+				{ schema.iditalic, false },
+				{ schema.idline_spacing, 0.0 },
+				{ schema.idhorizontal_alignment, (int)visual_alignment::align_far },
+				{ schema.idvertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idshape_fill_color, "" },
+				{ schema.idshape_border_thickness, "" },
+				{ schema.idshape_border_color, "" },
+				{ schema.idbox_fill_color, "" },
+				{ schema.idbox_border_thickness, "" },
+				{ schema.idbox_border_color, "" }
+			}
+			);
+
+		style_sheet.set(
+			{ schema.id_column_text_head },
+			{
+				{ schema.idname, "column_text_head" },
+				{ schema.idfont_name, "Arial" },
+				{ schema.idfont_size, 14.0 },
+				{ schema.idbold, false },
+				{ schema.iditalic, false },
+				{ schema.idline_spacing, 0.0 },
+				{ schema.idhorizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idvertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idshape_fill_color, "" },
+				{ schema.idshape_border_thickness, "" },
+				{ schema.idshape_border_color, "" },
+				{ schema.idbox_fill_color, "" },
+				{ schema.idbox_border_thickness, "" },
+				{ schema.idbox_border_color, "" }
+			}
+			);
+
+
+		style_sheet.set(
+			{ schema.id_column_data },
+			{
+				{ schema.idname, "column_data" },
+				{ schema.idfont_name, "Arial" },
+				{ schema.idfont_size, 30.0 },
+				{ schema.idbold, false },
+				{ schema.iditalic, false },
+				{ schema.idline_spacing, 0.0 },
+				{ schema.idhorizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idvertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idshape_fill_color, "" },
+				{ schema.idshape_border_thickness, "" },
+				{ schema.idshape_border_color, "" },
+				{ schema.idbox_fill_color, "" },
+				{ schema.idbox_border_thickness, "" },
+				{ schema.idbox_border_color, "" }
+			}
+			);
+
+
+		style_sheet.set(
+			{ schema.id_label },
+			{
+				{ schema.idname, "label" },
+				{ schema.idfont_name, "Arial" },
+				{ schema.idfont_size, 30.0 },
+				{ schema.idbold, false },
+				{ schema.iditalic, false },
+				{ schema.idline_spacing, 0.0 },
+				{ schema.idhorizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idvertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idshape_fill_color, "" },
+				{ schema.idshape_border_thickness, "" },
+				{ schema.idshape_border_color, "" },
+				{ schema.idbox_fill_color, "" },
+				{ schema.idbox_border_thickness, "" },
+				{ schema.idbox_border_color, "" }
+			}
+			);
+
+		style_sheet.set(
+			{ schema.id_chart_axis },
+			{
+				{ schema.idname, "chart_axis" },
+				{ schema.idfont_name, "Arial" },
+				{ schema.idfont_size, 30.0 },
+				{ schema.idbold, false },
+				{ schema.iditalic, false },
+				{ schema.idline_spacing, 0.0 },
+				{ schema.idhorizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idvertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idshape_fill_color, "" },
+				{ schema.idshape_border_thickness, "" },
+				{ schema.idshape_border_color, "" },
+				{ schema.idbox_fill_color, "" },
+				{ schema.idbox_border_thickness, "" },
+				{ schema.idbox_border_color, "" }
+			}
+			);
+
+		style_sheet.set(
+			{ schema.id_chart_legend },
+			{
+				{ schema.idname, "chart_legend" },
+				{ schema.idfont_name, "Arial" },
+				{ schema.idfont_size, 30.0 },
+				{ schema.idbold, false },
+				{ schema.iditalic, false },
+				{ schema.idline_spacing, 0.0 },
+				{ schema.idhorizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idvertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idshape_fill_color, "" },
+				{ schema.idshape_border_thickness, "" },
+				{ schema.idshape_border_color, "" },
+				{ schema.idbox_fill_color, "" },
+				{ schema.idbox_border_thickness, "" },
+				{ schema.idbox_border_color, "" }
+			}
+			);
+
+		style_sheet.set(
+			{ schema.id_chart_block },
+			{
+				{ schema.idname, "chart_block" },
+				{ schema.idfont_name, "Arial" },
+				{ schema.idfont_size, 30.0 },
+				{ schema.idbold, false },
+				{ schema.iditalic, false },
+				{ schema.idline_spacing, 0.0 },
+				{ schema.idhorizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idvertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idshape_fill_color, "" },
+				{ schema.idshape_border_thickness, "" },
+				{ schema.idshape_border_color, "" },
+				{ schema.idbox_fill_color, "" },
+				{ schema.idbox_border_thickness, "" },
+				{ schema.idbox_border_color, "" }
+			}
+			);
+
+		style_sheet.set(
+			{ schema.id_tooltip },
+			{
+				{ schema.idname, "tooltip" },
+				{ schema.idfont_name, "Arial" },
+				{ schema.idfont_size, 30.0 },
+				{ schema.idbold, false },
+				{ schema.iditalic, false },
+				{ schema.idline_spacing, 0.0 },
+				{ schema.idhorizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idvertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idshape_fill_color, "" },
+				{ schema.idshape_border_thickness, "" },
+				{ schema.idshape_border_color, "" },
+				{ schema.idbox_fill_color, "" },
+				{ schema.idbox_border_thickness, "" },
+				{ schema.idbox_border_color, "" }
+			}
+			);
+
 		relative_ptr_type program_summary_id = null_row;
 		program_chart.create_object(0, sample_actor.actor_id, program_class_id, program_summary_id);
 
-		enableEditMessages = true;
+		//{ idname, idfont_name, idfont_size, idbold, iditalic, idline_spacing, idhorizontal_alignment, idvertical_alignment,
+	//idshape_fill_color, idshape_border_thickness, idshape_border_color, idbox_fill_color, idbox_border_thickness, idbox_border_color };
+
+		//			pcr.member_fields = { idname, id_view_title, id_view_subtitle, id_view_section, id_view, id_disclaimer, id_copyright,
+		//id_h1, id_h2, id_h3, id_column_number_head, id_column_text_head, id_column_data, id_label, id_control, id_chart_axis, id_chart_legend, id_chart_block, id_tooltip };
+
+	}
+
+	wsproposal_controller::~wsproposal_controller()
+	{
+		;
 	}
 
 	void wsproposal_controller::render(const rectangle& newSize)

@@ -194,5 +194,27 @@ namespace corona
 				return std::all_of(functions.begin(), functions.end(), [x](boolean_fn fn) { return fn(x); });
 			}
 		};
+
+		template <class T>
+		concept explicit_int32 = std::same_as<T, int32_t>;
+
+		template <class T>
+		concept explicit_int64 = std::same_as<T, int64_t>;
+
+		template <class T>
+		concept explicit_int = std::same_as<T, int64_t> || std::same_as<T, int32_t>;
+
+		template <class T>
+		concept explicit_double = std::same_as<T, double>;
+
+		template <class T>
+		concept explicit_float = std::same_as<T, float>;
+
+		template <class T>
+		concept explicit_bool = std::same_as<T, bool>;
+
+		template <class T>
+		concept explicit_char_ptr = std::same_as<T, const char *>;
+
 	}
 }

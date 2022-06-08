@@ -27,66 +27,35 @@ namespace corona
 			host = _host;
 		}
 
-		void controller::baseLoadController()
-		{
-			loadController();
-		}
-
 		corona_controller::~corona_controller()
 		{
 			;
 		}
 
-		void corona_controller::onCreated(const rectangle& newSize)
+		jslice corona_controller::getStyleSheet()
 		{
 			relative_ptr_type ids = schema.id_style_sheet;
 
-			auto obj = program_chart.where([this, ids](auto slc) 
-			{
-				return slc.item.get_class_id() == ids;
-			});
+			auto obj = program_chart.where([this, ids](auto slc)
+				{
+					return slc.item.get_class_id() == ids;
+				});
 
-			if (obj == std::end(program_chart)) 
+			if (obj == std::end(program_chart))
 			{
 				throw std::logic_error("style sheet not found in the database");
 			}
+			return obj.get_object().item;
+		}
 
-			auto style_slice = obj.get_object().item;
+		void corona_controller::onCreated(const rectangle& newSize)
+		{
+			enableEditMessages = false;
 
-			for (int field_idx = 0; field_idx < style_slice.size(); field_idx++)
-			{
-				auto fld = style_slice.get_field(field_idx);
-				if (fld.object_properties.class_id == schema.id_text_style) 
-				{
-					auto text_style_array = style_slice.get_object(fld.field_id);
-					auto text_style = text_style_array.get_slice(0);
+			auto pos = host->getWindowPos(0);
+			host->setMinimumWindowSize(point{ pos.w - pos.x, pos.h - pos.y });
 
-					viewStyleRequest textStyle;
-					textStyle.name = text_style.get_string(schema.idname).c_str();
-					textStyle.fontName = text_style.get_string(schema.idfont_name).c_str();
-					textStyle.fontSize = text_style.get_float(schema.idfont_size);
-					textStyle.bold = text_style.get_int8(schema.idbold);
-					textStyle.italics = text_style.get_int8(schema.iditalic);
-					textStyle.line_spacing = text_style.get_float(schema.idline_spacing);
-					textStyle.horizontal_align = (visual_alignment)(text_style.get_int8(schema.idhorizontal_alignment).value());
-					textStyle.vertical_align = (visual_alignment)(text_style.get_int8(schema.idvertical_alignment).value());
-					textStyle.wrap_text = text_style.get_int8(schema.idwrap_text);
-					textStyle.shape_border_thickness = text_style.get_float(schema.idshape_border_thickness);
-					textStyle.box_border_thickness = text_style.get_float(schema.idshape_border_thickness);
-
-					textStyle.box_border_color.name = textStyle.name + "_box_border";
-					textStyle.box_border_color.brushColor = text_style.get_color(schema.idbox_border_color);
-
-					textStyle.shape_border_color.name = textStyle.name + "_shape_border";
-					textStyle.shape_border_color.brushColor = text_style.get_color(schema.idshape_border_color);
-
-					textStyle.box_fill_color.name = textStyle.name + "_box_fill";
-					textStyle.box_fill_color.brushColor = text_style.get_color(schema.idbox_border_color);
-
-					textStyle.shape_fill_color.name = textStyle.name + "_shape_fill";
-					textStyle.shape_fill_color.brushColor = text_style.get_color(schema.idshape_border_color);
-				}
-			}
+			enableEditMessages = true;
 		}
 
 		void corona_controller::randomAdvertisement()
