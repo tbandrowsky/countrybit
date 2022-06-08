@@ -39,6 +39,7 @@ namespace corona
 			std::map<std::string, deviceDependentAssetBase*> brushes;
 			std::map<std::string, path*> paths;
 			std::map<std::string, textStyle*> textStyles;
+			std::map<std::string, viewStyleRequest> viewStyles;
 
 			virtual void beginDraw();
 			virtual void endDraw();
@@ -64,6 +65,10 @@ namespace corona
 			virtual point getSize();
 
 			virtual void clear(color* _color);
+
+			virtual void addViewStyle(viewStyleRequest& _textStyle);
+			virtual void clearViewStyles();
+
 			virtual void addBitmap(bitmapRequest* _bitmap);
 			virtual bool getBitmapSize(bitmapRequest* _bitmap, point* _size);
 			virtual color getColorAtPoint(bitmapInstanceDto* _bitmap, point& _point);
@@ -79,8 +84,8 @@ namespace corona
 			virtual void addPath(pathDto* _pathDto, bool _closed);
 			virtual void clearPaths();
 
-			virtual void addViewStyle(viewStyleRequest* _textStyle);
-			virtual void clearViewStyles();
+			virtual void addTextStyle(textStyleRequest* _textStyle);
+			virtual void clearTextStyles();
 
 			virtual void popCamera();
 			virtual void pushCamera(point* _position, float _rotation, float _scale = 1.0);
@@ -101,6 +106,8 @@ namespace corona
 			virtual drawableHost* createBitmap(point& _size);
 			virtual void drawBitmap(drawableHost* _directBitmap, point& _dest, point& _size);
 			virtual void save(const char* _filename);
+
+			virtual void drawView(const char* _style, const char *_text, rectangle& _rect);
 
 		protected:
 
@@ -178,14 +185,7 @@ namespace corona
 					labelFont,
 					titleFont;
 
-		public:
-
-			directApplication(direct2dFactory* _factory);
-			virtual ~directApplication();
-
-			int renderPage(database::page& _page, database::jschema* _schema, database::actor_state& _state, database::jcollection& _collection);
-
-			virtual drawableHost* getDrawable(int i);
+			void loadStyleSheet();
 
 			HFONT createFontFromStyleSheet(relative_ptr_type _style_id);
 
@@ -203,6 +203,16 @@ namespace corona
 			);
 
 			void destroyChildren();
+
+
+		public:
+
+			directApplication(direct2dFactory* _factory);
+			virtual ~directApplication();
+
+			int renderPage(database::page& _page, database::jschema* _schema, database::actor_state& _state, database::jcollection& _collection);
+
+			virtual drawableHost* getDrawable(int i);
 
 			virtual bool runFull(HINSTANCE _hinstance, const char* _title, int _iconId, bool _fullScreen, controller* _firstController);
 			virtual bool runDialog(HINSTANCE _hinstance, const char* _title, int _iconId, bool _fullScreen, controller* _firstController);

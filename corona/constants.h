@@ -211,6 +211,9 @@ namespace corona
 		concept explicit_float = std::same_as<T, float>;
 
 		template <class T>
+		concept explicit_floating_point = std::same_as<T, double> || std::same_as<T, float>;
+
+		template <class T>
 		concept explicit_bool = std::same_as<T, bool>;
 
 		template <class T>

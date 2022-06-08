@@ -268,6 +268,11 @@ namespace corona
 				return type_id == jtype::type_datetime;
 			}
 
+			bool is_class(relative_ptr_type _class_id)
+			{
+				return type_id == jtype::type_object && object_properties.class_id == _class_id;
+			}
+
 		};
 
 		class query_definition_t

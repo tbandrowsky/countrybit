@@ -10,6 +10,7 @@ namespace corona
 
 		class drawableHost {
 		public:
+
 			virtual void beginDraw() = 0;
 			virtual void endDraw() = 0;
 			virtual void clear(color* _color) = 0;
@@ -23,7 +24,11 @@ namespace corona
 			virtual void clearBitmapsAndBrushes(bool deleteStockObjects = false) = 0;
 
 			virtual void addPath(pathDto* _pathDto, bool _closed = true) = 0;
-			virtual void addViewStyle(viewStyleRequest* _textStyle) = 0;
+
+			virtual void addViewStyle(viewStyleRequest& _textStyle) = 0;
+			virtual void clearViewStyles() = 0;
+			virtual void addTextStyle(textStyleRequest* _textStyle) = 0;
+			virtual void clearTextStyles() = 0;
 
 			virtual void clearPaths() = 0;
 
@@ -46,6 +51,8 @@ namespace corona
 			virtual void drawBitmap(drawableHost* _directBitmap, point& _dest, point& _size) = 0;
 			virtual bool isBitmap() { return false; }
 			virtual void save(const char* _filename) = 0;
+
+			virtual void drawView(const char* _style, const char* _text, rectangle& _rect) = 0;
 		};
 
 		class controllerHost {

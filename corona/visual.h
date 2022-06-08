@@ -168,16 +168,22 @@ namespace corona
 			}
 		};
 
-		struct viewStyleRequest
+		struct textStyleRequest
 		{
 			object_name name;
 			object_name fontName;
 			float fontSize;
-			bool bold, italics;
+			bool bold, italics, underline, strike_through;
 			double line_spacing;
 			visual_alignment horizontal_align;
 			visual_alignment vertical_align;
 			bool wrap_text;
+		};
+
+		struct viewStyleRequest
+		{
+			object_name			name;
+			textStyleRequest	text_style;
 			double shape_border_thickness;
 			double box_border_thickness;
 			solidBrushRequest box_border_color;
@@ -189,7 +195,6 @@ namespace corona
 		struct bitmapFilter {
 			std::function<bool(point, int, int, char*)> filterFunction;
 		};
-
 
 	}
 

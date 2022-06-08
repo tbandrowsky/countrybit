@@ -29,7 +29,6 @@ namespace proposal
 		virtual ~wsproposal_controller();
 
 		virtual void render(const rectangle& newSize);
-		virtual void render_item(drawableHost* _host, page_item& _item);
 	};
 
 }

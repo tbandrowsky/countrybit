@@ -153,7 +153,7 @@ namespace corona
 				;
 			}
 
-			template <explicit_double t> operator t()
+			template <explicit_floating_point t> operator t()
 			{
 				double r;
 				switch (this_type)
@@ -297,6 +297,11 @@ namespace corona
 					break;
 				}
 				return z;
+			}
+
+			template <explicit_bool t> operator t()
+			{
+				return (int)*this;
 			}
 
 			template <explicit_char_ptr t> operator t()
@@ -1149,6 +1154,7 @@ namespace corona
 			relative_ptr_type idbold;
 			relative_ptr_type iditalic;
 			relative_ptr_type idunderline;
+			relative_ptr_type idstrike_through;
 			relative_ptr_type idvertical_alignment;
 			relative_ptr_type idhorizontal_alignment;
 			relative_ptr_type idwrap_text;

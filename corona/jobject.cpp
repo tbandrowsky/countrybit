@@ -2462,11 +2462,12 @@ namespace corona
 				{ { null_row, jtype::type_datetime, "scheduled", "Scheduled" }, 0, INT64_MAX },
 			};
 
-			put_integer_field_request int_fields[7] = {
+			put_integer_field_request int_fields[8] = {
 				{ { null_row, jtype::type_int64, "count", "Count" }, 0, INT64_MAX },
 				{ { null_row, jtype::type_int8, "bold", "Bold" }, 0, INT8_MAX },
 				{ { null_row, jtype::type_int8, "italic", "Italic" }, 0, INT8_MAX },
 				{ { null_row, jtype::type_int8, "underline", "Underline" }, 0, INT8_MAX },
+				{ { null_row, jtype::type_int8, "strike_through", "Strike Through" }, 0, INT8_MAX },
 				{ { null_row, jtype::type_int8, "vertical_alignment", "Vertical alignment" }, 0, INT8_MAX },
 				{ { null_row, jtype::type_int8, "horizontal_alignment", "Vertical alignment" }, 0, INT8_MAX }, 
 				{ { null_row, jtype::type_int8, "wrap_text", "Wrap text" }, 0, INT8_MAX }
@@ -2566,6 +2567,7 @@ namespace corona
 			idbold = find_field("bold");
 			iditalic = find_field("italic");
 			idunderline = find_field("underline");
+			idstrike_through = find_field("strike_through");
 			idvertical_alignment = find_field("vertical_alignment");
 			idhorizontal_alignment = find_field("horizontal_alignment");
 			idwrap_text = find_field("wrap_text");
@@ -2610,7 +2612,7 @@ namespace corona
 
 			pcr.class_name = "text_style";
 			pcr.class_description = "styles of text for ui";
-			pcr.member_fields = { idname, idfont_name, idfont_size, idbold, iditalic, idline_spacing, idhorizontal_alignment, idvertical_alignment, 
+			pcr.member_fields = { idname, idfont_name, idfont_size, idbold, iditalic, idunderline, idstrike_through, idline_spacing, idhorizontal_alignment, idvertical_alignment,
 				idshape_fill_color, idshape_border_thickness, idshape_border_color, idbox_fill_color, idbox_border_thickness, idbox_border_color };
 			id_text_style = put_class(pcr);
 

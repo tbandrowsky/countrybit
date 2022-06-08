@@ -265,6 +265,8 @@ namespace corona
 			float size;
 			bool bold;
 			bool italic;
+			bool underline;
+			bool strike_through;
 			double line_spacing;
 			visual_alignment horizontal_align;
 			visual_alignment vertical_align;
@@ -276,6 +278,8 @@ namespace corona
 				float _size, 
 				bool _bold, 
 				bool _italic,
+				bool _underline,
+				bool _strike_through,
 				double _line_spacing,
 				visual_alignment _horizontal_align,
 				visual_alignment _vertical_align,
@@ -284,6 +288,8 @@ namespace corona
 				size(_size),
 				bold(_bold),
 				italic(_italic),
+				underline(_underline),
+				strike_through(_strike_through),
 				line_spacing(_line_spacing),
 				horizontal_align(_horizontal_align),
 				vertical_align(_vertical_align),
@@ -301,6 +307,8 @@ namespace corona
 			float get_size() { return size; }
 			bool get_bold() { return bold; }
 			bool get_italic()  { return italic; }
+			bool get_underline() { return underline; }
+			bool get_strike_through() { return strike_through; }
 			double get_line_spacing() { return line_spacing; }
 			visual_alignment get_horizontal_align() { return horizontal_align; }
 			visual_alignment get_vertical_align() { return vertical_align; }
@@ -1452,13 +1460,15 @@ namespace corona
 			paths.clear();
 		}
 
-		void direct2dContext::addViewStyle(viewStyleRequest* _textStyleDto)
+		void direct2dContext::addTextStyle(textStyleRequest* _textStyleDto)
 		{
 			textStyle* newStyle = new textStyle(
 				_textStyleDto->fontName.c_str(),
 				_textStyleDto->fontSize, 
 				_textStyleDto->bold, 
 				_textStyleDto->italics, 
+				_textStyleDto->underline,
+				_textStyleDto->strike_through,
 				_textStyleDto->line_spacing,
 				_textStyleDto->horizontal_align,
 				_textStyleDto->vertical_align,
@@ -1468,13 +1478,28 @@ namespace corona
 			newStyle->create(this);
 		}
 
-		void direct2dContext::clearViewStyles()
+		void direct2dContext::clearTextStyles()
 		{
 			std::for_each(textStyles.begin(), textStyles.end(), [this](std::pair<std::string, textStyle*> ib) {
 				delete ib.second;
 				});
 
 			textStyles.clear();
+		}
+
+		void direct2dContext::addViewStyle(viewStyleRequest& _request)
+		{
+			viewStyles[_request.name.c_str()] = _request;
+			addTextStyle(&_request.text_style);
+			addSolidColorBrush(&_request.box_border_color);
+			addSolidColorBrush(&_request.box_fill_color);
+			addSolidColorBrush(&_request.shape_border_color);
+			addSolidColorBrush(&_request.shape_fill_color);
+		}
+
+		void direct2dContext::clearViewStyles()
+		{
+			viewStyles.clear();
 		}
 
 		void direct2dContext::drawPath(pathInstance2dDto* _pathInstanceDto)
@@ -1776,6 +1801,14 @@ namespace corona
 			}
 		}
 
+		void direct2dContext::drawView(const char* _style, const char* _text, rectangle& _rect)
+		{
+			auto& vs = viewStyles[_style];
+			auto& rectFill = vs.box_fill_color;
+			drawRectangle(&_rect, vs.box_border_color.name, vs.box_border_thickness, vs.box_fill_color.name);		
+			drawText(_text, &_rect, vs.text_style.name, vs.shape_fill_color.name);
+		}
+
 		void direct2dContext::save(const char* _filename)
 		{
 			;
@@ -1818,6 +1851,46 @@ namespace corona
 				SendMessage(hwnd, WM_SETFONT, (WPARAM)font, TRUE);
 			}
 			childWindows.push_back(hwnd);
+		}
+
+		void directApplication::loadStyleSheet()
+		{
+			if (currentController) {
+				auto styles = currentController->getStyleSheet();
+				auto schema = styles.get_schema();
+
+				for (int idx = 0; idx < styles.size(); idx++)
+				{
+					auto field = styles.get_field(idx);
+					if (field.is_class(schema->id_text_style)) 
+					{
+						auto style = styles.get_slice(idx, { 0,0,0 }, false);
+						viewStyleRequest request;
+						request.name = field.name;
+						request.text_style.name = request.name + "_text";
+						request.text_style.fontName = (const char *)style.get(schema->idfont_name);
+						request.text_style.fontSize = style.get(schema->idfont_size);
+						request.text_style.bold = style.get(schema->idbold);
+						request.text_style.italics = style.get(schema->iditalic);
+						request.text_style.underline = style.get(schema->idunderline);
+						request.text_style.strike_through = style.get(schema->idstrike_through);
+						request.text_style.line_spacing = style.get(schema->idline_spacing);
+						request.text_style.horizontal_align = (visual_alignment)(int)style.get(schema->idhorizontal_alignment);
+						request.text_style.vertical_align = (visual_alignment)(int)style.get(schema->idvertical_alignment);
+
+						request.shape_border_color.name = request.name + "_shapcol";
+						request.shape_border_color.brushColor = style.get(schema->idbox_border_color);
+						request.shape_border_thickness = style.get(schema->idbox_border_thickness);
+
+						request.box_border_color.name = request.name + "_borcol";
+						request.box_border_color.brushColor = style.get(schema->idbox_border_color);
+						request.box_border_thickness = style.get(schema->idbox_border_thickness);
+						request.box_fill_color.name = request.name + "_filcol";
+						request.box_fill_color.brushColor = style.get(schema->idbox_fill_color);
+						addViewStyle(request);
+					}
+				}
+			}
 		}
 
 		HFONT directApplication::createFontFromStyleSheet(relative_ptr_type _style_id)
