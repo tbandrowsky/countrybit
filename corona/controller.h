@@ -128,9 +128,6 @@ namespace corona
 			page_item* column(page_item* _parent, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
 			page_item* absolute(page_item* _parent, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
 			page_item* canvas2d(page_item* _parent, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
-			page_item* h1(page_item* _parent, const char* _text, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
-			page_item* h2(page_item* _parent, const char* _text, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
-			page_item* h3(page_item* _parent, const char* _text, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
 			page_item* space(page_item* _parent, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
 
 			virtual void for_each(std::function<bool(const actor_view_collection::iterator_item_type& _item)> selector, std::function<bool(actor_view_object& avo, jslice& slice)> updator);
@@ -149,7 +146,7 @@ namespace corona
 			virtual page_item* column(page_item* _parent_ui, layout_rect _box, relative_ptr_type* _has_field_list);
 
 			virtual void render(const rectangle& newSize) = 0;
-			virtual void render_item(drawableHost *_host, page_item& _item) = 0;
+			virtual void render_item(drawableHost *_host, page_item& _item);
 			virtual void drawFrame();
 
 			virtual void keyDown(short _key);

@@ -27,15 +27,16 @@ namespace corona
 			int						id;
 			int						parent_id;
 			layout_types			layout;
+			const char*				style_name;
 
-			layout_rect					box;
+			layout_rect				box;
 			rectangle				bounds;
 
 			relative_ptr_type		object_id;
 			jfield*					field;
 			create_object_request	create_request;
 			select_object_request	select_request;
-			jslice					slice;			
+			jslice					slice;
 
 			const char*				caption;
 			int						canvas_id;
@@ -47,7 +48,8 @@ namespace corona
 				object_id(-1),
 				field(nullptr),
 				caption(nullptr),
-				canvas_id(-1)
+				canvas_id(-1),
+				style_name(nullptr)
 			{
 				;
 			}
@@ -77,20 +79,22 @@ namespace corona
 			void visit_impl(page_item* _item, std::function<bool(page_item* _parent)> fn);		
 			dynamic_box data;
 			using base_type = iarray<page_item, 1024>;
+			using style_names_by_class_type = sorted_index<relative_ptr_type, object_name, 1>;
+			style_names_by_class_type styles;
+			relative_ptr_type styles_location;
 
 		public:
 
 			page();
 			void clear();
 
+			void map_style(relative_ptr_type _class_id, relative_ptr_type _style_id, jschema *_schema);
+
 			page_item* row(page_item* _parent, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
 			page_item* column( page_item* _parent, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
 
 			page_item* absolute(page_item* _parent, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
 			page_item* canvas2d(page_item* _parent, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
-			page_item* h1(page_item* _parent, const char* _text, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
-			page_item* h2(page_item* _parent, const char* _text, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
-			page_item* h3(page_item* _parent, const char* _text, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
 			page_item* space(page_item* _parent, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
 
 			page_item* field(page_item* _parent, int object_id, int field_id, jslice slice);

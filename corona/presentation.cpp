@@ -9,12 +9,14 @@ namespace corona
 		page::page()
 		{
 			data.init(1 << 20);
+			styles = style_names_by_class_type::create_sorted_index(&data, styles_location);
 		}
 
 		void page::clear()
 		{
 			base_type::clear();
 			data.init(1 << 20);
+			styles = style_names_by_class_type::create_sorted_index(&data, styles_location);
 		}
 
 		page_item* page::row(page_item* _parent, layout_rect _box)
@@ -55,40 +57,6 @@ namespace corona
 			v->layout = layout_types::canvas2d;
 			v->box = _box;
 			v->canvas_id = v->id;
-			return v;
-		}
-
-		page_item* page::h1(page_item* _parent, const char* _text, layout_rect _box)
-		{
-			page_item* v = append();
-			v->id = size();
-			v->set_parent(_parent);
-			v->layout = layout_types::h1;
-			v->field = nullptr;
-			v->caption = data.copy(_text, 0);
-			v->box = _box;
-			return v;
-		}
-
-		page_item* page::h2(page_item* _parent, const char* _text, layout_rect _box)
-		{
-			page_item* v = append();
-			v->id = size();
-			v->set_parent(_parent);
-			v->layout = layout_types::h2;
-			v->caption = data.copy(_text, 0);
-			v->box = _box;
-			return v;
-		}
-
-		page_item* page::h3(page_item* _parent, const char* _text, layout_rect _box)
-		{
-			page_item* v = append();
-			v->id = size();
-			v->set_parent(_parent);
-			v->layout = layout_types::h3;
-			v->caption = data.copy(_text, 0);
-			v->box = _box;
 			return v;
 		}
 
@@ -158,6 +126,7 @@ namespace corona
 					label->box = { 0.0_px, 0.0_px, 200.0_px, 20.0_px };
 					label->slice = slice;
 					label->object_id = avo.object_id;
+					label->caption = fld.description;
 					height.amount += 20.0;
 					page_item* control = append();
 					control->id = size();
@@ -356,6 +325,10 @@ namespace corona
 				if (_item->object_id != null_row && _item->slice.has_field("rectangle"))
 				{
 					auto rect = _item->slice.get_rectangle("rectangle");
+					relative_ptr_type class_id = _item->slice.get_class_id();
+					if (styles.contains(class_id)) {
+						_item->style_name = styles[class_id].get_value();
+					}
 					rect = _item->bounds;
 				}
 			}
@@ -394,5 +367,12 @@ namespace corona
 				}
 			}
 		}
+
+		void page::map_style(relative_ptr_type _class_id, relative_ptr_type _style_id, jschema* _schema)
+		{
+			auto& fld = _schema->get_field(_style_id);
+			styles.insert_or_assign(_class_id, fld.name);
+		}
+
 	}
 }

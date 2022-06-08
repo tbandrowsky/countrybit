@@ -379,21 +379,6 @@ namespace corona
 			return pg.canvas2d(_parent, _box);
 		}
 
-		page_item* corona_controller::h1(page_item* _parent, const char* _text, layout_rect _box)
-		{
-			return pg.h1(_parent, _text, _box);
-		}
-
-		page_item* corona_controller::h2(page_item* _parent, const char* _text, layout_rect _box)
-		{
-			return pg.h2(_parent, _text, _box);
-		}
-
-		page_item* corona_controller::h3(page_item* _parent, const char* _text, layout_rect _box)
-		{
-			return pg.h3(_parent, _text, _box);
-		}
-
 		page_item* corona_controller::space(page_item* _parent, layout_rect _box)
 		{
 			return pg.space(_parent, _box);
@@ -520,6 +505,11 @@ namespace corona
 			{
 				render_item(drawable, pgi.item);
 			}
+		}
+
+		void corona_controller::render_item(drawableHost* _host, page_item& _item)
+		{
+			_host->drawView(_item.style_name, _item.caption != nullptr ? _item.caption : "", _item.bounds);
 		}
 	}
 }
