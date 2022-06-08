@@ -1803,6 +1803,7 @@ namespace corona
 
 		void direct2dContext::drawView(const char* _style, const char* _text, rectangle& _rect)
 		{
+			if (!_style) return;
 			auto& vs = viewStyles[_style];
 			auto& rectFill = vs.box_fill_color;
 			drawRectangle(&_rect, vs.box_border_color.name, vs.box_border_thickness, vs.box_fill_color.name);		

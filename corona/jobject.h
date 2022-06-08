@@ -1428,7 +1428,14 @@ namespace corona
 				if (request.options.dim.y == 0) request.options.dim.y = 1;
 				if (request.options.dim.z == 0) request.options.dim.z = 1;
 				object_name field_name;
-				get_class_field_name(field_name, pcr.pitem()->name, request.options.dim);
+				if (request.name.name.size() == 0) 
+				{
+					get_class_field_name(field_name, pcr.pitem()->name, request.options.dim);
+				}
+				else 
+				{
+					field_name = request.name.name;
+				}
 				request.options.total_size_bytes = request.options.dim.x * request.options.dim.y * request.options.dim.z * sizeb;
 				return put_field(request.name.field_id, type_object, field_name, request.name.description, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, request.options.total_size_bytes);
 			}

@@ -1418,7 +1418,7 @@ namespace corona
 
 		bool jslice::has_field(const object_name& name)
 		{
-			return get_field_index_by_name( name ) > -1;
+			return schema && get_field_index_by_name( name ) > -1;
 		}
 
 		bool jslice::has_field(relative_ptr_type field_id)
@@ -1845,13 +1845,13 @@ namespace corona
 					}
 					case jtype::type_int16:
 					{
-						auto fb = get_int32(index);
+						auto fb = get_int16(index);
 						fb = _member_assignment.int_value;
 						break;
 					}
 					case jtype::type_int8:
 					{
-						auto fb = get_int32(index);
+						auto fb = get_int8(index);
 						fb = _member_assignment.int_value;
 						break;
 					}
