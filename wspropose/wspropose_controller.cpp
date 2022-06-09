@@ -18,121 +18,180 @@ namespace proposal
 		box.init(1 << 22);
 		schema = jschema::create_schema(&box, 50, true, schema_id);
 
+		put_integer_field_request ifr;
+		ifr.name.name = "client_id";
+		ifr.name.description = "Client Id";
+		ifr.name.type_id = jtype::type_int64;
+		idprogram = schema.put_integer_field(ifr);
+
+		put_integer_field_request ifr;
+		ifr.name.name = "program_id";
+		ifr.name.description = "Program Id";
+		ifr.name.type_id = jtype::type_int64;
+		idprogram = schema.put_integer_field(ifr);
+
+		put_integer_field_request ifr;
+		ifr.name.name = "policy_id";
+		ifr.name.description = "Policy Id";
+		idpolicy = schema.put_integer_field(ifr);
+
+		put_integer_field_request ifr;
+		ifr.name.name = "coverage_id";
+		ifr.name.description = "Coverage Id";
+		idcoverage = schema.put_integer_field(ifr);
+
 		put_double_field_request dfr;
 		dfr.name.name = "limit";
 		dfr.name.description = "Policy Limit";
 		dfr.name.type_id = jtype::type_float64;
-		dfr.options.minimum_double = 0.0;
-		dfr.options.maximum_double = 1E10;
-		relative_ptr_type limit_field_id = schema.put_double_field(dfr);
+		idlimit = schema.put_double_field(dfr);
 
 		dfr.name.name = "attachment";
 		dfr.name.description = "Attachment Point";
-		dfr.name.type_id = jtype::type_float64;
-		dfr.options.minimum_double = 0.0;
-		dfr.options.maximum_double = 1E10;
-		attachment_field_id = schema.put_double_field(dfr);
+		idattachment = schema.put_double_field(dfr);
 
 		dfr.name.name = "deductible";
 		dfr.name.description = "Deductible";
-		dfr.name.type_id = jtype::type_float64;
-		dfr.options.minimum_double = 0.0;
-		dfr.options.maximum_double = 1E10;
-		deductible_field_id = schema.put_double_field(dfr);
+		iddeductible = schema.put_double_field(dfr);
+
+		dfr.name.name = "share";
+		dfr.name.description = "Share";
+		idshare = schema.put_double_field(dfr);
 
 		put_string_field_request sfr;
-		sfr.name.name = "description";
-		sfr.name.description = "Description";
+		sfr.name.name = "comment";
+		sfr.name.description = "Comment";
 		sfr.options.full_text_editor = true;
 		sfr.options.length = 512;
-		comment_field_id = schema.put_string_field(sfr);
+		idcomment = schema.put_string_field(sfr);
+
+		sfr.name.name = "client_name";
+		sfr.name.description = "Client name";
+		sfr.options.length = 200;
+		idclient_name = schema.put_string_field(sfr);
 
 		sfr.name.name = "program_name";
 		sfr.name.description = "Program name";
-		sfr.options.length = 200;
-		program_name_field_id = schema.put_string_field(sfr);
+		idprogram_name = schema.put_string_field(sfr);
+
+		sfr.name.name = "program_description";
+		sfr.name.description = "Program Description";
+		idprogram_description = schema.put_string_field(sfr);
+
+		sfr.name.name = "policy_name";
+		sfr.name.description = "Policy name";
+		idpolicy_name = schema.put_string_field(sfr);
 
 		sfr.name.name = "coverage_name";
 		sfr.name.description = "Coverage Name";
-		sfr.options.length = 200;
-		coverage_name_id = schema.put_string_field(sfr);
+		idcoverage_name = schema.put_string_field(sfr);
 
 		sfr.name.name = "carrier_name";
 		sfr.name.description = "Carrier Name";
-		sfr.options.length = 200;
-		carrier_name_id = schema.put_string_field(sfr);
+		idcarrier_name = schema.put_string_field(sfr);
+
+		sfr.name.name = "property_sov";
+		sfr.name.description = "Placeholder Buildings SOV";
+		idproperty_list = schema.put_string_field(sfr);
+
+		sfr.name.name = "wc_sov";
+		sfr.name.description = "Placeholder Aircraft SOV";
+		idwc_list = schema.put_string_field(sfr);
+
+		sfr.name.name = "vehicle_sov";
+		sfr.name.description = "Placeholder Vehicle SOV";
+		idvehicle_list = schema.put_string_field(sfr);
+
+		sfr.name.name = "aircraft_sov";
+		sfr.name.description = "Placeholder Aircraft SOV";
+		idaircraft_list = schema.put_string_field(sfr);
+
+		sfr.name.name = "slide_heading1";
+		sfr.name.description = "Slide Heading";
+		idslide_heading1 = schema.put_string_field(sfr);
+
+		sfr.name.name = "slide_heading2";
+		sfr.name.description = "Slide SubHeading";
+		idslide_heading2 = schema.put_string_field(sfr);
 
 		put_class_request pcr;
 
-		pcr.class_name = "program";
-		pcr.class_description = "Program summary";
-		pcr.member_fields = { "program_name", "description", "rectangle", "layout_rect" };
-		program_class_id = schema.put_class(pcr);
+		pcr.class_name = "client";
+		pcr.class_description = "Client";
+		pcr.member_fields = { idclient, idclient_name, schema.idfirst_name, schema.idlast_name, schema.idstreet, schema.idcity, schema.idstate, schema.idpostal  };
+		pcr.field_id_primary_key = idclient;
+		idclient_class = schema.put_class(pcr);
 
-		if (program_class_id == null_row) {
-			std::cout << __LINE__ << ":class create failed failed" << std::endl;
-			return;
-		}
-
-		pcr.class_name = "coverage";
-		pcr.class_description = "coverage frame";
-		pcr.member_fields = { "coverage_name", "description", "rectangle", "layout_rect" };
-		coverage_class_id = schema.put_class(pcr);
-
-		if (coverage_class_id == null_row) {
-			std::cout << __LINE__ << ":class create failed failed" << std::endl;
-			return;
-		}
-
-		pcr.class_name = "coverage_spacer";
-		pcr.class_description = "spacer frame";
-		pcr.member_fields = { "coverage_name", "rectangle", "layout_rect" };
-		coverage_spacer_id = schema.put_class(pcr);
-
-		if (coverage_spacer_id == null_row) {
+		if (idclient_class == null_row) {
 			std::cout << __LINE__ << ":class create failed failed" << std::endl;
 			return;
 		}
 
 		pcr.class_name = "carrier";
-		pcr.class_description = "carrier frame";
-		pcr.member_fields = { "carrier_name", "description", "rectangle", "layout_rect", "color" };
-		carrier_class_id = schema.put_class(pcr);
-
-		if (coverage_class_id == null_row) {
+		pcr.class_description = "Carrier";
+		pcr.member_fields = { idcarrier, idcarrier_name, schema.idfirst_name, schema.idlast_name, schema.idstreet, schema.idcity, schema.idstate, schema.idpostal, schema.idrectangle, schema.idlayout_rect };
+		pcr.field_id_primary_key = idcarrier;
+		idcarrier_class = schema.put_class(pcr);
+		if (idcarrier_class == null_row) {
 			std::cout << __LINE__ << ":class create failed failed" << std::endl;
 			return;
 		}
 
-		pcr.class_name = "policy";
-		pcr.class_description = "policy block";
-		pcr.member_fields = { "coverage_name", "carrier_name", "description", "rectangle", "layout_rect", "color", "limit", "attachment" };
-		policy_class_id = schema.put_class(pcr);
-
-		if (policy_class_id == null_row) {
+		pcr.class_name = "program";
+		pcr.class_description = "Program";
+		pcr.member_fields = { idclient, idprogram, idprogram_name, idprogram_description, idprogram_view, idproperty_list, idwc_list, idaircraft_list, idvehicle_list, schema.idrectangle, schema.idlayout_rect };
+		pcr.field_id_primary_key = idprogram;
+		idprogram_class = schema.put_class(pcr);
+		if (idprogram_class == null_row) {
 			std::cout << __LINE__ << ":class create failed failed" << std::endl;
 			return;
 		}
 
-		pcr.class_name = "policy_deductible";
-		pcr.class_description = "deductible block";
-		pcr.member_fields = { "coverage_name", "description", "rectangle", "layout_rect", "color", "deductible" };
-		policy_deductible_class_id = schema.put_class(pcr);
+		pcr.class_name = "coverage";
+		pcr.class_description = "Coverage";
+		pcr.member_fields = { idclient, idprogram, idcoverage, idcoverage_name, schema.idrectangle, schema.idlayout_rect };
+		pcr.field_id_primary_key = idcoverage;
+		idprogram_class = schema.put_class(pcr);
 
-		if (policy_deductible_class_id == null_row) {
-			std::cout << __LINE__ << ":class create failed failed" << std::endl;
-			return;
-		}
+		pcr.class_name = "buildings_policy";
+		pcr.class_description = "Buildings";
+		pcr.member_fields = { idprogram, idclient, idcarrier, idpolicy, idlimit, idattachment, idshare, schema.idcolor, schema.idrectangle, schema.idlayout_rect };
+		idpolicy_property_class = schema.put_class(pcr);
 
-		pcr.class_name = "policy_umbrella";
-		pcr.class_description = "deductible block";
-		pcr.member_fields = { "coverage_name", "description", "rectangle", "layout_rect", "color", "limit", "attachment" };
-		policy_umbrella_class_id = schema.put_class(pcr);
+		pcr.class_name = "wc_policy";
+		pcr.class_description = "Workers Comp";
+		pcr.member_fields = { idprogram, idclient, idcarrier, idpolicy, idlimit, idattachment, idshare, schema.idcolor, schema.idrectangle, schema.idlayout_rect };
+		idpolicy_wc_class = schema.put_class(pcr);
 
-		if (policy_deductible_class_id == null_row) {
-			std::cout << __LINE__ << ":class create failed failed" << std::endl;
-			return;
-		}
+		pcr.class_name = "vehicles_policy";
+		pcr.class_description = "Vehicles";
+		pcr.member_fields = { idprogram, idclient, idcarrier, idpolicy, idlimit, idattachment, idshare, schema.idcolor, schema.idrectangle, schema.idlayout_rect };
+		idpolicy_vehicles_class = schema.put_class(pcr);
+
+		pcr.class_name = "aircraft_policy";
+		pcr.class_description = "Aircraft";
+		pcr.member_fields = { idprogram, idclient, idcarrier, idpolicy, idlimit, idattachment, idshare, schema.idcolor, schema.idrectangle, schema.idlayout_rect };
+		idpolicy_aircraft_class = schema.put_class(pcr);
+
+		pcr.class_name = "umbrella_policy";
+		pcr.class_description = "Umbrella";
+		pcr.member_fields = { idprogram, idclient, idcarrier, idpolicy, idlimit, idattachment, idshare, schema.idcolor, schema.idrectangle, schema.idlayout_rect };
+		idpolicy_umbrella_class = schema.put_class(pcr);
+
+		pcr.class_name = "slide_title";
+		pcr.class_description = "Title Slide";
+		pcr.member_fields = { idprogram, idclient, idslide_heading1, idslide_heading2, schema.idrectangle, schema.idlayout_rect };
+		idslide_title_class = schema.put_class(pcr);
+
+		pcr.class_name = "slide_chart";
+		pcr.class_description = "Chart Slide";
+		pcr.member_fields = { idprogram, idclient, idslide_heading1, idslide_heading2, schema.idrectangle, schema.idlayout_rect };
+		idslide_program_chart_class = schema.put_class(pcr);
+
+		pcr.class_name = "slide_chart";
+		pcr.class_description = "Comparison Slide?";
+		pcr.member_fields = { idprogram, idclient, idslide_heading1, idslide_heading2, schema.idrectangle, schema.idlayout_rect };
+		idslide_demo_cart_class = schema.put_class(pcr);
 
 		jmodel jm;
 
@@ -144,108 +203,172 @@ namespace proposal
 		selector_rule* sr;
 
 		mcr = jm.create_options.append();
-		mcr->rule_name = "add coverage";
+		mcr->rule_name = "Add Client";
 		mcr->selectors.always();
-		mcr->create_class_id = coverage_class_id;
+		mcr->create_class_id = idclient_class;
 		mcr->replace_selected = false;
 		mcr->select_on_create = true;
 		mcr->item_id_class = null_row;
 
 		mcr = jm.create_options.append();
-		mcr->rule_name = "add carrier";
+		mcr->rule_name = "Add Carrier";
 		mcr->selectors.always();
-		mcr->create_class_id = carrier_class_id;
+		mcr->create_class_id = idcarrier_class;
 		mcr->replace_selected = false;
 		mcr->select_on_create = true;
 		mcr->item_id_class = null_row;
 
 		mcr = jm.create_options.append();
-		mcr->rule_name = "add coverage spacer";
-		mcr->selectors.when(coverage_class_id);
-		mcr->create_class_id = coverage_spacer_id;
+		mcr->rule_name = "Add Buildings Policy";
+		mcr->selectors.when(idcarrier_class, idprogram);
+		mcr->create_class_id = idpolicy_property_class;
+		mcr->select_on_create = true;
+		mcr->replace_selected = false;
+		mcr->item_id_class = null_row;
+
+		mcr = jm.create_options.append();
+		mcr->rule_name = "Add WC Policy";
+		mcr->selectors.when(idcarrier_class, idprogram);
+		mcr->create_class_id = idpolicy_wc_class;
+		mcr->select_on_create = true;
+		mcr->replace_selected = false;
+		mcr->item_id_class = null_row;
+
+		mcr = jm.create_options.append();
+		mcr->rule_name = "Add Aircraft Policy";
+		mcr->selectors.when(idcarrier_class, idprogram);
+		mcr->create_class_id = idpolicy_aircraft_class;
+		mcr->select_on_create = true;
+		mcr->replace_selected = false;
+		mcr->item_id_class = null_row;
+
+		mcr = jm.create_options.append();
+		mcr->rule_name = "Add Aircraft Policy";
+		mcr->selectors.when(idcarrier_class, idprogram);
+		mcr->create_class_id = idpolicy_aircraft_class;
+		mcr->select_on_create = true;
+		mcr->replace_selected = false;
+		mcr->item_id_class = null_row;
+
+		mcr = jm.create_options.append();
+		mcr->rule_name = "Add Program";
+		mcr->selectors.when(idclient_class);
+		mcr->create_class_id = idprogram_class;
+		mcr->replace_selected = false;
+		mcr->select_on_create = true;
+		mcr->item_id_class = null_row;
+
+		mcr = jm.create_options.append();
+		mcr->rule_name = "Add Coverage";
+		mcr->selectors.when(idprogram_class);
+		mcr->create_class_id = idcoverage_class;
 		mcr->select_on_create = false;
 		mcr->replace_selected = false;
 		mcr->item_id_class = null_row;
 
 		mcr = jm.create_options.append();
-		mcr->rule_name = "add policy";
-		mcr->selectors.when(coverage_class_id, carrier_class_id);
-		mcr->create_class_id = policy_class_id;
-		mcr->select_on_create = true;
+		mcr->rule_name = "Add Title Slide";
+		mcr->selectors.when(idprogram_class);
+		mcr->create_class_id = idslide_title_class;
 		mcr->replace_selected = false;
+		mcr->select_on_create = true;
 		mcr->item_id_class = null_row;
 
 		mcr = jm.create_options.append();
-		mcr->rule_name = "add deductible";
-		mcr->selectors.when(coverage_class_id);
-		mcr->create_class_id = policy_deductible_class_id;
-		mcr->select_on_create = true;
+		mcr->rule_name = "Add Program Slide";
+		mcr->selectors.when(idprogram_class);
+		mcr->create_class_id = idslide_program_chart_class;
 		mcr->replace_selected = false;
+		mcr->select_on_create = true;
 		mcr->item_id_class = null_row;
 
 		mcr = jm.create_options.append();
-		mcr->rule_name = "add umbrella";
-		mcr->selectors.when(policy_class_id);
-		mcr->create_class_id = policy_umbrella_class_id;
+		mcr->rule_name = "Add Comparison Slide";
+		mcr->selectors.when(idprogram_class);
+		mcr->create_class_id = idslide_demo_cart_class;
+		mcr->replace_selected = false;
 		mcr->select_on_create = true;
-		mcr->replace_selected = true;
 		mcr->item_id_class = null_row;
 
 		msr = jm.select_options.append();
-		msr->rule_name = "select program";
-		msr->select_class_id = program_class_id;
+		msr->rule_name = "select client";
+		msr->select_class_id = idclient_class;
 
 		msr = jm.select_options.append();
 		msr->rule_name = "select coverage";
-		msr->select_class_id = coverage_class_id;
+		msr->select_class_id = idcoverage_class;
 
 		msr = jm.select_options.append();
 		msr->rule_name = "select carrier";
-		msr->select_class_id = carrier_class_id;
+		msr->select_class_id = idcarrier_class;
 
 		msr = jm.select_options.append();
-		msr->rule_name = "select coverage spacer";
-		msr->select_class_id = coverage_spacer_id;
+		msr->rule_name = "select program";
+		msr->select_class_id = idprogram_class;
 
 		msr = jm.select_options.append();
-		msr->rule_name = "select policy";
-		msr->select_class_id = policy_class_id;
+		msr->rule_name = "select policy1";
+		msr->select_class_id = idpolicy_property_class;
 
 		msr = jm.select_options.append();
-		msr->rule_name = "select deductible";
-		msr->select_class_id = policy_deductible_class_id;
+		msr->rule_name = "select policy2";
+		msr->select_class_id = idpolicy_wc_class;
 
 		msr = jm.select_options.append();
-		msr->rule_name = "select umbrella";
-		msr->select_class_id = policy_umbrella_class_id;
+		msr->rule_name = "select policy3";
+		msr->select_class_id = idpolicy_vehicles_class;
+
+		msr = jm.select_options.append();
+		msr->rule_name = "select policy4";
+		msr->select_class_id = idpolicy_aircraft_class;
+
+		msr = jm.select_options.append();
+		msr->rule_name = "select policy5";
+		msr->select_class_id = idpolicy_umbrella_class;
+
+		msr = jm.select_options.append();
+		msr->rule_name = "select policy cov";
+		msr->select_class_id = idpolicy_coverage_class;
 
 		mur = jm.update_options.append();
-		mur->rule_name = "update program";
-		mur->update_class_id = program_class_id;
+		mur->rule_name = "update client";
+		mur->update_class_id = idclient_class;
 
 		mur = jm.update_options.append();
 		mur->rule_name = "update coverage";
-		mur->update_class_id = coverage_class_id;
+		mur->update_class_id = idcoverage_class;
 
 		mur = jm.update_options.append();
 		mur->rule_name = "update carrier";
-		mur->update_class_id = carrier_class_id;
+		mur->update_class_id = idcarrier_class;
 
 		mur = jm.update_options.append();
-		mur->rule_name = "update coverage spacer";
-		mur->update_class_id = coverage_spacer_id;
+		mur->rule_name = "update program";
+		mur->update_class_id = idprogram_class;
+
+		mur = jm.update_options.append();
+		mur->rule_name = "update policy1";
+		mur->update_class_id = idpolicy_property_class;
+
+		mur = jm.update_options.append();
+		mur->rule_name = "update policy1";
+		mur->update_class_id = idpolicy_wc_class;
+
+		mur = jm.update_options.append();
+		mur->rule_name = "update policy2";
+		mur->update_class_id = idpolicy_vehicles_class;
+
+		mur = jm.update_options.append();
+		mur->rule_name = "update policy3";
+		mur->update_class_id = idpolicy_aircraft_class;
+
+		mur = jm.update_options.append();
+		mur->rule_name = "update policy4";
+		mur->update_class_id = idpolicy_umbrella_class;
 
 		mur = jm.update_options.append();
 		mur->rule_name = "update policy";
-		mur->update_class_id = policy_class_id;
-
-		mur = jm.update_options.append();
-		mur->rule_name = "update deductible";
-		mur->update_class_id = policy_deductible_class_id;
-
-		mur = jm.update_options.append();
-		mur->rule_name = "update umbrella";
-		mur->update_class_id = policy_umbrella_class_id;
+		mur->update_class_id = idpolicy_coverage_class;
 
 		schema.put_model(jm);
 
@@ -271,15 +394,39 @@ namespace proposal
 		style_sheet.set(
 			{ schema.id_view_title },
 			{
+				{ schema.idname, "view_background" },
+				{ schema.idfont_name, "Arial" },
+				{ schema.idfont_size, 10.0 },
+				{ schema.idbold, false },
+				{ schema.iditalic, false },
+				{ schema.idunderline, false },
+				{ schema.idstrike_through, false },
+				{ schema.idline_spacing, 0.0 },
+				{ schema.idhorizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idvertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idshape_fill_color, "#000000FF" },
+				{ schema.idshape_border_thickness, "" },
+				{ schema.idshape_border_color, "" },
+				{ schema.idbox_fill_color, "#ffffffFF" },
+				{ schema.idbox_border_thickness, "4" },
+				{ schema.idbox_border_color, "#ffffffff" }
+			}
+			);
+
+		style_sheet.set(
+			{ schema.id_view_title },
+			{
 				{ schema.idname, "view_title" },
 				{ schema.idfont_name, "Arial" },
 				{ schema.idfont_size, 30.0 },
 				{ schema.idbold, false },
 				{ schema.iditalic, false },
+				{ schema.idunderline, false },
+				{ schema.idstrike_through, false },
 				{ schema.idline_spacing, 0.0 },
 				{ schema.idhorizontal_alignment, (int)visual_alignment::align_near },
 				{ schema.idvertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idshape_fill_color, "" },
+				{ schema.idshape_fill_color, "#000000FF" },
 				{ schema.idshape_border_thickness, "" },
 				{ schema.idshape_border_color, "" },
 				{ schema.idbox_fill_color, "" },
@@ -287,6 +434,7 @@ namespace proposal
 				{ schema.idbox_border_color, "" }
 			}
 			);
+
 		style_sheet.set(
 			{ schema.id_view_subtitle },
 			{
@@ -295,10 +443,12 @@ namespace proposal
 				{ schema.idfont_size, 24.0 },
 				{ schema.idbold, false },
 				{ schema.iditalic, false },
+				{ schema.idunderline, false },
+				{ schema.idstrike_through, false },
 				{ schema.idline_spacing, 0.0 },
 				{ schema.idhorizontal_alignment, (int)visual_alignment::align_near },
 				{ schema.idvertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idshape_fill_color, "" },
+				{ schema.idshape_fill_color, "#000000FF" },
 				{ schema.idshape_border_thickness, "" },
 				{ schema.idshape_border_color, "" },
 				{ schema.idbox_fill_color, "" },
@@ -312,13 +462,15 @@ namespace proposal
 			{
 				{ schema.idname, "view_section" },
 				{ schema.idfont_name, "Arial" },
-				{ schema.idfont_size, 20.0 },
+				{ schema.idfont_size, 16.0 },
 				{ schema.idbold, false },
 				{ schema.iditalic, false },
+				{ schema.idunderline, false },
+				{ schema.idstrike_through, false },
 				{ schema.idline_spacing, 0.0 },
 				{ schema.idhorizontal_alignment, (int)visual_alignment::align_near },
 				{ schema.idvertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idshape_fill_color, "" },
+				{ schema.idshape_fill_color, "#000000FF" },
 				{ schema.idshape_border_thickness, "" },
 				{ schema.idshape_border_color, "" },
 				{ schema.idbox_fill_color, "" },
@@ -335,10 +487,12 @@ namespace proposal
 				{ schema.idfont_size, 16.0 },
 				{ schema.idbold, false },
 				{ schema.iditalic, false },
+				{ schema.idunderline, false },
+				{ schema.idstrike_through, false },
 				{ schema.idline_spacing, 0.0 },
 				{ schema.idhorizontal_alignment, (int)visual_alignment::align_near },
 				{ schema.idvertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idshape_fill_color, "" },
+				{ schema.idshape_fill_color, "#000000FF" },
 				{ schema.idshape_border_thickness, "" },
 				{ schema.idshape_border_color, "" },
 				{ schema.idbox_fill_color, "" },
@@ -355,10 +509,12 @@ namespace proposal
 				{ schema.idfont_size, 12.0 },
 				{ schema.idbold, false },
 				{ schema.iditalic, false },
+				{ schema.idunderline, false },
+				{ schema.idstrike_through, false },
 				{ schema.idline_spacing, 0.0 },
 				{ schema.idhorizontal_alignment, (int)visual_alignment::align_near },
 				{ schema.idvertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idshape_fill_color, "" },
+				{ schema.idshape_fill_color, "#000000FF" },
 				{ schema.idshape_border_thickness, "" },
 				{ schema.idshape_border_color, "" },
 				{ schema.idbox_fill_color, "" },
@@ -375,10 +531,12 @@ namespace proposal
 				{ schema.idfont_size, 12.0 },
 				{ schema.idbold, false },
 				{ schema.iditalic, false },
+				{ schema.idunderline, false },
+				{ schema.idstrike_through, false },
 				{ schema.idline_spacing, 0.0 },
 				{ schema.idhorizontal_alignment, (int)visual_alignment::align_near },
 				{ schema.idvertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idshape_fill_color, "" },
+				{ schema.idshape_fill_color, "#000000FF" },
 				{ schema.idshape_border_thickness, "" },
 				{ schema.idshape_border_color, "" },
 				{ schema.idbox_fill_color, "" },
@@ -395,10 +553,12 @@ namespace proposal
 				{ schema.idfont_size, 30.0 },
 				{ schema.idbold, false },
 				{ schema.iditalic, false },
+				{ schema.idunderline, false },
+				{ schema.idstrike_through, false },
 				{ schema.idline_spacing, 0.0 },
 				{ schema.idhorizontal_alignment, (int)visual_alignment::align_near },
 				{ schema.idvertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idshape_fill_color, "" },
+				{ schema.idshape_fill_color, "#000000FF" },
 				{ schema.idshape_border_thickness, "" },
 				{ schema.idshape_border_color, "" },
 				{ schema.idbox_fill_color, "" },
@@ -415,10 +575,12 @@ namespace proposal
 				{ schema.idfont_size, 24.0 },
 				{ schema.idbold, false },
 				{ schema.iditalic, false },
+				{ schema.idunderline, false },
+				{ schema.idstrike_through, false },
 				{ schema.idline_spacing, 0.0 },
 				{ schema.idhorizontal_alignment, (int)visual_alignment::align_near },
 				{ schema.idvertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idshape_fill_color, "" },
+				{ schema.idshape_fill_color, "#000000FF" },
 				{ schema.idshape_border_thickness, "" },
 				{ schema.idshape_border_color, "" },
 				{ schema.idbox_fill_color, "" },
@@ -435,10 +597,12 @@ namespace proposal
 				{ schema.idfont_size, 20.0 },
 				{ schema.idbold, false },
 				{ schema.iditalic, false },
+				{ schema.idunderline, false },
+				{ schema.idstrike_through, false },
 				{ schema.idline_spacing, 0.0 },
 				{ schema.idhorizontal_alignment, (int)visual_alignment::align_near },
 				{ schema.idvertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idshape_fill_color, "" },
+				{ schema.idshape_fill_color, "#000000FF" },
 				{ schema.idshape_border_thickness, "" },
 				{ schema.idshape_border_color, "" },
 				{ schema.idbox_fill_color, "" },
@@ -455,10 +619,12 @@ namespace proposal
 				{ schema.idfont_size, 14.0 },
 				{ schema.idbold, false },
 				{ schema.iditalic, false },
+				{ schema.idunderline, false },
+				{ schema.idstrike_through, false },
 				{ schema.idline_spacing, 0.0 },
 				{ schema.idhorizontal_alignment, (int)visual_alignment::align_far },
 				{ schema.idvertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idshape_fill_color, "" },
+				{ schema.idshape_fill_color, "#000000FF" },
 				{ schema.idshape_border_thickness, "" },
 				{ schema.idshape_border_color, "" },
 				{ schema.idbox_fill_color, "" },
@@ -475,10 +641,12 @@ namespace proposal
 				{ schema.idfont_size, 14.0 },
 				{ schema.idbold, false },
 				{ schema.iditalic, false },
+				{ schema.idunderline, false },
+				{ schema.idstrike_through, false },
 				{ schema.idline_spacing, 0.0 },
 				{ schema.idhorizontal_alignment, (int)visual_alignment::align_near },
 				{ schema.idvertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idshape_fill_color, "" },
+				{ schema.idshape_fill_color, "#000000FF" },
 				{ schema.idshape_border_thickness, "" },
 				{ schema.idshape_border_color, "" },
 				{ schema.idbox_fill_color, "" },
@@ -496,10 +664,12 @@ namespace proposal
 				{ schema.idfont_size, 30.0 },
 				{ schema.idbold, false },
 				{ schema.iditalic, false },
+				{ schema.idunderline, false },
+				{ schema.idstrike_through, false },
 				{ schema.idline_spacing, 0.0 },
 				{ schema.idhorizontal_alignment, (int)visual_alignment::align_near },
 				{ schema.idvertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idshape_fill_color, "" },
+				{ schema.idshape_fill_color, "#000000FF" },
 				{ schema.idshape_border_thickness, "" },
 				{ schema.idshape_border_color, "" },
 				{ schema.idbox_fill_color, "" },
@@ -517,10 +687,12 @@ namespace proposal
 				{ schema.idfont_size, 30.0 },
 				{ schema.idbold, false },
 				{ schema.iditalic, false },
+				{ schema.idunderline, false },
+				{ schema.idstrike_through, false },
 				{ schema.idline_spacing, 0.0 },
 				{ schema.idhorizontal_alignment, (int)visual_alignment::align_near },
 				{ schema.idvertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idshape_fill_color, "" },
+				{ schema.idshape_fill_color, "#000000FF" },
 				{ schema.idshape_border_thickness, "" },
 				{ schema.idshape_border_color, "" },
 				{ schema.idbox_fill_color, "" },
@@ -537,10 +709,12 @@ namespace proposal
 				{ schema.idfont_size, 30.0 },
 				{ schema.idbold, false },
 				{ schema.iditalic, false },
+				{ schema.idunderline, false },
+				{ schema.idstrike_through, false },
 				{ schema.idline_spacing, 0.0 },
 				{ schema.idhorizontal_alignment, (int)visual_alignment::align_near },
 				{ schema.idvertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idshape_fill_color, "" },
+				{ schema.idshape_fill_color, "#000000FF" },
 				{ schema.idshape_border_thickness, "" },
 				{ schema.idshape_border_color, "" },
 				{ schema.idbox_fill_color, "" },
@@ -560,7 +734,7 @@ namespace proposal
 				{ schema.idline_spacing, 0.0 },
 				{ schema.idhorizontal_alignment, (int)visual_alignment::align_near },
 				{ schema.idvertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idshape_fill_color, "" },
+				{ schema.idshape_fill_color, "#000000FF" },
 				{ schema.idshape_border_thickness, "" },
 				{ schema.idshape_border_color, "" },
 				{ schema.idbox_fill_color, "" },
@@ -577,10 +751,12 @@ namespace proposal
 				{ schema.idfont_size, 30.0 },
 				{ schema.idbold, false },
 				{ schema.iditalic, false },
+				{ schema.idunderline, false },
+				{ schema.idstrike_through, false },
 				{ schema.idline_spacing, 0.0 },
 				{ schema.idhorizontal_alignment, (int)visual_alignment::align_near },
 				{ schema.idvertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idshape_fill_color, "" },
+				{ schema.idshape_fill_color, "#000000FF" },
 				{ schema.idshape_border_thickness, "" },
 				{ schema.idshape_border_color, "" },
 				{ schema.idbox_fill_color, "" },
@@ -597,10 +773,12 @@ namespace proposal
 				{ schema.idfont_size, 30.0 },
 				{ schema.idbold, false },
 				{ schema.iditalic, false },
+				{ schema.idunderline, false },
+				{ schema.idstrike_through, false },
 				{ schema.idline_spacing, 0.0 },
 				{ schema.idhorizontal_alignment, (int)visual_alignment::align_near },
 				{ schema.idvertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idshape_fill_color, "" },
+				{ schema.idshape_fill_color, "#000000FF" },
 				{ schema.idshape_border_thickness, "" },
 				{ schema.idshape_border_color, "" },
 				{ schema.idbox_fill_color, "" },
@@ -609,8 +787,8 @@ namespace proposal
 			}
 			);
 
-		relative_ptr_type program_summary_id = null_row;
-		program_chart.create_object(0, sample_actor.actor_id, program_class_id, program_summary_id);
+		relative_ptr_type existing_client_id = null_row;
+		auto client = program_chart.create_object(0, sample_actor.actor_id, idclient_class, existing_client_id);
 
 		//{ idname, idfont_name, idfont_size, idbold, iditalic, idline_spacing, idhorizontal_alignment, idvertical_alignment,
 	//idshape_fill_color, idshape_border_thickness, idshape_border_color, idbox_fill_color, idbox_border_thickness, idbox_border_color };
@@ -625,25 +803,51 @@ namespace proposal
 		;
 	}
 
-	void wsproposal_controller::render(const rectangle& newSize)
+	void wsproposal_controller::render_client_view(const rectangle& newSize)
 	{
-		pg.clear();
+		;
+	}
 
-		auto mainr = pg.row(nullptr);
-		auto controlcolumn = pg.column(mainr, { 0.0_px,0.0_px,25.0_pct,100.0_pct });
+	void wsproposal_controller::render_carrier_view(const rectangle& newSize)
+	{
+		;
+	}
+
+	void wsproposal_controller::render_coverage_view(const rectangle& newSize)
+	{
+		;
+	}
+
+	void wsproposal_controller::render_program_view(const rectangle& newSize)
+	{
+		corona::database::layout_rect title_box, * ptitle_box = &title_box;
 
 		auto left_margin = 20.0_px;
 		auto chart_top = 10.0_px;
 
-		auto d2dcolumn = pg.column(mainr, { 0.0_px,0.0_px,75.0_pct,100.0_pct });
-		auto d2dwin = pg.canvas2d(d2dcolumn, { 0.0_px,0.0_px,100.0_pct,100.0_pct });
+		auto mainr = row(nullptr, null_row);
+		auto controlcolumn = column(mainr, null_row, { 0.0_px,0.0_px,25.0_pct,100.0_pct });
+		auto d2dcolumn = column(mainr, null_row, { 0.0_px,0.0_px,75.0_pct,100.0_pct });
+		auto d2dwin = canvas2d(d2dcolumn, schema.id_view_background, { 0.0_px,0.0_px,100.0_pct,100.0_pct });
 
-		corona::database::layout_rect title_box, *ptitle_box = &title_box;
+		// editable controls on the left
+		pg.actor_update_fields(controlcolumn, &state, &schema, &program_chart);
+		pg.actor_create_buttons(controlcolumn, &state, &schema, &program_chart);
+
+		// draw the slides at the top
+		relative_ptr_type slide_fields[2] = { idslide_heading1, null_row };
+		auto d2dwin_area = column(d2dwin, schema.id_view_background, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
+		auto slide_area = row(d2dwin, { 0.0_px, 0.0_px, 100.0_pct, 200.0_px }, slide_fields);
+
+		// and now draw the selected slide
+		relative_ptr_type title_classes = { slide_title_class_id };
 
 		title_box.width = 500.0_px;
 		title_box.height = 100.0_px;
 		title_box.x = left_margin;
 		title_box.y = chart_top;
+		auto title_area = column(d2dwin, schema.id_view_title, title_box);
+		column(title_area, { 5.0_px, 0.0_px, 500.0_px, 75.0_px }, slide_title_class_id);
 
 		//const database::actor_view_object& avo, database::jslice& slice
 		for_each(program_class_id, [ptitle_box](const corona::database::actor_view_object& avo, corona::database::jslice& slice) {
@@ -652,7 +856,7 @@ namespace proposal
 			return true;
 			});
 
-		corona::database::layout_rect legend_box, *plegend_box = &legend_box;
+		corona::database::layout_rect legend_box, * plegend_box = &legend_box;
 		int carrier_count = state.view_objects.count_if([this](const auto& avokp) { return avokp.second.class_id == carrier_class_id; });
 
 		legend_box.width = 300.0_px;
@@ -661,15 +865,8 @@ namespace proposal
 		legend_box.x = -1.1_psz;
 		legend_box.y = chart_top;
 
-		auto legend_area = pg.column(d2dwin, legend_box );
-
-		for_each(carrier_class_id, [plegend_box](const corona::database::actor_view_object& avo, corona::database::jslice& slice) {
-			auto rbx = slice.get_layout_rect(";la");
-			rbx = *plegend_box;
-			plegend_box->y.amount += 20.0;
-			std::cout << std::format("carrier y:{} h:{}", plegend_box->width.amount, plegend_box->height.amount) << std::endl;
-			return true;
-			});
+		auto legend_area = column(d2dwin, schema.id_chart_legend, legend_box);
+		column(legend_area, { 5.0_px, 0.0_px, 250.0_px, 30.0_px }, carrier_class_id);
 
 		// get dimensions of the chart, the width
 
@@ -683,13 +880,13 @@ namespace proposal
 
 		// and the height
 
-		corona::database::relative_ptr_type limit_fields[3], *plimit_fields = &limit_fields[0];
+		corona::database::relative_ptr_type limit_fields[3], * plimit_fields = &limit_fields[0];
 		limit_fields[0] = limit_field_id;
 		limit_fields[1] = attachment_field_id;
 		limit_fields[2] = null_row;
 
 		double max_amount = 0.0, min_amount = 0.0, count = 0.0;
-		double *pmax_amount = &max_amount, *pmin_amount = &min_amount, *pcount = &count;
+		double* pmax_amount = &max_amount, * pmin_amount = &min_amount, * pcount = &count;
 
 		for_each(plimit_fields, [this, pmax_amount, pmin_amount, pcount, plimit_fields](const corona::database::actor_view_object& avo, corona::database::jslice& slice) {
 			corona::database::relative_ptr_type* pfield = plimit_fields;
@@ -702,13 +899,13 @@ namespace proposal
 				if (t > *pmax_amount) {
 					*pmax_amount = t;
 				}
-				*pcount+= 1.0;
+				*pcount += 1.0;
 				pfield++;
 			}
 			return true;
 			});
 
-		corona::database::rectangle coverage_box, *pcoverage_box = &coverage_box;
+		corona::database::rectangle coverage_box, * pcoverage_box = &coverage_box;
 
 		double chartMargin = -60;
 		double chartHeight = newSize.h + chartMargin;
@@ -719,14 +916,14 @@ namespace proposal
 		coverage_box.x = coverage_width;
 		coverage_box.y = chartHeight;
 
-		corona::database::relative_ptr_type comparison_fields[2], *pcomparison_fields = &comparison_fields[0];
+		corona::database::relative_ptr_type comparison_fields[2], * pcomparison_fields = &comparison_fields[0];
 		comparison_fields[0] = coverage_name_id;
 		comparison_fields[1] = null_row;
 
 		double policyMax = 0.0;
 		double policyMin = 0.0;
 
-		for_each(coverage_class_id, [this, chartHeight, scaley, pcomparison_fields,pcoverage_box,coverage_width](const corona::database::actor_view_object& avo, corona::database::jslice& slice) {
+		for_each(coverage_class_id, [this, chartHeight, scaley, pcomparison_fields, pcoverage_box, coverage_width](const corona::database::actor_view_object& avo, corona::database::jslice& slice) {
 			corona::database::rectangle policy_box, * ppolicy_box = &policy_box;
 			auto rbx = slice.get_rectangle("rectangle");
 			rbx = *pcoverage_box;
@@ -739,7 +936,7 @@ namespace proposal
 
 			for_each(slice, pcomparison_fields, [this, chartHeight, scaley, ppolicy_box](const corona::database::actor_view_object& avo, corona::database::jslice& slice) {
 
-				if (slice.has_field(limit_field_id) && slice.has_field(attachment_field_id)) 
+				if (slice.has_field(limit_field_id) && slice.has_field(attachment_field_id))
 				{
 					auto pbx = slice.get_rectangle("rectangle");
 
@@ -759,14 +956,25 @@ namespace proposal
 			return true;
 			});
 
-		pg.actor_update_fields(controlcolumn, &state, &schema, &program_chart);
-		pg.actor_create_buttons(controlcolumn, &state, &schema, &program_chart);
-		pg.actor_select_items(d2dwin, &state, &schema, &program_chart);
-
 		pg.arrange(newSize.w, newSize.h);
 
 		canvasWindowsId = host->renderPage(pg, &schema, state, program_chart);
 		host->redraw();
+	}
+
+	void wsproposal_controller::render(const rectangle& newSize)
+	{
+		clear();
+
+		if (state.modified_object_id == null_row || state.modified_object.get_class_id() == idclient_class)
+		{
+			render_client_view(newSize);
+		}
+		else
+		{
+			render_program_view(newSize);
+		}
+
 	}
 
 }

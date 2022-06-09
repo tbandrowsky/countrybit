@@ -15,6 +15,7 @@ namespace corona
 		const int max_selections = 1000;
 		const int max_class_fields = 512;
 		const int default_collection_object_size = 512;
+		const int max_selection_depth = 32;
 
 		struct string_properties_type
 		{
@@ -645,10 +646,11 @@ namespace corona
 		class put_class_request
 		{
 		public:
-			relative_ptr_type				 class_id;
-			object_name				 class_name;
-			object_description		 class_description;
-			member_field_collection  member_fields;
+			relative_ptr_type				class_id;
+			object_name						class_name;
+			object_description				class_description;
+			member_field_collection			member_fields;
+			relative_ptr_type				field_id_primary_key;
 		};
 
 		class jlist_instance
@@ -672,17 +674,18 @@ namespace corona
 		class jclass_header
 		{
 		public:
-			relative_ptr_type									class_id;
+			relative_ptr_type							class_id;
 			object_name									name;
 			object_description							description;
 			uint64_t									class_size_bytes;
+			int											primary_key_idx;
 		};
 
 		class jclass_field
 		{
 		public:
 			relative_ptr_type				field_id;
-			uint64_t				offset;
+			uint64_t						offset;
 		};
 
 		using jclass = item_details_holder<jclass_header, jclass_field>;
@@ -781,6 +784,7 @@ namespace corona
 		using model_create_class_collection = iarray<model_creatable_class, max_creatable_options>;
 		using model_select_class_collection = iarray<model_selectable_class, max_selectable_options>;
 		using model_update_class_collection = iarray<model_updatable_class, max_updatable_options>;
+		using model_selection_hierarchy = iarray<relative_ptr_type, max_selection_depth>;	
 
 		class model_type
 		{
@@ -789,6 +793,7 @@ namespace corona
 			model_create_class_collection create_options;
 			model_select_class_collection select_options;
 			model_update_class_collection update_options;
+			model_selection_hierarchy	  selection_hierarchy;
 		};
 
 		using jmodel = model_type;

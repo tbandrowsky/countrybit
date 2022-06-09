@@ -19,37 +19,43 @@ namespace corona
 			styles = style_names_by_class_type::create_sorted_index(&data, styles_location);
 		}
 
-		page_item* page::row(page_item* _parent, layout_rect _box)
+		page_item* page::row(page_item* _parent, const char* _style_name, layout_rect _box)
 		{
 			page_item* v = append();
 			v->id = size();
 			v->set_parent(_parent);
 			v->layout = layout_types::row;
 			v->box = _box;
+			if (_style_name)
+				v->style_name = data.copy(_style_name, 0);
 			return v;
 		}
 
-		page_item* page::column(page_item* _parent, layout_rect _box)
+		page_item* page::column(page_item* _parent, const char* _style_name, layout_rect _box)
 		{
 			page_item* v = append();
 			v->id = size();
 			v->set_parent(_parent);
 			v->layout = layout_types::column;
 			v->box = _box;
+			if (_style_name)
+				v->style_name = data.copy(_style_name, 0);
 			return v;
 		}
 
-		page_item* page::absolute(page_item* _parent, layout_rect _box)
+		page_item* page::absolute(page_item* _parent, const char* _style_name, layout_rect _box)
 		{
 			page_item* v = append();
 			v->id = size();
 			v->set_parent(_parent);
 			v->layout = layout_types::absolute;
 			v->box = _box;
+			if (_style_name)
+				v->style_name = data.copy(_style_name, 0);
 			return v;
 		}
 
-		page_item* page::canvas2d(page_item* _parent, layout_rect _box)
+		page_item* page::canvas2d(page_item* _parent, const char* _style_name, layout_rect _box)
 		{
 			page_item* v = append();
 			v->id = size();
@@ -57,16 +63,20 @@ namespace corona
 			v->layout = layout_types::canvas2d;
 			v->box = _box;
 			v->canvas_id = v->id;
+			if (_style_name)
+				v->style_name = data.copy(_style_name, 0);
 			return v;
 		}
 
-		page_item* page::space(page_item* _parent, layout_rect _box)
+		page_item* page::space(page_item* _parent, const char* _style_name, layout_rect _box)
 		{
 			page_item* v = append();
 			v->id = size();
 			v->set_parent(_parent);
 			v->layout = layout_types::space;
 			v->box = _box;
+			if (_style_name)
+				v->style_name = data.copy(_style_name, 0);
 			return v;
 		}
 
@@ -322,13 +332,14 @@ namespace corona
 					arrange_impl(&child.item, 0, 0, _item->bounds.x, _item->bounds.y, _item->bounds.w, _item->bounds.h);
 				}
 
+				relative_ptr_type class_id = _item->slice.get_class_id();
+				if (styles.contains(class_id)) {
+					_item->style_name = styles[class_id].get_value();
+				}
+
 				if (_item->object_id != null_row && _item->slice.has_field("rectangle"))
 				{
 					auto rect = _item->slice.get_rectangle("rectangle");
-					relative_ptr_type class_id = _item->slice.get_class_id();
-					if (styles.contains(class_id)) {
-						_item->style_name = styles[class_id].get_value();
-					}
 					rect = _item->bounds;
 				}
 			}

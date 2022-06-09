@@ -379,11 +379,29 @@ namespace corona
 			{
 				return acr;
 			}
+
 			actor_type ac = get_actor(_select.actor_id);
-			if (!_select.extend) {
-				ac.selections.clear();
-			}
-			if (objects.check(_select.object_id)) {
+			if (objects.check(_select.object_id)) 
+			{
+				auto slice = get_object(_select.object_id);
+				auto class_id = slice.get_class_id();
+				
+				selections_collection temp;
+				auto model = schema->get_model(ref->model_name);
+				auto pmodel = &model;
+				int hierarchy_location = model.selection_hierarchy.first_index([class_id](auto& vr) { return class_id == vr.item; });
+				int comparison_hierarchy = hierarchy_location + _select.extend ? 1 : 0;
+				auto selected_levels = model.selection_hierarchy.where([hierarchy_location](auto& vr) { return vr.location < hierarchy_location; });
+				auto pselected_levels = &selected_levels;
+
+				auto selections_to_keep = ac.selections.where([this, pmodel, pselected_levels](auto& vr) {
+					auto cls_id = get_class_id(vr.item);
+					return pselected_levels->any_of([cls_id](auto& vri) { return vri.item == cls_id; });
+					});
+
+				temp = selections_to_keep;
+				ac.selections = temp;
+
 				relative_ptr_type selection = _select.object_id;
 				ac.selections.push_back(selection);
 				put_actor(ac);
@@ -491,7 +509,15 @@ namespace corona
 			object_id = new_object.row_id();
 			char* bytes = new_object.pdetails();
 			jarray ja(nullptr, schema, find_field_id, bytes, true);
-			return ja.get_slice(0);
+			auto new_slice = ja.get_slice(0);
+			int pkidx = myclass.pitem()->primary_key_idx;
+
+			if (pkidx > -1) {
+				auto pkfield = new_slice.get_int64(pkidx);
+				pkfield = co.oid.row_id;
+			}
+
+			return new_slice;
 		}
 
 		jslice jcollection::get_object(relative_ptr_type _object_id)
@@ -506,6 +532,12 @@ namespace corona
 				jslice empty;
 				return empty;
 			}
+		}
+
+		relative_ptr_type jcollection::get_class_id(relative_ptr_type _object_id)
+		{
+			auto existing_object = objects.get_item(_object_id);
+			return existing_object.pitem()->class_id;
 		}
 
 		jslice jcollection::get_at(relative_ptr_type _object_id)
@@ -2616,7 +2648,8 @@ namespace corona
 				idshape_fill_color, idshape_border_thickness, idshape_border_color, idbox_fill_color, idbox_border_thickness, idbox_border_color };
 			id_text_style = put_class(pcr);
 
-			put_object_field_request object_fields[18] = {
+			put_object_field_request object_fields[19] = {
+				{ { null_row, jtype::type_object, "id_view_background", "View Background Style" }, { {1,1,1}, id_text_style }},
 				{ { null_row, jtype::type_object, "id_view_title", "View Title Style" }, { {1,1,1}, id_text_style }},
 				{ { null_row, jtype::type_object, "id_view_subtitle", "View Subtitle Style" }, { {1,1,1}, id_text_style }},
 				{ { null_row, jtype::type_object, "id_view_section", "View Section Style" }, { {1,1,1}, id_text_style }},
@@ -2643,6 +2676,7 @@ namespace corona
 
 			/* TODO: improve accessibility here.  Try it with a "blast shield on" */
 
+			id_view_background = find_field("id_view_background");
 			id_view_title = find_field("id_view_title");
 			id_view_subtitle = find_field("id_view_subtitle");
 			id_view_section = find_field("id_view_section");
@@ -2666,7 +2700,7 @@ namespace corona
 
 			pcr.class_name = "style_sheet";
 			pcr.class_description = "collection of styles for ui";
-			pcr.member_fields = { idname, id_view_title, id_view_subtitle, id_view_section, id_view, id_disclaimer, id_copyright,
+			pcr.member_fields = { idname, id_view_background, id_view_title, id_view_subtitle, id_view_section, id_view, id_disclaimer, id_copyright,
 				id_h1, id_h2, id_h3,id_column_number_head,id_column_text_head,id_column_data,id_label,id_control,id_chart_axis,id_chart_legend,id_chart_block,id_tooltip };
 			id_style_sheet = put_class(pcr);
 

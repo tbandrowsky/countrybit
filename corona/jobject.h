@@ -431,7 +431,8 @@ namespace corona
 			jclass get_class();
 			jschema* get_schema();
 
-			relative_ptr_type get_class_id() {
+			relative_ptr_type get_class_id() const 
+			{
 				return class_id;
 			}
 
@@ -995,6 +996,7 @@ namespace corona
 			bool selector_applies(selector_collection* _selector, actor_id_type& _actor);
 
 			jslice get_at(relative_ptr_type _object_id);
+			relative_ptr_type get_class_id(relative_ptr_type _object_id);
 
 			relative_ptr_type size()
 			{
@@ -1014,6 +1016,11 @@ namespace corona
 			auto where(std::function<bool(const iterator_item_type&)> _predicate)
 			{
 				return iterator_type(this, _predicate);
+			}
+
+			auto where(relative_ptr_type _class_id)
+			{
+				return iterator_type(this, [_class_id](const iterator_item_type& it) { return it.item.get_class_id() == _class_id; });
 			}
 
 			jslice first_value(std::function<bool(const iterator_item_type&)> predicate)
@@ -1166,6 +1173,7 @@ namespace corona
 			relative_ptr_type id_bitmap_brush;
 			relative_ptr_type id_text_style;
 
+			relative_ptr_type id_view_background;
 			relative_ptr_type id_view_title;
 			relative_ptr_type id_view_subtitle;
 			relative_ptr_type id_view_section;
@@ -1773,6 +1781,13 @@ namespace corona
 				p.name = request.class_name;
 				p.description = request.class_description;
 				p.class_size_bytes = total_size_bytes;
+				p.primary_key_idx = -1;
+				for (int i = 0; i < pcr.size(); i++)
+				{
+					if (pcr.detail(i).field_id == request.field_id_primary_key) {
+						p.primary_key_idx = i;
+					}
+				}
 
 				return class_id;
 			}

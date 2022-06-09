@@ -106,6 +106,7 @@ namespace corona
 			int canvasWindowsId;
 
 			void stateChanged(const rectangle& newSize);
+			const char* style_name(relative_ptr_type _style_field_id);
 
 		public:
 
@@ -124,14 +125,14 @@ namespace corona
 			virtual void clear();
 			virtual jslice getStyleSheet();
 
-			page_item* row(page_item* _parent, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
-			page_item* column(page_item* _parent, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
-			page_item* absolute(page_item* _parent, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
-			page_item* canvas2d(page_item* _parent, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
-			page_item* space(page_item* _parent, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
+			page_item* row(page_item* _parent, relative_ptr_type _style_id, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
+			page_item* column(page_item* _parent, relative_ptr_type _style_id, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
+			page_item* absolute(page_item* _parent, relative_ptr_type _style_id, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
+			page_item* space(page_item* _parent, relative_ptr_type _style_id, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
+			page_item* canvas2d(page_item* _parent, relative_ptr_type _style_id, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
 
 			virtual void for_each(std::function<bool(const actor_view_collection::iterator_item_type& _item)> selector, std::function<bool(actor_view_object& avo, jslice& slice)> updator);
-			virtual void for_each(relative_ptr_type class_id, std::function<bool(const actor_view_object& avo, jslice& slice)>  updator);
+			virtual void for_class(relative_ptr_type *class_ids, int _length, std::function<bool(const actor_view_object& avo, jslice& slice)>  updator);
 			virtual void for_each(jslice& _parent, relative_ptr_type* _join_fields, std::function<bool(const actor_view_object& avo, jslice& slice)>  updator);
 			virtual void for_each(relative_ptr_type* _has_field_list, std::function<bool(const actor_view_object& avo, jslice& slice)>  updator);
 

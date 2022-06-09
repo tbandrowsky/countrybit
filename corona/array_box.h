@@ -23,6 +23,19 @@ namespace corona
 				}
 			};
 
+			iarray(iterator_type& src)
+			{
+				length = 0;
+				for (auto srci : src)
+				{
+					push_back(srci.item);
+				}
+				for (corona_size_t i = length; i < max_items; i++)
+				{
+					data[i] = {};
+				}
+			}
+
 			iarray(const std::vector<item_type>& src)
 			{
 				copy(src.data(), src.size());
