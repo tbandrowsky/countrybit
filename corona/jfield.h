@@ -781,10 +781,16 @@ namespace corona
 
 		};
 
+		struct model_hierarchy_path
+		{
+			int					level_id;
+			relative_ptr_type	class_id;
+		};
+
 		using model_create_class_collection = iarray<model_creatable_class, max_creatable_options>;
 		using model_select_class_collection = iarray<model_selectable_class, max_selectable_options>;
 		using model_update_class_collection = iarray<model_updatable_class, max_updatable_options>;
-		using model_selection_hierarchy = iarray<relative_ptr_type, max_selection_depth>;	
+		using model_selection_hierarchy = iarray<model_hierarchy_path, max_selection_depth>;	
 
 		class model_type
 		{

@@ -8,13 +8,25 @@ namespace proposal
 	{
 	public:
 
+		corona::database::relative_ptr_type idhome_class;
+		corona::database::relative_ptr_type idhome;
+
+		corona::database::relative_ptr_type idclient_root_class;
+		corona::database::relative_ptr_type idclient_root;
+
 		corona::database::relative_ptr_type idclient_class;
 		corona::database::relative_ptr_type idclient;
 		corona::database::relative_ptr_type idclient_name;
 
+		corona::database::relative_ptr_type idcarrier_root_class;
+		corona::database::relative_ptr_type idcarrier_root;
+
 		corona::database::relative_ptr_type idcarrier_class;
 		corona::database::relative_ptr_type idcarrier;
 		corona::database::relative_ptr_type idcarrier_name;
+
+		corona::database::relative_ptr_type idcoverage_root_class;
+		corona::database::relative_ptr_type idcoverage_root;
 
 		corona::database::relative_ptr_type idcoverage_class;
 		corona::database::relative_ptr_type idcoverage;

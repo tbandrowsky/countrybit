@@ -389,14 +389,14 @@ namespace corona
 				selections_collection temp;
 				auto model = schema->get_model(ref->model_name);
 				auto pmodel = &model;
-				int hierarchy_location = model.selection_hierarchy.first_index([class_id](auto& vr) { return class_id == vr.item; });
-				int comparison_hierarchy = hierarchy_location + _select.extend ? 1 : 0;
-				auto selected_levels = model.selection_hierarchy.where([hierarchy_location](auto& vr) { return vr.location < hierarchy_location; });
+				auto hierarchy_item = model.selection_hierarchy.first_value([class_id](auto& vr) { return class_id == vr.item.class_id; });
+				auto phierarchy_item = &hierarchy_item;
+				auto selected_levels = model.selection_hierarchy.where([phierarchy_item](auto& vr) { return vr.item.level_id < phierarchy_item->level_id; });
 				auto pselected_levels = &selected_levels;
 
 				auto selections_to_keep = ac.selections.where([this, pmodel, pselected_levels](auto& vr) {
 					auto cls_id = get_class_id(vr.item);
-					return pselected_levels->any_of([cls_id](auto& vri) { return vri.item == cls_id; });
+					return pselected_levels->any_of([cls_id](auto& vri) { return vri.item.class_id == cls_id; });
 					});
 
 				temp = selections_to_keep;

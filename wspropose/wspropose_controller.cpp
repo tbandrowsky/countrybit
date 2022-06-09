@@ -19,23 +19,40 @@ namespace proposal
 		schema = jschema::create_schema(&box, 50, true, schema_id);
 
 		put_integer_field_request ifr;
+		ifr.name.name = "home_id";
+		ifr.name.description = "Home Id";
+		ifr.name.type_id = jtype::type_int64;
+		idhome = schema.put_integer_field(ifr);
+
+		ifr.name.name = "client_root_id";
+		ifr.name.description = "Client Root Id";
+		ifr.name.type_id = jtype::type_int64;
+		idclient_root = schema.put_integer_field(ifr);
+
+		ifr.name.name = "carrier_root_id";
+		ifr.name.description = "Carrier Root Id";
+		ifr.name.type_id = jtype::type_int64;
+		idcarrier_root = schema.put_integer_field(ifr);
+
+		ifr.name.name = "coverage_root_id";
+		ifr.name.description = "Coverage Root Id";
+		ifr.name.type_id = jtype::type_int64;
+		idcoverage_root = schema.put_integer_field(ifr);
+
 		ifr.name.name = "client_id";
 		ifr.name.description = "Client Id";
 		ifr.name.type_id = jtype::type_int64;
 		idprogram = schema.put_integer_field(ifr);
 
-		put_integer_field_request ifr;
 		ifr.name.name = "program_id";
 		ifr.name.description = "Program Id";
 		ifr.name.type_id = jtype::type_int64;
 		idprogram = schema.put_integer_field(ifr);
 
-		put_integer_field_request ifr;
 		ifr.name.name = "policy_id";
 		ifr.name.description = "Policy Id";
 		idpolicy = schema.put_integer_field(ifr);
 
-		put_integer_field_request ifr;
 		ifr.name.name = "coverage_id";
 		ifr.name.description = "Coverage Id";
 		idcoverage = schema.put_integer_field(ifr);
@@ -115,43 +132,56 @@ namespace proposal
 		idslide_heading2 = schema.put_string_field(sfr);
 
 		put_class_request pcr;
+		pcr.class_name = "home";
+		pcr.class_description = "Home";
+		pcr.member_fields = { idhome, schema.idlong_name };
+		pcr.field_id_primary_key = idhome;
+		idhome_class = schema.put_class(pcr);
+
+		pcr.class_name = "clients";
+		pcr.class_description = "Clients";
+		pcr.member_fields = { idhome, idclient_root, schema.idlong_name };
+		pcr.field_id_primary_key = idclient_root;
+		idclient_root_class = schema.put_class(pcr);
+
+		pcr.class_name = "carriers";
+		pcr.class_description = "Carriers";
+		pcr.member_fields = { idhome, idcarrier_root, schema.idlong_name };
+		pcr.field_id_primary_key = idcarrier_root;
+		idcarrier_root_class = schema.put_class(pcr);
+
+		pcr.class_name = "coverages";
+		pcr.class_description = "Coverages";
+		pcr.member_fields = { idhome, idcoverage_root, schema.idlong_name };
+		pcr.field_id_primary_key = idcarrier_root;
+		idcoverage_root_class = schema.put_class(pcr);
+
 
 		pcr.class_name = "client";
 		pcr.class_description = "Client";
-		pcr.member_fields = { idclient, idclient_name, schema.idfirst_name, schema.idlast_name, schema.idstreet, schema.idcity, schema.idstate, schema.idpostal  };
+		pcr.member_fields = { idclient_root, idclient, idclient_name, schema.idfirst_name, schema.idlast_name, schema.idstreet, schema.idcity, schema.idstate, schema.idpostal  };
 		pcr.field_id_primary_key = idclient;
 		idclient_class = schema.put_class(pcr);
 
-		if (idclient_class == null_row) {
-			std::cout << __LINE__ << ":class create failed failed" << std::endl;
-			return;
-		}
-
 		pcr.class_name = "carrier";
 		pcr.class_description = "Carrier";
-		pcr.member_fields = { idcarrier, idcarrier_name, schema.idfirst_name, schema.idlast_name, schema.idstreet, schema.idcity, schema.idstate, schema.idpostal, schema.idrectangle, schema.idlayout_rect };
+		pcr.member_fields = { idcarrier_root, idcarrier, idcarrier_name, schema.idfirst_name, schema.idlast_name, schema.idstreet, schema.idcity, schema.idstate, schema.idpostal, schema.idrectangle, schema.idlayout_rect };
 		pcr.field_id_primary_key = idcarrier;
 		idcarrier_class = schema.put_class(pcr);
-		if (idcarrier_class == null_row) {
-			std::cout << __LINE__ << ":class create failed failed" << std::endl;
-			return;
-		}
+
+		pcr.class_name = "coverage";
+		pcr.class_description = "Coverage";
+		pcr.member_fields = { idcoverage_root, idcoverage, idcoverage_name, schema.idrectangle, schema.idlayout_rect };
+		pcr.field_id_primary_key = idcoverage;
+		idprogram_class = schema.put_class(pcr);
 
 		pcr.class_name = "program";
 		pcr.class_description = "Program";
 		pcr.member_fields = { idclient, idprogram, idprogram_name, idprogram_description, idprogram_view, idproperty_list, idwc_list, idaircraft_list, idvehicle_list, schema.idrectangle, schema.idlayout_rect };
 		pcr.field_id_primary_key = idprogram;
 		idprogram_class = schema.put_class(pcr);
-		if (idprogram_class == null_row) {
-			std::cout << __LINE__ << ":class create failed failed" << std::endl;
-			return;
-		}
 
-		pcr.class_name = "coverage";
-		pcr.class_description = "Coverage";
-		pcr.member_fields = { idclient, idprogram, idcoverage, idcoverage_name, schema.idrectangle, schema.idlayout_rect };
-		pcr.field_id_primary_key = idcoverage;
-		idprogram_class = schema.put_class(pcr);
+
 
 		pcr.class_name = "buildings_policy";
 		pcr.class_description = "Buildings";
@@ -204,7 +234,7 @@ namespace proposal
 
 		mcr = jm.create_options.append();
 		mcr->rule_name = "Add Client";
-		mcr->selectors.always();
+		mcr->selectors.when(idclient_root_class);
 		mcr->create_class_id = idclient_class;
 		mcr->replace_selected = false;
 		mcr->select_on_create = true;
@@ -212,8 +242,15 @@ namespace proposal
 
 		mcr = jm.create_options.append();
 		mcr->rule_name = "Add Carrier";
-		mcr->selectors.always();
+		mcr->selectors.when(idcarrier_root_class);
 		mcr->create_class_id = idcarrier_class;
+		mcr->replace_selected = false;
+		mcr->select_on_create = true;
+		mcr->item_id_class = null_row;
+
+		mcr->rule_name = "Add Coverage";
+		mcr->selectors.when(idcoverage_root_class);
+		mcr->create_class_id = idcoverage_class;
 		mcr->replace_selected = false;
 		mcr->select_on_create = true;
 		mcr->item_id_class = null_row;
@@ -256,14 +293,6 @@ namespace proposal
 		mcr->create_class_id = idprogram_class;
 		mcr->replace_selected = false;
 		mcr->select_on_create = true;
-		mcr->item_id_class = null_row;
-
-		mcr = jm.create_options.append();
-		mcr->rule_name = "Add Coverage";
-		mcr->selectors.when(idprogram_class);
-		mcr->create_class_id = idcoverage_class;
-		mcr->select_on_create = false;
-		mcr->replace_selected = false;
 		mcr->item_id_class = null_row;
 
 		mcr = jm.create_options.append();
@@ -369,6 +398,24 @@ namespace proposal
 		mur = jm.update_options.append();
 		mur->rule_name = "update policy";
 		mur->update_class_id = idpolicy_coverage_class;
+
+		jm.selection_hierarchy.push_back({ 0, idhome_class });
+		jm.selection_hierarchy.push_back({ 1, idclient_root_class });
+		jm.selection_hierarchy.push_back({ 1, idcoverage_root_class });
+		jm.selection_hierarchy.push_back({ 1, idcarrier_root_class });
+		jm.selection_hierarchy.push_back({ 2, idclient_class });
+		jm.selection_hierarchy.push_back({ 2, idcoverage_class });
+		jm.selection_hierarchy.push_back({ 2, idcarrier_class });
+		jm.selection_hierarchy.push_back({ 3, idprogram_class });
+		jm.selection_hierarchy.push_back({ 4, idpolicy_property_class });
+		jm.selection_hierarchy.push_back({ 4, idpolicy_wc_class });
+		jm.selection_hierarchy.push_back({ 4, idpolicy_vehicles_class });
+		jm.selection_hierarchy.push_back({ 4, idpolicy_aircraft_class });
+		jm.selection_hierarchy.push_back({ 4, idpolicy_umbrella_class });
+		jm.selection_hierarchy.push_back({ 5, idpolicy_coverage_class });
+		jm.selection_hierarchy.push_back({ 6, idslide_title_class });
+		jm.selection_hierarchy.push_back({ 6, idslide_demo_cart_class });
+		jm.selection_hierarchy.push_back({ 6, idslide_program_chart_class });
 
 		schema.put_model(jm);
 
