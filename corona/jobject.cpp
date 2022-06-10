@@ -392,14 +392,18 @@ namespace corona
 				auto hierarchy_item = model.selection_hierarchy.first_value([class_id](auto& vr) { return class_id == vr.item.class_id; });
 				auto phierarchy_item = &hierarchy_item;
 				auto selected_levels = model.selection_hierarchy.where([phierarchy_item](auto& vr) { return vr.item.level_id <= phierarchy_item->level_id; });
-				auto pselected_levels = &selected_levels;
+				ac.breadcrumb.clear();
 
-				auto selections_to_keep = ac.selections.where([this, pmodel, pselected_levels](auto& vr) {
-					auto cls_id = get_class_id(vr.item);
-					return pselected_levels->any_of([cls_id](auto& vri) { return vri.item.class_id == cls_id; });
-					});
+				temp.clear();
+				for (auto aci : ac.selections)
+				{
+					auto cls_id = get_class_id(aci.item);
+					if (selected_levels.any_of([cls_id](auto& vri) { return vri.item.class_id == cls_id; })) {
+						ac.breadcrumb.push_back(cls_id);
+						temp.push_back(aci.item);
+					}
+				}
 
-				temp = selections_to_keep;
 				ac.selections = temp;
 
 				relative_ptr_type selection = _select.object_id;

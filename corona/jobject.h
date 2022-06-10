@@ -656,6 +656,7 @@ namespace corona
 			actor_id_type			actor_id;
 			object_name				actor_name;
 			selections_collection	selections;
+			selections_collection	breadcrumb;
 		};
 
 		using jactor = actor_type;

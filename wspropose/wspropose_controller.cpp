@@ -181,8 +181,6 @@ namespace proposal
 		pcr.field_id_primary_key = idprogram;
 		idprogram_class = schema.put_class(pcr);
 
-
-
 		pcr.class_name = "buildings_policy";
 		pcr.class_description = "Buildings";
 		pcr.member_fields = { idprogram, idclient, idcarrier, idpolicy, idlimit, idattachment, idshare, schema.idcolor, schema.idrectangle, schema.idlayout_rect };
