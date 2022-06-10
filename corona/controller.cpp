@@ -402,7 +402,7 @@ namespace corona
 			return pg.canvas2d(_parent, _style_name, _box);
 		}
 
-		page_item* corona_controller::row(page_item* _parent_ui, layout_rect _box, std::function<bool(const actor_view_collection::iterator_item_type& _item)> selector)
+		page_item* corona_controller::row_each(page_item* _parent_ui, layout_rect _box, std::function<bool(const actor_view_collection::iterator_item_type& _item)> selector)
 		{
 			auto pi = pg.row(_parent_ui, nullptr, _box);
 			auto* page_add = &pg;
@@ -529,6 +529,27 @@ namespace corona
 		{
 			_host->drawView(_item.style_name, _item.caption != nullptr ? _item.caption : "", _item.bounds);
 		}
+
+		page_item* corona_controller::add_update_fields(page_item* _parent)
+		{
+			pg.actor_update_fields(_parent, &state, &schema, &program_chart );
+		}
+
+		page_item* corona_controller::add_create_buttons(page_item* _parent)
+		{
+			pg.actor_create_buttons(_parent, &state, &schema, &program_chart);
+		}
+
+		page_item* corona_controller::add_select_items(page_item* _parent)
+		{
+			pg.actor_select_items(_parent, &state, &schema, &program_chart);
+		}
+
+		void corona_controller::arrange(double width, double height)
+		{
+			pg.arrange(width, height);
+		}
+
 	}
 }
 

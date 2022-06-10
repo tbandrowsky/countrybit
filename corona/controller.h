@@ -122,8 +122,11 @@ namespace corona
 
 			virtual ~corona_controller();
 
-			virtual void clear();
 			virtual jslice getStyleSheet();
+
+			// methods to use in render
+
+			virtual void clear();
 
 			page_item* row(page_item* _parent, relative_ptr_type _style_id, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
 			page_item* column(page_item* _parent, relative_ptr_type _style_id, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
@@ -145,6 +148,14 @@ namespace corona
 			virtual page_item* column_class(page_item* _parent_ui, layout_rect _box, relative_ptr_type *class_ids, int _length);
 			virtual page_item* column_join(page_item* _parent_ui, layout_rect _box, jslice& _parent, relative_ptr_type* _join_fields);
 			virtual page_item* column_common(page_item* _parent_ui, layout_rect _box, relative_ptr_type* _has_field_list);
+
+			virtual page_item* add_update_fields(page_item* _parent);
+			virtual page_item* add_create_buttons(page_item* _parent);
+			virtual page_item* add_select_items(page_item* _parent);
+
+			void arrange(double width, double height);
+
+			// end of render methods
 
 			virtual void render(const rectangle& newSize) = 0;
 			virtual void render_item(drawableHost *_host, page_item& _item);

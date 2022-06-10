@@ -391,7 +391,7 @@ namespace corona
 				auto pmodel = &model;
 				auto hierarchy_item = model.selection_hierarchy.first_value([class_id](auto& vr) { return class_id == vr.item.class_id; });
 				auto phierarchy_item = &hierarchy_item;
-				auto selected_levels = model.selection_hierarchy.where([phierarchy_item](auto& vr) { return vr.item.level_id < phierarchy_item->level_id; });
+				auto selected_levels = model.selection_hierarchy.where([phierarchy_item](auto& vr) { return vr.item.level_id <= phierarchy_item->level_id; });
 				auto pselected_levels = &selected_levels;
 
 				auto selections_to_keep = ac.selections.where([this, pmodel, pselected_levels](auto& vr) {
@@ -405,6 +405,7 @@ namespace corona
 				relative_ptr_type selection = _select.object_id;
 				ac.selections.push_back(selection);
 				put_actor(ac);
+				acr.modified_object_level = phierarchy_item->level_id;
 				acr.modified_object_id = _select.object_id;
 			}
 			acr = get_actor_state(_select.actor_id, _select.object_id, _trace_msg);
@@ -438,9 +439,12 @@ namespace corona
 
 				if (_create.select_on_create) 
 				{
-					ac.selections.clear();
-					ac.selections.push_back(object_id);
-					put_actor(ac);
+					select_object_request sor;
+					sor.actor_id = _create.actor_id;
+					sor.collection_id = _create.collection_id;
+					sor.extend = false;
+					sor.object_id = object_id;
+					select_object(sor, _trace_msg);
 				}
 			}
 
@@ -2648,7 +2652,7 @@ namespace corona
 				idshape_fill_color, idshape_border_thickness, idshape_border_color, idbox_fill_color, idbox_border_thickness, idbox_border_color };
 			id_text_style = put_class(pcr);
 
-			put_object_field_request object_fields[19] = {
+			put_object_field_request object_fields[20] = {
 				{ { null_row, jtype::type_object, "id_view_background", "View Background Style" }, { {1,1,1}, id_text_style }},
 				{ { null_row, jtype::type_object, "id_view_title", "View Title Style" }, { {1,1,1}, id_text_style }},
 				{ { null_row, jtype::type_object, "id_view_subtitle", "View Subtitle Style" }, { {1,1,1}, id_text_style }},
@@ -2667,7 +2671,8 @@ namespace corona
 				{ { null_row, jtype::type_object, "id_chart_axis", "Chart Axis" }, { {1,1,1}, id_text_style }},
 				{ { null_row, jtype::type_object, "id_chart_legend", "Chart Legend" }, { {1,1,1}, id_text_style }},
 				{ { null_row, jtype::type_object, "id_chart_block", "Chart Block" }, { {1,1,1}, id_text_style }},
-				{ { null_row, jtype::type_object, "id_tooltip", "Tooltip" }, { {1,1,1}, id_text_style }}
+				{ { null_row, jtype::type_object, "id_tooltip", "Tooltip" }, { {1,1,1}, id_text_style }},
+				{ { null_row, jtype::type_object, "id_breadcrumb", "Breadcrumb" }, { {1,1,1}, id_text_style }}
 			};
 
 			for (int i = 0; i < sizeof(object_fields) / sizeof(object_fields[0]); i++) {
@@ -2695,6 +2700,7 @@ namespace corona
 			id_chart_legend = find_field("id_chart_legend");
 			id_chart_block = find_field("id_chart_block");
 			id_tooltip = find_field("id_tooltip");
+			id_breadcrumb = find_field("id_breadcrumb");
 
 			put_class_request style_sheet;
 

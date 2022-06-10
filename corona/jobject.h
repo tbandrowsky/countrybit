@@ -17,7 +17,7 @@ namespace corona
 			object_path			collection_file_name;
 			collection_id_type	collection_id;
 
-			relative_ptr_type			collection_location;
+			relative_ptr_type	collection_location;
 
 			object_name			model_name;
 			uint32_t			max_actors;
@@ -26,9 +26,9 @@ namespace corona
 
 			bool				create_style_sheet;
 
-			relative_ptr_type			style_sheet_id;
-			relative_ptr_type			actors_id;
-			relative_ptr_type			objects_id;
+			relative_ptr_type	style_sheet_id;
+			relative_ptr_type	actors_id;
+			relative_ptr_type	objects_id;
 
 			dynamic_box*		data;
 
@@ -58,7 +58,7 @@ namespace corona
 			relative_ptr_type classes_by_name_id;
 			relative_ptr_type models_by_name_id;
 			relative_ptr_type fields_by_name_id;
-			relative_ptr_type	query_properties_id;
+			relative_ptr_type query_properties_id;
 			relative_ptr_type sql_properties_id;
 			relative_ptr_type file_properties_id;
 			relative_ptr_type http_properties_id;
@@ -782,6 +782,7 @@ namespace corona
 			actor_create_collection						create_objects;
 			actor_view_collection						view_objects;
 
+			int											modified_object_level;
 			relative_ptr_type							modified_object_id;
 			jslice										modified_object;
 
@@ -1192,6 +1193,7 @@ namespace corona
 			relative_ptr_type id_chart_legend;
 			relative_ptr_type id_chart_block;
 			relative_ptr_type id_tooltip;
+			relative_ptr_type id_breadcrumb;
 
 			relative_ptr_type id_style_sheet;
 

@@ -128,11 +128,11 @@ namespace corona
 
 			item_type& first_value(std::function<bool(const iterator_item_type&)> predicate)
 			{
-				auto w = this->where(predicate);
+				iterator_type w = where(predicate);
 				if (w == end()) {
 					throw std::logic_error("sequence has no elements");
 				}
-				return w->get_value();
+				return w.get_object();
 			}
 
 			relative_ptr_type first_index(std::function<bool(const iterator_item_type&)> predicate)

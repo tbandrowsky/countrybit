@@ -834,6 +834,28 @@ namespace proposal
 			}
 			);
 
+		style_sheet.set(
+			{ schema.id_breadcrumb },
+			{
+				{ schema.idname, "breadcrumb" },
+				{ schema.idfont_name, "Arial" },
+				{ schema.idfont_size, 14.0 },
+				{ schema.idbold, false },
+				{ schema.iditalic, false },
+				{ schema.idunderline, false },
+				{ schema.idstrike_through, false },
+				{ schema.idline_spacing, 0.0 },
+				{ schema.idhorizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idvertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idshape_fill_color, "#0000CCFF" },
+				{ schema.idshape_border_thickness, "" },
+				{ schema.idshape_border_color, "" },
+				{ schema.idbox_fill_color, "" },
+				{ schema.idbox_border_thickness, "" },
+				{ schema.idbox_border_color, "" }
+			}
+			);
+
 		relative_ptr_type existing_client_id = null_row;
 		auto client = program_chart.create_object(0, sample_actor.actor_id, idclient_class, existing_client_id);
 
@@ -876,15 +898,18 @@ namespace proposal
 		auto controlcolumn = column(mainr, null_row, { 0.0_px,0.0_px,25.0_pct,100.0_pct });
 		auto d2dcolumn = column(mainr, null_row, { 0.0_px,0.0_px,75.0_pct,100.0_pct });
 		auto d2dwin = canvas2d(d2dcolumn, schema.id_view_background, { 0.0_px,0.0_px,100.0_pct,100.0_pct });
+		auto d2dwin_area = column(d2dwin, schema.id_view_background, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
 
 		// editable controls on the left
-		pg.actor_update_fields(controlcolumn, &state, &schema, &program_chart);
-		pg.actor_create_buttons(controlcolumn, &state, &schema, &program_chart);
+		add_update_fields(controlcolumn);
+		add_create_buttons(controlcolumn);
+
+		// the breadcrumb at the top
+
 
 		// draw the slides at the top
 		relative_ptr_type slide_fields[2] = { idslide_heading1, null_row };
-		auto d2dwin_area = column(d2dwin, schema.id_view_background, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
-		auto slide_area = row(d2dwin, { 0.0_px, 0.0_px, 100.0_pct, 200.0_px }, slide_fields);
+		auto slide_area = row_common(d2dwin, { 0.0_px, 0.0_px, 100.0_pct, 200.0_px }, slide_fields);
 
 		// and now draw the selected slide
 		relative_ptr_type title_classes = { slide_title_class_id };
