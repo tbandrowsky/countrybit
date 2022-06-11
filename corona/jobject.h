@@ -1060,6 +1060,8 @@ namespace corona
 				return std::count_if(begin(), end(), predicate);
 			}
 
+			relative_ptr_type put_user_class(relative_ptr_type _class_definition_id);
+
 		};
 
 		class jschema
@@ -1204,8 +1206,10 @@ namespace corona
 			relative_ptr_type id_user_class_root_id;
 
 			relative_ptr_type id_user_class;
-			relative_ptr_type id_user_class_name;
 			relative_ptr_type id_user_class_id;
+			relative_ptr_type id_user_class_class_name;
+			relative_ptr_type id_user_class_class_id;
+			relative_ptr_type id_user_class_group;
 
 			relative_ptr_type id_user_field;
 			relative_ptr_type id_user_field_id;

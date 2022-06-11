@@ -125,6 +125,7 @@ namespace corona
 			if (_caption) {
 				v->caption = data.copy(v->caption,0);
 			}
+			return v;
 		}
 
 		page_item* page::actor_update_fields(page_item* _parent, actor_state* _state, jschema* _schema, jcollection* _collection)

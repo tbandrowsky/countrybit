@@ -556,6 +556,97 @@ namespace corona
 			}
 		}
 
+		relative_ptr_type jcollection::put_user_class(relative_ptr_type _class_definition_object)
+		{
+			auto class_id = null_row;
+			auto slice = get_object(_class_definition_object);
+			if (slice.get_class_id() != schema->id_user_class)
+			{
+				throw std::logic_error("object is not a user class");
+			}
+
+			put_class_request pcr;
+
+			pcr.class_name = slice.get_string(schema->id_user_class_class_name, true);
+			object_id_type& class_object_id = slice.get_object_id(schema->id_user_class_class_id, true);
+			pcr.class_id = class_object_id.row_id;
+			pcr.class_description = pcr.class_name;
+
+			auto fields = slice.get_list(schema->id_user_field_list, true);
+			for (auto field : fields) {
+
+				auto new_field_type_id = field.item.get_int64(schema->id_dbf_field_type, true);
+				auto new_field_type = (jtype)new_field_type_id.value();
+
+				switch (new_field_type) {
+				case type_int64:
+				case type_int32:
+				case type_int8:
+				{
+					put_integer_field_request pifr;
+					pifr.name.name = field.item.get_string(schema->id_dbf_field_name, true);
+					pifr.name.description = field.item.get_string(schema->id_dbf_field_description, true);
+					pifr.name.type_id = new_field_type;
+					//pifr.name.format = field.item.get_string(schema->id_dbf_field_description, true);
+					auto options = field.item.get_object(schema->id_fld_int_options, true).get_slice({ 0,0,0 });
+					pifr.options.maximum_int = options.get_int64(schema->id_dbf_int_stop);
+					pifr.options.minimum_int = options.get_int64(schema->id_dbf_int_start);
+					auto field_id = schema->put_integer_field(pifr);
+					pcr.member_fields.push_back({ field_id });
+				}
+				break;
+				case type_float64:
+				case type_float32:
+				{
+					put_double_field_request pifr;
+					pifr.name.name = field.item.get_string(schema->id_dbf_field_name, true);
+					pifr.name.description = field.item.get_string(schema->id_dbf_field_description, true);
+					pifr.name.type_id = new_field_type;
+					//pifr.name.format = field.item.get_string(schema->id_dbf_field_description, true);
+					auto options = field.item.get_object(schema->id_fld_double_options, true).get_slice({ 0,0,0 });
+					pifr.options.maximum_double = options.get_double(schema->id_dbf_double_stop);
+					pifr.options.minimum_double = options.get_double(schema->id_dbf_double_start);
+					auto field_id = schema->put_double_field(pifr);
+					pcr.member_fields.push_back({ field_id });
+				}
+				break;
+				case type_datetime:
+				{
+					put_time_field_request pifr;
+					pifr.name.name = field.item.get_string(schema->id_dbf_field_name, true);
+					pifr.name.description = field.item.get_string(schema->id_dbf_field_description, true);
+					pifr.name.type_id = new_field_type;
+					//pifr.name.format = field.item.get_string(schema->id_dbf_field_description, true);
+					auto options = field.item.get_object(schema->id_fld_date_options, true).get_slice({ 0,0,0 });
+					pifr.options.maximum_time_t = options.get_time(schema->id_dbf_date_stop);
+					pifr.options.minimum_time_t = options.get_time(schema->id_dbf_date_start);
+					auto field_id = schema->put_time_field(pifr);
+					pcr.member_fields.push_back({ field_id });
+				}
+				break;
+				case type_string:
+				{
+					put_string_field_request pifr;
+					pifr.name.name = field.item.get_string(schema->id_dbf_field_name, true);
+					pifr.name.description = field.item.get_string(schema->id_dbf_field_description, true);
+					pifr.name.type_id = new_field_type;
+					//pifr.name.format = field.item.get_string(schema->id_dbf_field_description, true);
+					auto options = field.item.get_object(schema->id_fld_string_options, true).get_slice({ 0,0,0 });
+					pifr.options.length = options.get_int32(schema->id_dbf_string_length);
+					pifr.options.validation_message = options.get_string(schema->id_dbf_string_validation_message);
+					pifr.options.validation_pattern = options.get_string(schema->id_dbf_string_validation_pattern);
+					pifr.options.full_text_editor = options.get_int8(schema->id_dbf_string_full_text_editor);
+					pifr.options.rich_text_editor = options.get_int8(schema->id_dbf_string_rich_text_editor);
+					auto field_id = schema->put_string_field(pifr);
+					pcr.member_fields.push_back({ field_id });
+				}
+				break;
+				}
+			}
+			class_id = schema->put_class(pcr);
+			return class_id;
+		}
+
 		relative_ptr_type jcollection::get_class_id(relative_ptr_type _object_id)
 		{
 			auto existing_object = objects.get_item(_object_id);
@@ -2474,7 +2565,7 @@ namespace corona
 
 		void jschema::add_standard_fields() 
 		{
-			put_string_field_request string_fields[43] = {
+			put_string_field_request string_fields[44] = {
 				{ { null_row, jtype::type_string ,"full_name", "Full Name" }, { 75, "", "" } },
 				{ { null_row, jtype::type_string ,"first_name", "First Name" }, { 50, "", "" } },
 				{ { null_row, jtype::type_string ,"last_name", "Last Name" }, { 50, "", "" } },
@@ -2514,7 +2605,8 @@ namespace corona
 				{ { null_row, jtype::type_string, "dbf_field_format", "Field Format" }, { 64, "", "" } },
 				{ { null_row, jtype::type_string, "dbf_string_validation_pattern", "Validation Pattern" }, { 64, "", "" } },
 				{ { null_row, jtype::type_string, "dbf_string_validation_message", "Validation Message" }, { 64, "", "" } },
-				{ { null_row, jtype::type_string, "id_user_class_name", "User Class Name" }, { 64, "", "" } }
+				{ { null_row, jtype::type_string, "user_class_class_name", "User Class Name" }, { 64, "", "" } },
+				{ { null_row, jtype::type_string, "user_class_group", "User Class Group" }, { 64, "", "" } }
 			};
 
 			put_time_field_request time_fields[4] = {
@@ -2524,7 +2616,7 @@ namespace corona
 				{ { null_row, jtype::type_datetime, "dbf_date_stop", "Max Date" }, 0, INT64_MAX }
 			};
 
-			put_integer_field_request int_fields[16] = {
+			put_integer_field_request int_fields[15] = {
 				{ { null_row, jtype::type_int64, "count", "Count" }, 0, INT64_MAX },
 				{ { null_row, jtype::type_int8, "bold", "Bold" }, 0, INT8_MAX },
 				{ { null_row, jtype::type_int8, "italic", "Italic" }, 0, INT8_MAX },
@@ -2535,12 +2627,11 @@ namespace corona
 				{ { null_row, jtype::type_int8, "wrap_text", "Wrap text" }, 0, INT8_MAX },
 				{ { null_row, jtype::type_int8, "dbf_int_start", "Min. Value" }, 0, INT64_MAX },
 				{ { null_row, jtype::type_int8, "dbf_int_stop", "Max. Value" }, 0, INT64_MAX },
-				{ { null_row, jtype::type_int64, "id_user_class_id", "Max. Value" }, 0, INT64_MAX },
-				{ { null_row, jtype::type_int64, "id_user_field_id", "Max. Value" }, 0, INT64_MAX },
-				{ { null_row, jtype::type_int64, "id_user_class_root_id", "Max. Value" }, 0, INT64_MAX },
-				{ { null_row, jtype::type_int64, "id_user_class_field_id", "Max. Value" }, 0, INT64_MAX },
-				{ { null_row, jtype::type_int64, "id_user_class_id", "Max. Value" }, 0, INT64_MAX },
-				{ { null_row, jtype::type_int64, "id_dbf_field_type", "Max. Value" }, 0, INT64_MAX },
+				{ { null_row, jtype::type_int64, "user_class_id", "Max. Value" }, 0, INT64_MAX },
+				{ { null_row, jtype::type_int64, "user_field_id", "Max. Value" }, 0, INT64_MAX },
+				{ { null_row, jtype::type_int64, "user_class_root_id", "Max. Value" }, 0, INT64_MAX },
+				{ { null_row, jtype::type_int64, "user_class_field_id", "Max. Value" }, 0, INT64_MAX },
+				{ { null_row, jtype::type_int64, "dbf_field_type", "Max. Value" }, 0, INT64_MAX },
 			};
 
 			put_double_field_request double_fields[20] = {
@@ -2575,6 +2666,8 @@ namespace corona
 			put_point_field({ null_row, jtype::type_point, "point", "point" });
 			put_point_field({ null_row, jtype::type_point, "position_point", "position_point" });
 			put_point_field({ null_row, jtype::type_point, "selection_point", "selection_point" });
+
+			put_object_field({ null_row, jtype::type_object, "user_class_class_id" });
 
 			put_rectangle_field({ null_row, jtype::type_rectangle, "rectangle", "rectangle" });
 
@@ -2674,6 +2767,12 @@ namespace corona
 			idrectangle = find_field("rectangle");
 			idlayout_rect = find_field("layout_rect");
 
+			id_user_class_id = find_field("user_class_id");
+			id_user_class_class_id = find_field("user_class_class_id");
+			id_user_class_class_name = find_field("user_class_class_name");
+			id_user_class_root_id = find_field("user_class_root_id");
+			id_user_class_group = find_field("user_class_group");
+
 			id_dbf_string_length = find_field("dbf_string_length");
 			id_dbf_string_validation_pattern = find_field("dbf_string_validation_pattern");
 			id_dbf_string_validation_message = find_field("dbf_string_validation_message");
@@ -2750,13 +2849,6 @@ namespace corona
 				put_object_field(object_fields[i]);
 			}
 
-			/* TODO: improve accessibility here.  Try it with a "blast shield on" */
-
-			id_fld_string_options = find_field("string_options");
-			id_fld_double_options = find_field("double_options");
-			id_fld_date_options = find_field("date_options");
-			id_fld_int_options = find_field("int_options");
-
 			id_view_background = find_field("view_background_style");
 			id_view_title = find_field("view_title_style");
 			id_view_subtitle = find_field("view_subtitle_style");
@@ -2777,9 +2869,12 @@ namespace corona
 			id_chart_block = find_field("chart_block_style");
 			id_tooltip = find_field("tooltip_style");
 			id_breadcrumb = find_field("breadcrumb_style");
-			id_dbf_field_type = find_field("id_dbf_field_type");
+			id_dbf_field_type = find_field("dbf_field_type");
 
-			id_class_date_options;
+			id_fld_string_options = find_field("string_options");
+			id_fld_double_options = find_field("double_options");
+			id_fld_date_options = find_field("date_options");
+			id_fld_int_options = find_field("int_options");
 
 			put_class_request style_sheet;
 
@@ -2807,7 +2902,7 @@ namespace corona
 
 			pcr.class_name = "user_class";
 			pcr.class_description = "custom class created by user";
-			pcr.member_fields = { id_user_class_root_id, id_user_class_id, id_user_class_name, id_user_field_list };
+			pcr.member_fields = { id_user_class_root_id, id_user_class_id, id_user_class_group, id_user_class_class_name, id_user_class_class_id, id_user_field_list };
 			pcr.field_id_primary_key = id_user_class_id;
 			id_user_class = put_class(pcr);
 

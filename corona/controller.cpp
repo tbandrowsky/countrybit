@@ -539,17 +539,17 @@ namespace corona
 
 		page_item* corona_controller::add_update_fields(page_item* _parent)
 		{
-			pg.actor_update_fields(_parent, &state, &schema, &program_chart );
+			return pg.actor_update_fields(_parent, &state, &schema, &program_chart );
 		}
 
 		page_item* corona_controller::add_create_buttons(page_item* _parent)
 		{
-			pg.actor_create_buttons(_parent, &state, &schema, &program_chart);
+			return pg.actor_create_buttons(_parent, &state, &schema, &program_chart);
 		}
 
 		page_item* corona_controller::add_select_items(page_item* _parent)
 		{
-			pg.actor_select_items(_parent, &state, &schema, &program_chart);
+			return pg.actor_select_items(_parent, &state, &schema, &program_chart);
 		}
 
 		void corona_controller::arrange(double width, double height)
