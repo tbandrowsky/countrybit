@@ -657,6 +657,7 @@ namespace corona
 			object_name				actor_name;
 			selections_collection	selections;
 			selections_collection	breadcrumb;
+			relative_ptr_type		current_view_class_id;
 		};
 
 		using jactor = actor_type;
@@ -782,6 +783,7 @@ namespace corona
 			relative_ptr_type							actor_id;
 			actor_create_collection						create_objects;
 			actor_view_collection						view_objects;
+			jactor										actor;
 
 			int											modified_object_level;
 			relative_ptr_type							modified_object_id;
@@ -1197,6 +1199,50 @@ namespace corona
 			relative_ptr_type id_breadcrumb;
 
 			relative_ptr_type id_style_sheet;
+
+			relative_ptr_type id_user_class_root;
+			relative_ptr_type id_user_class_root_id;
+
+			relative_ptr_type id_user_class;
+			relative_ptr_type id_user_class_name;
+			relative_ptr_type id_user_class_id;
+
+			relative_ptr_type id_user_field;
+			relative_ptr_type id_user_field_id;
+			relative_ptr_type id_user_field_list;
+
+			relative_ptr_type id_fld_string_options;
+			relative_ptr_type id_fld_double_options;
+			relative_ptr_type id_fld_int_options;
+			relative_ptr_type id_fld_date_options;
+
+			relative_ptr_type id_class_string_options;
+			relative_ptr_type id_class_double_options;
+			relative_ptr_type id_class_int_options;
+			relative_ptr_type id_class_date_options;
+
+			relative_ptr_type id_dbf_field_name;
+			relative_ptr_type id_dbf_field_description;
+			relative_ptr_type id_dbf_field_format;
+			relative_ptr_type id_dbf_field_type;
+
+			relative_ptr_type id_dbf_string_length;
+			relative_ptr_type id_dbf_string_validation_pattern;
+			relative_ptr_type id_dbf_string_validation_message;
+			relative_ptr_type id_dbf_string_full_text_editor;
+			relative_ptr_type id_dbf_string_rich_text_editor;
+
+			relative_ptr_type id_dbf_date_start;
+			relative_ptr_type id_dbf_date_stop;
+			relative_ptr_type id_dbf_date_format;
+
+			relative_ptr_type id_dbf_double_start;
+			relative_ptr_type id_dbf_double_stop;
+			relative_ptr_type id_dbf_double_format;
+
+			relative_ptr_type id_dbf_int_start;
+			relative_ptr_type id_dbf_int_stop;
+			relative_ptr_type id_dbf_int_format;
 
 			jschema() = default;
 			~jschema() = default;

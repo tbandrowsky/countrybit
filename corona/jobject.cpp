@@ -167,6 +167,8 @@ namespace corona
 			auto model = schema->get_model(ref->model_name);
 			auto& actor = actors[ _actor ];
 
+			acr.actor = actor;
+
 			auto& create_options = model.create_options;
 			auto& select_options = model.select_options;
 			auto& update_options = model.update_options;
@@ -392,14 +394,23 @@ namespace corona
 				auto hierarchy_item = model.selection_hierarchy.first_value([class_id](auto& vr) { return class_id == vr.item.class_id; });
 				auto phierarchy_item = &hierarchy_item;
 				auto selected_levels = model.selection_hierarchy.where([phierarchy_item](auto& vr) { return vr.item.level_id <= phierarchy_item->level_id; });
+
 				ac.breadcrumb.clear();
+				ac.current_view_class_id = -1;
 
 				temp.clear();
+				int highest_level = -1;
 				for (auto aci : ac.selections)
 				{
 					auto cls_id = get_class_id(aci.item);
-					if (selected_levels.any_of([cls_id](auto& vri) { return vri.item.class_id == cls_id; })) {
-						ac.breadcrumb.push_back(cls_id);
+					auto selected_item_level = selected_levels.where([cls_id, phierarchy_item](auto& vri) { return vri.item.class_id == cls_id; });
+					if (selected_item_level != std::end(selected_levels))
+					{
+						if (selected_item_level.get_object().item.level_id > highest_level)
+						{
+							ac.breadcrumb.push_back(aci.item);
+							ac.current_view_class_id = cls_id;
+						}
 						temp.push_back(aci.item);
 					}
 				}
@@ -409,10 +420,13 @@ namespace corona
 				relative_ptr_type selection = _select.object_id;
 				ac.selections.push_back(selection);
 				put_actor(ac);
+				acr = get_actor_state(_select.actor_id, _select.object_id, _trace_msg);
 				acr.modified_object_level = phierarchy_item->level_id;
 				acr.modified_object_id = _select.object_id;
 			}
-			acr = get_actor_state(_select.actor_id, _select.object_id, _trace_msg);
+			else {
+				acr = get_actor_state(_select.actor_id, _select.object_id, _trace_msg);
+			}
 			return acr;
 		}
 
@@ -2460,7 +2474,7 @@ namespace corona
 
 		void jschema::add_standard_fields() 
 		{
-			put_string_field_request string_fields[34] = {
+			put_string_field_request string_fields[43] = {
 				{ { null_row, jtype::type_string ,"full_name", "Full Name" }, { 75, "", "" } },
 				{ { null_row, jtype::type_string ,"first_name", "First Name" }, { 50, "", "" } },
 				{ { null_row, jtype::type_string ,"last_name", "Last Name" }, { 50, "", "" } },
@@ -2494,15 +2508,23 @@ namespace corona
 				{ { null_row, jtype::type_string, "mime_type", "MimeType" }, { 100, "", "" } },
 				{ { null_row, jtype::type_string, "base64", "Base64" }, { 100, "", "" } },
 				{ { null_row, jtype::type_string, "font_name", "Font" }, { 32, "", "" } },
-				{ { null_row, jtype::type_string, "name", "Object Name" }, { 32, "", "" } }
+				{ { null_row, jtype::type_string, "name", "Object Name" }, { 32, "", "" } },
+				{ { null_row, jtype::type_string, "dbf_field_name", "Field Name" }, { 64, "", "" } },
+				{ { null_row, jtype::type_string, "dbf_field_description", "Field Display Name" }, { 64, "", "" } },
+				{ { null_row, jtype::type_string, "dbf_field_format", "Field Format" }, { 64, "", "" } },
+				{ { null_row, jtype::type_string, "dbf_string_validation_pattern", "Validation Pattern" }, { 64, "", "" } },
+				{ { null_row, jtype::type_string, "dbf_string_validation_message", "Validation Message" }, { 64, "", "" } },
+				{ { null_row, jtype::type_string, "id_user_class_name", "User Class Name" }, { 64, "", "" } }
 			};
 
-			put_time_field_request time_fields[2] = {
+			put_time_field_request time_fields[4] = {
 				{ { null_row, jtype::type_datetime, "birthday", "Birthday" }, 0, INT64_MAX },
 				{ { null_row, jtype::type_datetime, "scheduled", "Scheduled" }, 0, INT64_MAX },
+				{ { null_row, jtype::type_datetime, "dbf_date_start", "Min Date" }, 0, INT64_MAX },
+				{ { null_row, jtype::type_datetime, "dbf_date_stop", "Max Date" }, 0, INT64_MAX }
 			};
 
-			put_integer_field_request int_fields[8] = {
+			put_integer_field_request int_fields[16] = {
 				{ { null_row, jtype::type_int64, "count", "Count" }, 0, INT64_MAX },
 				{ { null_row, jtype::type_int8, "bold", "Bold" }, 0, INT8_MAX },
 				{ { null_row, jtype::type_int8, "italic", "Italic" }, 0, INT8_MAX },
@@ -2510,10 +2532,18 @@ namespace corona
 				{ { null_row, jtype::type_int8, "strike_through", "Strike Through" }, 0, INT8_MAX },
 				{ { null_row, jtype::type_int8, "vertical_alignment", "Vertical alignment" }, 0, INT8_MAX },
 				{ { null_row, jtype::type_int8, "horizontal_alignment", "Vertical alignment" }, 0, INT8_MAX }, 
-				{ { null_row, jtype::type_int8, "wrap_text", "Wrap text" }, 0, INT8_MAX }
+				{ { null_row, jtype::type_int8, "wrap_text", "Wrap text" }, 0, INT8_MAX },
+				{ { null_row, jtype::type_int8, "dbf_int_start", "Min. Value" }, 0, INT64_MAX },
+				{ { null_row, jtype::type_int8, "dbf_int_stop", "Max. Value" }, 0, INT64_MAX },
+				{ { null_row, jtype::type_int64, "id_user_class_id", "Max. Value" }, 0, INT64_MAX },
+				{ { null_row, jtype::type_int64, "id_user_field_id", "Max. Value" }, 0, INT64_MAX },
+				{ { null_row, jtype::type_int64, "id_user_class_root_id", "Max. Value" }, 0, INT64_MAX },
+				{ { null_row, jtype::type_int64, "id_user_class_field_id", "Max. Value" }, 0, INT64_MAX },
+				{ { null_row, jtype::type_int64, "id_user_class_id", "Max. Value" }, 0, INT64_MAX },
+				{ { null_row, jtype::type_int64, "id_dbf_field_type", "Max. Value" }, 0, INT64_MAX },
 			};
 
-			put_double_field_request double_fields[18] = {
+			put_double_field_request double_fields[20] = {
 				{ { null_row, jtype::type_float64, "quantity", "Quantity" }, -1E40, 1E40 },
 				{ { null_row, jtype::type_float64, "latitude", "Latitude" }, -90, 90 },
 				{ { null_row, jtype::type_float64, "longitude", "Longitude" }, -180, 180 },
@@ -2531,7 +2561,9 @@ namespace corona
 				{ { null_row, jtype::type_float32, "font_size", "Font size" }, 0, 1E3 },
 				{ { null_row, jtype::type_float32, "line_spacing", "Line Spacing" }, 0, 1E3 },
 				{ { null_row, jtype::type_float32, "box_border_thickness", "Box Border Thickness" }, 0, 1E3 },
-				{ { null_row, jtype::type_float32, "shape_border_thickness", "Shape Border Thickness" }, 0, 1E3 }
+				{ { null_row, jtype::type_float32, "shape_border_thickness", "Shape Border Thickness" }, 0, 1E3 },
+				{ { null_row, jtype::type_float64, "dbf_double_start", "Min. Value" }, -11E30, 1E30 },
+				{ { null_row, jtype::type_float64, "dbf_double_stop", "Max. Value" }, -1E30, 1E30 }
 			};
 
 			put_color_field({ null_row, jtype::type_color, "color", "color" });
@@ -2642,13 +2674,44 @@ namespace corona
 			idrectangle = find_field("rectangle");
 			idlayout_rect = find_field("layout_rect");
 
-			put_class_request pcr;
+			id_dbf_string_length = find_field("dbf_string_length");
+			id_dbf_string_validation_pattern = find_field("dbf_string_validation_pattern");
+			id_dbf_string_validation_message = find_field("dbf_string_validation_message");
+			id_dbf_string_full_text_editor = find_field("dbf_string_full_text_editor");
+			id_dbf_string_rich_text_editor = find_field("dbf_string_rich_text_editor");
 
-			id_solid_brush = null_row;
-			id_gradient_stop = null_row;
-			id_linear_gradient_brush = null_row;
-			id_round_gradient_brush = null_row;
-			id_bitmap_brush = null_row;
+			id_dbf_date_start = find_field("dbf_date_start");
+			id_dbf_date_stop = find_field("dbf_date_stop");
+			id_dbf_date_format = find_field("dbf_date_format");
+
+			id_dbf_double_start = find_field("dbf_double_start");
+			id_dbf_double_stop = find_field("dbf_double_stop");
+			id_dbf_double_format = find_field("dbf_double_format");
+
+			id_dbf_int_start = find_field("dbf_int_start");
+			id_dbf_int_stop = find_field("dbf_int_stop");
+			id_dbf_int_format = find_field("dbf_int_format");
+
+			put_class_request pcr;
+			pcr.class_name = "field_string_options";
+			pcr.class_description = "Options for string field";
+			pcr.member_fields = { id_dbf_string_length, id_dbf_string_validation_message, id_dbf_string_validation_pattern, id_dbf_string_full_text_editor, id_dbf_string_rich_text_editor };
+			id_class_string_options = put_class(pcr);
+
+			pcr.class_name = "field_double_options";
+			pcr.class_description = "Options for double field";
+			pcr.member_fields = { id_dbf_double_start, id_dbf_double_stop };
+			id_class_double_options = put_class(pcr);
+
+			pcr.class_name = "field_date_options";
+			pcr.class_description = "Options for date field";
+			pcr.member_fields = { id_dbf_date_start, id_dbf_date_stop };
+			id_class_date_options = put_class(pcr);
+
+			pcr.class_name = "field_int_options";
+			pcr.class_description = "Options for int field";
+			pcr.member_fields = { id_dbf_int_start, id_dbf_int_stop };
+			id_class_int_options = put_class(pcr);
 
 			pcr.class_name = "text_style";
 			pcr.class_description = "styles of text for ui";
@@ -2656,27 +2719,31 @@ namespace corona
 				idshape_fill_color, idshape_border_thickness, idshape_border_color, idbox_fill_color, idbox_border_thickness, idbox_border_color };
 			id_text_style = put_class(pcr);
 
-			put_object_field_request object_fields[20] = {
-				{ { null_row, jtype::type_object, "id_view_background", "View Background Style" }, { {1,1,1}, id_text_style }},
-				{ { null_row, jtype::type_object, "id_view_title", "View Title Style" }, { {1,1,1}, id_text_style }},
-				{ { null_row, jtype::type_object, "id_view_subtitle", "View Subtitle Style" }, { {1,1,1}, id_text_style }},
-				{ { null_row, jtype::type_object, "id_view_section", "View Section Style" }, { {1,1,1}, id_text_style }},
-				{ { null_row, jtype::type_object, "id_view", "View Style" }, { {1,1,1}, id_text_style }},
-				{ { null_row, jtype::type_object, "id_disclaimer", "Disclaimer Style" }, { {1,1,1}, id_text_style }},
-				{ { null_row, jtype::type_object, "id_copyright", "Copyright Style" }, { {1,1,1}, id_text_style }},
-				{ { null_row, jtype::type_object, "id_h1", "H1" }, { {1,1,1}, id_text_style }},
-				{ { null_row, jtype::type_object, "id_h2", "H2" }, { {1,1,1}, id_text_style }},
-				{ { null_row, jtype::type_object, "id_h3", "H3" }, { {1,1,1}, id_text_style }},
-				{ { null_row, jtype::type_object, "id_column_number_head", "Column Number Head" }, { {1,1,1}, id_text_style }},
-				{ { null_row, jtype::type_object, "id_column_text_head", "Column Text Head" }, { {1,1,1}, id_text_style }},
-				{ { null_row, jtype::type_object, "id_column_data", "Column Data" }, { {1,1,1}, id_text_style }},
-				{ { null_row, jtype::type_object, "id_label", "Label" }, { {1,1,1}, id_text_style }},
-				{ { null_row, jtype::type_object, "id_control", "Control" }, { {1,1,1}, id_text_style }},
-				{ { null_row, jtype::type_object, "id_chart_axis", "Chart Axis" }, { {1,1,1}, id_text_style }},
-				{ { null_row, jtype::type_object, "id_chart_legend", "Chart Legend" }, { {1,1,1}, id_text_style }},
-				{ { null_row, jtype::type_object, "id_chart_block", "Chart Block" }, { {1,1,1}, id_text_style }},
-				{ { null_row, jtype::type_object, "id_tooltip", "Tooltip" }, { {1,1,1}, id_text_style }},
-				{ { null_row, jtype::type_object, "id_breadcrumb", "Breadcrumb" }, { {1,1,1}, id_text_style }}
+			put_object_field_request object_fields[24] = {
+				{ { null_row, jtype::type_object, "view_background_style", "View Background Style" }, { {1,1,1}, id_text_style }},
+				{ { null_row, jtype::type_object, "view_title_style", "View Title Style" }, { {1,1,1}, id_text_style }},
+				{ { null_row, jtype::type_object, "view_subtitle_style", "View Subtitle Style" }, { {1,1,1}, id_text_style }},
+				{ { null_row, jtype::type_object, "view_section_style", "View Section Style" }, { {1,1,1}, id_text_style }},
+				{ { null_row, jtype::type_object, "view_style", "View Style" }, { {1,1,1}, id_text_style }},
+				{ { null_row, jtype::type_object, "disclaimer_style", "Disclaimer Style" }, { {1,1,1}, id_text_style }},
+				{ { null_row, jtype::type_object, "copyright_style", "Copyright Style" }, { {1,1,1}, id_text_style }},
+				{ { null_row, jtype::type_object, "h1_style", "H1 Style" }, { {1,1,1}, id_text_style }},
+				{ { null_row, jtype::type_object, "h2_style", "H2 Style" }, { {1,1,1}, id_text_style }},
+				{ { null_row, jtype::type_object, "h3_style", "H3 Style" }, { {1,1,1}, id_text_style }},
+				{ { null_row, jtype::type_object, "column_number_head_style", "Column Number Head Style" }, { {1,1,1}, id_text_style }},
+				{ { null_row, jtype::type_object, "column_text_head_style", "Column Text Head Style" }, { {1,1,1}, id_text_style }},
+				{ { null_row, jtype::type_object, "column_data_style", "Column Data Style" }, { {1,1,1}, id_text_style }},
+				{ { null_row, jtype::type_object, "label_style", "Label Style" }, { {1,1,1}, id_text_style }},
+				{ { null_row, jtype::type_object, "control_style", "Control Style" }, { {1,1,1}, id_text_style }},
+				{ { null_row, jtype::type_object, "chart_axis_style", "Chart Axis Style" }, { {1,1,1}, id_text_style }},
+				{ { null_row, jtype::type_object, "chart_legend_style", "Chart Legend Style" }, { {1,1,1}, id_text_style }},
+				{ { null_row, jtype::type_object, "chart_block_style", "Chart Block Style" }, { {1,1,1}, id_text_style }},
+				{ { null_row, jtype::type_object, "tooltip_style", "Tooltip Style" }, { {1,1,1}, id_text_style }},
+				{ { null_row, jtype::type_object, "breadcrumb_style", "Breadcrumb Style" }, { {1,1,1}, id_text_style }},
+				{ { null_row, jtype::type_object, "string_options", "String Field Options" }, { {1,1,1}, id_class_string_options }},
+				{ { null_row, jtype::type_object, "double_options", "Double Field Options" }, { {1,1,1}, id_class_double_options }},
+				{ { null_row, jtype::type_object, "int_options", "Int Field Options" }, { {1,1,1}, id_class_int_options }},
+				{ { null_row, jtype::type_object, "date_options", "Date Field Options" }, { {1,1,1}, id_class_date_options }},
 			};
 
 			for (int i = 0; i < sizeof(object_fields) / sizeof(object_fields[0]); i++) {
@@ -2685,26 +2752,34 @@ namespace corona
 
 			/* TODO: improve accessibility here.  Try it with a "blast shield on" */
 
-			id_view_background = find_field("id_view_background");
-			id_view_title = find_field("id_view_title");
-			id_view_subtitle = find_field("id_view_subtitle");
-			id_view_section = find_field("id_view_section");
-			id_view = find_field("id_view");
-			id_disclaimer = find_field("id_disclaimer");
-			id_copyright = find_field("id_copyright");
-			id_h1 = find_field("id_h1");
-			id_h2 = find_field("id_h2");
-			id_h3 = find_field("id_h3");
-			id_column_number_head = find_field("id_column_number_head");
-			id_column_text_head = find_field("id_column_text_head");
-			id_column_data = find_field("id_column_data");
-			id_label = find_field("id_label");
-			id_control = find_field("id_control");
-			id_chart_axis = find_field("id_chart_axis");
-			id_chart_legend = find_field("id_chart_legend");
-			id_chart_block = find_field("id_chart_block");
-			id_tooltip = find_field("id_tooltip");
-			id_breadcrumb = find_field("id_breadcrumb");
+			id_fld_string_options = find_field("string_options");
+			id_fld_double_options = find_field("double_options");
+			id_fld_date_options = find_field("date_options");
+			id_fld_int_options = find_field("int_options");
+
+			id_view_background = find_field("view_background_style");
+			id_view_title = find_field("view_title_style");
+			id_view_subtitle = find_field("view_subtitle_style");
+			id_view_section = find_field("view_section_style");
+			id_view = find_field("view_style");
+			id_disclaimer = find_field("disclaimer_style");
+			id_copyright = find_field("copyright_style");
+			id_h1 = find_field("h1_style");
+			id_h2 = find_field("h2_style");
+			id_h3 = find_field("h3_style");
+			id_column_number_head = find_field("column_number_head_style");
+			id_column_text_head = find_field("column_text_head_style");
+			id_column_data = find_field("column_data_style");
+			id_label = find_field("label_style");
+			id_control = find_field("control_style");
+			id_chart_axis = find_field("chart_axis_style");
+			id_chart_legend = find_field("chart_legend_style");
+			id_chart_block = find_field("chart_block_style");
+			id_tooltip = find_field("tooltip_style");
+			id_breadcrumb = find_field("breadcrumb_style");
+			id_dbf_field_type = find_field("id_dbf_field_type");
+
+			id_class_date_options;
 
 			put_class_request style_sheet;
 
@@ -2713,6 +2788,34 @@ namespace corona
 			pcr.member_fields = { idname, id_view_background, id_view_title, id_view_subtitle, id_view_section, id_view, id_disclaimer, id_copyright,
 				id_h1, id_h2, id_h3,id_column_number_head,id_column_text_head,id_column_data,id_label,id_control,id_chart_axis,id_chart_legend,id_chart_block,id_tooltip };
 			id_style_sheet = put_class(pcr);
+
+			pcr.class_name = "user_class_root";
+			pcr.class_description = "custom class root";
+			pcr.member_fields = { id_user_class_root_id };
+			pcr.field_id_primary_key = id_user_class_root_id;
+			id_user_class_root = put_class(pcr);
+
+			pcr.class_name = "user_field";
+			pcr.class_description = "User field specification";
+			pcr.member_fields = { id_user_field_id, id_dbf_field_name, id_dbf_field_description, id_dbf_field_format, id_fld_string_options, id_fld_double_options, id_fld_date_options, id_fld_int_options };
+			id_user_field = put_class(pcr);
+
+			put_object_field_request object_user_field =
+			{ { null_row, jtype::type_list, "user_field_list", "User Fields" }, { {32,1,1}, id_user_field } };
+			
+			id_user_field_list = put_object_field(object_user_field);
+
+			pcr.class_name = "user_class";
+			pcr.class_description = "custom class created by user";
+			pcr.member_fields = { id_user_class_root_id, id_user_class_id, id_user_class_name, id_user_field_list };
+			pcr.field_id_primary_key = id_user_class_id;
+			id_user_class = put_class(pcr);
+
+			id_solid_brush = null_row;
+			id_gradient_stop = null_row;
+			id_linear_gradient_brush = null_row;
+			id_round_gradient_brush = null_row;
+			id_bitmap_brush = null_row;
 
 			// TODO, these will have to be added later
 			/*

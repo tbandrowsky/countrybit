@@ -430,8 +430,10 @@ namespace proposal
 		}
 
 		program_chart = schema.create_collection(&ref);
+		jactor sample_actor;
 		sample_actor.actor_name = "sample actor";
 		sample_actor.actor_id = null_row;
+		sample_actor.current_view_class_id = idhome_class;
 		sample_actor = program_chart.create_actor(sample_actor);
 
 		relative_ptr_type style_sheet_id = null_row;
@@ -898,19 +900,45 @@ namespace proposal
 		auto d2dwin = canvas2d(d2dcolumn, schema.id_view_background, { 0.0_px,0.0_px,100.0_pct,100.0_pct });
 		auto d2dwin_area = column(d2dwin, schema.id_view_background, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
 
+		auto navigation_bar = row(d2dwin, schema.id_view_background, { 0.0_px, 0.0_px, 100.0_pct, -50.0_px });
+		breadcrumbs(navigation_bar, [](jslice& _item) {
+			return nullptr;
+			}, {0.0_px, 0.0_px, 100.0_px, 20.0_px});
+
 		// editable controls on the left
 		add_update_fields(controlcolumn);
 		add_create_buttons(controlcolumn);
 
-		// the breadcrumb at the top
-
+		if (state.actor.current_view_class_id == idhome_class) 
+		{
+			
+		} 
+		else if (state.actor.current_view_class_id == idhome_class)
+		{
+			;
+		}
+		else if (state.actor.current_view_class_id == idhome_class)
+		{
+			;
+		}
+		else if (state.actor.current_view_class_id == idhome_class)
+		{
+			;
+		}
+		else if (state.actor.current_view_class_id == idhome_class)
+		{
+			;
+		}
 
 		// draw the slides at the top
 		relative_ptr_type slide_fields[2] = { idslide_heading1, null_row };
 		auto slide_area = row_common(d2dwin, { 0.0_px, 0.0_px, 100.0_pct, 200.0_px }, slide_fields);
 
+		// 
+
+
 		// and now draw the selected slide
-		relative_ptr_type title_classes = { slide_title_class_id };
+		relative_ptr_type title_classes[2] = { idslide_title_class, null_row };
 
 		title_box.width = 500.0_px;
 		title_box.height = 100.0_px;

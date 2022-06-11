@@ -25,6 +25,24 @@ namespace proposal
 		corona::database::relative_ptr_type idcarrier;
 		corona::database::relative_ptr_type idcarrier_name;
 
+		corona::database::relative_ptr_type idproduct_root_class;
+		corona::database::relative_ptr_type idproduct;
+		corona::database::relative_ptr_type idproduct_name;
+		corona::database::relative_ptr_type idproduct_code;
+		corona::database::relative_ptr_type idproduct_status;
+		corona::database::relative_ptr_type idproduct_edition_start;
+		corona::database::relative_ptr_type idproduct_edition_stop;
+		corona::database::relative_ptr_type idproduct_template_type;
+		corona::database::relative_ptr_type idproduct_line_of_business;
+		corona::database::relative_ptr_type idproduct_carrier_specific;
+		corona::database::relative_ptr_type idproduct_updated_by;
+		corona::database::relative_ptr_type idproduct_status_updated_by;
+		corona::database::relative_ptr_type idproduct_class;
+		corona::database::relative_ptr_type idproduct_program_header_class;
+		corona::database::relative_ptr_type idproduct_program_structure_class;
+		corona::database::relative_ptr_type idproduct_coverage_header_class;
+		corona::database::relative_ptr_type idproduct_coverage_structure_class;
+
 		corona::database::relative_ptr_type idcoverage_root_class;
 		corona::database::relative_ptr_type idcoverage_root;
 

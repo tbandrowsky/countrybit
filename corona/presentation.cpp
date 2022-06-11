@@ -100,6 +100,7 @@ namespace corona
 				v->id = size();
 				v->set_parent(_parent);
 				v->layout = layout_types::select;
+				v->slice = slice;
 				v->object_id = object_id;
 				auto rf = slice.get_layout_rect("layout_rect");
 				v->box = rf;
@@ -108,6 +109,21 @@ namespace corona
 			}
 			else {
 				return nullptr;
+			}
+		}
+
+		page_item* page::navigate(page_item* _parent, actor_state* _state, int object_id, const char *_style_name, const char* _caption, layout_rect _box )
+		{
+			page_item* v = append();
+			v->id = size();
+			v->set_parent(_parent);
+			v->layout = layout_types::navigate;
+			v->object_id = object_id;
+			v->box = _box;
+			v->select_request = _state->create_select_request(v->object_id, false);
+			v->style_name = _style_name;
+			if (_caption) {
+				v->caption = data.copy(v->caption,0);
 			}
 		}
 
@@ -192,10 +208,6 @@ namespace corona
 				v->set_parent(_parent);	
 				v->layout = layout_types::select;
 				v->object_id = st.second.object_id;
-				v->box.height.units = measure_units::pixels;
-				v->box.width.units = measure_units::pixels;
-				v->box.x.units = measure_units::pixels;
-				v->box.y.units = measure_units::pixels;
 				auto slice = _collection->get_object(st.second.object_id);
 				if (slice.has_field("layout_rect"))
 				{

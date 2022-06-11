@@ -168,7 +168,7 @@ namespace corona
 
 			setScrollBars();
 
-			state = program_chart.get_actor_state(sample_actor.actor_id, null_row, "state");
+			state = program_chart.get_actor_state(state.actor_id, null_row, "state");
 			stateChanged(newSize);
 
 			return 0;
@@ -188,15 +188,6 @@ namespace corona
 				auto select_item = select_item_iter.get_object();
 				std::cout << std::format("{} selected", select_item.item.id);
 				state = this->program_chart.select_object(select_item.item.select_request);
-				stateChanged(size);
-			}
-			else 
-			{
-				select_object_request request;
-				request.collection_id = program_chart.get_collection_id();
-				request.actor_id = sample_actor.actor_id;
-				request.object_id = 0;
-				state = this->program_chart.select_object(request);
 				stateChanged(size);
 			}
 		}
@@ -223,6 +214,22 @@ namespace corona
 		void corona_controller::exportBitmapRectangles(const char* _filenameImage, const char* _templateFile)
 		{
 			;
+		}
+
+		page_item* corona_controller::navigate(page_item* _parent, int object_id, relative_ptr_type _style_id, const char* _caption, layout_rect _box)
+		{
+			const char* _style_name = style_name(_style_id);
+			return pg.navigate( _parent, &state, object_id, _style_name, _caption, _box);
+		}
+
+		void corona_controller::breadcrumbs(page_item* _breadcrumb_container, std::function<const char* (jslice& slice)> _captioner, layout_rect _item_box)
+		{
+			for (auto bc : state.actor.breadcrumb)
+			{
+				jslice obj = program_chart.get_object(bc.item);
+				const char* caption = _captioner(obj);
+				navigate(_breadcrumb_container, bc.item, schema.id_breadcrumb, caption, _item_box);
+			}
 		}
 
 		bool corona_controller::update(double _elapsedSeconds, double _totalSeconds)

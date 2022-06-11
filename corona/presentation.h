@@ -16,9 +16,10 @@ namespace corona
 			label = 7,
 			create = 8,
 			select = 9,
-			h1 = 10,
-			h2 = 11,
-			h3 = 12
+			navigate = 10,
+			h1 = 11,
+			h2 = 12,
+			h3 = 13
 		};
 
 		class page_item
@@ -97,6 +98,7 @@ namespace corona
 
 			page_item* field(page_item* _parent, int object_id, int field_id, jslice slice);
 			page_item* select(page_item* _parent, actor_state* _state, int object_id, jslice slice);
+			page_item* navigate(page_item* _parent, actor_state* _state, int object_id, const char* _style_name, const char *_caption, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 20.0_px });
 			page_item* space(page_item* _parent, const char* _style_name = nullptr, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
 
 			page_item* actor_update_fields(page_item* _parent, actor_state* _state, jschema* _schema, jcollection* _collection);

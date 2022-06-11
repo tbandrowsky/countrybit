@@ -144,9 +144,10 @@ namespace corona
 		{
 		public:
 
-			relative_ptr_type				field_id;
+			relative_ptr_type		field_id;
 			jtype					type_id;
 			int64_t					size_bytes;
+			bool					user_defined;
 
 			object_name				name;
 			object_description		description;
@@ -678,6 +679,7 @@ namespace corona
 			object_name									name;
 			object_description							description;
 			uint64_t									class_size_bytes;
+			bool										user_defined;
 			int											primary_key_idx;
 		};
 
