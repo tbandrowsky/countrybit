@@ -56,7 +56,7 @@ namespace corona
 			return hr == S_OK;
 		}
 
-		jslice actor_state::create_object(jschema* _schema, relative_ptr_type _class_id)
+		jobject actor_state::create_object(jschema* _schema, relative_ptr_type _class_id)
 		{
 			auto myclass = _schema->get_class(_class_id);
 			auto bytes_to_allocate = myclass.item().class_size_bytes;
@@ -64,14 +64,14 @@ namespace corona
 
 			dimensions_type d = { 0,0,0 };
 
-			jslice ja(nullptr, _schema, _class_id, &data, location, d);
+			jobject ja(nullptr, _schema, _class_id, &data, location, d);
 			ja.construct();
 			return ja;
 		}
 
-		jslice actor_state::copy_object(jschema* _schema, jslice& _src)
+		jobject actor_state::copy_object(jschema* _schema, jobject& _src)
 		{
-			jslice dest = create_object(_schema, _src.get_class().item().class_id);
+			jobject dest = create_object(_schema, _src.get_class().item().class_id);
 			dest.update(_src);
 			return dest;
 		}
@@ -304,7 +304,7 @@ namespace corona
 			acr.modified_object_id = _last_modified_object;
 			if (acr.modified_object_id != null_row)
 			{
-				jslice slice = get_object(acr.modified_object_id);
+				jobject slice = get_object(acr.modified_object_id);
 				acr.modified_object = acr.copy_object(schema, slice);
 			}
 
@@ -446,12 +446,12 @@ namespace corona
 			relative_ptr_type item_id = _create.item_id;
 			relative_ptr_type object_id = null_row;
 
-			jslice new_object = create_object(item_id, _create.actor_id, _create.class_id, object_id);
+			jobject new_object = create_object(item_id, _create.actor_id, _create.class_id, object_id);
 			if (object_id != null_row) 
 			{
 				for (auto js : ac.selections)
 				{
-					jslice src_obj = get_object(js.item);
+					jobject src_obj = get_object(js.item);
 					new_object.update(src_obj);
 				}
 
@@ -496,15 +496,15 @@ namespace corona
 			return acr;
 		}
 
-		jslice jcollection::create_object(relative_ptr_type _item_id, relative_ptr_type _actor_id, relative_ptr_type _class_id, relative_ptr_type& object_id)
+		jobject jcollection::create_object(relative_ptr_type _item_id, relative_ptr_type _actor_id, relative_ptr_type _class_id, relative_ptr_type& object_id)
 		{
 			auto myclass = schema->get_class(_class_id);
 
 			object_name composed_class_field_name;
 			dimensions_type d = { 1, 1, 1 };
 			schema->get_class_field_name(composed_class_field_name, myclass.item().name, d);
-			auto find_field_id = schema->find_field(composed_class_field_name);
-			if (find_field_id == null_row)
+			auto find_class_id = schema->find_class(composed_class_field_name);
+			if (find_class_id == null_row)
 			{
 				put_object_field_request porf;
 				porf.name.name = composed_class_field_name;
@@ -513,15 +513,15 @@ namespace corona
 				porf.options.class_name = myclass.item().name;
 				porf.options.class_size_bytes = myclass.item().class_size_bytes;
 				porf.options.dim = d;
-				find_field_id = schema->put_object_field(porf);
+				find_class_id = schema->put_object_field(porf);
 			}
-			find_field_id = schema->find_field(composed_class_field_name);
-			auto find_field = schema->get_field(find_field_id);
-			auto bytes_to_allocate = find_field.size_bytes;
+			find_class_id = schema->find_class(composed_class_field_name);
+			auto find_class = schema->get_field(find_class_id);
+			auto bytes_to_allocate = find_class.size_bytes;
 
 			collection_object_type co;
 			co.oid.collection_id = collection_id;
-			co.class_field_id = find_field_id;
+			co.class_field_id = find_class_id;
 			co.class_id = _class_id;
 			co.item_id = _item_id;
 			co.otype = jtype::type_object;
@@ -530,7 +530,7 @@ namespace corona
 			co.oid.row_id = new_object.row_id();
 			object_id = new_object.row_id();
 			char* bytes = new_object.pdetails();
-			jarray ja(nullptr, schema, find_field_id, bytes, true);
+			jarray ja(nullptr, schema, find_class_id, bytes, true);
 			auto new_slice = ja.get_slice(0);
 			int pkidx = myclass.pitem()->primary_key_idx;
 
@@ -542,7 +542,7 @@ namespace corona
 			return new_slice;
 		}
 
-		jslice jcollection::get_object(relative_ptr_type _object_id)
+		jobject jcollection::get_object(relative_ptr_type _object_id)
 		{
 			auto existing_object = objects.get_item(_object_id);
 			if (existing_object.pitem()->otype == jtype::type_object) {
@@ -551,15 +551,14 @@ namespace corona
 			}
 			else 
 			{
-				jslice empty;
+				jobject empty;
 				return empty;
 			}
 		}
 
-		relative_ptr_type jcollection::put_user_class(relative_ptr_type _class_definition_object)
+		relative_ptr_type jcollection::put_user_class(jobject& slice)
 		{
 			auto class_id = null_row;
-			auto slice = get_object(_class_definition_object);
 			if (slice.get_class_id() != schema->id_user_class)
 			{
 				throw std::logic_error("object is not a user class");
@@ -653,7 +652,7 @@ namespace corona
 			return existing_object.pitem()->class_id;
 		}
 
-		jslice jcollection::get_at(relative_ptr_type _object_id)
+		jobject jcollection::get_at(relative_ptr_type _object_id)
 		{
 			return get_object(_object_id);
 		}
@@ -664,7 +663,7 @@ namespace corona
 			return existing_object.item();
 		}
 
-		jslice jcollection::update_object(relative_ptr_type _object_id, jslice _slice)
+		jobject jcollection::update_object(relative_ptr_type _object_id, jobject _slice)
 		{
 			auto existing_object = objects.get_item(_object_id);
 			if (existing_object.pitem()->otype == jtype::type_object) {
@@ -675,7 +674,7 @@ namespace corona
 			}
 			else
 			{
-				jslice empty;
+				jobject empty;
 				return empty;
 			}
 		}
@@ -1114,7 +1113,7 @@ namespace corona
 			}
 		}
 
-		dynamic_value jslice::get(relative_ptr_type _field_id)
+		dynamic_value jobject::get(relative_ptr_type _field_id)
 		{
 
 			dynamic_value sma;
@@ -1188,17 +1187,17 @@ namespace corona
 			return sma;
 		}
 
-		dynamic_value jslice::operator[](relative_ptr_type field_id)
+		dynamic_value jobject::operator[](relative_ptr_type field_id)
 		{
 			return get(field_id);
 		}
 
-		jslice::jslice() : schema(nullptr), class_id(null_row), bytes(nullptr), box(nullptr), location(null_row)
+		jobject::jobject() : schema(nullptr), class_id(null_row), bytes(nullptr), box(nullptr), location(null_row)
 		{
 			;
 		}
 
-		jslice::jslice(jslice *_parent, jschema* _schema, relative_ptr_type _class_id, char* _bytes, dimensions_type _dim) 
+		jobject::jobject(jobject *_parent, jschema* _schema, relative_ptr_type _class_id, char* _bytes, dimensions_type _dim) 
 			: parent(_parent), 
 			schema(_schema), 
 			class_id(_class_id), 
@@ -1210,7 +1209,7 @@ namespace corona
 			the_class = schema->get_class(_class_id);
 		}
 
-		jslice::jslice(jslice* _parent, jschema* _schema, relative_ptr_type _class_id, serialized_box_container *_box, relative_ptr_type _location, dimensions_type _dim) : 
+		jobject::jobject(jobject* _parent, jschema* _schema, relative_ptr_type _class_id, serialized_box_container *_box, relative_ptr_type _location, dimensions_type _dim) : 
 			parent(_parent), 
 			schema(_schema), 
 			class_id(_class_id), 
@@ -1222,7 +1221,7 @@ namespace corona
 			the_class = schema->get_class(class_id);
 		}
 
-		jslice::jslice(const jslice& _src) :
+		jobject::jobject(const jobject& _src) :
 			parent(_src.parent),
 			schema(_src.schema),
 			class_id(_src.class_id),
@@ -1234,7 +1233,7 @@ namespace corona
 			the_class = schema->get_class(class_id);
 		}
 
-		jslice jslice::operator =(const jslice& _src)
+		jobject jobject::operator =(const jobject& _src)
 		{
 			parent = _src.parent;
 			schema = _src.schema;
@@ -1247,7 +1246,7 @@ namespace corona
 			return *this;
 		}
 
-		jslice::jslice(jslice&& _src) : 
+		jobject::jobject(jobject&& _src) : 
 			parent(_src.parent),
 			schema(_src.schema),
 			class_id(_src.class_id),
@@ -1259,7 +1258,7 @@ namespace corona
 			the_class = schema->get_class(class_id);
 		}
 
-		jslice& jslice::operator =(jslice&& _src)
+		jobject& jobject::operator =(jobject&& _src)
 		{
 			parent = _src.parent;
 			schema = _src.schema;
@@ -1272,22 +1271,22 @@ namespace corona
 			return *this;
 		}
 
-		jslice& jslice::get_parent_slice()
+		jobject& jobject::get_parent_slice()
 		{
 			return *parent;
 		}
 
-		jclass jslice::get_class()
+		jclass jobject::get_class()
 		{
 			return the_class;
 		}
 
-		jschema *jslice::get_schema()
+		jschema *jobject::get_schema()
 		{
 			return schema;
 		}
 
-		size_t jslice::get_offset(int field_idx, jtype _type)
+		size_t jobject::get_offset(int field_idx, jtype _type)
 		{
 #if _DEBUG
 			if (schema == nullptr || class_id == null_row || get_bytes() == nullptr) {
@@ -1313,7 +1312,7 @@ namespace corona
 			char* c1 = bytes + offset1;
 			char* c2 = bytes + offset2;
 */
-		std::partial_ordering jslice::compare_express(jtype _type, char *c1, char *c2)
+		std::partial_ordering jobject::compare_express(jtype _type, char *c1, char *c2)
 		{
 			switch (_type)
 			{
@@ -1378,12 +1377,12 @@ namespace corona
 			}
 		}
 
-		dimensions_type jslice::get_dim() 
+		dimensions_type jobject::get_dim() 
 		{
 			return dim; 
 		}
 
-		void jslice::construct()
+		void jobject::construct()
 		{
 			for (int i = 0; i < the_class.size(); i++)
 			{
@@ -1529,14 +1528,14 @@ namespace corona
 			}
 		}
 
-		jfield& jslice::get_field(int field_idx)
+		jfield& jobject::get_field(int field_idx)
 		{
 			jclass_field& jcf = the_class.detail(field_idx);
 			jfield &jf = schema->get_field(jcf.field_id);
 			return jf;
 		}
 
-		int jslice::get_field_index_by_id(relative_ptr_type field_id)
+		int jobject::get_field_index_by_id(relative_ptr_type field_id)
 		{
 			for (int i = 0; i < the_class.size(); i++)
 			{
@@ -1549,34 +1548,34 @@ namespace corona
 			return -1;
 		}
 
-		int jslice::get_field_index_by_name(const object_name& name)
+		int jobject::get_field_index_by_name(const object_name& name)
 		{
-			relative_ptr_type field_id = schema->find_field(name);
+			relative_ptr_type field_id = schema->find_class(name);
 			return get_field_index_by_id(field_id);
 		}
 
-		jclass_field& jslice::get_class_field(int field_idx)
+		jclass_field& jobject::get_class_field(int field_idx)
 		{
 			jclass_field& jcf = the_class.detail(field_idx);
 			return jcf;
 		}
 
-		bool jslice::has_field(const object_name& name)
+		bool jobject::has_field(const object_name& name)
 		{
 			return schema && get_field_index_by_name( name ) > -1;
 		}
 
-		bool jslice::has_field(relative_ptr_type field_id)
+		bool jobject::has_field(relative_ptr_type field_id)
 		{
 			return get_field_index_by_id(field_id) > -1;
 		}
 
-		bool jslice::is_class(relative_ptr_type class_id)
+		bool jobject::is_class(relative_ptr_type class_id)
 		{
 			return the_class.pitem()->class_id == class_id;
 		}
 
-		jfield& jslice::get_field_by_id(relative_ptr_type field_id)
+		jfield& jobject::get_field_by_id(relative_ptr_type field_id)
 		{
 			for (int i = 0; i < the_class.size(); i++)
 			{
@@ -1590,115 +1589,115 @@ namespace corona
 			return schema->get_empty();
 		}
 
-		int8_box jslice::get_int8(int field_idx, bool _use_id)
+		int8_box jobject::get_int8(int field_idx, bool _use_id)
 		{
 			if (_use_id) field_idx = get_field_index_by_id(field_idx);
 			return get_boxed<int8_box>(field_idx, jtype::type_int8);
 		}
 
-		int16_box jslice::get_int16(int field_idx, bool _use_id)
+		int16_box jobject::get_int16(int field_idx, bool _use_id)
 		{
 			if (_use_id) field_idx = get_field_index_by_id(field_idx);
 			return get_boxed<int16_box>(field_idx, jtype::type_int16);
 		}
 
-		int32_box jslice::get_int32(int field_idx, bool _use_id)
+		int32_box jobject::get_int32(int field_idx, bool _use_id)
 		{
 			if (_use_id) field_idx = get_field_index_by_id(field_idx);
-			return jslice::get_boxed<int32_box>(field_idx, jtype::type_int32);
+			return jobject::get_boxed<int32_box>(field_idx, jtype::type_int32);
 		}
 
-		int64_box jslice::get_int64(int field_idx, bool _use_id)
+		int64_box jobject::get_int64(int field_idx, bool _use_id)
 		{
 			if (_use_id) field_idx = get_field_index_by_id(field_idx);
-			return jslice::get_boxed<int64_box>(field_idx, jtype::type_int64);
+			return jobject::get_boxed<int64_box>(field_idx, jtype::type_int64);
 		}
 
-		float_box jslice::get_float(int field_idx, bool _use_id)
+		float_box jobject::get_float(int field_idx, bool _use_id)
 		{
 			if (_use_id) field_idx = get_field_index_by_id(field_idx);
-			return jslice::get_boxed<float_box>(field_idx, jtype::type_float32);
+			return jobject::get_boxed<float_box>(field_idx, jtype::type_float32);
 		}
 
-		double_box jslice::get_double(int field_idx, bool _use_id)
+		double_box jobject::get_double(int field_idx, bool _use_id)
 		{
 			if (_use_id) field_idx = get_field_index_by_id(field_idx);
-			return jslice::get_boxed<double_box>(field_idx, jtype::type_float64);
+			return jobject::get_boxed<double_box>(field_idx, jtype::type_float64);
 		}
 
-		time_box jslice::get_time(int field_idx, bool _use_id)
+		time_box jobject::get_time(int field_idx, bool _use_id)
 		{
 			if (_use_id) field_idx = get_field_index_by_id(field_idx);
 			return get_boxed<time_box>(field_idx, jtype::type_datetime);
 		}
 
-		point_box jslice::get_point(int field_idx, bool _use_id)
+		point_box jobject::get_point(int field_idx, bool _use_id)
 		{
 			if (_use_id) field_idx = get_field_index_by_id(field_idx);
 			return get_boxed<point_box>(field_idx, jtype::type_point);
 		}
 
-		rectangle_box jslice::get_rectangle(int field_idx, bool _use_id)
+		rectangle_box jobject::get_rectangle(int field_idx, bool _use_id)
 		{
 			if (_use_id) field_idx = get_field_index_by_id(field_idx);
 			return get_boxed<rectangle_box>(field_idx, jtype::type_rectangle);
 		}
 
-		layout_rect_box jslice::get_layout_rect(int field_idx, bool _use_id)
+		layout_rect_box jobject::get_layout_rect(int field_idx, bool _use_id)
 		{
 			if (_use_id) field_idx = get_field_index_by_id(field_idx);
 			return get_boxed<layout_rect_box>(field_idx, jtype::type_layout_rect);
 		}
 
-		image_box jslice::get_image(int field_idx, bool _use_id)
+		image_box jobject::get_image(int field_idx, bool _use_id)
 		{
 			if (_use_id) field_idx = get_field_index_by_id(field_idx);
 			return get_boxed<image_box>(field_idx, jtype::type_image);
 		}
 
-		wave_box jslice::get_wave(int field_idx, bool _use_id)
+		wave_box jobject::get_wave(int field_idx, bool _use_id)
 		{
 			if (_use_id) field_idx = get_field_index_by_id(field_idx);
 			return get_boxed<wave_box>(field_idx, jtype::type_wave);
 		}
 
-		midi_box jslice::get_midi(int field_idx, bool _use_id)
+		midi_box jobject::get_midi(int field_idx, bool _use_id)
 		{
 			if (_use_id) field_idx = get_field_index_by_id(field_idx);
 			return get_boxed<midi_box>(field_idx, jtype::type_midi);
 		}
 
-		color_box jslice::get_color(int field_idx, bool _use_id)
+		color_box jobject::get_color(int field_idx, bool _use_id)
 		{
 			if (_use_id) field_idx = get_field_index_by_id(field_idx);
 			return get_boxed<color_box>(field_idx, jtype::type_color);
 		}
 
-		query_box jslice::get_query(int field_idx, bool _use_id)
+		query_box jobject::get_query(int field_idx, bool _use_id)
 		{
 			if (_use_id) field_idx = get_field_index_by_id(field_idx);
 			return get_boxed_ex<query_box>(field_idx, jtype::type_query);
 		}
 
-		sql_remote_box jslice::get_sql_remote(int field_idx, bool _use_id)
+		sql_remote_box jobject::get_sql_remote(int field_idx, bool _use_id)
 		{
 			if (_use_id) field_idx = get_field_index_by_id(field_idx);
 			return get_boxed_ex<sql_remote_box>(field_idx, jtype::type_sql);
 		}
 
-		http_remote_box jslice::get_http_remote(int field_idx, bool _use_id)
+		http_remote_box jobject::get_http_remote(int field_idx, bool _use_id)
 		{
 			if (_use_id) field_idx = get_field_index_by_id(field_idx);
 			return get_boxed_ex<http_remote_box>(field_idx, jtype::type_http);
 		}
 
-		file_remote_box jslice::get_file_remote(int field_idx, bool _use_id)
+		file_remote_box jobject::get_file_remote(int field_idx, bool _use_id)
 		{
 			if (_use_id) field_idx = get_field_index_by_id(field_idx);
 			return get_boxed_ex<file_remote_box>(field_idx, jtype::type_file);
 		}
 
-		string_box jslice::get_string(int field_idx, bool _use_id)
+		string_box jobject::get_string(int field_idx, bool _use_id)
 		{
 			if (_use_id) field_idx = get_field_index_by_id(field_idx);
 			size_t offset = get_offset(field_idx, jtype::type_string);
@@ -1707,7 +1706,7 @@ namespace corona
 			return temp;
 		}
 
-		jarray jslice::get_object(int field_idx, bool _use_id)
+		jarray jobject::get_object(int field_idx, bool _use_id)
 		{
 			if (_use_id) field_idx = get_field_index_by_id(field_idx);
 
@@ -1728,13 +1727,13 @@ namespace corona
 			return jerry;
 		}
 
-		jslice jslice::get_slice(int field_idx, dimensions_type _dim, bool _use_id)
+		jobject jobject::get_slice(int field_idx, dimensions_type _dim, bool _use_id)
 		{
 			jarray arr = get_object(field_idx, _use_id);
 			return arr.get_slice(_dim);
 		}
 
-		jlist jslice::get_list(int field_idx, bool _use_id)
+		jlist jobject::get_list(int field_idx, bool _use_id)
 		{
 			if (_use_id) field_idx = get_field_index_by_id(field_idx);
 
@@ -1755,155 +1754,155 @@ namespace corona
 			return jerry;
 		}
 
-		collection_id_box jslice::get_collection_id(int field_idx, bool _use_id)
+		collection_id_box jobject::get_collection_id(int field_idx, bool _use_id)
 		{
 			if (_use_id) field_idx = get_field_index_by_id(field_idx);
 
-			return jslice::get_boxed<collection_id_box>(field_idx, jtype::type_collection_id);
+			return jobject::get_boxed<collection_id_box>(field_idx, jtype::type_collection_id);
 		}
 
-		object_id_box jslice::get_object_id(int field_idx, bool _use_id)
+		object_id_box jobject::get_object_id(int field_idx, bool _use_id)
 		{
 			if (_use_id) field_idx = get_field_index_by_id(field_idx);
-			return jslice::get_boxed<object_id_box>(field_idx, jtype::type_object_id);
+			return jobject::get_boxed<object_id_box>(field_idx, jtype::type_object_id);
 		}
 
-		int8_box jslice::get_int8(object_name field_name)
+		int8_box jobject::get_int8(object_name field_name)
 		{
 			int index = get_field_index_by_name(field_name);
 			return get_int8(index);
 		}
 
-		int16_box jslice::get_int16(object_name field_name)
+		int16_box jobject::get_int16(object_name field_name)
 		{
 			int  index = get_field_index_by_name(field_name);
 			return get_int16(index);
 		}
 
-		int32_box jslice::get_int32(object_name field_name)
+		int32_box jobject::get_int32(object_name field_name)
 		{
 			int  index = get_field_index_by_name(field_name);;
 			return get_int32(index);
 		}
 
-		int64_box jslice::get_int64(object_name field_name)
+		int64_box jobject::get_int64(object_name field_name)
 		{
 			int  index = get_field_index_by_name(field_name);;
 			return get_int64(index);
 		}
 
-		float_box jslice::get_float(object_name field_name)
+		float_box jobject::get_float(object_name field_name)
 		{
 			int  index = get_field_index_by_name(field_name);;
 			return get_float(index);
 		}
 
-		double_box jslice::get_double(object_name field_name)
+		double_box jobject::get_double(object_name field_name)
 		{
 			int  index = get_field_index_by_name(field_name);;
 			return get_double(index);
 		}
 
-		time_box jslice::get_time(object_name field_name)
+		time_box jobject::get_time(object_name field_name)
 		{
 			int  index = get_field_index_by_name(field_name);;
 			return get_time(index);
 		}
 
-		string_box jslice::get_string(object_name field_name)
+		string_box jobject::get_string(object_name field_name)
 		{
 			int  index = get_field_index_by_name(field_name);;
 			return get_string(index);
 		}
 
-		jarray jslice::get_object(object_name field_name)
+		jarray jobject::get_object(object_name field_name)
 		{
 			int  index = get_field_index_by_name(field_name);
 			return get_object(index);
 		}
 
-		jlist jslice::get_list(object_name field_name)
+		jlist jobject::get_list(object_name field_name)
 		{
 			int  index = get_field_index_by_name(field_name);
 			return get_list(index);
 		}
 
-		collection_id_box jslice::get_collection_id(object_name field_name)
+		collection_id_box jobject::get_collection_id(object_name field_name)
 		{
 			int  index = get_field_index_by_name(field_name);
 			return get_collection_id(index);
 		}
 
-		object_id_box jslice::get_object_id(object_name field_name)
+		object_id_box jobject::get_object_id(object_name field_name)
 		{
 			int  index = get_field_index_by_name(field_name);
 			return get_object_id(index);
 		}
 
-		point_box jslice::get_point(object_name field_name)
+		point_box jobject::get_point(object_name field_name)
 		{
 			int  index = get_field_index_by_name(field_name);
 			return get_point(index);
 		}
 
-		rectangle_box jslice::get_rectangle(object_name field_name)
+		rectangle_box jobject::get_rectangle(object_name field_name)
 		{
 			int  index = get_field_index_by_name(field_name);
 			return get_rectangle(index);
 		}
 
-		layout_rect_box jslice::get_layout_rect(object_name field_name)
+		layout_rect_box jobject::get_layout_rect(object_name field_name)
 		{
 			int  index = get_field_index_by_name(field_name);
 			return get_layout_rect(index);
 		}
 
-		image_box jslice::get_image(object_name field_name)
+		image_box jobject::get_image(object_name field_name)
 		{
 			int  index = get_field_index_by_name(field_name);
 			return get_image(index);
 		}
 
-		wave_box jslice::get_wave(object_name field_name) {
+		wave_box jobject::get_wave(object_name field_name) {
 			int  index = get_field_index_by_name(field_name);
 			return get_wave(index);
 		}
 
-		midi_box jslice::get_midi(object_name field_name) {
+		midi_box jobject::get_midi(object_name field_name) {
 			int  index = get_field_index_by_name(field_name);
 			return get_midi(index);
 		}
 
-		color_box jslice::get_color(object_name field_name) {
+		color_box jobject::get_color(object_name field_name) {
 			int  index = get_field_index_by_name(field_name);
 			return get_color(index);
 		}
 
-		query_box jslice::get_query(object_name field_name)
+		query_box jobject::get_query(object_name field_name)
 		{
 			int index = get_field_index_by_name(field_name);
 			return get_query(index);
 		}
 
-		sql_remote_box jslice::get_sql_remote(object_name field_name)
+		sql_remote_box jobject::get_sql_remote(object_name field_name)
 		{
 			int index = get_field_index_by_name(field_name);
 			return get_sql_remote(index);
 		}
 
-		http_remote_box jslice::get_http_remote(object_name field_name)
+		http_remote_box jobject::get_http_remote(object_name field_name)
 		{
 			int index = get_field_index_by_name(field_name);
 			return get_http_remote(index);
 		}
 
-		file_remote_box jslice::get_file_remote(object_name field_name)
+		file_remote_box jobject::get_file_remote(object_name field_name)
 		{
 			int index = get_field_index_by_name(field_name);
 			return get_file_remote(index);
 		}
 
-		void jslice::set_value(const dynamic_value& _member_assignment)
+		void jobject::set_value(const dynamic_value& _member_assignment)
 		{
 			int index = get_field_index_by_id(_member_assignment.field_id);
 			auto fld = get_field(index);
@@ -2137,13 +2136,13 @@ namespace corona
 			}
 		}
 
-		int jslice::size()
+		int jobject::size()
 		{
 			auto the_class = schema->get_class(class_id);
 			return the_class.size();
 		}
 
-		void jslice::update(jslice& _src_slice)
+		void jobject::update(jobject& _src_slice)
 		{
 			if (_src_slice.class_id == class_id) 
 			{
@@ -2168,7 +2167,7 @@ namespace corona
 			}
 		}
 		
-		std::partial_ordering  jslice::compare(int _dst_idx, jslice& _src_slice, int _src_idx)
+		std::partial_ordering  jobject::compare(int _dst_idx, jobject& _src_slice, int _src_idx)
 		{
 			auto field_type = get_field(_dst_idx).type_id;
 			auto offset1 = get_offset(_dst_idx);
@@ -2178,7 +2177,7 @@ namespace corona
 			return compare_express(field_type, c1, c2);
 		}
 
-		std::partial_ordering jslice::compare(jslice& _src_slice)
+		std::partial_ordering jobject::compare(jobject& _src_slice)
 		{
 			if (_src_slice.class_id == class_id) 
 			{
@@ -2228,7 +2227,7 @@ namespace corona
 			}
 		}
 
-		std::partial_ordering jslice::compare(jslice& _src_slice, relative_ptr_type* field_ids)
+		std::partial_ordering jobject::compare(jobject& _src_slice, relative_ptr_type* field_ids)
 		{
 			relative_ptr_type fid;
 			while (*field_ids != null_row)
@@ -2262,7 +2261,7 @@ namespace corona
 			return std::strong_ordering::equal;
 		}
 
-		jslice jslice::convert(serialized_box_container* _box, relative_ptr_type _class_id)
+		jobject jobject::convert(serialized_box_container* _box, relative_ptr_type _class_id)
 		{
 			if (_class_id == class_id)
 				return *this;
@@ -2273,7 +2272,7 @@ namespace corona
 
 			dimensions_type d = { 0,0,0 };
 
-			jslice ja(nullptr, schema, _class_id, box, location, d);
+			jobject ja(nullptr, schema, _class_id, box, location, d);
 			ja.construct();
 			ja.update(*this);
 
@@ -2285,7 +2284,7 @@ namespace corona
 			;
 		}
 
-		jarray::jarray(jslice *_parent, jschema* _schema, relative_ptr_type _class_field_id, char* _bytes, bool _init) : item(_parent), schema(_schema), class_field_id(_class_field_id), bytes(_bytes)
+		jarray::jarray(jobject *_parent, jschema* _schema, relative_ptr_type _class_field_id, char* _bytes, bool _init) : item(_parent), schema(_schema), class_field_id(_class_field_id), bytes(_bytes)
 		{
 			if (_init) {
 				for (auto jai : *this)
@@ -2313,7 +2312,7 @@ namespace corona
 			return dim;
 		}
 
-		jslice jarray::get_slice(int x, int y, int z)
+		jobject jarray::get_slice(int x, int y, int z)
 		{
 			dimensions_type dims;
 			dims.x = x;
@@ -2322,7 +2321,7 @@ namespace corona
 			return get_slice(dims);
 		}
 
-		jslice jarray::get_slice(dimensions_type pos)
+		jobject jarray::get_slice(dimensions_type pos)
 		{
 			jfield& field = schema->get_field(class_field_id);
 			dimensions_type dim = field.object_properties.dim;
@@ -2332,7 +2331,7 @@ namespace corona
 					throw std::invalid_argument("dimension out of range on jarray");
 			}
 			char* b = &bytes[ ((pos.z * dim.y * dim.x) + (pos.y * dim.x) + pos.x ) * field.object_properties.class_size_bytes ];
-			jslice slice(item, schema, field.object_properties.class_id, b, pos);
+			jobject slice(item, schema, field.object_properties.class_id, b, pos);
 			return slice;
 		}
 
@@ -2342,7 +2341,7 @@ namespace corona
 			return field.size_bytes;
 		}
 
-		jslice jarray::get_at(relative_ptr_type _index)
+		jobject jarray::get_at(relative_ptr_type _index)
 		{
 			if (_index < 0) throw std::invalid_argument("index out of range on jarray");
 			jfield& field = schema->get_field(class_field_id);
@@ -2355,7 +2354,7 @@ namespace corona
 			index_calc /= array_bounds.y;
 			index_dim.z = index_calc % array_bounds.z;
 			char* b = &bytes[_index * field.object_properties.class_size_bytes];
-			jslice slice(item, schema, field.object_properties.class_id, b, index_dim);
+			jobject slice(item, schema, field.object_properties.class_id, b, index_dim);
 			return slice;
 		}
 
@@ -2395,7 +2394,7 @@ namespace corona
 			;
 		}
 
-		jlist::jlist(jslice *_parent, jschema* _schema, relative_ptr_type _class_field_id, char* _bytes, bool _init) 
+		jlist::jlist(jobject *_parent, jschema* _schema, relative_ptr_type _class_field_id, char* _bytes, bool _init) 
 			: item(_parent), schema(_schema), class_field_id(_class_field_id)
 		{
 			auto& field_def = schema->get_field(_class_field_id);
@@ -2448,16 +2447,16 @@ namespace corona
 			return data.instance->allocated;
 		}
 
-		jslice jlist::get_at(corona_size_t idx)
+		jobject jlist::get_at(corona_size_t idx)
 		{
 			jfield& field = schema->get_field(class_field_id);
 			dimensions_type dim = field.object_properties.dim;
 			if ((idx >= data.instance->allocated) || (idx < 0)) {
-				return jslice(item, schema, field.object_properties.class_id, nullptr, dim);
+				return jobject(item, schema, field.object_properties.class_id, nullptr, dim);
 			}
 			dimensions_type pos = { idx, 0, 0 };
 			char* b = &data.list_bytes[idx * field.object_properties.class_size_bytes];
-			jslice slice(item, schema, field.object_properties.class_id, b, pos);
+			jobject slice(item, schema, field.object_properties.class_id, b, pos);
 			return slice;
 		}
 
@@ -2502,12 +2501,12 @@ namespace corona
 			return result;
 		}
 
-		jslice jlist::append_slice()
+		jobject jlist::append_slice()
 		{
 			if (data.instance->allocated < capacity()) {
 				auto index = data.instance->allocated;
 				data.instance->allocated++;
-				jslice new_slice = get_at(index);
+				jobject new_slice = get_at(index);
 				new_slice.construct();
 				return new_slice;
 			}
@@ -2600,11 +2599,11 @@ namespace corona
 				{ { null_row, jtype::type_string, "base64", "Base64" }, { 100, "", "" } },
 				{ { null_row, jtype::type_string, "font_name", "Font" }, { 32, "", "" } },
 				{ { null_row, jtype::type_string, "name", "Object Name" }, { 32, "", "" } },
-				{ { null_row, jtype::type_string, "dbf_field_name", "Field Name" }, { 64, "", "" } },
-				{ { null_row, jtype::type_string, "dbf_field_description", "Field Display Name" }, { 64, "", "" } },
-				{ { null_row, jtype::type_string, "dbf_field_format", "Field Format" }, { 64, "", "" } },
-				{ { null_row, jtype::type_string, "dbf_string_validation_pattern", "Validation Pattern" }, { 64, "", "" } },
-				{ { null_row, jtype::type_string, "dbf_string_validation_message", "Validation Message" }, { 64, "", "" } },
+				{ { null_row, jtype::type_string, "field_name", "Field Name" }, { 64, "", "" } },
+				{ { null_row, jtype::type_string, "field_description", "Field Display Name" }, { 64, "", "" } },
+				{ { null_row, jtype::type_string, "field_format", "Field Format" }, { 64, "", "" } },
+				{ { null_row, jtype::type_string, "string_validation_pattern", "Validation Pattern" }, { 64, "", "" } },
+				{ { null_row, jtype::type_string, "string_validation_message", "Validation Message" }, { 64, "", "" } },
 				{ { null_row, jtype::type_string, "user_class_class_name", "User Class Name" }, { 64, "", "" } },
 				{ { null_row, jtype::type_string, "user_class_group", "User Class Group" }, { 64, "", "" } }
 			};
@@ -2612,11 +2611,11 @@ namespace corona
 			put_time_field_request time_fields[4] = {
 				{ { null_row, jtype::type_datetime, "birthday", "Birthday" }, 0, INT64_MAX },
 				{ { null_row, jtype::type_datetime, "scheduled", "Scheduled" }, 0, INT64_MAX },
-				{ { null_row, jtype::type_datetime, "dbf_date_start", "Min Date" }, 0, INT64_MAX },
-				{ { null_row, jtype::type_datetime, "dbf_date_stop", "Max Date" }, 0, INT64_MAX }
+				{ { null_row, jtype::type_datetime, "date_start", "Min Date" }, 0, INT64_MAX },
+				{ { null_row, jtype::type_datetime, "date_stop", "Max Date" }, 0, INT64_MAX }
 			};
 
-			put_integer_field_request int_fields[15] = {
+			put_integer_field_request int_fields[17] = {
 				{ { null_row, jtype::type_int64, "count", "Count" }, 0, INT64_MAX },
 				{ { null_row, jtype::type_int8, "bold", "Bold" }, 0, INT8_MAX },
 				{ { null_row, jtype::type_int8, "italic", "Italic" }, 0, INT8_MAX },
@@ -2625,13 +2624,14 @@ namespace corona
 				{ { null_row, jtype::type_int8, "vertical_alignment", "Vertical alignment" }, 0, INT8_MAX },
 				{ { null_row, jtype::type_int8, "horizontal_alignment", "Vertical alignment" }, 0, INT8_MAX }, 
 				{ { null_row, jtype::type_int8, "wrap_text", "Wrap text" }, 0, INT8_MAX },
-				{ { null_row, jtype::type_int8, "dbf_int_start", "Min. Value" }, 0, INT64_MAX },
-				{ { null_row, jtype::type_int8, "dbf_int_stop", "Max. Value" }, 0, INT64_MAX },
-				{ { null_row, jtype::type_int64, "user_class_id", "Max. Value" }, 0, INT64_MAX },
-				{ { null_row, jtype::type_int64, "user_field_id", "Max. Value" }, 0, INT64_MAX },
-				{ { null_row, jtype::type_int64, "user_class_root_id", "Max. Value" }, 0, INT64_MAX },
-				{ { null_row, jtype::type_int64, "user_class_field_id", "Max. Value" }, 0, INT64_MAX },
-				{ { null_row, jtype::type_int64, "dbf_field_type", "Max. Value" }, 0, INT64_MAX },
+				{ { null_row, jtype::type_int64, "int_start", "Min. Value" }, 0, INT64_MAX },
+				{ { null_row, jtype::type_int64, "int_stop", "Max. Value" }, 0, INT64_MAX },
+				{ { null_row, jtype::type_int64, "text_style", "Max. Value" }, 0, INT64_MAX },
+				{ { null_row, jtype::type_int64, "style_sheet", "Max. Value" }, 0, INT64_MAX },
+				{ { null_row, jtype::type_int64, "user_class_root", "Max. Value" }, 0, INT64_MAX },
+				{ { null_row, jtype::type_int64, "user_class", "Max. Value" }, 0, INT64_MAX },
+				{ { null_row, jtype::type_int64, "user_field", "Max. Value" }, 0, INT64_MAX },
+				{ { null_row, jtype::type_int16, "field_type", "Field Type" }, 0, INT64_MAX },
 			};
 
 			put_double_field_request double_fields[20] = {
@@ -2653,8 +2653,8 @@ namespace corona
 				{ { null_row, jtype::type_float32, "line_spacing", "Line Spacing" }, 0, 1E3 },
 				{ { null_row, jtype::type_float32, "box_border_thickness", "Box Border Thickness" }, 0, 1E3 },
 				{ { null_row, jtype::type_float32, "shape_border_thickness", "Shape Border Thickness" }, 0, 1E3 },
-				{ { null_row, jtype::type_float64, "dbf_double_start", "Min. Value" }, -11E30, 1E30 },
-				{ { null_row, jtype::type_float64, "dbf_double_stop", "Max. Value" }, -1E30, 1E30 }
+				{ { null_row, jtype::type_float64, "double_start", "Min. Value" }, -11E30, 1E30 },
+				{ { null_row, jtype::type_float64, "double_stop", "Max. Value" }, -1E30, 1E30 }
 			};
 
 			put_color_field({ null_row, jtype::type_color, "color", "color" });
@@ -2689,228 +2689,216 @@ namespace corona
 				put_double_field(double_fields[i]);
 			}
 
-			idfull_name = find_field("full_name");
-			idfirst_name = find_field("first_name");
-			idlast_name = find_field("last_name");
-			idmiddle_name = find_field("middle_name");
-			idssn = find_field("ssn");
-			idemail = find_field("email");
-			idtitle = find_field("title");
-			idstreet = find_field("street");
-			idsuiteapt = find_field("suiteapt");
-			idcity = find_field("city");
-			idstate = find_field("state");
-			idpostal = find_field("postal");
-			idcountry_name = find_field("country_name");
-			idcountry_code = find_field("country_code");
-			idinstitution_name = find_field("institution_name");
-			idlong_name = find_field("long_name");
-			idshort_name = find_field("short_name");
-			idunit = find_field("unit");
-			idsymbol = find_field("symbol");
-			idoperator = find_field("operator");
-			idwindows_path = find_field("windows_path");
-			idlinux_path = find_field("linux_path");
-			idurl = find_field("url");
-			idusername = find_field("username");
-			idpassword = find_field("password");
-			iddoc_title = find_field("doc_title");
-			idsection_title = find_field("section_title");
-			idblock_title = find_field("block_title");
-			idcaption = find_field("caption");
-			idparagraph = find_field("paragraph");
-			idmimeType = find_field("mime_type");
-			idbase64 = find_field("base64");
-			idfile_name = find_field("file_name");
-			idfont_name = find_field("font_name");
-			idname = find_field("name");
+			idf_full_name = find_field("full_name");
+			idf_first_name = find_field("first_name");
+			idf_last_name = find_field("last_name");
+			idf_middle_name = find_field("middle_name");
+			idf_ssn = find_field("ssn");
+			idf_email = find_field("email");
+			idf_title = find_field("title");
+			idf_street = find_field("street");
+			idf_suiteapt = find_field("suiteapt");
+			idf_city = find_field("city");
+			idf_state = find_field("state");
+			idf_postal = find_field("postal");
+			idf_country_name = find_field("country_name");
+			idf_country_code = find_field("country_code");
+			idf_institution_name = find_field("institution_name");
+			idf_long_name = find_field("long_name");
+			idf_short_name = find_field("short_name");
+			idf_unit = find_field("unit");
+			idf_symbol = find_field("symbol");
+			idf_operator = find_field("operator");
+			idf_windows_path = find_field("windows_path");
+			idf_linux_path = find_field("linux_path");
+			idf_url = find_field("url");
+			idf_username = find_field("username");
+			idf_password = find_field("password");
+			idf_doc_title = find_field("doc_title");
+			idf_section_title = find_field("section_title");
+			idf_block_title = find_field("block_title");
+			idf_caption = find_field("caption");
+			idf_paragraph = find_field("paragraph");
+			idf_mimeType = find_field("mime_type");
+			idf_base64 = find_field("base64");
+			idf_file_name = find_field("file_name");
+			idf_font_name = find_field("font_name");
+			idf_name = find_field("name");
 
-			idbirthday = find_field("birthday");
-			idscheduled = find_field("scheduled");
+			idf_birthday = find_field("birthday");
+			idf_scheduled = find_field("scheduled");
 
-			idcount = find_field("count");
-			idbold = find_field("bold");
-			iditalic = find_field("italic");
-			idunderline = find_field("underline");
-			idstrike_through = find_field("strike_through");
-			idvertical_alignment = find_field("vertical_alignment");
-			idhorizontal_alignment = find_field("horizontal_alignment");
-			idwrap_text = find_field("wrap_text");
+			idf_count = find_field("count");
+			idf_bold = find_field("bold");
+			idf_italic = find_field("italic");
+			idf_underline = find_field("underline");
+			idf_strike_through = find_field("strike_through");
+			idf_vertical_alignment = find_field("vertical_alignment");
+			idf_horizontal_alignment = find_field("horizontal_alignment");
+			idf_wrap_text = find_field("wrap_text");
 
-			idquantity = find_field("quantity");
-			idlatitude = find_field("latitude");
-			idlongitude = find_field("longitude");
-			idmeters = find_field("meters");
-			idfeet = find_field("feet");
-			idkilograms = find_field("kilograms");
-			idpounds = find_field("pounds");
-			idseconds = find_field("seconds");
-			idminutes = find_field("minutes");
-			idhours = find_field("hours");
-			idamperes = find_field("amperes");
-			idkelvin = find_field("kelvin");
-			idmoles = find_field("moles");
-			idgradient_position = find_field("gradient_position");
-			idfont_size = find_field("font_size");
-			idline_spacing = find_field("line_spacing");
-			idbox_border_thickness = find_field("box_border_thickness");
-			idshape_border_thickness = find_field("shape_border_thickness");
+			idf_quantity = find_field("quantity");
+			idf_latitude = find_field("latitude");
+			idf_longitude = find_field("longitude");
+			idf_meters = find_field("meters");
+			idf_feet = find_field("feet");
+			idf_kilograms = find_field("kilograms");
+			idf_pounds = find_field("pounds");
+			idf_seconds = find_field("seconds");
+			idf_minutes = find_field("minutes");
+			idf_hours = find_field("hours");
+			idf_amperes = find_field("amperes");
+			idf_kelvin = find_field("kelvin");
+			idf_moles = find_field("moles");
+			idf_gradient_position = find_field("gradient_position");
+			idf_font_size = find_field("font_size");
+			idf_line_spacing = find_field("line_spacing");
+			idf_box_border_thickness = find_field("box_border_thickness");
+			idf_shape_border_thickness = find_field("shape_border_thickness");
 
-			idcolor = find_field("color");
-			idshape_fill_color = find_field("shape_fill_color");
-			idbox_fill_color = find_field("box_fill_color");
-			idshape_border_color = find_field("shape_border_color");
-			idbox_border_color = find_field("box_border_color");
-			idpoint = find_field("point");
-			idposition_point = find_field("position_point");
-			idselection_point = find_field("selection_point");
-			idrectangle = find_field("rectangle");
-			idlayout_rect = find_field("layout_rect");
-
-			id_user_class_id = find_field("user_class_id");
-			id_user_class_class_id = find_field("user_class_class_id");
-			id_user_class_class_name = find_field("user_class_class_name");
-			id_user_class_root_id = find_field("user_class_root_id");
-			id_user_class_group = find_field("user_class_group");
-
-			id_dbf_string_length = find_field("dbf_string_length");
-			id_dbf_string_validation_pattern = find_field("dbf_string_validation_pattern");
-			id_dbf_string_validation_message = find_field("dbf_string_validation_message");
-			id_dbf_string_full_text_editor = find_field("dbf_string_full_text_editor");
-			id_dbf_string_rich_text_editor = find_field("dbf_string_rich_text_editor");
-
-			id_dbf_date_start = find_field("dbf_date_start");
-			id_dbf_date_stop = find_field("dbf_date_stop");
-			id_dbf_date_format = find_field("dbf_date_format");
-
-			id_dbf_double_start = find_field("dbf_double_start");
-			id_dbf_double_stop = find_field("dbf_double_stop");
-			id_dbf_double_format = find_field("dbf_double_format");
-
-			id_dbf_int_start = find_field("dbf_int_start");
-			id_dbf_int_stop = find_field("dbf_int_stop");
-			id_dbf_int_format = find_field("dbf_int_format");
+			idf_color = find_field("color");
+			idf_shape_fill_color = find_field("shape_fill_color");
+			idf_box_fill_color = find_field("box_fill_color");
+			idf_shape_border_color = find_field("shape_border_color");
+			idf_box_border_color = find_field("box_border_color");
+			idf_point = find_field("point");
+			idf_position_point = find_field("position_point");
+			idf_selection_point = find_field("selection_point");
+			idf_rectangle = find_field("rectangle");
+			idf_layout_rect = find_field("layout_rect");
 
 			put_class_request pcr;
-			pcr.class_name = "field_string_options";
-			pcr.class_description = "Options for string field";
-			pcr.member_fields = { id_dbf_string_length, id_dbf_string_validation_message, id_dbf_string_validation_pattern, id_dbf_string_full_text_editor, id_dbf_string_rich_text_editor };
-			id_class_string_options = put_class(pcr);
-
-			pcr.class_name = "field_double_options";
-			pcr.class_description = "Options for double field";
-			pcr.member_fields = { id_dbf_double_start, id_dbf_double_stop };
-			id_class_double_options = put_class(pcr);
-
-			pcr.class_name = "field_date_options";
-			pcr.class_description = "Options for date field";
-			pcr.member_fields = { id_dbf_date_start, id_dbf_date_stop };
-			id_class_date_options = put_class(pcr);
-
-			pcr.class_name = "field_int_options";
-			pcr.class_description = "Options for int field";
-			pcr.member_fields = { id_dbf_int_start, id_dbf_int_stop };
-			id_class_int_options = put_class(pcr);
-
 			pcr.class_name = "text_style";
 			pcr.class_description = "styles of text for ui";
-			pcr.member_fields = { idname, idfont_name, idfont_size, idbold, iditalic, idunderline, idstrike_through, idline_spacing, idhorizontal_alignment, idvertical_alignment,
-				idshape_fill_color, idshape_border_thickness, idshape_border_color, idbox_fill_color, idbox_border_thickness, idbox_border_color };
-			id_text_style = put_class(pcr);
+			pcr.member_fields = { idf_name, idf_font_name, idf_font_size, idf_bold, idf_italic, idf_underline, idf_strike_through, idf_line_spacing, idf_horizontal_alignment, idf_vertical_alignment,
+				idf_shape_fill_color, idf_shape_border_thickness, idf_shape_border_color, idf_box_fill_color, idf_box_border_thickness, idf_box_border_color };
+			idc_text_style = put_class(pcr);
 
 			put_object_field_request object_fields[24] = {
-				{ { null_row, jtype::type_object, "view_background_style", "View Background Style" }, { {1,1,1}, id_text_style }},
-				{ { null_row, jtype::type_object, "view_title_style", "View Title Style" }, { {1,1,1}, id_text_style }},
-				{ { null_row, jtype::type_object, "view_subtitle_style", "View Subtitle Style" }, { {1,1,1}, id_text_style }},
-				{ { null_row, jtype::type_object, "view_section_style", "View Section Style" }, { {1,1,1}, id_text_style }},
-				{ { null_row, jtype::type_object, "view_style", "View Style" }, { {1,1,1}, id_text_style }},
-				{ { null_row, jtype::type_object, "disclaimer_style", "Disclaimer Style" }, { {1,1,1}, id_text_style }},
-				{ { null_row, jtype::type_object, "copyright_style", "Copyright Style" }, { {1,1,1}, id_text_style }},
-				{ { null_row, jtype::type_object, "h1_style", "H1 Style" }, { {1,1,1}, id_text_style }},
-				{ { null_row, jtype::type_object, "h2_style", "H2 Style" }, { {1,1,1}, id_text_style }},
-				{ { null_row, jtype::type_object, "h3_style", "H3 Style" }, { {1,1,1}, id_text_style }},
-				{ { null_row, jtype::type_object, "column_number_head_style", "Column Number Head Style" }, { {1,1,1}, id_text_style }},
-				{ { null_row, jtype::type_object, "column_text_head_style", "Column Text Head Style" }, { {1,1,1}, id_text_style }},
-				{ { null_row, jtype::type_object, "column_data_style", "Column Data Style" }, { {1,1,1}, id_text_style }},
-				{ { null_row, jtype::type_object, "label_style", "Label Style" }, { {1,1,1}, id_text_style }},
-				{ { null_row, jtype::type_object, "control_style", "Control Style" }, { {1,1,1}, id_text_style }},
-				{ { null_row, jtype::type_object, "chart_axis_style", "Chart Axis Style" }, { {1,1,1}, id_text_style }},
-				{ { null_row, jtype::type_object, "chart_legend_style", "Chart Legend Style" }, { {1,1,1}, id_text_style }},
-				{ { null_row, jtype::type_object, "chart_block_style", "Chart Block Style" }, { {1,1,1}, id_text_style }},
-				{ { null_row, jtype::type_object, "tooltip_style", "Tooltip Style" }, { {1,1,1}, id_text_style }},
-				{ { null_row, jtype::type_object, "breadcrumb_style", "Breadcrumb Style" }, { {1,1,1}, id_text_style }},
-				{ { null_row, jtype::type_object, "string_options", "String Field Options" }, { {1,1,1}, id_class_string_options }},
-				{ { null_row, jtype::type_object, "double_options", "Double Field Options" }, { {1,1,1}, id_class_double_options }},
-				{ { null_row, jtype::type_object, "int_options", "Int Field Options" }, { {1,1,1}, id_class_int_options }},
-				{ { null_row, jtype::type_object, "date_options", "Date Field Options" }, { {1,1,1}, id_class_date_options }},
+				{ { null_row, jtype::type_object, "view_background_style", "View Background Style" }, { {1,1,1}, idc_text_style }},
+				{ { null_row, jtype::type_object, "view_title_style", "View Title Style" }, { {1,1,1}, idc_text_style }},
+				{ { null_row, jtype::type_object, "view_subtitle_style", "View Subtitle Style" }, { {1,1,1}, idc_text_style }},
+				{ { null_row, jtype::type_object, "view_section_style", "View Section Style" }, { {1,1,1}, idc_text_style }},
+				{ { null_row, jtype::type_object, "view_style", "View Style" }, { {1,1,1}, idc_text_style }},
+				{ { null_row, jtype::type_object, "disclaimer_style", "Disclaimer Style" }, { {1,1,1}, idc_text_style }},
+				{ { null_row, jtype::type_object, "copyright_style", "Copyright Style" }, { {1,1,1}, idc_text_style }},
+				{ { null_row, jtype::type_object, "h1_style", "H1 Style" }, { {1,1,1}, idc_text_style }},
+				{ { null_row, jtype::type_object, "h2_style", "H2 Style" }, { {1,1,1}, idc_text_style }},
+				{ { null_row, jtype::type_object, "h3_style", "H3 Style" }, { {1,1,1}, idc_text_style }},
+				{ { null_row, jtype::type_object, "column_number_head_style", "Column Number Head Style" }, { {1,1,1}, idc_text_style }},
+				{ { null_row, jtype::type_object, "column_text_head_style", "Column Text Head Style" }, { {1,1,1}, idc_text_style }},
+				{ { null_row, jtype::type_object, "column_data_style", "Column Data Style" }, { {1,1,1}, idc_text_style }},
+				{ { null_row, jtype::type_object, "label_style", "Label Style" }, { {1,1,1}, idc_text_style }},
+				{ { null_row, jtype::type_object, "control_style", "Control Style" }, { {1,1,1}, idc_text_style }},
+				{ { null_row, jtype::type_object, "chart_axis_style", "Chart Axis Style" }, { {1,1,1}, idc_text_style }},
+				{ { null_row, jtype::type_object, "chart_legend_style", "Chart Legend Style" }, { {1,1,1}, idc_text_style }},
+				{ { null_row, jtype::type_object, "chart_block_style", "Chart Block Style" }, { {1,1,1}, idc_text_style }},
+				{ { null_row, jtype::type_object, "tooltip_style", "Tooltip Style" }, { {1,1,1}, idc_text_style }},
+				{ { null_row, jtype::type_object, "breadcrumb_style", "Breadcrumb Style" }, { {1,1,1}, idc_text_style }},
+				{ { null_row, jtype::type_object, "string_options", "String Field Options" }, { {1,1,1}, idc_string_options }},
+				{ { null_row, jtype::type_object, "double_options", "Double Field Options" }, { {1,1,1}, idc_double_options }},
+				{ { null_row, jtype::type_object, "int_options", "Int Field Options" }, { {1,1,1}, idc_int_options }},
+				{ { null_row, jtype::type_object, "date_options", "Date Field Options" }, { {1,1,1}, idc_date_options }},
 			};
 
 			for (int i = 0; i < sizeof(object_fields) / sizeof(object_fields[0]); i++) {
 				put_object_field(object_fields[i]);
 			}
 
-			id_view_background = find_field("view_background_style");
-			id_view_title = find_field("view_title_style");
-			id_view_subtitle = find_field("view_subtitle_style");
-			id_view_section = find_field("view_section_style");
-			id_view = find_field("view_style");
-			id_disclaimer = find_field("disclaimer_style");
-			id_copyright = find_field("copyright_style");
-			id_h1 = find_field("h1_style");
-			id_h2 = find_field("h2_style");
-			id_h3 = find_field("h3_style");
-			id_column_number_head = find_field("column_number_head_style");
-			id_column_text_head = find_field("column_text_head_style");
-			id_column_data = find_field("column_data_style");
-			id_label = find_field("label_style");
-			id_control = find_field("control_style");
-			id_chart_axis = find_field("chart_axis_style");
-			id_chart_legend = find_field("chart_legend_style");
-			id_chart_block = find_field("chart_block_style");
-			id_tooltip = find_field("tooltip_style");
-			id_breadcrumb = find_field("breadcrumb_style");
-			id_dbf_field_type = find_field("dbf_field_type");
+			idf_view_background_style = find_field("view_background_style");
+			idf_view_title_style = find_field("view_title_style");
+			idf_view_subtitle_style = find_field("view_subtitle_style");
+			idf_view_section_style = find_field("view_section_style");
+			idf_view_style = find_field("view_style");
+			idf_disclaimer_style = find_field("disclaimer_style");
+			idf_copyright_style = find_field("copyright_style");
+			idf_h1_style = find_field("h1_style");
+			idf_h2_style = find_field("h2_style");
+			idf_h3_style = find_field("h3_style");
+			idf_column_number_head_style = find_field("column_number_head_style");
+			idf_column_text_head_style = find_field("column_text_head_style");
+			idf_column_data_style = find_field("column_data_style");
+			idf_label_style = find_field("label_style");
+			idf_control_style = find_field("control_style");
+			idf_chart_axis_style = find_field("chart_axis_style");
+			idf_chart_legend_style = find_field("chart_legend_style");
+			idf_chart_block_style = find_field("chart_block_style");
+			idf_tooltip_style = find_field("tooltip_style");
+			idf_breadcrumb_style = find_field("breadcrumb_style");
 
-			id_fld_string_options = find_field("string_options");
-			id_fld_double_options = find_field("double_options");
-			id_fld_date_options = find_field("date_options");
-			id_fld_int_options = find_field("int_options");
+			idf_field_type = find_field("field_type");
+			idf_string_options = find_field("string_options");
+			idf_double_options = find_field("double_options");
+			idf_date_options = find_field("date_options");
+			idf_int_options = find_field("int_options");
 
-			put_class_request style_sheet;
-
+			idf_style_sheet = find_field("style_sheet");
 			pcr.class_name = "style_sheet";
 			pcr.class_description = "collection of styles for ui";
-			pcr.member_fields = { idname, id_view_background, id_view_title, id_view_subtitle, id_view_section, id_view, id_disclaimer, id_copyright,
-				id_h1, id_h2, id_h3,id_column_number_head,id_column_text_head,id_column_data,id_label,id_control,id_chart_axis,id_chart_legend,id_chart_block,id_tooltip };
-			id_style_sheet = put_class(pcr);
+			pcr.member_fields = { idf_style_sheet, idf_name, idf_view_background_style, idf_view_title_style, idf_view_subtitle_style, idf_view_section_style, idf_view_style, idf_disclaimer_style, idf_copyright_style,
+				idf_h1_style, idf_h2_style, idf_h3_style,idf_column_number_head_style,idf_column_text_head_style,idf_column_data_style,idf_label_style,idf_control_style,idf_chart_axis_style,idf_chart_legend_style,idf_chart_block_style,idf_tooltip_style };
+			pcr.field_id_primary_key = idf_style_sheet;
+			idc_style_sheet = put_class(pcr);
+
+			idf_string_length = find_field("string_length");
+			idf_string_validation_pattern = find_field("string_validation_pattern");
+			idf_string_validation_message = find_field("string_validation_message");
+			idf_string_full_text_editor = find_field("string_full_text_editor");
+			idf_string_rich_text_editor = find_field("string_rich_text_editor");
+
+			idf_date_start = find_field("date_start");
+			idf_date_stop = find_field("date_stop");
+			idf_date_format = find_field("date_format");
+
+			idf_double_start = find_field("double_start");
+			idf_double_stop = find_field("double_stop");
+			idf_double_format = find_field("double_format");
+
+			idf_int_start = find_field("int_start");
+			idf_int_stop = find_field("int_stop");
+			idf_int_format = find_field("int_format");
+
+			pcr.class_name = "string_options";
+			pcr.class_description = "Options for string field";
+			pcr.member_fields = { idf_string_length, idf_string_validation_message, idf_string_validation_pattern, idf_string_full_text_editor, idf_string_rich_text_editor };
+			idc_string_options = put_class(pcr);
+
+			pcr.class_name = "double_options";
+			pcr.class_description = "Options for double field";
+			pcr.member_fields = { idf_double_start, idf_double_stop };
+			idc_double_options = put_class(pcr);
+
+			pcr.class_name = "date_options";
+			pcr.class_description = "Options for date field";
+			pcr.member_fields = { idf_date_start, idf_date_stop };
+			idc_date_options = put_class(pcr);
+
+			pcr.class_name = "int_options";
+			pcr.class_description = "Options for int field";
+			pcr.member_fields = { idf_int_start, idf_int_stop };
+			idc_int_options = put_class(pcr);
 
 			pcr.class_name = "user_class_root";
 			pcr.class_description = "custom class root";
-			pcr.member_fields = { id_user_class_root_id };
-			pcr.field_id_primary_key = id_user_class_root_id;
-			id_user_class_root = put_class(pcr);
+			pcr.member_fields = { idf_user_class_root };
+			pcr.field_id_primary_key = idf_user_class_root;
+			idc_user_class_root = put_class(pcr);
 
 			pcr.class_name = "user_field";
 			pcr.class_description = "User field specification";
-			pcr.member_fields = { id_user_field_id, id_dbf_field_name, id_dbf_field_description, id_dbf_field_format, id_fld_string_options, id_fld_double_options, id_fld_date_options, id_fld_int_options };
-			id_user_field = put_class(pcr);
+			pcr.member_fields = { idf_user_field, idf_field_name, idf_field_description, idf_field_format, idf_string_options, idf_double_options, idf_date_options, idf_int_options };
+			pcr.field_id_primary_key = idf_user_field;
+			idc_user_field = put_class(pcr);
 
-			put_object_field_request object_user_field =
-			{ { null_row, jtype::type_list, "user_field_list", "User Fields" }, { {32,1,1}, id_user_field } };
-			
-			id_user_field_list = put_object_field(object_user_field);
+			put_object_field_request user_field_list_def =
+			{ { null_row, jtype::type_list, "user_field_list", "User Fields" }, { {32,1,1}, idc_user_field } };
+			idf_user_field_list = put_object_field(user_field_list_def);
 
 			pcr.class_name = "user_class";
-			pcr.class_description = "custom class created by user";
-			pcr.member_fields = { id_user_class_root_id, id_user_class_id, id_user_class_group, id_user_class_class_name, id_user_class_class_id, id_user_field_list };
-			pcr.field_id_primary_key = id_user_class_id;
-			id_user_class = put_class(pcr);
-
-			id_solid_brush = null_row;
-			id_gradient_stop = null_row;
-			id_linear_gradient_brush = null_row;
-			id_round_gradient_brush = null_row;
-			id_bitmap_brush = null_row;
+			pcr.class_description = "Custom class created by user";
+			pcr.member_fields = { idf_user_class, idf_user_class_root, idf_user_class_group, idf_user_class_class_name, idf_user_class_class_id, idf_user_field_list };
+			pcr.field_id_primary_key = idf_user_class;
+			idc_user_class = put_class(pcr);
 
 			// TODO, these will have to be added later
 			/*
@@ -3018,7 +3006,7 @@ namespace corona
 					return false;
 				}
 
-				relative_ptr_type failed_field_id = schema.find_field("badFieldName");
+				relative_ptr_type failed_field_id = schema.find_class("badFieldName");
 
 				if (failed_field_id != null_row) {
 					std::cout << __LINE__ << ":find row failed" << std::endl;

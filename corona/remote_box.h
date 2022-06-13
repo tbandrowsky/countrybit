@@ -7,7 +7,7 @@ namespace corona
 
 		class jcollection;
 		class jdatabase;
-		class jslice;
+		class jobject;
 		class jschema;
 
 		using remote_sql_query = istring<8192>;

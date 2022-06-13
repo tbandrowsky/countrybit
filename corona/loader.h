@@ -69,7 +69,7 @@ namespace corona
 
 			virtual bool is_match(const pvalue* _src) = 0;
 			virtual bool set_value(char* _base, const pvalue* _src) { return false; }
-			virtual bool set_value(database::jslice& _base, const pvalue* _src) { return false; }
+			virtual bool set_value(database::jobject& _base, const pvalue* _src) { return false; }
 		};
 
 		class propertyinfo
@@ -202,7 +202,7 @@ namespace corona
 				return true;
 			}
 
-			virtual bool set_value(database::jslice slice, const pobject* _src)
+			virtual bool set_value(database::jobject slice, const pobject* _src)
 			{
 				for (auto member = _src->first_link; member; member = member->next_link)
 				{
@@ -387,7 +387,7 @@ namespace corona
 
 			}
 
-			virtual bool set_value(database::jslice slice, const pvalue* _src)
+			virtual bool set_value(database::jobject slice, const pvalue* _src)
 			{
 				if (_src->as_object() || _src->as_array()) {
 					throw std::logic_error("attempt to map non-scalar to scalar");
@@ -414,14 +414,14 @@ namespace corona
 
 			}
 
-			virtual bool set_value(database::jslice slice, const pvalue* _src)
+			virtual bool set_value(database::jobject slice, const pvalue* _src)
 			{
 				if (!_src->as_array()) {
 					throw std::logic_error("attempt to map non-scalar to scalar");
 				}
 
 				database::jlist list = slice.get_list(field_idx);
-				database::jslice new_slice = list.append_slice();
+				database::jobject new_slice = list.append_slice();
 
 				const pobject* pv = _src->as_object();
 
@@ -458,7 +458,7 @@ namespace corona
 
 			}
 
-			virtual bool set_value(database::jslice slice, const pvalue* _src)
+			virtual bool set_value(database::jobject slice, const pvalue* _src)
 			{
 				if (!_src->as_array()) {
 					throw std::logic_error("attempt to map non-scalar to scalar");
@@ -1818,7 +1818,7 @@ namespace corona
 
 			}
 
-			bool put_slice(database::jschema& _schema, database::jslice& _slice, pobject* _obj)
+			bool put_slice(database::jschema& _schema, database::jobject& _slice, pobject* _obj)
 			{
 				auto type_member = _obj->get_member(member_type_name);
 				if (type_member) {

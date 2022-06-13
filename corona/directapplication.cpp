@@ -1919,7 +1919,7 @@ namespace corona
 
 			int canvasWindowId = -1;
 			destroyChildren();
-			database::jslice slice;
+			database::jobject slice;
 			for (auto piter : _page)
 			{
 				auto pi = piter.item;

@@ -37,7 +37,7 @@ namespace corona
 			jfield*					field;
 			create_object_request	create_request;
 			select_object_request	select_request;
-			jslice					slice;
+			jobject					slice;
 
 			const char*				caption;
 			int						canvas_id;
@@ -96,8 +96,8 @@ namespace corona
 			page_item* absolute(page_item* _parent, const char* _style_name = nullptr, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
 			page_item* canvas2d(page_item* _parent, const char* _style_name = nullptr, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
 
-			page_item* field(page_item* _parent, int object_id, int field_id, jslice slice);
-			page_item* select(page_item* _parent, actor_state* _state, int object_id, jslice slice);
+			page_item* field(page_item* _parent, int object_id, int field_id, jobject slice);
+			page_item* select(page_item* _parent, actor_state* _state, int object_id, jobject slice);
 			page_item* navigate(page_item* _parent, actor_state* _state, int object_id, const char* _style_name, const char *_caption, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 20.0_px });
 			page_item* space(page_item* _parent, const char* _style_name = nullptr, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
 

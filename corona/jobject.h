@@ -73,7 +73,7 @@ namespace corona
 
 		class slice_enumerable {
 		public:
-			virtual jslice get_at(relative_ptr_type object_id) = 0;
+			virtual jobject get_at(relative_ptr_type object_id) = 0;
 			virtual corona_size_t size() = 0;
 		};
 
@@ -93,7 +93,7 @@ namespace corona
 			void copy(const dynamic_value& _src);
 
 		public:
-			friend class jslice;
+			friend class jobject;
 
 			dynamic_value() : field_id(null_row), this_type(jtype::type_null), string_value(""), double_value(0.0), int_value(0), time_value(0)
 			{
@@ -383,9 +383,9 @@ namespace corona
 
 		};
 
-		class jslice
+		class jobject
 		{
-			jslice* parent;
+			jobject* parent;
 			jschema* schema;
 			relative_ptr_type class_id;
 			char* bytes;
@@ -415,19 +415,19 @@ namespace corona
 
 		public:
 
-			jslice();
-			jslice(jslice* _parent, jschema* _schema, relative_ptr_type _class_id, char* _bytes, dimensions_type _dim);
-			jslice(jslice* _parent, jschema* _schema, relative_ptr_type _class_id, serialized_box_container *_box, relative_ptr_type _location, dimensions_type _dim);
+			jobject();
+			jobject(jobject* _parent, jschema* _schema, relative_ptr_type _class_id, char* _bytes, dimensions_type _dim);
+			jobject(jobject* _parent, jschema* _schema, relative_ptr_type _class_id, serialized_box_container *_box, relative_ptr_type _location, dimensions_type _dim);
 
-			jslice(const jslice& src);
-			jslice operator =(const jslice& src);
+			jobject(const jobject& src);
+			jobject operator =(const jobject& src);
 
-			jslice(jslice&& src);
-			jslice& operator =(jslice&& src);
+			jobject(jobject&& src);
+			jobject& operator =(jobject&& src);
 
 			void construct();
 
-			jslice& get_parent_slice();
+			jobject& get_parent_slice();
 			jclass get_class();
 			jschema* get_schema();
 
@@ -457,7 +457,7 @@ namespace corona
 			time_box get_time(int field_idx, bool _use_id = false);
 			string_box get_string(int field_idx, bool _use_id = false);
 			jarray get_object(int field_idx, bool _use_id = false);
-			jslice get_slice(int field_idx, dimensions_type _dim, bool _use_id = false);
+			jobject get_slice(int field_idx, dimensions_type _dim, bool _use_id = false);
 			jlist get_list(int field_idx, bool _use_id = false);
 			collection_id_box get_collection_id(int field_idx, bool _use_id = false);
 			object_id_box get_object_id(int field_idx, bool _use_id = false);
@@ -508,7 +508,7 @@ namespace corona
 
 			void set(std::initializer_list<relative_ptr_type> member_ids, std::initializer_list<dynamic_value> var)
 			{
-				jslice target_slice = *this;
+				jobject target_slice = *this;
 				
 				for (auto item : member_ids)
 				{
@@ -524,13 +524,13 @@ namespace corona
 			dynamic_value get(relative_ptr_type field_id);
 			dynamic_value operator[](relative_ptr_type field_idx);
 
-			void update(jslice& _src_slice);
+			void update(jobject& _src_slice);
 
-			std::partial_ordering compare(int _dst_idx, jslice& _src_slice, int _src_idx);
-			std::partial_ordering compare(jslice& _src_slice);
-			std::partial_ordering compare(jslice& _src_slice, relative_ptr_type *field_ids);
+			std::partial_ordering compare(int _dst_idx, jobject& _src_slice, int _src_idx);
+			std::partial_ordering compare(jobject& _src_slice);
+			std::partial_ordering compare(jobject& _src_slice, relative_ptr_type *field_ids);
 
-			jslice convert(serialized_box_container* _box, relative_ptr_type _class_id);
+			jobject convert(serialized_box_container* _box, relative_ptr_type _class_id);
 
 			template <typename boxed> boxed get(int field_idx)
 			{
@@ -544,7 +544,7 @@ namespace corona
 			char* get_bytes() { return box ? box->unpack<char>(location) : bytes;  };
 			relative_ptr_type size_bytes() { return get_class().item().class_size_bytes; };
 
-			std::partial_ordering operator<=>(jslice& src) {
+			std::partial_ordering operator<=>(jobject& src) {
 				return compare(src);
 			}
 		};
@@ -554,25 +554,25 @@ namespace corona
 			jschema* schema;
 			relative_ptr_type class_field_id;
 			char* bytes;
-			jslice* item;
+			jobject* item;
 
 		public:
 
 			using collection_type = jarray;
-			using iterator_item_type = value_object<jslice>;
-			using iterator_type = filterable_iterator<jslice, collection_type, iterator_item_type>;
+			using iterator_item_type = value_object<jobject>;
+			using iterator_type = filterable_iterator<jobject, collection_type, iterator_item_type>;
 
 			jarray();
-			jarray(jslice* _parent, jschema* _schema, relative_ptr_type _class_field_id, char* _bytes, bool _init = false);
+			jarray(jobject* _parent, jschema* _schema, relative_ptr_type _class_field_id, char* _bytes, bool _init = false);
 			jarray(dynamic_box& _dest, jarray& _src);
 			dimensions_type dimensions();
 
-			jslice get_slice(int x, int y = 0, int z = 0);
-			jslice get_slice(dimensions_type dims);
+			jobject get_slice(int x, int y = 0, int z = 0);
+			jobject get_slice(dimensions_type dims);
 			uint64_t get_size_bytes();
 			char* get_bytes();
 
-			jslice get_at(relative_ptr_type _index);
+			jobject get_at(relative_ptr_type _index);
 			corona_size_t size();
 
 			inline iterator_type begin()
@@ -607,28 +607,28 @@ namespace corona
 			jschema* schema;
 			relative_ptr_type class_field_id;
 			jlist_state data;
-			jslice* item;
+			jobject* item;
 			inline_box model_box;
 
 		public:
 
 			using collection_type = jlist;
-			using iterator_item_type = value_object<jslice>;
-			using iterator_type = filterable_iterator<jslice, collection_type, iterator_item_type>;
+			using iterator_item_type = value_object<jobject>;
+			using iterator_type = filterable_iterator<jobject, collection_type, iterator_item_type>;
 
 
 			jlist();
-			jlist(jslice* _parent, jschema* _schema, relative_ptr_type _class_field_id, char* _bytes, bool _init = false);
+			jlist(jobject* _parent, jschema* _schema, relative_ptr_type _class_field_id, char* _bytes, bool _init = false);
 			jlist(serialized_box_container& _dest, jlist& _src);
 
 			corona_size_t capacity();
 			corona_size_t size();
 
-			jslice get_at(relative_ptr_type x);
+			jobject get_at(relative_ptr_type x);
 			bool erase(relative_ptr_type x);
 			bool chop();
 
-			jslice append_slice();
+			jobject append_slice();
 			bool select_slice(relative_ptr_type x);
 			bool deselect_slice(relative_ptr_type x);
 			void deselect_all();
@@ -711,7 +711,7 @@ namespace corona
 			collection_id_type	collection_id;
 			actor_id_type		actor_id;
 			relative_ptr_type	object_id;
-			jslice				item;
+			jobject				item;
 		};
 
 		using actor_view_collection = sorted_index<relative_ptr_type, actor_view_object>;
@@ -721,7 +721,7 @@ namespace corona
 		{
 		public:
 			actor_view_object	avo;
-			jslice				slice;
+			jobject				slice;
 		};
 
 		class actor_query_base 
@@ -787,7 +787,7 @@ namespace corona
 
 			int											modified_object_level;
 			relative_ptr_type							modified_object_id;
-			jslice										modified_object;
+			jobject										modified_object;
 
 			actor_state()
 			{
@@ -848,8 +848,8 @@ namespace corona
 				view_objects = actor_view_collection::get_sorted_index(&data, view_objects_location);
 			}
 
-			jslice create_object(jschema* _schema, relative_ptr_type _class_id);
-			jslice copy_object(jschema* _schema, jslice& _src);
+			jobject create_object(jschema* _schema, relative_ptr_type _class_id);
+			jobject copy_object(jschema* _schema, jobject& _src);
 			actor_view_object get_modified_object();
 
 			actor_query_base query(slice_enumerable *collection)
@@ -910,8 +910,8 @@ namespace corona
 
 
 			using collection_type = jcollection;
-			using iterator_item_type = value_object<jslice>;
-			using iterator_type = filterable_iterator<jslice, collection_type, iterator_item_type>;
+			using iterator_item_type = value_object<jobject>;
+			using iterator_type = filterable_iterator<jobject, collection_type, iterator_item_type>;
 
 			jcollection() : schema( nullptr ), ref( nullptr )
 			{
@@ -992,14 +992,14 @@ namespace corona
 
 			void print(const char *_trace, actor_state& acr);
 
-			jslice create_object(relative_ptr_type _item_id, relative_ptr_type _actor_id, relative_ptr_type _class_id, relative_ptr_type& object_id);
-			jslice get_object(relative_ptr_type _object_id);
-			jslice update_object(relative_ptr_type _object_id, jslice _slice);
+			jobject create_object(relative_ptr_type _item_id, relative_ptr_type _actor_id, relative_ptr_type _class_id, relative_ptr_type& object_id);
+			jobject get_object(relative_ptr_type _object_id);
+			jobject update_object(relative_ptr_type _object_id, jobject _slice);
 			collection_object_type &get_object_reference(relative_ptr_type _object_id);
 
 			bool selector_applies(selector_collection* _selector, actor_id_type& _actor);
 
-			jslice get_at(relative_ptr_type _object_id);
+			jobject get_at(relative_ptr_type _object_id);
 			relative_ptr_type get_class_id(relative_ptr_type _object_id);
 
 			relative_ptr_type size()
@@ -1027,7 +1027,7 @@ namespace corona
 				return iterator_type(this, [_class_id](const iterator_item_type& it) { return it.item.get_class_id() == _class_id; });
 			}
 
-			jslice first_value(std::function<bool(const iterator_item_type&)> predicate)
+			jobject first_value(std::function<bool(const iterator_item_type&)> predicate)
 			{
 				auto w = this->where(predicate);
 				if (w == end()) {
@@ -1060,7 +1060,7 @@ namespace corona
 				return std::count_if(begin(), end(), predicate);
 			}
 
-			relative_ptr_type put_user_class(relative_ptr_type _class_definition_id);
+			relative_ptr_type put_user_class(jobject& _class_definition);
 
 		};
 
@@ -1093,160 +1093,161 @@ namespace corona
 
 		public:
 			
-			relative_ptr_type idfull_name;
-			relative_ptr_type idfirst_name;
-			relative_ptr_type idlast_name;
-			relative_ptr_type idmiddle_name;
-			relative_ptr_type idssn;
-			relative_ptr_type idemail;
-			relative_ptr_type idtitle;
-			relative_ptr_type idstreet;
-			relative_ptr_type idsuiteapt;
-			relative_ptr_type idcity;
-			relative_ptr_type idstate;
-			relative_ptr_type idpostal;
-			relative_ptr_type idcountry_name;
-			relative_ptr_type idcountry_code;
-			relative_ptr_type idinstitution_name;
-			relative_ptr_type idlong_name;
-			relative_ptr_type idshort_name;
-			relative_ptr_type idunit;
-			relative_ptr_type idsymbol;
-			relative_ptr_type idoperator;
-			relative_ptr_type idwindows_path;
-			relative_ptr_type idlinux_path;
-			relative_ptr_type idurl;
-			relative_ptr_type idusername;
-			relative_ptr_type idpassword;
-			relative_ptr_type iddoc_title;
-			relative_ptr_type idsection_title;
-			relative_ptr_type idblock_title;
-			relative_ptr_type idcaption;
-			relative_ptr_type idparagraph;
-			relative_ptr_type idmimeType;
-			relative_ptr_type idbase64;
-			relative_ptr_type idfile_name;
-			relative_ptr_type idfont_name;
-			relative_ptr_type idname;
+			relative_ptr_type idf_full_name;
+			relative_ptr_type idf_first_name;
+			relative_ptr_type idf_last_name;
+			relative_ptr_type idf_middle_name;
+			relative_ptr_type idf_ssn;
+			relative_ptr_type idf_email;
+			relative_ptr_type idf_title;
+			relative_ptr_type idf_street;
+			relative_ptr_type idf_suiteapt;
+			relative_ptr_type idf_city;
+			relative_ptr_type idf_state;
+			relative_ptr_type idf_postal;
+			relative_ptr_type idf_country_name;
+			relative_ptr_type idf_country_code;
+			relative_ptr_type idf_institution_name;
+			relative_ptr_type idf_long_name;
+			relative_ptr_type idf_short_name;
+			relative_ptr_type idf_unit;
+			relative_ptr_type idf_symbol;
+			relative_ptr_type idf_operator;
+			relative_ptr_type idf_windows_path;
+			relative_ptr_type idf_linux_path;
+			relative_ptr_type idf_url;
+			relative_ptr_type idf_username;
+			relative_ptr_type idf_password;
+			relative_ptr_type idf_doc_title;
+			relative_ptr_type idf_section_title;
+			relative_ptr_type idf_block_title;
+			relative_ptr_type idf_caption;
+			relative_ptr_type idf_paragraph;
+			relative_ptr_type idf_mimeType;
+			relative_ptr_type idf_base64;
+			relative_ptr_type idf_file_name;
+			relative_ptr_type idf_font_name;
+			relative_ptr_type idf_name;
 
-			relative_ptr_type idbirthday;
-			relative_ptr_type idscheduled;
+			relative_ptr_type idf_birthday;
+			relative_ptr_type idf_scheduled;
 
-			relative_ptr_type idcount;
+			relative_ptr_type idf_count;
 
-			relative_ptr_type idquantity;
-			relative_ptr_type idlatitude;
-			relative_ptr_type idlongitude;
-			relative_ptr_type idmeters;
-			relative_ptr_type idfeet;
-			relative_ptr_type idkilograms;
-			relative_ptr_type idpounds;
-			relative_ptr_type idseconds;
-			relative_ptr_type idminutes;
-			relative_ptr_type idhours;
-			relative_ptr_type idamperes;
-			relative_ptr_type idkelvin;
-			relative_ptr_type idmoles;
-			relative_ptr_type idgradient_position;
-			relative_ptr_type idfont_size;
-			relative_ptr_type idline_spacing;
-			relative_ptr_type idbox_border_thickness;
-			relative_ptr_type idshape_border_thickness;
+			relative_ptr_type idf_quantity;
+			relative_ptr_type idf_latitude;
+			relative_ptr_type idf_longitude;
+			relative_ptr_type idf_meters;
+			relative_ptr_type idf_feet;
+			relative_ptr_type idf_kilograms;
+			relative_ptr_type idf_pounds;
+			relative_ptr_type idf_seconds;
+			relative_ptr_type idf_minutes;
+			relative_ptr_type idf_hours;
+			relative_ptr_type idf_amperes;
+			relative_ptr_type idf_kelvin;
+			relative_ptr_type idf_moles;
+			relative_ptr_type idf_gradient_position;
+			relative_ptr_type idf_font_size;
+			relative_ptr_type idf_line_spacing;
+			relative_ptr_type idf_box_border_thickness;
+			relative_ptr_type idf_shape_border_thickness;
 
-			relative_ptr_type idcolor;
-			relative_ptr_type idshape_fill_color;
-			relative_ptr_type idbox_fill_color;
-			relative_ptr_type idshape_border_color;
-			relative_ptr_type idbox_border_color;
-			relative_ptr_type idpoint;
-			relative_ptr_type idposition_point;
-			relative_ptr_type idselection_point;
-			relative_ptr_type idrectangle;
-			relative_ptr_type idlayout_rect;
+			relative_ptr_type idf_color;
+			relative_ptr_type idf_shape_fill_color;
+			relative_ptr_type idf_box_fill_color;
+			relative_ptr_type idf_shape_border_color;
+			relative_ptr_type idf_box_border_color;
+			relative_ptr_type idf_point;
+			relative_ptr_type idf_position_point;
+			relative_ptr_type idf_selection_point;
+			relative_ptr_type idf_rectangle;
+			relative_ptr_type idf_layout_rect;
 
-			relative_ptr_type idbold;
-			relative_ptr_type iditalic;
-			relative_ptr_type idunderline;
-			relative_ptr_type idstrike_through;
-			relative_ptr_type idvertical_alignment;
-			relative_ptr_type idhorizontal_alignment;
-			relative_ptr_type idwrap_text;
+			relative_ptr_type idf_bold;
+			relative_ptr_type idf_italic;
+			relative_ptr_type idf_underline;
+			relative_ptr_type idf_strike_through;
+			relative_ptr_type idf_vertical_alignment;
+			relative_ptr_type idf_horizontal_alignment;
+			relative_ptr_type idf_wrap_text;
 
-			relative_ptr_type id_solid_brush;
-			relative_ptr_type id_gradient_stop;
-			relative_ptr_type id_linear_gradient_brush;
-			relative_ptr_type id_round_gradient_brush;
-			relative_ptr_type id_bitmap_brush;
-			relative_ptr_type id_text_style;
+			relative_ptr_type idc_solid_brush;
+			relative_ptr_type idc_gradient_stop;
+			relative_ptr_type idc_linear_gradient_brush;
+			relative_ptr_type idc_round_gradient_brush;
+			relative_ptr_type idc_bitmap_brush;
+			relative_ptr_type idc_text_style;
 
-			relative_ptr_type id_view_background;
-			relative_ptr_type id_view_title;
-			relative_ptr_type id_view_subtitle;
-			relative_ptr_type id_view_section;
-			relative_ptr_type id_view;
-			relative_ptr_type id_disclaimer;
-			relative_ptr_type id_copyright;
-			relative_ptr_type id_h1;
-			relative_ptr_type id_h2;
-			relative_ptr_type id_h3;
-			relative_ptr_type id_column_number_head;
-			relative_ptr_type id_column_text_head;
-			relative_ptr_type id_column_data;
-			relative_ptr_type id_label;
-			relative_ptr_type id_control;
-			relative_ptr_type id_chart_axis;
-			relative_ptr_type id_chart_legend;
-			relative_ptr_type id_chart_block;
-			relative_ptr_type id_tooltip;
-			relative_ptr_type id_breadcrumb;
+			relative_ptr_type idf_view_background_style;
+			relative_ptr_type idf_view_title_style;
+			relative_ptr_type idf_view_subtitle_style;
+			relative_ptr_type idf_view_section_style;
+			relative_ptr_type idf_view_style;
+			relative_ptr_type idf_disclaimer_style;
+			relative_ptr_type idf_copyright_style;
+			relative_ptr_type idf_h1_style;
+			relative_ptr_type idf_h2_style;
+			relative_ptr_type idf_h3_style;
+			relative_ptr_type idf_column_number_head_style;
+			relative_ptr_type idf_column_text_head_style;
+			relative_ptr_type idf_column_data_style;
+			relative_ptr_type idf_label_style;
+			relative_ptr_type idf_control_style;
+			relative_ptr_type idf_chart_axis_style;
+			relative_ptr_type idf_chart_legend_style;
+			relative_ptr_type idf_chart_block_style;
+			relative_ptr_type idf_tooltip_style;
+			relative_ptr_type idf_breadcrumb_style;
 
-			relative_ptr_type id_style_sheet;
+			relative_ptr_type idc_style_sheet;
+			relative_ptr_type idf_style_sheet;
 
-			relative_ptr_type id_user_class_root;
-			relative_ptr_type id_user_class_root_id;
+			relative_ptr_type idc_user_class_root;
+			relative_ptr_type idf_user_class_root;
 
-			relative_ptr_type id_user_class;
-			relative_ptr_type id_user_class_id;
-			relative_ptr_type id_user_class_class_name;
-			relative_ptr_type id_user_class_class_id;
-			relative_ptr_type id_user_class_group;
+			relative_ptr_type idc_user_class;
+			relative_ptr_type idf_user_class;
+			relative_ptr_type idf_user_class_class_name;
+			relative_ptr_type idf_user_class_class_id;
+			relative_ptr_type idf_user_class_group;
 
-			relative_ptr_type id_user_field;
-			relative_ptr_type id_user_field_id;
-			relative_ptr_type id_user_field_list;
+			relative_ptr_type idc_user_field;
+			relative_ptr_type idf_user_field;
+			relative_ptr_type idf_user_field_list;
 
-			relative_ptr_type id_fld_string_options;
-			relative_ptr_type id_fld_double_options;
-			relative_ptr_type id_fld_int_options;
-			relative_ptr_type id_fld_date_options;
+			relative_ptr_type idc_string_options;
+			relative_ptr_type idc_double_options;
+			relative_ptr_type idc_int_options;
+			relative_ptr_type idc_date_options;
 
-			relative_ptr_type id_class_string_options;
-			relative_ptr_type id_class_double_options;
-			relative_ptr_type id_class_int_options;
-			relative_ptr_type id_class_date_options;
+			relative_ptr_type idf_string_options;
+			relative_ptr_type idf_double_options;
+			relative_ptr_type idf_int_options;
+			relative_ptr_type idf_date_options;
 
-			relative_ptr_type id_dbf_field_name;
-			relative_ptr_type id_dbf_field_description;
-			relative_ptr_type id_dbf_field_format;
-			relative_ptr_type id_dbf_field_type;
+			relative_ptr_type idf_field_name;
+			relative_ptr_type idf_field_description;
+			relative_ptr_type idf_field_format;
+			relative_ptr_type idf_field_type;
 
-			relative_ptr_type id_dbf_string_length;
-			relative_ptr_type id_dbf_string_validation_pattern;
-			relative_ptr_type id_dbf_string_validation_message;
-			relative_ptr_type id_dbf_string_full_text_editor;
-			relative_ptr_type id_dbf_string_rich_text_editor;
+			relative_ptr_type idf_string_length;
+			relative_ptr_type idf_string_validation_pattern;
+			relative_ptr_type idf_string_validation_message;
+			relative_ptr_type idf_string_full_text_editor;
+			relative_ptr_type idf_string_rich_text_editor;
 
-			relative_ptr_type id_dbf_date_start;
-			relative_ptr_type id_dbf_date_stop;
-			relative_ptr_type id_dbf_date_format;
+			relative_ptr_type idf_date_start;
+			relative_ptr_type idf_date_stop;
+			relative_ptr_type idf_date_format;
 
-			relative_ptr_type id_dbf_double_start;
-			relative_ptr_type id_dbf_double_stop;
-			relative_ptr_type id_dbf_double_format;
+			relative_ptr_type idf_double_start;
+			relative_ptr_type idf_double_stop;
+			relative_ptr_type idf_double_format;
 
-			relative_ptr_type id_dbf_int_start;
-			relative_ptr_type id_dbf_int_stop;
-			relative_ptr_type id_dbf_int_format;
+			relative_ptr_type idf_int_start;
+			relative_ptr_type idf_int_stop;
+			relative_ptr_type idf_int_format;
 
 			jschema() = default;
 			~jschema() = default;

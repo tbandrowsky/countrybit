@@ -80,7 +80,7 @@ namespace corona
 			return v;
 		}
 
-		page_item* page::field(page_item* _parent, int object_id, int field_id, jslice slice)
+		page_item* page::field(page_item* _parent, int object_id, int field_id, jobject slice)
 		{
 			page_item* v = append();
 			v->id = size();
@@ -92,7 +92,7 @@ namespace corona
 			return v;
 		}
 
-		page_item* page::select(page_item* _parent, actor_state* _state, int object_id, jslice slice)
+		page_item* page::select(page_item* _parent, actor_state* _state, int object_id, jobject slice)
 		{
 			if (slice.has_field("layout_rect"))
 			{

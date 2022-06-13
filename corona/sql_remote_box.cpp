@@ -5,7 +5,7 @@ namespace corona
 {
 	namespace database
 	{
-		sql_remote_box::sql_remote_box(char* t, jschema* _schema, jclass* _class, jslice* _slice, int _field_idx) : boxed<sql_remote_instance>(t), schema(_schema), the_class(_class), slice(_slice)
+		sql_remote_box::sql_remote_box(char* t, jschema* _schema, jclass* _class, jobject* _slice, int _field_idx) : boxed<sql_remote_instance>(t), schema(_schema), the_class(_class), slice(_slice)
 		{
 			;
 		}

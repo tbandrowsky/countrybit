@@ -39,19 +39,21 @@ namespace proposal
 		ifr.name.type_id = jtype::type_int64;
 		idcoverage_root = schema.put_integer_field(ifr);
 
+		ifr.name.name = "product_root_id";
+		ifr.name.description = "Product Root Id";
+		ifr.name.type_id = jtype::type_int64;
+		idcoverage_root = schema.put_integer_field(ifr);
+
+		ifr.name.name = "product_template_id";
+		ifr.name.description = "Product_Id";
+		ifr.name.type_id = jtype::type_int64;
+		idproduct_template = schema.put_integer_field(ifr);
+
 		ifr.name.name = "client_id";
 		ifr.name.description = "Client Id";
 		ifr.name.type_id = jtype::type_int64;
-		idprogram = schema.put_integer_field(ifr);
+		idclient = schema.put_integer_field(ifr);
 
-		ifr.name.name = "program_id";
-		ifr.name.description = "Program Id";
-		ifr.name.type_id = jtype::type_int64;
-		idprogram = schema.put_integer_field(ifr);
-
-		ifr.name.name = "policy_id";
-		ifr.name.description = "Policy Id";
-		idpolicy = schema.put_integer_field(ifr);
 
 		ifr.name.name = "coverage_id";
 		ifr.name.description = "Coverage Id";
@@ -95,10 +97,6 @@ namespace proposal
 		sfr.name.description = "Program Description";
 		idprogram_description = schema.put_string_field(sfr);
 
-		sfr.name.name = "policy_name";
-		sfr.name.description = "Policy name";
-		idpolicy_name = schema.put_string_field(sfr);
-
 		sfr.name.name = "coverage_name";
 		sfr.name.description = "Coverage Name";
 		idcoverage_name = schema.put_string_field(sfr);
@@ -107,22 +105,6 @@ namespace proposal
 		sfr.name.description = "Carrier Name";
 		idcarrier_name = schema.put_string_field(sfr);
 
-		sfr.name.name = "property_sov";
-		sfr.name.description = "Placeholder Buildings SOV";
-		idproperty_list = schema.put_string_field(sfr);
-
-		sfr.name.name = "wc_sov";
-		sfr.name.description = "Placeholder Aircraft SOV";
-		idwc_list = schema.put_string_field(sfr);
-
-		sfr.name.name = "vehicle_sov";
-		sfr.name.description = "Placeholder Vehicle SOV";
-		idvehicle_list = schema.put_string_field(sfr);
-
-		sfr.name.name = "aircraft_sov";
-		sfr.name.description = "Placeholder Aircraft SOV";
-		idaircraft_list = schema.put_string_field(sfr);
-
 		sfr.name.name = "slide_heading1";
 		sfr.name.description = "Slide Heading";
 		idslide_heading1 = schema.put_string_field(sfr);
@@ -130,6 +112,38 @@ namespace proposal
 		sfr.name.name = "slide_heading2";
 		sfr.name.description = "Slide SubHeading";
 		idslide_heading2 = schema.put_string_field(sfr);
+
+
+		ifr.name.name = "product_template_root_id";
+		ifr.name.description = "Product template root id";
+		ifr.name.type_id = jtype::type_int64;
+		idcoverage_root = schema.put_integer_field(ifr);
+
+		ifr.name.name = "product_template_id";
+		ifr.name.description = "Product template root id";
+		ifr.name.type_id = jtype::type_int64;
+		idcoverage_root = schema.put_integer_field(ifr);
+
+		corona::database::relative_ptr_type idproduct_template_root;
+		corona::database::relative_ptr_type idproduct_template;
+		corona::database::relative_ptr_type idproduct_template_name;
+		corona::database::relative_ptr_type idproduct_template_code;
+		corona::database::relative_ptr_type idproduct_template_status;
+		corona::database::relative_ptr_type idproduct_template_edition_start;
+		corona::database::relative_ptr_type idproduct_template_edition_stop;
+		corona::database::relative_ptr_type idproduct_template_type;
+		corona::database::relative_ptr_type idproduct_template_line_of_business;
+		corona::database::relative_ptr_type idproduct_template_carrier_specific;
+		corona::database::relative_ptr_type idproduct_template_updated_by;
+		corona::database::relative_ptr_type idproduct_template_status_updated_by;
+		corona::database::relative_ptr_type idproduct_template_class;
+		corona::database::relative_ptr_type idproduct_template_program_header;
+		corona::database::relative_ptr_type idproduct_template_program_structure;
+		corona::database::relative_ptr_type idproduct_template_coverage_header;
+		corona::database::relative_ptr_type idproduct_template_coverage_structure;
+
+
+
 
 		put_class_request pcr;
 		pcr.class_name = "home";
@@ -181,31 +195,6 @@ namespace proposal
 		pcr.field_id_primary_key = idprogram;
 		idprogram_class = schema.put_class(pcr);
 
-		pcr.class_name = "buildings_policy";
-		pcr.class_description = "Buildings";
-		pcr.member_fields = { idprogram, idclient, idcarrier, idpolicy, idlimit, idattachment, idshare, schema.idcolor, schema.idrectangle, schema.idlayout_rect };
-		idpolicy_property_class = schema.put_class(pcr);
-
-		pcr.class_name = "wc_policy";
-		pcr.class_description = "Workers Comp";
-		pcr.member_fields = { idprogram, idclient, idcarrier, idpolicy, idlimit, idattachment, idshare, schema.idcolor, schema.idrectangle, schema.idlayout_rect };
-		idpolicy_wc_class = schema.put_class(pcr);
-
-		pcr.class_name = "vehicles_policy";
-		pcr.class_description = "Vehicles";
-		pcr.member_fields = { idprogram, idclient, idcarrier, idpolicy, idlimit, idattachment, idshare, schema.idcolor, schema.idrectangle, schema.idlayout_rect };
-		idpolicy_vehicles_class = schema.put_class(pcr);
-
-		pcr.class_name = "aircraft_policy";
-		pcr.class_description = "Aircraft";
-		pcr.member_fields = { idprogram, idclient, idcarrier, idpolicy, idlimit, idattachment, idshare, schema.idcolor, schema.idrectangle, schema.idlayout_rect };
-		idpolicy_aircraft_class = schema.put_class(pcr);
-
-		pcr.class_name = "umbrella_policy";
-		pcr.class_description = "Umbrella";
-		pcr.member_fields = { idprogram, idclient, idcarrier, idpolicy, idlimit, idattachment, idshare, schema.idcolor, schema.idrectangle, schema.idlayout_rect };
-		idpolicy_umbrella_class = schema.put_class(pcr);
-
 		pcr.class_name = "slide_title";
 		pcr.class_description = "Title Slide";
 		pcr.member_fields = { idprogram, idclient, idslide_heading1, idslide_heading2, schema.idrectangle, schema.idlayout_rect };
@@ -251,38 +240,6 @@ namespace proposal
 		mcr->create_class_id = idcoverage_class;
 		mcr->replace_selected = false;
 		mcr->select_on_create = true;
-		mcr->item_id_class = null_row;
-
-		mcr = jm.create_options.append();
-		mcr->rule_name = "Add Buildings Policy";
-		mcr->selectors.when(idcarrier_class, idprogram);
-		mcr->create_class_id = idpolicy_property_class;
-		mcr->select_on_create = true;
-		mcr->replace_selected = false;
-		mcr->item_id_class = null_row;
-
-		mcr = jm.create_options.append();
-		mcr->rule_name = "Add WC Policy";
-		mcr->selectors.when(idcarrier_class, idprogram);
-		mcr->create_class_id = idpolicy_wc_class;
-		mcr->select_on_create = true;
-		mcr->replace_selected = false;
-		mcr->item_id_class = null_row;
-
-		mcr = jm.create_options.append();
-		mcr->rule_name = "Add Aircraft Policy";
-		mcr->selectors.when(idcarrier_class, idprogram);
-		mcr->create_class_id = idpolicy_aircraft_class;
-		mcr->select_on_create = true;
-		mcr->replace_selected = false;
-		mcr->item_id_class = null_row;
-
-		mcr = jm.create_options.append();
-		mcr->rule_name = "Add Aircraft Policy";
-		mcr->selectors.when(idcarrier_class, idprogram);
-		mcr->create_class_id = idpolicy_aircraft_class;
-		mcr->select_on_create = true;
-		mcr->replace_selected = false;
 		mcr->item_id_class = null_row;
 
 		mcr = jm.create_options.append();
@@ -901,7 +858,7 @@ namespace proposal
 		auto d2dwin_area = column(d2dwin, schema.id_view_background, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
 
 		auto navigation_bar = row(d2dwin, schema.id_view_background, { 0.0_px, 0.0_px, 100.0_pct, -50.0_px });
-		breadcrumbs(navigation_bar, [](jslice& _item) {
+		breadcrumbs(navigation_bar, [](jobject& _item) {
 			return nullptr;
 			}, {0.0_px, 0.0_px, 100.0_px, 20.0_px});
 
@@ -947,8 +904,8 @@ namespace proposal
 		auto title_area = column(d2dwin, schema.id_view_title, title_box);
 		column(title_area, { 5.0_px, 0.0_px, 500.0_px, 75.0_px }, slide_title_class_id);
 
-		//const database::actor_view_object& avo, database::jslice& slice
-		for_each(program_class_id, [ptitle_box](const corona::database::actor_view_object& avo, corona::database::jslice& slice) {
+		//const database::actor_view_object& avo, database::jobject& slice
+		for_each(program_class_id, [ptitle_box](const corona::database::actor_view_object& avo, corona::database::jobject& slice) {
 			auto rbx = slice.get_layout_rect("layout_rect");
 			rbx = *ptitle_box;
 			return true;
@@ -986,7 +943,7 @@ namespace proposal
 		double max_amount = 0.0, min_amount = 0.0, count = 0.0;
 		double* pmax_amount = &max_amount, * pmin_amount = &min_amount, * pcount = &count;
 
-		for_each(plimit_fields, [this, pmax_amount, pmin_amount, pcount, plimit_fields](const corona::database::actor_view_object& avo, corona::database::jslice& slice) {
+		for_each(plimit_fields, [this, pmax_amount, pmin_amount, pcount, plimit_fields](const corona::database::actor_view_object& avo, corona::database::jobject& slice) {
 			corona::database::relative_ptr_type* pfield = plimit_fields;
 			std::cout << std::format("{} min:{} max:{}", *pmin_amount, *pmax_amount, *pcount) << std::endl;
 			while (*pfield != null_row) {
@@ -1021,7 +978,7 @@ namespace proposal
 		double policyMax = 0.0;
 		double policyMin = 0.0;
 
-		for_each(coverage_class_id, [this, chartHeight, scaley, pcomparison_fields, pcoverage_box, coverage_width](const corona::database::actor_view_object& avo, corona::database::jslice& slice) {
+		for_each(coverage_class_id, [this, chartHeight, scaley, pcomparison_fields, pcoverage_box, coverage_width](const corona::database::actor_view_object& avo, corona::database::jobject& slice) {
 			corona::database::rectangle policy_box, * ppolicy_box = &policy_box;
 			auto rbx = slice.get_rectangle("rectangle");
 			rbx = *pcoverage_box;
@@ -1032,7 +989,7 @@ namespace proposal
 			pcoverage_box->x += coverage_width;
 			std::cout << std::format("coverage x:{} w:{}", pcoverage_box->x, pcoverage_box->w) << std::endl;
 
-			for_each(slice, pcomparison_fields, [this, chartHeight, scaley, ppolicy_box](const corona::database::actor_view_object& avo, corona::database::jslice& slice) {
+			for_each(slice, pcomparison_fields, [this, chartHeight, scaley, ppolicy_box](const corona::database::actor_view_object& avo, corona::database::jobject& slice) {
 
 				if (slice.has_field(limit_field_id) && slice.has_field(attachment_field_id))
 				{

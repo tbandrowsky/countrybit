@@ -25,28 +25,30 @@ namespace proposal
 		corona::database::relative_ptr_type idcarrier;
 		corona::database::relative_ptr_type idcarrier_name;
 
-		corona::database::relative_ptr_type idproduct_root_class;
-		corona::database::relative_ptr_type idproduct;
-		corona::database::relative_ptr_type idproduct_name;
-		corona::database::relative_ptr_type idproduct_code;
-		corona::database::relative_ptr_type idproduct_status;
-		corona::database::relative_ptr_type idproduct_edition_start;
-		corona::database::relative_ptr_type idproduct_edition_stop;
+		corona::database::relative_ptr_type idproduct_template_root_class;
+		corona::database::relative_ptr_type idproduct_template_root;
+		corona::database::relative_ptr_type idproduct_template_class;
+		corona::database::relative_ptr_type idproduct_template;
+		corona::database::relative_ptr_type idproduct_template_name;
+		corona::database::relative_ptr_type idproduct_template_code;
+		corona::database::relative_ptr_type idproduct_template_status;
+		corona::database::relative_ptr_type idproduct_template_edition_start;
+		corona::database::relative_ptr_type idproduct_template_edition_stop;
 		corona::database::relative_ptr_type idproduct_template_type;
-		corona::database::relative_ptr_type idproduct_line_of_business;
-		corona::database::relative_ptr_type idproduct_carrier_specific;
-		corona::database::relative_ptr_type idproduct_updated_by;
-		corona::database::relative_ptr_type idproduct_status_updated_by;
-		corona::database::relative_ptr_type idproduct_class;
-		corona::database::relative_ptr_type idproduct_program_header_class;
-		corona::database::relative_ptr_type idproduct_program_structure_class;
-		corona::database::relative_ptr_type idproduct_coverage_header_class;
-		corona::database::relative_ptr_type idproduct_coverage_structure_class;
+		corona::database::relative_ptr_type idproduct_template_line_of_business;
+		corona::database::relative_ptr_type idproduct_template_carrier_specific;
+		corona::database::relative_ptr_type idproduct_template_updated_by;
+		corona::database::relative_ptr_type idproduct_template_status_updated_by;
+		corona::database::relative_ptr_type idproduct_template_class;
+		corona::database::relative_ptr_type idproduct_template_program_header;
+		corona::database::relative_ptr_type idproduct_template_program_structure;
+		corona::database::relative_ptr_type idproduct_template_coverage_header;
+		corona::database::relative_ptr_type idproduct_template_coverage_structure;
 
 		corona::database::relative_ptr_type idcoverage_root_class;
 		corona::database::relative_ptr_type idcoverage_root;
 
-		corona::database::relative_ptr_type idcoverage_class;
+		corona::database::relative_ptr_type idcoverage_class; 
 		corona::database::relative_ptr_type idcoverage;
 		corona::database::relative_ptr_type idcoverage_name;
 
@@ -56,19 +58,6 @@ namespace proposal
 		corona::database::relative_ptr_type idprogram_description;
 		corona::database::relative_ptr_type idprogram_view;
 
-		corona::database::relative_ptr_type idproperty_list;
-		corona::database::relative_ptr_type idwc_list;
-		corona::database::relative_ptr_type idvehicle_list;
-		corona::database::relative_ptr_type idaircraft_list;
-
-		corona::database::relative_ptr_type idpolicy_property_class;
-		corona::database::relative_ptr_type idpolicy_wc_class;
-		corona::database::relative_ptr_type idpolicy_vehicles_class;
-		corona::database::relative_ptr_type idpolicy_aircraft_class;
-		corona::database::relative_ptr_type idpolicy_umbrella_class;
-
-		corona::database::relative_ptr_type idpolicy;
-		corona::database::relative_ptr_type idpolicy_name;
 		corona::database::relative_ptr_type idinception;
 		corona::database::relative_ptr_type idexpiration;
 		corona::database::relative_ptr_type idstatus;

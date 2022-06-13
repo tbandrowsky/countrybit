@@ -6,7 +6,7 @@ namespace corona
 	namespace database
 	{
 
-		query_box::query_box(char* t, jschema* _schema, jclass* _class, jslice* _slice, int _field_index) :
+		query_box::query_box(char* t, jschema* _schema, jclass* _class, jobject* _slice, int _field_index) :
 			boxed<query_instance>(t),
 			schema(_schema),
 			the_class(_class),

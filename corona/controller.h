@@ -37,7 +37,7 @@ namespace corona
 
 			// these are for 
 
-			virtual jslice getStyleSheet() = 0;
+			virtual jobject getStyleSheet() = 0;
 			virtual void keyDown(short _key) = 0;
 			virtual void keyUp(short _key) = 0;
 			virtual void mouseMove(point* _point) = 0;
@@ -121,7 +121,7 @@ namespace corona
 
 			virtual ~corona_controller();
 
-			virtual jslice getStyleSheet();
+			virtual jobject getStyleSheet();
 
 			// methods to use in render
 
@@ -134,21 +134,21 @@ namespace corona
 			page_item* canvas2d(page_item* _parent, relative_ptr_type _style_id, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
 
 			page_item* navigate(page_item* _parent, int object_id, relative_ptr_type _style_id, const char* _caption, layout_rect _box);
-			virtual void breadcrumbs(page_item* _parent, std::function<const char *(jslice& slice)> _captioner, layout_rect _item_box = { 0.0_px, 0.0_px, 200.0_px, 100.0_px });
+			virtual void breadcrumbs(page_item* _parent, std::function<const char *(jobject& slice)> _captioner, layout_rect _item_box = { 0.0_px, 0.0_px, 200.0_px, 100.0_px });
 
-			virtual void for_each(std::function<bool(const actor_view_collection::iterator_item_type& _item)> selector, std::function<bool(actor_view_object& avo, jslice& slice)> updator);
-			virtual void for_class(relative_ptr_type *class_ids, int _length, std::function<bool(const actor_view_object& avo, jslice& slice)>  updator);
-			virtual void for_join(jslice& _join_parent, relative_ptr_type* _join_fields, std::function<bool(const actor_view_object& avo, jslice& slice)>  updator);
-			virtual void for_common(relative_ptr_type* _common_field_list, std::function<bool(const actor_view_object& avo, jslice& slice)>  updator);
+			virtual void for_each(std::function<bool(const actor_view_collection::iterator_item_type& _item)> selector, std::function<bool(actor_view_object& avo, jobject& slice)> updator);
+			virtual void for_class(relative_ptr_type *class_ids, int _length, std::function<bool(const actor_view_object& avo, jobject& slice)>  updator);
+			virtual void for_join(jobject& _join_parent, relative_ptr_type* _join_fields, std::function<bool(const actor_view_object& avo, jobject& slice)>  updator);
+			virtual void for_common(relative_ptr_type* _common_field_list, std::function<bool(const actor_view_object& avo, jobject& slice)>  updator);
 
 			virtual page_item *row_each(page_item* _parent_ui, layout_rect _box, std::function<bool(const actor_view_collection::iterator_item_type& _item)> selector);
 			virtual page_item* row_class(page_item* _parent_ui, layout_rect _box, relative_ptr_type *class_ids, int _length);
-			virtual page_item* row_join(page_item* _parent_ui, layout_rect _box, jslice& _parent, relative_ptr_type* _join_fields);
+			virtual page_item* row_join(page_item* _parent_ui, layout_rect _box, jobject& _parent, relative_ptr_type* _join_fields);
 			virtual page_item* row_common(page_item* _parent_ui, layout_rect _box, relative_ptr_type* _has_field_list);
 
 			virtual page_item* column_each(page_item* _parent_ui, layout_rect _box, std::function<bool(const actor_view_collection::iterator_item_type& _item)> selector);
 			virtual page_item* column_class(page_item* _parent_ui, layout_rect _box, relative_ptr_type *class_ids, int _length);
-			virtual page_item* column_join(page_item* _parent_ui, layout_rect _box, jslice& _parent, relative_ptr_type* _join_fields);
+			virtual page_item* column_join(page_item* _parent_ui, layout_rect _box, jobject& _parent, relative_ptr_type* _join_fields);
 			virtual page_item* column_common(page_item* _parent_ui, layout_rect _box, relative_ptr_type* _has_field_list);
 
 			virtual page_item* add_update_fields(page_item* _parent);
