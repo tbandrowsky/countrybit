@@ -2632,6 +2632,7 @@ namespace corona
 				{ { null_row, jtype::type_int64, "user_class", "Max. Value" }, 0, INT64_MAX },
 				{ { null_row, jtype::type_int64, "user_field", "Max. Value" }, 0, INT64_MAX },
 				{ { null_row, jtype::type_int16, "field_type", "Field Type" }, 0, INT64_MAX },
+				{ { null_row, jtype::type_int64, "user_class_class_id", "Max. Value" }, 0, INT64_MAX },
 			};
 
 			put_double_field_request double_fields[20] = {
@@ -2667,7 +2668,7 @@ namespace corona
 			put_point_field({ null_row, jtype::type_point, "position_point", "position_point" });
 			put_point_field({ null_row, jtype::type_point, "selection_point", "selection_point" });
 
-			put_object_field({ null_row, jtype::type_object, "user_class_class_id" });
+			put_integer_field({ null_row, jtype::type_object, "user_class_class_id" });
 
 			put_rectangle_field({ null_row, jtype::type_rectangle, "rectangle", "rectangle" });
 
@@ -2736,6 +2737,7 @@ namespace corona
 			idf_vertical_alignment = find_field("vertical_alignment");
 			idf_horizontal_alignment = find_field("horizontal_alignment");
 			idf_wrap_text = find_field("wrap_text");
+			idf_user_class_class_id = find_field("user_class_class_id");
 
 			idf_quantity = find_field("quantity");
 			idf_latitude = find_field("latitude");

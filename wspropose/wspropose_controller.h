@@ -8,74 +8,76 @@ namespace proposal
 	{
 	public:
 
-		corona::database::relative_ptr_type idhome_class;
-		corona::database::relative_ptr_type idhome;
+		corona::database::relative_ptr_type idc_home;
+		corona::database::relative_ptr_type idf_home;
 
-		corona::database::relative_ptr_type idclient_root_class;
-		corona::database::relative_ptr_type idclient_root;
+		corona::database::relative_ptr_type idc_client_root;
+		corona::database::relative_ptr_type idf_client_root;
 
-		corona::database::relative_ptr_type idclient_class;
-		corona::database::relative_ptr_type idclient;
-		corona::database::relative_ptr_type idclient_name;
+		corona::database::relative_ptr_type idc_client;
+		corona::database::relative_ptr_type idf_client;
 
-		corona::database::relative_ptr_type idcarrier_root_class;
-		corona::database::relative_ptr_type idcarrier_root;
+		corona::database::relative_ptr_type idc_carrier_root;
+		corona::database::relative_ptr_type idf_carrier_root;
 
-		corona::database::relative_ptr_type idcarrier_class;
-		corona::database::relative_ptr_type idcarrier;
-		corona::database::relative_ptr_type idcarrier_name;
+		corona::database::relative_ptr_type idc_carrier;
+		corona::database::relative_ptr_type idf_carrier;
 
-		corona::database::relative_ptr_type idproduct_template_root_class;
-		corona::database::relative_ptr_type idproduct_template_root;
-		corona::database::relative_ptr_type idproduct_template_class;
-		corona::database::relative_ptr_type idproduct_template;
-		corona::database::relative_ptr_type idproduct_template_name;
-		corona::database::relative_ptr_type idproduct_template_code;
-		corona::database::relative_ptr_type idproduct_template_status;
-		corona::database::relative_ptr_type idproduct_template_edition_start;
-		corona::database::relative_ptr_type idproduct_template_edition_stop;
-		corona::database::relative_ptr_type idproduct_template_type;
-		corona::database::relative_ptr_type idproduct_template_line_of_business;
-		corona::database::relative_ptr_type idproduct_template_carrier_specific;
-		corona::database::relative_ptr_type idproduct_template_updated_by;
-		corona::database::relative_ptr_type idproduct_template_status_updated_by;
-		corona::database::relative_ptr_type idproduct_template_class;
-		corona::database::relative_ptr_type idproduct_template_program_header;
-		corona::database::relative_ptr_type idproduct_template_program_structure;
-		corona::database::relative_ptr_type idproduct_template_coverage_header;
-		corona::database::relative_ptr_type idproduct_template_coverage_structure;
+		corona::database::relative_ptr_type idc_coverage_root;
+		corona::database::relative_ptr_type idf_coverage_root;
 
-		corona::database::relative_ptr_type idcoverage_root_class;
-		corona::database::relative_ptr_type idcoverage_root;
+		corona::database::relative_ptr_type idc_coverage;
+		corona::database::relative_ptr_type idf_coverage;
 
-		corona::database::relative_ptr_type idcoverage_class; 
-		corona::database::relative_ptr_type idcoverage;
-		corona::database::relative_ptr_type idcoverage_name;
+		corona::database::relative_ptr_type idc_product_template_root;
+		corona::database::relative_ptr_type idf_product_template_root;
+		corona::database::relative_ptr_type idc_product_template;
+		corona::database::relative_ptr_type idf_product_template;
+		corona::database::relative_ptr_type idf_product_template_name;
+		corona::database::relative_ptr_type idf_product_template_code;
+		corona::database::relative_ptr_type idf_product_template_status;
+		corona::database::relative_ptr_type idf_product_template_edition_start;
+		corona::database::relative_ptr_type idf_product_template_edition_stop;
+		corona::database::relative_ptr_type idf_product_template_type;
+		corona::database::relative_ptr_type idf_product_template_line_of_business;
+		corona::database::relative_ptr_type idf_product_template_carrier;
+		corona::database::relative_ptr_type idf_product_template_updated_by;
+		corona::database::relative_ptr_type idf_product_template_status_updated_by;
+		corona::database::relative_ptr_type idf_product_template_product_header;
+		corona::database::relative_ptr_type idf_product_template_product_structure;
+		corona::database::relative_ptr_type idf_product_template_coverage_header;
+		corona::database::relative_ptr_type idf_product_template_coverage_structure;
 
-		corona::database::relative_ptr_type idprogram_class;
-		corona::database::relative_ptr_type idprogram;
-		corona::database::relative_ptr_type idprogram_name;
-		corona::database::relative_ptr_type idprogram_description;
-		corona::database::relative_ptr_type idprogram_view;
+		corona::database::relative_ptr_type idf_inception;
+		corona::database::relative_ptr_type idf_expiration;
+		corona::database::relative_ptr_type idf_status;
+		corona::database::relative_ptr_type idf_attachment;
+		corona::database::relative_ptr_type idf_limit;
+		corona::database::relative_ptr_type idf_deductible;
+		corona::database::relative_ptr_type idf_share;
 
-		corona::database::relative_ptr_type idinception;
-		corona::database::relative_ptr_type idexpiration;
-		corona::database::relative_ptr_type idstatus;
-		corona::database::relative_ptr_type idattachment;
-		corona::database::relative_ptr_type idlimit;
-		corona::database::relative_ptr_type iddeductible;
-		corona::database::relative_ptr_type idshare;
+		corona::database::relative_ptr_type idf_program_title;
+		corona::database::relative_ptr_type idf_program_subtitle;
+		corona::database::relative_ptr_type idc_program;
+		corona::database::relative_ptr_type idf_program;
+		corona::database::relative_ptr_type idf_program_view;
 
-		corona::database::relative_ptr_type idpolicy_coverage_class;
+		corona::database::relative_ptr_type idc_program_product;
+		corona::database::relative_ptr_type idf_program_product;
+		corona::database::relative_ptr_type idc_product_instance;
+		corona::database::relative_ptr_type idf_product_instance;
+		
+		corona::database::relative_ptr_type idf_slide_title;
 
-		corona::database::relative_ptr_type idslide_heading1;
-		corona::database::relative_ptr_type idslide_heading2;
+		corona::database::relative_ptr_type idc_program_chart_slide;
+		corona::database::relative_ptr_type idf_program_chart_slide;
+		corona::database::relative_ptr_type idc_program_chart_slide_product;
+		corona::database::relative_ptr_type idf_program_chart_slide_product;
 
-		corona::database::relative_ptr_type idslide_title_class;
-		corona::database::relative_ptr_type idslide_program_chart_class;
-		corona::database::relative_ptr_type idslide_demo_cart_class;
+		corona::database::relative_ptr_type idc_program_generic_slide;
+		corona::database::relative_ptr_type idf_program_generic_slide;
 
-		corona::database::relative_ptr_type idcomment;
+		corona::database::relative_ptr_type idf_comment;
 
 		wsproposal_controller();
 		virtual ~wsproposal_controller();

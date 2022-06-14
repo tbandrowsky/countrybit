@@ -402,7 +402,6 @@ namespace corona
 			jtype		type_id;
 			object_name name;
 			object_description description;
-			object_type	type;
 		};
 
 		class put_string_field_request {

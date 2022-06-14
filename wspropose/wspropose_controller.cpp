@@ -6,8 +6,6 @@
 #include "resource.h"
 #include "wspropose_controller.h"
 
-const int IDC_DIRECT2D = -1;
-
 namespace proposal
 {
 
@@ -18,359 +16,155 @@ namespace proposal
 		box.init(1 << 22);
 		schema = jschema::create_schema(&box, 50, true, schema_id);
 
-		put_integer_field_request ifr;
-		ifr.name.name = "home_id";
-		ifr.name.description = "Home Id";
-		ifr.name.type_id = jtype::type_int64;
-		idhome = schema.put_integer_field(ifr);
-
-		ifr.name.name = "client_root_id";
-		ifr.name.description = "Client Root Id";
-		ifr.name.type_id = jtype::type_int64;
-		idclient_root = schema.put_integer_field(ifr);
-
-		ifr.name.name = "carrier_root_id";
-		ifr.name.description = "Carrier Root Id";
-		ifr.name.type_id = jtype::type_int64;
-		idcarrier_root = schema.put_integer_field(ifr);
-
-		ifr.name.name = "coverage_root_id";
-		ifr.name.description = "Coverage Root Id";
-		ifr.name.type_id = jtype::type_int64;
-		idcoverage_root = schema.put_integer_field(ifr);
-
-		ifr.name.name = "product_root_id";
-		ifr.name.description = "Product Root Id";
-		ifr.name.type_id = jtype::type_int64;
-		idcoverage_root = schema.put_integer_field(ifr);
-
-		ifr.name.name = "product_template_id";
-		ifr.name.description = "Product_Id";
-		ifr.name.type_id = jtype::type_int64;
-		idproduct_template = schema.put_integer_field(ifr);
-
-		ifr.name.name = "client_id";
-		ifr.name.description = "Client Id";
-		ifr.name.type_id = jtype::type_int64;
-		idclient = schema.put_integer_field(ifr);
-
-
-		ifr.name.name = "coverage_id";
-		ifr.name.description = "Coverage Id";
-		idcoverage = schema.put_integer_field(ifr);
-
-		put_double_field_request dfr;
-		dfr.name.name = "limit";
-		dfr.name.description = "Policy Limit";
-		dfr.name.type_id = jtype::type_float64;
-		idlimit = schema.put_double_field(dfr);
-
-		dfr.name.name = "attachment";
-		dfr.name.description = "Attachment Point";
-		idattachment = schema.put_double_field(dfr);
-
-		dfr.name.name = "deductible";
-		dfr.name.description = "Deductible";
-		iddeductible = schema.put_double_field(dfr);
-
-		dfr.name.name = "share";
-		dfr.name.description = "Share";
-		idshare = schema.put_double_field(dfr);
-
-		put_string_field_request sfr;
-		sfr.name.name = "comment";
-		sfr.name.description = "Comment";
-		sfr.options.full_text_editor = true;
-		sfr.options.length = 512;
-		idcomment = schema.put_string_field(sfr);
-
-		sfr.name.name = "client_name";
-		sfr.name.description = "Client name";
-		sfr.options.length = 200;
-		idclient_name = schema.put_string_field(sfr);
-
-		sfr.name.name = "program_name";
-		sfr.name.description = "Program name";
-		idprogram_name = schema.put_string_field(sfr);
-
-		sfr.name.name = "program_description";
-		sfr.name.description = "Program Description";
-		idprogram_description = schema.put_string_field(sfr);
-
-		sfr.name.name = "coverage_name";
-		sfr.name.description = "Coverage Name";
-		idcoverage_name = schema.put_string_field(sfr);
-
-		sfr.name.name = "carrier_name";
-		sfr.name.description = "Carrier Name";
-		idcarrier_name = schema.put_string_field(sfr);
-
-		sfr.name.name = "slide_heading1";
-		sfr.name.description = "Slide Heading";
-		idslide_heading1 = schema.put_string_field(sfr);
-
-		sfr.name.name = "slide_heading2";
-		sfr.name.description = "Slide SubHeading";
-		idslide_heading2 = schema.put_string_field(sfr);
-
-
-		ifr.name.name = "product_template_root_id";
-		ifr.name.description = "Product template root id";
-		ifr.name.type_id = jtype::type_int64;
-		idcoverage_root = schema.put_integer_field(ifr);
-
-		ifr.name.name = "product_template_id";
-		ifr.name.description = "Product template root id";
-		ifr.name.type_id = jtype::type_int64;
-		idcoverage_root = schema.put_integer_field(ifr);
-
-		corona::database::relative_ptr_type idproduct_template_root;
-		corona::database::relative_ptr_type idproduct_template;
-		corona::database::relative_ptr_type idproduct_template_name;
-		corona::database::relative_ptr_type idproduct_template_code;
-		corona::database::relative_ptr_type idproduct_template_status;
-		corona::database::relative_ptr_type idproduct_template_edition_start;
-		corona::database::relative_ptr_type idproduct_template_edition_stop;
-		corona::database::relative_ptr_type idproduct_template_type;
-		corona::database::relative_ptr_type idproduct_template_line_of_business;
-		corona::database::relative_ptr_type idproduct_template_carrier_specific;
-		corona::database::relative_ptr_type idproduct_template_updated_by;
-		corona::database::relative_ptr_type idproduct_template_status_updated_by;
-		corona::database::relative_ptr_type idproduct_template_class;
-		corona::database::relative_ptr_type idproduct_template_program_header;
-		corona::database::relative_ptr_type idproduct_template_program_structure;
-		corona::database::relative_ptr_type idproduct_template_coverage_header;
-		corona::database::relative_ptr_type idproduct_template_coverage_structure;
-
-
-
-
 		put_class_request pcr;
+		put_object_field_request porf;
+
+		idf_home = schema.put_integer_field({ { null_row,  jtype::type_int64, "home_id", "Home Id" }, { 0, INT64_MAX } });
 		pcr.class_name = "home";
-		pcr.class_description = "Home";
-		pcr.member_fields = { idhome, schema.idlong_name };
-		pcr.field_id_primary_key = idhome;
-		idhome_class = schema.put_class(pcr);
+		pcr.class_description = "Application Home";
+		pcr.field_id_primary_key = idf_home;
+		pcr.member_fields = { idf_home };
+		idc_home = schema.put_class(pcr);
 
-		pcr.class_name = "clients";
+		idf_client_root = schema.put_integer_field({ { null_row,  jtype::type_int64, "client_root", "Clients" }, { 0, INT64_MAX } });
+		pcr.class_name = "client_root";
 		pcr.class_description = "Clients";
-		pcr.member_fields = { idhome, idclient_root, schema.idlong_name };
-		pcr.field_id_primary_key = idclient_root;
-		idclient_root_class = schema.put_class(pcr);
+		pcr.field_id_primary_key = idf_client_root;
+		pcr.member_fields = { idf_client_root, idf_home };
+		idc_home = schema.put_class(pcr);
 
-		pcr.class_name = "carriers";
-		pcr.class_description = "Carriers";
-		pcr.member_fields = { idhome, idcarrier_root, schema.idlong_name };
-		pcr.field_id_primary_key = idcarrier_root;
-		idcarrier_root_class = schema.put_class(pcr);
-
-		pcr.class_name = "coverages";
-		pcr.class_description = "Coverages";
-		pcr.member_fields = { idhome, idcoverage_root, schema.idlong_name };
-		pcr.field_id_primary_key = idcarrier_root;
-		idcoverage_root_class = schema.put_class(pcr);
-
-
+		idf_client = schema.put_integer_field({ { null_row,  jtype::type_int64, "client_id", "Client Id" }, { 0, INT64_MAX } });
 		pcr.class_name = "client";
 		pcr.class_description = "Client";
-		pcr.member_fields = { idclient_root, idclient, idclient_name, schema.idfirst_name, schema.idlast_name, schema.idstreet, schema.idcity, schema.idstate, schema.idpostal  };
-		pcr.field_id_primary_key = idclient;
-		idclient_class = schema.put_class(pcr);
+		pcr.field_id_primary_key = idf_client;
+		pcr.member_fields = { idf_client, idf_client_root, schema.idf_name, schema.idf_street, schema.idf_city, schema.idf_state, schema.idf_postal, schema.idf_email, schema.idf_url };
+		idc_client = schema.put_class(pcr);
 
+		idf_carrier_root = schema.put_integer_field({ { null_row,  jtype::type_int64, "carrier_root", "Carriers" }, { 0, INT64_MAX } });
+		pcr.class_name = "carrier_root";
+		pcr.class_description = "Carriers";
+		pcr.field_id_primary_key = idf_carrier_root;
+		pcr.member_fields = { idf_carrier_root, idf_home };
+		idc_carrier_root = schema.put_class(pcr);
+
+		idf_carrier = schema.put_integer_field({ { null_row,  jtype::type_int64, "carrier_id", "Carrier Id" }, { 0, INT64_MAX } });
 		pcr.class_name = "carrier";
 		pcr.class_description = "Carrier";
-		pcr.member_fields = { idcarrier_root, idcarrier, idcarrier_name, schema.idfirst_name, schema.idlast_name, schema.idstreet, schema.idcity, schema.idstate, schema.idpostal, schema.idrectangle, schema.idlayout_rect };
-		pcr.field_id_primary_key = idcarrier;
-		idcarrier_class = schema.put_class(pcr);
+		pcr.field_id_primary_key = idf_carrier;
+		pcr.member_fields = { idf_carrier, idf_carrier_root, schema.idf_name, schema.idf_street, schema.idf_city, schema.idf_state, schema.idf_postal, schema.idf_email, schema.idf_url };
+		idc_carrier = schema.put_class(pcr);
 
+		idf_coverage_root = schema.put_integer_field({ { null_row,  jtype::type_int64, "coverage_root", "Coverages" }, { 0, INT64_MAX } });
+		pcr.class_name = "coverage_root";
+		pcr.class_description = "Carriers";
+		pcr.field_id_primary_key = idf_coverage_root;
+		pcr.member_fields = { idf_coverage_root, idf_home };
+		idc_coverage_root = schema.put_class(pcr);
+
+		idf_coverage = schema.put_integer_field({ { null_row,  jtype::type_int64, "coverage_id", "Coverage Id" }, { 0, INT64_MAX } });
 		pcr.class_name = "coverage";
 		pcr.class_description = "Coverage";
-		pcr.member_fields = { idcoverage_root, idcoverage, idcoverage_name, schema.idrectangle, schema.idlayout_rect };
-		pcr.field_id_primary_key = idcoverage;
-		idprogram_class = schema.put_class(pcr);
+		pcr.field_id_primary_key = idf_carrier;
+		pcr.member_fields = { idf_coverage, idf_coverage_root, schema.idf_name };
+		idc_coverage = schema.put_class(pcr);
 
+		idf_inception = schema.put_time_field({ { null_row,  jtype::type_datetime, "home", "Home id" }, { 0, INT64_MAX } });
+		idf_expiration = schema.put_time_field({ { null_row,  jtype::type_datetime, "home", "Home id" }, { 0, INT64_MAX } });
+		idf_status = schema.put_integer_field({ { null_row,  jtype::type_int32, "home", "Home id" }, { 0, INT64_MAX } });
+		idf_attachment = schema.put_double_field({ { null_row,  jtype::type_float32, "home", "Home id" }, { 0.0, 1E10 } });
+		idf_limit = schema.put_double_field({ { null_row,  jtype::type_float32, "home", "Home id" }, { 0.0, 1E10 } });
+		idf_attachment = schema.put_double_field({ { null_row,  jtype::type_float32, "home", "Home id" }, { 0.0, 1E10 } });
+		idf_deductible = schema.put_double_field({ { null_row,  jtype::type_float32, "home", "Home id" }, { 0.0, 1E10 } });
+		idf_share = schema.put_double_field({ { null_row,  jtype::type_float32, "home", "Home id" }, { 0.0, 1E10 } });
+
+		idf_product_template_root = schema.put_integer_field({ { null_row,  jtype::type_int64, "home", "Home id" }, { 0, INT64_MAX } });
+		pcr.class_name = "product_templates";
+		pcr.class_description = "Product Templates";
+		pcr.field_id_primary_key = idf_product_template_root;
+		pcr.member_fields = { idf_product_template_root, idf_home };
+		idc_product_template_root = schema.put_class(pcr);
+
+		idf_product_template = schema.put_integer_field({ { null_row,  jtype::type_int64, "product_template", "Product Template id" }, { 0, INT64_MAX } });
+		idf_product_template_name = schema.put_string_field({ { null_row,  jtype::type_string, "product_template_name", "Name" }, { 100, "", "" } });
+		idf_product_template_code = schema.put_string_field({ { null_row,  jtype::type_string, "product_template_code", "Code" }, { 32, "", "" }});
+		idf_product_template_status = schema.put_string_field({ { null_row,  jtype::type_string, "product_template_status", "Status" }, { 32, "", "" } });
+		idf_product_template_edition_start = schema.put_time_field({ { null_row,  jtype::type_datetime, "product_template_edition_start", "Edition Start" }, { 0, INT64_MAX } });
+		idf_product_template_edition_stop = schema.put_time_field({ { null_row,  jtype::type_datetime, "product_template_edition_stop", "Edition Stop" }, { 0, INT64_MAX } });
+		idf_product_template_type = schema.put_string_field({ { null_row,  jtype::type_string, "product_template_type", "Type" }, { 32, "", "" } });
+		idf_product_template_line_of_business = schema.put_string_field({ { null_row,  jtype::type_string, "product_template_line_of_business", "Line of Business" }, { 32, "", "" } });
+		idf_product_template_carrier = schema.put_string_field({ { null_row,  jtype::type_string, "home", "Home id" }, { 32, "", "" } });
+		idf_product_template_updated_by = schema.put_string_field({ { null_row,  jtype::type_string, "home", "Home id" }, { 32, "", "" } });
+		
+		porf = { { null_row, jtype::type_list, "product_template_product_header", "Product Header" }, { {1,1,1}, schema.idc_user_class } };
+		idf_product_template_product_header = schema.put_object_field(porf);
+
+		porf = { { null_row, jtype::type_list, "product_template_product_structure", "Product Structure" }, { {32,1,1}, schema.idc_user_class } };
+		idf_product_template_product_structure = schema.put_object_field(porf);
+
+		porf = { { null_row, jtype::type_list, "product_template_coverage_header", "Coverage Header" }, { {1,1,1}, schema.idc_user_class } };
+		idf_product_template_coverage_header = schema.put_object_field(porf);
+
+		porf = { { null_row, jtype::type_list, "product_template_coverage_structure", "Coverage Structure" }, { {32,1,1}, schema.idc_user_class } };
+		idf_product_template_coverage_structure = schema.put_object_field(porf);
+
+		pcr.class_name = "product_template";
+		pcr.class_description = "Product Template";
+		pcr.field_id_primary_key = idf_product_template;
+		pcr.member_fields = { 
+			idf_product_template, 
+			idf_product_template_root,
+			idf_product_template_name, 
+			idf_product_template_code, 
+			idf_product_template_status, 
+			idf_product_template_edition_start,
+			idf_product_template_edition_stop,
+			idf_product_template_type,
+			idf_product_template_line_of_business,
+			idf_product_template_carrier,
+			idf_product_template_updated_by
+		};
+
+		idf_program = schema.put_integer_field({ { null_row,  jtype::type_int64, "program_id", "Program" }, { 0, INT64_MAX } });
+		idf_program_view = schema.put_integer_field({ { null_row,  jtype::type_int64, "program_view", "Program View" }, { 0, INT64_MAX } });
+		idf_program_title = schema.put_string_field({ { null_row,  jtype::type_string, "program_title", "Program Title" }, { 100, "", "" }});
+		idf_program_subtitle = schema.put_string_field({ { null_row,  jtype::type_string, "program_title", "Program Subtitle" }, { 100, "", "" } });
 		pcr.class_name = "program";
 		pcr.class_description = "Program";
-		pcr.member_fields = { idclient, idprogram, idprogram_name, idprogram_description, idprogram_view, idproperty_list, idwc_list, idaircraft_list, idvehicle_list, schema.idrectangle, schema.idlayout_rect };
-		pcr.field_id_primary_key = idprogram;
-		idprogram_class = schema.put_class(pcr);
+		pcr.field_id_primary_key = idf_program;
+		pcr.member_fields = { idf_program, idf_client, idf_program_view, schema.idf_name, idf_program_title, idf_program_subtitle };
+		idc_coverage = schema.put_class(pcr);
 
-		pcr.class_name = "slide_title";
-		pcr.class_description = "Title Slide";
-		pcr.member_fields = { idprogram, idclient, idslide_heading1, idslide_heading2, schema.idrectangle, schema.idlayout_rect };
-		idslide_title_class = schema.put_class(pcr);
+		idf_program_product = schema.put_integer_field({ { null_row,  jtype::type_int64, "program_product_id", "Product Instance for Program" }, { 0, INT64_MAX } });
+		idc_product_instance = schema.put_integer_field({ { null_row,  jtype::type_int64, "product_instance_class_id", "Product Instance Class" }, { 0, INT64_MAX } });
+		idf_product_instance = schema.put_integer_field({ { null_row,  jtype::type_int64, "product_instance_object_id", "Product Instance Object" }, { 0, INT64_MAX } });
+		pcr.class_name = "program_product";
+		pcr.class_description = "Program Product";
+		pcr.field_id_primary_key = idf_program_product;
+		pcr.member_fields = { idf_program_product, idf_program, idf_product_template, idc_product_instance, idf_product_instance };
+		idc_program_product = schema.put_class(pcr);
 
-		pcr.class_name = "slide_chart";
-		pcr.class_description = "Chart Slide";
-		pcr.member_fields = { idprogram, idclient, idslide_heading1, idslide_heading2, schema.idrectangle, schema.idlayout_rect };
-		idslide_program_chart_class = schema.put_class(pcr);
+		idf_program_chart_slide = schema.put_integer_field({ { null_row,  jtype::type_int64, "program_chart_slide_id", "Program Chart Slide" }, { 0, INT64_MAX } });
+		pcr.class_name = "program_chart_slide";
+		pcr.class_description = "Program Chart Slide";
+		pcr.field_id_primary_key = idf_program_chart_slide;
+		pcr.member_fields = { idf_program_chart_slide, idf_client, idf_program, idf_slide_title };
+		idc_program_chart_slide = schema.put_class(pcr);
 
-		pcr.class_name = "slide_chart";
-		pcr.class_description = "Comparison Slide?";
-		pcr.member_fields = { idprogram, idclient, idslide_heading1, idslide_heading2, schema.idrectangle, schema.idlayout_rect };
-		idslide_demo_cart_class = schema.put_class(pcr);
+		idf_program_chart_slide_product = schema.put_integer_field({ { null_row,  jtype::type_int64, "program_chart_slide_product_id", "Product for Program Chart Slide" }, { 0, INT64_MAX } });
+		pcr.class_name = "program_chart_slide_product";
+		pcr.class_description = "Program Chart Slide Product";
+		pcr.field_id_primary_key = idf_program_chart_slide_product;
+		pcr.member_fields = { idf_program_chart_slide, idf_client, idf_program, idf_slide_title };
+		idc_program_chart_slide_product = schema.put_class(pcr);
+
+		idf_program_generic_slide = schema.put_integer_field({ { null_row,  jtype::type_int64, "program_generic_slide", "Generic Slide" }, { 0, INT64_MAX } });
+		pcr.class_name = "program_generic_slide";
+		pcr.class_description = "Program Generic Slide";
+		pcr.field_id_primary_key = idf_program_chart_slide;
+		pcr.member_fields = { idf_program_generic_slide, idf_client, idf_program, idf_slide_title };
+		idc_program_generic_slide = schema.put_class(pcr);
 
 		jmodel jm;
-
-		jm.name = "program_chart";
-
-		model_creatable_class* mcr;
-		model_selectable_class* msr;
-		model_updatable_class* mur;
-		selector_rule* sr;
-
-		mcr = jm.create_options.append();
-		mcr->rule_name = "Add Client";
-		mcr->selectors.when(idclient_root_class);
-		mcr->create_class_id = idclient_class;
-		mcr->replace_selected = false;
-		mcr->select_on_create = true;
-		mcr->item_id_class = null_row;
-
-		mcr = jm.create_options.append();
-		mcr->rule_name = "Add Carrier";
-		mcr->selectors.when(idcarrier_root_class);
-		mcr->create_class_id = idcarrier_class;
-		mcr->replace_selected = false;
-		mcr->select_on_create = true;
-		mcr->item_id_class = null_row;
-
-		mcr->rule_name = "Add Coverage";
-		mcr->selectors.when(idcoverage_root_class);
-		mcr->create_class_id = idcoverage_class;
-		mcr->replace_selected = false;
-		mcr->select_on_create = true;
-		mcr->item_id_class = null_row;
-
-		mcr = jm.create_options.append();
-		mcr->rule_name = "Add Program";
-		mcr->selectors.when(idclient_class);
-		mcr->create_class_id = idprogram_class;
-		mcr->replace_selected = false;
-		mcr->select_on_create = true;
-		mcr->item_id_class = null_row;
-
-		mcr = jm.create_options.append();
-		mcr->rule_name = "Add Title Slide";
-		mcr->selectors.when(idprogram_class);
-		mcr->create_class_id = idslide_title_class;
-		mcr->replace_selected = false;
-		mcr->select_on_create = true;
-		mcr->item_id_class = null_row;
-
-		mcr = jm.create_options.append();
-		mcr->rule_name = "Add Program Slide";
-		mcr->selectors.when(idprogram_class);
-		mcr->create_class_id = idslide_program_chart_class;
-		mcr->replace_selected = false;
-		mcr->select_on_create = true;
-		mcr->item_id_class = null_row;
-
-		mcr = jm.create_options.append();
-		mcr->rule_name = "Add Comparison Slide";
-		mcr->selectors.when(idprogram_class);
-		mcr->create_class_id = idslide_demo_cart_class;
-		mcr->replace_selected = false;
-		mcr->select_on_create = true;
-		mcr->item_id_class = null_row;
-
-		msr = jm.select_options.append();
-		msr->rule_name = "select client";
-		msr->select_class_id = idclient_class;
-
-		msr = jm.select_options.append();
-		msr->rule_name = "select coverage";
-		msr->select_class_id = idcoverage_class;
-
-		msr = jm.select_options.append();
-		msr->rule_name = "select carrier";
-		msr->select_class_id = idcarrier_class;
-
-		msr = jm.select_options.append();
-		msr->rule_name = "select program";
-		msr->select_class_id = idprogram_class;
-
-		msr = jm.select_options.append();
-		msr->rule_name = "select policy1";
-		msr->select_class_id = idpolicy_property_class;
-
-		msr = jm.select_options.append();
-		msr->rule_name = "select policy2";
-		msr->select_class_id = idpolicy_wc_class;
-
-		msr = jm.select_options.append();
-		msr->rule_name = "select policy3";
-		msr->select_class_id = idpolicy_vehicles_class;
-
-		msr = jm.select_options.append();
-		msr->rule_name = "select policy4";
-		msr->select_class_id = idpolicy_aircraft_class;
-
-		msr = jm.select_options.append();
-		msr->rule_name = "select policy5";
-		msr->select_class_id = idpolicy_umbrella_class;
-
-		msr = jm.select_options.append();
-		msr->rule_name = "select policy cov";
-		msr->select_class_id = idpolicy_coverage_class;
-
-		mur = jm.update_options.append();
-		mur->rule_name = "update client";
-		mur->update_class_id = idclient_class;
-
-		mur = jm.update_options.append();
-		mur->rule_name = "update coverage";
-		mur->update_class_id = idcoverage_class;
-
-		mur = jm.update_options.append();
-		mur->rule_name = "update carrier";
-		mur->update_class_id = idcarrier_class;
-
-		mur = jm.update_options.append();
-		mur->rule_name = "update program";
-		mur->update_class_id = idprogram_class;
-
-		mur = jm.update_options.append();
-		mur->rule_name = "update policy1";
-		mur->update_class_id = idpolicy_property_class;
-
-		mur = jm.update_options.append();
-		mur->rule_name = "update policy1";
-		mur->update_class_id = idpolicy_wc_class;
-
-		mur = jm.update_options.append();
-		mur->rule_name = "update policy2";
-		mur->update_class_id = idpolicy_vehicles_class;
-
-		mur = jm.update_options.append();
-		mur->rule_name = "update policy3";
-		mur->update_class_id = idpolicy_aircraft_class;
-
-		mur = jm.update_options.append();
-		mur->rule_name = "update policy4";
-		mur->update_class_id = idpolicy_umbrella_class;
-
-		mur = jm.update_options.append();
-		mur->rule_name = "update policy";
-		mur->update_class_id = idpolicy_coverage_class;
-
-		jm.selection_hierarchy.push_back({ 0, idhome_class });
-		jm.selection_hierarchy.push_back({ 1, idclient_root_class });
-		jm.selection_hierarchy.push_back({ 1, idcoverage_root_class });
-		jm.selection_hierarchy.push_back({ 1, idcarrier_root_class });
-		jm.selection_hierarchy.push_back({ 2, idclient_class });
-		jm.selection_hierarchy.push_back({ 2, idcoverage_class });
-		jm.selection_hierarchy.push_back({ 2, idcarrier_class });
-		jm.selection_hierarchy.push_back({ 3, idprogram_class });
-		jm.selection_hierarchy.push_back({ 4, idpolicy_property_class });
-		jm.selection_hierarchy.push_back({ 4, idpolicy_wc_class });
-		jm.selection_hierarchy.push_back({ 4, idpolicy_vehicles_class });
-		jm.selection_hierarchy.push_back({ 4, idpolicy_aircraft_class });
-		jm.selection_hierarchy.push_back({ 4, idpolicy_umbrella_class });
-		jm.selection_hierarchy.push_back({ 5, idpolicy_coverage_class });
-		jm.selection_hierarchy.push_back({ 6, idslide_title_class });
-		jm.selection_hierarchy.push_back({ 6, idslide_demo_cart_class });
-		jm.selection_hierarchy.push_back({ 6, idslide_program_chart_class });
 
 		schema.put_model(jm);
 
@@ -390,431 +184,438 @@ namespace proposal
 		jactor sample_actor;
 		sample_actor.actor_name = "sample actor";
 		sample_actor.actor_id = null_row;
-		sample_actor.current_view_class_id = idhome_class;
+		sample_actor.current_view_class_id = idc_home;
 		sample_actor = program_chart.create_actor(sample_actor);
 
 		relative_ptr_type style_sheet_id = null_row;
-		auto style_sheet = program_chart.create_object(0, null_row, schema.id_style_sheet, style_sheet_id);
+		auto style_sheet = program_chart.create_object(0, null_row, schema.idc_style_sheet, style_sheet_id);
 		style_sheet.set(
-			{ schema.id_view_title },
+			{ schema.idf_view_style },
 			{
-				{ schema.idname, "view_background" },
-				{ schema.idfont_name, "Arial" },
-				{ schema.idfont_size, 10.0 },
-				{ schema.idbold, false },
-				{ schema.iditalic, false },
-				{ schema.idunderline, false },
-				{ schema.idstrike_through, false },
-				{ schema.idline_spacing, 0.0 },
-				{ schema.idhorizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idvertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idshape_fill_color, "#000000FF" },
-				{ schema.idshape_border_thickness, "" },
-				{ schema.idshape_border_color, "" },
-				{ schema.idbox_fill_color, "#ffffffFF" },
-				{ schema.idbox_border_thickness, "4" },
-				{ schema.idbox_border_color, "#ffffffff" }
+				{ schema.idf_name, "view_background" },
+				{ schema.idf_font_name, "Arial" },
+				{ schema.idf_font_size, 10.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#000000FF" },
+				{ schema.idf_shape_border_thickness, "" },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "#ffffffFF" },
+				{ schema.idf_box_border_thickness, "4" },
+				{ schema.idf_box_border_color, "#ffffffff" }
 			}
 			);
 
 		style_sheet.set(
-			{ schema.id_view_title },
+			{ schema.idf_view_title_style },
 			{
-				{ schema.idname, "view_title" },
-				{ schema.idfont_name, "Arial" },
-				{ schema.idfont_size, 30.0 },
-				{ schema.idbold, false },
-				{ schema.iditalic, false },
-				{ schema.idunderline, false },
-				{ schema.idstrike_through, false },
-				{ schema.idline_spacing, 0.0 },
-				{ schema.idhorizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idvertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idshape_fill_color, "#000000FF" },
-				{ schema.idshape_border_thickness, "" },
-				{ schema.idshape_border_color, "" },
-				{ schema.idbox_fill_color, "" },
-				{ schema.idbox_border_thickness, "" },
-				{ schema.idbox_border_color, "" }
+				{ schema.idf_name, "view_title" },
+				{ schema.idf_font_name, "Arial" },
+				{ schema.idf_font_size, 30.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#000000FF" },
+				{ schema.idf_shape_border_thickness, "" },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "" },
+				{ schema.idf_box_border_thickness, "" },
+				{ schema.idf_box_border_color, "" }
 			}
 			);
 
 		style_sheet.set(
-			{ schema.id_view_subtitle },
+			{ schema.idf_view_subtitle_style },
 			{
-				{ schema.idname, "view_subtitle" },
-				{ schema.idfont_name, "Arial" },
-				{ schema.idfont_size, 24.0 },
-				{ schema.idbold, false },
-				{ schema.iditalic, false },
-				{ schema.idunderline, false },
-				{ schema.idstrike_through, false },
-				{ schema.idline_spacing, 0.0 },
-				{ schema.idhorizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idvertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idshape_fill_color, "#000000FF" },
-				{ schema.idshape_border_thickness, "" },
-				{ schema.idshape_border_color, "" },
-				{ schema.idbox_fill_color, "" },
-				{ schema.idbox_border_thickness, "" },
-				{ schema.idbox_border_color, "" }
+				{ schema.idf_name, "view_subtitle" },
+				{ schema.idf_font_name, "Arial" },
+				{ schema.idf_font_size, 24.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#000000FF" },
+				{ schema.idf_shape_border_thickness, "" },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "" },
+				{ schema.idf_box_border_thickness, "" },
+				{ schema.idf_box_border_color, "" }
 			}
 			);
 
 		style_sheet.set(
-			{ schema.id_view_section },
+			{ schema.idf_view_section_style },
 			{
-				{ schema.idname, "view_section" },
-				{ schema.idfont_name, "Arial" },
-				{ schema.idfont_size, 16.0 },
-				{ schema.idbold, false },
-				{ schema.iditalic, false },
-				{ schema.idunderline, false },
-				{ schema.idstrike_through, false },
-				{ schema.idline_spacing, 0.0 },
-				{ schema.idhorizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idvertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idshape_fill_color, "#000000FF" },
-				{ schema.idshape_border_thickness, "" },
-				{ schema.idshape_border_color, "" },
-				{ schema.idbox_fill_color, "" },
-				{ schema.idbox_border_thickness, "" },
-				{ schema.idbox_border_color, "" }
+				{ schema.idf_name, "view_section" },
+				{ schema.idf_font_name, "Arial" },
+				{ schema.idf_font_size, 16.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#000000FF" },
+				{ schema.idf_shape_border_thickness, "" },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "" },
+				{ schema.idf_box_border_thickness, "" },
+				{ schema.idf_box_border_color, "" }
 			}
 			);
 
 		style_sheet.set(
-			{ schema.id_view },
+			{ schema.idf_view_style },
 			{
-				{ schema.idname, "view" },
-				{ schema.idfont_name, "Arial" },
-				{ schema.idfont_size, 16.0 },
-				{ schema.idbold, false },
-				{ schema.iditalic, false },
-				{ schema.idunderline, false },
-				{ schema.idstrike_through, false },
-				{ schema.idline_spacing, 0.0 },
-				{ schema.idhorizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idvertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idshape_fill_color, "#000000FF" },
-				{ schema.idshape_border_thickness, "" },
-				{ schema.idshape_border_color, "" },
-				{ schema.idbox_fill_color, "" },
-				{ schema.idbox_border_thickness, "" },
-				{ schema.idbox_border_color, "" }
+				{ schema.idf_name, "view" },
+				{ schema.idf_font_name, "Arial" },
+				{ schema.idf_font_size, 16.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#000000FF" },
+				{ schema.idf_shape_border_thickness, "" },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "" },
+				{ schema.idf_box_border_thickness, "" },
+				{ schema.idf_box_border_color, "" }
 			}
 			);
 
 		style_sheet.set(
-			{ schema.id_disclaimer },
+			{ schema.idf_disclaimer_style },
 			{
-				{ schema.idname, "disclaimer" },
-				{ schema.idfont_name, "Arial" },
-				{ schema.idfont_size, 12.0 },
-				{ schema.idbold, false },
-				{ schema.iditalic, false },
-				{ schema.idunderline, false },
-				{ schema.idstrike_through, false },
-				{ schema.idline_spacing, 0.0 },
-				{ schema.idhorizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idvertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idshape_fill_color, "#000000FF" },
-				{ schema.idshape_border_thickness, "" },
-				{ schema.idshape_border_color, "" },
-				{ schema.idbox_fill_color, "" },
-				{ schema.idbox_border_thickness, "" },
-				{ schema.idbox_border_color, "" }
+				{ schema.idf_name, "disclaimer" },
+				{ schema.idf_font_name, "Arial" },
+				{ schema.idf_font_size, 12.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#000000FF" },
+				{ schema.idf_shape_border_thickness, "" },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "" },
+				{ schema.idf_box_border_thickness, "" },
+				{ schema.idf_box_border_color, "" }
 			}
 			);
 
 		style_sheet.set(
-			{ schema.id_copyright },
+			{ schema.idf_copyright_style },
 			{
-				{ schema.idname, "copyright" },
-				{ schema.idfont_name, "Arial" },
-				{ schema.idfont_size, 12.0 },
-				{ schema.idbold, false },
-				{ schema.iditalic, false },
-				{ schema.idunderline, false },
-				{ schema.idstrike_through, false },
-				{ schema.idline_spacing, 0.0 },
-				{ schema.idhorizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idvertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idshape_fill_color, "#000000FF" },
-				{ schema.idshape_border_thickness, "" },
-				{ schema.idshape_border_color, "" },
-				{ schema.idbox_fill_color, "" },
-				{ schema.idbox_border_thickness, "" },
-				{ schema.idbox_border_color, "" }
+				{ schema.idf_name, "copyright" },
+				{ schema.idf_font_name, "Arial" },
+				{ schema.idf_font_size, 12.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#000000FF" },
+				{ schema.idf_shape_border_thickness, "" },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "" },
+				{ schema.idf_box_border_thickness, "" },
+				{ schema.idf_box_border_color, "" }
 			}
 			);
 
 		style_sheet.set(
-			{ schema.id_h1 },
+			{ schema.idf_h1_style },
 			{
-				{ schema.idname, "h1" },
-				{ schema.idfont_name, "Arial" },
-				{ schema.idfont_size, 30.0 },
-				{ schema.idbold, false },
-				{ schema.iditalic, false },
-				{ schema.idunderline, false },
-				{ schema.idstrike_through, false },
-				{ schema.idline_spacing, 0.0 },
-				{ schema.idhorizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idvertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idshape_fill_color, "#000000FF" },
-				{ schema.idshape_border_thickness, "" },
-				{ schema.idshape_border_color, "" },
-				{ schema.idbox_fill_color, "" },
-				{ schema.idbox_border_thickness, "" },
-				{ schema.idbox_border_color, "" }
+				{ schema.idf_name, "h1" },
+				{ schema.idf_font_name, "Arial" },
+				{ schema.idf_font_size, 30.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#000000FF" },
+				{ schema.idf_shape_border_thickness, "" },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "" },
+				{ schema.idf_box_border_thickness, "" },
+				{ schema.idf_box_border_color, "" }
 			}
 			);
 
 		style_sheet.set(
-			{ schema.id_h2 },
+			{ schema.idf_h2_style },
 			{
-				{ schema.idname, "h2" },
-				{ schema.idfont_name, "Arial" },
-				{ schema.idfont_size, 24.0 },
-				{ schema.idbold, false },
-				{ schema.iditalic, false },
-				{ schema.idunderline, false },
-				{ schema.idstrike_through, false },
-				{ schema.idline_spacing, 0.0 },
-				{ schema.idhorizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idvertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idshape_fill_color, "#000000FF" },
-				{ schema.idshape_border_thickness, "" },
-				{ schema.idshape_border_color, "" },
-				{ schema.idbox_fill_color, "" },
-				{ schema.idbox_border_thickness, "" },
-				{ schema.idbox_border_color, "" }
+				{ schema.idf_name, "h2" },
+				{ schema.idf_font_name, "Arial" },
+				{ schema.idf_font_size, 24.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#000000FF" },
+				{ schema.idf_shape_border_thickness, "" },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "" },
+				{ schema.idf_box_border_thickness, "" },
+				{ schema.idf_box_border_color, "" }
 			}
 			);
 
 		style_sheet.set(
-			{ schema.id_h3 },
+			{ schema.idf_h3_style },
 			{
-				{ schema.idname, "h3" },
-				{ schema.idfont_name, "Arial" },
-				{ schema.idfont_size, 20.0 },
-				{ schema.idbold, false },
-				{ schema.iditalic, false },
-				{ schema.idunderline, false },
-				{ schema.idstrike_through, false },
-				{ schema.idline_spacing, 0.0 },
-				{ schema.idhorizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idvertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idshape_fill_color, "#000000FF" },
-				{ schema.idshape_border_thickness, "" },
-				{ schema.idshape_border_color, "" },
-				{ schema.idbox_fill_color, "" },
-				{ schema.idbox_border_thickness, "" },
-				{ schema.idbox_border_color, "" }
+				{ schema.idf_name, "h3" },
+				{ schema.idf_font_name, "Arial" },
+				{ schema.idf_font_size, 20.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#000000FF" },
+				{ schema.idf_shape_border_thickness, "" },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "" },
+				{ schema.idf_box_border_thickness, "" },
+				{ schema.idf_box_border_color, "" }
 			}
 			);
 
 		style_sheet.set(
-			{ schema.id_column_number_head },
+			{ schema.idf_column_number_head_style },
 			{
-				{ schema.idname, "column_number_head" },
-				{ schema.idfont_name, "Arial" },
-				{ schema.idfont_size, 14.0 },
-				{ schema.idbold, false },
-				{ schema.iditalic, false },
-				{ schema.idunderline, false },
-				{ schema.idstrike_through, false },
-				{ schema.idline_spacing, 0.0 },
-				{ schema.idhorizontal_alignment, (int)visual_alignment::align_far },
-				{ schema.idvertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idshape_fill_color, "#000000FF" },
-				{ schema.idshape_border_thickness, "" },
-				{ schema.idshape_border_color, "" },
-				{ schema.idbox_fill_color, "" },
-				{ schema.idbox_border_thickness, "" },
-				{ schema.idbox_border_color, "" }
+				{ schema.idf_name, "column_number_head" },
+				{ schema.idf_font_name, "Arial" },
+				{ schema.idf_font_size, 14.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_far },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#000000FF" },
+				{ schema.idf_shape_border_thickness, "" },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "" },
+				{ schema.idf_box_border_thickness, "" },
+				{ schema.idf_box_border_color, "" }
 			}
 			);
 
 		style_sheet.set(
-			{ schema.id_column_text_head },
+			{ schema.idf_column_text_head_style },
 			{
-				{ schema.idname, "column_text_head" },
-				{ schema.idfont_name, "Arial" },
-				{ schema.idfont_size, 14.0 },
-				{ schema.idbold, false },
-				{ schema.iditalic, false },
-				{ schema.idunderline, false },
-				{ schema.idstrike_through, false },
-				{ schema.idline_spacing, 0.0 },
-				{ schema.idhorizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idvertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idshape_fill_color, "#000000FF" },
-				{ schema.idshape_border_thickness, "" },
-				{ schema.idshape_border_color, "" },
-				{ schema.idbox_fill_color, "" },
-				{ schema.idbox_border_thickness, "" },
-				{ schema.idbox_border_color, "" }
-			}
-			);
-
-
-		style_sheet.set(
-			{ schema.id_column_data },
-			{
-				{ schema.idname, "column_data" },
-				{ schema.idfont_name, "Arial" },
-				{ schema.idfont_size, 30.0 },
-				{ schema.idbold, false },
-				{ schema.iditalic, false },
-				{ schema.idunderline, false },
-				{ schema.idstrike_through, false },
-				{ schema.idline_spacing, 0.0 },
-				{ schema.idhorizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idvertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idshape_fill_color, "#000000FF" },
-				{ schema.idshape_border_thickness, "" },
-				{ schema.idshape_border_color, "" },
-				{ schema.idbox_fill_color, "" },
-				{ schema.idbox_border_thickness, "" },
-				{ schema.idbox_border_color, "" }
+				{ schema.idf_name, "column_text_head" },
+				{ schema.idf_font_name, "Arial" },
+				{ schema.idf_font_size, 14.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#000000FF" },
+				{ schema.idf_shape_border_thickness, "" },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "" },
+				{ schema.idf_box_border_thickness, "" },
+				{ schema.idf_box_border_color, "" }
 			}
 			);
 
 
 		style_sheet.set(
-			{ schema.id_label },
+			{ schema.idf_column_data_style },
 			{
-				{ schema.idname, "label" },
-				{ schema.idfont_name, "Arial" },
-				{ schema.idfont_size, 30.0 },
-				{ schema.idbold, false },
-				{ schema.iditalic, false },
-				{ schema.idunderline, false },
-				{ schema.idstrike_through, false },
-				{ schema.idline_spacing, 0.0 },
-				{ schema.idhorizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idvertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idshape_fill_color, "#000000FF" },
-				{ schema.idshape_border_thickness, "" },
-				{ schema.idshape_border_color, "" },
-				{ schema.idbox_fill_color, "" },
-				{ schema.idbox_border_thickness, "" },
-				{ schema.idbox_border_color, "" }
+				{ schema.idf_name, "column_data" },
+				{ schema.idf_font_name, "Arial" },
+				{ schema.idf_font_size, 30.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#000000FF" },
+				{ schema.idf_shape_border_thickness, "" },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "" },
+				{ schema.idf_box_border_thickness, "" },
+				{ schema.idf_box_border_color, "" }
+			}
+			);
+
+
+		style_sheet.set(
+			{ schema.idf_label_style },
+			{
+				{ schema.idf_name, "label" },
+				{ schema.idf_font_name, "Arial" },
+				{ schema.idf_font_size, 30.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#000000FF" },
+				{ schema.idf_shape_border_thickness, "" },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "" },
+				{ schema.idf_box_border_thickness, "" },
+				{ schema.idf_box_border_color, "" }
 			}
 			);
 
 		style_sheet.set(
-			{ schema.id_chart_axis },
+			{ schema.idf_chart_axis_style },
 			{
-				{ schema.idname, "chart_axis" },
-				{ schema.idfont_name, "Arial" },
-				{ schema.idfont_size, 30.0 },
-				{ schema.idbold, false },
-				{ schema.iditalic, false },
-				{ schema.idunderline, false },
-				{ schema.idstrike_through, false },
-				{ schema.idline_spacing, 0.0 },
-				{ schema.idhorizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idvertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idshape_fill_color, "#000000FF" },
-				{ schema.idshape_border_thickness, "" },
-				{ schema.idshape_border_color, "" },
-				{ schema.idbox_fill_color, "" },
-				{ schema.idbox_border_thickness, "" },
-				{ schema.idbox_border_color, "" }
+				{ schema.idf_name, "chart_axis" },
+				{ schema.idf_font_name, "Arial" },
+				{ schema.idf_font_size, 30.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#000000FF" },
+				{ schema.idf_shape_border_thickness, "" },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "" },
+				{ schema.idf_box_border_thickness, "" },
+				{ schema.idf_box_border_color, "" }
 			}
 			);
 
 		style_sheet.set(
-			{ schema.id_chart_legend },
+			{ schema.idf_chart_legend_style },
 			{
-				{ schema.idname, "chart_legend" },
-				{ schema.idfont_name, "Arial" },
-				{ schema.idfont_size, 30.0 },
-				{ schema.idbold, false },
-				{ schema.iditalic, false },
-				{ schema.idline_spacing, 0.0 },
-				{ schema.idhorizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idvertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idshape_fill_color, "#000000FF" },
-				{ schema.idshape_border_thickness, "" },
-				{ schema.idshape_border_color, "" },
-				{ schema.idbox_fill_color, "" },
-				{ schema.idbox_border_thickness, "" },
-				{ schema.idbox_border_color, "" }
+				{ schema.idf_name, "chart_legend" },
+				{ schema.idf_font_name, "Arial" },
+				{ schema.idf_font_size, 30.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#000000FF" },
+				{ schema.idf_shape_border_thickness, "" },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "" },
+				{ schema.idf_box_border_thickness, "" },
+				{ schema.idf_box_border_color, "" }
 			}
 			);
 
 		style_sheet.set(
-			{ schema.id_chart_block },
+			{ schema.idf_chart_block_style },
 			{
-				{ schema.idname, "chart_block" },
-				{ schema.idfont_name, "Arial" },
-				{ schema.idfont_size, 30.0 },
-				{ schema.idbold, false },
-				{ schema.iditalic, false },
-				{ schema.idunderline, false },
-				{ schema.idstrike_through, false },
-				{ schema.idline_spacing, 0.0 },
-				{ schema.idhorizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idvertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idshape_fill_color, "#000000FF" },
-				{ schema.idshape_border_thickness, "" },
-				{ schema.idshape_border_color, "" },
-				{ schema.idbox_fill_color, "" },
-				{ schema.idbox_border_thickness, "" },
-				{ schema.idbox_border_color, "" }
+				{ schema.idf_name, "chart_block" },
+				{ schema.idf_font_name, "Arial" },
+				{ schema.idf_font_size, 30.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#000000FF" },
+				{ schema.idf_shape_border_thickness, "" },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "" },
+				{ schema.idf_box_border_thickness, "" },
+				{ schema.idf_box_border_color, "" }
 			}
 			);
 
 		style_sheet.set(
-			{ schema.id_tooltip },
+			{ schema.idf_tooltip_style },
 			{
-				{ schema.idname, "tooltip" },
-				{ schema.idfont_name, "Arial" },
-				{ schema.idfont_size, 30.0 },
-				{ schema.idbold, false },
-				{ schema.iditalic, false },
-				{ schema.idunderline, false },
-				{ schema.idstrike_through, false },
-				{ schema.idline_spacing, 0.0 },
-				{ schema.idhorizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idvertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idshape_fill_color, "#000000FF" },
-				{ schema.idshape_border_thickness, "" },
-				{ schema.idshape_border_color, "" },
-				{ schema.idbox_fill_color, "" },
-				{ schema.idbox_border_thickness, "" },
-				{ schema.idbox_border_color, "" }
+				{ schema.idf_name, "tooltip" },
+				{ schema.idf_font_name, "Arial" },
+				{ schema.idf_font_size, 30.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#000000FF" },
+				{ schema.idf_shape_border_thickness, "" },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "" },
+				{ schema.idf_box_border_thickness, "" },
+				{ schema.idf_box_border_color, "" }
 			}
 			);
 
 		style_sheet.set(
-			{ schema.id_breadcrumb },
+			{ schema.idf_breadcrumb_style },
 			{
-				{ schema.idname, "breadcrumb" },
-				{ schema.idfont_name, "Arial" },
-				{ schema.idfont_size, 14.0 },
-				{ schema.idbold, false },
-				{ schema.iditalic, false },
-				{ schema.idunderline, false },
-				{ schema.idstrike_through, false },
-				{ schema.idline_spacing, 0.0 },
-				{ schema.idhorizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idvertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idshape_fill_color, "#0000CCFF" },
-				{ schema.idshape_border_thickness, "" },
-				{ schema.idshape_border_color, "" },
-				{ schema.idbox_fill_color, "" },
-				{ schema.idbox_border_thickness, "" },
-				{ schema.idbox_border_color, "" }
+				{ schema.idf_name, "breadcrumb" },
+				{ schema.idf_font_name, "Arial" },
+				{ schema.idf_font_size, 14.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#0000CCFF" },
+				{ schema.idf_shape_border_thickness, "" },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "" },
+				{ schema.idf_box_border_thickness, "" },
+				{ schema.idf_box_border_color, "" }
 			}
 			);
 
-		relative_ptr_type existing_client_id = null_row;
-		auto client = program_chart.create_object(0, sample_actor.actor_id, idclient_class, existing_client_id);
+		relative_ptr_type homes_id = null_row;
+		relative_ptr_type clients_id = null_row;
+		relative_ptr_type carriers_id = null_row;
+		relative_ptr_type programs_id = null_row;
+
+		program_chart.create_object(0, sample_actor.actor_id, idc_home, homes_id);
+		program_chart.create_object(0, sample_actor.actor_id, idc_client_root, clients_id);
+		program_chart.create_object(0, sample_actor.actor_id, idc_carrier_root, carriers_id);
+		program_chart.create_object(0, sample_actor.actor_id, idc_carrier_root, programs_id);
 
 		//{ idname, idfont_name, idfont_size, idbold, iditalic, idline_spacing, idhorizontal_alignment, idvertical_alignment,
 	//idshape_fill_color, idshape_border_thickness, idshape_border_color, idbox_fill_color, idbox_border_thickness, idbox_border_color };
