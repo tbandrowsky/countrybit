@@ -801,6 +801,20 @@ namespace corona
 			model_select_class_collection select_options;
 			model_update_class_collection update_options;
 			model_selection_hierarchy	  selection_hierarchy;
+
+			void create_when(jschema* _schema, relative_ptr_type _selected_class_id1, relative_ptr_type _selected_class_id2, relative_ptr_type _create_class_id, relative_ptr_type _from_item_class_id, bool _select_created, bool _replace_selected);
+			void create_when( jschema *_schema, relative_ptr_type _selected_class_id1, relative_ptr_type _create_class_id, relative_ptr_type _from_item_class_id, bool _select_created,  bool _replace_selected );
+			void create_always(jschema* _schema, relative_ptr_type _create_class_id, relative_ptr_type _from_item_class_id, bool _select_created, bool _replace_selected);
+
+			void select_when(jschema* _schema, relative_ptr_type _selected_class_id1, relative_ptr_type _selected_class_id2, relative_ptr_type _select_class_id);
+			void select_when(jschema* _schema, relative_ptr_type _selected_class_id1, relative_ptr_type _select_class_id);
+			void select_always(jschema* _schema, relative_ptr_type _select_class_id);
+
+			void update_when(jschema* _schema, relative_ptr_type _selected_class_id1, relative_ptr_type _selected_class_id2, relative_ptr_type _update_class_id);
+			void update_when(jschema* _schema, relative_ptr_type _selected_class_id1, relative_ptr_type _update_class_id);
+			void update_always(jschema* _schema, relative_ptr_type _update_class_id);
+
+			void navigation(std::vector<model_hierarchy_path> items);
 		};
 
 		using jmodel = model_type;
