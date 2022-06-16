@@ -784,8 +784,8 @@ namespace corona
 
 		struct model_hierarchy_path
 		{
-			int					level_id;
 			relative_ptr_type	class_id;
+			int					level_id;
 		};
 
 		using model_create_class_collection = iarray<model_creatable_class, max_creatable_options>;
@@ -815,6 +815,7 @@ namespace corona
 			void update_always(jschema* _schema, relative_ptr_type _update_class_id);
 
 			void navigation(std::vector<model_hierarchy_path> items);
+			void navigation(std::initializer_list<model_hierarchy_path> member_ids);
 		};
 
 		using jmodel = model_type;

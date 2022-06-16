@@ -96,5 +96,12 @@ namespace corona
 				this->selection_hierarchy.push_back(hhp);
 			}
 		}
+
+		void model_type::navigation(std::initializer_list<model_hierarchy_path> member_ids)
+		{
+			std::vector<model_hierarchy_path> navs = member_ids;
+			navigation(navs);
+		}
+
 	}
 }

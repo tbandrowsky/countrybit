@@ -559,22 +559,22 @@ namespace corona
 		relative_ptr_type jcollection::put_user_class(jobject& slice)
 		{
 			auto class_id = null_row;
-			if (slice.get_class_id() != schema->id_user_class)
+			if (slice.get_class_id() != schema->idc_user_class)
 			{
 				throw std::logic_error("object is not a user class");
 			}
 
 			put_class_request pcr;
 
-			pcr.class_name = slice.get_string(schema->id_user_class_class_name, true);
-			object_id_type& class_object_id = slice.get_object_id(schema->id_user_class_class_id, true);
+			pcr.class_name = slice.get_string(schema->idf_user_class_class_name, true);
+			object_id_type& class_object_id = slice.get_object_id(schema->idf_user_class_class_id, true);
 			pcr.class_id = class_object_id.row_id;
 			pcr.class_description = pcr.class_name;
 
-			auto fields = slice.get_list(schema->id_user_field_list, true);
+			auto fields = slice.get_list(schema->idf_user_field_list, true);
 			for (auto field : fields) {
 
-				auto new_field_type_id = field.item.get_int64(schema->id_dbf_field_type, true);
+				auto new_field_type_id = field.item.get_int64(schema->idf_field_type, true);
 				auto new_field_type = (jtype)new_field_type_id.value();
 
 				switch (new_field_type) {
@@ -583,13 +583,13 @@ namespace corona
 				case type_int8:
 				{
 					put_integer_field_request pifr;
-					pifr.name.name = field.item.get_string(schema->id_dbf_field_name, true);
-					pifr.name.description = field.item.get_string(schema->id_dbf_field_description, true);
+					pifr.name.name = field.item.get_string(schema->idf_field_name, true);
+					pifr.name.description = field.item.get_string(schema->idf_field_description, true);
 					pifr.name.type_id = new_field_type;
 					//pifr.name.format = field.item.get_string(schema->id_dbf_field_description, true);
-					auto options = field.item.get_object(schema->id_fld_int_options, true).get_slice({ 0,0,0 });
-					pifr.options.maximum_int = options.get_int64(schema->id_dbf_int_stop);
-					pifr.options.minimum_int = options.get_int64(schema->id_dbf_int_start);
+					auto options = field.item.get_object(schema->idf_int_options, true).get_slice({ 0,0,0 });
+					pifr.options.maximum_int = options.get_int64(schema->idf_int_stop);
+					pifr.options.minimum_int = options.get_int64(schema->idf_int_start);
 					auto field_id = schema->put_integer_field(pifr);
 					pcr.member_fields.push_back({ field_id });
 				}
@@ -598,13 +598,13 @@ namespace corona
 				case type_float32:
 				{
 					put_double_field_request pifr;
-					pifr.name.name = field.item.get_string(schema->id_dbf_field_name, true);
-					pifr.name.description = field.item.get_string(schema->id_dbf_field_description, true);
+					pifr.name.name = field.item.get_string(schema->idf_field_name, true);
+					pifr.name.description = field.item.get_string(schema->idf_field_description, true);
 					pifr.name.type_id = new_field_type;
 					//pifr.name.format = field.item.get_string(schema->id_dbf_field_description, true);
-					auto options = field.item.get_object(schema->id_fld_double_options, true).get_slice({ 0,0,0 });
-					pifr.options.maximum_double = options.get_double(schema->id_dbf_double_stop);
-					pifr.options.minimum_double = options.get_double(schema->id_dbf_double_start);
+					auto options = field.item.get_object(schema->idf_double_options, true).get_slice({ 0,0,0 });
+					pifr.options.maximum_double = options.get_double(schema->idf_double_stop);
+					pifr.options.minimum_double = options.get_double(schema->idf_double_start);
 					auto field_id = schema->put_double_field(pifr);
 					pcr.member_fields.push_back({ field_id });
 				}
@@ -612,13 +612,13 @@ namespace corona
 				case type_datetime:
 				{
 					put_time_field_request pifr;
-					pifr.name.name = field.item.get_string(schema->id_dbf_field_name, true);
-					pifr.name.description = field.item.get_string(schema->id_dbf_field_description, true);
+					pifr.name.name = field.item.get_string(schema->idf_field_name, true);
+					pifr.name.description = field.item.get_string(schema->idf_field_description, true);
 					pifr.name.type_id = new_field_type;
 					//pifr.name.format = field.item.get_string(schema->id_dbf_field_description, true);
-					auto options = field.item.get_object(schema->id_fld_date_options, true).get_slice({ 0,0,0 });
-					pifr.options.maximum_time_t = options.get_time(schema->id_dbf_date_stop);
-					pifr.options.minimum_time_t = options.get_time(schema->id_dbf_date_start);
+					auto options = field.item.get_object(schema->idf_date_options, true).get_slice({ 0,0,0 });
+					pifr.options.maximum_time_t = options.get_time(schema->idf_date_stop);
+					pifr.options.minimum_time_t = options.get_time(schema->idf_date_start);
 					auto field_id = schema->put_time_field(pifr);
 					pcr.member_fields.push_back({ field_id });
 				}
@@ -626,16 +626,16 @@ namespace corona
 				case type_string:
 				{
 					put_string_field_request pifr;
-					pifr.name.name = field.item.get_string(schema->id_dbf_field_name, true);
-					pifr.name.description = field.item.get_string(schema->id_dbf_field_description, true);
+					pifr.name.name = field.item.get_string(schema->idf_field_name, true);
+					pifr.name.description = field.item.get_string(schema->idf_field_description, true);
 					pifr.name.type_id = new_field_type;
 					//pifr.name.format = field.item.get_string(schema->id_dbf_field_description, true);
-					auto options = field.item.get_object(schema->id_fld_string_options, true).get_slice({ 0,0,0 });
-					pifr.options.length = options.get_int32(schema->id_dbf_string_length);
-					pifr.options.validation_message = options.get_string(schema->id_dbf_string_validation_message);
-					pifr.options.validation_pattern = options.get_string(schema->id_dbf_string_validation_pattern);
-					pifr.options.full_text_editor = options.get_int8(schema->id_dbf_string_full_text_editor);
-					pifr.options.rich_text_editor = options.get_int8(schema->id_dbf_string_rich_text_editor);
+					auto options = field.item.get_object(schema->idf_string_options, true).get_slice({ 0,0,0 });
+					pifr.options.length = options.get_int32(schema->idf_string_length);
+					pifr.options.validation_message = options.get_string(schema->idf_string_validation_message);
+					pifr.options.validation_pattern = options.get_string(schema->idf_string_validation_pattern);
+					pifr.options.full_text_editor = options.get_int8(schema->idf_string_full_text_editor);
+					pifr.options.rich_text_editor = options.get_int8(schema->idf_string_rich_text_editor);
 					auto field_id = schema->put_string_field(pifr);
 					pcr.member_fields.push_back({ field_id });
 				}
@@ -2893,7 +2893,7 @@ namespace corona
 			idc_user_field = put_class(pcr);
 
 			put_object_field_request user_field_list_def =
-			{ { null_row, jtype::type_list, "user_field_list", "User Fields" }, { {32,1,1}, idc_user_field } };
+			{ { null_row, jtype::type_list, "user_field_list", "User Fields" }, { {50,1,1}, idc_user_field } };
 			idf_user_field_list = put_object_field(user_field_list_def);
 
 			pcr.class_name = "user_class";

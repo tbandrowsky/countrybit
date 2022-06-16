@@ -68,14 +68,13 @@ namespace proposal
 		pcr.member_fields = { idf_coverage, idf_coverage_root, schema.idf_name };
 		idc_coverage = schema.put_class(pcr);
 
-		idf_inception = schema.put_time_field({ { null_row,  jtype::type_datetime, "home", "Home id" }, { 0, INT64_MAX } });
-		idf_expiration = schema.put_time_field({ { null_row,  jtype::type_datetime, "home", "Home id" }, { 0, INT64_MAX } });
-		idf_status = schema.put_integer_field({ { null_row,  jtype::type_int32, "home", "Home id" }, { 0, INT64_MAX } });
-		idf_attachment = schema.put_double_field({ { null_row,  jtype::type_float32, "home", "Home id" }, { 0.0, 1E10 } });
-		idf_limit = schema.put_double_field({ { null_row,  jtype::type_float32, "home", "Home id" }, { 0.0, 1E10 } });
-		idf_attachment = schema.put_double_field({ { null_row,  jtype::type_float32, "home", "Home id" }, { 0.0, 1E10 } });
-		idf_deductible = schema.put_double_field({ { null_row,  jtype::type_float32, "home", "Home id" }, { 0.0, 1E10 } });
-		idf_share = schema.put_double_field({ { null_row,  jtype::type_float32, "home", "Home id" }, { 0.0, 1E10 } });
+		idf_inception = schema.put_time_field({ { null_row,  jtype::type_datetime, "inception", "Inception" }, { 0, INT64_MAX } });
+		idf_expiration = schema.put_time_field({ { null_row,  jtype::type_datetime, "expiration", "Expiration" }, { 0, INT64_MAX } });
+		idf_status = schema.put_integer_field({ { null_row,  jtype::type_int32, "status", "Status" }, { 0, INT64_MAX } });
+		idf_attachment = schema.put_double_field({ { null_row,  jtype::type_float32, "attachment", "Attachment" }, { 0.0, 1E10 } });
+		idf_limit = schema.put_double_field({ { null_row,  jtype::type_float32, "limit", "Limit" }, { 0.0, 1E10 } });
+		idf_deductible = schema.put_double_field({ { null_row,  jtype::type_float32, "deductible", "Deductible" }, { 0.0, 1E10 } });
+		idf_share = schema.put_double_field({ { null_row,  jtype::type_float32, "share", "Share %" }, { 0.0, 100 } });
 
 		idf_product_template_root = schema.put_integer_field({ { null_row,  jtype::type_int64, "home", "Home id" }, { 0, INT64_MAX } });
 		pcr.class_name = "product_templates";
@@ -98,13 +97,13 @@ namespace proposal
 		porf = { { null_row, jtype::type_list, "product_template_product_header", "Product Header" }, { {1,1,1}, schema.idc_user_class } };
 		idf_product_template_product_header = schema.put_object_field(porf);
 
-		porf = { { null_row, jtype::type_list, "product_template_product_structure", "Product Structure" }, { {32,1,1}, schema.idc_user_class } };
+		porf = { { null_row, jtype::type_list, "product_template_product_structure", "Product Structure" }, { {1,1,1}, schema.idc_user_class } };
 		idf_product_template_product_structure = schema.put_object_field(porf);
 
 		porf = { { null_row, jtype::type_list, "product_template_coverage_header", "Coverage Header" }, { {1,1,1}, schema.idc_user_class } };
 		idf_product_template_coverage_header = schema.put_object_field(porf);
 
-		porf = { { null_row, jtype::type_list, "product_template_coverage_structure", "Coverage Structure" }, { {32,1,1}, schema.idc_user_class } };
+		porf = { { null_row, jtype::type_list, "product_template_coverage_structure", "Coverage Structure" }, { {1,1,1}, schema.idc_user_class } };
 		idf_product_template_coverage_structure = schema.put_object_field(porf);
 
 		pcr.class_name = "product_template";
@@ -121,7 +120,11 @@ namespace proposal
 			idf_product_template_type,
 			idf_product_template_line_of_business,
 			idf_product_template_carrier,
-			idf_product_template_updated_by
+			idf_product_template_updated_by,
+			idf_product_template_product_header,
+			idf_product_template_product_structure,
+			idf_product_template_coverage_header,
+			idf_product_template_coverage_structure
 		};
 
 		idf_program = schema.put_integer_field({ { null_row,  jtype::type_int64, "program_id", "Program Id" }, { 0, INT64_MAX } });
@@ -140,7 +143,7 @@ namespace proposal
 		pcr.class_name = "program_product";
 		pcr.class_description = "Program Product";
 		pcr.field_id_primary_key = idf_program_product;
-		pcr.member_fields = { idf_program_product, idf_program, idf_client, idf_product_template, idc_product_instance, idf_product_instance };
+		pcr.member_fields = { idf_program_product, idf_program, idf_client, idf_product_template, idc_product_instance };
 		idc_program_product = schema.put_class(pcr);
 
 		idf_program_chart_slide = schema.put_integer_field({ { null_row,  jtype::type_int64, "program_chart_slide_id", "Program Chart Slide Id" }, { 0, INT64_MAX } });
@@ -166,18 +169,6 @@ namespace proposal
 
 		jmodel jm;
 
-		jm.select_always(&schema, idc_home);
-		jm.select_always(&schema, idc_carrier_root);
-		jm.select_always(&schema, idc_product_template_root);
-		jm.select_always(&schema, idc_coverage_root);
-		jm.select_always(&schema, idc_product_template);
-		jm.select_always(&schema, idc_client_root);
-		jm.select_always(&schema, idc_client);
-		jm.select_always(&schema, idc_program);
-		jm.select_always(&schema, idc_program_product);
-		jm.select_always(&schema, idc_program_chart_slide);
-		jm.select_always(&schema, idc_program_generic_slide);
-
 		jm.update_always(&schema, idc_home);
 		jm.update_always(&schema, idc_carrier_root);
 		jm.update_always(&schema, idc_product_template_root);
@@ -190,6 +181,18 @@ namespace proposal
 		jm.update_always(&schema, idc_program_chart_slide);
 		jm.update_always(&schema, idc_program_generic_slide);
 
+		jm.select_always(&schema, idc_home);
+		jm.select_always(&schema, idc_carrier_root);
+		jm.select_always(&schema, idc_product_template_root);
+		jm.select_always(&schema, idc_coverage_root);
+		jm.select_always(&schema, idc_product_template);
+		jm.select_always(&schema, idc_client_root);
+		jm.select_always(&schema, idc_client);
+		jm.select_always(&schema, idc_program);
+		jm.select_always(&schema, idc_program_product);
+		jm.select_always(&schema, idc_program_chart_slide);
+		jm.select_always(&schema, idc_program_generic_slide);
+
 		jm.create_when(&schema, idc_carrier_root, idc_carrier, null_row, true, false);
 		jm.create_when(&schema, idc_product_template_root, idc_product_template, null_row, true, false);
 		jm.create_when(&schema, idc_coverage_root, idc_coverage, null_row, true, false);
@@ -198,6 +201,19 @@ namespace proposal
 		jm.create_when(&schema, idc_program, idc_program_product, idc_program, true, false);
 		jm.create_when(&schema, idc_program, idc_program_chart_slide, idc_program, true, false);
 		jm.create_when(&schema, idc_program, idc_program_generic_slide, idc_program, true, false);
+
+		jm.navigation({
+						{ idc_home, 0},
+						{ idc_carrier_root, 1 },
+						{ idc_coverage_root, 1 },
+						{ idc_product_template_root, 1 },
+						{ idc_client_root, 1 },
+						{ idc_client, 2 },
+						{ idc_program, 3 },
+						{ idc_program_product, 4 },
+						{ idc_program_chart_slide, 4 },
+						{ idc_program_generic_slide, 4 } }
+			);
 
 		schema.put_model(jm);
 
@@ -678,7 +694,7 @@ namespace proposal
 		;
 	}
 
-	void wsproposal_controller::render_program_view(const rectangle& newSize)
+	void wsproposal_controller::render(const rectangle& newSize)
 	{
 		corona::database::layout_rect title_box, * ptitle_box = &title_box;
 
@@ -700,23 +716,31 @@ namespace proposal
 		add_update_fields(controlcolumn);
 		add_create_buttons(controlcolumn);
 
-		if (state.actor.current_view_class_id == idhome_class) 
+		if (state.actor.current_view_class_id == idc_home) 
 		{
 			
 		} 
-		else if (state.actor.current_view_class_id == idhome_class)
+		else if (state.actor.current_view_class_id == idc_client_root)
 		{
 			;
 		}
-		else if (state.actor.current_view_class_id == idhome_class)
+		else if (state.actor.current_view_class_id == idc_client)
 		{
 			;
 		}
-		else if (state.actor.current_view_class_id == idhome_class)
+		else if (state.actor.current_view_class_id == idc_product_template_root)
 		{
 			;
 		}
-		else if (state.actor.current_view_class_id == idhome_class)
+		else if (state.actor.current_view_class_id == idc_product_template)
+		{
+			;
+		}
+		else if (state.actor.current_view_class_id == idc_carrier_root)
+		{
+			;
+		}
+		else if (state.actor.current_view_class_id == idc_carrier)
 		{
 			;
 		}

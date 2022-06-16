@@ -1990,12 +1990,12 @@ namespace corona
 				if (reserved) {
 					tmp = get_collection(ref);
 					create_object_request cor;
-					cor.class_id = id_style_sheet;
+					cor.class_id = idc_style_sheet;
 					cor.actor_id = null_row;
 					cor.select_on_create = false;
 					cor.collection_id = tmp.get_collection_id();
 					if (ref->create_style_sheet) {
-						tmp.create_object(0, null_row, id_style_sheet, ref->style_sheet_id);
+						tmp.create_object(0, null_row, idc_style_sheet, ref->style_sheet_id);
 					}
 				}
 				return tmp;
