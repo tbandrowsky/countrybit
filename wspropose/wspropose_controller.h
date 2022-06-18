@@ -43,10 +43,16 @@ namespace proposal
 		corona::database::relative_ptr_type idf_product_template_carrier;
 		corona::database::relative_ptr_type idf_product_template_updated_by;
 		corona::database::relative_ptr_type idf_product_template_status_updated_by;
+
 		corona::database::relative_ptr_type idf_product_template_product_header;
 		corona::database::relative_ptr_type idf_product_template_product_structure;
 		corona::database::relative_ptr_type idf_product_template_coverage_header;
 		corona::database::relative_ptr_type idf_product_template_coverage_structure;
+
+		corona::database::relative_ptr_type idc_product_template_product_header;
+		corona::database::relative_ptr_type idc_product_template_product_structure;
+		corona::database::relative_ptr_type idc_product_template_coverage_header;
+		corona::database::relative_ptr_type idc_product_template_coverage_structure;			
 
 		corona::database::relative_ptr_type idf_inception;
 		corona::database::relative_ptr_type idf_expiration;

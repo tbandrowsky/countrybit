@@ -680,6 +680,7 @@ namespace corona
 			uint64_t									class_size_bytes;
 			bool										user_defined;
 			int											primary_key_idx;
+			object_id_type								dynamic_class_id;
 		};
 
 		class jclass_field
