@@ -105,9 +105,7 @@ namespace corona
 				required->all_of([this, selections](auto& src) {
 					int c = selections->count_if(
 						[src, this](auto& dest) {
-							auto obj = this->objects[dest.item];
-							relative_ptr_type class_id = obj.item().class_id;
-							return class_id == src.item.class_id;
+							return matches_class_id(dest.item,src.item.class_id);
 						});
 #if _TRACE_RULE
 					std::cout << "  selected count of " << src.item.class_id << " " << c << std::endl;
@@ -117,9 +115,7 @@ namespace corona
 
 				bool all_selections_required = selections->all_of([this, required](auto& dest) {
 					bool result = required->any_of([this, dest](auto& src) {
-						auto obj = this->objects[dest.item];
-						relative_ptr_type class_id = obj.item().class_id;
-						return src.item.class_id == class_id;
+						return matches_class_id(dest.item, src.item.class_id);
 						});
 #if _TRACE_RULE						
 					std::cout << "   check " << dest.item << " " << result << std::endl;
@@ -570,6 +566,7 @@ namespace corona
 			object_id_type& class_object_id = slice.get_object_id(schema->idf_user_class_class_id, true);
 			pcr.class_id = class_object_id.row_id;
 			pcr.class_description = pcr.class_name;
+			pcr.base_class_id = slice.get_int64(schema->idf_base_class_id, true);
 
 			auto fields = slice.get_list(schema->idf_user_field_list, true);
 			for (auto field : fields) {
@@ -650,6 +647,32 @@ namespace corona
 		{
 			auto existing_object = objects.get_item(_object_id);
 			return existing_object.pitem()->class_id;
+		}
+
+		relative_ptr_type jcollection::get_base_id(relative_ptr_type _object_id)
+		{
+			relative_ptr_type class_id = get_class_id(_object_id);
+			auto class_def = schema->get_class(class_id);
+			return class_def.item().base_class_id;
+		}
+
+		bool jcollection::matches_class_id(relative_ptr_type _object_id, relative_ptr_type _class_id)
+		{
+			relative_ptr_type class_id = get_class_id(_object_id);
+			if (class_id == _class_id) {
+				return true;
+			}
+			relative_ptr_type base_class_id = get_base_id(_object_id);
+			if (base_class_id == _class_id) {
+				return true;
+			}
+			while (base_class_id != null_row) {
+				auto new_class = schema->get_class(base_class_id);
+				if (new_class.item().class_id == _class_id || new_class.item().base_class_id == _class_id) {
+					return true;
+				}
+				base_class_id = new_class.item().base_class_id;
+			}
 		}
 
 		jobject jcollection::get_at(relative_ptr_type _object_id)
@@ -2564,7 +2587,7 @@ namespace corona
 
 		void jschema::add_standard_fields() 
 		{
-			put_string_field_request string_fields[44] = {
+			put_string_field_request string_fields[43] = {
 				{ { null_row, jtype::type_string ,"full_name", "Full Name" }, { 75, "", "" } },
 				{ { null_row, jtype::type_string ,"first_name", "First Name" }, { 50, "", "" } },
 				{ { null_row, jtype::type_string ,"last_name", "Last Name" }, { 50, "", "" } },
@@ -2604,8 +2627,7 @@ namespace corona
 				{ { null_row, jtype::type_string, "field_format", "Field Format" }, { 64, "", "" } },
 				{ { null_row, jtype::type_string, "string_validation_pattern", "Validation Pattern" }, { 64, "", "" } },
 				{ { null_row, jtype::type_string, "string_validation_message", "Validation Message" }, { 64, "", "" } },
-				{ { null_row, jtype::type_string, "user_class_class_name", "User Class Name" }, { 64, "", "" } },
-				{ { null_row, jtype::type_string, "user_class_group", "User Class Group" }, { 64, "", "" } }
+				{ { null_row, jtype::type_string, "user_class_class_name", "User Class Name" }, { 64, "", "" } }
 			};
 
 			put_time_field_request time_fields[4] = {
@@ -2615,7 +2637,7 @@ namespace corona
 				{ { null_row, jtype::type_datetime, "date_stop", "Max Date" }, 0, INT64_MAX }
 			};
 
-			put_integer_field_request int_fields[17] = {
+			put_integer_field_request int_fields[18] = {
 				{ { null_row, jtype::type_int64, "count", "Count" }, 0, INT64_MAX },
 				{ { null_row, jtype::type_int8, "bold", "Bold" }, 0, INT8_MAX },
 				{ { null_row, jtype::type_int8, "italic", "Italic" }, 0, INT8_MAX },
@@ -2633,6 +2655,7 @@ namespace corona
 				{ { null_row, jtype::type_int64, "user_field", "Max. Value" }, 0, INT64_MAX },
 				{ { null_row, jtype::type_int16, "field_type", "Field Type" }, 0, INT64_MAX },
 				{ { null_row, jtype::type_int64, "user_class_class_id", "Max. Value" }, 0, INT64_MAX },
+				{ { null_row, jtype::type_int64, "base_class_id", "Max. Value" }, 0, INT64_MAX },
 			};
 
 			put_double_field_request double_fields[20] = {
@@ -2667,8 +2690,6 @@ namespace corona
 			put_point_field({ null_row, jtype::type_point, "point", "point" });
 			put_point_field({ null_row, jtype::type_point, "position_point", "position_point" });
 			put_point_field({ null_row, jtype::type_point, "selection_point", "selection_point" });
-
-			put_integer_field({ null_row, jtype::type_object, "user_class_class_id" });
 
 			put_rectangle_field({ null_row, jtype::type_rectangle, "rectangle", "rectangle" });
 
@@ -2738,6 +2759,7 @@ namespace corona
 			idf_horizontal_alignment = find_field("horizontal_alignment");
 			idf_wrap_text = find_field("wrap_text");
 			idf_user_class_class_id = find_field("user_class_class_id");
+			idf_base_class_id = find_field("base_class_id");
 
 			idf_quantity = find_field("quantity");
 			idf_latitude = find_field("latitude");
@@ -2898,7 +2920,7 @@ namespace corona
 
 			pcr.class_name = "user_class";
 			pcr.class_description = "Custom class created by user";
-			pcr.member_fields = { idf_user_class, idf_user_class_root, idf_user_class_group, idf_user_class_class_name, idf_user_class_class_id, idf_user_field_list };
+			pcr.member_fields = { idf_user_class, idf_base_class_id, idf_user_class_root, idf_user_class_class_name, idf_user_class_class_id, idf_user_field_list };
 			pcr.field_id_primary_key = idf_user_class;
 			idc_user_class = put_class(pcr);
 

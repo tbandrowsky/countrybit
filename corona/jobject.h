@@ -436,6 +436,11 @@ namespace corona
 				return class_id;
 			}
 
+			relative_ptr_type get_base_class_id() 
+			{
+				return get_class().pitem()->base_class_id;
+			}
+
 			dimensions_type get_dim();
 
 			int get_field_index_by_name(const object_name& name);
@@ -1001,6 +1006,8 @@ namespace corona
 
 			jobject get_at(relative_ptr_type _object_id);
 			relative_ptr_type get_class_id(relative_ptr_type _object_id);
+			relative_ptr_type get_base_id(relative_ptr_type _object_id);
+			bool matches_class_id(relative_ptr_type _object_id, relative_ptr_type _class_id);
 
 			relative_ptr_type size()
 			{
@@ -1210,7 +1217,7 @@ namespace corona
 			relative_ptr_type idf_user_class;
 			relative_ptr_type idf_user_class_class_name;
 			relative_ptr_type idf_user_class_class_id;
-			relative_ptr_type idf_user_class_group;
+			relative_ptr_type idf_base_class_id;
 
 			relative_ptr_type idc_user_field;
 			relative_ptr_type idf_user_field;
@@ -1248,6 +1255,8 @@ namespace corona
 			relative_ptr_type idf_int_start;
 			relative_ptr_type idf_int_stop;
 			relative_ptr_type idf_int_format;
+
+			relative_ptr_type idf_base_class_id;
 
 			jschema() = default;
 			~jschema() = default;
@@ -1836,6 +1845,7 @@ namespace corona
 				p.description = request.class_description;
 				p.class_size_bytes = total_size_bytes;
 				p.primary_key_idx = -1;
+				p.base_class_id = request.base_class_id;
 				for (int i = 0; i < pcr.size(); i++)
 				{
 					if (pcr.detail(i).field_id == request.field_id_primary_key) {

@@ -651,6 +651,7 @@ namespace corona
 			object_description				class_description;
 			member_field_collection			member_fields;
 			relative_ptr_type				field_id_primary_key;
+			relative_ptr_type				base_class_id;
 		};
 
 		class jlist_instance
@@ -680,7 +681,7 @@ namespace corona
 			uint64_t									class_size_bytes;
 			bool										user_defined;
 			int											primary_key_idx;
-			object_id_type								dynamic_class_id;
+			relative_ptr_type							base_class_id;
 		};
 
 		class jclass_field
