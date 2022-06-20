@@ -492,7 +492,7 @@ namespace corona
 			return acr;
 		}
 
-		jobject jcollection::create_object(relative_ptr_type _item_id, relative_ptr_type _actor_id, relative_ptr_type _class_id, relative_ptr_type& object_id)
+		jobject jcollection::create_object(relative_ptr_type _item_id, relative_ptr_type _actor_id, relative_ptr_type _class_id, relative_ptr_type& _object_id)
 		{
 			auto myclass = schema->get_class(_class_id);
 
@@ -523,8 +523,9 @@ namespace corona
 			co.otype = jtype::type_object;
 
 			auto new_object = objects.create_item( &co, bytes_to_allocate, nullptr);
+			new_object.item().last_modified = std::time(nullptr);
 			co.oid.row_id = new_object.row_id();
-			object_id = new_object.row_id();
+			_object_id = new_object.row_id();
 			char* bytes = new_object.pdetails();
 			jarray ja(nullptr, schema, find_class_id, bytes, true);
 			auto new_slice = ja.get_slice(0);
@@ -552,7 +553,7 @@ namespace corona
 			}
 		}
 
-		relative_ptr_type jcollection::put_user_class(jobject& slice)
+		relative_ptr_type jcollection::put_user_class(jobject& slice, time_t _version)
 		{
 			auto class_id = null_row;
 			if (slice.get_class_id() != schema->idc_user_class)
@@ -563,6 +564,7 @@ namespace corona
 			put_class_request pcr;
 
 			pcr.class_name = slice.get_string(schema->idf_user_class_class_name, true);
+			pcr.class_name = pcr.class_name + "v" + std::to_string(_version);
 			object_id_type& class_object_id = slice.get_object_id(schema->idf_user_class_class_id, true);
 			pcr.class_id = class_object_id.row_id;
 			pcr.class_description = pcr.class_name;
@@ -637,10 +639,85 @@ namespace corona
 					pcr.member_fields.push_back({ field_id });
 				}
 				break;
+				case type_list:
+				case type_object:
+				{
+					put_object_field_request pifr;
+					pifr.name.name = field.item.get_string(schema->idf_field_name, true);
+					pifr.name.description = field.item.get_string(schema->idf_field_description, true);
+					//pifr.name.format = field.item.get_string(schema->id_dbf_field_description, true);
+					auto options = field.item.get_object(schema->idc_object_options, true).get_slice({ 0,0,0 });
+					pifr.options.class_id = options.get_int64(schema->idf_object_class_id);
+					pifr.options.dim.x = options.get_int32(schema->idf_object_x);
+					pifr.options.dim.y = options.get_int32(schema->idf_object_y);
+					pifr.options.dim.z = options.get_int32(schema->idf_object_z);
+					auto field_id = schema->put_object_field(pifr);
+					pcr.member_fields.push_back({ field_id });
+				}
+				break;
 				}
 			}
 			class_id = schema->put_class(pcr);
 			return class_id;
+		}
+
+		relative_ptr_type jcollection::create_class_from_template(relative_ptr_type _target_class_id, relative_ptr_type _source_template_object)
+		{
+			jclass cls = schema->get_class(_target_class_id);
+			auto object_header = objects.get_item(_source_template_object);
+			jobject obj = get_object(_source_template_object);
+	
+			put_class_request pcr;
+			pcr.class_name = "template_" + std::to_string(_source_template_object) + "_v" + std::to_string(object_header.item().last_modified);
+			pcr.class_description = "Class expanded from:" + _source_template_object;
+			pcr.class_id = null_row;
+			pcr.base_class_id = _target_class_id;
+			int idx = cls.item().primary_key_idx;
+
+			if (idx > -1)
+			{
+				pcr.field_id_primary_key = cls.detail(idx).field_id;
+			}
+
+			for (int i = 0; i < cls.size(); i++)
+			{
+				auto& target_class_field = cls.detail(i);
+				auto& target_field = schema->get_field(target_class_field.field_id);
+				auto src_field_idx = obj.get_field_index_by_id(target_field.field_id);
+
+				if (src_field_idx != null_row)
+				{
+					if (target_field.is_container())
+					{
+						if (target_field.is_class(schema->idc_user_class))
+						{
+							// the object here is a user class in the source object,
+							// so, we fetch it, create the class for it, then, go ahead and make that object 
+							// an object (list or array) member of the final object, with the 
+							// target class dimensions.
+							auto user_class_obj = obj.get_object(src_field_idx, false).get_slice(0);
+							relative_ptr_type field_class_id = put_user_class(user_class_obj, object_header.item().last_modified);
+							auto field_class = schema->get_class(field_class_id);
+							pcr.member_fields.push_back({ field_class_id, target_field.object_properties.dim });
+						} 
+						else 
+						{
+							pcr.member_fields.push_back({ target_field.object_properties.class_id, target_field.object_properties.dim });
+						}
+					}
+					else 
+					{
+						pcr.member_fields.push_back({ target_field.field_id });
+					}
+				}
+				else
+				{
+					pcr.member_fields.push_back({ target_field.field_id });
+				}
+			}
+			
+			auto new_class_id = schema->put_class(pcr);
+			return new_class_id;
 		}
 
 		relative_ptr_type jcollection::get_class_id(relative_ptr_type _object_id)
@@ -654,6 +731,26 @@ namespace corona
 			relative_ptr_type class_id = get_class_id(_object_id);
 			auto class_def = schema->get_class(class_id);
 			return class_def.item().base_class_id;
+		}
+
+		bool jcollection::matches_class_id(jobject& obj, relative_ptr_type _class_id)
+		{
+			relative_ptr_type class_id = obj.get_class_id();
+			if (class_id == _class_id) {
+				return true;
+			}
+			relative_ptr_type base_class_id = obj.get_base_class_id();
+			if (base_class_id == _class_id) {
+				return true;
+			}
+			while (base_class_id != null_row) {
+				auto new_class = schema->get_class(base_class_id);
+				if (new_class.item().class_id == _class_id || new_class.item().base_class_id == _class_id) {
+					return true;
+				}
+				base_class_id = new_class.item().base_class_id;
+			}
+			return false;
 		}
 
 		bool jcollection::matches_class_id(relative_ptr_type _object_id, relative_ptr_type _class_id)
@@ -673,6 +770,7 @@ namespace corona
 				}
 				base_class_id = new_class.item().base_class_id;
 			}
+			return false;
 		}
 
 		jobject jcollection::get_at(relative_ptr_type _object_id)
@@ -690,6 +788,7 @@ namespace corona
 		{
 			auto existing_object = objects.get_item(_object_id);
 			if (existing_object.pitem()->otype == jtype::type_object) {
+				existing_object.item().last_modified = std::time(nullptr);
 				jarray jax(nullptr, schema, existing_object.item().class_field_id, existing_object.pdetails());
 				auto slice_to_update = jax.get_slice(0);
 				slice_to_update.update(_slice);
@@ -2637,7 +2736,7 @@ namespace corona
 				{ { null_row, jtype::type_datetime, "date_stop", "Max Date" }, 0, INT64_MAX }
 			};
 
-			put_integer_field_request int_fields[18] = {
+			put_integer_field_request int_fields[22] = {
 				{ { null_row, jtype::type_int64, "count", "Count" }, 0, INT64_MAX },
 				{ { null_row, jtype::type_int8, "bold", "Bold" }, 0, INT8_MAX },
 				{ { null_row, jtype::type_int8, "italic", "Italic" }, 0, INT8_MAX },
@@ -2656,6 +2755,9 @@ namespace corona
 				{ { null_row, jtype::type_int16, "field_type", "Field Type" }, 0, INT64_MAX },
 				{ { null_row, jtype::type_int64, "user_class_class_id", "Max. Value" }, 0, INT64_MAX },
 				{ { null_row, jtype::type_int64, "base_class_id", "Max. Value" }, 0, INT64_MAX },
+				{ { null_row, jtype::type_int32, "object_x", "X Dim" }, 0, INT64_MAX },
+				{ { null_row, jtype::type_int32, "object_y", "Y Dim" }, 0, INT64_MAX },
+				{ { null_row, jtype::type_int32, "object_z", "Z Dim" }, 0, INT64_MAX },
 			};
 
 			put_double_field_request double_fields[20] = {
@@ -2882,6 +2984,10 @@ namespace corona
 			idf_int_stop = find_field("int_stop");
 			idf_int_format = find_field("int_format");
 
+			idf_object_x = find_field("object_x");
+			idf_object_y = find_field("object_y");
+			idf_object_z = find_field("object_z");
+
 			pcr.class_name = "string_options";
 			pcr.class_description = "Options for string field";
 			pcr.member_fields = { idf_string_length, idf_string_validation_message, idf_string_validation_pattern, idf_string_full_text_editor, idf_string_rich_text_editor };
@@ -2902,6 +3008,11 @@ namespace corona
 			pcr.member_fields = { idf_int_start, idf_int_stop };
 			idc_int_options = put_class(pcr);
 
+			pcr.class_name = "object_options";
+			pcr.class_description = "Options for object field";
+			pcr.member_fields = { idf_object_class_id, idf_object_is_list, idf_object_x, idf_object_y, idf_object_y };
+			idc_object_options = put_class(pcr);
+
 			pcr.class_name = "user_class_root";
 			pcr.class_description = "custom class root";
 			pcr.member_fields = { idf_user_class_root };
@@ -2910,7 +3021,7 @@ namespace corona
 
 			pcr.class_name = "user_field";
 			pcr.class_description = "User field specification";
-			pcr.member_fields = { idf_user_field, idf_field_name, idf_field_description, idf_field_format, idf_string_options, idf_double_options, idf_date_options, idf_int_options };
+			pcr.member_fields = { idf_user_field, idf_field_name, idf_field_description, idf_field_format, idf_string_options, idf_double_options, idf_date_options, idf_int_options, idf_object_options };
 			pcr.field_id_primary_key = idf_user_field;
 			idc_user_field = put_class(pcr);
 

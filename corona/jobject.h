@@ -676,6 +676,7 @@ namespace corona
 			relative_ptr_type		class_field_id;
 			actor_id_type			actor_id;
 			relative_ptr_type		item_id;
+			time_t					last_modified;
 			bool					deleted;
 		};
 
@@ -997,10 +998,11 @@ namespace corona
 
 			void print(const char *_trace, actor_state& acr);
 
-			jobject create_object(relative_ptr_type _item_id, relative_ptr_type _actor_id, relative_ptr_type _class_id, relative_ptr_type& object_id);
+			jobject create_object(relative_ptr_type _item_id, relative_ptr_type _actor_id, relative_ptr_type _class_id, relative_ptr_type& _object_id);
 			jobject get_object(relative_ptr_type _object_id);
 			jobject update_object(relative_ptr_type _object_id, jobject _slice);
 			collection_object_type &get_object_reference(relative_ptr_type _object_id);
+			relative_ptr_type create_class_from_template(relative_ptr_type _target_class_id, relative_ptr_type _source_template_object);
 
 			bool selector_applies(selector_collection* _selector, actor_id_type& _actor);
 
@@ -1008,6 +1010,7 @@ namespace corona
 			relative_ptr_type get_class_id(relative_ptr_type _object_id);
 			relative_ptr_type get_base_id(relative_ptr_type _object_id);
 			bool matches_class_id(relative_ptr_type _object_id, relative_ptr_type _class_id);
+			bool matches_class_id(jobject& obj, relative_ptr_type _class_id);
 
 			relative_ptr_type size()
 			{
@@ -1031,7 +1034,7 @@ namespace corona
 
 			auto where(relative_ptr_type _class_id)
 			{
-				return iterator_type(this, [_class_id](const iterator_item_type& it) { return it.item.get_class_id() == _class_id; });
+				return iterator_type(this, [this, _class_id](const iterator_item_type& it) { return matches_class_id(it.location, _class_id); });
 			}
 
 			jobject first_value(std::function<bool(const iterator_item_type&)> predicate)
@@ -1067,7 +1070,7 @@ namespace corona
 				return std::count_if(begin(), end(), predicate);
 			}
 
-			relative_ptr_type put_user_class(jobject& _class_definition);
+			relative_ptr_type put_user_class(jobject& _class_definition, time_t _version);
 
 		};
 
@@ -1227,11 +1230,13 @@ namespace corona
 			relative_ptr_type idc_double_options;
 			relative_ptr_type idc_int_options;
 			relative_ptr_type idc_date_options;
+			relative_ptr_type idc_object_options;
 
 			relative_ptr_type idf_string_options;
 			relative_ptr_type idf_double_options;
 			relative_ptr_type idf_int_options;
 			relative_ptr_type idf_date_options;
+			relative_ptr_type idf_object_options;
 
 			relative_ptr_type idf_field_name;
 			relative_ptr_type idf_field_description;
@@ -1256,7 +1261,18 @@ namespace corona
 			relative_ptr_type idf_int_stop;
 			relative_ptr_type idf_int_format;
 
+			relative_ptr_type idf_object_class_id;
+			relative_ptr_type idf_object_is_list;
+			relative_ptr_type idf_object_x;
+			relative_ptr_type idf_object_y;
+			relative_ptr_type idf_object_z;
+
 			relative_ptr_type idf_base_class_id;
+
+			relative_ptr_type idf_template_parameter_field_id;
+			relative_ptr_type idf_template_parameter_field_type;
+			relative_ptr_type idf_template_parameter_field_dim;
+			relative_ptr_type idc_template_parameter_field;
 
 			jschema() = default;
 			~jschema() = default;
@@ -1846,6 +1862,7 @@ namespace corona
 				p.class_size_bytes = total_size_bytes;
 				p.primary_key_idx = -1;
 				p.base_class_id = request.base_class_id;
+				p.template_class_id = request.template_class_id;
 				for (int i = 0; i < pcr.size(); i++)
 				{
 					if (pcr.detail(i).field_id == request.field_id_primary_key) {

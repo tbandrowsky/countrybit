@@ -127,10 +127,25 @@ namespace corona
 		struct object_properties_type
 		{
 			dimensions_type		dim;
-			relative_ptr_type			class_id;
+			relative_ptr_type	class_id;
 			object_name			class_name;
 			int64_t				class_size_bytes;
 			int64_t				total_size_bytes;
+
+			object_properties_type() : class_id(null_row), class_size_bytes(0), total_size_bytes(0)
+			{
+				;
+			}
+
+			object_properties_type( relative_ptr_type _class_id, dimensions_type _dim) : class_id(_class_id), dim(_dim), class_size_bytes(0), total_size_bytes(0)
+			{
+				;
+			}
+
+			object_properties_type( dimensions_type _dim, relative_ptr_type _class_id ) : class_id(_class_id), dim(_dim), class_size_bytes(0), total_size_bytes(0)
+			{
+				;
+			}
 		};
 
 		struct model_properties_type
@@ -169,7 +184,7 @@ namespace corona
 				sql_properties_type			sql_properties;
 				file_properties_type		file_properties;
 				http_properties_type		http_properties;
-				layout_rect_properties_type		layout_rect_properties;
+				layout_rect_properties_type	layout_rect_properties;
 			};
 
 			jfield() { ; }
@@ -301,10 +316,10 @@ namespace corona
 		{
 			remote_file_path				file_path;
 			object_name						parameter_field;
-			relative_ptr_type						parameter_field_id;
-			relative_ptr_type						result_field_id;
+			relative_ptr_type				parameter_field_id;
+			relative_ptr_type				result_field_id;
 			object_name						result_class_name;
-			relative_ptr_type						result_class_id;
+			relative_ptr_type				result_class_id;
 			int								max_result_objects;
 			remote_parameter_fields_type	parameters;
 			remote_fields_type				fields;
@@ -652,6 +667,7 @@ namespace corona
 			member_field_collection			member_fields;
 			relative_ptr_type				field_id_primary_key;
 			relative_ptr_type				base_class_id;
+			relative_ptr_type				template_class_id;
 		};
 
 		class jlist_instance
@@ -682,6 +698,7 @@ namespace corona
 			bool										user_defined;
 			int											primary_key_idx;
 			relative_ptr_type							base_class_id;
+			relative_ptr_type							template_class_id;
 		};
 
 		class jclass_field

@@ -93,7 +93,12 @@ namespace proposal
 		idf_product_template_line_of_business = schema.put_string_field({ { null_row,  jtype::type_string, "product_template_line_of_business", "Line of Business" }, { 32, "", "" } });
 		idf_product_template_carrier = schema.put_string_field({ { null_row,  jtype::type_string, "home", "Home id" }, { 32, "", "" } });
 		idf_product_template_updated_by = schema.put_string_field({ { null_row,  jtype::type_string, "home", "Home id" }, { 32, "", "" } });
-		
+
+		idf_product_template_product_header = schema.put_object_field({ { null_row, jtype::type_object, "product_header", "Product Header"}, { { 1, 1, 1 }, schema.idc_user_class } });
+		idf_product_template_product_structure = schema.put_object_field({ { null_row, jtype::type_object, "product_detail", "Product Detail"}, { { 1, 1, 1 }, schema.idc_user_class } });
+		idf_product_template_coverage_header = schema.put_object_field({ { null_row, jtype::type_object, "coverage_header", "Coverage Header"}, { { 1, 1, 1 }, schema.idc_user_class } });
+		idf_product_template_coverage_structure = schema.put_object_field({ { null_row, jtype::type_object, "coverage_detail", "Coverage Detail"}, { { 1, 1, 1 }, schema.idc_user_class } });
+
 		pcr.class_name = "product_template";
 		pcr.class_description = "Product Template";
 		pcr.field_id_primary_key = idf_product_template;
@@ -108,25 +113,13 @@ namespace proposal
 			idf_product_template_type,
 			idf_product_template_line_of_business,
 			idf_product_template_carrier,
-			idf_product_template_updated_by
-		};
-
-		porf = { { null_row, jtype::type_list, "product_template_product_header", "Product Header" }, { {1,1,1}, schema.idc_user_class } };
-		idf_product_template_product_header = schema.put_object_field(porf);
-
-		porf = { { null_row, jtype::type_list, "product_template_product_structure", "Product Structure" }, { {1,1,1}, schema.idc_user_class } };
-		idf_product_template_product_structure = schema.put_object_field(porf);
-
-		porf = { { null_row, jtype::type_list, "product_template_coverage_header", "Coverage Header" }, { {1,1,1}, schema.idc_user_class } };
-		idf_product_template_coverage_header = schema.put_object_field(porf);
-
-		porf = { { null_row, jtype::type_list, "product_template_coverage_structure", "Coverage Structure" }, { {1,1,1}, schema.idc_user_class } };
-		idf_product_template_coverage_structure = schema.put_object_field(porf);
-
-		idf_product_template_product_header,
+			idf_product_template_updated_by,
+			idf_product_template_product_header,
 			idf_product_template_product_structure,
 			idf_product_template_coverage_header,
 			idf_product_template_coverage_structure
+		};
+		idc_product_template = schema.put_class(pcr);
 
 		idf_program = schema.put_integer_field({ { null_row,  jtype::type_int64, "program_id", "Program Id" }, { 0, INT64_MAX } });
 		idf_program_view = schema.put_integer_field({ { null_row,  jtype::type_int64, "program_view", "Program View" }, { 0, INT64_MAX } });
@@ -138,15 +131,13 @@ namespace proposal
 		pcr.member_fields = { idf_program, idf_client, idf_program_view, schema.idf_name, idf_program_title, idf_program_subtitle };
 		idc_coverage = schema.put_class(pcr);
 
-
-		idf_program_product = schema.put_integer_field({ { null_row,  jtype::type_int64, "program_product_id", "Program Product Id" }, { 0, INT64_MAX } });
-		idc_product_instance = schema.put_integer_field({ { null_row,  jtype::type_int64, "product_instance_class_id", "Product Instance Class" }, { 0, INT64_MAX } });
-		idf_product_instance = schema.put_integer_field({ { null_row,  jtype::type_int64, "product_instance_object_id", "Product Instance Object" }, { 0, INT64_MAX } });
-		pcr.class_name = "program_product";
-		pcr.class_description = "Program Product";
-		pcr.field_id_primary_key = idf_program_product;
-		pcr.member_fields = { idf_program_product, idf_program, idf_client, idf_product_template, idc_product_instance };
-		idc_program_product = schema.put_class(pcr);
+		idf_product = schema.put_integer_field({ { null_row,  jtype::type_int64, "product_id", "Program Product Id" }, { 0, INT64_MAX } });
+		pcr.class_name = "Product";
+		pcr.class_description = "Product";
+		pcr.field_id_primary_key = idf_product;
+		pcr.base_class_id = idc_product_template;
+		pcr.member_fields = { idf_product, idf_program, idf_client, idf_product_template_product_header, idf_product_template_product_structure, idf_product_template_coverage_header, idf_product_template_coverage_structure };
+		idc_product = schema.put_class(pcr);
 
 		idf_program_chart_slide = schema.put_integer_field({ { null_row,  jtype::type_int64, "program_chart_slide_id", "Program Chart Slide Id" }, { 0, INT64_MAX } });
 		pcr.class_name = "program_chart_slide";

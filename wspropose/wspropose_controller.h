@@ -44,16 +44,6 @@ namespace proposal
 		corona::database::relative_ptr_type idf_product_template_updated_by;
 		corona::database::relative_ptr_type idf_product_template_status_updated_by;
 
-		corona::database::relative_ptr_type idf_product_template_product_header;
-		corona::database::relative_ptr_type idf_product_template_product_structure;
-		corona::database::relative_ptr_type idf_product_template_coverage_header;
-		corona::database::relative_ptr_type idf_product_template_coverage_structure;
-
-		corona::database::relative_ptr_type idc_product_template_product_header;
-		corona::database::relative_ptr_type idc_product_template_product_structure;
-		corona::database::relative_ptr_type idc_product_template_coverage_header;
-		corona::database::relative_ptr_type idc_product_template_coverage_structure;			
-
 		corona::database::relative_ptr_type idf_inception;
 		corona::database::relative_ptr_type idf_expiration;
 		corona::database::relative_ptr_type idf_status;
@@ -62,16 +52,24 @@ namespace proposal
 		corona::database::relative_ptr_type idf_deductible;
 		corona::database::relative_ptr_type idf_share;
 
+		corona::database::relative_ptr_type idf_product_template_product_header;
+		corona::database::relative_ptr_type idf_product_template_product_structure;
+		corona::database::relative_ptr_type idf_product_template_coverage_header;
+		corona::database::relative_ptr_type idf_product_template_coverage_structure;
+
+		corona::database::relative_ptr_type idf_product_header;
+		corona::database::relative_ptr_type idf_product_structure;
+		corona::database::relative_ptr_type idf_product_coverage_header;
+		corona::database::relative_ptr_type idf_product_coverage_structure;
+
 		corona::database::relative_ptr_type idf_program_title;
 		corona::database::relative_ptr_type idf_program_subtitle;
 		corona::database::relative_ptr_type idc_program;
 		corona::database::relative_ptr_type idf_program;
 		corona::database::relative_ptr_type idf_program_view;
 
-		corona::database::relative_ptr_type idc_program_product;
-		corona::database::relative_ptr_type idf_program_product;
-		corona::database::relative_ptr_type idc_product_instance;
-		corona::database::relative_ptr_type idf_product_instance;
+		corona::database::relative_ptr_type idc_product;
+		corona::database::relative_ptr_type idf_product;
 		
 		corona::database::relative_ptr_type idf_slide_title;
 
