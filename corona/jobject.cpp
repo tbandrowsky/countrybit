@@ -182,12 +182,17 @@ namespace corona
 #endif
 
 				if (selector_applies(&oi.item.selectors, _actor)) {
-#if _TRACE_RULE
-					std::cout << " " << oi.item.rule_name << " applies " << std::endl;
-#endif
 					create_object_request aco;
+
+					aco.collection_id = collection_id;
+					aco.actor_id = _actor;
+					aco.class_id = oi.item.create_class_id;
+					aco.select_on_create = oi.item.select_on_create;
+					aco.template_item_id = null_row;
+					aco.item_id = null_row;
+
 					auto selected_create = selections->where([rule, this](auto& src) {
-						return objects[src.item].item().class_id == rule->item_id_class;
+						return this->matches_class_id(src.item, rule->item_id_class);
 						});
 					if (selected_create != std::end(*selections)) {
 						relative_ptr_type object_id = selected_create.get_object().item;
@@ -198,11 +203,37 @@ namespace corona
 					{
 						aco.item_id = null_row;
 					}
-					aco.collection_id = collection_id;
-					aco.actor_id = _actor;
-					aco.class_id = oi.item.create_class_id;
-					aco.select_on_create = oi.item.select_on_create;
-					acr.create_objects.insert_or_assign(aco.class_id, aco);
+
+					auto cls = schema->get_class(rule->create_class_id);
+					relative_ptr_type template_class_id = cls.item().template_class_id;
+					if (template_class_id != null_row)
+					{
+						auto selected_template = selections->where([template_class_id, this](auto& src) {
+							return this->matches_class_id(src.item, template_class_id);
+							});
+						if (selected_template != std::end(*selections))
+						{
+							relative_ptr_type object_id = selected_template.get_object().item;
+							relative_ptr_type item_id = objects[object_id].item().item_id;
+							aco.template_item_id = item_id;
+							acr.create_objects.insert_or_assign(aco.class_id, aco);
+#if _TRACE_RULE
+							std::cout << " " << oi.item.rule_name << " applies " << std::endl;
+#endif
+						}
+						else {
+#if _TRACE_RULE
+							std::cout << " " << oi.item.rule_name << " does not apply because the template class was not selected " << std::endl;
+#endif
+						}
+					}
+					else 
+					{
+						acr.create_objects.insert_or_assign(aco.class_id, aco);
+#if _TRACE_RULE
+						std::cout << " " << oi.item.rule_name << " applies " << std::endl;
+#endif
+					}
 				}
 				else 
 				{
@@ -442,7 +473,14 @@ namespace corona
 			relative_ptr_type item_id = _create.item_id;
 			relative_ptr_type object_id = null_row;
 
-			jobject new_object = create_object(item_id, _create.actor_id, _create.class_id, object_id);
+			jobject new_object;
+			if (_create.template_item_id != null_row) {
+				auto new_class_id = create_class_from_template(_create.class_id, _create.template_item_id);
+				new_object = create_object(item_id, _create.actor_id, new_class_id, object_id);
+			}
+			else {
+				new_object = create_object(item_id, _create.actor_id, _create.class_id, object_id);
+			}
 			if (object_id != null_row) 
 			{
 				for (auto js : ac.selections)
@@ -3093,7 +3131,7 @@ namespace corona
 				jschema schema;
 				relative_ptr_type schema_id;
 
-				schema = jschema::create_schema( & box, 20, true, schema_id);
+				schema = jschema::create_schema( &box, 20, true, schema_id );
 
 				relative_ptr_type quantity_field_id = null_row;
 				relative_ptr_type last_name_field_id = null_row;
@@ -3238,7 +3276,6 @@ namespace corona
 				ref.max_actors = 2;
 				ref.max_objects = 50;
 				ref.collection_size_bytes = 1 << 19;
-
 
 				init_collection_id(ref.collection_id);
 

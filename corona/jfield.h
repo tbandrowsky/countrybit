@@ -756,10 +756,10 @@ namespace corona
 		public:
 			object_name						rule_name;
 			object_name						create_class_name;
-			relative_ptr_type						create_class_id;
+			relative_ptr_type				create_class_id;
 			selector_collection				selectors;
 			object_name						item_id_class_name;
-			relative_ptr_type						item_id_class;
+			relative_ptr_type				item_id_class;
 			bool							select_on_create;
 			bool							replace_selected;
 
@@ -777,7 +777,7 @@ namespace corona
 		public:	
 			object_name						rule_name;
 			object_name						select_class_name;
-			relative_ptr_type						select_class_id;
+			relative_ptr_type				select_class_id;
 			selector_collection				selectors;
 
 			model_selectable_class()

@@ -687,6 +687,7 @@ namespace corona
 			actor_id_type		actor_id;
 			relative_ptr_type	class_id;
 			relative_ptr_type	item_id;
+			relative_ptr_type	template_item_id;
 			bool				select_on_create;
 		};
 
@@ -1834,13 +1835,27 @@ namespace corona
 				}
 
 				auto sz = mfs.size();
-				int num_integration_fields = mfs.count_if([this](auto& src) {
-					auto& f = this->get_field(src.item.field_id);
-					return f.is_data_generator();
-					});
-
 				field_array af;
 				int64_t total_size_bytes = 0;
+
+				member_field_collection temp_fields;
+
+				if (request.template_class_id != null_row && request.base_class_id != null_row)
+				{
+					relative_ptr_type base_class_id = request.base_class_id;
+
+					jclass cls = get_class(base_class_id);
+
+					put_object_field_request porf;
+					porf.name.type_id = jtype::type_object;
+					porf.options.class_id = base_class_id;
+					porf.options.dim = { 1, 1, 1 };
+
+					auto field_id = put_object_field(porf);
+					temp_fields.push_back(field_id);
+				}
+
+				temp_fields += mfs;
 
 				build_class_members(af, total_size_bytes, mfs);
 
@@ -1863,6 +1878,7 @@ namespace corona
 				p.primary_key_idx = -1;
 				p.base_class_id = request.base_class_id;
 				p.template_class_id = request.template_class_id;
+
 				for (int i = 0; i < pcr.size(); i++)
 				{
 					if (pcr.detail(i).field_id == request.field_id_primary_key) {

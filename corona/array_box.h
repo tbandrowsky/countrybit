@@ -47,6 +47,15 @@ namespace corona
 				return *this;
 			}
 
+			iarray& operator += (iarray& src)
+			{
+				for (int i = 0; i < src.size(); i++)
+				{
+					push_back(src[i]);
+				}
+				return *this;
+			}
+
 			const item_type* value() const
 			{
 				return &data[0];
