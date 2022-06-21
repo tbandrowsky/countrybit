@@ -476,11 +476,13 @@ namespace corona
 			jobject new_object;
 			if (_create.template_item_id != null_row) {
 				auto new_class_id = create_class_from_template(_create.class_id, _create.template_item_id);
-				new_object = create_object(item_id, _create.actor_id, new_class_id, object_id);
-			}
-			else {
 				new_object = create_object(item_id, _create.actor_id, _create.class_id, object_id);
 			}
+			else 
+			{
+				new_object = create_object(item_id, _create.actor_id, _create.class_id, object_id);
+			}
+
 			if (object_id != null_row) 
 			{
 				for (auto js : ac.selections)
