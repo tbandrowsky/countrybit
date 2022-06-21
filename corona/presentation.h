@@ -17,9 +17,7 @@ namespace corona
 			create = 8,
 			select = 9,
 			navigate = 10,
-			h1 = 11,
-			h2 = 12,
-			h3 = 13
+			text = 11
 		};
 
 		class page_item
@@ -95,6 +93,8 @@ namespace corona
 			page_item* column( page_item* _parent, const char* _style_name = nullptr, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
 			page_item* absolute(page_item* _parent, const char* _style_name = nullptr, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
 			page_item* canvas2d(page_item* _parent, const char* _style_name = nullptr, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
+
+			page_item* text(page_item* _parent, const char* _style_name, const char *_text, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
 
 			page_item* field(page_item* _parent, int object_id, int field_id, jobject slice);
 			page_item* select(page_item* _parent, actor_state* _state, int object_id, jobject slice);

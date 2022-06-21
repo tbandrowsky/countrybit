@@ -132,9 +132,8 @@ namespace corona
 			page_item* absolute(page_item* _parent, relative_ptr_type _style_id, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
 			page_item* space(page_item* _parent, relative_ptr_type _style_id, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
 			page_item* canvas2d(page_item* _parent, relative_ptr_type _style_id, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
-
 			page_item* navigate(page_item* _parent, int object_id, relative_ptr_type _style_id, const char* _caption, layout_rect _box);
-			virtual void breadcrumbs(page_item* _parent, std::function<const char *(jobject& slice)> _captioner, layout_rect _item_box = { 0.0_px, 0.0_px, 200.0_px, 100.0_px });
+			page_item* text(page_item* _parent, relative_ptr_type _style_id, const char *_text, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
 
 			virtual void for_each(std::function<bool(const actor_view_collection::iterator_item_type& _item)> selector, std::function<bool(actor_view_object& avo, jobject& slice)> updator);
 			virtual void for_class(relative_ptr_type *class_ids, int _length, std::function<bool(const actor_view_object& avo, jobject& slice)>  updator);
@@ -151,6 +150,8 @@ namespace corona
 			virtual page_item* column_join(page_item* _parent_ui, layout_rect _box, jobject& _parent, relative_ptr_type* _join_fields);
 			virtual page_item* column_common(page_item* _parent_ui, layout_rect _box, relative_ptr_type* _has_field_list);
 
+			virtual void breadcrumbs(page_item* _parent, std::function<const char* (jobject& slice)> _captioner, layout_rect _item_box = { 0.0_px, 0.0_px, 200.0_px, 100.0_px });
+			virtual void selection_table(page_item* _parent);
 			virtual page_item* add_update_fields(page_item* _parent);
 			virtual page_item* add_create_buttons(page_item* _parent);
 			virtual page_item* add_select_items(page_item* _parent);

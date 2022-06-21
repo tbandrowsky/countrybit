@@ -228,7 +228,7 @@ namespace corona
 			{
 				jobject obj = program_chart.get_object(bc.item);
 				const char* caption = _captioner(obj);
-				navigate(_breadcrumb_container, bc.item, schema.id_breadcrumb, caption, _item_box);
+				navigate(_breadcrumb_container, bc.item, schema.idf_breadcrumb_style, caption, _item_box);
 			}
 		}
 
@@ -401,6 +401,12 @@ namespace corona
 		{
 			const char* _style_name = style_name(_style_id);
 			return pg.space(_parent, _style_name, _box);
+		}
+
+		page_item* corona_controller::text(page_item* _parent, relative_ptr_type _style_id, const char *_text, layout_rect _box)
+		{
+			const char* _style_name = style_name(_style_id);
+			return pg.text(_parent, _style_name, _text, _box);
 		}
 
 		page_item* corona_controller::canvas2d(page_item* _parent, relative_ptr_type _style_id, layout_rect _box)

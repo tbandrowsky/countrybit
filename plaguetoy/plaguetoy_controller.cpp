@@ -4,14 +4,14 @@
 
 #include "corona.h"
 #include "resource.h"
-#include "wspropose_controller.h"
+#include "plaguetoy_controller.h"
 
 namespace proposal
 {
 
 	using namespace corona::database;
 
-	wsproposal_controller::wsproposal_controller() : corona_controller()
+	plaguetoy_controller::plaguetoy_controller() : corona_controller()
 	{
 		box.init(1 << 22);
 		schema = jschema::create_schema(&box, 50, true, schema_id);
@@ -85,7 +85,7 @@ namespace proposal
 
 		idf_product_template = schema.put_integer_field({ { null_row,  jtype::type_int64, "product_template", "Product Template id" }, { 0, INT64_MAX } });
 		idf_product_template_name = schema.put_string_field({ { null_row,  jtype::type_string, "product_template_name", "Name" }, { 100, "", "" } });
-		idf_product_template_code = schema.put_string_field({ { null_row,  jtype::type_string, "product_template_code", "Code" }, { 32, "", "" }});
+		idf_product_template_code = schema.put_string_field({ { null_row,  jtype::type_string, "product_template_code", "Code" }, { 32, "", "" } });
 		idf_product_template_status = schema.put_string_field({ { null_row,  jtype::type_string, "product_template_status", "Status" }, { 32, "", "" } });
 		idf_product_template_edition_start = schema.put_time_field({ { null_row,  jtype::type_datetime, "product_template_edition_start", "Edition Start" }, { 0, INT64_MAX } });
 		idf_product_template_edition_stop = schema.put_time_field({ { null_row,  jtype::type_datetime, "product_template_edition_stop", "Edition Stop" }, { 0, INT64_MAX } });
@@ -102,12 +102,12 @@ namespace proposal
 		pcr.class_name = "product_template";
 		pcr.class_description = "Product Template";
 		pcr.field_id_primary_key = idf_product_template;
-		pcr.member_fields = { 
-			idf_product_template, 
+		pcr.member_fields = {
+			idf_product_template,
 			idf_product_template_root,
-			idf_product_template_name, 
-			idf_product_template_code, 
-			idf_product_template_status, 
+			idf_product_template_name,
+			idf_product_template_code,
+			idf_product_template_status,
 			idf_product_template_edition_start,
 			idf_product_template_edition_stop,
 			idf_product_template_type,
@@ -123,7 +123,7 @@ namespace proposal
 
 		idf_program = schema.put_integer_field({ { null_row,  jtype::type_int64, "program_id", "Program Id" }, { 0, INT64_MAX } });
 		idf_program_view = schema.put_integer_field({ { null_row,  jtype::type_int64, "program_view", "Program View" }, { 0, INT64_MAX } });
-		idf_program_title = schema.put_string_field({ { null_row,  jtype::type_string, "program_title", "Program Title" }, { 100, "", "" }});
+		idf_program_title = schema.put_string_field({ { null_row,  jtype::type_string, "program_title", "Program Title" }, { 100, "", "" } });
 		idf_program_subtitle = schema.put_string_field({ { null_row,  jtype::type_string, "program_title", "Program Subtitle" }, { 100, "", "" } });
 		pcr.class_name = "program";
 		pcr.class_description = "Program";
@@ -132,7 +132,7 @@ namespace proposal
 		idc_coverage = schema.put_class(pcr);
 
 		idf_product = schema.put_integer_field({ { null_row,  jtype::type_int64, "product_id", "Program Product Id" }, { 0, INT64_MAX } });
-		pcr.class_name = "product";
+		pcr.class_name = "Product";
 		pcr.class_description = "Product";
 		pcr.field_id_primary_key = idf_product;
 		pcr.template_class_id = idc_product_template;
@@ -150,43 +150,39 @@ namespace proposal
 		pcr.class_name = "program_chart_slide_product";
 		pcr.class_description = "Program Chart Slide Product";
 		pcr.field_id_primary_key = idf_program_chart_slide_product;
-		pcr.member_fields = { idf_program_chart_slide, idf_client, idf_program, idf_product };
+		pcr.member_fields = { idf_program_chart_slide, idf_client, idf_program, idf_program_product };
 		idc_program_chart_slide_product = schema.put_class(pcr);
 
 		idf_program_generic_slide = schema.put_integer_field({ { null_row,  jtype::type_int64, "program_generic_slide", "Generic Slide Id" }, { 0, INT64_MAX } });
 		pcr.class_name = "program_generic_slide";
 		pcr.class_description = "Program Generic Slide";
 		pcr.field_id_primary_key = idf_program_chart_slide;
-		pcr.member_fields = { idf_program_generic_slide, idf_client, idf_program };
+		pcr.member_fields = { idf_program_generic_slide, idf_client, idf_program, idf_program_product };
 		idc_program_generic_slide = schema.put_class(pcr);
 
 		jmodel jm;
 
 		jm.update_always(&schema, idc_home);
 		jm.update_always(&schema, idc_carrier_root);
-		jm.update_always(&schema, idc_carrier);
 		jm.update_always(&schema, idc_product_template_root);
-		jm.update_always(&schema, idc_product_template);
 		jm.update_always(&schema, idc_coverage_root);
-		jm.update_always(&schema, idc_coverage);
+		jm.update_always(&schema, idc_product_template);
 		jm.update_always(&schema, idc_client_root);
 		jm.update_always(&schema, idc_client);
 		jm.update_always(&schema, idc_program);
-		jm.update_always(&schema, idc_product);
+		jm.update_always(&schema, idc_program_product);
 		jm.update_always(&schema, idc_program_chart_slide);
 		jm.update_always(&schema, idc_program_generic_slide);
 
 		jm.select_always(&schema, idc_home);
 		jm.select_always(&schema, idc_carrier_root);
-		jm.select_always(&schema, idc_carrier);
 		jm.select_always(&schema, idc_product_template_root);
-		jm.select_always(&schema, idc_product_template);
 		jm.select_always(&schema, idc_coverage_root);
-		jm.select_always(&schema, idc_coverage);
+		jm.select_always(&schema, idc_product_template);
 		jm.select_always(&schema, idc_client_root);
 		jm.select_always(&schema, idc_client);
 		jm.select_always(&schema, idc_program);
-		jm.select_always(&schema, idc_product);
+		jm.select_always(&schema, idc_program_product);
 		jm.select_always(&schema, idc_program_chart_slide);
 		jm.select_always(&schema, idc_program_generic_slide);
 
@@ -194,10 +190,9 @@ namespace proposal
 		jm.create_when(&schema, idc_product_template_root, idc_product_template, null_row, true, false);
 		jm.create_when(&schema, idc_coverage_root, idc_coverage, null_row, true, false);
 		jm.create_when(&schema, idc_client_root, idc_client, null_row, true, false);
-		jm.create_when(&schema, idc_client, idc_program, null_row, true, false);
-		jm.create_when(&schema, idc_program, idc_product_template, idc_product, null_row, true, false);
+		jm.create_when(&schema, idc_client, idc_client, idc_program, true, false);
+		jm.create_when(&schema, idc_program, idc_program_product, idc_program, true, false);
 		jm.create_when(&schema, idc_program, idc_program_chart_slide, idc_program, true, false);
-		jm.create_when(&schema, idc_program_chart_slide, idc_program_chart_slide_product, idc_program, true, false);
 		jm.create_when(&schema, idc_program, idc_program_generic_slide, idc_program, true, false);
 
 		jm.navigation({
@@ -207,14 +202,11 @@ namespace proposal
 						{ idc_product_template_root, 1 },
 						{ idc_client_root, 1 },
 						{ idc_client, 2 },
-						{ idc_carrier, 2 },
-						{ idc_coverage, 2 },
 						{ idc_program, 3 },
-						{ idc_product, 4 },
+						{ idc_program_product, 4 },
 						{ idc_program_chart_slide, 4 },
 						{ idc_program_generic_slide, 4 } }
-			);
-
+		);
 
 		schema.put_model(jm);
 
@@ -675,41 +667,83 @@ namespace proposal
 
 	}
 
-	wsproposal_controller::~wsproposal_controller()
+	plaguetoy_controller::~plaguetoy_controller()
 	{
 		;
 	}
 
-	void wsproposal_controller::render_home(page_item* _frame)
+	void plaguetoy_controller::render_client_view(const rectangle& newSize)
 	{
 		;
 	}
 
-	void wsproposal_controller::render_client(page_item* _frame)
+	void plaguetoy_controller::render_carrier_view(const rectangle& newSize)
 	{
 		;
 	}
 
-	void wsproposal_controller::render_product_template(page_item* _frame)
+	void plaguetoy_controller::render_program_view(const rectangle& newSize)
 	{
 		;
 	}
 
-	void wsproposal_controller::render_selection_table(page_item* _frame)
+	void plaguetoy_controller::render(const rectangle& newSize)
 	{
-		;
-	}
+		corona::database::layout_rect title_box, * ptitle_box = &title_box;
 
-	void wsproposal_controller::render_carrier(page_item* _frame)
-	{
-		;
-	}
+		auto left_margin = 20.0_px;
+		auto chart_top = 10.0_px;
 
-	void wsproposal_controller::render_program(page_item* _frame)
-	{
+		auto mainr = row(nullptr, null_row);
+		auto controlcolumn = column(mainr, null_row, { 0.0_px,0.0_px,25.0_pct,100.0_pct });
+		auto d2dcolumn = column(mainr, null_row, { 0.0_px,0.0_px,75.0_pct,100.0_pct });
+		auto d2dwin = canvas2d(d2dcolumn, schema.idf_view_background_style, { 0.0_px,0.0_px,100.0_pct,100.0_pct });
+		auto d2dwin_area = column(d2dwin, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
+
+		auto navigation_bar = row(d2dwin, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, -50.0_px });
+		breadcrumbs(navigation_bar, [](jobject& _item) {
+			return nullptr;
+			}, { 0.0_px, 0.0_px, 100.0_px, 20.0_px });
+
+		// editable controls on the left
+		add_update_fields(controlcolumn);
+		add_create_buttons(controlcolumn);
+
+		if (state.actor.current_view_class_id == idc_home)
+		{
+
+		}
+		else if (state.actor.current_view_class_id == idc_client_root)
+		{
+			;
+		}
+		else if (state.actor.current_view_class_id == idc_client)
+		{
+			;
+		}
+		else if (state.actor.current_view_class_id == idc_product_template_root)
+		{
+			;
+		}
+		else if (state.actor.current_view_class_id == idc_product_template)
+		{
+			;
+		}
+		else if (state.actor.current_view_class_id == idc_carrier_root)
+		{
+			;
+		}
+		else if (state.actor.current_view_class_id == idc_carrier)
+		{
+			;
+		}
+
 		// draw the slides at the top
 		relative_ptr_type slide_fields[2] = { idslide_heading1, null_row };
 		auto slide_area = row_common(d2dwin, { 0.0_px, 0.0_px, 100.0_pct, 200.0_px }, slide_fields);
+
+		// 
+
 
 		// and now draw the selected slide
 		relative_ptr_type title_classes[2] = { idslide_title_class, null_row };
@@ -827,65 +861,26 @@ namespace proposal
 
 			return true;
 			});
+
+		pg.arrange(newSize.w, newSize.h);
+
+		canvasWindowsId = host->renderPage(pg, &schema, state, program_chart);
+		host->redraw();
 	}
 
-	void wsproposal_controller::render(const rectangle& newSize)
+	void plaguetoy_controller::render(const rectangle& newSize)
 	{
 		clear();
 
-		auto mainr = row(nullptr, null_row);
-		auto controlcolumn = column(mainr, null_row, { 0.0_px,0.0_px,25.0_pct,100.0_pct });
-		auto d2dcolumn = column(mainr, null_row, { 0.0_px,0.0_px,75.0_pct,100.0_pct });
-		auto d2dwin = canvas2d(d2dcolumn, schema.idf_view_background_style, { 0.0_px,0.0_px,100.0_pct,100.0_pct });
-		auto d2dwin_area = column(d2dwin, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
-
-		auto navigation_bar = row(d2dwin, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 50.0_px });
-		auto title_bar = text(navigation_bar, schema.idf_view_title_style, "Woodruff Sawyer Commercial Lines", { 0.0_px, 0.0_px, 150.0_px, 100.0_pct });
-		breadcrumbs(navigation_bar, [](jobject& _item) {
-			return nullptr;
-			}, { 0.0_px, 0.0_px, 100.0_px, 100.0_pct });
-		auto client_area = row(d2dwin, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
-
-		// editable controls on the left
-		add_update_fields(controlcolumn);
-		add_create_buttons(controlcolumn);
-
-		if (state.actor.current_view_class_id == idc_home) 
+		if (state.modified_object_id == null_row || state.modified_object.get_class_id() == idclient_class)
 		{
-			render_home(client_area);
-		} 
-		else if (state.actor.current_view_class_id == idc_client_root)
-		{
-			render_selection_table(client_area);
+			render_client_view(newSize);
 		}
-		else if (state.actor.current_view_class_id == idc_client)
+		else
 		{
-			render_client(client_area);
-		}
-		else if (state.actor.current_view_class_id == idc_product_template_root)
-		{
-			render_selection_table(client_area);
-		}
-		else if (state.actor.current_view_class_id == idc_product_template)
-		{
-			render_product_template(client_area);
-		}
-		else if (state.actor.current_view_class_id == idc_carrier_root)
-		{
-			render_selection_table(client_area);
-		}
-		else if (state.actor.current_view_class_id == idc_carrier)
-		{
-			render_carrier(client_area);
-		}
-		else if (state.actor.current_view_class_id == idc_program)
-		{
-			render_program(client_area);
+			render_program_view(newSize);
 		}
 
-		arrange(newSize.w, newSize.h);
-		canvasWindowsId = host->renderPage(pg, &schema, state, program_chart);
-		host->redraw();
 	}
 
 }

@@ -87,10 +87,12 @@ namespace proposal
 		wsproposal_controller();
 		virtual ~wsproposal_controller();
 
-		void render_client_view(const rectangle& newSize);
-		void render_carrier_view(const rectangle& newSize);
-		void render_coverage_view(const rectangle& newSize);
-		void render_program_view(const rectangle& newSize);
+		void render_home(page_item *_frame);
+		void render_client(page_item* _frame);
+		void render_product_template(page_item* _frame);
+		void render_selection_table(page_item* _frame);
+		void render_carrier(page_item* _frame);
+		void render_program(page_item* _frame);
 
 		virtual void render(const rectangle& newSize);
 	};

@@ -1,17 +1,17 @@
 //{{NO_DEPENDENCIES}}
 // Microsoft Visual C++ generated include file.
-// Used by outbreakmodel.rc
+// Used by plaguetoy.rc
 
 #define IDS_APP_TITLE			103
 
 #define IDR_MAINFRAME			128
-#define IDD_OUTBREAKMODEL_DIALOG	102
+#define IDD_PLAGUETOY_DIALOG	102
 #define IDD_ABOUTBOX			103
 #define IDM_ABOUT				104
 #define IDM_EXIT				105
-#define IDI_OUTBREAKMODEL			107
+#define IDI_PLAGUETOY			107
 #define IDI_SMALL				108
-#define IDC_OUTBREAKMODEL			109
+#define IDC_PLAGUETOY			109
 #define IDC_MYICON				2
 #ifndef IDC_STATIC
 #define IDC_STATIC				-1

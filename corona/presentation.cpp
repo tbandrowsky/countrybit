@@ -80,6 +80,20 @@ namespace corona
 			return v;
 		}
 
+		page_item* page::text(page_item* _parent, const char* _style_name, const char* _text, layout_rect _box)
+		{
+			page_item* v = append();
+			v->id = size();
+			v->set_parent(_parent);
+			v->layout = layout_types::text;
+			v->box = _box;
+			if (_style_name)
+				v->style_name = data.copy(_style_name, 0);
+			if (_text)
+				v->caption = data.copy(_text, 0);
+			return v;
+		}
+
 		page_item* page::field(page_item* _parent, int object_id, int field_id, jobject slice)
 		{
 			page_item* v = append();
