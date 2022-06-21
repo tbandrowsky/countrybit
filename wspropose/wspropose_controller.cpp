@@ -135,7 +135,7 @@ namespace proposal
 		pcr.class_name = "Product";
 		pcr.class_description = "Product";
 		pcr.field_id_primary_key = idf_product;
-		pcr.base_class_id = idc_product_template;
+		pcr.template_class_id = idc_product_template;
 		pcr.member_fields = { idf_product, idf_program, idf_client, idf_product_template_product_header, idf_product_template_product_structure, idf_product_template_coverage_header, idf_product_template_coverage_structure };
 		idc_product = schema.put_class(pcr);
 

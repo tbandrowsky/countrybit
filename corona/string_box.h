@@ -461,12 +461,6 @@ namespace corona
 				return *this;
 			}
 
-			istring& operator = (double d)
-			{
-				sprintf_s(data, "%f", d);
-				return *this;
-			}
-
 		};
 
 		template<int l1, int l2> int compare(const istring<l1>& a, const istring<l2>& b)

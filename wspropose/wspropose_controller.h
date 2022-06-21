@@ -68,8 +68,9 @@ namespace proposal
 		corona::database::relative_ptr_type idf_program;
 		corona::database::relative_ptr_type idf_program_view;
 
-		corona::database::relative_ptr_type idc_product;
+		corona::database::relative_ptr_type idc_product_base;
 		corona::database::relative_ptr_type idf_product;
+		corona::database::relative_ptr_type idc_product;
 		
 		corona::database::relative_ptr_type idf_slide_title;
 

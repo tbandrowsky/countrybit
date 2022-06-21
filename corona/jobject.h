@@ -1268,8 +1268,6 @@ namespace corona
 			relative_ptr_type idf_object_y;
 			relative_ptr_type idf_object_z;
 
-			relative_ptr_type idf_base_class_id;
-
 			relative_ptr_type idf_template_parameter_field_id;
 			relative_ptr_type idf_template_parameter_field_type;
 			relative_ptr_type idf_template_parameter_field_dim;
