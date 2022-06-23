@@ -61,6 +61,13 @@ namespace proposal
 		pcr.member_fields = { idf_coverage_root, idf_home };
 		idc_coverage_root = schema.put_class(pcr);
 
+		idf_system_root = schema.put_integer_field({ { null_row,  jtype::type_int64, "system_root", "System Settings" }, { 0, INT64_MAX } });
+		pcr.class_name = "system_root";
+		pcr.class_description = "System Settings";
+		pcr.field_id_primary_key = idf_system_root;
+		pcr.member_fields = { idf_system_root, idf_home };
+		idc_coverage_root = schema.put_class(pcr);
+
 		idf_coverage = schema.put_integer_field({ { null_row,  jtype::type_int64, "coverage_id", "Coverage Id" }, { 0, INT64_MAX } });
 		pcr.class_name = "coverage";
 		pcr.class_description = "Coverage";
@@ -159,7 +166,6 @@ namespace proposal
 		pcr.field_id_primary_key = idf_program_chart_slide;
 		pcr.member_fields = { idf_program_generic_slide, idf_client, idf_program };
 		idc_program_generic_slide = schema.put_class(pcr);
-
 		jmodel jm;
 
 		jm.update_always(&schema, idc_home);
@@ -224,6 +230,7 @@ namespace proposal
 		ref.max_actors = 2;
 		ref.max_objects = 100;
 		ref.collection_size_bytes = 1 << 19;
+		ref.create_style_sheet = true;
 
 		if (!init_collection_id(ref.collection_id))
 		{
@@ -237,425 +244,22 @@ namespace proposal
 		sample_actor.current_view_class_id = idc_home;
 		sample_actor = program_chart.create_actor(sample_actor);
 
+		map_style(idc_home, schema.idf_home_style);
+		map_style(idc_client_root, schema.idf_client_style);
+		map_style(idc_carrier_root, schema.idf_carrier_style);
+		map_style(idc_coverage_root, schema.idf_coverage_style);
+		map_style(idc_product_template_root, schema.idf_product_style);
+
+		relative_ptr_type id_home = null_row, id_carrier_root = null_row, id_coverage_root = null_row, id_client_root = null_row, id_product_template_root = null_row, id_system_root = null_row;
+
+		program_chart.create_object(null_row, sample_actor.actor_id, idc_home, id_home);
+		program_chart.create_object(null_row, sample_actor.actor_id, idc_carrier_root, id_carrier_root, { { idf_home , id_home }});
+		program_chart.create_object(null_row, sample_actor.actor_id, idc_coverage_root, id_coverage_root, { { idf_home, id_home } });
+		program_chart.create_object(null_row, sample_actor.actor_id, idc_client_root, id_client_root, { { idf_home, id_home } });
+		program_chart.create_object(null_row, sample_actor.actor_id, idc_product_template_root, id_product_template_root, { { idf_home, id_home } });
+		program_chart.create_object(null_row, sample_actor.actor_id, idc_system_root, id_system_root, { { idf_home, id_home } });
+
 		relative_ptr_type style_sheet_id = null_row;
-		auto style_sheet = program_chart.create_object(0, null_row, schema.idc_style_sheet, style_sheet_id);
-		style_sheet.set(
-			{ schema.idf_view_style },
-			{
-				{ schema.idf_name, "view_background" },
-				{ schema.idf_font_name, "Arial" },
-				{ schema.idf_font_size, 10.0 },
-				{ schema.idf_bold, false },
-				{ schema.idf_italic, false },
-				{ schema.idf_underline, false },
-				{ schema.idf_strike_through, false },
-				{ schema.idf_line_spacing, 0.0 },
-				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_shape_fill_color, "#000000FF" },
-				{ schema.idf_shape_border_thickness, "" },
-				{ schema.idf_shape_border_color, "" },
-				{ schema.idf_box_fill_color, "#ffffffFF" },
-				{ schema.idf_box_border_thickness, "4" },
-				{ schema.idf_box_border_color, "#ffffffff" }
-			}
-			);
-
-		style_sheet.set(
-			{ schema.idf_view_title_style },
-			{
-				{ schema.idf_name, "view_title" },
-				{ schema.idf_font_name, "Arial" },
-				{ schema.idf_font_size, 30.0 },
-				{ schema.idf_bold, false },
-				{ schema.idf_italic, false },
-				{ schema.idf_underline, false },
-				{ schema.idf_strike_through, false },
-				{ schema.idf_line_spacing, 0.0 },
-				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_shape_fill_color, "#000000FF" },
-				{ schema.idf_shape_border_thickness, "" },
-				{ schema.idf_shape_border_color, "" },
-				{ schema.idf_box_fill_color, "" },
-				{ schema.idf_box_border_thickness, "" },
-				{ schema.idf_box_border_color, "" }
-			}
-			);
-
-		style_sheet.set(
-			{ schema.idf_view_subtitle_style },
-			{
-				{ schema.idf_name, "view_subtitle" },
-				{ schema.idf_font_name, "Arial" },
-				{ schema.idf_font_size, 24.0 },
-				{ schema.idf_bold, false },
-				{ schema.idf_italic, false },
-				{ schema.idf_underline, false },
-				{ schema.idf_strike_through, false },
-				{ schema.idf_line_spacing, 0.0 },
-				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_shape_fill_color, "#000000FF" },
-				{ schema.idf_shape_border_thickness, "" },
-				{ schema.idf_shape_border_color, "" },
-				{ schema.idf_box_fill_color, "" },
-				{ schema.idf_box_border_thickness, "" },
-				{ schema.idf_box_border_color, "" }
-			}
-			);
-
-		style_sheet.set(
-			{ schema.idf_view_section_style },
-			{
-				{ schema.idf_name, "view_section" },
-				{ schema.idf_font_name, "Arial" },
-				{ schema.idf_font_size, 16.0 },
-				{ schema.idf_bold, false },
-				{ schema.idf_italic, false },
-				{ schema.idf_underline, false },
-				{ schema.idf_strike_through, false },
-				{ schema.idf_line_spacing, 0.0 },
-				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_shape_fill_color, "#000000FF" },
-				{ schema.idf_shape_border_thickness, "" },
-				{ schema.idf_shape_border_color, "" },
-				{ schema.idf_box_fill_color, "" },
-				{ schema.idf_box_border_thickness, "" },
-				{ schema.idf_box_border_color, "" }
-			}
-			);
-
-		style_sheet.set(
-			{ schema.idf_view_style },
-			{
-				{ schema.idf_name, "view" },
-				{ schema.idf_font_name, "Arial" },
-				{ schema.idf_font_size, 16.0 },
-				{ schema.idf_bold, false },
-				{ schema.idf_italic, false },
-				{ schema.idf_underline, false },
-				{ schema.idf_strike_through, false },
-				{ schema.idf_line_spacing, 0.0 },
-				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_shape_fill_color, "#000000FF" },
-				{ schema.idf_shape_border_thickness, "" },
-				{ schema.idf_shape_border_color, "" },
-				{ schema.idf_box_fill_color, "" },
-				{ schema.idf_box_border_thickness, "" },
-				{ schema.idf_box_border_color, "" }
-			}
-			);
-
-		style_sheet.set(
-			{ schema.idf_disclaimer_style },
-			{
-				{ schema.idf_name, "disclaimer" },
-				{ schema.idf_font_name, "Arial" },
-				{ schema.idf_font_size, 12.0 },
-				{ schema.idf_bold, false },
-				{ schema.idf_italic, false },
-				{ schema.idf_underline, false },
-				{ schema.idf_strike_through, false },
-				{ schema.idf_line_spacing, 0.0 },
-				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_shape_fill_color, "#000000FF" },
-				{ schema.idf_shape_border_thickness, "" },
-				{ schema.idf_shape_border_color, "" },
-				{ schema.idf_box_fill_color, "" },
-				{ schema.idf_box_border_thickness, "" },
-				{ schema.idf_box_border_color, "" }
-			}
-			);
-
-		style_sheet.set(
-			{ schema.idf_copyright_style },
-			{
-				{ schema.idf_name, "copyright" },
-				{ schema.idf_font_name, "Arial" },
-				{ schema.idf_font_size, 12.0 },
-				{ schema.idf_bold, false },
-				{ schema.idf_italic, false },
-				{ schema.idf_underline, false },
-				{ schema.idf_strike_through, false },
-				{ schema.idf_line_spacing, 0.0 },
-				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_shape_fill_color, "#000000FF" },
-				{ schema.idf_shape_border_thickness, "" },
-				{ schema.idf_shape_border_color, "" },
-				{ schema.idf_box_fill_color, "" },
-				{ schema.idf_box_border_thickness, "" },
-				{ schema.idf_box_border_color, "" }
-			}
-			);
-
-		style_sheet.set(
-			{ schema.idf_h1_style },
-			{
-				{ schema.idf_name, "h1" },
-				{ schema.idf_font_name, "Arial" },
-				{ schema.idf_font_size, 30.0 },
-				{ schema.idf_bold, false },
-				{ schema.idf_italic, false },
-				{ schema.idf_underline, false },
-				{ schema.idf_strike_through, false },
-				{ schema.idf_line_spacing, 0.0 },
-				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_shape_fill_color, "#000000FF" },
-				{ schema.idf_shape_border_thickness, "" },
-				{ schema.idf_shape_border_color, "" },
-				{ schema.idf_box_fill_color, "" },
-				{ schema.idf_box_border_thickness, "" },
-				{ schema.idf_box_border_color, "" }
-			}
-			);
-
-		style_sheet.set(
-			{ schema.idf_h2_style },
-			{
-				{ schema.idf_name, "h2" },
-				{ schema.idf_font_name, "Arial" },
-				{ schema.idf_font_size, 24.0 },
-				{ schema.idf_bold, false },
-				{ schema.idf_italic, false },
-				{ schema.idf_underline, false },
-				{ schema.idf_strike_through, false },
-				{ schema.idf_line_spacing, 0.0 },
-				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_shape_fill_color, "#000000FF" },
-				{ schema.idf_shape_border_thickness, "" },
-				{ schema.idf_shape_border_color, "" },
-				{ schema.idf_box_fill_color, "" },
-				{ schema.idf_box_border_thickness, "" },
-				{ schema.idf_box_border_color, "" }
-			}
-			);
-
-		style_sheet.set(
-			{ schema.idf_h3_style },
-			{
-				{ schema.idf_name, "h3" },
-				{ schema.idf_font_name, "Arial" },
-				{ schema.idf_font_size, 20.0 },
-				{ schema.idf_bold, false },
-				{ schema.idf_italic, false },
-				{ schema.idf_underline, false },
-				{ schema.idf_strike_through, false },
-				{ schema.idf_line_spacing, 0.0 },
-				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_shape_fill_color, "#000000FF" },
-				{ schema.idf_shape_border_thickness, "" },
-				{ schema.idf_shape_border_color, "" },
-				{ schema.idf_box_fill_color, "" },
-				{ schema.idf_box_border_thickness, "" },
-				{ schema.idf_box_border_color, "" }
-			}
-			);
-
-		style_sheet.set(
-			{ schema.idf_column_number_head_style },
-			{
-				{ schema.idf_name, "column_number_head" },
-				{ schema.idf_font_name, "Arial" },
-				{ schema.idf_font_size, 14.0 },
-				{ schema.idf_bold, false },
-				{ schema.idf_italic, false },
-				{ schema.idf_underline, false },
-				{ schema.idf_strike_through, false },
-				{ schema.idf_line_spacing, 0.0 },
-				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_far },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_shape_fill_color, "#000000FF" },
-				{ schema.idf_shape_border_thickness, "" },
-				{ schema.idf_shape_border_color, "" },
-				{ schema.idf_box_fill_color, "" },
-				{ schema.idf_box_border_thickness, "" },
-				{ schema.idf_box_border_color, "" }
-			}
-			);
-
-		style_sheet.set(
-			{ schema.idf_column_text_head_style },
-			{
-				{ schema.idf_name, "column_text_head" },
-				{ schema.idf_font_name, "Arial" },
-				{ schema.idf_font_size, 14.0 },
-				{ schema.idf_bold, false },
-				{ schema.idf_italic, false },
-				{ schema.idf_underline, false },
-				{ schema.idf_strike_through, false },
-				{ schema.idf_line_spacing, 0.0 },
-				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_shape_fill_color, "#000000FF" },
-				{ schema.idf_shape_border_thickness, "" },
-				{ schema.idf_shape_border_color, "" },
-				{ schema.idf_box_fill_color, "" },
-				{ schema.idf_box_border_thickness, "" },
-				{ schema.idf_box_border_color, "" }
-			}
-			);
-
-
-		style_sheet.set(
-			{ schema.idf_column_data_style },
-			{
-				{ schema.idf_name, "column_data" },
-				{ schema.idf_font_name, "Arial" },
-				{ schema.idf_font_size, 30.0 },
-				{ schema.idf_bold, false },
-				{ schema.idf_italic, false },
-				{ schema.idf_underline, false },
-				{ schema.idf_strike_through, false },
-				{ schema.idf_line_spacing, 0.0 },
-				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_shape_fill_color, "#000000FF" },
-				{ schema.idf_shape_border_thickness, "" },
-				{ schema.idf_shape_border_color, "" },
-				{ schema.idf_box_fill_color, "" },
-				{ schema.idf_box_border_thickness, "" },
-				{ schema.idf_box_border_color, "" }
-			}
-			);
-
-
-		style_sheet.set(
-			{ schema.idf_label_style },
-			{
-				{ schema.idf_name, "label" },
-				{ schema.idf_font_name, "Arial" },
-				{ schema.idf_font_size, 30.0 },
-				{ schema.idf_bold, false },
-				{ schema.idf_italic, false },
-				{ schema.idf_underline, false },
-				{ schema.idf_strike_through, false },
-				{ schema.idf_line_spacing, 0.0 },
-				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_shape_fill_color, "#000000FF" },
-				{ schema.idf_shape_border_thickness, "" },
-				{ schema.idf_shape_border_color, "" },
-				{ schema.idf_box_fill_color, "" },
-				{ schema.idf_box_border_thickness, "" },
-				{ schema.idf_box_border_color, "" }
-			}
-			);
-
-		style_sheet.set(
-			{ schema.idf_chart_axis_style },
-			{
-				{ schema.idf_name, "chart_axis" },
-				{ schema.idf_font_name, "Arial" },
-				{ schema.idf_font_size, 30.0 },
-				{ schema.idf_bold, false },
-				{ schema.idf_italic, false },
-				{ schema.idf_underline, false },
-				{ schema.idf_strike_through, false },
-				{ schema.idf_line_spacing, 0.0 },
-				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_shape_fill_color, "#000000FF" },
-				{ schema.idf_shape_border_thickness, "" },
-				{ schema.idf_shape_border_color, "" },
-				{ schema.idf_box_fill_color, "" },
-				{ schema.idf_box_border_thickness, "" },
-				{ schema.idf_box_border_color, "" }
-			}
-			);
-
-		style_sheet.set(
-			{ schema.idf_chart_legend_style },
-			{
-				{ schema.idf_name, "chart_legend" },
-				{ schema.idf_font_name, "Arial" },
-				{ schema.idf_font_size, 30.0 },
-				{ schema.idf_bold, false },
-				{ schema.idf_italic, false },
-				{ schema.idf_line_spacing, 0.0 },
-				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_shape_fill_color, "#000000FF" },
-				{ schema.idf_shape_border_thickness, "" },
-				{ schema.idf_shape_border_color, "" },
-				{ schema.idf_box_fill_color, "" },
-				{ schema.idf_box_border_thickness, "" },
-				{ schema.idf_box_border_color, "" }
-			}
-			);
-
-		style_sheet.set(
-			{ schema.idf_chart_block_style },
-			{
-				{ schema.idf_name, "chart_block" },
-				{ schema.idf_font_name, "Arial" },
-				{ schema.idf_font_size, 30.0 },
-				{ schema.idf_bold, false },
-				{ schema.idf_italic, false },
-				{ schema.idf_underline, false },
-				{ schema.idf_strike_through, false },
-				{ schema.idf_line_spacing, 0.0 },
-				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_shape_fill_color, "#000000FF" },
-				{ schema.idf_shape_border_thickness, "" },
-				{ schema.idf_shape_border_color, "" },
-				{ schema.idf_box_fill_color, "" },
-				{ schema.idf_box_border_thickness, "" },
-				{ schema.idf_box_border_color, "" }
-			}
-			);
-
-		style_sheet.set(
-			{ schema.idf_tooltip_style },
-			{
-				{ schema.idf_name, "tooltip" },
-				{ schema.idf_font_name, "Arial" },
-				{ schema.idf_font_size, 30.0 },
-				{ schema.idf_bold, false },
-				{ schema.idf_italic, false },
-				{ schema.idf_underline, false },
-				{ schema.idf_strike_through, false },
-				{ schema.idf_line_spacing, 0.0 },
-				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_shape_fill_color, "#000000FF" },
-				{ schema.idf_shape_border_thickness, "" },
-				{ schema.idf_shape_border_color, "" },
-				{ schema.idf_box_fill_color, "" },
-				{ schema.idf_box_border_thickness, "" },
-				{ schema.idf_box_border_color, "" }
-			}
-			);
-
-		style_sheet.set(
-			{ schema.idf_breadcrumb_style },
-			{
-				{ schema.idf_name, "breadcrumb" },
-				{ schema.idf_font_name, "Arial" },
-				{ schema.idf_font_size, 14.0 },
-				{ schema.idf_bold, false },
-				{ schema.idf_italic, false },
-				{ schema.idf_underline, false },
-				{ schema.idf_strike_through, false },
-				{ schema.idf_line_spacing, 0.0 },
-				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_shape_fill_color, "#0000CCFF" },
-				{ schema.idf_shape_border_thickness, "" },
-				{ schema.idf_shape_border_color, "" },
-				{ schema.idf_box_fill_color, "" },
-				{ schema.idf_box_border_thickness, "" },
-				{ schema.idf_box_border_color, "" }
-			}
-			);
 
 		relative_ptr_type homes_id = null_row;
 		relative_ptr_type clients_id = null_row;
@@ -708,8 +312,8 @@ namespace proposal
 	void wsproposal_controller::render_program(page_item* _frame)
 	{
 		// draw the slides at the top
-		relative_ptr_type slide_fields[2] = { idslide_heading1, null_row };
-		auto slide_area = row_common(d2dwin, { 0.0_px, 0.0_px, 100.0_pct, 200.0_px }, slide_fields);
+		relative_ptr_type slide_classes[2] = { idc_program_chart_slide, idc_program_chart_slide };
+		auto slide_area = row_class(_frame, {0.0_px, 0.0_px, 100.0_pct, 100.0_px}, slide_classes, 2);
 
 		// and now draw the selected slide
 		relative_ptr_type title_classes[2] = { idslide_title_class, null_row };
@@ -886,6 +490,872 @@ namespace proposal
 		arrange(newSize.w, newSize.h);
 		canvasWindowsId = host->renderPage(pg, &schema, state, program_chart);
 		host->redraw();
+	}
+
+	void wsproposal_controller::create_style_sheet()
+	{
+		auto style_sheet = program_chart.create_object(0, null_row, schema.idc_style_sheet, style_sheet_id);
+
+		const char* fontName = "Open Sans,Arial";
+
+		style_sheet.set(
+			{ schema.idf_view_style },
+			{
+				{ schema.idf_name, "view_background" },
+				{ schema.idf_font_name, fontName },
+				{ schema.idf_font_size, 14.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#000000FF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "#ffffffFF" },
+				{ schema.idf_box_border_thickness, 4 },
+				{ schema.idf_box_border_color, "#ffffffff" }
+			}
+			);
+
+		style_sheet.set(
+			{ schema.idf_view_title_style },
+			{
+				{ schema.idf_name, "view_title" },
+				{ schema.idf_font_name, fontName },
+				{ schema.idf_font_size, 30.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#000000FF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "#ffffffFF" },
+				{ schema.idf_box_border_thickness, 0 },
+				{ schema.idf_box_border_color, "" }
+			}
+			);
+
+		style_sheet.set(
+			{ schema.idf_view_subtitle_style },
+			{
+				{ schema.idf_name, "view_subtitle" },
+				{ schema.idf_font_name, fontName},
+				{ schema.idf_font_size, 24.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#000000FF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "#ffffffFF" },
+				{ schema.idf_box_border_thickness, 0 },
+				{ schema.idf_box_border_color, "" }
+			}
+			);
+
+		style_sheet.set(
+			{ schema.idf_view_section_style },
+			{
+				{ schema.idf_name, "view_section" },
+				{ schema.idf_font_name, fontName},
+				{ schema.idf_font_size, 16.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#000000FF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "#ffffffFF" },
+				{ schema.idf_box_border_thickness, 0 },
+				{ schema.idf_box_border_color, "" }
+			}
+			);
+
+		style_sheet.set(
+			{ schema.idf_view_style },
+			{
+				{ schema.idf_name, "view" },
+				{ schema.idf_font_name, fontName },
+				{ schema.idf_font_size, 16.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#000000FF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "#ffffffFF" },
+				{ schema.idf_box_border_thickness, 0 },
+				{ schema.idf_box_border_color, "" }
+			}
+			);
+
+		style_sheet.set(
+			{ schema.idf_disclaimer_style },
+			{
+				{ schema.idf_name, "disclaimer" },
+				{ schema.idf_font_name, fontName },
+				{ schema.idf_font_size, 12.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#000000FF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "#ffffffFF" },
+				{ schema.idf_box_border_thickness, 0 },
+				{ schema.idf_box_border_color, "" }
+			}
+			);
+
+		style_sheet.set(
+			{ schema.idf_copyright_style },
+			{
+				{ schema.idf_name, "copyright" },
+				{ schema.idf_font_name, fontName },
+				{ schema.idf_font_size, 12.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#000000FF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "#ffffffFF" },
+				{ schema.idf_box_border_thickness, 0 },
+				{ schema.idf_box_border_color, "" }
+			}
+			);
+
+		style_sheet.set(
+			{ schema.idf_h1_style },
+			{
+				{ schema.idf_name, "h1" },
+				{ schema.idf_font_name, fontName },
+				{ schema.idf_font_size, 30.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#000000FF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "#ffffffFF" },
+				{ schema.idf_box_border_thickness, 0 },
+				{ schema.idf_box_border_color, "" }
+			}
+			);
+
+		style_sheet.set(
+			{ schema.idf_h2_style },
+			{
+				{ schema.idf_name, "h2" },
+				{ schema.idf_font_name, fontName },
+				{ schema.idf_font_size, 24.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#000000FF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "#ffffffFF" },
+				{ schema.idf_box_border_thickness, 0 },
+				{ schema.idf_box_border_color, "" }
+			}
+			);
+
+		style_sheet.set(
+			{ schema.idf_h3_style },
+			{
+				{ schema.idf_name, "h3" },
+				{ schema.idf_font_name, fontName },
+				{ schema.idf_font_size, 20.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#000000FF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "#ffffffFF" },
+				{ schema.idf_box_border_thickness, 0 },
+				{ schema.idf_box_border_color, "" }
+			}
+			);
+
+		style_sheet.set(
+			{ schema.idf_column_number_head_style },
+			{
+				{ schema.idf_name, "column_number_head" },
+				{ schema.idf_font_name, fontName },
+				{ schema.idf_font_size, 14.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_far },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#000000FF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "#ffffffFF" },
+				{ schema.idf_box_border_thickness, 0 },
+				{ schema.idf_box_border_color, "" }
+			}
+			);
+
+		style_sheet.set(
+			{ schema.idf_column_text_head_style },
+			{
+				{ schema.idf_name, "column_text_head" },
+				{ schema.idf_font_name, fontName },
+				{ schema.idf_font_size, 14.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#000000FF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "#ffffffFF" },
+				{ schema.idf_box_border_thickness, 0 },
+				{ schema.idf_box_border_color, "" }
+			}
+			);
+
+
+		style_sheet.set(
+			{ schema.idf_column_data_style },
+			{
+				{ schema.idf_name, "column_data" },
+				{ schema.idf_font_name, fontName },
+				{ schema.idf_font_size, 30.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#000000FF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "#ffffffFF" },
+				{ schema.idf_box_border_thickness, 0 },
+				{ schema.idf_box_border_color, "" }
+			}
+			);
+
+
+		style_sheet.set(
+			{ schema.idf_label_style },
+			{
+				{ schema.idf_name, "label" },
+				{ schema.idf_font_name, fontName },
+				{ schema.idf_font_size, 30.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#000000FF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "#ffffffFF" },
+				{ schema.idf_box_border_thickness, 0 },
+				{ schema.idf_box_border_color, "" }
+			}
+			);
+
+		style_sheet.set(
+			{ schema.idf_chart_axis_style },
+			{
+				{ schema.idf_name, "chart_axis" },
+				{ schema.idf_font_name, fontName },
+				{ schema.idf_font_size, 30.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#000000FF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "#ffffffFF" },
+				{ schema.idf_box_border_thickness, 0 },
+				{ schema.idf_box_border_color, "" }
+			}
+			);
+
+		style_sheet.set(
+			{ schema.idf_chart_legend_style },
+			{
+				{ schema.idf_name, "chart_legend" },
+				{ schema.idf_font_name, fontName },
+				{ schema.idf_font_size, 30.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#000000FF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "#ffffffFF" },
+				{ schema.idf_box_border_thickness, 0 },
+				{ schema.idf_box_border_color, "" }
+			}
+			);
+
+		style_sheet.set(
+			{ schema.idf_chart_block_style },
+			{
+				{ schema.idf_name, "chart_block" },
+				{ schema.idf_font_name, fontName },
+				{ schema.idf_font_size, 30.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#000000FF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "#ffffffFF" },
+				{ schema.idf_box_border_thickness, 0 },
+				{ schema.idf_box_border_color, "" }
+			}
+			);
+
+		style_sheet.set(
+			{ schema.idf_tooltip_style },
+			{
+				{ schema.idf_name, "tooltip" },
+				{ schema.idf_font_name, fontName },
+				{ schema.idf_font_size, 14.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#000000FF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "#ffffffFF" },
+				{ schema.idf_box_border_thickness, 0 },
+				{ schema.idf_box_border_color, "" }
+			}
+			);
+
+		style_sheet.set(
+			{ schema.idf_error_style },
+			{
+				{ schema.idf_name, "error" },
+				{ schema.idf_font_name, fontName },
+				{ schema.idf_font_size, 14.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#0000CCFF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "#ffffffFF" },
+				{ schema.idf_box_border_thickness, 0 },
+				{ schema.idf_box_border_color, "" }
+			}
+			);
+
+		style_sheet.set(
+			{ schema.idf_client_style },
+			{
+				{ schema.idf_name, "client" },
+				{ schema.idf_font_name, "Arial" },
+				{ schema.idf_font_size, 14.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#0000CCFF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "#ffffffFF" },
+				{ schema.idf_box_border_thickness, 0 },
+				{ schema.idf_box_border_color, "" }
+			}
+			);
+
+		style_sheet.set(
+			{ schema.idf_carrier_style },
+			{
+				{ schema.idf_name, "carrier" },
+				{ schema.idf_font_name, "Arial" },
+				{ schema.idf_font_size, 14.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#0000CCFF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "#ffffffFF" },
+				{ schema.idf_box_border_thickness, 0 },
+				{ schema.idf_box_border_color, "" }
+			}
+			);
+
+		style_sheet.set(
+			{ schema.idf_coverage_style },
+			{
+				{ schema.idf_name, "coverage" },
+				{ schema.idf_font_name, "Arial" },
+				{ schema.idf_font_size, 14.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#0000CCFF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "#ffffffFF" },
+				{ schema.idf_box_border_thickness, 0 },
+				{ schema.idf_box_border_color, "" }
+			}
+			);
+
+		style_sheet.set(
+			{ schema.idf_product_style },
+			{
+				{ schema.idf_name, "product" },
+				{ schema.idf_font_name, "Arial" },
+				{ schema.idf_font_size, 14.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#0000CCFF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "#ffffffFF" },
+				{ schema.idf_box_border_thickness, 0 },
+				{ schema.idf_box_border_color, "" }
+			}
+			);
+
+		style_sheet.set(
+			{ schema.idf_system_style },
+			{
+				{ schema.idf_name, "system" },
+				{ schema.idf_font_name, "Arial" },
+				{ schema.idf_font_size, 14.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#0000CCFF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "#ffffffFF" },
+				{ schema.idf_box_border_thickness, 0 },
+				{ schema.idf_box_border_color, "" }
+			}
+			);
+
+		style_sheet.set(
+			{ schema.idf_home_style },
+			{
+				{ schema.idf_name, "home" },
+				{ schema.idf_font_name, "Arial" },
+				{ schema.idf_font_size, 14.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#0000CCFF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "#ffffffFF" },
+				{ schema.idf_box_border_thickness, 0 },
+				{ schema.idf_box_border_color, "" }
+			}
+			);
+
+		style_sheet.set(
+			{ schema.idf_login_style },
+			{
+				{ schema.idf_name, "login" },
+				{ schema.idf_font_name, "Arial" },
+				{ schema.idf_font_size, 14.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#0000CCFF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "#ffffffFF" },
+				{ schema.idf_box_border_thickness, 0 },
+				{ schema.idf_box_border_color, "" }
+			}
+			);
+
+		style_sheet.set(
+			{ schema.idf_company_a1_style },
+			{
+				{ schema.idf_name, "company_a1" },
+				{ schema.idf_font_name, "Arial" },
+				{ schema.idf_font_size, 14.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#0000CCFF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "#ffffffFF" },
+				{ schema.idf_box_border_thickness, 0 },
+				{ schema.idf_box_border_color, "" }
+			}
+			);
+
+		style_sheet.set(
+			{ schema.idf_company_a2_style },
+			{
+				{ schema.idf_name, "company_a2" },
+				{ schema.idf_font_name, "Arial" },
+				{ schema.idf_font_size, 14.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#0000CCFF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "#ffffffFF" },
+				{ schema.idf_box_border_thickness, 0 },
+				{ schema.idf_box_border_color, "" }
+			}
+			);
+
+		style_sheet.set(
+			{ schema.idf_company_a3_style },
+			{
+				{ schema.idf_name, "company_a3" },
+				{ schema.idf_font_name, "Arial" },
+				{ schema.idf_font_size, 14.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#0000CCFF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "#ffffffFF" },
+				{ schema.idf_box_border_thickness, 0 },
+				{ schema.idf_box_border_color, "" }
+			}
+			);
+
+		style_sheet.set(
+			{ schema.idf_company_b1_style },
+			{
+				{ schema.idf_name, "company_b1" },
+				{ schema.idf_font_name, "Arial" },
+				{ schema.idf_font_size, 14.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#0000CCFF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "#ffffffFF" },
+				{ schema.idf_box_border_thickness, 0 },
+				{ schema.idf_box_border_color, "" }
+			}
+			);
+
+		style_sheet.set(
+			{ schema.idf_company_b2_style },
+			{
+				{ schema.idf_name, "company_b2" },
+				{ schema.idf_font_name, "Arial" },
+				{ schema.idf_font_size, 14.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#0000CCFF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "#ffffffFF" },
+				{ schema.idf_box_border_thickness, 0 },
+				{ schema.idf_box_border_color, "" }
+			}
+			);
+
+		style_sheet.set(
+			{ schema.idf_company_b3_style },
+			{
+				{ schema.idf_name, "company_b3" },
+				{ schema.idf_font_name, "Arial" },
+				{ schema.idf_font_size, 14.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#0000CCFF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "#ffffffFF" },
+				{ schema.idf_box_border_thickness, 0 },
+				{ schema.idf_box_border_color, "" }
+			}
+			);
+
+		style_sheet.set(
+			{ schema.idf_company_c1_style },
+			{
+				{ schema.idf_name, "company_c1" },
+				{ schema.idf_font_name, "Arial" },
+				{ schema.idf_font_size, 14.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#0000CCFF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "#ffffffFF" },
+				{ schema.idf_box_border_thickness, 0 },
+				{ schema.idf_box_border_color, "" }
+			}
+			);
+
+		style_sheet.set(
+			{ schema.idf_company_c2_style },
+			{
+				{ schema.idf_name, "company_c2" },
+				{ schema.idf_font_name, "Arial" },
+				{ schema.idf_font_size, 14.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#0000CCFF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "#ffffffFF" },
+				{ schema.idf_box_border_thickness, 0 },
+				{ schema.idf_box_border_color, "" }
+			}
+			);
+
+		style_sheet.set(
+			{ schema.idf_company_c3_style },
+			{
+				{ schema.idf_name, "company_c3" },
+				{ schema.idf_font_name, "Arial" },
+				{ schema.idf_font_size, 14.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#0000CCFF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "#ffffffFF" },
+				{ schema.idf_box_border_thickness, 0 },
+				{ schema.idf_box_border_color, "" }
+			}
+			);
+
+		style_sheet.set(
+			{ schema.idf_company_d1_style },
+			{
+				{ schema.idf_name, "company_d1" },
+				{ schema.idf_font_name, "Arial" },
+				{ schema.idf_font_size, 14.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#0000CCFF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "#ffffffFF" },
+				{ schema.idf_box_border_thickness, 0 },
+				{ schema.idf_box_border_color, "" }
+			}
+			);
+
+		style_sheet.set(
+			{ schema.idf_company_d2_style },
+			{
+				{ schema.idf_name, "company_d2" },
+				{ schema.idf_font_name, "Arial" },
+				{ schema.idf_font_size, 14.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#0000CCFF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "#ffffffFF" },
+				{ schema.idf_box_border_thickness, 0 },
+				{ schema.idf_box_border_color, "" }
+			}
+			);
+
+		style_sheet.set(
+			{ schema.idf_company_d3_style },
+			{
+				{ schema.idf_name, "company_d3" },
+				{ schema.idf_font_name, "Arial" },
+				{ schema.idf_font_size, 14.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#0000CCFF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "#ffffffFF" },
+				{ schema.idf_box_border_thickness, 0 },
+				{ schema.idf_box_border_color, "" }
+			}
+			);
+
+		style_sheet.set(
+			{ schema.idf_company_deductible_style },
+			{
+				{ schema.idf_name, "deductible" },
+				{ schema.idf_font_name, "Arial" },
+				{ schema.idf_font_size, 14.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#0000CCFF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "#ffffffFF" },
+				{ schema.idf_box_border_thickness, 0 },
+				{ schema.idf_box_border_color, "" }
+			}
+			);
+
 	}
 
 }

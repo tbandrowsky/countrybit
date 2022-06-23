@@ -1,3 +1,6 @@
+
+
+
 #pragma once
 
 #include "corona.h"
@@ -998,8 +1001,8 @@ namespace corona
 			actor_state update_object(update_object_request& _update, const char* _trace_msg = nullptr);
 
 			void print(const char *_trace, actor_state& acr);
-
 			jobject create_object(relative_ptr_type _item_id, relative_ptr_type _actor_id, relative_ptr_type _class_id, relative_ptr_type& _object_id);
+			jobject create_object(relative_ptr_type _item_id, relative_ptr_type _actor_id, relative_ptr_type _class_id, relative_ptr_type& _object_id, std::initializer_list<dynamic_value> var);
 			jobject get_object(relative_ptr_type _object_id);
 			jobject update_object(relative_ptr_type _object_id, jobject _slice);
 			collection_object_type &get_object_reference(relative_ptr_type _object_id);
@@ -1210,6 +1213,29 @@ namespace corona
 			relative_ptr_type idf_chart_block_style;
 			relative_ptr_type idf_tooltip_style;
 			relative_ptr_type idf_breadcrumb_style;
+			relative_ptr_type idf_error_style;
+			relative_ptr_type idf_client_style;
+			relative_ptr_type idf_carrier_style;
+			relative_ptr_type idf_coverage_style;
+			relative_ptr_type idf_product_style;
+			relative_ptr_type idf_system_style;
+			relative_ptr_type idf_home_style;
+			relative_ptr_type idf_login_style;
+			relative_ptr_type idf_company_a1_style;
+			relative_ptr_type idf_company_a2_style;
+			relative_ptr_type idf_company_a3_style;
+			relative_ptr_type idf_company_b1_style;
+			relative_ptr_type idf_company_b2_style;
+			relative_ptr_type idf_company_b3_style;
+			relative_ptr_type idf_company_c1_style;
+			relative_ptr_type idf_company_c2_style;
+			relative_ptr_type idf_company_c3_style;
+			relative_ptr_type idf_company_d1_style;
+			relative_ptr_type idf_company_d2_style;
+			relative_ptr_type idf_company_d3_style;
+			relative_ptr_type idf_company_deductible_style;
+			relative_ptr_type idf_company_neutral1_style;
+			relative_ptr_type idf_company_neutral2_style;
 
 			relative_ptr_type idc_style_sheet;
 			relative_ptr_type idf_style_sheet;

@@ -87,7 +87,7 @@ namespace corona
 			page();
 			void clear();
 
-			void map_style(relative_ptr_type _class_id, relative_ptr_type _style_id, jschema *_schema);
+			void map_style(relative_ptr_type _class_id, const char* _style_name);
 
 			page_item* row(page_item* _parent, const char *_style_name = nullptr, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
 			page_item* column( page_item* _parent, const char* _style_name = nullptr, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });

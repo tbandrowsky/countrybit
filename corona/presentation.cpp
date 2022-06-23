@@ -406,10 +406,9 @@ namespace corona
 			}
 		}
 
-		void page::map_style(relative_ptr_type _class_id, relative_ptr_type _style_id, jschema* _schema)
+		void page::map_style(relative_ptr_type _class_id, const char *_style_name)
 		{
-			auto& fld = _schema->get_field(_style_id);
-			styles.insert_or_assign(_class_id, fld.name);
+			styles.insert_or_assign(_class_id, _style_name);
 		}
 
 	}

@@ -29,6 +29,9 @@ namespace proposal
 		corona::database::relative_ptr_type idc_coverage;
 		corona::database::relative_ptr_type idf_coverage;
 
+		corona::database::relative_ptr_type idc_system_root;
+		corona::database::relative_ptr_type idf_system_root;
+
 		corona::database::relative_ptr_type idc_product_template_root;
 		corona::database::relative_ptr_type idf_product_template_root;
 		corona::database::relative_ptr_type idc_product_template;
@@ -86,6 +89,8 @@ namespace proposal
 
 		wsproposal_controller();
 		virtual ~wsproposal_controller();
+
+		void create_style_sheet();
 
 		void render_home(page_item *_frame);
 		void render_client(page_item* _frame);

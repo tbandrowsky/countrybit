@@ -316,20 +316,43 @@ namespace corona
 
 			virtual bool create(direct2dContext* target)
 			{
-				fontName.c_str();
-				wchar_t buff[512];
-				int ret = ::MultiByteToWideChar(CP_ACP, 0, fontName.c_str(), -1, buff, sizeof(buff) - 1);
-				lpWriteTextFormat = NULL;
-				HRESULT hr = target->factory->getDWriteFactory()->CreateTextFormat(buff,
-					NULL,
-					bold ? DWRITE_FONT_WEIGHT_BOLD : DWRITE_FONT_WEIGHT_REGULAR,
-					italic ? DWRITE_FONT_STYLE_ITALIC : DWRITE_FONT_STYLE_NORMAL,
-					DWRITE_FONT_STRETCH_NORMAL,
-					size * 96.0 / 72.0,
-					L"en-US",
-					&lpWriteTextFormat);
+				HRESULT hr;
 
-				if (SUCCEEDED(hr) && lpWriteTextFormat != nullptr)
+				istring<2048> fontList = fontName;
+				istring<2048> fontName;
+
+				int state = 0;
+				char* fontExtractedName = fontList.next_token(',', state);
+				lpWriteTextFormat = NULL;
+
+				while (fontExtractedName)
+				{
+					fontName = fontExtractedName;
+					iwstring<2048> wideName = fontName;
+
+					DWRITE_FONT_STYLE fontStyle = DWRITE_FONT_STYLE_NORMAL;
+					
+					if (italic) {
+						fontStyle = DWRITE_FONT_STYLE_ITALIC;
+					}
+
+					HRESULT hr = target->factory->getDWriteFactory()->CreateTextFormat(wideName.c_str(),
+						NULL,
+						bold ? DWRITE_FONT_WEIGHT_BOLD : DWRITE_FONT_WEIGHT_REGULAR,
+						fontStyle,
+						DWRITE_FONT_STRETCH_NORMAL,
+						size * 96.0 / 72.0,
+						L"en-US",
+						&lpWriteTextFormat);
+
+					if (SUCCEEDED(hr) || lpWriteTextFormat != nullptr) {
+						break;
+					}
+
+					fontExtractedName = fontList.next_token(',', state);
+				};
+
+				if (lpWriteTextFormat != nullptr)
 				{
 					if (line_spacing > 0.0) {
 						lpWriteTextFormat->SetLineSpacing(DWRITE_LINE_SPACING_METHOD_UNIFORM, line_spacing, line_spacing * .8);
@@ -387,9 +410,10 @@ namespace corona
 					{
 						lpWriteTextFormat->SetWordWrapping(DWRITE_WORD_WRAPPING_EMERGENCY_BREAK);
 					}
-				}
 
-				return SUCCEEDED(hr);
+					return true;
+				}
+				return false;
 			}
 
 			virtual void release()

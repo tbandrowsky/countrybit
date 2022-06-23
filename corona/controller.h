@@ -127,6 +127,8 @@ namespace corona
 
 			virtual void clear();
 
+			void map_style(relative_ptr_type _class_id, relative_ptr_type _style_id);
+
 			page_item* row(page_item* _parent, relative_ptr_type _style_id, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
 			page_item* column(page_item* _parent, relative_ptr_type _style_id, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
 			page_item* absolute(page_item* _parent, relative_ptr_type _style_id, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
@@ -151,7 +153,7 @@ namespace corona
 			virtual page_item* column_common(page_item* _parent_ui, layout_rect _box, relative_ptr_type* _has_field_list);
 
 			virtual void breadcrumbs(page_item* _parent, std::function<const char* (jobject& slice)> _captioner, layout_rect _item_box = { 0.0_px, 0.0_px, 200.0_px, 100.0_px });
-			virtual void selection_table(page_item* _parent);
+
 			virtual page_item* add_update_fields(page_item* _parent);
 			virtual page_item* add_create_buttons(page_item* _parent);
 			virtual page_item* add_select_items(page_item* _parent);

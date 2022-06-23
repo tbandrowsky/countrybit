@@ -461,6 +461,24 @@ namespace corona
 				return *this;
 			}
 
+			char* next_token(char delim, int& start)
+			{
+				if (start < 0) start = 0;
+				if (start >= size()) {
+					start = size();
+					return nullptr;
+				}
+				char* s = &data[start];
+				char* e = s;
+				while (*e && *e != delim) {
+					start++;
+					e = &data[start];
+				}
+				*e = 0;
+				start++;
+				return s;
+			}
+
 		};
 
 		template<int l1, int l2> int compare(const istring<l1>& a, const istring<l2>& b)

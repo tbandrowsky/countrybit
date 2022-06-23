@@ -370,6 +370,11 @@ namespace corona
 			pg.clear();
 		}
 
+		void corona_controller::map_style(relative_ptr_type _class_id, relative_ptr_type _style_id)
+		{
+			pg.map_style(_class_id, style_name(_style_id));
+		}
+
 		const char* corona_controller::style_name(relative_ptr_type _style_field_id)
 		{
 			const char *r = nullptr;
