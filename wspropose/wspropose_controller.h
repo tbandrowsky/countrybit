@@ -34,18 +34,8 @@ namespace proposal
 
 		corona::database::relative_ptr_type idc_product_template_root;
 		corona::database::relative_ptr_type idf_product_template_root;
-		corona::database::relative_ptr_type idc_product_template;
 		corona::database::relative_ptr_type idf_product_template;
-		corona::database::relative_ptr_type idf_product_template_name;
-		corona::database::relative_ptr_type idf_product_template_code;
-		corona::database::relative_ptr_type idf_product_template_status;
-		corona::database::relative_ptr_type idf_product_template_edition_start;
-		corona::database::relative_ptr_type idf_product_template_edition_stop;
-		corona::database::relative_ptr_type idf_product_template_type;
-		corona::database::relative_ptr_type idf_product_template_line_of_business;
-		corona::database::relative_ptr_type idf_product_template_carrier;
-		corona::database::relative_ptr_type idf_product_template_updated_by;
-		corona::database::relative_ptr_type idf_product_template_status_updated_by;
+		corona::database::relative_ptr_type idc_product_template;
 
 		corona::database::relative_ptr_type idf_inception;
 		corona::database::relative_ptr_type idf_expiration;
@@ -54,26 +44,37 @@ namespace proposal
 		corona::database::relative_ptr_type idf_limit;
 		corona::database::relative_ptr_type idf_deductible;
 		corona::database::relative_ptr_type idf_share;
+		corona::database::relative_ptr_type idf_comment;
+		corona::database::relative_ptr_type idf_program_style;
 
-		corona::database::relative_ptr_type idf_product_template_product_header;
-		corona::database::relative_ptr_type idf_product_template_product_structure;
-		corona::database::relative_ptr_type idf_product_template_coverage_header;
-		corona::database::relative_ptr_type idf_product_template_coverage_structure;
+		corona::database::relative_ptr_type idf_product;
+		corona::database::relative_ptr_type idc_product;
 
-		corona::database::relative_ptr_type idf_product_header;
-		corona::database::relative_ptr_type idf_product_structure;
-		corona::database::relative_ptr_type idf_product_coverage_header;
-		corona::database::relative_ptr_type idf_product_coverage_structure;
+		corona::database::relative_ptr_type idf_pi_inception;
+		corona::database::relative_ptr_type idf_pi_expiration;
+		corona::database::relative_ptr_type idf_pi_status;
+		corona::database::relative_ptr_type idf_pi_attachment;
+		corona::database::relative_ptr_type idf_pi_limit;
+		corona::database::relative_ptr_type idf_pi_deductible;
+		corona::database::relative_ptr_type idf_pi_share;
+		corona::database::relative_ptr_type idf_pi_coverage;
+		corona::database::relative_ptr_type idf_pi_comment;
+
+		corona::database::relative_ptr_type idc_pi_inception;
+		corona::database::relative_ptr_type idc_pi_expiration;
+		corona::database::relative_ptr_type idc_pi_status;
+		corona::database::relative_ptr_type idc_pi_attachment;
+		corona::database::relative_ptr_type idc_pi_limit;
+		corona::database::relative_ptr_type idc_pi_deductible;
+		corona::database::relative_ptr_type idc_pi_share;
+		corona::database::relative_ptr_type idc_pi_coverage;
+		corona::database::relative_ptr_type idc_pi_comment;
 
 		corona::database::relative_ptr_type idf_program_title;
 		corona::database::relative_ptr_type idf_program_subtitle;
 		corona::database::relative_ptr_type idc_program;
 		corona::database::relative_ptr_type idf_program;
 		corona::database::relative_ptr_type idf_program_view;
-
-		corona::database::relative_ptr_type idc_product_base;
-		corona::database::relative_ptr_type idf_product;
-		corona::database::relative_ptr_type idc_product;
 		
 		corona::database::relative_ptr_type idf_slide_title;
 

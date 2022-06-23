@@ -82,6 +82,59 @@ namespace proposal
 		idf_limit = schema.put_double_field({ { null_row,  jtype::type_float32, "limit", "Limit" }, { 0.0, 1E10 } });
 		idf_deductible = schema.put_double_field({ { null_row,  jtype::type_float32, "deductible", "Deductible" }, { 0.0, 1E10 } });
 		idf_share = schema.put_double_field({ { null_row,  jtype::type_float32, "share", "Share %" }, { 0.0, 100 } });
+		idf_comment = schema.put_string_field({ { null_row,  jtype::type_string, "comment", "Comment" }, { 500, "", "", }});
+		idf_program_style = schema.put_string_field({ { null_row,  jtype::type_color, "style", "Style" }, {  } });
+
+		idf_pi_inception = schema.put_integer_field({ { null_row,  jtype::type_int64, "inception_id", "Inception Id" }, { 0, INT64_MAX } });
+		idf_pi_expiration = schema.put_integer_field({ { null_row,  jtype::type_int64, "expiration_id", "Expiration Id" }, { 0, INT64_MAX } });
+		idf_pi_status = schema.put_integer_field({ { null_row,  jtype::type_int64, "status_id", "Status Id" }, { 0, INT64_MAX } });
+		idf_pi_attachment = schema.put_integer_field({ { null_row,  jtype::type_int64, "attachment_id", "Attachment Id" }, { 0, INT64_MAX } });
+		idf_pi_limit = schema.put_integer_field({ { null_row,  jtype::type_int64, "limit_id", "Limit Id" }, { 0, INT64_MAX } });
+		idf_pi_deductible = schema.put_integer_field({ { null_row,  jtype::type_int64, "deductible_id", "Deductible Id" }, { 0, INT64_MAX } });
+		idf_pi_share = schema.put_integer_field({ { null_row,  jtype::type_int64, "share_id", "Share % Id" }, { 0, INT64_MAX } });
+		idf_pi_comment = schema.put_integer_field({ { null_row,  jtype::type_int64, "comment_id", "Comment Id" }, { 0, INT64_MAX } });
+
+		pcr.class_name = "pi_inception";
+		pcr.class_description = "Inception";
+		pcr.field_id_primary_key = idf_carrier;
+		pcr.member_fields = { idf_product, idf_inception };
+		idc_pi_inception = schema.put_class(pcr);
+
+		pcr.class_name = "pi_expiration";
+		pcr.class_description = "Expiration";
+		pcr.field_id_primary_key = idf_carrier;
+		pcr.member_fields = { idf_product, idf_expiration };
+		idc_pi_expiration = schema.put_class(pcr);
+
+		pcr.class_name = "pi_status";
+		pcr.class_description = "Status";
+		pcr.field_id_primary_key = idf_status;
+		pcr.member_fields = { idf_product, idf_status };
+		idc_pi_status = schema.put_class(pcr);
+
+		pcr.class_name = "pi_limit";
+		pcr.class_description = "Limit";
+		pcr.field_id_primary_key = idf_limit;
+		pcr.member_fields = { idf_product, idf_limit };
+		idc_pi_limit = schema.put_class(pcr);
+
+		pcr.class_name = "pi_deductible";
+		pcr.class_description = "Deductible";
+		pcr.field_id_primary_key = idf_limit;
+		pcr.member_fields = { idf_product, idf_deductible };
+		idc_pi_deductible = schema.put_class(pcr);
+
+		pcr.class_name = "pi_share";
+		pcr.class_description = "Share";
+		pcr.field_id_primary_key = idf_share;
+		pcr.member_fields = { idf_product, idf_deductible };
+		idc_pi_share = schema.put_class(pcr);
+
+		pcr.class_name = "pi_comment";
+		pcr.class_description = "Comment";
+		pcr.field_id_primary_key = idf_share;
+		pcr.member_fields = { idf_product, idf_comment };
+		idc_pi_comment = schema.put_class(pcr);
 
 		idf_product_template_root = schema.put_integer_field({ { null_row,  jtype::type_int64, "home", "Home id" }, { 0, INT64_MAX } });
 		pcr.class_name = "product_templates";
@@ -89,44 +142,7 @@ namespace proposal
 		pcr.field_id_primary_key = idf_product_template_root;
 		pcr.member_fields = { idf_product_template_root, idf_home };
 		idc_product_template_root = schema.put_class(pcr);
-
 		idf_product_template = schema.put_integer_field({ { null_row,  jtype::type_int64, "product_template", "Product Template id" }, { 0, INT64_MAX } });
-		idf_product_template_name = schema.put_string_field({ { null_row,  jtype::type_string, "product_template_name", "Name" }, { 100, "", "" } });
-		idf_product_template_code = schema.put_string_field({ { null_row,  jtype::type_string, "product_template_code", "Code" }, { 32, "", "" }});
-		idf_product_template_status = schema.put_string_field({ { null_row,  jtype::type_string, "product_template_status", "Status" }, { 32, "", "" } });
-		idf_product_template_edition_start = schema.put_time_field({ { null_row,  jtype::type_datetime, "product_template_edition_start", "Edition Start" }, { 0, INT64_MAX } });
-		idf_product_template_edition_stop = schema.put_time_field({ { null_row,  jtype::type_datetime, "product_template_edition_stop", "Edition Stop" }, { 0, INT64_MAX } });
-		idf_product_template_type = schema.put_string_field({ { null_row,  jtype::type_string, "product_template_type", "Type" }, { 32, "", "" } });
-		idf_product_template_line_of_business = schema.put_string_field({ { null_row,  jtype::type_string, "product_template_line_of_business", "Line of Business" }, { 32, "", "" } });
-		idf_product_template_carrier = schema.put_string_field({ { null_row,  jtype::type_string, "home", "Home id" }, { 32, "", "" } });
-		idf_product_template_updated_by = schema.put_string_field({ { null_row,  jtype::type_string, "home", "Home id" }, { 32, "", "" } });
-
-		idf_product_template_product_header = schema.put_object_field({ { null_row, jtype::type_object, "product_header", "Product Header"}, { { 1, 1, 1 }, schema.idc_user_class } });
-		idf_product_template_product_structure = schema.put_object_field({ { null_row, jtype::type_object, "product_detail", "Product Detail"}, { { 1, 1, 1 }, schema.idc_user_class } });
-		idf_product_template_coverage_header = schema.put_object_field({ { null_row, jtype::type_object, "coverage_header", "Coverage Header"}, { { 1, 1, 1 }, schema.idc_user_class } });
-		idf_product_template_coverage_structure = schema.put_object_field({ { null_row, jtype::type_object, "coverage_detail", "Coverage Detail"}, { { 1, 1, 1 }, schema.idc_user_class } });
-
-		pcr.class_name = "product_template";
-		pcr.class_description = "Product Template";
-		pcr.field_id_primary_key = idf_product_template;
-		pcr.member_fields = { 
-			idf_product_template, 
-			idf_product_template_root,
-			idf_product_template_name, 
-			idf_product_template_code, 
-			idf_product_template_status, 
-			idf_product_template_edition_start,
-			idf_product_template_edition_stop,
-			idf_product_template_type,
-			idf_product_template_line_of_business,
-			idf_product_template_carrier,
-			idf_product_template_updated_by,
-			idf_product_template_product_header,
-			idf_product_template_product_structure,
-			idf_product_template_coverage_header,
-			idf_product_template_coverage_structure
-		};
-		idc_product_template = schema.put_class(pcr);
 
 		idf_program = schema.put_integer_field({ { null_row,  jtype::type_int64, "program_id", "Program Id" }, { 0, INT64_MAX } });
 		idf_program_view = schema.put_integer_field({ { null_row,  jtype::type_int64, "program_view", "Program View" }, { 0, INT64_MAX } });
@@ -143,7 +159,7 @@ namespace proposal
 		pcr.class_description = "Product";
 		pcr.field_id_primary_key = idf_product;
 		pcr.template_class_id = idc_product_template;
-		pcr.member_fields = { idf_product, idf_program, idf_client, idf_product_template_product_header, idf_product_template_product_structure, idf_product_template_coverage_header, idf_product_template_coverage_structure };
+		pcr.member_fields = { idf_product, idf_program, idf_client, idf_program_style };
 		idc_product = schema.put_class(pcr);
 
 		idf_program_chart_slide = schema.put_integer_field({ { null_row,  jtype::type_int64, "program_chart_slide_id", "Program Chart Slide Id" }, { 0, INT64_MAX } });
@@ -166,6 +182,7 @@ namespace proposal
 		pcr.field_id_primary_key = idf_program_chart_slide;
 		pcr.member_fields = { idf_program_generic_slide, idf_client, idf_program };
 		idc_program_generic_slide = schema.put_class(pcr);
+
 		jmodel jm;
 
 		jm.update_always(&schema, idc_home);
@@ -179,6 +196,17 @@ namespace proposal
 		jm.update_always(&schema, idc_client);
 		jm.update_always(&schema, idc_program);
 		jm.update_always(&schema, idc_product);
+
+		jm.update_always(&schema, idc_pi_inception);
+		jm.update_always(&schema, idc_pi_expiration);
+		jm.update_always(&schema, idc_pi_status);
+		jm.update_always(&schema, idc_pi_attachment);
+		jm.update_always(&schema, idc_pi_limit);
+		jm.update_always(&schema, idc_pi_deductible);
+		jm.update_always(&schema, idc_pi_share);
+		jm.update_always(&schema, idc_pi_coverage);
+		jm.update_always(&schema, idc_pi_comment);
+
 		jm.update_always(&schema, idc_program_chart_slide);
 		jm.update_always(&schema, idc_program_generic_slide);
 
@@ -196,12 +224,32 @@ namespace proposal
 		jm.select_always(&schema, idc_program_chart_slide);
 		jm.select_always(&schema, idc_program_generic_slide);
 
+		jm.select_always(&schema, idc_pi_inception);
+		jm.select_always(&schema, idc_pi_expiration);
+		jm.select_always(&schema, idc_pi_status);
+		jm.select_always(&schema, idc_pi_attachment);
+		jm.select_always(&schema, idc_pi_limit);
+		jm.select_always(&schema, idc_pi_deductible);
+		jm.select_always(&schema, idc_pi_share);
+		jm.select_always(&schema, idc_pi_coverage);
+		jm.select_always(&schema, idc_pi_comment);
+
 		jm.create_when(&schema, idc_carrier_root, idc_carrier, null_row, true, false);
 		jm.create_when(&schema, idc_product_template_root, idc_product_template, null_row, true, false);
 		jm.create_when(&schema, idc_coverage_root, idc_coverage, null_row, true, false);
 		jm.create_when(&schema, idc_client_root, idc_client, null_row, true, false);
 		jm.create_when(&schema, idc_client, idc_program, null_row, true, false);
-		jm.create_when(&schema, idc_program, idc_product_template, idc_product, null_row, true, false);
+		jm.create_when(&schema, idc_program, idc_product, null_row, true, false);
+
+		jm.create_when(&schema, idc_program, idc_pi_inception, null_row, true, false);
+		jm.create_when(&schema, idc_program, idc_pi_expiration, null_row, true, false);
+		jm.create_when(&schema, idc_program, idc_pi_status, null_row, true, false);
+		jm.create_when(&schema, idc_program, idc_pi_attachment, null_row, true, false);
+		jm.create_when(&schema, idc_program, idc_pi_limit, null_row, true, false);
+		jm.create_when(&schema, idc_program, idc_pi_deductible, null_row, true, false);
+		jm.create_when(&schema, idc_program, idc_pi_share, null_row, true, false);
+		jm.create_when(&schema, idc_program, idc_pi_comment, null_row, true, false);
+
 		jm.create_when(&schema, idc_program, idc_program_chart_slide, idc_program, true, false);
 		jm.create_when(&schema, idc_program_chart_slide, idc_program_chart_slide_product, idc_program, true, false);
 		jm.create_when(&schema, idc_program, idc_program_generic_slide, idc_program, true, false);
@@ -220,7 +268,6 @@ namespace proposal
 						{ idc_program_chart_slide, 4 },
 						{ idc_program_generic_slide, 4 } }
 			);
-
 
 		schema.put_model(jm);
 
@@ -244,12 +291,6 @@ namespace proposal
 		sample_actor.current_view_class_id = idc_home;
 		sample_actor = program_chart.create_actor(sample_actor);
 
-		map_style(idc_home, schema.idf_home_style);
-		map_style(idc_client_root, schema.idf_client_style);
-		map_style(idc_carrier_root, schema.idf_carrier_style);
-		map_style(idc_coverage_root, schema.idf_coverage_style);
-		map_style(idc_product_template_root, schema.idf_product_style);
-
 		relative_ptr_type id_home = null_row, id_carrier_root = null_row, id_coverage_root = null_row, id_client_root = null_row, id_product_template_root = null_row, id_system_root = null_row;
 
 		program_chart.create_object(null_row, sample_actor.actor_id, idc_home, id_home);
@@ -271,11 +312,13 @@ namespace proposal
 		program_chart.create_object(0, sample_actor.actor_id, idc_carrier_root, carriers_id);
 		program_chart.create_object(0, sample_actor.actor_id, idc_carrier_root, programs_id);
 
-		//{ idname, idfont_name, idfont_size, idbold, iditalic, idline_spacing, idhorizontal_alignment, idvertical_alignment,
-	//idshape_fill_color, idshape_border_thickness, idshape_border_color, idbox_fill_color, idbox_border_thickness, idbox_border_color };
+		create_style_sheet();
 
-		//			pcr.member_fields = { idname, id_view_title, id_view_subtitle, id_view_section, id_view, id_disclaimer, id_copyright,
-		//id_h1, id_h2, id_h3, id_column_number_head, id_column_text_head, id_column_data, id_label, id_control, id_chart_axis, id_chart_legend, id_chart_block, id_tooltip };
+		map_style(idc_home, schema.idf_home_style);
+		map_style(idc_client_root, schema.idf_client_style);
+		map_style(idc_carrier_root, schema.idf_carrier_style);
+		map_style(idc_coverage_root, schema.idf_coverage_style);
+		map_style(idc_product_template_root, schema.idf_product_style);
 
 	}
 
