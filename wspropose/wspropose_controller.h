@@ -32,10 +32,19 @@ namespace proposal
 		corona::database::relative_ptr_type idc_system_root;
 		corona::database::relative_ptr_type idf_system_root;
 
-		corona::database::relative_ptr_type idc_product_template_root;
-		corona::database::relative_ptr_type idf_product_template_root;
-		corona::database::relative_ptr_type idf_product_template;
-		corona::database::relative_ptr_type idc_product_template;
+		corona::database::relative_ptr_type idc_program_template_root;
+		corona::database::relative_ptr_type idf_program_template_root;
+		corona::database::relative_ptr_type idf_program_template;
+		corona::database::relative_ptr_type idc_program_template;
+
+		corona::database::relative_ptr_type idc_program;
+		corona::database::relative_ptr_type idf_program;
+		corona::database::relative_ptr_type idf_program_view;
+		corona::database::relative_ptr_type idf_product;
+		corona::database::relative_ptr_type idc_product;
+
+		corona::database::relative_ptr_type idf_product_item_base;
+		corona::database::relative_ptr_type idc_product_item_base;
 
 		corona::database::relative_ptr_type idf_inception;
 		corona::database::relative_ptr_type idf_expiration;
@@ -46,9 +55,6 @@ namespace proposal
 		corona::database::relative_ptr_type idf_share;
 		corona::database::relative_ptr_type idf_comment;
 		corona::database::relative_ptr_type idf_program_style;
-
-		corona::database::relative_ptr_type idf_product;
-		corona::database::relative_ptr_type idc_product;
 
 		corona::database::relative_ptr_type idf_pi_inception;
 		corona::database::relative_ptr_type idf_pi_expiration;
@@ -72,9 +78,6 @@ namespace proposal
 
 		corona::database::relative_ptr_type idf_program_title;
 		corona::database::relative_ptr_type idf_program_subtitle;
-		corona::database::relative_ptr_type idc_program;
-		corona::database::relative_ptr_type idf_program;
-		corona::database::relative_ptr_type idf_program_view;
 		
 		corona::database::relative_ptr_type idf_slide_title;
 

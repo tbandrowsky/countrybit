@@ -88,6 +88,30 @@ namespace corona
 			so->selectors.always();
 		}
 
+		void model_type::delete_when(jschema* _schema, relative_ptr_type _selected_class_id1, relative_ptr_type _selected_class_id2, relative_ptr_type _update_class_id)
+		{
+			auto so = delete_options.append();
+			so->delete_class_id = _update_class_id;
+			so->rule_name = "Delete " + _schema->get_class(_update_class_id).item().name;
+			so->selectors.when(_selected_class_id1, _selected_class_id2);
+		}
+
+		void model_type::delete_when(jschema* _schema, relative_ptr_type _selected_class_id1, relative_ptr_type _update_class_id)
+		{
+			auto so = delete_options.append();
+			so->delete_class_id = _update_class_id;
+			so->rule_name = "Update " + _schema->get_class(_update_class_id).item().name;
+			so->selectors.when(_selected_class_id1);
+		}
+
+		void model_type::delete_always(jschema* _schema, relative_ptr_type _update_class_id)
+		{
+			auto so = delete_options.append();
+			so->delete_class_id = _update_class_id;
+			so->rule_name = "Update " + _schema->get_class(_update_class_id).item().name;
+			so->selectors.always();
+		}
+
 		void model_type::navigation(std::vector<model_hierarchy_path> items)
 		{
 			for (auto item : items)

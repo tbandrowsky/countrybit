@@ -457,6 +457,52 @@ namespace corona
 			return acr;
 		}
 
+		actor_state jcollection::delete_selected(const delete_selected_request& _select, const char* _trace_msg)
+		{
+			if (_trace_msg) {
+				std::cout << "\nstart:" << _trace_msg << std::endl;
+			}
+
+			actor_state acr;
+			acr.collection_id = collection_id;
+			if (!actors.check(_select.actor_id))
+			{
+				return acr;
+			}
+
+			actor_type ac = get_actor(_select.actor_id);
+
+			auto acr = get_actor_state(_select.actor_id, -1, _trace_msg);
+
+			auto modified_time = time(nullptr);
+
+			selections_collection retained_selections;
+
+			for (auto sel : ac.selections)
+			{
+				if (acr.view_objects.contains(sel.item)) {
+					auto state = acr.view_objects[sel.item];
+					auto avo = state.get_value();
+					if (avo.deletable) {
+						objects[sel.item].item().deleted = true;
+						objects[sel.item].item().last_modified = modified_time;
+						objects[sel.item].item().actor_id = _select.actor_id;
+					}
+					else {
+						retained_selections.push_back(sel.item);
+					}
+				}
+				else {
+					retained_selections.push_back(sel.item);
+				}
+			}
+
+			ac.selections = retained_selections;
+
+			acr = get_actor_state(_select.actor_id, -1, _trace_msg);
+			return acr;
+		}
+
 		actor_state jcollection::create_object(create_object_request& _create, const char* _trace_msg)
 		{
 			if (_trace_msg) {

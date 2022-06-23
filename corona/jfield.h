@@ -12,6 +12,7 @@ namespace corona
 		const int max_creatable_options = 100;
 		const int max_selectable_options = 100;
 		const int max_updatable_options = 100;
+		const int max_deletable_options = 100;
 		const int max_selections = 1000;
 		const int max_class_fields = 512;
 		const int default_collection_object_size = 512;
@@ -791,7 +792,7 @@ namespace corona
 		public:
 			object_name						rule_name;
 			object_name						update_class_name;
-			relative_ptr_type						update_class_id;
+			relative_ptr_type				update_class_id;
 			selector_collection				selectors;
 
 			model_updatable_class()
@@ -799,6 +800,20 @@ namespace corona
 				update_class_id = null_row;
 			}
 
+		};
+
+		class model_deletable_class
+		{
+		public:
+			object_name						rule_name;
+			object_name						delete_class_name;
+			relative_ptr_type				delete_class_id;
+			selector_collection				selectors;
+
+			model_deletable_class()
+			{
+				delete_class_id = null_row;
+			}
 		};
 
 		struct model_hierarchy_path
@@ -810,6 +825,7 @@ namespace corona
 		using model_create_class_collection = iarray<model_creatable_class, max_creatable_options>;
 		using model_select_class_collection = iarray<model_selectable_class, max_selectable_options>;
 		using model_update_class_collection = iarray<model_updatable_class, max_updatable_options>;
+		using model_delete_class_collection = iarray<model_deletable_class, max_deletable_options>;
 		using model_selection_hierarchy = iarray<model_hierarchy_path, max_selection_depth>;	
 
 		class model_type
@@ -819,10 +835,11 @@ namespace corona
 			model_create_class_collection create_options;
 			model_select_class_collection select_options;
 			model_update_class_collection update_options;
+			model_delete_class_collection delete_options;
 			model_selection_hierarchy	  selection_hierarchy;
 
 			void create_when(jschema* _schema, relative_ptr_type _selected_class_id1, relative_ptr_type _selected_class_id2, relative_ptr_type _create_class_id, relative_ptr_type _from_item_class_id, bool _select_created, bool _replace_selected);
-			void create_when( jschema *_schema, relative_ptr_type _selected_class_id1, relative_ptr_type _create_class_id, relative_ptr_type _from_item_class_id, bool _select_created,  bool _replace_selected );
+			void create_when(jschema *_schema, relative_ptr_type _selected_class_id1, relative_ptr_type _create_class_id, relative_ptr_type _from_item_class_id, bool _select_created,  bool _replace_selected );
 			void create_always(jschema* _schema, relative_ptr_type _create_class_id, relative_ptr_type _from_item_class_id, bool _select_created, bool _replace_selected);
 
 			void select_when(jschema* _schema, relative_ptr_type _selected_class_id1, relative_ptr_type _selected_class_id2, relative_ptr_type _select_class_id);
@@ -832,6 +849,10 @@ namespace corona
 			void update_when(jschema* _schema, relative_ptr_type _selected_class_id1, relative_ptr_type _selected_class_id2, relative_ptr_type _update_class_id);
 			void update_when(jschema* _schema, relative_ptr_type _selected_class_id1, relative_ptr_type _update_class_id);
 			void update_always(jschema* _schema, relative_ptr_type _update_class_id);
+
+			void delete_when(jschema* _schema, relative_ptr_type _selected_class_id1, relative_ptr_type _selected_class_id2, relative_ptr_type _update_class_id);
+			void delete_when(jschema* _schema, relative_ptr_type _selected_class_id1, relative_ptr_type _update_class_id);
+			void delete_always(jschema* _schema, relative_ptr_type _update_class_id);
 
 			void navigation(std::vector<model_hierarchy_path> items);
 			void navigation(std::initializer_list<model_hierarchy_path> member_ids);

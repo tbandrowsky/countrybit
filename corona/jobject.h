@@ -704,6 +704,7 @@ namespace corona
 			bool				selectable;
 			bool				updatable;
 			bool				selected;
+			bool				deletable;
 		};
 
 		class select_object_request
@@ -713,6 +714,13 @@ namespace corona
 			actor_id_type		actor_id;
 			relative_ptr_type	object_id;
 			bool				extend;
+		};
+
+		class delete_selected_request
+		{
+		public:
+			collection_id_type	collection_id;
+			actor_id_type		actor_id;
 		};
 
 		class update_object_request
@@ -997,6 +1005,7 @@ namespace corona
 
 			actor_state get_actor_state(relative_ptr_type _actor, relative_ptr_type _last_modified_object = null_row, const char *_trace_msg = nullptr);
 			actor_state select_object(const select_object_request& _select, const char* _trace_msg = nullptr);
+			actor_state delete_selected(const delete_selected_request& _select, const char* _trace_msg = nullptr);
 			actor_state create_object(create_object_request& _create, const char* _trace_msg = nullptr);
 			actor_state update_object(update_object_request& _update, const char* _trace_msg = nullptr);
 
@@ -1863,12 +1872,24 @@ namespace corona
 				int64_t total_size_bytes = 0;
 
 				member_field_collection temp_fields;
+				
+				jclass_field pk_field = { null_row, 0 };
 
 				if (request.template_class_id != null_row && request.base_class_id != null_row)
 				{
 					relative_ptr_type base_class_id = request.base_class_id;
 
 					jclass cls = get_class(base_class_id);
+
+					int pk_field_idx = cls.item().primary_key_idx;
+
+					if (pk_field_idx >= 0)
+					{
+						pk_field = cls.detail(pk_field_idx);
+						if (pk_field.field_id != request.field_id_primary_key) {
+							pk_field = { null_row, 0};
+						}
+					}
 
 					put_object_field_request porf;
 					porf.name.type_id = jtype::type_object;
@@ -1882,6 +1903,11 @@ namespace corona
 				temp_fields += mfs;
 
 				build_class_members(af, total_size_bytes, mfs);
+
+				if (pk_field.field_id > -1) 
+				{
+					af.push_back(pk_field);
+				}
 
 #if _DEBUG && false
 				std::cout << std::endl << request.class_name << " layout" << std::endl;
