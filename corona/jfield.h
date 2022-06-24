@@ -357,10 +357,10 @@ namespace corona
 			object_name						password;
 			remote_http_url					data_url;
 			remote_http_method				data_method;
-			relative_ptr_type						result_field_id;
+			relative_ptr_type				result_field_id;
 			object_name						result_class_name;
-			relative_ptr_type						result_class_id;
-			relative_ptr_type						max_result_objects;
+			relative_ptr_type				result_class_id;
+			relative_ptr_type				max_result_objects;
 			remote_parameter_fields_type	parameters;
 			remote_fields_type				fields;
 			time_t							last_success;

@@ -1,6 +1,5 @@
 
 
-
 #pragma once
 
 #include "corona.h"
@@ -451,6 +450,7 @@ namespace corona
 			jfield& get_field_by_id(relative_ptr_type field_id);
 			jclass_field& get_class_field(int field_idx);
 			jfield& get_field(int field_idx);
+			relative_ptr_type get_primary_key();
 
 			bool has_field(const object_name& name);
 			bool has_field(relative_ptr_type field_id);
@@ -504,6 +504,8 @@ namespace corona
 			sql_remote_box get_sql_remote(object_name field_name);
 			http_remote_box get_http_remote(object_name field_name);
 			file_remote_box get_file_remote(object_name field_name);
+
+			bool matches(const char* str);
 
 			void set_value(const dynamic_value& _member_assignment);
 
@@ -665,6 +667,7 @@ namespace corona
 			object_name				actor_name;
 			selections_collection	selections;
 			selections_collection	breadcrumb;
+			relative_ptr_type		current_view_object_id;
 			relative_ptr_type		current_view_class_id;
 		};
 
@@ -1005,9 +1008,9 @@ namespace corona
 
 			actor_state get_actor_state(relative_ptr_type _actor, relative_ptr_type _last_modified_object = null_row, const char *_trace_msg = nullptr);
 			actor_state select_object(const select_object_request& _select, const char* _trace_msg = nullptr);
-			actor_state delete_selected(const delete_selected_request& _select, const char* _trace_msg = nullptr);
 			actor_state create_object(create_object_request& _create, const char* _trace_msg = nullptr);
 			actor_state update_object(update_object_request& _update, const char* _trace_msg = nullptr);
+			actor_state delete_selected(const delete_selected_request& _select, const char* _trace_msg = nullptr);
 
 			void print(const char *_trace, actor_state& acr);
 			jobject create_object(relative_ptr_type _item_id, relative_ptr_type _actor_id, relative_ptr_type _class_id, relative_ptr_type& _object_id);
@@ -1032,7 +1035,9 @@ namespace corona
 
 			iterator_type begin()
 			{
-				return iterator_type(this, first_row);
+				return iterator_type(this, first_row).where([this](const iterator_item_type& it) {
+					return objects[it.location].item().deleted == false;
+					});
 			}
 
 			iterator_type end()
@@ -1042,7 +1047,10 @@ namespace corona
 
 			auto where(std::function<bool(const iterator_item_type&)> _predicate)
 			{
-				return iterator_type(this, _predicate);
+				return iterator_type(this, [this](const iterator_item_type& it) {
+					return objects[it.location].item().deleted == false;					
+					})
+					.where( _predicate );
 			}
 
 			auto where(relative_ptr_type _class_id)
@@ -1151,6 +1159,7 @@ namespace corona
 			relative_ptr_type idf_file_name;
 			relative_ptr_type idf_font_name;
 			relative_ptr_type idf_name;
+			relative_ptr_type idf_search_string;
 
 			relative_ptr_type idf_birthday;
 			relative_ptr_type idf_scheduled;

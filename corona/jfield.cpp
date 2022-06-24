@@ -100,7 +100,7 @@ namespace corona
 		{
 			auto so = delete_options.append();
 			so->delete_class_id = _update_class_id;
-			so->rule_name = "Update " + _schema->get_class(_update_class_id).item().name;
+			so->rule_name = "Delete " + _schema->get_class(_update_class_id).item().name;
 			so->selectors.when(_selected_class_id1);
 		}
 
@@ -108,7 +108,7 @@ namespace corona
 		{
 			auto so = delete_options.append();
 			so->delete_class_id = _update_class_id;
-			so->rule_name = "Update " + _schema->get_class(_update_class_id).item().name;
+			so->rule_name = "Delete " + _schema->get_class(_update_class_id).item().name;
 			so->selectors.always();
 		}
 

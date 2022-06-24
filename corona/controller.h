@@ -158,6 +158,8 @@ namespace corona
 			virtual page_item* add_create_buttons(page_item* _parent);
 			virtual page_item* add_select_items(page_item* _parent);
 
+			void search_table(page_item* _parent, relative_ptr_type _idc_parent_class_id, relative_ptr_type* _idf_child_fields, int _num_child_fields);
+
 			void arrange(double width, double height);
 
 			// end of render methods

@@ -99,7 +99,6 @@ namespace proposal
 		void render_home(page_item *_frame);
 		void render_client(page_item* _frame);
 		void render_product_template(page_item* _frame);
-		void render_selection_table(page_item* _frame);
 		void render_carrier(page_item* _frame);
 		void render_program(page_item* _frame);
 

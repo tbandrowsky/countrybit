@@ -550,7 +550,7 @@ namespace corona
 
 		page_item* corona_controller::add_update_fields(page_item* _parent)
 		{
-			return pg.actor_update_fields(_parent, &state, &schema, &program_chart );
+			return pg.actor_update_fields(_parent, &state, &schema, &program_chart);
 		}
 
 		page_item* corona_controller::add_create_buttons(page_item* _parent)
@@ -568,8 +568,11 @@ namespace corona
 			pg.arrange(width, height);
 		}
 
+		void corona_controller::search_table(page_item* _parent, relative_ptr_type _idc_parent_class_id, relative_ptr_type* _idf_child_fields, int _num_child_fields)
+		{
+
+		}
 	}
 }
 
 #endif
-

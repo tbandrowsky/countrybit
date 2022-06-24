@@ -161,7 +161,7 @@ namespace corona
 			acr.collection_id = collection_id;
 
 			auto model = schema->get_model(ref->model_name);
-			auto& actor = actors[ _actor ];
+			auto& actor = actors[_actor];
 
 			acr.actor = actor;
 
@@ -199,7 +199,7 @@ namespace corona
 						relative_ptr_type item_id = objects[object_id].item().item_id;
 						aco.item_id = item_id;
 					}
-					else 
+					else
 					{
 						aco.item_id = null_row;
 					}
@@ -227,7 +227,7 @@ namespace corona
 #endif
 						}
 					}
-					else 
+					else
 					{
 						acr.create_objects.insert_or_assign(aco.class_id, aco);
 #if _TRACE_RULE
@@ -235,7 +235,7 @@ namespace corona
 #endif
 					}
 				}
-				else 
+				else
 				{
 #if _TRACE_RULE
 					std::cout << " " << oi.item.rule_name << " does not apply " << std::endl;
@@ -244,6 +244,46 @@ namespace corona
 			}
 
 			// now for the moment, we just include all the objects in the view.  This can change for physical models, obviously.
+			jactor* pactor = &actor;
+
+			const char* search_string = nullptr;
+			relative_ptr_type field_id_pk = null_row;
+			relative_ptr_type field_id_pk_value = null_row;
+
+			// get the search string out of the search object
+			if (pactor->current_view_object_id != null_row && pactor->current_view_class_id != null_row)
+			{
+				auto obj = get_object(pactor->current_view_object_id);
+				int field_idx = obj.get_field_index_by_id(schema->idf_search_string);
+				if (field_idx > -1) search_string = obj.get_string(field_idx).c_str();
+				field_id_pk = obj.get_primary_key();
+				if (field_id_pk != null_row) {
+					field_id_pk_value = obj.get_int64(field_id_pk, true);
+				}
+			}
+
+			// get the view objects themselves based on the search, state, and children
+			auto view_objects = this->where([this, search_string, pactor, field_id_pk, field_id_pk_value](const iterator_item_type& _item)
+				{
+					bool include_selected = false;
+					bool include_class = false;
+					bool include_search = false;
+
+					relative_ptr_type loc = _item.location;
+					relative_ptr_type loc_class = _item.item.get_class_id();
+					auto search_item = get_object(_item.location);
+
+					include_selected = pactor->selections.any_of([this,loc_class](const selections_collection::iterator_item_type& _sel)
+						{ 
+							return this->matches_class_id(_sel.item, loc_class);
+						});
+
+					include_class = matches_class_id(loc, pactor->current_view_class_id) || (search_item.get(field_id_pk) == field_id_pk_value);
+					include_search = search_item.matches(search_string);
+					
+					return include_selected || (include_class && include_search);
+				}
+			);
 
 			for (auto iter = begin(); iter != end(); iter++)
 			{
@@ -423,7 +463,8 @@ namespace corona
 				auto selected_levels = model.selection_hierarchy.where([phierarchy_item](auto& vr) { return vr.item.level_id <= phierarchy_item->level_id; });
 
 				ac.breadcrumb.clear();
-				ac.current_view_class_id = -1;
+				ac.current_view_object_id = null_row;
+				ac.current_view_class_id = null_row;
 
 				temp.clear();
 				int highest_level = -1;
@@ -436,6 +477,7 @@ namespace corona
 						if (selected_item_level.get_object().item.level_id > highest_level)
 						{
 							ac.breadcrumb.push_back(aci.item);
+							ac.current_view_object_id = aci.item;
 							ac.current_view_class_id = cls_id;
 						}
 						temp.push_back(aci.item);
@@ -569,6 +611,8 @@ namespace corona
 
 			if (object_id != null_row && objects.check(object_id))
 			{
+				if (objects[object_id].item().deleted)
+					return acr;
 				acr.modified_object_id = object_id;
 				auto slice = get_object(object_id);
 				update_object(object_id, slice);
@@ -635,7 +679,7 @@ namespace corona
 		jobject jcollection::get_object(relative_ptr_type _object_id)
 		{
 			auto existing_object = objects.get_item(_object_id);
-			if (existing_object.pitem()->otype == jtype::type_object) {
+			if (existing_object.pitem()->otype == jtype::type_object && !existing_object.pitem()->deleted) {
 				jarray jax(nullptr, schema, existing_object.item().class_field_id, existing_object.pdetails());
 				return jax.get_slice(0);
 			}
@@ -1326,6 +1370,17 @@ namespace corona
 				throw std::logic_error("can't convert to layout_rect");
 				break;
 			}
+		}
+
+		relative_ptr_type jobject::get_primary_key()
+		{
+			relative_ptr_type pkfield = null_row;
+			auto cls = get_class();
+			int pkid = cls.pitem()->primary_key_idx;
+			if (pkid > -1) {
+				pkfield = cls.detail(pkid).field_id;
+			}
+			return pkfield;
 		}
 
 		dynamic_value jobject::get(relative_ptr_type _field_id)
@@ -2117,6 +2172,19 @@ namespace corona
 			return get_file_remote(index);
 		}
 
+		bool jobject::matches(const char* str)
+		{
+			for (int i = 0; i < size(); i++) {
+				if (get_field(i).type_id == jtype::type_string) {
+					auto str = get_string(i);
+					if (str.has_any(str)) {
+						return true;
+					}
+				}
+			};
+			return false;
+		}
+
 		void jobject::set_value(const dynamic_value& _member_assignment)
 		{
 			int index = get_field_index_by_id(_member_assignment.field_id);
@@ -2779,7 +2847,7 @@ namespace corona
 
 		void jschema::add_standard_fields() 
 		{
-			put_string_field_request string_fields[43] = {
+			put_string_field_request string_fields[41] = {
 				{ { null_row, jtype::type_string ,"full_name", "Full Name" }, { 75, "", "" } },
 				{ { null_row, jtype::type_string ,"first_name", "First Name" }, { 50, "", "" } },
 				{ { null_row, jtype::type_string ,"last_name", "Last Name" }, { 50, "", "" } },
@@ -2819,7 +2887,8 @@ namespace corona
 				{ { null_row, jtype::type_string, "field_format", "Field Format" }, { 64, "", "" } },
 				{ { null_row, jtype::type_string, "string_validation_pattern", "Validation Pattern" }, { 64, "", "" } },
 				{ { null_row, jtype::type_string, "string_validation_message", "Validation Message" }, { 64, "", "" } },
-				{ { null_row, jtype::type_string, "user_class_class_name", "User Class Name" }, { 64, "", "" } }
+				{ { null_row, jtype::type_string, "user_class_class_name", "User Class Name" }, { 64, "", "" } },
+				{ { null_row, jtype::type_string, "search_string", "Search String" }, { 250, "", "" } }
 			};
 
 			put_time_field_request time_fields[4] = {
@@ -2941,6 +3010,7 @@ namespace corona
 			idf_file_name = find_field("file_name");
 			idf_font_name = find_field("font_name");
 			idf_name = find_field("name");
+			idf_search_string = find_field("search_string");
 
 			idf_birthday = find_field("birthday");
 			idf_scheduled = find_field("scheduled");

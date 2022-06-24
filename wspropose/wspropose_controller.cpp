@@ -68,7 +68,7 @@ namespace proposal
 		pcr.class_name = "client_root";
 		pcr.class_description = "Clients";
 		pcr.field_id_primary_key = idf_client_root;
-		pcr.member_fields = { idf_client_root, idf_home, schema.idf_layout_rect };
+		pcr.member_fields = { idf_client_root, idf_home, schema.idf_layout_rect, schema.idf_search_string };
 		idc_home = schema.put_class(pcr);
 
 		pcr.class_name = "client";
@@ -80,7 +80,7 @@ namespace proposal
 		pcr.class_name = "carrier_root";
 		pcr.class_description = "Carriers";
 		pcr.field_id_primary_key = idf_carrier_root;
-		pcr.member_fields = { idf_carrier_root, idf_home, schema.idf_layout_rect };
+		pcr.member_fields = { idf_carrier_root, idf_home, schema.idf_layout_rect, schema.idf_search_string };
 		idc_carrier_root = schema.put_class(pcr);
 
 		pcr.class_name = "carrier";
@@ -92,7 +92,7 @@ namespace proposal
 		pcr.class_name = "coverage_root";
 		pcr.class_description = "Coverages";
 		pcr.field_id_primary_key = idf_coverage_root;
-		pcr.member_fields = { idf_coverage_root, idf_home, schema.idf_layout_rect };
+		pcr.member_fields = { idf_coverage_root, idf_home, schema.idf_layout_rect, schema.idf_search_string };
 		idc_coverage_root = schema.put_class(pcr);
 
 		pcr.class_name = "coverage";
@@ -104,13 +104,13 @@ namespace proposal
 		pcr.class_name = "system_root";
 		pcr.class_description = "System Settings";
 		pcr.field_id_primary_key = idf_system_root;
-		pcr.member_fields = { idf_system_root, idf_home, schema.idf_layout_rect };
+		pcr.member_fields = { idf_system_root, idf_home, schema.idf_layout_rect, schema.idf_search_string };
 		idc_system_root = schema.put_class(pcr);
 
 		pcr.class_name = "program_templates";
 		pcr.class_description = "Program Templates";
 		pcr.field_id_primary_key = idf_program_template_root;
-		pcr.member_fields = { idf_program_template_root, idf_home, schema.idf_layout_rect };
+		pcr.member_fields = { idf_program_template_root, idf_home, schema.idf_layout_rect, schema.idf_search_string };
 		idc_program_template_root = schema.put_class(pcr);
 
 		pcr.class_name = "program_template";
@@ -218,7 +218,6 @@ namespace proposal
 		jm.update_always(&schema, idc_program);
 		jm.update_always(&schema, idc_product);
 		jm.update_always(&schema, idc_product_item_base);
-
 		jm.update_always(&schema, idc_program_chart_slide);
 		jm.update_always(&schema, idc_program_generic_slide);
 
@@ -237,13 +236,22 @@ namespace proposal
 		jm.select_always(&schema, idc_program_generic_slide);
 		jm.select_always(&schema, idc_product_item_base);
 
+		jm.delete_always(&schema, idc_carrier);
+		jm.delete_always(&schema, idc_program_template);
+		jm.delete_always(&schema, idc_coverage);
+		jm.delete_always(&schema, idc_client);
+		jm.delete_always(&schema, idc_program);
+		jm.delete_always(&schema, idc_product);
+		jm.delete_always(&schema, idc_program_chart_slide);
+		jm.delete_always(&schema, idc_program_generic_slide);
+		jm.delete_always(&schema, idc_product_item_base);
+
 		jm.create_when(&schema, idc_carrier_root, idc_carrier, null_row, true, false);
 		jm.create_when(&schema, idc_program_template_root, idc_program_template, null_row, true, false);
 		jm.create_when(&schema, idc_coverage_root, idc_coverage, null_row, true, false);
 		jm.create_when(&schema, idc_client_root, idc_client, null_row, true, false);
 		jm.create_when(&schema, idc_client, idc_program, null_row, true, false);
 		jm.create_when(&schema, idc_program, idc_product, null_row, true, false);
-
 		jm.create_when(&schema, idc_product, idc_pi_inception, null_row, true, false);
 		jm.create_when(&schema, idc_product, idc_pi_expiration, null_row, true, false);
 		jm.create_when(&schema, idc_product, idc_pi_status, null_row, true, false);
@@ -252,7 +260,6 @@ namespace proposal
 		jm.create_when(&schema, idc_product, idc_pi_deductible, null_row, true, false);
 		jm.create_when(&schema, idc_product, idc_pi_share, null_row, true, false);
 		jm.create_when(&schema, idc_product, idc_pi_comment, null_row, true, false);
-
 		jm.create_when(&schema, idc_program, idc_program_chart_slide, idc_program, true, false);
 		jm.create_when(&schema, idc_program_chart_slide, idc_program_chart_slide_product, idc_program, true, false);
 		jm.create_when(&schema, idc_program, idc_program_generic_slide, idc_program, true, false);
@@ -517,13 +524,13 @@ namespace proposal
 		{
 			render_client(client_area);
 		}
-		else if (state.actor.current_view_class_id == idc_product_template_root)
+		else if (state.actor.current_view_class_id == idc_program_template_root)
 		{
 			render_selection_table(client_area);
 		}
-		else if (state.actor.current_view_class_id == idc_product_template)
+		else if (state.actor.current_view_class_id == idc_program_template)
 		{
-			render_product_template(client_area);
+			render_program(client_area);
 		}
 		else if (state.actor.current_view_class_id == idc_carrier_root)
 		{
@@ -545,7 +552,7 @@ namespace proposal
 
 	void wsproposal_controller::create_style_sheet()
 	{
-		auto style_sheet = program_chart.create_object(0, null_row, schema.idc_style_sheet, style_sheet_id);
+		auto style_sheet = program_chart.where( schema.idc_style_sheet ).get_object().item;
 
 		const char* fontName = "Open Sans,Arial";
 
