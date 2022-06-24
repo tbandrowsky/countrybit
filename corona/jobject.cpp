@@ -278,7 +278,7 @@ namespace corona
 							return this->matches_class_id(_sel.item, loc_class);
 						});
 
-					include_class = matches_class_id(loc, pactor->current_view_class_id) || (search_item.get(field_id_pk) == field_id_pk_value);
+					include_class = matches_class_id(loc, pactor->current_view_class_id) || ((int64_t)search_item.get(field_id_pk) == field_id_pk_value);
 					include_search = search_item.matches(search_string);
 					
 					return include_selected || (include_class && include_search);
@@ -514,7 +514,7 @@ namespace corona
 
 			actor_type ac = get_actor(_select.actor_id);
 
-			auto acr = get_actor_state(_select.actor_id, -1, _trace_msg);
+			acr = get_actor_state(_select.actor_id, -1, _trace_msg);
 
 			auto modified_time = time(nullptr);
 
@@ -3063,7 +3063,7 @@ namespace corona
 				idf_shape_fill_color, idf_shape_border_thickness, idf_shape_border_color, idf_box_fill_color, idf_box_border_thickness, idf_box_border_color };
 			idc_text_style = put_class(pcr);
 
-			put_object_field_request object_fields[44] = {
+			put_object_field_request object_fields[46] = {
 				{ { null_row, jtype::type_object, "view_background_style", "View Background Style" }, { {1,1,1}, idc_text_style }},
 				{ { null_row, jtype::type_object, "view_title_style", "View Title Style" }, { {1,1,1}, idc_text_style }},
 				{ { null_row, jtype::type_object, "view_subtitle_style", "View Subtitle Style" }, { {1,1,1}, idc_text_style }},

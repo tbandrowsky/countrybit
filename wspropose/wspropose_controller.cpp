@@ -552,7 +552,7 @@ namespace proposal
 
 	void wsproposal_controller::create_style_sheet()
 	{
-		auto style_sheet = program_chart.where( schema.idc_style_sheet ).get_object().item;
+		auto style_sheet = getStyleSheet();
 
 		const char* fontName = "Open Sans,Arial";
 

@@ -34,17 +34,15 @@ namespace corona
 
 		jobject corona_controller::getStyleSheet()
 		{
-			relative_ptr_type ids = schema.id_style_sheet;
+			relative_ptr_type ids = schema.idc_style_sheet;
 
-			auto obj = program_chart.where([this, ids](auto slc)
-				{
-					return slc.item.get_class_id() == ids;
-				});
+			auto obj = program_chart.where(ids);
 
 			if (obj == std::end(program_chart))
 			{
 				throw std::logic_error("style sheet not found in the database");
 			}
+
 			return obj.get_object().item;
 		}
 

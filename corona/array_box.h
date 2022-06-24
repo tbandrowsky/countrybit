@@ -141,7 +141,8 @@ namespace corona
 				if (w == end()) {
 					throw std::logic_error("sequence has no elements");
 				}
-				return w.get_object();
+				item_type&t = get_at( w.get_index() );
+				return t;
 			}
 
 			relative_ptr_type first_index(std::function<bool(const iterator_item_type&)> predicate)

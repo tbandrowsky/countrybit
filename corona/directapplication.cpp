@@ -1887,31 +1887,31 @@ namespace corona
 				for (int idx = 0; idx < styles.size(); idx++)
 				{
 					auto field = styles.get_field(idx);
-					if (field.is_class(schema->id_text_style)) 
+					if (field.is_class(schema->idc_text_style)) 
 					{
 						auto style = styles.get_slice(idx, { 0,0,0 }, false);
 						viewStyleRequest request;
 						request.name = field.name;
 						request.text_style.name = request.name + "_text";
-						request.text_style.fontName = (const char *)style.get(schema->idfont_name);
-						request.text_style.fontSize = style.get(schema->idfont_size);
-						request.text_style.bold = style.get(schema->idbold);
-						request.text_style.italics = style.get(schema->iditalic);
-						request.text_style.underline = style.get(schema->idunderline);
-						request.text_style.strike_through = style.get(schema->idstrike_through);
-						request.text_style.line_spacing = style.get(schema->idline_spacing);
-						request.text_style.horizontal_align = (visual_alignment)(int)style.get(schema->idhorizontal_alignment);
-						request.text_style.vertical_align = (visual_alignment)(int)style.get(schema->idvertical_alignment);
+						request.text_style.fontName = (const char *)style.get(schema->idf_font_name);
+						request.text_style.fontSize = style.get(schema->idf_font_size);
+						request.text_style.bold = style.get(schema->idf_bold);
+						request.text_style.italics = style.get(schema->idf_italic);
+						request.text_style.underline = style.get(schema->idf_underline);
+						request.text_style.strike_through = style.get(schema->idf_strike_through);
+						request.text_style.line_spacing = style.get(schema->idf_line_spacing);
+						request.text_style.horizontal_align = (visual_alignment)(int)style.get(schema->idf_horizontal_alignment);
+						request.text_style.vertical_align = (visual_alignment)(int)style.get(schema->idf_vertical_alignment);
 
 						request.shape_border_color.name = request.name + "_shapcol";
-						request.shape_border_color.brushColor = style.get(schema->idbox_border_color);
-						request.shape_border_thickness = style.get(schema->idbox_border_thickness);
+						request.shape_border_color.brushColor = style.get(schema->idf_box_border_color);
+						request.shape_border_thickness = style.get(schema->idf_box_border_thickness);
 
 						request.box_border_color.name = request.name + "_borcol";
-						request.box_border_color.brushColor = style.get(schema->idbox_border_color);
-						request.box_border_thickness = style.get(schema->idbox_border_thickness);
+						request.box_border_color.brushColor = style.get(schema->idf_box_border_color);
+						request.box_border_thickness = style.get(schema->idf_box_border_thickness);
 						request.box_fill_color.name = request.name + "_filcol";
-						request.box_fill_color.brushColor = style.get(schema->idbox_fill_color);
+						request.box_fill_color.brushColor = style.get(schema->idf_box_fill_color);
 						addViewStyle(request);
 					}
 				}
@@ -1926,7 +1926,7 @@ namespace corona
 				auto slice = currentController->getStyleSheet();
 				auto schema = slice.get_schema();
 				auto styleSlice = slice.get_slice(_style_id, {0,0,0}, true);
-				hfont = CreateFont(styleSlice.get(schema->idfont_size), 0, 0, 0, FW_DONTCARE, (int32_t)styleSlice.get(schema->iditalic), FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH, styleSlice.get(schema->idfont_name));
+				hfont = CreateFont(styleSlice.get(schema->idf_font_size), 0, 0, 0, FW_DONTCARE, (int32_t)styleSlice.get(schema->idf_italic), FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH, styleSlice.get(schema->idf_font_name));
 			}
 			return hfont;
 		}
@@ -1937,9 +1937,9 @@ namespace corona
 			HFONT oldLabelFont = labelFont;
 			HFONT oldTitleFont = titleFont;
 
-			controlFont = createFontFromStyleSheet(_schema->id_control);
-			labelFont = createFontFromStyleSheet(_schema->id_label);
-			titleFont = createFontFromStyleSheet(_schema->id_view_subtitle);
+			controlFont = createFontFromStyleSheet(_schema->idf_control_style);
+			labelFont = createFontFromStyleSheet(_schema->idf_label_style);
+			titleFont = createFontFromStyleSheet(_schema->idf_view_subtitle_style);
 
 			int canvasWindowId = -1;
 			destroyChildren();
