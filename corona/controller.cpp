@@ -75,7 +75,7 @@ namespace corona
 			;
 		}
 
-		int corona_controller::onHScroll(int controlId, scrollTypes scrollType)
+		int corona_controller::onHScroll(int controlId, scrollTypes scrollType, page_item pi)
 		{
 			if (controlId != canvasWindowsId)
 				return 0;
@@ -112,7 +112,7 @@ namespace corona
 			return pos;
 		}
 
-		int corona_controller::onVScroll(int controlId, scrollTypes scrollType)
+		int corona_controller::onVScroll(int controlId, scrollTypes scrollType, page_item pi)
 		{
 			if (controlId != canvasWindowsId)
 				return 0;
@@ -149,7 +149,7 @@ namespace corona
 			return pos;
 		}
 
-		int corona_controller::onSpin(int controlId, int newPosition)
+		int corona_controller::onSpin(int controlId, int newPosition, page_item pi)
 		{
 			double newPositionF = newPosition / 100.0;
 			return 0;
@@ -237,28 +237,53 @@ namespace corona
 			return oldShowUpdate;
 		}
 
-		void corona_controller::onCommand(int buttonId)
+		void corona_controller::onCommand(int buttonId, page_item pi)
 		{
-			auto command_item = pg.where([this, buttonId](const auto& pi) { return pi.item.id == buttonId; })
-				.get_object();
+			auto command_item = pi.create_request;
 
 			std::cout << "Create " << buttonId << std::endl;
 
-			state = this->program_chart.create_object(command_item.item.create_request, "Create Item");
+			state = this->program_chart.create_object(command_item, "Create Item");
 			auto size = host->getWindowPos(0);
 
 			stateChanged(size);
 		}
 
-		void corona_controller::onTextChanged(int textControlId)
+		void corona_controller::onTextChanged(int textControlId, page_item pi)
 		{
+			if (pi.object_id != null_row) 
+			{
+				auto text = host->getEditText(textControlId);
+				pi.slice.set({ { pi.field->field_id, text.c_str()}});
+				update_object_request uor;
+				uor.actor_id = state.actor.actor_id;
+				uor.collection_id = program_chart.get_collection_id();
+				uor.item = pi.slice;
+				uor.object_id = pi.object_id;
+				state = this->program_chart.update_object(uor);
+				auto size = host->getWindowPos(0);
+				stateChanged(size);
+			}
 		}
 
-		void corona_controller::onDropDownChanged(int dropDownId)
+		void corona_controller::onDropDownChanged(int dropDownId, page_item pi)
 		{
+			if (pi.object_id != null_row)
+			{
+				auto text = host->getComboSelectedText(dropDownId);
+				pi.slice.set({ { pi.field->field_id, text.c_str()} });
+				update_object_request uor;
+				uor.actor_id = state.actor.actor_id;
+				uor.collection_id = program_chart.get_collection_id();
+				uor.item = pi.slice;
+				uor.object_id = pi.object_id;
+				state = this->program_chart.update_object(uor);
+				auto size = host->getWindowPos(0);
+				stateChanged(size);
+			}
 		}
 
-		void corona_controller::onListViewChanged(int listViewId)
+		void corona_controller::onListViewChanged(int listViewId, page_item pi)
 		{
 		}
 

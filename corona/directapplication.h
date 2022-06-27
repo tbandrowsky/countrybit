@@ -178,8 +178,13 @@ namespace corona
 			bool colorCapture;
 			int iconResourceId;
 
-			std::map<int, database::page_item>	windowControlMap;
-			std::vector<HWND>			childWindows;
+			struct windowMapItem
+			{
+				HWND				window;
+				database::page_item item;
+			};
+
+			std::map<int, windowMapItem>	windowControlMap;
 
 			HFONT	controlFont,
 					labelFont,
@@ -199,7 +204,8 @@ namespace corona
 				int         nHeight,
 				int			windowId,
 				LPVOID		lpParam,
-				HFONT		font
+				HFONT		font,
+				database::page_item item
 			);
 
 			void destroyChildren();

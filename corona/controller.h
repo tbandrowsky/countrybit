@@ -47,14 +47,14 @@ namespace corona
 			virtual bool update(double _elapsedSeconds, double _totalSeconds) = 0;
 
 			virtual void onCreated(const rectangle& newSize) = 0;
-			virtual void onCommand(int buttonId) = 0;
-			virtual void onTextChanged(int textControlId) = 0;
-			virtual void onDropDownChanged(int dropDownId) = 0;
-			virtual void onListViewChanged(int listViewId) = 0;
-			virtual int onHScroll(int controlId, scrollTypes scrollType) = 0;
-			virtual int onVScroll(int controlId, scrollTypes scrollType) = 0;
+			virtual void onCommand(int buttonId, page_item pi) = 0;
+			virtual void onTextChanged(int textControlId, page_item pi) = 0;
+			virtual void onDropDownChanged(int dropDownId, page_item pi) = 0;
+			virtual void onListViewChanged(int listViewId, page_item pi) = 0;
+			virtual int onHScroll(int controlId, scrollTypes scrollType, page_item pi) = 0;
+			virtual int onVScroll(int controlId, scrollTypes scrollType, page_item pi) = 0;
 			virtual int onResize(const rectangle& newSize) = 0;
-			virtual int onSpin(int controlId, int newPosition) = 0;
+			virtual int onSpin(int controlId, int newPosition, page_item pi) = 0;
 		};
 
 		enum currentWindowViews {
@@ -177,14 +177,14 @@ namespace corona
 			virtual bool update(double _elapsedSeconds, double _totalSeconds);
 
 			virtual void onCreated(const rectangle& newSize);
-			virtual void onCommand(int buttonId);
-			virtual void onTextChanged(int textControlId);
-			virtual void onDropDownChanged(int dropDownId);
-			virtual void onListViewChanged(int listViewId);
-			virtual int onHScroll(int controlId, scrollTypes scrollType);
-			virtual int onVScroll(int controlId, scrollTypes scrollType);
+			virtual void onCommand(int buttonId, page_item pi);
+			virtual void onTextChanged(int textControlId, page_item pi);
+			virtual void onDropDownChanged(int dropDownId, page_item pi);
+			virtual void onListViewChanged(int listViewId, page_item pi);
+			virtual int onHScroll(int controlId, scrollTypes scrollType, page_item pi);
+			virtual int onVScroll(int controlId, scrollTypes scrollType, page_item pi);
 			virtual int onResize(const rectangle& newSize);
-			virtual int onSpin(int controlId, int newPosition);
+			virtual int onSpin(int controlId, int newPosition, page_item pi);
 
 		};
 

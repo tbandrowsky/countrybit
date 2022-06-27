@@ -1850,11 +1850,10 @@ namespace corona
 
 		void directApplication::destroyChildren()
 		{
-			for (auto child : childWindows)
+			for (auto child : windowControlMap)
 			{
-				DestroyWindow(child);
+				DestroyWindow(child.second.window);
 			}
-			childWindows.clear();
 			windowControlMap.clear();
 		}
 
@@ -1868,14 +1867,43 @@ namespace corona
 			int         nHeight,
 			int			windowId,
 			LPVOID		lpParam,
-			HFONT		font
+			HFONT		font,
+			database::page_item item
 		)
 		{
-			HWND hwnd = CreateWindow(lpClassName, lpWindowName, dwStyle, x, y, nWidth, nHeight, directApplication::hwndRoot, (HMENU)windowId, hinstance, lpParam);
-			if (font) {
-				SendMessage(hwnd, WM_SETFONT, (WPARAM)font, TRUE);
+
+			HWND hwnd = nullptr;
+
+			if (windowControlMap.contains(windowId)) 
+			{
+				auto wcmi = windowControlMap[windowId];
+				char buff[512];
+				::GetClassName(wcmi.window, buff, sizeof(buff) - 1);
+				if (stricmp(buff, lpClassName) == 0)
+				{
+					MoveWindow(wcmi.window, x, y, nWidth, nHeight, true);
+					hwnd = wcmi.window;
+					if (stricmp(buff, WC_EDIT) == 0) {
+						::SetWindowText(hwnd, lpWindowName);
+					}
+				}
+				else 
+				{
+					::DestroyWindow(wcmi.window);
+					hwnd = CreateWindow(lpClassName, lpWindowName, dwStyle, x, y, nWidth, nHeight, directApplication::hwndRoot, (HMENU)windowId, hinstance, lpParam);
+				}
 			}
-			childWindows.push_back(hwnd);
+			else 
+			{
+				hwnd = CreateWindow(lpClassName, lpWindowName, dwStyle, x, y, nWidth, nHeight, directApplication::hwndRoot, (HMENU)windowId, hinstance, lpParam);
+				if (font)
+				{
+					SendMessage(hwnd, WM_SETFONT, (WPARAM)font, TRUE);
+				}
+			}
+
+			windowMapItem wmi = { hwnd, item };
+			windowControlMap.insert_or_assign(windowId, wmi);
 		}
 
 		void directApplication::loadStyleSheet()
@@ -1952,10 +1980,10 @@ namespace corona
 				{
 				case database::layout_types::canvas2d:
 					canvasWindowId = pi.id;
-					createChildWindow("CoronaDirect2d", "", WS_CHILD | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, canvasWindowId, NULL, NULL);
+					createChildWindow("CoronaDirect2d", "", WS_CHILD | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, canvasWindowId, NULL, NULL, pi);
 					break;
 				case database::layout_types::label:
-					createChildWindow(WC_STATIC, pi.field->name.c_str(), WS_CHILD | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, labelFont);
+					createChildWindow(WC_STATIC, pi.field->name.c_str(), WS_CHILD | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, labelFont, pi);
 					break;
 				case database::layout_types::field:
 					{
@@ -1968,58 +1996,58 @@ namespace corona
 							{
 								auto bx = slice.get_int8(idx);
 								x = bx;
-								createChildWindow(WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont);
+								createChildWindow(WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont, pi);
 							}
 							break;
 						case database::type_int16:
 							{
 								auto bx = slice.get_int16(idx);
 								x = bx;
-								createChildWindow(WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont);
+								createChildWindow(WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont, pi);
 							}
 							break;
 						case database::type_int32:
 							{
 								auto bx = slice.get_int32(idx);
 								x = bx;
-								createChildWindow(WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont);
+								createChildWindow(WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont, pi);
 							}
 							break;
 						case database::type_int64:
 							{
 								auto bx = slice.get_int64(idx);
 								x = bx;
-								createChildWindow(WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont);
+								createChildWindow(WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont, pi);
 							}
 							break;
 						case database::type_float32:
 							{
 								auto bx = slice.get_float(idx);
 								x = bx;
-								createChildWindow(WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont);
+								createChildWindow(WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont, pi);
 							}
 							break;
 						case database::type_float64:
 							{
 								auto bx = slice.get_double(idx);
 								x = bx;
-								createChildWindow(WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont);
+								createChildWindow(WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont, pi);
 							}
 							break;
 						case database::type_string:
 							{
 								auto bx = slice.get_string(idx);
-								createChildWindow(WC_EDIT, bx.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont);
+								createChildWindow(WC_EDIT, bx.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont, pi);
 							}
 							break;
 						default:
-							createChildWindow(WC_STATIC, "Type not supported", WS_CHILD | WS_BORDER | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont);
+							createChildWindow(WC_STATIC, "Type not supported", WS_CHILD | WS_BORDER | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont, pi);
 							break;
 						}
 					}
 					break;
 				case database::layout_types::create:
-					createChildWindow(WC_BUTTON, pi.caption, BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont);
+					createChildWindow(WC_BUTTON, pi.caption, BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont, pi);
 					break;
 				case database::layout_types::select:
 					break;
@@ -2227,15 +2255,19 @@ namespace corona
 				{
 					UINT controlId = LOWORD(wParam);
 					UINT notificationCode = HIWORD(wParam);
+					database::page_item pi;
+					if (windowControlMap.contains(controlId)) {
+						pi = windowControlMap[ controlId ].item;
+					}
 					switch (notificationCode) {
 					case BN_CLICKED: // button or menu
-						currentController->onCommand(controlId);
+						currentController->onCommand(controlId, pi);
 						break;
 					case EN_UPDATE:
-						currentController->onTextChanged(controlId);
+						currentController->onTextChanged(controlId, pi);
 						break;
 					case CBN_SELCHANGE:
-						currentController->onDropDownChanged(controlId);
+						currentController->onDropDownChanged(controlId, pi);
 						break;
 					}
 					break;
@@ -2249,15 +2281,23 @@ namespace corona
 					case UDN_DELTAPOS:
 					{
 						auto lpnmud = (LPNMUPDOWN)lParam;
-						currentController->onSpin(lpnm->idFrom, lpnmud->iPos + lpnmud->iDelta);
+						database::page_item pi;
+						if (windowControlMap.contains(lpnm->idFrom)) {
+							pi = windowControlMap[lpnm->idFrom].item;
+						}
+						currentController->onSpin(lpnm->idFrom, lpnmud->iPos + lpnmud->iDelta, pi);
 						return 0;
 					}
 					break;
 					case LVN_ITEMCHANGED:
 					{
 						auto lpmnlv = (LPNMLISTVIEW)lParam;
+						database::page_item pi;
+						if (windowControlMap.contains(lpnm->idFrom)) {
+							pi = windowControlMap[lpnm->idFrom].item;
+						}
 						if (lpmnlv->uNewState & LVIS_SELECTED)
-							currentController->onListViewChanged(lpnm->idFrom);
+							currentController->onListViewChanged(lpnm->idFrom, pi);
 					}
 					break;
 					case NM_CLICK:
