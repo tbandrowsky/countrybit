@@ -126,6 +126,21 @@ namespace corona
 			}
 		}
 
+		page_item* page::select_cell(page_item* _parent, actor_state* _state, int object_id, jobject slice, const char *_caption, const char* _style_name, layout_rect _box)
+		{
+			page_item* v = append();
+			v->id = size();
+			v->set_parent(_parent);
+			v->layout = layout_types::select_cell;
+			v->slice = slice;
+			v->object_id = object_id;
+			v->box = _box;
+			v->style_name = _style_name;
+			v->select_request = _state->create_select_request(v->object_id, false);
+			v->caption = data.copy(_caption, 0);
+			return v;
+		}
+
 		page_item* page::navigate(page_item* _parent, actor_state* _state, int object_id, const char *_style_name, const char* _caption, layout_rect _box )
 		{
 			page_item* v = append();
@@ -246,46 +261,92 @@ namespace corona
 			}
 		}
 
-		void page::arrange_impl(page_item* _item, double offx, double offy, double x, double y, double width, double height)
+		void page::calculate_sizes(page::iterator_type children, double offx, double offy, double x, double y, double width, double height, double& remaining_width, double& remaining_height)
 		{
+			remaining_width = width;
+			remaining_height = height;
 
-			if (_item->box.height.units == measure_units::percent_container)
-				_item->bounds.h = _item->box.height.amount * height / 100.0;
-			else
-				_item->bounds.h = _item->box.height.amount;
+			for (auto child : children)
+			{
+				if (child.item.box.width.units == measure_units::pixels)
+				{
+					remaining_width -= child.item.box.width.amount;
+				}
+				if (child.item.box.height.units == measure_units::pixels)
+				{
+					remaining_height -= child.item.box.height.amount;
+				}
+			}
+		}
 
-			if (_item->box.width.units == measure_units::percent_container)
+		void page::calculate_bounds_w(page_item* _item, double width, double height, int safety)
+		{
+			if (safety > 2)
+				return;
+			if (_item->box.width.units == measure_units::percent_remaining)
 				_item->bounds.w = _item->box.width.amount * width / 100.0;
+			else if (_item->box.width.units == measure_units::percent_height)
+			{
+				calculate_bounds_h(_item, width, height, safety+1);
+				_item->bounds.w = _item->box.width.amount * _item->bounds.h / 100.0;
+			}
 			else
 				_item->bounds.w = _item->box.width.amount;
+		}
+
+		void page::calculate_bounds_h(page_item* _item, double width, double height, int safety)
+		{
+			if (safety > 2)
+				return;
+			if (_item->box.height.units == measure_units::percent_remaining)
+				_item->bounds.h = _item->box.height.amount * height / 100.0;
+			else if (_item->box.height.units == measure_units::percent_width)
+			{
+				calculate_bounds_w(_item, width, height, safety+1);
+				_item->bounds.h = _item->box.height.amount * _item->bounds.w / 100.0;
+			}
+			else
+				_item->bounds.h = _item->box.height.amount;
+		}
+
+		void page::set_bound_size(page_item* _item, double offx, double offy, double x, double y, double width, double height)
+		{
+			calculate_bounds_w(_item, width, height, 0);
+			calculate_bounds_h(_item, width, height, 0);
 
 			if (_item->box.x.amount >= 0.0)
 			{
 				switch (_item->box.x.units)
 				{
-				case measure_units::percent_container:
+				case measure_units::percent_remaining:
 					_item->bounds.x = _item->box.x.amount * width / 100.0 + x;
 					break;
 				case measure_units::pixels:
 					_item->bounds.x = _item->box.x.amount + x + offx;
 					break;
-				case measure_units::percent_size:
+				case measure_units::percent_height:
+					_item->bounds.x = _item->box.x.amount * _item->bounds.h / 100.0 + x;
+					break;
+				case measure_units::percent_width:
 					_item->bounds.x = _item->box.x.amount * _item->bounds.w / 100.0 + x;
 					break;
 				}
 			}
-			else 
+			else
 			{
 				switch (_item->box.x.units)
 				{
-				case measure_units::percent_container:
+				case measure_units::percent_remaining:
 					_item->bounds.x = (width - (_item->box.x.amount * width / 100.0)) + x;
 					break;
 				case measure_units::pixels:
 					_item->bounds.x = (width - _item->box.x.amount) + x + offx;
 					break;
-				case measure_units::percent_size:
-					_item->bounds.x = (width - (_item->box.x.amount * _item->bounds.w / 100.0)) + x;
+				case measure_units::percent_height:
+					_item->bounds.x = width -  (_item->box.x.amount * _item->bounds.h / 100.0) + x;
+					break;
+				case measure_units::percent_width:
+					_item->bounds.x = width - (_item->box.x.amount * _item->bounds.w / 100.0) + x;
 					break;
 				}
 			}
@@ -294,14 +355,17 @@ namespace corona
 			{
 				switch (_item->box.y.units)
 				{
-				case measure_units::percent_container:
+				case measure_units::percent_remaining:
 					_item->bounds.y = _item->box.y.amount * height / 100.0 + y;
 					break;
 				case measure_units::pixels:
 					_item->bounds.y = _item->box.y.amount + y + offy;
 					break;
-				case measure_units::percent_size:
+				case measure_units::percent_height:
 					_item->bounds.y = _item->box.y.amount * _item->bounds.h / 100.0 + y;
+					break;
+				case measure_units::percent_width:
+					_item->bounds.y = _item->box.y.amount * _item->bounds.w / 100.0 + y;
 					break;
 				}
 			}
@@ -309,30 +373,43 @@ namespace corona
 			{
 				switch (_item->box.y.units)
 				{
-				case measure_units::percent_container:
+				case measure_units::percent_remaining:
 					_item->bounds.y = (height - (_item->box.y.amount * height / 100.0)) + y;
 					break;
 				case measure_units::pixels:
-					_item->bounds.y = (height - _item->box.y.amount) + y + offx;
+					_item->bounds.y = (height - _item->box.y.amount) + y + offy;
 					break;
-				case measure_units::percent_size:
-					_item->bounds.y = (height - (_item->box.y.amount * _item->bounds.h / 100.0)) + y;
+				case measure_units::percent_height:
+					_item->bounds.y = width - (_item->box.y.amount * _item->bounds.h / 100.0) + y;
+					break;
+				case measure_units::percent_width:
+					_item->bounds.y = width - (_item->box.y.amount * _item->bounds.w / 100.0) + y;
 					break;
 				}
 			}
 
 			std::cout << std::format("{},{} bounds {},{},{},{} canvas {}, is_draw {}", _item->parent_id, _item->id, _item->bounds.x, _item->bounds.y, _item->bounds.w, _item->bounds.h, _item->canvas_id, _item->is_drawable()) << std::endl;
 
+		}
+
+		void page::arrange_impl(page_item* _item, double offx, double offy, double x, double y, double width, double height)
+		{
+
+			set_bound_size(_item, offx, offy, x, y, width, height);
+
 			auto children = where([_item](const auto& it) {
 				return it.item.parent_id == _item->id;
 				});
+
+			double remaining_width, remaining_height;
+			calculate_sizes(children, offx, offy, x, y, width, height, remaining_width, remaining_height);
 
 			if (_item->layout == layout_types::row) 
 			{
 				double startx = x;
 				for (auto child : children)
 				{
-					arrange_impl(&child.item, startx, 0, _item->bounds.x, _item->bounds.y, _item->bounds.w, _item->bounds.h);
+					arrange_impl(&child.item, startx, 0, _item->bounds.x, _item->bounds.y, remaining_width, _item->bounds.h);
 					startx += (child.item.bounds.w);
 				}
 			}
@@ -341,7 +418,7 @@ namespace corona
 				double starty = y;
 				for (auto child : children)
 				{
-					arrange_impl(&child.item, 0, starty, _item->bounds.x, _item->bounds.y, _item->bounds.w, _item->bounds.h);
+					arrange_impl(&child.item, 0, starty, _item->bounds.x, _item->bounds.y, _item->bounds.w, remaining_height);
 					starty += (child.item.bounds.h);
 				}
 			}
@@ -352,6 +429,13 @@ namespace corona
 					arrange_impl(&child.item, 0, 0, 0, 0, _item->bounds.w, _item->bounds.h);
 				}
 			}
+			else if (_item->layout == layout_types::select_cell)
+			{
+				for (auto child : children)
+				{
+					arrange_impl(&child.item, 0, 0, _item->bounds.x, _item->bounds.y, _item->bounds.w, _item->bounds.h);
+				}
+			}
 			else
 			{
 				for (auto child : children)
@@ -359,15 +443,22 @@ namespace corona
 					arrange_impl(&child.item, 0, 0, _item->bounds.x, _item->bounds.y, _item->bounds.w, _item->bounds.h);
 				}
 
-				relative_ptr_type class_id = _item->slice.get_class_id();
-				if (styles.contains(class_id)) {
-					_item->style_name = styles[class_id].get_value();
-				}
-
-				if (_item->object_id != null_row && _item->slice.has_field("rectangle"))
+				if (_item->object_id != null_row) 
 				{
-					auto rect = _item->slice.get_rectangle("rectangle");
-					rect = _item->bounds;
+					relative_ptr_type class_id = _item->slice.get_class_id();
+
+					if (_item->style_name == nullptr)
+					{
+						if (styles.contains(class_id)) {
+							_item->style_name = styles[class_id].get_value();
+						}
+
+						if (_item->slice.has_field("rectangle"))
+						{
+							auto rect = _item->slice.get_rectangle("rectangle");
+							rect = _item->bounds;
+						}
+					}
 				}
 			}
 		}

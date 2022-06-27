@@ -288,46 +288,50 @@ namespace corona
 			;
 		}
 
-		void corona_controller::for_each(std::function<bool(const actor_view_collection::iterator_item_type& _item)> selector, std::function<bool(actor_view_object& avo, jobject& slice)> updator)
+		void corona_controller::for_each(std::function<bool(const actor_view_collection::iterator_item_type& _item)> selector, std::function<bool(actor_view_object& avo)> updator)
 		{
 			auto selections = state.view_objects.where(selector);
 			for (auto selection : selections)
 			{
-				jobject slice = program_chart.get_object(selection.second.object_id);
-				updator(selection.second, slice);
+				updator(selection.second);
 			}
 		}
 
-		void corona_controller::for_class(relative_ptr_type *_class_ids, int _length, std::function<bool(const actor_view_object& avo, jobject& slice)>  updator)
+		void corona_controller::for_class(relative_ptr_type *_class_ids, int _length, std::function<bool(actor_view_object& avo)>  updator)
 		{
-			auto selections = state.view_objects.where([_class_ids, _length](auto& kp) { 
-				auto search_class = kp.second.class_id;
-				return std::any_of(_class_ids, _class_ids + _length, [search_class](auto& cid) { return search_class == cid; });
+			auto selections = state.view_objects.where([this, _class_ids, _length](auto& kp) { 
+				for (int i = 0; i < _length; i++) 
+				{
+					if (this->program_chart.matches_class_id(kp.second.object, _class_ids[i])) 
+					{
+						return true;
+					}
+				}
+				return false;
 			});
 
 			for (auto selection : selections)
 			{
-				jobject slice = program_chart.get_object(selection.second.object_id);
-				updator(selection.second, slice);
+				updator(selection.second);
 			}
 		}
 
-		void corona_controller::for_join(jobject& _parent, relative_ptr_type* _join_fields, std::function<bool(const actor_view_object& avo, jobject& slice)>  updator)
+		void corona_controller::for_join(jobject& _parent, relative_ptr_type* _join_fields, std::function<bool(actor_view_object& avo)>  updator)
 		{
 			relative_ptr_type class_id = _parent.get_class_id();
 			auto selections = state.view_objects.where([class_id](auto& kp) { return kp.second.class_id != class_id; });
 			for (auto selection : selections)
 			{
-				jobject slice = program_chart.get_object(selection.second.object_id);
+				auto slice = selection.second.object;
 
 				if (slice.get_bytes() != _parent.get_bytes() && _parent.compare(slice, _join_fields) == 0)
 				{
-					updator(selection.second, slice);
+					updator(selection.second);
 				}
 			}
 		}
 
-		void corona_controller::for_common(relative_ptr_type* _has_field_list, std::function<bool(const actor_view_object& avo, jobject& slice)>  updator)
+		void corona_controller::for_common(relative_ptr_type* _has_field_list, std::function<bool(actor_view_object& avo)>  updator)
 		{
 			auto selections = state.view_objects.where([](auto& kp) {return true; });
 
@@ -357,8 +361,7 @@ namespace corona
 				
 				if (has_fields) 
 				{
-					jobject slice = program_chart.get_object(selection.second.object_id);
-					updator(selection.second, slice);
+					updator(selection.second);
 				}
 			}
 		}
@@ -412,6 +415,12 @@ namespace corona
 			return pg.text(_parent, _style_name, _text, _box);
 		}
 
+		page_item* corona_controller::select_cell(page_item* _parent, actor_state* _state, int object_id, jobject slice, const char *_caption, relative_ptr_type _style_id, layout_rect _box)
+		{
+			const char* _style_name = style_name(_style_id);
+			return pg.select_cell(_parent, _state, object_id, slice, _caption, _style_name, _box);
+		}
+
 		page_item* corona_controller::canvas2d(page_item* _parent, relative_ptr_type _style_id, layout_rect _box)
 		{
 			const char* _style_name = style_name(_style_id);
@@ -423,9 +432,9 @@ namespace corona
 			auto pi = pg.row(_parent_ui, nullptr, _box);
 			auto* page_add = &pg;
 			auto* st = &state;
-			for_each(selector, [st, page_add, pi, this, _parent_ui](const actor_view_object& avo, jobject& slice)
+			for_each(selector, [st, page_add, pi, this, _parent_ui]( actor_view_object& avo)
 				{
-					page_add->select(pi, st, avo.object_id, slice);
+					page_add->select(pi, st, avo.object_id);
 					return true;
 				});
 			return pi;
@@ -436,9 +445,9 @@ namespace corona
 			auto pi = pg.row(_parent_ui, nullptr, _box);
 			auto* page_add = &pg;
 			auto* st = &state;
-			for_class(_class_ids, _length, [st, page_add, pi, this, _parent_ui](const actor_view_object& avo, jobject& slice)
+			for_class(_class_ids, _length, [st, page_add, pi, this, _parent_ui]( actor_view_object& avo)
 				{
-					page_add->select(pi, st, avo.object_id, slice);
+					page_add->select(pi, st, avo.object_id, avo.object);
 					return true;
 				});
 			return pi;
@@ -449,9 +458,9 @@ namespace corona
 			auto pi = pg.row(_parent_ui, nullptr, _box);
 			auto* page_add = &pg;
 			auto* st = &state;
-			for_join(_parent, _join_fields, [st, page_add, pi, this, _parent_ui](const actor_view_object& avo, jobject& slice)
+			for_join(_parent, _join_fields, [st, page_add, pi, this, _parent_ui]( actor_view_object& avo)
 				{
-					page_add->select(pi, st, avo.object_id, slice);
+					page_add->select(pi, st, avo.object_id, avo.object);
 					return true;
 				});
 			return pi;
@@ -462,9 +471,9 @@ namespace corona
 			auto pi = pg.row(_parent_ui, nullptr, _box);
 			auto* page_add = &pg;
 			auto* st = &state;
-			for_common(_has_field_list, [st, page_add, pi, this, _parent_ui](const actor_view_object& avo, jobject& slice)
+			for_common(_has_field_list, [st, page_add, pi, this, _parent_ui]( actor_view_object& avo)
 				{
-					page_add->select(pi, st, avo.object_id, slice);
+					page_add->select(pi, st, avo.object_id, avo.object);
 					return true;
 				});
 			return pi;
@@ -475,9 +484,9 @@ namespace corona
 			auto pi = pg.row(_parent_ui, nullptr, _box);
 			auto* page_add = &pg;
 			auto* st = &state;
-			for_each(selector, [st, page_add, pi, this, _parent_ui](const actor_view_object& avo, jobject& slice)
+			for_each(selector, [st, page_add, pi, this, _parent_ui]( actor_view_object& avo)
 				{
-					page_add->select(pi, st, avo.object_id, slice);
+					page_add->select(pi, st, avo.object_id, avo.object);
 					return true;
 				});
 			return pi;
@@ -488,9 +497,9 @@ namespace corona
 			auto pi = pg.row(_parent_ui, nullptr, _box);
 			auto* page_add = &pg;
 			auto* st = &state;
-			for_class(_class_ids, _length, [st, page_add, pi, this, _parent_ui](const actor_view_object& avo, jobject& slice)
+			for_class(_class_ids, _length, [st, page_add, pi, this, _parent_ui]( actor_view_object& avo)
 				{
-					page_add->select(pi, st, avo.object_id, slice);
+					page_add->select(pi, st, avo.object_id, avo.object);
 					return true;
 				});
 			return pi;
@@ -501,9 +510,9 @@ namespace corona
 			auto pi = pg.row(_parent_ui, nullptr, _box);
 			auto* page_add = &pg;
 			auto* st = &state;
-			for_join(_parent, _join_fields, [st, page_add, pi, this, _parent_ui](const actor_view_object& avo, jobject& slice)
+			for_join(_parent, _join_fields, [st, page_add, pi, this, _parent_ui]( actor_view_object& avo)
 				{
-					page_add->select(pi, st, avo.object_id, slice);
+					page_add->select(pi, st, avo.object_id, avo.object);
 					return true;
 				});
 			return pi;
@@ -514,12 +523,53 @@ namespace corona
 			auto pi = pg.row(_parent_ui, nullptr, _box);
 			auto* page_add = &pg;
 			auto* st = &state;
-			for_common(_has_field_list, [st, page_add, pi, this, _parent_ui](const actor_view_object& avo, jobject& slice)
+			for_common(_has_field_list, [st, page_add, pi, this, _parent_ui]( actor_view_object& avo)
 				{
-					page_add->select(pi, st, avo.object_id, slice);
+					page_add->select(pi, st, avo.object_id, avo.object);
 					return true;
 				});
 			return pi;
+		}
+
+		void corona_controller::search_table(page_item* _parent, relative_ptr_type _idc_class_id, relative_ptr_type* _idf_child_fields, int _num_child_fields)
+		{
+			page_item* header_column = column(_parent, schema.idf_view_background_style);
+			page_item* drow = row(_parent, schema.idf_view_background_style);
+
+			double fontHeight = this->getStyleSheet().get_object(schema.idf_column_text_head_style).get_slice(0).get(schema.idf_font_size);
+
+			std::vector<layout_rect> columns;
+
+			for (int i = 0; i < _num_child_fields; i++)
+			{
+				auto field_spec = schema.get_field(_idf_child_fields[i]);
+				auto layout = field_spec.get_layout(fontHeight);
+				columns.push_back(layout);
+				if (field_spec.is_string())
+					text(drow, schema.idf_column_text_head_style, field_spec.description, layout);
+				else
+					text(drow, schema.idf_column_number_head_style, field_spec.description, layout);
+			}
+
+			auto svo = state.view_objects.where([this, _idc_class_id](actor_view_collection::iterator_item_type& _item) {
+				return program_chart.matches_class_id(_item.second.object, _idc_class_id);
+				});
+
+			for (auto avo : svo)
+			{
+				page_item* drow = row(_parent, schema.idf_view_background_style);
+
+				for (int i = 0; i < _num_child_fields; i++)
+				{
+					auto field_spec = schema.get_field(_idf_child_fields[i]);
+					auto layout = columns[i];
+					const char* value = avo.second.object.get(field_spec.field_id);
+					if (field_spec.is_string())
+						select_cell(drow, &state, avo.second.object_id, avo.second.object, value, schema.idf_column_text_style, layout);
+					else
+						select_cell(drow, &state, avo.second.object_id, avo.second.object, value, schema.idf_column_number_style, layout);
+				}
+			}
 		}
 
 		void corona_controller::stateChanged(const rectangle& newSize)
@@ -566,10 +616,6 @@ namespace corona
 			pg.arrange(width, height);
 		}
 
-		void corona_controller::search_table(page_item* _parent, relative_ptr_type _idc_parent_class_id, relative_ptr_type* _idf_child_fields, int _num_child_fields)
-		{
-
-		}
 	}
 }
 

@@ -85,22 +85,47 @@ namespace proposal
 		corona::database::relative_ptr_type idf_program_chart_slide;
 		corona::database::relative_ptr_type idc_program_chart_slide_product;
 		corona::database::relative_ptr_type idf_program_chart_slide_product;
-
 		corona::database::relative_ptr_type idc_program_generic_slide;
 		corona::database::relative_ptr_type idf_program_generic_slide;
 
 		corona::database::relative_ptr_type idf_comment;
+
+		const char* application_title = "Woodruff Sawyer and Company Commercial Lines";
 
 		wsproposal_controller();
 		virtual ~wsproposal_controller();
 
 		void create_style_sheet();
 
-		void render_home(page_item *_frame);
-		void render_client(page_item* _frame);
-		void render_product_template(page_item* _frame);
-		void render_carrier(page_item* _frame);
-		void render_program(page_item* _frame);
+		void render_header(page_item* _frame, const char* _title, const char* _subtitle, bool _left_pad);
+		void render_form(std::function<void(page_item* _frame)> _contents);
+		void render_search(std::function<void(page_item* _frame)> _contents);
+		void render_visual(std::function<void(page_item* _frame)> _contents);
+
+		void render_home();
+		void render_client_root();
+		void render_client();
+		void render_coverage_root();
+		void render_coverage();
+		void render_product_template_root();
+		void render_product_template();
+		void render_carrier_root();
+		void render_carrier();
+		void render_program();
+
+		void render_home_contents(page_item* _frame);
+		void render_client_root_contents(page_item* _frame);
+		void render_client_contents(page_item* _frame);
+		void render_coverage_root_contents(page_item* _frame);
+		void render_coverage_contents(page_item* _frame);
+		void render_product_template_root_contents(page_item* _frame);
+		void render_product_template_contents(page_item* _frame);
+		void render_carrier_root_contents(page_item* _frame);
+		void render_carrier_contents(page_item* _frame);
+		void render_program_contents(page_item* _frame);
+		void render_program_slide(page_item* _frame, actor_view_object& _slide, layout_rect* _layout);
+		void render_program_chart_slide(page_item* _frame, actor_view_object& _slide, layout_rect* _layout);
+		void render_program_generic_slide(page_item* _frame, actor_view_object& _slide, layout_rect* _layout);
 
 		virtual void render(const rectangle& newSize);
 	};

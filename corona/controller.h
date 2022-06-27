@@ -136,11 +136,12 @@ namespace corona
 			page_item* canvas2d(page_item* _parent, relative_ptr_type _style_id, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
 			page_item* navigate(page_item* _parent, int object_id, relative_ptr_type _style_id, const char* _caption, layout_rect _box);
 			page_item* text(page_item* _parent, relative_ptr_type _style_id, const char *_text, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
+			page_item* select_cell(page_item* _parent, actor_state* _state, int object_id, jobject slice, const char* _caption, relative_ptr_type _style_id, layout_rect _box);
 
-			virtual void for_each(std::function<bool(const actor_view_collection::iterator_item_type& _item)> selector, std::function<bool(actor_view_object& avo, jobject& slice)> updator);
-			virtual void for_class(relative_ptr_type *class_ids, int _length, std::function<bool(const actor_view_object& avo, jobject& slice)>  updator);
-			virtual void for_join(jobject& _join_parent, relative_ptr_type* _join_fields, std::function<bool(const actor_view_object& avo, jobject& slice)>  updator);
-			virtual void for_common(relative_ptr_type* _common_field_list, std::function<bool(const actor_view_object& avo, jobject& slice)>  updator);
+			virtual void for_each(std::function<bool(const actor_view_collection::iterator_item_type& _item)> selector, std::function<bool(actor_view_object& avo)> updator);
+			virtual void for_class(relative_ptr_type *class_ids, int _length, std::function<bool( actor_view_object& avo)>  updator);
+			virtual void for_join(jobject& _join_parent, relative_ptr_type* _join_fields, std::function<bool( actor_view_object& avo)>  updator);
+			virtual void for_common(relative_ptr_type* _common_field_list, std::function<bool( actor_view_object& avo)>  updator);
 
 			virtual page_item *row_each(page_item* _parent_ui, layout_rect _box, std::function<bool(const actor_view_collection::iterator_item_type& _item)> selector);
 			virtual page_item* row_class(page_item* _parent_ui, layout_rect _box, relative_ptr_type *class_ids, int _length);
@@ -158,7 +159,7 @@ namespace corona
 			virtual page_item* add_create_buttons(page_item* _parent);
 			virtual page_item* add_select_items(page_item* _parent);
 
-			void search_table(page_item* _parent, relative_ptr_type _idc_parent_class_id, relative_ptr_type* _idf_child_fields, int _num_child_fields);
+			void search_table(page_item* _parent, relative_ptr_type _idc_class_id, relative_ptr_type* _idf_child_fields, int _num_child_fields);
 
 			void arrange(double width, double height);
 

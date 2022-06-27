@@ -12,12 +12,17 @@ namespace corona
 
 		measure operator ""_pct(long double pct)
 		{
-			return measure(pct, measure_units::percent_container);
+			return measure(pct, measure_units::percent_remaining);
+		}
+		
+		measure operator ""_pcw(long double pct)
+		{
+			return measure(pct, measure_units::percent_width);
 		}
 
-		measure operator ""_psz(long double pct)
+		measure operator ""_pch(long double pct)
 		{
-			return measure(pct, measure_units::percent_size);
+			return measure(pct, measure_units::percent_height);
 		}
 
 		measure operator -(const measure& _src)

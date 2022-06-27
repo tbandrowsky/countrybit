@@ -16,8 +16,9 @@ namespace corona
 			label = 7,
 			create = 8,
 			select = 9,
-			navigate = 10,
-			text = 11
+			select_cell = 10,
+			navigate = 11,
+			text = 12
 		};
 
 		class page_item
@@ -74,6 +75,8 @@ namespace corona
 
 		class page : public iarray<page_item, 1024>
 		{
+			void calculate_sizes(page::iterator_type children, double offx, double offy, double x, double y, double width, double height, double& remaining_width, double& remaining_height);
+			void set_bound_size(page_item* _item, double offx, double offy, double x, double y, double width, double height);
 			void arrange_impl(page_item *_item, double offx, double offy, double x, double y, double width, double height);
 			void visit_impl(page_item* _item, std::function<bool(page_item* _parent)> fn);		
 			dynamic_box data;
@@ -81,6 +84,9 @@ namespace corona
 			using style_names_by_class_type = sorted_index<relative_ptr_type, object_name, 1>;
 			style_names_by_class_type styles;
 			relative_ptr_type styles_location;
+
+			void calculate_bounds_w(page_item* _pi, double width, double height, int safety);
+			void calculate_bounds_h(page_item* _pi, double width, double height, int safety);
 
 		public:
 
@@ -98,6 +104,7 @@ namespace corona
 
 			page_item* field(page_item* _parent, int object_id, int field_id, jobject slice);
 			page_item* select(page_item* _parent, actor_state* _state, int object_id, jobject slice);
+			page_item* select_cell(page_item* _parent, actor_state* _state, int object_id, jobject slice, const char *_caption, const char* _style_name, layout_rect _box);
 			page_item* navigate(page_item* _parent, actor_state* _state, int object_id, const char* _style_name, const char *_caption, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 20.0_px });
 			page_item* space(page_item* _parent, const char* _style_name = nullptr, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
 

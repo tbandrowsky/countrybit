@@ -285,17 +285,18 @@ namespace corona
 				}
 			);
 
-			for (auto iter = begin(); iter != end(); iter++)
+			for (auto vos : view_objects)
 			{
 				actor_view_object avo;
 				avo.actor_id = _actor;
 				avo.collection_id = collection_id;
-				avo.object_id = iter.get_index();
-				avo.class_id = iter.get_object().item.get_class_id();
+				avo.object_id = vos.location;
+				avo.class_id = vos.item.get_class_id();
 				avo.selectable = false;
 				avo.selected = false;
 				avo.updatable = false;
-				acr.view_objects.put(iter.get_index(), avo, [](actor_view_object& _dest) { ;  });
+				avo.object = vos.item;
+				acr.view_objects.put(avo.object_id, avo, [](actor_view_object& _dest) { ;  });
 			}
 
 			// now to select whatever is selected
@@ -3076,6 +3077,8 @@ namespace corona
 				{ { null_row, jtype::type_object, "h3_style", "H3 Style" }, { {1,1,1}, idc_text_style }},
 				{ { null_row, jtype::type_object, "column_number_head_style", "Column Number Head Style" }, { {1,1,1}, idc_text_style }},
 				{ { null_row, jtype::type_object, "column_text_head_style", "Column Text Head Style" }, { {1,1,1}, idc_text_style }},
+				{ { null_row, jtype::type_object, "column_number_style", "Column Number Head Style" }, { {1,1,1}, idc_text_style }},
+				{ { null_row, jtype::type_object, "column_text_style", "Column Text Head Style" }, { {1,1,1}, idc_text_style }},
 				{ { null_row, jtype::type_object, "column_data_style", "Column Data Style" }, { {1,1,1}, idc_text_style }},
 				{ { null_row, jtype::type_object, "label_style", "Label Style" }, { {1,1,1}, idc_text_style }},
 				{ { null_row, jtype::type_object, "control_style", "Control Style" }, { {1,1,1}, idc_text_style }},
@@ -3134,6 +3137,8 @@ namespace corona
 			idf_h3_style = find_field("h3_style");
 			idf_column_number_head_style = find_field("column_number_head_style");
 			idf_column_text_head_style = find_field("column_text_head_style");
+			idf_column_number_style = find_field("column_number_style");
+			idf_column_text_style = find_field("column_text_style");
 			idf_column_data_style = find_field("column_data_style");
 			idf_label_style = find_field("label_style");
 			idf_control_style = find_field("control_style");
@@ -3181,7 +3186,9 @@ namespace corona
 			pcr.class_name = "style_sheet";
 			pcr.class_description = "collection of styles for ui";
 			pcr.member_fields = { idf_style_sheet, idf_name, idf_view_background_style, idf_view_title_style, idf_view_subtitle_style, idf_view_section_style, idf_view_style, idf_disclaimer_style, idf_copyright_style,
-				idf_h1_style, idf_h2_style, idf_h3_style, idf_column_number_head_style,idf_column_text_head_style,idf_column_data_style,idf_label_style,idf_control_style,idf_chart_axis_style,idf_chart_legend_style,idf_chart_block_style,idf_tooltip_style,
+				idf_h1_style, idf_h2_style, idf_h3_style, idf_column_number_head_style,idf_column_text_head_style,
+				idf_column_number_style, idf_column_text_style,
+				idf_column_data_style,idf_label_style,idf_control_style,idf_chart_axis_style,idf_chart_legend_style,idf_chart_block_style,idf_tooltip_style,
 				idf_error_style, idf_client_style, idf_carrier_style, idf_coverage_style, idf_home_style, idf_login_style, idf_product_style,
 				idf_company_a1_style, idf_company_a2_style, idf_company_a3_style, idf_company_b1_style, idf_company_b2_style, idf_company_b3_style, idf_company_c1_style, idf_company_c2_style, idf_company_c3_style,idf_company_d1_style, idf_company_d2_style, idf_company_d3_style, 
 				idf_company_deductible_style, idf_company_neutral1_style, idf_company_neutral2_style

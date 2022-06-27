@@ -298,17 +298,17 @@ namespace corona
 			char data[length_bytes];
 		public:
 
-			istring() : last_char( length_bytes - 1 )
+			istring() : last_char( length_bytes - 1 ), length(0)
 			{
 				copy("");
 			}
 
-			istring(const char *_src) : last_char(length_bytes - 1)
+			istring(const char *_src) : last_char(length_bytes - 1), length(0)
 			{
 				copy(_src);
 			}
 
-			istring(const std::string& src) : last_char(length_bytes - 1)
+			istring(const std::string& src) : last_char(length_bytes - 1), length(0)
 			{
 				const char* s = src.c_str();
 				copy(s);
@@ -317,29 +317,34 @@ namespace corona
 			istring& operator = (const std::string& src)
 			{
 				const char* s = src.c_str();
+				length = 0;
 				copy(s);
 				return *this;
 			}
 
 			istring& operator = (const char* s)
 			{
+				length = 0;
 				copy(s);
 				return *this;
 			}
 
 			istring(const wchar_t* _src) 
 			{
+				length = 0;
 				copy(_src);
 			}
 
 			istring(const std::wstring& src)
 			{
+				length = 0;
 				const wchar_t* s = src.c_str();
 				copy(s);
 			}
 
 			istring& operator = (const std::wstring& src)
 			{
+				length = 0;
 				const wchar_t* s = src.c_str();
 				copy(s);
 				return *this;
@@ -347,6 +352,7 @@ namespace corona
 
 			istring& operator = (const wchar_t* s)
 			{
+				length = 0;
 				copy(s);
 				return *this;
 			}
@@ -398,8 +404,12 @@ namespace corona
 				if (max_len < 0)
 					max_len = wcslen(_src);
 
-				if (max_len >= last_char)
-					max_len = last_char;
+				int total_len = max_len + length;
+
+				if (total_len >= last_char) {
+					max_len = total_len - last_char;
+					total_len = last_char;
+				}
 
 				int result = WideCharToMultiByte(CP_UTF8, 0, _src, max_len, NULL, 0, NULL, NULL);
 				if (result > 0)
@@ -410,25 +420,23 @@ namespace corona
 					}
 					if (result > 0)
 					{
-						WideCharToMultiByte(CP_UTF8, 0, _src, max_len, data, result, NULL, NULL);
-						data[result] = 0;
-						length = result;
+						WideCharToMultiByte(CP_UTF8, 0, _src, max_len, data + length, result, NULL, NULL);
+						data[result + length] = 0;
+						length = result + length;
 					}
 					else {
-						data[0] = 0;
-						length = 0;
+						data[length] = 0;
 					}
 				}
 				else {
-					data[0] = 0;
-					length = 0;
+					data[length] = 0;
 				}
 			}
 
 			void copy(const char* s)
 			{
-				char* d = &data[0];
-				int l = 0;
+				char* d = &data[length];
+				int l = length;
 
 				while (l <= last_char && *s)
 				{
@@ -453,6 +461,12 @@ namespace corona
 			bool has_any(const char* _pattern)
 			{
 				return str_has_any(data, _pattern);
+			}
+
+			istring& operator += ( const char *_src )
+			{
+				copy(_src);
+				return *this;
 			}
 
 			istring& operator = (double d)

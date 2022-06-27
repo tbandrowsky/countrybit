@@ -708,6 +708,7 @@ namespace corona
 			bool				updatable;
 			bool				selected;
 			bool				deletable;
+			jobject				object;
 		};
 
 		class select_object_request
@@ -1223,6 +1224,8 @@ namespace corona
 			relative_ptr_type idf_h3_style;
 			relative_ptr_type idf_column_number_head_style;
 			relative_ptr_type idf_column_text_head_style;
+			relative_ptr_type idf_column_number_style;
+			relative_ptr_type idf_column_text_style;
 			relative_ptr_type idf_column_data_style;
 			relative_ptr_type idf_label_style;
 			relative_ptr_type idf_control_style;

@@ -280,23 +280,23 @@ namespace corona
 				return get_node(offset).item();
 			}
 
-			auto where(std::function<bool(const data_pair&)> _predicate)
+			auto where(std::function<bool(data_pair&)> _predicate)
 			{
 				mapper_check();
 				return iterator_type(this, _predicate, &mapper);
 			}
 
-			bool any_of(std::function<bool(const data_pair&)> predicate)
+			bool any_of(std::function<bool(data_pair&)> predicate)
 			{
 				return std::any_of(begin(), end(), predicate);
 			}
 
-			bool all_of(std::function<bool(const data_pair&)> predicate)
+			bool all_of(std::function<bool( data_pair&)> predicate)
 			{
 				return std::all_of(begin(), end(), predicate);
 			}
 
-			corona_size_t count_if(std::function<bool(const data_pair&)> predicate)
+			corona_size_t count_if(std::function<bool( data_pair&)> predicate)
 			{
 				return std::count_if(begin(), end(), predicate);
 			}

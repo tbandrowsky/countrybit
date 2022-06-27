@@ -338,160 +338,85 @@ namespace proposal
 		;
 	}
 
-	void wsproposal_controller::render_home(page_item* _frame)
+	void wsproposal_controller::render_header(page_item* _frame, const char* _title, const char* _subtitle, bool _left_pad)
 	{
-		relative_ptr_type class_ids1[3] = { idc_client_root, idc_carrier_root, idc_coverage_root };
-		relative_ptr_type class_ids2[3] = { idc_program_template_root, idc_system_root };
+		auto title_block = row(_frame, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 150.0_px });
 
-		column_class(_frame, { 0.0_px, 0.0_px, 50.0_pct, 100.0_pct }, class_ids1, sizeof(class_ids1) / sizeof(relative_ptr_type));
-		column_class(_frame, { 0.0_px, 0.0_px, 50.0_pct, 100.0_pct }, class_ids2, sizeof(class_ids1) / sizeof(relative_ptr_type));
+		page_item* header_area;
+
+		if (_left_pad) 
+		{
+			space(_frame, schema.idf_view_background_style, { 0.0_px, 0.0_px, 25.0_pct, 100.0_pct });
+			header_area = column(title_block, schema.idf_view_background_style, { 0.0_px, 0.0_px, 75.0_pct, 100.0_pct });
+		}
+		else 
+		{
+			header_area = column(title_block, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
+		}
+
+		auto title_bar = row(header_area, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 50.0_px });
+		auto subtitle_bar = row(header_area, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 50.0_px });
+		auto breadcrumb_bar = row(header_area, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 50.0_px });
+
+		text(title_bar, schema.idf_view_title_style, _title, { 0.0_px, 0.0_px, 150.0_px, 100.0_pct });
+		text(subtitle_bar, schema.idf_view_subtitle_style, _subtitle, { 0.0_px, 0.0_px, 150.0_px, 100.0_pct });
+		breadcrumbs(breadcrumb_bar, [](jobject& _item) {
+			return nullptr;
+			}, { 0.0_px, 0.0_px, 100.0_px, 100.0_pct });
 	}
 
-	void wsproposal_controller::render_client(page_item* _frame)
+	void wsproposal_controller::render_form(std::function<void(page_item* _frame)> _contents)
 	{
-		;
+		clear();
+
+		auto mainr = row(nullptr, null_row);
+
+		auto d2drow = column(mainr, null_row, { 0.0_px,0.0_px,100.0_pct,100.0_pct });
+		auto controlrow = row(mainr, null_row, { 0.0_px,0.0_px,100.0_pct,100.0_pct });
+		auto controlcolumn = column(mainr, null_row, { 20.0_pct,0.0_px,60.0_pct,100.0_pct });
+
+		auto d2dwin = canvas2d(d2drow, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
+		auto d2dwin_area = column(d2dwin, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
+
+		const char* object_title = nullptr;
+		object_title = schema.get_class(state.actor.current_view_class_id).item().description;
+
+		render_header(d2dwin_area, application_title, object_title, true);
+
+		// editable controls on the left
+		add_update_fields(controlcolumn);
+		add_create_buttons(controlcolumn);
+
+		_contents(d2dwin_area);
 	}
 
-	void wsproposal_controller::render_product_template(page_item* _frame)
+
+	void wsproposal_controller::render_search(std::function<void(page_item* _frame)> _contents)
 	{
-		;
+		clear();
+
+		auto mainr = row(nullptr, null_row);
+		auto d2drow = column(mainr, null_row, { 0.0_px,0.0_px,100.0_pct,25.0_pct });
+		auto controlrow = column(mainr, null_row, { 0.0_px,0.0_px,100.0_pct,75.0_pct });
+		auto d2dwin = canvas2d(d2drow, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
+		auto d2dwin_area = column(d2dwin, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
+
+		const char* object_title = nullptr;
+		object_title = schema.get_class(state.actor.current_view_class_id).item().description;
+
+		render_header(d2dwin, application_title, object_title, false);
+
+		auto client_area = row(d2dwin, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
+
+		_contents(client_area);
+
+		// editable controls on the left
+		add_update_fields(controlrow);
+		add_create_buttons(controlrow);
+
 	}
 
-	void wsproposal_controller::render_selection_table(page_item* _frame)
-	{
-		;
-	}
-
-	void wsproposal_controller::render_carrier(page_item* _frame)
-	{
-		;
-	}
-
-	void wsproposal_controller::render_program(page_item* _frame)
-	{
-		// draw the slides at the top
-		relative_ptr_type slide_classes[2] = { idc_program_chart_slide, idc_program_chart_slide };
-		auto slide_area = row_class(_frame, {0.0_px, 0.0_px, 100.0_pct, 100.0_px}, slide_classes, 2);
-
-		// and now draw the selected slide
-		relative_ptr_type title_classes[2] = { idslide_title_class, null_row };
-
-		title_box.width = 500.0_px;
-		title_box.height = 100.0_px;
-		title_box.x = left_margin;
-		title_box.y = chart_top;
-		auto title_area = column(d2dwin, schema.id_view_title, title_box);
-		column(title_area, { 5.0_px, 0.0_px, 500.0_px, 75.0_px }, slide_title_class_id);
-
-		//const database::actor_view_object& avo, database::jobject& slice
-		for_each(program_class_id, [ptitle_box](const corona::database::actor_view_object& avo, corona::database::jobject& slice) {
-			auto rbx = slice.get_layout_rect("layout_rect");
-			rbx = *ptitle_box;
-			return true;
-			});
-
-		corona::database::layout_rect legend_box, * plegend_box = &legend_box;
-		int carrier_count = state.view_objects.count_if([this](const auto& avokp) { return avokp.second.class_id == carrier_class_id; });
-
-		legend_box.width = 300.0_px;
-		legend_box.height = 20.0_px;
-		legend_box.height.amount;
-		legend_box.x = -1.1_psz;
-		legend_box.y = chart_top;
-
-		auto legend_area = column(d2dwin, schema.id_chart_legend, legend_box);
-		column(legend_area, { 5.0_px, 0.0_px, 250.0_px, 30.0_px }, carrier_class_id);
-
-		// get dimensions of the chart, the width
-
-		int coverage_count = state.view_objects.count_if([this](auto& avokp) { return avokp.second.class_id == this->coverage_class_id; });
-		if (coverage_count < 3)
-			coverage_count = 3;
-		coverage_count += 2;
-		int coverage_width = 1.0 / coverage_count * 100;
-
-		std::cout << std::format("coverages {} w:{}", coverage_count, coverage_width) << std::endl;
-
-		// and the height
-
-		corona::database::relative_ptr_type limit_fields[3], * plimit_fields = &limit_fields[0];
-		limit_fields[0] = limit_field_id;
-		limit_fields[1] = attachment_field_id;
-		limit_fields[2] = null_row;
-
-		double max_amount = 0.0, min_amount = 0.0, count = 0.0;
-		double* pmax_amount = &max_amount, * pmin_amount = &min_amount, * pcount = &count;
-
-		for_each(plimit_fields, [this, pmax_amount, pmin_amount, pcount, plimit_fields](const corona::database::actor_view_object& avo, corona::database::jobject& slice) {
-			corona::database::relative_ptr_type* pfield = plimit_fields;
-			std::cout << std::format("{} min:{} max:{}", *pmin_amount, *pmax_amount, *pcount) << std::endl;
-			while (*pfield != null_row) {
-				auto t = slice.get_double(*pfield, true);
-				if (t < *pmin_amount) {
-					*pmin_amount = t;
-				}
-				if (t > *pmax_amount) {
-					*pmax_amount = t;
-				}
-				*pcount += 1.0;
-				pfield++;
-			}
-			return true;
-			});
-
-		corona::database::rectangle coverage_box, * pcoverage_box = &coverage_box;
-
-		double chartMargin = -60;
-		double chartHeight = newSize.h + chartMargin;
-		double scaley = *pmax_amount / chartHeight;
-
-		coverage_box.w = coverage_width;
-		coverage_box.h = 30;
-		coverage_box.x = coverage_width;
-		coverage_box.y = chartHeight;
-
-		corona::database::relative_ptr_type comparison_fields[2], * pcomparison_fields = &comparison_fields[0];
-		comparison_fields[0] = coverage_name_id;
-		comparison_fields[1] = null_row;
-
-		double policyMax = 0.0;
-		double policyMin = 0.0;
-
-		for_each(coverage_class_id, [this, chartHeight, scaley, pcomparison_fields, pcoverage_box, coverage_width](const corona::database::actor_view_object& avo, corona::database::jobject& slice) {
-			corona::database::rectangle policy_box, * ppolicy_box = &policy_box;
-			auto rbx = slice.get_rectangle("rectangle");
-			rbx = *pcoverage_box;
-			policy_box.w = pcoverage_box->w;
-			policy_box.x = pcoverage_box->x;
-			policy_box.h = 0;
-			policy_box.y = 0;
-			pcoverage_box->x += coverage_width;
-			std::cout << std::format("coverage x:{} w:{}", pcoverage_box->x, pcoverage_box->w) << std::endl;
-
-			for_each(slice, pcomparison_fields, [this, chartHeight, scaley, ppolicy_box](const corona::database::actor_view_object& avo, corona::database::jobject& slice) {
-
-				if (slice.has_field(limit_field_id) && slice.has_field(attachment_field_id))
-				{
-					auto pbx = slice.get_rectangle("rectangle");
-
-					double limit, attach;
-					limit = slice.get_double(limit_field_id, true);
-					attach = slice.get_double(attachment_field_id, true);
-
-					ppolicy_box->h = chartHeight - limit * scaley;
-					ppolicy_box->y = chartHeight - attach * scaley;
-
-					pbx = *ppolicy_box;
-				}
-
-				return true;
-				});
-
-			return true;
-			});
-	}
-
-	void wsproposal_controller::render(const rectangle& newSize)
+	void wsproposal_controller::render_visual(std::function<void(page_item* _frame)> _contents)
 	{
 		clear();
 
@@ -499,50 +424,198 @@ namespace proposal
 		auto controlcolumn = column(mainr, null_row, { 0.0_px,0.0_px,25.0_pct,100.0_pct });
 		auto d2dcolumn = column(mainr, null_row, { 0.0_px,0.0_px,75.0_pct,100.0_pct });
 		auto d2dwin = canvas2d(d2dcolumn, schema.idf_view_background_style, { 0.0_px,0.0_px,100.0_pct,100.0_pct });
-		auto d2dwin_area = column(d2dwin, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
 
-		auto navigation_bar = row(d2dwin, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 50.0_px });
-		auto title_bar = text(navigation_bar, schema.idf_view_title_style, "Woodruff Sawyer Commercial Lines", { 0.0_px, 0.0_px, 150.0_px, 100.0_pct });
-		breadcrumbs(navigation_bar, [](jobject& _item) {
-			return nullptr;
-			}, { 0.0_px, 0.0_px, 100.0_px, 100.0_pct });
-		auto client_area = row(d2dwin, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
+		object_description object_title;
+		object_title = schema.get_class(state.actor.current_view_class_id).item().description;
+
+		render_header(d2dwin, application_title, object_title, false);
 
 		// editable controls on the left
 		add_update_fields(controlcolumn);
 		add_create_buttons(controlcolumn);
 
+		_contents(d2dwin);
+	}
+
+	void wsproposal_controller::render_home()
+	{
+		render_visual([this](page_item* _frame) { render_home_contents(_frame);  });
+	}
+
+	void wsproposal_controller::render_client_root()
+	{
+		render_visual([this](page_item* _frame) { render_client_root_contents(_frame);  });
+	}
+
+	void wsproposal_controller::render_client()
+	{
+		render_form([this](page_item* _frame) { render_client_contents(_frame);  });
+	}
+
+	void wsproposal_controller::render_coverage_root()
+	{
+		render_visual([this](page_item* _frame) { render_coverage_root_contents(_frame);  });
+	}
+
+	void wsproposal_controller::render_coverage()
+	{
+		render_form([this](page_item* _frame) { render_coverage_contents(_frame);  });
+	}
+
+	void wsproposal_controller::render_product_template_root()
+	{
+		render_visual([this](page_item* _frame) { render_product_template_root_contents(_frame);  });
+	}
+
+	void wsproposal_controller::render_product_template()
+	{
+		render_visual([this](page_item* _frame) { render_product_template_contents(_frame);  });
+	}
+
+	void wsproposal_controller::render_carrier_root()
+	{
+		render_visual([this](page_item* _frame) { render_carrier_root_contents(_frame);  });
+	}
+
+	void wsproposal_controller::render_carrier()
+	{
+		render_form([this](page_item* _frame) { render_carrier_contents(_frame);  });
+	}
+
+	void wsproposal_controller::render_program()
+	{
+		render_form([this](page_item* _frame) { render_program_contents(_frame);  });
+	}
+
+	void wsproposal_controller::render_home_contents(page_item* _frame)
+	{
+		relative_ptr_type class_ids1[3] = { idc_client_root, idc_carrier_root, idc_coverage_root };
+		relative_ptr_type class_ids2[2] = { idc_program_template_root, idc_system_root };
+
+		column_class(_frame, { 0.0_px, 0.0_px, 50.0_pct, 100.0_pct }, class_ids1, 3);
+		column_class(_frame, { 0.0_px, 0.0_px, 50.0_pct, 100.0_pct }, class_ids2, 2);
+	}
+
+	void wsproposal_controller::render_client_root_contents(page_item* _frame)
+	{
+		relative_ptr_type field_ids[5] = { schema.idf_name, schema.idf_street, schema.idf_city, schema.idf_state, schema.idf_postal };
+		search_table(_frame, idc_client, field_ids, 5);
+	}
+
+	void wsproposal_controller::render_client_contents(page_item* _frame)
+	{
+		;
+	}
+
+	void wsproposal_controller::render_coverage_root_contents(page_item* _frame)
+	{
+		relative_ptr_type field_ids[1] = { schema.idf_name };
+		search_table(_frame, idc_client, field_ids, 1);
+	}
+
+	void wsproposal_controller::render_coverage_contents(page_item* _frame)
+	{
+
+	}
+
+	void wsproposal_controller::render_product_template_root_contents(page_item* _frame)
+	{
+		relative_ptr_type field_ids[5] = { schema.idf_name, schema.idf_street, schema.idf_city, schema.idf_state, schema.idf_postal };
+		search_table(_frame, idc_carrier, field_ids, 5);
+	}
+
+	void wsproposal_controller::render_product_template_contents(page_item* _frame)
+	{
+		;
+	}
+
+	void wsproposal_controller::render_carrier_root_contents(page_item* _frame)
+	{
+		relative_ptr_type field_ids[5] = { schema.idf_name, schema.idf_street, schema.idf_city, schema.idf_state, schema.idf_postal };
+		search_table(_frame, idc_carrier, field_ids, 5);
+	}
+
+	void wsproposal_controller::render_carrier_contents(page_item* _frame)
+	{
+		;
+	}
+
+	void wsproposal_controller::render_program_contents(page_item* _frame)
+	{
+		page_item* contents = row( _frame, schema.idf_view_background_style);
+		page_item* slide_area = column(contents, schema.idf_view_background_style, { 0.0_px, 0.0_px, 25.0_pct, 100.0_pct });
+		page_item* selected_slide_area = column(contents, schema.idf_view_background_style, { 0.0_px, 0.0_px, 25.0_pct, 100.0_pct });
+
+		layout_rect slide_layout = { 0.0_px, 0.0_px, 100.0_pct, 75.0_pcw }, *pslide_layout = &slide_layout;
+
+		relative_ptr_type slide_types[2] = { idc_program_chart_slide, idc_program_generic_slide };
+		for_class(slide_types, 2, [this, pslide_layout, slide_area, selected_slide_area](actor_view_object& slide_avo)
+			{
+				render_program_slide(slide_area, slide_avo, pslide_layout);
+				if (slide_avo.selected) 
+				{
+					render_program_slide( selected_slide_area, slide_avo, pslide_layout );
+				}
+				return true;
+			}
+		);
+	}
+
+	void wsproposal_controller::render_program_slide(page_item* _frame, actor_view_object& _slide, layout_rect *_layout)
+	{
+		if (_slide.class_id == idc_program_chart_slide)
+		{
+			render_program_chart_slide(_frame, _slide, _layout);
+		}
+		else if (_slide.class_id == idc_program_generic_slide)
+		{
+			render_program_generic_slide(_frame, _slide, _layout);
+		}
+	}
+
+	void wsproposal_controller::render_program_chart_slide(page_item* _frame, actor_view_object& _slide, layout_rect* _layout)
+	{
+		text(_frame, schema.idc_text_style, "Program Chart", *_layout);
+	}
+
+	void wsproposal_controller::render_program_generic_slide(page_item* _frame, actor_view_object& _slide, layout_rect* _layout)
+	{
+		text(_frame, schema.idc_text_style, "Generic Slide", *_layout);
+	}
+
+	void wsproposal_controller::render(const rectangle& newSize)
+	{
 		if (state.actor.current_view_class_id == idc_home) 
 		{
-			render_home(client_area);
+			render_home();
 		} 
 		else if (state.actor.current_view_class_id == idc_client_root)
 		{
-			render_selection_table(client_area);
+			render_client_root();
 		}
 		else if (state.actor.current_view_class_id == idc_client)
 		{
-			render_client(client_area);
+			render_client();
 		}
 		else if (state.actor.current_view_class_id == idc_program_template_root)
 		{
-			render_selection_table(client_area);
+			render_product_template_root();
 		}
 		else if (state.actor.current_view_class_id == idc_program_template)
 		{
-			render_program(client_area);
+			render_product_template();
 		}
 		else if (state.actor.current_view_class_id == idc_carrier_root)
 		{
-			render_selection_table(client_area);
+			render_carrier_root();
 		}
 		else if (state.actor.current_view_class_id == idc_carrier)
 		{
-			render_carrier(client_area);
+			render_carrier();
 		}
 		else if (state.actor.current_view_class_id == idc_program)
 		{
-			render_program(client_area);
+			render_program();
 		}
 
 		arrange(newSize.w, newSize.h);
@@ -782,6 +855,50 @@ namespace proposal
 				{ schema.idf_name, "column_number_head" },
 				{ schema.idf_font_name, fontName },
 				{ schema.idf_font_size, 14.0 },
+				{ schema.idf_bold, true },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_far },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#000000FF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "#efefefFF" },
+				{ schema.idf_box_border_thickness, 1 },
+				{ schema.idf_box_border_color, "#dfdfdfFF" }
+			}
+			);
+
+		style_sheet.set(
+			{ schema.idf_column_text_head_style },
+			{
+				{ schema.idf_name, "column_text_head" },
+				{ schema.idf_font_name, fontName },
+				{ schema.idf_font_size, 14.0 },
+				{ schema.idf_bold, true },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#000000FF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "#efefefFF" },
+				{ schema.idf_box_border_thickness, 1 },
+				{ schema.idf_box_border_color, "#dfdfdfFF" }
+			}
+			);
+
+		style_sheet.set(
+			{ schema.idf_column_number_style },
+			{
+				{ schema.idf_name, "column_number" },
+				{ schema.idf_font_name, fontName },
+				{ schema.idf_font_size, 14.0 },
 				{ schema.idf_bold, false },
 				{ schema.idf_italic, false },
 				{ schema.idf_underline, false },
@@ -793,15 +910,15 @@ namespace proposal
 				{ schema.idf_shape_border_thickness, 0 },
 				{ schema.idf_shape_border_color, "" },
 				{ schema.idf_box_fill_color, "#ffffffFF" },
-				{ schema.idf_box_border_thickness, 0 },
-				{ schema.idf_box_border_color, "" }
+				{ schema.idf_box_border_thickness, 1 },
+				{ schema.idf_box_border_color, "#dfdfdfFF" }
 			}
 			);
 
 		style_sheet.set(
-			{ schema.idf_column_text_head_style },
+			{ schema.idf_column_text_style },
 			{
-				{ schema.idf_name, "column_text_head" },
+				{ schema.idf_name, "column_text" },
 				{ schema.idf_font_name, fontName },
 				{ schema.idf_font_size, 14.0 },
 				{ schema.idf_bold, false },
@@ -815,11 +932,10 @@ namespace proposal
 				{ schema.idf_shape_border_thickness, 0 },
 				{ schema.idf_shape_border_color, "" },
 				{ schema.idf_box_fill_color, "#ffffffFF" },
-				{ schema.idf_box_border_thickness, 0 },
-				{ schema.idf_box_border_color, "" }
+				{ schema.idf_box_border_thickness, 1 },
+				{ schema.idf_box_border_color, "#dfdfdfFF" }
 			}
 			);
-
 
 		style_sheet.set(
 			{ schema.idf_column_data_style },
@@ -838,11 +954,10 @@ namespace proposal
 				{ schema.idf_shape_border_thickness, 0 },
 				{ schema.idf_shape_border_color, "" },
 				{ schema.idf_box_fill_color, "#ffffffFF" },
-				{ schema.idf_box_border_thickness, 0 },
-				{ schema.idf_box_border_color, "" }
+				{ schema.idf_box_border_thickness, 1 },
+				{ schema.idf_box_border_color, "#dfdfdfFF" }
 			}
 			);
-
 
 		style_sheet.set(
 			{ schema.idf_label_style },
