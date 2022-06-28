@@ -33,14 +33,6 @@ namespace flowers
 		jm.select_always(&schema, idc_home);
 
 		jm.delete_always(&schema, idc_carrier);
-		jm.delete_always(&schema, idc_program_template);
-		jm.delete_always(&schema, idc_coverage);
-		jm.delete_always(&schema, idc_client);
-		jm.delete_always(&schema, idc_program);
-		jm.delete_always(&schema, idc_product);
-		jm.delete_always(&schema, idc_program_chart_slide);
-		jm.delete_always(&schema, idc_program_generic_slide);
-		jm.delete_always(&schema, idc_product_item_base);
 
 		jm.create_when(&schema, idc_carrier_root, idc_carrier, null_row, true, false);
 

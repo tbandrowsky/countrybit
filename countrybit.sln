@@ -11,6 +11,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "wspropose", "wspropose\wspr
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FlowersAndBeautifulThings", "FlowersAndBeautifulThings\FlowersAndBeautifulThings.vcxproj", "{3DA57AD5-E218-4D79-A770-B0F73F869FE1}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bridges", "bridges\bridges.vcxproj", "{11EA6178-E71F-4BF2-B429-1EA385FCF743}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|ARM = Debug|ARM
@@ -71,6 +73,22 @@ Global
 		{3DA57AD5-E218-4D79-A770-B0F73F869FE1}.Release|x64.Build.0 = Release|x64
 		{3DA57AD5-E218-4D79-A770-B0F73F869FE1}.Release|x86.ActiveCfg = Release|Win32
 		{3DA57AD5-E218-4D79-A770-B0F73F869FE1}.Release|x86.Build.0 = Release|Win32
+		{11EA6178-E71F-4BF2-B429-1EA385FCF743}.Debug|ARM.ActiveCfg = Debug|x64
+		{11EA6178-E71F-4BF2-B429-1EA385FCF743}.Debug|ARM.Build.0 = Debug|x64
+		{11EA6178-E71F-4BF2-B429-1EA385FCF743}.Debug|ARM64.ActiveCfg = Debug|x64
+		{11EA6178-E71F-4BF2-B429-1EA385FCF743}.Debug|ARM64.Build.0 = Debug|x64
+		{11EA6178-E71F-4BF2-B429-1EA385FCF743}.Debug|x64.ActiveCfg = Debug|x64
+		{11EA6178-E71F-4BF2-B429-1EA385FCF743}.Debug|x64.Build.0 = Debug|x64
+		{11EA6178-E71F-4BF2-B429-1EA385FCF743}.Debug|x86.ActiveCfg = Debug|Win32
+		{11EA6178-E71F-4BF2-B429-1EA385FCF743}.Debug|x86.Build.0 = Debug|Win32
+		{11EA6178-E71F-4BF2-B429-1EA385FCF743}.Release|ARM.ActiveCfg = Release|x64
+		{11EA6178-E71F-4BF2-B429-1EA385FCF743}.Release|ARM.Build.0 = Release|x64
+		{11EA6178-E71F-4BF2-B429-1EA385FCF743}.Release|ARM64.ActiveCfg = Release|x64
+		{11EA6178-E71F-4BF2-B429-1EA385FCF743}.Release|ARM64.Build.0 = Release|x64
+		{11EA6178-E71F-4BF2-B429-1EA385FCF743}.Release|x64.ActiveCfg = Release|x64
+		{11EA6178-E71F-4BF2-B429-1EA385FCF743}.Release|x64.Build.0 = Release|x64
+		{11EA6178-E71F-4BF2-B429-1EA385FCF743}.Release|x86.ActiveCfg = Release|Win32
+		{11EA6178-E71F-4BF2-B429-1EA385FCF743}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -79,6 +97,7 @@ Global
 		SolutionGuid = {BA47BF18-71C4-44D3-A412-2F875C556B7D}
 	EndGlobalSection
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		corona\corona.vcxitems*{11ea6178-e71f-4bf2-b429-1ea385fcf743}*SharedItemsImports = 4
 		corona\corona.vcxitems*{3da57ad5-e218-4d79-a770-b0f73f869fe1}*SharedItemsImports = 4
 		corona\corona.vcxitems*{8ba13569-58de-4105-9694-1ed9f2f85445}*SharedItemsImports = 4
 		corona\corona.vcxitems*{c12de1f8-9a25-4e3b-af11-93f4b3aceee9}*SharedItemsImports = 9
