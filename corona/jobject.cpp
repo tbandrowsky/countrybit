@@ -652,6 +652,7 @@ namespace corona
 			co.class_id = _class_id;
 			co.item_id = _item_id;
 			co.otype = jtype::type_object;
+			co.deleted = false;
 
 			auto new_object = objects.create_item( &co, bytes_to_allocate, nullptr);
 			new_object.item().last_modified = std::time(nullptr);
@@ -1860,126 +1861,327 @@ namespace corona
 			return schema->get_empty();
 		}
 
-		int8_box jobject::get_int8(int field_idx, bool _use_id)
+		int8_box jobject::get_int8(int field_id, bool _use_id)
 		{
-			if (_use_id) field_idx = get_field_index_by_id(field_idx);
+			int field_idx = null_row;
+
+			if (_use_id)
+				field_idx = get_field_index_by_id(field_id);
+			else
+				field_idx = field_id;
+
+			if (field_idx == null_row)
+			{
+				throw std::invalid_argument(std::format("field {} not found"));
+			}
 			return get_boxed<int8_box>(field_idx, jtype::type_int8);
 		}
 
-		int16_box jobject::get_int16(int field_idx, bool _use_id)
+		int16_box jobject::get_int16(int field_id, bool _use_id)
 		{
-			if (_use_id) field_idx = get_field_index_by_id(field_idx);
+			int field_idx = null_row;
+
+			if (_use_id)
+				field_idx = get_field_index_by_id(field_id);
+			else
+				field_idx = field_id;
+
+			if (field_idx == null_row)
+			{
+				throw std::invalid_argument(std::format("field {} not found"));
+			}
 			return get_boxed<int16_box>(field_idx, jtype::type_int16);
 		}
 
-		int32_box jobject::get_int32(int field_idx, bool _use_id)
+		int32_box jobject::get_int32(int field_id, bool _use_id)
 		{
-			if (_use_id) field_idx = get_field_index_by_id(field_idx);
+			int field_idx = null_row;
+
+			if (_use_id)
+				field_idx = get_field_index_by_id(field_id);
+			else
+				field_idx = field_id;
+
+			if (field_idx == null_row)
+			{
+				throw std::invalid_argument(std::format("field {} not found"));
+			}
 			return jobject::get_boxed<int32_box>(field_idx, jtype::type_int32);
 		}
 
-		int64_box jobject::get_int64(int field_idx, bool _use_id)
+		int64_box jobject::get_int64(int field_id, bool _use_id)
 		{
-			if (_use_id) field_idx = get_field_index_by_id(field_idx);
+			int field_idx = null_row;
+
+			if (_use_id)
+				field_idx = get_field_index_by_id(field_id);
+			else
+				field_idx = field_id;
+
+			if (field_idx == null_row)
+			{
+				throw std::invalid_argument(std::format("field {} not found"));
+			}
 			return jobject::get_boxed<int64_box>(field_idx, jtype::type_int64);
 		}
 
-		float_box jobject::get_float(int field_idx, bool _use_id)
+		float_box jobject::get_float(int field_id, bool _use_id)
 		{
-			if (_use_id) field_idx = get_field_index_by_id(field_idx);
+			int field_idx = null_row;
+
+			if (_use_id)
+				field_idx = get_field_index_by_id(field_id);
+			else
+				field_idx = field_id;
+
+			if (field_idx == null_row)
+			{
+				throw std::invalid_argument(std::format("field {} not found"));
+			}
 			return jobject::get_boxed<float_box>(field_idx, jtype::type_float32);
 		}
 
-		double_box jobject::get_double(int field_idx, bool _use_id)
+		double_box jobject::get_double(int field_id, bool _use_id)
 		{
-			if (_use_id) field_idx = get_field_index_by_id(field_idx);
+			int field_idx = null_row;
+
+			if (_use_id)
+				field_idx = get_field_index_by_id(field_id);
+			else
+				field_idx = field_id;
+
+			if (field_idx == null_row)
+			{
+				throw std::invalid_argument(std::format("field {} not found"));
+			}
 			return jobject::get_boxed<double_box>(field_idx, jtype::type_float64);
 		}
 
-		time_box jobject::get_time(int field_idx, bool _use_id)
+		time_box jobject::get_time(int field_id, bool _use_id)
 		{
-			if (_use_id) field_idx = get_field_index_by_id(field_idx);
+			int field_idx = null_row;
+
+			if (_use_id)
+				field_idx = get_field_index_by_id(field_id);
+			else
+				field_idx = field_id;
+
+			if (field_idx == null_row)
+			{
+				throw std::invalid_argument(std::format("field {} not found"));
+			}
 			return get_boxed<time_box>(field_idx, jtype::type_datetime);
 		}
 
-		point_box jobject::get_point(int field_idx, bool _use_id)
+		point_box jobject::get_point(int field_id, bool _use_id)
 		{
-			if (_use_id) field_idx = get_field_index_by_id(field_idx);
+			int field_idx = null_row;
+
+			if (_use_id)
+				field_idx = get_field_index_by_id(field_id);
+			else
+				field_idx = field_id;
+
+			if (field_idx == null_row)
+			{
+				throw std::invalid_argument(std::format("field {} not found"));
+			}
 			return get_boxed<point_box>(field_idx, jtype::type_point);
 		}
 
-		rectangle_box jobject::get_rectangle(int field_idx, bool _use_id)
+		rectangle_box jobject::get_rectangle(int field_id, bool _use_id)
 		{
-			if (_use_id) field_idx = get_field_index_by_id(field_idx);
+			int field_idx = null_row;
+
+			if (_use_id)
+				field_idx = get_field_index_by_id(field_id);
+			else
+				field_idx = field_id;
+
+			if (field_idx == null_row)
+			{
+				throw std::invalid_argument(std::format("field {} not found"));
+			}
 			return get_boxed<rectangle_box>(field_idx, jtype::type_rectangle);
 		}
 
-		layout_rect_box jobject::get_layout_rect(int field_idx, bool _use_id)
+		layout_rect_box jobject::get_layout_rect(int field_id, bool _use_id)
 		{
-			if (_use_id) field_idx = get_field_index_by_id(field_idx);
+			int field_idx = null_row;
+
+			if (_use_id)
+				field_idx = get_field_index_by_id(field_id);
+			else
+				field_idx = field_id;
+
+			if (field_idx == null_row)
+			{
+				throw std::invalid_argument(std::format("field {} not found"));
+			}
 			return get_boxed<layout_rect_box>(field_idx, jtype::type_layout_rect);
 		}
 
-		image_box jobject::get_image(int field_idx, bool _use_id)
+		image_box jobject::get_image(int field_id, bool _use_id)
 		{
-			if (_use_id) field_idx = get_field_index_by_id(field_idx);
+			int field_idx = null_row;
+
+			if (_use_id)
+				field_idx = get_field_index_by_id(field_id);
+			else
+				field_idx = field_id;
+
+			if (field_idx == null_row)
+			{
+				throw std::invalid_argument(std::format("field {} not found"));
+			}
 			return get_boxed<image_box>(field_idx, jtype::type_image);
 		}
 
-		wave_box jobject::get_wave(int field_idx, bool _use_id)
+		wave_box jobject::get_wave(int field_id, bool _use_id)
 		{
-			if (_use_id) field_idx = get_field_index_by_id(field_idx);
+			int field_idx = null_row;
+
+			if (_use_id)
+				field_idx = get_field_index_by_id(field_id);
+			else
+				field_idx = field_id;
+
+			if (field_idx == null_row)
+			{
+				throw std::invalid_argument(std::format("field {} not found"));
+			}
 			return get_boxed<wave_box>(field_idx, jtype::type_wave);
 		}
 
-		midi_box jobject::get_midi(int field_idx, bool _use_id)
+		midi_box jobject::get_midi(int field_id, bool _use_id)
 		{
-			if (_use_id) field_idx = get_field_index_by_id(field_idx);
+			int field_idx = null_row;
+
+			if (_use_id)
+				field_idx = get_field_index_by_id(field_id);
+			else
+				field_idx = field_id;
+
+			if (field_idx == null_row)
+			{
+				throw std::invalid_argument(std::format("field {} not found"));
+			}
 			return get_boxed<midi_box>(field_idx, jtype::type_midi);
 		}
 
-		color_box jobject::get_color(int field_idx, bool _use_id)
+		color_box jobject::get_color(int field_id, bool _use_id)
 		{
-			if (_use_id) field_idx = get_field_index_by_id(field_idx);
+			int field_idx = null_row;
+
+			if (_use_id)
+				field_idx = get_field_index_by_id(field_id);
+			else
+				field_idx = field_id;
+
+			if (field_idx == null_row)
+			{
+				throw std::invalid_argument(std::format("field {} not found"));
+			}
 			return get_boxed<color_box>(field_idx, jtype::type_color);
 		}
 
-		query_box jobject::get_query(int field_idx, bool _use_id)
+		query_box jobject::get_query(int field_id, bool _use_id)
 		{
-			if (_use_id) field_idx = get_field_index_by_id(field_idx);
+			int field_idx = null_row;
+
+			if (_use_id)
+				field_idx = get_field_index_by_id(field_id);
+			else
+				field_idx = field_id;
+
+			if (field_idx == null_row)
+			{
+				throw std::invalid_argument(std::format("field {} not found"));
+			}
 			return get_boxed_ex<query_box>(field_idx, jtype::type_query);
 		}
 
-		sql_remote_box jobject::get_sql_remote(int field_idx, bool _use_id)
+		sql_remote_box jobject::get_sql_remote(int field_id, bool _use_id)
 		{
-			if (_use_id) field_idx = get_field_index_by_id(field_idx);
+			int field_idx = null_row;
+
+			if (_use_id)
+				field_idx = get_field_index_by_id(field_id);
+			else
+				field_idx = field_id;
+
+			if (field_idx == null_row)
+			{
+				throw std::invalid_argument(std::format("field {} not found"));
+			}
 			return get_boxed_ex<sql_remote_box>(field_idx, jtype::type_sql);
 		}
 
-		http_remote_box jobject::get_http_remote(int field_idx, bool _use_id)
+		http_remote_box jobject::get_http_remote(int field_id, bool _use_id)
 		{
-			if (_use_id) field_idx = get_field_index_by_id(field_idx);
+			int field_idx = null_row;
+
+			if (_use_id)
+				field_idx = get_field_index_by_id(field_id);
+			else
+				field_idx = field_id;
+
+			if (field_idx == null_row)
+			{
+				throw std::invalid_argument(std::format("field {} not found"));
+			}
 			return get_boxed_ex<http_remote_box>(field_idx, jtype::type_http);
 		}
 
-		file_remote_box jobject::get_file_remote(int field_idx, bool _use_id)
+		file_remote_box jobject::get_file_remote(int field_id, bool _use_id)
 		{
-			if (_use_id) field_idx = get_field_index_by_id(field_idx);
+			int field_idx = null_row;
+
+			if (_use_id)
+				field_idx = get_field_index_by_id(field_id);
+			else
+				field_idx = field_id;
+
+			if (field_idx == null_row)
+			{
+				throw std::invalid_argument(std::format("field {} not found"));
+			}
 			return get_boxed_ex<file_remote_box>(field_idx, jtype::type_file);
 		}
 
-		string_box jobject::get_string(int field_idx, bool _use_id)
+		string_box jobject::get_string(int field_id, bool _use_id)
 		{
-			if (_use_id) field_idx = get_field_index_by_id(field_idx);
+			int field_idx = null_row;
+
+			if (_use_id)
+				field_idx = get_field_index_by_id(field_id);
+			else
+				field_idx = field_id;
+
+			if (field_idx == null_row)
+			{
+				throw std::invalid_argument(std::format("field {} not found"));
+			}
+
 			size_t offset = get_offset(field_idx, jtype::type_string);
 			char *b = get_bytes() + offset;
 			auto temp = string_box::get(b);
 			return temp;
 		}
 
-		jarray jobject::get_object(int field_idx, bool _use_id)
+		jarray jobject::get_object(int field_id, bool _use_id)
 		{
-			if (_use_id) field_idx = get_field_index_by_id(field_idx);
+			int field_idx = null_row;
+
+			if (_use_id)
+				field_idx = get_field_index_by_id(field_id);
+			else
+				field_idx = field_id;
+
+			if (field_idx == null_row)
+			{
+				throw std::invalid_argument(std::format("field {} not found"));
+			}
 
 #if _DEBUG
 			if (schema == nullptr || class_id == null_row) {
@@ -2004,9 +2206,19 @@ namespace corona
 			return arr.get_slice(_dim);
 		}
 
-		jlist jobject::get_list(int field_idx, bool _use_id)
+		jlist jobject::get_list(int field_id, bool _use_id)
 		{
-			if (_use_id) field_idx = get_field_index_by_id(field_idx);
+			int field_idx = null_row;
+
+			if (_use_id)
+				field_idx = get_field_index_by_id(field_id);
+			else
+				field_idx = field_id;
+
+			if (field_idx == null_row)
+			{
+				throw std::invalid_argument(std::format("field {} not found"));
+			}
 
 #if _DEBUG
 			if (schema == nullptr || class_id == null_row || bytes == nullptr) {
@@ -2025,16 +2237,36 @@ namespace corona
 			return jerry;
 		}
 
-		collection_id_box jobject::get_collection_id(int field_idx, bool _use_id)
+		collection_id_box jobject::get_collection_id(int field_id, bool _use_id)
 		{
-			if (_use_id) field_idx = get_field_index_by_id(field_idx);
+			int field_idx = null_row;
+
+			if (_use_id)
+				field_idx = get_field_index_by_id(field_id);
+			else
+				field_idx = field_id;
+
+			if (field_idx == null_row)
+			{
+				throw std::invalid_argument(std::format("field {} not found"));
+			}
 
 			return jobject::get_boxed<collection_id_box>(field_idx, jtype::type_collection_id);
 		}
 
-		object_id_box jobject::get_object_id(int field_idx, bool _use_id)
+		object_id_box jobject::get_object_id(int field_id, bool _use_id)
 		{
-			if (_use_id) field_idx = get_field_index_by_id(field_idx);
+			int field_idx = null_row;
+
+			if (_use_id)
+				field_idx = get_field_index_by_id(field_id);
+			else
+				field_idx = field_id;
+
+			if (field_idx == null_row)
+			{
+				throw std::invalid_argument(std::format("field {} not found"));
+			}
 			return jobject::get_boxed<object_id_box>(field_idx, jtype::type_object_id);
 		}
 

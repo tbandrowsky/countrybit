@@ -1056,7 +1056,7 @@ namespace corona
 
 			auto where(relative_ptr_type _class_id)
 			{
-				return iterator_type(this, [this, _class_id](const iterator_item_type& it) { return matches_class_id(it.location, _class_id); });
+				return iterator_type(this, [this, _class_id](const iterator_item_type& it) { return objects[it.location].item().deleted == false && matches_class_id(it.location, _class_id); });
 			}
 
 			jobject first_value(std::function<bool(const iterator_item_type&)> predicate)
