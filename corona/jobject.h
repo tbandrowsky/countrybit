@@ -1872,6 +1872,13 @@ namespace corona
 				relative_ptr_type class_id = find_class(request.class_name);
 				request.class_id = class_id;
 
+				if (request.template_class_id < 0)
+					request.template_class_id = null_row;
+				if (request.base_class_id < 0)
+					request.base_class_id = null_row;
+				if (request.field_id_primary_key < 0)
+					request.field_id_primary_key = null_row;
+
 				auto& mfs = request.member_fields;
 
 				for (auto mfi : mfs)

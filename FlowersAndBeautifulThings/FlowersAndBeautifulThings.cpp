@@ -1,7 +1,7 @@
 
 #include "corona.h"
 #include "resource.h"
-#include "plaguetoy_controller.h"
+#include "flowers_controller.h"
 
 int __stdcall WinMain(HINSTANCE hInstance,
 	HINSTANCE hPrevInstance,
@@ -24,13 +24,13 @@ int __stdcall WinMain(HINSTANCE hInstance,
 	forceWindowed = true;
 #endif
 
-	proposal::plaguetoy_controller* mainController = new proposal::plaguetoy_controller();
+	flowers::flowers_controller* mainController = new flowers::wsproposal_controller();
 
 	if (forceWindowed) {
-		wsPropose.runDialog(hInstance, "Plague Toy", IDI_PLAGUETOY, false, mainController);
+		wsPropose.runDialog(hInstance, "Flowers and Beautiful Things", IDI_FLOWERSANDBEAUTIFULTHINGS, false, mainController);
 	}
 	else {
-		wsPropose.runDialog(hInstance, "Plague Toy", IDI_PLAGUETOY, true, mainController);
+		wsPropose.runDialog(hInstance, "Flowers and Beautiful Things", IDI_FLOWERSANDBEAUTIFULTHINGS, true, mainController);
 	}
 }
 

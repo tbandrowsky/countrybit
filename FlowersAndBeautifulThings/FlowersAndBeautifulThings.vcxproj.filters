@@ -24,26 +24,23 @@
     <ClInclude Include="Resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="plaguetoy.h">
+    <ClInclude Include="FlowersAndBeautifulThings.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="plaguetoy_controller.h">
+    <ClInclude Include="flowers_controller.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="plaguetoy.cpp">
+    <ClCompile Include="FlowersAndBeautifulThings.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="pch.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="plaguetoy_controller.cpp">
+    <ClCompile Include="flowers_controller.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="plaguetoy.rc">
+    <ResourceCompile Include="FlowersAndBeautifulThings.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
   </ItemGroup>
@@ -51,7 +48,7 @@
     <Image Include="small.ico">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="plaguetoy.ico">
+    <Image Include="FlowersAndBeautifulThings.ico">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>

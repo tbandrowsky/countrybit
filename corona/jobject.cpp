@@ -2926,7 +2926,7 @@ namespace corona
 				{ { null_row, jtype::type_datetime, "date_stop", "Max Date" }, 0, INT64_MAX }
 			};
 
-			put_integer_field_request int_fields[22] = {
+			put_integer_field_request int_fields[21] = {
 				{ { null_row, jtype::type_int64, "count", "Count" }, 0, INT64_MAX },
 				{ { null_row, jtype::type_int8, "bold", "Bold" }, 0, INT8_MAX },
 				{ { null_row, jtype::type_int8, "italic", "Italic" }, 0, INT8_MAX },
