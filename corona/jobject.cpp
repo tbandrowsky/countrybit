@@ -871,7 +871,7 @@ namespace corona
 			return class_def.item().base_class_id;
 		}
 
-		bool jcollection::matches_class_id(jobject& obj, relative_ptr_type _class_id)
+		bool jcollection::matches_class_id(const jobject& obj, relative_ptr_type _class_id)
 		{
 			relative_ptr_type class_id = obj.get_class_id();
 			if (class_id == _class_id) {
@@ -1547,7 +1547,7 @@ namespace corona
 			return *parent;
 		}
 
-		jclass jobject::get_class()
+		jclass jobject::get_class() const
 		{
 			return the_class;
 		}
@@ -2846,6 +2846,33 @@ namespace corona
 			return field.size_bytes;
 		}
 
+		layout_rect jschema::get_layout(relative_ptr_type _field_idx, double _font_height)
+		{
+			layout_rect lr;
+			lr.x = 0.0_px;
+			lr.y = 0.0_px;
+			lr.height = measure(_font_height, measure_units::pixels);
+			double width_factor = .8;
+			double char_width = _font_height * width_factor;
+			jfield &f = get_field(_field_idx);
+
+			if (f.is_integer() || f.is_float()) {
+				lr.width = measure(char_width * 10, measure_units::pixels);
+			}
+			else if (f.is_string())
+			{
+				double w = f.string_properties.length;
+				if (w > 30) w = 30.0;
+				lr.width = measure(char_width * w, measure_units::pixels);
+			}
+			else
+			{
+				lr.width = measure(char_width * 10, measure_units::pixels);
+			}
+
+			return lr;
+		}
+
 		void jschema::add_standard_fields() 
 		{
 			put_string_field_request string_fields[41] = {
@@ -3064,7 +3091,7 @@ namespace corona
 				idf_shape_fill_color, idf_shape_border_thickness, idf_shape_border_color, idf_box_fill_color, idf_box_border_thickness, idf_box_border_color };
 			idc_text_style = put_class(pcr);
 
-			put_object_field_request object_fields[46] = {
+			put_object_field_request object_fields[48] = {
 				{ { null_row, jtype::type_object, "view_background_style", "View Background Style" }, { {1,1,1}, idc_text_style }},
 				{ { null_row, jtype::type_object, "view_title_style", "View Title Style" }, { {1,1,1}, idc_text_style }},
 				{ { null_row, jtype::type_object, "view_subtitle_style", "View Subtitle Style" }, { {1,1,1}, idc_text_style }},

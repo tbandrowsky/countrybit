@@ -1879,11 +1879,11 @@ namespace corona
 				auto wcmi = windowControlMap[windowId];
 				char buff[512];
 				::GetClassName(wcmi.window, buff, sizeof(buff) - 1);
-				if (stricmp(buff, lpClassName) == 0)
+				if (_stricmp(buff, lpClassName) == 0)
 				{
 					MoveWindow(wcmi.window, x, y, nWidth, nHeight, true);
 					hwnd = wcmi.window;
-					if (stricmp(buff, WC_EDIT) == 0) {
+					if (_stricmp(buff, WC_EDIT) == 0) {
 						::SetWindowText(hwnd, lpWindowName);
 					}
 				}
@@ -2160,27 +2160,30 @@ namespace corona
 			case WM_HSCROLL:
 				if (currentController) {
 					int ctrlId = ::GetDlgCtrlID(hwnd);
+					database::page_item pi;
+					windowControlMap.contains(ctrlId);
+					pi = windowControlMap[ctrlId].item;
 					int pos = 0;
 					switch (LOWORD(wParam)) {
 					case SB_LINELEFT:
-						pos = currentController->onHScroll(ctrlId, scrollTypes::ScrollLineUp);
+						pos = currentController->onHScroll(ctrlId, scrollTypes::ScrollLineUp, pi);
 						::SetScrollPos(hwnd, SB_HORZ, pos, TRUE);
 						break;
 					case SB_LINERIGHT:
-						pos = currentController->onHScroll(ctrlId, scrollTypes::ScrollLineDown);
+						pos = currentController->onHScroll(ctrlId, scrollTypes::ScrollLineDown, pi);
 						::SetScrollPos(hwnd, SB_HORZ, pos, TRUE);
 						break;
 					case SB_PAGELEFT:
-						pos = currentController->onHScroll(ctrlId, scrollTypes::ScrollPageUp);
+						pos = currentController->onHScroll(ctrlId, scrollTypes::ScrollPageUp, pi);
 						::SetScrollPos(hwnd, SB_HORZ, pos, TRUE);
 						break;
 					case SB_PAGERIGHT:
-						pos = currentController->onHScroll(ctrlId, scrollTypes::ScrollPageDown);
+						pos = currentController->onHScroll(ctrlId, scrollTypes::ScrollPageDown, pi);
 						::SetScrollPos(hwnd, SB_HORZ, pos, TRUE);
 						break;
 						//			case SB_THUMBPOSITION:
 					case SB_THUMBTRACK:
-						pos = currentController->onHScroll(ctrlId, scrollTypes::ThumbTrack);
+						pos = currentController->onHScroll(ctrlId, scrollTypes::ThumbTrack, pi);
 						::SetScrollPos(hwnd, SB_HORZ, pos, TRUE);
 						break;
 					}
@@ -2189,27 +2192,30 @@ namespace corona
 			case WM_VSCROLL:
 				if (currentController) {
 					int ctrlId = ::GetDlgCtrlID(hwnd);
+					database::page_item pi;
+					windowControlMap.contains(ctrlId);
+					pi = windowControlMap[ctrlId].item;
 					int pos = 0;
 					switch (LOWORD(wParam)) {
 					case SB_LINELEFT:
-						pos = currentController->onVScroll(ctrlId, scrollTypes::ScrollLineUp);
+						pos = currentController->onVScroll(ctrlId, scrollTypes::ScrollLineUp, pi);
 						::SetScrollPos(hwnd, SB_VERT, pos, TRUE);
 						break;
 					case SB_LINERIGHT:
-						pos = currentController->onVScroll(ctrlId, scrollTypes::ScrollLineDown);
+						pos = currentController->onVScroll(ctrlId, scrollTypes::ScrollLineDown, pi);
 						::SetScrollPos(hwnd, SB_VERT, pos, TRUE);
 						break;
 					case SB_PAGELEFT:
-						pos = currentController->onVScroll(ctrlId, scrollTypes::ScrollPageUp);
+						pos = currentController->onVScroll(ctrlId, scrollTypes::ScrollPageUp, pi);
 						::SetScrollPos(hwnd, SB_VERT, pos, TRUE);
 						break;
 					case SB_PAGERIGHT:
-						pos = currentController->onVScroll(ctrlId, scrollTypes::ScrollPageDown);
+						pos = currentController->onVScroll(ctrlId, scrollTypes::ScrollPageDown, pi);
 						::SetScrollPos(hwnd, SB_VERT, pos, TRUE);
 						break;
 						//			case SB_THUMBPOSITION:
 					case SB_THUMBTRACK:
-						pos = currentController->onVScroll(ctrlId, scrollTypes::ThumbTrack);
+						pos = currentController->onVScroll(ctrlId, scrollTypes::ThumbTrack, pi);
 						::SetScrollPos(hwnd, SB_VERT, pos, TRUE);
 						break;
 					}

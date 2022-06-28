@@ -327,7 +327,7 @@ namespace corona
 			auto selections = state.view_objects.where([this, _class_ids, _length](auto& kp) { 
 				for (int i = 0; i < _length; i++) 
 				{
-					if (this->program_chart.matches_class_id(kp.second.object, _class_ids[i])) 
+					if (this->program_chart.matches_class_id(kp.second.class_id, _class_ids[i])) 
 					{
 						return true;
 					}
@@ -459,7 +459,7 @@ namespace corona
 			auto* st = &state;
 			for_each(selector, [st, page_add, pi, this, _parent_ui]( actor_view_object& avo)
 				{
-					page_add->select(pi, st, avo.object_id);
+					page_add->select(pi, st, avo.object_id, avo.object);
 					return true;
 				});
 			return pi;
@@ -568,7 +568,7 @@ namespace corona
 			for (int i = 0; i < _num_child_fields; i++)
 			{
 				auto field_spec = schema.get_field(_idf_child_fields[i]);
-				auto layout = field_spec.get_layout(fontHeight);
+				auto layout = schema.get_layout(_idf_child_fields[i],fontHeight);
 				columns.push_back(layout);
 				if (field_spec.is_string())
 					text(drow, schema.idf_column_text_head_style, field_spec.description, layout);
@@ -576,7 +576,7 @@ namespace corona
 					text(drow, schema.idf_column_number_head_style, field_spec.description, layout);
 			}
 
-			auto svo = state.view_objects.where([this, _idc_class_id](actor_view_collection::iterator_item_type& _item) {
+			auto svo = state.view_objects.where([this, _idc_class_id](const actor_view_collection::iterator_item_type& _item) {
 				return program_chart.matches_class_id(_item.second.object, _idc_class_id);
 				});
 

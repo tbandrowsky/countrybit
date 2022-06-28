@@ -290,32 +290,6 @@ namespace corona
 			{
 				return type_id == jtype::type_object && object_properties.class_id == _class_id;
 			}
-
-			layout_rect get_layout( double _fontHeight )
-			{
-				layout_rect lr;
-				lr.x = 0.0_px;
-				lr.y = 0.0_px;
-				lr.height = measure(_fontHeight, measure_units::pixels);
-				double width_factor = .8;
-				double char_width = _fontHeight * width_factor;
-
-				if (is_integer() || is_float()) {
-					lr.width = measure(char_width * 10, measure_units::pixels);
-				}
-				else if (is_string())
-				{
-					double w = this->string_properties.length;
-					if (w > 30) w = 30.0;
-					lr.width = measure(char_width * w, measure_units::pixels);
-				}
-				else
-				{
-					lr.width = measure(char_width * 10, measure_units::pixels);
-				}
-
-				return lr;
-			}
 		};
 
 		class query_definition_t

@@ -75,8 +75,11 @@ namespace corona
 			void move_first()
 			{
 				if (base->size() == 0) current = null_row;
-				while (current != null_row && !predicate(get_object(current)))
+				while (current != null_row)
 				{
+					const auto& obj = get_object(current);
+					if (!predicate(obj))
+						break;
 					current++;
 					if (current >= base->size()) {
 						current = null_row;
@@ -224,8 +227,12 @@ namespace corona
 					return end();
 
 				current++;
-				while (current < base->size() && !predicate(get_object(current)))
+				while (current < base->size())
 				{
+					const auto& obj = get_object(current);
+					if (!predicate(obj)) {
+						break;
+					}
 					current++;
 				}
 

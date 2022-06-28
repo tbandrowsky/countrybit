@@ -430,7 +430,7 @@ namespace corona
 			void construct();
 
 			jobject& get_parent_slice();
-			jclass get_class();
+			jclass get_class() const;
 			jschema* get_schema();
 
 			relative_ptr_type get_class_id() const 
@@ -438,7 +438,7 @@ namespace corona
 				return class_id;
 			}
 
-			relative_ptr_type get_base_class_id() 
+			relative_ptr_type get_base_class_id() const 
 			{
 				return get_class().pitem()->base_class_id;
 			}
@@ -1027,7 +1027,7 @@ namespace corona
 			relative_ptr_type get_class_id(relative_ptr_type _object_id);
 			relative_ptr_type get_base_id(relative_ptr_type _object_id);
 			bool matches_class_id(relative_ptr_type _object_id, relative_ptr_type _class_id);
-			bool matches_class_id(jobject& obj, relative_ptr_type _class_id);
+			bool matches_class_id(const jobject& obj, relative_ptr_type _class_id);
 
 			relative_ptr_type size()
 			{
@@ -1505,6 +1505,8 @@ namespace corona
 				fields_by_name.insert_or_assign(jf.name, _field_id);
 				return _field_id;
 			}
+
+			layout_rect get_layout(relative_ptr_type _field_idx, double _font_height);
 
 			relative_ptr_type put_string_field(put_string_field_request request)
 			{
