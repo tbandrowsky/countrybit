@@ -1,7 +1,6 @@
 
 #pragma once
 
-
 #include "corona.h"
 #include "resource.h"
 #include "flowers_controller.h"

@@ -548,19 +548,17 @@ namespace corona
 			object_name			field_name;
 			object_name			membership_type_name;
 
-			union
-			{
-				relative_ptr_type field_id;
-				relative_ptr_type class_id;
-			};
+			relative_ptr_type	field_id;
+			relative_ptr_type	class_id;
 
-			dimensions_type dimensions;
+			dimensions_type		dimensions;
 
-			member_field() : 
-				membership_type( member_field_types::member_field ),
-				field_name(  ""),
-				membership_type_name( ""),
-				field_id(null_row)
+			member_field() :
+				membership_type(member_field_types::member_field),
+				field_name(""),
+				membership_type_name(""),
+				field_id(null_row),
+				class_id(null_row)
 			{ 
 				; 
 			}
@@ -569,6 +567,7 @@ namespace corona
 				membership_type(member_field_types::member_field),
 				field_name(""),
 				field_id(_field_id),
+				class_id(null_row),
 				dimensions{ 1, 1, 1 }
 			{
 				;
@@ -583,9 +582,11 @@ namespace corona
 				{
 				case member_field_types::member_class:
 					class_id = _id;
+					field_id = null_row;
 					break;
 				case member_field_types::member_field:
 					field_id = _id;
+					class_id = null_row;
 					break;
 				}
 			}
@@ -594,6 +595,7 @@ namespace corona
 				membership_type(_member_ship_type),
 				field_name(_name),
 				field_id(null_row),
+				class_id(null_row),
 				dimensions{ 1, 1, 1 }
 			{
 
@@ -602,7 +604,8 @@ namespace corona
 			member_field(relative_ptr_type _class_id, int _maximum) :
 				membership_type(member_field_types::member_list),
 				field_name(""),
-				class_id(_class_id)
+				class_id(_class_id),
+				field_id(null_row)
 			{
 				dimensions = { _maximum, 1, 1 };
 			}
@@ -610,7 +613,8 @@ namespace corona
 			member_field(relative_ptr_type _class_id, dimensions_type dims) :
 				membership_type(member_field_types::member_class),
 				field_name(""),
-				class_id(_class_id)
+				class_id(_class_id),
+				field_id(null_row)
 			{
 				dimensions = dims;
 			}
@@ -618,7 +622,8 @@ namespace corona
 			member_field(object_name _name, relative_ptr_type _class_id, dimensions_type dims) :
 				membership_type(member_field_types::member_class),
 				field_name(_name),
-				class_id(_class_id)
+				class_id(_class_id),
+				field_id(null_row)
 			{
 				dimensions = dims;
 			}
@@ -626,7 +631,8 @@ namespace corona
 			member_field(const char *_name) :
 				membership_type(member_field_types::member_field),
 				field_name(_name),
-				field_id(null_row)
+				field_id(null_row),
+				class_id(null_row)
 			{
 				dimensions = { 1, 1, 1 };
 			}
@@ -634,7 +640,8 @@ namespace corona
 			member_field(object_name _name) :
 				membership_type(member_field_types::member_field),
 				field_name(_name),
-				class_id(null_row)
+				class_id(null_row),
+				field_id(null_row)
 			{
 				dimensions = { 1, 1, 1 };
 			}
@@ -642,7 +649,8 @@ namespace corona
 			member_field(object_name _name, int _maximum) :
 				membership_type(member_field_types::member_list),
 				field_name(_name),
-				class_id(null_row)
+				class_id(null_row),
+				field_id(null_row)
 			{
 				dimensions = { _maximum, 1, 1 };
 			}
@@ -650,9 +658,20 @@ namespace corona
 			member_field(object_name _name, dimensions_type dims) :
 				membership_type(member_field_types::member_class),
 				field_name(_name),
-				class_id(null_row)
+				class_id(null_row),
+				field_id(null_row),
+				dimensions(dims)
 			{
-				dimensions = dims;
+				;
+			}
+
+			member_field(const member_field& _src) :
+				membership_type(_src.membership_type),
+				field_name(_src.field_name),
+				class_id(_src.class_id),
+				field_id(_src.field_id),
+				dimensions(_src.dimensions)
+			{
 			}
 		};
 

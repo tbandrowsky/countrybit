@@ -310,18 +310,6 @@ namespace proposal
 		program_chart.create_object(null_row, sample_actor.actor_id, idc_program_template_root, id_product_template_root, { { idf_home, id_home } });
 		program_chart.create_object(null_row, sample_actor.actor_id, idc_system_root, id_system_root, { { idf_home, id_home } });
 
-		relative_ptr_type style_sheet_id = null_row;
-
-		relative_ptr_type homes_id = null_row;
-		relative_ptr_type clients_id = null_row;
-		relative_ptr_type carriers_id = null_row;
-		relative_ptr_type programs_id = null_row;
-
-		program_chart.create_object(0, sample_actor.actor_id, idc_home, homes_id);
-		program_chart.create_object(0, sample_actor.actor_id, idc_client_root, clients_id);
-		program_chart.create_object(0, sample_actor.actor_id, idc_carrier_root, carriers_id);
-		program_chart.create_object(0, sample_actor.actor_id, idc_carrier_root, programs_id);
-
 		create_style_sheet();
 
 		map_style(idc_home, schema.idf_home_style);

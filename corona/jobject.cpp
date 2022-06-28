@@ -630,8 +630,8 @@ namespace corona
 			object_name composed_class_field_name;
 			dimensions_type d = { 1, 1, 1 };
 			schema->get_class_field_name(composed_class_field_name, myclass.item().name, d);
-			auto find_class_id = schema->find_class(composed_class_field_name);
-			if (find_class_id == null_row)
+			auto find_field_id = schema->find_field(composed_class_field_name);
+			if (find_field_id == null_row)
 			{
 				put_object_field_request porf;
 				porf.name.name = composed_class_field_name;
@@ -640,15 +640,15 @@ namespace corona
 				porf.options.class_name = myclass.item().name;
 				porf.options.class_size_bytes = myclass.item().class_size_bytes;
 				porf.options.dim = d;
-				find_class_id = schema->put_object_field(porf);
+				find_field_id = schema->put_object_field(porf);
 			}
-			find_class_id = schema->find_class(composed_class_field_name);
-			auto find_class = schema->get_field(find_class_id);
+			find_field_id = schema->find_field(composed_class_field_name);
+			auto find_class = schema->get_field(find_field_id);
 			auto bytes_to_allocate = find_class.size_bytes;
 
 			collection_object_type co;
 			co.oid.collection_id = collection_id;
-			co.class_field_id = find_class_id;
+			co.class_field_id = find_field_id;
 			co.class_id = _class_id;
 			co.item_id = _item_id;
 			co.otype = jtype::type_object;
@@ -658,7 +658,7 @@ namespace corona
 			co.oid.row_id = new_object.row_id();
 			_object_id = new_object.row_id();
 			char* bytes = new_object.pdetails();
-			jarray ja(nullptr, schema, find_class_id, bytes, true);
+			jarray ja(nullptr, schema, find_field_id, bytes, true);
 			auto new_slice = ja.get_slice(0);
 			int pkidx = myclass.pitem()->primary_key_idx;
 
@@ -2926,7 +2926,7 @@ namespace corona
 				{ { null_row, jtype::type_datetime, "date_stop", "Max Date" }, 0, INT64_MAX }
 			};
 
-			put_integer_field_request int_fields[21] = {
+			put_integer_field_request int_fields[24] = {
 				{ { null_row, jtype::type_int64, "count", "Count" }, 0, INT64_MAX },
 				{ { null_row, jtype::type_int8, "bold", "Bold" }, 0, INT8_MAX },
 				{ { null_row, jtype::type_int8, "italic", "Italic" }, 0, INT8_MAX },
@@ -2945,6 +2945,9 @@ namespace corona
 				{ { null_row, jtype::type_int16, "field_type", "Field Type" }, 0, INT64_MAX },
 				{ { null_row, jtype::type_int64, "user_class_class_id", "User Class Id" }, 0, INT64_MAX },
 				{ { null_row, jtype::type_int64, "base_class_id", "Base Class Id" }, 0, INT64_MAX },
+				{ { null_row, jtype::type_int32, "string_length", "Max Length of String Field" }, 0, 1<<20 },
+				{ { null_row, jtype::type_int8, "string_full_text_editor", "Base Class Id" }, 0, 1 },
+				{ { null_row, jtype::type_int8, "string_rich_text_editor", "Base Class Id" }, 0, 1 },
 				{ { null_row, jtype::type_int32, "object_x", "X Dim" }, 0, INT64_MAX },
 				{ { null_row, jtype::type_int32, "object_y", "Y Dim" }, 0, INT64_MAX },
 				{ { null_row, jtype::type_int32, "object_z", "Z Dim" }, 0, INT64_MAX },
@@ -3091,7 +3094,7 @@ namespace corona
 				idf_shape_fill_color, idf_shape_border_thickness, idf_shape_border_color, idf_box_fill_color, idf_box_border_thickness, idf_box_border_color };
 			idc_text_style = put_class(pcr);
 
-			put_object_field_request object_fields[48] = {
+			put_object_field_request object_fields[49] = {
 				{ { null_row, jtype::type_object, "view_background_style", "View Background Style" }, { {1,1,1}, idc_text_style }},
 				{ { null_row, jtype::type_object, "view_title_style", "View Title Style" }, { {1,1,1}, idc_text_style }},
 				{ { null_row, jtype::type_object, "view_subtitle_style", "View Subtitle Style" }, { {1,1,1}, idc_text_style }},
@@ -3141,6 +3144,8 @@ namespace corona
 				{ { null_row, jtype::type_object, "company_deductible_style", "Company Chart Deductible Style" }, { {1,1,1}, idc_text_style }},
 				{ { null_row, jtype::type_object, "company_neutral1_style", "Company Chart Deductible Style" }, { {1,1,1}, idc_text_style }},
 				{ { null_row, jtype::type_object, "company_neutral2_style", "Company Chart Deductible Style" }, { {1,1,1}, idc_text_style }},
+
+				{ { null_row, jtype::type_object, "login_style", "Login Style" }, { {1,1,1}, idc_text_style }},
 
 				{ { null_row, jtype::type_object, "string_options", "String Field Options" }, { {1,1,1}, idc_string_options }},
 				{ { null_row, jtype::type_object, "double_options", "Double Field Options" }, { {1,1,1}, idc_double_options }},
@@ -3212,6 +3217,7 @@ namespace corona
 			idf_style_sheet = find_field("style_sheet");
 			pcr.class_name = "style_sheet";
 			pcr.class_description = "collection of styles for ui";
+			pcr.member_fields = { idf_style_sheet };
 			pcr.member_fields = { idf_style_sheet, idf_name, idf_view_background_style, idf_view_title_style, idf_view_subtitle_style, idf_view_section_style, idf_view_style, idf_disclaimer_style, idf_copyright_style,
 				idf_h1_style, idf_h2_style, idf_h3_style, idf_column_number_head_style,idf_column_text_head_style,
 				idf_column_number_style, idf_column_text_style,

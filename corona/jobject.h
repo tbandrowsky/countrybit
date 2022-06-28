@@ -1923,7 +1923,7 @@ namespace corona
 
 				temp_fields += mfs;
 
-				build_class_members(af, total_size_bytes, mfs);
+				build_class_members(af, total_size_bytes, temp_fields);
 
 				if (pk_field.field_id > -1) 
 				{
