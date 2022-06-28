@@ -1888,7 +1888,8 @@ namespace corona
 
 			if (field_idx == null_row)
 			{
-				throw std::invalid_argument(std::format("field {} not found"));
+				throw std::invalid_argument(std::format("field {} not found", field_id));
+
 			}
 			return get_boxed<int16_box>(field_idx, jtype::type_int16);
 		}
@@ -1904,7 +1905,8 @@ namespace corona
 
 			if (field_idx == null_row)
 			{
-				throw std::invalid_argument(std::format("field {} not found"));
+				throw std::invalid_argument(std::format("field {} not found", field_id));
+
 			}
 			return jobject::get_boxed<int32_box>(field_idx, jtype::type_int32);
 		}
@@ -1952,7 +1954,7 @@ namespace corona
 
 			if (field_idx == null_row)
 			{
-				throw std::invalid_argument(std::format("field {} not found"));
+				throw std::invalid_argument(std::format("field {} not found", field_id));
 			}
 			return jobject::get_boxed<double_box>(field_idx, jtype::type_float64);
 		}
@@ -1968,7 +1970,7 @@ namespace corona
 
 			if (field_idx == null_row)
 			{
-				throw std::invalid_argument(std::format("field {} not found"));
+				throw std::invalid_argument(std::format("field {} not found", field_id));
 			}
 			return get_boxed<time_box>(field_idx, jtype::type_datetime);
 		}
@@ -1984,7 +1986,7 @@ namespace corona
 
 			if (field_idx == null_row)
 			{
-				throw std::invalid_argument(std::format("field {} not found"));
+				throw std::invalid_argument(std::format("field {} not found", field_id));
 			}
 			return get_boxed<point_box>(field_idx, jtype::type_point);
 		}
@@ -2000,7 +2002,7 @@ namespace corona
 
 			if (field_idx == null_row)
 			{
-				throw std::invalid_argument(std::format("field {} not found"));
+				throw std::invalid_argument(std::format("field {} not found", field_id));
 			}
 			return get_boxed<rectangle_box>(field_idx, jtype::type_rectangle);
 		}
@@ -2016,7 +2018,8 @@ namespace corona
 
 			if (field_idx == null_row)
 			{
-				throw std::invalid_argument(std::format("field {} not found"));
+				throw std::invalid_argument(std::format("field {} not found", field_id));
+
 			}
 			return get_boxed<layout_rect_box>(field_idx, jtype::type_layout_rect);
 		}
@@ -2032,7 +2035,7 @@ namespace corona
 
 			if (field_idx == null_row)
 			{
-				throw std::invalid_argument(std::format("field {} not found"));
+				throw std::invalid_argument(std::format("field {} not found", field_id));
 			}
 			return get_boxed<image_box>(field_idx, jtype::type_image);
 		}
@@ -2048,7 +2051,7 @@ namespace corona
 
 			if (field_idx == null_row)
 			{
-				throw std::invalid_argument(std::format("field {} not found"));
+				throw std::invalid_argument(std::format("field {} not found", field_id));
 			}
 			return get_boxed<wave_box>(field_idx, jtype::type_wave);
 		}
@@ -2064,7 +2067,7 @@ namespace corona
 
 			if (field_idx == null_row)
 			{
-				throw std::invalid_argument(std::format("field {} not found"));
+				throw std::invalid_argument(std::format("field {} not found", field_id));
 			}
 			return get_boxed<midi_box>(field_idx, jtype::type_midi);
 		}
@@ -2080,7 +2083,7 @@ namespace corona
 
 			if (field_idx == null_row)
 			{
-				throw std::invalid_argument(std::format("field {} not found"));
+				throw std::invalid_argument(std::format("field {} not found", field_id));
 			}
 			return get_boxed<color_box>(field_idx, jtype::type_color);
 		}
@@ -2096,7 +2099,7 @@ namespace corona
 
 			if (field_idx == null_row)
 			{
-				throw std::invalid_argument(std::format("field {} not found"));
+				throw std::invalid_argument(std::format("field {} not found", field_id));
 			}
 			return get_boxed_ex<query_box>(field_idx, jtype::type_query);
 		}
@@ -2112,7 +2115,7 @@ namespace corona
 
 			if (field_idx == null_row)
 			{
-				throw std::invalid_argument(std::format("field {} not found"));
+				throw std::invalid_argument(std::format("field {} not found", field_id));
 			}
 			return get_boxed_ex<sql_remote_box>(field_idx, jtype::type_sql);
 		}
@@ -2128,7 +2131,7 @@ namespace corona
 
 			if (field_idx == null_row)
 			{
-				throw std::invalid_argument(std::format("field {} not found"));
+				throw std::invalid_argument(std::format("field {} not found", field_id));
 			}
 			return get_boxed_ex<http_remote_box>(field_idx, jtype::type_http);
 		}
@@ -2144,7 +2147,7 @@ namespace corona
 
 			if (field_idx == null_row)
 			{
-				throw std::invalid_argument(std::format("field {} not found"));
+				throw std::invalid_argument(std::format("field {} not found", field_id));
 			}
 			return get_boxed_ex<file_remote_box>(field_idx, jtype::type_file);
 		}
@@ -2160,7 +2163,7 @@ namespace corona
 
 			if (field_idx == null_row)
 			{
-				throw std::invalid_argument(std::format("field {} not found"));
+				throw std::invalid_argument(std::format("field {} not found", field_id));
 			}
 
 			size_t offset = get_offset(field_idx, jtype::type_string);
@@ -2217,7 +2220,7 @@ namespace corona
 
 			if (field_idx == null_row)
 			{
-				throw std::invalid_argument(std::format("field {} not found"));
+				throw std::invalid_argument(std::format("field {} not found", field_id));
 			}
 
 #if _DEBUG
@@ -2248,7 +2251,7 @@ namespace corona
 
 			if (field_idx == null_row)
 			{
-				throw std::invalid_argument(std::format("field {} not found"));
+				throw std::invalid_argument(std::format("field {} not found", field_id));
 			}
 
 			return jobject::get_boxed<collection_id_box>(field_idx, jtype::type_collection_id);
@@ -2265,7 +2268,7 @@ namespace corona
 
 			if (field_idx == null_row)
 			{
-				throw std::invalid_argument(std::format("field {} not found"));
+				throw std::invalid_argument(std::format("field {} not found", field_id));
 			}
 			return jobject::get_boxed<object_id_box>(field_idx, jtype::type_object_id);
 		}
