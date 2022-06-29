@@ -468,8 +468,9 @@ namespace corona
 			sort([](auto& a, auto& b) {
 				return (a.parent_id < b.parent_id);
 				});
-			for (auto pi : *this)
+			for (auto pix = begin(); pix != end(); pix++)
 			{
+				auto pi = pix.get_object();
 				if (pi.item.parent_id < 0) {
 					arrange_impl(&pi.item, 0, 0, 0, 0, width, height);
 				}

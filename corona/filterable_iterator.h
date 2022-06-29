@@ -144,6 +144,15 @@ namespace corona
 				mapper(_src->mapper),
 				current(_current)
 			{
+				;
+			}
+
+			filterable_iterator(const filterable_iterator* _src) :
+				base(_src->base),
+				predicate(_src->predicate),
+				mapper(_src->mapper),
+				current(0)
+			{
 				move_first();
 			}
 
@@ -213,7 +222,7 @@ namespace corona
 
 			inline filterable_iterator begin() const
 			{
-				return filterable_iterator(this, 0);
+				return filterable_iterator(this);
 			}
 
 			inline filterable_iterator end() const
@@ -231,16 +240,14 @@ namespace corona
 				{
 					const auto& obj = get_object(current);
 					if (predicate(obj)) {
-						break;
+						return filterable_iterator(this, current);
 					}
 					current++;
 				}
 
-				if (current >= base->size()) {
-					current = null_row;
-				}
+				current = null_row;
 
-				return filterable_iterator(this, current);
+				return end();
 			}
 
 			inline filterable_iterator operator++(int)

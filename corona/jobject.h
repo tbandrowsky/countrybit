@@ -552,6 +552,9 @@ namespace corona
 
 			int size();
 			char* get_bytes() { return box ? box->unpack<char>(location) : bytes;  };
+			bool is_null() {
+				return get_bytes() == nullptr;
+			}
 			relative_ptr_type size_bytes() { return get_class().item().class_size_bytes; };
 
 			std::partial_ordering operator<=>(jobject& src) {

@@ -119,7 +119,7 @@ namespace corona
 		};
 
 		struct solidBrushRequest {
-			object_name name;
+			object_name_composed name;
 			color brushColor;
 		};
 
@@ -170,7 +170,7 @@ namespace corona
 
 		struct textStyleRequest
 		{
-			object_name name;
+			object_name_composed name;
 			object_name fontName;
 			float fontSize;
 			bool bold, italics, underline, strike_through;

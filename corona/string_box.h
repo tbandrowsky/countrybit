@@ -946,6 +946,7 @@ namespace corona
 		bool string_tests();
 
 		using object_name = istring<100>;
+		using object_name_composed = istring<150>;
 		using operation_name = istring<16>;
 		using object_description = istring<250>;
 		using object_path = istring<260>;

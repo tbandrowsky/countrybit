@@ -57,6 +57,12 @@ namespace corona
 			direct2dContext(direct2dFactory* _factory);
 			virtual ~direct2dContext();
 
+			void text_style_name(const object_name& _style_sheet_name, object_name_composed& _object_style_name);
+			void box_border_brush_name(const object_name& _style_sheet_name, object_name_composed& _object_style_name);
+			void box_fill_brush_name(const object_name& _style_sheet_name, object_name_composed& _object_style_name);
+			void shape_fill_brush_name(const object_name& _style_sheet_name, object_name_composed& _object_style_name);
+			void shape_border_brush_name(const object_name& _style_sheet_name, object_name_composed& _object_style_name);
+
 		public:
 
 			inline direct2dFactory* getFactory() { return factory; }

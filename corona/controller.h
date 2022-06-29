@@ -46,7 +46,7 @@ namespace corona
 			virtual void drawFrame() = 0;
 			virtual bool update(double _elapsedSeconds, double _totalSeconds) = 0;
 
-			virtual void onCreated(const rectangle& newSize) = 0;
+			virtual void onCreated() = 0;
 			virtual void onCommand(int buttonId, page_item pi) = 0;
 			virtual void onTextChanged(int textControlId, page_item pi) = 0;
 			virtual void onDropDownChanged(int dropDownId, page_item pi) = 0;
@@ -177,7 +177,7 @@ namespace corona
 			virtual void pointSelected(point* _point, color* _color);
 			virtual bool update(double _elapsedSeconds, double _totalSeconds);
 
-			virtual void onCreated(const rectangle& newSize);
+			virtual void onCreated();
 			virtual void onCommand(int buttonId, page_item pi);
 			virtual void onTextChanged(int textControlId, page_item pi);
 			virtual void onDropDownChanged(int dropDownId, page_item pi);

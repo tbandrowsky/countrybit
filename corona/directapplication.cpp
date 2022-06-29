@@ -5,6 +5,11 @@
 
 #ifdef WINDESKTOP_GUI
 
+#define TRACE_GUI 1
+
+#if TRACE_GUI
+#endif
+
 namespace corona
 {
 	namespace win32
@@ -94,7 +99,9 @@ namespace corona
 			GetClientRect(hwnd, &rc);
 
 			D2D1_SIZE_U size = D2D1::SizeU(rc.right - rc.left, rc.bottom - rc.top);
+#if TRACE_GUI
 			std::cout << "createRenderTarget: " << size.width << ", " << size.height << std::endl;
+#endif
 
 			HRESULT hr = factory->getD2DFactory()->CreateHwndRenderTarget(D2D1::RenderTargetProperties(), D2D1::HwndRenderTargetProperties(hwnd, size), &hwndRenderTarget);
 			renderTarget = hwndRenderTarget;
@@ -1538,12 +1545,16 @@ namespace corona
 			auto p = paths[_pathInstanceDto->pathName];
 
 			if (!fill) {
+#if TRACE_GUI
 				std::cout << "missing fill " << _pathInstanceDto->fillBrushName << std::endl;
+#endif
 				return;
 			}
 
 			if (!border) {
+#if TRACE_GUI
 				std::cout << "missing border " << _pathInstanceDto->borderBrushName << std::endl;
+#endif
 				return;
 			}
 
@@ -1567,12 +1578,16 @@ namespace corona
 			auto border = brushes[_pathImmediateDto->borderBrushName];
 
 			if (!fill) {
+#if TRACE_GUI
 				std::cout << "missing fill " << _pathImmediateDto->fillBrushName << std::endl;
+#endif
 				return;
 			}
 
 			if (!border) {
+#if TRACE_GUI
 				std::cout << "missing border " << _pathImmediateDto->borderBrushName << std::endl;
+#endif
 				return;
 			}
 
@@ -1620,8 +1635,11 @@ namespace corona
 			if (_fillBrush) 
 			{
 				auto fill = brushes[_fillBrush];
-				if (!fill) 
+				if (!fill) {
+#if TRACE_GUI
 					std::cout << "missing fill " << _fillBrush << std::endl;
+#endif
+				}
 				else 
 					renderTarget->FillRectangle(r, fill->getBrush());
 			}
@@ -1629,12 +1647,14 @@ namespace corona
 			if (_borderBrush)
 			{
 				auto border = brushes[_borderBrush];
-				if (!border)
+				if (!border) {
+#if TRACE_GUI
 					std::cout << "missing border " << _borderBrush << std::endl;
+#endif
+				}
 				else
 					renderTarget->DrawRectangle(&r, border->getBrush(), _borderWidth);
 			}
-					
 		}
 
 		void direct2dContext::drawText(const char* _text, database::rectangle* _rectangle, const char* _textStyle, const char* _fillBrush)
@@ -1643,12 +1663,25 @@ namespace corona
 			auto fill = brushes[_fillBrush];
 
 			if (!style) {
-				std::cout << "missing textStyle" << _textStyle << std::endl;
+#if TRACE_GUI
+				std::cout << "missing textStyle " << _textStyle << std::endl;
+#endif
 				return;
 			}
 
 			if (!fill) {
-				std::cout << "missing fillBrush" << _fillBrush << std::endl;
+#if TRACE_GUI
+				std::cout << "missing fillBrush " << _fillBrush << std::endl;
+#endif
+				return;
+			}
+
+			auto format = style->getFormat();
+			if (!format) {
+#if TRACE_GUI
+				std::cout << "missing format " << _textStyle << std::endl;
+#endif
+
 				return;
 			}
 
@@ -1662,7 +1695,7 @@ namespace corona
 			int len = (strlen(_text) + 1) * 2;
 			wchar_t* buff = new wchar_t[len];
 			int ret = ::MultiByteToWideChar(CP_ACP, NULL, _text, -1, buff, len - 1);
-			renderTarget->DrawText(buff, ret, style->getFormat(), &r, brush);
+			renderTarget->DrawText(buff, ret, format, &r, brush);
 			delete[] buff;
 		}
 
@@ -1690,12 +1723,16 @@ namespace corona
 			auto fill = brushes[_textInstanceDto->fillBrushName];
 
 			if (!style) {
+#if TRACE_GUI				
 				std::cout << "missing text style " << _textInstanceDto->styleName << std::endl;
+#endif
 				return;
 			}
 
 			if (!fill) {
+#if TRACE_GUI
 				std::cout << "missing fill " << _textInstanceDto->fillBrushName << std::endl;
+#endif
 				return;
 			}
 
@@ -1842,6 +1879,9 @@ namespace corona
 		void direct2dContext::drawView(const char* _style, const char* _text, rectangle& _rect)
 		{
 			if (!_style) return;
+#if TRACE_GUI
+			std::cout << "drawView:" << _style << std::endl;
+#endif
 			auto& vs = viewStyles[_style];
 			auto& rectFill = vs.box_fill_color;
 			drawRectangle(&_rect, vs.box_border_color.name, vs.box_border_thickness, vs.box_fill_color.name);		
@@ -1920,6 +1960,31 @@ namespace corona
 			windowControlMap.insert_or_assign(windowId, wmi);
 		}
 
+		void direct2dContext::text_style_name(const object_name& _style_sheet_name, object_name_composed& _object_style_name)
+		{
+			_object_style_name = _style_sheet_name + "-text";
+		}
+
+		void direct2dContext::box_border_brush_name(const object_name& _style_sheet_name, object_name_composed& _object_style_name)
+		{
+			_object_style_name = _style_sheet_name + "-box-border";
+		}
+
+		void direct2dContext::box_fill_brush_name(const object_name& _style_sheet_name, object_name_composed& _object_style_name)
+		{
+			_object_style_name = _style_sheet_name + "-box-fill";
+		}
+
+		void direct2dContext::shape_fill_brush_name(const object_name& _style_sheet_name, object_name_composed& _object_style_name)
+		{
+			_object_style_name = _style_sheet_name + "-shape-fill";
+		}
+
+		void direct2dContext::shape_border_brush_name(const object_name& _style_sheet_name, object_name_composed& _object_style_name)
+		{
+			_object_style_name = _style_sheet_name + "-shape-border";
+		}
+
 		void directApplication::loadStyleSheet()
 		{
 			if (currentController) {
@@ -1934,7 +1999,8 @@ namespace corona
 						auto style = styles.get_slice(idx, { 0,0,0 }, false);
 						viewStyleRequest request;
 						request.name = field.name;
-						request.text_style.name = request.name + "_text";
+
+						text_style_name( request.name, request.text_style.name );
 						request.text_style.fontName = (const char *)style.get(schema->idf_font_name);
 						request.text_style.fontSize = style.get(schema->idf_font_size);
 						request.text_style.bold = style.get(schema->idf_bold);
@@ -1945,15 +2011,22 @@ namespace corona
 						request.text_style.horizontal_align = (visual_alignment)(int)style.get(schema->idf_horizontal_alignment);
 						request.text_style.vertical_align = (visual_alignment)(int)style.get(schema->idf_vertical_alignment);
 
-						request.shape_border_color.name = request.name + "_shapcol";
+						shape_border_brush_name(request.name, request.shape_border_color.name);
 						request.shape_border_color.brushColor = style.get(schema->idf_box_border_color);
 						request.shape_border_thickness = style.get(schema->idf_box_border_thickness);
 
-						request.box_border_color.name = request.name + "_borcol";
+						shape_fill_brush_name(request.name, request.shape_fill_color.name);
+						request.shape_fill_color.brushColor = style.get(schema->idf_shape_fill_color);
+						request.shape_border_color.brushColor = style.get(schema->idf_box_border_color);
+						request.shape_border_thickness = style.get(schema->idf_box_border_thickness);
+
+						box_border_brush_name(request.name, request.box_border_color.name);
 						request.box_border_color.brushColor = style.get(schema->idf_box_border_color);
 						request.box_border_thickness = style.get(schema->idf_box_border_thickness);
-						request.box_fill_color.name = request.name + "_filcol";
+
+						box_fill_brush_name(request.name, request.box_fill_color.name);
 						request.box_fill_color.brushColor = style.get(schema->idf_box_fill_color);
+
 						addViewStyle(request);
 					}
 				}
@@ -2252,7 +2325,6 @@ namespace corona
 			static HBRUSH hbrBkgnd = NULL;
 			static HBRUSH hbrBkgnd2 = NULL;
 			char className[256];
-			LPCREATESTRUCT lpcr;
 			database::point ptz;
 
 			switch (message)
@@ -2260,9 +2332,8 @@ namespace corona
 			case WM_CREATE:
 				hwndRoot = hwnd;
 				if (currentController) {
-					lpcr = (LPCREATESTRUCT)lParam;
-					rectangle r{ 0, 0, (float)lpcr->cx, (float)lpcr->cy };
-					currentController->onCreated(r);
+					currentController->onCreated();
+					loadStyleSheet();
 				}
 				break;
 			case WM_INITDIALOG:
@@ -2567,6 +2638,8 @@ namespace corona
 			hwndDirect2d = NULL;
 			hwndRenderTarget = NULL;
 
+			setController(_firstController);
+
 			hwndRoot = CreateWindowEx(dwExStyle,
 				wcD2D.lpszClassName, _title,
 				dwStyle | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
@@ -2577,8 +2650,6 @@ namespace corona
 				MessageBox(NULL, "Could not start because of a problem creating the main window.", _title, MB_OK);
 				return FALSE;
 			}
-
-			setController(_firstController);
 
 			::ShowWindow(hwndRoot, SW_SHOWNORMAL);
 			::UpdateWindow(hwndRoot);
@@ -2672,6 +2743,8 @@ namespace corona
 				dwExStyle = WS_EX_APPWINDOW | WS_EX_WINDOWEDGE;
 			}
 
+			setController(_firstController);
+
 			hwndRoot = CreateWindowEx(dwExStyle,
 				wcMain.lpszClassName, _title,
 				dwStyle | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
@@ -2682,8 +2755,6 @@ namespace corona
 				MessageBox(NULL, "Could not start because of a problem creating the main window.", _title, MB_OK);
 				return FALSE;
 			}
-
-			setController(_firstController);
 
 			::ShowWindow(hwndRoot, SW_SHOWNORMAL);
 			::UpdateWindow(hwndRoot);

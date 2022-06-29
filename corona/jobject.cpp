@@ -143,7 +143,13 @@ namespace corona
 			for (auto vo : acr.view_objects)
 			{
 				auto slice = get_at(vo.second.object_id);
-				std::cout << "existing object: " << vo.second.object_id << " (" << slice.get_class().item().name << ") selectable:" <<  vo.second.selectable << " selected:" << vo.second.selected << " updatable:" << vo.second.updatable << std::endl;
+				std::cout << "existing object: " << schema->get_class(vo.second.class_id).item().name << std::endl;
+				if (!slice.is_null()) {
+					std::cout << "existing object: " << vo.second.object_id << " (" << schema->get_class(vo.second.class_id).item().name << ") selectable:" << vo.second.selectable << " selected:" << vo.second.selected << " updatable:" << vo.second.updatable << std::endl;
+				}
+				else {
+					std::cout << "existing object is null: " << vo.second.object_id << " selectable:" << vo.second.selectable << " selected : " << vo.second.selected << " updatable : " << vo.second.updatable << std::endl;
+				}
 			}
 			if (_trace) {
 				std::cout << _trace << std::endl;
@@ -159,6 +165,9 @@ namespace corona
 			}
 
 			acr.collection_id = collection_id;
+#if _TRACE_RULE
+			std::cout << "collection size: " << size() << " " << objects.size() << std::endl;
+#endif
 
 			auto model = schema->get_model(ref->model_name);
 			auto& actor = actors[_actor];
@@ -262,6 +271,10 @@ namespace corona
 				}
 			}
 
+#if _TRACE_RULE
+			std::cout << "collection size: " << size() << " " << objects.size() << std::endl;
+			std::cout << "view_objects: where: " << std::endl;
+#endif
 			// get the view objects themselves based on the search, state, and children
 			auto view_objects = this->where([this, search_string, pactor, field_id_pk, field_id_pk_value](const iterator_item_type& _item)
 				{
@@ -295,7 +308,7 @@ namespace corona
 				avo.selectable = false;
 				avo.selected = false;
 				avo.updatable = false;
-				avo.object = vos.item;
+				avo.object = acr.copy_object(schema, vos.item);
 				acr.view_objects.put(avo.object_id, avo, [](actor_view_object& _dest) { ;  });
 			}
 
@@ -658,6 +671,7 @@ namespace corona
 			co.deleted = false;
 
 			auto new_object = objects.create_item( &co, bytes_to_allocate, nullptr);
+			std::cout << "created obj, objects size:"<< objects.size() << " collections size:" << size() << std::endl;
 			new_object.item().last_modified = std::time(nullptr);
 			co.oid.row_id = new_object.row_id();
 			_object_id = new_object.row_id();
@@ -3339,7 +3353,7 @@ namespace corona
 			put_class_request pcr;
 			pcr.class_name = "text_style";
 			pcr.class_description = "styles of text for ui";
-			pcr.member_fields = { idf_name, idf_font_name, idf_font_size, idf_bold, idf_italic, idf_underline, idf_strike_through, idf_line_spacing, idf_horizontal_alignment, idf_vertical_alignment,
+			pcr.member_fields = { idf_font_name, idf_font_size, idf_bold, idf_italic, idf_underline, idf_strike_through, idf_line_spacing, idf_horizontal_alignment, idf_vertical_alignment,
 				idf_shape_fill_color, idf_shape_border_thickness, idf_shape_border_color, idf_box_fill_color, idf_box_border_thickness, idf_box_border_color };
 			idc_text_style = put_class(pcr);
 

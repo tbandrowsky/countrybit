@@ -683,7 +683,6 @@ field id idf_carrier, which is populated when objects of this class are construc
 		style_sheet.set(
 			{ schema.idf_view_style },
 			{
-				{ schema.idf_name, "view_background" },
 				{ schema.idf_font_name, fontName },
 				{ schema.idf_font_size, 14.0 },
 				{ schema.idf_bold, false },
@@ -705,7 +704,6 @@ field id idf_carrier, which is populated when objects of this class are construc
 		style_sheet.set(
 			{ schema.idf_view_title_style },
 			{
-				{ schema.idf_name, "view_title" },
 				{ schema.idf_font_name, fontName },
 				{ schema.idf_font_size, 30.0 },
 				{ schema.idf_bold, false },
@@ -727,7 +725,6 @@ field id idf_carrier, which is populated when objects of this class are construc
 		style_sheet.set(
 			{ schema.idf_view_subtitle_style },
 			{
-				{ schema.idf_name, "view_subtitle" },
 				{ schema.idf_font_name, fontName},
 				{ schema.idf_font_size, 24.0 },
 				{ schema.idf_bold, false },
@@ -749,7 +746,6 @@ field id idf_carrier, which is populated when objects of this class are construc
 		style_sheet.set(
 			{ schema.idf_view_section_style },
 			{
-				{ schema.idf_name, "view_section" },
 				{ schema.idf_font_name, fontName},
 				{ schema.idf_font_size, 16.0 },
 				{ schema.idf_bold, false },
@@ -771,7 +767,6 @@ field id idf_carrier, which is populated when objects of this class are construc
 		style_sheet.set(
 			{ schema.idf_view_style },
 			{
-				{ schema.idf_name, "view" },
 				{ schema.idf_font_name, fontName },
 				{ schema.idf_font_size, 16.0 },
 				{ schema.idf_bold, false },
@@ -793,7 +788,6 @@ field id idf_carrier, which is populated when objects of this class are construc
 		style_sheet.set(
 			{ schema.idf_disclaimer_style },
 			{
-				{ schema.idf_name, "disclaimer" },
 				{ schema.idf_font_name, fontName },
 				{ schema.idf_font_size, 12.0 },
 				{ schema.idf_bold, false },
@@ -815,7 +809,6 @@ field id idf_carrier, which is populated when objects of this class are construc
 		style_sheet.set(
 			{ schema.idf_copyright_style },
 			{
-				{ schema.idf_name, "copyright" },
 				{ schema.idf_font_name, fontName },
 				{ schema.idf_font_size, 12.0 },
 				{ schema.idf_bold, false },
@@ -837,7 +830,6 @@ field id idf_carrier, which is populated when objects of this class are construc
 		style_sheet.set(
 			{ schema.idf_h1_style },
 			{
-				{ schema.idf_name, "h1" },
 				{ schema.idf_font_name, fontName },
 				{ schema.idf_font_size, 30.0 },
 				{ schema.idf_bold, false },
@@ -859,7 +851,6 @@ field id idf_carrier, which is populated when objects of this class are construc
 		style_sheet.set(
 			{ schema.idf_h2_style },
 			{
-				{ schema.idf_name, "h2" },
 				{ schema.idf_font_name, fontName },
 				{ schema.idf_font_size, 24.0 },
 				{ schema.idf_bold, false },
@@ -881,7 +872,6 @@ field id idf_carrier, which is populated when objects of this class are construc
 		style_sheet.set(
 			{ schema.idf_h3_style },
 			{
-				{ schema.idf_name, "h3" },
 				{ schema.idf_font_name, fontName },
 				{ schema.idf_font_size, 20.0 },
 				{ schema.idf_bold, false },
@@ -903,7 +893,6 @@ field id idf_carrier, which is populated when objects of this class are construc
 		style_sheet.set(
 			{ schema.idf_column_number_head_style },
 			{
-				{ schema.idf_name, "column_number_head" },
 				{ schema.idf_font_name, fontName },
 				{ schema.idf_font_size, 14.0 },
 				{ schema.idf_bold, true },
@@ -925,7 +914,6 @@ field id idf_carrier, which is populated when objects of this class are construc
 		style_sheet.set(
 			{ schema.idf_column_text_head_style },
 			{
-				{ schema.idf_name, "column_text_head" },
 				{ schema.idf_font_name, fontName },
 				{ schema.idf_font_size, 14.0 },
 				{ schema.idf_bold, true },
@@ -947,7 +935,6 @@ field id idf_carrier, which is populated when objects of this class are construc
 		style_sheet.set(
 			{ schema.idf_column_number_style },
 			{
-				{ schema.idf_name, "column_number" },
 				{ schema.idf_font_name, fontName },
 				{ schema.idf_font_size, 14.0 },
 				{ schema.idf_bold, false },
@@ -969,7 +956,6 @@ field id idf_carrier, which is populated when objects of this class are construc
 		style_sheet.set(
 			{ schema.idf_column_text_style },
 			{
-				{ schema.idf_name, "column_text" },
 				{ schema.idf_font_name, fontName },
 				{ schema.idf_font_size, 14.0 },
 				{ schema.idf_bold, false },
@@ -991,7 +977,6 @@ field id idf_carrier, which is populated when objects of this class are construc
 		style_sheet.set(
 			{ schema.idf_column_data_style },
 			{
-				{ schema.idf_name, "column_data" },
 				{ schema.idf_font_name, fontName },
 				{ schema.idf_font_size, 30.0 },
 				{ schema.idf_bold, false },
@@ -1013,7 +998,6 @@ field id idf_carrier, which is populated when objects of this class are construc
 		style_sheet.set(
 			{ schema.idf_label_style },
 			{
-				{ schema.idf_name, "label" },
 				{ schema.idf_font_name, fontName },
 				{ schema.idf_font_size, 30.0 },
 				{ schema.idf_bold, false },
@@ -1035,7 +1019,6 @@ field id idf_carrier, which is populated when objects of this class are construc
 		style_sheet.set(
 			{ schema.idf_chart_axis_style },
 			{
-				{ schema.idf_name, "chart_axis" },
 				{ schema.idf_font_name, fontName },
 				{ schema.idf_font_size, 30.0 },
 				{ schema.idf_bold, false },
@@ -1057,7 +1040,6 @@ field id idf_carrier, which is populated when objects of this class are construc
 		style_sheet.set(
 			{ schema.idf_chart_legend_style },
 			{
-				{ schema.idf_name, "chart_legend" },
 				{ schema.idf_font_name, fontName },
 				{ schema.idf_font_size, 30.0 },
 				{ schema.idf_bold, false },
@@ -1077,7 +1059,6 @@ field id idf_carrier, which is populated when objects of this class are construc
 		style_sheet.set(
 			{ schema.idf_chart_block_style },
 			{
-				{ schema.idf_name, "chart_block" },
 				{ schema.idf_font_name, fontName },
 				{ schema.idf_font_size, 30.0 },
 				{ schema.idf_bold, false },
@@ -1099,7 +1080,6 @@ field id idf_carrier, which is populated when objects of this class are construc
 		style_sheet.set(
 			{ schema.idf_tooltip_style },
 			{
-				{ schema.idf_name, "tooltip" },
 				{ schema.idf_font_name, fontName },
 				{ schema.idf_font_size, 14.0 },
 				{ schema.idf_bold, false },
@@ -1121,7 +1101,6 @@ field id idf_carrier, which is populated when objects of this class are construc
 		style_sheet.set(
 			{ schema.idf_error_style },
 			{
-				{ schema.idf_name, "error" },
 				{ schema.idf_font_name, fontName },
 				{ schema.idf_font_size, 14.0 },
 				{ schema.idf_bold, false },
@@ -1143,7 +1122,6 @@ field id idf_carrier, which is populated when objects of this class are construc
 		style_sheet.set(
 			{ schema.idf_client_style },
 			{
-				{ schema.idf_name, "client" },
 				{ schema.idf_font_name, "Arial" },
 				{ schema.idf_font_size, 14.0 },
 				{ schema.idf_bold, false },
@@ -1165,7 +1143,6 @@ field id idf_carrier, which is populated when objects of this class are construc
 		style_sheet.set(
 			{ schema.idf_carrier_style },
 			{
-				{ schema.idf_name, "carrier" },
 				{ schema.idf_font_name, "Arial" },
 				{ schema.idf_font_size, 14.0 },
 				{ schema.idf_bold, false },
@@ -1187,7 +1164,6 @@ field id idf_carrier, which is populated when objects of this class are construc
 		style_sheet.set(
 			{ schema.idf_coverage_style },
 			{
-				{ schema.idf_name, "coverage" },
 				{ schema.idf_font_name, "Arial" },
 				{ schema.idf_font_size, 14.0 },
 				{ schema.idf_bold, false },
@@ -1209,7 +1185,6 @@ field id idf_carrier, which is populated when objects of this class are construc
 		style_sheet.set(
 			{ schema.idf_product_style },
 			{
-				{ schema.idf_name, "product" },
 				{ schema.idf_font_name, "Arial" },
 				{ schema.idf_font_size, 14.0 },
 				{ schema.idf_bold, false },
@@ -1231,7 +1206,6 @@ field id idf_carrier, which is populated when objects of this class are construc
 		style_sheet.set(
 			{ schema.idf_system_style },
 			{
-				{ schema.idf_name, "system" },
 				{ schema.idf_font_name, "Arial" },
 				{ schema.idf_font_size, 14.0 },
 				{ schema.idf_bold, false },
@@ -1253,7 +1227,6 @@ field id idf_carrier, which is populated when objects of this class are construc
 		style_sheet.set(
 			{ schema.idf_home_style },
 			{
-				{ schema.idf_name, "home" },
 				{ schema.idf_font_name, "Arial" },
 				{ schema.idf_font_size, 14.0 },
 				{ schema.idf_bold, false },
@@ -1275,7 +1248,6 @@ field id idf_carrier, which is populated when objects of this class are construc
 		style_sheet.set(
 			{ schema.idf_login_style },
 			{
-				{ schema.idf_name, "login" },
 				{ schema.idf_font_name, "Arial" },
 				{ schema.idf_font_size, 14.0 },
 				{ schema.idf_bold, false },
@@ -1297,7 +1269,6 @@ field id idf_carrier, which is populated when objects of this class are construc
 		style_sheet.set(
 			{ schema.idf_company_a1_style },
 			{
-				{ schema.idf_name, "company_a1" },
 				{ schema.idf_font_name, "Arial" },
 				{ schema.idf_font_size, 14.0 },
 				{ schema.idf_bold, false },
@@ -1319,7 +1290,6 @@ field id idf_carrier, which is populated when objects of this class are construc
 		style_sheet.set(
 			{ schema.idf_company_a2_style },
 			{
-				{ schema.idf_name, "company_a2" },
 				{ schema.idf_font_name, "Arial" },
 				{ schema.idf_font_size, 14.0 },
 				{ schema.idf_bold, false },
@@ -1341,7 +1311,6 @@ field id idf_carrier, which is populated when objects of this class are construc
 		style_sheet.set(
 			{ schema.idf_company_a3_style },
 			{
-				{ schema.idf_name, "company_a3" },
 				{ schema.idf_font_name, "Arial" },
 				{ schema.idf_font_size, 14.0 },
 				{ schema.idf_bold, false },
@@ -1363,7 +1332,6 @@ field id idf_carrier, which is populated when objects of this class are construc
 		style_sheet.set(
 			{ schema.idf_company_b1_style },
 			{
-				{ schema.idf_name, "company_b1" },
 				{ schema.idf_font_name, "Arial" },
 				{ schema.idf_font_size, 14.0 },
 				{ schema.idf_bold, false },
@@ -1385,7 +1353,6 @@ field id idf_carrier, which is populated when objects of this class are construc
 		style_sheet.set(
 			{ schema.idf_company_b2_style },
 			{
-				{ schema.idf_name, "company_b2" },
 				{ schema.idf_font_name, "Arial" },
 				{ schema.idf_font_size, 14.0 },
 				{ schema.idf_bold, false },
@@ -1407,7 +1374,6 @@ field id idf_carrier, which is populated when objects of this class are construc
 		style_sheet.set(
 			{ schema.idf_company_b3_style },
 			{
-				{ schema.idf_name, "company_b3" },
 				{ schema.idf_font_name, "Arial" },
 				{ schema.idf_font_size, 14.0 },
 				{ schema.idf_bold, false },
@@ -1429,7 +1395,6 @@ field id idf_carrier, which is populated when objects of this class are construc
 		style_sheet.set(
 			{ schema.idf_company_c1_style },
 			{
-				{ schema.idf_name, "company_c1" },
 				{ schema.idf_font_name, "Arial" },
 				{ schema.idf_font_size, 14.0 },
 				{ schema.idf_bold, false },
@@ -1451,7 +1416,6 @@ field id idf_carrier, which is populated when objects of this class are construc
 		style_sheet.set(
 			{ schema.idf_company_c2_style },
 			{
-				{ schema.idf_name, "company_c2" },
 				{ schema.idf_font_name, "Arial" },
 				{ schema.idf_font_size, 14.0 },
 				{ schema.idf_bold, false },
@@ -1473,7 +1437,6 @@ field id idf_carrier, which is populated when objects of this class are construc
 		style_sheet.set(
 			{ schema.idf_company_c3_style },
 			{
-				{ schema.idf_name, "company_c3" },
 				{ schema.idf_font_name, "Arial" },
 				{ schema.idf_font_size, 14.0 },
 				{ schema.idf_bold, false },
@@ -1495,7 +1458,6 @@ field id idf_carrier, which is populated when objects of this class are construc
 		style_sheet.set(
 			{ schema.idf_company_d1_style },
 			{
-				{ schema.idf_name, "company_d1" },
 				{ schema.idf_font_name, "Arial" },
 				{ schema.idf_font_size, 14.0 },
 				{ schema.idf_bold, false },
@@ -1517,7 +1479,6 @@ field id idf_carrier, which is populated when objects of this class are construc
 		style_sheet.set(
 			{ schema.idf_company_d2_style },
 			{
-				{ schema.idf_name, "company_d2" },
 				{ schema.idf_font_name, "Arial" },
 				{ schema.idf_font_size, 14.0 },
 				{ schema.idf_bold, false },
@@ -1539,7 +1500,6 @@ field id idf_carrier, which is populated when objects of this class are construc
 		style_sheet.set(
 			{ schema.idf_company_d3_style },
 			{
-				{ schema.idf_name, "company_d3" },
 				{ schema.idf_font_name, "Arial" },
 				{ schema.idf_font_size, 14.0 },
 				{ schema.idf_bold, false },
@@ -1561,7 +1521,6 @@ field id idf_carrier, which is populated when objects of this class are construc
 		style_sheet.set(
 			{ schema.idf_company_deductible_style },
 			{
-				{ schema.idf_name, "deductible" },
 				{ schema.idf_font_name, "Arial" },
 				{ schema.idf_font_size, 14.0 },
 				{ schema.idf_bold, false },

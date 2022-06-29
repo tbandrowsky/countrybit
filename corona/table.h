@@ -503,6 +503,7 @@ namespace corona
 			{
 				relative_ptr_type new_row;
 				item_type *it = item.create(1, new_row);
+
 				if (it)
 				{
 					if (_item) {
@@ -548,6 +549,7 @@ namespace corona
 				if (mod_details) {
 					append_detail(location, detail_count, mod_details);
 				}
+
 				return get_item(location);
 			}
 
@@ -663,6 +665,9 @@ namespace corona
 			{
 				item_details_holder<P, C> nullpc;
 				if (row_id == null_row) return nullpc;
+				if (!item.check(row_id)) {
+					throw std::invalid_argument("get_item out of range" + std::to_string(row_id));
+				}
 				auto& pc = item[row_id];
 				relative_ptr_type lsize = pc.detail_range.size();
 				relative_ptr_type lstart = pc.detail_range.start;

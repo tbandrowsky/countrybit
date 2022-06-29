@@ -46,7 +46,7 @@ namespace corona
 			return obj.get_object().item;
 		}
 
-		void corona_controller::onCreated(const rectangle& newSize)
+		void corona_controller::onCreated()
 		{
 			enableEditMessages = false;
 
@@ -54,7 +54,7 @@ namespace corona
 			host->setMinimumWindowSize(point{ pos.w - pos.x, pos.h - pos.y });
 
 			state = program_chart.get_actor_state(actor_id);
-			stateChanged(newSize);
+			stateChanged(pos);
 
 			enableEditMessages = true;
 		}
@@ -330,7 +330,7 @@ namespace corona
 			auto selections = state.view_objects.where([this, _class_ids, _length](auto& kp) { 
 				for (int i = 0; i < _length; i++) 
 				{
-					if (this->program_chart.matches_class_id(kp.second.class_id, _class_ids[i])) 
+					if (this->program_chart.matches_class_id(kp.second.object_id, _class_ids[i])) 
 					{
 						return true;
 					}
@@ -621,7 +621,10 @@ namespace corona
 
 		void corona_controller::render_item(drawableHost* _host, page_item& _item)
 		{
-			_host->drawView(_item.style_name, _item.caption != nullptr ? _item.caption : "", _item.bounds);
+			const char* cap = _item.caption != nullptr ? _item.caption : "";
+			const char *sty = _item.style_name != nullptr ? _item.style_name : "";
+			std::cout << "draw item" << _item.id << " " << sty << " " << cap << std::endl;
+			_host->drawView(_item.style_name, cap, _item.bounds);
 		}
 
 		page_item* corona_controller::add_update_fields(page_item* _parent)
