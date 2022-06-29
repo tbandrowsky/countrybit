@@ -116,8 +116,7 @@ namespace corona
 		{
 			for (auto item : items)
 			{
-				model_hierarchy_path hhp;
-				this->selection_hierarchy.push_back(hhp);
+				this->selection_hierarchy.push_back(item);
 			}
 		}
 

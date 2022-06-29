@@ -834,6 +834,7 @@ namespace corona
 				modified_object_id = _src.modified_object_id;
 				create_objects = actor_create_collection::get_sorted_index(&data, create_objects_location );
 				view_objects = actor_view_collection::get_sorted_index(&data, view_objects_location );
+				actor = _src.actor;
 			}
 
 			actor_state& operator=(actor_state&& _src)
@@ -846,6 +847,7 @@ namespace corona
 				modified_object_id = _src.modified_object_id;
 				create_objects = actor_create_collection::get_sorted_index(&data, create_objects_location);
 				view_objects = actor_view_collection::get_sorted_index(&data, view_objects_location);
+				actor = _src.actor;
 
 				return *this;
 			}
@@ -860,6 +862,7 @@ namespace corona
 				modified_object_id = _src.modified_object_id;
 				create_objects = actor_create_collection::get_sorted_index(&data, create_objects_location);
 				view_objects = actor_view_collection::get_sorted_index(&data, view_objects_location);
+				actor = _src.actor;
 				return *this;
 			}
 
@@ -873,6 +876,7 @@ namespace corona
 				modified_object_id = _src.modified_object_id;
 				create_objects = actor_create_collection::get_sorted_index(&data, create_objects_location);
 				view_objects = actor_view_collection::get_sorted_index(&data, view_objects_location);
+				actor = _src.actor;
 			}
 
 			jobject create_object(jschema* _schema, relative_ptr_type _class_id);

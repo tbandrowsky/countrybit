@@ -42,6 +42,12 @@ namespace proposal
 		put_class_request pcr;
 		put_object_field_request porf;
 
+		/*
+		These fields are all custom integer fields that we will use to represent primary keys.  
+		Primary keys in Corona are like a cross between sequences and auto number.  The field itself 
+		is just an integer, but it will be assigned as a PK as part of its class membership.
+		*/
+
 		idf_home = schema.put_integer_field({ { null_row,  jtype::type_int64, "home_id", "Home Id" }, { 0, INT64_MAX } });
 		idf_client_root = schema.put_integer_field({ { null_row,  jtype::type_int64, "client_root", "Clients" }, { 0, INT64_MAX } });
 		idf_client = schema.put_integer_field({ { null_row,  jtype::type_int64, "client_id", "Client Id" }, { 0, INT64_MAX } });
@@ -63,6 +69,12 @@ namespace proposal
 		idf_program_chart_slide_product = schema.put_integer_field({ { null_row,  jtype::type_int64, "program_chart_slide_product_id", "Program Chart Slide Item Id" }, { 0, INT64_MAX } });
 		idf_program_generic_slide = schema.put_integer_field({ { null_row,  jtype::type_int64, "program_generic_slide", "Generic Slide Id" }, { 0, INT64_MAX } });
 
+		/* 
+		* Here we are going to specify a set of fields that may be used to create a program item.  
+		* A model in Corona is a way to tie together objects that are affiliated but necessarily members per se, although syntactical
+		* sugar will be introduced to make it -seem- that way.
+		*/
+
 		idf_inception = schema.put_time_field({ { null_row,  jtype::type_datetime, "inception", "Inception" }, { 0, INT64_MAX } });
 		idf_expiration = schema.put_time_field({ { null_row,  jtype::type_datetime, "expiration", "Expiration" }, { 0, INT64_MAX } });
 		idf_status = schema.put_integer_field({ { null_row,  jtype::type_int32, "status", "Status" }, { 0, INT64_MAX } });
@@ -73,26 +85,33 @@ namespace proposal
 		idf_comment = schema.put_string_field({ { null_row,  jtype::type_string, "comment", "Comment" }, { 500, "", "", } });
 		idf_program_style = schema.put_string_field({ { null_row,  jtype::type_color, "style", "Style" }, {  } });
 
-		idf_pi_inception = schema.put_integer_field({ { null_row,  jtype::type_int64, "inception_id", "Inception Id" }, { 0, INT64_MAX } });
-		idf_pi_expiration = schema.put_integer_field({ { null_row,  jtype::type_int64, "expiration_id", "Expiration Id" }, { 0, INT64_MAX } });
-		idf_pi_status = schema.put_integer_field({ { null_row,  jtype::type_int64, "status_id", "Status Id" }, { 0, INT64_MAX } });
-		idf_pi_attachment = schema.put_integer_field({ { null_row,  jtype::type_int64, "attachment_id", "Attachment Id" }, { 0, INT64_MAX } });
-		idf_pi_limit = schema.put_integer_field({ { null_row,  jtype::type_int64, "limit_id", "Limit Id" }, { 0, INT64_MAX } });
-		idf_pi_deductible = schema.put_integer_field({ { null_row,  jtype::type_int64, "deductible_id", "Deductible Id" }, { 0, INT64_MAX } });
-		idf_pi_share = schema.put_integer_field({ { null_row,  jtype::type_int64, "share_id", "Share % Id" }, { 0, INT64_MAX } });
-		idf_pi_comment = schema.put_integer_field({ { null_row,  jtype::type_int64, "comment_id", "Comment Id" }, { 0, INT64_MAX } });
+		/* 
+		Now that we have our fields, we can make our classes.
+		*/
 
+		/*
+		We have a class object to represent our application states and objects with respect to this model.  We supply a class name, description, a list 
+		of member fields, and then, a primary key.  We call put_class to upsert the class, and the class id is returned for easy reference.
+		The schema can also be searched by the class_name to find the class.
+		*/
+
+		/* This is the application home class.  It is just a place holder now */
 		pcr.class_name = "home";
 		pcr.class_description = "Application Home";
 		pcr.field_id_primary_key = idf_home;
 		pcr.member_fields = { idf_home };
 		idc_home = schema.put_class(pcr);
 
+		/* This is the client root class. Objects of the class have a layout and accept the client home id as a relation.  There is also 
+		a standard search string field, for searching for clients and keeping the search state. */
 		pcr.class_name = "client_root";
 		pcr.class_description = "Clients";
 		pcr.field_id_primary_key = idf_client_root;
 		pcr.member_fields = { idf_client_root, idf_home, schema.idf_layout_rect, schema.idf_search_string };
 		idc_client_root = schema.put_class(pcr);
+
+		/* This is the client class. Objects of the class have client things like name and address.  The primary key is the 
+		field id idf_client, which is populated when objects of this class are constructed. . */
 
 		pcr.class_name = "client";
 		pcr.class_description = "Client";
@@ -100,11 +119,18 @@ namespace proposal
 		pcr.member_fields = { idf_client, idf_client_root, schema.idf_name, schema.idf_street, schema.idf_city, schema.idf_state, schema.idf_postal, schema.idf_email, schema.idf_url };
 		idc_client = schema.put_class(pcr);
 
+		/* This is the carrier root class. Objects of the class have a layout and accept the idf_home as a relation and have a primary key 
+		that is auto-opulated at object load time.  There is also
+			a standard search string field, for searching for clients and keeping the search state. */
+
 		pcr.class_name = "carrier_root";
 		pcr.class_description = "Carriers";
 		pcr.field_id_primary_key = idf_carrier_root;
 		pcr.member_fields = { idf_carrier_root, idf_home, schema.idf_layout_rect, schema.idf_search_string };
 		idc_carrier_root = schema.put_class(pcr);
+
+		/* This is the carrier class. Objects of the class have client things like name and address.  The primary key is the
+field id idf_carrier, which is populated when objects of this class are constructed. . */
 
 		pcr.class_name = "carrier";
 		pcr.class_description = "Carrier";
@@ -302,6 +328,7 @@ namespace proposal
 						{ idc_program_generic_slide, 4 } }
 			);
 
+
 		schema.put_model(jm);
 
 		jcollection_ref ref;
@@ -317,7 +344,17 @@ namespace proposal
 			std::cout << __LINE__ << "collection id failed" << std::endl;
 		}
 
-		create_style_sheet();
+		program_chart = schema.create_collection(&ref);
+
+		jactor sample_actor;
+		sample_actor.actor_name = "sample actor";
+		sample_actor.actor_id = null_row;
+		sample_actor.current_view_class_id = idc_home;
+		sample_actor = program_chart.create_actor(sample_actor);
+
+		actor_id = sample_actor.actor_id;
+
+		set_style_sheet();
 
 		map_style(idc_home, schema.idf_home_style);
 		map_style(idc_client_root, schema.idf_client_style);
@@ -326,13 +363,6 @@ namespace proposal
 		map_style(idc_program_template_root, schema.idf_product_style);
 		map_style(idc_system_root, schema.idf_system_style);
 
-		program_chart = schema.create_collection(&ref);
-		jactor sample_actor;
-		sample_actor.actor_name = "sample actor";
-		sample_actor.actor_id = null_row;
-		sample_actor.current_view_class_id = idc_home;
-		sample_actor = program_chart.create_actor(sample_actor);
-
 		program_chart.create_object(null_row, sample_actor.actor_id, idc_home, id_home);
 		program_chart.create_object(null_row, sample_actor.actor_id, idc_carrier_root, id_carrier_root, { { idf_home , id_home }});
 		program_chart.create_object(null_row, sample_actor.actor_id, idc_coverage_root, id_coverage_root, { { idf_home, id_home } });
@@ -340,9 +370,17 @@ namespace proposal
 		program_chart.create_object(null_row, sample_actor.actor_id, idc_program_template_root, id_product_template_root, { { idf_home, id_home } });
 		program_chart.create_object(null_row, sample_actor.actor_id, idc_system_root, id_system_root, { { idf_home, id_home } });
 		
-		auto initial_selection = state.create_select_request(id_home, false);
-		program_chart.select_object(initial_selection);
+		// get our initial state
+		state = program_chart.get_actor_state(sample_actor.actor_id);
 
+		// then create our select request
+		auto initial_selection = state.create_select_request(id_home, false);
+
+		// now we can select our initial object!
+		state = program_chart.select_object(initial_selection);
+
+		// when the controller creates the window then, the state will be queried again and the application will be on the same
+		// page
 
 	}
 
@@ -636,7 +674,7 @@ namespace proposal
 		host->redraw();
 	}
 
-	void wsproposal_controller::create_style_sheet()
+	void wsproposal_controller::set_style_sheet()
 	{
 		auto style_sheet = getStyleSheet();
 

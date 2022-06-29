@@ -76,7 +76,7 @@ namespace flowers
 		program_chart.create_object(0, sample_actor.actor_id, idc_carrier_root, carriers_id);
 		program_chart.create_object(0, sample_actor.actor_id, idc_carrier_root, programs_id);
 
-		create_style_sheet();
+		set_style_sheet();
 
 		map_style(idc_home, schema.idf_home_style);
 		map_style(idc_carrier_root, schema.idf_carrier_style);
@@ -254,7 +254,7 @@ namespace flowers
 		host->redraw();
 	}
 
-	void flowers_controller::create_style_sheet()
+	void flowers_controller::set_style_sheet()
 	{
 		auto style_sheet = getStyleSheet();
 

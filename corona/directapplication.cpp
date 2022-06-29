@@ -1538,12 +1538,12 @@ namespace corona
 			auto p = paths[_pathInstanceDto->pathName];
 
 			if (!fill) {
-				std::cout << "missing " << _pathInstanceDto->fillBrushName << std::endl;
+				std::cout << "missing fill " << _pathInstanceDto->fillBrushName << std::endl;
 				return;
 			}
 
 			if (!border) {
-				std::cout << "missing " << _pathInstanceDto->borderBrushName << std::endl;
+				std::cout << "missing border " << _pathInstanceDto->borderBrushName << std::endl;
 				return;
 			}
 
@@ -1567,12 +1567,12 @@ namespace corona
 			auto border = brushes[_pathImmediateDto->borderBrushName];
 
 			if (!fill) {
-				std::cout << "missing " << _pathImmediateDto->fillBrushName << std::endl;
+				std::cout << "missing fill " << _pathImmediateDto->fillBrushName << std::endl;
 				return;
 			}
 
 			if (!border) {
-				std::cout << "missing " << _pathImmediateDto->borderBrushName << std::endl;
+				std::cout << "missing border " << _pathImmediateDto->borderBrushName << std::endl;
 				return;
 			}
 
@@ -1611,24 +1611,30 @@ namespace corona
 
 		void direct2dContext::drawRectangle(database::rectangle* _rectangle, const char* _borderBrush, double _borderWidth, const char* _fillBrush)
 		{
-			auto fill = brushes[_fillBrush];
-			auto border = brushes[_borderBrush];
-
 			D2D1_RECT_F r;
 			r.left = _rectangle->x;
 			r.top = _rectangle->y;
 			r.right = _rectangle->x + _rectangle->w;
 			r.bottom = _rectangle->y + _rectangle->h;
 
-			if (fill) 
+			if (_fillBrush) 
 			{
-				renderTarget->FillRectangle(r, fill->getBrush());
+				auto fill = brushes[_fillBrush];
+				if (!fill) 
+					std::cout << "missing fill " << _fillBrush << std::endl;
+				else 
+					renderTarget->FillRectangle(r, fill->getBrush());
 			}
 
-			if (border)
+			if (_borderBrush)
 			{
-				renderTarget->DrawRectangle(&r, border->getBrush(), _borderWidth);
+				auto border = brushes[_borderBrush];
+				if (!border)
+					std::cout << "missing border " << _borderBrush << std::endl;
+				else
+					renderTarget->DrawRectangle(&r, border->getBrush(), _borderWidth);
 			}
+					
 		}
 
 		void direct2dContext::drawText(const char* _text, database::rectangle* _rectangle, const char* _textStyle, const char* _fillBrush)
@@ -1637,12 +1643,12 @@ namespace corona
 			auto fill = brushes[_fillBrush];
 
 			if (!style) {
-				std::cout << "missing " << _textStyle << std::endl;
+				std::cout << "missing textStyle" << _textStyle << std::endl;
 				return;
 			}
 
 			if (!fill) {
-				std::cout << "missing " << _fillBrush << std::endl;
+				std::cout << "missing fillBrush" << _fillBrush << std::endl;
 				return;
 			}
 
@@ -1684,12 +1690,12 @@ namespace corona
 			auto fill = brushes[_textInstanceDto->fillBrushName];
 
 			if (!style) {
-				std::cout << "missing " << _textInstanceDto->styleName << std::endl;
+				std::cout << "missing text style " << _textInstanceDto->styleName << std::endl;
 				return;
 			}
 
 			if (!fill) {
-				std::cout << "missing " << _textInstanceDto->fillBrushName << std::endl;
+				std::cout << "missing fill " << _textInstanceDto->fillBrushName << std::endl;
 				return;
 			}
 

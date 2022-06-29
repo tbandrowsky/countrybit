@@ -53,6 +53,9 @@ namespace corona
 			auto pos = host->getWindowPos(0);
 			host->setMinimumWindowSize(point{ pos.w - pos.x, pos.h - pos.y });
 
+			state = program_chart.get_actor_state(actor_id);
+			stateChanged(newSize);
+
 			enableEditMessages = true;
 		}
 
@@ -506,7 +509,7 @@ namespace corona
 
 		page_item* corona_controller::column_each(page_item* _parent_ui, layout_rect _box, std::function<bool(const actor_view_collection::iterator_item_type& _item)> selector)
 		{
-			auto pi = pg.row(_parent_ui, nullptr, _box);
+			auto pi = pg.column(_parent_ui, nullptr, _box);
 			auto* page_add = &pg;
 			auto* st = &state;
 			for_each(selector, [st, page_add, pi, this, _parent_ui]( actor_view_object& avo)
@@ -519,7 +522,7 @@ namespace corona
 
 		page_item* corona_controller::column_class(page_item* _parent_ui, layout_rect _box, relative_ptr_type *_class_ids, int _length)
 		{
-			auto pi = pg.row(_parent_ui, nullptr, _box);
+			auto pi = pg.column(_parent_ui, nullptr, _box);
 			auto* page_add = &pg;
 			auto* st = &state;
 			for_class(_class_ids, _length, [st, page_add, pi, this, _parent_ui]( actor_view_object& avo)
@@ -532,7 +535,7 @@ namespace corona
 
 		page_item* corona_controller::column_join(page_item* _parent_ui, layout_rect _box, jobject& _parent, relative_ptr_type* _join_fields)
 		{
-			auto pi = pg.row(_parent_ui, nullptr, _box);
+			auto pi = pg.column(_parent_ui, nullptr, _box);
 			auto* page_add = &pg;
 			auto* st = &state;
 			for_join(_parent, _join_fields, [st, page_add, pi, this, _parent_ui]( actor_view_object& avo)
@@ -545,7 +548,7 @@ namespace corona
 
 		page_item* corona_controller::column_common(page_item* _parent_ui, layout_rect _box, relative_ptr_type* _has_field_list)
 		{
-			auto pi = pg.row(_parent_ui, nullptr, _box);
+			auto pi = pg.column(_parent_ui, nullptr, _box);
 			auto* page_add = &pg;
 			auto* st = &state;
 			for_common(_has_field_list, [st, page_add, pi, this, _parent_ui]( actor_view_object& avo)

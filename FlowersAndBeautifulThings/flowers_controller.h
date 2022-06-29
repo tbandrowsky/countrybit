@@ -64,7 +64,7 @@ namespace flowers
 		flowers_controller();
 		virtual ~flowers_controller();
 
-		void create_style_sheet();
+		void set_style_sheet();
 
 		void render_header(page_item* _frame, const char* _title, const char* _subtitle, bool _left_pad);
 		void render_form(std::function<void(page_item* _frame)> _contents);

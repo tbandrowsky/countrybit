@@ -101,6 +101,7 @@ namespace corona
 			jcollection program_chart;
 			page pg;
 			actor_state state;
+			actor_id_type actor_id;
 
 			int canvasWindowsId;
 

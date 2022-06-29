@@ -278,7 +278,7 @@ namespace corona
 							return this->matches_class_id(_sel.item, loc_class);
 						});
 
-					include_class = matches_class_id(loc, pactor->current_view_class_id) || (field_id_pk > null_row && ((int64_t)search_item.get(field_id_pk) == field_id_pk_value));
+					include_class = matches_class_id(loc, pactor->current_view_class_id) || (search_item.has_field(field_id_pk) && ((int64_t)search_item.get(field_id_pk) == field_id_pk_value));
 					include_search = search_item.matches(search_string);
 					
 					return include_selected || (include_class && include_search);
@@ -376,6 +376,8 @@ namespace corona
 				acr.modified_object = acr.copy_object(schema, slice);
 			}
 
+			acr.actor = actor;
+
 			if (_trace_msg)
 			{
 				print("-------", acr);
@@ -467,6 +469,9 @@ namespace corona
 				ac.current_view_object_id = null_row;
 				ac.current_view_class_id = null_row;
 
+				relative_ptr_type selection = _select.object_id;
+				ac.selections.push_back(selection);
+
 				temp.clear();
 				int highest_level = -1;
 				for (auto aci : ac.selections)
@@ -487,8 +492,6 @@ namespace corona
 
 				ac.selections = temp;
 
-				relative_ptr_type selection = _select.object_id;
-				ac.selections.push_back(selection);
 				put_actor(ac);
 				acr = get_actor_state(_select.actor_id, _select.object_id, _trace_msg);
 				acr.modified_object_level = phierarchy_item->level_id;
@@ -1849,7 +1852,7 @@ namespace corona
 
 		bool jobject::has_field(relative_ptr_type field_id)
 		{
-			return get_field_index_by_id(field_id) > -1;
+			return field_id > null_row && get_field_index_by_id(field_id) > -1;
 		}
 
 		bool jobject::is_class(relative_ptr_type class_id)
@@ -2420,6 +2423,7 @@ namespace corona
 
 		bool jobject::matches(const char* str)
 		{
+			if (!str) return true;
 			for (int i = 0; i < size(); i++) {
 				if (get_field(i).type_id == jtype::type_string) {
 					auto str = get_string(i);
