@@ -78,7 +78,7 @@ namespace corona
 				while (current != null_row)
 				{
 					const auto& obj = get_object(current);
-					if (!predicate(obj))
+					if (predicate(obj))
 						break;
 					current++;
 					if (current >= base->size()) {
@@ -230,7 +230,7 @@ namespace corona
 				while (current < base->size())
 				{
 					const auto& obj = get_object(current);
-					if (!predicate(obj)) {
+					if (predicate(obj)) {
 						break;
 					}
 					current++;

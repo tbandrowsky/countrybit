@@ -405,7 +405,7 @@ namespace corona
 		{
 			const char *r = nullptr;
 			if (_style_field_id != null_row) {
-				r = program_chart.where(_style_field_id).get_object().item.get_field_by_id(_style_field_id).name;
+				r = schema.get_field(_style_field_id).name;
 			}
 			return r;
 		}

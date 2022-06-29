@@ -85,6 +85,11 @@ namespace corona
 
 		bool direct2dContext::createRenderTarget(HWND hwnd)
 		{
+			if (hwnd == nullptr) {
+				renderTarget = hwndRenderTarget = nullptr;
+				return false;
+			}
+
 			RECT rc;
 			GetClientRect(hwnd, &rc);
 
@@ -1763,21 +1768,24 @@ namespace corona
 		}
 
 		void direct2dContext::endDraw() {
-			HRESULT hr = renderTarget->EndDraw();
-			if (hr == D2DERR_RECREATE_TARGET) {
-				std::for_each(brushes.begin(), brushes.end(), [this](std::pair<std::string, deviceDependentAssetBase*> ib) {
-					if (ib.second)
-						ib.second->release();
-					});
-				std::for_each(bitmaps.begin(), bitmaps.end(), [this](std::pair<std::string, deviceDependentAssetBase*> ib) {
-					if (ib.second)
-						ib.second->release();
-					});
-				std::for_each(textStyles.begin(), textStyles.end(), [this](std::pair<std::string, textStyle*> ib) {
-					if (ib.second)
-						ib.second->release();
-					});
-				destroyRenderTarget();
+
+			if (renderTarget) {
+				HRESULT hr = renderTarget->EndDraw();
+				if (hr == D2DERR_RECREATE_TARGET) {
+					std::for_each(brushes.begin(), brushes.end(), [this](std::pair<std::string, deviceDependentAssetBase*> ib) {
+						if (ib.second)
+							ib.second->release();
+						});
+					std::for_each(bitmaps.begin(), bitmaps.end(), [this](std::pair<std::string, deviceDependentAssetBase*> ib) {
+						if (ib.second)
+							ib.second->release();
+						});
+					std::for_each(textStyles.begin(), textStyles.end(), [this](std::pair<std::string, textStyle*> ib) {
+						if (ib.second)
+							ib.second->release();
+						});
+					destroyRenderTarget();
+				}
 			}
 		}
 
@@ -2474,7 +2482,6 @@ namespace corona
 		{
 			return direct2dContext::createRenderTarget(hwndDirect2d);
 		}
-
 
 		void directApplication::setController(controller* _newCurrentController)
 		{

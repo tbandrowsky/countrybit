@@ -13,8 +13,31 @@ namespace proposal
 
 	wsproposal_controller::wsproposal_controller() : corona_controller()
 	{
+		/*
+		
+		In this example we create our schema and data store locally.  
+		In a remote application, we will wind up fetching and binding but that will be for a different example.
+		
+		*/
+
+		/* first we initialize our box.  Our box can grow, but we start with a size of 16MB, which is more than enough
+		* for demo purposes.
+		*/
+
 		box.init(1 << 22);
-		schema = jschema::create_schema(&box, 50, true, schema_id);
+
+		/* with our box, we can then create a schema.  We'll reserve space to create roughly 75 classes, 
+		* and also include standard fields and classes.  
+		*/
+
+		schema = jschema::create_schema(&box, 75, true, schema_id);
+
+		/*
+		Now, we can begin to flesh out schema for this application.  In Corona, a schema is a collection of fields,
+		that are composed into classes.  There are many different types of fields, and only some are used below.
+		Some C++ syntactical sugar makes the process less painful.  Note that the id of each field returned goes 
+		into a variable with the idf naming convention.
+		*/
 
 		put_class_request pcr;
 		put_object_field_request porf;
@@ -69,7 +92,7 @@ namespace proposal
 		pcr.class_description = "Clients";
 		pcr.field_id_primary_key = idf_client_root;
 		pcr.member_fields = { idf_client_root, idf_home, schema.idf_layout_rect, schema.idf_search_string };
-		idc_home = schema.put_class(pcr);
+		idc_client_root = schema.put_class(pcr);
 
 		pcr.class_name = "client";
 		pcr.class_description = "Client";
@@ -294,22 +317,6 @@ namespace proposal
 			std::cout << __LINE__ << "collection id failed" << std::endl;
 		}
 
-		program_chart = schema.create_collection(&ref);
-		jactor sample_actor;
-		sample_actor.actor_name = "sample actor";
-		sample_actor.actor_id = null_row;
-		sample_actor.current_view_class_id = idc_home;
-		sample_actor = program_chart.create_actor(sample_actor);
-
-		relative_ptr_type id_home = null_row, id_carrier_root = null_row, id_coverage_root = null_row, id_client_root = null_row, id_product_template_root = null_row, id_system_root = null_row;
-
-		program_chart.create_object(null_row, sample_actor.actor_id, idc_home, id_home);
-		program_chart.create_object(null_row, sample_actor.actor_id, idc_carrier_root, id_carrier_root, { { idf_home , id_home }});
-		program_chart.create_object(null_row, sample_actor.actor_id, idc_coverage_root, id_coverage_root, { { idf_home, id_home } });
-		program_chart.create_object(null_row, sample_actor.actor_id, idc_client_root, id_client_root, { { idf_home, id_home } });
-		program_chart.create_object(null_row, sample_actor.actor_id, idc_program_template_root, id_product_template_root, { { idf_home, id_home } });
-		program_chart.create_object(null_row, sample_actor.actor_id, idc_system_root, id_system_root, { { idf_home, id_home } });
-
 		create_style_sheet();
 
 		map_style(idc_home, schema.idf_home_style);
@@ -318,6 +325,24 @@ namespace proposal
 		map_style(idc_coverage_root, schema.idf_coverage_style);
 		map_style(idc_program_template_root, schema.idf_product_style);
 		map_style(idc_system_root, schema.idf_system_style);
+
+		program_chart = schema.create_collection(&ref);
+		jactor sample_actor;
+		sample_actor.actor_name = "sample actor";
+		sample_actor.actor_id = null_row;
+		sample_actor.current_view_class_id = idc_home;
+		sample_actor = program_chart.create_actor(sample_actor);
+
+		program_chart.create_object(null_row, sample_actor.actor_id, idc_home, id_home);
+		program_chart.create_object(null_row, sample_actor.actor_id, idc_carrier_root, id_carrier_root, { { idf_home , id_home }});
+		program_chart.create_object(null_row, sample_actor.actor_id, idc_coverage_root, id_coverage_root, { { idf_home, id_home } });
+		program_chart.create_object(null_row, sample_actor.actor_id, idc_client_root, id_client_root, { { idf_home, id_home } });
+		program_chart.create_object(null_row, sample_actor.actor_id, idc_program_template_root, id_product_template_root, { { idf_home, id_home } });
+		program_chart.create_object(null_row, sample_actor.actor_id, idc_system_root, id_system_root, { { idf_home, id_home } });
+		
+		auto initial_selection = state.create_select_request(id_home, false);
+		program_chart.select_object(initial_selection);
+
 
 	}
 

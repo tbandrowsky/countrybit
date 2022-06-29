@@ -669,6 +669,11 @@ namespace corona
 			selections_collection	breadcrumb;
 			relative_ptr_type		current_view_object_id;
 			relative_ptr_type		current_view_class_id;
+
+			actor_type() : actor_id(null_row), current_view_object_id(null_row), current_view_class_id(null_row)
+			{
+				;
+			}
 		};
 
 		using jactor = actor_type;

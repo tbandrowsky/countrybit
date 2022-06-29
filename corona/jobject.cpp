@@ -278,7 +278,7 @@ namespace corona
 							return this->matches_class_id(_sel.item, loc_class);
 						});
 
-					include_class = matches_class_id(loc, pactor->current_view_class_id) || ((int64_t)search_item.get(field_id_pk) == field_id_pk_value);
+					include_class = matches_class_id(loc, pactor->current_view_class_id) || (field_id_pk > null_row && ((int64_t)search_item.get(field_id_pk) == field_id_pk_value));
 					include_search = search_item.matches(search_string);
 					
 					return include_selected || (include_class && include_search);
@@ -1387,10 +1387,20 @@ namespace corona
 
 		dynamic_value jobject::get(relative_ptr_type _field_id)
 		{
-
 			dynamic_value sma;
 
+			if (_field_id < 0)
+			{
+				throw std::invalid_argument(std::format("get:invalid field id {}", _field_id));
+			}
+
 			int _field_idx = get_field_index_by_id(_field_id);
+
+			if (_field_idx < 0)
+			{
+				throw std::invalid_argument(std::format("get:field id not found {}", _field_id));
+			}
+
 			jfield& field = get_field(_field_idx);
 			switch (field.type_id)
 			{
@@ -1872,7 +1882,7 @@ namespace corona
 
 			if (field_idx == null_row)
 			{
-				throw std::invalid_argument(std::format("field {} not found"));
+				throw std::invalid_argument(std::format("int8 field {} not found", field_id));
 			}
 			return get_boxed<int8_box>(field_idx, jtype::type_int8);
 		}
@@ -1888,7 +1898,7 @@ namespace corona
 
 			if (field_idx == null_row)
 			{
-				throw std::invalid_argument(std::format("field {} not found", field_id));
+				throw std::invalid_argument(std::format("int16 field {} not found", field_id));
 
 			}
 			return get_boxed<int16_box>(field_idx, jtype::type_int16);
@@ -1905,7 +1915,7 @@ namespace corona
 
 			if (field_idx == null_row)
 			{
-				throw std::invalid_argument(std::format("field {} not found", field_id));
+				throw std::invalid_argument(std::format("int32 field {} not found", field_id));
 
 			}
 			return jobject::get_boxed<int32_box>(field_idx, jtype::type_int32);
@@ -1922,7 +1932,7 @@ namespace corona
 
 			if (field_idx == null_row)
 			{
-				throw std::invalid_argument(std::format("field {} not found"));
+				throw std::invalid_argument(std::format("int64 field {} not found", field_id));
 			}
 			return jobject::get_boxed<int64_box>(field_idx, jtype::type_int64);
 		}
@@ -1938,7 +1948,7 @@ namespace corona
 
 			if (field_idx == null_row)
 			{
-				throw std::invalid_argument(std::format("field {} not found"));
+				throw std::invalid_argument(std::format("float field {} not found", field_id));
 			}
 			return jobject::get_boxed<float_box>(field_idx, jtype::type_float32);
 		}
@@ -1954,7 +1964,7 @@ namespace corona
 
 			if (field_idx == null_row)
 			{
-				throw std::invalid_argument(std::format("field {} not found", field_id));
+				throw std::invalid_argument(std::format("double field {} not found", field_id));
 			}
 			return jobject::get_boxed<double_box>(field_idx, jtype::type_float64);
 		}
@@ -1970,7 +1980,7 @@ namespace corona
 
 			if (field_idx == null_row)
 			{
-				throw std::invalid_argument(std::format("field {} not found", field_id));
+				throw std::invalid_argument(std::format("time field {} not found", field_id));
 			}
 			return get_boxed<time_box>(field_idx, jtype::type_datetime);
 		}
@@ -1986,7 +1996,7 @@ namespace corona
 
 			if (field_idx == null_row)
 			{
-				throw std::invalid_argument(std::format("field {} not found", field_id));
+				throw std::invalid_argument(std::format("point field {} not found", field_id));
 			}
 			return get_boxed<point_box>(field_idx, jtype::type_point);
 		}
@@ -2002,7 +2012,7 @@ namespace corona
 
 			if (field_idx == null_row)
 			{
-				throw std::invalid_argument(std::format("field {} not found", field_id));
+				throw std::invalid_argument(std::format("rectangle field {} not found", field_id));
 			}
 			return get_boxed<rectangle_box>(field_idx, jtype::type_rectangle);
 		}
@@ -2018,7 +2028,7 @@ namespace corona
 
 			if (field_idx == null_row)
 			{
-				throw std::invalid_argument(std::format("field {} not found", field_id));
+				throw std::invalid_argument(std::format("layout field {} not found", field_id));
 
 			}
 			return get_boxed<layout_rect_box>(field_idx, jtype::type_layout_rect);
@@ -2035,7 +2045,7 @@ namespace corona
 
 			if (field_idx == null_row)
 			{
-				throw std::invalid_argument(std::format("field {} not found", field_id));
+				throw std::invalid_argument(std::format("image field {} not found", field_id));
 			}
 			return get_boxed<image_box>(field_idx, jtype::type_image);
 		}
@@ -2051,7 +2061,7 @@ namespace corona
 
 			if (field_idx == null_row)
 			{
-				throw std::invalid_argument(std::format("field {} not found", field_id));
+				throw std::invalid_argument(std::format("wave field {} not found", field_id));
 			}
 			return get_boxed<wave_box>(field_idx, jtype::type_wave);
 		}
@@ -2067,7 +2077,7 @@ namespace corona
 
 			if (field_idx == null_row)
 			{
-				throw std::invalid_argument(std::format("field {} not found", field_id));
+				throw std::invalid_argument(std::format("midi field {} not found", field_id));
 			}
 			return get_boxed<midi_box>(field_idx, jtype::type_midi);
 		}
@@ -2083,7 +2093,7 @@ namespace corona
 
 			if (field_idx == null_row)
 			{
-				throw std::invalid_argument(std::format("field {} not found", field_id));
+				throw std::invalid_argument(std::format("color field {} not found", field_id));
 			}
 			return get_boxed<color_box>(field_idx, jtype::type_color);
 		}
@@ -2099,7 +2109,7 @@ namespace corona
 
 			if (field_idx == null_row)
 			{
-				throw std::invalid_argument(std::format("field {} not found", field_id));
+				throw std::invalid_argument(std::format("query field {} not found", field_id));
 			}
 			return get_boxed_ex<query_box>(field_idx, jtype::type_query);
 		}
@@ -2115,7 +2125,7 @@ namespace corona
 
 			if (field_idx == null_row)
 			{
-				throw std::invalid_argument(std::format("field {} not found", field_id));
+				throw std::invalid_argument(std::format("sql field {} not found", field_id));
 			}
 			return get_boxed_ex<sql_remote_box>(field_idx, jtype::type_sql);
 		}
@@ -2131,7 +2141,7 @@ namespace corona
 
 			if (field_idx == null_row)
 			{
-				throw std::invalid_argument(std::format("field {} not found", field_id));
+				throw std::invalid_argument(std::format("http field {} not found", field_id));
 			}
 			return get_boxed_ex<http_remote_box>(field_idx, jtype::type_http);
 		}
@@ -2147,7 +2157,7 @@ namespace corona
 
 			if (field_idx == null_row)
 			{
-				throw std::invalid_argument(std::format("field {} not found", field_id));
+				throw std::invalid_argument(std::format("file field {} not found", field_id));
 			}
 			return get_boxed_ex<file_remote_box>(field_idx, jtype::type_file);
 		}
@@ -2163,7 +2173,7 @@ namespace corona
 
 			if (field_idx == null_row)
 			{
-				throw std::invalid_argument(std::format("field {} not found", field_id));
+				throw std::invalid_argument(std::format("string field {} not found", field_id));
 			}
 
 			size_t offset = get_offset(field_idx, jtype::type_string);
@@ -2183,7 +2193,7 @@ namespace corona
 
 			if (field_idx == null_row)
 			{
-				throw std::invalid_argument(std::format("field {} not found"));
+				throw std::invalid_argument(std::format("object field {} not found", field_id));
 			}
 
 #if _DEBUG
@@ -2220,7 +2230,7 @@ namespace corona
 
 			if (field_idx == null_row)
 			{
-				throw std::invalid_argument(std::format("field {} not found", field_id));
+				throw std::invalid_argument(std::format("list field {} not found", field_id));
 			}
 
 #if _DEBUG
@@ -2251,7 +2261,7 @@ namespace corona
 
 			if (field_idx == null_row)
 			{
-				throw std::invalid_argument(std::format("field {} not found", field_id));
+				throw std::invalid_argument(std::format("collection_id field {} not found", field_id));
 			}
 
 			return jobject::get_boxed<collection_id_box>(field_idx, jtype::type_collection_id);
@@ -2268,7 +2278,7 @@ namespace corona
 
 			if (field_idx == null_row)
 			{
-				throw std::invalid_argument(std::format("field {} not found", field_id));
+				throw std::invalid_argument(std::format("object id field {} not found", field_id));
 			}
 			return jobject::get_boxed<object_id_box>(field_idx, jtype::type_object_id);
 		}
@@ -3329,7 +3339,7 @@ namespace corona
 				idf_shape_fill_color, idf_shape_border_thickness, idf_shape_border_color, idf_box_fill_color, idf_box_border_thickness, idf_box_border_color };
 			idc_text_style = put_class(pcr);
 
-			put_object_field_request object_fields[49] = {
+			put_object_field_request object_fields[50] = {
 				{ { null_row, jtype::type_object, "view_background_style", "View Background Style" }, { {1,1,1}, idc_text_style }},
 				{ { null_row, jtype::type_object, "view_title_style", "View Title Style" }, { {1,1,1}, idc_text_style }},
 				{ { null_row, jtype::type_object, "view_subtitle_style", "View Subtitle Style" }, { {1,1,1}, idc_text_style }},
@@ -3380,6 +3390,7 @@ namespace corona
 				{ { null_row, jtype::type_object, "company_neutral1_style", "Company Chart Deductible Style" }, { {1,1,1}, idc_text_style }},
 				{ { null_row, jtype::type_object, "company_neutral2_style", "Company Chart Deductible Style" }, { {1,1,1}, idc_text_style }},
 
+				{ { null_row, jtype::type_object, "home_style", "Home Style" }, { {1,1,1}, idc_text_style }},
 				{ { null_row, jtype::type_object, "login_style", "Login Style" }, { {1,1,1}, idc_text_style }},
 
 				{ { null_row, jtype::type_object, "string_options", "String Field Options" }, { {1,1,1}, idc_string_options }},
@@ -3452,12 +3463,11 @@ namespace corona
 			idf_style_sheet = find_field("style_sheet");
 			pcr.class_name = "style_sheet";
 			pcr.class_description = "collection of styles for ui";
-			pcr.member_fields = { idf_style_sheet };
 			pcr.member_fields = { idf_style_sheet, idf_name, idf_view_background_style, idf_view_title_style, idf_view_subtitle_style, idf_view_section_style, idf_view_style, idf_disclaimer_style, idf_copyright_style,
 				idf_h1_style, idf_h2_style, idf_h3_style, idf_column_number_head_style,idf_column_text_head_style,
 				idf_column_number_style, idf_column_text_style,
 				idf_column_data_style,idf_label_style,idf_control_style,idf_chart_axis_style,idf_chart_legend_style,idf_chart_block_style,idf_tooltip_style,
-				idf_error_style, idf_client_style, idf_carrier_style, idf_coverage_style, idf_home_style, idf_login_style, idf_product_style,
+				idf_error_style, idf_client_style, idf_carrier_style, idf_coverage_style, idf_home_style, idf_system_style, idf_login_style, idf_product_style,
 				idf_company_a1_style, idf_company_a2_style, idf_company_a3_style, idf_company_b1_style, idf_company_b2_style, idf_company_b3_style, idf_company_c1_style, idf_company_c2_style, idf_company_c3_style,idf_company_d1_style, idf_company_d2_style, idf_company_d3_style, 
 				idf_company_deductible_style, idf_company_neutral1_style, idf_company_neutral2_style
 			};

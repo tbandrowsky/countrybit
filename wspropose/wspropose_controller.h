@@ -88,6 +88,13 @@ namespace proposal
 		corona::database::relative_ptr_type idc_program_generic_slide;
 		corona::database::relative_ptr_type idf_program_generic_slide;
 
+		relative_ptr_type	id_home,
+							id_carrier_root, 
+							id_coverage_root, 
+							id_client_root, 
+							id_product_template_root, 
+							id_system_root;
+
 		const char* application_title = "Woodruff Sawyer and Company Commercial Lines";
 
 		wsproposal_controller();
