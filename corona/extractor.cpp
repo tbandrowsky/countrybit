@@ -127,6 +127,15 @@ namespace corona
 						group->count = count;
 					}
 					break;
+				case match_group::search_counts::search_exact:
+					if (count != group->search_exact_count) {
+						return match_result::empty();
+					}
+					else {
+						group->match = start;
+						group->count = count;
+					}
+					break;
 				}
 				num_groups--;
 				group++;
@@ -336,25 +345,44 @@ namespace corona
 			result.char_offset = index;
 
 			match_group groups[9] = {
-				{ match_group::search_counts::search_one, match_group::search_types::pound, 0 },
-				{ match_group::search_counts::search_one, match_group::search_types::hex, 0 },
-				{ match_group::search_counts::search_one, match_group::search_types::hex, 0 },
-				{ match_group::search_counts::search_one, match_group::search_types::hex, 0 },
-				{ match_group::search_counts::search_one, match_group::search_types::hex, 0 },
-				{ match_group::search_counts::search_one, match_group::search_types::hex, 0 },
-				{ match_group::search_counts::search_one, match_group::search_types::hex, 0 },
-				{ match_group::search_counts::search_one, match_group::search_types::hex, 0 },
-				{ match_group::search_counts::search_one, match_group::search_types::hex, 0 },
+				{ match_group::search_counts::search_one, match_group::search_types::pound, 0, 0, 0 },
+				{ match_group::search_counts::search_exact, match_group::search_types::hex, 8, 0, 0 }
 			};
 
-			auto matches = match(index, 7, groups);
+			auto matches = match(index, 2, groups);
 			if (!matches.is_empty())
 			{
-				result.red = (matches.get_hex(1) * 16 + matches.get_hex(2)) / 256.0;
-				result.green = (matches.get_hex(3) * 16 + matches.get_hex(4)) / 256.0;
-				result.blue = (matches.get_hex(5) * 16 + matches.get_hex(5)) / 256.0;
-				result.alpha = (matches.get_hex(7) * 16 + matches.get_hex(7)) / 256.0;
-				result.success = true;
+				auto str_view = matches.get_string(1);
+
+				uint32_t result_hex;
+
+				struct color_block 
+				{
+					uint8_t a, b, g, r;
+				} *cb;
+
+				cb = (color_block*)&result_hex;
+
+				auto [ptr, ec] { std::from_chars(str_view.data(), str_view.data() + str_view.size(), result_hex, 16) };
+
+				if (ec == std::errc())
+				{
+					result.red = (cb->r) / 256.0;
+					result.green = (cb->g) / 256.0;
+					result.blue = (cb->b) / 256.0;
+					result.alpha = (cb->a) / 256.0;
+					result.success = true;
+				}
+				else if (ec == std::errc::invalid_argument)
+				{
+					result.success = false;
+					result.message = error_expected_number;
+				}
+				else if (ec == std::errc::result_out_of_range)
+				{
+					result.success = false;
+					result.message = "This number is larger than an int.\n";
+				}
 			}
 			else
 			{

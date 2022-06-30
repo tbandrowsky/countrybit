@@ -621,9 +621,8 @@ namespace corona
 
 		void corona_controller::render_item(drawableHost* _host, page_item& _item)
 		{
-			const char* cap = _item.caption != nullptr ? _item.caption : "";
-			const char *sty = _item.style_name != nullptr ? _item.style_name : "";
-			std::cout << "draw item" << _item.id << " " << sty << " " << cap << std::endl;
+			const char* cap = _item.caption != nullptr ? _item.caption : "(no caption)";
+			const char *sty = _item.style_name != nullptr ? _item.style_name : "(no style)";
 			_host->drawView(_item.style_name, cap, _item.bounds);
 		}
 

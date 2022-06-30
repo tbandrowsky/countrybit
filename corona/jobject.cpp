@@ -3357,7 +3357,7 @@ namespace corona
 				idf_shape_fill_color, idf_shape_border_thickness, idf_shape_border_color, idf_box_fill_color, idf_box_border_thickness, idf_box_border_color };
 			idc_text_style = put_class(pcr);
 
-			put_object_field_request object_fields[50] = {
+			put_object_field_request object_fields[54] = {
 				{ { null_row, jtype::type_object, "view_background_style", "View Background Style" }, { {1,1,1}, idc_text_style }},
 				{ { null_row, jtype::type_object, "view_title_style", "View Title Style" }, { {1,1,1}, idc_text_style }},
 				{ { null_row, jtype::type_object, "view_subtitle_style", "View Subtitle Style" }, { {1,1,1}, idc_text_style }},
@@ -3407,6 +3407,11 @@ namespace corona
 				{ { null_row, jtype::type_object, "company_deductible_style", "Company Chart Deductible Style" }, { {1,1,1}, idc_text_style }},
 				{ { null_row, jtype::type_object, "company_neutral1_style", "Company Chart Deductible Style" }, { {1,1,1}, idc_text_style }},
 				{ { null_row, jtype::type_object, "company_neutral2_style", "Company Chart Deductible Style" }, { {1,1,1}, idc_text_style }},
+
+				{ { null_row, jtype::type_object, "header_area_style", "Header Style" }, { {1,1,1}, idc_text_style }},
+				{ { null_row, jtype::type_object, "title_bar_style", "Title Bar Style" }, { {1,1,1}, idc_text_style }},
+				{ { null_row, jtype::type_object, "subtitle_bar_style", "Subtitle Bar Style" }, { {1,1,1}, idc_text_style }},
+				{ { null_row, jtype::type_object, "breadcrumb_bar_style", "Breadcrumb Bar Style" }, { {1,1,1}, idc_text_style }},
 
 				{ { null_row, jtype::type_object, "home_style", "Home Style" }, { {1,1,1}, idc_text_style }},
 				{ { null_row, jtype::type_object, "login_style", "Login Style" }, { {1,1,1}, idc_text_style }},
@@ -3472,6 +3477,11 @@ namespace corona
 			idf_company_neutral1_style = find_field("company_neutral1_style");
 			idf_company_neutral2_style = find_field("company_neutral2_style");
 
+			idf_header_area_style = find_field("header_area_style");
+			idf_title_bar_style = find_field("title_bar_style"); 
+			idf_subtitle_bar_style = find_field("subtitle_bar_style");
+			idf_breadcrumb_bar_style = find_field("breadcrumb_bar_style");
+
 			idf_field_type = find_field("field_type");
 			idf_string_options = find_field("string_options");
 			idf_double_options = find_field("double_options");
@@ -3481,14 +3491,14 @@ namespace corona
 			idf_style_sheet = find_field("style_sheet");
 			pcr.class_name = "style_sheet";
 			pcr.class_description = "collection of styles for ui";
-			pcr.member_fields = { idf_style_sheet, idf_name, idf_view_background_style, idf_view_title_style, idf_view_subtitle_style, idf_view_section_style, idf_view_style, idf_disclaimer_style, idf_copyright_style,
+			pcr.member_fields = { idf_style_sheet, idf_name, 
+				idf_view_background_style, idf_view_title_style, idf_view_subtitle_style, idf_view_section_style, idf_view_style, idf_disclaimer_style, idf_copyright_style,
 				idf_h1_style, idf_h2_style, idf_h3_style, idf_column_number_head_style,idf_column_text_head_style,
 				idf_column_number_style, idf_column_text_style,
 				idf_column_data_style,idf_label_style,idf_control_style,idf_chart_axis_style,idf_chart_legend_style,idf_chart_block_style,idf_tooltip_style,
 				idf_error_style, idf_client_style, idf_carrier_style, idf_coverage_style, idf_home_style, idf_system_style, idf_login_style, idf_product_style,
 				idf_company_a1_style, idf_company_a2_style, idf_company_a3_style, idf_company_b1_style, idf_company_b2_style, idf_company_b3_style, idf_company_c1_style, idf_company_c2_style, idf_company_c3_style,idf_company_d1_style, idf_company_d2_style, idf_company_d3_style, 
-				idf_company_deductible_style, idf_company_neutral1_style, idf_company_neutral2_style
-			};
+				idf_company_deductible_style, idf_company_neutral1_style, idf_company_neutral2_style, idf_header_area_style, idf_title_bar_style, idf_subtitle_bar_style, idf_breadcrumb_bar_style };
 			pcr.field_id_primary_key = idf_style_sheet;
 			idc_style_sheet = put_class(pcr);
 

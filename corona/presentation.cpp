@@ -319,16 +319,16 @@ namespace corona
 				switch (_item->box.x.units)
 				{
 				case measure_units::percent_remaining:
-					_item->bounds.x = _item->box.x.amount * width / 100.0 + x;
+					_item->bounds.x = _item->box.x.amount * width / 100.0 + x + offx;
 					break;
 				case measure_units::pixels:
 					_item->bounds.x = _item->box.x.amount + x + offx;
 					break;
 				case measure_units::percent_height:
-					_item->bounds.x = _item->box.x.amount * _item->bounds.h / 100.0 + x;
+					_item->bounds.x = _item->box.x.amount * _item->bounds.h / 100.0 + x + offx;
 					break;
 				case measure_units::percent_width:
-					_item->bounds.x = _item->box.x.amount * _item->bounds.w / 100.0 + x;
+					_item->bounds.x = _item->box.x.amount * _item->bounds.w / 100.0 + x + offx;
 					break;
 				}
 			}
@@ -337,16 +337,16 @@ namespace corona
 				switch (_item->box.x.units)
 				{
 				case measure_units::percent_remaining:
-					_item->bounds.x = (width - (_item->box.x.amount * width / 100.0)) + x;
+					_item->bounds.x = (width - (_item->box.x.amount * width / 100.0)) + x + offx;
 					break;
 				case measure_units::pixels:
 					_item->bounds.x = (width - _item->box.x.amount) + x + offx;
 					break;
 				case measure_units::percent_height:
-					_item->bounds.x = width -  (_item->box.x.amount * _item->bounds.h / 100.0) + x;
+					_item->bounds.x = width -  (_item->box.x.amount * _item->bounds.h / 100.0) + x + offx;
 					break;
 				case measure_units::percent_width:
-					_item->bounds.x = width - (_item->box.x.amount * _item->bounds.w / 100.0) + x;
+					_item->bounds.x = width - (_item->box.x.amount * _item->bounds.w / 100.0) + x + offx;
 					break;
 				}
 			}
@@ -356,16 +356,16 @@ namespace corona
 				switch (_item->box.y.units)
 				{
 				case measure_units::percent_remaining:
-					_item->bounds.y = _item->box.y.amount * height / 100.0 + y;
+					_item->bounds.y = _item->box.y.amount * height / 100.0 + y + offy;
 					break;
 				case measure_units::pixels:
 					_item->bounds.y = _item->box.y.amount + y + offy;
 					break;
 				case measure_units::percent_height:
-					_item->bounds.y = _item->box.y.amount * _item->bounds.h / 100.0 + y;
+					_item->bounds.y = _item->box.y.amount * _item->bounds.h / 100.0 + y + offy;
 					break;
 				case measure_units::percent_width:
-					_item->bounds.y = _item->box.y.amount * _item->bounds.w / 100.0 + y;
+					_item->bounds.y = _item->box.y.amount * _item->bounds.w / 100.0 + y + offy;
 					break;
 				}
 			}
@@ -374,21 +374,21 @@ namespace corona
 				switch (_item->box.y.units)
 				{
 				case measure_units::percent_remaining:
-					_item->bounds.y = (height - (_item->box.y.amount * height / 100.0)) + y;
+					_item->bounds.y = (height - (_item->box.y.amount * height / 100.0)) + y + offy;
 					break;
 				case measure_units::pixels:
 					_item->bounds.y = (height - _item->box.y.amount) + y + offy;
 					break;
 				case measure_units::percent_height:
-					_item->bounds.y = width - (_item->box.y.amount * _item->bounds.h / 100.0) + y;
+					_item->bounds.y = width - (_item->box.y.amount * _item->bounds.h / 100.0) + y + offy;
 					break;
 				case measure_units::percent_width:
-					_item->bounds.y = width - (_item->box.y.amount * _item->bounds.w / 100.0) + y;
+					_item->bounds.y = width - (_item->box.y.amount * _item->bounds.w / 100.0) + y + offy;
 					break;
 				}
 			}
 
-			std::cout << std::format("{},{} bounds {},{},{},{} canvas {}, is_draw {}", _item->parent_id, _item->id, _item->bounds.x, _item->bounds.y, _item->bounds.w, _item->bounds.h, _item->canvas_id, _item->is_drawable()) << std::endl;
+			std::cout << std::format("p:{},c:{},l:{} bounds {},{},{},{} canvas {}, is_draw {}", _item->parent_id, _item->id, (int)_item->layout, _item->bounds.x, _item->bounds.y, _item->bounds.w, _item->bounds.h, _item->canvas_id, _item->is_drawable()) << std::endl;
 
 		}
 
@@ -426,7 +426,7 @@ namespace corona
 			{
 				for (auto child : children)
 				{
-					arrange_impl(&child.item, 0, 0, 0, 0, _item->bounds.w, _item->bounds.h);
+					arrange_impl(&child.item, 0, 0,_item->bounds.x, _item->bounds.y, _item->bounds.w, _item->bounds.h);
 				}
 			}
 			else if (_item->layout == layout_types::select_cell)

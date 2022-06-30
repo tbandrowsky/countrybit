@@ -681,6 +681,19 @@ field id idf_carrier, which is populated when objects of this class are construc
 		const char* fontName = "Open Sans,Arial";
 
 		style_sheet.set(
+			{ schema.idf_view_background_style },
+			{
+				{ schema.idf_shape_fill_color, "#000000FF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "#000000FF" },
+				{ schema.idf_box_fill_color, "#ffffffFF" },
+				{ schema.idf_box_border_thickness, 4 },
+				{ schema.idf_box_border_color, "#ffffffff" }
+			}
+			);
+
+		style_sheet.set(
+			schema.idf_view_background_style,
 			{ schema.idf_view_style },
 			{
 				{ schema.idf_font_name, fontName },
@@ -694,7 +707,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
 				{ schema.idf_shape_fill_color, "#000000FF" },
 				{ schema.idf_shape_border_thickness, 0 },
-				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_shape_border_color, "#000000FF" },
 				{ schema.idf_box_fill_color, "#ffffffFF" },
 				{ schema.idf_box_border_thickness, 4 },
 				{ schema.idf_box_border_color, "#ffffffff" }
@@ -702,195 +715,79 @@ field id idf_carrier, which is populated when objects of this class are construc
 			);
 
 		style_sheet.set(
+			schema.idf_view_style,
 			{ schema.idf_view_title_style },
 			{
 				{ schema.idf_font_name, fontName },
-				{ schema.idf_font_size, 30.0 },
-				{ schema.idf_bold, false },
-				{ schema.idf_italic, false },
-				{ schema.idf_underline, false },
-				{ schema.idf_strike_through, false },
-				{ schema.idf_line_spacing, 0.0 },
-				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_shape_fill_color, "#000000FF" },
-				{ schema.idf_shape_border_thickness, 0 },
-				{ schema.idf_shape_border_color, "" },
-				{ schema.idf_box_fill_color, "#ffffffFF" },
-				{ schema.idf_box_border_thickness, 0 },
-				{ schema.idf_box_border_color, "" }
+				{ schema.idf_font_size, 30.0 }
 			}
 			);
 
 		style_sheet.set(
+			schema.idf_view_style,
 			{ schema.idf_view_subtitle_style },
 			{
 				{ schema.idf_font_name, fontName},
 				{ schema.idf_font_size, 24.0 },
-				{ schema.idf_bold, false },
-				{ schema.idf_italic, false },
-				{ schema.idf_underline, false },
-				{ schema.idf_strike_through, false },
-				{ schema.idf_line_spacing, 0.0 },
-				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_shape_fill_color, "#000000FF" },
-				{ schema.idf_shape_border_thickness, 0 },
-				{ schema.idf_shape_border_color, "" },
-				{ schema.idf_box_fill_color, "#ffffffFF" },
-				{ schema.idf_box_border_thickness, 0 },
-				{ schema.idf_box_border_color, "" }
 			}
 			);
 
 		style_sheet.set(
+			schema.idf_view_style, 
 			{ schema.idf_view_section_style },
 			{
 				{ schema.idf_font_name, fontName},
 				{ schema.idf_font_size, 16.0 },
-				{ schema.idf_bold, false },
-				{ schema.idf_italic, false },
-				{ schema.idf_underline, false },
-				{ schema.idf_strike_through, false },
-				{ schema.idf_line_spacing, 0.0 },
-				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_shape_fill_color, "#000000FF" },
-				{ schema.idf_shape_border_thickness, 0 },
-				{ schema.idf_shape_border_color, "" },
-				{ schema.idf_box_fill_color, "#ffffffFF" },
-				{ schema.idf_box_border_thickness, 0 },
-				{ schema.idf_box_border_color, "" }
 			}
 			);
 
 		style_sheet.set(
-			{ schema.idf_view_style },
-			{
-				{ schema.idf_font_name, fontName },
-				{ schema.idf_font_size, 16.0 },
-				{ schema.idf_bold, false },
-				{ schema.idf_italic, false },
-				{ schema.idf_underline, false },
-				{ schema.idf_strike_through, false },
-				{ schema.idf_line_spacing, 0.0 },
-				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_shape_fill_color, "#000000FF" },
-				{ schema.idf_shape_border_thickness, 0 },
-				{ schema.idf_shape_border_color, "" },
-				{ schema.idf_box_fill_color, "#ffffffFF" },
-				{ schema.idf_box_border_thickness, 0 },
-				{ schema.idf_box_border_color, "" }
-			}
-			);
-
-		style_sheet.set(
+			schema.idf_view_style,
 			{ schema.idf_disclaimer_style },
 			{
 				{ schema.idf_font_name, fontName },
 				{ schema.idf_font_size, 12.0 },
-				{ schema.idf_bold, false },
-				{ schema.idf_italic, false },
-				{ schema.idf_underline, false },
-				{ schema.idf_strike_through, false },
-				{ schema.idf_line_spacing, 0.0 },
-				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_shape_fill_color, "#000000FF" },
-				{ schema.idf_shape_border_thickness, 0 },
-				{ schema.idf_shape_border_color, "" },
-				{ schema.idf_box_fill_color, "#ffffffFF" },
-				{ schema.idf_box_border_thickness, 0 },
-				{ schema.idf_box_border_color, "" }
 			}
 			);
 
 		style_sheet.set(
+			schema.idf_view_style,
 			{ schema.idf_copyright_style },
 			{
 				{ schema.idf_font_name, fontName },
 				{ schema.idf_font_size, 12.0 },
-				{ schema.idf_bold, false },
-				{ schema.idf_italic, false },
-				{ schema.idf_underline, false },
-				{ schema.idf_strike_through, false },
-				{ schema.idf_line_spacing, 0.0 },
-				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_shape_fill_color, "#000000FF" },
-				{ schema.idf_shape_border_thickness, 0 },
-				{ schema.idf_shape_border_color, "" },
-				{ schema.idf_box_fill_color, "#ffffffFF" },
-				{ schema.idf_box_border_thickness, 0 },
-				{ schema.idf_box_border_color, "" }
 			}
 			);
 
 		style_sheet.set(
+			schema.idf_view_style,
 			{ schema.idf_h1_style },
 			{
 				{ schema.idf_font_name, fontName },
 				{ schema.idf_font_size, 30.0 },
-				{ schema.idf_bold, false },
-				{ schema.idf_italic, false },
-				{ schema.idf_underline, false },
-				{ schema.idf_strike_through, false },
-				{ schema.idf_line_spacing, 0.0 },
-				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_shape_fill_color, "#000000FF" },
-				{ schema.idf_shape_border_thickness, 0 },
-				{ schema.idf_shape_border_color, "" },
-				{ schema.idf_box_fill_color, "#ffffffFF" },
-				{ schema.idf_box_border_thickness, 0 },
-				{ schema.idf_box_border_color, "" }
 			}
 			);
 
 		style_sheet.set(
+			schema.idf_view_style,
 			{ schema.idf_h2_style },
 			{
 				{ schema.idf_font_name, fontName },
 				{ schema.idf_font_size, 24.0 },
-				{ schema.idf_bold, false },
-				{ schema.idf_italic, false },
-				{ schema.idf_underline, false },
-				{ schema.idf_strike_through, false },
-				{ schema.idf_line_spacing, 0.0 },
-				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_shape_fill_color, "#000000FF" },
-				{ schema.idf_shape_border_thickness, 0 },
-				{ schema.idf_shape_border_color, "" },
-				{ schema.idf_box_fill_color, "#ffffffFF" },
-				{ schema.idf_box_border_thickness, 0 },
-				{ schema.idf_box_border_color, "" }
 			}
 			);
 
 		style_sheet.set(
+			schema.idf_view_style,
 			{ schema.idf_h3_style },
 			{
 				{ schema.idf_font_name, fontName },
 				{ schema.idf_font_size, 20.0 },
-				{ schema.idf_bold, false },
-				{ schema.idf_italic, false },
-				{ schema.idf_underline, false },
-				{ schema.idf_strike_through, false },
-				{ schema.idf_line_spacing, 0.0 },
-				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_shape_fill_color, "#000000FF" },
-				{ schema.idf_shape_border_thickness, 0 },
-				{ schema.idf_shape_border_color, "" },
-				{ schema.idf_box_fill_color, "#ffffffFF" },
-				{ schema.idf_box_border_thickness, 0 },
-				{ schema.idf_box_border_color, "" }
 			}
 			);
 
 		style_sheet.set(
+			schema.idf_view_style,
 			{ schema.idf_column_number_head_style },
 			{
 				{ schema.idf_font_name, fontName },
@@ -912,6 +809,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 			);
 
 		style_sheet.set(
+			schema.idf_view_style,
 			{ schema.idf_column_text_head_style },
 			{
 				{ schema.idf_font_name, fontName },
@@ -933,6 +831,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 			);
 
 		style_sheet.set(
+			schema.idf_view_style,
 			{ schema.idf_column_number_style },
 			{
 				{ schema.idf_font_name, fontName },
@@ -954,6 +853,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 			);
 
 		style_sheet.set(
+			schema.idf_view_style,
 			{ schema.idf_column_text_style },
 			{
 				{ schema.idf_font_name, fontName },
@@ -975,6 +875,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 			);
 
 		style_sheet.set(
+			schema.idf_view_style,
 			{ schema.idf_column_data_style },
 			{
 				{ schema.idf_font_name, fontName },
@@ -996,120 +897,56 @@ field id idf_carrier, which is populated when objects of this class are construc
 			);
 
 		style_sheet.set(
+			schema.idf_view_style,
 			{ schema.idf_label_style },
 			{
 				{ schema.idf_font_name, fontName },
 				{ schema.idf_font_size, 30.0 },
-				{ schema.idf_bold, false },
-				{ schema.idf_italic, false },
-				{ schema.idf_underline, false },
-				{ schema.idf_strike_through, false },
-				{ schema.idf_line_spacing, 0.0 },
-				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_shape_fill_color, "#000000FF" },
-				{ schema.idf_shape_border_thickness, 0 },
-				{ schema.idf_shape_border_color, "" },
-				{ schema.idf_box_fill_color, "#ffffffFF" },
-				{ schema.idf_box_border_thickness, 0 },
-				{ schema.idf_box_border_color, "" }
 			}
 			);
 
 		style_sheet.set(
+			schema.idf_view_style,
 			{ schema.idf_chart_axis_style },
 			{
 				{ schema.idf_font_name, fontName },
 				{ schema.idf_font_size, 30.0 },
-				{ schema.idf_bold, false },
-				{ schema.idf_italic, false },
-				{ schema.idf_underline, false },
-				{ schema.idf_strike_through, false },
-				{ schema.idf_line_spacing, 0.0 },
-				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_shape_fill_color, "#000000FF" },
-				{ schema.idf_shape_border_thickness, 0 },
-				{ schema.idf_shape_border_color, "" },
-				{ schema.idf_box_fill_color, "#ffffffFF" },
-				{ schema.idf_box_border_thickness, 0 },
-				{ schema.idf_box_border_color, "" }
 			}
 			);
 
 		style_sheet.set(
+			schema.idf_view_style,
 			{ schema.idf_chart_legend_style },
 			{
 				{ schema.idf_font_name, fontName },
 				{ schema.idf_font_size, 30.0 },
-				{ schema.idf_bold, false },
-				{ schema.idf_italic, false },
-				{ schema.idf_line_spacing, 0.0 },
-				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_shape_fill_color, "#000000FF" },
-				{ schema.idf_shape_border_thickness, 0 },
-				{ schema.idf_shape_border_color, "" },
-				{ schema.idf_box_fill_color, "#ffffffFF" },
-				{ schema.idf_box_border_thickness, 0 },
-				{ schema.idf_box_border_color, "" }
 			}
 			);
 
 		style_sheet.set(
+			schema.idf_view_style,
 			{ schema.idf_chart_block_style },
 			{
 				{ schema.idf_font_name, fontName },
 				{ schema.idf_font_size, 30.0 },
-				{ schema.idf_bold, false },
-				{ schema.idf_italic, false },
-				{ schema.idf_underline, false },
-				{ schema.idf_strike_through, false },
-				{ schema.idf_line_spacing, 0.0 },
-				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_shape_fill_color, "#000000FF" },
-				{ schema.idf_shape_border_thickness, 0 },
-				{ schema.idf_shape_border_color, "" },
-				{ schema.idf_box_fill_color, "#ffffffFF" },
-				{ schema.idf_box_border_thickness, 0 },
-				{ schema.idf_box_border_color, "" }
 			}
 			);
 
 		style_sheet.set(
+			schema.idf_view_style,
 			{ schema.idf_tooltip_style },
 			{
 				{ schema.idf_font_name, fontName },
 				{ schema.idf_font_size, 14.0 },
-				{ schema.idf_bold, false },
-				{ schema.idf_italic, false },
-				{ schema.idf_underline, false },
-				{ schema.idf_strike_through, false },
-				{ schema.idf_line_spacing, 0.0 },
-				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_shape_fill_color, "#000000FF" },
-				{ schema.idf_shape_border_thickness, 0 },
-				{ schema.idf_shape_border_color, "" },
-				{ schema.idf_box_fill_color, "#ffffffFF" },
-				{ schema.idf_box_border_thickness, 0 },
-				{ schema.idf_box_border_color, "" }
 			}
 			);
 
 		style_sheet.set(
+			schema.idf_view_style,
 			{ schema.idf_error_style },
 			{
 				{ schema.idf_font_name, fontName },
 				{ schema.idf_font_size, 14.0 },
-				{ schema.idf_bold, false },
-				{ schema.idf_italic, false },
-				{ schema.idf_underline, false },
-				{ schema.idf_strike_through, false },
-				{ schema.idf_line_spacing, 0.0 },
-				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
 				{ schema.idf_shape_fill_color, "#0000CCFF" },
 				{ schema.idf_shape_border_thickness, 0 },
 				{ schema.idf_shape_border_color, "" },
@@ -1120,17 +957,11 @@ field id idf_carrier, which is populated when objects of this class are construc
 			);
 
 		style_sheet.set(
+			schema.idf_view_style,
 			{ schema.idf_client_style },
 			{
 				{ schema.idf_font_name, "Arial" },
 				{ schema.idf_font_size, 14.0 },
-				{ schema.idf_bold, false },
-				{ schema.idf_italic, false },
-				{ schema.idf_underline, false },
-				{ schema.idf_strike_through, false },
-				{ schema.idf_line_spacing, 0.0 },
-				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
 				{ schema.idf_shape_fill_color, "#0000CCFF" },
 				{ schema.idf_shape_border_thickness, 0 },
 				{ schema.idf_shape_border_color, "" },
@@ -1141,17 +972,11 @@ field id idf_carrier, which is populated when objects of this class are construc
 			);
 
 		style_sheet.set(
+			schema.idf_view_style,
 			{ schema.idf_carrier_style },
 			{
 				{ schema.idf_font_name, "Arial" },
 				{ schema.idf_font_size, 14.0 },
-				{ schema.idf_bold, false },
-				{ schema.idf_italic, false },
-				{ schema.idf_underline, false },
-				{ schema.idf_strike_through, false },
-				{ schema.idf_line_spacing, 0.0 },
-				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
 				{ schema.idf_shape_fill_color, "#0000CCFF" },
 				{ schema.idf_shape_border_thickness, 0 },
 				{ schema.idf_shape_border_color, "" },
@@ -1162,17 +987,11 @@ field id idf_carrier, which is populated when objects of this class are construc
 			);
 
 		style_sheet.set(
+			schema.idf_view_style,
 			{ schema.idf_coverage_style },
 			{
 				{ schema.idf_font_name, "Arial" },
 				{ schema.idf_font_size, 14.0 },
-				{ schema.idf_bold, false },
-				{ schema.idf_italic, false },
-				{ schema.idf_underline, false },
-				{ schema.idf_strike_through, false },
-				{ schema.idf_line_spacing, 0.0 },
-				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
 				{ schema.idf_shape_fill_color, "#0000CCFF" },
 				{ schema.idf_shape_border_thickness, 0 },
 				{ schema.idf_shape_border_color, "" },
@@ -1183,17 +1002,11 @@ field id idf_carrier, which is populated when objects of this class are construc
 			);
 
 		style_sheet.set(
+			schema.idf_view_style,
 			{ schema.idf_product_style },
 			{
 				{ schema.idf_font_name, "Arial" },
 				{ schema.idf_font_size, 14.0 },
-				{ schema.idf_bold, false },
-				{ schema.idf_italic, false },
-				{ schema.idf_underline, false },
-				{ schema.idf_strike_through, false },
-				{ schema.idf_line_spacing, 0.0 },
-				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
 				{ schema.idf_shape_fill_color, "#0000CCFF" },
 				{ schema.idf_shape_border_thickness, 0 },
 				{ schema.idf_shape_border_color, "" },
@@ -1204,17 +1017,11 @@ field id idf_carrier, which is populated when objects of this class are construc
 			);
 
 		style_sheet.set(
+			schema.idf_view_style,
 			{ schema.idf_system_style },
 			{
 				{ schema.idf_font_name, "Arial" },
 				{ schema.idf_font_size, 14.0 },
-				{ schema.idf_bold, false },
-				{ schema.idf_italic, false },
-				{ schema.idf_underline, false },
-				{ schema.idf_strike_through, false },
-				{ schema.idf_line_spacing, 0.0 },
-				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
 				{ schema.idf_shape_fill_color, "#0000CCFF" },
 				{ schema.idf_shape_border_thickness, 0 },
 				{ schema.idf_shape_border_color, "" },
@@ -1225,17 +1032,9 @@ field id idf_carrier, which is populated when objects of this class are construc
 			);
 
 		style_sheet.set(
+			schema.idf_view_style,
 			{ schema.idf_home_style },
 			{
-				{ schema.idf_font_name, "Arial" },
-				{ schema.idf_font_size, 14.0 },
-				{ schema.idf_bold, false },
-				{ schema.idf_italic, false },
-				{ schema.idf_underline, false },
-				{ schema.idf_strike_through, false },
-				{ schema.idf_line_spacing, 0.0 },
-				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
 				{ schema.idf_shape_fill_color, "#0000CCFF" },
 				{ schema.idf_shape_border_thickness, 0 },
 				{ schema.idf_shape_border_color, "" },
@@ -1246,17 +1045,9 @@ field id idf_carrier, which is populated when objects of this class are construc
 			);
 
 		style_sheet.set(
+			schema.idf_view_style,
 			{ schema.idf_login_style },
 			{
-				{ schema.idf_font_name, "Arial" },
-				{ schema.idf_font_size, 14.0 },
-				{ schema.idf_bold, false },
-				{ schema.idf_italic, false },
-				{ schema.idf_underline, false },
-				{ schema.idf_strike_through, false },
-				{ schema.idf_line_spacing, 0.0 },
-				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
 				{ schema.idf_shape_fill_color, "#0000CCFF" },
 				{ schema.idf_shape_border_thickness, 0 },
 				{ schema.idf_shape_border_color, "" },
@@ -1267,17 +1058,9 @@ field id idf_carrier, which is populated when objects of this class are construc
 			);
 
 		style_sheet.set(
+			schema.idf_view_style,
 			{ schema.idf_company_a1_style },
 			{
-				{ schema.idf_font_name, "Arial" },
-				{ schema.idf_font_size, 14.0 },
-				{ schema.idf_bold, false },
-				{ schema.idf_italic, false },
-				{ schema.idf_underline, false },
-				{ schema.idf_strike_through, false },
-				{ schema.idf_line_spacing, 0.0 },
-				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
 				{ schema.idf_shape_fill_color, "#0000CCFF" },
 				{ schema.idf_shape_border_thickness, 0 },
 				{ schema.idf_shape_border_color, "" },
@@ -1288,17 +1071,9 @@ field id idf_carrier, which is populated when objects of this class are construc
 			);
 
 		style_sheet.set(
+			schema.idf_view_style,
 			{ schema.idf_company_a2_style },
 			{
-				{ schema.idf_font_name, "Arial" },
-				{ schema.idf_font_size, 14.0 },
-				{ schema.idf_bold, false },
-				{ schema.idf_italic, false },
-				{ schema.idf_underline, false },
-				{ schema.idf_strike_through, false },
-				{ schema.idf_line_spacing, 0.0 },
-				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
 				{ schema.idf_shape_fill_color, "#0000CCFF" },
 				{ schema.idf_shape_border_thickness, 0 },
 				{ schema.idf_shape_border_color, "" },
@@ -1309,17 +1084,9 @@ field id idf_carrier, which is populated when objects of this class are construc
 			);
 
 		style_sheet.set(
+			schema.idf_view_style,
 			{ schema.idf_company_a3_style },
 			{
-				{ schema.idf_font_name, "Arial" },
-				{ schema.idf_font_size, 14.0 },
-				{ schema.idf_bold, false },
-				{ schema.idf_italic, false },
-				{ schema.idf_underline, false },
-				{ schema.idf_strike_through, false },
-				{ schema.idf_line_spacing, 0.0 },
-				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
 				{ schema.idf_shape_fill_color, "#0000CCFF" },
 				{ schema.idf_shape_border_thickness, 0 },
 				{ schema.idf_shape_border_color, "" },
@@ -1330,17 +1097,9 @@ field id idf_carrier, which is populated when objects of this class are construc
 			);
 
 		style_sheet.set(
+			schema.idf_view_style,
 			{ schema.idf_company_b1_style },
 			{
-				{ schema.idf_font_name, "Arial" },
-				{ schema.idf_font_size, 14.0 },
-				{ schema.idf_bold, false },
-				{ schema.idf_italic, false },
-				{ schema.idf_underline, false },
-				{ schema.idf_strike_through, false },
-				{ schema.idf_line_spacing, 0.0 },
-				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
 				{ schema.idf_shape_fill_color, "#0000CCFF" },
 				{ schema.idf_shape_border_thickness, 0 },
 				{ schema.idf_shape_border_color, "" },
@@ -1351,17 +1110,9 @@ field id idf_carrier, which is populated when objects of this class are construc
 			);
 
 		style_sheet.set(
+			schema.idf_view_style,
 			{ schema.idf_company_b2_style },
 			{
-				{ schema.idf_font_name, "Arial" },
-				{ schema.idf_font_size, 14.0 },
-				{ schema.idf_bold, false },
-				{ schema.idf_italic, false },
-				{ schema.idf_underline, false },
-				{ schema.idf_strike_through, false },
-				{ schema.idf_line_spacing, 0.0 },
-				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
 				{ schema.idf_shape_fill_color, "#0000CCFF" },
 				{ schema.idf_shape_border_thickness, 0 },
 				{ schema.idf_shape_border_color, "" },
@@ -1372,17 +1123,9 @@ field id idf_carrier, which is populated when objects of this class are construc
 			);
 
 		style_sheet.set(
+			schema.idf_view_style,
 			{ schema.idf_company_b3_style },
 			{
-				{ schema.idf_font_name, "Arial" },
-				{ schema.idf_font_size, 14.0 },
-				{ schema.idf_bold, false },
-				{ schema.idf_italic, false },
-				{ schema.idf_underline, false },
-				{ schema.idf_strike_through, false },
-				{ schema.idf_line_spacing, 0.0 },
-				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
 				{ schema.idf_shape_fill_color, "#0000CCFF" },
 				{ schema.idf_shape_border_thickness, 0 },
 				{ schema.idf_shape_border_color, "" },
@@ -1393,17 +1136,9 @@ field id idf_carrier, which is populated when objects of this class are construc
 			);
 
 		style_sheet.set(
+			schema.idf_view_style,
 			{ schema.idf_company_c1_style },
 			{
-				{ schema.idf_font_name, "Arial" },
-				{ schema.idf_font_size, 14.0 },
-				{ schema.idf_bold, false },
-				{ schema.idf_italic, false },
-				{ schema.idf_underline, false },
-				{ schema.idf_strike_through, false },
-				{ schema.idf_line_spacing, 0.0 },
-				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
 				{ schema.idf_shape_fill_color, "#0000CCFF" },
 				{ schema.idf_shape_border_thickness, 0 },
 				{ schema.idf_shape_border_color, "" },
@@ -1414,17 +1149,9 @@ field id idf_carrier, which is populated when objects of this class are construc
 			);
 
 		style_sheet.set(
+			schema.idf_view_style,
 			{ schema.idf_company_c2_style },
 			{
-				{ schema.idf_font_name, "Arial" },
-				{ schema.idf_font_size, 14.0 },
-				{ schema.idf_bold, false },
-				{ schema.idf_italic, false },
-				{ schema.idf_underline, false },
-				{ schema.idf_strike_through, false },
-				{ schema.idf_line_spacing, 0.0 },
-				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
 				{ schema.idf_shape_fill_color, "#0000CCFF" },
 				{ schema.idf_shape_border_thickness, 0 },
 				{ schema.idf_shape_border_color, "" },
@@ -1435,17 +1162,9 @@ field id idf_carrier, which is populated when objects of this class are construc
 			);
 
 		style_sheet.set(
+			schema.idf_view_style,
 			{ schema.idf_company_c3_style },
 			{
-				{ schema.idf_font_name, "Arial" },
-				{ schema.idf_font_size, 14.0 },
-				{ schema.idf_bold, false },
-				{ schema.idf_italic, false },
-				{ schema.idf_underline, false },
-				{ schema.idf_strike_through, false },
-				{ schema.idf_line_spacing, 0.0 },
-				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
 				{ schema.idf_shape_fill_color, "#0000CCFF" },
 				{ schema.idf_shape_border_thickness, 0 },
 				{ schema.idf_shape_border_color, "" },
@@ -1456,17 +1175,9 @@ field id idf_carrier, which is populated when objects of this class are construc
 			);
 
 		style_sheet.set(
+			schema.idf_view_style,
 			{ schema.idf_company_d1_style },
 			{
-				{ schema.idf_font_name, "Arial" },
-				{ schema.idf_font_size, 14.0 },
-				{ schema.idf_bold, false },
-				{ schema.idf_italic, false },
-				{ schema.idf_underline, false },
-				{ schema.idf_strike_through, false },
-				{ schema.idf_line_spacing, 0.0 },
-				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
 				{ schema.idf_shape_fill_color, "#0000CCFF" },
 				{ schema.idf_shape_border_thickness, 0 },
 				{ schema.idf_shape_border_color, "" },
@@ -1477,17 +1188,9 @@ field id idf_carrier, which is populated when objects of this class are construc
 			);
 
 		style_sheet.set(
+			schema.idf_view_style,
 			{ schema.idf_company_d2_style },
 			{
-				{ schema.idf_font_name, "Arial" },
-				{ schema.idf_font_size, 14.0 },
-				{ schema.idf_bold, false },
-				{ schema.idf_italic, false },
-				{ schema.idf_underline, false },
-				{ schema.idf_strike_through, false },
-				{ schema.idf_line_spacing, 0.0 },
-				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
 				{ schema.idf_shape_fill_color, "#0000CCFF" },
 				{ schema.idf_shape_border_thickness, 0 },
 				{ schema.idf_shape_border_color, "" },
@@ -1498,17 +1201,9 @@ field id idf_carrier, which is populated when objects of this class are construc
 			);
 
 		style_sheet.set(
+			schema.idf_view_style,
 			{ schema.idf_company_d3_style },
 			{
-				{ schema.idf_font_name, "Arial" },
-				{ schema.idf_font_size, 14.0 },
-				{ schema.idf_bold, false },
-				{ schema.idf_italic, false },
-				{ schema.idf_underline, false },
-				{ schema.idf_strike_through, false },
-				{ schema.idf_line_spacing, 0.0 },
-				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
 				{ schema.idf_shape_fill_color, "#0000CCFF" },
 				{ schema.idf_shape_border_thickness, 0 },
 				{ schema.idf_shape_border_color, "" },
@@ -1519,23 +1214,67 @@ field id idf_carrier, which is populated when objects of this class are construc
 			);
 
 		style_sheet.set(
+			schema.idf_view_style,
 			{ schema.idf_company_deductible_style },
 			{
-				{ schema.idf_font_name, "Arial" },
-				{ schema.idf_font_size, 14.0 },
-				{ schema.idf_bold, false },
-				{ schema.idf_italic, false },
-				{ schema.idf_underline, false },
-				{ schema.idf_strike_through, false },
-				{ schema.idf_line_spacing, 0.0 },
-				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
 				{ schema.idf_shape_fill_color, "#0000CCFF" },
 				{ schema.idf_shape_border_thickness, 0 },
 				{ schema.idf_shape_border_color, "" },
 				{ schema.idf_box_fill_color, "#ffffffFF" },
 				{ schema.idf_box_border_thickness, 0 },
 				{ schema.idf_box_border_color, "" }
+			}
+			);
+
+		style_sheet.set(
+			schema.idf_view_style,
+			{ schema.idf_header_area_style },
+			{
+				{ schema.idf_shape_fill_color, "#0000CCFF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "#cfcfffFF" },
+				{ schema.idf_box_border_thickness, 1 },
+				{ schema.idf_box_border_color, "#cfcfefFF" }
+			}
+			);
+
+		style_sheet.set(
+			schema.idf_view_style,
+			{ schema.idf_title_bar_style },
+			{
+				{ schema.idf_shape_fill_color, "#0000CCFF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "#cfcfffFF" },
+				{ schema.idf_box_border_thickness, 1 },
+				{ schema.idf_box_border_color, "#cfcfefFF" }
+			}
+			);
+
+		style_sheet.set(
+			schema.idf_view_style,
+			{ schema.idf_subtitle_bar_style },
+			{
+				{ schema.idf_shape_fill_color, "#0000CCFF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "#cfcfffFF" },
+				{ schema.idf_box_border_thickness, 1 },
+				{ schema.idf_box_border_color, "#cfcfefFF" }
+			}
+			);
+
+		style_sheet.set(
+			schema.idf_view_style,
+			{ schema.idf_breadcrumb_bar_style },
+			{
+				{ schema.idf_shape_fill_color, "#0000CCFF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "#cfcfffFF" },
+				{ schema.idf_box_border_thickness, 1 },
+				{ schema.idf_box_border_color, "#cfcfefFF" }
 			}
 			);
 

@@ -531,6 +531,26 @@ namespace corona
 				}
 			}
 
+			void set(relative_ptr_type _src_member_id, std::initializer_list<relative_ptr_type> member_ids, std::initializer_list<dynamic_value> var)
+			{
+				jobject target_slice = *this;
+				jobject source_slice = *this;
+
+				source_slice = get_slice(_src_member_id, { 0,0,0 }, true);
+
+				for (auto item : member_ids)
+				{
+					target_slice = target_slice.get_slice(item, { 0,0,0 }, true);
+				}
+
+				target_slice.update(source_slice);
+
+				for (auto item : var)
+				{
+					target_slice.set_value(item);
+				}
+			}
+
 			dynamic_value get(relative_ptr_type field_id);
 			dynamic_value operator[](relative_ptr_type field_idx);
 
@@ -1269,6 +1289,10 @@ namespace corona
 			relative_ptr_type idf_company_deductible_style;
 			relative_ptr_type idf_company_neutral1_style;
 			relative_ptr_type idf_company_neutral2_style;
+			relative_ptr_type idf_header_area_style;
+			relative_ptr_type idf_title_bar_style;
+			relative_ptr_type idf_subtitle_bar_style;
+			relative_ptr_type idf_breadcrumb_bar_style;
 
 			relative_ptr_type idc_style_sheet;
 			relative_ptr_type idf_style_sheet;

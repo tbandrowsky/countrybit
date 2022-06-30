@@ -350,7 +350,8 @@ namespace corona
 					search_optional_one,
 					search_one,
 					search_optional_many,
-					search_many
+					search_many,
+					search_exact
 				} search_counts;
 
 				enum class search_types
@@ -371,6 +372,7 @@ namespace corona
 					pound
 				} search_type;
 
+				int search_exact_count;
 				int match;
 				int count;
 			};

@@ -1879,12 +1879,12 @@ namespace corona
 		void direct2dContext::drawView(const char* _style, const char* _text, rectangle& _rect)
 		{
 			if (!_style) return;
-#if TRACE_GUI
-			std::cout << "drawView:" << _style << std::endl;
-#endif
 			auto& vs = viewStyles[_style];
 			auto& rectFill = vs.box_fill_color;
-			drawRectangle(&_rect, vs.box_border_color.name, vs.box_border_thickness, vs.box_fill_color.name);		
+#if TRACE_GUI
+			std::cout << "drawView:" << _style << "(" << _rect.x << "," << _rect.y << "-" << _rect.w << "," << _rect.h << ")" << rectFill.brushColor.red << " " << rectFill.brushColor.green << " " << rectFill.brushColor.blue << " " << rectFill.brushColor.alpha << std::endl;
+#endif
+			drawRectangle(&_rect, vs.box_border_color.name, vs.box_border_thickness, vs.box_fill_color.name);
 			drawText(_text, &_rect, vs.text_style.name, vs.shape_fill_color.name);
 		}
 
