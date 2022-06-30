@@ -2057,7 +2057,7 @@ namespace corona
 			titleFont = createFontFromStyleSheet(_schema->idf_view_subtitle_style);
 
 			int canvasWindowId = -1;
-			destroyChildren();
+
 			database::jobject slice;
 			for (auto piter : _page)
 			{
