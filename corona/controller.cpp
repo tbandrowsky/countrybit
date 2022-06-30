@@ -455,108 +455,56 @@ namespace corona
 			return pg.canvas2d(_parent, _style_name, _box);
 		}
 
-		page_item* corona_controller::row_each(page_item* _parent_ui, layout_rect _box, std::function<bool(const actor_view_collection::iterator_item_type& _item)> selector)
+		page_item* corona_controller::selects(page_item* _parent_ui, layout_rect _box, relative_ptr_type _id_name, std::function<bool(const actor_view_collection::iterator_item_type& _item)> selector)
 		{
-			auto pi = pg.row(_parent_ui, nullptr, _box);
 			auto* page_add = &pg;
 			auto* st = &state;
-			for_each(selector, [st, page_add, pi, this, _parent_ui]( actor_view_object& avo)
+			auto* pbox = &_box;
+			for_each(selector, [pbox, st, page_add, this, _id_name, _parent_ui]( actor_view_object& avo)
 				{
-					page_add->select(pi, st, avo.object_id, avo.object);
+					page_add->select(_parent_ui, st, avo.object_id, _id_name, avo.object, *pbox);
 					return true;
 				});
-			return pi;
+			return _parent_ui;
 		}
 
-		page_item* corona_controller::row_class(page_item* _parent_ui, layout_rect _box, relative_ptr_type *_class_ids, int _length)
+		page_item* corona_controller::selects(page_item* _parent_ui, layout_rect _box, relative_ptr_type _id_name, relative_ptr_type *_class_ids, int _length)
 		{
-			auto pi = pg.row(_parent_ui, nullptr, _box);
 			auto* page_add = &pg;
 			auto* st = &state;
-			for_class(_class_ids, _length, [st, page_add, pi, this, _parent_ui]( actor_view_object& avo)
+			auto* pbox = &_box;
+			for_class(_class_ids, _length, [pbox, st, page_add, this, _id_name, _parent_ui]( actor_view_object& avo)
 				{
-					page_add->select(pi, st, avo.object_id, avo.object);
+					page_add->select(_parent_ui, st, avo.object_id, _id_name, avo.object, *pbox);
 					return true;
 				});
-			return pi;
+			return _parent_ui;
 		}
 
-		page_item* corona_controller::row_join(page_item* _parent_ui, layout_rect _box, jobject& _parent, relative_ptr_type* _join_fields)
+		page_item* corona_controller::selects(page_item* _parent_ui, layout_rect _box, relative_ptr_type _id_name, jobject& _parent, relative_ptr_type* _join_fields)
 		{
-			auto pi = pg.row(_parent_ui, nullptr, _box);
 			auto* page_add = &pg;
 			auto* st = &state;
-			for_join(_parent, _join_fields, [st, page_add, pi, this, _parent_ui]( actor_view_object& avo)
+			auto* pbox = &_box;
+			for_join(_parent, _join_fields, [pbox, st, page_add, _id_name, this, _parent_ui]( actor_view_object& avo)
 				{
-					page_add->select(pi, st, avo.object_id, avo.object);
+					page_add->select(_parent_ui, st, avo.object_id, _id_name, avo.object, *pbox);
 					return true;
 				});
-			return pi;
+			return _parent_ui;
 		}
 
-		page_item* corona_controller::row_common(page_item* _parent_ui, layout_rect _box, relative_ptr_type* _has_field_list)
+		page_item* corona_controller::selects(page_item* _parent_ui, layout_rect _box, relative_ptr_type _id_name, relative_ptr_type* _has_field_list)
 		{
-			auto pi = pg.row(_parent_ui, nullptr, _box);
 			auto* page_add = &pg;
 			auto* st = &state;
-			for_common(_has_field_list, [st, page_add, pi, this, _parent_ui]( actor_view_object& avo)
+			auto* pbox = &_box;
+			for_common(_has_field_list, [pbox, st, _id_name, page_add, this, _parent_ui]( actor_view_object& avo)
 				{
-					page_add->select(pi, st, avo.object_id, avo.object);
+					page_add->select(_parent_ui, st, avo.object_id, _id_name, avo.object, *pbox);
 					return true;
 				});
-			return pi;
-		}
-
-		page_item* corona_controller::column_each(page_item* _parent_ui, layout_rect _box, std::function<bool(const actor_view_collection::iterator_item_type& _item)> selector)
-		{
-			auto pi = pg.column(_parent_ui, nullptr, _box);
-			auto* page_add = &pg;
-			auto* st = &state;
-			for_each(selector, [st, page_add, pi, this, _parent_ui]( actor_view_object& avo)
-				{
-					page_add->select(pi, st, avo.object_id, avo.object);
-					return true;
-				});
-			return pi;
-		}
-
-		page_item* corona_controller::column_class(page_item* _parent_ui, layout_rect _box, relative_ptr_type *_class_ids, int _length)
-		{
-			auto pi = pg.column(_parent_ui, nullptr, _box);
-			auto* page_add = &pg;
-			auto* st = &state;
-			for_class(_class_ids, _length, [st, page_add, pi, this, _parent_ui]( actor_view_object& avo)
-				{
-					page_add->select(pi, st, avo.object_id, avo.object);
-					return true;
-				});
-			return pi;
-		}
-
-		page_item* corona_controller::column_join(page_item* _parent_ui, layout_rect _box, jobject& _parent, relative_ptr_type* _join_fields)
-		{
-			auto pi = pg.column(_parent_ui, nullptr, _box);
-			auto* page_add = &pg;
-			auto* st = &state;
-			for_join(_parent, _join_fields, [st, page_add, pi, this, _parent_ui]( actor_view_object& avo)
-				{
-					page_add->select(pi, st, avo.object_id, avo.object);
-					return true;
-				});
-			return pi;
-		}
-
-		page_item* corona_controller::column_common(page_item* _parent_ui, layout_rect _box, relative_ptr_type* _has_field_list)
-		{
-			auto pi = pg.column(_parent_ui, nullptr, _box);
-			auto* page_add = &pg;
-			auto* st = &state;
-			for_common(_has_field_list, [st, page_add, pi, this, _parent_ui]( actor_view_object& avo)
-				{
-					page_add->select(pi, st, avo.object_id, avo.object);
-					return true;
-				});
-			return pi;
+			return _parent_ui;
 		}
 
 		void corona_controller::search_table(page_item* _parent, relative_ptr_type _idc_class_id, relative_ptr_type* _idf_child_fields, int _num_child_fields)
@@ -623,7 +571,60 @@ namespace corona
 		{
 			const char* cap = _item.caption != nullptr ? _item.caption : "(no caption)";
 			const char *sty = _item.style_name != nullptr ? _item.style_name : "(no style)";
-			_host->drawView(_item.style_name, cap, _item.bounds);
+
+			object_description od;
+
+			switch (_item.layout) 
+			{
+			case layout_types::absolute:
+				od = "absolute";
+				break;
+			case layout_types::canvas2d:
+				od = "canvas2d";
+				break;
+			case layout_types::column:
+				od = "column";
+				break;
+			case layout_types::row:
+				od = "row";
+				break;
+			case layout_types::create:
+				od = "create";
+				break;
+			case layout_types::field:
+				od = "field";
+				break;
+			case layout_types::label:
+				od = "label";
+				break;
+			case layout_types::navigate:
+				od = "navigate";
+				break;
+			case layout_types::select:
+				od = "select";
+				break;
+			case layout_types::select_cell:
+				od = "select_cell";
+				break;
+			case layout_types::space:
+				od = "space";
+				break;
+			case layout_types::text:
+				od = "text";
+				break;
+			}
+
+			if (_item.style_name) {
+				od += "-";
+				od += _item.style_name;
+			}
+			
+			if (_item.object_id > null_row && !_item.slice.is_null()) {
+				od += "-";
+				od += _item.slice.get_class().item().name;
+			}
+
+			_host->drawView(_item.style_name, cap, _item.bounds, od.c_str());
 		}
 
 		page_item* corona_controller::add_update_fields(page_item* _parent)

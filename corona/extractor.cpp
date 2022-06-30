@@ -367,10 +367,10 @@ namespace corona
 
 				if (ec == std::errc())
 				{
-					result.red = (cb->r) / 256.0;
-					result.green = (cb->g) / 256.0;
-					result.blue = (cb->b) / 256.0;
-					result.alpha = (cb->a) / 256.0;
+					result.red = (cb->r) / 255.0;
+					result.green = (cb->g) / 255.0;
+					result.blue = (cb->b) / 255.0;
+					result.alpha = (cb->a) / 255.0;
 					result.success = true;
 				}
 				else if (ec == std::errc::invalid_argument)
@@ -425,10 +425,10 @@ namespace corona
 
 				if (ec == std::errc())
 				{
-					result.red = (cb->r) / 256.0;
-					result.green = (cb->g) / 256.0;
-					result.blue = (cb->b) / 256.0;
-					result.alpha = (cb->a) / 256.0;
+					result.red = (cb->r) / 255.0;
+					result.green = (cb->g) / 255.0;
+					result.blue = (cb->b) / 255.0;
+					result.alpha = (cb->a) / 255.0;
 					result.success = true;
 				}
 				else if (ec == std::errc::invalid_argument)

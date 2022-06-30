@@ -103,7 +103,7 @@ namespace corona
 			page_item* text(page_item* _parent, const char* _style_name, const char *_text, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
 
 			page_item* field(page_item* _parent, int object_id, int field_id, jobject slice);
-			page_item* select(page_item* _parent, actor_state* _state, int object_id, jobject slice);
+			page_item* select(page_item* _parent, actor_state* _state, int object_id, relative_ptr_type _id_name, jobject slice, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
 			page_item* select_cell(page_item* _parent, actor_state* _state, int object_id, jobject slice, const char *_caption, const char* _style_name, layout_rect _box);
 			page_item* navigate(page_item* _parent, actor_state* _state, int object_id, const char* _style_name, const char *_caption, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 20.0_px });
 			page_item* space(page_item* _parent, const char* _style_name = nullptr, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });

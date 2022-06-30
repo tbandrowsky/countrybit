@@ -52,7 +52,7 @@ namespace corona
 			virtual bool isBitmap() { return false; }
 			virtual void save(const char* _filename) = 0;
 
-			virtual void drawView(const char* _style, const char* _text, rectangle& _rect) = 0;
+			virtual void drawView(const char* _style, const char* _text, rectangle& _rect, const char *_debug_comment) = 0;
 		};
 
 		class controllerHost {

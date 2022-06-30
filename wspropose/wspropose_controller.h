@@ -94,8 +94,8 @@ namespace proposal
 
 		void render_header(page_item* _frame, const char* _title, const char* _subtitle, bool _left_pad);
 		void render_form(std::function<void(page_item* _frame)> _contents);
-		void render_search(std::function<void(page_item* _frame)> _contents);
-		void render_visual(std::function<void(page_item* _frame)> _contents);
+		void render_2d(std::function<void(page_item* _frame)> _contents);
+		void render_mixed(std::function<void(page_item* _frame)> _contents);
 
 		void render_home();
 		void render_client_root();

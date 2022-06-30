@@ -6,8 +6,10 @@
 #ifdef WINDESKTOP_GUI
 
 #define TRACE_GUI 1
+#define OUTLINE_GUI 1
 
 #if TRACE_GUI
+#define OUTLINE_GUI 1
 #endif
 
 namespace corona
@@ -1525,6 +1527,10 @@ namespace corona
 
 		void direct2dContext::addViewStyle(viewStyleRequest& _request)
 		{
+#if TRACE_GUI
+			std::cout << "Adding " << _request.name << std::endl;
+#endif
+
 			viewStyles[_request.name.c_str()] = _request;
 			addTextStyle(&_request.text_style);
 			addSolidColorBrush(&_request.box_border_color);
@@ -1659,13 +1665,21 @@ namespace corona
 
 		void direct2dContext::drawText(const char* _text, database::rectangle* _rectangle, const char* _textStyle, const char* _fillBrush)
 		{
-			auto style = textStyles[_textStyle];
-			auto fill = brushes[_fillBrush];
+			auto style = _textStyle ? textStyles[_textStyle] : nullptr;
+			auto fill = _fillBrush ? brushes[_fillBrush] : nullptr;
 
 			if (!style) {
 #if TRACE_GUI
 				std::cout << "missing textStyle " << _textStyle << std::endl;
+
+#if TRACE_STYLES
+				std::cout << "styles loaded" << std::endl;
+				for (auto vs : viewStyles) {
+					std::cout << vs.first << std::endl;
+				}
 #endif
+#endif
+
 				return;
 			}
 
@@ -1876,7 +1890,7 @@ namespace corona
 			}
 		}
 
-		void direct2dContext::drawView(const char* _style, const char* _text, rectangle& _rect)
+		void direct2dContext::drawView(const char* _style, const char* _text, rectangle& _rect, const char *_debug_comment)
 		{
 			if (!_style) return;
 			auto& vs = viewStyles[_style];
@@ -1886,6 +1900,14 @@ namespace corona
 #endif
 			drawRectangle(&_rect, vs.box_border_color.name, vs.box_border_thickness, vs.box_fill_color.name);
 			drawText(_text, &_rect, vs.text_style.name, vs.shape_fill_color.name);
+
+#if OUTLINE_GUI
+
+			drawRectangle(&_rect, "debug-border",2.0, nullptr);
+			if (_debug_comment) {
+				drawText(_debug_comment, &_rect, "debug-text", "debug-border");
+			}
+#endif
 		}
 
 		void direct2dContext::save(const char* _filename)
@@ -1987,6 +2009,28 @@ namespace corona
 
 		void directApplication::loadStyleSheet()
 		{
+			solidBrushRequest dsrb;
+			dsrb.name = "debug-border";
+			dsrb.brushColor.red = 0;
+			dsrb.brushColor.green = 0;
+			dsrb.brushColor.blue = 250;
+			dsrb.brushColor.alpha = 250;
+			addSolidColorBrush(&dsrb);
+
+			textStyleRequest dtsr;
+			dtsr.name = "debug-text";
+			dtsr.fontName = "Arial";
+			dtsr.fontSize = 8.0;
+			dtsr.horizontal_align = visual_alignment::align_center;
+			dtsr.vertical_align = visual_alignment::align_center;
+			dtsr.bold = false;
+			dtsr.underline = false;
+			dtsr.italics = false;
+			dtsr.strike_through = false;
+			dtsr.line_spacing = 0.0;
+			dtsr.wrap_text = true;
+			addTextStyle(&dtsr);
+
 			if (currentController) {
 				auto styles = currentController->getStyleSheet();
 				auto schema = styles.get_schema();
@@ -2031,6 +2075,12 @@ namespace corona
 					}
 				}
 			}
+#ifdef TRACE_GUI
+			std::cout << "styles loaded" << std::endl;
+			for (auto vs : viewStyles) {
+				std::cout << vs.first << std::endl;
+			}
+#endif
 		}
 
 		HFONT directApplication::createFontFromStyleSheet(relative_ptr_type _style_id)

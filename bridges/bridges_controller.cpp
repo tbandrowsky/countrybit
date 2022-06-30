@@ -142,7 +142,7 @@ namespace bridges
 		}
 
 
-		void bridges_controller::render_search(std::function<void(page_item* _frame)> _contents)
+		void bridges_controller::render_2d(std::function<void(page_item* _frame)> _contents)
 		{
 			clear();
 
@@ -167,7 +167,7 @@ namespace bridges
 
 		}
 
-		void bridges_controller::render_visual(std::function<void(page_item* _frame)> _contents)
+		void bridges_controller::render_mixed(std::function<void(page_item* _frame)> _contents)
 		{
 			clear();
 

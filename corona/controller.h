@@ -144,15 +144,10 @@ namespace corona
 			virtual void for_join(jobject& _join_parent, relative_ptr_type* _join_fields, std::function<bool( actor_view_object& avo)>  updator);
 			virtual void for_common(relative_ptr_type* _common_field_list, std::function<bool( actor_view_object& avo)>  updator);
 
-			virtual page_item *row_each(page_item* _parent_ui, layout_rect _box, std::function<bool(const actor_view_collection::iterator_item_type& _item)> selector);
-			virtual page_item* row_class(page_item* _parent_ui, layout_rect _box, relative_ptr_type *class_ids, int _length);
-			virtual page_item* row_join(page_item* _parent_ui, layout_rect _box, jobject& _parent, relative_ptr_type* _join_fields);
-			virtual page_item* row_common(page_item* _parent_ui, layout_rect _box, relative_ptr_type* _has_field_list);
-
-			virtual page_item* column_each(page_item* _parent_ui, layout_rect _box, std::function<bool(const actor_view_collection::iterator_item_type& _item)> selector);
-			virtual page_item* column_class(page_item* _parent_ui, layout_rect _box, relative_ptr_type *class_ids, int _length);
-			virtual page_item* column_join(page_item* _parent_ui, layout_rect _box, jobject& _parent, relative_ptr_type* _join_fields);
-			virtual page_item* column_common(page_item* _parent_ui, layout_rect _box, relative_ptr_type* _has_field_list);
+			virtual page_item * selects(page_item* _parent_ui, layout_rect _box, relative_ptr_type _id_name, std::function<bool(const actor_view_collection::iterator_item_type& _item)> selector);
+			virtual page_item* selects(page_item* _parent_ui, layout_rect _box, relative_ptr_type _id_name, relative_ptr_type *class_ids, int _length);
+			virtual page_item* selects(page_item* _parent_ui, layout_rect _box, relative_ptr_type _id_name, jobject& _parent, relative_ptr_type* _join_fields);
+			virtual page_item* selects(page_item* _parent_ui, layout_rect _box, relative_ptr_type _id_name, relative_ptr_type* _has_field_list);
 
 			virtual void breadcrumbs(page_item* _parent, std::function<const char* (jobject& slice)> _captioner, layout_rect _item_box = { 0.0_px, 0.0_px, 200.0_px, 100.0_px });
 

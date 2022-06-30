@@ -106,23 +106,23 @@ namespace corona
 			return v;
 		}
 
-		page_item* page::select(page_item* _parent, actor_state* _state, int object_id, jobject slice)
+		page_item* page::select(page_item* _parent, actor_state* _state, int object_id, relative_ptr_type id_name, jobject slice, layout_rect box)
 		{
+			page_item* v = append();
+			v->id = size();
+			v->set_parent(_parent);
+			v->layout = layout_types::select;
+			v->slice = slice;
+			v->object_id = object_id;
+			v->box = box;
+			v->select_request = _state->create_select_request(v->object_id, false);
+			v->caption = data.copy(slice.get_name(id_name), 0);
+
 			if (slice.has_field("layout_rect"))
 			{
-				page_item* v = append();
-				v->id = size();
-				v->set_parent(_parent);
-				v->layout = layout_types::select;
-				v->slice = slice;
-				v->object_id = object_id;
 				auto rf = slice.get_layout_rect("layout_rect");
 				v->box = rf;
-				v->select_request = _state->create_select_request(v->object_id, false);
 				return v;
-			}
-			else {
-				return nullptr;
 			}
 		}
 
@@ -152,7 +152,7 @@ namespace corona
 			v->select_request = _state->create_select_request(v->object_id, false);
 			v->style_name = _style_name;
 			if (_caption) {
-				v->caption = data.copy(v->caption,0);
+				v->caption = data.copy(_caption,0);
 			}
 			return v;
 		}
@@ -466,7 +466,7 @@ namespace corona
 		void page::arrange(double width, double height)
 		{
 			sort([](auto& a, auto& b) {
-				return (a.parent_id < b.parent_id);
+				return std::tie( a.parent_id, a.id ) < std::tie( b.parent_id, b.id );
 				});
 			for (auto pix = begin(); pix != end(); pix++)
 			{

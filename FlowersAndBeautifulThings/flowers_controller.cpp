@@ -141,7 +141,7 @@ namespace flowers
 	}
 
 
-	void flowers_controller::render_search(std::function<void(page_item* _frame)> _contents)
+	void flowers_controller::render_2d(std::function<void(page_item* _frame)> _contents)
 	{
 		clear();
 
@@ -166,7 +166,7 @@ namespace flowers
 
 	}
 
-	void flowers_controller::render_visual(std::function<void(page_item* _frame)> _contents)
+	void flowers_controller::render_mixed(std::function<void(page_item* _frame)> _contents)
 	{
 		clear();
 

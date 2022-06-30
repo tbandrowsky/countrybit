@@ -113,7 +113,7 @@ namespace corona
 			virtual void drawBitmap(drawableHost* _directBitmap, point& _dest, point& _size);
 			virtual void save(const char* _filename);
 
-			virtual void drawView(const char* _style, const char *_text, rectangle& _rect);
+			virtual void drawView(const char* _style, const char *_text, rectangle& _rect, const char *_debug_comment);
 
 		protected:
 

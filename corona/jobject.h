@@ -451,6 +451,7 @@ namespace corona
 			jclass_field& get_class_field(int field_idx);
 			jfield& get_field(int field_idx);
 			relative_ptr_type get_primary_key();
+			const char* get_name(relative_ptr_type field_id);
 
 			bool has_field(const object_name& name);
 			bool has_field(relative_ptr_type field_id);

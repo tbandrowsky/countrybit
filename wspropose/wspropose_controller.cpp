@@ -397,23 +397,24 @@ field id idf_carrier, which is populated when objects of this class are construc
 
 		if (_left_pad) 
 		{
-			space(_frame, schema.idf_view_background_style, { 0.0_px, 0.0_px, 25.0_pct, 100.0_pct });
+			space(title_block, schema.idf_view_background_style, { 0.0_px, 0.0_px, 25.0_pct, 100.0_pct });
 			header_area = column(title_block, schema.idf_view_background_style, { 0.0_px, 0.0_px, 75.0_pct, 100.0_pct });
 		}
 		else 
 		{
+			space(title_block, schema.idf_view_background_style, { 0.0_px, 0.0_px, 20.0_px, 100.0_pct });
 			header_area = column(title_block, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
 		}
 
-		auto title_bar = row(header_area, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 50.0_px });
-		auto subtitle_bar = row(header_area, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 50.0_px });
-		auto breadcrumb_bar = row(header_area, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 50.0_px });
+		auto title_bar = row(header_area, schema.idf_title_bar_style, { 0.0_px, 0.0_px, 100.0_pct, 50.0_px });
+		auto subtitle_bar = row(header_area, schema.idf_subtitle_bar_style, { 0.0_px, 0.0_px, 100.0_pct, 50.0_px });
+		auto breadcrumb_bar = row(header_area, schema.idf_breadcrumb_bar_style, { 0.0_px, 0.0_px, 100.0_pct, 50.0_px });
 
-		text(title_bar, schema.idf_view_title_style, _title, { 0.0_px, 0.0_px, 150.0_px, 100.0_pct });
-		text(subtitle_bar, schema.idf_view_subtitle_style, _subtitle, { 0.0_px, 0.0_px, 150.0_px, 100.0_pct });
-		breadcrumbs(breadcrumb_bar, [](jobject& _item) {
-			return nullptr;
-			}, { 0.0_px, 0.0_px, 100.0_px, 100.0_pct });
+		text(title_bar, schema.idf_view_title_style, _title, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct});
+		text(subtitle_bar, schema.idf_view_subtitle_style, _subtitle, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
+		breadcrumbs(breadcrumb_bar, [this](jobject& _item) {
+			return _item.get_name(schema.idf_name);
+			}, { 0.0_px, 0.0_px, 200.0_px, 100.0_pct });
 	}
 
 	void wsproposal_controller::render_form(std::function<void(page_item* _frame)> _contents)
@@ -442,7 +443,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 	}
 
 
-	void wsproposal_controller::render_search(std::function<void(page_item* _frame)> _contents)
+	void wsproposal_controller::render_2d(std::function<void(page_item* _frame)> _contents)
 	{
 		clear();
 
@@ -455,9 +456,9 @@ field id idf_carrier, which is populated when objects of this class are construc
 		const char* object_title = nullptr;
 		object_title = schema.get_class(state.actor.current_view_class_id).item().description;
 
-		render_header(d2dwin, application_title, object_title, false);
+		render_header(d2dwin_area, application_title, object_title, false);
 
-		auto client_area = row(d2dwin, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
+		auto client_area = row(d2dwin_area, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
 
 		_contents(client_area);
 
@@ -467,7 +468,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 
 	}
 
-	void wsproposal_controller::render_visual(std::function<void(page_item* _frame)> _contents)
+	void wsproposal_controller::render_mixed(std::function<void(page_item* _frame)> _contents)
 	{
 		clear();
 
@@ -490,12 +491,12 @@ field id idf_carrier, which is populated when objects of this class are construc
 
 	void wsproposal_controller::render_home()
 	{
-		render_visual([this](page_item* _frame) { render_home_contents(_frame);  });
+		render_2d([this](page_item* _frame) { render_home_contents(_frame);  });
 	}
 
 	void wsproposal_controller::render_client_root()
 	{
-		render_visual([this](page_item* _frame) { render_client_root_contents(_frame);  });
+		render_2d([this](page_item* _frame) { render_client_root_contents(_frame);  });
 	}
 
 	void wsproposal_controller::render_client()
@@ -505,7 +506,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 
 	void wsproposal_controller::render_coverage_root()
 	{
-		render_visual([this](page_item* _frame) { render_coverage_root_contents(_frame);  });
+		render_2d([this](page_item* _frame) { render_coverage_root_contents(_frame);  });
 	}
 
 	void wsproposal_controller::render_coverage()
@@ -515,17 +516,17 @@ field id idf_carrier, which is populated when objects of this class are construc
 
 	void wsproposal_controller::render_product_template_root()
 	{
-		render_visual([this](page_item* _frame) { render_product_template_root_contents(_frame);  });
+		render_2d([this](page_item* _frame) { render_product_template_root_contents(_frame);  });
 	}
 
 	void wsproposal_controller::render_product_template()
 	{
-		render_visual([this](page_item* _frame) { render_product_template_contents(_frame);  });
+		render_mixed([this](page_item* _frame) { render_product_template_contents(_frame);  });
 	}
 
 	void wsproposal_controller::render_carrier_root()
 	{
-		render_visual([this](page_item* _frame) { render_carrier_root_contents(_frame);  });
+		render_2d([this](page_item* _frame) { render_carrier_root_contents(_frame);  });
 	}
 
 	void wsproposal_controller::render_carrier()
@@ -543,8 +544,11 @@ field id idf_carrier, which is populated when objects of this class are construc
 		relative_ptr_type class_ids1[3] = { idc_client_root, idc_carrier_root, idc_coverage_root };
 		relative_ptr_type class_ids2[2] = { idc_program_template_root, idc_system_root };
 
-		column_class(_frame, { 0.0_px, 0.0_px, 50.0_pct, 100.0_pct }, class_ids1, 3);
-		column_class(_frame, { 0.0_px, 0.0_px, 50.0_pct, 100.0_pct }, class_ids2, 2);
+		auto column1 = column(_frame, schema.idf_view_background_style, { 0.0_px, 0.0_px, 50.0_pct, 100.0_pct });
+		selects(column1, { 0.0_px, 0.0_px, 50.0_pct, 100.0_pct }, schema.idf_name, class_ids1, 3);
+
+		auto column2 = column(_frame, schema.idf_view_background_style, { 0.0_px, 0.0_px, 50.0_pct, 100.0_pct });
+		selects(column2, { 0.0_px, 0.0_px, 50.0_pct, 100.0_pct }, schema.idf_name, class_ids2, 2);
 	}
 
 	void wsproposal_controller::render_client_root_contents(page_item* _frame)
@@ -731,6 +735,9 @@ field id idf_carrier, which is populated when objects of this class are construc
 				{ schema.idf_font_size, 24.0 },
 			}
 			);
+
+		auto color_check_src = style_sheet.get_slice(schema.idf_view_style, { 0,0,0 }, true).get(schema.idf_shape_fill_color);
+		auto color_check_dest = style_sheet.get_slice(schema.idf_view_subtitle_style, { 0,0,0 }, true).get(schema.idf_shape_fill_color);
 
 		style_sheet.set(
 			schema.idf_view_style, 
@@ -960,7 +967,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 			schema.idf_view_style,
 			{ schema.idf_client_style },
 			{
-				{ schema.idf_font_name, "Arial" },
+				{ schema.idf_font_name, fontName },
 				{ schema.idf_font_size, 14.0 },
 				{ schema.idf_shape_fill_color, "#0000CCFF" },
 				{ schema.idf_shape_border_thickness, 0 },
@@ -975,7 +982,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 			schema.idf_view_style,
 			{ schema.idf_carrier_style },
 			{
-				{ schema.idf_font_name, "Arial" },
+				{ schema.idf_font_name, fontName },
 				{ schema.idf_font_size, 14.0 },
 				{ schema.idf_shape_fill_color, "#0000CCFF" },
 				{ schema.idf_shape_border_thickness, 0 },
@@ -990,7 +997,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 			schema.idf_view_style,
 			{ schema.idf_coverage_style },
 			{
-				{ schema.idf_font_name, "Arial" },
+				{ schema.idf_font_name, fontName },
 				{ schema.idf_font_size, 14.0 },
 				{ schema.idf_shape_fill_color, "#0000CCFF" },
 				{ schema.idf_shape_border_thickness, 0 },
@@ -1005,7 +1012,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 			schema.idf_view_style,
 			{ schema.idf_product_style },
 			{
-				{ schema.idf_font_name, "Arial" },
+				{ schema.idf_font_name, fontName },
 				{ schema.idf_font_size, 14.0 },
 				{ schema.idf_shape_fill_color, "#0000CCFF" },
 				{ schema.idf_shape_border_thickness, 0 },
@@ -1020,7 +1027,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 			schema.idf_view_style,
 			{ schema.idf_system_style },
 			{
-				{ schema.idf_font_name, "Arial" },
+				{ schema.idf_font_name, fontName },
 				{ schema.idf_font_size, 14.0 },
 				{ schema.idf_shape_fill_color, "#0000CCFF" },
 				{ schema.idf_shape_border_thickness, 0 },
@@ -1270,6 +1277,21 @@ field id idf_carrier, which is populated when objects of this class are construc
 			{ schema.idf_breadcrumb_bar_style },
 			{
 				{ schema.idf_shape_fill_color, "#0000CCFF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "#cfcfffFF" },
+				{ schema.idf_box_border_thickness, 1 },
+				{ schema.idf_box_border_color, "#cfcfefFF" }
+			}
+			);
+
+		style_sheet.set(
+			schema.idf_view_style,
+			{ schema.idf_breadcrumb_style },
+			{
+				{ schema.idf_font_name, fontName },
+				{ schema.idf_font_size, 14.0 },
+				{ schema.idf_shape_fill_color, "#2f2f2fFF" },
 				{ schema.idf_shape_border_thickness, 0 },
 				{ schema.idf_shape_border_color, "" },
 				{ schema.idf_box_fill_color, "#cfcfffFF" },

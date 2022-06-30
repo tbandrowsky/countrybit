@@ -2693,7 +2693,7 @@ namespace corona
 		{
 			if (_src_slice.class_id == class_id) 
 			{
-				std::copy(_src_slice.get_bytes(), _src_slice.get_bytes() + size(), get_bytes());
+				std::copy(_src_slice.get_bytes(), _src_slice.get_bytes() + size_bytes(), get_bytes());
 			}
 			else 
 			{
@@ -2712,6 +2712,15 @@ namespace corona
 					}
 				}
 			}
+		}
+
+		const char* jobject::get_name(relative_ptr_type field_id)
+		{
+			int idx = get_field_index_by_id(field_id);
+			if (idx > null_row) {
+				return get_string(idx).c_str();
+			}
+			return get_class().item().description;
 		}
 		
 		std::partial_ordering  jobject::compare(int _dst_idx, jobject& _src_slice, int _src_idx)
@@ -3498,7 +3507,7 @@ namespace corona
 				idf_column_data_style,idf_label_style,idf_control_style,idf_chart_axis_style,idf_chart_legend_style,idf_chart_block_style,idf_tooltip_style,
 				idf_error_style, idf_client_style, idf_carrier_style, idf_coverage_style, idf_home_style, idf_system_style, idf_login_style, idf_product_style,
 				idf_company_a1_style, idf_company_a2_style, idf_company_a3_style, idf_company_b1_style, idf_company_b2_style, idf_company_b3_style, idf_company_c1_style, idf_company_c2_style, idf_company_c3_style,idf_company_d1_style, idf_company_d2_style, idf_company_d3_style, 
-				idf_company_deductible_style, idf_company_neutral1_style, idf_company_neutral2_style, idf_header_area_style, idf_title_bar_style, idf_subtitle_bar_style, idf_breadcrumb_bar_style };
+				idf_company_deductible_style, idf_company_neutral1_style, idf_company_neutral2_style, idf_header_area_style, idf_title_bar_style, idf_subtitle_bar_style, idf_breadcrumb_bar_style, idf_breadcrumb_style };
 			pcr.field_id_primary_key = idf_style_sheet;
 			idc_style_sheet = put_class(pcr);
 
