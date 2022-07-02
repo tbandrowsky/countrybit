@@ -2136,6 +2136,9 @@ namespace corona
 			{
 				auto pi = piter.item;
 
+				if (pi.is_drawable() || pi.layout == layout_types::canvas2d)
+					continue;
+
 				switch (pi.layout)
 				{
 				case database::layout_types::canvas2d:

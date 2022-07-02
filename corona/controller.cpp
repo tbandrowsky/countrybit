@@ -178,26 +178,38 @@ namespace corona
 
 		void corona_controller::mouseClick(point* _point)
 		{
-			auto select_item_iter = pg.where([this, _point](const auto& pi) { return pi.item.is_select() && rectangle_math::contains(pi.item.bounds, _point->x, _point->y); });
+			auto clicked_items = pg.where([this, _point](const auto& pi) { return pi.item.is_command() && rectangle_math::contains(pi.item.bounds, _point->x, _point->y); });
 			auto size = host->getWindowPos(0);
 
 #if TRACE_CONTROLLER
 			std::cout << std::format("clicked {},{}", _point->x, _point->y) << std::endl;
 #endif 
 
-			if (select_item_iter != std::end(pg)) 
+			if (clicked_items != std::end(pg))
 			{
-				auto select_item = select_item_iter.get_object();
+				auto clicked_item = clicked_items.get_object();
 
 #if TRACE_CONTROLLER
-				std::cout << std::format("{} selected", select_item.item.id) << std::endl;
+				std::cout << std::format("{} clicked", clicked_item.item.id) << std::endl;
 #endif 
 
+				if (clicked_item.item.is_select())
+				{
+
 #if TRACE_CONTROLLER
-				state = this->program_chart.select_object(select_item.item.select_request, "selected via mouse click");
+					state = this->program_chart.select_object(clicked_item.item.select_request, "selected via mouse click");
 #else
-				state = this->program_chart.select_object(select_item.item.select_request);
+					state = this->program_chart.select_object(select_clicked_itemitem.item.select_request);
 #endif
+				}
+				else if (clicked_item.item.is_create())
+				{
+#if TRACE_CONTROLLER
+					state = this->program_chart.create_object(clicked_item.item.create_request, "created via mouse click");
+#else
+					state = this->program_chart.create_object(select_clicked_itemitem.item.create_request);
+#endif
+				}
 
 				stateChanged(size);
 			}

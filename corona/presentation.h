@@ -76,6 +76,17 @@ namespace corona
 			{
 				return layout == layout_types::select || layout == layout_types::select_cell || layout == layout_types::navigate;
 			}
+
+			bool is_create()
+			{
+				return layout == layout_types::create;
+			}
+
+			bool is_command()
+			{
+				return is_create() || is_select();
+			}
+
 		};
 
 		class page : public iarray<page_item, 1024>
