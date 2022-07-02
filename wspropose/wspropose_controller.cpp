@@ -99,7 +99,7 @@ namespace proposal
 		pcr.class_name = "home";
 		pcr.class_description = "Application Home";
 		pcr.field_id_primary_key = idf_home;
-		pcr.member_fields = { idf_home };
+		pcr.member_fields = { idf_home, schema.idf_style_id };
 		idc_home = schema.put_class(pcr);
 
 		/* This is the client root class. Objects of the class have a layout and accept the client home id as a relation.  There is also 
@@ -107,7 +107,7 @@ namespace proposal
 		pcr.class_name = "client_root";
 		pcr.class_description = "Clients";
 		pcr.field_id_primary_key = idf_client_root;
-		pcr.member_fields = { idf_client_root, idf_home, schema.idf_layout_rect, schema.idf_search_string };
+		pcr.member_fields = { idf_client_root, idf_home, schema.idf_search_string, schema.idf_style_id };
 		idc_client_root = schema.put_class(pcr);
 
 		/* This is the client class. Objects of the class have client things like name and address.  The primary key is the 
@@ -126,7 +126,7 @@ namespace proposal
 		pcr.class_name = "carrier_root";
 		pcr.class_description = "Carriers";
 		pcr.field_id_primary_key = idf_carrier_root;
-		pcr.member_fields = { idf_carrier_root, idf_home, schema.idf_layout_rect, schema.idf_search_string };
+		pcr.member_fields = { idf_carrier_root, idf_home, schema.idf_search_string, schema.idf_style_id };
 		idc_carrier_root = schema.put_class(pcr);
 
 		/* This is the carrier class. Objects of the class have client things like name and address.  The primary key is the
@@ -141,7 +141,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 		pcr.class_name = "coverage_root";
 		pcr.class_description = "Coverages";
 		pcr.field_id_primary_key = idf_coverage_root;
-		pcr.member_fields = { idf_coverage_root, idf_home, schema.idf_layout_rect, schema.idf_search_string };
+		pcr.member_fields = { idf_coverage_root, idf_home, schema.idf_search_string, schema.idf_style_id };
 		idc_coverage_root = schema.put_class(pcr);
 
 		pcr.class_name = "coverage";
@@ -153,20 +153,20 @@ field id idf_carrier, which is populated when objects of this class are construc
 		pcr.class_name = "system_root";
 		pcr.class_description = "System Settings";
 		pcr.field_id_primary_key = idf_system_root;
-		pcr.member_fields = { idf_system_root, idf_home, schema.idf_layout_rect, schema.idf_search_string };
+		pcr.member_fields = { idf_system_root, idf_home, schema.idf_search_string, schema.idf_style_id };
 		idc_system_root = schema.put_class(pcr);
 
 		pcr.class_name = "program_templates";
 		pcr.class_description = "Program Templates";
 		pcr.field_id_primary_key = idf_program_template_root;
-		pcr.member_fields = { idf_program_template_root, idf_home, schema.idf_layout_rect, schema.idf_search_string };
+		pcr.member_fields = { idf_program_template_root, idf_home, schema.idf_search_string, schema.idf_style_id };
 		idc_program_template_root = schema.put_class(pcr);
 
 		pcr.class_name = "program_template";
 		pcr.class_description = "Program Template";
 		pcr.field_id_primary_key = idf_program_template;
-		pcr.member_fields = { idf_program_template_root, idf_program_template, idf_home, schema.idf_layout_rect };
-		idc_program_template_root = schema.put_class(pcr);
+		pcr.member_fields = { idf_program_template_root, idf_program_template, idf_home };
+		idc_program_template = schema.put_class(pcr);
 
 		pcr.class_name = "program";
 		pcr.class_description = "Program";
@@ -177,7 +177,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 		pcr.class_name = "product";
 		pcr.class_description = "Product";
 		pcr.field_id_primary_key = idf_product;
-		pcr.member_fields = { idf_product, idf_program, idf_client, idf_program_style, schema.idf_layout_rect };
+		pcr.member_fields = { idf_product, idf_program, idf_client, idf_program_style };
 		idc_product = schema.put_class(pcr);
 
 		pcr.class_name = "product_item_base";
@@ -279,6 +279,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 		jm.select_always(&schema, idc_coverage);
 		jm.select_always(&schema, idc_client_root);
 		jm.select_always(&schema, idc_client);
+		jm.select_always(&schema, idc_system_root);
 		jm.select_always(&schema, idc_program);
 		jm.select_always(&schema, idc_product);
 		jm.select_always(&schema, idc_program_chart_slide);
@@ -319,6 +320,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 						{ idc_coverage_root, 1 },
 						{ idc_program_template_root, 1 },
 						{ idc_client_root, 1 },
+						{ idc_system_root, 1 },
 						{ idc_client, 2 },
 						{ idc_carrier, 2 },
 						{ idc_coverage, 2 },
@@ -356,19 +358,12 @@ field id idf_carrier, which is populated when objects of this class are construc
 
 		set_style_sheet();
 
-		map_style(idc_home, schema.idf_home_style);
-		map_style(idc_client_root, schema.idf_client_style);
-		map_style(idc_carrier_root, schema.idf_carrier_style);
-		map_style(idc_coverage_root, schema.idf_coverage_style);
-		map_style(idc_program_template_root, schema.idf_product_style);
-		map_style(idc_system_root, schema.idf_system_style);
-
-		program_chart.create_object(null_row, sample_actor.actor_id, idc_home, id_home);
-		program_chart.create_object(null_row, sample_actor.actor_id, idc_carrier_root, id_carrier_root, { { idf_home , id_home }});
-		program_chart.create_object(null_row, sample_actor.actor_id, idc_coverage_root, id_coverage_root, { { idf_home, id_home } });
-		program_chart.create_object(null_row, sample_actor.actor_id, idc_client_root, id_client_root, { { idf_home, id_home } });
-		program_chart.create_object(null_row, sample_actor.actor_id, idc_program_template_root, id_product_template_root, { { idf_home, id_home } });
-		program_chart.create_object(null_row, sample_actor.actor_id, idc_system_root, id_system_root, { { idf_home, id_home } });
+		program_chart.create_object(null_row, sample_actor.actor_id, idc_home, id_home, { { schema.idf_style_id, schema.idf_home_style } });
+		program_chart.create_object(null_row, sample_actor.actor_id, idc_carrier_root, id_carrier_root, { { idf_home , id_home }, { schema.idf_style_id, schema.idf_client_style } });
+		program_chart.create_object(null_row, sample_actor.actor_id, idc_coverage_root, id_coverage_root, { { idf_home, id_home }, { schema.idf_style_id, schema.idf_coverage_style } });
+		program_chart.create_object(null_row, sample_actor.actor_id, idc_client_root, id_client_root, { { idf_home, id_home }, { schema.idf_style_id, schema.idf_client_style } });
+		program_chart.create_object(null_row, sample_actor.actor_id, idc_program_template_root, id_product_template_root, { { idf_home, id_home }, { schema.idf_style_id, schema.idf_product_style } });
+		program_chart.create_object(null_row, sample_actor.actor_id, idc_system_root, id_system_root, { { idf_home, id_home }, { schema.idf_style_id, schema.idf_system_style} });
 		
 		// get our initial state
 		state = program_chart.get_actor_state(sample_actor.actor_id);
@@ -409,37 +404,35 @@ field id idf_carrier, which is populated when objects of this class are construc
 		auto title_bar = row(header_area, schema.idf_title_bar_style, { 0.0_px, 0.0_px, 100.0_pct, 50.0_px });
 		auto subtitle_bar = row(header_area, schema.idf_subtitle_bar_style, { 0.0_px, 0.0_px, 100.0_pct, 50.0_px });
 		auto breadcrumb_bar = row(header_area, schema.idf_breadcrumb_bar_style, { 0.0_px, 0.0_px, 100.0_pct, 50.0_px });
-
-		text(title_bar, schema.idf_view_title_style, _title, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct});
-		text(subtitle_bar, schema.idf_view_subtitle_style, _subtitle, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
 		breadcrumbs(breadcrumb_bar, [this](jobject& _item) {
 			return _item.get_name(schema.idf_name);
 			}, { 0.0_px, 0.0_px, 200.0_px, 100.0_pct });
+
+		text(title_bar, schema.idf_view_title_style, _title, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct});
+		text(subtitle_bar, schema.idf_view_subtitle_style, _subtitle, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
+
 	}
 
 	void wsproposal_controller::render_form(std::function<void(page_item* _frame)> _contents)
 	{
 		clear();
 
-		auto mainr = row(nullptr, null_row);
-
-		auto d2drow = column(mainr, null_row, { 0.0_px,0.0_px,100.0_pct,100.0_pct });
+		auto mainr = column(nullptr, null_row);
+		auto d2drow = canvas2d(mainr, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 150.0_px });
 		auto controlrow = row(mainr, null_row, { 0.0_px,0.0_px,100.0_pct,100.0_pct });
-		auto controlcolumn = column(mainr, null_row, { 20.0_pct,0.0_px,60.0_pct,100.0_pct });
-
-		auto d2dwin = canvas2d(d2drow, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
-		auto d2dwin_area = column(d2dwin, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
+		auto controlcol1 = column(controlrow, null_row, { 25.0_pct,0.0_px,50.0_pct,100.0_pct });
 
 		const char* object_title = nullptr;
 		object_title = schema.get_class(state.actor.current_view_class_id).item().description;
 
-		render_header(d2dwin_area, application_title, object_title, true);
+		render_header(d2drow, application_title, object_title, true);
 
 		// editable controls on the left
-		add_update_fields(controlcolumn);
-		add_create_buttons(controlcolumn);
+		add_update_fields(controlcol1);
+		add_create_buttons(controlcol1);
 
-		_contents(d2dwin_area);
+		_contents(controlrow);
+
 	}
 
 
@@ -448,23 +441,19 @@ field id idf_carrier, which is populated when objects of this class are construc
 		clear();
 
 		auto mainr = row(nullptr, null_row);
-		auto d2drow = column(mainr, null_row, { 0.0_px,0.0_px,100.0_pct,25.0_pct });
-		auto controlrow = column(mainr, null_row, { 0.0_px,0.0_px,100.0_pct,75.0_pct });
-		auto d2dwin = canvas2d(d2drow, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
-		auto d2dwin_area = column(d2dwin, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
+		auto d2dcol = column(mainr, null_row, { 0.0_px,0.0_px,100.0_pct,100.0_pct });
+		auto d2dwin = canvas2d(d2dcol, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
+		auto d2darea = column(d2dwin, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
 
 		const char* object_title = nullptr;
 		object_title = schema.get_class(state.actor.current_view_class_id).item().description;
 
-		render_header(d2dwin_area, application_title, object_title, false);
+		render_header(d2darea, application_title, object_title, false);
 
-		auto client_area = row(d2dwin_area, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
-
+		auto client_area = row(d2darea, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
 		_contents(client_area);
-
-		// editable controls on the left
-		add_update_fields(controlrow);
-		add_create_buttons(controlrow);
+		auto d2dcommandbar = row(d2darea, schema.idf_breadcrumb_bar_style, { 0.0_px, 0.0_px, 100.0_pct, 50.0_px });
+		add_create_buttons(d2dcommandbar);
 
 	}
 
@@ -473,20 +462,26 @@ field id idf_carrier, which is populated when objects of this class are construc
 		clear();
 
 		auto mainr = row(nullptr, null_row);
-		auto controlcolumn = column(mainr, null_row, { 0.0_px,0.0_px,25.0_pct,100.0_pct });
-		auto d2dcolumn = column(mainr, null_row, { 0.0_px,0.0_px,75.0_pct,100.0_pct });
-		auto d2dwin = canvas2d(d2dcolumn, schema.idf_view_background_style, { 0.0_px,0.0_px,100.0_pct,100.0_pct });
+		auto d2dwin = canvas2d(mainr, schema.idf_view_background_style, { 0.0_px, 0.0_px, 75.0_pct, 100.0_pct });
+		auto control = canvas2d(mainr, schema.idf_view_background_style, { 0.0_px, 0.0_px, 25.0_pct, 100.0_pct });
+		auto d2darea = column(d2dwin, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
 
-		object_description object_title;
+		auto contcol = column(mainr, null_row, { 0.0_px,0.0_px,300.0_px,100.0_pct });
+
+		const char* object_title = nullptr;
 		object_title = schema.get_class(state.actor.current_view_class_id).item().description;
 
-		render_header(d2dwin, application_title, object_title, false);
+		render_header(d2darea, application_title, object_title, false);
+
+		auto client_area = row(d2darea, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
+		_contents(client_area);
+
+		auto d2dcommandbar = row(d2darea, schema.idf_breadcrumb_bar_style, { 0.0_px, 0.0_px, 100.0_pct, 50.0_px });
+		add_create_buttons(d2dcommandbar);
 
 		// editable controls on the left
-		add_update_fields(controlcolumn);
-		add_create_buttons(controlcolumn);
-
-		_contents(d2dwin);
+		add_update_fields(contcol);
+		clear();
 	}
 
 	void wsproposal_controller::render_home()
@@ -529,6 +524,11 @@ field id idf_carrier, which is populated when objects of this class are construc
 		render_2d([this](page_item* _frame) { render_carrier_root_contents(_frame);  });
 	}
 
+	void wsproposal_controller::render_system_root()
+	{
+		render_2d([this](page_item* _frame) { render_carrier_root_contents(_frame);  });
+	}
+
 	void wsproposal_controller::render_carrier()
 	{
 		render_form([this](page_item* _frame) { render_carrier_contents(_frame);  });
@@ -544,11 +544,13 @@ field id idf_carrier, which is populated when objects of this class are construc
 		relative_ptr_type class_ids1[3] = { idc_client_root, idc_carrier_root, idc_coverage_root };
 		relative_ptr_type class_ids2[2] = { idc_program_template_root, idc_system_root };
 
-		auto column1 = column(_frame, schema.idf_view_background_style, { 0.0_px, 0.0_px, 50.0_pct, 100.0_pct });
-		selects(column1, { 0.0_px, 0.0_px, 50.0_pct, 100.0_pct }, schema.idf_name, class_ids1, 3);
+		auto d2darea = row(_frame, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
 
-		auto column2 = column(_frame, schema.idf_view_background_style, { 0.0_px, 0.0_px, 50.0_pct, 100.0_pct });
-		selects(column2, { 0.0_px, 0.0_px, 50.0_pct, 100.0_pct }, schema.idf_name, class_ids2, 2);
+		auto column1 = column(d2darea, schema.idf_view_background_style, { 0.0_px, 0.0_px, 50.0_pct, 100.0_pct });
+		selects(column1, schema.idf_company_neutral1_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_px }, schema.idf_name, class_ids1, 3);
+
+		auto column2 = column(d2darea, schema.idf_view_background_style, { 0.0_px, 0.0_px, 50.0_pct, 100.0_pct });
+		selects(column2, schema.idf_company_neutral1_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_px }, schema.idf_name, class_ids2, 2);
 	}
 
 	void wsproposal_controller::render_client_root_contents(page_item* _frame)
@@ -660,6 +662,22 @@ field id idf_carrier, which is populated when objects of this class are construc
 		{
 			render_product_template();
 		}
+		else if (state.actor.current_view_class_id == idc_coverage_root)
+		{
+			render_coverage_root();
+		}
+		else if (state.actor.current_view_class_id == idc_coverage)
+		{
+			render_coverage();
+		}
+		else if (state.actor.current_view_class_id == idc_program_template)
+		{
+			render_product_template();
+		}
+		else if (state.actor.current_view_class_id == idc_program)
+		{
+			render_program();
+		}
 		else if (state.actor.current_view_class_id == idc_carrier_root)
 		{
 			render_carrier_root();
@@ -668,9 +686,9 @@ field id idf_carrier, which is populated when objects of this class are construc
 		{
 			render_carrier();
 		}
-		else if (state.actor.current_view_class_id == idc_program)
+		else if (state.actor.current_view_class_id == idc_system_root)
 		{
-			render_program();
+			render_system_root();
 		}
 
 		arrange(newSize.w, newSize.h);

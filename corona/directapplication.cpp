@@ -5,7 +5,7 @@
 
 #ifdef WINDESKTOP_GUI
 
-#define TRACE_GUI 1
+//#define TRACE_GUI 1
 #define OUTLINE_GUI 1
 
 #if TRACE_GUI
@@ -105,9 +105,15 @@ namespace corona
 			std::cout << "createRenderTarget: " << size.width << ", " << size.height << std::endl;
 #endif
 
-			HRESULT hr = factory->getD2DFactory()->CreateHwndRenderTarget(D2D1::RenderTargetProperties(), D2D1::HwndRenderTargetProperties(hwnd, size), &hwndRenderTarget);
+			D2D1_RENDER_TARGET_PROPERTIES rtps = D2D1::RenderTargetProperties(D2D1_RENDER_TARGET_TYPE_HARDWARE);
+			D2D1_HWND_RENDER_TARGET_PROPERTIES hrtps = D2D1::HwndRenderTargetProperties(hwnd, size);
+
+			HRESULT hr = factory->getD2DFactory()->CreateHwndRenderTarget(rtps, hrtps, &hwndRenderTarget);
 			renderTarget = hwndRenderTarget;
 			throwOnFail(hr, "Could not create render target");
+
+			size_dips = renderTarget->GetSize();
+			size_pixels = renderTarget->GetPixelSize();
 
 			return SUCCEEDED(hr);
 		}
@@ -1216,6 +1222,8 @@ namespace corona
 			controlFont = nullptr;
 			labelFont = nullptr,
 			titleFont = nullptr;
+			dpiScale = 1.0;
+			disableChangeProcessing = false;
 
 			ZeroMemory(&ofn, sizeof(ofn));
 		}
@@ -1223,6 +1231,14 @@ namespace corona
 		directApplication::~directApplication()
 		{
 
+		}
+
+		point direct2dContext::getLayoutSize()
+		{
+			point fsize;
+			fsize.x = size_dips.width;
+			fsize.y = size_dips.height;
+			return fsize;
 		}
 
 		point direct2dContext::getSize()
@@ -1950,6 +1966,11 @@ namespace corona
 
 			HWND hwnd = nullptr;
 
+			x /= dpiScale;
+			y /= dpiScale;
+			nWidth /= dpiScale;
+			nHeight /= dpiScale;
+
 			if (windowControlMap.contains(windowId)) 
 			{
 				auto wcmi = windowControlMap[windowId];
@@ -2098,6 +2119,8 @@ namespace corona
 
 		int directApplication::renderPage(database::page& _page, database::jschema* _schema, database::actor_state& _state, database::jcollection& _collection)
 		{
+			disableChangeProcessing = true;
+
 			HFONT oldControlFont = controlFont;
 			HFONT oldLabelFont = labelFont;
 			HFONT oldTitleFont = titleFont;
@@ -2195,6 +2218,8 @@ namespace corona
 			if (oldLabelFont) DeleteObject(oldLabelFont);
 			if (oldTitleFont) DeleteObject(oldTitleFont);
 
+			disableChangeProcessing = false;
+
 			return canvasWindowId;
 		}
 
@@ -2212,6 +2237,7 @@ namespace corona
 			{
 			case WM_CREATE:
 				this->hwndDirect2d = hwnd;
+				dpiScale = 96.0 / GetDpiForWindow(hwnd); 
 				break;
 			case WM_SWITCH_CONTROLLER:
 				setController((controller*)lParam);
@@ -2245,15 +2271,15 @@ namespace corona
 				// <------------mouse management------------------->
 
 			case WM_LBUTTONDOWN:
-				point.x = GET_X_LPARAM(lParam);
-				point.y = GET_Y_LPARAM(lParam);
+				point.x = GET_X_LPARAM(lParam) * dpiScale;
+				point.y = GET_Y_LPARAM(lParam) * dpiScale;
 				if (currentController)
 					currentController->mouseClick(&point);
 				break;
 
 			case WM_MOUSEMOVE:
-				point.x = GET_X_LPARAM(lParam);
-				point.y = GET_Y_LPARAM(lParam);
+				point.x = GET_X_LPARAM(lParam) * dpiScale;
+				point.y = GET_Y_LPARAM(lParam) * dpiScale;
 				if (currentController)
 					currentController->mouseMove(&point);
 				break;
@@ -2392,7 +2418,7 @@ namespace corona
 				PostQuitMessage(0);
 				return 0;
 			case WM_COMMAND:
-				if (currentController)
+				if (currentController && !disableChangeProcessing)
 				{
 					UINT controlId = LOWORD(wParam);
 					UINT notificationCode = HIWORD(wParam);
@@ -2413,8 +2439,22 @@ namespace corona
 					}
 					break;
 				}
-			case WM_NOTIFY:
+				break;
+			case WM_DPICHANGED:
 				if (currentController)
+				{
+					RECT* const prcNewWindow = (RECT*)lParam;
+					SetWindowPos(hwnd,
+						NULL,
+						prcNewWindow->left,
+						prcNewWindow->top,
+						prcNewWindow->right - prcNewWindow->left,
+						prcNewWindow->bottom - prcNewWindow->top,
+						SWP_NOZORDER | SWP_NOACTIVATE);				
+				}
+				break;
+			case WM_NOTIFY:
+				if (currentController && !disableChangeProcessing)
 				{
 					//LVN_ITEMACTIVATE
 					LPNMHDR lpnm = (LPNMHDR)lParam;
@@ -2587,12 +2627,13 @@ namespace corona
 				break;
 			case WM_SIZE:
 				if (currentController) {
+					dpiScale = 96.0 / GetDpiForWindow(hwnd);
 					rectangle rect;
 					rect.x = 0;
 					rect.y = 0;
-					rect.w = LOWORD(lParam);
-					rect.h = HIWORD(lParam);
-					currentController->onResize(rect);
+					rect.w = LOWORD(lParam) * dpiScale;
+					rect.h = HIWORD(lParam) * dpiScale;
+					currentController->onResize(rect, dpiScale);
 				}
 				break;
 			}
@@ -3339,7 +3380,8 @@ namespace corona
 
 			::GetWindowRect(control, &r);
 
-			if (ddlControlId >= 0) {
+			if (ddlControlId >= 0) 
+			{
 				::ScreenToClient(hwndRoot, (LPPOINT)&r.left);
 				::ScreenToClient(hwndRoot, (LPPOINT)&r.right);
 			}
@@ -3348,6 +3390,13 @@ namespace corona
 			rd.y = r.top;
 			rd.w = r.right - r.left;
 			rd.h = r.bottom - r.top;
+
+			dpiScale = 96.0 / GetDpiForWindow(hwndRoot);
+
+			rd.x *= dpiScale;
+			rd.y *= dpiScale;
+			rd.w *= dpiScale;
+			rd.h *= dpiScale;
 
 			return rd;
 		}

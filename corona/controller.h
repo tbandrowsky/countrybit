@@ -53,7 +53,7 @@ namespace corona
 			virtual void onListViewChanged(int listViewId, page_item pi) = 0;
 			virtual int onHScroll(int controlId, scrollTypes scrollType, page_item pi) = 0;
 			virtual int onVScroll(int controlId, scrollTypes scrollType, page_item pi) = 0;
-			virtual int onResize(const rectangle& newSize) = 0;
+			virtual int onResize(const rectangle& newSize, double d2dScale) = 0;
 			virtual int onSpin(int controlId, int newPosition, page_item pi) = 0;
 		};
 
@@ -128,8 +128,6 @@ namespace corona
 
 			virtual void clear();
 
-			void map_style(relative_ptr_type _class_id, relative_ptr_type _style_id);
-
 			page_item* row(page_item* _parent, relative_ptr_type _style_id, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
 			page_item* column(page_item* _parent, relative_ptr_type _style_id, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
 			page_item* absolute(page_item* _parent, relative_ptr_type _style_id, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
@@ -144,10 +142,10 @@ namespace corona
 			virtual void for_join(jobject& _join_parent, relative_ptr_type* _join_fields, std::function<bool( actor_view_object& avo)>  updator);
 			virtual void for_common(relative_ptr_type* _common_field_list, std::function<bool( actor_view_object& avo)>  updator);
 
-			virtual page_item * selects(page_item* _parent_ui, layout_rect _box, relative_ptr_type _id_name, std::function<bool(const actor_view_collection::iterator_item_type& _item)> selector);
-			virtual page_item* selects(page_item* _parent_ui, layout_rect _box, relative_ptr_type _id_name, relative_ptr_type *class_ids, int _length);
-			virtual page_item* selects(page_item* _parent_ui, layout_rect _box, relative_ptr_type _id_name, jobject& _parent, relative_ptr_type* _join_fields);
-			virtual page_item* selects(page_item* _parent_ui, layout_rect _box, relative_ptr_type _id_name, relative_ptr_type* _has_field_list);
+			virtual page_item * selects(page_item* _parent_ui, relative_ptr_type _style_id, layout_rect _box, relative_ptr_type _id_name, std::function<bool(const actor_view_collection::iterator_item_type& _item)> selector);
+			virtual page_item* selects(page_item* _parent_ui, relative_ptr_type _style_id, layout_rect _box, relative_ptr_type _id_name, relative_ptr_type *class_ids, int _length);
+			virtual page_item* selects(page_item* _parent_ui, relative_ptr_type _style_id, layout_rect _box, relative_ptr_type _id_name, jobject& _parent, relative_ptr_type* _join_fields);
+			virtual page_item* selects(page_item* _parent_ui, relative_ptr_type _style_id, layout_rect _box, relative_ptr_type _id_name, relative_ptr_type* _has_field_list);
 
 			virtual void breadcrumbs(page_item* _parent, std::function<const char* (jobject& slice)> _captioner, layout_rect _item_box = { 0.0_px, 0.0_px, 200.0_px, 100.0_px });
 
@@ -179,7 +177,7 @@ namespace corona
 			virtual void onListViewChanged(int listViewId, page_item pi);
 			virtual int onHScroll(int controlId, scrollTypes scrollType, page_item pi);
 			virtual int onVScroll(int controlId, scrollTypes scrollType, page_item pi);
-			virtual int onResize(const rectangle& newSize);
+			virtual int onResize(const rectangle& newSize, double dpi);
 			virtual int onSpin(int controlId, int newPosition, page_item pi);
 
 		};

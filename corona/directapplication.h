@@ -33,7 +33,10 @@ namespace corona
 
 		class direct2dContext : public drawableHost {
 		protected:
+
 			SIZE size;
+			D2D1_SIZE_F size_dips;
+			D2D1_SIZE_U size_pixels;
 
 			std::map<std::string, bitmap*> bitmaps;
 			std::map<std::string, deviceDependentAssetBase*> brushes;
@@ -68,6 +71,7 @@ namespace corona
 			inline direct2dFactory* getFactory() { return factory; }
 			inline ID2D1RenderTarget* getRenderTarget() { return renderTarget; }
 
+			virtual point getLayoutSize();
 			virtual point getSize();
 
 			virtual void clear(color* _color);
@@ -196,6 +200,8 @@ namespace corona
 					labelFont,
 					titleFont;
 
+			double dpiScale;
+
 			void loadStyleSheet();
 
 			HFONT createFontFromStyleSheet(relative_ptr_type _style_id);
@@ -216,6 +222,7 @@ namespace corona
 
 			void destroyChildren();
 
+			bool disableChangeProcessing;
 
 		public:
 

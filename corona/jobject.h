@@ -1298,6 +1298,8 @@ namespace corona
 			relative_ptr_type idc_style_sheet;
 			relative_ptr_type idf_style_sheet;
 
+			relative_ptr_type idf_style_id;
+
 			relative_ptr_type idc_user_class_root;
 			relative_ptr_type idf_user_class_root;
 

@@ -8,6 +8,8 @@ int __stdcall WinMain(HINSTANCE hInstance,
 	LPSTR  lpszCmdParam,
 	int    nCmdShow)
 {
+	
+	auto dpiResult = ::SetProcessDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 );
 
 	corona::win32::EnableGuiStdOuts();
 

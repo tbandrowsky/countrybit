@@ -105,6 +105,7 @@ namespace proposal
 		void render_product_template_root();
 		void render_product_template();
 		void render_carrier_root();
+		void render_system_root();
 		void render_carrier();
 		void render_program();
 
@@ -112,6 +113,7 @@ namespace proposal
 		void render_client_root_contents(page_item* _frame);
 		void render_client_contents(page_item* _frame);
 		void render_coverage_root_contents(page_item* _frame);
+		void render_system_root_contents(page_item* _frame);
 		void render_coverage_contents(page_item* _frame);
 		void render_product_template_root_contents(page_item* _frame);
 		void render_product_template_contents(page_item* _frame);

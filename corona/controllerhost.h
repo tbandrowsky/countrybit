@@ -11,6 +11,7 @@ namespace corona
 		class drawableHost {
 		public:
 
+			virtual point getLayoutSize() = 0;
 			virtual void beginDraw() = 0;
 			virtual void endDraw() = 0;
 			virtual void clear(color* _color) = 0;

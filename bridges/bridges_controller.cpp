@@ -79,12 +79,9 @@ namespace bridges
 
 		set_style_sheet();
 
-		map_style(idc_home, schema.idf_home_style);
-		map_style(idc_carrier_root, schema.idf_carrier_style);
-
 		}
 
-			bridges_controller::~bridges_controller()
+		bridges_controller::~bridges_controller()
 		{
 			;
 		}

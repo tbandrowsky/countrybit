@@ -3,6 +3,8 @@
 
 #ifdef WINDESKTOP_GUI
 
+#define TRACE_CONTROLLER 1
+
 namespace corona
 {
 	namespace win32
@@ -51,9 +53,11 @@ namespace corona
 			enableEditMessages = false;
 
 			auto pos = host->getWindowPos(0);
-			host->setMinimumWindowSize(point{ pos.w - pos.x, pos.h - pos.y });
+
+//			host->setMinimumWindowSize(point{ pos.w - pos.x, pos.h - pos.y });
 
 			state = program_chart.get_actor_state(actor_id);
+
 			stateChanged(pos);
 
 			enableEditMessages = true;
@@ -158,15 +162,8 @@ namespace corona
 			return 0;
 		}
 
-		int corona_controller::onResize(const rectangle& newSize)
+		int corona_controller::onResize(const rectangle& newSize, double d2dScale)
 		{
-			rectangle r = host->getWindowPos(canvasWindowsId);
-
-			r.w = newSize.w - (r.x + 32);
-			r.h = newSize.h - (r.y + 32);
-
-			host->setWindowPos(canvasWindowsId, r);
-
 			setScrollBars();
 
 			state = program_chart.get_actor_state(state.actor_id, null_row, "state");
@@ -181,14 +178,27 @@ namespace corona
 
 		void corona_controller::mouseClick(point* _point)
 		{
-			auto select_item_iter = pg.where([this, _point](const auto& pi) { return pi.item.is_drawable() && rectangle_math::contains(pi.item.bounds, _point->x, _point->y); });
+			auto select_item_iter = pg.where([this, _point](const auto& pi) { return pi.item.is_select() && rectangle_math::contains(pi.item.bounds, _point->x, _point->y); });
 			auto size = host->getWindowPos(0);
+
+#if TRACE_CONTROLLER
+			std::cout << std::format("clicked {},{}", _point->x, _point->y) << std::endl;
+#endif 
 
 			if (select_item_iter != std::end(pg)) 
 			{
 				auto select_item = select_item_iter.get_object();
-				std::cout << std::format("{} selected", select_item.item.id);
+
+#if TRACE_CONTROLLER
+				std::cout << std::format("{} selected", select_item.item.id) << std::endl;
+#endif 
+
+#if TRACE_CONTROLLER
+				state = this->program_chart.select_object(select_item.item.select_request, "selected via mouse click");
+#else
 				state = this->program_chart.select_object(select_item.item.select_request);
+#endif
+
 				stateChanged(size);
 			}
 		}
@@ -244,7 +254,9 @@ namespace corona
 		{
 			auto command_item = pi.create_request;
 
+#if TRACE_CONTROLLER
 			std::cout << "Create " << buttonId << std::endl;
+#endif
 
 			state = this->program_chart.create_object(command_item, "Create Item");
 			auto size = host->getWindowPos(0);
@@ -399,11 +411,6 @@ namespace corona
 			pg.clear();
 		}
 
-		void corona_controller::map_style(relative_ptr_type _class_id, relative_ptr_type _style_id)
-		{
-			pg.map_style(_class_id, style_name(_style_id));
-		}
-
 		const char* corona_controller::style_name(relative_ptr_type _style_field_id)
 		{
 			const char *r = nullptr;
@@ -455,53 +462,73 @@ namespace corona
 			return pg.canvas2d(_parent, _style_name, _box);
 		}
 
-		page_item* corona_controller::selects(page_item* _parent_ui, layout_rect _box, relative_ptr_type _id_name, std::function<bool(const actor_view_collection::iterator_item_type& _item)> selector)
+		page_item* corona_controller::selects(page_item* _parent_ui, relative_ptr_type _style_id, layout_rect _box, relative_ptr_type _id_name, std::function<bool(const actor_view_collection::iterator_item_type& _item)> selector)
 		{
 			auto* page_add = &pg;
 			auto* st = &state;
 			auto* pbox = &_box;
-			for_each(selector, [pbox, st, page_add, this, _id_name, _parent_ui]( actor_view_object& avo)
+			for_each(selector, [pbox, st, page_add, this, _id_name, _parent_ui, _style_id]( actor_view_object& avo)
 				{
-					page_add->select(_parent_ui, st, avo.object_id, _id_name, avo.object, *pbox);
+					auto style_id = _style_id;
+					if (avo.object.has_field(schema.idf_style_sheet)) {
+						style_id = avo.object.get_int64(schema.idf_style_sheet, true);
+					}
+					const char *style_name = this->style_name(style_id);
+					page_add->select(_parent_ui, st, avo.object_id, _id_name, avo.object, style_name, *pbox);
 					return true;
 				});
 			return _parent_ui;
 		}
 
-		page_item* corona_controller::selects(page_item* _parent_ui, layout_rect _box, relative_ptr_type _id_name, relative_ptr_type *_class_ids, int _length)
+		page_item* corona_controller::selects(page_item* _parent_ui, relative_ptr_type _style_id, layout_rect _box, relative_ptr_type _id_name, relative_ptr_type *_class_ids, int _length)
 		{
 			auto* page_add = &pg;
 			auto* st = &state;
 			auto* pbox = &_box;
-			for_class(_class_ids, _length, [pbox, st, page_add, this, _id_name, _parent_ui]( actor_view_object& avo)
+			for_class(_class_ids, _length, [pbox, st, page_add, this, _id_name, _parent_ui, _style_id]( actor_view_object& avo)
 				{
-					page_add->select(_parent_ui, st, avo.object_id, _id_name, avo.object, *pbox);
+					auto style_id = _style_id;
+					if (avo.object.has_field(schema.idf_style_sheet)) {
+						style_id = avo.object.get_int64(schema.idf_style_sheet, true);
+					}
+					const char* style_name = this->style_name(style_id);
+					page_add->select(_parent_ui, st, avo.object_id, _id_name, avo.object, style_name, *pbox);
 					return true;
 				});
 			return _parent_ui;
 		}
 
-		page_item* corona_controller::selects(page_item* _parent_ui, layout_rect _box, relative_ptr_type _id_name, jobject& _parent, relative_ptr_type* _join_fields)
+		page_item* corona_controller::selects(page_item* _parent_ui, relative_ptr_type _style_id, layout_rect _box, relative_ptr_type _id_name, jobject& _parent, relative_ptr_type* _join_fields)
 		{
 			auto* page_add = &pg;
 			auto* st = &state;
 			auto* pbox = &_box;
-			for_join(_parent, _join_fields, [pbox, st, page_add, _id_name, this, _parent_ui]( actor_view_object& avo)
+			for_join(_parent, _join_fields, [pbox, st, page_add, _id_name, this, _parent_ui, _style_id]( actor_view_object& avo)
 				{
-					page_add->select(_parent_ui, st, avo.object_id, _id_name, avo.object, *pbox);
+					auto style_id = _style_id;
+					if (avo.object.has_field(schema.idf_style_sheet)) {
+						style_id = avo.object.get_int64(schema.idf_style_sheet, true);
+					}
+					const char* style_name = this->style_name(style_id);
+					page_add->select(_parent_ui, st, avo.object_id, _id_name, avo.object, style_name, *pbox);
 					return true;
 				});
 			return _parent_ui;
 		}
 
-		page_item* corona_controller::selects(page_item* _parent_ui, layout_rect _box, relative_ptr_type _id_name, relative_ptr_type* _has_field_list)
+		page_item* corona_controller::selects(page_item* _parent_ui, relative_ptr_type _style_id, layout_rect _box, relative_ptr_type _id_name, relative_ptr_type* _has_field_list)
 		{
 			auto* page_add = &pg;
 			auto* st = &state;
 			auto* pbox = &_box;
-			for_common(_has_field_list, [pbox, st, _id_name, page_add, this, _parent_ui]( actor_view_object& avo)
+			for_common(_has_field_list, [pbox, st, _id_name, page_add, this, _parent_ui, _style_id]( actor_view_object& avo)
 				{
-					page_add->select(_parent_ui, st, avo.object_id, _id_name, avo.object, *pbox);
+					auto style_id = _style_id;
+					if (avo.object.has_field(schema.idf_style_sheet)) {
+						style_id = avo.object.get_int64(schema.idf_style_sheet, true);
+					}
+					const char* style_name = this->style_name(style_id);
+					page_add->select(_parent_ui, st, avo.object_id, _id_name, avo.object, style_name, *pbox);
 					return true;
 				});
 			return _parent_ui;
@@ -512,7 +539,7 @@ namespace corona
 			page_item* header_column = column(_parent, schema.idf_view_background_style);
 			page_item* drow = row(_parent, schema.idf_view_background_style);
 
-			double fontHeight = this->getStyleSheet().get_object(schema.idf_column_text_head_style).get_slice(0).get(schema.idf_font_size);
+			double fontHeight = this->getStyleSheet().get_object(schema.idf_column_text_head_style,true).get_slice(0).get(schema.idf_font_size);
 
 			std::vector<layout_rect> columns;
 
@@ -526,6 +553,13 @@ namespace corona
 				else
 					text(drow, schema.idf_column_number_head_style, field_spec.description, layout);
 			}
+
+			auto* pout = &std::cout;
+
+			auto xvo = state.view_objects.where([pout, this, _idc_class_id](const actor_view_collection::iterator_item_type& _item) {
+				*pout << "view object oid:"  << _item.second.object_id << " clsid:" << _item.second.class_id << " \n";
+				return true;
+				});
 
 			auto svo = state.view_objects.where([this, _idc_class_id](const actor_view_collection::iterator_item_type& _item) {
 				return program_chart.matches_class_id(_item.second.object, _idc_class_id);
@@ -552,7 +586,7 @@ namespace corona
 		{
 			clear();
 			render(newSize);
-			pg.arrange(newSize.w, newSize.h);
+			arrange(newSize.w, newSize.h);
 		}
 
 		void corona_controller::drawFrame()

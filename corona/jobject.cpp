@@ -3,6 +3,7 @@
 
 #define _DETAIL 0
 #define _TRACE_RULE 0
+#define _TRACE_GET_OBJECT 0
 
 namespace corona
 {
@@ -322,6 +323,10 @@ namespace corona
 				avo.selectable = false;
 				avo.selected = true;
 				avo.updatable = false;
+				if (!acr.view_objects.contains(sel.item)) {
+					jobject temp = get_object(sel.item);
+					avo.object = acr.copy_object(schema, temp);
+				}
 				acr.view_objects.put(sel.item, avo, [](actor_view_object& _dest) { _dest.selected = true; });
 			}
 
@@ -346,6 +351,10 @@ namespace corona
 							avo.selectable = true;
 							avo.selected = false;
 							avo.updatable = false;
+							if (!acr.view_objects.contains(oid)) {
+								jobject temp = get_object(oid);
+								avo.object = acr.copy_object(schema, temp);
+							}
 							acr.view_objects.put(oid, avo, [](actor_view_object& _dest) { 
 								_dest.selectable = !_dest.selected;  });
 						}
@@ -374,7 +383,11 @@ namespace corona
 							avo.selectable = false;
 							avo.selected = false;
 							avo.updatable = true;
-							acr.view_objects.put(oid, avo, [](actor_view_object& _dest) { 								
+							if (!acr.view_objects.contains(oid)) {
+								jobject temp = get_object(oid);
+								avo.object = acr.copy_object(schema, temp);
+							}
+							acr.view_objects.put(oid, avo, [](actor_view_object& _dest) {
 								_dest.updatable = true; 																						
 								});
 						}
@@ -498,6 +511,7 @@ namespace corona
 							ac.breadcrumb.push_back(aci.item);
 							ac.current_view_object_id = aci.item;
 							ac.current_view_class_id = cls_id;
+							highest_level = selected_item_level.get_object().item.level_id;
 						}
 						temp.push_back(aci.item);
 					}
@@ -671,7 +685,9 @@ namespace corona
 			co.deleted = false;
 
 			auto new_object = objects.create_item( &co, bytes_to_allocate, nullptr);
+			#ifdef	_TRACE_GET_OBJECT
 			std::cout << "created obj, objects size:"<< objects.size() << " collections size:" << size() << std::endl;
+			#endif
 			new_object.item().last_modified = std::time(nullptr);
 			co.oid.row_id = new_object.row_id();
 			_object_id = new_object.row_id();
@@ -698,7 +714,15 @@ namespace corona
 		jobject jcollection::get_object(relative_ptr_type _object_id)
 		{
 			auto existing_object = objects.get_item(_object_id);
-			if (existing_object.pitem()->otype == jtype::type_object && !existing_object.pitem()->deleted) {
+
+			auto item_type_id = existing_object.pitem()->otype;
+			auto deleted = existing_object.pitem()->deleted;
+
+			#if	_TRACE_GET_OBJECT
+				std::cout << "get_object id:" << _object_id << ", class_id:: " << item_type_id << ", deleted:" << deleted << std::endl;
+			#endif
+
+			if (item_type_id == jtype::type_object && !existing_object.pitem()->deleted) {
 				jarray jax(nullptr, schema, existing_object.item().class_field_id, existing_object.pdetails());
 				return jax.get_slice(0);
 			}
@@ -3198,7 +3222,7 @@ namespace corona
 				{ { null_row, jtype::type_datetime, "date_stop", "Max Date" }, 0, INT64_MAX }
 			};
 
-			put_integer_field_request int_fields[24] = {
+			put_integer_field_request int_fields[25] = {
 				{ { null_row, jtype::type_int64, "count", "Count" }, 0, INT64_MAX },
 				{ { null_row, jtype::type_int8, "bold", "Bold" }, 0, INT8_MAX },
 				{ { null_row, jtype::type_int8, "italic", "Italic" }, 0, INT8_MAX },
@@ -3223,6 +3247,7 @@ namespace corona
 				{ { null_row, jtype::type_int32, "object_x", "X Dim" }, 0, INT64_MAX },
 				{ { null_row, jtype::type_int32, "object_y", "Y Dim" }, 0, INT64_MAX },
 				{ { null_row, jtype::type_int32, "object_z", "Z Dim" }, 0, INT64_MAX },
+				{ { null_row, jtype::type_int64, "style_id", "Style Id" }, 0, INT64_MAX },
 			};
 
 			put_double_field_request double_fields[20] = {
@@ -3358,6 +3383,7 @@ namespace corona
 			idf_selection_point = find_field("selection_point");
 			idf_rectangle = find_field("rectangle");
 			idf_layout_rect = find_field("layout_rect");
+			idf_style_id = find_field("style_id");
 
 			put_class_request pcr;
 			pcr.class_name = "text_style";

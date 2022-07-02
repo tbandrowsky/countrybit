@@ -1,6 +1,8 @@
 
 #include "corona.h"
 
+#define TRACE_LAYOUT 0
+
 namespace corona
 {
 	namespace database
@@ -9,14 +11,12 @@ namespace corona
 		page::page()
 		{
 			data.init(1 << 20);
-			styles = style_names_by_class_type::create_sorted_index(&data, styles_location);
 		}
 
 		void page::clear()
 		{
 			base_type::clear();
 			data.init(1 << 20);
-			styles = style_names_by_class_type::create_sorted_index(&data, styles_location);
 		}
 
 		page_item* page::row(page_item* _parent, const char* _style_name, layout_rect _box)
@@ -106,7 +106,7 @@ namespace corona
 			return v;
 		}
 
-		page_item* page::select(page_item* _parent, actor_state* _state, int object_id, relative_ptr_type id_name, jobject slice, layout_rect box)
+		page_item* page::select(page_item* _parent, actor_state* _state, int object_id, relative_ptr_type id_name, jobject slice, const char* _style_name, layout_rect box)
 		{
 			page_item* v = append();
 			v->id = size();
@@ -117,6 +117,8 @@ namespace corona
 			v->box = box;
 			v->select_request = _state->create_select_request(v->object_id, false);
 			v->caption = data.copy(slice.get_name(id_name), 0);
+			v->slice = slice;
+			v->style_name = _style_name;
 
 			if (slice.has_field("layout_rect"))
 			{
@@ -388,7 +390,9 @@ namespace corona
 				}
 			}
 
+#if TRACE_LAYOUT
 			std::cout << std::format("p:{},c:{},l:{} bounds {},{},{},{} canvas {}, is_draw {}", _item->parent_id, _item->id, (int)_item->layout, _item->bounds.x, _item->bounds.y, _item->bounds.w, _item->bounds.h, _item->canvas_id, _item->is_drawable()) << std::endl;
+#endif
 
 		}
 
@@ -449,10 +453,6 @@ namespace corona
 
 					if (_item->style_name == nullptr)
 					{
-						if (styles.contains(class_id)) {
-							_item->style_name = styles[class_id].get_value();
-						}
-
 						if (_item->slice.has_field("rectangle"))
 						{
 							auto rect = _item->slice.get_rectangle("rectangle");
@@ -496,11 +496,6 @@ namespace corona
 					break;
 				}
 			}
-		}
-
-		void page::map_style(relative_ptr_type _class_id, const char *_style_name)
-		{
-			styles.insert_or_assign(_class_id, _style_name);
 		}
 
 	}
