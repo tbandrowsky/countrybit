@@ -203,7 +203,7 @@ namespace corona
 			return v;
 		}
 
-		page_item* page::actor_create_buttons(page_item* _parent, actor_state* _state, jschema* _schema, jcollection* _collection)
+		page_item* page::actor_create_buttons(page_item* _parent, actor_state* _state, jschema* _schema, jcollection* _collection, const char* _style_name, layout_rect _box)
 		{
 			for (auto aco : _state->create_objects)
 			{
@@ -211,8 +211,9 @@ namespace corona
 				button->set_parent(_parent);
 				button->id = size();
 				button->layout = layout_types::create;
-				button->box = { 0.0_px, 0.0_px, 200.0_px, 20.0_px };
+				button->box = _box;
 				button->create_request = _state->create_create_request(aco.second.class_id);
+				button->style_name = _style_name;
 
 				object_description desc;
 				desc = "Add " + _schema->get_class(aco.second.class_id).pitem()->name;

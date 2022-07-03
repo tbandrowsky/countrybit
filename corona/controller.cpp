@@ -678,9 +678,10 @@ namespace corona
 			return pg.actor_update_fields(_parent, &state, &schema, &program_chart);
 		}
 
-		page_item* corona_controller::add_create_buttons(page_item* _parent)
+		page_item* corona_controller::add_create_buttons(page_item* _parent, relative_ptr_type _style_id, layout_rect _box)
 		{
-			return pg.actor_create_buttons(_parent, &state, &schema, &program_chart);
+			const char* _style_name = style_name(_style_id);
+			return pg.actor_create_buttons(_parent, &state, &schema, &program_chart, _style_name, _box);
 		}
 
 		page_item* corona_controller::add_select_items(page_item* _parent)

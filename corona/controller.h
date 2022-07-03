@@ -150,7 +150,7 @@ namespace corona
 			virtual void breadcrumbs(page_item* _parent, std::function<const char* (jobject& slice)> _captioner, layout_rect _item_box = { 0.0_px, 0.0_px, 200.0_px, 100.0_px });
 
 			virtual page_item* add_update_fields(page_item* _parent);
-			virtual page_item* add_create_buttons(page_item* _parent);
+			virtual page_item* add_create_buttons(page_item* _parent, relative_ptr_type _style_id, layout_rect _box = { 0.0_px, 0.0_px, 150.0_px, 20.0_px });
 			virtual page_item* add_select_items(page_item* _parent);
 
 			void search_table(page_item* _parent, relative_ptr_type _idc_class_id, relative_ptr_type* _idf_child_fields, int _num_child_fields);

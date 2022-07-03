@@ -1260,6 +1260,7 @@ namespace corona
 			relative_ptr_type idf_column_number_style;
 			relative_ptr_type idf_column_text_style;
 			relative_ptr_type idf_column_data_style;
+			relative_ptr_type idf_button_style;
 			relative_ptr_type idf_label_style;
 			relative_ptr_type idf_control_style;
 			relative_ptr_type idf_chart_axis_style;

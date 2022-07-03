@@ -429,7 +429,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 
 		// editable controls on the left
 		add_update_fields(controlcol1);
-		add_create_buttons(controlcol1);
+		add_create_buttons(controlcol1, schema.idf_button_style);
 
 		_contents(controlrow);
 
@@ -452,7 +452,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 		auto client_area = row(d2darea, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
 		_contents(client_area);
 		auto d2dcommandbar = row(d2darea, schema.idf_breadcrumb_bar_style, { 0.0_px, 0.0_px, 100.0_pct, 50.0_px });
-		add_create_buttons(d2dcommandbar);
+		add_create_buttons(d2dcommandbar, schema.idf_button_style);
 
 	}
 
@@ -476,7 +476,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 		_contents(client_area);
 
 		auto d2dcommandbar = row(d2darea, schema.idf_breadcrumb_bar_style, { 0.0_px, 0.0_px, 100.0_pct, 50.0_px });
-		add_create_buttons(d2dcommandbar);
+		add_create_buttons(d2dcommandbar, schema.idf_button_style);
 
 		// editable controls on the left
 		add_update_fields(contcol);
@@ -1313,6 +1313,21 @@ field id idf_carrier, which is populated when objects of this class are construc
 				{ schema.idf_shape_border_color, "" },
 				{ schema.idf_box_fill_color, "#cfcfffFF" },
 				{ schema.idf_box_border_thickness, 1 },
+				{ schema.idf_box_border_color, "#cfcfefFF" }
+			}
+			);
+
+		style_sheet.set(
+			schema.idf_view_style,
+			{ schema.idf_button_style },
+			{
+				{ schema.idf_font_name, fontName },
+				{ schema.idf_font_size, 14.0 },
+				{ schema.idf_shape_fill_color, "#2f2f2fFF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "#cfcfffFF" },
+				{ schema.idf_box_border_thickness, 2 },
 				{ schema.idf_box_border_color, "#cfcfefFF" }
 			}
 			);

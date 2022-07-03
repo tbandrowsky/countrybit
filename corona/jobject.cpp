@@ -2,7 +2,7 @@
 #include "corona.h"
 
 #define _DETAIL 0
-#define _TRACE_RULE 1
+#define _TRACE_RULE 0
 #define _TRACE_GET_OBJECT 0
 
 namespace corona
@@ -3382,7 +3382,7 @@ namespace corona
 				idf_shape_fill_color, idf_shape_border_thickness, idf_shape_border_color, idf_box_fill_color, idf_box_border_thickness, idf_box_border_color };
 			idc_text_style = put_class(pcr);
 
-			put_object_field_request object_fields[54] = {
+			put_object_field_request object_fields[55] = {
 				{ { null_row, jtype::type_object, "view_background_style", "View Background Style" }, { {1,1,1}, idc_text_style }},
 				{ { null_row, jtype::type_object, "view_title_style", "View Title Style" }, { {1,1,1}, idc_text_style }},
 				{ { null_row, jtype::type_object, "view_subtitle_style", "View Subtitle Style" }, { {1,1,1}, idc_text_style }},
@@ -3398,6 +3398,7 @@ namespace corona
 				{ { null_row, jtype::type_object, "column_number_style", "Column Number Head Style" }, { {1,1,1}, idc_text_style }},
 				{ { null_row, jtype::type_object, "column_text_style", "Column Text Head Style" }, { {1,1,1}, idc_text_style }},
 				{ { null_row, jtype::type_object, "column_data_style", "Column Data Style" }, { {1,1,1}, idc_text_style }},
+				{ { null_row, jtype::type_object, "button_style", "Button Style" }, { {1,1,1}, idc_text_style }},
 				{ { null_row, jtype::type_object, "label_style", "Label Style" }, { {1,1,1}, idc_text_style }},
 				{ { null_row, jtype::type_object, "control_style", "Control Style" }, { {1,1,1}, idc_text_style }},
 				{ { null_row, jtype::type_object, "chart_axis_style", "Chart Axis Style" }, { {1,1,1}, idc_text_style }},
@@ -3473,6 +3474,7 @@ namespace corona
 			idf_chart_block_style = find_field("chart_block_style");
 			idf_tooltip_style = find_field("tooltip_style");
 			idf_breadcrumb_style = find_field("breadcrumb_style");
+			idf_button_style = find_field("button_style");
 			idf_error_style = find_field("error_style");
 			idf_client_style = find_field("client_style");
 			idf_carrier_style = find_field("carrier_style");
@@ -3519,7 +3521,7 @@ namespace corona
 			pcr.member_fields = { idf_style_sheet, idf_name, 
 				idf_view_background_style, idf_view_title_style, idf_view_subtitle_style, idf_view_section_style, idf_view_style, idf_disclaimer_style, idf_copyright_style,
 				idf_h1_style, idf_h2_style, idf_h3_style, idf_column_number_head_style,idf_column_text_head_style,
-				idf_column_number_style, idf_column_text_style,
+				idf_column_number_style, idf_column_text_style, idf_button_style,
 				idf_column_data_style,idf_label_style,idf_control_style,idf_chart_axis_style,idf_chart_legend_style,idf_chart_block_style,idf_tooltip_style,
 				idf_error_style, idf_client_style, idf_carrier_style, idf_coverage_style, idf_home_style, idf_system_style, idf_login_style, idf_product_style,
 				idf_company_a1_style, idf_company_a2_style, idf_company_a3_style, idf_company_b1_style, idf_company_b2_style, idf_company_b3_style, idf_company_c1_style, idf_company_c2_style, idf_company_c3_style,idf_company_d1_style, idf_company_d2_style, idf_company_d3_style, 
