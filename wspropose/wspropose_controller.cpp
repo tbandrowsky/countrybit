@@ -417,7 +417,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 	{
 		clear();
 
-		auto mainr = column(nullptr, null_row);
+		auto mainr = column(nullptr, null_row, { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
 		auto d2drow = canvas2d(mainr, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 150.0_px });
 		auto controlrow = row(mainr, null_row, { 0.0_px,0.0_px,100.0_pct,100.0_pct });
 		auto controlcol1 = column(controlrow, null_row, { 25.0_pct,0.0_px,50.0_pct,100.0_pct });
@@ -440,8 +440,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 	{
 		clear();
 
-		auto mainr = row(nullptr, null_row);
-		auto d2dcol = column(mainr, null_row, { 0.0_px,0.0_px,100.0_pct,100.0_pct });
+		auto d2dcol = column(nullptr, null_row, { 0.0_px,0.0_px,100.0_pct,100.0_pct });
 		auto d2dwin = canvas2d(d2dcol, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
 		auto d2darea = column(d2dwin, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
 

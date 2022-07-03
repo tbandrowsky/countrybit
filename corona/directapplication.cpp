@@ -336,7 +336,10 @@ namespace corona
 
 			virtual bool create(direct2dContext* target)
 			{
-				HRESULT hr;
+				HRESULT hr = -1;
+
+				if (!target || !target->renderTarget)
+					return false;
 
 				istring<2048> fontList = fontName;
 				istring<2048> fontName;
@@ -1018,6 +1021,9 @@ namespace corona
 
 			virtual bool create(direct2dContext* target)
 			{
+				if (!target || !target->renderTarget)
+					return false;
+
 				HRESULT hr = target->renderTarget->CreateBitmapBrush(bm->getFirst(), &asset);
 
 				return SUCCEEDED(hr);
@@ -1046,7 +1052,13 @@ namespace corona
 
 			bool create(direct2dContext* target)
 			{
-				HRESULT hr = target->renderTarget->CreateSolidColorBrush(color, &asset);
+				HRESULT hr = -1;
+
+				if (!target || !target->renderTarget)
+					return false;
+
+				hr = target->renderTarget->CreateSolidColorBrush(color, &asset);
+
 				return SUCCEEDED(hr);
 			}
 
@@ -1066,6 +1078,9 @@ namespace corona
 			virtual bool create(direct2dContext* target)
 			{
 				ID2D1GradientStopCollection* pGradientStops = NULL;
+
+				if (!target || !target->renderTarget)
+					return false;
 
 				HRESULT hr = target->renderTarget->CreateGradientStopCollection(&stops[0], stops.size(), &pGradientStops);
 
@@ -1097,6 +1112,9 @@ namespace corona
 			bool create(direct2dContext* target)
 			{
 				ID2D1GradientStopCollection* pGradientStops = NULL;
+
+				if (!target || !target->renderTarget)
+					return false;
 
 				HRESULT hr = target->renderTarget->CreateGradientStopCollection(&stops[0], stops.size(), &pGradientStops);
 
@@ -2136,7 +2154,7 @@ namespace corona
 			{
 				auto pi = piter.item;
 
-				if (pi.is_drawable() || pi.layout == layout_types::canvas2d)
+				if (pi.is_drawable())
 					continue;
 
 				switch (pi.layout)
@@ -2453,7 +2471,7 @@ namespace corona
 						prcNewWindow->top,
 						prcNewWindow->right - prcNewWindow->left,
 						prcNewWindow->bottom - prcNewWindow->top,
-						SWP_NOZORDER | SWP_NOACTIVATE);				
+						SWP_NOZORDER | SWP_NOACTIVATE);
 				}
 				break;
 			case WM_NOTIFY:
@@ -2631,11 +2649,13 @@ namespace corona
 			case WM_SIZE:
 				if (currentController) {
 					dpiScale = 96.0 / GetDpiForWindow(hwnd);
+					RECT l;
+					::GetClientRect(hwnd, &l);
 					rectangle rect;
 					rect.x = 0;
 					rect.y = 0;
-					rect.w = LOWORD(lParam) * dpiScale;
-					rect.h = HIWORD(lParam) * dpiScale;
+					rect.w = (l.right - l.left) * dpiScale;
+					rect.h = (l.bottom - l.top) * dpiScale;
 					currentController->onResize(rect, dpiScale);
 				}
 				break;
@@ -3403,6 +3423,29 @@ namespace corona
 
 			return rd;
 		}
+
+		rectangle directApplication::getWindowClientPos()
+		{
+			RECT r;
+			rectangle rd;
+
+			::GetClientRect(hwndRoot, &r);
+
+			rd.x = r.left;
+			rd.y = r.top;
+			rd.w = r.right - r.left;
+			rd.h = r.bottom - r.top;
+
+			dpiScale = 96.0 / GetDpiForWindow(hwndRoot);
+
+			rd.x *= dpiScale;
+			rd.y *= dpiScale;
+			rd.w *= dpiScale;
+			rd.h *= dpiScale;
+
+			return rd;
+		}
+
 
 		void directApplication::setWindowPos(int ddlControlId, rectangle rect)
 		{

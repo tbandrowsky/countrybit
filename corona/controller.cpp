@@ -52,7 +52,7 @@ namespace corona
 		{
 			enableEditMessages = false;
 
-			auto pos = host->getWindowPos(0);
+			auto pos = host->getWindowClientPos();
 
 //			host->setMinimumWindowSize(point{ pos.w - pos.x, pos.h - pos.y });
 
@@ -179,7 +179,7 @@ namespace corona
 		void corona_controller::mouseClick(point* _point)
 		{
 			auto clicked_items = pg.where([this, _point](const auto& pi) { return pi.item.is_command() && rectangle_math::contains(pi.item.bounds, _point->x, _point->y); });
-			auto size = host->getWindowPos(0);
+			auto size = host->getWindowClientPos();
 
 #if TRACE_CONTROLLER
 			std::cout << std::format("clicked {},{}", _point->x, _point->y) << std::endl;
@@ -271,7 +271,7 @@ namespace corona
 #endif
 
 			state = this->program_chart.create_object(command_item, "Create Item");
-			auto size = host->getWindowPos(0);
+			auto size = host->getWindowClientPos();
 
 			stateChanged(size);
 		}
@@ -288,7 +288,7 @@ namespace corona
 				uor.item = pi.slice;
 				uor.object_id = pi.object_id;
 				state = this->program_chart.update_object(uor);
-				auto size = host->getWindowPos(0);
+				auto size = host->getWindowClientPos();
 				stateChanged(size);
 			}
 		}
@@ -305,7 +305,7 @@ namespace corona
 				uor.item = pi.slice;
 				uor.object_id = pi.object_id;
 				state = this->program_chart.update_object(uor);
-				auto size = host->getWindowPos(0);
+				auto size = host->getWindowClientPos();
 				stateChanged(size);
 			}
 		}

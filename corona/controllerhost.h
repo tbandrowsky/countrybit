@@ -110,6 +110,7 @@ namespace corona
 			virtual point getScrollRange(int ddlControlId) = 0;
 			virtual void setScrollPos(int ddlControlId, point pt) = 0;
 
+			virtual rectangle getWindowClientPos() = 0;
 			virtual rectangle getWindowPos(int ddlControlId) = 0;
 			virtual void setWindowPos(int ddlControlId, rectangle rect) = 0;
 			virtual void setMinimumWindowSize(point size) = 0;

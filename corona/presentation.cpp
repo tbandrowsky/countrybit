@@ -205,30 +205,20 @@ namespace corona
 
 		page_item* page::actor_create_buttons(page_item* _parent, actor_state* _state, jschema* _schema, jcollection* _collection)
 		{
-			page_item* v = append();
-			v->id = size();
-			v->layout = layout_types::column;
-			v->set_parent(_parent);
-
-			measure height = 0.0_px;
-
 			for (auto aco : _state->create_objects)
 			{
 				page_item* button = append();
-				button->parent_id = v->id;
+				button->set_parent(_parent);
 				button->id = size();
 				button->layout = layout_types::create;
 				button->box = { 0.0_px, 0.0_px, 200.0_px, 20.0_px };
 				button->create_request = _state->create_create_request(aco.second.class_id);
-				height.amount += 20.0;				
 
 				object_description desc;
 				desc = "Add " + _schema->get_class(aco.second.class_id).pitem()->name;
 				button->caption = data.copy<char>(desc.c_str(), 0);
 			}
-
-			v->box = { 10.0_px, 10.0_px, 200.0_px, height };
-			return v;
+			return _parent;
 		}
 
 		page_item* page::actor_select_items(page_item* _parent, actor_state* _state, jschema* _schema, jcollection* _collection)

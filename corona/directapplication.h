@@ -247,6 +247,7 @@ namespace corona
 			virtual void setEnable(int controlId, bool enabled);
 			virtual void setFocus(int ddlControlId);
 
+			virtual rectangle getWindowClientPos();
 			virtual rectangle getWindowPos(int ddlControlId);
 			virtual void setWindowPos(int ddlControlId, rectangle rect);
 			virtual void setMinimumWindowSize(point size);

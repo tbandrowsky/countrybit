@@ -2,7 +2,7 @@
 #include "corona.h"
 
 #define _DETAIL 0
-#define _TRACE_RULE 0
+#define _TRACE_RULE 1
 #define _TRACE_GET_OBJECT 0
 
 namespace corona
@@ -114,21 +114,11 @@ namespace corona
 					return c == 1;
 					});
 
-				bool all_selections_required = selections->all_of([this, required](auto& dest) {
-					bool result = required->any_of([this, dest](auto& src) {
-						return matches_class_id(dest.item, src.item.class_id);
-						});
-#if _TRACE_RULE						
-					std::cout << "   check " << dest.item << " " << result << std::endl;
-#endif
-						return result;
-					});
-
 #if _TRACE_RULE
-				std::cout << "  all_required " << all_required_items_satisfied << " " << "all_selected " << all_selections_required << std::endl;
+				std::cout << "  all_required " << all_required_items_satisfied << std::endl;
 #endif
 
-				return all_required_items_satisfied && all_selections_required;
+				return all_required_items_satisfied;
 			}
 
 			return false;
@@ -144,14 +134,14 @@ namespace corona
 			for (auto vo : acr.view_objects)
 			{
 				auto slice = get_at(vo.second.object_id);
-				std::cout << "existing object: " << schema->get_class(vo.second.class_id).item().name << std::endl;
-				if (!slice.is_null()) {
-					std::cout << "existing object: " << vo.second.object_id << " (" << schema->get_class(vo.second.class_id).item().name << ") selectable:" << vo.second.selectable << " selected:" << vo.second.selected << " updatable:" << vo.second.updatable << std::endl;
-				}
-				else {
-					std::cout << "existing object is null: " << vo.second.object_id << " selectable:" << vo.second.selectable << " selected : " << vo.second.selected << " updatable : " << vo.second.updatable << std::endl;
-				}
+				std::cout << "existing object: " << vo.second.object_id << " (" << slice.get_class().pitem()->name << ") selectable:" << vo.second.selectable << " selected:" << vo.second.selected << " updatable:" << vo.second.updatable << std::endl;
 			}
+
+			for (auto vo : acr.create_objects)
+			{
+				std::cout << "create object: " << vo.second.class_id << " (" << schema->get_class(vo.second.class_id).pitem()->name << ")" << std::endl;
+			}
+
 			if (_trace) {
 				std::cout << _trace << std::endl;
 			}
