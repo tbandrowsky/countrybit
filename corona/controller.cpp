@@ -548,7 +548,6 @@ namespace corona
 
 		void corona_controller::search_table(page_item* _parent, relative_ptr_type _idc_class_id, relative_ptr_type* _idf_child_fields, int _num_child_fields)
 		{
-			page_item* header_column = column(_parent, schema.idf_view_background_style);
 			page_item* drow = row(_parent, schema.idf_view_background_style);
 
 			double fontHeight = this->getStyleSheet().get_object(schema.idf_column_text_head_style,true).get_slice(0).get(schema.idf_font_size);

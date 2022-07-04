@@ -1491,7 +1491,10 @@ namespace corona
 			case jtype::type_sql:
 				break;
 			case jtype::type_string:
-				sma = dynamic_value(_field_idx, get_string(_field_idx).c_str());
+				{
+				auto str_value = get_string(_field_idx);
+				sma = dynamic_value(_field_idx, str_value.c_str());
+				}
 				break;
 			case jtype::type_wave:
 				break;
