@@ -9,6 +9,8 @@
 
 #include "constants.h"
 
+#define TRACE_DYNAMIC_BOX 1
+
 namespace corona
 {
 	namespace database
@@ -538,6 +540,10 @@ namespace corona
 				corona_size_t new_stuff_size = new_size + sizeof(serialized_box);
 				if (new_stuff_size < stuff_size)
 					return;
+
+#if	TRACE_DYNAMIC_BOX
+				std::cout << "box:" << this << " " << (void*)stuff << std::endl;
+#endif
 				char* temp = new char[new_stuff_size];
 				if (!temp) {
 					throw std::exception("Out of memory");
@@ -558,11 +564,17 @@ namespace corona
 			dynamic_box() : stuff(nullptr), stuff_size(0)
 			{
 				own_the_data = true;
+#if	TRACE_DYNAMIC_BOX
+				std::cout << "box:" << this << " " << (void*)stuff << " create " << std::endl;
+#endif
 			}
 
 			~dynamic_box()
 			{
-				if (own_the_data && stuff) 
+#if	TRACE_DYNAMIC_BOX
+				std::cout << "box:" << this << " " << (void*)stuff << " delete " << std::endl;
+#endif
+				if (own_the_data && stuff)
 				{
 					delete[] stuff;
 					stuff = nullptr;
@@ -571,38 +583,70 @@ namespace corona
 
 			dynamic_box& operator = (const dynamic_box& _src)
 			{
+				if (stuff != _src.stuff && own_the_data && stuff)
+				{
+					delete[] stuff;
+					stuff = nullptr;
+				}
 				stuff = _src.stuff;
 				stuff_size = _src.stuff_size;
 				own_the_data = false;
+#if	TRACE_DYNAMIC_BOX
+				std::cout << "box:" << this << " " << (void*)stuff << " copy " << std::endl;
+#endif
 				return *this;
 			}
 
 			dynamic_box& operator = (dynamic_box&& _src)
 			{
+				if (stuff != _src.stuff && own_the_data && stuff)
+				{
+					delete[] stuff;
+					stuff = nullptr;
+				}
 				stuff = _src.stuff;
 				stuff_size = _src.stuff_size;
 				own_the_data = true;
 				_src.stuff = nullptr;
 				_src.stuff_size = 0;
 				_src.own_the_data = false;
+#if	TRACE_DYNAMIC_BOX
+				std::cout << "box:" << this << " " << (void*)stuff << " move " << std::endl;
+#endif
 				return *this;
 			}
 
 			dynamic_box(const dynamic_box& _src)
 			{
+				if (stuff != _src.stuff && own_the_data && stuff)
+				{
+					delete[] stuff;
+					stuff = nullptr;
+				}
 				stuff = _src.stuff;
 				stuff_size = _src.stuff_size;
 				own_the_data = false;
+#if	TRACE_DYNAMIC_BOX
+				std::cout << "box:" << this << " " << (void*)stuff << " copy ctor" << std::endl;
+#endif
 			}
 
 			dynamic_box(dynamic_box&& _src)
 			{
+				if (stuff != _src.stuff && own_the_data && stuff)
+				{
+					delete[] stuff;
+					stuff = nullptr;
+				}
 				stuff = _src.stuff;
 				stuff_size = _src.stuff_size;
 				own_the_data = true;
 				_src.stuff = nullptr;
 				_src.stuff_size = 0;
 				_src.own_the_data = false;
+#if	TRACE_DYNAMIC_BOX
+				std::cout << "box:" << this << " " << (void*)stuff << " move ctor" << std::endl;
+#endif
 			}
 
 			virtual serialized_box* get_box() 
@@ -639,6 +683,10 @@ namespace corona
 				if (_src) {
 					std::copy(_src->data(), _src->data() + _length, get_box()->data());
 				}
+#if	TRACE_DYNAMIC_BOX
+				std::cout << "box:" << this << " " << (void*)stuff << " init " << std::endl;
+#endif
+
 			}
 
 			void copy_box(serialized_box* _src = nullptr)
@@ -646,6 +694,10 @@ namespace corona
 				resize(_src->size());
 				get_box()->init(_src->size());
 				std::copy(_src->data(), _src->data() + _src->size(), get_box()->data());
+#if	TRACE_DYNAMIC_BOX
+				std::cout << "box:" << this << " " << (void*)stuff << " copy box " << std::endl;
+#endif
+
 			}
 
 			template <typename bx>
@@ -655,6 +707,11 @@ namespace corona
 				corona_size_t new_size = _src.size();
 				init(new_size);
 				memcpy(data(), _src.data(), new_size);
+#if	TRACE_DYNAMIC_BOX
+				std::cout << "box:" << this << " " << (void*)stuff << " copy data ctor " << std::endl;
+#endif
+
+
 			}
 
 			template <typename bx>
@@ -664,7 +721,11 @@ namespace corona
 				corona_size_t new_size = _src.size();
 				init(new_size);
 				memcpy(data(), _src.data(), new_size);
+#if	TRACE_DYNAMIC_BOX
+				std::cout << "box:" << this << " " << (void*)stuff << " assign " << std::endl;
+#endif
 				return *this;
+
 			}
 
 		};

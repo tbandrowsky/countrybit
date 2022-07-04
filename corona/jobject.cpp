@@ -67,6 +67,7 @@ namespace corona
 
 			jobject ja(nullptr, _schema, _class_id, &data, location, d);
 			ja.construct();
+			std::cout << "actor create object " << (void*)&data << " " << std::endl;
 			return ja;
 		}
 

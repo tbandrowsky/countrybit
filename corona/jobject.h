@@ -433,6 +433,12 @@ namespace corona
 			jclass get_class() const;
 			jschema* get_schema();
 
+			void set_box_dangerous_hack(serialized_box_container* _box)
+			{
+				std::cout << "object box " << (void*)&box << " to " << (void *)_box << std::endl;
+				box = _box;
+			}
+
 			relative_ptr_type get_class_id() const 
 			{
 				return class_id;
@@ -858,6 +864,9 @@ namespace corona
 				modified_object_id = _src.modified_object_id;
 				create_objects = actor_create_collection::get_sorted_index(&data, create_objects_location );
 				view_objects = actor_view_collection::get_sorted_index(&data, view_objects_location );
+				for (auto avo : view_objects) {
+					avo.second.object.set_box_dangerous_hack(&data);
+				}
 				actor = _src.actor;
 			}
 
@@ -871,6 +880,9 @@ namespace corona
 				modified_object_id = _src.modified_object_id;
 				create_objects = actor_create_collection::get_sorted_index(&data, create_objects_location);
 				view_objects = actor_view_collection::get_sorted_index(&data, view_objects_location);
+				for (auto avo : view_objects) {
+					avo.second.object.set_box_dangerous_hack(&data);
+				}
 				actor = _src.actor;
 
 				return *this;
@@ -886,6 +898,9 @@ namespace corona
 				modified_object_id = _src.modified_object_id;
 				create_objects = actor_create_collection::get_sorted_index(&data, create_objects_location);
 				view_objects = actor_view_collection::get_sorted_index(&data, view_objects_location);
+				for (auto avo : view_objects) {
+					avo.second.object.set_box_dangerous_hack(&data);
+				}
 				actor = _src.actor;
 				return *this;
 			}
@@ -900,6 +915,9 @@ namespace corona
 				modified_object_id = _src.modified_object_id;
 				create_objects = actor_create_collection::get_sorted_index(&data, create_objects_location);
 				view_objects = actor_view_collection::get_sorted_index(&data, view_objects_location);
+				for (auto avo : view_objects) {
+					avo.second.object.set_box_dangerous_hack(&data);
+				}
 				actor = _src.actor;
 			}
 
