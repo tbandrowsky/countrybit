@@ -363,7 +363,7 @@ namespace corona
 
 			void put(data_pair& kvp)
 			{
-				relative_ptr_type modified_node = this->update_node(kvp);
+				relative_ptr_type modified_node = this->update_node(kvp, [kvp](VALUE& dest) { dest = kvp.second; });
 			}
 
 			void put(KEY key, VALUE value)

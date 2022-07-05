@@ -654,6 +654,11 @@ namespace corona
 				return (serialized_box*)stuff;
 			}
 
+			virtual bool has_data()
+			{
+				return stuff != nullptr;
+			}
+
 			virtual serialized_box* check(int _bytes) 
 			{
 				serialized_box* ob, *nb;

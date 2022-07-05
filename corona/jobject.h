@@ -4,6 +4,8 @@
 
 #include "corona.h"
 
+#define ACTOR_OBJECT_CHECKING 0
+
 namespace corona
 {
 	namespace database
@@ -435,7 +437,9 @@ namespace corona
 
 			void set_box_dangerous_hack(serialized_box_container* _box)
 			{
+#if ACTOR_OBJECT_CHECKING
 				std::cout << "object box " << (void*)&box << " to " << (void *)_box << std::endl;
+#endif
 				box = _box;
 			}
 
@@ -576,6 +580,8 @@ namespace corona
 				boxed temp(src);
 				return temp;
 			}
+
+			void* get_box_address() { return box; }
 
 			int size();
 			char* get_bytes() { return box ? box->unpack<char>(location) : bytes;  };
@@ -852,6 +858,7 @@ namespace corona
 				create_objects = actor_create_collection::create_sorted_index(&data, create_objects_location);
 				view_objects = actor_view_collection::create_sorted_index(&data, view_objects_location);
 				modified_object_id = null_row;
+				check_objects("empty ctor");
 			}
 
 			actor_state(actor_state&& _src)
@@ -868,6 +875,7 @@ namespace corona
 					avo.second.object.set_box_dangerous_hack(&data);
 				}
 				actor = _src.actor;
+				check_objects("move ctor");
 			}
 
 			actor_state& operator=(actor_state&& _src)
@@ -880,11 +888,8 @@ namespace corona
 				modified_object_id = _src.modified_object_id;
 				create_objects = actor_create_collection::get_sorted_index(&data, create_objects_location);
 				view_objects = actor_view_collection::get_sorted_index(&data, view_objects_location);
-				for (auto avo : view_objects) {
-					avo.second.object.set_box_dangerous_hack(&data);
-				}
 				actor = _src.actor;
-
+				check_objects("move assign");
 				return *this;
 			}
 
@@ -898,10 +903,8 @@ namespace corona
 				modified_object_id = _src.modified_object_id;
 				create_objects = actor_create_collection::get_sorted_index(&data, create_objects_location);
 				view_objects = actor_view_collection::get_sorted_index(&data, view_objects_location);
-				for (auto avo : view_objects) {
-					avo.second.object.set_box_dangerous_hack(&data);
-				}
 				actor = _src.actor;
+				check_objects("copy assign");
 				return *this;
 			}
 
@@ -915,10 +918,8 @@ namespace corona
 				modified_object_id = _src.modified_object_id;
 				create_objects = actor_create_collection::get_sorted_index(&data, create_objects_location);
 				view_objects = actor_view_collection::get_sorted_index(&data, view_objects_location);
-				for (auto avo : view_objects) {
-					avo.second.object.set_box_dangerous_hack(&data);
-				}
 				actor = _src.actor;
+				check_objects("copy ctor");
 			}
 
 			jobject create_object(jschema* _schema, relative_ptr_type _class_id);
@@ -927,6 +928,7 @@ namespace corona
 
 			actor_query_base query(slice_enumerable *collection)
 			{
+				check_objects("query");
 				actor_query_base new_base(view_objects, collection);
 				return new_base;
 			}
@@ -937,6 +939,7 @@ namespace corona
 					throw std::invalid_argument("class is not creatable");
 				}
 				create_object_request aco = create_objects[_class_id].second;
+				check_objects("create_request");
 				return aco;
 			}
 
@@ -951,6 +954,7 @@ namespace corona
 				aso.actor_id = actor_id;
 				aso.extend = _extend;
 				aso.object_id = _object_id;
+				check_objects("select_request");
 				return aso;
 			}
 
@@ -962,6 +966,30 @@ namespace corona
 				uor.object_id = modified_object_id;
 				uor.item = modified_object;
 				return uor;
+			}
+
+			void check_objects(const char *name)
+			{
+				serialized_box_container* sbd = static_cast<serialized_box_container*>(&data);
+				for (auto avo : view_objects) {
+					avo.second.object.set_box_dangerous_hack(sbd);
+					view_objects.put(avo);
+				}
+
+#if ACTOR_OBJECT_CHECKING
+				// this ensures that all the objects in this state have their data set to be provided from this state,
+				void* my_data = (void*)(&data);
+				std::cout << "actor state box " << name << ", data " << my_data << ", has_data: " << data.has_data() << std::endl;
+				bool is_ok = true;
+				for (auto avo : view_objects) 
+				{
+					void *object_data = avo.second.object.get_box_address();
+					if (object_data != my_data) {
+						is_ok = false;
+						std::cout << "object " << avo.second.object_id << " " << object_data << " is incorrect " << std::endl;
+					}
+				}
+#endif
 			}
 
 		};
