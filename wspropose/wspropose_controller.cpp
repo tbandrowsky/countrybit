@@ -427,7 +427,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 		render_header(d2drow, application_title, object_title, false);
 
 		// editable controls on the left
-		add_update_fields(controlcol1);
+		add_update_fields(controlcol1, field_layout::label_on_left, nullptr);
 		add_create_buttons(controlcol1, schema.idf_button_style);
 
 		_contents(controlrow);
@@ -453,7 +453,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 
 	}
 
-	void wsproposal_controller::render_mixed(std::function<void(page_item* _frame)> _contents)
+	void wsproposal_controller::render_mixed(std::function<void(page_item* _frame)> _contents, const char *_object_title)
 	{
 		clear();
 
@@ -471,7 +471,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 		_contents(client_area);
 
 		// editable controls on the left
-		add_update_fields(control);
+		add_update_fields(control, field_layout::label_on_top, _object_title);
 
 		// and the add buttons
 		add_create_buttons(control, schema.idf_button_style);
@@ -484,7 +484,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 
 	void wsproposal_controller::render_client_root()
 	{
-		render_mixed([this](page_item* _frame) { render_client_root_contents(_frame);  });
+		render_mixed([this](page_item* _frame) { render_client_root_contents(_frame);  }, "Find and Create Clients");
 	}
 
 	void wsproposal_controller::render_client()
@@ -494,7 +494,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 
 	void wsproposal_controller::render_coverage_root()
 	{
-		render_mixed([this](page_item* _frame) { render_coverage_root_contents(_frame);  });
+		render_mixed([this](page_item* _frame) { render_coverage_root_contents(_frame);  }, "Find and Create Coverages");
 	}
 
 	void wsproposal_controller::render_coverage()
@@ -504,17 +504,17 @@ field id idf_carrier, which is populated when objects of this class are construc
 
 	void wsproposal_controller::render_product_template_root()
 	{
-		render_mixed([this](page_item* _frame) { render_product_template_root_contents(_frame);  });
+		render_mixed([this](page_item* _frame) { render_product_template_root_contents(_frame);  }, "Find and Create Products");
 	}
 
 	void wsproposal_controller::render_product_template()
 	{
-		render_mixed([this](page_item* _frame) { render_product_template_contents(_frame);  });
+		render_mixed([this](page_item* _frame) { render_product_template_contents(_frame);  }, "Edit Product");
 	}
 
 	void wsproposal_controller::render_carrier_root()
 	{
-		render_mixed([this](page_item* _frame) { render_carrier_root_contents(_frame);  });
+		render_mixed([this](page_item* _frame) { render_carrier_root_contents(_frame);  }, "Find and Create Carriers");
 	}
 
 	void wsproposal_controller::render_system_root()

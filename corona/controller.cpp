@@ -431,14 +431,14 @@ namespace corona
 			return r;
 		}
 
-		page_item* corona_controller::row(page_item* _parent, relative_ptr_type _style_id, layout_rect _box)
+		page_item* corona_controller::row(page_item* _parent, relative_ptr_type _style_id, layout_rect _box, measure _item_space)
 		{
-			return pg.row(_parent, _style_id, _box);
+			return pg.row(_parent, _style_id, _box, _item_space);
 		}
 
-		page_item* corona_controller::column(page_item* _parent, relative_ptr_type _style_id, layout_rect _box)
+		page_item* corona_controller::column(page_item* _parent, relative_ptr_type _style_id, layout_rect _box, measure _item_space)
 		{
-			return pg.column(_parent, _style_id, _box);
+			return pg.column(_parent, _style_id, _box, _item_space);
 		}
 
 		page_item* corona_controller::absolute(page_item* _parent, relative_ptr_type _style_id, layout_rect _box)
@@ -655,9 +655,9 @@ namespace corona
 			_host->drawView(style_name, cap, _item.bounds, od.c_str());
 		}
 
-		page_item* corona_controller::add_update_fields(page_item* _parent)
+		page_item* corona_controller::add_update_fields(page_item* _parent, field_layout _layout, const char *_object_title)
 		{
-			return pg.actor_update_fields(_parent, &state, &schema, &program_chart);
+			return pg.actor_update_fields(_parent, &state, &schema, &program_chart, _layout, _object_title);
 		}
 
 		page_item* corona_controller::add_create_buttons(page_item* _parent, relative_ptr_type _style_id, layout_rect _box)

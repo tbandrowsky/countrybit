@@ -19,7 +19,7 @@ namespace corona
 			data.init(1 << 20);
 		}
 
-		page_item* page::row(page_item* _parent, relative_ptr_type _style_id, layout_rect _box)
+		page_item* page::row(page_item* _parent, relative_ptr_type _style_id, layout_rect _box, measure _item_space)
 		{
 			page_item* v = append();
 			v->id = size();
@@ -27,10 +27,11 @@ namespace corona
 			v->layout = layout_types::row;
 			v->box = _box;
 			v->style_id = _style_id;
+			v->item_space = _item_space;
 			return v;
 		}
 
-		page_item* page::column(page_item* _parent, relative_ptr_type _style_id, layout_rect _box)
+		page_item* page::column(page_item* _parent, relative_ptr_type _style_id, layout_rect _box, measure _item_space)
 		{
 			page_item* v = append();
 			v->id = size();
@@ -38,6 +39,7 @@ namespace corona
 			v->layout = layout_types::column;
 			v->box = _box;
 			v->style_id = _style_id;
+			v->item_space = _item_space;
 			return v;
 		}
 
@@ -96,7 +98,7 @@ namespace corona
 			v->set_parent(_parent);
 			v->class_id = slice.get_class_id();
 			v->object_id = object_id;
-			v->box = { 0.0_pct, 0.0_pct, 100.0_pct, 50.0_px };
+			v->box = { 0.0_pct, 0.0_pct, 100.0_px, 50.0_px };
 			v->slice = slice;
 			v->field = &(slice.get_field_by_id(field_id));
 			return v;
@@ -157,36 +159,52 @@ namespace corona
 			return v;
 		}
 
-		page_item* page::actor_update_fields(page_item* _parent, actor_state* _state, jschema* _schema, jcollection* _collection)
+		page_item* page::actor_update_fields(page_item* _parent, actor_state* _state, jschema* _schema, jcollection* _collection, field_layout _field_layout, const char* _object_title)
 		{
 
 			if (_state->modified_object_id != null_row)
 			{
 				auto avo = _state->get_modified_object();
 				auto slice = _collection->get_object(avo.object_id);
+				page_item* label;
 
-				page_item* label = append();
-				label->id = size();
-				label->parent_id = _parent->id;
-				label->layout = layout_types::label;
-				label->box = { 0.0_px, 0.0_px, 200.0_px, 1.0_fntgr };
-				label->slice = slice;
-				label->class_id = slice.get_class_id();
-				label->object_id = avo.object_id;
-				label->style_id = _schema->idf_label_style;
-				label->caption = slice.get_class().item().description;
+				if (_object_title)
+				{
+					label = append();
+					label->id = size();
+					label->parent_id = _parent->id;
+					label->layout = layout_types::label;
+					label->box = { 0.0_px, 0.0_px, 300.0_px, 1.0_fntgr };
+					label->slice = slice;
+					label->class_id = slice.get_class_id();
+					label->object_id = avo.object_id;
+					label->style_id = _schema->idf_label_style;
+					label->caption = data.copy(_object_title, 0);
+				}
 
 				for (int i = 0; i < slice.size(); i++)
 				{
+					page_item* container = nullptr;
+
+					switch (_field_layout)
+					{
+					case field_layout::label_on_left:
+						container = row(_parent, _parent->style_id, { 0.0_px, 0.0_px, 400.0_px, 1.0_fntgr });
+						break;
+					case field_layout::label_on_top:
+						container = column(_parent, _parent->style_id, { 0.0_px, 0.0_px, 200.0_px, 2.0_fntgr });
+						break;
+					}
+
 					jfield& fld = slice.get_field(i);
 					if (!fld.display_in_user_ui)
 						continue;
 					label = append();
 					label->id = size();
-					label->parent_id = _parent->id;
+					label->parent_id = container->id;
 					label->layout = layout_types::label;
 					label->field = &fld;
-					label->box = { 0.0_px, 0.0_px, 200.0_px, 1.0_fntgr };
+					label->box = { 0.0_px, 0.0_px, 150.0_px, 1.0_fntgr };
 					label->slice = slice;
 					label->object_id = avo.object_id;
 					label->style_id = _schema->idf_label_style;
@@ -195,7 +213,7 @@ namespace corona
 
 					page_item* control = append();
 					control->id = size();
-					control->parent_id = _parent->id;
+					control->parent_id = container->id;
 					control->layout = layout_types::field;
 					control->field = &fld;
 					control->box = { 0.0_px, 0.0_px, 200.0_px, 1.0_fntgr };
@@ -439,20 +457,66 @@ namespace corona
 
 			if (_item->layout == layout_types::row) 
 			{
+				switch (_item->item_space.units)
+				{
+				case measure_units::font:
+					_item->item_space_amount = _item->item_space.amount * 16.0;
+					break;
+				case measure_units::font_golden_ratio:
+					_item->item_space_amount = _item->item_space.amount * 16.0 / 1.618;
+					break;
+				case measure_units::percent_height:
+					_item->item_space_amount = _item->item_space.amount * height / 100.0;
+					break;
+				case measure_units::percent_width:
+					_item->item_space_amount = _item->item_space.amount * width / 100.0;
+					break;
+				case measure_units::percent_remaining:
+					_item->item_space_amount = _item->item_space.amount * remaining_width / 100.0;
+					break;
+				case measure_units::pixels:
+					_item->item_space_amount = _item->item_space.amount;
+					break;
+				}
+
 				double startx = 0;
 				for (auto child : children)
 				{
 					arrange_impl(_style_sheet, &child.item, startx, 0, _item->bounds.x, _item->bounds.y, remaining_width, _item->bounds.h);
 					startx += (child.item.bounds.w);
+					startx += _item->item_space_amount;
 				}
 			}
 			else if (_item->layout == layout_types::column) 
 			{
+				switch (_item->item_space.units)
+				{
+				case measure_units::font:
+					_item->item_space_amount = _item->item_space.amount * 16.0;
+					break;
+				case measure_units::font_golden_ratio:
+					_item->item_space_amount = _item->item_space.amount * 16.0 * 1.618;
+					break;
+				case measure_units::percent_height:
+					_item->item_space_amount = _item->item_space.amount * height / 100.0;
+					break;
+				case measure_units::percent_width:
+					_item->item_space_amount = _item->item_space.amount * width / 100.0;
+					break;
+				case measure_units::percent_remaining:
+					_item->item_space_amount = _item->item_space.amount * remaining_width / 100.0;
+					break;
+				case measure_units::pixels:
+					_item->item_space_amount = _item->item_space.amount;
+					break;
+				}
+
 				double starty = 0;
 				for (auto child : children)
 				{
 					arrange_impl(_style_sheet, &child.item, 0, starty, _item->bounds.x, _item->bounds.y, _item->bounds.w, remaining_height);
 					starty += (child.item.bounds.h);
+					starty += _item->item_space_amount;
 				}
 			}
 			else if (_item->layout == layout_types::canvas2d)
