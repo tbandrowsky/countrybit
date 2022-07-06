@@ -6,7 +6,7 @@
 #ifdef WINDESKTOP_GUI
 
 //#define TRACE_GUI 1
-#define OUTLINE_GUI 1
+//#define OUTLINE_GUI 1
 
 #if TRACE_GUI
 #define OUTLINE_GUI 1
@@ -1933,6 +1933,12 @@ namespace corona
 			std::cout << "drawView:" << _style << "(" << _rect.x << "," << _rect.y << "-" << _rect.w << "," << _rect.h << ")" << rectFill.brushColor.red << " " << rectFill.brushColor.green << " " << rectFill.brushColor.blue << " " << rectFill.brushColor.alpha << std::endl;
 #endif
 			drawRectangle(&_rect, vs.box_border_color.name, vs.box_border_thickness, vs.box_fill_color.name);
+
+			_rect.h -= vs.box_border_thickness * 2.0;
+			_rect.w -= vs.box_border_thickness * 2.0;
+			_rect.x += vs.box_border_thickness;
+			_rect.y += vs.box_border_thickness;
+
 			drawText(_text, &_rect, vs.text_style.name, vs.shape_fill_color.name);
 
 #if OUTLINE_GUI

@@ -1544,7 +1544,7 @@ namespace corona
 				return jf.field_id;
 			}
 
-			layout_rect get_layout(relative_ptr_type _field_idx, double _font_height);
+			layout_rect get_layout(relative_ptr_type _field_idx);
 
 			relative_ptr_type put_string_field(put_string_field_request request)
 			{

@@ -97,7 +97,7 @@ namespace proposal
 
 		/* This is the application home class.  It is just a place holder now */
 		pcr.class_name = "home";
-		pcr.class_description = "Application Home";
+		pcr.class_description = "HOME";
 		pcr.field_id_primary_key = idf_home;
 		pcr.member_fields = { idf_home, schema.idf_style_id };
 		idc_home = schema.put_class(pcr);
@@ -105,7 +105,7 @@ namespace proposal
 		/* This is the client root class. Objects of the class have a layout and accept the client home id as a relation.  There is also 
 		a standard search string field, for searching for clients and keeping the search state. */
 		pcr.class_name = "client_root";
-		pcr.class_description = "Clients";
+		pcr.class_description = "CLIENTS";
 		pcr.field_id_primary_key = idf_client_root;
 		pcr.member_fields = { idf_client_root, idf_home, schema.idf_search_string, schema.idf_style_id };
 		idc_client_root = schema.put_class(pcr);
@@ -114,7 +114,7 @@ namespace proposal
 		field id idf_client, which is populated when objects of this class are constructed. . */
 
 		pcr.class_name = "client";
-		pcr.class_description = "Client";
+		pcr.class_description = "CLIENT";
 		pcr.field_id_primary_key = idf_client;
 		pcr.member_fields = { idf_client, idf_client_root, schema.idf_name, schema.idf_street, schema.idf_city, schema.idf_state, schema.idf_postal, schema.idf_email, schema.idf_url };
 		idc_client = schema.put_class(pcr);
@@ -124,7 +124,7 @@ namespace proposal
 			a standard search string field, for searching for clients and keeping the search state. */
 
 		pcr.class_name = "carrier_root";
-		pcr.class_description = "Carriers";
+		pcr.class_description = "CARRIERS";
 		pcr.field_id_primary_key = idf_carrier_root;
 		pcr.member_fields = { idf_carrier_root, idf_home, schema.idf_search_string, schema.idf_style_id };
 		idc_carrier_root = schema.put_class(pcr);
@@ -133,55 +133,55 @@ namespace proposal
 field id idf_carrier, which is populated when objects of this class are constructed. . */
 
 		pcr.class_name = "carrier";
-		pcr.class_description = "Carrier";
+		pcr.class_description = "CARRIER";
 		pcr.field_id_primary_key = idf_carrier;
 		pcr.member_fields = { idf_carrier, idf_carrier_root, schema.idf_name, schema.idf_street, schema.idf_city, schema.idf_state, schema.idf_postal, schema.idf_email, schema.idf_url };
 		idc_carrier = schema.put_class(pcr);
 
 		pcr.class_name = "coverage_root";
-		pcr.class_description = "Coverages";
+		pcr.class_description = "COVERAGES";
 		pcr.field_id_primary_key = idf_coverage_root;
 		pcr.member_fields = { idf_coverage_root, idf_home, schema.idf_search_string, schema.idf_style_id };
 		idc_coverage_root = schema.put_class(pcr);
 
 		pcr.class_name = "coverage";
-		pcr.class_description = "Coverage";
+		pcr.class_description = "COVERAGE";
 		pcr.field_id_primary_key = idf_carrier;
 		pcr.member_fields = { idf_coverage, idf_coverage_root, schema.idf_name };
 		idc_coverage = schema.put_class(pcr);
 
 		pcr.class_name = "system_root";
-		pcr.class_description = "System Settings";
+		pcr.class_description = "SYSTEM";
 		pcr.field_id_primary_key = idf_system_root;
 		pcr.member_fields = { idf_system_root, idf_home, schema.idf_search_string, schema.idf_style_id };
 		idc_system_root = schema.put_class(pcr);
 
 		pcr.class_name = "program_templates";
-		pcr.class_description = "Program Templates";
+		pcr.class_description = "PROGRAM TEMPLATES";
 		pcr.field_id_primary_key = idf_program_template_root;
 		pcr.member_fields = { idf_program_template_root, idf_home, schema.idf_search_string, schema.idf_style_id };
 		idc_program_template_root = schema.put_class(pcr);
 
 		pcr.class_name = "program_template";
-		pcr.class_description = "Program Template";
+		pcr.class_description = "PROGRAM TEMPLATE";
 		pcr.field_id_primary_key = idf_program_template;
 		pcr.member_fields = { idf_program_template_root, idf_program_template, idf_home };
 		idc_program_template = schema.put_class(pcr);
 
 		pcr.class_name = "program";
-		pcr.class_description = "Program";
+		pcr.class_description = "PROGRAM";
 		pcr.field_id_primary_key = idf_program;
 		pcr.member_fields = { idf_program, idf_client, idf_program_view, schema.idf_name, idf_program_title, idf_program_subtitle };
 		idc_coverage = schema.put_class(pcr);
 
 		pcr.class_name = "product";
-		pcr.class_description = "Product";
+		pcr.class_description = "PRODUCT";
 		pcr.field_id_primary_key = idf_product;
 		pcr.member_fields = { idf_product, idf_program, idf_client, idf_program_style };
 		idc_product = schema.put_class(pcr);
 
 		pcr.class_name = "product_item_base";
-		pcr.class_description = "Product Item Base";
+		pcr.class_description = "PRODUCT ITEM";
 		pcr.field_id_primary_key = idf_product_item_base;
 		pcr.member_fields = { idf_product, idf_product_item_base };
 		idc_product_item_base = schema.put_class(pcr);
@@ -236,19 +236,19 @@ field id idf_carrier, which is populated when objects of this class are construc
 		idc_pi_comment = schema.put_class(pcr);
 
 		pcr.class_name = "program_chart_slide";
-		pcr.class_description = "Program Chart Slide";
+		pcr.class_description = "PROGRAM SLIDE";
 		pcr.field_id_primary_key = idf_program_chart_slide;
 		pcr.member_fields = { idf_program_chart_slide, idf_client, idf_program, idf_slide_title };
 		idc_program_chart_slide = schema.put_class(pcr);
 
 		pcr.class_name = "program_chart_slide_product";
-		pcr.class_description = "Program Chart Slide Product";
+		pcr.class_description = "SLIDE PRODUCT";
 		pcr.field_id_primary_key = idf_program_chart_slide_product;
 		pcr.member_fields = { idf_program_chart_slide, idf_client, idf_program, idf_product };
 		idc_program_chart_slide_product = schema.put_class(pcr);
 
 		pcr.class_name = "program_generic_slide";
-		pcr.class_description = "Program Generic Slide";
+		pcr.class_description = "GENERIC SLIDE";
 		pcr.field_id_primary_key = idf_program_chart_slide;
 		pcr.member_fields = { idf_program_generic_slide, idf_client, idf_program };
 		idc_program_generic_slide = schema.put_class(pcr);
@@ -386,7 +386,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 
 	void wsproposal_controller::render_header(page_item* _frame, const char* _title, const char* _subtitle, bool _left_pad)
 	{
-		auto title_block = row(_frame, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 150.0_px });
+		auto title_block = row(_frame, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 120.0_px });
 
 		page_item* header_area;
 
@@ -402,15 +402,14 @@ field id idf_carrier, which is populated when objects of this class are construc
 		}
 
 		auto title_bar = row(header_area, schema.idf_title_bar_style, { 0.0_px, 0.0_px, 100.0_pct, 1.0_fntgr });
-		auto subtitle_bar = row(header_area, schema.idf_subtitle_bar_style, { 0.0_px, 0.0_px, 100.0_pct, 1.0_fntgr });
-		auto breadcrumb_bar = row(header_area, schema.idf_breadcrumb_bar_style, { 0.0_px, 0.0_px, 100.0_pct, 1.0_fntgr });
+		auto underline_bar = row(header_area, schema.idf_view_section_style, { 0.0_px, 0.0_px, 75.0_pct, 4.0_px });
+		auto underline_space_bar = row(header_area, schema.idf_view_background_style , { 0.0_px, 0.0_px, 75.0_pct, 4.0_px });
+		auto breadcrumb_bar = row(header_area, schema.idf_breadcrumb_bar_style, { 0.0_px, 0.0_px, 100.0_pct, 50.0_px });
 		breadcrumbs(breadcrumb_bar, [this](jobject& _item) {
 			return _item.get_name(schema.idf_name);
-			}, { 0.0_px, 0.0_px, 200.0_px, 100.0_pct });
+			}, { 0.0_px, 0.0_px, 200.0_px, 50.0_px });
 
 		text(title_bar, schema.idf_title_bar_style, _title, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct});
-		text(subtitle_bar, schema.idf_subtitle_bar_style, _subtitle, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
-
 	}
 
 	void wsproposal_controller::render_form(std::function<void(page_item* _frame)> _contents)
@@ -535,15 +534,15 @@ field id idf_carrier, which is populated when objects of this class are construc
 
 	void wsproposal_controller::render_home_contents(page_item* _frame)
 	{
-		relative_ptr_type class_ids1[3] = { idc_client_root, idc_carrier_root, idc_coverage_root };
-		relative_ptr_type class_ids2[2] = { idc_program_template_root, idc_system_root };
+		relative_ptr_type class_ids1[3] = { idc_client_root, idc_program_template_root, idc_carrier_root };
+		relative_ptr_type class_ids2[2] = { idc_coverage_root, idc_system_root };
 
 		auto d2darea = row(_frame, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
 
-		auto column1 = column(d2darea, schema.idf_view_background_style, { 0.0_px, 0.0_px, 50.0_pct, 100.0_pct });
+		auto column1 = column(d2darea, schema.idf_view_background_style, { 20.0_pct, 0.0_px, 30.0_pct, 100.0_pct });
 		selects(column1, schema.idf_company_neutral1_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_px }, schema.idf_name, class_ids1, 3);
 
-		auto column2 = column(d2darea, schema.idf_view_background_style, { 0.0_px, 0.0_px, 50.0_pct, 100.0_pct });
+		auto column2 = column(d2darea, schema.idf_view_background_style, { 20.0_pct, 0.0_px, 30.0_pct, 100.0_pct });
 		selects(column2, schema.idf_company_neutral1_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_px }, schema.idf_name, class_ids2, 2);
 	}
 
@@ -758,7 +757,9 @@ field id idf_carrier, which is populated when objects of this class are construc
 			{
 				{ schema.idf_font_name, fontName},
 				{ schema.idf_font_size, 16.0 },
-				{ schema.idf_box_fill_color, "#c0c0c0FF" },
+				{ schema.idf_box_fill_color, "#DEE1E1FF" },
+				{ schema.idf_box_border_thickness, 1 },
+				{ schema.idf_box_border_color, "#C1C6C8FF" }
 			}
 			);
 
@@ -813,19 +814,19 @@ field id idf_carrier, which is populated when objects of this class are construc
 			{
 				{ schema.idf_font_name, fontName },
 				{ schema.idf_font_size, 14.0 },
-				{ schema.idf_bold, true },
+				{ schema.idf_bold, false },
 				{ schema.idf_italic, false },
 				{ schema.idf_underline, false },
 				{ schema.idf_strike_through, false },
 				{ schema.idf_line_spacing, 0.0 },
 				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_far },
 				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_shape_fill_color, "#000000FF" },
+				{ schema.idf_shape_fill_color, "#5B6770FF" },
 				{ schema.idf_shape_border_thickness, 0 },
 				{ schema.idf_shape_border_color, "" },
-				{ schema.idf_box_fill_color, "#efefefFF" },
+				{ schema.idf_box_fill_color, "#DEE1E1FF" },
 				{ schema.idf_box_border_thickness, 1 },
-				{ schema.idf_box_border_color, "#dfdfdfFF" }
+				{ schema.idf_box_border_color, "#C1C6C8FF" }
 			}
 			);
 
@@ -834,20 +835,20 @@ field id idf_carrier, which is populated when objects of this class are construc
 			{ schema.idf_column_text_head_style },
 			{
 				{ schema.idf_font_name, fontName },
-				{ schema.idf_font_size, 14.0 },
-				{ schema.idf_bold, true },
+				{ schema.idf_font_size, 12.0 },
+				{ schema.idf_bold, false },
 				{ schema.idf_italic, false },
 				{ schema.idf_underline, false },
 				{ schema.idf_strike_through, false },
 				{ schema.idf_line_spacing, 0.0 },
 				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
 				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_shape_fill_color, "#000000FF" },
+				{ schema.idf_shape_fill_color, "#5B6770FF" },
 				{ schema.idf_shape_border_thickness, 0 },
 				{ schema.idf_shape_border_color, "" },
-				{ schema.idf_box_fill_color, "#efefefFF" },
+				{ schema.idf_box_fill_color, "#DEE1E1FF" },
 				{ schema.idf_box_border_thickness, 1 },
-				{ schema.idf_box_border_color, "#dfdfdfFF" }
+				{ schema.idf_box_border_color, "#C1C6C8FF" }
 			}
 			);
 
@@ -856,7 +857,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 			{ schema.idf_column_number_style },
 			{
 				{ schema.idf_font_name, fontName },
-				{ schema.idf_font_size, 14.0 },
+				{ schema.idf_font_size, 12.0 },
 				{ schema.idf_bold, false },
 				{ schema.idf_italic, false },
 				{ schema.idf_underline, false },
@@ -878,7 +879,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 			{ schema.idf_column_text_style },
 			{
 				{ schema.idf_font_name, fontName },
-				{ schema.idf_font_size, 14.0 },
+				{ schema.idf_font_size, 12.0 },
 				{ schema.idf_bold, false },
 				{ schema.idf_italic, false },
 				{ schema.idf_underline, false },
@@ -900,7 +901,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 			{ schema.idf_column_data_style },
 			{
 				{ schema.idf_font_name, fontName },
-				{ schema.idf_font_size, 30.0 },
+				{ schema.idf_font_size, 12.0 },
 				{ schema.idf_bold, false },
 				{ schema.idf_italic, false },
 				{ schema.idf_underline, false },
@@ -993,12 +994,14 @@ field id idf_carrier, which is populated when objects of this class are construc
 			{
 				{ schema.idf_font_name, fontName },
 				{ schema.idf_font_size, 14.0 },
-				{ schema.idf_shape_fill_color, "#0000CCFF" },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_center },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_center },
+				{ schema.idf_shape_fill_color, "#000000FF" },
 				{ schema.idf_shape_border_thickness, 0 },
 				{ schema.idf_shape_border_color, "" },
-				{ schema.idf_box_fill_color, "#ffffffFF" },
-				{ schema.idf_box_border_thickness, 0 },
-				{ schema.idf_box_border_color, "" }
+				{ schema.idf_box_fill_color, "#78BE20FF" },
+				{ schema.idf_box_border_thickness, 8 },
+				{ schema.idf_box_border_color, "#FFFFFFFF" }
 			}
 			);
 
@@ -1008,12 +1011,14 @@ field id idf_carrier, which is populated when objects of this class are construc
 			{
 				{ schema.idf_font_name, fontName },
 				{ schema.idf_font_size, 14.0 },
-				{ schema.idf_shape_fill_color, "#0000CCFF" },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_center },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_center },
+				{ schema.idf_shape_fill_color, "#000000FF" },
 				{ schema.idf_shape_border_thickness, 0 },
 				{ schema.idf_shape_border_color, "" },
-				{ schema.idf_box_fill_color, "#ffffffFF" },
-				{ schema.idf_box_border_thickness, 0 },
-				{ schema.idf_box_border_color, "" }
+				{ schema.idf_box_fill_color, "#6399AEFF" },
+				{ schema.idf_box_border_thickness, 8 },
+				{ schema.idf_box_border_color, "#FFFFFFFF" }
 			}
 			);
 
@@ -1023,12 +1028,14 @@ field id idf_carrier, which is populated when objects of this class are construc
 			{
 				{ schema.idf_font_name, fontName },
 				{ schema.idf_font_size, 14.0 },
-				{ schema.idf_shape_fill_color, "#0000CCFF" },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_center },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_center },
+				{ schema.idf_shape_fill_color, "#000000FF" },
 				{ schema.idf_shape_border_thickness, 0 },
 				{ schema.idf_shape_border_color, "" },
-				{ schema.idf_box_fill_color, "#ffffffFF" },
-				{ schema.idf_box_border_thickness, 0 },
-				{ schema.idf_box_border_color, "" }
+				{ schema.idf_box_fill_color, "#A2AAADFF" },
+				{ schema.idf_box_border_thickness, 8 },
+				{ schema.idf_box_border_color, "#FFFFFFFF" }
 			}
 			);
 
@@ -1038,12 +1045,14 @@ field id idf_carrier, which is populated when objects of this class are construc
 			{
 				{ schema.idf_font_name, fontName },
 				{ schema.idf_font_size, 14.0 },
-				{ schema.idf_shape_fill_color, "#0000CCFF" },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_center },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_center },
+				{ schema.idf_shape_fill_color, "#000000FF" },
 				{ schema.idf_shape_border_thickness, 0 },
 				{ schema.idf_shape_border_color, "" },
-				{ schema.idf_box_fill_color, "#ffffffFF" },
-				{ schema.idf_box_border_thickness, 0 },
-				{ schema.idf_box_border_color, "" }
+				{ schema.idf_box_fill_color, "#78BE20FF" },
+				{ schema.idf_box_border_thickness, 8 },
+				{ schema.idf_box_border_color, "#FFFFFFFF" }
 			}
 			);
 
@@ -1053,12 +1062,14 @@ field id idf_carrier, which is populated when objects of this class are construc
 			{
 				{ schema.idf_font_name, fontName },
 				{ schema.idf_font_size, 14.0 },
-				{ schema.idf_shape_fill_color, "#0000CCFF" },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_center },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_center },
+				{ schema.idf_shape_fill_color, "#000000FF" },
 				{ schema.idf_shape_border_thickness, 0 },
 				{ schema.idf_shape_border_color, "" },
-				{ schema.idf_box_fill_color, "#ffffffFF" },
-				{ schema.idf_box_border_thickness, 0 },
-				{ schema.idf_box_border_color, "" }
+				{ schema.idf_box_fill_color, "#A2AAADFF" },
+				{ schema.idf_box_border_thickness, 8 },
+				{ schema.idf_box_border_color, "#FFFFFFFF" }
 			}
 			);
 
@@ -1275,13 +1286,13 @@ field id idf_carrier, which is populated when objects of this class are construc
 			{ schema.idf_title_bar_style },
 			{
 				{ schema.idf_font_name, fontName },
-				{ schema.idf_font_size, 32.0 },
-				{ schema.idf_shape_fill_color, "#0000CCFF" },
+				{ schema.idf_font_size, 24.0 },
+				{ schema.idf_shape_fill_color, "#319B42FF" },
 				{ schema.idf_shape_border_thickness, 0 },
 				{ schema.idf_shape_border_color, "" },
-				{ schema.idf_box_fill_color, "#cfcfffFF" },
-				{ schema.idf_box_border_thickness, 1 },
-				{ schema.idf_box_border_color, "#cfcfefFF" }
+				{ schema.idf_box_fill_color, "#FFFFFFFF" },
+				{ schema.idf_box_border_thickness, 0 },
+				{ schema.idf_box_border_color, "#FFFFFFFF" }
 			}
 			);
 
@@ -1305,14 +1316,13 @@ field id idf_carrier, which is populated when objects of this class are construc
 			{ schema.idf_breadcrumb_bar_style },
 			{
 				{ schema.idf_font_name, fontName },
-				{ schema.idf_font_size, 24.0 },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_center },
+				{ schema.idf_font_size, 14.0 },
 				{ schema.idf_shape_fill_color, "#0000CCFF" },
 				{ schema.idf_shape_border_thickness, 0 },
 				{ schema.idf_shape_border_color, "" },
-				{ schema.idf_box_fill_color, "#cfcfffFF" },
+				{ schema.idf_box_fill_color, "#FFFFFFFF" },
 				{ schema.idf_box_border_thickness, 1 },
-				{ schema.idf_box_border_color, "#cfcfefFF" }
+				{ schema.idf_box_border_color, "#FFFFFFFF" }
 			}
 			);
 
@@ -1322,12 +1332,14 @@ field id idf_carrier, which is populated when objects of this class are construc
 			{
 				{ schema.idf_font_name, fontName },
 				{ schema.idf_font_size, 14.0 },
-				{ schema.idf_shape_fill_color, "#2f2f2fFF" },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_center },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_center },
+				{ schema.idf_shape_fill_color, "#000000FF" },
 				{ schema.idf_shape_border_thickness, 0 },
 				{ schema.idf_shape_border_color, "" },
-				{ schema.idf_box_fill_color, "#cfcfffFF" },
-				{ schema.idf_box_border_thickness, 1 },
-				{ schema.idf_box_border_color, "#cfcfefFF" }
+				{ schema.idf_box_fill_color, "#DEE1E1FF" },
+				{ schema.idf_box_border_thickness, 4 },
+				{ schema.idf_box_border_color, "#FFFFFFFF" }
 			}
 			);
 

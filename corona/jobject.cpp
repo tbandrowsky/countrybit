@@ -3138,28 +3138,26 @@ namespace corona
 			return field.size_bytes;
 		}
 
-		layout_rect jschema::get_layout(relative_ptr_type _field_idx, double _font_height)
+		layout_rect jschema::get_layout(relative_ptr_type _field_idx)
 		{
 			layout_rect lr;
 			lr.x = 0.0_px;
 			lr.y = 0.0_px;
-			lr.height = measure(_font_height, measure_units::pixels);
-			double width_factor = .8;
-			double char_width = _font_height * width_factor;
+			lr.height = 1.0_fntgr;
 			jfield &f = get_field(_field_idx);
 
 			if (f.is_integer() || f.is_float()) {
-				lr.width = measure(char_width * 10, measure_units::pixels);
+				lr.width = measure(10.0, measure_units::font_golden_ratio);
 			}
 			else if (f.is_string())
 			{
 				double w = f.string_properties.length;
 				if (w > 30) w = 30.0;
-				lr.width = measure(char_width * w, measure_units::pixels);
+				lr.width = measure(w, measure_units::font_golden_ratio);
 			}
 			else
 			{
-				lr.width = measure(char_width * 10, measure_units::pixels);
+				lr.width = measure(10.0, measure_units::font_golden_ratio);
 			}
 
 			return lr;
@@ -3201,7 +3199,7 @@ namespace corona
 				{ { jtype::type_string, "mime_type", "MimeType" }, { 100, "", "" } },
 				{ { jtype::type_string, "base64", "Base64" }, { 100, "", "" } },
 				{ { jtype::type_string, "font_name", "Font" }, { 32, "", "" } },
-				{ { jtype::type_string, "name", "Object Name" }, { 32, "", "" } },
+				{ { jtype::type_string, "name", "Name" }, { 32, "", "" } },
 				{ { jtype::type_string, "field_name", "Field Name" }, { 64, "", "" } },
 				{ { jtype::type_string, "field_description", "Field Display Name" }, { 64, "", "" } },
 				{ { jtype::type_string, "field_format", "Field Format" }, { 64, "", "" } },
@@ -3243,7 +3241,7 @@ namespace corona
 				{ { jtype::type_int32, "object_x", "X Dim" }, 0, INT64_MAX },
 				{ { jtype::type_int32, "object_y", "Y Dim" }, 0, INT64_MAX },
 				{ { jtype::type_int32, "object_z", "Z Dim" }, 0, INT64_MAX },
-				{ { jtype::type_int64, "style_id", "Style Id" }, 0, INT64_MAX },
+				{ { jtype::type_int64, "style_id", "Style Id", false }, 0, INT64_MAX },
 			};
 
 			put_double_field_request double_fields[20] = {

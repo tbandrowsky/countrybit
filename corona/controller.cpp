@@ -491,8 +491,8 @@ namespace corona
 			for_class(_class_ids, _length, [pbox, st, page_add, this, _id_name, _parent_ui, _style_id]( actor_view_object& avo)
 				{
 					auto style_id = _style_id;
-					if (avo.object.has_field(schema.idf_style_sheet)) {
-						style_id = avo.object.get_int64(schema.idf_style_sheet, true);
+					if (avo.object.has_field(schema.idf_style_id)) {
+						style_id = avo.object.get_int64(schema.idf_style_id, true);
 					}
 					page_add->select(_parent_ui, st, avo.object_id, _id_name, avo.object, style_id, *pbox);
 					return true;
@@ -538,14 +538,12 @@ namespace corona
 		{
 			page_item* drow = row(_parent, schema.idf_view_background_style);
 
-			double fontHeight = this->getStyleSheet().get_object(schema.idf_column_text_head_style,true).get_slice(0).get(schema.idf_font_size);
-
 			std::vector<layout_rect> columns;
 
 			for (int i = 0; i < _num_child_fields; i++)
 			{
 				auto field_spec = schema.get_field(_idf_child_fields[i]);
-				auto layout = schema.get_layout(_idf_child_fields[i],fontHeight);
+				auto layout = schema.get_layout(_idf_child_fields[i]);
 				columns.push_back(layout);
 				if (field_spec.is_string())
 					text(drow, schema.idf_column_text_head_style, field_spec.description, layout);
@@ -554,11 +552,6 @@ namespace corona
 			}
 
 			auto* pout = &std::cout;
-
-			auto xvo = state.view_objects.where([pout, this, _idc_class_id](const actor_view_collection::iterator_item_type& _item) {
-				*pout << "view object oid:"  << _item.second.object_id << " clsid:" << _item.second.class_id << " \n";
-				return true;
-				});
 
 			auto svo = state.view_objects.where([this, _idc_class_id](const actor_view_collection::iterator_item_type& _item) {
 				return program_chart.matches_class_id(_item.second.object, _idc_class_id);
@@ -603,7 +596,7 @@ namespace corona
 
 		void corona_controller::render_item(drawableHost* _host, page_item& _item)
 		{
-			const char* cap = _item.caption != nullptr ? _item.caption : "(no caption)";
+			const char* cap = _item.caption != nullptr ? _item.caption : "";
 			const char* style_name = style_id(_item.style_id);
 			const char *sty = style_name != nullptr ? style_name : "(no style)";
 
