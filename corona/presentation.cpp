@@ -94,9 +94,11 @@ namespace corona
 			v->id = size();
 			v->layout = layout_types::column;
 			v->set_parent(_parent);
+			v->class_id = slice.get_class_id();
 			v->object_id = object_id;
 			v->box = { 0.0_pct, 0.0_pct, 100.0_pct, 50.0_px };
 			v->slice = slice;
+			v->field = &(slice.get_field_by_id(field_id));
 			return v;
 		}
 
@@ -113,6 +115,7 @@ namespace corona
 			v->caption = data.copy(slice.get_name(id_name), 0);
 			v->slice = slice;
 			v->style_id = _style_id;
+			v->class_id = slice.get_class_id();
 
 			if (slice.has_field("layout_rect"))
 			{
@@ -130,6 +133,7 @@ namespace corona
 			v->layout = layout_types::select_cell;
 			v->slice = slice;
 			v->object_id = object_id;
+			v->class_id = slice.get_class_id();
 			v->box = _box;
 			v->style_id = _style_id;
 			v->select_request = _state->create_select_request(v->object_id, false);
@@ -155,6 +159,7 @@ namespace corona
 
 		page_item* page::actor_update_fields(page_item* _parent, actor_state* _state, jschema* _schema, jcollection* _collection)
 		{
+
 			if (_state->modified_object_id != null_row)
 			{
 				auto avo = _state->get_modified_object();
@@ -166,6 +171,7 @@ namespace corona
 				label->layout = layout_types::label;
 				label->box = { 0.0_px, 0.0_px, 200.0_px, 1.0_fntgr };
 				label->slice = slice;
+				label->class_id = slice.get_class_id();
 				label->object_id = avo.object_id;
 				label->style_id = _schema->idf_label_style;
 				label->caption = slice.get_class().item().description;
@@ -185,6 +191,7 @@ namespace corona
 					label->object_id = avo.object_id;
 					label->style_id = _schema->idf_label_style;
 					label->caption = fld.description;
+					label->class_id = slice.get_class_id();
 
 					page_item* control = append();
 					control->id = size();
@@ -194,6 +201,7 @@ namespace corona
 					control->box = { 0.0_px, 0.0_px, 200.0_px, 1.0_fntgr };
 					control->slice = slice;
 					control->object_id = avo.object_id;
+					control->class_id = slice.get_class_id();
 					control->style_id = _schema->idf_control_style;
 				}
 			}

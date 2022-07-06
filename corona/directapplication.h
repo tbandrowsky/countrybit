@@ -191,11 +191,13 @@ namespace corona
 			struct windowMapItem
 			{
 				HWND				window;
-				database::page_item item;
 			};
 
-			std::map<int, windowMapItem>	previousWindowControlMap, 
-											windowControlMap;
+			std::map<page_item_identifier, windowMapItem> 
+				windowControlMap, 
+				oldWindowControlMap;
+
+			std::map<int, page_item> message_map;
 
 			HFONT	controlFont,
 					labelFont,
@@ -208,6 +210,7 @@ namespace corona
 			HFONT createFontFromStyleSheet(relative_ptr_type _style_id);
 
 			void createChildWindow(
+				page_item_identifier pii,
 				LPCTSTR		lpClassName,
 				LPCTSTR		lpWindowName,
 				DWORD       dwStyle,

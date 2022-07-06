@@ -21,6 +21,16 @@ namespace corona
 			text = 12
 		};
 
+		struct page_item_identifier_x
+		{
+			relative_ptr_type		class_id;
+			relative_ptr_type		object_id;
+			relative_ptr_type		field_id;
+			int						layout;
+		};
+
+		typedef int64_t page_item_identifier;
+
 		class page_item
 		{
 		public:
@@ -32,6 +42,7 @@ namespace corona
 			layout_rect				box;
 			rectangle				bounds;
 
+			relative_ptr_type		class_id;
 			relative_ptr_type		object_id;
 			jfield*					field;
 			create_object_request	create_request;
@@ -40,6 +51,7 @@ namespace corona
 
 			const char*				caption;
 			int						canvas_id;
+			int						old_id;
 
 			page_item() :
 				id(-1),
@@ -49,7 +61,8 @@ namespace corona
 				field(nullptr),
 				caption(nullptr),
 				canvas_id(-1),
-				style_id(null_row)
+				style_id(null_row),
+				old_id(-1)
 			{
 				;
 			}
@@ -87,6 +100,28 @@ namespace corona
 				return is_create() || is_select();
 			}
 
+			page_item_identifier get_identifier()
+			{
+				page_item_identifier_x pii { null_row, null_row };
+				if ((layout == layout_types::field) ||
+					(layout == layout_types::label) ||
+					(layout == layout_types::create) ||
+					(layout == layout_types::canvas2d) || 
+					(layout == layout_types::canvas3d)) {
+					pii.layout = (int)layout;
+					pii.object_id = object_id;
+					if (field != nullptr) 
+					{
+						pii.field_id = field->field_id;
+					}
+				}
+				page_item_identifier c = 17;
+				c = c * 23 + pii.layout;
+				c = c * 23 + pii.class_id;
+				c = c * 23 + pii.field_id;
+				c = c * 23 + pii.object_id;
+				return c;
+			}
 		};
 
 		class page : public iarray<page_item, 1024>
