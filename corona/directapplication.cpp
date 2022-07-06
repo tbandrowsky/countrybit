@@ -1953,7 +1953,9 @@ namespace corona
 		{
 			if (currentController) {
 				beginDraw();
-				currentController->drawFrame();
+				if (renderTarget != nullptr) {
+					currentController->drawFrame();
+				}
 				endDraw();
 			}
 		}
@@ -1989,9 +1991,16 @@ namespace corona
 			nWidth /= dpiScale;
 			nHeight /= dpiScale;
 
-			if (stricmp("CoronaDirect2d", lpClassName) == 0) 
+			if (_stricmp("CoronaDirect2d", lpClassName) == 0) 
 			{
-
+				if (hwndDirect2d != nullptr) {
+					MoveWindow(hwndDirect2d, x, y, nWidth, nHeight, true);
+					hwnd = hwndDirect2d;
+				}
+				else 
+				{
+					hwnd = CreateWindow(lpClassName, lpWindowName, dwStyle, x, y, nWidth, nHeight, directApplication::hwndRoot, (HMENU)windowId, hinstance, lpParam);
+				}
 			}
 			else if (previousWindowControlMap.contains(windowId)) 
 			{
@@ -2172,7 +2181,7 @@ namespace corona
 					createChildWindow("CoronaDirect2d", "", WS_CHILD | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, canvasWindowId, NULL, NULL, pi);
 					break;
 				case database::layout_types::label:
-					createChildWindow(WC_STATIC, pi.field->name.c_str(), WS_CHILD | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, labelFont, pi);
+					createChildWindow(WC_STATIC, pi.caption, WS_CHILD | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, labelFont, pi);
 					break;
 				case database::layout_types::field:
 					{
@@ -2251,13 +2260,13 @@ namespace corona
 
 			for (auto wmi : previousWindowControlMap) 
 			{
-				if (!windowControlMap.contains(wmi.first))
+				if (!windowControlMap.contains(wmi.first) && wmi.second.item.layout != layout_types::canvas2d)
 				{
 					DestroyWindow(wmi.second.window);
 				}
 			}
 			
-			InvalidateRect(hwndRoot, nullptr, false);
+			InvalidateRect(hwndRoot, nullptr, true);
 			UpdateWindow(hwndRoot);
 
 			return canvasWindowId;
@@ -2607,25 +2616,9 @@ namespace corona
 				{
 					hbrBkgnd = CreateSolidBrush(RGB(255, 255, 255));
 				}
-				if (hbrBkgnd2 == NULL)
-				{
-					hbrBkgnd2 = CreateSolidBrush(RGB(192, 192, 192));
-				}
+
 				::GetClientRect(hwnd, &rect);
-				::FillRect((HDC)wParam, &rect, hbrBkgnd2);
-
-				rect2.left = 8;
-				rect2.right = 433;
-				rect2.top = 8;
-				rect2.bottom = rect.bottom - 8;
-				::FillRect((HDC)wParam, &rect2, hbrBkgnd);
-
-				rect2.left = 441;
-				rect2.right = rect.right - 8;
-				rect2.top = 8;
-				rect2.bottom = rect.bottom - 8;
-				::FillRect((HDC)wParam, &rect2, hbrBkgnd);
-
+				::FillRect((HDC)wParam, &rect, hbrBkgnd);
 				return 1;
 			}
 			break;

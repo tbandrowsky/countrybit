@@ -155,48 +155,50 @@ namespace corona
 
 		page_item* page::actor_update_fields(page_item* _parent, actor_state* _state, jschema* _schema, jcollection* _collection)
 		{
-			page_item* v = append();
-
-			v->id = size();
-			v->layout = layout_types::column;
-			v->set_parent(_parent);
-
-			measure height = 0.0_px;
-
 			if (_state->modified_object_id != null_row)
 			{
 				auto avo = _state->get_modified_object();
 				auto slice = _collection->get_object(avo.object_id);
+
+				page_item* label = append();
+				label->id = size();
+				label->parent_id = _parent->id;
+				label->layout = layout_types::label;
+				label->box = { 0.0_px, 0.0_px, 200.0_px, 1.0_fntgr };
+				label->slice = slice;
+				label->object_id = avo.object_id;
+				label->style_id = _schema->idf_label_style;
+				label->caption = slice.get_class().item().description;
+
 				for (int i = 0; i < slice.size(); i++)
 				{
 					jfield& fld = slice.get_field(i);
-					page_item* label = append();
+					if (!fld.display_in_user_ui)
+						continue;
+					label = append();
 					label->id = size();
-					label->parent_id = v->id;
+					label->parent_id = _parent->id;
 					label->layout = layout_types::label;
 					label->field = &fld;
-					label->box = { 0.0_px, 0.0_px, 200.0_px, 20.0_px };
+					label->box = { 0.0_px, 0.0_px, 200.0_px, 1.0_fntgr };
 					label->slice = slice;
 					label->object_id = avo.object_id;
 					label->style_id = _schema->idf_label_style;
 					label->caption = fld.description;
-					height.amount += 20.0;
+
 					page_item* control = append();
 					control->id = size();
-					control->parent_id = v->id;
+					control->parent_id = _parent->id;
 					control->layout = layout_types::field;
 					control->field = &fld;
-					control->box = { 0.0_px, 0.0_px, 200.0_px, 20.0_px };
+					control->box = { 0.0_px, 0.0_px, 200.0_px, 1.0_fntgr };
 					control->slice = slice;
 					control->object_id = avo.object_id;
 					control->style_id = _schema->idf_control_style;
-					height.amount += 20.0;
 				}
 			}
 
-			v->box = { 10.0_px, 10.0_px, 200.0_px, height };
-
-			return v;
+			return _parent;
 		}
 
 		page_item* page::actor_create_buttons(page_item* _parent, actor_state* _state, jschema* _schema, jcollection* _collection, relative_ptr_type _style_id, layout_rect _box)
@@ -429,7 +431,7 @@ namespace corona
 
 			if (_item->layout == layout_types::row) 
 			{
-				double startx = x;
+				double startx = 0;
 				for (auto child : children)
 				{
 					arrange_impl(_style_sheet, &child.item, startx, 0, _item->bounds.x, _item->bounds.y, remaining_width, _item->bounds.h);
@@ -438,7 +440,7 @@ namespace corona
 			}
 			else if (_item->layout == layout_types::column) 
 			{
-				double starty = y;
+				double starty = 0;
 				for (auto child : children)
 				{
 					arrange_impl(_style_sheet, &child.item, 0, starty, _item->bounds.x, _item->bounds.y, _item->bounds.w, remaining_height);
@@ -449,7 +451,7 @@ namespace corona
 			{
 				for (auto child : children)
 				{
-					arrange_impl(_style_sheet, &child.item, 0, 0,_item->bounds.x, _item->bounds.y, _item->bounds.w, _item->bounds.h);
+					arrange_impl(_style_sheet, &child.item, 0, 0, 0, 0, _item->bounds.w, _item->bounds.h);
 				}
 			}
 			else if (_item->layout == layout_types::select_cell)

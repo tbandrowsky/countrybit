@@ -359,7 +359,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 		set_style_sheet();
 
 		program_chart.create_object(null_row, sample_actor.actor_id, idc_home, id_home, { { schema.idf_style_id, schema.idf_home_style } });
-		program_chart.create_object(null_row, sample_actor.actor_id, idc_carrier_root, id_carrier_root, { { idf_home , id_home }, { schema.idf_style_id, schema.idf_client_style } });
+		program_chart.create_object(null_row, sample_actor.actor_id, idc_carrier_root, id_carrier_root, { { idf_home , id_home }, { schema.idf_style_id, schema.idf_carrier_style } });
 		program_chart.create_object(null_row, sample_actor.actor_id, idc_coverage_root, id_coverage_root, { { idf_home, id_home }, { schema.idf_style_id, schema.idf_coverage_style } });
 		program_chart.create_object(null_row, sample_actor.actor_id, idc_client_root, id_client_root, { { idf_home, id_home }, { schema.idf_style_id, schema.idf_client_style } });
 		program_chart.create_object(null_row, sample_actor.actor_id, idc_program_template_root, id_product_template_root, { { idf_home, id_home }, { schema.idf_style_id, schema.idf_product_style } });
@@ -432,9 +432,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 		add_create_buttons(controlcol1, schema.idf_button_style);
 
 		_contents(controlrow);
-
 	}
-
 
 	void wsproposal_controller::render_2d(std::function<void(page_item* _frame)> _contents)
 	{
@@ -460,24 +458,24 @@ field id idf_carrier, which is populated when objects of this class are construc
 	{
 		clear();
 
-		auto mainr = row(nullptr, null_row);
-		auto control = column(mainr, schema.idf_view_background_style, { 0.0_px, 0.0_px, 25.0_pct, 100.0_pct });
-		auto d2darea = column(mainr, schema.idf_view_background_style, { 0.0_px, 0.0_px, 75.0_pct, 100.0_pct });
-		auto d2dwin = canvas2d(d2darea, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
+		auto mainr = column(nullptr, null_row, { 0.0_px,0.0_px,100.0_pct,100.0_pct });
+		auto d2dwin = canvas2d(mainr, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 80.0_pct });
+		auto control = row(mainr, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 20.0_pct });
+		auto d2darea = column(d2dwin, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
 
 		const char* object_title = nullptr;
 		object_title = schema.get_class(state.actor.current_view_class_id).item().description;
 
-		render_header(d2dwin, application_title, object_title, true);
+		render_header(d2darea, application_title, object_title, false);
 
-		auto client_area = row(d2dwin, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
+		auto client_area = row(d2darea, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
 		_contents(client_area);
-
-		auto d2dcommandbar = row(d2dwin, schema.idf_breadcrumb_bar_style, { 0.0_px, 0.0_px, 100.0_pct, 50.0_px });
-		add_create_buttons(d2dcommandbar, schema.idf_button_style);
 
 		// editable controls on the left
 		add_update_fields(control);
+
+		// and the add buttons
+		add_create_buttons(control, schema.idf_button_style);
 	}
 
 	void wsproposal_controller::render_home()
@@ -760,6 +758,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 			{
 				{ schema.idf_font_name, fontName},
 				{ schema.idf_font_size, 16.0 },
+				{ schema.idf_box_fill_color, "#c0c0c0FF" },
 			}
 			);
 
@@ -923,7 +922,17 @@ field id idf_carrier, which is populated when objects of this class are construc
 			{ schema.idf_label_style },
 			{
 				{ schema.idf_font_name, fontName },
-				{ schema.idf_font_size, 30.0 },
+				{ schema.idf_font_size, 24.0 },
+			}
+			);
+
+		style_sheet.set(
+			schema.idf_view_style,
+			{ schema.idf_control_style },
+			{
+				{ schema.idf_font_name, fontName },
+				{ schema.idf_font_size, 24.0 },
+				{ schema.idf_bold, true },
 			}
 			);
 
