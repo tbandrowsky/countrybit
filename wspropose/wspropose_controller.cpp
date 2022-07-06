@@ -48,26 +48,26 @@ namespace proposal
 		is just an integer, but it will be assigned as a PK as part of its class membership.
 		*/
 
-		idf_home = schema.put_integer_field({ { null_row,  jtype::type_int64, "home_id", "Home Id" }, { 0, INT64_MAX } });
-		idf_client_root = schema.put_integer_field({ { null_row,  jtype::type_int64, "client_root", "Clients" }, { 0, INT64_MAX } });
-		idf_client = schema.put_integer_field({ { null_row,  jtype::type_int64, "client_id", "Client Id" }, { 0, INT64_MAX } });
-		idf_carrier_root = schema.put_integer_field({ { null_row,  jtype::type_int64, "carrier_root", "Carriers" }, { 0, INT64_MAX } });
-		idf_carrier = schema.put_integer_field({ { null_row,  jtype::type_int64, "carrier_id", "Carrier Id" }, { 0, INT64_MAX } });
-		idf_program_template_root = schema.put_integer_field({ { null_row,  jtype::type_int64, "home", "Home id" }, { 0, INT64_MAX } });
-		idf_program_template = schema.put_integer_field({ { null_row,  jtype::type_int64, "product_template", "Product Template id" }, { 0, INT64_MAX } });
-		idf_coverage_root = schema.put_integer_field({ { null_row,  jtype::type_int64, "coverage_root", "Coverages" }, { 0, INT64_MAX } });
-		idf_coverage = schema.put_integer_field({ { null_row,  jtype::type_int64, "coverage_id", "Coverage Id" }, { 0, INT64_MAX } });
-		idf_system_root = schema.put_integer_field({ { null_row,  jtype::type_int64, "system_root", "System Settings" }, { 0, INT64_MAX } });
+		idf_home = schema.put_integer_field({ {  jtype::type_int64, "home_id", "Home Id", false }, { 0, INT64_MAX } });
+		idf_client_root = schema.put_integer_field({ {  jtype::type_int64, "client_root", "Clients", false }, { 0, INT64_MAX } });
+		idf_client = schema.put_integer_field({ {  jtype::type_int64, "client_id", "Client Id", false }, { 0, INT64_MAX } });
+		idf_carrier_root = schema.put_integer_field({ {  jtype::type_int64, "carrier_root", "Carriers", false }, { 0, INT64_MAX } });
+		idf_carrier = schema.put_integer_field({ {  jtype::type_int64, "carrier_id", "Carrier Id", false }, { 0, INT64_MAX } });
+		idf_program_template_root = schema.put_integer_field({ {  jtype::type_int64, "home", "Home id", false }, { 0, INT64_MAX } });
+		idf_program_template = schema.put_integer_field({ {  jtype::type_int64, "product_template", "Product Template id", false }, { 0, INT64_MAX } });
+		idf_coverage_root = schema.put_integer_field({ {  jtype::type_int64, "coverage_root", "Coverages", false }, { 0, INT64_MAX } });
+		idf_coverage = schema.put_integer_field({ {  jtype::type_int64, "coverage_id", "Coverage Id", false }, { 0, INT64_MAX } });
+		idf_system_root = schema.put_integer_field({ {  jtype::type_int64, "system_root", "System Settings", false }, { 0, INT64_MAX } });
 
-		idf_program = schema.put_integer_field({ { null_row,  jtype::type_int64, "program_id", "Program Id" }, { 0, INT64_MAX } });
-		idf_program_view = schema.put_integer_field({ { null_row,  jtype::type_int64, "program_view", "Program View" }, { 0, INT64_MAX } });
-		idf_program_title = schema.put_string_field({ { null_row,  jtype::type_string, "program_title", "Program Title" }, { 100, "", "" } });
-		idf_program_subtitle = schema.put_string_field({ { null_row,  jtype::type_string, "program_title", "Program Subtitle" }, { 100, "", "" } });
-		idf_product = schema.put_integer_field({ { null_row,  jtype::type_int64, "product_id", "Product Id" }, { 0, INT64_MAX } });
-		idf_product_item_base = schema.put_integer_field({ { null_row,  jtype::type_int64, "product_item_id", "Product Item Id" }, { 0, INT64_MAX } });
-		idf_program_chart_slide = schema.put_integer_field({ { null_row,  jtype::type_int64, "program_chart_slide_id", "Program Chart Slide Id" }, { 0, INT64_MAX } });
-		idf_program_chart_slide_product = schema.put_integer_field({ { null_row,  jtype::type_int64, "program_chart_slide_product_id", "Program Chart Slide Item Id" }, { 0, INT64_MAX } });
-		idf_program_generic_slide = schema.put_integer_field({ { null_row,  jtype::type_int64, "program_generic_slide", "Generic Slide Id" }, { 0, INT64_MAX } });
+		idf_program = schema.put_integer_field({ {  jtype::type_int64, "program_id", "Program Id", false }, { 0, INT64_MAX } });
+		idf_program_view = schema.put_integer_field({ {  jtype::type_int64, "program_view", "Program View", false }, { 0, INT64_MAX } });
+		idf_program_title = schema.put_string_field({ {  jtype::type_string, "program_title", "Program Title", true }, { 100, "", "" } });
+		idf_program_subtitle = schema.put_string_field({ {  jtype::type_string, "program_title", "Program Subtitle", true }, { 100, "", "" } });
+		idf_product = schema.put_integer_field({ {  jtype::type_int64, "product_id", "Product Id", false }, { 0, INT64_MAX } });
+		idf_product_item_base = schema.put_integer_field({ {  jtype::type_int64, "product_item_id", "Product Item Id", false }, { 0, INT64_MAX } });
+		idf_program_chart_slide = schema.put_integer_field({ {  jtype::type_int64, "program_chart_slide_id", "Program Chart Slide Id", false }, { 0, INT64_MAX } });
+		idf_program_chart_slide_product = schema.put_integer_field({ {  jtype::type_int64, "program_chart_slide_product_id", "Program Chart Slide Item Id", false}, { 0, INT64_MAX } });
+		idf_program_generic_slide = schema.put_integer_field({ {  jtype::type_int64, "program_generic_slide", "Generic Slide Id", false }, { 0, INT64_MAX } });
 
 		/* 
 		* Here we are going to specify a set of fields that may be used to create a program item.  
@@ -75,15 +75,15 @@ namespace proposal
 		* sugar will be introduced to make it -seem- that way.
 		*/
 
-		idf_inception = schema.put_time_field({ { null_row,  jtype::type_datetime, "inception", "Inception" }, { 0, INT64_MAX } });
-		idf_expiration = schema.put_time_field({ { null_row,  jtype::type_datetime, "expiration", "Expiration" }, { 0, INT64_MAX } });
-		idf_status = schema.put_integer_field({ { null_row,  jtype::type_int32, "status", "Status" }, { 0, INT64_MAX } });
-		idf_attachment = schema.put_double_field({ { null_row,  jtype::type_float32, "attachment", "Attachment" }, { 0.0, 1E10 } });
-		idf_limit = schema.put_double_field({ { null_row,  jtype::type_float32, "limit", "Limit" }, { 0.0, 1E10 } });
-		idf_deductible = schema.put_double_field({ { null_row,  jtype::type_float32, "deductible", "Deductible" }, { 0.0, 1E10 } });
-		idf_share = schema.put_double_field({ { null_row,  jtype::type_float32, "share", "Share %" }, { 0.0, 100 } });
-		idf_comment = schema.put_string_field({ { null_row,  jtype::type_string, "comment", "Comment" }, { 500, "", "", } });
-		idf_program_style = schema.put_string_field({ { null_row,  jtype::type_color, "style", "Style" }, {  } });
+		idf_inception = schema.put_time_field({ {  jtype::type_datetime, "inception", "Inception" }, { 0, INT64_MAX } });
+		idf_expiration = schema.put_time_field({ {  jtype::type_datetime, "expiration", "Expiration" }, { 0, INT64_MAX } });
+		idf_status = schema.put_integer_field({ {  jtype::type_int32, "status", "Status" }, { 0, INT64_MAX } });
+		idf_attachment = schema.put_double_field({ {  jtype::type_float32, "attachment", "Attachment" }, { 0.0, 1E10 } });
+		idf_limit = schema.put_double_field({ {  jtype::type_float32, "limit", "Limit" }, { 0.0, 1E10 } });
+		idf_deductible = schema.put_double_field({ {  jtype::type_float32, "deductible", "Deductible" }, { 0.0, 1E10 } });
+		idf_share = schema.put_double_field({ {  jtype::type_float32, "share", "Share %" }, { 0.0, 100 } });
+		idf_comment = schema.put_string_field({ {  jtype::type_string, "comment", "Comment" }, { 500, "", "", } });
+		idf_program_style = schema.put_string_field({ {  jtype::type_color, "style", "Style" }, {  } });
 
 		/* 
 		Now that we have our fields, we can make our classes.
@@ -393,23 +393,23 @@ field id idf_carrier, which is populated when objects of this class are construc
 		if (_left_pad) 
 		{
 			space(title_block, schema.idf_view_background_style, { 0.0_px, 0.0_px, 25.0_pct, 100.0_pct });
-			header_area = column(title_block, schema.idf_view_background_style, { 0.0_px, 0.0_px, 75.0_pct, 100.0_pct });
+			header_area = column(title_block, schema.idf_view_background_style, { 0.0_px, 0.0_px, 75.0_pct, 100.0_px });
 		}
 		else 
 		{
 			space(title_block, schema.idf_view_background_style, { 0.0_px, 0.0_px, 20.0_px, 100.0_pct });
-			header_area = column(title_block, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
+			header_area = column(title_block, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
 		}
 
-		auto title_bar = row(header_area, schema.idf_title_bar_style, { 0.0_px, 0.0_px, 100.0_pct, 50.0_px });
-		auto subtitle_bar = row(header_area, schema.idf_subtitle_bar_style, { 0.0_px, 0.0_px, 100.0_pct, 50.0_px });
-		auto breadcrumb_bar = row(header_area, schema.idf_breadcrumb_bar_style, { 0.0_px, 0.0_px, 100.0_pct, 50.0_px });
+		auto title_bar = row(header_area, schema.idf_title_bar_style, { 0.0_px, 0.0_px, 100.0_pct, 1.0_fntgr });
+		auto subtitle_bar = row(header_area, schema.idf_subtitle_bar_style, { 0.0_px, 0.0_px, 100.0_pct, 1.0_fntgr });
+		auto breadcrumb_bar = row(header_area, schema.idf_breadcrumb_bar_style, { 0.0_px, 0.0_px, 100.0_pct, 1.0_fntgr });
 		breadcrumbs(breadcrumb_bar, [this](jobject& _item) {
 			return _item.get_name(schema.idf_name);
 			}, { 0.0_px, 0.0_px, 200.0_px, 100.0_pct });
 
-		text(title_bar, schema.idf_view_title_style, _title, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct});
-		text(subtitle_bar, schema.idf_view_subtitle_style, _subtitle, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
+		text(title_bar, schema.idf_title_bar_style, _title, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct});
+		text(subtitle_bar, schema.idf_subtitle_bar_style, _subtitle, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
 
 	}
 
@@ -425,7 +425,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 		const char* object_title = nullptr;
 		object_title = schema.get_class(state.actor.current_view_class_id).item().description;
 
-		render_header(d2drow, application_title, object_title, true);
+		render_header(d2drow, application_title, object_title, false);
 
 		// editable controls on the left
 		add_update_fields(controlcol1);
@@ -461,26 +461,23 @@ field id idf_carrier, which is populated when objects of this class are construc
 		clear();
 
 		auto mainr = row(nullptr, null_row);
-		auto d2dwin = canvas2d(mainr, schema.idf_view_background_style, { 0.0_px, 0.0_px, 75.0_pct, 100.0_pct });
-		auto control = canvas2d(mainr, schema.idf_view_background_style, { 0.0_px, 0.0_px, 25.0_pct, 100.0_pct });
-		auto d2darea = column(d2dwin, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
-
-		auto contcol = column(mainr, null_row, { 0.0_px,0.0_px,300.0_px,100.0_pct });
+		auto control = column(mainr, schema.idf_view_background_style, { 0.0_px, 0.0_px, 25.0_pct, 100.0_pct });
+		auto d2darea = column(mainr, schema.idf_view_background_style, { 0.0_px, 0.0_px, 75.0_pct, 100.0_pct });
+		auto d2dwin = canvas2d(d2darea, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
 
 		const char* object_title = nullptr;
 		object_title = schema.get_class(state.actor.current_view_class_id).item().description;
 
-		render_header(d2darea, application_title, object_title, false);
+		render_header(d2dwin, application_title, object_title, true);
 
-		auto client_area = row(d2darea, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
+		auto client_area = row(d2dwin, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
 		_contents(client_area);
 
-		auto d2dcommandbar = row(d2darea, schema.idf_breadcrumb_bar_style, { 0.0_px, 0.0_px, 100.0_pct, 50.0_px });
+		auto d2dcommandbar = row(d2dwin, schema.idf_breadcrumb_bar_style, { 0.0_px, 0.0_px, 100.0_pct, 50.0_px });
 		add_create_buttons(d2dcommandbar, schema.idf_button_style);
 
 		// editable controls on the left
-		add_update_fields(contcol);
-		clear();
+		add_update_fields(control);
 	}
 
 	void wsproposal_controller::render_home()
@@ -490,7 +487,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 
 	void wsproposal_controller::render_client_root()
 	{
-		render_2d([this](page_item* _frame) { render_client_root_contents(_frame);  });
+		render_mixed([this](page_item* _frame) { render_client_root_contents(_frame);  });
 	}
 
 	void wsproposal_controller::render_client()
@@ -500,7 +497,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 
 	void wsproposal_controller::render_coverage_root()
 	{
-		render_2d([this](page_item* _frame) { render_coverage_root_contents(_frame);  });
+		render_mixed([this](page_item* _frame) { render_coverage_root_contents(_frame);  });
 	}
 
 	void wsproposal_controller::render_coverage()
@@ -510,7 +507,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 
 	void wsproposal_controller::render_product_template_root()
 	{
-		render_2d([this](page_item* _frame) { render_product_template_root_contents(_frame);  });
+		render_mixed([this](page_item* _frame) { render_product_template_root_contents(_frame);  });
 	}
 
 	void wsproposal_controller::render_product_template()
@@ -520,7 +517,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 
 	void wsproposal_controller::render_carrier_root()
 	{
-		render_2d([this](page_item* _frame) { render_carrier_root_contents(_frame);  });
+		render_mixed([this](page_item* _frame) { render_carrier_root_contents(_frame);  });
 	}
 
 	void wsproposal_controller::render_system_root()
@@ -690,7 +687,8 @@ field id idf_carrier, which is populated when objects of this class are construc
 			render_system_root();
 		}
 
-		arrange(newSize.w, newSize.h);
+		auto style_sheet = getStyleSheet();
+		arrange(newSize.w, newSize.h, style_sheet);
 		canvasWindowsId = host->renderPage(pg, &schema, state, program_chart);
 		host->redraw();
 	}
@@ -1267,6 +1265,8 @@ field id idf_carrier, which is populated when objects of this class are construc
 			schema.idf_view_style,
 			{ schema.idf_title_bar_style },
 			{
+				{ schema.idf_font_name, fontName },
+				{ schema.idf_font_size, 32.0 },
 				{ schema.idf_shape_fill_color, "#0000CCFF" },
 				{ schema.idf_shape_border_thickness, 0 },
 				{ schema.idf_shape_border_color, "" },
@@ -1280,6 +1280,8 @@ field id idf_carrier, which is populated when objects of this class are construc
 			schema.idf_view_style,
 			{ schema.idf_subtitle_bar_style },
 			{
+				{ schema.idf_font_name, fontName },
+				{ schema.idf_font_size, 24.0 },
 				{ schema.idf_shape_fill_color, "#0000CCFF" },
 				{ schema.idf_shape_border_thickness, 0 },
 				{ schema.idf_shape_border_color, "" },
@@ -1293,6 +1295,9 @@ field id idf_carrier, which is populated when objects of this class are construc
 			schema.idf_view_style,
 			{ schema.idf_breadcrumb_bar_style },
 			{
+				{ schema.idf_font_name, fontName },
+				{ schema.idf_font_size, 24.0 },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_center },
 				{ schema.idf_shape_fill_color, "#0000CCFF" },
 				{ schema.idf_shape_border_thickness, 0 },
 				{ schema.idf_shape_border_color, "" },

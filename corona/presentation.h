@@ -27,7 +27,7 @@ namespace corona
 			int						id;
 			int						parent_id;
 			layout_types			layout;
-			const char*				style_name;
+			relative_ptr_type		style_id;
 
 			layout_rect				box;
 			rectangle				bounds;
@@ -49,7 +49,7 @@ namespace corona
 				field(nullptr),
 				caption(nullptr),
 				canvas_id(-1),
-				style_name(nullptr)
+				style_id(null_row)
 			{
 				;
 			}
@@ -91,39 +91,39 @@ namespace corona
 
 		class page : public iarray<page_item, 1024>
 		{
-			void calculate_sizes(page::iterator_type children, double offx, double offy, double x, double y, double width, double height, double& remaining_width, double& remaining_height);
-			void set_bound_size(page_item* _item, double offx, double offy, double x, double y, double width, double height);
-			void arrange_impl(page_item *_item, double offx, double offy, double x, double y, double width, double height);
+			void calculate_sizes(jobject& _style_sheet, page::iterator_type children, double offx, double offy, double x, double y, double width, double height, double& remaining_width, double& remaining_height);
+			void set_bound_size(jobject& _style_sheet, page_item* _item, double offx, double offy, double x, double y, double width, double height);
+			void arrange_impl(jobject& _style_sheet, page_item *_item, double offx, double offy, double x, double y, double width, double height);
 			void visit_impl(page_item* _item, std::function<bool(page_item* _parent)> fn);		
 			dynamic_box data;
 			using base_type = iarray<page_item, 1024>;
 
-			void calculate_bounds_w(page_item* _pi, double width, double height, int safety);
-			void calculate_bounds_h(page_item* _pi, double width, double height, int safety);
+			void calculate_bounds_w(jobject& _style_sheet, page_item* _pi, double width, double height, int safety);
+			void calculate_bounds_h(jobject& _style_sheet, page_item* _pi, double width, double height, int safety);
 
 		public:
 
 			page();
 			void clear();
 
-			page_item* row(page_item* _parent, const char *_style_name = nullptr, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
-			page_item* column( page_item* _parent, const char* _style_name = nullptr, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
-			page_item* absolute(page_item* _parent, const char* _style_name = nullptr, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
-			page_item* canvas2d(page_item* _parent, const char* _style_name = nullptr, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
+			page_item* row(page_item* _parent, relative_ptr_type _style_id = null_row,  layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
+			page_item* column( page_item* _parent, relative_ptr_type _style_id = null_row, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
+			page_item* absolute(page_item* _parent, relative_ptr_type _style_id = null_row, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
+			page_item* canvas2d(page_item* _parent, relative_ptr_type _style_id = null_row, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
 
-			page_item* text(page_item* _parent, const char* _style_name, const char *_text, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
+			page_item* text(page_item* _parent, relative_ptr_type _style_id, const char *_text, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
 
 			page_item* field(page_item* _parent, int object_id, int field_id, jobject slice);
-			page_item* select(page_item* _parent, actor_state* _state, int object_id, relative_ptr_type _id_name, jobject slice, const char* _style_name, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
-			page_item* select_cell(page_item* _parent, actor_state* _state, int object_id, jobject slice, const char *_caption, const char* _style_name, layout_rect _box);
-			page_item* navigate(page_item* _parent, actor_state* _state, int object_id, const char* _style_name, const char *_caption, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 20.0_px });
-			page_item* space(page_item* _parent, const char* _style_name = nullptr, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
+			page_item* select(page_item* _parent, actor_state* _state, int object_id, relative_ptr_type _id_name, jobject slice, relative_ptr_type _style_id, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
+			page_item* select_cell(page_item* _parent, actor_state* _state, int object_id, jobject slice, const char *_caption, relative_ptr_type _style_id, layout_rect _box);
+			page_item* navigate(page_item* _parent, actor_state* _state, int object_id, relative_ptr_type _style_id, const char *_caption, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 20.0_px });
+			page_item* space(page_item* _parent, relative_ptr_type _style_id = null_row, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
 
 			page_item* actor_update_fields(page_item* _parent, actor_state* _state, jschema* _schema, jcollection* _collection);
-			page_item* actor_create_buttons(page_item* _parent, actor_state* _state, jschema* _schema, jcollection* _collection, const char* _style_name, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
+			page_item* actor_create_buttons(page_item* _parent, actor_state* _state, jschema* _schema, jcollection* _collection, relative_ptr_type _style_id, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
 			page_item* actor_select_items(page_item* _parent, actor_state* _state, jschema* _schema, jcollection* _collection);
 
-			void arrange( double width, double height );
+			void arrange( double _width, double _height, jobject& _style_sheet );
 			void visit(std::function<bool(page_item* _parent)> fn);
 
 		};

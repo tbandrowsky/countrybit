@@ -194,7 +194,8 @@ namespace corona
 				database::page_item item;
 			};
 
-			std::map<int, windowMapItem>	windowControlMap;
+			std::map<int, windowMapItem>	previousWindowControlMap, 
+											windowControlMap;
 
 			HFONT	controlFont,
 					labelFont,

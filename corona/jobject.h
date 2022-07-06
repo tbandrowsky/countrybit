@@ -1515,123 +1515,100 @@ namespace corona
 				return field_id;
 			}
 
-			relative_ptr_type put_field(
-				relative_ptr_type _field_id,
-				jtype _field_type,
-				object_name& _name,
-				object_description& _description,
-				string_properties_type* _string_properties,
-				int_properties_type* _int_properties,
-				double_properties_type* _double_properties,
-				time_properties_type* _time_properties,
-				object_properties_type* _object_properties,
-				query_properties_type* _query_properties,
-				point_properties_type* _point_properties,
-				rectangle_properties_type* _rectangle_properties,
-				image_properties_type* _image_properties,
-				wave_properties_type* _wave_properties,
-				midi_properties_type* _midi_properties,
-				color_properties_type* _color_properties,
-				sql_properties_type* _sql_properties,
-				file_properties_type* _file_properties,
-				http_properties_type* _http_properties,
-				layout_rect_properties_type* _layout_rect_properties,
-				int64_t _size_bytes)
+			relative_ptr_type put_field(put_field_request_base& _base, int64_t _size_bytes, std::function<void(jfield& _set_options)> _options)
 			{
+				relative_ptr_type field_id = find_field(_base.name);
 
-				_field_id = find_field(_name);
-
-				if (_field_id == null_row)
+				if (_base.field_id == null_row)
 				{
-					_field_id = new_field_id();
+					_base.field_id = new_field_id();
 				}
 
-				auto& jf = fields[_field_id];
+				auto& jf = fields[_base.field_id];
 
-				jf.field_id = _field_id;
-				jf.type_id = _field_type;
-				jf.name = _name;
-				jf.description = _description;
-
-				if (_string_properties)
-					jf.string_properties = *_string_properties;
-				if (_int_properties)
-					jf.int_properties = *_int_properties;
-				if (_double_properties)
-					jf.double_properties = *_double_properties;
-				if (_time_properties)
-					jf.time_properties = *_time_properties;
-				if (_object_properties)
-					jf.object_properties = *_object_properties;
-				if (_query_properties)
-					jf.query_properties = *_query_properties;
-				if (_point_properties)
-					jf.point_properties = *_point_properties;
-				if (_rectangle_properties)
-					jf.rectangle_properties = *_rectangle_properties;
-				if (_image_properties)
-					jf.image_properties = *_image_properties;
-				if (_wave_properties)
-					jf.wave_properties = *_wave_properties;
-				if (_midi_properties)
-					jf.midi_properties = *_midi_properties;
-				if (_color_properties)
-					jf.color_properties = *_color_properties;
-				if (_sql_properties)
-					jf.sql_properties = *_sql_properties;
-				if (_http_properties)
-					jf.http_properties = *_http_properties;
-				if (_file_properties)
-					jf.file_properties = *_file_properties;
-				if (_layout_rect_properties)
-					jf.layout_rect_properties = *_layout_rect_properties;
-
+				jf.field_id = _base.field_id;
+				jf.type_id = _base.type_id;
+				jf.name = _base.name;
+				jf.description = _base.description;
+				jf.display_in_user_ui = _base.display_in_user_ui;
+				jf.display_in_admin_ui = _base.display_in_admin_ui;
+				jf.enumeration_class_id = _base.enumeration_class_id;
+				jf.enumeration_display_field_id = _base.enumeration_display_field_id;
+				jf.enumeration_value_field_id = _base.enumeration_value_field_id;
 				jf.size_bytes = _size_bytes;
 
-				fields_by_name.insert_or_assign(jf.name, _field_id);
-				return _field_id;
+				_options(jf);
+
+				fields_by_name.insert_or_assign(jf.name, jf.field_id);
+
+				return jf.field_id;
 			}
 
 			layout_rect get_layout(relative_ptr_type _field_idx, double _font_height);
 
 			relative_ptr_type put_string_field(put_string_field_request request)
 			{
-				return put_field(request.name.field_id, jtype::type_string, request.name.name, request.name.description, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, string_box::get_box_size(request.options.length));
+				request.name.type_id = jtype::type_string;
+				return put_field(request.name, string_box::get_box_size(request.options.length), [request](jfield& _field)
+					{
+						_field.string_properties = request.options;
+					});
 			}
 
 			relative_ptr_type put_time_field(put_time_field_request request)
 			{
-				return put_field(request.name.field_id, type_datetime, request.name.name, request.name.description, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(time_t));
+				request.name.type_id = jtype::type_datetime;
+				return put_field(request.name, sizeof(time_t), [request](jfield& _field)
+					{
+						_field.time_properties= request.options;
+					});
 			}
 
 			relative_ptr_type put_integer_field(put_integer_field_request request)
 			{
+				int size_bytes = 0;
 				switch (request.name.type_id)
 				{
 				case jtype::type_int8:
-					return put_field(request.name.field_id, type_int8, request.name.name, request.name.description, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(int8_t));
+					size_bytes = sizeof(int8_t);
+					break;
 				case jtype::type_int16:
-					return put_field(request.name.field_id, type_int16, request.name.name, request.name.description, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(int16_t));
+					size_bytes = sizeof(int16_t);
+					break;
 				case jtype::type_int32:
-					return put_field(request.name.field_id, type_int32, request.name.name, request.name.description, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(int32_t));
+					size_bytes = sizeof(int32_t);
+					break;
 				case jtype::type_int64:
-					return put_field(request.name.field_id, type_int64, request.name.name, request.name.description, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(int64_t));
+					size_bytes = sizeof(int64_t);
+					break;
 				default:
 					throw std::invalid_argument("Invalid integer type for field name:" + request.name.name);
 				}
+				return put_field(request.name, size_bytes, [request](jfield& _field)
+					{
+						_field.int_properties = request.options;
+					});
+
 			}
 
 			relative_ptr_type put_double_field(put_double_field_request request)
 			{
+				int size_bytes = 0;
 				switch (request.name.type_id)
 				{
 				case type_float32:
-					return put_field(request.name.field_id, type_float32, request.name.name, request.name.description, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(float));
+					size_bytes = sizeof(float);
+					break;
 				case type_float64:
-					return put_field(request.name.field_id, type_float64, request.name.name, request.name.description, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(double));
+					size_bytes = sizeof(double);
+					break;
 				default:
 					throw std::invalid_argument("Invalid floating point type for field name:" + request.name.name);
 				}
+				return put_field(request.name, size_bytes, [request](jfield& _field)
+					{
+						_field.double_properties = request.options;
+					});
 			}
 
 			void get_class_field_name(object_name& _dest, object_name _class_name, dimensions_type& _dim)
@@ -1657,8 +1634,12 @@ namespace corona
 				{
 					field_name = request.name.name;
 				}
+				request.name.type_id = jtype::type_object;
 				request.options.total_size_bytes = request.options.dim.x * request.options.dim.y * request.options.dim.z * sizeb;
-				return put_field(request.name.field_id, type_object, field_name, request.name.description, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, request.options.total_size_bytes);
+				return put_field(request.name, request.options.total_size_bytes, [request](jfield& _field)
+					{
+						_field.object_properties = request.options;
+					});
 			}
 
 			relative_ptr_type put_list_field(put_object_field_request request)
@@ -1678,7 +1659,10 @@ namespace corona
 				object_name field_name;
 				get_class_field_name(field_name, pcr.pitem()->name + "list", request.options.dim);
 				request.options.total_size_bytes = request.options.dim.x * request.options.dim.y * request.options.dim.z * sizeb + sizeof(jlist_instance) + sizeof(selection_flag_type) * request.options.dim.x + 32;
-				return put_field(request.name.field_id, type_list, field_name, request.name.description, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, request.options.total_size_bytes);
+				return put_field(request.name, request.options.total_size_bytes, [request](jfield& _field)
+					{
+						_field.object_properties = request.options;
+					});
 			}
 
 			const char* invalid_comparison = "Invalid comparison";
@@ -1727,7 +1711,12 @@ namespace corona
 			{
 				query_properties_type options;
 
-				relative_ptr_type query_location = put_field(request.name.field_id, type_query, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, &options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(query_instance));
+				request.name.type_id = jtype::type_query;
+				auto query_location = put_field(request.name, sizeof(query_instance), [request](jfield& _field)
+					{
+						;
+					});
+
 				queries.insert_or_assign(query_location, request.options);
 
 				return query_location;
@@ -1737,80 +1726,134 @@ namespace corona
 			{
 				sql_properties_type options;
 
+				request.name.type_id = jtype::type_sql;
+
 				auto& params = request.options.parameters;
 				for (auto param : params) {
 					auto& pi = param.item;
 					bind_field(pi.corona_field, pi.corona_field_id);
 				}
 
-				relative_ptr_type remote_location = put_field(request.name.field_id, type_sql, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &options, nullptr, nullptr, nullptr, sizeof(sql_remote_instance));
-				sql_remotes.insert_or_assign(remote_location, request.options);
-				return remote_location;
+				auto query_location = put_field(request.name, sizeof(sql_remote_instance), [request](jfield& _field)
+					{
+						;
+					});
+
+				sql_remotes.insert_or_assign(query_location, request.options);
+				return query_location;
 			}
 
 			relative_ptr_type put_http_remote_field(put_named_http_remote_field_request request)
 			{
 				http_properties_type options;
 
+				request.name.type_id = jtype::type_http;
+
 				auto& params = request.options.parameters;
 				for (auto param : params) {
 					auto& pi = param.item;
 					bind_field(pi.corona_field, pi.corona_field_id);
 				}
 
-				relative_ptr_type remote_location = put_field(request.name.field_id, type_http, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &options, nullptr, sizeof(http_remote_instance));
-				http_remotes.insert_or_assign(remote_location, request.options);
+				auto query_location = put_field(request.name, sizeof(http_remote_instance), [request](jfield& _field)
+					{
+						;
+					});
 
-				return remote_location;
+				http_remotes.insert_or_assign(query_location, request.options);
+
+				return query_location;
 			}
 
 			relative_ptr_type put_file_remote_field(put_named_file_remote_field_request request)
 			{
 				file_properties_type options;
 
+				request.name.type_id = jtype::type_file;
+
 				auto& params = request.options.parameters;
 				for (auto param : params) {
 					auto& pi = param.item;
 					bind_field(pi.corona_field, pi.corona_field_id);
 				}
 
-				relative_ptr_type remote_location = put_field(request.name.field_id, type_sql, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &options, nullptr, nullptr, sizeof(file_remote_instance));
-				file_remotes.insert_or_assign(remote_location, request.options);
-				return remote_location;
+				auto query_location = put_field(request.name, sizeof(file_remote_instance), [request](jfield& _field)
+					{
+						;
+					});
+
+				file_remotes.insert_or_assign(query_location, request.options);
+				return query_location;
 			}
 
 			relative_ptr_type put_point_field(put_point_field_request request)
 			{
-				return put_field(request.name.field_id, type_point, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(point));
+				request.name.type_id = jtype::type_point;
+				auto query_location = put_field(request.name, sizeof(point), [request](jfield& _field)
+					{
+						_field.point_properties = request.options;
+					});
+				return query_location;
 			}
 
 			relative_ptr_type put_rectangle_field(put_rectangle_field_request request)
 			{
-				return put_field(request.name.field_id, type_rectangle, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(rectangle));
+				request.name.type_id = jtype::type_rectangle;
+				auto query_location = put_field(request.name, sizeof(rectangle), [request](jfield& _field)
+					{
+						_field.rectangle_properties = request.options;
+					});
+				return query_location;
 			}
 
 			relative_ptr_type put_layout_rect_field(put_layout_rect_field_request request)
 			{
-				return put_field(request.name.field_id, type_layout_rect, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &request.options, sizeof(layout_rect));
+				request.name.type_id = jtype::type_layout_rect;
+				auto query_location = put_field(request.name, sizeof(rectangle), [request](jfield& _field)
+					{
+						_field.layout_rect_properties = request.options;
+					});
+				return query_location;
 			}
 
 			relative_ptr_type put_image_field(put_image_field_request request)
 			{
-				return put_field(request.name.field_id, type_image, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(image_instance));			}
+				request.name.type_id = jtype::type_image;
+				auto query_location = put_field(request.name, sizeof(image_instance), [request](jfield& _field)
+					{
+						_field.image_properties = request.options;
+					});
+				return query_location;
+			}
 
 			relative_ptr_type put_wave_field(put_wave_field_request request)
 			{
-				return put_field(request.name.field_id, type_wave, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(wave_instance));
+				request.name.type_id = jtype::type_wave;
+				auto query_location = put_field(request.name, sizeof(wave_instance), [request](jfield& _field)
+					{
+						_field.wave_properties = request.options;
+					});
+				return query_location;
 			}
 
 			relative_ptr_type put_midi_field(put_midi_field_request request)
 			{
-				return put_field(request.name.field_id, type_midi, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, nullptr, sizeof(midi_instance));
+				request.name.type_id = jtype::type_midi;
+				auto query_location = put_field(request.name, sizeof(midi_instance), [request](jfield& _field)
+					{
+						_field.midi_properties = request.options;
+					});
+				return query_location;
 			}
 
 			relative_ptr_type put_color_field(put_color_field_request request)
 			{
-				return put_field(request.name.field_id, type_color, request.name.name, request.name.description, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, &request.options, nullptr, nullptr, nullptr, nullptr, sizeof(color));
+				request.name.type_id = jtype::type_color;
+				auto query_location = put_field(request.name, sizeof(color), [request](jfield& _field)
+					{
+						_field.color_properties = request.options;
+					});
+				return query_location;
 			}
 
 			relative_ptr_type put_list_field(relative_ptr_type class_id, int max_rows )

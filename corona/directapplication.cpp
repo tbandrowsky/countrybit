@@ -1989,9 +1989,13 @@ namespace corona
 			nWidth /= dpiScale;
 			nHeight /= dpiScale;
 
-			if (windowControlMap.contains(windowId)) 
+			if (stricmp("CoronaDirect2d", lpClassName) == 0) 
 			{
-				auto wcmi = windowControlMap[windowId];
+
+			}
+			else if (previousWindowControlMap.contains(windowId)) 
+			{
+				auto wcmi = previousWindowControlMap[windowId];
 				char buff[512];
 				::GetClassName(wcmi.window, buff, sizeof(buff) - 1);
 				if (_stricmp(buff, lpClassName) == 0)
@@ -2130,7 +2134,9 @@ namespace corona
 				auto slice = currentController->getStyleSheet();
 				auto schema = slice.get_schema();
 				auto styleSlice = slice.get_slice(_style_id, {0,0,0}, true);
-				hfont = CreateFont(styleSlice.get(schema->idf_font_size), 0, 0, 0, FW_DONTCARE, (int32_t)styleSlice.get(schema->idf_italic), FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH, styleSlice.get(schema->idf_font_name));
+				double fontSize = styleSlice.get(schema->idf_font_size);
+				double ifontSize = fontSize / dpiScale;
+				hfont = CreateFont(ifontSize, 0, 0, 0, FW_DONTCARE, (int32_t)styleSlice.get(schema->idf_italic), FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH, styleSlice.get(schema->idf_font_name));
 			}
 			return hfont;
 		}
@@ -2148,6 +2154,8 @@ namespace corona
 			titleFont = createFontFromStyleSheet(_schema->idf_view_subtitle_style);
 
 			int canvasWindowId = -1;
+
+			previousWindowControlMap = windowControlMap;
 
 			database::jobject slice;
 			for (auto piter : _page)
@@ -2241,6 +2249,17 @@ namespace corona
 
 			disableChangeProcessing = false;
 
+			for (auto wmi : previousWindowControlMap) 
+			{
+				if (!windowControlMap.contains(wmi.first))
+				{
+					DestroyWindow(wmi.second.window);
+				}
+			}
+			
+			InvalidateRect(hwndRoot, nullptr, false);
+			UpdateWindow(hwndRoot);
+
 			return canvasWindowId;
 		}
 
@@ -2292,6 +2311,7 @@ namespace corona
 				// <------------mouse management------------------->
 
 			case WM_LBUTTONDOWN:
+				dpiScale = 96.0 / GetDpiForWindow(hwnd);
 				point.x = GET_X_LPARAM(lParam) * dpiScale;
 				point.y = GET_Y_LPARAM(lParam) * dpiScale;
 				if (currentController)
@@ -2299,6 +2319,7 @@ namespace corona
 				break;
 
 			case WM_MOUSEMOVE:
+				dpiScale = 96.0 / GetDpiForWindow(hwnd);
 				point.x = GET_X_LPARAM(lParam) * dpiScale;
 				point.y = GET_Y_LPARAM(lParam) * dpiScale;
 				if (currentController)
@@ -3488,7 +3509,7 @@ namespace corona
 			WinHttpSession() : hSession(NULL), hConnect(NULL), hRequest(NULL)
 			{
 				// Use WinHttpOpen to obtain a session handle.
-				hSession = ::WinHttpOpen(L"YankeeRino Direct2d/1.0",
+				hSession = ::WinHttpOpen(L"Corona Win64-Direct2d/1.0",
 					WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
 					WINHTTP_NO_PROXY_NAME,
 					WINHTTP_NO_PROXY_BYPASS, 0);

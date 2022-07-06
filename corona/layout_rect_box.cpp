@@ -25,6 +25,16 @@ namespace corona
 			return measure(pct, measure_units::percent_height);
 		}
 
+		measure operator ""_fnt(long double fnt)
+		{
+			return measure(fnt, measure_units::font);
+		}
+
+		measure operator ""_fntgr(long double fnt)
+		{
+			return measure(fnt, measure_units::font_golden_ratio);
+		}
+
 		measure operator -(const measure& _src)
 		{
 			return measure(-_src.amount, _src.units);

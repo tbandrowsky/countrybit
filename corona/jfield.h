@@ -168,6 +168,13 @@ namespace corona
 			object_name				name;
 			object_description		description;
 
+			bool					display_in_user_ui;
+			bool					display_in_admin_ui;
+
+			relative_ptr_type		enumeration_class_id;
+			relative_ptr_type		enumeration_display_field_id;
+			relative_ptr_type		enumeration_value_field_id;
+
 			union
 			{
 				string_properties_type		string_properties;
@@ -417,6 +424,68 @@ namespace corona
 			jtype		type_id;
 			object_name name;
 			object_description description;
+
+			bool					display_in_user_ui;
+			bool					display_in_admin_ui;
+
+			relative_ptr_type		enumeration_class_id;
+			relative_ptr_type		enumeration_display_field_id;
+			relative_ptr_type		enumeration_value_field_id;
+
+			put_field_request_base() : field_id(null_row),
+				type_id(jtype::type_null),
+				name(""),
+				description(""),
+				display_in_user_ui(true),
+				display_in_admin_ui(true),
+				enumeration_class_id(null_row),
+				enumeration_display_field_id(null_row),
+				enumeration_value_field_id(null_row)
+			{
+				;
+			}
+
+			put_field_request_base(jtype _type_id, const char* _name, const char* _description) :
+				field_id(null_row),
+				type_id(_type_id),
+				name(_name),
+				description(_description),
+				display_in_user_ui(true),
+				display_in_admin_ui(true),
+				enumeration_class_id(null_row),
+				enumeration_display_field_id(null_row),
+				enumeration_value_field_id(null_row)
+			{
+				;
+			}
+
+			put_field_request_base(jtype _type_id, const char* _name, const char* _description, bool _display_in_user_ui ) :
+				field_id(null_row),
+				type_id(_type_id),
+				name(_name),
+				description(_description),
+				display_in_user_ui(_display_in_user_ui),
+				display_in_admin_ui(true),
+				enumeration_class_id(null_row),
+				enumeration_display_field_id(null_row),
+				enumeration_value_field_id(null_row)
+			{
+				;
+			}
+
+			put_field_request_base(jtype _type_id, const char* _name, const char* _description, bool _display_in_user_ui, relative_ptr_type _enumeration_class_id, relative_ptr_type _enumeration_display_field_id, relative_ptr_type _enumeration_value_field_id) :
+				field_id(null_row),
+				type_id(_type_id),
+				name(_name),
+				description(_description),
+				display_in_user_ui(_display_in_user_ui),
+				display_in_admin_ui(true),
+				enumeration_class_id(_enumeration_class_id),
+				enumeration_display_field_id(_enumeration_display_field_id),
+				enumeration_value_field_id(_enumeration_value_field_id)
+			{
+				;
+			}
 		};
 
 		class put_string_field_request {

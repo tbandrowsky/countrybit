@@ -9,7 +9,7 @@
 
 #include "constants.h"
 
-#define TRACE_DYNAMIC_BOX 1
+#define TRACE_DYNAMIC_BOX 0
 
 namespace corona
 {

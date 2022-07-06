@@ -19,43 +19,40 @@ namespace corona
 			data.init(1 << 20);
 		}
 
-		page_item* page::row(page_item* _parent, const char* _style_name, layout_rect _box)
+		page_item* page::row(page_item* _parent, relative_ptr_type _style_id, layout_rect _box)
 		{
 			page_item* v = append();
 			v->id = size();
 			v->set_parent(_parent);
 			v->layout = layout_types::row;
 			v->box = _box;
-			if (_style_name)
-				v->style_name = data.copy(_style_name, 0);
+			v->style_id = _style_id;
 			return v;
 		}
 
-		page_item* page::column(page_item* _parent, const char* _style_name, layout_rect _box)
+		page_item* page::column(page_item* _parent, relative_ptr_type _style_id, layout_rect _box)
 		{
 			page_item* v = append();
 			v->id = size();
 			v->set_parent(_parent);
 			v->layout = layout_types::column;
 			v->box = _box;
-			if (_style_name)
-				v->style_name = data.copy(_style_name, 0);
+			v->style_id = _style_id;
 			return v;
 		}
 
-		page_item* page::absolute(page_item* _parent, const char* _style_name, layout_rect _box)
+		page_item* page::absolute(page_item* _parent, relative_ptr_type _style_id, layout_rect _box)
 		{
 			page_item* v = append();
 			v->id = size();
 			v->set_parent(_parent);
 			v->layout = layout_types::absolute;
 			v->box = _box;
-			if (_style_name)
-				v->style_name = data.copy(_style_name, 0);
+			v->style_id = _style_id;
 			return v;
 		}
 
-		page_item* page::canvas2d(page_item* _parent, const char* _style_name, layout_rect _box)
+		page_item* page::canvas2d(page_item* _parent, relative_ptr_type _style_id, layout_rect _box)
 		{
 			page_item* v = append();
 			v->id = size();
@@ -63,32 +60,29 @@ namespace corona
 			v->layout = layout_types::canvas2d;
 			v->box = _box;
 			v->canvas_id = v->id;
-			if (_style_name)
-				v->style_name = data.copy(_style_name, 0);
+			v->style_id = _style_id;
 			return v;
 		}
 
-		page_item* page::space(page_item* _parent, const char* _style_name, layout_rect _box)
+		page_item* page::space(page_item* _parent, relative_ptr_type _style_id, layout_rect _box)
 		{
 			page_item* v = append();
 			v->id = size();
 			v->set_parent(_parent);
 			v->layout = layout_types::space;
 			v->box = _box;
-			if (_style_name)
-				v->style_name = data.copy(_style_name, 0);
+			v->style_id = _style_id;
 			return v;
 		}
 
-		page_item* page::text(page_item* _parent, const char* _style_name, const char* _text, layout_rect _box)
+		page_item* page::text(page_item* _parent, relative_ptr_type _style_id, const char* _text, layout_rect _box)
 		{
 			page_item* v = append();
 			v->id = size();
 			v->set_parent(_parent);
 			v->layout = layout_types::text;
 			v->box = _box;
-			if (_style_name)
-				v->style_name = data.copy(_style_name, 0);
+			v->style_id = _style_id;
 			if (_text)
 				v->caption = data.copy(_text, 0);
 			return v;
@@ -106,7 +100,7 @@ namespace corona
 			return v;
 		}
 
-		page_item* page::select(page_item* _parent, actor_state* _state, int object_id, relative_ptr_type id_name, jobject slice, const char* _style_name, layout_rect box)
+		page_item* page::select(page_item* _parent, actor_state* _state, int object_id, relative_ptr_type id_name, jobject slice, relative_ptr_type _style_id, layout_rect box)
 		{
 			page_item* v = append();
 			v->id = size();
@@ -118,7 +112,7 @@ namespace corona
 			v->select_request = _state->create_select_request(v->object_id, false);
 			v->caption = data.copy(slice.get_name(id_name), 0);
 			v->slice = slice;
-			v->style_name = _style_name;
+			v->style_id = _style_id;
 
 			if (slice.has_field("layout_rect"))
 			{
@@ -128,7 +122,7 @@ namespace corona
 			}
 		}
 
-		page_item* page::select_cell(page_item* _parent, actor_state* _state, int object_id, jobject slice, const char *_caption, const char* _style_name, layout_rect _box)
+		page_item* page::select_cell(page_item* _parent, actor_state* _state, int object_id, jobject slice, const char *_caption, relative_ptr_type _style_id, layout_rect _box)
 		{
 			page_item* v = append();
 			v->id = size();
@@ -137,13 +131,13 @@ namespace corona
 			v->slice = slice;
 			v->object_id = object_id;
 			v->box = _box;
-			v->style_name = _style_name;
+			v->style_id = _style_id;
 			v->select_request = _state->create_select_request(v->object_id, false);
 			v->caption = data.copy(_caption, 0);
 			return v;
 		}
 
-		page_item* page::navigate(page_item* _parent, actor_state* _state, int object_id, const char *_style_name, const char* _caption, layout_rect _box )
+		page_item* page::navigate(page_item* _parent, actor_state* _state, int object_id, relative_ptr_type _style_id, const char* _caption, layout_rect _box )
 		{
 			page_item* v = append();
 			v->id = size();
@@ -152,7 +146,7 @@ namespace corona
 			v->object_id = object_id;
 			v->box = _box;
 			v->select_request = _state->create_select_request(v->object_id, false);
-			v->style_name = _style_name;
+			v->style_id = _style_id;
 			if (_caption) {
 				v->caption = data.copy(_caption,0);
 			}
@@ -184,6 +178,7 @@ namespace corona
 					label->box = { 0.0_px, 0.0_px, 200.0_px, 20.0_px };
 					label->slice = slice;
 					label->object_id = avo.object_id;
+					label->style_id = _schema->idf_label_style;
 					label->caption = fld.description;
 					height.amount += 20.0;
 					page_item* control = append();
@@ -194,6 +189,7 @@ namespace corona
 					control->box = { 0.0_px, 0.0_px, 200.0_px, 20.0_px };
 					control->slice = slice;
 					control->object_id = avo.object_id;
+					control->style_id = _schema->idf_control_style;
 					height.amount += 20.0;
 				}
 			}
@@ -203,7 +199,7 @@ namespace corona
 			return v;
 		}
 
-		page_item* page::actor_create_buttons(page_item* _parent, actor_state* _state, jschema* _schema, jcollection* _collection, const char* _style_name, layout_rect _box)
+		page_item* page::actor_create_buttons(page_item* _parent, actor_state* _state, jschema* _schema, jcollection* _collection, relative_ptr_type _style_id, layout_rect _box)
 		{
 			for (auto aco : _state->create_objects)
 			{
@@ -213,7 +209,7 @@ namespace corona
 				button->layout = layout_types::create;
 				button->box = _box;
 				button->create_request = _state->create_create_request(aco.second.class_id);
-				button->style_name = _style_name;
+				button->style_id = _style_id;
 
 				object_description desc;
 				desc = "Add " + _schema->get_class(aco.second.class_id).pitem()->name;
@@ -254,7 +250,7 @@ namespace corona
 			}
 		}
 
-		void page::calculate_sizes(page::iterator_type children, double offx, double offy, double x, double y, double width, double height, double& remaining_width, double& remaining_height)
+		void page::calculate_sizes(jobject& _style_sheet, page::iterator_type children, double offx, double offy, double x, double y, double width, double height, double& remaining_width, double& remaining_height)
 		{
 			remaining_width = width;
 			remaining_height = height;
@@ -272,40 +268,72 @@ namespace corona
 			}
 		}
 
-		void page::calculate_bounds_w(page_item* _item, double width, double height, int safety)
+		void page::calculate_bounds_w(jobject& _style_sheet, page_item* _item, double width, double height, int safety)
 		{
 			if (safety > 2)
 				return;
 			if (_item->box.width.units == measure_units::percent_remaining)
+			{
 				_item->bounds.w = _item->box.width.amount * width / 100.0;
+			}
 			else if (_item->box.width.units == measure_units::percent_height)
 			{
-				calculate_bounds_h(_item, width, height, safety+1);
+				calculate_bounds_h(_style_sheet, _item, width, height, safety+1);
 				_item->bounds.w = _item->box.width.amount * _item->bounds.h / 100.0;
+			}
+			else if (_item->box.width.units == measure_units::font || _item->box.width.units == measure_units::font_golden_ratio)
+			{
+				double font_height = 12.0;
+				if (_item->style_id != null_row && _style_sheet.has_field(_item->style_id))
+				{
+					jobject style = _style_sheet.get_object(_item->style_id, true).get_slice({ 0,0,0 });
+					font_height = style.get(style.get_schema()->idf_font_size);
+				};
+				_item->bounds.w = font_height * _item->box.width.amount;
+				if (_item->box.width.units == measure_units::font_golden_ratio)
+				{
+					_item->bounds.w /= 1.618;
+				}
 			}
 			else
 				_item->bounds.w = _item->box.width.amount;
 		}
 
-		void page::calculate_bounds_h(page_item* _item, double width, double height, int safety)
+		void page::calculate_bounds_h(jobject& _style_sheet, page_item* _item, double width, double height, int safety)
 		{
 			if (safety > 2)
 				return;
 			if (_item->box.height.units == measure_units::percent_remaining)
+			{
 				_item->bounds.h = _item->box.height.amount * height / 100.0;
+			}
 			else if (_item->box.height.units == measure_units::percent_width)
 			{
-				calculate_bounds_w(_item, width, height, safety+1);
+				calculate_bounds_w(_style_sheet, _item, width, height, safety+1);
 				_item->bounds.h = _item->box.height.amount * _item->bounds.w / 100.0;
+			}
+			else if (_item->box.height.units == measure_units::font || _item->box.height.units == measure_units::font_golden_ratio)
+			{
+				double font_height = 12.0;
+				if (_item->style_id != null_row && _style_sheet.has_field(_item->style_id)) 
+				{
+					jobject style = _style_sheet.get_object(_item->style_id, true).get_slice({ 0,0,0 });
+					font_height = style.get(style.get_schema()->idf_font_size);
+				};
+				_item->bounds.h = font_height * _item->box.height.amount;
+				if (_item->box.height.units == measure_units::font_golden_ratio)
+				{
+					_item->bounds.h *= 1.618;
+				}
 			}
 			else
 				_item->bounds.h = _item->box.height.amount;
 		}
 
-		void page::set_bound_size(page_item* _item, double offx, double offy, double x, double y, double width, double height)
+		void page::set_bound_size(jobject& _style_sheet, page_item* _item, double offx, double offy, double x, double y, double width, double height)
 		{
-			calculate_bounds_w(_item, width, height, 0);
-			calculate_bounds_h(_item, width, height, 0);
+			calculate_bounds_w(_style_sheet, _item, width, height, 0);
+			calculate_bounds_h(_style_sheet, _item, width, height, 0);
 
 			if (_item->box.x.amount >= 0.0)
 			{
@@ -387,24 +415,24 @@ namespace corona
 
 		}
 
-		void page::arrange_impl(page_item* _item, double offx, double offy, double x, double y, double width, double height)
+		void page::arrange_impl(jobject& _style_sheet, page_item* _item, double offx, double offy, double x, double y, double width, double height)
 		{
 
-			set_bound_size(_item, offx, offy, x, y, width, height);
+			set_bound_size(_style_sheet, _item, offx, offy, x, y, width, height);
 
 			auto children = where([_item](const auto& it) {
 				return it.item.parent_id == _item->id;
 				});
 
 			double remaining_width, remaining_height;
-			calculate_sizes(children, offx, offy, x, y, width, height, remaining_width, remaining_height);
+			calculate_sizes(_style_sheet, children, offx, offy, x, y, width, height, remaining_width, remaining_height);
 
 			if (_item->layout == layout_types::row) 
 			{
 				double startx = x;
 				for (auto child : children)
 				{
-					arrange_impl(&child.item, startx, 0, _item->bounds.x, _item->bounds.y, remaining_width, _item->bounds.h);
+					arrange_impl(_style_sheet, &child.item, startx, 0, _item->bounds.x, _item->bounds.y, remaining_width, _item->bounds.h);
 					startx += (child.item.bounds.w);
 				}
 			}
@@ -413,7 +441,7 @@ namespace corona
 				double starty = y;
 				for (auto child : children)
 				{
-					arrange_impl(&child.item, 0, starty, _item->bounds.x, _item->bounds.y, _item->bounds.w, remaining_height);
+					arrange_impl(_style_sheet, &child.item, 0, starty, _item->bounds.x, _item->bounds.y, _item->bounds.w, remaining_height);
 					starty += (child.item.bounds.h);
 				}
 			}
@@ -421,28 +449,28 @@ namespace corona
 			{
 				for (auto child : children)
 				{
-					arrange_impl(&child.item, 0, 0,_item->bounds.x, _item->bounds.y, _item->bounds.w, _item->bounds.h);
+					arrange_impl(_style_sheet, &child.item, 0, 0,_item->bounds.x, _item->bounds.y, _item->bounds.w, _item->bounds.h);
 				}
 			}
 			else if (_item->layout == layout_types::select_cell)
 			{
 				for (auto child : children)
 				{
-					arrange_impl(&child.item, 0, 0, _item->bounds.x, _item->bounds.y, _item->bounds.w, _item->bounds.h);
+					arrange_impl(_style_sheet, &child.item, 0, 0, _item->bounds.x, _item->bounds.y, _item->bounds.w, _item->bounds.h);
 				}
 			}
 			else
 			{
 				for (auto child : children)
 				{
-					arrange_impl(&child.item, 0, 0, _item->bounds.x, _item->bounds.y, _item->bounds.w, _item->bounds.h);
+					arrange_impl(_style_sheet, &child.item, 0, 0, _item->bounds.x, _item->bounds.y, _item->bounds.w, _item->bounds.h);
 				}
 
 				if (_item->object_id != null_row) 
 				{
 					relative_ptr_type class_id = _item->slice.get_class_id();
 
-					if (_item->style_name == nullptr)
+					if (_item->style_id == null_row)
 					{
 						if (_item->slice.has_field("rectangle"))
 						{
@@ -454,7 +482,7 @@ namespace corona
 			}
 		}
 
-		void page::arrange(double width, double height)
+		void page::arrange(double width, double height, jobject& _style_sheet)
 		{
 			sort([](auto& a, auto& b) {
 				return std::tie( a.parent_id, a.id ) < std::tie( b.parent_id, b.id );
@@ -463,7 +491,7 @@ namespace corona
 			{
 				auto pi = pix.get_object();
 				if (pi.item.parent_id < 0) {
-					arrange_impl(&pi.item, 0, 0, 0, 0, width, height);
+					arrange_impl(_style_sheet, &pi.item, 0, 0, 0, 0, width, height);
 				}
 				else 
 				{

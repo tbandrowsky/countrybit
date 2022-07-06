@@ -10,6 +10,8 @@ namespace corona
 			pixels = 1,
 			percent_width = 2,
 			percent_height = 3,
+			font = 4,
+			font_golden_ratio = 5
 		};
 
 		class measure
@@ -26,6 +28,8 @@ namespace corona
 		measure operator ""_pct(long double pct);
 		measure operator ""_pcw(long double pct);
 		measure operator ""_pch(long double pct);
+		measure operator ""_fnt(long double fnt);
+		measure operator ""_fntgr(long double fnt);
 		measure operator -(const measure& _src);
 
 		class layout_rect

@@ -241,8 +241,7 @@ namespace corona
 
 		page_item* corona_controller::navigate(page_item* _parent, int object_id, relative_ptr_type _style_id, const char* _caption, layout_rect _box)
 		{
-			const char* _style_name = style_name(_style_id);
-			return pg.navigate( _parent, &state, object_id, _style_name, _caption, _box);
+			return pg.navigate( _parent, &state, object_id, _style_id, _caption, _box);
 		}
 
 		void corona_controller::breadcrumbs(page_item* _breadcrumb_container, std::function<const char* (jobject& slice)> _captioner, layout_rect _item_box)
@@ -423,7 +422,7 @@ namespace corona
 			pg.clear();
 		}
 
-		const char* corona_controller::style_name(relative_ptr_type _style_field_id)
+		const char* corona_controller::style_id(relative_ptr_type _style_field_id)
 		{
 			const char *r = nullptr;
 			if (_style_field_id != null_row) {
@@ -434,44 +433,37 @@ namespace corona
 
 		page_item* corona_controller::row(page_item* _parent, relative_ptr_type _style_id, layout_rect _box)
 		{
-			const char* _style_name = style_name(_style_id);
-			return pg.row(_parent, _style_name, _box);
+			return pg.row(_parent, _style_id, _box);
 		}
 
 		page_item* corona_controller::column(page_item* _parent, relative_ptr_type _style_id, layout_rect _box)
 		{
-			const char* _style_name = style_name(_style_id);
-			return pg.column(_parent, _style_name, _box);
+			return pg.column(_parent, _style_id, _box);
 		}
 
 		page_item* corona_controller::absolute(page_item* _parent, relative_ptr_type _style_id, layout_rect _box)
 		{
-			const char* _style_name = style_name(_style_id);
-			return pg.absolute(_parent, _style_name, _box);
+			return pg.absolute(_parent, _style_id, _box);
 		}
 
 		page_item* corona_controller::space(page_item* _parent, relative_ptr_type _style_id, layout_rect _box)
 		{
-			const char* _style_name = style_name(_style_id);
-			return pg.space(_parent, _style_name, _box);
+			return pg.space(_parent, _style_id, _box);
 		}
 
 		page_item* corona_controller::text(page_item* _parent, relative_ptr_type _style_id, const char *_text, layout_rect _box)
 		{
-			const char* _style_name = style_name(_style_id);
-			return pg.text(_parent, _style_name, _text, _box);
+			return pg.text(_parent, _style_id, _text, _box);
 		}
 
 		page_item* corona_controller::select_cell(page_item* _parent, actor_state* _state, int object_id, jobject slice, const char *_caption, relative_ptr_type _style_id, layout_rect _box)
 		{
-			const char* _style_name = style_name(_style_id);
-			return pg.select_cell(_parent, _state, object_id, slice, _caption, _style_name, _box);
+			return pg.select_cell(_parent, _state, object_id, slice, _caption, _style_id, _box);
 		}
 
 		page_item* corona_controller::canvas2d(page_item* _parent, relative_ptr_type _style_id, layout_rect _box)
 		{
-			const char* _style_name = style_name(_style_id);
-			return pg.canvas2d(_parent, _style_name, _box);
+			return pg.canvas2d(_parent, _style_id, _box);
 		}
 
 		page_item* corona_controller::selects(page_item* _parent_ui, relative_ptr_type _style_id, layout_rect _box, relative_ptr_type _id_name, std::function<bool(const actor_view_collection::iterator_item_type& _item)> selector)
@@ -485,8 +477,7 @@ namespace corona
 					if (avo.object.has_field(schema.idf_style_sheet)) {
 						style_id = avo.object.get_int64(schema.idf_style_sheet, true);
 					}
-					const char *style_name = this->style_name(style_id);
-					page_add->select(_parent_ui, st, avo.object_id, _id_name, avo.object, style_name, *pbox);
+					page_add->select(_parent_ui, st, avo.object_id, _id_name, avo.object, style_id, *pbox);
 					return true;
 				});
 			return _parent_ui;
@@ -503,8 +494,7 @@ namespace corona
 					if (avo.object.has_field(schema.idf_style_sheet)) {
 						style_id = avo.object.get_int64(schema.idf_style_sheet, true);
 					}
-					const char* style_name = this->style_name(style_id);
-					page_add->select(_parent_ui, st, avo.object_id, _id_name, avo.object, style_name, *pbox);
+					page_add->select(_parent_ui, st, avo.object_id, _id_name, avo.object, style_id, *pbox);
 					return true;
 				});
 			return _parent_ui;
@@ -521,8 +511,7 @@ namespace corona
 					if (avo.object.has_field(schema.idf_style_sheet)) {
 						style_id = avo.object.get_int64(schema.idf_style_sheet, true);
 					}
-					const char* style_name = this->style_name(style_id);
-					page_add->select(_parent_ui, st, avo.object_id, _id_name, avo.object, style_name, *pbox);
+					page_add->select(_parent_ui, st, avo.object_id, _id_name, avo.object, style_id, *pbox);
 					return true;
 				});
 			return _parent_ui;
@@ -539,8 +528,7 @@ namespace corona
 					if (avo.object.has_field(schema.idf_style_sheet)) {
 						style_id = avo.object.get_int64(schema.idf_style_sheet, true);
 					}
-					const char* style_name = this->style_name(style_id);
-					page_add->select(_parent_ui, st, avo.object_id, _id_name, avo.object, style_name, *pbox);
+					page_add->select(_parent_ui, st, avo.object_id, _id_name, avo.object, style_id, *pbox);
 					return true;
 				});
 			return _parent_ui;
@@ -597,7 +585,8 @@ namespace corona
 		{
 			clear();
 			render(newSize);
-			arrange(newSize.w, newSize.h);
+			jobject style_sheet = getStyleSheet();
+			arrange(newSize.w, newSize.h, style_sheet);
 		}
 
 		void corona_controller::drawFrame()
@@ -615,7 +604,8 @@ namespace corona
 		void corona_controller::render_item(drawableHost* _host, page_item& _item)
 		{
 			const char* cap = _item.caption != nullptr ? _item.caption : "(no caption)";
-			const char *sty = _item.style_name != nullptr ? _item.style_name : "(no style)";
+			const char* style_name = style_id(_item.style_id);
+			const char *sty = style_name != nullptr ? style_name : "(no style)";
 
 			object_description od;
 
@@ -659,9 +649,9 @@ namespace corona
 				break;
 			}
 
-			if (_item.style_name) {
+			if (_item.style_id) {
 				od += "-";
-				od += _item.style_name;
+				od += style_name;
 			}
 			
 			if (_item.object_id > null_row && !_item.slice.is_null()) {
@@ -669,7 +659,7 @@ namespace corona
 				od += _item.slice.get_class().item().name;
 			}
 
-			_host->drawView(_item.style_name, cap, _item.bounds, od.c_str());
+			_host->drawView(style_name, cap, _item.bounds, od.c_str());
 		}
 
 		page_item* corona_controller::add_update_fields(page_item* _parent)
@@ -679,8 +669,7 @@ namespace corona
 
 		page_item* corona_controller::add_create_buttons(page_item* _parent, relative_ptr_type _style_id, layout_rect _box)
 		{
-			const char* _style_name = style_name(_style_id);
-			return pg.actor_create_buttons(_parent, &state, &schema, &program_chart, _style_name, _box);
+			return pg.actor_create_buttons(_parent, &state, &schema, &program_chart, _style_id, _box);
 		}
 
 		page_item* corona_controller::add_select_items(page_item* _parent)
@@ -688,9 +677,9 @@ namespace corona
 			return pg.actor_select_items(_parent, &state, &schema, &program_chart);
 		}
 
-		void corona_controller::arrange(double width, double height)
+		void corona_controller::arrange(double width, double height, jobject& _style_sheet)
 		{
-			pg.arrange(width, height);
+			pg.arrange(width, height, _style_sheet);
 		}
 
 	}
