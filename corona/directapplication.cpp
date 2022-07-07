@@ -2003,12 +2003,14 @@ namespace corona
 			if (oldWindowControlMap.contains(pid))
 			{
 				auto wi = oldWindowControlMap[pid];
+				SetWindowLongPtr(wi.window, GWL_ID, item.id);
 				MoveWindow(wi.window, x, y, nWidth, nHeight, false);
 				hwnd = wi.window;
 			}
 			else if (_stricmp("CoronaDirect2d", lpClassName) == 0) 
 			{
 				if (hwndDirect2d != nullptr) {
+					SetWindowLongPtr(hwndDirect2d, GWL_ID, item.id);
 					MoveWindow(hwndDirect2d, x, y, nWidth, nHeight, false);
 					hwnd = hwndDirect2d;
 				}
