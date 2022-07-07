@@ -178,7 +178,7 @@ namespace corona
 					label->slice = slice;
 					label->class_id = slice.get_class_id();
 					label->object_id = avo.object_id;
-					label->style_id = _schema->idf_label_style;
+					label->style_id = _schema->idf_view_subtitle_style;
 					label->caption = data.copy(_object_title, 0);
 				}
 

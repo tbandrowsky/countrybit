@@ -7,6 +7,7 @@
 
 //#define TRACE_GUI 1
 //#define OUTLINE_GUI 1
+#define TRACE_SIZE 1
 
 #if TRACE_GUI
 #define OUTLINE_GUI 1
@@ -92,7 +93,8 @@ namespace corona
 
 		bool direct2dContext::createRenderTarget(HWND hwnd)
 		{
-			if (hwnd == nullptr) {
+			if (hwnd == nullptr) 
+			{
 				renderTarget = hwndRenderTarget = nullptr;
 				return false;
 			}
@@ -110,10 +112,14 @@ namespace corona
 
 			HRESULT hr = factory->getD2DFactory()->CreateHwndRenderTarget(rtps, hrtps, &hwndRenderTarget);
 			renderTarget = hwndRenderTarget;
-			throwOnFail(hr, "Could not create render target");
 
-			size_dips = renderTarget->GetSize();
-			size_pixels = renderTarget->GetPixelSize();
+			if (renderTarget) {
+				size_dips = renderTarget->GetSize();
+				size_pixels = renderTarget->GetPixelSize();
+			}
+			else {
+				DebugBreak();
+			}
 
 			return SUCCEEDED(hr);
 		}
@@ -1242,6 +1248,7 @@ namespace corona
 			titleFont = nullptr;
 			dpiScale = 1.0;
 			disableChangeProcessing = false;
+			region = nullptr;
 
 			ZeroMemory(&ofn, sizeof(ofn));
 		}
@@ -1971,6 +1978,11 @@ namespace corona
 			for (auto child : oldWindowControlMap)
 			{
 				if (!windowControlMap.contains(child.first)) {
+					char buff[512];
+					GetClassName(child.second.window, buff, sizeof(buff));
+#if TRACE_SIZE
+					std::cout << "Destroying " << buff << std::endl;
+#endif
 					DestroyWindow(child.second.window);
 				}
 			}
@@ -2000,18 +2012,13 @@ namespace corona
 			nWidth /= dpiScale;
 			nHeight /= dpiScale;
 
-			if (oldWindowControlMap.contains(pid))
-			{
-				auto wi = oldWindowControlMap[pid];
-				SetWindowLongPtr(wi.window, GWL_ID, item.id);
-				MoveWindow(wi.window, x, y, nWidth, nHeight, false);
-				hwnd = wi.window;
-			}
-			else if (_stricmp("CoronaDirect2d", lpClassName) == 0) 
+			dwStyle |= WS_CLIPSIBLINGS;
+
+			if (_stricmp("CoronaDirect2d", lpClassName) == 0) 
 			{
 				if (hwndDirect2d != nullptr) {
 					SetWindowLongPtr(hwndDirect2d, GWL_ID, item.id);
-					MoveWindow(hwndDirect2d, x, y, nWidth, nHeight, false);
+					MoveWindow(hwndDirect2d, x, y, nWidth, nHeight, true);
 					hwnd = hwndDirect2d;
 				}
 				else 
@@ -2019,7 +2026,14 @@ namespace corona
 					hwnd = CreateWindow(lpClassName, lpWindowName, dwStyle, x, y, nWidth, nHeight, directApplication::hwndRoot, (HMENU)windowId, hinstance, lpParam);
 				}
 			}
-			else 
+			else if (oldWindowControlMap.contains(pid))
+			{
+				auto wi = oldWindowControlMap[pid];
+				SetWindowLongPtr(wi.window, GWL_ID, item.id);
+				MoveWindow(wi.window, x, y, nWidth, nHeight, true);
+				hwnd = wi.window;
+			}
+			else
 			{
 				hwnd = CreateWindow(lpClassName, lpWindowName, dwStyle, x, y, nWidth, nHeight, directApplication::hwndRoot, (HMENU)windowId, hinstance, lpParam);
 				if (font)
@@ -2165,13 +2179,27 @@ namespace corona
 				auto styleSlice = slice.get_slice(_style_id, {0,0,0}, true);
 				double fontSize = styleSlice.get(schema->idf_font_size);
 				double ifontSize = fontSize / dpiScale;
-				hfont = CreateFont(ifontSize, 0, 0, 0, FW_DONTCARE, (int32_t)styleSlice.get(schema->idf_italic), FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH, styleSlice.get(schema->idf_font_name));
+				istring<2048> fontList = (const char *)styleSlice.get(schema->idf_font_name);
+				bool italic = (int32_t)styleSlice.get(schema->idf_italic);
+				bool bold = (int32_t)styleSlice.get(schema->idf_bold);
+
+				int state = 0;
+				char* fontExtractedName = fontList.next_token(',', state);
+
+				while (fontExtractedName && !hfont)
+				{
+					hfont = CreateFont(-ifontSize, 0, 0, 0, bold ? FW_BOLD : FW_NORMAL, italic, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH, fontExtractedName);
+					fontExtractedName = fontList.next_token(',', state);
+				}
 			}
 			return hfont;
 		}
 
 		int directApplication::renderPage(database::page& _page, database::jschema* _schema, database::actor_state& _state, database::jcollection& _collection)
 		{
+			if (disableChangeProcessing)
+				return 0;
+
 			disableChangeProcessing = true;
 
 			int canvasWindowId = -1;
@@ -2179,10 +2207,24 @@ namespace corona
 			windowControlMap.clear();
 			message_map.clear();
 
+			if (region) 
+			{
+				DeleteObject(region);
+			}
+
 			database::jobject slice;
 			for (auto piter : _page)
 			{
 				auto pi = piter.item;
+
+				if (pi.windowsRegion) {
+					region = CreateRectRgn(
+						pi.bounds.x / dpiScale,
+						pi.bounds.y / dpiScale,
+						pi.bounds.w / dpiScale + pi.bounds.x / dpiScale,
+						pi.bounds.h / dpiScale + pi.bounds.y / dpiScale
+					);
+				}
 
 				if (pi.is_drawable())
 					continue;
@@ -2196,7 +2238,29 @@ namespace corona
 					createChildWindow(pid, "CoronaDirect2d", "", WS_CHILD | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, canvasWindowId, NULL, NULL, pi);
 					break;
 				case database::layout_types::label:
-					createChildWindow(pid, WC_STATIC, pi.caption, WS_CHILD | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, labelFont, pi);
+					{
+
+						auto styles = currentController->getStyleSheet();
+						auto schema = styles.get_schema();
+						HFONT font;
+						if (pi.style_id == schema->idf_view_subtitle_style)
+						{
+							font = this->titleFont;
+						}
+						else if (pi.style_id == schema->idf_label_style)
+						{
+							font = this->labelFont;
+						}
+						else if (pi.style_id == schema->idf_control_style)
+						{
+							font = this->controlFont;
+						}
+						else
+						{
+							font = this->controlFont;
+						}
+						createChildWindow(pid, WC_STATIC, pi.caption, WS_CHILD | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, font, pi);
+					}
 					break;
 				case database::layout_types::field:
 					{
@@ -2614,16 +2678,17 @@ namespace corona
 					}
 					return (INT_PTR)hbrBkgnd;
 				}
+				break;
 			case WM_ERASEBKGND:
 			{
-				RECT rect, rect2;
-				if (hbrBkgnd == NULL)
-				{
-					hbrBkgnd = CreateSolidBrush(RGB(255, 255, 255));
-				}
-
-				::GetClientRect(hwnd, &rect);
-				::FillRect((HDC)wParam, &rect, hbrBkgnd);
+					RECT rect, rect2;
+					HDC eraseDc = (HDC)wParam;
+					if (hbrBkgnd == NULL)
+					{
+						hbrBkgnd = CreateSolidBrush(RGB(255, 255, 255));
+					}
+					::GetClientRect(hwnd, &rect);
+					::FillRect((HDC)wParam, &rect, hbrBkgnd);
 				return 1;
 			}
 			break;
@@ -2673,8 +2738,11 @@ namespace corona
 					rectangle rect;
 					rect.x = 0;
 					rect.y = 0;
-					rect.w = (l.right - l.left) * dpiScale;
-					rect.h = (l.bottom - l.top) * dpiScale;
+					rect.w = abs(l.right - l.left) * dpiScale;
+					rect.h = abs(l.bottom - l.top) * dpiScale;
+#if TRACE_SIZE
+					std::cout << " w " << rect.w << "h " << rect.h << std::endl;
+#endif
 					currentController->onResize(rect, dpiScale);
 				}
 				break;

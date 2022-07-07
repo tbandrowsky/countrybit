@@ -3183,7 +3183,7 @@ namespace corona
 				{ { jtype::type_string ,"last_name", "Last Name" }, { 50, "", "" } },
 				{ { jtype::type_string ,"middle_name", "Middle Name" }, { 50, "", "" } },
 				{ { jtype::type_string ,"ssn", "SSN" }, { 10, "", "" }},
-				{ { jtype::type_string, "email", "eEmail" }, { 200, "", ""  }},
+				{ { jtype::type_string, "email", "eMail" }, { 200, "", ""  }},
 				{ { jtype::type_string, "title", "Title" }, { 200, "", "" } },
 				{ { jtype::type_string, "street", "Street" },{  200, "", "" } },
 				{ { jtype::type_string, "suiteapt", "Suite/Apt" }, { 100, "", ""  }},

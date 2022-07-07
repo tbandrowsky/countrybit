@@ -457,6 +457,8 @@ field id idf_carrier, which is populated when objects of this class are construc
 		auto controlrow = row(mainr, null_row, { 0.0_px,0.0_px,100.0_pct,100.0_pct });
 		auto controlcol1 = column(controlrow, null_row, { 25.0_pct,0.0_px,50.0_pct,100.0_pct });
 
+		controlcol1->windowsRegion = true;
+
 		const char* object_title = nullptr;
 		object_title = schema.get_class(state.actor.current_view_class_id).item().description;
 
@@ -500,6 +502,8 @@ field id idf_carrier, which is populated when objects of this class are construc
 		auto d2dareao = row(d2dwin, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
 		auto d2darea = column(d2dareao, schema.idf_view_background_style, { 20.0_px, 0.0_px, 100.0_pct, 100.0_pct });
 
+		control->windowsRegion = true;
+
 		const char* object_title = nullptr;
 		object_title = schema.get_class(state.actor.current_view_class_id).item().description;
 
@@ -528,23 +532,30 @@ field id idf_carrier, which is populated when objects of this class are construc
 	{
 		clear();
 
-		auto mainr = absolute(nullptr, null_row, { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
-		auto d2drow = canvas2d(mainr, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
-		auto controlrow = row(mainr, null_row, { 0.0_px,0.0_px,100.0_pct,100.0_pct });
-		auto controlcol1 = column(controlrow, null_row, { 15.0_pct,150.0_px,40.0_pct,100.0_pct });
+		auto mainr = row(nullptr, null_row, { 0.0_px,0.0_px,100.0_pct,100.0_pct });
+		auto canvas_area = column(mainr, schema.idf_view_background_style, { 0.0_px, 0.0_px, 70.0_pct, 100.0_pct });
+		auto control = column(mainr, schema.idf_view_background_style, { 0.0_px, 0.0_px, 30.0_pct, 100.0_pct });
+		auto d2dwin = canvas2d(canvas_area, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
+		auto d2darea = column(d2dwin, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
+
+		control->windowsRegion = true;
 
 		const char* object_title = nullptr;
 		object_title = schema.get_class(state.actor.current_view_class_id).item().description;
 
-		render_header(d2drow, application_title, object_title, false);
+		space(control, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 150.0_px });
+
+		render_header(d2darea, application_title, object_title, false);
+
+		text(d2darea, schema.idf_view_subtitle_style, "Client Programs", {0.0_px, 0.0_px, 100.0_pct, 50.0_px});
+		relative_ptr_type field_ids[1] = { idf_program_title };
+		search_table(d2darea, idc_program, field_ids, 1);
 
 		// editable controls on the left
-		add_update_fields(controlcol1, field_layout::label_on_left, nullptr);
-		add_create_buttons(controlcol1, schema.idf_button_style);
+		add_update_fields(control, field_layout::label_on_top, "Client Details");
 
-		//relative_ptr_type field_ids[1] = { idf_program_title };
-		//search_table(tablecol1, idc_program, field_ids, 1);
-
+		// and the add buttons
+		add_create_buttons(control, schema.idf_button_style);
 	}
 
 	void wsproposal_controller::render_coverage_root()
@@ -790,7 +801,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 			{ schema.idf_view_title_style },
 			{
 				{ schema.idf_font_name, fontName },
-				{ schema.idf_font_size, 30.0 }
+				{ schema.idf_font_size, 24.0 }
 			}
 			);
 
@@ -799,7 +810,8 @@ field id idf_carrier, which is populated when objects of this class are construc
 			{ schema.idf_view_subtitle_style },
 			{
 				{ schema.idf_font_name, fontName},
-				{ schema.idf_font_size, 24.0 },
+				{ schema.idf_font_size, 16.0 },
+				{ schema.idf_bold, false },
 			}
 			);
 

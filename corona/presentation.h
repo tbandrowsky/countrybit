@@ -56,6 +56,8 @@ namespace corona
 			int						canvas_id;
 			int						old_id;
 
+			bool					windowsRegion;
+
 			page_item() :
 				id(-1),
 				parent_id(-1),
@@ -67,7 +69,8 @@ namespace corona
 				style_id(null_row),
 				old_id(-1),
 				item_space(),
-				item_space_amount(0.0)
+				item_space_amount(0.0),
+				windowsRegion(false)
 			{
 				;
 			}
@@ -110,15 +113,22 @@ namespace corona
 				page_item_identifier_x pii { null_row, null_row };
 				if ((layout == layout_types::field) ||
 					(layout == layout_types::label) ||
-					(layout == layout_types::create) ||
-					(layout == layout_types::canvas2d) || 
-					(layout == layout_types::canvas3d)) {
+					(layout == layout_types::create)) {
 					pii.layout = (int)layout;
 					pii.object_id = object_id;
+					pii.class_id = class_id;
 					if (field != nullptr) 
 					{
 						pii.field_id = field->field_id;
 					}
+				}
+				else if ((layout == layout_types::canvas2d) ||
+					(layout == layout_types::canvas3d))
+				{
+					pii.layout = (int)layout;
+					pii.object_id = 0;
+					pii.class_id = 0;
+					pii.field_id = 0;
 				}
 				page_item_identifier c = 17;
 				c = c * 23 + pii.layout;

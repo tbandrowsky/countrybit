@@ -227,6 +227,7 @@ namespace corona
 			void destroyChildren();
 
 			bool disableChangeProcessing;
+			HRGN region;
 
 		public:
 
