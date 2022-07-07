@@ -90,7 +90,7 @@ namespace proposal
 							id_product_template_root, 
 							id_system_root;
 
-		const char* application_title = "WOODRUFF SAWYER PROPOSAL";
+		const char* application_title = "WOODRUFF SAWYER PROPOSAL PROTOTYPE";
 
 		wsproposal_controller();
 		virtual ~wsproposal_controller();

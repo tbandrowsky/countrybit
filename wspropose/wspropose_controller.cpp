@@ -359,10 +359,11 @@ field id idf_carrier, which is populated when objects of this class are construc
 						{ idc_carrier, 2 },
 						{ idc_coverage, 2 },
 						{ idc_program, 3 },
-						{ idc_product, 4 },
 						{ idc_program_item_base, 4 },
 						{ idc_program_chart_slide, 4 },
 						{ idc_program_generic_slide, 4 },
+						{ idc_product, 4 },
+						{ idc_product_item_base, 5 },
 						{ idc_product_item_base, 5 }
 					}
 			);
@@ -422,24 +423,24 @@ field id idf_carrier, which is populated when objects of this class are construc
 
 	void wsproposal_controller::render_header(page_item* _frame, const char* _title, const char* _subtitle, bool _left_pad)
 	{
-		auto title_block = row(_frame, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 150.0_px });
+		auto title_block = row(_frame, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 120.0_px });
 
 		page_item* header_area;
 
 		if (_left_pad) 
 		{
 			space(title_block, schema.idf_view_background_style, { 0.0_px, 0.0_px, 25.0_pct, 100.0_pct });
-			header_area = column(title_block, schema.idf_view_background_style, { 0.0_px, 0.0_px, 75.0_pct, 100.0_px });
+			header_area = column(title_block, schema.idf_view_background_style, { 0.0_px, 0.0_px, 75.0_pct, 100.0_pct });
 		}
 		else 
 		{
 			space(title_block, schema.idf_view_background_style, { 0.0_px, 0.0_px, 20.0_px, 100.0_pct });
-			header_area = column(title_block, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
+			header_area = column(title_block, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
 		}
 
 		auto title_bar = row(header_area, schema.idf_title_bar_style, { 0.0_px, 0.0_px, 100.0_pct, 1.0_fntgr });
-		auto underline_bar = row(header_area, schema.idf_view_section_style, { 0.0_px, 0.0_px, 75.0_pct, 4.0_px });
-		auto underline_space_bar = row(header_area, schema.idf_view_background_style , { 0.0_px, 0.0_px, 75.0_pct, 4.0_px });
+		auto underline_bar = row(header_area, schema.idf_view_section_style, { 0.0_px, 0.0_px, 90.0_pct, 4.0_px });
+		auto underline_space_bar = row(header_area, schema.idf_view_background_style , { 0.0_px, 0.0_px, 90.0_pct, 4.0_px });
 		auto breadcrumb_bar = row(header_area, schema.idf_breadcrumb_bar_style, { 0.0_px, 0.0_px, 100.0_pct, 50.0_px });
 		breadcrumbs(breadcrumb_bar, [this](jobject& _item) {
 			return _item.get_name(schema.idf_name);
@@ -466,6 +467,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 
 		// editable controls on the left
 		add_update_fields(controlcol1, field_layout::label_on_left, nullptr);
+		space(controlcol1, schema.idf_button_style, { 0.0_px, 0.0_px, 1.0_fntgr, 1.0_fntgr });
 		add_create_buttons(controlcol1, schema.idf_button_style);
 
 		_contents(controlrow);
@@ -497,10 +499,10 @@ field id idf_carrier, which is populated when objects of this class are construc
 
 		auto mainr = column(nullptr, null_row, { 0.0_px,0.0_px,100.0_pct,100.0_pct });
 		auto canvas_area = row(mainr, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 80.0_pct });
-		auto control = row(mainr, schema.idf_view_background_style, { 20.0_px, 0.0_px, 100.0_pct, 20.0_pct });
+		auto control = row(mainr, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 20.0_pct });
 		auto d2dwin = canvas2d(canvas_area, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
 		auto d2dareao = row(d2dwin, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
-		auto d2darea = column(d2dareao, schema.idf_view_background_style, { 20.0_px, 0.0_px, 100.0_pct, 100.0_pct });
+		auto d2darea = column(d2dareao, schema.idf_view_background_style, {20.0_px, 0.0_px, 100.0_pct, 100.0_pct });
 
 		control->windowsRegion = true;
 
@@ -513,7 +515,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 
 		// editable controls on the left
 		add_update_fields(control, field_layout::label_on_top, _object_title);
-
+		space(control, schema.idf_button_style, { 0.0_px, 0.0_px, 1.0_fntgr, 1.0_fntgr });
 		// and the add buttons
 		add_create_buttons(control, schema.idf_button_style);
 	}
@@ -533,28 +535,26 @@ field id idf_carrier, which is populated when objects of this class are construc
 		clear();
 
 		auto mainr = row(nullptr, null_row, { 0.0_px,0.0_px,100.0_pct,100.0_pct });
-		auto canvas_area = column(mainr, schema.idf_view_background_style, { 0.0_px, 0.0_px, 70.0_pct, 100.0_pct });
-		auto control = column(mainr, schema.idf_view_background_style, { 0.0_px, 0.0_px, 30.0_pct, 100.0_pct });
+		auto canvas_area = column(mainr, schema.idf_view_background_style, { 0.0_px, 0.0_px, 65.0_pct, 100.0_pct });
+		auto control = column(mainr, schema.idf_view_background_style, { 5.0_pct, 0.0_px, 30.0_pct, 100.0_pct });
 		auto d2dwin = canvas2d(canvas_area, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
-		auto d2darea = column(d2dwin, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
+		auto d2darea = column(d2dwin, schema.idf_view_background_style, { 20.0_px, 0.0_px, 100.0_pct, 100.0_pct});
 
 		control->windowsRegion = true;
 
 		const char* object_title = nullptr;
 		object_title = schema.get_class(state.actor.current_view_class_id).item().description;
 
-		space(control, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 150.0_px });
-
 		render_header(d2darea, application_title, object_title, false);
 
-		text(d2darea, schema.idf_view_subtitle_style, "Client Programs", {0.0_px, 0.0_px, 100.0_pct, 50.0_px});
-		text(d2darea, schema.idf_label_style, "Comparison Label", { 0.0_px, 0.0_px, 100.0_pct, 50.0_px });
+		space(control, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 130.0_px });
+		text(d2darea, schema.idf_view_subtitle_style, "Client Programs", {0.0_px, 0.0_px, 100.0_pct, 1.4_fntgr});
 		relative_ptr_type field_ids[1] = { idf_program_title };
 		search_table(d2darea, idc_program, field_ids, 1);
 
 		// editable controls on the left
 		add_update_fields(control, field_layout::label_on_top, "Client Details");
-
+		space(control, schema.idf_button_style, { 0.0_px, 0.0_px, 1.0_fntgr, 1.0_fntgr });
 		// and the add buttons
 		add_create_buttons(control, schema.idf_button_style);
 	}
@@ -596,7 +596,31 @@ field id idf_carrier, which is populated when objects of this class are construc
 
 	void wsproposal_controller::render_program()
 	{
-		render_form([this](page_item* _frame) { render_program_contents(_frame);  });
+		clear();
+
+		auto mainr = row(nullptr, null_row, { 0.0_px,0.0_px,100.0_pct,100.0_pct });
+		auto canvas_area = column(mainr, schema.idf_view_background_style, { 0.0_px, 0.0_px, 65.0_pct, 100.0_pct });
+		auto control = column(mainr, schema.idf_view_background_style, { 5.0_pct, 0.0_px, 30.0_pct, 100.0_pct });
+		auto d2dwin = canvas2d(canvas_area, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
+		auto d2darea = column(d2dwin, schema.idf_view_background_style, { 20.0_px, 0.0_px, 100.0_pct, 100.0_pct });
+
+		control->windowsRegion = true;
+
+		const char* object_title = nullptr;
+		object_title = schema.get_class(state.actor.current_view_class_id).item().description;
+
+		render_header(d2darea, application_title, object_title, false);
+
+		space(control, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 130.0_px });
+		text(d2darea, schema.idf_view_subtitle_style, "Program items", { 0.0_px, 0.0_px, 100.0_pct, 1.4_fntgr });
+		relative_ptr_type field_ids[1] = { idf_program_title };
+		search_table(d2darea, idc_program, field_ids, 1);
+
+		// editable controls on the left
+		add_update_fields(control, field_layout::label_on_top, "Program Details");
+		space(control, schema.idf_button_style, { 0.0_px, 0.0_px, 1.0_fntgr, 1.0_fntgr });
+		// and the add buttons
+		add_create_buttons(control, schema.idf_button_style);
 	}
 
 	void wsproposal_controller::render_home_contents(page_item* _frame)
@@ -734,7 +758,10 @@ field id idf_carrier, which is populated when objects of this class are construc
 		{
 			render_product_template();
 		}
-		else if (state.actor.current_view_class_id == idc_program)
+		else if (state.actor.current_view_class_id == idc_program || 
+			state.actor.current_view_class_id == idc_product || 
+			program_chart.matches_class_id( state.actor.current_view_object_id, idc_program_item_base ) || 
+			program_chart.matches_class_id(state.actor.current_view_object_id, idc_product_item_base) )
 		{
 			render_program();
 		}

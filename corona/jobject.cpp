@@ -482,11 +482,12 @@ namespace corona
 			{
 				auto slice = get_object(_select.object_id);
 				auto class_id = slice.get_class_id();
+				auto object_id = _select.object_id;
 				
 				selections_collection temp;
 				auto model = schema->get_model(ref->model_name);
 				auto pmodel = &model;
-				auto hierarchy_item = model.selection_hierarchy.first_value([class_id](auto& vr) { return class_id == vr.item.class_id; });
+				auto hierarchy_item = model.selection_hierarchy.first_value([class_id, this, object_id](auto& vr) { return this->matches_class_id( object_id, vr.item.class_id ); });
 				auto phierarchy_item = &hierarchy_item;
 				auto selected_levels = model.selection_hierarchy.where([phierarchy_item](auto& vr) { return vr.item.level_id <= phierarchy_item->level_id; });
 
