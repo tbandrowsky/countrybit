@@ -366,12 +366,15 @@ namespace corona
 						fontStyle = DWRITE_FONT_STYLE_ITALIC;
 					}
 
+					FLOAT dpiX = 96.0, dpiY = 96.0;
+					target->renderTarget->GetDpi(&dpiX, &dpiY);
+
 					HRESULT hr = target->factory->getDWriteFactory()->CreateTextFormat(wideName.c_str(),
 						NULL,
 						bold ? DWRITE_FONT_WEIGHT_BOLD : DWRITE_FONT_WEIGHT_REGULAR,
 						fontStyle,
 						DWRITE_FONT_STRETCH_NORMAL,
-						size * 96.0 / 72.0,
+						size,
 						L"en-US",
 						&lpWriteTextFormat);
 

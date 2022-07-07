@@ -548,6 +548,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 		render_header(d2darea, application_title, object_title, false);
 
 		text(d2darea, schema.idf_view_subtitle_style, "Client Programs", {0.0_px, 0.0_px, 100.0_pct, 50.0_px});
+		text(d2darea, schema.idf_label_style, "Comparison Label", { 0.0_px, 0.0_px, 100.0_pct, 50.0_px });
 		relative_ptr_type field_ids[1] = { idf_program_title };
 		search_table(d2darea, idc_program, field_ids, 1);
 
