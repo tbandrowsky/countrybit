@@ -40,11 +40,23 @@ namespace proposal
 		corona::database::relative_ptr_type idc_program;
 		corona::database::relative_ptr_type idf_program;
 		corona::database::relative_ptr_type idf_program_view;
+		corona::database::relative_ptr_type idf_program_item_base;
+		corona::database::relative_ptr_type idc_program_item_base;
+
+		corona::database::relative_ptr_type idf_program_feature1;
+		corona::database::relative_ptr_type idf_program_feature2;
+		corona::database::relative_ptr_type idc_program_feature1;
+		corona::database::relative_ptr_type idc_program_feature2;
+
 		corona::database::relative_ptr_type idf_product;
 		corona::database::relative_ptr_type idc_product;
-
 		corona::database::relative_ptr_type idf_product_item_base;
 		corona::database::relative_ptr_type idc_product_item_base;
+
+		corona::database::relative_ptr_type idf_product_feature1;
+		corona::database::relative_ptr_type idf_product_feature2;
+		corona::database::relative_ptr_type idc_product_feature1;
+		corona::database::relative_ptr_type idc_product_feature2;
 
 		corona::database::relative_ptr_type idf_inception;
 		corona::database::relative_ptr_type idf_expiration;
@@ -54,17 +66,10 @@ namespace proposal
 		corona::database::relative_ptr_type idf_deductible;
 		corona::database::relative_ptr_type idf_share;
 		corona::database::relative_ptr_type idf_comment;
-		corona::database::relative_ptr_type idf_program_style;
-
-		corona::database::relative_ptr_type idc_pi_inception;
-		corona::database::relative_ptr_type idc_pi_expiration;
-		corona::database::relative_ptr_type idc_pi_status;
-		corona::database::relative_ptr_type idc_pi_attachment;
-		corona::database::relative_ptr_type idc_pi_limit;
-		corona::database::relative_ptr_type idc_pi_deductible;
-		corona::database::relative_ptr_type idc_pi_share;
-		corona::database::relative_ptr_type idc_pi_coverage;
-		corona::database::relative_ptr_type idc_pi_comment;
+		corona::database::relative_ptr_type idf_carrier_name;
+		corona::database::relative_ptr_type idf_coverage_name;
+		corona::database::relative_ptr_type idf_feature1_text;
+		corona::database::relative_ptr_type idf_feature2_text;
 
 		corona::database::relative_ptr_type idf_program_title;
 		corona::database::relative_ptr_type idf_program_subtitle;

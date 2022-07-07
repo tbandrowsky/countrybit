@@ -4,6 +4,7 @@
 #define _DETAIL 0
 #define _TRACE_RULE 0
 #define _TRACE_GET_OBJECT 0
+#define _TRACE_SEARCH 0
 
 namespace corona
 {
@@ -274,6 +275,7 @@ namespace corona
 				{
 					bool include_selected = false;
 					bool include_class = false;
+					bool is_child_object = false;
 					bool include_search = false;
 
 					relative_ptr_type loc = _item.location;
@@ -285,10 +287,20 @@ namespace corona
 							return this->matches_class_id(_sel.item, loc_class);
 						});
 
-					include_class = matches_class_id(loc, pactor->current_view_class_id) || (search_item.has_field(field_id_pk) && ((int64_t)search_item.get(field_id_pk) == field_id_pk_value));
-					include_search = search_item.matches(search_string);
-					
-					return include_selected || (include_class && include_search);
+					include_class = matches_class_id(loc, pactor->current_view_class_id);
+					is_child_object = (search_item.has_field(field_id_pk) && ((int64_t)search_item.get(field_id_pk) == field_id_pk_value));
+					if (is_child_object) {
+						include_search = search_item.matches(search_string);
+#if _TRACE_SEARCH
+						std::cout << "search class:" << pactor->current_view_class_id << ", candidate class:" << search_item.get_class().item().name << ", object id:" << loc << ", matches:" << include_search << std::endl;
+#endif
+					}
+
+#if _TRACE_SEARCH
+					std::cout << "search class:" << pactor->current_view_class_id << ", candidate class:" << search_item.get_class().item().name << ", object id:" << loc << ", matches:" << include_selected << ", " << include_class << ", " << include_search << std::endl;
+#endif
+
+					return include_selected || include_class || (is_child_object && include_search);
 				}
 			);
 
@@ -316,11 +328,9 @@ namespace corona
 				avo.selectable = false;
 				avo.selected = true;
 				avo.updatable = false;
-				if (!acr.view_objects.contains(sel.item)) {
-					jobject temp = get_object(sel.item);
-					avo.object = acr.copy_object(schema, temp);
+				if (acr.view_objects.contains(sel.item)) {
+					acr.view_objects.put(sel.item, avo, [](actor_view_object& _dest) { _dest.selected = true; });
 				}
-				acr.view_objects.put(sel.item, avo, [](actor_view_object& _dest) { _dest.selected = true; });
 			}
 
 			// now to our select options
@@ -344,12 +354,10 @@ namespace corona
 							avo.selectable = true;
 							avo.selected = false;
 							avo.updatable = false;
-							if (!acr.view_objects.contains(oid)) {
-								jobject temp = get_object(oid);
-								avo.object = acr.copy_object(schema, temp);
+							if (acr.view_objects.contains(oid)) {
+								acr.view_objects.put(oid, avo, [](actor_view_object& _dest) {
+									_dest.selectable = !_dest.selected;  });
 							}
-							acr.view_objects.put(oid, avo, [](actor_view_object& _dest) { 
-								_dest.selectable = !_dest.selected;  });
 						}
 					}
 				}
@@ -376,13 +384,11 @@ namespace corona
 							avo.selectable = false;
 							avo.selected = false;
 							avo.updatable = true;
-							if (!acr.view_objects.contains(oid)) {
-								jobject temp = get_object(oid);
-								avo.object = acr.copy_object(schema, temp);
+							if (acr.view_objects.contains(oid)) {
+								acr.view_objects.put(oid, avo, [](actor_view_object& _dest) {
+									_dest.updatable = true;
+									});
 							}
-							acr.view_objects.put(oid, avo, [](actor_view_object& _dest) {
-								_dest.updatable = true; 																						
-								});
 						}
 					}
 				}
@@ -638,8 +644,7 @@ namespace corona
 				if (objects[object_id].item().deleted)
 					return acr;
 				acr.modified_object_id = object_id;
-				auto slice = get_object(object_id);
-				update_object(object_id, slice);
+				update_object(object_id, _update.item);
 			}
 
 			acr = get_actor_state(_update.actor_id, object_id, _trace_msg);
@@ -2461,13 +2466,14 @@ namespace corona
 			return get_file_remote(index);
 		}
 
-		bool jobject::matches(const char* str)
+		bool jobject::matches(const char* _str)
 		{
-			if (!str) return true;
+			if (!_str) return true;
+			if (*_str == 0) return true;
 			for (int i = 0; i < size(); i++) {
 				if (get_field(i).type_id == jtype::type_string) {
 					auto str = get_string(i);
-					if (str.has_any(str)) {
+					if (str.has_any(_str)) {
 						return true;
 					}
 				}

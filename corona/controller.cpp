@@ -651,7 +651,7 @@ namespace corona
 				break;
 			}
 
-			if (_item.style_id) {
+			if (_item.style_id > null_row) {
 				od += "-";
 				od += style_name;
 			}

@@ -14,10 +14,10 @@ namespace proposal
 	wsproposal_controller::wsproposal_controller() : corona_controller()
 	{
 		/*
-		
-		In this example we create our schema and data store locally.  
+
+		In this example we create our schema and data store locally.
 		In a remote application, we will wind up fetching and binding but that will be for a different example.
-		
+
 		*/
 
 		/* first we initialize our box.  Our box can grow, but we start with a size of 16MB, which is more than enough
@@ -26,8 +26,8 @@ namespace proposal
 
 		box.init(1 << 22);
 
-		/* with our box, we can then create a schema.  We'll reserve space to create roughly 75 classes, 
-		* and also include standard fields and classes.  
+		/* with our box, we can then create a schema.  We'll reserve space to create roughly 75 classes,
+		* and also include standard fields and classes.
 		*/
 
 		schema = jschema::create_schema(&box, 75, true, schema_id);
@@ -35,7 +35,7 @@ namespace proposal
 		/*
 		Now, we can begin to flesh out schema for this application.  In Corona, a schema is a collection of fields,
 		that are composed into classes.  There are many different types of fields, and only some are used below.
-		Some C++ syntactical sugar makes the process less painful.  Note that the id of each field returned goes 
+		Some C++ syntactical sugar makes the process less painful.  Note that the id of each field returned goes
 		into a variable with the idf naming convention.
 		*/
 
@@ -43,8 +43,8 @@ namespace proposal
 		put_object_field_request porf;
 
 		/*
-		These fields are all custom integer fields that we will use to represent primary keys.  
-		Primary keys in Corona are like a cross between sequences and auto number.  The field itself 
+		These fields are all custom integer fields that we will use to represent primary keys.
+		Primary keys in Corona are like a cross between sequences and auto number.  The field itself
 		is just an integer, but it will be assigned as a PK as part of its class membership.
 		*/
 
@@ -60,17 +60,22 @@ namespace proposal
 		idf_system_root = schema.put_integer_field({ {  jtype::type_int64, "system_root", "System Settings", false }, { 0, INT64_MAX } });
 
 		idf_program = schema.put_integer_field({ {  jtype::type_int64, "program_id", "Program Id", false }, { 0, INT64_MAX } });
+		idf_program_item_base = schema.put_integer_field({ {  jtype::type_int64, "program_item_id", "Program Item Id", false }, { 0, INT64_MAX } });
 		idf_program_view = schema.put_integer_field({ {  jtype::type_int64, "program_view", "Program View", false }, { 0, INT64_MAX } });
 		idf_program_title = schema.put_string_field({ {  jtype::type_string, "program_title", "Program Title", true }, { 100, "", "" } });
 		idf_program_subtitle = schema.put_string_field({ {  jtype::type_string, "program_title", "Program Subtitle", true }, { 100, "", "" } });
+
+		idf_carrier_name = schema.put_string_field({ {  jtype::type_string, "carrier_name", "Carrier Name", true }, { 100, "", "" } });
+		idf_coverage_name = schema.put_string_field({ {  jtype::type_string, "carrier_name", "Coverage Name", true }, { 100, "", "" } });
+
 		idf_product = schema.put_integer_field({ {  jtype::type_int64, "product_id", "Product Id", false }, { 0, INT64_MAX } });
 		idf_product_item_base = schema.put_integer_field({ {  jtype::type_int64, "product_item_id", "Product Item Id", false }, { 0, INT64_MAX } });
 		idf_program_chart_slide = schema.put_integer_field({ {  jtype::type_int64, "program_chart_slide_id", "Program Chart Slide Id", false }, { 0, INT64_MAX } });
 		idf_program_chart_slide_product = schema.put_integer_field({ {  jtype::type_int64, "program_chart_slide_product_id", "Program Chart Slide Item Id", false}, { 0, INT64_MAX } });
 		idf_program_generic_slide = schema.put_integer_field({ {  jtype::type_int64, "program_generic_slide", "Generic Slide Id", false }, { 0, INT64_MAX } });
 
-		/* 
-		* Here we are going to specify a set of fields that may be used to create a program item.  
+		/*
+		* Here we are going to specify a set of fields that may be used to create a program item.
 		* A model in Corona is a way to tie together objects that are affiliated but necessarily members per se, although syntactical
 		* sugar will be introduced to make it -seem- that way.
 		*/
@@ -83,14 +88,15 @@ namespace proposal
 		idf_deductible = schema.put_double_field({ {  jtype::type_float32, "deductible", "Deductible" }, { 0.0, 1E10 } });
 		idf_share = schema.put_double_field({ {  jtype::type_float32, "share", "Share %" }, { 0.0, 100 } });
 		idf_comment = schema.put_string_field({ {  jtype::type_string, "comment", "Comment" }, { 500, "", "", } });
-		idf_program_style = schema.put_string_field({ {  jtype::type_color, "style", "Style" }, {  } });
+		idf_feature1_text = schema.put_string_field({ {  jtype::type_string, "feature1_text", "Feature1 Text" }, { 500, "", "", } });
+		idf_feature2_text = schema.put_string_field({ {  jtype::type_string, "feature2_text", "Feature2 Text" }, { 500, "", "", } });
 
-		/* 
+		/*
 		Now that we have our fields, we can make our classes.
 		*/
 
 		/*
-		We have a class object to represent our application states and objects with respect to this model.  We supply a class name, description, a list 
+		We have a class object to represent our application states and objects with respect to this model.  We supply a class name, description, a list
 		of member fields, and then, a primary key.  We call put_class to upsert the class, and the class id is returned for easy reference.
 		The schema can also be searched by the class_name to find the class.
 		*/
@@ -102,7 +108,7 @@ namespace proposal
 		pcr.member_fields = { idf_home, schema.idf_style_id };
 		idc_home = schema.put_class(pcr);
 
-		/* This is the client root class. Objects of the class have a layout and accept the client home id as a relation.  There is also 
+		/* This is the client root class. Objects of the class have a layout and accept the client home id as a relation.  There is also
 		a standard search string field, for searching for clients and keeping the search state. */
 		pcr.class_name = "client_root";
 		pcr.class_description = "CLIENTS";
@@ -110,7 +116,7 @@ namespace proposal
 		pcr.member_fields = { idf_client_root, idf_home, schema.idf_search_string, schema.idf_style_id };
 		idc_client_root = schema.put_class(pcr);
 
-		/* This is the client class. Objects of the class have client things like name and address.  The primary key is the 
+		/* This is the client class. Objects of the class have client things like name and address.  The primary key is the
 		field id idf_client, which is populated when objects of this class are constructed. . */
 
 		pcr.class_name = "client";
@@ -119,7 +125,7 @@ namespace proposal
 		pcr.member_fields = { idf_client, idf_client_root, schema.idf_name, schema.idf_street, schema.idf_city, schema.idf_state, schema.idf_postal, schema.idf_email, schema.idf_url };
 		idc_client = schema.put_class(pcr);
 
-		/* This is the carrier root class. Objects of the class have a layout and accept the idf_home as a relation and have a primary key 
+		/* This is the carrier root class. Objects of the class have a layout and accept the idf_home as a relation and have a primary key
 		that is auto-opulated at object load time.  There is also
 			a standard search string field, for searching for clients and keeping the search state. */
 
@@ -171,69 +177,98 @@ field id idf_carrier, which is populated when objects of this class are construc
 		pcr.class_name = "program";
 		pcr.class_description = "PROGRAM";
 		pcr.field_id_primary_key = idf_program;
-		pcr.member_fields = { idf_program, idf_client, idf_program_view, schema.idf_name, idf_program_title, idf_program_subtitle };
-		idc_coverage = schema.put_class(pcr);
+		pcr.member_fields = { idf_program,
+			idf_client,
+			idf_program_view,
+			schema.idf_name,
+			idf_program_title,
+			idf_program_subtitle,
+			idf_inception,
+			idf_expiration
+		};
+		idc_program = schema.put_class(pcr);
+
+		pcr.class_name = "program_item_base";
+		pcr.class_description = "PROGRAM ITEM";
+		pcr.field_id_primary_key = idf_program_item_base;
+		pcr.member_fields = {
+			idf_program_item_base,
+			idf_program,
+			schema.idf_style_id,
+		};
+		idc_program_item_base = schema.put_class(pcr);
+
+		pcr.class_name = "program_feature1";
+		pcr.class_description = "PROGRAM FEATURE 1";
+		pcr.field_id_primary_key = idf_program_item_base;
+		pcr.base_class_id = idc_program_item_base;
+		pcr.member_fields = {
+			idf_program_item_base,
+			idf_program,
+			idf_feature1_text,
+			schema.idf_style_id,
+		};
+		idc_program_feature1 = schema.put_class(pcr);
+
+		pcr.class_name = "program_feature2";
+		pcr.class_description = "PROGRAM FEATURE 2";
+		pcr.field_id_primary_key = idf_program_item_base;
+		pcr.base_class_id = idc_program_item_base;
+		pcr.member_fields = {
+			idf_program_item_base,
+			idf_program,
+			idf_feature2_text,
+			schema.idf_style_id,
+		};
+		idc_program_feature2 = schema.put_class(pcr);
 
 		pcr.class_name = "product";
 		pcr.class_description = "PRODUCT";
 		pcr.field_id_primary_key = idf_product;
-		pcr.member_fields = { idf_product, idf_program, idf_client, idf_program_style };
+		pcr.member_fields = {
+			idf_product,
+			idf_program,
+			schema.idf_style_id,
+			idf_attachment,
+			idf_limit,
+			idf_share,
+			idf_deductible,
+			idf_comment
+		};
 		idc_product = schema.put_class(pcr);
 
 		pcr.class_name = "product_item_base";
 		pcr.class_description = "PRODUCT ITEM";
 		pcr.field_id_primary_key = idf_product_item_base;
-		pcr.member_fields = { idf_product, idf_product_item_base };
+		pcr.member_fields = {
+			idf_product_item_base,
+			idf_product,
+		};
 		idc_product_item_base = schema.put_class(pcr);
 
-		pcr.class_name = "pi_inception";
-		pcr.class_description = "Inception";
+		pcr.class_name = "product_feature1";
+		pcr.class_description = "PRODUCT FEATURE 1";
 		pcr.field_id_primary_key = idf_product_item_base;
 		pcr.base_class_id = idc_product_item_base;
-		pcr.member_fields = { idf_inception };
-		idc_pi_inception = schema.put_class(pcr);
+		pcr.member_fields = {
+			idf_program_item_base,
+			idf_product,
+			idf_feature1_text,
+			schema.idf_style_id,
+		};
+		idc_product_feature1 = schema.put_class(pcr);
 
-		pcr.class_name = "pi_expiration";
-		pcr.class_description = "Expiration";
+		pcr.class_name = "product_feature2";
+		pcr.class_description = "PRODUCT FEATURE 2";
 		pcr.field_id_primary_key = idf_product_item_base;
 		pcr.base_class_id = idc_product_item_base;
-		pcr.member_fields = { idf_expiration };
-		idc_pi_expiration = schema.put_class(pcr);
-
-		pcr.class_name = "pi_status";
-		pcr.class_description = "Status";
-		pcr.field_id_primary_key = idf_product_item_base;
-		pcr.base_class_id = idc_product_item_base;
-		pcr.member_fields = { idf_status };
-		idc_pi_status = schema.put_class(pcr);
-
-		pcr.class_name = "pi_limit";
-		pcr.class_description = "Limit";
-		pcr.field_id_primary_key = idf_product_item_base;
-		pcr.base_class_id = idc_product_item_base;
-		pcr.member_fields = { idf_limit };
-		idc_pi_limit = schema.put_class(pcr);
-
-		pcr.class_name = "pi_deductible";
-		pcr.class_description = "Deductible";
-		pcr.field_id_primary_key = idf_product_item_base;
-		pcr.base_class_id = idc_product_item_base;
-		pcr.member_fields = { idf_deductible };
-		idc_pi_deductible = schema.put_class(pcr);
-
-		pcr.class_name = "pi_share";
-		pcr.class_description = "Share";
-		pcr.field_id_primary_key = idf_product_item_base;
-		pcr.base_class_id = idc_product_item_base;
-		pcr.member_fields = { idf_deductible };
-		idc_pi_share = schema.put_class(pcr);
-
-		pcr.class_name = "pi_comment";
-		pcr.class_description = "Comment";
-		pcr.field_id_primary_key = idf_product_item_base;
-		pcr.base_class_id = idc_product_item_base;
-		pcr.member_fields = { idf_comment };
-		idc_pi_comment = schema.put_class(pcr);
+		pcr.member_fields = {
+			idf_program_item_base,
+			idf_program,
+			idf_feature2_text,
+			schema.idf_style_id,
+		};
+		idc_product_feature2 = schema.put_class(pcr);
 
 		pcr.class_name = "program_chart_slide";
 		pcr.class_description = "PROGRAM SLIDE";
@@ -265,10 +300,11 @@ field id idf_carrier, which is populated when objects of this class are construc
 		jm.update_always(&schema, idc_client_root);
 		jm.update_always(&schema, idc_client);
 		jm.update_always(&schema, idc_program);
-		jm.update_always(&schema, idc_product);
-		jm.update_always(&schema, idc_product_item_base);
 		jm.update_always(&schema, idc_program_chart_slide);
 		jm.update_always(&schema, idc_program_generic_slide);
+		jm.update_always(&schema, idc_program_item_base);
+		jm.update_always(&schema, idc_product);
+		jm.update_always(&schema, idc_product_item_base);
 
 		jm.select_always(&schema, idc_home);
 		jm.select_always(&schema, idc_carrier_root);
@@ -280,21 +316,23 @@ field id idf_carrier, which is populated when objects of this class are construc
 		jm.select_always(&schema, idc_client_root);
 		jm.select_always(&schema, idc_client);
 		jm.select_always(&schema, idc_system_root);
-		jm.select_always(&schema, idc_program);
-		jm.select_always(&schema, idc_product);
-		jm.select_always(&schema, idc_program_chart_slide);
-		jm.select_always(&schema, idc_program_generic_slide);
-		jm.select_always(&schema, idc_product_item_base);
+		jm.update_always(&schema, idc_program);
+		jm.update_always(&schema, idc_program_chart_slide);
+		jm.update_always(&schema, idc_program_generic_slide);
+		jm.update_always(&schema, idc_program_item_base);
+		jm.update_always(&schema, idc_product);
+		jm.update_always(&schema, idc_product_item_base);
 
 		jm.delete_always(&schema, idc_carrier);
 		jm.delete_always(&schema, idc_program_template);
 		jm.delete_always(&schema, idc_coverage);
 		jm.delete_always(&schema, idc_client);
-		jm.delete_always(&schema, idc_program);
-		jm.delete_always(&schema, idc_product);
-		jm.delete_always(&schema, idc_program_chart_slide);
-		jm.delete_always(&schema, idc_program_generic_slide);
-		jm.delete_always(&schema, idc_product_item_base);
+		jm.update_always(&schema, idc_program);
+		jm.update_always(&schema, idc_program_chart_slide);
+		jm.update_always(&schema, idc_program_generic_slide);
+		jm.update_always(&schema, idc_program_item_base);
+		jm.update_always(&schema, idc_product);
+		jm.update_always(&schema, idc_product_item_base);
 
 		jm.create_when(&schema, idc_carrier_root, idc_carrier, null_row, true, false);
 		jm.create_when(&schema, idc_program_template_root, idc_program_template, null_row, true, false);
@@ -302,17 +340,13 @@ field id idf_carrier, which is populated when objects of this class are construc
 		jm.create_when(&schema, idc_client_root, idc_client, null_row, true, false);
 		jm.create_when(&schema, idc_client, idc_program, null_row, true, false);
 		jm.create_when(&schema, idc_program, idc_product, null_row, true, false);
-		jm.create_when(&schema, idc_product, idc_pi_inception, null_row, true, false);
-		jm.create_when(&schema, idc_product, idc_pi_expiration, null_row, true, false);
-		jm.create_when(&schema, idc_product, idc_pi_status, null_row, true, false);
-		jm.create_when(&schema, idc_product, idc_pi_attachment, null_row, true, false);
-		jm.create_when(&schema, idc_product, idc_pi_limit, null_row, true, false);
-		jm.create_when(&schema, idc_product, idc_pi_deductible, null_row, true, false);
-		jm.create_when(&schema, idc_product, idc_pi_share, null_row, true, false);
-		jm.create_when(&schema, idc_product, idc_pi_comment, null_row, true, false);
 		jm.create_when(&schema, idc_program, idc_program_chart_slide, idc_program, true, false);
-		jm.create_when(&schema, idc_program_chart_slide, idc_program_chart_slide_product, idc_program, true, false);
+		jm.create_when(&schema, idc_program_chart_slide, idc_product, idc_program_chart_slide_product, idc_product, true, false);
 		jm.create_when(&schema, idc_program, idc_program_generic_slide, idc_program, true, false);
+		jm.create_when(&schema, idc_program, idc_program_feature1, null_row, true, false);
+		jm.create_when(&schema, idc_program, idc_program_feature2, null_row, true, false);
+		jm.create_when(&schema, idc_product, idc_product_feature1, null_row, true, false);
+		jm.create_when(&schema, idc_product, idc_product_feature2, null_row, true, false);
 
 		jm.navigation({
 						{ idc_home, 0},
@@ -326,10 +360,12 @@ field id idf_carrier, which is populated when objects of this class are construc
 						{ idc_coverage, 2 },
 						{ idc_program, 3 },
 						{ idc_product, 4 },
+						{ idc_program_item_base, 4 },
 						{ idc_program_chart_slide, 4 },
-						{ idc_program_generic_slide, 4 } }
+						{ idc_program_generic_slide, 4 },
+						{ idc_product_item_base, 5 }
+					}
 			);
-
 
 		schema.put_model(jm);
 
@@ -386,7 +422,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 
 	void wsproposal_controller::render_header(page_item* _frame, const char* _title, const char* _subtitle, bool _left_pad)
 	{
-		auto title_block = row(_frame, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 120.0_px });
+		auto title_block = row(_frame, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 150.0_px });
 
 		page_item* header_area;
 
@@ -458,9 +494,11 @@ field id idf_carrier, which is populated when objects of this class are construc
 		clear();
 
 		auto mainr = column(nullptr, null_row, { 0.0_px,0.0_px,100.0_pct,100.0_pct });
-		auto d2dwin = canvas2d(mainr, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 80.0_pct });
-		auto control = row(mainr, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 20.0_pct });
-		auto d2darea = column(d2dwin, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
+		auto canvas_area = row(mainr, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 80.0_pct });
+		auto control = row(mainr, schema.idf_view_background_style, { 20.0_px, 0.0_px, 100.0_pct, 20.0_pct });
+		auto d2dwin = canvas2d(canvas_area, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
+		auto d2dareao = row(d2dwin, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
+		auto d2darea = column(d2dareao, schema.idf_view_background_style, { 20.0_px, 0.0_px, 100.0_pct, 100.0_pct });
 
 		const char* object_title = nullptr;
 		object_title = schema.get_class(state.actor.current_view_class_id).item().description;
@@ -488,7 +526,25 @@ field id idf_carrier, which is populated when objects of this class are construc
 
 	void wsproposal_controller::render_client()
 	{
-		render_form([this](page_item* _frame) { render_client_contents(_frame);  });
+		clear();
+
+		auto mainr = absolute(nullptr, null_row, { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
+		auto d2drow = canvas2d(mainr, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
+		auto controlrow = row(mainr, null_row, { 0.0_px,0.0_px,100.0_pct,100.0_pct });
+		auto controlcol1 = column(controlrow, null_row, { 15.0_pct,150.0_px,40.0_pct,100.0_pct });
+
+		const char* object_title = nullptr;
+		object_title = schema.get_class(state.actor.current_view_class_id).item().description;
+
+		render_header(d2drow, application_title, object_title, false);
+
+		// editable controls on the left
+		add_update_fields(controlcol1, field_layout::label_on_left, nullptr);
+		add_create_buttons(controlcol1, schema.idf_button_style);
+
+		//relative_ptr_type field_ids[1] = { idf_program_title };
+		//search_table(tablecol1, idc_program, field_ids, 1);
+
 	}
 
 	void wsproposal_controller::render_coverage_root()
@@ -533,16 +589,16 @@ field id idf_carrier, which is populated when objects of this class are construc
 
 	void wsproposal_controller::render_home_contents(page_item* _frame)
 	{
-		relative_ptr_type class_ids1[3] = { idc_client_root, idc_program_template_root, idc_carrier_root };
-		relative_ptr_type class_ids2[2] = { idc_coverage_root, idc_system_root };
+		relative_ptr_type class_ids1[2] = { idc_client_root, idc_program_template_root };
+		relative_ptr_type class_ids2[3] = { idc_carrier_root, idc_coverage_root, idc_system_root };
 
 		auto d2darea = row(_frame, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
 
 		auto column1 = column(d2darea, schema.idf_view_background_style, { 20.0_pct, 0.0_px, 30.0_pct, 100.0_pct });
-		selects(column1, schema.idf_company_neutral1_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_px }, schema.idf_name, class_ids1, 3);
+		selects(column1, schema.idf_company_neutral1_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_px }, schema.idf_name, class_ids1, 2);
 
 		auto column2 = column(d2darea, schema.idf_view_background_style, { 20.0_pct, 0.0_px, 30.0_pct, 100.0_pct });
-		selects(column2, schema.idf_company_neutral1_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_px }, schema.idf_name, class_ids2, 2);
+		selects(column2, schema.idf_company_neutral1_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_px }, schema.idf_name, class_ids2, 3);
 	}
 
 	void wsproposal_controller::render_client_root_contents(page_item* _frame)
@@ -922,7 +978,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 			{ schema.idf_label_style },
 			{
 				{ schema.idf_font_name, fontName },
-				{ schema.idf_font_size, 24.0 },
+				{ schema.idf_font_size, 14.0 },
 			}
 			);
 
@@ -931,7 +987,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 			{ schema.idf_control_style },
 			{
 				{ schema.idf_font_name, fontName },
-				{ schema.idf_font_size, 24.0 },
+				{ schema.idf_font_size, 14.0 },
 				{ schema.idf_bold, true },
 			}
 			);
@@ -941,7 +997,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 			{ schema.idf_chart_axis_style },
 			{
 				{ schema.idf_font_name, fontName },
-				{ schema.idf_font_size, 30.0 },
+				{ schema.idf_font_size, 14.0 },
 			}
 			);
 
@@ -950,7 +1006,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 			{ schema.idf_chart_legend_style },
 			{
 				{ schema.idf_font_name, fontName },
-				{ schema.idf_font_size, 30.0 },
+				{ schema.idf_font_size, 14.0 },
 			}
 			);
 
@@ -959,7 +1015,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 			{ schema.idf_chart_block_style },
 			{
 				{ schema.idf_font_name, fontName },
-				{ schema.idf_font_size, 30.0 },
+				{ schema.idf_font_size, 14.0 },
 			}
 			);
 

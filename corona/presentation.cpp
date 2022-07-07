@@ -237,6 +237,8 @@ namespace corona
 				button->id = size();
 				button->layout = layout_types::create;
 				button->box = _box;
+				button->class_id = aco.second.class_id;
+				button->field = nullptr;
 				button->create_request = _state->create_create_request(aco.second.class_id);
 				button->style_id = _style_id;
 
