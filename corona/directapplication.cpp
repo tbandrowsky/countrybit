@@ -117,8 +117,9 @@ namespace corona
 				size_dips = renderTarget->GetSize();
 				size_pixels = renderTarget->GetPixelSize();
 			}
-			else {
-				DebugBreak();
+			else 
+			{
+				throw std::invalid_argument("Looks like you blew away the hwndRenderTarget and you still haven't allowed for multiple D2D windows.");
 			}
 
 			return SUCCEEDED(hr);
