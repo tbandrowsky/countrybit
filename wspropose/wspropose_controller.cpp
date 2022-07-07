@@ -467,8 +467,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 
 		render_header(d2darea, application_title, object_title, false);
 
-		auto client_area = row(d2darea, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
-		_contents(client_area);
+		_contents(d2darea);
 
 		// editable controls on the left
 		add_update_fields(control, field_layout::label_on_top, _object_title);

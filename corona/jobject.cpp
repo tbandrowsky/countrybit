@@ -114,7 +114,7 @@ namespace corona
 #if _TRACE_RULE
 					std::cout << "  selected count of " << src.item.class_id << " " << c << std::endl;
 #endif
-					return c == 1;
+					return c > 0;
 					});
 
 #if _TRACE_RULE
@@ -896,7 +896,13 @@ namespace corona
 		relative_ptr_type jcollection::get_class_id(relative_ptr_type _object_id)
 		{
 			auto existing_object = objects.get_item(_object_id);
-			return existing_object.pitem()->class_id;
+			relative_ptr_type cls_id = existing_object.pitem()->class_id;
+
+#if _TRACE_RULE
+			//std::cout << "object " << _object_id << " class " << cls_id << " " << schema->get_class(cls_id).pitem()->name << std::endl;
+#endif
+
+			return cls_id;
 		}
 
 		relative_ptr_type jcollection::get_base_id(relative_ptr_type _object_id)

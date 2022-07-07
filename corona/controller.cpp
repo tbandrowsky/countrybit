@@ -199,7 +199,7 @@ namespace corona
 #if TRACE_CONTROLLER
 					state = this->program_chart.select_object(clicked_item.item.select_request, "selected via mouse click");
 #else
-					state = this->program_chart.select_object(select_clicked_itemitem.item.select_request);
+					state = this->program_chart.select_object(clicked_item.item.select_request);
 #endif
 				}
 				else if (clicked_item.item.is_create())
@@ -207,7 +207,7 @@ namespace corona
 #if TRACE_CONTROLLER
 					state = this->program_chart.create_object(clicked_item.item.create_request, "created via mouse click");
 #else
-					state = this->program_chart.create_object(select_clicked_itemitem.item.create_request);
+					state = this->program_chart.create_object(clicked_item.item.create_request);
 #endif
 				}
 
@@ -536,7 +536,7 @@ namespace corona
 
 		void corona_controller::search_table(page_item* _parent, relative_ptr_type _idc_class_id, relative_ptr_type* _idf_child_fields, int _num_child_fields)
 		{
-			page_item* drow = row(_parent, schema.idf_view_background_style);
+			page_item* drow = row(_parent, schema.idf_column_text_head_style);
 
 			std::vector<layout_rect> columns;
 
@@ -551,6 +551,11 @@ namespace corona
 					text(drow, schema.idf_column_number_head_style, field_spec.description, layout);
 			}
 
+			drow->box.height = columns[0].height;
+			drow->box.width = 100.0_pct;
+			drow->box.x = 0.0_px;
+			drow->box.y = 0.0_px;
+
 			auto* pout = &std::cout;
 
 			auto svo = state.view_objects.where([this, _idc_class_id](const actor_view_collection::iterator_item_type& _item) {
@@ -559,7 +564,11 @@ namespace corona
 
 			for (auto avo : svo)
 			{
-				page_item* drow = row(_parent, schema.idf_view_background_style);
+				drow = row(_parent, schema.idf_column_text_head_style);
+				drow->box.height = columns[0].height;
+				drow->box.width = 100.0_pct;
+				drow->box.x = 0.0_px;
+				drow->box.y = 0.0_px;
 
 				for (int i = 0; i < _num_child_fields; i++)
 				{

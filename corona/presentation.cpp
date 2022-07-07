@@ -186,19 +186,20 @@ namespace corona
 				{
 					page_item* container = nullptr;
 
-					switch (_field_layout)
-					{
-					case field_layout::label_on_left:
-						container = row(_parent, _parent->style_id, { 0.0_px, 0.0_px, 400.0_px, 1.0_fntgr });
-						break;
-					case field_layout::label_on_top:
-						container = column(_parent, _parent->style_id, { 0.0_px, 0.0_px, 200.0_px, 2.0_fntgr });
-						break;
-					}
-
 					jfield& fld = slice.get_field(i);
 					if (!fld.display_in_user_ui)
 						continue;
+
+					switch (_field_layout)
+					{
+					case field_layout::label_on_left:
+						container = row(_parent, _schema->idf_label_style, { 0.0_px, 0.0_px, 400.0_px, 1.1_fntgr });
+						break;
+					case field_layout::label_on_top:
+						container = column(_parent, _schema->idf_label_style, { 0.0_px, 0.0_px, 200.0_px, 2.0_fntgr });
+						break;
+					}
+
 					label = append();
 					label->id = size();
 					label->parent_id = container->id;
@@ -438,7 +439,7 @@ namespace corona
 			}
 
 #if TRACE_LAYOUT
-			std::cout << std::format("p:{},c:{},l:{} bounds {},{},{},{} canvas {}, is_draw {}", _item->parent_id, _item->id, (int)_item->layout, _item->bounds.x, _item->bounds.y, _item->bounds.w, _item->bounds.h, _item->canvas_id, _item->is_drawable()) << std::endl;
+			std::cout << std::format("p:{},c:{},l:{} bounds {},{},{},{} canvas {}, is_draw {} {}", _item->parent_id, _item->id, (int)_item->layout, _item->bounds.x, _item->bounds.y, _item->bounds.w, _item->bounds.h, _item->canvas_id, _item->is_drawable(), _item->caption ? _item->caption : "") << std::endl;
 #endif
 
 		}

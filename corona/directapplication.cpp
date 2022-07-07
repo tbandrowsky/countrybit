@@ -6,7 +6,7 @@
 #ifdef WINDESKTOP_GUI
 
 //#define TRACE_GUI 1
-//#define OUTLINE_GUI 1
+#define OUTLINE_GUI 0
 
 #if TRACE_GUI
 #define OUTLINE_GUI 1
