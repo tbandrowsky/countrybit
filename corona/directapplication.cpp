@@ -2070,6 +2070,13 @@ namespace corona
 			if (oldWindowControlMap.contains(pid))
 			{
 				auto wi = oldWindowControlMap[pid];
+				int old_id = GetDlgCtrlID(wi.window);
+				if (context_map.contains(old_id))
+				{
+					auto oldContext = context_map[old_id];
+					context_map.erase(old_id);
+					context_map.insert_or_assign(item.id, oldContext);
+				}
 				SetWindowLongPtr(wi.window, GWL_ID, item.id);
 				MoveWindow(wi.window, x, y, nWidth, nHeight, true);
 				hwnd = wi.window;
@@ -2752,8 +2759,7 @@ namespace corona
 		}
 
 		drawableHost* directApplication::getDrawable(int i)
-		{
-			
+		{			
 			auto mmi = context_map[i];
 			return mmi;
 		}
