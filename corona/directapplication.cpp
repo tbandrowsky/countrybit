@@ -134,7 +134,7 @@ namespace corona
 			D2D1_RENDER_TARGET_PROPERTIES rtps = D2D1::RenderTargetProperties(D2D1_RENDER_TARGET_TYPE_HARDWARE);
 			D2D1_HWND_RENDER_TARGET_PROPERTIES hrtps = D2D1::HwndRenderTargetProperties(hwnd, size);
 
-			HRESULT hr = factory->getD2DFactory()->CreateHwndRenderTarget(rtps, hrtps, &hwndRenderTarget);
+			hr = factory->getD2DFactory()->CreateHwndRenderTarget(rtps, hrtps, &hwndRenderTarget);
 
 			if (hwndRenderTarget) {
 				size_dips = hwndRenderTarget->GetSize();
@@ -1785,7 +1785,7 @@ namespace corona
 			int l = (_textInstanceDto->text.length() + 1) * 2;
 			wchar_t* buff = new wchar_t[l];
 			int ret = ::MultiByteToWideChar(CP_ACP, NULL, _textInstanceDto->text.c_str(), -1, buff, l - 1);
-			renderTarget->DrawText(buff, ret, style->getFormat(), &rect, brush);
+			getRenderTarget()->DrawText(buff, ret, style->getFormat(), &rect, brush);
 			delete[] buff;
 		}
 
