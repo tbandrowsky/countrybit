@@ -107,13 +107,15 @@ namespace corona
 			virtual database::rectangle getCanvasSize();
 
 			virtual bool createRenderTarget() = 0;
-			virtual void destroyRenderTarget();
+			virtual void destroyRenderTarget() = 0;
 
 			virtual drawableHost* createBitmap(point& _size);
 			virtual void drawBitmap(drawableHost* _directBitmap, point& _dest, point& _size);
 			virtual void save(const char* _filename);
 
 			virtual void drawView(const char* _style, const char *_text, rectangle& _rect, const char *_debug_comment);
+
+			virtual void loadStyleSheet(jobject& style_sheet);
 
 		protected:
 

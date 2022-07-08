@@ -1937,6 +1937,82 @@ namespace corona
 #endif
 		}
 
+		void direct2dContext::loadStyleSheet(jobject& style_sheet)
+		{
+			solidBrushRequest dsrb;
+			dsrb.name = "debug-border";
+			dsrb.brushColor.red = 0;
+			dsrb.brushColor.green = 0;
+			dsrb.brushColor.blue = 250;
+			dsrb.brushColor.alpha = 250;
+			addSolidColorBrush(&dsrb);
+
+			textStyleRequest dtsr;
+			dtsr.name = "debug-text";
+			dtsr.fontName = "Arial";
+			dtsr.fontSize = 8.0;
+			dtsr.horizontal_align = visual_alignment::align_center;
+			dtsr.vertical_align = visual_alignment::align_center;
+			dtsr.bold = false;
+			dtsr.underline = false;
+			dtsr.italics = false;
+			dtsr.strike_through = false;
+			dtsr.line_spacing = 0.0;
+			dtsr.wrap_text = true;
+			addTextStyle(&dtsr);
+
+			auto schema = style_sheet.get_schema();
+
+			for (int idx = 0; idx < style_sheet.size(); idx++)
+			{
+				auto field = style_sheet.get_field(idx);
+				if (field.is_class(schema->idc_text_style))
+				{
+					auto style = style_sheet.get_slice(idx, { 0,0,0 }, false);
+					viewStyleRequest request;
+					request.name = field.name;
+
+					text_style_name(request.name, request.text_style.name);
+					request.text_style.fontName = (const char*)style.get(schema->idf_font_name);
+					request.text_style.fontSize = style.get(schema->idf_font_size);
+					request.text_style.bold = style.get(schema->idf_bold);
+					request.text_style.italics = style.get(schema->idf_italic);
+					request.text_style.underline = style.get(schema->idf_underline);
+					request.text_style.strike_through = style.get(schema->idf_strike_through);
+					request.text_style.line_spacing = style.get(schema->idf_line_spacing);
+					request.text_style.horizontal_align = (visual_alignment)(int)style.get(schema->idf_horizontal_alignment);
+					request.text_style.vertical_align = (visual_alignment)(int)style.get(schema->idf_vertical_alignment);
+
+					shape_border_brush_name(request.name, request.shape_border_color.name);
+					request.shape_border_color.brushColor = style.get(schema->idf_box_border_color);
+					request.shape_border_thickness = style.get(schema->idf_box_border_thickness);
+
+					shape_fill_brush_name(request.name, request.shape_fill_color.name);
+					request.shape_fill_color.brushColor = style.get(schema->idf_shape_fill_color);
+					request.shape_border_color.brushColor = style.get(schema->idf_box_border_color);
+					request.shape_border_thickness = style.get(schema->idf_box_border_thickness);
+
+					box_border_brush_name(request.name, request.box_border_color.name);
+					request.box_border_color.brushColor = style.get(schema->idf_box_border_color);
+					request.box_border_thickness = style.get(schema->idf_box_border_thickness);
+
+					box_fill_brush_name(request.name, request.box_fill_color.name);
+					request.box_fill_color.brushColor = style.get(schema->idf_box_fill_color);
+
+					addViewStyle(request);
+				}
+			}
+
+
+#ifdef TRACE_GUI
+			std::cout << "styles loaded" << std::endl;
+			for (auto vs : viewStyles) {
+				std::cout << vs.first << std::endl;
+			}
+#endif
+		}
+
+
 		void direct2dContext::save(const char* _filename)
 		{
 			;
@@ -2039,75 +2115,19 @@ namespace corona
 
 		void directApplication::loadStyleSheet()
 		{
-			solidBrushRequest dsrb;
-			dsrb.name = "debug-border";
-			dsrb.brushColor.red = 0;
-			dsrb.brushColor.green = 0;
-			dsrb.brushColor.blue = 250;
-			dsrb.brushColor.alpha = 250;
-			addSolidColorBrush(&dsrb);
-
-			textStyleRequest dtsr;
-			dtsr.name = "debug-text";
-			dtsr.fontName = "Arial";
-			dtsr.fontSize = 8.0;
-			dtsr.horizontal_align = visual_alignment::align_center;
-			dtsr.vertical_align = visual_alignment::align_center;
-			dtsr.bold = false;
-			dtsr.underline = false;
-			dtsr.italics = false;
-			dtsr.strike_through = false;
-			dtsr.line_spacing = 0.0;
-			dtsr.wrap_text = true;
-			addTextStyle(&dtsr);
 
 			if (currentController) {
 				auto styles = currentController->getStyleSheet();
 				auto schema = styles.get_schema();
 
-				for (int idx = 0; idx < styles.size(); idx++)
-				{
-					auto field = styles.get_field(idx);
-					if (field.is_class(schema->idc_text_style)) 
-					{
-						auto style = styles.get_slice(idx, { 0,0,0 }, false);
-						viewStyleRequest request;
-						request.name = field.name;
-
-						text_style_name( request.name, request.text_style.name );
-						request.text_style.fontName = (const char *)style.get(schema->idf_font_name);
-						request.text_style.fontSize = style.get(schema->idf_font_size);
-						request.text_style.bold = style.get(schema->idf_bold);
-						request.text_style.italics = style.get(schema->idf_italic);
-						request.text_style.underline = style.get(schema->idf_underline);
-						request.text_style.strike_through = style.get(schema->idf_strike_through);
-						request.text_style.line_spacing = style.get(schema->idf_line_spacing);
-						request.text_style.horizontal_align = (visual_alignment)(int)style.get(schema->idf_horizontal_alignment);
-						request.text_style.vertical_align = (visual_alignment)(int)style.get(schema->idf_vertical_alignment);
-
-						shape_border_brush_name(request.name, request.shape_border_color.name);
-						request.shape_border_color.brushColor = style.get(schema->idf_box_border_color);
-						request.shape_border_thickness = style.get(schema->idf_box_border_thickness);
-
-						shape_fill_brush_name(request.name, request.shape_fill_color.name);
-						request.shape_fill_color.brushColor = style.get(schema->idf_shape_fill_color);
-						request.shape_border_color.brushColor = style.get(schema->idf_box_border_color);
-						request.shape_border_thickness = style.get(schema->idf_box_border_thickness);
-
-						box_border_brush_name(request.name, request.box_border_color.name);
-						request.box_border_color.brushColor = style.get(schema->idf_box_border_color);
-						request.box_border_thickness = style.get(schema->idf_box_border_thickness);
-
-						box_fill_brush_name(request.name, request.box_fill_color.name);
-						request.box_fill_color.brushColor = style.get(schema->idf_box_fill_color);
-
-						addViewStyle(request);
-					}
-				}
-
 				HFONT oldControlFont = controlFont;
 				HFONT oldLabelFont = labelFont;
 				HFONT oldTitleFont = titleFont;
+
+				for (auto wmi : context_map)
+				{
+					wmi.second->loadStyleSheet(styles);
+				}
 
 				controlFont = createFontFromStyleSheet(schema->idf_control_style);
 				labelFont = createFontFromStyleSheet(schema->idf_label_style);
@@ -2332,6 +2352,7 @@ namespace corona
 						throw std::logic_error("id already exists in map");
 					}
 					directWindow* context = new directWindow(hwnd, factory);
+					context->createRenderTarget();
 					context_map.insert_or_assign(id, context);
 				}
 				break;
@@ -2363,7 +2384,6 @@ namespace corona
 					{
 						auto context = context_map[id];
 						context->setSize(D2D1::SizeU(size.cx, size.cy));
-						context_map.erase(id);
 					}
 				}
 				return 0;
@@ -2733,8 +2753,9 @@ namespace corona
 
 		drawableHost* directApplication::getDrawable(int i)
 		{
-			auto mmi = message_map[i];
-			return mmi.context;
+			
+			auto mmi = context_map[i];
+			return mmi;
 		}
 
 		void directApplication::setController(controller* _newCurrentController)
@@ -2848,8 +2869,7 @@ namespace corona
 					double totalSeconds = (double)(counter - startCounter) / (double)performanceFrequency;
 					lastCounter = counter;
 					if (currentController->update(elapsedSeconds, totalSeconds)) {
-						::InvalidateRect(hwndDirect2d, NULL, TRUE);
-						::UpdateWindow(hwndDirect2d);
+						redraw();
 					}
 				}
 			}
@@ -2950,7 +2970,9 @@ namespace corona
 					double elapsedSeconds = (double)(counter - lastCounter) / (double)performanceFrequency;
 					double totalSeconds = (double)(counter - startCounter) / (double)performanceFrequency;
 					lastCounter = counter;
-					currentController->update(elapsedSeconds, totalSeconds);
+					if (currentController->update(elapsedSeconds, totalSeconds)) {
+						redraw();
+					}
 				}
 			}
 
