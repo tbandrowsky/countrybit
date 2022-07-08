@@ -67,17 +67,17 @@ namespace corona
 		{
 		}
 
-		void corona_controller::keyDown(short _key)
+		void corona_controller::keyDown(int _id, short _key, page_item& pi)
 		{
 			;
 		}
 
-		void corona_controller::keyUp(short _key)
+		void corona_controller::keyUp(int _id, short _key, page_item& pi)
 		{
 			;
 		}
 
-		void corona_controller::mouseMove(point* _point)
+		void corona_controller::mouseMove(int _id, point* _point, page_item& pi)
 		{
 			;
 		}
@@ -176,7 +176,7 @@ namespace corona
 		{
 		}
 
-		void corona_controller::mouseClick(point* _point)
+		void corona_controller::mouseClick(int _id, point* _point, page_item& pi)
 		{
 			auto clicked_items = pg.where([this, _point](const auto& pi) { return pi.item.is_command() && rectangle_math::contains(pi.item.bounds, _point->x, _point->y); });
 			auto size = host->getWindowClientPos();
@@ -593,14 +593,31 @@ namespace corona
 
 		void corona_controller::drawFrame()
 		{
-			auto drawable = host->getDrawable(0);
 
-			auto drawables = pg.where([](const auto& pgi) { return pgi.item.is_drawable(); });
-
-			for (auto pgi : drawables)
-			{
-				render_item(drawable, pgi.item);
-			}
+			pg.visit([this](page_item* _in_page)
+				{
+					if (_in_page->layout == layout_types::canvas2d)
+					{
+						auto dr = this->getDrawable(_in_page->id);
+						dr->beginDraw();
+					}
+					else if (_in_page->is_drawable())
+					{
+						auto dr = this->getDrawable(_in_page->canvas_id);
+						render_item(dr, *_in_page);
+					}
+					return true;
+				},
+				[this](page_item* _out_page)
+				{
+					if (_out_page->layout == layout_types::canvas2d)
+					{
+						auto dr = this->getDrawable(_out_page->id);
+						dr->endDraw();
+					}
+					return true;
+				}
+				);
 		}
 
 		void corona_controller::render_item(drawableHost* _host, page_item& _item)

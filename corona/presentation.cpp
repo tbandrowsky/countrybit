@@ -269,7 +269,7 @@ namespace corona
 			return _parent;
 		}
 
-		void page::visit_impl(page_item *r, std::function<bool(page_item* _item)> fn)
+		void page::visit_impl(page_item *r, std::function<bool(page_item* _item)> fn, std::function<bool(page_item* _parent)> fout)
 		{
 			fn(r);
 			auto children = where([r](const auto& it) {
@@ -277,8 +277,9 @@ namespace corona
 				});
 			for (auto child : children)
 			{
-				visit_impl(&child.item, fn);
+				visit_impl(&child.item, fn, fout);
 			}
+			fout(r);
 		}
 
 		void page::calculate_sizes(jobject& _style_sheet, page::iterator_type children, double offx, double offy, double x, double y, double width, double height, double& remaining_width, double& remaining_height)
@@ -577,15 +578,16 @@ namespace corona
 			}
 		}
 
-		void page::visit(std::function<bool(page_item* _item)> fn)
+		void page::visit(std::function<bool(page_item* _parent)> fnin, std::function<bool(page_item* _parent)> fout)
 		{
 			sort([](auto& a, auto& b) {
 				return (a.parent_id < b.parent_id);
 				});
 			for (auto pi : *this)
 			{
-				if (pi.item.parent_id < 0) {
-					visit_impl(&pi.item, fn);
+				if (pi.item.parent_id < 0) 
+				{
+					visit_impl(&pi.item, fnin, fout);
 				}
 				else
 				{
@@ -593,6 +595,5 @@ namespace corona
 				}
 			}
 		}
-
 	}
 }

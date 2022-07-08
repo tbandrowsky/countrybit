@@ -32,16 +32,16 @@ namespace corona
 			virtual ~controller();
 
 			inline controllerHost* getHost() { return host; }
-			inline drawableHost* getDrawable() { return host->getDrawable(0); }
+			inline drawableHost* getDrawable(int _id) { return host->getDrawable(_id); }
 			virtual void attach(controllerHost* _host);
 
 			// these are for 
 
 			virtual jobject getStyleSheet() = 0;
-			virtual void keyDown(short _key) = 0;
-			virtual void keyUp(short _key) = 0;
-			virtual void mouseMove(point* _point) = 0;
-			virtual void mouseClick(point* _point) = 0;
+			virtual void keyDown(int _id, short _key, page_item& _pi) = 0;
+			virtual void keyUp(int _id, short _key, page_item& _pi) = 0;
+			virtual void mouseMove(int _id, point* _point, page_item& _pi) = 0;
+			virtual void mouseClick(int _id, point* _point, page_item& _pi) = 0;
 			virtual void pointSelected(point* _point, color* _color) = 0;
 			virtual void drawFrame() = 0;
 			virtual bool update(double _elapsedSeconds, double _totalSeconds) = 0;
@@ -163,10 +163,10 @@ namespace corona
 			virtual void render_item(drawableHost *_host, page_item& _item);
 			virtual void drawFrame();
 
-			virtual void keyDown(short _key);
-			virtual void keyUp(short _key);
-			virtual void mouseMove(point* _point);
-			virtual void mouseClick(point* _point);
+			virtual void keyDown(int _id, short _key, page_item& _pi);
+			virtual void keyUp(int _id, short _key, page_item& _pi);
+			virtual void mouseMove(int _id, point* _point, page_item& _pi);
+			virtual void mouseClick(int _id, point* _point, page_item& _pi);
 			virtual void pointSelected(point* _point, color* _color);
 			virtual bool update(double _elapsedSeconds, double _totalSeconds);
 

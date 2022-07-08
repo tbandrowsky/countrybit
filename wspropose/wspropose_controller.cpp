@@ -24,13 +24,13 @@ namespace proposal
 		* for demo purposes.
 		*/
 
-		box.init(1 << 22);
+		box.init(1 << 23);
 
 		/* with our box, we can then create a schema.  We'll reserve space to create roughly 75 classes,
 		* and also include standard fields and classes.
 		*/
 
-		schema = jschema::create_schema(&box, 75, true, schema_id);
+		schema = jschema::create_schema(&box, 250, true, schema_id);
 
 		/*
 		Now, we can begin to flesh out schema for this application.  In Corona, a schema is a collection of fields,

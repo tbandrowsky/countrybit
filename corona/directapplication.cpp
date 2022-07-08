@@ -63,10 +63,7 @@ namespace corona
 		}
 
 		direct2dContext::direct2dContext(direct2dFactory* _factory) :
-			factory(_factory),
-			renderTarget(NULL),
-			bitmapRenderTarget(NULL),
-			hwndRenderTarget(NULL)
+			factory(_factory)
 		{
 		}
 
@@ -75,69 +72,6 @@ namespace corona
 			clearPaths();
 			clearViewStyles();
 			clearBitmapsAndBrushes(true);
-
-			if (renderTarget) {
-				renderTarget->Release();
-				renderTarget = NULL;
-			}
-		}
-
-		bool direct2dContext::createRenderTarget(ID2D1RenderTarget* _renderTarget, D2D1_SIZE_F _size)
-		{
-			HRESULT hr = _renderTarget->CreateCompatibleRenderTarget(_size, &bitmapRenderTarget);
-			throwOnFail(hr, "Could not create render target");
-
-			renderTarget = bitmapRenderTarget;
-			return SUCCEEDED(hr);
-		}
-
-		bool direct2dContext::createRenderTarget(HWND hwnd)
-		{
-			if (hwnd == nullptr) 
-			{
-				renderTarget = hwndRenderTarget = nullptr;
-				return false;
-			}
-
-			RECT rc;
-			GetClientRect(hwnd, &rc);
-
-			D2D1_SIZE_U size = D2D1::SizeU(rc.right - rc.left, rc.bottom - rc.top);
-#if TRACE_GUI
-			std::cout << "createRenderTarget: " << size.width << ", " << size.height << std::endl;
-#endif
-
-			D2D1_RENDER_TARGET_PROPERTIES rtps = D2D1::RenderTargetProperties(D2D1_RENDER_TARGET_TYPE_HARDWARE);
-			D2D1_HWND_RENDER_TARGET_PROPERTIES hrtps = D2D1::HwndRenderTargetProperties(hwnd, size);
-
-			HRESULT hr = factory->getD2DFactory()->CreateHwndRenderTarget(rtps, hrtps, &hwndRenderTarget);
-			renderTarget = hwndRenderTarget;
-
-			if (renderTarget) {
-				size_dips = renderTarget->GetSize();
-				size_pixels = renderTarget->GetPixelSize();
-			}
-			else 
-			{
-				throw std::invalid_argument("Looks like you blew away the hwndRenderTarget and you still haven't allowed for multiple D2D windows.");
-			}
-
-			return SUCCEEDED(hr);
-		}
-
-		void direct2dContext::destroyRenderTarget()
-		{
-			if (hwndRenderTarget) {
-				hwndRenderTarget->Release();
-				hwndRenderTarget = NULL;
-			}
-
-			if (bitmapRenderTarget) {
-				bitmapRenderTarget->Release();
-				bitmapRenderTarget = NULL;
-			}
-
-			renderTarget = NULL;
 		}
 
 		directBitmap::directBitmap(direct2dFactory* _factory, D2D1_SIZE_F _size)
@@ -164,8 +98,6 @@ namespace corona
 			hr = getFactory()->getD2DFactory()->CreateWicBitmapRenderTarget(wicBitmap, props, &wicTarget);
 			throwOnFail(hr, "Could not create WIC render target");
 
-			renderTarget = wicTarget;
-
 			return true;
 		}
 
@@ -173,7 +105,53 @@ namespace corona
 		{
 			if (wicTarget) wicTarget->Release();
 			wicTarget = NULL;
-			renderTarget = NULL;
+		}
+
+		directWindow::directWindow(HWND _hwnd, direct2dFactory* _factory)
+			: hwnd(_hwnd ),
+			direct2dContext(_factory)
+		{
+
+		}
+
+		directWindow::~directWindow()
+		{
+			destroyRenderTarget();
+		}
+
+		bool directWindow::createRenderTarget()
+		{
+			HRESULT hr;
+			RECT rc;
+
+			GetClientRect(hwnd, &rc);
+
+			D2D1_SIZE_U size = D2D1::SizeU(rc.right - rc.left, rc.bottom - rc.top);
+#if TRACE_GUI
+			std::cout << "createRenderTarget: " << size.width << ", " << size.height << std::endl;
+#endif
+
+			D2D1_RENDER_TARGET_PROPERTIES rtps = D2D1::RenderTargetProperties(D2D1_RENDER_TARGET_TYPE_HARDWARE);
+			D2D1_HWND_RENDER_TARGET_PROPERTIES hrtps = D2D1::HwndRenderTargetProperties(hwnd, size);
+
+			HRESULT hr = factory->getD2DFactory()->CreateHwndRenderTarget(rtps, hrtps, &hwndRenderTarget);
+
+			if (hwndRenderTarget) {
+				size_dips = hwndRenderTarget->GetSize();
+				size_pixels = hwndRenderTarget->GetPixelSize();
+			}
+			else
+			{
+				throw std::invalid_argument("Looks like you blew away the hwndRenderTarget and you still haven't allowed for multiple D2D windows.");
+			}
+
+			return true;
+		}
+
+		void directWindow::destroyRenderTarget()
+		{
+			if (hwndRenderTarget) hwndRenderTarget->Release();
+			hwndRenderTarget = NULL;
 		}
 
 		class directBitmapSaveImpl {
@@ -345,7 +323,7 @@ namespace corona
 			{
 				HRESULT hr = -1;
 
-				if (!target || !target->renderTarget)
+				if (!target || !target->getRenderTarget())
 					return false;
 
 				istring<2048> fontList = fontName;
@@ -367,7 +345,7 @@ namespace corona
 					}
 
 					FLOAT dpiX = 96.0, dpiY = 96.0;
-					target->renderTarget->GetDpi(&dpiX, &dpiY);
+					target->getRenderTarget()->GetDpi(&dpiX, &dpiY);
 
 					HRESULT hr = target->factory->getDWriteFactory()->CreateTextFormat(wideName.c_str(),
 						NULL,
@@ -1031,10 +1009,10 @@ namespace corona
 
 			virtual bool create(direct2dContext* target)
 			{
-				if (!target || !target->renderTarget)
+				if (!target || !target->getRenderTarget())
 					return false;
 
-				HRESULT hr = target->renderTarget->CreateBitmapBrush(bm->getFirst(), &asset);
+				HRESULT hr = target->getRenderTarget()->CreateBitmapBrush(bm->getFirst(), &asset);
 
 				return SUCCEEDED(hr);
 			}
@@ -1064,10 +1042,10 @@ namespace corona
 			{
 				HRESULT hr = -1;
 
-				if (!target || !target->renderTarget)
+				if (!target || !target->getRenderTarget())
 					return false;
 
-				hr = target->renderTarget->CreateSolidColorBrush(color, &asset);
+				hr = target->getRenderTarget()->CreateSolidColorBrush(color, &asset);
 
 				return SUCCEEDED(hr);
 			}
@@ -1089,14 +1067,14 @@ namespace corona
 			{
 				ID2D1GradientStopCollection* pGradientStops = NULL;
 
-				if (!target || !target->renderTarget)
+				if (!target || !target->getRenderTarget())
 					return false;
 
-				HRESULT hr = target->renderTarget->CreateGradientStopCollection(&stops[0], stops.size(), &pGradientStops);
+				HRESULT hr = target->getRenderTarget()->CreateGradientStopCollection(&stops[0], stops.size(), &pGradientStops);
 
 				if (SUCCEEDED(hr))
 				{
-					hr = target->renderTarget->CreateLinearGradientBrush(
+					hr = target->getRenderTarget()->CreateLinearGradientBrush(
 						D2D1::LinearGradientBrushProperties(start, stop),
 						D2D1::BrushProperties(),
 						pGradientStops,
@@ -1123,14 +1101,14 @@ namespace corona
 			{
 				ID2D1GradientStopCollection* pGradientStops = NULL;
 
-				if (!target || !target->renderTarget)
+				if (!target || !target->getRenderTarget())
 					return false;
 
-				HRESULT hr = target->renderTarget->CreateGradientStopCollection(&stops[0], stops.size(), &pGradientStops);
+				HRESULT hr = target->getRenderTarget()->CreateGradientStopCollection(&stops[0], stops.size(), &pGradientStops);
 
 				if (SUCCEEDED(hr))
 				{
-					hr = target->renderTarget->CreateRadialGradientBrush(
+					hr = target->getRenderTarget()->CreateRadialGradientBrush(
 						radialProperties,
 						D2D1::BrushProperties(),
 						pGradientStops,
@@ -1242,7 +1220,7 @@ namespace corona
 
 		directApplication* directApplication::current;
 
-		directApplication::directApplication(direct2dFactory* _factory) : direct2dContext(_factory), colorCapture(false)
+		directApplication::directApplication(direct2dFactory* _factory) : factory(_factory), colorCapture(false)
 		{
 			current = this;
 			previousController = NULL;
@@ -1253,8 +1231,6 @@ namespace corona
 			dpiScale = 1.0;
 			disableChangeProcessing = false;
 			region = nullptr;
-
-			ZeroMemory(&ofn, sizeof(ofn));
 		}
 
 		directApplication::~directApplication()
@@ -1287,7 +1263,7 @@ namespace corona
 			color.g = _color->green;
 			color.r = _color->red;
 
-			this->renderTarget->Clear(color);
+			this->getRenderTarget()->Clear(color);
 		}
 
 		void direct2dContext::addBitmap(bitmapRequest* _bitmap)
@@ -1613,13 +1589,13 @@ namespace corona
 				return;
 
 			D2D1::Matrix3x2F product = currentTransform * D2D1::Matrix3x2F::Rotation(_pathInstanceDto->rotation) * D2D1::Matrix3x2F::Translation(_pathInstanceDto->position.x, _pathInstanceDto->position.y);
-			renderTarget->SetTransform(product);
+			getRenderTarget()->SetTransform(product);
 
 			if (fill) {
-				renderTarget->FillGeometry(p->geometry, fill->getBrush());
+				getRenderTarget()->FillGeometry(p->geometry, fill->getBrush());
 			}
 			if (border && _pathInstanceDto->strokeWidth > 0.0) {
-				renderTarget->DrawGeometry(p->geometry, border->getBrush(), _pathInstanceDto->strokeWidth);
+				getRenderTarget()->DrawGeometry(p->geometry, border->getBrush(), _pathInstanceDto->strokeWidth);
 			}
 		}
 
@@ -1647,13 +1623,13 @@ namespace corona
 				return;
 
 			D2D1::Matrix3x2F product = currentTransform * D2D1::Matrix3x2F::Rotation(_pathImmediateDto->rotation) * D2D1::Matrix3x2F::Translation(_pathImmediateDto->position.x, _pathImmediateDto->position.y);
-			renderTarget->SetTransform(product);
+			getRenderTarget()->SetTransform(product);
 
 			if (fill) {
-				renderTarget->FillGeometry(p->geometry, fill->getBrush());
+				getRenderTarget()->FillGeometry(p->geometry, fill->getBrush());
 			}
 			if (border && _pathImmediateDto->strokeWidth > 0.0) {
-				renderTarget->DrawGeometry(p->geometry, border->getBrush(), _pathImmediateDto->strokeWidth);
+				getRenderTarget()->DrawGeometry(p->geometry, border->getBrush(), _pathImmediateDto->strokeWidth);
 			}
 
 			delete p;
@@ -1671,7 +1647,7 @@ namespace corona
 			dstop.y = stop->y;
 
 			if (fill) {
-				renderTarget->DrawLine(dstart, dstop, fill->getBrush(), thickness, nullptr );
+				getRenderTarget()->DrawLine(dstart, dstop, fill->getBrush(), thickness, nullptr );
 			}
 		}
 
@@ -1692,7 +1668,7 @@ namespace corona
 #endif
 				}
 				else 
-					renderTarget->FillRectangle(r, fill->getBrush());
+					getRenderTarget()->FillRectangle(r, fill->getBrush());
 			}
 
 			if (_borderBrush)
@@ -1704,7 +1680,7 @@ namespace corona
 #endif
 				}
 				else
-					renderTarget->DrawRectangle(&r, border->getBrush(), _borderWidth);
+					getRenderTarget()->DrawRectangle(&r, border->getBrush(), _borderWidth);
 			}
 		}
 
@@ -1754,7 +1730,7 @@ namespace corona
 			int len = (strlen(_text) + 1) * 2;
 			wchar_t* buff = new wchar_t[len];
 			int ret = ::MultiByteToWideChar(CP_ACP, NULL, _text, -1, buff, len - 1);
-			renderTarget->DrawText(buff, ret, format, &r, brush);
+			getRenderTarget()->DrawText(buff, ret, format, &r, brush);
 			delete[] buff;
 		}
 
@@ -1763,9 +1739,9 @@ namespace corona
 
 			D2D1_SIZE_F size;
 
-			if (renderTarget) 
+			if (getRenderTarget())
 			{
-				size = renderTarget->GetSize();
+				size = getRenderTarget()->GetSize();
 			}
 			else 
 			{
@@ -1796,7 +1772,7 @@ namespace corona
 			}
 
 			D2D1::Matrix3x2F product = currentTransform * D2D1::Matrix3x2F::Rotation(_textInstanceDto->rotation) * D2D1::Matrix3x2F::Translation(_textInstanceDto->position.x, _textInstanceDto->position.y);
-			renderTarget->SetTransform(product);
+			getRenderTarget()->SetTransform(product);
 
 			D2D1_RECT_F rect;
 
@@ -1824,7 +1800,7 @@ namespace corona
 			rect.top = _bitmapInstanceDto->y;
 			rect.right = rect.left + _bitmapInstanceDto->width;
 			rect.bottom = rect.top + _bitmapInstanceDto->height;
-			renderTarget->DrawBitmap(ibm, rect);
+			getRenderTarget()->DrawBitmap(ibm, rect);
 		}
 
 		void direct2dContext::popCamera()
@@ -1843,14 +1819,14 @@ namespace corona
 			currentTransform = currentTransform * D2D1::Matrix3x2F::Rotation(_rotation)
 				* D2D1::Matrix3x2F::Translation(_position->x, _position->y)
 				* D2D1::Matrix3x2F::Scale(_scale, _scale);
-			renderTarget->SetTransform(currentTransform);
+			getRenderTarget()->SetTransform(currentTransform);
 		}
 
 		void direct2dContext::beginDraw()
 		{
 			currentTransform = D2D1::Matrix3x2F::Identity();
 
-			if (!renderTarget && createRenderTarget()) {
+			if (!getRenderTarget() && createRenderTarget()) {
 				std::for_each(bitmaps.begin(), bitmaps.end(), [this](std::pair<std::string, deviceDependentAssetBase*> ib) {
 					if (ib.second)
 						ib.second->create(this);
@@ -1864,15 +1840,15 @@ namespace corona
 						ib.second->create(this);
 					});
 			}
-			if (renderTarget) {
-				renderTarget->BeginDraw();
+			if (getRenderTarget()) {
+				getRenderTarget()->BeginDraw();
 			}
 		}
 
 		void direct2dContext::endDraw() {
 
-			if (renderTarget) {
-				HRESULT hr = renderTarget->EndDraw();
+			if (getRenderTarget()) {
+				HRESULT hr = getRenderTarget()->EndDraw();
 				if (hr == D2DERR_RECREATE_TARGET) {
 					std::for_each(brushes.begin(), brushes.end(), [this](std::pair<std::string, deviceDependentAssetBase*> ib) {
 						if (ib.second)
@@ -1922,14 +1898,14 @@ namespace corona
 				directBitmap* bp = (directBitmap*)_drawableHost;
 				auto wicbitmap = bp->getBitmap();
 				ID2D1Bitmap* bitmap = NULL;
-				HRESULT hr = this->hwndRenderTarget->CreateBitmapFromWicBitmap(wicbitmap, &bitmap);
+				HRESULT hr = this->getRenderTarget()->CreateBitmapFromWicBitmap(wicbitmap, &bitmap);
 				throwOnFail(hr, "Could not create bitmap from wic bitmap");
 				D2D1_RECT_F rect;
 				rect.left = _dest.x;
 				rect.top = _dest.y;
 				rect.right = rect.left += _size.x > 0 ? _size.x : bp->size.width;
 				rect.bottom = rect.top += _size.y > 0 ? _size.y : bp->size.height;
-				hwndRenderTarget->DrawBitmap(bitmap, &rect);
+				getRenderTarget()->DrawBitmap(bitmap, &rect);
 				bitmap->Release();
 				bitmap = NULL;
 			}
@@ -1968,12 +1944,9 @@ namespace corona
 
 		void directApplication::redraw()
 		{
-			if (currentController) {
-				beginDraw();
-				if (renderTarget != nullptr) {
-					currentController->drawFrame();
-				}
-				endDraw();
+			if (currentController) 
+			{	
+				currentController->drawFrame();
 			}
 		}
 
@@ -2018,19 +1991,7 @@ namespace corona
 
 			dwStyle |= WS_CLIPSIBLINGS;
 
-			if (_stricmp("CoronaDirect2d", lpClassName) == 0) 
-			{
-				if (hwndDirect2d != nullptr) {
-					SetWindowLongPtr(hwndDirect2d, GWL_ID, item.id);
-					MoveWindow(hwndDirect2d, x, y, nWidth, nHeight, true);
-					hwnd = hwndDirect2d;
-				}
-				else 
-				{
-					hwnd = CreateWindow(lpClassName, lpWindowName, dwStyle, x, y, nWidth, nHeight, directApplication::hwndRoot, (HMENU)windowId, hinstance, lpParam);
-				}
-			}
-			else if (oldWindowControlMap.contains(pid))
+			if (oldWindowControlMap.contains(pid))
 			{
 				auto wi = oldWindowControlMap[pid];
 				SetWindowLongPtr(wi.window, GWL_ID, item.id);
@@ -2355,11 +2316,24 @@ namespace corona
 			bool found = false;
 			point point;
 
+			int id = ::GetDlgCtrlID(hwnd);		
+
+			database::page_item pi;
+			if (message_map.contains(id))
+				pi = message_map[id];
+
 			switch (message)
 			{
 			case WM_CREATE:
-				this->hwndDirect2d = hwnd;
-				dpiScale = 96.0 / GetDpiForWindow(hwnd); 
+				{
+					dpiScale = 96.0 / GetDpiForWindow(hwnd);
+					if (context_map.contains(id))
+					{
+						throw std::logic_error("id already exists in map");
+					}
+					directWindow* context = new directWindow(hwnd, factory);
+					context_map.insert_or_assign(id, context);
+				}
 				break;
 			case WM_SWITCH_CONTROLLER:
 				setController((controller*)lParam);
@@ -2371,25 +2345,37 @@ namespace corona
 				popController();
 				return 0;
 			case WM_DESTROY:
-				destroyRenderTarget();
+				{
+					if (context_map.contains(id))
+					{
+						auto context = context_map[id];
+						context->destroyRenderTarget();
+						context_map.erase(id);
+					}
+				}
 				return 0;
 			case WM_SIZE:
-				size.cx = LOWORD(lParam);
-				size.cy = HIWORD(lParam);
-				if (hwndRenderTarget)
-					hwndRenderTarget->Resize(D2D1::SizeU(size.cx, size.cy));
+				{
+					SIZE size;
+					size.cx = LOWORD(lParam);
+					size.cy = HIWORD(lParam);
+					if (context_map.contains(id))
+					{
+						auto context = context_map[id];
+						context->setSize(D2D1::SizeU(size.cx, size.cy));
+						context_map.erase(id);
+					}
+				}
 				return 0;
 			case WM_CLOSE:
 				DestroyWindow(hwnd);
 				return 0;
 			case WM_ERASEBKGND:
 				return 0;
-
 			case WM_PAINT:
 				redraw();
 				::ValidateRect(hwnd, NULL);
 				return 0;
-
 				// <------------mouse management------------------->
 
 			case WM_LBUTTONDOWN:
@@ -2397,7 +2383,7 @@ namespace corona
 				point.x = GET_X_LPARAM(lParam) * dpiScale;
 				point.y = GET_Y_LPARAM(lParam) * dpiScale;
 				if (currentController)
-					currentController->mouseClick(&point);
+					currentController->mouseClick(id, &point, pi);
 				break;
 
 			case WM_MOUSEMOVE:
@@ -2405,7 +2391,7 @@ namespace corona
 				point.x = GET_X_LPARAM(lParam) * dpiScale;
 				point.y = GET_Y_LPARAM(lParam) * dpiScale;
 				if (currentController)
-					currentController->mouseMove(&point);
+					currentController->mouseMove(id, &point, pi);
 				break;
 
 				// <------------keyboard management------------------->
@@ -2429,8 +2415,7 @@ namespace corona
 					if (!found) {
 						pressedKeys.push_back(wParam);
 						if (currentController) {
-							currentController->keyDown(wParam);
-							::UpdateWindow(hwnd);
+							currentController->keyDown(id, wParam, pi);
 						}
 					}
 					break;
@@ -2439,38 +2424,33 @@ namespace corona
 			case WM_KEYUP:
 				pressedKeys.remove(wParam);
 				if (currentController) {
-					currentController->keyUp(wParam);
-					::UpdateWindow(hwnd);
+					currentController->keyUp(id, wParam, pi);
 				}
 				return 0;
 
 			case WM_HSCROLL:
 				if (currentController) {
-					int ctrlId = ::GetDlgCtrlID(hwnd);
-					database::page_item pi;
-					message_map.contains(ctrlId);
-					pi = message_map[ctrlId];
 					int pos = 0;
 					switch (LOWORD(wParam)) {
 					case SB_LINELEFT:
-						pos = currentController->onHScroll(ctrlId, scrollTypes::ScrollLineUp, pi);
+						pos = currentController->onHScroll(id, scrollTypes::ScrollLineUp, pi);
 						::SetScrollPos(hwnd, SB_HORZ, pos, TRUE);
 						break;
 					case SB_LINERIGHT:
-						pos = currentController->onHScroll(ctrlId, scrollTypes::ScrollLineDown, pi);
+						pos = currentController->onHScroll(id, scrollTypes::ScrollLineDown, pi);
 						::SetScrollPos(hwnd, SB_HORZ, pos, TRUE);
 						break;
 					case SB_PAGELEFT:
-						pos = currentController->onHScroll(ctrlId, scrollTypes::ScrollPageUp, pi);
+						pos = currentController->onHScroll(id, scrollTypes::ScrollPageUp, pi);
 						::SetScrollPos(hwnd, SB_HORZ, pos, TRUE);
 						break;
 					case SB_PAGERIGHT:
-						pos = currentController->onHScroll(ctrlId, scrollTypes::ScrollPageDown, pi);
+						pos = currentController->onHScroll(id, scrollTypes::ScrollPageDown, pi);
 						::SetScrollPos(hwnd, SB_HORZ, pos, TRUE);
 						break;
 						//			case SB_THUMBPOSITION:
 					case SB_THUMBTRACK:
-						pos = currentController->onHScroll(ctrlId, scrollTypes::ThumbTrack, pi);
+						pos = currentController->onHScroll(id, scrollTypes::ThumbTrack, pi);
 						::SetScrollPos(hwnd, SB_HORZ, pos, TRUE);
 						break;
 					}
@@ -2478,31 +2458,27 @@ namespace corona
 				break;
 			case WM_VSCROLL:
 				if (currentController) {
-					int ctrlId = ::GetDlgCtrlID(hwnd);
-					database::page_item pi;
-					if (message_map.contains(ctrlId))
-						pi = message_map[ctrlId];
 					int pos = 0;
 					switch (LOWORD(wParam)) {
 					case SB_LINELEFT:
-						pos = currentController->onVScroll(ctrlId, scrollTypes::ScrollLineUp, pi);
+						pos = currentController->onVScroll(id, scrollTypes::ScrollLineUp, pi);
 						::SetScrollPos(hwnd, SB_VERT, pos, TRUE);
 						break;
 					case SB_LINERIGHT:
-						pos = currentController->onVScroll(ctrlId, scrollTypes::ScrollLineDown, pi);
+						pos = currentController->onVScroll(id, scrollTypes::ScrollLineDown, pi);
 						::SetScrollPos(hwnd, SB_VERT, pos, TRUE);
 						break;
 					case SB_PAGELEFT:
-						pos = currentController->onVScroll(ctrlId, scrollTypes::ScrollPageUp, pi);
+						pos = currentController->onVScroll(id, scrollTypes::ScrollPageUp, pi);
 						::SetScrollPos(hwnd, SB_VERT, pos, TRUE);
 						break;
 					case SB_PAGERIGHT:
-						pos = currentController->onVScroll(ctrlId, scrollTypes::ScrollPageDown, pi);
+						pos = currentController->onVScroll(id, scrollTypes::ScrollPageDown, pi);
 						::SetScrollPos(hwnd, SB_VERT, pos, TRUE);
 						break;
 						//			case SB_THUMBPOSITION:
 					case SB_THUMBTRACK:
-						pos = currentController->onVScroll(ctrlId, scrollTypes::ThumbTrack, pi);
+						pos = currentController->onVScroll(id, scrollTypes::ThumbTrack, pi);
 						::SetScrollPos(hwnd, SB_VERT, pos, TRUE);
 						break;
 					}
@@ -2757,12 +2733,8 @@ namespace corona
 
 		drawableHost* directApplication::getDrawable(int i)
 		{
-			return static_cast<drawableHost*>(this);
-		}
-
-		bool directApplication::createRenderTarget()
-		{
-			return direct2dContext::createRenderTarget(hwndDirect2d);
+			auto mmi = message_map[i];
+			return mmi.context;
 		}
 
 		void directApplication::setController(controller* _newCurrentController)
@@ -2840,8 +2812,6 @@ namespace corona
 			}
 
 			hwndRoot = NULL;
-			hwndDirect2d = NULL;
-			hwndRenderTarget = NULL;
 
 			setController(_firstController);
 
@@ -2935,8 +2905,6 @@ namespace corona
 			}
 
 			hwndRoot = NULL;
-			hwndDirect2d = NULL;
-			hwndRenderTarget = NULL;
 
 			if (_fullScreen) {
 				dwStyle = WS_POPUP | WS_MAXIMIZE;
@@ -2982,10 +2950,7 @@ namespace corona
 					double elapsedSeconds = (double)(counter - lastCounter) / (double)performanceFrequency;
 					double totalSeconds = (double)(counter - startCounter) / (double)performanceFrequency;
 					lastCounter = counter;
-					if (hwndDirect2d != nullptr && currentController->update(elapsedSeconds, totalSeconds)) {
-						::InvalidateRect(hwndDirect2d, NULL, TRUE);
-						::UpdateWindow(hwndDirect2d);
-					}
+					currentController->update(elapsedSeconds, totalSeconds);
 				}
 			}
 
@@ -3683,6 +3648,7 @@ namespace corona
 			char szFileName[MAX_PATH + 1] = "";
 			bool retval;
 
+			OPENFILENAME ofn;
 			ZeroMemory(&ofn, sizeof(ofn));
 
 			ofn.lStructSize = sizeof(ofn);

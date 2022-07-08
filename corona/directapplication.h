@@ -47,10 +47,6 @@ namespace corona
 			virtual void beginDraw();
 			virtual void endDraw();
 
-			ID2D1BitmapRenderTarget* bitmapRenderTarget;
-			ID2D1HwndRenderTarget* hwndRenderTarget;
-			ID2D1RenderTarget* renderTarget;
-
 			direct2dFactory* factory;
 
 			OPENFILENAMEA ofn;
@@ -69,7 +65,7 @@ namespace corona
 		public:
 
 			inline direct2dFactory* getFactory() { return factory; }
-			inline ID2D1RenderTarget* getRenderTarget() { return renderTarget; }
+			virtual ID2D1RenderTarget* getRenderTarget() = 0;
 
 			virtual point getLayoutSize();
 			virtual point getSize();
@@ -125,7 +121,6 @@ namespace corona
 			D2D1::Matrix3x2F currentTransform;
 			path* createPath(pathDto* _pathDto, bool _closed);
 
-			bool createRenderTarget(HWND hwnd);
 			bool createRenderTarget(ID2D1RenderTarget* renderTarget, D2D1_SIZE_F _size);
 
 		public:
@@ -147,24 +142,51 @@ namespace corona
 			ID2D1RenderTarget* wicTarget;
 			IWICBitmap* wicBitmap;
 
+		public:
+			D2D1_SIZE_F size;
+
 			directBitmap(direct2dFactory* _factory, D2D1_SIZE_F _size);
 			virtual ~directBitmap();
 
-		protected:
 			virtual bool createRenderTarget();
 			virtual void destroyRenderTarget();
 
-		public:
-			D2D1_SIZE_F size;
 			IWICBitmap* getBitmap();
 			void save(const char* _filename);
-			friend class direct2dContext;
-
 			virtual bool isBitmap() { return true; }
 
+			virtual ID2D1RenderTarget* getRenderTarget()
+			{
+				return wicTarget;
+			}
 		};
 
-		class directApplication : public direct2dContext, public controllerHost
+		class directWindow : public direct2dContext
+		{
+		private:
+			HWND hwnd;
+			ID2D1HwndRenderTarget* hwndRenderTarget;
+
+		public:
+
+			directWindow(HWND _hwnd, direct2dFactory* _factory);
+			virtual ~directWindow();
+
+			virtual bool createRenderTarget();
+			virtual void destroyRenderTarget();
+
+			HRESULT setSize(D2D1_SIZE_U _newSize)
+			{
+				return hwndRenderTarget->Resize(_newSize);
+			}
+
+			virtual ID2D1RenderTarget* getRenderTarget()
+			{
+				return hwndRenderTarget;
+			}
+		};
+
+		class directApplication : public controllerHost
 		{
 		protected:
 			bool controllerLoaded;
@@ -178,7 +200,7 @@ namespace corona
 			virtual LRESULT d2dWindowProcHandler(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 			virtual LRESULT windowProcHandler(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 			HINSTANCE hinstance;
-			HWND hwndRoot, hwndDirect2d;
+			HWND hwndRoot;
 			std::list<int> pressedKeys;
 
 			__int64 performanceFrequency;
@@ -198,6 +220,7 @@ namespace corona
 				oldWindowControlMap;
 
 			std::map<int, page_item> message_map;
+			std::map<int, directWindow*> context_map;
 
 			HFONT	controlFont,
 					labelFont,
@@ -229,6 +252,8 @@ namespace corona
 			bool disableChangeProcessing;
 			HRGN region;
 
+			direct2dFactory* factory;
+
 		public:
 
 			directApplication(direct2dFactory* _factory);
@@ -236,11 +261,10 @@ namespace corona
 
 			int renderPage(database::page& _page, database::jschema* _schema, database::actor_state& _state, database::jcollection& _collection);
 
-			virtual drawableHost* getDrawable(int i);
+			virtual drawableHost* getDrawable(int ctrlId);
 
 			virtual bool runFull(HINSTANCE _hinstance, const char* _title, int _iconId, bool _fullScreen, controller* _firstController);
 			virtual bool runDialog(HINSTANCE _hinstance, const char* _title, int _iconId, bool _fullScreen, controller* _firstController);
-			virtual bool createRenderTarget();
 
 			virtual void setController(controller* _newCurrentController);
 			virtual void pushController(controller* _newCurrentController);
