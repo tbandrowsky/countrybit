@@ -10,19 +10,24 @@ namespace corona
 			row = 1,
 			column = 2,
 			absolute = 3,
-			canvas2d = 4,
-			canvas3d = 5,
-			field = 6,
-			label = 7,
-			create = 8,
-			select = 9,
-			select_cell = 10,
-			navigate = 11,
-			text = 12
+			canvas2d_row = 4,
+			canvas2d_column = 5,
+			canvas2d_absolute = 6,
+			canvas3d_row = 7,
+			canvas3d_column = 8,
+			canvas3d_absolute = 9,
+			field = 10,
+			label = 11,
+			create = 12,
+			select = 13,
+			select_cell = 14,
+			navigate = 15,
+			text = 16
 		};
 
 		struct page_item_identifier_x
 		{
+			relative_ptr_type		item_uid;
 			relative_ptr_type		class_id;
 			relative_ptr_type		object_id;
 			relative_ptr_type		field_id;
@@ -47,6 +52,8 @@ namespace corona
 
 			relative_ptr_type		class_id;
 			relative_ptr_type		object_id;
+			relative_ptr_type		item_uid;
+
 			jfield*					field;
 			create_object_request	create_request;
 			select_object_request	select_request;
@@ -70,6 +77,7 @@ namespace corona
 				old_id(-1),
 				item_space(),
 				item_space_amount(0.0),
+				item_uid(null_row),
 				windowsRegion(false)
 			{
 				;
@@ -117,6 +125,7 @@ namespace corona
 					pii.layout = (int)layout;
 					pii.object_id = object_id;
 					pii.class_id = class_id;
+					pii.item_uid = item_uid;
 					if (field != nullptr) 
 					{
 						pii.field_id = field->field_id;
@@ -129,8 +138,10 @@ namespace corona
 					pii.object_id = 0;
 					pii.class_id = 0;
 					pii.field_id = 0;
+					pii.item_uid = item_uid;
 				}
 				page_item_identifier c = 17;
+				c = c * 23 + pii.item_uid;
 				c = c * 23 + pii.layout;
 				c = c * 23 + pii.class_id;
 				c = c * 23 + pii.field_id;
@@ -166,7 +177,10 @@ namespace corona
 			page_item* row(page_item* _parent, relative_ptr_type _style_id = null_row,  layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct }, measure _item_space = { 0.0, measure_units::pixels });
 			page_item* column( page_item* _parent, relative_ptr_type _style_id = null_row, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct }, measure _item_space = { 0.0, measure_units::pixels });
 			page_item* absolute(page_item* _parent, relative_ptr_type _style_id = null_row, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
-			page_item* canvas2d(page_item* _parent, relative_ptr_type _style_id = null_row, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
+
+			page_item* canvas2d_row(relative_ptr_type _item_uid, page_item* _parent, relative_ptr_type _style_id = null_row, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
+			page_item* canvas2d_column(relative_ptr_type _item_uid, page_item* _parent, relative_ptr_type _style_id = null_row, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
+			page_item* canvas2d_absolute(relative_ptr_type _item_uid, page_item* _parent, relative_ptr_type _style_id = null_row, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
 
 			page_item* text(page_item* _parent, relative_ptr_type _style_id, const char *_text, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
 

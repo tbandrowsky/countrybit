@@ -54,15 +54,44 @@ namespace corona
 			return v;
 		}
 
-		page_item* page::canvas2d(page_item* _parent, relative_ptr_type _style_id, layout_rect _box)
+		page_item* page::canvas2d_row(relative_ptr_type _item_uid, page_item* _parent, relative_ptr_type _style_id = null_row, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px })
 		{
 			page_item* v = append();
 			v->id = size();
 			v->set_parent(_parent);
-			v->layout = layout_types::canvas2d;
+			v->layout = layout_types::canvas2d_row;
 			v->box = _box;
 			v->canvas_id = v->id;
 			v->style_id = _style_id;
+			v->item_uid = _item_uid;
+			return v;
+
+		}
+
+		page_item* page::canvas2d_column(relative_ptr_type _item_uid, page_item* _parent, relative_ptr_type _style_id = null_row, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px })
+		{
+			page_item* v = append();
+			v->id = size();
+			v->set_parent(_parent);
+			v->layout = layout_types::canvas2d_column;
+			v->box = _box;
+			v->canvas_id = v->id;
+			v->style_id = _style_id;
+			v->item_uid = _item_uid;
+			return v;
+
+		}
+
+		page_item* page::canvas2d_absolute(relative_ptr_type _item_uid, page_item* _parent, relative_ptr_type _style_id = null_row, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px })
+		{
+			page_item* v = append();
+			v->id = size();
+			v->set_parent(_parent);
+			v->layout = layout_types::canvas2d_absolute;
+			v->box = _box;
+			v->canvas_id = v->id;
+			v->style_id = _style_id;
+			v->item_uid = _item_uid;
 			return v;
 		}
 
@@ -459,7 +488,7 @@ namespace corona
 			double remaining_width, remaining_height;
 			calculate_sizes(_style_sheet, children, offx, offy, x, y, width, height, remaining_width, remaining_height);
 
-			if (_item->layout == layout_types::row) 
+			if (_item->layout == layout_types::row || _item->layout == layout_types::canvas2d_row || _item->layout == layout_types::canvas3d_row)
 			{
 				switch (_item->item_space.units)
 				{
@@ -491,7 +520,7 @@ namespace corona
 					startx += _item->item_space_amount;
 				}
 			}
-			else if (_item->layout == layout_types::column) 
+			else if (_item->layout == layout_types::column || _item->layout == layout_types::canvas2d_column || _item->layout == layout_types::canvas3d_column)
 			{
 				switch (_item->item_space.units)
 				{
@@ -523,7 +552,7 @@ namespace corona
 					starty += _item->item_space_amount;
 				}
 			}
-			else if (_item->layout == layout_types::canvas2d)
+			else if (_item->layout == layout_types::canvas2d_absolute || _item->layout == layout_types::canvas3d_absolute)
 			{
 				for (auto child : children)
 				{

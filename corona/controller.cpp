@@ -461,9 +461,17 @@ namespace corona
 			return pg.select_cell(_parent, _state, object_id, slice, _caption, _style_id, _box);
 		}
 
-		page_item* corona_controller::canvas2d(page_item* _parent, relative_ptr_type _style_id, layout_rect _box)
+		page_item* corona_controller::canvas2d_row(relative_ptr_type _canvas_uid, page_item* _parent, relative_ptr_type _style_id, layout_rect _box)
 		{
-			return pg.canvas2d(_parent, _style_id, _box);
+			return pg.canvas2d_row(_canvas_uid, _parent, _style_id, _box);
+		}
+		page_item* corona_controller::canvas2d_column(relative_ptr_type _canvas_uid, page_item* _parent, relative_ptr_type _style_id, layout_rect _box)
+		{
+			return pg.canvas2d_column(_canvas_uid, _parent, _style_id, _box);
+		}
+		page_item* corona_controller::canvas2d_absolute(relative_ptr_type _canvas_uid, page_item* _parent, relative_ptr_type _style_id, layout_rect _box)
+		{
+			return pg.canvas2d_absolute(_canvas_uid, _parent, _style_id, _box);
 		}
 
 		page_item* corona_controller::selects(page_item* _parent_ui, relative_ptr_type _style_id, layout_rect _box, relative_ptr_type _id_name, std::function<bool(const actor_view_collection::iterator_item_type& _item)> selector)

@@ -90,6 +90,9 @@ namespace proposal
 							id_product_template_root, 
 							id_system_root;
 
+		relative_ptr_type	id_canvas_header = 1;
+		relative_ptr_type	id_canvas_data_view = 2;
+
 		const char* application_title = "WOODRUFF SAWYER PROPOSAL PROTOTYPE";
 
 		wsproposal_controller();
