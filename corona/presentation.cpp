@@ -54,7 +54,7 @@ namespace corona
 			return v;
 		}
 
-		page_item* page::canvas2d_row(relative_ptr_type _item_uid, page_item* _parent, relative_ptr_type _style_id = null_row, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px })
+		page_item* page::canvas2d_row(relative_ptr_type _item_uid, page_item* _parent, relative_ptr_type _style_id, layout_rect _box)
 		{
 			page_item* v = append();
 			v->id = size();
@@ -68,7 +68,7 @@ namespace corona
 
 		}
 
-		page_item* page::canvas2d_column(relative_ptr_type _item_uid, page_item* _parent, relative_ptr_type _style_id = null_row, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px })
+		page_item* page::canvas2d_column(relative_ptr_type _item_uid, page_item* _parent, relative_ptr_type _style_id, layout_rect _box)
 		{
 			page_item* v = append();
 			v->id = size();
@@ -82,7 +82,7 @@ namespace corona
 
 		}
 
-		page_item* page::canvas2d_absolute(relative_ptr_type _item_uid, page_item* _parent, relative_ptr_type _style_id = null_row, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px })
+		page_item* page::canvas2d_absolute(relative_ptr_type _item_uid, page_item* _parent, relative_ptr_type _style_id, layout_rect _box)
 		{
 			page_item* v = append();
 			v->id = size();

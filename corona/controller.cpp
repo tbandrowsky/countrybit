@@ -604,7 +604,7 @@ namespace corona
 
 			pg.visit([this](page_item* _in_page)
 				{
-					if (_in_page->layout == layout_types::canvas2d)
+					if (_in_page->is_canvas2d())
 					{
 						auto dr = this->getDrawable(_in_page->id);
 						dr->beginDraw();
@@ -618,7 +618,7 @@ namespace corona
 				},
 				[this](page_item* _out_page)
 				{
-					if (_out_page->layout == layout_types::canvas2d)
+					if (_out_page->is_canvas2d())
 					{
 						auto dr = this->getDrawable(_out_page->id);
 						dr->endDraw();
@@ -641,8 +641,14 @@ namespace corona
 			case layout_types::absolute:
 				od = "absolute";
 				break;
-			case layout_types::canvas2d:
-				od = "canvas2d";
+			case layout_types::canvas2d_row:
+				od = "canvas2d_row";
+				break;
+			case layout_types::canvas2d_column:
+				od = "canvas2d_column";
+				break;
+			case layout_types::canvas2d_absolute:
+				od = "canvas2d_absolute";
 				break;
 			case layout_types::column:
 				od = "column";

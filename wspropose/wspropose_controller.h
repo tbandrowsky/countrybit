@@ -92,6 +92,7 @@ namespace proposal
 
 		relative_ptr_type	id_canvas_header = 1;
 		relative_ptr_type	id_canvas_data_view = 2;
+		relative_ptr_type	id_canvas_visual_view = 3;
 
 		const char* application_title = "WOODRUFF SAWYER PROPOSAL PROTOTYPE";
 

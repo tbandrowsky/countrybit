@@ -121,6 +121,11 @@ namespace corona
 				return is_create() || is_select();
 			}
 
+			bool is_canvas2d()
+			{
+				return layout == layout_types::canvas2d_absolute || layout == layout_types::canvas2d_row || layout == layout_types::canvas2d_column;
+			}
+
 			page_item_identifier get_identifier()
 			{
 				page_item_identifier_x pii { null_row, null_row };

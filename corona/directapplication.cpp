@@ -2225,7 +2225,9 @@ namespace corona
 
 				switch (pi.layout)
 				{
-				case database::layout_types::canvas2d:
+				case database::layout_types::canvas2d_row:
+				case database::layout_types::canvas2d_column:
+				case database::layout_types::canvas2d_absolute:
 					canvasWindowId = pi.id;
 					createChildWindow(pid, "CoronaDirect2d", "", WS_CHILD | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, canvasWindowId, NULL, NULL, pi);
 					break;
