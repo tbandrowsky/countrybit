@@ -430,18 +430,16 @@ field id idf_carrier, which is populated when objects of this class are construc
 		if (_left_pad) 
 		{
 			space(header_column, schema.idf_view_background_style, { 0.0_px, 0.0_px, 25.0_pct, 100.0_pct });
-			header_area = column(header_column, schema.idf_view_background_style, { 0.0_px, 0.0_px, 75.0_pct, 100.0_pct });
 		}
 		else 
 		{
 			space(header_column, schema.idf_view_background_style, { 0.0_px, 0.0_px, 20.0_px, 100.0_pct });
-			header_area = column(header_column, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
 		}
 
-		auto title_bar = row(header_area, schema.idf_title_bar_style, { 0.0_px, 0.0_px, 100.0_pct, 1.0_fntgr });
-		auto underline_bar = row(header_area, schema.idf_view_section_style, { 0.0_px, 0.0_px, 90.0_pct, 4.0_px });
-		auto underline_space_bar = row(header_area, schema.idf_view_background_style , { 0.0_px, 0.0_px, 90.0_pct, 4.0_px });
-		auto breadcrumb_bar = row(header_area, schema.idf_breadcrumb_bar_style, { 0.0_px, 0.0_px, 100.0_pct, 50.0_px });
+		auto title_bar = row(header_column, schema.idf_title_bar_style, { 0.0_px, 0.0_px, 100.0_pct, 1.0_fntgr });
+		auto underline_bar = row(header_column, schema.idf_view_section_style, { 0.0_px, 0.0_px, 90.0_pct, 4.0_px });
+		auto underline_space_bar = row(header_column, schema.idf_view_background_style , { 0.0_px, 0.0_px, 90.0_pct, 4.0_px });
+		auto breadcrumb_bar = row(header_column, schema.idf_breadcrumb_bar_style, { 0.0_px, 0.0_px, 100.0_pct, 50.0_px });
 		breadcrumbs(breadcrumb_bar, [this](jobject& _item) {
 			return _item.get_name(schema.idf_name);
 			}, { 0.0_px, 0.0_px, 200.0_px, 50.0_px });

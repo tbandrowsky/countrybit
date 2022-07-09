@@ -2362,6 +2362,10 @@ namespace corona
 					}
 					directWindow* context = new directWindow(hwnd, factory);
 					context->createRenderTarget();
+					if (currentController) {
+						auto styles = currentController->getStyleSheet();
+						context->loadStyleSheet(styles);
+					}
 					context_map.insert_or_assign(id, context);
 				}
 				break;
