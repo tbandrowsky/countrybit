@@ -92,7 +92,12 @@ namespace corona
 				}
 				else {
 					parent_id = -1;
-					canvas_id = ((layout == layout_types::canvas2d) ? id : -1);
+					if (layout == layout_types::canvas2d_absolute ||
+						layout == layout_types::canvas2d_column ||
+						layout == layout_types::canvas2d_row)
+						canvas_id = id;
+					else
+						canvas_id = -1;
 				}
 			}
 
@@ -131,8 +136,12 @@ namespace corona
 						pii.field_id = field->field_id;
 					}
 				}
-				else if ((layout == layout_types::canvas2d) ||
-					(layout == layout_types::canvas3d))
+				else if ((layout == layout_types::canvas2d_row) ||
+					(layout == layout_types::canvas2d_column) ||
+					(layout == layout_types::canvas2d_absolute) ||
+					(layout == layout_types::canvas3d_row) ||
+					(layout == layout_types::canvas3d_column) ||
+					(layout == layout_types::canvas3d_absolute))
 				{
 					pii.layout = (int)layout;
 					pii.object_id = 0;
