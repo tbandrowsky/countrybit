@@ -252,8 +252,6 @@ namespace corona
 			void destroyChildren();
 
 			bool disableChangeProcessing;
-			HRGN region;
-
 			direct2dFactory* factory;
 
 		public:

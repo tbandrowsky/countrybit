@@ -6,8 +6,8 @@
 #ifdef WINDESKTOP_GUI
 
 //#define TRACE_GUI 1
-//#define OUTLINE_GUI 1
-#define TRACE_SIZE 1
+#define OUTLINE_GUI 1
+//#define TRACE_SIZE 1
 
 #if TRACE_GUI
 #define OUTLINE_GUI 1
@@ -1230,7 +1230,6 @@ namespace corona
 			titleFont = nullptr;
 			dpiScale = 1.0;
 			disableChangeProcessing = false;
-			region = nullptr;
 		}
 
 		directApplication::~directApplication()
@@ -1548,10 +1547,6 @@ namespace corona
 
 		void direct2dContext::addViewStyle(viewStyleRequest& _request)
 		{
-#if TRACE_GUI
-			std::cout << "Adding " << _request.name << std::endl;
-#endif
-
 			viewStyles[_request.name.c_str()] = _request;
 			addTextStyle(&_request.text_style);
 			addSolidColorBrush(&_request.box_border_color);
@@ -1916,9 +1911,6 @@ namespace corona
 			if (!_style) return;
 			auto& vs = viewStyles[_style];
 			auto& rectFill = vs.box_fill_color;
-#if TRACE_GUI
-			std::cout << "drawView:" << _style << "(" << _rect.x << "," << _rect.y << "-" << _rect.w << "," << _rect.h << ")" << rectFill.brushColor.red << " " << rectFill.brushColor.green << " " << rectFill.brushColor.blue << " " << rectFill.brushColor.alpha << std::endl;
-#endif
 			drawRectangle(&_rect, vs.box_border_color.name, vs.box_border_thickness, vs.box_fill_color.name);
 
 			_rect.h -= vs.box_border_thickness * 2.0;
@@ -2003,13 +1995,6 @@ namespace corona
 				}
 			}
 
-
-#ifdef TRACE_GUI
-			std::cout << "styles loaded" << std::endl;
-			for (auto vs : viewStyles) {
-				std::cout << vs.first << std::endl;
-			}
-#endif
 		}
 
 
@@ -2153,12 +2138,6 @@ namespace corona
 				}
 
 			}
-#ifdef TRACE_GUI
-			std::cout << "styles loaded" << std::endl;
-			for (auto vs : viewStyles) {
-				std::cout << vs.first << std::endl;
-			}
-#endif
 		}
 
 		HFONT directApplication::createFontFromStyleSheet(relative_ptr_type _style_id)
@@ -2199,24 +2178,10 @@ namespace corona
 			windowControlMap.clear();
 			message_map.clear();
 
-			if (region) 
-			{
-				DeleteObject(region);
-			}
-
 			database::jobject slice;
 			for (auto piter : _page)
 			{
 				auto pi = piter.item;
-
-				if (pi.windowsRegion) {
-					region = CreateRectRgn(
-						pi.bounds.x / dpiScale,
-						pi.bounds.y / dpiScale,
-						pi.bounds.w / dpiScale + pi.bounds.x / dpiScale,
-						pi.bounds.h / dpiScale + pi.bounds.y / dpiScale
-					);
-				}
 
 				if (pi.is_drawable())
 					continue;
@@ -2232,7 +2197,7 @@ namespace corona
 					createChildWindow(pid, "CoronaDirect2d", "", WS_CHILD | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, canvasWindowId, NULL, NULL, pi);
 					break;
 				case database::layout_types::label:
-					{
+					{	   
 
 						auto styles = currentController->getStyleSheet();
 						auto schema = styles.get_schema();
