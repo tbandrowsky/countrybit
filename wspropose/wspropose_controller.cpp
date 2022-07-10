@@ -600,12 +600,12 @@ field id idf_carrier, which is populated when objects of this class are construc
 		relative_ptr_type class_ids1[2] = { idc_client_root, idc_program_template_root };
 		relative_ptr_type class_ids2[3] = { idc_carrier_root, idc_coverage_root, idc_system_root };
 
-		auto d2darea = row(_frame, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
+		auto d2darea = row(_frame, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct }, {10.0_pct});
 
-		auto column1 = column(d2darea, schema.idf_view_background_style, { 20.0_pct, 0.0_px, 30.0_pct, 100.0_pct });
+		auto column1 = column(d2darea, schema.idf_view_background_style, { 0.0_pct, 0.0_px, 30.0_pct, 100.0_pct });
 		selects(column1, schema.idf_company_neutral1_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_px }, schema.idf_name, class_ids1, 2);
 
-		auto column2 = column(d2darea, schema.idf_view_background_style, { 20.0_pct, 0.0_px, 30.0_pct, 100.0_pct });
+		auto column2 = column(d2darea, schema.idf_view_background_style, { 0.0_pct, 0.0_px, 30.0_pct, 100.0_pct });
 		selects(column2, schema.idf_company_neutral1_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_px }, schema.idf_name, class_ids2, 3);
 	}
 

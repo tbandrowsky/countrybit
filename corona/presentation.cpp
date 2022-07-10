@@ -512,10 +512,18 @@ namespace corona
 					break;
 				}
 
+				double bx = 0.0, by = 0.0;
+
+				if (_item->layout == layout_types::row)
+				{
+					bx = _item->bounds.x;
+					by = _item->bounds.y;
+				}
+
 				double startx = 0;
 				for (auto child : children)
 				{
-					arrange_impl(_style_sheet, &child.item, startx, 0, _item->bounds.x, _item->bounds.y, remaining_width, _item->bounds.h);
+					arrange_impl(_style_sheet, &child.item, startx, 0, bx, by, remaining_width, _item->bounds.h);
 					startx += (child.item.bounds.w);
 					startx += _item->item_space_amount;
 				}
@@ -544,10 +552,18 @@ namespace corona
 					break;
 				}
 
+				double bx = 0.0, by = 0.0;
+
+				if (_item->layout == layout_types::column)
+				{
+					bx = _item->bounds.x;
+					by = _item->bounds.y;
+				}
+
 				double starty = 0;
 				for (auto child : children)
 				{
-					arrange_impl(_style_sheet, &child.item, 0, starty, _item->bounds.x, _item->bounds.y, _item->bounds.w, remaining_height);
+					arrange_impl(_style_sheet, &child.item, 0, starty, bx, by, _item->bounds.w, remaining_height);
 					starty += (child.item.bounds.h);
 					starty += _item->item_space_amount;
 				}
