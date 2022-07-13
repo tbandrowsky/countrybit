@@ -8,6 +8,7 @@
 //#define TRACE_GUI 1
 //#define OUTLINE_GUI 1
 //#define TRACE_SIZE 1
+#define TRACE_RENDER 1
 
 #if TRACE_GUI
 #define OUTLINE_GUI 1
@@ -318,7 +319,9 @@ namespace corona
 
 			if (childWindow)
 			{
+#if TRACE_RENDER
 				std::cout << "%%%%%%%%% child resize " << GetDlgCtrlID( hwnd ) << " " << width << " " << height << std::endl;
+#endif
 
 				if (childBitmap)
 					delete childBitmap;
@@ -335,7 +338,9 @@ namespace corona
 			}
 			else 
 			{
+#if TRACE_RENDER
 				std::cout << "%%%%%%%%% parent resize " << GetDlgCtrlID(hwnd) << " " << width << " " << height << std::endl;
+#endif
 
 				if (renderTarget)
 				{
@@ -358,7 +363,19 @@ namespace corona
 
 		void direct2dWindow::moveWindow(UINT x, UINT y, UINT w, UINT h)
 		{
+			double dpi = ::GetDpiForWindow(hwnd);
+
+			windowPosition.x = x * 96.0 / dpi;
+			windowPosition.y = y * 96.0 / dpi;
+			windowPosition.w = w * 96.0 / dpi;
+			windowPosition.h = h * 96.0 / dpi;
+
 			MoveWindow(hwnd, x, y, w, h, false);
+		}
+
+		rectangle direct2dWindow::getBoundsDips()
+		{
+			return windowPosition;
 		}
 
 		void direct2dWindow::applySwapChain()
@@ -417,8 +434,10 @@ namespace corona
 			renderTarget->SetTarget(bitmap);
 			dipssz = renderTarget->GetSize();
 
+#if TRACE_RENDER
 			std::cout << "render target pixel size " << pixssz.width << " " << pixssz.height << " " << std::endl;
 			std::cout << "render target dip size " << dipssz.width << " " << dipssz.height << " " << std::endl;
+#endif
 			return;
 
 		}
@@ -484,8 +503,10 @@ namespace corona
 			auto pxs = bitmap->GetPixelSize();
 			auto ps = bitmap->GetSize();
 
+#if TRACE_RENDER
 			std::cout << "bitmap pixel size " << pxs.width << " " << pxs.height << std::endl;
 			std::cout << "bitmap dips size " << ps.width << " " << ps.height << std::endl;
+#endif
 
 			targetContext->SetDpi(dpi, dpi);
 			targetContext->SetTarget(bitmap);
@@ -495,8 +516,11 @@ namespace corona
 
 			auto unitMode = targetContext->GetUnitMode();
 
+
+#if TRACE_RENDER
 			std::cout << "target pixel size " << pxs.width << " " << pxs.height << std::endl;
 			std::cout << "target dips size " << ps.width << " " << ps.height << std::endl;
+#endif
 
 			return;
 
@@ -2458,15 +2482,19 @@ namespace corona
 
 					for (auto w : wins)
 					{
-						RECT r;
-						HWND h = w->getWindow();
-						::GetClientRect(h, &r);
+						rectangle r = w->getBoundsDips();
+
+						id = ::GetDlgCtrlID(w->getWindow());
 
 						D2D1_RECT_F dest;
-						dest.left = r.left * toDips;
-						dest.top = r.top * toDips;
-						dest.right = r.right * toDips;
-						dest.bottom = r.bottom * toDips;
+						dest.left = r.x;
+						dest.top = r.y;
+						dest.right = r.x + r.w;
+						dest.bottom = r.y + r.h;
+
+#if TRACE_RENDER
+						std::cout << "Compose item#" << id << " " << dest.left << " " << dest.top << " " << dest.right << " " << dest.bottom << std::endl;
+#endif
 
 						winroot->getRenderTarget()->DrawBitmap(w->getBitmap(), &dest);
 
@@ -2482,7 +2510,7 @@ namespace corona
 						id++;
 						counter++;
 
-						winroot->drawView("client_style", temp.c_str(), dest2, "comment");
+						//winroot->drawView("client_style", temp.c_str(), dest2, "comment");
 					}
 
 					winroot->endDraw(failedDevice);
@@ -2807,6 +2835,7 @@ namespace corona
 			{
 			case WM_CREATE:
 				{
+					LPCREATESTRUCT lpcn = (LPCREATESTRUCT)lParam;
 					dpiScale = 96.0 / GetDpiForWindow(hwnd);
 					auto *win = factory->createD2dWindow(hwnd, true);
 					if (currentController) {
@@ -3223,15 +3252,20 @@ namespace corona
 			return DefWindowProc(hwnd, message, wParam, lParam);
 		}
 
-		drawableHost* directApplication::getDrawable(int i)
+		drawableHost* directApplication::getDrawable(relative_ptr_type i)
 		{	
-			// ugh, but there won't be that many windows so I promise...
-			for (auto wmi : factory->windows)
-			{
-				if (::GetDlgCtrlID(wmi.first) == i);
-				return wmi.second;
-			}
-			return nullptr;
+			auto witem = this->windowControlMap[i];
+			auto w = witem.window;
+			auto wmi = factory->getWindow(w);
+			return wmi;
+		}
+
+		direct2dWindow* directApplication::getWindow(relative_ptr_type i)
+		{
+			auto witem = this->windowControlMap[i];
+			auto w = witem.window;
+			auto wmi = factory->getWindow(w);
+			return wmi;
 		}
 
 		void directApplication::setController(controller* _newCurrentController)

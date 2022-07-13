@@ -283,10 +283,14 @@ namespace corona
 
 			void applySwapChain();
 
+			rectangle windowPosition;
+
 		public:
 
 			direct2dWindow(HWND hwnd, adapterSet* _adapter, bool _childWindow);
 			virtual ~direct2dWindow();
+
+			rectangle getBoundsDips();
 
 			void resize(UINT x, UINT y);
 			void moveWindow(UINT x, UINT y, UINT h, UINT w);
@@ -377,7 +381,8 @@ namespace corona
 
 			int renderPage(database::page& _page, database::jschema* _schema, database::actor_state& _state, database::jcollection& _collection);
 
-			virtual drawableHost* getDrawable(int ctrlId);
+			virtual drawableHost* getDrawable(relative_ptr_type ctrlId);
+			virtual direct2dWindow* getWindow(relative_ptr_type ctrlId);
 
 			virtual bool runFull(HINSTANCE _hinstance, const char* _title, int _iconId, bool _fullScreen, controller* _firstController);
 			virtual bool runDialog(HINSTANCE _hinstance, const char* _title, int _iconId, bool _fullScreen, controller* _firstController);

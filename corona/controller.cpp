@@ -4,6 +4,7 @@
 #ifdef WINDESKTOP_GUI
 
 #define TRACE_CONTROLLER 1
+#define TRACE_RENDER 1
 
 namespace corona
 {
@@ -608,15 +609,26 @@ namespace corona
 			{
 				auto& item = pg[_id];
 				if (item.is_canvas2d()) {
-					std::cout << "Draw Item!!" << item.id << " " << std::endl;
-					auto  host = getDrawable(_id);
+					auto  host = getHost()->getWindow(item.get_identifier());
 					host->beginDraw(adapter_blown_away);
 					color c;
-					c.alpha = 1.0;
+					c.alpha = .50;
 					c.blue = 1.0;
 					c.green = (double)_id / pg.size();
 					c.red = (double)_id / pg.size();
 					host->clear(&c);
+
+					auto location = item.bounds;
+					location.x = 0;
+					location.y = 0;
+
+					std::string labelo = std::format("{} {}", "testo", _id);
+					host->drawView("label_style", labelo.c_str(), location, "commment");
+
+#if TRACE_RENDER
+					std::cout << "Draw Canvas Item" << item.id << " " << location.x << " " << location.y << " " << location.w << " " << location.h << std::endl;
+#endif
+
 					/*
 					pg.visit_impl(&item, [this, host](page_item* _in_page)
 						{
