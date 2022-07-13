@@ -216,7 +216,7 @@ namespace corona
 
 			D2D1_SIZE_F size;
 
-			direct2dBitmapCore(D2D1_SIZE_F _size, adapterSet* _factory);
+			direct2dBitmapCore(D2D1_SIZE_F _size, adapterSet* _factory, int _dpi);
 			virtual ~direct2dBitmapCore();
 
 			virtual bool isBitmap() { return true; }

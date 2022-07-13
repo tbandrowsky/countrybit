@@ -308,28 +308,34 @@ namespace corona
 			}
 			else 
 			{
-				D2D1_SIZE_F size;
-				size.width = width;
-				size.height = height;
-				childBitmap = new direct2dBitmapCore(size, _adapterSet);
+				resize(width, height);
 			}
 		}
 
-		void direct2dWindow::resize(UINT x, UINT y)
+		void direct2dWindow::resize(UINT width, UINT height)
 		{
 			HRESULT hr;
 
 			if (childWindow)
 			{
+				std::cout << "%%%%%%%%% child resize " << GetDlgCtrlID( hwnd ) << " " << width << " " << height << std::endl;
+
 				if (childBitmap)
 					delete childBitmap;
+
+				childBitmap = nullptr; 
+
+				int dpiWindow;
+				dpiWindow = ::GetDpiForWindow(hwnd);
+
 				D2D1_SIZE_F size;
-				size.width = x;
-				size.height = y;
-				childBitmap = new direct2dBitmapCore(size, factory);
+				size.width = width;
+				size.height = height;
+				childBitmap = new direct2dBitmapCore(size, factory, dpiWindow);
 			}
 			else 
 			{
+				std::cout << "%%%%%%%%% parent resize " << GetDlgCtrlID(hwnd) << " " << width << " " << height << std::endl;
 
 				if (renderTarget)
 				{
@@ -382,8 +388,8 @@ namespace corona
 			bitmapProperties.bitmapOptions = D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW;
 			bitmapProperties.pixelFormat = D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE);
 			bitmapProperties.colorContext = nullptr;
-			bitmapProperties.dpiX = dpix;
-			bitmapProperties.dpiY = dpiy;
+			bitmapProperties.dpiX = dpiWindow;
+			bitmapProperties.dpiY = dpiWindow;
 				
 			// Direct2D needs the dxgi version of the backbuffer surface pointer.
 			hr = swapChain->GetBuffer(0, IID_IDXGISurface, (void**)&surface);
@@ -406,8 +412,14 @@ namespace corona
 
 			// Now we can set the Direct2D render target.
 			auto dipssz = renderTarget->GetSize();
+			auto pixssz = renderTarget->GetPixelSize();
+			renderTarget->SetDpi(dpiWindow, dpiWindow);
 			renderTarget->SetTarget(bitmap);
 			dipssz = renderTarget->GetSize();
+
+			std::cout << "render target pixel size " << pixssz.width << " " << pixssz.height << " " << std::endl;
+			std::cout << "render target dip size " << dipssz.width << " " << dipssz.height << " " << std::endl;
+			return;
 
 		}
 
@@ -442,7 +454,7 @@ namespace corona
 			return factory;
 		}
 
-		direct2dBitmapCore::direct2dBitmapCore(D2D1_SIZE_F _size, adapterSet* _adapterSet) :
+		direct2dBitmapCore::direct2dBitmapCore(D2D1_SIZE_F _size, adapterSet* _adapterSet, int dpi) :
 			size(_size)
 		{
 			targetContext = nullptr;
@@ -460,8 +472,8 @@ namespace corona
 
 			D2D1_BITMAP_PROPERTIES1 props = {};
 
-			props.dpiX = 96;
-			props.dpiY = 96;
+			props.dpiX = dpi;
+			props.dpiY = dpi;
 			props.pixelFormat.format = DXGI_FORMAT::DXGI_FORMAT_B8G8R8A8_UNORM;
 			props.pixelFormat.alphaMode = D2D1_ALPHA_MODE::D2D1_ALPHA_MODE_IGNORE;
 			props.bitmapOptions = D2D1_BITMAP_OPTIONS::D2D1_BITMAP_OPTIONS_TARGET;
@@ -469,7 +481,25 @@ namespace corona
 			hr = targetContext->CreateBitmap(bmsize, nullptr, 0,  props, &bitmap);
 			throwOnFail(hr, "Could not create BITMAP");
 
+			auto pxs = bitmap->GetPixelSize();
+			auto ps = bitmap->GetSize();
+
+			std::cout << "bitmap pixel size " << pxs.width << " " << pxs.height << std::endl;
+			std::cout << "bitmap dips size " << ps.width << " " << ps.height << std::endl;
+
+			targetContext->SetDpi(dpi, dpi);
 			targetContext->SetTarget(bitmap);
+
+			ps = targetContext->GetSize();
+			pxs = targetContext->GetPixelSize();
+
+			auto unitMode = targetContext->GetUnitMode();
+
+			std::cout << "target pixel size " << pxs.width << " " << pxs.height << std::endl;
+			std::cout << "target dips size " << ps.width << " " << ps.height << std::endl;
+
+			return;
+
 		}
 
 		direct2dBitmapCore::~direct2dBitmapCore()
@@ -2414,31 +2444,44 @@ namespace corona
 				if (winroot == nullptr)
 					return;
 
+				double toDips = 96.0 / GetDpiForWindow(winroot->getWindow());
+
 				winroot->beginDraw(failedDevice);
+								
 
 				if (!failedDevice) 
 				{
 					auto wins = factory->getChildren(hwndRoot);
+
+					int iy = 200;
+					int id = 0;
 
 					for (auto w : wins)
 					{
 						RECT r;
 						HWND h = w->getWindow();
 						::GetClientRect(h, &r);
+
 						D2D1_RECT_F dest;
-						dest.left = r.left;
-						dest.top = r.top;
-						dest.right = r.right;
-						dest.bottom = r.bottom;
+						dest.left = r.left * toDips;
+						dest.top = r.top * toDips;
+						dest.right = r.right * toDips;
+						dest.bottom = r.bottom * toDips;
+
+						winroot->getRenderTarget()->DrawBitmap(w->getBitmap(), &dest);
+
+						std::string temp = std::format("child {} {} counter", id, counter);
 
 						rectangle dest2;
-						dest2.x = r.left;
-						dest2.y = r.top;
-						dest2.w = r.right - r.left;
-						dest2.h = r.bottom - r.top;
-						winroot->getRenderTarget()->DrawBitmap(w->getBitmap(), dest);
+						dest2.x = 50.0;
+						dest2.y = iy;
+						dest2.w = 500.0;
+						dest2.h = 50.0;
+
+						iy += 50.0;
+						id++;
 						counter++;
-						std::string temp = std::format("{} counter", counter);
+
 						winroot->drawView("client_style", temp.c_str(), dest2, "comment");
 					}
 
@@ -3159,15 +3202,18 @@ namespace corona
 					rectangle rect;
 					rect.x = 0;
 					rect.y = 0;
-					rect.w = abs(l.right - l.left) * dpiScale;
-					rect.h = abs(l.bottom - l.top) * dpiScale;
+					rect.w = abs(l.right - l.left);
+					rect.h = abs(l.bottom - l.top);
 					auto* win = factory->getWindow(hwnd);
 					win->resize(rect.w, rect.h);
 					if (currentController) {
 						dpiScale = 96.0 / GetDpiForWindow(hwnd);
 	#if TRACE_SIZE
 						std::cout << " w " << rect.w << "h " << rect.h << std::endl;
-	#endif
+
+#endif
+						rect.w *= dpiScale;
+						rect.h *= dpiScale;
 						currentController->onResize(rect, dpiScale);
 					}
 				}

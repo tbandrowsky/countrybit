@@ -604,18 +604,26 @@ namespace corona
 		bool corona_controller::drawItem(int _id)
 		{
 			bool adapter_blown_away = false;
-			if (pg.size() < _id && _id >= 0)
+			if (pg.size() > _id && _id >= 0)
 			{
 				auto& item = pg[_id];
 				if (item.is_canvas2d()) {
-					auto host = getDrawable(_id);
+					std::cout << "Draw Item!!" << item.id << " " << std::endl;
+					auto  host = getDrawable(_id);
 					host->beginDraw(adapter_blown_away);
-					pg.visit([this](page_item* _in_page)
+					color c;
+					c.alpha = 1.0;
+					c.blue = 1.0;
+					c.green = (double)_id / pg.size();
+					c.red = (double)_id / pg.size();
+					host->clear(&c);
+					/*
+					pg.visit_impl(&item, [this, host](page_item* _in_page)
 						{
 							if (_in_page->is_drawable())
 							{
-								auto dr = this->getDrawable(_in_page->canvas_id);
-								render_item(dr, *_in_page);
+								std::cout << ".. render item!!" << _in_page->id << " " << std::endl;
+								render_item(host, *_in_page);
 							}
 							return true;
 						},
@@ -624,6 +632,7 @@ namespace corona
 							return true;
 						}
 						);
+						*/
 					host->endDraw(adapter_blown_away);
 				}
 			}
@@ -635,14 +644,14 @@ namespace corona
 			bool adapter_failure = false;
 			bool* padapter_failure = &adapter_failure;
 
-			for (int i = 0; i < pg.size(); i++)
+			for (auto pi : pg)
 			{
-				auto lyt = pg[i].layout;
+				auto lyt = pi.item.layout;
 				if (lyt == layout_types::canvas2d_absolute ||
 					lyt == layout_types::canvas2d_row ||
 					lyt == layout_types::canvas2d_column)
 				{
-					drawItem(i);
+					drawItem(pi.item.id);
 				}
 			}
 			return true;

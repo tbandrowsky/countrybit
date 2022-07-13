@@ -601,9 +601,6 @@ namespace corona
 
 		void page::arrange(double width, double height, jobject& _style_sheet)
 		{
-			sort([](auto& a, auto& b) {
-				return std::tie( a.parent_id, a.id ) < std::tie( b.parent_id, b.id );
-				});
 			for (auto pix = begin(); pix != end(); pix++)
 			{
 				auto pi = pix.get_object();

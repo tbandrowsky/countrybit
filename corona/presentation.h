@@ -187,6 +187,16 @@ namespace corona
 			page();
 			void clear();
 
+			page_item& operator[](int _id)
+			{
+				int id_to_idx = _id - 1;
+				auto& pi = this->get_at(id_to_idx);
+				if (pi.id != _id) {
+					throw std::logic_error("something bad happened with page item indeces");
+				}
+				return pi;
+			}
+
 			page_item* row(page_item* _parent, relative_ptr_type _style_id = null_row,  layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct }, measure _item_space = { 0.0, measure_units::pixels });
 			page_item* column( page_item* _parent, relative_ptr_type _style_id = null_row, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct }, measure _item_space = { 0.0, measure_units::pixels });
 			page_item* absolute(page_item* _parent, relative_ptr_type _style_id = null_row, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
