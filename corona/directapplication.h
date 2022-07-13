@@ -6,19 +6,89 @@ namespace corona
 	{
 		void throwOnFail(HRESULT hr, const char* _message);
 
-		class direct2dFactory {
-			ID2D1Factory* d2DFactory;
+		class direct3dWindowInstance
+		{
+		public:
+
+		};
+
+		class direct3dDevice
+		{
+			ID3D11Device*		d3d11Device;
+			D3D_FEATURE_LEVEL	feature_level;
+
+		public:
+
+			direct3dDevice();
+			~direct3dDevice();
+
+			bool setDevice(IDXGIAdapter1* _adapter);
+			inline ID3D11Device* getD3DDevice() { return d3d11Device; }
+			inline D3D_FEATURE_LEVEL getFeatureLevel() { return feature_level;  }
+		};
+
+		class direct2dContext;
+		class direct2dWindow;
+		class direct2dBitmap;
+
+		class direct2dDevice
+		{
+			IDXGIDevice* dxDevice;
+			ID2D1Device* d2dDevice;
+			ID2D1Factory1* d2DFactory;
 			IWICImagingFactory* wicFactory;
 			IDWriteFactory* dWriteFactory;
 
 		public:
 
-			direct2dFactory();
-			virtual ~direct2dFactory();
+			direct2dDevice();
+			~direct2dDevice();
 
-			inline ID2D1Factory* getD2DFactory() { return d2DFactory; }
+			inline ID2D1Factory1* getD2DFactory() { return d2DFactory; }
 			inline IWICImagingFactory* getWicFactory() { return wicFactory; }
 			inline IDWriteFactory* getDWriteFactory() { return dWriteFactory; }
+			inline ID2D1Device* getD2DDevice() { return d2dDevice; }
+
+			bool setDevice(ID3D11Device* _d3dDevice);
+			void release();
+		};
+
+		class adapterSet
+		{
+			IDXGIFactory2* dxFactory;
+			IDXGIAdapter1* dxAdapter;
+
+			direct2dDevice *direct2d;
+			direct3dDevice *direct3d;
+
+		public:
+
+			adapterSet();
+			~adapterSet();
+
+			void cleanup();
+			void refresh();
+
+			inline IDXGIFactory2* getDxFactory() { return dxFactory; }
+			inline IDXGIAdapter1* getDxAdapter() { return dxAdapter; }
+
+			inline ID2D1Factory* getD2DFactory() { return direct2d->getD2DFactory(); }
+			inline IWICImagingFactory* getWicFactory() { return direct2d->getWicFactory(); }
+			inline IDWriteFactory* getDWriteFactory() { return direct2d->getDWriteFactory(); }
+			inline ID2D1Device* getD2DDevice() { return direct2d->getD2DDevice(); }
+
+			inline ID3D11Device* getD3DDevice() { return direct3d->getD3DDevice(); }
+			inline D3D_FEATURE_LEVEL getFeatureLevel() { return direct3d->getFeatureLevel(); }
+
+			std::map<HWND, direct2dWindow*> windows;
+			direct2dWindow* createD2dWindow(HWND hwnd, bool childWindow);
+			direct2dWindow* getWindow(HWND hwnd);
+			std::vector<direct2dWindow*> getChildren(HWND hwnd);
+			bool containsWindow(HWND hwnd);
+			void closeWindow(HWND hwnd);
+			void clearWindows();
+
+			direct2dBitmap* createD2dBitmap(D2D1_SIZE_F size);
 
 		};
 
@@ -27,14 +97,14 @@ namespace corona
 		class path;
 		class textStyle;
 
-		struct PBGRAPixel {
+		struct PBGRAPixel 
+		{
 			unsigned char blue, green, red, alpha;
 		};
 
 		class direct2dContext : public drawableHost {
 		protected:
 
-			SIZE size;
 			D2D1_SIZE_F size_dips;
 			D2D1_SIZE_U size_pixels;
 
@@ -44,16 +114,13 @@ namespace corona
 			std::map<std::string, textStyle*> textStyles;
 			std::map<std::string, viewStyleRequest> viewStyles;
 
-			virtual void beginDraw();
-			virtual void endDraw();
-
-			direct2dFactory* factory;
+			adapterSet* factory;
 
 			OPENFILENAMEA ofn;
 
 		protected:
 
-			direct2dContext(direct2dFactory* _factory);
+			direct2dContext(adapterSet* _factory);
 			virtual ~direct2dContext();
 
 			void text_style_name(const object_name& _style_sheet_name, object_name_composed& _object_style_name);
@@ -64,11 +131,14 @@ namespace corona
 
 		public:
 
-			inline direct2dFactory* getFactory() { return factory; }
-			virtual ID2D1RenderTarget* getRenderTarget() = 0;
+			virtual ID2D1DeviceContext* getRenderTarget() = 0;
+			virtual adapterSet* getFactory();
 
 			virtual point getLayoutSize();
 			virtual point getSize();
+
+			virtual void beginDraw(bool& _adapter_blown_away) = 0;
+			virtual void endDraw(bool& _adapter_blown_away) = 0;
 
 			virtual void clear(color* _color);
 
@@ -106,9 +176,6 @@ namespace corona
 			virtual void drawText(const char* _text, database::rectangle* _rectangle, const char* _textStyle, const char* _fillBrush);
 			virtual database::rectangle getCanvasSize();
 
-			virtual bool createRenderTarget() = 0;
-			virtual void destroyRenderTarget() = 0;
-
 			virtual drawableHost* createBitmap(point& _size);
 			virtual void drawBitmap(drawableHost* _directBitmap, point& _dest, point& _size);
 			virtual void save(const char* _filename);
@@ -138,54 +205,104 @@ namespace corona
 
 		class directApplication;
 
-		class directBitmap : public direct2dContext
+		class direct2dBitmapCore
 		{
-		private:
-			ID2D1RenderTarget* wicTarget;
+		protected:
+			ID2D1DeviceContext* targetContext;
+			ID2D1RenderTarget* target;
+			ID2D1Bitmap1* bitmap;
+
+		public:
+
+			D2D1_SIZE_F size;
+
+			direct2dBitmapCore(D2D1_SIZE_F _size, adapterSet* _factory);
+			virtual ~direct2dBitmapCore();
+
+			virtual bool isBitmap() { return true; }
+
+			virtual ID2D1DeviceContext* getRenderTarget()
+			{
+				return targetContext;
+			}
+
+			ID2D1Bitmap1* getBitmap() {
+				return bitmap;
+			}
+
+			virtual void beginDraw(bool& _adapter_blown_away);
+			virtual void endDraw(bool& _adapter_blown_away);
+
+		};
+
+
+		class direct2dBitmap : public direct2dContext
+		{
+			ID2D1DeviceContext* targetContext;
+			ID2D1RenderTarget* target;
 			IWICBitmap* wicBitmap;
 
 		public:
+
 			D2D1_SIZE_F size;
 
-			directBitmap(direct2dFactory* _factory, D2D1_SIZE_F _size);
-			virtual ~directBitmap();
 
-			virtual bool createRenderTarget();
-			virtual void destroyRenderTarget();
+			direct2dBitmap(D2D1_SIZE_F _size, adapterSet* _factory);
+			virtual ~direct2dBitmap();
 
 			IWICBitmap* getBitmap();
 			void save(const char* _filename);
 			virtual bool isBitmap() { return true; }
 
-			virtual ID2D1RenderTarget* getRenderTarget()
+			virtual ID2D1DeviceContext* getRenderTarget()
 			{
-				return wicTarget;
+				return targetContext;
 			}
+
+			virtual void beginDraw(bool& _adapter_blown_away);
+			virtual void endDraw(bool& _adapter_blown_away);
+
 		};
 
-		class directWindow : public direct2dContext
+		class direct2dWindow : public direct2dContext
 		{
 		private:
 			HWND hwnd;
-			ID2D1HwndRenderTarget* hwndRenderTarget;
+
+			// for main window
+
+			ID2D1DeviceContext* renderTarget;
+			IDXGISwapChain1* swapChain;
+			IDXGISurface* surface;
+			ID3D11Texture2D* texture;
+			ID2D1Bitmap1* bitmap;
+
+			// for children
+			bool childWindow;
+			direct2dBitmapCore* childBitmap;
+
+			void applySwapChain();
 
 		public:
 
-			directWindow(HWND _hwnd, direct2dFactory* _factory);
-			virtual ~directWindow();
+			direct2dWindow(HWND hwnd, adapterSet* _adapter, bool _childWindow);
+			virtual ~direct2dWindow();
 
-			virtual bool createRenderTarget();
-			virtual void destroyRenderTarget();
+			void resize(UINT x, UINT y);
+			void moveWindow(UINT x, UINT y, UINT h, UINT w);
 
-			HRESULT setSize(D2D1_SIZE_U _newSize)
+			virtual ID2D1DeviceContext* getRenderTarget()
 			{
-				return hwndRenderTarget->Resize(_newSize);
+				return childBitmap ? childBitmap->getRenderTarget() : renderTarget;
 			}
 
-			virtual ID2D1RenderTarget* getRenderTarget()
-			{
-				return hwndRenderTarget;
-			}
+			ID2D1Bitmap1* getBitmap() { return childBitmap ? childBitmap->getBitmap() : bitmap; }
+
+			virtual void beginDraw(bool& _adapter_blown_away);
+			virtual void endDraw(bool& _adapter_blown_away);
+
+			bool isChild() { return childWindow; }
+			HWND getWindow() { return hwnd; }
 		};
 
 		class directApplication : public controllerHost
@@ -222,7 +339,6 @@ namespace corona
 				oldWindowControlMap;
 
 			std::map<int, page_item> message_map;
-			std::map<int, directWindow*> context_map;
 
 			HFONT	controlFont,
 					labelFont,
@@ -252,11 +368,11 @@ namespace corona
 			void destroyChildren();
 
 			bool disableChangeProcessing;
-			direct2dFactory* factory;
+			adapterSet* factory;
 
 		public:
 
-			directApplication(direct2dFactory* _factory);
+			directApplication(adapterSet* _factory);
 			virtual ~directApplication();
 
 			int renderPage(database::page& _page, database::jschema* _schema, database::actor_state& _state, database::jcollection& _collection);
@@ -272,6 +388,7 @@ namespace corona
 
 			// general
 			virtual void redraw();
+			virtual void redraw(int controlId);
 			virtual void setVisible(int controlId, bool visible);
 			virtual void setEnable(int controlId, bool enabled);
 			virtual void setFocus(int ddlControlId);

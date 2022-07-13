@@ -514,11 +514,8 @@ namespace corona
 
 				double bx = 0.0, by = 0.0;
 
-				if (_item->layout == layout_types::row)
-				{
-					bx = _item->bounds.x;
-					by = _item->bounds.y;
-				}
+				bx = _item->bounds.x;
+				by = _item->bounds.y;
 
 				double startx = 0;
 				for (auto child : children)
@@ -554,11 +551,8 @@ namespace corona
 
 				double bx = 0.0, by = 0.0;
 
-				if (_item->layout == layout_types::column)
-				{
-					bx = _item->bounds.x;
-					by = _item->bounds.y;
-				}
+				bx = _item->bounds.x;
+				by = _item->bounds.y;
 
 				double starty = 0;
 				for (auto child : children)

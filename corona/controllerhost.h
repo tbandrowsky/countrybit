@@ -12,8 +12,8 @@ namespace corona
 		public:
 
 			virtual point getLayoutSize() = 0;
-			virtual void beginDraw() = 0;
-			virtual void endDraw() = 0;
+			virtual void beginDraw(bool& _adapter_blown_away) = 0;
+			virtual void endDraw(bool& _adapter_blown_away) = 0;
 			virtual void clear(color* _color) = 0;
 			virtual void addBitmap(bitmapRequest* _bitmap) = 0;
 			virtual bool setBitmapSizes(bitmapRequest* _bitmap, bool _forceResize) = 0;

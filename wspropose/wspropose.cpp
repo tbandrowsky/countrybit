@@ -11,9 +11,13 @@ int __stdcall WinMain(HINSTANCE hInstance,
 	
 	auto dpiResult = ::SetProcessDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 );
 
+	CoInitialize(NULL);
+
 	corona::win32::EnableGuiStdOuts();
 
-	corona::win32::direct2dFactory factory;
+	corona::win32::adapterSet factory;
+	factory.refresh();
+
 	corona::win32::directApplication wsPropose(&factory);
 
 	bool forceWindowed = false;
@@ -34,5 +38,7 @@ int __stdcall WinMain(HINSTANCE hInstance,
 	else {
 		wsPropose.runDialog(hInstance, "Woodruff Sawyer Proposal", IDI_WSPROPOSE, true, mainController);
 	}
+
+	CoUninitialize();
 }
 

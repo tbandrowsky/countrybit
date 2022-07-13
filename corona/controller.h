@@ -43,7 +43,8 @@ namespace corona
 			virtual void mouseMove(int _id, point* _point, page_item& _pi) = 0;
 			virtual void mouseClick(int _id, point* _point, page_item& _pi) = 0;
 			virtual void pointSelected(point* _point, color* _color) = 0;
-			virtual void drawFrame() = 0;
+			virtual bool drawFrame() = 0;
+			virtual bool drawItem(int _id) = 0;
 			virtual bool update(double _elapsedSeconds, double _totalSeconds) = 0;
 
 			virtual void onCreated() = 0;
@@ -163,7 +164,8 @@ namespace corona
 
 			virtual void render(const rectangle& newSize) = 0;
 			virtual void render_item(drawableHost *_host, page_item& _item);
-			virtual void drawFrame();
+			virtual bool drawFrame();
+			virtual bool drawItem(int _id);
 
 			virtual void keyDown(int _id, short _key, page_item& _pi);
 			virtual void keyUp(int _id, short _key, page_item& _pi);

@@ -275,7 +275,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 		pcr.field_id_primary_key = idf_program_chart_slide;
 		pcr.member_fields = { idf_program_chart_slide, idf_client, idf_program, idf_slide_title };
 		idc_program_chart_slide = schema.put_class(pcr);
-
+		 
 		pcr.class_name = "program_chart_slide_product";
 		pcr.class_description = "SLIDE PRODUCT";
 		pcr.field_id_primary_key = idf_program_chart_slide_product;
@@ -1060,12 +1060,12 @@ field id idf_carrier, which is populated when objects of this class are construc
 			{ schema.idf_client_style },
 			{
 				{ schema.idf_font_name, fontName },
-				{ schema.idf_font_size, 14.0 },
+				{ schema.idf_font_size, 32.0 },
 				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_center },
 				{ schema.idf_vertical_alignment, (int)visual_alignment::align_center },
 				{ schema.idf_shape_fill_color, "#000000FF" },
-				{ schema.idf_shape_border_thickness, 0 },
-				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_shape_border_thickness, 8 },
+				{ schema.idf_shape_border_color, "#000000FF" },
 				{ schema.idf_box_fill_color, "#78BE20FF" },
 				{ schema.idf_box_border_thickness, 8 },
 				{ schema.idf_box_border_color, "#FFFFFFFF" }

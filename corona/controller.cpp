@@ -224,10 +224,11 @@ namespace corona
 			c.alpha = 1.0;
 			c.red = c.green = c.blue = 0.0;
 
-			bm->beginDraw();
-			bm->clear(&c);
+			bool blown_away;
 
-			bm->endDraw();
+			bm->beginDraw(blown_away);
+			bm->clear(&c);
+			bm->endDraw(blown_away);
 
 			bm->save(_filenameImage);
 
@@ -419,6 +420,7 @@ namespace corona
 
 		void corona_controller::clear()
 		{
+			showUpdate = true;
 			pg.clear();
 		}
 
@@ -599,33 +601,51 @@ namespace corona
 			arrange(newSize.w, newSize.h, style_sheet);
 		}
 
-		void corona_controller::drawFrame()
+		bool corona_controller::drawItem(int _id)
 		{
-
-			pg.visit([this](page_item* _in_page)
-				{
-					if (_in_page->is_canvas2d())
-					{
-						auto dr = this->getDrawable(_in_page->id);
-						dr->beginDraw();
-					}
-					else if (_in_page->is_drawable())
-					{
-						auto dr = this->getDrawable(_in_page->canvas_id);
-						render_item(dr, *_in_page);
-					}
-					return true;
-				},
-				[this](page_item* _out_page)
-				{
-					if (_out_page->is_canvas2d())
-					{
-						auto dr = this->getDrawable(_out_page->id);
-						dr->endDraw();
-					}
-					return true;
+			bool adapter_blown_away = false;
+			if (pg.size() < _id && _id >= 0)
+			{
+				auto& item = pg[_id];
+				if (item.is_canvas2d()) {
+					auto host = getDrawable(_id);
+					host->beginDraw(adapter_blown_away);
+					pg.visit([this](page_item* _in_page)
+						{
+							if (_in_page->is_drawable())
+							{
+								auto dr = this->getDrawable(_in_page->canvas_id);
+								render_item(dr, *_in_page);
+							}
+							return true;
+						},
+						[this](page_item* _out_page)
+						{
+							return true;
+						}
+						);
+					host->endDraw(adapter_blown_away);
 				}
-				);
+			}
+			return adapter_blown_away;
+		}
+
+		bool corona_controller::drawFrame()
+		{
+			bool adapter_failure = false;
+			bool* padapter_failure = &adapter_failure;
+
+			for (int i = 0; i < pg.size(); i++)
+			{
+				auto lyt = pg[i].layout;
+				if (lyt == layout_types::canvas2d_absolute ||
+					lyt == layout_types::canvas2d_row ||
+					lyt == layout_types::canvas2d_column)
+				{
+					drawItem(i);
+				}
+			}
+			return true;
 		}
 
 		void corona_controller::render_item(drawableHost* _host, page_item& _item)
@@ -692,7 +712,19 @@ namespace corona
 				od += _item.slice.get_class().item().name;
 			}
 
-			_host->drawView(style_name, cap, _item.bounds, od.c_str());
+			// because canvases are their own windows, the contents
+			// must be drawn within them relative to the window, not the screen
+
+			auto effective_bounds = _item.bounds;
+
+			if (_item.canvas_id > -1)
+			{
+				auto container = pg[_item.canvas_id];
+				effective_bounds.x -= container.bounds.x;
+				effective_bounds.y -= container.bounds.y;
+			}
+
+			_host->drawView(style_name, cap, effective_bounds, od.c_str());
 		}
 
 		page_item* corona_controller::add_update_fields(page_item* _parent, field_layout _layout, const char *_object_title)

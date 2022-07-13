@@ -175,7 +175,6 @@ namespace corona
 			void calculate_sizes(jobject& _style_sheet, page::iterator_type children, double offx, double offy, double x, double y, double width, double height, double& remaining_width, double& remaining_height);
 			void set_bound_size(jobject& _style_sheet, page_item* _item, double offx, double offy, double x, double y, double width, double height);
 			void arrange_impl(jobject& _style_sheet, page_item *_item, double offx, double offy, double x, double y, double width, double height);
-			void visit_impl(page_item* _item, std::function<bool(page_item* _parent)> fnin, std::function<bool(page_item* _parent)> fout);
 
 			dynamic_box data;
 			using base_type = iarray<page_item, 1024>;
@@ -210,6 +209,7 @@ namespace corona
 
 			void arrange( double _width, double _height, jobject& _style_sheet );
 			void visit(std::function<bool(page_item* _parent)> fnin, std::function<bool(page_item* _parent)> fout);
+			void visit_impl(page_item* _item, std::function<bool(page_item* _parent)> fnin, std::function<bool(page_item* _parent)> fout);
 
 		};
 	}
