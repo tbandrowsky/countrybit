@@ -4,7 +4,7 @@
 #ifdef WINDESKTOP_GUI
 
 #define TRACE_CONTROLLER 1
-#define TRACE_RENDER 1
+#define TRACE_RENDER 0
 
 namespace corona
 {
@@ -622,14 +622,13 @@ namespace corona
 					location.x = 0;
 					location.y = 0;
 
-					std::string labelo = std::format("{} {}", "testo", _id);
-					host->drawView("label_style", labelo.c_str(), location, "commment");
 
 #if TRACE_RENDER
+					std::string labelo = std::format("{} {}", "testo", _id);
+					host->drawView("label_style", labelo.c_str(), location, "commment");
 					std::cout << "Draw Canvas Item" << item.id << " " << location.x << " " << location.y << " " << location.w << " " << location.h << std::endl;
-#endif
+#else
 
-					/*
 					pg.visit_impl(&item, [this, host](page_item* _in_page)
 						{
 							if (_in_page->is_drawable())
@@ -644,7 +643,7 @@ namespace corona
 							return true;
 						}
 						);
-						*/
+#endif
 					host->endDraw(adapter_blown_away);
 				}
 			}
