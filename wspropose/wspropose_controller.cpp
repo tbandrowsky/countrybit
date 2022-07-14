@@ -424,7 +424,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 	void wsproposal_controller::render_header(page_item* _frame, const char* _title, const char* _subtitle, bool _left_pad)
 	{
 		auto header_column = canvas2d_column( id_canvas_header, _frame, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 120.0_px });
-		auto title_bar = row(header_column, null_row, { 0.0_px, 0.0_px, 100.0_pct, 1.0_fntgr });
+		auto title_bar = row(header_column, null_row, { 0.0_px, 0.0_px, 100.0_pct, 32.0_px });
 		auto underline_bar = row(header_column, schema.idf_view_section_style, { 0.0_px, 0.0_px, 90.0_pct, 4.0_px });
 		auto underline_space_bar = row(header_column, schema.idf_view_background_style , { 0.0_px, 0.0_px, 90.0_pct, 4.0_px });
 		auto breadcrumb_bar = row(header_column, schema.idf_breadcrumb_bar_style, { 0.0_px, 0.0_px, 100.0_pct, 50.0_px });

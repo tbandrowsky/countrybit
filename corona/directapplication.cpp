@@ -8,7 +8,7 @@
 //#define TRACE_GUI 1
 //#define OUTLINE_GUI 1
 //#define TRACE_SIZE 1
-#define TRACE_RENDER 1
+//#define TRACE_RENDER 1
 
 #if TRACE_GUI
 #define OUTLINE_GUI 1
@@ -104,51 +104,71 @@ namespace corona
 			direct2d->setDevice(direct3d->getD3DDevice());
 		}
 
-		direct2dWindow* adapterSet::createD2dWindow(HWND hwnd, bool isChild)
+		direct2dWindow* adapterSet::createD2dWindow(HWND parent)
 		{
-			direct2dWindow* win = new direct2dWindow(hwnd, this, isChild);
-			windows.insert_or_assign(hwnd, win);
+			direct2dWindow *win = new direct2dWindow(parent, this);
+			parent_windows.insert_or_assign(parent, win);
 			return win;
 		}
 
-		std::vector<direct2dWindow*> adapterSet::getChildren(HWND hwnd)
+		direct2dWindow* adapterSet::getWindow(HWND parent)
 		{
-			std::vector<direct2dWindow*> vec;
-
-			for (auto w : windows)
-			{
-				if (w.second->isChild() && GetParent(w.first) == hwnd)
-					vec.push_back(w.second);
+			direct2dWindow* win = nullptr;
+			if (parent_windows.contains(parent)) {
+				win = parent_windows[parent];
 			}
-			return vec;
+			return win;
 		}
 
-		direct2dWindow* adapterSet::getWindow(HWND hwnd)
+		bool adapterSet::containsWindow(HWND parent)
 		{
-			return windows[hwnd];
-		}
-
-		bool adapterSet::containsWindow(HWND hwnd)
-		{
-			return windows.contains(hwnd);
+			return parent_windows.contains(parent);
 		}
 
 		void adapterSet::closeWindow(HWND hwnd)
 		{
-			auto *w = windows[hwnd];
-			delete w;
-			windows.erase(hwnd);
+			auto *win = getWindow(hwnd);
+			if (win) {
+				delete win;
+				parent_windows.erase(hwnd);
+			}
 		}
 
 		void adapterSet::clearWindows()
 		{
-			for (auto w : windows)
+			for (auto win : parent_windows)
 			{
-				delete w.second;
+				delete win.second;
 			}
-			windows.clear();
+			parent_windows.clear();
 		}
 
+		direct2dChildWindow* adapterSet::findChild(relative_ptr_type _child)
+		{
+			direct2dChildWindow* w = nullptr;
+			for (auto win : parent_windows)
+			{
+				w = win.second->getChild(_child);
+				if (w) {
+					break;
+				}
+			}
+			return w;
+		}
+
+		void adapterSet::loadStyleSheet(jobject& sheet)
+		{
+			direct2dChildWindow* w = nullptr;
+			for (auto win : parent_windows)
+			{
+				win.second->loadStyleSheet(sheet);
+				for (auto& child : win.second->getChildren())
+				{
+					child.second->loadStyleSheet(sheet);
+				}
+			}
+		}
+ 
 		direct2dBitmap* adapterSet::createD2dBitmap(D2D1_SIZE_F size)
 		{
 			direct2dBitmap* win = new direct2dBitmap(size, this);
@@ -254,7 +274,9 @@ namespace corona
 			return SUCCEEDED(hr);
 		}
 
-		direct2dWindow::direct2dWindow(HWND _hwnd, adapterSet* _adapterSet, bool _childWindow) : direct2dContext(_adapterSet)
+		//-------
+
+		direct2dWindow::direct2dWindow(HWND _hwnd, adapterSet* _adapterSet) : direct2dContext(_adapterSet)
 		{
 
 			HRESULT hr;
@@ -264,8 +286,6 @@ namespace corona
 			surface = nullptr;
 			swapChain = nullptr;
 			renderTarget = nullptr;
-			childBitmap = nullptr;
-			childWindow = _childWindow;
 
 			D2D1_DEVICE_CONTEXT_OPTIONS options;
 
@@ -279,108 +299,68 @@ namespace corona
 			int width = abs(rect.right - rect.left);
 			int height = abs(rect.bottom - rect.top);
 
-			if (!childWindow) {
+			DXGI_SWAP_CHAIN_DESC1 swapChainDesc = { 0 };
+			swapChainDesc.Width = width;
+			swapChainDesc.Height = height;
+			swapChainDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM; // this is the most common swapchain format
+			swapChainDesc.Stereo = false;
+			swapChainDesc.SampleDesc.Count = 1;
+			swapChainDesc.SampleDesc.Quality = 0;
+			swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_BACK_BUFFER;
+			swapChainDesc.BufferCount = 2;                     // use double buffering to enable flip
+			swapChainDesc.Scaling = DXGI_SCALING_NONE;
+			swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
+			swapChainDesc.Flags = 0;
 
-				DXGI_SWAP_CHAIN_DESC1 swapChainDesc = { 0 };
-				swapChainDesc.Width = width;
-				swapChainDesc.Height = height;
-				swapChainDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM; // this is the most common swapchain format
-				swapChainDesc.Stereo = false;
-				swapChainDesc.SampleDesc.Count = 1;
-				swapChainDesc.SampleDesc.Quality = 0;
-				swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_BACK_BUFFER;
-				swapChainDesc.BufferCount = 2;                     // use double buffering to enable flip
-				swapChainDesc.Scaling = DXGI_SCALING_NONE;
-				swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
-				swapChainDesc.Flags = 0;
+			hr = _adapterSet->getDxFactory()->CreateSwapChainForHwnd(_adapterSet->getD3DDevice(), hwnd, &swapChainDesc, nullptr, nullptr, &swapChain);
+			throwOnFail(hr, "Could not create swap chain");
 
-				hr = _adapterSet->getDxFactory()->CreateSwapChainForHwnd(_adapterSet->getD3DDevice(), hwnd, &swapChainDesc, nullptr, nullptr, &swapChain);
-				throwOnFail(hr, "Could not create swap chain");
+			DXGI_RGBA color;
+			color.a = 1.0;
+			color.r = 0.0;
+			color.g = 0.0;
+			color.b = 0.2;
 
-				DXGI_RGBA color;
-				color.a = 1.0;
-				color.r = 0.0;
-				color.g = .80;
-				color.b = 1.0;
+			swapChain->SetBackgroundColor(&color);
 
-				swapChain->SetBackgroundColor(&color);
-
-				applySwapChain();
-			}
-			else 
-			{
-				resize(width, height);
-			}
+			applySwapChain();
 		}
 
 		void direct2dWindow::resize(UINT width, UINT height)
 		{
 			HRESULT hr;
 
-			if (childWindow)
-			{
-#if TRACE_RENDER
-				std::cout << "%%%%%%%%% child resize " << GetDlgCtrlID( hwnd ) << " " << width << " " << height << std::endl;
-#endif
-
-				if (childBitmap)
-					delete childBitmap;
-
-				childBitmap = nullptr; 
-
-				int dpiWindow;
-				dpiWindow = ::GetDpiForWindow(hwnd);
-
-				D2D1_SIZE_F size;
-				size.width = width;
-				size.height = height;
-				childBitmap = new direct2dBitmapCore(size, factory, dpiWindow);
-			}
-			else 
-			{
 #if TRACE_RENDER
 				std::cout << "%%%%%%%%% parent resize " << GetDlgCtrlID(hwnd) << " " << width << " " << height << std::endl;
 #endif
 
-				if (renderTarget)
-				{
-					renderTarget->SetTarget(nullptr);
-				}
-				if (bitmap)
-				{
-					bitmap->Release();
-					bitmap = nullptr;
-				}
-				if (surface)
-				{
-					surface->Release();
-					surface = nullptr;
-				}
-
-				applySwapChain();
+			if (renderTarget)
+			{
+				renderTarget->SetTarget(nullptr);
 			}
+			if (bitmap)
+			{
+				bitmap->Release();
+				bitmap = nullptr;
+			}
+			if (surface)
+			{
+				surface->Release();
+				surface = nullptr;
+			}
+
+			applySwapChain();
 		}
 
 		void direct2dWindow::moveWindow(UINT x, UINT y, UINT w, UINT h)
 		{
 			double dpi = ::GetDpiForWindow(hwnd);
 
-			windowPosition.x = x * 96.0 / dpi;
-			windowPosition.y = y * 96.0 / dpi;
-			windowPosition.w = w * 96.0 / dpi;
-			windowPosition.h = h * 96.0 / dpi;
-
 			MoveWindow(hwnd, x, y, w, h, false);
-		}
-
-		rectangle direct2dWindow::getBoundsDips()
-		{
-			return windowPosition;
 		}
 
 		void direct2dWindow::applySwapChain()
 		{
-
 			HRESULT hr;
 
 			float dpix, dpiy;
@@ -444,8 +424,13 @@ namespace corona
 
 		direct2dWindow::~direct2dWindow()
 		{
-			if (childBitmap)
-				delete childBitmap;
+			for (auto child : children)
+			{
+				delete child.second;
+			}
+
+			children.clear();
+
 			if (bitmap)
 				bitmap->Release();
 			if (surface)
@@ -455,6 +440,163 @@ namespace corona
 			if (renderTarget)
 				renderTarget->Release();
 		}
+
+		direct2dChildWindow* direct2dWindow::createChild(relative_ptr_type _id, UINT _x, UINT _y, UINT _w, UINT _h)
+		{
+			direct2dChildWindow* child = nullptr;
+			if (children.contains(_id)) {
+				child = children[_id];
+				child->moveWindow(_x, _y, _w, _h);
+			}
+			else 
+			{
+				child = new direct2dChildWindow(this, factory, _x, _y, _w, _h);
+				children.insert_or_assign(_id, child);
+			}
+			return child;
+		}
+
+		direct2dChildWindow* direct2dWindow::getChild(relative_ptr_type _id)
+		{
+			direct2dChildWindow* child = nullptr;
+			if (children.contains(_id)) {
+				child = children[ _id ];
+			}
+			return child;
+		}
+		
+		direct2dChildWindow* direct2dWindow::deleteChild(relative_ptr_type _id)
+		{
+			direct2dChildWindow* child = getChild(_id);
+			if (child) {
+				delete child;
+				children.erase(_id);
+			}
+			return nullptr;
+		}
+
+		void direct2dWindow::beginDraw(bool& _adapter_blown_away)
+		{
+			currentTransform = D2D1::Matrix3x2F::Identity();
+			_adapter_blown_away = false;
+
+			HRESULT hr = S_OK;
+
+			if (getRenderTarget()) {
+				getRenderTarget()->BeginDraw();
+			}
+			;
+		}
+
+		void direct2dWindow::endDraw(bool& _adapter_blown_away)
+		{
+			_adapter_blown_away = false;
+			if (getRenderTarget()) {
+				HRESULT hr = getRenderTarget()->EndDraw();
+
+				if (hr == D2DERR_RECREATE_TARGET)
+				{
+					_adapter_blown_away = true;
+				}
+				else if (SUCCEEDED(hr))
+				{
+					RECT r;
+					hr = swapChain->Present(1, 0);
+
+					switch (hr)
+					{
+					case DXGI_ERROR_ACCESS_DENIED:
+					case DXGI_ERROR_DRIVER_INTERNAL_ERROR:
+					case DXGI_ERROR_DEVICE_REMOVED:
+					case DXGI_ERROR_DEVICE_RESET:
+					case DXGI_ERROR_ALREADY_EXISTS:
+						_adapter_blown_away = true;
+						break;
+					}
+				}
+			}
+		}
+
+		//-------
+
+		direct2dChildWindow::direct2dChildWindow(direct2dWindow* _parent, adapterSet* _adapterSet, UINT _xdips, UINT _ydips, UINT _wdips, UINT _hdips) : direct2dContext(_adapterSet)
+		{
+			HRESULT hr;
+
+			parent = _parent;
+			childBitmap = nullptr;
+
+			windowPosition.x = _xdips;
+			windowPosition.y = _ydips;
+			windowPosition.w = _wdips;
+			windowPosition.h = _hdips;
+
+			resize(_wdips, _hdips);
+		}
+
+		void direct2dChildWindow::resize(UINT _wdips, UINT _hdips)
+		{
+			HRESULT hr;
+
+#if TRACE_RENDER
+			std::cout << "%%%%%%%%% child resize " << GetDlgCtrlID(hwnd) << " " << width << " " << height << std::endl;
+#endif
+
+			if (childBitmap)
+				delete childBitmap;
+			childBitmap = nullptr;
+
+			int dpiWindow;
+			dpiWindow = ::GetDpiForWindow(parent->getWindow());
+			double dipsToPixels = dpiWindow / 96.0;
+
+			D2D1_SIZE_F size;
+			size.width = _wdips * dipsToPixels;
+			size.height = _hdips * dipsToPixels;
+			childBitmap = new direct2dBitmapCore(size, factory, dpiWindow);
+		}
+
+		void direct2dChildWindow::moveWindow(UINT _xdips, UINT _ydips, UINT _wdips, UINT _hdips)
+		{
+			windowPosition.x = _xdips;
+			windowPosition.y = _ydips;
+			windowPosition.w = _wdips;
+			windowPosition.h = _hdips;
+			resize(_wdips, _hdips);
+		}
+
+		rectangle direct2dChildWindow::getBoundsDips()
+		{
+			return windowPosition;
+		}
+
+		direct2dChildWindow::~direct2dChildWindow()
+		{
+			if (childBitmap)
+				delete childBitmap;
+		}
+
+		void direct2dChildWindow::beginDraw(bool& _adapter_blown_away)
+		{
+			currentTransform = D2D1::Matrix3x2F::Identity();
+			_adapter_blown_away = false;
+
+			HRESULT hr = S_OK;
+
+			if (getRenderTarget()) {
+				getRenderTarget()->BeginDraw();
+			}
+		}
+
+		void direct2dChildWindow::endDraw(bool& _adapter_blown_away)
+		{
+			_adapter_blown_away = false;
+			if (getRenderTarget()) {
+				HRESULT hr = getRenderTarget()->EndDraw();
+			}
+		}
+
+		//---
 
 		direct2dContext::direct2dContext(adapterSet* _factory) :
 			factory(_factory)
@@ -2257,49 +2399,6 @@ namespace corona
 			}
 		}
 
-		void direct2dWindow::beginDraw(bool& _adapter_blown_away)
-		{
-			currentTransform = D2D1::Matrix3x2F::Identity();
-			_adapter_blown_away = false;
-
-			HRESULT hr = S_OK;
-
-			if (getRenderTarget()) {
-				getRenderTarget()->BeginDraw();
-			}
-			;
-		}
-
-		void direct2dWindow::endDraw(bool& _adapter_blown_away)
-		{
-			_adapter_blown_away = false;
-			if (getRenderTarget()) {
-				HRESULT hr = getRenderTarget()->EndDraw();
-
-				if (!childBitmap) {
-					if (hr == D2DERR_RECREATE_TARGET)
-					{
-						_adapter_blown_away = true;
-					}
-					else if (SUCCEEDED(hr))
-					{
-						RECT r;
-						hr = swapChain->Present(1, 0);
-
-						switch (hr)
-						{
-						case DXGI_ERROR_ACCESS_DENIED:
-						case DXGI_ERROR_DRIVER_INTERNAL_ERROR:
-						case DXGI_ERROR_DEVICE_REMOVED:
-						case DXGI_ERROR_DEVICE_RESET:
-						case DXGI_ERROR_ALREADY_EXISTS:
-							_adapter_blown_away = true;
-							break;
-						}
-					}
-				}
-			}
-		}
 
 		drawableHost* direct2dContext::createBitmap(point& _size)
 		{
@@ -2458,7 +2557,8 @@ namespace corona
 			static int counter = 0;
 
 			if (currentController) 
-			{	
+			{
+			
 				currentController->drawFrame();
 
 				bool failedDevice = false;
@@ -2470,21 +2570,20 @@ namespace corona
 
 				double toDips = 96.0 / GetDpiForWindow(winroot->getWindow());
 
-				winroot->beginDraw(failedDevice);
-								
+				winroot->beginDraw(failedDevice);						
 
 				if (!failedDevice) 
 				{
-					auto wins = factory->getChildren(hwndRoot);
+					auto wins = winroot->getChildren();
 
 					int iy = 200;
-					int id = 0;
+					relative_ptr_type id = 0;
 
-					for (auto w : wins)
+					for (auto& w : wins)
 					{
-						rectangle r = w->getBoundsDips();
+						rectangle r = w.second->getBoundsDips();
 
-						id = ::GetDlgCtrlID(w->getWindow());
+						id = w.first;
 
 						D2D1_RECT_F dest;
 						dest.left = r.x;
@@ -2496,7 +2595,7 @@ namespace corona
 						std::cout << "Compose item#" << id << " " << dest.left << " " << dest.top << " " << dest.right << " " << dest.bottom << std::endl;
 #endif
 
-						winroot->getRenderTarget()->DrawBitmap(w->getBitmap(), &dest);
+						winroot->getRenderTarget()->DrawBitmap(w.second->getBitmap(), &dest);
 
 						std::string temp = std::format("child {} {} counter", id, counter);
 
@@ -2507,7 +2606,6 @@ namespace corona
 						dest2.h = 50.0;
 
 						iy += 50.0;
-						id++;
 						counter++;
 
 						//winroot->drawView("client_style", temp.c_str(), dest2, "comment");
@@ -2527,15 +2625,23 @@ namespace corona
 
 		void directApplication::destroyChildren()
 		{
-			for (auto child : oldWindowControlMap)
+			for (auto& child : oldWindowControlMap)
 			{
-				if (!windowControlMap.contains(child.first)) {
-					char buff[512];
-					GetClassName(child.second.window, buff, sizeof(buff));
+				if (!windowControlMap.contains(child.first)) 
+				{
+					if (child.second.window) 
+					{
+						char buff[512];
+						GetClassName(child.second.window, buff, sizeof(buff));
 #if TRACE_SIZE
-					std::cout << "Destroying " << buff << std::endl;
+						std::cout << "Destroying " << buff << std::endl;
 #endif
-					DestroyWindow(child.second.window);
+						DestroyWindow(child.second.window);
+					}
+					else
+					{
+						factory->getWindow(hwndRoot)->deleteChild(child.first);
+					}
 				}
 			}
 			oldWindowControlMap = windowControlMap;
@@ -2631,10 +2737,7 @@ namespace corona
 				HFONT oldLabelFont = labelFont;
 				HFONT oldTitleFont = titleFont;
 
-				for (auto wmi : factory->windows)
-				{
-					wmi.second->loadStyleSheet(styles);
-				}
+				factory->loadStyleSheet(styles);
 
 				controlFont = createFontFromStyleSheet(schema->idf_control_style);
 				labelFont = createFontFromStyleSheet(schema->idf_label_style);
@@ -2693,6 +2796,8 @@ namespace corona
 			windowControlMap.clear();
 			message_map.clear();
 
+			auto *win = factory->getWindow(hwndRoot);
+
 			database::jobject slice;
 			for (auto piter : _page)
 			{
@@ -2708,8 +2813,14 @@ namespace corona
 				case database::layout_types::canvas2d_row:
 				case database::layout_types::canvas2d_column:
 				case database::layout_types::canvas2d_absolute:
-					canvasWindowId = pi.id;
-					createChildWindow(pid, "CoronaDirect2d", "", WS_CHILD | WS_TABSTOP , pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, canvasWindowId, NULL, NULL, pi);
+					{
+						windowMapItem wmi{};
+
+						auto child = win->createChild(pid, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h);
+						auto ss = currentController->getStyleSheet();
+						child->loadStyleSheet(ss);
+						windowControlMap.insert_or_assign(pid, wmi);
+					}
 					break;
 				case database::layout_types::label:
 					{	   
@@ -2815,181 +2926,6 @@ namespace corona
 			return canvasWindowId;
 		}
 
-		LRESULT CALLBACK directApplication::d2dWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
-		{
-			return current->d2dWindowProcHandler(hwnd, message, wParam, lParam);
-		}
-
-		LRESULT directApplication::d2dWindowProcHandler(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
-		{
-			bool found = false;
-			point point;
-
-			int id = ::GetDlgCtrlID(hwnd);		
-
-			database::page_item pi;
-			if (message_map.contains(id))
-				pi = message_map[id];
-
-			switch (message)
-			{
-			case WM_CREATE:
-				{
-					LPCREATESTRUCT lpcn = (LPCREATESTRUCT)lParam;
-					dpiScale = 96.0 / GetDpiForWindow(hwnd);
-					auto *win = factory->createD2dWindow(hwnd, true);
-					if (currentController) {
-						auto styles = currentController->getStyleSheet();
-						win->loadStyleSheet(styles);
-					}
-				}
-				break;
-			case WM_SWITCH_CONTROLLER:
-				setController((controller*)lParam);
-				return 0;
-			case WM_PUSH_CONTROLLER:
-				pushController((controller*)lParam);
-				return 0;
-			case WM_POP_CONTROLLER:
-				popController();
-				return 0;
-			case WM_DESTROY:
-				{
-					factory->closeWindow(hwnd);
-				}
-				return 0;
-			case WM_SIZE:
-				{
-					SIZE size;
-					size.cx = LOWORD(lParam);
-					size.cy = HIWORD(lParam);
-					auto* win = factory->getWindow(hwnd);					
-					win->resize(size.cx, size.cy);
-				}
-				return 0;
-			case WM_CLOSE:
-				DestroyWindow(hwnd);
-				return 0;
-			case WM_ERASEBKGND:
-				return 1;
-			case WM_PAINT:
-				redraw(GetDlgCtrlID(hwnd));
-//				redraw();
-	//			::ValidateRect(hwnd, NULL);
-				return 0;
-				// <------------mouse management------------------->
-
-			case WM_LBUTTONDOWN:
-				dpiScale = 96.0 / GetDpiForWindow(hwnd);
-				point.x = GET_X_LPARAM(lParam) * dpiScale;
-				point.y = GET_Y_LPARAM(lParam) * dpiScale;
-				if (currentController)
-					currentController->mouseClick(id, &point, pi);
-				break;
-
-			case WM_MOUSEMOVE:
-				dpiScale = 96.0 / GetDpiForWindow(hwnd);
-				point.x = GET_X_LPARAM(lParam) * dpiScale;
-				point.y = GET_Y_LPARAM(lParam) * dpiScale;
-				if (currentController)
-					currentController->mouseMove(id, &point, pi);
-				break;
-
-				// <------------keyboard management------------------->
-
-			case WM_KILLFOCUS:
-				pressedKeys.clear();
-				return 0;
-			case WM_KEYDOWN:
-				switch (wParam)
-				{
-				case VK_ESCAPE:
-					DestroyWindow(hwnd);
-					break;
-				default:
-					for (std::list<int>::iterator i = pressedKeys.begin(); i != pressedKeys.end(); i++) {
-						if (*i == wParam) {
-							found = true;
-							break;
-						}
-					}
-					if (!found) {
-						pressedKeys.push_back(wParam);
-						if (currentController) {
-							currentController->keyDown(id, wParam, pi);
-						}
-					}
-					break;
-				}
-				break;
-			case WM_KEYUP:
-				pressedKeys.remove(wParam);
-				if (currentController) {
-					currentController->keyUp(id, wParam, pi);
-				}
-				return 0;
-
-			case WM_HSCROLL:
-				if (currentController) {
-					int pos = 0;
-					switch (LOWORD(wParam)) {
-					case SB_LINELEFT:
-						pos = currentController->onHScroll(id, scrollTypes::ScrollLineUp, pi);
-						::SetScrollPos(hwnd, SB_HORZ, pos, TRUE);
-						break;
-					case SB_LINERIGHT:
-						pos = currentController->onHScroll(id, scrollTypes::ScrollLineDown, pi);
-						::SetScrollPos(hwnd, SB_HORZ, pos, TRUE);
-						break;
-					case SB_PAGELEFT:
-						pos = currentController->onHScroll(id, scrollTypes::ScrollPageUp, pi);
-						::SetScrollPos(hwnd, SB_HORZ, pos, TRUE);
-						break;
-					case SB_PAGERIGHT:
-						pos = currentController->onHScroll(id, scrollTypes::ScrollPageDown, pi);
-						::SetScrollPos(hwnd, SB_HORZ, pos, TRUE);
-						break;
-						//			case SB_THUMBPOSITION:
-					case SB_THUMBTRACK:
-						pos = currentController->onHScroll(id, scrollTypes::ThumbTrack, pi);
-						::SetScrollPos(hwnd, SB_HORZ, pos, TRUE);
-						break;
-					}
-				}
-				break;
-			case WM_VSCROLL:
-				if (currentController) {
-					int pos = 0;
-					switch (LOWORD(wParam)) {
-					case SB_LINELEFT:
-						pos = currentController->onVScroll(id, scrollTypes::ScrollLineUp, pi);
-						::SetScrollPos(hwnd, SB_VERT, pos, TRUE);
-						break;
-					case SB_LINERIGHT:
-						pos = currentController->onVScroll(id, scrollTypes::ScrollLineDown, pi);
-						::SetScrollPos(hwnd, SB_VERT, pos, TRUE);
-						break;
-					case SB_PAGELEFT:
-						pos = currentController->onVScroll(id, scrollTypes::ScrollPageUp, pi);
-						::SetScrollPos(hwnd, SB_VERT, pos, TRUE);
-						break;
-					case SB_PAGERIGHT:
-						pos = currentController->onVScroll(id, scrollTypes::ScrollPageDown, pi);
-						::SetScrollPos(hwnd, SB_VERT, pos, TRUE);
-						break;
-						//			case SB_THUMBPOSITION:
-					case SB_THUMBTRACK:
-						pos = currentController->onVScroll(id, scrollTypes::ThumbTrack, pi);
-						::SetScrollPos(hwnd, SB_VERT, pos, TRUE);
-						break;
-					}
-				}
-				break;
-			}
-
-			return DefWindowProc(hwnd, message, wParam, lParam);
-		}
-
 		LRESULT CALLBACK directApplication::windowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 		{
 			return current->windowProcHandler(hwnd, message, wParam, lParam);
@@ -3004,14 +2940,16 @@ namespace corona
 			char className[256];
 			database::point ptz;
 
+			auto* winx = factory->getWindow(hwnd);
+
 			switch (message)
 			{
 			case WM_CREATE:
 				hwndRoot = hwnd;
 				if (currentController) {
+					auto* win = factory->createD2dWindow(hwnd);
 					currentController->onCreated();
 					dpiScale = 96.0 / GetDpiForWindow(hwnd);
-					auto* win = factory->createD2dWindow(hwnd, false);
 					auto styles = currentController->getStyleSheet();
 					win->loadStyleSheet(styles);
 				}
@@ -3029,7 +2967,7 @@ namespace corona
 					UINT notificationCode = HIWORD(wParam);
 					database::page_item pi;
 					if (message_map.contains(controlId)) {
-						pi = message_map[ controlId ];
+						pi = message_map[controlId];
 					}
 					switch (notificationCode) {
 					case BN_CLICKED: // button or menu
@@ -3142,38 +3080,38 @@ namespace corona
 				break;
 			case WM_CTLCOLORLISTBOX:
 			case WM_CTLCOLOREDIT:
+			{
+				HDC hdcStatic = (HDC)wParam;
+				SetBkColor(hdcStatic, RGB(255, 255, 255));
+				if (hbrBkgnd == NULL)
 				{
-					HDC hdcStatic = (HDC) wParam;
-					SetBkColor(hdcStatic, RGB(255,255,255));
-					if (hbrBkgnd == NULL)
-					{
-						hbrBkgnd = CreateSolidBrush(RGB(255, 255, 255));
-					}
-					return (INT_PTR)hbrBkgnd;
+					hbrBkgnd = CreateSolidBrush(RGB(255, 255, 255));
 				}
-				break;
+				return (INT_PTR)hbrBkgnd;
+			}
+			break;
 			case WM_CTLCOLORBTN:
 			case WM_CTLCOLORSTATIC:
+			{
+				HDC hdcStatic = (HDC)wParam;
+				SetBkColor(hdcStatic, RGB(255, 255, 255));
+				if (hbrBkgnd == NULL)
 				{
-					HDC hdcStatic = (HDC) wParam;
-					SetBkColor(hdcStatic, RGB(255, 255, 255));
-					if (hbrBkgnd == NULL)
-					{
-						hbrBkgnd = CreateSolidBrush(RGB(255, 255, 255));
-					}
-					return (INT_PTR)hbrBkgnd;
+					hbrBkgnd = CreateSolidBrush(RGB(255, 255, 255));
 				}
-				break;
+				return (INT_PTR)hbrBkgnd;
+			}
+			break;
 			case WM_ERASEBKGND:
 			{
-					RECT rect, rect2;
-					HDC eraseDc = (HDC)wParam;
-					if (hbrBkgnd == NULL)
-					{
-						hbrBkgnd = CreateSolidBrush(RGB(255, 144, 255));
-					}
-					::GetClientRect(hwnd, &rect);
-					::FillRect((HDC)wParam, &rect, hbrBkgnd);
+				RECT rect, rect2;
+				HDC eraseDc = (HDC)wParam;
+				if (hbrBkgnd == NULL)
+				{
+					hbrBkgnd = CreateSolidBrush(RGB(255, 144, 255));
+				}
+				::GetClientRect(hwnd, &rect);
+				::FillRect((HDC)wParam, &rect, hbrBkgnd);
 				return 0;
 			}
 			break;
@@ -3210,8 +3148,20 @@ namespace corona
 							ptz.x = p.x;
 							ptz.y = p.y;
 							if (currentController)
-								currentController->pointSelected(&ptz, &pickedColor);
+								currentController->pointSelected(winx, &ptz, &pickedColor);
 						}
+					}
+				}
+				else if (currentController)
+				{
+					POINT p;
+					if (GetCursorPos(&p))
+					{
+						ScreenToClient(hwnd, &p);
+						database::point ptxo;
+						ptxo.x = p.x * 96.0 / GetDpiForWindow(hwnd);
+						ptxo.y = p.y * 96.0 / GetDpiForWindow(hwnd);
+						currentController->mouseClick(winx, &ptxo);
 					}
 				}
 				break;
@@ -3260,11 +3210,9 @@ namespace corona
 			return wmi;
 		}
 
-		direct2dWindow* directApplication::getWindow(relative_ptr_type i)
+		direct2dChildWindow* directApplication::getWindow(relative_ptr_type i)
 		{
-			auto witem = this->windowControlMap[i];
-			auto w = witem.window;
-			auto wmi = factory->getWindow(w);
+			auto wmi = factory->findChild(i);
 			return wmi;
 		}
 
@@ -3309,7 +3257,7 @@ namespace corona
 
 			::InitCommonControls();
 
-			WNDCLASS wcD2D, wcMain;
+			WNDCLASS wcMain;
 			MSG msg;
 			DWORD dwStyle, dwExStyle;
 
@@ -3317,18 +3265,18 @@ namespace corona
 
 			// register the control for the direct2d WINDOW - THIS is the main window this time.
 
-			wcD2D.style = CS_OWNDC;
-			wcD2D.lpfnWndProc = &directApplication::d2dWindowProc;
-			wcD2D.cbClsExtra = 0;
-			wcD2D.cbWndExtra = DLGWINDOWEXTRA;
-			wcD2D.hInstance = hinstance;
-			wcD2D.hIcon = LoadIcon(hinstance, MAKEINTRESOURCE(_iconId));
-			wcD2D.hCursor = LoadCursor(NULL, IDC_ARROW);
-			wcD2D.hbrBackground = NULL;
-			wcD2D.lpszMenuName = NULL;
-			wcD2D.lpszClassName = "CoronaDirect2d";
-			if (!RegisterClass(&wcD2D)) {
-				::MessageBoxA(NULL, "Could not start because the direct 2d class could not be registered", "Couldn't Start", MB_ICONERROR);
+			wcMain.style = CS_OWNDC;
+			wcMain.lpfnWndProc = &directApplication::windowProc;
+			wcMain.cbClsExtra = 0;
+			wcMain.cbWndExtra = DLGWINDOWEXTRA;
+			wcMain.hInstance = hinstance;
+			wcMain.hIcon = LoadIcon(hinstance, MAKEINTRESOURCE(_iconId));
+			wcMain.hCursor = LoadCursor(NULL, IDC_ARROW);
+			wcMain.hbrBackground = NULL;
+			wcMain.lpszMenuName = NULL;
+			wcMain.lpszClassName = "Corona2dBase";
+			if (!RegisterClass(&wcMain)) {
+				::MessageBoxA(NULL, "Could not start because the  class could not be registered", "Couldn't Start", MB_ICONERROR);
 				return 0;
 			}
 
@@ -3347,8 +3295,8 @@ namespace corona
 			setController(_firstController);
 
 			hwndRoot = CreateWindowEx(dwExStyle,
-				wcD2D.lpszClassName, _title,
-				dwStyle | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
+				wcMain.lpszClassName, _title,
+				dwStyle | WS_CLIPSIBLINGS ,
 				CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
 				NULL, NULL, hinstance, NULL);
 
@@ -3394,7 +3342,7 @@ namespace corona
 
 			::InitCommonControls();
 
-			WNDCLASS wcD2D, wcMain;
+			WNDCLASS wcMain;
 			MSG msg;
 			DWORD dwStyle, dwExStyle;
 
@@ -3409,28 +3357,11 @@ namespace corona
 			wcMain.hInstance = hinstance;
 			wcMain.hIcon = LoadIcon(hinstance, MAKEINTRESOURCE(_iconId));
 			wcMain.hCursor = LoadCursor(NULL, IDC_ARROW);
-			wcMain.hbrBackground = (HBRUSH)(COLOR_BTNFACE + 1);
+			wcMain.hbrBackground =	NULL;
 			wcMain.lpszMenuName = NULL;
 			wcMain.lpszClassName = "Corona2dBase";
 			if (!RegisterClass(&wcMain)) {
 				::MessageBoxA(NULL, "Could not start because the main window class could not be registered", "Couldn't Start", MB_ICONERROR);
-				return 0;
-			}
-
-			// register the control for the direct2d instance in the window
-
-			wcD2D.style = CS_OWNDC;
-			wcD2D.lpfnWndProc = &directApplication::d2dWindowProc;
-			wcD2D.cbClsExtra = 0;
-			wcD2D.cbWndExtra = DLGWINDOWEXTRA;
-			wcD2D.hInstance = hinstance;
-			wcD2D.hIcon = LoadIcon(hinstance, MAKEINTRESOURCE(_iconId));
-			wcD2D.hCursor = LoadCursor(NULL, IDC_ARROW);
-			wcD2D.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
-			wcD2D.lpszMenuName = NULL;
-			wcD2D.lpszClassName = "CoronaDirect2d";
-			if (!RegisterClass(&wcD2D)) {
-				::MessageBoxA(NULL, "Could not start because the direct 2d class could not be registered", "Couldn't Start", MB_ICONERROR);
 				return 0;
 			}
 

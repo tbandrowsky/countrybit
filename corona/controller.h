@@ -38,11 +38,11 @@ namespace corona
 			// these are for 
 
 			virtual jobject getStyleSheet() = 0;
-			virtual void keyDown(int _id, short _key, page_item& _pi) = 0;
-			virtual void keyUp(int _id, short _key, page_item& _pi) = 0;
-			virtual void mouseMove(int _id, point* _point, page_item& _pi) = 0;
-			virtual void mouseClick(int _id, point* _point, page_item& _pi) = 0;
-			virtual void pointSelected(point* _point, color* _color) = 0;
+			virtual void keyDown(direct2dWindow *win, short _key) = 0;
+			virtual void keyUp(direct2dWindow* win, short _key) = 0;
+			virtual void mouseMove(direct2dWindow* win, point* _point) = 0;
+			virtual void mouseClick(direct2dWindow* win, point* _point) = 0;
+			virtual void pointSelected(direct2dWindow *win, point* _point, color* _color) = 0;
 			virtual bool drawFrame() = 0;
 			virtual bool drawItem(int _id) = 0;
 			virtual bool update(double _elapsedSeconds, double _totalSeconds) = 0;
@@ -167,11 +167,11 @@ namespace corona
 			virtual bool drawFrame();
 			virtual bool drawItem(int _id);
 
-			virtual void keyDown(int _id, short _key, page_item& _pi);
-			virtual void keyUp(int _id, short _key, page_item& _pi);
-			virtual void mouseMove(int _id, point* _point, page_item& _pi);
-			virtual void mouseClick(int _id, point* _point, page_item& _pi);
-			virtual void pointSelected(point* _point, color* _color);
+			virtual void keyDown(direct2dWindow* win, short _key);
+			virtual void keyUp(direct2dWindow* win, short _key);
+			virtual void mouseMove(direct2dWindow* win, point* _point);
+			virtual void mouseClick(direct2dWindow* win, point* _point);
+			virtual void pointSelected(direct2dWindow* win, point* _point, color* _color);
 			virtual bool update(double _elapsedSeconds, double _totalSeconds);
 
 			virtual void onCreated();

@@ -68,17 +68,17 @@ namespace corona
 		{
 		}
 
-		void corona_controller::keyDown(int _id, short _key, page_item& pi)
+		void corona_controller::keyDown(direct2dWindow* win, short _key)
 		{
 			;
 		}
 
-		void corona_controller::keyUp(int _id, short _key, page_item& pi)
+		void corona_controller::keyUp(direct2dWindow* win, short _key)
 		{
 			;
 		}
 
-		void corona_controller::mouseMove(int _id, point* _point, page_item& pi)
+		void corona_controller::mouseMove(direct2dWindow* win, point* _point)
 		{
 			;
 		}
@@ -177,7 +177,7 @@ namespace corona
 		{
 		}
 
-		void corona_controller::mouseClick(int _id, point* _point, page_item& pi)
+		void corona_controller::mouseClick(direct2dWindow *win, point* _point)
 		{
 			auto clicked_items = pg.where([this, _point](const auto& pi) { return pi.item.is_command() && rectangle_math::contains(pi.item.bounds, _point->x, _point->y); });
 			auto size = host->getWindowClientPos();
@@ -326,7 +326,7 @@ namespace corona
 			enableEditMessages = true;
 		}
 
-		void corona_controller::pointSelected(point* _point, color* _color)
+		void corona_controller::pointSelected(direct2dWindow* win, point* _point, color* _color)
 		{
 
 		}
@@ -609,7 +609,8 @@ namespace corona
 			{
 				auto& item = pg[_id];
 				if (item.is_canvas2d()) {
-					auto  host = getHost()->getWindow(item.get_identifier());
+					auto item_id = item.get_identifier();
+					auto  host = getHost()->getWindow(item_id);
 					host->beginDraw(adapter_blown_away);
 					color c;
 					c.alpha = .50;
@@ -622,7 +623,6 @@ namespace corona
 					location.x = 0;
 					location.y = 0;
 
-
 #if TRACE_RENDER
 					std::string labelo = std::format("{} {}", "testo", _id);
 					host->drawView("label_style", labelo.c_str(), location, "commment");
@@ -633,7 +633,9 @@ namespace corona
 						{
 							if (_in_page->is_drawable())
 							{
+#if TRACE_RENDER
 								std::cout << ".. render item!!" << _in_page->id << " " << std::endl;
+#endif
 								render_item(host, *_in_page);
 							}
 							return true;

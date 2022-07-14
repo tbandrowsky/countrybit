@@ -29,6 +29,7 @@ namespace corona
 
 		class direct2dContext;
 		class direct2dWindow;
+		class direct2dChildWindow;
 		class direct2dBitmap;
 
 		class direct2dDevice
@@ -80,15 +81,18 @@ namespace corona
 			inline ID3D11Device* getD3DDevice() { return direct3d->getD3DDevice(); }
 			inline D3D_FEATURE_LEVEL getFeatureLevel() { return direct3d->getFeatureLevel(); }
 
-			std::map<HWND, direct2dWindow*> windows;
-			direct2dWindow* createD2dWindow(HWND hwnd, bool childWindow);
-			direct2dWindow* getWindow(HWND hwnd);
-			std::vector<direct2dWindow*> getChildren(HWND hwnd);
-			bool containsWindow(HWND hwnd);
+			std::map<HWND, direct2dWindow*> parent_windows;
+
+			direct2dWindow* createD2dWindow(HWND parent);
+			direct2dWindow* getWindow(HWND parent);
+			bool containsWindow(HWND parent);
 			void closeWindow(HWND hwnd);
 			void clearWindows();
+			direct2dChildWindow *findChild(relative_ptr_type _child);
 
 			direct2dBitmap* createD2dBitmap(D2D1_SIZE_F size);
+
+			void loadStyleSheet(jobject& sheet);
 
 		};
 
@@ -235,7 +239,6 @@ namespace corona
 
 		};
 
-
 		class direct2dBitmap : public direct2dContext
 		{
 			ID2D1DeviceContext* targetContext;
@@ -245,7 +248,6 @@ namespace corona
 		public:
 
 			D2D1_SIZE_F size;
-
 
 			direct2dBitmap(D2D1_SIZE_F _size, adapterSet* _factory);
 			virtual ~direct2dBitmap();
@@ -264,30 +266,28 @@ namespace corona
 
 		};
 
+		class direct2dChildWindow;
+
 		class direct2dWindow : public direct2dContext
 		{
 		private:
+
 			HWND hwnd;
 
 			// for main window
-
 			ID2D1DeviceContext* renderTarget;
 			IDXGISwapChain1* swapChain;
 			IDXGISurface* surface;
 			ID3D11Texture2D* texture;
 			ID2D1Bitmap1* bitmap;
 
-			// for children
-			bool childWindow;
-			direct2dBitmapCore* childBitmap;
+			std::map<relative_ptr_type, direct2dChildWindow*> children;
 
 			void applySwapChain();
 
-			rectangle windowPosition;
-
 		public:
 
-			direct2dWindow(HWND hwnd, adapterSet* _adapter, bool _childWindow);
+			direct2dWindow(HWND hwnd, adapterSet* _adapter);
 			virtual ~direct2dWindow();
 
 			rectangle getBoundsDips();
@@ -297,16 +297,53 @@ namespace corona
 
 			virtual ID2D1DeviceContext* getRenderTarget()
 			{
-				return childBitmap ? childBitmap->getRenderTarget() : renderTarget;
+				return renderTarget;
 			}
 
-			ID2D1Bitmap1* getBitmap() { return childBitmap ? childBitmap->getBitmap() : bitmap; }
+			ID2D1Bitmap1* getBitmap() { return bitmap; }
 
 			virtual void beginDraw(bool& _adapter_blown_away);
 			virtual void endDraw(bool& _adapter_blown_away);
 
-			bool isChild() { return childWindow; }
 			HWND getWindow() { return hwnd; }
+
+			direct2dChildWindow* createChild(relative_ptr_type _id, UINT _xdips, UINT _ydips, UINT _wdips, UINT _hdips);
+			direct2dChildWindow* getChild(relative_ptr_type _id);
+			direct2dChildWindow* deleteChild(relative_ptr_type _id);
+
+			auto& getChildren() { return children; }
+		};
+
+		class direct2dChildWindow : public direct2dContext
+		{
+
+		private:
+
+			direct2dWindow* parent;
+			direct2dBitmapCore* childBitmap;
+			rectangle windowPosition;
+
+			direct2dChildWindow(direct2dWindow* _parent, adapterSet* _adapterSet, UINT _xdips, UINT _ydips, UINT _wdips, UINT _hdips);
+			virtual ~direct2dChildWindow();
+
+		public:
+
+			friend class direct2dWindow;
+
+			rectangle getBoundsDips();
+
+			void resize(UINT _wdips, UINT _hdips);
+			void moveWindow(UINT _xdips, UINT _ydips, UINT _wdips, UINT _hdips);
+
+			virtual ID2D1DeviceContext* getRenderTarget()
+			{
+				return childBitmap->getRenderTarget();
+			}
+
+			ID2D1Bitmap1* getBitmap() { return childBitmap->getBitmap(); }
+
+			virtual void beginDraw(bool& _adapter_blown_away);
+			virtual void endDraw(bool& _adapter_blown_away);
 		};
 
 		class directApplication : public controllerHost
@@ -319,8 +356,6 @@ namespace corona
 
 			static directApplication* current;
 			static LRESULT CALLBACK windowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
-			static LRESULT CALLBACK d2dWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
-			virtual LRESULT d2dWindowProcHandler(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 			virtual LRESULT windowProcHandler(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 			HINSTANCE hinstance;
 			HWND hwndRoot;
@@ -382,7 +417,7 @@ namespace corona
 			int renderPage(database::page& _page, database::jschema* _schema, database::actor_state& _state, database::jcollection& _collection);
 
 			virtual drawableHost* getDrawable(relative_ptr_type ctrlId);
-			virtual direct2dWindow* getWindow(relative_ptr_type ctrlId);
+			virtual direct2dChildWindow* getWindow(relative_ptr_type ctrlId);
 
 			virtual bool runFull(HINSTANCE _hinstance, const char* _title, int _iconId, bool _fullScreen, controller* _firstController);
 			virtual bool runDialog(HINSTANCE _hinstance, const char* _title, int _iconId, bool _fullScreen, controller* _firstController);

@@ -9,6 +9,7 @@ namespace corona
 		using namespace database;
 
 		class direct2dWindow;
+		class direct2dChildWindow;
 
 		class drawableHost {
 		public:
@@ -63,7 +64,7 @@ namespace corona
 		public:
 
 			virtual drawableHost* getDrawable(relative_ptr_type i) = 0;
-			virtual direct2dWindow* getWindow(relative_ptr_type ctrlId) = 0;
+			virtual direct2dChildWindow* getWindow(relative_ptr_type ctrlId) = 0;
 
 			virtual void setPictureIcon(int controlId, dtoIconId iconId) = 0;
 			virtual void setButtonIcon(int controlId, dtoIconId iconId) = 0;
