@@ -434,7 +434,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 		text(title_bar, schema.idf_title_bar_style, _title, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct});
 	}
 
-	void wsproposal_controller::render_form(std::function<void(page_item* _frame)> _contents)
+	void wsproposal_controller::render_form(std::function<void(page_item* _frame)> _contents, const char *_form_title)
 	{
 		clear();
 
@@ -450,7 +450,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 		controlcol1->windowsRegion = true;
 
 		// editable controls on the left
-		add_update_fields(controlcol1, field_layout::label_on_left, nullptr);
+		add_update_fields(controlcol1, field_layout::label_on_left, _form_title);
 		space(controlcol1, schema.idf_button_style, { 0.0_px, 0.0_px, 1.0_fntgr, 1.0_fntgr });
 		add_create_buttons(controlcol1, schema.idf_button_style);
 
@@ -539,7 +539,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 
 	void wsproposal_controller::render_coverage()
 	{
-		render_form([this](page_item* _frame) { render_coverage_contents(_frame);  });
+		render_form([this](page_item* _frame) { render_coverage_contents(_frame);  }, "Coverag Details");
 	}
 
 	void wsproposal_controller::render_product_template_root()
@@ -564,7 +564,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 
 	void wsproposal_controller::render_carrier()
 	{
-		render_form([this](page_item* _frame) { render_carrier_contents(_frame);  });
+		render_form([this](page_item* _frame) { render_carrier_contents(_frame);  }, "Carrier Details");
 	}
 
 	void wsproposal_controller::render_program()
