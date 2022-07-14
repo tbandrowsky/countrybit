@@ -515,12 +515,11 @@ field id idf_carrier, which is populated when objects of this class are construc
 
 		auto mainr = column(nullptr, null_row, { 0.0_px,0.0_px,100.0_pct,100.0_pct });
 		render_header(mainr, application_title, object_title, false);
-		auto edit_body = row(nullptr, null_row, { 0.0_px,0.0_px,100.0_pct,100.0_pct });
+		auto edit_body = row(mainr, null_row, { 0.0_px,0.0_px,100.0_pct,100.0_pct });
 
-		auto control = column(edit_body, schema.idf_view_background_style, { 0.0_pct, 0.0_px, 100.0_pct, 200.0_px });
-		auto children = canvas2d_column( id_canvas_data_view, edit_body, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
+		auto control = column(edit_body, schema.idf_view_background_style, { 0.0_pct, 0.0_px, 50.0_pct, 100.0_pct });
+		auto children = canvas2d_column( id_canvas_data_view, edit_body, schema.idf_view_background_style, { 0.0_px, 0.0_px, 50.0_pct, 100.0_pct });
 
-		space(control, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 130.0_px });
 		add_update_fields(control, field_layout::label_on_top, "Client Details");
 		space(control, schema.idf_button_style, { 0.0_px, 0.0_px, 1.0_fntgr, 1.0_fntgr });
 		// and the add buttons
