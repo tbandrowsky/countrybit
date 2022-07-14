@@ -1,7 +1,7 @@
 
 #include "corona.h"
 
-#define TRACE_LAYOUT 1
+#define TRACE_LAYOUT 0
 
 namespace corona
 {

@@ -389,7 +389,7 @@ namespace corona
 
 			HFONT createFontFromStyleSheet(relative_ptr_type _style_id);
 
-			void createChildWindow(
+			bool createChildWindow(
 				page_item_identifier pii,
 				LPCTSTR		lpClassName,
 				LPCTSTR		lpWindowName,

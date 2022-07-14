@@ -15,9 +15,9 @@ namespace corona
 		controller::controller()
 		{
 			backgroundColor.alpha = 1.0;
-			backgroundColor.red = 0.2;
-			backgroundColor.green = 0.0;
-			backgroundColor.blue = 0.0;
+			backgroundColor.red = 1.0;
+			backgroundColor.green = 1.0;
+			backgroundColor.blue = 1.0;
 		}
 
 		controller::~controller()
@@ -547,7 +547,9 @@ namespace corona
 
 		void corona_controller::search_table(page_item* _parent, relative_ptr_type _idc_class_id, relative_ptr_type* _idf_child_fields, int _num_child_fields)
 		{
-			page_item* drow = row(_parent, schema.idf_column_text_head_style);
+			page_item* table_container = column(_parent, null_row);
+			page_item* drow = row(table_container, schema.idf_column_text_head_style);
+			layout_rect row_size;
 
 			std::vector<layout_rect> columns;
 
@@ -562,10 +564,11 @@ namespace corona
 					text(drow, schema.idf_column_number_head_style, field_spec.description, layout);
 			}
 
-			drow->box.height = columns[0].height;
-			drow->box.width = 100.0_pct;
-			drow->box.x = 0.0_px;
-			drow->box.y = 0.0_px;
+			row_size.height = columns[0].height;
+			row_size.width = 100.0_pct;
+			row_size.x = 0.0_px;
+			row_size.y = 0.0_px;
+			drow->box = row_size;
 
 			auto* pout = &std::cout;
 
@@ -575,11 +578,7 @@ namespace corona
 
 			for (auto avo : svo)
 			{
-				drow = row(_parent, schema.idf_column_text_head_style);
-				drow->box.height = columns[0].height;
-				drow->box.width = 100.0_pct;
-				drow->box.x = 0.0_px;
-				drow->box.y = 0.0_px;
+				drow = row(table_container, schema.idf_column_text_head_style, row_size);
 
 				for (int i = 0; i < _num_child_fields; i++)
 				{
@@ -612,12 +611,7 @@ namespace corona
 					auto item_id = item.get_identifier();
 					auto  host = getHost()->getWindow(item_id);
 					host->beginDraw(adapter_blown_away);
-					color c;
-					c.alpha = .50;
-					c.blue = 1.0;
-					c.green = (double)_id / pg.size();
-					c.red = (double)_id / pg.size();
-					host->clear(&c);
+					host->clear(&backgroundColor);
 
 					auto location = item.bounds;
 					location.x = 0;

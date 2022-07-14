@@ -2471,9 +2471,9 @@ namespace corona
 			solidBrushRequest dsrb;
 			dsrb.name = "debug-border";
 			dsrb.brushColor.red = 0;
-			dsrb.brushColor.green = 0;
-			dsrb.brushColor.blue = 250;
-			dsrb.brushColor.alpha = 250;
+			dsrb.brushColor.green = 230;
+			dsrb.brushColor.blue = 200;
+			dsrb.brushColor.alpha = 255;
 			addSolidColorBrush(&dsrb);
 
 			textStyleRequest dtsr;
@@ -2571,6 +2571,8 @@ namespace corona
 				double toDips = 96.0 / GetDpiForWindow(winroot->getWindow());
 
 				winroot->beginDraw(failedDevice);						
+				color c = { 1.0, 1.0, 1.0, 1.0 };
+				winroot->clear(&c);
 
 				if (!failedDevice) 
 				{
@@ -2647,7 +2649,7 @@ namespace corona
 			oldWindowControlMap = windowControlMap;
 		}
 
-		void directApplication::createChildWindow(
+		bool directApplication::createChildWindow(
 			page_item_identifier pid,
 			LPCTSTR		lpClassName,
 			LPCTSTR		lpWindowName,
@@ -2664,6 +2666,7 @@ namespace corona
 		{
 
 			HWND hwnd = nullptr;
+			bool created_something = false;
 
 			x /= dpiScale;
 			y /= dpiScale;
@@ -2689,6 +2692,7 @@ namespace corona
 			}
 			else
 			{
+				created_something = true;
 				hwnd = CreateWindow(lpClassName, lpWindowName, dwStyle, x, y, nWidth, nHeight, directApplication::hwndRoot, (HMENU)windowId, hinstance, lpParam);
 				if (font)
 				{
@@ -2699,6 +2703,7 @@ namespace corona
 			windowMapItem wmi = { hwnd };
 			windowControlMap.insert_or_assign(pid, wmi);
 			message_map.insert_or_assign(windowId, item);
+			return created_something;
 		}
 
 		void direct2dContext::text_style_name(const object_name& _style_sheet_name, object_name_composed& _object_style_name)
@@ -2796,7 +2801,11 @@ namespace corona
 			windowControlMap.clear();
 			message_map.clear();
 
+			auto dpi = GetDpiForWindow(hwndRoot);
 			auto *win = factory->getWindow(hwndRoot);
+
+			bool created_anything = false;
+			bool created_something = false;
 
 			database::jobject slice;
 			for (auto piter : _page)
@@ -2844,7 +2853,7 @@ namespace corona
 						{
 							font = this->controlFont;
 						}
-						createChildWindow(pid, WC_STATIC, pi.caption, WS_CHILD | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, font, pi);
+						created_something = createChildWindow(pid, WC_STATIC, pi.caption, WS_CHILD | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, font, pi);
 					}
 					break;
 				case database::layout_types::field:
@@ -2858,72 +2867,81 @@ namespace corona
 							{
 								auto bx = slice.get_int8(idx);
 								x = bx;
-								createChildWindow(pid, WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont, pi);
+								created_something = createChildWindow(pid, WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont, pi);
 							}
 							break;
 						case database::type_int16:
 							{
 								auto bx = slice.get_int16(idx);
 								x = bx;
-								createChildWindow(pid, WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont, pi);
+								created_something = createChildWindow(pid, WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont, pi);
 							}
 							break;
 						case database::type_int32:
 							{
 								auto bx = slice.get_int32(idx);
 								x = bx;
-								createChildWindow(pid, WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont, pi);
+								created_something = createChildWindow(pid, WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont, pi);
 							}
 							break;
 						case database::type_int64:
 							{
 								auto bx = slice.get_int64(idx);
 								x = bx;
-								createChildWindow(pid, WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont, pi);
+								created_something = createChildWindow(pid, WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont, pi);
 							}
 							break;
 						case database::type_float32:
 							{
 								auto bx = slice.get_float(idx);
 								x = bx;
-								createChildWindow(pid, WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont, pi);
+								created_something = createChildWindow(pid, WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont, pi);
 							}
 							break;
 						case database::type_float64:
 							{
 								auto bx = slice.get_double(idx);
 								x = bx;
-								createChildWindow(pid, WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont, pi);
+								created_something = createChildWindow(pid, WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont, pi);
 							}
 							break;
 						case database::type_string:
 							{
 								auto bx = slice.get_string(idx);
-								createChildWindow(pid, WC_EDIT, bx.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont, pi);
+								created_something = createChildWindow(pid, WC_EDIT, bx.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont, pi);
 							}
 							break;
 						default:
-							createChildWindow(pid, WC_STATIC, "Type not supported", WS_CHILD | WS_BORDER | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont, pi);
+							created_something = createChildWindow(pid, WC_STATIC, "Type not supported", WS_CHILD | WS_BORDER | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont, pi);
 							break;
 						}
 					}
 					break;
 				case database::layout_types::create:
-					createChildWindow(pid, WC_BUTTON, pi.caption, BS_PUSHBUTTON | BS_FLAT | WS_TABSTOP | WS_CHILD | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont, pi);
+					created_something = createChildWindow(pid, WC_BUTTON, pi.caption, BS_PUSHBUTTON | BS_FLAT | WS_TABSTOP | WS_CHILD | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont, pi);
 					break;
 				case database::layout_types::select:
 					break;
+				default:
+					{
+					auto bx = pi.bounds;
+					RECT r;
+					r.left = bx.x * 96.0 / dpi;
+					r.top = bx.y * 96.0 / dpi;
+					r.right = r.left + bx.w * 96.0 / dpi;
+					r.bottom = r.top + bx.h * 96.0 / dpi;
+					InvalidateRect(hwndRoot, &r, true);
+					}
 				}
+				if (created_something)
+					created_anything = true;
 			}
 
 			destroyChildren();
-
-			disableChangeProcessing = false;
-			
-			InvalidateRect(hwndRoot, nullptr, true);
+			disableChangeProcessing = false;	
 			UpdateWindow(hwndRoot);
 
-			return canvasWindowId;
+			return created_anything;
 		}
 
 		LRESULT CALLBACK directApplication::windowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -3108,7 +3126,7 @@ namespace corona
 				HDC eraseDc = (HDC)wParam;
 				if (hbrBkgnd == NULL)
 				{
-					hbrBkgnd = CreateSolidBrush(RGB(255, 144, 255));
+					hbrBkgnd = CreateSolidBrush(RGB(255, 255, 255));
 				}
 				::GetClientRect(hwnd, &rect);
 				::FillRect((HDC)wParam, &rect, hbrBkgnd);
