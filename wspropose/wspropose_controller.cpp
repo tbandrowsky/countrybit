@@ -30,7 +30,7 @@ namespace proposal
 		* and also include standard fields and classes.
 		*/
 
-		schema = jschema::create_schema(&box, 250, true, schema_id);
+		schema = jschema::create_schema(&box, 500, true, schema_id);
 
 		/*
 		Now, we can begin to flesh out schema for this application.  In Corona, a schema is a collection of fields,
@@ -421,40 +421,39 @@ field id idf_carrier, which is populated when objects of this class are construc
 		;
 	}
 
-	void wsproposal_controller::render_header(page_item* _frame, const char* _title, const char* _subtitle, bool _left_pad)
-	{
-		auto header_column = canvas2d_column( id_canvas_header, _frame, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 90.0_px });
-		auto title_bar = row(header_column, null_row, { 0.0_px, 0.0_px, 100.0_pct, 32.0_px });
-		auto underline_bar = row(header_column, schema.idf_view_section_style, { 0.0_px, 0.0_px, 90.0_pct, 4.0_px });
-		auto underline_space_bar = row(header_column, schema.idf_view_background_style , { 0.0_px, 0.0_px, 90.0_pct, 4.0_px });
-		auto breadcrumb_bar = row(header_column, schema.idf_breadcrumb_bar_style, { 0.0_px, 0.0_px, 100.0_pct, 50.0_px });
-		breadcrumbs(breadcrumb_bar, [this](jobject& _item) {
-			return _item.get_name(schema.idf_name);
-			}, { 0.0_px, 0.0_px, 200.0_px, 30.0_px });
-		text(title_bar, schema.idf_title_bar_style, _title, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct});
-	}
-
-	void wsproposal_controller::render_form(std::function<void(page_item* _frame)> _contents, const char *_form_title)
+	void wsproposal_controller::render_navigation_frame(const char* _title, const char* _subtitle, bool _left_pad, std::function<void(page_item* _frame)> _contents)
 	{
 		clear();
 
+		auto page_column = column(nullptr, null_row, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
+
+		auto title_bar = canvas2d_row(id_canvas_header, page_column, null_row, { 0.0_px, 0.0_px, 100.0_pct, 50.0_px });
+		text(title_bar, schema.idf_album_title_style, _title);
+
+		auto main_row = row(page_column, null_row, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
+		auto navigation_contents = canvas2d_column(id_canvas_navigation, main_row, null_row, { 0.0_px, 0.0_px, 200.0_px, 100.0_pct });
+		breadcrumbs(navigation_contents, [this](jobject& _item) {
+			return _item.get_name(schema.idf_name);
+			}, { 0.0_px, 0.0_px, 100.0_pct, 30.0_px });
+
+		auto form_contents = column(main_row, null_row, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
+		_contents(form_contents);
+
+		auto footer_bar = canvas2d_row(id_canvas_footer, page_column, null_row, { 0.0_px, 0.0_px, 100.0_pct, 50.0_px });
+		text(footer_bar, schema.idf_artist_title_style, _subtitle);
+	}
+
+	void wsproposal_controller::render_form(page_item *_frame, const char *_form_title)
+	{
 		const char* object_title = nullptr;
 		object_title = schema.get_class(state.actor.current_view_class_id).item().description;
 
-		auto mainr = column(nullptr, null_row, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
-		render_header(mainr, application_title, object_title, false);
-
-		auto controlrow = row(mainr, null_row, { 0.0_px,0.0_px,100.0_pct,100.0_pct });
-		auto controlcol1 = column(controlrow, null_row, { 25.0_pct,0.0_px,50.0_pct,100.0_pct });
-
-		controlcol1->windowsRegion = true;
+		_frame->windowsRegion = true;
 
 		// editable controls on the left
-		add_update_fields(controlcol1, field_layout::label_on_left, _form_title);
-		space(controlcol1, schema.idf_button_style, { 0.0_px, 0.0_px, 1.0_fntgr, 1.0_fntgr });
-		add_create_buttons(controlcol1, schema.idf_button_style);
-
-		_contents(controlrow);
+		add_update_fields(_frame, field_layout::label_on_left, _form_title);
+		space(_frame, schema.idf_button_style, { 0.0_px, 0.0_px, 1.0_fntgr, 1.0_fntgr });
+		add_create_buttons(_frame, schema.idf_button_style);
 	}
 
 	void wsproposal_controller::render_2d(std::function<void(page_item* _frame)> _contents)
@@ -539,7 +538,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 
 	void wsproposal_controller::render_coverage()
 	{
-		render_form([this](page_item* _frame) { render_coverage_contents(_frame);  }, "Coverag Details");
+		render_form([this](page_item* _frame) { render_coverage_contents(_frame);  }, "Coverage Details");
 	}
 
 	void wsproposal_controller::render_product_template_root()
@@ -749,7 +748,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 		}
 
 		auto style_sheet = getStyleSheet();
-		arrange(newSize.w, newSize.h, style_sheet);
+		arrange(newSize.w, newSize.h, style_sheet, 16);
 		canvasWindowsId = host->renderPage(pg, &schema, state, program_chart);
 		host->redraw();
 	}
@@ -1420,6 +1419,158 @@ field id idf_carrier, which is populated when objects of this class are construc
 				{ schema.idf_box_fill_color, "#cfcfffFF" },
 				{ schema.idf_box_border_thickness, 2 },
 				{ schema.idf_box_border_color, "#cfcfefFF" }
+			}
+			);
+
+		style_sheet.set(
+			schema.idf_view_style,
+			{ schema.idf_album_title_style },
+			{
+				{ schema.idf_font_name, "Felix Titling" },
+				{ schema.idf_font_size, 40.0 },
+				{ schema.idf_horizontal_alignment, (int)(visual_alignment::align_center) },
+				{ schema.idf_shape_fill_color, "#000000FF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "#FFFFFFFF" },
+				{ schema.idf_box_border_thickness, 1 },
+				{ schema.idf_box_border_color, "#FFFFFFFF" }
+			}
+			);
+
+		style_sheet.set(
+			schema.idf_view_style,
+			{ schema.idf_artist_title_style },
+			{
+				{ schema.idf_font_name, "Wide Latin" },
+				{ schema.idf_font_size, 48.0 },
+				{ schema.idf_horizontal_alignment, (int)(visual_alignment::align_center) },
+				{ schema.idf_shape_fill_color, "#001100FF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "#FFFFFFFF" },
+				{ schema.idf_box_border_thickness, 1 },
+				{ schema.idf_box_border_color, "#FFFFFFFF" }
+			}
+			);
+
+		style_sheet.set(
+			schema.idf_view_style,
+			{ schema.idf_album_about_style },
+			{
+				{ schema.idf_font_name, fontName },
+				{ schema.idf_font_size, 14.0 },
+				{ schema.idf_shape_fill_color, "#0000CCFF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "#FFFFFFFF" },
+				{ schema.idf_box_border_thickness, 1 },
+				{ schema.idf_box_border_color, "#FFFFFFFF" }
+			}
+			);
+
+		style_sheet.set(
+			schema.idf_view_style,
+			{ schema.idf_artist_about_style },
+			{
+				{ schema.idf_font_name, fontName },
+				{ schema.idf_font_size, 14.0 },
+				{ schema.idf_shape_fill_color, "#0000CCFF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "#FFFFFFFF" },
+				{ schema.idf_box_border_thickness, 1 },
+				{ schema.idf_box_border_color, "#FFFFFFFF" }
+			}
+			);
+
+		style_sheet.set(
+			schema.idf_view_style,
+			{ schema.idf_work_title1_style },
+			{
+				{ schema.idf_font_name, fontName },
+				{ schema.idf_font_size, 14.0 },
+				{ schema.idf_shape_fill_color, "#0000CCFF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "#FFFFFFFF" },
+				{ schema.idf_box_border_thickness, 1 },
+				{ schema.idf_box_border_color, "#FFFFFFFF" }
+			}
+			);
+
+		style_sheet.set(
+			schema.idf_view_style,
+			{ schema.idf_work_title2_style },
+			{
+				{ schema.idf_font_name, fontName },
+				{ schema.idf_font_size, 14.0 },
+				{ schema.idf_shape_fill_color, "#0000CCFF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "#FFFFFFFF" },
+				{ schema.idf_box_border_thickness, 1 },
+				{ schema.idf_box_border_color, "#FFFFFFFF" }
+			}
+			);
+
+		style_sheet.set(
+			schema.idf_view_style,
+			{ schema.idf_work_title3_style },
+			{
+				{ schema.idf_font_name, fontName },
+				{ schema.idf_font_size, 14.0 },
+				{ schema.idf_shape_fill_color, "#0000CCFF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "#FFFFFFFF" },
+				{ schema.idf_box_border_thickness, 1 },
+				{ schema.idf_box_border_color, "#FFFFFFFF" }
+			}
+			);
+
+		style_sheet.set(
+			schema.idf_view_style,
+			{ schema.idf_work_title4_style },
+			{
+				{ schema.idf_font_name, fontName },
+				{ schema.idf_font_size, 14.0 },
+				{ schema.idf_shape_fill_color, "#0000CCFF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "#FFFFFFFF" },
+				{ schema.idf_box_border_thickness, 1 },
+				{ schema.idf_box_border_color, "#FFFFFFFF" }
+			}
+			);
+
+		style_sheet.set(
+			schema.idf_view_style,
+			{ schema.idf_work_title5_style },
+			{
+				{ schema.idf_font_name, fontName },
+				{ schema.idf_font_size, 14.0 },
+				{ schema.idf_shape_fill_color, "#0000CCFF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "#FFFFFFFF" },
+				{ schema.idf_box_border_thickness, 1 },
+				{ schema.idf_box_border_color, "#FFFFFFFF" }
+			}
+			);
+
+		style_sheet.set(
+			schema.idf_view_style,
+			{ schema.idf_work_title6_style },
+			{
+				{ schema.idf_font_name, fontName },
+				{ schema.idf_font_size, 14.0 },
+				{ schema.idf_shape_fill_color, "#0000CCFF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "#FFFFFFFF" },
+				{ schema.idf_box_border_thickness, 1 },
+				{ schema.idf_box_border_color, "#FFFFFFFF" }
 			}
 			);
 

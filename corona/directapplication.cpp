@@ -658,14 +658,12 @@ namespace corona
 
 			auto unitMode = targetContext->GetUnitMode();
 
-
 #if TRACE_RENDER
 			std::cout << "target pixel size " << pxs.width << " " << pxs.height << std::endl;
 			std::cout << "target dips size " << ps.width << " " << ps.height << std::endl;
 #endif
 
 			return;
-
 		}
 
 		direct2dBitmapCore::~direct2dBitmapCore()
@@ -2815,6 +2813,9 @@ namespace corona
 				if (pi.is_drawable())
 					continue;
 
+				if (pi.bounds.w < 1 || pi.bounds.h < 1)
+					continue;
+
 				auto pid = pi.get_identifier();
 
 				switch (pi.layout)
@@ -2966,10 +2967,9 @@ namespace corona
 				hwndRoot = hwnd;
 				if (currentController) {
 					auto* win = factory->createD2dWindow(hwnd);
-					currentController->onCreated();
 					dpiScale = 96.0 / GetDpiForWindow(hwnd);
-					auto styles = currentController->getStyleSheet();
-					win->loadStyleSheet(styles);
+					loadStyleSheet();
+					currentController->onCreated();
 				}
 				break;
 			case WM_INITDIALOG:

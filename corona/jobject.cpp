@@ -3399,7 +3399,7 @@ namespace corona
 				idf_shape_fill_color, idf_shape_border_thickness, idf_shape_border_color, idf_box_fill_color, idf_box_border_thickness, idf_box_border_color };
 			idc_text_style = put_class(pcr);
 
-			put_object_field_request object_fields[55] = {
+			put_object_field_request object_fields[65] = {
 				{ { jtype::type_object, "view_background_style", "View Background Style" }, { {1,1,1}, idc_text_style }},
 				{ { jtype::type_object, "view_title_style", "View Title Style" }, { {1,1,1}, idc_text_style }},
 				{ { jtype::type_object, "view_subtitle_style", "View Subtitle Style" }, { {1,1,1}, idc_text_style }},
@@ -3458,6 +3458,17 @@ namespace corona
 
 				{ { jtype::type_object, "home_style", "Home Style" }, { {1,1,1}, idc_text_style }},
 				{ { jtype::type_object, "login_style", "Login Style" }, { {1,1,1}, idc_text_style }},
+
+				{ { jtype::type_object, "album_title_style", "Album Title Style" }, { {1,1,1}, idc_text_style }},
+				{ { jtype::type_object, "artist_title_style", "Login Style" }, { {1,1,1}, idc_text_style }},
+				{ { jtype::type_object, "work_title1_style", "Login Style" }, { {1,1,1}, idc_text_style }},
+				{ { jtype::type_object, "work_title2_style", "Login Style" }, { {1,1,1}, idc_text_style }},
+				{ { jtype::type_object, "work_title3_style", "Login Style" }, { {1,1,1}, idc_text_style }},
+				{ { jtype::type_object, "work_title4_style", "Login Style" }, { {1,1,1}, idc_text_style }},
+				{ { jtype::type_object, "work_title5_style", "Login Style" }, { {1,1,1}, idc_text_style }},
+				{ { jtype::type_object, "work_title6_style", "Login Style" }, { {1,1,1}, idc_text_style }},
+				{ { jtype::type_object, "album_about_style", "Login Style" }, { {1,1,1}, idc_text_style }},
+				{ { jtype::type_object, "artist_about_style", "Login Style" }, { {1,1,1}, idc_text_style }},
 
 				{ { jtype::type_object, "string_options", "String Field Options" }, { {1,1,1}, idc_string_options }},
 				{ { jtype::type_object, "double_options", "Double Field Options" }, { {1,1,1}, idc_double_options }},
@@ -3526,6 +3537,17 @@ namespace corona
 			idf_subtitle_bar_style = find_field("subtitle_bar_style");
 			idf_breadcrumb_bar_style = find_field("breadcrumb_bar_style");
 
+			idf_album_title_style = find_field("album_title_style");
+			idf_artist_title_style = find_field("artist_title_style");
+			idf_work_title1_style = find_field("work_title1_style");
+			idf_work_title2_style = find_field("work_title2_style");
+			idf_work_title3_style = find_field("work_title3_style");
+			idf_work_title4_style = find_field("work_title4_style");
+			idf_work_title5_style = find_field("work_title5_style");
+			idf_work_title6_style = find_field("work_title6_style");
+			idf_album_about_style = find_field("album_about_style");
+			idf_artist_about_style = find_field("artist_about_style");
+
 			idf_field_type = find_field("field_type");
 			idf_string_options = find_field("string_options");
 			idf_double_options = find_field("double_options");
@@ -3542,7 +3564,10 @@ namespace corona
 				idf_column_data_style,idf_label_style,idf_control_style,idf_chart_axis_style,idf_chart_legend_style,idf_chart_block_style,idf_tooltip_style,
 				idf_error_style, idf_client_style, idf_carrier_style, idf_coverage_style, idf_home_style, idf_system_style, idf_login_style, idf_product_style,
 				idf_company_a1_style, idf_company_a2_style, idf_company_a3_style, idf_company_b1_style, idf_company_b2_style, idf_company_b3_style, idf_company_c1_style, idf_company_c2_style, idf_company_c3_style,idf_company_d1_style, idf_company_d2_style, idf_company_d3_style, 
-				idf_company_deductible_style, idf_company_neutral1_style, idf_company_neutral2_style, idf_header_area_style, idf_title_bar_style, idf_subtitle_bar_style, idf_breadcrumb_bar_style, idf_breadcrumb_style };
+				idf_company_deductible_style, idf_company_neutral1_style, idf_company_neutral2_style, idf_header_area_style, idf_title_bar_style, idf_subtitle_bar_style, idf_breadcrumb_bar_style, idf_breadcrumb_style,
+				idf_album_title_style, idf_artist_title_style, idf_work_title1_style, idf_work_title2_style, idf_work_title3_style, idf_work_title4_style, idf_work_title5_style, idf_work_title6_style, 
+				idf_album_about_style, idf_artist_about_style
+			};
 			pcr.field_id_primary_key = idf_style_sheet;
 			idc_style_sheet = put_class(pcr);
 

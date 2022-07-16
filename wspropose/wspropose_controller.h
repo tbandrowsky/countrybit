@@ -91,20 +91,20 @@ namespace proposal
 							id_system_root;
 
 		relative_ptr_type	id_canvas_header = 1;
-		relative_ptr_type	id_canvas_data_view = 2;
-		relative_ptr_type	id_canvas_visual_view = 3;
+		relative_ptr_type	id_canvas_navigation = 2;
+		relative_ptr_type	id_canvas_footer = 3;
+		relative_ptr_type	id_canvas_form_table_a = 4;
 
-		const char* application_title = "WOODRUFF SAWYER PROPOSAL PROTOTYPE";
+		const char* application_title = "PROOFS OF CONCEPT";
+		const char* application_author = "WOODRUFF SAWYER";
 
 		wsproposal_controller();
 		virtual ~wsproposal_controller();
 
 		void set_style_sheet();
 
-		void render_header(page_item* _frame, const char* _title, const char* _subtitle, bool _left_pad);
-		void render_form(std::function<void(page_item* _frame)> _contents, const char *_form_title);
-		void render_2d(std::function<void(page_item* _frame)> _contents);
-		void render_mixed(std::function<void(page_item* _frame)> _contents, const char* _object_title);
+		void render_navigation_frame(const char* _title, const char* _subtitle, bool _left_pad, std::function<void(page_item* _frame)> _contents);
+		void render_form(page_item* _frame, const char *_form_title);
 
 		void render_home();
 		void render_client_root();

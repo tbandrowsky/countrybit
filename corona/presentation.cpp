@@ -599,13 +599,13 @@ namespace corona
 			}
 		}
 
-		void page::arrange(double width, double height, jobject& _style_sheet)
+		void page::arrange(double width, double height, jobject& _style_sheet, double _padding)
 		{
 			for (auto pix = begin(); pix != end(); pix++)
 			{
 				auto pi = pix.get_object();
 				if (pi.item.parent_id < 0) {
-					arrange_impl(_style_sheet, &pi.item, 0, 0, 0, 0, width, height);
+					arrange_impl(_style_sheet, &pi.item, 0, 0, _padding, _padding, width - _padding * 2.0, height - _padding * 2.0);
 				}
 				else 
 				{

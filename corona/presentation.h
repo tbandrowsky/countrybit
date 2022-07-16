@@ -217,7 +217,7 @@ namespace corona
 			page_item* actor_create_buttons(page_item* _parent, actor_state* _state, jschema* _schema, jcollection* _collection, relative_ptr_type _style_id, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
 			page_item* actor_select_items(page_item* _parent, actor_state* _state, jschema* _schema, jcollection* _collection);
 
-			void arrange( double _width, double _height, jobject& _style_sheet );
+			void arrange( double _width, double _height, jobject& _style_sheet, double _padding = 0.0 );
 			void visit(std::function<bool(page_item* _parent)> fnin, std::function<bool(page_item* _parent)> fout);
 			void visit_impl(page_item* _item, std::function<bool(page_item* _parent)> fnin, std::function<bool(page_item* _parent)> fout);
 

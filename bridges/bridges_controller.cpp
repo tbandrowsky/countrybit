@@ -246,8 +246,14 @@ namespace bridges
 			{
 				render_home();
 			}
+			rectangle arranged_size = newSize;
+			if (arranged_size.w < 8 || arranged_size.h < 8)
+			{
+				arranged_size.w = 8;
+				arranged_size.h = 8;
+			}
 
-			arrange(newSize.w, newSize.h);
+			arrange(arranged_size.w, arranged_size.h);
 			canvasWindowsId = host->renderPage(pg, &schema, state, program_chart);
 			host->redraw();
 		}

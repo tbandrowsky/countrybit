@@ -598,7 +598,7 @@ namespace corona
 			clear();
 			render(newSize);
 			jobject style_sheet = getStyleSheet();
-			arrange(newSize.w, newSize.h, style_sheet);
+//			arrange(newSize.w, newSize.h, style_sheet, 32);
 		}
 
 		bool corona_controller::drawItem(int _id)
@@ -610,6 +610,8 @@ namespace corona
 				if (item.is_canvas2d()) {
 					auto item_id = item.get_identifier();
 					auto  host = getHost()->getWindow(item_id);
+					if (!host) // this can be, the size of the window was too small so the host was never made.
+						return false;
 					host->beginDraw(adapter_blown_away);
 					host->clear(&backgroundColor);
 
@@ -758,9 +760,9 @@ namespace corona
 			return pg.actor_select_items(_parent, &state, &schema, &program_chart);
 		}
 
-		void corona_controller::arrange(double width, double height, jobject& _style_sheet)
+		void corona_controller::arrange(double width, double height, jobject& _style_sheet, double padding)
 		{
-			pg.arrange(width, height, _style_sheet);
+			pg.arrange(width, height, _style_sheet, padding);
 		}
 
 	}

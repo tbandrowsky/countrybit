@@ -1341,6 +1341,16 @@ namespace corona
 			relative_ptr_type idf_title_bar_style;
 			relative_ptr_type idf_subtitle_bar_style;
 			relative_ptr_type idf_breadcrumb_bar_style;
+			relative_ptr_type idf_album_title_style;
+			relative_ptr_type idf_artist_title_style;
+			relative_ptr_type idf_work_title1_style;
+			relative_ptr_type idf_work_title2_style;
+			relative_ptr_type idf_work_title3_style;
+			relative_ptr_type idf_work_title4_style;
+			relative_ptr_type idf_work_title5_style;
+			relative_ptr_type idf_work_title6_style;
+			relative_ptr_type idf_album_about_style;
+			relative_ptr_type idf_artist_about_style;
 
 			relative_ptr_type idc_style_sheet;
 			relative_ptr_type idf_style_sheet;
@@ -1492,7 +1502,7 @@ namespace corona
 
 			static jschema create_schema(serialized_box_container* _b, int _num_classes, bool _use_standard_fields, relative_ptr_type& _location)
 			{
-				int _num_fields = _num_classes * 5 + _use_standard_fields ? 200 : 0;
+				int _num_fields = _num_classes * 10 + (_use_standard_fields ? 200 : 0);
 				int _total_class_fields = _num_classes * 100;
 				auto total_size = jschema::get_box_size(_num_classes, _num_fields, _total_class_fields, _use_standard_fields);
 				_location = reserve_schema(_b, _num_classes, _num_fields, _total_class_fields, _use_standard_fields);
