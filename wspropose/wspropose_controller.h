@@ -103,7 +103,7 @@ namespace proposal
 
 		void set_style_sheet();
 
-		void render_navigation_frame(const char* _title, const char* _subtitle, bool _left_pad, std::function<void(page_item* _frame)> _contents);
+		void render_navigation_frame(std::function<void(page_item* _navigation, page_item* _contents)> _contents);
 		void render_form(page_item* _frame, const char *_form_title);
 
 		void render_home();
@@ -118,17 +118,17 @@ namespace proposal
 		void render_carrier();
 		void render_program();
 
-		void render_home_contents(page_item* _frame);
-		void render_client_root_contents(page_item* _frame);
-		void render_client_contents(page_item* _frame);
-		void render_coverage_root_contents(page_item* _frame);
-		void render_system_root_contents(page_item* _frame);
-		void render_coverage_contents(page_item* _frame);
-		void render_product_template_root_contents(page_item* _frame);
-		void render_product_template_contents(page_item* _frame);
-		void render_carrier_root_contents(page_item* _frame);
-		void render_carrier_contents(page_item* _frame);
-		void render_program_contents(page_item* _frame);
+		void render_home_contents(page_item *_navigation, page_item* _contents);
+		void render_client_root_contents(page_item* _navigation, page_item* _contents);
+		void render_client_contents(page_item* _navigation, page_item* _contents);
+		void render_coverage_root_contents(page_item* _navigation, page_item* _contents);
+		void render_system_root_contents(page_item* _navigation, page_item* _contents);
+		void render_coverage_contents(page_item* _navigation, page_item* _contents);
+		void render_product_template_root_contents(page_item* _navigation, page_item* _contents);
+		void render_product_template_contents(page_item* _navigation, page_item* _contents);
+		void render_carrier_root_contents(page_item* _navigation, page_item* _contents);
+		void render_carrier_contents(page_item* _navigation, page_item* _contents);
+		void render_program_contents(page_item* _navigation, page_item* _contents);
 		void render_program_slide(page_item* _frame, actor_view_object& _slide, layout_rect* _layout);
 		void render_program_chart_slide(page_item* _frame, actor_view_object& _slide, layout_rect* _layout);
 		void render_program_generic_slide(page_item* _frame, actor_view_object& _slide, layout_rect* _layout);

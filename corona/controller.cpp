@@ -501,11 +501,15 @@ namespace corona
 			auto* pbox = &_box;
 			for_class(_class_ids, _length, [pbox, st, page_add, this, _id_name, _parent_ui, _style_id]( actor_view_object& avo)
 				{
-					auto style_id = _style_id;
-					if (avo.object.has_field(schema.idf_style_id)) {
-						style_id = avo.object.get_int64(schema.idf_style_id, true);
+					auto object_id = avo.object_id;
+					if (!st->actor.breadcrumb.any_of([object_id](auto& br) {return br.item == object_id; }))
+					{
+						auto style_id = _style_id;
+						if (avo.object.has_field(schema.idf_style_id)) {
+							style_id = avo.object.get_int64(schema.idf_style_id, true);
+						}
+						page_add->select(_parent_ui, st, avo.object_id, _id_name, avo.object, style_id, *pbox);
 					}
-					page_add->select(_parent_ui, st, avo.object_id, _id_name, avo.object, style_id, *pbox);
 					return true;
 				});
 			return _parent_ui;

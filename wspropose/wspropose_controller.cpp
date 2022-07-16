@@ -163,13 +163,13 @@ field id idf_carrier, which is populated when objects of this class are construc
 		idc_system_root = schema.put_class(pcr);
 
 		pcr.class_name = "program_templates";
-		pcr.class_description = "PROGRAM TEMPLATES";
+		pcr.class_description = "PRODUCTS";
 		pcr.field_id_primary_key = idf_program_template_root;
 		pcr.member_fields = { idf_program_template_root, idf_home, schema.idf_search_string, schema.idf_style_id };
 		idc_program_template_root = schema.put_class(pcr);
 
 		pcr.class_name = "program_template";
-		pcr.class_description = "PROGRAM TEMPLATE";
+		pcr.class_description = "PRODUCT";
 		pcr.field_id_primary_key = idf_program_template;
 		pcr.member_fields = { idf_program_template_root, idf_program_template, idf_home };
 		idc_program_template = schema.put_class(pcr);
@@ -421,13 +421,16 @@ field id idf_carrier, which is populated when objects of this class are construc
 		;
 	}
 
-	void wsproposal_controller::render_navigation_frame(const char* _title, const char* _subtitle, bool _left_pad, std::function<void(page_item* _frame)> _contents)
+	void wsproposal_controller::render_navigation_frame(std::function<void(page_item* navigation_contents, page_item* _frame)> _contents)
 	{
 		clear();
 
+		const char* _title = application_title;
+		const char* _subtitle = application_author;
+
 		auto page_column = column(nullptr, null_row, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
 
-		auto title_bar = canvas2d_row(id_canvas_header, page_column, null_row, { 0.0_px, 0.0_px, 100.0_pct, 50.0_px });
+		auto title_bar = canvas2d_row(id_canvas_header, page_column, null_row, { 0.0_px, 0.0_px, 100.0_pct, 45.0_px });
 		text(title_bar, schema.idf_album_title_style, _title);
 
 		auto main_row = row(page_column, null_row, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
@@ -436,10 +439,13 @@ field id idf_carrier, which is populated when objects of this class are construc
 			return _item.get_name(schema.idf_name);
 			}, { 0.0_px, 0.0_px, 100.0_pct, 30.0_px });
 
-		auto form_contents = column(main_row, null_row, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
-		_contents(form_contents);
+		relative_ptr_type navigation_objects[5] = {idc_client_root, idc_program_template_root, idc_carrier_root, idc_coverage_root, idc_system_root};
+		selects(navigation_contents, schema.idf_company_neutral1_style, { 0.0_px, 0.0_px, 100.0_pct, 30.0_px }, schema.idf_name, navigation_objects, 5);
 
-		auto footer_bar = canvas2d_row(id_canvas_footer, page_column, null_row, { 0.0_px, 0.0_px, 100.0_pct, 50.0_px });
+		auto form_contents = column(main_row, null_row, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
+		_contents(navigation_contents, form_contents);
+
+		auto footer_bar = canvas2d_row(id_canvas_footer, page_column, null_row, { 0.0_px, 0.0_px, 100.0_pct, 30.0_px });
 		text(footer_bar, schema.idf_artist_title_style, _subtitle);
 	}
 
@@ -456,129 +462,136 @@ field id idf_carrier, which is populated when objects of this class are construc
 		add_create_buttons(_frame, schema.idf_button_style);
 	}
 
-	void wsproposal_controller::render_2d(std::function<void(page_item* _frame)> _contents)
-	{
-		const char* object_title = nullptr;
-		object_title = schema.get_class(state.actor.current_view_class_id).item().description;
-
-		clear();
-		auto page = column(nullptr, null_row, { 0.0_px,0.0_px,100.0_pct,100.0_pct });
-		render_header(page, application_title, object_title, false);
-		auto d2dwin = canvas2d_row(id_canvas_data_view, page, schema.idf_view_background_style, {0.0_px, 0.0_px, 100.0_pct, 100.0_pct});
-		auto client_area = row(d2dwin, schema.idf_view_background_style, { 0.0_px,0.0_px,100.0_pct,100.0_pct });
-		_contents(client_area);
-		auto d2dcommandbar = row(client_area, schema.idf_breadcrumb_bar_style, { 0.0_px, 0.0_px, 100.0_pct, 50.0_px });
-		add_create_buttons(d2dcommandbar, schema.idf_button_style);
-	}
-
-	void wsproposal_controller::render_mixed(std::function<void(page_item* _frame)> _contents, const char *_object_title)
-	{
-		clear();
-
-		const char* object_title = nullptr;
-		object_title = schema.get_class(state.actor.current_view_class_id).item().description;
-
-		auto mainr = column(nullptr, null_row, { 0.0_px,0.0_px,100.0_pct,100.0_pct });
-
-		render_header(mainr, application_title, object_title, false);
-
-		auto form_area = row(mainr, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 150.0_px });
-		auto view_row = canvas2d_row( id_canvas_data_view, mainr, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
-
-		// editable controls on the left
-		add_update_fields(form_area, field_layout::label_on_top, _object_title);
-		space(form_area, schema.idf_button_style, { 0.0_px, 0.0_px, 1.0_fntgr, 1.0_fntgr });
-		// and the add buttons
-		add_create_buttons(form_area, schema.idf_button_style);
-
-		_contents(view_row);
-
-	}
-
 	void wsproposal_controller::render_home()
 	{
-		render_2d([this](page_item* _frame) { render_home_contents(_frame);  });
+		render_navigation_frame([this](page_item* _navigation, page_item* _contents) { render_home_contents(_navigation, _contents);  });
 	}
 
 	void wsproposal_controller::render_client_root()
 	{
-		render_mixed([this](page_item* _frame) { render_client_root_contents(_frame);  }, "Find and Create Clients");
+		render_navigation_frame([this](page_item* _navigation, page_item* _contents) { render_client_root_contents(_navigation, _contents);  });
 	}
 
 	void wsproposal_controller::render_client()
 	{
-		clear();
+		render_navigation_frame([this](page_item* _navigation, page_item* _contents) { render_client_contents(_navigation, _contents);  });
+	}
 
+	void wsproposal_controller::render_coverage_root()
+	{
+		render_navigation_frame([this](page_item* _navigation, page_item* _contents) { render_coverage_root_contents(_navigation, _contents);  });
+	}
+
+	void wsproposal_controller::render_coverage()
+	{
+		render_navigation_frame([this](page_item* _navigation, page_item* _contents) { render_coverage_contents(_navigation, _contents);  });
+	}
+
+	void wsproposal_controller::render_product_template_root()
+	{
+		render_navigation_frame([this](page_item* _navigation, page_item* _contents) { render_product_template_root_contents(_navigation, _contents);  });
+	}
+
+	void wsproposal_controller::render_product_template()
+	{
+		render_navigation_frame([this](page_item* _navigation, page_item* _contents) { render_product_template_contents(_navigation, _contents);  });
+	}
+
+	void wsproposal_controller::render_carrier_root()
+	{
+		render_navigation_frame([this](page_item* _navigation, page_item* _contents) { render_carrier_root_contents(_navigation, _contents);  });
+	}
+
+	void wsproposal_controller::render_system_root()
+	{
+		render_navigation_frame([this](page_item* _navigation, page_item* _contents) { render_carrier_root_contents(_navigation, _contents);  });
+	}
+
+	void wsproposal_controller::render_carrier()
+	{
+		render_navigation_frame([this](page_item* _navigation, page_item* _contents) { render_carrier_contents(_navigation, _contents);  });
+	}
+
+	void wsproposal_controller::render_program()
+	{
+	}
+
+	void wsproposal_controller::render_home_contents(page_item* _navigation, page_item* _contents)
+	{
+	}
+
+	void wsproposal_controller::render_client_root_contents(page_item* _navigation, page_item* _contents)
+	{
+		relative_ptr_type field_ids[5] = { schema.idf_name, schema.idf_street, schema.idf_city, schema.idf_state, schema.idf_postal };
+		auto form_table = canvas2d_column(id_canvas_form_table_a, _contents, schema.idf_view_background_style);
+
+		search_table(form_table, idc_client, field_ids, 5);
+		add_create_buttons(_navigation, schema.idf_button_style);
+	}
+
+	void wsproposal_controller::render_client_contents(page_item* _navigation, page_item* _contents)
+	{
 		const char* object_title = nullptr;
 		object_title = schema.get_class(state.actor.current_view_class_id).item().description;
 
-		auto mainr = column(nullptr, null_row, { 0.0_px,0.0_px,100.0_pct,100.0_pct });
-		render_header(mainr, application_title, object_title, false);
-		auto edit_body = row(mainr, null_row, { 0.0_px,0.0_px,100.0_pct,100.0_pct });
+		auto edit_body = row(_contents, null_row, { 0.0_px,0.0_px,100.0_pct,100.0_pct });
 
 		auto control = column(edit_body, schema.idf_view_background_style, { 0.0_pct, 0.0_px, 50.0_pct, 100.0_pct });
-		auto children = canvas2d_column( id_canvas_data_view, edit_body, schema.idf_view_background_style, { 0.0_px, 0.0_px, 50.0_pct, 100.0_pct });
+		auto children = canvas2d_column(id_canvas_form_table_a, edit_body, schema.idf_view_background_style, { 0.0_px, 0.0_px, 50.0_pct, 100.0_pct });
 
 		add_update_fields(control, field_layout::label_on_top, "Client Details");
 		space(control, schema.idf_button_style, { 0.0_px, 0.0_px, 1.0_fntgr, 1.0_fntgr });
 		// and the add buttons
 		add_create_buttons(control, schema.idf_button_style);
 
-		text(children, schema.idf_view_subtitle_style, "Client Programs", {0.0_px, 0.0_px, 100.0_pct, 1.4_fntgr});
+		text(children, schema.idf_view_subtitle_style, "Client Programs", { 0.0_px, 0.0_px, 100.0_pct, 1.4_fntgr });
 		relative_ptr_type field_ids[1] = { idf_program_title };
 		search_table(children, idc_program, field_ids, 1);
-
-		// editable controls on the left
 	}
 
-	void wsproposal_controller::render_coverage_root()
+	void wsproposal_controller::render_coverage_root_contents(page_item* _navigation, page_item* _contents)
 	{
-		render_mixed([this](page_item* _frame) { render_coverage_root_contents(_frame);  }, "Find and Create Coverages");
+		relative_ptr_type field_ids[1] = { schema.idf_name };
+		auto form_table = canvas2d_column(id_canvas_form_table_a, _contents, schema.idf_view_background_style);
+		search_table(form_table, idc_client, field_ids, 1);
 	}
 
-	void wsproposal_controller::render_coverage()
+	void wsproposal_controller::render_coverage_contents(page_item* _navigation, page_item* _contents)
 	{
-		render_form([this](page_item* _frame) { render_coverage_contents(_frame);  }, "Coverage Details");
+
 	}
 
-	void wsproposal_controller::render_product_template_root()
+	void wsproposal_controller::render_product_template_root_contents(page_item* _navigation, page_item* _contents)
 	{
-		render_mixed([this](page_item* _frame) { render_product_template_root_contents(_frame);  }, "Find and Create Products");
+		relative_ptr_type field_ids[5] = { schema.idf_name, schema.idf_street, schema.idf_city, schema.idf_state, schema.idf_postal };
+		search_table(_contents, idc_carrier, field_ids, 5);
 	}
 
-	void wsproposal_controller::render_product_template()
+	void wsproposal_controller::render_product_template_contents(page_item* _navigation, page_item* _contents)
 	{
-		render_mixed([this](page_item* _frame) { render_product_template_contents(_frame);  }, "Edit Product");
+		;
 	}
 
-	void wsproposal_controller::render_carrier_root()
+	void wsproposal_controller::render_carrier_root_contents(page_item* _navigation, page_item* _contents)
 	{
-		render_mixed([this](page_item* _frame) { render_carrier_root_contents(_frame);  }, "Find and Create Carriers");
+		relative_ptr_type field_ids[5] = { schema.idf_name, schema.idf_street, schema.idf_city, schema.idf_state, schema.idf_postal };
+		search_table(_contents, idc_carrier, field_ids, 5);
 	}
 
-	void wsproposal_controller::render_system_root()
+	void wsproposal_controller::render_carrier_contents(page_item* _navigation, page_item* _contents)
 	{
-		render_2d([this](page_item* _frame) { render_carrier_root_contents(_frame);  });
+		;
 	}
 
-	void wsproposal_controller::render_carrier()
+	void wsproposal_controller::render_program_contents(page_item* _navigation, page_item* _contents)
 	{
-		render_form([this](page_item* _frame) { render_carrier_contents(_frame);  }, "Carrier Details");
-	}
-
-	void wsproposal_controller::render_program()
-	{
-		clear();
-
 		const char* object_title = nullptr;
 		object_title = schema.get_class(state.actor.current_view_class_id).item().description;
 
-		auto mainr = column(nullptr, null_row, { 0.0_px,0.0_px,100.0_pct,100.0_pct });
-		render_header(mainr, application_title, object_title, false);
-		auto content_area = row(mainr, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
+		auto content_area = row(_contents, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
 		auto detail_area = column(content_area, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 40.0_pct });
 		auto program_edit_area = row(detail_area, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 200.0_px });
-		auto program_table_area = canvas2d_row( id_canvas_data_view, detail_area, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
+		auto program_table_area = canvas2d_row(id_canvas_form_table_a, detail_area, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
 
 		// editable controls on the left
 		add_update_fields(program_edit_area, field_layout::label_on_top, "Program Details");
@@ -590,68 +603,8 @@ field id idf_carrier, which is populated when objects of this class are construc
 		relative_ptr_type field_ids[1] = { idf_program_title };
 		search_table(program_table_area, idc_program, field_ids, 1);
 
-	}
+/*
 
-	void wsproposal_controller::render_home_contents(page_item* _frame)
-	{
-		relative_ptr_type class_ids1[2] = { idc_client_root, idc_program_template_root };
-		relative_ptr_type class_ids2[3] = { idc_carrier_root, idc_coverage_root, idc_system_root };
-
-		auto d2darea = row(_frame, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct }, {10.0_pct});
-
-		auto column1 = column(d2darea, schema.idf_view_background_style, { 0.0_pct, 0.0_px, 30.0_pct, 100.0_pct });
-		selects(column1, schema.idf_company_neutral1_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_px }, schema.idf_name, class_ids1, 2);
-
-		auto column2 = column(d2darea, schema.idf_view_background_style, { 0.0_pct, 0.0_px, 30.0_pct, 100.0_pct });
-		selects(column2, schema.idf_company_neutral1_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_px }, schema.idf_name, class_ids2, 3);
-	}
-
-	void wsproposal_controller::render_client_root_contents(page_item* _frame)
-	{
-		relative_ptr_type field_ids[5] = { schema.idf_name, schema.idf_street, schema.idf_city, schema.idf_state, schema.idf_postal };
-		search_table(_frame, idc_client, field_ids, 5);
-	}
-
-	void wsproposal_controller::render_client_contents(page_item* _frame)
-	{
-		;
-	}
-
-	void wsproposal_controller::render_coverage_root_contents(page_item* _frame)
-	{
-		relative_ptr_type field_ids[1] = { schema.idf_name };
-		search_table(_frame, idc_client, field_ids, 1);
-	}
-
-	void wsproposal_controller::render_coverage_contents(page_item* _frame)
-	{
-
-	}
-
-	void wsproposal_controller::render_product_template_root_contents(page_item* _frame)
-	{
-		relative_ptr_type field_ids[5] = { schema.idf_name, schema.idf_street, schema.idf_city, schema.idf_state, schema.idf_postal };
-		search_table(_frame, idc_carrier, field_ids, 5);
-	}
-
-	void wsproposal_controller::render_product_template_contents(page_item* _frame)
-	{
-		;
-	}
-
-	void wsproposal_controller::render_carrier_root_contents(page_item* _frame)
-	{
-		relative_ptr_type field_ids[5] = { schema.idf_name, schema.idf_street, schema.idf_city, schema.idf_state, schema.idf_postal };
-		search_table(_frame, idc_carrier, field_ids, 5);
-	}
-
-	void wsproposal_controller::render_carrier_contents(page_item* _frame)
-	{
-		;
-	}
-
-	void wsproposal_controller::render_program_contents(page_item* _frame)
-	{
 		page_item* contents = row( _frame, schema.idf_view_background_style);
 		page_item* slide_area = column(contents, schema.idf_view_background_style, { 0.0_px, 0.0_px, 25.0_pct, 100.0_pct });
 		page_item* selected_slide_area = column(contents, schema.idf_view_background_style, { 0.0_px, 0.0_px, 25.0_pct, 100.0_pct });
@@ -668,7 +621,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 				}
 				return true;
 			}
-		);
+		); */
 	}
 
 	void wsproposal_controller::render_program_slide(page_item* _frame, actor_view_object& _slide, layout_rect *_layout)
@@ -1057,7 +1010,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 			{ schema.idf_client_style },
 			{
 				{ schema.idf_font_name, fontName },
-				{ schema.idf_font_size, 32.0 },
+				{ schema.idf_font_size, 14.0 },
 				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_center },
 				{ schema.idf_vertical_alignment, (int)visual_alignment::align_center },
 				{ schema.idf_shape_fill_color, "#000000FF" },
@@ -1442,8 +1395,8 @@ field id idf_carrier, which is populated when objects of this class are construc
 			schema.idf_view_style,
 			{ schema.idf_artist_title_style },
 			{
-				{ schema.idf_font_name, "Wide Latin" },
-				{ schema.idf_font_size, 48.0 },
+				{ schema.idf_font_name, fontName },
+				{ schema.idf_font_size, 24.0 },
 				{ schema.idf_horizontal_alignment, (int)(visual_alignment::align_center) },
 				{ schema.idf_shape_fill_color, "#001100FF" },
 				{ schema.idf_shape_border_thickness, 0 },

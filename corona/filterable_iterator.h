@@ -300,6 +300,12 @@ namespace corona
 				return std::count_if(begin(), end(), new_predicate);
 			}
 
+			int order_by(std::function<bool(const value_ref&)> _predicate)
+			{
+				auto new_predicate = [this, _predicate](auto& kp) { return predicate(kp.item) && _predicate(kp.item); };
+				return std::count_if(begin(), end(), new_predicate);
+			}
+
 			template <typename new_key> grouped<new_key, value_ref> group_by(serialized_box_container *_box, std::function<new_key(const value_ref&)> _transform)
 			{
 				return create_grouped<new_key, value_ref, filterable_iterator>(_box, begin(), end(), _transform);

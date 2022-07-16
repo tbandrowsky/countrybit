@@ -388,5 +388,13 @@ namespace corona
 
 		bool array_box_tests();
 	}
+
+	template <typename item_type>
+	class larray
+	{
+
+
+	};
+
 }
 
