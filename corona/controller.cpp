@@ -352,20 +352,30 @@ namespace corona
 
 		void corona_controller::for_class(relative_ptr_type *_class_ids, int _length, std::function<bool(actor_view_object& avo)>  updator)
 		{
-			auto selections = state.view_objects.where([this, _class_ids, _length](auto& kp) { 
-				for (int i = 0; i < _length; i++) 
-				{
-					if (this->program_chart.matches_class_id(kp.second.object_id, _class_ids[i])) 
-					{
-						return true;
-					}
-				}
-				return false;
-			});
+			std::vector<actor_view_object*> selected;
+			dynamic_box box;
+			box.init(1 << 23);
 
-			for (auto selection : selections)
+			auto sorted_list = state.view_objects.where([_class_ids, _length, this](auto& avox)
+				{
+					for (int i = 0; i < _length; i++)
+					{
+						if (this->program_chart.matches_class_id(avox.second.object_id, _class_ids[i]))
+						{
+							return true;
+						}
+					}
+					return false;
+				})
+				.order_by(&box, [](auto& a1, auto& a2)
+					{
+						return a1.second.navigation_order - a2.second.navigation_order;
+					}
+				);
+
+			for (auto selection : sorted_list)
 			{
-				updator(selection.second);
+				updator(selection.item.second);
 			}
 		}
 

@@ -315,6 +315,7 @@ namespace corona
 				avo.selected = false;
 				avo.updatable = false;
 				avo.object = acr.copy_object(schema, vos.item);
+				avo.navigation_order = 0;
 				acr.view_objects.put(avo.object_id, avo, [](actor_view_object& _dest) { ;  });
 			}
 
@@ -450,6 +451,7 @@ namespace corona
 		}
 
 		relative_ptr_type jcollection::put_actor(actor_type _actor)
+
 		{
 			actor_type modified;
 

@@ -750,6 +750,7 @@ namespace corona
 			bool				selected;
 			bool				deletable;
 			jobject				object;
+			int					navigation_order;
 		};
 
 		class select_object_request

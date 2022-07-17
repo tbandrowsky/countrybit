@@ -161,11 +161,11 @@ namespace corona
 
 		};
 
-		template <typename new_type, typename value_ref, typename iter_type> 
-		grouped<new_type,value_ref> create_grouped(serialized_box_container *_box, iter_type begin_iter, iter_type end_iter, std::function<new_type(value_ref&)> _transform )
+		template <typename new_type, typename item_type, typename iter_type> 
+		grouped<new_type, item_type> create_grouped(serialized_box_container *_box, iter_type begin_iter, iter_type end_iter, std::function<new_type(item_type&)> _transform )
 		{
 			relative_ptr_type header_location;
-			auto new_group = grouped<new_type, value_ref>::create_grouped(_box, header_location);
+			auto new_group = grouped<new_type, item_type>::create_grouped(_box, header_location);
 			for (auto iter = begin_iter; iter != end_iter; iter++) {
 				auto obj = iter.get_object();
 				auto key = _transform(obj);

@@ -6,7 +6,10 @@ namespace corona
 	{
 		template <typename new_key, typename value_ref> class grouped;
 		template <typename new_value> class list_box;
-		template <typename new_type, typename value_ref, typename iter_type> grouped<new_type, value_ref> create_new_group(serialized_box_container* _box, iter_type begin_iter, iter_type stop_iter, std::function<new_type(value_ref&)> _transform);
+
+		template <typename value_ref, typename result_type, typename iterator> auto create_array(serialized_box_container* _box, iterator, iterator, std::function<result_type(value_ref)> _fn);
+		template <typename value_ref, typename result_type, typename iterator> auto create_list(serialized_box_container* _box, iterator, iterator, std::function<result_type(value_ref)> _fn);
+		template <typename value_ref, typename result_type, typename iterator> auto create_grouped(serialized_box_container* _box, iterator, iterator, std::function<result_type(value_ref)> _fn);
 
 		template <typename item_type>
 		class value_reference 
@@ -300,20 +303,26 @@ namespace corona
 				return std::count_if(begin(), end(), new_predicate);
 			}
 
-			int order_by(std::function<bool(const value_ref&)> _predicate)
+			int count()
 			{
-				auto new_predicate = [this, _predicate](auto& kp) { return predicate(kp.item) && _predicate(kp.item); };
-				return std::count_if(begin(), end(), new_predicate);
+				return std::count_if(begin(), end(), [](const auto& kp) { return true;  });
 			}
 
-			template <typename new_key> grouped<new_key, value_ref> group_by(serialized_box_container *_box, std::function<new_key(const value_ref&)> _transform)
+			template <typename new_key> grouped<new_key, item_type> group_by(serialized_box_container *_box, std::function<new_key(const value_type&)> _transform)
 			{
-				return create_grouped<new_key, value_ref, filterable_iterator>(_box, begin(), end(), _transform);
+				return create_grouped<value_type, value_type, filterable_iterator>(_box, begin(), end(), _transform);
 			}
 
-			template <typename new_key> list_box<new_key> select(serialized_box_container* _box, std::function<new_key(const value_ref&)> _transform)
+			template <typename new_key> list_box<new_key> select(serialized_box_container* _box, std::function<new_key(const value_type&)> _transform)
 			{
-				return create_list<new_key, value_ref, filterable_iterator>(_box, begin(), end(), _transform);
+				return create_list<value_type, value_type, filterable_iterator>(_box, begin(), end(), _transform);
+			}
+
+			auto order_by(serialized_box_container* _box, std::function<int(value_type&, value_type&)> _compare)
+			{
+				auto results = create_array<value_type, value_type, filterable_iterator>(_box, begin(), end(), [](value_type& a) { return a; });
+				results.sort(_compare);
+				return results;
 			}
 
 		};
