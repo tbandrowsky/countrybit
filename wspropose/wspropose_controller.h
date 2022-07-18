@@ -104,7 +104,7 @@ namespace proposal
 		void set_style_sheet();
 
 		void render_navigation_frame(std::function<void(page_item* _navigation, page_item* _contents)> _contents);
-		void render_form(page_item* _frame, const char *_form_title);
+		void render_form(page_item* _navigation, page_item* _frame, const char *_form_title);
 
 		void render_home();
 		void render_client_root();

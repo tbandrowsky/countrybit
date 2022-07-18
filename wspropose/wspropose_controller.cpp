@@ -449,7 +449,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 		text(footer_bar, schema.idf_artist_title_style, _subtitle);
 	}
 
-	void wsproposal_controller::render_form(page_item *_frame, const char *_form_title)
+	void wsproposal_controller::render_form(page_item* _navigation, page_item *_frame, const char *_form_title)
 	{
 		const char* object_title = nullptr;
 		object_title = schema.get_class(state.actor.current_view_class_id).item().description;
@@ -459,7 +459,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 		// editable controls on the left
 		add_update_fields(_frame, field_layout::label_on_left, _form_title);
 		space(_frame, schema.idf_button_style, { 0.0_px, 0.0_px, 1.0_fntgr, 1.0_fntgr });
-		add_create_buttons(_frame, schema.idf_button_style);
+		add_create_buttons(_navigation, schema.idf_button_style);
 	}
 
 	void wsproposal_controller::render_home()
@@ -504,7 +504,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 
 	void wsproposal_controller::render_system_root()
 	{
-		render_navigation_frame([this](page_item* _navigation, page_item* _contents) { render_carrier_root_contents(_navigation, _contents);  });
+		render_navigation_frame([this](page_item* _navigation, page_item* _contents) { render_system_root_contents(_navigation, _contents);  });
 	}
 
 	void wsproposal_controller::render_carrier()
@@ -541,46 +541,57 @@ field id idf_carrier, which is populated when objects of this class are construc
 
 		add_update_fields(control, field_layout::label_on_top, "Client Details");
 		space(control, schema.idf_button_style, { 0.0_px, 0.0_px, 1.0_fntgr, 1.0_fntgr });
-		// and the add buttons
-		add_create_buttons(control, schema.idf_button_style);
 
 		text(children, schema.idf_view_subtitle_style, "Client Programs", { 0.0_px, 0.0_px, 100.0_pct, 1.4_fntgr });
 		relative_ptr_type field_ids[1] = { idf_program_title };
 		search_table(children, idc_program, field_ids, 1);
+
+		add_create_buttons(_navigation, schema.idf_button_style);
 	}
 
 	void wsproposal_controller::render_coverage_root_contents(page_item* _navigation, page_item* _contents)
 	{
 		relative_ptr_type field_ids[1] = { schema.idf_name };
 		auto form_table = canvas2d_column(id_canvas_form_table_a, _contents, schema.idf_view_background_style);
-		search_table(form_table, idc_client, field_ids, 1);
+		search_table(form_table, idc_coverage, field_ids, 1);
+		// and the add buttons
+		add_create_buttons(_navigation, schema.idf_button_style);
+
 	}
+
+	void wsproposal_controller::render_system_root_contents(page_item* _navigation, page_item* _contents)
+	{
+
+		}
 
 	void wsproposal_controller::render_coverage_contents(page_item* _navigation, page_item* _contents)
 	{
-
+		render_form(_navigation, _contents, "Coverage");
 	}
 
 	void wsproposal_controller::render_product_template_root_contents(page_item* _navigation, page_item* _contents)
 	{
-		relative_ptr_type field_ids[5] = { schema.idf_name, schema.idf_street, schema.idf_city, schema.idf_state, schema.idf_postal };
-		search_table(_contents, idc_carrier, field_ids, 5);
+		relative_ptr_type field_ids[1] = { schema.idf_name };
+		search_table(_contents, idc_product, field_ids, 1);
+		add_create_buttons(_navigation, schema.idf_button_style);
 	}
 
 	void wsproposal_controller::render_product_template_contents(page_item* _navigation, page_item* _contents)
 	{
-		;
+		render_form(_navigation, _contents, "Product");
 	}
 
 	void wsproposal_controller::render_carrier_root_contents(page_item* _navigation, page_item* _contents)
 	{
 		relative_ptr_type field_ids[5] = { schema.idf_name, schema.idf_street, schema.idf_city, schema.idf_state, schema.idf_postal };
-		search_table(_contents, idc_carrier, field_ids, 5);
+		auto form_table = canvas2d_column(id_canvas_form_table_a, _contents, schema.idf_view_background_style);
+		search_table(form_table, idc_carrier, field_ids, 5);
+		add_create_buttons(_navigation, schema.idf_button_style);
 	}
 
 	void wsproposal_controller::render_carrier_contents(page_item* _navigation, page_item* _contents)
 	{
-		;
+		render_form(_navigation, _contents, "Carrier");
 	}
 
 	void wsproposal_controller::render_program_contents(page_item* _navigation, page_item* _contents)
@@ -656,7 +667,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 		{
 			render_client_root();
 		}
-		else if (state.actor.current_view_class_id == idc_client)
+		else if (state.actor.current_view_class_id == idc_client || state.actor.current_view_class_id == idc_program)
 		{
 			render_client();
 		}

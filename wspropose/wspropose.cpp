@@ -33,10 +33,10 @@ int __stdcall WinMain(HINSTANCE hInstance,
 	proposal::wsproposal_controller* mainController = new proposal::wsproposal_controller();
 
 	if (forceWindowed) {
-		wsPropose.runDialog(hInstance, "Woodruff Sawyer Proposal", IDI_WSPROPOSE, false, mainController);
+		wsPropose.runDialog(hInstance, "Proofs of Concept", IDI_WSPROPOSE, false, mainController);
 	}
 	else {
-		wsPropose.runDialog(hInstance, "Woodruff Sawyer Proposal", IDI_WSPROPOSE, true, mainController);
+		wsPropose.runDialog(hInstance, "Proofs of Concept", IDI_WSPROPOSE, true, mainController);
 	}
 
 	CoUninitialize();
