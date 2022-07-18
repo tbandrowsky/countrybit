@@ -433,7 +433,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 		auto title_bar = canvas2d_row(id_canvas_header, page_column, null_row, { 0.0_px, 0.0_px, 100.0_pct, 45.0_px });
 		text(title_bar, schema.idf_album_title_style, _title);
 
-		auto main_row = row(page_column, null_row, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
+		auto main_row = row(page_column, null_row, { 0.0_px, 15.0_px, 100.0_pct, 100.0_pct });
 		auto navigation_contents = canvas2d_column(id_canvas_navigation, main_row, null_row, { 0.0_px, 0.0_px, 200.0_px, 100.0_pct });
 		breadcrumbs(navigation_contents, [this](jobject& _item) {
 			return _item.get_name(schema.idf_name);
@@ -442,7 +442,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 		relative_ptr_type navigation_objects[5] = {idc_client_root, idc_program_template_root, idc_carrier_root, idc_coverage_root, idc_system_root};
 		selects(navigation_contents, schema.idf_company_neutral1_style, { 0.0_px, 0.0_px, 100.0_pct, 30.0_px }, schema.idf_name, navigation_objects, 5);
 
-		auto form_contents = column(main_row, null_row, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
+		auto form_contents = column(main_row, null_row, { 16.0_px, 0.0_px, 100.0_pct, 100.0_pct });
 		_contents(navigation_contents, form_contents);
 
 		auto footer_bar = canvas2d_row(id_canvas_footer, page_column, null_row, { 0.0_px, 0.0_px, 100.0_pct, 30.0_px });
@@ -455,11 +455,20 @@ field id idf_carrier, which is populated when objects of this class are construc
 		object_title = schema.get_class(state.actor.current_view_class_id).item().description;
 
 		_frame->windowsRegion = true;
-
-		// editable controls on the left
 		add_update_fields(_frame, field_layout::label_on_left, _form_title);
-		space(_frame, schema.idf_button_style, { 0.0_px, 0.0_px, 1.0_fntgr, 1.0_fntgr });
-		add_create_buttons(_navigation, schema.idf_button_style);
+		space(_navigation, schema.idf_button_style, { 0.0_px, 0.0_px, 100.0_pct, 32.0_px });
+		text(_navigation, schema.idf_label_style, "Create", {0.0_px, 0.0_px, 100.0_pct, 32.0_px});
+		add_create_buttons(_navigation, schema.idf_button_style, { 0.0_px, 0.0_px, 100.0_pct, 32.0_px });
+	}
+
+	void wsproposal_controller::render_search_page(page_item* _navigation, page_item* _contents, relative_ptr_type _class_id, const char* _form_title, int count_fields, relative_ptr_type *_field_ids)
+	{
+		auto form_search = row(_contents, null_row, { 0.0_px, 0.0_px, 100.0_pct, 25.0_px });
+		add_update_fields(form_search, field_layout::label_on_left, _form_title);
+		auto form_table = canvas2d_column(id_canvas_form_table_a, _contents, schema.idf_view_background_style);
+		search_table(form_table, _class_id, _field_ids, count_fields);
+		text(_navigation, schema.idf_label_style, "Create", { 0.0_px, 0.0_px, 100.0_pct, 32.0_px });
+		add_create_buttons(_navigation, schema.idf_button_style, { 0.0_px, 0.0_px, 100.0_pct, 32.0_px });
 	}
 
 	void wsproposal_controller::render_home()
@@ -523,10 +532,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 	void wsproposal_controller::render_client_root_contents(page_item* _navigation, page_item* _contents)
 	{
 		relative_ptr_type field_ids[5] = { schema.idf_name, schema.idf_street, schema.idf_city, schema.idf_state, schema.idf_postal };
-		auto form_table = canvas2d_column(id_canvas_form_table_a, _contents, schema.idf_view_background_style);
-
-		search_table(form_table, idc_client, field_ids, 5);
-		add_create_buttons(_navigation, schema.idf_button_style);
+		render_search_page(_navigation, _contents, idc_client, "Clients", 5, field_ids);
 	}
 
 	void wsproposal_controller::render_client_contents(page_item* _navigation, page_item* _contents)
@@ -546,17 +552,13 @@ field id idf_carrier, which is populated when objects of this class are construc
 		relative_ptr_type field_ids[1] = { idf_program_title };
 		search_table(children, idc_program, field_ids, 1);
 
-		add_create_buttons(_navigation, schema.idf_button_style);
+		add_create_buttons(_navigation, schema.idf_button_style, { 0.0_px, 0.0_px, 100.0_pct, 32.0_px });
 	}
 
 	void wsproposal_controller::render_coverage_root_contents(page_item* _navigation, page_item* _contents)
 	{
 		relative_ptr_type field_ids[1] = { schema.idf_name };
-		auto form_table = canvas2d_column(id_canvas_form_table_a, _contents, schema.idf_view_background_style);
-		search_table(form_table, idc_coverage, field_ids, 1);
-		// and the add buttons
-		add_create_buttons(_navigation, schema.idf_button_style);
-
+		render_search_page(_navigation, _contents, idc_coverage, "Coverages", 1, field_ids);
 	}
 
 	void wsproposal_controller::render_system_root_contents(page_item* _navigation, page_item* _contents)
@@ -572,8 +574,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 	void wsproposal_controller::render_product_template_root_contents(page_item* _navigation, page_item* _contents)
 	{
 		relative_ptr_type field_ids[1] = { schema.idf_name };
-		search_table(_contents, idc_product, field_ids, 1);
-		add_create_buttons(_navigation, schema.idf_button_style);
+		render_search_page(_navigation, _contents, idc_program_template, "Products", 1, field_ids);
 	}
 
 	void wsproposal_controller::render_product_template_contents(page_item* _navigation, page_item* _contents)
@@ -584,9 +585,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 	void wsproposal_controller::render_carrier_root_contents(page_item* _navigation, page_item* _contents)
 	{
 		relative_ptr_type field_ids[5] = { schema.idf_name, schema.idf_street, schema.idf_city, schema.idf_state, schema.idf_postal };
-		auto form_table = canvas2d_column(id_canvas_form_table_a, _contents, schema.idf_view_background_style);
-		search_table(form_table, idc_carrier, field_ids, 5);
-		add_create_buttons(_navigation, schema.idf_button_style);
+		render_search_page(_navigation, _contents, idc_carrier, "Carriers", 5, field_ids);
 	}
 
 	void wsproposal_controller::render_carrier_contents(page_item* _navigation, page_item* _contents)
@@ -1044,7 +1043,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 				{ schema.idf_shape_fill_color, "#000000FF" },
 				{ schema.idf_shape_border_thickness, 0 },
 				{ schema.idf_shape_border_color, "" },
-				{ schema.idf_box_fill_color, "#6399AEFF" },
+				{ schema.idf_box_fill_color, "#78BE20FF" },
 				{ schema.idf_box_border_thickness, 8 },
 				{ schema.idf_box_border_color, "#FFFFFFFF" }
 			}
@@ -1061,7 +1060,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 				{ schema.idf_shape_fill_color, "#000000FF" },
 				{ schema.idf_shape_border_thickness, 0 },
 				{ schema.idf_shape_border_color, "" },
-				{ schema.idf_box_fill_color, "#A2AAADFF" },
+				{ schema.idf_box_fill_color, "#78BE20FF" },
 				{ schema.idf_box_border_thickness, 8 },
 				{ schema.idf_box_border_color, "#FFFFFFFF" }
 			}
@@ -1095,7 +1094,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 				{ schema.idf_shape_fill_color, "#000000FF" },
 				{ schema.idf_shape_border_thickness, 0 },
 				{ schema.idf_shape_border_color, "" },
-				{ schema.idf_box_fill_color, "#A2AAADFF" },
+				{ schema.idf_box_fill_color, "#78BE20FF" },
 				{ schema.idf_box_border_thickness, 8 },
 				{ schema.idf_box_border_color, "#FFFFFFFF" }
 			}
@@ -1377,6 +1376,8 @@ field id idf_carrier, which is populated when objects of this class are construc
 			{
 				{ schema.idf_font_name, fontName },
 				{ schema.idf_font_size, 14.0 },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_center },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_center },
 				{ schema.idf_shape_fill_color, "#2f2f2fFF" },
 				{ schema.idf_shape_border_thickness, 0 },
 				{ schema.idf_shape_border_color, "" },
@@ -1390,12 +1391,12 @@ field id idf_carrier, which is populated when objects of this class are construc
 			schema.idf_view_style,
 			{ schema.idf_album_title_style },
 			{
-				{ schema.idf_font_name, "Felix Titling" },
+				{ schema.idf_font_name, fontName },
 				{ schema.idf_font_size, 40.0 },
 				{ schema.idf_horizontal_alignment, (int)(visual_alignment::align_center) },
 				{ schema.idf_shape_fill_color, "#000000FF" },
-				{ schema.idf_shape_border_thickness, 0 },
-				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_shape_border_thickness, 4 },
+				{ schema.idf_shape_border_color, "#000000FF" },
 				{ schema.idf_box_fill_color, "#FFFFFFFF" },
 				{ schema.idf_box_border_thickness, 1 },
 				{ schema.idf_box_border_color, "#FFFFFFFF" }

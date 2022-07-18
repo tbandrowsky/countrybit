@@ -261,19 +261,22 @@ namespace corona
 		{
 			for (auto aco : _state->create_objects)
 			{
-				page_item* button = append();
-				button->set_parent(_parent);
-				button->id = size();
-				button->layout = layout_types::create;
-				button->box = _box;
-				button->class_id = aco.second.class_id;
-				button->field = nullptr;
-				button->create_request = _state->create_create_request(aco.second.class_id);
-				button->style_id = _style_id;
+				if (aco.get_value().class_id != _state->actor.current_view_class_id)
+				{
+					page_item* button = append();
+					button->set_parent(_parent);
+					button->id = size();
+					button->layout = layout_types::create;
+					button->box = _box;
+					button->class_id = aco.second.class_id;
+					button->field = nullptr;
+					button->create_request = _state->create_create_request(aco.second.class_id);
+					button->style_id = _style_id;
 
-				object_description desc;
-				desc = "Add " + _schema->get_class(aco.second.class_id).pitem()->name;
-				button->caption = data.copy<char>(desc.c_str(), 0);
+					object_description desc;
+					desc = "Add " + _schema->get_class(aco.second.class_id).pitem()->name;
+					button->caption = data.copy<char>(desc.c_str(), 0);
+				}
 			}
 			return _parent;
 		}
