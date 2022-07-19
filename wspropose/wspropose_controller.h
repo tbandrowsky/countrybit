@@ -73,7 +73,8 @@ namespace proposal
 
 		corona::database::relative_ptr_type idf_program_title;
 		corona::database::relative_ptr_type idf_program_subtitle;
-		
+		corona::database::relative_ptr_type idf_program_status;
+
 		corona::database::relative_ptr_type idf_slide_title;
 
 		corona::database::relative_ptr_type idc_program_chart_slide;

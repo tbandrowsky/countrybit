@@ -566,7 +566,7 @@ namespace corona
 		void corona_controller::search_table(page_item* _parent, relative_ptr_type _idc_class_id, relative_ptr_type* _idf_child_fields, int _num_child_fields)
 		{
 			page_item* table_container = column(_parent, null_row);
-			page_item* drow = row(table_container, schema.idf_column_text_head_style);
+			page_item* drow = row(table_container, null_row);
 			layout_rect row_size;
 
 			std::vector<layout_rect> columns;
@@ -596,7 +596,7 @@ namespace corona
 
 			for (auto avo : svo)
 			{
-				drow = row(table_container, schema.idf_column_text_head_style, row_size);
+				drow = row(table_container, null_row, row_size);
 
 				for (int i = 0; i < _num_child_fields; i++)
 				{

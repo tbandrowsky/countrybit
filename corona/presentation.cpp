@@ -274,7 +274,7 @@ namespace corona
 					button->style_id = _style_id;
 
 					object_description desc;
-					desc = "Add " + _schema->get_class(aco.second.class_id).pitem()->name;
+					desc = "Add " + _schema->get_class(aco.second.class_id).pitem()->description;
 					button->caption = data.copy<char>(desc.c_str(), 0);
 				}
 			}

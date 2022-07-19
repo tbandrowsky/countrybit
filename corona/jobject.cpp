@@ -3158,7 +3158,7 @@ namespace corona
 			layout_rect lr;
 			lr.x = 0.0_px;
 			lr.y = 0.0_px;
-			lr.height = 1.0_fntgr;
+			lr.height = 1.2_fntgr;
 			jfield &f = get_field(_field_idx);
 
 			if (f.is_integer() || f.is_float()) {

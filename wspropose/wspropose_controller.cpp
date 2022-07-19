@@ -63,6 +63,7 @@ namespace proposal
 		idf_program_item_base = schema.put_integer_field({ {  jtype::type_int64, "program_item_id", "Program Item Id", false }, { 0, INT64_MAX } });
 		idf_program_view = schema.put_integer_field({ {  jtype::type_int64, "program_view", "Program View", false }, { 0, INT64_MAX } });
 		idf_program_title = schema.put_string_field({ {  jtype::type_string, "program_title", "Program Title", true }, { 100, "", "" } });
+		idf_program_status = schema.put_string_field({ {  jtype::type_string, "program_status", "Program Status", true }, { 100, "", "" } });
 		idf_program_subtitle = schema.put_string_field({ {  jtype::type_string, "program_title", "Program Subtitle", true }, { 100, "", "" } });
 
 		idf_carrier_name = schema.put_string_field({ {  jtype::type_string, "carrier_name", "Carrier Name", true }, { 100, "", "" } });
@@ -181,6 +182,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 			idf_client,
 			idf_program_view,
 			schema.idf_name,
+			idf_program_status,
 			idf_program_title,
 			idf_program_subtitle,
 			idf_inception,
@@ -542,13 +544,13 @@ field id idf_carrier, which is populated when objects of this class are construc
 
 		auto edit_body = row(_contents, null_row, { 0.0_px,0.0_px,100.0_pct,100.0_pct });
 
-		auto control = column(edit_body, schema.idf_view_background_style, { 0.0_pct, 0.0_px, 50.0_pct, 100.0_pct });
-		auto children = canvas2d_column(id_canvas_form_table_a, edit_body, schema.idf_view_background_style, { 0.0_px, 0.0_px, 50.0_pct, 100.0_pct });
+		auto control = column(edit_body, schema.idf_view_background_style, { 0.0_pct, 0.0_px, 30.0_pct, 100.0_pct });
+		auto children = canvas2d_column(id_canvas_form_table_a, edit_body, schema.idf_view_background_style, { 0.0_px, 0.0_px, 65.0_pct, 100.0_pct });
 
 		add_update_fields(control, field_layout::label_on_top, "Client Details");
 		space(control, schema.idf_button_style, { 0.0_px, 0.0_px, 1.0_fntgr, 1.0_fntgr });
 
-		text(children, schema.idf_view_subtitle_style, "Client Programs", { 0.0_px, 0.0_px, 100.0_pct, 1.4_fntgr });
+		text(children, schema.idf_view_subtitle_style, "Programs", { 0.0_px, 0.0_px, 100.0_pct, 1.4_fntgr });
 		relative_ptr_type field_ids[1] = { idf_program_title };
 		search_table(children, idc_program, field_ids, 1);
 
@@ -848,12 +850,12 @@ field id idf_carrier, which is populated when objects of this class are construc
 				{ schema.idf_line_spacing, 0.0 },
 				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_far },
 				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_shape_fill_color, "#5B6770FF" },
+				{ schema.idf_shape_fill_color, "#FFFFFFFF" },
 				{ schema.idf_shape_border_thickness, 0 },
 				{ schema.idf_shape_border_color, "" },
-				{ schema.idf_box_fill_color, "#DEE1E1FF" },
+				{ schema.idf_box_fill_color, "#1F2A44FF" },
 				{ schema.idf_box_border_thickness, 1 },
-				{ schema.idf_box_border_color, "#C1C6C8FF" }
+				{ schema.idf_box_border_color, "#1F2A44FF" }
 			}
 			);
 
@@ -870,12 +872,12 @@ field id idf_carrier, which is populated when objects of this class are construc
 				{ schema.idf_line_spacing, 0.0 },
 				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
 				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_shape_fill_color, "#5B6770FF" },
+				{ schema.idf_shape_fill_color, "#FFFFFFFF" },
 				{ schema.idf_shape_border_thickness, 0 },
 				{ schema.idf_shape_border_color, "" },
-				{ schema.idf_box_fill_color, "#DEE1E1FF" },
+				{ schema.idf_box_fill_color, "#1F2A44FF" },
 				{ schema.idf_box_border_thickness, 1 },
-				{ schema.idf_box_border_color, "#C1C6C8FF" }
+				{ schema.idf_box_border_color, "#1F2A44FF" }
 			}
 			);
 
@@ -1023,7 +1025,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 				{ schema.idf_font_size, 14.0 },
 				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_center },
 				{ schema.idf_vertical_alignment, (int)visual_alignment::align_center },
-				{ schema.idf_shape_fill_color, "#000000FF" },
+				{ schema.idf_shape_fill_color, "#ffffffFF" },
 				{ schema.idf_shape_border_thickness, 8 },
 				{ schema.idf_shape_border_color, "#000000FF" },
 				{ schema.idf_box_fill_color, "#78BE20FF" },
@@ -1040,7 +1042,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 				{ schema.idf_font_size, 14.0 },
 				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_center },
 				{ schema.idf_vertical_alignment, (int)visual_alignment::align_center },
-				{ schema.idf_shape_fill_color, "#000000FF" },
+				{ schema.idf_shape_fill_color, "#ffffffFF" },
 				{ schema.idf_shape_border_thickness, 0 },
 				{ schema.idf_shape_border_color, "" },
 				{ schema.idf_box_fill_color, "#78BE20FF" },
@@ -1057,7 +1059,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 				{ schema.idf_font_size, 14.0 },
 				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_center },
 				{ schema.idf_vertical_alignment, (int)visual_alignment::align_center },
-				{ schema.idf_shape_fill_color, "#000000FF" },
+				{ schema.idf_shape_fill_color, "#ffffffFF" },
 				{ schema.idf_shape_border_thickness, 0 },
 				{ schema.idf_shape_border_color, "" },
 				{ schema.idf_box_fill_color, "#78BE20FF" },
@@ -1074,7 +1076,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 				{ schema.idf_font_size, 14.0 },
 				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_center },
 				{ schema.idf_vertical_alignment, (int)visual_alignment::align_center },
-				{ schema.idf_shape_fill_color, "#000000FF" },
+				{ schema.idf_shape_fill_color, "#ffffffFF" },
 				{ schema.idf_shape_border_thickness, 0 },
 				{ schema.idf_shape_border_color, "" },
 				{ schema.idf_box_fill_color, "#78BE20FF" },
@@ -1091,7 +1093,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 				{ schema.idf_font_size, 14.0 },
 				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_center },
 				{ schema.idf_vertical_alignment, (int)visual_alignment::align_center },
-				{ schema.idf_shape_fill_color, "#000000FF" },
+				{ schema.idf_shape_fill_color, "#ffffffFF" },
 				{ schema.idf_shape_border_thickness, 0 },
 				{ schema.idf_shape_border_color, "" },
 				{ schema.idf_box_fill_color, "#78BE20FF" },
@@ -1361,7 +1363,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 				{ schema.idf_font_size, 14.0 },
 				{ schema.idf_vertical_alignment, (int)visual_alignment::align_center },
 				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_center },
-				{ schema.idf_shape_fill_color, "#000000FF" },
+				{ schema.idf_shape_fill_color, "#5284A3FF" },
 				{ schema.idf_shape_border_thickness, 0 },
 				{ schema.idf_shape_border_color, "" },
 				{ schema.idf_box_fill_color, "#DEE1E1FF" },
@@ -1378,12 +1380,12 @@ field id idf_carrier, which is populated when objects of this class are construc
 				{ schema.idf_font_size, 14.0 },
 				{ schema.idf_vertical_alignment, (int)visual_alignment::align_center },
 				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_center },
-				{ schema.idf_shape_fill_color, "#2f2f2fFF" },
+				{ schema.idf_shape_fill_color, "#FFFFFFFF" },
 				{ schema.idf_shape_border_thickness, 0 },
 				{ schema.idf_shape_border_color, "" },
-				{ schema.idf_box_fill_color, "#cfcfffFF" },
+				{ schema.idf_box_fill_color, "#319B42FF" },
 				{ schema.idf_box_border_thickness, 2 },
-				{ schema.idf_box_border_color, "#cfcfefFF" }
+				{ schema.idf_box_border_color, "#319B42FF" }
 			}
 			);
 
