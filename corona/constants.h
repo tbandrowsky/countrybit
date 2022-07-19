@@ -36,6 +36,20 @@ namespace corona
 			type_list = 23
 		};
 
+		enum class control_type
+		{
+			ct_none = 0,
+			ct_text = 1,
+			ct_big_text = 2,
+			ct_numeric = 3,
+			ct_currency = 4,
+			ct_dropdown = 5,
+			ct_radio = 6,
+			ct_checkbox = 7,
+			ct_date_picker = 8,
+			ct_color_picker = 9
+		};
+
 		typedef int64_t corona_size_t;
 		typedef corona_size_t relative_ptr_type;
 

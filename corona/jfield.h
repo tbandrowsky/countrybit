@@ -162,6 +162,7 @@ namespace corona
 
 			relative_ptr_type		field_id;
 			jtype					type_id;
+			control_type			control_id;
 			int64_t					size_bytes;
 			bool					user_defined;
 
