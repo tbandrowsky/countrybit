@@ -1038,7 +1038,6 @@ namespace corona
 				map_scalar<database::int32_box>(query_fields_ti, pvalue::pvalue_types::double_value, "id", "id", offsetof(database::put_named_query_field_request, name.field_id));
 				map_scalar<database::string_box>(query_fields_ti, pvalue::pvalue_types::string_value, "name", "name", offsetof(database::put_named_query_field_request, name.name));
 				map_scalar<database::string_box>(query_fields_ti, pvalue::pvalue_types::string_value, "description", "description", offsetof(database::put_named_query_field_request, name.description));
-				map_scalar<database::string_box>(query_fields_ti, pvalue::pvalue_types::string_value, "query", "query", offsetof(database::put_named_query_field_request, options.body));
 				map_scalar<database::string_box>(query_fields_ti, pvalue::pvalue_types::string_value, "result_class", "result_class", offsetof(database::put_named_query_field_request, options.result_class_name));
 
 				remote_parameters_ti = create_map(member_type_name, "parameter", "parameter", 20);

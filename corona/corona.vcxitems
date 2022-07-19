@@ -31,6 +31,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)grouping.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)jdatabase_client.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)jdatabase_server.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)jquery.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)list_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)directory.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)file_remote_box.h" />
@@ -93,6 +94,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)jdatabase_client.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)jdatabase_server.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)jfield.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)jquery.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)layout_rect_box.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)list_box.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)directory.cpp" />

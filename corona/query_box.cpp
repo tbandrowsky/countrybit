@@ -6,6 +6,7 @@ namespace corona
 	namespace database
 	{
 
+
 		query_box::query_box(char* t, jschema* _schema, jclass* _class, jobject* _slice, int _field_index) :
 			boxed<query_instance>(t),
 			schema(_schema),
@@ -19,6 +20,10 @@ namespace corona
 		query_box::query_box(query_box& _src) : boxed<query_instance>(_src)
 		{
 			;
+		}
+
+		relative_ptr_type query_box::put_class(query_definition_type& qd, object_name _class_name)
+		{
 		}
 
 		query_box query_box::operator = (const query_box& _src)
@@ -50,10 +55,12 @@ namespace corona
 			return get_value(); 
 		}
 
-		void query_box::run()
+
+		void query_box::run(jcollection *_collection)
 		{
-			auto qi = value();
-			
+			auto class_field = the_class->detail(field_index);
+			auto definition = schema->get_query_definition(class_field.field_id);
+
 		}
 	}
 }

@@ -6,7 +6,7 @@ namespace corona
 	{
 
 		const int max_query_filters = 32;
-		const int max_path_nodes = 64;
+		const int max_path_nodes = 16;
 		const int max_projection_fields = 128;
 		const int max_update_elements = 32;
 		const int max_creatable_options = 100;
@@ -115,6 +115,7 @@ namespace corona
 
 			dimensions_type(corona_size_t _x, corona_size_t _y, corona_size_t _z) : x(_x), y(_y), z(_z) { ; }
 			dimensions_type() : x(0), y(0), z(0) { ; }
+			bool increment(dimensions_type& _constraint);
 		};
 
 		int compare(const dimensions_type& a, const dimensions_type& b);
@@ -300,14 +301,34 @@ namespace corona
 			}
 		};
 
+		enum class query_root_types
+		{
+			root_class = 1,
+			root_object = 2
+		};
+
+		class query_root
+		{
+		public:
+			query_root_types query_root_type;
+			relative_ptr_type root_item_id;
+		};
+
+		class query_node
+		{
+		public:
+			relative_ptr_type field_id;
+		};
+
+		using query_path = iarray<query_node, max_path_nodes>;
+		using query_project = iarray<query_node, max_projection_fields>;
+
 		class query_definition_t
 		{
 		public:
-			object_name								result_class_name;
-			relative_ptr_type						result_class_id;
-			relative_ptr_type						result_field_id;
-			query_body								body;
-			corona_size_t							max_result_objects;
+			query_root								root;
+			query_path								path;
+			query_project							project;
 		};
 
 		using query_definition_type = query_definition_t;
@@ -417,7 +438,6 @@ namespace corona
 			time_t						last_error;
 			object_description			error_message;
 		};
-
 
 		class put_field_request_base {
 		public:

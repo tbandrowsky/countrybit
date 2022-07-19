@@ -105,6 +105,7 @@
 #include "pobject_transformer.h"
 #include "extractor.h"
 #include "jobject.h"
+#include "jquery.h"
 #include "presentation.h"
 #include "jdatabase.h"
 #include "jdatabase_client.h"

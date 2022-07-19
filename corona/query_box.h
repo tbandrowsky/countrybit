@@ -18,6 +18,8 @@ namespace corona
 			jclass* the_class;
 			int field_index;
 
+			relative_ptr_type put_class(query_definition_type& qd, object_name obj);
+
 		public:
 
 			query_box(char* t, jschema* _schema, jclass* _class, jobject* _slice, int _field_index);
@@ -28,7 +30,7 @@ namespace corona
 			query_instance* operator->();
 			query_instance value() const;
 
-			void run();
+			void run(jcollection *_collection);
 
 		};
 

@@ -7,6 +7,27 @@ namespace corona
 	namespace database
 	{
 
+		bool dimensions_type::increment(dimensions_type& _constraint)
+		{
+			x++;
+			if (x >= _constraint.x)
+			{
+				x = 0;
+				y++;
+				if (y >= _constraint.y)
+				{
+					z++;
+					y = 0;
+					if (z >= _constraint.z)
+					{
+						z = 0;
+						return false;
+					}
+				}
+			}
+			return true;
+		}
+
 		void model_type::create_when(jschema* _schema, relative_ptr_type _selected_class_id1, relative_ptr_type _selected_class_id2, relative_ptr_type _create_class_id, relative_ptr_type _from_item_class_id, bool _select_created, bool _replace_selected)
 		{
 			auto co = create_options.append();

@@ -780,7 +780,7 @@ namespace corona
 
 		using actor_view_collection = sorted_index<relative_ptr_type, actor_view_object>;
 		using actor_create_collection = sorted_index<relative_ptr_type, create_object_request>;
-
+		
 		class actor_object_option
 		{
 		public:
@@ -889,6 +889,9 @@ namespace corona
 				modified_object_id = _src.modified_object_id;
 				create_objects = actor_create_collection::get_sorted_index(&data, create_objects_location);
 				view_objects = actor_view_collection::get_sorted_index(&data, view_objects_location);
+				for (auto avo : view_objects) {
+					avo.second.object.set_box_dangerous_hack(&data);
+				}
 				actor = _src.actor;
 				check_objects("move assign");
 				return *this;
@@ -904,6 +907,9 @@ namespace corona
 				modified_object_id = _src.modified_object_id;
 				create_objects = actor_create_collection::get_sorted_index(&data, create_objects_location);
 				view_objects = actor_view_collection::get_sorted_index(&data, view_objects_location);
+				for (auto avo : view_objects) {
+					avo.second.object.set_box_dangerous_hack(&data);
+				}
 				actor = _src.actor;
 				check_objects("copy assign");
 				return *this;
@@ -919,6 +925,9 @@ namespace corona
 				modified_object_id = _src.modified_object_id;
 				create_objects = actor_create_collection::get_sorted_index(&data, create_objects_location);
 				view_objects = actor_view_collection::get_sorted_index(&data, view_objects_location);
+				for (auto avo : view_objects) {
+					avo.second.object.set_box_dangerous_hack(&data);
+				}
 				actor = _src.actor;
 				check_objects("copy ctor");
 			}
@@ -2255,8 +2264,6 @@ namespace corona
 				return tmp;
 			}
 		};
-
-		class jarray;
 
 		bool schema_tests();
 		bool collection_tests();
