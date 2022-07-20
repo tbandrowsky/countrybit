@@ -28,9 +28,9 @@ namespace corona
 		{
 			for (auto fld : _stack) {
 				_dest.update(_root);
-				_root = new_object.get_object(fld.item.member_idx).get_slice(fld.item.current_dim);
+				_root = _root.get_object(fld.item.member_idx).get_slice(fld.item.current_dim);
 			}
-			return new_object;
+			return _dest;
 		}
 
 		query_result run_query(object_name& _query_class_name, jschema* _schema, query_definition_type& _query, jcollection* _collection)

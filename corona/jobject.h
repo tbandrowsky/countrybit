@@ -705,6 +705,8 @@ namespace corona
 			selections_collection	breadcrumb;
 			relative_ptr_type		current_view_object_id;
 			relative_ptr_type		current_view_class_id;
+			relative_ptr_type		current_subview_class_id;
+			relative_ptr_type		current_subview_object_id;
 
 			actor_type() : actor_id(null_row), current_view_object_id(null_row), current_view_class_id(null_row)
 			{
@@ -1324,6 +1326,7 @@ namespace corona
 			relative_ptr_type idf_chart_block_style;
 			relative_ptr_type idf_tooltip_style;
 			relative_ptr_type idf_breadcrumb_style;
+			relative_ptr_type idf_breadcrumb_selected_style;
 			relative_ptr_type idf_error_style;
 			relative_ptr_type idf_client_style;
 			relative_ptr_type idf_carrier_style;
@@ -1345,6 +1348,8 @@ namespace corona
 			relative_ptr_type idf_company_d2_style;
 			relative_ptr_type idf_company_d3_style;
 			relative_ptr_type idf_company_deductible_style;
+			relative_ptr_type idf_navigation_style;
+			relative_ptr_type idf_navigation_selected_style;
 			relative_ptr_type idf_company_neutral1_style;
 			relative_ptr_type idf_company_neutral2_style;
 			relative_ptr_type idf_header_area_style;

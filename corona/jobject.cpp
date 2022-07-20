@@ -508,15 +508,31 @@ namespace corona
 					auto selected_item_level = selected_levels.where([cls_id, phierarchy_item](auto& vri) { return vri.item.class_id == cls_id; });
 					if (selected_item_level != std::end(selected_levels))
 					{
-						if (selected_item_level.get_object().item.level_id > highest_level)
+						auto &hl = selected_item_level.get_object().item;
+						if (hl.level_id > highest_level)
 						{
-							ac.breadcrumb.push_back(aci.item);
-							ac.current_view_object_id = aci.item;
-							ac.current_view_class_id = cls_id;
+							if (hl.form) {
+								ac.breadcrumb.push_back(aci.item);
+								ac.current_view_object_id = aci.item;
+								ac.current_view_class_id = cls_id;
+								ac.current_subview_object_id = -1;
+								ac.current_subview_class_id = -1;
+								temp.push_back(aci.item);
+							}
+							else if (aci.item = _select.object_id)
+							{
+								ac.current_subview_object_id = aci.item;
+								ac.current_subview_class_id = cls_id;
+								temp.push_back(aci.item);
+							}
 							highest_level = selected_item_level.get_object().item.level_id;
 						}
-						temp.push_back(aci.item);
 					}
+				}
+
+				if (ac.current_subview_object_id > -1) 
+				{
+					temp.push_back(ac.current_subview_object_id);
 				}
 
 				ac.selections = temp;
@@ -3401,7 +3417,7 @@ namespace corona
 				idf_shape_fill_color, idf_shape_border_thickness, idf_shape_border_color, idf_box_fill_color, idf_box_border_thickness, idf_box_border_color };
 			idc_text_style = put_class(pcr);
 
-			put_object_field_request object_fields[65] = {
+			put_object_field_request object_fields[67] = {
 				{ { jtype::type_object, "view_background_style", "View Background Style" }, { {1,1,1}, idc_text_style }},
 				{ { jtype::type_object, "view_title_style", "View Title Style" }, { {1,1,1}, idc_text_style }},
 				{ { jtype::type_object, "view_subtitle_style", "View Subtitle Style" }, { {1,1,1}, idc_text_style }},
@@ -3432,6 +3448,8 @@ namespace corona
 				{ { jtype::type_object, "product_style", "Product Style" }, { {1,1,1}, idc_text_style }},
 				{ { jtype::type_object, "coverage_style", "Coverage Style" }, { {1,1,1}, idc_text_style }},
 				{ { jtype::type_object, "system_style", "System Style" }, { {1,1,1}, idc_text_style }},
+				{ { jtype::type_object, "navigation_style", "Navigation Style" }, { {1,1,1}, idc_text_style }},
+				{ { jtype::type_object, "navigation_selected_style", "Navigation Selected Style" }, { {1,1,1}, idc_text_style }},
 
 				{ { jtype::type_object, "company_a1_style", "Company Chart A1 Style" }, { {1,1,1}, idc_text_style }},
 				{ { jtype::type_object, "company_a2_style", "Company Chart A2 Style" }, { {1,1,1}, idc_text_style }},
@@ -3511,6 +3529,9 @@ namespace corona
 			idf_coverage_style = find_field("coverage_style");
 			idf_product_style = find_field("product_style");
 			idf_system_style = find_field("system_style");
+			idf_navigation_selected_style = find_field("navigation_selected_style");
+			idf_navigation_style = find_field("navigation_style");
+
 			idf_home_style = find_field("home_style");
 			idf_login_style = find_field("login_style");
 
@@ -3568,7 +3589,7 @@ namespace corona
 				idf_company_a1_style, idf_company_a2_style, idf_company_a3_style, idf_company_b1_style, idf_company_b2_style, idf_company_b3_style, idf_company_c1_style, idf_company_c2_style, idf_company_c3_style,idf_company_d1_style, idf_company_d2_style, idf_company_d3_style, 
 				idf_company_deductible_style, idf_company_neutral1_style, idf_company_neutral2_style, idf_header_area_style, idf_title_bar_style, idf_subtitle_bar_style, idf_breadcrumb_bar_style, idf_breadcrumb_style,
 				idf_album_title_style, idf_artist_title_style, idf_work_title1_style, idf_work_title2_style, idf_work_title3_style, idf_work_title4_style, idf_work_title5_style, idf_work_title6_style, 
-				idf_album_about_style, idf_artist_about_style
+				idf_album_about_style, idf_artist_about_style, idf_navigation_style, idf_navigation_selected_style
 			};
 			pcr.field_id_primary_key = idf_style_sheet;
 			idc_style_sheet = put_class(pcr);

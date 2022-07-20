@@ -66,10 +66,12 @@ namespace proposal
 		corona::database::relative_ptr_type idf_product_psi_base;
 
 		corona::database::relative_ptr_type idc_product_coverage_header;
+		corona::database::relative_ptr_type idf_product_coverage_header;
 		corona::database::relative_ptr_type idc_product_chi_base;
 		corona::database::relative_ptr_type idf_product_chi_base;
 
 		corona::database::relative_ptr_type idc_product_coverage_structure;
+		corona::database::relative_ptr_type idf_product_coverage_structure;
 		corona::database::relative_ptr_type idc_product_csi_base;
 		corona::database::relative_ptr_type idf_product_csi_base;
 
@@ -95,6 +97,8 @@ namespace proposal
 		relative_ptr_type	id_canvas_navigation = 2;
 		relative_ptr_type	id_canvas_footer = 3;
 		relative_ptr_type	id_canvas_form_table_a = 4;
+		relative_ptr_type	id_canvas_products_a = 5;
+		relative_ptr_type	id_canvas_products_b = 6;
 
 		const char* application_title = "PROOFS OF CONCEPT";
 		const char* application_author = "WOODRUFF SAWYER";

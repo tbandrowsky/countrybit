@@ -491,16 +491,19 @@ namespace corona
 			return pg.canvas2d_absolute(_canvas_uid, _parent, _style_id, _box);
 		}
 
-		page_item* corona_controller::selects(page_item* _parent_ui, relative_ptr_type _style_id, layout_rect _box, relative_ptr_type _id_name, std::function<bool(const actor_view_collection::iterator_item_type& _item)> selector)
+		page_item* corona_controller::selects(page_item* _parent_ui, relative_ptr_type _style_id, relative_ptr_type _selected_style_id, layout_rect _box, relative_ptr_type _id_name, std::function<bool(const actor_view_collection::iterator_item_type& _item)> selector)
 		{
 			auto* page_add = &pg;
 			auto* st = &state;
 			auto* pbox = &_box;
-			for_each(selector, [pbox, st, page_add, this, _id_name, _parent_ui, _style_id]( actor_view_object& avo)
+			for_each(selector, [pbox, st, page_add, this, _id_name, _parent_ui, _style_id, _selected_style_id]( actor_view_object& avo)
 				{
 					auto style_id = _style_id;
 					if (avo.object.has_field(schema.idf_style_sheet)) {
 						style_id = avo.object.get_int64(schema.idf_style_sheet, true);
+					}
+					else {
+						style_id = avo.selected ? _selected_style_id : _style_id;
 					}
 					page_add->select(_parent_ui, st, avo.object_id, _id_name, avo.object, style_id, *pbox);
 					return true;
@@ -508,12 +511,12 @@ namespace corona
 			return _parent_ui;
 		}
 
-		page_item* corona_controller::selects(page_item* _parent_ui, relative_ptr_type _style_id, layout_rect _box, relative_ptr_type _id_name, relative_ptr_type *_class_ids, int _length)
+		page_item* corona_controller::selects(page_item* _parent_ui, relative_ptr_type _style_id, relative_ptr_type _selected_style_id, layout_rect _box, relative_ptr_type _id_name, relative_ptr_type *_class_ids, int _length)
 		{
 			auto* page_add = &pg;
 			auto* st = &state;
 			auto* pbox = &_box;
-			for_class(_class_ids, _length, [pbox, st, page_add, this, _id_name, _parent_ui, _style_id]( actor_view_object& avo)
+			for_class(_class_ids, _length, [pbox, st, page_add, this, _id_name, _parent_ui, _style_id, _selected_style_id]( actor_view_object& avo)
 				{
 					auto object_id = avo.object_id;
 					if (!st->actor.breadcrumb.any_of([object_id](auto& br) {return br.item == object_id; }))
@@ -522,6 +525,9 @@ namespace corona
 						if (avo.object.has_field(schema.idf_style_id)) {
 							style_id = avo.object.get_int64(schema.idf_style_id, true);
 						}
+						else {
+							style_id = avo.selected ? _selected_style_id : _style_id;
+						}
 						page_add->select(_parent_ui, st, avo.object_id, _id_name, avo.object, style_id, *pbox);
 					}
 					return true;
@@ -529,16 +535,19 @@ namespace corona
 			return _parent_ui;
 		}
 
-		page_item* corona_controller::selects(page_item* _parent_ui, relative_ptr_type _style_id, layout_rect _box, relative_ptr_type _id_name, jobject& _parent, relative_ptr_type* _join_fields)
+		page_item* corona_controller::selects(page_item* _parent_ui, relative_ptr_type _style_id, relative_ptr_type _selected_style_id, layout_rect _box, relative_ptr_type _id_name, jobject& _parent, relative_ptr_type* _join_fields)
 		{
 			auto* page_add = &pg;
 			auto* st = &state;
 			auto* pbox = &_box;
-			for_join(_parent, _join_fields, [pbox, st, page_add, _id_name, this, _parent_ui, _style_id]( actor_view_object& avo)
+			for_join(_parent, _join_fields, [pbox, st, page_add, _id_name, this, _parent_ui, _style_id, _selected_style_id]( actor_view_object& avo)
 				{
 					auto style_id = _style_id;
 					if (avo.object.has_field(schema.idf_style_sheet)) {
 						style_id = avo.object.get_int64(schema.idf_style_sheet, true);
+					}
+					else {
+						style_id = avo.selected ? _selected_style_id : _style_id;
 					}
 					page_add->select(_parent_ui, st, avo.object_id, _id_name, avo.object, style_id, *pbox);
 					return true;
@@ -546,16 +555,19 @@ namespace corona
 			return _parent_ui;
 		}
 
-		page_item* corona_controller::selects(page_item* _parent_ui, relative_ptr_type _style_id, layout_rect _box, relative_ptr_type _id_name, relative_ptr_type* _has_field_list)
+		page_item* corona_controller::selects(page_item* _parent_ui, relative_ptr_type _style_id, relative_ptr_type _selected_style_id, layout_rect _box, relative_ptr_type _id_name, relative_ptr_type* _has_field_list)
 		{
 			auto* page_add = &pg;
 			auto* st = &state;
 			auto* pbox = &_box;
-			for_common(_has_field_list, [pbox, st, _id_name, page_add, this, _parent_ui, _style_id]( actor_view_object& avo)
+			for_common(_has_field_list, [pbox, st, _id_name, page_add, this, _parent_ui, _style_id, _selected_style_id]( actor_view_object& avo)
 				{
 					auto style_id = _style_id;
 					if (avo.object.has_field(schema.idf_style_sheet)) {
 						style_id = avo.object.get_int64(schema.idf_style_sheet, true);
+					}
+					else {
+						style_id = avo.selected ? _selected_style_id : _style_id;
 					}
 					page_add->select(_parent_ui, st, avo.object_id, _id_name, avo.object, style_id, *pbox);
 					return true;
@@ -597,6 +609,7 @@ namespace corona
 			for (auto avo : svo)
 			{
 				drow = row(table_container, null_row, row_size);
+				std::cout << "row:" << std::endl;
 
 				for (int i = 0; i < _num_child_fields; i++)
 				{

@@ -928,6 +928,7 @@ namespace corona
 		{
 			relative_ptr_type	class_id;
 			int					level_id;
+			bool				form;
 		};
 
 		using model_create_class_collection = iarray<model_creatable_class, max_creatable_options>;
