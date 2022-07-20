@@ -32,31 +32,46 @@ namespace proposal
 		corona::database::relative_ptr_type idc_system_root;
 		corona::database::relative_ptr_type idf_system_root;
 
-		corona::database::relative_ptr_type idc_program_template_root;
-		corona::database::relative_ptr_type idf_program_template_root;
-		corona::database::relative_ptr_type idf_program_template;
-		corona::database::relative_ptr_type idc_program_template;
-
-		corona::database::relative_ptr_type idc_program;
-		corona::database::relative_ptr_type idf_program;
-		corona::database::relative_ptr_type idf_program_view;
-		corona::database::relative_ptr_type idf_program_item_base;
-		corona::database::relative_ptr_type idc_program_item_base;
-
-		corona::database::relative_ptr_type idf_program_feature1;
-		corona::database::relative_ptr_type idf_program_feature2;
-		corona::database::relative_ptr_type idc_program_feature1;
-		corona::database::relative_ptr_type idc_program_feature2;
-
+		corona::database::relative_ptr_type idc_product_root;
+		corona::database::relative_ptr_type idf_product_root;
 		corona::database::relative_ptr_type idf_product;
 		corona::database::relative_ptr_type idc_product;
-		corona::database::relative_ptr_type idf_product_item_base;
-		corona::database::relative_ptr_type idc_product_item_base;
 
-		corona::database::relative_ptr_type idf_product_feature1;
-		corona::database::relative_ptr_type idf_product_feature2;
-		corona::database::relative_ptr_type idc_product_feature1;
-		corona::database::relative_ptr_type idc_product_feature2;
+		corona::database::relative_ptr_type idf_product_name;
+		corona::database::relative_ptr_type idf_product_code;
+		corona::database::relative_ptr_type idf_product_status;
+		corona::database::relative_ptr_type idf_product_edition;
+		corona::database::relative_ptr_type idf_product_template_type;
+		corona::database::relative_ptr_type idf_product_line_of_business;
+		corona::database::relative_ptr_type idf_product_carrier;
+		corona::database::relative_ptr_type idf_product_updated_by;
+		corona::database::relative_ptr_type idf_product_updated_date;
+		corona::database::relative_ptr_type idf_product_view;
+
+		corona::database::relative_ptr_type idf_prompt;
+
+		corona::database::relative_ptr_type idc_product_program_header;
+		corona::database::relative_ptr_type idf_product_program_header;
+		corona::database::relative_ptr_type idc_product_phi_base;
+		corona::database::relative_ptr_type idf_product_phi_base;
+
+		corona::database::relative_ptr_type idc_product_phi_fill;
+		corona::database::relative_ptr_type idf_product_phi_fill;
+		corona::database::relative_ptr_type idc_product_phi_carrier;
+		corona::database::relative_ptr_type idf_product_phi_carrier;
+
+		corona::database::relative_ptr_type idc_product_program_structure;
+		corona::database::relative_ptr_type idf_product_program_structure;
+		corona::database::relative_ptr_type idc_product_psi_base;
+		corona::database::relative_ptr_type idf_product_psi_base;
+
+		corona::database::relative_ptr_type idc_product_coverage_header;
+		corona::database::relative_ptr_type idc_product_chi_base;
+		corona::database::relative_ptr_type idf_product_chi_base;
+
+		corona::database::relative_ptr_type idc_product_coverage_structure;
+		corona::database::relative_ptr_type idc_product_csi_base;
+		corona::database::relative_ptr_type idf_product_csi_base;
 
 		corona::database::relative_ptr_type idf_inception;
 		corona::database::relative_ptr_type idf_expiration;
@@ -68,27 +83,12 @@ namespace proposal
 		corona::database::relative_ptr_type idf_comment;
 		corona::database::relative_ptr_type idf_carrier_name;
 		corona::database::relative_ptr_type idf_coverage_name;
-		corona::database::relative_ptr_type idf_feature1_text;
-		corona::database::relative_ptr_type idf_feature2_text;
-
-		corona::database::relative_ptr_type idf_program_title;
-		corona::database::relative_ptr_type idf_program_subtitle;
-		corona::database::relative_ptr_type idf_program_status;
-
-		corona::database::relative_ptr_type idf_slide_title;
-
-		corona::database::relative_ptr_type idc_program_chart_slide;
-		corona::database::relative_ptr_type idf_program_chart_slide;
-		corona::database::relative_ptr_type idc_program_chart_slide_product;
-		corona::database::relative_ptr_type idf_program_chart_slide_product;
-		corona::database::relative_ptr_type idc_program_generic_slide;
-		corona::database::relative_ptr_type idf_program_generic_slide;
 
 		relative_ptr_type	id_home,
 							id_carrier_root, 
 							id_coverage_root, 
 							id_client_root, 
-							id_product_template_root, 
+							id_product_root, 
 							id_system_root;
 
 		relative_ptr_type	id_canvas_header = 1;
@@ -113,8 +113,8 @@ namespace proposal
 		void render_client();
 		void render_coverage_root();
 		void render_coverage();
-		void render_product_template_root();
-		void render_product_template();
+		void render_product_root();
+		void render_product();
 		void render_carrier_root();
 		void render_system_root();
 		void render_carrier();
@@ -126,14 +126,10 @@ namespace proposal
 		void render_coverage_root_contents(page_item* _navigation, page_item* _contents);
 		void render_system_root_contents(page_item* _navigation, page_item* _contents);
 		void render_coverage_contents(page_item* _navigation, page_item* _contents);
-		void render_product_template_root_contents(page_item* _navigation, page_item* _contents);
-		void render_product_template_contents(page_item* _navigation, page_item* _contents);
+		void render_product_root_contents(page_item* _navigation, page_item* _contents);
+		void render_product_contents(page_item* _navigation, page_item* _contents);
 		void render_carrier_root_contents(page_item* _navigation, page_item* _contents);
 		void render_carrier_contents(page_item* _navigation, page_item* _contents);
-		void render_program_contents(page_item* _navigation, page_item* _contents);
-		void render_program_slide(page_item* _frame, actor_view_object& _slide, layout_rect* _layout);
-		void render_program_chart_slide(page_item* _frame, actor_view_object& _slide, layout_rect* _layout);
-		void render_program_generic_slide(page_item* _frame, actor_view_object& _slide, layout_rect* _layout);
 
 		virtual void render(const rectangle& newSize);
 	};

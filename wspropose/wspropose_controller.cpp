@@ -48,32 +48,43 @@ namespace proposal
 		is just an integer, but it will be assigned as a PK as part of its class membership.
 		*/
 
+
 		idf_home = schema.put_integer_field({ {  jtype::type_int64, "home_id", "Home Id", false }, { 0, INT64_MAX } });
 		idf_client_root = schema.put_integer_field({ {  jtype::type_int64, "client_root", "Clients", false }, { 0, INT64_MAX } });
 		idf_client = schema.put_integer_field({ {  jtype::type_int64, "client_id", "Client Id", false }, { 0, INT64_MAX } });
 		idf_carrier_root = schema.put_integer_field({ {  jtype::type_int64, "carrier_root", "Carriers", false }, { 0, INT64_MAX } });
 		idf_carrier = schema.put_integer_field({ {  jtype::type_int64, "carrier_id", "Carrier Id", false }, { 0, INT64_MAX } });
-		idf_program_template_root = schema.put_integer_field({ {  jtype::type_int64, "home", "Home id", false }, { 0, INT64_MAX } });
-		idf_program_template = schema.put_integer_field({ {  jtype::type_int64, "product_template", "Product Template id", false }, { 0, INT64_MAX } });
+		idf_product_root = schema.put_integer_field({ {  jtype::type_int64, "product_root", "Products", false }, { 0, INT64_MAX } });
+		idf_product = schema.put_integer_field({ {  jtype::type_int64, "product", "product_root", false }, { 0, INT64_MAX } });
 		idf_coverage_root = schema.put_integer_field({ {  jtype::type_int64, "coverage_root", "Coverages", false }, { 0, INT64_MAX } });
 		idf_coverage = schema.put_integer_field({ {  jtype::type_int64, "coverage_id", "Coverage Id", false }, { 0, INT64_MAX } });
 		idf_system_root = schema.put_integer_field({ {  jtype::type_int64, "system_root", "System Settings", false }, { 0, INT64_MAX } });
 
-		idf_program = schema.put_integer_field({ {  jtype::type_int64, "program_id", "Program Id", false }, { 0, INT64_MAX } });
-		idf_program_item_base = schema.put_integer_field({ {  jtype::type_int64, "program_item_id", "Program Item Id", false }, { 0, INT64_MAX } });
-		idf_program_view = schema.put_integer_field({ {  jtype::type_int64, "program_view", "Program View", false }, { 0, INT64_MAX } });
-		idf_program_title = schema.put_string_field({ {  jtype::type_string, "program_title", "Program Title", true }, { 100, "", "" } });
-		idf_program_status = schema.put_string_field({ {  jtype::type_string, "program_status", "Program Status", true }, { 100, "", "" } });
-		idf_program_subtitle = schema.put_string_field({ {  jtype::type_string, "program_title", "Program Subtitle", true }, { 100, "", "" } });
-
 		idf_carrier_name = schema.put_string_field({ {  jtype::type_string, "carrier_name", "Carrier Name", true }, { 100, "", "" } });
-		idf_coverage_name = schema.put_string_field({ {  jtype::type_string, "carrier_name", "Coverage Name", true }, { 100, "", "" } });
+		idf_coverage_name = schema.put_string_field({ {  jtype::type_string, "coverage_name", "Coverage Name", true }, { 100, "", "" } });
+		idf_prompt = schema.put_string_field({ {  jtype::type_string, "prompt_name", "Prompt/Label", true }, { 100, "", "" } });
 
 		idf_product = schema.put_integer_field({ {  jtype::type_int64, "product_id", "Product Id", false }, { 0, INT64_MAX } });
-		idf_product_item_base = schema.put_integer_field({ {  jtype::type_int64, "product_item_id", "Product Item Id", false }, { 0, INT64_MAX } });
-		idf_program_chart_slide = schema.put_integer_field({ {  jtype::type_int64, "program_chart_slide_id", "Program Chart Slide Id", false }, { 0, INT64_MAX } });
-		idf_program_chart_slide_product = schema.put_integer_field({ {  jtype::type_int64, "program_chart_slide_product_id", "Program Chart Slide Item Id", false}, { 0, INT64_MAX } });
-		idf_program_generic_slide = schema.put_integer_field({ {  jtype::type_int64, "program_generic_slide", "Generic Slide Id", false }, { 0, INT64_MAX } });
+		idf_product_name = schema.put_string_field({ {  jtype::type_string, "product_name", "Product Name", true }, { 100, "", "" } });
+		idf_product_code = schema.put_string_field({ {  jtype::type_string, "product_code", "Code", true }, { 100, "", "" } });
+		idf_product_status = schema.put_string_field({ {  jtype::type_string, "product_status", "Status", true }, { 100, "", "" } });
+		idf_product_edition = schema.put_string_field({ {  jtype::type_string, "product_edition", "Edition", true }, { 100, "", "" } });
+		idf_product_template_type = schema.put_string_field({ {  jtype::type_string, "product_template_type", "Template Type", true }, { 100, "", "" } });
+		idf_product_line_of_business = schema.put_string_field({ {  jtype::type_string, "product_line_of_business", "Line of Business", true }, { 100, "", "" } });
+		idf_product_carrier = schema.put_string_field({ {  jtype::type_string, "product_carrier", "Carrier", true }, { 100, "", "" } });
+		idf_product_updated_by = schema.put_string_field({ {  jtype::type_string, "product_updated_by", "Updated By", true }, { 100, "", "" } });
+		idf_product_updated_date = schema.put_string_field({ {  jtype::type_string, "product_updated_date", "Updated Date", true }, { 100, "", "" } });
+		idf_product_view = schema.put_integer_field({ {  jtype::type_int64, "product_id", "Product Id", false }, { 0, INT64_MAX } });
+
+		idf_product_program_header = schema.put_integer_field({ {  jtype::type_int64, "product_header_id", "Product Header", false }, { 0, INT64_MAX } });
+		idf_product_program_structure = schema.put_integer_field({ {  jtype::type_int64, "product_structure_id", "Product Structure", false }, { 0, INT64_MAX } });
+		idf_product_coverage_header = schema.put_integer_field({ {  jtype::type_int64, "coverage_header_id", "Coverage Header", false }, { 0, INT64_MAX } });
+		idf_product_coverage_structure = schema.put_integer_field({ {  jtype::type_int64, "coverage_structure_id", "Coverage Structure", false }, { 0, INT64_MAX } });
+	
+		idf_product_psi_base = schema.put_integer_field({ {  jtype::type_int64, "psi_base_id", "Product Structure Item Id", false }, { 0, INT64_MAX } });
+		idf_product_phi_base = schema.put_integer_field({ {  jtype::type_int64, "phi_base_id", "Product Header Item Id", false }, { 0, INT64_MAX } });
+		idf_product_csi_base = schema.put_integer_field({ {  jtype::type_int64, "csi_base_id", "Coverage Structure Item Id", false }, { 0, INT64_MAX } });
+		idf_product_chi_base = schema.put_integer_field({ {  jtype::type_int64, "chi_base_id", "Coverage Header Item Id", false }, { 0, INT64_MAX } });
 
 		/*
 		* Here we are going to specify a set of fields that may be used to create a program item.
@@ -163,211 +174,185 @@ field id idf_carrier, which is populated when objects of this class are construc
 		pcr.member_fields = { idf_system_root, idf_home, schema.idf_search_string, schema.idf_style_id };
 		idc_system_root = schema.put_class(pcr);
 
-		pcr.class_name = "program_templates";
+		pcr.class_name = "products";
 		pcr.class_description = "PRODUCTS";
-		pcr.field_id_primary_key = idf_program_template_root;
-		pcr.member_fields = { idf_program_template_root, idf_home, schema.idf_search_string, schema.idf_style_id };
-		idc_program_template_root = schema.put_class(pcr);
-
-		pcr.class_name = "program_template";
-		pcr.class_description = "PRODUCT";
-		pcr.field_id_primary_key = idf_program_template;
-		pcr.member_fields = { idf_program_template_root, idf_program_template, idf_home };
-		idc_program_template = schema.put_class(pcr);
-
-		pcr.class_name = "program";
-		pcr.class_description = "PROGRAM";
-		pcr.field_id_primary_key = idf_program;
-		pcr.member_fields = { idf_program,
-			idf_client,
-			idf_program_view,
-			schema.idf_name,
-			idf_program_status,
-			idf_program_title,
-			idf_program_subtitle,
-			idf_inception,
-			idf_expiration
-		};
-		idc_program = schema.put_class(pcr);
-
-		pcr.class_name = "program_item_base";
-		pcr.class_description = "PROGRAM ITEM";
-		pcr.field_id_primary_key = idf_program_item_base;
-		pcr.member_fields = {
-			idf_program_item_base,
-			idf_program,
-			schema.idf_style_id,
-		};
-		idc_program_item_base = schema.put_class(pcr);
-
-		pcr.class_name = "program_feature1";
-		pcr.class_description = "PROGRAM FEATURE 1";
-		pcr.field_id_primary_key = idf_program_item_base;
-		pcr.base_class_id = idc_program_item_base;
-		pcr.member_fields = {
-			idf_program_item_base,
-			idf_program,
-			idf_feature1_text,
-			schema.idf_style_id,
-		};
-		idc_program_feature1 = schema.put_class(pcr);
-
-		pcr.class_name = "program_feature2";
-		pcr.class_description = "PROGRAM FEATURE 2";
-		pcr.field_id_primary_key = idf_program_item_base;
-		pcr.base_class_id = idc_program_item_base;
-		pcr.member_fields = {
-			idf_program_item_base,
-			idf_program,
-			idf_feature2_text,
-			schema.idf_style_id,
-		};
-		idc_program_feature2 = schema.put_class(pcr);
+		pcr.field_id_primary_key = idf_product_root;
+		pcr.member_fields = { idf_product_root, idf_home, schema.idf_search_string, schema.idf_style_id };
+		idc_product_root = schema.put_class(pcr);
 
 		pcr.class_name = "product";
 		pcr.class_description = "PRODUCT";
 		pcr.field_id_primary_key = idf_product;
-		pcr.member_fields = {
-			idf_product,
-			idf_program,
-			schema.idf_style_id,
-			idf_attachment,
-			idf_limit,
-			idf_share,
-			idf_deductible,
-			idf_comment
-		};
+		pcr.member_fields = { idf_program_template_root,
+							  idf_product_name,
+							  idf_product_code,
+							  idf_product_status,
+							  idf_product_edition,
+							  idf_product_template_type,
+							  idf_product_line_of_business,
+							  idf_product_carrier,
+							  idf_product_view,
+							  idf_product_updated_by,
+							  idf_product_updated_date };
 		idc_product = schema.put_class(pcr);
 
-		pcr.class_name = "product_item_base";
-		pcr.class_description = "PRODUCT ITEM";
-		pcr.field_id_primary_key = idf_product_item_base;
-		pcr.member_fields = {
-			idf_product_item_base,
-			idf_product,
-		};
-		idc_product_item_base = schema.put_class(pcr);
+		pcr.class_name = "product_program_header";
+		pcr.class_description = "Program Header";
+		pcr.field_id_primary_key = idf_product_program_header;
+		pcr.member_fields = { idf_product_program_header, idf_product };
+		idc_product_program_header = schema.put_class(pcr);
 
-		pcr.class_name = "product_feature1";
-		pcr.class_description = "PRODUCT FEATURE 1";
-		pcr.field_id_primary_key = idf_product_item_base;
-		pcr.base_class_id = idc_product_item_base;
-		pcr.member_fields = {
-			idf_program_item_base,
-			idf_product,
-			idf_feature1_text,
-			schema.idf_style_id,
-		};
-		idc_product_feature1 = schema.put_class(pcr);
+		pcr.class_name = "product_program_structure";
+		pcr.class_description = "Program Structure";
+		pcr.field_id_primary_key = idf_product_program_structure;
+		pcr.member_fields = { idf_product_program_structure, idf_product };
+		idc_product_program_structure = schema.put_class(pcr);
 
-		pcr.class_name = "product_feature2";
-		pcr.class_description = "PRODUCT FEATURE 2";
-		pcr.field_id_primary_key = idf_product_item_base;
-		pcr.base_class_id = idc_product_item_base;
-		pcr.member_fields = {
-			idf_program_item_base,
-			idf_program,
-			idf_feature2_text,
-			schema.idf_style_id,
-		};
-		idc_product_feature2 = schema.put_class(pcr);
+		pcr.class_name = "product_coverage_header";
+		pcr.class_description = "Coverage Header";
+		pcr.field_id_primary_key = idf_product_coverage_header;
+		pcr.member_fields = { idf_product_coverage_header, idf_product };
+		idc_product_coverage_header = schema.put_class(pcr);
 
-		pcr.class_name = "program_chart_slide";
-		pcr.class_description = "PROGRAM SLIDE";
-		pcr.field_id_primary_key = idf_program_chart_slide;
-		pcr.member_fields = { idf_program_chart_slide, idf_client, idf_program, idf_slide_title };
-		idc_program_chart_slide = schema.put_class(pcr);
-		 
-		pcr.class_name = "program_chart_slide_product";
-		pcr.class_description = "SLIDE PRODUCT";
-		pcr.field_id_primary_key = idf_program_chart_slide_product;
-		pcr.member_fields = { idf_program_chart_slide, idf_client, idf_program, idf_product };
-		idc_program_chart_slide_product = schema.put_class(pcr);
+		pcr.class_name = "product_coverage_structure";
+		pcr.class_description = "Coverage Structure";
+		pcr.field_id_primary_key = idf_product_coverage_structure;
+		pcr.member_fields = { idf_product_coverage_structure, idf_product  };
+		idc_product_coverage_structure = schema.put_class(pcr);
 
-		pcr.class_name = "program_generic_slide";
-		pcr.class_description = "GENERIC SLIDE";
-		pcr.field_id_primary_key = idf_program_chart_slide;
-		pcr.member_fields = { idf_program_generic_slide, idf_client, idf_program };
-		idc_program_generic_slide = schema.put_class(pcr);
+		pcr.class_name = "product_phi_base";
+		pcr.class_description = "Program Header Item";
+		pcr.field_id_primary_key = idf_product_phi_base;
+		pcr.member_fields = { idf_product_phi_base, idf_product_program_header };
+		idc_product_phi_base = schema.put_class(pcr);
+
+		pcr.class_name = "product_psi_base";
+		pcr.class_description = "Program Structure Item";
+		pcr.field_id_primary_key = idf_product_psi_base;
+		pcr.member_fields = { idf_product_psi_base, idf_product_program_structure };
+		idc_product_psi_base = schema.put_class(pcr);
+
+		pcr.class_name = "product_chi_base";
+		pcr.class_description = "Coverage Header Item";
+		pcr.field_id_primary_key = idf_product_chi_base;
+		pcr.member_fields = { idf_product_chi_base, idf_product_coverage_header };
+		idc_product_chi_base = schema.put_class(pcr);
+
+		pcr.class_name = "product_csi_base";
+		pcr.class_description = "Coverage Structure Item";
+		pcr.field_id_primary_key = idf_product_csi_base;
+		pcr.member_fields = { idf_product_csi_base, idf_product_coverage_structure };
+		idc_product_csi_base = schema.put_class(pcr);
+
+		relative_ptr_type bases[4] = { idc_product_phi_base, idc_product_psi_base, idc_product_chi_base, idc_product_csi_base  };
+		char* bases_names[4] = { "product_phi", "product_psi", "product_chi", "product_csi" };
+		char* item_descriptions[4] = { "Text Field", "Number Field", "Date Field", "Image Field" };
+		char* item_names[4] = { "_text", "_number", "_date", "_image" };
+
+		for (int i = 0; i < 4; i++)
+		{
+			auto bid = bases[i];
+			object_name name;
+			name = base_names[i];
+			for (int j = 0; j < 4; j++)
+			{
+				name += item_names[j];
+				pcr.class_name = name;
+				pcr.class_description = name;
+				pcr.field_id_primary_key = bases[i];
+				pcr.member_fields = { bases[i], idf_prompt };
+				schema.put_class(pcr);
+			}
+		}
 
 		jmodel jm;
 
 		jm.update_always(&schema, idc_home);
 		jm.update_always(&schema, idc_carrier_root);
 		jm.update_always(&schema, idc_carrier);
-		jm.update_always(&schema, idc_program_template_root);
-		jm.update_always(&schema, idc_program_template);
+		jm.update_always(&schema, idc_product_root);
+		jm.update_always(&schema, idc_product);
+		jm.update_always(&schema, idc_product_program_header);
+		jm.update_always(&schema, idc_product_program_structure);
+		jm.update_always(&schema, idc_product_coverage_header);
+		jm.update_always(&schema, idc_product_coverage_structure);
+		jm.update_always(&schema, idc_product_phi_base);
+		jm.update_always(&schema, idc_product_chi_base);
+		jm.update_always(&schema, idc_product_psi_base);
+		jm.update_always(&schema, idc_product_csi_base);
 		jm.update_always(&schema, idc_coverage_root);
 		jm.update_always(&schema, idc_coverage);
 		jm.update_always(&schema, idc_client_root);
 		jm.update_always(&schema, idc_client);
-		jm.update_always(&schema, idc_program);
-		jm.update_always(&schema, idc_program_chart_slide);
-		jm.update_always(&schema, idc_program_generic_slide);
-		jm.update_always(&schema, idc_program_item_base);
-		jm.update_always(&schema, idc_product);
-		jm.update_always(&schema, idc_product_item_base);
+		jm.update_always(&schema, idc_system_root);
 
 		jm.select_always(&schema, idc_home);
 		jm.select_always(&schema, idc_carrier_root);
 		jm.select_always(&schema, idc_carrier);
-		jm.select_always(&schema, idc_program_template_root);
-		jm.select_always(&schema, idc_program_template);
+		jm.select_always(&schema, idc_product_root);
+		jm.select_always(&schema, idc_product);
+		jm.select_always(&schema, idc_product_program_header);
+		jm.select_always(&schema, idc_product_program_structure);
+		jm.select_always(&schema, idc_product_coverage_header);
+		jm.select_always(&schema, idc_product_coverage_structure);
+		jm.select_always(&schema, idc_product_phi_base);
+		jm.select_always(&schema, idc_product_chi_base);
+		jm.select_always(&schema, idc_product_psi_base);
+		jm.select_always(&schema, idc_product_csi_base);
 		jm.select_always(&schema, idc_coverage_root);
 		jm.select_always(&schema, idc_coverage);
 		jm.select_always(&schema, idc_client_root);
 		jm.select_always(&schema, idc_client);
 		jm.select_always(&schema, idc_system_root);
-		jm.update_always(&schema, idc_program);
-		jm.update_always(&schema, idc_program_chart_slide);
-		jm.update_always(&schema, idc_program_generic_slide);
-		jm.update_always(&schema, idc_program_item_base);
-		jm.update_always(&schema, idc_product);
-		jm.update_always(&schema, idc_product_item_base);
 
 		jm.delete_always(&schema, idc_carrier);
-		jm.delete_always(&schema, idc_program_template);
+		jm.delete_always(&schema, idc_product);
+		jm.delete_always(&schema, idc_product_program_header);
+		jm.delete_always(&schema, idc_product_program_structure);
+		jm.delete_always(&schema, idc_product_coverage_header);
+		jm.delete_always(&schema, idc_product_coverage_structure);
+		jm.delete_always(&schema, idc_product_phi_base);
+		jm.delete_always(&schema, idc_product_chi_base);
+		jm.delete_always(&schema, idc_product_psi_base);
+		jm.delete_always(&schema, idc_product_csi_base);
 		jm.delete_always(&schema, idc_coverage);
 		jm.delete_always(&schema, idc_client);
-		jm.update_always(&schema, idc_program);
-		jm.update_always(&schema, idc_program_chart_slide);
-		jm.update_always(&schema, idc_program_generic_slide);
-		jm.update_always(&schema, idc_program_item_base);
-		jm.update_always(&schema, idc_product);
-		jm.update_always(&schema, idc_product_item_base);
 
 		jm.create_when(&schema, idc_carrier_root, idc_carrier, null_row, true, false);
 		jm.create_when(&schema, idc_program_template_root, idc_program_template, null_row, true, false);
 		jm.create_when(&schema, idc_coverage_root, idc_coverage, null_row, true, false);
 		jm.create_when(&schema, idc_client_root, idc_client, null_row, true, false);
-		jm.create_when(&schema, idc_client, idc_program, null_row, true, false);
-		jm.create_when(&schema, idc_program, idc_product, null_row, true, false);
-		jm.create_when(&schema, idc_program, idc_program_chart_slide, idc_program, true, false);
-		jm.create_when(&schema, idc_program_chart_slide, idc_product, idc_program_chart_slide_product, idc_product, true, false);
-		jm.create_when(&schema, idc_program, idc_program_generic_slide, idc_program, true, false);
-		jm.create_when(&schema, idc_program, idc_program_feature1, null_row, true, false);
-		jm.create_when(&schema, idc_program, idc_program_feature2, null_row, true, false);
-		jm.create_when(&schema, idc_product, idc_product_feature1, null_row, true, false);
-		jm.create_when(&schema, idc_product, idc_product_feature2, null_row, true, false);
+		jm.create_when(&schema, idc_product_root, idc_product, null_row, true, false);
+
+		jm.create_when(&schema, idc_product, idc_product_program_header, null_row, true, false);
+		jm.create_when(&schema, idc_product, idc_product_program_structure, null_row, true, false);
+		jm.create_when(&schema, idc_product, idc_product_coverage_header, null_row, true, false);
+		jm.create_when(&schema, idc_product, idc_product_coverage_structure, null_row, true, false);
+		jm.create_when(&schema, idc_product_program_header, idc_product_phi_base, null_row, true, false);
+		jm.create_when(&schema, idc_product_program_structure, idc_product_chi_base, null_row, true, false);
+		jm.create_when(&schema, idc_product_coverage_header, idc_product_psi_base, null_row, true, false);
+		jm.create_when(&schema, idc_product_coverage_structure, idc_product_csi_base, null_row, true, false);
 
 		jm.navigation({
-						{ idc_home, 0},
+						{ idc_home, 0 },
 						{ idc_carrier_root, 1 },
 						{ idc_coverage_root, 1 },
-						{ idc_program_template_root, 1 },
+						{ idc_product_root, 1 },
 						{ idc_client_root, 1 },
 						{ idc_system_root, 1 },
+						{ idc_product, 2 },
 						{ idc_client, 2 },
 						{ idc_carrier, 2 },
 						{ idc_coverage, 2 },
-						{ idc_program, 3 },
-						{ idc_program_item_base, 4 },
-						{ idc_program_chart_slide, 4 },
-						{ idc_program_generic_slide, 4 },
-						{ idc_product, 4 },
-						{ idc_product_item_base, 5 },
-						{ idc_product_item_base, 5 }
-					}
+						{ idc_product_structure_header, 3 },
+						{ idc_product_structure_item, 3 },
+						{ idc_product_coverage_header, 3 },
+						{ idc_product_coverage_item, 3 },
+						{ idc_product_phi_base, 4 },
+						{ idc_product_psi_base, 4 },
+						{ idc_product_chi_base, 4 },
+						{ idc_product_csi_base, 4 },
+			}
 			);
 
 		schema.put_model(jm);
@@ -401,7 +386,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 		program_chart.create_object(null_row, sample_actor.actor_id, idc_carrier_root, id_carrier_root, { { idf_home , id_home }, { schema.idf_style_id, schema.idf_carrier_style } });
 		program_chart.create_object(null_row, sample_actor.actor_id, idc_coverage_root, id_coverage_root, { { idf_home, id_home }, { schema.idf_style_id, schema.idf_coverage_style } });
 		program_chart.create_object(null_row, sample_actor.actor_id, idc_client_root, id_client_root, { { idf_home, id_home }, { schema.idf_style_id, schema.idf_client_style } });
-		program_chart.create_object(null_row, sample_actor.actor_id, idc_program_template_root, id_product_template_root, { { idf_home, id_home }, { schema.idf_style_id, schema.idf_product_style } });
+		program_chart.create_object(null_row, sample_actor.actor_id, idc_product_root, id_product_root, { { idf_home, id_home }, { schema.idf_style_id, schema.idf_product_style } });
 		program_chart.create_object(null_row, sample_actor.actor_id, idc_system_root, id_system_root, { { idf_home, id_home }, { schema.idf_style_id, schema.idf_system_style} });
 		
 		// get our initial state
@@ -498,14 +483,14 @@ field id idf_carrier, which is populated when objects of this class are construc
 		render_navigation_frame([this](page_item* _navigation, page_item* _contents) { render_coverage_contents(_navigation, _contents);  });
 	}
 
-	void wsproposal_controller::render_product_template_root()
+	void wsproposal_controller::render_product_root()
 	{
-		render_navigation_frame([this](page_item* _navigation, page_item* _contents) { render_product_template_root_contents(_navigation, _contents);  });
+		render_navigation_frame([this](page_item* _navigation, page_item* _contents) { render_product_root_contents(_navigation, _contents);  });
 	}
 
-	void wsproposal_controller::render_product_template()
+	void wsproposal_controller::render_product()
 	{
-		render_navigation_frame([this](page_item* _navigation, page_item* _contents) { render_product_template_contents(_navigation, _contents);  });
+		render_navigation_frame([this](page_item* _navigation, page_item* _contents) { render_product_product_contents(_navigation, _contents);  });
 	}
 
 	void wsproposal_controller::render_carrier_root()
@@ -573,13 +558,13 @@ field id idf_carrier, which is populated when objects of this class are construc
 		render_form(_navigation, _contents, "Coverage");
 	}
 
-	void wsproposal_controller::render_product_template_root_contents(page_item* _navigation, page_item* _contents)
+	void wsproposal_controller::render_product_root_contents(page_item* _navigation, page_item* _contents)
 	{
 		relative_ptr_type field_ids[1] = { schema.idf_name };
-		render_search_page(_navigation, _contents, idc_program_template, "Products", 1, field_ids);
+		render_search_page(_navigation, _contents, idc_product, "Products", 1, field_ids);
 	}
 
-	void wsproposal_controller::render_product_template_contents(page_item* _navigation, page_item* _contents)
+	void wsproposal_controller::render_product_contents(page_item* _navigation, page_item* _contents)
 	{
 		render_form(_navigation, _contents, "Product");
 	}
@@ -597,65 +582,6 @@ field id idf_carrier, which is populated when objects of this class are construc
 
 	void wsproposal_controller::render_program_contents(page_item* _navigation, page_item* _contents)
 	{
-		const char* object_title = nullptr;
-		object_title = schema.get_class(state.actor.current_view_class_id).item().description;
-
-		auto content_area = row(_contents, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
-		auto detail_area = column(content_area, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 40.0_pct });
-		auto program_edit_area = row(detail_area, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 200.0_px });
-		auto program_table_area = canvas2d_row(id_canvas_form_table_a, detail_area, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
-
-		// editable controls on the left
-		add_update_fields(program_edit_area, field_layout::label_on_top, "Program Details");
-		space(program_edit_area, schema.idf_button_style, { 0.0_px, 0.0_px, 1.0_fntgr, 1.0_fntgr });
-		// and the add buttons
-		add_create_buttons(program_edit_area, schema.idf_button_style);
-
-		text(program_table_area, schema.idf_view_subtitle_style, "Program items", { 0.0_px, 0.0_px, 100.0_pct, 1.4_fntgr });
-		relative_ptr_type field_ids[1] = { idf_program_title };
-		search_table(program_table_area, idc_program, field_ids, 1);
-
-/*
-
-		page_item* contents = row( _frame, schema.idf_view_background_style);
-		page_item* slide_area = column(contents, schema.idf_view_background_style, { 0.0_px, 0.0_px, 25.0_pct, 100.0_pct });
-		page_item* selected_slide_area = column(contents, schema.idf_view_background_style, { 0.0_px, 0.0_px, 25.0_pct, 100.0_pct });
-
-		layout_rect slide_layout = { 0.0_px, 0.0_px, 100.0_pct, 75.0_pcw }, *pslide_layout = &slide_layout;
-
-		relative_ptr_type slide_types[2] = { idc_program_chart_slide, idc_program_generic_slide };
-		for_class(slide_types, 2, [this, pslide_layout, slide_area, selected_slide_area](actor_view_object& slide_avo)
-			{
-				render_program_slide(slide_area, slide_avo, pslide_layout);
-				if (slide_avo.selected) 
-				{
-					render_program_slide( selected_slide_area, slide_avo, pslide_layout );
-				}
-				return true;
-			}
-		); */
-	}
-
-	void wsproposal_controller::render_program_slide(page_item* _frame, actor_view_object& _slide, layout_rect *_layout)
-	{
-		if (_slide.class_id == idc_program_chart_slide)
-		{
-			render_program_chart_slide(_frame, _slide, _layout);
-		}
-		else if (_slide.class_id == idc_program_generic_slide)
-		{
-			render_program_generic_slide(_frame, _slide, _layout);
-		}
-	}
-
-	void wsproposal_controller::render_program_chart_slide(page_item* _frame, actor_view_object& _slide, layout_rect* _layout)
-	{
-		text(_frame, schema.idc_text_style, "Program Chart", *_layout);
-	}
-
-	void wsproposal_controller::render_program_generic_slide(page_item* _frame, actor_view_object& _slide, layout_rect* _layout)
-	{
-		text(_frame, schema.idc_text_style, "Generic Slide", *_layout);
 	}
 
 	void wsproposal_controller::render(const rectangle& newSize)
@@ -672,13 +598,15 @@ field id idf_carrier, which is populated when objects of this class are construc
 		{
 			render_client();
 		}
-		else if (state.actor.current_view_class_id == idc_program_template_root)
+		else if (state.actor.current_view_class_id == idc_product_root)
 		{
-			render_product_template_root();
+			render_product_root();
 		}
-		else if (state.actor.current_view_class_id == idc_program_template)
+		else if (state.actor.current_view_class_id == idc_product ||
+			
+			)
 		{
-			render_product_template();
+			render_product();
 		}
 		else if (state.actor.current_view_class_id == idc_coverage_root)
 		{
