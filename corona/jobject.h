@@ -1896,46 +1896,6 @@ namespace corona
 				return class_field_id;
 			}
 
-			relative_ptr_type get_result_field_class(jfield fld, relative_ptr_type &_max_result_rows)
-			{
-				relative_ptr_type result_class_id = null_row;
-				switch (fld.type_id) {
-				case jtype::type_query:
-					{
-						auto qd = get_query_definition(fld.field_id);
-						result_class_id = qd.result_class_id;
-						_max_result_rows = qd.max_result_objects;
-						break;
-					}
-				case jtype::type_file:
-					{
-						auto fd = get_file_definition(fld.field_id);
-						result_class_id = fd.result_class_id;
-						_max_result_rows = fd.max_result_objects;
-						break;
-					}
-					break;
-				case jtype::type_http:
-					{
-						auto hd = get_http_definition(fld.field_id);
-						result_class_id = hd.result_class_id;
-						_max_result_rows = hd.max_result_objects;
-						break;
-					}
-					break;
-				case jtype::type_sql:
-					{
-						auto sd = get_sql_definition(fld.field_id);
-						result_class_id = sd.result_class_id;
-						_max_result_rows = sd.max_result_objects;
-						break;
-					}
-					break;
-				}
-				return result_class_id;
-			}
-
-
 			relative_ptr_type build_class_members(field_array& pcr, int64_t& class_size_bytes, member_field_collection &mfs)
 			{
 				int field_idx = 0;
@@ -1964,18 +1924,6 @@ namespace corona
 						ref->offset = class_size_bytes;
 						field_idx++;
 						class_size_bytes += existing_field.size_bytes;
-
-						if (existing_field.is_data_generator()) {
-							relative_ptr_type max_result_rows = 0;
-							relative_ptr_type result_class_field = this->get_result_field_class(existing_field, max_result_rows);
-
-							jclass_field* ref = pcr.append();
-							ref->field_id = result_class_field;
-							ref->offset = class_size_bytes;
-							field_idx++;
-							auto& result_field = fields[result_class_field];
-							class_size_bytes += result_field.size_bytes;
-						}
 					}
 					break;
 					case member_field_types::member_class:

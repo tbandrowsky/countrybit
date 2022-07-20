@@ -24,15 +24,10 @@ namespace corona
 			return class_id;
 		}
 
-		jobject extract_query_item(serialized_box_container* _container, relative_ptr_type _dest_class_id, jobject _root, path_stack_type& _stack)
+		jobject extract_query_item(jobject& _dest, jobject& _root, path_stack_type& _stack)
 		{
-			auto schema = _root.get_schema();
-			auto class_type = schema->get_class(_dest_class_id);
-			auto total_bytes = class_type.item().class_size_bytes;
-			auto location = _container->reserve(total_bytes);
-			jobject new_object(nullptr, schema, _dest_class_id, _container, location, { 1, 1, 1 });
 			for (auto fld : _stack) {
-				new_object.update(_root);
+				_dest.update(_root);
 				_root = new_object.get_object(fld.item.member_idx).get_slice(fld.item.current_dim);
 			}
 			return new_object;
@@ -40,7 +35,6 @@ namespace corona
 
 		query_result run_query(object_name& _query_class_name, jschema* _schema, query_definition_type& _query, jcollection* _collection)
 		{
-
 			query_result results;
 
 			auto& definition = _query;
@@ -51,7 +45,7 @@ namespace corona
 			path_stack_type path_stack;
 			// figure out how to walk through the collection
 
-			jcollection::iterator_type iter;
+			jcollection::iterator_type iter = _collection->begin();
 
 			if (definition.root.query_root_type == query_root_types::root_class)
 			{
@@ -107,8 +101,8 @@ namespace corona
 
 				while (bottom > -1)
 				{
-					jobject obj = extract_query_item(&results.data, dest_class_id, root, path_stack);
-
+					jobject obj = results.append(_schema, dest_class_id);
+					extract_query_item(obj, root, path_stack);
 
 					bool incrementing = true;
 					while (incrementing && bottom > -1)
@@ -119,6 +113,34 @@ namespace corona
 					}
 				}
 			}
+
+			return results;
 		}
+
+		jobject query_result::create_object(jschema* _schema, relative_ptr_type _class_id)
+		{
+			auto myclass = _schema->get_class(_class_id);
+			auto bytes_to_allocate = myclass.item().class_size_bytes;
+			relative_ptr_type location = data.reserve(bytes_to_allocate);
+
+			dimensions_type d = { 0,0,0 };
+
+			jobject ja(nullptr, _schema, _class_id, &data, location, d);
+			ja.construct();
+#if _TRACE_GET_OBJECT
+			std::cout << "actor create object " << (void*)&data << " " << std::endl;
+#endif
+			return ja;
+		}
+
+		jobject query_result::copy_object(jschema* _schema, jobject& _src)
+		{
+			jobject dest = create_object(_schema, _src.get_class().item().class_id);
+			dest.update(_src);
+			return dest;
+		}
+
 	}
+
+
 }

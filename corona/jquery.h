@@ -26,7 +26,12 @@ namespace corona
 		class query_result
 		{
 			relative_ptr_type result_objects_location;
+
+			jobject create_object(jschema* _schema, relative_ptr_type _class_id);
+			jobject copy_object(jschema* _schema, jobject& _src);
+
 		public:
+
 			dynamic_box data;
 			query_result_collection result_objects;
 
@@ -78,11 +83,27 @@ namespace corona
 				}
 			}
 
-			jobject create_object(jschema* _schema, relative_ptr_type _class_id);
+			jobject append(jschema* _schema, jobject& _src)
+			{
+				relative_ptr_type id = result_objects.size();
+				query_result_item item;
+				item.object = copy_object(_schema, _src);
+				result_objects.insert_or_assign(id, item);
+				return item;
+			}
+
+			jobject append(jschema* _schema, relative_ptr_type _class_id)
+			{
+				relative_ptr_type id = result_objects.size();
+				query_result_item item;
+				item.object = create_object(_schema, _class_id);
+				result_objects.insert_or_assign(id, item);
+				return item;
+			}
 		};
 
 		relative_ptr_type put_query_class(jschema* _schema, query_definition_type& qd, object_name _name);
-		jobject extract_query_item(serialized_box_container* _container, relative_ptr_type _dest_class_id, jobject _root, path_stack_type& _stack);
+		jobject extract_query_item(jobject& _dest, jobject& _root, path_stack_type& _stack);
 		query_result run_query(object_name& _query_class_name, jschema* _schema, query_definition_type& _query, jcollection* _collection);
 	}
 }

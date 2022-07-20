@@ -22,10 +22,6 @@ namespace corona
 			;
 		}
 
-		relative_ptr_type query_box::put_class(query_definition_type& qd, object_name _class_name)
-		{
-		}
-
 		query_box query_box::operator = (const query_box& _src)
 		{
 			set_data(_src);
