@@ -89,7 +89,7 @@ namespace corona
 				query_result_item item;
 				item.object = copy_object(_schema, _src);
 				result_objects.insert_or_assign(id, item);
-				return item;
+				return item.object;
 			}
 
 			jobject append(jschema* _schema, relative_ptr_type _class_id)
@@ -98,7 +98,7 @@ namespace corona
 				query_result_item item;
 				item.object = create_object(_schema, _class_id);
 				result_objects.insert_or_assign(id, item);
-				return item;
+				return item.object;
 			}
 		};
 
