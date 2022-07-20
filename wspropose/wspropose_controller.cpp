@@ -221,25 +221,25 @@ field id idf_carrier, which is populated when objects of this class are construc
 		pcr.class_name = "product_phi_base";
 		pcr.class_description = "Program Header Item";
 		pcr.field_id_primary_key = idf_product_phi_base;
-		pcr.member_fields = { idf_product_phi_base, idf_product_program_header, idf_product };
+		pcr.member_fields = { idf_product_phi_base, idf_product_program_header, idf_product, schema.idf_name, schema.idf_field_type };
 		idc_product_phi_base = schema.put_class(pcr);
 
 		pcr.class_name = "product_psi_base";
 		pcr.class_description = "Program Structure Item";
 		pcr.field_id_primary_key = idf_product_psi_base;
-		pcr.member_fields = { idf_product_psi_base, idf_product_program_structure, idf_product };
+		pcr.member_fields = { idf_product_psi_base, idf_product_program_structure, idf_product, schema.idf_name, schema.idf_field_type };
 		idc_product_psi_base = schema.put_class(pcr);
 
 		pcr.class_name = "product_chi_base";
 		pcr.class_description = "Coverage Header Item";
 		pcr.field_id_primary_key = idf_product_chi_base;
-		pcr.member_fields = { idf_product_chi_base, idf_product_coverage_header, idf_product };
+		pcr.member_fields = { idf_product_chi_base, idf_product_coverage_header, idf_product, schema.idf_name, schema.idf_field_type };
 		idc_product_chi_base = schema.put_class(pcr);
 
 		pcr.class_name = "product_csi_base";
 		pcr.class_description = "Coverage Structure Item";
 		pcr.field_id_primary_key = idf_product_csi_base;
-		pcr.member_fields = { idf_product_csi_base, idf_product_coverage_structure, idf_product };
+		pcr.member_fields = { idf_product_csi_base, idf_product_coverage_structure, idf_product, schema.idf_name, schema.idf_field_type };
 		idc_product_csi_base = schema.put_class(pcr);
 
 		relative_ptr_type bases[4] = { idc_product_phi_base, idc_product_psi_base, idc_product_chi_base, idc_product_csi_base  };
@@ -566,37 +566,47 @@ field id idf_carrier, which is populated when objects of this class are construc
 
 	void wsproposal_controller::render_product_contents(page_item* _navigation, page_item* _contents)
 	{
-		if (state.actor.current_view_class_id == idc_product) 
+		if (state.actor.current_subview_class_id == -1) 
 		{
 			auto content_column = column( _contents, null_row, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
 			auto tab_row = canvas2d_row(id_canvas_products_a, content_column, null_row, { 0.0_px, 0.0_px, 100.0_pct, 30.0_px });
 			relative_ptr_type product_objects[5] = { idc_product, idc_product_program_header, idc_product_program_structure, idc_product_coverage_header, idc_product_coverage_structure };
-			selects(tab_row, schema.idf_navigation_style, schema.idf_navigation_selected_style, { 0.0_px, 0.0_px, 150.0_px, 30.0_px }, schema.idf_name, product_objects, 5);
+//			selects(tab_row, schema.idf_navigation_style, schema.idf_navigation_selected_style, { 0.0_px, 0.0_px, 150.0_px, 30.0_px }, schema.idf_name, product_objects, 5);
 			render_form(_navigation, content_column, "Product");
 		}
-		else 
+		else
 		{
 			auto content_column = canvas2d_column(id_canvas_products_b, _contents, null_row, { 0.0_px, 0.0_px, 100.0_pct, 90.0_pct });
 			auto tab_row = row(content_column, null_row, { 0.0_px, 0.0_px, 100.0_pct, 30.0_px });
 			relative_ptr_type product_objects[5] = { idc_product, idc_product_program_header, idc_product_program_structure, idc_product_coverage_header, idc_product_coverage_structure };
-			selects(tab_row, schema.idf_navigation_style, schema.idf_navigation_selected_style, { 0.0_px, 0.0_px, 150.0_px, 30.0_px }, schema.idf_name, product_objects, 5);
+	//		selects(tab_row, schema.idf_navigation_style, schema.idf_navigation_selected_style, { 0.0_px, 0.0_px, 150.0_px, 30.0_px }, schema.idf_name, product_objects, 5);
 
-			if (state.actor.current_view_class_id == idc_product_program_header)
+			auto title_row = row(content_column, null_row, { 0.0_px, 0.0_px, 100.0_pct, 30.0_px });
+			auto body_row = row(content_column, null_row, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
+			relative_ptr_type search_fields[2] = {schema.idf_name, schema.idf_field_type};
+
+			if (state.actor.current_subview_class_id == idc_product_program_header)
 			{
-				text(content_column, schema.idf_album_about_style, "Program Header Stuff");
+				text(title_row, schema.idf_label_style, "Program Header");
+				search_table(body_row, idc_product_phi_base, search_fields, 2 );
 			}
-			else if (state.actor.current_view_class_id == idc_product_program_structure)
+			else if (state.actor.current_subview_class_id == idc_product_program_structure)
 			{
-				text(content_column, schema.idf_album_about_style, "Program Structure Stuff");
+				text(title_row, schema.idf_label_style, "Program Structure");
+				search_table(body_row, idc_product_psi_base, search_fields, 2);
 			}
-			else if (state.actor.current_view_class_id == idc_product_coverage_header)
+			else if (state.actor.current_subview_class_id == idc_product_coverage_header)
 			{
-				text(content_column, schema.idf_album_about_style, "Coverage Header Stuff");
+				text(title_row, schema.idf_label_style, "Coverage Header");
+				search_table(body_row, idc_product_chi_base, search_fields, 2);
 			}
-			else if (state.actor.current_view_class_id == idc_product_coverage_structure)
+			else if (state.actor.current_subview_class_id == idc_product_coverage_structure)
 			{
-				text(content_column, schema.idf_album_about_style, "Coverage Structure Stuff");
+				text(title_row, schema.idf_label_style, "Coverage Structure");
+				search_table(body_row, idc_product_csi_base, search_fields, 2);
 			}
+
+			add_create_buttons(_navigation, schema.idf_button_style, { 0.0_px, 0.0_px, 100.0_pct, 32.0_px });
 		}
 	}
 
