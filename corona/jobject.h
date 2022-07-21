@@ -326,7 +326,7 @@ namespace corona
 					throw std::logic_error("can't convert to string");
 					break;
 				case jtype::type_color:
-					throw std::logic_error("can't convert to string");
+					string_value = "test";
 					break;
 				case jtype::type_datetime:
 					throw std::logic_error("can't convert to string");

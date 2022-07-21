@@ -221,25 +221,25 @@ field id idf_carrier, which is populated when objects of this class are construc
 		pcr.class_name = "product_phi_base";
 		pcr.class_description = "Program Header Item";
 		pcr.field_id_primary_key = idf_product_phi_base;
-		pcr.member_fields = { idf_product_phi_base, idf_product_program_header, idf_product, schema.idf_name, schema.idf_field_type };
+		pcr.member_fields = { idf_product_phi_base, idf_product_program_header, idf_product, schema.idf_name, schema.idf_field_description };
 		idc_product_phi_base = schema.put_class(pcr);
 
 		pcr.class_name = "product_psi_base";
 		pcr.class_description = "Program Structure Item";
 		pcr.field_id_primary_key = idf_product_psi_base;
-		pcr.member_fields = { idf_product_psi_base, idf_product_program_structure, idf_product, schema.idf_name, schema.idf_field_type };
+		pcr.member_fields = { idf_product_psi_base, idf_product_program_structure, idf_product, schema.idf_name, schema.idf_field_description };
 		idc_product_psi_base = schema.put_class(pcr);
 
 		pcr.class_name = "product_chi_base";
 		pcr.class_description = "Coverage Header Item";
 		pcr.field_id_primary_key = idf_product_chi_base;
-		pcr.member_fields = { idf_product_chi_base, idf_product_coverage_header, idf_product, schema.idf_name, schema.idf_field_type };
+		pcr.member_fields = { idf_product_chi_base, idf_product_coverage_header, idf_product, schema.idf_name, schema.idf_field_description };
 		idc_product_chi_base = schema.put_class(pcr);
 
 		pcr.class_name = "product_csi_base";
 		pcr.class_description = "Coverage Structure Item";
 		pcr.field_id_primary_key = idf_product_csi_base;
-		pcr.member_fields = { idf_product_csi_base, idf_product_coverage_structure, idf_product, schema.idf_name, schema.idf_field_type };
+		pcr.member_fields = { idf_product_csi_base, idf_product_coverage_structure, idf_product, schema.idf_name, schema.idf_field_description };
 		idc_product_csi_base = schema.put_class(pcr);
 
 		relative_ptr_type bases[4] = { idc_product_phi_base, idc_product_psi_base, idc_product_chi_base, idc_product_csi_base  };
@@ -328,8 +328,8 @@ field id idf_carrier, which is populated when objects of this class are construc
 		jm.create_when(&schema, idc_product, idc_product_coverage_header, null_row, false, false);
 		jm.create_when(&schema, idc_product, idc_product_coverage_structure, null_row, false, false);
 		jm.create_when(&schema, idc_product_program_header, idc_product_phi_base, null_row, false, false);
-		jm.create_when(&schema, idc_product_program_structure, idc_product_chi_base, null_row, false, false);
-		jm.create_when(&schema, idc_product_coverage_header, idc_product_psi_base, null_row, false, false);
+		jm.create_when(&schema, idc_product_program_structure, idc_product_psi_base, null_row, false, false);
+		jm.create_when(&schema, idc_product_coverage_header, idc_product_chi_base, null_row, false, false);
 		jm.create_when(&schema, idc_product_coverage_structure, idc_product_csi_base, null_row, false, false);
 
 		jm.navigation({
@@ -583,7 +583,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 
 			auto title_row = row(content_column, null_row, { 0.0_px, 0.0_px, 100.0_pct, 30.0_px });
 			auto body_row = row(content_column, null_row, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
-			relative_ptr_type search_fields[2] = {schema.idf_name, schema.idf_field_type};
+			relative_ptr_type search_fields[2] = {schema.idf_name, schema.idf_field_description };
 
 			if (state.actor.current_subview_class_id == idc_product_program_header)
 			{
