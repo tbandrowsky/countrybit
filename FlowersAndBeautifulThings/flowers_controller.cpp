@@ -54,17 +54,17 @@ namespace flowers
 			std::cout << __LINE__ << "collection id failed" << std::endl;
 		}
 
-		program_chart = schema.create_collection(&ref);
+		user_collection = schema.create_collection(&ref);
 		jactor sample_actor;
 		sample_actor.actor_name = "sample actor";
 		sample_actor.actor_id = null_row;
 		sample_actor.current_view_class_id = idc_home;
-		sample_actor = program_chart.create_actor(sample_actor);
+		sample_actor = user_collection.create_actor(sample_actor);
 
 		relative_ptr_type id_home = null_row, id_carrier_root = null_row, id_coverage_root = null_row, id_client_root = null_row, id_product_template_root = null_row, id_system_root = null_row;
 
-		program_chart.create_object(null_row, sample_actor.actor_id, idc_home, id_home);
-		program_chart.create_object(null_row, sample_actor.actor_id, idc_carrier_root, id_carrier_root, { { idf_home , id_home } });
+		user_collection.create_object(null_row, sample_actor.actor_id, idc_home, id_home);
+		user_collection.create_object(null_row, sample_actor.actor_id, idc_carrier_root, id_carrier_root, { { idf_home , id_home } });
 		relative_ptr_type style_sheet_id = null_row;
 
 		relative_ptr_type homes_id = null_row;
@@ -72,9 +72,9 @@ namespace flowers
 		relative_ptr_type carriers_id = null_row;
 		relative_ptr_type programs_id = null_row;
 
-		program_chart.create_object(0, sample_actor.actor_id, idc_home, homes_id);
-		program_chart.create_object(0, sample_actor.actor_id, idc_carrier_root, carriers_id);
-		program_chart.create_object(0, sample_actor.actor_id, idc_carrier_root, programs_id);
+		user_collection.create_object(0, sample_actor.actor_id, idc_home, homes_id);
+		user_collection.create_object(0, sample_actor.actor_id, idc_carrier_root, carriers_id);
+		user_collection.create_object(0, sample_actor.actor_id, idc_carrier_root, programs_id);
 
 		set_style_sheet();
 
@@ -250,7 +250,7 @@ namespace flowers
 		}
 
 		arrange(newSize.w, newSize.h);
-		canvasWindowsId = host->renderPage(pg, &schema, state, program_chart);
+		canvasWindowsId = host->renderPage(pg, &schema, state, user_collection);
 		host->redraw();
 	}
 

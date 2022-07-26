@@ -99,7 +99,7 @@ namespace corona
 			dynamic_box box;
 			jschema schema;
 			relative_ptr_type schema_id;
-			jcollection program_chart;
+			jcollection user_collection;
 			page pg;
 			actor_state state;
 			actor_id_type actor_id;
@@ -139,16 +139,6 @@ namespace corona
 			page_item* navigate(page_item* _parent, int object_id, relative_ptr_type _style_id, const char* _caption, layout_rect _box);
 			page_item* text(page_item* _parent, relative_ptr_type _style_id, const char *_text, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
 			page_item* select_cell(page_item* _parent, actor_state* _state, int object_id, jobject slice, const char* _caption, relative_ptr_type _style_id, layout_rect _box);
-
-			virtual void for_each(std::function<bool(const actor_view_collection::iterator_item_type& _item)> selector, std::function<bool(actor_view_object& avo)> updator);
-			virtual void for_class(relative_ptr_type *class_ids, int _length, std::function<bool( actor_view_object& avo)>  updator);
-			virtual void for_join(jobject& _join_parent, relative_ptr_type* _join_fields, std::function<bool( actor_view_object& avo)>  updator);
-			virtual void for_common(relative_ptr_type* _common_field_list, std::function<bool( actor_view_object& avo)>  updator);
-
-			virtual page_item* selects(page_item* _parent_ui, relative_ptr_type _style_id, relative_ptr_type _selected_style_id, layout_rect _box, relative_ptr_type _id_name, std::function<bool(const actor_view_collection::iterator_item_type& _item)> selector);
-			virtual page_item* selects(page_item* _parent_ui, relative_ptr_type _style_id, relative_ptr_type _selected_style_id, layout_rect _box, relative_ptr_type _id_name, relative_ptr_type *class_ids, int _length);
-			virtual page_item* selects(page_item* _parent_ui, relative_ptr_type _style_id, relative_ptr_type _selected_style_id, layout_rect _box, relative_ptr_type _id_name, jobject& _parent, relative_ptr_type* _join_fields);
-			virtual page_item* selects(page_item* _parent_ui, relative_ptr_type _style_id, relative_ptr_type _selected_style_id, layout_rect _box, relative_ptr_type _id_name, relative_ptr_type* _has_field_list);
 
 			virtual void breadcrumbs(page_item* _parent, std::function<const char* (jobject& slice)> _captioner, layout_rect _item_box = { 0.0_px, 0.0_px, 200.0_px, 100.0_px });
 

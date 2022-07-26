@@ -39,9 +39,9 @@ namespace corona
 		{
 			relative_ptr_type ids = schema.idc_style_sheet;
 
-			auto obj = program_chart.where(ids);
+			auto obj = user_collection.where(ids);
 
-			if (obj == std::end(program_chart))
+			if (obj == std::end(user_collection))
 			{
 				throw std::logic_error("style sheet not found in the database");
 			}
@@ -57,7 +57,7 @@ namespace corona
 
 //			host->setMinimumWindowSize(point{ pos.w - pos.x, pos.h - pos.y });
 
-			state = program_chart.get_actor_state(actor_id);
+			state = user_collection.get_actor_state(actor_id);
 
 			stateChanged(pos);
 
@@ -167,7 +167,7 @@ namespace corona
 		{
 			setScrollBars();
 
-			state = program_chart.get_actor_state(state.actor_id, null_row, "state");
+			state = user_collection.get_actor_state(state.actor_id, null_row, "state");
 			stateChanged(newSize);
 
 			return 0;
@@ -198,7 +198,7 @@ namespace corona
 				{
 
 #if TRACE_CONTROLLER
-					state = this->program_chart.select_object(clicked_item.item.select_request, "selected via mouse click");
+					state = this->user_collection.select_object(clicked_item.item.select_request, "selected via mouse click");
 #else
 					state = this->program_chart.select_object(clicked_item.item.select_request);
 #endif
@@ -206,7 +206,7 @@ namespace corona
 				else if (clicked_item.item.is_create())
 				{
 #if TRACE_CONTROLLER
-					state = this->program_chart.create_object(clicked_item.item.create_request, "created via mouse click");
+					state = this->user_collection.create_object(clicked_item.item.create_request, "created via mouse click");
 #else
 					state = this->program_chart.create_object(clicked_item.item.create_request);
 #endif
@@ -250,7 +250,7 @@ namespace corona
 		{
 			for (auto bc : state.actor.breadcrumb)
 			{
-				jobject obj = program_chart.get_object(bc.item);
+				jobject obj = user_collection.get_object(bc.item);
 				const char* caption = _captioner(obj);
 				navigate(_breadcrumb_container, bc.item, schema.idf_breadcrumb_style, caption, _item_box);
 			}
@@ -271,7 +271,7 @@ namespace corona
 			std::cout << "Create " << buttonId << std::endl;
 #endif
 
-			state = this->program_chart.create_object(command_item, "Create Item");
+			state = this->user_collection.create_object(command_item, "Create Item");
 			auto size = host->getWindowClientPos();
 
 			stateChanged(size);
@@ -285,10 +285,10 @@ namespace corona
 				pi.slice.set({ { pi.field->field_id, text.c_str()}});
 				update_object_request uor;
 				uor.actor_id = state.actor.actor_id;
-				uor.collection_id = program_chart.get_collection_id();
+				uor.collection_id = user_collection.get_collection_id();
 				uor.item = pi.slice;
 				uor.object_id = pi.object_id;
-				state = this->program_chart.update_object(uor);
+				state = this->user_collection.update_object(uor);
 				auto size = host->getWindowClientPos();
 				stateChanged(size);
 			}
@@ -302,10 +302,10 @@ namespace corona
 				pi.slice.set({ { pi.field->field_id, text.c_str()} });
 				update_object_request uor;
 				uor.actor_id = state.actor.actor_id;
-				uor.collection_id = program_chart.get_collection_id();
+				uor.collection_id = user_collection.get_collection_id();
 				uor.item = pi.slice;
 				uor.object_id = pi.object_id;
-				state = this->program_chart.update_object(uor);
+				state = this->user_collection.update_object(uor);
 				auto size = host->getWindowClientPos();
 				stateChanged(size);
 			}
@@ -341,97 +341,6 @@ namespace corona
 			;
 		}
 
-		void corona_controller::for_each(std::function<bool(const actor_view_collection::iterator_item_type& _item)> selector, std::function<bool(actor_view_object& avo)> updator)
-		{
-			auto selections = state.view_objects.where(selector);
-			for (auto selection : selections)
-			{
-				updator(selection.second);
-			}
-		}
-
-		void corona_controller::for_class(relative_ptr_type *_class_ids, int _length, std::function<bool(actor_view_object& avo)>  updator)
-		{
-			dynamic_box box;
-			box.init(1 << 23);
-
-			for (auto item : state.view_objects)
-			{
-				item.second.navigation_order = -1;
-				for (int i = 0; i < _length; i++)
-				{
-					if (this->program_chart.matches_class_id(item.second.object_id, _class_ids[i]))
-					{
-						state.view_objects[item.first].second.navigation_order = i;
-					}
-				}
-			}
-
-			auto sorted_list = state.view_objects.where([_class_ids, _length, this](auto& avox)
-				{
-					return avox.second.navigation_order > -1;
-				})
-				.order_by(&box, [](auto& a1, auto& a2)
-					{
-						return a1.second.navigation_order < a2.second.navigation_order;
-					}
-				);
-
-			for (auto selection : sorted_list)
-			{
-				updator(selection.item.second);
-			}
-		}
-
-		void corona_controller::for_join(jobject& _parent, relative_ptr_type* _join_fields, std::function<bool(actor_view_object& avo)>  updator)
-		{
-			relative_ptr_type class_id = _parent.get_class_id();
-			auto selections = state.view_objects.where([class_id](auto& kp) { return kp.second.class_id != class_id; });
-			for (auto selection : selections)
-			{
-				auto slice = selection.second.object;
-
-				if (slice.get_bytes() != _parent.get_bytes() && _parent.compare(slice, _join_fields) == 0)
-				{
-					updator(selection.second);
-				}
-			}
-		}
-
-		void corona_controller::for_common(relative_ptr_type* _has_field_list, std::function<bool(actor_view_object& avo)>  updator)
-		{
-			auto selections = state.view_objects.where([](auto& kp) {return true; });
-
-			for (auto selection : selections)
-			{
-				auto clsid = selection.second.class_id;
-				auto cls = schema.get_class(clsid);
-
-				bool has_fields = true;
-				
-				while (*_has_field_list != null_row) 
-				{
-					bool has_field = false;
-					for (int i = 0; i < cls.size(); i++) {
-						if (cls.detail(0).field_id == *_has_field_list)
-						{
-							has_field = true;
-							break;
-						}
-					}
-					if (!has_field) {
-						has_fields = false;
-						break;
-					}
-					_has_field_list++;
-				}
-				
-				if (has_fields) 
-				{
-					updator(selection.second);
-				}
-			}
-		}
 
 		void corona_controller::clear()
 		{
@@ -491,90 +400,6 @@ namespace corona
 			return pg.canvas2d_absolute(_canvas_uid, _parent, _style_id, _box);
 		}
 
-		page_item* corona_controller::selects(page_item* _parent_ui, relative_ptr_type _style_id, relative_ptr_type _selected_style_id, layout_rect _box, relative_ptr_type _id_name, std::function<bool(const actor_view_collection::iterator_item_type& _item)> selector)
-		{
-			auto* page_add = &pg;
-			auto* st = &state;
-			auto* pbox = &_box;
-			for_each(selector, [pbox, st, page_add, this, _id_name, _parent_ui, _style_id, _selected_style_id]( actor_view_object& avo)
-				{
-					auto style_id = _style_id;
-					if (avo.object.has_field(schema.idf_style_sheet)) {
-						style_id = avo.object.get_int64(schema.idf_style_sheet, true);
-					}
-					else {
-						style_id = avo.selected ? _selected_style_id : _style_id;
-					}
-					page_add->select(_parent_ui, st, avo.object_id, _id_name, avo.object, style_id, *pbox);
-					return true;
-				});
-			return _parent_ui;
-		}
-
-		page_item* corona_controller::selects(page_item* _parent_ui, relative_ptr_type _style_id, relative_ptr_type _selected_style_id, layout_rect _box, relative_ptr_type _id_name, relative_ptr_type *_class_ids, int _length)
-		{
-			auto* page_add = &pg;
-			auto* st = &state;
-			auto* pbox = &_box;
-			for_class(_class_ids, _length, [pbox, st, page_add, this, _id_name, _parent_ui, _style_id, _selected_style_id]( actor_view_object& avo)
-				{
-					auto object_id = avo.object_id;
-					if (!st->actor.breadcrumb.any_of([object_id](auto& br) {return br.item == object_id; }))
-					{
-						auto style_id = _style_id;
-						if (avo.object.has_field(schema.idf_style_id)) {
-							style_id = avo.object.get_int64(schema.idf_style_id, true);
-						}
-						else {
-							style_id = avo.selected ? _selected_style_id : _style_id;
-						}
-						page_add->select(_parent_ui, st, avo.object_id, _id_name, avo.object, style_id, *pbox);
-					}
-					return true;
-				});
-			return _parent_ui;
-		}
-
-		page_item* corona_controller::selects(page_item* _parent_ui, relative_ptr_type _style_id, relative_ptr_type _selected_style_id, layout_rect _box, relative_ptr_type _id_name, jobject& _parent, relative_ptr_type* _join_fields)
-		{
-			auto* page_add = &pg;
-			auto* st = &state;
-			auto* pbox = &_box;
-			for_join(_parent, _join_fields, [pbox, st, page_add, _id_name, this, _parent_ui, _style_id, _selected_style_id]( actor_view_object& avo)
-				{
-					auto style_id = _style_id;
-					if (avo.object.has_field(schema.idf_style_sheet)) {
-						style_id = avo.object.get_int64(schema.idf_style_sheet, true);
-					}
-					else {
-						style_id = avo.selected ? _selected_style_id : _style_id;
-					}
-					page_add->select(_parent_ui, st, avo.object_id, _id_name, avo.object, style_id, *pbox);
-					return true;
-				});
-			return _parent_ui;
-		}
-
-		page_item* corona_controller::selects(page_item* _parent_ui, relative_ptr_type _style_id, relative_ptr_type _selected_style_id, layout_rect _box, relative_ptr_type _id_name, relative_ptr_type* _has_field_list)
-		{
-			auto* page_add = &pg;
-			auto* st = &state;
-			auto* pbox = &_box;
-			for_common(_has_field_list, [pbox, st, _id_name, page_add, this, _parent_ui, _style_id, _selected_style_id]( actor_view_object& avo)
-				{
-					auto style_id = _style_id;
-					if (avo.object.has_field(schema.idf_style_sheet)) {
-						style_id = avo.object.get_int64(schema.idf_style_sheet, true);
-					}
-					else {
-						style_id = avo.selected ? _selected_style_id : _style_id;
-					}
-					page_add->select(_parent_ui, st, avo.object_id, _id_name, avo.object, style_id, *pbox);
-					return true;
-				});
-			return _parent_ui;
-		}
-
 		void corona_controller::search_table(page_item* _parent, relative_ptr_type _idc_class_id, relative_ptr_type* _idf_child_fields, int _num_child_fields)
 		{
 			page_item* table_container = column(_parent, null_row);
@@ -603,7 +428,7 @@ namespace corona
 			auto* pout = &std::cout;
 
 			auto svo = state.view_objects.where([this, _idc_class_id](const actor_view_collection::iterator_item_type& _item) {
-				return program_chart.matches_class_id(_item.second.object, _idc_class_id);
+				return user_collection.matches_class_id(_item.second.object, _idc_class_id);
 				});
 
 			for (auto avo : svo)
@@ -778,17 +603,17 @@ namespace corona
 
 		page_item* corona_controller::add_update_fields(page_item* _parent, field_layout _layout, const char *_object_title)
 		{
-			return pg.actor_update_fields(_parent, &state, &schema, &program_chart, _layout, _object_title);
+			return pg.actor_update_fields(_parent, &state, &schema, &user_collection, _layout, _object_title);
 		}
 
 		page_item* corona_controller::add_create_buttons(page_item* _parent, relative_ptr_type _style_id, layout_rect _box)
 		{
-			return pg.actor_create_buttons(_parent, &state, &schema, &program_chart, _style_id, _box);
+			return pg.actor_create_buttons(_parent, &state, &schema, &user_collection, _style_id, _box);
 		}
 
 		page_item* corona_controller::add_select_items(page_item* _parent)
 		{
-			return pg.actor_select_items(_parent, &state, &schema, &program_chart);
+			return pg.actor_select_items(_parent, &state, &schema, &user_collection);
 		}
 
 		void corona_controller::arrange(double width, double height, jobject& _style_sheet, double padding)

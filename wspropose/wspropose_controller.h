@@ -86,13 +86,6 @@ namespace proposal
 		corona::database::relative_ptr_type idf_carrier_name;
 		corona::database::relative_ptr_type idf_coverage_name;
 
-		relative_ptr_type	id_home,
-							id_carrier_root, 
-							id_coverage_root, 
-							id_client_root, 
-							id_product_root, 
-							id_system_root;
-
 		relative_ptr_type	id_canvas_header = 1;
 		relative_ptr_type	id_canvas_navigation = 2;
 		relative_ptr_type	id_canvas_footer = 3;

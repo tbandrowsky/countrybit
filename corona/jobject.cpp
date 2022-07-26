@@ -247,92 +247,131 @@ namespace corona
 				}
 			}
 
-			// now for the moment, we just include all the objects in the view.  This can change for physical models, obviously.
 			jactor* pactor = &actor;
 
-			const char* search_string = nullptr;
-			relative_ptr_type field_id_pk = null_row;
-			relative_ptr_type field_id_pk_value = null_row;
+			// first, pull in all the objects that are selected.
+			// this is because they will have the parameters for the queries
 
-			// get the search string out of the search object
-			if (pactor->current_view_object_id != null_row && pactor->current_view_class_id != null_row)
+			for (auto selection : pactor->selections)
 			{
-				auto obj = get_object(pactor->current_view_object_id);
+				auto obj = get_object(selection.item);
+				actor_view_object avo;
+				avo.actor_id = _actor;
+				avo.collection_id = collection_id;
+				avo.object_id = selection.item;
+				avo.class_id = obj.get_class_id();
+				avo.selectable = false;
+				avo.selected = true;
+				avo.updatable = false;
+
+				if (acr.view_objects.contains(selection.item)) {
+
+					acr.view_objects.put(selection.item, avo, [](actor_view_object& _dest) {
+						_dest.selected = true;
+						_dest.selectable = false;
+						});
+				}
+				else 
+				{
+					avo.object = acr.copy_object(schema, obj);
+					acr.view_objects.put(avo.object_id, avo, [](actor_view_object& _dest) {;  });
+				}
+			}
+
+			// now, run the items that are in the view query
+
+			if (pactor->view.use_view)
+			{
+				for (auto vqi : pactor->view.view_queries)
+				{
+					filter fil;
+					auto& vq = vqi.item;
+					fil.classes = vq.classes;
+					for (auto comp : vq.parameters)
+					{
+						auto comp_field = comp.item;
+						filter_term new_option;
+						for (auto sel : pactor->selections)
+						{
+							auto obj_ref = acr.view_objects.get_at(sel.item);
+							auto obj = obj_ref.second.object;
+							if (obj.has_field(comp.item.field_id_source))
+							{
+								new_option.comparison = comp_field.comparison;
+								new_option.target_field = comp_field.field_id_target;
+								new_option.src_value = obj.get(comp_field.field_id_source);
+								fil.options.push_back(new_option);
+								break;
+							}
+						}
+					}
+					filtered_object_list flist = run_filter(acr.get_data(), fil);
+					acr.filter_results.put(vqi.item.query_name, flist.get_location());
+					for (auto view_item : flist) {
+						if (!acr.view_objects.contains(view_item))
+						{
+							auto obj = get_object(view_item);
+							actor_view_object avo;
+							avo.actor_id = _actor;
+							avo.collection_id = collection_id;
+							avo.object_id = view_item;
+							avo.class_id = obj.get_class_id();
+							avo.selectable = false;
+							avo.selected = false;
+							avo.updatable = false;
+							avo.object = acr.copy_object(schema, obj);
+							acr.view_objects.put(view_item, avo);
+						}
+					}
+				}
+			}
+
+			for (auto selection : pactor->selections)
+			{
+				const char* search_string = nullptr;
+				relative_ptr_type field_id_pk = null_row;
+				relative_ptr_type field_id_pk_value = null_row;
+
+				auto obj = get_object(selection.item);
 				int field_idx = obj.get_field_index_by_id(schema->idf_search_string);
 				if (field_idx > -1) search_string = obj.get_string(field_idx).c_str();
 				field_id_pk = obj.get_primary_key();
 				if (field_id_pk != null_row) {
 					field_id_pk_value = obj.get_int64(field_id_pk, true);
 				}
+
+				auto object_id = selection.item;
+
+				auto view_objects = this->where([this, object_id, search_string, pactor, field_id_pk, field_id_pk_value](const iterator_item_type& _item)
+					{
+						bool include_object = false;
+
+						if (_item.location == object_id) {
+							include_object = true;
+						}
+						else 
+						{
+							relative_ptr_type loc = _item.location;
+							relative_ptr_type loc_class = _item.item.get_class_id();
+							auto search_item = get_object(_item.location);
+
+							bool is_child_object = (search_item.has_field(field_id_pk) && ((int64_t)search_item.get(field_id_pk) == field_id_pk_value));
+							if (is_child_object)
+							{
+								include_object = search_item.matches(search_string);
+							}
+						}
+						return include_object;
+					}
+				);
+
 			}
 
 #if _TRACE_RULE
 			std::cout << "collection size: " << size() << " " << objects.size() << std::endl;
 			std::cout << "view_objects: where: " << std::endl;
 #endif
-			// get the view objects themselves based on the search, state, and children
-			auto view_objects = this->where([this, search_string, pactor, field_id_pk, field_id_pk_value](const iterator_item_type& _item)
-				{
-					bool include_selected = false;
-					bool include_class = false;
-					bool is_child_object = false;
-					bool include_search = false;
 
-					relative_ptr_type loc = _item.location;
-					relative_ptr_type loc_class = _item.item.get_class_id();
-					auto search_item = get_object(_item.location);
-
-					include_selected = pactor->selections.any_of([this,loc_class](const selections_collection::iterator_item_type& _sel)
-						{ 
-							return this->matches_class_id(_sel.item, loc_class);
-						});
-
-					include_class = matches_class_id(loc, pactor->current_view_class_id);
-					is_child_object = (search_item.has_field(field_id_pk) && ((int64_t)search_item.get(field_id_pk) == field_id_pk_value));
-					if (is_child_object) {
-						include_search = search_item.matches(search_string);
-#if _TRACE_SEARCH
-						std::cout << "search class:" << pactor->current_view_class_id << ", candidate class:" << search_item.get_class().item().name << ", object id:" << loc << ", matches:" << include_search << std::endl;
-#endif
-					}
-
-#if _TRACE_SEARCH
-					std::cout << "search class:" << pactor->current_view_class_id << ", candidate class:" << search_item.get_class().item().name << ", object id:" << loc << ", matches:" << include_selected << ", " << include_class << ", " << include_search << std::endl;
-#endif
-
-					return include_selected || include_class || (is_child_object && include_search);
-				}
-			);
-
-			for (auto vos : view_objects)
-			{
-				actor_view_object avo;
-				avo.actor_id = _actor;
-				avo.collection_id = collection_id;
-				avo.object_id = vos.location;
-				avo.class_id = vos.item.get_class_id();
-				avo.selectable = false;
-				avo.selected = false;
-				avo.updatable = false;
-				avo.object = acr.copy_object(schema, vos.item);
-				avo.navigation_order = 0;
-				acr.view_objects.put(avo.object_id, avo, [](actor_view_object& _dest) { ;  });
-			}
-
-			// now to select whatever is selected
-
-			for (auto sel : actor.selections) {
-				auto obj = objects[sel.item];
-				actor_view_object avo;
-				avo.collection_id = collection_id;
-				avo.object_id = sel.item;
-				avo.selectable = false;
-				avo.selected = true;
-				avo.updatable = false;
-				if (acr.view_objects.contains(sel.item)) {
-					acr.view_objects.put(sel.item, avo, [](actor_view_object& _dest) { _dest.selected = true; });
-				}
-			}
 
 			// now to our select options
 			
@@ -482,67 +521,84 @@ namespace corona
 			actor_type ac = get_actor(_select.actor_id);
 			if (objects.check(_select.object_id)) 
 			{
-				auto slice = get_object(_select.object_id);
-				auto class_id = slice.get_class_id();
-				auto object_id = _select.object_id;
+				auto selected_object = get_object(_select.object_id);
+				auto selected_class_id = selected_object.get_class_id();
+				auto selected_object_id = _select.object_id;
 				
 				selections_collection temp;
+
 				auto model = schema->get_model(ref->model_name);
-				auto pmodel = &model;
-				auto hierarchy_item = model.selection_hierarchy.first_value([class_id, this, object_id](auto& vr) { return this->matches_class_id( object_id, vr.item.class_id ); });
-				auto phierarchy_item = &hierarchy_item;
-				auto selected_levels = model.selection_hierarchy.where([phierarchy_item](auto& vr) { return vr.item.level_id <= phierarchy_item->level_id; });
 
-				ac.breadcrumb.clear();
-				ac.current_view_object_id = null_row;
-				ac.current_view_class_id = null_row;
-
-				relative_ptr_type selection = _select.object_id;
-				ac.selections.push_back(selection);
-
-				temp.clear();
-				int highest_level = -1;
-				for (auto aci : ac.selections)
-				{
-					auto cls_id = get_class_id(aci.item);
-					auto selected_item_level = selected_levels.where([cls_id, phierarchy_item](auto& vri) { return vri.item.class_id == cls_id; });
-					if (selected_item_level != std::end(selected_levels))
+				auto sel_options = model.select_options.where([selected_class_id, selected_object_id, this](auto& option)
 					{
-						auto &hl = selected_item_level.get_object().item;
-						if (hl.level_id > highest_level)
+						return this->matches_class_id(selected_object_id, option.item.select_class_id);
+					}
+				);
+
+				if (sel_options != std::end(model.select_options))
+				{
+					auto& selection_rule = sel_options.get_object().item;
+
+					auto selection_classes = model.get_selection_classes(selected_class_id, _select.extend);
+
+					for (auto sel : ac.selections)
+					{
+						bool keepit = false;
+
+						if (_select.extend) 
 						{
-							if (hl.form) {
-								ac.breadcrumb.push_back(aci.item);
-								ac.current_view_object_id = aci.item;
-								ac.current_view_class_id = cls_id;
-								ac.current_subview_object_id = -1;
-								ac.current_subview_class_id = -1;
-								temp.push_back(aci.item);
-							}
-							else if (aci.item = _select.object_id)
-							{
-								ac.current_subview_object_id = aci.item;
-								ac.current_subview_class_id = cls_id;
-								temp.push_back(aci.item);
-							}
-							highest_level = selected_item_level.get_object().item.level_id;
+							keepit = true;
+						}
+						else 
+						{
+							bool is_ancestor = matches_class_id(sel.item, selection_classes);
+							bool is_clear_on_select = matches_class_id(sel.item, selection_rule.clear_on_select);
+							if (!is_clear_on_select && is_ancestor)
+								keepit = true;
+						}
+
+						if (keepit) 
+						{
+							temp.push_back(sel.item);
 						}
 					}
-				}
 
-				if (ac.current_subview_object_id > -1) 
+					temp.push_back(selected_object_id);
+
+					if (selection_rule.view_options.use_view)
+					{
+						ac.view = selection_rule.view_options;
+					}
+
+					ac.last_rule_name = selection_rule.rule_name;
+					ac.selections = temp;
+					put_actor(ac);
+
+					for (auto class_id : selection_rule.create_on_select)
+					{
+						create_object_request cor;
+						cor.actor_id = _select.actor_id;
+						cor.class_id = class_id.item;
+						cor.collection_id = get_collection_id();
+						cor.select_on_create = false;
+						cor.item_id = null_row;
+						cor.template_item_id = null_row;
+						create_object(cor);
+					}
+				}
+				else 
 				{
-					temp.push_back(ac.current_subview_object_id);
+					ac.last_rule_name = "No selection rule";
+					put_actor(ac);
 				}
 
-				ac.selections = temp;
-
-				put_actor(ac);
 				acr = get_actor_state(_select.actor_id, _select.object_id, _trace_msg);
-				acr.modified_object_level = phierarchy_item->level_id;
 				acr.modified_object_id = _select.object_id;
 			}
-			else {
+			else 
+			{
+				ac.last_rule_name = "Invalid object";
+				put_actor(ac);
 				acr = get_actor_state(_select.actor_id, _select.object_id, _trace_msg);
 			}
 			return acr;
@@ -569,21 +625,27 @@ namespace corona
 
 			selections_collection retained_selections;
 
+			auto model = schema->get_model(ref->model_name);
+
 			for (auto sel : ac.selections)
 			{
-				if (acr.view_objects.contains(sel.item)) {
+				if (acr.view_objects.contains(sel.item)) 
+				{
 					auto state = acr.view_objects[sel.item];
 					auto avo = state.get_value();
-					if (avo.deletable) {
+					if (avo.deletable) 
+					{
 						objects[sel.item].item().deleted = true;
 						objects[sel.item].item().last_modified = modified_time;
 						objects[sel.item].item().actor_id = _select.actor_id;
 					}
-					else {
+					else 
+					{
 						retained_selections.push_back(sel.item);
 					}
 				}
-				else {
+				else 
+				{
 					retained_selections.push_back(sel.item);
 				}
 			}
@@ -607,36 +669,77 @@ namespace corona
 				return acr;
 			}
 			actor_type ac = get_actor(_create.actor_id);
+
 			relative_ptr_type item_id = _create.item_id;
+			relative_ptr_type class_id = _create.class_id;
 			relative_ptr_type object_id = null_row;
 
-			jobject new_object;
-			if (_create.template_item_id != null_row) {
-				auto new_class_id = create_class_from_template(_create.class_id, _create.template_item_id);
-				new_object = create_object(item_id, _create.actor_id, _create.class_id, object_id);
+			auto model = schema->get_model(ref->model_name);
+
+			auto create_options = model.create_options.where([class_id , this](auto& option)
+				{
+					return this->matches_class_id(class_id, option.item.create_class_id);
+				}
+			);
+
+			if (create_options != std::end(model.create_options))
+			{
+				auto& create_option = create_options.get_object().item;
+
+				jobject new_object;
+				if (_create.template_item_id != null_row) {
+					auto new_class_id = create_class_from_template(_create.class_id, _create.template_item_id);
+					new_object = create_object(item_id, _create.actor_id, _create.class_id, object_id);
+				}
+				else
+				{
+					new_object = create_object(item_id, _create.actor_id, _create.class_id, object_id);
+				}
+
+				if (object_id != null_row)
+				{
+					auto model = schema->get_model(ref->model_name);
+
+					for (auto js : ac.selections)
+					{
+						jobject src_obj = get_object(js.item);
+						new_object.update(src_obj);
+					}
+
+					if (_create.select_on_create)
+					{
+						select_object_request sor;
+						sor.actor_id = _create.actor_id;
+						sor.collection_id = _create.collection_id;
+						sor.extend = false;
+						sor.object_id = object_id;
+						select_object(sor, _trace_msg);
+					}
+
+					for (auto class_id : create_option.create_on_create)
+					{
+						create_object_request cor;
+						cor.actor_id = _create.actor_id;
+						cor.class_id = class_id.item;
+						cor.collection_id = get_collection_id();
+						cor.select_on_create = false;
+						cor.item_id = -1;
+						cor.template_item_id = null_row;
+						create_object(cor);
+					}
+
+					ac.last_rule_name = create_option.rule_name;
+					put_actor(ac);
+				}
+				else {
+					ac.last_rule_name = "Invalid class";
+					put_actor(ac);
+				}
 			}
 			else 
 			{
-				new_object = create_object(item_id, _create.actor_id, _create.class_id, object_id);
-			}
-
-			if (object_id != null_row) 
-			{
-				for (auto js : ac.selections)
-				{
-					jobject src_obj = get_object(js.item);
-					new_object.update(src_obj);
-				}
-
-				if (_create.select_on_create) 
-				{
-					select_object_request sor;
-					sor.actor_id = _create.actor_id;
-					sor.collection_id = _create.collection_id;
-					sor.extend = false;
-					sor.object_id = object_id;
-					select_object(sor, _trace_msg);
-				}
+				ac.last_rule_name = "Invalid rule";
+				put_actor(ac);
 			}
 
 			acr = get_actor_state(_create.actor_id, object_id, _trace_msg);
@@ -662,8 +765,46 @@ namespace corona
 			{
 				if (objects[object_id].item().deleted)
 					return acr;
-				acr.modified_object_id = object_id;
-				update_object(object_id, _update.item);
+
+				auto model = schema->get_model(ref->model_name);
+
+				auto update_options = model.update_options.where([object_id, this](auto& option)
+					{
+						return this->matches_class_id(object_id, option.item.update_class_id);
+					}
+				);
+
+				if (update_options != std::end(model.update_options))
+				{
+					auto& update_option = update_options.get_object().item;
+
+					acr.modified_object_id = object_id;
+					update_object(object_id, _update.item);
+
+					for (auto class_id : update_option.create_on_update) 
+					{
+						create_object_request cor;
+						cor.actor_id = _update.actor_id;
+						cor.class_id = class_id.item;
+						cor.collection_id = get_collection_id();
+						cor.select_on_create = false;
+						cor.item_id = null_row;
+						cor.template_item_id = null_row;
+						create_object(cor);
+					}
+
+					ac.last_rule_name = update_option.rule_name;
+					put_actor(ac);
+				}
+				else 
+				{
+					ac.last_rule_name = "Invalid rule";
+					put_actor(ac);
+				}
+			}
+			else {
+				ac.last_rule_name = "Invalid object";
+				put_actor(ac);
 			}
 
 			acr = get_actor_state(_update.actor_id, object_id, _trace_msg);
@@ -976,6 +1117,79 @@ namespace corona
 			return false;
 		}
 
+		bool jcollection::matches_class_id(relative_ptr_type _object_id, class_list& _class_ids)
+		{
+			for (auto cli : _class_ids)
+			{
+				if (matches_class_id(_object_id, cli.item))
+					return true;
+			}
+			return false;
+		}
+
+		bool jcollection::matches_class_id(relative_ptr_type _object_id, std::vector<relative_ptr_type> _class_ids)
+		{
+			for (auto cli : _class_ids)
+			{
+				if (matches_class_id(_object_id, cli))
+					return true;
+			}
+			return false;
+		}
+
+		bool jcollection::matches_class_id(const jobject& obj, std::vector<relative_ptr_type> _class_ids)
+		{
+			for (auto cli : _class_ids)
+			{
+				if (matches_class_id(obj, cli))
+					return true;
+			}
+			return false;
+		}
+
+		bool jcollection::matches_class_id(const jobject& obj, class_list& _class_ids)
+		{
+			for (auto cli : _class_ids)
+			{
+				if (matches_class_id(obj, cli.item))
+					return true;
+			}
+			return false;
+		}
+
+		filtered_object_list jcollection::run_filter(serialized_box_container* _data, filter& _filter)
+		{
+			filtered_object_list list;
+			list = filtered_object_list::create(_data);
+
+			for (auto obji : *this)
+			{
+				bool matches = false;
+				auto object = obji.item;
+				if (matches_class_id(object, _filter.classes))
+				{
+					bool all_good = true;
+					for (auto qi : _filter.options)
+					{
+						auto obj_value = object.get(qi.target_field);
+						if (!obj_value.compare(qi.comparison, qi.src_value)) {
+							all_good = false;
+							break;
+						}
+					}
+					if (all_good) {
+						matches = true;
+					}
+				}
+				if (matches) 
+				{
+					list.push_back(obji.location);
+				}
+			}
+
+			return list;
+		}
+
 		jobject jcollection::get_at(relative_ptr_type _object_id)
 		{
 			return get_object(_object_id);
@@ -1002,6 +1216,143 @@ namespace corona
 				jobject empty;
 				return empty;
 			}
+		}
+
+		bool dynamic_value::compare(comparisons _comparison, dynamic_value& _target)
+		{
+			int64_t ithis, itarget;
+			double dthis, dtarget;
+			const char *sthis, *starget;
+			auto& rthis = *this;
+
+			switch (_comparison)
+			{
+			case comparisons::eq:
+				if (is_integer(ithis) && _target.is_integer(itarget))
+				{
+					return ithis == itarget;
+				}
+				else if (is_double(dthis) && _target.is_double(dtarget))
+				{
+					return dthis == dtarget;
+				}
+				else if (is_double(dthis) && _target.is_integer(itarget))
+				{
+					return dthis == itarget;
+				}
+				else if (is_integer(ithis) && _target.is_double(dtarget))
+				{
+					return ithis == dtarget;
+				}
+				else
+				{
+					sthis = rthis;
+					starget = _target;
+					return strcmp(sthis, starget) == 0;
+				}
+				break;
+			case comparisons::lt:
+				if (is_integer(ithis) && _target.is_integer(itarget))
+				{
+					return ithis < itarget;
+				}
+				else if (is_double(dthis) && _target.is_double(dtarget))
+				{
+					return dthis < dtarget;
+				}
+				else if (is_double(dthis) && _target.is_integer(itarget))
+				{
+					return dthis < itarget;
+				}
+				else if (is_integer(ithis) && _target.is_double(dtarget))
+				{
+					return ithis < dtarget;
+				}
+				else
+				{
+					sthis = rthis;
+					starget = _target;
+					return strcmp(sthis, starget) < 0;
+				}
+				break;
+			case comparisons::lte:
+				if (is_integer(ithis) && _target.is_integer(itarget))
+				{
+					return ithis <= itarget;
+				}
+				else if (is_double(dthis) && _target.is_double(dtarget))
+				{
+					return dthis <= dtarget;
+				}
+				else if (is_double(dthis) && _target.is_integer(itarget))
+				{
+					return dthis <= itarget;
+				}
+				else if (is_integer(ithis) && _target.is_double(dtarget))
+				{
+					return ithis <= dtarget;
+				}
+				else
+				{
+					sthis = rthis;
+					starget = _target;
+					return strcmp(sthis, starget) <= 0;
+				}
+				break;
+			case comparisons::gt:
+				if (is_integer(ithis) && _target.is_integer(itarget))
+				{
+					return ithis > itarget;
+				}
+				else if (is_double(dthis) && _target.is_double(dtarget))
+				{
+					return dthis > dtarget;
+				}
+				else if (is_double(dthis) && _target.is_integer(itarget))
+				{
+					return dthis > itarget;
+				}
+				else if (is_integer(ithis) && _target.is_double(dtarget))
+				{
+					return ithis > dtarget;
+				}
+				else
+				{
+					sthis = rthis;
+					starget = _target;
+					return strcmp(sthis, starget) > 0;
+				}
+				break;
+			case comparisons::gte:
+				if (is_integer(ithis) && _target.is_integer(itarget))
+				{
+					return ithis >= itarget;
+				}
+				else if (is_double(dthis) && _target.is_double(dtarget))
+				{
+					return dthis >= dtarget;
+				}
+				else if (is_double(dthis) && _target.is_integer(itarget))
+				{
+					return dthis >= itarget;
+				}
+				else if (is_integer(ithis) && _target.is_double(dtarget))
+				{
+					return ithis >= dtarget;
+				}
+				else
+				{
+					sthis = rthis;
+					starget = _target;
+					return strcmp(sthis, starget) >= 0;
+				}
+				break;
+			case comparisons::cont:
+				sthis = rthis;
+				starget = _target;
+				return strstr(sthis, starget) != nullptr;
+			}
+			return false;
 		}
 
 		void dynamic_value::copy(const dynamic_value& _src)
@@ -2834,13 +3185,13 @@ namespace corona
 			}
 		}
 
-		std::partial_ordering jobject::compare(jobject& _src_slice, relative_ptr_type* field_ids)
+		std::partial_ordering jobject::compare(jobject& _src_slice, const std::vector<relative_ptr_type>& _join_fields)
 		{
 			relative_ptr_type fid;
-			while (*field_ids != null_row)
+			for (auto iter : _join_fields)
 			{
-				auto fld_idx_source = _src_slice.get_field_index_by_id(*field_ids);
-				auto fld_idx_dest = get_field_index_by_id(*field_ids);
+				auto fld_idx_source = _src_slice.get_field_index_by_id(iter);
+				auto fld_idx_dest = get_field_index_by_id(iter);
 
 				if (fld_idx_source == null_row) 
 				{
@@ -2862,8 +3213,6 @@ namespace corona
 				if (x != std::strong_ordering::equal) {
 					return x;
 				}
-
-				field_ids++;
 			}
 			return std::strong_ordering::equal;
 		}
@@ -4329,7 +4678,7 @@ namespace corona
 
 				mcr = jm.create_options.append();
 				mcr->rule_name = "add coverage spacer";
-				mcr->selectors.when(coverage_class_id);
+				mcr->selectors.when( { coverage_class_id });
 				mcr->create_class_id = coverage_spacer_id;
 				mcr->select_on_create = false;
 				mcr->replace_selected = false;
@@ -4337,7 +4686,7 @@ namespace corona
 
 				mcr = jm.create_options.append();
 				mcr->rule_name = "add policy";
-				mcr->selectors.when(coverage_class_id, carrier_class_id);
+				mcr->selectors.when({ coverage_class_id, carrier_class_id });
 				mcr->create_class_id = policy_class_id;
 				mcr->select_on_create = true;
 				mcr->replace_selected = false;
@@ -4345,7 +4694,7 @@ namespace corona
 
 				mcr = jm.create_options.append();
 				mcr->rule_name = "add deductible";
-				mcr->selectors.when(coverage_class_id);
+				mcr->selectors.when({ coverage_class_id });
 				mcr->create_class_id = policy_deductible_class_id;
 				mcr->select_on_create = true;
 				mcr->replace_selected = false;
@@ -4353,7 +4702,7 @@ namespace corona
 
 				mcr = jm.create_options.append();
 				mcr->rule_name = "add umbrella";
-				mcr->selectors.when(policy_class_id);
+				mcr->selectors.when({ policy_class_id });
 				mcr->create_class_id = policy_umbrella_class_id;
 				mcr->select_on_create = true;
 				mcr->replace_selected = true;

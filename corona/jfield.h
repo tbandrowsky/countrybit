@@ -18,6 +18,34 @@ namespace corona
 		const int default_collection_object_size = 512;
 		const int max_selection_depth = 32;
 
+		using class_list = iarray<relative_ptr_type, 16>;
+		using field_list = iarray<relative_ptr_type, 16>;
+
+		enum class comparisons
+		{
+			none = 0,
+			gt = 1,
+			gte = 2,
+			eq = 3,
+			lte = 4,
+			lt = 5,
+			cont = 6
+		};
+
+		struct comparison_field
+		{
+			relative_ptr_type field_id_source;
+			relative_ptr_type field_id_target;
+			comparisons		  comparison;
+
+			comparison_field() : comparison(comparisons::none), field_id_source(null_row), field_id_target(null_row)
+			{
+				;
+			}
+		};
+
+		using comparison_list = iarray<comparison_field, 20>;
+
 		struct string_properties_type
 		{
 			int32_t						length;
@@ -840,23 +868,14 @@ namespace corona
 				rules.clear();
 			}
 
-			void when(relative_ptr_type _class_id0)
+			void when(const std::vector<relative_ptr_type>& when_event)
 			{
-				auto *sr = rules.append();
-				sr->class_id = _class_id0;
-			}
-
-			void when(relative_ptr_type _class_id0, relative_ptr_type _class_id1)
-			{
-				when(_class_id0);
-				when(_class_id1);
-			}
-
-			void when(relative_ptr_type _class_id0, relative_ptr_type _class_id1, relative_ptr_type _class_id2)
-			{
-				when(_class_id0);
-				when(_class_id1);
-				when(_class_id2);
+				rules.clear();
+				for (auto evt : when_event)
+				{
+					auto* sr = rules.append();
+					sr->class_id = evt;
+				}
 			}
 		};
 
@@ -871,6 +890,8 @@ namespace corona
 			relative_ptr_type				item_id_class;
 			bool							select_on_create;
 			bool							replace_selected;
+			int								max_creatable_count;
+			class_list						create_on_create;
 
 			model_creatable_class()
 			{
@@ -881,6 +902,27 @@ namespace corona
 			}
 		};
 
+		using query_id_type = object_name;
+
+		class view_query
+		{
+		public:
+			object_name		  query_name;
+			class_list		  classes;
+			comparison_list   parameters;
+		};
+
+		using view_query_list = iarray<view_query, 8>;
+
+		class view_options
+		{
+		public:
+			bool use_view;
+			relative_ptr_type				view_class_id;
+			view_query_list					view_queries;
+			view_options() :				use_view(false) { ; }
+		};
+
 		class model_selectable_class
 		{
 		public:	
@@ -888,6 +930,9 @@ namespace corona
 			object_name						select_class_name;
 			relative_ptr_type				select_class_id;
 			selector_collection				selectors;
+			class_list						clear_on_select;
+			class_list						create_on_select;
+			view_options					view_options;
 
 			model_selectable_class()
 			{
@@ -902,6 +947,7 @@ namespace corona
 			object_name						update_class_name;
 			relative_ptr_type				update_class_id;
 			selector_collection				selectors;
+			class_list						create_on_update;
 
 			model_updatable_class()
 			{
@@ -917,6 +963,7 @@ namespace corona
 			object_name						delete_class_name;
 			relative_ptr_type				delete_class_id;
 			selector_collection				selectors;
+			class_list						create_on_delete;
 
 			model_deletable_class()
 			{
@@ -924,47 +971,49 @@ namespace corona
 			}
 		};
 
-		struct model_hierarchy_path
-		{
-			relative_ptr_type	class_id;
-			int					level_id;
-			bool				form;
-		};
+		class actor_type;
 
 		using model_create_class_collection = iarray<model_creatable_class, max_creatable_options>;
 		using model_select_class_collection = iarray<model_selectable_class, max_selectable_options>;
 		using model_update_class_collection = iarray<model_updatable_class, max_updatable_options>;
 		using model_delete_class_collection = iarray<model_deletable_class, max_deletable_options>;
-		using model_selection_hierarchy = iarray<model_hierarchy_path, max_selection_depth>;	
 
 		class model_type
 		{
+			void add_path(std::map<relative_ptr_type, int>& _target, relative_ptr_type _leaf);
+
 		public:
 			object_name					  name;
 			model_create_class_collection create_options;
 			model_select_class_collection select_options;
 			model_update_class_collection update_options;
 			model_delete_class_collection delete_options;
-			model_selection_hierarchy	  selection_hierarchy;
 
-			void create_when(jschema* _schema, relative_ptr_type _selected_class_id1, relative_ptr_type _selected_class_id2, relative_ptr_type _create_class_id, relative_ptr_type _from_item_class_id, bool _select_created, bool _replace_selected);
-			void create_when(jschema *_schema, relative_ptr_type _selected_class_id1, relative_ptr_type _create_class_id, relative_ptr_type _from_item_class_id, bool _select_created,  bool _replace_selected );
-			void create_always(jschema* _schema, relative_ptr_type _create_class_id, relative_ptr_type _from_item_class_id, bool _select_created, bool _replace_selected);
+			void create_when(jschema* _schema, std::vector<relative_ptr_type> when_selected, 
+				relative_ptr_type _create_class_id, 
+				relative_ptr_type _from_item_class_id, 
+				bool _select_created, 
+				bool _replace_selected, 
+				int _max_creatable_count, 
+				std::vector<relative_ptr_type> on_created);
 
-			void select_when(jschema* _schema, relative_ptr_type _selected_class_id1, relative_ptr_type _selected_class_id2, relative_ptr_type _select_class_id);
-			void select_when(jschema* _schema, relative_ptr_type _selected_class_id1, relative_ptr_type _select_class_id);
-			void select_always(jschema* _schema, relative_ptr_type _select_class_id);
+			void select_when(jschema* _schema, std::vector<relative_ptr_type> when_selected, 
+				relative_ptr_type _select_class_id, 
+				std::vector<relative_ptr_type> on_selected_clear,
+				std::vector<relative_ptr_type> on_created,
+				view_options _view_options);
 
-			void update_when(jschema* _schema, relative_ptr_type _selected_class_id1, relative_ptr_type _selected_class_id2, relative_ptr_type _update_class_id);
-			void update_when(jschema* _schema, relative_ptr_type _selected_class_id1, relative_ptr_type _update_class_id);
-			void update_always(jschema* _schema, relative_ptr_type _update_class_id);
+			void update_when(jschema* _schema, 
+				std::vector<relative_ptr_type> when_selected, 
+				relative_ptr_type _update_class_id,
+				std::vector<relative_ptr_type> on_created);
 
-			void delete_when(jschema* _schema, relative_ptr_type _selected_class_id1, relative_ptr_type _selected_class_id2, relative_ptr_type _update_class_id);
-			void delete_when(jschema* _schema, relative_ptr_type _selected_class_id1, relative_ptr_type _update_class_id);
-			void delete_always(jschema* _schema, relative_ptr_type _update_class_id);
+			void delete_when(jschema* _schema, 
+				std::vector<relative_ptr_type> when_selected, 
+				relative_ptr_type _delete_class_id,
+				std::vector<relative_ptr_type> on_created);
 
-			void navigation(std::vector<model_hierarchy_path> items);
-			void navigation(std::initializer_list<model_hierarchy_path> member_ids);
+			std::vector<relative_ptr_type> get_selection_classes(relative_ptr_type _leaf, bool _include_leaf);
 		};
 
 		using jmodel = model_type;

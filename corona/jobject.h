@@ -157,6 +157,28 @@ namespace corona
 				;
 			}
 
+			bool is_integer(int64_t &v)
+			{
+				if ((this_type == jtype::type_int8 || this_type == jtype::type_int16 || this_type == jtype::type_int32 || this_type == jtype::type_int64))
+				{
+					v = int_value;
+					return true;
+				}
+				return false;
+			}
+
+			bool is_double(double& _d)
+			{
+				if ((this_type == jtype::type_float32 || this_type == jtype::type_float64))
+				{
+					_d = double_value;
+					return true;
+				}
+				return false;
+			}
+
+			bool compare(comparisons _comparion, dynamic_value& _target);
+
 			template <explicit_floating_point t> operator t()
 			{
 				double r;
@@ -323,57 +345,57 @@ namespace corona
 					string_value = std::format("{}", double_value);
 					break;
 				case jtype::type_collection_id:
-					throw std::logic_error("can't convert to string");
+					string_value = "collection_id";
 					break;
 				case jtype::type_color:
-					string_value = "test";
+					string_value = "color";
 					break;
 				case jtype::type_datetime:
-					throw std::logic_error("can't convert to string");
+					string_value = "datetime";
 					break;
 				case jtype::type_file:
-					throw std::logic_error("can't convert to string");
+					string_value = "file";
 					break;
 				case jtype::type_http:
-					throw std::logic_error("can't convert to string");
+					string_value = "http";
 					break;
 				case jtype::type_image:
-					throw std::logic_error("can't convert to string");
+					string_value = "image";
 					break;
 				case jtype::type_layout_rect:
-					throw std::logic_error("can't convert to string");
+					string_value = "layout_rect";
 					break;
 				case jtype::type_list:
-					throw std::logic_error("can't convert to string");
+					string_value = "list";
 					break;
 				case jtype::type_midi:
-					throw std::logic_error("can't convert to string");
+					string_value = "midi";
 					break;
 				case jtype::type_null:
-					throw std::logic_error("can't convert to string");
+					string_value = "(null type)";
 					break;
 				case jtype::type_object:
-					throw std::logic_error("can't convert to string");
+					string_value = "object";
 					break;
 				case jtype::type_object_id:
-					throw std::logic_error("can't convert to string");
+					string_value = "object_id";
 					break;
 				case jtype::type_point:
-					throw std::logic_error("can't convert to string");
+					string_value = "point";
 					break;
 				case jtype::type_query:
-					throw std::logic_error("can't convert to string");
+					string_value = "query";
 					break;
 				case jtype::type_rectangle:
-					throw std::logic_error("can't convert to string");
+					string_value = "rectangle";
 					break;
 				case jtype::type_sql:
-					throw std::logic_error("can't convert to string");
+					string_value = "sql";
 					break;
 				case jtype::type_string:
 					break;
 				case jtype::type_wave:
-					throw std::logic_error("can't convert to string");
+					string_value = "wave";
 					break;
 				}
 				return string_value.c_str();
@@ -385,6 +407,21 @@ namespace corona
 			operator rectangle();
 			operator layout_rect();
 
+		};
+
+		class filter_term
+		{
+		public:
+			dynamic_value	  src_value;
+			relative_ptr_type target_field;
+			comparisons		  comparison;
+		};
+
+		class filter
+		{
+		public:
+			class_list classes;
+			std::vector<filter_term> options;
 		};
 
 		class jobject
@@ -569,7 +606,7 @@ namespace corona
 
 			std::partial_ordering compare(int _dst_idx, jobject& _src_slice, int _src_idx);
 			std::partial_ordering compare(jobject& _src_slice);
-			std::partial_ordering compare(jobject& _src_slice, relative_ptr_type *field_ids);
+			std::partial_ordering compare(jobject& _src_slice, const std::vector<relative_ptr_type>& join_fields);
 
 			jobject convert(serialized_box_container* _box, relative_ptr_type _class_id);
 
@@ -703,12 +740,10 @@ namespace corona
 			object_name				actor_name;
 			selections_collection	selections;
 			selections_collection	breadcrumb;
-			relative_ptr_type		current_view_object_id;
-			relative_ptr_type		current_view_class_id;
-			relative_ptr_type		current_subview_class_id;
-			relative_ptr_type		current_subview_object_id;
+			view_options			view;
+			object_name				last_rule_name;
 
-			actor_type() : actor_id(null_row), current_view_object_id(null_row), current_view_class_id(null_row)
+			actor_type() : actor_id(null_row)
 			{
 				;
 			}
@@ -752,7 +787,6 @@ namespace corona
 			bool				selected;
 			bool				deletable;
 			jobject				object;
-			int					navigation_order;
 		};
 
 		class select_object_request
@@ -780,8 +814,10 @@ namespace corona
 			jobject				item;
 		};
 
+		using filtered_object_list = list_box<relative_ptr_type>;
 		using actor_view_collection = sorted_index<relative_ptr_type, actor_view_object>;
 		using actor_create_collection = sorted_index<relative_ptr_type, create_object_request>;
+		using filtered_objects_collection = sorted_index<object_name, relative_ptr_type>;
 		
 		class actor_object_option
 		{
@@ -790,57 +826,12 @@ namespace corona
 			jobject				slice;
 		};
 
-		class actor_query_base 
-		{
-		public:
-			slice_enumerable *objects;
-			actor_view_collection& view;
-
-			using collection_type = actor_query_base;
-			using iterator_item_type = value_object<actor_object_option>;
-			using iterator_type = filterable_iterator<actor_object_option, collection_type, iterator_item_type>;
-
-			actor_query_base(actor_view_collection& _view, slice_enumerable* _objects):
-				view(_view),
-				objects(_objects)
-			{
-				;
-			}
-
-			corona_size_t size()
-			{
-				return objects->size();
-			}
-
-			actor_object_option get_at(relative_ptr_type _id)
-			{
-				actor_object_option aoo;
-				aoo.slice = objects->get_at(_id);
-				aoo.avo = view.get(_id).second;
-				return aoo;
-			}
-
-			iterator_type begin()
-			{
-				return iterator_type(this, first_row);
-			}
-
-			iterator_type end()
-			{
-				return iterator_type(this, null_row);
-			}
-
-			auto where(std::function<bool(const iterator_item_type&)> _predicate)
-			{
-				return iterator_type(this, _predicate);
-			}
-		};
-
 		class actor_state
 		{
 			dynamic_box									data;
 			relative_ptr_type							create_objects_location;
 			relative_ptr_type							view_objects_location;
+			relative_ptr_type							filter_results_location;
 			jschema* schema;
 
 		public:
@@ -849,9 +840,9 @@ namespace corona
 			relative_ptr_type							actor_id;
 			actor_create_collection						create_objects;
 			actor_view_collection						view_objects;
+			filtered_objects_collection					filter_results;
 			jactor										actor;
 
-			int											modified_object_level;
 			relative_ptr_type							modified_object_id;
 			jobject										modified_object;
 
@@ -860,6 +851,7 @@ namespace corona
 				data.init(100000);
 				create_objects = actor_create_collection::create_sorted_index(&data, create_objects_location);
 				view_objects = actor_view_collection::create_sorted_index(&data, view_objects_location);
+				filter_results = filtered_objects_collection::create_sorted_index(&data, filter_results_location);
 				modified_object_id = null_row;
 				check_objects("empty ctor");
 			}
@@ -872,8 +864,10 @@ namespace corona
 				create_objects_location = _src.create_objects_location;
 				view_objects_location = _src.view_objects_location;
 				modified_object_id = _src.modified_object_id;
+				filter_results_location = _src.filter_results_location;
 				create_objects = actor_create_collection::get_sorted_index(&data, create_objects_location );
 				view_objects = actor_view_collection::get_sorted_index(&data, view_objects_location );
+				filter_results = filtered_objects_collection::get_sorted_index(&data, filter_results_location);
 				for (auto avo : view_objects) {
 					avo.second.object.set_box_dangerous_hack(&data);
 				}
@@ -889,8 +883,10 @@ namespace corona
 				create_objects_location = _src.create_objects_location;
 				view_objects_location = _src.view_objects_location;
 				modified_object_id = _src.modified_object_id;
+				filter_results_location = _src.filter_results_location;
 				create_objects = actor_create_collection::get_sorted_index(&data, create_objects_location);
 				view_objects = actor_view_collection::get_sorted_index(&data, view_objects_location);
+				filter_results = filtered_objects_collection::get_sorted_index(&data, filter_results_location);
 				for (auto avo : view_objects) {
 					avo.second.object.set_box_dangerous_hack(&data);
 				}
@@ -907,8 +903,10 @@ namespace corona
 				create_objects_location = _src.create_objects_location;
 				view_objects_location = _src.view_objects_location;
 				modified_object_id = _src.modified_object_id;
+				filter_results_location = _src.filter_results_location;
 				create_objects = actor_create_collection::get_sorted_index(&data, create_objects_location);
 				view_objects = actor_view_collection::get_sorted_index(&data, view_objects_location);
+				filter_results = filtered_objects_collection::get_sorted_index(&data, filter_results_location);
 				for (auto avo : view_objects) {
 					avo.second.object.set_box_dangerous_hack(&data);
 				}
@@ -925,8 +923,10 @@ namespace corona
 				create_objects_location = _src.create_objects_location;
 				view_objects_location = _src.view_objects_location;
 				modified_object_id = _src.modified_object_id;
+				filter_results_location = _src.filter_results_location;
 				create_objects = actor_create_collection::get_sorted_index(&data, create_objects_location);
 				view_objects = actor_view_collection::get_sorted_index(&data, view_objects_location);
+				filter_results = filtered_objects_collection::get_sorted_index(&data, filter_results_location);
 				for (auto avo : view_objects) {
 					avo.second.object.set_box_dangerous_hack(&data);
 				}
@@ -934,16 +934,14 @@ namespace corona
 				check_objects("copy ctor");
 			}
 
+			serialized_box_container* get_data() 
+			{
+				return &data;
+			}
+
 			jobject create_object(jschema* _schema, relative_ptr_type _class_id);
 			jobject copy_object(jschema* _schema, jobject& _src);
 			actor_view_object get_modified_object();
-
-			actor_query_base query(slice_enumerable *collection)
-			{
-				check_objects("query");
-				actor_query_base new_base(view_objects, collection);
-				return new_base;
-			}
 
 			create_object_request create_create_request(relative_ptr_type _class_id)
 			{
@@ -1002,6 +1000,21 @@ namespace corona
 					}
 				}
 #endif
+			}
+
+			std::vector<actor_view_object> get_list(const object_name& _name)
+			{
+				std::vector<actor_view_object> ret_value;
+				if (filter_results.contains(_name))
+				{
+					auto fr_loc = filter_results[_name];
+					auto list = filtered_object_list::get(&data, fr_loc.second);
+					for (auto item : list) {
+						auto avo = view_objects[item];
+						ret_value.push_back(avo.second);
+					}
+				}
+				return ret_value;
 			}
 
 		};
@@ -1119,6 +1132,12 @@ namespace corona
 			relative_ptr_type get_base_id(relative_ptr_type _object_id);
 			bool matches_class_id(relative_ptr_type _object_id, relative_ptr_type _class_id);
 			bool matches_class_id(const jobject& obj, relative_ptr_type _class_id);
+			bool matches_class_id(relative_ptr_type _object_id, std::vector<relative_ptr_type> _class_ids);
+			bool matches_class_id(relative_ptr_type _object_id, class_list& _class_ids);
+			bool matches_class_id(const jobject& obj, std::vector<relative_ptr_type> _class_ids);
+			bool matches_class_id(const jobject& obj, class_list& _class_ids);
+
+			filtered_object_list run_filter(serialized_box_container* _data, filter& _stuff);
 
 			relative_ptr_type size()
 			{
