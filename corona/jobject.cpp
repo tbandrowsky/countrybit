@@ -287,6 +287,11 @@ namespace corona
 					filter fil;
 					auto& vq = vqi.item;
 					fil.classes = vq.classes;
+					relative_ptr_type join_field_id;
+					object_name		  join_class_name;
+
+					field_list		  flat_field_ids;
+
 					for (auto comp : vq.parameters)
 					{
 						auto comp_field = comp.item;
@@ -1166,6 +1171,7 @@ namespace corona
 			{
 				bool matches = false;
 				auto object = obji.item;
+
 				if (matches_class_id(object, _filter.classes))
 				{
 					bool all_good = true;
@@ -1181,6 +1187,7 @@ namespace corona
 						matches = true;
 					}
 				}
+
 				if (matches) 
 				{
 					list.push_back(obji.location);
@@ -1796,6 +1803,17 @@ namespace corona
 			int pkid = cls.pitem()->primary_key_idx;
 			if (pkid > -1) {
 				pkfield = cls.detail(pkid).field_id;
+			}
+			return pkfield;
+		}
+
+		relative_ptr_type jobject::get_primary_key_value()
+		{
+			relative_ptr_type pkfield = null_row;
+			auto cls = get_class();
+			int pkid = cls.pitem()->primary_key_idx;
+			if (pkid > -1) {
+				pkfield = get_int64(pkid, false);
 			}
 			return pkfield;
 		}

@@ -103,6 +103,7 @@ namespace corona
 			page pg;
 			actor_state state;
 			actor_id_type actor_id;
+			analytics analytic;
 
 			int canvasWindowsId;
 
@@ -118,7 +119,7 @@ namespace corona
 				previewMode(false),
 				magnification(100)
 			{
-				;
+				analytic = analytics(&state, &user_collection);
 			}
 
 			virtual ~corona_controller();

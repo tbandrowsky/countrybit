@@ -72,6 +72,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)wave_box.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="$(MSBuildThisFileDirectory)analytics.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)application.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>

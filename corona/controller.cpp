@@ -454,7 +454,6 @@ namespace corona
 			clear();
 			render(newSize);
 			jobject style_sheet = getStyleSheet();
-//			arrange(newSize.w, newSize.h, style_sheet, 32);
 		}
 
 		bool corona_controller::drawItem(int _id)

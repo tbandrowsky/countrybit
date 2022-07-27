@@ -498,6 +498,7 @@ namespace corona
 			jclass_field& get_class_field(int field_idx);
 			jfield& get_field(int field_idx);
 			relative_ptr_type get_primary_key();
+			relative_ptr_type get_primary_key_value();
 			const char* get_name(relative_ptr_type field_id);
 
 			bool has_field(const object_name& name);
@@ -818,7 +819,36 @@ namespace corona
 		using actor_view_collection = sorted_index<relative_ptr_type, actor_view_object>;
 		using actor_create_collection = sorted_index<relative_ptr_type, create_object_request>;
 		using filtered_objects_collection = sorted_index<object_name, relative_ptr_type>;
-		
+
+		class actor_state;
+
+		class analytics_kit
+		{
+
+			actor_state* state;
+			jcollection* collection;
+
+		public:
+
+			analytics_kit() : state(nullptr), collection(nullptr)
+			{
+				;
+			}
+
+			analytics_kit(actor_state* _state, jcollection* _collection) : state(_state), collection(_collection)
+			{
+				;
+			}
+
+			relative_ptr_type selected_class(filtered_object_list& list);
+			double min_field(filtered_object_list& list, relative_ptr_type field_id);
+			double max_field(filtered_object_list& list, relative_ptr_type field_id);
+			double sum_field(filtered_object_list& list, relative_ptr_type field_id);
+			double avg_field(filtered_object_list& list, relative_ptr_type field_id);
+			double count_class(filtered_object_list& list, relative_ptr_type class_id);
+			double count_distinct(filtered_object_list& list, relative_ptr_type field_id);
+		};
+
 		class actor_object_option
 		{
 		public:

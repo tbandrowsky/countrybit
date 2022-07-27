@@ -50,6 +50,8 @@ namespace proposal
 
 		corona::database::relative_ptr_type idf_prompt;
 
+		corona::database::relative_ptr_type idc_product_header;
+		corona::database::relative_ptr_type idf_product_header;
 		corona::database::relative_ptr_type idc_product_program_header;
 		corona::database::relative_ptr_type idf_product_program_header;
 		corona::database::relative_ptr_type idc_product_phi_base;

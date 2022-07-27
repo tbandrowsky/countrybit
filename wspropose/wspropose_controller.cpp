@@ -75,8 +75,9 @@ namespace proposal
 		idf_product_updated_date = schema.put_string_field({ {  jtype::type_string, "product_updated_date", "Updated Date", true }, { 100, "", "" } });
 		idf_product_view = schema.put_integer_field({ {  jtype::type_int64, "product_id", "Product Id", false }, { 0, INT64_MAX } });
 
-		idf_product_program_header = schema.put_integer_field({ {  jtype::type_int64, "product_header_id", "Product Header", false }, { 0, INT64_MAX } });
-		idf_product_program_structure = schema.put_integer_field({ {  jtype::type_int64, "product_structure_id", "Product Structure", false }, { 0, INT64_MAX } });
+		idf_product_header = schema.put_integer_field({ {  jtype::type_int64, "product_header_id", "Product Header", false }, { 0, INT64_MAX } });
+		idf_product_program_header = schema.put_integer_field({ {  jtype::type_int64, "program_header_id", "Program Header", false }, { 0, INT64_MAX } });
+		idf_product_program_structure = schema.put_integer_field({ {  jtype::type_int64, "program_structure_id", "Program Structure", false }, { 0, INT64_MAX } });
 		idf_product_coverage_header = schema.put_integer_field({ {  jtype::type_int64, "coverage_header_id", "Coverage Header", false }, { 0, INT64_MAX } });
 		idf_product_coverage_structure = schema.put_integer_field({ {  jtype::type_int64, "coverage_structure_id", "Coverage Structure", false }, { 0, INT64_MAX } });
 	
@@ -181,8 +182,13 @@ field id idf_carrier, which is populated when objects of this class are construc
 		pcr.class_description = "Product";
 		pcr.field_id_primary_key = idf_product;
 		pcr.member_fields = { idf_product_root,
-							  idf_product,
-							  schema.idf_name,
+							  idf_product };
+		idc_product = schema.put_class(pcr);
+
+		pcr.class_name = "product_header";
+		pcr.class_description = "Product Header";
+		pcr.field_id_primary_key = idf_product_header;
+		pcr.member_fields = { idf_product_header, idf_product, schema.idf_name,
 							  idf_product_code,
 							  idf_product_status,
 							  idf_product_edition,
@@ -192,7 +198,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 							  idf_product_view,
 							  idf_product_updated_by,
 							  idf_product_updated_date };
-		idc_product = schema.put_class(pcr);
+		idc_product_header = schema.put_class(pcr);
 
 		pcr.class_name = "product_program_header";
 		pcr.class_description = "Program Header";
@@ -272,6 +278,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 		jm.update_when(&schema, {}, idc_carrier, {});
 		jm.update_when(&schema, {}, idc_product_root, {});
 		jm.update_when(&schema, {}, idc_product, {});
+		jm.update_when(&schema, {}, idc_product_header, {});
 		jm.update_when(&schema, {}, idc_product_program_header, {});
 		jm.update_when(&schema, {}, idc_product_program_structure, {});
 		jm.update_when(&schema, {}, idc_product_coverage_header, {});
@@ -286,26 +293,29 @@ field id idf_carrier, which is populated when objects of this class are construc
 		jm.update_when(&schema, {}, idc_client, {});
 		jm.update_when(&schema, {}, idc_system_root, {});
 
-		view_query vq;
 		view_query vq_navigation;
-		vq.classes = { idc_home, idc_carrier_root, idc_product_root, idc_coverage_root, idc_client_root, idc_system_root };
-		vq.query_name = "navigation";
+		vq_navigation.classes = { idc_home, idc_carrier_root, idc_product_root, idc_coverage_root, idc_client_root, idc_system_root };
+		vq_navigation.query_name = "navigation";
 
 		view_query vq_carriers;
-		vq.classes = { idc_carrier };
-		vq.query_name = "carriers";
+		vq_carriers.classes = { idc_carrier };
+		vq_carriers.query_name = "carriers";
 
 		view_query vq_products;
-		vq.classes = { idc_product };
-		vq.query_name = "products";
+		vq_products.classes = { idc_product };
+		vq_products.query_name = "products";
 
 		view_query vq_clients;
-		vq.classes = { idc_client };
-		vq.query_name = "clients";
+		vq_clients.classes = { idc_client };
+		vq_clients.query_name = "clients";
 
 		view_query vq_coverages;
-		vq.classes = { idc_coverage };
-		vq.query_name = "coverages";
+		vq_coverages.classes = { idc_coverage };
+		vq_coverages.query_name = "coverages";
+
+		view_query vq_product_header;
+		vq_coverages.classes = { idc_coverage };
+		vq_coverages.query_name = "coverages";
 
 		view_options vo_home;
 		vo_home.use_view = true;
@@ -337,6 +347,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 		vo_product.view_queries.push_back(vq_navigation);
 		jm.select_when(&schema, { idc_product_root }, idc_product, {}, {}, {});
 
+		jm.select_when(&schema, { idc_product }, idc_product_header, {}, {}, {});
 		jm.select_when(&schema, { idc_product }, idc_product_program_header, {}, {}, {});
 		jm.select_when(&schema, { idc_product }, idc_product_program_structure, {}, {}, {});
 		jm.select_when(&schema, { idc_product }, idc_product_coverage_header, {}, {}, {});
@@ -488,9 +499,6 @@ field id idf_carrier, which is populated when objects of this class are construc
 
 	void wsproposal_controller::render_form(page_item* _navigation, page_item *_frame, const char *_form_title)
 	{
-		const char* object_title = nullptr;
-		object_title = schema.get_class(state.actor.current_view_class_id).item().description;
-
 		_frame->windowsRegion = true;
 		add_update_fields(_frame, field_layout::label_on_left, _form_title);
 		space(_navigation, schema.idf_button_style, { 0.0_px, 0.0_px, 100.0_pct, 32.0_px });
