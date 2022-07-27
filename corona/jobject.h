@@ -424,6 +424,20 @@ namespace corona
 			std::vector<filter_term> options;
 		};
 
+		class select_spec
+		{
+		public:
+			field_list		  fields;
+		};
+
+		class join_spec
+		{
+		public:
+			relative_ptr_type class_id_source;
+			relative_ptr_type field_id_common;
+			relative_ptr_type class_id_target;
+		};
+
 		class jobject
 		{
 			jobject* parent;
@@ -815,39 +829,14 @@ namespace corona
 			jobject				item;
 		};
 
-		using filtered_object_list = list_box<relative_ptr_type>;
+		using filtered_object_id_list = list_box<relative_ptr_type>;
+		using filtered_object_list = list_box<jobject>;
+		using filtered_actor_view_object_list = list_box<actor_view_object>;
 		using actor_view_collection = sorted_index<relative_ptr_type, actor_view_object>;
 		using actor_create_collection = sorted_index<relative_ptr_type, create_object_request>;
 		using filtered_objects_collection = sorted_index<object_name, relative_ptr_type>;
 
 		class actor_state;
-
-		class analytics_kit
-		{
-
-			actor_state* state;
-			jcollection* collection;
-
-		public:
-
-			analytics_kit() : state(nullptr), collection(nullptr)
-			{
-				;
-			}
-
-			analytics_kit(actor_state* _state, jcollection* _collection) : state(_state), collection(_collection)
-			{
-				;
-			}
-
-			relative_ptr_type selected_class(filtered_object_list& list);
-			double min_field(filtered_object_list& list, relative_ptr_type field_id);
-			double max_field(filtered_object_list& list, relative_ptr_type field_id);
-			double sum_field(filtered_object_list& list, relative_ptr_type field_id);
-			double avg_field(filtered_object_list& list, relative_ptr_type field_id);
-			double count_class(filtered_object_list& list, relative_ptr_type class_id);
-			double count_distinct(filtered_object_list& list, relative_ptr_type field_id);
-		};
 
 		class actor_object_option
 		{
@@ -1032,16 +1021,33 @@ namespace corona
 #endif
 			}
 
-			std::vector<actor_view_object> get_list(const object_name& _name)
+			filtered_actor_view_object_list get_actor_view_object_list(const object_name& _name)
 			{
-				std::vector<actor_view_object> ret_value;
+				filtered_actor_view_object_list ret_value;
+				ret_value = filtered_actor_view_object_list::create(&data);
 				if (filter_results.contains(_name))
 				{
 					auto fr_loc = filter_results[_name];
-					auto list = filtered_object_list::get(&data, fr_loc.second);
+					auto list = filtered_object_id_list::get(&data, fr_loc.second);
 					for (auto item : list) {
 						auto avo = view_objects[item];
 						ret_value.push_back(avo.second);
+					}
+				}
+				return ret_value;
+			}
+
+			filtered_object_list get_object_list(const object_name& _name)
+			{
+				filtered_object_list ret_value;
+				ret_value = filtered_object_list::create(&data);
+				if (filter_results.contains(_name))
+				{
+					auto fr_loc = filter_results[_name];
+					auto list = filtered_object_id_list::get(&data, fr_loc.second);
+					for (auto item : list) {
+						auto avo = view_objects[item];
+						ret_value.push_back(avo.second.object);
 					}
 				}
 				return ret_value;
@@ -1167,7 +1173,7 @@ namespace corona
 			bool matches_class_id(const jobject& obj, std::vector<relative_ptr_type> _class_ids);
 			bool matches_class_id(const jobject& obj, class_list& _class_ids);
 
-			filtered_object_list run_filter(serialized_box_container* _data, filter& _stuff);
+			filtered_object_id_list run_filter(serialized_box_container* _data, filter& _stuff);
 
 			relative_ptr_type size()
 			{

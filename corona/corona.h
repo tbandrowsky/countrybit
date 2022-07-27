@@ -106,6 +106,7 @@
 #include "extractor.h"
 #include "jobject.h"
 #include "jquery.h"
+#include "analytics.h"
 #include "presentation.h"
 #include "jdatabase.h"
 #include "jdatabase_client.h"

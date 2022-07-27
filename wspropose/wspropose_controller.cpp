@@ -293,29 +293,23 @@ field id idf_carrier, which is populated when objects of this class are construc
 		jm.update_when(&schema, {}, idc_client, {});
 		jm.update_when(&schema, {}, idc_system_root, {});
 
-		view_query vq_navigation;
 		vq_navigation.classes = { idc_home, idc_carrier_root, idc_product_root, idc_coverage_root, idc_client_root, idc_system_root };
 		vq_navigation.query_name = "navigation";
 
-		view_query vq_carriers;
 		vq_carriers.classes = { idc_carrier };
 		vq_carriers.query_name = "carriers";
 
-		view_query vq_products;
 		vq_products.classes = { idc_product };
 		vq_products.query_name = "products";
 
-		view_query vq_clients;
 		vq_clients.classes = { idc_client };
 		vq_clients.query_name = "clients";
 
-		view_query vq_coverages;
 		vq_coverages.classes = { idc_coverage };
 		vq_coverages.query_name = "coverages";
 
-		view_query vq_product_header;
-		vq_coverages.classes = { idc_coverage };
-		vq_coverages.query_name = "coverages";
+		vq_coverages.classes = { idc_product_header, idc_product_program_header, idc_product_program_structure, idc_product_coverage_header, idc_product_coverage_structure };
+		vq_coverages.query_name = "product_header";
 
 		view_options vo_home;
 		vo_home.use_view = true;
@@ -345,6 +339,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 		vo_product.use_view = true;
 		vo_product.view_class_id = idc_product;
 		vo_product.view_queries.push_back(vq_navigation);
+		vo_product.view_queries.push_back(vq_product_header);
 		jm.select_when(&schema, { idc_product_root }, idc_product, {}, {}, {});
 
 		jm.select_when(&schema, { idc_product }, idc_product_header, {}, {}, {});

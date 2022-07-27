@@ -104,6 +104,6 @@ namespace corona
 
 		relative_ptr_type put_query_class(jschema* _schema, query_definition_type& qd, object_name _name);
 		jobject extract_query_item(jobject& _dest, jobject& _root, path_stack_type& _stack);
-		query_result run_query(object_name& _query_class_name, jschema* _schema, query_definition_type& _query, jcollection* _collection);
+		query_result run_query(object_name& _query_class_name, jschema* _schema, query_definition_type& _query, filtered_object_list* _collection);
 	}
 }

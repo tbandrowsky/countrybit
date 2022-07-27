@@ -33,7 +33,7 @@ namespace corona
 			return _dest;
 		}
 
-		query_result run_query(object_name& _query_class_name, jschema* _schema, query_definition_type& _query, jcollection* _collection)
+		query_result run_query(object_name& _query_class_name, jschema* _schema, query_definition_type& _query, filtered_object_list* _collection)
 		{
 			query_result results;
 
@@ -45,7 +45,7 @@ namespace corona
 			path_stack_type path_stack;
 			// figure out how to walk through the collection
 
-			jcollection::iterator_type iter = _collection->begin();
+			filtered_object_list::iterator_type iter = _collection->begin();
 
 			if (definition.root.query_root_type == query_root_types::root_class)
 			{

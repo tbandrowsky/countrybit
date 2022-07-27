@@ -95,6 +95,13 @@ namespace proposal
 		relative_ptr_type	id_canvas_products_a = 5;
 		relative_ptr_type	id_canvas_products_b = 6;
 
+		view_query vq_navigation;
+		view_query vq_carriers;
+		view_query vq_products;
+		view_query vq_clients;
+		view_query vq_coverages;
+		view_query vq_product_header;
+
 		const char* application_title = "PROOFS OF CONCEPT";
 		const char* application_author = "WOODRUFF SAWYER";
 

@@ -310,7 +310,7 @@ namespace corona
 							}
 						}
 					}
-					filtered_object_list flist = run_filter(acr.get_data(), fil);
+					filtered_object_id_list flist = run_filter(acr.get_data(), fil);
 					acr.filter_results.put(vqi.item.query_name, flist.get_location());
 					for (auto view_item : flist) {
 						if (!acr.view_objects.contains(view_item))
@@ -1162,10 +1162,10 @@ namespace corona
 			return false;
 		}
 
-		filtered_object_list jcollection::run_filter(serialized_box_container* _data, filter& _filter)
+		filtered_object_id_list jcollection::run_filter(serialized_box_container* _data, filter& _filter)
 		{
-			filtered_object_list list;
-			list = filtered_object_list::create(_data);
+			filtered_object_id_list list;
+			list = filtered_object_id_list::create(_data);
 
 			for (auto obji : *this)
 			{
