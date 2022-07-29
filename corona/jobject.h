@@ -417,25 +417,11 @@ namespace corona
 			comparisons		  comparison;
 		};
 
-		class filter
+		class filter_option
 		{
 		public:
 			class_list classes;
 			std::vector<filter_term> options;
-		};
-
-		class select_spec
-		{
-		public:
-			field_list		  fields;
-		};
-
-		class join_spec
-		{
-		public:
-			relative_ptr_type class_id_source;
-			relative_ptr_type field_id_common;
-			relative_ptr_type class_id_target;
 		};
 
 		class jobject
@@ -1157,7 +1143,9 @@ namespace corona
 			jobject create_object(relative_ptr_type _item_id, relative_ptr_type _actor_id, relative_ptr_type _class_id, relative_ptr_type& _object_id);
 			jobject create_object(relative_ptr_type _item_id, relative_ptr_type _actor_id, relative_ptr_type _class_id, relative_ptr_type& _object_id, std::initializer_list<dynamic_value> var);
 			jobject get_object(relative_ptr_type _object_id);
+			jobject get_object(object_member_path _path);
 			jobject update_object(relative_ptr_type _object_id, jobject _slice);
+			jobject update_object(object_member_path _path, jobject _slice);
 			collection_object_type &get_object_reference(relative_ptr_type _object_id);
 			relative_ptr_type create_class_from_template(relative_ptr_type _target_class_id, relative_ptr_type _source_template_object);
 
@@ -1173,7 +1161,7 @@ namespace corona
 			bool matches_class_id(const jobject& obj, std::vector<relative_ptr_type> _class_ids);
 			bool matches_class_id(const jobject& obj, class_list& _class_ids);
 
-			filtered_object_id_list run_filter(serialized_box_container* _data, filter& _stuff);
+			filtered_object_id_list run_filter(serialized_box_container* _data, filter_option& _stuff);
 
 			relative_ptr_type size()
 			{
@@ -1492,6 +1480,20 @@ namespace corona
 			jfield& get_empty()
 			{
 				return empty;
+			}
+
+			std::vector<relative_ptr_type> get_classes_with_primary_key(relative_ptr_type _field_id)
+			{
+				std::vector<relative_ptr_type> classes;
+
+				for (int i = 0; i < classes.size(); i++)
+				{
+					auto pk = get_class_primary_key(i);
+					if (pk == _field_id) {
+						classes.push_back(i);
+					}
+				}
+				return classes;
 			}
 
 			static relative_ptr_type reserve_schema(serialized_box_container* _b, int _num_classes, int _num_fields, int _total_class_fields, bool _use_standard_fields)
@@ -2109,8 +2111,15 @@ namespace corona
 
 				for (int i = 0; i < pcr.size(); i++)
 				{
-					if (pcr.detail(i).field_id == request.field_id_primary_key) {
+					auto field_id = pcr.detail(i).field_id;
+					if (field_id == request.field_id_primary_key) {
 						p.primary_key_idx = i;
+						
+					}
+					auto fld = get_field(field_id);
+					if (!fld.is_key) 
+					{
+						throw std::invalid_argument("Primary key field specified is not marked as a key field");
 					}
 				}
 
@@ -2179,6 +2188,16 @@ namespace corona
 			{
 				auto the_class = classes[class_id];
 				return the_class;
+			}
+
+			relative_ptr_type get_class_primary_key(relative_ptr_type class_id)
+			{
+				auto the_class = classes[class_id];
+				relative_ptr_type pk_index = the_class.item().primary_key_idx;
+				if (pk_index < 0)
+					return null_row;
+				relative_ptr_type pk_id = the_class.detail(pk_index).field_id;
+				return pk_id;
 			}
 
 			jfield &get_field(relative_ptr_type field_id)

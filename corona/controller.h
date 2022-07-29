@@ -119,7 +119,7 @@ namespace corona
 				previewMode(false),
 				magnification(100)
 			{
-				analytics = analytics_kit(&state, &user_collection);
+				analytics = analytics_kit(&schema, &state, &user_collection);
 			}
 
 			virtual ~corona_controller();

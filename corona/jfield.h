@@ -154,6 +154,34 @@ namespace corona
 		int operator==(const dimensions_type& a, const dimensions_type& b);
 		int operator!=(const dimensions_type& a, const dimensions_type& b);
 
+		class path_stack_item
+		{
+		public:
+			relative_ptr_type member_id;
+			int				  member_idx;
+			dimensions_type   current_dim;
+			dimensions_type   max_dim;
+		};
+
+		using path_stack_type = iarray<path_stack_item, max_path_nodes>;
+
+		class member_path_item
+		{
+		public:
+			relative_ptr_type member_id;
+			int				  member_idx;
+			dimensions_type   current_dim;
+		};
+
+		using member_path = iarray<member_path_item, max_path_nodes>;
+
+		class object_member_path
+		{
+		public:
+			object_id_type  object;
+			member_path		path;
+		};
+
 		struct object_properties_type
 		{
 			dimensions_type		dim;
@@ -194,6 +222,7 @@ namespace corona
 			control_type			control_id;
 			int64_t					size_bytes;
 			bool					user_defined;
+			bool					is_key;
 
 			object_name				name;
 			object_description		description;
@@ -329,37 +358,11 @@ namespace corona
 			}
 		};
 
-		enum class query_root_types
+
+		class query_definition_type
 		{
-			root_class = 1,
-			root_object = 2
+			;
 		};
-
-		class query_root
-		{
-		public:
-			query_root_types query_root_type;
-			relative_ptr_type root_item_id;
-		};
-
-		class query_node
-		{
-		public:
-			relative_ptr_type field_id;
-		};
-
-		using query_path = iarray<query_node, max_path_nodes>;
-		using query_project = iarray<query_node, max_projection_fields>;
-
-		class query_definition_t
-		{
-		public:
-			query_root								root;
-			query_path								path;
-			query_project							project;
-		};
-
-		using query_definition_type = query_definition_t;
 
 		class query_instance
 		{

@@ -4,11 +4,39 @@ namespace corona
 {
 	namespace database
 	{
+
+		class join_term
+		{
+		public:
+			relative_ptr_type class_id_source;
+			relative_ptr_type field_id_common;
+			relative_ptr_type class_id_target;
+		};
+
+		using join_terms = iarray<join_term, 32>;
+
+		class join_option
+		{
+		public:
+			join_terms joins;
+		};
+
+		class flatten_option
+		{
+		public:
+			field_list						path;
+			field_list						project;
+		};
+
 		class analytics_kit
 		{
-
 			actor_state* state;
 			jcollection* collection;
+			jschema* schema;
+
+			jobject create_object(relative_ptr_type _class_id);
+			jobject copy_object(jobject& _src);
+			dynamic_box data;
 
 		public:
 
@@ -17,9 +45,14 @@ namespace corona
 				;
 			}
 
-			analytics_kit(actor_state* _state, jcollection* _collection) : state(_state), collection(_collection)
+			analytics_kit(jschema* _schema, actor_state* _state, jcollection* _collection) : schema(_schema), state(_state), collection(_collection)
 			{
 				;
+			}
+
+			void init( int size = 1<<21)
+			{
+				data.init(size);
 			}
 
 			jobject get_object(filtered_object_list::iterator_item_type& item)
@@ -153,6 +186,12 @@ namespace corona
 				value = distinct.size();
 				return value;
 			}
+
+			relative_ptr_type put_class(field_list& qd, object_name _name);
+
+			filtered_object_list flatten_list(filtered_object_list* _collection, object_name& _query_class_name, jschema* _schema, flatten_option &_query);
+			filtered_object_list join_list(filtered_object_list* _collection, object_name& _query_class_name, jschema* _schema, class_list classes);
+
 		};
 
 	}

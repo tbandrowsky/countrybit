@@ -2,6 +2,7 @@
 #include "corona.h"
 #include "resource.h"
 #include "wspropose_controller.h"
+#include "wspresent_controller.h"
 
 int __stdcall WinMain(HINSTANCE hInstance,
 	HINSTANCE hPrevInstance,
@@ -30,7 +31,8 @@ int __stdcall WinMain(HINSTANCE hInstance,
 	forceWindowed = true;
 #endif
 
-	proposal::wsproposal_controller* mainController = new proposal::wsproposal_controller();
+//	proposal::wsproposal_controller* mainController = new proposal::wsproposal_controller();
+	proposal::wspresent_controller* mainController = new proposal::wspresent_controller();
 
 	if (forceWindowed) 
 	{

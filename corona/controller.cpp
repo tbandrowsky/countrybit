@@ -211,7 +211,6 @@ namespace corona
 					state = this->program_chart.create_object(clicked_item.item.create_request);
 #endif
 				}
-
 				stateChanged(size);
 			}
 		}
@@ -341,9 +340,9 @@ namespace corona
 			;
 		}
 
-
 		void corona_controller::clear()
 		{
+			analytics.init(1 << 23);
 			showUpdate = true;
 			pg.clear();
 		}

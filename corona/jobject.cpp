@@ -284,7 +284,7 @@ namespace corona
 			{
 				for (auto vqi : pactor->view.view_queries)
 				{
-					filter fil;
+					filter_option fil;
 					auto& vq = vqi.item;
 					fil.classes = vq.classes;
 					relative_ptr_type join_field_id;
@@ -896,6 +896,21 @@ namespace corona
 			}
 		}
 
+		jobject jcollection::get_object(object_member_path _path)
+		{
+			jobject root_object = get_object(_path.object.row_id);
+			if (root_object.is_null())
+				return root_object;
+
+			for (auto level : _path.path)
+			{
+				jarray temp = root_object.get_object(level.item.member_id, true);
+				root_object = temp.get_slice(level.item.current_dim);
+			}
+
+			return root_object;
+		}
+
 		relative_ptr_type jcollection::put_user_class(jobject& slice, time_t _version)
 		{
 			auto class_id = null_row;
@@ -1162,7 +1177,7 @@ namespace corona
 			return false;
 		}
 
-		filtered_object_id_list jcollection::run_filter(serialized_box_container* _data, filter& _filter)
+		filtered_object_id_list jcollection::run_filter(serialized_box_container* _data, filter_option& _filter)
 		{
 			filtered_object_id_list list;
 			list = filtered_object_id_list::create(_data);
@@ -1223,6 +1238,15 @@ namespace corona
 				jobject empty;
 				return empty;
 			}
+		}
+
+		jobject jcollection::update_object(object_member_path _path, jobject _slice)
+		{
+			auto existing_object = get_object(_path);
+			if (!existing_object.is_null()) {
+				existing_object.update(_slice);
+			}
+			return existing_object;
 		}
 
 		bool dynamic_value::compare(comparisons _comparison, dynamic_value& _target)
