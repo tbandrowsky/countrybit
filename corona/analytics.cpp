@@ -108,21 +108,21 @@ namespace corona
 			return results;
 		}
 
-		filtered_object_list analytics_kit::join_list(filtered_object_list* _collection, object_name& _query_class_name, jschema* _schema, class_list classes)
+		filtered_object_list analytics_kit::join_list(filtered_object_list* _collection, relative_ptr_type _target_class_id, jschema* _schema, relative_ptr_type _source_classic_id)
 		{
-			std::map<relative_ptr_type, jobject> objects_by_primary_key;
-			std::map<relative_ptr_type, std::list<relative_ptr_type>> objects_by_key_field;
-
 			filtered_object_list dest_list;
 			dest_list = filtered_object_list::create(&data);
+			join_path mini_stack;
 
 			for (auto obj : *_collection)
 			{
-				relative_ptr_type pk_id = obj.get_primary_key_value();
-				objects_by_primary_key[pk_id] = obj;
+				if (this->collection->matches_class_id(obj, _source_classic_id))
+				{
+					join_object(dest_list, mini_stack, obj, 0, _target_class_id);
+				}
 			}
+			return dest_list;
 		}
-
 		jobject analytics_kit::create_object(relative_ptr_type _class_id)
 		{
 			auto myclass = schema->get_class(_class_id);
@@ -146,5 +146,41 @@ namespace corona
 			return dest;
 		}
 
+		void analytics_kit::join_object(filtered_object_list& _target, join_path& _ministack, jobject& parent, int _level, relative_ptr_type _dest_type_id)
+		{
+			auto cls = parent.get_class();
+			auto pk_idx = cls.item().primary_key_idx;
+
+			bool at_leaf = true;
+
+			_level = _level + 1;
+			for (int i = 0; i < cls.size(); i++)
+			{
+				if (pk_idx != i) {
+					auto& fld = cls.detail(i);
+					auto& fld_def = schema->get_field(fld.field_id);
+					auto field_id = parent.get(fld.field_id);
+					if (state->view_objects.contains(field_id)) {
+						_ministack[_level] = field_id;
+						jobject& jobj = state->view_objects[field_id].second.object;
+						join_object(_target, _ministack, jobj, _level, _dest_type_id);
+						at_leaf = false;
+					}
+				}
+			}
+
+			if (at_leaf)
+			{
+				jobject new_object = create_object(_dest_type_id);
+				auto sz = _ministack.size();
+				for (int i = 0; i < sz; i++)
+				{
+					auto mi = _ministack[i];
+					auto obj = state->view_objects[mi].second.object;
+					new_object.update(obj);
+				}
+				_target.push_back(new_object);
+			}
+		}
 	}
 }

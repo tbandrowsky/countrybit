@@ -5,6 +5,8 @@ namespace corona
 	namespace database
 	{
 
+		const int max_join_objects = 128;
+
 		class join_term
 		{
 		public:
@@ -28,6 +30,8 @@ namespace corona
 			field_list						project;
 		};
 
+		using join_path = iarray<relative_ptr_type, max_join_objects>;
+
 		class analytics_kit
 		{
 			actor_state* state;
@@ -36,6 +40,8 @@ namespace corona
 
 			jobject create_object(relative_ptr_type _class_id);
 			jobject copy_object(jobject& _src);
+			void join_object(filtered_object_list& _target, join_path& _ministack, jobject &parent, int _level, relative_ptr_type _dest_type_id);
+
 			dynamic_box data;
 
 		public:
@@ -189,8 +195,8 @@ namespace corona
 
 			relative_ptr_type put_class(field_list& qd, object_name _name);
 
-			filtered_object_list flatten_list(filtered_object_list* _collection, object_name& _query_class_name, jschema* _schema, flatten_option &_query);
-			filtered_object_list join_list(filtered_object_list* _collection, object_name& _query_class_name, jschema* _schema, class_list classes);
+			filtered_object_list flatten_list(filtered_object_list* _collection, relative_ptr_type _target_class_id, jschema* _schema, flatten_option &_query);
+			filtered_object_list join_list(filtered_object_list* _collection, relative_ptr_type _target_class_id, jschema* _schema, relative_ptr_type _source_classic_id);
 
 		};
 
