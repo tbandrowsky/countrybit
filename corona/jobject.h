@@ -809,9 +809,8 @@ namespace corona
 		class update_object_request
 		{
 		public:
-			collection_id_type	collection_id;
+			object_member_path	path;
 			actor_id_type		actor_id;
-			relative_ptr_type	object_id;
 			jobject				item;
 		};
 
@@ -947,6 +946,7 @@ namespace corona
 			jobject create_object(jschema* _schema, relative_ptr_type _class_id);
 			jobject copy_object(jschema* _schema, jobject& _src);
 			actor_view_object get_modified_object();
+			jobject get_object(object_member_path _path);
 
 			create_object_request create_create_request(relative_ptr_type _class_id)
 			{
@@ -977,8 +977,8 @@ namespace corona
 			{
 				update_object_request uor;
 				uor.actor_id = actor_id;
-				uor.collection_id = collection_id;
-				uor.object_id = modified_object_id;
+				uor.path.object.collection_id = collection_id;
+				uor.path.object.row_id = modified_object_id;
 				uor.item = modified_object;
 				return uor;
 			}
@@ -1618,6 +1618,7 @@ namespace corona
 				jf.enumeration_display_field_id = _base.enumeration_display_field_id;
 				jf.enumeration_value_field_id = _base.enumeration_value_field_id;
 				jf.size_bytes = _size_bytes;
+				jf.is_key = _base.is_key;
 
 				_options(jf);
 

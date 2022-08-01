@@ -22,7 +22,8 @@ namespace corona
 			select = 13,
 			select_cell = 14,
 			navigate = 15,
-			text = 16
+			text = 16,
+			set = 17
 		};
 
 		struct page_item_identifier_x
@@ -51,8 +52,9 @@ namespace corona
 			rectangle				bounds;
 
 			relative_ptr_type		class_id;
-			relative_ptr_type		object_id;
 			relative_ptr_type		item_uid;
+
+			object_member_path		object_path;
 
 			jfield*					field;
 			create_object_request	create_request;
@@ -65,11 +67,12 @@ namespace corona
 
 			bool					windowsRegion;
 
+			dynamic_value			dest_value;
+
 			page_item() :
 				id(-1),
 				parent_id(-1),
 				layout(layout_types::space),
-				object_id(-1),
 				field(nullptr),
 				caption(nullptr),
 				canvas_id(-1),
@@ -80,7 +83,8 @@ namespace corona
 				item_uid(null_row),
 				windowsRegion(false)
 			{
-				;
+				object_path.object.collection_id = {};
+				object_path.object.row_id = null_row;
 			}
 
 			void set_parent(page_item* _parent)
@@ -130,10 +134,11 @@ namespace corona
 			{
 				page_item_identifier_x pii { null_row, null_row };
 				if ((layout == layout_types::field) ||
+					(layout == layout_types::set) ||
 					(layout == layout_types::label) ||
 					(layout == layout_types::create)) {
 					pii.layout = (int)layout;
-					pii.object_id = object_id;
+					pii.object_id = object_path.object.row_id;
 					pii.class_id = class_id;
 					pii.item_uid = item_uid;
 					if (field != nullptr) 
@@ -207,13 +212,13 @@ namespace corona
 
 			page_item* text(page_item* _parent, relative_ptr_type _style_id, const char *_text, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
 
-			page_item* field(page_item* _parent, int object_id, int field_id, jobject slice);
+			page_item* set(page_item* _parent, actor_state* _state, object_member_path path, int field_id, dynamic_value dv, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
 			page_item* select(page_item* _parent, actor_state* _state, int object_id, relative_ptr_type _id_name, jobject slice, relative_ptr_type _style_id, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
 			page_item* select_cell(page_item* _parent, actor_state* _state, int object_id, jobject slice, const char *_caption, relative_ptr_type _style_id, layout_rect _box);
 			page_item* navigate(page_item* _parent, actor_state* _state, int object_id, relative_ptr_type _style_id, const char *_caption, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 20.0_px });
 			page_item* space(page_item* _parent, relative_ptr_type _style_id = null_row, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
 
-			page_item* actor_update_fields(page_item* _parent, actor_state* _state, jschema* _schema, jcollection* _collection, field_layout _field_layout, const char *_object_title);
+			page_item* actor_update_fields(page_item* _parent, actor_state* _state, object_member_path& omp, field_layout _field_layout, const char *_object_title);
 			page_item* actor_create_buttons(page_item* _parent, actor_state* _state, jschema* _schema, jcollection* _collection, relative_ptr_type _style_id, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
 			page_item* actor_select_items(page_item* _parent, actor_state* _state, jschema* _schema, jcollection* _collection);
 

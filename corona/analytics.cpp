@@ -35,12 +35,12 @@ namespace corona
 			return class_id;
 		}
 
-		filtered_object_list analytics_kit::flatten_list(filtered_object_list* _collection, object_name& _query_class_name, jschema* _schema, flatten_option& _query)
+		filtered_object_list analytics_kit::flatten_list(filtered_object_list* _collection, relative_ptr_type _target_class_id, jschema* _schema, flatten_option& _query)
 		{
 			filtered_object_list results;
 
 			// create our destination class
-			relative_ptr_type dest_class_id = put_class(_query.project, _query_class_name);
+			relative_ptr_type dest_class_id = _target_class_id;
 
 			path_stack_type path_stack;
 			// figure out how to walk through the collection

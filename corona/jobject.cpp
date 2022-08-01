@@ -58,6 +58,21 @@ namespace corona
 			return hr == S_OK;
 		}
 
+		jobject actor_state::get_object(object_member_path _path)
+		{
+			jobject root_object = view_objects[_path.object.row_id].second.object;
+			if (root_object.is_null())
+				return root_object;
+
+			for (auto level : _path.path)
+			{
+				jarray temp = root_object.get_object(level.item.member_id, true);
+				root_object = temp.get_slice(level.item.current_dim);
+			}
+
+			return root_object;
+		}
+
 		jobject actor_state::create_object(jschema* _schema, relative_ptr_type _class_id)
 		{
 			auto myclass = _schema->get_class(_class_id);
@@ -764,7 +779,7 @@ namespace corona
 				return acr;
 			}
 			actor_type ac = get_actor(_update.actor_id);
-			relative_ptr_type object_id = _update.object_id;
+			relative_ptr_type object_id = _update.path.object.row_id;
 
 			if (object_id != null_row && objects.check(object_id))
 			{
@@ -784,7 +799,7 @@ namespace corona
 					auto& update_option = update_options.get_object().item;
 
 					acr.modified_object_id = object_id;
-					update_object(object_id, _update.item);
+					update_object(_update.path, _update.item);
 
 					for (auto class_id : update_option.create_on_update) 
 					{

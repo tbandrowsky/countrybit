@@ -119,17 +119,15 @@ namespace corona
 			return v;
 		}
 
-		page_item* page::field(page_item* _parent, int object_id, int field_id, jobject slice)
+		page_item* page::set(page_item* _parent, actor_state* _state, object_member_path path, int field_id, dynamic_value dv, layout_rect _box)
 		{
 			page_item* v = append();
 			v->id = size();
-			v->layout = layout_types::column;
+			v->layout = layout_types::set;
 			v->set_parent(_parent);
-			v->class_id = slice.get_class_id();
-			v->object_id = object_id;
-			v->box = { 0.0_pct, 0.0_pct, 100.0_px, 50.0_px };
-			v->slice = slice;
-			v->field = &(slice.get_field_by_id(field_id));
+			v->object_path = path;
+			v->box = _box;
+			v->dest_value = dv;
 			return v;
 		}
 
@@ -140,9 +138,9 @@ namespace corona
 			v->set_parent(_parent);
 			v->layout = layout_types::select;
 			v->slice = slice;
-			v->object_id = object_id;
+			v->object_path.object.row_id = object_id;
 			v->box = box;
-			v->select_request = _state->create_select_request(v->object_id, false);
+			v->select_request = _state->create_select_request(v->object_path.object.row_id, false);
 			v->caption = data.copy(slice.get_name(id_name), 0);
 			v->slice = slice;
 			v->style_id = _style_id;
@@ -163,11 +161,11 @@ namespace corona
 			v->set_parent(_parent);
 			v->layout = layout_types::select_cell;
 			v->slice = slice;
-			v->object_id = object_id;
+			v->object_path.object.row_id = object_id;
 			v->class_id = slice.get_class_id();
 			v->box = _box;
 			v->style_id = _style_id;
-			v->select_request = _state->create_select_request(v->object_id, false);
+			v->select_request = _state->create_select_request(object_id, false);
 			v->caption = data.copy(_caption, 0);
 			return v;
 		}
@@ -178,9 +176,9 @@ namespace corona
 			v->id = size();
 			v->set_parent(_parent);
 			v->layout = layout_types::navigate;
-			v->object_id = object_id;
+			v->object_path.object.row_id = object_id;
 			v->box = _box;
-			v->select_request = _state->create_select_request(v->object_id, false);
+			v->select_request = _state->create_select_request(object_id, false);
 			v->style_id = _style_id;
 			if (_caption) {
 				v->caption = data.copy(_caption,0);
@@ -188,70 +186,66 @@ namespace corona
 			return v;
 		}
 
-		page_item* page::actor_update_fields(page_item* _parent, actor_state* _state, jschema* _schema, jcollection* _collection, field_layout _field_layout, const char* _object_title)
+		page_item* page::actor_update_fields(page_item* _parent, actor_state* _state, object_member_path& omp, field_layout _field_layout, const char* _object_title)
 		{
 
-			if (_state->modified_object_id != null_row)
+			auto slice = _state->get_object(omp);
+			page_item* label;
+
+			if (_object_title)
 			{
-				auto avo = _state->get_modified_object();
-				auto slice = _collection->get_object(avo.object_id);
-				page_item* label;
+				label = append();
+				label->id = size();
+				label->parent_id = _parent->id;
+				label->layout = layout_types::label;
+				label->box = { 0.0_px, 0.0_px, 300.0_px, 1.0_fntgr };
+				label->slice = slice;
+				label->class_id = slice.get_class_id();
+				label->object_path = omp;
+				label->style_id = slice.get_schema()->idf_view_subtitle_style;
+				label->caption = data.copy(_object_title, 0);
+			}
 
-				if (_object_title)
+			for (int i = 0; i < slice.size(); i++)
+			{
+				page_item* container = nullptr;
+
+				jfield& fld = slice.get_field(i);
+				if (!fld.display_in_user_ui)
+					continue;
+
+				switch (_field_layout)
 				{
-					label = append();
-					label->id = size();
-					label->parent_id = _parent->id;
-					label->layout = layout_types::label;
-					label->box = { 0.0_px, 0.0_px, 300.0_px, 1.0_fntgr };
-					label->slice = slice;
-					label->class_id = slice.get_class_id();
-					label->object_id = avo.object_id;
-					label->style_id = _schema->idf_view_subtitle_style;
-					label->caption = data.copy(_object_title, 0);
+				case field_layout::label_on_left:
+					container = row(_parent, slice.get_schema()->idf_label_style, { 0.0_px, 0.0_px, 400.0_px, 1.1_fntgr });
+					break;
+				case field_layout::label_on_top:
+					container = column(_parent, slice.get_schema()->idf_label_style, { 0.0_px, 0.0_px, 200.0_px, 2.0_fntgr });
+					break;
 				}
 
-				for (int i = 0; i < slice.size(); i++)
-				{
-					page_item* container = nullptr;
+				label = append();
+				label->id = size();
+				label->parent_id = container->id;
+				label->layout = layout_types::label;
+				label->field = &fld;
+				label->box = { 0.0_px, 0.0_px, 150.0_px, 1.0_fntgr };
+				label->slice = slice;
+				label->object_path = omp;
+				label->style_id = slice.get_schema()->idf_label_style;
+				label->caption = fld.description;
+				label->class_id = slice.get_class_id();
 
-					jfield& fld = slice.get_field(i);
-					if (!fld.display_in_user_ui)
-						continue;
-
-					switch (_field_layout)
-					{
-					case field_layout::label_on_left:
-						container = row(_parent, _schema->idf_label_style, { 0.0_px, 0.0_px, 400.0_px, 1.1_fntgr });
-						break;
-					case field_layout::label_on_top:
-						container = column(_parent, _schema->idf_label_style, { 0.0_px, 0.0_px, 200.0_px, 2.0_fntgr });
-						break;
-					}
-
-					label = append();
-					label->id = size();
-					label->parent_id = container->id;
-					label->layout = layout_types::label;
-					label->field = &fld;
-					label->box = { 0.0_px, 0.0_px, 150.0_px, 1.0_fntgr };
-					label->slice = slice;
-					label->object_id = avo.object_id;
-					label->style_id = _schema->idf_label_style;
-					label->caption = fld.description;
-					label->class_id = slice.get_class_id();
-
-					page_item* control = append();
-					control->id = size();
-					control->parent_id = container->id;
-					control->layout = layout_types::field;
-					control->field = &fld;
-					control->box = { 0.0_px, 0.0_px, 200.0_px, 1.0_fntgr };
-					control->slice = slice;
-					control->object_id = avo.object_id;
-					control->class_id = slice.get_class_id();
-					control->style_id = _schema->idf_control_style;
-				}
+				page_item* control = append();
+				control->id = size();
+				control->parent_id = container->id;
+				control->layout = layout_types::field;
+				control->field = &fld;
+				control->box = { 0.0_px, 0.0_px, 200.0_px, 1.0_fntgr };
+				control->slice = slice;
+				control->object_path = omp;
+				control->class_id = slice.get_class_id();
+				control->style_id = slice.get_schema()->idf_control_style;
 			}
 
 			return _parent;
@@ -286,7 +280,7 @@ namespace corona
 				v->id = size();
 				v->set_parent(_parent);	
 				v->layout = layout_types::select;
-				v->object_id = st.second.object_id;
+				v->object_path.object.row_id = st.second.object_id;
 				auto slice = _collection->get_object(st.second.object_id);
 				if (slice.has_field("layout_rect"))
 				{

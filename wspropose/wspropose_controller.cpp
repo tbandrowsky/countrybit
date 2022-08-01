@@ -49,22 +49,22 @@ namespace proposal
 		*/
 
 
-		idf_home = schema.put_integer_field({ {  jtype::type_int64, "home_id", "Home Id", false }, { 0, INT64_MAX } });
-		idf_client_root = schema.put_integer_field({ {  jtype::type_int64, "client_root", "Clients", false }, { 0, INT64_MAX } });
-		idf_client = schema.put_integer_field({ {  jtype::type_int64, "client_id", "Client Id", false }, { 0, INT64_MAX } });
-		idf_carrier_root = schema.put_integer_field({ {  jtype::type_int64, "carrier_root", "Carriers", false }, { 0, INT64_MAX } });
-		idf_carrier = schema.put_integer_field({ {  jtype::type_int64, "carrier_id", "Carrier Id", false }, { 0, INT64_MAX } });
+		idf_home = schema.put_integer_field({ {  jtype::type_int64, "home_id", "Home Id", false, true }, { 0, INT64_MAX } });
+		idf_client_root = schema.put_integer_field({ {  jtype::type_int64, "client_root", "Clients", false, true }, { 0, INT64_MAX } });
+		idf_client = schema.put_integer_field({ {  jtype::type_int64, "client_id", "Client Id", false, true }, { 0, INT64_MAX } });
+		idf_carrier_root = schema.put_integer_field({ {  jtype::type_int64, "carrier_root", "Carriers", false, true }, { 0, INT64_MAX } });
+		idf_carrier = schema.put_integer_field({ {  jtype::type_int64, "carrier_id", "Carrier Id", false, true }, { 0, INT64_MAX } });
 		idf_product_root = schema.put_integer_field({ {  jtype::type_int64, "product_root", "Products", false }, { 0, INT64_MAX } });
-		idf_product = schema.put_integer_field({ {  jtype::type_int64, "product", "product_root", false }, { 0, INT64_MAX } });
-		idf_coverage_root = schema.put_integer_field({ {  jtype::type_int64, "coverage_root", "Coverages", false }, { 0, INT64_MAX } });
-		idf_coverage = schema.put_integer_field({ {  jtype::type_int64, "coverage_id", "Coverage Id", false }, { 0, INT64_MAX } });
-		idf_system_root = schema.put_integer_field({ {  jtype::type_int64, "system_root", "System Settings", false }, { 0, INT64_MAX } });
+		idf_product = schema.put_integer_field({ {  jtype::type_int64, "product", "product_root", false, true }, { 0, INT64_MAX } });
+		idf_coverage_root = schema.put_integer_field({ {  jtype::type_int64, "coverage_root", "Coverages", false, true }, { 0, INT64_MAX } });
+		idf_coverage = schema.put_integer_field({ {  jtype::type_int64, "coverage_id", "Coverage Id", false, true }, { 0, INT64_MAX } });
+		idf_system_root = schema.put_integer_field({ {  jtype::type_int64, "system_root", "System Settings", false, true }, { 0, INT64_MAX } });
 
 		idf_carrier_name = schema.put_string_field({ {  jtype::type_string, "carrier_name", "Carrier Name", true }, { 100, "", "" } });
 		idf_coverage_name = schema.put_string_field({ {  jtype::type_string, "coverage_name", "Coverage Name", true }, { 100, "", "" } });
 		idf_prompt = schema.put_string_field({ {  jtype::type_string, "prompt_name", "Prompt/Label", true }, { 100, "", "" } });
 
-		idf_product = schema.put_integer_field({ {  jtype::type_int64, "product_id", "Product Id", false }, { 0, INT64_MAX } });
+		idf_product = schema.put_integer_field({ {  jtype::type_int64, "product_id", "Product Id", false, true }, { 0, INT64_MAX } });
 		idf_product_code = schema.put_string_field({ {  jtype::type_string, "product_code", "Code", true }, { 100, "", "" } });
 		idf_product_status = schema.put_string_field({ {  jtype::type_string, "product_status", "Status", true }, { 100, "", "" } });
 		idf_product_edition = schema.put_string_field({ {  jtype::type_string, "product_edition", "Edition", true }, { 100, "", "" } });
@@ -75,11 +75,11 @@ namespace proposal
 		idf_product_updated_date = schema.put_string_field({ {  jtype::type_string, "product_updated_date", "Updated Date", true }, { 100, "", "" } });
 		idf_product_view = schema.put_integer_field({ {  jtype::type_int64, "product_id", "Product Id", false }, { 0, INT64_MAX } });
 
-		idf_product_header = schema.put_integer_field({ {  jtype::type_int64, "product_header_id", "Product Header", false }, { 0, INT64_MAX } });
-		idf_product_program_header = schema.put_integer_field({ {  jtype::type_int64, "program_header_id", "Program Header", false }, { 0, INT64_MAX } });
-		idf_product_program_structure = schema.put_integer_field({ {  jtype::type_int64, "program_structure_id", "Program Structure", false }, { 0, INT64_MAX } });
-		idf_product_coverage_header = schema.put_integer_field({ {  jtype::type_int64, "coverage_header_id", "Coverage Header", false }, { 0, INT64_MAX } });
-		idf_product_coverage_structure = schema.put_integer_field({ {  jtype::type_int64, "coverage_structure_id", "Coverage Structure", false }, { 0, INT64_MAX } });
+		idf_product_header = schema.put_integer_field({ {  jtype::type_int64, "product_header_id", "Product Header", false, true }, { 0, INT64_MAX } });
+		idf_product_program_header = schema.put_integer_field({ {  jtype::type_int64, "program_header_id", "Program Header", false, true }, { 0, INT64_MAX } });
+		idf_product_program_structure = schema.put_integer_field({ {  jtype::type_int64, "program_structure_id", "Program Structure", false, true }, { 0, INT64_MAX } });
+		idf_product_coverage_header = schema.put_integer_field({ {  jtype::type_int64, "coverage_header_id", "Coverage Header", false, true }, { 0, INT64_MAX } });
+		idf_product_coverage_structure = schema.put_integer_field({ {  jtype::type_int64, "coverage_structure_id", "Coverage Structure", false, true }, { 0, INT64_MAX } });
 	
 		idf_product_psi_base = schema.put_integer_field({ {  jtype::type_int64, "psi_base_id", "Product Structure Item Id", false }, { 0, INT64_MAX } });
 		idf_product_phi_base = schema.put_integer_field({ {  jtype::type_int64, "phi_base_id", "Product Header Item Id", false }, { 0, INT64_MAX } });
