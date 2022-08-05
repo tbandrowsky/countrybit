@@ -812,9 +812,20 @@ namespace corona
 			object_name						class_name;
 			object_description				class_description;
 			member_field_collection			member_fields;
+			bool							auto_primary_key;
 			relative_ptr_type				field_id_primary_key;
 			relative_ptr_type				base_class_id;
 			relative_ptr_type				template_class_id;
+
+			put_class_request() : 
+				class_id(null_row), 
+				auto_primary_key(false), 
+				field_id_primary_key(null_row), 
+				base_class_id(null_row), 
+				template_class_id(null_row)
+			{
+				;
+			}
 		};
 
 		class jlist_instance

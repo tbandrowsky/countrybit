@@ -9,84 +9,22 @@ namespace proposal
 	public:
 
 		corona::database::relative_ptr_type idc_home;
-		corona::database::relative_ptr_type idf_home;
-
 		corona::database::relative_ptr_type idc_client_root;
-		corona::database::relative_ptr_type idf_client_root;
-
 		corona::database::relative_ptr_type idc_client;
-		corona::database::relative_ptr_type idf_client;
+		corona::database::relative_ptr_type idc_program;
+		corona::database::relative_ptr_type idc_program_item;
+		corona::database::relative_ptr_type idc_program_insurance;
+		corona::database::relative_ptr_type idc_program_insurance_coverage;
 
+		corona::database::relative_ptr_type idc_slide_show;
+		corona::database::relative_ptr_type idc_text_slide;
+		corona::database::relative_ptr_type idc_title_slide;
+		corona::database::relative_ptr_type idc_program_slide;
 		corona::database::relative_ptr_type idc_carrier_root;
-		corona::database::relative_ptr_type idf_carrier_root;
-
 		corona::database::relative_ptr_type idc_carrier;
-		corona::database::relative_ptr_type idf_carrier;
-
 		corona::database::relative_ptr_type idc_coverage_root;
-		corona::database::relative_ptr_type idf_coverage_root;
-
 		corona::database::relative_ptr_type idc_coverage;
-		corona::database::relative_ptr_type idf_coverage;
-
 		corona::database::relative_ptr_type idc_system_root;
-		corona::database::relative_ptr_type idf_system_root;
-
-		corona::database::relative_ptr_type idc_product_root;
-		corona::database::relative_ptr_type idf_product_root;
-		corona::database::relative_ptr_type idf_product;
-		corona::database::relative_ptr_type idc_product;
-
-		corona::database::relative_ptr_type idf_product_name;
-		corona::database::relative_ptr_type idf_product_code;
-		corona::database::relative_ptr_type idf_product_status;
-		corona::database::relative_ptr_type idf_product_edition;
-		corona::database::relative_ptr_type idf_product_template_type;
-		corona::database::relative_ptr_type idf_product_line_of_business;
-		corona::database::relative_ptr_type idf_product_carrier;
-		corona::database::relative_ptr_type idf_product_updated_by;
-		corona::database::relative_ptr_type idf_product_updated_date;
-		corona::database::relative_ptr_type idf_product_view;
-
-		corona::database::relative_ptr_type idf_prompt;
-
-		corona::database::relative_ptr_type idc_product_header;
-		corona::database::relative_ptr_type idf_product_header;
-		corona::database::relative_ptr_type idc_product_program_header;
-		corona::database::relative_ptr_type idf_product_program_header;
-		corona::database::relative_ptr_type idc_product_phi_base;
-		corona::database::relative_ptr_type idf_product_phi_base;
-
-		corona::database::relative_ptr_type idc_product_phi_fill;
-		corona::database::relative_ptr_type idf_product_phi_fill;
-		corona::database::relative_ptr_type idc_product_phi_carrier;
-		corona::database::relative_ptr_type idf_product_phi_carrier;
-
-		corona::database::relative_ptr_type idc_product_program_structure;
-		corona::database::relative_ptr_type idf_product_program_structure;
-		corona::database::relative_ptr_type idc_product_psi_base;
-		corona::database::relative_ptr_type idf_product_psi_base;
-
-		corona::database::relative_ptr_type idc_product_coverage_header;
-		corona::database::relative_ptr_type idf_product_coverage_header;
-		corona::database::relative_ptr_type idc_product_chi_base;
-		corona::database::relative_ptr_type idf_product_chi_base;
-
-		corona::database::relative_ptr_type idc_product_coverage_structure;
-		corona::database::relative_ptr_type idf_product_coverage_structure;
-		corona::database::relative_ptr_type idc_product_csi_base;
-		corona::database::relative_ptr_type idf_product_csi_base;
-
-		corona::database::relative_ptr_type idf_inception;
-		corona::database::relative_ptr_type idf_expiration;
-		corona::database::relative_ptr_type idf_status;
-		corona::database::relative_ptr_type idf_attachment;
-		corona::database::relative_ptr_type idf_limit;
-		corona::database::relative_ptr_type idf_deductible;
-		corona::database::relative_ptr_type idf_share;
-		corona::database::relative_ptr_type idf_comment;
-		corona::database::relative_ptr_type idf_carrier_name;
-		corona::database::relative_ptr_type idf_coverage_name;
 
 		relative_ptr_type	id_canvas_header = 1;
 		relative_ptr_type	id_canvas_navigation = 2;

@@ -287,7 +287,7 @@ namespace corona
 
 				try
 				{
-					auto collection_response = get_collection(_request.collection_id);
+					auto collection_response = get_collection(_request.get_collection_id());
 					if (!collection_response.success)
 					{
 						response.message = collection_response.message;

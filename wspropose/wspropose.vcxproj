@@ -174,7 +174,6 @@
   <ItemGroup>
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />
-    <ClInclude Include="wspresent_controller.h" />
     <ClInclude Include="wspropose.h" />
     <ClInclude Include="wspropose_controller.h" />
   </ItemGroup>
@@ -189,7 +188,6 @@
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">corona.h</PrecompiledHeaderFile>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">corona.h</PrecompiledHeaderFile>
     </ClCompile>
-    <ClCompile Include="wspresent_controller.cpp" />
     <ClCompile Include="wspropose.cpp" />
     <ClCompile Include="wspropose_controller.cpp" />
   </ItemGroup>

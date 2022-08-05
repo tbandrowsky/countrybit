@@ -211,6 +211,21 @@ namespace corona
 					state = this->program_chart.create_object(clicked_item.item.create_request);
 #endif
 				}
+				else if (clicked_item.item.is_set())
+				{
+					auto obj = this->user_collection.get_object(clicked_item.item.object_path);
+					obj.set({ clicked_item.item.dest_value });
+					update_object_request uor;
+					uor.path = clicked_item.item.object_path;
+					uor.item = obj;
+					uor.actor_id = this->actor_id;
+#if TRACE_CONTROLLER
+					state = this->user_collection.update_object( uor, "updated via mouse click");
+#else
+					state = this->program_chart.update_object(uor);
+#endif
+				}
+
 				stateChanged(size);
 			}
 		}
@@ -278,15 +293,14 @@ namespace corona
 
 		void corona_controller::onTextChanged(int textControlId, page_item pi)
 		{
-			if (pi.object_id != null_row) 
+			if (pi.object_path.object.row_id != null_row) 
 			{
 				auto text = host->getEditText(textControlId);
 				pi.slice.set({ { pi.field->field_id, text.c_str()}});
 				update_object_request uor;
 				uor.actor_id = state.actor.actor_id;
-				uor.collection_id = user_collection.get_collection_id();
+				uor.path = pi.object_path;
 				uor.item = pi.slice;
-				uor.object_id = pi.object_id;
 				state = this->user_collection.update_object(uor);
 				auto size = host->getWindowClientPos();
 				stateChanged(size);
@@ -295,15 +309,14 @@ namespace corona
 
 		void corona_controller::onDropDownChanged(int dropDownId, page_item pi)
 		{
-			if (pi.object_id != null_row)
+			if (pi.object_path.object.row_id != null_row)
 			{
 				auto text = host->getComboSelectedText(dropDownId);
 				pi.slice.set({ { pi.field->field_id, text.c_str()} });
 				update_object_request uor;
 				uor.actor_id = state.actor.actor_id;
-				uor.collection_id = user_collection.get_collection_id();
+				uor.path = pi.object_path;
 				uor.item = pi.slice;
-				uor.object_id = pi.object_id;
 				state = this->user_collection.update_object(uor);
 				auto size = host->getWindowClientPos();
 				stateChanged(size);
@@ -312,6 +325,7 @@ namespace corona
 
 		void corona_controller::onListViewChanged(int listViewId, page_item pi)
 		{
+
 		}
 
 		void corona_controller::fromImage()
@@ -572,6 +586,9 @@ namespace corona
 			case layout_types::text:
 				od = "text";
 				break;
+			case layout_types::set:
+				od = "set";
+				break;
 			}
 
 			if (_item.style_id > null_row) {
@@ -579,13 +596,10 @@ namespace corona
 				od += style_name;
 			}
 			
-			if (_item.object_id > null_row && !_item.slice.is_null()) {
+			if (_item.object_path.object.row_id > null_row && !_item.slice.is_null()) {
 				od += "-";
 				od += _item.slice.get_class().item().name;
 			}
-
-			// because canvases are their own windows, the contents
-			// must be drawn within them relative to the window, not the screen
 
 			auto effective_bounds = _item.bounds;
 
@@ -599,9 +613,9 @@ namespace corona
 			_host->drawView(style_name, cap, effective_bounds, od.c_str());
 		}
 
-		page_item* corona_controller::add_update_fields(page_item* _parent, field_layout _layout, const char *_object_title)
+		page_item* corona_controller::add_update_fields(page_item* _parent, const object_member_path& _omp, field_layout _layout, const char* _object_title)
 		{
-			return pg.actor_update_fields(_parent, &state, &schema, &user_collection, _layout, _object_title);
+			return pg.actor_update_fields(_parent, &state, _omp, _layout, _object_title);
 		}
 
 		page_item* corona_controller::add_create_buttons(page_item* _parent, relative_ptr_type _style_id, layout_rect _box)
@@ -617,6 +631,27 @@ namespace corona
 		void corona_controller::arrange(double width, double height, jobject& _style_sheet, double padding)
 		{
 			pg.arrange(width, height, _style_sheet, padding);
+		}
+
+		void corona_controller::render_form(page_item* _navigation, page_item* _frame, const object_member_path& _omp, const char* _form_title)
+		{
+			_frame->windowsRegion = true;
+			add_update_fields(_frame, _omp, field_layout::label_on_left, _form_title);
+			space(_navigation, schema.idf_button_style, { 0.0_px, 0.0_px, 100.0_pct, 32.0_px });
+			text(_navigation, schema.idf_label_style, "Create", { 0.0_px, 0.0_px, 100.0_pct, 32.0_px });
+			add_create_buttons(_navigation, schema.idf_button_style, { 0.0_px, 0.0_px, 100.0_pct, 32.0_px });
+		}
+
+		void corona_controller::render_search_page(page_item* _navigation, page_item* _contents, relative_ptr_type _canvas_uid, relative_ptr_type _search_class_id, relative_ptr_type _list_class_id, const char* _form_title, int count_fields, relative_ptr_type* _field_ids)
+		{
+			auto form_search = row(_contents, null_row, { 0.0_px, 0.0_px, 100.0_pct, 25.0_px });
+			object_member_path opt;
+			opt.object = state.find_object_by_class(_search_class_id);
+			add_update_fields(form_search, opt, field_layout::label_on_left, _form_title);
+			auto form_table = canvas2d_column(_canvas_uid, _contents, schema.idf_view_background_style);
+			search_table(form_table, _list_class_id, _field_ids, count_fields);
+			text(_navigation, schema.idf_label_style, "Create", { 0.0_px, 0.0_px, 100.0_pct, 32.0_px });
+			add_create_buttons(_navigation, schema.idf_button_style, { 0.0_px, 0.0_px, 100.0_pct, 32.0_px });
 		}
 
 	}

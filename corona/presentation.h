@@ -120,9 +120,14 @@ namespace corona
 				return layout == layout_types::create;
 			}
 
+			bool is_set()
+			{
+				return layout == layout_types::set;
+			}
+
 			bool is_command()
 			{
-				return is_create() || is_select();
+				return is_create() || is_select() || is_set();
 			}
 
 			bool is_canvas2d()
@@ -212,13 +217,13 @@ namespace corona
 
 			page_item* text(page_item* _parent, relative_ptr_type _style_id, const char *_text, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
 
-			page_item* set(page_item* _parent, actor_state* _state, object_member_path path, int field_id, dynamic_value dv, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
+			page_item* set(page_item* _parent, actor_state* _state, const object_member_path path, int field_id, dynamic_value dv, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
 			page_item* select(page_item* _parent, actor_state* _state, int object_id, relative_ptr_type _id_name, jobject slice, relative_ptr_type _style_id, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
 			page_item* select_cell(page_item* _parent, actor_state* _state, int object_id, jobject slice, const char *_caption, relative_ptr_type _style_id, layout_rect _box);
 			page_item* navigate(page_item* _parent, actor_state* _state, int object_id, relative_ptr_type _style_id, const char *_caption, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 20.0_px });
 			page_item* space(page_item* _parent, relative_ptr_type _style_id = null_row, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
 
-			page_item* actor_update_fields(page_item* _parent, actor_state* _state, object_member_path& omp, field_layout _field_layout, const char *_object_title);
+			page_item* actor_update_fields(page_item* _parent, actor_state* _state, const object_member_path& omp, field_layout _field_layout, const char *_object_title);
 			page_item* actor_create_buttons(page_item* _parent, actor_state* _state, jschema* _schema, jcollection* _collection, relative_ptr_type _style_id, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
 			page_item* actor_select_items(page_item* _parent, actor_state* _state, jschema* _schema, jcollection* _collection);
 

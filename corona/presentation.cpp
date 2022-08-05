@@ -186,7 +186,7 @@ namespace corona
 			return v;
 		}
 
-		page_item* page::actor_update_fields(page_item* _parent, actor_state* _state, object_member_path& omp, field_layout _field_layout, const char* _object_title)
+		page_item* page::actor_update_fields(page_item* _parent, actor_state* _state, const object_member_path& omp, field_layout _field_layout, const char* _object_title)
 		{
 
 			auto slice = _state->get_object(omp);
@@ -286,7 +286,7 @@ namespace corona
 				{
 					auto rf = slice.get_layout_rect("layout_rect");
 					v->box = rf;
-					v->select_request = _state->create_select_request(v->object_id, false);
+					v->select_request = _state->create_select_request(v->object_path.object.row_id, false);
 				}
 			}
 			return _parent;
@@ -577,7 +577,7 @@ namespace corona
 					arrange_impl(_style_sheet, &child.item, 0, 0, _item->bounds.x, _item->bounds.y, _item->bounds.w, _item->bounds.h);
 				}
 
-				if (_item->object_id != null_row) 
+				if (_item->object_path.object.row_id != null_row) 
 				{
 					relative_ptr_type class_id = _item->slice.get_class_id();
 

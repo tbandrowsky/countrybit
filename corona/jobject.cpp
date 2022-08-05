@@ -73,6 +73,27 @@ namespace corona
 			return root_object;
 		}
 
+		object_member_path actor_state::find_object_by_class(relative_ptr_type _class_id, member_path _path)
+		{
+			object_member_path omp;
+			omp.object = find_object_by_class(_class_id);
+			omp.path = _path;
+			return omp;
+		}
+
+		object_id_type actor_state::find_object_by_class(relative_ptr_type _class_id)
+		{
+			object_id_type rpt;
+			rpt.row_id = null_row;
+			auto avoiter = view_objects.where([_class_id](const  actor_view_collection::iterator_item_type& it) { return it.second.class_id == _class_id;  });
+			if (avoiter != std::end(view_objects)) {
+				const auto& temp = avoiter.get_object().second;
+				rpt.row_id = temp.object_id;
+				rpt.collection_id = temp.collection_id;
+			}
+			return rpt;
+		}
+
 		jobject actor_state::create_object(jschema* _schema, relative_ptr_type _class_id)
 		{
 			auto myclass = _schema->get_class(_class_id);

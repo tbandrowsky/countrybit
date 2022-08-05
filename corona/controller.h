@@ -143,7 +143,7 @@ namespace corona
 
 			virtual void breadcrumbs(page_item* _parent, std::function<const char* (jobject& slice)> _captioner, layout_rect _item_box = { 0.0_px, 0.0_px, 200.0_px, 100.0_px });
 
-			virtual page_item *add_update_fields(page_item* _parent, field_layout _layout, const char* _object_title);
+			virtual page_item *add_update_fields(page_item* _parent, const object_member_path& _omp, field_layout _layout, const char* _object_title);
 			virtual page_item* add_create_buttons(page_item* _parent, relative_ptr_type _style_id, layout_rect _box = { 0.0_px, 0.0_px, 250.0_px, 2.0_fntgr });
 			virtual page_item* add_select_items(page_item* _parent);
 
@@ -155,6 +155,10 @@ namespace corona
 
 			virtual void render(const rectangle& newSize) = 0;
 			virtual void render_item(drawableHost *_host, page_item& _item);
+
+			virtual void render_form(page_item* _navigation, page_item* _frame, const object_member_path& _omp, const char* _form_title);
+			virtual void render_search_page(page_item* _navigation, page_item* _frame, relative_ptr_type _canvas_uid, relative_ptr_type _search_class_id, relative_ptr_type _list_class_id, const char* _form_title, int count_fields, relative_ptr_type* _field_ids);
+
 			virtual bool drawFrame();
 			virtual bool drawItem(int _id);
 

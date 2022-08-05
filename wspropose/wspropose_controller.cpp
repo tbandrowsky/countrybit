@@ -48,228 +48,97 @@ namespace proposal
 		is just an integer, but it will be assigned as a PK as part of its class membership.
 		*/
 
-
-		idf_home = schema.put_integer_field({ {  jtype::type_int64, "home_id", "Home Id", false, true }, { 0, INT64_MAX } });
-		idf_client_root = schema.put_integer_field({ {  jtype::type_int64, "client_root", "Clients", false, true }, { 0, INT64_MAX } });
-		idf_client = schema.put_integer_field({ {  jtype::type_int64, "client_id", "Client Id", false, true }, { 0, INT64_MAX } });
-		idf_carrier_root = schema.put_integer_field({ {  jtype::type_int64, "carrier_root", "Carriers", false, true }, { 0, INT64_MAX } });
-		idf_carrier = schema.put_integer_field({ {  jtype::type_int64, "carrier_id", "Carrier Id", false, true }, { 0, INT64_MAX } });
-		idf_product_root = schema.put_integer_field({ {  jtype::type_int64, "product_root", "Products", false }, { 0, INT64_MAX } });
-		idf_product = schema.put_integer_field({ {  jtype::type_int64, "product", "product_root", false, true }, { 0, INT64_MAX } });
-		idf_coverage_root = schema.put_integer_field({ {  jtype::type_int64, "coverage_root", "Coverages", false, true }, { 0, INT64_MAX } });
-		idf_coverage = schema.put_integer_field({ {  jtype::type_int64, "coverage_id", "Coverage Id", false, true }, { 0, INT64_MAX } });
-		idf_system_root = schema.put_integer_field({ {  jtype::type_int64, "system_root", "System Settings", false, true }, { 0, INT64_MAX } });
-
-		idf_carrier_name = schema.put_string_field({ {  jtype::type_string, "carrier_name", "Carrier Name", true }, { 100, "", "" } });
-		idf_coverage_name = schema.put_string_field({ {  jtype::type_string, "coverage_name", "Coverage Name", true }, { 100, "", "" } });
-		idf_prompt = schema.put_string_field({ {  jtype::type_string, "prompt_name", "Prompt/Label", true }, { 100, "", "" } });
-
-		idf_product = schema.put_integer_field({ {  jtype::type_int64, "product_id", "Product Id", false, true }, { 0, INT64_MAX } });
-		idf_product_code = schema.put_string_field({ {  jtype::type_string, "product_code", "Code", true }, { 100, "", "" } });
-		idf_product_status = schema.put_string_field({ {  jtype::type_string, "product_status", "Status", true }, { 100, "", "" } });
-		idf_product_edition = schema.put_string_field({ {  jtype::type_string, "product_edition", "Edition", true }, { 100, "", "" } });
-		idf_product_template_type = schema.put_string_field({ {  jtype::type_string, "product_template_type", "Template Type", true }, { 100, "", "" } });
-		idf_product_line_of_business = schema.put_string_field({ {  jtype::type_string, "product_line_of_business", "Line of Business", true }, { 100, "", "" } });
-		idf_product_carrier = schema.put_string_field({ {  jtype::type_string, "product_carrier", "Carrier", true }, { 100, "", "" } });
-		idf_product_updated_by = schema.put_string_field({ {  jtype::type_string, "product_updated_by", "Updated By", true }, { 100, "", "" } });
-		idf_product_updated_date = schema.put_string_field({ {  jtype::type_string, "product_updated_date", "Updated Date", true }, { 100, "", "" } });
-		idf_product_view = schema.put_integer_field({ {  jtype::type_int64, "product_id", "Product Id", false }, { 0, INT64_MAX } });
-
-		idf_product_header = schema.put_integer_field({ {  jtype::type_int64, "product_header_id", "Product Header", false, true }, { 0, INT64_MAX } });
-		idf_product_program_header = schema.put_integer_field({ {  jtype::type_int64, "program_header_id", "Program Header", false, true }, { 0, INT64_MAX } });
-		idf_product_program_structure = schema.put_integer_field({ {  jtype::type_int64, "program_structure_id", "Program Structure", false, true }, { 0, INT64_MAX } });
-		idf_product_coverage_header = schema.put_integer_field({ {  jtype::type_int64, "coverage_header_id", "Coverage Header", false, true }, { 0, INT64_MAX } });
-		idf_product_coverage_structure = schema.put_integer_field({ {  jtype::type_int64, "coverage_structure_id", "Coverage Structure", false, true }, { 0, INT64_MAX } });
-	
-		idf_product_psi_base = schema.put_integer_field({ {  jtype::type_int64, "psi_base_id", "Product Structure Item Id", false }, { 0, INT64_MAX } });
-		idf_product_phi_base = schema.put_integer_field({ {  jtype::type_int64, "phi_base_id", "Product Header Item Id", false }, { 0, INT64_MAX } });
-		idf_product_csi_base = schema.put_integer_field({ {  jtype::type_int64, "csi_base_id", "Coverage Structure Item Id", false }, { 0, INT64_MAX } });
-		idf_product_chi_base = schema.put_integer_field({ {  jtype::type_int64, "chi_base_id", "Coverage Header Item Id", false }, { 0, INT64_MAX } });
-
-		/*
-		* Here we are going to specify a set of fields that may be used to create a program item.
-		* A model in Corona is a way to tie together objects that are affiliated but necessarily members per se, although syntactical
-		* sugar will be introduced to make it -seem- that way.
-		*/
-
-		idf_inception = schema.put_time_field({ {  jtype::type_datetime, "inception", "Inception" }, { 0, INT64_MAX } });
-		idf_expiration = schema.put_time_field({ {  jtype::type_datetime, "expiration", "Expiration" }, { 0, INT64_MAX } });
-		idf_status = schema.put_integer_field({ {  jtype::type_int32, "status", "Status" }, { 0, INT64_MAX } });
-		idf_attachment = schema.put_double_field({ {  jtype::type_float32, "attachment", "Attachment" }, { 0.0, 1E10 } });
-		idf_limit = schema.put_double_field({ {  jtype::type_float32, "limit", "Limit" }, { 0.0, 1E10 } });
-		idf_deductible = schema.put_double_field({ {  jtype::type_float32, "deductible", "Deductible" }, { 0.0, 1E10 } });
-		idf_share = schema.put_double_field({ {  jtype::type_float32, "share", "Share %" }, { 0.0, 100 } });
-		idf_comment = schema.put_string_field({ {  jtype::type_string, "comment", "Comment" }, { 500, "", "", } });
-
-		/*
-		Now that we have our fields, we can make our classes.
-		*/
-
-		/*
-		We have a class object to represent our application states and objects with respect to this model.  We supply a class name, description, a list
-		of member fields, and then, a primary key.  We call put_class to upsert the class, and the class id is returned for easy reference.
-		The schema can also be searched by the class_name to find the class.
-		*/
-
 		/* This is the application home class.  It is just a place holder now */
 		pcr.class_name = "home";
 		pcr.class_description = "HOME";
-		pcr.field_id_primary_key = idf_home;
-		pcr.member_fields = { idf_home, schema.idf_style_id };
+		pcr.auto_primary_key = true;
+		pcr.member_fields = { schema.idf_style_id };
 		idc_home = schema.put_class(pcr);
-
-		/* This is the client root class. Objects of the class have a layout and accept the client home id as a relation.  There is also
-		a standard search string field, for searching for clients and keeping the search state. */
-		pcr.class_name = "client_root";
-		pcr.class_description = "Client";
-		pcr.field_id_primary_key = idf_client_root;
-		pcr.member_fields = { idf_client_root, idf_home, schema.idf_search_string, schema.idf_style_id };
-		idc_client_root = schema.put_class(pcr);
-
-		/* This is the client class. Objects of the class have client things like name and address.  The primary key is the
-		field id idf_client, which is populated when objects of this class are constructed. . */
-
-		pcr.class_name = "client";
-		pcr.class_description = "Client";
-		pcr.field_id_primary_key = idf_client;
-		pcr.member_fields = { idf_client, idf_client_root, schema.idf_name, schema.idf_street, schema.idf_city, schema.idf_state, schema.idf_postal, schema.idf_email, schema.idf_url };
-		idc_client = schema.put_class(pcr);
-
-		/* This is the carrier root class. Objects of the class have a layout and accept the idf_home as a relation and have a primary key
-		that is auto-opulated at object load time.  There is also
-			a standard search string field, for searching for clients and keeping the search state. */
 
 		pcr.class_name = "carrier_root";
 		pcr.class_description = "Carriers";
-		pcr.field_id_primary_key = idf_carrier_root;
-		pcr.member_fields = { idf_carrier_root, idf_home, schema.idf_search_string, schema.idf_style_id };
+		pcr.auto_primary_key = true;
+		pcr.member_fields = { schema.get_primary_key(idc_home), schema.idf_search_string, schema.idf_style_id };
 		idc_carrier_root = schema.put_class(pcr);
-
-		/* This is the carrier class. Objects of the class have client things like name and address.  The primary key is the
-field id idf_carrier, which is populated when objects of this class are constructed. . */
 
 		pcr.class_name = "carrier";
 		pcr.class_description = "Carrier";
-		pcr.field_id_primary_key = idf_carrier;
-		pcr.member_fields = { idf_carrier, idf_carrier_root, schema.idf_name, schema.idf_street, schema.idf_city, schema.idf_state, schema.idf_postal, schema.idf_email, schema.idf_url };
+		pcr.auto_primary_key = true;
+		pcr.member_fields = { schema.get_primary_key(idc_carrier_root), schema.idf_name, schema.idf_street, schema.idf_city, schema.idf_state, schema.idf_postal, schema.idf_email, schema.idf_url };
 		idc_carrier = schema.put_class(pcr);
 
 		pcr.class_name = "coverage_root";
 		pcr.class_description = "Coverages";
-		pcr.field_id_primary_key = idf_coverage_root;
-		pcr.member_fields = { idf_coverage_root, idf_home, schema.idf_search_string, schema.idf_style_id };
+		pcr.auto_primary_key = true;
+		pcr.member_fields = { schema.get_primary_key(idc_home), schema.idf_search_string, schema.idf_style_id };
 		idc_coverage_root = schema.put_class(pcr);
 
 		pcr.class_name = "coverage";
 		pcr.class_description = "Coverage";
-		pcr.field_id_primary_key = idf_carrier;
-		pcr.member_fields = { idf_coverage, idf_coverage_root, schema.idf_name };
+		pcr.auto_primary_key = true;
+		pcr.member_fields = { schema.get_primary_key(idc_coverage_root), schema.idf_name };
 		idc_coverage = schema.put_class(pcr);
+
+		/* This is the client root class. Objects of the class have a layout and accept the client home id as a relation.  There is also
+		a standard search string field, for searching for clients and keeping the search state. */
+		pcr.class_name = "client_root";
+		pcr.class_description = "Clients";
+		pcr.auto_primary_key = true;
+		pcr.member_fields = { schema.get_primary_key(idc_home), schema.idf_search_string, schema.idf_style_id };
+		idc_client_root = schema.put_class(pcr);
+		
+		pcr.class_name = "client";
+		pcr.class_description = "Client";
+		pcr.auto_primary_key = true;
+		pcr.member_fields = { schema.get_primary_key(idc_client_root), schema.idf_name, schema.idf_street, schema.idf_city, schema.idf_state, schema.idf_postal, schema.idf_email, schema.idf_url };
+		idc_client = schema.put_class(pcr);
+
+		pcr.class_name = "program";
+		pcr.class_description = "Program";
+		pcr.auto_primary_key = true;
+		pcr.member_fields = { schema.get_primary_key(idc_client), schema.idf_name };
+		idc_program = schema.put_class(pcr);
+
+		pcr.class_name = "program_item";
+		pcr.class_description = "Program Item";
+		pcr.auto_primary_key = true;
+		pcr.member_fields = { schema.get_primary_key(idc_program), schema.idf_name };
+		idc_program_item = schema.put_class(pcr);
+
+		relative_ptr_type idf_insurance_carrier = schema.put_string_field({ {  jtype::type_string, "insurance_carrier", "Carrier" }, { 500, "", "", } });
+		relative_ptr_type idf_insurance_inception = schema.put_time_field({ {  jtype::type_datetime, "insurance_inception", "Inception Dt" }, { 0, INT64_MAX } });
+		relative_ptr_type idf_insurance_expiration = schema.put_time_field({ {  jtype::type_datetime, "insurance_expiration", "Expiration Dt" }, { 0, INT64_MAX } });
+		relative_ptr_type idf_insurance_attachment = schema.put_double_field({ {  jtype::type_float32, "insurance_attachment", "Attachment $" }, { 0.0, 1E10 } });
+		relative_ptr_type idf_insurance_limit = schema.put_double_field({ {  jtype::type_float32, "insurance_limit", "Limit $" }, { 0.0, 1E10 } });
+		relative_ptr_type idf_insurance_premium = schema.put_double_field({ {  jtype::type_float32, "insurance_premium", "Premium $" }, { 0.0, 1E10 } });
+		relative_ptr_type idf_insurance_deductible = schema.put_double_field({ {  jtype::type_float32, "insurance_deductible", "Deductible $" }, { 0.0, 1E10 } });
+		relative_ptr_type idf_insurance_share = schema.put_double_field({ {  jtype::type_float32, "insurance_share", "Share %" }, { 0.0, 100 } });
+		relative_ptr_type idf_insurance_comment = schema.put_string_field({ {  jtype::type_string, "insurance_comment", "Comment" }, { 500, "", "", } });
+		relative_ptr_type idf_insurance_coverage = schema.put_integer_field({ {  jtype::type_int64, "product_insurance", "Insurance Product", false }, { 0, INT64_MAX } });
+
+		pcr.class_name = "insurance_item";
+		pcr.class_description = "Insurance Item";
+		pcr.auto_primary_key = false;
+		pcr.base_class_id = idc_program_item;
+		pcr.member_fields = { idf_insurance_carrier, idf_insurance_inception, idf_insurance_expiration, idf_insurance_comment, idf_insurance_premium };
+		idc_program_insurance = schema.put_class(pcr);
+
+		relative_ptr_type idf_insurance_coverage_name = schema.put_string_field({ {  jtype::type_string, "insurance_coverage_name", "Coverage", false }, { 50 } });
+		relative_ptr_type idf_insurance_coverage_comment = schema.put_string_field({ {  jtype::type_string, "insurance_coverage_comment", "Comment", false }, { 250 } });
+		relative_ptr_type idf_insurance_coverage_color = schema.put_color_field({ {  jtype::type_string, "insurance_coverage_color", "Color", false } });
+		pcr.class_name = "insurance_item_coverage";
+		pcr.class_description = "Item Coverage";
+		pcr.auto_primary_key = true;
+		pcr.member_fields = { schema.get_primary_key(idc_program_item), schema.get_primary_key(idc_coverage), 
+								idf_insurance_attachment, idf_insurance_limit, idf_insurance_deductible, idf_insurance_share		
+							};
+		idc_program_insurance_coverage = schema.put_class(pcr);
 
 		pcr.class_name = "system_root";
 		pcr.class_description = "System";
-		pcr.field_id_primary_key = idf_system_root;
-		pcr.member_fields = { idf_system_root, idf_home, schema.idf_search_string, schema.idf_style_id };
+		pcr.auto_primary_key = true;
+		pcr.member_fields = { schema.get_primary_key(idc_home), schema.idf_search_string, schema.idf_style_id };
 		idc_system_root = schema.put_class(pcr);
-
-		pcr.class_name = "products";
-		pcr.class_description = "Products";
-		pcr.field_id_primary_key = idf_product_root;
-		pcr.member_fields = { idf_product_root, idf_home, schema.idf_search_string, schema.idf_style_id };
-		idc_product_root = schema.put_class(pcr);
-
-		pcr.class_name = "product";
-		pcr.class_description = "Product";
-		pcr.field_id_primary_key = idf_product;
-		pcr.member_fields = { idf_product_root,
-							  idf_product };
-		idc_product = schema.put_class(pcr);
-
-		pcr.class_name = "product_header";
-		pcr.class_description = "Product Header";
-		pcr.field_id_primary_key = idf_product_header;
-		pcr.member_fields = { idf_product_header, idf_product, schema.idf_name,
-							  idf_product_code,
-							  idf_product_status,
-							  idf_product_edition,
-							  idf_product_template_type,
-							  idf_product_line_of_business,
-							  idf_product_carrier,
-							  idf_product_view,
-							  idf_product_updated_by,
-							  idf_product_updated_date };
-		idc_product_header = schema.put_class(pcr);
-
-		pcr.class_name = "product_program_header";
-		pcr.class_description = "Program Header";
-		pcr.field_id_primary_key = idf_product_program_header;
-		pcr.member_fields = { idf_product_program_header, idf_product };
-		idc_product_program_header = schema.put_class(pcr);
-
-		pcr.class_name = "product_program_structure";
-		pcr.class_description = "Program Structure";
-		pcr.field_id_primary_key = idf_product_program_structure;
-		pcr.member_fields = { idf_product_program_structure, idf_product };
-		idc_product_program_structure = schema.put_class(pcr);
-
-		pcr.class_name = "product_coverage_header";
-		pcr.class_description = "Coverage Header";
-		pcr.field_id_primary_key = idf_product_coverage_header;
-		pcr.member_fields = { idf_product_coverage_header, idf_product };
-		idc_product_coverage_header = schema.put_class(pcr);
-
-		pcr.class_name = "product_coverage_structure";
-		pcr.class_description = "Coverage Structure";
-		pcr.field_id_primary_key = idf_product_coverage_structure;
-		pcr.member_fields = { idf_product_coverage_structure, idf_product  };
-		idc_product_coverage_structure = schema.put_class(pcr);
-
-		pcr.class_name = "product_phi_base";
-		pcr.class_description = "Program Header Item";
-		pcr.field_id_primary_key = idf_product_phi_base;
-		pcr.member_fields = { idf_product_phi_base, idf_product_program_header, idf_product, schema.idf_name, schema.idf_field_description };
-		idc_product_phi_base = schema.put_class(pcr);
-
-		pcr.class_name = "product_psi_base";
-		pcr.class_description = "Program Structure Item";
-		pcr.field_id_primary_key = idf_product_psi_base;
-		pcr.member_fields = { idf_product_psi_base, idf_product_program_structure, idf_product, schema.idf_name, schema.idf_field_description };
-		idc_product_psi_base = schema.put_class(pcr);
-
-		pcr.class_name = "product_chi_base";
-		pcr.class_description = "Coverage Header Item";
-		pcr.field_id_primary_key = idf_product_chi_base;
-		pcr.member_fields = { idf_product_chi_base, idf_product_coverage_header, idf_product, schema.idf_name, schema.idf_field_description };
-		idc_product_chi_base = schema.put_class(pcr);
-
-		pcr.class_name = "product_csi_base";
-		pcr.class_description = "Coverage Structure Item";
-		pcr.field_id_primary_key = idf_product_csi_base;
-		pcr.member_fields = { idf_product_csi_base, idf_product_coverage_structure, idf_product, schema.idf_name, schema.idf_field_description };
-		idc_product_csi_base = schema.put_class(pcr);
-
-		relative_ptr_type bases[4] = { idc_product_phi_base, idc_product_psi_base, idc_product_chi_base, idc_product_csi_base  };
-		relative_ptr_type pks[4] = { idf_product_phi_base, idf_product_psi_base, idf_product_chi_base, idf_product_csi_base };
-		const char* base_names[4] = { "product_phi", "product_psi", "product_chi", "product_csi" };
-		const char* item_descriptions[4] = { "Text Field", "Number Field", "Date Field", "Image Field" };
-		const char* item_names[4] = { "_text", "_number", "_date", "_image" };
-
-		for (int i = 0; i < 4; i++)
-		{
-			auto bid = bases[i];
-			object_name name;
-			name = base_names[i];
-			for (int j = 0; j < 4; j++)
-			{
-				name += item_names[j];
-				pcr.class_name = name;
-				pcr.class_description = name;
-				pcr.field_id_primary_key = pks[i];
-				pcr.member_fields = { idf_prompt };
-				pcr.base_class_id = bases[i];
-				schema.put_class(pcr);
-			}
-		}
 
 		jmodel jm;
 
@@ -283,7 +152,7 @@ field id idf_carrier, which is populated when objects of this class are construc
 		jm.update_when(&schema, {}, idc_product_program_structure, {});
 		jm.update_when(&schema, {}, idc_product_coverage_header, {});
 		jm.update_when(&schema, {}, idc_product_coverage_structure, {});
-		jm.update_when(&schema, {}, idc_product_phi_base, {});
+		jm.update_when(&schema, {}, idc_product_phi_base, {});	
 		jm.update_when(&schema, {}, idc_product_chi_base, {});
 		jm.update_when(&schema, {}, idc_product_psi_base, {});
 		jm.update_when(&schema, {}, idc_product_csi_base, {});
@@ -341,16 +210,6 @@ field id idf_carrier, which is populated when objects of this class are construc
 		vo_product.view_queries.push_back(vq_navigation);
 		vo_product.view_queries.push_back(vq_product_header);
 		jm.select_when(&schema, { idc_product_root }, idc_product, {}, {}, {});
-
-		jm.select_when(&schema, { idc_product }, idc_product_header, {}, {}, {});
-		jm.select_when(&schema, { idc_product }, idc_product_program_header, {}, {}, {});
-		jm.select_when(&schema, { idc_product }, idc_product_program_structure, {}, {}, {});
-		jm.select_when(&schema, { idc_product }, idc_product_coverage_header, {}, {}, {});
-		jm.select_when(&schema, { idc_product }, idc_product_coverage_structure, {}, {}, {});
-		jm.select_when(&schema, {}, idc_product_phi_base, {}, {}, {});
-		jm.select_when(&schema, {}, idc_product_chi_base, {}, {}, {});
-		jm.select_when(&schema, {}, idc_product_psi_base, {}, {}, {});
-		jm.select_when(&schema, {}, idc_product_csi_base, {}, {}, {});
 
 		view_options vo_coverage_root;
 		vo_coverage_root.use_view = true;
@@ -492,24 +351,6 @@ field id idf_carrier, which is populated when objects of this class are construc
 		text(footer_bar, schema.idf_artist_title_style, _subtitle);
 	}
 
-	void wsproposal_controller::render_form(page_item* _navigation, page_item *_frame, const char *_form_title)
-	{
-		_frame->windowsRegion = true;
-		add_update_fields(_frame, field_layout::label_on_left, _form_title);
-		space(_navigation, schema.idf_button_style, { 0.0_px, 0.0_px, 100.0_pct, 32.0_px });
-		text(_navigation, schema.idf_label_style, "Create", {0.0_px, 0.0_px, 100.0_pct, 32.0_px});
-		add_create_buttons(_navigation, schema.idf_button_style, { 0.0_px, 0.0_px, 100.0_pct, 32.0_px });
-	}
-
-	void wsproposal_controller::render_search_page(page_item* _navigation, page_item* _contents, relative_ptr_type _class_id, const char* _form_title, int count_fields, relative_ptr_type *_field_ids)
-	{
-		auto form_search = row(_contents, null_row, { 0.0_px, 0.0_px, 100.0_pct, 25.0_px });
-		add_update_fields(form_search, field_layout::label_on_left, _form_title);
-		auto form_table = canvas2d_column(id_canvas_form_table_a, _contents, schema.idf_view_background_style);
-		search_table(form_table, _class_id, _field_ids, count_fields);
-		text(_navigation, schema.idf_label_style, "Create", { 0.0_px, 0.0_px, 100.0_pct, 32.0_px });
-		add_create_buttons(_navigation, schema.idf_button_style, { 0.0_px, 0.0_px, 100.0_pct, 32.0_px });
-	}
 
 	void wsproposal_controller::render_home()
 	{

@@ -2860,7 +2860,7 @@ namespace corona
 				case database::layout_types::field:
 					{
 						database::istring<256> x;
-						auto slice = _collection.get_object(pi.object_id);
+						auto slice = _collection.get_object(pi.object_path);
 						int idx = slice.get_field_index_by_id(pi.field->field_id);
 						switch (pi.field->type_id)
 						{

@@ -774,6 +774,7 @@ namespace corona
 			relative_ptr_type	item_id;
 			relative_ptr_type	template_item_id;
 			bool				select_on_create;
+			collection_id_type get_collection_id() { return collection_id; }
 		};
 
 		class actor_view_object
@@ -797,6 +798,7 @@ namespace corona
 			actor_id_type		actor_id;
 			relative_ptr_type	object_id;
 			bool				extend;
+			collection_id_type get_collection_id() { return collection_id; }
 		};
 
 		class delete_selected_request
@@ -804,6 +806,7 @@ namespace corona
 		public:
 			collection_id_type	collection_id;
 			actor_id_type		actor_id;
+			collection_id_type get_collection_id() { return collection_id; }
 		};
 
 		class update_object_request
@@ -812,6 +815,7 @@ namespace corona
 			object_member_path	path;
 			actor_id_type		actor_id;
 			jobject				item;
+			collection_id_type get_collection_id() { return path.object.collection_id; }
 		};
 
 		using filtered_object_id_list = list_box<relative_ptr_type>;
@@ -947,6 +951,8 @@ namespace corona
 			jobject copy_object(jschema* _schema, jobject& _src);
 			actor_view_object get_modified_object();
 			jobject get_object(object_member_path _path);
+			object_member_path find_object_by_class(relative_ptr_type _class_id, member_path _path);
+			object_id_type find_object_by_class(relative_ptr_type _class_id);
 
 			create_object_request create_create_request(relative_ptr_type _class_id)
 			{
@@ -2039,6 +2045,18 @@ namespace corona
 				if (request.field_id_primary_key < 0)
 					request.field_id_primary_key = null_row;
 
+				if (request.auto_primary_key) 
+				{
+					put_integer_field_request pifr;
+					pifr.name.name = "key_" + request.class_name;
+					pifr.name.description = "primary key for " + request.class_name;
+					pifr.name.is_key = true;
+					pifr.options.minimum_int = INT64_MIN;
+					pifr.options.maximum_int = INT64_MAX;
+					request.field_id_primary_key = put_integer_field(pifr);
+					request.member_fields.push_back(request.field_id_primary_key);
+				}
+
 				auto& mfs = request.member_fields;
 
 				for (auto mfi : mfs)
@@ -2056,7 +2074,7 @@ namespace corona
 				
 				jclass_field pk_field = { null_row, 0 };
 
-				if (request.template_class_id != null_row && request.base_class_id != null_row)
+				if (request.base_class_id != null_row)
 				{
 					relative_ptr_type base_class_id = request.base_class_id;
 
@@ -2135,6 +2153,14 @@ namespace corona
 					if (cls.detail(i).field_id == field_id) return true;
 				}
 				return false;
+			}
+
+			relative_ptr_type get_primary_key(relative_ptr_type class_id)
+			{
+				auto cls = classes[class_id];
+				relative_ptr_type key_idx = cls.item().primary_key_idx;
+				if (key_idx < 0) return null_row;
+				return cls.detail(key_idx).field_id;
 			}
 
 			void put_model(jmodel request)
