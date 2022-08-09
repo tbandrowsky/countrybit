@@ -165,20 +165,20 @@ namespace proposal
 
 		vq_clients.classes = { idc_client };
 		vq_clients.query_name = "clients";
-		auto comp = vq_client.parameters.append();
+		comp = vq_client.parameters.append();
 		comp->comparison = comparisons::eq;
 		comp->field_id_source = schema.get_primary_key(idc_client);
 		comp->field_id_target = schema.get_primary_key(idc_client);
 
 		vq_coverages.classes = { idc_coverage };
 		vq_coverages.query_name = "coverages";
-		auto comp = vq_coverages.parameters.append();
+		comp = vq_coverages.parameters.append();
 		comp->comparison = comparisons::eq;
 		comp->field_id_source = schema.get_primary_key(idc_coverage);
 		comp->field_id_target = schema.get_primary_key(idc_coverage);
 
 		vq_client.classes = { idc_client, idc_program };
-		auto comp = vq_client.parameters.append();
+		comp = vq_client.parameters.append();
 		comp->comparison = comparisons::eq;
 		comp->field_id_source = schema.get_primary_key(idc_client);
 		comp->field_id_target = schema.get_primary_key(idc_client);
@@ -186,7 +186,7 @@ namespace proposal
 
 		vq_program.classes = { idc_program, idc_program_item, idc_program_insurance_coverage };
 		vq_program.query_name = "program";
-		auto comp = vq_program.parameters.append();
+		comp = vq_program.parameters.append();
 		comp->comparison = comparisons::eq;
 		comp->field_id_source = schema.get_primary_key(idc_program);
 		comp->field_id_target = schema.get_primary_key(idc_program);

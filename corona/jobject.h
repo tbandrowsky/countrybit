@@ -2144,12 +2144,11 @@ namespace corona
 					auto field_id = pcr.detail(i).field_id;
 					if (field_id == request.field_id_primary_key) {
 						p.primary_key_idx = i;
-						
-					}
-					auto fld = get_field(field_id);
-					if (!fld.is_key) 
-					{
-						throw std::invalid_argument("Primary key field specified is not marked as a key field");
+						auto fld = get_field(field_id);
+						if (!fld.is_key)
+						{
+							throw std::invalid_argument("Primary key field specified is not marked as a key field");
+						}
 					}
 				}
 

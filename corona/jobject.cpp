@@ -3699,10 +3699,10 @@ namespace corona
 				{ { jtype::type_int64, "int_start", "Min. Value" }, 0, INT64_MAX },
 				{ { jtype::type_int64, "int_stop", "Max. Value" }, 0, INT64_MAX },
 				{ { jtype::type_int64, "text_style", "Text Style" }, 0, INT64_MAX },
-				{ { jtype::type_int64, "style_sheet", "Style Sheet" }, 0, INT64_MAX },
-				{ { jtype::type_int64, "user_class_root", "User Classes" }, 0, INT64_MAX },
-				{ { jtype::type_int64, "user_class", "User Class" }, 0, INT64_MAX },
-				{ { jtype::type_int64, "user_field", "User Field" }, 0, INT64_MAX },
+				{ { jtype::type_int64, "style_sheet", "Style Sheet", false, true }, 0, INT64_MAX },
+				{ { jtype::type_int64, "user_class_root", "User Classes", false, true }, 0, INT64_MAX },
+				{ { jtype::type_int64, "user_class", "User Class", false, true }, 0, INT64_MAX },
+				{ { jtype::type_int64, "user_field", "User Field", false, true }, 0, INT64_MAX },
 				{ { jtype::type_int16, "field_type", "Field Type" }, 0, INT64_MAX },
 				{ { jtype::type_int64, "user_class_class_id", "User Class Id" }, 0, INT64_MAX },
 				{ { jtype::type_int64, "base_class_id", "Base Class Id" }, 0, INT64_MAX },
@@ -4011,6 +4011,7 @@ namespace corona
 			idf_album_about_style = find_field("album_about_style");
 			idf_artist_about_style = find_field("artist_about_style");
 
+			idf_user_class_root = find_field("user_class_root");
 			idf_field_type = find_field("field_type");
 			idf_string_options = find_field("string_options");
 			idf_double_options = find_field("double_options");
@@ -4089,8 +4090,9 @@ namespace corona
 
 			pcr.class_name = "user_field";
 			pcr.class_description = "User field specification";
-			pcr.member_fields = { idf_user_field, idf_field_name, idf_field_description, idf_field_format, idf_string_options, idf_double_options, idf_date_options, idf_int_options, idf_object_options };
-			pcr.field_id_primary_key = idf_user_field;
+			pcr.member_fields = { idf_field_name, idf_field_description, idf_field_format, idf_string_options, idf_double_options, idf_date_options, idf_int_options, idf_object_options };
+			pcr.auto_primary_key = true;
+			pcr.field_id_primary_key = -1;
 			idc_user_field = put_class(pcr);
 
 			put_object_field_request user_field_list_def =
@@ -4099,8 +4101,9 @@ namespace corona
 
 			pcr.class_name = "user_class";
 			pcr.class_description = "Custom class created by user";
-			pcr.member_fields = { idf_user_class, idf_base_class_id, idf_user_class_root, idf_user_class_class_name, idf_user_class_class_id, idf_user_field_list };
-			pcr.field_id_primary_key = idf_user_class;
+			pcr.member_fields = { idf_base_class_id, idf_user_class_root, idf_user_class_class_name, idf_user_class_class_id, idf_user_field_list };
+			pcr.auto_primary_key = true;
+			pcr.field_id_primary_key = -1;
 			idc_user_class = put_class(pcr);
 
 			// TODO, these will have to be added later
