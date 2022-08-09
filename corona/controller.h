@@ -65,9 +65,29 @@ namespace corona
 			viewRunning
 		};
 
-		struct advertisement {
+		struct advertisement 
+		{
 			std::string url;
 			std::string description;
+		};
+
+		struct table_column 
+		{
+		public:
+			object_name			title;
+			object_name			subtitle;
+			measure				width;
+			relative_ptr_type	field_id;
+		};
+
+		struct table_options 
+		{
+		public:
+			view_query				  *data;
+			bool					  alternating_row;
+			measure					  header_height;
+			measure					  row_height;
+			std::vector<table_column> columns;
 		};
 
 		class corona_controller : public controller
@@ -147,7 +167,7 @@ namespace corona
 			virtual page_item* add_create_buttons(page_item* _parent, relative_ptr_type _style_id, layout_rect _box = { 0.0_px, 0.0_px, 250.0_px, 2.0_fntgr });
 			virtual page_item* add_select_items(page_item* _parent);
 
-			void search_table(page_item* _parent, relative_ptr_type _idc_class_id, relative_ptr_type* _idf_child_fields, int _num_child_fields);
+			void table(page_item* _parent, table_options& _options);
 
 			void arrange(double width, double height, jobject& _style_sheet, double padding = 0.0);
 

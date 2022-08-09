@@ -953,6 +953,7 @@ namespace corona
 			jobject get_object(object_member_path _path);
 			object_member_path find_object_by_class(relative_ptr_type _class_id, member_path _path);
 			object_id_type find_object_by_class(relative_ptr_type _class_id);
+			object_member_path find_selected( relative_ptr_type _class_id );
 
 			create_object_request create_create_request(relative_ptr_type _class_id)
 			{
@@ -1013,7 +1014,7 @@ namespace corona
 #endif
 			}
 
-			filtered_actor_view_object_list get_actor_view_object_list(const object_name& _name)
+			filtered_actor_view_object_list get_view_query_avo(const object_name& _name)
 			{
 				filtered_actor_view_object_list ret_value;
 				ret_value = filtered_actor_view_object_list::create(&data);
@@ -1029,7 +1030,12 @@ namespace corona
 				return ret_value;
 			}
 
-			filtered_object_list get_object_list(const object_name& _name)
+			filtered_actor_view_object_list get_view_query_avo(view_query& vq)
+			{
+				return get_view_query_avo(vq.query_name);
+			}
+
+			filtered_object_list get_view_query_obj(const object_name& _name)
 			{
 				filtered_object_list ret_value;
 				ret_value = filtered_object_list::create(&data);
@@ -1043,6 +1049,11 @@ namespace corona
 					}
 				}
 				return ret_value;
+			}
+
+			filtered_object_list get_view_query_obj(view_query& vq)
+			{
+				return get_view_query_obj(vq.query_name);
 			}
 
 		};

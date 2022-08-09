@@ -413,51 +413,54 @@ namespace corona
 			return pg.canvas2d_absolute(_canvas_uid, _parent, _style_id, _box);
 		}
 
-		void corona_controller::search_table(page_item* _parent, relative_ptr_type _idc_class_id, relative_ptr_type* _idf_child_fields, int _num_child_fields)
+		void corona_controller::table(page_item* _parent, table_options& _options)
 		{
 			page_item* table_container = column(_parent, null_row);
-			page_item* drow = row(table_container, null_row);
+
+			page_item* header_row = row(table_container, null_row);
 			layout_rect row_size;
 
-			std::vector<layout_rect> columns;
-
-			for (int i = 0; i < _num_child_fields; i++)
+			for (auto col : _options.columns)
 			{
-				auto field_spec = schema.get_field(_idf_child_fields[i]);
-				auto layout = schema.get_layout(_idf_child_fields[i]);
-				columns.push_back(layout);
+				auto field_spec = schema.get_field(col.field_id);
+				layout_rect layout;
+				layout.x = 0.0_px;
+				layout.y = 0.0_px;
+				layout.width = col.width;
+				layout.height = _options.header_height;
 				if (field_spec.is_string())
-					text(drow, schema.idf_column_text_head_style, field_spec.description, layout);
+					text(header_row, schema.idf_column_text_head_style, col.title, layout);
 				else
-					text(drow, schema.idf_column_number_head_style, field_spec.description, layout);
+					text(header_row, schema.idf_column_number_head_style, col.title, layout);
 			}
 
-			row_size.height = columns[0].height;
+			row_size.height = _options.header_height;
 			row_size.width = 100.0_pct;
 			row_size.x = 0.0_px;
 			row_size.y = 0.0_px;
-			drow->box = row_size;
+			header_row->box = row_size;
 
 			auto* pout = &std::cout;
 
-			auto svo = state.view_objects.where([this, _idc_class_id](const actor_view_collection::iterator_item_type& _item) {
-				return user_collection.matches_class_id(_item.second.object, _idc_class_id);
-				});
+			auto svo = state.get_view_query_avo_results(*_options.data);
 
 			for (auto avo : svo)
 			{
-				drow = row(table_container, null_row, row_size);
-				std::cout << "row:" << std::endl;
+				page_item* data_row = row(table_container, null_row, row_size);
 
-				for (int i = 0; i < _num_child_fields; i++)
+				for (auto col : _options.columns)
 				{
-					auto field_spec = schema.get_field(_idf_child_fields[i]);
-					auto layout = columns[i];
-					const char* value = avo.second.object.get(field_spec.field_id);
+					auto field_spec = schema.get_field(col.field_id);
+					layout_rect layout;
+					layout.x = 0.0_px;
+					layout.y = 0.0_px;
+					layout.width = col.width;
+					layout.height = _options.row_height;
+					const char* value = avo.object.get(field_spec.field_id);
 					if (field_spec.is_string())
-						select_cell(drow, &state, avo.second.object_id, avo.second.object, value, schema.idf_column_text_style, layout);
+						select_cell(data_row, &state, avo.object_id, avo.object, value, schema.idf_column_text_style, layout);
 					else
-						select_cell(drow, &state, avo.second.object_id, avo.second.object, value, schema.idf_column_number_style, layout);
+						select_cell(data_row, &state, avo.object_id, avo.object, value, schema.idf_column_number_style, layout);
 				}
 			}
 		}

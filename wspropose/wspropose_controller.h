@@ -16,10 +16,6 @@ namespace proposal
 		corona::database::relative_ptr_type idc_program_insurance;
 		corona::database::relative_ptr_type idc_program_insurance_coverage;
 
-		corona::database::relative_ptr_type idc_slide_show;
-		corona::database::relative_ptr_type idc_text_slide;
-		corona::database::relative_ptr_type idc_title_slide;
-		corona::database::relative_ptr_type idc_program_slide;
 		corona::database::relative_ptr_type idc_carrier_root;
 		corona::database::relative_ptr_type idc_carrier;
 		corona::database::relative_ptr_type idc_coverage_root;
@@ -35,10 +31,10 @@ namespace proposal
 
 		view_query vq_navigation;
 		view_query vq_carriers;
-		view_query vq_products;
 		view_query vq_clients;
 		view_query vq_coverages;
-		view_query vq_product_header;
+		view_query vq_client;
+		view_query vq_program;
 
 		const char* application_title = "PROOFS OF CONCEPT";
 		const char* application_author = "WOODRUFF SAWYER";
@@ -57,8 +53,6 @@ namespace proposal
 		void render_client();
 		void render_coverage_root();
 		void render_coverage();
-		void render_product_root();
-		void render_product();
 		void render_carrier_root();
 		void render_system_root();
 		void render_carrier();
@@ -67,11 +61,10 @@ namespace proposal
 		void render_home_contents(page_item *_navigation, page_item* _contents);
 		void render_client_root_contents(page_item* _navigation, page_item* _contents);
 		void render_client_contents(page_item* _navigation, page_item* _contents);
+		void render_program_contents(page_item* _navigation, page_item* _contents);
 		void render_coverage_root_contents(page_item* _navigation, page_item* _contents);
-		void render_system_root_contents(page_item* _navigation, page_item* _contents);
 		void render_coverage_contents(page_item* _navigation, page_item* _contents);
-		void render_product_root_contents(page_item* _navigation, page_item* _contents);
-		void render_product_contents(page_item* _navigation, page_item* _contents);
+		void render_system_root_contents(page_item* _navigation, page_item* _contents);
 		void render_carrier_root_contents(page_item* _navigation, page_item* _contents);
 		void render_carrier_contents(page_item* _navigation, page_item* _contents);
 

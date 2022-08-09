@@ -114,7 +114,6 @@ namespace proposal
 		relative_ptr_type idf_insurance_deductible = schema.put_double_field({ {  jtype::type_float32, "insurance_deductible", "Deductible $" }, { 0.0, 1E10 } });
 		relative_ptr_type idf_insurance_share = schema.put_double_field({ {  jtype::type_float32, "insurance_share", "Share %" }, { 0.0, 100 } });
 		relative_ptr_type idf_insurance_comment = schema.put_string_field({ {  jtype::type_string, "insurance_comment", "Comment" }, { 500, "", "", } });
-		relative_ptr_type idf_insurance_coverage = schema.put_integer_field({ {  jtype::type_int64, "product_insurance", "Insurance Product", false }, { 0, INT64_MAX } });
 
 		pcr.class_name = "insurance_item";
 		pcr.class_description = "Insurance Item";
@@ -130,7 +129,7 @@ namespace proposal
 		pcr.class_description = "Item Coverage";
 		pcr.auto_primary_key = true;
 		pcr.member_fields = { schema.get_primary_key(idc_program_item), schema.get_primary_key(idc_coverage), 
-								idf_insurance_attachment, idf_insurance_limit, idf_insurance_deductible, idf_insurance_share		
+								idf_insurance_coverage_name, idf_insurance_coverage_color, idf_insurance_coverage_comment, idf_insurance_attachment, idf_insurance_limit, idf_insurance_deductible, idf_insurance_share
 							};
 		idc_program_insurance_coverage = schema.put_class(pcr);
 
@@ -145,31 +144,20 @@ namespace proposal
 		jm.update_when(&schema, {}, idc_home, {});
 		jm.update_when(&schema, {}, idc_carrier_root, {});
 		jm.update_when(&schema, {}, idc_carrier, {});
-		jm.update_when(&schema, {}, idc_product_root, {});
-		jm.update_when(&schema, {}, idc_product, {});
-		jm.update_when(&schema, {}, idc_product_header, {});
-		jm.update_when(&schema, {}, idc_product_program_header, {});
-		jm.update_when(&schema, {}, idc_product_program_structure, {});
-		jm.update_when(&schema, {}, idc_product_coverage_header, {});
-		jm.update_when(&schema, {}, idc_product_coverage_structure, {});
-		jm.update_when(&schema, {}, idc_product_phi_base, {});	
-		jm.update_when(&schema, {}, idc_product_chi_base, {});
-		jm.update_when(&schema, {}, idc_product_psi_base, {});
-		jm.update_when(&schema, {}, idc_product_csi_base, {});
 		jm.update_when(&schema, {}, idc_coverage_root, {});
+		jm.update_when(&schema, {}, idc_program, {});
+		jm.update_when(&schema, {}, idc_program_item, {});
+		jm.update_when(&schema, {}, idc_program_insurance_coverage, {});
 		jm.update_when(&schema, {}, idc_coverage, {});
 		jm.update_when(&schema, {}, idc_client_root, {});
 		jm.update_when(&schema, {}, idc_client, {});
 		jm.update_when(&schema, {}, idc_system_root, {});
 
-		vq_navigation.classes = { idc_home, idc_carrier_root, idc_product_root, idc_coverage_root, idc_client_root, idc_system_root };
+		vq_navigation.classes = { idc_home, idc_carrier_root, idc_coverage_root, idc_client_root, idc_system_root };
 		vq_navigation.query_name = "navigation";
 
 		vq_carriers.classes = { idc_carrier };
 		vq_carriers.query_name = "carriers";
-
-		vq_products.classes = { idc_product };
-		vq_products.query_name = "products";
 
 		vq_clients.classes = { idc_client };
 		vq_clients.query_name = "clients";
@@ -177,8 +165,11 @@ namespace proposal
 		vq_coverages.classes = { idc_coverage };
 		vq_coverages.query_name = "coverages";
 
-		vq_coverages.classes = { idc_product_header, idc_product_program_header, idc_product_program_structure, idc_product_coverage_header, idc_product_coverage_structure };
-		vq_coverages.query_name = "product_header";
+		vq_client.classes = { idc_client, idc_program };
+		vq_client.query_name = "client";
+
+		vq_program.classes = { idc_program, idc_program_item, idc_program_insurance_coverage };
+		vq_program.query_name = "program";
 
 		view_options vo_home;
 		vo_home.use_view = true;
@@ -198,85 +189,59 @@ namespace proposal
 		vo_carrier.view_queries.push_back(vq_navigation);
 		jm.select_when(&schema, { idc_carrier_root }, idc_carrier, {}, {}, vo_carrier);
 
-		view_options vo_product_root;
-		vo_product_root.use_view = true;
-		vo_product_root.view_class_id = idc_product_root;
-		vo_product_root.view_queries.push_back(vq_navigation);
-		jm.select_when(&schema, { idc_home }, idc_product_root, {}, {}, vo_product_root);
-
-		view_options vo_product;
-		vo_product.use_view = true;
-		vo_product.view_class_id = idc_product;
-		vo_product.view_queries.push_back(vq_navigation);
-		vo_product.view_queries.push_back(vq_product_header);
-		jm.select_when(&schema, { idc_product_root }, idc_product, {}, {}, {});
-
 		view_options vo_coverage_root;
 		vo_coverage_root.use_view = true;
 		vo_coverage_root.view_class_id = idc_coverage_root;
 		vo_coverage_root.view_queries.push_back(vq_navigation);
-		jm.select_when(&schema, {}, idc_coverage_root, {}, {}, vo_coverage_root);
+		jm.select_when(&schema, { idc_home }, idc_coverage_root, {}, {}, vo_coverage_root);
 
 		view_options vo_coverage;
 		vo_coverage.use_view = true;
 		vo_coverage.view_class_id = idc_coverage;
 		vo_coverage.view_queries.push_back(vq_navigation);
-		jm.select_when(&schema, {}, idc_coverage, {}, {}, vo_coverage);
+		jm.select_when(&schema, { idc_coverage_root }, idc_coverage, {}, {}, vo_coverage);
 
 		view_options vo_client_root;
 		vo_client_root.use_view = true;
 		vo_client_root.view_class_id = idc_client_root;
 		vo_client_root.view_queries.push_back(vq_navigation);
-		jm.select_when(&schema, {}, idc_client_root, {}, {}, vo_client_root);
+		jm.select_when(&schema, { idc_home }, idc_client_root, {}, {}, vo_client_root);
 
 		view_options vo_client;
 		vo_client.use_view = true;
 		vo_client.view_class_id = idc_client;
 		vo_client.view_queries.push_back(vq_navigation);
-		jm.select_when(&schema, {}, idc_client, {}, {}, vo_client);
+		vo_client.view_queries.push_back(vq_client);
+		jm.select_when(&schema, { idc_client_root }, idc_client, {}, {}, vo_client);
+
+		view_options vo_program;
+		vo_client.use_view = true;
+		vo_client.view_class_id = idc_program;
+		vo_client.view_queries.push_back(vq_navigation);
+		vo_client.view_queries.push_back(vq_program);
+		jm.select_when(&schema, { idc_client }, idc_program, {}, {}, vo_program);
 
 		view_options vo_system_root;
-		vo_product_root.use_view = true;
-		vo_product_root.view_class_id = idc_system_root;
-		vo_product_root.view_queries.push_back(vq_navigation);
+		vo_system_root.use_view = true;
+		vo_system_root.view_class_id = idc_system_root;
+		vo_system_root.view_queries.push_back(vq_navigation);
 		jm.select_when(&schema, {}, idc_system_root, {}, {}, {});
 
 		jm.delete_when(&schema, {}, idc_carrier, {});
-		jm.delete_when(&schema, {}, idc_product, {});
-		jm.delete_when(&schema, {}, idc_product_program_header, {});
-		jm.delete_when(&schema, {}, idc_product_program_structure, {});
-		jm.delete_when(&schema, {}, idc_product_coverage_header, {});
-		jm.delete_when(&schema, {}, idc_product_coverage_structure, {});
-		jm.delete_when(&schema, {}, idc_product_phi_base, {});
-		jm.delete_when(&schema, {}, idc_product_chi_base, {});
-		jm.delete_when(&schema, {}, idc_product_psi_base, {});
-		jm.delete_when(&schema, {}, idc_product_csi_base, {});
 		jm.delete_when(&schema, {}, idc_coverage, {});
 		jm.delete_when(&schema, {}, idc_client, {});
 
-		jm.create_when(&schema, { }, idc_home, null_row, true, false, 0, { idc_carrier_root, idc_coverage_root, idc_client_root, idc_product_root });
+		jm.create_when(&schema, { }, idc_home, null_row, true, false, 0, { idc_carrier_root, idc_coverage_root, idc_client_root, idc_system_root });
 		jm.create_when(&schema, { idc_home }, idc_carrier_root, null_row, true, false, 0, {});
 		jm.create_when(&schema, { idc_home }, idc_coverage_root, null_row, true, false, 0, {});
 		jm.create_when(&schema, { idc_home }, idc_client_root, null_row, true, false, 0, {});
-		jm.create_when(&schema, { idc_home }, idc_product_root, null_row, true, false, 0, {  });
+		jm.create_when(&schema, { idc_home }, idc_system_root, null_row, true, false, 0, { });
 		jm.create_when(&schema, { idc_carrier_root }, idc_carrier, null_row, true, false, 0, {});
 		jm.create_when(&schema, { idc_coverage_root }, idc_coverage, null_row, true, false, 0, {});
 		jm.create_when(&schema, { idc_client_root }, idc_client, null_row, true, false, 0, {});
-		jm.create_when(&schema, { idc_product_root }, idc_product, null_row, true, false, 0, 
-			{ 
-			idc_product_program_header, 
-			idc_product_program_structure, 
-			idc_product_coverage_header, 
-			idc_product_coverage_structure });
-
-		jm.create_when(&schema, { idc_product }, idc_product_program_header, null_row, false, false, 1, {});
-		jm.create_when(&schema, { idc_product }, idc_product_program_structure, null_row, false, false, 1, {});
-		jm.create_when(&schema, { idc_product }, idc_product_coverage_header, null_row, false, false, 1, {});
-		jm.create_when(&schema, { idc_product }, idc_product_coverage_structure, null_row, false, false, 1, {});
-		jm.create_when(&schema, { idc_product_program_header }, idc_product_phi_base, null_row, false, false, 0, {});
-		jm.create_when(&schema, { idc_product_program_structure }, idc_product_psi_base, null_row, false, false, 0, {});
-		jm.create_when(&schema, { idc_product_coverage_header }, idc_product_chi_base, null_row, false, false, 0, {});
-		jm.create_when(&schema, { idc_product_coverage_structure }, idc_product_csi_base, null_row, false, false, 0, {});
+		jm.create_when(&schema, { idc_client }, idc_program, null_row, false, false, 1, {});
+		jm.create_when(&schema, { idc_program }, idc_program_item, null_row, false, false, 1, {});
+		jm.create_when(&schema, { idc_program_insurance }, idc_program_insurance_coverage, null_row, false, false, 1, {});
 
 		schema.put_model(jm);
 
@@ -337,11 +302,11 @@ namespace proposal
 
 		auto main_row = row(page_column, null_row, { 0.0_px, 15.0_px, 100.0_pct, 100.0_pct });
 		auto navigation_contents = canvas2d_column(id_canvas_navigation, main_row, null_row, { 0.0_px, 0.0_px, 200.0_px, 100.0_pct });
+
 		breadcrumbs(navigation_contents, [this](jobject& _item) {
 			return _item.get_name(schema.idf_name);
 			}, { 0.0_px, 0.0_px, 100.0_pct, 30.0_px });
 
-		std::vector<relative_ptr_type> navigation_objects = {idc_client_root, idc_product_root, idc_carrier_root, idc_coverage_root, idc_system_root};
 		//selects_by_class(navigation_contents, schema.idf_navigation_style, schema.idf_navigation_selected_style, { 0.0_px, 0.0_px, 100.0_pct, 30.0_px }, schema.idf_name, navigation_objects);
 
 		auto form_contents = column(main_row, null_row, { 16.0_px, 0.0_px, 100.0_pct, 100.0_pct });
@@ -375,16 +340,6 @@ namespace proposal
 	void wsproposal_controller::render_coverage()
 	{
 		render_navigation_frame([this](page_item* _navigation, page_item* _contents) { render_coverage_contents(_navigation, _contents);  });
-	}
-
-	void wsproposal_controller::render_product_root()
-	{
-		render_navigation_frame([this](page_item* _navigation, page_item* _contents) { render_product_root_contents(_navigation, _contents);  });
-	}
-
-	void wsproposal_controller::render_product()
-	{
-		render_navigation_frame([this](page_item* _navigation, page_item* _contents) { render_product_contents(_navigation, _contents);  });
 	}
 
 	void wsproposal_controller::render_carrier_root()
@@ -422,7 +377,8 @@ namespace proposal
 		auto control = column(edit_body, schema.idf_view_background_style, { 0.0_pct, 0.0_px, 30.0_pct, 100.0_pct });
 		auto children = canvas2d_column(id_canvas_form_table_a, edit_body, schema.idf_view_background_style, { 0.0_px, 0.0_px, 65.0_pct, 100.0_pct });
 
-		add_update_fields(control, field_layout::label_on_top, "Client Details");
+		auto client_id = state.find_selected(idc_client);
+		add_update_fields(control, client_id, field_layout::label_on_top, "Client Details");
 		space(control, schema.idf_button_style, { 0.0_px, 0.0_px, 1.0_fntgr, 1.0_fntgr });
 
 		add_create_buttons(_navigation, schema.idf_button_style, { 0.0_px, 0.0_px, 100.0_pct, 32.0_px });
@@ -442,71 +398,6 @@ namespace proposal
 	void wsproposal_controller::render_coverage_contents(page_item* _navigation, page_item* _contents)
 	{
 		render_form(_navigation, _contents, "Coverage");
-	}
-
-	void wsproposal_controller::render_product_root_contents(page_item* _navigation, page_item* _contents)
-	{
-		relative_ptr_type field_ids[9] = { 
-							  schema.idf_name,
-							  idf_product_code,
-							  idf_product_status,
-							  idf_product_edition,
-							  idf_product_template_type,
-							  idf_product_line_of_business,
-							  idf_product_carrier,
-							  idf_product_updated_by,
-							  idf_product_updated_date };
-		render_search_page(_navigation, _contents, idc_product, "Products", 9, field_ids);
-	}
-
-	void wsproposal_controller::render_product_contents(page_item* _navigation, page_item* _contents)
-	{
-		if (state.actor.current_subview_class_id == -1) 
-		{
-			auto content_column = column( _contents, null_row, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
-			auto tab_row = canvas2d_row(id_canvas_products_a, content_column, null_row, { 0.0_px, 0.0_px, 100.0_pct, 30.0_px });
-			relative_ptr_type product_objects[5] = { idc_product, idc_product_program_header, idc_product_program_structure, idc_product_coverage_header, idc_product_coverage_structure };
-//			selects(tab_row, schema.idf_navigation_style, schema.idf_navigation_selected_style, { 0.0_px, 0.0_px, 150.0_px, 30.0_px }, schema.idf_name, product_objects, 5);
-			render_form(_navigation, content_column, "Product");
-		}
-		else
-		{
-			auto content_column = canvas2d_column(id_canvas_products_b, _contents, null_row, { 0.0_px, 0.0_px, 100.0_pct, 90.0_pct });
-			auto tab_row = row(content_column, null_row, { 0.0_px, 0.0_px, 100.0_pct, 30.0_px });
-			relative_ptr_type product_objects[5] = { idc_product, idc_product_program_header, idc_product_program_structure, idc_product_coverage_header, idc_product_coverage_structure };
-	//		selects(tab_row, schema.idf_navigation_style, schema.idf_navigation_selected_style, { 0.0_px, 0.0_px, 150.0_px, 30.0_px }, schema.idf_name, product_objects, 5);
-
-			auto title_row = row(content_column, null_row, { 0.0_px, 0.0_px, 100.0_pct, 30.0_px });
-			auto body_row = row(content_column, null_row, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
-			relative_ptr_type search_fields[2] = {schema.idf_name, schema.idf_field_description };
-
-			if (state.actor.current_subview_class_id == idc_product_program_header)
-			{
-				std::cout << "Product Program Header Clicked" << std::endl;
-				text(title_row, schema.idf_label_style, "Program Header");
-				search_table(body_row, idc_product_phi_base, search_fields, 2 );
-			}
-			else if (state.actor.current_subview_class_id == idc_product_program_structure)
-			{
-				std::cout << "Product Program Structure Clicked" << std::endl;
-				text(title_row, schema.idf_label_style, "Program Structure");
-				search_table(body_row, idc_product_psi_base, search_fields, 2);
-			}
-			else if (state.actor.current_subview_class_id == idc_product_coverage_header)
-			{
-				std::cout << "Product Coverage Header  Clicked" << std::endl;
-				text(title_row, schema.idf_label_style, "Coverage Header");
-				search_table(body_row, idc_product_chi_base, search_fields, 2);
-			}
-			else if (state.actor.current_subview_class_id == idc_product_coverage_structure)
-			{
-				std::cout << "Product Coverage Structure  Clicked" << std::endl;
-				text(title_row, schema.idf_label_style, "Coverage Structure");
-				search_table(body_row, idc_product_csi_base, search_fields, 2);
-			}
-
-			add_create_buttons(_navigation, schema.idf_button_style, { 0.0_px, 0.0_px, 100.0_pct, 32.0_px });
-		}
 	}
 
 	void wsproposal_controller::render_carrier_root_contents(page_item* _navigation, page_item* _contents)
@@ -533,14 +424,6 @@ namespace proposal
 		else if (state.actor.view.view_class_id == idc_client)
 		{
 			render_client();
-		}
-		else if (state.actor.view.view_class_id == idc_product_root)
-		{
-			render_product_root();
-		}
-		else if (state.actor.view.view_class_id == idc_product)
-		{
-			render_product();
 		}
 		else if (state.actor.view.view_class_id == idc_coverage_root)
 		{

@@ -125,6 +125,19 @@ namespace corona
 			return view_objects[ modified_object_id ].get_value();
 		}
 
+		object_member_path actor_state::find_selected(relative_ptr_type _class_id)
+		{
+			object_member_path omp;
+			for (auto sel : actor.selections) 
+			{
+				auto &aco = view_objects[sel.item];
+				if (aco.second.class_id == _class_id) {
+					omp.object.row_id = aco.second.object_id;
+				}
+			}
+			return omp;
+		}
+
 		bool jcollection::selector_applies(selector_collection* _selector, actor_id_type& _actor)
 		{
 			auto& actor = actors[_actor];
