@@ -702,7 +702,7 @@ namespace corona
 			return _parent;
 		}
 
-		page_item* corona_controller::selectable_items(page_item* _parent, view_query& _vq)
+		page_item* corona_controller::selectable_items(page_item* _parent, view_query& _vq, layout_rect _box)
 		{
 			auto vqo = state.get_view_query_avo(_vq);
 			for (const auto& st : vqo)
@@ -712,13 +712,14 @@ namespace corona
 				v->set_parent(_parent);
 				v->layout = layout_types::select;
 				v->object_path.object.row_id = st.object_id;
+				v->box = _box;
 				auto slice = st.object;
 				if (slice.has_field("layout_rect"))
 				{
 					auto rf = slice.get_layout_rect("layout_rect");
 					v->box = rf;
-					v->select_request = state.create_select_request(v->object_path.object.row_id, false);
 				}
+				v->select_request = state.create_select_request(v->object_path.object.row_id, false);
 			}
 			return _parent;
 		}

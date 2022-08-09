@@ -165,7 +165,7 @@ namespace corona
 
 			virtual page_item *edit_fields(page_item* _parent, const object_member_path& _omp, field_layout _layout, const char* _object_title);
 			virtual page_item* create_buttons(page_item* _parent, relative_ptr_type _style_id, layout_rect _box = { 0.0_px, 0.0_px, 250.0_px, 2.0_fntgr });
-			virtual page_item* selectable_items(page_item* _parent, view_query& _vq);
+			virtual page_item* selectable_items(page_item* _parent, view_query& _vq, layout_rect _box = { 0.0_px, 0.0_px, 250.0_px, 2.0_fntgr });
 			virtual void edit_form(page_item* _navigation, page_item* _frame, const object_member_path& _omp, const char* _form_title);
 			virtual void search_form(page_item* _navigation, page_item* _frame, relative_ptr_type _canvas_uid, relative_ptr_type _search_class_id, table_options& _options, const char* _form_title);
 

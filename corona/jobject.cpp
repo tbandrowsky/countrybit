@@ -760,6 +760,13 @@ namespace corona
 						new_object.update(src_obj);
 					}
 
+					for (auto class_id : create_option.create_on_create)
+					{
+						jobject new_object;
+						relative_ptr_type new_object_id = null_row;
+						new_object = create_object(item_id, _create.actor_id, class_id.item, new_object_id);
+					}
+
 					if (_create.select_on_create)
 					{
 						select_object_request sor;
@@ -768,19 +775,6 @@ namespace corona
 						sor.extend = false;
 						sor.object_id = object_id;
 						acr = select_object(sor, _trace_msg);
-						ac = acr.actor;
-					}
-
-					for (auto class_id : create_option.create_on_create)
-					{
-						create_object_request cor;
-						cor.actor_id = _create.actor_id;
-						cor.class_id = class_id.item;
-						cor.collection_id = get_collection_id();
-						cor.select_on_create = false;
-						cor.item_id = -1;
-						cor.template_item_id = null_row;
-						acr = create_object(cor);
 						ac = acr.actor;
 					}
 
@@ -1175,27 +1169,13 @@ namespace corona
 		bool jcollection::object_is_class(const jobject& obj, relative_ptr_type _class_id)
 		{
 			relative_ptr_type class_id = obj.get_class_id();
-			return false;
+			return class_has_base(class_id, _class_id);
 		}
 
 		bool jcollection::object_is_class(relative_ptr_type _object_id, relative_ptr_type _class_id)
 		{
 			relative_ptr_type class_id = get_class_id(_object_id);
-			if (class_id == _class_id) {
-				return true;
-			}
-			relative_ptr_type base_class_id = get_base_id(_object_id);
-			if (base_class_id == _class_id) {
-				return true;
-			}
-			while (base_class_id != null_row) {
-				auto new_class = schema->get_class(base_class_id);
-				if (new_class.item().class_id == _class_id || new_class.item().base_class_id == _class_id) {
-					return true;
-				}
-				base_class_id = new_class.item().base_class_id;
-			}
-			return false;
+			return class_has_base(class_id, _class_id);
 		}
 
 		bool jcollection::object_is_class(relative_ptr_type _object_id, class_list& _class_ids)
