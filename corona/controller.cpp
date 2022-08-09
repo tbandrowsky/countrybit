@@ -633,7 +633,7 @@ namespace corona
 				label->class_id = slice.get_class_id();
 				label->object_path = _omp;
 				label->style_id = slice.get_schema()->idf_view_subtitle_style;
-				label->caption = pg.copy(_object_title, 0);
+				label->caption = pg.copy(_object_title);
 			}
 
 			for (int i = 0; i < slice.size(); i++)
@@ -741,7 +741,7 @@ namespace corona
 		{
 			auto form_search = row(_frame, null_row, { 0.0_px, 0.0_px, 100.0_pct, 25.0_px });
 			object_member_path opt;
-			opt.object = state.find_object_by_class(_search_class_id);
+			opt.object = state.get_object_by_class(_search_class_id);
 			edit_fields(form_search, opt, field_layout::label_on_left, _form_title);
 			auto form_table = canvas2d_column(_canvas_uid, _frame, schema.idf_view_background_style);
 			table(form_table, _options);

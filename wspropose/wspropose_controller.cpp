@@ -158,18 +158,38 @@ namespace proposal
 
 		vq_carriers.classes = { idc_carrier };
 		vq_carriers.query_name = "carriers";
+		auto comp = vq_carriers.parameters.append();
+		comp->comparison = comparisons::eq;
+		comp->field_id_source = schema.get_primary_key(idc_carrier);
+		comp->field_id_target = schema.get_primary_key(idc_carrier);
 
 		vq_clients.classes = { idc_client };
 		vq_clients.query_name = "clients";
+		auto comp = vq_client.parameters.append();
+		comp->comparison = comparisons::eq;
+		comp->field_id_source = schema.get_primary_key(idc_client);
+		comp->field_id_target = schema.get_primary_key(idc_client);
 
 		vq_coverages.classes = { idc_coverage };
 		vq_coverages.query_name = "coverages";
+		auto comp = vq_coverages.parameters.append();
+		comp->comparison = comparisons::eq;
+		comp->field_id_source = schema.get_primary_key(idc_coverage);
+		comp->field_id_target = schema.get_primary_key(idc_coverage);
 
 		vq_client.classes = { idc_client, idc_program };
+		auto comp = vq_client.parameters.append();
+		comp->comparison = comparisons::eq;
+		comp->field_id_source = schema.get_primary_key(idc_client);
+		comp->field_id_target = schema.get_primary_key(idc_client);
 		vq_client.query_name = "client";
 
 		vq_program.classes = { idc_program, idc_program_item, idc_program_insurance_coverage };
 		vq_program.query_name = "program";
+		auto comp = vq_program.parameters.append();
+		comp->comparison = comparisons::eq;
+		comp->field_id_source = schema.get_primary_key(idc_program);
+		comp->field_id_target = schema.get_primary_key(idc_program);
 
 		view_options vo_home;
 		vo_home.use_view = true;
@@ -205,6 +225,7 @@ namespace proposal
 		vo_client_root.use_view = true;
 		vo_client_root.view_class_id = idc_client_root;
 		vo_client_root.view_queries.push_back(vq_navigation);
+		vo_client_root.view_queries.push_back(vq_client);
 		jm.select_when(&schema, { idc_home }, idc_client_root, {}, {}, vo_client_root);
 
 		view_options vo_client;
@@ -307,7 +328,7 @@ namespace proposal
 			return _item.get_name(schema.idf_name);
 			}, { 0.0_px, 0.0_px, 100.0_pct, 30.0_px });
 
-		//selects_by_class(navigation_contents, schema.idf_navigation_style, schema.idf_navigation_selected_style, { 0.0_px, 0.0_px, 100.0_pct, 30.0_px }, schema.idf_name, navigation_objects);
+		selectable_items(navigation_contents, vq_navigation);
 
 		auto form_contents = column(main_row, null_row, { 16.0_px, 0.0_px, 100.0_pct, 100.0_pct });
 		_contents(navigation_contents, form_contents);
@@ -368,8 +389,23 @@ namespace proposal
 
 	void wsproposal_controller::render_client_root_contents(page_item* _navigation, page_item* _contents)
 	{
-		relative_ptr_type field_ids[5] = { schema.idf_name, schema.idf_street, schema.idf_city, schema.idf_state, schema.idf_postal };
-		render_search_page(_navigation, _contents, idc_client, "Clients", 5, field_ids);
+		relative_ptr_type field_ids[5] = { schema.idf_name, schema.idf_street, schema.idf_city, schema.idf_state, schema.idf_postal };		
+
+		table_options options;
+
+		options.alternating_row = true;
+		options.data = &vq_clients;
+		options.header_height = 1.2_fntgr;
+		options.row_height = 1.2_fntgr;
+		options.columns = { 
+			{ "Name", "", 100.0_px, schema.idf_name },
+			{ "Street", "", 200.0_px, schema.idf_name },
+			{ "City", "", 100.0_px, schema.idf_name },
+			{ "State", "", 100.0_px, schema.idf_name },
+			{ "Postal", "", 100.0_px, schema.idf_name }		
+		};
+
+		search_form(_navigation, _contents, id_canvas_table, idc_client, options, "Clients");
 	}
 
 	void wsproposal_controller::render_client_contents(page_item* _navigation, page_item* _contents)
@@ -380,45 +416,85 @@ namespace proposal
 		auto edit_body = row(_contents, null_row, { 0.0_px,0.0_px,100.0_pct,100.0_pct });
 
 		auto control = column(edit_body, schema.idf_view_background_style, { 0.0_pct, 0.0_px, 30.0_pct, 100.0_pct });
-		auto children = canvas2d_column(id_canvas_form_table_a, edit_body, schema.idf_view_background_style, { 0.0_px, 0.0_px, 65.0_pct, 100.0_pct });
-
-		auto client_id = state.find_selected(idc_client);
-		add_update_fields(control, client_id, field_layout::label_on_top, "Client Details");
+		auto client_id = state.get_selected(idc_client);
+		edit_fields(control, client_id, field_layout::label_on_top, "Client Details");
 		space(control, schema.idf_button_style, { 0.0_px, 0.0_px, 1.0_fntgr, 1.0_fntgr });
+		create_buttons(_navigation, schema.idf_button_style, { 0.0_px, 0.0_px, 100.0_pct, 32.0_px });
 
-		add_create_buttons(_navigation, schema.idf_button_style, { 0.0_px, 0.0_px, 100.0_pct, 32.0_px });
+		auto children = canvas2d_column(id_canvas_table, edit_body, schema.idf_view_background_style, { 0.0_px, 0.0_px, 65.0_pct, 100.0_pct });
+
+		table_options options;
+		options.alternating_row = true;
+		options.data = &vq_client;
+		options.header_height = 1.2_fntgr;
+		options.row_height = 1.2_fntgr;
+		options.columns = {
+			{ "Name", "", 100.0_px, schema.idf_name },
+			{ "Street", "", 200.0_px, schema.idf_street },
+			{ "City", "", 100.0_px, schema.idf_city },
+			{ "State", "", 100.0_px, schema.idf_state },
+			{ "Postal", "", 100.0_px, schema.idf_postal }
+		};
+
+		table(children, options);
 	}
 
 	void wsproposal_controller::render_coverage_root_contents(page_item* _navigation, page_item* _contents)
 	{
-		relative_ptr_type field_ids[1] = { schema.idf_name };
-		render_search_page(_navigation, _contents, idc_coverage, "Coverages", 1, field_ids);
+		table_options options;
+		options.alternating_row = true;
+		options.data = &vq_coverages;
+		options.header_height = 1.2_fntgr;
+		options.row_height = 1.2_fntgr;
+		options.columns = {
+			{ "Name", "", 100.0_px, schema.idf_name },
+			{ "Street", "", 200.0_px, schema.idf_street },
+			{ "City", "", 100.0_px, schema.idf_city },
+			{ "State", "", 100.0_px, schema.idf_state },
+			{ "Postal", "", 100.0_px, schema.idf_postal }
+		};
+
+		search_form(_navigation, _contents, id_canvas_table, idc_coverage, options, "Coverages");
 	}
 
 	void wsproposal_controller::render_program_contents(page_item* _navigation, page_item* _contents)
 	{
-		;
+		text(_contents, schema.idf_album_about_style, "Program Details");
 	}
 
 	void wsproposal_controller::render_system_root_contents(page_item* _navigation, page_item* _contents)
 	{
-		;
+		text(_contents, schema.idf_album_about_style, "System Root");
 	}
 
 	void wsproposal_controller::render_coverage_contents(page_item* _navigation, page_item* _contents)
 	{
-		render_form(_navigation, _contents, "Coverage");
+		auto sel = state.get_selected(idc_coverage);
+		edit_form(_navigation, _contents, sel, "Coverage");
 	}
 
 	void wsproposal_controller::render_carrier_root_contents(page_item* _navigation, page_item* _contents)
 	{
-		relative_ptr_type field_ids[5] = { schema.idf_name, schema.idf_street, schema.idf_city, schema.idf_state, schema.idf_postal };
-		render_search_page(_navigation, _contents, idc_carrier, "Carriers", 5, field_ids);
+		table_options options;
+		options.alternating_row = true;
+		options.data = &vq_carriers;
+		options.header_height = 1.2_fntgr;
+		options.row_height = 1.2_fntgr;
+		options.columns = {
+			{ "Name", "", 100.0_px, schema.idf_name },
+			{ "Street", "", 200.0_px, schema.idf_street },
+			{ "City", "", 100.0_px, schema.idf_city },
+			{ "State", "", 100.0_px, schema.idf_state },
+			{ "Postal", "", 100.0_px, schema.idf_postal }
+		};
+
+		search_form(_navigation, _contents, id_canvas_table, idc_carrier, options, "Carriers");
 	}
 
 	void wsproposal_controller::render_carrier_contents(page_item* _navigation, page_item* _contents)
 	{
-		render_form(_navigation, _contents, "Carrier");
+		auto sel = state.get_selected(idc_carrier);
+		edit_form(_navigation, _contents, sel, "Carrier");
 	}
 
 	void wsproposal_controller::render(const rectangle& newSize)

@@ -25,9 +25,7 @@ namespace proposal
 		relative_ptr_type	id_canvas_header = 1;
 		relative_ptr_type	id_canvas_navigation = 2;
 		relative_ptr_type	id_canvas_footer = 3;
-		relative_ptr_type	id_canvas_form_table_a = 4;
-		relative_ptr_type	id_canvas_products_a = 5;
-		relative_ptr_type	id_canvas_products_b = 6;
+		relative_ptr_type	id_canvas_table = 4;
 
 		view_query vq_navigation;
 		view_query vq_carriers;

@@ -951,9 +951,9 @@ namespace corona
 			jobject copy_object(jschema* _schema, jobject& _src);
 			actor_view_object get_modified_object();
 			jobject get_object(object_member_path _path);
-			object_member_path find_object_by_class(relative_ptr_type _class_id, member_path _path);
-			object_id_type find_object_by_class(relative_ptr_type _class_id);
-			object_member_path find_selected( relative_ptr_type _class_id );
+			object_member_path get_object_by_class(relative_ptr_type _class_id, member_path _path);
+			object_id_type get_object_by_class(relative_ptr_type _class_id);
+			object_member_path get_selected( relative_ptr_type _class_id );
 
 			create_object_request create_create_request(relative_ptr_type _class_id)
 			{

@@ -73,15 +73,15 @@ namespace corona
 			return root_object;
 		}
 
-		object_member_path actor_state::find_object_by_class(relative_ptr_type _class_id, member_path _path)
+		object_member_path actor_state::get_object_by_class(relative_ptr_type _class_id, member_path _path)
 		{
 			object_member_path omp;
-			omp.object = find_object_by_class(_class_id);
+			omp.object = get_object_by_class(_class_id);
 			omp.path = _path;
 			return omp;
 		}
 
-		object_id_type actor_state::find_object_by_class(relative_ptr_type _class_id)
+		object_id_type actor_state::get_object_by_class(relative_ptr_type _class_id)
 		{
 			object_id_type rpt;
 			rpt.row_id = null_row;
@@ -125,7 +125,7 @@ namespace corona
 			return view_objects[ modified_object_id ].get_value();
 		}
 
-		object_member_path actor_state::find_selected(relative_ptr_type _class_id)
+		object_member_path actor_state::get_selected(relative_ptr_type _class_id)
 		{
 			object_member_path omp;
 			for (auto sel : actor.selections) 
