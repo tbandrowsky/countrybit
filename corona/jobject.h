@@ -1171,12 +1171,15 @@ namespace corona
 			jobject get_at(relative_ptr_type _object_id);
 			relative_ptr_type get_class_id(relative_ptr_type _object_id);
 			relative_ptr_type get_base_id(relative_ptr_type _object_id);
-			bool matches_class_id(relative_ptr_type _object_id, relative_ptr_type _class_id);
-			bool matches_class_id(const jobject& obj, relative_ptr_type _class_id);
-			bool matches_class_id(relative_ptr_type _object_id, std::vector<relative_ptr_type> _class_ids);
-			bool matches_class_id(relative_ptr_type _object_id, class_list& _class_ids);
-			bool matches_class_id(const jobject& obj, std::vector<relative_ptr_type> _class_ids);
-			bool matches_class_id(const jobject& obj, class_list& _class_ids);
+
+			bool object_is_class(relative_ptr_type _object_id, relative_ptr_type _class_id);
+			bool object_is_class(const jobject& obj, relative_ptr_type _class_id);
+			bool object_is_class(relative_ptr_type _object_id, std::vector<relative_ptr_type> _class_ids);
+			bool object_is_class(relative_ptr_type _object_id, class_list& _class_ids);
+			bool object_is_class(const jobject& obj, std::vector<relative_ptr_type> _class_ids);
+			bool object_is_class(const jobject& obj, class_list& _class_ids);
+
+			bool class_has_base(relative_ptr_type _class_id, relative_ptr_type _base_id);
 
 			filtered_object_id_list run_filter(serialized_box_container* _data, filter_option& _stuff);
 
@@ -1207,7 +1210,7 @@ namespace corona
 
 			auto where(relative_ptr_type _class_id)
 			{
-				return iterator_type(this, [this, _class_id](const iterator_item_type& it) { return objects[it.location].item().deleted == false && matches_class_id(it.location, _class_id); });
+				return iterator_type(this, [this, _class_id](const iterator_item_type& it) { return objects[it.location].item().deleted == false && object_is_class(it.location, _class_id); });
 			}
 
 			jobject first_value(std::function<bool(const iterator_item_type&)> predicate)
@@ -2059,6 +2062,7 @@ namespace corona
 				if (request.auto_primary_key) 
 				{
 					put_integer_field_request pifr;
+					pifr.name.type_id = jtype::type_int64;
 					pifr.name.name = "key_" + request.class_name;
 					pifr.name.description = "primary key for " + request.class_name;
 					pifr.name.is_key = true;

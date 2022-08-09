@@ -159,7 +159,7 @@ namespace corona
 				required->all_of([this, selections](auto& src) {
 					int c = selections->count_if(
 						[src, this](auto& dest) {
-							return matches_class_id(dest.item,src.item.class_id);
+							return object_is_class(dest.item,src.item.class_id);
 						});
 #if _TRACE_RULE
 					std::cout << "  selected count of " << src.item.class_id << " " << c << std::endl;
@@ -245,7 +245,7 @@ namespace corona
 					aco.item_id = null_row;
 
 					auto selected_create = selections->where([rule, this](auto& src) {
-						return this->matches_class_id(src.item, rule->item_id_class);
+						return this->object_is_class(src.item, rule->item_id_class);
 						});
 					if (selected_create != std::end(*selections)) {
 						relative_ptr_type object_id = selected_create.get_object().item;
@@ -262,7 +262,7 @@ namespace corona
 					if (template_class_id != null_row)
 					{
 						auto selected_template = selections->where([template_class_id, this](auto& src) {
-							return this->matches_class_id(src.item, template_class_id);
+							return this->object_is_class(src.item, template_class_id);
 							});
 						if (selected_template != std::end(*selections))
 						{
@@ -585,7 +585,7 @@ namespace corona
 
 				auto sel_options = model.select_options.where([selected_class_id, selected_object_id, this](auto& option)
 					{
-						return this->matches_class_id(selected_object_id, option.item.select_class_id);
+						return this->object_is_class(selected_object_id, option.item.select_class_id);
 					}
 				);
 
@@ -605,8 +605,8 @@ namespace corona
 						}
 						else 
 						{
-							bool is_ancestor = matches_class_id(sel.item, selection_classes);
-							bool is_clear_on_select = matches_class_id(sel.item, selection_rule.clear_on_select);
+							bool is_ancestor = object_is_class(sel.item, selection_classes);
+							bool is_clear_on_select = object_is_class(sel.item, selection_rule.clear_on_select);
 							if (!is_clear_on_select && is_ancestor)
 								keepit = true;
 						}
@@ -732,7 +732,7 @@ namespace corona
 
 			auto create_options = model.create_options.where([class_id , this](auto& option)
 				{
-					return this->matches_class_id(class_id, option.item.create_class_id);
+					return this->class_has_base(option.item.create_class_id, class_id);
 				}
 			);
 
@@ -824,7 +824,7 @@ namespace corona
 
 				auto update_options = model.update_options.where([object_id, this](auto& option)
 					{
-						return this->matches_class_id(object_id, option.item.update_class_id);
+						return this->object_is_class(object_id, option.item.update_class_id);
 					}
 				);
 
@@ -1146,27 +1146,37 @@ namespace corona
 			return class_def.item().base_class_id;
 		}
 
-		bool jcollection::matches_class_id(const jobject& obj, relative_ptr_type _class_id)
+		bool jcollection::class_has_base(relative_ptr_type _class_id, relative_ptr_type _base_id)
 		{
-			relative_ptr_type class_id = obj.get_class_id();
-			if (class_id == _class_id) {
+			if (_base_id == null_row || _class_id == null_row)
+			{
+				return false;
+			}
+			if (_base_id == _class_id) 
+			{
 				return true;
 			}
-			relative_ptr_type base_class_id = obj.get_base_class_id();
-			if (base_class_id == _class_id) {
+			relative_ptr_type base_class_id = schema->get_class(_class_id).item().base_class_id;
+			if (base_class_id == _base_id) {
 				return true;
 			}
 			while (base_class_id != null_row) {
 				auto new_class = schema->get_class(base_class_id);
-				if (new_class.item().class_id == _class_id || new_class.item().base_class_id == _class_id) {
+				base_class_id = new_class.item().base_class_id;
+				if (base_class_id == _base_id) {
 					return true;
 				}
-				base_class_id = new_class.item().base_class_id;
 			}
 			return false;
 		}
 
-		bool jcollection::matches_class_id(relative_ptr_type _object_id, relative_ptr_type _class_id)
+		bool jcollection::object_is_class(const jobject& obj, relative_ptr_type _class_id)
+		{
+			relative_ptr_type class_id = obj.get_class_id();
+			return false;
+		}
+
+		bool jcollection::object_is_class(relative_ptr_type _object_id, relative_ptr_type _class_id)
 		{
 			relative_ptr_type class_id = get_class_id(_object_id);
 			if (class_id == _class_id) {
@@ -1186,41 +1196,41 @@ namespace corona
 			return false;
 		}
 
-		bool jcollection::matches_class_id(relative_ptr_type _object_id, class_list& _class_ids)
+		bool jcollection::object_is_class(relative_ptr_type _object_id, class_list& _class_ids)
 		{
 			for (auto cli : _class_ids)
 			{
-				if (matches_class_id(_object_id, cli.item))
+				if (object_is_class(_object_id, cli.item))
 					return true;
 			}
 			return false;
 		}
 
-		bool jcollection::matches_class_id(relative_ptr_type _object_id, std::vector<relative_ptr_type> _class_ids)
+		bool jcollection::object_is_class(relative_ptr_type _object_id, std::vector<relative_ptr_type> _class_ids)
 		{
 			for (auto cli : _class_ids)
 			{
-				if (matches_class_id(_object_id, cli))
+				if (object_is_class(_object_id, cli))
 					return true;
 			}
 			return false;
 		}
 
-		bool jcollection::matches_class_id(const jobject& obj, std::vector<relative_ptr_type> _class_ids)
+		bool jcollection::object_is_class(const jobject& obj, std::vector<relative_ptr_type> _class_ids)
 		{
 			for (auto cli : _class_ids)
 			{
-				if (matches_class_id(obj, cli))
+				if (object_is_class(obj, cli))
 					return true;
 			}
 			return false;
 		}
 
-		bool jcollection::matches_class_id(const jobject& obj, class_list& _class_ids)
+		bool jcollection::object_is_class(const jobject& obj, class_list& _class_ids)
 		{
 			for (auto cli : _class_ids)
 			{
-				if (matches_class_id(obj, cli.item))
+				if (object_is_class(obj, cli.item))
 					return true;
 			}
 			return false;
@@ -1236,7 +1246,7 @@ namespace corona
 				bool matches = false;
 				auto object = obji.item;
 
-				if (matches_class_id(object, _filter.classes))
+				if (object_is_class(object, _filter.classes))
 				{
 					bool all_good = true;
 					for (auto qi : _filter.options)

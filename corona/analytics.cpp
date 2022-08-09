@@ -116,7 +116,7 @@ namespace corona
 
 			for (auto obj : *_collection)
 			{
-				if (this->collection->matches_class_id(obj, _source_classic_id))
+				if (this->collection->object_is_class(obj, _source_classic_id))
 				{
 					join_object(dest_list, mini_stack, obj, 0, _target_class_id);
 				}
