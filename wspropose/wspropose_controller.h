@@ -45,8 +45,6 @@ namespace proposal
 		void set_style_sheet();
 
 		void render_navigation_frame(std::function<void(page_item* _navigation, page_item* _contents)> _contents);
-		void render_form(page_item* _navigation, page_item* _frame, const char *_form_title);
-		void render_search_page(page_item* _navigation, page_item* _frame, relative_ptr_type _class_id, const char* _form_title, int count_fields, relative_ptr_type *_field_ids);
 
 		void render_home();
 		void render_client_root();

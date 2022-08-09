@@ -357,6 +357,11 @@ namespace proposal
 		render_navigation_frame([this](page_item* _navigation, page_item* _contents) { render_carrier_contents(_navigation, _contents);  });
 	}
 
+	void wsproposal_controller::render_program()
+	{
+		;
+	}
+
 	void wsproposal_controller::render_home_contents(page_item* _navigation, page_item* _contents)
 	{
 	}
@@ -390,10 +395,15 @@ namespace proposal
 		render_search_page(_navigation, _contents, idc_coverage, "Coverages", 1, field_ids);
 	}
 
+	void wsproposal_controller::render_program_contents(page_item* _navigation, page_item* _contents)
+	{
+		;
+	}
+
 	void wsproposal_controller::render_system_root_contents(page_item* _navigation, page_item* _contents)
 	{
-
-		}
+		;
+	}
 
 	void wsproposal_controller::render_coverage_contents(page_item* _navigation, page_item* _contents)
 	{

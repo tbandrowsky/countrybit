@@ -442,7 +442,7 @@ namespace corona
 
 			auto* pout = &std::cout;
 
-			auto svo = state.get_view_query_avo_results(*_options.data);
+			auto svo = state.get_view_query_avo(*_options.data);
 
 			for (auto avo : svo)
 			{
@@ -616,19 +616,111 @@ namespace corona
 			_host->drawView(style_name, cap, effective_bounds, od.c_str());
 		}
 
-		page_item* corona_controller::add_update_fields(page_item* _parent, const object_member_path& _omp, field_layout _layout, const char* _object_title)
+		page_item* corona_controller::edit_fields(page_item* _parent, const object_member_path& _omp, field_layout _layout, const char* _object_title)
 		{
-			return pg.actor_update_fields(_parent, &state, _omp, _layout, _object_title);
+
+			auto slice = state.get_object(_omp);
+			page_item* label;
+
+			if (_object_title)
+			{
+				label = pg.append();
+				label->id = pg.size();
+				label->parent_id = _parent->id;
+				label->layout = layout_types::label;
+				label->box = { 0.0_px, 0.0_px, 300.0_px, 1.0_fntgr };
+				label->slice = slice;
+				label->class_id = slice.get_class_id();
+				label->object_path = _omp;
+				label->style_id = slice.get_schema()->idf_view_subtitle_style;
+				label->caption = pg.copy(_object_title, 0);
+			}
+
+			for (int i = 0; i < slice.size(); i++)
+			{
+				page_item* container = nullptr;
+
+				jfield& fld = slice.get_field(i);
+				if (!fld.display_in_user_ui)
+					continue;
+
+				switch (_layout)
+				{
+				case field_layout::label_on_left:
+					container = row(_parent, slice.get_schema()->idf_label_style, { 0.0_px, 0.0_px, 400.0_px, 1.1_fntgr });
+					break;
+				case field_layout::label_on_top:
+					container = column(_parent, slice.get_schema()->idf_label_style, { 0.0_px, 0.0_px, 200.0_px, 2.0_fntgr });
+					break;
+				}
+
+				label = pg.append();
+				label->id = pg.size();
+				label->parent_id = container->id;
+				label->layout = layout_types::label;
+				label->field = &fld;
+				label->box = { 0.0_px, 0.0_px, 150.0_px, 1.0_fntgr };
+				label->slice = slice;
+				label->object_path = _omp;
+				label->style_id = slice.get_schema()->idf_label_style;
+				label->caption = fld.description;
+				label->class_id = slice.get_class_id();
+
+				page_item* control = pg.append();
+				control->id = pg.size();
+				control->parent_id = container->id;
+				control->layout = layout_types::field;
+				control->field = &fld;
+				control->box = { 0.0_px, 0.0_px, 200.0_px, 1.0_fntgr };
+				control->slice = slice;
+				control->object_path = _omp;
+				control->class_id = slice.get_class_id();
+				control->style_id = slice.get_schema()->idf_control_style;
+			}
+
+			return _parent;
 		}
 
-		page_item* corona_controller::add_create_buttons(page_item* _parent, relative_ptr_type _style_id, layout_rect _box)
+		page_item* corona_controller::create_buttons(page_item* _parent, relative_ptr_type _style_id, layout_rect _box)
 		{
-			return pg.actor_create_buttons(_parent, &state, &schema, &user_collection, _style_id, _box);
+			for (auto aco : state.create_objects)
+			{
+				page_item* button = pg.append();
+				button->set_parent(_parent);
+				button->id = pg.size();
+				button->layout = layout_types::create;
+				button->box = _box;
+				button->class_id = aco.second.class_id;
+				button->field = nullptr;
+				button->create_request = state.create_create_request(aco.second.class_id);
+				button->style_id = _style_id;
+
+				object_description desc;
+				desc = "Add " + schema.get_class(aco.second.class_id).pitem()->description;
+				button->caption = pg.copy(desc.c_str());
+			}
+			return _parent;
 		}
 
-		page_item* corona_controller::add_select_items(page_item* _parent)
+		page_item* corona_controller::selectable_items(page_item* _parent, view_query& _vq)
 		{
-			return pg.actor_select_items(_parent, &state, &schema, &user_collection);
+			auto vqo = state.get_view_query_avo(_vq);
+			for (const auto& st : vqo)
+			{
+				page_item* v = pg.append();
+				v->id = pg.size();
+				v->set_parent(_parent);
+				v->layout = layout_types::select;
+				v->object_path.object.row_id = st.object_id;
+				auto slice = st.object;
+				if (slice.has_field("layout_rect"))
+				{
+					auto rf = slice.get_layout_rect("layout_rect");
+					v->box = rf;
+					v->select_request = state.create_select_request(v->object_path.object.row_id, false);
+				}
+			}
+			return _parent;
 		}
 
 		void corona_controller::arrange(double width, double height, jobject& _style_sheet, double padding)
@@ -636,25 +728,25 @@ namespace corona
 			pg.arrange(width, height, _style_sheet, padding);
 		}
 
-		void corona_controller::render_form(page_item* _navigation, page_item* _frame, const object_member_path& _omp, const char* _form_title)
+		void corona_controller::edit_form(page_item* _navigation, page_item* _frame, const object_member_path& _omp, const char* _form_title)
 		{
 			_frame->windowsRegion = true;
-			add_update_fields(_frame, _omp, field_layout::label_on_left, _form_title);
+			edit_fields(_frame, _omp, field_layout::label_on_left, _form_title);
 			space(_navigation, schema.idf_button_style, { 0.0_px, 0.0_px, 100.0_pct, 32.0_px });
 			text(_navigation, schema.idf_label_style, "Create", { 0.0_px, 0.0_px, 100.0_pct, 32.0_px });
-			add_create_buttons(_navigation, schema.idf_button_style, { 0.0_px, 0.0_px, 100.0_pct, 32.0_px });
+			create_buttons(_navigation, schema.idf_button_style, { 0.0_px, 0.0_px, 100.0_pct, 32.0_px });
 		}
 
-		void corona_controller::render_search_page(page_item* _navigation, page_item* _contents, relative_ptr_type _canvas_uid, relative_ptr_type _search_class_id, relative_ptr_type _list_class_id, const char* _form_title, int count_fields, relative_ptr_type* _field_ids)
+		void corona_controller::search_form(page_item* _navigation, page_item* _frame, relative_ptr_type _canvas_uid, relative_ptr_type _search_class_id, table_options& _options, const char* _form_title)
 		{
-			auto form_search = row(_contents, null_row, { 0.0_px, 0.0_px, 100.0_pct, 25.0_px });
+			auto form_search = row(_frame, null_row, { 0.0_px, 0.0_px, 100.0_pct, 25.0_px });
 			object_member_path opt;
 			opt.object = state.find_object_by_class(_search_class_id);
-			add_update_fields(form_search, opt, field_layout::label_on_left, _form_title);
-			auto form_table = canvas2d_column(_canvas_uid, _contents, schema.idf_view_background_style);
-			search_table(form_table, _list_class_id, _field_ids, count_fields);
+			edit_fields(form_search, opt, field_layout::label_on_left, _form_title);
+			auto form_table = canvas2d_column(_canvas_uid, _frame, schema.idf_view_background_style);
+			table(form_table, _options);
 			text(_navigation, schema.idf_label_style, "Create", { 0.0_px, 0.0_px, 100.0_pct, 32.0_px });
-			add_create_buttons(_navigation, schema.idf_button_style, { 0.0_px, 0.0_px, 100.0_pct, 32.0_px });
+			create_buttons(_navigation, schema.idf_button_style, { 0.0_px, 0.0_px, 100.0_pct, 32.0_px });
 		}
 
 	}
