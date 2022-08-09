@@ -767,7 +767,8 @@ namespace corona
 						sor.collection_id = _create.collection_id;
 						sor.extend = false;
 						sor.object_id = object_id;
-						select_object(sor, _trace_msg);
+						acr = select_object(sor, _trace_msg);
+						ac = acr.actor;
 					}
 
 					for (auto class_id : create_option.create_on_create)
@@ -779,7 +780,8 @@ namespace corona
 						cor.select_on_create = false;
 						cor.item_id = -1;
 						cor.template_item_id = null_row;
-						create_object(cor);
+						acr = create_object(cor);
+						ac = acr.actor;
 					}
 
 					ac.last_rule_name = create_option.rule_name;
