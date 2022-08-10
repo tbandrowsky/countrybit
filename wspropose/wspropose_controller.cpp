@@ -50,15 +50,15 @@ namespace proposal
 
 		/* This is the application home class.  It is just a place holder now */
 		pcr.class_name = "home";
-		pcr.class_description = "HOME";
+		pcr.class_description = "Home";
 		pcr.auto_primary_key = true;
-		pcr.member_fields = { schema.idf_style_id };
+		pcr.member_fields = { schema.idf_name, schema.idf_style_id };
 		idc_home = schema.put_class(pcr);
 
 		pcr.class_name = "carrier_root";
 		pcr.class_description = "Carriers";
 		pcr.auto_primary_key = true;
-		pcr.member_fields = { schema.get_primary_key(idc_home), schema.idf_search_string, schema.idf_style_id };
+		pcr.member_fields = { schema.get_primary_key(idc_home), schema.idf_name, schema.idf_search_string, schema.idf_style_id };
 		idc_carrier_root = schema.put_class(pcr);
 
 		pcr.class_name = "carrier";
@@ -70,7 +70,7 @@ namespace proposal
 		pcr.class_name = "coverage_root";
 		pcr.class_description = "Coverages";
 		pcr.auto_primary_key = true;
-		pcr.member_fields = { schema.get_primary_key(idc_home), schema.idf_search_string, schema.idf_style_id };
+		pcr.member_fields = { schema.get_primary_key(idc_home), schema.idf_name, schema.idf_search_string, schema.idf_style_id };
 		idc_coverage_root = schema.put_class(pcr);
 
 		pcr.class_name = "coverage";
@@ -84,7 +84,7 @@ namespace proposal
 		pcr.class_name = "client_root";
 		pcr.class_description = "Clients";
 		pcr.auto_primary_key = true;
-		pcr.member_fields = { schema.get_primary_key(idc_home), schema.idf_search_string, schema.idf_style_id };
+		pcr.member_fields = { schema.get_primary_key(idc_home), schema.idf_name, schema.idf_search_string, schema.idf_style_id };
 		idc_client_root = schema.put_class(pcr);
 		
 		pcr.class_name = "client";
@@ -154,6 +154,7 @@ namespace proposal
 		jm.update_when(&schema, {}, idc_system_root, {});
 
 		vq_navigation.classes = { idc_home, idc_carrier_root, idc_coverage_root, idc_client_root, idc_system_root };
+		vq_navigation.fields = { schema.idf_name };
 		vq_navigation.query_name = "navigation";
 
 		vq_carriers.classes = { idc_carrier };
@@ -302,6 +303,11 @@ namespace proposal
 		// create our initial object, and get our state.
 		state = user_collection.create_object(cor, "create home");
 
+		user_collection.update(vq_navigation, &sample_actor, [this](jobject& src) { 
+			src.set({ { schema.idf_name, src.get_class().item().description }});
+			return true;
+		});
+
 	}
 
 	wsproposal_controller::~wsproposal_controller()
@@ -328,7 +334,7 @@ namespace proposal
 			return _item.get_name(schema.idf_name);
 			}, { 0.0_px, 0.0_px, 100.0_pct, 30.0_px });
 
-		selectable_items(navigation_contents, vq_navigation);
+		selectable_items(navigation_contents, vq_navigation, schema.idf_button_style, { 0.0_px, 0.0_px, 100.0_pct, 1.2_fntgr });
 
 		auto form_contents = column(main_row, null_row, { 16.0_px, 0.0_px, 100.0_pct, 100.0_pct });
 		_contents(navigation_contents, form_contents);
@@ -405,7 +411,7 @@ namespace proposal
 			{ "Postal", "", 100.0_px, schema.idf_name }		
 		};
 
-		search_form(_navigation, _contents, id_canvas_table, idc_client, options, "Clients");
+		search_form(_navigation, _contents, id_canvas_table, idc_client_root, options, "Clients", { schema.idf_search_string });
 	}
 
 	void wsproposal_controller::render_client_contents(page_item* _navigation, page_item* _contents)
@@ -417,7 +423,7 @@ namespace proposal
 
 		auto control = column(edit_body, schema.idf_view_background_style, { 0.0_pct, 0.0_px, 30.0_pct, 100.0_pct });
 		auto client_id = state.get_selected(idc_client);
-		edit_fields(control, client_id, field_layout::label_on_top, "Client Details");
+		edit_fields(control, client_id, field_layout::label_on_top, "Client Details", { schema.idf_name, schema.idf_street, schema.idf_city, schema.idf_state, schema.idf_postal });
 		space(control, schema.idf_button_style, { 0.0_px, 0.0_px, 1.0_fntgr, 1.0_fntgr });
 		create_buttons(_navigation, schema.idf_button_style, { 0.0_px, 0.0_px, 100.0_pct, 32.0_px });
 
@@ -454,7 +460,7 @@ namespace proposal
 			{ "Postal", "", 100.0_px, schema.idf_postal }
 		};
 
-		search_form(_navigation, _contents, id_canvas_table, idc_coverage, options, "Coverages");
+		search_form(_navigation, _contents, id_canvas_table, idc_coverage_root, options, "Coverages", { schema.idf_search_string });
 	}
 
 	void wsproposal_controller::render_program_contents(page_item* _navigation, page_item* _contents)
@@ -470,7 +476,7 @@ namespace proposal
 	void wsproposal_controller::render_coverage_contents(page_item* _navigation, page_item* _contents)
 	{
 		auto sel = state.get_selected(idc_coverage);
-		edit_form(_navigation, _contents, sel, "Coverage");
+		edit_form(_navigation, _contents, sel, "Coverage", { schema.idf_name });
 	}
 
 	void wsproposal_controller::render_carrier_root_contents(page_item* _navigation, page_item* _contents)
@@ -488,13 +494,13 @@ namespace proposal
 			{ "Postal", "", 100.0_px, schema.idf_postal }
 		};
 
-		search_form(_navigation, _contents, id_canvas_table, idc_carrier, options, "Carriers");
+		search_form(_navigation, _contents, id_canvas_table, idc_carrier_root, options, "Carriers", { schema.idf_search_string });
 	}
 
 	void wsproposal_controller::render_carrier_contents(page_item* _navigation, page_item* _contents)
 	{
 		auto sel = state.get_selected(idc_carrier);
-		edit_form(_navigation, _contents, sel, "Carrier");
+		edit_form(_navigation, _contents, sel, "Carrier", { schema.idf_name, schema.idf_street, schema.idf_city, schema.idf_state, schema.idf_postal});
 	}
 
 	void wsproposal_controller::render(const rectangle& newSize)
@@ -597,8 +603,8 @@ namespace proposal
 			}
 			);
 
-		auto color_check_src = style_sheet.get_slice(schema.idf_view_style, { 0,0,0 }, true).get(schema.idf_shape_fill_color);
-		auto color_check_dest = style_sheet.get_slice(schema.idf_view_subtitle_style, { 0,0,0 }, true).get(schema.idf_shape_fill_color);
+		auto color_check_src = style_sheet.get_object(schema.idf_view_style, { 0,0,0 }, true).get(schema.idf_shape_fill_color);
+		auto color_check_dest = style_sheet.get_object(schema.idf_view_subtitle_style, { 0,0,0 }, true).get(schema.idf_shape_fill_color);
 
 		style_sheet.set(
 			schema.idf_view_style, 
@@ -828,117 +834,6 @@ namespace proposal
 			{
 				{ schema.idf_font_name, fontName },
 				{ schema.idf_font_size, 14.0 },
-				{ schema.idf_shape_fill_color, "#0000CCFF" },
-				{ schema.idf_shape_border_thickness, 0 },
-				{ schema.idf_shape_border_color, "" },
-				{ schema.idf_box_fill_color, "#ffffffFF" },
-				{ schema.idf_box_border_thickness, 0 },
-				{ schema.idf_box_border_color, "" }
-			}
-			);
-
-		style_sheet.set(
-			schema.idf_view_style,
-			{ schema.idf_client_style },
-			{
-				{ schema.idf_font_name, fontName },
-				{ schema.idf_font_size, 14.0 },
-				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_center },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_center },
-				{ schema.idf_shape_fill_color, "#ffffffFF" },
-				{ schema.idf_shape_border_thickness, 8 },
-				{ schema.idf_shape_border_color, "#000000FF" },
-				{ schema.idf_box_fill_color, "#78BE20FF" },
-				{ schema.idf_box_border_thickness, 8 },
-				{ schema.idf_box_border_color, "#FFFFFFFF" }
-			}
-			);
-
-		style_sheet.set(
-			schema.idf_view_style,
-			{ schema.idf_carrier_style },
-			{
-				{ schema.idf_font_name, fontName },
-				{ schema.idf_font_size, 14.0 },
-				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_center },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_center },
-				{ schema.idf_shape_fill_color, "#ffffffFF" },
-				{ schema.idf_shape_border_thickness, 0 },
-				{ schema.idf_shape_border_color, "" },
-				{ schema.idf_box_fill_color, "#78BE20FF" },
-				{ schema.idf_box_border_thickness, 8 },
-				{ schema.idf_box_border_color, "#FFFFFFFF" }
-			}
-			);
-
-		style_sheet.set(
-			schema.idf_view_style,
-			{ schema.idf_coverage_style },
-			{
-				{ schema.idf_font_name, fontName },
-				{ schema.idf_font_size, 14.0 },
-				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_center },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_center },
-				{ schema.idf_shape_fill_color, "#ffffffFF" },
-				{ schema.idf_shape_border_thickness, 0 },
-				{ schema.idf_shape_border_color, "" },
-				{ schema.idf_box_fill_color, "#78BE20FF" },
-				{ schema.idf_box_border_thickness, 8 },
-				{ schema.idf_box_border_color, "#FFFFFFFF" }
-			}
-			);
-
-		style_sheet.set(
-			schema.idf_view_style,
-			{ schema.idf_product_style },
-			{
-				{ schema.idf_font_name, fontName },
-				{ schema.idf_font_size, 14.0 },
-				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_center },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_center },
-				{ schema.idf_shape_fill_color, "#ffffffFF" },
-				{ schema.idf_shape_border_thickness, 0 },
-				{ schema.idf_shape_border_color, "" },
-				{ schema.idf_box_fill_color, "#78BE20FF" },
-				{ schema.idf_box_border_thickness, 8 },
-				{ schema.idf_box_border_color, "#FFFFFFFF" }
-			}
-			);
-
-		style_sheet.set(
-			schema.idf_view_style,
-			{ schema.idf_system_style },
-			{
-				{ schema.idf_font_name, fontName },
-				{ schema.idf_font_size, 14.0 },
-				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_center },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_center },
-				{ schema.idf_shape_fill_color, "#ffffffFF" },
-				{ schema.idf_shape_border_thickness, 0 },
-				{ schema.idf_shape_border_color, "" },
-				{ schema.idf_box_fill_color, "#78BE20FF" },
-				{ schema.idf_box_border_thickness, 8 },
-				{ schema.idf_box_border_color, "#FFFFFFFF" }
-			}
-			);
-
-		style_sheet.set(
-			schema.idf_view_style,
-			{ schema.idf_home_style },
-			{
-				{ schema.idf_shape_fill_color, "#0000CCFF" },
-				{ schema.idf_shape_border_thickness, 0 },
-				{ schema.idf_shape_border_color, "" },
-				{ schema.idf_box_fill_color, "#ffffffFF" },
-				{ schema.idf_box_border_thickness, 0 },
-				{ schema.idf_box_border_color, "" }
-			}
-			);
-
-		style_sheet.set(
-			schema.idf_view_style,
-			{ schema.idf_login_style },
-			{
 				{ schema.idf_shape_fill_color, "#0000CCFF" },
 				{ schema.idf_shape_border_thickness, 0 },
 				{ schema.idf_shape_border_color, "" },

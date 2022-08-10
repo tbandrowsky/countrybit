@@ -37,16 +37,7 @@ namespace corona
 
 		jobject corona_controller::getStyleSheet()
 		{
-			relative_ptr_type ids = schema.idc_style_sheet;
-
-			auto obj = user_collection.where(ids);
-
-			if (obj == std::end(user_collection))
-			{
-				throw std::logic_error("style sheet not found in the database");
-			}
-
-			return obj.get_object().item;
+			return user_collection.get_style_sheet();
 		}
 
 		void corona_controller::onCreated()
@@ -364,7 +355,7 @@ namespace corona
 		const char* corona_controller::style_id(relative_ptr_type _style_field_id)
 		{
 			const char *r = nullptr;
-			if (_style_field_id != null_row) {
+			if (_style_field_id > 0) {
 				r = schema.get_field(_style_field_id).name;
 			}
 			return r;
@@ -541,7 +532,11 @@ namespace corona
 		{
 			const char* cap = _item.caption != nullptr ? _item.caption : "";
 			const char* style_name = style_id(_item.style_id);
-			const char *sty = style_name != nullptr ? style_name : "(no style)";
+			const char *sty = style_name != nullptr ? style_name : "(default style)";
+
+			if (!style_name) {
+				style_name = style_id(schema.idf_button_style);
+			}
 
 			object_description od;
 
@@ -596,7 +591,7 @@ namespace corona
 
 			if (_item.style_id > null_row) {
 				od += "-";
-				od += style_name;
+				od += sty;
 			}
 			
 			if (_item.object_path.object.row_id > null_row && !_item.slice.is_null()) {
@@ -616,9 +611,8 @@ namespace corona
 			_host->drawView(style_name, cap, effective_bounds, od.c_str());
 		}
 
-		page_item* corona_controller::edit_fields(page_item* _parent, const object_member_path& _omp, field_layout _layout, const char* _object_title)
+		page_item* corona_controller::edit_fields(page_item* _parent, const object_member_path& _omp, field_layout _layout, const char* _object_title, const field_list& _fields)
 		{
-
 			auto slice = state.get_object(_omp);
 			page_item* label;
 
@@ -636,13 +630,16 @@ namespace corona
 				label->caption = pg.copy(_object_title);
 			}
 
-			for (int i = 0; i < slice.size(); i++)
+			for (int i = 0; i < _fields.size(); i++)
 			{
 				page_item* container = nullptr;
 
-				jfield& fld = slice.get_field(i);
-				if (!fld.display_in_user_ui)
-					continue;
+				const relative_ptr_type& fld_id = _fields[i];
+
+				int field_idx = slice.get_field_index_by_id(fld_id);
+				if (field_idx < 0) continue;
+
+				jfield& fld = slice.get_field(field_idx);
 
 				switch (_layout)
 				{
@@ -702,7 +699,7 @@ namespace corona
 			return _parent;
 		}
 
-		page_item* corona_controller::selectable_items(page_item* _parent, view_query& _vq, layout_rect _box)
+		page_item* corona_controller::selectable_items(page_item* _parent, view_query& _vq, relative_ptr_type _style_id, layout_rect _box)
 		{
 			auto vqo = state.get_view_query_avo(_vq);
 			for (const auto& st : vqo)
@@ -711,14 +708,41 @@ namespace corona
 				v->id = pg.size();
 				v->set_parent(_parent);
 				v->layout = layout_types::select;
+				v->slice = st.object;
 				v->object_path.object.row_id = st.object_id;
-				v->box = _box;
 				auto slice = st.object;
+
+				if (slice.has_field(schema.idf_style_id))
+				{
+					v->style_id = slice.get_int64(schema.idf_style_id, true);
+				}
+				else 
+				{
+					v->style_id = _style_id;
+				}
+
 				if (slice.has_field("layout_rect"))
 				{
 					auto rf = slice.get_layout_rect("layout_rect");
 					v->box = rf;
 				}
+				else
+				{
+					v->box = _box;
+				}
+
+				std::string temp = "";
+
+				for (auto f : _vq.fields)
+				{
+					if (slice.has_field(f.item)) {
+						const char *t = slice.get(f.item);
+						if (t) {
+							temp += t;
+						}
+					}
+				}
+				v->caption = pg.copy(temp.c_str());
 				v->select_request = state.create_select_request(v->object_path.object.row_id, false);
 			}
 			return _parent;
@@ -729,21 +753,23 @@ namespace corona
 			pg.arrange(width, height, _style_sheet, padding);
 		}
 
-		void corona_controller::edit_form(page_item* _navigation, page_item* _frame, const object_member_path& _omp, const char* _form_title)
+		void corona_controller::edit_form(page_item* _navigation, page_item* _frame, const object_member_path& _omp, const char* _form_title, const field_list& _fields)
 		{
 			_frame->windowsRegion = true;
-			edit_fields(_frame, _omp, field_layout::label_on_left, _form_title);
+			edit_fields(_frame, _omp, field_layout::label_on_left, _form_title, _fields);
 			space(_navigation, schema.idf_button_style, { 0.0_px, 0.0_px, 100.0_pct, 32.0_px });
 			text(_navigation, schema.idf_label_style, "Create", { 0.0_px, 0.0_px, 100.0_pct, 32.0_px });
 			create_buttons(_navigation, schema.idf_button_style, { 0.0_px, 0.0_px, 100.0_pct, 32.0_px });
 		}
 
-		void corona_controller::search_form(page_item* _navigation, page_item* _frame, relative_ptr_type _canvas_uid, relative_ptr_type _search_class_id, table_options& _options, const char* _form_title)
+		void corona_controller::search_form(page_item* _navigation, page_item* _frame, relative_ptr_type _canvas_uid, relative_ptr_type _search_class_id, table_options& _options, const char* _form_title, const field_list& _fields)
 		{
 			auto form_search = row(_frame, null_row, { 0.0_px, 0.0_px, 100.0_pct, 25.0_px });
 			object_member_path opt;
 			opt.object = state.get_object_by_class(_search_class_id);
-			edit_fields(form_search, opt, field_layout::label_on_left, _form_title);
+			if (opt.object.row_id < 0)
+				throw std::invalid_argument(std::format("class {} is incorrect", _search_class_id));
+			edit_fields(form_search, opt, field_layout::label_on_left, _form_title, _fields);
 			auto form_table = canvas2d_column(_canvas_uid, _frame, schema.idf_view_background_style);
 			table(form_table, _options);
 			text(_navigation, schema.idf_label_style, "Create", { 0.0_px, 0.0_px, 100.0_pct, 32.0_px });

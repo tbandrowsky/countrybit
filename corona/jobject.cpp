@@ -67,7 +67,7 @@ namespace corona
 			for (auto level : _path.path)
 			{
 				jarray temp = root_object.get_object(level.item.member_id, true);
-				root_object = temp.get_slice(level.item.current_dim);
+				root_object = temp.get_object(level.item.current_dim);
 			}
 
 			return root_object;
@@ -198,6 +198,35 @@ namespace corona
 			if (_trace) {
 				std::cout << _trace << std::endl;
 			}
+		}
+
+		filter_option jcollection::create_filter_from_view_query(view_query& vq, actor_type *pactor)
+		{
+			filter_option fil;
+			fil.classes = vq.classes;
+			relative_ptr_type join_field_id;
+			object_name		  join_class_name;
+			field_list		  flat_field_ids;
+
+			for (auto comp : vq.parameters)
+			{
+				auto comp_field = comp.item;
+				filter_term new_option;
+				for (auto sel : pactor->selections)
+				{
+					auto obj = get_at(sel.item);
+					if (obj.has_field(comp.item.field_id_source))
+					{
+						new_option.comparison = comp_field.comparison;
+						new_option.target_field = comp_field.field_id_target;
+						new_option.src_value = obj.get(comp_field.field_id_source);
+						fil.options.push_back(new_option);
+						break;
+					}
+				}
+			}
+
+			return fil;
 		}
 
 		actor_state jcollection::get_actor_state(relative_ptr_type _actor, relative_ptr_type _last_modified_object, const char* _trace_msg)
@@ -333,32 +362,7 @@ namespace corona
 			{
 				for (auto vqi : pactor->view.view_queries)
 				{
-					filter_option fil;
-					auto& vq = vqi.item;
-					fil.classes = vq.classes;
-					relative_ptr_type join_field_id;
-					object_name		  join_class_name;
-
-					field_list		  flat_field_ids;
-
-					for (auto comp : vq.parameters)
-					{
-						auto comp_field = comp.item;
-						filter_term new_option;
-						for (auto sel : pactor->selections)
-						{
-							auto obj_ref = acr.view_objects.get_at(sel.item);
-							auto obj = obj_ref.second.object;
-							if (obj.has_field(comp.item.field_id_source))
-							{
-								new_option.comparison = comp_field.comparison;
-								new_option.target_field = comp_field.field_id_target;
-								new_option.src_value = obj.get(comp_field.field_id_source);
-								fil.options.push_back(new_option);
-								break;
-							}
-						}
-					}
+					auto fil = create_filter_from_view_query(vqi.item, pactor);
 					filtered_object_id_list flist = run_filter(acr.get_data(), fil);
 					acr.filter_results.put(vqi.item.query_name, flist.get_location());
 					for (auto view_item : flist) {
@@ -901,7 +905,7 @@ namespace corona
 			_object_id = new_object.row_id();
 			char* bytes = new_object.pdetails();
 			jarray ja(nullptr, schema, find_field_id, bytes, true);
-			auto new_slice = ja.get_slice(0);
+			auto new_slice = ja.get_object(0);
 			int pkidx = myclass.pitem()->primary_key_idx;
 
 			if (pkidx > -1) {
@@ -932,7 +936,7 @@ namespace corona
 
 			if (item_type_id == jtype::type_object && !existing_object.pitem()->deleted) {
 				jarray jax(nullptr, schema, existing_object.item().class_field_id, existing_object.pdetails());
-				return jax.get_slice(0);
+				return jax.get_object(0);
 			}
 			else 
 			{
@@ -950,7 +954,7 @@ namespace corona
 			for (auto level : _path.path)
 			{
 				jarray temp = root_object.get_object(level.item.member_id, true);
-				root_object = temp.get_slice(level.item.current_dim);
+				root_object = temp.get_object(level.item.current_dim);
 			}
 
 			return root_object;
@@ -989,7 +993,7 @@ namespace corona
 					pifr.name.description = field.item.get_string(schema->idf_field_description, true);
 					pifr.name.type_id = new_field_type;
 					//pifr.name.format = field.item.get_string(schema->id_dbf_field_description, true);
-					auto options = field.item.get_object(schema->idf_int_options, true).get_slice({ 0,0,0 });
+					auto options = field.item.get_object(schema->idf_int_options, true).get_object({ 0,0,0 });
 					pifr.options.maximum_int = options.get_int64(schema->idf_int_stop);
 					pifr.options.minimum_int = options.get_int64(schema->idf_int_start);
 					auto field_id = schema->put_integer_field(pifr);
@@ -1004,7 +1008,7 @@ namespace corona
 					pifr.name.description = field.item.get_string(schema->idf_field_description, true);
 					pifr.name.type_id = new_field_type;
 					//pifr.name.format = field.item.get_string(schema->id_dbf_field_description, true);
-					auto options = field.item.get_object(schema->idf_double_options, true).get_slice({ 0,0,0 });
+					auto options = field.item.get_object(schema->idf_double_options, true).get_object({ 0,0,0 });
 					pifr.options.maximum_double = options.get_double(schema->idf_double_stop);
 					pifr.options.minimum_double = options.get_double(schema->idf_double_start);
 					auto field_id = schema->put_double_field(pifr);
@@ -1018,7 +1022,7 @@ namespace corona
 					pifr.name.description = field.item.get_string(schema->idf_field_description, true);
 					pifr.name.type_id = new_field_type;
 					//pifr.name.format = field.item.get_string(schema->id_dbf_field_description, true);
-					auto options = field.item.get_object(schema->idf_date_options, true).get_slice({ 0,0,0 });
+					auto options = field.item.get_object(schema->idf_date_options, true).get_object({ 0,0,0 });
 					pifr.options.maximum_time_t = options.get_time(schema->idf_date_stop);
 					pifr.options.minimum_time_t = options.get_time(schema->idf_date_start);
 					auto field_id = schema->put_time_field(pifr);
@@ -1032,7 +1036,7 @@ namespace corona
 					pifr.name.description = field.item.get_string(schema->idf_field_description, true);
 					pifr.name.type_id = new_field_type;
 					//pifr.name.format = field.item.get_string(schema->id_dbf_field_description, true);
-					auto options = field.item.get_object(schema->idf_string_options, true).get_slice({ 0,0,0 });
+					auto options = field.item.get_object(schema->idf_string_options, true).get_object({ 0,0,0 });
 					pifr.options.length = options.get_int32(schema->idf_string_length);
 					pifr.options.validation_message = options.get_string(schema->idf_string_validation_message);
 					pifr.options.validation_pattern = options.get_string(schema->idf_string_validation_pattern);
@@ -1049,7 +1053,7 @@ namespace corona
 					pifr.name.name = field.item.get_string(schema->idf_field_name, true);
 					pifr.name.description = field.item.get_string(schema->idf_field_description, true);
 					//pifr.name.format = field.item.get_string(schema->id_dbf_field_description, true);
-					auto options = field.item.get_object(schema->idc_object_options, true).get_slice({ 0,0,0 });
+					auto options = field.item.get_object(schema->idc_object_options, true).get_object({ 0,0,0 });
 					pifr.options.class_id = options.get_int64(schema->idf_object_class_id);
 					pifr.options.dim.x = options.get_int32(schema->idf_object_x);
 					pifr.options.dim.y = options.get_int32(schema->idf_object_y);
@@ -1098,7 +1102,7 @@ namespace corona
 							// so, we fetch it, create the class for it, then, go ahead and make that object 
 							// an object (list or array) member of the final object, with the 
 							// target class dimensions.
-							auto user_class_obj = obj.get_object(src_field_idx, false).get_slice(0);
+							auto user_class_obj = obj.get_object(src_field_idx, false).get_object(0);
 							relative_ptr_type field_class_id = put_user_class(user_class_obj, object_header.item().last_modified);
 							auto field_class = schema->get_class(field_class_id);
 							pcr.member_fields.push_back({ field_class_id, target_field.object_properties.dim });
@@ -1140,6 +1144,13 @@ namespace corona
 			relative_ptr_type class_id = get_class_id(_object_id);
 			auto class_def = schema->get_class(class_id);
 			return class_def.item().base_class_id;
+		}
+
+		jobject jcollection::get_style_sheet()
+		{
+			if (this->ref->style_sheet_id < 0)
+				throw std::logic_error("collection does not have default style sheet");
+			return get_object(this->ref->style_sheet_id);
 		}
 
 		bool jcollection::class_has_base(relative_ptr_type _class_id, relative_ptr_type _base_id)
@@ -1253,6 +1264,48 @@ namespace corona
 			return list;
 		}
 
+		void jcollection::update(filter_option& _filter, std::function<bool(jobject& _src)> updateor)
+		{
+			for (auto obji : *this)
+			{
+				bool matches = false;
+				auto object = obji.item;
+
+				if (object_is_class(object, _filter.classes))
+				{
+					bool all_good = true;
+					for (auto qi : _filter.options)
+					{
+						auto obj_value = object.get(qi.target_field);
+						if (!obj_value.compare(qi.comparison, qi.src_value)) {
+							all_good = false;
+							break;
+						}
+					}
+					if (all_good) 
+					{
+						matches = true;
+					}
+				}
+				if (matches)
+				{
+					updateor(object);
+				}
+			}
+		}
+
+		filtered_object_id_list jcollection::run_filter(serialized_box_container* _data, view_query& vq, actor_type* pactor)
+		{
+			filter_option fo = create_filter_from_view_query(vq, pactor);
+			return run_filter(_data, fo);
+		}
+
+		void jcollection::update(view_query& vq, actor_type* pactor, std::function<bool(jobject& _src)> updateor)
+		{
+			filter_option fo = create_filter_from_view_query(vq, pactor);
+			update(fo, updateor);
+		}
+
 		jobject jcollection::get_at(relative_ptr_type _object_id)
 		{
 			return get_object(_object_id);
@@ -1270,7 +1323,7 @@ namespace corona
 			if (existing_object.pitem()->otype == jtype::type_object) {
 				existing_object.item().last_modified = std::time(nullptr);
 				jarray jax(nullptr, schema, existing_object.item().class_field_id, existing_object.pdetails());
-				auto slice_to_update = jax.get_slice(0);
+				auto slice_to_update = jax.get_object(0);
 				slice_to_update.update(_slice);
 				return slice_to_update;
 			}
@@ -2714,10 +2767,22 @@ namespace corona
 			return jerry;
 		}
 
-		jobject jobject::get_slice(int field_idx, dimensions_type _dim, bool _use_id)
+		jarray jobject::get_object_by_class(relative_ptr_type _class_id)
+		{
+			for (int field_idx = 0; field_idx < the_class.size(); field_idx++) {
+				jclass_field& jcf = the_class.detail(field_idx);
+				auto fld = schema->get_field(jcf.field_id);
+				if (fld.object_properties.class_id == _class_id) {
+					jarray obj = get_object(field_idx, false);
+					return obj;
+				}
+			}
+		}
+
+		jobject jobject::get_object(int field_idx, dimensions_type _dim, bool _use_id)
 		{
 			jarray arr = get_object(field_idx, _use_id);
-			return arr.get_slice(_dim);
+			return arr.get_object(_dim);
 		}
 
 		jlist jobject::get_list(int field_id, bool _use_id)
@@ -2937,6 +3002,10 @@ namespace corona
 		void jobject::set_value(const dynamic_value& _member_assignment)
 		{
 			int index = get_field_index_by_id(_member_assignment.field_id);
+
+			if (index == -1)
+				return;
+
 			auto fld = get_field(index);
 
 			switch (_member_assignment.this_type)
@@ -3351,16 +3420,16 @@ namespace corona
 			return dim;
 		}
 
-		jobject jarray::get_slice(int x, int y, int z)
+		jobject jarray::get_object(int x, int y, int z)
 		{
 			dimensions_type dims;
 			dims.x = x;
 			dims.y = y;
 			dims.z = z;
-			return get_slice(dims);
+			return get_object(dims);
 		}
 
-		jobject jarray::get_slice(dimensions_type pos)
+		jobject jarray::get_object(dimensions_type pos)
 		{
 			jfield& field = schema->get_field(class_field_id);
 			dimensions_type dim = field.object_properties.dim;
@@ -3691,10 +3760,10 @@ namespace corona
 				{ { jtype::type_int64, "int_start", "Min. Value" }, 0, INT64_MAX },
 				{ { jtype::type_int64, "int_stop", "Max. Value" }, 0, INT64_MAX },
 				{ { jtype::type_int64, "text_style", "Text Style" }, 0, INT64_MAX },
-				{ { jtype::type_int64, "style_sheet", "Style Sheet", false, true }, 0, INT64_MAX },
-				{ { jtype::type_int64, "user_class_root", "User Classes", false, true }, 0, INT64_MAX },
-				{ { jtype::type_int64, "user_class", "User Class", false, true }, 0, INT64_MAX },
-				{ { jtype::type_int64, "user_field", "User Field", false, true }, 0, INT64_MAX },
+				{ { jtype::type_int64, "style_sheet", "Style Sheet", true }, 0, INT64_MAX },
+				{ { jtype::type_int64, "user_class_root", "User Classes", true }, 0, INT64_MAX },
+				{ { jtype::type_int64, "user_class", "User Class", true }, 0, INT64_MAX },
+				{ { jtype::type_int64, "user_field", "User Field", true }, 0, INT64_MAX },
 				{ { jtype::type_int16, "field_type", "Field Type" }, 0, INT64_MAX },
 				{ { jtype::type_int64, "user_class_class_id", "User Class Id" }, 0, INT64_MAX },
 				{ { jtype::type_int64, "base_class_id", "Base Class Id" }, 0, INT64_MAX },
@@ -3704,7 +3773,7 @@ namespace corona
 				{ { jtype::type_int32, "object_x", "X Dim" }, 0, INT64_MAX },
 				{ { jtype::type_int32, "object_y", "Y Dim" }, 0, INT64_MAX },
 				{ { jtype::type_int32, "object_z", "Z Dim" }, 0, INT64_MAX },
-				{ { jtype::type_int64, "style_id", "Style Id", false }, 0, INT64_MAX },
+				{ { jtype::type_int64, "style_id", "Style Id" }, 0, INT64_MAX },
 			};
 
 			put_double_field_request double_fields[20] = {
@@ -3874,14 +3943,7 @@ namespace corona
 				{ { jtype::type_object, "tooltip_style", "Tooltip Style" }, { {1,1,1}, idc_text_style }},
 				{ { jtype::type_object, "breadcrumb_style", "Breadcrumb Style" }, { {1,1,1}, idc_text_style }},
 				{ { jtype::type_object, "error_style", "Error Style" }, { {1,1,1}, idc_text_style }},
-				{ { jtype::type_object, "home_style", "Home Style" }, { {1,1,1}, idc_text_style }},
-				{ { jtype::type_object, "client_style", "Client Style" }, { {1,1,1}, idc_text_style }},
-				{ { jtype::type_object, "carrier_style", "Carrier Style" }, { {1,1,1}, idc_text_style }},
-				{ { jtype::type_object, "product_style", "Product Style" }, { {1,1,1}, idc_text_style }},
-				{ { jtype::type_object, "coverage_style", "Coverage Style" }, { {1,1,1}, idc_text_style }},
-				{ { jtype::type_object, "system_style", "System Style" }, { {1,1,1}, idc_text_style }},
 				{ { jtype::type_object, "navigation_style", "Navigation Style" }, { {1,1,1}, idc_text_style }},
-				{ { jtype::type_object, "navigation_selected_style", "Navigation Selected Style" }, { {1,1,1}, idc_text_style }},
 
 				{ { jtype::type_object, "company_a1_style", "Company Chart A1 Style" }, { {1,1,1}, idc_text_style }},
 				{ { jtype::type_object, "company_a2_style", "Company Chart A2 Style" }, { {1,1,1}, idc_text_style }},
@@ -3907,9 +3969,6 @@ namespace corona
 				{ { jtype::type_object, "title_bar_style", "Title Bar Style" }, { {1,1,1}, idc_text_style }},
 				{ { jtype::type_object, "subtitle_bar_style", "Subtitle Bar Style" }, { {1,1,1}, idc_text_style }},
 				{ { jtype::type_object, "breadcrumb_bar_style", "Breadcrumb Bar Style" }, { {1,1,1}, idc_text_style }},
-
-				{ { jtype::type_object, "home_style", "Home Style" }, { {1,1,1}, idc_text_style }},
-				{ { jtype::type_object, "login_style", "Login Style" }, { {1,1,1}, idc_text_style }},
 
 				{ { jtype::type_object, "album_title_style", "Album Title Style" }, { {1,1,1}, idc_text_style }},
 				{ { jtype::type_object, "artist_title_style", "Login Style" }, { {1,1,1}, idc_text_style }},
@@ -3956,16 +4015,7 @@ namespace corona
 			idf_breadcrumb_style = find_field("breadcrumb_style");
 			idf_button_style = find_field("button_style");
 			idf_error_style = find_field("error_style");
-			idf_client_style = find_field("client_style");
-			idf_carrier_style = find_field("carrier_style");
-			idf_coverage_style = find_field("coverage_style");
-			idf_product_style = find_field("product_style");
-			idf_system_style = find_field("system_style");
-			idf_navigation_selected_style = find_field("navigation_selected_style");
 			idf_navigation_style = find_field("navigation_style");
-
-			idf_home_style = find_field("home_style");
-			idf_login_style = find_field("login_style");
 
 			idf_company_a1_style = find_field("company_a1_style");
 			idf_company_a2_style = find_field("company_a2_style");
@@ -4010,22 +4060,26 @@ namespace corona
 			idf_date_options = find_field("date_options");
 			idf_int_options = find_field("int_options");
 
-			idf_style_sheet = find_field("style_sheet");
 			pcr.class_name = "style_sheet";
 			pcr.class_description = "collection of styles for ui";
-			pcr.member_fields = { idf_style_sheet, idf_name, 
+			pcr.member_fields = { idf_name, 
 				idf_view_background_style, idf_view_title_style, idf_view_subtitle_style, idf_view_section_style, idf_view_style, idf_disclaimer_style, idf_copyright_style,
 				idf_h1_style, idf_h2_style, idf_h3_style, idf_column_number_head_style,idf_column_text_head_style,
-				idf_column_number_style, idf_column_text_style, idf_button_style,
+				idf_column_number_style, idf_column_text_style, idf_button_style, 
 				idf_column_data_style,idf_label_style,idf_control_style,idf_chart_axis_style,idf_chart_legend_style,idf_chart_block_style,idf_tooltip_style,
-				idf_error_style, idf_client_style, idf_carrier_style, idf_coverage_style, idf_home_style, idf_system_style, idf_login_style, idf_product_style,
+				idf_error_style, 
 				idf_company_a1_style, idf_company_a2_style, idf_company_a3_style, idf_company_b1_style, idf_company_b2_style, idf_company_b3_style, idf_company_c1_style, idf_company_c2_style, idf_company_c3_style,idf_company_d1_style, idf_company_d2_style, idf_company_d3_style, 
 				idf_company_deductible_style, idf_company_neutral1_style, idf_company_neutral2_style, idf_header_area_style, idf_title_bar_style, idf_subtitle_bar_style, idf_breadcrumb_bar_style, idf_breadcrumb_style,
 				idf_album_title_style, idf_artist_title_style, idf_work_title1_style, idf_work_title2_style, idf_work_title3_style, idf_work_title4_style, idf_work_title5_style, idf_work_title6_style, 
-				idf_album_about_style, idf_artist_about_style, idf_navigation_style, idf_navigation_selected_style
+				idf_album_about_style, idf_artist_about_style, idf_navigation_style,
 			};
-			pcr.field_id_primary_key = idf_style_sheet;
 			idc_style_sheet = put_class(pcr);
+
+			pcr.class_name = "style_sheet_set";
+			pcr.class_description = "style sheets for normal, disabled, selected and over states";
+			pcr.member_fields = { { idc_style_sheet, 4 } };
+			pcr.auto_primary_key = true;
+			idc_style_sheet_set = put_class(pcr);
 
 			idf_string_length = find_field("string_length");
 			idf_string_validation_pattern = find_field("string_validation_pattern");

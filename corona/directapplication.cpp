@@ -2495,7 +2495,7 @@ namespace corona
 				auto field = style_sheet.get_field(idx);
 				if (field.is_class(schema->idc_text_style))
 				{
-					auto style = style_sheet.get_slice(idx, { 0,0,0 }, false);
+					auto style = style_sheet.get_object(idx, { 0,0,0 }, false);
 					viewStyleRequest request;
 					request.name = field.name;
 
@@ -2766,9 +2766,10 @@ namespace corona
 			HFONT hfont = nullptr;
 
 			if (currentController) {
-				auto slice = currentController->getStyleSheet();
+				auto sheet = currentController->getStyleSheet();
+				auto styleSlice = sheet.get_object_by_class(schema.idc_style_sheet,)
+															.get_object(_style_id, {0,0,0}, true);
 				auto schema = slice.get_schema();
-				auto styleSlice = slice.get_slice(_style_id, {0,0,0}, true);
 				double fontSize = styleSlice.get(schema->idf_font_size);
 				double ifontSize = fontSize / dpiScale;
 				istring<2048> fontList = (const char *)styleSlice.get(schema->idf_font_name);

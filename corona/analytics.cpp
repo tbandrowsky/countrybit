@@ -11,7 +11,7 @@ namespace corona
 		{
 			for (auto fld : _stack) {
 				_dest.update(_root);
-				_root = _root.get_object(fld.item.member_idx).get_slice(fld.item.current_dim);
+				_root = _root.get_object(fld.item.member_idx).get_object(fld.item.current_dim);
 			}
 			return _dest;
 		}
@@ -70,7 +70,7 @@ namespace corona
 						{
 							psi.max_dim = fld.object_properties.dim;
 							psi.current_dim = { 0, 0, 0 };
-							object = object.get_slice(psi.member_idx, { 0, 0, 0 }, false);
+							object = object.get_object(psi.member_idx, { 0, 0, 0 }, false);
 						}
 						else
 						{
@@ -123,6 +123,7 @@ namespace corona
 			}
 			return dest_list;
 		}
+
 		jobject analytics_kit::create_object(relative_ptr_type _class_id)
 		{
 			auto myclass = schema->get_class(_class_id);

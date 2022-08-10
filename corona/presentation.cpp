@@ -236,7 +236,7 @@ namespace corona
 				double font_height = 12.0;
 				if (_item->style_id != null_row && _style_sheet.has_field(_item->style_id))
 				{
-					jobject style = _style_sheet.get_object(_item->style_id, true).get_slice({ 0,0,0 });
+					jobject style = _style_sheet.get_object(_item->style_id, true).get_object({ 0,0,0 });
 					font_height = style.get(style.get_schema()->idf_font_size);
 				};
 				_item->bounds.w = font_height * _item->box.width.amount;
@@ -267,7 +267,7 @@ namespace corona
 				double font_height = 12.0;
 				if (_item->style_id != null_row && _style_sheet.has_field(_item->style_id)) 
 				{
-					jobject style = _style_sheet.get_object(_item->style_id, true).get_slice({ 0,0,0 });
+					jobject style = _style_sheet.get_object(_item->style_id, true).get_object({ 0,0,0 });
 					font_height = style.get(style.get_schema()->idf_font_size);
 				};
 				_item->bounds.h = font_height * _item->box.height.amount;

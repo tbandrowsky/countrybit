@@ -514,7 +514,8 @@ namespace corona
 			time_box get_time(int field_idx, bool _use_id = false);
 			string_box get_string(int field_idx, bool _use_id = false);
 			jarray get_object(int field_idx, bool _use_id = false);
-			jobject get_slice(int field_idx, dimensions_type _dim, bool _use_id = false);
+			jarray get_object_by_class(relative_ptr_type _class_id);
+			jobject get_object(int field_idx, dimensions_type _dim, bool _use_id = false);
 			jlist get_list(int field_idx, bool _use_id = false);
 			collection_id_box get_collection_id(int field_idx, bool _use_id = false);
 			object_id_box get_object_id(int field_idx, bool _use_id = false);
@@ -571,7 +572,7 @@ namespace corona
 				
 				for (auto item : member_ids)
 				{
-					target_slice = target_slice.get_slice(item, {0,0,0}, true);
+					target_slice = target_slice.get_object(item, {0,0,0}, true);
 				}
 
 				for (auto item : var) 
@@ -585,11 +586,11 @@ namespace corona
 				jobject target_slice = *this;
 				jobject source_slice = *this;
 
-				source_slice = get_slice(_src_member_id, { 0,0,0 }, true);
+				source_slice = get_object(_src_member_id, { 0,0,0 }, true);
 
 				for (auto item : member_ids)
 				{
-					target_slice = target_slice.get_slice(item, { 0,0,0 }, true);
+					target_slice = target_slice.get_object(item, { 0,0,0 }, true);
 				}
 
 				target_slice.update(source_slice);
@@ -651,8 +652,8 @@ namespace corona
 			jarray(dynamic_box& _dest, jarray& _src);
 			dimensions_type dimensions();
 
-			jobject get_slice(int x, int y = 0, int z = 0);
-			jobject get_slice(dimensions_type dims);
+			jobject get_object(int x, int y = 0, int z = 0);
+			jobject get_object(dimensions_type dims);
 			uint64_t get_size_bytes();
 			char* get_bytes();
 
@@ -1171,6 +1172,7 @@ namespace corona
 			jobject get_at(relative_ptr_type _object_id);
 			relative_ptr_type get_class_id(relative_ptr_type _object_id);
 			relative_ptr_type get_base_id(relative_ptr_type _object_id);
+			jobject get_style_sheet();
 
 			bool object_is_class(relative_ptr_type _object_id, relative_ptr_type _class_id);
 			bool object_is_class(const jobject& obj, relative_ptr_type _class_id);
@@ -1181,7 +1183,13 @@ namespace corona
 
 			bool class_has_base(relative_ptr_type _class_id, relative_ptr_type _base_id);
 
+			filter_option create_filter_from_view_query(view_query& vq, actor_type* pactor);
+
 			filtered_object_id_list run_filter(serialized_box_container* _data, filter_option& _stuff);
+			void update(filter_option& _stuff, std::function<bool(jobject&_src)> updateor);
+
+			filtered_object_id_list run_filter(serialized_box_container* _data, view_query& vq, actor_type *pactor);
+			void update(view_query& vq, actor_type* pactor, std::function<bool(jobject& _src)> updateor);
 
 			relative_ptr_type size()
 			{
@@ -1389,15 +1397,7 @@ namespace corona
 			relative_ptr_type idf_chart_block_style;
 			relative_ptr_type idf_tooltip_style;
 			relative_ptr_type idf_breadcrumb_style;
-			relative_ptr_type idf_breadcrumb_selected_style;
 			relative_ptr_type idf_error_style;
-			relative_ptr_type idf_client_style;
-			relative_ptr_type idf_carrier_style;
-			relative_ptr_type idf_coverage_style;
-			relative_ptr_type idf_product_style;
-			relative_ptr_type idf_system_style;
-			relative_ptr_type idf_home_style;
-			relative_ptr_type idf_login_style;
 			relative_ptr_type idf_company_a1_style;
 			relative_ptr_type idf_company_a2_style;
 			relative_ptr_type idf_company_a3_style;
@@ -1412,7 +1412,6 @@ namespace corona
 			relative_ptr_type idf_company_d3_style;
 			relative_ptr_type idf_company_deductible_style;
 			relative_ptr_type idf_navigation_style;
-			relative_ptr_type idf_navigation_selected_style;
 			relative_ptr_type idf_company_neutral1_style;
 			relative_ptr_type idf_company_neutral2_style;
 			relative_ptr_type idf_header_area_style;
@@ -1431,7 +1430,7 @@ namespace corona
 			relative_ptr_type idf_artist_about_style;
 
 			relative_ptr_type idc_style_sheet;
-			relative_ptr_type idf_style_sheet;
+			relative_ptr_type idc_style_sheet_set;
 
 			relative_ptr_type idf_style_id;
 
@@ -1632,8 +1631,6 @@ namespace corona
 				jf.type_id = _base.type_id;
 				jf.name = _base.name;
 				jf.description = _base.description;
-				jf.display_in_user_ui = _base.display_in_user_ui;
-				jf.display_in_admin_ui = _base.display_in_admin_ui;
 				jf.enumeration_class_id = _base.enumeration_class_id;
 				jf.enumeration_display_field_id = _base.enumeration_display_field_id;
 				jf.enumeration_value_field_id = _base.enumeration_value_field_id;
@@ -2320,13 +2317,8 @@ namespace corona
 				jcollection tmp;
 				if (reserved) {
 					tmp = get_collection(ref);
-					create_object_request cor;
-					cor.class_id = idc_style_sheet;
-					cor.actor_id = null_row;
-					cor.select_on_create = false;
-					cor.collection_id = tmp.get_collection_id();
 					if (ref->create_style_sheet) {
-						tmp.create_object(0, null_row, idc_style_sheet, ref->style_sheet_id);
+						tmp.create_object(0, null_row, idc_style_sheet_set, ref->style_sheet_id);
 					}
 				}
 				return tmp;

@@ -41,6 +41,19 @@ namespace corona
 				copy(src.data(), src.size());
 			}
 
+			iarray(const std::initializer_list<item_type>& src)
+			{
+				length = 0;
+				for (auto itm : src)
+				{
+					push_back(itm);
+				}
+				for (corona_size_t i = length; i < max_items; i++)
+				{
+					data[i] = {};
+				}
+			}
+
 			iarray& operator = (const std::vector<item_type>& src)
 			{
 				copy(src.data(), src.size());
@@ -64,6 +77,11 @@ namespace corona
 			corona_size_t size() const
 			{
 				return length;
+			}
+
+			const item_type& operator[](corona_size_t idx) const
+			{
+				return data[idx];
 			}
 
 			item_type& operator[](corona_size_t idx)

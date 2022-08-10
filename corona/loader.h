@@ -473,7 +473,7 @@ namespace corona
 					throw std::logic_error("attempt to map non-object to object");
 				}
 
-				auto update_slice = array.get_slice(_src->x, _src->y, _src->z);
+				auto update_slice = array.get_object(_src->x, _src->y, _src->z);
 
 				for (auto member = pv->first_link; member; member = member->next_link)
 				{
