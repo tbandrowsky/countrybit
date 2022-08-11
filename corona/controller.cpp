@@ -35,9 +35,11 @@ namespace corona
 			;
 		}
 
-		jobject corona_controller::getStyleSheet()
+		jobject corona_controller::get_style_sheet(int _index)
 		{
-			return user_collection.get_style_sheet();
+			return user_collection.get_style_sheet()
+				.get_object_by_class(schema.idc_style_sheet)
+				.get_at(_index);
 		}
 
 		void corona_controller::onCreated()
@@ -71,7 +73,19 @@ namespace corona
 
 		void corona_controller::mouseMove(direct2dWindow* win, point* _point)
 		{
-			;
+			for (auto pgi : pg) {
+				pgi.item.mouse_over = false;
+			}
+
+			auto over_items = pg.where([this, _point](const auto& pi) { 
+				return pi.item.is_command() && 
+				rectangle_math::contains(pi.item.bounds, _point->x, _point->y); });
+
+			for (auto ov : over_items)
+			{
+				ov.item.mouse_over = true;
+			}
+			host->redraw();
 		}
 
 		int corona_controller::onHScroll(int controlId, scrollTypes scrollType, page_item pi)
@@ -460,7 +474,6 @@ namespace corona
 		{
 			clear();
 			render(newSize);
-			jobject style_sheet = getStyleSheet();
 		}
 
 		bool corona_controller::drawItem(int _id)
@@ -608,7 +621,20 @@ namespace corona
 				effective_bounds.y -= container.bounds.y;
 			}
 
-			_host->drawView(style_name, cap, effective_bounds, od.c_str());
+			int state;
+
+			if (_item.selected)
+			{
+				state = style_selected;
+			}
+			else if (_item.mouse_over)
+			{
+				state = style_over;
+			}
+			else
+				state = style_normal;
+
+			_host->drawView(style_name, cap, effective_bounds, state, od.c_str());
 		}
 
 		page_item* corona_controller::edit_fields(page_item* _parent, const object_member_path& _omp, field_layout _layout, const char* _object_title, const field_list& _fields)
@@ -710,9 +736,10 @@ namespace corona
 				v->layout = layout_types::select;
 				v->slice = st.object;
 				v->object_path.object.row_id = st.object_id;
+				v->selected = st.selected;
 				auto slice = st.object;
 
-				if (slice.has_field(schema.idf_style_id))
+ 				if (slice.has_field(schema.idf_style_id))
 				{
 					v->style_id = slice.get_int64(schema.idf_style_id, true);
 				}

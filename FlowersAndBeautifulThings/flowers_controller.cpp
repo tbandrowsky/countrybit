@@ -256,7 +256,7 @@ namespace flowers
 
 	void flowers_controller::set_style_sheet()
 	{
-		auto style_sheet = getStyleSheet();
+		auto style_sheet = get_style_sheet();
 
 		const char* fontName = "Open Sans,Arial";
 

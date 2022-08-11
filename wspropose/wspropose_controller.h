@@ -40,7 +40,8 @@ namespace proposal
 		wsproposal_controller();
 		virtual ~wsproposal_controller();
 
-		void set_style_sheet();
+		void set_style_sheets();
+		void set_style_sheet(int _index);
 
 		void render_navigation_frame(std::function<void(page_item* _navigation, page_item* _contents)> _contents);
 

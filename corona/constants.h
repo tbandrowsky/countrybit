@@ -233,5 +233,11 @@ namespace corona
 		template <class T>
 		concept explicit_char_ptr = std::same_as<T, const char *>;
 
+		const int styles_count = 5;
+		const int style_normal = 0;
+		const int style_over = 1;
+		const int style_selected = 2;
+		const int style_busy = 3;
+		const int style_disabled = 4;
 	}
 }

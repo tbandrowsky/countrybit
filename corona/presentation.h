@@ -69,6 +69,10 @@ namespace corona
 
 			dynamic_value			dest_value;
 
+			bool					mouse_over;
+			bool					pressed;
+			bool					selected;
+
 			page_item() :
 				id(-1),
 				parent_id(-1),
@@ -81,7 +85,10 @@ namespace corona
 				item_space(),
 				item_space_amount(0.0),
 				item_uid(null_row),
-				windowsRegion(false)
+				windowsRegion(false),
+				mouse_over(false),
+				pressed(false),
+				selected(false)
 			{
 				object_path.object.collection_id = {};
 				object_path.object.row_id = null_row;

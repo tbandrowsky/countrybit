@@ -3918,7 +3918,7 @@ namespace corona
 				idf_shape_fill_color, idf_shape_border_thickness, idf_shape_border_color, idf_box_fill_color, idf_box_border_thickness, idf_box_border_color };
 			idc_text_style = put_class(pcr);
 
-			put_object_field_request object_fields[67] = {
+			put_object_field_request object_fields[59] = {
 				{ { jtype::type_object, "view_background_style", "View Background Style" }, { {1,1,1}, idc_text_style }},
 				{ { jtype::type_object, "view_title_style", "View Title Style" }, { {1,1,1}, idc_text_style }},
 				{ { jtype::type_object, "view_subtitle_style", "View Subtitle Style" }, { {1,1,1}, idc_text_style }},
@@ -3980,6 +3980,7 @@ namespace corona
 				{ { jtype::type_object, "work_title6_style", "Login Style" }, { {1,1,1}, idc_text_style }},
 				{ { jtype::type_object, "album_about_style", "Login Style" }, { {1,1,1}, idc_text_style }},
 				{ { jtype::type_object, "artist_about_style", "Login Style" }, { {1,1,1}, idc_text_style }},
+				{ { jtype::type_object, "panel_style", "Panel Style" }, { {1,1,1}, idc_text_style }},
 
 				{ { jtype::type_object, "string_options", "String Field Options" }, { {1,1,1}, idc_string_options }},
 				{ { jtype::type_object, "double_options", "Double Field Options" }, { {1,1,1}, idc_double_options }},
@@ -4033,6 +4034,8 @@ namespace corona
 			idf_company_d2_style = find_field("company_d2_style");
 			idf_company_d3_style = find_field("company_d3_style");
 
+			idf_panel_style = find_field("panel_style");
+
 			idf_company_deductible_style = find_field("company_deductible_style");
 			idf_company_neutral1_style = find_field("company_neutral1_style");
 			idf_company_neutral2_style = find_field("company_neutral2_style");
@@ -4067,7 +4070,7 @@ namespace corona
 				idf_h1_style, idf_h2_style, idf_h3_style, idf_column_number_head_style,idf_column_text_head_style,
 				idf_column_number_style, idf_column_text_style, idf_button_style, 
 				idf_column_data_style,idf_label_style,idf_control_style,idf_chart_axis_style,idf_chart_legend_style,idf_chart_block_style,idf_tooltip_style,
-				idf_error_style, 
+				idf_error_style, idf_panel_style,
 				idf_company_a1_style, idf_company_a2_style, idf_company_a3_style, idf_company_b1_style, idf_company_b2_style, idf_company_b3_style, idf_company_c1_style, idf_company_c2_style, idf_company_c3_style,idf_company_d1_style, idf_company_d2_style, idf_company_d3_style, 
 				idf_company_deductible_style, idf_company_neutral1_style, idf_company_neutral2_style, idf_header_area_style, idf_title_bar_style, idf_subtitle_bar_style, idf_breadcrumb_bar_style, idf_breadcrumb_style,
 				idf_album_title_style, idf_artist_title_style, idf_work_title1_style, idf_work_title2_style, idf_work_title3_style, idf_work_title4_style, idf_work_title5_style, idf_work_title6_style, 
@@ -4077,7 +4080,7 @@ namespace corona
 
 			pcr.class_name = "style_sheet_set";
 			pcr.class_description = "style sheets for normal, disabled, selected and over states";
-			pcr.member_fields = { { idc_style_sheet, 4 } };
+			pcr.member_fields = { { idc_style_sheet, { styles_count, 1, 1 } }  };
 			pcr.auto_primary_key = true;
 			idc_style_sheet_set = put_class(pcr);
 

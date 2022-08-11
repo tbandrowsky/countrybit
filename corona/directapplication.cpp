@@ -156,15 +156,15 @@ namespace corona
 			return w;
 		}
 
-		void adapterSet::loadStyleSheet(jobject& sheet)
+		void adapterSet::loadStyleSheet(jobject& sheet, int _state)
 		{
 			direct2dChildWindow* w = nullptr;
 			for (auto win : parent_windows)
 			{
-				win.second->loadStyleSheet(sheet);
+				win.second->loadStyleSheet(sheet, _state);
 				for (auto& child : win.second->getChildren())
 				{
-					child.second->loadStyleSheet(sheet);
+					child.second->loadStyleSheet(sheet, _state);
 				}
 			}
 		}
@@ -2441,10 +2441,16 @@ namespace corona
 			}
 		}
 
-		void direct2dContext::drawView(const char* _style, const char* _text, rectangle& _rect, const char *_debug_comment)
+		void direct2dContext::drawView(const char* _style, const char* _text, rectangle& _rect, int _state, const char *_debug_comment)
 		{
 			if (!_style) return;
-			auto& vs = viewStyles[_style];
+
+			object_name style_name = _style;
+			object_name style_composed_name;
+
+			view_style_name(style_name, style_composed_name, _state);
+
+			auto& vs = viewStyles[style_composed_name.c_str()];
 			auto& rectFill = vs.box_fill_color;
 			drawRectangle(&_rect, vs.box_border_color.name, vs.box_border_thickness, vs.box_fill_color.name);
 
@@ -2464,7 +2470,7 @@ namespace corona
 #endif
 		}
 
-		void direct2dContext::loadStyleSheet(jobject& style_sheet)
+		void direct2dContext::loadStyleSheet(jobject& style_sheet, int _state)
 		{
 			solidBrushRequest dsrb;
 			dsrb.name = "debug-border";
@@ -2497,9 +2503,10 @@ namespace corona
 				{
 					auto style = style_sheet.get_object(idx, { 0,0,0 }, false);
 					viewStyleRequest request;
-					request.name = field.name;
+					
+					view_style_name(field.name, request.name, _state);
 
-					text_style_name(request.name, request.text_style.name);
+					text_style_name(field.name, request.text_style.name, _state);
 					request.text_style.fontName = (const char*)style.get(schema->idf_font_name);
 					request.text_style.fontSize = style.get(schema->idf_font_size);
 					request.text_style.bold = style.get(schema->idf_bold);
@@ -2510,20 +2517,20 @@ namespace corona
 					request.text_style.horizontal_align = (visual_alignment)(int)style.get(schema->idf_horizontal_alignment);
 					request.text_style.vertical_align = (visual_alignment)(int)style.get(schema->idf_vertical_alignment);
 
-					shape_border_brush_name(request.name, request.shape_border_color.name);
+					shape_border_brush_name(field.name, request.shape_border_color.name, _state);
 					request.shape_border_color.brushColor = style.get(schema->idf_box_border_color);
 					request.shape_border_thickness = style.get(schema->idf_box_border_thickness);
 
-					shape_fill_brush_name(request.name, request.shape_fill_color.name);
+					shape_fill_brush_name(field.name, request.shape_fill_color.name, _state);
 					request.shape_fill_color.brushColor = style.get(schema->idf_shape_fill_color);
 					request.shape_border_color.brushColor = style.get(schema->idf_box_border_color);
 					request.shape_border_thickness = style.get(schema->idf_box_border_thickness);
 
-					box_border_brush_name(request.name, request.box_border_color.name);
+					box_border_brush_name(field.name, request.box_border_color.name, _state);
 					request.box_border_color.brushColor = style.get(schema->idf_box_border_color);
 					request.box_border_thickness = style.get(schema->idf_box_border_thickness);
 
-					box_fill_brush_name(request.name, request.box_fill_color.name);
+					box_fill_brush_name(field.name, request.box_fill_color.name, _state);
 					request.box_fill_color.brushColor = style.get(schema->idf_box_fill_color);
 
 					addViewStyle(request);
@@ -2704,77 +2711,89 @@ namespace corona
 			return created_something;
 		}
 
-		void direct2dContext::text_style_name(const object_name& _style_sheet_name, object_name_composed& _object_style_name)
+		void direct2dContext::view_style_name(const object_name& _style_sheet_name, object_name& _object_style_name, int _index)
 		{
-			_object_style_name = _style_sheet_name + "-text";
+			_object_style_name = _style_sheet_name + "-view-" + std::to_string(_index);
 		}
 
-		void direct2dContext::box_border_brush_name(const object_name& _style_sheet_name, object_name_composed& _object_style_name)
+		void direct2dContext::text_style_name(const object_name& _style_sheet_name, object_name_composed& _object_style_name, int _index)
 		{
-			_object_style_name = _style_sheet_name + "-box-border";
+			_object_style_name = _style_sheet_name + "-text-" + std::to_string(_index);
 		}
 
-		void direct2dContext::box_fill_brush_name(const object_name& _style_sheet_name, object_name_composed& _object_style_name)
+		void direct2dContext::box_border_brush_name(const object_name& _style_sheet_name, object_name_composed& _object_style_name, int _index)
 		{
-			_object_style_name = _style_sheet_name + "-box-fill";
+			_object_style_name = _style_sheet_name + "-box-border-" + std::to_string(_index);
 		}
 
-		void direct2dContext::shape_fill_brush_name(const object_name& _style_sheet_name, object_name_composed& _object_style_name)
+		void direct2dContext::box_fill_brush_name(const object_name& _style_sheet_name, object_name_composed& _object_style_name, int _index)
 		{
-			_object_style_name = _style_sheet_name + "-shape-fill";
+			_object_style_name = _style_sheet_name + "-box-fill-" + std::to_string(_index);
 		}
 
-		void direct2dContext::shape_border_brush_name(const object_name& _style_sheet_name, object_name_composed& _object_style_name)
+		void direct2dContext::shape_fill_brush_name(const object_name& _style_sheet_name, object_name_composed& _object_style_name, int _index)
 		{
-			_object_style_name = _style_sheet_name + "-shape-border";
+			_object_style_name = _style_sheet_name + "-shape-fill-" + std::to_string(_index);
+		}
+
+		void direct2dContext::shape_border_brush_name(const object_name& _style_sheet_name, object_name_composed& _object_style_name, int _index)
+		{
+			_object_style_name = _style_sheet_name + "-shape-border-" + std::to_string(_index);
 		}
 
 		void directApplication::loadStyleSheet()
 		{
 
-			if (currentController) {
-				auto styles = currentController->getStyleSheet();
+			if (currentController) 
+			{
+				auto styles = currentController->get_style_sheet(0);
 				auto schema = styles.get_schema();
 
 				HFONT oldControlFont = controlFont;
 				HFONT oldLabelFont = labelFont;
 				HFONT oldTitleFont = titleFont;
 
-				factory->loadStyleSheet(styles);
-
 				controlFont = createFontFromStyleSheet(schema->idf_control_style);
 				labelFont = createFontFromStyleSheet(schema->idf_label_style);
 				titleFont = createFontFromStyleSheet(schema->idf_view_subtitle_style);
 
-				if (oldControlFont) {
+				if (oldControlFont) 
+				{
 					DeleteObject(oldControlFont);
 				}
 
-				if (oldLabelFont) {
+				if (oldLabelFont) 
+				{
 					DeleteObject(oldLabelFont);
 				}
 
-				if (oldTitleFont) {
+				if (oldTitleFont) 
+				{
 					DeleteObject(oldTitleFont);
 				}
 
+				for (int i = 0; i < styles_count; i++)
+				{
+					factory->loadStyleSheet(styles, i);
+				}
 			}
 		}
+
 
 		HFONT directApplication::createFontFromStyleSheet(relative_ptr_type _style_id)
 		{
 			HFONT hfont = nullptr;
 
 			if (currentController) {
-				auto sheet = currentController->getStyleSheet();
-				auto styleSlice = sheet.get_object_by_class(schema.idc_style_sheet,)
-															.get_object(_style_id, {0,0,0}, true);
-				auto schema = slice.get_schema();
-				double fontSize = styleSlice.get(schema->idf_font_size);
+				auto sheet = currentController->get_style_sheet( style_normal );
+				auto style_field = sheet.get_object(_style_id, true)
+					.get_object(0);
+				auto schema = style_field.get_schema();
+				double fontSize = style_field.get(schema->idf_font_size);
 				double ifontSize = fontSize / dpiScale;
-				istring<2048> fontList = (const char *)styleSlice.get(schema->idf_font_name);
-				bool italic = (int32_t)styleSlice.get(schema->idf_italic);
-				bool bold = (int32_t)styleSlice.get(schema->idf_bold);
+				istring<2048> fontList = (const char *)style_field.get(schema->idf_font_name);
+				bool italic = (int32_t)style_field.get(schema->idf_italic);
+				bool bold = (int32_t)style_field.get(schema->idf_bold);
 
 				int state = 0;
 				char* fontExtractedName = fontList.next_token(',', state);
@@ -2828,15 +2847,18 @@ namespace corona
 						windowMapItem wmi{};
 
 						auto child = win->createChild(pid, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h);
-						auto ss = currentController->getStyleSheet();
-						child->loadStyleSheet(ss);
+						for (int i = 0; i < styles_count; i++) 
+						{
+							auto ss = currentController->get_style_sheet(i);
+							child->loadStyleSheet(ss, i);
+						}
 						windowControlMap.insert_or_assign(pid, wmi);
 					}
 					break;
 				case database::layout_types::label:
 					{	   
 
-						auto styles = currentController->getStyleSheet();
+						auto styles = currentController->get_style_sheet(0);
 						auto schema = styles.get_schema();
 						HFONT font;
 						if (pi.style_id == schema->idf_view_subtitle_style)
@@ -3181,6 +3203,20 @@ namespace corona
 						ptxo.x = p.x * 96.0 / GetDpiForWindow(hwnd);
 						ptxo.y = p.y * 96.0 / GetDpiForWindow(hwnd);
 						currentController->mouseClick(winx, &ptxo);
+					}
+				}
+				break;
+			case WM_MOUSEMOVE:
+				if (currentController)
+				{
+					POINT p;
+					if (GetCursorPos(&p))
+					{
+						ScreenToClient(hwnd, &p);
+						database::point ptxo;
+						ptxo.x = p.x * 96.0 / GetDpiForWindow(hwnd);
+						ptxo.y = p.y * 96.0 / GetDpiForWindow(hwnd);
+						currentController->mouseMove(winx, &ptxo);
 					}
 				}
 				break;

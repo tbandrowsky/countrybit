@@ -37,7 +37,7 @@ namespace corona
 
 			// these are for 
 
-			virtual jobject getStyleSheet() = 0;
+			virtual jobject get_style_sheet(int _idx) = 0;
 			virtual void keyDown(direct2dWindow *win, short _key) = 0;
 			virtual void keyUp(direct2dWindow* win, short _key) = 0;
 			virtual void mouseMove(direct2dWindow* win, point* _point) = 0;
@@ -144,7 +144,7 @@ namespace corona
 
 			virtual ~corona_controller();
 
-			virtual jobject getStyleSheet();
+			virtual jobject get_style_sheet(int _index);
 
 			// methods to use in render
 

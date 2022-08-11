@@ -92,7 +92,7 @@ namespace corona
 
 			direct2dBitmap* createD2dBitmap(D2D1_SIZE_F size);
 
-			void loadStyleSheet(jobject& sheet);
+			void loadStyleSheet(jobject& sheet, int style_state);
 
 		};
 
@@ -127,11 +127,12 @@ namespace corona
 			direct2dContext(adapterSet* _factory);
 			virtual ~direct2dContext();
 
-			void text_style_name(const object_name& _style_sheet_name, object_name_composed& _object_style_name);
-			void box_border_brush_name(const object_name& _style_sheet_name, object_name_composed& _object_style_name);
-			void box_fill_brush_name(const object_name& _style_sheet_name, object_name_composed& _object_style_name);
-			void shape_fill_brush_name(const object_name& _style_sheet_name, object_name_composed& _object_style_name);
-			void shape_border_brush_name(const object_name& _style_sheet_name, object_name_composed& _object_style_name);
+			void view_style_name(const object_name& _style_sheet_name, object_name& _object_style_name, int _index);
+			void text_style_name(const object_name& _style_sheet_name, object_name_composed& _object_style_name, int _index);
+			void box_border_brush_name(const object_name& _style_sheet_name, object_name_composed& _object_style_name, int _index);
+			void box_fill_brush_name(const object_name& _style_sheet_name, object_name_composed& _object_style_name, int _index);
+			void shape_fill_brush_name(const object_name& _style_sheet_name, object_name_composed& _object_style_name, int _index);
+			void shape_border_brush_name(const object_name& _style_sheet_name, object_name_composed& _object_style_name, int _index);
 
 		public:
 
@@ -184,9 +185,9 @@ namespace corona
 			virtual void drawBitmap(drawableHost* _directBitmap, point& _dest, point& _size);
 			virtual void save(const char* _filename);
 
-			virtual void drawView(const char* _style, const char *_text, rectangle& _rect, const char *_debug_comment);
+			virtual void drawView(const char* _style, const char *_text, rectangle& _rect, int _state, const char *_debug_comment);
 
-			virtual void loadStyleSheet(jobject& style_sheet);
+			virtual void loadStyleSheet(jobject& style_sheet, int _style_state);
 
 		protected:
 

@@ -1381,6 +1381,7 @@ namespace corona
 			relative_ptr_type idf_view_style;
 			relative_ptr_type idf_disclaimer_style;
 			relative_ptr_type idf_copyright_style;
+			relative_ptr_type idf_panel_style;
 			relative_ptr_type idf_h1_style;
 			relative_ptr_type idf_h2_style;
 			relative_ptr_type idf_h3_style;
