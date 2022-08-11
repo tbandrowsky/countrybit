@@ -190,14 +190,14 @@ namespace corona
 		class page : public iarray<page_item, 1024>
 		{
 			void calculate_sizes(jobject& _style_sheet, page::iterator_type children, double offx, double offy, double x, double y, double width, double height, double& remaining_width, double& remaining_height);
-			void set_bound_size(jobject& _style_sheet, page_item* _item, double offx, double offy, double x, double y, double width, double height);
+			void set_bound_size(jobject& _style_sheet, page_item* _item, double offx, double offy, double x, double y, double width, double height, double remaining_width, double remaining_height);
 			void arrange_impl(jobject& _style_sheet, page_item *_item, double offx, double offy, double x, double y, double width, double height);
 
 			dynamic_box data;
 			using base_type = iarray<page_item, 1024>;
 
-			void calculate_bounds_w(jobject& _style_sheet, page_item* _pi, double width, double height, int safety);
-			void calculate_bounds_h(jobject& _style_sheet, page_item* _pi, double width, double height, int safety);
+			void calculate_bounds_w(jobject& _style_sheet, page_item* _pi, double width, double height, double remaining_width, double remaining_height, int safety);
+			void calculate_bounds_h(jobject& _style_sheet, page_item* _pi, double width, double height, double remaining_width, double remaining_height, int safety);
 
 		public:
 

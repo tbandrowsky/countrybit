@@ -218,17 +218,17 @@ namespace corona
 			}
 		}
 
-		void page::calculate_bounds_w(jobject& _style_sheet, page_item* _item, double width, double height, int safety)
+		void page::calculate_bounds_w(jobject& _style_sheet, page_item* _item, double width, double height, double remaining_width, double remaining_height, int safety)
 		{
 			if (safety > 2)
 				return;
 			if (_item->box.width.units == measure_units::percent_remaining)
 			{
-				_item->bounds.w = _item->box.width.amount * width / 100.0;
+				_item->bounds.w = _item->box.width.amount * remaining_width / 100.0;
 			}
 			else if (_item->box.width.units == measure_units::percent_height)
 			{
-				calculate_bounds_h(_style_sheet, _item, width, height, safety+1);
+				calculate_bounds_h(_style_sheet, _item, width, height, remaining_width, remaining_height, safety+1);
 				_item->bounds.w = _item->box.width.amount * _item->bounds.h / 100.0;
 			}
 			else if (_item->box.width.units == measure_units::font || _item->box.width.units == measure_units::font_golden_ratio)
@@ -249,17 +249,17 @@ namespace corona
 				_item->bounds.w = _item->box.width.amount;
 		}
 
-		void page::calculate_bounds_h(jobject& _style_sheet, page_item* _item, double width, double height, int safety)
+		void page::calculate_bounds_h(jobject& _style_sheet, page_item* _item, double width, double height, double remaining_width, double remaining_height, int safety)
 		{
 			if (safety > 2)
 				return;
 			if (_item->box.height.units == measure_units::percent_remaining)
 			{
-				_item->bounds.h = _item->box.height.amount * height / 100.0;
+				_item->bounds.h = _item->box.height.amount * remaining_height / 100.0;
 			}
 			else if (_item->box.height.units == measure_units::percent_width)
 			{
-				calculate_bounds_w(_style_sheet, _item, width, height, safety+1);
+				calculate_bounds_w(_style_sheet, _item, width, height, remaining_width, remaining_height, safety+1);
 				_item->bounds.h = _item->box.height.amount * _item->bounds.w / 100.0;
 			}
 			else if (_item->box.height.units == measure_units::font || _item->box.height.units == measure_units::font_golden_ratio)
@@ -280,10 +280,10 @@ namespace corona
 				_item->bounds.h = _item->box.height.amount;
 		}
 
-		void page::set_bound_size(jobject& _style_sheet, page_item* _item, double offx, double offy, double x, double y, double width, double height)
+		void page::set_bound_size(jobject& _style_sheet, page_item* _item, double offx, double offy, double x, double y, double width, double height, double remaining_width, double remaining_height)
 		{
-			calculate_bounds_w(_style_sheet, _item, width, height, 0);
-			calculate_bounds_h(_style_sheet, _item, width, height, 0);
+			calculate_bounds_w(_style_sheet, _item, width, height, remaining_width, remaining_height, 0);
+			calculate_bounds_h(_style_sheet, _item, width, height, remaining_width, remaining_height, 0);
 
 			if (_item->box.x.amount >= 0.0)
 			{
@@ -368,14 +368,13 @@ namespace corona
 		void page::arrange_impl(jobject& _style_sheet, page_item* _item, double offx, double offy, double x, double y, double width, double height)
 		{
 
-			set_bound_size(_style_sheet, _item, offx, offy, x, y, width, height);
-
 			auto children = where([_item](const auto& it) {
 				return it.item.parent_id == _item->id;
 				});
 
 			double remaining_width, remaining_height;
 			calculate_sizes(_style_sheet, children, offx, offy, x, y, width, height, remaining_width, remaining_height);
+			set_bound_size(_style_sheet, _item, offx, offy, x, y, width, height, remaining_width, remaining_height);
 
 			if (_item->layout == layout_types::row || _item->layout == layout_types::canvas2d_row || _item->layout == layout_types::canvas3d_row)
 			{
@@ -431,7 +430,7 @@ namespace corona
 					_item->item_space_amount = _item->item_space.amount * width / 100.0;
 					break;
 				case measure_units::percent_remaining:
-					_item->item_space_amount = _item->item_space.amount * remaining_width / 100.0;
+					_item->item_space_amount = _item->item_space.amount * remaining_height / 100.0;
 					break;
 				case measure_units::pixels:
 					_item->item_space_amount = _item->item_space.amount;
