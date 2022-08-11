@@ -267,9 +267,9 @@ namespace corona
 				{
 					auto count = get_class_count(oi.item.create_class_id);
 
-//#if _TRACE_RULE
+#if _TRACE_RULE
 					std::cout << " " << oi.item.rule_name << " count existing objects " << count << std::endl;
-//#endif
+#endif
 
 					if (count < oi.item.max_creatable_count)
 					{
