@@ -1182,6 +1182,7 @@ namespace corona
 			bool object_is_class(const jobject& obj, class_list& _class_ids);
 
 			bool class_has_base(relative_ptr_type _class_id, relative_ptr_type _base_id);
+			int64_t get_class_count(relative_ptr_type _class_id);
 
 			filter_option create_filter_from_view_query(view_query& vq, actor_type* pactor);
 

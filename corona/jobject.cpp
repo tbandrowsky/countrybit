@@ -263,58 +263,68 @@ namespace corona
 				std::cout << "check rule " << oi.item.rule_name << std::endl;
 #endif
 
-				if (selector_applies(&oi.item.selectors, _actor)) {
-					create_object_request aco;
+				if (selector_applies(&oi.item.selectors, _actor))
+				{
+					auto count = get_class_count(oi.item.create_class_id);
 
-					aco.collection_id = collection_id;
-					aco.actor_id = _actor;
-					aco.class_id = oi.item.create_class_id;
-					aco.select_on_create = oi.item.select_on_create;
-					aco.template_item_id = null_row;
-					aco.item_id = null_row;
+//#if _TRACE_RULE
+					std::cout << " " << oi.item.rule_name << " count existing objects " << count << std::endl;
+//#endif
 
-					auto selected_create = selections->where([rule, this](auto& src) {
-						return this->object_is_class(src.item, rule->item_id_class);
-						});
-					if (selected_create != std::end(*selections)) {
-						relative_ptr_type object_id = selected_create.get_object().item;
-						relative_ptr_type item_id = objects[object_id].item().item_id;
-						aco.item_id = item_id;
-					}
-					else
+					if (count < oi.item.max_creatable_count)
 					{
+						create_object_request aco;
+
+						aco.collection_id = collection_id;
+						aco.actor_id = _actor;
+						aco.class_id = oi.item.create_class_id;
+						aco.select_on_create = oi.item.select_on_create;
+						aco.template_item_id = null_row;
 						aco.item_id = null_row;
-					}
 
-					auto cls = schema->get_class(rule->create_class_id);
-					relative_ptr_type template_class_id = cls.item().template_class_id;
-					if (template_class_id != null_row)
-					{
-						auto selected_template = selections->where([template_class_id, this](auto& src) {
-							return this->object_is_class(src.item, template_class_id);
+						auto selected_create = selections->where([rule, this](auto& src) {
+							return this->object_is_class(src.item, rule->item_id_class);
 							});
-						if (selected_template != std::end(*selections))
-						{
-							relative_ptr_type object_id = selected_template.get_object().item;
+						if (selected_create != std::end(*selections)) {
+							relative_ptr_type object_id = selected_create.get_object().item;
 							relative_ptr_type item_id = objects[object_id].item().item_id;
-							aco.template_item_id = item_id;
+							aco.item_id = item_id;
+						}
+						else
+						{
+							aco.item_id = null_row;
+						}
+
+						auto cls = schema->get_class(rule->create_class_id);
+						relative_ptr_type template_class_id = cls.item().template_class_id;
+						if (template_class_id != null_row)
+						{
+							auto selected_template = selections->where([template_class_id, this](auto& src) {
+								return this->object_is_class(src.item, template_class_id);
+								});
+							if (selected_template != std::end(*selections))
+							{
+								relative_ptr_type object_id = selected_template.get_object().item;
+								relative_ptr_type item_id = objects[object_id].item().item_id;
+								aco.template_item_id = item_id;
+								acr.create_objects.insert_or_assign(aco.class_id, aco);
+#if _TRACE_RULE
+								std::cout << " " << oi.item.rule_name << " applies " << std::endl;
+#endif
+							}
+							else {
+#if _TRACE_RULE
+								std::cout << " " << oi.item.rule_name << " does not apply because the template class was not selected " << std::endl;
+#endif
+							}
+						}
+						else
+						{
 							acr.create_objects.insert_or_assign(aco.class_id, aco);
 #if _TRACE_RULE
 							std::cout << " " << oi.item.rule_name << " applies " << std::endl;
 #endif
 						}
-						else {
-#if _TRACE_RULE
-							std::cout << " " << oi.item.rule_name << " does not apply because the template class was not selected " << std::endl;
-#endif
-						}
-					}
-					else
-					{
-						acr.create_objects.insert_or_assign(aco.class_id, aco);
-#if _TRACE_RULE
-						std::cout << " " << oi.item.rule_name << " applies " << std::endl;
-#endif
 					}
 				}
 				else
@@ -1175,6 +1185,19 @@ namespace corona
 				}
 			}
 			return false;
+		}
+
+		int64_t jcollection::get_class_count(relative_ptr_type _class_id)
+		{
+			int64_t count = 0;
+			int64_t index = 0;
+			for (index = 0; index < objects.size(); index++)
+			{
+				auto object_class_id = objects[index].item().class_id;
+				if (class_has_base(object_class_id, _class_id))
+					count++;
+			}
+			return count;
 		}
 
 		bool jcollection::object_is_class(const jobject& obj, relative_ptr_type _class_id)

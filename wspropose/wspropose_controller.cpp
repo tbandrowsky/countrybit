@@ -253,17 +253,17 @@ namespace proposal
 		jm.delete_when(&schema, {}, idc_coverage, {});
 		jm.delete_when(&schema, {}, idc_client, {});
 
-		jm.create_when(&schema, { }, idc_home, null_row, true, false, 0, { idc_carrier_root, idc_coverage_root, idc_client_root, idc_system_root });
-		jm.create_when(&schema, { idc_home }, idc_carrier_root, null_row, true, false, 0, {});
-		jm.create_when(&schema, { idc_home }, idc_coverage_root, null_row, true, false, 0, {});
-		jm.create_when(&schema, { idc_home }, idc_client_root, null_row, true, false, 0, {});
-		jm.create_when(&schema, { idc_home }, idc_system_root, null_row, true, false, 0, { });
-		jm.create_when(&schema, { idc_carrier_root }, idc_carrier, null_row, true, false, 0, {});
-		jm.create_when(&schema, { idc_coverage_root }, idc_coverage, null_row, true, false, 0, {});
-		jm.create_when(&schema, { idc_client_root }, idc_client, null_row, true, false, 0, {});
-		jm.create_when(&schema, { idc_client }, idc_program, null_row, false, false, 1, {});
-		jm.create_when(&schema, { idc_program }, idc_program_item, null_row, false, false, 1, {});
-		jm.create_when(&schema, { idc_program_insurance }, idc_program_insurance_coverage, null_row, false, false, 1, {});
+		jm.create_when(&schema, { }, idc_home, null_row, true, false, 1, { idc_carrier_root, idc_coverage_root, idc_client_root, idc_system_root });
+		jm.create_when(&schema, { idc_home }, idc_carrier_root, null_row, true, false, 1, {});
+		jm.create_when(&schema, { idc_home }, idc_coverage_root, null_row, true, false, 1, {});
+		jm.create_when(&schema, { idc_home }, idc_client_root, null_row, true, false, 1, {});
+		jm.create_when(&schema, { idc_home }, idc_system_root, null_row, true, false, 1, { });
+		jm.create_when(&schema, { idc_carrier_root }, idc_carrier, null_row, true, false, 100, {});
+		jm.create_when(&schema, { idc_coverage_root }, idc_coverage, null_row, true, false, 10, {});
+		jm.create_when(&schema, { idc_client_root }, idc_client, null_row, true, false, 100, {});
+		jm.create_when(&schema, { idc_client }, idc_program, null_row, false, false, 20, {});
+		jm.create_when(&schema, { idc_program }, idc_program_item, null_row, false, false, 50, {});
+		jm.create_when(&schema, { idc_program_insurance }, idc_program_insurance_coverage, null_row, false, false, 50, {});
 
 		schema.put_model(jm);
 
@@ -329,10 +329,6 @@ namespace proposal
 
 		auto main_row = row(page_column, null_row, { 0.0_px, 15.0_px, 100.0_pct, 100.0_pct });
 		auto navigation_contents = canvas2d_column(id_canvas_navigation, main_row, null_row, { 0.0_px, 0.0_px, 200.0_px, 100.0_pct });
-
-		breadcrumbs(navigation_contents, [this](jobject& _item) {
-			return _item.get_name(schema.idf_name);
-			}, { 0.0_px, 0.0_px, 100.0_pct, 30.0_px });
 
 		selectable_items(navigation_contents, vq_navigation, schema.idf_button_style, { 0.0_px, 0.0_px, 100.0_pct, 1.2_fntgr });
 

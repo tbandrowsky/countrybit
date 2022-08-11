@@ -71,6 +71,7 @@ namespace corona
 			co->rule_name = "Create " + _schema->get_class(co->create_class_id).item().name;
 			co->selectors.when(when_selected);
 			co->create_on_create = on_created;
+			co->max_creatable_count = _max_creatable_count;
 		}
 
 		void model_type::select_when(jschema* _schema, std::vector<relative_ptr_type> when_selected,
