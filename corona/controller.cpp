@@ -172,7 +172,7 @@ namespace corona
 		{
 			setScrollBars();
 
-			state = user_collection.get_actor_state(state.actor_id, null_row, "state");
+//			state = user_collection.get_actor_state(state.actor_id, null_row, "state");
 			stateChanged(newSize);
 
 			return 0;

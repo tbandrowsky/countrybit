@@ -187,17 +187,23 @@ namespace corona
 			label_on_top = 2
 		};
 
-		class page : public iarray<page_item, 1024>
+		using page_base_type = iarray<page_item, 1024>;
+
+		class page : public page_base_type
 		{
-			void calculate_sizes(jobject& _style_sheet, page::iterator_type children, double offx, double offy, double x, double y, double width, double height, double& remaining_width, double& remaining_height);
-			void set_bound_size(jobject& _style_sheet, page_item* _item, double offx, double offy, double x, double y, double width, double height, double remaining_width, double remaining_height);
-			void arrange_impl(jobject& _style_sheet, page_item *_item, double offx, double offy, double x, double y, double width, double height);
+			void calculate_static_sizes(jobject& _style_sheet, page::iterator_type children, double width, double height, double& remaining_width, double& remaining_height);
+			void calculate_dependent_sizes(jobject& _style_sheet, page::iterator_type children, double remaining_width, double remaining_height);
+
+			void calculate_dependent_size(jobject& _style_sheet, page_item* _item, double remaining_width, double remaining_height);
+			void calculate_dependant_width(jobject& _style_sheet, page_item* _pi, double remaining_width, double remaining_height, int safety);
+			void calculate_dependant_height(jobject& _style_sheet, page_item* _pi, double remaining_width, double remaining_height, int safety);
+
+			void calculate_size(jobject& _style_sheet, page_item* _item, double width, double height);
+			void calculate_position(jobject& _style_sheet, page_item* _item, double offx, double offy, double x, double y, double width, double height);
+			void layout_item(jobject& _style_sheet, page_item *_item, double offx, double offy, double x, double y, double width, double height);
+
 
 			dynamic_box data;
-			using base_type = iarray<page_item, 1024>;
-
-			void calculate_bounds_w(jobject& _style_sheet, page_item* _pi, double width, double height, double remaining_width, double remaining_height, int safety);
-			void calculate_bounds_h(jobject& _style_sheet, page_item* _pi, double width, double height, double remaining_width, double remaining_height, int safety);
 
 		public:
 

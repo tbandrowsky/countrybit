@@ -1,7 +1,7 @@
 
 #include "corona.h"
 
-#define TRACE_LAYOUT 0
+#define TRACE_LAYOUT 1
 
 namespace corona
 {
@@ -15,7 +15,7 @@ namespace corona
 
 		void page::clear()
 		{
-			base_type::clear();
+			page_base_type::clear();
 			data.init(1 << 20);
 		}
 
@@ -200,106 +200,140 @@ namespace corona
 			fout(r);
 		}
 
-		void page::calculate_sizes(jobject& _style_sheet, page::iterator_type children, double offx, double offy, double x, double y, double width, double height, double& remaining_width, double& remaining_height)
+		void page::calculate_static_sizes(jobject& _style_sheet, page::iterator_type children, double width, double height, double& remaining_width, double& remaining_height)
 		{
 			remaining_width = width;
 			remaining_height = height;
 
 			for (auto child : children)
 			{
-				if (child.item.box.width.units == measure_units::pixels)
+				page_item& pi = child.item;
+				pi.bounds.w = 0;
+				pi.bounds.h = 0;
+
+				if (pi.box.width.units == measure_units::pixels)
 				{
-					remaining_width -= child.item.box.width.amount;
+					pi.bounds.w = pi.box.width.amount;
 				}
-				if (child.item.box.height.units == measure_units::pixels)
+				else if (pi.box.width.units == measure_units::font || pi.box.width.units == measure_units::font_golden_ratio)
 				{
-					remaining_height -= child.item.box.height.amount;
+					double font_height = 12.0;
+					if (pi.style_id != null_row && _style_sheet.has_field(pi.style_id))
+					{
+						jobject style = _style_sheet.get_object(pi.style_id, true).get_object({ 0,0,0 });
+						font_height = style.get(style.get_schema()->idf_font_size);
+					};
+					pi.bounds.w = font_height * pi.box.width.amount;
+					if (pi.box.width.units == measure_units::font_golden_ratio)
+					{
+						pi.bounds.w /= 1.618;
+					}
 				}
+
+				if (pi.box.height.units == measure_units::pixels)
+				{
+					pi.bounds.h = pi.box.height.amount;
+				}
+				else if (pi.box.height.units == measure_units::font || pi.box.height.units == measure_units::font_golden_ratio)
+				{
+					double font_height = 12.0;
+					if (pi.style_id != null_row && _style_sheet.has_field(pi.style_id))
+					{
+						jobject style = _style_sheet.get_object(pi.style_id, true).get_object({ 0,0,0 });
+						font_height = style.get(style.get_schema()->idf_font_size);
+					};
+					pi.bounds.h = font_height * pi.box.height.amount;
+					if (pi.box.height.units == measure_units::font_golden_ratio)
+					{
+						pi.bounds.h *= 1.618;
+					}
+				}
+				remaining_width -= pi.bounds.w;
+				remaining_height -= pi.bounds.h;
 			}
 		}
 
-		void page::calculate_bounds_w(jobject& _style_sheet, page_item* _item, double width, double height, double remaining_width, double remaining_height, int safety)
+		void page::calculate_dependant_width(jobject& _style_sheet, page_item* _item, double width, double height, int safety)
 		{
 			if (safety > 2)
 				return;
+
 			if (_item->box.width.units == measure_units::percent_remaining)
 			{
-				_item->bounds.w = _item->box.width.amount * remaining_width / 100.0;
+				_item->bounds.w = _item->box.width.amount * width / 100.0;
 			}
-			else if (_item->box.width.units == measure_units::percent_height)
+			else if (_item->box.width.units == measure_units::percent_aspect)
 			{
-				calculate_bounds_h(_style_sheet, _item, width, height, remaining_width, remaining_height, safety+1);
+				calculate_dependant_height(_style_sheet, _item, width, height, safety+1);
 				_item->bounds.w = _item->box.width.amount * _item->bounds.h / 100.0;
-			}
-			else if (_item->box.width.units == measure_units::font || _item->box.width.units == measure_units::font_golden_ratio)
-			{
-				double font_height = 12.0;
-				if (_item->style_id != null_row && _style_sheet.has_field(_item->style_id))
-				{
-					jobject style = _style_sheet.get_object(_item->style_id, true).get_object({ 0,0,0 });
-					font_height = style.get(style.get_schema()->idf_font_size);
-				};
-				_item->bounds.w = font_height * _item->box.width.amount;
-				if (_item->box.width.units == measure_units::font_golden_ratio)
-				{
-					_item->bounds.w /= 1.618;
-				}
 			}
 			else
 				_item->bounds.w = _item->box.width.amount;
 		}
 
-		void page::calculate_bounds_h(jobject& _style_sheet, page_item* _item, double width, double height, double remaining_width, double remaining_height, int safety)
+		void page::calculate_dependant_height(jobject& _style_sheet, page_item* _item, double width, double height, int safety)
 		{
 			if (safety > 2)
 				return;
 			if (_item->box.height.units == measure_units::percent_remaining)
 			{
-				_item->bounds.h = _item->box.height.amount * remaining_height / 100.0;
+				_item->bounds.h = _item->box.height.amount * height / 100.0;
 			}
-			else if (_item->box.height.units == measure_units::percent_width)
+			else if (_item->box.height.units == measure_units::percent_aspect)
 			{
-				calculate_bounds_w(_style_sheet, _item, width, height, remaining_width, remaining_height, safety+1);
+				calculate_dependant_width(_style_sheet, _item, width, height, safety+1);
 				_item->bounds.h = _item->box.height.amount * _item->bounds.w / 100.0;
 			}
-			else if (_item->box.height.units == measure_units::font || _item->box.height.units == measure_units::font_golden_ratio)
-			{
-				double font_height = 12.0;
-				if (_item->style_id != null_row && _style_sheet.has_field(_item->style_id)) 
-				{
-					jobject style = _style_sheet.get_object(_item->style_id, true).get_object({ 0,0,0 });
-					font_height = style.get(style.get_schema()->idf_font_size);
-				};
-				_item->bounds.h = font_height * _item->box.height.amount;
-				if (_item->box.height.units == measure_units::font_golden_ratio)
-				{
-					_item->bounds.h *= 1.618;
-				}
-			}
-			else
-				_item->bounds.h = _item->box.height.amount;
 		}
 
-		void page::set_bound_size(jobject& _style_sheet, page_item* _item, double offx, double offy, double x, double y, double width, double height, double remaining_width, double remaining_height)
+		void page::calculate_dependent_size(jobject& _style_sheet, page_item* _item, double remaining_width, double remaining_height)
 		{
-			calculate_bounds_w(_style_sheet, _item, width, height, remaining_width, remaining_height, 0);
-			calculate_bounds_h(_style_sheet, _item, width, height, remaining_width, remaining_height, 0);
+			calculate_dependant_width(_style_sheet, _item, remaining_width, remaining_height, 0);
+			calculate_dependant_height(_style_sheet, _item, remaining_width, remaining_height, 0);
+
+
+#if TRACE_LAYOUT
+			std::cout << std::format("p:{},c:{},l:{} bounds {},{},{},{} canvas {}, is_draw {} {}", _item->parent_id, _item->id, (int)_item->layout, _item->bounds.x, _item->bounds.y, _item->bounds.w, _item->bounds.h, _item->canvas_id, _item->is_drawable(), _item->caption ? _item->caption : "") << std::endl;
+#endif
+
+		}
+
+		void page::calculate_dependent_sizes(jobject& _style_sheet, page::iterator_type children, double remaining_width, double remaining_height)
+		{
+			for (auto child : children)
+			{
+				calculate_dependent_size(_style_sheet, &child.item, remaining_width, remaining_height);
+			}
+		}
+
+		void page::calculate_size(jobject& _style_sheet, page_item* _item, double width, double height)
+		{
+			double remaining_width, remaining_height;
+
+			auto children = where([_item](const auto& it) {
+				return it.item.parent_id == _item->id;
+				});
+
+			calculate_static_sizes(_style_sheet, children, width, height, remaining_width, remaining_height);
+			calculate_dependent_sizes(_style_sheet, children, remaining_width, remaining_height);
+		}
+
+		void page::layout_item(jobject& _style_sheet, page_item* _item, double offx, double offy, double x, double y, double width, double height)
+		{
+
 
 			if (_item->box.x.amount >= 0.0)
 			{
 				switch (_item->box.x.units)
 				{
 				case measure_units::percent_remaining:
-					_item->bounds.x = _item->box.x.amount * width / 100.0 + x + offx;
+					_item->bounds.x = _item->box.x.amount * remaining_width / 100.0 + x + offx;
 					break;
 				case measure_units::pixels:
 					_item->bounds.x = _item->box.x.amount + x + offx;
 					break;
-				case measure_units::percent_height:
+				case measure_units::percent_aspect:
 					_item->bounds.x = _item->box.x.amount * _item->bounds.h / 100.0 + x + offx;
-					break;
-				case measure_units::percent_width:
-					_item->bounds.x = _item->box.x.amount * _item->bounds.w / 100.0 + x + offx;
 					break;
 				}
 			}
@@ -308,16 +342,13 @@ namespace corona
 				switch (_item->box.x.units)
 				{
 				case measure_units::percent_remaining:
-					_item->bounds.x = (width - (_item->box.x.amount * width / 100.0)) + x + offx;
+					_item->bounds.x = (remaining_width - (_item->box.x.amount * remaining_width / 100.0)) + x + offx;
 					break;
 				case measure_units::pixels:
-					_item->bounds.x = (width - _item->box.x.amount) + x + offx;
+					_item->bounds.x = (remaining_width - _item->box.x.amount) + x + offx;
 					break;
-				case measure_units::percent_height:
-					_item->bounds.x = width -  (_item->box.x.amount * _item->bounds.h / 100.0) + x + offx;
-					break;
-				case measure_units::percent_width:
-					_item->bounds.x = width - (_item->box.x.amount * _item->bounds.w / 100.0) + x + offx;
+				case measure_units::percent_aspect:
+					_item->bounds.x = remaining_width - (_item->box.x.amount * _item->bounds.h / 100.0) + x + offx;
 					break;
 				}
 			}
@@ -327,15 +358,12 @@ namespace corona
 				switch (_item->box.y.units)
 				{
 				case measure_units::percent_remaining:
-					_item->bounds.y = _item->box.y.amount * height / 100.0 + y + offy;
+					_item->bounds.y = _item->box.y.amount * remaining_height / 100.0 + y + offy;
 					break;
 				case measure_units::pixels:
 					_item->bounds.y = _item->box.y.amount + y + offy;
 					break;
-				case measure_units::percent_height:
-					_item->bounds.y = _item->box.y.amount * _item->bounds.h / 100.0 + y + offy;
-					break;
-				case measure_units::percent_width:
+				case measure_units::percent_aspect:
 					_item->bounds.y = _item->box.y.amount * _item->bounds.w / 100.0 + y + offy;
 					break;
 				}
@@ -345,39 +373,28 @@ namespace corona
 				switch (_item->box.y.units)
 				{
 				case measure_units::percent_remaining:
-					_item->bounds.y = (height - (_item->box.y.amount * height / 100.0)) + y + offy;
+					_item->bounds.y = (remaining_height - (_item->box.y.amount * remaining_height / 100.0)) + y + offy;
 					break;
 				case measure_units::pixels:
-					_item->bounds.y = (height - _item->box.y.amount) + y + offy;
+					_item->bounds.y = (remaining_height - _item->box.y.amount) + y + offy;
 					break;
-				case measure_units::percent_height:
-					_item->bounds.y = width - (_item->box.y.amount * _item->bounds.h / 100.0) + y + offy;
-					break;
-				case measure_units::percent_width:
-					_item->bounds.y = width - (_item->box.y.amount * _item->bounds.w / 100.0) + y + offy;
+				case measure_units::percent_aspect:
+					_item->bounds.y = _item->box.y.amount * _item->bounds.w / 100.0 + y + offy;
 					break;
 				}
 			}
 
-#if TRACE_LAYOUT
-			std::cout << std::format("p:{},c:{},l:{} bounds {},{},{},{} canvas {}, is_draw {} {}", _item->parent_id, _item->id, (int)_item->layout, _item->bounds.x, _item->bounds.y, _item->bounds.w, _item->bounds.h, _item->canvas_id, _item->is_drawable(), _item->caption ? _item->caption : "") << std::endl;
-#endif
+			auto schema = _style_sheet.get_schema();
+			relative_ptr_type class_id = _item->slice.get_class_id();
 
-		}
-
-		void page::arrange_impl(jobject& _style_sheet, page_item* _item, double offx, double offy, double x, double y, double width, double height)
-		{
-
-			auto children = where([_item](const auto& it) {
-				return it.item.parent_id == _item->id;
-				});
-
-			double remaining_width, remaining_height;
-			calculate_sizes(_style_sheet, children, offx, offy, x, y, width, height, remaining_width, remaining_height);
-			set_bound_size(_style_sheet, _item, offx, offy, x, y, width, height, remaining_width, remaining_height);
-
-			if (_item->layout == layout_types::row || _item->layout == layout_types::canvas2d_row || _item->layout == layout_types::canvas3d_row)
+			if (!_item->slice.is_null() && _item->slice.has_field(schema->idf_rectangle))
 			{
+				auto rect = _item->slice.get_rectangle(schema->idf_rectangle);
+				_item->bounds = rect;
+			}
+			else if (_item->layout == layout_types::row || _item->layout == layout_types::canvas2d_row || _item->layout == layout_types::canvas3d_row)
+			{
+
 				switch (_item->item_space.units)
 				{
 				case measure_units::font:
@@ -386,11 +403,8 @@ namespace corona
 				case measure_units::font_golden_ratio:
 					_item->item_space_amount = _item->item_space.amount * 16.0 / 1.618;
 					break;
-				case measure_units::percent_height:
+				case measure_units::percent_aspect:
 					_item->item_space_amount = _item->item_space.amount * height / 100.0;
-					break;
-				case measure_units::percent_width:
-					_item->item_space_amount = _item->item_space.amount * width / 100.0;
 					break;
 				case measure_units::percent_remaining:
 					_item->item_space_amount = _item->item_space.amount * remaining_width / 100.0;
@@ -408,7 +422,7 @@ namespace corona
 				double startx = 0;
 				for (auto child : children)
 				{
-					arrange_impl(_style_sheet, &child.item, startx, 0, bx, by, remaining_width, _item->bounds.h);
+					layout_item(_style_sheet, &child.item, startx, 0, bx, by, remaining_width, _item->bounds.h);
 					startx += (child.item.bounds.w);
 					startx += _item->item_space_amount;
 				}
@@ -423,10 +437,7 @@ namespace corona
 				case measure_units::font_golden_ratio:
 					_item->item_space_amount = _item->item_space.amount * 16.0 * 1.618;
 					break;
-				case measure_units::percent_height:
-					_item->item_space_amount = _item->item_space.amount * height / 100.0;
-					break;
-				case measure_units::percent_width:
+				case measure_units::percent_aspect:
 					_item->item_space_amount = _item->item_space.amount * width / 100.0;
 					break;
 				case measure_units::percent_remaining:
@@ -445,44 +456,16 @@ namespace corona
 				double starty = 0;
 				for (auto child : children)
 				{
-					arrange_impl(_style_sheet, &child.item, 0, starty, bx, by, _item->bounds.w, remaining_height);
+					layout_item(_style_sheet, &child.item, 0, starty, bx, by, _item->bounds.w, remaining_height);
 					starty += (child.item.bounds.h);
 					starty += _item->item_space_amount;
-				}
-			}
-			else if (_item->layout == layout_types::canvas2d_absolute || _item->layout == layout_types::canvas3d_absolute)
-			{
-				for (auto child : children)
-				{
-					arrange_impl(_style_sheet, &child.item, 0, 0, 0, 0, _item->bounds.w, _item->bounds.h);
-				}
-			}
-			else if (_item->layout == layout_types::select_cell)
-			{
-				for (auto child : children)
-				{
-					arrange_impl(_style_sheet, &child.item, 0, 0, _item->bounds.x, _item->bounds.y, _item->bounds.w, _item->bounds.h);
 				}
 			}
 			else
 			{
 				for (auto child : children)
 				{
-					arrange_impl(_style_sheet, &child.item, 0, 0, _item->bounds.x, _item->bounds.y, _item->bounds.w, _item->bounds.h);
-				}
-
-				if (_item->object_path.object.row_id != null_row) 
-				{
-					relative_ptr_type class_id = _item->slice.get_class_id();
-
-					if (_item->style_id == null_row)
-					{
-						if (_item->slice.has_field("rectangle"))
-						{
-							auto rect = _item->slice.get_rectangle("rectangle");
-							rect = _item->bounds;
-						}
-					}
+					layout_item(_style_sheet, &child.item, 0, 0, _item->bounds.x, _item->bounds.y, _item->bounds.w, _item->bounds.h);
 				}
 			}
 		}
@@ -493,7 +476,7 @@ namespace corona
 			{
 				auto pi = pix.get_object();
 				if (pi.item.parent_id < 0) {
-					arrange_impl(_style_sheet, &pi.item, 0, 0, _padding, _padding, width - _padding * 2.0, height - _padding * 2.0);
+					layout_item(_style_sheet, &pi.item, 0, 0, _padding, _padding, width - _padding * 2.0, height - _padding * 2.0);
 				}
 				else 
 				{

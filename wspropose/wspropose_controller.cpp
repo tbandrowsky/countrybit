@@ -328,7 +328,7 @@ namespace proposal
 		text(title_bar, schema.idf_album_title_style, _title);
 
 		auto main_row = row(page_column, null_row, { 0.0_px, 15.0_px, 100.0_pct, 100.0_pct });
-		auto navigation_contents = canvas2d_column(id_canvas_navigation, main_row, null_row, { 0.0_px, 0.0_px, 200.0_px, 100.0_pct });
+		auto navigation_contents = canvas2d_column(id_canvas_navigation, main_row, schema.idf_panel_style, { 0.0_px, 0.0_px, 200.0_px, 100.0_pct });
 
 		selectable_items(navigation_contents, vq_navigation, schema.idf_button_style, { 0.0_px, 0.0_px, 100.0_pct, 1.2_fntgr });
 
@@ -579,6 +579,16 @@ namespace proposal
 				{ schema.idf_line_spacing, 0.0 },
 				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
 				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+			}
+			);
+
+		style_sheet.set(
+			schema.idf_view_style,
+			{ schema.idf_panel_style },
+			{
+				{ schema.idf_box_fill_color, "#EFEFEFFF" },
+				{ schema.idf_box_border_thickness, 1 },
+				{ schema.idf_box_border_color, "#CFCFCFFF" }
 			}
 			);
 
