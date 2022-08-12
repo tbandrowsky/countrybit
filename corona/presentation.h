@@ -46,7 +46,7 @@ namespace corona
 			relative_ptr_type		style_id;
 
 			measure					item_space;
-			double					item_space_amount;
+			point					item_space_amount;
 
 			layout_rect				box;
 			rectangle				bounds;
@@ -83,7 +83,7 @@ namespace corona
 				style_id(null_row),
 				old_id(-1),
 				item_space(),
-				item_space_amount(0.0),
+				item_space_amount({ 0.0, 0.0 } ),
 				item_uid(null_row),
 				windowsRegion(false),
 				mouse_over(false),
@@ -193,8 +193,10 @@ namespace corona
 		{
 		public:
 			point flow_origin;
+			point container_origin;
 			point container_size;
 			point remaining_size;
+			point space_amount;
 		};
 
 		using page_item_children = list_box<page_item*>;
@@ -209,8 +211,10 @@ namespace corona
 			void size_variadic_widths(jobject& _style_sheet, page_item* _pi, layout_context _ctx, int safety);
 			void size_variadic_heights(jobject& _style_sheet, page_item* _pi, layout_context _ctx, int safety);
 
+			void size_item(jobject& _style_sheet, page_item* _pi, layout_context _ctx);
 			layout_context size_items(jobject& _style_sheet, page_item_children children, layout_context _ctx);
-			void position(jobject& _style_sheet, page_item *_item, page_item_children children, layout_context _ctx);
+			void position(jobject& _style_sheet, page_item* _item, layout_context _ctx);
+			void position(jobject& _style_sheet, layout_types _layout, page_item_children children, layout_context _ctx);
 			void layout(jobject& _style_sheet, page_item *_item, layout_context _ctx);
 
 			dynamic_box data;

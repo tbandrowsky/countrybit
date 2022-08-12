@@ -14,15 +14,15 @@ namespace corona
 		{
 			return measure(pct, measure_units::percent_remaining);
 		}
-		
-		measure operator ""_pcw(long double pct)
+
+		measure operator ""_pcc(long double pcc)
 		{
-			return measure(pct, measure_units::percent_width);
+			return measure(pcc, measure_units::percent_container);
 		}
 
-		measure operator ""_pch(long double pct)
+		measure operator ""_pca(long double pct)
 		{
-			return measure(pct, measure_units::percent_height);
+			return measure(pct, measure_units::percent_aspect);
 		}
 
 		measure operator ""_fnt(long double fnt)

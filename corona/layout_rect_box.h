@@ -25,9 +25,9 @@ namespace corona
 		};
 
 		measure operator ""_px(long double px);
+		measure operator ""_pcc(long double pct);
 		measure operator ""_pct(long double pct);
-		measure operator ""_pcw(long double pct);
-		measure operator ""_pch(long double pct);
+		measure operator ""_pca(long double pct);
 		measure operator ""_fnt(long double fnt);
 		measure operator ""_fntgr(long double fnt);
 		measure operator -(const measure& _src);

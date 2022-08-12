@@ -313,9 +313,9 @@ namespace corona
 				return create_grouped<value_type, value_type, filterable_iterator>(_box, begin(), end(), _transform);
 			}
 
-			template <typename new_key> list_box<new_key> select(serialized_box_container* _box, std::function<new_key(const value_type&)> _transform)
+			template <typename new_key, typename old_value_ref> list_box<new_key> select(serialized_box_container* _box, std::function<new_key(const old_value_ref&)> _transform)
 			{
-				return create_list<value_type, value_type, filterable_iterator>(_box, begin(), end(), _transform);
+				return create_list<new_key, old_value_ref, filterable_iterator>(_box, begin(), end(), _transform);
 			}
 
 			auto order_by(serialized_box_container* _box, std::function<int(value_type&, value_type&)> _compare)
