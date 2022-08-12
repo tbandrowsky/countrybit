@@ -249,8 +249,8 @@ namespace corona
 					pi.bounds.h *= 1.618;
 				}
 			}
-			p.x += pi.bounds.w;
-			p.y += pi.bounds.h;		
+			p.x = pi.bounds.x + pi.bounds.w;
+			p.y = pi.bounds.y + pi.bounds.h;
 
 			return p;
 		}
@@ -266,7 +266,8 @@ namespace corona
 			for (auto child : children)
 			{
 				point p2 = size_constant(_style_sheet, child);
-				p = p + p2;
+				if (p2.x > p.x) p2.x = p.x;
+				if (p2.y > p.y) p2.y = p.y;
 			}
 			return p;
 		}
@@ -278,7 +279,7 @@ namespace corona
 
 			if (_item->box.width.units == measure_units::percent_remaining)
 			{
-				_item->bounds.w = _item->box.width.amount * _ctx.remaining_size.x / 100.0;
+				_item->bounds.w = _item->box.width.amount * (_ctx.remaining_size.x - _item->bounds.x) / 100.0;
 			}
 			else if (_item->box.width.units == measure_units::percent_aspect)
 			{
@@ -295,7 +296,7 @@ namespace corona
 				return;
 			if (_item->box.height.units == measure_units::percent_remaining)
 			{
-				_item->bounds.h = _item->box.height.amount * _ctx.remaining_size.y / 100.0;
+				_item->bounds.h = _item->box.height.amount * (_ctx.remaining_size.y - _item->bounds.y) / 100.0;
 			}
 			else if (_item->box.height.units == measure_units::percent_aspect)
 			{
@@ -475,8 +476,8 @@ namespace corona
 				return &_pir.item;
 					});
 
-			size_item(_style_sheet, _item, _ctx);
 			position(_style_sheet, _item, _ctx);
+			size_item(_style_sheet, _item, _ctx);
 
 #if TRACE_LAYOUT
 			std::cout << std::format("{}.{} bounds {},{},{},{} canvas {}, is_draw {} {}", _item->parent_id, _item->id, _item->bounds.x, _item->bounds.y, _item->bounds.w, _item->bounds.h, _item->canvas_id, _item->is_drawable(), _item->caption ? _item->caption : "") << std::endl;
