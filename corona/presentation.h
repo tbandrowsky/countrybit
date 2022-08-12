@@ -197,17 +197,20 @@ namespace corona
 			point remaining_size;
 		};
 
+		using page_item_children = list_box<page_item*>;
+
 		class page : public page_base_type
 		{
-			point size_constants(jobject& _style_sheet, page::iterator_type children);
-			void size_variadics(jobject& _style_sheet, page::iterator_type children, layout_context _ctx);
+			point size_constant(jobject& _style_sheet, page_item* _item);
+			point size_constants(jobject& _style_sheet, page_item_children children);
+			void size_variadics(jobject& _style_sheet, page_item_children children, layout_context _ctx);
 
 			void size_variadic(jobject& _style_sheet, page_item* _item, layout_context _ctx);
 			void size_variadic_widths(jobject& _style_sheet, page_item* _pi, layout_context _ctx, int safety);
 			void size_variadic_heights(jobject& _style_sheet, page_item* _pi, layout_context _ctx, int safety);
 
-			void size(jobject& _style_sheet, page_item* _item, layout_context _ctx);
-			void position(jobject& _style_sheet, page_item* _item, layout_context _ctx);
+			layout_context size_items(jobject& _style_sheet, page_item_children children, layout_context _ctx);
+			void position(jobject& _style_sheet, page_item *_item, page_item_children children, layout_context _ctx);
 			void layout(jobject& _style_sheet, page_item *_item, layout_context _ctx);
 
 			dynamic_box data;
