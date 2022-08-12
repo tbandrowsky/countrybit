@@ -189,19 +189,26 @@ namespace corona
 
 		using page_base_type = iarray<page_item, 1024>;
 
+		class layout_context 
+		{
+		public:
+			point flow_origin;
+			point container_size;
+			point remaining_size;
+		};
+
 		class page : public page_base_type
 		{
-			void calculate_static_sizes(jobject& _style_sheet, page::iterator_type children, double width, double height, double& remaining_width, double& remaining_height);
-			void calculate_dependent_sizes(jobject& _style_sheet, page::iterator_type children, double remaining_width, double remaining_height);
+			point size_constants(jobject& _style_sheet, page::iterator_type children);
+			void size_variadics(jobject& _style_sheet, page::iterator_type children, layout_context _ctx);
 
-			void calculate_dependent_size(jobject& _style_sheet, page_item* _item, double remaining_width, double remaining_height);
-			void calculate_dependant_width(jobject& _style_sheet, page_item* _pi, double remaining_width, double remaining_height, int safety);
-			void calculate_dependant_height(jobject& _style_sheet, page_item* _pi, double remaining_width, double remaining_height, int safety);
+			void size_variadic(jobject& _style_sheet, page_item* _item, layout_context _ctx);
+			void size_variadic_widths(jobject& _style_sheet, page_item* _pi, layout_context _ctx, int safety);
+			void size_variadic_heights(jobject& _style_sheet, page_item* _pi, layout_context _ctx, int safety);
 
-			void calculate_size(jobject& _style_sheet, page_item* _item, double width, double height);
-			void calculate_position(jobject& _style_sheet, page_item* _item, double offx, double offy, double x, double y, double width, double height);
-			void layout_item(jobject& _style_sheet, page_item *_item, double offx, double offy, double x, double y, double width, double height);
-
+			void size(jobject& _style_sheet, page_item* _item, layout_context _ctx);
+			void position(jobject& _style_sheet, page_item* _item, layout_context _ctx);
+			void layout(jobject& _style_sheet, page_item *_item, layout_context _ctx);
 
 			dynamic_box data;
 

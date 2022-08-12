@@ -6,9 +6,9 @@ namespace corona
 	{
 		enum class measure_units
 		{
-			percent_remaining = 0,
-			percent_aspect = 1,
-			percent_parent = 2,
+			percent_container = 0,
+			percent_remaining = 1,
+			percent_aspect = 2,
 			pixels = 3,
 			font = 4,
 			font_golden_ratio = 5

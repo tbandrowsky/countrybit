@@ -200,10 +200,12 @@ namespace corona
 			fout(r);
 		}
 
-		void page::calculate_static_sizes(jobject& _style_sheet, page::iterator_type children, double width, double height, double& remaining_width, double& remaining_height)
+		point page::size_constants(jobject& _style_sheet, page::iterator_type children)
 		{
-			remaining_width = width;
-			remaining_height = height;
+			point p;
+
+			p.x = 0;
+			p.y = 0;
 
 			for (auto child : children)
 			{
@@ -248,49 +250,49 @@ namespace corona
 						pi.bounds.h *= 1.618;
 					}
 				}
-				remaining_width -= pi.bounds.w;
-				remaining_height -= pi.bounds.h;
+				p.x += pi.bounds.w;
+				p.y += pi.bounds.h;
 			}
+			return p;
 		}
 
-		void page::calculate_dependant_width(jobject& _style_sheet, page_item* _item, double width, double height, int safety)
+		void page::size_variadic_widths(jobject& _style_sheet, page_item* _item, layout_context _ctx, int safety)
 		{
 			if (safety > 2)
 				return;
 
 			if (_item->box.width.units == measure_units::percent_remaining)
 			{
-				_item->bounds.w = _item->box.width.amount * width / 100.0;
+				_item->bounds.w = _item->box.width.amount * _ctx.remaining_size.x / 100.0;
 			}
 			else if (_item->box.width.units == measure_units::percent_aspect)
 			{
-				calculate_dependant_height(_style_sheet, _item, width, height, safety+1);
+				size_variadic_heights(_style_sheet, _item, _ctx, safety+1);
 				_item->bounds.w = _item->box.width.amount * _item->bounds.h / 100.0;
 			}
 			else
 				_item->bounds.w = _item->box.width.amount;
 		}
 
-		void page::calculate_dependant_height(jobject& _style_sheet, page_item* _item, double width, double height, int safety)
+		void page::size_variadic_heights(jobject& _style_sheet, page_item* _item, layout_context _ctx, int safety)
 		{
 			if (safety > 2)
 				return;
 			if (_item->box.height.units == measure_units::percent_remaining)
 			{
-				_item->bounds.h = _item->box.height.amount * height / 100.0;
+				_item->bounds.h = _item->box.height.amount * _ctx.remaining_size.y / 100.0;
 			}
 			else if (_item->box.height.units == measure_units::percent_aspect)
 			{
-				calculate_dependant_width(_style_sheet, _item, width, height, safety+1);
+				size_variadic_widths(_style_sheet, _item, _ctx, safety+1);
 				_item->bounds.h = _item->box.height.amount * _item->bounds.w / 100.0;
 			}
 		}
 
-		void page::calculate_dependent_size(jobject& _style_sheet, page_item* _item, double remaining_width, double remaining_height)
+		void page::size_variadic(jobject& _style_sheet, page_item* _item, layout_context _ctx)
 		{
-			calculate_dependant_width(_style_sheet, _item, remaining_width, remaining_height, 0);
-			calculate_dependant_height(_style_sheet, _item, remaining_width, remaining_height, 0);
-
+			size_variadic_heights(_style_sheet, _item, _ctx, 0);
+			size_variadic_widths(_style_sheet, _item, _ctx, 0);
 
 #if TRACE_LAYOUT
 			std::cout << std::format("p:{},c:{},l:{} bounds {},{},{},{} canvas {}, is_draw {} {}", _item->parent_id, _item->id, (int)_item->layout, _item->bounds.x, _item->bounds.y, _item->bounds.w, _item->bounds.h, _item->canvas_id, _item->is_drawable(), _item->caption ? _item->caption : "") << std::endl;
@@ -298,42 +300,38 @@ namespace corona
 
 		}
 
-		void page::calculate_dependent_sizes(jobject& _style_sheet, page::iterator_type children, double remaining_width, double remaining_height)
+		void page::size_variadics(jobject& _style_sheet, page::iterator_type children, layout_context _ctx)
 		{
 			for (auto child : children)
 			{
-				calculate_dependent_size(_style_sheet, &child.item, remaining_width, remaining_height);
+				size_variadic(_style_sheet, &child.item, _ctx);
 			}
 		}
 
-		void page::calculate_size(jobject& _style_sheet, page_item* _item, double width, double height)
+		void page::size(jobject& _style_sheet, page_item* _item, layout_context _ctx)
 		{
-			double remaining_width, remaining_height;
-
 			auto children = where([_item](const auto& it) {
 				return it.item.parent_id == _item->id;
 				});
 
-			calculate_static_sizes(_style_sheet, children, width, height, remaining_width, remaining_height);
-			calculate_dependent_sizes(_style_sheet, children, remaining_width, remaining_height);
+			_ctx.remaining_size = size_constants(_style_sheet, children);
+			size_variadics(_style_sheet, children, _ctx);
 		}
 
-		void page::layout_item(jobject& _style_sheet, page_item* _item, double offx, double offy, double x, double y, double width, double height)
+		void page::position(jobject& _style_sheet, page_item* _item, layout_context _ctx)
 		{
-
-
 			if (_item->box.x.amount >= 0.0)
 			{
 				switch (_item->box.x.units)
 				{
 				case measure_units::percent_remaining:
-					_item->bounds.x = _item->box.x.amount * remaining_width / 100.0 + x + offx;
+					_item->bounds.x = _item->box.x.amount * _ctx.remaining_size.x / 100.0 + _ctx.flow_origin.x;
 					break;
 				case measure_units::pixels:
-					_item->bounds.x = _item->box.x.amount + x + offx;
+					_item->bounds.x = _item->box.x.amount + _ctx.flow_origin.x;
 					break;
-				case measure_units::percent_aspect:
-					_item->bounds.x = _item->box.x.amount * _item->bounds.h / 100.0 + x + offx;
+				default:
+					_item->bounds.x = _ctx.flow_origin.x;
 					break;
 				}
 			}
@@ -342,13 +340,13 @@ namespace corona
 				switch (_item->box.x.units)
 				{
 				case measure_units::percent_remaining:
-					_item->bounds.x = (remaining_width - (_item->box.x.amount * remaining_width / 100.0)) + x + offx;
+					_item->bounds.x = (_ctx.container_size.x - (_ctx.flow_origin.x + _item->box.x.amount * _ctx.remaining_size.x / 100.0));
 					break;
 				case measure_units::pixels:
-					_item->bounds.x = (remaining_width - _item->box.x.amount) + x + offx;
+					_item->bounds.x = (_ctx.container_size.x - (_ctx.flow_origin.x +_item->box.x.amount));
 					break;
-				case measure_units::percent_aspect:
-					_item->bounds.x = remaining_width - (_item->box.x.amount * _item->bounds.h / 100.0) + x + offx;
+				default:
+					_item->bounds.x = (_ctx.container_size.x - _ctx.flow_origin.x);
 					break;
 				}
 			}
@@ -358,7 +356,7 @@ namespace corona
 				switch (_item->box.y.units)
 				{
 				case measure_units::percent_remaining:
-					_item->bounds.y = _item->box.y.amount * remaining_height / 100.0 + y + offy;
+					_item->bounds.y = _item->box.y.amount * remaining_height / 100.0 + _ctx.flow_origin.y;
 					break;
 				case measure_units::pixels:
 					_item->bounds.y = _item->box.y.amount + y + offy;
