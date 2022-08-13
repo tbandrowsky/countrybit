@@ -454,6 +454,26 @@ namespace corona
 				auto rect = _item->slice.get_rectangle(schema->idf_rectangle);
 				_item->bounds = rect;
 			}
+/*
+			int end_x = _item->bounds.w + _item->bounds.x;
+			int end_c = _ctx.container_size.x + _ctx.container_origin.x;
+			int delta = end_x - end_c;
+			if (delta > 0) {
+				_item->bounds.w -= delta;
+				if (_item->bounds.w < 0) {
+					_item->bounds.w = 0;
+				}
+			}
+
+			end_x = _item->bounds.h + _item->bounds.y;
+			end_c = _ctx.container_size.y + _ctx.container_origin.y;
+			delta = end_x - end_c;
+			if (delta > 0) {
+				_item->bounds.h -= delta;
+				if (_item->bounds.h < 0) {
+					_item->bounds.h = 0;
+				}
+			} */
 		}
 
 		void page::position(jobject& _style_sheet, layout_types _layout, page_item_children children, layout_context _ctx)
@@ -508,12 +528,11 @@ namespace corona
 			std::cout << std::format("{}.{} bounds {},{},{},{} canvas {}, is_draw {} {}", _item->parent_id, _item->id, _item->bounds.x, _item->bounds.y, _item->bounds.w, _item->bounds.h, _item->canvas_id, _item->is_drawable(), _item->caption ? _item->caption : "") << std::endl;
 #endif
 
-			_ctx.container_size.x = _item->bounds.w;
-			_ctx.container_size.y = _item->bounds.h;
-			_ctx.remaining_size.x = _item->bounds.w;
-			_ctx.remaining_size.y = _item->bounds.h;
 			_ctx.container_origin.x = _item->bounds.x;
 			_ctx.container_origin.y = _item->bounds.y;
+			_ctx.container_size.x = _item->bounds.w;
+			_ctx.container_size.y = _item->bounds.h;
+			_ctx.remaining_size = _ctx.container_size;
 			_ctx.flow_origin.x = 0;
 			_ctx.flow_origin.y = 0;
 
