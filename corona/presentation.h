@@ -203,16 +203,20 @@ namespace corona
 
 		class page : public page_base_type
 		{
-			point size_constant(jobject& _style_sheet, page_item* _item);
-			point size_constants(jobject& _style_sheet, page_item_children children);
-			void size_variadics(jobject& _style_sheet, page_item_children children, layout_context _ctx);
+			void size_constant(jobject& _style_sheet, page_item* _item, layout_context _ctx);
+			void size_constants(jobject& _style_sheet, page_item_children children, layout_context _ctx);
 
-			void size_variadic(jobject& _style_sheet, page_item* _item, layout_context _ctx);
-			void size_variadic_widths(jobject& _style_sheet, page_item* _pi, layout_context _ctx, int safety);
-			void size_variadic_heights(jobject& _style_sheet, page_item* _pi, layout_context _ctx, int safety);
+			void size_aspects(jobject& _style_sheet, page_item* _item, layout_context _ctx);
+			void size_aspect_widths(jobject& _style_sheet, page_item* _pi, layout_context _ctx, int safety);
+			void size_aspect_heights(jobject& _style_sheet, page_item* _pi, layout_context _ctx, int safety);
+			void size_aspects(jobject& _style_sheet, page_item_children children, layout_context _ctx);
+
+			void size_remaining(jobject& _style_sheet, page_item* _item, layout_context _ctx);
+			void size_remainings(jobject& _style_sheet, page_item_children children, layout_context _ctx);
+			layout_context get_remaining(jobject& _style_sheet, page_item_children children, layout_context _ctx);
 
 			void size_item(jobject& _style_sheet, page_item* _pi, layout_context _ctx);
-			layout_context size_items(jobject& _style_sheet, page_item_children children, layout_context _ctx);
+			void size_items(jobject& _style_sheet, page_item_children children, layout_context _ctx);
 			void position(jobject& _style_sheet, page_item* _item, layout_context _ctx);
 			void position(jobject& _style_sheet, layout_types _layout, page_item_children children, layout_context _ctx);
 			void layout(jobject& _style_sheet, page_item *_item, layout_context _ctx);

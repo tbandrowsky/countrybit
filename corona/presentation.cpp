@@ -200,14 +200,9 @@ namespace corona
 			fout(r);
 		}
 
-		point page::size_constant(jobject& _style_sheet, page_item *_item)
+		void page::size_constant(jobject& _style_sheet, page_item *_item, layout_context _ctx)
 		{
-			point p;
-
-			p.x = 0;
-			p.y = 0;
-			p.z = 0;
-
+			
 			page_item& pi = *_item;
 			pi.bounds.w = 0;
 			pi.bounds.h = 0;
@@ -215,6 +210,10 @@ namespace corona
 			if (pi.box.width.units == measure_units::pixels)
 			{
 				pi.bounds.w = pi.box.width.amount;
+			}
+			else if (pi.box.width.units == measure_units::percent_container)
+			{
+				pi.bounds.w = pi.box.width.amount * _ctx.container_size.x;
 			}
 			else if (pi.box.width.units == measure_units::font || pi.box.width.units == measure_units::font_golden_ratio)
 			{
@@ -235,6 +234,10 @@ namespace corona
 			{
 				pi.bounds.h = pi.box.height.amount;
 			}
+			else if (pi.box.height.units == measure_units::percent_container)
+			{
+				pi.bounds.h = pi.box.height.amount * _ctx.container_size.y;
+			}
 			else if (pi.box.height.units == measure_units::font || pi.box.height.units == measure_units::font_golden_ratio)
 			{
 				double font_height = 12.0;
@@ -249,88 +252,106 @@ namespace corona
 					pi.bounds.h *= 1.618;
 				}
 			}
-			p.x = pi.bounds.x + pi.bounds.w;
-			p.y = pi.bounds.y + pi.bounds.h;
-
-			return p;
 		}
 
-		point page::size_constants(jobject& _style_sheet, page_item_children children)
+		void page::size_constants(jobject& _style_sheet, page_item_children children, layout_context _ctx)
 		{
-			point p;
-
-			p.x = 0;
-			p.y = 0;
-			p.z = 0;
-
 			for (auto child : children)
 			{
-				point p2 = size_constant(_style_sheet, child);
-				if (p2.x > p.x) p2.x = p.x;
-				if (p2.y > p.y) p2.y = p.y;
+				size_constant(_style_sheet, child, _ctx);
 			}
-			return p;
 		}
 
-		void page::size_variadic_widths(jobject& _style_sheet, page_item* _item, layout_context _ctx, int safety)
+		void page::size_aspect_widths(jobject& _style_sheet, page_item* _item, layout_context _ctx, int safety)
 		{
 			if (safety > 2)
 				return;
 
-			if (_item->box.width.units == measure_units::percent_remaining)
+			if (_item->box.width.units == measure_units::percent_aspect)
 			{
-				_item->bounds.w = _item->box.width.amount * (_ctx.remaining_size.x - _item->bounds.x) / 100.0;
-			}
-			else if (_item->box.width.units == measure_units::percent_aspect)
-			{
-				size_variadic_heights(_style_sheet, _item, _ctx, safety+1);
+				size_aspect_heights(_style_sheet, _item, _ctx, safety+1);
 				_item->bounds.w = _item->box.width.amount * _item->bounds.h / 100.0;
 			}
 			else
 				_item->bounds.w = _item->box.width.amount;
 		}
 
-		void page::size_variadic_heights(jobject& _style_sheet, page_item* _item, layout_context _ctx, int safety)
+		void page::size_aspect_heights(jobject& _style_sheet, page_item* _item, layout_context _ctx, int safety)
 		{
 			if (safety > 2)
 				return;
-			if (_item->box.height.units == measure_units::percent_remaining)
+			if (_item->box.height.units == measure_units::percent_aspect)
 			{
-				_item->bounds.h = _item->box.height.amount * (_ctx.remaining_size.y - _item->bounds.y) / 100.0;
-			}
-			else if (_item->box.height.units == measure_units::percent_aspect)
-			{
-				size_variadic_widths(_style_sheet, _item, _ctx, safety+1);
+				size_aspect_widths(_style_sheet, _item, _ctx, safety+1);
 				_item->bounds.h = _item->box.height.amount * _item->bounds.w / 100.0;
 			}
 		}
 
-		void page::size_variadic(jobject& _style_sheet, page_item* _item, layout_context _ctx)
+		void page::size_aspects(jobject& _style_sheet, page_item* _item, layout_context _ctx)
 		{
-			size_variadic_heights(_style_sheet, _item, _ctx, 0);
-			size_variadic_widths(_style_sheet, _item, _ctx, 0);
+			size_aspect_heights(_style_sheet, _item, _ctx, 0);
+			size_aspect_widths(_style_sheet, _item, _ctx, 0);
 		}
 
-		void page::size_variadics(jobject& _style_sheet, page_item_children children, layout_context _ctx)
+		void page::size_aspects(jobject& _style_sheet, page_item_children children, layout_context _ctx)
 		{
 			for (auto child : children)
 			{
-				size_variadic(_style_sheet, child, _ctx);
+				size_aspects(_style_sheet, child, _ctx);
+			}
+		}
+
+		layout_context page::get_remaining(jobject& _style_sheet, page_item_children children, layout_context _ctx)
+		{
+			point pt = { 0.0, 0.0, 0.0 };
+			for (auto child : children)
+			{
+				if (child->box.width.units != measure_units::percent_remaining)
+				{
+					pt.x += child->bounds.w;
+				}
+
+				if (child->box.height.units != measure_units::percent_remaining)
+				{
+					pt.y += child->bounds.h;
+				}
+			}
+			_ctx.remaining_size = _ctx.container_size - pt;
+			return _ctx;
+		}
+
+		void page::size_remaining(jobject& _style_sheet, page_item* _item, layout_context _ctx)
+		{
+			if (_item->box.width.units == measure_units::percent_remaining)
+			{
+				_item->bounds.w = _item->box.width.amount * _ctx.remaining_size.x / 100.0;
+			}
+			if (_item->box.height.units == measure_units::percent_remaining)
+			{
+				_item->bounds.h = _item->box.height.amount * _ctx.remaining_size.y / 100.0;
+			}
+		}
+
+		void page::size_remainings(jobject& _style_sheet, page_item_children children, layout_context _ctx)
+		{
+			_ctx = get_remaining(_style_sheet, children, _ctx);
+			for (auto child : children) {
+				size_remaining(_style_sheet, child, _ctx);
 			}
 		}
 
 		void page::size_item(jobject& _style_sheet, page_item* _pi, layout_context _ctx)
 		{
-			auto sz = size_constant(_style_sheet, _pi);
-			size_variadic(_style_sheet, _pi, _ctx);
+			size_constant(_style_sheet, _pi, _ctx);
+			size_aspects(_style_sheet, _pi, _ctx);
+			size_remaining(_style_sheet, _pi, _ctx);
 		}
 
-		layout_context page::size_items(jobject& _style_sheet, page_item_children children, layout_context _ctx)
+		void page::size_items(jobject& _style_sheet, page_item_children children, layout_context _ctx)
 		{
-			point item_size = size_constants(_style_sheet, children);
-			_ctx.remaining_size = _ctx.container_size - item_size;
-			size_variadics(_style_sheet, children, _ctx);
-			return _ctx;
+			size_constants(_style_sheet, children, _ctx);
+			size_aspects(_style_sheet, children, _ctx);
+			size_remainings(_style_sheet, children, _ctx);
 		}
 
 		void page::position(jobject& _style_sheet, page_item* _item, layout_context _ctx)
@@ -339,8 +360,9 @@ namespace corona
 			{
 				switch (_item->box.x.units)
 				{
+				case measure_units::percent_container:
 				case measure_units::percent_remaining:
-					_item->bounds.x = _item->box.x.amount * _ctx.remaining_size.x / 100.0 + _ctx.flow_origin.x + _ctx.container_origin.x;
+					_item->bounds.x = _item->box.x.amount * _ctx.container_size.x / 100.0 + _ctx.flow_origin.x + _ctx.container_origin.x;
 					break;
 				case measure_units::pixels:
 					_item->bounds.x = _item->box.x.amount + _ctx.flow_origin.x + _ctx.container_origin.x;
@@ -354,14 +376,15 @@ namespace corona
 			{
 				switch (_item->box.x.units)
 				{
+				case measure_units::percent_container:
 				case measure_units::percent_remaining:
-					_item->bounds.x = (_ctx.container_size.x - (_ctx.flow_origin.x + _ctx.container_origin.x + _item->box.x.amount * _ctx.remaining_size.x / 100.0));
+					_item->bounds.x = _ctx.container_origin.x + _ctx.container_size.x - (_item->bounds.w + _item->box.x.amount * _ctx.container_size.x / 100.0);
 					break;
 				case measure_units::pixels:
-					_item->bounds.x = (_ctx.container_size.x - (_ctx.flow_origin.x + _ctx.container_origin.x + _item->box.x.amount ));
+					_item->bounds.x = _ctx.container_origin.x + _ctx.container_size.x - (_item->bounds.w + _item->box.x.amount + _ctx.flow_origin.x);
 					break;
 				default:
-					_item->bounds.x = (_ctx.container_size.x - (_ctx.flow_origin.x + _ctx.container_origin.x));
+					_item->bounds.x = _ctx.container_origin.x  + _ctx.container_size.x - (_item->bounds.w + _ctx.flow_origin.x);
 					break;
 				}
 			}
@@ -370,8 +393,9 @@ namespace corona
 			{
 				switch (_item->box.y.units)
 				{
+				case measure_units::percent_container:
 				case measure_units::percent_remaining:
-					_item->bounds.y = _item->box.y.amount * _ctx.remaining_size.y / 100.0 + _ctx.flow_origin.y + _ctx.container_origin.y;
+					_item->bounds.y = _item->box.y.amount * _ctx.container_size.y / 100.0 + _ctx.flow_origin.y + _ctx.container_origin.y;
 					break;
 				case measure_units::pixels:
 					_item->bounds.y = _item->box.y.amount + _ctx.flow_origin.y + _ctx.container_origin.y;
@@ -385,14 +409,15 @@ namespace corona
 			{
 				switch (_item->box.y.units)
 				{
+				case measure_units::percent_container:
 				case measure_units::percent_remaining:
-					_item->bounds.y = (_ctx.container_size.y + _ctx.container_origin.y - (_ctx.flow_origin.y + _item->box.y.amount * _ctx.remaining_size.y / 100.0));
+					_item->bounds.y = _ctx.container_origin.y + _ctx.container_size.y - (_item->bounds.h + _item->box.y.amount * _ctx.container_size.y / 100.0);
 					break;
 				case measure_units::pixels:
-					_item->bounds.y = (_ctx.container_size.y + _ctx.container_origin.y - (_ctx.flow_origin.y + _item->box.y.amount));
+					_item->bounds.y = _ctx.container_origin.y + _ctx.container_size.y - (_item->bounds.h + _ctx.flow_origin.y + _item->box.y.amount);
 					break;
 				default:
-					_item->bounds.y = (_ctx.container_size.y + _ctx.container_origin.y - _ctx.flow_origin.y);
+					_item->bounds.y = _ctx.container_origin.y + _ctx.container_size.y - (_item->bounds.h + _ctx.flow_origin.y);
 					break;
 				}
 			}
@@ -476,8 +501,8 @@ namespace corona
 				return &_pir.item;
 					});
 
-			position(_style_sheet, _item, _ctx);
 			size_item(_style_sheet, _item, _ctx);
+			position(_style_sheet, _item, _ctx);
 
 #if TRACE_LAYOUT
 			std::cout << std::format("{}.{} bounds {},{},{},{} canvas {}, is_draw {} {}", _item->parent_id, _item->id, _item->bounds.x, _item->bounds.y, _item->bounds.w, _item->bounds.h, _item->canvas_id, _item->is_drawable(), _item->caption ? _item->caption : "") << std::endl;
@@ -492,7 +517,7 @@ namespace corona
 			_ctx.flow_origin.x = 0;
 			_ctx.flow_origin.y = 0;
 
-			_ctx = size_items(_style_sheet, children, _ctx);			
+			size_items(_style_sheet, children, _ctx);
 			position(_style_sheet, _item->layout, children, _ctx);
 		}
 
