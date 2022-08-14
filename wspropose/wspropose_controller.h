@@ -25,7 +25,16 @@ namespace proposal
 		relative_ptr_type	id_canvas_header = 1;
 		relative_ptr_type	id_canvas_navigation = 2;
 		relative_ptr_type	id_canvas_footer = 3;
-		relative_ptr_type	id_canvas_table = 4;
+		relative_ptr_type	id_canvas_root_search_table = 4;
+		relative_ptr_type	id_canvas_root_search_title = 5;
+		relative_ptr_type	id_canvas_program_search_table = 6;
+		relative_ptr_type	id_canvas_program_search_title = 7;
+		relative_ptr_type	id_canvas_exposures_search_table = 8;
+		relative_ptr_type	id_canvas_exposures_search_title = 9;
+		relative_ptr_type	id_canvas_claims_search_table = 10;
+		relative_ptr_type	id_canvas_claims_search_title = 11;
+		relative_ptr_type	id_canvas_billing_search_table = 12;
+		relative_ptr_type	id_canvas_billing_search_title = 13;
 
 		view_query vq_navigation;
 		view_query vq_carriers;

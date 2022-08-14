@@ -19,7 +19,7 @@ namespace corona
 			data.init(1 << 20);
 		}
 
-		page_item* page::row(page_item* _parent, relative_ptr_type _style_id, layout_rect _box, measure _item_space)
+		page_item* page::row(page_item* _parent, relative_ptr_type _style_id, layout_rect _box, measure _item_space, visual_alignment _alignment)
 		{
 			page_item* v = append();
 			v->id = size();
@@ -28,10 +28,11 @@ namespace corona
 			v->box = _box;
 			v->style_id = _style_id;
 			v->item_space = _item_space;
+			v->alignment = _alignment;
 			return v;
 		}
 
-		page_item* page::column(page_item* _parent, relative_ptr_type _style_id, layout_rect _box, measure _item_space)
+		page_item* page::column(page_item* _parent, relative_ptr_type _style_id, layout_rect _box, measure _item_space, visual_alignment _alignment)
 		{
 			page_item* v = append();
 			v->id = size();
@@ -40,10 +41,11 @@ namespace corona
 			v->box = _box;
 			v->style_id = _style_id;
 			v->item_space = _item_space;
+			v->alignment = _alignment;
 			return v;
 		}
 
-		page_item* page::absolute(page_item* _parent, relative_ptr_type _style_id, layout_rect _box)
+		page_item* page::absolute(page_item* _parent, relative_ptr_type _style_id, layout_rect _box, visual_alignment _alignment)
 		{
 			page_item* v = append();
 			v->id = size();
@@ -51,10 +53,11 @@ namespace corona
 			v->layout = layout_types::absolute;
 			v->box = _box;
 			v->style_id = _style_id;
+			v->alignment = _alignment;
 			return v;
 		}
 
-		page_item* page::canvas2d_row(relative_ptr_type _item_uid, page_item* _parent, relative_ptr_type _style_id, layout_rect _box)
+		page_item* page::canvas2d_row(relative_ptr_type _item_uid, page_item* _parent, relative_ptr_type _style_id, layout_rect _box, visual_alignment _alignment)
 		{
 			page_item* v = append();
 			v->id = size();
@@ -64,11 +67,12 @@ namespace corona
 			v->canvas_id = v->id;
 			v->style_id = _style_id;
 			v->item_uid = _item_uid;
+			v->alignment = _alignment;
 			return v;
 
 		}
 
-		page_item* page::canvas2d_column(relative_ptr_type _item_uid, page_item* _parent, relative_ptr_type _style_id, layout_rect _box)
+		page_item* page::canvas2d_column(relative_ptr_type _item_uid, page_item* _parent, relative_ptr_type _style_id, layout_rect _box, visual_alignment _alignment)
 		{
 			page_item* v = append();
 			v->id = size();
@@ -78,11 +82,12 @@ namespace corona
 			v->canvas_id = v->id;
 			v->style_id = _style_id;
 			v->item_uid = _item_uid;
+			v->alignment = _alignment;
 			return v;
 
 		}
 
-		page_item* page::canvas2d_absolute(relative_ptr_type _item_uid, page_item* _parent, relative_ptr_type _style_id, layout_rect _box)
+		page_item* page::canvas2d_absolute(relative_ptr_type _item_uid, page_item* _parent, relative_ptr_type _style_id, layout_rect _box, visual_alignment _alignment)
 		{
 			page_item* v = append();
 			v->id = size();
@@ -92,6 +97,7 @@ namespace corona
 			v->canvas_id = v->id;
 			v->style_id = _style_id;
 			v->item_uid = _item_uid;
+			v->alignment = _alignment;
 			return v;
 		}
 
@@ -356,70 +362,32 @@ namespace corona
 
 		void page::position(jobject& _style_sheet, page_item* _item, layout_context _ctx)
 		{
-			if (_item->box.x.amount >= 0.0)
+			switch (_item->box.x.units)
 			{
-				switch (_item->box.x.units)
-				{
-				case measure_units::percent_container:
-				case measure_units::percent_remaining:
-					_item->bounds.x = _item->box.x.amount * _ctx.container_size.x / 100.0 + _ctx.flow_origin.x + _ctx.container_origin.x;
-					break;
-				case measure_units::pixels:
-					_item->bounds.x = _item->box.x.amount + _ctx.flow_origin.x + _ctx.container_origin.x;
-					break;
-				default:
-					_item->bounds.x = _ctx.flow_origin.x + _ctx.container_origin.x;
-					break;
-				}
-			}
-			else
-			{
-				switch (_item->box.x.units)
-				{
-				case measure_units::percent_container:
-				case measure_units::percent_remaining:
-					_item->bounds.x = _ctx.container_origin.x + _ctx.container_size.x - (_item->bounds.w + _item->box.x.amount * _ctx.container_size.x / 100.0);
-					break;
-				case measure_units::pixels:
-					_item->bounds.x = _ctx.container_origin.x + _ctx.container_size.x - (_item->bounds.w + _item->box.x.amount + _ctx.flow_origin.x);
-					break;
-				default:
-					_item->bounds.x = _ctx.container_origin.x  + _ctx.container_size.x - (_item->bounds.w + _ctx.flow_origin.x);
-					break;
-				}
+			case measure_units::percent_container:
+			case measure_units::percent_remaining:
+				_item->bounds.x = _item->box.x.amount * _ctx.container_size.x / 100.0 + _ctx.flow_origin.x + _ctx.container_origin.x;
+				break;
+			case measure_units::pixels:
+				_item->bounds.x = _item->box.x.amount + _ctx.flow_origin.x + _ctx.container_origin.x;
+				break;
+			default:
+				_item->bounds.x = _ctx.flow_origin.x + _ctx.container_origin.x;
+				break;
 			}
 
-			if (_item->box.y.amount >= 0.0)
+			switch (_item->box.y.units)
 			{
-				switch (_item->box.y.units)
-				{
-				case measure_units::percent_container:
-				case measure_units::percent_remaining:
-					_item->bounds.y = _item->box.y.amount * _ctx.container_size.y / 100.0 + _ctx.flow_origin.y + _ctx.container_origin.y;
-					break;
-				case measure_units::pixels:
-					_item->bounds.y = _item->box.y.amount + _ctx.flow_origin.y + _ctx.container_origin.y;
-					break;
-				default:
-					_item->bounds.y = _ctx.flow_origin.y + _ctx.container_origin.y;
-					break;
-				}
-			}
-			else
-			{
-				switch (_item->box.y.units)
-				{
-				case measure_units::percent_container:
-				case measure_units::percent_remaining:
-					_item->bounds.y = _ctx.container_origin.y + _ctx.container_size.y - (_item->bounds.h + _item->box.y.amount * _ctx.container_size.y / 100.0);
-					break;
-				case measure_units::pixels:
-					_item->bounds.y = _ctx.container_origin.y + _ctx.container_size.y - (_item->bounds.h + _ctx.flow_origin.y + _item->box.y.amount);
-					break;
-				default:
-					_item->bounds.y = _ctx.container_origin.y + _ctx.container_size.y - (_item->bounds.h + _ctx.flow_origin.y);
-					break;
-				}
+			case measure_units::percent_container:
+			case measure_units::percent_remaining:
+				_item->bounds.y = _item->box.y.amount * _ctx.container_size.y / 100.0 + _ctx.flow_origin.y + _ctx.container_origin.y;
+				break;
+			case measure_units::pixels:
+				_item->bounds.y = _item->box.y.amount + _ctx.flow_origin.y + _ctx.container_origin.y;
+				break;
+			default:
+				_item->bounds.y = _ctx.flow_origin.y + _ctx.container_origin.y;
+				break;
 			}
 
 			auto schema = _style_sheet.get_schema();
@@ -454,54 +422,92 @@ namespace corona
 				auto rect = _item->slice.get_rectangle(schema->idf_rectangle);
 				_item->bounds = rect;
 			}
-/*
-			int end_x = _item->bounds.w + _item->bounds.x;
-			int end_c = _ctx.container_size.x + _ctx.container_origin.x;
-			int delta = end_x - end_c;
-			if (delta > 0) {
-				_item->bounds.w -= delta;
-				if (_item->bounds.w < 0) {
-					_item->bounds.w = 0;
-				}
-			}
-
-			end_x = _item->bounds.h + _item->bounds.y;
-			end_c = _ctx.container_size.y + _ctx.container_origin.y;
-			delta = end_x - end_c;
-			if (delta > 0) {
-				_item->bounds.h -= delta;
-				if (_item->bounds.h < 0) {
-					_item->bounds.h = 0;
-				}
-			} */
 		}
 
-		void page::position(jobject& _style_sheet, layout_types _layout, page_item_children children, layout_context _ctx)
+		void page::position(jobject& _style_sheet, visual_alignment _alignment, layout_types _layout, page_item_children children, layout_context _ctx)
 		{
 			if (_layout == layout_types::row || _layout == layout_types::canvas2d_row || _layout == layout_types::canvas3d_row)
 			{
-				_ctx.flow_origin.x = 0;
-				_ctx.flow_origin.y = 0;
-
-				for (auto child : children)
+				if (_alignment == visual_alignment::align_near)
 				{
-					position(_style_sheet, child, _ctx);
-					layout(_style_sheet, child, _ctx);
-					_ctx.flow_origin.x += (child->bounds.w);
-					_ctx.flow_origin.x += _ctx.space_amount.x;
+					_ctx.flow_origin.x = 0;
+					_ctx.flow_origin.y = 0;
+
+					for (auto child : children)
+					{
+						position(_style_sheet, child, _ctx);
+						layout(_style_sheet, child, _ctx);
+						_ctx.flow_origin.x += (child->bounds.w);
+						_ctx.flow_origin.x += _ctx.space_amount.x;
+					}
+				} 
+				else if (_alignment == visual_alignment::align_far)
+				{
+					_ctx.flow_origin.x = _ctx.container_size.x;
+					_ctx.flow_origin.y = 0;
+
+					for (auto child : children)
+					{
+						_ctx.flow_origin.x -= (child->bounds.w);
+						position(_style_sheet, child, _ctx);
+						layout(_style_sheet, child, _ctx);
+						_ctx.flow_origin.x -= _ctx.space_amount.x;
+					}
+				}
+				else if (_alignment == visual_alignment::align_center)
+				{
+					_ctx.flow_origin.x = ( _ctx.container_size.x - _ctx.remaining_size.x ) / 2;
+					_ctx.flow_origin.y = 0;
+
+					for (auto child : children)
+					{
+						position(_style_sheet, child, _ctx);
+						layout(_style_sheet, child, _ctx);
+						_ctx.flow_origin.x += (child->bounds.w);
+						_ctx.flow_origin.x += _ctx.space_amount.x;
+					}
 				}
 			}
 			else if (_layout == layout_types::column || _layout == layout_types::canvas2d_column || _layout == layout_types::canvas3d_column)
 			{
-				_ctx.flow_origin.x = 0;
-				_ctx.flow_origin.y = 0;
-
-				for (auto child : children)
+				if (_alignment == visual_alignment::align_near)
 				{
-					position(_style_sheet, child, _ctx);
-					layout(_style_sheet, child, _ctx);
-					_ctx.flow_origin.y += (child->bounds.h);
-					_ctx.flow_origin.y += _ctx.space_amount.y;
+					_ctx.flow_origin.x = 0;
+					_ctx.flow_origin.y = 0;
+
+					for (auto child : children)
+					{
+						position(_style_sheet, child, _ctx);
+						layout(_style_sheet, child, _ctx);
+						_ctx.flow_origin.y += (child->bounds.h);
+						_ctx.flow_origin.y += _ctx.space_amount.y;
+					}
+				}
+				else if (_alignment == visual_alignment::align_far)
+				{
+					_ctx.flow_origin.x = 0;
+					_ctx.flow_origin.y = _ctx.container_size.y;
+
+					for (auto child : children)
+					{
+						_ctx.flow_origin.y -= (child->bounds.h);
+						position(_style_sheet, child, _ctx);
+						layout(_style_sheet, child, _ctx);
+						_ctx.flow_origin.y -= _ctx.space_amount.x;
+					}
+				}
+				else if (_alignment == visual_alignment::align_center)
+				{
+					_ctx.flow_origin.x = 0;
+					_ctx.flow_origin.y = (_ctx.container_size.y - _ctx.remaining_size.y) / 2;
+
+					for (auto child : children)
+					{
+						position(_style_sheet, child, _ctx);
+						layout(_style_sheet, child, _ctx);
+						_ctx.flow_origin.y += (child->bounds.h);
+						_ctx.flow_origin.y += _ctx.space_amount.y;
+					}
 				}
 			}
 			else
@@ -517,7 +523,7 @@ namespace corona
 			}
 		}
 
-		void page::layout(jobject& _style_sheet, page_item* _item, layout_context _ctx)
+		rectangle page::layout(jobject& _style_sheet, page_item* _item, layout_context _ctx)
 		{
 			auto children = this->where([_item](const value_reference<page_item>& _pir) { return _pir.item.parent_id == _item->id; })
 				.select<page_item*, value_reference<page_item>>(&data, [](const value_reference<page_item>& _pir) {
@@ -537,7 +543,9 @@ namespace corona
 #endif
 
 			size_items(_style_sheet, children, _ctx);
-			position(_style_sheet, _item->layout, children, _ctx);
+			position(_style_sheet, _item->alignment, _item->layout, children, _ctx);
+
+			return _item->bounds;
 		}
 
 		void page::arrange(double width, double height, jobject& _style_sheet, double _padding)
@@ -580,6 +588,17 @@ namespace corona
 					break;
 				}
 			}
+		}
+
+		rectangle page::layout(jobject& _style_sheet, page_item* _item)
+		{
+			layout_context ctx;
+			ctx.container_origin = { 0.0, 0.0 };
+			ctx.container_size = { 1000, 1000 };
+			ctx.flow_origin = { 0, 0 };
+			ctx.remaining_size = ctx.container_size;
+			ctx.space_amount = { 0, 0 };
+			return layout(_style_sheet, _item, ctx);
 		}
 	}
 }

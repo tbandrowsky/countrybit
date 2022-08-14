@@ -401,14 +401,14 @@ namespace proposal
 		options.header_height = 1.2_fntgr;
 		options.row_height = 1.2_fntgr;
 		options.columns = { 
-			{ "Name", "", 100.0_px, schema.idf_name },
-			{ "Street", "", 200.0_px, schema.idf_name },
-			{ "City", "", 100.0_px, schema.idf_name },
-			{ "State", "", 100.0_px, schema.idf_name },
-			{ "Postal", "", 100.0_px, schema.idf_name }		
+			{ "Name", "", 100.0, schema.idf_name },
+			{ "Street", "", 200.0, schema.idf_name },
+			{ "City", "", 100.0, schema.idf_name },
+			{ "State", "", 100.0, schema.idf_name },
+			{ "Postal", "", 100.0, schema.idf_name }		
 		};
 
-		search_form(_navigation, _contents, id_canvas_table, idc_client_root, options, "Clients", { schema.idf_search_string });
+		search_form(_navigation, _contents, id_canvas_program_search_title, id_canvas_root_search_table, idc_client_root, options, "Clients", { schema.idf_search_string });
 	}
 
 	void wsproposal_controller::render_client_contents(page_item* _navigation, page_item* _contents)
@@ -424,7 +424,7 @@ namespace proposal
 		space(control, schema.idf_button_style, { 0.0_px, 0.0_px, 1.0_fntgr, 1.0_fntgr });
 		create_buttons(_navigation, schema.idf_button_style, { 0.0_px, 0.0_px, 100.0_pct, 32.0_px });
 
-		auto children = canvas2d_column(id_canvas_table, edit_body, schema.idf_view_background_style, { 0.0_px, 0.0_px, 65.0_pct, 100.0_pct });
+		auto children = canvas2d_column(id_canvas_root_search_table, edit_body, schema.idf_view_background_style, { 0.0_px, 0.0_px, 65.0_pct, 100.0_pct });
 
 		table_options options;
 		options.alternating_row = true;
@@ -432,11 +432,11 @@ namespace proposal
 		options.header_height = 1.2_fntgr;
 		options.row_height = 1.2_fntgr;
 		options.columns = {
-			{ "Name", "", 100.0_px, schema.idf_name },
-			{ "Street", "", 200.0_px, schema.idf_street },
-			{ "City", "", 100.0_px, schema.idf_city },
-			{ "State", "", 100.0_px, schema.idf_state },
-			{ "Postal", "", 100.0_px, schema.idf_postal }
+			{ "Name", "", 100.0, schema.idf_name },
+			{ "Street", "", 200.0, schema.idf_street },
+			{ "City", "", 100.0, schema.idf_city },
+			{ "State", "", 100.0, schema.idf_state },
+			{ "Postal", "", 100.0, schema.idf_postal }
 		};
 
 		table(children, options);
@@ -450,14 +450,14 @@ namespace proposal
 		options.header_height = 1.2_fntgr;
 		options.row_height = 1.2_fntgr;
 		options.columns = {
-			{ "Name", "", 100.0_px, schema.idf_name },
-			{ "Street", "", 200.0_px, schema.idf_street },
-			{ "City", "", 100.0_px, schema.idf_city },
-			{ "State", "", 100.0_px, schema.idf_state },
-			{ "Postal", "", 100.0_px, schema.idf_postal }
+			{ "Name", "", 100.0, schema.idf_name },
+			{ "Street", "", 200.0, schema.idf_street },
+			{ "City", "", 100.0, schema.idf_city },
+			{ "State", "", 100.0, schema.idf_state },
+			{ "Postal", "", 100.0, schema.idf_postal }
 		};
 
-		search_form(_navigation, _contents, id_canvas_table, idc_coverage_root, options, "Coverages", { schema.idf_search_string });
+		search_form(_navigation, _contents, id_canvas_program_search_title, id_canvas_root_search_table, idc_coverage_root, options, "Coverages", { schema.idf_search_string });
 	}
 
 	void wsproposal_controller::render_program_contents(page_item* _navigation, page_item* _contents)
@@ -484,14 +484,14 @@ namespace proposal
 		options.header_height = 1.2_fntgr;
 		options.row_height = 1.2_fntgr;
 		options.columns = {
-			{ "Name", "", 100.0_px, schema.idf_name },
-			{ "Street", "", 200.0_px, schema.idf_street },
-			{ "City", "", 100.0_px, schema.idf_city },
-			{ "State", "", 100.0_px, schema.idf_state },
-			{ "Postal", "", 100.0_px, schema.idf_postal }
+			{ "Name", "", 100.0, schema.idf_name },
+			{ "Street", "", 200.0, schema.idf_street },
+			{ "City", "", 100.0, schema.idf_city },
+			{ "State", "", 100.0, schema.idf_state },
+			{ "Postal", "", 100.0, schema.idf_postal }
 		};
 
-		search_form(_navigation, _contents, id_canvas_table, idc_carrier_root, options, "Carriers", { schema.idf_search_string });
+		search_form(_navigation, _contents, id_canvas_program_search_title, id_canvas_root_search_table, idc_carrier_root, options, "Carriers", { schema.idf_search_string });
 	}
 
 	void wsproposal_controller::render_carrier_contents(page_item* _navigation, page_item* _contents)

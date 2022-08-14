@@ -418,7 +418,7 @@ namespace corona
 			return pg.canvas2d_absolute(_canvas_uid, _parent, _style_id, _box);
 		}
 
-		void corona_controller::table(page_item* _parent, table_options& _options)
+		rectangle corona_controller::table(page_item* _parent, table_options& _options)
 		{
 			page_item* table_container = column(_parent, null_row);
 
@@ -431,13 +431,17 @@ namespace corona
 				layout_rect layout;
 				layout.x = 0.0_px;
 				layout.y = 0.0_px;
-				layout.width = col.width;
+				layout.width = { col.width, measure_units::pixels };
 				layout.height = _options.header_height;
 				if (field_spec.is_string())
 					text(header_row, schema.idf_column_text_head_style, col.title, layout);
 				else
 					text(header_row, schema.idf_column_number_head_style, col.title, layout);
 			}
+
+			auto sheet = get_style_sheet(0);
+
+			rectangle header_bounds = pg.layout(sheet, header_row);
 
 			row_size.height = _options.header_height;
 			row_size.width = 100.0_pct;
@@ -459,7 +463,7 @@ namespace corona
 					layout_rect layout;
 					layout.x = 0.0_px;
 					layout.y = 0.0_px;
-					layout.width = col.width;
+					layout.width.amount = col.width;
 					layout.height = _options.row_height;
 					const char* value = avo.object.get(field_spec.field_id);
 					if (field_spec.is_string())
@@ -468,6 +472,8 @@ namespace corona
 						select_cell(data_row, &state, avo.object_id, avo.object, value, schema.idf_column_number_style, layout);
 				}
 			}
+
+			return header_bounds;
 		}
 
 		void corona_controller::stateChanged(const rectangle& newSize)
@@ -789,18 +795,21 @@ namespace corona
 			create_buttons(_navigation, schema.idf_button_style, { 0.0_px, 0.0_px, 100.0_pct, 32.0_px });
 		}
 
-		void corona_controller::search_form(page_item* _navigation, page_item* _frame, relative_ptr_type _canvas_uid, relative_ptr_type _search_class_id, table_options& _options, const char* _form_title, const field_list& _fields)
+		void corona_controller::search_form(page_item* _navigation, page_item* _frame, relative_ptr_type _title_uiid, relative_ptr_type _table_uiid, relative_ptr_type _search_class_id, table_options& _options, const char* _form_title, const field_list& _fields)
 		{
-			auto form_search = row(_frame, null_row, { 0.0_px, 0.0_px, 100.0_pct, 25.0_px });
+			auto form_title = canvas2d_row(_title_uiid, _frame, schema.idf_view_subtitle_style, { 0.0_px, 0.0_px, 100.0_pct, 32.0_px });
+			text(form_title, schema.idf_view_section_style, _form_title, { 0.0_px, 0.0_px, 150.0_pct, 100.0_pct });
+			create_buttons(form_title, schema.idf_button_style, { -1.0_px, 0.0_px, 150.0_px, 32.0_px });
+			auto form_search = row(_frame, null_row, { 0.0_px, 0.0_px, 100.0_pct, 32.0_px });
 			object_member_path opt;
 			opt.object = state.get_object_by_class(_search_class_id);
 			if (opt.object.row_id < 0)
 				throw std::invalid_argument(std::format("class {} is incorrect", _search_class_id));
-			edit_fields(form_search, opt, field_layout::label_on_left, _form_title, _fields);
-			auto form_table = canvas2d_column(_canvas_uid, _frame, schema.idf_view_background_style);
-			table(form_table, _options);
-			text(_navigation, schema.idf_label_style, "Create", { 0.0_px, 0.0_px, 100.0_pct, 32.0_px });
-			create_buttons(_navigation, schema.idf_button_style, { 0.0_px, 0.0_px, 100.0_pct, 32.0_px });
+			edit_fields(form_search, opt, field_layout::label_on_left, nullptr, _fields);
+			auto form_table = canvas2d_column(_table_uiid, _frame, schema.idf_view_background_style);
+			auto header_bounds = table(form_table, _options);
+			form_title->bounds.w = header_bounds.w;
+			form_search->bounds.w = header_bounds.w;
 		}
 
 	}

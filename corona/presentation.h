@@ -44,6 +44,7 @@ namespace corona
 			int						parent_id;
 			layout_types			layout;
 			relative_ptr_type		style_id;
+			visual_alignment		alignment;
 
 			measure					item_space;
 			point					item_space_amount;
@@ -218,12 +219,14 @@ namespace corona
 			void size_item(jobject& _style_sheet, page_item* _pi, layout_context _ctx);
 			void size_items(jobject& _style_sheet, page_item_children children, layout_context _ctx);
 			void position(jobject& _style_sheet, page_item* _item, layout_context _ctx);
-			void position(jobject& _style_sheet, layout_types _layout, page_item_children children, layout_context _ctx);
-			void layout(jobject& _style_sheet, page_item *_item, layout_context _ctx);
+			void position(jobject& _style_sheet, visual_alignment _alignment, layout_types _layout, page_item_children children, layout_context _ctx);
 
 			dynamic_box data;
 
+			rectangle layout(jobject& _style_sheet, page_item* _item, layout_context _ctx);
+
 		public:
+
 
 			page();
 			void clear();
@@ -242,13 +245,15 @@ namespace corona
 				return pi;
 			}
 
-			page_item* row(page_item* _parent, relative_ptr_type _style_id = null_row,  layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct }, measure _item_space = { 0.0, measure_units::pixels });
-			page_item* column( page_item* _parent, relative_ptr_type _style_id = null_row, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct }, measure _item_space = { 0.0, measure_units::pixels });
-			page_item* absolute(page_item* _parent, relative_ptr_type _style_id = null_row, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
+			rectangle layout(jobject& _style_sheet, page_item* _item);
 
-			page_item* canvas2d_row(relative_ptr_type _item_uid, page_item* _parent, relative_ptr_type _style_id = null_row, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
-			page_item* canvas2d_column(relative_ptr_type _item_uid, page_item* _parent, relative_ptr_type _style_id = null_row, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
-			page_item* canvas2d_absolute(relative_ptr_type _item_uid, page_item* _parent, relative_ptr_type _style_id = null_row, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
+			page_item* row(page_item* _parent, relative_ptr_type _style_id = null_row,  layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct }, measure _item_space = { 0.0, measure_units::pixels }, visual_alignment _alignment = visual_alignment::align_near);
+			page_item* column( page_item* _parent, relative_ptr_type _style_id = null_row, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct }, measure _item_space = { 0.0, measure_units::pixels }, visual_alignment _alignment = visual_alignment::align_near);
+			page_item* absolute(page_item* _parent, relative_ptr_type _style_id = null_row, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px }, visual_alignment _alignment = visual_alignment::align_near);
+
+			page_item* canvas2d_row(relative_ptr_type _item_uid, page_item* _parent, relative_ptr_type _style_id = null_row, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px }, visual_alignment _alignment = visual_alignment::align_near);
+			page_item* canvas2d_column(relative_ptr_type _item_uid, page_item* _parent, relative_ptr_type _style_id = null_row, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px }, visual_alignment _alignment = visual_alignment::align_near);
+			page_item* canvas2d_absolute(relative_ptr_type _item_uid, page_item* _parent, relative_ptr_type _style_id = null_row, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px }, visual_alignment _alignment = visual_alignment::align_near);
 
 			page_item* text(page_item* _parent, relative_ptr_type _style_id, const char *_text, layout_rect _box = { 0.0_px, 0.0_px, 100.0_pct, 100.0_px });
 
