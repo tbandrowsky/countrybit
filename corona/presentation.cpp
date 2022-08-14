@@ -213,7 +213,7 @@ namespace corona
 			}
 			else if (pi.box.width.units == measure_units::percent_container)
 			{
-				pi.bounds.w = pi.box.width.amount * _ctx.container_size.x;
+				pi.bounds.w = pi.box.width.amount * _ctx.container_size.x / 100.0;
 			}
 			else if (pi.box.width.units == measure_units::font || pi.box.width.units == measure_units::font_golden_ratio)
 			{
@@ -236,7 +236,7 @@ namespace corona
 			}
 			else if (pi.box.height.units == measure_units::percent_container)
 			{
-				pi.bounds.h = pi.box.height.amount * _ctx.container_size.y;
+				pi.bounds.h = pi.box.height.amount * _ctx.container_size.y / 100.0;
 			}
 			else if (pi.box.height.units == measure_units::font || pi.box.height.units == measure_units::font_golden_ratio)
 			{
@@ -485,6 +485,7 @@ namespace corona
 
 				for (auto child : children)
 				{
+					position(_style_sheet, child, _ctx);
 					layout(_style_sheet, child, _ctx);
 					_ctx.flow_origin.x += (child->bounds.w);
 					_ctx.flow_origin.x += _ctx.space_amount.x;
@@ -497,6 +498,7 @@ namespace corona
 
 				for (auto child : children)
 				{
+					position(_style_sheet, child, _ctx);
 					layout(_style_sheet, child, _ctx);
 					_ctx.flow_origin.y += (child->bounds.h);
 					_ctx.flow_origin.y += _ctx.space_amount.y;
@@ -509,6 +511,7 @@ namespace corona
 
 				for (auto child : children)
 				{
+					position(_style_sheet, child, _ctx);
 					layout(_style_sheet, child, _ctx);
 				}
 			}
@@ -521,13 +524,6 @@ namespace corona
 				return &_pir.item;
 					});
 
-			size_item(_style_sheet, _item, _ctx);
-			position(_style_sheet, _item, _ctx);
-
-#if TRACE_LAYOUT
-			std::cout << std::format("{}.{} bounds {},{},{},{} canvas {}, is_draw {} {}", _item->parent_id, _item->id, _item->bounds.x, _item->bounds.y, _item->bounds.w, _item->bounds.h, _item->canvas_id, _item->is_drawable(), _item->caption ? _item->caption : "") << std::endl;
-#endif
-
 			_ctx.container_origin.x = _item->bounds.x;
 			_ctx.container_origin.y = _item->bounds.y;
 			_ctx.container_size.x = _item->bounds.w;
@@ -535,6 +531,10 @@ namespace corona
 			_ctx.remaining_size = _ctx.container_size;
 			_ctx.flow_origin.x = 0;
 			_ctx.flow_origin.y = 0;
+
+#if TRACE_LAYOUT
+			std::cout << std::format("{}.{} rem {},{} bounds {},{},{},{} canvas {}, {}", _item->parent_id, _item->id, _ctx.remaining_size.x, _ctx.remaining_size.y, _item->bounds.x, _item->bounds.y, _item->bounds.w, _item->bounds.h, _item->canvas_id,  _item->caption ? _item->caption : "") << std::endl;
+#endif
 
 			size_items(_style_sheet, children, _ctx);
 			position(_style_sheet, _item->layout, children, _ctx);
@@ -553,6 +553,8 @@ namespace corona
 					ctx.container_origin = { _padding, _padding };
 					ctx.flow_origin = { 0, 0 };
 					ctx.remaining_size = ctx.container_size;
+					size_item(_style_sheet, &pi.item, ctx);
+					position(_style_sheet, &pi.item, ctx);
 					layout(_style_sheet, &pi.item, ctx);
 				}
 				else 
