@@ -1079,7 +1079,7 @@ namespace proposal
 				{ schema.idf_shape_border_color, "" },
 				{ schema.idf_box_fill_color, "#319B42FF" },
 				{ schema.idf_box_border_thickness, 2 },
-				{ schema.idf_box_border_color, "#319B42FF" }
+				{ schema.idf_box_border_color, "#218B32FF" }
 			}
 			);
 
@@ -1100,7 +1100,7 @@ namespace proposal
 				{ schema.idf_shape_border_color, "" },
 				{ schema.idf_box_fill_color, "#319B42FF" },
 				{ schema.idf_box_border_thickness, 2 },
-				{ schema.idf_box_border_color, "#319B42FF" }
+				{ schema.idf_box_border_color, "#218B32FF" }
 			}
 			);
 		}

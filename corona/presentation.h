@@ -220,6 +220,7 @@ namespace corona
 			void size_items(jobject& _style_sheet, page_item_children children, layout_context _ctx);
 			void position(jobject& _style_sheet, page_item* _item, layout_context _ctx);
 			void position(jobject& _style_sheet, visual_alignment _alignment, layout_types _layout, page_item_children children, layout_context _ctx);
+			void styles(jobject& _style_sheet, int style_id, page_item_children children);
 
 			dynamic_box data;
 

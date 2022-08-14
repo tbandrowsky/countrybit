@@ -375,14 +375,14 @@ namespace corona
 			return r;
 		}
 
-		page_item* corona_controller::row(page_item* _parent, relative_ptr_type _style_id, layout_rect _box, measure _item_space)
+		page_item* corona_controller::row(page_item* _parent, relative_ptr_type _style_id, layout_rect _box, measure _item_space, visual_alignment _alignment)
 		{
-			return pg.row(_parent, _style_id, _box, _item_space);
+			return pg.row(_parent, _style_id, _box, _item_space, _alignment);
 		}
 
-		page_item* corona_controller::column(page_item* _parent, relative_ptr_type _style_id, layout_rect _box, measure _item_space)
+		page_item* corona_controller::column(page_item* _parent, relative_ptr_type _style_id, layout_rect _box, measure _item_space, visual_alignment _alignment)
 		{
-			return pg.column(_parent, _style_id, _box, _item_space);
+			return pg.column(_parent, _style_id, _box, _item_space, _alignment);
 		}
 
 		page_item* corona_controller::absolute(page_item* _parent, relative_ptr_type _style_id, layout_rect _box)
@@ -405,17 +405,17 @@ namespace corona
 			return pg.select_cell(_parent, _state, object_id, slice, _caption, _style_id, _box);
 		}
 
-		page_item* corona_controller::canvas2d_row(relative_ptr_type _canvas_uid, page_item* _parent, relative_ptr_type _style_id, layout_rect _box)
+		page_item* corona_controller::canvas2d_row(relative_ptr_type _canvas_uid, page_item* _parent, relative_ptr_type _style_id, layout_rect _box, visual_alignment _alignment)
 		{
-			return pg.canvas2d_row(_canvas_uid, _parent, _style_id, _box);
+			return pg.canvas2d_row(_canvas_uid, _parent, _style_id, _box, _alignment);
 		}
-		page_item* corona_controller::canvas2d_column(relative_ptr_type _canvas_uid, page_item* _parent, relative_ptr_type _style_id, layout_rect _box)
+		page_item* corona_controller::canvas2d_column(relative_ptr_type _canvas_uid, page_item* _parent, relative_ptr_type _style_id, layout_rect _box, visual_alignment _alignment)
 		{
-			return pg.canvas2d_column(_canvas_uid, _parent, _style_id, _box);
+			return pg.canvas2d_column(_canvas_uid, _parent, _style_id, _box, _alignment);
 		}
-		page_item* corona_controller::canvas2d_absolute(relative_ptr_type _canvas_uid, page_item* _parent, relative_ptr_type _style_id, layout_rect _box)
+		page_item* corona_controller::canvas2d_absolute(relative_ptr_type _canvas_uid, page_item* _parent, relative_ptr_type _style_id, layout_rect _box, visual_alignment _alignment)
 		{
-			return pg.canvas2d_absolute(_canvas_uid, _parent, _style_id, _box);
+			return pg.canvas2d_absolute(_canvas_uid, _parent, _style_id, _box, _alignment);
 		}
 
 		rectangle corona_controller::table(page_item* _parent, table_options& _options)
@@ -554,7 +554,7 @@ namespace corona
 			const char *sty = style_name != nullptr ? style_name : "(default style)";
 
 			if (!style_name) {
-				style_name = style_id(schema.idf_button_style);
+				return;
 			}
 
 			object_description od;
@@ -797,9 +797,14 @@ namespace corona
 
 		void corona_controller::search_form(page_item* _navigation, page_item* _frame, relative_ptr_type _title_uiid, relative_ptr_type _table_uiid, relative_ptr_type _search_class_id, table_options& _options, const char* _form_title, const field_list& _fields)
 		{
-			auto form_title = canvas2d_row(_title_uiid, _frame, schema.idf_view_subtitle_style, { 0.0_px, 0.0_px, 100.0_pct, 32.0_px });
+			auto form_title_area = canvas2d_absolute(_title_uiid, _frame, schema.idf_view_subtitle_style, { 0.0_px, 0.0_px, 100.0_pct, 32.0_px });
+
+			auto form_title = row(form_title_area, null_row, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct }, 0.0_px, visual_alignment::align_near);
+			auto form_buttons = row(form_title_area, null_row, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct }, 0.0_px, visual_alignment::align_near);
+
 			text(form_title, schema.idf_view_section_style, _form_title, { 0.0_px, 0.0_px, 150.0_pct, 100.0_pct });
 			create_buttons(form_title, schema.idf_button_style, { -1.0_px, 0.0_px, 150.0_px, 32.0_px });
+
 			auto form_search = row(_frame, null_row, { 0.0_px, 0.0_px, 100.0_pct, 32.0_px });
 			object_member_path opt;
 			opt.object = state.get_object_by_class(_search_class_id);
@@ -811,7 +816,6 @@ namespace corona
 			form_title->bounds.w = header_bounds.w;
 			form_search->bounds.w = header_bounds.w;
 		}
-
 	}
 }
 

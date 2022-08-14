@@ -523,6 +523,16 @@ namespace corona
 			}
 		}
 
+		void page::styles(jobject& _style_sheet, int style_id, page_item_children children)
+		{
+			for (auto child : children)
+			{
+				if (child->style_id <= 0) {
+					child->style_id = style_id;
+				}
+			}
+		}
+
 		rectangle page::layout(jobject& _style_sheet, page_item* _item, layout_context _ctx)
 		{
 			auto children = this->where([_item](const value_reference<page_item>& _pir) { return _pir.item.parent_id == _item->id; })
@@ -542,6 +552,7 @@ namespace corona
 			std::cout << std::format("{}.{} rem {},{} bounds {},{},{},{} canvas {}, {}", _item->parent_id, _item->id, _ctx.remaining_size.x, _ctx.remaining_size.y, _item->bounds.x, _item->bounds.y, _item->bounds.w, _item->bounds.h, _item->canvas_id,  _item->caption ? _item->caption : "") << std::endl;
 #endif
 
+			styles(_style_sheet, _item->style_id, children);
 			size_items(_style_sheet, children, _ctx);
 			position(_style_sheet, _item->alignment, _item->layout, children, _ctx);
 
