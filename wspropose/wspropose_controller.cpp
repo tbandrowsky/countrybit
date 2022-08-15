@@ -52,13 +52,13 @@ namespace proposal
 		pcr.class_name = "home";
 		pcr.class_description = "Home";
 		pcr.auto_primary_key = true;
-		pcr.member_fields = { schema.idf_name, schema.idf_style_id };
+		pcr.member_fields = { schema.idf_name };
 		idc_home = schema.put_class(pcr);
 
 		pcr.class_name = "carrier_root";
 		pcr.class_description = "Carriers";
 		pcr.auto_primary_key = true;
-		pcr.member_fields = { schema.get_primary_key(idc_home), schema.idf_name, schema.idf_search_string, schema.idf_style_id };
+		pcr.member_fields = { schema.get_primary_key(idc_home), schema.idf_name, schema.idf_search_string };
 		idc_carrier_root = schema.put_class(pcr);
 
 		pcr.class_name = "carrier";
@@ -136,7 +136,7 @@ namespace proposal
 		pcr.class_name = "system_root";
 		pcr.class_description = "System";
 		pcr.auto_primary_key = true;
-		pcr.member_fields = { schema.get_primary_key(idc_home), schema.idf_search_string, schema.idf_style_id };
+		pcr.member_fields = { schema.get_primary_key(idc_home), schema.idf_name, schema.idf_search_string, schema.idf_style_id };
 		idc_system_root = schema.put_class(pcr);
 
 		jmodel jm;
@@ -202,7 +202,7 @@ namespace proposal
 		vo_carrier_root.use_view = true;
 		vo_carrier_root.view_class_id = idc_carrier_root;
 		vo_carrier_root.view_queries.push_back(vq_navigation);
-		jm.select_when(&schema, { idc_home }, idc_carrier_root, {}, {}, vo_carrier_root);
+		jm.select_when(&schema, { }, idc_carrier_root, {}, {}, vo_carrier_root);
 
 		view_options vo_carrier;
 		vo_carrier.use_view = true;
@@ -214,7 +214,7 @@ namespace proposal
 		vo_coverage_root.use_view = true;
 		vo_coverage_root.view_class_id = idc_coverage_root;
 		vo_coverage_root.view_queries.push_back(vq_navigation);
-		jm.select_when(&schema, { idc_home }, idc_coverage_root, {}, {}, vo_coverage_root);
+		jm.select_when(&schema, { }, idc_coverage_root, {}, {}, vo_coverage_root);
 
 		view_options vo_coverage;
 		vo_coverage.use_view = true;
@@ -227,7 +227,7 @@ namespace proposal
 		vo_client_root.view_class_id = idc_client_root;
 		vo_client_root.view_queries.push_back(vq_navigation);
 		vo_client_root.view_queries.push_back(vq_client);
-		jm.select_when(&schema, { idc_home }, idc_client_root, {}, {}, vo_client_root);
+		jm.select_when(&schema, { }, idc_client_root, {}, {}, vo_client_root);
 
 		view_options vo_client;
 		vo_client.use_view = true;
@@ -328,7 +328,8 @@ namespace proposal
 		text(title_bar, schema.idf_album_title_style, _title);
 
 		auto main_row = row(page_column, null_row, { 0.0_px, 15.0_px, 100.0_pct, 100.0_pct });
-		auto navigation_contents = canvas2d_column(id_canvas_navigation, main_row, schema.idf_panel_style, { 0.0_px, 0.0_px, 200.0_px, 100.0_pct });
+		auto navigation_shell = canvas2d_column(id_canvas_navigation, main_row, schema.idf_panel_style, { 0.0_px, 0.0_px, 150.0_px, 100.0_pct }, 10.0_px, visual_alignment::align_near);
+		auto navigation_contents = column(navigation_shell, null_row, { 10.0_px, 0.0_px, 130.0_px, 95.0_pct }, 0.0_px, visual_alignment::align_near);
 
 		selectable_items(navigation_contents, vq_navigation, schema.idf_button_style, { 0.0_px, 0.0_px, 100.0_pct, 1.2_fntgr });
 
@@ -1058,7 +1059,7 @@ namespace proposal
 				{ schema.idf_shape_fill_color, "#CCCCCCFF" },
 				{ schema.idf_shape_border_thickness, 0 },
 				{ schema.idf_shape_border_color, "" },
-				{ schema.idf_box_fill_color, "#319B42FF" },
+				{ schema.idf_box_fill_color, "#61BB42FF" },
 				{ schema.idf_box_border_thickness, 2 },
 				{ schema.idf_box_border_color, "#319B42FF" }
 			}
@@ -1203,6 +1204,20 @@ namespace proposal
 			{
 				{ schema.idf_font_name, fontName },
 				{ schema.idf_font_size, 14.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_center },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_center },
+			}
+			);
+
+		style_sheet.set(
+			schema.idf_view_style,
+			{ schema.idf_panel_style },
+			{
+				{ schema.idf_font_name, fontName },
+				{ schema.idf_font_size, 14.0 },
+				{ schema.idf_box_fill_color, "#E0F0E0FF" },
+				{ schema.idf_box_border_thickness, 4 },
+				{ schema.idf_box_border_color, "#D0E0D0FF" },
 				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_center },
 				{ schema.idf_vertical_alignment, (int)visual_alignment::align_center },
 			}

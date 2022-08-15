@@ -2830,7 +2830,7 @@ namespace corona
 			{
 				auto pi = piter.item;
 
-				if (pi.is_drawable())
+				if (pi.is_canvas_child())
 					continue;
 
 				if (pi.bounds.w < 1 || pi.bounds.h < 1)

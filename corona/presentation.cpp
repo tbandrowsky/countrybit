@@ -1,7 +1,7 @@
 
 #include "corona.h"
 
-#define TRACE_LAYOUT 0
+#define TRACE_LAYOUT 01
 
 namespace corona
 {
@@ -57,7 +57,7 @@ namespace corona
 			return v;
 		}
 
-		page_item* page::canvas2d_row(relative_ptr_type _item_uid, page_item* _parent, relative_ptr_type _style_id, layout_rect _box, visual_alignment _alignment)
+		page_item* page::canvas2d_row(relative_ptr_type _item_uid, page_item* _parent, relative_ptr_type _style_id, layout_rect _box, measure _item_space, visual_alignment _alignment)
 		{
 			page_item* v = append();
 			v->id = size();
@@ -68,11 +68,12 @@ namespace corona
 			v->style_id = _style_id;
 			v->item_uid = _item_uid;
 			v->alignment = _alignment;
+			v->item_space = _item_space;
 			return v;
 
 		}
 
-		page_item* page::canvas2d_column(relative_ptr_type _item_uid, page_item* _parent, relative_ptr_type _style_id, layout_rect _box, visual_alignment _alignment)
+		page_item* page::canvas2d_column(relative_ptr_type _item_uid, page_item* _parent, relative_ptr_type _style_id, layout_rect _box, measure _item_space, visual_alignment _alignment)
 		{
 			page_item* v = append();
 			v->id = size();
@@ -83,11 +84,12 @@ namespace corona
 			v->style_id = _style_id;
 			v->item_uid = _item_uid;
 			v->alignment = _alignment;
+			v->item_space = _item_space;
 			return v;
 
 		}
 
-		page_item* page::canvas2d_absolute(relative_ptr_type _item_uid, page_item* _parent, relative_ptr_type _style_id, layout_rect _box, visual_alignment _alignment)
+		page_item* page::canvas2d_absolute(relative_ptr_type _item_uid, page_item* _parent, relative_ptr_type _style_id, layout_rect _box, measure _item_space, visual_alignment _alignment)
 		{
 			page_item* v = append();
 			v->id = size();
@@ -98,6 +100,7 @@ namespace corona
 			v->style_id = _style_id;
 			v->item_uid = _item_uid;
 			v->alignment = _alignment;
+			v->item_space = _item_space;
 			return v;
 		}
 
@@ -545,6 +548,7 @@ namespace corona
 			_ctx.container_size.x = _item->bounds.w;
 			_ctx.container_size.y = _item->bounds.h;
 			_ctx.remaining_size = _ctx.container_size;
+			_ctx.space_amount = { (double)_item->item_space.amount, (double)_item->item_space.amount};
 			_ctx.flow_origin.x = 0;
 			_ctx.flow_origin.y = 0;
 

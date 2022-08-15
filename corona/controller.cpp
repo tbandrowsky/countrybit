@@ -405,17 +405,17 @@ namespace corona
 			return pg.select_cell(_parent, _state, object_id, slice, _caption, _style_id, _box);
 		}
 
-		page_item* corona_controller::canvas2d_row(relative_ptr_type _canvas_uid, page_item* _parent, relative_ptr_type _style_id, layout_rect _box, visual_alignment _alignment)
+		page_item* corona_controller::canvas2d_row(relative_ptr_type _canvas_uid, page_item* _parent, relative_ptr_type _style_id, layout_rect _box, measure _item_space, visual_alignment _alignment)
 		{
-			return pg.canvas2d_row(_canvas_uid, _parent, _style_id, _box, _alignment);
+			return pg.canvas2d_row(_canvas_uid, _parent, _style_id, _box, _item_space, _alignment);
 		}
-		page_item* corona_controller::canvas2d_column(relative_ptr_type _canvas_uid, page_item* _parent, relative_ptr_type _style_id, layout_rect _box, visual_alignment _alignment)
+		page_item* corona_controller::canvas2d_column(relative_ptr_type _canvas_uid, page_item* _parent, relative_ptr_type _style_id, layout_rect _box, measure _item_space, visual_alignment _alignment)
 		{
-			return pg.canvas2d_column(_canvas_uid, _parent, _style_id, _box, _alignment);
+			return pg.canvas2d_column(_canvas_uid, _parent, _style_id, _box, _item_space, _alignment);
 		}
-		page_item* corona_controller::canvas2d_absolute(relative_ptr_type _canvas_uid, page_item* _parent, relative_ptr_type _style_id, layout_rect _box, visual_alignment _alignment)
+		page_item* corona_controller::canvas2d_absolute(relative_ptr_type _canvas_uid, page_item* _parent, relative_ptr_type _style_id, layout_rect _box, measure _item_space, visual_alignment _alignment)
 		{
-			return pg.canvas2d_absolute(_canvas_uid, _parent, _style_id, _box, _alignment);
+			return pg.canvas2d_absolute(_canvas_uid, _parent, _style_id, _box, _item_space, _alignment);
 		}
 
 		rectangle corona_controller::table(page_item* _parent, table_options& _options)
@@ -748,6 +748,8 @@ namespace corona
  				if (slice.has_field(schema.idf_style_id))
 				{
 					v->style_id = slice.get_int64(schema.idf_style_id, true);
+					if (v->style_id <= 0)
+						v->style_id = _style_id;
 				}
 				else 
 				{
