@@ -7,6 +7,27 @@ namespace corona
 {
 	namespace database
 	{
+		const char* layout_type_names[] = {
+			"space",
+			"row",
+			"column",
+			"absolute",
+			"2d_row",
+			"2d_column",
+			"2d_absolute",
+			"3d_row",
+			"3d_column",
+			"3d_absolute",
+			"field",
+			"label",
+			"create",
+			"select",
+			"select_cell",
+			"navigate",
+			"text",
+			"set"
+		};
+
 
 		page::page()
 		{
@@ -308,21 +329,31 @@ namespace corona
 			}
 		}
 
-		layout_context page::get_remaining(jobject& _style_sheet, page_item_children children, layout_context _ctx)
+		layout_context page::get_remaining(jobject& _style_sheet, page_item* _pi, page_item_children children, layout_context _ctx)
 		{
 			point pt = { 0.0, 0.0, 0.0 };
-			for (auto child : children)
-			{
-				if (child->box.width.units != measure_units::percent_remaining)
-				{
-					pt.x += child->bounds.w;
-				}
 
-				if (child->box.height.units != measure_units::percent_remaining)
+			if (_pi->layout == layout_types::canvas2d_column || _pi->layout == layout_types::column || _pi->layout == layout_types::canvas3d_column)
+			{
+				for (auto child : children)
 				{
-					pt.y += child->bounds.h;
+					if (child->box.height.units != measure_units::percent_remaining)
+					{
+						pt.y += child->bounds.h;
+					}
 				}
 			}
+			else if (_pi->layout == layout_types::canvas2d_row || _pi->layout == layout_types::row || _pi->layout == layout_types::canvas3d_row)
+			{
+				for (auto child : children)
+				{
+					if (child->box.width.units != measure_units::percent_remaining)
+					{
+						pt.x += child->bounds.w;
+					}
+				}
+			}
+
 			_ctx.remaining_size = _ctx.container_size - pt;
 			return _ctx;
 		}
@@ -339,9 +370,9 @@ namespace corona
 			}
 		}
 
-		void page::size_remainings(jobject& _style_sheet, page_item_children children, layout_context _ctx)
+		void page::size_remainings(jobject& _style_sheet, page_item* _pi, page_item_children children, layout_context _ctx)
 		{
-			_ctx = get_remaining(_style_sheet, children, _ctx);
+			_ctx = get_remaining(_style_sheet, _pi, children, _ctx);
 			for (auto child : children) {
 				size_remaining(_style_sheet, child, _ctx);
 			}
@@ -354,11 +385,11 @@ namespace corona
 			size_remaining(_style_sheet, _pi, _ctx);
 		}
 
-		void page::size_items(jobject& _style_sheet, page_item_children children, layout_context _ctx)
+		void page::size_items(jobject& _style_sheet, page_item* _pi, page_item_children children, layout_context _ctx)
 		{
 			size_constants(_style_sheet, children, _ctx);
 			size_aspects(_style_sheet, children, _ctx);
-			size_remainings(_style_sheet, children, _ctx);
+			size_remainings(_style_sheet, _pi, children, _ctx);
 		}
 
 		void page::position(jobject& _style_sheet, page_item* _item, layout_context _ctx)
@@ -551,11 +582,15 @@ namespace corona
 			_ctx.flow_origin.y = 0;
 
 #if TRACE_LAYOUT
-			std::cout << std::format("{}.{} rem {},{} bounds {},{},{},{} canvas {}, {}", _item->parent_id, _item->id, _ctx.remaining_size.x, _ctx.remaining_size.y, _item->bounds.x, _item->bounds.y, _item->bounds.w, _item->bounds.h, _item->canvas_id,  _item->caption ? _item->caption : "") << std::endl;
+			std::cout << _item->parent_id << "." << _item->id << " " <<
+				layout_type_names[(int)_item->layout] << " " <<
+				"(" << _ctx.remaining_size.x << ", " << _ctx.remaining_size.y << ")" <<
+				"(" << _item->bounds.x << ", " << _item->bounds.y << "  x  " << _item->bounds.w << "," << _item->bounds.h << ")" <<
+				(_item->caption ? _item->caption : "") << std::endl;
 #endif
 
 			styles(_style_sheet, _item->style_id, children);
-			size_items(_style_sheet, children, _ctx);
+			size_items(_style_sheet, _item, children, _ctx);
 			position(_style_sheet, _item->alignment, _item->layout, children, _ctx);
 
 			return _item->bounds;

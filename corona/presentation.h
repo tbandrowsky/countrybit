@@ -218,11 +218,11 @@ namespace corona
 			void size_aspects(jobject& _style_sheet, page_item_children children, layout_context _ctx);
 
 			void size_remaining(jobject& _style_sheet, page_item* _item, layout_context _ctx);
-			void size_remainings(jobject& _style_sheet, page_item_children children, layout_context _ctx);
-			layout_context get_remaining(jobject& _style_sheet, page_item_children children, layout_context _ctx);
+			void size_remainings(jobject& _style_sheet, page_item* _pi, page_item_children children, layout_context _ctx);
+			layout_context get_remaining(jobject& _style_sheet, page_item* _pi, page_item_children children, layout_context _ctx);
 
 			void size_item(jobject& _style_sheet, page_item* _pi, layout_context _ctx);
-			void size_items(jobject& _style_sheet, page_item_children children, layout_context _ctx);
+			void size_items(jobject& _style_sheet, page_item* _pi, page_item_children children, layout_context _ctx);
 			void position(jobject& _style_sheet, page_item* _item, layout_context _ctx);
 			void position(jobject& _style_sheet, visual_alignment _alignment, layout_types _layout, page_item_children children, layout_context _ctx);
 			void styles(jobject& _style_sheet, int style_id, page_item_children children);
