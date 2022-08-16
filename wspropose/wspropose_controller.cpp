@@ -322,20 +322,19 @@ namespace proposal
 		const char* _title = application_title;
 		const char* _subtitle = application_author;
 
-		auto page_column = column(nullptr, null_row, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
+		auto page_column = column(nullptr, null_row, { 0.0_px, 0.0_px, 100.0_pcc, 100.0_pcc });
 
-		auto title_bar = canvas2d_row(id_canvas_header, page_column, null_row, { 0.0_px, 0.0_px, 100.0_pct, 45.0_px });
-		text(title_bar, schema.idf_album_title_style, _title);
+		auto title_bar = canvas2d_absolute(id_canvas_header, page_column, null_row, { 0.0_px, 0.0_px, 100.0_pcc, 45.0_px });
+		auto title_text_bar = row(title_bar, null_row, { 0.0_px, 0.0_px, 100.0_pcc, 45.0_px }, 0.0_px, visual_alignment::align_near);
+		auto navigation_bar = row(title_bar, null_row, { 0.0_px, 0.0_px, 100.0_pcc, 45.0_px }, 0.0_px, visual_alignment::align_far);
+
+		text(title_text_bar, schema.idf_album_title_style, _title);
+		selectable_items(navigation_bar, vq_navigation, schema.idf_navigation_style, { 0.0_px, 0.0_px, 100.0_px, 1.2_fntgr });
 
 		auto main_row = row(page_column, null_row, { 0.0_px, 15.0_px, 100.0_pct, 100.0_pct });
-		auto navigation_shell = canvas2d_column(id_canvas_navigation, main_row, schema.idf_panel_style, { 0.0_px, 0.0_px, 150.0_px, 100.0_pct }, 10.0_px, visual_alignment::align_near);
-		auto navigation_contents = column(navigation_shell, null_row, { 10.0_px, 0.0_px, 130.0_px, 95.0_pct }, 0.0_px, visual_alignment::align_near);
-
-		selectable_items(navigation_contents, vq_navigation, schema.idf_button_style, { 0.0_px, 0.0_px, 100.0_pct, 1.2_fntgr });
-
-		auto form_contents = column(main_row, null_row, { 16.0_px, 0.0_px, 100.0_pct, 100.0_pct });
+		auto form_contents = column(main_row, null_row, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
 		form_contents->caption = pg.copy("contents form");
-		_contents(navigation_contents, form_contents);
+		_contents(navigation_bar, form_contents);
 
 		auto footer_bar = canvas2d_row(id_canvas_footer, page_column, null_row, { 0.0_px, 0.0_px, 100.0_pct, 30.0_px });
 		text(footer_bar, schema.idf_artist_title_style, _subtitle);
@@ -1112,8 +1111,8 @@ namespace proposal
 			{
 				{ schema.idf_font_name, fontName },
 				{ schema.idf_font_size, 40.0 },
-				{ schema.idf_horizontal_alignment, (int)(visual_alignment::align_center) },
-			}
+				{ schema.idf_horizontal_alignment, (int)(visual_alignment::align_near) },
+				{ schema.idf_vertical_alignment, (int)(visual_alignment::align_near) },			}
 			);
 
 		style_sheet.set(
@@ -1198,16 +1197,64 @@ namespace proposal
 			}
 			);
 
-		style_sheet.set(
-			schema.idf_view_style,
-			{ schema.idf_navigation_style },
+		if (_index == style_normal)
+		{
+
+			style_sheet.set(
+				schema.idf_view_style,
+				{ schema.idf_navigation_style },
 			{
 				{ schema.idf_font_name, fontName },
-				{ schema.idf_font_size, 14.0 },
+				{ schema.idf_font_size, 16.0 },
+				{ schema.idf_bold, true },
+				{ schema.idf_underline, false },
+				{ schema.idf_shape_fill_color, "#1F2A44FF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "#1F2A44FF" },
 				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_center },
 				{ schema.idf_vertical_alignment, (int)visual_alignment::align_center },
 			}
 			);
+
+		}
+		else if (_index == style_over) 
+		{
+
+			style_sheet.set(
+				schema.idf_view_style,
+				{ schema.idf_navigation_style },
+			{
+				{ schema.idf_font_name, fontName },
+				{ schema.idf_font_size, 16.0 },
+				{ schema.idf_bold, true },
+				{ schema.idf_underline, false },
+				{ schema.idf_shape_fill_color, "#78BE8CFF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "#1F2A44FF" },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_center },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_center },
+			}
+			);
+		}
+		else if (_index == style_selected) 
+		{
+			style_sheet.set(
+				schema.idf_view_style,
+				{ schema.idf_navigation_style },
+			{
+				{ schema.idf_font_name, fontName },
+				{ schema.idf_font_size, 16.0 },
+				{ schema.idf_bold, true },
+				{ schema.idf_underline, true },
+				{ schema.idf_shape_fill_color, "#78BE8CFF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "#1F2A44FF" },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_center },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_center },
+			}
+			);
+
+		}
 
 		style_sheet.set(
 			schema.idf_view_style,

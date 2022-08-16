@@ -2279,7 +2279,29 @@ namespace corona
 			int len = (strlen(_text) + 1) * 2;
 			wchar_t* buff = new wchar_t[len];
 			int ret = ::MultiByteToWideChar(CP_ACP, NULL, _text, -1, buff, len - 1);
-			getRenderTarget()->DrawText(buff, ret, format, &r, brush);
+
+			if (style->get_strike_through() || style->get_underline())
+			{
+				int l = wcslen(buff);
+				IDWriteTextLayout* textLayout = nullptr;
+				getFactory()->getDWriteFactory()->CreateTextLayout(buff, l, format, r.right - r.left,r.bottom - r.top, &textLayout);
+				if (textLayout != nullptr) {
+					textLayout->SetUnderline(style->get_underline(), { (UINT32)0, (UINT32)l });
+					textLayout->SetStrikethrough(style->get_strike_through(), {(UINT32)0, (UINT32)l});
+					getRenderTarget()->DrawTextLayout({ r.left, r.top }, textLayout, brush );
+					textLayout->Release();
+					textLayout = nullptr;
+				}
+				else 
+				{
+					getRenderTarget()->DrawText(buff, ret, format, &r, brush);
+				}
+			}
+			else 
+			{
+				getRenderTarget()->DrawText(buff, ret, format, &r, brush);
+			}
+
 			delete[] buff;
 		}
 

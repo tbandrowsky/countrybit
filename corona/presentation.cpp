@@ -281,8 +281,6 @@ namespace corona
 				size_aspect_heights(_style_sheet, _item, _ctx, safety+1);
 				_item->bounds.w = _item->box.width.amount * _item->bounds.h / 100.0;
 			}
-			else
-				_item->bounds.w = _item->box.width.amount;
 		}
 
 		void page::size_aspect_heights(jobject& _style_sheet, page_item* _item, layout_context _ctx, int safety)

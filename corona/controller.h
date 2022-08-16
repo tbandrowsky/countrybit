@@ -90,6 +90,10 @@ namespace corona
 			std::vector<table_column> columns;
 		};
 
+		class corona_controller;
+
+		std::function<void(drawableHost* _cont, page_item* _item)> render_handler;
+
 		class corona_controller : public controller
 		{
 		protected:
