@@ -322,21 +322,21 @@ namespace proposal
 		const char* _title = application_title;
 		const char* _subtitle = application_author;
 
-		auto page_column = column(nullptr, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pcc, 100.0_pcc });
+		auto page_column = column(nullptr, schema.idf_view_background_style, { 0.0_px, 0.0_px, 1.0_container, 1.0_container });
 
-		auto title_bar = canvas2d_absolute(id_canvas_header, page_column, null_row, { 0.0_px, 0.0_px, 100.0_pcc, 45.0_px });
-		auto title_text_bar = row(title_bar, null_row, { 0.0_px, 0.0_px, 100.0_pcc, 45.0_px }, 0.0_px, visual_alignment::align_near);
-		auto navigation_bar = row(title_bar, null_row, { 0.0_px, 0.0_px, 100.0_pcc, 45.0_px }, 0.0_px, visual_alignment::align_far);
+		auto title_bar = canvas2d_absolute(id_canvas_header, page_column, null_row, { 0.0_px, 0.0_px, 1.0_container, 45.0_px });
+		auto title_text_bar = row(title_bar, null_row, { 0.0_px, 0.0_px, 1.0_container, 45.0_px }, 0.0_px, visual_alignment::align_near);
+		auto navigation_bar = row(title_bar, null_row, { 0.0_px, 0.0_px, 1.0_container, 45.0_px }, 0.0_px, visual_alignment::align_far);
 
 		text(title_text_bar, schema.idf_album_title_style, _title);
-		selectable_items(navigation_bar, vq_navigation, schema.idf_navigation_style, { 0.0_px, 0.0_px, 100.0_px, 1.2_fntgr });
+		selectable_items(navigation_bar, vq_navigation, schema.idf_navigation_style, { 0.0_px, 0.0_px, 100.0_px, 1.2_fontgr });
 
-		auto main_row = row(page_column, null_row, { 0.0_px, 15.0_px, 100.0_pct, 100.0_pct });
-		auto form_contents = column(main_row, null_row, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
+		auto main_row = row(page_column, null_row, { 0.0_px, 15.0_px, 1.0_remaining, 1.0_remaining });
+		auto form_contents = column(main_row, null_row, { 0.0_px, 0.0_px, 1.0_remaining, 1.0_remaining });
 		form_contents->caption = pg.copy("contents form");
 		_contents(navigation_bar, form_contents);
 
-		auto footer_bar = canvas2d_row(id_canvas_footer, page_column, null_row, { 0.0_px, 0.0_px, 100.0_pct, 30.0_px });
+		auto footer_bar = canvas2d_row(id_canvas_footer, page_column, null_row, { 0.0_px, 0.0_px, 1.0_remaining, 30.0_px });
 		text(footer_bar, schema.idf_artist_title_style, _subtitle);
 	}
 
@@ -398,8 +398,8 @@ namespace proposal
 
 		options.alternating_row = true;
 		options.data = &vq_clients;
-		options.header_height = 1.2_fntgr;
-		options.row_height = 1.2_fntgr;
+		options.header_height = 1.2_fontgr;
+		options.row_height = 1.2_fontgr;
 		options.columns = { 
 			{ "Name", "", 100.0, schema.idf_name },
 			{ "Street", "", 200.0, schema.idf_name },
@@ -416,21 +416,21 @@ namespace proposal
 		const char* object_title = nullptr;
 		object_title = schema.get_class(state.actor.view.view_class_id).item().description;
 
-		auto edit_body = row(_contents, null_row, { 0.0_px,0.0_px,100.0_pct,100.0_pct });
+		auto edit_body = row(_contents, null_row, { 0.0_px,0.0_px,1.0_remaining,1.0_remaining });
 
-		auto control = column(edit_body, schema.idf_view_background_style, { 0.0_pct, 0.0_px, 30.0_pct, 100.0_pct });
+		auto control = column(edit_body, schema.idf_view_background_style, { 0.0_remaining, 0.0_px, 0.300_remaining, 1.0_remaining });
 		auto client_id = state.get_selected(idc_client);
 		edit_fields(control, client_id, field_layout::label_on_top, "Client Details", { schema.idf_name, schema.idf_street, schema.idf_city, schema.idf_state, schema.idf_postal });
-		space(control, schema.idf_button_style, { 0.0_px, 0.0_px, 1.0_fntgr, 1.0_fntgr });
-		create_buttons(_navigation, schema.idf_button_style, { 0.0_px, 0.0_px, 100.0_pct, 32.0_px });
+		space(control, schema.idf_button_style, { 0.0_px, 0.0_px, 1.0_fontgr, 1.0_fontgr });
+		create_buttons(_navigation, schema.idf_button_style, { 0.0_px, 0.0_px, 1.0_remaining, 32.0_px });
 
-		auto children = canvas2d_column(id_canvas_root_search_table, edit_body, schema.idf_view_background_style, { 0.0_px, 0.0_px, 65.0_pct, 100.0_pct });
+		auto children = canvas2d_column(id_canvas_root_search_table, edit_body, schema.idf_view_background_style, { 0.0_px, 0.0_px, 0.65_remaining, 1.0_remaining });
 
 		table_options options;
 		options.alternating_row = true;
 		options.data = &vq_client;
-		options.header_height = 1.2_fntgr;
-		options.row_height = 1.2_fntgr;
+		options.header_height = 1.2_fontgr;
+		options.row_height = 1.2_fontgr;
 		options.columns = {
 			{ "Name", "", 100.0, schema.idf_name },
 			{ "Street", "", 200.0, schema.idf_street },
@@ -447,8 +447,8 @@ namespace proposal
 		table_options options;
 		options.alternating_row = true;
 		options.data = &vq_coverages;
-		options.header_height = 1.2_fntgr;
-		options.row_height = 1.2_fntgr;
+		options.header_height = 1.2_fontgr;
+		options.row_height = 1.2_fontgr;
 		options.columns = {
 			{ "Name", "", 100.0, schema.idf_name },
 			{ "Street", "", 200.0, schema.idf_street },
@@ -481,8 +481,8 @@ namespace proposal
 		table_options options;
 		options.alternating_row = true;
 		options.data = &vq_carriers;
-		options.header_height = 1.2_fntgr;
-		options.row_height = 1.2_fntgr;
+		options.header_height = 1.2_fontgr;
+		options.row_height = 1.2_fontgr;
 		options.columns = {
 			{ "Name", "", 100.0, schema.idf_name },
 			{ "Street", "", 200.0, schema.idf_street },

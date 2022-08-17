@@ -90,29 +90,29 @@ namespace flowers
 
 	void flowers_controller::render_header(page_item* _frame, const char* _title, const char* _subtitle, bool _left_pad)
 	{
-		auto title_block = row(_frame, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 150.0_px });
+		auto title_block = row(_frame, schema.idf_view_background_style, { 0.0_px, 0.0_px, 1.0_remaining, 150.0_px });
 
 		page_item* header_area;
 
 		if (_left_pad)
 		{
-			space(_frame, schema.idf_view_background_style, { 0.0_px, 0.0_px, 25.0_pct, 100.0_pct });
-			header_area = column(title_block, schema.idf_view_background_style, { 0.0_px, 0.0_px, 75.0_pct, 100.0_pct });
+			space(_frame, schema.idf_view_background_style, { 0.0_px, 0.0_px, 0.25_remaining, 1.0_remaining });
+			header_area = column(title_block, schema.idf_view_background_style, { 0.0_px, 0.0_px, 0.75_remaining, 1.0_remaining });
 		}
 		else
 		{
-			header_area = column(title_block, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
+			header_area = column(title_block, schema.idf_view_background_style, { 0.0_px, 0.0_px, 1.0_remaining, 1.0_remaining });
 		}
 
-		auto title_bar = row(header_area, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 50.0_px });
-		auto subtitle_bar = row(header_area, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 50.0_px });
-		auto breadcrumb_bar = row(header_area, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 50.0_px });
+		auto title_bar = row(header_area, schema.idf_view_background_style, { 0.0_px, 0.0_px, 1.0_remaining, 50.0_px });
+		auto subtitle_bar = row(header_area, schema.idf_view_background_style, { 0.0_px, 0.0_px, 1.0_remaining, 50.0_px });
+		auto breadcrumb_bar = row(header_area, schema.idf_view_background_style, { 0.0_px, 0.0_px, 1.0_remaining, 50.0_px });
 
-		text(title_bar, schema.idf_view_title_style, _title, { 0.0_px, 0.0_px, 150.0_px, 100.0_pct });
-		text(subtitle_bar, schema.idf_view_subtitle_style, _subtitle, { 0.0_px, 0.0_px, 150.0_px, 100.0_pct });
+		text(title_bar, schema.idf_view_title_style, _title, { 0.0_px, 0.0_px, 150.0_px, 1.0_remaining });
+		text(subtitle_bar, schema.idf_view_subtitle_style, _subtitle, { 0.0_px, 0.0_px, 150.0_px, 1.0_remaining });
 		breadcrumbs(breadcrumb_bar, [](jobject& _item) {
 			return nullptr;
-			}, { 0.0_px, 0.0_px, 100.0_px, 100.0_pct });
+			}, { 0.0_px, 0.0_px, 100.0_px, 1.0_remaining });
 	}
 
 	void flowers_controller::render_form(std::function<void(page_item* _frame)> _contents)
@@ -121,12 +121,12 @@ namespace flowers
 
 		auto mainr = row(nullptr, null_row);
 
-		auto d2drow = column(mainr, null_row, { 0.0_px,0.0_px,100.0_pct,100.0_pct });
-		auto controlrow = row(mainr, null_row, { 0.0_px,0.0_px,100.0_pct,100.0_pct });
-		auto controlcolumn = column(mainr, null_row, { 20.0_pct,0.0_px,60.0_pct,100.0_pct });
+		auto d2drow = column(mainr, null_row, { 0.0_px,0.0_px,1.0_remaining,1.0_remaining });
+		auto controlrow = row(mainr, null_row, { 0.0_px,0.0_px,1.0_remaining,1.0_remaining });
+		auto controlcolumn = column(mainr, null_row, { 20.0_remaining,0.0_px,60.0_remaining,1.0_remaining });
 
-		auto d2dwin = canvas2d(d2drow, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
-		auto d2dwin_area = column(d2dwin, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
+		auto d2dwin = canvas2d(d2drow, schema.idf_view_background_style, { 0.0_px, 0.0_px, 1.0_remaining, 1.0_remaining });
+		auto d2dwin_area = column(d2dwin, schema.idf_view_background_style, { 0.0_px, 0.0_px, 1.0_remaining, 1.0_remaining });
 
 		const char* object_title = nullptr;
 		object_title = schema.get_class(state.actor.current_view_class_id).item().description;
@@ -146,17 +146,17 @@ namespace flowers
 		clear();
 
 		auto mainr = row(nullptr, null_row);
-		auto d2drow = column(mainr, null_row, { 0.0_px,0.0_px,100.0_pct,25.0_pct });
-		auto controlrow = column(mainr, null_row, { 0.0_px,0.0_px,100.0_pct,75.0_pct });
-		auto d2dwin = canvas2d(d2drow, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
-		auto d2dwin_area = column(d2dwin, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
+		auto d2drow = column(mainr, null_row, { 0.0_px,0.0_px,1.0_remaining,25.0_remaining });
+		auto controlrow = column(mainr, null_row, { 0.0_px,0.0_px,1.0_remaining,75.0_remaining });
+		auto d2dwin = canvas2d(d2drow, schema.idf_view_background_style, { 0.0_px, 0.0_px, 1.0_remaining, 1.0_remaining });
+		auto d2dwin_area = column(d2dwin, schema.idf_view_background_style, { 0.0_px, 0.0_px, 1.0_remaining, 1.0_remaining });
 
 		const char* object_title = nullptr;
 		object_title = schema.get_class(state.actor.current_view_class_id).item().description;
 
 		render_header(d2dwin, application_title, object_title, false);
 
-		auto client_area = row(d2dwin, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
+		auto client_area = row(d2dwin, schema.idf_view_background_style, { 0.0_px, 0.0_px, 1.0_remaining, 1.0_remaining });
 
 		_contents(client_area);
 
@@ -171,9 +171,9 @@ namespace flowers
 		clear();
 
 		auto mainr = row(nullptr, null_row);
-		auto controlcolumn = column(mainr, null_row, { 0.0_px,0.0_px,25.0_pct,100.0_pct });
-		auto d2dcolumn = column(mainr, null_row, { 0.0_px,0.0_px,75.0_pct,100.0_pct });
-		auto d2dwin = canvas2d(d2dcolumn, schema.idf_view_background_style, { 0.0_px,0.0_px,100.0_pct,100.0_pct });
+		auto controlcolumn = column(mainr, null_row, { 0.0_px,0.0_px,25.0_remaining,1.0_remaining });
+		auto d2dcolumn = column(mainr, null_row, { 0.0_px,0.0_px,75.0_remaining,1.0_remaining });
+		auto d2dwin = canvas2d(d2dcolumn, schema.idf_view_background_style, { 0.0_px,0.0_px,1.0_remaining,1.0_remaining });
 
 		object_description object_title;
 		object_title = schema.get_class(state.actor.current_view_class_id).item().description;

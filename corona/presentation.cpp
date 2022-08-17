@@ -243,7 +243,7 @@ namespace corona
 			}
 			else if (pi.box.width.units == measure_units::percent_container)
 			{
-				pi.bounds.w = pi.box.width.amount * _ctx.container_size.x / 100.0;
+				pi.bounds.w = pi.box.width.amount * _ctx.container_size.x;
 			}
 			else if (pi.box.width.units == measure_units::font || pi.box.width.units == measure_units::font_golden_ratio)
 			{
@@ -266,7 +266,7 @@ namespace corona
 			}
 			else if (pi.box.height.units == measure_units::percent_container)
 			{
-				pi.bounds.h = pi.box.height.amount * _ctx.container_size.y / 100.0;
+				pi.bounds.h = pi.box.height.amount * _ctx.container_size.y;
 			}
 			else if (pi.box.height.units == measure_units::font || pi.box.height.units == measure_units::font_golden_ratio)
 			{
@@ -300,7 +300,7 @@ namespace corona
 			if (_item->box.width.units == measure_units::percent_aspect)
 			{
 				size_aspect_heights(_style_sheet, _item, _ctx, safety+1);
-				_item->bounds.w = _item->box.width.amount * _item->bounds.h / 100.0;
+				_item->bounds.w = _item->box.width.amount * _item->bounds.h;
 			}
 		}
 
@@ -311,7 +311,7 @@ namespace corona
 			if (_item->box.height.units == measure_units::percent_aspect)
 			{
 				size_aspect_widths(_style_sheet, _item, _ctx, safety+1);
-				_item->bounds.h = _item->box.height.amount * _item->bounds.w / 100.0;
+				_item->bounds.h = _item->box.height.amount * _item->bounds.w;
 			}
 		}
 
@@ -362,11 +362,11 @@ namespace corona
 		{
 			if (_item->box.width.units == measure_units::percent_remaining)
 			{
-				_item->bounds.w = _item->box.width.amount * _ctx.remaining_size.x / 100.0;
+				_item->bounds.w = _item->box.width.amount * _ctx.remaining_size.x;
 			}
 			if (_item->box.height.units == measure_units::percent_remaining)
 			{
-				_item->bounds.h = _item->box.height.amount * _ctx.remaining_size.y / 100.0;
+				_item->bounds.h = _item->box.height.amount * _ctx.remaining_size.y;
 			}
 		}
 
@@ -375,6 +375,35 @@ namespace corona
 			_ctx = get_remaining(_style_sheet, _pi, children, _ctx);
 			for (auto child : children) {
 				size_remaining(_style_sheet, child, _ctx);
+			}
+		}
+
+		void page::size_children(jobject& _style_sheet, page_item* _pi, page_item_children children, layout_context _ctx)
+		{
+			bool sheight = _pi->box.height.units == measure_units::percent_child;
+			bool swidth = _pi->box.width.units == measure_units::percent_child;
+			if (sheight || swidth)
+			{
+				point sizes = { 0.0, 0.0 };
+				for (auto child : children) 
+				{
+					if (child->bounds.w > sizes.x)
+					{
+						sizes.x = child->bounds.w;
+					}
+					if (child->bounds.h > sizes.y)
+					{
+						sizes.y = child->bounds.h;
+					}
+				}
+				if (sheight)
+				{
+					_pi->bounds.h = sizes.y * _pi->box.height.amount;
+				}
+				if (swidth)
+				{
+					_pi->bounds.w = sizes.x * _pi->box.width.amount;
+				}
 			}
 		}
 
@@ -389,6 +418,7 @@ namespace corona
 		{
 			size_constants(_style_sheet, children, _ctx);
 			size_aspects(_style_sheet, children, _ctx);
+			size_children(_style_sheet, _pi, children, _ctx);
 			size_remainings(_style_sheet, _pi, children, _ctx);
 		}
 
@@ -398,10 +428,16 @@ namespace corona
 			{
 			case measure_units::percent_container:
 			case measure_units::percent_remaining:
-				_item->bounds.x = _item->box.x.amount * _ctx.container_size.x / 100.0 + _ctx.flow_origin.x + _ctx.container_origin.x;
+				_item->bounds.x = _item->box.x.amount * _ctx.container_size.x + _ctx.flow_origin.x + _ctx.container_origin.x;
 				break;
 			case measure_units::pixels:
 				_item->bounds.x = _item->box.x.amount + _ctx.flow_origin.x + _ctx.container_origin.x;
+				break;
+			case measure_units::font:
+			case measure_units::font_golden_ratio:
+			case measure_units::percent_aspect:
+			case measure_units::percent_child:
+				throw std::logic_error("font, aspect and child units cannot be used for position");
 				break;
 			default:
 				_item->bounds.x = _ctx.flow_origin.x + _ctx.container_origin.x;
@@ -412,10 +448,16 @@ namespace corona
 			{
 			case measure_units::percent_container:
 			case measure_units::percent_remaining:
-				_item->bounds.y = _item->box.y.amount * _ctx.container_size.y / 100.0 + _ctx.flow_origin.y + _ctx.container_origin.y;
+				_item->bounds.y = _item->box.y.amount * _ctx.container_size.y + _ctx.flow_origin.y + _ctx.container_origin.y;
 				break;
 			case measure_units::pixels:
 				_item->bounds.y = _item->box.y.amount + _ctx.flow_origin.y + _ctx.container_origin.y;
+				break;
+			case measure_units::font:
+			case measure_units::font_golden_ratio:
+			case measure_units::percent_aspect:
+			case measure_units::percent_child:
+				throw std::logic_error("font, aspect and child units cannot be used for position");
 				break;
 			default:
 				_item->bounds.y = _ctx.flow_origin.y + _ctx.container_origin.y;
@@ -436,12 +478,12 @@ namespace corona
 				_item->item_space_amount.y = _item->item_space.amount * 16.0 / 1.618;
 				break;
 			case measure_units::percent_aspect:
-				_item->item_space_amount.x = _item->item_space.amount * _ctx.container_size.y / 100.0;
-				_item->item_space_amount.y = _item->item_space.amount * _ctx.container_size.x / 100.0;
+				_item->item_space_amount.x = _item->item_space.amount * _ctx.container_size.y;
+				_item->item_space_amount.y = _item->item_space.amount * _ctx.container_size.x;
 				break;
 			case measure_units::percent_remaining:
-				_item->item_space_amount.x = _item->item_space.amount * _ctx.remaining_size.x / 100.0;
-				_item->item_space_amount.y = _item->item_space.amount * _ctx.remaining_size.y / 100.0;
+				_item->item_space_amount.x = _item->item_space.amount * _ctx.remaining_size.x;
+				_item->item_space_amount.y = _item->item_space.amount * _ctx.remaining_size.y;
 				break;
 			case measure_units::pixels:
 				_item->item_space_amount.x = _item->item_space.amount;
@@ -626,6 +668,9 @@ namespace corona
 					ctx.container_origin = { _padding, _padding };
 					ctx.flow_origin = { 0, 0 };
 					ctx.remaining_size = ctx.container_size;
+					if (pi.item.box.height.units == measure_units::percent_child ||
+						pi.item.box.width.units == measure_units::percent_child)
+						throw std::logic_error("Cannot use child based sizing on a root element");
 					size_item(_style_sheet, &pi.item, ctx);
 					position(_style_sheet, &pi.item, ctx);
 					layout(_style_sheet, &pi.item, ctx);
@@ -653,54 +698,6 @@ namespace corona
 					break;
 				}
 			}
-		}
-
-		point page::size_to_children(jobject& _style_sheet, page_item* _item)
-		{
-			auto children = this->where([_item](const value_reference<page_item>& _pir) { return _pir.item.parent_id == _item->id; })
-				.select<page_item*, value_reference<page_item>>(&data, [](const value_reference<page_item>& _pir) {
-				return &_pir.item;
-					});
-
-			layout_context ctx;
-			ctx.container_origin = { 0.0, 0.0 };
-			ctx.container_size = { 0, 0 };
-			ctx.flow_origin = { 0, 0 };
-			ctx.remaining_size = ctx.container_size;
-			ctx.space_amount = { 0, 0 };
-
-			if (_item->caption && strcmp(_item->caption, "search_form_centering_container")==0) {
-				DebugBreak();
-			}
-
-			if (children.size() == 0) 
-			{
-				size_item(_style_sheet, _item, ctx);
-
-				point sz = { _item->bounds.w, _item->bounds.h };
-				return sz;
-			}
-
-			_item->box.width = 0.0_px;
-			_item->box.height = 0.0_px;
-
-			styles(_style_sheet, _item->style_id, children);
-			size_items(_style_sheet, _item, children, ctx);
-			position(_style_sheet, _item, children, ctx);
-
-			for (auto child : children) 
-			{
-				auto sz = size_to_children(_style_sheet, child);
-				double ex = child->bounds.w + child->bounds.x - _item->bounds.x;
-				double ey = child->bounds.h + child->bounds.y - _item->bounds.x;
-				if (ex > _item->box.width.amount)
-					_item->box.width.amount = ex;
-				if (ey > _item->box.height.amount)
-					_item->box.height.amount = ey;
-			}
-
-			point sizeo = { _item->box.width.amount, _item->box.height.amount };
-			return sizeo;
 		}
 	}
 }

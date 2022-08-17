@@ -418,7 +418,7 @@ namespace corona
 			return pg.canvas2d_absolute(_canvas_uid, _parent, _style_id, _box, _item_space, _alignment);
 		}
 
-		point corona_controller::table(page_item* _parent, table_options& _options)
+		void corona_controller::table(page_item* _parent, table_options& _options)
 		{
 			page_item* table_container = column(_parent, null_row);
 			table_container->caption = pg.copy("table");
@@ -440,17 +440,7 @@ namespace corona
 					text(header_row, schema.idf_column_number_head_style, col.title, layout);
 			}
 
-			auto sheet = get_style_sheet(0);
-
-			auto header_size = pg.size_to_children(sheet, header_row);
-
-			row_box.height = _options.row_height;
-			row_box.width = { header_size.x, measure_units::pixels };
-			row_box.x = 0.0_px;
-			row_box.y = 0.0_px;
-
 			auto* pout = &std::cout;
-
 			auto svo = state.get_view_query_avo(*_options.data);
 
 			for (auto avo : svo)
@@ -471,13 +461,8 @@ namespace corona
 					else
 						select_cell(data_row, &state, avo.object_id, avo.object, value, schema.idf_column_number_style, layout);
 				}
-
-				pg.size_to_children(sheet, data_row);
 			}
 
-			point bounds = pg.size_to_children(sheet, table_container);
-
-			return bounds;
 		}
 
 		void corona_controller::stateChanged(const rectangle& newSize)
@@ -658,7 +643,7 @@ namespace corona
 				label->id = pg.size();
 				label->parent_id = _parent->id;
 				label->layout = layout_types::label;
-				label->box = { 0.0_px, 0.0_px, 300.0_px, 1.0_fntgr };
+				label->box = { 0.0_px, 0.0_px, 300.0_px, 1.0_fontgr };
 				label->slice = slice;
 				label->class_id = slice.get_class_id();
 				label->object_path = _omp;
@@ -680,10 +665,10 @@ namespace corona
 				switch (_layout)
 				{
 				case field_layout::label_on_left:
-					container = row(_parent, slice.get_schema()->idf_label_style, { 0.0_px, 0.0_px, 400.0_px, 1.1_fntgr });
+					container = row(_parent, slice.get_schema()->idf_label_style, { 0.0_px, 0.0_px, 400.0_px, 1.1_fontgr });
 					break;
 				case field_layout::label_on_top:
-					container = column(_parent, slice.get_schema()->idf_label_style, { 0.0_px, 0.0_px, 200.0_px, 2.0_fntgr });
+					container = column(_parent, slice.get_schema()->idf_label_style, { 0.0_px, 0.0_px, 200.0_px, 2.0_fontgr });
 					break;
 				}
 
@@ -692,7 +677,7 @@ namespace corona
 				label->parent_id = container->id;
 				label->layout = layout_types::label;
 				label->field = &fld;
-				label->box = { 0.0_px, 0.0_px, 150.0_px, 1.0_fntgr };
+				label->box = { 0.0_px, 0.0_px, 150.0_px, 1.0_fontgr };
 				label->slice = slice;
 				label->object_path = _omp;
 				label->style_id = slice.get_schema()->idf_label_style;
@@ -704,7 +689,7 @@ namespace corona
 				control->parent_id = container->id;
 				control->layout = layout_types::field;
 				control->field = &fld;
-				control->box = { 0.0_px, 0.0_px, 200.0_px, 1.0_fntgr };
+				control->box = { 0.0_px, 0.0_px, 200.0_px, 1.0_fontgr };
 				control->slice = slice;
 				control->object_path = _omp;
 				control->class_id = slice.get_class_id();
@@ -794,43 +779,40 @@ namespace corona
 
 		void corona_controller::edit_form(page_item* _navigation, page_item* _frame, const object_member_path& _omp, const char* _form_title, const field_list& _fields)
 		{
-			_frame->windowsRegion = true;
 			edit_fields(_frame, _omp, field_layout::label_on_left, _form_title, _fields);
-			space(_navigation, schema.idf_button_style, { 0.0_px, 0.0_px, 100.0_pct, 32.0_px });
-			text(_navigation, schema.idf_label_style, "Create", { 0.0_px, 0.0_px, 100.0_pct, 32.0_px });
-			create_buttons(_navigation, schema.idf_button_style, { 0.0_px, 0.0_px, 100.0_pct, 32.0_px });
+			space(_navigation, schema.idf_button_style, { 0.0_px, 0.0_px, 1.0_remaining, 32.0_px });
+			text(_navigation, schema.idf_label_style, "Create", { 0.0_px, 0.0_px, 1.0_remaining, 32.0_px });
+			create_buttons(_navigation, schema.idf_button_style, { 0.0_px, 0.0_px, 1.0_remaining, 32.0_px });
 		}
 
 		void corona_controller::search_form(page_item* _navigation, page_item* _frame, relative_ptr_type _title_uiid, relative_ptr_type _table_uiid, relative_ptr_type _search_class_id, table_options& _options, const char* _form_title, const field_list& _fields)
 		{
 			_frame->caption = pg.copy("search_form");
-			auto form_title_area = canvas2d_absolute(_title_uiid, _frame, null_row, { 0.0_px, 0.0_px, 100.0_pct, 32.0_px });
-			form_title_area->caption = pg.copy("search_form_title");
+			auto form_title_area = canvas2d_absolute(_title_uiid, _frame, null_row, { 0.0_px, 0.0_px, 1.0_remaining, 32.0_px });
+				form_title_area->caption = pg.copy("search_form_title");
 
-			auto form_title = row(form_title_area, null_row, { 0.0_px, 0.0_px, 30.0_pct, 100.0_pct }, 0.0_px, visual_alignment::align_near);
-			auto form_buttons = row(form_title_area, null_row, { 0.0_px, 0.0_px, 70.0_pct, 100.0_pct }, 0.0_px, visual_alignment::align_far);
+				auto form_title = row(form_title_area, null_row, { 0.0_px, 0.0_px, 0.300_remaining, 1.0_remaining }, 0.0_px, visual_alignment::align_near);
+					text(form_title, schema.idf_view_section_style, _form_title, { 0.0_px, 0.0_px, 350.0_px, 1.0_remaining });
+	
+				auto form_buttons = row(form_title_area, null_row, { 0.0_px, 0.0_px, 0.700_remaining, 1.0_remaining }, 0.0_px, visual_alignment::align_far);
+					create_buttons(form_buttons, schema.idf_button_style, { -1.0_px, 0.0_px, 150.0_px, 32.0_px });
 
-			text(form_title, schema.idf_view_section_style, _form_title, { 0.0_px, 0.0_px, 350.0_px, 100.0_pct });
-			create_buttons(form_buttons, schema.idf_button_style, { -1.0_px, 0.0_px, 150.0_px, 32.0_px });
-			auto ss = get_style_sheet(0);
+				auto ss = get_style_sheet(0);
 
-			auto form_search_container = row(_frame, null_row, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct }, 0.0_px, visual_alignment::align_center);
-				form_search_container->caption = pg.copy("search_form_container");
-				auto form_search_centering_container = column(form_search_container, null_row, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct }, 0.0_px);
-					form_search_centering_container->caption = pg.copy("search_form_centering_container");
-					auto form_search_fields = row(form_search_centering_container, null_row, { 0.0_px, 0.0_px, 100.0_pct, 32.0_px }, 0.0_px);
-						object_member_path opt;
-						opt.object = state.get_object_by_class(_search_class_id);
-						if (opt.object.row_id < 0)
-							throw std::invalid_argument(std::format("class {} is incorrect", _search_class_id));
-						edit_fields(form_search_fields, opt, field_layout::label_on_left, nullptr, _fields);
-						pg.size_to_children(ss, form_search_fields);
+				auto form_search_container = row(_frame, null_row, { 0.0_px, 0.0_px, 1.0_remaining, 1.0_remaining }, 0.0_px, visual_alignment::align_center);
+					form_search_container->caption = pg.copy("search_form_container");
+					auto form_search_centering_container = column(form_search_container, null_row, { 0.0_px, 0.0_px, 1.0_remaining, 1.0_remaining }, 0.0_px);
+						form_search_centering_container->caption = pg.copy("search_form_centering_container");
+						auto form_search_fields = row(form_search_centering_container, null_row, { 0.0_px, 0.0_px, 1.0_remaining, 32.0_px }, 0.0_px);
+							object_member_path opt;
+							opt.object = state.get_object_by_class(_search_class_id);
+							if (opt.object.row_id < 0)
+								throw std::invalid_argument(std::format("class {} is incorrect", _search_class_id));
+							edit_fields(form_search_fields, opt, field_layout::label_on_left, nullptr, _fields);
 					
-					auto form_table = canvas2d_column(_table_uiid, form_search_centering_container, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pct, 100.0_pct });
-						form_table->caption = pg.copy("search_form_table"); 
-						table(form_table, _options);
-
-				auto check = pg.size_to_children(ss, form_search_centering_container);
+						auto form_table = canvas2d_column(_table_uiid, form_search_centering_container, schema.idf_view_background_style, { 0.0_px, 0.0_px, 1.0_remaining, 1.0_remaining });
+							form_table->caption = pg.copy("search_form_table"); 
+							table(form_table, _options);
 		}
 	}
 }

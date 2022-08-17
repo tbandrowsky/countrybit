@@ -11,7 +11,8 @@ namespace corona
 			percent_aspect = 2,
 			pixels = 3,
 			font = 4,
-			font_golden_ratio = 5
+			font_golden_ratio = 5,
+			percent_child = 6
 		};
 
 		class measure
@@ -25,11 +26,12 @@ namespace corona
 		};
 
 		measure operator ""_px(long double px);
-		measure operator ""_pcc(long double pct);
-		measure operator ""_pct(long double pct);
-		measure operator ""_pca(long double pct);
-		measure operator ""_fnt(long double fnt);
-		measure operator ""_fntgr(long double fnt);
+		measure operator ""_container(long double pct);
+		measure operator ""_remaining(long double pct);
+		measure operator ""_children(long double pct);
+		measure operator ""_aspect(long double pct);
+		measure operator ""_font(long double fnt);
+		measure operator ""_fontgr(long double fnt);
 		measure operator -(const measure& _src);
 
 		class layout_rect
