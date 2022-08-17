@@ -378,7 +378,7 @@ namespace corona
 			}
 		}
 
-		void page::size_children(jobject& _style_sheet, page_item* _pi, page_item_children children, layout_context _ctx)
+		void page::size_children(page_item* _pi, page_item_children children)
 		{
 			bool sheight = _pi->box.height.units == measure_units::percent_child;
 			bool swidth = _pi->box.width.units == measure_units::percent_child;
@@ -387,10 +387,12 @@ namespace corona
 				point sizes = { 0.0, 0.0 };
 				for (auto child : children) 
 				{
-					if (child->bounds.w > sizes.x)
+					auto ew = child->bounds.w + child->bounds.x - _pi->bounds.x;
+					if (ew > sizes.x)
 					{
-						sizes.x = child->bounds.w;
+						sizes.x = ew;
 					}
+					auto eh = child->bounds.h + child->bounds.y - _pi->bounds.y;
 					if (child->bounds.h > sizes.y)
 					{
 						sizes.y = child->bounds.h;
@@ -418,7 +420,6 @@ namespace corona
 		{
 			size_constants(_style_sheet, children, _ctx);
 			size_aspects(_style_sheet, children, _ctx);
-			size_children(_style_sheet, _pi, children, _ctx);
 			size_remainings(_style_sheet, _pi, children, _ctx);
 		}
 
@@ -537,10 +538,12 @@ namespace corona
 
 					for (auto child : children)
 					{
+						position(_style_sheet, child, _ctx);
+						layout(_style_sheet, child, _ctx);
 						w += child->bounds.w;
 					}
 
-					_ctx.flow_origin.x = (_item->bounds.w - w) / 2;
+					_ctx.flow_origin.x = (_ctx.container_size.x - w) / 2;
 					_ctx.flow_origin.y = 0;
 
 					for (auto child : children)
@@ -586,6 +589,8 @@ namespace corona
 
 					for (auto child : children)
 					{
+						position(_style_sheet, child, _ctx);
+						layout(_style_sheet, child, _ctx);
 						h += child->bounds.h;
 					}
 
@@ -612,6 +617,8 @@ namespace corona
 					layout(_style_sheet, child, _ctx);
 				}
 			}
+
+			size_children(_item, children);
 		}
 
 		void page::styles(jobject& _style_sheet, int style_id, page_item_children children)
@@ -640,6 +647,10 @@ namespace corona
 			_ctx.flow_origin.x = 0;
 			_ctx.flow_origin.y = 0;
 
+			styles(_style_sheet, _item->style_id, children);
+			size_items(_style_sheet, _item, children, _ctx);
+			position(_style_sheet, _item, children, _ctx);
+
 #if TRACE_LAYOUT
 			std::cout << _item->parent_id << "." << _item->id << " " <<
 				layout_type_names[(int)_item->layout] << " " <<
@@ -647,10 +658,6 @@ namespace corona
 				"(" << _item->bounds.x << ", " << _item->bounds.y << "  x  " << _item->bounds.w << "," << _item->bounds.h << ")" <<
 				(_item->caption ? _item->caption : "") << std::endl;
 #endif
-
-			styles(_style_sheet, _item->style_id, children);
-			size_items(_style_sheet, _item, children, _ctx);
-			position(_style_sheet, _item, children, _ctx);
 
 			return _item->bounds;
 		}

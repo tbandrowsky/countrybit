@@ -420,11 +420,10 @@ namespace corona
 
 		void corona_controller::table(page_item* _parent, table_options& _options)
 		{
-			page_item* table_container = column(_parent, null_row);
+			page_item* table_container = column(_parent, null_row, { 0.0_px, 0.0_px, 1.0_children, 1.0_children });
 			table_container->caption = pg.copy("table");
 
-			page_item* header_row = row(table_container, null_row);
-			layout_rect row_box;
+			page_item* header_row = row(table_container, null_row, { 0.0_px, 0.0_px, 1.0_children, 1.0_children});
 
 			for (auto col : _options.columns)
 			{
@@ -445,7 +444,7 @@ namespace corona
 
 			for (auto avo : svo)
 			{
-				page_item* data_row = row(table_container, null_row, row_box);
+				page_item* data_row = row(table_container, null_row, { 0.0_px, 0.0_px, 1.0_children, 1.0_children });
 
 				for (auto col : _options.columns)
 				{
@@ -801,16 +800,16 @@ namespace corona
 
 				auto form_search_container = row(_frame, null_row, { 0.0_px, 0.0_px, 1.0_remaining, 1.0_remaining }, 0.0_px, visual_alignment::align_center);
 					form_search_container->caption = pg.copy("search_form_container");
-					auto form_search_centering_container = column(form_search_container, null_row, { 0.0_px, 0.0_px, 1.0_remaining, 1.0_remaining }, 0.0_px);
+					auto form_search_centering_container = column(form_search_container, null_row, { 0.0_px, 0.0_px, 1.0_children, 1.0_children }, 0.0_px);
 						form_search_centering_container->caption = pg.copy("search_form_centering_container");
-						auto form_search_fields = row(form_search_centering_container, null_row, { 0.0_px, 0.0_px, 1.0_remaining, 32.0_px }, 0.0_px);
+						auto form_search_fields = row(form_search_centering_container, null_row, { 0.0_px, 0.0_px, 1.0_children, 32.0_px }, 0.0_px);
 							object_member_path opt;
 							opt.object = state.get_object_by_class(_search_class_id);
 							if (opt.object.row_id < 0)
 								throw std::invalid_argument(std::format("class {} is incorrect", _search_class_id));
 							edit_fields(form_search_fields, opt, field_layout::label_on_left, nullptr, _fields);
 					
-						auto form_table = canvas2d_column(_table_uiid, form_search_centering_container, schema.idf_view_background_style, { 0.0_px, 0.0_px, 1.0_remaining, 1.0_remaining });
+						auto form_table = canvas2d_column(_table_uiid, form_search_centering_container, schema.idf_view_background_style, { 0.0_px, 0.0_px, 1.0_children, 1.0_children });
 							form_table->caption = pg.copy("search_form_table"); 
 							table(form_table, _options);
 		}

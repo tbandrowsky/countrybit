@@ -210,7 +210,7 @@ namespace corona
 			void size_aspect_widths(jobject& _style_sheet, page_item* _pi, layout_context _ctx, int safety);
 			void size_aspect_heights(jobject& _style_sheet, page_item* _pi, layout_context _ctx, int safety);
 			void size_aspects(jobject& _style_sheet, page_item_children children, layout_context _ctx);
-			void size_children(jobject& _style_sheet, page_item* _pi, page_item_children children, layout_context _ctx);
+			void size_children(page_item* _pi, page_item_children children);
 
 			void size_remaining(jobject& _style_sheet, page_item* _item, layout_context _ctx);
 			void size_remainings(jobject& _style_sheet, page_item* _pi, page_item_children children, layout_context _ctx);
