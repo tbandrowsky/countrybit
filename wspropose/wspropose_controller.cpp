@@ -322,7 +322,7 @@ namespace proposal
 		const char* _title = application_title;
 		const char* _subtitle = application_author;
 
-		auto page_column = column(nullptr, null_row, { 0.0_px, 0.0_px, 100.0_pcc, 100.0_pcc });
+		auto page_column = column(nullptr, schema.idf_view_background_style, { 0.0_px, 0.0_px, 100.0_pcc, 100.0_pcc });
 
 		auto title_bar = canvas2d_absolute(id_canvas_header, page_column, null_row, { 0.0_px, 0.0_px, 100.0_pcc, 45.0_px });
 		auto title_text_bar = row(title_bar, null_row, { 0.0_px, 0.0_px, 100.0_pcc, 45.0_px }, 0.0_px, visual_alignment::align_near);
@@ -558,12 +558,6 @@ namespace proposal
 		style_sheet.set(
 			{ schema.idf_view_background_style },
 			{
-				{ schema.idf_shape_fill_color, "#000000FF" },
-				{ schema.idf_shape_border_thickness, 0 },
-				{ schema.idf_shape_border_color, "#000000FF" },
-				{ schema.idf_box_fill_color, "#FFFFFFFF" },
-				{ schema.idf_box_border_thickness, 0 },
-				{ schema.idf_box_border_color, "#000000FF" }
 			}
 			);
 
@@ -580,6 +574,12 @@ namespace proposal
 				{ schema.idf_line_spacing, 0.0 },
 				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
 				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#000000FF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "#000000FF" },
+				{ schema.idf_box_fill_color, "#FFFFFFFF" },
+				{ schema.idf_box_border_thickness, 0 },
+				{ schema.idf_box_border_color, "#000000FF" }
 			}
 			);
 
@@ -597,6 +597,9 @@ namespace proposal
 			schema.idf_view_style,
 			{ schema.idf_view_title_style },
 			{
+				{ schema.idf_shape_fill_color, "#000000FF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "#000000FF" },
 				{ schema.idf_font_name, fontName },
 				{ schema.idf_font_size, 24.0 }
 			}

@@ -456,8 +456,11 @@ namespace corona
 			}
 		}
 
-		void page::position(jobject& _style_sheet, visual_alignment _alignment, layout_types _layout, page_item_children children, layout_context _ctx)
-		{
+		void page::position(jobject& _style_sheet, page_item* _item, page_item_children children, layout_context _ctx)
+		{			
+			visual_alignment _alignment = _item->alignment;
+			layout_types _layout = _item->layout;
+
 			if (_layout == layout_types::row || _layout == layout_types::canvas2d_row || _layout == layout_types::canvas3d_row)
 			{
 				if (_alignment == visual_alignment::align_near)
@@ -488,7 +491,14 @@ namespace corona
 				}
 				else if (_alignment == visual_alignment::align_center)
 				{
-					_ctx.flow_origin.x = ( _ctx.container_size.x - _ctx.remaining_size.x ) / 2;
+					double w = 0.0;
+
+					for (auto child : children)
+					{
+						w += child->bounds.w;
+					}
+
+					_ctx.flow_origin.x = (_item->bounds.w - w) / 2;
 					_ctx.flow_origin.y = 0;
 
 					for (auto child : children)
@@ -530,8 +540,15 @@ namespace corona
 				}
 				else if (_alignment == visual_alignment::align_center)
 				{
+					double h = 0;
+
+					for (auto child : children)
+					{
+						h += child->bounds.h;
+					}
+
 					_ctx.flow_origin.x = 0;
-					_ctx.flow_origin.y = (_ctx.container_size.y - _ctx.remaining_size.y) / 2;
+					_ctx.flow_origin.y = (_ctx.container_size.y - h) / 2;
 
 					for (auto child : children)
 					{
@@ -591,7 +608,7 @@ namespace corona
 
 			styles(_style_sheet, _item->style_id, children);
 			size_items(_style_sheet, _item, children, _ctx);
-			position(_style_sheet, _item->alignment, _item->layout, children, _ctx);
+			position(_style_sheet, _item, children, _ctx);
 
 			return _item->bounds;
 		}
@@ -638,15 +655,52 @@ namespace corona
 			}
 		}
 
-		rectangle page::layout(jobject& _style_sheet, page_item* _item)
+		point page::size_to_children(jobject& _style_sheet, page_item* _item)
 		{
+			auto children = this->where([_item](const value_reference<page_item>& _pir) { return _pir.item.parent_id == _item->id; })
+				.select<page_item*, value_reference<page_item>>(&data, [](const value_reference<page_item>& _pir) {
+				return &_pir.item;
+					});
+
 			layout_context ctx;
 			ctx.container_origin = { 0.0, 0.0 };
-			ctx.container_size = { 1000, 1000 };
+			ctx.container_size = { 0, 0 };
 			ctx.flow_origin = { 0, 0 };
 			ctx.remaining_size = ctx.container_size;
 			ctx.space_amount = { 0, 0 };
-			return layout(_style_sheet, _item, ctx);
+
+			if (_item->caption && strcmp(_item->caption, "search_form_centering_container")==0) {
+				DebugBreak();
+			}
+
+			if (children.size() == 0) 
+			{
+				size_item(_style_sheet, _item, ctx);
+
+				point sz = { _item->bounds.w, _item->bounds.h };
+				return sz;
+			}
+
+			_item->box.width = 0.0_px;
+			_item->box.height = 0.0_px;
+
+			styles(_style_sheet, _item->style_id, children);
+			size_items(_style_sheet, _item, children, ctx);
+			position(_style_sheet, _item, children, ctx);
+
+			for (auto child : children) 
+			{
+				auto sz = size_to_children(_style_sheet, child);
+				double ex = child->bounds.w + child->bounds.x - _item->bounds.x;
+				double ey = child->bounds.h + child->bounds.y - _item->bounds.x;
+				if (ex > _item->box.width.amount)
+					_item->box.width.amount = ex;
+				if (ey > _item->box.height.amount)
+					_item->box.height.amount = ey;
+			}
+
+			point sizeo = { _item->box.width.amount, _item->box.height.amount };
+			return sizeo;
 		}
 	}
 }

@@ -173,7 +173,7 @@ namespace corona
 			virtual void edit_form(page_item* _navigation, page_item* _frame, const object_member_path& _omp, const char* _form_title, const field_list& _fields);
 			virtual void search_form(page_item* _navigation, page_item* _frame, relative_ptr_type _title_uiid, relative_ptr_type _table_uiid, relative_ptr_type _search_class_id, table_options& _options, const char* _form_title, const field_list& _fields);
 
-			rectangle table(page_item* _parent, table_options& _options);
+			point table(page_item* _parent, table_options& _options);
 
 			void arrange(double width, double height, jobject& _style_sheet, double padding = 0.0);
 
