@@ -1215,7 +1215,7 @@ namespace proposal
 				{ schema.idf_shape_border_thickness, 0 },
 				{ schema.idf_shape_border_color, "#1F2A44FF" },
 				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_center },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_center },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_far },
 			}
 			);
 
@@ -1235,7 +1235,7 @@ namespace proposal
 				{ schema.idf_shape_border_thickness, 0 },
 				{ schema.idf_shape_border_color, "#1F2A44FF" },
 				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_center },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_center },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_far },
 			}
 			);
 		}
@@ -1253,7 +1253,7 @@ namespace proposal
 				{ schema.idf_shape_border_thickness, 0 },
 				{ schema.idf_shape_border_color, "#1F2A44FF" },
 				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_center },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_center },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_far },
 			}
 			);
 
@@ -1269,7 +1269,7 @@ namespace proposal
 				{ schema.idf_box_border_thickness, 4 },
 				{ schema.idf_box_border_color, "#D0E0D0FF" },
 				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_center },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_center },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_far },
 			}
 			);
 
