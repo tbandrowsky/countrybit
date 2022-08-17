@@ -624,6 +624,7 @@ namespace proposal
 			{
 				{ schema.idf_font_name, fontName},
 				{ schema.idf_font_size, 16.0 },
+				{ schema.idf_bold, true },
 			}
 			);
 
