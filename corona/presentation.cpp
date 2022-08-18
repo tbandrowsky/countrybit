@@ -7,28 +7,6 @@ namespace corona
 {
 	namespace database
 	{
-		const char* layout_type_names[] = {
-			"space",
-			"row",
-			"column",
-			"absolute",
-			"2d_row",
-			"2d_column",
-			"2d_absolute",
-			"3d_row",
-			"3d_column",
-			"3d_absolute",
-			"field",
-			"label",
-			"create",
-			"select",
-			"select_cell",
-			"navigate",
-			"text",
-			"set"
-		};
-
-
 		page::page()
 		{
 			data.init(1 << 20);
@@ -651,14 +629,6 @@ namespace corona
 			size_items(_style_sheet, _item, children, _ctx);
 			position(_style_sheet, _item, children, _ctx);
 
-#if TRACE_LAYOUT
-			std::cout << _item->parent_id << "." << _item->id << " " <<
-				layout_type_names[(int)_item->layout] << " " <<
-				"(" << _ctx.remaining_size.x << ", " << _ctx.remaining_size.y << ")" <<
-				"(" << _item->bounds.x << ", " << _item->bounds.y << "  x  " << _item->bounds.w << "," << _item->bounds.h << ")" <<
-				(_item->caption ? _item->caption : "") << std::endl;
-#endif
-
 			return _item->bounds;
 		}
 
@@ -687,6 +657,19 @@ namespace corona
 					break;
 				}
 			}
+
+#if TRACE_LAYOUT
+			std::cout << std::endl;
+			for (auto pix = begin(); pix != end(); pix++)
+			{
+				auto& _item = pix.get_object().item;
+				std::cout << _item.parent_id << "." << _item.id << " " <<
+					database::layout_type_names[(int)_item.layout] << " " <<
+					"(" << _item.bounds.x << ", " << _item.bounds.y << "  x  " << _item.bounds.w << "," << _item.bounds.h << ")" <<
+					(_item.caption ? _item.caption : "") << std::endl;
+			}
+#endif
+
 		}
 
 		void page::visit(std::function<bool(page_item* _parent)> fnin, std::function<bool(page_item* _parent)> fout)

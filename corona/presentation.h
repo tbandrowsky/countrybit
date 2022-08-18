@@ -26,6 +26,27 @@ namespace corona
 			set = 17
 		};
 
+		inline constexpr const char* layout_type_names[] = {
+			"space",
+			"row",
+			"column",
+			"absolute",
+			"2d_row",
+			"2d_column",
+			"2d_absolute",
+			"3d_row",
+			"3d_column",
+			"3d_absolute",
+			"field",
+			"label",
+			"create",
+			"select",
+			"select_cell",
+			"navigate",
+			"text",
+			"set"
+		};
+
 		struct page_item_identifier_x
 		{
 			relative_ptr_type		item_uid;
