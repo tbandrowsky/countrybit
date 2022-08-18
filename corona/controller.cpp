@@ -791,30 +791,33 @@ namespace corona
 
 			auto ss = get_style_sheet(0);
 
-			auto form_area = column(_frame, null_row, { 0.0_px, 0.0_px, 1.0_remaining, 1.0_remaining });
+			auto form_area = row(_frame, null_row, { 0.0_px, 0.0_px, 1.0_remaining, 1.0_remaining }, 0.0_px, visual_alignment::align_center);
 				form_area->caption = pg.copy("search_form");
 
-				auto form_title = canvas2d_row(_title_uiid, form_area, null_row, { 0.0_px, 0.0_px, 1.0_remaining, 1.0_children }, 0.0_px, visual_alignment::align_center);
-					form_title->caption = pg.copy("search_title");
-					text(form_title, schema.idf_view_section_style, _form_title, { 0.0_px, 0.0_px, 350.0_px, 1.0_fontgr });
+					auto center_area = column(form_area, null_row, { 0.0_px, 0.0_px, 1.0_children, 1.0_remaining });
+					center_area->caption = pg.copy("center_block");
 
-				auto form_search_container = row(form_area, null_row, { 0.0_px, 0.0_px, 1.0_remaining, 1.0_remaining }, 0.0_px, visual_alignment::align_center);
-					form_search_container->caption = pg.copy("search_form_container");
+						auto form_title = canvas2d_row(_title_uiid, center_area, null_row, { 0.0_px, 0.0_px, 1.0_remaining, 1.0_children }, 0.0_px, visual_alignment::align_center);
+							form_title->caption = pg.copy("search_title");
+							text(form_title, schema.idf_view_section_style, _form_title, { 0.0_px, 0.0_px, 1.0_remaining, 1.0_fontgr });
 
-					auto form_search_fields_container = column(form_search_container, null_row, { 0.0_px, 0.0_px, 250.0_px, 1.0_children }, 0.0_px);
-						object_member_path opt;
-						opt.object = state.get_object_by_class(_search_class_id);
-						if (opt.object.row_id < 0)
-							throw std::invalid_argument(std::format("class {} is incorrect", _search_class_id));
-						edit_fields(form_search_fields_container, opt, field_layout::label_on_top, nullptr, _fields);
-						create_buttons(form_search_fields_container, schema.idf_button_style, { -1.0_px, 0.0_px, 150.0_px, 32.0_px });
+						auto form_search_container = row(center_area, null_row, { 0.0_px, 0.0_px, 1.0_children, 1.0_remaining });
+							form_search_container->caption = pg.copy("search_form_container");
 
-					auto form_search_table_container = column(form_search_container, null_row, { 0.0_px, 0.0_px, 1.0_children, 1.0_children }, 0.0_px);
-						form_search_table_container->caption = pg.copy("form_search_table_container");
+							auto form_search_fields_container = column(form_search_container, null_row, { 0.0_px, 0.0_px, 250.0_px, 1.0_children }, 0.0_px);
+								object_member_path opt;
+								opt.object = state.get_object_by_class(_search_class_id);
+								if (opt.object.row_id < 0)
+									throw std::invalid_argument(std::format("class {} is incorrect", _search_class_id));
+								edit_fields(form_search_fields_container, opt, field_layout::label_on_top, nullptr, _fields);
+								create_buttons(form_search_fields_container, schema.idf_button_style, { -1.0_px, 0.0_px, 150.0_px, 32.0_px });
+
+							auto form_search_table_container = column(form_search_container, null_row, { 0.0_px, 0.0_px, 1.0_children, 1.0_children }, 0.0_px);
+								form_search_table_container->caption = pg.copy("form_search_table_container");
 					
-						auto form_table = canvas2d_column(_table_uiid, form_search_table_container, schema.idf_view_background_style, { 0.0_px, 0.0_px, 1.0_children, 1.0_children });
-							form_table->caption = pg.copy("search_form_table"); 
-							table(form_table, _options);
+								auto form_table = canvas2d_column(_table_uiid, form_search_table_container, schema.idf_view_background_style, { 0.0_px, 0.0_px, 1.0_children, 1.0_children });
+									form_table->caption = pg.copy("search_form_table"); 
+									table(form_table, _options);
 		}
 	}
 }

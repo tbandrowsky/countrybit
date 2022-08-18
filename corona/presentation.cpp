@@ -356,7 +356,7 @@ namespace corona
 			}
 		}
 
-		void page::size_children(page_item* _pi, page_item_children children)
+		void page::size_children(jobject& _style_sheet, page_item* _pi, page_item_children children, layout_context _ctx)
 		{
 			bool sheight = _pi->box.height.units == measure_units::percent_child;
 			bool swidth = _pi->box.width.units == measure_units::percent_child;
@@ -385,6 +385,7 @@ namespace corona
 					_pi->bounds.w = sizes.x * _pi->box.width.amount;
 				}
 			}
+			size_remainings(_style_sheet, _pi, children, _ctx);
 		}
 
 		void page::size_item(jobject& _style_sheet, page_item* _pi, layout_context _ctx)
@@ -596,7 +597,7 @@ namespace corona
 				}
 			}
 
-			size_children(_item, children);
+			size_children(_style_sheet, _item, children, _ctx);
 		}
 
 		void page::styles(jobject& _style_sheet, int style_id, page_item_children children)
