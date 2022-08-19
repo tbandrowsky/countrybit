@@ -4,7 +4,7 @@
 #define _DETAIL 0
 #define _TRACE_RULE 0
 #define _TRACE_GET_OBJECT 0
-#define _TRACE_SEARCH 0
+#define _TRACE_SEARCH 1
 
 namespace corona
 {
@@ -372,10 +372,12 @@ namespace corona
 			{
 				for (auto vqi : pactor->view.view_queries)
 				{
+					int64_t row_count = 0;
 					auto fil = create_filter_from_view_query(vqi.item, pactor);
 					filtered_object_id_list flist = run_filter(acr.get_data(), fil);
 					acr.filter_results.put(vqi.item.query_name, flist.get_location());
 					for (auto view_item : flist) {
+						row_count++;
 						if (!acr.view_objects.contains(view_item))
 						{
 							auto obj = get_object(view_item);
@@ -391,6 +393,9 @@ namespace corona
 							acr.view_objects.put(view_item, avo);
 						}
 					}
+#if _TRACE_SEARCH
+					std::cout << " " << vqi.item.query_name << " view_query " << row_count << " rows " << std::endl;
+#endif
 				}
 			}
 

@@ -784,6 +784,7 @@ namespace corona
 			relative_ptr_type				class_id;
 			object_name						class_name;
 			object_description				class_description;
+			object_description				create_prompt;
 			member_field_collection			member_fields;
 			bool							auto_primary_key;
 			relative_ptr_type				field_id_primary_key;
@@ -825,6 +826,7 @@ namespace corona
 			relative_ptr_type							class_id;
 			object_name									name;
 			object_description							description;
+			object_description							create_prompt;
 			uint64_t									class_size_bytes;
 			bool										user_defined;
 			int											primary_key_idx;

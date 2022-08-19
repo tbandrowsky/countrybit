@@ -215,7 +215,7 @@ namespace corona
 #if TRACE_CONTROLLER
 					state = this->user_collection.create_object(clicked_item.item.create_request, "created via mouse click");
 #else
-					state = this->program_chart.create_object(clicked_item.item.create_request);
+					state = this->user_collection.create_object(clicked_item.item.create_request);
 #endif
 				}
 				else if (clicked_item.item.is_set())
@@ -715,7 +715,7 @@ namespace corona
 				button->style_id = _style_id;
 
 				object_description desc;
-				desc = "Add " + schema.get_class(aco.second.class_id).pitem()->description;
+				desc = schema.get_class(aco.second.class_id).pitem()->create_prompt;
 				button->caption = pg.copy(desc.c_str());
 			}
 			return _parent;
@@ -781,8 +781,9 @@ namespace corona
 		void corona_controller::edit_form(page_item* _navigation, page_item* _frame, const object_member_path& _omp, const char* _form_title, const field_list& _fields)
 		{
 			edit_fields(_frame, _omp, field_layout::label_on_left, _form_title, _fields);
-			space(_navigation, schema.idf_button_style, { 0.0_px, 0.0_px, 1.0_remaining, 32.0_px });
+			space(_navigation, schema.idf_button_style, { 0.0_px, 0.0_px, 1.0_remaining, 64.0_px });
 			text(_navigation, schema.idf_label_style, "Create", { 0.0_px, 0.0_px, 1.0_remaining, 32.0_px });
+			space(_navigation, schema.idf_button_style, { 0.0_px, 0.0_px, 1.0_remaining, 64.0_px });
 			create_buttons(_navigation, schema.idf_button_style, { 0.0_px, 0.0_px, 1.0_remaining, 32.0_px });
 		}
 
