@@ -90,6 +90,42 @@ namespace corona
 			std::vector<table_column> columns;
 		};
 
+		struct edit_field
+		{
+		public:
+			object_name				  label;
+			relative_ptr_type		  field_id;
+			int						  column_id;
+
+			edit_field() : field_id(null_row), column_id(0)
+			{
+				;
+			}
+
+			edit_field( const char *_label ) : label(_label), field_id(null_row), column_id(0)
+			{
+				;
+			}
+
+			edit_field(const char* _label, relative_ptr_type _field_id) : label(_label), field_id(_field_id), column_id(0)
+			{
+				;
+			}
+
+			edit_field(const char* _label, relative_ptr_type _field_id, int _column) : label(_label), field_id(_field_id), column_id(_column)
+			{
+				;
+			}
+		};
+
+		struct edit_options
+		{
+		public:
+			view_query* data;
+			object_name				  form_title;
+			std::vector<edit_field> fields;
+		};
+
 		class corona_controller;
 
 		std::function<void(drawableHost* _cont, page_item* _item)> render_handler;
@@ -167,11 +203,11 @@ namespace corona
 
 			virtual void breadcrumbs(page_item* _parent, std::function<const char* (jobject& slice)> _captioner, layout_rect _item_box = { 0.0_px, 0.0_px, 200.0_px, 100.0_px });
 
-			virtual page_item *edit_fields(page_item* _parent, const object_member_path& _omp, field_layout _layout, const char* _object_title, const field_list& _fields);
+			virtual page_item *edit_fields(page_item* _parent, const object_member_path& _omp, field_layout _layout, const edit_options& _fields);
 			virtual page_item* create_buttons(page_item* _parent, relative_ptr_type _style_id, layout_rect _box = { 0.0_px, 0.0_px, 250.0_px, 2.0_fontgr });
 			virtual page_item* selectable_items(page_item* _parent, view_query& _vq, relative_ptr_type _style_id, layout_rect _box = { 0.0_px, 0.0_px, 250.0_px, 2.0_fontgr });
-			virtual void edit_form(page_item* _navigation, page_item* _frame, const object_member_path& _omp, const char* _form_title, const field_list& _fields);
-			virtual void search_form(page_item* _navigation, page_item* _frame, relative_ptr_type _title_uiid, relative_ptr_type _table_uiid, relative_ptr_type _search_class_id, table_options& _options, const char* _form_title, const field_list& _fields);
+			virtual void edit_form(page_item* _navigation, page_item* _frame, const object_member_path& _omp, const edit_options& _fields);
+			virtual void search_form(page_item* _navigation, page_item* _frame, relative_ptr_type _title_uiid, relative_ptr_type _table_uiid, relative_ptr_type _search_class_id, table_options& _options, const edit_options& _search_options);
 
 			void table(page_item* _parent, table_options& _options);
 

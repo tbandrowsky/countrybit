@@ -415,33 +415,27 @@ namespace proposal
 
 	void wsproposal_controller::render_client_contents(page_item* _navigation, page_item* _contents)
 	{
-		const char* object_title = nullptr;
-		object_title = schema.get_class(state.actor.view.view_class_id).item().description;
+		auto edit_body = row(_contents, null_row, { 0.0_px,0.0_px,1.0_remaining,1.0_remaining }, 0.0_px, visual_alignment::align_center);
 
-		auto edit_body = row(_contents, null_row, { 0.0_px,0.0_px,1.0_remaining,1.0_remaining });
+			auto control = column(edit_body, schema.idf_view_background_style, { 0.0_remaining, 0.0_px, 0.300_remaining, 1.0_remaining });
+				auto client_id = state.get_selected(idc_client);
 
-		auto control = column(edit_body, schema.idf_view_background_style, { 0.0_remaining, 0.0_px, 0.300_remaining, 1.0_remaining });
-		auto client_id = state.get_selected(idc_client);
-		edit_fields(control, client_id, field_layout::label_on_top, "Client Details", { schema.idf_name, schema.idf_street, schema.idf_city, schema.idf_state, schema.idf_postal });
-		space(control, schema.idf_button_style, { 0.0_px, 0.0_px, 1.0_fontgr, 1.0_fontgr });
-		create_buttons(_navigation, schema.idf_button_style, { 0.0_px, 0.0_px, 1.0_remaining, 32.0_px });
+					auto client_obj = state.get_object(client_id);
 
-		auto children = canvas2d_column(id_canvas_root_search_table, edit_body, schema.idf_view_background_style, { 0.0_px, 0.0_px, 0.65_remaining, 1.0_remaining });
+					edit_options options;
 
-		table_options options;
-		options.alternating_row = true;
-		options.data = &vq_client;
-		options.header_height = 1.2_fontgr;
-		options.row_height = 1.2_fontgr;
-		options.columns = {
-			{ "Name", "", 100.0, schema.idf_name },
-			{ "Street", "", 200.0, schema.idf_street },
-			{ "City", "", 100.0, schema.idf_city },
-			{ "State", "", 100.0, schema.idf_state },
-			{ "Postal", "", 100.0, schema.idf_postal }
-		};
+					options.form_title = "Client Details - " + client_obj.get( schema.idf_name );
+					options.fields = {
+						{ "Address", null_row, 0 },
+						{ "Name", schema.idf_name, 0 },
+						{ "Street", schema.idf_street, 0 },
+						{ "City", schema.idf_city, 0 },
+						{ "State", schema.idf_state, 0 },
+						{ "Postal", schema.idf_postal, 0 },
+					};
 
-		table(children, options);
+					edit_form(_navigation, edit_body, client_id, options);
+
 	}
 
 	void wsproposal_controller::render_coverage_root_contents(page_item* _navigation, page_item* _contents)
@@ -474,8 +468,19 @@ namespace proposal
 
 	void wsproposal_controller::render_coverage_contents(page_item* _navigation, page_item* _contents)
 	{
-		auto sel = state.get_selected(idc_coverage);
-		edit_form(_navigation, _contents, sel, "Coverage", { schema.idf_name });
+		auto edit_body = row(_contents, null_row, { 0.0_px,0.0_px,1.0_remaining,1.0_remaining }, 0.0_px, visual_alignment::align_center);
+
+			auto coverage_id = state.get_selected(idc_client);
+			auto coverage_obj = state.get_object(coverage_id);
+
+			edit_options options;
+
+			options.form_title = "Coverage Details - " + coverage_obj.get(schema.idf_name);
+			options.fields = {
+				{ "Name", schema.idf_name, 0 },
+			};
+
+			edit_form(_navigation, edit_body, coverage_id, options);
 	}
 
 	void wsproposal_controller::render_carrier_root_contents(page_item* _navigation, page_item* _contents)
@@ -498,8 +503,19 @@ namespace proposal
 
 	void wsproposal_controller::render_carrier_contents(page_item* _navigation, page_item* _contents)
 	{
-		auto sel = state.get_selected(idc_carrier);
-		edit_form(_navigation, _contents, sel, "Carrier", { schema.idf_name, schema.idf_street, schema.idf_city, schema.idf_state, schema.idf_postal});
+		auto edit_body = row(_contents, null_row, { 0.0_px,0.0_px,1.0_remaining,1.0_remaining }, 0.0_px, visual_alignment::align_center);
+
+		auto coverage_id = state.get_selected(idc_client);
+		auto coverage_obj = state.get_object(coverage_id);
+
+		edit_options options;
+
+		options.form_title = "Carrier Details - " + coverage_obj.get(schema.idf_name);
+		options.fields = {
+			{ "Name", schema.idf_name, 0 },
+		};
+
+		edit_form(_navigation, edit_body, coverage_id, options);
 	}
 
 	void wsproposal_controller::render(const rectangle& newSize)
