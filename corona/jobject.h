@@ -1028,6 +1028,10 @@ namespace corona
 						ret_value.push_back(avo.second);
 					}
 				}
+				else
+				{
+					std::cout << "ERR:" << _name << " query results not found";
+				}
 				return ret_value;
 			}
 
@@ -1048,6 +1052,10 @@ namespace corona
 						auto avo = view_objects[item];
 						ret_value.push_back(avo.second.object);
 					}
+				}
+				else 
+				{
+					std::cout << "ERR:" << _name << " query results not found";
 				}
 				return ret_value;
 			}

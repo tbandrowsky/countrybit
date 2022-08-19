@@ -202,6 +202,7 @@ namespace proposal
 		vo_carrier_root.use_view = true;
 		vo_carrier_root.view_class_id = idc_carrier_root;
 		vo_carrier_root.view_queries.push_back(vq_navigation);
+		vo_carrier_root.view_queries.push_back(vq_carriers);
 		jm.select_when(&schema, { }, idc_carrier_root, {}, {}, vo_carrier_root);
 
 		view_options vo_carrier;
@@ -214,6 +215,7 @@ namespace proposal
 		vo_coverage_root.use_view = true;
 		vo_coverage_root.view_class_id = idc_coverage_root;
 		vo_coverage_root.view_queries.push_back(vq_navigation);
+		vo_coverage_root.view_queries.push_back(vq_coverages);
 		jm.select_when(&schema, { }, idc_coverage_root, {}, {}, vo_coverage_root);
 
 		view_options vo_coverage;
@@ -226,7 +228,7 @@ namespace proposal
 		vo_client_root.use_view = true;
 		vo_client_root.view_class_id = idc_client_root;
 		vo_client_root.view_queries.push_back(vq_navigation);
-		vo_client_root.view_queries.push_back(vq_client);
+		vo_client_root.view_queries.push_back(vq_clients);
 		jm.select_when(&schema, { }, idc_client_root, {}, {}, vo_client_root);
 
 		view_options vo_client;
@@ -717,6 +719,19 @@ namespace proposal
 			schema.idf_view_style,
 			{ schema.idf_column_number_style },
 			{
+				{ schema.idf_font_name, fontName },
+				{ schema.idf_font_size, 12.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+			}
+			);
+
+		style_sheet.set(
+			schema.idf_view_style,
+			{ schema.idf_column_text_style },
+			{
+				{ schema.idf_font_name, fontName },
+				{ schema.idf_font_size, 12.0 },
 				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
 				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
 			}

@@ -252,7 +252,20 @@ namespace corona
 				if (pi.style_id != null_row && _style_sheet.has_field(pi.style_id))
 				{
 					jobject style = _style_sheet.get_object(pi.style_id, true).get_object({ 0,0,0 });
-					font_height = style.get(style.get_schema()->idf_font_size);
+					auto schema = style.get_schema();
+					font_height = style.get(schema->idf_font_size);
+					if (font_height < 1.0) {
+						std::cout << "WARNING: font height not specified on style:";
+						if (pi.style_id) {
+							std::cout << " " << schema->get_field(pi.style_id).name << " ";
+						}
+						if (pi.caption) {
+							std::cout << " for " << pi.caption << std::endl;
+						}
+						else {
+							std::cout << " for " << "(element)" << std::endl;
+						}
+					}
 				};
 				pi.bounds.h = font_height * pi.box.height.amount;
 				if (pi.box.height.units == measure_units::font_golden_ratio)
