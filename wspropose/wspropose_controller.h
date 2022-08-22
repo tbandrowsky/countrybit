@@ -38,9 +38,11 @@ namespace proposal
 
 		view_query vq_navigation;
 		view_query vq_carriers;
+		view_query vq_carrier;
 		view_query vq_clients;
-		view_query vq_coverages;
 		view_query vq_client;
+		view_query vq_coverages;
+		view_query vq_coverage;
 		view_query vq_program;
 
 		const char* application_title = "PROOFS OF CONCEPT";

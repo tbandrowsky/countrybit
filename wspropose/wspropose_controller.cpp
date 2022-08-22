@@ -174,6 +174,13 @@ namespace proposal
 		comp->field_id_source = schema.get_primary_key(idc_client);
 		comp->field_id_target = schema.get_primary_key(idc_client);
 
+		vq_client.classes = { idc_client, idc_program };
+		comp = vq_client.parameters.append();
+		comp->comparison = comparisons::eq;
+		comp->field_id_source = schema.get_primary_key(idc_client);
+		comp->field_id_target = schema.get_primary_key(idc_client);
+		vq_client.query_name = "client";
+
 		vq_coverages.classes = { idc_coverage };
 		vq_coverages.query_name = "coverages";
 		comp = vq_coverages.parameters.append();
@@ -181,12 +188,12 @@ namespace proposal
 		comp->field_id_source = schema.get_primary_key(idc_coverage);
 		comp->field_id_target = schema.get_primary_key(idc_coverage);
 
-		vq_client.classes = { idc_client, idc_program };
-		comp = vq_client.parameters.append();
+		vq_coverage.classes = { idc_coverage };
+		vq_coverage.query_name = "coverage";
+		comp = vq_coverages.parameters.append();
 		comp->comparison = comparisons::eq;
-		comp->field_id_source = schema.get_primary_key(idc_client);
-		comp->field_id_target = schema.get_primary_key(idc_client);
-		vq_client.query_name = "client";
+		comp->field_id_source = schema.get_primary_key(idc_coverage);
+		comp->field_id_target = schema.get_primary_key(idc_coverage);
 
 		vq_program.classes = { idc_program, idc_program_item, idc_program_insurance_coverage };
 		vq_program.query_name = "program";
@@ -212,6 +219,7 @@ namespace proposal
 		vo_carrier.use_view = true;
 		vo_carrier.view_class_id = idc_carrier;
 		vo_carrier.view_queries.push_back(vq_navigation);
+		vo_carrier.view_queries.push_back(vq_carrier);
 		jm.select_when(&schema, { idc_carrier_root }, idc_carrier, {}, {}, vo_carrier);
 
 		view_options vo_coverage_root;
@@ -225,6 +233,7 @@ namespace proposal
 		vo_coverage.use_view = true;
 		vo_coverage.view_class_id = idc_coverage;
 		vo_coverage.view_queries.push_back(vq_navigation);
+		vo_coverage.view_queries.push_back(vq_coverage);
 		jm.select_when(&schema, { idc_coverage_root }, idc_coverage, {}, {}, vo_coverage);
 
 		view_options vo_client_root;
@@ -400,7 +409,7 @@ namespace proposal
 
 		table_options grid_options;
 		grid_options.alternating_row = true;
-		grid_options.data = &vq_coverages;
+		grid_options.data = &vq_clients;
 		grid_options.header_height = 1.2_fontgr;
 		grid_options.row_height = 1.2_fontgr;
 		grid_options.columns = {
@@ -456,10 +465,6 @@ namespace proposal
 		grid_options.row_height = 1.2_fontgr;
 		grid_options.columns = {
 			{ "Name", "", 100.0, schema.idf_name },
-			{ "Street", "", 200.0, schema.idf_street },
-			{ "City", "", 100.0, schema.idf_city },
-			{ "State", "", 100.0, schema.idf_state },
-			{ "Postal", "", 100.0, schema.idf_postal }
 		};
 
 		edit_options search_options;
@@ -486,7 +491,7 @@ namespace proposal
 	{
 		auto edit_body = row(_contents, null_row, { 0.0_px,0.0_px,1.0_remaining,1.0_remaining }, 0.0_px, visual_alignment::align_center);
 
-			auto coverage_id = state.get_selected(idc_client);
+			auto coverage_id = state.get_selected(idc_coverage);
 			auto coverage_obj = state.get_object(coverage_id);
 
 			edit_options options;
@@ -504,7 +509,7 @@ namespace proposal
 	{
 		table_options grid_options;
 		grid_options.alternating_row = true;
-		grid_options.data = &vq_coverages;
+		grid_options.data = &vq_carrier;
 		grid_options.header_height = 1.2_fontgr;
 		grid_options.row_height = 1.2_fontgr;
 		grid_options.columns = {

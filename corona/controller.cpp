@@ -472,7 +472,7 @@ namespace corona
 			render(newSize);
 		}
 
-		bool corona_controller::drawItem(int _id)
+		bool corona_controller::drawCanvas(int _id)
 		{
 			bool adapter_blown_away = false;
 			if (pg.size() > _id && _id >= 0)
@@ -531,7 +531,7 @@ namespace corona
 					lyt == layout_types::canvas2d_row ||
 					lyt == layout_types::canvas2d_column)
 				{
-					drawItem(pi.item.id);
+					drawCanvas(pi.item.id);
 				}
 			}
 			return true;

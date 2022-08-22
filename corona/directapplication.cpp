@@ -2571,7 +2571,7 @@ namespace corona
 		{
 			if (currentController)
 			{
-				bool failedDevice = currentController->drawItem(controlId);
+				bool failedDevice = currentController->drawCanvas(controlId);
 				if (failedDevice) {
 					factory->clearWindows();
 					factory->refresh();
@@ -2948,7 +2948,7 @@ namespace corona
 						case database::type_string:
 							{
 								auto bx = slice.get_string(idx);
-								created_something = createChildWindow(pid, WC_EDIT, bx.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont, pi);
+								x = bx;
 							}
 							break;
 						default:
