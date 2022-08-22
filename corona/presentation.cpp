@@ -376,18 +376,46 @@ namespace corona
 			if (sheight || swidth)
 			{
 				point sizes = { 0.0, 0.0 };
-				for (auto child : children) 
+				if (_pi->layout == layout_types::canvas2d_column || _pi->layout == layout_types::canvas3d_column || _pi->layout == layout_types::column)
 				{
-					auto ew = child->bounds.w + child->bounds.x - _pi->bounds.x;
-					if (ew > sizes.x)
+					for (auto child : children)
 					{
-						sizes.x = ew;
+						auto ew = child->bounds.w + child->bounds.x - _pi->bounds.x;
+						if (ew > sizes.x)
+						{
+							sizes.x = ew;
+						}
+						sizes.y += child->bounds.h;
 					}
-					auto eh = child->bounds.h + child->bounds.y - _pi->bounds.y;
-					if (child->bounds.h > sizes.y)
+				}
+				else if (_pi->layout == layout_types::canvas2d_row || _pi->layout == layout_types::canvas3d_row || _pi->layout == layout_types::row)
+				{
+					for (auto child : children)
 					{
-						sizes.y = child->bounds.h;
+						auto eh = child->bounds.h + child->bounds.y - _pi->bounds.y;
+						if (child->bounds.h > sizes.y)
+						{
+							sizes.y = child->bounds.h;
+						}
+						sizes.x += child->bounds.w;
 					}
+				}
+				else 
+				{
+					for (auto child : children)
+					{
+						auto ew = child->bounds.w + child->bounds.x - _pi->bounds.x;
+						if (ew > sizes.x)
+						{
+							sizes.x = ew;
+						}
+						auto eh = child->bounds.h + child->bounds.y - _pi->bounds.y;
+						if (child->bounds.h > sizes.y)
+						{
+							sizes.y = child->bounds.h;
+						}
+					}
+
 				}
 				if (sheight)
 				{
