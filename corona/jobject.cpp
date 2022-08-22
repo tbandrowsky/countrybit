@@ -296,6 +296,7 @@ namespace corona
 						}
 
 						auto cls = schema->get_class(rule->create_class_id);
+						aco.create_prompt = cls.item().create_prompt;
 						relative_ptr_type template_class_id = cls.item().template_class_id;
 						if (template_class_id != null_row)
 						{

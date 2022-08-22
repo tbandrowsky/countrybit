@@ -699,7 +699,7 @@ namespace corona
 					label->slice = slice;
 					label->object_path = _omp;
 					label->style_id = slice.get_schema()->idf_label_style;
-					label->caption = field.label.size() > 0 ? field.label : fld.description;
+					label->caption = pg.copy(field.label.size() > 0 ? field.label : fld.description);
 					label->class_id = slice.get_class_id();
 
 					page_item* control = pg.append();
@@ -747,7 +747,7 @@ namespace corona
 				button->style_id = _style_id;
 
 				object_description desc;
-				desc = schema.get_class(aco.second.class_id).pitem()->create_prompt;
+				desc = aco.second.create_prompt;
 				button->caption = pg.copy(desc.c_str());
 			}
 			return _parent;
@@ -819,7 +819,7 @@ namespace corona
 			create_buttons(_navigation, schema.idf_button_style, { 0.0_px, 0.0_px, 1.0_remaining, 32.0_px });
 		}
 
-		void corona_controller::search_form(page_item* _navigation, page_item* _frame, relative_ptr_type _title_uiid, relative_ptr_type _table_uiid, relative_ptr_type _search_class_id, table_options& _options, const edit_options& _search_options)
+		void corona_controller::search_form(page_item* _navigation, page_item* _frame, relative_ptr_type _title_uiid, relative_ptr_type _table_uiid, relative_ptr_type _search_class_id, table_options& _options, edit_options& _search_options)
 		{
 
 			auto ss = get_style_sheet(0);
@@ -833,6 +833,7 @@ namespace corona
 						auto form_title = canvas2d_row(_title_uiid, center_area, null_row, { 0.0_px, 0.0_px, 1.0_remaining, 1.0_children }, 0.0_px, visual_alignment::align_center);
 							form_title->caption = pg.copy("search_title");
 							text(form_title, schema.idf_view_section_style, _search_options.form_title, { 0.0_px, 0.0_px, 1.0_remaining, 1.0_fontgr });
+							_search_options.form_title = "";
 
 						auto form_search_container = row(center_area, null_row, { 0.0_px, 0.0_px, 1.0_children, 1.0_remaining });
 							form_search_container->caption = pg.copy("search_form_container");

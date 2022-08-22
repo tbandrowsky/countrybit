@@ -775,6 +775,7 @@ namespace corona
 			relative_ptr_type	item_id;
 			relative_ptr_type	template_item_id;
 			bool				select_on_create;
+			object_name			create_prompt;
 			collection_id_type get_collection_id() { return collection_id; }
 		};
 
@@ -2149,6 +2150,7 @@ namespace corona
 				p.primary_key_idx = -1;
 				p.base_class_id = request.base_class_id;
 				p.template_class_id = request.template_class_id;
+				p.create_prompt = request.create_prompt;
 
 				for (int i = 0; i < pcr.size(); i++)
 				{

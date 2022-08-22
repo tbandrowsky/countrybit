@@ -64,6 +64,7 @@ namespace proposal
 		pcr.class_name = "carrier";
 		pcr.class_description = "Carrier";
 		pcr.auto_primary_key = true;
+		pcr.create_prompt = "Add Carrier";
 		pcr.member_fields = { schema.get_primary_key(idc_carrier_root), schema.idf_name, schema.idf_street, schema.idf_city, schema.idf_state, schema.idf_postal, schema.idf_email, schema.idf_url };
 		idc_carrier = schema.put_class(pcr);
 
@@ -76,6 +77,7 @@ namespace proposal
 		pcr.class_name = "coverage";
 		pcr.class_description = "Coverage";
 		pcr.auto_primary_key = true;
+		pcr.create_prompt = "Add Coverage";
 		pcr.member_fields = { schema.get_primary_key(idc_coverage_root), schema.idf_name };
 		idc_coverage = schema.put_class(pcr);
 
@@ -89,6 +91,7 @@ namespace proposal
 		
 		pcr.class_name = "client";
 		pcr.class_description = "Client";
+		pcr.create_prompt = "Add Client";
 		pcr.auto_primary_key = true;
 		pcr.member_fields = { schema.get_primary_key(idc_client_root), schema.idf_name, schema.idf_street, schema.idf_city, schema.idf_state, schema.idf_postal, schema.idf_email, schema.idf_url };
 		idc_client = schema.put_class(pcr);
@@ -394,23 +397,29 @@ namespace proposal
 
 	void wsproposal_controller::render_client_root_contents(page_item* _navigation, page_item* _contents)
 	{
-		relative_ptr_type field_ids[5] = { schema.idf_name, schema.idf_street, schema.idf_city, schema.idf_state, schema.idf_postal };		
 
-		table_options options;
-
-		options.alternating_row = true;
-		options.data = &vq_clients;
-		options.header_height = 1.2_fontgr;
-		options.row_height = 1.2_fontgr;
-		options.columns = { 
+		table_options grid_options;
+		grid_options.alternating_row = true;
+		grid_options.data = &vq_coverages;
+		grid_options.header_height = 1.2_fontgr;
+		grid_options.row_height = 1.2_fontgr;
+		grid_options.columns = {
 			{ "Name", "", 100.0, schema.idf_name },
-			{ "Street", "", 200.0, schema.idf_name },
-			{ "City", "", 100.0, schema.idf_name },
-			{ "State", "", 100.0, schema.idf_name },
-			{ "Postal", "", 100.0, schema.idf_name }		
+			{ "Street", "", 200.0, schema.idf_street },
+			{ "City", "", 100.0, schema.idf_city },
+			{ "State", "", 100.0, schema.idf_state },
+			{ "Postal", "", 100.0, schema.idf_postal }
 		};
 
-		search_form(_navigation, _contents, id_canvas_program_search_title, id_canvas_root_search_table, idc_client_root, options, "Clients", { schema.idf_search_string });
+		edit_options search_options;
+
+		search_options.form_title = "Clients";
+		search_options.fields = {
+			{ "Client Search", schema.idf_search_string, 0 },
+		};
+
+		search_form(_navigation, _contents, id_canvas_program_search_title, id_canvas_root_search_table, idc_client_root, grid_options, search_options);
+
 	}
 
 	void wsproposal_controller::render_client_contents(page_item* _navigation, page_item* _contents)
@@ -424,9 +433,9 @@ namespace proposal
 
 					edit_options options;
 
-					options.form_title = "Client Details - " + client_obj.get( schema.idf_name );
+					options.form_title = "Client Details - ";
+					options.form_title += client_obj.get(schema.idf_name);
 					options.fields = {
-						{ "Address", null_row, 0 },
 						{ "Name", schema.idf_name, 0 },
 						{ "Street", schema.idf_street, 0 },
 						{ "City", schema.idf_city, 0 },
@@ -440,12 +449,12 @@ namespace proposal
 
 	void wsproposal_controller::render_coverage_root_contents(page_item* _navigation, page_item* _contents)
 	{
-		table_options options;
-		options.alternating_row = true;
-		options.data = &vq_coverages;
-		options.header_height = 1.2_fontgr;
-		options.row_height = 1.2_fontgr;
-		options.columns = {
+		table_options grid_options;
+		grid_options.alternating_row = true;
+		grid_options.data = &vq_coverages;
+		grid_options.header_height = 1.2_fontgr;
+		grid_options.row_height = 1.2_fontgr;
+		grid_options.columns = {
 			{ "Name", "", 100.0, schema.idf_name },
 			{ "Street", "", 200.0, schema.idf_street },
 			{ "City", "", 100.0, schema.idf_city },
@@ -453,7 +462,14 @@ namespace proposal
 			{ "Postal", "", 100.0, schema.idf_postal }
 		};
 
-		search_form(_navigation, _contents, id_canvas_program_search_title, id_canvas_root_search_table, idc_coverage_root, options, "Coverages", { schema.idf_search_string });
+		edit_options search_options;
+
+		search_options.form_title = "Coverages";
+		search_options.fields = {
+			{ "Coverage Search", schema.idf_search_string, 0 },
+		};
+
+		search_form(_navigation, _contents, id_canvas_program_search_title, id_canvas_root_search_table, idc_coverage_root, grid_options, search_options);
 	}
 
 	void wsproposal_controller::render_program_contents(page_item* _navigation, page_item* _contents)
@@ -475,7 +491,8 @@ namespace proposal
 
 			edit_options options;
 
-			options.form_title = "Coverage Details - " + coverage_obj.get(schema.idf_name);
+			options.form_title = "Coverage Details - ";
+			options.form_title += coverage_obj.get(schema.idf_name);
 			options.fields = {
 				{ "Name", schema.idf_name, 0 },
 			};
@@ -485,12 +502,12 @@ namespace proposal
 
 	void wsproposal_controller::render_carrier_root_contents(page_item* _navigation, page_item* _contents)
 	{
-		table_options options;
-		options.alternating_row = true;
-		options.data = &vq_carriers;
-		options.header_height = 1.2_fontgr;
-		options.row_height = 1.2_fontgr;
-		options.columns = {
+		table_options grid_options;
+		grid_options.alternating_row = true;
+		grid_options.data = &vq_coverages;
+		grid_options.header_height = 1.2_fontgr;
+		grid_options.row_height = 1.2_fontgr;
+		grid_options.columns = {
 			{ "Name", "", 100.0, schema.idf_name },
 			{ "Street", "", 200.0, schema.idf_street },
 			{ "City", "", 100.0, schema.idf_city },
@@ -498,24 +515,33 @@ namespace proposal
 			{ "Postal", "", 100.0, schema.idf_postal }
 		};
 
-		search_form(_navigation, _contents, id_canvas_program_search_title, id_canvas_root_search_table, idc_carrier_root, options, "Carriers", { schema.idf_search_string });
+		edit_options search_options;
+
+		search_options.form_title = "Carriers";
+		search_options.fields = {
+			{ "Carrier Search", schema.idf_search_string, 0 },
+		};
+
+		search_form(_navigation, _contents, id_canvas_program_search_title, id_canvas_root_search_table, idc_carrier_root, grid_options, search_options);
 	}
 
 	void wsproposal_controller::render_carrier_contents(page_item* _navigation, page_item* _contents)
 	{
 		auto edit_body = row(_contents, null_row, { 0.0_px,0.0_px,1.0_remaining,1.0_remaining }, 0.0_px, visual_alignment::align_center);
 
-		auto coverage_id = state.get_selected(idc_client);
-		auto coverage_obj = state.get_object(coverage_id);
+		auto carrier_id = state.get_selected(idc_carrier);
+		auto carrier_obj = state.get_object(carrier_id);
+
 
 		edit_options options;
 
-		options.form_title = "Carrier Details - " + coverage_obj.get(schema.idf_name);
+		options.form_title = "Carrier Details - ";
+		options.form_title += carrier_obj.get(schema.idf_name);
 		options.fields = {
 			{ "Name", schema.idf_name, 0 },
 		};
 
-		edit_form(_navigation, edit_body, coverage_id, options);
+		edit_form(_navigation, edit_body, carrier_id, options);
 	}
 
 	void wsproposal_controller::render(const rectangle& newSize)

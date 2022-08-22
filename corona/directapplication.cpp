@@ -2913,42 +2913,36 @@ namespace corona
 							{
 								auto bx = slice.get_int8(idx);
 								x = bx;
-								created_something = createChildWindow(pid, WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont, pi);
 							}
 							break;
 						case database::type_int16:
 							{
 								auto bx = slice.get_int16(idx);
 								x = bx;
-								created_something = createChildWindow(pid, WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont, pi);
 							}
 							break;
 						case database::type_int32:
 							{
 								auto bx = slice.get_int32(idx);
 								x = bx;
-								created_something = createChildWindow(pid, WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont, pi);
 							}
 							break;
 						case database::type_int64:
 							{
 								auto bx = slice.get_int64(idx);
 								x = bx;
-								created_something = createChildWindow(pid, WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont, pi);
 							}
 							break;
 						case database::type_float32:
 							{
 								auto bx = slice.get_float(idx);
 								x = bx;
-								created_something = createChildWindow(pid, WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont, pi);
 							}
 							break;
 						case database::type_float64:
 							{
 								auto bx = slice.get_double(idx);
 								x = bx;
-								created_something = createChildWindow(pid, WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont, pi);
 							}
 							break;
 						case database::type_string:
@@ -2958,10 +2952,13 @@ namespace corona
 							}
 							break;
 						default:
-							created_something = createChildWindow(pid, WC_STATIC, "Type not supported", WS_CHILD | WS_BORDER | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont, pi);
 							break;
 						}
+						created_something = createChildWindow(pid, WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont, pi);
 					}
+					break;
+				case database::layout_types::set:
+					created_something = createChildWindow(pid, WC_BUTTON, pi.caption, BS_PUSHBUTTON | BS_FLAT | WS_TABSTOP | WS_CHILD | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont, pi);
 					break;
 				case database::layout_types::create:
 					created_something = createChildWindow(pid, WC_BUTTON, pi.caption, BS_PUSHBUTTON | BS_FLAT | WS_TABSTOP | WS_CHILD | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont, pi);
