@@ -3948,7 +3948,7 @@ namespace corona
 			idc_text_style = put_class(pcr);
 
 			put_object_field_request object_fields[59] = {
-				{ { jtype::type_object, "view_background_style", "View Background Style" }, { {1,1,1}, idc_text_style }},
+				{ { jtype::type_object, "view_background_style", "View No Background Style" }, { {1,1,1}, idc_text_style }},
 				{ { jtype::type_object, "view_title_style", "View Title Style" }, { {1,1,1}, idc_text_style }},
 				{ { jtype::type_object, "view_subtitle_style", "View Subtitle Style" }, { {1,1,1}, idc_text_style }},
 				{ { jtype::type_object, "view_section_style", "View Section Style" }, { {1,1,1}, idc_text_style }},

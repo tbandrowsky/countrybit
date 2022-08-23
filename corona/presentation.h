@@ -4,47 +4,56 @@ namespace corona
 {
 	namespace database
 	{
+
 		enum class layout_types
 		{
-			space = 0,
-			row = 1,
-			column = 2,
-			absolute = 3,
-			canvas2d_row = 4,
-			canvas2d_column = 5,
-			canvas2d_absolute = 6,
-			canvas3d_row = 7,
-			canvas3d_column = 8,
-			canvas3d_absolute = 9,
-			field = 10,
-			label = 11,
-			create = 12,
-			select = 13,
-			select_cell = 14,
-			navigate = 15,
-			text = 16,
-			set = 17
+			canvas2d_row = 0,
+			canvas2d_column = 1,
+			canvas2d_absolute = 2,
+			canvas3d_row = 3,
+			canvas3d_column = 4,
+			canvas3d_absolute = 5,
+			text_window = 6,
+			dropdown_window = 7,
+			spinner_window = 8,
+			hscroll_window = 9,
+			vscroll_window = 10,
+			space = 11,
+			row = 12,
+			column = 13,
+			absolute = 14,
+			label = 15,
+			create = 16,
+			select = 17,
+			select_cell = 18,
+			navigate = 19,
+			text = 20,
+			set = 21,
 		};
 
 		inline constexpr const char* layout_type_names[] = {
-			"space",
-			"row",
-			"column",
-			"absolute",
-			"2d_row",
-			"2d_column",
-			"2d_absolute",
-			"3d_row",
-			"3d_column",
-			"3d_absolute",
-			"field",
-			"label",
-			"create",
-			"select",
-			"select_cell",
-			"navigate",
-			"text",
-			"set"
+			"canvas2d_row = 0",
+			"canvas2d_column = 1",
+			"canvas2d_absolute = 2",
+			"canvas3d_row = 3",
+			"canvas3d_column = 4",
+			"canvas3d_absolute = 5",
+			"text_window = 6",
+			"dropdown_window = 7",
+			"spinner_window = 8",
+			"hscroll_window = 9",
+			"vscroll_window = 10",
+			"space = 11",
+			"row = 12",
+			"column = 13",
+			"absolute = 14",
+			"label = 15",
+			"create = 16",
+			"select = 17",
+			"select_cell = 18",
+			"navigate = 19",
+			"text = 20",
+			"set = 21"
 		};
 
 		struct page_item_identifier_x
@@ -166,20 +175,7 @@ namespace corona
 			page_item_identifier get_identifier()
 			{
 				page_item_identifier_x pii { null_row, null_row };
-				if ((layout == layout_types::field) ||
-					(layout == layout_types::set) ||
-					(layout == layout_types::label) ||
-					(layout == layout_types::create)) {
-					pii.layout = (int)layout;
-					pii.object_id = object_path.object.row_id;
-					pii.class_id = class_id;
-					pii.item_uid = item_uid;
-					if (field != nullptr) 
-					{
-						pii.field_id = field->field_id;
-					}
-				}
-				else if ((layout == layout_types::canvas2d_row) ||
+				if ((layout == layout_types::canvas2d_row) ||
 					(layout == layout_types::canvas2d_column) ||
 					(layout == layout_types::canvas2d_absolute) ||
 					(layout == layout_types::canvas3d_row) ||
@@ -191,6 +187,17 @@ namespace corona
 					pii.class_id = 0;
 					pii.field_id = 0;
 					pii.item_uid = item_uid;
+				}
+				else 
+				{
+					pii.layout = (int)layout;
+					pii.object_id = object_path.object.row_id;
+					pii.class_id = class_id;
+					pii.item_uid = item_uid;
+					if (field != nullptr)
+					{
+						pii.field_id = field->field_id;
+					}
 				}
 				page_item_identifier c = 17;
 				c = c * 23 + pii.item_uid;

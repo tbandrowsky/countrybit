@@ -74,11 +74,13 @@ namespace proposal
 		pcr.member_fields = { schema.get_primary_key(idc_home), schema.idf_name, schema.idf_search_string, schema.idf_style_id };
 		idc_coverage_root = schema.put_class(pcr);
 
+		idf_pet_name = schema.put_string_field({ {  jtype::type_string, "pet_name", "Pet Name" }, { 25, "", "", } });
+
 		pcr.class_name = "coverage";
 		pcr.class_description = "Coverage";
 		pcr.auto_primary_key = true;
 		pcr.create_prompt = "Add Coverage";
-		pcr.member_fields = { schema.get_primary_key(idc_coverage_root), schema.idf_name };
+		pcr.member_fields = { schema.get_primary_key(idc_coverage_root), schema.idf_name, idf_pet_name };
 		idc_coverage = schema.put_class(pcr);
 
 		/* This is the client root class. Objects of the class have a layout and accept the client home id as a relation.  There is also
@@ -98,6 +100,7 @@ namespace proposal
 
 		pcr.class_name = "program";
 		pcr.class_description = "Program";
+		pcr.create_prompt = "Add Program";
 		pcr.auto_primary_key = true;
 		pcr.member_fields = { schema.get_primary_key(idc_client), schema.idf_name };
 		idc_program = schema.put_class(pcr);
@@ -336,9 +339,8 @@ namespace proposal
 		const char* _title = application_title;
 		const char* _subtitle = application_author;
 
-		auto page_column = column(nullptr, schema.idf_view_background_style, { 0.0_px, 0.0_px, 1.0_container, 1.0_container });
-
-		auto title_bar = canvas2d_absolute(id_canvas_header, page_column, null_row, { 0.0_px, 0.0_px, 1.0_container, 45.0_px });
+		auto page_column = canvas2d_column(id_canvas_main, nullptr, schema.idf_view_style, { 0.0_px, 0.0_px, 1.0_container, 1.0_container });
+		auto title_bar = absolute(page_column, null_row, { 0.0_px, 0.0_px, 1.0_container, 45.0_px });
 		auto title_text_bar = row(title_bar, null_row, { 0.0_px, 0.0_px, 1.0_container, 45.0_px }, 0.0_px, visual_alignment::align_near);
 		auto navigation_bar = row(title_bar, null_row, { 0.0_px, 0.0_px, 1.0_container, 45.0_px }, 0.0_px, visual_alignment::align_far);
 
@@ -350,7 +352,7 @@ namespace proposal
 		form_contents->caption = pg.copy("contents form");
 		_contents(navigation_bar, form_contents);
 
-		auto footer_bar = canvas2d_row(id_canvas_footer, page_column, null_row, { 0.0_px, 0.0_px, 1.0_remaining, 30.0_px });
+		auto footer_bar = row(page_column, null_row, { 0.0_px, 0.0_px, 1.0_remaining, 30.0_px });
 		text(footer_bar, schema.idf_artist_title_style, _subtitle);
 	}
 
@@ -427,21 +429,18 @@ namespace proposal
 			{ "Client Search", schema.idf_search_string, 0 },
 		};
 
-		search_form(_navigation, _contents, id_canvas_program_search_title, id_canvas_root_search_table, idc_client_root, grid_options, search_options);
+		search_form(_navigation, _contents, id_canvas_title, id_canvas_table, idc_client_root, grid_options, search_options);
 
 	}
 
 	void wsproposal_controller::render_client_contents(page_item* _navigation, page_item* _contents)
 	{
+		auto client_id = state.get_selected(idc_client);
+		auto client_obj = state.get_object(client_id);
+
 		auto edit_body = row(_contents, null_row, { 0.0_px,0.0_px,1.0_remaining,1.0_remaining }, 0.0_px, visual_alignment::align_center);
-
-			auto control = column(edit_body, schema.idf_view_background_style, { 0.0_remaining, 0.0_px, 0.300_remaining, 1.0_remaining });
-				auto client_id = state.get_selected(idc_client);
-
-					auto client_obj = state.get_object(client_id);
-
+			auto control = column(edit_body, schema.idf_view_background_style, { 0.0_px, 0.0_px, 0.400_container, 1.0_container });
 					edit_options options;
-
 					options.form_title = "Client Details - ";
 					options.form_title += client_obj.get(schema.idf_name);
 					options.fields = {
@@ -451,8 +450,26 @@ namespace proposal
 						{ "State", schema.idf_state, 0 },
 						{ "Postal", schema.idf_postal, 0 },
 					};
+					edit_form(_navigation, edit_body, id_canvas_title, client_id, options);
 
-					edit_form(_navigation, edit_body, client_id, options);
+				auto program = column(edit_body, schema.idf_view_background_style, { 0.0_px, 0.0_px, 0.600_container, 1.0_container });
+					table_options grid_options;
+					grid_options.alternating_row = true;
+					grid_options.data = &vq_program;
+					grid_options.header_height = 1.2_fontgr;
+					grid_options.row_height = 1.2_fontgr;
+					grid_options.columns = {
+						{ "Name", "", 150.0, schema.idf_name },
+					};
+
+					edit_options program_search_options;
+
+					program_search_options.form_title = "Programs";
+					program_search_options.fields = {
+						{ "Program Search", schema.idf_search_string, 0 },
+					};
+					search_form(_navigation, program, id_canvas_title2, id_canvas_table2, idc_client, grid_options, program_search_options);
+
 
 	}
 
@@ -474,7 +491,7 @@ namespace proposal
 			{ "Coverage Search", schema.idf_search_string, 0 },
 		};
 
-		search_form(_navigation, _contents, id_canvas_program_search_title, id_canvas_root_search_table, idc_coverage_root, grid_options, search_options);
+		search_form(_navigation, _contents, id_canvas_title, id_canvas_table, idc_coverage_root, grid_options, search_options);
 	}
 
 	void wsproposal_controller::render_program_contents(page_item* _navigation, page_item* _contents)
@@ -500,9 +517,10 @@ namespace proposal
 			options.form_title += coverage_obj.get(schema.idf_name);
 			options.fields = {
 				{ "Name", schema.idf_name, 0 },
+				{ "Pet Name", idf_pet_name, 0 },
 			};
 
-			edit_form(_navigation, edit_body, coverage_id, options);
+			edit_form(_navigation, edit_body, id_canvas_title, coverage_id, options);
 	}
 
 	void wsproposal_controller::render_carrier_root_contents(page_item* _navigation, page_item* _contents)
@@ -527,7 +545,7 @@ namespace proposal
 			{ "Carrier Search", schema.idf_search_string, 0 },
 		};
 
-		search_form(_navigation, _contents, id_canvas_program_search_title, id_canvas_root_search_table, idc_carrier_root, grid_options, search_options);
+		search_form(_navigation, _contents, id_canvas_title, id_canvas_table, idc_carrier_root, grid_options, search_options);
 	}
 
 	void wsproposal_controller::render_carrier_contents(page_item* _navigation, page_item* _contents)
@@ -546,7 +564,7 @@ namespace proposal
 			{ "Name", schema.idf_name, 0 },
 		};
 
-		edit_form(_navigation, edit_body, carrier_id, options);
+		edit_form(_navigation, edit_body, id_canvas_title, carrier_id, options);
 	}
 
 	void wsproposal_controller::render(const rectangle& newSize)
@@ -722,9 +740,12 @@ namespace proposal
 			}
 			);
 
-		style_sheet.set(
-			schema.idf_view_style,
-			{ schema.idf_column_number_head_style },
+		if (_index == style_normal)
+		{
+
+			style_sheet.set(
+				schema.idf_view_style,
+				{ schema.idf_column_number_head_style },
 			{
 				{ schema.idf_font_name, fontName },
 				{ schema.idf_font_size, 14.0 },
@@ -744,38 +765,27 @@ namespace proposal
 			}
 			);
 
-		style_sheet.set(
-			schema.idf_column_number_head_style,
-			{ schema.idf_column_text_head_style },
+			style_sheet.set(
+				schema.idf_column_number_head_style,
+				{ schema.idf_column_text_head_style },
 			{
 				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
 				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
 			}
 			);
 
-		style_sheet.set(
-			schema.idf_column_number_head_style,
-			{ schema.idf_column_number_style },
+			style_sheet.set(
+				schema.idf_column_number_head_style,
+				{ schema.idf_column_number_style },
 			{
 				{ schema.idf_font_name, fontName },
 				{ schema.idf_font_size, 12.0 },
 			}
 			);
 
-		style_sheet.set(
-			schema.idf_view_style,
-			{ schema.idf_column_number_style },
-			{
-				{ schema.idf_font_name, fontName },
-				{ schema.idf_font_size, 12.0 },
-				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
-				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
-			}
-			);
-
-		style_sheet.set(
-			schema.idf_view_style,
-			{ schema.idf_column_text_style },
+			style_sheet.set(
+				schema.idf_view_style,
+				{ schema.idf_column_number_style },
 			{
 				{ schema.idf_font_name, fontName },
 				{ schema.idf_font_size, 12.0 },
@@ -784,9 +794,20 @@ namespace proposal
 			}
 			);
 
-		style_sheet.set(
-			schema.idf_view_style,
-			{ schema.idf_column_data_style },
+			style_sheet.set(
+				schema.idf_view_style,
+				{ schema.idf_column_text_style },
+			{
+				{ schema.idf_font_name, fontName },
+				{ schema.idf_font_size, 12.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+			}
+			);
+
+			style_sheet.set(
+				schema.idf_view_style,
+				{ schema.idf_column_data_style },
 			{
 				{ schema.idf_font_name, fontName },
 				{ schema.idf_font_size, 12.0 },
@@ -805,6 +826,102 @@ namespace proposal
 				{ schema.idf_box_border_color, "#dfdfdfFF" }
 			}
 			);
+		}
+		else 
+		{
+		
+			style_sheet.set(
+				schema.idf_view_style,
+				{ schema.idf_column_number_head_style },
+			{
+				{ schema.idf_font_name, fontName },
+				{ schema.idf_font_size, 14.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_far },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#FFFFFFFF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "#C0C0C0FF" },
+				{ schema.idf_box_border_thickness, 2 },
+				{ schema.idf_box_border_color, "#1F2A44FF" }
+			}
+			);
+
+			style_sheet.set(
+				schema.idf_view_style,
+				{ schema.idf_column_text_head_style },
+			{
+				{ schema.idf_font_name, fontName },
+				{ schema.idf_font_size, 14.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_box_fill_color, "#0C1933FF" },
+				{ schema.idf_box_border_thickness, 2 },
+				{ schema.idf_box_border_color, "#C0C0C0FF" }
+			}
+			);
+
+			style_sheet.set(
+				schema.idf_view_style,
+				{ schema.idf_column_number_style },
+			{
+				{ schema.idf_font_name, fontName },
+				{ schema.idf_font_size, 12.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_box_fill_color, "#ccccccFF" },
+				{ schema.idf_box_border_thickness, 1 },
+				{ schema.idf_box_border_color, "#dfdfdfFF" }
+			}
+			);
+
+			style_sheet.set(
+				schema.idf_view_style,
+				{ schema.idf_column_text_style },
+			{
+				{ schema.idf_font_name, fontName },
+				{ schema.idf_font_size, 12.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_box_fill_color, "#ccccccFF" },
+				{ schema.idf_box_border_thickness, 1 },
+				{ schema.idf_box_border_color, "#dfdfdfFF" }
+			}
+			);
+
+			style_sheet.set(
+				schema.idf_view_style,
+				{ schema.idf_column_data_style },
+			{
+				{ schema.idf_font_name, fontName },
+				{ schema.idf_font_size, 12.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#000000FF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "#ccccccFF" },
+				{ schema.idf_box_border_thickness, 1 },
+				{ schema.idf_box_border_color, "#dfdfdfFF" }
+			}
+			);
+
+		}
 
 		style_sheet.set(
 			schema.idf_view_style,

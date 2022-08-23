@@ -2636,8 +2636,6 @@ namespace corona
 
 						iy += 50.0;
 						counter++;
-
-						//winroot->drawView("client_style", temp.c_str(), dest2, "comment");
 					}
 
 					winroot->endDraw(failedDevice);
@@ -2852,9 +2850,6 @@ namespace corona
 			{
 				auto pi = piter.item;
 
-				if (pi.is_canvas_child())
-					continue;
-
 				if (pi.bounds.w < 1 || pi.bounds.h < 1)
 					continue;
 
@@ -2877,8 +2872,10 @@ namespace corona
 						windowControlMap.insert_or_assign(pid, wmi);
 					}
 					break;
+/*
 				case database::layout_types::label:
-					{	   
+					break;
+					{
 
 						auto styles = currentController->get_style_sheet(0);
 						auto schema = styles.get_schema();
@@ -2902,7 +2899,8 @@ namespace corona
 						created_something = createChildWindow(pid, WC_STATIC, pi.caption, WS_CHILD | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, font, pi);
 					}
 					break;
-				case database::layout_types::field:
+					*/
+				case database::layout_types::text_window:
 					{
 						database::istring<256> x;
 						auto slice = _collection.get_object(pi.object_path);
@@ -2957,7 +2955,7 @@ namespace corona
 						created_something = createChildWindow(pid, WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont, pi);
 					}
 					break;
-				case database::layout_types::set:
+/*				case database::layout_types::set:
 					created_something = createChildWindow(pid, WC_BUTTON, pi.caption, BS_PUSHBUTTON | BS_FLAT | WS_TABSTOP | WS_CHILD | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont, pi);
 					break;
 				case database::layout_types::create:
@@ -2975,6 +2973,7 @@ namespace corona
 					r.bottom = r.top + bx.h * 96.0 / dpi;
 					InvalidateRect(hwndRoot, &r, true);
 					}
+*/
 				}
 				if (created_something)
 					created_anything = true;

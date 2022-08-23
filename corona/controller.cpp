@@ -5,7 +5,7 @@
 
 #define TRACE_CONTROLLER 1
 #define TRACE_RENDER 0
-#define TRACE_LAYOUT 1
+#define TRACE_LAYOUT 0
 
 namespace corona
 {
@@ -207,7 +207,7 @@ namespace corona
 #if TRACE_CONTROLLER
 					state = this->user_collection.select_object(clicked_item.item.select_request, "selected via mouse click");
 #else
-					state = this->program_chart.select_object(clicked_item.item.select_request);
+					state = this->user_collection.select_object(clicked_item.item.select_request);
 #endif
 				}
 				else if (clicked_item.item.is_create())
@@ -215,7 +215,7 @@ namespace corona
 #if TRACE_CONTROLLER
 					state = this->user_collection.create_object(clicked_item.item.create_request, "created via mouse click");
 #else
-					state = this->program_chart.create_object(clicked_item.item.create_request);
+					state = this->user_collection.create_object(clicked_item.item.create_request);
 #endif
 				}
 				else if (clicked_item.item.is_set())
@@ -229,7 +229,7 @@ namespace corona
 #if TRACE_CONTROLLER
 					state = this->user_collection.update_object( uor, "updated via mouse click");
 #else
-					state = this->program_chart.update_object(uor);
+					state = this->user_collection.update_object(uor);
 #endif
 				}
 
@@ -484,7 +484,6 @@ namespace corona
 					if (!host) // this can be, the size of the window was too small so the host was never made.
 						return false;
 					host->beginDraw(adapter_blown_away);
-					host->clear(&backgroundColor);
 
 					auto location = item.bounds;
 					location.x = 0;
@@ -549,54 +548,7 @@ namespace corona
 
 			object_description od;
 
-			switch (_item.layout) 
-			{
-			case layout_types::absolute:
-				od = "absolute";
-				break;
-			case layout_types::canvas2d_row:
-				od = "canvas2d_row";
-				break;
-			case layout_types::canvas2d_column:
-				od = "canvas2d_column";
-				break;
-			case layout_types::canvas2d_absolute:
-				od = "canvas2d_absolute";
-				break;
-			case layout_types::column:
-				od = "column";
-				break;
-			case layout_types::row:
-				od = "row";
-				break;
-			case layout_types::create:
-				od = "create";
-				break;
-			case layout_types::field:
-				od = "field";
-				break;
-			case layout_types::label:
-				od = "label";
-				break;
-			case layout_types::navigate:
-				od = "navigate";
-				break;
-			case layout_types::select:
-				od = "select";
-				break;
-			case layout_types::select_cell:
-				od = "select_cell";
-				break;
-			case layout_types::space:
-				od = "space";
-				break;
-			case layout_types::text:
-				od = "text";
-				break;
-			case layout_types::set:
-				od = "set";
-				break;
-			}
+			od = layout_type_names[(int)_item.layout];
 
 			if (_item.style_id > null_row) {
 				od += "-";
@@ -705,7 +657,7 @@ namespace corona
 					page_item* control = pg.append();
 					control->id = pg.size();
 					control->parent_id = container->id;
-					control->layout = layout_types::field;
+					control->layout = layout_types::text_window;
 					control->field = &fld;
 					control->box = { 0.0_px, 0.0_px, 200.0_px, 1.0_fontgr };
 					control->slice = slice;
@@ -810,16 +762,21 @@ namespace corona
 			pg.arrange(width, height, _style_sheet, padding);
 		}
 
-		void corona_controller::edit_form(page_item* _navigation, page_item* _frame, const object_member_path& _omp, const edit_options& _fields)
+		void corona_controller::edit_form(page_item* _navigation, page_item* _frame, relative_ptr_type _title_uiid, const object_member_path& _omp, edit_options _fields)
 		{
-			edit_fields(_frame, _omp, field_layout::label_on_left, _fields);
-			space(_navigation, schema.idf_button_style, { 0.0_px, 0.0_px, 1.0_remaining, 64.0_px });
-			text(_navigation, schema.idf_label_style, "Create", { 0.0_px, 0.0_px, 1.0_remaining, 32.0_px });
-			space(_navigation, schema.idf_button_style, { 0.0_px, 0.0_px, 1.0_remaining, 64.0_px });
-			create_buttons(_navigation, schema.idf_button_style, { 0.0_px, 0.0_px, 1.0_remaining, 32.0_px });
+			auto form_area = row(_frame, null_row, { 0.0_px, 0.0_px, 1.0_remaining, 1.0_remaining }, 0.0_px, visual_alignment::align_center);
+			form_area->caption = pg.copy("edit_form");
+				auto center_area = column(form_area, schema.idf_panel_style, { 0.0_px, 0.0_px, 1.0_children, 1.0_remaining });
+				center_area->caption = pg.copy("center_block");
+					auto form_title = row(center_area, null_row, { 0.0_px, 0.0_px, 1.0_remaining, 1.0_children }, 0.0_px, visual_alignment::align_center);
+						form_title->caption = pg.copy("search_title");
+						text(form_title, schema.idf_view_section_style, _fields.form_title, { 0.0_px, 0.0_px, 1.0_remaining, 1.0_fontgr });
+						_fields.form_title = "";
+
+					edit_fields(center_area, _omp, field_layout::label_on_left, _fields);
 		}
 
-		void corona_controller::search_form(page_item* _navigation, page_item* _frame, relative_ptr_type _title_uiid, relative_ptr_type _table_uiid, relative_ptr_type _search_class_id, table_options& _options, edit_options& _search_options)
+		void corona_controller::search_form(page_item* _navigation, page_item* _frame, relative_ptr_type _title_uiid, relative_ptr_type _table_uiid, relative_ptr_type _search_class_id, table_options& _options, edit_options _search_options)
 		{
 
 			auto ss = get_style_sheet(0);
@@ -827,10 +784,10 @@ namespace corona
 			auto form_area = row(_frame, null_row, { 0.0_px, 0.0_px, 1.0_remaining, 1.0_remaining }, 0.0_px, visual_alignment::align_center);
 				form_area->caption = pg.copy("search_form");
 
-					auto center_area = column(form_area, null_row, { 0.0_px, 0.0_px, 1.0_children, 1.0_remaining });
+					auto center_area = column(form_area, schema.idf_panel_style, { 0.0_px, 0.0_px, 1.0_children, 1.0_remaining });
 					center_area->caption = pg.copy("center_block");
 
-						auto form_title = canvas2d_row(_title_uiid, center_area, null_row, { 0.0_px, 0.0_px, 1.0_remaining, 1.0_children }, 0.0_px, visual_alignment::align_center);
+						auto form_title = row(center_area, null_row, { 0.0_px, 0.0_px, 1.0_remaining, 1.0_children }, 0.0_px, visual_alignment::align_center);
 							form_title->caption = pg.copy("search_title");
 							text(form_title, schema.idf_view_section_style, _search_options.form_title, { 0.0_px, 0.0_px, 1.0_remaining, 1.0_fontgr });
 							_search_options.form_title = "";
@@ -849,7 +806,7 @@ namespace corona
 							auto form_search_table_container = column(form_search_container, null_row, { 0.0_px, 0.0_px, 1.0_children, 1.0_children }, 0.0_px);
 								form_search_table_container->caption = pg.copy("form_search_table_container");
 					
-								auto form_table = canvas2d_column(_table_uiid, form_search_table_container, schema.idf_view_background_style, { 0.0_px, 0.0_px, 1.0_children, 1.0_children });
+								auto form_table = column(form_search_table_container, null_row, { 0.0_px, 0.0_px, 1.0_children, 1.0_children });
 									form_table->caption = pg.copy("search_form_table"); 
 									table(form_table, _options);
 		}

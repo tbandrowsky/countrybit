@@ -192,6 +192,7 @@ namespace corona
 
 			page_item* row(page_item* _parent, relative_ptr_type _style_id, layout_rect _box = { 0.0_px, 0.0_px, 1.0_remaining, 1.0_remaining }, measure _item_space = { 0.0, measure_units::pixels }, visual_alignment _alignment = visual_alignment::align_near);
 			page_item* column(page_item* _parent, relative_ptr_type _style_id, layout_rect _box = { 0.0_px, 0.0_px, 1.0_remaining, 1.0_remaining }, measure _item_space = { 0.0, measure_units::pixels }, visual_alignment _alignment = visual_alignment::align_near);
+			page_item* hcenter(page_item* _parent, relative_ptr_type _style_id);
 			page_item* absolute(page_item* _parent, relative_ptr_type _style_id, layout_rect _box = { 0.0_px, 0.0_px, 1.0_remaining, 100.0_px });
 			page_item* space(page_item* _parent, relative_ptr_type _style_id, layout_rect _box = { 0.0_px, 0.0_px, 1.0_remaining, 100.0_px });
 			page_item* canvas2d_row(relative_ptr_type _canvas_uid, page_item* _parent, relative_ptr_type _style_id, layout_rect _box = { 0.0_px, 0.0_px, 1.0_remaining, 100.0_px }, measure _item_space = { 0.0, measure_units::pixels }, visual_alignment _alignment = visual_alignment::align_near);
@@ -206,8 +207,8 @@ namespace corona
 			virtual page_item *edit_fields(page_item* _parent, const object_member_path& _omp, field_layout _layout, const edit_options& _fields);
 			virtual page_item* create_buttons(page_item* _parent, relative_ptr_type _style_id, layout_rect _box = { 0.0_px, 0.0_px, 250.0_px, 2.0_fontgr });
 			virtual page_item* selectable_items(page_item* _parent, view_query& _vq, relative_ptr_type _style_id, layout_rect _box = { 0.0_px, 0.0_px, 250.0_px, 2.0_fontgr });
-			virtual void edit_form(page_item* _navigation, page_item* _frame, const object_member_path& _omp, const edit_options& _fields);
-			virtual void search_form(page_item* _navigation, page_item* _frame, relative_ptr_type _title_uiid, relative_ptr_type _table_uiid, relative_ptr_type _search_class_id, table_options& _options, edit_options& _search_options);
+			virtual void edit_form(page_item* _navigation, page_item* _frame, relative_ptr_type _title_uiid, const object_member_path& _omp, edit_options _fields);
+			virtual void search_form(page_item* _navigation, page_item* _frame, relative_ptr_type _title_uiid, relative_ptr_type _table_uiid, relative_ptr_type _search_class_id, table_options& _options, edit_options _search_options);
 
 			void table(page_item* _parent, table_options& _options);
 
