@@ -1,5 +1,14 @@
 #pragma once
 
+//#define TRACE_GUI 1
+//#define OUTLINE_GUI 1
+//#define TRACE_SIZE 1
+//#define TRACE_RENDER 1
+
+#if TRACE_GUI
+#define OUTLINE_GUI 1
+#endif
+
 namespace corona
 {
 	namespace win32 

@@ -18,110 +18,67 @@ namespace corona
 			data.init(1 << 20);
 		}
 
-		page_item* page::row(page_item* _parent, relative_ptr_type _style_id, layout_rect _box, measure _item_space, visual_alignment _alignment)
+		page_item* page::append(page_item* _parent, layout_types _layout, relative_ptr_type _style_id, layout_rect _box, measure _item_space, visual_alignment _alignment)
 		{
-			page_item* v = append();
-			v->id = size();
+			page_item* v = page_base_type::append();
+			v->id = page_base_type::get_index(v);
 			v->set_parent(_parent);
-			v->layout = layout_types::row;
-			v->box = _box;
+			v->layout = _layout;
 			v->style_id = _style_id;
+			v->box = _box;
 			v->item_space = _item_space;
 			v->alignment = _alignment;
 			return v;
+		}
+
+		page_item* page::row(page_item* _parent, relative_ptr_type _style_id, layout_rect _box, measure _item_space, visual_alignment _alignment)
+		{
+			return append(_parent, layout_types::row, _style_id, _box, _item_space, _alignment);
 		}
 
 		page_item* page::column(page_item* _parent, relative_ptr_type _style_id, layout_rect _box, measure _item_space, visual_alignment _alignment)
 		{
-			page_item* v = append();
-			v->id = size();
-			v->set_parent(_parent);
-			v->layout = layout_types::column;
-			v->box = _box;
-			v->style_id = _style_id;
-			v->item_space = _item_space;
-			v->alignment = _alignment;
-			return v;
+			return append(_parent, layout_types::column, _style_id, _box, _item_space, _alignment);
 		}
 
 		page_item* page::absolute(page_item* _parent, relative_ptr_type _style_id, layout_rect _box, visual_alignment _alignment)
 		{
-			page_item* v = append();
-			v->id = size();
-			v->set_parent(_parent);
-			v->layout = layout_types::absolute;
-			v->box = _box;
-			v->style_id = _style_id;
-			v->alignment = _alignment;
-			return v;
+			return append(_parent, layout_types::absolute, _style_id, _box, 0.0_px, _alignment);
 		}
 
 		page_item* page::canvas2d_row(relative_ptr_type _item_uid, page_item* _parent, relative_ptr_type _style_id, layout_rect _box, measure _item_space, visual_alignment _alignment)
 		{
-			page_item* v = append();
-			v->id = size();
-			v->set_parent(_parent);
-			v->layout = layout_types::canvas2d_row;
-			v->box = _box;
+			page_item* v = append(_parent, layout_types::canvas2d_row, _style_id, _box, _item_space, _alignment);
 			v->canvas_id = v->id;
-			v->style_id = _style_id;
 			v->item_uid = _item_uid;
-			v->alignment = _alignment;
-			v->item_space = _item_space;
 			return v;
-
 		}
 
 		page_item* page::canvas2d_column(relative_ptr_type _item_uid, page_item* _parent, relative_ptr_type _style_id, layout_rect _box, measure _item_space, visual_alignment _alignment)
 		{
-			page_item* v = append();
-			v->id = size();
-			v->set_parent(_parent);
-			v->layout = layout_types::canvas2d_column;
-			v->box = _box;
+			page_item* v = append(_parent, layout_types::canvas2d_column, _style_id, _box, _item_space, _alignment);
 			v->canvas_id = v->id;
-			v->style_id = _style_id;
 			v->item_uid = _item_uid;
-			v->alignment = _alignment;
-			v->item_space = _item_space;
 			return v;
-
 		}
 
 		page_item* page::canvas2d_absolute(relative_ptr_type _item_uid, page_item* _parent, relative_ptr_type _style_id, layout_rect _box, measure _item_space, visual_alignment _alignment)
 		{
-			page_item* v = append();
-			v->id = size();
-			v->set_parent(_parent);
-			v->layout = layout_types::canvas2d_absolute;
-			v->box = _box;
+			page_item* v = append(_parent, layout_types::canvas2d_absolute, _style_id, _box, _item_space, _alignment);
 			v->canvas_id = v->id;
-			v->style_id = _style_id;
 			v->item_uid = _item_uid;
-			v->alignment = _alignment;
-			v->item_space = _item_space;
 			return v;
 		}
 
 		page_item* page::space(page_item* _parent, relative_ptr_type _style_id, layout_rect _box)
 		{
-			page_item* v = append();
-			v->id = size();
-			v->set_parent(_parent);
-			v->layout = layout_types::space;
-			v->box = _box;
-			v->style_id = _style_id;
+			page_item* v = append(_parent, layout_types::space, _style_id, _box, 0.0_px, visual_alignment::align_near);
 			return v;
 		}
 
 		page_item* page::text(page_item* _parent, relative_ptr_type _style_id, const char* _text, layout_rect _box)
 		{
-			page_item* v = append();
-			v->id = size();
-			v->set_parent(_parent);
-			v->layout = layout_types::text;
-			v->box = _box;
-			v->style_id = _style_id;
+			page_item* v = append(_parent, layout_types::text, _style_id, _box, 0.0_px, visual_alignment::align_near);
 			if (_text)
 				v->caption = data.copy(_text, 0);
 			return v;
@@ -129,50 +86,36 @@ namespace corona
 
 		page_item* page::set(page_item* _parent, actor_state* _state, object_member_path path, int field_id, dynamic_value dv, layout_rect _box)
 		{
-			page_item* v = append();
-			v->id = size();
-			v->layout = layout_types::set;
-			v->set_parent(_parent);
+			page_item* v = append(_parent, layout_types::set, null_row, _box, 0.0_px, visual_alignment::align_near);
 			v->object_path = path;
-			v->box = _box;
 			v->dest_value = dv;
 			return v;
 		}
 
-		page_item* page::select(page_item* _parent, actor_state* _state, int object_id, relative_ptr_type id_name, jobject slice, relative_ptr_type _style_id, layout_rect box)
+		page_item* page::select(page_item* _parent, actor_state* _state, int object_id, relative_ptr_type id_name, jobject slice, relative_ptr_type _style_id, layout_rect _box)
 		{
-			page_item* v = append();
-			v->id = size();
-			v->set_parent(_parent);
-			v->layout = layout_types::select;
+			page_item* v = append(_parent, layout_types::select, _style_id, _box, 0.0_px, visual_alignment::align_near);
 			v->slice = slice;
 			v->object_path.object.row_id = object_id;
-			v->box = box;
 			v->select_request = _state->create_select_request(v->object_path.object.row_id, false);
 			v->caption = data.copy(slice.get_name(id_name), 0);
 			v->slice = slice;
-			v->style_id = _style_id;
 			v->class_id = slice.get_class_id();
 
 			if (slice.has_field("layout_rect"))
 			{
 				auto rf = slice.get_layout_rect("layout_rect");
 				v->box = rf;
-				return v;
 			}
+			return v;
 		}
 
 		page_item* page::select_cell(page_item* _parent, actor_state* _state, int object_id, jobject slice, const char *_caption, relative_ptr_type _style_id, layout_rect _box)
 		{
-			page_item* v = append();
-			v->id = size();
-			v->set_parent(_parent);
-			v->layout = layout_types::select_cell;
+			page_item* v = append(_parent, layout_types::select_cell, _style_id, _box, 0.0_px, visual_alignment::align_near);
 			v->slice = slice;
 			v->object_path.object.row_id = object_id;
 			v->class_id = slice.get_class_id();
-			v->box = _box;
-			v->style_id = _style_id;
 			v->select_request = _state->create_select_request(object_id, false);
 			v->caption = data.copy(_caption, 0);
 			return v;
@@ -180,30 +123,19 @@ namespace corona
 
 		page_item* page::navigate(page_item* _parent, actor_state* _state, int object_id, relative_ptr_type _style_id, const char* _caption, layout_rect _box )
 		{
-			page_item* v = append();
-			v->id = size();
-			v->set_parent(_parent);
-			v->layout = layout_types::navigate;
+			page_item* v = append(_parent, layout_types::navigate, _style_id, _box, 0.0_px, visual_alignment::align_near);
 			v->object_path.object.row_id = object_id;
-			v->box = _box;
 			v->select_request = _state->create_select_request(object_id, false);
-			v->style_id = _style_id;
-			if (_caption) {
-				v->caption = data.copy(_caption,0);
-			}
+			v->caption = data.copy(_caption, 0);
 			return v;
 		}
-
 
 		void page::visit_impl(page_item *r, std::function<bool(page_item* _item)> fn, std::function<bool(page_item* _parent)> fout)
 		{
 			fn(r);
-			auto children = where([r](const auto& it) {
-				return it.item.parent_id == r->id;
-				});
-			for (auto child : children)
+			for (auto child = r->get_first_child(); child != nullptr; child = child->get_next())
 			{
-				visit_impl(&child.item, fn, fout);
+				visit_impl(child, fn, fout);
 			}
 			fout(r);
 		}
@@ -275,9 +207,9 @@ namespace corona
 			}
 		}
 
-		void page::size_constants(jobject& _style_sheet, page_item_children children, layout_context _ctx)
+		void page::size_constants(jobject& _style_sheet, page_item *_item, layout_context _ctx)
 		{
-			for (auto child : children)
+			for (auto child = _item->get_first_child(); child != nullptr; child = child->get_next())
 			{
 				size_constant(_style_sheet, child, _ctx);
 			}
@@ -312,21 +244,21 @@ namespace corona
 			size_aspect_widths(_style_sheet, _item, _ctx, 0);
 		}
 
-		void page::size_aspects(jobject& _style_sheet, page_item_children children, layout_context _ctx)
+		void page::size_aspects(jobject& _style_sheet, page_item *_item, layout_context _ctx)
 		{
-			for (auto child : children)
+			for (auto child = _item->get_first_child(); child != nullptr; child = child->get_next())
 			{
 				size_aspects(_style_sheet, child, _ctx);
 			}
 		}
 
-		layout_context page::get_remaining(jobject& _style_sheet, page_item* _pi, page_item_children children, layout_context _ctx)
+		layout_context page::get_remaining(jobject& _style_sheet, page_item* _pi, layout_context _ctx)
 		{
 			point pt = { 0.0, 0.0, 0.0 };
 
 			if (_pi->layout == layout_types::canvas2d_column || _pi->layout == layout_types::column || _pi->layout == layout_types::canvas3d_column)
 			{
-				for (auto child : children)
+				for (auto child = _pi->get_first_child(); child != nullptr; child = child->get_next())
 				{
 					if (child->box.height.units != measure_units::percent_remaining)
 					{
@@ -336,7 +268,7 @@ namespace corona
 			}
 			else if (_pi->layout == layout_types::canvas2d_row || _pi->layout == layout_types::row || _pi->layout == layout_types::canvas3d_row)
 			{
-				for (auto child : children)
+				for (auto child = _pi->get_first_child(); child != nullptr; child = child->get_next())
 				{
 					if (child->box.width.units != measure_units::percent_remaining)
 					{
@@ -361,15 +293,16 @@ namespace corona
 			}
 		}
 
-		void page::size_remainings(jobject& _style_sheet, page_item* _pi, page_item_children children, layout_context _ctx)
+		void page::size_remainings(jobject& _style_sheet, page_item* _pi, layout_context _ctx)
 		{
-			_ctx = get_remaining(_style_sheet, _pi, children, _ctx);
-			for (auto child : children) {
+			_ctx = get_remaining(_style_sheet, _pi, _ctx);
+			for (auto child = _pi->get_first_child(); child != nullptr; child = child->get_next())
+			{
 				size_remaining(_style_sheet, child, _ctx);
 			}
 		}
 
-		void page::size_children(jobject& _style_sheet, page_item* _pi, page_item_children children, layout_context _ctx)
+		void page::size_children(jobject& _style_sheet, page_item* _pi, layout_context _ctx)
 		{
 			bool sheight = _pi->box.height.units == measure_units::percent_child;
 			bool swidth = _pi->box.width.units == measure_units::percent_child;
@@ -378,7 +311,7 @@ namespace corona
 				point sizes = { 0.0, 0.0 };
 				if (_pi->layout == layout_types::canvas2d_column || _pi->layout == layout_types::canvas3d_column || _pi->layout == layout_types::column)
 				{
-					for (auto child : children)
+					for (auto child = _pi->get_first_child(); child != nullptr; child = child->get_next())
 					{
 						auto ew = child->bounds.w + child->bounds.x - _pi->bounds.x;
 						if (ew > sizes.x)
@@ -390,7 +323,7 @@ namespace corona
 				}
 				else if (_pi->layout == layout_types::canvas2d_row || _pi->layout == layout_types::canvas3d_row || _pi->layout == layout_types::row)
 				{
-					for (auto child : children)
+					for (auto child = _pi->get_first_child(); child != nullptr; child = child->get_next())
 					{
 						auto eh = child->bounds.h + child->bounds.y - _pi->bounds.y;
 						if (child->bounds.h > sizes.y)
@@ -402,7 +335,7 @@ namespace corona
 				}
 				else 
 				{
-					for (auto child : children)
+					for (auto child = _pi->get_first_child(); child != nullptr; child = child->get_next())
 					{
 						auto ew = child->bounds.w + child->bounds.x - _pi->bounds.x;
 						if (ew > sizes.x)
@@ -426,7 +359,7 @@ namespace corona
 					_pi->bounds.w = sizes.x * _pi->box.width.amount;
 				}
 			}
-			size_remainings(_style_sheet, _pi, children, _ctx);
+			size_remainings(_style_sheet, _pi, _ctx);
 		}
 
 		void page::size_item(jobject& _style_sheet, page_item* _pi, layout_context _ctx)
@@ -436,11 +369,11 @@ namespace corona
 			size_remaining(_style_sheet, _pi, _ctx);
 		}
 
-		void page::size_items(jobject& _style_sheet, page_item* _pi, page_item_children children, layout_context _ctx)
+		void page::size_items(jobject& _style_sheet, page_item* _pi, layout_context _ctx)
 		{
-			size_constants(_style_sheet, children, _ctx);
-			size_aspects(_style_sheet, children, _ctx);
-			size_remainings(_style_sheet, _pi, children, _ctx);
+			size_constants(_style_sheet, _pi, _ctx);
+			size_aspects(_style_sheet, _pi, _ctx);
+			size_remainings(_style_sheet, _pi, _ctx);
 		}
 
 		void page::position(jobject& _style_sheet, page_item* _item, layout_context _ctx)
@@ -519,7 +452,7 @@ namespace corona
 			}
 		}
 
-		void page::position(jobject& _style_sheet, page_item* _item, page_item_children children, layout_context _ctx)
+		void page::position(jobject& _style_sheet, page_item* _item, layout_context _ctx)
 		{			
 			visual_alignment _alignment = _item->alignment;
 			layout_types _layout = _item->layout;
@@ -531,7 +464,7 @@ namespace corona
 					_ctx.flow_origin.x = 0;
 					_ctx.flow_origin.y = 0;
 
-					for (auto child : children)
+					for (auto child = _item->get_first_child(); child != nullptr; child = child->get_next())
 					{
 						position(_style_sheet, child, _ctx);
 						layout(_style_sheet, child, _ctx);
@@ -544,7 +477,7 @@ namespace corona
 					_ctx.flow_origin.x = _ctx.container_size.x;
 					_ctx.flow_origin.y = 0;
 
-					for (auto child : children)
+					for (auto child = _item->get_first_child(); child != nullptr; child = child->get_next())
 					{
 						_ctx.flow_origin.x -= (child->bounds.w);
 						position(_style_sheet, child, _ctx);
@@ -556,7 +489,7 @@ namespace corona
 				{
 					double w = 0.0;
 
-					for (auto child : children)
+					for (auto child = _item->get_first_child(); child != nullptr; child = child->get_next())
 					{
 						position(_style_sheet, child, _ctx);
 						layout(_style_sheet, child, _ctx);
@@ -566,7 +499,7 @@ namespace corona
 					_ctx.flow_origin.x = (_ctx.container_size.x - w) / 2;
 					_ctx.flow_origin.y = 0;
 
-					for (auto child : children)
+					for (auto child = _item->get_first_child(); child != nullptr; child = child->get_next())
 					{
 						position(_style_sheet, child, _ctx);
 						layout(_style_sheet, child, _ctx);
@@ -582,7 +515,7 @@ namespace corona
 					_ctx.flow_origin.x = 0;
 					_ctx.flow_origin.y = 0;
 
-					for (auto child : children)
+					for (auto child = _item->get_first_child(); child != nullptr; child = child->get_next())
 					{
 						position(_style_sheet, child, _ctx);
 						layout(_style_sheet, child, _ctx);
@@ -595,7 +528,7 @@ namespace corona
 					_ctx.flow_origin.x = 0;
 					_ctx.flow_origin.y = _ctx.container_size.y;
 
-					for (auto child : children)
+					for (auto child = _item->get_first_child(); child != nullptr; child = child->get_next())
 					{
 						_ctx.flow_origin.y -= (child->bounds.h);
 						position(_style_sheet, child, _ctx);
@@ -607,7 +540,7 @@ namespace corona
 				{
 					double h = 0;
 
-					for (auto child : children)
+					for (auto child = _item->get_first_child(); child != nullptr; child = child->get_next())
 					{
 						position(_style_sheet, child, _ctx);
 						layout(_style_sheet, child, _ctx);
@@ -617,7 +550,7 @@ namespace corona
 					_ctx.flow_origin.x = 0;
 					_ctx.flow_origin.y = (_ctx.container_size.y - h) / 2;
 
-					for (auto child : children)
+					for (auto child = _item->get_first_child(); child != nullptr; child = child->get_next())
 					{
 						position(_style_sheet, child, _ctx);
 						layout(_style_sheet, child, _ctx);
@@ -631,19 +564,19 @@ namespace corona
 				_ctx.flow_origin.x = 0;
 				_ctx.flow_origin.y = 0;
 
-				for (auto child : children)
+				for (auto child = _item->get_first_child(); child != nullptr; child = child->get_next())
 				{
 					position(_style_sheet, child, _ctx);
 					layout(_style_sheet, child, _ctx);
 				}
 			}
 
-			size_children(_style_sheet, _item, children, _ctx);
+			size_children(_style_sheet, _item, _ctx);
 		}
 
-		void page::styles(jobject& _style_sheet, int style_id, page_item_children children)
+		void page::styles(jobject& _style_sheet, int style_id, page_item *_item)
 		{
-			for (auto child : children)
+			for (auto child = _item->get_first_child(); child != nullptr; child = child->get_next())
 			{
 				if (child->style_id <= 0) {
 					child->style_id = style_id;
@@ -667,9 +600,9 @@ namespace corona
 			_ctx.flow_origin.x = 0;
 			_ctx.flow_origin.y = 0;
 
-			styles(_style_sheet, _item->style_id, children);
-			size_items(_style_sheet, _item, children, _ctx);
-			position(_style_sheet, _item, children, _ctx);
+			styles(_style_sheet, _item->style_id, _item);
+			size_items(_style_sheet, _item, _ctx);
+			position(_style_sheet, _item, _ctx);
 
 			return _item->bounds;
 		}

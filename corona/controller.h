@@ -217,7 +217,7 @@ namespace corona
 			// end of render methods
 
 			virtual void render(const rectangle& newSize) = 0;
-			virtual void render_item(drawableHost *_host, page_item& _item);
+			virtual void render_item(drawableHost *_host, page_item* _item);
 
 			virtual bool drawFrame();
 			virtual bool drawCanvas(int _id);

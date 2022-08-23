@@ -79,6 +79,11 @@ namespace corona
 				return length;
 			}
 
+			int get_index(item_type* _item)
+			{
+				return _item - data;
+			}
+
 			const item_type& operator[](corona_size_t idx) const
 			{
 				return data[idx];

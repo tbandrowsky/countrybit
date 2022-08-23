@@ -5,14 +5,6 @@
 
 #ifdef WINDESKTOP_GUI
 
-//#define TRACE_GUI 1
-//#define OUTLINE_GUI 1
-//#define TRACE_SIZE 1
-//#define TRACE_RENDER 1
-
-#if TRACE_GUI
-#define OUTLINE_GUI 1
-#endif
 
 namespace corona
 {
@@ -2872,34 +2864,6 @@ namespace corona
 						windowControlMap.insert_or_assign(pid, wmi);
 					}
 					break;
-/*
-				case database::layout_types::label:
-					break;
-					{
-
-						auto styles = currentController->get_style_sheet(0);
-						auto schema = styles.get_schema();
-						HFONT font;
-						if (pi.style_id == schema->idf_view_subtitle_style)
-						{
-							font = this->titleFont;
-						}
-						else if (pi.style_id == schema->idf_label_style)
-						{
-							font = this->labelFont;
-						}
-						else if (pi.style_id == schema->idf_control_style)
-						{
-							font = this->controlFont;
-						}
-						else
-						{
-							font = this->controlFont;
-						}
-						created_something = createChildWindow(pid, WC_STATIC, pi.caption, WS_CHILD | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, font, pi);
-					}
-					break;
-					*/
 				case database::layout_types::text_window:
 					{
 						database::istring<256> x;

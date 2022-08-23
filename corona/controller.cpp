@@ -502,7 +502,7 @@ namespace corona
 #if TRACE_RENDER
 								std::cout << ".. render item!!" << _in_page->id << " " << std::endl;
 #endif
-								render_item(host, *_in_page);
+								render_item(host, _in_page);
 							}
 							return true;
 						},
@@ -536,53 +536,69 @@ namespace corona
 			return true;
 		}
 
-		void corona_controller::render_item(drawableHost* _host, page_item& _item)
+		void corona_controller::render_item(drawableHost* _host, page_item* _item)
 		{
-			const char* cap = _item.caption != nullptr ? _item.caption : "";
-			const char* style_name = style_id(_item.style_id);
+			const char* cap = _item->caption != nullptr ? _item->caption : "";
+			const char* style_name = style_id(_item->style_id);
+
+/*
+			if (_item->style_id == schema.idf_label_style)
+			{
+				DebugBreak();
+			}
+*/
+
 			const char *sty = style_name != nullptr ? style_name : "(default style)";
 
 			if (!style_name) {
 				return;
 			}
 
+#ifdef OUTLINE_GUI
+
 			object_description od;
 
-			od = layout_type_names[(int)_item.layout];
+			od = layout_type_names[(int)_item->layout];
 
-			if (_item.style_id > null_row) {
+			if (_item->style_id > null_row) {
 				od += "-";
 				od += sty;
 			}
 			
-			if (_item.object_path.object.row_id > null_row && !_item.slice.is_null()) {
+			if (_item->object_path.object.row_id > null_row && !_item->slice.is_null()) {
 				od += "-";
-				od += _item.slice.get_class().item().name;
+				od += _item->slice.get_class().item().name;
 			}
 
-			auto effective_bounds = _item.bounds;
+#endif
 
-			if (_item.canvas_id > -1)
+			auto effective_bounds = _item->bounds;
+
+			if (_item->canvas_id > -1)
 			{
-				auto container = pg[_item.canvas_id];
+				auto container = pg[_item->canvas_id];
 				effective_bounds.x -= container.bounds.x;
 				effective_bounds.y -= container.bounds.y;
 			}
 
 			int state;
 
-			if (_item.selected)
+			if (_item->selected)
 			{
 				state = style_selected;
 			}
-			else if (_item.mouse_over)
+			else if (_item->mouse_over)
 			{
 				state = style_over;
 			}
 			else
 				state = style_normal;
 
+#ifdef OUTLINE_GUI
 			_host->drawView(style_name, cap, effective_bounds, state, od.c_str());
+#else
+			_host->drawView(style_name, cap, effective_bounds, state, nullptr);
+#endif
 		}
 
 		page_item* corona_controller::edit_fields(page_item* _parent, const object_member_path& _omp, field_layout _layout, const edit_options& _fields)
@@ -592,11 +608,13 @@ namespace corona
 
 			if (_fields.form_title.size()>0)
 			{
-				label = pg.append();
-				label->id = pg.size();
-				label->parent_id = _parent->id;
-				label->layout = layout_types::label;
-				label->box = { 0.0_px, 0.0_px, 300.0_px, 1.0_fontgr };
+				label = pg.append(_parent, 
+					layout_types::label, 
+					slice.get_schema()->idf_view_subtitle_style,
+					{ 0.0_px, 0.0_px, 300.0_px, 1.0_fontgr },
+					0.0_px,
+					visual_alignment::align_near
+					);
 				label->slice = slice;
 				label->class_id = slice.get_class_id();
 				label->object_path = _omp;
@@ -642,42 +660,47 @@ namespace corona
 
 					jfield& fld = slice.get_field(field_idx);
 
-					label = pg.append();
-					label->id = pg.size();
-					label->parent_id = container->id;
-					label->layout = layout_types::label;
+					label = pg.append(_parent,
+						layout_types::label,
+						slice.get_schema()->idf_label_style,
+						{ 0.0_px, 0.0_px, 150.0_px, 1.0_fontgr },
+						0.0_px,
+						visual_alignment::align_near
+					);
+
 					label->field = &fld;
-					label->box = { 0.0_px, 0.0_px, 150.0_px, 1.0_fontgr };
 					label->slice = slice;
 					label->object_path = _omp;
-					label->style_id = slice.get_schema()->idf_label_style;
 					label->caption = pg.copy(field.label.size() > 0 ? field.label : fld.description);
 					label->class_id = slice.get_class_id();
 
-					page_item* control = pg.append();
-					control->id = pg.size();
-					control->parent_id = container->id;
-					control->layout = layout_types::text_window;
+					auto control = pg.append(_parent,
+						layout_types::text_window,
+						slice.get_schema()->idf_control_style,
+						{ 0.0_px, 0.0_px, 200.0_px, 1.0_fontgr },
+						0.0_px,
+						visual_alignment::align_near
+					);
+
 					control->field = &fld;
-					control->box = { 0.0_px, 0.0_px, 200.0_px, 1.0_fontgr };
 					control->slice = slice;
 					control->object_path = _omp;
 					control->class_id = slice.get_class_id();
-					control->style_id = slice.get_schema()->idf_control_style;
 				}
 				else 
 				{
-					label = pg.append();
-					label->id = pg.size();
-					label->parent_id = container->id;
-					label->layout = layout_types::text;
-					label->box = { 0.0_px, 0.0_px, 150.0_px, 1.0_fontgr };
+					label = pg.append(_parent,
+						layout_types::label,
+						slice.get_schema()->idf_label_style,
+						{ 0.0_px, 0.0_px, 150.0_px, 1.0_fontgr },
+						0.0_px,
+						visual_alignment::align_near
+					);
+
 					label->slice = slice;
 					label->object_path = _omp;
-					label->style_id = slice.get_schema()->idf_label_style;
 					label->caption = pg.copy(field.label.c_str());
 					label->class_id = slice.get_class_id();
-
 				}
 			}
 
@@ -688,11 +711,14 @@ namespace corona
 		{
 			for (auto aco : state.create_objects)
 			{
-				page_item* button = pg.append();
-				button->set_parent(_parent);
-				button->id = pg.size();
-				button->layout = layout_types::create;
-				button->box = _box;
+				auto button = pg.append(_parent,
+					layout_types::create,
+					_style_id,
+					_box,
+					0.0_px,
+					visual_alignment::align_near
+				);
+
 				button->class_id = aco.second.class_id;
 				button->field = nullptr;
 				button->create_request = state.create_create_request(aco.second.class_id);
@@ -710,10 +736,13 @@ namespace corona
 			auto vqo = state.get_view_query_avo(_vq);
 			for (const auto& st : vqo)
 			{
-				page_item* v = pg.append();
-				v->id = pg.size();
-				v->set_parent(_parent);
-				v->layout = layout_types::select;
+				auto v = pg.append(_parent,
+					layout_types::select,
+					_style_id,
+					_box,
+					0.0_px,
+					visual_alignment::align_near
+				);
 				v->slice = st.object;
 				v->object_path.object.row_id = st.object_id;
 				v->selected = st.selected;

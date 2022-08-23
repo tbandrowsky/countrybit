@@ -100,6 +100,11 @@ namespace corona
 			bool					pressed;
 			bool					selected;
 
+			int						first_child;
+			int						last_child;
+
+			int						next_item;
+
 			page_item() :
 				id(-1),
 				parent_id(-1),
@@ -113,10 +118,43 @@ namespace corona
 				item_uid(null_row),
 				mouse_over(false),
 				pressed(false),
-				selected(false)
+				selected(false),
+				first_child(-1),
+				last_child(-1),
+				next_item(-1)
 			{
 				object_path.object.collection_id = {};
 				object_path.object.row_id = null_row;
+			}
+
+			page_item* get_base()
+			{
+				return this - this->id;
+			}
+
+			page_item* get_parent()
+			{
+				return parent_id > -1 ? (get_base() + parent_id) : nullptr;
+			}
+
+			page_item* get_canvas()
+			{
+				return canvas_id > -1 ? (get_base() + canvas_id) : nullptr;
+			}
+
+			page_item* get_first_child()
+			{
+				return first_child > -1 ? (get_base() + first_child) : nullptr;
+			}
+
+			page_item* get_last_child()
+			{
+				return last_child > -1 ? (get_base() + last_child) : nullptr;
+			}
+
+			page_item* get_next()
+			{
+				return next_item > -1 ? (get_base() + next_item) : nullptr;
 			}
 
 			void set_parent(page_item* _parent)
@@ -125,8 +163,21 @@ namespace corona
 				{
 					parent_id = _parent->id;
 					canvas_id = _parent->canvas_id;
+					auto p = get_parent();
+					assert(p == _parent);
+					auto lc = p->get_last_child();
+					if (lc) 
+					{
+						lc->next_item = id;
+						_parent->last_child = id;
+					}
+					else {
+						_parent->first_child = id;
+						_parent->last_child = id;
+					}
 				}
-				else {
+				else 
+				{
 					parent_id = -1;
 					if (layout == layout_types::canvas2d_absolute ||
 						layout == layout_types::canvas2d_column ||
@@ -227,28 +278,26 @@ namespace corona
 			point space_amount;
 		};
 
-		using page_item_children = list_box<page_item*>;
-
 		class page : public page_base_type
 		{
 			void size_constant(jobject& _style_sheet, page_item* _item, layout_context _ctx);
-			void size_constants(jobject& _style_sheet, page_item_children children, layout_context _ctx);
+			void size_constants(jobject& _style_sheet, page_item* _item, layout_context _ctx);
 
 			void size_aspects(jobject& _style_sheet, page_item* _item, layout_context _ctx);
-			void size_aspect_widths(jobject& _style_sheet, page_item* _pi, layout_context _ctx, int safety);
-			void size_aspect_heights(jobject& _style_sheet, page_item* _pi, layout_context _ctx, int safety);
-			void size_aspects(jobject& _style_sheet, page_item_children children, layout_context _ctx);
-			void size_children(jobject& _style_sheet, page_item* _pi, page_item_children children, layout_context _ctx);
+			void size_aspect_widths(jobject& _style_sheet, page_item* _item, layout_context _ctx, int safety);
+			void size_aspect_heights(jobject& _style_sheet, page_item* _item, layout_context _ctx, int safety);
+			void size_aspects(jobject& _style_sheet, page_item* _item, layout_context _ctx);
+			void size_children(jobject& _style_sheet, page_item* _item, layout_context _ctx);
 
 			void size_remaining(jobject& _style_sheet, page_item* _item, layout_context _ctx);
-			void size_remainings(jobject& _style_sheet, page_item* _pi, page_item_children children, layout_context _ctx);
-			layout_context get_remaining(jobject& _style_sheet, page_item* _pi, page_item_children children, layout_context _ctx);
+			void size_remainings(jobject& _style_sheet, page_item* _item, layout_context _ctx);
+			layout_context get_remaining(jobject& _style_sheet, page_item* _item, layout_context _ctx);
 
 			void size_item(jobject& _style_sheet, page_item* _pi, layout_context _ctx);
-			void size_items(jobject& _style_sheet, page_item* _pi, page_item_children children, layout_context _ctx);
+			void size_items(jobject& _style_sheet, page_item* _pi, layout_context _ctx);
 			void position(jobject& _style_sheet, page_item* _item, layout_context _ctx);
-			void position(jobject& _style_sheet, page_item* _item, page_item_children children, layout_context _ctx);
-			void styles(jobject& _style_sheet, int style_id, page_item_children children);
+			void position(jobject& _style_sheet, page_item* _item, layout_context _ctx);
+			void styles(jobject& _style_sheet, int style_id, page_item* _item);
 
 			dynamic_box data;
 
@@ -266,13 +315,15 @@ namespace corona
 
 			page_item& operator[](int _id)
 			{
-				int id_to_idx = _id - 1;
+				int id_to_idx = _id;
 				auto& pi = this->get_at(id_to_idx);
 				if (pi.id != _id) {
 					throw std::logic_error("something bad happened with page item indeces");
 				}
 				return pi;
 			}
+
+			page_item* append(page_item* _parent, layout_types _layout, relative_ptr_type _style_id, layout_rect _box, measure _item_space, visual_alignment _alignment);
 
 			page_item* row(page_item* _parent, relative_ptr_type _style_id = null_row,  layout_rect _box = { 0.0_px, 0.0_px, 1.0_remaining, 1.0_remaining }, measure _item_space = { 0.0, measure_units::pixels }, visual_alignment _alignment = visual_alignment::align_near);
 			page_item* column( page_item* _parent, relative_ptr_type _style_id = null_row, layout_rect _box = { 0.0_px, 0.0_px, 1.0_remaining, 1.0_remaining }, measure _item_space = { 0.0, measure_units::pixels }, visual_alignment _alignment = visual_alignment::align_near);

@@ -929,6 +929,19 @@ namespace proposal
 			{
 				{ schema.idf_font_name, fontName },
 				{ schema.idf_font_size, 14.0 },
+				{ schema.idf_bold, false },
+				{ schema.idf_italic, false },
+				{ schema.idf_underline, false },
+				{ schema.idf_strike_through, false },
+				{ schema.idf_line_spacing, 0.0 },
+				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_vertical_alignment, (int)visual_alignment::align_near },
+				{ schema.idf_shape_fill_color, "#AAAAAAFF" },
+				{ schema.idf_shape_border_thickness, 0 },
+				{ schema.idf_shape_border_color, "" },
+				{ schema.idf_box_fill_color, "#ccccccFF" },
+				{ schema.idf_box_border_thickness, 1 },
+				{ schema.idf_box_border_color, "#dfdfdfFF" }
 			}
 			);
 
