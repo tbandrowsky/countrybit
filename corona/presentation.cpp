@@ -238,7 +238,7 @@ namespace corona
 			}
 		}
 
-		void page::size_aspects(jobject& _style_sheet, page_item* _item, layout_context _ctx)
+		void page::size_aspect(jobject& _style_sheet, page_item* _item, layout_context _ctx)
 		{
 			size_aspect_heights(_style_sheet, _item, _ctx, 0);
 			size_aspect_widths(_style_sheet, _item, _ctx, 0);
@@ -248,7 +248,7 @@ namespace corona
 		{
 			for (auto child = _item->get_first_child(); child != nullptr; child = child->get_next())
 			{
-				size_aspects(_style_sheet, child, _ctx);
+				size_aspect(_style_sheet, child, _ctx);
 			}
 		}
 
@@ -365,7 +365,7 @@ namespace corona
 		void page::size_item(jobject& _style_sheet, page_item* _pi, layout_context _ctx)
 		{
 			size_constant(_style_sheet, _pi, _ctx);
-			size_aspects(_style_sheet, _pi, _ctx);
+			size_aspect(_style_sheet, _pi, _ctx);
 			size_remaining(_style_sheet, _pi, _ctx);
 		}
 
@@ -452,7 +452,7 @@ namespace corona
 			}
 		}
 
-		void page::position(jobject& _style_sheet, page_item* _item, layout_context _ctx)
+		void page::positions(jobject& _style_sheet, page_item* _item, layout_context _ctx)
 		{			
 			visual_alignment _alignment = _item->alignment;
 			layout_types _layout = _item->layout;

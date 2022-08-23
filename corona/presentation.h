@@ -283,7 +283,7 @@ namespace corona
 			void size_constant(jobject& _style_sheet, page_item* _item, layout_context _ctx);
 			void size_constants(jobject& _style_sheet, page_item* _item, layout_context _ctx);
 
-			void size_aspects(jobject& _style_sheet, page_item* _item, layout_context _ctx);
+			void size_aspect(jobject& _style_sheet, page_item* _item, layout_context _ctx);
 			void size_aspect_widths(jobject& _style_sheet, page_item* _item, layout_context _ctx, int safety);
 			void size_aspect_heights(jobject& _style_sheet, page_item* _item, layout_context _ctx, int safety);
 			void size_aspects(jobject& _style_sheet, page_item* _item, layout_context _ctx);
@@ -296,7 +296,7 @@ namespace corona
 			void size_item(jobject& _style_sheet, page_item* _pi, layout_context _ctx);
 			void size_items(jobject& _style_sheet, page_item* _pi, layout_context _ctx);
 			void position(jobject& _style_sheet, page_item* _item, layout_context _ctx);
-			void position(jobject& _style_sheet, page_item* _item, layout_context _ctx);
+			void positions(jobject& _style_sheet, page_item* _item, layout_context _ctx);
 			void styles(jobject& _style_sheet, int style_id, page_item* _item);
 
 			dynamic_box data;
