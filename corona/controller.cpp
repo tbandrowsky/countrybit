@@ -402,9 +402,24 @@ namespace corona
 			return pg.text(_parent, _style_id, _text, _box);
 		}
 
-		page_item* corona_controller::select_cell(page_item* _parent, actor_state* _state, int object_id, jobject slice, const char *_caption, relative_ptr_type _style_id, layout_rect _box)
+		page_item* corona_controller::table_header(page_item* _parent, actor_state* _state, const char* _caption, relative_ptr_type object_id, jobject slice, relative_ptr_type field_id, relative_ptr_type sort_field_id, relative_ptr_type _style_id, layout_rect _box)
 		{
-			return pg.select_cell(_parent, _state, object_id, slice, _caption, _style_id, _box);
+			return pg.table_header(_parent, _state, _caption, object_id, slice, field_id, sort_field_id, _style_id, _box);
+		}
+
+		page_item* corona_controller::table_cell(page_item* _parent, actor_state* _state, relative_ptr_type object_id, jobject slice, relative_ptr_type field_id, relative_ptr_type _style_id, layout_rect _box)
+		{
+			return pg.table_cell(_parent, _state, object_id, slice, field_id,  _style_id, _box);
+		}
+
+		page_item* corona_controller::set(page_item* _parent, actor_state* _state, const object_member_path path, int field_id, dynamic_value dv, layout_rect _box = { 0.0_px, 0.0_px, 1.0_remaining, 100.0_px })
+		{
+			return pg.set(_parent, _state, path, field_id, dv, _box);
+		}
+
+		page_item* corona_controller::select(page_item* _parent, actor_state* _state, relative_ptr_type object_id, relative_ptr_type _id_name, jobject slice, relative_ptr_type _style_id, layout_rect _box = { 0.0_px, 0.0_px, 1.0_remaining, 100.0_px })
+		{
+			return pg.select(_parent, _state, object_id, _id_name, slice, _style_id, _box);
 		}
 
 		page_item* corona_controller::canvas2d_row(relative_ptr_type _canvas_uid, page_item* _parent, relative_ptr_type _style_id, layout_rect _box, measure _item_space, visual_alignment _alignment)
@@ -435,9 +450,9 @@ namespace corona
 				layout.width = { col.width, measure_units::pixels };
 				layout.height = _options.header_height;
 				if (field_spec.is_string())
-					text(header_row, schema.idf_column_text_head_style, col.title, layout);
+					table_header(header_row, schema.idf_column_text_head_style, col.title, layout);
 				else
-					text(header_row, schema.idf_column_number_head_style, col.title, layout);
+					table_header(header_row, schema.idf_column_number_head_style, col.title, layout);
 			}
 
 			auto* pout = &std::cout;
@@ -457,9 +472,9 @@ namespace corona
 					layout.height = _options.row_height;
 					const char* value = avo.object.get(field_spec.field_id);
 					if (field_spec.is_string())
-						select_cell(data_row, &state, avo.object_id, avo.object, value, schema.idf_column_text_style, layout);
+						table_cell(data_row, &state, avo.object_id, avo.object, value, schema.idf_column_text_style, layout);
 					else
-						select_cell(data_row, &state, avo.object_id, avo.object, value, schema.idf_column_number_style, layout);
+						table_cell(data_row, &state, avo.object_id, avo.object, value, schema.idf_column_number_style, layout);
 				}
 			}
 

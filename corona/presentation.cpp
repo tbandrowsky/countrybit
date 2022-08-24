@@ -92,7 +92,7 @@ namespace corona
 			return v;
 		}
 
-		page_item* page::select(page_item* _parent, actor_state* _state, int object_id, relative_ptr_type id_name, jobject slice, relative_ptr_type _style_id, layout_rect _box)
+		page_item* page::select(page_item* _parent, actor_state* _state, relative_ptr_type object_id, relative_ptr_type id_name, jobject slice, relative_ptr_type _style_id, layout_rect _box)
 		{
 			page_item* v = append(_parent, layout_types::select, _style_id, _box, 0.0_px, visual_alignment::align_near);
 			v->slice = slice;
@@ -110,18 +110,32 @@ namespace corona
 			return v;
 		}
 
-		page_item* page::select_cell(page_item* _parent, actor_state* _state, int object_id, jobject slice, const char *_caption, relative_ptr_type _style_id, layout_rect _box)
+		page_item* page::table_header(page_item* _parent, actor_state* _state, const char* _caption, relative_ptr_type object_id, jobject slice, relative_ptr_type _field_id, relative_ptr_type _sort_field_id, relative_ptr_type _style_id, layout_rect _box)
 		{
-			page_item* v = append(_parent, layout_types::select_cell, _style_id, _box, 0.0_px, visual_alignment::align_near);
+			page_item* v = append(_parent, layout_types::table_header, _style_id, _box, 0.0_px, visual_alignment::align_near);
 			v->slice = slice;
 			v->object_path.object.row_id = object_id;
 			v->class_id = slice.get_class_id();
-			v->select_request = _state->create_select_request(object_id, false);
+			v->field = &slice.get_field_by_id(_field_id);
 			v->caption = data.copy(_caption, 0);
+			v->dest_value = dynamic_value(_field_id, _sort_field_id );
 			return v;
 		}
 
-		page_item* page::navigate(page_item* _parent, actor_state* _state, int object_id, relative_ptr_type _style_id, const char* _caption, layout_rect _box )
+		page_item* page::table_cell(page_item* _parent, actor_state* _state, relative_ptr_type object_id, jobject slice, relative_ptr_type _field_id, relative_ptr_type _style_id, layout_rect _box)
+		{
+			page_item* v = append(_parent, layout_types::table_cell, _style_id, _box, 0.0_px, visual_alignment::align_near);
+			v->slice = slice;
+			v->object_path.object.row_id = object_id;
+			v->class_id = slice.get_class_id();
+			v->field = &slice.get_field_by_id(_field_id);
+			v->select_request = _state->create_select_request(object_id, false);
+			const char* dataf = slice.get(_field_id);
+			v->caption = data.copy(dataf, 0);
+			return v;
+		}
+
+		page_item* page::navigate(page_item* _parent, actor_state* _state, relative_ptr_type object_id, relative_ptr_type _style_id, const char* _caption, layout_rect _box )
 		{
 			page_item* v = append(_parent, layout_types::navigate, _style_id, _box, 0.0_px, visual_alignment::align_near);
 			v->object_path.object.row_id = object_id;

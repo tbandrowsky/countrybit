@@ -200,7 +200,10 @@ namespace corona
 			page_item* canvas2d_absolute(relative_ptr_type _canvas_uid, page_item* _parent, relative_ptr_type _style_id, layout_rect _box = { 0.0_px, 0.0_px, 1.0_remaining, 100.0_px }, measure _item_space = { 0.0, measure_units::pixels }, visual_alignment _alignment = visual_alignment::align_near);
 			page_item* navigate(page_item* _parent, int object_id, relative_ptr_type _style_id, const char* _caption, layout_rect _box);
 			page_item* text(page_item* _parent, relative_ptr_type _style_id, const char *_text, layout_rect _box = { 0.0_px, 0.0_px, 1.0_remaining, 100.0_px });
-			page_item* select_cell(page_item* _parent, actor_state* _state, int object_id, jobject slice, const char* _caption, relative_ptr_type _style_id, layout_rect _box);
+			page_item* table_header(page_item* _parent, actor_state* _state, const char* _caption, relative_ptr_type object_id, jobject slice, relative_ptr_type field_id, relative_ptr_type sort_field_id, relative_ptr_type _style_id, layout_rect _box);
+			page_item* table_cell(page_item* _parent, actor_state* _state, relative_ptr_type object_id, jobject slice, relative_ptr_type field_id, relative_ptr_type _style_id, layout_rect _box);
+			page_item* set(page_item* _parent, actor_state* _state, const object_member_path path, int field_id, dynamic_value dv, layout_rect _box = { 0.0_px, 0.0_px, 1.0_remaining, 100.0_px });
+			page_item* select(page_item* _parent, actor_state* _state, relative_ptr_type object_id, relative_ptr_type _id_name, jobject slice, relative_ptr_type _style_id, layout_rect _box = { 0.0_px, 0.0_px, 1.0_remaining, 100.0_px });
 
 			virtual void breadcrumbs(page_item* _parent, std::function<const char* (jobject& slice)> _captioner, layout_rect _item_box = { 0.0_px, 0.0_px, 200.0_px, 100.0_px });
 

@@ -992,6 +992,18 @@ namespace corona
 				return uor;
 			}
 
+			update_object_request create_update_request(relative_ptr_type _object_id)
+			{
+				update_object_request uor;
+				uor.actor_id = actor_id;
+				uor.path.object.collection_id = collection_id;
+				uor.path.object.row_id = _object_id;
+				uor.item = view_objects.get_at(_object_id)
+							.get_value()
+							.object;
+				return uor;
+			}
+
 			void check_objects(const char *name)
 			{
 				serialized_box_container* sbd = static_cast<serialized_box_container*>(&data);

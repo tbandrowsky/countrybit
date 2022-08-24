@@ -25,10 +25,11 @@ namespace corona
 			label = 15,
 			create = 16,
 			select = 17,
-			select_cell = 18,
+			table_cell = 18,
 			navigate = 19,
 			text = 20,
 			set = 21,
+			table_header = 22
 		};
 
 		inline constexpr const char* layout_type_names[] = {
@@ -50,10 +51,11 @@ namespace corona
 			"label = 15",
 			"create = 16",
 			"select = 17",
-			"select_cell = 18",
+			"table_cell = 18",
 			"navigate = 19",
 			"text = 20",
-			"set = 21"
+			"set = 21",
+			"table_header = 22"
 		};
 
 		struct page_item_identifier_x
@@ -200,7 +202,7 @@ namespace corona
 
 			bool is_select()
 			{
-				return layout == layout_types::select || layout == layout_types::select_cell || layout == layout_types::navigate;
+				return layout == layout_types::select || layout == layout_types::table_cell || layout == layout_types::navigate;
 			}
 
 			bool is_create()
@@ -210,7 +212,7 @@ namespace corona
 
 			bool is_set()
 			{
-				return layout == layout_types::set;
+				return layout == layout_types::set || layout == layout_types::table_cell;
 			}
 
 			bool is_command()
@@ -336,9 +338,10 @@ namespace corona
 			page_item* text(page_item* _parent, relative_ptr_type _style_id, const char *_text, layout_rect _box = { 0.0_px, 0.0_px, 1.0_remaining, 100.0_px });
 
 			page_item* set(page_item* _parent, actor_state* _state, const object_member_path path, int field_id, dynamic_value dv, layout_rect _box = { 0.0_px, 0.0_px, 1.0_remaining, 100.0_px });
-			page_item* select(page_item* _parent, actor_state* _state, int object_id, relative_ptr_type _id_name, jobject slice, relative_ptr_type _style_id, layout_rect _box = { 0.0_px, 0.0_px, 1.0_remaining, 100.0_px });
-			page_item* select_cell(page_item* _parent, actor_state* _state, int object_id, jobject slice, const char *_caption, relative_ptr_type _style_id, layout_rect _box);
-			page_item* navigate(page_item* _parent, actor_state* _state, int object_id, relative_ptr_type _style_id, const char *_caption, layout_rect _box = { 0.0_px, 0.0_px, 1.0_remaining, 20.0_px });
+			page_item* select(page_item* _parent, actor_state* _state, relative_ptr_type object_id, relative_ptr_type _id_name, jobject slice, relative_ptr_type _style_id, layout_rect _box = { 0.0_px, 0.0_px, 1.0_remaining, 100.0_px });
+			page_item* table_header(page_item* _parent, actor_state* _state, const char* _caption, relative_ptr_type object_id, jobject slice, relative_ptr_type field_id, relative_ptr_type sort_field_id, relative_ptr_type _style_id, layout_rect _box);
+			page_item* table_cell(page_item* _parent, actor_state* _state, relative_ptr_type object_id, jobject slice, relative_ptr_type field_id, relative_ptr_type _style_id, layout_rect _box);
+			page_item* navigate(page_item* _parent, actor_state* _state, relative_ptr_type object_id, relative_ptr_type _style_id, const char* _caption, layout_rect _box = { 0.0_px, 0.0_px, 1.0_remaining, 20.0_px });
 			page_item* space(page_item* _parent, relative_ptr_type _style_id = null_row, layout_rect _box = { 0.0_px, 0.0_px, 1.0_remaining, 100.0_px });
 
 			void arrange( double _width, double _height, jobject& _style_sheet, double _padding = 0.0 );
