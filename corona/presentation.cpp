@@ -602,7 +602,7 @@ namespace corona
 
 			styles(_style_sheet, _item->style_id, _item);
 			size_items(_style_sheet, _item, _ctx);
-			position(_style_sheet, _item, _ctx);
+			positions(_style_sheet, _item, _ctx);
 
 			return _item->bounds;
 		}

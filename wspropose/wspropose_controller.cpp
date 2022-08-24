@@ -340,16 +340,15 @@ namespace proposal
 		const char* _subtitle = application_author;
 
 		auto page_column = canvas2d_column(id_canvas_main, nullptr, schema.idf_view_style, { 0.0_px, 0.0_px, 1.0_container, 1.0_container });
-		auto title_bar = absolute(page_column, null_row, { 0.0_px, 0.0_px, 1.0_container, 45.0_px });
-		auto title_text_bar = row(title_bar, null_row, { 0.0_px, 0.0_px, 1.0_container, 45.0_px }, 0.0_px, visual_alignment::align_near);
-		auto navigation_bar = row(title_bar, null_row, { 0.0_px, 0.0_px, 1.0_container, 45.0_px }, 0.0_px, visual_alignment::align_far);
+		auto title_bar = row(page_column, null_row, { 0.0_px, 0.0_px, 1.0_container, 45.0_px });
+		auto title_text_bar = row(title_bar, null_row, { 0.0_px, 0.0_px, 0.5_container, 45.0_px }, 0.0_px, visual_alignment::align_near);
+		auto navigation_bar = row(title_bar, null_row, { 0.0_px, 0.0_px, 0.5_container, 45.0_px }, 0.0_px, visual_alignment::align_far);
 
 		text(title_text_bar, schema.idf_album_title_style, _title);
 		selectable_items(navigation_bar, vq_navigation, schema.idf_navigation_style, { 0.0_px, 0.0_px, 100.0_px, 1.2_fontgr });
 
 		auto main_row = row(page_column, null_row, { 0.0_px, 15.0_px, 1.0_remaining, 1.0_remaining });
 		auto form_contents = column(main_row, null_row, { 0.0_px, 0.0_px, 1.0_remaining, 1.0_remaining });
-		form_contents->caption = pg.copy("contents form");
 		_contents(navigation_bar, form_contents);
 
 		auto footer_bar = row(page_column, null_row, { 0.0_px, 0.0_px, 1.0_remaining, 30.0_px });

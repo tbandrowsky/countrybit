@@ -423,7 +423,6 @@ namespace corona
 		void corona_controller::table(page_item* _parent, table_options& _options)
 		{
 			page_item* table_container = column(_parent, null_row, { 0.0_px, 0.0_px, 1.0_children, 1.0_children });
-			table_container->caption = pg.copy("table");
 
 			page_item* header_row = row(table_container, null_row, { 0.0_px, 0.0_px, 1.0_children, 1.0_children});
 
@@ -660,7 +659,7 @@ namespace corona
 
 					jfield& fld = slice.get_field(field_idx);
 
-					label = pg.append(_parent,
+					label = pg.append(container,
 						layout_types::label,
 						slice.get_schema()->idf_label_style,
 						{ 0.0_px, 0.0_px, 150.0_px, 1.0_fontgr },
@@ -674,7 +673,7 @@ namespace corona
 					label->caption = pg.copy(field.label.size() > 0 ? field.label : fld.description);
 					label->class_id = slice.get_class_id();
 
-					auto control = pg.append(_parent,
+					auto control = pg.append(container,
 						layout_types::text_window,
 						slice.get_schema()->idf_control_style,
 						{ 0.0_px, 0.0_px, 200.0_px, 1.0_fontgr },
@@ -689,7 +688,7 @@ namespace corona
 				}
 				else 
 				{
-					label = pg.append(_parent,
+					label = pg.append(container,
 						layout_types::label,
 						slice.get_schema()->idf_label_style,
 						{ 0.0_px, 0.0_px, 150.0_px, 1.0_fontgr },
@@ -794,11 +793,8 @@ namespace corona
 		void corona_controller::edit_form(page_item* _navigation, page_item* _frame, relative_ptr_type _title_uiid, const object_member_path& _omp, edit_options _fields)
 		{
 			auto form_area = row(_frame, null_row, { 0.0_px, 0.0_px, 1.0_remaining, 1.0_remaining }, 0.0_px, visual_alignment::align_center);
-			form_area->caption = pg.copy("edit_form");
 				auto center_area = column(form_area, schema.idf_panel_style, { 0.0_px, 0.0_px, 1.0_children, 1.0_remaining });
-				center_area->caption = pg.copy("center_block");
 					auto form_title = row(center_area, null_row, { 0.0_px, 0.0_px, 1.0_remaining, 1.0_children }, 0.0_px, visual_alignment::align_center);
-						form_title->caption = pg.copy("search_title");
 						text(form_title, schema.idf_view_section_style, _fields.form_title, { 0.0_px, 0.0_px, 1.0_remaining, 1.0_fontgr });
 						_fields.form_title = "";
 
@@ -811,18 +807,14 @@ namespace corona
 			auto ss = get_style_sheet(0);
 
 			auto form_area = row(_frame, null_row, { 0.0_px, 0.0_px, 1.0_remaining, 1.0_remaining }, 0.0_px, visual_alignment::align_center);
-				form_area->caption = pg.copy("search_form");
 
 					auto center_area = column(form_area, schema.idf_panel_style, { 0.0_px, 0.0_px, 1.0_children, 1.0_remaining });
-					center_area->caption = pg.copy("center_block");
 
 						auto form_title = row(center_area, null_row, { 0.0_px, 0.0_px, 1.0_remaining, 1.0_children }, 0.0_px, visual_alignment::align_center);
-							form_title->caption = pg.copy("search_title");
 							text(form_title, schema.idf_view_section_style, _search_options.form_title, { 0.0_px, 0.0_px, 1.0_remaining, 1.0_fontgr });
 							_search_options.form_title = "";
 
 						auto form_search_container = row(center_area, null_row, { 0.0_px, 0.0_px, 1.0_children, 1.0_remaining });
-							form_search_container->caption = pg.copy("search_form_container");
 
 							auto form_search_fields_container = column(form_search_container, null_row, { 0.0_px, 0.0_px, 250.0_px, 1.0_children }, 0.0_px);
 								object_member_path opt;
@@ -833,10 +825,8 @@ namespace corona
 								create_buttons(form_search_fields_container, schema.idf_button_style, { -1.0_px, 0.0_px, 150.0_px, 32.0_px });
 
 							auto form_search_table_container = column(form_search_container, null_row, { 0.0_px, 0.0_px, 1.0_children, 1.0_children }, 0.0_px);
-								form_search_table_container->caption = pg.copy("form_search_table_container");
 					
 								auto form_table = column(form_search_table_container, null_row, { 0.0_px, 0.0_px, 1.0_children, 1.0_children });
-									form_table->caption = pg.copy("search_form_table"); 
 									table(form_table, _options);
 		}
 	}
