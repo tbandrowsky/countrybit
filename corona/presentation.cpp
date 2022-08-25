@@ -115,8 +115,10 @@ namespace corona
 			page_item* v = append(_parent, layout_types::table_header, _style_id, _box, 0.0_px, visual_alignment::align_near);
 			v->slice = slice;
 			v->object_path.object.row_id = object_id;
-			v->class_id = slice.get_class_id();
-			v->field = &slice.get_field_by_id(_field_id);
+			if (!slice.is_null()) {
+				v->class_id = slice.get_class_id();
+				v->field = &slice.get_field_by_id(_field_id);
+			}
 			v->caption = data.copy(_caption, 0);
 			v->dest_value = dynamic_value(_field_id, _sort_field_id );
 			return v;
@@ -127,8 +129,10 @@ namespace corona
 			page_item* v = append(_parent, layout_types::table_cell, _style_id, _box, 0.0_px, visual_alignment::align_near);
 			v->slice = slice;
 			v->object_path.object.row_id = object_id;
-			v->class_id = slice.get_class_id();
-			v->field = &slice.get_field_by_id(_field_id);
+			if (!slice.is_null()) {
+				v->class_id = slice.get_class_id();
+				v->field = &slice.get_field_by_id(_field_id);
+			}
 			v->select_request = _state->create_select_request(object_id, false);
 			const char* dataf = slice.get(_field_id);
 			v->caption = data.copy(dataf, 0);

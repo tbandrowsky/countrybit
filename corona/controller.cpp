@@ -412,12 +412,12 @@ namespace corona
 			return pg.table_cell(_parent, _state, object_id, slice, field_id,  _style_id, _box);
 		}
 
-		page_item* corona_controller::set(page_item* _parent, actor_state* _state, const object_member_path path, int field_id, dynamic_value dv, layout_rect _box = { 0.0_px, 0.0_px, 1.0_remaining, 100.0_px })
+		page_item* corona_controller::set(page_item* _parent, actor_state* _state, const object_member_path path, int field_id, dynamic_value dv, layout_rect _box)
 		{
 			return pg.set(_parent, _state, path, field_id, dv, _box);
 		}
 
-		page_item* corona_controller::select(page_item* _parent, actor_state* _state, relative_ptr_type object_id, relative_ptr_type _id_name, jobject slice, relative_ptr_type _style_id, layout_rect _box = { 0.0_px, 0.0_px, 1.0_remaining, 100.0_px })
+		page_item* corona_controller::select(page_item* _parent, actor_state* _state, relative_ptr_type object_id, relative_ptr_type _id_name, jobject slice, relative_ptr_type _style_id, layout_rect _box)
 		{
 			return pg.select(_parent, _state, object_id, _id_name, slice, _style_id, _box);
 		}
@@ -449,10 +449,12 @@ namespace corona
 				layout.y = 0.0_px;
 				layout.width = { col.width, measure_units::pixels };
 				layout.height = _options.header_height;
+				relative_ptr_type style_id;
 				if (field_spec.is_string())
-					table_header(header_row, schema.idf_column_text_head_style, col.title, layout);
+					style_id = schema.idf_column_text_head_style;
 				else
-					table_header(header_row, schema.idf_column_number_head_style, col.title, layout);
+					style_id = schema.idf_column_number_head_style;
+				table_header(header_row, &state, col.title, _options.header_config_id, _options.header_config, col.field_id, _options.sort_field_id, style_id, layout);
 			}
 
 			auto* pout = &std::cout;
@@ -470,11 +472,12 @@ namespace corona
 					layout.y = 0.0_px;
 					layout.width.amount = col.width;
 					layout.height = _options.row_height;
-					const char* value = avo.object.get(field_spec.field_id);
+					relative_ptr_type style_id;
 					if (field_spec.is_string())
-						table_cell(data_row, &state, avo.object_id, avo.object, value, schema.idf_column_text_style, layout);
+						style_id = schema.idf_column_text_style;
 					else
-						table_cell(data_row, &state, avo.object_id, avo.object, value, schema.idf_column_number_style, layout);
+						style_id = schema.idf_column_number_style;
+					table_cell(data_row, &state, avo.object_id, avo.object, col.field_id, style_id, layout);
 				}
 			}
 

@@ -88,6 +88,19 @@ namespace corona
 			measure					  header_height;
 			measure					  row_height;
 			std::vector<table_column> columns;
+			relative_ptr_type		  header_config_id;
+			jobject					  header_config;
+			relative_ptr_type		  sort_field_id;
+
+			table_options() : data(nullptr)
+				, alternating_row(false)
+				, header_height({ 1.2_fontgr })
+				, row_height({ 1.2_fontgr })
+				, header_config_id(null_row)
+				, sort_field_id(null_row)
+			{
+				;
+			}
 		};
 
 		struct edit_field

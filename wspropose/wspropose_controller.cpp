@@ -649,15 +649,6 @@ namespace proposal
 			}
 			);
 
-		style_sheet.set(
-			schema.idf_view_style,
-			{ schema.idf_panel_style },
-			{
-				{ schema.idf_box_fill_color, "#EFEFEFFF" },
-				{ schema.idf_box_border_thickness, 1 },
-				{ schema.idf_box_border_color, "#CFCFCFFF" }
-			}
-			);
 
 		style_sheet.set(
 			schema.idf_view_style,
@@ -1452,14 +1443,14 @@ namespace proposal
 		}
 
 		style_sheet.set(
-			schema.idf_view_style,
+			schema.idf_view_style, 
 			{ schema.idf_panel_style },
 			{
 				{ schema.idf_font_name, fontName },
 				{ schema.idf_font_size, 14.0 },
-				{ schema.idf_box_fill_color, "#E0F0E0FF" },
-				{ schema.idf_box_border_thickness, 4 },
-				{ schema.idf_box_border_color, "#D0E0D0FF" },
+				{ schema.idf_box_fill_color, "#E4F0E4FF" },
+				{ schema.idf_box_border_thickness, 0 },
+				{ schema.idf_box_border_color, "" },
 				{ schema.idf_horizontal_alignment, (int)visual_alignment::align_center },
 				{ schema.idf_vertical_alignment, (int)visual_alignment::align_far },
 			}

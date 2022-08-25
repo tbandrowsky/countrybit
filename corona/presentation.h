@@ -212,7 +212,7 @@ namespace corona
 
 			bool is_set()
 			{
-				return layout == layout_types::set || layout == layout_types::table_cell;
+				return layout == layout_types::set || layout == layout_types::table_cell || layout == layout_types::table_header;
 			}
 
 			bool is_command()
