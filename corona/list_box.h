@@ -36,29 +36,29 @@ namespace corona
 
 			list_box_data* get_hdr()
 			{
-				return box->unpack<list_box_data>(header_loc);
+				return box->get_object<list_box_data>(header_loc);
 			}
 
 			list_link* first_link()
 			{
 				list_box_data* hdr = get_hdr();
-				return box->unpack<list_link>(hdr->root_item);
+				return box->get_object<list_link>(hdr->root_item);
 			}
 
 			list_link* last_link()
 			{
 				list_box_data* hdr = get_hdr();
-				return box->unpack<list_link>(hdr->last_item);
+				return box->get_object<list_link>(hdr->last_item);
 			}
 
 			list_link* next_link(list_link* n)
 			{
-				return box->unpack<list_link>(n->next_link);
+				return box->get_object<list_link>(n->next_link);
 			}
 
 			list_link* previous_link(list_link* n)
 			{
-				return box->unpack<list_link>(n->previous_link);
+				return box->get_object<list_link>(n->previous_link);
 			}
 
 			list_link* put(const item_type& _src)
@@ -71,7 +71,7 @@ namespace corona
 				temp.next_link = null_row;
 				temp.previous_link = null_row;
 
-				relative_ptr_type loc = box->pack(temp);
+				relative_ptr_type loc = box->put_object(temp);
 
 				if (loc == null_row) {
 					return nullptr;
@@ -79,8 +79,8 @@ namespace corona
 
 				if (hdr->last_item != null_row) 
 				{
-					list_link* last_link = box->unpack<list_link>(hdr->last_item);
-					n = box->unpack<list_link>(loc);
+					list_link* last_link = box->get_object<list_link>(hdr->last_item);
+					n = box->get_object<list_link>(loc);
 					n->previous_link = hdr->last_item;
 					last_link->next_link = loc;
 					hdr->last_item = loc;
@@ -92,7 +92,7 @@ namespace corona
 				}
 				
 				hdr->length++;
-				list_link *l = box->unpack<list_link>(loc);
+				list_link *l = box->get_object<list_link>(loc);
 				return l;
 			}
 
@@ -122,7 +122,7 @@ namespace corona
 				relative_ptr_type ln = lbd->root_item;
 				while (ln != null_row) {
 					mapper.add(ln);
-					auto nd = box->unpack<list_link>(ln);
+					auto nd = box->get_object<list_link>(ln);
 					ln = nd->next_link;
 					lbd->length++;
 				}
@@ -164,7 +164,7 @@ namespace corona
 				hdr.length = 0;
 				hdr.root_item = null_row;
 				hdr.last_item = null_row;
-				auto location = b->pack<list_box_data>(hdr);
+				auto location = b->put_object<list_box_data>(hdr);
 				return location;
 			}
 
@@ -219,7 +219,7 @@ namespace corona
 
 			item_type& get_at(relative_ptr_type offset)
 			{
-				list_link *l = box->unpack<list_link>(offset);
+				list_link *l = box->get_object<list_link>(offset);
 				return l->data;
 			}
 
@@ -277,7 +277,7 @@ namespace corona
 					throw std::invalid_argument("idx out of range, and come on, we even let you do idx < 0 and you still got it wrong");
 				}
 				auto map_idx = mapper.map(base_idx);
-				auto link = box->unpack<list_link>(map_idx);
+				auto link = box->get_object<list_link>(map_idx);
 				return link->data;
 			}
 		};

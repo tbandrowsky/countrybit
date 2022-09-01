@@ -27,7 +27,7 @@ namespace corona
 			while (l >= 0) 
 			{
 				int i = c % 3;
-				l = b->pack(tests[i]);
+				l = b->put_object(tests[i]);
 				if (l >= 0) {
 					locations[i] = l;
 					c++;
@@ -37,7 +37,7 @@ namespace corona
 			while (c >= 0)
 			{
 				int i = c % 3;
-				test_struct *ts = b->unpack<test_struct>(locations[i]);
+				test_struct *ts = b->get_object<test_struct>(locations[i]);
 				test_struct& item = tests[i];
 				if (ts->i1 != item.i1 ||
 					ts->i2 != item.i2 ||

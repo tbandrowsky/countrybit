@@ -610,7 +610,7 @@ namespace corona
 			auto cx = get_string_char();
 			while ((cx.c && cx.c != '"') || (cx.c == '"' && cx.escaped == true))
 			{
-				int l = data.pack(cx.c);
+				int l = data.put_object(cx.c);
 				if (l<0) {
 					result.line_number = line;
 					result.char_offset = index;
@@ -620,7 +620,7 @@ namespace corona
 
 				if (!result.value)
 				{
-					result.value = data.unpack<char>(l);
+					result.value = data.get_object<char>(l);
 				}
 				maximum_string_size--;
 				if (!maximum_string_size) {
@@ -633,11 +633,11 @@ namespace corona
 			}
 
 			char null = 0;
-			int lx = data.pack(null);
+			int lx = data.put_object(null);
 
 			if (!result.value)
 			{
-				result.value = data.unpack<char>(lx);
+				result.value = data.get_object<char>(lx);
 			}
 
 			if (cx.c != '"' || cx.escaped != false)

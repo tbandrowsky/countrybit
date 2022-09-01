@@ -27,6 +27,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)corona.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)datatransfer.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)directapplication.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)jvalue.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)file_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)filterable_iterator.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)grouping.h" />
@@ -39,13 +40,11 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)http_remote_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)image_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)layout_rect_box.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)pobject_transformer.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)remote_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)jfield.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)extractor.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)loader.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)midi_box.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)pobject.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)point_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)query_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)object_id_box.h" />
@@ -92,6 +91,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)controllerhost.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)datatransfer.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)directapplication.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)jvalue.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)grouping.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)jdatabase_client.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)jdatabase_server.cpp" />
@@ -111,7 +111,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)loader.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)messages.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)object_id_box.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)pobject.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)point_box.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)query_box.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)read_all_string.cpp" />

@@ -412,7 +412,7 @@ namespace corona
 			return pg.table_cell(_parent, _state, object_id, slice, field_id,  _style_id, _box);
 		}
 
-		page_item* corona_controller::set(page_item* _parent, actor_state* _state, const object_member_path path, int field_id, dynamic_value dv, layout_rect _box)
+		page_item* corona_controller::set(page_item* _parent, actor_state* _state, const object_member_path path, int field_id, jvalue dv, layout_rect _box)
 		{
 			return pg.set(_parent, _state, path, field_id, dv, _box);
 		}

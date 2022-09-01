@@ -171,7 +171,7 @@ namespace corona
 				if (hdr_id == null_row)
 					return hdr_id;
 
-				t.hdr = _b->unpack<table_header>(hdr_id);
+				t.hdr = _b->get_object<table_header>(hdr_id);
 				t.hdr->block = block_id::table_id();
 				t.hdr->id = hdr_id;
 				t.hdr->dynamic = _dynamic;
@@ -190,7 +190,7 @@ namespace corona
 			{
 				table t;
 
-				t.hdr = _b->unpack<table_header>(offset);
+				t.hdr = _b->get_object<table_header>(offset);
 				if (!t.hdr->block.is_table())
 				{
 					throw std::logic_error("Did not read table correctly.");
@@ -204,7 +204,7 @@ namespace corona
 			{
 				table t;
 				offset = reserve_table(_b, _max_rows, _dynamic);
-				t.hdr = _b->unpack<table_header>(offset);
+				t.hdr = _b->get_object<table_header>(offset);
 				t.box = _b;
 				return t;
 			}
@@ -474,8 +474,8 @@ namespace corona
 				item_detail_table_header hdr;
 				hdr.item_location = null_row;
 				hdr.detail_location = null_row;
-				relative_ptr_type r = b->pack(hdr);
-				auto* phdr = b->unpack<item_detail_table_header>(r);
+				relative_ptr_type r = b->put_object(hdr);
+				auto* phdr = b->get_object<item_detail_table_header>(r);
 				phdr->item_location = table< item_details_table<P, C>::item_type >::reserve_table(b, item_rows);
 				phdr->detail_location = table< C >::reserve_table(b, detail_rows, dynamic);
 				return r;
@@ -485,7 +485,7 @@ namespace corona
 			{
 				item_details_table pct;
 				item_detail_table_header* hdr;
-				hdr = b->unpack<item_details_table<P, C>::item_detail_table_header>(row);
+				hdr = b->get_object<item_details_table<P, C>::item_detail_table_header>(row);
 				pct.item = table< item_details_table<P, C>::item_type >::get_table(b, hdr->item_location);
 				pct.details = table<C>::get_table(b, hdr->detail_location);
 				return pct;

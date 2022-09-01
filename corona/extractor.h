@@ -326,19 +326,19 @@ namespace corona
 		class parse_json_object_result : public base_parse_result
 		{
 		public:
-			pobject *value;
+			jobject value;
 		};
 
 		class parse_json_value_result : public base_parse_result
 		{
 		public:
-			pvalue* value;
+			int value;
 		};
 
 		class parse_json_array_result : public base_parse_result
 		{
 		public:
-			parray *value;
+			jarray value;
 		};
 
 		class string_extractor

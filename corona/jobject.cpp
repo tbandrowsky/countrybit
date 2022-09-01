@@ -932,7 +932,7 @@ namespace corona
 			return new_slice;
 		}
 
-		jobject jcollection::create_object(relative_ptr_type _item_id, relative_ptr_type _actor_id, relative_ptr_type _class_id, relative_ptr_type& _object_id, std::initializer_list<dynamic_value> var)
+		jobject jcollection::create_object(relative_ptr_type _item_id, relative_ptr_type _actor_id, relative_ptr_type _class_id, relative_ptr_type& _object_id, std::initializer_list<jvalue> var)
 		{
 			jobject j = create_object(_item_id, _actor_id, _class_id, _object_id);
 			j.set(var);
@@ -1372,576 +1372,6 @@ namespace corona
 			return existing_object;
 		}
 
-		bool dynamic_value::compare(comparisons _comparison, dynamic_value& _target)
-		{
-			int64_t ithis, itarget;
-			double dthis, dtarget;
-			const char *sthis, *starget;
-			auto& rthis = *this;
-
-			switch (_comparison)
-			{
-			case comparisons::eq:
-				if (is_integer(ithis) && _target.is_integer(itarget))
-				{
-					return ithis == itarget;
-				}
-				else if (is_double(dthis) && _target.is_double(dtarget))
-				{
-					return dthis == dtarget;
-				}
-				else if (is_double(dthis) && _target.is_integer(itarget))
-				{
-					return dthis == itarget;
-				}
-				else if (is_integer(ithis) && _target.is_double(dtarget))
-				{
-					return ithis == dtarget;
-				}
-				else
-				{
-					sthis = rthis;
-					starget = _target;
-					return strcmp(sthis, starget) == 0;
-				}
-				break;
-			case comparisons::lt:
-				if (is_integer(ithis) && _target.is_integer(itarget))
-				{
-					return ithis < itarget;
-				}
-				else if (is_double(dthis) && _target.is_double(dtarget))
-				{
-					return dthis < dtarget;
-				}
-				else if (is_double(dthis) && _target.is_integer(itarget))
-				{
-					return dthis < itarget;
-				}
-				else if (is_integer(ithis) && _target.is_double(dtarget))
-				{
-					return ithis < dtarget;
-				}
-				else
-				{
-					sthis = rthis;
-					starget = _target;
-					return strcmp(sthis, starget) < 0;
-				}
-				break;
-			case comparisons::lte:
-				if (is_integer(ithis) && _target.is_integer(itarget))
-				{
-					return ithis <= itarget;
-				}
-				else if (is_double(dthis) && _target.is_double(dtarget))
-				{
-					return dthis <= dtarget;
-				}
-				else if (is_double(dthis) && _target.is_integer(itarget))
-				{
-					return dthis <= itarget;
-				}
-				else if (is_integer(ithis) && _target.is_double(dtarget))
-				{
-					return ithis <= dtarget;
-				}
-				else
-				{
-					sthis = rthis;
-					starget = _target;
-					return strcmp(sthis, starget) <= 0;
-				}
-				break;
-			case comparisons::gt:
-				if (is_integer(ithis) && _target.is_integer(itarget))
-				{
-					return ithis > itarget;
-				}
-				else if (is_double(dthis) && _target.is_double(dtarget))
-				{
-					return dthis > dtarget;
-				}
-				else if (is_double(dthis) && _target.is_integer(itarget))
-				{
-					return dthis > itarget;
-				}
-				else if (is_integer(ithis) && _target.is_double(dtarget))
-				{
-					return ithis > dtarget;
-				}
-				else
-				{
-					sthis = rthis;
-					starget = _target;
-					return strcmp(sthis, starget) > 0;
-				}
-				break;
-			case comparisons::gte:
-				if (is_integer(ithis) && _target.is_integer(itarget))
-				{
-					return ithis >= itarget;
-				}
-				else if (is_double(dthis) && _target.is_double(dtarget))
-				{
-					return dthis >= dtarget;
-				}
-				else if (is_double(dthis) && _target.is_integer(itarget))
-				{
-					return dthis >= itarget;
-				}
-				else if (is_integer(ithis) && _target.is_double(dtarget))
-				{
-					return ithis >= dtarget;
-				}
-				else
-				{
-					sthis = rthis;
-					starget = _target;
-					return strcmp(sthis, starget) >= 0;
-				}
-				break;
-			case comparisons::cont:
-				sthis = rthis;
-				starget = _target;
-				return strstr(sthis, starget) != nullptr;
-			}
-			return false;
-		}
-
-		void dynamic_value::copy(const dynamic_value& _src)
-		{
-			field_id = _src.field_id;
-			this_type = _src.this_type;
-			switch (this_type)
-			{
-			case jtype::type_int8:
-			case jtype::type_int16:
-			case jtype::type_int32:
-			case jtype::type_int64:
-				int_value = _src.int_value;
-				break;
-			case jtype::type_float32:
-			case jtype::type_float64:
-				double_value = _src.double_value;
-				break;
-			case jtype::type_collection_id:
-				throw std::logic_error("not implemented");
-				break;
-			case jtype::type_color:
-				color_value = _src.color_value;
-				break;
-			case jtype::type_datetime:
-				time_value = _src.time_value;
-				break;
-			case jtype::type_file:
-				throw std::logic_error("not implemented");
-				break;
-			case jtype::type_http:
-				throw std::logic_error("not implemented");
-				break;
-			case jtype::type_image:
-				throw std::logic_error("not implemented");
-				break;
-			case jtype::type_layout_rect:
-				layout_rect_value = _src.layout_rect_value;
-				break;
-			case jtype::type_list:
-				throw std::logic_error("not implemented");
-				break;
-			case jtype::type_midi:
-				throw std::logic_error("not implemented");
-				break;
-			case jtype::type_null:
-				break;
-			case jtype::type_object:
-				throw std::logic_error("not implemented");
-				break;
-			case jtype::type_object_id:
-				throw std::logic_error("not implemented");
-				break;
-			case jtype::type_point:
-				point_value = _src.point_value;
-				break;
-			case jtype::type_query:
-				throw std::logic_error("not implemented");
-				break;
-			case jtype::type_rectangle:
-				rectangle_value = _src.rectangle_value;
-				break;
-			case jtype::type_sql:
-				break;
-			case jtype::type_string:
-				string_value = _src.string_value;
-				break;
-			case jtype::type_wave:
-				break;
-			}
-		}
-
-		dynamic_value::dynamic_value(const dynamic_value& _src)
-		{
-			copy(_src);
-		}
-
-		dynamic_value dynamic_value::operator =(const dynamic_value& _src)
-		{
-			copy(_src);
-			return *this;
-		}
-
-		dynamic_value::operator std::string()
-		{
-			std::string z;
-			switch (this_type)
-			{
-			case jtype::type_int8:
-			case jtype::type_int16:
-			case jtype::type_int32:
-			case jtype::type_int64:
-				z = std::format("{}", int_value);
-				break;
-			case jtype::type_float32:
-			case jtype::type_float64:
-				z = std::format("{}", double_value);
-				break;
-			case jtype::type_collection_id:
-				throw std::logic_error("can't convert to string");
-				break;
-			case jtype::type_color:
-				throw std::logic_error("can't convert to string");
-				break;
-			case jtype::type_datetime:
-				throw std::logic_error("can't convert to string");
-				break;
-			case jtype::type_file:
-				throw std::logic_error("can't convert to string");
-				break;
-			case jtype::type_http:
-				throw std::logic_error("can't convert to string");
-				break;
-			case jtype::type_image:
-				throw std::logic_error("can't convert to string");
-				break;
-			case jtype::type_layout_rect:
-				throw std::logic_error("can't convert to string");
-				break;
-			case jtype::type_list:
-				throw std::logic_error("can't convert to string");
-				break;
-			case jtype::type_midi:
-				throw std::logic_error("can't convert to string");
-				break;
-			case jtype::type_null:
-				throw std::logic_error("can't convert to string");
-				break;
-			case jtype::type_object:
-				throw std::logic_error("can't convert to string");
-				break;
-			case jtype::type_object_id:
-				throw std::logic_error("can't convert to string");
-				break;
-			case jtype::type_point:
-				throw std::logic_error("can't convert to string");
-				break;
-			case jtype::type_query:
-				throw std::logic_error("can't convert to string");
-				break;
-			case jtype::type_rectangle:
-				throw std::logic_error("can't convert to string");
-				break;
-			case jtype::type_sql:
-				throw std::logic_error("can't convert to string");
-				break;
-			case jtype::type_string:
-				z = string_value;
-				break;
-			case jtype::type_wave:
-				throw std::logic_error("can't convert to string");
-				break;
-			}
-			return z;
-		}
-
-		dynamic_value::operator color ()
-		{
-			switch (this_type)
-			{
-			case jtype::type_int8:
-			case jtype::type_int16:
-			case jtype::type_int32:
-			case jtype::type_int64:
-				throw std::logic_error("can't convert to color");
-				break;
-			case jtype::type_float32:
-			case jtype::type_float64:
-				throw std::logic_error("can't convert to color");
-				break;
-			case jtype::type_collection_id:
-				throw std::logic_error("can't convert to color");
-				break;
-			case jtype::type_color:
-				return color_value;
-			case jtype::type_datetime:
-				throw std::logic_error("can't convert to color");
-				break;
-			case jtype::type_file:
-				throw std::logic_error("can't convert to color");
-				break;
-			case jtype::type_http:
-				throw std::logic_error("can't convert to color");
-				break;
-			case jtype::type_image:
-				throw std::logic_error("can't convert to color");
-				break;
-			case jtype::type_layout_rect:
-				throw std::logic_error("can't convert to color");
-				break;
-			case jtype::type_list:
-				throw std::logic_error("can't convert to color");
-				break;
-			case jtype::type_midi:
-				throw std::logic_error("can't convert to color");
-				break;
-			case jtype::type_null:
-				throw std::logic_error("can't convert to color");
-				break;
-			case jtype::type_object:
-				throw std::logic_error("can't convert to color");
-				break;
-			case jtype::type_object_id:
-				throw std::logic_error("can't convert to color");
-				break;
-			case jtype::type_point:
-				throw std::logic_error("can't convert to color");
-				break;
-			case jtype::type_query:
-				throw std::logic_error("can't convert to color");
-				break;
-			case jtype::type_rectangle:
-				throw std::logic_error("can't convert to color");
-				break;
-			case jtype::type_sql:
-				throw std::logic_error("can't convert to color");
-				break;
-			case jtype::type_string:
-				throw std::logic_error("can't convert to color");
-				break;
-			case jtype::type_wave:
-				throw std::logic_error("can't convert to color");
-				break;
-			}
-		}
-
-		dynamic_value::operator point()
-		{
-			switch (this_type)
-			{
-			case jtype::type_int8:
-			case jtype::type_int16:
-			case jtype::type_int32:
-			case jtype::type_int64:
-				throw std::logic_error("can't convert to point");
-				break;
-			case jtype::type_float32:
-			case jtype::type_float64:
-				throw std::logic_error("can't convert to point");
-				break;
-			case jtype::type_collection_id:
-				throw std::logic_error("can't convert to point");
-				break;
-			case jtype::type_color:
-				throw std::logic_error("can't convert to point");
-				break;
-			case jtype::type_datetime:
-				throw std::logic_error("can't convert to point");
-				break;
-			case jtype::type_file:
-				throw std::logic_error("can't convert to point");
-				break;
-			case jtype::type_http:
-				throw std::logic_error("can't convert to point");
-				break;
-			case jtype::type_image:
-				throw std::logic_error("can't convert to point");
-				break;
-			case jtype::type_layout_rect:
-				throw std::logic_error("can't convert to point");
-				break;
-			case jtype::type_list:
-				throw std::logic_error("can't convert to point");
-				break;
-			case jtype::type_midi:
-				throw std::logic_error("can't convert to point");
-				break;
-			case jtype::type_null:
-				throw std::logic_error("can't convert to point");
-				break;
-			case jtype::type_object:
-				throw std::logic_error("can't convert to point");
-				break;
-			case jtype::type_object_id:
-				throw std::logic_error("can't convert to point");
-				break;
-			case jtype::type_point:
-				return point_value;
-			case jtype::type_query:
-				throw std::logic_error("can't convert to point");
-				break;
-			case jtype::type_rectangle:
-				throw std::logic_error("can't convert to point");
-				break;
-			case jtype::type_sql:
-				throw std::logic_error("can't convert to point");
-				break;
-			case jtype::type_string:
-				throw std::logic_error("can't convert to point");
-				break;
-			case jtype::type_wave:
-				throw std::logic_error("can't convert to point");
-				break;
-			}
-		}
-
-		dynamic_value::operator rectangle()
-		{
-			switch (this_type)
-			{
-			case jtype::type_int8:
-			case jtype::type_int16:
-			case jtype::type_int32:
-			case jtype::type_int64:
-				throw std::logic_error("can't convert to rectangle");
-				break;
-			case jtype::type_float32:
-			case jtype::type_float64:
-				throw std::logic_error("can't convert to rectangle");
-				break;
-			case jtype::type_collection_id:
-				throw std::logic_error("can't convert to rectangle");
-				break;
-			case jtype::type_color:
-				throw std::logic_error("can't convert to rectangle");
-				break;
-			case jtype::type_datetime:
-				throw std::logic_error("can't convert to rectangle");
-				break;
-			case jtype::type_file:
-				throw std::logic_error("can't convert to rectangle");
-				break;
-			case jtype::type_http:
-				throw std::logic_error("can't convert to rectangle");
-				break;
-			case jtype::type_image:
-				throw std::logic_error("can't convert to rectangle");
-				break;
-			case jtype::type_layout_rect:
-				throw std::logic_error("can't convert to rectangle");
-				break;
-			case jtype::type_list:
-				throw std::logic_error("can't convert to rectangle");
-				break;
-			case jtype::type_midi:
-				throw std::logic_error("can't convert to rectangle");
-				break;
-			case jtype::type_null:
-				throw std::logic_error("can't convert to rectangle");
-				break;
-			case jtype::type_object:
-				throw std::logic_error("can't convert to rectangle");
-				break;
-			case jtype::type_object_id:
-				throw std::logic_error("can't convert to rectangle");
-				break;
-			case jtype::type_point:
-				throw std::logic_error("can't convert to rectangle");
-				break;
-			case jtype::type_query:
-				throw std::logic_error("can't convert to rectangle");
-				break;
-			case jtype::type_rectangle:
-				return rectangle_value;
-			case jtype::type_sql:
-				throw std::logic_error("can't convert to rectangle");
-				break;
-			case jtype::type_string:
-				throw std::logic_error("can't convert to rectangle");
-				break;
-			case jtype::type_wave:
-				throw std::logic_error("can't convert to rectangle");
-				break;
-			}
-		}
-
-		dynamic_value::operator layout_rect()
-		{
-			switch (this_type)
-			{
-			case jtype::type_int8:
-			case jtype::type_int16:
-			case jtype::type_int32:
-			case jtype::type_int64:
-				throw std::logic_error("can't convert to layout_rect");
-				break;
-			case jtype::type_float32:
-			case jtype::type_float64:
-				throw std::logic_error("can't convert to layout_rect");
-				break;
-			case jtype::type_collection_id:
-				throw std::logic_error("can't convert to layout_rect");
-				break;
-			case jtype::type_color:
-				throw std::logic_error("can't convert to layout_rect");
-				break;
-			case jtype::type_datetime:
-				throw std::logic_error("can't convert to layout_rect");
-				break;
-			case jtype::type_file:
-				throw std::logic_error("can't convert to layout_rect");
-				break;
-			case jtype::type_http:
-				throw std::logic_error("can't convert to layout_rect");
-				break;
-			case jtype::type_image:
-				throw std::logic_error("can't convert to layout_rect");
-				break;
-			case jtype::type_layout_rect:
-				return layout_rect_value;
-			case jtype::type_list:
-				throw std::logic_error("can't convert to layout_rect");
-				break;
-			case jtype::type_midi:
-				throw std::logic_error("can't convert to layout_rect");
-				break;
-			case jtype::type_null:
-				throw std::logic_error("can't convert to layout_rect");
-				break;
-			case jtype::type_object:
-				throw std::logic_error("can't convert to layout_rect");
-				break;
-			case jtype::type_object_id:
-				throw std::logic_error("can't convert to layout_rect");
-				break;
-			case jtype::type_point:
-				throw std::logic_error("can't convert to layout_rect");
-				break;
-			case jtype::type_query:
-				throw std::logic_error("can't convert to layout_rect");
-				break;
-			case jtype::type_rectangle:
-				throw std::logic_error("can't convert to layout_rect");
-				break;
-			case jtype::type_sql:
-				throw std::logic_error("can't convert to layout_rect");
-				break;
-			case jtype::type_string:
-				throw std::logic_error("can't convert to layout_rect");
-				break;
-			case jtype::type_wave:
-				throw std::logic_error("can't convert to layout_rect");
-				break;
-			}
-		}
 
 		relative_ptr_type jobject::get_primary_key()
 		{
@@ -1965,9 +1395,9 @@ namespace corona
 			return pkfield;
 		}
 
-		dynamic_value jobject::get(relative_ptr_type _field_id)
+		jvalue jobject::get(relative_ptr_type _field_id)
 		{
-			dynamic_value sma;
+			jvalue sma;
 
 			if (_field_id < 0)
 			{
@@ -1985,30 +1415,30 @@ namespace corona
 			switch (field.type_id)
 			{
 			case jtype::type_int8:
-				sma = dynamic_value( _field_idx, (int64_t)get_int8(_field_idx) );
+				sma = jvalue( _field_idx, (int64_t)get_int8(_field_idx) );
 				break;
 			case jtype::type_int16:
-				sma = dynamic_value(_field_idx, (int64_t)get_int16(_field_idx) );
+				sma = jvalue(_field_idx, (int64_t)get_int16(_field_idx) );
 				break;
 			case jtype::type_int32:
-				sma = dynamic_value(_field_idx, (int64_t)get_int32(_field_idx) );
+				sma = jvalue(_field_idx, (int64_t)get_int32(_field_idx) );
 				break;
 			case jtype::type_int64:
-				sma = dynamic_value(_field_idx, (int64_t)get_int64(_field_idx) );
+				sma = jvalue(_field_idx, (int64_t)get_int64(_field_idx) );
 				break;
 			case jtype::type_float32:
-				sma = dynamic_value(_field_idx, (double)get_float(_field_idx) );
+				sma = jvalue(_field_idx, (double)get_float(_field_idx) );
 				break;
 			case jtype::type_float64:
-				sma = dynamic_value(_field_idx, (double)get_double(_field_idx) );
+				sma = jvalue(_field_idx, (double)get_double(_field_idx) );
 				break;
 			case jtype::type_collection_id:
 				break;
 			case jtype::type_color:
-				sma = dynamic_value(_field_idx, (color)get_color(_field_idx));
+				sma = jvalue(_field_idx, (color)get_color(_field_idx));
 				break;
 			case jtype::type_datetime:
-				sma = dynamic_value(_field_idx, (time_t)get_time(_field_idx));
+				sma = jvalue(_field_idx, (time_t)get_time(_field_idx));
 				break;
 			case jtype::type_file:
 				break;
@@ -2017,7 +1447,7 @@ namespace corona
 			case jtype::type_image:
 				break;
 			case jtype::type_layout_rect:
-				sma = dynamic_value(_field_idx, get_layout_rect(_field_idx));
+				sma = jvalue(_field_idx, get_layout_rect(_field_idx));
 				break;
 			case jtype::type_list:
 				break;
@@ -2030,19 +1460,19 @@ namespace corona
 			case jtype::type_object_id:
 				break;
 			case jtype::type_point:
-				sma = dynamic_value(_field_idx, get_point(_field_idx));
+				sma = jvalue(_field_idx, get_point(_field_idx));
 				break;
 			case jtype::type_query:
 				break;
 			case jtype::type_rectangle:
-				sma = dynamic_value(_field_idx, get_rectangle(_field_idx));
+				sma = jvalue(_field_idx, get_rectangle(_field_idx));
 				break;
 			case jtype::type_sql:
 				break;
 			case jtype::type_string:
 				{
 				auto str_value = get_string(_field_idx);
-				sma = dynamic_value(_field_idx, str_value.c_str());
+				sma = jvalue(_field_idx, str_value.c_str());
 				}
 				break;
 			case jtype::type_wave:
@@ -2052,7 +1482,7 @@ namespace corona
 			return sma;
 		}
 
-		dynamic_value jobject::operator[](relative_ptr_type field_id)
+		jvalue jobject::operator[](relative_ptr_type field_id)
 		{
 			return get(field_id);
 		}
@@ -3028,7 +2458,7 @@ namespace corona
 			return false;
 		}
 
-		void jobject::set_value(const dynamic_value& _member_assignment)
+		void jobject::set_value(const jvalue& _member_assignment)
 		{
 			int index = get_field_index_by_id(_member_assignment.field_id);
 
@@ -3550,10 +2980,10 @@ namespace corona
 			}
 			else
 			{
-				data.instance = model_box.unpack<jlist_instance>(0);
+				data.instance = model_box.get_object<jlist_instance>(0);
 			}
 
-			data.list_bytes = model_box.unpack<char>(data.instance->slice_offset);
+			data.list_bytes = model_box.get_object<char>(data.instance->slice_offset);
 			data.selections = array_box<relative_ptr_type>::get(&model_box, data.instance->selection_offset);
 		}
 
@@ -3566,8 +2996,8 @@ namespace corona
 			char* t = _dest.allocate<char>(box_size);
 			model_box = inline_box(t, box_size);
 			std::copy((char*)_src.data.instance, (char*)_src.data.instance + box_size, (char*)data.instance);
-			data.instance = model_box.unpack<jlist_instance>(0);
-			data.list_bytes = model_box.unpack<char>(data.instance->slice_offset);
+			data.instance = model_box.get_object<jlist_instance>(0);
+			data.list_bytes = model_box.get_object<char>(data.instance->slice_offset);
 			data.selections = array_box<relative_ptr_type>::get(&model_box, data.instance->selection_offset);
 			item = _src.item;
 		}

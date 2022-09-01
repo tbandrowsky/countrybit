@@ -84,7 +84,7 @@ namespace corona
 
 				grp.key = _key;
 
-				serialized_box_container *box = group_by_collection::get_box();
+				auto box = group_by_collection::get_box();
 
 				if (group_by_collection::contains(_key))
 				{

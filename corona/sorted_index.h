@@ -91,7 +91,7 @@ namespace corona
 			index_header_type* get_index_header()
 			{
 				index_header_type* t;
-				t = box->unpack<index_header_type>(header_location);
+				t = box->get_object<index_header_type>(header_location);
 				if (!t->block.is_sorted_index()) {
 					throw std::logic_error("did not read sorted index correctly");
 				}
@@ -109,7 +109,7 @@ namespace corona
 			{
 				index_node_holder holder, * hd;
 				data_pair dp;
-				relative_ptr_type r = box->pack<index_node_holder>(holder);
+				relative_ptr_type r = box->put_object<index_node_holder>(holder);
 
 				int level_bounds = _max_level + 1;
 
@@ -118,9 +118,9 @@ namespace corona
 					throw std::logic_error("sorted index exhausted.");
 				}
 
-				hd = box->unpack<index_node_holder>(r);
+				hd = box->get_object<index_node_holder>(r);
 				hd->block = block_id::sorted_index_node_id();
-				hd->header_id = box->pack<data_pair>(dp);
+				hd->header_id = box->put_object<data_pair>(dp);
 				hd->details_id = forward_pointer_collection::reserve(box, level_bounds);
 
 				if (hd->header_id == null_row || hd->details_id == null_row)
@@ -129,7 +129,7 @@ namespace corona
 				}
 
 				index_node		  node;
-				node.data = box->unpack<data_pair>(hd->header_id);
+				node.data = box->get_object<data_pair>(hd->header_id);
 				node.details = forward_pointer_collection::get(box, hd->details_id);
 				node.id = r;
 
@@ -151,12 +151,12 @@ namespace corona
 			static index_node get_node(serialized_box_container* box, relative_ptr_type _node_id)
 			{
 				index_node_holder *hd;
-				hd = box->unpack<index_node_holder>(_node_id);
+				hd = box->get_object<index_node_holder>(_node_id);
 				if (!hd->block.is_sorted_index_node()) {
 					throw std::logic_error("did not read sorted index node correctly");
 				}
 				index_node		  node;
-				node.data = box->unpack<data_pair>(hd->header_id);
+				node.data = box->get_object<data_pair>(hd->header_id);
 				node.details = forward_pointer_collection::get(box, hd->details_id);
 				return node;
 			}
@@ -206,7 +206,7 @@ namespace corona
 				return *this;
 			}
 
-			serialized_box_container* get_box() {
+			auto get_box() {
 				return box;
 			}
 
@@ -219,8 +219,8 @@ namespace corona
 				hdr.header_id = null_row;
 				hdr.block = block_id::sorted_index_id();
 
-				relative_ptr_type header_location = _b->pack(hdr);			
-				phdr = _b->unpack<index_header_type>(header_location);
+				relative_ptr_type header_location = _b->put_object(hdr);			
+				phdr = _b->get_object<index_header_type>(header_location);
 
 				index_node new_node = create_node(_b, MaxNumberOfLevels);
 				phdr->header_id = new_node.row_id();

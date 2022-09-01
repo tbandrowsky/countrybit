@@ -70,8 +70,8 @@ namespace corona
 			static relative_ptr_type create(BOX* b, int chars_length)
 			{
 				string_box temp;
-				auto location = b->pack<char>(sizeof(string_box_data)+chars_length);
-				temp.hdr = b->unpack<string_box_data>(location);
+				auto location = b->put_object<char>(sizeof(string_box_data)+chars_length);
+				temp.hdr = b->get_object<string_box_data>(location);
 				temp.hdr->last_char = chars_length - 1;
 				temp.hdr->length = 0;
 				temp.hdr->data[0] = 0;
@@ -83,7 +83,7 @@ namespace corona
 			static string_box get(BOX* b, int location)
 			{
 				string_box temp;
-				temp.hdr = b->unpack<string_box_data>(location);
+				temp.hdr = b->get_object<string_box_data>(location);
 				return temp;
 			}
 

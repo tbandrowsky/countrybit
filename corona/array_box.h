@@ -252,7 +252,7 @@ namespace corona
 			{
 				array_box temp;
 				auto location = b->fill<char>(0, sizeof(array_box_data) + items_length * sizeof(item_type));
-				temp.hdr = b->unpack<array_box_data>(location);
+				temp.hdr = b->get_object<array_box_data>(location);
 				temp.hdr->max_items = items_length;
 				temp.hdr->length = 0;
 				temp.hdr->data[0] = {};
@@ -262,7 +262,7 @@ namespace corona
 			static array_box get(serialized_box_container* b, corona_size_t location)
 			{
 				array_box temp;
-				temp.hdr = b->unpack<array_box_data>(location);
+				temp.hdr = b->get_object<array_box_data>(location);
 				return temp;
 			}
 

@@ -22,144 +22,337 @@ namespace corona
 			b = c.data();
 		};
 
-		template <typename box_class, typename data>
-		concept box = requires(box_class c, data d, data * pd, relative_ptr_type l, corona_size_t s, int x, char* b) {
+		template <typename box_class>
+		concept box_implementation = requires(box_class c, relative_ptr_type l, corona_size_t s, int x, char* b, bool v, int64_t i) {
+			c.init(x);
+			c.adjust(x);
 			s = c.size();
 			x = c.top();
-			b = c.data();
-			l = c.pack(d);
 			l = c.reserve(s);
-			l = c.pack(d, x);
-			l = c.pack(&d, x);
-//			pd = c.unpack(l);
+			i = c.free();
+			b = c.allocate(s, x, l);
+			b = c.get_object(l);
+			l = c.put_object(b, x);
+			c.commit();
 		};
 
-		class serialized_box 
+		struct serialized_box_data
 		{
 			block_id		 _box_id;
 			corona_size_t _size;
 			corona_size_t _top;
 			char _data[1];
 
-		public:
-
-			serialized_box()
+			static serialized_box_data* from(char* p)
 			{
-				_box_id = block_id::box_id();
+				serialized_box_data* r = new (p) serialized_box_data();
+				return r;
+			}
+		};
+
+		class serialized_box_implementation
+		{
+		public:
+			virtual void init(corona_size_t _length) = 0;
+			virtual void adjust(corona_size_t _length) = 0;
+			virtual corona_size_t size() const = 0;
+			virtual relative_ptr_type top() const = 0;
+			virtual corona_size_t free() const = 0;
+			virtual void clear() = 0;
+			virtual relative_ptr_type reserve(corona_size_t length) = 0;
+			virtual char* allocate(int64_t sizeofobj, int length, relative_ptr_type& dest) = 0;
+			virtual char* get_object(relative_ptr_type _src) = 0;
+			virtual relative_ptr_type put_object(char* _src, int _length) = 0;
+			virtual void commit() = 0;
+		};
+
+		class serialized_box_memory_implementation : public serialized_box_implementation
+		{
+			serialized_box_data* data;
+
+
+			serialized_box_memory_implementation(char* _data)
+			{
+				data = serialized_box_data::from(_data);
+				data->_box_id = block_id::box_id();
 			}
 
-			template <typename bx> 
-			requires (box_data<bx>)
-			serialized_box(const bx& _src)
+		public:
+
+			serialized_box_memory_implementation()
 			{
-				int64_t new_size = _src.size();
-				if (_size < new_size)
-					throw std::invalid_argument("target box too small");
-				_top = _src.top();
-				_size = new_size;
-				memcpy(_data, _src.data(), new_size);
+				data = nullptr;
+			}
+
+			static serialized_box_memory_implementation *from(char* _data)
+			{
+				serialized_box_memory_implementation* nw = new (_data) serialized_box_memory_implementation(_data + sizeof(serialized_box_memory_implementation));
+				return nw;
+			}
+
+			static serialized_box_memory_implementation* create(char* _data, int _length)
+			{
+				int reserved_size = sizeof(serialized_box_memory_implementation) + sizeof(serialized_box_data);
+				serialized_box_memory_implementation* nw = new (_data) serialized_box_memory_implementation(_data + sizeof(serialized_box_memory_implementation));
+				nw->init(_length - reserved_size);
+				return nw;
+			}
+
+			serialized_box_memory_implementation operator = (serialized_box_memory_implementation& _bx)
+			{
+				data = _bx.data;
 			}
 
 			template <typename bx>
-			requires (box_data<bx>)
-			serialized_box operator = (const bx& _src)
+				requires (box_data<bx>)
+			serialized_box_memory_implementation operator = (const bx& _src)
 			{
 				int64_t new_size = _src.size();
-				if (_size < new_size)
+				if (data->_size < new_size)
 					throw std::invalid_argument("target box too small");
-				_top = _src.top();
-				_size = new_size;
-				memcpy(_data, _src.data(), new_size);
+				data->_top = _src.top();
+				data->_size = new_size;
+				memcpy(data->_data, _src.data(), new_size);
 				return *this;
 			}
 
-			void init(corona_size_t _length)
+			virtual void init(corona_size_t _length)
 			{
-				_top = 0;
-				_size = _length;
-				_box_id = block_id::box_id();
+				data->_top = 0;
+				data->_size = _length;
+				data->_box_id = block_id::box_id();
 			}
 
-			void adjust(corona_size_t _length)
+			virtual void adjust(corona_size_t _length)
 			{
-				_size = _length;
+				data->_size = _length;
 			}
 
-			relative_ptr_type top()
+			virtual corona_size_t size() const
 			{
-				return _top;
+				return data->_size;
 			}
 
-			corona_size_t size()
+			virtual relative_ptr_type top() const
 			{
-				return _size;
+				return data->_top;
 			}
 
-			char* data()
+			virtual corona_size_t free() const
 			{
-				return &_data[0];
+				return size() - top();
 			}
 
-			template <typename T>
-			T* pack_start(int length, relative_ptr_type& dest)
+			virtual void clear()
 			{
-				relative_ptr_type alignment = sizeof(T);
+				data->_top = 0;
+			}
 
-				if (sizeof(T) < 8)
+			virtual relative_ptr_type reserve(corona_size_t length)
+			{
+				corona_size_t sz = length;
+				corona_size_t placement = data->_top;
+				corona_size_t new_top = placement + sz;
+				if (new_top > data->_size)
+					return -1;
+				data->_top = new_top;
+				return placement;
+			}
+
+			virtual char* allocate(int64_t sizeofobj, int length, relative_ptr_type& dest)
+			{
+				relative_ptr_type alignment = sizeof(sizeofobj);
+
+				if (sizeofobj < 8)
 				{
-					alignment = sizeof(T);
+					alignment = sizeofobj;
 				}
 				else
 				{
 					alignment = 8;
 				}
 
-				relative_ptr_type start = _top + ((alignment - _top % alignment) % alignment);
-				relative_ptr_type stop = start + sizeof(T) * length;
+				relative_ptr_type start = data->_top + ((alignment - data->_top % alignment) % alignment);
+				relative_ptr_type stop = start + sizeofobj * length;
 
-//				std::cout << "pack:" << start << " " << stop << " " << _size << std::endl;
+				//				std::cout << "pack:" << start << " " << stop << " " << _size << std::endl;
 
-				if (stop > _size) 
+				if (stop > data->_size)
 				{
 					dest = null_row;
 					return nullptr;
 				}
 
-				T *destptr = (T*)(data() + start);
-				_top = stop;
+				char* destptr = (data->_data + start);
+				data->_top = stop;
 				dest = start;
 
 				return destptr;
 			}
 
-			template <typename T>
-			requires (std::is_standard_layout<T>::value)
-			T* unpack(relative_ptr_type offset, T* dummy = nullptr)
+			virtual char* get_object(relative_ptr_type _src)
 			{
-				if (offset == null_row) {
+				if (_src == null_row) {
 					return nullptr;
 				}
-				T* item = (T*)&_data[offset];
+				char* item = &data->_data[_src];
 				return item;
 			}
 
-			template <typename T> 
-			requires (std::is_standard_layout<T>::value)
-			relative_ptr_type pack(T& src)
+			virtual relative_ptr_type put_object(char *_src, int _length)
 			{
 				relative_ptr_type placement;
-				T* item = pack_start<T>(1, placement);
+				char* item = allocate(1, _length, placement);
+				if (!item) return placement;
+				memcpy(item,_src, _length);
+				return placement;
+			}
+
+			virtual void commit()
+			{
+				;
+			}
+			
+			char* data()
+			{
+				return data->_data;
+			}
+
+		};
+
+		class serialized_box 
+		{
+
+			serialized_box_implementation *boxi;
+
+		public:
+
+			serialized_box() : boxi(nullptr)
+			{
+				;
+			}
+
+			serialized_box(serialized_box_implementation *_boxi) : boxi(_boxi)
+			{
+				;
+			}
+
+			void adjust(corona_size_t _length)
+			{
+				boxi->adjust(_length);
+			}
+
+			relative_ptr_type reserve(corona_size_t length)
+			{
+				return boxi->reserve(length);
+			}
+
+			corona_size_t top() const
+			{
+				return boxi->top();
+			}
+
+			const serialized_box* get_address() const
+			{
+				return this;
+			}
+
+			corona_size_t free() const
+			{
+				return boxi->free();
+			}
+
+			corona_size_t size() const
+			{
+				return boxi->size();
+			}
+
+			void clear()
+			{
+				boxi->clear();
+			}
+
+			char* allocate(int64_t sizeofobj, int length, relative_ptr_type& dest)
+			{
+				return boxi->allocate(sizeofobj, length, dest);
+			}
+
+			char* get_object(relative_ptr_type _src)
+			{
+				return boxi->get_object(_src);
+			}
+
+			relative_ptr_type put_object(char* _src, int _length)
+			{
+				return boxi->put_object(_src, _length);
+			}
+
+			void commit()
+			{
+				boxi->commit();
+			}
+
+		};
+
+
+		class serialized_box_container
+		{
+		public:
+
+			virtual serialized_box* get_box() { return nullptr; }
+			virtual const serialized_box* get_box_const() const { return nullptr; }
+			virtual serialized_box* check(corona_size_t _bytes) { return nullptr; }
+
+			relative_ptr_type top() const
+			{
+				return get_box_const()->top();
+			}
+
+			corona_size_t free() const
+			{
+				return get_box_const()->size();
+			}
+
+			corona_size_t size() const
+			{
+				return get_box_const()->size();
+			}
+
+			void clear()
+			{
+				return get_box()->clear();
+			}
+		
+			template <typename T>
+			T* allocate(int length, relative_ptr_type& dest)
+			{
+				return (T*)get_box()->allocate(sizeof(T), length, dest);
+			}
+
+			template <typename T>
+				requires (std::is_standard_layout<T>::value)
+			T* get_object(relative_ptr_type offset, T* dummy = nullptr)
+			{
+				return (T*)get_box()->get_object(offset);
+			}
+
+			template <typename T>
+				requires (std::is_standard_layout<T>::value)
+			relative_ptr_type put_object(T& src)
+			{
+				relative_ptr_type placement;
+				T* item = allocate<T>(1, placement);
 				if (!item) return placement;
 				*item = src;
 				return placement;
 			}
 
 			template <typename T>
-			requires (std::is_standard_layout<T>::value)
-			relative_ptr_type pack(const T* src, int length)
+				requires (std::is_standard_layout<T>::value)
+			relative_ptr_type put_object(const T* src, int length)
 			{
 				relative_ptr_type placement;
-				T* item = pack_start<T>(length, placement);
+				T* item = allocate<T>(length, placement);
 				if (!item) return placement;
 				while (length)
 				{
@@ -176,7 +369,7 @@ namespace corona
 			relative_ptr_type fill(T src, int length)
 			{
 				relative_ptr_type placement;
-				T* item = pack_start<T>(length, placement);
+				T* item = allocate<T>(length, placement);
 				if (!item) return placement;
 				while (length)
 				{
@@ -187,12 +380,12 @@ namespace corona
 				return placement;
 			}
 
-			template <typename T> 
-			requires (std::is_standard_layout<T>::value)
+			template <typename T>
+				requires (std::is_standard_layout<T>::value)
 			relative_ptr_type pack_slice(const T* base, int start, int stop, bool terminate = true)
 			{
 				relative_ptr_type placement;
-				T* item = pack_start<T>((stop - start) + 1, placement);
+				T* item = allocate<T>((stop - start) + 1, placement);
 				if (!item) return placement;
 
 				int i = start;
@@ -203,7 +396,7 @@ namespace corona
 					i++;
 				}
 
-				if (terminate) 
+				if (terminate)
 				{
 					T temp = {};
 					*item = temp;
@@ -214,7 +407,7 @@ namespace corona
 
 			template <typename T>
 				requires (std::is_standard_layout<T>::value)
-			relative_ptr_type pack_terminated(const T* base, int start)
+			relative_ptr_type put_null_terminated(const T* base, int start)
 			{
 				int length = 0;
 				T defaulto = {};
@@ -226,10 +419,10 @@ namespace corona
 				length++;
 
 				relative_ptr_type placement;
-				T* item = pack_start<T>(length, placement);
+				T* item = allocate<T>(length, placement);
 				if (!item) return placement;
 
-				while (length) 
+				while (length)
 				{
 					*item = base[start];
 					length--;
@@ -243,12 +436,12 @@ namespace corona
 			}
 
 			template <typename T>
-			requires (std::is_standard_layout<T>::value)
+				requires (std::is_standard_layout<T>::value)
 			T* copy(const T* base, int start)
 			{
 				if (!base) return nullptr;
-				corona_size_t l = pack_terminated(base, start);
-				return unpack<T>(l);
+				corona_size_t l = put_null_terminated(base, start);
+				return get_object<T>(l);
 			}
 
 			template <typename T>
@@ -257,15 +450,7 @@ namespace corona
 			{
 				if (!base) return nullptr;
 				corona_size_t l = pack_slice(base, start, stop, terminate);
-				return unpack<T>(l);
-			}
-
-			template <typename T>
-			char* place()
-			{
-				relative_ptr_type placement;
-				T* item = pack_start<T>(1, placement);
-				return (char *)item;
+				return get_object<T>(l);
 			}
 
 			template <typename T>
@@ -275,22 +460,22 @@ namespace corona
 				// so, we shall have to track this with a list some kind down the road to 
 				// use this facility, and ideally create a special box
 				relative_ptr_type placement;
-				T* item = pack_start<T>(1, placement);
-				if (!item) return item;				
+				T* item = allocate<T>(1, placement);
+				if (!item) return item;
 				item = new (item) T(source);
 				return item;
 			}
 
 			template <typename T>
-			requires (std::is_standard_layout<T>::value)
+				requires (std::is_standard_layout<T>::value)
 			T* allocate(int count)
 			{
 				relative_ptr_type placement;
-				T* item = pack_start<T>(count, placement);
+				T* item = allocate<T>(count, placement);
 				if (!item) return item;
 
 				T* it = item;
-				while (count) 
+				while (count)
 				{
 					*it = {};
 					count--;
@@ -299,153 +484,9 @@ namespace corona
 				return item;
 			}
 
-			relative_ptr_type reserve(corona_size_t length)
+			void commit()
 			{
-				corona_size_t sz = length;
-				corona_size_t placement = _top;
-				corona_size_t new_top = placement + sz;
-				if (new_top > _size)
-					return -1;
-				_top = new_top;
-				return placement;
-			}
-
-			relative_ptr_type reserve_all_free()
-			{
-				corona_size_t new_top = _size;
-				corona_size_t r = _top;
-				_top = new_top;
-				return r;
-			}
-
-			corona_size_t free()
-			{
-				return size() - top();
-			}
-
-		};
-
-		class serialized_box_container
-		{
-		public:
-			virtual serialized_box* get_box() { return nullptr; }
-			virtual serialized_box* check(corona_size_t _bytes) { return nullptr; }
-
-			relative_ptr_type top()
-			{
-				return get_box()->top();
-			}
-
-			corona_size_t free()
-			{
-				return get_box()->size();
-			}
-
-			corona_size_t size()
-			{
-				return get_box()->size();
-			}
-
-			char* data()
-			{
-				return get_box()->data();
-			}
-
-			char* move_ptr(serialized_box* _src, char* _srcp)
-			{
-				corona_size_t offset = _srcp - _src->data();
-				char* t = data() + offset;
-				return t;
-			}
-
-			template <typename T>
-				requires (std::is_standard_layout<T>::value)
-			T* unpack(corona_size_t offset)
-			{
-				return get_box()->unpack<T>(offset);
-			}
-
-			template <typename T>
-				requires (std::is_standard_layout<T>::value)
-			relative_ptr_type pack(T& src)
-			{
-				check(sizeof(T));
-				return get_box()->pack<T>(src);
-			}
-
-			template <typename T>
-				requires (std::is_standard_layout<T>::value)
-			relative_ptr_type fill(const T& src, int length)
-			{
-				check(sizeof(T) * length);
-				return get_box()->fill<T>(src, length);
-			}
-
-			template <typename T>
-				requires (std::is_standard_layout<T>::value)
-			relative_ptr_type pack(const T* src, int length)
-			{
-				check(sizeof(T) * length);
-				return get_box()->pack<T>(src, length);
-			}
-
-			template <typename T>
-				requires (std::is_standard_layout<T>::value)
-			relative_ptr_type pack_terminated(const T* src, int start, bool terminate = true)
-			{
-				return get_box()->pack_terminated<T>(src, start, terminate);
-			}
-
-			template <typename T>
-				requires (std::is_standard_layout<T>::value)
-			relative_ptr_type pack_slice(const T* src, int start, int stop, bool terminate = true)
-			{
-				check(sizeof(T) * (stop - start + 1));
-				return get_box()->pack_slice<T>(src, start, stop, terminate);
-			}
-
-			template <typename T>
-				requires (std::is_standard_layout<T>::value)
-			T *copy(const T* src, int start, int stop, bool terminate = true)
-			{
-				corona_size_t t = pack_slice<T>(src, start, stop, terminate);
-				return unpack<T>(t);
-			}
-
-			template <typename T>
-				requires (std::is_standard_layout<T>::value)
-			T* copy(const T* base, int start)
-			{
-				return get_box()->copy(base, start);
-			}
-
-			template <typename T>
-			T* clone(T& base)
-			{
-				return get_box()->clone(base);
-			}
-
-			template <typename T>
-				requires (std::is_standard_layout<T>::value)
-			T* allocate(int count)
-			{
-				check(sizeof(T) * count);
-				return get_box()->allocate<T>(count);
-			}
-
-			template <typename T>
-			char* place()
-			{
-				check(sizeof(T));
-				return get_box()->place<T>();
-			}
-
-			relative_ptr_type reserve(corona_size_t length)
-			{
-				if (!length)
-					length = get_box()->free();
-				check(length);
-				return get_box()->reserve(length);
+				get_box()->commit();
 			}
 
 		};
@@ -455,16 +496,18 @@ namespace corona
 		class static_box  : public serialized_box_container
 		{
 			static const int length = bytes;
+			serialized_box box;
 			char stuff[length];
 
 		public:
 
-			static_box()
+			static_box() 
 			{
-				init();
+				box = serialized_box_memory_implementation::create(stuff, length);
 			}
 
-			virtual serialized_box* get_box() { return (serialized_box*)&stuff; }
+			virtual serialized_box* get_box() { return &box; }
+			virtual const serialized_box* get_box_const() const { return &box; }
 			virtual serialized_box* check(int _bytes) { return _bytes < get_box()->free() ? get_box() : nullptr; }
 
 			template <typename bx>
@@ -479,18 +522,15 @@ namespace corona
 
 			template <typename bx>
 			requires (box_data<bx>)
-			static_box operator = (const bx& _src)
+			static_box operator = (bx& _src)
 			{
 				int new_size = _src.size();
 				if (length < new_size)
 					throw std::invalid_argument("target box too small");
-				memcpy(data(), _src.data(), new_size);
+				clear();
+				auto base = _src.get_object<char>(0);
+				pack_slice<char>(base, 0, new_size, false);
 				return *this;
-			}
-
-			void init()
-			{
-				get_box()->init(length - sizeof(serialized_box));
 			}
 
 		};
@@ -499,6 +539,7 @@ namespace corona
 		{
 			char* stuff;
 			int64_t length;
+			serialized_box box;
 
 		public:
 
@@ -507,20 +548,33 @@ namespace corona
 				
 			}
 
-			inline_box(char* _stuff, int _length) : stuff(_stuff), length(_length)
+			inline_box(char* _stuff, int _length) 
+				: 
+				stuff(_stuff), 
+				length(_length)
 			{
-				get_box()->init(length - sizeof(serialized_box));
+				box = serialized_box_memory_implementation::create(stuff, length);
 			}
 
-			inline_box(const inline_box& _src) : stuff(_src.stuff), length(_src.length)
+			inline_box(const inline_box& _src)
 			{
-
+				box = serialized_box_memory_implementation::create(_src.stuff, _src.length);
 			}
 
-			inline_box& operator =(const inline_box& _src) 
+			virtual serialized_box* get_box() { return &box; }
+			virtual const serialized_box* get_box_const() const { 
+				return box.get_address();
+			}
+			virtual serialized_box* check(int _bytes) { return _bytes < get_box()->free() ? get_box() : nullptr; }
+
+			inline_box& operator =(inline_box& _src) 
 			{
-				stuff = _src.stuff;
-				length = _src.length;
+				int new_size = _src.size();
+				if (length < new_size)
+					throw std::invalid_argument("target box too small");
+				clear();
+				auto base = _src.get_object<char>(0);
+				pack_slice<char>(base, 0, new_size, false);
 				return *this;
 			}
 
@@ -535,9 +589,11 @@ namespace corona
 			corona_size_t stuff_size;
 			bool own_the_data;
 
+			serialized_box box;
+
 			void resize(corona_size_t new_size)
 			{
-				corona_size_t new_stuff_size = new_size + sizeof(serialized_box);
+				corona_size_t new_stuff_size = new_size + sizeof(serialized_box) + sizeof(serialized_box_memory_implementation);
 				if (new_stuff_size < stuff_size)
 					return;
 
@@ -550,20 +606,34 @@ namespace corona
 				}
 				if (stuff) {
 					memcpy(temp, stuff, stuff_size);
-					if (own_the_data) {
-						delete[] stuff;
-					}
+					ownership_delete(nullptr);
+					stuff = temp;
+					stuff_size = new_size;
+					box = serialized_box_memory_implementation::from(temp);
+					box.adjust(stuff_size);
 				}
-				stuff = temp;
-				stuff_size = new_size;
+				else 
+				{
+					stuff = temp;
+					stuff_size = new_size;
+					box = serialized_box_memory_implementation::create(temp, stuff_size);
+				}
 				own_the_data = true;
+			}
+
+			void ownership_delete(char *other_stuff)
+			{
+				if (stuff != other_stuff && own_the_data && stuff)
+				{
+					delete[] stuff;
+					stuff = nullptr;
+				}
 			}
 
 		public:
 
-			dynamic_box() : stuff(nullptr), stuff_size(0)
+			dynamic_box() : stuff(nullptr), stuff_size(0), own_the_data(true)
 			{
-				own_the_data = true;
 #if	TRACE_DYNAMIC_BOX
 				std::cout << "box:" << this << " " << (void*)stuff << " create " << std::endl;
 #endif
@@ -574,23 +644,16 @@ namespace corona
 #if	TRACE_DYNAMIC_BOX
 				std::cout << "box:" << this << " " << (void*)stuff << " delete " << std::endl;
 #endif
-				if (own_the_data && stuff)
-				{
-					delete[] stuff;
-					stuff = nullptr;
-				}
+				ownership_delete(nullptr);
 			}
 
 			dynamic_box& operator = (const dynamic_box& _src)
 			{
-				if (stuff != _src.stuff && own_the_data && stuff)
-				{
-					delete[] stuff;
-					stuff = nullptr;
-				}
+				ownership_delete(nullptr);
 				stuff = _src.stuff;
 				stuff_size = _src.stuff_size;
 				own_the_data = false;
+				box = serialized_box_memory_implementation::from(stuff);
 #if	TRACE_DYNAMIC_BOX
 				std::cout << "box:" << this << " " << (void*)stuff << " copy " << std::endl;
 #endif
@@ -599,59 +662,45 @@ namespace corona
 
 			dynamic_box& operator = (dynamic_box&& _src)
 			{
-				if (stuff != _src.stuff && own_the_data && stuff)
-				{
-					delete[] stuff;
-					stuff = nullptr;
-				}
+				ownership_delete(nullptr);
 				stuff = _src.stuff;
 				stuff_size = _src.stuff_size;
 				own_the_data = true;
 				_src.stuff = nullptr;
 				_src.stuff_size = 0;
 				_src.own_the_data = false;
+				box = serialized_box_memory_implementation::from(stuff);
 #if	TRACE_DYNAMIC_BOX
 				std::cout << "box:" << this << " " << (void*)stuff << " move " << std::endl;
 #endif
 				return *this;
 			}
 
-			dynamic_box(const dynamic_box& _src)
+			dynamic_box(const dynamic_box& _src) : stuff(nullptr), stuff_size(0), own_the_data(true)
 			{
-				if (stuff != _src.stuff && own_the_data && stuff)
-				{
-					delete[] stuff;
-					stuff = nullptr;
-				}
+				ownership_delete(nullptr);
 				stuff = _src.stuff;
 				stuff_size = _src.stuff_size;
 				own_the_data = false;
+				box = serialized_box_memory_implementation::from(stuff);
 #if	TRACE_DYNAMIC_BOX
 				std::cout << "box:" << this << " " << (void*)stuff << " copy ctor" << std::endl;
 #endif
 			}
 
-			dynamic_box(dynamic_box&& _src)
+			dynamic_box(dynamic_box&& _src) : stuff(nullptr), stuff_size(0), own_the_data(true)
 			{
-				if (stuff != _src.stuff && own_the_data && stuff)
-				{
-					delete[] stuff;
-					stuff = nullptr;
-				}
+				ownership_delete(nullptr);
 				stuff = _src.stuff;
 				stuff_size = _src.stuff_size;
 				own_the_data = true;
 				_src.stuff = nullptr;
 				_src.stuff_size = 0;
 				_src.own_the_data = false;
+				box = serialized_box_memory_implementation::from(stuff);
 #if	TRACE_DYNAMIC_BOX
 				std::cout << "box:" << this << " " << (void*)stuff << " move ctor" << std::endl;
 #endif
-			}
-
-			virtual serialized_box* get_box() 
-			{
-				return (serialized_box*)stuff;
 			}
 
 			virtual bool has_data()
@@ -661,9 +710,8 @@ namespace corona
 
 			virtual serialized_box* check(int _bytes) 
 			{
-				serialized_box* ob, *nb;
+				serialized_box* ob;
 				ob = get_box();
-				nb = ob;
 				if (_bytes > ob->free())
 				{
 					corona_size_t s = ob->size();
@@ -675,18 +723,17 @@ namespace corona
 					}
 					resize(d);
 					std::cout << "resized from " << s << " to " << d << std::endl;
-					serialized_box *nb = get_box();
-					nb->adjust(d);
 				}
-				return nb;
+				return get_box();
 			}
 
 			void init(corona_size_t _length, serialized_box *_src = nullptr)
 			{
-				resize(_length);
-				get_box()->init(_length);
+				corona_size_t new_length = _src ? max(_length, _src->size()) : _length;
+				resize(new_length);
 				if (_src) {
-					std::copy(_src->data(), _src->data() + _length, get_box()->data());
+					clear();
+					copy(_src->get_object(0), 0, _src->size(), false);
 				}
 #if	TRACE_DYNAMIC_BOX
 				std::cout << "box:" << this << " " << (void*)stuff << " init " << std::endl;
@@ -696,27 +743,27 @@ namespace corona
 
 			void copy_box(serialized_box* _src = nullptr)
 			{
-				resize(_src->size());
-				get_box()->init(_src->size());
-				std::copy(_src->data(), _src->data() + _src->size(), get_box()->data());
+				if (!_src) return;
+				corona_size_t new_length = max(size(), _src->size());
+				resize(new_length);
+				if (_src) {
+					clear();
+					copy(_src->get_object(0), 0, _src->size(), false);
+				}
 #if	TRACE_DYNAMIC_BOX
 				std::cout << "box:" << this << " " << (void*)stuff << " copy box " << std::endl;
 #endif
-
 			}
 
 			template <typename bx>
 			requires (box_data<bx>)
-			dynamic_box(const bx& _src)
+			dynamic_box(const bx& _src) : stuff(nullptr), stuff_size(0), own_the_data(true)
 			{
 				corona_size_t new_size = _src.size();
-				init(new_size);
-				memcpy(data(), _src.data(), new_size);
+				resize(new_size);
 #if	TRACE_DYNAMIC_BOX
 				std::cout << "box:" << this << " " << (void*)stuff << " copy data ctor " << std::endl;
 #endif
-
-
 			}
 
 			template <typename bx>
@@ -724,13 +771,14 @@ namespace corona
 			dynamic_box operator = (const bx& _src)
 			{
 				corona_size_t new_size = _src.size();
-				init(new_size);
-				memcpy(data(), _src.data(), new_size);
+				resize(new_size);
+				clear();
+				copy(_src.data(), 0, new_size, false);
+
 #if	TRACE_DYNAMIC_BOX
 				std::cout << "box:" << this << " " << (void*)stuff << " assign " << std::endl;
 #endif
 				return *this;
-
 			}
 
 		};

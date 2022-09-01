@@ -233,6 +233,18 @@ namespace corona
 				return aw;
 			}
 
+			template <typename object_type> auto write(uint64_t location, object_type* obj, int count = 1)
+			{
+				if (count < 1)
+					throw std::invalid_argument("count cannot be less than 1");
+				return write(location, obj, sizeof(object_type));
+			}
+
+			template <typename object_type> auto write(uint64_t location, object_type& obj)
+			{
+				return write(location, &obj, sizeof(object_type));
+			}
+
 			auto read(uint64_t location, void* _buffer, int _buffer_length)
 			{
 				async_io_task<file_read_job, file_instance> aw;
@@ -241,6 +253,19 @@ namespace corona
 				instance.buffer_size = _buffer_length;
 				aw.configure(instance.queue, instance);
 				return aw;
+			}
+
+			template <typename object_type> auto read(uint64_t location, object_type* obj, int count = 1)
+			{
+				if (count < 1)
+					throw std::invalid_argument("count cannot be less than 1");
+
+				return read(location, obj, sizeof(object_type));
+			}
+
+			template <typename object_type> auto read(uint64_t location, object_type& obj, int count = 1)
+			{
+				return read(location, &obj, sizeof(object_type));
 			}
 
 			uint64_t size()

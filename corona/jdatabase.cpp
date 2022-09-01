@@ -20,7 +20,7 @@ namespace corona
 				database_box.init(sz);
 				co_await dbfile.read(0, database_box.data(), sz);
 				if (dbfile.success()) {
-					map = database_box.unpack<jdatabase_control_map>(0);
+					map = database_box.get_object<jdatabase_control_map>(0);
 					schema = jschema::get_schema(&database_box, map->schema_location);
 					collections_by_id = collections_by_id_type::get_sorted_index(&database_box, map->collections_by_id_location);
 				}
