@@ -14,6 +14,7 @@
 #include "shellapi.h"
 #include <io.h>
 #include <fcntl.h>
+#include "oleauto.h"
 
 #include <stdlib.h>
 #include <malloc.h>
@@ -62,6 +63,7 @@
 #include <ctime>
 #include <stack>
 
+#include "concept_lock.h"
 #include "assert_if.h"
 #include "constants.h"
 #include "store_box.h"
@@ -99,6 +101,7 @@
 #include "http_remote_box.h"
 #include "file_remote_box.h"
 #include "sorted_index.h"
+#include "store_box_file.h"
 #include "query_box.h"
 #include "visual.h"
 #include "extractor.h"

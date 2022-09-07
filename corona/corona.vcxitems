@@ -21,6 +21,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)assert_if.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)collection_id_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)color_box.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)concept_lock.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)constants.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)controller.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)controllerhost.h" />
@@ -50,6 +51,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)object_id_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)rectangle_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)sql_remote_box.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)store_box_file.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)time_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)file.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)float_box.h" />
@@ -86,6 +88,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)array_box.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)assert_if.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)collection_id_box.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)concept_lock.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)constants.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)controller.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)controllerhost.cpp" />
@@ -116,6 +119,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)read_all_string.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)sql_remote_box.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)store_box.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)store_box_file.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)string_box.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)sorted_index.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)jobject.cpp" />

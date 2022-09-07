@@ -22,18 +22,30 @@ namespace corona
 			b = c.data();
 		};
 
+		struct box_block
+		{
+			relative_ptr_type		location;
+			relative_ptr_type		allocated_length;
+			relative_ptr_type		payload_length;
+			bool					deleted;
+			time_t					updated;
+			char					data[1];
+			template <typename T>   T *get_data() { return (T *) data[0]; }
+		};
+
 		template <typename box_class>
-		concept box_implementation = requires(box_class c, relative_ptr_type l, corona_size_t s, int x, char* b, bool v, int64_t i) {
-			c.init(x);
-			c.adjust(x);
-			s = c.size();
-			x = c.top();
-			l = c.reserve(s);
-			i = c.free();
-			b = c.allocate(s, x, l);
-			b = c.get_object(l);
-			l = c.put_object(b, x);
-			c.commit();
+		concept box_implementation = requires(box_block *bb, box_class bc, relative_ptr_type loc, corona_size_t sz, int x, char* c, bool tf, int64_t i) {
+			bc.init(x);
+			bc.adjust(x);
+			sz = bc.size();
+			x = bc.top();
+			bb = bc.reserve(sz);
+			i = bc.free();
+			bb = bc.allocate(sz, x, loc);
+			bb = bc.get_object(loc);
+			loc = bc.create_object(loc, c, x);
+			loc = bc.put_object(c, x);
+			bc.commit();
 		};
 
 		struct serialized_box_data
@@ -53,35 +65,38 @@ namespace corona
 		class serialized_box_implementation
 		{
 		public:
+			virtual concept_lock lock(std::string _name) = 0;
 			virtual void init(corona_size_t _length) = 0;
 			virtual void adjust(corona_size_t _length) = 0;
 			virtual corona_size_t size() const = 0;
 			virtual relative_ptr_type top() const = 0;
 			virtual corona_size_t free() const = 0;
 			virtual void clear() = 0;
-			virtual relative_ptr_type reserve(corona_size_t length) = 0;
-			virtual char* allocate(int64_t sizeofobj, int length, relative_ptr_type& dest) = 0;
-			virtual char* get_object(relative_ptr_type _src) = 0;
-			virtual relative_ptr_type put_object(char* _src, int _length) = 0;
+			virtual box_block* reserve(corona_size_t length) = 0;
+			virtual box_block* allocate(int64_t sizeofobj, int length) = 0;
+			virtual box_block* get_object(relative_ptr_type _src) = 0;
+			virtual relative_ptr_type create_object(char* _src, int _length) = 0;
+			virtual relative_ptr_type update_object(relative_ptr_type _location, char* _src, int _length) = 0;
+			virtual bool delete_object(relative_ptr_type _location) = 0;
+			virtual relative_ptr_type copy_object(relative_ptr_type _location) = 0;
 			virtual void commit() = 0;
 		};
 
 		class serialized_box_memory_implementation : public serialized_box_implementation
 		{
-			serialized_box_data* data;
-
+			serialized_box_data* sbdata;
 
 			serialized_box_memory_implementation(char* _data)
 			{
-				data = serialized_box_data::from(_data);
-				data->_box_id = block_id::box_id();
+				sbdata = serialized_box_data::from(_data);
+				sbdata->_box_id = block_id::box_id();
 			}
 
 		public:
 
 			serialized_box_memory_implementation()
 			{
-				data = nullptr;
+				sbdata = nullptr;
 			}
 
 			static serialized_box_memory_implementation *from(char* _data)
@@ -100,42 +115,42 @@ namespace corona
 
 			serialized_box_memory_implementation operator = (serialized_box_memory_implementation& _bx)
 			{
-				data = _bx.data;
+				sbdata = _bx.sbdata;
 			}
 
 			template <typename bx>
 				requires (box_data<bx>)
 			serialized_box_memory_implementation operator = (const bx& _src)
-			{
+			{+
 				int64_t new_size = _src.size();
-				if (data->_size < new_size)
+				if (sbdata->_size < new_size)
 					throw std::invalid_argument("target box too small");
-				data->_top = _src.top();
-				data->_size = new_size;
-				memcpy(data->_data, _src.data(), new_size);
+				sbdata->_top = _src.top();
+				sbdata->_size = new_size;
+				memcpy(sbdata->_data, _src.data(), new_size);
 				return *this;
 			}
 
 			virtual void init(corona_size_t _length)
 			{
-				data->_top = 0;
-				data->_size = _length;
-				data->_box_id = block_id::box_id();
+				sbdata->_top = 0;
+				sbdata->_size = _length;
+				sbdata->_box_id = block_id::box_id();
 			}
 
 			virtual void adjust(corona_size_t _length)
 			{
-				data->_size = _length;
+				sbdata->_size = _length;
 			}
 
 			virtual corona_size_t size() const
 			{
-				return data->_size;
+				return sbdata->_size;
 			}
 
 			virtual relative_ptr_type top() const
 			{
-				return data->_top;
+				return sbdata->_top;
 			}
 
 			virtual corona_size_t free() const
@@ -145,21 +160,17 @@ namespace corona
 
 			virtual void clear()
 			{
-				data->_top = 0;
+				sbdata->_top = 0;
 			}
 
-			virtual relative_ptr_type reserve(corona_size_t length)
+			virtual box_block* reserve(corona_size_t length)
 			{
-				corona_size_t sz = length;
-				corona_size_t placement = data->_top;
-				corona_size_t new_top = placement + sz;
-				if (new_top > data->_size)
-					return -1;
-				data->_top = new_top;
-				return placement;
+				relative_ptr_type placement;
+				auto ac = allocate(1, length);
+				return ac;
 			}
 
-			virtual char* allocate(int64_t sizeofobj, int length, relative_ptr_type& dest)
+			virtual box_block* allocate(int64_t sizeofobj, int length)
 			{
 				relative_ptr_type alignment = sizeof(sizeofobj);
 
@@ -172,40 +183,70 @@ namespace corona
 					alignment = 8;
 				}
 
-				relative_ptr_type start = data->_top + ((alignment - data->_top % alignment) % alignment);
-				relative_ptr_type stop = start + sizeofobj * length;
+				relative_ptr_type start = sbdata->_top + ((alignment - sbdata->_top % alignment) % alignment);
+				relative_ptr_type stop = start + sizeofobj * length + sizeof(box_block);
 
 				//				std::cout << "pack:" << start << " " << stop << " " << _size << std::endl;
 
-				if (stop > data->_size)
+				if (stop > sbdata->_size)
 				{
-					dest = null_row;
 					return nullptr;
 				}
 
-				char* destptr = (data->_data + start);
-				data->_top = stop;
-				dest = start;
+				box_block* destptr = (box_block *)(sbdata->_data + start);
+				destptr->allocated_length = stop - start;
+				destptr->payload_length = length;
+				destptr->location = start;
+				destptr->deleted = false;
+				sbdata->_top = stop;
 
 				return destptr;
 			}
 
-			virtual char* get_object(relative_ptr_type _src)
+			virtual box_block* get_object(relative_ptr_type _src)
 			{
 				if (_src == null_row) {
 					return nullptr;
 				}
-				char* item = &data->_data[_src];
+				box_block* item = (box_block*) &sbdata->_data[_src];
 				return item;
 			}
 
-			virtual relative_ptr_type put_object(char *_src, int _length)
+			virtual relative_ptr_type create_object(char *_src, int _length)
 			{
-				relative_ptr_type placement;
-				char* item = allocate(1, _length, placement);
-				if (!item) return placement;
-				memcpy(item,_src, _length);
-				return placement;
+				box_block* item = allocate(1, _length);
+				if (!item) return null_row;
+				memcpy(&item->data[0], _src, _length);
+				return item->location;
+			}
+
+			virtual relative_ptr_type update_object(relative_ptr_type _placement, char* _src, int _length)
+			{
+				box_block* item = (box_block*)&sbdata->_data[_placement];
+				char* dest;
+				dest = &item->data[0];
+				std::copy(_src, _src + _length, dest);
+				return item->location;
+			}
+
+			virtual bool delete_object(relative_ptr_type _location)
+			{
+				box_block* item = (box_block*)&sbdata->_data[_location];
+				item->deleted = true;
+				return true;
+			}
+
+			virtual relative_ptr_type copy_object(relative_ptr_type _location)
+			{
+				relative_ptr_type dest_location = null_row;
+				box_block* dest_block;
+				box_block* item = (box_block*)&sbdata->_data[_location];
+				dest_block = allocate(1, item->payload_length);
+				if (dest_block) {
+					char* p = &item->data[0];
+					std::copy(p, p + item->payload_length, &dest_block->data[0]);
+				}
+				return dest_location;
 			}
 
 			virtual void commit()
@@ -215,10 +256,11 @@ namespace corona
 			
 			char* data()
 			{
-				return data->_data;
+				return sbdata->_data;
 			}
 
 		};
+
 
 		class serialized_box 
 		{
@@ -274,23 +316,30 @@ namespace corona
 
 			char* allocate(int64_t sizeofobj, int length, relative_ptr_type& dest)
 			{
-				return boxi->allocate(sizeofobj, length, dest);
+				auto allocation = boxi->allocate(sizeofobj, length);
+				return allocation ? &allocation->data[0] : nullptr;
 			}
 
-			char* get_object(relative_ptr_type _src)
+			box_block* get_object(relative_ptr_type _src)
 			{
 				return boxi->get_object(_src);
 			}
 
-			relative_ptr_type put_object(char* _src, int _length)
+			relative_ptr_type create_object(char* _src, int _length)
 			{
-				return boxi->put_object(_src, _length);
+				return boxi->create_object(_src, _length);
+			}
+
+			virtual relative_ptr_type update_object(relative_ptr_type _placement, char* _src, int _length)
+			{
+				return boxi->update_object(_placement, _src, _length);
 			}
 
 			void commit()
 			{
 				boxi->commit();
 			}
+
 
 		};
 
