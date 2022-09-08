@@ -23,20 +23,20 @@ namespace corona
 		class date_time 
 		{
 		public:
-			static int year(time_t t);
-			static int month(time_t t);
-			static int day(time_t t);
-			static int hour(time_t t);
-			static int minute(time_t t);
-			static int second(time_t t);
+			static int year(DATE t);
+			static int month(DATE t);
+			static int day(DATE t);
+			static int hour(DATE t);
+			static int minute(DATE t);
+			static int second(DATE t);
 
-			time_t add_seconds(time_t seconds);
-			time_t add_minutes(time_t minutes);
-			time_t add_hours(time_t hours);
-			time_t add_days(time_t days);
-			time_t add_weeks(time_t weeks);
-			time_t add_months(time_t months);
-			time_t add_years(time_t years);
+			DATE add_seconds(DATE seconds);
+			DATE add_minutes(DATE minutes);
+			DATE add_hours(DATE hours);
+			DATE add_days(DATE days);
+			DATE add_weeks(DATE weeks);
+			DATE add_months(time_t months);
+			DATE add_years(time_t years);
 		};
 
 		class time_box : public basic_time_box
@@ -53,18 +53,17 @@ namespace corona
 				return *this;
 			}
 
-			time_box operator = (time_t _src)
+			time_box operator = (DATE _src)
 			{
 				set_value(_src);
 				return *this;
 			}
 
-			operator time_t& () { return *data; }
-			time_t* get_data() { return data; }
-			time_t value() const { return *data; }
+			operator DATE& () { return *data; }
+			DATE* get_data() { return data; }
+			DATE value() const { return *data; }
 		};
 
 		std::ostream& operator <<(std::ostream& output, time_box& src);
-
 	}
 }

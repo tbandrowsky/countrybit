@@ -84,7 +84,7 @@ namespace corona
 			return v;
 		}
 
-		page_item* page::set(page_item* _parent, actor_state* _state, object_member_path path, int field_id, jvalue dv, layout_rect _box)
+		page_item* page::set(page_item* _parent, actor_state* _state, object_member_path path, int field_id, jvariant dv, layout_rect _box)
 		{
 			page_item* v = append(_parent, layout_types::set, null_row, _box, 0.0_px, visual_alignment::align_near);
 			v->object_path = path;
@@ -120,7 +120,7 @@ namespace corona
 				v->field = &slice.get_field_by_id(_field_id);
 			}
 			v->caption = data.copy(_caption, 0);
-			v->dest_value = jvalue(_field_id, _sort_field_id );
+			v->dest_value = jvariant(_field_id, _sort_field_id );
 			return v;
 		}
 

@@ -59,18 +59,28 @@ namespace corona
 		{
 			int64_t			minimum_int;
 			int64_t			maximum_int;
+			object_name		format;
 		};
 
 		struct double_properties_type
 		{
 			double			minimum_double;
 			double			maximum_double;
+			object_name		format;
 		};
 
 		struct time_properties_type
 		{
-			int64_t			minimum_time_t;
-			int64_t			maximum_time_t;
+			DATE			minimum_date;
+			DATE			maximum_date;
+			object_name		format;
+		};
+
+		struct currency_properties_type
+		{
+			CY				minimum_amount;
+			CY				maximum_amount;
+			object_name		format;
 		};
 
 		struct point_properties_type
@@ -237,6 +247,7 @@ namespace corona
 				int_properties_type			int_properties;
 				double_properties_type		double_properties;
 				time_properties_type		time_properties;
+				currency_properties_type	currency_properties;
 				object_properties_type		object_properties;
 				query_properties_type		query_properties;
 				point_properties_type		point_properties;
@@ -356,42 +367,35 @@ namespace corona
 		};
 
 
-		class query_definition_type
+		struct query_mapping_type
 		{
-			;
-		};
-
-		class query_instance
-		{
-		public:
-			time_t						last_success;
-			time_t						last_error;
-			object_description			error_message;
-		};
-
-		struct file_definition_type
-		{
-			remote_file_path				file_path;
-			object_name						parameter_field;
-			relative_ptr_type				parameter_field_id;
 			relative_ptr_type				result_field_id;
 			object_name						result_class_name;
 			relative_ptr_type				result_class_id;
 			int								max_result_objects;
 			remote_parameter_fields_type	parameters;
 			remote_fields_type				fields;
-			time_t							last_success;
-			time_t							last_error;
-			object_description				error_message;
+		};
+
+		struct query_status 
+		{
+			DATE						last_success;
+			DATE						last_error;
+			object_description			error_message;
+		};
+
+		struct file_definition_type
+		{
+			remote_file_path				file_path;
+			query_mapping_type			mapping;
+			query_status					status;
 		};
 
 		class file_remote_instance
 		{
 		public:
 			collection_id_type			collection;
-			time_t						last_success;
-			time_t						last_error;
-			object_description			error_message;
+			query_status					status;
 		};
 
 		enum class http_login_types
@@ -403,7 +407,7 @@ namespace corona
 			certificate_authentication = 4
 		};
 
-		struct http_definition_type
+		struct http_definition_type 
 		{
 			operation_name					login_type_name;
 			http_login_types				login_type;
@@ -413,24 +417,16 @@ namespace corona
 			object_name						password;
 			remote_http_url					data_url;
 			remote_http_method				data_method;
-			relative_ptr_type				result_field_id;
-			object_name						result_class_name;
-			relative_ptr_type				result_class_id;
-			relative_ptr_type				max_result_objects;
-			remote_parameter_fields_type	parameters;
-			remote_fields_type				fields;
-			time_t							last_success;
-			time_t							last_error;
-			object_description				error_message;
+			query_mapping_type			mapping;
+			query_status					status;
 		};
 
 		class http_remote_instance
 		{
 		public:
 			collection_id_type			collection;
-			time_t						last_success;
-			time_t						last_error;
-			object_description			error_message;
+			query_status					status;
+
 		};
 
 		enum class sql_login_types
@@ -447,24 +443,14 @@ namespace corona
 			sql_login_types					login_type;
 			object_name						username;
 			object_name						password;
-			relative_ptr_type				result_field_id;
-			object_name						result_class_name;
-			relative_ptr_type				result_class_id;
-			relative_ptr_type				max_result_objects;
-			remote_parameter_fields_type	parameters;
-			remote_fields_type				fields;
-			remote_sql_query				query;
-			time_t							last_success;
-			time_t							last_error;
-			object_description				error_message;
+			query_mapping_type			mapping;
+			query_status					status;
 		};
 
 		class sql_remote_instance
 		{
 		public:
-			time_t						last_success;
-			time_t						last_error;
-			object_description			error_message;
+			query_status					status;
 		};
 
 		class put_field_request_base {
@@ -553,7 +539,7 @@ namespace corona
 		class put_named_query_field_request {
 		public:
 			put_field_request_base name;
-			query_definition_type options;
+			query_mapping_type options;
 		};
 
 		class put_named_sql_remote_field_request {

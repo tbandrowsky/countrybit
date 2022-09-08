@@ -932,7 +932,7 @@ namespace corona
 			return new_slice;
 		}
 
-		jobject jcollection::create_object(relative_ptr_type _item_id, relative_ptr_type _actor_id, relative_ptr_type _class_id, relative_ptr_type& _object_id, std::initializer_list<jvalue> var)
+		jobject jcollection::create_object(relative_ptr_type _item_id, relative_ptr_type _actor_id, relative_ptr_type _class_id, relative_ptr_type& _object_id, std::initializer_list<jvariant> var)
 		{
 			jobject j = create_object(_item_id, _actor_id, _class_id, _object_id);
 			j.set(var);
@@ -1395,9 +1395,9 @@ namespace corona
 			return pkfield;
 		}
 
-		jvalue jobject::get(relative_ptr_type _field_id)
+		jvariant jobject::get(relative_ptr_type _field_id)
 		{
-			jvalue sma;
+			jvariant sma;
 
 			if (_field_id < 0)
 			{
@@ -1415,30 +1415,30 @@ namespace corona
 			switch (field.type_id)
 			{
 			case jtype::type_int8:
-				sma = jvalue( _field_idx, (int64_t)get_int8(_field_idx) );
+				sma = jvariant( _field_idx, (int64_t)get_int8(_field_idx) );
 				break;
 			case jtype::type_int16:
-				sma = jvalue(_field_idx, (int64_t)get_int16(_field_idx) );
+				sma = jvariant(_field_idx, (int64_t)get_int16(_field_idx) );
 				break;
 			case jtype::type_int32:
-				sma = jvalue(_field_idx, (int64_t)get_int32(_field_idx) );
+				sma = jvariant(_field_idx, (int64_t)get_int32(_field_idx) );
 				break;
 			case jtype::type_int64:
-				sma = jvalue(_field_idx, (int64_t)get_int64(_field_idx) );
+				sma = jvariant(_field_idx, (int64_t)get_int64(_field_idx) );
 				break;
 			case jtype::type_float32:
-				sma = jvalue(_field_idx, (double)get_float(_field_idx) );
+				sma = jvariant(_field_idx, (double)get_float(_field_idx) );
 				break;
 			case jtype::type_float64:
-				sma = jvalue(_field_idx, (double)get_double(_field_idx) );
+				sma = jvariant(_field_idx, (double)get_double(_field_idx) );
 				break;
 			case jtype::type_collection_id:
 				break;
 			case jtype::type_color:
-				sma = jvalue(_field_idx, (color)get_color(_field_idx));
+				sma = jvariant(_field_idx, (color)get_color(_field_idx));
 				break;
 			case jtype::type_datetime:
-				sma = jvalue(_field_idx, (time_t)get_time(_field_idx));
+				sma = jvariant(_field_idx, (time_t)get_time(_field_idx));
 				break;
 			case jtype::type_file:
 				break;
@@ -1447,7 +1447,7 @@ namespace corona
 			case jtype::type_image:
 				break;
 			case jtype::type_layout_rect:
-				sma = jvalue(_field_idx, get_layout_rect(_field_idx));
+				sma = jvariant(_field_idx, get_layout_rect(_field_idx));
 				break;
 			case jtype::type_list:
 				break;
@@ -1460,19 +1460,19 @@ namespace corona
 			case jtype::type_object_id:
 				break;
 			case jtype::type_point:
-				sma = jvalue(_field_idx, get_point(_field_idx));
+				sma = jvariant(_field_idx, get_point(_field_idx));
 				break;
 			case jtype::type_query:
 				break;
 			case jtype::type_rectangle:
-				sma = jvalue(_field_idx, get_rectangle(_field_idx));
+				sma = jvariant(_field_idx, get_rectangle(_field_idx));
 				break;
 			case jtype::type_sql:
 				break;
 			case jtype::type_string:
 				{
 				auto str_value = get_string(_field_idx);
-				sma = jvalue(_field_idx, str_value.c_str());
+				sma = jvariant(_field_idx, str_value.c_str());
 				}
 				break;
 			case jtype::type_wave:
@@ -1482,7 +1482,7 @@ namespace corona
 			return sma;
 		}
 
-		jvalue jobject::operator[](relative_ptr_type field_id)
+		jvariant jobject::operator[](relative_ptr_type field_id)
 		{
 			return get(field_id);
 		}
@@ -1798,7 +1798,7 @@ namespace corona
 				case jtype::type_query:
 					{
 						query_box b(c, schema, &the_class, this, i);
-						b = query_instance{};
+						b = query_status{};
 					}
 					break;
 				case jtype::type_sql:
@@ -2458,7 +2458,7 @@ namespace corona
 			return false;
 		}
 
-		void jobject::set_value(const jvalue& _member_assignment)
+		void jobject::set_value(const jvariant& _member_assignment)
 		{
 			int index = get_field_index_by_id(_member_assignment.field_id);
 
@@ -2467,7 +2467,7 @@ namespace corona
 
 			auto fld = get_field(index);
 
-			switch (_member_assignment.this_type)
+			switch (_member_assignment.variant_type)
 			{
 			case jtype::type_float64:
 			case jtype::type_float32:

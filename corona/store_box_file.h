@@ -62,9 +62,8 @@ namespace corona
 			serialized_box_file_implementation operator =(const serialized_box_file_implementation& _src) = delete;
 
 			serialized_box_file_implementation(serialized_box_file_implementation&& _src);
-			serialized_box_file_implementation operator =(const serialized_box_file_implementation& _src) = delete;
+			serialized_box_file_implementation& operator =(serialized_box_file_implementation&& _src) = delete;
 
-			serialized_box_file_implementation& operator =(serialized_box_file_implementation&& _src);
 			static serialized_box_file_implementation* open(application* _application, object_path _file_name);
 			static serialized_box_file_implementation* create(application* _application, object_path _file_name);
 
@@ -98,7 +97,6 @@ namespace corona
 			corona::database::sync<relative_ptr_type> copy_object_async(relative_ptr_type _location);
 			corona::database::sync<relative_ptr_type> commit_async();
 
-			virtual concept_lock lock(std::string _name);
 			virtual void init(corona_size_t _length);			 
 			virtual void adjust(corona_size_t _length);
 			virtual void clear();

@@ -21,19 +21,20 @@ namespace corona
 			type_object_id = 9,
 			type_collection_id = 10,
 			type_string = 11,
+			type_currency = 12,
 
-			type_query = 12,
-			type_image = 13,
-			type_wave = 14,
-			type_midi = 15,
-			type_point = 16,
-			type_rectangle = 17,
-			type_layout_rect = 18,
-			type_color = 19,
-			type_sql = 20,
-			type_http = 21,
-			type_file = 22,
-			type_list = 23
+			type_query = 13,
+			type_image = 14,
+			type_wave = 15,
+			type_midi = 16,
+			type_point = 17,
+			type_rectangle = 18,
+			type_layout_rect = 19,
+			type_color = 20,
+			type_sql = 21,
+			type_http = 22,
+			type_file = 23,
+			type_list = 24
 		};
 
 		enum class control_type

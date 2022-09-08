@@ -111,7 +111,7 @@ namespace corona
 
 				g.key = _key;
 				relative_ptr_type location = group_by_collection::get(_key).second;
-				g.items = grouped_items::get(box, location);
+				g.items = grouped_items::get(this->get_box(), location);
 
 				return g;
 			}
@@ -124,7 +124,7 @@ namespace corona
 				auto dp = group_by_collection::get(ptr);
 				grp.key = dp.first;
 				relative_ptr_type location = dp.second;
-				grp.items = grouped_items::get(box, location);
+				grp.items = grouped_items::get(this->get_box(), location);
 				return grp;
 			}
 

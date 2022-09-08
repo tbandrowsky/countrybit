@@ -4,6 +4,27 @@ namespace corona
 {
 	namespace database 
 	{
+		class lockable_concept;
+
+		class concept_lock
+		{
+			lockable_concept* locked;
+
+			friend class lockable_concept;
+			concept_lock(lockable_concept* _locked);
+
+		public:
+
+			concept_lock();
+
+			concept_lock(concept_lock&& _lock);
+			concept_lock& operator =(concept_lock&& _lock);
+
+			concept_lock(const concept_lock& _lock) = delete;
+			concept_lock & operator =(const concept_lock & _lock) = delete;
+
+			~concept_lock();
+		};
 
 		class lockable_concept
 		{
@@ -11,6 +32,8 @@ namespace corona
 			CRITICAL_SECTION holder_lock;
 
 		public:
+
+			friend class concept_lock;
 
 			std::string name;
 
@@ -24,46 +47,7 @@ namespace corona
 
 			virtual ~lockable_concept();
 
-			void lock_concept();
-			void unlock_concept();
-		};
-
-		class concept_lock
-		{
-			lockable_concept* locked;
-
-		public:
-
-			concept_lock() : locked(nullptr)
-			{
-				;
-			}
-
-			concept_lock(lockable_concept* _locked) : locked(_locked)
-			{
-				if (locked) _locked->lock_concept();
-			}
-
-			concept_lock(concept_lock&& _lock)
-			{
-				locked = _lock.locked;
-				_lock.locked = nullptr;
-			}
-
-			concept_lock& operator =(concept_lock&& _lock)
-			{
-				locked = _lock.locked;
-				_lock.locked = nullptr;
-			}
-
-			concept_lock(const concept_lock& _lock) = delete;
-			concept_lock& operator =(const concept_lock& _lock) = delete;
-
-			~concept_lock()
-			{
-				if (locked) locked->unlock_concept();
-				locked = nullptr;
-			}
+			concept_lock lock();
 		};
 
 		class concept_locker
@@ -71,7 +55,7 @@ namespace corona
 
 		private:
 
-			CRITICAL_SECTION map_update_lock;
+			lockable_concept map_lock;
 			std::map<std::string, lockable_concept> locks;
 
 		public:

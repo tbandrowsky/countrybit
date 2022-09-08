@@ -8,7 +8,7 @@ namespace corona
 
 
 		query_box::query_box(char* t, jschema* _schema, jclass* _class, jobject* _slice, int _field_index) :
-			boxed<query_instance>(t),
+			boxed<query_status>(t),
 			schema(_schema),
 			the_class(_class),
 			slice(_slice),
@@ -17,7 +17,7 @@ namespace corona
 			;
 		}
 
-		query_box::query_box(query_box& _src) : boxed<query_instance>(_src)
+		query_box::query_box(query_box& _src) : boxed<query_status>(_src)
 		{
 			;
 		}
@@ -28,25 +28,25 @@ namespace corona
 			return *this;
 		}
 
-		query_box query_box::operator = (query_instance _src)
+		query_box query_box::operator = (query_status _src)
 		{
 			set_value(_src);
 			return *this;
 		}
 
-		query_box::operator query_instance& ()
+		query_box::operator query_status& ()
 		{
-			query_instance& t = get_data_ref();
+			query_status& t = get_data_ref();
 			return t;
 		}
 
-		query_instance* query_box::operator->()
+		query_status* query_box::operator->()
 		{
-			query_instance& t = get_data_ref();
+			query_status& t = get_data_ref();
 			return &t;
 		}
 
-		query_instance query_box::value() const 
+		query_status query_box::value() const 
 		{ 
 			return get_value(); 
 		}

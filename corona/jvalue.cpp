@@ -6,7 +6,7 @@ namespace corona
 	namespace database
 	{
 
-		bool jvalue::compare(comparisons _comparison, jvalue& _target)
+		bool jvariant::compare(comparisons _comparison, jvariant& _target)
 		{
 			int64_t ithis, itarget;
 			double dthis, dtarget;
@@ -143,11 +143,11 @@ namespace corona
 			return false;
 		}
 
-		void jvalue::copy(const jvalue& _src)
+		void jvariant::copy(const jvariant& _src)
 		{
 			field_id = _src.field_id;
-			this_type = _src.this_type;
-			switch (this_type)
+			variant_type = _src.variant_type;
+			switch (variant_type)
 			{
 			case jtype::type_int8:
 			case jtype::type_int16:
@@ -213,21 +213,21 @@ namespace corona
 			}
 		}
 
-		jvalue::jvalue(const jvalue& _src)
+		jvariant::jvariant(const jvariant& _src)
 		{
 			copy(_src);
 		}
 
-		jvalue jvalue::operator =(const jvalue& _src)
+		jvariant jvariant::operator =(const jvariant& _src)
 		{
 			copy(_src);
 			return *this;
 		}
 
-		jvalue::operator std::string()
+		jvariant::operator std::string()
 		{
 			std::string z;
-			switch (this_type)
+			switch (variant_type)
 			{
 			case jtype::type_int8:
 			case jtype::type_int16:
@@ -297,9 +297,9 @@ namespace corona
 			return z;
 		}
 
-		jvalue::operator color ()
+		jvariant::operator color ()
 		{
-			switch (this_type)
+			switch (variant_type)
 			{
 			case jtype::type_int8:
 			case jtype::type_int16:
@@ -367,9 +367,9 @@ namespace corona
 			}
 		}
 
-		jvalue::operator point()
+		jvariant::operator point()
 		{
-			switch (this_type)
+			switch (variant_type)
 			{
 			case jtype::type_int8:
 			case jtype::type_int16:
@@ -437,9 +437,9 @@ namespace corona
 			}
 		}
 
-		jvalue::operator rectangle()
+		jvariant::operator rectangle()
 		{
-			switch (this_type)
+			switch (variant_type)
 			{
 			case jtype::type_int8:
 			case jtype::type_int16:
@@ -507,9 +507,9 @@ namespace corona
 			}
 		}
 
-		jvalue::operator layout_rect()
+		jvariant::operator layout_rect()
 		{
-			switch (this_type)
+			switch (variant_type)
 			{
 			case jtype::type_int8:
 			case jtype::type_int16:

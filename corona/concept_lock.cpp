@@ -7,31 +7,6 @@ namespace corona
 	namespace database
 	{
 
-		lockable_concept::lockable_concept(const lockable_concept& _holder)
-		{
-			::InitializeCriticalSection(&holder_lock);
-			name = _holder.name;
-		}
-
-		lockable_concept::lockable_concept(lockable_concept&& _holder)
-		{
-			::InitializeCriticalSection(&holder_lock);
-			name = std::move(_holder.name);
-		}
-
-		lockable_concept lockable_concept::operator=(const lockable_concept& _holder)
-		{
-			name = _holder.name;
-			return *this;
-		}
-
-		lockable_concept& lockable_concept::operator=(lockable_concept&& _holder)
-		{
-			::InitializeCriticalSection(&holder_lock);
-			name = std::move(_holder.name);
-			return *this;
-		}
-
 		lockable_concept::lockable_concept(std::string _name)
 		{
 			::InitializeCriticalSection(&holder_lock);
@@ -43,61 +18,92 @@ namespace corona
 			::InitializeCriticalSection(&holder_lock);
 		}
 
+		lockable_concept::lockable_concept(const lockable_concept& _holder)
+		{
+			name = _holder.name;
+			::InitializeCriticalSection(&holder_lock);
+		}
+
+		lockable_concept::lockable_concept(lockable_concept&& _holder)
+		{
+			name = std::move(_holder.name);
+			::InitializeCriticalSection(&holder_lock);
+		}
+
 		lockable_concept::~lockable_concept()
 		{
 			::DeleteCriticalSection(&holder_lock);
 		}
 
+		lockable_concept lockable_concept::operator=(const lockable_concept& _holder)
+		{
+			name = _holder.name;
+			return *this;
+		}
+
+		lockable_concept& lockable_concept::operator=(lockable_concept&& _holder)
+		{
+			name = std::move(_holder.name);
+			return *this;
+		}
+
+		concept_lock lockable_concept::lock()
+		{
+			concept_lock locko(this);
+
+			return locko;
+		}
+
 		concept_lock::concept_lock()
 		{
-			;
+			locked = nuillptr;
 		}
 
 		concept_lock::concept_lock(lockable_concept* _locked)
 		{
-			if (locked) _locked->lock_concept();
+			locked = _locked;
+			::EnterCriticalSection(&locked->holder_lock);
 		}
 
 		concept_lock::concept_lock(concept_lock&& _lock)
 		{
-			locked = _lock.locked;
-			_lock.locked = nullptr;
+			locked = nullptr;
+			std::swap(locked,_lock.locked);
 		}
 
 		concept_lock& concept_lock::operator =(concept_lock&& _lock)
 		{
-			locked = _lock.locked;
-			_lock.locked = nullptr;
+			locked = nullptr;
+			std::swap(locked, _lock.locked);
 		}
 
 		concept_lock::~concept_lock()
 		{
-			if (locked) locked->unlock_concept();
+			if (locked) ::LeaveCriticalSection(&locked->holder_lock);
 			locked = nullptr;
 		}
 
 		concept_locker::concept_locker()
 		{
-			::InitializeCriticalSection(&map_update_lock);
+			;
 		}
 
 		concept_locker::~concept_locker()
 		{
-			::DeleteCriticalSection(&map_update_lock);
+			;
 		}
 
 		concept_lock concept_locker::checkout(std::string _name)
 		{
-			concept_lock lock;
-
-			EnterCriticalSection(&this->map_update_lock);
+			concept_lock map_locked = map_lock.lock();
+			concept_lock check_out_lock;
 
 			if (locks.contains(_name))
 			{
 				try 
 				{				
 					auto& l = locks[_name];				
-					lock = concept_lock(&l);
+					check_out_lock = l.lock();
 				}
 				catch (std::exception & exc)
 				{
@@ -111,7 +117,7 @@ namespace corona
 					lockable_concept lck(_name);
 					locks.insert_or_assign(_name, lck);
 					auto& l = locks[_name];
-					lock = concept_lock(&l);					
+					check_out_lock = l.lock();
 				}
 				catch (std::exception& exc)
 				{
@@ -119,9 +125,7 @@ namespace corona
 				}
 			}
 
-			LeaveCriticalSection(&this->map_update_lock);
-
-			return lock;
+			return check_out_lock;
 		}
 	}
 }

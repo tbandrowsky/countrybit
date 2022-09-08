@@ -85,7 +85,7 @@ namespace corona
 		class filter_term
 		{
 		public:
-			jvalue	  src_value;
+			jvariant	  src_value;
 			relative_ptr_type target_field;
 			comparisons		  comparison;
 		};
@@ -230,16 +230,16 @@ namespace corona
 
 			bool matches(const char* str);
 
-			void set_value(const jvalue& _member_assignment);
+			void set_value(const jvariant& _member_assignment);
 
-			void set(std::initializer_list<jvalue> var)
+			void set(std::initializer_list<jvariant> var)
 			{
 				for (auto item : var) {
 					set_value(item);
 				}
 			}
 
-			void set(std::initializer_list<relative_ptr_type> member_ids, std::initializer_list<jvalue> var)
+			void set(std::initializer_list<relative_ptr_type> member_ids, std::initializer_list<jvariant> var)
 			{
 				jobject target_slice = *this;
 				
@@ -254,7 +254,7 @@ namespace corona
 				}
 			}
 
-			void set(relative_ptr_type _src_member_id, std::initializer_list<relative_ptr_type> member_ids, std::initializer_list<jvalue> var)
+			void set(relative_ptr_type _src_member_id, std::initializer_list<relative_ptr_type> member_ids, std::initializer_list<jvariant> var)
 			{
 				jobject target_slice = *this;
 				jobject source_slice = *this;
@@ -274,8 +274,8 @@ namespace corona
 				}
 			}
 
-			jvalue get(relative_ptr_type field_id);
-			jvalue operator[](relative_ptr_type field_idx);
+			jvariant get(relative_ptr_type field_id);
+			jvariant operator[](relative_ptr_type field_idx);
 
 			void update(jobject& _src_slice);
 
@@ -853,7 +853,7 @@ namespace corona
 
 			void print(const char *_trace, actor_state& acr);
 			jobject create_object(relative_ptr_type _item_id, relative_ptr_type _actor_id, relative_ptr_type _class_id, relative_ptr_type& _object_id);
-			jobject create_object(relative_ptr_type _item_id, relative_ptr_type _actor_id, relative_ptr_type _class_id, relative_ptr_type& _object_id, std::initializer_list<jvalue> var);
+			jobject create_object(relative_ptr_type _item_id, relative_ptr_type _actor_id, relative_ptr_type _class_id, relative_ptr_type& _object_id, std::initializer_list<jvariant> var);
 			jobject get_object(relative_ptr_type _object_id);
 			jobject get_object(object_member_path _path);
 			jobject update_object(relative_ptr_type _object_id, jobject _slice);
@@ -962,7 +962,7 @@ namespace corona
 			using class_store_type = item_details_table<jclass_header, jclass_field>;
 			using class_index_type = sorted_index<object_name, relative_ptr_type>;
 			using field_index_type = sorted_index<object_name, relative_ptr_type>;
-			using query_store_type = sorted_index<relative_ptr_type, query_definition_type>;
+			using query_store_type = sorted_index<relative_ptr_type, query_mapping_type>;
 			using sql_store_type = sorted_index<relative_ptr_type, sql_definition_type>;
 			using file_store_type = sorted_index<relative_ptr_type, file_definition_type>;
 			using http_store_type = sorted_index<relative_ptr_type, http_definition_type>;
@@ -1354,11 +1354,11 @@ namespace corona
 			relative_ptr_type put_time_field(put_time_field_request request)
 			{
 				request.name.type_id = jtype::type_datetime;
-				return put_field(request.name, sizeof(time_t), [request](jfield& _field)
+				return put_field(request.name, sizeof(DATE), [request](jfield& _field)
 					{
 						_field.time_properties= request.options;
 					});
-			}
+			} 
 
 			relative_ptr_type put_integer_field(put_integer_field_request request)
 			{
@@ -1406,6 +1406,7 @@ namespace corona
 						_field.double_properties = request.options;
 					});
 			}
+
 
 			void get_class_field_name(object_name& _dest, object_name _class_name, dimensions_type& _dim)
 			{
@@ -1508,7 +1509,7 @@ namespace corona
 				query_properties_type options;
 
 				request.name.type_id = jtype::type_query;
-				auto query_location = put_field(request.name, sizeof(query_instance), [request](jfield& _field)
+				auto query_location = put_field(request.name, sizeof(query_status), [request](jfield& _field)
 					{
 						;
 					});
@@ -1524,7 +1525,7 @@ namespace corona
 
 				request.name.type_id = jtype::type_sql;
 
-				auto& params = request.options.parameters;
+				auto& params = request.options.mapping.parameters;
 				for (auto param : params) {
 					auto& pi = param.item;
 					bind_field(pi.corona_field, pi.corona_field_id);
@@ -1545,7 +1546,7 @@ namespace corona
 
 				request.name.type_id = jtype::type_http;
 
-				auto& params = request.options.parameters;
+				auto& params = request.options.mapping.parameters;
 				for (auto param : params) {
 					auto& pi = param.item;
 					bind_field(pi.corona_field, pi.corona_field_id);
@@ -1567,7 +1568,7 @@ namespace corona
 
 				request.name.type_id = jtype::type_file;
 
-				auto& params = request.options.parameters;
+				auto& params = request.options.mapping.parameters;
 				for (auto param : params) {
 					auto& pi = param.item;
 					bind_field(pi.corona_field, pi.corona_field_id);
@@ -1941,7 +1942,7 @@ namespace corona
 				return the_field;
 			}
 
-			const query_definition_type& get_query_definition(relative_ptr_type field_id)
+			const query_mapping_type& get_query_definition(relative_ptr_type field_id)
 			{
 				auto& f = fields[field_id];
 				return queries[field_id].second;

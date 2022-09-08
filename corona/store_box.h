@@ -64,8 +64,51 @@ namespace corona
 
 		class serialized_box_implementation
 		{
+			concept_locker *locker;
+
+		protected:
+
+			lockable_concept box_lock;
+
 		public:
-			virtual concept_lock lock(std::string _name) = 0;
+
+			serialized_box_implementation() : locker(nullptr)
+			{
+				;
+			}
+
+			serialized_box_implementation(concept_locker *_locker) : locker(_locker)
+			{
+				;
+			}
+
+			virtual ~serialized_box_implementation()
+			{
+				;
+			}
+
+			void set_locker(concept_locker* _locker)
+			{
+				locker = _locker;
+			}
+
+			concept_locker* get_locker()
+			{
+				return locker;
+			}
+
+			concept_lock checkout(std::string _name)
+			{
+				if (locker) {
+					return locker->checkout(_name);
+				}
+				else 
+				{
+					concept_lock lck;
+					return lck;
+				}
+			} 
+
 			virtual void init(corona_size_t _length) = 0;
 			virtual void adjust(corona_size_t _length) = 0;
 			virtual corona_size_t size() const = 0;
@@ -80,6 +123,7 @@ namespace corona
 			virtual bool delete_object(relative_ptr_type _location) = 0;
 			virtual relative_ptr_type copy_object(relative_ptr_type _location) = 0;
 			virtual void commit() = 0;
+			virtual char* data() = 0;
 		};
 
 		class serialized_box_memory_implementation : public serialized_box_implementation
@@ -121,7 +165,8 @@ namespace corona
 			template <typename bx>
 				requires (box_data<bx>)
 			serialized_box_memory_implementation operator = (const bx& _src)
-			{+
+			{
+				auto method_lock = box_lock.lock();
 				int64_t new_size = _src.size();
 				if (sbdata->_size < new_size)
 					throw std::invalid_argument("target box too small");
@@ -133,6 +178,7 @@ namespace corona
 
 			virtual void init(corona_size_t _length)
 			{
+				auto method_lock = box_lock.lock();
 				sbdata->_top = 0;
 				sbdata->_size = _length;
 				sbdata->_box_id = block_id::box_id();
@@ -140,6 +186,7 @@ namespace corona
 
 			virtual void adjust(corona_size_t _length)
 			{
+				auto method_lock = box_lock.lock();
 				sbdata->_size = _length;
 			}
 
@@ -165,6 +212,7 @@ namespace corona
 
 			virtual box_block* reserve(corona_size_t length)
 			{
+				auto method_lock = box_lock.lock();
 				relative_ptr_type placement;
 				auto ac = allocate(1, length);
 				return ac;
@@ -172,6 +220,7 @@ namespace corona
 
 			virtual box_block* allocate(int64_t sizeofobj, int length)
 			{
+				auto method_lock = box_lock.lock();
 				relative_ptr_type alignment = sizeof(sizeofobj);
 
 				if (sizeofobj < 8)
@@ -205,6 +254,7 @@ namespace corona
 
 			virtual box_block* get_object(relative_ptr_type _src)
 			{
+				auto method_lock = box_lock.lock();
 				if (_src == null_row) {
 					return nullptr;
 				}
@@ -214,6 +264,7 @@ namespace corona
 
 			virtual relative_ptr_type create_object(char *_src, int _length)
 			{
+				auto method_lock = box_lock.lock();
 				box_block* item = allocate(1, _length);
 				if (!item) return null_row;
 				memcpy(&item->data[0], _src, _length);
@@ -222,6 +273,7 @@ namespace corona
 
 			virtual relative_ptr_type update_object(relative_ptr_type _placement, char* _src, int _length)
 			{
+				auto method_lock = box_lock.lock();
 				box_block* item = (box_block*)&sbdata->_data[_placement];
 				char* dest;
 				dest = &item->data[0];
@@ -231,6 +283,7 @@ namespace corona
 
 			virtual bool delete_object(relative_ptr_type _location)
 			{
+				auto method_lock = box_lock.lock();
 				box_block* item = (box_block*)&sbdata->_data[_location];
 				item->deleted = true;
 				return true;
@@ -238,6 +291,7 @@ namespace corona
 
 			virtual relative_ptr_type copy_object(relative_ptr_type _location)
 			{
+				auto method_lock = box_lock.lock();
 				relative_ptr_type dest_location = null_row;
 				box_block* dest_block;
 				box_block* item = (box_block*)&sbdata->_data[_location];
@@ -254,13 +308,13 @@ namespace corona
 				;
 			}
 			
-			char* data()
+			virtual char* data()
 			{
+				auto method_lock = box_lock.lock();
 				return sbdata->_data;
 			}
 
 		};
-
 
 		class serialized_box 
 		{
@@ -286,7 +340,7 @@ namespace corona
 
 			relative_ptr_type reserve(corona_size_t length)
 			{
-				return boxi->reserve(length);
+				return boxi->reserve(length)->location;
 			}
 
 			corona_size_t top() const
@@ -340,6 +394,10 @@ namespace corona
 				boxi->commit();
 			}
 
+			char* data()
+			{
+				return boxi->data();
+			}
 
 		};
 
@@ -370,6 +428,11 @@ namespace corona
 			void clear()
 			{
 				return get_box()->clear();
+			}
+
+			char* data()
+			{
+				return get_box()->data();
 			}
 		
 			template <typename T>
@@ -626,10 +689,6 @@ namespace corona
 				pack_slice<char>(base, 0, new_size, false);
 				return *this;
 			}
-
-			virtual serialized_box* get_box() { return (serialized_box*)stuff; }
-			virtual serialized_box* check(int _bytes) { return _bytes < get_box()->free() ? get_box() : nullptr; }
-
 		};
 
 		class dynamic_box : public serialized_box_container
@@ -880,7 +939,8 @@ namespace corona
 		using basic_int64_box = boxed<int64_t>;
 		using basic_float_box = boxed<float>;
 		using basic_double_box = boxed<double>;
-		using basic_time_box = boxed<time_t>;
+		using basic_time_box = boxed<DATE>;
+		using basic_currency_box = boxed<CY>;
 		using basic_collection_id_box = boxed<collection_id_type>;
 		using basic_object_id_box = boxed<object_id_type>;
 
