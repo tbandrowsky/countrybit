@@ -4,11 +4,11 @@ namespace corona
 {
 	namespace database
 	{
-		class schema_builder 
+		class schema_builder
 		{
 		public:
 
-			void build_api_objects(jschema *_schema)
+			void build_api_objects(jschema* _schema)
 			{
 				put_class_request pcr;
 
@@ -20,10 +20,10 @@ namespace corona
 				pcr.class_description = "system field request base";
 
 				pcr.member_fields = {
-					member_field({ "field_id", jtype::type_int64 } ),
-					member_field({ "field_type", jtype::type_string } ),
-					member_field({ "field_name", jtype::type_string } ),
-					member_field({ "field_description", jtype::type_string } ),
+					member_field({ "field_id", jtype::type_int64 }),
+					member_field({ "field_type", jtype::type_string }),
+					member_field({ "field_name", jtype::type_string }),
+					member_field({ "field_description", jtype::type_string }),
 					member_field({ "field_key", jtype::type_int32}),
 					member_field({ "field_enumeration_class", jtype::type_string }),
 					member_field({ "field_display_field", jtype::type_string	}),
@@ -597,11 +597,289 @@ namespace corona
 
 				_schema->put_class(pcr);
 
+				pcr.class_name = "find_class_request";
+				pcr.auto_primary_key = true;
+				pcr.base_class_id = null_row;
+				pcr.class_id = null_row;
+				pcr.field_id_primary_key = null_row;
+				pcr.class_description = "request to find class";
+
+				pcr.member_fields = {
+					member_field({ "class_name", jtype::type_string }),
+				};
+
+				_schema->put_class(pcr);
+
+				pcr.class_name = "get_class_request";
+				pcr.auto_primary_key = true;
+				pcr.base_class_id = null_row;
+				pcr.class_id = null_row;
+				pcr.field_id_primary_key = null_row;
+				pcr.class_description = "request to get class";
+
+				pcr.member_fields = {
+					member_field({ "class_id", jtype::type_int64 }),
+				};
+
+				_schema->put_class(pcr);
+
+				pcr.class_name = "get_base_classes_request";
+				pcr.auto_primary_key = true;
+				pcr.base_class_id = null_row;
+				pcr.class_id = null_row;
+				pcr.field_id_primary_key = null_row;
+				pcr.class_description = "request to get all the base classes";
+
+				pcr.member_fields = {
+					member_field({ "class_id", jtype::type_int64 }),
+				};
+
+				_schema->put_class(pcr);
+
+
+				pcr.class_name = "find_field_request";
+				pcr.auto_primary_key = true;
+				pcr.base_class_id = null_row;
+				pcr.class_id = null_row;
+				pcr.field_id_primary_key = null_row;
+				pcr.class_description = "request to find field";
+
+				pcr.member_fields = {
+					member_field({ "field_name", jtype::type_string }),
+				};
+
+				_schema->put_class(pcr);
+
+				pcr.class_name = "get_field_request";
+				pcr.auto_primary_key = true;
+				pcr.base_class_id = null_row;
+				pcr.class_id = null_row;
+				pcr.field_id_primary_key = null_row;
+				pcr.class_description = "request to get field";
+
+				pcr.member_fields = {
+					member_field({ "field_id", jtype::type_int64 }),
+				};
+
+				_schema->put_class(pcr);
+
+				pcr.class_name = "get_fields";
+				pcr.auto_primary_key = true;
+				pcr.base_class_id = null_row;
+				pcr.class_id = null_row;
+				pcr.field_id_primary_key = null_row;
+				pcr.class_description = "request to get all the fields";
+
+				pcr.member_fields = {
+					member_field({ "field_id", jtype::type_int64 }),
+				};
+
+				_schema->put_class(pcr);
+
+				pcr.class_name = "create_object_request";
+				pcr.auto_primary_key = true;
+				pcr.base_class_id = null_row;
+				pcr.class_id = null_row;
+				pcr.field_id_primary_key = null_row;
+				pcr.class_description = "request to create an object";
+
+				pcr.member_fields = {
+					member_field({ "collection_name", jtype::type_string }),
+					member_field({ "class_name", jtype::type_string })
+				};
+
+				_schema->put_class(pcr);
+
+				pcr.class_name = "get_object_request";
+				pcr.auto_primary_key = true;
+				pcr.base_class_id = null_row;
+				pcr.class_id = null_row;
+				pcr.field_id_primary_key = null_row;
+				pcr.class_description = "request to get an";
+
+				pcr.member_fields = {
+					member_field({ "collection_name", jtype::type_string }),
+				};
+
+				_schema->put_class(pcr);
 
 			}
 
 		};
 
+		namespace xxx
+		{
+			using field_array = iarray<jclass_field, max_class_fields>;
+			using selections_collection = iarray<relative_ptr_type, max_selections>;
+
+			class selector_rule
+			{
+			public:
+				object_name class_name;
+				relative_ptr_type class_id;
+			};
+
+			using selector_rule_collection = iarray<selector_rule, 8>;
+
+			class selector_collection
+			{
+			public:
+				selector_rule_collection rules;
+
+				void always()
+				{
+					rules.clear();
+				}
+
+				void when(const std::vector<relative_ptr_type>& when_event)
+				{
+					rules.clear();
+					for (auto evt : when_event)
+					{
+						auto* sr = rules.append();
+						sr->class_id = evt;
+					}
+				}
+			};
+
+			class model_creatable_class
+			{
+			public:
+				object_name						rule_name;
+				object_name						create_class_name;
+				relative_ptr_type				create_class_id;
+				selector_collection				selectors;
+				object_name						item_id_class_name;
+				relative_ptr_type				item_id_class;
+				bool							select_on_create;
+				bool							replace_selected;
+				int								max_creatable_count;
+				class_list						create_on_create;
+
+				model_creatable_class()
+				{
+					create_class_id = null_row;
+					item_id_class = null_row;
+					select_on_create = false;
+					replace_selected = false;
+				}
+			};
+
+			using query_id_type = object_name;
+
+			class view_query
+			{
+			public:
+				object_name		  query_name;
+				class_list		  classes;
+				comparison_list   parameters;
+				field_list		  fields;
+			};
+
+			using view_query_list = iarray<view_query, 8>;
+
+			class view_options
+			{
+			public:
+				bool use_view;
+				relative_ptr_type				view_class_id;
+				view_query_list					view_queries;
+				view_options() : use_view(false) { ; }
+			};
+
+			class model_selectable_class
+			{
+			public:
+				object_name						rule_name;
+				object_name						select_class_name;
+				relative_ptr_type				select_class_id;
+				selector_collection				selectors;
+				class_list						clear_on_select;
+				class_list						create_on_select;
+				view_options					view_options;
+
+				model_selectable_class()
+				{
+					select_class_id = null_row;
+				}
+			};
+
+			class model_updatable_class
+			{
+			public:
+				object_name						rule_name;
+				object_name						update_class_name;
+				relative_ptr_type				update_class_id;
+				selector_collection				selectors;
+				class_list						create_on_update;
+
+				model_updatable_class()
+				{
+					update_class_id = null_row;
+				}
+
+			};
+
+			class model_deletable_class
+			{
+			public:
+				object_name						rule_name;
+				object_name						delete_class_name;
+				relative_ptr_type				delete_class_id;
+				selector_collection				selectors;
+				class_list						create_on_delete;
+
+				model_deletable_class()
+				{
+					delete_class_id = null_row;
+				}
+			};
+
+			class actor_type;
+
+			using model_create_class_collection = iarray<model_creatable_class, max_creatable_options>;
+			using model_select_class_collection = iarray<model_selectable_class, max_selectable_options>;
+			using model_update_class_collection = iarray<model_updatable_class, max_updatable_options>;
+			using model_delete_class_collection = iarray<model_deletable_class, max_deletable_options>;
+
+			class model_type
+			{
+				void add_path(std::map<relative_ptr_type, int>& _target, relative_ptr_type _leaf);
+
+			public:
+				object_name					  name;
+				model_create_class_collection create_options;
+				model_select_class_collection select_options;
+				model_update_class_collection update_options;
+				model_delete_class_collection delete_options;
+
+				void create_when(jschema* _schema, std::vector<relative_ptr_type> when_selected,
+					relative_ptr_type _create_class_id,
+					relative_ptr_type _from_item_class_id,
+					bool _select_created,
+					bool _replace_selected,
+					int _max_creatable_count,
+					std::vector<relative_ptr_type> on_created);
+
+				void select_when(jschema* _schema, std::vector<relative_ptr_type> when_selected,
+					relative_ptr_type _select_class_id,
+					std::vector<relative_ptr_type> on_selected_clear,
+					std::vector<relative_ptr_type> on_created,
+					view_options _view_options);
+
+				void update_when(jschema* _schema,
+					std::vector<relative_ptr_type> when_selected,
+					relative_ptr_type _update_class_id,
+					std::vector<relative_ptr_type> on_created);
+
+				void delete_when(jschema* _schema,
+					std::vector<relative_ptr_type> when_selected,
+					relative_ptr_type _delete_class_id,
+					std::vector<relative_ptr_type> on_created);
+
+				std::vector<relative_ptr_type> get_selection_classes(relative_ptr_type _leaf, bool _include_leaf);
+			};
+		}
 
 
 	}
