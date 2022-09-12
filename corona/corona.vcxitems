@@ -52,6 +52,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)rectangle_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)sql_remote_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)store_box_file.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)system_jobjects.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)time_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)file.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)float_box.h" />

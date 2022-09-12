@@ -192,24 +192,24 @@ namespace corona
 			return field_invoke<put_color_field_request>(request.name.name.c_str(), [this](auto& r) { return schema.put_color_field(r); }, request);
 		}
 
-		field_response jdatabase::put_query_field(put_named_query_field_request request)
+		field_response jdatabase::put_query_field(put_filter_field_request request)
 		{
-			return field_invoke<put_named_query_field_request>(request.name.name.c_str(), [this](auto& r) { return schema.put_query_field(r); }, request);
+			return field_invoke<put_filter_field_request>(request.name.name.c_str(), [this](auto& r) { return schema.put_query_field(r); }, request);
 		}
 
-		field_response jdatabase::put_sql_remote_field(put_named_sql_remote_field_request request)
+		field_response jdatabase::put_sql_remote_field(put_sql_remote_field_request request)
 		{
-			return field_invoke<put_named_sql_remote_field_request>(request.name.name.c_str(), [this](auto& r) { return schema.put_sql_remote_field(r); }, request);
+			return field_invoke<put_sql_remote_field_request>(request.name.name.c_str(), [this](auto& r) { return schema.put_sql_remote_field(r); }, request);
 		}
 
-		field_response jdatabase::put_http_remote_field(put_named_http_remote_field_request request)
+		field_response jdatabase::put_http_remote_field(put_http_remote_field_request request)
 		{
-			return field_invoke<put_named_http_remote_field_request>(request.name.name.c_str(), [this](auto& r) { return schema.put_http_remote_field(r); }, request);
+			return field_invoke<put_http_remote_field_request>(request.name.name.c_str(), [this](auto& r) { return schema.put_http_remote_field(r); }, request);
 		}
 
-		field_response jdatabase::put_file_remote_field(put_named_file_remote_field_request request)
+		field_response jdatabase::put_file_remote_field(put_file_remote_field_request request)
 		{
-			return field_invoke<put_named_file_remote_field_request>(request.name.name.c_str(), [this](auto& r) { return schema.put_file_remote_field(r); }, request);
+			return field_invoke<put_file_remote_field_request>(request.name.name.c_str(), [this](auto& r) { return schema.put_file_remote_field(r); }, request);
 		}
 
 		field_response jdatabase::put_image_field(put_image_field_request request)

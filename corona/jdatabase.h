@@ -327,10 +327,10 @@ namespace corona
 			field_response put_time_field(put_time_field_request request);
 			field_response put_integer_field(put_integer_field_request request);
 			field_response put_double_field(put_double_field_request request);
-			field_response put_query_field(put_named_query_field_request request);
-			field_response put_sql_remote_field(put_named_sql_remote_field_request request);
-			field_response put_http_remote_field(put_named_http_remote_field_request request);
-			field_response put_file_remote_field(put_named_file_remote_field_request request);
+			field_response put_query_field(put_filter_field_request request);
+			field_response put_sql_remote_field(put_sql_remote_field_request request);
+			field_response put_http_remote_field(put_http_remote_field_request request);
+			field_response put_file_remote_field(put_file_remote_field_request request);
 			field_response put_point_field(put_point_field_request request);
 			field_response put_rectangle_field(put_rectangle_field_request request);
 			field_response put_image_field(put_image_field_request request);

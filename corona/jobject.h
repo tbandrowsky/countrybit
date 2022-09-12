@@ -81,11 +81,10 @@ namespace corona
 			virtual corona_size_t size() = 0;
 		};
 
-
 		class filter_term
 		{
 		public:
-			jvariant	  src_value;
+			jvariant	      src_value;
 			relative_ptr_type target_field;
 			comparisons		  comparison;
 		};
@@ -962,7 +961,7 @@ namespace corona
 			using class_store_type = item_details_table<jclass_header, jclass_field>;
 			using class_index_type = sorted_index<object_name, relative_ptr_type>;
 			using field_index_type = sorted_index<object_name, relative_ptr_type>;
-			using query_store_type = sorted_index<relative_ptr_type, query_mapping_type>;
+			using query_store_type = sorted_index<relative_ptr_type, query_definition_type>;
 			using sql_store_type = sorted_index<relative_ptr_type, sql_definition_type>;
 			using file_store_type = sorted_index<relative_ptr_type, file_definition_type>;
 			using http_store_type = sorted_index<relative_ptr_type, http_definition_type>;
@@ -1504,7 +1503,7 @@ namespace corona
 				bind_class(fn, _class_id);
 			}
 
-			relative_ptr_type put_query_field(put_named_query_field_request request)
+			relative_ptr_type put_query_field(put_filter_field_request request)
 			{
 				query_properties_type options;
 
@@ -1519,7 +1518,7 @@ namespace corona
 				return query_location;
 			}
 
-			relative_ptr_type put_sql_remote_field(put_named_sql_remote_field_request request)
+			relative_ptr_type put_sql_remote_field(put_sql_remote_field_request request)
 			{
 				sql_properties_type options;
 
@@ -1531,7 +1530,7 @@ namespace corona
 					bind_field(pi.corona_field, pi.corona_field_id);
 				}
 
-				auto query_location = put_field(request.name, sizeof(sql_remote_instance), [request](jfield& _field)
+				auto query_location = put_field(request.name, sizeof(sql_instance), [request](jfield& _field)
 					{
 						;
 					});
@@ -1540,7 +1539,7 @@ namespace corona
 				return query_location;
 			}
 
-			relative_ptr_type put_http_remote_field(put_named_http_remote_field_request request)
+			relative_ptr_type put_http_remote_field(put_http_remote_field_request request)
 			{
 				http_properties_type options;
 
@@ -1562,7 +1561,7 @@ namespace corona
 				return query_location;
 			}
 
-			relative_ptr_type put_file_remote_field(put_named_file_remote_field_request request)
+			relative_ptr_type put_file_remote_field(put_file_remote_field_request request)
 			{
 				file_properties_type options;
 
@@ -1649,6 +1648,16 @@ namespace corona
 				auto query_location = put_field(request.name, sizeof(color), [request](jfield& _field)
 					{
 						_field.color_properties = request.options;
+					});
+				return query_location;
+			}
+
+			relative_ptr_type put_currency_field(put_currency_field_request request)
+			{
+				request.name.type_id = jtype::type_currency;
+				auto query_location = put_field(request.name, sizeof(CY), [request](jfield& _field)
+					{
+						_field.currency_properties = request.options;
 					});
 				return query_location;
 			}
@@ -1942,7 +1951,7 @@ namespace corona
 				return the_field;
 			}
 
-			const query_mapping_type& get_query_definition(relative_ptr_type field_id)
+			const query_definition_type& get_query_definition(relative_ptr_type field_id)
 			{
 				auto& f = fields[field_id];
 				return queries[field_id].second;

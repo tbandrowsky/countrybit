@@ -18,7 +18,7 @@ namespace corona
 			jclass* the_class;
 			int field_index;
 
-			relative_ptr_type put_class(query_mapping_type& qd, object_name obj);
+			relative_ptr_type put_class(query_definition_type& qd, object_name obj);
 
 		public:
 

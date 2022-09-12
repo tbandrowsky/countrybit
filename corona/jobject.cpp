@@ -1804,7 +1804,7 @@ namespace corona
 				case jtype::type_sql:
 					{
 						sql_remote_box b(c, schema, &the_class, this, i);
-						b = sql_remote_instance{};
+						b = sql_instance{};
 					}
 					break;
 				case jtype::type_file:

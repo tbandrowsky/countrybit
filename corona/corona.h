@@ -107,6 +107,7 @@
 #include "extractor.h"
 #include "jvalue.h"
 #include "jobject.h"
+#include "system_jobjects.h"
 #include "jquery.h"
 #include "analytics.h"
 #include "presentation.h"

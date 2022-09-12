@@ -216,12 +216,6 @@ namespace corona
 			}
 		};
 
-		struct model_properties_type
-		{
-			relative_ptr_type			class_id;
-			object_name			class_name;
-			int64_t				model_size_bytes;
-		};
 
 		class jfield
 		{
@@ -366,36 +360,48 @@ namespace corona
 			}
 		};
 
-
-		struct query_mapping_type
+		struct remote_mapping_type
 		{
-			relative_ptr_type				result_field_id;
 			object_name						result_class_name;
 			relative_ptr_type				result_class_id;
-			int								max_result_objects;
 			remote_parameter_fields_type	parameters;
 			remote_fields_type				fields;
 		};
 
-		struct query_status 
+		struct remote_status 
 		{
 			DATE						last_success;
 			DATE						last_error;
 			object_description			error_message;
 		};
 
+		class filter_term
+		{
+		public:
+			object_name		  src_value;
+			relative_ptr_type target_field;
+			comparisons		  comparison;
+		};
+
+		class filter_option
+		{
+		public:
+			class_list classes;
+			iarray<filter_term,32> options;
+		};
+
 		struct file_definition_type
 		{
 			remote_file_path				file_path;
-			query_mapping_type			mapping;
-			query_status					status;
+			remote_mapping_type				mapping;
+			remote_status					status;
 		};
 
 		class file_remote_instance
 		{
 		public:
 			collection_id_type			collection;
-			query_status					status;
+			remote_status					status;
 		};
 
 		enum class http_login_types
@@ -417,15 +423,15 @@ namespace corona
 			object_name						password;
 			remote_http_url					data_url;
 			remote_http_method				data_method;
-			query_mapping_type			mapping;
-			query_status					status;
+			remote_mapping_type				mapping;
+			remote_status					status;
 		};
 
 		class http_remote_instance
 		{
 		public:
 			collection_id_type			collection;
-			query_status					status;
+			remote_status				status;
 
 		};
 
@@ -443,14 +449,14 @@ namespace corona
 			sql_login_types					login_type;
 			object_name						username;
 			object_name						password;
-			query_mapping_type			mapping;
-			query_status					status;
+			remote_mapping_type				mapping;
+			remote_status					status;
 		};
 
-		class sql_remote_instance
+		class sql_instance
 		{
 		public:
-			query_status					status;
+			remote_status					status;
 		};
 
 		class put_field_request_base {
@@ -530,31 +536,37 @@ namespace corona
 			time_properties_type options;
 		};
 
+		class put_currency_field_request {
+		public:
+			put_field_request_base name;
+			currency_properties_type options;
+		};
+
 		class put_object_field_request {
 		public:
 			put_field_request_base name;
 			object_properties_type options;
 		};
 
-		class put_named_query_field_request {
+		class put_filter_field_request {
 		public:
 			put_field_request_base name;
-			query_mapping_type options;
+			filter_option options;
 		};
 
-		class put_named_sql_remote_field_request {
+		class put_sql_remote_field_request {
 		public:
 			put_field_request_base name;
 			sql_definition_type options;
 		};
 
-		class put_named_file_remote_field_request {
+		class put_file_remote_field_request {
 		public:
 			put_field_request_base name;
 			file_definition_type options;
 		};
 
-		class put_named_http_remote_field_request
+		class put_http_remote_field_request
 		{
 		public:
 			put_field_request_base name;
@@ -634,6 +646,8 @@ namespace corona
 			member_field_types	membership_type;
 			object_name			field_name;
 			object_name			membership_type_name;
+			jtype				field_type;
+			object_name			field_type_name;
 
 			relative_ptr_type	field_id;
 			relative_ptr_type	class_id;
@@ -641,6 +655,7 @@ namespace corona
 			dimensions_type		dimensions;
 
 			member_field() :
+				field_type(jtype::type_null),
 				membership_type(member_field_types::member_field),
 				field_name(""),
 				membership_type_name(""),
@@ -652,6 +667,7 @@ namespace corona
 
 			member_field(relative_ptr_type _field_id) :
 				membership_type(member_field_types::member_field),
+				field_type(jtype::type_null),
 				field_name(""),
 				field_id(_field_id),
 				class_id(null_row),
@@ -663,7 +679,8 @@ namespace corona
 			member_field(member_field_types _member_ship_type, relative_ptr_type _id) :
 				membership_type(_member_ship_type),
 				field_name(""),
-				dimensions{ 1, 1, 1 }
+				dimensions{ 1, 1, 1 },
+				field_type(jtype::type_null)
 			{
 				switch (membership_type)
 				{
@@ -678,11 +695,12 @@ namespace corona
 				}
 			}
 
-			member_field(member_field_types _member_ship_type, object_name _name) :
+			member_field(member_field_types _member_ship_type, object_name _name, jtype _field_type = type_null) :
 				membership_type(_member_ship_type),
 				field_name(_name),
 				field_id(null_row),
 				class_id(null_row),
+				field_type(_field_type),
 				dimensions{ 1, 1, 1 }
 			{
 
@@ -692,7 +710,9 @@ namespace corona
 				membership_type(member_field_types::member_list),
 				field_name(""),
 				class_id(_class_id),
-				field_id(null_row)
+				field_id(null_row),
+				field_type(jtype::type_null)
+
 			{
 				dimensions = { _maximum, 1, 1 };
 			}
@@ -701,7 +721,9 @@ namespace corona
 				membership_type(member_field_types::member_class),
 				field_name(""),
 				class_id(_class_id),
-				field_id(null_row)
+				field_id(null_row),
+				field_type(jtype::type_null)
+
 			{
 				dimensions = dims;
 			}
@@ -710,44 +732,53 @@ namespace corona
 				membership_type(member_field_types::member_class),
 				field_name(_name),
 				class_id(_class_id),
-				field_id(null_row)
+				field_id(null_row),
+				field_type(jtype::type_null)
+
 			{
 				dimensions = dims;
 			}
 
-			member_field(const char *_name) :
+			member_field(const char *_name, jtype _field_type = type_null) :
 				membership_type(member_field_types::member_field),
 				field_name(_name),
 				field_id(null_row),
-				class_id(null_row)
+				class_id(null_row),
+				field_type(_field_type)
+
 			{
 				dimensions = { 1, 1, 1 };
 			}
 
-			member_field(object_name _name) :
+			member_field(object_name _name, jtype _field_type = type_null) :
 				membership_type(member_field_types::member_field),
 				field_name(_name),
 				class_id(null_row),
-				field_id(null_row)
+				field_id(null_row),
+				field_type(_field_type)
+
 			{
 				dimensions = { 1, 1, 1 };
 			}
 
-			member_field(object_name _name, int _maximum) :
+			member_field(object_name _name, int _maximum, jtype _field_type = type_null) :
 				membership_type(member_field_types::member_list),
 				field_name(_name),
 				class_id(null_row),
-				field_id(null_row)
+				field_id(null_row),
+				field_type(_field_type)
 			{
 				dimensions = { _maximum, 1, 1 };
 			}
 
-			member_field(object_name _name, dimensions_type dims) :
+			member_field(object_name _name, dimensions_type dims, jtype _field_type = type_null) :
 				membership_type(member_field_types::member_class),
 				field_name(_name),
 				class_id(null_row),
 				field_id(null_row),
-				dimensions(dims)
+				dimensions(dims),
+				field_type(_field_type)
+
 			{
 				;
 			}
@@ -757,7 +788,8 @@ namespace corona
 				field_name(_src.field_name),
 				class_id(_src.class_id),
 				field_id(_src.field_id),
-				dimensions(_src.dimensions)
+				dimensions(_src.dimensions),
+				field_type(_src.field_type)
 			{
 			}
 		};
