@@ -18,7 +18,7 @@ int __stdcall WinMain(HINSTANCE hInstance,
 	corona::win32::adapterSet factory;
 	factory.refresh();
 
-	corona::win32::directApplication wsPropose(&factory);
+	corona::win32::directApplicationWin32 wsPropose(&factory);
 
 	bool forceWindowed = false;
 

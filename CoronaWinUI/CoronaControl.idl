@@ -1,0 +1,9 @@
+namespace CoronaWinUI
+{
+    [default_interface]
+    runtimeclass CoronaControl : Microsoft.UI.Xaml.Controls.UserControl
+    {
+        CoronaControl();
+        Int32 MyProperty;
+    }
+}

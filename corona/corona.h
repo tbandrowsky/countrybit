@@ -6,15 +6,32 @@
 #include "windowsx.h"
 #include "process.h"
 #include "combaseapi.h"
-#include "commctrl.h"
-#include "commdlg.h"
-#include "Shlwapi.h"
-#include "Shlobj.h"
 #include "Winhttp.h"
 #include "shellapi.h"
 #include <io.h>
 #include <fcntl.h>
 #include "oleauto.h"
+
+#include <unknwn.h>
+
+#ifdef _WINRT_DLL
+#include <winrt/Windows.Foundation.h>
+#include <winrt/Windows.Foundation.Collections.h>
+#include <winrt/Microsoft.UI.Composition.h>
+#include <winrt/Microsoft.UI.Xaml.h>
+#include <winrt/Microsoft.UI.Xaml.Controls.h>
+#include <winrt/Microsoft.UI.Xaml.Controls.Primitives.h>
+#include <winrt/Microsoft.UI.Xaml.Data.h>
+#include <winrt/Microsoft.UI.Xaml.Markup.h>
+#include <winrt/Microsoft.UI.Xaml.Navigation.h>
+#include <winrt/Microsoft.UI.Dispatching.h>
+#include <wil/cppwinrt_helpers.h>
+#else
+#include "commctrl.h"
+#include "commdlg.h"
+#include "Shlwapi.h"
+#include "Shlobj.h"
+#endif
 
 #include <stdlib.h>
 #include <malloc.h>
@@ -107,7 +124,6 @@
 #include "extractor.h"
 #include "jvalue.h"
 #include "jobject.h"
-#include "system_jobjects.h"
 #include "jquery.h"
 #include "analytics.h"
 #include "presentation.h"
@@ -121,8 +137,19 @@
 #include "utility.h"
 #include "datatransfer.h"
 #include "controllerhost.h"
+#include "directdxgi.h"
+#include "directxdcontext.h"
 #include "controller.h"
-#include "directapplication.h"
+
+#ifdef _WINRT_DLL
+
+#include "directapplicationwinuwp.h"
+
+#else
+
+#include "directapplicationwin32.h"
+
+#endif
 
 const int WM_SWITCH_CONTROLLER = WM_APP + 101;
 const int WM_PUSH_CONTROLLER = WM_APP + 102;

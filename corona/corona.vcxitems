@@ -27,7 +27,10 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)controllerhost.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)datatransfer.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)directapplication.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)directapplicationwinuwp.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)directdxgi.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)directxdcontext.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)directapplicationwin32.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)jvalue.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)file_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)filterable_iterator.h" />
@@ -52,7 +55,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)rectangle_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)sql_remote_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)store_box_file.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)system_jobjects.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)time_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)file.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)float_box.h" />
@@ -94,7 +96,10 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)controller.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)controllerhost.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)datatransfer.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)directapplication.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)directapplicationwinuwp.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)directdxgi.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)directxdcontext.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)directapplicationwin32.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)jvalue.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)grouping.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)jdatabase_client.cpp" />

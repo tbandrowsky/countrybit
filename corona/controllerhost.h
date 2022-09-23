@@ -66,6 +66,21 @@ namespace corona
 			virtual drawableHost* getDrawable(relative_ptr_type i) = 0;
 			virtual direct2dChildWindow* getWindow(relative_ptr_type ctrlId) = 0;
 
+			virtual bool getSaveFilename(std::string& _saveFileName, const char* _pathExtensions, const char* _defaultExtension) = 0;
+			virtual int renderPage(database::page& _page, database::jschema* _schema, database::actor_state& _state, database::jcollection& _collection) = 0;
+			virtual rectangle getWindowClientPos() = 0;
+			virtual rectangle getWindowPos(int ddlControlId) = 0;
+			virtual void setWindowPos(int ddlControlId, rectangle rect) = 0;
+			virtual void setMinimumWindowSize(point size) = 0;
+		};
+
+		class win32ControllerHost : public controllerHost {
+
+		public:
+
+			virtual drawableHost* getDrawable(relative_ptr_type i) = 0;
+			virtual direct2dChildWindow* getWindow(relative_ptr_type ctrlId) = 0;
+
 			virtual void setPictureIcon(int controlId, dtoIconId iconId) = 0;
 			virtual void setButtonIcon(int controlId, dtoIconId iconId) = 0;
 
@@ -114,11 +129,6 @@ namespace corona
 			virtual point getScrollRange(int ddlControlId) = 0;
 			virtual void setScrollPos(int ddlControlId, point pt) = 0;
 
-			virtual rectangle getWindowClientPos() = 0;
-			virtual rectangle getWindowPos(int ddlControlId) = 0;
-			virtual void setWindowPos(int ddlControlId, rectangle rect) = 0;
-			virtual void setMinimumWindowSize(point size) = 0;
-
 			virtual void setSpinRange(int ddlControlId, int lo, int high) = 0;
 			virtual void setSpinPos(int ddlControlId, int pos) = 0;
 
@@ -126,11 +136,15 @@ namespace corona
 			virtual std::vector<std::string> readInternet(const char* _domain, const char* _path) = 0;
 
 			virtual void redraw() = 0;
-			virtual bool getSaveFilename(std::string& _saveFileName, const char* _pathExtensions, const char* _defaultExtension) = 0;
 
 			virtual void setColorCapture(int _iconResourceId) = 0;
 
+			virtual bool getSaveFilename(std::string& _saveFileName, const char* _pathExtensions, const char* _defaultExtension) = 0;
 			virtual int renderPage(database::page& _page, database::jschema* _schema, database::actor_state& _state, database::jcollection& _collection) = 0;
+			virtual rectangle getWindowClientPos() = 0;
+			virtual rectangle getWindowPos(int ddlControlId) = 0;
+			virtual void setWindowPos(int ddlControlId, rectangle rect) = 0;
+			virtual void setMinimumWindowSize(point size) = 0;
 
 		};
 
