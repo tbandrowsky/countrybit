@@ -460,13 +460,6 @@ namespace corona
 				}
 			};
 
-			class filter_option
-			{
-			public:
-				class_list classes;
-				iarray<filter_term, 32> options;
-			};
-
 			class filter_option_wrapper : public poco_object_wrapper<filter_option>
 			{
 			public:
@@ -477,13 +470,15 @@ namespace corona
 				}
 			};
 
-			struct dimensions_type
+			class dimensions_type_wrapper : public poco_object_wrapper<dimensions_type>
 			{
-				corona_size_t x, y, z;
-
-				dimensions_type(corona_size_t _x, corona_size_t _y, corona_size_t _z) : x(_x), y(_y), z(_z) { ; }
-				dimensions_type() : x(0), y(0), z(0) { ; }
-				bool increment(dimensions_type& _constraint);
+			public:
+				dimensions_type_wrapper(dimensions_type& _ref) : poco_object_wrapper("dimensions", _ref)
+				{
+					bind_scalar("x", "x", ref.x);
+					bind_scalar("y", "y", ref.y);
+					bind_scalar("z", "z", ref.z);
+				}
 			};
 
 			struct file_definition_type
