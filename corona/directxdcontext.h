@@ -38,8 +38,6 @@ namespace corona
 
 			adapterSet* factory;
 
-			OPENFILENAMEA ofn;
-
 		protected:
 
 			direct2dContext(adapterSet* _factory);
@@ -552,5 +550,8 @@ namespace corona
 			void add_quadratic_bezier(D2D1_POINT_2F point1, D2D1_POINT_2F point2);
 			void close_figure(bool closed = true);
 		};
+
+
+
 	}
 }

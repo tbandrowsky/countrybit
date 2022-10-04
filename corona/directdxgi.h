@@ -7,6 +7,21 @@ namespace corona
 		using namespace corona::database;
 
 		void throwOnFail(HRESULT hr, const char* _message);
+		void throwOnNull(void* _ptr, const char* _message);
+
+		struct sizeCrop {
+			D2D1_SIZE_U size;
+			bool cropEnabled;
+			D2D1_RECT_F crop;
+		};
+
+		sizeCrop toSizeC(point& _size, bool _cropEnabled, rectangle& _crop);
+		D2D1_SIZE_U toSizeU(point& _size);
+		D2D1_SIZE_F toSizeF(point& _size);
+		point toSize(D2D1_SIZE_U& _size);
+		D2D1_COLOR_F toColor(color& _color);
+		D2D1_POINT_2F toPoint(point& _point);
+		D2D1_GRADIENT_STOP toGradientStop(gradientStop& _gradientStop);
 
 		class direct3dWindowInstance
 		{

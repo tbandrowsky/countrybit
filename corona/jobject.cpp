@@ -1039,8 +1039,8 @@ namespace corona
 					pifr.name.type_id = new_field_type;
 					//pifr.name.format = field.item.get_string(schema->id_dbf_field_description, true);
 					auto options = field.item.get_object(schema->idf_date_options, true).get_object({ 0,0,0 });
-					pifr.options.maximum_time_t = options.get_time(schema->idf_date_stop);
-					pifr.options.minimum_time_t = options.get_time(schema->idf_date_start);
+					pifr.options.maximum_date = options.get_time(schema->idf_date_stop);
+					pifr.options.minimum_date = options.get_time(schema->idf_date_start);
 					auto field_id = schema->put_time_field(pifr);
 					pcr.member_fields.push_back({ field_id });
 				}
@@ -1056,8 +1056,6 @@ namespace corona
 					pifr.options.length = options.get_int32(schema->idf_string_length);
 					pifr.options.validation_message = options.get_string(schema->idf_string_validation_message);
 					pifr.options.validation_pattern = options.get_string(schema->idf_string_validation_pattern);
-					pifr.options.full_text_editor = options.get_int8(schema->idf_string_full_text_editor);
-					pifr.options.rich_text_editor = options.get_int8(schema->idf_string_rich_text_editor);
 					auto field_id = schema->put_string_field(pifr);
 					pcr.member_fields.push_back({ field_id });
 				}
@@ -1798,25 +1796,25 @@ namespace corona
 				case jtype::type_query:
 					{
 						query_box b(c, schema, &the_class, this, i);
-						b = query_status{};
+						b = query_instance{};
 					}
 					break;
 				case jtype::type_sql:
 					{
-						sql_remote_box b(c, schema, &the_class, this, i);
+						sql_box b(c, schema, &the_class, this, i);
 						b = sql_instance{};
 					}
 					break;
 				case jtype::type_file:
 					{
-						file_remote_box b(c, schema, &the_class, this, i);;
-						b = file_remote_instance{};
+						file_box b(c, schema, &the_class, this, i);;
+						b = file_instance{};
 					}
 					break;
 				case jtype::type_http:
 					{
-						http_remote_box b(c, schema, &the_class, this, i);;
-						b = http_remote_instance{};
+						http_box b(c, schema, &the_class, this, i);;
+						b = http_instance{};
 					}
 					break;
 				}
@@ -3207,7 +3205,7 @@ namespace corona
 				{ { jtype::type_datetime, "date_stop", "Max Date" }, 0, INT64_MAX }
 			};
 
-			put_integer_field_request int_fields[25] = {
+			put_integer_field_request int_fields[23] = {
 				{ { jtype::type_int64, "count", "Count" }, 0, INT64_MAX },
 				{ { jtype::type_int8, "bold", "Bold" }, 0, INT8_MAX },
 				{ { jtype::type_int8, "italic", "Italic" }, 0, INT8_MAX },
@@ -3227,8 +3225,6 @@ namespace corona
 				{ { jtype::type_int64, "user_class_class_id", "User Class Id" }, 0, INT64_MAX },
 				{ { jtype::type_int64, "base_class_id", "Base Class Id" }, 0, INT64_MAX },
 				{ { jtype::type_int32, "string_length", "Max Length of String Field" }, 0, 1<<20 },
-				{ { jtype::type_int8, "string_full_text_editor", "Base Class Id" }, 0, 1 },
-				{ { jtype::type_int8, "string_rich_text_editor", "Base Class Id" }, 0, 1 },
 				{ { jtype::type_int32, "object_x", "X Dim" }, 0, INT64_MAX },
 				{ { jtype::type_int32, "object_y", "Y Dim" }, 0, INT64_MAX },
 				{ { jtype::type_int32, "object_z", "Z Dim" }, 0, INT64_MAX },
@@ -3546,8 +3542,6 @@ namespace corona
 			idf_string_length = find_field("string_length");
 			idf_string_validation_pattern = find_field("string_validation_pattern");
 			idf_string_validation_message = find_field("string_validation_message");
-			idf_string_full_text_editor = find_field("string_full_text_editor");
-			idf_string_rich_text_editor = find_field("string_rich_text_editor");
 
 			idf_date_start = find_field("date_start");
 			idf_date_stop = find_field("date_stop");
@@ -3567,7 +3561,7 @@ namespace corona
 
 			pcr.class_name = "string_options";
 			pcr.class_description = "Options for string field";
-			pcr.member_fields = { idf_string_length, idf_string_validation_message, idf_string_validation_pattern, idf_string_full_text_editor, idf_string_rich_text_editor };
+			pcr.member_fields = { idf_string_length, idf_string_validation_message, idf_string_validation_pattern };
 			idc_string_options = put_class(pcr);
 
 			pcr.class_name = "double_options";

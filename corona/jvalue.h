@@ -23,6 +23,7 @@ namespace corona
 			void copy(const jvariant& _src);
 
 		public:
+
 			friend class jobject;
 
 			jvariant() : field_id(null_row), variant_type(jtype::type_null)
@@ -32,6 +33,11 @@ namespace corona
 
 			jvariant(const jvariant& _src);
 			jvariant operator =(const jvariant& _src);
+
+			jvariant(relative_ptr_type _field_id) : variant_type(jtype::type_null)
+			{
+				;
+			}
 
 			template <explicit_char_ptr t> jvariant(relative_ptr_type _field_id, t _string_value) : field_id(_field_id), string_value(_string_value), variant_type(jtype::type_string)
 			{

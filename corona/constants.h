@@ -234,6 +234,19 @@ namespace corona
 		template <class T>
 		concept explicit_char_ptr = std::same_as<T, const char *>;
 
+		class jtype_identifier
+		{
+		public:
+			static jtype_identifier get() { return jtype_identifier(); }
+			template<explicit_int32 t> jtype from(t _dummy) { return jtype::type_int32; }
+			template<explicit_int64 t> jtype from(t _dummy) { return jtype::type_int64; }
+			template<explicit_int t> jtype from(t _dummy) { return jtype::type_int64; }
+			template<explicit_double t> jtype from(t _dummy) { return jtype::type_float64; }
+			template<explicit_float t> jtype from(t _dummy) { return jtype::type_float32; }
+			template<explicit_bool t> jtype from(t _dummy) { return jtype::type_int8; }
+			template<explicit_char_ptr t> jtype from(t _dummy) { return jtype::type_string; }
+		};
+
 		const int styles_count = 5;
 		const int style_normal = 0;
 		const int style_over = 1;

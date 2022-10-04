@@ -34,7 +34,7 @@ namespace corona
 			relative_ptr_type	actors_id;
 			relative_ptr_type	objects_id;
 
-			dynamic_box*		data;
+			persistent_box*		data;
 
 			jcollection_ref() : 
 				collection_name(""),
@@ -1229,7 +1229,7 @@ namespace corona
 				schema_map.classes_table_id = class_store_type::reserve_table(_b, _num_classes, _total_class_fields);
 				schema_map.classes_by_name_id = class_index_type::reserve_sorted_index(_b);
 				schema_map.fields_by_name_id = field_index_type::reserve_sorted_index(_b);
-				schema_map.query_properties_id = query_store_type::reserve_sorted_index(_b);
+				schem/a_map.query_properties_id = query_store_type::reserve_sorted_index(_b);
 				schema_map.sql_properties_id = sql_store_type::reserve_sorted_index(_b);
 				schema_map.file_properties_id = file_store_type::reserve_sorted_index(_b);
 				schema_map.http_properties_id = http_store_type::reserve_sorted_index(_b);
@@ -1503,12 +1503,12 @@ namespace corona
 				bind_class(fn, _class_id);
 			}
 
-			relative_ptr_type put_query_field(put_filter_field_request request)
+			relative_ptr_type put_query_field(put_query_field_request request)
 			{
 				query_properties_type options;
 
 				request.name.type_id = jtype::type_query;
-				auto query_location = put_field(request.name, sizeof(query_status), [request](jfield& _field)
+				auto query_location = put_field(request.name, sizeof(query_instance), [request](jfield& _field)
 					{
 						;
 					});
@@ -1551,7 +1551,7 @@ namespace corona
 					bind_field(pi.corona_field, pi.corona_field_id);
 				}
 
-				auto query_location = put_field(request.name, sizeof(http_remote_instance), [request](jfield& _field)
+				auto query_location = put_field(request.name, sizeof(http_instance), [request](jfield& _field)
 					{
 						;
 					});
@@ -1573,7 +1573,7 @@ namespace corona
 					bind_field(pi.corona_field, pi.corona_field_id);
 				}
 
-				auto query_location = put_field(request.name, sizeof(file_remote_instance), [request](jfield& _field)
+				auto query_location = put_field(request.name, sizeof(file_instance), [request](jfield& _field)
 					{
 						;
 					});

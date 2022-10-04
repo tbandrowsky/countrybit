@@ -397,7 +397,7 @@ namespace corona
 			remote_status					status;
 		};
 
-		class file_remote_instance
+		class file_instance
 		{
 		public:
 			collection_id_type			collection;
@@ -425,14 +425,14 @@ namespace corona
 			remote_http_method				data_method;
 			remote_mapping_type				mapping;
 			remote_status					status;
+			query_body						query;
 		};
 
-		class http_remote_instance
+		class http_instance
 		{
 		public:
 			collection_id_type			collection;
 			remote_status				status;
-
 		};
 
 		enum class sql_login_types
@@ -451,11 +451,25 @@ namespace corona
 			object_name						password;
 			remote_mapping_type				mapping;
 			remote_status					status;
+			query_body						query;
 		};
 
 		class sql_instance
 		{
 		public:
+			collection_id_type			collection;
+			remote_status					status;
+		};
+
+		struct query_definition_type
+		{
+			query_body						query;
+		};
+
+		class query_instance
+		{
+		public:
+			collection_id_type			collection;
 			remote_status					status;
 		};
 
@@ -548,10 +562,10 @@ namespace corona
 			object_properties_type options;
 		};
 
-		class put_filter_field_request {
+		class put_query_field_request {
 		public:
 			put_field_request_base name;
-			filter_option options;
+			query_definition_type  options;
 		};
 
 		class put_sql_remote_field_request {

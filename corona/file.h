@@ -4,7 +4,7 @@ namespace corona
 {
 	namespace database 
 	{
-		class file_instance
+		class file_result
 		{
 		public:
 			job_queue* queue;
@@ -17,7 +17,7 @@ namespace corona
 			BOOL		success;
 			os_result	last_result;
 
-			file_instance() :
+			file_result() :
 				queue(nullptr),
 				file_name(""),
 				hfile(INVALID_HANDLE_VALUE)
@@ -25,9 +25,9 @@ namespace corona
 
 			}
 
-			~file_instance() = default;
+			~file_result() = default;
 
-			file_instance(job_queue* _queue, const file_path& _file_name, HANDLE _hfile) :
+			file_result(job_queue* _queue, const file_path& _file_name, HANDLE _hfile) :
 				queue(_queue),
 				file_name(_file_name),
 				hfile(_hfile),
@@ -45,7 +45,7 @@ namespace corona
 		{
 		public:
 
-			file_instance* params;
+			file_result* params;
 
 			bool run()
 			{
@@ -63,7 +63,7 @@ namespace corona
 		class file_read_job : public task_job
 		{
 		public:
-			file_instance* params;
+			file_result* params;
 
 			bool run()
 			{
@@ -87,7 +87,7 @@ namespace corona
 
 		class file
 		{
-			file_instance instance;
+			file_result instance;
 			lockable size_locker;
 			HANDLE resize_event;
 
@@ -228,7 +228,7 @@ namespace corona
 				instance.location = location;
 				instance.buffer_bytes = (char*)_buffer;
 				instance.buffer_size = _buffer_length;
-				async_io_task<file_write_job, file_instance> aw;
+				async_io_task<file_write_job, file_result> aw;
 				aw.configure(instance.queue, instance);
 				return aw;
 			}
@@ -236,7 +236,7 @@ namespace corona
 
 			auto read(uint64_t location, void* _buffer, int _buffer_length)
 			{
-				async_io_task<file_read_job, file_instance> aw;
+				async_io_task<file_read_job, file_result> aw;
 				instance.location = location;
 				instance.buffer_bytes = (char *)_buffer;
 				instance.buffer_size = _buffer_length;

@@ -27,6 +27,7 @@ namespace corona
 			relative_ptr_type		location;
 			relative_ptr_type		allocated_length;
 			relative_ptr_type		payload_length;
+			relative_ptr_type		block_type_id;
 			bool					deleted;
 			time_t					updated;
 			char					data[1];

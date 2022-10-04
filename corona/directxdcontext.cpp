@@ -6,6 +6,13 @@ namespace corona
 {
 	namespace win32
 	{
+		class nullFilterFunction {
+		public:
+			bool operator()(point, int, int, char*)
+			{
+				return true;
+			}
+		};
 
 		direct3dDevice::direct3dDevice()
 		{
@@ -754,6 +761,7 @@ namespace corona
 				lpWriteTextFormat->Release();
 			lpWriteTextFormat = NULL;
 		}
+
 		bool filteredBitmap::create(direct2dContext* _target, IWICBitmapSource* _source)
 		{
 			HRESULT hr;
@@ -2172,6 +2180,7 @@ namespace corona
 		{
 			_object_style_name = _style_sheet_name + "-shape-border-" + std::to_string(_index);
 		}
+
 
 	}
 }

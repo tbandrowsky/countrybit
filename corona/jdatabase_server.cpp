@@ -14,19 +14,10 @@ namespace corona
 		task<db_response> jdatabase::open(open_db_request _open)
 		{
 			int success = 1;
-			file dbfile = current_application->open_file(_open.filename.c_str(), file_open_types::open_existing);
-			if (dbfile.success()) {
-				auto sz = dbfile.size();
-				database_box.init(sz);
-				co_await dbfile.read(0, database_box.data(), sz);
-				if (dbfile.success()) {
-					map = database_box.get_object<jdatabase_control_map>(0);
-					schema = jschema::get_schema(&database_box, map->schema_location);
-					collections_by_id = collections_by_id_type::get_sorted_index(&database_box, map->collections_by_id_location);
-				}
-			}
+			database_box.open(current_application, _open.filename);
+			map = database_box.get_object<jdatabase_control_map>(0);
+			collections_by_id = collections_by_id_type::get_sorted_index(&database_box, map->collections_by_id_location);
 			db_response jfr;
-			jfr.os_code = dbfile.result();
 			jfr.success = true;
 			co_return jfr;
 		}
@@ -41,7 +32,7 @@ namespace corona
 			int64_t collection_by_name_bytes = collections_by_name_type::get_box_size();
 			int64_t collection_by_id_bytes = collections_by_id_type::get_box_size();
 
-			database_box.init(collection_by_name_bytes + collection_by_id_bytes + sizeof(jdatabase_control_map) + schema_size_bytes);
+			database_box.create(current_application, _create.database_filename);
 			map = database_box.allocate<jdatabase_control_map>(1);
 
 			std::filesystem::path dbpath = _create.database_filename.c_str();
@@ -53,15 +44,9 @@ namespace corona
 			schema = jschema::create_schema(&database_box, _create.num_classes, true, map->schema_location);
 			collections_by_id = collections_by_id_type::create_sorted_index(&database_box, map->collections_by_id_location);
 			collections_by_name = collections_by_name_type::create_sorted_index(&database_box, map->collections_by_name_location);
-
-			file dbfile = current_application->create_file(_create.database_filename);
-
-			if (dbfile.success()) {
-				auto result = co_await dbfile.write(0, database_box.data(), database_box.size());
-			}
+			database_box.commit();
 
 			db_response jfr;
-			jfr.os_code = dbfile.result();
 			jfr.success = true;
 			co_return jfr;
 		}
@@ -108,6 +93,8 @@ namespace corona
 				collections_by_id.insert_or_assign(new_collection.collection_id, new_collection);
 				collections_by_name.insert_or_assign(new_collection.collection_name, new_collection.collection_id);
 
+				database_box.commit();
+
 				response = get_collection(new_collection.collection_id);
 			}
 			catch (std::exception exc)
@@ -149,8 +136,8 @@ namespace corona
 			}
 			auto ref = collections_by_id[_id];
 			if (ref.second.data == nullptr) {
-				ref.second.data = new dynamic_box();
-				ref.second.data->init(ref.second.collection_size_bytes * 2);
+				ref.second.data = new persistent_box();
+				ref.second.data->open(current_application, ref.second.collection_file_name);
 			}
 			response.collection = jcollection(&schema, &ref.second);
 			response.success = true;
@@ -255,6 +242,14 @@ namespace corona
 		actor_response jdatabase::get_actor(get_actor_request _request)
 		{
 			return actor_invoke<get_actor_request>(_request.name.c_str(), [this](jcollection& col, auto& r) { return col.find_actor(r.name); }, _request);
+		}
+
+		actor_state_response jdatabase::get_actor_state(get_actor_request _request)
+		{
+			return command_invoke<get_actor_request>(_request, [](jcollection& _collection, get_actor_request& p) {
+				auto actor = _collection.find_actor(p.name);
+				return _collection.get_actor_state(actor);
+				});
 		}
 
 		actor_state_response jdatabase::select_object(select_object_request _select)

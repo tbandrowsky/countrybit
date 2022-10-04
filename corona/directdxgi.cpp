@@ -1,5 +1,7 @@
 #pragma once
 
+#include "corona.h"
+
 namespace corona
 {
 	namespace win32
@@ -60,6 +62,34 @@ namespace corona
 			newSize.y = _size.height;
 			return newSize;
 		}
+
+		D2D1_COLOR_F toColor(color& _color)
+		{
+			D2D1_COLOR_F newColor;
+			newColor.a = _color.alpha;
+			newColor.b = _color.blue;
+			newColor.r = _color.red;
+			newColor.g = _color.green;
+			return newColor;
+		}
+
+		D2D1_POINT_2F toPoint(point& _point)
+		{
+			D2D1_POINT_2F point2;
+			point2.x = _point.x;
+			point2.y = _point.y;
+			return point2;
+		}
+
+		D2D1_GRADIENT_STOP toGradientStop(gradientStop& _gradientStop)
+		{
+			D2D1_GRADIENT_STOP stop;
+
+			stop.position = _gradientStop.position;
+			stop.color = toColor(_gradientStop.color);
+			return stop;
+		}
+
 
 		adapterSet::adapterSet()
 		{
@@ -203,6 +233,107 @@ namespace corona
 			direct2dBitmap* win = new direct2dBitmap(size, this);
 			return win;
 		}
+
+		direct3dDevice::direct3dDevice()
+		{
+			d3d11Device = nullptr;
+		}
+
+		direct3dDevice::~direct3dDevice()
+		{
+			if (d3d11Device)
+			{
+				d3d11Device->Release();
+			}
+			d3d11Device = nullptr;
+		}
+
+		bool direct3dDevice::setDevice(IDXGIAdapter1* _adapter)
+		{
+			if (d3d11Device != nullptr)
+			{
+				d3d11Device->Release();
+				d3d11Device = nullptr;
+				feature_level = D3D_FEATURE_LEVEL::D3D_FEATURE_LEVEL_1_0_CORE;
+			}
+
+			D3D_FEATURE_LEVEL feature_levels[] = {
+				D3D_FEATURE_LEVEL_10_0,
+				D3D_FEATURE_LEVEL_10_1,
+				D3D_FEATURE_LEVEL_11_0,
+				D3D_FEATURE_LEVEL_11_1
+			};
+
+			HRESULT hr = D3D11CreateDevice(_adapter,
+				D3D_DRIVER_TYPE_UNKNOWN,
+				NULL,
+				D3D11_CREATE_DEVICE_BGRA_SUPPORT,
+				feature_levels,
+				2,
+				D3D11_SDK_VERSION,
+				&d3d11Device,
+				&feature_level,
+				NULL
+			);
+
+			if (SUCCEEDED(hr) && d3d11Device != nullptr)
+			{
+				return true;
+			}
+		}
+
+		direct2dDevice::direct2dDevice()
+		{
+			d2dDevice = nullptr;
+			d2DFactory = nullptr;
+			wicFactory = nullptr;
+			dWriteFactory = nullptr;
+			dxDevice = nullptr;
+
+			HRESULT hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED, &d2DFactory);
+			throwOnFail(hr, "Could not create D2D1 factory");
+
+			hr = CoCreateInstance(CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&wicFactory));
+			throwOnFail(hr, "Could not create WIC Imaging factory");
+
+			hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(dWriteFactory), reinterpret_cast<IUnknown**>(&dWriteFactory));
+			throwOnFail(hr, "Could not create direct write factory");
+		}
+
+		direct2dDevice::~direct2dDevice()
+		{
+			if (wicFactory) {
+				wicFactory->Release();
+				wicFactory = NULL;
+			}
+			if (dWriteFactory) {
+				dWriteFactory->Release();
+				dWriteFactory = NULL;
+			}
+			if (d2dDevice) {
+				d2dDevice->Release();
+				d2dDevice = NULL;
+			}
+			if (d2DFactory) {
+				d2DFactory->Release();
+				d2DFactory = NULL;
+			}
+			if (dxDevice) {
+				dxDevice->Release();
+				dxDevice = NULL;
+			}
+		}
+
+		bool direct2dDevice::setDevice(ID3D11Device* _d3dDevice)
+		{
+			HRESULT hr = _d3dDevice->QueryInterface(&this->dxDevice);
+
+			hr = d2DFactory->CreateDevice(dxDevice, &d2dDevice);
+
+			return SUCCEEDED(hr);
+		}
+
+
 
 	}
 }

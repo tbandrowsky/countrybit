@@ -291,12 +291,15 @@ namespace corona
 		std::string operator+(const std::string& b, const string_box& a);
 		std::ostream& operator <<(std::ostream& output, string_box& src);
 		
-		template <int length_bytes> class istring 
+		template <int32_t length_bytes> class istring 
 		{
-			uint32_t length;
-			int last_char;
+			int32_t length;
+			int32_t last_char;
 			char data[length_bytes];
 		public:
+
+			const int32_t size_param = length_bytes;
+			const auto type() { return decltype(istring<length_bytes>); }
 
 			istring() : last_char( length_bytes - 1 ), length(0)
 			{

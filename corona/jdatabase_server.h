@@ -124,7 +124,7 @@ namespace corona
 
 		class jdatabase
 		{
-			file_box						database_box;
+			persistent_box					database_box;
 			jschema							schema;
 			collections_by_id_type			collections_by_id;
 			collections_by_name_type		collections_by_name;
@@ -149,6 +149,7 @@ namespace corona
 					{
 						response.info = get_fn(fid);
 						response.success = true;
+						database_box.commit();
 					}
 					else
 					{
@@ -180,6 +181,7 @@ namespace corona
 				{
 					process_fn(_request);
 					response.info = get_fn(_request.name);
+					database_box.commit();
 				}
 				catch (std::logic_error& le)
 				{
@@ -204,6 +206,7 @@ namespace corona
 				try
 				{
 					response.info = get_fn(_name);
+					database_box.commit();
 				}
 				catch (std::logic_error& le)
 				{
@@ -258,6 +261,7 @@ namespace corona
 					{
 						response.message = std::format("Could not manage [{}]", _name);
 					}
+					database_box.commit();
 				}
 				catch (std::logic_error& le)
 				{
@@ -295,6 +299,7 @@ namespace corona
 
 					response.info = process_fn(collection_response.collection, _request);
 					response.success = true;
+					database_box.commit();
 					return response;
 				}
 				catch (std::logic_error& le)
@@ -351,7 +356,7 @@ namespace corona
 			actor_response put_actor(jactor _actor);
 			actor_response get_actor(get_actor_request _request);
 
-			actor_state_response get_actor_options(get_actor_request _request);
+			actor_state_response get_actor_state(get_actor_request _request);
 			actor_state_response select_object(select_object_request _select);
 			actor_state_response create_object(create_object_request _create);
 			actor_state_response update_object(update_object_request _update);

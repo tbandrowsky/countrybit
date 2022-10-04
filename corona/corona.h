@@ -14,9 +14,11 @@
 
 #include <unknwn.h>
 
-#ifdef _WINRT_DLL
+#ifdef CORONA_USE_WINRT
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.Foundation.Collections.h>
+#include <winrt/Windows.Data.Xml.Dom.h>
+#include <winrt/Windows.Data.Json.h>
 #include <winrt/Microsoft.UI.Composition.h>
 #include <winrt/Microsoft.UI.Xaml.h>
 #include <winrt/Microsoft.UI.Xaml.Controls.h>
@@ -114,20 +116,20 @@
 #include "wave_box.h"
 #include "midi_box.h"
 #include "color_box.h"
-#include "sql_remote_box.h"
-#include "http_remote_box.h"
-#include "file_remote_box.h"
+#include "sql_box.h"
+#include "http_box.h"
+#include "file_box.h"
 #include "sorted_index.h"
 #include "store_box_file.h"
 #include "query_box.h"
 #include "visual.h"
+#include "bridges.h"
 #include "extractor.h"
 #include "jvalue.h"
 #include "jobject.h"
 #include "jquery.h"
 #include "analytics.h"
 #include "presentation.h"
-#include "jdatabase.h"
 #include "jdatabase_client.h"
 #include "jdatabase_server.h"
 #include "loader.h"
@@ -141,18 +143,18 @@
 #include "directxdcontext.h"
 #include "controller.h"
 
-#ifdef _WINRT_DLL
+#ifdef CORONA_USE_WINRT
 
 #include "directapplicationwinuwp.h"
 
 #else
 
-#include "directapplicationwin32.h"
-
-#endif
-
 const int WM_SWITCH_CONTROLLER = WM_APP + 101;
 const int WM_PUSH_CONTROLLER = WM_APP + 102;
 const int WM_POP_CONTROLLER = WM_APP + 103;
 
+#include "directapplicationwin32.h"
+
 #endif
+#endif
+

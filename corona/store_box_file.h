@@ -112,9 +112,35 @@ namespace corona
 			virtual void clear_cache();
 		};
 
-		class file_box : public serialized_box_container
+		class persistent_box : public serialized_box_container
 		{
-			;
+			serialized_box box;
+
+		public:
+
+			persistent_box() 
+			{
+			}
+
+			void open(application *_the_application, object_path _the_file_name)
+			{
+				box = serialized_box_file_implementation::open(_the_application, _the_file_name);
+			}
+
+			void create(application* _the_application, object_path _the_file_name)
+			{
+				box = serialized_box_file_implementation::create(_the_application, _the_file_name);
+			}
+
+			virtual serialized_box* get_box() { return &box; }
+			virtual const serialized_box* get_box_const() const { return &box; }
+			virtual serialized_box* check(int _bytes) { return _bytes < get_box()->free() ? get_box() : nullptr; }
+
+			virtual ~persistent_box()
+			{
+				;
+			}
+
 		};
 
 	}
