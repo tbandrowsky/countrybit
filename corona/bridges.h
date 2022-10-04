@@ -10,6 +10,8 @@ namespace corona
 			class object_base;
 			class field_base;
 			class array_field_base;
+			class object_array_field_base;
+			class scalar_array_field_base;
 			class scalar_field_base;
 
 			class field_base
@@ -18,18 +20,37 @@ namespace corona
 				virtual std::string get_field_name() = 0;
 				virtual std::string get_field_description() = 0;
 				virtual jtype get_field_type() = 0;
-				virtual array_field_base* as_array_field() = 0;
+				virtual object_array_field_base* as_object_array_field() = 0;
+				virtual scalar_array_field_base* as_scalar_array_field() = 0;
 				virtual scalar_field_base* as_scalar_field() = 0;
 			};
 
 			class array_field_base : public field_base
 			{
 			public:
-				virtual std::shared_ptr<object_base> create_object() = 0;
-				virtual std::shared_ptr<object_base> get_object(int _index) = 0;
+			};
+
+			class scalar_array_field_base : public array_field_base
+			{
+			public:
+				virtual jvariant create_scalar() = 0;
+				virtual jvariant get_scalar(int _index) = 0;
+				virtual jvariant put_scalar(int _index, jvariant& _src) = 0;
+				virtual int32_t get_scalar_count() = 0;
+				virtual object_array_field_base* as_object_array_field() { return nullptr; };
+				virtual scalar_array_field_base* as_scalar_array_field() { return this; };
+				virtual scalar_field_base* as_scalar_field() { return nullptr; };
+			};
+
+			class object_array_field_base : public array_field_base
+			{
+			public:
+				virtual object_base *create_object() = 0;
+				virtual object_base *get_object(int _index) = 0;
 				virtual int32_t get_object_count() = 0;
-				virtual array_field_base* as_array_field() { return this;  };
-				virtual scalar_field_base* as_scalar_field() { return nullptr;  };
+				virtual object_array_field_base* as_object_array_field() { return this; };
+				virtual scalar_array_field_base* as_scalar_array_field() { return nullptr; };
+				virtual scalar_field_base* as_scalar_field() { return nullptr; };
 			};
 
 			class scalar_field_base : public field_base
@@ -37,7 +58,8 @@ namespace corona
 			public:
 				virtual jvariant get_field_value() = 0;
 				virtual bool set_field_value(jvariant _field) = 0;
-				virtual array_field_base* as_array_field() { return nullptr; };
+				virtual object_array_field_base* as_object_array_field() { return nullptr; };
+				virtual scalar_array_field_base* as_scalar_array_field() { return nullptr; };
 				virtual scalar_field_base* as_scalar_field() { return this; };
 			};
 
@@ -79,14 +101,87 @@ namespace corona
 				virtual jtype get_field_type() { return jtype_identifier::get().from(field); }
 			};
 
-			template <typename poco, int32_t length_items> class poco_iarray_field : public array_field_base
+			template <typename object_wrapper_type, typename poco, int32_t length_items> class object_iarray_field : public object_array_field_base
 			{
 			public:
-				iarray<poco, length_items>& array_field;
-				virtual std::shared_ptr<object_base> create_object() = 0;
-				virtual std::shared_ptr<object_base> get_object(int _index) = 0;
-				virtual int32_t get_object_count() = 0;
-				virtual array_field_base* as_array_field() { return this; };
+				std::string object_name;
+				std::string object_description;
+				iarray<poco, length_items>& ref;
+
+				object_iarray_field(const std::string& _object_name, const std::string& _object_description, iarray<poco, length_items>& _ref) :
+					object_name(_object_name),
+					object_description(_object_description),
+					array_field(_ref)
+				{
+
+				}
+
+				virtual std::string get_field_name() { return object_name; }
+				virtual std::string get_field_description() { return object_description; }
+				virtual jtype get_field_type() { return jtype::type_object; }
+
+				virtual std::shared_ptr<object_base> create_object()
+				{
+					auto ptemp = ref.append();
+					auto wrapper = new object_wrapper_type(*ptemp);
+					return wrapper;
+				}
+				virtual std::shared_ptr<object_base> get_object(int _index)
+				{
+					auto ref_item = ref[_index];
+					auto wrapper = new object_wrapper_type(ref_item);
+					return wrapper;
+				}
+				virtual int32_t get_object_count()
+				{
+					return ref.size();
+				}
+				virtual object_array_field_base* as_object_array_field() { return this; };
+				virtual scalar_array_field_base* as_scalar_array_field() { return nullptr; };
+				virtual scalar_field_base* as_scalar_field() { return nullptr; };
+			};
+
+			template <typename scalar, int length_items> class scalar_iarray_field : public scalar_array_field_base
+			{
+			public:
+				std::string object_name;
+				std::string object_description;
+				iarray<scalar, length_items>& ref;
+
+				scalar_iarray_field(const std::string& _object_name, const std::string& _object_description, iarray<scalar, length_items>& _ref) :
+					object_name(_object_name),
+					object_description(_object_description),
+					array_field(_ref)
+				{
+
+				}
+
+				virtual std::string get_field_name() { return object_name; }
+				virtual std::string get_field_description() { return object_description; }
+				virtual jtype get_field_type() { return jtype::type_object; }
+
+				virtual jvariant create_item()
+				{
+					auto ptemp = ref.append();
+					jvariant t = *ptemp;
+					return t;
+				}
+				virtual jvariant get_scalar(int _index)
+				{
+					jvariant t = ref[_index];
+					return t;
+				}
+				virtual jvariant set_scalar(int _index, jvariant& v)
+				{
+					ref[_index] = v;
+					return v;
+				}
+				virtual int32_t get_scalar_count()
+				{
+					return ref.size();
+				}
+				virtual object_array_field_base* as_object_array_field() { return nullptr; };
+				virtual scalar_array_field_base* as_scalar_array_field() { return this; };
 				virtual scalar_field_base* as_scalar_field() { return nullptr; };
 			};
 
@@ -146,9 +241,15 @@ namespace corona
 					fields.push_back(base);
 				}
 
-				template <int32_t max_length> void bind_array(const std::string& _name, const std::string& _description)
+				template <typename wrapper_type, typename poco, int32_t max_length> void bind_object_array(const std::string& _name, const std::string& _description, iarray<poco, max_length>& _ref )
 				{
-					auto base = new array_field(_name, _description, _str);
+					auto base = new poco_iarray_field<wrapper_type, poco, max_length>(_name, _description, _str);
+					fields.push_back(base);
+				}
+
+				template <typename scalar, int32_t max_length> void bind_scalar_array(const std::string& _name, const std::string& _description, iarray<scalar, max_length>& _ref)
+				{
+					auto base = new scalar_iarray_field<scalar, max_length>(_name, _description, _str);
 					fields.push_back(base);
 				}
 
@@ -166,6 +267,16 @@ namespace corona
 				};
 			};
 
+			template <typename poco> class poco_object_wrapper : public object_wrapper
+			{
+			public:
+				poco& ref;
+				poco_object_wrapper(const std::string& _object_name, poco& _ref) : object_wrapper(_object_name), ref(_ref)
+				{
+					;
+				}
+			};
+
 			class controller
 			{
 			public:
@@ -177,13 +288,11 @@ namespace corona
 
 			// -- wrappers
 
-			class string_properties_type_wrapper : public object_wrapper
+			class string_properties_type_wrapper : public poco_object_wrapper<string_properties_type>
 			{
 			public:
 
-				string_properties_type		ref;
-
-				string_properties_type_wrapper() : object_wrapper("string_properties_type")
+				string_properties_type_wrapper(string_properties_type& _ref) : poco_object_wrapper("string_properties_type", _ref)
 				{
 					bind_scalar("length", "length", ref.length);
 					bind_istring("validation_pattern", "validation_pattern", ref.validation_pattern);
@@ -191,12 +300,11 @@ namespace corona
 				}
 			};
 
-			class int_properties_type_wrapper : public object_wrapper
+			class int_properties_type_wrapper : public poco_object_wrapper<int_properties_type>
 			{
 			public:
-				int_properties_type ref;
 
-				int_properties_type_wrapper() : object_wrapper("int_properties_type")
+				int_properties_type_wrapper(int_properties_type& _ref) : poco_object_wrapper("int_properties_type", _ref)
 				{
 					bind_scalar("mininum_int", "mininum_int", ref.minimum_int);
 					bind_scalar("maximum_int", "maximum_int", ref.maximum_int);
@@ -204,12 +312,10 @@ namespace corona
 				}
 			};
 
-			class double_properties_type_wrapper : public object_wrapper
+			class double_properties_type_wrapper : public poco_object_wrapper<double_properties_type>
 			{
 			public:
-				double_properties_type ref;
-
-				double_properties_type_wrapper() : object_wrapper("double_properties_type")
+				double_properties_type_wrapper(double_properties_type& _ref) : poco_object_wrapper("double_properties_type", _ref)
 				{
 					bind_scalar("mininum_double", "mininum_double", ref.minimum_double);
 					bind_scalar("maximum_double", "maximum_double", ref.maximum_double);
@@ -217,12 +323,11 @@ namespace corona
 				}
 			};
 
-			class time_properties_type_wrapper : public object_wrapper
+			class time_properties_type_wrapper : public poco_object_wrapper<time_properties_type>
 			{
 			public:
-				time_properties_type ref;
-
-				time_properties_type_wrapper() : object_wrapper("time_properties_type")
+				
+				time_properties_type_wrapper(time_properties_type& _ref) : poco_object_wrapper("time_properties_type", _ref)
 				{
 					bind_scalar("mininum_date", "mininum_date", ref.minimum_date);
 					bind_scalar("maximum_date", "maximum_date", ref.maximum_date);
@@ -230,19 +335,10 @@ namespace corona
 				}
 			};
 
-			struct currency_properties_type
-			{
-				CY				minimum_amount;
-				CY				maximum_amount;
-				object_name		format;
-			};
-
-			class currency_properties_type_wrapper : public object_wrapper
+			class currency_properties_type_wrapper : public poco_object_wrapper<currency_properties_type>
 			{
 			public:
-				currency_properties_type ref;
-
-				currency_properties_type_wrapper() : object_wrapper("currency_properties_type")
+				currency_properties_type_wrapper(currency_properties_type& _ref) : poco_object_wrapper("currency_properties_type", _ref)
 				{
 					bind_scalar("mininum_amount", "mininum_amount", ref.minimum_amount);
 					bind_scalar("maximum_amount", "maximum_amount", ref.maximum_amount);
@@ -250,96 +346,79 @@ namespace corona
 				}
 			};
 
-			class point_properties_type_wrapper : public object_wrapper
+			class point_properties_type_wrapper : public poco_object_wrapper<point_properties_type>
 			{
 			public:
-				point_properties_type ref;
-
-				point_properties_type_wrapper() : object_wrapper("point_properties_type")
+				point_properties_type_wrapper(point_properties_type& _ref) : poco_object_wrapper("point_properties_type", _ref)
 				{
 					;
 				}
 			};
 
-			class rectangle_properties_type_wrapper : public object_wrapper			
+			class rectangle_properties_type_wrapper : public poco_object_wrapper<rectangle_properties_type>
 			{
 			public:
-				rectangle_properties_type ref;
 
-				rectangle_properties_type_wrapper() : object_wrapper("rectangle_properties_type")
+				rectangle_properties_type_wrapper(rectangle_properties_type& _ref) : poco_object_wrapper("rectangle_properties_type", _ref)
 				{
 					;
 				}
 			};
 
-			class layout_rect_properties_type_wrapper : public object_wrapper
+			class layout_rect_properties_type_wrapper : public poco_object_wrapper<layout_rect_properties_type>
 			{
 			public:
-				layout_rect_properties_type ref;
 
-				layout_rect_properties_type_wrapper() : object_wrapper("layout_rect_properties_type")
+				layout_rect_properties_type_wrapper(layout_rect_properties_type& _ref) : poco_object_wrapper("layout_rect_properties_type", _ref)
 				{
 					;
 				}
 			};
 
-			class color_properties_type_wrapper : public object_wrapper
+			class color_properties_type_wrapper : public poco_object_wrapper<color_properties_type>
 			{
 			public:
-				color_properties_type ref;
 
-				color_properties_type_wrapper() : object_wrapper("color_properties_type")
+				color_properties_type_wrapper(color_properties_type& _ref) : poco_object_wrapper<color_properties_type>("color_properties_type", _ref)
 				{
 					;
 				}
 			};
 
-			class image_properties_type_wrapper : public object_wrapper
+			class image_properties_type_wrapper : public poco_object_wrapper<image_properties_type>
 			{
 			public:
-				image_properties_type ref;
 
-				image_properties_type_wrapper() : object_wrapper("image_properties_type")
+				image_properties_type_wrapper(image_properties_type& _ref) : poco_object_wrapper("image_properties_type", _ref)
 				{
 					bind_istring("image_path", "image_path", ref.image_path);
 				}
 			};
 
-			class midi_properties_type_wrapper : public object_wrapper
+			class midi_properties_type_wrapper : public poco_object_wrapper<midi_properties_type>
 			{
 			public:
-				midi_properties_type ref;
 
-				midi_properties_type_wrapper() : object_wrapper("midi_properties_type")
+				midi_properties_type_wrapper(midi_properties_type& _ref) : poco_object_wrapper("midi_properties_type", _ref)
+				{
+					bind_istring("image_path", "image_path", _ref.image_path);
+				}
+			};
+
+			class wave_properties_type_wrapper : public poco_object_wrapper<wave_properties_type>
+			{
+			public:
+				wave_properties_type_wrapper(wave_properties_type& _ref) : poco_object_wrapper("midi_properties_type", _ref)
 				{
 					bind_istring("image_path", "image_path", ref.image_path);
 				}
 			};
 
-			class wave_properties_type_wrapper : public object_wrapper
+			class remote_field_map_type_wrapper : public poco_object_wrapper<remote_field_map_type>
 			{
 			public:
-				wave_properties_type ref;
 
-				wave_properties_type_wrapper() : object_wrapper("midi_properties_type")
-				{
-					bind_istring("image_path", "image_path", ref.image_path);
-				}
-			};
-
-			struct remote_field_map_type
-			{
-				object_name corona_field;
-				relative_ptr_type corona_field_id;
-				object_name remote_field;
-			};
-
-			class remote_field_map_type_wrapper : public object_wrapper
-			{
-			public:
-				remote_field_map_type ref;
-
-				remote_field_map_type_wrapper() : object_wrapper("remote_field_map_type")
+				remote_field_map_type_wrapper(remote_field_map_type& _ref) : poco_object_wrapper("remote_field_map_type", _ref)
 				{
 					bind_istring("corona_field", "corona_field", ref.corona_field);
 					bind_scalar("corona_field_id", "corona_field_id", ref.corona_field_id);
@@ -347,27 +426,38 @@ namespace corona
 				}
 			};
 
-			struct remote_mapping_type
-			{
-				object_name						result_class_name;
-				relative_ptr_type				result_class_id;
-				remote_parameter_fields_type	parameters;
-				remote_fields_type				fields;
-			};
-
-			struct remote_status
-			{
-				DATE						last_success;
-				DATE						last_error;
-				object_description			error_message;
-			};
-
-			class filter_term
+			class remote_mapping_type_wrapper : public poco_object_wrapper<remote_mapping_type>
 			{
 			public:
-				object_name		  src_value;
-				relative_ptr_type target_field;
-				comparisons		  comparison;
+				remote_mapping_type_wrapper(remote_mapping_type& _ref) : poco_object_wrapper("remote_mapping_type", _ref)
+				{
+					bind_istring("result_class_name", "result_class_name", ref.result_class_name);
+					bind_scalar("result_class_id", "result_class_id", ref.result_class_id);
+					bind_object_array<remote_field_map_type_wrapper, remote_field_map_type>("parameters", "parameters", ref.parameters);
+					bind_object_array<remote_field_map_type_wrapper, remote_field_map_type>("fields", "fields", ref.fields);
+				}
+			};
+
+			class remote_status_wrapper : public poco_object_wrapper<remote_status>
+			{
+			public:
+				remote_status_wrapper(remote_status& _ref) : poco_object_wrapper("remote_status", _ref)
+				{
+					bind_scalar("last_sucess", "last_success", ref.last_success);
+					bind_scalar("last_error", "last_error", ref.last_error);
+					bind_scalar("error_message", "error_message", ref.error_message);
+				}
+			};
+
+			class filter_term_wrapper : public poco_object_wrapper<filter_term>
+			{
+			public:
+				filter_term_wrapper(filter_term& _ref) : poco_object_wrapper("filter_term", _ref)
+				{
+					bind_scalar("src_value", "src_value", ref.src_value);
+					bind_scalar("target_field", "target_field", ref.target_field);
+					bind_scalar("comparison", "comparison", ref.comparison);
+				}
 			};
 
 			class filter_option
@@ -377,6 +467,15 @@ namespace corona
 				iarray<filter_term, 32> options;
 			};
 
+			class filter_option_wrapper : public poco_object_wrapper<filter_option>
+			{
+			public:
+				filter_option_wrapper(filter_option& _ref) : poco_object_wrapper("filter_option", _ref)
+				{
+					bind_scalar_array("classes", "classes", ref.classes);
+					bind_object_array<filter_term_wrapper,filter_term>("options", "options", ref.options);
+				}
+			};
 
 			struct dimensions_type
 			{
