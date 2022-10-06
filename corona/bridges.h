@@ -241,6 +241,12 @@ namespace corona
 					fields.push_back(base);
 				}
 
+				template <typename wrapper_type, typename poco> void bind_object(const std::string& _name, const std::string& _description, poco& _ref)
+				{
+					auto base = new wrapper_type(_name, _description, _ref);
+					fields.push_back(base);
+				}
+
 				template <typename wrapper_type, typename poco, int32_t max_length> void bind_object_array(const std::string& _name, const std::string& _description, iarray<poco, max_length>& _ref )
 				{
 					auto base = new poco_iarray_field<wrapper_type, poco, max_length>(_name, _description, _str);
@@ -488,182 +494,219 @@ namespace corona
 				remote_status					status;
 			};
 
-			struct query_definition_type
-			{
-				query_body						query;
-			};
-
-			struct sql_definition_type
-			{
-				operation_name					login_type_name;
-				sql_login_types					login_type;
-				object_name						username;
-				object_name						password;
-				remote_mapping_type				mapping;
-				remote_status					status;
-				query_body						query;
-			};
-
-			struct http_definition_type
-			{
-				operation_name					login_type_name;
-				http_login_types				login_type;
-				remote_http_url					login_url;
-				remote_http_method				login_method;
-				object_name						username;
-				object_name						password;
-				remote_http_url					data_url;
-				remote_http_method				data_method;
-				remote_mapping_type				mapping;
-				remote_status					status;
-				query_body						query;
-			};
-
-			class put_field_request_base_bridge : public object_base
+			class file_definition_type_wrapper : public poco_object_wrapper<file_definition_type>
 			{
 			public:
-				relative_ptr_type		field_id;
-				jtype					type_id;
-				object_name				name;
-				object_description		description;
-				bool					is_key;
-
-				relative_ptr_type		enumeration_class_id;
-				relative_ptr_type		enumeration_display_field_id;
-				relative_ptr_type		enumeration_value_field_id;
-
-				virtual std::string get_class_name() 
-				{ 
-					return "put_field_request_base"; 
-				}
-				virtual int get_field_count() 
+				file_definition_type_wrapper(file_definition_type& _ref) : poco_object_wrapper("file_definition_type", _ref)
 				{
-					return 8;
+					bind_istring("x", "x", ref.file_path);
+					bind_object<remote_mapping_type_wrapper>("y", "y", ref.mapping);
+					bind_object<remote_status_wrapper>("z", "z", ref.status);
 				}
-				virtual std::shared_ptr<array_field_base> get_object_field(int _field_index) = 0;
-				virtual std::shared_ptr<scalar_field_base> get_scalar_field(int _field_index) = 0;
 			};
 
-			class put_string_field_request {
-			public:
-				put_field_request_base name;
-				string_properties_type options;
-			};
-
-			class put_integer_field_request {
-			public:
-				put_field_request_base name;
-				int_properties_type options;
-			};
-
-			class put_double_field_request {
-			public:
-				put_field_request_base name;
-				double_properties_type options;
-			};
-
-			class put_time_field_request {
-			public:
-				put_field_request_base name;
-				time_properties_type options;
-			};
-
-			class put_currency_field_request {
-			public:
-				put_field_request_base name;
-				currency_properties_type options;
-			};
-
-			class put_object_field_request {
-			public:
-				put_field_request_base name;
-				object_properties_type options;
-			};
-
-			class put_query_field_request {
-			public:
-				put_field_request_base name;
-				query_definition_type  options;
-			};
-
-			class put_sql_remote_field_request {
-			public:
-				put_field_request_base name;
-				sql_definition_type options;
-			};
-
-			class put_file_remote_field_request {
-			public:
-				put_field_request_base name;
-				file_definition_type options;
-			};
-
-			class put_http_remote_field_request
+			class query_definition_type_wrapper : public poco_object_wrapper<query_definition_type>
 			{
 			public:
-				put_field_request_base name;
-				http_definition_type options;
+				query_definition_type_wrapper(query_definition_type& _ref) : poco_object_wrapper("query_definition_type", _ref)
+				{
+					bind_istring("query", "query", ref.query);
+				}
 			};
 
-			class put_point_field_request {
-			public:
-				put_field_request_base name;
-				point_properties_type options;
+			class sql_definition_type_wrapper : public poco_object_wrapper<sql_definition_type>
+			{
+				sql_definition_type_wrapper(sql_definition_type& _ref) : poco_object_wrapper("sql_definition_type", _ref)
+				{
+					bind_istring("login_type_name", "login_type_name", ref.login_type_name);
+					bind_istring("username", "username", ref.username);
+					bind_istring("password", "password", ref.password);
+					bind_object<remote_mapping_type_wrapper, remote_mapping_type>("mapping", "mapping", ref.mapping);
+					bind_object<remote_status_wrapper, remote_status>("status", "status", ref.status);
+					bind_object<query_definition_type_wrapper, query_definition_type>("query", "query", ref.query);
+				}
 			};
 
-			class put_rectangle_field_request {
-			public:
-				put_field_request_base name;
-				rectangle_properties_type options;
+			class http_definition_type_wrapper : public poco_object_wrapper<http_definition_type>
+			{
+				http_definition_type_wrapper(http_definition_type& _ref) : poco_object_wrapper("http_definition_type", _ref)
+				{
+					bind_istring("login_type_name", "login_type_name", ref.login_type_name);
+					bind_istring("login_method", "login_method", ref.login_method);
+					bind_istring("password", "password", ref.password);
+					bind_istring("username", "username", ref.username);
+					bind_istring("password", "password", ref.password);
+					bind_object<remote_mapping_type_wrapper, remote_mapping_type>("mapping", "mapping", ref.mapping);
+					bind_object<remote_status_wrapper, remote_status>("status", "status", ref.status);
+					bind_object<query_definition_type_wrapper, query_definition_type>("query", "query", ref.query);
+					bind_istring("data_method", "data_method", ref.data_method);
+					bind_istring("data_url", "data_url", ref.data_url);
+					bind_istring("login_method", "login_method", ref.login_method);
+					bind_istring("login_url", "login_url", ref.login_url);
+				}
 			};
 
-			class put_layout_rect_field_request {
+			class put_field_request_base_wrapper : public poco_object_wrapper<put_field_request_base>
+			{
 			public:
-				put_field_request_base name;
-				layout_rect_properties_type options;
+				put_field_request_base_wrapper(put_field_request_base& _ref) : poco_object_wrapper("put_field_request_base", _ref)
+				{
+					bind_scalar("field_id", "field_id", ref.field_id);
+					bind_scalar("type_id", "type_id", ref.type_id);
+					bind_istring("name", "name", ref.name);
+					bind_istring("description", "description", ref.description);
+					bind_scalar("is_key", "is_key", ref.is_key);
+					bind_scalar("enumeration_class_id", "enumeration_class_id", ref.enumeration_class_id);
+					bind_scalar("enumeration_display_field_id", "enumeration_display_field_id", ref.enumeration_display_field_id);
+					bind_scalar("enumeration_value_field_id", "enumeration_value_field_id", ref.enumeration_value_field_id);
+				}
 			};
 
-			class put_image_field_request {
+			class put_string_field_request_wrapper : public poco_object_wrapper<put_string_field_request> {
 			public:
-				put_field_request_base name;
-				image_properties_type options;
+				put_string_field_request_wrapper(put_string_field_request& _ref) : poco_object_wrapper("put_string_field_request", _ref)
+				{
+					bind_object<put_field_request_base_wrapper>("name", "name", _ref.name);
+					bind_object<string_properties_type_wrapper>("options", "options", _ref.options);
+				}
 			};
 
-			class put_wave_field_request {
+
+			class put_integer_field_request_wrapper : public poco_object_wrapper<put_integer_field_request> {
 			public:
-				put_field_request_base name;
-				wave_properties_type options;
+				put_integer_field_request_wrapper(put_integer_field_request& _ref) : poco_object_wrapper("put_integer_field_request", _ref)
+				{
+					bind_object<put_field_request_base_wrapper>("name", "name", _ref.name);
+					bind_object<int_properties_type_wrapper>("options", "options", _ref.options);
+				}
 			};
 
-			class put_midi_field_request {
+			class put_double_field_request_wrapper : public poco_object_wrapper<put_double_field_request> {
 			public:
-				put_field_request_base name;
-				midi_properties_type options;
+				put_double_field_request_wrapper(put_double_field_request& _ref) : poco_object_wrapper("put_double_field_request", _ref)
+				{
+					bind_object<put_field_request_base_wrapper>("name", "name", _ref.name);
+					bind_object<double_properties_type_wrapper>("options", "options", _ref.options);
+				}
 			};
 
-			class put_color_field_request {
+			class put_time_field_request_wrapper : public poco_object_wrapper<put_time_field_request> {
 			public:
-				put_field_request_base name;
-				color_properties_type options;
+				put_time_field_request_wrapper(put_time_field_request& _ref) : poco_object_wrapper("put_time_field_request", _ref)
+				{
+					bind_object<put_field_request_base_wrapper>("name", "name", _ref.name);
+					bind_object<time_properties_type_wrapper>("options", "options", _ref.options);
+				}
 			};
 
-			class put_file_field_request {
+			class put_currency_field_request_wrapper : public poco_object_wrapper<put_currency_field_request> {
 			public:
-				put_field_request_base name;
-				file_properties_type options;
+				put_currency_field_request_wrapper(put_currency_field_request& _ref) : poco_object_wrapper("put_currency_field_request", _ref)
+				{
+					bind_object<put_field_request_base_wrapper>("name", "name", _ref.name);
+					bind_object<currency_properties_type_wrapper>("options", "options", _ref.options);
+				}
 			};
 
-			class put_sql_field_request {
+			class put_object_field_request_wrapper : public poco_object_wrapper<put_object_field_request> {
 			public:
-				put_field_request_base name;
-				sql_properties_type options;
+				put_object_field_request_wrapper(put_object_field_request& _ref) : poco_object_wrapper("put_object_field_request", _ref)
+				{
+					bind_object<put_field_request_base_wrapper>("name", "name", _ref.name);
+					bind_object<object_properties_type_wrapper>("options", "options", _ref.options);
+				}
 			};
 
-			class put_http_field_request {
+			class put_query_field_request_wrapper : public poco_object_wrapper<put_query_field_request> {
 			public:
-				put_field_request_base name;
-				http_properties_type options;
+				put_query_field_request_wrapper(put_query_field_request& _ref) : poco_object_wrapper("put_query_field_request", _ref)
+				{
+					bind_object<put_field_request_base_wrapper>("name", "name", _ref.name);
+					bind_object<query_definition_type_wrapper>("options", "options", _ref.options);
+				}
 			};
+
+			class put_sql_remote_field_request_wrapper : public poco_object_wrapper<put_sql_remote_field_request> {
+			public:
+				put_sql_remote_field_request_wrapper(put_sql_remote_field_request& _ref) : poco_object_wrapper("put_sql_remote_field_request", _ref)
+				{
+					bind_object<put_field_request_base_wrapper>("name", "name", _ref.name);
+					bind_object<sql_definition_type_wrapper>("options", "options", _ref.options);
+				}
+			};
+
+			class put_file_remote_field_request_wrapper : public poco_object_wrapper<put_file_remote_field_request> {
+			public:
+				put_file_remote_field_request_wrapper(put_file_remote_field_request& _ref) : poco_object_wrapper("put_file_remote_field_request", _ref)
+				{
+					bind_object<put_field_request_base_wrapper>("name", "name", _ref.name);
+					bind_object<file_definition_type_wrapper>("options", "options", _ref.options);
+				}
+			};
+
+			class put_http_remote_field_request_wrapper : public poco_object_wrapper<put_http_remote_field_request> {
+			public:
+				put_http_remote_field_request_wrapper(put_http_remote_field_request& _ref) : poco_object_wrapper("put_http_remote_field_request", _ref)
+				{
+					bind_object<put_field_request_base_wrapper>("name", "name", _ref.name);
+					bind_object<http_definition_type_wrapper>("options", "options", _ref.options);
+				}
+			};
+
+			class put_point_field_request_wrapper : public poco_object_wrapper<put_point_field_request> {
+			public:
+				put_point_field_request_wrapper(put_point_field_request& _ref) : poco_object_wrapper("put_point_field_request", _ref)
+				{
+					bind_object<put_field_request_base_wrapper>("name", "name", _ref.name);
+					bind_object<point_properties_type_wrapper>("options", "options", _ref.options);
+				}
+			};
+
+			class put_rectangle_field_request_wrapper : public poco_object_wrapper<put_rectangle_field_request> {
+			public:
+				put_rectangle_field_request_wrapper(put_rectangle_field_request& _ref) : poco_object_wrapper("put_rectangle_field_request", _ref)
+				{
+					bind_object<put_field_request_base_wrapper>("name", "name", _ref.name);
+					bind_object<rectangle_properties_type_wrapper>("options", "options", _ref.options);
+				}
+			};
+
+			class put_layout_rect_field_request_wrapper : public poco_object_wrapper<put_layout_rect_field_request> {
+			public:
+				put_layout_rect_field_request_wrapper(put_layout_rect_field_request& _ref) : poco_object_wrapper("put_layout_rect_field_request", _ref)
+				{
+					bind_object<put_field_request_base_wrapper>("name", "name", _ref.name);
+					bind_object<layout_rect_properties_type_wrapper>("options", "options", _ref.options);
+				}
+			};
+
+			class put_image_field_request_wrapper : public poco_object_wrapper<put_image_field_request> {
+			public:
+				put_image_field_request_wrapper(put_image_field_request& _ref) : poco_object_wrapper("put_image_field_request", _ref)
+				{
+					bind_object<put_field_request_base_wrapper>("name", "name", _ref.name);
+					bind_object<image_properties_type_wrapper>("options", "options", _ref.options);
+				}
+			};
+
+			class put_wave_field_request_wrapper : public poco_object_wrapper<put_wave_field_request> {
+			public:
+				put_wave_field_request_wrapper(put_wave_field_request& _ref) : poco_object_wrapper("put_wave_field_request", _ref)
+				{
+					bind_object<put_field_request_base_wrapper>("name", "name", _ref.name);
+					bind_object<wave_properties_type_wrapper>("options", "options", _ref.options);
+				}
+			};
+
+			class put_color_field_request_wrapper : public poco_object_wrapper<put_color_field_request> {
+			public:
+				put_color_field_request_wrapper(put_color_field_request& _ref) : poco_object_wrapper("put_color_field_request", _ref)
+				{
+					bind_object<put_field_request_base_wrapper>("name", "name", _ref.name);
+					bind_object<color_properties_type_wrapper>("options", "options", _ref.options);
+				}
+			};
+
 
 		}
 	}

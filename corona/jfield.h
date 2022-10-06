@@ -360,6 +360,11 @@ namespace corona
 			}
 		};
 
+		struct query_definition_type
+		{
+			query_body						query;
+		};
+
 		struct remote_mapping_type
 		{
 			object_name						result_class_name;
@@ -412,7 +417,7 @@ namespace corona
 			jwt_authentication = 3,
 			certificate_authentication = 4
 		};
-
+		 
 		struct http_definition_type 
 		{
 			operation_name					login_type_name;
@@ -425,7 +430,7 @@ namespace corona
 			remote_http_method				data_method;
 			remote_mapping_type				mapping;
 			remote_status					status;
-			query_body						query;
+			query_definition_type			query;
 		};
 
 		class http_instance
@@ -451,7 +456,7 @@ namespace corona
 			object_name						password;
 			remote_mapping_type				mapping;
 			remote_status					status;
-			query_body						query;
+			query_definition_type			query;
 		};
 
 		class sql_instance
@@ -459,11 +464,6 @@ namespace corona
 		public:
 			collection_id_type			collection;
 			remote_status					status;
-		};
-
-		struct query_definition_type
-		{
-			query_body						query;
 		};
 
 		class query_instance
