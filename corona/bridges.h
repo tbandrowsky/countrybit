@@ -141,6 +141,51 @@ namespace corona
 				virtual scalar_field_base* as_scalar_field() { return nullptr; };
 			};
 
+			template <typename object_wrapper_type, typename poco> class object_vector_field : public object_array_field_base
+			{
+			public:
+				std::string object_name;
+				std::string object_description;
+				std::vector<poco> &ref;
+
+				object_vector_field(const std::string& _object_name, const std::string& _object_description, std::vector<poco>& _ref) :
+					object_name(_object_name),
+					object_description(_object_description),
+					ref(_ref)
+				{
+
+				}
+
+				virtual std::string get_field_name() { return object_name; }
+				virtual std::string get_field_description() { return object_description; }
+				virtual jtype get_field_type() { return jtype::type_object; }
+
+				virtual std::shared_ptr<object_base> create_object()
+				{
+					poco temp = {}
+					ref.push_back(temp);
+					auto& ptemp = ref.back();
+					auto wrapper = new object_wrapper_type(ptemp);
+					return wrapper;
+				}
+
+				virtual std::shared_ptr<object_base> get_object(int _index)
+				{
+					auto ref_item = ref[_index];
+					auto wrapper = new object_wrapper_type(ref_item);
+					return wrapper;
+				}
+
+				virtual int32_t get_object_count()
+				{
+					return ref.size();
+				}
+
+				virtual object_array_field_base* as_object_array_field() { return this; };
+				virtual scalar_array_field_base* as_scalar_array_field() { return nullptr; };
+				virtual scalar_field_base* as_scalar_field() { return nullptr; };
+			};
+
 			template <typename scalar, int length_items> class scalar_iarray_field : public scalar_array_field_base
 			{
 			public:
@@ -151,7 +196,7 @@ namespace corona
 				scalar_iarray_field(const std::string& _object_name, const std::string& _object_description, iarray<scalar, length_items>& _ref) :
 					object_name(_object_name),
 					object_description(_object_description),
-					array_field(_ref)
+					ref(_ref)
 				{
 
 				}
@@ -249,7 +294,13 @@ namespace corona
 
 				template <typename wrapper_type, typename poco, int32_t max_length> void bind_object_array(const std::string& _name, const std::string& _description, iarray<poco, max_length>& _ref )
 				{
-					auto base = new poco_iarray_field<wrapper_type, poco, max_length>(_name, _description, _str);
+					auto base = new object_iarray_field<wrapper_type, poco, max_length>(_name, _description, _str);
+					fields.push_back(base);
+				}
+
+				template <typename wrapper_type, typename poco> void bind_object_array(const std::string& _name, const std::string& _description, std::vector<poco>& _ref)
+				{
+					auto base = new object_vector_field<wrapper_type, poco>(_name, _description, _str);
 					fields.push_back(base);
 				}
 
@@ -487,6 +538,19 @@ namespace corona
 				}
 			};
 
+			class object_properties_type_wrapper : public poco_object_wrapper<object_properties_type>
+			{
+			public:
+				object_properties_type_wrapper(object_properties_type& _ref) : poco_object_wrapper("object_properties_type", _ref)
+				{
+					bind_object<dimensions_type_wrapper>("dim", "dim", _ref.dim);
+					bind_istring("class_name", "class name", _ref.class_name);
+					bind_scalar("class_id", "class id", _ref.class_id);
+					bind_scalar("class_size_bytes", "class_size_bytes", _ref.class_size_bytes);
+					bind_scalar("total_size_bytes", "total_size_bytes", _ref.total_size_bytes);
+				}
+			};
+
 			struct file_definition_type
 			{
 				remote_file_path				file_path;
@@ -706,7 +770,6 @@ namespace corona
 					bind_object<color_properties_type_wrapper>("options", "options", _ref.options);
 				}
 			};
-
 
 		}
 	}
