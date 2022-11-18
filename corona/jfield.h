@@ -103,25 +103,6 @@ namespace corona
 
 		};
 
-		struct query_properties_type
-		{
-			;
-		};
-
-		struct sql_properties_type
-		{
-			;
-		};
-
-		struct file_properties_type
-		{
-			;
-		};
-
-		struct http_properties_type
-		{
-			;
-		};
 
 		struct emphemeral_handle_type
 		{
@@ -242,17 +223,12 @@ namespace corona
 				double_properties_type		double_properties;
 				time_properties_type		time_properties;
 				currency_properties_type	currency_properties;
-				object_properties_type		object_properties;
-				query_properties_type		query_properties;
 				point_properties_type		point_properties;
 				rectangle_properties_type   rectangle_properties;
 				image_properties_type		image_properties;
 				midi_properties_type		midi_properties;
 				wave_properties_type		wave_properties;
 				color_properties_type		color_properties;
-				sql_properties_type			sql_properties;
-				file_properties_type		file_properties;
-				http_properties_type		http_properties;
 				layout_rect_properties_type	layout_rect_properties;
 			};
 
@@ -354,10 +330,6 @@ namespace corona
 				return type_id == jtype::type_datetime;
 			}
 
-			bool is_class(relative_ptr_type _class_id)
-			{
-				return type_id == jtype::type_object && object_properties.class_id == _class_id;
-			}
 		};
 
 		struct query_definition_type
@@ -629,24 +601,6 @@ namespace corona
 			color_properties_type options;
 		};
 
-		class put_file_field_request {
-		public:
-			put_field_request_base name;
-			file_properties_type options;
-		};
-
-		class put_sql_field_request {
-		public:
-			put_field_request_base name;
-			sql_properties_type options;
-		};
-
-		class put_http_field_request {
-		public:
-			put_field_request_base name;
-			http_properties_type options;
-		};
-
 		enum class member_field_types
 		{
 			member_field = 1,
@@ -657,155 +611,37 @@ namespace corona
 		struct member_field
 		{
 		public:
-			member_field_types	membership_type;
 			object_name			field_name;
-			object_name			membership_type_name;
-			jtype				field_type;
-			object_name			field_type_name;
-
 			relative_ptr_type	field_id;
-			relative_ptr_type	class_id;
-
-			dimensions_type		dimensions;
 
 			member_field() :
-				field_type(jtype::type_null),
-				membership_type(member_field_types::member_field),
 				field_name(""),
-				membership_type_name(""),
-				field_id(null_row),
-				class_id(null_row)
+				field_id(null_row)
 			{ 
 				; 
 			}
 
 			member_field(relative_ptr_type _field_id) :
-				membership_type(member_field_types::member_field),
-				field_type(jtype::type_null),
 				field_name(""),
-				field_id(_field_id),
-				class_id(null_row),
-				dimensions{ 1, 1, 1 }
+				field_id(_field_id)
 			{
 				;
 			}
 
-			member_field(member_field_types _member_ship_type, relative_ptr_type _id) :
-				membership_type(_member_ship_type),
-				field_name(""),
-				dimensions{ 1, 1, 1 },
-				field_type(jtype::type_null)
-			{
-				switch (membership_type)
-				{
-				case member_field_types::member_class:
-					class_id = _id;
-					field_id = null_row;
-					break;
-				case member_field_types::member_field:
-					field_id = _id;
-					class_id = null_row;
-					break;
-				}
-			}
-
-			member_field(member_field_types _member_ship_type, object_name _name, jtype _field_type = type_null) :
-				membership_type(_member_ship_type),
+			member_field(object_name _name) :
 				field_name(_name),
-				field_id(null_row),
-				class_id(null_row),
-				field_type(_field_type),
-				dimensions{ 1, 1, 1 }
+				field_id(null_row)
 			{
 
 			}
 
-			member_field(relative_ptr_type _class_id, int _maximum) :
-				membership_type(member_field_types::member_list),
-				field_name(""),
-				class_id(_class_id),
-				field_id(null_row),
-				field_type(jtype::type_null)
-
-			{
-				dimensions = { _maximum, 1, 1 };
-			}
-
-			member_field(relative_ptr_type _class_id, dimensions_type dims) :
-				membership_type(member_field_types::member_class),
-				field_name(""),
-				class_id(_class_id),
-				field_id(null_row),
-				field_type(jtype::type_null)
-
-			{
-				dimensions = dims;
-			}
-
-			member_field(object_name _name, relative_ptr_type _class_id, dimensions_type dims) :
-				membership_type(member_field_types::member_class),
+			member_field(const char *_name) :
 				field_name(_name),
-				class_id(_class_id),
-				field_id(null_row),
-				field_type(jtype::type_null)
-
+				field_id(null_row)
 			{
-				dimensions = dims;
+
 			}
 
-			member_field(const char *_name, jtype _field_type = type_null) :
-				membership_type(member_field_types::member_field),
-				field_name(_name),
-				field_id(null_row),
-				class_id(null_row),
-				field_type(_field_type)
-
-			{
-				dimensions = { 1, 1, 1 };
-			}
-
-			member_field(object_name _name, jtype _field_type = type_null) :
-				membership_type(member_field_types::member_field),
-				field_name(_name),
-				class_id(null_row),
-				field_id(null_row),
-				field_type(_field_type)
-
-			{
-				dimensions = { 1, 1, 1 };
-			}
-
-			member_field(object_name _name, int _maximum, jtype _field_type = type_null) :
-				membership_type(member_field_types::member_list),
-				field_name(_name),
-				class_id(null_row),
-				field_id(null_row),
-				field_type(_field_type)
-			{
-				dimensions = { _maximum, 1, 1 };
-			}
-
-			member_field(object_name _name, dimensions_type dims, jtype _field_type = type_null) :
-				membership_type(member_field_types::member_class),
-				field_name(_name),
-				class_id(null_row),
-				field_id(null_row),
-				dimensions(dims),
-				field_type(_field_type)
-
-			{
-				;
-			}
-
-			member_field(const member_field& _src) :
-				membership_type(_src.membership_type),
-				field_name(_src.field_name),
-				class_id(_src.class_id),
-				field_id(_src.field_id),
-				dimensions(_src.dimensions),
-				field_type(_src.field_type)
-			{
-			}
 		};
 
 		using member_field_collection = iarray<member_field, max_class_fields>;
@@ -876,176 +712,6 @@ namespace corona
 		using jclass = item_details_holder<jclass_header, jclass_field>;
 		using field_array = iarray<jclass_field, max_class_fields>;
 		using selections_collection = iarray<relative_ptr_type, max_selections>;
-
-		class selector_rule
-		{
-		public:
-			object_name class_name;
-			relative_ptr_type class_id;
-		};
-
-		using selector_rule_collection = iarray<selector_rule, 8>;
-
-		class selector_collection
-		{
-		public:
-			selector_rule_collection rules;
-
-			void always()
-			{
-				rules.clear();
-			}
-
-			void when(const std::vector<relative_ptr_type>& when_event)
-			{
-				rules.clear();
-				for (auto evt : when_event)
-				{
-					auto* sr = rules.append();
-					sr->class_id = evt;
-				}
-			}
-		};
-
-		class model_creatable_class
-		{
-		public:
-			object_name						rule_name;
-			object_name						create_class_name;
-			relative_ptr_type				create_class_id;
-			selector_collection				selectors;
-			object_name						item_id_class_name;
-			relative_ptr_type				item_id_class;
-			bool							select_on_create;
-			bool							replace_selected;
-			int								max_creatable_count;
-			class_list						create_on_create;
-
-			model_creatable_class()
-			{
-				create_class_id = null_row;
-				item_id_class = null_row;
-				select_on_create = false;
-				replace_selected = false;
-			}
-		};
-
-		using query_id_type = object_name;
-
-		class view_query
-		{
-		public:
-			object_name		  query_name;
-			class_list		  classes;
-			comparison_list   parameters;
-			field_list		  fields;
-		};
-
-		using view_query_list = iarray<view_query, 8>;
-
-		class view_options
-		{
-		public:
-			bool use_view;
-			relative_ptr_type				view_class_id;
-			view_query_list					view_queries;
-			view_options() :				use_view(false) { ; }
-		};
-
-		class model_selectable_class
-		{
-		public:	
-			object_name						rule_name;
-			object_name						select_class_name;
-			relative_ptr_type				select_class_id;
-			selector_collection				selectors;
-			class_list						clear_on_select;
-			class_list						create_on_select;
-			view_options					view_options;
-
-			model_selectable_class()
-			{
-				select_class_id = null_row;
-			}
-		};
-
-		class model_updatable_class
-		{
-		public:
-			object_name						rule_name;
-			object_name						update_class_name;
-			relative_ptr_type				update_class_id;
-			selector_collection				selectors;
-			class_list						create_on_update;
-
-			model_updatable_class()
-			{
-				update_class_id = null_row;
-			}
-
-		};
-
-		class model_deletable_class
-		{
-		public:
-			object_name						rule_name;
-			object_name						delete_class_name;
-			relative_ptr_type				delete_class_id;
-			selector_collection				selectors;
-			class_list						create_on_delete;
-
-			model_deletable_class()
-			{
-				delete_class_id = null_row;
-			}
-		};
-
-		class actor_type;
-
-		using model_create_class_collection = iarray<model_creatable_class, max_creatable_options>;
-		using model_select_class_collection = iarray<model_selectable_class, max_selectable_options>;
-		using model_update_class_collection = iarray<model_updatable_class, max_updatable_options>;
-		using model_delete_class_collection = iarray<model_deletable_class, max_deletable_options>;
-
-		class model_type
-		{
-			void add_path(std::map<relative_ptr_type, int>& _target, relative_ptr_type _leaf);
-
-		public:
-			object_name					  name;
-			model_create_class_collection create_options;
-			model_select_class_collection select_options;
-			model_update_class_collection update_options;
-			model_delete_class_collection delete_options;
-
-			void create_when(jschema* _schema, std::vector<relative_ptr_type> when_selected, 
-				relative_ptr_type _create_class_id, 
-				relative_ptr_type _from_item_class_id, 
-				bool _select_created, 
-				bool _replace_selected, 
-				int _max_creatable_count, 
-				std::vector<relative_ptr_type> on_created);
-
-			void select_when(jschema* _schema, std::vector<relative_ptr_type> when_selected, 
-				relative_ptr_type _select_class_id, 
-				std::vector<relative_ptr_type> on_selected_clear,
-				std::vector<relative_ptr_type> on_created,
-				view_options _view_options);
-
-			void update_when(jschema* _schema, 
-				std::vector<relative_ptr_type> when_selected, 
-				relative_ptr_type _update_class_id,
-				std::vector<relative_ptr_type> on_created);
-
-			void delete_when(jschema* _schema, 
-				std::vector<relative_ptr_type> when_selected, 
-				relative_ptr_type _delete_class_id,
-				std::vector<relative_ptr_type> on_created);
-
-			std::vector<relative_ptr_type> get_selection_classes(relative_ptr_type _leaf, bool _include_leaf);
-		};
-
-		using jmodel = model_type;
 
 		enum class visual_alignment
 		{

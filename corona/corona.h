@@ -116,12 +116,8 @@
 #include "wave_box.h"
 #include "midi_box.h"
 #include "color_box.h"
-#include "sql_box.h"
-#include "http_box.h"
-#include "file_box.h"
 #include "sorted_index.h"
 #include "store_box_file.h"
-#include "query_box.h"
 #include "visual.h"
 #include "bridges.h"
 #include "extractor.h"
@@ -157,4 +153,6 @@ const int WM_POP_CONTROLLER = WM_APP + 103;
 
 #endif
 #endif
+
+
 

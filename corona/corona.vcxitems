@@ -36,12 +36,9 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)file_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)filterable_iterator.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)grouping.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)jdatabase_client.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)jdatabase_server.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)jquery.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)list_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)directory.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)http_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)image_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)layout_rect_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)remote_box.h" />
@@ -53,7 +50,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)query_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)object_id_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)rectangle_box.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)sql_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)store_box_file.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)time_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)file.h" />
@@ -102,10 +98,8 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)file_box.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)jvalue.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)grouping.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)jdatabase_client.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)jdatabase_server.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)jfield.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)jquery.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)layout_rect_box.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)list_box.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)directory.cpp" />
@@ -113,7 +107,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)float_box.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)function.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)extractor.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)http_box.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)int_box.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)loader.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)messages.cpp" />
@@ -121,7 +114,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)point_box.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)query_box.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)read_all_string.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)sql_box.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)store_box.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)store_box_file.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)string_box.cpp" />

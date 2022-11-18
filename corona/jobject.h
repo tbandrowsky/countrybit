@@ -24,14 +24,12 @@ namespace corona
 			relative_ptr_type	collection_location;
 
 			object_name			model_name;
-			uint32_t			max_actors;
 			uint32_t			max_objects;
 			uint64_t			collection_size_bytes;
 
 			bool				create_style_sheet;
 
 			relative_ptr_type	style_sheet_id;
-			relative_ptr_type	actors_id;
 			relative_ptr_type	objects_id;
 
 			persistent_box*		data;
@@ -41,10 +39,8 @@ namespace corona
 				collection_file_name(""),
 				collection_location(null_row),
 				model_name(""),
-				max_actors(0),
 				max_objects(0),
 				collection_size_bytes(0),
-				actors_id(null_row),
 				objects_id(null_row),
 				style_sheet_id(null_row),
 				create_style_sheet(false),
@@ -62,47 +58,16 @@ namespace corona
 			relative_ptr_type classes_by_name_id;
 			relative_ptr_type models_by_name_id;
 			relative_ptr_type fields_by_name_id;
-			relative_ptr_type query_properties_id;
-			relative_ptr_type sql_properties_id;
-			relative_ptr_type file_properties_id;
-			relative_ptr_type http_properties_id;
 			relative_ptr_type models_id;
 		};
 
-		using actor_id_type = relative_ptr_type;
-
 		class jschema;
-		class jarray;
-		class jlist;
-
-		class slice_enumerable {
-		public:
-			virtual jobject get_at(relative_ptr_type object_id) = 0;
-			virtual corona_size_t size() = 0;
-		};
-
-		class filter_term
-		{
-		public:
-			jvariant	      src_value;
-			relative_ptr_type target_field;
-			comparisons		  comparison;
-		};
-
-		class filter_option
-		{
-		public:
-			class_list classes;
-			std::vector<filter_term> options;
-		};
 
 		class jobject
 		{
-			jobject* parent;
 			jschema* schema;
 			relative_ptr_type class_id;
 			char* bytes;
-			dimensions_type dim;
 			jclass the_class;
 
 			serialized_box_container* box;
@@ -129,8 +94,8 @@ namespace corona
 		public:
 
 			jobject();
-			jobject(jobject* _parent, jschema* _schema, relative_ptr_type _class_id, char* _bytes, dimensions_type _dim);
-			jobject(jobject* _parent, jschema* _schema, relative_ptr_type _class_id, serialized_box_container *_box, relative_ptr_type _location, dimensions_type _dim);
+			jobject(jschema* _schema, relative_ptr_type _class_id, char* _bytes);
+			jobject(jschema* _schema, relative_ptr_type _class_id, serialized_box_container *_box, relative_ptr_type _location);
 
 			jobject(const jobject& src);
 			jobject operator =(const jobject& src);
@@ -185,12 +150,6 @@ namespace corona
 			double_box get_double(int field_idx, bool _use_id = false);
 			time_box get_time(int field_idx, bool _use_id = false);
 			string_box get_string(int field_idx, bool _use_id = false);
-			jarray get_object(int field_idx, bool _use_id = false);
-			jarray get_object_by_class(relative_ptr_type _class_id);
-			jobject get_object(int field_idx, dimensions_type _dim, bool _use_id = false);
-			jlist get_list(int field_idx, bool _use_id = false);
-			collection_id_box get_collection_id(int field_idx, bool _use_id = false);
-			object_id_box get_object_id(int field_idx, bool _use_id = false);
 			point_box get_point(int field_idx, bool _use_id = false);
 			rectangle_box get_rectangle(int field_idx, bool _use_id = false);
 			layout_rect_box get_layout_rect(int field_idx, bool _use_id = false);
@@ -198,10 +157,6 @@ namespace corona
 			wave_box get_wave(int field_idx, bool _use_id = false);
 			midi_box get_midi(int field_idx, bool _use_id = false);
 			color_box get_color(int field_idx, bool _use_id = false);
-			query_box get_query(int field_idx, bool _use_id = false);
-			sql_remote_box get_sql_remote(int field_idx, bool _use_id = false);
-			http_remote_box get_http_remote(int field_idx, bool _use_id = false);
-			file_remote_box get_file_remote(int field_idx, bool _use_id = false);
 
 			int8_box get_int8(object_name field_name);
 			int16_box get_int16(object_name field_name);
@@ -211,10 +166,6 @@ namespace corona
 			double_box get_double(object_name field_name);
 			time_box get_time(object_name field_name);
 			string_box get_string(object_name field_name);
-			jarray get_object(object_name field_name);
-			jlist get_list(object_name field_name);
-			collection_id_box get_collection_id(object_name field_name);
-			object_id_box get_object_id(object_name field_name);
 			point_box get_point(object_name field_name);
 			rectangle_box get_rectangle(object_name field_name);
 			layout_rect_box get_layout_rect(object_name field_name);
@@ -222,10 +173,6 @@ namespace corona
 			wave_box get_wave(object_name field_name);
 			midi_box get_midi(object_name field_name);
 			color_box get_color(object_name field_name);
-			query_box get_query(object_name field_name);
-			sql_remote_box get_sql_remote(object_name field_name);
-			http_remote_box get_http_remote(object_name field_name);
-			file_remote_box get_file_remote(object_name field_name);
 
 			bool matches(const char* str);
 
@@ -235,41 +182,6 @@ namespace corona
 			{
 				for (auto item : var) {
 					set_value(item);
-				}
-			}
-
-			void set(std::initializer_list<relative_ptr_type> member_ids, std::initializer_list<jvariant> var)
-			{
-				jobject target_slice = *this;
-				
-				for (auto item : member_ids)
-				{
-					target_slice = target_slice.get_object(item, {0,0,0}, true);
-				}
-
-				for (auto item : var) 
-				{
-					target_slice.set_value(item);
-				}
-			}
-
-			void set(relative_ptr_type _src_member_id, std::initializer_list<relative_ptr_type> member_ids, std::initializer_list<jvariant> var)
-			{
-				jobject target_slice = *this;
-				jobject source_slice = *this;
-
-				source_slice = get_object(_src_member_id, { 0,0,0 }, true);
-
-				for (auto item : member_ids)
-				{
-					target_slice = target_slice.get_object(item, { 0,0,0 }, true);
-				}
-
-				target_slice.update(source_slice);
-
-				for (auto item : var)
-				{
-					target_slice.set_value(item);
 				}
 			}
 
@@ -306,124 +218,6 @@ namespace corona
 			}
 		};
 
-		class jarray : public slice_enumerable
-		{
-			jschema* schema;
-			relative_ptr_type class_field_id;
-			char* bytes;
-			jobject* item;
-
-		public:
-
-			using collection_type = jarray;
-			using iterator_item_type = value_object<jobject>;
-			using iterator_type = filterable_iterator<jobject, collection_type, iterator_item_type>;
-
-			jarray();
-			jarray(jobject* _parent, jschema* _schema, relative_ptr_type _class_field_id, char* _bytes, bool _init = false);
-			jarray(dynamic_box& _dest, jarray& _src);
-			dimensions_type dimensions();
-
-			jobject get_object(int x, int y = 0, int z = 0);
-			jobject get_object(dimensions_type dims);
-			uint64_t get_size_bytes();
-			char* get_bytes();
-
-			jobject get_at(relative_ptr_type _index);
-			corona_size_t size();
-
-			inline iterator_type begin()
-			{
-				return iterator_type(this, 0);
-			}
-
-			inline iterator_type end()
-			{
-				return iterator_type(this, null_row);
-			}
-		};
-
-		class jarray_container
-		{
-			collection_id_type	collection;
-			dynamic_box			data;
-			jarray				objects;
-
-		public:
-
-			jarray_container();
-			jarray_container(collection_id_type& _collection, jarray& _objects);
-			void set(collection_id_type& _collection, jarray& _objects);
-			jarray& get();
-		};
-
-		using selection_flag_type = uint32_t;
-
-		class jlist : public slice_enumerable
-		{
-			jschema* schema;
-			relative_ptr_type class_field_id;
-			jlist_state data;
-			jobject* item;
-			inline_box model_box;
-
-		public:
-
-			using collection_type = jlist;
-			using iterator_item_type = value_object<jobject>;
-			using iterator_type = filterable_iterator<jobject, collection_type, iterator_item_type>;
-
-
-			jlist();
-			jlist(jobject* _parent, jschema* _schema, relative_ptr_type _class_field_id, char* _bytes, bool _init = false);
-			jlist(serialized_box_container& _dest, jlist& _src);
-
-			corona_size_t capacity();
-			corona_size_t size();
-
-			jobject get_at(relative_ptr_type x);
-			bool erase(relative_ptr_type x);
-			bool chop();
-
-			jobject append_slice();
-			bool select_slice(relative_ptr_type x);
-			bool deselect_slice(relative_ptr_type x);
-			void deselect_all();
-			void select_all();
-			void clear();
-
-			uint64_t get_size_bytes();
-			char* get_bytes();
-
-			inline iterator_type begin()
-			{
-				return iterator_type(this, 0);
-			}
-
-			inline iterator_type end()
-			{
-				return iterator_type(this, null_row);
-			}
-		};
-
-		class actor_type
-		{
-		public:
-			collection_id_type		collection_id;
-			actor_id_type			actor_id;
-			object_name				actor_name;
-			selections_collection	selections;
-			selections_collection	breadcrumb;
-			view_options			view;
-			object_name				last_rule_name;
-
-			actor_type() : actor_id(null_row)
-			{
-				;
-			}
-		};
-
-		using jactor = actor_type;
 
 		class collection_object_type
 		{
@@ -431,9 +225,6 @@ namespace corona
 			object_id_type			oid;
 			jtype					otype;
 			relative_ptr_type		class_id;
-			relative_ptr_type		class_field_id;
-			actor_id_type			actor_id;
-			relative_ptr_type		item_id;
 			time_t					last_modified;
 			bool					deleted;
 		};
@@ -442,7 +233,6 @@ namespace corona
 		{
 		public:
 			collection_id_type	collection_id;
-			actor_id_type		actor_id;
 			relative_ptr_type	class_id;
 			relative_ptr_type	item_id;
 			relative_ptr_type	template_item_id;
@@ -451,308 +241,6 @@ namespace corona
 			collection_id_type get_collection_id() { return collection_id; }
 		};
 
-		class actor_view_object
-		{
-		public:
-			collection_id_type	collection_id;
-			actor_id_type		actor_id;
-			relative_ptr_type	object_id;
-			relative_ptr_type	class_id;
-			bool				selectable;
-			bool				updatable;
-			bool				selected;
-			bool				deletable;
-			jobject				object;
-		};
-
-		class select_object_request
-		{
-		public:
-			collection_id_type	collection_id;
-			actor_id_type		actor_id;
-			relative_ptr_type	object_id;
-			bool				extend;
-			collection_id_type get_collection_id() { return collection_id; }
-		};
-
-		class delete_selected_request
-		{
-		public:
-			collection_id_type	collection_id;
-			actor_id_type		actor_id;
-			collection_id_type get_collection_id() { return collection_id; }
-		};
-
-		class update_object_request
-		{
-		public:
-			object_member_path	path;
-			actor_id_type		actor_id;
-			jobject				item;
-			collection_id_type get_collection_id() { return path.object.collection_id; }
-		};
-
-		using filtered_object_id_list = list_box<relative_ptr_type>;
-		using filtered_object_list = list_box<jobject>;
-		using filtered_actor_view_object_list = list_box<actor_view_object>;
-		using actor_view_collection = sorted_index<relative_ptr_type, actor_view_object>;
-		using actor_create_collection = sorted_index<relative_ptr_type, create_object_request>;
-		using filtered_objects_collection = sorted_index<object_name, relative_ptr_type>;
-
-		class actor_state;
-
-		class actor_object_option
-		{
-		public:
-			actor_view_object	avo;
-			jobject				slice;
-		};
-
-		class actor_state
-		{
-			dynamic_box									data;
-			relative_ptr_type							create_objects_location;
-			relative_ptr_type							view_objects_location;
-			relative_ptr_type							filter_results_location;
-			jschema* schema;
-
-		public:
-
-			collection_id_type							collection_id;
-			relative_ptr_type							actor_id;
-			actor_create_collection						create_objects;
-			actor_view_collection						view_objects;
-			filtered_objects_collection					filter_results;
-			jactor										actor;
-
-			relative_ptr_type							modified_object_id;
-			jobject										modified_object;
-
-			actor_state()
-			{
-				data.init(100000);
-				create_objects = actor_create_collection::create_sorted_index(&data, create_objects_location);
-				view_objects = actor_view_collection::create_sorted_index(&data, view_objects_location);
-				filter_results = filtered_objects_collection::create_sorted_index(&data, filter_results_location);
-				modified_object_id = null_row;
-				check_objects("empty ctor");
-			}
-
-			actor_state(actor_state&& _src)
-			{
-				data = std::move(_src.data);
-				collection_id = _src.collection_id;
-				actor_id = _src.actor_id;
-				create_objects_location = _src.create_objects_location;
-				view_objects_location = _src.view_objects_location;
-				modified_object_id = _src.modified_object_id;
-				filter_results_location = _src.filter_results_location;
-				create_objects = actor_create_collection::get_sorted_index(&data, create_objects_location );
-				view_objects = actor_view_collection::get_sorted_index(&data, view_objects_location );
-				filter_results = filtered_objects_collection::get_sorted_index(&data, filter_results_location);
-				for (auto avo : view_objects) {
-					avo.second.object.set_box_dangerous_hack(&data);
-				}
-				actor = _src.actor;
-				check_objects("move ctor");
-			}
-
-			actor_state& operator=(actor_state&& _src)
-			{
-				data = std::move(_src.data);
-				collection_id = _src.collection_id;
-				actor_id = _src.actor_id;
-				create_objects_location = _src.create_objects_location;
-				view_objects_location = _src.view_objects_location;
-				modified_object_id = _src.modified_object_id;
-				filter_results_location = _src.filter_results_location;
-				create_objects = actor_create_collection::get_sorted_index(&data, create_objects_location);
-				view_objects = actor_view_collection::get_sorted_index(&data, view_objects_location);
-				filter_results = filtered_objects_collection::get_sorted_index(&data, filter_results_location);
-				for (auto avo : view_objects) {
-					avo.second.object.set_box_dangerous_hack(&data);
-				}
-				actor = _src.actor;
-				check_objects("move assign");
-				return *this;
-			}
-
-			actor_state operator=(const actor_state& _src)
-			{
-				data = _src.data;
-				collection_id = _src.collection_id;
-				actor_id = _src.actor_id;
-				create_objects_location = _src.create_objects_location;
-				view_objects_location = _src.view_objects_location;
-				modified_object_id = _src.modified_object_id;
-				filter_results_location = _src.filter_results_location;
-				create_objects = actor_create_collection::get_sorted_index(&data, create_objects_location);
-				view_objects = actor_view_collection::get_sorted_index(&data, view_objects_location);
-				filter_results = filtered_objects_collection::get_sorted_index(&data, filter_results_location);
-				for (auto avo : view_objects) {
-					avo.second.object.set_box_dangerous_hack(&data);
-				}
-				actor = _src.actor;
-				check_objects("copy assign");
-				return *this;
-			}
-
-			actor_state(const actor_state& _src)
-			{
-				data = _src.data;
-				collection_id = _src.collection_id;
-				actor_id = _src.actor_id;
-				create_objects_location = _src.create_objects_location;
-				view_objects_location = _src.view_objects_location;
-				modified_object_id = _src.modified_object_id;
-				filter_results_location = _src.filter_results_location;
-				create_objects = actor_create_collection::get_sorted_index(&data, create_objects_location);
-				view_objects = actor_view_collection::get_sorted_index(&data, view_objects_location);
-				filter_results = filtered_objects_collection::get_sorted_index(&data, filter_results_location);
-				for (auto avo : view_objects) {
-					avo.second.object.set_box_dangerous_hack(&data);
-				}
-				actor = _src.actor;
-				check_objects("copy ctor");
-			}
-
-			serialized_box_container* get_data() 
-			{
-				return &data;
-			}
-
-			jobject create_object(jschema* _schema, relative_ptr_type _class_id);
-			jobject copy_object(jschema* _schema, jobject& _src);
-			actor_view_object get_modified_object();
-			jobject get_object(object_member_path _path);
-			object_member_path get_object_by_class(relative_ptr_type _class_id, member_path _path);
-			object_id_type get_object_by_class(relative_ptr_type _class_id);
-			object_member_path get_selected( relative_ptr_type _class_id );
-
-			create_object_request create_create_request(relative_ptr_type _class_id)
-			{
-				if (!create_objects.contains(_class_id)) {
-					throw std::invalid_argument("class is not creatable");
-				}
-				create_object_request aco = create_objects[_class_id].second;
-				check_objects("create_request");
-				return aco;
-			}
-
-			select_object_request create_select_request(relative_ptr_type _object_id, bool _extend)
-			{
-				if (!view_objects.contains(_object_id)) {
-					throw std::invalid_argument("object not found");
-				}
-				actor_view_object avo = view_objects[_object_id].second;
-				select_object_request aso;
-				aso.collection_id = collection_id;
-				aso.actor_id = actor_id;
-				aso.extend = _extend;
-				aso.object_id = _object_id;
-				check_objects("select_request");
-				return aso;
-			}
-
-			update_object_request create_update_request()
-			{
-				update_object_request uor;
-				uor.actor_id = actor_id;
-				uor.path.object.collection_id = collection_id;
-				uor.path.object.row_id = modified_object_id;
-				uor.item = modified_object;
-				return uor;
-			}
-
-			update_object_request create_update_request(relative_ptr_type _object_id)
-			{
-				update_object_request uor;
-				uor.actor_id = actor_id;
-				uor.path.object.collection_id = collection_id;
-				uor.path.object.row_id = _object_id;
-				uor.item = view_objects.get_at(_object_id)
-							.get_value()
-							.object;
-				return uor;
-			}
-
-			void check_objects(const char *name)
-			{
-				serialized_box_container* sbd = static_cast<serialized_box_container*>(&data);
-				for (auto avo : view_objects) {
-					avo.second.object.set_box_dangerous_hack(sbd);
-					view_objects.put(avo);
-				}
-
-#if ACTOR_OBJECT_CHECKING
-				// this ensures that all the objects in this state have their data set to be provided from this state,
-				void* my_data = (void*)(&data);
-				std::cout << "actor state box " << name << ", data " << my_data << ", has_data: " << data.has_data() << std::endl;
-				bool is_ok = true;
-				for (auto avo : view_objects) 
-				{
-					void *object_data = avo.second.object.get_box_address();
-					if (object_data != my_data) {
-						is_ok = false;
-						std::cout << "object " << avo.second.object_id << " " << object_data << " is incorrect " << std::endl;
-					}
-				}
-#endif
-			}
-
-			filtered_actor_view_object_list get_view_query_avo(const object_name& _name)
-			{
-				filtered_actor_view_object_list ret_value;
-				ret_value = filtered_actor_view_object_list::create(&data);
-				if (filter_results.contains(_name))
-				{
-					auto fr_loc = filter_results[_name];
-					auto list = filtered_object_id_list::get(&data, fr_loc.second);
-					for (auto item : list) {
-						auto avo = view_objects[item];
-						ret_value.push_back(avo.second);
-					}
-				}
-				else
-				{
-					std::cout << "ERR:" << _name << " query results not found";
-				}
-				return ret_value;
-			}
-
-			filtered_actor_view_object_list get_view_query_avo(view_query& vq)
-			{
-				return get_view_query_avo(vq.query_name);
-			}
-
-			filtered_object_list get_view_query_obj(const object_name& _name)
-			{
-				filtered_object_list ret_value;
-				ret_value = filtered_object_list::create(&data);
-				if (filter_results.contains(_name))
-				{
-					auto fr_loc = filter_results[_name];
-					auto list = filtered_object_id_list::get(&data, fr_loc.second);
-					for (auto item : list) {
-						auto avo = view_objects[item];
-						ret_value.push_back(avo.second.object);
-					}
-				}
-				else 
-				{
-					std::cout << "ERR:" << _name << " query results not found";
-				}
-				return ret_value;
-			}
-
-			filtered_object_list get_view_query_obj(view_query& vq)
-			{
-				return get_view_query_obj(vq.query_name);
-			}
-
-		};
-
-		using actor_collection = table<actor_type>;
 		using object_collection = item_details_table<collection_object_type, char>;
 
 		class jcollection
@@ -762,7 +250,6 @@ namespace corona
 			jcollection_ref* ref;
 
 			collection_id_type		collection_id;
-			actor_collection		actors;
 			object_collection		objects;
 
 		public:
@@ -785,7 +272,6 @@ namespace corona
 				if (!ref || ref->data == nullptr) {
 					throw std::invalid_argument("jcollection ref must have data initialized");
 				}
-				actors = actor_collection::get_table(_ref->data, _ref->actors_id );
 				objects = object_collection::get_table(_ref->data, _ref->objects_id );
 			}
 
@@ -797,7 +283,6 @@ namespace corona
 				if (!ref || ref->data == nullptr) {
 					throw std::invalid_argument("jcollection ref must have data initialized");
 				}
-				actors = actor_collection::get_table(ref->data, ref->actors_id);
 				objects = object_collection::get_table(ref->data, ref->objects_id);
 			}
 
@@ -809,7 +294,6 @@ namespace corona
 				if (!ref || ref->data == nullptr) {
 					throw std::invalid_argument("jcollection ref must have data initialized");
 				}
-				actors = actor_collection::get_table(ref->data, ref->actors_id);
 				objects = object_collection::get_table(ref->data, ref->objects_id);
 			}
 
@@ -818,7 +302,6 @@ namespace corona
 				schema = _src.schema;
 				ref = _src.ref;
 				collection_id = _src.collection_id;
-				actors = actor_collection::get_table(ref->data, ref->actors_id);
 				objects = object_collection::get_table(ref->data, ref->objects_id);
 				return *this;
 			}
@@ -828,7 +311,6 @@ namespace corona
 				schema = _src.schema;
 				ref = _src.ref;
 				collection_id = _src.collection_id;
-				actors = actor_collection::get_table(ref->data, ref->actors_id);
 				objects = object_collection::get_table(ref->data, ref->objects_id);
 				return *this;
 			}
@@ -838,29 +320,11 @@ namespace corona
 				return collection_id;
 			}
 
-			actor_type create_actor(actor_type _actor);
-			actor_id_type put_actor(actor_type _actor);
-			actor_type get_actor(actor_id_type _actor_id);
-			actor_id_type find_actor(object_name& name);
-			actor_type update_actor(actor_type _actor);
-
-			actor_state get_actor_state(relative_ptr_type _actor, relative_ptr_type _last_modified_object = null_row, const char *_trace_msg = nullptr);
-			actor_state select_object(const select_object_request& _select, const char* _trace_msg = nullptr);
-			actor_state create_object(create_object_request& _create, const char* _trace_msg = nullptr);
-			actor_state update_object(update_object_request& _update, const char* _trace_msg = nullptr);
-			actor_state delete_selected(const delete_selected_request& _select, const char* _trace_msg = nullptr);
-
-			void print(const char *_trace, actor_state& acr);
-			jobject create_object(relative_ptr_type _item_id, relative_ptr_type _actor_id, relative_ptr_type _class_id, relative_ptr_type& _object_id);
-			jobject create_object(relative_ptr_type _item_id, relative_ptr_type _actor_id, relative_ptr_type _class_id, relative_ptr_type& _object_id, std::initializer_list<jvariant> var);
+			jobject create_object(relative_ptr_type _class_id, relative_ptr_type& _object_id);
+			jobject create_object(relative_ptr_type _class_id, relative_ptr_type& _object_id, std::initializer_list<jvariant> var);
 			jobject get_object(relative_ptr_type _object_id);
-			jobject get_object(object_member_path _path);
 			jobject update_object(relative_ptr_type _object_id, jobject _slice);
-			jobject update_object(object_member_path _path, jobject _slice);
 			collection_object_type &get_object_reference(relative_ptr_type _object_id);
-			relative_ptr_type create_class_from_template(relative_ptr_type _target_class_id, relative_ptr_type _source_template_object);
-
-			bool selector_applies(selector_collection* _selector, actor_id_type& _actor);
 
 			jobject get_at(relative_ptr_type _object_id);
 			relative_ptr_type get_class_id(relative_ptr_type _object_id);
@@ -876,14 +340,6 @@ namespace corona
 
 			bool class_has_base(relative_ptr_type _class_id, relative_ptr_type _base_id);
 			int64_t get_class_count(relative_ptr_type _class_id);
-
-			filter_option create_filter_from_view_query(view_query& vq, actor_type* pactor);
-
-			filtered_object_id_list run_filter(serialized_box_container* _data, filter_option& _stuff);
-			void update(filter_option& _stuff, std::function<bool(jobject&_src)> updateor);
-
-			filtered_object_id_list run_filter(serialized_box_container* _data, view_query& vq, actor_type *pactor);
-			void update(view_query& vq, actor_type* pactor, std::function<bool(jobject& _src)> updateor);
 
 			relative_ptr_type size()
 			{
@@ -948,8 +404,6 @@ namespace corona
 				return std::count_if(begin(), end(), predicate);
 			}
 
-			relative_ptr_type put_user_class(jobject& _class_definition, time_t _version);
-
 		};
 
 		class jschema
@@ -961,232 +415,15 @@ namespace corona
 			using class_store_type = item_details_table<jclass_header, jclass_field>;
 			using class_index_type = sorted_index<object_name, relative_ptr_type>;
 			using field_index_type = sorted_index<object_name, relative_ptr_type>;
-			using query_store_type = sorted_index<relative_ptr_type, query_definition_type>;
-			using sql_store_type = sorted_index<relative_ptr_type, sql_definition_type>;
-			using file_store_type = sorted_index<relative_ptr_type, file_definition_type>;
-			using http_store_type = sorted_index<relative_ptr_type, http_definition_type>;
-			using model_store_type = sorted_index<object_name, model_type>;
 
 			field_store_type		fields;
 			class_store_type		classes;
 			class_index_type		classes_by_name;
 			field_index_type		fields_by_name;
-			query_store_type		queries;
-			sql_store_type			sql_remotes;
-			file_store_type			file_remotes;
-			http_store_type			http_remotes;
-			model_store_type		models;
 
 			jfield					empty;
 
-		public:
-			
-			relative_ptr_type idf_full_name;
-			relative_ptr_type idf_first_name;
-			relative_ptr_type idf_last_name;
-			relative_ptr_type idf_middle_name;
-			relative_ptr_type idf_ssn;
-			relative_ptr_type idf_email;
-			relative_ptr_type idf_title;
-			relative_ptr_type idf_street;
-			relative_ptr_type idf_suiteapt;
-			relative_ptr_type idf_city;
-			relative_ptr_type idf_state;
-			relative_ptr_type idf_postal;
-			relative_ptr_type idf_country_name;
-			relative_ptr_type idf_country_code;
-			relative_ptr_type idf_institution_name;
-			relative_ptr_type idf_long_name;
-			relative_ptr_type idf_short_name;
-			relative_ptr_type idf_unit;
-			relative_ptr_type idf_symbol;
-			relative_ptr_type idf_operator;
-			relative_ptr_type idf_windows_path;
-			relative_ptr_type idf_linux_path;
-			relative_ptr_type idf_url;
-			relative_ptr_type idf_username;
-			relative_ptr_type idf_password;
-			relative_ptr_type idf_doc_title;
-			relative_ptr_type idf_section_title;
-			relative_ptr_type idf_block_title;
-			relative_ptr_type idf_caption;
-			relative_ptr_type idf_paragraph;
-			relative_ptr_type idf_mimeType;
-			relative_ptr_type idf_base64;
-			relative_ptr_type idf_file_name;
-			relative_ptr_type idf_font_name;
-			relative_ptr_type idf_name;
-			relative_ptr_type idf_search_string;
-
-			relative_ptr_type idf_birthday;
-			relative_ptr_type idf_scheduled;
-
-			relative_ptr_type idf_count;
-
-			relative_ptr_type idf_quantity;
-			relative_ptr_type idf_latitude;
-			relative_ptr_type idf_longitude;
-			relative_ptr_type idf_meters;
-			relative_ptr_type idf_feet;
-			relative_ptr_type idf_kilograms;
-			relative_ptr_type idf_pounds;
-			relative_ptr_type idf_seconds;
-			relative_ptr_type idf_minutes;
-			relative_ptr_type idf_hours;
-			relative_ptr_type idf_amperes;
-			relative_ptr_type idf_kelvin;
-			relative_ptr_type idf_moles;
-			relative_ptr_type idf_gradient_position;
-			relative_ptr_type idf_font_size;
-			relative_ptr_type idf_line_spacing;
-			relative_ptr_type idf_box_border_thickness;
-			relative_ptr_type idf_shape_border_thickness;
-
-			relative_ptr_type idf_color;
-			relative_ptr_type idf_shape_fill_color;
-			relative_ptr_type idf_box_fill_color;
-			relative_ptr_type idf_shape_border_color;
-			relative_ptr_type idf_box_border_color;
-			relative_ptr_type idf_point;
-			relative_ptr_type idf_position_point;
-			relative_ptr_type idf_selection_point;
-			relative_ptr_type idf_rectangle;
-			relative_ptr_type idf_layout_rect;
-
-			relative_ptr_type idf_bold;
-			relative_ptr_type idf_italic;
-			relative_ptr_type idf_underline;
-			relative_ptr_type idf_strike_through;
-			relative_ptr_type idf_vertical_alignment;
-			relative_ptr_type idf_horizontal_alignment;
-			relative_ptr_type idf_wrap_text;
-
-			relative_ptr_type idc_solid_brush;
-			relative_ptr_type idc_gradient_stop;
-			relative_ptr_type idc_linear_gradient_brush;
-			relative_ptr_type idc_round_gradient_brush;
-			relative_ptr_type idc_bitmap_brush;
-			relative_ptr_type idc_text_style;
-
-			relative_ptr_type idf_view_background_style;
-			relative_ptr_type idf_view_title_style;
-			relative_ptr_type idf_view_subtitle_style;
-			relative_ptr_type idf_view_section_style;
-			relative_ptr_type idf_view_style;
-			relative_ptr_type idf_disclaimer_style;
-			relative_ptr_type idf_copyright_style;
-			relative_ptr_type idf_panel_style;
-			relative_ptr_type idf_h1_style;
-			relative_ptr_type idf_h2_style;
-			relative_ptr_type idf_h3_style;
-			relative_ptr_type idf_column_number_head_style;
-			relative_ptr_type idf_column_text_head_style;
-			relative_ptr_type idf_column_number_style;
-			relative_ptr_type idf_column_text_style;
-			relative_ptr_type idf_column_data_style;
-			relative_ptr_type idf_button_style;
-			relative_ptr_type idf_label_style;
-			relative_ptr_type idf_control_style;
-			relative_ptr_type idf_chart_axis_style;
-			relative_ptr_type idf_chart_legend_style;
-			relative_ptr_type idf_chart_block_style;
-			relative_ptr_type idf_tooltip_style;
-			relative_ptr_type idf_breadcrumb_style;
-			relative_ptr_type idf_error_style;
-			relative_ptr_type idf_company_a1_style;
-			relative_ptr_type idf_company_a2_style;
-			relative_ptr_type idf_company_a3_style;
-			relative_ptr_type idf_company_b1_style;
-			relative_ptr_type idf_company_b2_style;
-			relative_ptr_type idf_company_b3_style;
-			relative_ptr_type idf_company_c1_style;
-			relative_ptr_type idf_company_c2_style;
-			relative_ptr_type idf_company_c3_style;
-			relative_ptr_type idf_company_d1_style;
-			relative_ptr_type idf_company_d2_style;
-			relative_ptr_type idf_company_d3_style;
-			relative_ptr_type idf_company_deductible_style;
-			relative_ptr_type idf_navigation_style;
-			relative_ptr_type idf_company_neutral1_style;
-			relative_ptr_type idf_company_neutral2_style;
-			relative_ptr_type idf_header_area_style;
-			relative_ptr_type idf_title_bar_style;
-			relative_ptr_type idf_subtitle_bar_style;
-			relative_ptr_type idf_breadcrumb_bar_style;
-			relative_ptr_type idf_album_title_style;
-			relative_ptr_type idf_artist_title_style;
-			relative_ptr_type idf_work_title1_style;
-			relative_ptr_type idf_work_title2_style;
-			relative_ptr_type idf_work_title3_style;
-			relative_ptr_type idf_work_title4_style;
-			relative_ptr_type idf_work_title5_style;
-			relative_ptr_type idf_work_title6_style;
-			relative_ptr_type idf_album_about_style;
-			relative_ptr_type idf_artist_about_style;
-
-			relative_ptr_type idc_style_sheet;
-			relative_ptr_type idc_style_sheet_set;
-
-			relative_ptr_type idf_style_id;
-
-			relative_ptr_type idc_user_class_root;
-			relative_ptr_type idf_user_class_root;
-
-			relative_ptr_type idc_user_class;
-			relative_ptr_type idf_user_class;
-			relative_ptr_type idf_user_class_class_name;
-			relative_ptr_type idf_user_class_class_id;
-			relative_ptr_type idf_base_class_id;
-
-			relative_ptr_type idc_user_field;
-			relative_ptr_type idf_user_field;
-			relative_ptr_type idf_user_field_list;
-
-			relative_ptr_type idc_string_options;
-			relative_ptr_type idc_double_options;
-			relative_ptr_type idc_int_options;
-			relative_ptr_type idc_date_options;
-			relative_ptr_type idc_object_options;
-
-			relative_ptr_type idf_string_options;
-			relative_ptr_type idf_double_options;
-			relative_ptr_type idf_int_options;
-			relative_ptr_type idf_date_options;
-			relative_ptr_type idf_object_options;
-
-			relative_ptr_type idf_field_name;
-			relative_ptr_type idf_field_description;
-			relative_ptr_type idf_field_format;
-			relative_ptr_type idf_field_type;
-
-			relative_ptr_type idf_string_length;
-			relative_ptr_type idf_string_validation_pattern;
-			relative_ptr_type idf_string_validation_message;
-			relative_ptr_type idf_string_full_text_editor;
-			relative_ptr_type idf_string_rich_text_editor;
-
-			relative_ptr_type idf_date_start;
-			relative_ptr_type idf_date_stop;
-			relative_ptr_type idf_date_format;
-
-			relative_ptr_type idf_double_start;
-			relative_ptr_type idf_double_stop;
-			relative_ptr_type idf_double_format;
-
-			relative_ptr_type idf_int_start;
-			relative_ptr_type idf_int_stop;
-			relative_ptr_type idf_int_format;
-
-			relative_ptr_type idf_object_class_id;
-			relative_ptr_type idf_object_is_list;
-			relative_ptr_type idf_object_x;
-			relative_ptr_type idf_object_y;
-			relative_ptr_type idf_object_z;
-
-			relative_ptr_type idf_template_parameter_field_id;
-			relative_ptr_type idf_template_parameter_field_type;
-			relative_ptr_type idf_template_parameter_field_dim;
-			relative_ptr_type idc_template_parameter_field;
+		public:	
 
 			jschema() = default;
 			~jschema() = default;
@@ -1218,22 +455,12 @@ namespace corona
 				schema_map.classes_table_id = null_row;
 				schema_map.classes_by_name_id = null_row;
 				schema_map.fields_by_name_id = null_row;
-				schema_map.query_properties_id = null_row;
-				schema_map.sql_properties_id = null_row;
-				schema_map.file_properties_id = null_row;
-				schema_map.http_properties_id = null_row;
-				schema_map.models_id = null_row;
 
 				relative_ptr_type rit = _b->put_object(schema_map);
 				schema_map.fields_table_id = field_store_type::reserve_table(_b, _num_fields);
 				schema_map.classes_table_id = class_store_type::reserve_table(_b, _num_classes, _total_class_fields);
 				schema_map.classes_by_name_id = class_index_type::reserve_sorted_index(_b);
 				schema_map.fields_by_name_id = field_index_type::reserve_sorted_index(_b);
-				schema_map.query_properties_id = query_store_type::reserve_sorted_index(_b);
-				schema_map.sql_properties_id = sql_store_type::reserve_sorted_index(_b);
-				schema_map.file_properties_id = file_store_type::reserve_sorted_index(_b);
-				schema_map.http_properties_id = http_store_type::reserve_sorted_index(_b);
-				schema_map.models_id = model_store_type::reserve_sorted_index(_b);
 				pschema_map = _b->get_object<jschema_map>(rit);
 				*pschema_map = schema_map;
 				return rit;
@@ -1251,11 +478,6 @@ namespace corona
 				schema.classes = class_store_type::get_table(_b, pschema_map->classes_table_id);
 				schema.classes_by_name = class_index_type::get_sorted_index(_b, pschema_map->classes_by_name_id);
 				schema.fields_by_name = field_index_type::get_sorted_index(_b, pschema_map->fields_by_name_id);
-				schema.queries = query_store_type::get_sorted_index(_b, pschema_map->query_properties_id);
-				schema.sql_remotes = sql_store_type::get_sorted_index(_b, pschema_map->sql_properties_id);
-				schema.file_remotes = file_store_type::get_sorted_index(_b, pschema_map->file_properties_id);
-				schema.http_remotes = http_store_type::get_sorted_index(_b, pschema_map->http_properties_id);
-				schema.models = model_store_type::get_sorted_index(_b, pschema_map->models_id);
 				schema.empty.field_id = null_row;
 				schema.empty.type_id = jtype::type_null;
 				schema.empty.name = "empty";
@@ -1269,20 +491,10 @@ namespace corona
 				int64_t class_size = class_store_type::get_box_size(_num_classes, _total_class_fields);
 				int64_t classes_by_name_size = class_index_type::get_box_size();
 				int64_t fields_by_name_size = field_index_type::get_box_size();
-				int64_t query_size = query_store_type::get_box_size();
-				int64_t sql_size = sql_store_type::get_box_size();
-				int64_t file_size = file_store_type::get_box_size();
-				int64_t http_size = http_store_type::get_box_size();
-				int64_t model_size = model_store_type::get_box_size();
-				int64_t total_size = field_size + 
-					class_size + 
-					classes_by_name_size + 
-					fields_by_name_size + 
-					query_size + 
-					sql_size + 
-					file_size + 
-					http_size + 
-					model_size;
+				int64_t total_size = field_size +
+					class_size +
+					classes_by_name_size +
+					fields_by_name_size;
 				return total_size;
 			}
 
@@ -1355,7 +567,7 @@ namespace corona
 				request.name.type_id = jtype::type_datetime;
 				return put_field(request.name, sizeof(DATE), [request](jfield& _field)
 					{
-						_field.time_properties= request.options;
+						_field.time_properties = request.options;
 					});
 			} 
 
@@ -1412,54 +624,6 @@ namespace corona
 				_dest = _class_name + "[" + std::to_string(_dim.x) + "," + std::to_string(_dim.y) + "," + std::to_string(_dim.z) + "]";
 			}
 
-			relative_ptr_type put_object_field(put_object_field_request request)
-			{
-				auto pcr = classes[request.options.class_id];
-				auto& p = pcr.item();
-				int64_t sizeb = pcr.item().class_size_bytes;
-				request.options.class_size_bytes = sizeb;
-				if (request.options.dim.x == 0) request.options.dim.x = 1;
-				if (request.options.dim.y == 0) request.options.dim.y = 1;
-				if (request.options.dim.z == 0) request.options.dim.z = 1;
-				object_name field_name;
-				if (request.name.name.size() == 0) 
-				{
-					get_class_field_name(field_name, pcr.pitem()->name, request.options.dim);
-				}
-				else 
-				{
-					field_name = request.name.name;
-				}
-				request.name.type_id = jtype::type_object;
-				request.options.total_size_bytes = request.options.dim.x * request.options.dim.y * request.options.dim.z * sizeb;
-				return put_field(request.name, request.options.total_size_bytes, [request](jfield& _field)
-					{
-						_field.object_properties = request.options;
-					});
-			}
-
-			relative_ptr_type put_list_field(put_object_field_request request)
-			{
-				auto pcr = classes[request.options.class_id];
-				auto& p = pcr.item();
-				int64_t sizeb = pcr.item().class_size_bytes;
-				request.options.class_size_bytes = sizeb;
-				if (request.options.dim.x == 0) request.options.dim.x = 1;
-				int64_t power_of_two = 1;
-				while (request.options.dim.x < power_of_two) {
-					power_of_two *= 2;
-				}
-				request.options.dim.x = power_of_two;
-				request.options.dim.y = 1;
-				request.options.dim.z = 1;
-				object_name field_name;
-				get_class_field_name(field_name, pcr.pitem()->name + "list", request.options.dim);
-				request.options.total_size_bytes = request.options.dim.x * request.options.dim.y * request.options.dim.z * sizeb + sizeof(jlist_instance) + sizeof(selection_flag_type) * request.options.dim.x + 32;
-				return put_field(request.name, request.options.total_size_bytes, [request](jfield& _field)
-					{
-						_field.object_properties = request.options;
-					});
-			}
 
 			const char* invalid_comparison = "Invalid comparison";
 			const char* invalid_parameter_field = "Invalid parameter field";
@@ -1501,85 +665,6 @@ namespace corona
 			{
 				object_name fn = _class_name;
 				bind_class(fn, _class_id);
-			}
-
-			relative_ptr_type put_query_field(put_query_field_request request)
-			{
-				query_properties_type options;
-
-				request.name.type_id = jtype::type_query;
-				auto query_location = put_field(request.name, sizeof(query_instance), [request](jfield& _field)
-					{
-						;
-					});
-
-				queries.insert_or_assign(query_location, request.options);
-
-				return query_location;
-			}
-
-			relative_ptr_type put_sql_remote_field(put_sql_remote_field_request request)
-			{
-				sql_properties_type options;
-
-				request.name.type_id = jtype::type_sql;
-
-				auto& params = request.options.mapping.parameters;
-				for (auto param : params) {
-					auto& pi = param.item;
-					bind_field(pi.corona_field, pi.corona_field_id);
-				}
-
-				auto query_location = put_field(request.name, sizeof(sql_instance), [request](jfield& _field)
-					{
-						;
-					});
-
-				sql_remotes.insert_or_assign(query_location, request.options);
-				return query_location;
-			}
-
-			relative_ptr_type put_http_remote_field(put_http_remote_field_request request)
-			{
-				http_properties_type options;
-
-				request.name.type_id = jtype::type_http;
-
-				auto& params = request.options.mapping.parameters;
-				for (auto param : params) {
-					auto& pi = param.item;
-					bind_field(pi.corona_field, pi.corona_field_id);
-				}
-
-				auto query_location = put_field(request.name, sizeof(http_instance), [request](jfield& _field)
-					{
-						;
-					});
-
-				http_remotes.insert_or_assign(query_location, request.options);
-
-				return query_location;
-			}
-
-			relative_ptr_type put_file_remote_field(put_file_remote_field_request request)
-			{
-				file_properties_type options;
-
-				request.name.type_id = jtype::type_file;
-
-				auto& params = request.options.mapping.parameters;
-				for (auto param : params) {
-					auto& pi = param.item;
-					bind_field(pi.corona_field, pi.corona_field_id);
-				}
-
-				auto query_location = put_field(request.name, sizeof(file_instance), [request](jfield& _field)
-					{
-						;
-					});
-
-				file_remotes.insert_or_assign(query_location, request.options);
-				return query_location;
 			}
 
 			relative_ptr_type put_point_field(put_point_field_request request)
@@ -1662,25 +747,6 @@ namespace corona
 				return query_location;
 			}
 
-			relative_ptr_type put_list_field(relative_ptr_type class_id, int max_rows )
-			{
-				object_name result_class_name;
-
-				put_object_field_request porf;
-				auto class_cls = classes[class_id];
-				porf.name.name = class_cls.item().name;
-				porf.name.field_id = null_row;
-				porf.name.type_id = jtype::type_list;
-				porf.options.class_name = class_cls.item().name;
-				porf.options.class_id = class_id;
-				porf.options.class_size_bytes = class_cls.pitem()->class_size_bytes;
-				porf.options.dim = { max_rows, 1, 1 };
-				auto class_field_id = put_object_field(porf);
-				if (class_field_id == null_row) {
-					return null_row;
-				}
-				return class_field_id;
-			}
 
 			relative_ptr_type build_class_members(field_array& pcr, int64_t& class_size_bytes, member_field_collection &mfs)
 			{
@@ -1692,61 +758,23 @@ namespace corona
 				{
 					auto& field = mfs[i];
 
-					switch (field.membership_type)
-					{
-					case member_field_types::member_field:
-					{
-						relative_ptr_type fid;
-						if (field.field_name.size()>0) {
-							fid = fields_by_name[field.field_name].second;
-						}
-						else
-						{
-							fid = field.field_id;
-						}
-						auto& existing_field = fields[fid];
-						jclass_field *ref = pcr.append();
-						ref->field_id = fid;
-						ref->offset = class_size_bytes;
-						field_idx++;
-						class_size_bytes += existing_field.size_bytes;
+					relative_ptr_type fid;
+					if (field.field_name.size()>0) {
+						fid = fields_by_name[field.field_name].second;
 					}
-					break;
-					case member_field_types::member_class:
+					else
 					{
-						put_object_field_request porf;
-						auto class_cls = classes[field.class_id];
-
-						if (field.field_name.size() > 0) {
-							porf.name.name = field.field_name;
-						}
-						else 
-						{
-							porf.name.name = class_cls.item().name;
-						}
-
-						porf.name.field_id = null_row;
-						porf.name.type_id = jtype::type_object;
-						porf.options.class_name = class_cls.item().name;
-						porf.options.class_id = field.class_id;
-						porf.options.class_size_bytes = classes[field.class_id].pitem()->class_size_bytes;
-						porf.options.dim = field.dimensions;
-
-						auto class_field_id = put_object_field(porf);
-						if (class_field_id == null_row) {
-							return null_row;
-						}
-						auto& existing_field = fields[class_field_id];
-
-						jclass_field* ref = pcr.append();
-						ref->field_id = class_field_id;
-						ref->offset = class_size_bytes;
-						field_idx++;
-						class_size_bytes += existing_field.size_bytes;
+						fid = field.field_id;
 					}
-					break;
-					}
+					jclass_field *ref = pcr.append();
+					ref->field_id = fid;
+				}
 
+				for (int i = 0; i < pcr.size(); i++)
+				{
+					auto& fld = pcr[i];
+					fld.offset = class_size_bytes;
+					class_size_bytes += get_field(fld.field_id).size_bytes;
 				}
 			}
 
@@ -1798,33 +826,16 @@ namespace corona
 
 					jclass cls = get_class(base_class_id);
 
-					int pk_field_idx = cls.item().primary_key_idx;
-
-					if (pk_field_idx >= 0)
+					for (int i = 0; i < cls.size(); i++)
 					{
-						pk_field = cls.detail(pk_field_idx);
-						if (pk_field.field_id != request.field_id_primary_key) {
-							pk_field = { null_row, 0};
-						}
+						auto base_field = cls.detail(i);
+						af.push_back(base_field);
 					}
-
-					put_object_field_request porf;
-					porf.name.type_id = jtype::type_object;
-					porf.options.class_id = base_class_id;
-					porf.options.dim = { 1, 1, 1 };
-
-					auto field_id = put_object_field(porf);
-					temp_fields.push_back(field_id);
 				}
 
 				temp_fields += mfs;
 
 				build_class_members(af, total_size_bytes, temp_fields);
-
-				if (pk_field.field_id > -1) 
-				{
-					af.push_back(pk_field);
-				}
 
 #if _DEBUG && false
 				std::cout << std::endl << request.class_name << " layout" << std::endl;
@@ -1881,39 +892,6 @@ namespace corona
 				return cls.detail(key_idx).field_id;
 			}
 
-			void put_model(jmodel request)
-			{
-				for (auto opt : request.create_options)
-				{
-					for (auto sel : opt.item.selectors.rules) 
-					{
-						bind_class(sel.item.class_name, sel.item.class_id);
-					}
-					bind_class(opt.item.create_class_name, opt.item.create_class_id);
-					bind_class(opt.item.item_id_class_name, opt.item.item_id_class, true);
-				}
-
-				for (auto opt : request.select_options)
-				{
-					for (auto sel : opt.item.selectors.rules)
-					{
-						bind_class(sel.item.class_name, sel.item.class_id);
-					}
-					bind_class(opt.item.select_class_name, opt.item.select_class_id);
-				}
-
-				for (auto opt : request.update_options)
-				{
-					for (auto sel : opt.item.selectors.rules)
-					{
-						bind_class(sel.item.class_name, sel.item.class_id);
-					}
-					bind_class(opt.item.update_class_name, opt.item.update_class_id);
-				}
-
-				models.insert_or_assign(request.name, request);
-			}
-
 			relative_ptr_type find_class(const object_name& class_name)
 			{
 				return classes_by_name.contains(class_name) ? classes_by_name[class_name].second : null_row;
@@ -1922,11 +900,6 @@ namespace corona
 			relative_ptr_type find_field(const object_name& field_name)
 			{
 				return fields_by_name.contains(field_name) ? fields_by_name[field_name].second : null_row;
-			}
-
-			jmodel get_model(object_name model_name)
-			{
-				return models[model_name].second;
 			}
 
 			jclass get_class(relative_ptr_type class_id)
@@ -1949,30 +922,6 @@ namespace corona
 			{
 				auto& the_field = fields[field_id];
 				return the_field;
-			}
-
-			const query_definition_type& get_query_definition(relative_ptr_type field_id)
-			{
-				auto& f = fields[field_id];
-				return queries[field_id].second;
-			}
-
-			const sql_definition_type& get_sql_definition(relative_ptr_type field_id)
-			{
-				auto& f = fields[field_id];
-				return sql_remotes[field_id].second;
-			}
-
-			const file_definition_type& get_file_definition(relative_ptr_type field_id)
-			{
-				auto& f = fields[field_id];
-				return file_remotes[field_id].second;
-			}
-
-			const http_definition_type& get_http_definition(relative_ptr_type field_id)
-			{
-				auto& f = fields[field_id];
-				return http_remotes[field_id].second;
 			}
 
 			uint64_t get_max_object_size(relative_ptr_type* _class_ids)
@@ -2006,10 +955,9 @@ namespace corona
 			{
 				uint64_t total_size = ref->collection_size_bytes;
 
-				ref->actors_id = actor_collection::reserve_table(ref->data, ref->max_actors);
 				ref->objects_id =  object_collection::reserve_table(ref->data, ref->max_objects, total_size, true);
 
-				return ref->actors_id != null_row && ref->objects_id != null_row;
+				return ref->objects_id != null_row;
 			}
 
 			jcollection get_collection(jcollection_ref* ref)
@@ -2035,6 +983,5 @@ namespace corona
 		bool schema_tests();
 		bool collection_tests();
 		bool array_tests();
-		bool model_tests();
 	}
 }

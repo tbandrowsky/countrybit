@@ -72,12 +72,6 @@ namespace corona
 			jclass info;
 		};
 
-		class model_response : public db_response
-		{
-		public:
-			jmodel info;
-		};
-
 		class network_status_response : public db_response
 		{
 		public:
@@ -100,25 +94,6 @@ namespace corona
 		{
 		public:
 
-		};
-
-		class get_actor_request
-		{
-		public:
-			collection_id_type collection_id;
-			object_name name;
-		};
-
-		class actor_response : public db_response
-		{
-		public:
-			jactor info;
-		};
-
-		class actor_state_response : public db_response
-		{
-		public:
-			actor_state info;
 		};
 
 
@@ -275,45 +250,6 @@ namespace corona
 				return response;
 			}
 
-			template<typename request_type> actor_response actor_invoke(const char* _name, std::function<relative_ptr_type(jcollection&, request_type& _request)> fn, request_type& _request)
-			{
-				return collection_invoke<request_type, actor_response, jactor>(_name, _request, fn, [this](jcollection& collection, relative_ptr_type id) { return collection.get_actor(id); });
-			}
-
-			template <typename request_type> actor_state_response command_invoke(
-				request_type& _request,
-				std::function<actor_state(jcollection& _collection, request_type& _request)> process_fn
-			)
-			{
-				actor_state_response response;
-				response.success = false;
-
-				try
-				{
-					auto collection_response = get_collection(_request.get_collection_id());
-					if (!collection_response.success)
-					{
-						response.message = collection_response.message;
-						return response;
-					}
-
-					response.info = process_fn(collection_response.collection, _request);
-					response.success = true;
-					database_box.commit();
-					return response;
-				}
-				catch (std::logic_error& le)
-				{
-					response.message = std::format("{}: {}", "Logic error", le.what());
-				}
-				catch (std::exception& exc)
-				{
-					response.message = std::format("{}: {}", "Unknown error", exc.what());
-				}
-
-				return response;
-			}
-
 		public:
 
 			jdatabase(application* _application);
@@ -331,10 +267,6 @@ namespace corona
 			field_response put_time_field(put_time_field_request request);
 			field_response put_integer_field(put_integer_field_request request);
 			field_response put_double_field(put_double_field_request request);
-			field_response put_query_field(put_filter_field_request request);
-			field_response put_sql_remote_field(put_sql_remote_field_request request);
-			field_response put_http_remote_field(put_http_remote_field_request request);
-			field_response put_file_remote_field(put_file_remote_field_request request);
 			field_response put_point_field(put_point_field_request request);
 			field_response put_rectangle_field(put_rectangle_field_request request);
 			field_response put_image_field(put_image_field_request request);
@@ -346,20 +278,9 @@ namespace corona
 			class_response put_class(put_class_request request);
 			class_response get_class(object_name name);
 
-			model_response put_model(jmodel request);
-			model_response get_model(object_name name);
-
 			collection_response create_collection(create_collection_request _create_collection);
 			collection_response get_collection(object_name _name);
 			collection_response get_collection(collection_id_type _id);
-
-			actor_response put_actor(jactor _actor);
-			actor_response get_actor(get_actor_request _request);
-
-			actor_state_response get_actor_state(get_actor_request _request);
-			actor_state_response select_object(select_object_request _select);
-			actor_state_response create_object(create_object_request _create);
-			actor_state_response update_object(update_object_request _update);
 
 		};
 	}

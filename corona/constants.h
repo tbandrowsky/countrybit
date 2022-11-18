@@ -7,34 +7,22 @@ namespace corona
 		enum jtype
 		{
 			type_null = 0,
-
 			type_int8 = 1,
 			type_int16 = 2,
 			type_int32 = 3,
 			type_int64 = 4,
-
 			type_float32 = 5,
 			type_float64 = 6,
-
 			type_datetime = 7,
-			type_object = 8,
-			type_object_id = 9,
-			type_collection_id = 10,
-			type_string = 11,
-			type_currency = 12,
-
-			type_query = 13,
-			type_image = 14,
-			type_wave = 15,
-			type_midi = 16,
-			type_point = 17,
-			type_rectangle = 18,
-			type_layout_rect = 19,
-			type_color = 20,
-			type_sql = 21,
-			type_http = 22,
-			type_file = 23,
-			type_list = 24
+			type_string = 8,
+			type_currency = 9,
+			type_image = 10,
+			type_wave = 11,
+			type_midi = 12,
+			type_point = 13,
+			type_rectangle = 14,
+			type_layout_rect = 15,
+			type_color = 16
 		};
 
 		enum class control_type
