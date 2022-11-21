@@ -83,27 +83,6 @@ namespace corona
 			object_name		format;
 		};
 
-		struct point_properties_type
-		{
-
-		};
-
-		struct rectangle_properties_type
-		{
-
-		};
-
-		struct layout_rect_properties_type
-		{
-
-		};
-
-		struct color_properties_type
-		{
-
-		};
-
-
 		struct emphemeral_handle_type
 		{
 			time_t	valid_time;
@@ -145,58 +124,6 @@ namespace corona
 		int operator==(const dimensions_type& a, const dimensions_type& b);
 		int operator!=(const dimensions_type& a, const dimensions_type& b);
 
-		class path_stack_item
-		{
-		public:
-			relative_ptr_type member_id;
-			int				  member_idx;
-			dimensions_type   current_dim;
-			dimensions_type   max_dim;
-		};
-
-		using path_stack_type = iarray<path_stack_item, max_path_nodes>;
-
-		class member_path_item
-		{
-		public:
-			relative_ptr_type member_id;
-			int				  member_idx;
-			dimensions_type   current_dim;
-		};
-
-		using member_path = iarray<member_path_item, max_path_nodes>;
-
-		class object_member_path
-		{
-		public:
-			object_id_type  object;
-			member_path		path;
-		};
-
-		struct object_properties_type
-		{
-			dimensions_type		dim;
-			relative_ptr_type	class_id;
-			object_name			class_name;
-			int64_t				class_size_bytes;
-			int64_t				total_size_bytes;
-
-			object_properties_type() : class_id(null_row), class_size_bytes(0), total_size_bytes(0)
-			{
-				;
-			}
-
-			object_properties_type( relative_ptr_type _class_id, dimensions_type _dim) : class_id(_class_id), dim(_dim), class_size_bytes(0), total_size_bytes(0)
-			{
-				;
-			}
-
-			object_properties_type( dimensions_type _dim, relative_ptr_type _class_id ) : class_id(_class_id), dim(_dim), class_size_bytes(0), total_size_bytes(0)
-			{
-				;
-			}
-		};
-
 
 		class jfield
 		{
@@ -223,51 +150,17 @@ namespace corona
 				double_properties_type		double_properties;
 				time_properties_type		time_properties;
 				currency_properties_type	currency_properties;
-				point_properties_type		point_properties;
-				rectangle_properties_type   rectangle_properties;
 				image_properties_type		image_properties;
 				midi_properties_type		midi_properties;
 				wave_properties_type		wave_properties;
-				color_properties_type		color_properties;
-				layout_rect_properties_type	layout_rect_properties;
 			};
 
 			jfield() { ; }
 			~jfield() { ; }
 
-			bool is_container()
-			{
-				return type_id == jtype::type_list || type_id == jtype::type_object;
-			}
-
-			bool is_scalar()
-			{
-				return !is_container();
-			}
-
-			bool is_data_generator() 
-			{
-				return type_id == jtype::type_query || type_id == jtype::type_sql || type_id == jtype::type_http || type_id == jtype::type_file;
-			}
-
 			bool is_integer()
 			{
 				return type_id == jtype::type_int16 || type_id == jtype::type_int32 || type_id == jtype::type_int64 || type_id == jtype::type_int8;
-			}
-
-			bool is_point()
-			{
-				return type_id == jtype::type_point;
-			}
-
-			bool is_rectangle()
-			{
-				return type_id == jtype::type_rectangle;
-			}
-
-			bool is_color()
-			{
-				return type_id == jtype::type_color;
 			}
 
 			bool is_image()
@@ -330,119 +223,6 @@ namespace corona
 				return type_id == jtype::type_datetime;
 			}
 
-		};
-
-		struct query_definition_type
-		{
-			query_body						query;
-		};
-
-		struct remote_mapping_type
-		{
-			object_name						result_class_name;
-			relative_ptr_type				result_class_id;
-			remote_parameter_fields_type	parameters;
-			remote_fields_type				fields;
-		};
-
-		struct remote_status 
-		{
-			DATE						last_success;
-			DATE						last_error;
-			object_description			error_message;
-		};
-
-		class filter_term
-		{
-		public:
-			object_name		  src_value;
-			relative_ptr_type target_field;
-			comparisons		  comparison;
-		};
-
-		class filter_option
-		{
-		public:
-			class_list classes;
-			iarray<filter_term,32> options;
-		};
-
-		struct file_definition_type
-		{
-			remote_file_path				file_path;
-			remote_mapping_type				mapping;
-			remote_status					status;
-		};
-
-		class file_instance
-		{
-		public:
-			collection_id_type			collection;
-			remote_status					status;
-		};
-
-		enum class http_login_types
-		{
-			no_authentication = 0,
-			windows_authentication = 1,
-			basic_authentication = 2,
-			jwt_authentication = 3,
-			certificate_authentication = 4
-		};
-		 
-		struct http_definition_type 
-		{
-			operation_name					login_type_name;
-			http_login_types				login_type;
-			remote_http_url					login_url;
-			remote_http_method				login_method;
-			object_name						username;
-			object_name						password;
-			remote_http_url					data_url;
-			remote_http_method				data_method;
-			remote_mapping_type				mapping;
-			remote_status					status;
-			query_definition_type			query;
-		};
-
-		class http_instance
-		{
-		public:
-			collection_id_type			collection;
-			remote_status				status;
-		};
-
-		enum class sql_login_types
-		{
-			no_authentication = 0,
-			windows_authentication = 1,
-			basic_authentication = 2,
-			certificate_authentication = 3
-		};
-
-		struct sql_definition_type
-		{
-			operation_name					login_type_name;
-			sql_login_types					login_type;
-			object_name						username;
-			object_name						password;
-			remote_mapping_type				mapping;
-			remote_status					status;
-			query_definition_type			query;
-		};
-
-		class sql_instance
-		{
-		public:
-			collection_id_type			collection;
-			remote_status					status;
-		};
-
-		class query_instance
-		{
-		public:
-			collection_id_type			collection;
-			remote_status					status;
 		};
 
 		class put_field_request_base {
@@ -528,55 +308,6 @@ namespace corona
 			currency_properties_type options;
 		};
 
-		class put_object_field_request {
-		public:
-			put_field_request_base name;
-			object_properties_type options;
-		};
-
-		class put_query_field_request {
-		public:
-			put_field_request_base name;
-			query_definition_type  options;
-		};
-
-		class put_sql_remote_field_request {
-		public:
-			put_field_request_base name;
-			sql_definition_type options;
-		};
-
-		class put_file_remote_field_request {
-		public:
-			put_field_request_base name;
-			file_definition_type options;
-		};
-
-		class put_http_remote_field_request
-		{
-		public:
-			put_field_request_base name;
-			http_definition_type options;
-		};
-
-		class put_point_field_request {
-		public:
-			put_field_request_base name;
-			point_properties_type options;
-		};
-
-		class put_rectangle_field_request {
-		public:
-			put_field_request_base name;
-			rectangle_properties_type options;
-		};
-
-		class put_layout_rect_field_request {
-		public:
-			put_field_request_base name;
-			layout_rect_properties_type options;
-		};
-
 		class put_image_field_request {
 		public:
 			put_field_request_base name;
@@ -593,12 +324,6 @@ namespace corona
 		public:
 			put_field_request_base name;
 			midi_properties_type options;
-		};
-
-		class put_color_field_request {
-		public:
-			put_field_request_base name;
-			color_properties_type options;
 		};
 
 		enum class member_field_types
@@ -668,24 +393,6 @@ namespace corona
 			{
 				;
 			}
-		};
-
-		class jlist_instance
-		{
-		public:
-			corona_size_t   allocated;
-			corona_size_t   selection_offset;
-			corona_size_t   sort_offset;
-			corona_size_t   slice_offset;
-		};
-
-		class jlist_state
-		{
-		public:
-			array_box<relative_ptr_type> selections;
-			array_box<relative_ptr_type> sort_order;
-			jlist_instance* instance;
-			char	  *list_bytes;
 		};
 
 		class jclass_header

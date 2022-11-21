@@ -801,55 +801,6 @@ namespace corona
 			return get_boxed<time_box>(field_idx, jtype::type_datetime);
 		}
 
-		point_box jobject::get_point(int field_id, bool _use_id)
-		{
-			int field_idx = null_row;
-
-			if (_use_id)
-				field_idx = get_field_index_by_id(field_id);
-			else
-				field_idx = field_id;
-
-			if (field_idx == null_row)
-			{
-				throw std::invalid_argument(std::format("point field {} not found", field_id));
-			}
-			return get_boxed<point_box>(field_idx, jtype::type_point);
-		}
-
-		rectangle_box jobject::get_rectangle(int field_id, bool _use_id)
-		{
-			int field_idx = null_row;
-
-			if (_use_id)
-				field_idx = get_field_index_by_id(field_id);
-			else
-				field_idx = field_id;
-
-			if (field_idx == null_row)
-			{
-				throw std::invalid_argument(std::format("rectangle field {} not found", field_id));
-			}
-			return get_boxed<rectangle_box>(field_idx, jtype::type_rectangle);
-		}
-
-		layout_rect_box jobject::get_layout_rect(int field_id, bool _use_id)
-		{
-			int field_idx = null_row;
-
-			if (_use_id)
-				field_idx = get_field_index_by_id(field_id);
-			else
-				field_idx = field_id;
-
-			if (field_idx == null_row)
-			{
-				throw std::invalid_argument(std::format("layout field {} not found", field_id));
-
-			}
-			return get_boxed<layout_rect_box>(field_idx, jtype::type_layout_rect);
-		}
-
 		image_box jobject::get_image(int field_id, bool _use_id)
 		{
 			int field_idx = null_row;
@@ -896,22 +847,6 @@ namespace corona
 				throw std::invalid_argument(std::format("midi field {} not found", field_id));
 			}
 			return get_boxed<midi_box>(field_idx, jtype::type_midi);
-		}
-
-		color_box jobject::get_color(int field_id, bool _use_id)
-		{
-			int field_idx = null_row;
-
-			if (_use_id)
-				field_idx = get_field_index_by_id(field_id);
-			else
-				field_idx = field_id;
-
-			if (field_idx == null_row)
-			{
-				throw std::invalid_argument(std::format("color field {} not found", field_id));
-			}
-			return get_boxed<color_box>(field_idx, jtype::type_color);
 		}
 
 		string_box jobject::get_string(int field_id, bool _use_id)
@@ -983,23 +918,6 @@ namespace corona
 		}
 
 
-		point_box jobject::get_point(object_name field_name)
-		{
-			int  index = get_field_index_by_name(field_name);
-			return get_point(index);
-		}
-
-		rectangle_box jobject::get_rectangle(object_name field_name)
-		{
-			int  index = get_field_index_by_name(field_name);
-			return get_rectangle(index);
-		}
-
-		layout_rect_box jobject::get_layout_rect(object_name field_name)
-		{
-			int  index = get_field_index_by_name(field_name);
-			return get_layout_rect(index);
-		}
 
 		image_box jobject::get_image(object_name field_name)
 		{
@@ -1015,11 +933,6 @@ namespace corona
 		midi_box jobject::get_midi(object_name field_name) {
 			int  index = get_field_index_by_name(field_name);
 			return get_midi(index);
-		}
-
-		color_box jobject::get_color(object_name field_name) {
-			int  index = get_field_index_by_name(field_name);
-			return get_color(index);
 		}
 
 		bool jobject::matches(const char* _str)
@@ -1156,36 +1069,6 @@ namespace corona
 					}
 				}
 				break;
-			case jtype::type_point:
-				switch (fld.type_id)
-				{
-					case jtype::type_point:
-					{
-						auto fb = get_point(index);
-						fb = _member_assignment.point_value;
-					}
-				}
-				break;
-			case jtype::type_rectangle:
-				switch (fld.type_id)
-				{
-					case jtype::type_rectangle:
-					{
-						auto fb = get_rectangle(index);
-						fb = _member_assignment.rectangle_value;
-					}
-				}
-				break;
-			case jtype::type_layout_rect:
-				switch (fld.type_id)
-				{
-					case jtype::type_layout_rect:
-					{
-						auto fb = get_layout_rect(index);
-						fb = _member_assignment.layout_rect_value;
-					}
-				}
-				break;
 			case jtype::type_string:
 				switch (fld.type_id)
 				{
@@ -1205,46 +1088,6 @@ namespace corona
 						{
 							auto fb = get_float(index);
 							fb = _member_assignment.string_value.to_double();
-						}
-						break;
-					case jtype::type_color:
-						{
-							auto fb = get_color(index);
-							string_extractor ex(_member_assignment.string_value.c_str(), _member_assignment.string_value.size(), 8192, nullptr);
-							if (_member_assignment.string_value.size() > 7) 
-							{
-								auto r = ex.get_color_alpha();
-								if (r.success) {
-									fb->red = r.red;
-									fb->green = r.green;
-									fb->blue = r.blue;
-									fb->alpha = r.alpha;
-								}
-								else 
-								{
-									fb->red = 0;
-									fb->green = 0;
-									fb->blue = 0;
-									fb->alpha = 1.0;
-								}
-							}
-							else 
-							{
-								auto r = ex.get_color();
-								if (r.success) {
-									fb->red = r.red;
-									fb->green = r.green;
-									fb->blue = r.blue;
-									fb->alpha = r.alpha;
-								}
-								else
-								{
-									fb->red = 0;
-									fb->green = 0;
-									fb->blue = 0;
-									fb->alpha = 1.0;
-								}
-							}
 						}
 						break;
 					case jtype::type_int64:
@@ -1527,20 +1370,6 @@ namespace corona
 				{ { jtype::type_float64, "double_stop", "Max. Value" }, -1E30, 1E30 }
 			};
 
-			put_color_field({ { jtype::type_color, "color", "color" } });
-			put_color_field({ { jtype::type_color, "shape_fill_color", "shape_fill_color" } });
-			put_color_field({ { jtype::type_color, "box_fill_color", "box_fill_color" } });
-			put_color_field({ { jtype::type_color, "shape_border_color", "shape_border_color" } });
-			put_color_field({ { jtype::type_color, "box_border_color", "box_border_color" } });
-
-			put_point_field({ { jtype::type_point, "point", "point" } });
-			put_point_field({ { jtype::type_point, "position_point", "position_point" } });
-			put_point_field({ { jtype::type_point, "selection_point", "selection_point" } });
-
-			put_rectangle_field({ { jtype::type_rectangle, "rectangle", "rectangle" } } );
-
-			put_layout_rect_field({ { jtype::type_layout_rect, "layout_rect", "layout_rect" }  });
-
 			for (int i = 0; i < sizeof(string_fields) / sizeof(string_fields[0]); i++) {
 				put_string_field(string_fields[i]);
 			}
@@ -1712,8 +1541,6 @@ namespace corona
 					std::cout << __LINE__ << ":class create failed failed" << std::endl;
 					return false;
 				}
-
-				jarray pa;
 
 				int birthdaystart = 1941;
 				int countstart = 12;

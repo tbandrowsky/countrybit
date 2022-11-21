@@ -186,20 +186,11 @@ namespace corona
 				case jtype::type_float64:
 					string_value = std::format("{}", double_value);
 					break;
-				case jtype::type_collection_id:
-					string_value = "collection_id";
-					break;
 				case jtype::type_color:
 					string_value = "color";
 					break;
 				case jtype::type_datetime:
 					string_value = "datetime";
-					break;
-				case jtype::type_file:
-					string_value = "file";
-					break;
-				case jtype::type_http:
-					string_value = "http";
 					break;
 				case jtype::type_image:
 					string_value = "image";
@@ -207,32 +198,17 @@ namespace corona
 				case jtype::type_layout_rect:
 					string_value = "layout_rect";
 					break;
-				case jtype::type_list:
-					string_value = "list";
-					break;
 				case jtype::type_midi:
 					string_value = "midi";
 					break;
 				case jtype::type_null:
 					string_value = "(null type)";
 					break;
-				case jtype::type_object:
-					string_value = "object";
-					break;
-				case jtype::type_object_id:
-					string_value = "object_id";
-					break;
 				case jtype::type_point:
 					string_value = "point";
 					break;
-				case jtype::type_query:
-					string_value = "query";
-					break;
 				case jtype::type_rectangle:
 					string_value = "rectangle";
-					break;
-				case jtype::type_sql:
-					string_value = "sql";
 					break;
 				case jtype::type_string:
 					break;

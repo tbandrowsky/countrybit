@@ -27,9 +27,6 @@ namespace corona
 			uint32_t			max_objects;
 			uint64_t			collection_size_bytes;
 
-			bool				create_style_sheet;
-
-			relative_ptr_type	style_sheet_id;
 			relative_ptr_type	objects_id;
 
 			persistent_box*		data;
@@ -42,8 +39,6 @@ namespace corona
 				max_objects(0),
 				collection_size_bytes(0),
 				objects_id(null_row),
-				style_sheet_id(null_row),
-				create_style_sheet(false),
 				data(nullptr)
 			{
 				;
@@ -618,13 +613,6 @@ namespace corona
 					});
 			}
 
-
-			void get_class_field_name(object_name& _dest, object_name _class_name, dimensions_type& _dim)
-			{
-				_dest = _class_name + "[" + std::to_string(_dim.x) + "," + std::to_string(_dim.y) + "," + std::to_string(_dim.z) + "]";
-			}
-
-
 			const char* invalid_comparison = "Invalid comparison";
 			const char* invalid_parameter_field = "Invalid parameter field";
 			const char* invalid_target_field = "Invalid target field";
@@ -667,36 +655,6 @@ namespace corona
 				bind_class(fn, _class_id);
 			}
 
-			relative_ptr_type put_point_field(put_point_field_request request)
-			{
-				request.name.type_id = jtype::type_point;
-				auto query_location = put_field(request.name, sizeof(point), [request](jfield& _field)
-					{
-						_field.point_properties = request.options;
-					});
-				return query_location;
-			}
-
-			relative_ptr_type put_rectangle_field(put_rectangle_field_request request)
-			{
-				request.name.type_id = jtype::type_rectangle;
-				auto query_location = put_field(request.name, sizeof(rectangle), [request](jfield& _field)
-					{
-						_field.rectangle_properties = request.options;
-					});
-				return query_location;
-			}
-
-			relative_ptr_type put_layout_rect_field(put_layout_rect_field_request request)
-			{
-				request.name.type_id = jtype::type_layout_rect;
-				auto query_location = put_field(request.name, sizeof(rectangle), [request](jfield& _field)
-					{
-						_field.layout_rect_properties = request.options;
-					});
-				return query_location;
-			}
-
 			relative_ptr_type put_image_field(put_image_field_request request)
 			{
 				request.name.type_id = jtype::type_image;
@@ -723,16 +681,6 @@ namespace corona
 				auto query_location = put_field(request.name, sizeof(midi_instance), [request](jfield& _field)
 					{
 						_field.midi_properties = request.options;
-					});
-				return query_location;
-			}
-
-			relative_ptr_type put_color_field(put_color_field_request request)
-			{
-				request.name.type_id = jtype::type_color;
-				auto query_location = put_field(request.name, sizeof(color), [request](jfield& _field)
-					{
-						_field.color_properties = request.options;
 					});
 				return query_location;
 			}
@@ -972,9 +920,6 @@ namespace corona
 				jcollection tmp;
 				if (reserved) {
 					tmp = get_collection(ref);
-					if (ref->create_style_sheet) {
-						tmp.create_object(0, null_row, idc_style_sheet_set, ref->style_sheet_id);
-					}
 				}
 				return tmp;
 			}

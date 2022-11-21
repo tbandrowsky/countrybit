@@ -298,9 +298,6 @@ namespace corona
 			char data[length_bytes];
 		public:
 
-			const int32_t size_param = length_bytes;
-			const auto type() { return decltype(istring<length_bytes>); }
-
 			istring() : last_char( length_bytes - 1 ), length(0)
 			{
 				copy("");
@@ -312,6 +309,12 @@ namespace corona
 			}
 
 			istring(const std::string& src) : last_char(length_bytes - 1), length(0)
+			{
+				const char* s = src.c_str();
+				copy(s);
+			}
+
+			template <int length> istring(const istring<length>& src) : last_char(length_bytes - 1), length(0)
 			{
 				const char* s = src.c_str();
 				copy(s);
@@ -349,6 +352,14 @@ namespace corona
 			{
 				length = 0;
 				const wchar_t* s = src.c_str();
+				copy(s);
+				return *this;
+			}
+
+			template <int length> istring& operator = (const istring<length>& src)
+			{
+				length = 0;
+				const char* s = src.c_str();
 				copy(s);
 				return *this;
 			}

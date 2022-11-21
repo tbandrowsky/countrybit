@@ -15,11 +15,9 @@
     <ProjectCapability Include="SourceItemsFromImports" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="$(MSBuildThisFileDirectory)analytics.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)application.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)array_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)assert_if.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)bridges.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)collection_id_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)color_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)concept_lock.h" />
@@ -43,7 +41,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)layout_rect_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)remote_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)jfield.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)extractor.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)loader.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)midi_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)point_box.h" />
@@ -72,7 +69,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)wave_box.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="$(MSBuildThisFileDirectory)analytics.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)application.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
@@ -106,7 +102,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)file.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)float_box.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)function.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)extractor.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)int_box.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)loader.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)messages.cpp" />

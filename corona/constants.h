@@ -18,11 +18,7 @@ namespace corona
 			type_currency = 9,
 			type_image = 10,
 			type_wave = 11,
-			type_midi = 12,
-			type_point = 13,
-			type_rectangle = 14,
-			type_layout_rect = 15,
-			type_color = 16
+			type_midi = 12
 		};
 
 		enum class control_type

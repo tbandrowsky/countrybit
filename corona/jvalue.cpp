@@ -159,20 +159,11 @@ namespace corona
 			case jtype::type_float64:
 				double_value = _src.double_value;
 				break;
-			case jtype::type_collection_id:
-				throw std::logic_error("not implemented");
-				break;
 			case jtype::type_color:
 				color_value = _src.color_value;
 				break;
 			case jtype::type_datetime:
 				time_value = _src.time_value;
-				break;
-			case jtype::type_file:
-				throw std::logic_error("not implemented");
-				break;
-			case jtype::type_http:
-				throw std::logic_error("not implemented");
 				break;
 			case jtype::type_image:
 				throw std::logic_error("not implemented");
@@ -180,30 +171,16 @@ namespace corona
 			case jtype::type_layout_rect:
 				layout_rect_value = _src.layout_rect_value;
 				break;
-			case jtype::type_list:
-				throw std::logic_error("not implemented");
-				break;
 			case jtype::type_midi:
 				throw std::logic_error("not implemented");
 				break;
 			case jtype::type_null:
 				break;
-			case jtype::type_object:
-				throw std::logic_error("not implemented");
-				break;
-			case jtype::type_object_id:
-				throw std::logic_error("not implemented");
-				break;
 			case jtype::type_point:
 				point_value = _src.point_value;
 				break;
-			case jtype::type_query:
-				throw std::logic_error("not implemented");
-				break;
 			case jtype::type_rectangle:
 				rectangle_value = _src.rectangle_value;
-				break;
-			case jtype::type_sql:
 				break;
 			case jtype::type_string:
 				string_value = _src.string_value;
@@ -239,19 +216,10 @@ namespace corona
 			case jtype::type_float64:
 				z = std::format("{}", double_value);
 				break;
-			case jtype::type_collection_id:
-				throw std::logic_error("can't convert to string");
-				break;
 			case jtype::type_color:
 				throw std::logic_error("can't convert to string");
 				break;
 			case jtype::type_datetime:
-				throw std::logic_error("can't convert to string");
-				break;
-			case jtype::type_file:
-				throw std::logic_error("can't convert to string");
-				break;
-			case jtype::type_http:
 				throw std::logic_error("can't convert to string");
 				break;
 			case jtype::type_image:
@@ -260,31 +228,16 @@ namespace corona
 			case jtype::type_layout_rect:
 				throw std::logic_error("can't convert to string");
 				break;
-			case jtype::type_list:
-				throw std::logic_error("can't convert to string");
-				break;
 			case jtype::type_midi:
 				throw std::logic_error("can't convert to string");
 				break;
 			case jtype::type_null:
 				throw std::logic_error("can't convert to string");
 				break;
-			case jtype::type_object:
-				throw std::logic_error("can't convert to string");
-				break;
-			case jtype::type_object_id:
-				throw std::logic_error("can't convert to string");
-				break;
 			case jtype::type_point:
 				throw std::logic_error("can't convert to string");
 				break;
-			case jtype::type_query:
-				throw std::logic_error("can't convert to string");
-				break;
 			case jtype::type_rectangle:
-				throw std::logic_error("can't convert to string");
-				break;
-			case jtype::type_sql:
 				throw std::logic_error("can't convert to string");
 				break;
 			case jtype::type_string:
@@ -311,18 +264,9 @@ namespace corona
 			case jtype::type_float64:
 				throw std::logic_error("can't convert to color");
 				break;
-			case jtype::type_collection_id:
-				throw std::logic_error("can't convert to color");
-				break;
 			case jtype::type_color:
 				return color_value;
 			case jtype::type_datetime:
-				throw std::logic_error("can't convert to color");
-				break;
-			case jtype::type_file:
-				throw std::logic_error("can't convert to color");
-				break;
-			case jtype::type_http:
 				throw std::logic_error("can't convert to color");
 				break;
 			case jtype::type_image:
@@ -331,31 +275,16 @@ namespace corona
 			case jtype::type_layout_rect:
 				throw std::logic_error("can't convert to color");
 				break;
-			case jtype::type_list:
-				throw std::logic_error("can't convert to color");
-				break;
 			case jtype::type_midi:
 				throw std::logic_error("can't convert to color");
 				break;
 			case jtype::type_null:
 				throw std::logic_error("can't convert to color");
 				break;
-			case jtype::type_object:
-				throw std::logic_error("can't convert to color");
-				break;
-			case jtype::type_object_id:
-				throw std::logic_error("can't convert to color");
-				break;
 			case jtype::type_point:
 				throw std::logic_error("can't convert to color");
 				break;
-			case jtype::type_query:
-				throw std::logic_error("can't convert to color");
-				break;
 			case jtype::type_rectangle:
-				throw std::logic_error("can't convert to color");
-				break;
-			case jtype::type_sql:
 				throw std::logic_error("can't convert to color");
 				break;
 			case jtype::type_string:
@@ -381,19 +310,10 @@ namespace corona
 			case jtype::type_float64:
 				throw std::logic_error("can't convert to point");
 				break;
-			case jtype::type_collection_id:
-				throw std::logic_error("can't convert to point");
-				break;
 			case jtype::type_color:
 				throw std::logic_error("can't convert to point");
 				break;
 			case jtype::type_datetime:
-				throw std::logic_error("can't convert to point");
-				break;
-			case jtype::type_file:
-				throw std::logic_error("can't convert to point");
-				break;
-			case jtype::type_http:
 				throw std::logic_error("can't convert to point");
 				break;
 			case jtype::type_image:
@@ -402,30 +322,15 @@ namespace corona
 			case jtype::type_layout_rect:
 				throw std::logic_error("can't convert to point");
 				break;
-			case jtype::type_list:
-				throw std::logic_error("can't convert to point");
-				break;
 			case jtype::type_midi:
 				throw std::logic_error("can't convert to point");
 				break;
 			case jtype::type_null:
 				throw std::logic_error("can't convert to point");
 				break;
-			case jtype::type_object:
-				throw std::logic_error("can't convert to point");
-				break;
-			case jtype::type_object_id:
-				throw std::logic_error("can't convert to point");
-				break;
 			case jtype::type_point:
 				return point_value;
-			case jtype::type_query:
-				throw std::logic_error("can't convert to point");
-				break;
 			case jtype::type_rectangle:
-				throw std::logic_error("can't convert to point");
-				break;
-			case jtype::type_sql:
 				throw std::logic_error("can't convert to point");
 				break;
 			case jtype::type_string:
@@ -451,19 +356,10 @@ namespace corona
 			case jtype::type_float64:
 				throw std::logic_error("can't convert to rectangle");
 				break;
-			case jtype::type_collection_id:
-				throw std::logic_error("can't convert to rectangle");
-				break;
 			case jtype::type_color:
 				throw std::logic_error("can't convert to rectangle");
 				break;
 			case jtype::type_datetime:
-				throw std::logic_error("can't convert to rectangle");
-				break;
-			case jtype::type_file:
-				throw std::logic_error("can't convert to rectangle");
-				break;
-			case jtype::type_http:
 				throw std::logic_error("can't convert to rectangle");
 				break;
 			case jtype::type_image:
@@ -472,32 +368,17 @@ namespace corona
 			case jtype::type_layout_rect:
 				throw std::logic_error("can't convert to rectangle");
 				break;
-			case jtype::type_list:
-				throw std::logic_error("can't convert to rectangle");
-				break;
 			case jtype::type_midi:
 				throw std::logic_error("can't convert to rectangle");
 				break;
 			case jtype::type_null:
 				throw std::logic_error("can't convert to rectangle");
 				break;
-			case jtype::type_object:
-				throw std::logic_error("can't convert to rectangle");
-				break;
-			case jtype::type_object_id:
-				throw std::logic_error("can't convert to rectangle");
-				break;
 			case jtype::type_point:
-				throw std::logic_error("can't convert to rectangle");
-				break;
-			case jtype::type_query:
 				throw std::logic_error("can't convert to rectangle");
 				break;
 			case jtype::type_rectangle:
 				return rectangle_value;
-			case jtype::type_sql:
-				throw std::logic_error("can't convert to rectangle");
-				break;
 			case jtype::type_string:
 				throw std::logic_error("can't convert to rectangle");
 				break;
@@ -521,19 +402,10 @@ namespace corona
 			case jtype::type_float64:
 				throw std::logic_error("can't convert to layout_rect");
 				break;
-			case jtype::type_collection_id:
-				throw std::logic_error("can't convert to layout_rect");
-				break;
 			case jtype::type_color:
 				throw std::logic_error("can't convert to layout_rect");
 				break;
 			case jtype::type_datetime:
-				throw std::logic_error("can't convert to layout_rect");
-				break;
-			case jtype::type_file:
-				throw std::logic_error("can't convert to layout_rect");
-				break;
-			case jtype::type_http:
 				throw std::logic_error("can't convert to layout_rect");
 				break;
 			case jtype::type_image:
@@ -541,31 +413,16 @@ namespace corona
 				break;
 			case jtype::type_layout_rect:
 				return layout_rect_value;
-			case jtype::type_list:
-				throw std::logic_error("can't convert to layout_rect");
-				break;
 			case jtype::type_midi:
 				throw std::logic_error("can't convert to layout_rect");
 				break;
 			case jtype::type_null:
 				throw std::logic_error("can't convert to layout_rect");
 				break;
-			case jtype::type_object:
-				throw std::logic_error("can't convert to layout_rect");
-				break;
-			case jtype::type_object_id:
-				throw std::logic_error("can't convert to layout_rect");
-				break;
 			case jtype::type_point:
 				throw std::logic_error("can't convert to layout_rect");
 				break;
-			case jtype::type_query:
-				throw std::logic_error("can't convert to layout_rect");
-				break;
 			case jtype::type_rectangle:
-				throw std::logic_error("can't convert to layout_rect");
-				break;
-			case jtype::type_sql:
 				throw std::logic_error("can't convert to layout_rect");
 				break;
 			case jtype::type_string:
