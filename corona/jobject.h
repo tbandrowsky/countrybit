@@ -29,7 +29,7 @@ namespace corona
 
 			relative_ptr_type	objects_id;
 
-			persistent_box*		data;
+			std::shared_ptr<serialized_box_container>		data;
 
 			jcollection_ref() : 
 				collection_name(""),
@@ -60,12 +60,12 @@ namespace corona
 
 		class jobject
 		{
-			jschema* schema;
+			std::shared_ptr<jschema> schema;
 			relative_ptr_type class_id;
 			char* bytes;
 			jclass the_class;
 
-			serialized_box_container* box;
+			std::shared_ptr<serialized_box_container> box;
 			relative_ptr_type location;
 
 			size_t get_offset(int field_idx, jtype _type = jtype::type_null);
@@ -100,17 +100,8 @@ namespace corona
 
 			void construct();
 
-			jobject& get_parent_slice();
 			jclass get_class() const;
-			jschema* get_schema();
-
-			void set_box_dangerous_hack(serialized_box_container* _box)
-			{
-#if ACTOR_OBJECT_CHECKING
-				std::cout << "object box " << (void*)&box << " to " << (void *)_box << std::endl;
-#endif
-				box = _box;
-			}
+			std::shared_ptr<jschema> get_schema();
 
 			relative_ptr_type get_class_id() const 
 			{
@@ -121,8 +112,6 @@ namespace corona
 			{
 				return get_class().pitem()->base_class_id;
 			}
-
-			dimensions_type get_dim();
 
 			int get_field_index_by_name(const object_name& name);
 			int get_field_index_by_id(relative_ptr_type field_id);
@@ -145,13 +134,9 @@ namespace corona
 			double_box get_double(int field_idx, bool _use_id = false);
 			time_box get_time(int field_idx, bool _use_id = false);
 			string_box get_string(int field_idx, bool _use_id = false);
-			point_box get_point(int field_idx, bool _use_id = false);
-			rectangle_box get_rectangle(int field_idx, bool _use_id = false);
-			layout_rect_box get_layout_rect(int field_idx, bool _use_id = false);
 			image_box get_image(int field_idx, bool _use_id = false);
 			wave_box get_wave(int field_idx, bool _use_id = false);
 			midi_box get_midi(int field_idx, bool _use_id = false);
-			color_box get_color(int field_idx, bool _use_id = false);
 
 			int8_box get_int8(object_name field_name);
 			int16_box get_int16(object_name field_name);
@@ -161,13 +146,9 @@ namespace corona
 			double_box get_double(object_name field_name);
 			time_box get_time(object_name field_name);
 			string_box get_string(object_name field_name);
-			point_box get_point(object_name field_name);
-			rectangle_box get_rectangle(object_name field_name);
-			layout_rect_box get_layout_rect(object_name field_name);
 			image_box get_image(object_name field_name);
 			wave_box get_wave(object_name field_name);
 			midi_box get_midi(object_name field_name);
-			color_box get_color(object_name field_name);
 
 			bool matches(const char* str);
 
@@ -198,8 +179,6 @@ namespace corona
 				boxed temp(src);
 				return temp;
 			}
-
-			void* get_box_address() { return box; }
 
 			int size();
 			char* get_bytes() { return box ? box->get_object<char>(location) : bytes;  };
@@ -324,7 +303,6 @@ namespace corona
 			jobject get_at(relative_ptr_type _object_id);
 			relative_ptr_type get_class_id(relative_ptr_type _object_id);
 			relative_ptr_type get_base_id(relative_ptr_type _object_id);
-			jobject get_style_sheet();
 
 			bool object_is_class(relative_ptr_type _object_id, relative_ptr_type _class_id);
 			bool object_is_class(const jobject& obj, relative_ptr_type _class_id);
@@ -428,6 +406,9 @@ namespace corona
 				return empty;
 			}
 
+			virtual void on_update(jfield& f) { ; }
+			virtual void on_update(jclass& f) { ; }
+
 			std::vector<relative_ptr_type> get_classes_with_primary_key(relative_ptr_type _field_id)
 			{
 				std::vector<relative_ptr_type> classes;
@@ -442,7 +423,7 @@ namespace corona
 				return classes;
 			}
 
-			static relative_ptr_type reserve_schema(serialized_box_container* _b, int _num_classes, int _num_fields, int _total_class_fields, bool _use_standard_fields)
+			static relative_ptr_type reserve_schema(std::shared_ptr<serialized_box_container> _b, int _num_classes, int _num_fields, int _total_class_fields, bool _use_standard_fields)
 			{
 				jschema_map schema_map, *pschema_map;
 				schema_map.block = block_id::collection_id();
@@ -461,7 +442,7 @@ namespace corona
 				return rit;
 			} 
 
-			static jschema get_schema(serialized_box_container* _b, relative_ptr_type _row)
+			static jschema get_schema(std::shared_ptr<serialized_box_container> _b, relative_ptr_type _row)
 			{
 				jschema schema;
 				jschema_map* pschema_map;
@@ -493,7 +474,7 @@ namespace corona
 				return total_size;
 			}
 
-			static jschema create_schema(serialized_box_container* _b, int _num_classes, bool _use_standard_fields, relative_ptr_type& _location)
+			static jschema create_schema(std::shared_ptr<serialized_box_container> _b, int _num_classes, bool _use_standard_fields, relative_ptr_type& _location)
 			{
 				int _num_fields = _num_classes * 10 + (_use_standard_fields ? 200 : 0);
 				int _total_class_fields = _num_classes * 100;

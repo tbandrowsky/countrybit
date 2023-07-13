@@ -387,8 +387,9 @@ namespace corona
 			return copy_object_async(_location);
 		}
 
-		void serialized_box_file_implementation::commit()
+		relative_ptr_type serialized_box_file_implementation::commit()
 		{
+			return commit_async();
 		}
 
 		corona_size_t serialized_box_file_implementation::size() const
@@ -405,17 +406,5 @@ namespace corona
 		{
 			return header.sbd._size - header.sbd._top;
 		}
-
-		void serialized_box_file_implementation::clear()
-		{
-			header.sbd._top = sizeof(header);
-		}
-
-		void serialized_box_file_implementation::commit()
-		{
-			;
-		}
-
-
 	}
 }

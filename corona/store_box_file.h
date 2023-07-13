@@ -31,15 +31,8 @@ namespace corona
 			io_block_store transaction;
 			relative_ptr_type transaction_header;
 
-			void open_file()
-			{
-				box_file = app->open_file(box_name, file_open_types::open_existing);
-			}
-
-			void create_file()
-			{
-				box_file = app->open_file(box_name, file_open_types::create_new);
-			}
+			void open_file();
+			void create_file();
 
 			struct file_header
 			{
@@ -107,9 +100,7 @@ namespace corona
 			virtual relative_ptr_type update_object(relative_ptr_type _rp, char* _src, int _length);
 			bool delete_object(relative_ptr_type _location);
 			relative_ptr_type copy_object(relative_ptr_type _location);
-			virtual void commit();
-			
-			virtual void clear_cache();
+			virtual relative_ptr_type commit();
 		};
 
 		class persistent_box : public serialized_box_container

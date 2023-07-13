@@ -82,13 +82,6 @@ namespace corona
 			visual_alignment		alignment;
 
 			relative_ptr_type		class_id;
-			object_member_path		object_path;
-
-			jfield* field;
-			create_object_request	create_request;
-			select_object_request	select_request;
-			jobject					slice;
-			jvalue			dest_value;
 
 			layout_rect				box;
 			measure					item_space;
@@ -111,7 +104,6 @@ namespace corona
 				id(-1),
 				parent_id(-1),
 				layout(layout_types::space),
-				field(nullptr),
 				caption(nullptr),
 				canvas_id(-1),
 				style_id(null_row),
@@ -125,8 +117,6 @@ namespace corona
 				last_child(-1),
 				next_item(-1)
 			{
-				object_path.object.collection_id = {};
-				object_path.object.row_id = null_row;
 			}
 
 			page_item* get_base()
@@ -244,13 +234,10 @@ namespace corona
 				else 
 				{
 					pii.layout = (int)layout;
-					pii.object_id = object_path.object.row_id;
+					pii.object_id = 0; // object_path.object.row_id;
 					pii.class_id = class_id;
 					pii.item_uid = item_uid;
-					if (field != nullptr)
-					{
-						pii.field_id = field->field_id;
-					}
+					pii.field_id = 0;
 				}
 				page_item_identifier c = 17;
 				c = c * 23 + pii.item_uid;
@@ -337,11 +324,6 @@ namespace corona
 
 			page_item* text(page_item* _parent, relative_ptr_type _style_id, const char *_text, layout_rect _box = { 0.0_px, 0.0_px, 1.0_remaining, 100.0_px });
 
-			page_item* set(page_item* _parent, actor_state* _state, const object_member_path path, int field_id, jvalue dv, layout_rect _box = { 0.0_px, 0.0_px, 1.0_remaining, 100.0_px });
-			page_item* select(page_item* _parent, actor_state* _state, relative_ptr_type object_id, relative_ptr_type _id_name, jobject slice, relative_ptr_type _style_id, layout_rect _box = { 0.0_px, 0.0_px, 1.0_remaining, 100.0_px });
-			page_item* table_header(page_item* _parent, actor_state* _state, const char* _caption, relative_ptr_type object_id, jobject slice, relative_ptr_type field_id, relative_ptr_type sort_field_id, relative_ptr_type _style_id, layout_rect _box);
-			page_item* table_cell(page_item* _parent, actor_state* _state, relative_ptr_type object_id, jobject slice, relative_ptr_type field_id, relative_ptr_type _style_id, layout_rect _box);
-			page_item* navigate(page_item* _parent, actor_state* _state, relative_ptr_type object_id, relative_ptr_type _style_id, const char* _caption, layout_rect _box = { 0.0_px, 0.0_px, 1.0_remaining, 20.0_px });
 			page_item* space(page_item* _parent, relative_ptr_type _style_id = null_row, layout_rect _box = { 0.0_px, 0.0_px, 1.0_remaining, 100.0_px });
 
 			void arrange( double _width, double _height, jobject& _style_sheet, double _padding = 0.0 );

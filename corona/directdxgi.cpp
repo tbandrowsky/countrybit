@@ -20,12 +20,6 @@ namespace corona
 			}
 		}
 
-		struct sizeCrop {
-			D2D1_SIZE_U size;
-			bool cropEnabled;
-			D2D1_RECT_F crop;
-		};
-
 		sizeCrop toSizeC(point& _size, bool _cropEnabled, rectangle& _crop)
 		{
 			sizeCrop sz;
@@ -65,12 +59,7 @@ namespace corona
 
 		D2D1_COLOR_F toColor(color& _color)
 		{
-			D2D1_COLOR_F newColor;
-			newColor.a = _color.alpha;
-			newColor.b = _color.blue;
-			newColor.r = _color.red;
-			newColor.g = _color.green;
-			return newColor;
+			return _color;
 		}
 
 		D2D1_POINT_2F toPoint(point& _point)

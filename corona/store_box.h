@@ -123,8 +123,7 @@ namespace corona
 			virtual relative_ptr_type update_object(relative_ptr_type _location, char* _src, int _length) = 0;
 			virtual bool delete_object(relative_ptr_type _location) = 0;
 			virtual relative_ptr_type copy_object(relative_ptr_type _location) = 0;
-			virtual void commit() = 0;
-			virtual char* data() = 0;
+			virtual relative_ptr_type commit() = 0;
 		};
 
 		class serialized_box_memory_implementation : public serialized_box_implementation
@@ -304,15 +303,9 @@ namespace corona
 				return dest_location;
 			}
 
-			virtual void commit()
+			virtual relative_ptr_type commit()
 			{
-				;
-			}
-			
-			virtual char* data()
-			{
-				auto method_lock = box_lock.lock();
-				return sbdata->_data;
+				return null_row;
 			}
 
 		};
@@ -394,14 +387,7 @@ namespace corona
 			{
 				boxi->commit();
 			}
-
-			char* data()
-			{
-				return boxi->data();
-			}
-
 		};
-
 
 		class serialized_box_container
 		{
@@ -429,11 +415,6 @@ namespace corona
 			void clear()
 			{
 				return get_box()->clear();
-			}
-
-			char* data()
-			{
-				return get_box()->data();
 			}
 		
 			template <typename T>
@@ -630,7 +611,7 @@ namespace corona
 				int new_size = _src.size();
 				if (length < new_size)
 					throw std::invalid_argument("target box too small");
-				memcpy(data(), _src.data(), new_size);
+				memcpy(stuff, _src.data(), new_size);
 			}
 
 			template <typename bx>

@@ -23,9 +23,6 @@ int main()
     if (corona::database::schema_tests()) std::cout << "schema passed" << std::endl;
     if (corona::database::collection_tests()) std::cout << "collection passed" << std::endl;
     if (corona::database::array_tests()) std::cout << "array object passed" << std::endl;
-    if (corona::database::string_extractor::test_basics()) std::cout << "parser basics passed" << std::endl;
-    if (corona::database::string_extractor::test_json()) std::cout << "parser json passed" << std::endl;
-    if (corona::database::model_tests()) std::cout << "model passed" << std::endl;
 //    queue_tests();
 }
 

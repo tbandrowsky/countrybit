@@ -17,23 +17,33 @@ namespace corona
 			ThumbTrack
 		};
 
-		class controller
+		template<typename T> class controller
 		{
 
 		protected:
 
-			controllerHost* host;
+			std::unique_ptr<T> host;
 
 		public:
 
 			color backgroundColor;
 
-			controller();
-			virtual ~controller();
+			controller()
+			{
+				backgroundColor.a = 1.0;
+				backgroundColor.r = 1.0;
+				backgroundColor.g = 1.0;
+				backgroundColor.b = 1.0;
+			}
 
-			inline controllerHost* getHost() { return host; }
+			virtual ~controller()
+			{
+
+			}
+
+			inline T* getHost() { return host.get(); }
 			inline drawableHost* getDrawable(int _id) { return host->getDrawable(_id); }
-			virtual void attach(controllerHost* _host);
+			virtual void attach(T* _host);
 
 			// these are for 
 
@@ -83,7 +93,6 @@ namespace corona
 		struct table_options 
 		{
 		public:
-			view_query				  *data;
 			bool					  alternating_row;
 			measure					  header_height;
 			measure					  row_height;
@@ -92,8 +101,8 @@ namespace corona
 			jobject					  header_config;
 			relative_ptr_type		  sort_field_id;
 
-			table_options() : data(nullptr)
-				, alternating_row(false)
+			table_options() : 
+				alternating_row(false)
 				, header_height({ 1.2_fontgr })
 				, row_height({ 1.2_fontgr })
 				, header_config_id(null_row)
@@ -131,19 +140,11 @@ namespace corona
 			}
 		};
 
-		struct edit_options
-		{
-		public:
-			view_query* data;
-			object_name				  form_title;
-			std::vector<edit_field> fields;
-		};
-
 		class corona_controller;
 
 		std::function<void(drawableHost* _cont, page_item* _item)> render_handler;
 
-		class corona_controller : public controller
+		class corona_controller : public controller<win32ControllerHost>
 		{
 		protected:
 
@@ -174,9 +175,6 @@ namespace corona
 			relative_ptr_type schema_id;
 			jcollection user_collection;
 			page pg;
-			actor_state state;
-			actor_id_type actor_id;
-			analytics_kit analytics;
 
 			int canvasWindowsId;
 
@@ -192,12 +190,10 @@ namespace corona
 				previewMode(false),
 				magnification(100)
 			{
-				analytics = analytics_kit(&schema, &state, &user_collection);
+
 			}
 
 			virtual ~corona_controller();
-
-			virtual jobject get_style_sheet(int _index);
 
 			// methods to use in render
 
@@ -205,7 +201,6 @@ namespace corona
 
 			page_item* row(page_item* _parent, relative_ptr_type _style_id, layout_rect _box = { 0.0_px, 0.0_px, 1.0_remaining, 1.0_remaining }, measure _item_space = { 0.0, measure_units::pixels }, visual_alignment _alignment = visual_alignment::align_near);
 			page_item* column(page_item* _parent, relative_ptr_type _style_id, layout_rect _box = { 0.0_px, 0.0_px, 1.0_remaining, 1.0_remaining }, measure _item_space = { 0.0, measure_units::pixels }, visual_alignment _alignment = visual_alignment::align_near);
-			page_item* hcenter(page_item* _parent, relative_ptr_type _style_id);
 			page_item* absolute(page_item* _parent, relative_ptr_type _style_id, layout_rect _box = { 0.0_px, 0.0_px, 1.0_remaining, 100.0_px });
 			page_item* space(page_item* _parent, relative_ptr_type _style_id, layout_rect _box = { 0.0_px, 0.0_px, 1.0_remaining, 100.0_px });
 			page_item* canvas2d_row(relative_ptr_type _canvas_uid, page_item* _parent, relative_ptr_type _style_id, layout_rect _box = { 0.0_px, 0.0_px, 1.0_remaining, 100.0_px }, measure _item_space = { 0.0, measure_units::pixels }, visual_alignment _alignment = visual_alignment::align_near);
@@ -213,18 +208,7 @@ namespace corona
 			page_item* canvas2d_absolute(relative_ptr_type _canvas_uid, page_item* _parent, relative_ptr_type _style_id, layout_rect _box = { 0.0_px, 0.0_px, 1.0_remaining, 100.0_px }, measure _item_space = { 0.0, measure_units::pixels }, visual_alignment _alignment = visual_alignment::align_near);
 			page_item* navigate(page_item* _parent, int object_id, relative_ptr_type _style_id, const char* _caption, layout_rect _box);
 			page_item* text(page_item* _parent, relative_ptr_type _style_id, const char *_text, layout_rect _box = { 0.0_px, 0.0_px, 1.0_remaining, 100.0_px });
-			page_item* table_header(page_item* _parent, actor_state* _state, const char* _caption, relative_ptr_type object_id, jobject slice, relative_ptr_type field_id, relative_ptr_type sort_field_id, relative_ptr_type _style_id, layout_rect _box);
-			page_item* table_cell(page_item* _parent, actor_state* _state, relative_ptr_type object_id, jobject slice, relative_ptr_type field_id, relative_ptr_type _style_id, layout_rect _box);
-			page_item* set(page_item* _parent, actor_state* _state, const object_member_path path, int field_id, jvariant dv, layout_rect _box = { 0.0_px, 0.0_px, 1.0_remaining, 100.0_px });
-			page_item* select(page_item* _parent, actor_state* _state, relative_ptr_type object_id, relative_ptr_type _id_name, jobject slice, relative_ptr_type _style_id, layout_rect _box = { 0.0_px, 0.0_px, 1.0_remaining, 100.0_px });
-
 			virtual void breadcrumbs(page_item* _parent, std::function<const char* (jobject& slice)> _captioner, layout_rect _item_box = { 0.0_px, 0.0_px, 200.0_px, 100.0_px });
-
-			virtual page_item *edit_fields(page_item* _parent, const object_member_path& _omp, field_layout _layout, const edit_options& _fields);
-			virtual page_item* create_buttons(page_item* _parent, relative_ptr_type _style_id, layout_rect _box = { 0.0_px, 0.0_px, 250.0_px, 2.0_fontgr });
-			virtual page_item* selectable_items(page_item* _parent, view_query& _vq, relative_ptr_type _style_id, layout_rect _box = { 0.0_px, 0.0_px, 250.0_px, 2.0_fontgr });
-			virtual void edit_form(page_item* _navigation, page_item* _frame, relative_ptr_type _title_uiid, const object_member_path& _omp, edit_options _fields);
-			virtual void search_form(page_item* _navigation, page_item* _frame, relative_ptr_type _title_uiid, relative_ptr_type _table_uiid, relative_ptr_type _search_class_id, table_options& _options, edit_options _search_options);
 
 			void table(page_item* _parent, table_options& _options);
 

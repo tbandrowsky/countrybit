@@ -131,7 +131,7 @@ namespace corona
 			};
 
 			table_header* hdr;
-			serialized_box_container* box;
+			std::weak_ptr<serialized_box_container> box;
 
 			using collection_type = table<T>;
 			using iterator_item_type = value_reference<T>;
@@ -141,8 +141,7 @@ namespace corona
 		public:
 
 			table(  ) : 
-				hdr(nullptr),
-				box(nullptr)
+				hdr(nullptr)
 			{
 				
 			}
@@ -157,7 +156,7 @@ namespace corona
 				return sizeof(table_header) + sizeof(T) * (_rows + 8);
 			}
 
-			static relative_ptr_type reserve_table(serialized_box_container* _b, int _max_rows, bool _dynamic = false)
+			static relative_ptr_type reserve_table(std::shared_ptr<serialized_box_container> _b, int _max_rows, bool _dynamic = false)
 			{
 				table t;
 
@@ -186,7 +185,7 @@ namespace corona
 				return hdr_id;
 			}
 
-			static table get_table(serialized_box_container* _b, relative_ptr_type offset)
+			static table get_table(std::shared_ptr<serialized_box_container> _b, relative_ptr_type offset)
 			{
 				table t;
 
@@ -200,7 +199,7 @@ namespace corona
 				return t;
 			}
 
-			static table create_table(serialized_box_container* _b, int _max_rows, relative_ptr_type& offset, bool _dynamic = false)
+			static table create_table(std::shared_ptr<serialized_box_container> _b, int _max_rows, relative_ptr_type& offset, bool _dynamic = false)
 			{
 				table t;
 				offset = reserve_table(_b, _max_rows, _dynamic);
@@ -469,7 +468,7 @@ namespace corona
 				;
 			}
 
-			static relative_ptr_type reserve_table(serialized_box_container* b, int item_rows, int detail_rows, bool dynamic = false)
+			static relative_ptr_type reserve_table(std::shared_ptr<serialized_box_container> b, int item_rows, int detail_rows, bool dynamic = false)
 			{
 				item_detail_table_header hdr;
 				hdr.item_location = null_row;
@@ -481,7 +480,7 @@ namespace corona
 				return r;
 			}
 
-			static item_details_table get_table(serialized_box_container* b, relative_ptr_type row)
+			static item_details_table get_table(std::shared_ptr<serialized_box_container> b, relative_ptr_type row)
 			{
 				item_details_table pct;
 				item_detail_table_header* hdr;
@@ -491,7 +490,7 @@ namespace corona
 				return pct;
 			}
 
-			static item_details_table create_table(serialized_box_container* b, int item_rows, int detail_rows, relative_ptr_type& row, bool dynamic = false)
+			static item_details_table create_table(std::shared_ptr<serialized_box_container> b, int item_rows, int detail_rows, relative_ptr_type& row, bool dynamic = false)
 			{
 				item_details_table pct;
 				row = reserve_table(b, item_rows, detail_rows, dynamic);

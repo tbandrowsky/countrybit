@@ -67,7 +67,7 @@ namespace corona
 			virtual direct2dChildWindow* getWindow(relative_ptr_type ctrlId) = 0;
 
 			virtual bool getSaveFilename(std::string& _saveFileName, const char* _pathExtensions, const char* _defaultExtension) = 0;
-			virtual int renderPage(database::page& _page, database::jschema* _schema, database::actor_state& _state, database::jcollection& _collection) = 0;
+			virtual int renderPage(database::page& _page, database::jschema* _schema, database::jcollection& _collection) = 0;
 			virtual rectangle getWindowClientPos() = 0;
 			virtual rectangle getWindowPos(int ddlControlId) = 0;
 			virtual void setWindowPos(int ddlControlId, rectangle rect) = 0;
@@ -140,7 +140,7 @@ namespace corona
 			virtual void setColorCapture(int _iconResourceId) = 0;
 
 			virtual bool getSaveFilename(std::string& _saveFileName, const char* _pathExtensions, const char* _defaultExtension) = 0;
-			virtual int renderPage(database::page& _page, database::jschema* _schema, database::actor_state& _state, database::jcollection& _collection) = 0;
+			virtual int renderPage(database::page& _page, database::jschema* _schema, database::jcollection& _collection) = 0;
 			virtual rectangle getWindowClientPos() = 0;
 			virtual rectangle getWindowPos(int ddlControlId) = 0;
 			virtual void setWindowPos(int ddlControlId, rectangle rect) = 0;

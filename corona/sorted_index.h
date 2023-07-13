@@ -84,7 +84,7 @@ namespace corona
 		protected:
 
 			relative_ptr_type header_location;
-			serialized_box_container* box;
+			std::weak_ptr<serialized_box_container> box;
 			index_mapper mapper;
 			bool mapper_dirty;
 
@@ -105,7 +105,7 @@ namespace corona
 				return in;
 			}
 
-			static index_node create_node(serialized_box_container* box, int _max_level)
+			static index_node create_node(std::shared_ptr<serialized_box_container> box, int _max_level)
 			{
 				index_node_holder holder, * hd;
 				data_pair dp;
@@ -148,7 +148,7 @@ namespace corona
 				return create_node(box, _max_level);
 			}
 
-			static index_node get_node(serialized_box_container* box, relative_ptr_type _node_id)
+			static index_node get_node(std::shared_ptr<serialized_box_container> box, relative_ptr_type _node_id)
 			{
 				index_node_holder *hd;
 				hd = box->get_object<index_node_holder>(_node_id);
@@ -163,7 +163,8 @@ namespace corona
 
 			index_node get_node(relative_ptr_type _node_id)
 			{
-				return get_node(box, _node_id);
+				auto boxptr = box.lock();
+				index_node idxn = get_node(boxptr, _node_id);
 			}
 
 			void mapper_check()
@@ -185,11 +186,11 @@ namespace corona
 
 		public:
 
-			sorted_index() : header_location(null_row), box(nullptr), mapper_dirty(true)
+			sorted_index() : header_location(null_row), box(), mapper_dirty(true)
 			{
 			}
 
-			sorted_index(serialized_box_container* _box, relative_ptr_type _location) : box(_box), header_location(_location), mapper_dirty(true)
+			sorted_index(std::shared_ptr<serialized_box_container> _box, relative_ptr_type _location) : box(_box), header_location(_location), mapper_dirty(true)
 			{
 			}
 
@@ -210,7 +211,7 @@ namespace corona
 				return box;
 			}
 
-			static relative_ptr_type reserve_sorted_index(serialized_box_container *_b)
+			static relative_ptr_type reserve_sorted_index(std::shared_ptr<serialized_box_container> _b)
 			{
 				index_header_type hdr, *phdr;
 
@@ -228,13 +229,13 @@ namespace corona
 				return header_location;
 			}
 
-			static sorted_index get_sorted_index(serialized_box_container* _b, relative_ptr_type _header_location)
+			static sorted_index get_sorted_index(std::shared_ptr<serialized_box_container> _b, relative_ptr_type _header_location)
 			{
 				sorted_index si(_b, _header_location);
 				return si;
 			}
 
-			static sorted_index create_sorted_index(serialized_box_container* _b, relative_ptr_type& _header_location)
+			static sorted_index create_sorted_index(std::shared_ptr<serialized_box_container> _b, relative_ptr_type& _header_location)
 			{
 				_header_location = reserve_sorted_index(_b);
 				sorted_index new_index = get_sorted_index(_b, _header_location);

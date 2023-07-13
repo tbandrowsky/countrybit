@@ -140,19 +140,6 @@ namespace corona
 			return box_id;
 		}
 
-		block_id block_id::rectangle_id()
-		{
-			block_id box_id;
-			strncpy_s(box_id.name, "rect", sizeof(box_id.name));
-			return box_id;
-		}
-
-		block_id block_id::point_id()
-		{
-			block_id box_id;
-			strncpy_s(box_id.name, "point", sizeof(box_id.name));
-			return box_id;
-		}
 
 		block_id block_id::dimension_id()
 		{
@@ -281,18 +268,6 @@ namespace corona
 		bool block_id::is_audio()
 		{
 			block_id t = block_id::audio_id();
-			return strcmp(t.name, name) == 0;
-		}
-
-		bool block_id::is_rectangle()
-		{
-			block_id t = block_id::rectangle_id();
-			return strcmp(t.name, name) == 0;
-		}
-
-		bool block_id::is_point()
-		{
-			block_id t = block_id::point_id();
 			return strcmp(t.name, name) == 0;
 		}
 

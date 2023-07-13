@@ -136,13 +136,6 @@ namespace corona
 			return class_def.item().base_class_id;
 		}
 
-		jobject jcollection::get_style_sheet()
-		{
-			if (this->ref->style_sheet_id < 0)
-				throw std::logic_error("collection does not have default style sheet");
-			return get_object(this->ref->style_sheet_id);
-		}
-
 		bool jcollection::class_has_base(relative_ptr_type _class_id, relative_ptr_type _base_id)
 		{
 			if (_base_id == null_row || _class_id == null_row)
@@ -313,26 +306,14 @@ namespace corona
 			case jtype::type_float64:
 				sma = jvariant(_field_idx, (double)get_double(_field_idx) );
 				break;
-			case jtype::type_color:
-				sma = jvariant(_field_idx, (color)get_color(_field_idx));
-				break;
 			case jtype::type_datetime:
 				sma = jvariant(_field_idx, (time_t)get_time(_field_idx));
 				break;
 			case jtype::type_image:
 				break;
-			case jtype::type_layout_rect:
-				sma = jvariant(_field_idx, get_layout_rect(_field_idx));
-				break;
 			case jtype::type_midi:
 				break;
 			case jtype::type_null:
-				break;
-			case jtype::type_point:
-				sma = jvariant(_field_idx, get_point(_field_idx));
-				break;
-			case jtype::type_rectangle:
-				sma = jvariant(_field_idx, get_rectangle(_field_idx));
 				break;
 			case jtype::type_string:
 				{
@@ -578,30 +559,6 @@ namespace corona
 				case jtype::type_string:
 					{
 						string_box::create(c, jf.string_properties.length);
-					}
-					break;
-				case jtype::type_point:
-					{
-						point_box b(c);
-						b = point { };
-					}
-					break;
-				case jtype::type_rectangle:
-					{
-						rectangle_box b(c);
-						b = rectangle {};
-					}
-					break;
-				case jtype::type_layout_rect:
-					{
-						layout_rect_box b(c);
-						b = layout_rect{};
-					}
-					break;
-				case jtype::type_color:
-					{
-						color_box b(c);
-						b = color{};
 					}
 					break;
 				case jtype::type_image:

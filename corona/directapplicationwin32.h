@@ -19,8 +19,8 @@ namespace corona
 		protected:
 			bool controllerLoaded;
 
-			controller	*currentController,
-						*previousController;
+			std::unique_ptr<controller<win32ControllerHost>> 	currentController,
+																previousController;
 
 			static directApplicationWin32* current;
 			static LRESULT CALLBACK windowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
@@ -55,8 +55,6 @@ namespace corona
 
 			void loadStyleSheet();
 
-			HFONT createFontFromStyleSheet(relative_ptr_type _style_id);
-
 			bool createChildWindow(
 				page_item_identifier pii,
 				LPCTSTR		lpClassName,
@@ -72,6 +70,7 @@ namespace corona
 				database::page_item item
 			);
 
+
 			void destroyChildren();
 
 			bool disableChangeProcessing;
@@ -82,17 +81,19 @@ namespace corona
 			directApplicationWin32(adapterSet* _factory);
 			virtual ~directApplicationWin32();
 
-			int renderPage(database::page& _page, database::jschema* _schema, database::actor_state& _state, database::jcollection& _collection);
+			int renderPage(database::page& _page, database::jschema* _schema, database::jcollection& _collection);
 
 			virtual drawableHost* getDrawable(relative_ptr_type ctrlId);
 			virtual direct2dChildWindow* getWindow(relative_ptr_type ctrlId);
 
-			virtual bool runFull(HINSTANCE _hinstance, const char* _title, int _iconId, bool _fullScreen, controller* _firstController);
-			virtual bool runDialog(HINSTANCE _hinstance, const char* _title, int _iconId, bool _fullScreen, controller* _firstController);
+			virtual bool runFull(HINSTANCE _hinstance, const char* _title, int _iconId, bool _fullScreen, controller<win32ControllerHost>* _firstController);
+			virtual bool runDialog(HINSTANCE _hinstance, const char* _title, int _iconId, bool _fullScreen, controller<win32ControllerHost>* _firstController);
 
-			virtual void setController(controller* _newCurrentController);
-			virtual void pushController(controller* _newCurrentController);
+			virtual void setController(controller<win32ControllerHost>* _newCurrentController);
+			virtual void pushController(controller<win32ControllerHost>* _newCurrentController);
 			virtual void popController();
+
+			HFONT createFont(const char* _fontName, double fontSize, bool bold, bool italic);
 
 			// general
 			virtual void redraw();

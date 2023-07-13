@@ -84,70 +84,6 @@ namespace corona
 			return v;
 		}
 
-		page_item* page::set(page_item* _parent, actor_state* _state, object_member_path path, int field_id, jvariant dv, layout_rect _box)
-		{
-			page_item* v = append(_parent, layout_types::set, null_row, _box, 0.0_px, visual_alignment::align_near);
-			v->object_path = path;
-			v->dest_value = dv;
-			return v;
-		}
-
-		page_item* page::select(page_item* _parent, actor_state* _state, relative_ptr_type object_id, relative_ptr_type id_name, jobject slice, relative_ptr_type _style_id, layout_rect _box)
-		{
-			page_item* v = append(_parent, layout_types::select, _style_id, _box, 0.0_px, visual_alignment::align_near);
-			v->slice = slice;
-			v->object_path.object.row_id = object_id;
-			v->select_request = _state->create_select_request(v->object_path.object.row_id, false);
-			v->caption = data.copy(slice.get_name(id_name), 0);
-			v->slice = slice;
-			v->class_id = slice.get_class_id();
-
-			if (slice.has_field("layout_rect"))
-			{
-				auto rf = slice.get_layout_rect("layout_rect");
-				v->box = rf;
-			}
-			return v;
-		}
-
-		page_item* page::table_header(page_item* _parent, actor_state* _state, const char* _caption, relative_ptr_type object_id, jobject slice, relative_ptr_type _field_id, relative_ptr_type _sort_field_id, relative_ptr_type _style_id, layout_rect _box)
-		{
-			page_item* v = append(_parent, layout_types::table_header, _style_id, _box, 0.0_px, visual_alignment::align_near);
-			v->slice = slice;
-			v->object_path.object.row_id = object_id;
-			if (!slice.is_null()) {
-				v->class_id = slice.get_class_id();
-				v->field = &slice.get_field_by_id(_field_id);
-			}
-			v->caption = data.copy(_caption, 0);
-			v->dest_value = jvariant(_field_id, _sort_field_id );
-			return v;
-		}
-
-		page_item* page::table_cell(page_item* _parent, actor_state* _state, relative_ptr_type object_id, jobject slice, relative_ptr_type _field_id, relative_ptr_type _style_id, layout_rect _box)
-		{
-			page_item* v = append(_parent, layout_types::table_cell, _style_id, _box, 0.0_px, visual_alignment::align_near);
-			v->slice = slice;
-			v->object_path.object.row_id = object_id;
-			if (!slice.is_null()) {
-				v->class_id = slice.get_class_id();
-				v->field = &slice.get_field_by_id(_field_id);
-			}
-			v->select_request = _state->create_select_request(object_id, false);
-			const char* dataf = slice.get(_field_id);
-			v->caption = data.copy(dataf, 0);
-			return v;
-		}
-
-		page_item* page::navigate(page_item* _parent, actor_state* _state, relative_ptr_type object_id, relative_ptr_type _style_id, const char* _caption, layout_rect _box )
-		{
-			page_item* v = append(_parent, layout_types::navigate, _style_id, _box, 0.0_px, visual_alignment::align_near);
-			v->object_path.object.row_id = object_id;
-			v->select_request = _state->create_select_request(object_id, false);
-			v->caption = data.copy(_caption, 0);
-			return v;
-		}
-
 		void page::visit_impl(page_item *r, std::function<bool(page_item* _item)> fn, std::function<bool(page_item* _parent)> fout)
 		{
 			fn(r);
@@ -176,11 +112,6 @@ namespace corona
 			else if (pi.box.width.units == measure_units::font || pi.box.width.units == measure_units::font_golden_ratio)
 			{
 				double font_height = 12.0;
-				if (pi.style_id != null_row && _style_sheet.has_field(pi.style_id))
-				{
-					jobject style = _style_sheet.get_object(pi.style_id, true).get_object({ 0,0,0 });
-					font_height = style.get(style.get_schema()->idf_font_size);
-				};
 				pi.bounds.w = font_height * pi.box.width.amount;
 				if (pi.box.width.units == measure_units::font_golden_ratio)
 				{
@@ -199,24 +130,6 @@ namespace corona
 			else if (pi.box.height.units == measure_units::font || pi.box.height.units == measure_units::font_golden_ratio)
 			{
 				double font_height = 12.0;
-				if (pi.style_id != null_row && _style_sheet.has_field(pi.style_id))
-				{
-					jobject style = _style_sheet.get_object(pi.style_id, true).get_object({ 0,0,0 });
-					auto schema = style.get_schema();
-					font_height = style.get(schema->idf_font_size);
-					if (font_height < 1.0) {
-						std::cout << "WARNING: font height not specified on style:";
-						if (pi.style_id) {
-							std::cout << " " << schema->get_field(pi.style_id).name << " ";
-						}
-						if (pi.caption) {
-							std::cout << " for " << pi.caption << std::endl;
-						}
-						else {
-							std::cout << " for " << "(element)" << std::endl;
-						}
-					}
-				};
 				pi.bounds.h = font_height * pi.box.height.amount;
 				if (pi.box.height.units == measure_units::font_golden_ratio)
 				{
@@ -436,8 +349,6 @@ namespace corona
 				break;
 			}
 
-			auto schema = _style_sheet.get_schema();
-			relative_ptr_type class_id = _item->slice.get_class_id();
 
 			switch (_item->item_space.units)
 			{
@@ -461,12 +372,6 @@ namespace corona
 				_item->item_space_amount.x = _item->item_space.amount;
 				_item->item_space_amount.y = _item->item_space.amount;
 				break;
-			}
-
-			if (!_item->slice.is_null() && _item->slice.has_field(schema->idf_rectangle))
-			{
-				auto rect = _item->slice.get_rectangle(schema->idf_rectangle);
-				_item->bounds = rect;
 			}
 		}
 

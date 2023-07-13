@@ -74,7 +74,6 @@ namespace corona
 				jcollection_ref new_collection;
 				new_collection.collection_name = _create_collection.collection_name;
 				new_collection.model_name = _create_collection.model_name;
-				new_collection.max_actors = _create_collection.max_actors;
 				new_collection.max_objects = _create_collection.max_objects;
 				new_collection.data = nullptr;
 
@@ -144,16 +143,6 @@ namespace corona
 			return response;
 		}
 
-		field_response jdatabase::put_point_field(put_point_field_request request)
-		{
-			return field_invoke<put_point_field_request>(request.name.name.c_str(), [this](auto& r) { return schema.put_point_field(r); }, request);
-		}
-
-		field_response jdatabase::put_rectangle_field(put_rectangle_field_request request)
-		{
-			return field_invoke<put_rectangle_field_request>(request.name.name.c_str(), [this](auto& r) { return schema.put_rectangle_field(r); }, request);
-		}
-
 		field_response jdatabase::put_string_field(put_string_field_request request)
 		{
 			return field_invoke<put_string_field_request>(request.name.name.c_str(), [this](auto& r) { return schema.put_string_field(r); }, request);
@@ -174,34 +163,14 @@ namespace corona
 			return field_invoke<put_double_field_request>(request.name.name.c_str(), [this](auto& r) { return schema.put_double_field(r); }, request);
 		}
 
-		field_response jdatabase::put_color_field(put_color_field_request request)
-		{
-			return field_invoke<put_color_field_request>(request.name.name.c_str(), [this](auto& r) { return schema.put_color_field(r); }, request);
-		}
-
-		field_response jdatabase::put_query_field(put_filter_field_request request)
-		{
-			return field_invoke<put_filter_field_request>(request.name.name.c_str(), [this](auto& r) { return schema.put_query_field(r); }, request);
-		}
-
-		field_response jdatabase::put_sql_remote_field(put_sql_remote_field_request request)
-		{
-			return field_invoke<put_sql_remote_field_request>(request.name.name.c_str(), [this](auto& r) { return schema.put_sql_remote_field(r); }, request);
-		}
-
-		field_response jdatabase::put_http_remote_field(put_http_remote_field_request request)
-		{
-			return field_invoke<put_http_remote_field_request>(request.name.name.c_str(), [this](auto& r) { return schema.put_http_remote_field(r); }, request);
-		}
-
-		field_response jdatabase::put_file_remote_field(put_file_remote_field_request request)
-		{
-			return field_invoke<put_file_remote_field_request>(request.name.name.c_str(), [this](auto& r) { return schema.put_file_remote_field(r); }, request);
-		}
-
 		field_response jdatabase::put_image_field(put_image_field_request request)
 		{
 			return field_invoke<put_image_field_request>(request.name.name.c_str(), [this](auto& r) { return schema.put_image_field(r); }, request);
+		}
+
+		field_response jdatabase::put_midi_field(put_midi_field_request request)
+		{
+			return field_invoke<put_midi_field_request>(request.name.name.c_str(), [this](auto& r) { return schema.put_midi_field(r); }, request);
 		}
 
 		field_response jdatabase::put_wave_field(put_wave_field_request request)
@@ -224,53 +193,93 @@ namespace corona
 			return class_invoke<object_name>(name.c_str(), [this](auto& r) { return schema.find_class(r); }, name);
 		}
 
-		model_response jdatabase::put_model(jmodel request)
+		query_response jdatabase::query(const std::string& _query_expression)
 		{
-			return schema_put_named<model_response, jmodel>(request, [this](jmodel& r) { schema.put_model(r); }, [this](object_name& r) { return schema.get_model(r); });
-		}
+			std::stack<std::unique_ptr<process_item>> items;
 
-		model_response jdatabase::get_model(object_name name)
-		{
-			return schema_get_by_name<model_response, jmodel>(name, [this](object_name& r) { return schema.get_model(r); });
-		}
+			std::unique_ptr<query_process_item> pi = std::make_unique<query_process_item>();
+			items.push(pi);
 
-		actor_response jdatabase::put_actor(jactor _actor)
-		{
-			return actor_invoke<jactor>(_actor.actor_name.c_str(), [this](jcollection& col, auto& r) { return col.put_actor(r); }, _actor);
-		}
+			for (auto c : _query_expression)
+			{
+				auto current_item = items.top();
+				if (std::isalpha(c))
+				{
+					if (current_item->is_class_process_item() ||
+						current_item->is_field_process_item() || 
+						current_item->is_string_process_item()) {
+						current_item->add(c);
+					}
+					else if (current_item->is_query_process_item()) 
+					{
 
-		actor_response jdatabase::get_actor(get_actor_request _request)
-		{
-			return actor_invoke<get_actor_request>(_request.name.c_str(), [this](jcollection& col, auto& r) { return col.find_actor(r.name); }, _request);
-		}
+					}
+					else if (current_item->is_where_process_item())
+					{
 
-		actor_state_response jdatabase::get_actor_state(get_actor_request _request)
-		{
-			return command_invoke<get_actor_request>(_request, [](jcollection& _collection, get_actor_request& p) {
-				auto actor = _collection.find_actor(p.name);
-				return _collection.get_actor_state(actor);
-				});
-		}
+					}
+				}
+				else if (std::isdigit(c))
+				{
+					if (current_item->is_class_process_item() || 
+						current_item->is_field_process_item() ||
+						current_item->is_string_process_item()) {
+						current_item->add(c);
+					}
+					else 
+					{
+						current_item->add(c);
+					}
+				}
+				else if (c == '[') 
+				{
+					if (current_item->is_string_process_item()) 
+					{
+						current_item->add(c);
+					}
+					else if (current_item->is_class_process_item()) 
+					{
+						where_process_item wpi = std::make_unique<where_process_item>();
+						items.push(wpi);
+					}
+					else
+					{
+						current_item->add(c);
+					}
+				}
+				else if (c == ']') 
+				{
 
-		actor_state_response jdatabase::select_object(select_object_request _select)
-		{
-			return command_invoke<select_object_request>(_select, [](jcollection& _collection, select_object_request& p) {
-				return _collection.select_object(p);
-				});
-		}
+				}
+				else if (c == '(')
+				{
 
-		actor_state_response jdatabase::create_object(create_object_request _create)
-		{
-			return command_invoke<create_object_request>(_create, [](jcollection& _collection, create_object_request& p) {
-				return _collection.create_object(p);
-				});
-		}
+				}
+				else if (c == ')')
+				{
 
-		actor_state_response jdatabase::update_object(update_object_request _update)
-		{
-			return command_invoke<update_object_request>(_update, [](jcollection& _collection, update_object_request& p) {
-				return _collection.update_object(p);
-				});
+				}
+				else if (c == '"')
+				{
+
+				}
+				else if (c == '{')
+				{
+
+				}
+				else if (c == '}')
+				{
+
+				}
+				else if (c == '@')
+				{
+
+				}
+				else if (std::isspace(c))
+				{
+
+				}
+			}
 		}
 
 		jdatabase::~jdatabase()

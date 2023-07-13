@@ -671,251 +671,135 @@ namespace corona
 			saver.save(buff);
 		}
 
-		class deviceDependentAssetBase {
-		public:
-
-			bool stock;
-
-			deviceDependentAssetBase() : stock(false)
-			{
-				;
-			}
-
-			virtual ~deviceDependentAssetBase()
-			{
-				;
-			}
-
-			virtual bool create(direct2dContext* target) = 0;
-			virtual void release() = 0;
-
-			virtual ID2D1Brush* getBrush()
-			{
-				return NULL;
-			}
-
-		};
-
-		class textStyle : public deviceDependentAssetBase
+		deviceDependentAssetBase::deviceDependentAssetBase() : stock(false)
 		{
-			IDWriteTextFormat* lpWriteTextFormat;
+			;
+		}
 
-			std::string fontName;
-			float size;
-			bool bold;
-			bool italic;
-			bool underline;
-			bool strike_through;
-			double line_spacing;
-			visual_alignment horizontal_align;
-			visual_alignment vertical_align;
-			bool wrap_text;
+		deviceDependentAssetBase::~deviceDependentAssetBase()
+		{
+			;
+		}
 
-		public:
+		ID2D1Brush* deviceDependentAssetBase::getBrush()
+		{
+			return NULL;
+		}
 
-			textStyle(std::string _fontName, 
-				float _size, 
-				bool _bold, 
-				bool _italic,
-				bool _underline,
-				bool _strike_through,
-				double _line_spacing,
-				visual_alignment _horizontal_align,
-				visual_alignment _vertical_align,
-				bool _wrap_text) :
-				fontName(_fontName),
-				size(_size),
-				bold(_bold),
-				italic(_italic),
-				underline(_underline),
-				strike_through(_strike_through),
-				line_spacing(_line_spacing),
-				horizontal_align(_horizontal_align),
-				vertical_align(_vertical_align),
-				lpWriteTextFormat(NULL)
-			{
-				;
-			}
+		bool textStyle::create(direct2dContext* target)
+		{
+			HRESULT hr = -1;
 
-			virtual ~textStyle()
-			{
-				release();
-			}
-
-			std::string get_fontName() { return fontName;  };
-			float get_size() { return size; }
-			bool get_bold() { return bold; }
-			bool get_italic()  { return italic; }
-			bool get_underline() { return underline; }
-			bool get_strike_through() { return strike_through; }
-			double get_line_spacing() { return line_spacing; }
-			visual_alignment get_horizontal_align() { return horizontal_align; }
-			visual_alignment get_vertical_align() { return vertical_align; }
-			bool get_wrap_text() { return wrap_text;  }
-
-			virtual bool create(direct2dContext* target)
-			{
-				HRESULT hr = -1;
-
-				if (!target || !target->getRenderTarget())
-					return false;
-
-				istring<2048> fontList = fontName;
-				istring<2048> fontName;
-
-				int state = 0;
-				char* fontExtractedName = fontList.next_token(',', state);
-				lpWriteTextFormat = NULL;
-
-				while (fontExtractedName)
-				{
-					fontName = fontExtractedName;
-					iwstring<2048> wideName = fontName;
-
-					DWRITE_FONT_STYLE fontStyle = DWRITE_FONT_STYLE_NORMAL;
-					
-					if (italic) {
-						fontStyle = DWRITE_FONT_STYLE_ITALIC;
-					}
-
-					FLOAT dpiX = 96.0, dpiY = 96.0;
-					target->getRenderTarget()->GetDpi(&dpiX, &dpiY);
-
-					HRESULT hr = target->factory->getDWriteFactory()->CreateTextFormat(wideName.c_str(),
-						NULL,
-						bold ? DWRITE_FONT_WEIGHT_BOLD : DWRITE_FONT_WEIGHT_REGULAR,
-						fontStyle,
-						DWRITE_FONT_STRETCH_NORMAL,
-						size,
-						L"en-US",
-						&lpWriteTextFormat);
-
-					if (SUCCEEDED(hr) || lpWriteTextFormat != nullptr) {
-						break;
-					}
-
-					fontExtractedName = fontList.next_token(',', state);
-				};
-
-				if (lpWriteTextFormat != nullptr)
-				{
-					if (line_spacing > 0.0) {
-						lpWriteTextFormat->SetLineSpacing(DWRITE_LINE_SPACING_METHOD_UNIFORM, line_spacing, line_spacing * .8);
-					}
-
-					switch (horizontal_align) 
-					{
-					case visual_alignment::align_near:
-						lpWriteTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
-						break;
-					case visual_alignment::align_center:
-						lpWriteTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
-						break;
-					case visual_alignment::align_far:
-						lpWriteTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_TRAILING);
-						break;
-					case visual_alignment::align_justify:
-						lpWriteTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_JUSTIFIED);
-						break;
-					}
-
-					switch (horizontal_align)
-					{
-					case visual_alignment::align_near:
-						lpWriteTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
-						break;
-					case visual_alignment::align_center:
-						lpWriteTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
-						break;
-					case visual_alignment::align_far:
-						lpWriteTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_TRAILING);
-						break;
-					case visual_alignment::align_justify:
-						lpWriteTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_JUSTIFIED);
-						break;
-					}
-
-					switch (vertical_align)
-					{
-					case visual_alignment::align_near:
-						lpWriteTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_NEAR);
-						break;
-					case visual_alignment::align_center:
-						lpWriteTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
-						break;
-					case visual_alignment::align_far:
-						lpWriteTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_FAR);
-						break;
-					case visual_alignment::align_justify:
-						lpWriteTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
-						break;
-					}
-
-					if (wrap_text) 
-					{
-						lpWriteTextFormat->SetWordWrapping(DWRITE_WORD_WRAPPING_EMERGENCY_BREAK);
-					}
-
-					return true;
-				}
+			if (!target || !target->getRenderTarget())
 				return false;
-			}
 
-			virtual void release()
+			istring<2048> fontList = fontName;
+			istring<2048> fontName;
+
+			int state = 0;
+			char* fontExtractedName = fontList.next_token(',', state);
+			lpWriteTextFormat = NULL;
+
+			while (fontExtractedName)
 			{
-				if (lpWriteTextFormat)
-					lpWriteTextFormat->Release();
-				lpWriteTextFormat = NULL;
-			}
+				fontName = fontExtractedName;
+				iwstring<2048> wideName = fontName;
 
-			IDWriteTextFormat* getFormat()
+				DWRITE_FONT_STYLE fontStyle = DWRITE_FONT_STYLE_NORMAL;
+					
+				if (italic) {
+					fontStyle = DWRITE_FONT_STYLE_ITALIC;
+				}
+
+				FLOAT dpiX = 96.0, dpiY = 96.0;
+				target->getRenderTarget()->GetDpi(&dpiX, &dpiY);
+
+				HRESULT hr = target->factory->getDWriteFactory()->CreateTextFormat(wideName.c_str(),
+					NULL,
+					bold ? DWRITE_FONT_WEIGHT_BOLD : DWRITE_FONT_WEIGHT_REGULAR,
+					fontStyle,
+					DWRITE_FONT_STRETCH_NORMAL,
+					size,
+					L"en-US",
+					&lpWriteTextFormat);
+
+				if (SUCCEEDED(hr) || lpWriteTextFormat != nullptr) {
+					break;
+				}
+
+				fontExtractedName = fontList.next_token(',', state);
+			};
+
+			if (lpWriteTextFormat != nullptr)
 			{
-				return lpWriteTextFormat;
+				if (line_spacing > 0.0) {
+					lpWriteTextFormat->SetLineSpacing(DWRITE_LINE_SPACING_METHOD_UNIFORM, line_spacing, line_spacing * .8);
+				}
+
+				switch (horizontal_align) 
+				{
+				case visual_alignment::align_near:
+					lpWriteTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
+					break;
+				case visual_alignment::align_center:
+					lpWriteTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
+					break;
+				case visual_alignment::align_far:
+					lpWriteTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_TRAILING);
+					break;
+				case visual_alignment::align_justify:
+					lpWriteTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_JUSTIFIED);
+					break;
+				}
+
+				switch (horizontal_align)
+				{
+				case visual_alignment::align_near:
+					lpWriteTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
+					break;
+				case visual_alignment::align_center:
+					lpWriteTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
+					break;
+				case visual_alignment::align_far:
+					lpWriteTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_TRAILING);
+					break;
+				case visual_alignment::align_justify:
+					lpWriteTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_JUSTIFIED);
+					break;
+				}
+
+				switch (vertical_align)
+				{
+				case visual_alignment::align_near:
+					lpWriteTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_NEAR);
+					break;
+				case visual_alignment::align_center:
+					lpWriteTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+					break;
+				case visual_alignment::align_far:
+					lpWriteTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_FAR);
+					break;
+				case visual_alignment::align_justify:
+					lpWriteTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+					break;
+				}
+
+				if (wrap_text) 
+				{
+					lpWriteTextFormat->SetWordWrapping(DWRITE_WORD_WRAPPING_EMERGENCY_BREAK);
+				}
+
+				return true;
 			}
+			return false;
+		}
 
-		};
-
-		template <class T> class deviceDependentAsset : public deviceDependentAssetBase {
-		protected:
-			T asset;
-
-		public:
-
-			deviceDependentAsset() : asset(NULL)
-			{
-				;
-			}
-
-			virtual ~deviceDependentAsset()
-			{
-				release();
-			}
-
-			virtual bool create(direct2dContext* target) = 0;
-
-			bool recreate(direct2dContext* target)
-			{
-				release();
-				create(target);
-			}
-
-			inline T getAsset() { return asset; }
-
-		protected:
-
-			virtual void release()
-			{
-				if (asset) asset->Release();
-				asset = NULL;
-			}
-		};
-
-		class brush
+		void textStyle::release()
 		{
-		public:
-			virtual ID2D1Brush* getBrush() = 0;
-		};
-
+			if (lpWriteTextFormat)
+				lpWriteTextFormat->Release();
+			lpWriteTextFormat = NULL;
+		}
 
 		// -------------------------------------------------------
 
@@ -1107,70 +991,28 @@ namespace corona
 		void directApplicationWin32::loadStyleSheet()
 		{
 
-			if (currentController) 
-			{
-				auto styles = currentController->get_style_sheet(0);
-				auto schema = styles.get_schema();
-
-				HFONT oldControlFont = controlFont;
-				HFONT oldLabelFont = labelFont;
-				HFONT oldTitleFont = titleFont;
-
-				controlFont = createFontFromStyleSheet(schema->idf_control_style);
-				labelFont = createFontFromStyleSheet(schema->idf_label_style);
-				titleFont = createFontFromStyleSheet(schema->idf_view_subtitle_style);
-
-				if (oldControlFont) 
-				{
-					DeleteObject(oldControlFont);
-				}
-
-				if (oldLabelFont) 
-				{
-					DeleteObject(oldLabelFont);
-				}
-
-				if (oldTitleFont) 
-				{
-					DeleteObject(oldTitleFont);
-				}
-
-				for (int i = 0; i < styles_count; i++)
-				{
-					factory->loadStyleSheet(styles, i);
-				}
-			}
 		}
 
 
-		HFONT directApplicationWin32::createFontFromStyleSheet(relative_ptr_type _style_id)
+		HFONT directApplicationWin32::createFont(const char *_fontName, double fontSize, bool bold, bool italic )
 		{
 			HFONT hfont = nullptr;
 
-			if (currentController) {
-				auto sheet = currentController->get_style_sheet( style_normal );
-				auto style_field = sheet.get_object(_style_id, true)
-					.get_object(0);
-				auto schema = style_field.get_schema();
-				double fontSize = style_field.get(schema->idf_font_size);
-				double ifontSize = fontSize / dpiScale;
-				istring<2048> fontList = (const char *)style_field.get(schema->idf_font_name);
-				bool italic = (int32_t)style_field.get(schema->idf_italic);
-				bool bold = (int32_t)style_field.get(schema->idf_bold);
+			double ifontSize = fontSize / dpiScale;
+			istring<2048> fontList = _fontName;
 
-				int state = 0;
-				char* fontExtractedName = fontList.next_token(',', state);
+			int state = 0;
+			char* fontExtractedName = fontList.next_token(',', state);
 
-				while (fontExtractedName && !hfont)
-				{
-					hfont = CreateFont(-ifontSize, 0, 0, 0, bold ? FW_BOLD : FW_NORMAL, italic, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH, fontExtractedName);
-					fontExtractedName = fontList.next_token(',', state);
-				}
+			while (fontExtractedName && !hfont)
+			{
+				hfont = CreateFont(-ifontSize, 0, 0, 0, bold ? FW_BOLD : FW_NORMAL, italic, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH, fontExtractedName);
+				fontExtractedName = fontList.next_token(',', state);
 			}
 			return hfont;
 		}
 
-		int directApplicationWin32::renderPage(database::page& _page, database::jschema* _schema, database::actor_state& _state, database::jcollection& _collection)
+		int directApplicationWin32::renderPage(database::page& _page, database::jschema* _schema, database::jcollection& _collection)
 		{
 			if (disableChangeProcessing)
 				return 0;
@@ -1218,55 +1060,6 @@ namespace corona
 				case database::layout_types::text_window:
 					{
 						database::istring<256> x;
-						auto slice = _collection.get_object(pi.object_path);
-						int idx = slice.get_field_index_by_id(pi.field->field_id);
-						switch (pi.field->type_id)
-						{
-						case database::type_int8:
-							{
-								auto bx = slice.get_int8(idx);
-								x = bx;
-							}
-							break;
-						case database::type_int16:
-							{
-								auto bx = slice.get_int16(idx);
-								x = bx;
-							}
-							break;
-						case database::type_int32:
-							{
-								auto bx = slice.get_int32(idx);
-								x = bx;
-							}
-							break;
-						case database::type_int64:
-							{
-								auto bx = slice.get_int64(idx);
-								x = bx;
-							}
-							break;
-						case database::type_float32:
-							{
-								auto bx = slice.get_float(idx);
-								x = bx;
-							}
-							break;
-						case database::type_float64:
-							{
-								auto bx = slice.get_double(idx);
-								x = bx;
-							}
-							break;
-						case database::type_string:
-							{
-								auto bx = slice.get_string(idx);
-								x = bx;
-							}
-							break;
-						default:
-							break;
-						}
 						created_something = createChildWindow(pid, WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont, pi);
 					}
 					break;
@@ -1516,9 +1309,9 @@ namespace corona
 						if (hdc) {
 							COLORREF cr = ::GetPixel(hdc, p.x, p.y);
 							color pickedColor;
-							pickedColor.red = GetRValue(cr) / 255.0;
-							pickedColor.green = GetGValue(cr) / 255.0;
-							pickedColor.blue = GetBValue(cr) / 255.0;
+							pickedColor.r = GetRValue(cr) / 255.0;
+							pickedColor.g = GetGValue(cr) / 255.0;
+							pickedColor.b = GetBValue(cr) / 255.0;
 							ptz.x = p.x;
 							ptz.y = p.y;
 							if (currentController)
@@ -1604,24 +1397,20 @@ namespace corona
 			return wmi;
 		}
 
-		void directApplicationWin32::setController(controller* _newCurrentController)
+		void directApplicationWin32::setController(controller<win32ControllerHost>* _newCurrentController)
 		{
 			::QueryPerformanceCounter((LARGE_INTEGER*)&startCounter);
 			pressedKeys.clear();
-			if (currentController)
-				delete currentController;
-			currentController = _newCurrentController;
+			currentController.reset(_newCurrentController);
 			currentController->attach(this);
 			::QueryPerformanceCounter((LARGE_INTEGER*)&lastCounter);
 		}
 
-		void directApplicationWin32::pushController(controller* _newCurrentController)
+		void directApplicationWin32::pushController(controller<win32ControllerHost>* _newCurrentController)
 		{
 			pressedKeys.clear();
-			if (previousController)
-				delete previousController;
-			previousController = currentController;
-			currentController = _newCurrentController;
+			previousController.reset(currentController.get());
+			currentController.reset(_newCurrentController);
 			currentController->attach(this);
 			::QueryPerformanceCounter((LARGE_INTEGER*)&startCounter);
 			::QueryPerformanceCounter((LARGE_INTEGER*)&lastCounter);
@@ -1630,15 +1419,13 @@ namespace corona
 		void directApplicationWin32::popController()
 		{
 			pressedKeys.clear();
-			if (currentController)
-				delete currentController;
-			currentController = previousController;
-			previousController = NULL;
+			currentController.reset(previousController.get());
+			previousController.release();
 			::QueryPerformanceCounter((LARGE_INTEGER*)&startCounter);
 			::QueryPerformanceCounter((LARGE_INTEGER*)&lastCounter);
 		}
 
-		bool directApplicationWin32::runFull(HINSTANCE _hinstance, const char* _title, int _iconId, bool _fullScreen, controller* _firstController)
+		bool directApplicationWin32::runFull(HINSTANCE _hinstance, const char* _title, int _iconId, bool _fullScreen, controller<win32ControllerHost>* _firstController)
 		{
 			if (!_firstController)
 				return false;
@@ -1723,7 +1510,7 @@ namespace corona
 			return true;
 		}
 
-		bool directApplicationWin32::runDialog(HINSTANCE _hinstance, const char* _title, int _iconId, bool _fullScreen, controller* _firstController)
+		bool directApplicationWin32::runDialog(HINSTANCE _hinstance, const char* _title, int _iconId, bool _fullScreen, controller<win32ControllerHost>* _firstController)
 		{
 			if (!_firstController)
 				return false;

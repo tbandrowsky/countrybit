@@ -56,7 +56,7 @@ namespace corona
 
 		concept_lock::concept_lock()
 		{
-			locked = nuillptr;
+			locked = nullptr;
 		}
 
 		concept_lock::concept_lock(lockable_concept* _locked)

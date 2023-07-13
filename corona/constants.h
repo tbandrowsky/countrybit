@@ -24,14 +24,13 @@ namespace corona
 		enum class control_type
 		{
 			ct_none = 0,
-			ct_text = 1,
-			ct_big_text = 2,
-			ct_numeric = 3,
+			ct_numeric = 1,
+			ct_date_picker = 2,
+			ct_text = 2,
 			ct_currency = 4,
 			ct_dropdown = 5,
 			ct_radio = 6,
 			ct_checkbox = 7,
-			ct_date_picker = 8,
 			ct_color_picker = 9
 		};
 
@@ -81,8 +80,6 @@ namespace corona
 			static block_id color_id();
 			static block_id wave_id();
 			static block_id audio_id();
-			static block_id rectangle_id();
-			static block_id point_id();
 			static block_id datetime_id();
 			static block_id path_id();
 
@@ -106,8 +103,6 @@ namespace corona
 			bool is_color();
 			bool is_wave();
 			bool is_audio();
-			bool is_rectangle();
-			bool is_point();
 			bool is_datetime();
 			bool is_path();
 
@@ -134,8 +129,6 @@ namespace corona
 			a.block.is_color();
 			a.block.is_wave();
 			a.block.is_audio();
-			a.block.is_rectangle();
-			a.block.is_point();
 			a.block.is_datetime();
 			a.block.is_path();
 

@@ -72,30 +72,10 @@ namespace corona
 			jclass info;
 		};
 
-		class network_status_response : public db_response
+		class query_response : public db_response
 		{
 		public:
-
 		};
-
-		class collection_status_response : public db_response
-		{
-		public:
-
-		};
-
-		class schema_response : public db_response
-		{
-		public:
-
-		};
-
-		class log_response : public db_response
-		{
-		public:
-
-		};
-
 
 		class jdatabase
 		{
@@ -258,21 +238,13 @@ namespace corona
 			task<db_response> open(open_db_request _open);
 			task<db_response> create(create_db_request _create);
 
-			network_status_response get_network_status();
-			collection_status_response get_collection_status();
-			schema_response get_schema();
-			log_response get_log();
-
 			field_response put_string_field(put_string_field_request request);
 			field_response put_time_field(put_time_field_request request);
 			field_response put_integer_field(put_integer_field_request request);
 			field_response put_double_field(put_double_field_request request);
-			field_response put_point_field(put_point_field_request request);
-			field_response put_rectangle_field(put_rectangle_field_request request);
 			field_response put_image_field(put_image_field_request request);
 			field_response put_wave_field(put_wave_field_request request);
 			field_response put_midi_field(put_midi_field_request request);
-			field_response put_color_field(put_color_field_request request);
 			field_response get_field(object_name name);
 
 			class_response put_class(put_class_request request);
@@ -281,6 +253,8 @@ namespace corona
 			collection_response create_collection(create_collection_request _create_collection);
 			collection_response get_collection(object_name _name);
 			collection_response get_collection(collection_id_type _id);
+
+			query_response query(const std::string& _query_expression);
 
 		};
 	}

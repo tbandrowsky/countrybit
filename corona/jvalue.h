@@ -15,10 +15,6 @@ namespace corona
 			corona_size_t			int_value;
 			DATE					time_value;
 			CY						currency_value;
-			rectangle				rectangle_value;
-			layout_rect				layout_rect_value;
-			point					point_value;
-			color					color_value;
 
 			void copy(const jvariant& _src);
 
@@ -65,26 +61,6 @@ namespace corona
 			}
 
 			template <explicit_bool t> jvariant(relative_ptr_type _field_id, t _bool_value) : field_id(_field_id), int_value(_bool_value), variant_type(jtype::type_int64)
-			{
-				;
-			}
-
-			jvariant(relative_ptr_type _field_id, rectangle _rectangle_value) : field_id(_field_id), rectangle_value(_rectangle_value), variant_type(jtype::type_rectangle)
-			{
-				;
-			}
-
-			jvariant(relative_ptr_type _field_id, layout_rect _layout_rect_value) : field_id(_field_id), layout_rect_value(_layout_rect_value), variant_type(jtype::type_layout_rect)
-			{
-				;
-			}
-
-			jvariant(relative_ptr_type _field_id, point _point_value) : field_id(_field_id), point_value(_point_value), variant_type(jtype::type_point)
-			{
-				;
-			}
-
-			jvariant(relative_ptr_type _field_id, color _color_value) : field_id(_field_id), color_value(_color_value), variant_type(jtype::type_color)
 			{
 				;
 			}
@@ -186,29 +162,17 @@ namespace corona
 				case jtype::type_float64:
 					string_value = std::format("{}", double_value);
 					break;
-				case jtype::type_color:
-					string_value = "color";
-					break;
 				case jtype::type_datetime:
 					string_value = "datetime";
 					break;
 				case jtype::type_image:
 					string_value = "image";
 					break;
-				case jtype::type_layout_rect:
-					string_value = "layout_rect";
-					break;
 				case jtype::type_midi:
 					string_value = "midi";
 					break;
 				case jtype::type_null:
 					string_value = "(null type)";
-					break;
-				case jtype::type_point:
-					string_value = "point";
-					break;
-				case jtype::type_rectangle:
-					string_value = "rectangle";
 					break;
 				case jtype::type_string:
 					break;
@@ -220,10 +184,7 @@ namespace corona
 			}
 
 			operator std::string();
-			operator color ();
-			operator point();
-			operator rectangle();
-			operator layout_rect();
+
 
 		};
 

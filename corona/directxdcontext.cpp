@@ -900,14 +900,6 @@ namespace corona
 			filteredScaledBitmap = NULL;
 		}
 
-		class nullFilterFunction {
-		public:
-			bool operator()(point, int, int, char*)
-			{
-				return true;
-			}
-		};
-
 		void bitmap::clearFilteredBitmaps()
 		{
 			for (auto ifb = filteredBitmaps.begin(); ifb != filteredBitmaps.end(); ifb++) {
@@ -1039,15 +1031,15 @@ namespace corona
 							if (SUCCEEDED(hr) && pv && cbBufferSize) {
 								auto row = (PBGRAPixel*)(pv + cbStride * (int)point.y);
 								auto pix = row[(int)point.x];
-								color.alpha = pix.alpha / 255.0;
-								color.blue = pix.blue / 255.0;
-								color.red = pix.red / 255.0;
-								color.green = pix.green / 255.0;
+								color.a = pix.alpha / 255.0;
+								color.b = pix.blue / 255.0;
+								color.r = pix.red / 255.0;
+								color.g = pix.green / 255.0;
 								// because this is premultiplied alpha
-								if (color.alpha >= 0.0) {
-									color.blue /= color.alpha;
-									color.green /= color.alpha;
-									color.red /= color.alpha;
+								if (color.a >= 0.0) {
+									color.b /= color.a;
+									color.g /= color.a;
+									color.r /= color.a;
 								}
 							}
 						}
@@ -1254,38 +1246,33 @@ namespace corona
 			return asset;
 		}
 
-		class radialGradientBrush : public deviceDependentAsset<ID2D1RadialGradientBrush*>, brush {
-		public:
-			std::vector<D2D1_GRADIENT_STOP> stops;
-			D2D1_RADIAL_GRADIENT_BRUSH_PROPERTIES radialProperties;
 
-			bool create(direct2dContext* target)
+		bool radialGradientBrush::create(direct2dContext* target)
+		{
+			ID2D1GradientStopCollection* pGradientStops = NULL;
+
+			if (!target || !target->getRenderTarget())
+				return false;
+
+			HRESULT hr = target->getRenderTarget()->CreateGradientStopCollection(&stops[0], stops.size(), &pGradientStops);
+
+			if (SUCCEEDED(hr))
 			{
-				ID2D1GradientStopCollection* pGradientStops = NULL;
-
-				if (!target || !target->getRenderTarget())
-					return false;
-
-				HRESULT hr = target->getRenderTarget()->CreateGradientStopCollection(&stops[0], stops.size(), &pGradientStops);
-
-				if (SUCCEEDED(hr))
-				{
-					hr = target->getRenderTarget()->CreateRadialGradientBrush(
-						radialProperties,
-						D2D1::BrushProperties(),
-						pGradientStops,
-						&asset
-					);
-					pGradientStops->Release();
-				}
-				return SUCCEEDED(hr);
+				hr = target->getRenderTarget()->CreateRadialGradientBrush(
+					radialProperties,
+					D2D1::BrushProperties(),
+					pGradientStops,
+					&asset
+				);
+				pGradientStops->Release();
 			}
+			return SUCCEEDED(hr);
+		}
 
-			virtual ID2D1Brush* getBrush()
-			{
-				return asset;
-			}
-		};
+		ID2D1Brush* radialGradientBrush::getBrush()
+		{
+			return asset;
+		}
 
 
 		path::path(direct2dContext* target) : geometry(NULL), sink(NULL)
@@ -1336,7 +1323,7 @@ namespace corona
 			if (sink) sink->AddQuadraticBezier(D2D1::QuadraticBezierSegment(point1, point2));
 		}
 
-		void path::close_figure(bool closed = true)
+		void path::close_figure(bool closed)
 		{
 			if (sink) {
 				sink->EndFigure(closed ? D2D1_FIGURE_END_CLOSED : D2D1_FIGURE_END_OPEN);
@@ -1348,12 +1335,7 @@ namespace corona
 
 		D2D1_COLOR_F toColor(color& _color)
 		{
-			D2D1_COLOR_F newColor;
-			newColor.a = _color.alpha;
-			newColor.b = _color.blue;
-			newColor.r = _color.red;
-			newColor.g = _color.green;
-			return newColor;
+			return _color;
 		}
 
 		D2D1_POINT_2F toPoint(point& _point)
@@ -1395,10 +1377,10 @@ namespace corona
 		{
 			D2D1_COLOR_F color;
 
-			color.a = _color->alpha;
-			color.b = _color->blue;
-			color.g = _color->green;
-			color.r = _color->red;
+			color.a = _color->a;
+			color.b = _color->b;
+			color.g = _color->g;
+			color.r = _color->r;
 
 			this->getRenderTarget()->Clear(color);
 		}
@@ -2074,75 +2056,6 @@ namespace corona
 				drawText(_debug_comment, &_rect, "debug-text", "debug-border");
 			}
 #endif
-		}
-
-		void direct2dContext::loadStyleSheet(jobject& style_sheet, int _state)
-		{
-			solidBrushRequest dsrb;
-			dsrb.name = "debug-border";
-			dsrb.brushColor.red = 0;
-			dsrb.brushColor.green = 230;
-			dsrb.brushColor.blue = 200;
-			dsrb.brushColor.alpha = 255;
-			addSolidColorBrush(&dsrb);
-
-			textStyleRequest dtsr;
-			dtsr.name = "debug-text";
-			dtsr.fontName = "Arial";
-			dtsr.fontSize = 8.0;
-			dtsr.horizontal_align = visual_alignment::align_center;
-			dtsr.vertical_align = visual_alignment::align_center;
-			dtsr.bold = false;
-			dtsr.underline = false;
-			dtsr.italics = false;
-			dtsr.strike_through = false;
-			dtsr.line_spacing = 0.0;
-			dtsr.wrap_text = true;
-			addTextStyle(&dtsr);
-
-			auto schema = style_sheet.get_schema();
-
-			for (int idx = 0; idx < style_sheet.size(); idx++)
-			{
-				auto field = style_sheet.get_field(idx);
-				if (field.is_class(schema->idc_text_style))
-				{
-					auto style = style_sheet.get_object(idx, { 0,0,0 }, false);
-					viewStyleRequest request;
-
-					view_style_name(field.name, request.name, _state);
-
-					text_style_name(field.name, request.text_style.name, _state);
-					request.text_style.fontName = (const char*)style.get(schema->idf_font_name);
-					request.text_style.fontSize = style.get(schema->idf_font_size);
-					request.text_style.bold = style.get(schema->idf_bold);
-					request.text_style.italics = style.get(schema->idf_italic);
-					request.text_style.underline = style.get(schema->idf_underline);
-					request.text_style.strike_through = style.get(schema->idf_strike_through);
-					request.text_style.line_spacing = style.get(schema->idf_line_spacing);
-					request.text_style.horizontal_align = (visual_alignment)(int)style.get(schema->idf_horizontal_alignment);
-					request.text_style.vertical_align = (visual_alignment)(int)style.get(schema->idf_vertical_alignment);
-
-					shape_border_brush_name(field.name, request.shape_border_color.name, _state);
-					request.shape_border_color.brushColor = style.get(schema->idf_box_border_color);
-					request.shape_border_thickness = style.get(schema->idf_box_border_thickness);
-
-					shape_fill_brush_name(field.name, request.shape_fill_color.name, _state);
-					request.shape_fill_color.brushColor = style.get(schema->idf_shape_fill_color);
-					request.shape_border_color.brushColor = style.get(schema->idf_box_border_color);
-					request.shape_border_thickness = style.get(schema->idf_box_border_thickness);
-
-					box_border_brush_name(field.name, request.box_border_color.name, _state);
-					request.box_border_color.brushColor = style.get(schema->idf_box_border_color);
-					request.box_border_thickness = style.get(schema->idf_box_border_thickness);
-
-					box_fill_brush_name(field.name, request.box_fill_color.name, _state);
-					request.box_fill_color.brushColor = style.get(schema->idf_box_fill_color);
-
-					addViewStyle(request);
-				}
-			}
-
 		}
 
 

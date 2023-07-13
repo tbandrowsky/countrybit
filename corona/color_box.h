@@ -4,20 +4,10 @@ namespace corona
 {
 	namespace database
 	{
-		struct color
-		{
-			double red;
-			double green;
-			double blue;
-			double alpha;
-		};
 
-		class color_math
-		{
-		public:
-		};
+		using color = D3DCOLORVALUE;
 
-		class color_box : public boxed<color>
+		class color_box : protected boxed<color>
 		{
 		public:
 			color_box(char* t) : boxed<color>(t)
@@ -26,6 +16,12 @@ namespace corona
 			}
 
 			color_box operator = (const color_box& _src)
+			{
+				boxed<color>::operator =(_src);
+				return *this;
+			}
+
+			color_box operator = (color_box _src)
 			{
 				set_data(_src);
 				return *this;
@@ -37,20 +33,22 @@ namespace corona
 				return *this;
 			}
 
-			operator color& ()
-			{
-				color& t = boxed<color>::get_data_ref();
-				return t;
-			}
-
 			color* operator->()
 			{
 				color& t = boxed<color>::get_data_ref();
 				return &t;
 			}
 
+			operator color& ()
+			{
+				color& t = boxed<color>::get_data_ref();
+				return t;
+			}
+
 			color value() const { return boxed<color>::get_value(); }
 
 		};
+
 	}
+
 }
