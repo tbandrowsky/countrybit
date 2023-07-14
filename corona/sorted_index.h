@@ -91,7 +91,8 @@ namespace corona
 			index_header_type* get_index_header()
 			{
 				index_header_type* t;
-				t = box->get_object<index_header_type>(header_location);
+				auto boxptr = box.lock();
+				t = boxptr->get_object<index_header_type>(header_location);
 				if (!t->block.is_sorted_index()) {
 					throw std::logic_error("did not read sorted index correctly");
 				}
@@ -145,7 +146,9 @@ namespace corona
 			index_node create_node(int _max_level)
 			{
 				mapper_dirty = true;
-				return create_node(box, _max_level);
+				auto boxptr = box.lock();
+				auto rvalue = create_node(boxptr, _max_level);
+				return rvalue;
 			}
 
 			static index_node get_node(std::shared_ptr<serialized_box_container> box, relative_ptr_type _node_id)

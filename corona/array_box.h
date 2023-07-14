@@ -248,7 +248,7 @@ namespace corona
 			{
 			}
 
-			static relative_ptr_type reserve(serialized_box_container* b, corona_size_t items_length)
+			static relative_ptr_type reserve(std::shared_ptr<serialized_box_container> b, corona_size_t items_length)
 			{
 				array_box temp;
 				auto location = b->fill<char>(0, sizeof(array_box_data) + items_length * sizeof(item_type));
@@ -259,14 +259,14 @@ namespace corona
 				return location;
 			}
 
-			static array_box get(serialized_box_container* b, corona_size_t location)
+			static array_box get(std::shared_ptr<serialized_box_container> b, corona_size_t location)
 			{
 				array_box temp;
 				temp.hdr = b->get_object<array_box_data>(location);
 				return temp;
 			}
 
-			static array_box create(serialized_box_container* b, corona_size_t items_length, relative_ptr_type& _dest)
+			static array_box create(std::shared_ptr<serialized_box_container> b, corona_size_t items_length, relative_ptr_type& _dest)
 			{
 				_dest = reserve(b, items_length);
 				auto temp = get(b, _dest);

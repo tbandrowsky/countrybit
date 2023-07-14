@@ -218,7 +218,8 @@ namespace corona
 				else if (hdr->dynamic)
 				{
 					relative_ptr_type demand_bytes = new_rows * sizeof(T);
-					if (box->check(demand_bytes)) {
+					auto boxptr = box.lock();
+					if (boxptr->check(demand_bytes)) {
 						hdr->max_rows += new_rows;
 						return true;
 					}
