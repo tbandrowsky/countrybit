@@ -13,7 +13,7 @@ namespace corona
 	{
 
 		using namespace database;
-
+/*
 		corona_controller::~corona_controller()
 		{
 			;
@@ -63,7 +63,7 @@ namespace corona
 			host->redraw();
 		}
 
-		int corona_controller::onHScroll(int controlId, scrollTypes scrollType, page_item pi)
+		int corona_controller::onHScroll(int controlId, scrollTypes scrollType)
 		{
 			if (controlId != canvasWindowsId)
 				return 0;
@@ -100,7 +100,7 @@ namespace corona
 			return pos;
 		}
 
-		int corona_controller::onVScroll(int controlId, scrollTypes scrollType, page_item pi)
+		int corona_controller::onVScroll(int controlId, scrollTypes scrollType)
 		{
 			if (controlId != canvasWindowsId)
 				return 0;
@@ -137,7 +137,7 @@ namespace corona
 			return pos;
 		}
 
-		int corona_controller::onSpin(int controlId, int newPosition, page_item pi)
+		int corona_controller::onSpin(int controlId, int newPosition)
 		{
 			double newPositionF = newPosition / 100.0;
 			return 0;
@@ -221,22 +221,22 @@ namespace corona
 			return oldShowUpdate;
 		}
 
-		void corona_controller::onCommand(int buttonId, page_item pi)
+		void corona_controller::onCommand(int buttonId)
 		{
 			auto size = host->getWindowClientPos();
 
 			stateChanged(size);
 		}
 
-		void corona_controller::onTextChanged(int textControlId, page_item pi)
+		void corona_controller::onTextChanged(int textControlId)
 		{
 		}
 
-		void corona_controller::onDropDownChanged(int dropDownId, page_item pi)
+		void corona_controller::onDropDownChanged(int dropDownId)
 		{
 		}
 
-		void corona_controller::onListViewChanged(int listViewId, page_item pi)
+		void corona_controller::onListViewChanged(int listViewId)
 		{
 
 		}
@@ -267,12 +267,6 @@ namespace corona
 			;
 		}
 
-		void corona_controller::clear()
-		{
-			showUpdate = true;
-			pg.clear();
-		}
-
 		const char* corona_controller::style_id(relative_ptr_type _style_field_id)
 		{
 			const char* r = nullptr;
@@ -282,48 +276,9 @@ namespace corona
 			return r;
 		}
 
-		page_item* corona_controller::row(page_item* _parent, relative_ptr_type _style_id, layout_rect _box, measure _item_space, visual_alignment _alignment)
-		{
-			return pg.row(_parent, _style_id, _box, _item_space, _alignment);
-		}
-
-		page_item* corona_controller::column(page_item* _parent, relative_ptr_type _style_id, layout_rect _box, measure _item_space, visual_alignment _alignment)
-		{
-			return pg.column(_parent, _style_id, _box, _item_space, _alignment);
-		}
-
-		page_item* corona_controller::absolute(page_item* _parent, relative_ptr_type _style_id, layout_rect _box)
-		{
-			return pg.absolute(_parent, _style_id, _box);
-		}
-
-		page_item* corona_controller::space(page_item* _parent, relative_ptr_type _style_id, layout_rect _box)
-		{
-			return pg.space(_parent, _style_id, _box);
-		}
-
-		page_item* corona_controller::text(page_item* _parent, relative_ptr_type _style_id, const char* _text, layout_rect _box)
-		{
-			return pg.text(_parent, _style_id, _text, _box);
-		}
-
-
-		page_item* corona_controller::canvas2d_row(relative_ptr_type _canvas_uid, page_item* _parent, relative_ptr_type _style_id, layout_rect _box, measure _item_space, visual_alignment _alignment)
-		{
-			return pg.canvas2d_row(_canvas_uid, _parent, _style_id, _box, _item_space, _alignment);
-		}
-		page_item* corona_controller::canvas2d_column(relative_ptr_type _canvas_uid, page_item* _parent, relative_ptr_type _style_id, layout_rect _box, measure _item_space, visual_alignment _alignment)
-		{
-			return pg.canvas2d_column(_canvas_uid, _parent, _style_id, _box, _item_space, _alignment);
-		}
-		page_item* corona_controller::canvas2d_absolute(relative_ptr_type _canvas_uid, page_item* _parent, relative_ptr_type _style_id, layout_rect _box, measure _item_space, visual_alignment _alignment)
-		{
-			return pg.canvas2d_absolute(_canvas_uid, _parent, _style_id, _box, _item_space, _alignment);
-		}
 
 		void corona_controller::stateChanged(const rectangle& newSize)
 		{
-			clear();
 			render(newSize);
 		}
 
@@ -350,7 +305,7 @@ namespace corona
 					std::cout << "Draw Canvas Item" << item.id << " " << location.x << " " << location.y << " " << location.w << " " << location.h << std::endl;
 #else
 
-					pg.visit_impl(&item, [this, host](page_item* _in_page)
+					pg.visit_impl(&item, [this, host](control_base* _in_page)
 						{
 							if (_in_page->is_drawable())
 							{
@@ -361,7 +316,7 @@ namespace corona
 							}
 							return true;
 						},
-						[this](page_item* _out_page)
+						[this](control_base* _out_page)
 						{
 							return true;
 						}
@@ -372,89 +327,7 @@ namespace corona
 			}
 			return adapter_blown_away;
 		}
-
-		bool corona_controller::drawFrame()
-		{
-			bool adapter_failure = false;
-			bool* padapter_failure = &adapter_failure;
-
-			for (auto pi : pg)
-			{
-				auto lyt = pi.item.layout;
-				if (lyt == layout_types::canvas2d_absolute ||
-					lyt == layout_types::canvas2d_row ||
-					lyt == layout_types::canvas2d_column)
-				{
-					drawCanvas(pi.item.id);
-				}
-				}
-			return true;
-			}
-
-		void corona_controller::render_item(drawableHost* _host, page_item* _item)
-		{
-			const char* cap = _item->caption != nullptr ? _item->caption : "";
-			const char* style_name = style_id(_item->style_id);
-
-			/*
-						if (_item->style_id == schema.idf_label_style)
-						{
-							DebugBreak();
-						}
-			*/
-
-			const char* sty = style_name != nullptr ? style_name : "(default style)";
-
-			if (!style_name) {
-				return;
-			}
-
-#ifdef OUTLINE_GUI
-
-			object_description od;
-
-			od = layout_type_names[(int)_item->layout];
-
-			if (_item->style_id > null_row) {
-				od += "-";
-				od += sty;
-			}
-
-			if (_item->object_path.object.row_id > null_row && !_item->slice.is_null()) {
-				od += "-";
-				od += _item->slice.get_class().item().name;
-			}
-
-#endif
-
-			auto effective_bounds = _item->bounds;
-
-			if (_item->canvas_id > -1)
-			{
-				auto container = pg[_item->canvas_id];
-				effective_bounds.x -= container.bounds.x;
-				effective_bounds.y -= container.bounds.y;
-			}
-
-			int state;
-
-			if (_item->selected)
-			{
-				state = style_selected;
-			}
-			else if (_item->mouse_over)
-			{
-				state = style_over;
-			}
-			else
-				state = style_normal;
-
-#ifdef OUTLINE_GUI
-			_host->drawView(style_name, cap, effective_bounds, state, od.c_str());
-#else
-			_host->drawView(style_name, cap, effective_bounds, state, nullptr);
-#endif
-		}
+*/
 	}
 
 }

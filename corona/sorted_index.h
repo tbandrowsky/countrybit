@@ -70,7 +70,7 @@ namespace corona
 					return id;
 				}
 
-				inline relative_ptr_type& detail(int idx)
+				inline relative_ptr_type& detail(int idx)  const
 				{
 					return details.get_at(idx);
 				}
@@ -88,7 +88,7 @@ namespace corona
 			index_mapper mapper;
 			bool mapper_dirty;
 
-			index_header_type* get_index_header()
+			index_header_type* get_index_header() const
 			{
 				index_header_type* t;
 				auto boxptr = box.lock();
@@ -99,7 +99,7 @@ namespace corona
 				return t;
 			};
 
-			index_node get_header()
+			index_node get_header() const
 			{
 				auto hdr = get_index_header();
 				index_node in = get_node(hdr->header_id);
@@ -164,10 +164,11 @@ namespace corona
 				return node;
 			}
 
-			index_node get_node(relative_ptr_type _node_id)
+			index_node get_node(relative_ptr_type _node_id) const
 			{
 				auto boxptr = box.lock();
 				index_node idxn = get_node(boxptr, _node_id);
+				return idxn;
 			}
 
 			void mapper_check()
@@ -315,7 +316,7 @@ namespace corona
 				return this->remove_node(key);
 			}
 
-			data_pair& operator[](const KEY& key)
+			data_pair& operator[](const KEY& key) const
 			{
 				relative_ptr_type n = find_node(key);
 				if (n == null_row) {
@@ -324,7 +325,7 @@ namespace corona
 				return get_node( n ).item();
 			}
 
-			bool contains(const KEY& key)
+			bool contains(const KEY& key) const
 			{
 				return this->find_node(key) != null_row;
 			}
@@ -415,7 +416,7 @@ namespace corona
 
 			// compare a node to a key for equality
 
-			inline int compare(relative_ptr_type _node, const KEY& key)
+			inline int compare(relative_ptr_type _node, const KEY& key) const
 			{
 				if (_node != null_row)
 				{
@@ -435,7 +436,7 @@ namespace corona
 				}
 			}
 
-			relative_ptr_type find_node(relative_ptr_type* update, const KEY& key)
+			relative_ptr_type find_node(relative_ptr_type* update, const KEY& key) const
 			{
 				relative_ptr_type found = null_row, p, q;
 				auto hdr = get_header();
@@ -561,7 +562,7 @@ namespace corona
 				}
 			}
 
-			relative_ptr_type find_node(const KEY& key)
+			relative_ptr_type find_node(const KEY& key) const
 			{
 #ifdef	TIME_SKIP_LIST
 				benchmark::auto_timer_type methodtimer("skip_list_type::search");

@@ -63,23 +63,28 @@ namespace corona
 
 		public:
 
-			virtual drawableHost* getDrawable(relative_ptr_type i) = 0;
-			virtual direct2dChildWindow* getWindow(relative_ptr_type ctrlId) = 0;
 
 			virtual bool getSaveFilename(std::string& _saveFileName, const char* _pathExtensions, const char* _defaultExtension) = 0;
-			virtual int renderPage(database::page& _page, database::jschema* _schema, database::jcollection& _collection) = 0;
 			virtual rectangle getWindowClientPos() = 0;
 			virtual rectangle getWindowPos(int ddlControlId) = 0;
 			virtual void setWindowPos(int ddlControlId, rectangle rect) = 0;
 			virtual void setMinimumWindowSize(point size) = 0;
 		};
 
+		class controller;
+
 		class win32ControllerHost : public controllerHost {
 
 		public:
 
-			virtual drawableHost* getDrawable(relative_ptr_type i) = 0;
-			virtual direct2dChildWindow* getWindow(relative_ptr_type ctrlId) = 0;
+			virtual HWND getMainWindow() = 0;
+			virtual HWND createWindow(DWORD window_id, LPCTSTR		lpClassName, LPCTSTR		lpWindowName, DWORD       dwStyle, rectangle bounds, LPVOID		lpParam, HFONT		font) = 0;
+			virtual void destroyWindow(HWND hwnd) = 0;
+
+			virtual direct2dChildWindow* createDirect2Window(DWORD control_id, rectangle bounds) = 0;
+			virtual direct2dChildWindow* getDirect2dWindow(relative_ptr_type ctrlId) = 0;
+
+			virtual void setController(controller * _newCurrentController) = 0;
 
 			virtual void setPictureIcon(int controlId, dtoIconId iconId) = 0;
 			virtual void setButtonIcon(int controlId, dtoIconId iconId) = 0;
@@ -140,7 +145,6 @@ namespace corona
 			virtual void setColorCapture(int _iconResourceId) = 0;
 
 			virtual bool getSaveFilename(std::string& _saveFileName, const char* _pathExtensions, const char* _defaultExtension) = 0;
-			virtual int renderPage(database::page& _page, database::jschema* _schema, database::jcollection& _collection) = 0;
 			virtual rectangle getWindowClientPos() = 0;
 			virtual rectangle getWindowPos(int ddlControlId) = 0;
 			virtual void setWindowPos(int ddlControlId, rectangle rect) = 0;

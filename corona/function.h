@@ -5,6 +5,8 @@ namespace corona
 	namespace database
 	{
 
+#define TRACE_TASK 0
+
 		class task_job : public job
 		{
 		public:
@@ -86,7 +88,7 @@ namespace corona
 				};
 
 				void return_value(T value) {
-					//std::cout << "task return_value:" << value << " " << this << GetCurrentThreadId() << std::endl;
+					std::cout << "task return_value:" << value << " " << this << GetCurrentThreadId() << std::endl;
 					m_value = value;
 				}
 

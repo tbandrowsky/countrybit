@@ -17,5 +17,12 @@ namespace corona
 				success = true;
 			}
 		}
+
+		std::ostream& operator <<(std::ostream& output, const os_result& src)
+		{
+			output << src.error_code << " " << src.message << " " << src.success;
+			return output;
+		}
+
 	}
 }

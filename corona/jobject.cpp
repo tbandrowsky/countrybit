@@ -285,7 +285,7 @@ namespace corona
 				throw std::invalid_argument(std::format("get:field id not found {}", _field_id));
 			}
 
-			jfield& field = get_field(_field_idx);
+			const jfield& field = get_field(_field_idx);
 			switch (field.type_id)
 			{
 			case jtype::type_int8:
@@ -338,7 +338,7 @@ namespace corona
 			;
 		}
 
-		jobject::jobject(jschema* _schema, relative_ptr_type _class_id, char* _bytes) 
+		jobject::jobject(const jschema  * _schema , relative_ptr_type _class_id, char* _bytes)
 			: 
 			schema(_schema), 
 			class_id(_class_id), 
@@ -349,7 +349,7 @@ namespace corona
 			the_class = schema->get_class(_class_id);
 		}
 
-		jobject::jobject(jschema* _schema, relative_ptr_type _class_id, serialized_box_container *_box, relative_ptr_type _location) : 
+		jobject::jobject(const jschema  * _schema, relative_ptr_type _class_id, serialized_box_container *_box, relative_ptr_type _location) :
 			schema(_schema), 
 			class_id(_class_id), 
 			bytes(nullptr), 
@@ -406,7 +406,7 @@ namespace corona
 			return the_class;
 		}
 
-		jschema *jobject::get_schema()
+		const jschema *jobject::get_schema()
 		{
 			return schema;
 		}
@@ -583,7 +583,7 @@ namespace corona
 			}
 		}
 
-		jfield& jobject::get_field(int field_idx)
+		const jfield& jobject::get_field(int field_idx) const
 		{
 			jclass_field& jcf = the_class.detail(field_idx);
 			jfield &jf = schema->get_field(jcf.field_id);
@@ -609,7 +609,7 @@ namespace corona
 			return get_field_index_by_id(field_id);
 		}
 
-		jclass_field& jobject::get_class_field(int field_idx)
+		const jclass_field& jobject::get_class_field(int field_idx) const
 		{
 			jclass_field& jcf = the_class.detail(field_idx);
 			return jcf;
@@ -630,7 +630,7 @@ namespace corona
 			return the_class.pitem()->class_id == class_id;
 		}
 
-		jfield& jobject::get_field_by_id(relative_ptr_type field_id)
+		const jfield& jobject::get_field_by_id(relative_ptr_type field_id) const
 		{
 			for (int i = 0; i < the_class.size(); i++)
 			{
@@ -1278,7 +1278,7 @@ namespace corona
 				{ { jtype::type_datetime, "date_stop", "Max Date" }, 0, INT64_MAX }
 			};
 
-			put_integer_field_request int_fields[23] = {
+			put_integer_field_request int_fields[25] = {
 				{ { jtype::type_int64, "count", "Count" }, 0, INT64_MAX },
 				{ { jtype::type_int8, "bold", "Bold" }, 0, INT8_MAX },
 				{ { jtype::type_int8, "italic", "Italic" }, 0, INT8_MAX },
@@ -1301,6 +1301,8 @@ namespace corona
 				{ { jtype::type_int32, "object_x", "X Dim" }, 0, INT64_MAX },
 				{ { jtype::type_int32, "object_y", "Y Dim" }, 0, INT64_MAX },
 				{ { jtype::type_int32, "object_z", "Z Dim" }, 0, INT64_MAX },
+				{ { jtype::type_int32, "object_w", "Width" }, 0, INT64_MAX },
+				{ { jtype::type_int32, "object_h", "Height" }, 0, INT64_MAX },
 				{ { jtype::type_int64, "style_id", "Style Id" }, 0, INT64_MAX },
 			};
 
@@ -1347,13 +1349,13 @@ namespace corona
 		bool schema_tests()
 		{
 			try {
-				dynamic_box box;
-				box.init(1 << 21);
+				std::shared_ptr<dynamic_box> box = std::make_shared<dynamic_box>();
+				box->init(1 << 21);
 
 				jschema schema;
 				relative_ptr_type schema_id;
 
-				schema = jschema::create_schema( &box, 20, true, schema_id );
+				schema = jschema::create_schema( box, 20, true, schema_id );
 
 				relative_ptr_type quantity_field_id = null_row;
 				relative_ptr_type last_name_field_id = null_row;
@@ -1453,13 +1455,16 @@ namespace corona
 		{
 
 			try {
-				dynamic_box box;
-				box.init(1 << 21);
+
+				corona::database::application app;
+
+				std::shared_ptr<dynamic_box> box = std::make_shared<dynamic_box>();
+				box->init(1 << 21);
 
 				jschema schema;
 				relative_ptr_type schema_id;
 
-				schema = jschema::create_schema(&box, 20, true, schema_id);
+				schema = jschema::create_schema(box, 20, true, schema_id);
 
 				relative_ptr_type quantity_field_id = null_row;
 				relative_ptr_type last_name_field_id = null_row;
@@ -1478,7 +1483,8 @@ namespace corona
 				schema.bind_field("institutionName", institution_field_id);
 
 				jcollection_ref ref;
-				ref.data = &box;
+				ref.data = std::make_shared<persistent_box>();
+				ref.data->create(&app, "test.dat");
 				ref.max_objects = 50;
 				ref.collection_size_bytes = 1 << 19;
 
@@ -1617,19 +1623,20 @@ namespace corona
 		{
 
 			try {
-				dynamic_box box;
-				box.init(1 << 21);
+				std::shared_ptr<dynamic_box> box = std::make_shared<dynamic_box>();
+				box->init(1 << 21);
+				corona::database::application app;
 
 				jschema schema;
 				relative_ptr_type schema_id;
 
-				schema = jschema::create_schema(&box, 50, true, schema_id);
+				schema = jschema::create_schema(box, 50, true, schema_id);
 
 				put_class_request sprite_frame_request;
 
 				sprite_frame_request.class_name = "spriteframe";
 				sprite_frame_request.class_description = "sprite frame";
-				sprite_frame_request.member_fields = { "shortName", "rectangle", "color" };
+				sprite_frame_request.member_fields = { "shortName", "object_x", "object_y", "object_w", "object_h", "color" };
 				relative_ptr_type sprite_frame_class_id = schema.put_class(sprite_frame_request);
 
 				if (sprite_frame_class_id == null_row) {
@@ -1640,7 +1647,7 @@ namespace corona
 				put_class_request sprite_class_request;
 				sprite_class_request.class_name = "sprite";
 				sprite_class_request.class_description = "sprite";
-				sprite_class_request.member_fields = { "shortName", "rectangle", member_field(sprite_frame_class_id, { 10, 10, 1 }) };
+				sprite_class_request.member_fields = { "shortName", "object_x", "object_y", "object_w", "object_h" , member_field(sprite_frame_class_id) };
 				relative_ptr_type sprite_class_id = schema.put_class(sprite_class_request);
 
 				if (sprite_class_id == null_row) {
@@ -1655,7 +1662,8 @@ namespace corona
 				relative_ptr_type classesb[2] = { sprite_class_id, null_row };
 
 				jcollection_ref ref;
-				ref.data = &box;
+				ref.data = std::make_shared<persistent_box>();
+				ref.data->create(&app, "test.dat");
 				ref.max_objects = 50;
 				ref.collection_size_bytes = 1 << 19;
 
@@ -1664,15 +1672,24 @@ namespace corona
 				jcollection sprites = schema.create_collection(&ref);
 
 				for (int i = 0; i < 10; i++) {
-					auto slice = sprites.create_object(sprite_class_id, new_sprite_id);
+
+					relative_ptr_type new_sprite_id;
+					auto slice = sprites.create_object(sprite_class_id, new_sprite_id );
 					auto image_name = slice.get_string(0);
-					auto image_rect = slice.get_rectangle(1);
+
+
+					auto bx = slice.get_int32("object_x");
+					auto by = slice.get_int32("object_y");
+					auto bw = slice.get_int32("object_w");
+					auto bh = slice.get_int32("object_h");
+
+					rectangle image_rect;
 
 					image_name = std::format("{} #{}", "image", i);
-					image_rect->x = 0;
-					image_rect->y = 0;
-					image_rect->w = 1000;
-					image_rect->h = 1000;
+					bx = 0;
+					by = 0;
+					bw = 1000;
+					bh = 1000;
 
 #if _DETAIL
 					std::cout << "before:" << image_name << std::endl;
@@ -1686,14 +1703,17 @@ namespace corona
 				for (auto slice : sprites)
 				{
 					auto image_name = slice.item.get_string(0);
-					auto image_rect = slice.item.get_rectangle(1);
+					auto bx = slice.item.get_int32("object_x");
+					auto by = slice.item.get_int32("object_y");
+					auto bw = slice.item.get_int32("object_w");
+					auto bh = slice.item.get_int32("object_h");
 
 #if _DETAIL
 					std::cout << image_name << std::endl;
 					std::cout << image_rect->w << " " << image_rect->h << " " << image_rect->x << " " << image_rect->y << std::endl;
 #endif
 
-					if (image_rect->w != 1000 || image_rect->h != 1000) {
+					if (bw != 1000 || bh != 1000) {
 
 						std::cout << __LINE__ << ":array failed" << std::endl;
 						return false;

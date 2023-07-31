@@ -808,7 +808,6 @@ namespace corona
 		directApplicationWin32::directApplicationWin32(adapterSet* _factory) : factory(_factory), colorCapture(false)
 		{
 			current = this;
-			previousController = NULL;
 			currentController = NULL;
 			controlFont = nullptr;
 			labelFont = nullptr,
@@ -861,7 +860,6 @@ namespace corona
 				{
 					auto wins = winroot->getChildren();
 
-					int iy = 200;
 					relative_ptr_type id = 0;
 
 					for (auto& w : wins)
@@ -884,13 +882,6 @@ namespace corona
 
 						std::string temp = std::format("child {} {} counter", id, counter);
 
-						rectangle dest2;
-						dest2.x = 50.0;
-						dest2.y = iy;
-						dest2.w = 500.0;
-						dest2.h = 50.0;
-
-						iy += 50.0;
 						counter++;
 					}
 
@@ -906,93 +897,45 @@ namespace corona
 			}
 		}
 
-		void directApplicationWin32::destroyChildren()
+		void directApplicationWin32::loadStyleSheet()
 		{
-			for (auto& child : oldWindowControlMap)
-			{
-				if (!windowControlMap.contains(child.first)) 
-				{
-					if (child.second.window) 
-					{
-						char buff[512];
-						GetClassName(child.second.window, buff, sizeof(buff));
-#if TRACE_SIZE
-						std::cout << "Destroying " << buff << std::endl;
-#endif
-						DestroyWindow(child.second.window);
-					}
-					else
-					{
-						factory->getWindow(hwndRoot)->deleteChild(child.first);
-					}
-				}
-			}
-			oldWindowControlMap = windowControlMap;
+
 		}
 
-		bool directApplicationWin32::createChildWindow(
-			page_item_identifier pid,
+		HWND directApplicationWin32::createWindow(
+			DWORD window_id,
 			LPCTSTR		lpClassName,
 			LPCTSTR		lpWindowName,
 			DWORD       dwStyle,
-			int         x,
-			int         y,
-			int         nWidth,
-			int         nHeight,
-			int			windowId,
+			rectangle bounds, 
 			LPVOID		lpParam,
-			HFONT		font,
-			database::page_item item
+			HFONT		font
 		)
 		{
 
 			HWND hwnd = nullptr;
 			bool created_something = false;
 
-			x /= dpiScale;
-			y /= dpiScale;
-			nWidth /= dpiScale;
-			nHeight /= dpiScale;
+			bounds.x /= dpiScale;
+			bounds.y /= dpiScale;
+			bounds.w /= dpiScale;
+			bounds.h /= dpiScale;
 
 			dwStyle |= WS_CLIPSIBLINGS;
 
-			if (oldWindowControlMap.contains(pid))
+			hwnd = CreateWindow(lpClassName, lpWindowName, dwStyle, bounds.x, bounds.y, bounds.w, bounds.h, directApplicationWin32::hwndRoot, (HMENU)window_id, hinstance, lpParam);
+			if (font)
 			{
-				auto wi = oldWindowControlMap[pid];
-				int old_id = GetDlgCtrlID(wi.window);
-				SetWindowLongPtr(wi.window, GWL_ID, item.id);
-				if (factory->containsWindow(wi.window)) {
-					auto w = factory->getWindow(wi.window);
-					w->moveWindow(x, y, nWidth, nHeight);
-				}
-				else 
-				{
-					MoveWindow(wi.window, x, y, nWidth, nHeight, true);
-				}
-				hwnd = wi.window;
-			}
-			else
-			{
-				created_something = true;
-				hwnd = CreateWindow(lpClassName, lpWindowName, dwStyle, x, y, nWidth, nHeight, directApplicationWin32::hwndRoot, (HMENU)windowId, hinstance, lpParam);
-				if (font)
-				{
-					SendMessage(hwnd, WM_SETFONT, (WPARAM)font, TRUE);
-				}
+				SendMessage(hwnd, WM_SETFONT, (WPARAM)font, TRUE);
 			}
 
-			windowMapItem wmi = { hwnd };
-			windowControlMap.insert_or_assign(pid, wmi);
-			message_map.insert_or_assign(windowId, item);
-			return created_something;
+			return hwnd;
 		}
 
-
-		void directApplicationWin32::loadStyleSheet()
+		void directApplicationWin32::destroyWindow(HWND hwnd)
 		{
-
+			::DestroyWindow(hwnd);
 		}
-
 
 		HFONT directApplicationWin32::createFont(const char *_fontName, double fontSize, bool bold, bool italic )
 		{
@@ -1012,86 +955,15 @@ namespace corona
 			return hfont;
 		}
 
-		int directApplicationWin32::renderPage(database::page& _page, database::jschema* _schema, database::jcollection& _collection)
+		direct2dChildWindow* directApplicationWin32::createDirect2Window(DWORD control_id, rectangle bounds)
 		{
-			if (disableChangeProcessing)
-				return 0;
-
-			disableChangeProcessing = true;
-
-			int canvasWindowId = -1;
-
-			windowControlMap.clear();
-			message_map.clear();
+			if (bounds.w < 1 || bounds.h < 1)
+				return nullptr;
 
 			auto dpi = GetDpiForWindow(hwndRoot);
-			auto *win = factory->getWindow(hwndRoot);
-
-			bool created_anything = false;
-			bool created_something = false;
-
-			database::jobject slice;
-			for (auto piter : _page)
-			{
-				auto pi = piter.item;
-
-				if (pi.bounds.w < 1 || pi.bounds.h < 1)
-					continue;
-
-				auto pid = pi.get_identifier();
-
-				switch (pi.layout)
-				{
-				case database::layout_types::canvas2d_row:
-				case database::layout_types::canvas2d_column:
-				case database::layout_types::canvas2d_absolute:
-					{
-						windowMapItem wmi{};
-
-						auto child = win->createChild(pid, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h);
-						for (int i = 0; i < styles_count; i++) 
-						{
-							auto ss = currentController->get_style_sheet(i);
-							child->loadStyleSheet(ss, i);
-						}
-						windowControlMap.insert_or_assign(pid, wmi);
-					}
-					break;
-				case database::layout_types::text_window:
-					{
-						database::istring<256> x;
-						created_something = createChildWindow(pid, WC_EDIT, x.c_str(), WS_CHILD | WS_BORDER | WS_TABSTOP | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont, pi);
-					}
-					break;
-/*				case database::layout_types::set:
-					created_something = createChildWindow(pid, WC_BUTTON, pi.caption, BS_PUSHBUTTON | BS_FLAT | WS_TABSTOP | WS_CHILD | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont, pi);
-					break;
-				case database::layout_types::create:
-					created_something = createChildWindow(pid, WC_BUTTON, pi.caption, BS_PUSHBUTTON | BS_FLAT | WS_TABSTOP | WS_CHILD | WS_VISIBLE, pi.bounds.x, pi.bounds.y, pi.bounds.w, pi.bounds.h, pi.id, NULL, controlFont, pi);
-					break;
-				case database::layout_types::select:
-					break;
-				default:
-					{
-					auto bx = pi.bounds;
-					RECT r;
-					r.left = bx.x * 96.0 / dpi;
-					r.top = bx.y * 96.0 / dpi;
-					r.right = r.left + bx.w * 96.0 / dpi;
-					r.bottom = r.top + bx.h * 96.0 / dpi;
-					InvalidateRect(hwndRoot, &r, true);
-					}
-*/
-				}
-				if (created_something)
-					created_anything = true;
-			}
-
-			destroyChildren();
-			disableChangeProcessing = false;	
-			UpdateWindow(hwndRoot);
-
-			return created_anything;
+			auto* win = factory->getWindow(hwndRoot);
+			auto child = win->createChild(control_id, bounds.x, bounds.y, bounds.w, bounds.h);
+			return child;
 		}
 
 		LRESULT CALLBACK directApplicationWin32::windowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -1132,19 +1004,15 @@ namespace corona
 				{
 					UINT controlId = LOWORD(wParam);
 					UINT notificationCode = HIWORD(wParam);
-					database::page_item pi;
-					if (message_map.contains(controlId)) {
-						pi = message_map[controlId];
-					}
 					switch (notificationCode) {
 					case BN_CLICKED: // button or menu
-						currentController->onCommand(controlId, pi);
+						currentController->onCommand(controlId);
 						break;
 					case EN_UPDATE:
-						currentController->onTextChanged(controlId, pi);
+						currentController->onTextChanged(controlId);
 						break;
 					case CBN_SELCHANGE:
-						currentController->onDropDownChanged(controlId, pi);
+						currentController->onDropDownChanged(controlId);
 						break;
 					}
 					break;
@@ -1172,23 +1040,16 @@ namespace corona
 					case UDN_DELTAPOS:
 					{
 						auto lpnmud = (LPNMUPDOWN)lParam;
-						database::page_item pi;
-						if (message_map.contains(lpnm->idFrom)) {
-							pi = message_map[lpnm->idFrom];
-						}
-						currentController->onSpin(lpnm->idFrom, lpnmud->iPos + lpnmud->iDelta, pi);
+						currentController->onSpin(lpnm->idFrom, lpnmud->iPos + lpnmud->iDelta);
 						return 0;
 					}
 					break;
 					case LVN_ITEMCHANGED:
 					{
 						auto lpmnlv = (LPNMLISTVIEW)lParam;
-						database::page_item pi;
-						if (message_map.contains(lpnm->idFrom)) {
-							pi = message_map[lpnm->idFrom];
-						}
+						database::control_base pi;
 						if (lpmnlv->uNewState & LVIS_SELECTED)
-							currentController->onListViewChanged(lpnm->idFrom, pi);
+							currentController->onListViewChanged(lpnm->idFrom);
 					}
 					break;
 					case NM_CLICK:
@@ -1383,49 +1244,21 @@ namespace corona
 			return DefWindowProc(hwnd, message, wParam, lParam);
 		}
 
-		drawableHost* directApplicationWin32::getDrawable(relative_ptr_type i)
-		{	
-			auto witem = this->windowControlMap[i];
-			auto w = witem.window;
-			auto wmi = factory->getWindow(w);
-			return wmi;
-		}
-
-		direct2dChildWindow* directApplicationWin32::getWindow(relative_ptr_type i)
+		direct2dChildWindow* directApplicationWin32::getDirect2dWindow(relative_ptr_type i)
 		{
 			auto wmi = factory->findChild(i);
 			return wmi;
 		}
 
-		void directApplicationWin32::setController(controller<win32ControllerHost>* _newCurrentController)
+		void directApplicationWin32::setController(controller* _newCurrentController)
 		{
 			::QueryPerformanceCounter((LARGE_INTEGER*)&startCounter);
 			pressedKeys.clear();
-			currentController.reset(_newCurrentController);
-			currentController->attach(this);
+			currentController = _newCurrentController;
 			::QueryPerformanceCounter((LARGE_INTEGER*)&lastCounter);
 		}
 
-		void directApplicationWin32::pushController(controller<win32ControllerHost>* _newCurrentController)
-		{
-			pressedKeys.clear();
-			previousController.reset(currentController.get());
-			currentController.reset(_newCurrentController);
-			currentController->attach(this);
-			::QueryPerformanceCounter((LARGE_INTEGER*)&startCounter);
-			::QueryPerformanceCounter((LARGE_INTEGER*)&lastCounter);
-		}
-
-		void directApplicationWin32::popController()
-		{
-			pressedKeys.clear();
-			currentController.reset(previousController.get());
-			previousController.release();
-			::QueryPerformanceCounter((LARGE_INTEGER*)&startCounter);
-			::QueryPerformanceCounter((LARGE_INTEGER*)&lastCounter);
-		}
-
-		bool directApplicationWin32::runFull(HINSTANCE _hinstance, const char* _title, int _iconId, bool _fullScreen, controller<win32ControllerHost>* _firstController)
+		bool directApplicationWin32::runFull(HINSTANCE _hinstance, const char* _title, int _iconId, bool _fullScreen, controller* _firstController)
 		{
 			if (!_firstController)
 				return false;
@@ -1510,7 +1343,7 @@ namespace corona
 			return true;
 		}
 
-		bool directApplicationWin32::runDialog(HINSTANCE _hinstance, const char* _title, int _iconId, bool _fullScreen, controller<win32ControllerHost>* _firstController)
+		bool directApplicationWin32::runDialog(HINSTANCE _hinstance, const char* _title, int _iconId, bool _fullScreen, controller* _firstController)
 		{
 			if (!_firstController)
 				return false;

@@ -9,14 +9,15 @@ namespace corona
 		bool test_index()
 		{
 
-			static_box<20000> box;
+			std::shared_ptr<static_box<20000>> box = 
+				std::make_shared<static_box<20000>>();
 
 			using test_sorted_index_type = sorted_index<int, istring<30>, 1>;
 
 			test_sorted_index_type test;
 
 			relative_ptr_type test_location;
-			test = test_sorted_index_type::create_sorted_index( &box, test_location );
+			test = test_sorted_index_type::create_sorted_index( box, test_location );
 
 			test.insert_or_assign(5, "hello");
 			auto t1 = test[5];

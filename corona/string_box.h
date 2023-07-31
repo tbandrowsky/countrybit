@@ -66,7 +66,6 @@ namespace corona
 			}
 
 			template <typename BOX>
-			requires(box<BOX, char>)
 			static relative_ptr_type create(BOX* b, int chars_length)
 			{
 				string_box temp;
@@ -79,7 +78,6 @@ namespace corona
 			}
 
 			template <typename BOX>
-			requires(box<BOX, char>)
 			static string_box get(BOX* b, int location)
 			{
 				string_box temp;

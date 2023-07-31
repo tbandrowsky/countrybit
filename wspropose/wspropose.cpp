@@ -1,7 +1,7 @@
 
 #include "corona.h"
 #include "resource.h"
-#include "wspropose_controller.h"
+#include "corona.h"
 
 int __stdcall WinMain(HINSTANCE hInstance,
 	HINSTANCE hPrevInstance,

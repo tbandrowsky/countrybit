@@ -8,15 +8,25 @@ namespace corona
 
 		jdatabase::jdatabase(application* _application) : current_application(_application)
 		{
+			database_box = std::make_shared<persistent_box>();
+		}
 
+		jdatabase::~jdatabase()
+		{
+			;
+		}
+
+		std::ostream& operator <<(std::ostream& output, db_response& src)
+		{
+			output << src.os_code << " " << src.message;
 		}
 
 		task<db_response> jdatabase::open(open_db_request _open)
 		{
 			int success = 1;
-			database_box.open(current_application, _open.filename);
-			map = database_box.get_object<jdatabase_control_map>(0);
-			collections_by_id = collections_by_id_type::get_sorted_index(&database_box, map->collections_by_id_location);
+			database_box->open(current_application, _open.filename);
+			map = database_box->get_object<jdatabase_control_map>(0);
+			collections_by_id = collections_by_id_type::get_sorted_index(database_box, map->collections_by_id_location);
 			db_response jfr;
 			jfr.success = true;
 			co_return jfr;
@@ -32,8 +42,8 @@ namespace corona
 			int64_t collection_by_name_bytes = collections_by_name_type::get_box_size();
 			int64_t collection_by_id_bytes = collections_by_id_type::get_box_size();
 
-			database_box.create(current_application, _create.database_filename);
-			map = database_box.allocate<jdatabase_control_map>(1);
+			database_box->create(current_application, _create.database_filename);
+			map = database_box->allocate<jdatabase_control_map>(1);
 
 			std::filesystem::path dbpath = _create.database_filename.c_str();
 			std::filesystem::path dbfolder = dbpath.parent_path();
@@ -41,10 +51,10 @@ namespace corona
 			map->filename = dbpath;
 			map->database_folder = dbfolder;
 
-			schema = jschema::create_schema(&database_box, _create.num_classes, true, map->schema_location);
-			collections_by_id = collections_by_id_type::create_sorted_index(&database_box, map->collections_by_id_location);
-			collections_by_name = collections_by_name_type::create_sorted_index(&database_box, map->collections_by_name_location);
-			database_box.commit();
+			schema = jschema::create_schema(database_box, _create.num_classes, true, map->schema_location);
+			collections_by_id = collections_by_id_type::create_sorted_index(database_box, map->collections_by_id_location);
+			collections_by_name = collections_by_name_type::create_sorted_index(database_box, map->collections_by_name_location);
+			database_box->commit();
 
 			db_response jfr;
 			jfr.success = true;
@@ -92,7 +102,7 @@ namespace corona
 				collections_by_id.insert_or_assign(new_collection.collection_id, new_collection);
 				collections_by_name.insert_or_assign(new_collection.collection_name, new_collection.collection_id);
 
-				database_box.commit();
+				database_box->commit();
 
 				response = get_collection(new_collection.collection_id);
 			}
@@ -135,7 +145,7 @@ namespace corona
 			}
 			auto ref = collections_by_id[_id];
 			if (ref.second.data == nullptr) {
-				ref.second.data = new persistent_box();
+				ref.second.data = std::make_shared<persistent_box>();
 				ref.second.data->open(current_application, ref.second.collection_file_name);
 			}
 			response.collection = jcollection(&schema, &ref.second);
@@ -193,17 +203,39 @@ namespace corona
 			return class_invoke<object_name>(name.c_str(), [this](auto& r) { return schema.find_class(r); }, name);
 		}
 
+		class query_element
+		{
+		public:
+			std::weak_ptr<query_element> parent;
+			std::string body;
+			std::vector<std::shared_ptr<query_element>> children;
+		};
+
+		class query_statement : public query_element {		};
+		class class_expression : public query_element {		};
+		class class_where_expression : public query_element {		};
+		class field_expression : public query_element {		};
+		class constant_expression : public query_element {		};
+
 		query_response jdatabase::query(const std::string& _query_expression)
 		{
-			std::stack<std::unique_ptr<process_item>> items;
+			query_response response;
+			return response;
+		}
 
-			std::unique_ptr<query_process_item> pi = std::make_unique<query_process_item>();
+	}
+}
+			/*
+			std::stack<std::shared_ptr<query_element>> items;
+
+			std::shared_ptr<query_statement> pi = std::make_unique<query_statement>();
+
 			items.push(pi);
 
 			for (auto c : _query_expression)
 			{
 				auto current_item = items.top();
-				if (std::isalpha(c))
+				if (std::isalpha(c) || std::isalnum(c))
 				{
 					if (current_item->is_class_process_item() ||
 						current_item->is_field_process_item() || 
@@ -217,18 +249,6 @@ namespace corona
 					else if (current_item->is_where_process_item())
 					{
 
-					}
-				}
-				else if (std::isdigit(c))
-				{
-					if (current_item->is_class_process_item() || 
-						current_item->is_field_process_item() ||
-						current_item->is_string_process_item()) {
-						current_item->add(c);
-					}
-					else 
-					{
-						current_item->add(c);
 					}
 				}
 				else if (c == '[') 
@@ -279,12 +299,4 @@ namespace corona
 				{
 
 				}
-			}
-		}
-
-		jdatabase::~jdatabase()
-		{
-			;
-		}
-	}
-}
+				*/

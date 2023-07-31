@@ -27,7 +27,7 @@ namespace corona
 			application* app;
 			object_path box_name;
 			file box_file;
-			dynamic_box transaction_data;
+			std::shared_ptr<dynamic_box> transaction_data;
 			io_block_store transaction;
 			relative_ptr_type transaction_header;
 
@@ -55,7 +55,7 @@ namespace corona
 			serialized_box_file_implementation operator =(const serialized_box_file_implementation& _src) = delete;
 
 			serialized_box_file_implementation(serialized_box_file_implementation&& _src);
-			serialized_box_file_implementation& operator =(serialized_box_file_implementation&& _src) = delete;
+			serialized_box_file_implementation& operator =(serialized_box_file_implementation&& _src);
 
 			static serialized_box_file_implementation* open(application* _application, object_path _file_name);
 			static serialized_box_file_implementation* create(application* _application, object_path _file_name);

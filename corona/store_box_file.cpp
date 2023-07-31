@@ -19,16 +19,18 @@ namespace corona
 
 		serialized_box_file_implementation::serialized_box_file_implementation() : app(nullptr)
 		{
-			transaction_data.init(1 << 20);
-			transaction = io_block_store::create_sorted_index(&transaction_data, transaction_header);
+			transaction_data = std::make_shared<dynamic_box>();
+			transaction_data->init(1 << 20);
+			transaction = io_block_store::create_sorted_index(transaction_data, transaction_header);
 		}
 
 		serialized_box_file_implementation::serialized_box_file_implementation(application* _application, object_path _file_name) :
 			app(_application),
 			box_name(_file_name)
 		{
-			transaction_data.init(1 << 20);
-			transaction = io_block_store::create_sorted_index(&transaction_data, transaction_header);
+			transaction_data = std::make_shared<dynamic_box>();
+			transaction_data->init(1 << 20);
+			transaction = io_block_store::create_sorted_index(transaction_data, transaction_header);
 		}
 
 		serialized_box_file_implementation::serialized_box_file_implementation(serialized_box_file_implementation&& _src)
@@ -98,10 +100,10 @@ namespace corona
 			os_result r;
 			try
 			{
-				auto ret = co_await box_file.read(0, &header, sizeof(header));
+				auto ret_read = co_await box_file.read(0, &header, sizeof(header));
 				header.sbd._top = sizeof(header);
-				auto ret = co_await box_file.write(0, &header, sizeof(header));
-				r = ret.last_result;
+				auto ret_write = co_await box_file.write(0, &header, sizeof(header));
+				r = ret_write.last_result;
 			}
 			catch (std::exception e)
 			{
@@ -148,9 +150,8 @@ namespace corona
 				if (total_length < 0)
 				{
 					double factor = 1.0;
-					int64_t bytes_to_add;
-					int64_t elapsed_seconds = current_time - header.last_grow;
 					int64_t bytes_to_add = _length;
+					int64_t elapsed_seconds = current_time - header.last_grow;
 
 					if (elapsed_seconds > 0)
 					{
@@ -169,8 +170,8 @@ namespace corona
 
 				}
 
-				auto total_length = _length + sizeof(box_block);
-				bb = (box_block*)transaction_data.allocate<char>(total_length);
+				total_length = _length + sizeof(box_block);
+				bb = (box_block*)transaction_data->allocate<char>(total_length);
 				bb->deleted = false;
 				bb->allocated_length = total_length;
 				bb->payload_length = _length;
@@ -208,7 +209,7 @@ namespace corona
 			{
 				box_block temp, *actual;
 				co_await box_file.read(location, &temp, sizeof(box_block));
-				actual = (box_block *)transaction_data.allocate<char>(temp.payload_length );
+				actual = (box_block *)transaction_data->allocate<char>(temp.payload_length );
 				co_await box_file.read(location, actual, actual->allocated_length);
 			}
 			co_return bb;

@@ -50,14 +50,14 @@ namespace corona
 
             using box_type = dynamic_box;
 
-            box_type box;
+            std::shared_ptr<box_type> box = std::make_shared<box_type>();
 
-            box.init(50000);
+            box->init(50000);
 
             table<test_item> basic;
 
-            auto location = table<test_item>::reserve_table(&box, 20);
-            basic = table<test_item>::get_table(&box, location);
+            auto location = table<test_item>::reserve_table(box, 20);
+            basic = table<test_item>::get_table(box, location);
 
             test_item* ti = &objects[0];
             test_item* tif = &moved_foward_objects[0];
@@ -125,7 +125,7 @@ namespace corona
 
             relative_ptr_type table_location;
             relative_ptr_type simple_test_location;
-            auto simple_test = item_details_table<test_item, object_name>::create_table(&box, 10, 100, simple_test_location);
+            auto simple_test = item_details_table<test_item, object_name>::create_table(box, 10, 100, simple_test_location);
 
             test_item tix;
             tix.name = "test1";
@@ -176,7 +176,7 @@ namespace corona
 #endif
 
             relative_ptr_type insert_test2_location;
-            auto insert_test2 = table<test_item>::create_table(&box, 20, insert_test2_location);
+            auto insert_test2 = table<test_item>::create_table(box, 20, insert_test2_location);
 
             tix.name = "test 1";
             tix.description = "test1 description";
@@ -204,7 +204,7 @@ namespace corona
 #endif
 
             item_details_table<test_item, object_name> item_stuff;
-            item_stuff = item_details_table<test_item, object_name>::create_table(&box, 10, 100, table_location);
+            item_stuff = item_details_table<test_item, object_name>::create_table(box, 10, 100, table_location);
 
             relative_ptr_type ids[4];
 

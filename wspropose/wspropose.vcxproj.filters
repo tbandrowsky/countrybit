@@ -24,18 +24,12 @@
     <ClInclude Include="wspropose.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="wspropose_controller.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="wspropose.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="pch.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="wspropose_controller.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

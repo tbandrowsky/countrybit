@@ -29,7 +29,7 @@ namespace corona
 
 			relative_ptr_type	objects_id;
 
-			std::shared_ptr<serialized_box_container>		data;
+			std::shared_ptr<persistent_box>		data;
 
 			jcollection_ref() : 
 				collection_name(""),
@@ -60,12 +60,12 @@ namespace corona
 
 		class jobject
 		{
-			std::shared_ptr<jschema> schema;
+			const jschema *schema;
 			relative_ptr_type class_id;
 			char* bytes;
 			jclass the_class;
 
-			std::shared_ptr<serialized_box_container> box;
+			serialized_box_container *box;
 			relative_ptr_type location;
 
 			size_t get_offset(int field_idx, jtype _type = jtype::type_null);
@@ -89,8 +89,8 @@ namespace corona
 		public:
 
 			jobject();
-			jobject(jschema* _schema, relative_ptr_type _class_id, char* _bytes);
-			jobject(jschema* _schema, relative_ptr_type _class_id, serialized_box_container *_box, relative_ptr_type _location);
+			jobject(const jschema *_schema, relative_ptr_type _class_id, char* _bytes);
+			jobject(const jschema *_schema, relative_ptr_type _class_id, serialized_box_container *_box, relative_ptr_type _location);
 
 			jobject(const jobject& src);
 			jobject operator =(const jobject& src);
@@ -101,7 +101,7 @@ namespace corona
 			void construct();
 
 			jclass get_class() const;
-			std::shared_ptr<jschema> get_schema();
+			const jschema *get_schema();
 
 			relative_ptr_type get_class_id() const 
 			{
@@ -115,9 +115,9 @@ namespace corona
 
 			int get_field_index_by_name(const object_name& name);
 			int get_field_index_by_id(relative_ptr_type field_id);
-			jfield& get_field_by_id(relative_ptr_type field_id);
-			jclass_field& get_class_field(int field_idx);
-			jfield& get_field(int field_idx);
+			const jfield& get_field_by_id(relative_ptr_type field_id)  const;
+			const jclass_field& get_class_field(int field_idx) const;
+			const jfield& get_field(int field_idx)  const;
 			relative_ptr_type get_primary_key();
 			relative_ptr_type get_primary_key_value();
 			const char* get_name(relative_ptr_type field_id);
@@ -401,7 +401,7 @@ namespace corona
 			jschema() = default;
 			~jschema() = default;
 
-			jfield& get_empty()
+			const jfield &get_empty() const
 			{
 				return empty;
 			}
@@ -677,7 +677,7 @@ namespace corona
 			}
 
 
-			relative_ptr_type build_class_members(field_array& pcr, int64_t& class_size_bytes, member_field_collection &mfs)
+			void build_class_members(field_array& pcr, int64_t& class_size_bytes, member_field_collection &mfs)
 			{
 				int field_idx = 0;
 				corona_size_t sz = mfs.size();
@@ -821,7 +821,7 @@ namespace corona
 				return cls.detail(key_idx).field_id;
 			}
 
-			relative_ptr_type find_class(const object_name& class_name)
+			relative_ptr_type find_class(const object_name& class_name) const
 			{
 				return classes_by_name.contains(class_name) ? classes_by_name[class_name].second : null_row;
 			}
@@ -831,7 +831,7 @@ namespace corona
 				return fields_by_name.contains(field_name) ? fields_by_name[field_name].second : null_row;
 			}
 
-			jclass get_class(relative_ptr_type class_id)
+			jclass get_class(relative_ptr_type class_id) const
 			{
 				auto the_class = classes[class_id];
 				return the_class;
@@ -847,7 +847,7 @@ namespace corona
 				return pk_id;
 			}
 
-			jfield &get_field(relative_ptr_type field_id)
+			jfield &get_field(relative_ptr_type field_id) const
 			{
 				auto& the_field = fields[field_id];
 				return the_field;

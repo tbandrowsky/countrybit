@@ -48,9 +48,23 @@
 #include <dwrite.h>
 #include <wincodec.h>
 
+
 #include <clocale>
 #include <locale>
 #include "sys/stat.h"
+
+#include <atlbase.h>
+#include <atlapp.h>
+
+extern CAppModule _Module;
+
+#include <atlwin.h>
+
+#include <atlframe.h>
+#include <atlctrls.h>
+#include <atldlgs.h>
+#include <atlctrlx.h>
+#include <atlmisc.h>
 
 #include <cstddef>  // For std::ptrdiff_t
 #include <vector>
@@ -86,6 +100,7 @@
 #include "assert_if.h"
 #include "constants.h"
 #include "store_box.h"
+#include "collection_id_box.h"
 #include "filterable_iterator.h"
 #include "string_box.h"
 #include "array_box.h"
@@ -119,7 +134,6 @@
 #include "visual.h"
 #include "jvalue.h"
 #include "jobject.h"
-#include "presentation.h"
 #include "jdatabase_server.h"
 #include "loader.h"
 
@@ -143,6 +157,7 @@ const int WM_PUSH_CONTROLLER = WM_APP + 102;
 const int WM_POP_CONTROLLER = WM_APP + 103;
 
 #include "directapplicationwin32.h"
+#include "presentation.h"
 
 #endif
 #endif

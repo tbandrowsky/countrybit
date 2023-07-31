@@ -75,6 +75,7 @@ namespace corona
 		{
 			locked = nullptr;
 			std::swap(locked, _lock.locked);
+			return *this;
 		}
 
 		concept_lock::~concept_lock()

@@ -73,7 +73,7 @@ namespace corona
 				return *the_object;
 			}
 
-			C& detail(relative_ptr_type idx)
+			C& detail(relative_ptr_type idx) const
 			{
 				if (is_null())
 					throw std::invalid_argument("is null");
@@ -315,7 +315,7 @@ namespace corona
 				return get_ptr(index);
 			}
 
-			bool check(int index)
+			bool check(int index) const
 			{
 				if (index == null_row || index >= size() || index < 0)
 				{
@@ -340,7 +340,7 @@ namespace corona
 				return hdr->rows[rr.start];
 			}
 
-			T* get_ptr(relative_ptr_type& r)
+			T* get_ptr(relative_ptr_type& r)  const
 			{
 				if (r == null_row || r >= hdr->max_rows || r < 0)
 					throw std::invalid_argument("invalid row id");
@@ -353,7 +353,7 @@ namespace corona
 				return &hdr->rows[r];
 			}
 
-			T& get_at(relative_ptr_type& r)
+			T& get_at(relative_ptr_type& r) const
 			{
 				if (r == null_row || r >= hdr->max_rows || r < 0)
 					throw std::invalid_argument("invalid row id");
@@ -366,7 +366,7 @@ namespace corona
 				return hdr->rows[r];
 			}
 
-			T& operator[](relative_ptr_type r)
+			T& operator[](relative_ptr_type r)  const
 			{
 				return get_at(r);
 			}
@@ -656,12 +656,12 @@ namespace corona
 				return item.check(index);
 			}
 
-			item_details_holder<P, C> operator[](relative_ptr_type row_id)
+			item_details_holder<P, C> operator[](relative_ptr_type row_id) const
 			{
 				return get_item(row_id);
 			}
 
-			item_details_holder<P, C> get_item(relative_ptr_type row_id)
+			item_details_holder<P, C> get_item(relative_ptr_type row_id) const
 			{
 				item_details_holder<P, C> nullpc;
 				if (row_id == null_row) return nullpc;

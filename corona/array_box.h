@@ -322,14 +322,14 @@ namespace corona
 				return hdr->data[_idx];
 			}
 
-			item_type& operator[](corona_size_t _idx)
+			item_type& operator[](corona_size_t _idx)  const
 			{
 				if (_idx < 0 || _idx >= hdr->max_items)
 					throw std::invalid_argument("range error");
 				return hdr->data[_idx];
 			}
 
-			item_type& get_at(corona_size_t _idx)
+			item_type& get_at(corona_size_t _idx) const
 			{
 				if (_idx < 0 || _idx >= hdr->max_items)
 					throw std::invalid_argument("range error");

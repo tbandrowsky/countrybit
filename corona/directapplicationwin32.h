@@ -14,13 +14,15 @@ namespace corona
 	namespace win32 
 	{
 
+		class controller;
+
 		class directApplicationWin32 : public win32ControllerHost
 		{
 		protected:
+
 			bool controllerLoaded;
 
-			std::unique_ptr<controller<win32ControllerHost>> 	currentController,
-																previousController;
+			controller * 		currentController;
 
 			static directApplicationWin32* current;
 			static LRESULT CALLBACK windowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
@@ -36,17 +38,6 @@ namespace corona
 			bool colorCapture;
 			int iconResourceId;
 
-			struct windowMapItem
-			{
-				HWND				window;
-			};
-
-			std::map<page_item_identifier, windowMapItem> 
-				windowControlMap, 
-				oldWindowControlMap;
-
-			std::map<int, page_item> message_map;
-
 			HFONT	controlFont,
 					labelFont,
 					titleFont;
@@ -55,23 +46,6 @@ namespace corona
 
 			void loadStyleSheet();
 
-			bool createChildWindow(
-				page_item_identifier pii,
-				LPCTSTR		lpClassName,
-				LPCTSTR		lpWindowName,
-				DWORD       dwStyle,
-				int         x,
-				int         y,
-				int         nWidth,
-				int         nHeight,
-				int			windowId,
-				LPVOID		lpParam,
-				HFONT		font,
-				database::page_item item
-			);
-
-
-			void destroyChildren();
 
 			bool disableChangeProcessing;
 			adapterSet* factory;
@@ -81,17 +55,17 @@ namespace corona
 			directApplicationWin32(adapterSet* _factory);
 			virtual ~directApplicationWin32();
 
-			int renderPage(database::page& _page, database::jschema* _schema, database::jcollection& _collection);
+			HWND getMainWindow() { return hwndRoot;  }
+			HWND createWindow( DWORD window_id, LPCTSTR		lpClassName, LPCTSTR		lpWindowName, DWORD       dwStyle, rectangle bounds, LPVOID		lpParam, HFONT		font);
+			void destroyWindow( HWND hwnd );
 
-			virtual drawableHost* getDrawable(relative_ptr_type ctrlId);
-			virtual direct2dChildWindow* getWindow(relative_ptr_type ctrlId);
+			direct2dChildWindow* createDirect2Window(DWORD control_id, rectangle bounds);
+			virtual direct2dChildWindow* getDirect2dWindow(relative_ptr_type ctrlId);
 
-			virtual bool runFull(HINSTANCE _hinstance, const char* _title, int _iconId, bool _fullScreen, controller<win32ControllerHost>* _firstController);
-			virtual bool runDialog(HINSTANCE _hinstance, const char* _title, int _iconId, bool _fullScreen, controller<win32ControllerHost>* _firstController);
+			virtual bool runFull(HINSTANCE _hinstance, const char* _title, int _iconId, bool _fullScreen, controller* _firstController);
+			virtual bool runDialog(HINSTANCE _hinstance, const char* _title, int _iconId, bool _fullScreen, controller* _firstController);
 
-			virtual void setController(controller<win32ControllerHost>* _newCurrentController);
-			virtual void pushController(controller<win32ControllerHost>* _newCurrentController);
-			virtual void popController();
+			virtual void setController(controller* _newCurrentController);
 
 			HFONT createFont(const char* _fontName, double fontSize, bool bold, bool italic);
 

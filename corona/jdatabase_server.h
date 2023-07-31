@@ -45,6 +45,8 @@ namespace corona
 			os_result os_code;
 		};
 
+		std::ostream& operator <<(std::ostream& output, db_response& src);
+
 		class create_collection_request
 		{
 		public:
@@ -79,7 +81,7 @@ namespace corona
 
 		class jdatabase
 		{
-			persistent_box					database_box;
+			std::shared_ptr<persistent_box>	database_box;
 			jschema							schema;
 			collections_by_id_type			collections_by_id;
 			collections_by_name_type		collections_by_name;
@@ -104,7 +106,7 @@ namespace corona
 					{
 						response.info = get_fn(fid);
 						response.success = true;
-						database_box.commit();
+						database_box->commit();
 					}
 					else
 					{
@@ -136,7 +138,7 @@ namespace corona
 				{
 					process_fn(_request);
 					response.info = get_fn(_request.name);
-					database_box.commit();
+					database_box->commit();
 				}
 				catch (std::logic_error& le)
 				{
@@ -161,7 +163,7 @@ namespace corona
 				try
 				{
 					response.info = get_fn(_name);
-					database_box.commit();
+					database_box->commit();
 				}
 				catch (std::logic_error& le)
 				{
@@ -216,7 +218,7 @@ namespace corona
 					{
 						response.message = std::format("Could not manage [{}]", _name);
 					}
-					database_box.commit();
+					database_box->commit();
 				}
 				catch (std::logic_error& le)
 				{
