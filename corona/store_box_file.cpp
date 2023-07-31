@@ -156,7 +156,7 @@ namespace corona
 					if (elapsed_seconds > 0)
 					{
 						int64_t bytes_added_per_second = header.bytes_added / elapsed_seconds;
-						int64_t bytes_added_per_day = bytes_added_per_day / 86400;
+						int64_t bytes_added_per_day = bytes_added_per_second / 86400;
 						if (bytes_added_per_day < 0) {
 							bytes_to_add = 7 * bytes_added_per_day;
 						}

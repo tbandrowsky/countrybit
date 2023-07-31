@@ -19,6 +19,7 @@ namespace corona
 		std::ostream& operator <<(std::ostream& output, db_response& src)
 		{
 			output << src.os_code << " " << src.message;
+			return output;
 		}
 
 		task<db_response> jdatabase::open(open_db_request _open)
