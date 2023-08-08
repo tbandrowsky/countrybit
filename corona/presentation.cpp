@@ -923,7 +923,7 @@ namespace corona
 			if (cp) {
 				auto children = win->getChildren();
 				key_down_event kde;
-				kde.controlId = 0;
+				kde.control_id = 0;
 				kde.key = _key;
 				cp->handle_key_down(0, kde);
 			}
@@ -934,7 +934,7 @@ namespace corona
 			auto cp = current_page.lock();
 			if (cp) {
 				key_up_event kde;
-				kde.controlId = 0;
+				kde.control_id = 0;
 				kde.key = _key;
 				cp->handle_key_up(0, kde);
 			}
@@ -945,7 +945,7 @@ namespace corona
 			auto cp = current_page.lock();
 			if (cp) {
 				mouse_move_event kde;
-				kde.controlId = 0;
+				kde.control_id = 0;
 				kde.absolute_point = *_point;
 				cp->handle_mouse_move(0, kde);
 			}
@@ -956,7 +956,7 @@ namespace corona
 			auto cp = current_page.lock();
 			if (cp) {
 				mouse_click_event kde;
-				kde.controlId = 0;
+				kde.control_id = 0;
 				kde.absolute_point = *_point;
 				cp->handle_mouse_click(0, kde);
 			}
