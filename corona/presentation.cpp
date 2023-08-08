@@ -896,6 +896,34 @@ namespace corona
 			}
 		}
 
+		void page::handle_item_changed(int _control_id, item_changed_event evt)
+		{
+			item_changed_event* pevt = &evt;
+
+			if (item_changed_events.contains(_control_id)) {
+				auto& ptrx = item_changed_events[_control_id];
+				if (auto temp = ptrx.get()->control.lock()) {
+					evt.control = temp.get();
+					evt.control_id = temp->id;
+					ptrx->on_change(evt);
+				}
+			}
+		}
+
+		void page::handle_list_changed(int _control_id, list_changed_event evt)
+		{
+			list_changed_event* pevt = &evt;
+
+			if (list_changed_events.contains(_control_id)) {
+				auto& ptrx = list_changed_events[_control_id];
+				if (auto temp = ptrx.get()->control.lock()) {
+					evt.control = temp.get();
+					evt.control_id = temp->id;
+					ptrx->on_change(evt);
+				}
+			}
+		}
+
 		void presentation::select_page(const std::string& _page_name)
 		{
 			auto lock_ptr = current_page.lock();

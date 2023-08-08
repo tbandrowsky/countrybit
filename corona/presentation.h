@@ -211,100 +211,100 @@ namespace corona
 			}
 		};
 
-		class static_control : public windows_control<WTL::CStatic, WS_VISIBLE>
+		class static_control : public windows_control<WTL::CStatic, WS_VISIBLE | WS_BORDER | WS_CHILD>
 		{
 		public:
 
 		};
 
-		class button_control : public windows_control<WTL::CButton, 0>
+		class button_control : public windows_control<WTL::CButton, WS_VISIBLE | WS_BORDER | WS_CHILD>
 		{
 		public:
 
 		};
 
-		class listbox_control : public windows_control<WTL::CListBox, 0>
+		class listbox_control : public windows_control<WTL::CListBox, WS_VISIBLE | WS_BORDER | WS_CHILD>
 		{
 		public:
 		};
 
-		class combobox_control : public windows_control<WTL::CComboBox, 0>
+		class combobox_control : public windows_control<WTL::CComboBox, WS_VISIBLE | WS_BORDER | WS_CHILD>
 		{
 		public:
 			
 		};
 
-		class edit_control : public windows_control<WTL::CEdit, 0>
+		class edit_control : public windows_control<WTL::CEdit, WS_VISIBLE | WS_BORDER | WS_CHILD>
 		{
 		public:
 		};
 
-		class scrollbar_control : public windows_control<WTL::CScrollBar, 0>
+		class scrollbar_control : public windows_control<WTL::CScrollBar, WS_VISIBLE | WS_BORDER | WS_CHILD>
 		{
 		public:
 		};
 
-		class listview_control : public windows_control<WTL::CListViewCtrl, 0>
+		class listview_control : public windows_control<WTL::CListViewCtrl, WS_VISIBLE | WS_BORDER | WS_CHILD>
 		{
 		public:
 		};
 
-		class treeview_control : public windows_control<WTL::CTreeViewCtrl, 0>
+		class treeview_control : public windows_control<WTL::CTreeViewCtrl, WS_VISIBLE | WS_BORDER | WS_CHILD>
 		{
 		public:
 		};
 
-		class header_control : public windows_control<WTL::CHeaderCtrl, 0>
+		class header_control : public windows_control<WTL::CHeaderCtrl, WS_VISIBLE | WS_BORDER | WS_CHILD>
 		{
 		public:
 		};
 
-		class toolbar_control : public windows_control<WTL::CToolBarCtrl, 0>
+		class toolbar_control : public windows_control<WTL::CToolBarCtrl, WS_VISIBLE | WS_BORDER | WS_CHILD>
 		{
 		public:
 		};
 
-		class statusbar_control : public windows_control<WTL::CStatusBarCtrl, 0>
+		class statusbar_control : public windows_control<WTL::CStatusBarCtrl, WS_VISIBLE | WS_BORDER | WS_CHILD>
 		{
 		public:
 		};
 
-		class hotkey_control : public windows_control<WTL::CHotKeyCtrl, 0>
+		class hotkey_control : public windows_control<WTL::CHotKeyCtrl, WS_VISIBLE | WS_BORDER | WS_CHILD>
 		{
 		public:
 		};
 
-		class animate_control : public windows_control<WTL::CAnimateCtrl, 0>
+		class animate_control : public windows_control<WTL::CAnimateCtrl, WS_VISIBLE | WS_BORDER | WS_CHILD>
 		{
 		public:
 		};
 
-		class richedit_control : public windows_control<WTL::CRichEditCtrl, 0>
+		class richedit_control : public windows_control<WTL::CRichEditCtrl, WS_VISIBLE | WS_BORDER | WS_CHILD>
 		{
 		public:
 		};
 
-		class draglistbox_control : public windows_control<WTL::CDragListBox, 0>
+		class draglistbox_control : public windows_control<WTL::CDragListBox, WS_VISIBLE | WS_BORDER | WS_CHILD>
 		{
 		public:
 		};
 
-		class rebar_control : public windows_control<WTL::CReBarCtrl, 0>
+		class rebar_control : public windows_control<WTL::CReBarCtrl, WS_VISIBLE | WS_BORDER | WS_CHILD>
 		{
 		public:
 		};
 
-		class comboboxex_control : public windows_control<WTL::CComboBoxEx, 0>
+		class comboboxex_control : public windows_control<WTL::CComboBoxEx, WS_VISIBLE | WS_BORDER | WS_CHILD>
 		{
 		public:
 		};
 
-		class datetimepicker_control : public windows_control<CDateTimePickerCtrl, 0>
+		class datetimepicker_control : public windows_control<CDateTimePickerCtrl, WS_VISIBLE | WS_BORDER | WS_CHILD>
 		{
 		public:
 		};
 
-		class monthcalendar_control : public windows_control<CMonthCalendarCtrl, 0>
+		class monthcalendar_control : public windows_control<CMonthCalendarCtrl, WS_VISIBLE | WS_BORDER | WS_CHILD>
 		{
 		public:
 		};
@@ -457,6 +457,24 @@ namespace corona
 			std::map<int, std::shared_ptr<list_changed_event_binding> > list_changed_events;
 			update_function update_event;
 
+		protected:
+
+			void handle_key_up(int _control_id, key_up_event evt);
+			void handle_key_down(int _control_id, key_down_event evt);
+			void handle_mouse_move(int _control_id, mouse_move_event evt);
+			void handle_mouse_click(int _control_id, mouse_click_event evt);
+			void handle_item_changed(int _control_id, item_changed_event evt);
+			void handle_list_changed(int _control_id, list_changed_event evt);
+
+			void arrange(double _width, double _height, double _padding = 0.0);
+
+			virtual void create(win32::win32ControllerHost* _host);
+			virtual void destroy();
+			virtual void draw();
+			virtual void update(double _elapsedSeconds, double _totalSeconds);
+			virtual void item_changed(int _control_id, std::string _text_value);
+			virtual void list_changed(int _control_id, std::string _text_value, int _index, relative_ptr_type _value);
+
 		public:
 
 			std::shared_ptr<control_base> root;
@@ -475,30 +493,15 @@ namespace corona
 			void on_list_changed(int _control_id, std::function< void(list_changed_event) >);
 			void on_update(update_function fnc);
 
-			void handle_key_up(int _control_id, key_up_event evt);
-			void handle_key_down(int _control_id, key_down_event evt);
-			void handle_mouse_move(int _control_id, mouse_move_event evt);
-			void handle_mouse_click(int _control_id, mouse_click_event evt);
-			void handle_item_changed(int _control_id, item_changed_event evt);
-			void handle_list_changed(int _control_id, list_changed_event evt);
-
-			void arrange(double _width, double _height, double _padding = 0.0);
-
-			virtual void create(win32::win32ControllerHost *_host);
-			virtual void destroy();
-			virtual void draw();
-			virtual void update(double _elapsedSeconds, double _totalSeconds);
-			virtual void item_changed(int _control_id, std::string _text_value);
-			virtual void list_changed(int _control_id, std::string _text_value, int _index, relative_ptr_type _value);
-
 			control_base* get_root();
 
 			const control_base *operator[](int _id)
 			{
 				return get_root()->find(_id);
 			}
-		};
 
+			friend class presentation;
+		};
 
 		class presentation : public win32::controller
 		{
