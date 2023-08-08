@@ -44,14 +44,12 @@ namespace corona
 
 			inline win32ControllerHost *getHost() { return host; }
 
-			virtual jobject get_style_sheet(int _idx) = 0;
 			virtual void keyDown(direct2dWindow *win, short _key) = 0;
 			virtual void keyUp(direct2dWindow* win, short _key) = 0;
 			virtual void mouseMove(direct2dWindow* win, point* _point) = 0;
 			virtual void mouseClick(direct2dWindow* win, point* _point) = 0;
 			virtual void pointSelected(direct2dWindow *win, point* _point, color* _color) = 0;
 			virtual bool drawFrame() = 0;
-			virtual bool drawCanvas(int _id) = 0;
 			virtual bool update(double _elapsedSeconds, double _totalSeconds) = 0;
 
 			virtual void onCreated() = 0;

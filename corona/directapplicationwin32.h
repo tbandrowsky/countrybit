@@ -71,7 +71,6 @@ namespace corona
 
 			// general
 			virtual void redraw();
-			virtual void redraw(int controlId);
 			virtual void setVisible(int controlId, bool visible);
 			virtual void setEnable(int controlId, bool enabled);
 			virtual void setFocus(int ddlControlId);

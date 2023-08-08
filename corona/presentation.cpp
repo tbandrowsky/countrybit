@@ -8,119 +8,182 @@ namespace corona
 	namespace database
 	{
 
-		std::shared_ptr<row_container_control> control_base::create_row(int id)
+		const control_base* control_base::find(int _id) const
 		{
-			;
+			const control_base* result = nullptr;
+			if (this->id == _id) {
+				result = this;
+			}
+			else
+			{
+				for (auto child : children)
+				{
+					result = child->find(_id);
+					if (result != nullptr) {
+						break;
+					}
+				}
+			}
+			return result;
 		}
 
-		std::shared_ptr<column_container_control> control_base::create_column(int id)
+		std::weak_ptr<control_base> control_base::get(std::shared_ptr<control_base>& _root, int _id)
 		{
-
+			std::weak_ptr<control_base> result;
+			if (_root->id == _id) {
+				return _root;
+			}
+			else
+			{
+				for (auto child : _root->children)
+				{
+					result = get(child, _id);
+					if (!result.expired()) {
+						return result;
+					}
+				}
+			}
+			return result;
 		}
 
-		std::shared_ptr<absolute_container_control> control_base::create_absolute(int id)
+		void control_base::foreach(std::function<void(control_base * _root)> _item)
 		{
-
+			_item(this);
+			for (auto child : children) {
+				child->foreach(_item);
+			}
 		}
 
-		std::shared_ptr<static_control> control_base::create_static(int id)
+		void control_base::create(win32::win32ControllerHost* _host)
 		{
-			std::shared_ptr<static_control> wnd = std::make_shared<static_control>();
+			for (auto child : children) {
+				child->create(_host);
+			}
 		}
 
-		std::shared_ptr<button_control> control_base::create_button(int id)
+		void control_base::destroy()
 		{
-			std::shared_ptr<button_control> wnd = std::make_shared<button_control>();
+			for (auto child : children) {
+				child->destroy();
+			}
 		}
 
-		std::shared_ptr<listbox_control> control_base::create_listbox(int id)
+		void control_base::draw()
 		{
-
+			for (auto child : children) {
+				child->draw();
+			}
 		}
 
-		std::shared_ptr<combobox_control> control_base::create_combobox(int id)
+		row_layout& control_base::row_layout_new(int id)
 		{
-
+			return create<row_layout>(id);
 		}
 
-		std::shared_ptr<edit_control> control_base::create_edit(int id)
+		column_layout& control_base::column_layout_new(int id)
 		{
-
+			return create<column_layout>(id);
 		}
 
-		std::shared_ptr<scrollbar_control> control_base::create_scrollbar(int id)
+		absolute_layout& control_base::absolute_layout_new(int id)
 		{
-
+			return create<absolute_layout>(id);
 		}
 
-		std::shared_ptr<imagelist_control> control_base::create_imagelist(int id)
-		{
 
+		static_control& control_base::static_control_new(int id)
+		{
+			return create<static_control>(id);
 		}
 
-		std::shared_ptr<listview_control> control_base::create_listview(int id)
+		button_control& control_base::button_control_new(int id)
 		{
-
+			return create<button_control>(id);
 		}
 
-		std::shared_ptr<treeview_control> control_base::create_treeview(int id)
+		listbox_control& control_base::listbox_control_new(int id)
 		{
-
+			return create<listbox_control>(id);
 		}
 
-		std::shared_ptr<header_control>  control_base::create_header(int id)
+		combobox_control& control_base::combobox_control_new(int id)
 		{
-
+			return create<combobox_control>(id);
 		}
 
-		std::shared_ptr<toolbar_control> control_base::create_toolbar(int id)
+		edit_control& control_base::edit_control_new(int id)
 		{
-
+			return create<edit_control>(id);
 		}
 
-		std::shared_ptr<statusbar_control> control_base::create_statusbar(int id)
+		scrollbar_control& control_base::scrollbar_control_new(int id)
 		{
-
+			return create<scrollbar_control>(id);
 		}
 
-		std::shared_ptr<hotkey_control> control_base::create_hotkey(int id)
+		listview_control& control_base::listview_control_new(int id)
 		{
-
+			return create<listview_control>(id);
 		}
 
-		std::shared_ptr<animate_control> control_base::create_animate(int id)
+		treeview_control& control_base::treeview_control_new(int id)
 		{
-
+			return create<treeview_control>(id);
 		}
 
-		std::shared_ptr<richedit_control> control_base::create_richedit(int id)
+		header_control& control_base::header_control_new(int id)
 		{
-
+			return create<header_control>(id);
 		}
 
-		std::shared_ptr<draglistbox_control> control_base::create_draglistbox(int id)
+		toolbar_control& control_base::toolbar_control_new(int id)
 		{
-
+			return create<toolbar_control>(id);
 		}
 
-		std::shared_ptr<rebar_control> control_base::create_rebar(int id)
+		statusbar_control& control_base::statusbar_control_new(int id)
 		{
-
+			return create<statusbar_control>(id);
 		}
 
-		std::shared_ptr<comboboxex_control> control_base::create_comboboxex(int id)
+		hotkey_control& control_base::hotkey_control_new(int id)
 		{
-
+			return create<hotkey_control>(id);
 		}
 
-		std::shared_ptr<datetimepicker_control> control_base::create_datetimepicker(int id)
+		animate_control& control_base::animate_control_new(int id)
 		{
-
+			return create<animate_control>(id);
 		}
 
-		std::shared_ptr<monthcalendar_control> control_base::create_monthcalendar(int id)
+		richedit_control& control_base::richedit_control_new(int id)
 		{
+			return create<richedit_control>(id);
+		}
 
+		draglistbox_control& control_base::draglistbox_control_new(int id)
+		{
+			return create<draglistbox_control>(id);
+		}
+
+		rebar_control& control_base::rebar_control_new(int id)
+		{
+			return create<rebar_control>(id);
+		}
+
+		comboboxex_control& control_base::comboboxex_control_new(int id)
+		{
+			return create<comboboxex_control>(id);
+		}
+
+		datetimepicker_control& control_base::datetimepicker_control_new(int id)
+		{
+			return create<datetimepicker_control>(id);
+		}
+
+		monthcalendar_control& control_base::monthcalendar_control_new(int id)
+		{
+			return create<monthcalendar_control>(id);
 		}
 
 		void control_base::size_constant(layout_context _ctx)
@@ -221,7 +284,8 @@ namespace corona
 		}
 
 
-		layout_context row_container_control::get_remaining(layout_context _ctx)
+
+		layout_context row_layout::get_remaining(layout_context _ctx)
 		{
 			point pt = { 0.0, 0.0, 0.0 };
 
@@ -237,7 +301,7 @@ namespace corona
 			return _ctx;
 		}
 
-		layout_context column_container_control::get_remaining(layout_context _ctx)
+		layout_context column_layout::get_remaining(layout_context _ctx)
 		{
 			point pt = { 0.0, 0.0, 0.0 };
 
@@ -307,7 +371,7 @@ namespace corona
 			size_remainings(_ctx);
 		}
 
-		void column_container_control::size_children(layout_context _ctx)
+		void column_layout::size_children(layout_context _ctx)
 		{
 			bool sheight = box.height.units == measure_units::percent_child;
 			bool swidth = box.width.units == measure_units::percent_child;
@@ -335,7 +399,7 @@ namespace corona
 			size_remainings(_ctx);
 		}
 
-		void row_container_control::size_children(layout_context _ctx)
+		void row_layout::size_children(layout_context _ctx)
 		{
 			bool sheight = box.height.units == measure_units::percent_child;
 			bool swidth = box.width.units == measure_units::percent_child;
@@ -361,6 +425,11 @@ namespace corona
 				}
 			}
 			size_remainings(_ctx);
+		}
+
+		bool control_base::contains(point pt)
+		{
+			return rectangle_math::contains(bounds, pt.x, pt.y);
 		}
 
 		void control_base::size_item(layout_context _ctx)
@@ -459,7 +528,7 @@ namespace corona
 			size_children(_ctx);
 		}
 
-		void row_container_control::positions(layout_context _ctx)
+		void row_layout::positions(layout_context _ctx)
 		{
 			if (alignment == visual_alignment::align_near)
 			{
@@ -513,8 +582,8 @@ namespace corona
 			size_children(_ctx);
 		}
 
-		void column_container_control::positions(layout_context _ctx)
-		{	
+		void column_layout::positions(layout_context _ctx)
+		{
 			if (alignment == visual_alignment::align_near)
 			{
 				_ctx.flow_origin.x = 0;
@@ -522,7 +591,7 @@ namespace corona
 
 				for (auto child : children)
 				{
-					child->position( _ctx);
+					child->position(_ctx);
 					child->layout(_ctx);
 					_ctx.flow_origin.y += (child->bounds.h);
 					_ctx.flow_origin.y += _ctx.space_amount.y;
@@ -582,146 +651,379 @@ namespace corona
 			positions(_ctx);
 
 			return bounds;
+
 		}
 
-		page::page()
+		void container_control::create(win32::win32ControllerHost* _host)
 		{
+			host = _host;
+			window = _host->createDirect2Window(id, bounds);
+			for (auto child : children) {
+				child->create(_host);
+			}
+		}
+
+		void container_control::destroy()
+		{
+			host = nullptr;
+			window = nullptr;
+			for (auto child : children) {
+				child->destroy();
+			}
+		}
+
+		void container_control::draw()
+		{
+			bool adapter_blown_away = false;
+			window->beginDraw(adapter_blown_away);
+			if (!adapter_blown_away)
+			{
+				if (this->on_draw != nullptr) {
+					on_draw(this);
+				}
+				else
+					window->drawRectangle(&bounds, "container", 2, "containerfill");
+			}
+			window->endDraw(adapter_blown_away);
+
+			for (auto child : children) {
+				child->draw();
+			}
+		}
+
+		page::page(const char* _name = nullptr) : name(_name)
+		{
+			root = std::make_shared<column_layout>();
 		}
 
 		void page::clear()
 		{
+			destroy();
+			root = std::make_shared<column_layout>();
 		}
 
-		control_base* page::append(control_base* _parent, control_types _layout, relative_ptr_type _style_id, layout_rect _box, measure _item_space, visual_alignment _alignment)
+		void page::create(win32::win32ControllerHost* _host)
 		{
-			control_base* v = page_base_type::append();
-			v->id = page_base_type::get_index(v);
-			v->set_parent(_parent);
-			v->control_type = _layout;
-			v->style_id = _style_id;
-			v->box = _box;
-			v->item_space = _item_space;
-			v->alignment = _alignment;
-			return v;
-		}
-
-		control_base* page::row(control_base* _parent, relative_ptr_type _style_id, layout_rect _box, measure _item_space, visual_alignment _alignment)
-		{
-			return append(_parent, control_types::row, _style_id, _box, _item_space, _alignment);
-		}
-
-		control_base* page::column(control_base* _parent, relative_ptr_type _style_id, layout_rect _box, measure _item_space, visual_alignment _alignment)
-		{
-			return append(_parent, control_types::column, _style_id, _box, _item_space, _alignment);
-		}
-
-		control_base* page::absolute(control_base* _parent, relative_ptr_type _style_id, layout_rect _box, visual_alignment _alignment)
-		{
-			return append(_parent, control_types::absolute, _style_id, _box, 0.0_px, _alignment);
-		}
-
-		control_base* page::canvas2d_row(relative_ptr_type _item_uid, control_base* _parent, relative_ptr_type _style_id, layout_rect _box, measure _item_space, visual_alignment _alignment)
-		{
-			control_base* v = append(_parent, control_types::d2d_row, _style_id, _box, _item_space, _alignment);
-			v->canvas_id = v->id;
-			v->item_uid = _item_uid;
-			return v;
-		}
-
-		control_base* page::canvas2d_column(relative_ptr_type _item_uid, control_base* _parent, relative_ptr_type _style_id, layout_rect _box, measure _item_space, visual_alignment _alignment)
-		{
-			control_base* v = append(_parent, control_types::d2d_column, _style_id, _box, _item_space, _alignment);
-			v->canvas_id = v->id;
-			v->item_uid = _item_uid;
-			return v;
-		}
-
-		control_base* page::canvas2d_absolute(relative_ptr_type _item_uid, control_base* _parent, relative_ptr_type _style_id, layout_rect _box, measure _item_space, visual_alignment _alignment)
-		{
-			control_base* v = append(_parent, control_types::d2d_absolute, _style_id, _box, _item_space, _alignment);
-			v->canvas_id = v->id;
-			v->item_uid = _item_uid;
-			return v;
-		}
-
-		control_base* page::space(control_base* _parent, relative_ptr_type _style_id, layout_rect _box)
-		{
-			control_base* v = append(_parent, control_types::space, _style_id, _box, 0.0_px, visual_alignment::align_near);
-			return v;
-		}
-
-		control_base* page::text(control_base* _parent, relative_ptr_type _style_id, const char* _text, layout_rect _box)
-		{
-			control_base* v = append(_parent, control_types::text, _style_id, _box, 0.0_px, visual_alignment::align_near);
-			if (_text)
-				v->caption = data.copy(_text, 0);
-			return v;
-		}
-
-		void page::visit_impl(control_base *r, std::function<bool(control_base* _item)> fn, std::function<bool(control_base* _parent)> fout)
-		{
-			fn(r);
-			for (auto child = r->get_first_child(); child != nullptr; child = child->get_next())
+			if (root.get()) 
 			{
-				visit_impl(child, fn, fout);
+				root->create(_host);
 			}
-			fout(r);
 		}
 
+		void page::destroy()
+		{
+			if (root.get())
+			{
+				root->destroy();
+			}
+		}
+
+		void page::draw()
+		{
+			if (root.get())
+			{
+				root->draw();
+			}
+		}
+
+		void page::update(double _elapsedSeconds, double _totalSeconds)
+		{
+			if (update_event) {
+				update_event(this, _elapsedSeconds, _totalSeconds);
+			}
+		}
+
+		bool presentation::drawFrame()
+		{
+			return false;
+		}
+
+		bool presentation::update(double _elapsedSeconds, double _totalSeconds)
+		{
+			;
+		}
 
 		void page::arrange(double width, double height, double _padding)
 		{
-			for (auto pix = begin(); pix != end(); pix++)
-			{
-				auto pi = pix.get_object();
-				if (pi.item.parent_id < 0) {
-					double pd = _padding * 2.0;
-					layout_context ctx;
-					ctx.space_amount = { 0.0, 0.0 };
-					ctx.container_size = { width - pd, height - pd };
-					ctx.container_origin = { _padding, _padding };
-					ctx.flow_origin = { 0, 0 };
-					ctx.remaining_size = ctx.container_size;
-					if (pi.item.box.height.units == measure_units::percent_child ||
-						pi.item.box.width.units == measure_units::percent_child)
-						throw std::logic_error("Cannot use child based sizing on a root element");
-					size_item( &pi.item, ctx);
-					position( &pi.item, ctx);
-					layout(&pi.item, ctx);
-				}
-				else 
-				{
-					break;
-				}
-			}
 
-#if TRACE_LAYOUT
-			std::cout << std::endl;
-			for (auto pix = begin(); pix != end(); pix++)
-			{
-				auto& _item = pix.get_object().item;
-				std::cout << _item.parent_id << "." << _item.id << " " <<
-					database::control_type_names[(int)_item.control_type] << " " <<
-					"(" << _item.bounds.x << ", " << _item.bounds.y << "  x  " << _item.bounds.w << "," << _item.bounds.h << ")" <<
-					(_item.caption ? _item.caption : "") << std::endl;
-			}
-#endif
+			double pd = _padding * 2.0;
+			layout_context ctx;
+			ctx.space_amount = { 0.0, 0.0 };
+			ctx.container_size = { width - pd, height - pd };
+			ctx.container_origin = { _padding, _padding };
+			ctx.flow_origin = { 0, 0 };
+			ctx.remaining_size = ctx.container_size;
+
+			if (root->box.height.units == measure_units::percent_child ||
+				root->box.width.units == measure_units::percent_child)
+				throw std::logic_error("Cannot use child based sizing on a root element");
+
+			root->size_item(ctx);
+			root->position(ctx);
+			root->layout(ctx);
 
 		}
 
-		void page::visit(std::function<bool(control_base* _parent)> fnin, std::function<bool(control_base* _parent)> fout)
+		void page::on_key_up(int _control_id, std::function< void(key_up_event) > handler)
 		{
-			for (auto pi : *this)
-			{
-				if (pi.item.parent_id < 0) 
-				{
-					visit_impl(&pi.item, fnin, fout);
+			auto evt = std::make_shared<key_up_event_binding>();
+			evt->subscribed_item_id = _control_id;
+			evt->on_key_up = handler;
+			key_up_events[_control_id] = evt;
+		}
+
+		void page::on_key_down(int _control_id, std::function< void(key_down_event) >  handler)
+		{
+			auto evt = std::make_shared<key_down_event_binding>();
+			evt->subscribed_item_id = _control_id;
+			evt->on_key_down = handler;
+			key_down_events[_control_id] = evt;
+		}
+
+		void page::on_mouse_move(int _control_id, std::function< void(mouse_move_event) > handler)
+		{
+			auto evt = std::make_shared<mouse_move_event_binding>();
+			evt->subscribed_item_id = _control_id;
+			evt->on_mouse_move = handler;
+			mouse_move_events[_control_id] = evt;
+		}
+
+		void page::on_mouse_click(int _control_id, std::function< void(mouse_click_event) > handler)
+		{
+			auto evt = std::make_shared<mouse_click_event_binding>();
+			evt->subscribed_item_id = _control_id;
+			evt->on_mouse_click = handler;
+			mouse_click_events[_control_id] = evt;
+		}
+
+		void page::on_item_changed(int _control_id, std::function< void(item_changed_event) > handler)
+		{
+			auto evt = std::make_shared<item_changed_event_binding>();
+			evt->subscribed_item_id = _control_id;
+			evt->on_change = handler;
+			item_changed_events[_control_id] = evt;
+		}
+
+		void page::on_list_changed(int _control_id, std::function< void(list_changed_event) > handler)
+		{
+			auto evt = std::make_shared<list_changed_event_binding>();
+			evt->subscribed_item_id = _control_id;
+			evt->on_change = handler;
+			list_changed_events[_control_id] = evt;
+		}
+
+		void page::on_update(update_function fnc)
+		{
+			update_event = fnc;
+		}
+
+		void page::handle_key_up(int _control_id, key_up_event evt)
+		{
+			if (key_up_events.contains(_control_id)) {
+				key_up_events[_control_id]->on_key_up(evt);
+			}
+		}
+
+		void page::handle_key_down(int _control_id, key_down_event evt)
+		{
+			if (key_down_events.contains(_control_id)) {
+				key_down_events[_control_id]->on_key_down(evt);
+			}
+		}
+
+		void page::handle_mouse_move(int _control_id, mouse_move_event evt)
+		{
+			mouse_move_event* pevt = &evt;
+
+			if (mouse_move_events.contains(_control_id)) {
+				auto& ptrx = mouse_move_events[_control_id];
+				if (auto temp = ptrx.get()->control.lock()) {
+					evt.relative_point.x = evt.absolute_point.x - temp->bounds.x;
+					evt.relative_point.y = evt.absolute_point.y - temp->bounds.y;
+					evt.control = temp.get();
+					evt.control_id = temp->id;
+					ptrx->on_mouse_move(evt);
 				}
-				else
+			}
+
+			if (!_control_id) 
+			{
+				for (auto evh : mouse_move_events)
 				{
-					break;
+					auto lck = evh.second->control.lock();
+					if (lck && lck->contains(evt.absolute_point))
+					{
+						evt.relative_point.x = evt.absolute_point.x - lck->bounds.x;
+						evt.relative_point.y = evt.absolute_point.y - lck->bounds.y;
+						evt.control = lck.get();
+						evt.control_id = lck->id;
+						evh.second->on_mouse_move(evt);
+					}
+				}
+			}
+
+		}
+
+		void page::handle_mouse_click(int _control_id, mouse_click_event evt)
+		{
+			mouse_click_event* pevt = &evt;
+
+			if (mouse_click_events.contains(_control_id)) {
+				auto& ptrx = mouse_click_events[_control_id];
+				if (auto temp = ptrx.get()->control.lock()) {
+					evt.relative_point.x = evt.absolute_point.x - temp->bounds.x;
+					evt.relative_point.y = evt.absolute_point.y - temp->bounds.y;
+					evt.control = temp.get();
+					evt.control_id = temp->id;
+					ptrx->on_mouse_click(evt);
+				}
+			}
+
+			if (!_control_id)
+			{
+				for (auto evh : mouse_click_events)
+				{
+					auto lck = evh.second->control.lock();
+					if (lck && lck->contains(evt.absolute_point))
+					{
+						evt.relative_point.x = evt.absolute_point.x - lck->bounds.x;
+						evt.relative_point.y = evt.absolute_point.y - lck->bounds.y;
+						evt.control = lck.get();
+						evt.control_id = lck->id;
+						evh.second->on_mouse_click(evt);
+					}
 				}
 			}
 		}
+
+		void presentation::select_page(const std::string& _page_name)
+		{
+			auto lock_ptr = current_page.lock();
+			if (lock_ptr) {
+				lock_ptr->destroy();
+			}
+			if (pages.contains(_page_name)) {
+				current_page = pages[_page_name];
+			}
+		}
+
+		bool presentation::drawFrame()
+		{
+			;
+		}
+
+		bool presentation::update(double _elapsedSeconds, double _totalSeconds)
+		{
+			;
+		}
+
+		void presentation::keyDown(win32::direct2dWindow* win, short _key)
+		{
+			auto cp = current_page.lock();
+			if (cp) {
+				auto children = win->getChildren();
+				key_down_event kde;
+				kde.controlId = 0;
+				kde.key = _key;
+				cp->handle_key_down(0, kde);
+			}
+		}
+
+		void presentation::keyUp(win32::direct2dWindow* win, short _key)
+		{
+			auto cp = current_page.lock();
+			if (cp) {
+				key_up_event kde;
+				kde.controlId = 0;
+				kde.key = _key;
+				cp->handle_key_up(0, kde);
+			}
+		}
+
+		void presentation::mouseMove(win32::direct2dWindow* win, point* _point)
+		{
+			auto cp = current_page.lock();
+			if (cp) {
+				mouse_move_event kde;
+				kde.controlId = 0;
+				kde.absolute_point = *_point;
+				cp->handle_mouse_move(0, kde);
+			}
+		}
+
+		void presentation::mouseClick(win32::direct2dWindow* win, point* _point)
+		{
+			auto cp = current_page.lock();
+			if (cp) {
+				mouse_click_event kde;
+				kde.controlId = 0;
+				kde.absolute_point = *_point;
+				cp->handle_mouse_click(0, kde);
+			}
+		}
+
+		void presentation::pointSelected(win32::direct2dWindow* win, point* _point, color* _color)
+		{
+			;
+		}
+
+		void presentation::onCreated()
+		{
+			;
+		}
+
+		void presentation::onCommand(int buttonId)
+		{
+			;
+		}
+
+		void presentation::onTextChanged(int textControlId)
+		{
+			std::string newText = getHost()->getEditText(textControlId);
+		}
+
+		void presentation::onDropDownChanged(int dropDownId)
+		{
+			auto ptr = getHost();
+			if (ptr) {
+				std::string newText = ptr->getComboSelectedText(dropDownId);
+				int index = ptr->getComboSelectedIndex(dropDownId);
+				int value = ptr->getComboSelectedValue(dropDownId);
+			}
+		}
+
+		void presentation::onListViewChanged(int listViewId)
+		{
+			auto ptr = getHost();
+			if (ptr) {
+				std::string newText = ptr->getListViewSelectedText(listViewId);
+				int index = ptr->getListViewSelectedIndex(listViewId);
+				int value = ptr->getListViewSelectedValue(listViewId);
+			}
+		}
+
+		int presentation::onHScroll(int controlId, win32::scrollTypes scrollType)
+		{
+
+		}
+
+		int presentation::onVScroll(int controlId, win32::scrollTypes scrollType)
+		{
+
+		}
+
+		int presentation::onResize(const rectangle& newSize, double d2dScale)
+		{
+			auto pg = current_page.lock();
+			if (pg) {
+				pg->arrange(newSize.w, newSize.h);
+			}
+		}
+
+		int presentation::onSpin(int controlId, int newPosition)
+		{
+			int value = newPosition;
+		}
+
 	}
 }

@@ -822,17 +822,6 @@ namespace corona
 		}
 
 
-		void directApplicationWin32::redraw(int controlId)
-		{
-			if (currentController)
-			{
-				bool failedDevice = currentController->drawCanvas(controlId);
-				if (failedDevice) {
-					factory->clearWindows();
-					factory->refresh();
-				}
-			}
-		}
 
 		void directApplicationWin32::redraw()
 		{
