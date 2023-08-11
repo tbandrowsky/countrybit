@@ -691,6 +691,111 @@ namespace corona
 			}
 		}
 
+		//
+
+		void static_control::set_text(const std::string& _text)
+		{
+			host->setEditText(id, _text);
+		}
+
+		std::string static_control::get_text()
+		{
+			return host->getEditText(id);
+		}
+
+		void button_control::set_text(const std::string& _text)
+		{
+			host->setEditText(id, _text);
+		}
+
+		std::string button_control::get_text()
+		{
+			return host->getEditText(id);
+		}
+
+		void edit_control::set_text(const std::string& _text)
+		{
+			host->setEditText(id, _text);
+		}
+
+		std::string edit_control::get_text()
+		{
+			return host->getEditText(id);
+		}
+
+		void listbox_control::set_list(list_data& choices)
+		{
+
+		}
+
+		void combobox_control::set_list(list_data& choices)
+		{
+
+		}
+
+		void comboboxex_control::set_list(list_data& choices)
+		{
+
+		}
+
+		void listview_control::set_table(table_data& choices)
+		{
+
+		}
+
+		/*
+		class scrollbar_control : public windows_control<WTL::CScrollBar, WS_VISIBLE | WS_BORDER | WS_CHILD>
+		{
+		public:
+		};
+		*/
+
+		void richedit_control::set_html(const std::string& _text)
+		{
+
+		}
+
+		std::string richedit_control::get_html()
+		{
+
+		}
+
+		void datetimepicker_control::set_text(const std::string& _text)
+		{
+
+		}
+
+		std::string datetimepicker_control::get_text()
+		{
+
+		}
+
+		/*
+		class monthcalendar_control : public windows_control<CMonthCalendarCtrl, WS_VISIBLE | WS_BORDER | WS_CHILD>
+		{
+		public:
+		};
+		*/
+
+		bool animate_control::open(const std::string& _name)
+		{
+
+		}
+
+		bool animate_control::open(DWORD resource_id)
+		{
+
+		}
+
+		bool animate_control::play()
+		{
+
+		}
+
+		bool animate_control::stop()
+		{
+		}
+
 		page::page(const char* _name = nullptr) : name(_name)
 		{
 			root = std::make_shared<column_layout>();
@@ -738,10 +843,6 @@ namespace corona
 			return false;
 		}
 
-		bool presentation::update(double _elapsedSeconds, double _totalSeconds)
-		{
-			;
-		}
 
 		void page::arrange(double width, double height, double _padding)
 		{
@@ -942,7 +1043,10 @@ namespace corona
 
 		bool presentation::update(double _elapsedSeconds, double _totalSeconds)
 		{
-			;
+			auto cp = current_page.lock();
+			if (cp) {
+				cp->update(_elapsedSeconds, _totalSeconds );
+			}
 		}
 
 		void presentation::keyDown(win32::direct2dWindow* win, short _key)
@@ -1014,9 +1118,20 @@ namespace corona
 		{
 			auto ptr = getHost();
 			if (ptr) {
-				std::string newText = ptr->getComboSelectedText(dropDownId);
+				std::string new_text = ptr->getComboSelectedText(dropDownId);
 				int index = ptr->getComboSelectedIndex(dropDownId);
 				int value = ptr->getComboSelectedValue(dropDownId);
+				list_changed_event lce;
+				lce.control_id = dropDownId;
+				lce.selected_text = new_text;
+				lce.selected_value = value;
+				lce.selected_index = index;
+				lce.state = 0;
+				lce.control = nullptr; // the page will assign this.
+				auto cp = current_page.lock();
+				if (cp) {
+					cp->handle_list_changed(dropDownId, lce);
+				}
 			}
 		}
 
@@ -1024,9 +1139,20 @@ namespace corona
 		{
 			auto ptr = getHost();
 			if (ptr) {
-				std::string newText = ptr->getListViewSelectedText(listViewId);
+				std::string new_text = ptr->getListViewSelectedText(listViewId);
 				int index = ptr->getListViewSelectedIndex(listViewId);
 				int value = ptr->getListViewSelectedValue(listViewId);
+				list_changed_event lce;
+				lce.control_id = listViewId;
+				lce.selected_text = new_text;
+				lce.selected_value = value;
+				lce.selected_index = index;
+				lce.state = 0;
+				lce.control = nullptr; // the page will assign this.
+				auto cp = current_page.lock();
+				if (cp) {
+					cp->handle_list_changed(listViewId, lce);
+				}
 			}
 		}
 

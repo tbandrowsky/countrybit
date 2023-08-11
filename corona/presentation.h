@@ -184,10 +184,13 @@ namespace corona
 		public:
 
 			WtlWindowClass window;
+			win32::win32ControllerHost* host;
 
 			virtual void create(win32::win32ControllerHost* _host)
 			{
-				HWND parent = _host->getMainWindow();
+				host = _host;
+
+				HWND parent = host->getMainWindow();
 
 				RECT r;
 				r.left = bounds.x;
@@ -202,6 +205,7 @@ namespace corona
 
 			virtual void destroy()
 			{
+				host = nullptr;
 				window.DestroyWindow();
 			}
 
@@ -211,100 +215,140 @@ namespace corona
 			}
 		};
 
-		class static_control : public windows_control<WTL::CStatic, WS_VISIBLE | WS_BORDER | WS_CHILD>
+		class list_data
 		{
 		public:
-
+			std::string id_field;
+			std::string text_field;
+			json items;
 		};
 
-		class button_control : public windows_control<WTL::CButton, WS_VISIBLE | WS_BORDER | WS_CHILD>
+		class table_column
 		{
 		public:
-
+			std::string display_name;
+			std::string json_field;
+			visual_alignment alignment;
 		};
 
-		class listbox_control : public windows_control<WTL::CListBox, WS_VISIBLE | WS_BORDER | WS_CHILD>
+		class table_data
 		{
 		public:
+			std::vector<table_column> columns;
+			std::string id_field;
+			json items;
 		};
 
-		class combobox_control : public windows_control<WTL::CComboBox, WS_VISIBLE | WS_BORDER | WS_CHILD>
+		class static_control : public windows_control<WTL::CStatic, WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP>
 		{
 		public:
-			
+			void set_text(const std::string& _text);
+			std::string get_text();
 		};
 
-		class edit_control : public windows_control<WTL::CEdit, WS_VISIBLE | WS_BORDER | WS_CHILD>
+		class button_control : public windows_control<WTL::CButton, WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP>
 		{
 		public:
+			void set_text(const std::string& _text);
+			std::string get_text();
 		};
 
-		class scrollbar_control : public windows_control<WTL::CScrollBar, WS_VISIBLE | WS_BORDER | WS_CHILD>
+		class edit_control : public windows_control<WTL::CEdit, WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP>
 		{
 		public:
+			void set_text(const std::string& _text);
+			std::string get_text();
 		};
 
-		class listview_control : public windows_control<WTL::CListViewCtrl, WS_VISIBLE | WS_BORDER | WS_CHILD>
+		class listbox_control : public windows_control<WTL::CListBox, WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP>
 		{
 		public:
+			void set_list(list_data &choices);
 		};
 
-		class treeview_control : public windows_control<WTL::CTreeViewCtrl, WS_VISIBLE | WS_BORDER | WS_CHILD>
+		class combobox_control : public windows_control<WTL::CComboBox, WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP>
 		{
 		public:
+			void set_list(list_data& choices);
 		};
 
-		class header_control : public windows_control<WTL::CHeaderCtrl, WS_VISIBLE | WS_BORDER | WS_CHILD>
+		class comboboxex_control : public windows_control<WTL::CComboBoxEx, WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP>
 		{
 		public:
+			void set_list(list_data& choices);
 		};
 
-		class toolbar_control : public windows_control<WTL::CToolBarCtrl, WS_VISIBLE | WS_BORDER | WS_CHILD>
+		class listview_control : public windows_control<WTL::CListViewCtrl, WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP>
 		{
 		public:
+			void set_table(table_data& choices);
 		};
 
-		class statusbar_control : public windows_control<WTL::CStatusBarCtrl, WS_VISIBLE | WS_BORDER | WS_CHILD>
-		{
-		public:
-		};
-
-		class hotkey_control : public windows_control<WTL::CHotKeyCtrl, WS_VISIBLE | WS_BORDER | WS_CHILD>
-		{
-		public:
-		};
-
-		class animate_control : public windows_control<WTL::CAnimateCtrl, WS_VISIBLE | WS_BORDER | WS_CHILD>
-		{
-		public:
-		};
-
-		class richedit_control : public windows_control<WTL::CRichEditCtrl, WS_VISIBLE | WS_BORDER | WS_CHILD>
-		{
-		public:
-		};
-
-		class draglistbox_control : public windows_control<WTL::CDragListBox, WS_VISIBLE | WS_BORDER | WS_CHILD>
+		class scrollbar_control : public windows_control<WTL::CScrollBar, WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP>
 		{
 		public:
 		};
 
-		class rebar_control : public windows_control<WTL::CReBarCtrl, WS_VISIBLE | WS_BORDER | WS_CHILD>
+		class richedit_control : public windows_control<WTL::CRichEditCtrl, WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP>
+		{
+		public:
+			void set_html(const std::string& _text);
+			std::string get_html();
+		};
+
+		class datetimepicker_control : public windows_control<CDateTimePickerCtrl, WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP>
+		{
+		public:
+			void set_text(const std::string& _text);
+			std::string get_text();
+		};
+
+		class monthcalendar_control : public windows_control<CMonthCalendarCtrl, WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP>
 		{
 		public:
 		};
 
-		class comboboxex_control : public windows_control<WTL::CComboBoxEx, WS_VISIBLE | WS_BORDER | WS_CHILD>
+		class animate_control : public windows_control<WTL::CAnimateCtrl, WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP>
+		{
+		public:
+			bool open(const std::string& _name);
+			bool open(DWORD resource_id);
+			bool play();
+			bool stop();
+		};
+
+		class treeview_control : public windows_control<WTL::CTreeViewCtrl, WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP>
 		{
 		public:
 		};
 
-		class datetimepicker_control : public windows_control<CDateTimePickerCtrl, WS_VISIBLE | WS_BORDER | WS_CHILD>
+		class header_control : public windows_control<WTL::CHeaderCtrl, WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP>
 		{
 		public:
 		};
 
-		class monthcalendar_control : public windows_control<CMonthCalendarCtrl, WS_VISIBLE | WS_BORDER | WS_CHILD>
+		class toolbar_control : public windows_control<WTL::CToolBarCtrl, WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP>
+		{
+		public:
+		};
+
+		class statusbar_control : public windows_control<WTL::CStatusBarCtrl, WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP>
+		{
+		public:
+		};
+
+		class hotkey_control : public windows_control<WTL::CHotKeyCtrl, WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP>
+		{
+		public:
+		};
+
+
+		class draglistbox_control : public windows_control<WTL::CDragListBox, WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP>
+		{
+		public:
+		};
+
+		class rebar_control : public windows_control<WTL::CReBarCtrl, WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP>
 		{
 		public:
 		};
@@ -368,12 +412,6 @@ namespace corona
 		class item_changed_event : public control_event
 		{
 		public:
-
-		};
-
-		class item_changed_event : public control_event
-		{
-		public:
 			std::string text_value;
 		};
 
@@ -383,7 +421,7 @@ namespace corona
 			int state;
 
 			std::string selected_text;
-			int select_index;
+			int selected_index;
 			relative_ptr_type selected_value;
 		};
 

@@ -1452,7 +1452,7 @@ namespace corona
 			::EnableWindow(control, enabled);
 		}
 
-		void directApplicationWin32::setEditText(int textControlId, std::string& _string)
+		void directApplicationWin32::setEditText(int textControlId, const std::string& _string)
 		{
 			HWND control = ::GetDlgItem(hwndRoot, textControlId);
 			::SetWindowTextA(control, _string.c_str());
@@ -1561,6 +1561,95 @@ namespace corona
 			}
 		}
 
+// listbox
+
+		std::string directApplicationWin32::getListSelectedText(int ddlControlId)
+		{
+			std::string value = "";
+			HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
+			int newSelection = (int)::SendMessage(control, LB_GETCURSEL, 0, 0);
+			if (newSelection > -1) {
+				int length = (int)::SendMessage(control, LB_GETTEXTLEN, newSelection, 0);
+				char* buffer = new char[length + 16];
+				if (buffer) {
+					::SendMessage(control, LB_GETTEXT, newSelection, (LPARAM)buffer);
+					value = buffer;
+					delete[] buffer;
+				}
+			}
+			return value;
+		}
+
+		int directApplicationWin32::getListSelectedIndex(int ddlControlId)
+		{
+			HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
+			int newSelection = (int)::SendMessage(control, LB_GETCURSEL, 0, 0);
+			return newSelection;
+		}
+
+		int directApplicationWin32::getListSelectedValue(int ddlControlId)
+		{
+			HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
+			int newSelection = (int)::SendMessage(control, LB_GETCURSEL, 0, 0);
+			int data = (int)::SendMessage(control, LB_GETITEMDATA, newSelection, 0);
+			return data;
+		}
+
+		void directApplicationWin32::setListSelectedIndex(int ddlControlId, int index)
+		{
+			HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
+			::SendMessageA(control, LB_SETCURSEL, index, NULL);
+		}
+
+		void directApplicationWin32::setListSelectedText(int ddlControlId, std::string& _text)
+		{
+			setListSelectedText(ddlControlId, _text.c_str());
+		}
+
+		void directApplicationWin32::setListSelectedText(int ddlControlId, const char* _text)
+		{
+			HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
+			int index = ::SendMessageA(control, LB_FINDSTRINGEXACT, (WPARAM)-1, (LPARAM)_text);
+			::SendMessageA(control, LB_SETCURSEL, index, NULL);
+		}
+
+		void directApplicationWin32::setListSelectedValue(int ddlControlId, int value)
+		{
+			HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
+			int count = ::SendMessageA(control, LB_GETCOUNT, NULL, NULL);
+			for (int i = 0; i < count; i++) {
+				int data = (int)::SendMessageA(control, LB_GETITEMDATA, i, 0);
+				if (data == value) {
+					::SendMessageA(control, LB_SETCURSEL, i, NULL);
+					break;
+				}
+			}
+		}
+
+		void directApplicationWin32::clearListItems(int ddlControlId)
+		{
+			HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
+			::SendMessageA(control, LB_RESETCONTENT, NULL, NULL);
+		}
+
+		void directApplicationWin32::addListItem(int ddlControlId, std::string& _text, int _data)
+		{
+			addListItem(ddlControlId, _text.c_str(), _data);
+		}
+
+		void directApplicationWin32::addListItem(int ddlControlId, const char* _text, int _data)
+		{
+			HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
+			int newItemIndex = (int)::SendMessageA(control, LB_ADDSTRING, NULL, (LPARAM)_text);
+			if (newItemIndex != LB_ERR) {
+				int err = ::SendMessageA(control, LB_SETITEMDATA, newItemIndex, (LPARAM)_data);
+			}
+		}
+
+
+
+
+
 		void directApplicationWin32::setFocus(int ddlControlId)
 		{
 			HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
@@ -1647,21 +1736,58 @@ namespace corona
 			ListView_DeleteAllItems(control);
 		}
 
-		void directApplicationWin32::addListViewItem(int ddlControlId, std::string& _text, int _data)
+		void directApplicationWin32::addListViewItem(int ddlControlId, std::string& _text, LPARAM _data)
 		{
 			addListViewItem(ddlControlId, _text.c_str(), _data);
 		}
 
-		void directApplicationWin32::addListViewItem(int ddlControlId, const char* _text, int _data)
+		void directApplicationWin32::addListViewItem(int ddlControlId, const char* _text, LPARAM _data)
 		{
 			HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
 			LVITEM lvitem;
 			ZeroMemory(&lvitem, sizeof(lvitem));
-			lvitem.mask = LVIF_TEXT | LVIF_STATE | LVIF_PARAM;
+			lvitem.mask = LVIF_TEXT | LVIF_PARAM;
 			lvitem.iItem = ListView_GetItemCount(control);
 			lvitem.pszText = (LPSTR)_text;
 			lvitem.lParam = _data;
 			ListView_InsertItem(control, &lvitem);
+		}
+
+		void directApplicationWin32::addListViewColumn(int ddlControlId, 
+			int column_id,
+			const char* _text,
+			int _width, 
+			visual_alignment _alignment)
+		{
+			HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
+			LVCOLUMN lvitem;
+			ZeroMemory(&lvitem, sizeof(lvitem));
+			lvitem.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM | LVCF_ORDER;
+			lvitem.iSubItem = column_id;
+			lvitem.iOrder = column_id;
+			lvitem.pszText = (LPSTR)_text;
+			lvitem.cx = _width;
+			lvitem.cxIdeal = _width;
+			ListView_InsertItem(control, &lvitem);
+		}
+
+		void directApplicationWin32::addListViewRow(int ddlControlId, LPARAM _data, const std::vector<const char*>& _items)
+		{
+			HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
+
+			LVITEM lvitem;
+			ZeroMemory(&lvitem, sizeof(lvitem));
+			lvitem.mask = LVIF_TEXT | LVIF_PARAM;
+			lvitem.iItem = ListView_GetItemCount(control);
+			lvitem.pszText = (LPSTR)_items[0];
+			lvitem.lParam = _data;
+			ListView_InsertItem(control, &lvitem);
+
+			for (int i = 1; i < _items.size(); i++) {
+				lvitem.mask = LVIF_TEXT;
+				lvitem.iSubItem = i;
+				ListView_SetItem(control, &lvitem);
+			}
 		}
 
 		int directApplicationWin32::getListViewSelectedIndex(int ddlControlId)
@@ -1671,7 +1797,7 @@ namespace corona
 			return iPos;
 		}
 
-		int directApplicationWin32::getListViewSelectedValue(int ddlControlId)
+		LPARAM directApplicationWin32::getListViewSelectedValue(int ddlControlId)
 		{
 			HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
 			int pos = getListViewSelectedIndex(ddlControlId);
@@ -1742,9 +1868,9 @@ namespace corona
 			return ret;
 		}
 
-		std::list<int> directApplicationWin32::getListViewSelectedValues(int ddlControlId)
+		std::list<LPARAM> directApplicationWin32::getListViewSelectedValues(int ddlControlId)
 		{
-			std::list<int> ret;
+			std::list<LPARAM> ret;
 
 			std::list<int> indeces = getListViewSelectedIndexes(ddlControlId);
 			HWND control = ::GetDlgItem(hwndRoot, ddlControlId);

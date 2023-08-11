@@ -85,7 +85,7 @@ namespace corona
 			virtual void setButtonIcon(int controlId, dtoIconId iconId);
 
 			//text
-			virtual void setEditText(int textControlId, std::string& _string);
+			virtual void setEditText(int textControlId, const std::string& _string);
 			virtual void setEditText(int textControlId, const char* _string);
 			virtual std::string getEditText(int textControlId);
 
@@ -103,20 +103,35 @@ namespace corona
 			virtual void addFoldersToCombo(int ddlControlId, const char* _path);
 			virtual void addPicturesFoldersToCombo(int ddlControlId);
 
+			// ListBox
+			virtual std::string getListSelectedText(int ddlControlId);
+			virtual int getListSelectedValue(int ddlControlId);
+			virtual int getListSelectedIndex(int ddlControlId);
+			virtual void setListSelectedIndex(int ddlControlId, int index);
+			virtual void setListSelectedText(int ddlControlId, std::string& _text);
+			virtual void setListSelectedText(int ddlControlId, const char* _text);
+			virtual void setListSelectedValue(int ddlControlId, int value);
+			virtual void clearListItems(int ddlControlId);
+			virtual void addListItem(int ddlControlId, std::string& _text, int _data);
+			virtual void addListItem(int ddlControlId, const char* _text, int _data);
+
 			// buttons
 			virtual void setButtonChecked(int controlId, bool enabled);
 			virtual bool getButtonChecked(int controlId);
 
 			// list view
 			virtual void clearListView(int ddlControlId);
-			virtual void addListViewItem(int ddlControlId, std::string& _text, int _data);
-			virtual void addListViewItem(int ddlControlId, const char* _text, int _data);
+			virtual void addListViewItem(int ddlControlId, std::string& _text, LPARAM _data);
+			virtual void addListViewItem(int ddlControlId, const char* _text, LPARAM _data);
+			virtual void addListViewColumn(int ddlControlId, int column_id, const char* _text, int _width, visual_alignment _alignment);
+			virtual void addListViewRow(int ddlControlId, LPARAM data, const std::vector<const char*>& _items) = 0;
+
 			virtual std::string getListViewSelectedText(int ddlControlId);
 			virtual int getListViewSelectedIndex(int ddlControlId);
-			virtual int getListViewSelectedValue(int ddlControlId);
+			virtual LPARAM getListViewSelectedValue(int ddlControlId);
 			virtual std::list<std::string> getListViewSelectedTexts(int ddlControlId);
 			virtual std::list<int> getListViewSelectedIndexes(int ddlControlId);
-			virtual std::list<int> getListViewSelectedValues(int ddlControlId);
+			virtual std::list<LPARAM> getListViewSelectedValues(int ddlControlId);
 
 			virtual void setListViewSelectedIndex(int ddlControlId, int indexId);
 			virtual void setListViewSelectedText(int ddlControlId, std::string& _text);

@@ -96,6 +96,9 @@ extern CAppModule _Module;
 #include <ctime>
 #include <stack>
 
+#include <nlohmann/json.hpp>
+using json = nlohmann::json;
+
 #include "concept_lock.h"
 #include "assert_if.h"
 #include "constants.h"
