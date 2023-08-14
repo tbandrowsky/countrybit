@@ -152,16 +152,16 @@ namespace corona
 			direct2d->setDevice(direct3d->getD3DDevice());
 		}
 
-		direct2dWindow* adapterSet::createD2dWindow(HWND parent)
+		std::weak_ptr<direct2dWindow> adapterSet::createD2dWindow(HWND parent)
 		{
-			direct2dWindow* win = new direct2dWindow(parent, this);
+			std::shared_ptr<direct2dWindow> win = std::make_shared<direct2dWindow>(parent, this);
 			parent_windows.insert_or_assign(parent, win);
 			return win;
 		}
 
-		direct2dWindow* adapterSet::getWindow(HWND parent)
+		std::weak_ptr<direct2dWindow> adapterSet::getWindow(HWND parent)
 		{
-			direct2dWindow* win = nullptr;
+			std::shared_ptr<direct2dWindow> win = nullptr;
 			if (parent_windows.contains(parent)) {
 				win = parent_windows[parent];
 			}
@@ -175,25 +175,17 @@ namespace corona
 
 		void adapterSet::closeWindow(HWND hwnd)
 		{
-			auto* win = getWindow(hwnd);
-			if (win) {
-				delete win;
-				parent_windows.erase(hwnd);
-			}
+			parent_windows.erase(hwnd);
 		}
 
 		void adapterSet::clearWindows()
 		{
-			for (auto win : parent_windows)
-			{
-				delete win.second;
-			}
 			parent_windows.clear();
 		}
 
-		direct2dChildWindow* adapterSet::findChild(relative_ptr_type _child)
+		std::weak_ptr<direct2dChildWindow> adapterSet::findChild(relative_ptr_type _child)
 		{
-			direct2dChildWindow* w = nullptr;
+			std::weak_ptr<direct2dChildWindow> w;
 			for (auto win : parent_windows)
 			{
 				w = win.second->getChild(_child);

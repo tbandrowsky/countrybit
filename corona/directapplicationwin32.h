@@ -22,7 +22,7 @@ namespace corona
 
 			bool controllerLoaded;
 
-			controller * 		currentController;
+			std::shared_ptr<controller> currentController;
 
 			static directApplicationWin32* current;
 			static LRESULT CALLBACK windowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
@@ -46,26 +46,25 @@ namespace corona
 
 			void loadStyleSheet();
 
-
 			bool disableChangeProcessing;
-			adapterSet* factory;
+			std::weak_ptr<adapterSet> factory;
 
 		public:
 
-			directApplicationWin32(adapterSet* _factory);
+			directApplicationWin32(std::weak_ptr<adapterSet> _factory);
 			virtual ~directApplicationWin32();
 
 			HWND getMainWindow() { return hwndRoot;  }
 			HWND createWindow( DWORD window_id, LPCTSTR		lpClassName, LPCTSTR		lpWindowName, DWORD       dwStyle, rectangle bounds, LPVOID		lpParam, HFONT		font);
 			void destroyWindow( HWND hwnd );
 
-			direct2dChildWindow* createDirect2Window(DWORD control_id, rectangle bounds);
-			virtual direct2dChildWindow* getDirect2dWindow(relative_ptr_type ctrlId);
+			std::weak_ptr<direct2dChildWindow> createDirect2Window(DWORD control_id, rectangle bounds);
+			virtual std::weak_ptr<direct2dChildWindow> getDirect2dWindow(relative_ptr_type ctrlId);
 
-			virtual bool runFull(HINSTANCE _hinstance, const char* _title, int _iconId, bool _fullScreen, controller* _firstController);
-			virtual bool runDialog(HINSTANCE _hinstance, const char* _title, int _iconId, bool _fullScreen, controller* _firstController);
+			virtual bool runFull(HINSTANCE _hinstance, const char* _title, int _iconId, bool _fullScreen, std::shared_ptr<controller> _firstController);
+			virtual bool runDialog(HINSTANCE _hinstance, const char* _title, int _iconId, bool _fullScreen, std::shared_ptr<controller> _firstController);
 
-			virtual void setController(controller* _newCurrentController);
+			virtual void setController(std::shared_ptr<controller> _newCurrentController);
 
 			HFONT createFont(const char* _fontName, double fontSize, bool bold, bool italic);
 

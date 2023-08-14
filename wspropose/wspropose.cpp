@@ -30,15 +30,15 @@ int __stdcall WinMain(HINSTANCE hInstance,
 	forceWindowed = true;
 #endif
 
-	proposal::wsproposal_controller* mainController = new proposal::wsproposal_controller();
+	std::shared_ptr<corona::win32::presentation> presentation = std::make_shared<corona::win32::presentation>();
 
 	if (forceWindowed) 
 	{
-		wsPropose.runDialog(hInstance, "Technology Demonstrator", IDI_WSPROPOSE, false, mainController);
+		wsPropose.runDialog(hInstance, "Technology Demonstrator", IDI_WSPROPOSE, false, presentation);
 	}
 	else 
 	{
-		wsPropose.runDialog(hInstance, "Technology Demonstrator", IDI_WSPROPOSE, true, mainController);
+		wsPropose.runDialog(hInstance, "Technology Demonstrator", IDI_WSPROPOSE, true, presentation);
 	}
 
 	CoUninitialize();

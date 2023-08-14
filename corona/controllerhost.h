@@ -81,8 +81,8 @@ namespace corona
 			virtual HWND createWindow(DWORD window_id, LPCTSTR		lpClassName, LPCTSTR		lpWindowName, DWORD       dwStyle, rectangle bounds, LPVOID		lpParam, HFONT		font) = 0;
 			virtual void destroyWindow(HWND hwnd) = 0;
 
-			virtual direct2dChildWindow* createDirect2Window(DWORD control_id, rectangle bounds) = 0;
-			virtual direct2dChildWindow* getDirect2dWindow(relative_ptr_type ctrlId) = 0;
+			virtual std::weak_ptr<direct2dChildWindow> createDirect2Window(DWORD control_id, rectangle bounds) = 0;
+			virtual std::weak_ptr<direct2dChildWindow> getDirect2dWindow(relative_ptr_type ctrlId) = 0;
 
 			virtual void setController(controller * _newCurrentController) = 0;
 

@@ -83,16 +83,16 @@ namespace corona
 			direct2d->setDevice(direct3d->getD3DDevice());
 		}
 
-		direct2dWindow* adapterSet::createD2dWindow(HWND parent)
+		std::weak_ptr<direct2dWindow> adapterSet::createD2dWindow(HWND parent)
 		{
-			direct2dWindow *win = new direct2dWindow(parent, this);
+			std::shared_ptr<direct2dWindow> win = std::make_shared<direct2dWindow>(parent, this);
 			parent_windows.insert_or_assign(parent, win);
 			return win;
 		}
 
-		direct2dWindow* adapterSet::getWindow(HWND parent)
+		std::weak_ptr<direct2dWindow> adapterSet::getWindow(HWND parent)
 		{
-			direct2dWindow* win = nullptr;
+			std::shared_ptr<direct2dWindow> win;
 			if (parent_windows.contains(parent)) {
 				win = parent_windows[parent];
 			}
@@ -106,29 +106,24 @@ namespace corona
 
 		void adapterSet::closeWindow(HWND hwnd)
 		{
-			auto *win = getWindow(hwnd);
-			if (win) {
-				delete win;
+			auto win = getWindow(hwnd);
+			if (!win.expired()) {
 				parent_windows.erase(hwnd);
 			}
 		}
 
 		void adapterSet::clearWindows()
 		{
-			for (auto win : parent_windows)
-			{
-				delete win.second;
-			}
 			parent_windows.clear();
 		}
 
-		direct2dChildWindow* adapterSet::findChild(relative_ptr_type _child)
+		std::weak_ptr<direct2dChildWindow> adapterSet::findChild(relative_ptr_type _child)
 		{
-			direct2dChildWindow* w = nullptr;
+			std::weak_ptr<direct2dChildWindow> w;
 			for (auto win : parent_windows)
 			{
 				w = win.second->getChild(_child);
-				if (w) {
+				if (!w.expired()) {
 					break;
 				}
 			}
@@ -148,9 +143,9 @@ namespace corona
 			}
 		}
  
-		direct2dBitmap* adapterSet::createD2dBitmap(D2D1_SIZE_F size)
+		std::unique_ptr<direct2dBitmap> adapterSet::createD2dBitmap(D2D1_SIZE_F size)
 		{
-			direct2dBitmap* win = new direct2dBitmap(size, this);
+			std::unique_ptr<direct2dBitmap> win = std::make_unique<direct2dBitmap>(size, this);
 			return win;
 		}
 
@@ -321,38 +316,36 @@ namespace corona
 				renderTarget->Release();
 		}
 
-		direct2dChildWindow* direct2dWindow::createChild(relative_ptr_type _id, UINT _x, UINT _y, UINT _w, UINT _h)
+		std::weak_ptr<direct2dChildWindow> direct2dWindow::createChild(relative_ptr_type _id, UINT _x, UINT _y, UINT _w, UINT _h)
 		{
-			direct2dChildWindow* child = nullptr;
+			std::weak_ptr<direct2dChildWindow> child;
 			if (children.contains(_id)) {
 				child = children[_id];
-				child->moveWindow(_x, _y, _w, _h);
+				auto c = child.lock();
+				if (c) {
+					c->moveWindow(_x, _y, _w, _h);
+				}
 			}
 			else 
 			{
-				child = new direct2dChildWindow(this, factory, _x, _y, _w, _h);
+				child = std::make_shared<direct2dChildWindow>(this, factory, _x, _y, _w, _h);
 				children.insert_or_assign(_id, child);
 			}
 			return child;
 		}
 
-		direct2dChildWindow* direct2dWindow::getChild(relative_ptr_type _id)
+		std::weak_ptr<direct2dChildWindow> direct2dWindow::getChild(relative_ptr_type _id)
 		{
-			direct2dChildWindow* child = nullptr;
+			std::weak_ptr<direct2dChildWindow> child;
 			if (children.contains(_id)) {
 				child = children[ _id ];
 			}
 			return child;
 		}
 		
-		direct2dChildWindow* direct2dWindow::deleteChild(relative_ptr_type _id)
+		void direct2dWindow::deleteChild(relative_ptr_type _id)
 		{
-			direct2dChildWindow* child = getChild(_id);
-			if (child) {
-				delete child;
-				children.erase(_id);
-			}
-			return nullptr;
+			children.erase(_id);
 		}
 
 		void direct2dWindow::beginDraw(bool& _adapter_blown_away)
@@ -805,7 +798,7 @@ namespace corona
 
 		directApplicationWin32* directApplicationWin32::current;
 
-		directApplicationWin32::directApplicationWin32(adapterSet* _factory) : factory(_factory), colorCapture(false)
+		directApplicationWin32::directApplicationWin32(std::weak_ptr<adapterSet> _factory) : factory(_factory), colorCapture(false)
 		{
 			current = this;
 			currentController = NULL;
@@ -834,7 +827,10 @@ namespace corona
 
 				bool failedDevice = false;
 
-				auto winroot = factory->getWindow(hwndRoot);
+				auto pfactory = factory.lock();
+				if (!pfactory) return;
+
+				auto winroot = pfactory->getWindow(hwndRoot).lock();
 
 				if (winroot == nullptr)
 					return;
@@ -880,8 +876,8 @@ namespace corona
 			failed_check:
 
 				if (failedDevice) {
-					factory->clearWindows();
-					factory->refresh();
+					pfactory->clearWindows();
+					pfactory->refresh();
 				}
 			}
 		}
@@ -944,13 +940,17 @@ namespace corona
 			return hfont;
 		}
 
-		direct2dChildWindow* directApplicationWin32::createDirect2Window(DWORD control_id, rectangle bounds)
+		std::weak_ptr<direct2dChildWindow> directApplicationWin32::createDirect2Window(DWORD control_id, rectangle bounds)	
 		{
+			std::weak_ptr<direct2dChildWindow> cx;
 			if (bounds.w < 1 || bounds.h < 1)
-				return nullptr;
+				return cx;
 
 			auto dpi = GetDpiForWindow(hwndRoot);
-			auto* win = factory->getWindow(hwndRoot);
+			auto pfactory = factory.lock();
+			if (!pfactory) return;
+
+			auto win = pfactory->getWindow(hwndRoot).lock();
 			auto child = win->createChild(control_id, bounds.x, bounds.y, bounds.w, bounds.h);
 			return child;
 		}
@@ -969,14 +969,16 @@ namespace corona
 			char className[256];
 			database::point ptz;
 
-			auto* winx = factory->getWindow(hwnd);
+			auto pfactory = factory.lock();
+			if (!pfactory) return;
+			auto* winx = pfactory->getWindow(hwnd);
 
 			switch (message)
 			{
 			case WM_CREATE:
 				hwndRoot = hwnd;
 				if (currentController) {
-					auto* win = factory->createD2dWindow(hwnd);
+					auto* win = pfactory->createD2dWindow(hwnd);
 					dpiScale = 96.0 / GetDpiForWindow(hwnd);
 					loadStyleSheet();
 					currentController->onCreated();
@@ -985,7 +987,7 @@ namespace corona
 			case WM_INITDIALOG:
 				break;
 			case WM_DESTROY:
-				factory->closeWindow(hwnd);
+				pfactory->closeWindow(hwnd);
 				PostQuitMessage(0);
 				return 0;
 			case WM_COMMAND:
@@ -1214,7 +1216,7 @@ namespace corona
 					rect.y = 0;
 					rect.w = abs(l.right - l.left);
 					rect.h = abs(l.bottom - l.top);
-					auto* win = factory->getWindow(hwnd);
+					auto* win = pfactory->getWindow(hwnd);
 					win->resize(rect.w, rect.h);
 					if (currentController) {
 						dpiScale = 96.0 / GetDpiForWindow(hwnd);
@@ -1233,13 +1235,16 @@ namespace corona
 			return DefWindowProc(hwnd, message, wParam, lParam);
 		}
 
-		direct2dChildWindow* directApplicationWin32::getDirect2dWindow(relative_ptr_type i)
+		std::weak_ptr<direct2dChildWindow> directApplicationWin32::getDirect2dWindow(relative_ptr_type i)
 		{
-			auto wmi = factory->findChild(i);
+			auto pfactory = factory.lock();
+			if (!pfactory) return;
+
+			auto wmi = pfactory->findChild(i);
 			return wmi;
 		}
 
-		void directApplicationWin32::setController(controller* _newCurrentController)
+		void directApplicationWin32::setController(std::shared_ptr<controller> _newCurrentController)
 		{
 			::QueryPerformanceCounter((LARGE_INTEGER*)&startCounter);
 			pressedKeys.clear();
@@ -1247,7 +1252,7 @@ namespace corona
 			::QueryPerformanceCounter((LARGE_INTEGER*)&lastCounter);
 		}
 
-		bool directApplicationWin32::runFull(HINSTANCE _hinstance, const char* _title, int _iconId, bool _fullScreen, controller* _firstController)
+		bool directApplicationWin32::runFull(HINSTANCE _hinstance, const char* _title, int _iconId, bool _fullScreen, std::shared_ptr<controller> _firstController)
 		{
 			if (!_firstController)
 				return false;
@@ -1332,7 +1337,7 @@ namespace corona
 			return true;
 		}
 
-		bool directApplicationWin32::runDialog(HINSTANCE _hinstance, const char* _title, int _iconId, bool _fullScreen, controller* _firstController)
+		bool directApplicationWin32::runDialog(HINSTANCE _hinstance, const char* _title, int _iconId, bool _fullScreen, std::shared_ptr<controller> _firstController)
 		{
 			if (!_firstController)
 				return false;

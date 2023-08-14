@@ -79,6 +79,8 @@ namespace corona
 			direct2dDevice* direct2d;
 			direct3dDevice* direct3d;
 
+			std::map<HWND, std::shared_ptr<direct2dWindow>> parent_windows;
+
 		public:
 
 			adapterSet();
@@ -98,16 +100,16 @@ namespace corona
 			inline ID3D11Device* getD3DDevice() { return direct3d->getD3DDevice(); }
 			inline D3D_FEATURE_LEVEL getFeatureLevel() { return direct3d->getFeatureLevel(); }
 
-			std::map<HWND, direct2dWindow*> parent_windows;
+			std::weak_ptr<direct2dWindow> createD2dWindow(HWND parent);
 
-			direct2dWindow* createD2dWindow(HWND parent);
-			direct2dWindow* getWindow(HWND parent);
+			std::weak_ptr<direct2dWindow> getWindow(HWND parent);
 			bool containsWindow(HWND parent);
 			void closeWindow(HWND hwnd);
 			void clearWindows();
-			direct2dChildWindow* findChild(relative_ptr_type _child);
 
-			direct2dBitmap* createD2dBitmap(D2D1_SIZE_F size);
+			std::weak_ptr<direct2dChildWindow> findChild(relative_ptr_type _child);
+
+			std::unique_ptr<direct2dBitmap> createD2dBitmap(D2D1_SIZE_F size);
 
 			void loadStyleSheet(jobject& sheet, int style_state);
 

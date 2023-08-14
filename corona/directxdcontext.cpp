@@ -263,11 +263,6 @@ namespace corona
 
 		direct2dWindow::~direct2dWindow()
 		{
-			for (auto child : children)
-			{
-				delete child.second;
-			}
-
 			children.clear();
 
 			if (bitmap)
@@ -280,38 +275,38 @@ namespace corona
 				renderTarget->Release();
 		}
 
-		direct2dChildWindow* direct2dWindow::createChild(relative_ptr_type _id, UINT _x, UINT _y, UINT _w, UINT _h)
+		std::weak_ptr<direct2dChildWindow> direct2dWindow::createChild(relative_ptr_type _id, UINT _x, UINT _y, UINT _w, UINT _h)
 		{
-			direct2dChildWindow* child = nullptr;
+			std::weak_ptr<direct2dChildWindow> child;
 			if (children.contains(_id)) {
 				child = children[_id];
-				child->moveWindow(_x, _y, _w, _h);
+				if (auto c = child.lock()) {
+					c->moveWindow(_x, _y, _w, _h);
+				}
 			}
 			else
 			{
-				child = new direct2dChildWindow(this, factory, _x, _y, _w, _h);
-				children.insert_or_assign(_id, child);
+				auto new_ptr = std::make_shared<direct2dChildWindow>(this, factory, _x, _y, _w, _h);
+				children.insert_or_assign(_id, new_ptr);
+				child = new_ptr;
 			}
 			return child;
 		}
 
-		direct2dChildWindow* direct2dWindow::getChild(relative_ptr_type _id)
+		std::weak_ptr<direct2dChildWindow> direct2dWindow::getChild(relative_ptr_type _id)
 		{
-			direct2dChildWindow* child = nullptr;
+			std::weak_ptr<direct2dChildWindow> child;
 			if (children.contains(_id)) {
 				child = children[_id];
 			}
 			return child;
 		}
 
-		direct2dChildWindow* direct2dWindow::deleteChild(relative_ptr_type _id)
+		void direct2dWindow::deleteChild(relative_ptr_type _id)
 		{
-			direct2dChildWindow* child = getChild(_id);
-			if (child) {
-				delete child;
+			if (children.contains(_id)) {
 				children.erase(_id);
 			}
-			return nullptr;
 		}
 
 		void direct2dWindow::beginDraw(bool& _adapter_blown_away)

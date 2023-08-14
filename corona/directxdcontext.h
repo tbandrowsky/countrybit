@@ -198,7 +198,7 @@ namespace corona
 			ID3D11Texture2D* texture;
 			ID2D1Bitmap1* bitmap;
 
-			std::map<relative_ptr_type, direct2dChildWindow*> children;
+			std::map<relative_ptr_type, std::shared_ptr<direct2dChildWindow>> children;
 
 			void applySwapChain();
 
@@ -224,9 +224,9 @@ namespace corona
 
 			HWND getWindow() { return hwnd; }
 
-			direct2dChildWindow* createChild(relative_ptr_type _id, UINT _xdips, UINT _ydips, UINT _wdips, UINT _hdips);
-			direct2dChildWindow* getChild(relative_ptr_type _id);
-			direct2dChildWindow* deleteChild(relative_ptr_type _id);
+			std::weak_ptr<direct2dChildWindow> createChild(relative_ptr_type _id, UINT _xdips, UINT _ydips, UINT _wdips, UINT _hdips);
+			std::weak_ptr<direct2dChildWindow> getChild(relative_ptr_type _id);
+			void deleteChild(relative_ptr_type _id);
 
 			auto& getChildren() { return children; }
 		};
