@@ -183,14 +183,16 @@ namespace corona
 		{
 		public:
 
+			using control_base::id;
+
 			WtlWindowClass window;
-			win32::win32ControllerHost* host;
+			win32::win32ControllerHost* window_host;
 
 			virtual void create(win32::win32ControllerHost* _host)
 			{
-				host = _host;
+				window_host = _host;
 
-				HWND parent = host->getMainWindow();
+				HWND parent = window_host->getMainWindow();
 
 				RECT r;
 				r.left = bounds.x;
@@ -205,7 +207,7 @@ namespace corona
 
 			virtual void destroy()
 			{
-				host = nullptr;
+				window_host = nullptr;
 				window.DestroyWindow();
 			}
 
@@ -244,28 +246,35 @@ namespace corona
 		template <typename WtlWindowClass, DWORD dwStyle, DWORD dwExStyle = 0> class text_control_base : public windows_control<WtlWindowClass, dwStyle, dwExStyle>
 		{
 		public:
+
+			using control_base::id;
+			using windows_control<WtlWindowClass,dwStyle,dwExStyle>::window_host;
+
 			void set_text(const std::string& _text)
 			{
-				host->setEditText(id, _text);
+				window_host->setEditText(id, _text);
 			}
 
 			std::string get_text()
 			{
-				return host->getEditText(id);
+				return window_host->getEditText(id);
 			}
 		};
 
 		template <typename WtlWindowClass, DWORD dwStyle, DWORD dwExStyle = 0> class table_control_base : public windows_control<WtlWindowClass, dwStyle, dwExStyle>
 		{
 		public:
+			using control_base::id;
+			using windows_control<WtlWindowClass, dwStyle, dwExStyle>::window_host;
+
 			void set_table(table_data& choices)
 			{
-				host->clearListView();
+				window_host->clearListView();
 				int idx = 1;
 				std::map<std::string, int> column_map;
 				for (auto col : choices.columns) {
 					//virtual void addListViewColumn(int ddlControlId, int column_id, const char* _text, int _width, visual_alignment _alignment);
-					host->addListViewColumn(id, idx, col.display_name, col.width, col.alignment);
+					window_host->addListViewColumn(id, idx, col.display_name, col.width, col.alignment);
 					column_map[col.json_field] = idx;
 				}
 				int row_idx = 0;
@@ -281,7 +290,7 @@ namespace corona
 						}
 					}
 					//virtual void addListViewRow(int ddlControlId, LPARAM data, const std::vector<std::string>&_items) = 0;
-					host->addListViewRow(id, row_idx, data);
+					window_host->addListViewRow(id, row_idx, data);
 					row_idx++;
 				}
 			}
@@ -290,15 +299,18 @@ namespace corona
 		template <typename WtlWindowClass, DWORD dwStyle, DWORD dwExStyle = 0> class list_control_base : public windows_control<WtlWindowClass, dwStyle, dwExStyle>
 		{
 		public:
+			using control_base::id;
+			using windows_control<WtlWindowClass, dwStyle, dwExStyle>::window_host;
+
 			void set_list(list_data& choices)
 			{
-				host->clearListItems();
-				for (auto element in choices.items.items()) 
+				window_host->clearListItems();
+				for (auto element : choices.items.items()) 
 				{
 					auto c = element.value();
 					int id = c[choices.id_field].template get<int>();
 					std::string description = c[choices.text_field].template get<std::string>();
-					host->addListItem(id, description, value);
+					window_host->addListItem(id, description, id);
 				}
 			}
 		};
@@ -306,15 +318,19 @@ namespace corona
 		template <typename WtlWindowClass, DWORD dwStyle, DWORD dwExStyle = 0> class dropdown_control_base : public windows_control<WtlWindowClass, dwStyle, dwExStyle>
 		{
 		public:
+
+			using control_base::id;
+			using windows_control<WtlWindowClass, dwStyle, dwExStyle>::window_host;
+
 			void set_list(list_data& choices)
 			{
-				host->clearComboItems();
-				for (auto element in choices.items.items())
+				window_host->clearComboItems();
+				for (auto element : choices.items.items())
 				{
 					auto c = element.value();
 					int id = c[choices.id_field].template get<int>();
 					std::string description = c[choices.text_field].template get<std::string>();
-					host->addComboItem(id, description, value);
+					window_host->addComboItem(id, description, id);
 				}
 			}
 		};
@@ -383,6 +399,7 @@ namespace corona
 		public:
 			bool open(const std::string& _name);
 			bool open(DWORD resource_id);
+			bool play(UINT from, UINT to, UINT rep);
 			bool play();
 			bool stop();
 		};

@@ -1646,9 +1646,70 @@ namespace corona
 			}
 		}
 
+		void directApplicationWin32::addFoldersToList(int ddlControlId, const char* _path)
+		{
+			HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
 
+			char searchPath[MAX_PATH + 8];
+			strncpy_s(searchPath, _path, MAX_PATH);
+			searchPath[MAX_PATH] = 0;
 
+			char* lastChar = getLastChar(searchPath);
+			if (!lastChar)
+				return;
 
+			if (*lastChar == '\\') {
+				lastChar++;
+				*lastChar = '*';
+				lastChar++;
+				*lastChar = 0;
+			}
+			else if (*lastChar != '*') {
+				lastChar++;
+				*lastChar = '\\';
+				lastChar++;
+				*lastChar = '*';
+				lastChar++;
+				*lastChar = 0;
+			}
+
+			WIN32_FIND_DATA findData;
+			ZeroMemory(&findData, sizeof(findData));
+
+			HANDLE hfind = INVALID_HANDLE_VALUE;
+
+			hfind = ::FindFirstFileA(searchPath, &findData);
+			if (hfind != INVALID_HANDLE_VALUE) {
+				do
+				{
+					// oh windows, . is really a directory, seriously!
+					if (strcmp(findData.cFileName, ".") == 0)
+						continue;
+
+					if (strcmp(findData.cFileName, "..") == 0)
+						continue;
+
+					if (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+					{
+						char recurseBuff[MAX_PATH + 8];
+						strncpy_s(recurseBuff, _path, MAX_PATH);
+						recurseBuff[MAX_PATH] = 0;
+						::PathAddBackslashA(recurseBuff);
+						::PathAppendA(recurseBuff, findData.cFileName);
+						addComboItem(ddlControlId, recurseBuff, 0);
+						addFoldersToCombo(ddlControlId, recurseBuff);
+					}
+				} while (FindNextFile(hfind, &findData) != 0);
+			}
+
+		}
+
+		void directApplicationWin32::addPicturesFoldersToList(int ddlControlId)
+		{
+			char picturesPath[MAX_PATH * 2];
+			::SHGetFolderPath(NULL, CSIDL_MYPICTURES, NULL, SHGFP_TYPE_CURRENT, picturesPath);
+			addFoldersToCombo(ddlControlId, picturesPath);
+		}
 
 		void directApplicationWin32::setFocus(int ddlControlId)
 		{
@@ -1956,7 +2017,7 @@ namespace corona
 
 		}
 
-		void directApplicationWin32::setListViewSelectedValue(int ddlControlId, int value)
+		void directApplicationWin32::setListViewSelectedValue(int ddlControlId, LPARAM value)
 		{
 			clearListViewSelection(ddlControlId);
 

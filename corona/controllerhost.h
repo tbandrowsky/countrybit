@@ -123,7 +123,7 @@ namespace corona
 			virtual void addFoldersToList(int ddlControlId, const char* _path) = 0;
 			virtual void addPicturesFoldersToList(int ddlControlId) = 0;
 			virtual void addListViewColumn(int ddlControlId, int column_id, const char* _text, int _width, visual_alignment _alignment) = 0;
-			virtual void addListViewRow(int ddlControlId, LPARAM data, const std::vector<const char*>& _items) = 0;
+			virtual void addListViewRow(int ddlControlId, LPARAM data, const std::vector<std::string>& _items) = 0;
 
 			virtual void setButtonChecked(int controlId, bool enabled) = 0;
 			virtual bool getButtonChecked(int controlId) = 0;

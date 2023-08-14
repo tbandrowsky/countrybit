@@ -706,7 +706,7 @@ namespace corona
 
 		std::string richedit_control::get_html()
 		{
-
+			return "";
 		}
 
 		void datetimepicker_control::set_text(const std::string& _text)
@@ -716,7 +716,7 @@ namespace corona
 
 		std::string datetimepicker_control::get_text()
 		{
-
+			return "";
 		}
 
 		/*
@@ -728,24 +728,30 @@ namespace corona
 
 		bool animate_control::open(const std::string& _name)
 		{
-
+			return window.Open(_name.c_str());
 		}
 
 		bool animate_control::open(DWORD resource_id)
 		{
+			return window.Open(resource_id);
+		}
 
+		bool animate_control::play(UINT from, UINT to, UINT rep)
+		{
+			return window.Play(from, to, rep);
 		}
 
 		bool animate_control::play()
 		{
-
+			return window.Play(0, -1, 1);
 		}
 
 		bool animate_control::stop()
 		{
+			return window.Stop();
 		}
 
-		page::page(const char* _name = nullptr) : name(_name)
+		page::page(const char* _name) : name(_name)
 		{
 			root = std::make_shared<column_layout>();
 		}
@@ -985,17 +991,13 @@ namespace corona
 			}
 		}
 
-		bool presentation::drawFrame()
-		{
-			;
-		}
-
 		bool presentation::update(double _elapsedSeconds, double _totalSeconds)
 		{
 			auto cp = current_page.lock();
 			if (cp) {
 				cp->update(_elapsedSeconds, _totalSeconds );
 			}
+			return true;
 		}
 
 		void presentation::keyDown(win32::direct2dWindow* win, short _key)
@@ -1107,12 +1109,12 @@ namespace corona
 
 		int presentation::onHScroll(int controlId, win32::scrollTypes scrollType)
 		{
-
+			return 0;
 		}
 
 		int presentation::onVScroll(int controlId, win32::scrollTypes scrollType)
 		{
-
+			return 0;
 		}
 
 		int presentation::onResize(const rectangle& newSize, double d2dScale)
@@ -1121,11 +1123,13 @@ namespace corona
 			if (pg) {
 				pg->arrange(newSize.w, newSize.h);
 			}
+			return 0;
 		}
 
 		int presentation::onSpin(int controlId, int newPosition)
 		{
 			int value = newPosition;
+			return 0;
 		}
 
 	}
