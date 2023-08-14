@@ -1734,6 +1734,7 @@ namespace corona
 		{
 			HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
 			ListView_DeleteAllItems(control);
+			while (ListView_DeleteColumn(hwndRoot, 1));
 		}
 
 		void directApplicationWin32::addListViewItem(int ddlControlId, std::string& _text, LPARAM _data)
@@ -1771,7 +1772,7 @@ namespace corona
 			ListView_InsertItem(control, &lvitem);
 		}
 
-		void directApplicationWin32::addListViewRow(int ddlControlId, LPARAM _data, const std::vector<const char*>& _items)
+		void directApplicationWin32::addListViewRow(int ddlControlId, LPARAM _data, const std::vector<std::string>& _items)
 		{
 			HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
 
@@ -1779,13 +1780,14 @@ namespace corona
 			ZeroMemory(&lvitem, sizeof(lvitem));
 			lvitem.mask = LVIF_TEXT | LVIF_PARAM;
 			lvitem.iItem = ListView_GetItemCount(control);
-			lvitem.pszText = (LPSTR)_items[0];
+			lvitem.pszText = (LPSTR)_items[0].c_str();
 			lvitem.lParam = _data;
 			ListView_InsertItem(control, &lvitem);
 
 			for (int i = 1; i < _items.size(); i++) {
 				lvitem.mask = LVIF_TEXT;
 				lvitem.iSubItem = i;
+				lvitem.pszText = (LPSTR)_items[i].c_str();
 				ListView_SetItem(control, &lvitem);
 			}
 		}

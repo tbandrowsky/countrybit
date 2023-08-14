@@ -228,6 +228,7 @@ namespace corona
 		public:
 			std::string display_name;
 			std::string json_field;
+			int width;
 			visual_alignment alignment;
 		};
 
@@ -239,49 +240,118 @@ namespace corona
 			json items;
 		};
 
-		class static_control : public windows_control<WTL::CStatic, WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP>
+
+		template <typename WtlWindowClass, DWORD dwStyle, DWORD dwExStyle = 0> class text_control_base : public windows_control<WtlWindowClass, dwStyle, dwExStyle>
 		{
 		public:
-			void set_text(const std::string& _text);
-			std::string get_text();
+			void set_text(const std::string& _text)
+			{
+				host->setEditText(id, _text);
+			}
+
+			std::string get_text()
+			{
+				return host->getEditText(id);
+			}
 		};
 
-		class button_control : public windows_control<WTL::CButton, WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP>
+		template <typename WtlWindowClass, DWORD dwStyle, DWORD dwExStyle = 0> class table_control_base : public windows_control<WtlWindowClass, dwStyle, dwExStyle>
 		{
 		public:
-			void set_text(const std::string& _text);
-			std::string get_text();
+			void set_table(table_data& choices)
+			{
+				host->clearListView();
+				int idx = 1;
+				std::map<std::string, int> column_map;
+				for (auto col : choices.columns) {
+					//virtual void addListViewColumn(int ddlControlId, int column_id, const char* _text, int _width, visual_alignment _alignment);
+					host->addListViewColumn(id, idx, col.display_name, col.width, col.alignment);
+					column_map[col.json_field] = idx;
+				}
+				int row_idx = 0;
+				for (auto item : choices.items)
+				{
+					std::vector<std::string> data;
+					for (auto col : choices.columns) 
+					{
+						bool has_field = item.contains(col.json_field);
+						if (has_field) {
+							std::string contents = item[col.json_field].get<std::string>();
+							data.push_back(contents);
+						}
+					}
+					//virtual void addListViewRow(int ddlControlId, LPARAM data, const std::vector<std::string>&_items) = 0;
+					host->addListViewRow(id, row_idx, data);
+					row_idx++;
+				}
+			}
 		};
 
-		class edit_control : public windows_control<WTL::CEdit, WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP>
+		template <typename WtlWindowClass, DWORD dwStyle, DWORD dwExStyle = 0> class list_control_base : public windows_control<WtlWindowClass, dwStyle, dwExStyle>
 		{
 		public:
-			void set_text(const std::string& _text);
-			std::string get_text();
+			void set_list(list_data& choices)
+			{
+				host->clearListItems();
+				for (auto element in choices.items.items()) 
+				{
+					auto c = element.value();
+					int id = c[choices.id_field].template get<int>();
+					std::string description = c[choices.text_field].template get<std::string>();
+					host->addListItem(id, description, value);
+				}
+			}
 		};
 
-		class listbox_control : public windows_control<WTL::CListBox, WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP>
+		template <typename WtlWindowClass, DWORD dwStyle, DWORD dwExStyle = 0> class dropdown_control_base : public windows_control<WtlWindowClass, dwStyle, dwExStyle>
 		{
 		public:
-			void set_list(list_data &choices);
+			void set_list(list_data& choices)
+			{
+				host->clearComboItems();
+				for (auto element in choices.items.items())
+				{
+					auto c = element.value();
+					int id = c[choices.id_field].template get<int>();
+					std::string description = c[choices.text_field].template get<std::string>();
+					host->addComboItem(id, description, value);
+				}
+			}
 		};
 
-		class combobox_control : public windows_control<WTL::CComboBox, WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP>
+		class static_control : public text_control_base<WTL::CStatic, WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP>
 		{
 		public:
-			void set_list(list_data& choices);
 		};
 
-		class comboboxex_control : public windows_control<WTL::CComboBoxEx, WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP>
+		class button_control : public text_control_base<WTL::CButton, WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP>
 		{
 		public:
-			void set_list(list_data& choices);
 		};
 
-		class listview_control : public windows_control<WTL::CListViewCtrl, WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP>
+		class edit_control : public text_control_base<WTL::CEdit, WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP>
 		{
 		public:
-			void set_table(table_data& choices);
+		};
+
+		class listbox_control : public list_control_base<WTL::CListBox, WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP>
+		{
+		public:
+		};
+
+		class combobox_control : public list_control_base<WTL::CComboBox, WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP>
+		{
+		public:
+		};
+
+		class comboboxex_control : public list_control_base<WTL::CComboBoxEx, WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP>
+		{
+		public:
+		};
+
+		class listview_control : public table_control_base<WTL::CListViewCtrl, WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP>
+		{
+		public:
 		};
 
 		class scrollbar_control : public windows_control<WTL::CScrollBar, WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP>
@@ -289,7 +359,7 @@ namespace corona
 		public:
 		};
 
-		class richedit_control : public windows_control<WTL::CRichEditCtrl, WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP>
+		class richedit_control : public text_control_base<WTL::CRichEditCtrl, WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP>
 		{
 		public:
 			void set_html(const std::string& _text);
@@ -523,12 +593,12 @@ namespace corona
 
 			void clear();
 
-			void on_key_up( int _control_id, std::function< void(key_up_event) >);
-			void on_key_down( int _control_id, std::function< void(key_down_event) >);
-			void on_mouse_move( int _control_id, std::function< void(mouse_move_event) >);
-			void on_mouse_click( int _control_id, std::function< void(mouse_click_event) >);
-			void on_item_changed(int _control_id, std::function< void(item_changed_event) >);
-			void on_list_changed(int _control_id, std::function< void(list_changed_event) >);
+			void on_key_up( int _control_id, std::function< void(key_up_event) > );
+			void on_key_down( int _control_id, std::function< void(key_down_event) > );
+			void on_mouse_move( int _control_id, std::function< void(mouse_move_event) > );
+			void on_mouse_click( int _control_id, std::function< void(mouse_click_event) > );
+			void on_item_changed( int _control_id, std::function< void(item_changed_event) > );
+			void on_list_changed( int _control_id, std::function< void(list_changed_event) > );
 			void on_update(update_function fnc);
 
 			control_base* get_root();

@@ -675,6 +675,7 @@ namespace corona
 		void container_control::draw()
 		{
 			bool adapter_blown_away = false;
+
 			window->beginDraw(adapter_blown_away);
 			if (!adapter_blown_away)
 			{
@@ -690,59 +691,7 @@ namespace corona
 				child->draw();
 			}
 		}
-
-		//
-
-		void static_control::set_text(const std::string& _text)
-		{
-			host->setEditText(id, _text);
-		}
-
-		std::string static_control::get_text()
-		{
-			return host->getEditText(id);
-		}
-
-		void button_control::set_text(const std::string& _text)
-		{
-			host->setEditText(id, _text);
-		}
-
-		std::string button_control::get_text()
-		{
-			return host->getEditText(id);
-		}
-
-		void edit_control::set_text(const std::string& _text)
-		{
-			host->setEditText(id, _text);
-		}
-
-		std::string edit_control::get_text()
-		{
-			return host->getEditText(id);
-		}
-
-		void listbox_control::set_list(list_data& choices)
-		{
-
-		}
-
-		void combobox_control::set_list(list_data& choices)
-		{
-
-		}
-
-		void comboboxex_control::set_list(list_data& choices)
-		{
-
-		}
-
-		void listview_control::set_table(table_data& choices)
-		{
-
-		}
-
+ 
 		/*
 		class scrollbar_control : public windows_control<WTL::CScrollBar, WS_VISIBLE | WS_BORDER | WS_CHILD>
 		{
