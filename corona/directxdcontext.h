@@ -36,11 +36,11 @@ namespace corona
 			std::map<std::string, textStyle*> textStyles;
 			std::map<std::string, viewStyleRequest> viewStyles;
 
-			adapterSet* factory;
+			std::weak_ptr<adapterSet> factory;
 
 		protected:
 
-			direct2dContext(adapterSet* _factory);
+			direct2dContext(std::weak_ptr<adapterSet> _factory);
 			virtual ~direct2dContext();
 
 			void view_style_name(const object_name& _style_sheet_name, object_name& _object_style_name, int _index);
@@ -53,7 +53,7 @@ namespace corona
 		public:
 
 			virtual ID2D1DeviceContext* getRenderTarget() = 0;
-			virtual adapterSet* getFactory();
+			virtual std::weak_ptr<adapterSet> getFactory();
 
 			virtual point getLayoutSize();
 			virtual point getSize();
@@ -137,7 +137,7 @@ namespace corona
 
 			D2D1_SIZE_F size;
 
-			direct2dBitmapCore(D2D1_SIZE_F _size, adapterSet* _factory, int _dpi);
+			direct2dBitmapCore(D2D1_SIZE_F _size, std::weak_ptr<adapterSet> _factory, int _dpi);
 			virtual ~direct2dBitmapCore();
 
 			virtual bool isBitmap() { return true; }
@@ -166,7 +166,7 @@ namespace corona
 
 			D2D1_SIZE_F size;
 
-			direct2dBitmap(D2D1_SIZE_F _size, adapterSet* _factory);
+			direct2dBitmap(D2D1_SIZE_F _size, std::shared_ptr<adapterSet>& _factory);
 			virtual ~direct2dBitmap();
 
 			IWICBitmap* getBitmap();
@@ -204,7 +204,7 @@ namespace corona
 
 		public:
 
-			direct2dWindow(HWND hwnd, adapterSet* _adapter);
+			direct2dWindow(HWND hwnd, std::weak_ptr<adapterSet> _adapter);
 			virtual ~direct2dWindow();
 
 			rectangle getBoundsDips();
@@ -236,11 +236,11 @@ namespace corona
 
 		private:
 
-			direct2dWindow* parent;
-			direct2dBitmapCore* childBitmap;
+			std::weak_ptr<direct2dWindow> parent;
+			std::shared_ptr<direct2dBitmapCore> childBitmap;
 			rectangle windowPosition;
 
-			direct2dChildWindow(direct2dWindow* _parent, adapterSet* _adapterSet, UINT _xdips, UINT _ydips, UINT _wdips, UINT _hdips);
+			direct2dChildWindow(std::weak_ptr<direct2dWindow> _parent, std::weak_ptr<adapterSet> _adapterSet, UINT _xdips, UINT _ydips, UINT _wdips, UINT _hdips);
 			virtual ~direct2dChildWindow();
 
 		public:
@@ -551,7 +551,32 @@ namespace corona
 			void close_figure(bool closed = true);
 		};
 
+		class directBitmapSaveImpl {
+		public:
 
+			direct2dBitmap* dBitmap;
+			IWICStream* fileStream;
+			IWICBitmapEncoder* bitmapEncoder;
+			IWICBitmapFrameEncode* bitmapFrameEncode;
+
+			directBitmapSaveImpl(direct2dBitmap* _dbitmap) :
+				dBitmap(_dbitmap),
+				fileStream(NULL),
+				bitmapEncoder(NULL),
+				bitmapFrameEncode(NULL)
+			{
+
+			}
+
+			virtual ~directBitmapSaveImpl()
+			{
+				if (fileStream) fileStream->Release();
+				if (bitmapEncoder) bitmapEncoder->Release();
+				if (bitmapFrameEncode) bitmapFrameEncode->Release();
+			}
+
+			virtual void save(const wchar_t* _filename);
+		};
 
 	}
 }

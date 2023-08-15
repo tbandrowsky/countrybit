@@ -84,7 +84,7 @@ namespace corona
 			virtual std::weak_ptr<direct2dChildWindow> createDirect2Window(DWORD control_id, rectangle bounds) = 0;
 			virtual std::weak_ptr<direct2dChildWindow> getDirect2dWindow(relative_ptr_type ctrlId) = 0;
 
-			virtual void setController(controller * _newCurrentController) = 0;
+			virtual void setController(std::shared_ptr<controller> _newCurrentController) = 0;
 
 			virtual void setPictureIcon(int controlId, dtoIconId iconId) = 0;
 			virtual void setButtonIcon(int controlId, dtoIconId iconId) = 0;

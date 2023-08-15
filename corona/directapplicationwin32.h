@@ -51,7 +51,7 @@ namespace corona
 
 		public:
 
-			directApplicationWin32(std::weak_ptr<adapterSet> _factory);
+			directApplicationWin32(std::weak_ptr<adapterSet>  _factory);
 			virtual ~directApplicationWin32();
 
 			HWND getMainWindow() { return hwndRoot;  }

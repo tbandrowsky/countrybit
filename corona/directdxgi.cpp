@@ -161,7 +161,7 @@ namespace corona
 
 		std::weak_ptr<direct2dWindow> adapterSet::getWindow(HWND parent)
 		{
-			std::shared_ptr<direct2dWindow> win = nullptr;
+			std::shared_ptr<direct2dWindow> win;
 			if (parent_windows.contains(parent)) {
 				win = parent_windows[parent];
 			}
@@ -175,7 +175,10 @@ namespace corona
 
 		void adapterSet::closeWindow(HWND hwnd)
 		{
-			parent_windows.erase(hwnd);
+			auto win = getWindow(hwnd);
+			if (!win.expired()) {
+				parent_windows.erase(hwnd);
+			}
 		}
 
 		void adapterSet::clearWindows()
@@ -189,7 +192,7 @@ namespace corona
 			for (auto win : parent_windows)
 			{
 				w = win.second->getChild(_child);
-				if (w) {
+				if (!w.expired()) {
 					break;
 				}
 			}
@@ -209,9 +212,9 @@ namespace corona
 			}
 		}
 
-		direct2dBitmap* adapterSet::createD2dBitmap(D2D1_SIZE_F size)
+		std::unique_ptr<direct2dBitmap> adapterSet::createD2dBitmap(D2D1_SIZE_F size)
 		{
-			direct2dBitmap* win = new direct2dBitmap(size, this);
+			std::unique_ptr<direct2dBitmap> win = std::make_unique<direct2dBitmap>(size, this);
 			return win;
 		}
 

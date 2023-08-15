@@ -11,147 +11,9 @@ namespace corona
 	namespace win32
 	{
 
-		adapterSet::adapterSet()
-		{
-			dxFactory = nullptr;
-			dxAdapter = nullptr;
-			direct2d = nullptr;
-			direct3d = nullptr;
-		}
-
-		adapterSet::~adapterSet()
-		{
-			if (dxAdapter) {
-				dxAdapter->Release();
-				dxAdapter = nullptr;
-			}
-
-			if (dxFactory) {
-				dxFactory->Release();
-				dxFactory = nullptr;
-			}
-		}
-
-		void adapterSet::cleanup()
-		{
-
-			if (direct2d)
-				delete direct2d;
-
-			if (direct3d)
-				delete direct3d;
-
-			if (dxAdapter)
-				dxAdapter->Release();
-			dxAdapter = nullptr;
-
-			if (dxFactory)
-				dxFactory->Release();
-			dxFactory = nullptr;
-		}
-
-		void adapterSet::refresh()
-		{
-			cleanup();
-			direct2d = new direct2dDevice();
-			direct3d = new direct3dDevice();
-
-			HRESULT hr = CreateDXGIFactory1(IID_IDXGIFactory1, (void**)&dxFactory);
-			throwOnFail(hr, "Could not create DXGI factory");
-
-			for (UINT adapterIndex = 0; ; ++adapterIndex)
-			{
-				IDXGIAdapter1* currentAdapter = nullptr;
-
-				if (DXGI_ERROR_NOT_FOUND == dxFactory->EnumAdapters1(adapterIndex, &currentAdapter))
-				{
-					// No more adapters to enumerate.
-					break;
-				}
-
-				if (direct3d->setDevice(currentAdapter)) 
-				{					
-					dxAdapter = currentAdapter;
-					break;
-				}
-				else 
-				{
-					currentAdapter->Release();
-				}
-			}
-			
-			direct2d->setDevice(direct3d->getD3DDevice());
-		}
-
-		std::weak_ptr<direct2dWindow> adapterSet::createD2dWindow(HWND parent)
-		{
-			std::shared_ptr<direct2dWindow> win = std::make_shared<direct2dWindow>(parent, this);
-			parent_windows.insert_or_assign(parent, win);
-			return win;
-		}
-
-		std::weak_ptr<direct2dWindow> adapterSet::getWindow(HWND parent)
-		{
-			std::shared_ptr<direct2dWindow> win;
-			if (parent_windows.contains(parent)) {
-				win = parent_windows[parent];
-			}
-			return win;
-		}
-
-		bool adapterSet::containsWindow(HWND parent)
-		{
-			return parent_windows.contains(parent);
-		}
-
-		void adapterSet::closeWindow(HWND hwnd)
-		{
-			auto win = getWindow(hwnd);
-			if (!win.expired()) {
-				parent_windows.erase(hwnd);
-			}
-		}
-
-		void adapterSet::clearWindows()
-		{
-			parent_windows.clear();
-		}
-
-		std::weak_ptr<direct2dChildWindow> adapterSet::findChild(relative_ptr_type _child)
-		{
-			std::weak_ptr<direct2dChildWindow> w;
-			for (auto win : parent_windows)
-			{
-				w = win.second->getChild(_child);
-				if (!w.expired()) {
-					break;
-				}
-			}
-			return w;
-		}
-
-		void adapterSet::loadStyleSheet(jobject& sheet, int _state)
-		{
-			direct2dChildWindow* w = nullptr;
-			for (auto win : parent_windows)
-			{
-				win.second->loadStyleSheet(sheet, _state);
-				for (auto& child : win.second->getChildren())
-				{
-					child.second->loadStyleSheet(sheet, _state);
-				}
-			}
-		}
- 
-		std::unique_ptr<direct2dBitmap> adapterSet::createD2dBitmap(D2D1_SIZE_F size)
-		{
-			std::unique_ptr<direct2dBitmap> win = std::make_unique<direct2dBitmap>(size, this);
-			return win;
-		}
-
 		//-------
 
-		direct2dWindow::direct2dWindow(HWND _hwnd, adapterSet* _adapterSet) : direct2dContext(_adapterSet)
+		direct2dWindow::direct2dWindow(HWND _hwnd, std::weak_ptr<adapterSet> _adapterSet) : direct2dContext(_adapterSet)
 		{
 
 			HRESULT hr;
@@ -166,7 +28,9 @@ namespace corona
 
 			options = D2D1_DEVICE_CONTEXT_OPTIONS::D2D1_DEVICE_CONTEXT_OPTIONS_ENABLE_MULTITHREADED_OPTIMIZATIONS;
 
-			hr = _adapterSet->getD2DDevice()->CreateDeviceContext(options, &renderTarget);
+			auto padaptr = _adapterSet.lock();
+
+			hr = padaptr->getD2DDevice()->CreateDeviceContext(options, &renderTarget);
 			throwOnFail(hr, "Could not create device context");
 
 			RECT rect;
@@ -187,7 +51,7 @@ namespace corona
 			swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
 			swapChainDesc.Flags = 0;
 
-			hr = _adapterSet->getDxFactory()->CreateSwapChainForHwnd(_adapterSet->getD3DDevice(), hwnd, &swapChainDesc, nullptr, nullptr, &swapChain);
+			hr = padaptr->getDxFactory()->CreateSwapChainForHwnd(padaptr->getD3DDevice(), hwnd, &swapChainDesc, nullptr, nullptr, &swapChain);
 			throwOnFail(hr, "Could not create swap chain");
 
 			DXGI_RGBA color;
@@ -299,11 +163,6 @@ namespace corona
 
 		direct2dWindow::~direct2dWindow()
 		{
-			for (auto child : children)
-			{
-				delete child.second;
-			}
-
 			children.clear();
 
 			if (bitmap)
@@ -392,7 +251,7 @@ namespace corona
 
 		//-------
 
-		direct2dChildWindow::direct2dChildWindow(direct2dWindow* _parent, adapterSet* _adapterSet, UINT _xdips, UINT _ydips, UINT _wdips, UINT _hdips) : direct2dContext(_adapterSet)
+		direct2dChildWindow::direct2dChildWindow(std::weak_ptr<direct2dWindow> _parent, std::weak_ptr<adapterSet> _adapterSet, UINT _xdips, UINT _ydips, UINT _wdips, UINT _hdips) : direct2dContext(_adapterSet)
 		{
 			HRESULT hr;
 
@@ -415,18 +274,14 @@ namespace corona
 			std::cout << "%%%%%%%%% child resize " << GetDlgCtrlID(hwnd) << " " << width << " " << height << std::endl;
 #endif
 
-			if (childBitmap)
-				delete childBitmap;
-			childBitmap = nullptr;
-
 			int dpiWindow;
-			dpiWindow = ::GetDpiForWindow(parent->getWindow());
+			dpiWindow = ::GetDpiForWindow(parent.lock()->getWindow());
 			double dipsToPixels = dpiWindow / 96.0;
 
 			D2D1_SIZE_F size;
 			size.width = _wdips * dipsToPixels;
 			size.height = _hdips * dipsToPixels;
-			childBitmap = new direct2dBitmapCore(size, factory, dpiWindow);
+			childBitmap = std::make_shared<direct2dBitmapCore>(size, factory, dpiWindow);
 		}
 
 		void direct2dChildWindow::moveWindow(UINT _xdips, UINT _ydips, UINT _wdips, UINT _hdips)
@@ -445,8 +300,6 @@ namespace corona
 
 		direct2dChildWindow::~direct2dChildWindow()
 		{
-			if (childBitmap)
-				delete childBitmap;
 		}
 
 		void direct2dChildWindow::beginDraw(bool& _adapter_blown_away)
@@ -467,331 +320,6 @@ namespace corona
 			if (getRenderTarget()) {
 				HRESULT hr = getRenderTarget()->EndDraw();
 			}
-		}
-
-		//---
-
-		direct2dContext::direct2dContext(adapterSet* _factory) :
-			factory(_factory)
-		{
-		}
-
-		direct2dContext::~direct2dContext()
-		{
-			clearPaths();
-			clearViewStyles();
-			clearBitmapsAndBrushes(true);
-		}
-
-		adapterSet* direct2dContext::getFactory()
-		{
-			return factory;
-		}
-
-		direct2dBitmapCore::direct2dBitmapCore(D2D1_SIZE_F _size, adapterSet* _adapterSet, int dpi) :
-			size(_size)
-		{
-			targetContext = nullptr;
-			target = nullptr;
-
-			auto options = D2D1_DEVICE_CONTEXT_OPTIONS::D2D1_DEVICE_CONTEXT_OPTIONS_NONE;
-
-			auto hr = _adapterSet->getD2DDevice()->CreateDeviceContext(options, &targetContext);
-			throwOnFail(hr, "Could not create device context");
-
-			D2D1_SIZE_U bmsize;
-
-			bmsize.height = _size.height;
-			bmsize.width = _size.width;
-
-			D2D1_BITMAP_PROPERTIES1 props = {};
-
-			props.dpiX = dpi;
-			props.dpiY = dpi;
-			props.pixelFormat.format = DXGI_FORMAT::DXGI_FORMAT_B8G8R8A8_UNORM;
-			props.pixelFormat.alphaMode = D2D1_ALPHA_MODE::D2D1_ALPHA_MODE_IGNORE;
-			props.bitmapOptions = D2D1_BITMAP_OPTIONS::D2D1_BITMAP_OPTIONS_TARGET;
-
-			hr = targetContext->CreateBitmap(bmsize, nullptr, 0,  props, &bitmap);
-			throwOnFail(hr, "Could not create BITMAP");
-
-			auto pxs = bitmap->GetPixelSize();
-			auto ps = bitmap->GetSize();
-
-#if TRACE_RENDER
-			std::cout << "bitmap pixel size " << pxs.width << " " << pxs.height << std::endl;
-			std::cout << "bitmap dips size " << ps.width << " " << ps.height << std::endl;
-#endif
-
-			targetContext->SetDpi(dpi, dpi);
-			targetContext->SetTarget(bitmap);
-
-			ps = targetContext->GetSize();
-			pxs = targetContext->GetPixelSize();
-
-			auto unitMode = targetContext->GetUnitMode();
-
-#if TRACE_RENDER
-			std::cout << "target pixel size " << pxs.width << " " << pxs.height << std::endl;
-			std::cout << "target dips size " << ps.width << " " << ps.height << std::endl;
-#endif
-
-			return;
-		}
-
-		direct2dBitmapCore::~direct2dBitmapCore()
-		{
-			if (targetContext) targetContext->Release();
-			if (target) target->Release();
-			if (bitmap) bitmap->Release();
-		}
-
-		void direct2dBitmapCore::beginDraw(bool& blownAdapter)
-		{
-			blownAdapter = false;
-			targetContext->BeginDraw();
-		}
-
-		void direct2dBitmapCore::endDraw(bool& blownAdapter)
-		{
-			blownAdapter = false;
-			targetContext->EndDraw();
-		}
-
-		direct2dBitmap::direct2dBitmap(D2D1_SIZE_F _size, adapterSet* _factory) : 
-			direct2dContext(_factory)
-		{
-			HRESULT hr;
-			D2D1_RENDER_TARGET_PROPERTIES props = D2D1::RenderTargetProperties();
-
-			hr = _factory->getWicFactory()->CreateBitmap(size.width, size.height, GUID_WICPixelFormat32bppPBGRA, WICBitmapCreateCacheOption::WICBitmapCacheOnDemand, &wicBitmap);
-			throwOnFail(hr, "Could not create WIC bitmap");
-
-			hr = _factory->getD2DFactory()->CreateWicBitmapRenderTarget(wicBitmap, props, &target);
-			throwOnFail(hr, "Could not create WIC render target");
-
-			hr = target->QueryInterface(&targetContext);
-			throwOnFail(hr, "Could not get WIC context");
-		}
-
-		direct2dBitmap::~direct2dBitmap()
-		{
-			if (targetContext) targetContext->Release();
-			if (target) target->Release();
-			if (wicBitmap) wicBitmap->Release();
-		}
-
-		class directBitmapSaveImpl {
-		public:
-
-			direct2dBitmap* dBitmap;
-			IWICStream* fileStream;
-			IWICBitmapEncoder* bitmapEncoder;
-			IWICBitmapFrameEncode* bitmapFrameEncode;
-
-			directBitmapSaveImpl(direct2dBitmap* _dbitmap) :
-				dBitmap(_dbitmap),
-				fileStream(NULL),
-				bitmapEncoder(NULL),
-				bitmapFrameEncode(NULL)
-			{
-
-			}
-
-			virtual ~directBitmapSaveImpl()
-			{
-				if (fileStream) fileStream->Release();
-				if (bitmapEncoder) bitmapEncoder->Release();
-				if (bitmapFrameEncode) bitmapFrameEncode->Release();
-			}
-
-			virtual void save(const wchar_t* _filename)
-			{
-
-				HRESULT hr;
-
-				hr = dBitmap->getFactory()->getWicFactory()->CreateStream(&fileStream);
-				throwOnFail(hr, "Could not create file stream");
-
-				hr = fileStream->InitializeFromFilename(_filename, GENERIC_WRITE);
-				throwOnFail(hr, "Could not initialize file stream");
-
-				hr = dBitmap->getFactory()->getWicFactory()->CreateEncoder(GUID_ContainerFormatPng, NULL, &bitmapEncoder);
-				throwOnFail(hr, "Could not create bitmap encoder");
-
-				hr = bitmapEncoder->Initialize(fileStream, WICBitmapEncoderCacheOption::WICBitmapEncoderNoCache);
-				throwOnFail(hr, "Could not intialize bitmap encoder");
-
-				hr = bitmapEncoder->CreateNewFrame(&bitmapFrameEncode, NULL);
-				throwOnFail(hr, "Could not create frame");
-
-				hr = bitmapFrameEncode->Initialize(NULL);
-				throwOnFail(hr, "Could not initialize bitmap frame encoder");
-
-				hr = bitmapFrameEncode->SetSize(dBitmap->size.width, dBitmap->size.height);
-				throwOnFail(hr, "Could not initialize set size");
-
-				WICPixelFormatGUID format = GUID_WICPixelFormatDontCare;
-
-				WICRect rect;
-				rect.X = 0;
-				rect.Y = 0;
-				rect.Width = dBitmap->size.width;
-				rect.Height = dBitmap->size.height;
-
-				hr = bitmapFrameEncode->WriteSource(dBitmap->getBitmap(), &rect);
-				throwOnFail(hr, "Could not write source");
-
-				hr = bitmapFrameEncode->Commit();
-				throwOnFail(hr, "Could not commit frame");
-
-				hr = bitmapEncoder->Commit();
-				throwOnFail(hr, "Could not commit bitmap");
-
-			}
-		};
-
-		IWICBitmap* direct2dBitmap::getBitmap()
-		{
-			return wicBitmap;
-		}
-
-		void direct2dBitmap::save(const char* _filename)
-		{
-			wchar_t buff[8192];
-			int ret = ::MultiByteToWideChar(CP_ACP, 0, _filename, -1, buff, sizeof(buff) - 1);
-			directBitmapSaveImpl saver(this);
-			saver.save(buff);
-		}
-
-		deviceDependentAssetBase::deviceDependentAssetBase() : stock(false)
-		{
-			;
-		}
-
-		deviceDependentAssetBase::~deviceDependentAssetBase()
-		{
-			;
-		}
-
-		ID2D1Brush* deviceDependentAssetBase::getBrush()
-		{
-			return NULL;
-		}
-
-		bool textStyle::create(direct2dContext* target)
-		{
-			HRESULT hr = -1;
-
-			if (!target || !target->getRenderTarget())
-				return false;
-
-			istring<2048> fontList = fontName;
-			istring<2048> fontName;
-
-			int state = 0;
-			char* fontExtractedName = fontList.next_token(',', state);
-			lpWriteTextFormat = NULL;
-
-			while (fontExtractedName)
-			{
-				fontName = fontExtractedName;
-				iwstring<2048> wideName = fontName;
-
-				DWRITE_FONT_STYLE fontStyle = DWRITE_FONT_STYLE_NORMAL;
-					
-				if (italic) {
-					fontStyle = DWRITE_FONT_STYLE_ITALIC;
-				}
-
-				FLOAT dpiX = 96.0, dpiY = 96.0;
-				target->getRenderTarget()->GetDpi(&dpiX, &dpiY);
-
-				HRESULT hr = target->factory->getDWriteFactory()->CreateTextFormat(wideName.c_str(),
-					NULL,
-					bold ? DWRITE_FONT_WEIGHT_BOLD : DWRITE_FONT_WEIGHT_REGULAR,
-					fontStyle,
-					DWRITE_FONT_STRETCH_NORMAL,
-					size,
-					L"en-US",
-					&lpWriteTextFormat);
-
-				if (SUCCEEDED(hr) || lpWriteTextFormat != nullptr) {
-					break;
-				}
-
-				fontExtractedName = fontList.next_token(',', state);
-			};
-
-			if (lpWriteTextFormat != nullptr)
-			{
-				if (line_spacing > 0.0) {
-					lpWriteTextFormat->SetLineSpacing(DWRITE_LINE_SPACING_METHOD_UNIFORM, line_spacing, line_spacing * .8);
-				}
-
-				switch (horizontal_align) 
-				{
-				case visual_alignment::align_near:
-					lpWriteTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
-					break;
-				case visual_alignment::align_center:
-					lpWriteTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
-					break;
-				case visual_alignment::align_far:
-					lpWriteTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_TRAILING);
-					break;
-				case visual_alignment::align_justify:
-					lpWriteTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_JUSTIFIED);
-					break;
-				}
-
-				switch (horizontal_align)
-				{
-				case visual_alignment::align_near:
-					lpWriteTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
-					break;
-				case visual_alignment::align_center:
-					lpWriteTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
-					break;
-				case visual_alignment::align_far:
-					lpWriteTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_TRAILING);
-					break;
-				case visual_alignment::align_justify:
-					lpWriteTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_JUSTIFIED);
-					break;
-				}
-
-				switch (vertical_align)
-				{
-				case visual_alignment::align_near:
-					lpWriteTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_NEAR);
-					break;
-				case visual_alignment::align_center:
-					lpWriteTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
-					break;
-				case visual_alignment::align_far:
-					lpWriteTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_FAR);
-					break;
-				case visual_alignment::align_justify:
-					lpWriteTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
-					break;
-				}
-
-				if (wrap_text) 
-				{
-					lpWriteTextFormat->SetWordWrapping(DWRITE_WORD_WRAPPING_EMERGENCY_BREAK);
-				}
-
-				return true;
-			}
-			return false;
-		}
-
-		void textStyle::release()
-		{
-			if (lpWriteTextFormat)
-				lpWriteTextFormat->Release();
-			lpWriteTextFormat = NULL;
 		}
 
 		// -------------------------------------------------------
@@ -1216,17 +744,19 @@ namespace corona
 					rect.y = 0;
 					rect.w = abs(l.right - l.left);
 					rect.h = abs(l.bottom - l.top);
-					auto* win = pfactory->getWindow(hwnd);
-					win->resize(rect.w, rect.h);
-					if (currentController) {
-						dpiScale = 96.0 / GetDpiForWindow(hwnd);
-	#if TRACE_SIZE
-						std::cout << " w " << rect.w << "h " << rect.h << std::endl;
+					auto wwin = pfactory->getWindow(hwnd);
+					if (auto win = wwin.lock()) {
+						win->resize(rect.w, rect.h);
+						if (currentController) {
+							dpiScale = 96.0 / GetDpiForWindow(hwnd);
+#if TRACE_SIZE
+							std::cout << " w " << rect.w << "h " << rect.h << std::endl;
 
 #endif
-						rect.w *= dpiScale;
-						rect.h *= dpiScale;
-						currentController->onResize(rect, dpiScale);
+							rect.w *= dpiScale;
+							rect.h *= dpiScale;
+							currentController->onResize(rect, dpiScale);
+						}
 					}
 				}
 				break;

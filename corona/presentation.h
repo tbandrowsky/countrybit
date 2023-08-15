@@ -100,7 +100,7 @@ namespace corona
 			static std::weak_ptr<control_base> get(std::shared_ptr<control_base>& _root, int _id);
 			void foreach(std::function<void (control_base *_root)> _item);
 
-			virtual void create(win32::win32ControllerHost* _host);
+			virtual void create(std::weak_ptr<win32::win32ControllerHost> _host);
 			virtual void destroy();
 			virtual void draw();
 
@@ -143,11 +143,11 @@ namespace corona
 		class container_control : public control_base
 		{
 		public:
-			win32::win32ControllerHost* host;
-			win32::direct2dChildWindow* window;
+			std::weak_ptr<win32::win32ControllerHost> host;
+			std::weak_ptr<win32::direct2dChildWindow> window;
 			std::function<void(container_control*)> on_draw;
 
-			virtual void create(win32::win32ControllerHost* _host);
+			virtual void create(std::weak_ptr<win32::win32ControllerHost> _host);
 			virtual void destroy();
 			virtual void draw();
 

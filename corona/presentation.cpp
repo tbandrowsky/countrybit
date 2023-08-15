@@ -54,7 +54,7 @@ namespace corona
 			}
 		}
 
-		void control_base::create(win32::win32ControllerHost* _host)
+		void control_base::create(std::weak_ptr<win32::win32ControllerHost> _host)
 		{
 			for (auto child : children) {
 				child->create(_host);
@@ -654,10 +654,10 @@ namespace corona
 
 		}
 
-		void container_control::create(win32::win32ControllerHost* _host)
+		void container_control::create(std::weak_ptr<win32::win32ControllerHost> _host)
 		{
 			host = _host;
-			window = _host->createDirect2Window(id, bounds);
+			window = _host.lock()->createDirect2Window(id, bounds);
 			for (auto child : children) {
 				child->create(_host);
 			}
@@ -665,8 +665,6 @@ namespace corona
 
 		void container_control::destroy()
 		{
-			host = nullptr;
-			window = nullptr;
 			for (auto child : children) {
 				child->destroy();
 			}
@@ -676,16 +674,18 @@ namespace corona
 		{
 			bool adapter_blown_away = false;
 
-			window->beginDraw(adapter_blown_away);
+			auto pwindow = window.lock();
+
+			pwindow->beginDraw(adapter_blown_away);
 			if (!adapter_blown_away)
 			{
 				if (this->on_draw != nullptr) {
 					on_draw(this);
 				}
 				else
-					window->drawRectangle(&bounds, "container", 2, "containerfill");
+					pwindow->drawRectangle(&bounds, "container", 2, "containerfill");
 			}
-			window->endDraw(adapter_blown_away);
+			pwindow->endDraw(adapter_blown_away);
 
 			for (auto child : children) {
 				child->draw();
@@ -762,7 +762,7 @@ namespace corona
 			root = std::make_shared<column_layout>();
 		}
 
-		void page::create(win32::win32ControllerHost* _host)
+		void page::create(std::weak_ptr<win32::win32ControllerHost> _host)
 		{
 			if (root.get()) 
 			{

@@ -115,7 +115,7 @@ namespace corona
 
 		//-------
 
-		direct2dWindow::direct2dWindow(HWND _hwnd, adapterSet* _adapterSet) : direct2dContext(_adapterSet)
+		direct2dWindow::direct2dWindow(HWND _hwnd, std::weak_ptr<adapterSet> _adapterSet) : direct2dContext(_adapterSet)
 		{
 
 			HRESULT hr;
@@ -130,7 +130,9 @@ namespace corona
 
 			options = D2D1_DEVICE_CONTEXT_OPTIONS::D2D1_DEVICE_CONTEXT_OPTIONS_ENABLE_MULTITHREADED_OPTIMIZATIONS;
 
-			hr = _adapterSet->getD2DDevice()->CreateDeviceContext(options, &renderTarget);
+			auto padapter = _adapterSet.lock();
+
+			hr = padapter->getD2DDevice()->CreateDeviceContext(options, &renderTarget);
 			throwOnFail(hr, "Could not create device context");
 
 			RECT rect;
@@ -151,7 +153,7 @@ namespace corona
 			swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
 			swapChainDesc.Flags = 0;
 
-			hr = _adapterSet->getDxFactory()->CreateSwapChainForHwnd(_adapterSet->getD3DDevice(), hwnd, &swapChainDesc, nullptr, nullptr, &swapChain);
+			hr = padapter->getDxFactory()->CreateSwapChainForHwnd(padapter->getD3DDevice(), hwnd, &swapChainDesc, nullptr, nullptr, &swapChain);
 			throwOnFail(hr, "Could not create swap chain");
 
 			DXGI_RGBA color;
@@ -353,7 +355,7 @@ namespace corona
 
 		//-------
 
-		direct2dChildWindow::direct2dChildWindow(direct2dWindow* _parent, adapterSet* _adapterSet, UINT _xdips, UINT _ydips, UINT _wdips, UINT _hdips) : direct2dContext(_adapterSet)
+		direct2dChildWindow::direct2dChildWindow(std::weak_ptr<direct2dWindow> _parent, std::weak_ptr<adapterSet> _adapterSet, UINT _xdips, UINT _ydips, UINT _wdips, UINT _hdips) : direct2dContext(_adapterSet)
 		{
 			HRESULT hr;
 
@@ -376,18 +378,18 @@ namespace corona
 			std::cout << "%%%%%%%%% child resize " << GetDlgCtrlID(hwnd) << " " << width << " " << height << std::endl;
 #endif
 
-			if (childBitmap)
-				delete childBitmap;
 			childBitmap = nullptr;
 
-			int dpiWindow;
-			dpiWindow = ::GetDpiForWindow(parent->getWindow());
-			double dipsToPixels = dpiWindow / 96.0;
+			if (auto pparent = parent.lock()) {
+				int dpiWindow;
+				dpiWindow = ::GetDpiForWindow(pparent->getWindow());
+				double dipsToPixels = dpiWindow / 96.0;
 
-			D2D1_SIZE_F size;
-			size.width = _wdips * dipsToPixels;
-			size.height = _hdips * dipsToPixels;
-			childBitmap = new direct2dBitmapCore(size, factory, dpiWindow);
+				D2D1_SIZE_F size;
+				size.width = _wdips * dipsToPixels;
+				size.height = _hdips * dipsToPixels;
+				childBitmap = std::make_shared<direct2dBitmapCore>(size, factory, dpiWindow);
+			}
 		}
 
 		void direct2dChildWindow::moveWindow(UINT _xdips, UINT _ydips, UINT _wdips, UINT _hdips)
@@ -406,8 +408,6 @@ namespace corona
 
 		direct2dChildWindow::~direct2dChildWindow()
 		{
-			if (childBitmap)
-				delete childBitmap;
 		}
 
 		void direct2dChildWindow::beginDraw(bool& _adapter_blown_away)
@@ -432,7 +432,7 @@ namespace corona
 
 		//---
 
-		direct2dContext::direct2dContext(adapterSet* _factory) :
+		direct2dContext::direct2dContext(std::weak_ptr<corona::win32::adapterSet> _factory) :
 			factory(_factory)
 		{
 		}
@@ -444,12 +444,12 @@ namespace corona
 			clearBitmapsAndBrushes(true);
 		}
 
-		adapterSet* direct2dContext::getFactory()
+		std::weak_ptr<adapterSet> direct2dContext::getFactory()
 		{
 			return factory;
 		}
 
-		direct2dBitmapCore::direct2dBitmapCore(D2D1_SIZE_F _size, adapterSet* _adapterSet, int dpi) :
+		direct2dBitmapCore::direct2dBitmapCore(D2D1_SIZE_F _size, std::weak_ptr<adapterSet> _adapterSet, int dpi) :
 			size(_size)
 		{
 			targetContext = nullptr;
@@ -457,47 +457,49 @@ namespace corona
 
 			auto options = D2D1_DEVICE_CONTEXT_OPTIONS::D2D1_DEVICE_CONTEXT_OPTIONS_NONE;
 
-			auto hr = _adapterSet->getD2DDevice()->CreateDeviceContext(options, &targetContext);
-			throwOnFail(hr, "Could not create device context");
+			if (auto padapterSet = _adapterSet.lock()) {
 
-			D2D1_SIZE_U bmsize;
+				auto hr = padapterSet->getD2DDevice()->CreateDeviceContext(options, &targetContext);
+				throwOnFail(hr, "Could not create device context");
 
-			bmsize.height = _size.height;
-			bmsize.width = _size.width;
+				D2D1_SIZE_U bmsize;
 
-			D2D1_BITMAP_PROPERTIES1 props = {};
+				bmsize.height = _size.height;
+				bmsize.width = _size.width;
 
-			props.dpiX = dpi;
-			props.dpiY = dpi;
-			props.pixelFormat.format = DXGI_FORMAT::DXGI_FORMAT_B8G8R8A8_UNORM;
-			props.pixelFormat.alphaMode = D2D1_ALPHA_MODE::D2D1_ALPHA_MODE_IGNORE;
-			props.bitmapOptions = D2D1_BITMAP_OPTIONS::D2D1_BITMAP_OPTIONS_TARGET;
+				D2D1_BITMAP_PROPERTIES1 props = {};
 
-			hr = targetContext->CreateBitmap(bmsize, nullptr, 0, props, &bitmap);
-			throwOnFail(hr, "Could not create BITMAP");
+				props.dpiX = dpi;
+				props.dpiY = dpi;
+				props.pixelFormat.format = DXGI_FORMAT::DXGI_FORMAT_B8G8R8A8_UNORM;
+				props.pixelFormat.alphaMode = D2D1_ALPHA_MODE::D2D1_ALPHA_MODE_IGNORE;
+				props.bitmapOptions = D2D1_BITMAP_OPTIONS::D2D1_BITMAP_OPTIONS_TARGET;
 
-			auto pxs = bitmap->GetPixelSize();
-			auto ps = bitmap->GetSize();
+				hr = targetContext->CreateBitmap(bmsize, nullptr, 0, props, &bitmap);
+				throwOnFail(hr, "Could not create BITMAP");
 
-#if TRACE_RENDER
-			std::cout << "bitmap pixel size " << pxs.width << " " << pxs.height << std::endl;
-			std::cout << "bitmap dips size " << ps.width << " " << ps.height << std::endl;
-#endif
-
-			targetContext->SetDpi(dpi, dpi);
-			targetContext->SetTarget(bitmap);
-
-			ps = targetContext->GetSize();
-			pxs = targetContext->GetPixelSize();
-
-			auto unitMode = targetContext->GetUnitMode();
+				auto pxs = bitmap->GetPixelSize();
+				auto ps = bitmap->GetSize();
 
 #if TRACE_RENDER
-			std::cout << "target pixel size " << pxs.width << " " << pxs.height << std::endl;
-			std::cout << "target dips size " << ps.width << " " << ps.height << std::endl;
+				std::cout << "bitmap pixel size " << pxs.width << " " << pxs.height << std::endl;
+				std::cout << "bitmap dips size " << ps.width << " " << ps.height << std::endl;
 #endif
 
-			return;
+				targetContext->SetDpi(dpi, dpi);
+				targetContext->SetTarget(bitmap);
+
+				ps = targetContext->GetSize();
+				pxs = targetContext->GetPixelSize();
+
+				auto unitMode = targetContext->GetUnitMode();
+
+#if TRACE_RENDER
+				std::cout << "target pixel size " << pxs.width << " " << pxs.height << std::endl;
+				std::cout << "target dips size " << ps.width << " " << ps.height << std::endl;
+#endif
+			}
+
 		}
 
 		direct2dBitmapCore::~direct2dBitmapCore()
@@ -519,7 +521,7 @@ namespace corona
 			targetContext->EndDraw();
 		}
 
-		direct2dBitmap::direct2dBitmap(D2D1_SIZE_F _size, adapterSet* _factory) :
+		direct2dBitmap::direct2dBitmap(D2D1_SIZE_F _size, std::shared_ptr<adapterSet>& _factory) :
 			direct2dContext(_factory)
 		{
 			HRESULT hr;
@@ -542,43 +544,21 @@ namespace corona
 			if (wicBitmap) wicBitmap->Release();
 		}
 
-		class directBitmapSaveImpl {
-		public:
+		void directBitmapSaveImpl::save(const wchar_t* _filename)
+		{
 
-			direct2dBitmap* dBitmap;
-			IWICStream* fileStream;
-			IWICBitmapEncoder* bitmapEncoder;
-			IWICBitmapFrameEncode* bitmapFrameEncode;
+			HRESULT hr;
 
-			directBitmapSaveImpl(direct2dBitmap* _dbitmap) :
-				dBitmap(_dbitmap),
-				fileStream(NULL),
-				bitmapEncoder(NULL),
-				bitmapFrameEncode(NULL)
-			{
+			if (auto padapter = dBitmap->getFactory().lock()) {
 
-			}
-
-			virtual ~directBitmapSaveImpl()
-			{
-				if (fileStream) fileStream->Release();
-				if (bitmapEncoder) bitmapEncoder->Release();
-				if (bitmapFrameEncode) bitmapFrameEncode->Release();
-			}
-
-			virtual void save(const wchar_t* _filename)
-			{
-
-				HRESULT hr;
-
-				hr = dBitmap->getFactory()->getWicFactory()->CreateStream(&fileStream);
+				hr = padapter->getWicFactory()->CreateStream(&fileStream);
 				throwOnFail(hr, "Could not create file stream");
+
+				hr = padapter->getWicFactory()->CreateEncoder(GUID_ContainerFormatPng, NULL, &bitmapEncoder);
+				throwOnFail(hr, "Could not create bitmap encoder");
 
 				hr = fileStream->InitializeFromFilename(_filename, GENERIC_WRITE);
 				throwOnFail(hr, "Could not initialize file stream");
-
-				hr = dBitmap->getFactory()->getWicFactory()->CreateEncoder(GUID_ContainerFormatPng, NULL, &bitmapEncoder);
-				throwOnFail(hr, "Could not create bitmap encoder");
 
 				hr = bitmapEncoder->Initialize(fileStream, WICBitmapEncoderCacheOption::WICBitmapEncoderNoCache);
 				throwOnFail(hr, "Could not intialize bitmap encoder");
@@ -608,9 +588,9 @@ namespace corona
 
 				hr = bitmapEncoder->Commit();
 				throwOnFail(hr, "Could not commit bitmap");
-
 			}
-		};
+
+		}
 
 		IWICBitmap* direct2dBitmap::getBitmap()
 		{
@@ -669,17 +649,21 @@ namespace corona
 				FLOAT dpiX = 96.0, dpiY = 96.0;
 				target->getRenderTarget()->GetDpi(&dpiX, &dpiY);
 
-				HRESULT hr = target->factory->getDWriteFactory()->CreateTextFormat(wideName.c_str(),
-					NULL,
-					bold ? DWRITE_FONT_WEIGHT_BOLD : DWRITE_FONT_WEIGHT_REGULAR,
-					fontStyle,
-					DWRITE_FONT_STRETCH_NORMAL,
-					size,
-					L"en-US",
-					&lpWriteTextFormat);
+				if (auto fact = target->getFactory().lock())
+				{
 
-				if (SUCCEEDED(hr) || lpWriteTextFormat != nullptr) {
-					break;
+					HRESULT hr = fact->getDWriteFactory()->CreateTextFormat(wideName.c_str(),
+						NULL,
+						bold ? DWRITE_FONT_WEIGHT_BOLD : DWRITE_FONT_WEIGHT_REGULAR,
+						fontStyle,
+						DWRITE_FONT_STRETCH_NORMAL,
+						size,
+						L"en-US",
+						&lpWriteTextFormat);
+
+					if (SUCCEEDED(hr) || lpWriteTextFormat != nullptr) {
+						break;
+					}
 				}
 
 				fontExtractedName = fontList.next_token(',', state);
@@ -747,7 +731,6 @@ namespace corona
 				return true;
 			}
 			return false;
-
 		}
 
 		void textStyle::release()
@@ -756,6 +739,7 @@ namespace corona
 				lpWriteTextFormat->Release();
 			lpWriteTextFormat = NULL;
 		}
+
 
 		bool filteredBitmap::create(direct2dContext* _target, IWICBitmapSource* _source)
 		{
