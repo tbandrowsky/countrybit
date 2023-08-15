@@ -15,10 +15,10 @@ int __stdcall WinMain(HINSTANCE hInstance,
 
 	corona::win32::EnableGuiStdOuts();
 
-	corona::win32::adapterSet factory;
-	factory.refresh();
+	std::shared_ptr<corona::win32::adapterSet> factory = std::make_shared<corona::win32::adapterSet>();
+	factory->refresh();
 
-	corona::win32::directApplicationWin32 wsPropose(&factory);
+	std::shared_ptr<corona::win32::directApplicationWin32> wsPropose = std::make_shared<corona::win32::directApplicationWin32>(factory);
 
 	bool forceWindowed = false;
 
