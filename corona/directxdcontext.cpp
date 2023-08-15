@@ -759,90 +759,96 @@ namespace corona
 				wicFilteredScaledBitmap = NULL;
 			}
 
-			hr = _target->getFactory()->getWicFactory()->CreateFormatConverter(&pConverter);
-			hr = _source->GetSize(&originalWidth, &originalHeight);
+			if (auto pfactory = _target->getFactory().lock()) {
+				hr = pfactory->getWicFactory()->CreateFormatConverter(&pConverter);
+				hr = _source->GetSize(&originalWidth, &originalHeight);
 
-			// If a new width or height was specified, create an
-			// IWICBitmapScaler and use it to resize the image.
-			if (size.width != 0 || size.height != 0)
-			{
-				if (SUCCEEDED(hr))
+				// If a new width or height was specified, create an
+				// IWICBitmapScaler and use it to resize the image.
+				if (size.width != 0 || size.height != 0)
 				{
-					if (cropEnabled) {
-						hr = _target->getFactory()->getWicFactory()->CreateBitmapClipper(&pClipper);
-						if (SUCCEEDED(hr)) {
-							WICRect clipRect;
-							clipRect.X = crop.left * originalWidth;
-							clipRect.Y = crop.top * originalHeight;
-							clipRect.Height = originalHeight - (clipRect.Y + originalHeight * crop.bottom);
-							clipRect.Width = originalWidth - (clipRect.X + originalWidth * crop.right);
-							hr = pClipper->Initialize(_source, &clipRect);
-							_source = pClipper;
+					if (SUCCEEDED(hr))
+					{
+						if (cropEnabled) {
+							hr = pfactory->getWicFactory()->CreateBitmapClipper(&pClipper);
+							if (SUCCEEDED(hr)) {
+								WICRect clipRect;
+								clipRect.X = crop.left * originalWidth;
+								clipRect.Y = crop.top * originalHeight;
+								clipRect.Height = originalHeight - (clipRect.Y + originalHeight * crop.bottom);
+								clipRect.Width = originalWidth - (clipRect.X + originalWidth * crop.right);
+								hr = pClipper->Initialize(_source, &clipRect);
+								_source = pClipper;
+								if (size.width == 0)
+								{
+									FLOAT scalar = static_cast<FLOAT>(size.height) / static_cast<FLOAT>(clipRect.Height);
+									size.width = static_cast<UINT>(scalar * static_cast<FLOAT>(clipRect.Width));
+								}
+								else if (size.height == 0)
+								{
+									FLOAT scalar = static_cast<FLOAT>(size.width) / static_cast<FLOAT>(clipRect.Width);
+									size.height = static_cast<UINT>(scalar * static_cast<FLOAT>(clipRect.Height));
+								}
+							}
+						}
+						else
+						{
 							if (size.width == 0)
 							{
-								FLOAT scalar = static_cast<FLOAT>(size.height) / static_cast<FLOAT>(clipRect.Height);
-								size.width = static_cast<UINT>(scalar * static_cast<FLOAT>(clipRect.Width));
+								FLOAT scalar = static_cast<FLOAT>(size.height) / static_cast<FLOAT>(originalHeight);
+								size.width = static_cast<UINT>(scalar * static_cast<FLOAT>(originalWidth));
 							}
 							else if (size.height == 0)
 							{
-								FLOAT scalar = static_cast<FLOAT>(size.width) / static_cast<FLOAT>(clipRect.Width);
-								size.height = static_cast<UINT>(scalar * static_cast<FLOAT>(clipRect.Height));
+								FLOAT scalar = static_cast<FLOAT>(size.width) / static_cast<FLOAT>(originalWidth);
+								size.height = static_cast<UINT>(scalar * static_cast<FLOAT>(originalHeight));
 							}
 						}
-					}
-					else
-					{
-						if (size.width == 0)
-						{
-							FLOAT scalar = static_cast<FLOAT>(size.height) / static_cast<FLOAT>(originalHeight);
-							size.width = static_cast<UINT>(scalar * static_cast<FLOAT>(originalWidth));
-						}
-						else if (size.height == 0)
-						{
-							FLOAT scalar = static_cast<FLOAT>(size.width) / static_cast<FLOAT>(originalWidth);
-							size.height = static_cast<UINT>(scalar * static_cast<FLOAT>(originalHeight));
-						}
-					}
 
 
-					hr = _target->getFactory()->getWicFactory()->CreateBitmapScaler(&pScaler);
-					if (SUCCEEDED(hr))
-						hr = pScaler->Initialize(_source, size.width, size.height, WICBitmapInterpolationModeCubic);
-					if (SUCCEEDED(hr))
-						hr = pConverter->Initialize(pScaler, GUID_WICPixelFormat32bppPBGRA, WICBitmapDitherTypeNone, NULL, 0.f, WICBitmapPaletteTypeMedianCut);
-					if (SUCCEEDED(hr)) {
-						hr = _target->getFactory()->getWicFactory()->CreateBitmapFromSource(pConverter, WICBitmapCreateCacheOption::WICBitmapCacheOnDemand, &originalScaledBitmap);
-						hr = _target->getFactory()->getWicFactory()->CreateBitmapFromSource(pConverter, WICBitmapCreateCacheOption::WICBitmapCacheOnDemand, &wicFilteredScaledBitmap);
-					}
-				}
-			}
-			else // Don't scale the image.
-			{
-				hr = pConverter->Initialize(_source, GUID_WICPixelFormat32bppPBGRA, WICBitmapDitherTypeNone, NULL, 0.f, WICBitmapPaletteTypeMedianCut);
-				if (SUCCEEDED(hr)) {
-					if (cropEnabled) {
-						hr = _target->getFactory()->getWicFactory()->CreateBitmapClipper(&pClipper);
+						hr = pfactory->getWicFactory()->CreateBitmapScaler(&pScaler);
+						if (SUCCEEDED(hr))
+							hr = pScaler->Initialize(_source, size.width, size.height, WICBitmapInterpolationModeCubic);
+						if (SUCCEEDED(hr))
+							hr = pConverter->Initialize(pScaler, GUID_WICPixelFormat32bppPBGRA, WICBitmapDitherTypeNone, NULL, 0.f, WICBitmapPaletteTypeMedianCut);
 						if (SUCCEEDED(hr)) {
-							WICRect clipRect;
-							clipRect.X = crop.left * originalWidth;
-							clipRect.Y = crop.top * originalHeight;
-							clipRect.Height = (originalHeight - (crop.bottom * originalHeight)) - clipRect.Y;
-							clipRect.Width = (originalWidth - (crop.right * originalWidth)) - clipRect.X;
-							hr = pClipper->Initialize(_source, &clipRect);
-							_source = pClipper;
+							hr = pfactory->getWicFactory()->CreateBitmapFromSource(pConverter, WICBitmapCreateCacheOption::WICBitmapCacheOnDemand, &originalScaledBitmap);
+							hr = pfactory->getWicFactory()->CreateBitmapFromSource(pConverter, WICBitmapCreateCacheOption::WICBitmapCacheOnDemand, &wicFilteredScaledBitmap);
 						}
 					}
-					else {
-						_source = pConverter;
-					}
-					hr = _target->getFactory()->getWicFactory()->CreateBitmapFromSource(_source, WICBitmapCreateCacheOption::WICBitmapCacheOnDemand, &originalScaledBitmap);
-					hr = _target->getFactory()->getWicFactory()->CreateBitmapFromSource(_source, WICBitmapCreateCacheOption::WICBitmapCacheOnDemand, &wicFilteredScaledBitmap);
 				}
-			}
+				else // Don't scale the image.
+				{
+					hr = pConverter->Initialize(_source, GUID_WICPixelFormat32bppPBGRA, WICBitmapDitherTypeNone, NULL, 0.f, WICBitmapPaletteTypeMedianCut);
+					if (SUCCEEDED(hr)) {
+						if (cropEnabled) {
+							hr = pfactory->getWicFactory()->CreateBitmapClipper(&pClipper);
+							if (SUCCEEDED(hr)) {
+								WICRect clipRect;
+								clipRect.X = crop.left * originalWidth;
+								clipRect.Y = crop.top * originalHeight;
+								clipRect.Height = (originalHeight - (crop.bottom * originalHeight)) - clipRect.Y;
+								clipRect.Width = (originalWidth - (crop.right * originalWidth)) - clipRect.X;
+								hr = pClipper->Initialize(_source, &clipRect);
+								_source = pClipper;
+							}
+						}
+						else {
+							_source = pConverter;
+						}
+						hr = pfactory->getWicFactory()->CreateBitmapFromSource(_source, WICBitmapCreateCacheOption::WICBitmapCacheOnDemand, &originalScaledBitmap);
+						hr = pfactory->getWicFactory()->CreateBitmapFromSource(_source, WICBitmapCreateCacheOption::WICBitmapCacheOnDemand, &wicFilteredScaledBitmap);
+					}
+				}
 
-			if (pConverter) { pConverter->Release(); pConverter = NULL; }
-			if (pScaler) { pScaler->Release(); pScaler = NULL; }
-			if (pClipper) { pClipper->Release(); pClipper = NULL; }
+				if (pConverter) { pConverter->Release(); pConverter = NULL; }
+				if (pScaler) { pScaler->Release(); pScaler = NULL; }
+				if (pClipper) { pClipper->Release(); pClipper = NULL; }
+			}
+			else 
+			{
+				hr = HRESULT_FROM_WIN32(ERROR_BAD_ENVIRONMENT);
+			}
 
 			return SUCCEEDED(hr);
 		}
