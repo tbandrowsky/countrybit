@@ -112,7 +112,7 @@ namespace corona
 				children.push_back(temp);
 				return *temp.get();
 			}
-
+			
 			row_layout &row_layout_new(int id);
 			column_layout &column_layout_new(int id);
 			absolute_layout &absolute_layout_new(int id);
@@ -593,7 +593,7 @@ namespace corona
 
 			void arrange(double _width, double _height, double _padding = 0.0);
 
-			virtual void create(win32::win32ControllerHost* _host);
+			virtual void create(std::weak_ptr<corona::win32::win32ControllerHost> _host);
 			virtual void destroy();
 			virtual void draw();
 			virtual void update(double _elapsedSeconds, double _totalSeconds);
@@ -637,16 +637,19 @@ namespace corona
 
 			std::map<std::string, std::shared_ptr<page>> pages;
 
+			presentation();
+			virtual ~presentation();
+
 			virtual void select_page(const std::string& _page_name);
 
 			virtual bool drawFrame();
 			virtual bool update(double _elapsedSeconds, double _totalSeconds);
 
-			virtual void keyDown(win32::direct2dWindow* win, short _key);
-			virtual void keyUp(win32::direct2dWindow* win, short _key);
-			virtual void mouseMove(win32::direct2dWindow* win, point* _point);
-			virtual void mouseClick(win32::direct2dWindow* win, point* _point);
-			virtual void pointSelected(win32::direct2dWindow* win, point* _point, color* _color);
+			virtual void keyDown(std::shared_ptr<win32::direct2dWindow>& win, short _key);
+			virtual void keyUp(std::shared_ptr<win32::direct2dWindow>& win, short _key);
+			virtual void mouseMove(std::shared_ptr<win32::direct2dWindow>& win, point* _point);
+			virtual void mouseClick(std::shared_ptr<win32::direct2dWindow>& win, point* _point);
+			virtual void pointSelected(std::shared_ptr<win32::direct2dWindow>& win, point* _point, color* _color);
 
 			virtual void onCreated();
 			virtual void onCommand(int buttonId);

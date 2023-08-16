@@ -3,6 +3,12 @@
 #include "resource.h"
 #include "corona.h"
 
+/*
+
+Use CComPtr for COM objects and CAdapt for collections
+
+*/
+
 int __stdcall WinMain(HINSTANCE hInstance,
 	HINSTANCE hPrevInstance,
 	LPSTR  lpszCmdParam,
@@ -34,11 +40,11 @@ int __stdcall WinMain(HINSTANCE hInstance,
 
 	if (forceWindowed) 
 	{
-		wsPropose.runDialog(hInstance, "Technology Demonstrator", IDI_WSPROPOSE, false, presentation);
+		wsPropose->runDialog(hInstance, "Technology Demonstrator", IDI_WSPROPOSE, false, presentation);
 	}
 	else 
 	{
-		wsPropose.runDialog(hInstance, "Technology Demonstrator", IDI_WSPROPOSE, true, presentation);
+		wsPropose->runDialog(hInstance, "Technology Demonstrator", IDI_WSPROPOSE, true, presentation);
 	}
 
 	CoUninitialize();

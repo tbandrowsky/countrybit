@@ -793,6 +793,17 @@ namespace corona
 			}
 		}
 
+
+		presentation::presentation()
+		{
+			;
+		}
+
+		presentation::~presentation()
+		{
+			;
+		}
+
 		bool presentation::drawFrame()
 		{
 			return false;
@@ -1000,7 +1011,7 @@ namespace corona
 			return true;
 		}
 
-		void presentation::keyDown(win32::direct2dWindow* win, short _key)
+		void presentation::keyDown(std::shared_ptr<win32::direct2dWindow>& win, short _key)
 		{
 			auto cp = current_page.lock();
 			if (cp) {
@@ -1012,7 +1023,7 @@ namespace corona
 			}
 		}
 
-		void presentation::keyUp(win32::direct2dWindow* win, short _key)
+		void presentation::keyUp(std::shared_ptr<win32::direct2dWindow>& win, short _key)
 		{
 			auto cp = current_page.lock();
 			if (cp) {
@@ -1023,7 +1034,7 @@ namespace corona
 			}
 		}
 
-		void presentation::mouseMove(win32::direct2dWindow* win, point* _point)
+		void presentation::mouseMove(std::shared_ptr<win32::direct2dWindow>& win, point* _point)
 		{
 			auto cp = current_page.lock();
 			if (cp) {
@@ -1034,7 +1045,7 @@ namespace corona
 			}
 		}
 
-		void presentation::mouseClick(win32::direct2dWindow* win, point* _point)
+		void presentation::mouseClick(std::shared_ptr<win32::direct2dWindow>& win, point* _point)
 		{
 			auto cp = current_page.lock();
 			if (cp) {
@@ -1045,7 +1056,7 @@ namespace corona
 			}
 		}
 
-		void presentation::pointSelected(win32::direct2dWindow* win, point* _point, color* _color)
+		void presentation::pointSelected(std::shared_ptr<win32::direct2dWindow>& win, point* _point, color* _color)
 		{
 			;
 		}

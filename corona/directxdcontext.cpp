@@ -14,105 +14,6 @@ namespace corona
 			}
 		};
 
-		direct3dDevice::direct3dDevice()
-		{
-			d3d11Device = nullptr;
-		}
-
-		direct3dDevice::~direct3dDevice()
-		{
-			if (d3d11Device)
-			{
-				d3d11Device->Release();
-			}
-			d3d11Device = nullptr;
-		}
-
-		bool direct3dDevice::setDevice(IDXGIAdapter1* _adapter)
-		{
-			if (d3d11Device != nullptr)
-			{
-				d3d11Device->Release();
-				d3d11Device = nullptr;
-				feature_level = D3D_FEATURE_LEVEL::D3D_FEATURE_LEVEL_1_0_CORE;
-			}
-
-			D3D_FEATURE_LEVEL feature_levels[] = {
-				D3D_FEATURE_LEVEL_10_0,
-				D3D_FEATURE_LEVEL_10_1,
-				D3D_FEATURE_LEVEL_11_0,
-				D3D_FEATURE_LEVEL_11_1
-			};
-
-			HRESULT hr = D3D11CreateDevice(_adapter,
-				D3D_DRIVER_TYPE_UNKNOWN,
-				NULL,
-				D3D11_CREATE_DEVICE_BGRA_SUPPORT,
-				feature_levels,
-				2,
-				D3D11_SDK_VERSION,
-				&d3d11Device,
-				&feature_level,
-				NULL
-			);
-
-			if (SUCCEEDED(hr) && d3d11Device != nullptr)
-			{
-				return true;
-			}
-		}
-
-		direct2dDevice::direct2dDevice()
-		{
-			d2dDevice = nullptr;
-			d2DFactory = nullptr;
-			wicFactory = nullptr;
-			dWriteFactory = nullptr;
-			dxDevice = nullptr;
-
-			HRESULT hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED, &d2DFactory);
-			throwOnFail(hr, "Could not create D2D1 factory");
-
-			hr = CoCreateInstance(CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&wicFactory));
-			throwOnFail(hr, "Could not create WIC Imaging factory");
-
-			hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(dWriteFactory), reinterpret_cast<IUnknown**>(&dWriteFactory));
-			throwOnFail(hr, "Could not create direct write factory");
-		}
-
-		direct2dDevice::~direct2dDevice()
-		{
-			if (wicFactory) {
-				wicFactory->Release();
-				wicFactory = NULL;
-			}
-			if (dWriteFactory) {
-				dWriteFactory->Release();
-				dWriteFactory = NULL;
-			}
-			if (d2dDevice) {
-				d2dDevice->Release();
-				d2dDevice = NULL;
-			}
-			if (d2DFactory) {
-				d2DFactory->Release();
-				d2DFactory = NULL;
-			}
-			if (dxDevice) {
-				dxDevice->Release();
-				dxDevice = NULL;
-			}
-		}
-
-		bool direct2dDevice::setDevice(ID3D11Device* _d3dDevice)
-		{
-			HRESULT hr = _d3dDevice->QueryInterface(&this->dxDevice);
-
-			hr = d2DFactory->CreateDevice(dxDevice, &d2dDevice);
-
-			return SUCCEEDED(hr);
-		}
-
 		//-------
 
 		direct2dWindow::direct2dWindow(HWND _hwnd, std::weak_ptr<adapterSet> _adapterSet) : direct2dContext(_adapterSet)
@@ -288,7 +189,8 @@ namespace corona
 			}
 			else
 			{
-				auto new_ptr = std::make_shared<direct2dChildWindow>(this, factory, _x, _y, _w, _h);
+				auto pthis = std::enable_shared_from_this<direct2dWindow>::weak_from_this();
+				auto new_ptr = std::make_shared<direct2dChildWindow>(pthis, factory, _x, _y, _w, _h);
 				children.insert_or_assign(_id, new_ptr);
 				child = new_ptr;
 			}
@@ -521,20 +423,23 @@ namespace corona
 			targetContext->EndDraw();
 		}
 
-		direct2dBitmap::direct2dBitmap(D2D1_SIZE_F _size, std::shared_ptr<adapterSet>& _factory) :
+		direct2dBitmap::direct2dBitmap(D2D1_SIZE_F _size, std::weak_ptr<adapterSet>& _factory) :
 			direct2dContext(_factory)
 		{
 			HRESULT hr;
 			D2D1_RENDER_TARGET_PROPERTIES props = D2D1::RenderTargetProperties();
 
-			hr = _factory->getWicFactory()->CreateBitmap(size.width, size.height, GUID_WICPixelFormat32bppPBGRA, WICBitmapCreateCacheOption::WICBitmapCacheOnDemand, &wicBitmap);
-			throwOnFail(hr, "Could not create WIC bitmap");
+			if (auto padapter = _factory.lock()) {
 
-			hr = _factory->getD2DFactory()->CreateWicBitmapRenderTarget(wicBitmap, props, &target);
-			throwOnFail(hr, "Could not create WIC render target");
+				hr = padapter->getWicFactory()->CreateBitmap(size.width, size.height, GUID_WICPixelFormat32bppPBGRA, WICBitmapCreateCacheOption::WICBitmapCacheOnDemand, &wicBitmap);
+				throwOnFail(hr, "Could not create WIC bitmap");
 
-			hr = target->QueryInterface(&targetContext);
-			throwOnFail(hr, "Could not get WIC context");
+				hr = padapter->getD2DFactory()->CreateWicBitmapRenderTarget(wicBitmap, props, &target);
+				throwOnFail(hr, "Could not create WIC render target");
+
+				hr = target->QueryInterface(&targetContext);
+				throwOnFail(hr, "Could not get WIC context");
+			}
 		}
 
 		direct2dBitmap::~direct2dBitmap()
@@ -621,114 +526,117 @@ namespace corona
 			return NULL;
 		}
 
-		bool textStyle::create(direct2dContext* target)
+		bool textStyle::create(std::weak_ptr<direct2dContext>& target)
 		{
 			HRESULT hr = -1;
 
-			if (!target || !target->getRenderTarget())
-				return false;
-
-			istring<2048> fontList = fontName;
-			istring<2048> fontName;
-
-			int state = 0;
-			char* fontExtractedName = fontList.next_token(',', state);
-			lpWriteTextFormat = NULL;
-
-			while (fontExtractedName)
+			if (auto ptarget = target.lock()) 
 			{
-				fontName = fontExtractedName;
-				iwstring<2048> wideName = fontName;
+				if (!ptarget->getRenderTarget())
+					return false;
 
-				DWRITE_FONT_STYLE fontStyle = DWRITE_FONT_STYLE_NORMAL;
+				istring<2048> fontList = fontName;
+				istring<2048> fontName;
 
-				if (italic) {
-					fontStyle = DWRITE_FONT_STYLE_ITALIC;
-				}
+				int state = 0;
+				char* fontExtractedName = fontList.next_token(',', state);
+				lpWriteTextFormat = NULL;
 
-				FLOAT dpiX = 96.0, dpiY = 96.0;
-				target->getRenderTarget()->GetDpi(&dpiX, &dpiY);
-
-				if (auto fact = target->getFactory().lock())
+				while (fontExtractedName)
 				{
+					fontName = fontExtractedName;
+					iwstring<2048> wideName = fontName;
 
-					HRESULT hr = fact->getDWriteFactory()->CreateTextFormat(wideName.c_str(),
-						NULL,
-						bold ? DWRITE_FONT_WEIGHT_BOLD : DWRITE_FONT_WEIGHT_REGULAR,
-						fontStyle,
-						DWRITE_FONT_STRETCH_NORMAL,
-						size,
-						L"en-US",
-						&lpWriteTextFormat);
+					DWRITE_FONT_STYLE fontStyle = DWRITE_FONT_STYLE_NORMAL;
 
-					if (SUCCEEDED(hr) || lpWriteTextFormat != nullptr) {
+					if (italic) {
+						fontStyle = DWRITE_FONT_STYLE_ITALIC;
+					}
+
+					FLOAT dpiX = 96.0, dpiY = 96.0;
+					ptarget->getRenderTarget()->GetDpi(&dpiX, &dpiY);
+
+					if (auto fact = ptarget->getFactory().lock())
+					{
+
+						HRESULT hr = fact->getDWriteFactory()->CreateTextFormat(wideName.c_str(),
+							NULL,
+							bold ? DWRITE_FONT_WEIGHT_BOLD : DWRITE_FONT_WEIGHT_REGULAR,
+							fontStyle,
+							DWRITE_FONT_STRETCH_NORMAL,
+							size,
+							L"en-US",
+							&lpWriteTextFormat);
+
+						if (SUCCEEDED(hr) || lpWriteTextFormat != nullptr) {
+							break;
+						}
+					}
+
+					fontExtractedName = fontList.next_token(',', state);
+				};
+
+				if (lpWriteTextFormat != nullptr)
+				{
+					if (line_spacing > 0.0) {
+						lpWriteTextFormat->SetLineSpacing(DWRITE_LINE_SPACING_METHOD_UNIFORM, line_spacing, line_spacing * .8);
+					}
+
+					switch (horizontal_align)
+					{
+					case visual_alignment::align_near:
+						lpWriteTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
+						break;
+					case visual_alignment::align_center:
+						lpWriteTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
+						break;
+					case visual_alignment::align_far:
+						lpWriteTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_TRAILING);
+						break;
+					case visual_alignment::align_justify:
+						lpWriteTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_JUSTIFIED);
 						break;
 					}
+
+					switch (horizontal_align)
+					{
+					case visual_alignment::align_near:
+						lpWriteTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
+						break;
+					case visual_alignment::align_center:
+						lpWriteTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
+						break;
+					case visual_alignment::align_far:
+						lpWriteTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_TRAILING);
+						break;
+					case visual_alignment::align_justify:
+						lpWriteTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_JUSTIFIED);
+						break;
+					}
+
+					switch (vertical_align)
+					{
+					case visual_alignment::align_near:
+						lpWriteTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_NEAR);
+						break;
+					case visual_alignment::align_center:
+						lpWriteTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+						break;
+					case visual_alignment::align_far:
+						lpWriteTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_FAR);
+						break;
+					case visual_alignment::align_justify:
+						lpWriteTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+						break;
+					}
+
+					if (wrap_text)
+					{
+						lpWriteTextFormat->SetWordWrapping(DWRITE_WORD_WRAPPING_EMERGENCY_BREAK);
+					}
+
+					return true;
 				}
-
-				fontExtractedName = fontList.next_token(',', state);
-			};
-
-			if (lpWriteTextFormat != nullptr)
-			{
-				if (line_spacing > 0.0) {
-					lpWriteTextFormat->SetLineSpacing(DWRITE_LINE_SPACING_METHOD_UNIFORM, line_spacing, line_spacing * .8);
-				}
-
-				switch (horizontal_align)
-				{
-				case visual_alignment::align_near:
-					lpWriteTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
-					break;
-				case visual_alignment::align_center:
-					lpWriteTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
-					break;
-				case visual_alignment::align_far:
-					lpWriteTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_TRAILING);
-					break;
-				case visual_alignment::align_justify:
-					lpWriteTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_JUSTIFIED);
-					break;
-				}
-
-				switch (horizontal_align)
-				{
-				case visual_alignment::align_near:
-					lpWriteTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
-					break;
-				case visual_alignment::align_center:
-					lpWriteTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
-					break;
-				case visual_alignment::align_far:
-					lpWriteTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_TRAILING);
-					break;
-				case visual_alignment::align_justify:
-					lpWriteTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_JUSTIFIED);
-					break;
-				}
-
-				switch (vertical_align)
-				{
-				case visual_alignment::align_near:
-					lpWriteTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_NEAR);
-					break;
-				case visual_alignment::align_center:
-					lpWriteTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
-					break;
-				case visual_alignment::align_far:
-					lpWriteTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_FAR);
-					break;
-				case visual_alignment::align_justify:
-					lpWriteTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
-					break;
-				}
-
-				if (wrap_text)
-				{
-					lpWriteTextFormat->SetWordWrapping(DWRITE_WORD_WRAPPING_EMERGENCY_BREAK);
-				}
-
-				return true;
 			}
 			return false;
 		}
@@ -741,7 +649,7 @@ namespace corona
 		}
 
 
-		bool filteredBitmap::create(direct2dContext* _target, IWICBitmapSource* _source)
+		bool filteredBitmap::create(std::weak_ptr<direct2dContext>& _target, IWICBitmapSource* _source)
 		{
 			HRESULT hr;
 
@@ -759,110 +667,116 @@ namespace corona
 				wicFilteredScaledBitmap = NULL;
 			}
 
-			if (auto pfactory = _target->getFactory().lock()) {
-				hr = pfactory->getWicFactory()->CreateFormatConverter(&pConverter);
-				hr = _source->GetSize(&originalWidth, &originalHeight);
+			if (auto ptarget = _target.lock()) {
 
-				// If a new width or height was specified, create an
-				// IWICBitmapScaler and use it to resize the image.
-				if (size.width != 0 || size.height != 0)
-				{
-					if (SUCCEEDED(hr))
+				if (auto pfactory = ptarget->getFactory().lock()) {
+					hr = pfactory->getWicFactory()->CreateFormatConverter(&pConverter);
+					hr = _source->GetSize(&originalWidth, &originalHeight);
+
+					// If a new width or height was specified, create an
+					// IWICBitmapScaler and use it to resize the image.
+					if (size.width != 0 || size.height != 0)
 					{
-						if (cropEnabled) {
-							hr = pfactory->getWicFactory()->CreateBitmapClipper(&pClipper);
-							if (SUCCEEDED(hr)) {
-								WICRect clipRect;
-								clipRect.X = crop.left * originalWidth;
-								clipRect.Y = crop.top * originalHeight;
-								clipRect.Height = originalHeight - (clipRect.Y + originalHeight * crop.bottom);
-								clipRect.Width = originalWidth - (clipRect.X + originalWidth * crop.right);
-								hr = pClipper->Initialize(_source, &clipRect);
-								_source = pClipper;
+						if (SUCCEEDED(hr))
+						{
+							if (cropEnabled) {
+								hr = pfactory->getWicFactory()->CreateBitmapClipper(&pClipper);
+								if (SUCCEEDED(hr)) {
+									WICRect clipRect;
+									clipRect.X = crop.left * originalWidth;
+									clipRect.Y = crop.top * originalHeight;
+									clipRect.Height = originalHeight - (clipRect.Y + originalHeight * crop.bottom);
+									clipRect.Width = originalWidth - (clipRect.X + originalWidth * crop.right);
+									hr = pClipper->Initialize(_source, &clipRect);
+									_source = pClipper;
+									if (size.width == 0)
+									{
+										FLOAT scalar = static_cast<FLOAT>(size.height) / static_cast<FLOAT>(clipRect.Height);
+										size.width = static_cast<UINT>(scalar * static_cast<FLOAT>(clipRect.Width));
+									}
+									else if (size.height == 0)
+									{
+										FLOAT scalar = static_cast<FLOAT>(size.width) / static_cast<FLOAT>(clipRect.Width);
+										size.height = static_cast<UINT>(scalar * static_cast<FLOAT>(clipRect.Height));
+									}
+								}
+							}
+							else
+							{
 								if (size.width == 0)
 								{
-									FLOAT scalar = static_cast<FLOAT>(size.height) / static_cast<FLOAT>(clipRect.Height);
-									size.width = static_cast<UINT>(scalar * static_cast<FLOAT>(clipRect.Width));
+									FLOAT scalar = static_cast<FLOAT>(size.height) / static_cast<FLOAT>(originalHeight);
+									size.width = static_cast<UINT>(scalar * static_cast<FLOAT>(originalWidth));
 								}
 								else if (size.height == 0)
 								{
-									FLOAT scalar = static_cast<FLOAT>(size.width) / static_cast<FLOAT>(clipRect.Width);
-									size.height = static_cast<UINT>(scalar * static_cast<FLOAT>(clipRect.Height));
+									FLOAT scalar = static_cast<FLOAT>(size.width) / static_cast<FLOAT>(originalWidth);
+									size.height = static_cast<UINT>(scalar * static_cast<FLOAT>(originalHeight));
 								}
 							}
-						}
-						else
-						{
-							if (size.width == 0)
-							{
-								FLOAT scalar = static_cast<FLOAT>(size.height) / static_cast<FLOAT>(originalHeight);
-								size.width = static_cast<UINT>(scalar * static_cast<FLOAT>(originalWidth));
-							}
-							else if (size.height == 0)
-							{
-								FLOAT scalar = static_cast<FLOAT>(size.width) / static_cast<FLOAT>(originalWidth);
-								size.height = static_cast<UINT>(scalar * static_cast<FLOAT>(originalHeight));
-							}
-						}
 
 
-						hr = pfactory->getWicFactory()->CreateBitmapScaler(&pScaler);
-						if (SUCCEEDED(hr))
-							hr = pScaler->Initialize(_source, size.width, size.height, WICBitmapInterpolationModeCubic);
-						if (SUCCEEDED(hr))
-							hr = pConverter->Initialize(pScaler, GUID_WICPixelFormat32bppPBGRA, WICBitmapDitherTypeNone, NULL, 0.f, WICBitmapPaletteTypeMedianCut);
-						if (SUCCEEDED(hr)) {
-							hr = pfactory->getWicFactory()->CreateBitmapFromSource(pConverter, WICBitmapCreateCacheOption::WICBitmapCacheOnDemand, &originalScaledBitmap);
-							hr = pfactory->getWicFactory()->CreateBitmapFromSource(pConverter, WICBitmapCreateCacheOption::WICBitmapCacheOnDemand, &wicFilteredScaledBitmap);
-						}
-					}
-				}
-				else // Don't scale the image.
-				{
-					hr = pConverter->Initialize(_source, GUID_WICPixelFormat32bppPBGRA, WICBitmapDitherTypeNone, NULL, 0.f, WICBitmapPaletteTypeMedianCut);
-					if (SUCCEEDED(hr)) {
-						if (cropEnabled) {
-							hr = pfactory->getWicFactory()->CreateBitmapClipper(&pClipper);
+							hr = pfactory->getWicFactory()->CreateBitmapScaler(&pScaler);
+							if (SUCCEEDED(hr))
+								hr = pScaler->Initialize(_source, size.width, size.height, WICBitmapInterpolationModeCubic);
+							if (SUCCEEDED(hr))
+								hr = pConverter->Initialize(pScaler, GUID_WICPixelFormat32bppPBGRA, WICBitmapDitherTypeNone, NULL, 0.f, WICBitmapPaletteTypeMedianCut);
 							if (SUCCEEDED(hr)) {
-								WICRect clipRect;
-								clipRect.X = crop.left * originalWidth;
-								clipRect.Y = crop.top * originalHeight;
-								clipRect.Height = (originalHeight - (crop.bottom * originalHeight)) - clipRect.Y;
-								clipRect.Width = (originalWidth - (crop.right * originalWidth)) - clipRect.X;
-								hr = pClipper->Initialize(_source, &clipRect);
-								_source = pClipper;
+								hr = pfactory->getWicFactory()->CreateBitmapFromSource(pConverter, WICBitmapCreateCacheOption::WICBitmapCacheOnDemand, &originalScaledBitmap);
+								hr = pfactory->getWicFactory()->CreateBitmapFromSource(pConverter, WICBitmapCreateCacheOption::WICBitmapCacheOnDemand, &wicFilteredScaledBitmap);
 							}
 						}
-						else {
-							_source = pConverter;
-						}
-						hr = pfactory->getWicFactory()->CreateBitmapFromSource(_source, WICBitmapCreateCacheOption::WICBitmapCacheOnDemand, &originalScaledBitmap);
-						hr = pfactory->getWicFactory()->CreateBitmapFromSource(_source, WICBitmapCreateCacheOption::WICBitmapCacheOnDemand, &wicFilteredScaledBitmap);
 					}
-				}
+					else // Don't scale the image.
+					{
+						hr = pConverter->Initialize(_source, GUID_WICPixelFormat32bppPBGRA, WICBitmapDitherTypeNone, NULL, 0.f, WICBitmapPaletteTypeMedianCut);
+						if (SUCCEEDED(hr)) {
+							if (cropEnabled) {
+								hr = pfactory->getWicFactory()->CreateBitmapClipper(&pClipper);
+								if (SUCCEEDED(hr)) {
+									WICRect clipRect;
+									clipRect.X = crop.left * originalWidth;
+									clipRect.Y = crop.top * originalHeight;
+									clipRect.Height = (originalHeight - (crop.bottom * originalHeight)) - clipRect.Y;
+									clipRect.Width = (originalWidth - (crop.right * originalWidth)) - clipRect.X;
+									hr = pClipper->Initialize(_source, &clipRect);
+									_source = pClipper;
+								}
+							}
+							else {
+								_source = pConverter;
+							}
+							hr = pfactory->getWicFactory()->CreateBitmapFromSource(_source, WICBitmapCreateCacheOption::WICBitmapCacheOnDemand, &originalScaledBitmap);
+							hr = pfactory->getWicFactory()->CreateBitmapFromSource(_source, WICBitmapCreateCacheOption::WICBitmapCacheOnDemand, &wicFilteredScaledBitmap);
+						}
+					}
 
-				if (pConverter) { pConverter->Release(); pConverter = NULL; }
-				if (pScaler) { pScaler->Release(); pScaler = NULL; }
-				if (pClipper) { pClipper->Release(); pClipper = NULL; }
-			}
-			else 
-			{
-				hr = HRESULT_FROM_WIN32(ERROR_BAD_ENVIRONMENT);
+					if (pConverter) { pConverter->Release(); pConverter = NULL; }
+					if (pScaler) { pScaler->Release(); pScaler = NULL; }
+					if (pClipper) { pClipper->Release(); pClipper = NULL; }
+				}
+				else
+				{
+					hr = HRESULT_FROM_WIN32(ERROR_BAD_ENVIRONMENT);
+				}
 			}
 
 			return SUCCEEDED(hr);
 		}
 
-		bool filteredBitmap::make(direct2dContext* _target)
+		bool filteredBitmap::make(std::weak_ptr<direct2dContext>& _target)
 		{
 			HRESULT hr = 0;
+
 			if (filteredScaledBitmap) {
 				filteredScaledBitmap->Release();
 				filteredScaledBitmap = NULL;
 			}
 
 			if (wicFilteredScaledBitmap) {
-				hr = _target->getRenderTarget()->CreateBitmapFromWicBitmap(wicFilteredScaledBitmap, &filteredScaledBitmap);
+				if (auto pTarget = _target.lock()) {
+					hr = pTarget->getRenderTarget()->CreateBitmapFromWicBitmap(wicFilteredScaledBitmap, &filteredScaledBitmap);
+				}
 			}
 			return hr == S_OK;
 		}
@@ -903,7 +817,7 @@ namespace corona
 			}
 		}
 
-		void bitmap::copyFilteredBitmaps(direct2dContext* _targetContext, bitmap* _src)
+		void bitmap::copyFilteredBitmaps(std::weak_ptr<direct2dContext>& _targetContext, bitmap* _src)
 		{
 			for (auto i = _src->filteredBitmaps.begin(); i != _src->filteredBitmaps.end(); i++) {
 				auto srcfiltered = *i;
@@ -912,7 +826,7 @@ namespace corona
 			}
 		}
 
-		bitmap::bitmap(direct2dContext* _targetContext, bitmap* _src)
+		bitmap::bitmap(std::weak_ptr<direct2dContext>& _targetContext, bitmap* _src)
 			: useFile(_src->useFile),
 			filename(_src->filename),
 			filterFunction(_src->filterFunction)
@@ -935,7 +849,7 @@ namespace corona
 			clearFilteredBitmaps();
 		}
 
-		bitmap* bitmap::clone(direct2dContext* _src)
+		bitmap* bitmap::clone(std::weak_ptr<direct2dContext>& _src)
 		{
 			return new bitmap(_src, this);
 		}
@@ -1093,7 +1007,7 @@ namespace corona
 			}
 		}
 
-		bool bitmap::applyFilters(direct2dContext* _target)
+		bool bitmap::applyFilters(std::weak_ptr<direct2dContext>& _target)
 		{
 			filter();
 
@@ -1105,7 +1019,7 @@ namespace corona
 			return true;
 		}
 
-		bool bitmap::create(direct2dContext* _target)
+		bool bitmap::create(std::weak_ptr<direct2dContext> & _target)
 		{
 
 			HRESULT hr;
@@ -1115,29 +1029,35 @@ namespace corona
 			wchar_t fileBuff[1024];
 			int ret = ::MultiByteToWideChar(CP_ACP, 0, filename.c_str(), -1, fileBuff, sizeof(fileBuff) / sizeof(wchar_t) - 1);
 
-			hr = _target->getFactory()->getWicFactory()->CreateDecoderFromFilename(fileBuff, NULL, GENERIC_READ, WICDecodeMetadataCacheOnLoad, &pDecoder);
+			hr = HRESULT_FROM_WIN32(ERROR_BAD_ENVIRONMENT);
 
-			if (SUCCEEDED(hr))
-				hr = pDecoder->GetFrame(0, &pSource);
+			if (auto pfactory = _target.lock()) {
+				if (auto padapter = pfactory->getFactory().lock()) {
+					hr = padapter->getWicFactory()->CreateDecoderFromFilename(fileBuff, NULL, GENERIC_READ, WICDecodeMetadataCacheOnLoad, &pDecoder);
 
-			if (SUCCEEDED(hr))
-			{
-				for (auto ifb = filteredBitmaps.begin(); ifb != filteredBitmaps.end(); ifb++) {
-					filteredBitmap* bm = *ifb;
-					bm->create(_target, pSource);
+					if (SUCCEEDED(hr))
+						hr = pDecoder->GetFrame(0, &pSource);
+
+					if (SUCCEEDED(hr))
+					{
+						for (auto ifb = filteredBitmaps.begin(); ifb != filteredBitmaps.end(); ifb++) {
+							filteredBitmap* bm = *ifb;
+							bm->create(_target, pSource);
+						}
+
+						filter();
+
+						for (auto ifb = filteredBitmaps.begin(); ifb != filteredBitmaps.end(); ifb++) {
+							filteredBitmap* bm = *ifb;
+							bm->make(_target);
+						}
+
+					}
+
+					if (pDecoder) { pDecoder->Release(); pDecoder = NULL; }
+					if (pSource) { pSource->Release(); pSource = NULL; }
 				}
-
-				filter();
-
-				for (auto ifb = filteredBitmaps.begin(); ifb != filteredBitmaps.end(); ifb++) {
-					filteredBitmap* bm = *ifb;
-					bm->make(_target);
-				}
-
 			}
-
-			if (pDecoder) { pDecoder->Release(); pDecoder = NULL; }
-			if (pSource) { pSource->Release(); pSource = NULL; }
 
 			return SUCCEEDED(hr);
 		}
@@ -1161,12 +1081,16 @@ namespace corona
 
 		}
 
-		bool bitmapBrush::create(direct2dContext* target)
+		bool bitmapBrush::create(std::weak_ptr<direct2dContext>& target)
 		{
-			if (!target || !target->getRenderTarget())
+			HRESULT hr = HRESULT_FROM_WIN32(ERROR_BAD_ENVIRONMENT);
+			if (auto ptarget = target.lock()) {
+
+				if (!ptarget || !ptarget->getRenderTarget())
 				return false;
 
-			HRESULT hr = target->getRenderTarget()->CreateBitmapBrush(bm->getFirst(), &asset);
+				HRESULT hr = ptarget->getRenderTarget()->CreateBitmapBrush(bm->getFirst(), &asset);
+			}
 
 			return SUCCEEDED(hr);
 		}
@@ -1186,14 +1110,17 @@ namespace corona
 
 		}
 
-		bool solidColorBrush::create(direct2dContext* target)
+		bool solidColorBrush::create(std::weak_ptr<direct2dContext>& target)
 		{
 			HRESULT hr = -1;
 
-			if (!target || !target->getRenderTarget())
-				return false;
+			if (auto ptarget = target.lock()) 
+			{
+				if (!ptarget->getRenderTarget())
+					return false;
 
-			hr = target->getRenderTarget()->CreateSolidColorBrush(color, &asset);
+				hr = ptarget->getRenderTarget()->CreateSolidColorBrush(color, &asset);
+			}
 
 			return SUCCEEDED(hr);
 		}
@@ -1204,25 +1131,31 @@ namespace corona
 		}
 
 
-		bool linearGradientBrush::create(direct2dContext* target)
+		bool linearGradientBrush::create(std::weak_ptr<direct2dContext>& target)
 		{
 			ID2D1GradientStopCollection* pGradientStops = NULL;
 
-			if (!target || !target->getRenderTarget())
-				return false;
+			HRESULT hr = HRESULT_FROM_WIN32(ERROR_BAD_ENVIRONMENT);
 
-			HRESULT hr = target->getRenderTarget()->CreateGradientStopCollection(&stops[0], stops.size(), &pGradientStops);
-
-			if (SUCCEEDED(hr))
+			if (auto ptarget = target.lock())
 			{
-				hr = target->getRenderTarget()->CreateLinearGradientBrush(
-					D2D1::LinearGradientBrushProperties(start, stop),
-					D2D1::BrushProperties(),
-					pGradientStops,
-					&asset
-				);
-				pGradientStops->Release();
+				if (!ptarget->getRenderTarget())
+					return false;
+
+				hr = ptarget->getRenderTarget()->CreateGradientStopCollection(&stops[0], stops.size(), &pGradientStops);
+
+				if (SUCCEEDED(hr))
+				{
+					hr = ptarget->getRenderTarget()->CreateLinearGradientBrush(
+						D2D1::LinearGradientBrushProperties(start, stop),
+						D2D1::BrushProperties(),
+						pGradientStops,
+						&asset
+					);
+					pGradientStops->Release();
+				}
 			}
+	
 			return SUCCEEDED(hr);
 		}
 
@@ -1232,24 +1165,29 @@ namespace corona
 		}
 
 
-		bool radialGradientBrush::create(direct2dContext* target)
+		bool radialGradientBrush::create(std::weak_ptr<direct2dContext>& target)
 		{
 			ID2D1GradientStopCollection* pGradientStops = NULL;
 
-			if (!target || !target->getRenderTarget())
-				return false;
+			HRESULT hr = HRESULT_FROM_WIN32(ERROR_BAD_ENVIRONMENT);
 
-			HRESULT hr = target->getRenderTarget()->CreateGradientStopCollection(&stops[0], stops.size(), &pGradientStops);
-
-			if (SUCCEEDED(hr))
+			if (auto ptarget = target.lock())
 			{
-				hr = target->getRenderTarget()->CreateRadialGradientBrush(
-					radialProperties,
-					D2D1::BrushProperties(),
-					pGradientStops,
-					&asset
-				);
-				pGradientStops->Release();
+				if (!ptarget->getRenderTarget())
+					return false;
+
+				hr = ptarget->getRenderTarget()->CreateGradientStopCollection(&stops[0], stops.size(), &pGradientStops);
+
+				if (SUCCEEDED(hr))
+				{
+					hr = ptarget->getRenderTarget()->CreateRadialGradientBrush(
+						radialProperties,
+						D2D1::BrushProperties(),
+						pGradientStops,
+						&asset
+					);
+					pGradientStops->Release();
+				}
 			}
 			return SUCCEEDED(hr);
 		}
@@ -1259,12 +1197,21 @@ namespace corona
 			return asset;
 		}
 
-
-		path::path(direct2dContext* target) : geometry(NULL), sink(NULL)
+		path::path(std::weak_ptr<direct2dContext>& target) : geometry(NULL), sink(NULL)
 		{
-			HRESULT hr = target->getFactory()->getD2DFactory()->CreatePathGeometry(&geometry);
-			if (!SUCCEEDED(hr)) {
-				// UH, SOMETHING;
+			HRESULT hr = HRESULT_FROM_WIN32(ERROR_BAD_ENVIRONMENT);
+
+			if (auto ptarget = target.lock())
+			{
+				if (ptarget->getRenderTarget()) 
+				{
+					if (auto pfactory = ptarget->getFactory().lock()) {
+						hr = pfactory->getD2DFactory()->CreatePathGeometry(&geometry);
+						if (!SUCCEEDED(hr)) {
+							// UH, SOMETHING;
+						}
+					}
+				}
 			}
 		}
 
@@ -1318,28 +1265,6 @@ namespace corona
 			}
 		}
 
-		D2D1_COLOR_F toColor(color& _color)
-		{
-			return _color;
-		}
-
-		D2D1_POINT_2F toPoint(point& _point)
-		{
-			D2D1_POINT_2F point2;
-			point2.x = _point.x;
-			point2.y = _point.y;
-			return point2;
-		}
-
-		D2D1_GRADIENT_STOP toGradientStop(gradientStop& _gradientStop)
-		{
-			D2D1_GRADIENT_STOP stop;
-
-			stop.position = _gradientStop.position;
-			stop.color = toColor(_gradientStop.color);
-			return stop;
-		}
-
 		// -------------------------------------------------------
 
 		point direct2dContext::getLayoutSize()
@@ -1381,7 +1306,8 @@ namespace corona
 			}
 			bitmap* bm = new bitmap(filename, sizes);
 			bitmaps[name] = bm;
-			bm->create(this);
+			auto wft = weak_from_this();
+			bm->create(wft);
 
 			for (auto it = _bitmap->sizes.begin(); it != _bitmap->sizes.end(); it++) {
 				int sx, sy;
@@ -1441,7 +1367,8 @@ namespace corona
 						sizes.push_back(toSizeC(*it, _bitmap->cropEnabled, _bitmap->crop));
 					}
 					bm->setSizes(sizes);
-					bm->create(this);
+					auto wft = weak_from_this();
+					bm->create(wft);
 					for (auto it = _bitmap->sizes.begin(); it != _bitmap->sizes.end(); it++) {
 						int width = it->x;
 						int height = it->y;
@@ -1462,7 +1389,8 @@ namespace corona
 			auto bm = bitmaps[_bitmap->name.c_str()];
 			if (bm) {
 				bm->setFilter(_filter);
-				success = bm->applyFilters(this);
+				auto wft = weak_from_this();
+				success = bm->applyFilters(wft);
 			}
 			return success;
 		}
@@ -1475,7 +1403,8 @@ namespace corona
 			bitmapName = _bitmapBrush->bitmapName;
 			brush->bm = bitmaps[bitmapName];
 			brushes[name] = brush;
-			brush->create(this);
+			auto wft = weak_from_this();
+			brush->create(wft);
 		}
 
 		void direct2dContext::addSolidColorBrush(solidBrushRequest* _solidBrushDto)
@@ -1484,7 +1413,8 @@ namespace corona
 			brush->stock = false;
 			brush->color = toColor(_solidBrushDto->brushColor);
 			brushes[_solidBrushDto->name.c_str()] = brush;
-			brush->create(this);
+			auto wft = weak_from_this();
+			brush->create(wft);
 		}
 
 		void direct2dContext::addLinearGradientBrush(linearGradientBrushRequest* _linearGradientBrushDto)
@@ -1499,7 +1429,8 @@ namespace corona
 				brush->stops.push_back(gradientStop);
 			}
 			brushes[_linearGradientBrushDto->name.c_str()] = brush;
-			brush->create(this);
+			auto wft = weak_from_this();
+			brush->create(wft);
 		}
 
 		void direct2dContext::addRadialGradientBrush(radialGradientBrushRequest* _radialGradientBrushDto)
@@ -1516,7 +1447,8 @@ namespace corona
 				brush->stops.push_back(gradientStop);
 			}
 			brushes[_radialGradientBrushDto->name.c_str()] = brush;
-			brush->create(this);
+			auto wft = weak_from_this();
+			brush->create(wft);
 		}
 
 		void direct2dContext::clearBitmapsAndBrushes(bool deleteStock)
@@ -1549,7 +1481,8 @@ namespace corona
 
 		path* direct2dContext::createPath(pathDto* _pathDto, bool _closed)
 		{
-			path* newPath = new path(this);
+			auto wft = weak_from_this();
+			path* newPath = new path(wft);
 			std::list<pathBaseDto*>::iterator i;
 
 			// skip everything until we get to the starting point
@@ -1638,7 +1571,8 @@ namespace corona
 				_textStyleDto->wrap_text
 			);
 			textStyles[_textStyleDto->name.c_str()] = newStyle;
-			newStyle->create(this);
+			auto wft = weak_from_this();
+			newStyle->create(wft);
 		}
 
 		void direct2dContext::clearTextStyles()
@@ -1835,17 +1769,21 @@ namespace corona
 			{
 				int l = wcslen(buff);
 				IDWriteTextLayout* textLayout = nullptr;
-				getFactory()->getDWriteFactory()->CreateTextLayout(buff, l, format, r.right - r.left, r.bottom - r.top, &textLayout);
-				if (textLayout != nullptr) {
-					textLayout->SetUnderline(style->get_underline(), { (UINT32)0, (UINT32)l });
-					textLayout->SetStrikethrough(style->get_strike_through(), { (UINT32)0, (UINT32)l });
-					getRenderTarget()->DrawTextLayout({ r.left, r.top }, textLayout, brush);
-					textLayout->Release();
-					textLayout = nullptr;
-				}
-				else
-				{
-					getRenderTarget()->DrawText(buff, ret, format, &r, brush);
+				
+				if (auto pfactory = getFactory().lock()) {
+
+					pfactory->getDWriteFactory()->CreateTextLayout(buff, l, format, r.right - r.left, r.bottom - r.top, &textLayout);
+					if (textLayout != nullptr) {
+						textLayout->SetUnderline(style->get_underline(), { (UINT32)0, (UINT32)l });
+						textLayout->SetStrikethrough(style->get_strike_through(), { (UINT32)0, (UINT32)l });
+						getRenderTarget()->DrawTextLayout({ r.left, r.top }, textLayout, brush);
+						textLayout->Release();
+						textLayout = nullptr;
+					}
+					else
+					{
+						getRenderTarget()->DrawText(buff, ret, format, &r, brush);
+					}
 				}
 			}
 			else
@@ -1973,24 +1911,29 @@ namespace corona
 
 		drawableHost* direct2dContext::createBitmap(point& _size)
 		{
-			direct2dBitmap* bp = new direct2dBitmap(toSizeF(_size), getFactory());
+			direct2dBitmap* bp = nullptr;
+			auto rfact = getFactory();
+			if (auto pfactory = rfact.lock()) {
+				bp = new direct2dBitmap(toSizeF(_size), rfact );
 
-			// now for the fun thing.  we need copy all of the objects over that we created from this context into the new one.  
-			// i guess every architecture has its unforseen ugh moment, and this one is mine.
+				// now for the fun thing.  we need copy all of the objects over that we created from this context into the new one.  
+				// i guess every architecture has its unforseen ugh moment, and this one is mine.
 
-			std::for_each(bitmaps.begin(), bitmaps.end(), [this, bp](std::pair<std::string, deviceDependentAssetBase*> ib) {
-				bp->bitmaps[ib.first] = ((bitmap*)ib.second)->clone(bp);
+				std::for_each(bitmaps.begin(), bitmaps.end(), [this, bp](std::pair<std::string, deviceDependentAssetBase*> ib) {
+					auto pcontext = weak_from_this();
+					bp->bitmaps[ib.first] = ((bitmap*)ib.second)->clone(pcontext);
+					});
+
+				// will need this for all objects
+				/*
+				std::for_each( brushes.begin(), brushes.end(), [ this, bp ]( std::pair<std::string, deviceDependentAssetBase *> ib ) {
+					ib.second->create(this);
 				});
-
-			// will need this for all objects
-			/*
-			std::for_each( brushes.begin(), brushes.end(), [ this, bp ]( std::pair<std::string, deviceDependentAssetBase *> ib ) {
-				ib.second->create(this);
-			});
-			std::for_each( textStyles.begin(), textStyles.end(), [ this, bp ]( std::pair<std::string, textStyle *> ib ) {
-				ib.second->create(this);
-			});
-			*/
+				std::for_each( textStyles.begin(), textStyles.end(), [ this, bp ]( std::pair<std::string, textStyle *> ib ) {
+					ib.second->create(this);
+				});
+				*/
+			}
 
 			return bp;
 		}
@@ -2079,6 +2022,10 @@ namespace corona
 			_object_style_name = _style_sheet_name + "-shape-border-" + std::to_string(_index);
 		}
 
+		void direct2dContext::loadStyleSheet(jobject& style_sheet, int _style_state)
+		{
+			;
+		}
 
 	}
 }

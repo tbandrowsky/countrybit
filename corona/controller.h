@@ -22,14 +22,13 @@ namespace corona
 		class controller
 		{
 
-			win32ControllerHost *host;
+			std::weak_ptr<win32ControllerHost> host;
 
 		public:
 
 			color backgroundColor;
 
-			controller(win32ControllerHost *_host) 
-				: host(_host)
+			controller()
 			{
 				backgroundColor.a = 1.0;
 				backgroundColor.r = 1.0;
@@ -42,13 +41,14 @@ namespace corona
 
 			}
 
-			inline win32ControllerHost *getHost() { return host; }
+			inline void setHost(std::weak_ptr<win32ControllerHost> _host) { host = _host; }
+			inline std::shared_ptr<win32ControllerHost> getHost() { return host.lock(); }
 
-			virtual void keyDown(direct2dWindow *win, short _key) = 0;
-			virtual void keyUp(direct2dWindow* win, short _key) = 0;
-			virtual void mouseMove(direct2dWindow* win, point* _point) = 0;
-			virtual void mouseClick(direct2dWindow* win, point* _point) = 0;
-			virtual void pointSelected(direct2dWindow *win, point* _point, color* _color) = 0;
+			virtual void keyDown(std::shared_ptr<win32::direct2dWindow>& win, short _key) = 0;
+			virtual void keyUp(std::shared_ptr<win32::direct2dWindow>& win, short _key) = 0;
+			virtual void mouseMove(std::shared_ptr<win32::direct2dWindow>& win, point* _point) = 0;
+			virtual void mouseClick(std::shared_ptr<win32::direct2dWindow>& win, point* _point) = 0;
+			virtual void pointSelected(std::shared_ptr<win32::direct2dWindow>& win, point* _point, color* _color) = 0;
 			virtual bool drawFrame() = 0;
 			virtual bool update(double _elapsedSeconds, double _totalSeconds) = 0;
 

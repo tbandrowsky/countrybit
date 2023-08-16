@@ -11,317 +11,6 @@ namespace corona
 	namespace win32
 	{
 
-		//-------
-
-		direct2dWindow::direct2dWindow(HWND _hwnd, std::weak_ptr<adapterSet> _adapterSet) : direct2dContext(_adapterSet)
-		{
-
-			HRESULT hr;
-
-			hwnd = _hwnd;
-			bitmap = nullptr;
-			surface = nullptr;
-			swapChain = nullptr;
-			renderTarget = nullptr;
-
-			D2D1_DEVICE_CONTEXT_OPTIONS options;
-
-			options = D2D1_DEVICE_CONTEXT_OPTIONS::D2D1_DEVICE_CONTEXT_OPTIONS_ENABLE_MULTITHREADED_OPTIMIZATIONS;
-
-			auto padaptr = _adapterSet.lock();
-
-			hr = padaptr->getD2DDevice()->CreateDeviceContext(options, &renderTarget);
-			throwOnFail(hr, "Could not create device context");
-
-			RECT rect;
-			::GetClientRect(hwnd, &rect);
-			int width = abs(rect.right - rect.left);
-			int height = abs(rect.bottom - rect.top);
-
-			DXGI_SWAP_CHAIN_DESC1 swapChainDesc = { 0 };
-			swapChainDesc.Width = width;
-			swapChainDesc.Height = height;
-			swapChainDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM; // this is the most common swapchain format
-			swapChainDesc.Stereo = false;
-			swapChainDesc.SampleDesc.Count = 1;
-			swapChainDesc.SampleDesc.Quality = 0;
-			swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_BACK_BUFFER;
-			swapChainDesc.BufferCount = 2;                     // use double buffering to enable flip
-			swapChainDesc.Scaling = DXGI_SCALING_NONE;
-			swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
-			swapChainDesc.Flags = 0;
-
-			hr = padaptr->getDxFactory()->CreateSwapChainForHwnd(padaptr->getD3DDevice(), hwnd, &swapChainDesc, nullptr, nullptr, &swapChain);
-			throwOnFail(hr, "Could not create swap chain");
-
-			DXGI_RGBA color;
-			color.a = 1.0;
-			color.r = 0.0;
-			color.g = 0.0;
-			color.b = 0.2;
-
-			swapChain->SetBackgroundColor(&color);
-
-			applySwapChain();
-		}
-
-		void direct2dWindow::resize(UINT width, UINT height)
-		{
-			HRESULT hr;
-
-#if TRACE_RENDER
-				std::cout << "%%%%%%%%% parent resize " << GetDlgCtrlID(hwnd) << " " << width << " " << height << std::endl;
-#endif
-
-			if (renderTarget)
-			{
-				renderTarget->SetTarget(nullptr);
-			}
-			if (bitmap)
-			{
-				bitmap->Release();
-				bitmap = nullptr;
-			}
-			if (surface)
-			{
-				surface->Release();
-				surface = nullptr;
-			}
-
-			applySwapChain();
-		}
-
-		void direct2dWindow::moveWindow(UINT x, UINT y, UINT w, UINT h)
-		{
-			double dpi = ::GetDpiForWindow(hwnd);
-
-			MoveWindow(hwnd, x, y, w, h, false);
-		}
-
-		void direct2dWindow::applySwapChain()
-		{
-			HRESULT hr;
-
-			float dpix, dpiy;
-			int dpiWindow;
-			RECT r;
-
-			dpiWindow = ::GetDpiForWindow(hwnd);
-			renderTarget->GetDpi(&dpix, &dpiy);
-
-			GetClientRect(hwnd, &r);
-			int x = r.right - r.left;
-			int y = r.bottom - r.top;
-
-			hr = swapChain->ResizeBuffers(2, x, y, DXGI_FORMAT_B8G8R8A8_UNORM, 0);
-			throwOnFail(hr, "Couldn't resize swapchain");
-
-			// Now we set up the Direct2D render target bitmap linked to the swapchain. 
-			// Whenever we render to this bitmap, it is directly rendered to the 
-			// swap chain associated with the window.
-			D2D1_BITMAP_PROPERTIES1 bitmapProperties = {};
-			
-			bitmapProperties.bitmapOptions = D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW;
-			bitmapProperties.pixelFormat = D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE);
-			bitmapProperties.colorContext = nullptr;
-			bitmapProperties.dpiX = dpiWindow;
-			bitmapProperties.dpiY = dpiWindow;
-				
-			// Direct2D needs the dxgi version of the backbuffer surface pointer.
-			hr = swapChain->GetBuffer(0, IID_IDXGISurface, (void**)&surface);
-			throwOnFail(hr, "Could not get swap chain surface");
-
-			DXGI_SURFACE_DESC sdec;
-			surface->GetDesc(&sdec);
-
-			// Get a D2D surface from the DXGI back buffer to use as the D2D render target.
-			hr = renderTarget->CreateBitmapFromDxgiSurface(
-				surface,
-				&bitmapProperties,
-				&bitmap
-			);
-
-			auto pxsx = bitmap->GetPixelSize();
-			auto sizex = bitmap->GetSize();
-
-			throwOnFail(hr, "Could create bitmap from surface");
-
-			// Now we can set the Direct2D render target.
-			auto dipssz = renderTarget->GetSize();
-			auto pixssz = renderTarget->GetPixelSize();
-			renderTarget->SetDpi(dpiWindow, dpiWindow);
-			renderTarget->SetTarget(bitmap);
-			dipssz = renderTarget->GetSize();
-
-#if TRACE_RENDER
-			std::cout << "render target pixel size " << pixssz.width << " " << pixssz.height << " " << std::endl;
-			std::cout << "render target dip size " << dipssz.width << " " << dipssz.height << " " << std::endl;
-#endif
-			return;
-
-		}
-
-		direct2dWindow::~direct2dWindow()
-		{
-			children.clear();
-
-			if (bitmap)
-				bitmap->Release();
-			if (surface)
-				surface->Release();
-			if (swapChain)
-				swapChain->Release();
-			if (renderTarget)
-				renderTarget->Release();
-		}
-
-		std::weak_ptr<direct2dChildWindow> direct2dWindow::createChild(relative_ptr_type _id, UINT _x, UINT _y, UINT _w, UINT _h)
-		{
-			std::weak_ptr<direct2dChildWindow> child;
-			if (children.contains(_id)) {
-				child = children[_id];
-				auto c = child.lock();
-				if (c) {
-					c->moveWindow(_x, _y, _w, _h);
-				}
-			}
-			else 
-			{
-				child = std::make_shared<direct2dChildWindow>(this, factory, _x, _y, _w, _h);
-				children.insert_or_assign(_id, child);
-			}
-			return child;
-		}
-
-		std::weak_ptr<direct2dChildWindow> direct2dWindow::getChild(relative_ptr_type _id)
-		{
-			std::weak_ptr<direct2dChildWindow> child;
-			if (children.contains(_id)) {
-				child = children[ _id ];
-			}
-			return child;
-		}
-		
-		void direct2dWindow::deleteChild(relative_ptr_type _id)
-		{
-			children.erase(_id);
-		}
-
-		void direct2dWindow::beginDraw(bool& _adapter_blown_away)
-		{
-			currentTransform = D2D1::Matrix3x2F::Identity();
-			_adapter_blown_away = false;
-
-			HRESULT hr = S_OK;
-
-			if (getRenderTarget()) {
-				getRenderTarget()->BeginDraw();
-			}
-			;
-		}
-
-		void direct2dWindow::endDraw(bool& _adapter_blown_away)
-		{
-			_adapter_blown_away = false;
-			if (getRenderTarget()) {
-				HRESULT hr = getRenderTarget()->EndDraw();
-
-				if (hr == D2DERR_RECREATE_TARGET)
-				{
-					_adapter_blown_away = true;
-				}
-				else if (SUCCEEDED(hr))
-				{
-					RECT r;
-					hr = swapChain->Present(1, 0);
-
-					switch (hr)
-					{
-					case DXGI_ERROR_ACCESS_DENIED:
-					case DXGI_ERROR_DRIVER_INTERNAL_ERROR:
-					case DXGI_ERROR_DEVICE_REMOVED:
-					case DXGI_ERROR_DEVICE_RESET:
-					case DXGI_ERROR_ALREADY_EXISTS:
-						_adapter_blown_away = true;
-						break;
-					}
-				}
-			}
-		}
-
-		//-------
-
-		direct2dChildWindow::direct2dChildWindow(std::weak_ptr<direct2dWindow> _parent, std::weak_ptr<adapterSet> _adapterSet, UINT _xdips, UINT _ydips, UINT _wdips, UINT _hdips) : direct2dContext(_adapterSet)
-		{
-			HRESULT hr;
-
-			parent = _parent;
-			childBitmap = nullptr;
-
-			windowPosition.x = _xdips;
-			windowPosition.y = _ydips;
-			windowPosition.w = _wdips;
-			windowPosition.h = _hdips;
-
-			resize(_wdips, _hdips);
-		}
-
-		void direct2dChildWindow::resize(UINT _wdips, UINT _hdips)
-		{
-			HRESULT hr;
-
-#if TRACE_RENDER
-			std::cout << "%%%%%%%%% child resize " << GetDlgCtrlID(hwnd) << " " << width << " " << height << std::endl;
-#endif
-
-			int dpiWindow;
-			dpiWindow = ::GetDpiForWindow(parent.lock()->getWindow());
-			double dipsToPixels = dpiWindow / 96.0;
-
-			D2D1_SIZE_F size;
-			size.width = _wdips * dipsToPixels;
-			size.height = _hdips * dipsToPixels;
-			childBitmap = std::make_shared<direct2dBitmapCore>(size, factory, dpiWindow);
-		}
-
-		void direct2dChildWindow::moveWindow(UINT _xdips, UINT _ydips, UINT _wdips, UINT _hdips)
-		{
-			windowPosition.x = _xdips;
-			windowPosition.y = _ydips;
-			windowPosition.w = _wdips;
-			windowPosition.h = _hdips;
-			resize(_wdips, _hdips);
-		}
-
-		rectangle direct2dChildWindow::getBoundsDips()
-		{
-			return windowPosition;
-		}
-
-		direct2dChildWindow::~direct2dChildWindow()
-		{
-		}
-
-		void direct2dChildWindow::beginDraw(bool& _adapter_blown_away)
-		{
-			currentTransform = D2D1::Matrix3x2F::Identity();
-			_adapter_blown_away = false;
-
-			HRESULT hr = S_OK;
-
-			if (getRenderTarget()) {
-				getRenderTarget()->BeginDraw();
-			}
-		}
-
-		void direct2dChildWindow::endDraw(bool& _adapter_blown_away)
-		{
-			_adapter_blown_away = false;
-			if (getRenderTarget()) {
-				HRESULT hr = getRenderTarget()->EndDraw();
-			}
-		}
-
 		// -------------------------------------------------------
 
 		directApplicationWin32* directApplicationWin32::current;
@@ -476,7 +165,7 @@ namespace corona
 
 			auto dpi = GetDpiForWindow(hwndRoot);
 			auto pfactory = factory.lock();
-			if (!pfactory) return;
+			if (!pfactory) return cx;
 
 			auto win = pfactory->getWindow(hwndRoot).lock();
 			auto child = win->createChild(control_id, bounds.x, bounds.y, bounds.w, bounds.h);
@@ -498,244 +187,249 @@ namespace corona
 			database::point ptz;
 
 			auto pfactory = factory.lock();
-			if (!pfactory) return;
-			auto* winx = pfactory->getWindow(hwnd);
-
-			switch (message)
+			if (!pfactory) 
 			{
-			case WM_CREATE:
-				hwndRoot = hwnd;
-				if (currentController) {
-					auto* win = pfactory->createD2dWindow(hwnd);
-					dpiScale = 96.0 / GetDpiForWindow(hwnd);
-					loadStyleSheet();
-					currentController->onCreated();
-				}
-				break;
-			case WM_INITDIALOG:
-				break;
-			case WM_DESTROY:
-				pfactory->closeWindow(hwnd);
-				PostQuitMessage(0);
-				return 0;
-			case WM_COMMAND:
-				if (currentController && !disableChangeProcessing)
+				return DefWindowProc(hwnd, message, wParam, lParam);
+			}
+
+			auto current_window = pfactory->getWindow(hwnd);
+			if (auto pcurrent_window = current_window.lock()) {
+
+				switch (message)
 				{
-					UINT controlId = LOWORD(wParam);
-					UINT notificationCode = HIWORD(wParam);
-					switch (notificationCode) {
-					case BN_CLICKED: // button or menu
-						currentController->onCommand(controlId);
-						break;
-					case EN_UPDATE:
-						currentController->onTextChanged(controlId);
-						break;
-					case CBN_SELCHANGE:
-						currentController->onDropDownChanged(controlId);
+				case WM_CREATE:
+					hwndRoot = hwnd;
+					if (currentController) {
+						pfactory->createD2dWindow(hwnd);
+						dpiScale = 96.0 / GetDpiForWindow(hwnd);
+						loadStyleSheet();
+						currentController->onCreated();
+					}
+					break;
+				case WM_INITDIALOG:
+					break;
+				case WM_DESTROY:
+					pfactory->closeWindow(hwnd);
+					PostQuitMessage(0);
+					return 0;
+				case WM_COMMAND:
+					if (currentController && !disableChangeProcessing)
+					{
+						UINT controlId = LOWORD(wParam);
+						UINT notificationCode = HIWORD(wParam);
+						switch (notificationCode) {
+						case BN_CLICKED: // button or menu
+							currentController->onCommand(controlId);
+							break;
+						case EN_UPDATE:
+							currentController->onTextChanged(controlId);
+							break;
+						case CBN_SELCHANGE:
+							currentController->onDropDownChanged(controlId);
+							break;
+						}
 						break;
 					}
 					break;
-				}
-				break;
-			case WM_DPICHANGED:
-				if (currentController)
-				{
-					RECT* const prcNewWindow = (RECT*)lParam;
-					SetWindowPos(hwnd,
-						NULL,
-						prcNewWindow->left,
-						prcNewWindow->top,
-						prcNewWindow->right - prcNewWindow->left,
-						prcNewWindow->bottom - prcNewWindow->top,
-						SWP_NOZORDER | SWP_NOACTIVATE);
-				}
-				break;
-			case WM_NOTIFY:
-				if (currentController && !disableChangeProcessing)
-				{
-					//LVN_ITEMACTIVATE
-					LPNMHDR lpnm = (LPNMHDR)lParam;
-					switch (lpnm->code) {
-					case UDN_DELTAPOS:
+				case WM_DPICHANGED:
+					if (currentController)
 					{
-						auto lpnmud = (LPNMUPDOWN)lParam;
-						currentController->onSpin(lpnm->idFrom, lpnmud->iPos + lpnmud->iDelta);
+						RECT* const prcNewWindow = (RECT*)lParam;
+						SetWindowPos(hwnd,
+							NULL,
+							prcNewWindow->left,
+							prcNewWindow->top,
+							prcNewWindow->right - prcNewWindow->left,
+							prcNewWindow->bottom - prcNewWindow->top,
+							SWP_NOZORDER | SWP_NOACTIVATE);
+					}
+					break;
+				case WM_NOTIFY:
+					if (currentController && !disableChangeProcessing)
+					{
+						//LVN_ITEMACTIVATE
+						LPNMHDR lpnm = (LPNMHDR)lParam;
+						switch (lpnm->code) {
+						case UDN_DELTAPOS:
+						{
+							auto lpnmud = (LPNMUPDOWN)lParam;
+							currentController->onSpin(lpnm->idFrom, lpnmud->iPos + lpnmud->iDelta);
+							return 0;
+						}
+						break;
+						case LVN_ITEMCHANGED:
+						{
+							auto lpmnlv = (LPNMLISTVIEW)lParam;
+							database::control_base pi;
+							if (lpmnlv->uNewState & LVIS_SELECTED)
+								currentController->onListViewChanged(lpnm->idFrom);
+						}
+						break;
+						case NM_CLICK:
+						{
+
+							::GetClassNameA(lpnm->hwndFrom, className, sizeof(className) - 1);
+							if (strcmp(className, "SysLink") == 0) {
+								auto plink = (PNMLINK)lParam;
+								auto r = ::ShellExecuteW(NULL, L"open", plink->item.szUrl, NULL, NULL, SW_SHOWNORMAL);
+							}
+						}
+						break;
+						case NM_CUSTOMDRAW:
+						{
+							LPNMLVCUSTOMDRAW  lplvcd = (LPNMLVCUSTOMDRAW)lParam;
+							switch (lplvcd->nmcd.dwDrawStage) {
+							case CDDS_PREPAINT:
+								return CDRF_NOTIFYITEMDRAW;
+							case CDDS_ITEMPREPAINT:
+								LVITEM lvitem;
+								char buff[16384];
+								ZeroMemory(&lvitem, sizeof(lvitem));
+								lvitem.iItem = lplvcd->nmcd.dwItemSpec;
+								lvitem.stateMask = LVIS_SELECTED;
+								lvitem.mask = LVIF_STATE | LVIF_TEXT;
+								lvitem.cchTextMax = sizeof(buff) - 1;
+								lvitem.pszText = buff;
+								HWND control = ::GetDlgItem(hwndRoot, lplvcd->nmcd.hdr.idFrom);
+								ListView_GetItem(control, &lvitem);
+
+								RECT area = lplvcd->nmcd.rc;
+
+								if (lvitem.state & LVIS_SELECTED) {
+									::FillRect(lplvcd->nmcd.hdc, &area, GetSysColorBrush(COLOR_HIGHLIGHT));
+									::SetTextColor(lplvcd->nmcd.hdc, ::GetSysColor(COLOR_HIGHLIGHTTEXT));
+									::DrawTextA(lplvcd->nmcd.hdc, lvitem.pszText, strlen(lvitem.pszText), &area, DT_CENTER);
+								}
+								else {
+									::FillRect(lplvcd->nmcd.hdc, &area, GetSysColorBrush(COLOR_WINDOW));
+									::SetTextColor(lplvcd->nmcd.hdc, ::GetSysColor(COLOR_WINDOWTEXT));
+									::DrawTextA(lplvcd->nmcd.hdc, lvitem.pszText, strlen(lvitem.pszText), &area, DT_CENTER);
+								}
+								return CDRF_SKIPDEFAULT;
+							}
+						}
+						}
+					}
+					break;
+				case WM_GETMINMAXINFO:
+					if (minimumWindowSize.x > 0) {
+						auto minmaxinfo = (LPMINMAXINFO)lParam;
+						minmaxinfo->ptMinTrackSize.x = minimumWindowSize.x;
+						minmaxinfo->ptMinTrackSize.y = minimumWindowSize.y;
 						return 0;
 					}
 					break;
-					case LVN_ITEMCHANGED:
+				case WM_CTLCOLORLISTBOX:
+				case WM_CTLCOLOREDIT:
+				{
+					HDC hdcStatic = (HDC)wParam;
+					SetBkColor(hdcStatic, RGB(255, 255, 255));
+					if (hbrBkgnd == NULL)
 					{
-						auto lpmnlv = (LPNMLISTVIEW)lParam;
-						database::control_base pi;
-						if (lpmnlv->uNewState & LVIS_SELECTED)
-							currentController->onListViewChanged(lpnm->idFrom);
+						hbrBkgnd = CreateSolidBrush(RGB(255, 255, 255));
 					}
-					break;
-					case NM_CLICK:
-					{
-
-						::GetClassNameA(lpnm->hwndFrom, className, sizeof(className) - 1);
-						if (strcmp(className, "SysLink") == 0) {
-							auto plink = (PNMLINK)lParam;
-							auto r = ::ShellExecuteW(NULL, L"open", plink->item.szUrl, NULL, NULL, SW_SHOWNORMAL);
-						}
-					}
-					break;
-					case NM_CUSTOMDRAW:
-					{
-						LPNMLVCUSTOMDRAW  lplvcd = (LPNMLVCUSTOMDRAW)lParam;
-						switch (lplvcd->nmcd.dwDrawStage) {
-						case CDDS_PREPAINT:
-							return CDRF_NOTIFYITEMDRAW;
-						case CDDS_ITEMPREPAINT:
-							LVITEM lvitem;
-							char buff[16384];
-							ZeroMemory(&lvitem, sizeof(lvitem));
-							lvitem.iItem = lplvcd->nmcd.dwItemSpec;
-							lvitem.stateMask = LVIS_SELECTED;
-							lvitem.mask = LVIF_STATE | LVIF_TEXT;
-							lvitem.cchTextMax = sizeof(buff) - 1;
-							lvitem.pszText = buff;
-							HWND control = ::GetDlgItem(hwndRoot, lplvcd->nmcd.hdr.idFrom);
-							ListView_GetItem(control, &lvitem);
-
-							RECT area = lplvcd->nmcd.rc;
-
-							if (lvitem.state & LVIS_SELECTED) {
-								::FillRect(lplvcd->nmcd.hdc, &area, GetSysColorBrush(COLOR_HIGHLIGHT));
-								::SetTextColor(lplvcd->nmcd.hdc, ::GetSysColor(COLOR_HIGHLIGHTTEXT));
-								::DrawTextA(lplvcd->nmcd.hdc, lvitem.pszText, strlen(lvitem.pszText), &area, DT_CENTER);
-							}
-							else {
-								::FillRect(lplvcd->nmcd.hdc, &area, GetSysColorBrush(COLOR_WINDOW));
-								::SetTextColor(lplvcd->nmcd.hdc, ::GetSysColor(COLOR_WINDOWTEXT));
-								::DrawTextA(lplvcd->nmcd.hdc, lvitem.pszText, strlen(lvitem.pszText), &area, DT_CENTER);
-							}
-							return CDRF_SKIPDEFAULT;
-						}
-					}
-					}
+					return (INT_PTR)hbrBkgnd;
 				}
 				break;
-			case WM_GETMINMAXINFO:
-				if (minimumWindowSize.x > 0) {
-					auto minmaxinfo = (LPMINMAXINFO)lParam;
-					minmaxinfo->ptMinTrackSize.x = minimumWindowSize.x;
-					minmaxinfo->ptMinTrackSize.y = minimumWindowSize.y;
+				case WM_CTLCOLORBTN:
+				case WM_CTLCOLORSTATIC:
+				{
+					HDC hdcStatic = (HDC)wParam;
+					SetBkColor(hdcStatic, RGB(255, 255, 255));
+					if (hbrBkgnd == NULL)
+					{
+						hbrBkgnd = CreateSolidBrush(RGB(255, 255, 255));
+					}
+					return (INT_PTR)hbrBkgnd;
+				}
+				break;
+				case WM_ERASEBKGND:
+				{
+					RECT rect, rect2;
+					HDC eraseDc = (HDC)wParam;
+					if (hbrBkgnd == NULL)
+					{
+						hbrBkgnd = CreateSolidBrush(RGB(255, 255, 255));
+					}
+					::GetClientRect(hwnd, &rect);
+					::FillRect((HDC)wParam, &rect, hbrBkgnd);
 					return 0;
 				}
 				break;
-			case WM_CTLCOLORLISTBOX:
-			case WM_CTLCOLOREDIT:
-			{
-				HDC hdcStatic = (HDC)wParam;
-				SetBkColor(hdcStatic, RGB(255, 255, 255));
-				if (hbrBkgnd == NULL)
-				{
-					hbrBkgnd = CreateSolidBrush(RGB(255, 255, 255));
-				}
-				return (INT_PTR)hbrBkgnd;
-			}
-			break;
-			case WM_CTLCOLORBTN:
-			case WM_CTLCOLORSTATIC:
-			{
-				HDC hdcStatic = (HDC)wParam;
-				SetBkColor(hdcStatic, RGB(255, 255, 255));
-				if (hbrBkgnd == NULL)
-				{
-					hbrBkgnd = CreateSolidBrush(RGB(255, 255, 255));
-				}
-				return (INT_PTR)hbrBkgnd;
-			}
-			break;
-			case WM_ERASEBKGND:
-			{
-				RECT rect, rect2;
-				HDC eraseDc = (HDC)wParam;
-				if (hbrBkgnd == NULL)
-				{
-					hbrBkgnd = CreateSolidBrush(RGB(255, 255, 255));
-				}
-				::GetClientRect(hwnd, &rect);
-				::FillRect((HDC)wParam, &rect, hbrBkgnd);
-				return 0;
-			}
-			break;
 
-			case WM_CHAR:
-			case WM_RBUTTONDOWN:
-			case WM_CANCELMODE:
-				if (colorCapture) {
+				case WM_CHAR:
+				case WM_RBUTTONDOWN:
+				case WM_CANCELMODE:
+					if (colorCapture) {
+						colorCapture = false;
+						::ReleaseCapture();
+						::SetCursor(LoadCursor(NULL, IDC_ARROW));
+					}
+					break;
+
+				case WM_CAPTURECHANGED:
 					colorCapture = false;
-					::ReleaseCapture();
-					::SetCursor(LoadCursor(NULL, IDC_ARROW));
-				}
-				break;
+					break;
 
-			case WM_CAPTURECHANGED:
-				colorCapture = false;
-				break;
-
-			case WM_LBUTTONDOWN:
-				if (colorCapture) {
-					colorCapture = false;
-					::ReleaseCapture();
-					::SetCursor(LoadCursor(NULL, IDC_ARROW));
-					POINT p;
-					if (GetCursorPos(&p))
-					{
-						HDC hdc = ::GetDC(NULL);
-						if (hdc) {
-							COLORREF cr = ::GetPixel(hdc, p.x, p.y);
-							color pickedColor;
-							pickedColor.r = GetRValue(cr) / 255.0;
-							pickedColor.g = GetGValue(cr) / 255.0;
-							pickedColor.b = GetBValue(cr) / 255.0;
-							ptz.x = p.x;
-							ptz.y = p.y;
-							if (currentController)
-								currentController->pointSelected(winx, &ptz, &pickedColor);
+				case WM_LBUTTONDOWN:
+					if (colorCapture) {
+						colorCapture = false;
+						::ReleaseCapture();
+						::SetCursor(LoadCursor(NULL, IDC_ARROW));
+						POINT p;
+						if (GetCursorPos(&p))
+						{
+							HDC hdc = ::GetDC(NULL);
+							if (hdc) {
+								COLORREF cr = ::GetPixel(hdc, p.x, p.y);
+								color pickedColor;
+								pickedColor.r = GetRValue(cr) / 255.0;
+								pickedColor.g = GetGValue(cr) / 255.0;
+								pickedColor.b = GetBValue(cr) / 255.0;
+								ptz.x = p.x;
+								ptz.y = p.y;
+								if (currentController)
+									currentController->pointSelected(pcurrent_window, &ptz, &pickedColor);
+							}
 						}
 					}
-				}
-				else if (currentController)
-				{
-					POINT p;
-					if (GetCursorPos(&p))
+					else if (currentController)
 					{
-						ScreenToClient(hwnd, &p);
-						database::point ptxo;
-						ptxo.x = p.x * 96.0 / GetDpiForWindow(hwnd);
-						ptxo.y = p.y * 96.0 / GetDpiForWindow(hwnd);
-						currentController->mouseClick(winx, &ptxo);
+						POINT p;
+						if (GetCursorPos(&p))
+						{
+							ScreenToClient(hwnd, &p);
+							database::point ptxo;
+							ptxo.x = p.x * 96.0 / GetDpiForWindow(hwnd);
+							ptxo.y = p.y * 96.0 / GetDpiForWindow(hwnd);
+							currentController->mouseClick(pcurrent_window, &ptxo);
+						}
 					}
-				}
-				break;
-			case WM_MOUSEMOVE:
-				if (currentController)
-				{
-					POINT p;
-					if (GetCursorPos(&p))
+					break;
+				case WM_MOUSEMOVE:
+					if (currentController)
 					{
-						ScreenToClient(hwnd, &p);
-						database::point ptxo;
-						ptxo.x = p.x * 96.0 / GetDpiForWindow(hwnd);
-						ptxo.y = p.y * 96.0 / GetDpiForWindow(hwnd);
-						currentController->mouseMove(winx, &ptxo);
+						POINT p;
+						if (GetCursorPos(&p))
+						{
+							ScreenToClient(hwnd, &p);
+							database::point ptxo;
+							ptxo.x = p.x * 96.0 / GetDpiForWindow(hwnd);
+							ptxo.y = p.y * 96.0 / GetDpiForWindow(hwnd);
+							currentController->mouseMove(pcurrent_window, &ptxo);
+						}
 					}
+					break;
+				case WM_PAINT:
+				{
+					ValidateRect(hwnd, nullptr);
+					/*				PAINTSTRUCT ps;
+									BeginPaint(hwnd, &ps);
+									EndPaint(hwnd, &ps); */
+					redraw();
+					return 0;
 				}
-				break;
-			case WM_PAINT:
-			{
-				ValidateRect(hwnd, nullptr);
-/*				PAINTSTRUCT ps;
-				BeginPaint(hwnd, &ps);
-				EndPaint(hwnd, &ps); */
-				redraw();
-				return 0;
-			}
-			case WM_SIZE:
+				case WM_SIZE:
 				{
 					RECT l;
 					::GetClientRect(hwnd, &l);
@@ -760,6 +454,7 @@ namespace corona
 					}
 				}
 				break;
+				}
 			}
 
 			return DefWindowProc(hwnd, message, wParam, lParam);
@@ -767,11 +462,13 @@ namespace corona
 
 		std::weak_ptr<direct2dChildWindow> directApplicationWin32::getDirect2dWindow(relative_ptr_type i)
 		{
-			auto pfactory = factory.lock();
-			if (!pfactory) return;
+			std::weak_ptr<direct2dChildWindow> wp;
 
-			auto wmi = pfactory->findChild(i);
-			return wmi;
+			auto pfactory = factory.lock();
+			if (!pfactory) return wp;
+
+			wp = pfactory->findChild(i);
+			return wp;
 		}
 
 		void directApplicationWin32::setController(std::shared_ptr<controller> _newCurrentController)
@@ -788,6 +485,9 @@ namespace corona
 				return false;
 
 			::InitCommonControls();
+
+			auto ptr = weak_from_this();
+			_firstController->setHost(ptr);
 
 			WNDCLASS wcMain;
 			MSG msg;
@@ -873,6 +573,9 @@ namespace corona
 				return false;
 
 			::InitCommonControls();
+
+			auto ptr = weak_from_this();
+			_firstController->setHost(ptr);
 
 			WNDCLASS wcMain;
 			MSG msg;

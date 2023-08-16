@@ -29,9 +29,9 @@ namespace corona
 
 		};
 
-		class direct3dDevice
+		class direct3dDevice : std::enable_shared_from_this<direct3dDevice>
 		{
-			ID3D11Device* d3d11Device;
+			CComPtr<ID3D11Device> d3d11Device;
 			D3D_FEATURE_LEVEL	feature_level;
 
 		public:
@@ -49,13 +49,13 @@ namespace corona
 		class direct2dChildWindow;
 		class direct2dBitmap;
 
-		class direct2dDevice
+		class direct2dDevice : std::enable_shared_from_this<direct2dDevice>
 		{
-			IDXGIDevice* dxDevice;
-			ID2D1Device* d2dDevice;
-			ID2D1Factory1* d2DFactory;
-			IWICImagingFactory* wicFactory;
-			IDWriteFactory* dWriteFactory;
+			CComPtr<IDXGIDevice> dxDevice;
+			CComPtr<ID2D1Device> d2dDevice;
+			CComPtr<ID2D1Factory1> d2DFactory;
+			CComPtr<IWICImagingFactory> wicFactory;
+			CComPtr<IDWriteFactory> dWriteFactory;
 
 		public:
 
@@ -65,19 +65,19 @@ namespace corona
 			inline ID2D1Factory1* getD2DFactory() { return d2DFactory; }
 			inline IWICImagingFactory* getWicFactory() { return wicFactory; }
 			inline IDWriteFactory* getDWriteFactory() { return dWriteFactory; }
-			inline ID2D1Device* getD2DDevice() { return d2dDevice; }
+			inline ID2D1Device *getD2DDevice() { return d2dDevice; }
 
-			bool setDevice(ID3D11Device* _d3dDevice);
+			bool setDevice(ID3D11Device *_d3dDevice);
 			void release();
 		};
 
-		class adapterSet
+		class adapterSet : std::enable_shared_from_this<adapterSet>
 		{
-			IDXGIFactory2* dxFactory;
-			IDXGIAdapter1* dxAdapter;
+			CComPtr<IDXGIFactory2> dxFactory;
+			CComPtr<IDXGIAdapter1> dxAdapter;
 
-			direct2dDevice* direct2d;
-			direct3dDevice* direct3d;
+			std::shared_ptr<direct2dDevice> direct2d;
+			std::shared_ptr<direct3dDevice> direct3d;
 
 			std::map<HWND, std::shared_ptr<direct2dWindow>> parent_windows;
 
@@ -89,15 +89,15 @@ namespace corona
 			void cleanup();
 			void refresh();
 
-			inline IDXGIFactory2* getDxFactory() { return dxFactory; }
-			inline IDXGIAdapter1* getDxAdapter() { return dxAdapter; }
+			inline IDXGIFactory2 *getDxFactory() { return dxFactory; }
+			inline IDXGIAdapter1 *getDxAdapter() { return dxAdapter; }
 
-			inline ID2D1Factory* getD2DFactory() { return direct2d->getD2DFactory(); }
-			inline IWICImagingFactory* getWicFactory() { return direct2d->getWicFactory(); }
-			inline IDWriteFactory* getDWriteFactory() { return direct2d->getDWriteFactory(); }
-			inline ID2D1Device* getD2DDevice() { return direct2d->getD2DDevice(); }
+			inline ID2D1Factory *getD2DFactory() { return direct2d->getD2DFactory(); }
+			inline IWICImagingFactory *getWicFactory() { return direct2d->getWicFactory(); }
+			inline IDWriteFactory *getDWriteFactory() { return direct2d->getDWriteFactory(); }
+			inline ID2D1Device *getD2DDevice() { return direct2d->getD2DDevice(); }
 
-			inline ID3D11Device* getD3DDevice() { return direct3d->getD3DDevice(); }
+			inline ID3D11Device *getD3DDevice() { return direct3d->getD3DDevice(); }
 			inline D3D_FEATURE_LEVEL getFeatureLevel() { return direct3d->getFeatureLevel(); }
 
 			std::weak_ptr<direct2dWindow> createD2dWindow(HWND parent);

@@ -82,48 +82,23 @@ namespace corona
 
 		adapterSet::adapterSet()
 		{
-			dxFactory = nullptr;
-			dxAdapter = nullptr;
-			direct2d = nullptr;
-			direct3d = nullptr;
 		}
 
 		adapterSet::~adapterSet()
 		{
-			if (dxAdapter) {
-				dxAdapter->Release();
-				dxAdapter = nullptr;
-			}
-
-			if (dxFactory) {
-				dxFactory->Release();
-				dxFactory = nullptr;
-			}
 		}
 
 		void adapterSet::cleanup()
 		{
-
-			if (direct2d)
-				delete direct2d;
-
-			if (direct3d)
-				delete direct3d;
-
-			if (dxAdapter)
-				dxAdapter->Release();
-			dxAdapter = nullptr;
-
-			if (dxFactory)
-				dxFactory->Release();
-			dxFactory = nullptr;
+			dxAdapter.Release();
+			dxFactory.Release();
 		}
 
 		void adapterSet::refresh()
 		{
 			cleanup();
-			direct2d = new direct2dDevice();
-			direct3d = new direct3dDevice();
+			direct2d = std::make_shared<direct2dDevice>();
+			direct3d = std::make_shared<direct3dDevice>();
 
 			HRESULT hr = CreateDXGIFactory1(IID_IDXGIFactory1, (void**)&dxFactory);
 			throwOnFail(hr, "Could not create DXGI factory");
@@ -154,7 +129,8 @@ namespace corona
 
 		std::weak_ptr<direct2dWindow> adapterSet::createD2dWindow(HWND parent)
 		{
-			std::shared_ptr<direct2dWindow> win = std::make_shared<direct2dWindow>(parent, this);
+			auto pthis = weak_from_this();
+			std::shared_ptr<direct2dWindow> win = std::make_shared<direct2dWindow>(parent, pthis);
 			parent_windows.insert_or_assign(parent, win);
 			return win;
 		}
@@ -214,7 +190,8 @@ namespace corona
 
 		std::unique_ptr<direct2dBitmap> adapterSet::createD2dBitmap(D2D1_SIZE_F size)
 		{
-			std::unique_ptr<direct2dBitmap> win = std::make_unique<direct2dBitmap>(size, this);
+			auto padapter = weak_from_this();
+			std::unique_ptr<direct2dBitmap> win = std::make_unique<direct2dBitmap>(size, padapter);
 			return win;
 		}
 
@@ -225,21 +202,13 @@ namespace corona
 
 		direct3dDevice::~direct3dDevice()
 		{
-			if (d3d11Device)
-			{
-				d3d11Device->Release();
-			}
-			d3d11Device = nullptr;
 		}
 
-		bool direct3dDevice::setDevice(IDXGIAdapter1* _adapter)
+		bool direct3dDevice::setDevice(IDXGIAdapter1 *_adapter)
 		{
-			if (d3d11Device != nullptr)
-			{
-				d3d11Device->Release();
-				d3d11Device = nullptr;
-				feature_level = D3D_FEATURE_LEVEL::D3D_FEATURE_LEVEL_1_0_CORE;
-			}
+			d3d11Device.Release();
+
+			feature_level = D3D_FEATURE_LEVEL::D3D_FEATURE_LEVEL_1_0_CORE;
 
 			D3D_FEATURE_LEVEL feature_levels[] = {
 				D3D_FEATURE_LEVEL_10_0,
@@ -286,29 +255,9 @@ namespace corona
 
 		direct2dDevice::~direct2dDevice()
 		{
-			if (wicFactory) {
-				wicFactory->Release();
-				wicFactory = NULL;
-			}
-			if (dWriteFactory) {
-				dWriteFactory->Release();
-				dWriteFactory = NULL;
-			}
-			if (d2dDevice) {
-				d2dDevice->Release();
-				d2dDevice = NULL;
-			}
-			if (d2DFactory) {
-				d2DFactory->Release();
-				d2DFactory = NULL;
-			}
-			if (dxDevice) {
-				dxDevice->Release();
-				dxDevice = NULL;
-			}
 		}
 
-		bool direct2dDevice::setDevice(ID3D11Device* _d3dDevice)
+		bool direct2dDevice::setDevice(ID3D11Device *_d3dDevice)
 		{
 			HRESULT hr = _d3dDevice->QueryInterface(&this->dxDevice);
 
@@ -316,6 +265,7 @@ namespace corona
 
 			return SUCCEEDED(hr);
 		}
+
 
 
 
