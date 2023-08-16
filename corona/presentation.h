@@ -597,8 +597,6 @@ namespace corona
 			virtual void destroy();
 			virtual void draw();
 			virtual void update(double _elapsedSeconds, double _totalSeconds);
-			virtual void item_changed(int _control_id, std::string _text_value);
-			virtual void list_changed(int _control_id, std::string _text_value, int _index, relative_ptr_type _value);
 
 		public:
 
@@ -655,6 +653,7 @@ namespace corona
 			virtual void onCommand(int buttonId);
 			virtual void onTextChanged(int textControlId);
 			virtual void onDropDownChanged(int dropDownId);
+			virtual void onListBoxChanged(int listBoxId);
 			virtual void onListViewChanged(int listViewId);
 			virtual int onHScroll(int controlId, win32::scrollTypes scrollType);
 			virtual int onVScroll(int controlId, win32::scrollTypes scrollType);

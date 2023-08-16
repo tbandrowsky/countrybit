@@ -44,7 +44,7 @@ namespace corona
 			os_result();
 		};
 
-		std::ostream& operator <<(std::ostream& output, os_result& src);
+		std::ostream& operator <<(std::ostream& output, const os_result& src);
 
 	}
 

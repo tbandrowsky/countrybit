@@ -56,6 +56,7 @@ namespace corona
 			virtual void onCommand(int buttonId) = 0;
 			virtual void onTextChanged(int textControlId) = 0;
 			virtual void onDropDownChanged(int dropDownId) = 0;
+			virtual void onListBoxChanged(int dropDownId) = 0;
 			virtual void onListViewChanged(int listViewId) = 0;
 			virtual int onHScroll(int controlId, scrollTypes scrollType) = 0;
 			virtual int onVScroll(int controlId, scrollTypes scrollType) = 0;

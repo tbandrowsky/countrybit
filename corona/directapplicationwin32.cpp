@@ -217,6 +217,7 @@ namespace corona
 					{
 						UINT controlId = LOWORD(wParam);
 						UINT notificationCode = HIWORD(wParam);
+						HWND controlWindow = (HWND)lParam;
 						switch (notificationCode) {
 						case BN_CLICKED: // button or menu
 							currentController->onCommand(controlId);
@@ -225,8 +226,20 @@ namespace corona
 							currentController->onTextChanged(controlId);
 							break;
 						case CBN_SELCHANGE:
-							currentController->onDropDownChanged(controlId);
-							break;
+							{
+								char window_class[500];
+								if (::RealGetWindowClassA(controlWindow, window_class, sizeof(window_class) - 1)) {
+									if (strcmp(WC_COMBOBOX, window_class) || 
+										strcmp(WC_COMBOBOXEX, window_class) == 0) {
+										currentController->onDropDownChanged(controlId);
+									}
+									else 
+									{
+										currentController->onListBoxChanged(controlId);
+									}
+								}
+								break;
+							}
 						}
 						break;
 					}

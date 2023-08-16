@@ -756,6 +756,11 @@ namespace corona
 			root = std::make_shared<column_layout>();
 		}
 
+		page::~page()
+		{
+			destroy();
+		}
+
 		void page::clear()
 		{
 			destroy();
@@ -1083,6 +1088,27 @@ namespace corona
 				std::string new_text = ptr->getComboSelectedText(dropDownId);
 				int index = ptr->getComboSelectedIndex(dropDownId);
 				int value = ptr->getComboSelectedValue(dropDownId);
+				list_changed_event lce;
+				lce.control_id = dropDownId;
+				lce.selected_text = new_text;
+				lce.selected_value = value;
+				lce.selected_index = index;
+				lce.state = 0;
+				lce.control = nullptr; // the page will assign this.
+				auto cp = current_page.lock();
+				if (cp) {
+					cp->handle_list_changed(dropDownId, lce);
+				}
+			}
+		}
+
+		void presentation::onListBoxChanged(int dropDownId)
+		{
+			auto ptr = getHost();
+			if (ptr) {
+				std::string new_text = ptr->getListSelectedText(dropDownId);
+				int index = ptr->getListSelectedIndex(dropDownId);
+				int value = ptr->getListSelectedValue(dropDownId);
 				list_changed_event lce;
 				lce.control_id = dropDownId;
 				lce.selected_text = new_text;
