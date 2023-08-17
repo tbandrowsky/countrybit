@@ -10,6 +10,7 @@ namespace corona
 
 		class direct2dWindow;
 		class direct2dChildWindow;
+		class direct2dBitmap;
 
 		class drawableHost {
 		public:
@@ -18,20 +19,20 @@ namespace corona
 			virtual void beginDraw(bool& _adapter_blown_away) = 0;
 			virtual void endDraw(bool& _adapter_blown_away) = 0;
 			virtual void clear(color* _color) = 0;
-			virtual void addBitmap(bitmapRequest* _bitmap) = 0;
+			virtual void setBitmap(bitmapRequest* _bitmap) = 0;
 			virtual bool setBitmapSizes(bitmapRequest* _bitmap, bool _forceResize) = 0;
 			virtual bool setBitmapFilter(bitmapRequest* _bitmap, std::function<bool(point, int, int, char* bytes)> _filter) = 0;
-			virtual void addBitmapBrush(bitmapBrushRequest* _bitmapBrush) = 0;
-			virtual void addSolidColorBrush(solidBrushRequest* _solidBrushDto) = 0;
-			virtual void addLinearGradientBrush(linearGradientBrushRequest* _linearGradientBrushDto) = 0;
-			virtual void addRadialGradientBrush(radialGradientBrushRequest* _radialGradientBrushDto) = 0;
+			virtual void setBitmapBrush(bitmapBrushRequest* _bitmapBrush) = 0;
+			virtual void setSolidColorBrush(solidBrushRequest* _solidBrushDto) = 0;
+			virtual void setLinearGradientBrush(linearGradientBrushRequest* _linearGradientBrushDto) = 0;
+			virtual void setRadialGradientBrush(radialGradientBrushRequest* _radialGradientBrushDto) = 0;
 			virtual void clearBitmapsAndBrushes(bool deleteStockObjects = false) = 0;
 
-			virtual void addPath(pathDto* _pathDto, bool _closed = true) = 0;
+			virtual void setPath(pathDto* _pathDto, bool _closed = true) = 0;
 
-			virtual void addViewStyle(viewStyleRequest& _textStyle) = 0;
+			virtual void setViewStyle(viewStyleRequest& _textStyle) = 0;
 			virtual void clearViewStyles() = 0;
-			virtual void addTextStyle(textStyleRequest* _textStyle) = 0;
+			virtual void setTextStyle(textStyleRequest* _textStyle) = 0;
 			virtual void clearTextStyles() = 0;
 
 			virtual void clearPaths() = 0;
@@ -51,7 +52,7 @@ namespace corona
 
 			virtual point getSize() = 0;
 
-			virtual drawableHost* createBitmap(point& _size) = 0;
+			virtual std::shared_ptr<direct2dBitmap> createBitmap(point& _size) = 0;
 			virtual void drawBitmap(drawableHost* _directBitmap, point& _dest, point& _size) = 0;
 			virtual bool isBitmap() { return false; }
 			virtual void save(const char* _filename) = 0;

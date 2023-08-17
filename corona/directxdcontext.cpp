@@ -849,9 +849,9 @@ namespace corona
 			clearFilteredBitmaps();
 		}
 
-		bitmap* bitmap::clone(std::weak_ptr<direct2dContext>& _src)
+		std::shared_ptr<bitmap> bitmap::clone(std::weak_ptr<direct2dContext>& _src)
 		{
-			return new bitmap(_src, this);
+			return std::make_shared<bitmap>(_src, this);
 		}
 
 		void bitmap::setSizes(std::list<sizeCrop>& _sizes)
@@ -1089,7 +1089,9 @@ namespace corona
 				if (!ptarget || !ptarget->getRenderTarget())
 				return false;
 
-				HRESULT hr = ptarget->getRenderTarget()->CreateBitmapBrush(bm->getFirst(), &asset);
+				if (auto pbm = bm.lock()) {
+					hr = ptarget->getRenderTarget()->CreateBitmapBrush(pbm->getFirst(), &asset);
+				}
 			}
 
 			return SUCCEEDED(hr);
@@ -1295,7 +1297,7 @@ namespace corona
 			this->getRenderTarget()->Clear(color);
 		}
 
-		void direct2dContext::addBitmap(bitmapRequest* _bitmap)
+		void direct2dContext::setBitmap(bitmapRequest* _bitmap)
 		{
 			std::string filename, name;
 			filename = _bitmap->file_name.c_str();
@@ -1304,7 +1306,7 @@ namespace corona
 			for (auto it = _bitmap->sizes.begin(); it != _bitmap->sizes.end(); it++) {
 				sizes.push_back(toSizeC(*it, _bitmap->cropEnabled, _bitmap->crop));
 			}
-			bitmap* bm = new bitmap(filename, sizes);
+			auto bm = std::make_shared<bitmap>(filename, sizes);
 			bitmaps[name] = bm;
 			auto wft = weak_from_this();
 			bm->create(wft);
@@ -1395,9 +1397,9 @@ namespace corona
 			return success;
 		}
 
-		void direct2dContext::addBitmapBrush(bitmapBrushRequest* _bitmapBrush)
+		void direct2dContext::setBitmapBrush(bitmapBrushRequest* _bitmapBrush)
 		{
-			bitmapBrush* brush = new bitmapBrush();
+			auto brush = std::make_shared<bitmapBrush>();
 			std::string name, bitmapName;
 			name = _bitmapBrush->name.c_str();
 			bitmapName = _bitmapBrush->bitmapName;
@@ -1407,9 +1409,9 @@ namespace corona
 			brush->create(wft);
 		}
 
-		void direct2dContext::addSolidColorBrush(solidBrushRequest* _solidBrushDto)
+		void direct2dContext::setSolidColorBrush(solidBrushRequest* _solidBrushDto)
 		{
-			solidColorBrush* brush = new solidColorBrush();
+			auto brush = std::make_shared<solidColorBrush>();
 			brush->stock = false;
 			brush->color = toColor(_solidBrushDto->brushColor);
 			brushes[_solidBrushDto->name.c_str()] = brush;
@@ -1417,10 +1419,10 @@ namespace corona
 			brush->create(wft);
 		}
 
-		void direct2dContext::addLinearGradientBrush(linearGradientBrushRequest* _linearGradientBrushDto)
+		void direct2dContext::setLinearGradientBrush(linearGradientBrushRequest* _linearGradientBrushDto)
 		{
 			D2D1_GRADIENT_STOP gradientStop;
-			linearGradientBrush* brush = new linearGradientBrush();
+			auto brush = std::make_shared<linearGradientBrush>();
 			brush->stock = _linearGradientBrushDto->stock;
 			brush->start = toPoint(_linearGradientBrushDto->start);
 			brush->stop = toPoint(_linearGradientBrushDto->stop);
@@ -1433,10 +1435,10 @@ namespace corona
 			brush->create(wft);
 		}
 
-		void direct2dContext::addRadialGradientBrush(radialGradientBrushRequest* _radialGradientBrushDto)
+		void direct2dContext::setRadialGradientBrush(radialGradientBrushRequest* _radialGradientBrushDto)
 		{
 			D2D1_GRADIENT_STOP gradientStop;
-			radialGradientBrush* brush = new radialGradientBrush();
+			auto brush = std::make_shared<radialGradientBrush>();
 			brush->stock = _radialGradientBrushDto->stock;
 			brush->radialProperties.center = toPoint(_radialGradientBrushDto->center);
 			brush->radialProperties.gradientOriginOffset = toPoint(_radialGradientBrushDto->offset);
@@ -1453,36 +1455,14 @@ namespace corona
 
 		void direct2dContext::clearBitmapsAndBrushes(bool deleteStock)
 		{
-			std::list<std::string> brushesToRemove, bitmapsToRemove;
-			for (auto i = brushes.begin(); i != brushes.end(); i++)
-			{
-				if (i->second && (deleteStock || !i->second->stock)) {
-					delete i->second;
-					brushesToRemove.push_back(i->first);
-				}
-			};
-
-			for (auto i = bitmaps.begin(); i != bitmaps.end(); i++)
-			{
-				if (i->second && (deleteStock || !i->second->stock)) {
-					delete i->second;
-					bitmapsToRemove.push_back(i->first);
-				}
-			};
-
-			std::for_each(brushesToRemove.begin(), brushesToRemove.end(), [this](std::string ib) {
-				brushes.erase(ib);
-				});
-
-			std::for_each(bitmapsToRemove.begin(), bitmapsToRemove.end(), [this](std::string ib) {
-				bitmaps.erase(ib);
-				});
+			brushes.clear();
+			bitmaps.clear();
 		}
 
-		path* direct2dContext::createPath(pathDto* _pathDto, bool _closed)
+		std::shared_ptr<path> direct2dContext::createPath(pathDto* _pathDto, bool _closed)
 		{
 			auto wft = weak_from_this();
-			path* newPath = new path(wft);
+			std::shared_ptr<path> newPath = std::make_shared<path>(wft);
 			std::list<pathBaseDto*>::iterator i;
 
 			// skip everything until we get to the starting point
@@ -1541,24 +1521,20 @@ namespace corona
 			return newPath;
 		}
 
-		void direct2dContext::addPath(pathDto* _pathDto, bool _closed)
+		void direct2dContext::setPath(pathDto* _pathDto, bool _closed)
 		{
-			path* newPath = createPath(_pathDto, _closed);
+			auto newPath = createPath(_pathDto, _closed);
 			paths[_pathDto->name.c_str()] = newPath;
 		}
 
 		void direct2dContext::clearPaths()
 		{
-			std::for_each(paths.begin(), paths.end(), [this](std::pair<std::string, path*> ib) {
-				delete ib.second;
-				});
-
 			paths.clear();
 		}
 
-		void direct2dContext::addTextStyle(textStyleRequest* _textStyleDto)
+		void direct2dContext::setTextStyle(textStyleRequest* _textStyleDto)
 		{
-			textStyle* newStyle = new textStyle(
+			auto newStyle = std::make_shared<textStyle>(
 				_textStyleDto->fontName.c_str(),
 				_textStyleDto->fontSize,
 				_textStyleDto->bold,
@@ -1577,21 +1553,19 @@ namespace corona
 
 		void direct2dContext::clearTextStyles()
 		{
-			std::for_each(textStyles.begin(), textStyles.end(), [this](std::pair<std::string, textStyle*> ib) {
-				delete ib.second;
-				});
-
 			textStyles.clear();
 		}
 
-		void direct2dContext::addViewStyle(viewStyleRequest& _request)
+		void direct2dContext::setViewStyle(viewStyleRequest& _request)
 		{
-			viewStyles[_request.name.c_str()] = _request;
-			addTextStyle(&_request.text_style);
-			addSolidColorBrush(&_request.box_border_color);
-			addSolidColorBrush(&_request.box_fill_color);
-			addSolidColorBrush(&_request.shape_border_color);
-			addSolidColorBrush(&_request.shape_fill_color);
+			auto vs = std::make_shared<viewStyleRequest>();
+			*(vs.get()) = _request;
+			viewStyles[_request.name.c_str()] = vs;
+			setTextStyle(&_request.text_style);
+			setSolidColorBrush(&_request.box_border_color);
+			setSolidColorBrush(&_request.box_fill_color);
+			setSolidColorBrush(&_request.shape_border_color);
+			setSolidColorBrush(&_request.shape_fill_color);
 		}
 
 		void direct2dContext::clearViewStyles()
@@ -1665,8 +1639,6 @@ namespace corona
 			if (border && _pathImmediateDto->strokeWidth > 0.0) {
 				getRenderTarget()->DrawGeometry(p->geometry, border->getBrush(), _pathImmediateDto->strokeWidth);
 			}
-
-			delete p;
 		}
 
 		void direct2dContext::drawLine(database::point* start, database::point* stop, const char* _fillBrush, double thickness)
@@ -1852,7 +1824,7 @@ namespace corona
 		void direct2dContext::drawBitmap(bitmapInstanceDto* _bitmapInstanceDto)
 		{
 			auto bm = bitmaps[_bitmapInstanceDto->bitmapName];
-			throwOnNull(bm, "Bitmap not found in context");
+			throwOnFalse(static_cast<bool>(bm), "Bitmap not found in context");
 			auto ibm = bm->getBySize(_bitmapInstanceDto->width, _bitmapInstanceDto->height);
 			throwOnNull(ibm, "Bitmap size not found in context");
 			D2D1_RECT_F rect;
@@ -1908,20 +1880,19 @@ namespace corona
 			}
 		}
 
-
-		drawableHost* direct2dContext::createBitmap(point& _size)
+		std::shared_ptr<direct2dBitmap> direct2dContext::createBitmap(point& _size)
 		{
-			direct2dBitmap* bp = nullptr;
 			auto rfact = getFactory();
+			auto bp = std::make_shared<direct2dBitmap>(toSizeF(_size), rfact);
+
 			if (auto pfactory = rfact.lock()) {
-				bp = new direct2dBitmap(toSizeF(_size), rfact );
 
 				// now for the fun thing.  we need copy all of the objects over that we created from this context into the new one.  
 				// i guess every architecture has its unforseen ugh moment, and this one is mine.
 
-				std::for_each(bitmaps.begin(), bitmaps.end(), [this, bp](std::pair<std::string, deviceDependentAssetBase*> ib) {
+				std::for_each(bitmaps.begin(), bitmaps.end(), [this, bp](auto ib) {
 					auto pcontext = weak_from_this();
-					bp->bitmaps[ib.first] = ((bitmap*)ib.second)->clone(pcontext);
+					bp->bitmaps[ib.first] = ib.second->clone(pcontext);
 					});
 
 				// will need this for all objects
@@ -1966,16 +1937,16 @@ namespace corona
 
 			view_style_name(style_name, style_composed_name, _state);
 
-			auto& vs = viewStyles[style_composed_name.c_str()];
-			auto& rectFill = vs.box_fill_color;
-			drawRectangle(&_rect, vs.box_border_color.name, vs.box_border_thickness, vs.box_fill_color.name);
+			auto vs = viewStyles[style_composed_name.c_str()];
+			auto& rectFill = vs->box_fill_color;
+			drawRectangle(&_rect, vs->box_border_color.name, vs->box_border_thickness, vs->box_fill_color.name);
 
-			_rect.h -= vs.box_border_thickness * 2.0;
-			_rect.w -= vs.box_border_thickness * 2.0;
-			_rect.x += vs.box_border_thickness;
-			_rect.y += vs.box_border_thickness;
+			_rect.h -= vs->box_border_thickness * 2.0;
+			_rect.w -= vs->box_border_thickness * 2.0;
+			_rect.x += vs->box_border_thickness;
+			_rect.y += vs->box_border_thickness;
 
-			drawText(_text, &_rect, vs.text_style.name, vs.shape_fill_color.name);
+			drawText(_text, &_rect, vs->text_style.name, vs->shape_fill_color.name);
 
 #if OUTLINE_GUI
 

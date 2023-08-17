@@ -36,15 +36,20 @@ int __stdcall WinMain(HINSTANCE hInstance,
 	forceWindowed = true;
 #endif
 
-	std::shared_ptr<corona::win32::presentation> presentation = std::make_shared<corona::win32::presentation>();
+	std::shared_ptr<corona::win32::presentation> test_app = std::make_shared<corona::win32::presentation>();
+
+	const int IDC_HOME_COLUMN = 1;
+
+	test_app->create_page("home")
+		.column_begin(IDC_HOME_COLUMN);
 
 	if (forceWindowed) 
 	{
-		wsPropose->runDialog(hInstance, "Technology Demonstrator", IDI_WSPROPOSE, false, presentation);
+		wsPropose->runDialog(hInstance, "Technology Demonstrator", IDI_WSPROPOSE, false, test_app);
 	}
 	else 
 	{
-		wsPropose->runDialog(hInstance, "Technology Demonstrator", IDI_WSPROPOSE, true, presentation);
+		wsPropose->runDialog(hInstance, "Technology Demonstrator", IDI_WSPROPOSE, true, test_app);
 	}
 
 	CoUninitialize();

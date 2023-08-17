@@ -75,113 +75,123 @@ namespace corona
 			}
 		}
 
-		row_layout& control_base::row_layout_new(int id)
+		row_layout& control_base::row_begin(int id)
 		{
 			return create<row_layout>(id);
 		}
 
-		column_layout& control_base::column_layout_new(int id)
+		column_layout& control_base::column_begin(int id)
 		{
 			return create<column_layout>(id);
 		}
 
-		absolute_layout& control_base::absolute_layout_new(int id)
+		absolute_layout& control_base::absolute_begin(int id)
 		{
 			return create<absolute_layout>(id);
 		}
 
+		control_base& control_base::end()
+		{
+			if (auto pparent = parent.lock()) {
+				return *pparent.get();
+			}
+			else 
+			{
+				return *this;
+			}
+		}
 
-		static_control& control_base::static_control_new(int id)
+		static_control& control_base::label(int id)
 		{
 			return create<static_control>(id);
 		}
 
-		button_control& control_base::button_control_new(int id)
+		button_control& control_base::button(int id)
 		{
 			return create<button_control>(id);
 		}
 
-		listbox_control& control_base::listbox_control_new(int id)
+		listbox_control& control_base::listbox(int id)
 		{
 			return create<listbox_control>(id);
 		}
 
-		combobox_control& control_base::combobox_control_new(int id)
+		combobox_control& control_base::combobox(int id)
 		{
 			return create<combobox_control>(id);
 		}
 
-		edit_control& control_base::edit_control_new(int id)
+		edit_control& control_base::edit(int id)
 		{
 			return create<edit_control>(id);
 		}
 
-		scrollbar_control& control_base::scrollbar_control_new(int id)
+		scrollbar_control& control_base::scrollbar(int id)
 		{
 			return create<scrollbar_control>(id);
 		}
 
-		listview_control& control_base::listview_control_new(int id)
+		listview_control& control_base::listview(int id)
 		{
 			return create<listview_control>(id);
 		}
 
-		treeview_control& control_base::treeview_control_new(int id)
+		treeview_control& control_base::treeview(int id)
 		{
 			return create<treeview_control>(id);
 		}
 
-		header_control& control_base::header_control_new(int id)
+		header_control& control_base::header(int id)
 		{
 			return create<header_control>(id);
 		}
 
-		toolbar_control& control_base::toolbar_control_new(int id)
+		toolbar_control& control_base::toolbar(int id)
 		{
 			return create<toolbar_control>(id);
 		}
 
-		statusbar_control& control_base::statusbar_control_new(int id)
+		statusbar_control& control_base::statusbar(int id)
 		{
 			return create<statusbar_control>(id);
 		}
 
-		hotkey_control& control_base::hotkey_control_new(int id)
+		hotkey_control& control_base::hotkey(int id)
 		{
 			return create<hotkey_control>(id);
 		}
 
-		animate_control& control_base::animate_control_new(int id)
+		animate_control& control_base::animate(int id)
 		{
 			return create<animate_control>(id);
 		}
 
-		richedit_control& control_base::richedit_control_new(int id)
+		richedit_control& control_base::richedit(int id)
 		{
 			return create<richedit_control>(id);
 		}
 
-		draglistbox_control& control_base::draglistbox_control_new(int id)
+		draglistbox_control& control_base::draglistbox(int id)
 		{
 			return create<draglistbox_control>(id);
 		}
 
-		rebar_control& control_base::rebar_control_new(int id)
+		rebar_control& control_base::rebar(int id)
 		{
 			return create<rebar_control>(id);
 		}
 
-		comboboxex_control& control_base::comboboxex_control_new(int id)
+		comboboxex_control& control_base::comboboxex(int id)
 		{
 			return create<comboboxex_control>(id);
 		}
 
-		datetimepicker_control& control_base::datetimepicker_control_new(int id)
+		datetimepicker_control& control_base::datetimepicker(int id)
 		{
 			return create<datetimepicker_control>(id);
 		}
 
-		monthcalendar_control& control_base::monthcalendar_control_new(int id)
+		monthcalendar_control& control_base::monthcalendar(int id)
 		{
 			return create<monthcalendar_control>(id);
 		}
@@ -528,6 +538,24 @@ namespace corona
 			size_children(_ctx);
 		}
 
+		control_base* control_base::align_base(visual_alignment _new_alignment)
+		{
+			alignment = _new_alignment;
+			return this;
+		}
+
+		control_base* control_base::position_base(layout_rect _new_layout)
+		{
+			box = _new_layout;
+			return this;
+		}
+
+		control_base* control_base::spacing_base(measure _spacing)
+		{
+			this->item_space= _spacing;
+			return this;
+		}
+
 		void row_layout::positions(layout_context _ctx)
 		{
 			if (alignment == visual_alignment::align_near)
@@ -654,39 +682,40 @@ namespace corona
 
 		}
 
-		void container_control::create(std::weak_ptr<win32::win32ControllerHost> _host)
+		void draw_control::create(std::weak_ptr<win32::win32ControllerHost> _host)
 		{
 			host = _host;
 			window = _host.lock()->createDirect2Window(id, bounds);
+			if (on_create) {
+				on_create(this);
+			}
 			for (auto child : children) {
 				child->create(_host);
 			}
 		}
 
-		void container_control::destroy()
+		void draw_control::destroy()
 		{
 			for (auto child : children) {
 				child->destroy();
 			}
 		}
 
-		void container_control::draw()
+		void draw_control::draw()
 		{
 			bool adapter_blown_away = false;
 
-			auto pwindow = window.lock();
-
-			pwindow->beginDraw(adapter_blown_away);
-			if (!adapter_blown_away)
+			if (auto pwindow = window.lock()) 
 			{
-				if (this->on_draw != nullptr) {
-					on_draw(this);
+				pwindow->beginDraw(adapter_blown_away);
+				if (!adapter_blown_away)
+				{
+					if (on_draw != nullptr) {
+						on_draw(this);
+					}
 				}
-				else
-					pwindow->drawRectangle(&bounds, "container", 2, "containerfill");
+				pwindow->endDraw(adapter_blown_away);
 			}
-			pwindow->endDraw(adapter_blown_away);
-
 			for (auto child : children) {
 				child->draw();
 			}
@@ -698,6 +727,49 @@ namespace corona
 		public:
 		};
 		*/
+
+		text_display_control::text_display_control()
+		{
+			on_create = [this](draw_control* _src) 
+			{				
+				if (auto pwindow = this->window.lock()) 
+				{
+					solidBrushRequest sbr;
+					sbr.brushColor = corona::win32::toColor(this->text_color);
+					sbr.name = this->style_name;
+					pwindow->setSolidColorBrush(&sbr);
+					pwindow->setTextStyle(&this->text_style );
+				}
+			};
+
+			on_draw = [this](draw_control* _src) {
+				
+
+			};
+		}
+
+		title_control::title_control()
+		{
+			;
+		}
+
+		subtitle_control::subtitle_control()
+		{
+			;
+		}
+
+		chapter_control::chapter_control()
+		{
+			;
+		}
+
+		paragraph_control::paragraph_control()
+		{
+		}
+
+		code_control::code_control()
+		{
+		}
 
 		void richedit_control::set_html(const std::string& _text)
 		{
@@ -798,6 +870,26 @@ namespace corona
 			}
 		}
 
+		row_layout& page::row_begin(int id)
+		{
+			auto new_row = std::make_shared<row_layout>();
+			root = new_row;
+			return *new_row.get();
+		}
+
+		column_layout& page::column_begin(int id)
+		{
+			auto new_row = std::make_shared<column_layout>();
+			root = new_row;
+			return *new_row.get();
+		}
+
+		absolute_layout& page::absolute_begin(int id)
+		{
+			auto new_row = std::make_shared<absolute_layout>();
+			root = new_row;
+			return *new_row.get();
+		}
 
 		presentation::presentation()
 		{
@@ -994,6 +1086,13 @@ namespace corona
 					ptrx->on_change(evt);
 				}
 			}
+		}
+
+		page& presentation::create_page(std::string _name)
+		{
+			auto new_page = std::make_shared<page>();
+			pages[_name] = new_page;
+			return *new_page.get();
 		}
 
 		void presentation::select_page(const std::string& _page_name)

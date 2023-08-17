@@ -24,6 +24,8 @@ namespace corona
 			unsigned char blue, green, red, alpha;
 		};
 
+		class direct2dBitmap;
+
 		class direct2dContext : public drawableHost, public std::enable_shared_from_this<direct2dContext> 
 		{
 		protected:
@@ -31,11 +33,11 @@ namespace corona
 			D2D1_SIZE_F size_dips;
 			D2D1_SIZE_U size_pixels;
 
-			std::map<std::string, bitmap*> bitmaps;
-			std::map<std::string, deviceDependentAssetBase*> brushes;
-			std::map<std::string, path*> paths;
-			std::map<std::string, textStyle*> textStyles;
-			std::map<std::string, viewStyleRequest> viewStyles;
+			std::map<std::string, std::shared_ptr<bitmap>> bitmaps;
+			std::map<std::string, std::shared_ptr<deviceDependentAssetBase>> brushes;
+			std::map<std::string, std::shared_ptr<path>> paths;
+			std::map<std::string, std::shared_ptr<textStyle>> textStyles;
+			std::map<std::string, std::shared_ptr<viewStyleRequest>> viewStyles;
 
 			std::weak_ptr<adapterSet> factory;
 
@@ -64,25 +66,25 @@ namespace corona
 
 			virtual void clear(color* _color);
 
-			virtual void addViewStyle(viewStyleRequest& _textStyle);
+			virtual void setViewStyle(viewStyleRequest& _textStyle);
 			virtual void clearViewStyles();
 
-			virtual void addBitmap(bitmapRequest* _bitmap);
+			virtual void setBitmap(bitmapRequest* _bitmap);
 			virtual bool getBitmapSize(bitmapRequest* _bitmap, point* _size);
 			virtual color getColorAtPoint(bitmapInstanceDto* _bitmap, point& _point);
 			virtual bool setBitmapSizes(bitmapRequest* _bitmap, bool _forceResize);
 			virtual bool setBitmapFilter(bitmapRequest* _bitmap, std::function<bool(point, int, int, char* bytes)> _filter);
 
-			virtual void addBitmapBrush(bitmapBrushRequest* _bitmapBrush);
-			virtual void addSolidColorBrush(solidBrushRequest* _solidBrushDto);
-			virtual void addLinearGradientBrush(linearGradientBrushRequest* _linearGradientBrushDto);
-			virtual void addRadialGradientBrush(radialGradientBrushRequest* _radialGradientBrushDto);
+			virtual void setBitmapBrush(bitmapBrushRequest* _bitmapBrush);
+			virtual void setSolidColorBrush(solidBrushRequest* _solidBrushDto);
+			virtual void setLinearGradientBrush(linearGradientBrushRequest* _linearGradientBrushDto);
+			virtual void setRadialGradientBrush(radialGradientBrushRequest* _radialGradientBrushDto);
 			virtual void clearBitmapsAndBrushes(bool deleteStockObjects);
 
-			virtual void addPath(pathDto* _pathDto, bool _closed);
+			virtual void setPath(pathDto* _pathDto, bool _closed);
 			virtual void clearPaths();
 
-			virtual void addTextStyle(textStyleRequest* _textStyle);
+			virtual void setTextStyle(textStyleRequest* _textStyle);
 			virtual void clearTextStyles();
 
 			virtual void popCamera();
@@ -98,7 +100,7 @@ namespace corona
 			virtual void drawText(const char* _text, database::rectangle* _rectangle, const char* _textStyle, const char* _fillBrush);
 			virtual database::rectangle getCanvasSize();
 
-			virtual drawableHost* createBitmap(point& _size);
+			virtual std::shared_ptr<direct2dBitmap> createBitmap(point& _size);
 			virtual void drawBitmap(drawableHost* _directBitmap, point& _dest, point& _size);
 			virtual void save(const char* _filename);
 
@@ -110,7 +112,7 @@ namespace corona
 
 			std::stack<D2D1::Matrix3x2F> transforms;
 			D2D1::Matrix3x2F currentTransform;
-			path* createPath(pathDto* _pathDto, bool _closed);
+			std::shared_ptr<path> createPath(pathDto* _pathDto, bool _closed);
 
 			bool createRenderTarget(ID2D1RenderTarget* renderTarget, D2D1_SIZE_F _size);
 
@@ -473,13 +475,13 @@ namespace corona
 			void clearFilteredBitmaps();
 			void setFilteredBitmaps(std::list<sizeCrop>& _sizes);
 			void copyFilteredBitmaps(std::weak_ptr<direct2dContext>& _targetContext, bitmap* _src);
-			bitmap(std::weak_ptr<direct2dContext>& _targetContext, bitmap* _src);
 
 		public:
 
+			bitmap(std::weak_ptr<direct2dContext>& _targetContext, bitmap* _src);
 			bitmap(std::string& _filename, std::list<sizeCrop>& _sizes);
 			virtual ~bitmap();
-			virtual bitmap* clone(std::weak_ptr<direct2dContext>& _src);
+			virtual std::shared_ptr<bitmap> clone(std::weak_ptr<direct2dContext>& _src);
 			void setSizes(std::list<sizeCrop>& _sizes);
 			bool getSize(int* _sizex, int* _sizey);
 			ID2D1Bitmap* getFirst();
@@ -498,7 +500,7 @@ namespace corona
 		class bitmapBrush : public deviceDependentAsset<ID2D1BitmapBrush*>, brush {
 		public:
 
-			bitmap* bm;
+			std::weak_ptr<bitmap> bm;
 
 			bitmapBrush();
 			virtual ~bitmapBrush();

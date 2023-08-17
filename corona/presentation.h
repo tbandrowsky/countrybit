@@ -4,6 +4,14 @@ namespace corona
 {
 	namespace database
 	{
+
+		class id_counter
+		{
+		public:
+			static int id;
+			static int next() { return id++; }
+		};
+
 		class layout_context
 		{
 		public:
@@ -19,6 +27,14 @@ namespace corona
 		class row_layout;
 		class column_layout;
 		class absolute_layout;
+
+		class title_control;
+		class subtitle_control;
+		class chapter_control;
+		class paragraph_control;
+		class code_control;
+		class image_control;
+
 		class static_control;
 		class button_control;
 		class listbox_control;
@@ -39,7 +55,7 @@ namespace corona
 		class datetimepicker_control;
 		class monthcalendar_control;
 
-		class control_base
+		class control_base : public std::enable_shared_from_this<control_base>
 		{
 		protected:
 
@@ -59,12 +75,15 @@ namespace corona
 			virtual void size_items(layout_context _ctx);
 			virtual void positions(layout_context _ctx);
 
+			control_base* align_base(visual_alignment _new_alignment);
+			control_base* position_base(layout_rect _new_layout);
+			control_base* spacing_base(measure _spacing);
+
 		public:
 
 			int						id;
-			std::string				control_type;
-			visual_alignment		alignment;
 
+			visual_alignment		alignment;
 			layout_rect				box;
 			measure					item_space;
 
@@ -113,45 +132,105 @@ namespace corona
 				return *temp.get();
 			}
 			
-			row_layout &row_layout_new(int id);
-			column_layout &column_layout_new(int id);
-			absolute_layout &absolute_layout_new(int id);
+			row_layout &row_begin(int id = id_counter::next());
+			column_layout &column_begin(int id = id_counter::next());
+			absolute_layout &absolute_begin(int id = id_counter::next());
+			control_base& end();
 
-			static_control &static_control_new(int id);
-			button_control &button_control_new(int id);
-			listbox_control &listbox_control_new(int id);
-			combobox_control &combobox_control_new(int id);
-			edit_control &edit_control_new(int id);
-			scrollbar_control &scrollbar_control_new(int id);
+			title_control& title(int id = id_counter::next());
+			subtitle_control& subtitle(int id = id_counter::next());
+			chapter_control& chapter(int id = id_counter::next());
+			paragraph_control& paragraph(int id = id_counter::next());
+			code_control& code(int id = id_counter::next());
+			image_control& image(int id = id_counter::next());
 
-			listview_control &listview_control_new(int id);
-			treeview_control &treeview_control_new(int id);
-			header_control &header_control_new(int id);
-			toolbar_control &toolbar_control_new(int id);
-			statusbar_control &statusbar_control_new(int id);
-			hotkey_control &hotkey_control_new(int id);
-			animate_control &animate_control_new(int id);
-			richedit_control &richedit_control_new(int id);
-			draglistbox_control &draglistbox_control_new(int id);
-			rebar_control &rebar_control_new(int id);
-			comboboxex_control &comboboxex_control_new(int id);
-			datetimepicker_control &datetimepicker_control_new(int id);
-			monthcalendar_control &monthcalendar_control_new(int id);
+			static_control& label(int id = id_counter::next());
+			button_control& button(int id);
+			listbox_control& listbox(int id);
+			combobox_control& combobox(int id);
+			edit_control& edit(int id);
+			scrollbar_control& scrollbar(int id);
+
+			listview_control &listview(int id);
+			treeview_control &treeview(int id);
+			header_control &header(int id);
+			toolbar_control &toolbar(int id);
+			statusbar_control &statusbar(int id);
+			hotkey_control &hotkey(int id);
+			animate_control &animate(int id);
+			richedit_control &richedit(int id);
+			draglistbox_control &draglistbox(int id);
+			rebar_control &rebar(int id);
+			comboboxex_control &comboboxex(int id);
+			datetimepicker_control &datetimepicker(int id);
+			monthcalendar_control &monthcalendar(int id);
 
 		};
 
-		class container_control : public control_base
+		class draw_control : public control_base
 		{
-		public:
+		protected:
 			std::weak_ptr<win32::win32ControllerHost> host;
 			std::weak_ptr<win32::direct2dChildWindow> window;
-			std::function<void(container_control*)> on_draw;
+			std::function<void(draw_control*)> on_draw;
+			std::function<void(draw_control*)> on_create;
 
 			virtual void create(std::weak_ptr<win32::win32ControllerHost> _host);
 			virtual void destroy();
 			virtual void draw();
-
 		};
+
+		class container_control : public draw_control
+		{
+		public:
+		};
+
+		class text_display_control : public draw_control
+		{
+		protected:
+			textStyleRequest	text_style;
+			std::string			text_color;
+			std::string			style_name;
+
+		public:
+			std::string text;
+
+			text_display_control();
+		};
+
+		class title_control : public text_display_control
+		{
+		public:
+			title_control();
+		};
+
+		class subtitle_control : public text_display_control
+		{
+		public:
+			subtitle_control();
+		};
+
+		class chapter_control : public text_display_control
+		{
+		public:
+			chapter_control();
+		};
+
+		class paragraph_control : public text_display_control
+		{
+		public:
+			paragraph_control();
+		};
+
+		class code_control : public text_display_control
+		{
+		public:
+			code_control();
+		};
+
+		chapter_control& chapter(int id);
+		paragraph_control& paragraph(int id);
+		code_control& code(int id);
 
 		class absolute_layout : public container_control
 		{
@@ -338,41 +417,65 @@ namespace corona
 		class static_control : public text_control_base<WTL::CStatic, WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP>
 		{
 		public:
+			inline static_control& align(visual_alignment _new_alignment)	{ align_base(_new_alignment);  return *this; }
+			inline static_control& position(layout_rect _new_layout) {	position_base(_new_layout); return *this; }
+			inline static_control& spacing(measure _spacing) { 	spacing_base(_spacing); return *this; }
 		};
 
 		class button_control : public text_control_base<WTL::CButton, WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP>
 		{
 		public:
+			inline button_control& align(visual_alignment _new_alignment) { align_base(_new_alignment);  return *this; }
+			inline button_control& position(layout_rect _new_layout) { position_base(_new_layout); return *this; }
+			inline button_control& spacing(measure _spacing) { spacing_base(_spacing); return *this; }
 		};
 
 		class edit_control : public text_control_base<WTL::CEdit, WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP>
 		{
 		public:
+			inline edit_control& align(visual_alignment _new_alignment) { align_base(_new_alignment);  return *this; }
+			inline edit_control& position(layout_rect _new_layout) { position_base(_new_layout); return *this; }
+			inline edit_control& spacing(measure _spacing) { spacing_base(_spacing); return *this; }
 		};
 
 		class listbox_control : public list_control_base<WTL::CListBox, WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP>
 		{
 		public:
+			inline listbox_control& align(visual_alignment _new_alignment) { align_base(_new_alignment);  return *this; }
+			inline listbox_control& position(layout_rect _new_layout) { position_base(_new_layout); return *this; }
+			inline listbox_control& spacing(measure _spacing) { spacing_base(_spacing); return *this; }
 		};
 
 		class combobox_control : public list_control_base<WTL::CComboBox, WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP>
 		{
 		public:
+			inline combobox_control& align(visual_alignment _new_alignment) { align_base(_new_alignment);  return *this; }
+			inline combobox_control& position(layout_rect _new_layout) { position_base(_new_layout); return *this; }
+			inline combobox_control& spacing(measure _spacing) { spacing_base(_spacing); return *this; }
 		};
 
 		class comboboxex_control : public list_control_base<WTL::CComboBoxEx, WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP>
 		{
 		public:
+			inline comboboxex_control& align(visual_alignment _new_alignment) { align_base(_new_alignment);  return *this; }
+			inline comboboxex_control& position(layout_rect _new_layout) { position_base(_new_layout); return *this; }
+			inline comboboxex_control& spacing(measure _spacing) { spacing_base(_spacing); return *this; }
 		};
 
 		class listview_control : public table_control_base<WTL::CListViewCtrl, WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP>
 		{
 		public:
+			inline listview_control& align(visual_alignment _new_alignment) { align_base(_new_alignment);  return *this; }
+			inline listview_control& position(layout_rect _new_layout) { position_base(_new_layout); return *this; }
+			inline listview_control& spacing(measure _spacing) { spacing_base(_spacing); return *this; }
 		};
 
 		class scrollbar_control : public windows_control<WTL::CScrollBar, WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP>
 		{
 		public:
+			inline scrollbar_control& align(visual_alignment _new_alignment) { align_base(_new_alignment);  return *this; }
+			inline scrollbar_control& position(layout_rect _new_layout) { position_base(_new_layout); return *this; }
+			inline scrollbar_control& spacing(measure _spacing) { spacing_base(_spacing); return *this; }
 		};
 
 		class richedit_control : public text_control_base<WTL::CRichEditCtrl, WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP>
@@ -380,6 +483,10 @@ namespace corona
 		public:
 			void set_html(const std::string& _text);
 			std::string get_html();
+
+			inline richedit_control& align(visual_alignment _new_alignment) { align_base(_new_alignment);  return *this; }
+			inline richedit_control& position(layout_rect _new_layout) { position_base(_new_layout); return *this; }
+			inline richedit_control& spacing(measure _spacing) { spacing_base(_spacing); return *this; }
 		};
 
 		class datetimepicker_control : public windows_control<CDateTimePickerCtrl, WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP>
@@ -387,11 +494,19 @@ namespace corona
 		public:
 			void set_text(const std::string& _text);
 			std::string get_text();
+
+			inline datetimepicker_control& align(visual_alignment _new_alignment) { align_base(_new_alignment);  return *this; }
+			inline datetimepicker_control& position(layout_rect _new_layout) { position_base(_new_layout); return *this; }
+			inline datetimepicker_control& spacing(measure _spacing) { spacing_base(_spacing); return *this; }
 		};
 
 		class monthcalendar_control : public windows_control<CMonthCalendarCtrl, WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP>
 		{
 		public:
+
+			inline monthcalendar_control& align(visual_alignment _new_alignment) { align_base(_new_alignment);  return *this; }
+			inline monthcalendar_control& position(layout_rect _new_layout) { position_base(_new_layout); return *this; }
+			inline monthcalendar_control& spacing(measure _spacing) { spacing_base(_spacing); return *this; }
 		};
 
 		class animate_control : public windows_control<WTL::CAnimateCtrl, WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP>
@@ -402,42 +517,78 @@ namespace corona
 			bool play(UINT from, UINT to, UINT rep);
 			bool play();
 			bool stop();
+
+			inline animate_control& align(visual_alignment _new_alignment) { align_base(_new_alignment);  return *this; }
+			inline animate_control& position(layout_rect _new_layout) { position_base(_new_layout); return *this; }
+			inline animate_control& spacing(measure _spacing) { spacing_base(_spacing); return *this; }
 		};
 
 		class treeview_control : public windows_control<WTL::CTreeViewCtrl, WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP>
 		{
 		public:
+
+			inline treeview_control& align(visual_alignment _new_alignment) { align_base(_new_alignment);  return *this; }
+			inline treeview_control& position(layout_rect _new_layout) { position_base(_new_layout); return *this; }
+			inline treeview_control& spacing(measure _spacing) { spacing_base(_spacing); return *this; }
 		};
 
 		class header_control : public windows_control<WTL::CHeaderCtrl, WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP>
 		{
 		public:
+
+			inline header_control& align(visual_alignment _new_alignment) { align_base(_new_alignment);  return *this; }
+			inline header_control& position(layout_rect _new_layout) { position_base(_new_layout); return *this; }
+			inline header_control& spacing(measure _spacing) { spacing_base(_spacing); return *this; }
+
 		};
 
 		class toolbar_control : public windows_control<WTL::CToolBarCtrl, WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP>
 		{
 		public:
+
+			inline toolbar_control& align(visual_alignment _new_alignment) { align_base(_new_alignment);  return *this; }
+			inline toolbar_control& position(layout_rect _new_layout) { position_base(_new_layout); return *this; }
+			inline toolbar_control& spacing(measure _spacing) { spacing_base(_spacing); return *this; }
 		};
 
 		class statusbar_control : public windows_control<WTL::CStatusBarCtrl, WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP>
 		{
 		public:
+
+			inline statusbar_control& align(visual_alignment _new_alignment) { align_base(_new_alignment);  return *this; }
+			inline statusbar_control& position(layout_rect _new_layout) { position_base(_new_layout); return *this; }
+			inline statusbar_control& spacing(measure _spacing) { spacing_base(_spacing); return *this; }
+
 		};
 
 		class hotkey_control : public windows_control<WTL::CHotKeyCtrl, WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP>
 		{
 		public:
+
+			inline hotkey_control& align(visual_alignment _new_alignment) { align_base(_new_alignment);  return *this; }
+			inline hotkey_control& position(layout_rect _new_layout) { position_base(_new_layout); return *this; }
+			inline hotkey_control& spacing(measure _spacing) { spacing_base(_spacing); return *this; }
 		};
 
 
 		class draglistbox_control : public windows_control<WTL::CDragListBox, WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP>
 		{
 		public:
+
+			inline draglistbox_control& align(visual_alignment _new_alignment) { align_base(_new_alignment);  return *this; }
+			inline draglistbox_control& position(layout_rect _new_layout) { position_base(_new_layout); return *this; }
+			inline draglistbox_control& spacing(measure _spacing) { spacing_base(_spacing); return *this; }
+
 		};
 
 		class rebar_control : public windows_control<WTL::CReBarCtrl, WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP>
 		{
 		public:
+
+			inline rebar_control& align(visual_alignment _new_alignment) { align_base(_new_alignment);  return *this; }
+			inline rebar_control& position(layout_rect _new_layout) { position_base(_new_layout); return *this; }
+			inline rebar_control& spacing(measure _spacing) { spacing_base(_spacing); return *this; }
+
 		};
 
 
@@ -616,6 +767,11 @@ namespace corona
 			void on_list_changed( int _control_id, std::function< void(list_changed_event) > );
 			void on_update(update_function fnc);
 
+			row_layout& row_begin(int id);
+			column_layout& column_begin(int id);
+			absolute_layout& absolute_begin(int id);
+			control_base& end();		
+
 			control_base* get_root();
 
 			const control_base *operator[](int _id)
@@ -638,6 +794,7 @@ namespace corona
 			presentation();
 			virtual ~presentation();
 
+			virtual page& create_page(std::string _name);
 			virtual void select_page(const std::string& _page_name);
 
 			virtual bool drawFrame();

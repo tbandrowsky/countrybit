@@ -20,6 +20,13 @@ namespace corona
 			}
 		}
 
+		void throwOnFalse(bool _ptr, const char* _message)
+		{
+			if (!_ptr) {
+				throw std::exception("object reference failure");
+			}
+		}
+
 		sizeCrop toSizeC(point& _size, bool _cropEnabled, rectangle& _crop)
 		{
 			sizeCrop sz;
@@ -55,6 +62,60 @@ namespace corona
 			newSize.x = _size.width;
 			newSize.y = _size.height;
 			return newSize;
+		}
+
+		int toInt(char hex, int shift)
+		{
+			int d = {};
+			hex = toupper(hex);
+
+			if (hex >= 'A' && hex <= 'F') 
+			{
+				d = hex - 'A' + 10;
+			}
+			else if (hex >= '0' && hex <= '9')
+			{
+				d = hex - '0';
+			}
+			d <<= shift;
+			return d;
+		}
+
+		int toInt2(const std::string& item, int _baseIndex)
+		{
+			int r = toInt(item[_baseIndex], 4) + toInt(item[_baseIndex + 1], 0);
+			return r;
+		}
+
+		D2D1_COLOR_F toColor(std::string& _htmlColor)
+		{
+			D2D1_COLOR_F new_color = {};
+
+			int si = {}, r = {}, g = {}, b = {}, a = 255;
+
+			if (_htmlColor.size() > 0)
+			{
+				si = _htmlColor[0] == '#' ? 1 : 0;
+			}
+
+			if (_htmlColor.size() >= 6)
+			{
+				r = toInt2(_htmlColor, si);
+				g = toInt2(_htmlColor, si + 2);
+				b = toInt2(_htmlColor, si + 4);
+			}
+
+			if (_htmlColor.size() >= 8) 
+			{
+				a = toInt2(_htmlColor, si + 6);
+			}
+
+			new_color.r = r / 256.0;
+			new_color.g = g / 256.0;
+			new_color.b = b / 256.0;
+			new_color.a = a / 256.0;
+
+			return new_color;
 		}
 
 		D2D1_COLOR_F toColor(color& _color)

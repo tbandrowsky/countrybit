@@ -8,6 +8,7 @@ namespace corona
 
 		void throwOnFail(HRESULT hr, const char* _message);
 		void throwOnNull(void* _ptr, const char* _message);
+		void throwOnFalse(bool _ptr, const char* _message);
 
 		struct sizeCrop {
 			D2D1_SIZE_U size;
@@ -20,6 +21,9 @@ namespace corona
 		D2D1_SIZE_F toSizeF(point& _size);
 		point toSize(D2D1_SIZE_U& _size);
 		D2D1_COLOR_F toColor(color& _color);
+		D2D1_COLOR_F toColor(std::string& _htmlColor);
+		int toInt(char hex);
+		int toInt2(const std::string& item, int _baseIndex);
 		D2D1_POINT_2F toPoint(point& _point);
 		D2D1_GRADIENT_STOP toGradientStop(gradientStop& _gradientStop);
 
