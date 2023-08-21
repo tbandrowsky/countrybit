@@ -21,7 +21,7 @@ namespace corona
 		D2D1_SIZE_F toSizeF(point& _size);
 		point toSize(D2D1_SIZE_U& _size);
 		D2D1_COLOR_F toColor(color& _color);
-		D2D1_COLOR_F toColor(std::string& _htmlColor);
+		D2D1_COLOR_F toColor(const char *_htmlColor);
 		int toInt(char hex);
 		int toInt2(const std::string& item, int _baseIndex);
 		D2D1_POINT_2F toPoint(point& _point);
@@ -33,7 +33,7 @@ namespace corona
 
 		};
 
-		class direct3dDevice : std::enable_shared_from_this<direct3dDevice>
+		class direct3dDevice : public std::enable_shared_from_this<direct3dDevice>
 		{
 			CComPtr<ID3D11Device> d3d11Device;
 			D3D_FEATURE_LEVEL	feature_level;
@@ -53,18 +53,19 @@ namespace corona
 		class direct2dChildWindow;
 		class direct2dBitmap;
 
-		class direct2dDevice : std::enable_shared_from_this<direct2dDevice>
+		class direct2dDevice : public std::enable_shared_from_this<direct2dDevice>
 		{
-			CComPtr<IDXGIDevice> dxDevice;
-			CComPtr<ID2D1Device> d2dDevice;
-			CComPtr<ID2D1Factory1> d2DFactory;
-			CComPtr<IWICImagingFactory> wicFactory;
-			CComPtr<IDWriteFactory> dWriteFactory;
+			IDXGIDevice *dxDevice;
+			ID2D1Device *d2dDevice;
+
+			ID2D1Factory1 *d2DFactory;
+			IWICImagingFactory *wicFactory;
+			IDWriteFactory *dWriteFactory;
 
 		public:
 
 			direct2dDevice();
-			~direct2dDevice();
+			virtual ~direct2dDevice();
 
 			inline ID2D1Factory1* getD2DFactory() { return d2DFactory; }
 			inline IWICImagingFactory* getWicFactory() { return wicFactory; }
@@ -72,10 +73,9 @@ namespace corona
 			inline ID2D1Device *getD2DDevice() { return d2dDevice; }
 
 			bool setDevice(ID3D11Device *_d3dDevice);
-			void release();
 		};
 
-		class adapterSet : std::enable_shared_from_this<adapterSet>
+		class adapterSet : public std::enable_shared_from_this<adapterSet>
 		{
 			CComPtr<IDXGIFactory2> dxFactory;
 			CComPtr<IDXGIAdapter1> dxAdapter;
@@ -88,7 +88,7 @@ namespace corona
 		public:
 
 			adapterSet();
-			~adapterSet();
+			virtual ~adapterSet();
 
 			void cleanup();
 			void refresh();

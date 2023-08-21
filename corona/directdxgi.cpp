@@ -87,25 +87,26 @@ namespace corona
 			return r;
 		}
 
-		D2D1_COLOR_F toColor(std::string& _htmlColor)
+		D2D1_COLOR_F toColor(const char *_htmlColor)
 		{
 			D2D1_COLOR_F new_color = {};
 
 			int si = {}, r = {}, g = {}, b = {}, a = 255;
+			int sz = strlen(_htmlColor);
 
-			if (_htmlColor.size() > 0)
+			if (sz > 0)
 			{
 				si = _htmlColor[0] == '#' ? 1 : 0;
 			}
 
-			if (_htmlColor.size() >= 6)
+			if (sz >= 6)
 			{
 				r = toInt2(_htmlColor, si);
 				g = toInt2(_htmlColor, si + 2);
 				b = toInt2(_htmlColor, si + 4);
 			}
 
-			if (_htmlColor.size() >= 8) 
+			if (sz >= 8) 
 			{
 				a = toInt2(_htmlColor, si + 6);
 			}
@@ -241,10 +242,10 @@ namespace corona
 			direct2dChildWindow* w = nullptr;
 			for (auto win : parent_windows)
 			{
-				win.second->loadStyleSheet(sheet, _state);
+				win.second->getContext().loadStyleSheet(sheet, _state);
 				for (auto& child : win.second->getChildren())
 				{
-					child.second->loadStyleSheet(sheet, _state);
+					child.second->getContext().loadStyleSheet(sheet, _state);
 				}
 			}
 		}
@@ -298,11 +299,12 @@ namespace corona
 
 		direct2dDevice::direct2dDevice()
 		{
+			dxDevice = nullptr;
 			d2dDevice = nullptr;
+
 			d2DFactory = nullptr;
 			wicFactory = nullptr;
 			dWriteFactory = nullptr;
-			dxDevice = nullptr;
 
 			HRESULT hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED, &d2DFactory);
 			throwOnFail(hr, "Could not create D2D1 factory");
@@ -316,6 +318,25 @@ namespace corona
 
 		direct2dDevice::~direct2dDevice()
 		{
+			if (wicFactory)
+				wicFactory->Release();
+			if (dWriteFactory)
+				dWriteFactory->Release();
+
+			if (dxDevice)
+				dxDevice->Release();
+			if (d2dDevice)
+				d2dDevice->Release();
+			if (d2DFactory)
+				d2DFactory->Release();
+
+			dxDevice = nullptr;
+			d2dDevice = nullptr;
+
+			d2DFactory = nullptr;
+			wicFactory = nullptr;
+			dWriteFactory = nullptr;
+
 		}
 
 		bool direct2dDevice::setDevice(ID3D11Device *_d3dDevice)
@@ -326,9 +347,6 @@ namespace corona
 
 			return SUCCEEDED(hr);
 		}
-
-
-
 
 	}
 }

@@ -16,7 +16,7 @@ namespace corona
 
 		class controller;
 
-		class directApplicationWin32 : public win32ControllerHost, std::enable_shared_from_this<directApplicationWin32>
+		class directApplicationWin32 : public win32ControllerHost, public std::enable_shared_from_this<directApplicationWin32>
 		{
 		protected:
 

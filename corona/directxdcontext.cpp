@@ -16,25 +16,15 @@ namespace corona
 
 		//-------
 
-		direct2dWindow::direct2dWindow(HWND _hwnd, std::weak_ptr<adapterSet> _adapterSet) : direct2dContext(_adapterSet)
+		direct2dWindow::direct2dWindow(HWND _hwnd, std::weak_ptr<adapterSet> _adapterSet) 
 		{
-
 			HRESULT hr;
 
 			hwnd = _hwnd;
+			context = std::make_shared<direct2dContext>(_adapterSet);
 			bitmap = nullptr;
 			surface = nullptr;
 			swapChain = nullptr;
-			renderTarget = nullptr;
-
-			D2D1_DEVICE_CONTEXT_OPTIONS options;
-
-			options = D2D1_DEVICE_CONTEXT_OPTIONS::D2D1_DEVICE_CONTEXT_OPTIONS_ENABLE_MULTITHREADED_OPTIMIZATIONS;
-
-			auto padapter = _adapterSet.lock();
-
-			hr = padapter->getD2DDevice()->CreateDeviceContext(options, &renderTarget);
-			throwOnFail(hr, "Could not create device context");
 
 			RECT rect;
 			::GetClientRect(hwnd, &rect);
@@ -54,18 +44,21 @@ namespace corona
 			swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
 			swapChainDesc.Flags = 0;
 
-			hr = padapter->getDxFactory()->CreateSwapChainForHwnd(padapter->getD3DDevice(), hwnd, &swapChainDesc, nullptr, nullptr, &swapChain);
-			throwOnFail(hr, "Could not create swap chain");
+			if (auto padapter = _adapterSet.lock())
+			{
+				hr = padapter->getDxFactory()->CreateSwapChainForHwnd(padapter->getD3DDevice(), hwnd, &swapChainDesc, nullptr, nullptr, &swapChain);
+				throwOnFail(hr, "Could not create swap chain");
 
-			DXGI_RGBA color;
-			color.a = 1.0;
-			color.r = 0.0;
-			color.g = 0.0;
-			color.b = 0.2;
+				DXGI_RGBA color;
+				color.a = 1.0;
+				color.r = 0.0;
+				color.g = 0.0;
+				color.b = 0.2;
 
-			swapChain->SetBackgroundColor(&color);
+				swapChain->SetBackgroundColor(&color);
 
-			applySwapChain();
+				applySwapChain();
+			}
 		}
 
 		void direct2dWindow::resize(UINT width, UINT height)
@@ -76,10 +69,8 @@ namespace corona
 			std::cout << "%%%%%%%%% parent resize " << GetDlgCtrlID(hwnd) << " " << width << " " << height << std::endl;
 #endif
 
-			if (renderTarget)
-			{
-				renderTarget->SetTarget(nullptr);
-			}
+			context->getDeviceContext()->SetTarget(nullptr);
+
 			if (bitmap)
 			{
 				bitmap->Release();
@@ -110,7 +101,7 @@ namespace corona
 			RECT r;
 
 			dpiWindow = ::GetDpiForWindow(hwnd);
-			renderTarget->GetDpi(&dpix, &dpiy);
+			context->getDeviceContext()->GetDpi(&dpix, &dpiy);
 
 			GetClientRect(hwnd, &r);
 			int x = r.right - r.left;
@@ -138,7 +129,7 @@ namespace corona
 			surface->GetDesc(&sdec);
 
 			// Get a D2D surface from the DXGI back buffer to use as the D2D render target.
-			hr = renderTarget->CreateBitmapFromDxgiSurface(
+			hr = context->getDeviceContext()->CreateBitmapFromDxgiSurface(
 				surface,
 				&bitmapProperties,
 				&bitmap
@@ -150,11 +141,11 @@ namespace corona
 			throwOnFail(hr, "Could create bitmap from surface");
 
 			// Now we can set the Direct2D render target.
-			auto dipssz = renderTarget->GetSize();
-			auto pixssz = renderTarget->GetPixelSize();
-			renderTarget->SetDpi(dpiWindow, dpiWindow);
-			renderTarget->SetTarget(bitmap);
-			dipssz = renderTarget->GetSize();
+			auto dipssz = context->getDeviceContext()->GetSize();
+			auto pixssz = context->getDeviceContext()->GetPixelSize();
+			context->getDeviceContext()->SetDpi(dpiWindow, dpiWindow);
+			context->getDeviceContext()->SetTarget(bitmap);
+			dipssz = context->getDeviceContext()->GetSize();
 
 #if TRACE_RENDER
 			std::cout << "render target pixel size " << pixssz.width << " " << pixssz.height << " " << std::endl;
@@ -174,26 +165,19 @@ namespace corona
 				surface->Release();
 			if (swapChain)
 				swapChain->Release();
-			if (renderTarget)
-				renderTarget->Release();
 		}
 
 		std::weak_ptr<direct2dChildWindow> direct2dWindow::createChild(relative_ptr_type _id, UINT _x, UINT _y, UINT _w, UINT _h)
 		{
-			std::weak_ptr<direct2dChildWindow> child;
-			if (children.contains(_id)) {
-				child = children[_id];
-				if (auto c = child.lock()) {
-					c->moveWindow(_x, _y, _w, _h);
-				}
-			}
-			else
-			{
-				auto pthis = std::enable_shared_from_this<direct2dWindow>::weak_from_this();
-				auto new_ptr = std::make_shared<direct2dChildWindow>(pthis, factory, _x, _y, _w, _h);
+			if (!children.contains(_id)) {
+				auto pthis = weak_from_this();
+				auto new_ptr = std::make_shared<direct2dChildWindow>(pthis, getContext().getFactory(), _x, _y, _w, _h);
 				children.insert_or_assign(_id, new_ptr);
-				child = new_ptr;
 			}
+
+			auto child = children[_id];
+			child->moveWindow(_x, _y, _w, _h);
+
 			return child;
 		}
 
@@ -213,24 +197,18 @@ namespace corona
 			}
 		}
 
-		void direct2dWindow::beginDraw(bool& _adapter_blown_away)
+		CComPtr<ID2D1DeviceContext> direct2dWindow::beginDraw(bool& _adapter_blown_away)
 		{
-			currentTransform = D2D1::Matrix3x2F::Identity();
-			_adapter_blown_away = false;
-
-			HRESULT hr = S_OK;
-
-			if (getRenderTarget()) {
-				getRenderTarget()->BeginDraw();
-			}
-			;
+			return context->beginDraw(_adapter_blown_away);
 		}
 
 		void direct2dWindow::endDraw(bool& _adapter_blown_away)
 		{
 			_adapter_blown_away = false;
-			if (getRenderTarget()) {
-				HRESULT hr = getRenderTarget()->EndDraw();
+			context->endDraw(_adapter_blown_away);
+
+			if (context->getDeviceContext()) {
+				HRESULT hr = context->getDeviceContext()->EndDraw();
 
 				if (hr == D2DERR_RECREATE_TARGET)
 				{
@@ -257,10 +235,11 @@ namespace corona
 
 		//-------
 
-		direct2dChildWindow::direct2dChildWindow(std::weak_ptr<direct2dWindow> _parent, std::weak_ptr<adapterSet> _adapterSet, UINT _xdips, UINT _ydips, UINT _wdips, UINT _hdips) : direct2dContext(_adapterSet)
+		direct2dChildWindow::direct2dChildWindow(std::weak_ptr<direct2dWindow> _parent, std::weak_ptr<adapterSet> _adapterSet, UINT _xdips, UINT _ydips, UINT _wdips, UINT _hdips) 
 		{
 			HRESULT hr;
-
+			
+			context = std::make_shared<direct2dContext>(_adapterSet);
 			parent = _parent;
 			childBitmap = nullptr;
 
@@ -282,15 +261,19 @@ namespace corona
 
 			childBitmap = nullptr;
 
-			if (auto pparent = parent.lock()) {
+			if (auto pwindow = parent.lock()) {
 				int dpiWindow;
-				dpiWindow = ::GetDpiForWindow(pparent->getWindow());
+				dpiWindow = ::GetDpiForWindow(pwindow->getWindow());
 				double dipsToPixels = dpiWindow / 96.0;
 
 				D2D1_SIZE_F size;
 				size.width = _wdips * dipsToPixels;
 				size.height = _hdips * dipsToPixels;
-				childBitmap = std::make_shared<direct2dBitmapCore>(size, factory, dpiWindow);
+
+				if (auto pfactory = context->getFactory().lock()) 
+				{
+					childBitmap = std::make_shared<direct2dBitmapCore>(size, pfactory, dpiWindow);
+				}
 			}
 		}
 
@@ -308,28 +291,18 @@ namespace corona
 			return windowPosition;
 		}
 
-		direct2dChildWindow::~direct2dChildWindow()
+		CComPtr<ID2D1DeviceContext>  direct2dChildWindow::beginDraw(bool& _adapter_blown_away)
 		{
-		}
-
-		void direct2dChildWindow::beginDraw(bool& _adapter_blown_away)
-		{
-			currentTransform = D2D1::Matrix3x2F::Identity();
-			_adapter_blown_away = false;
-
-			HRESULT hr = S_OK;
-
-			if (getRenderTarget()) {
-				getRenderTarget()->BeginDraw();
-			}
+			return context->beginDraw(_adapter_blown_away);
 		}
 
 		void direct2dChildWindow::endDraw(bool& _adapter_blown_away)
 		{
-			_adapter_blown_away = false;
-			if (getRenderTarget()) {
-				HRESULT hr = getRenderTarget()->EndDraw();
-			}
+			context->endDraw(_adapter_blown_away);
+		}
+
+		direct2dChildWindow::~direct2dChildWindow()
+		{
 		}
 
 		//---
@@ -337,6 +310,25 @@ namespace corona
 		direct2dContext::direct2dContext(std::weak_ptr<corona::win32::adapterSet> _factory) :
 			factory(_factory)
 		{
+			currentTransform = D2D1::Matrix3x2F::Identity();
+
+			D2D1_DEVICE_CONTEXT_OPTIONS options;
+
+			options = D2D1_DEVICE_CONTEXT_OPTIONS::D2D1_DEVICE_CONTEXT_OPTIONS_ENABLE_MULTITHREADED_OPTIMIZATIONS;
+
+			auto padapter = _factory.lock();
+			ID2D1DeviceContext *temp = nullptr;
+
+			HRESULT hr = padapter->getD2DDevice()->CreateDeviceContext(options, &temp);
+			context = temp;
+			throwOnFail(hr, "Could not create device context");
+		}
+
+		direct2dContext::direct2dContext(std::weak_ptr<corona::win32::adapterSet> _factory, ID2D1DeviceContext* _context) :
+			factory(_factory)
+		{
+			currentTransform = D2D1::Matrix3x2F::Identity();
+			context = _context;
 		}
 
 		direct2dContext::~direct2dContext()
@@ -344,6 +336,24 @@ namespace corona
 			clearPaths();
 			clearViewStyles();
 			clearBitmapsAndBrushes(true);
+		}
+
+		CComPtr<ID2D1DeviceContext> direct2dContext::beginDraw(bool& _adapter_blown_away)
+		{
+			currentTransform = D2D1::Matrix3x2F::Identity();
+			_adapter_blown_away = false;
+
+			HRESULT hr = S_OK;
+
+			context->BeginDraw();
+			return context;
+		}
+
+		HRESULT direct2dContext::endDraw(bool& _adapter_blown_away)
+		{
+			_adapter_blown_away = false;
+			HRESULT hr = context->EndDraw();
+			return hr;
 		}
 
 		std::weak_ptr<adapterSet> direct2dContext::getFactory()
@@ -406,15 +416,15 @@ namespace corona
 
 		direct2dBitmapCore::~direct2dBitmapCore()
 		{
-			if (targetContext) targetContext->Release();
 			if (target) target->Release();
 			if (bitmap) bitmap->Release();
 		}
 
-		void direct2dBitmapCore::beginDraw(bool& blownAdapter)
+		CComPtr<ID2D1DeviceContext> direct2dBitmapCore::beginDraw(bool& blownAdapter)
 		{
 			blownAdapter = false;
 			targetContext->BeginDraw();
+			return targetContext;
 		}
 
 		void direct2dBitmapCore::endDraw(bool& blownAdapter)
@@ -423,8 +433,7 @@ namespace corona
 			targetContext->EndDraw();
 		}
 
-		direct2dBitmap::direct2dBitmap(D2D1_SIZE_F _size, std::weak_ptr<adapterSet>& _factory) :
-			direct2dContext(_factory)
+		direct2dBitmap::direct2dBitmap(D2D1_SIZE_F _size, std::weak_ptr<adapterSet>& _factory) 
 		{
 			HRESULT hr;
 			D2D1_RENDER_TARGET_PROPERTIES props = D2D1::RenderTargetProperties();
@@ -437,14 +446,17 @@ namespace corona
 				hr = padapter->getD2DFactory()->CreateWicBitmapRenderTarget(wicBitmap, props, &target);
 				throwOnFail(hr, "Could not create WIC render target");
 
+				ID2D1DeviceContext* targetContext = nullptr;
+
 				hr = target->QueryInterface(&targetContext);
 				throwOnFail(hr, "Could not get WIC context");
+
+				context = std::make_shared<direct2dContext>(_factory, targetContext);
 			}
 		}
 
 		direct2dBitmap::~direct2dBitmap()
 		{
-			if (targetContext) targetContext->Release();
 			if (target) target->Release();
 			if (wicBitmap) wicBitmap->Release();
 		}
@@ -454,7 +466,7 @@ namespace corona
 
 			HRESULT hr;
 
-			if (auto padapter = dBitmap->getFactory().lock()) {
+			if (auto padapter = dBitmap->getContext().getFactory().lock()) {
 
 				hr = padapter->getWicFactory()->CreateStream(&fileStream);
 				throwOnFail(hr, "Could not create file stream");
@@ -532,7 +544,7 @@ namespace corona
 
 			if (auto ptarget = target.lock()) 
 			{
-				if (!ptarget->getRenderTarget())
+				if (!ptarget->getDeviceContext())
 					return false;
 
 				istring<2048> fontList = fontName;
@@ -554,7 +566,7 @@ namespace corona
 					}
 
 					FLOAT dpiX = 96.0, dpiY = 96.0;
-					ptarget->getRenderTarget()->GetDpi(&dpiX, &dpiY);
+					ptarget->getDeviceContext()->GetDpi(&dpiX, &dpiY);
 
 					if (auto fact = ptarget->getFactory().lock())
 					{
@@ -775,7 +787,7 @@ namespace corona
 
 			if (wicFilteredScaledBitmap) {
 				if (auto pTarget = _target.lock()) {
-					hr = pTarget->getRenderTarget()->CreateBitmapFromWicBitmap(wicFilteredScaledBitmap, &filteredScaledBitmap);
+					hr = pTarget->getDeviceContext()->CreateBitmapFromWicBitmap(wicFilteredScaledBitmap, &filteredScaledBitmap);
 				}
 			}
 			return hr == S_OK;
@@ -1086,11 +1098,11 @@ namespace corona
 			HRESULT hr = HRESULT_FROM_WIN32(ERROR_BAD_ENVIRONMENT);
 			if (auto ptarget = target.lock()) {
 
-				if (!ptarget || !ptarget->getRenderTarget())
+				if (!ptarget || !ptarget->getDeviceContext())
 				return false;
 
 				if (auto pbm = bm.lock()) {
-					hr = ptarget->getRenderTarget()->CreateBitmapBrush(pbm->getFirst(), &asset);
+					hr = ptarget->getDeviceContext()->CreateBitmapBrush(pbm->getFirst(), &asset);
 				}
 			}
 
@@ -1118,10 +1130,10 @@ namespace corona
 
 			if (auto ptarget = target.lock()) 
 			{
-				if (!ptarget->getRenderTarget())
+				if (!ptarget->getDeviceContext())
 					return false;
 
-				hr = ptarget->getRenderTarget()->CreateSolidColorBrush(color, &asset);
+				hr = ptarget->getDeviceContext()->CreateSolidColorBrush(color, &asset);
 			}
 
 			return SUCCEEDED(hr);
@@ -1141,14 +1153,14 @@ namespace corona
 
 			if (auto ptarget = target.lock())
 			{
-				if (!ptarget->getRenderTarget())
+				if (!ptarget->getDeviceContext())
 					return false;
 
-				hr = ptarget->getRenderTarget()->CreateGradientStopCollection(&stops[0], stops.size(), &pGradientStops);
+				hr = ptarget->getDeviceContext()->CreateGradientStopCollection(&stops[0], stops.size(), &pGradientStops);
 
 				if (SUCCEEDED(hr))
 				{
-					hr = ptarget->getRenderTarget()->CreateLinearGradientBrush(
+					hr = ptarget->getDeviceContext()->CreateLinearGradientBrush(
 						D2D1::LinearGradientBrushProperties(start, stop),
 						D2D1::BrushProperties(),
 						pGradientStops,
@@ -1175,14 +1187,14 @@ namespace corona
 
 			if (auto ptarget = target.lock())
 			{
-				if (!ptarget->getRenderTarget())
+				if (!ptarget->getDeviceContext())
 					return false;
 
-				hr = ptarget->getRenderTarget()->CreateGradientStopCollection(&stops[0], stops.size(), &pGradientStops);
+				hr = ptarget->getDeviceContext()->CreateGradientStopCollection(&stops[0], stops.size(), &pGradientStops);
 
 				if (SUCCEEDED(hr))
 				{
-					hr = ptarget->getRenderTarget()->CreateRadialGradientBrush(
+					hr = ptarget->getDeviceContext()->CreateRadialGradientBrush(
 						radialProperties,
 						D2D1::BrushProperties(),
 						pGradientStops,
@@ -1205,7 +1217,7 @@ namespace corona
 
 			if (auto ptarget = target.lock())
 			{
-				if (ptarget->getRenderTarget()) 
+				if (ptarget->getDeviceContext())
 				{
 					if (auto pfactory = ptarget->getFactory().lock()) {
 						hr = pfactory->getD2DFactory()->CreatePathGeometry(&geometry);
@@ -1294,10 +1306,10 @@ namespace corona
 			color.g = _color->g;
 			color.r = _color->r;
 
-			this->getRenderTarget()->Clear(color);
+			this->getDeviceContext()->Clear(color);
 		}
 
-		void direct2dContext::setBitmap(bitmapRequest* _bitmap)
+		std::string direct2dContext::setBitmap(bitmapRequest* _bitmap)
 		{
 			std::string filename, name;
 			filename = _bitmap->file_name.c_str();
@@ -1317,6 +1329,7 @@ namespace corona
 				it->x = sx;
 				it->y = sy;
 			}
+			return name;
 		}
 
 		bool direct2dContext::getBitmapSize(bitmapRequest* _bitmap, point* _size)
@@ -1397,7 +1410,7 @@ namespace corona
 			return success;
 		}
 
-		void direct2dContext::setBitmapBrush(bitmapBrushRequest* _bitmapBrush)
+		std::string direct2dContext::setBitmapBrush(bitmapBrushRequest* _bitmapBrush)
 		{
 			auto brush = std::make_shared<bitmapBrush>();
 			std::string name, bitmapName;
@@ -1407,9 +1420,10 @@ namespace corona
 			brushes[name] = brush;
 			auto wft = weak_from_this();
 			brush->create(wft);
+			return name;
 		}
 
-		void direct2dContext::setSolidColorBrush(solidBrushRequest* _solidBrushDto)
+		std::string direct2dContext::setSolidColorBrush(solidBrushRequest* _solidBrushDto)
 		{
 			auto brush = std::make_shared<solidColorBrush>();
 			brush->stock = false;
@@ -1417,9 +1431,10 @@ namespace corona
 			brushes[_solidBrushDto->name.c_str()] = brush;
 			auto wft = weak_from_this();
 			brush->create(wft);
+			return _solidBrushDto->name.c_str();
 		}
 
-		void direct2dContext::setLinearGradientBrush(linearGradientBrushRequest* _linearGradientBrushDto)
+		std::string direct2dContext::setLinearGradientBrush(linearGradientBrushRequest* _linearGradientBrushDto)
 		{
 			D2D1_GRADIENT_STOP gradientStop;
 			auto brush = std::make_shared<linearGradientBrush>();
@@ -1433,9 +1448,10 @@ namespace corona
 			brushes[_linearGradientBrushDto->name.c_str()] = brush;
 			auto wft = weak_from_this();
 			brush->create(wft);
+			return _linearGradientBrushDto->name.c_str();
 		}
 
-		void direct2dContext::setRadialGradientBrush(radialGradientBrushRequest* _radialGradientBrushDto)
+		std::string direct2dContext::setRadialGradientBrush(radialGradientBrushRequest* _radialGradientBrushDto)
 		{
 			D2D1_GRADIENT_STOP gradientStop;
 			auto brush = std::make_shared<radialGradientBrush>();
@@ -1451,6 +1467,7 @@ namespace corona
 			brushes[_radialGradientBrushDto->name.c_str()] = brush;
 			auto wft = weak_from_this();
 			brush->create(wft);
+			return _radialGradientBrushDto->name.c_str();
 		}
 
 		void direct2dContext::clearBitmapsAndBrushes(bool deleteStock)
@@ -1521,10 +1538,11 @@ namespace corona
 			return newPath;
 		}
 
-		void direct2dContext::setPath(pathDto* _pathDto, bool _closed)
+		std::string direct2dContext::setPath(pathDto* _pathDto, bool _closed)
 		{
 			auto newPath = createPath(_pathDto, _closed);
 			paths[_pathDto->name.c_str()] = newPath;
+			return _pathDto->name.c_str();
 		}
 
 		void direct2dContext::clearPaths()
@@ -1597,13 +1615,13 @@ namespace corona
 				return;
 
 			D2D1::Matrix3x2F product = currentTransform * D2D1::Matrix3x2F::Rotation(_pathInstanceDto->rotation) * D2D1::Matrix3x2F::Translation(_pathInstanceDto->position.x, _pathInstanceDto->position.y);
-			getRenderTarget()->SetTransform(product);
+			getDeviceContext()->SetTransform(product);
 
 			if (fill) {
-				getRenderTarget()->FillGeometry(p->geometry, fill->getBrush());
+				getDeviceContext()->FillGeometry(p->geometry, fill->getBrush());
 			}
 			if (border && _pathInstanceDto->strokeWidth > 0.0) {
-				getRenderTarget()->DrawGeometry(p->geometry, border->getBrush(), _pathInstanceDto->strokeWidth);
+				getDeviceContext()->DrawGeometry(p->geometry, border->getBrush(), _pathInstanceDto->strokeWidth);
 			}
 		}
 
@@ -1631,13 +1649,13 @@ namespace corona
 				return;
 
 			D2D1::Matrix3x2F product = currentTransform * D2D1::Matrix3x2F::Rotation(_pathImmediateDto->rotation) * D2D1::Matrix3x2F::Translation(_pathImmediateDto->position.x, _pathImmediateDto->position.y);
-			getRenderTarget()->SetTransform(product);
+			getDeviceContext()->SetTransform(product);
 
 			if (fill) {
-				getRenderTarget()->FillGeometry(p->geometry, fill->getBrush());
+				getDeviceContext()->FillGeometry(p->geometry, fill->getBrush());
 			}
 			if (border && _pathImmediateDto->strokeWidth > 0.0) {
-				getRenderTarget()->DrawGeometry(p->geometry, border->getBrush(), _pathImmediateDto->strokeWidth);
+				getDeviceContext()->DrawGeometry(p->geometry, border->getBrush(), _pathImmediateDto->strokeWidth);
 			}
 		}
 
@@ -1653,7 +1671,7 @@ namespace corona
 			dstop.y = stop->y;
 
 			if (fill) {
-				getRenderTarget()->DrawLine(dstart, dstop, fill->getBrush(), thickness, nullptr);
+				getDeviceContext()->DrawLine(dstart, dstop, fill->getBrush(), thickness, nullptr);
 			}
 		}
 
@@ -1674,7 +1692,7 @@ namespace corona
 #endif
 				}
 				else
-					getRenderTarget()->FillRectangle(r, fill->getBrush());
+					getDeviceContext()->FillRectangle(r, fill->getBrush());
 			}
 
 			if (_borderBrush)
@@ -1686,7 +1704,7 @@ namespace corona
 #endif
 				}
 				else
-					getRenderTarget()->DrawRectangle(&r, border->getBrush(), _borderWidth);
+					getDeviceContext()->DrawRectangle(&r, border->getBrush(), _borderWidth);
 			}
 		}
 
@@ -1748,19 +1766,19 @@ namespace corona
 					if (textLayout != nullptr) {
 						textLayout->SetUnderline(style->get_underline(), { (UINT32)0, (UINT32)l });
 						textLayout->SetStrikethrough(style->get_strike_through(), { (UINT32)0, (UINT32)l });
-						getRenderTarget()->DrawTextLayout({ r.left, r.top }, textLayout, brush);
+						getDeviceContext()->DrawTextLayout({ r.left, r.top }, textLayout, brush);
 						textLayout->Release();
 						textLayout = nullptr;
 					}
 					else
 					{
-						getRenderTarget()->DrawText(buff, ret, format, &r, brush);
+						getDeviceContext()->DrawText(buff, ret, format, &r, brush);
 					}
 				}
 			}
 			else
 			{
-				getRenderTarget()->DrawText(buff, ret, format, &r, brush);
+				getDeviceContext()->DrawText(buff, ret, format, &r, brush);
 			}
 
 			delete[] buff;
@@ -1771,9 +1789,9 @@ namespace corona
 
 			D2D1_SIZE_F size;
 
-			if (getRenderTarget())
+			if (getDeviceContext())
 			{
-				size = getRenderTarget()->GetSize();
+				size = getDeviceContext()->GetSize();
 			}
 			else
 			{
@@ -1804,7 +1822,7 @@ namespace corona
 			}
 
 			D2D1::Matrix3x2F product = currentTransform * D2D1::Matrix3x2F::Rotation(_textInstanceDto->rotation) * D2D1::Matrix3x2F::Translation(_textInstanceDto->position.x, _textInstanceDto->position.y);
-			getRenderTarget()->SetTransform(product);
+			getDeviceContext()->SetTransform(product);
 
 			D2D1_RECT_F rect = {};
 
@@ -1817,7 +1835,7 @@ namespace corona
 			int l = (_textInstanceDto->text.length() + 1) * 2;
 			wchar_t* buff = new wchar_t[l];
 			int ret = ::MultiByteToWideChar(CP_ACP, NULL, _textInstanceDto->text.c_str(), -1, buff, l - 1);
-			getRenderTarget()->DrawText(buff, ret, style->getFormat(), &rect, brush);
+			getDeviceContext()->DrawText(buff, ret, style->getFormat(), &rect, brush);
 			delete[] buff;
 		}
 
@@ -1832,7 +1850,7 @@ namespace corona
 			rect.top = _bitmapInstanceDto->y;
 			rect.right = rect.left + _bitmapInstanceDto->width;
 			rect.bottom = rect.top + _bitmapInstanceDto->height;
-			getRenderTarget()->DrawBitmap(ibm, rect);
+			getDeviceContext()->DrawBitmap(ibm, rect);
 		}
 
 		void direct2dContext::popCamera()
@@ -1851,33 +1869,21 @@ namespace corona
 			currentTransform = currentTransform * D2D1::Matrix3x2F::Rotation(_rotation)
 				* D2D1::Matrix3x2F::Translation(_position->x, _position->y)
 				* D2D1::Matrix3x2F::Scale(_scale, _scale);
-			getRenderTarget()->SetTransform(currentTransform);
+			getDeviceContext()->SetTransform(currentTransform);
 		}
 
-		void direct2dBitmap::beginDraw(bool& _adapter_blown_away)
+		CComPtr<ID2D1DeviceContext>  direct2dBitmap::beginDraw(bool& _adapter_blown_away)
 		{
 			_adapter_blown_away = false;
-			currentTransform = D2D1::Matrix3x2F::Identity();
 
-			HRESULT hr = S_OK;
-
-			if (getRenderTarget()) {
-				getRenderTarget()->BeginDraw();
-			}
+			return context->beginDraw(_adapter_blown_away);
 		}
 
 		void direct2dBitmap::endDraw(bool& _adapter_blown_away)
 		{
 			_adapter_blown_away = false;
 
-			HRESULT hr = S_OK;
-			if (getRenderTarget()) {
-				HRESULT hr = getRenderTarget()->EndDraw();
-				if (hr == D2DERR_RECREATE_TARGET)
-				{
-					_adapter_blown_away = true;
-				}
-			}
+			context->endDraw(_adapter_blown_away);
 		}
 
 		std::shared_ptr<direct2dBitmap> direct2dContext::createBitmap(point& _size)
@@ -1892,7 +1898,7 @@ namespace corona
 
 				std::for_each(bitmaps.begin(), bitmaps.end(), [this, bp](auto ib) {
 					auto pcontext = weak_from_this();
-					bp->bitmaps[ib.first] = ib.second->clone(pcontext);
+					bp->getContext().bitmaps[ib.first] = ib.second->clone(pcontext);
 					});
 
 				// will need this for all objects
@@ -1915,14 +1921,14 @@ namespace corona
 				direct2dBitmap* bp = (direct2dBitmap*)_drawableHost;
 				auto wicbitmap = bp->getBitmap();
 				ID2D1Bitmap* bitmap = NULL;
-				HRESULT hr = this->getRenderTarget()->CreateBitmapFromWicBitmap(wicbitmap, &bitmap);
+				HRESULT hr = this->getDeviceContext()->CreateBitmapFromWicBitmap(wicbitmap, &bitmap);
 				throwOnFail(hr, "Could not create bitmap from wic bitmap");
 				D2D1_RECT_F rect;
 				rect.left = _dest.x;
 				rect.top = _dest.y;
 				rect.right = rect.left += _size.x > 0 ? _size.x : bp->size.width;
 				rect.bottom = rect.top += _size.y > 0 ? _size.y : bp->size.height;
-				getRenderTarget()->DrawBitmap(bitmap, &rect);
+				getDeviceContext()->DrawBitmap(bitmap, &rect);
 				bitmap->Release();
 				bitmap = NULL;
 			}

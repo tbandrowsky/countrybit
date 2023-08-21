@@ -56,7 +56,7 @@ namespace corona
 
 				winroot->beginDraw(failedDevice);						
 				color c = { 1.0, 1.0, 1.0, 1.0 };
-				winroot->clear(&c);
+				winroot->getContext().clear(&c);
 
 				if (!failedDevice) 
 				{
@@ -80,7 +80,7 @@ namespace corona
 						std::cout << "Compose item#" << id << " " << dest.left << " " << dest.top << " " << dest.right << " " << dest.bottom << std::endl;
 #endif
 
-						winroot->getRenderTarget()->DrawBitmap(w.second->getBitmap(), &dest);
+						winroot->getContext().getDeviceContext()->DrawBitmap(w.second->getBitmap(), &dest);
 
 						std::string temp = std::format("child {} {} counter", id, counter);
 
@@ -193,281 +193,283 @@ namespace corona
 			}
 
 			auto current_window = pfactory->getWindow(hwnd);
-			if (auto pcurrent_window = current_window.lock()) {
+			auto pcurrent_window = current_window.lock();
 
-				switch (message)
+			switch (message)
+			{
+			case WM_CREATE:
+				hwndRoot = hwnd;
+				if (currentController) {
+					pfactory->createD2dWindow(hwnd);
+					dpiScale = 96.0 / GetDpiForWindow(hwnd);
+					loadStyleSheet();
+					currentController->onCreated();
+				}
+				break;
+			case WM_INITDIALOG:
+				break;
+			case WM_DESTROY:
+				pfactory->closeWindow(hwnd);
+				PostQuitMessage(0);
+				return 0;
+			case WM_COMMAND:
+				if (currentController && !disableChangeProcessing)
 				{
-				case WM_CREATE:
-					hwndRoot = hwnd;
-					if (currentController) {
-						pfactory->createD2dWindow(hwnd);
-						dpiScale = 96.0 / GetDpiForWindow(hwnd);
-						loadStyleSheet();
-						currentController->onCreated();
-					}
-					break;
-				case WM_INITDIALOG:
-					break;
-				case WM_DESTROY:
-					pfactory->closeWindow(hwnd);
-					PostQuitMessage(0);
-					return 0;
-				case WM_COMMAND:
-					if (currentController && !disableChangeProcessing)
-					{
-						UINT controlId = LOWORD(wParam);
-						UINT notificationCode = HIWORD(wParam);
-						HWND controlWindow = (HWND)lParam;
-						switch (notificationCode) {
-						case BN_CLICKED: // button or menu
-							currentController->onCommand(controlId);
+					UINT controlId = LOWORD(wParam);
+					UINT notificationCode = HIWORD(wParam);
+					HWND controlWindow = (HWND)lParam;
+					switch (notificationCode) {
+					case BN_CLICKED: // button or menu
+						currentController->onCommand(controlId);
+						break;
+					case EN_UPDATE:
+						currentController->onTextChanged(controlId);
+						break;
+					case CBN_SELCHANGE:
+						{
+							char window_class[500];
+							if (::RealGetWindowClassA(controlWindow, window_class, sizeof(window_class) - 1)) {
+								if (strcmp(WC_COMBOBOX, window_class) || 
+									strcmp(WC_COMBOBOXEX, window_class) == 0) {
+									currentController->onDropDownChanged(controlId);
+								}
+								else 
+								{
+									currentController->onListBoxChanged(controlId);
+								}
+							}
 							break;
-						case EN_UPDATE:
-							currentController->onTextChanged(controlId);
-							break;
-						case CBN_SELCHANGE:
-							{
-								char window_class[500];
-								if (::RealGetWindowClassA(controlWindow, window_class, sizeof(window_class) - 1)) {
-									if (strcmp(WC_COMBOBOX, window_class) || 
-										strcmp(WC_COMBOBOXEX, window_class) == 0) {
-										currentController->onDropDownChanged(controlId);
-									}
-									else 
-									{
-										currentController->onListBoxChanged(controlId);
-									}
-								}
-								break;
-							}
 						}
-						break;
 					}
 					break;
-				case WM_DPICHANGED:
-					if (currentController)
+				}
+				break;
+			case WM_DPICHANGED:
+				if (currentController)
+				{
+					RECT* const prcNewWindow = (RECT*)lParam;
+					SetWindowPos(hwnd,
+						NULL,
+						prcNewWindow->left,
+						prcNewWindow->top,
+						prcNewWindow->right - prcNewWindow->left,
+						prcNewWindow->bottom - prcNewWindow->top,
+						SWP_NOZORDER | SWP_NOACTIVATE);
+				}
+				break;
+			case WM_NOTIFY:
+				if (currentController && !disableChangeProcessing)
+				{
+					//LVN_ITEMACTIVATE
+					LPNMHDR lpnm = (LPNMHDR)lParam;
+					switch (lpnm->code) {
+					case UDN_DELTAPOS:
 					{
-						RECT* const prcNewWindow = (RECT*)lParam;
-						SetWindowPos(hwnd,
-							NULL,
-							prcNewWindow->left,
-							prcNewWindow->top,
-							prcNewWindow->right - prcNewWindow->left,
-							prcNewWindow->bottom - prcNewWindow->top,
-							SWP_NOZORDER | SWP_NOACTIVATE);
-					}
-					break;
-				case WM_NOTIFY:
-					if (currentController && !disableChangeProcessing)
-					{
-						//LVN_ITEMACTIVATE
-						LPNMHDR lpnm = (LPNMHDR)lParam;
-						switch (lpnm->code) {
-						case UDN_DELTAPOS:
-						{
-							auto lpnmud = (LPNMUPDOWN)lParam;
-							currentController->onSpin(lpnm->idFrom, lpnmud->iPos + lpnmud->iDelta);
-							return 0;
-						}
-						break;
-						case LVN_ITEMCHANGED:
-						{
-							auto lpmnlv = (LPNMLISTVIEW)lParam;
-							database::control_base pi;
-							if (lpmnlv->uNewState & LVIS_SELECTED)
-								currentController->onListViewChanged(lpnm->idFrom);
-						}
-						break;
-						case NM_CLICK:
-						{
-
-							::GetClassNameA(lpnm->hwndFrom, className, sizeof(className) - 1);
-							if (strcmp(className, "SysLink") == 0) {
-								auto plink = (PNMLINK)lParam;
-								auto r = ::ShellExecuteW(NULL, L"open", plink->item.szUrl, NULL, NULL, SW_SHOWNORMAL);
-							}
-						}
-						break;
-						case NM_CUSTOMDRAW:
-						{
-							LPNMLVCUSTOMDRAW  lplvcd = (LPNMLVCUSTOMDRAW)lParam;
-							switch (lplvcd->nmcd.dwDrawStage) {
-							case CDDS_PREPAINT:
-								return CDRF_NOTIFYITEMDRAW;
-							case CDDS_ITEMPREPAINT:
-								LVITEM lvitem;
-								char buff[16384];
-								ZeroMemory(&lvitem, sizeof(lvitem));
-								lvitem.iItem = lplvcd->nmcd.dwItemSpec;
-								lvitem.stateMask = LVIS_SELECTED;
-								lvitem.mask = LVIF_STATE | LVIF_TEXT;
-								lvitem.cchTextMax = sizeof(buff) - 1;
-								lvitem.pszText = buff;
-								HWND control = ::GetDlgItem(hwndRoot, lplvcd->nmcd.hdr.idFrom);
-								ListView_GetItem(control, &lvitem);
-
-								RECT area = lplvcd->nmcd.rc;
-
-								if (lvitem.state & LVIS_SELECTED) {
-									::FillRect(lplvcd->nmcd.hdc, &area, GetSysColorBrush(COLOR_HIGHLIGHT));
-									::SetTextColor(lplvcd->nmcd.hdc, ::GetSysColor(COLOR_HIGHLIGHTTEXT));
-									::DrawTextA(lplvcd->nmcd.hdc, lvitem.pszText, strlen(lvitem.pszText), &area, DT_CENTER);
-								}
-								else {
-									::FillRect(lplvcd->nmcd.hdc, &area, GetSysColorBrush(COLOR_WINDOW));
-									::SetTextColor(lplvcd->nmcd.hdc, ::GetSysColor(COLOR_WINDOWTEXT));
-									::DrawTextA(lplvcd->nmcd.hdc, lvitem.pszText, strlen(lvitem.pszText), &area, DT_CENTER);
-								}
-								return CDRF_SKIPDEFAULT;
-							}
-						}
-						}
-					}
-					break;
-				case WM_GETMINMAXINFO:
-					if (minimumWindowSize.x > 0) {
-						auto minmaxinfo = (LPMINMAXINFO)lParam;
-						minmaxinfo->ptMinTrackSize.x = minimumWindowSize.x;
-						minmaxinfo->ptMinTrackSize.y = minimumWindowSize.y;
+						auto lpnmud = (LPNMUPDOWN)lParam;
+						currentController->onSpin(lpnm->idFrom, lpnmud->iPos + lpnmud->iDelta);
 						return 0;
 					}
 					break;
-				case WM_CTLCOLORLISTBOX:
-				case WM_CTLCOLOREDIT:
-				{
-					HDC hdcStatic = (HDC)wParam;
-					SetBkColor(hdcStatic, RGB(255, 255, 255));
-					if (hbrBkgnd == NULL)
+					case LVN_ITEMCHANGED:
 					{
-						hbrBkgnd = CreateSolidBrush(RGB(255, 255, 255));
+						auto lpmnlv = (LPNMLISTVIEW)lParam;
+						database::control_base pi;
+						if (lpmnlv->uNewState & LVIS_SELECTED)
+							currentController->onListViewChanged(lpnm->idFrom);
 					}
-					return (INT_PTR)hbrBkgnd;
+					break;
+					case NM_CLICK:
+					{
+
+						::GetClassNameA(lpnm->hwndFrom, className, sizeof(className) - 1);
+						if (strcmp(className, "SysLink") == 0) {
+							auto plink = (PNMLINK)lParam;
+							auto r = ::ShellExecuteW(NULL, L"open", plink->item.szUrl, NULL, NULL, SW_SHOWNORMAL);
+						}
+					}
+					break;
+					case NM_CUSTOMDRAW:
+					{
+						LPNMLVCUSTOMDRAW  lplvcd = (LPNMLVCUSTOMDRAW)lParam;
+						switch (lplvcd->nmcd.dwDrawStage) {
+						case CDDS_PREPAINT:
+							return CDRF_NOTIFYITEMDRAW;
+						case CDDS_ITEMPREPAINT:
+							LVITEM lvitem;
+							char buff[16384];
+							ZeroMemory(&lvitem, sizeof(lvitem));
+							lvitem.iItem = lplvcd->nmcd.dwItemSpec;
+							lvitem.stateMask = LVIS_SELECTED;
+							lvitem.mask = LVIF_STATE | LVIF_TEXT;
+							lvitem.cchTextMax = sizeof(buff) - 1;
+							lvitem.pszText = buff;
+							HWND control = ::GetDlgItem(hwndRoot, lplvcd->nmcd.hdr.idFrom);
+							ListView_GetItem(control, &lvitem);
+
+							RECT area = lplvcd->nmcd.rc;
+
+							if (lvitem.state & LVIS_SELECTED) {
+								::FillRect(lplvcd->nmcd.hdc, &area, GetSysColorBrush(COLOR_HIGHLIGHT));
+								::SetTextColor(lplvcd->nmcd.hdc, ::GetSysColor(COLOR_HIGHLIGHTTEXT));
+								::DrawTextA(lplvcd->nmcd.hdc, lvitem.pszText, strlen(lvitem.pszText), &area, DT_CENTER);
+							}
+							else {
+								::FillRect(lplvcd->nmcd.hdc, &area, GetSysColorBrush(COLOR_WINDOW));
+								::SetTextColor(lplvcd->nmcd.hdc, ::GetSysColor(COLOR_WINDOWTEXT));
+								::DrawTextA(lplvcd->nmcd.hdc, lvitem.pszText, strlen(lvitem.pszText), &area, DT_CENTER);
+							}
+							return CDRF_SKIPDEFAULT;
+						}
+					}
+					}
 				}
 				break;
-				case WM_CTLCOLORBTN:
-				case WM_CTLCOLORSTATIC:
-				{
-					HDC hdcStatic = (HDC)wParam;
-					SetBkColor(hdcStatic, RGB(255, 255, 255));
-					if (hbrBkgnd == NULL)
-					{
-						hbrBkgnd = CreateSolidBrush(RGB(255, 255, 255));
-					}
-					return (INT_PTR)hbrBkgnd;
-				}
-				break;
-				case WM_ERASEBKGND:
-				{
-					RECT rect, rect2;
-					HDC eraseDc = (HDC)wParam;
-					if (hbrBkgnd == NULL)
-					{
-						hbrBkgnd = CreateSolidBrush(RGB(255, 255, 255));
-					}
-					::GetClientRect(hwnd, &rect);
-					::FillRect((HDC)wParam, &rect, hbrBkgnd);
+			case WM_GETMINMAXINFO:
+				if (minimumWindowSize.x > 0) {
+					auto minmaxinfo = (LPMINMAXINFO)lParam;
+					minmaxinfo->ptMinTrackSize.x = minimumWindowSize.x;
+					minmaxinfo->ptMinTrackSize.y = minimumWindowSize.y;
 					return 0;
 				}
 				break;
+			case WM_CTLCOLORLISTBOX:
+			case WM_CTLCOLOREDIT:
+			{
+				HDC hdcStatic = (HDC)wParam;
+				SetBkColor(hdcStatic, RGB(255, 255, 255));
+				if (hbrBkgnd == NULL)
+				{
+					hbrBkgnd = CreateSolidBrush(RGB(255, 255, 255));
+				}
+				return (INT_PTR)hbrBkgnd;
+			}
+			break;
+			case WM_CTLCOLORBTN:
+			case WM_CTLCOLORSTATIC:
+			{
+				HDC hdcStatic = (HDC)wParam;
+				SetBkColor(hdcStatic, RGB(255, 255, 255));
+				if (hbrBkgnd == NULL)
+				{
+					hbrBkgnd = CreateSolidBrush(RGB(255, 255, 255));
+				}
+				return (INT_PTR)hbrBkgnd;
+			}
+			break;
+			case WM_ERASEBKGND:
+			{
+				RECT rect, rect2;
+				HDC eraseDc = (HDC)wParam;
+				if (hbrBkgnd == NULL)
+				{
+					hbrBkgnd = CreateSolidBrush(RGB(255, 255, 255));
+				}
+				::GetClientRect(hwnd, &rect);
+				::FillRect((HDC)wParam, &rect, hbrBkgnd);
+				return 0;
+			}
+			break;
 
-				case WM_CHAR:
-				case WM_RBUTTONDOWN:
-				case WM_CANCELMODE:
-					if (colorCapture) {
-						colorCapture = false;
-						::ReleaseCapture();
-						::SetCursor(LoadCursor(NULL, IDC_ARROW));
-					}
-					break;
-
-				case WM_CAPTURECHANGED:
+			case WM_CHAR:
+			case WM_RBUTTONDOWN:
+			case WM_CANCELMODE:
+				if (colorCapture) {
 					colorCapture = false;
-					break;
+					::ReleaseCapture();
+					::SetCursor(LoadCursor(NULL, IDC_ARROW));
+				}
+				break;
 
-				case WM_LBUTTONDOWN:
-					if (colorCapture) {
-						colorCapture = false;
-						::ReleaseCapture();
-						::SetCursor(LoadCursor(NULL, IDC_ARROW));
-						POINT p;
-						if (GetCursorPos(&p))
-						{
-							HDC hdc = ::GetDC(NULL);
-							if (hdc) {
-								COLORREF cr = ::GetPixel(hdc, p.x, p.y);
-								color pickedColor;
-								pickedColor.r = GetRValue(cr) / 255.0;
-								pickedColor.g = GetGValue(cr) / 255.0;
-								pickedColor.b = GetBValue(cr) / 255.0;
-								ptz.x = p.x;
-								ptz.y = p.y;
-								if (currentController)
-									currentController->pointSelected(pcurrent_window, &ptz, &pickedColor);
+			case WM_CAPTURECHANGED:
+				colorCapture = false;
+				break;
+
+			case WM_LBUTTONDOWN:
+				if (colorCapture) {
+					colorCapture = false;
+					::ReleaseCapture();
+					::SetCursor(LoadCursor(NULL, IDC_ARROW));
+					POINT p;
+					if (GetCursorPos(&p))
+					{
+						HDC hdc = ::GetDC(NULL);
+						if (hdc) {
+							COLORREF cr = ::GetPixel(hdc, p.x, p.y);
+							color pickedColor;
+							pickedColor.r = GetRValue(cr) / 255.0;
+							pickedColor.g = GetGValue(cr) / 255.0;
+							pickedColor.b = GetBValue(cr) / 255.0;
+							ptz.x = p.x;
+							ptz.y = p.y;
+							if (currentController) {
+								currentController->pointSelected(pcurrent_window, &ptz, &pickedColor);
 							}
 						}
 					}
-					else if (currentController)
-					{
-						POINT p;
-						if (GetCursorPos(&p))
-						{
-							ScreenToClient(hwnd, &p);
-							database::point ptxo;
-							ptxo.x = p.x * 96.0 / GetDpiForWindow(hwnd);
-							ptxo.y = p.y * 96.0 / GetDpiForWindow(hwnd);
-							currentController->mouseClick(pcurrent_window, &ptxo);
-						}
-					}
-					break;
-				case WM_MOUSEMOVE:
-					if (currentController)
-					{
-						POINT p;
-						if (GetCursorPos(&p))
-						{
-							ScreenToClient(hwnd, &p);
-							database::point ptxo;
-							ptxo.x = p.x * 96.0 / GetDpiForWindow(hwnd);
-							ptxo.y = p.y * 96.0 / GetDpiForWindow(hwnd);
-							currentController->mouseMove(pcurrent_window, &ptxo);
-						}
-					}
-					break;
-				case WM_PAINT:
-				{
-					ValidateRect(hwnd, nullptr);
-					/*				PAINTSTRUCT ps;
-									BeginPaint(hwnd, &ps);
-									EndPaint(hwnd, &ps); */
-					redraw();
-					return 0;
 				}
-				case WM_SIZE:
+				else if (currentController)
 				{
-					RECT l;
-					::GetClientRect(hwnd, &l);
-					rectangle rect;
-					rect.x = 0;
-					rect.y = 0;
-					rect.w = abs(l.right - l.left);
-					rect.h = abs(l.bottom - l.top);
-					auto wwin = pfactory->getWindow(hwnd);
-					if (auto win = wwin.lock()) {
-						win->resize(rect.w, rect.h);
-						if (currentController) {
-							dpiScale = 96.0 / GetDpiForWindow(hwnd);
-#if TRACE_SIZE
-							std::cout << " w " << rect.w << "h " << rect.h << std::endl;
-
-#endif
-							rect.w *= dpiScale;
-							rect.h *= dpiScale;
-							currentController->onResize(rect, dpiScale);
+					POINT p;
+					if (GetCursorPos(&p))
+					{
+						ScreenToClient(hwnd, &p);
+						database::point ptxo;
+						ptxo.x = p.x * 96.0 / GetDpiForWindow(hwnd);
+						ptxo.y = p.y * 96.0 / GetDpiForWindow(hwnd);
+						if (pcurrent_window) {
+							currentController->mouseClick(pcurrent_window, &ptxo);
 						}
 					}
 				}
 				break;
+			case WM_MOUSEMOVE:
+				if (currentController)
+				{
+					POINT p;
+					if (GetCursorPos(&p))
+					{
+						ScreenToClient(hwnd, &p);
+						database::point ptxo;
+						ptxo.x = p.x * 96.0 / GetDpiForWindow(hwnd);
+						ptxo.y = p.y * 96.0 / GetDpiForWindow(hwnd);
+						currentController->mouseMove(pcurrent_window, &ptxo);
+					}
 				}
+				break;
+			case WM_PAINT:
+			{
+				ValidateRect(hwnd, nullptr);
+				/*				PAINTSTRUCT ps;
+								BeginPaint(hwnd, &ps);
+								EndPaint(hwnd, &ps); */
+				redraw();
+				return 0;
+			}
+			case WM_SIZE:
+			{
+				RECT l;
+				::GetClientRect(hwnd, &l);
+				rectangle rect;
+				rect.x = 0;
+				rect.y = 0;
+				rect.w = abs(l.right - l.left);
+				rect.h = abs(l.bottom - l.top);
+				auto wwin = pfactory->getWindow(hwnd);
+				if (auto win = wwin.lock()) {
+					win->resize(rect.w, rect.h);
+					if (currentController) {
+						dpiScale = 96.0 / GetDpiForWindow(hwnd);
+#if TRACE_SIZE
+						std::cout << " w " << rect.w << "h " << rect.h << std::endl;
+
+#endif
+						rect.w *= dpiScale;
+						rect.h *= dpiScale;
+						currentController->onResize(rect, dpiScale);
+					}
+				}
+			}
+			break;
 			}
 
 			return DefWindowProc(hwnd, message, wParam, lParam);

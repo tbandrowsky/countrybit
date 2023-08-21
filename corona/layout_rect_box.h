@@ -45,6 +45,11 @@ namespace corona
 			{
 				;
 			}
+			layout_rect(measure _width, measure _height) :
+				x(0.0_px), y(0.0_px), width(_width), height(_height)
+			{
+				;
+			}
 		};
 
 		class layout_rect_box : protected boxed<layout_rect>

@@ -5,8 +5,20 @@
 
 namespace corona
 {
+	using namespace win32;
+
 	namespace database
 	{
+		int id_counter::id = 0;
+		int id_counter::next() 
+		{ 
+			return ++id; 
+		}
+		int id_counter::check(int _id) { 
+			if (_id > id) 
+				id = _id;
+			return id;
+		}
 
 		const control_base* control_base::find(int _id) const
 		{
@@ -101,24 +113,102 @@ namespace corona
 			}
 		}
 
+
+		title_control& control_base::title(int id)
+		{
+			return create<title_control>(id);
+		}
+
+		subtitle_control& control_base::subtitle(int id)
+		{
+			return create<subtitle_control>(id);
+		}
+
+		chaptertitle_control& control_base::chaptertitle(int id)
+		{
+			return create<chaptertitle_control>(id);
+		}
+
+		chaptersubtitle_control& control_base::chaptersubtitle(int id)
+		{
+			return create<chaptersubtitle_control>(id);
+		}
+
+		paragraph_control& control_base::paragraph(int id)
+		{
+			return create<paragraph_control>(id);
+		}
+
+		code_control& control_base::code(int id)
+		{
+			return create<code_control>(id);
+		}
+
+		image_control& control_base::image(int id)
+		{
+			return create<image_control>(id);
+		}
+
+		title_control& control_base::title(std::string text, int id)
+		{
+			auto tc = create<title_control>(id);
+			tc.text = text;
+			return tc;
+		}
+
+		subtitle_control& control_base::subtitle(std::string text, int id)
+		{
+			auto tc = create<subtitle_control>(id);
+			return tc;
+		}
+
+		chaptertitle_control& control_base::chaptertitle(std::string text, int id)
+		{
+			auto tc = create<chaptertitle_control>(id);
+			return tc;
+		}
+
+		chaptersubtitle_control& control_base::chaptersubtitle(std::string text, int id)
+		{
+			auto tc = create<chaptersubtitle_control>(id);
+			return tc;
+		}
+
+		paragraph_control& control_base::paragraph(std::string text, int id)
+		{
+			auto tc = create<paragraph_control>(id);
+			return tc;
+		}
+
+		code_control& control_base::code(std::string text, int id)
+		{
+			auto tc = create<code_control>(id);
+			return tc;
+		}
+
+
 		static_control& control_base::label(int id)
 		{
-			return create<static_control>(id);
+			auto tc = create<static_control>(id);
+			return tc;
 		}
 
 		button_control& control_base::button(int id)
 		{
-			return create<button_control>(id);
+			auto tc = create<button_control>(id);
+			return tc;
 		}
 
 		listbox_control& control_base::listbox(int id)
 		{
-			return create<listbox_control>(id);
+			auto tc = create<listbox_control>(id);
+			return tc;
 		}
 
 		combobox_control& control_base::combobox(int id)
 		{
-			return create<combobox_control>(id);
+			auto tc = create<combobox_control>(id);
+			return tc;
 		}
 
 		edit_control& control_base::edit(int id)
@@ -538,19 +628,33 @@ namespace corona
 			size_children(_ctx);
 		}
 
-		control_base* control_base::align_base(visual_alignment _new_alignment)
+		control_base* control_base::set_align_base(visual_alignment _new_alignment)
 		{
 			alignment = _new_alignment;
 			return this;
 		}
 
-		control_base* control_base::position_base(layout_rect _new_layout)
+		control_base* control_base::set_origin_base(measure _x, measure _y)
+		{
+			box.x = _x;
+			box.y = _y;
+			return this;
+		}
+
+		control_base* control_base::set_size_base(measure _width, measure _height)
+		{
+			box.width = _width;
+			box.height = _height;
+			return this;
+		}
+
+		control_base* control_base::set_position_base(layout_rect _new_layout)
 		{
 			box = _new_layout;
 			return this;
 		}
 
-		control_base* control_base::spacing_base(measure _spacing)
+		control_base* control_base::set_spacing_base(measure _spacing)
 		{
 			this->item_space= _spacing;
 			return this;
@@ -730,45 +834,136 @@ namespace corona
 
 		text_display_control::text_display_control()
 		{
+			set_size_base(100.0_container, 1.0_fontgr);
+
 			on_create = [this](draw_control* _src) 
 			{				
 				if (auto pwindow = this->window.lock()) 
 				{
-					solidBrushRequest sbr;
-					sbr.brushColor = corona::win32::toColor(this->text_color);
-					sbr.name = this->style_name;
-					pwindow->setSolidColorBrush(&sbr);
-					pwindow->setTextStyle(&this->text_style );
+					pwindow->getContext().setSolidColorBrush(&this->text_fill_brush);
+					pwindow->getContext().setTextStyle(&this->text_style );
 				}
 			};
 
 			on_draw = [this](draw_control* _src) {
-				
-
+				if (auto pwindow = this->window.lock())
+				{
+					auto draw_bounds = pwindow->getContext().getCanvasSize();
+					pwindow->getContext().drawText(text.c_str(), &draw_bounds, this->text_style.name, this->text_fill_brush.name);
+				}
 			};
+		}
+
+		image_control::image_control()
+		{
 		}
 
 		title_control::title_control()
 		{
-			;
+			text_fill_brush.name = "title_text_fill";
+			text_fill_brush.brushColor = toColor("#C0C0C0");
+
+			text_style = {};
+			text_style.name = "title_text_style";
+			text_style.fontName = "Open Sans;Arial";
+			text_style.fontSize = 34;
+			text_style.bold = false;
+			text_style.italics = false;
+			text_style.underline = false;
+			text_style.strike_through = false;
+			text_style.horizontal_align = visual_alignment::align_center;
+			text_style.vertical_align = visual_alignment::align_center;
+			text_style.wrap_text = true;
 		}
 
 		subtitle_control::subtitle_control()
 		{
-			;
+			text_fill_brush.name = "subtitle_text_fill";
+			text_fill_brush.brushColor = toColor("#C0C0C0");
+
+			text_style = {};
+			text_style.name = "subtitle_text_style";
+			text_style.fontName = "Open Sans;Arial";
+			text_style.fontSize = 25;
+			text_style.bold = false;
+			text_style.italics = false;
+			text_style.underline = true;
+			text_style.strike_through = false;
+			text_style.horizontal_align = visual_alignment::align_center;
+			text_style.vertical_align = visual_alignment::align_center;
+			text_style.wrap_text = true;
 		}
 
-		chapter_control::chapter_control()
+		chaptertitle_control::chaptertitle_control()
 		{
-			;
+			text_fill_brush.name = "chaptertitle_text_fill";
+			text_fill_brush.brushColor = toColor("#C0C0C0");
+
+			text_style = {};
+			text_style.name = "chaptertitle_text_style";
+			text_style.fontName = "Century,Courier New,Arial";
+			text_style.fontSize = 18;
+			text_style.bold = false;
+			text_style.italics = false;
+			text_style.underline = false;
+			text_style.strike_through = false;
+			text_style.horizontal_align = visual_alignment::align_center;
+			text_style.vertical_align = visual_alignment::align_center;
+			text_style.wrap_text = true;
+		}
+
+		chaptersubtitle_control::chaptersubtitle_control()
+		{
+			text_fill_brush.name = "chaptersubtitle_text_fill";
+			text_fill_brush.brushColor = toColor("#C0C0C0");
+
+			text_style = {};
+			text_style.name = "chaptersubtitle_text_style";
+			text_style.fontName = "Century,Courier New,Arial";
+			text_style.fontSize = 18;
+			text_style.bold = false;
+			text_style.italics = false;
+			text_style.underline = false;
+			text_style.strike_through = false;
+			text_style.horizontal_align = visual_alignment::align_center;
+			text_style.vertical_align = visual_alignment::align_center;
+			text_style.wrap_text = true;
 		}
 
 		paragraph_control::paragraph_control()
 		{
+			text_fill_brush.name = "chaptersubtitle_text_fill";
+			text_fill_brush.brushColor = toColor("#C0C0C0");
+
+			text_style = {};
+			text_style.name = "chaptersubtitle_text_style";
+			text_style.fontName = "Century,Courier New,Arial";
+			text_style.fontSize = 12;
+			text_style.bold = false;
+			text_style.italics = false;
+			text_style.underline = false;
+			text_style.strike_through = false;
+			text_style.horizontal_align = visual_alignment::align_center;
+			text_style.vertical_align = visual_alignment::align_center;
+			text_style.wrap_text = true;
 		}
 
 		code_control::code_control()
 		{
+			text_fill_brush.name = "chaptersubtitle_text_fill";
+			text_fill_brush.brushColor = toColor("#C0C0C0");
+
+			text_style = {};
+			text_style.name = "chaptersubtitle_text_style";
+			text_style.fontName = "Cascadia Mono,Courier New";
+			text_style.fontSize = 12;
+			text_style.bold = false;
+			text_style.italics = false;
+			text_style.underline = false;
+			text_style.strike_through = false;
+			text_style.horizontal_align = visual_alignment::align_center;
+			text_style.vertical_align = visual_alignment::align_center;
+			text_style.wrap_text = false;
 		}
 
 		void richedit_control::set_html(const std::string& _text)
@@ -823,8 +1018,9 @@ namespace corona
 			return window.Stop();
 		}
 
-		page::page(const char* _name) : name(_name)
+		page::page(const char* _name)
 		{
+			name = _name != nullptr ? _name : "Test";
 			root = std::make_shared<column_layout>();
 		}
 
@@ -841,9 +1037,13 @@ namespace corona
 
 		void page::create(std::weak_ptr<win32::win32ControllerHost> _host)
 		{
-			if (root.get()) 
-			{
-				root->create(_host);
+			if (auto whost = _host.lock()) {
+				auto pos = whost->getWindowClientPos();
+				arrange(pos.w, pos.h);
+				if (root.get())
+				{
+					root->create(_host);
+				}
 			}
 		}
 
@@ -900,12 +1100,6 @@ namespace corona
 		{
 			;
 		}
-
-		bool presentation::drawFrame()
-		{
-			return false;
-		}
-
 
 		void page::arrange(double width, double height, double _padding)
 		{
@@ -1092,18 +1286,37 @@ namespace corona
 		{
 			auto new_page = std::make_shared<page>();
 			pages[_name] = new_page;
+			if (current_page.expired()) {
+				current_page = new_page;
+			}
 			return *new_page.get();
 		}
 
 		void presentation::select_page(const std::string& _page_name)
 		{
-			auto lock_ptr = current_page.lock();
-			if (lock_ptr) {
-				lock_ptr->destroy();
-			}
 			if (pages.contains(_page_name)) {
 				current_page = pages[_page_name];
 			}
+		}
+
+		void presentation::onCreated()
+		{
+			auto cp = current_page.lock();
+			if (cp) {
+				auto host = getHost();
+				auto post = host->getWindowClientPos();
+				cp->arrange(post.w, post.h);
+				cp->create(host);
+			}
+		}
+
+		bool presentation::drawFrame()
+		{
+			auto cp = current_page.lock();
+			if (cp) {
+				cp->draw();
+			}
+			return false;
 		}
 
 		bool presentation::update(double _elapsedSeconds, double _totalSeconds)
@@ -1161,11 +1374,6 @@ namespace corona
 		}
 
 		void presentation::pointSelected(std::shared_ptr<win32::direct2dWindow>& win, point* _point, color* _color)
-		{
-			;
-		}
-
-		void presentation::onCreated()
 		{
 			;
 		}

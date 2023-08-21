@@ -26,12 +26,12 @@ namespace corona
 
 		class direct2dBitmap;
 
-		class direct2dContext : public drawableHost, public std::enable_shared_from_this<direct2dContext> 
+		class direct2dContext : public drawableHost, public std::enable_shared_from_this<direct2dContext>
 		{
 		protected:
 
-			D2D1_SIZE_F size_dips;
-			D2D1_SIZE_U size_pixels;
+			D2D1_SIZE_F size_dips = {};
+			D2D1_SIZE_U size_pixels = {};
 
 			std::map<std::string, std::shared_ptr<bitmap>> bitmaps;
 			std::map<std::string, std::shared_ptr<deviceDependentAssetBase>> brushes;
@@ -40,11 +40,9 @@ namespace corona
 			std::map<std::string, std::shared_ptr<viewStyleRequest>> viewStyles;
 
 			std::weak_ptr<adapterSet> factory;
+			CComPtr<ID2D1DeviceContext> context;
 
 		protected:
-
-			direct2dContext(std::weak_ptr<adapterSet> _factory);
-			virtual ~direct2dContext();
 
 			void view_style_name(const object_name& _style_sheet_name, object_name& _object_style_name, int _index);
 			void text_style_name(const object_name& _style_sheet_name, object_name_composed& _object_style_name, int _index);
@@ -54,34 +52,41 @@ namespace corona
 			void shape_border_brush_name(const object_name& _style_sheet_name, object_name_composed& _object_style_name, int _index);
 
 		public:
+			direct2dContext(std::weak_ptr<adapterSet> _factory);
+			direct2dContext(std::weak_ptr<corona::win32::adapterSet> _factory, ID2D1DeviceContext* _context);
 
-			virtual ID2D1DeviceContext* getRenderTarget() = 0;
+			virtual ~direct2dContext();
+
 			virtual std::weak_ptr<adapterSet> getFactory();
+			virtual CComPtr<ID2D1DeviceContext>& getDeviceContext()
+			{
+				return context;
+			}
+
+			CComPtr<ID2D1DeviceContext> beginDraw(bool& _adapter_blown_away);
+			HRESULT endDraw(bool& _adapter_blown_away);
 
 			virtual point getLayoutSize();
 			virtual point getSize();
-
-			virtual void beginDraw(bool& _adapter_blown_away) = 0;
-			virtual void endDraw(bool& _adapter_blown_away) = 0;
 
 			virtual void clear(color* _color);
 
 			virtual void setViewStyle(viewStyleRequest& _textStyle);
 			virtual void clearViewStyles();
 
-			virtual void setBitmap(bitmapRequest* _bitmap);
+			virtual std::string setBitmap(bitmapRequest* _bitmap);
 			virtual bool getBitmapSize(bitmapRequest* _bitmap, point* _size);
 			virtual color getColorAtPoint(bitmapInstanceDto* _bitmap, point& _point);
 			virtual bool setBitmapSizes(bitmapRequest* _bitmap, bool _forceResize);
 			virtual bool setBitmapFilter(bitmapRequest* _bitmap, std::function<bool(point, int, int, char* bytes)> _filter);
 
-			virtual void setBitmapBrush(bitmapBrushRequest* _bitmapBrush);
-			virtual void setSolidColorBrush(solidBrushRequest* _solidBrushDto);
-			virtual void setLinearGradientBrush(linearGradientBrushRequest* _linearGradientBrushDto);
-			virtual void setRadialGradientBrush(radialGradientBrushRequest* _radialGradientBrushDto);
+			virtual std::string setBitmapBrush(bitmapBrushRequest* _bitmapBrush);
+			virtual std::string setSolidColorBrush(solidBrushRequest* _solidBrushDto);
+			virtual std::string setLinearGradientBrush(linearGradientBrushRequest* _linearGradientBrushDto);
+			virtual std::string setRadialGradientBrush(radialGradientBrushRequest* _radialGradientBrushDto);
 			virtual void clearBitmapsAndBrushes(bool deleteStockObjects);
 
-			virtual void setPath(pathDto* _pathDto, bool _closed);
+			virtual std::string  setPath(pathDto* _pathDto, bool _closed);
 			virtual void clearPaths();
 
 			virtual void setTextStyle(textStyleRequest* _textStyle);
@@ -114,8 +119,6 @@ namespace corona
 			D2D1::Matrix3x2F currentTransform;
 			std::shared_ptr<path> createPath(pathDto* _pathDto, bool _closed);
 
-			bool createRenderTarget(ID2D1RenderTarget* renderTarget, D2D1_SIZE_F _size);
-
 		public:
 
 			friend class textStyle;
@@ -125,6 +128,8 @@ namespace corona
 			friend class radialGradientBrush;
 			friend class linearGradientBrush;
 			friend class path;
+
+			friend class direct2dWindow;
 		};
 
 		class directApplicationWin32;
@@ -132,7 +137,7 @@ namespace corona
 		class direct2dBitmapCore
 		{
 		protected:
-			ID2D1DeviceContext* targetContext;
+			CComPtr<ID2D1DeviceContext> targetContext;
 			ID2D1RenderTarget* target;
 			ID2D1Bitmap1* bitmap;
 
@@ -154,16 +159,16 @@ namespace corona
 				return bitmap;
 			}
 
-			virtual void beginDraw(bool& _adapter_blown_away);
+			virtual CComPtr<ID2D1DeviceContext>  beginDraw(bool& _adapter_blown_away);
 			virtual void endDraw(bool& _adapter_blown_away);
 
 		};
 
-		class direct2dBitmap : public direct2dContext
+		class direct2dBitmap : public std::enable_shared_from_this<direct2dBitmap>
 		{
-			ID2D1DeviceContext* targetContext;
 			ID2D1RenderTarget* target;
 			IWICBitmap* wicBitmap;
+			std::shared_ptr<direct2dContext> context;
 
 		public:
 
@@ -176,26 +181,26 @@ namespace corona
 			void save(const char* _filename);
 			virtual bool isBitmap() { return true; }
 
-			virtual ID2D1DeviceContext* getRenderTarget()
+			virtual direct2dContext& getContext()
 			{
-				return targetContext;
+				return *context.get();
 			}
 
-			virtual void beginDraw(bool& _adapter_blown_away);
+			virtual CComPtr<ID2D1DeviceContext>  beginDraw(bool& _adapter_blown_away);
 			virtual void endDraw(bool& _adapter_blown_away);
 
 		};
 
 		class direct2dChildWindow;
 
-		class direct2dWindow : public direct2dContext, public std::enable_shared_from_this<direct2dWindow>
+		class direct2dWindow : public std::enable_shared_from_this<direct2dWindow>
 		{
 		private:
 
 			HWND hwnd;
+			std::shared_ptr<direct2dContext> context;
 
 			// for main window
-			ID2D1DeviceContext* renderTarget;
 			IDXGISwapChain1* swapChain;
 			IDXGISurface* surface;
 			ID3D11Texture2D* texture;
@@ -215,32 +220,33 @@ namespace corona
 			void resize(UINT x, UINT y);
 			void moveWindow(UINT x, UINT y, UINT h, UINT w);
 
-			virtual ID2D1DeviceContext* getRenderTarget()
+			virtual direct2dContext& getContext()
 			{
-				return renderTarget;
+				return *context.get();
 			}
 
 			ID2D1Bitmap1* getBitmap() { return bitmap; }
 
-			virtual void beginDraw(bool& _adapter_blown_away);
+			virtual CComPtr<ID2D1DeviceContext>  beginDraw(bool& _adapter_blown_away);
 			virtual void endDraw(bool& _adapter_blown_away);
 
 			HWND getWindow() { return hwnd; }
 
-			std::weak_ptr<direct2dChildWindow> createChild(relative_ptr_type _id, UINT _xdips, UINT _ydips, UINT _wdips, UINT _hdips);
-			std::weak_ptr<direct2dChildWindow> getChild(relative_ptr_type _id);
-			void deleteChild(relative_ptr_type _id);
+			virtual std::weak_ptr<direct2dChildWindow> createChild(relative_ptr_type _id, UINT _xdips, UINT _ydips, UINT _wdips, UINT _hdips);
+			virtual std::weak_ptr<direct2dChildWindow> getChild(relative_ptr_type _id);
+			virtual void deleteChild(relative_ptr_type _id);
 
 			auto& getChildren() { return children; }
 		};
 
-		class direct2dChildWindow : public direct2dContext
+		class direct2dChildWindow 
 		{
 
 		private:
 
 			std::weak_ptr<direct2dWindow> parent;
 			std::shared_ptr<direct2dBitmapCore> childBitmap;
+			std::shared_ptr<direct2dContext> context;
 			rectangle windowPosition;
 
 
@@ -256,14 +262,14 @@ namespace corona
 			void resize(UINT _wdips, UINT _hdips);
 			void moveWindow(UINT _xdips, UINT _ydips, UINT _wdips, UINT _hdips);
 
-			virtual ID2D1DeviceContext* getRenderTarget()
-			{
-				return childBitmap->getRenderTarget();
-			}
-
 			ID2D1Bitmap1* getBitmap() { return childBitmap->getBitmap(); }
 
-			virtual void beginDraw(bool& _adapter_blown_away);
+			virtual direct2dContext& getContext()
+			{
+				return *context.get();
+			}
+
+			virtual CComPtr<ID2D1DeviceContext>  beginDraw(bool& _adapter_blown_away);
 			virtual void endDraw(bool& _adapter_blown_away);
 		};
 
