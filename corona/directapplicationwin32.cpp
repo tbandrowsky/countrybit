@@ -55,12 +55,14 @@ namespace corona
 				double toDips = 96.0 / GetDpiForWindow(winroot->getWindow());
 
 				winroot->beginDraw(failedDevice);						
-				color c = { 1.0, 1.0, 1.0, 1.0 };
-				winroot->getContext().clear(&c);
 
 				if (!failedDevice) 
 				{
 					auto wins = winroot->getChildren();
+					auto dc = winroot->getContext().getDeviceContext();
+
+					color c = { .5, .6, .2, 1.0 };
+					winroot->getContext().clear(&c);
 
 					relative_ptr_type id = 0;
 
@@ -76,13 +78,22 @@ namespace corona
 						dest.right = r.x + r.w;
 						dest.bottom = r.y + r.h;
 
+						CComPtr<ID2D1SolidColorBrush> brush;
+						D2D1_COLOR_F brushColor = {};
+						brushColor.a = 1.0;
+						brushColor.b = 1.0;
+
+						dc->CreateSolidColorBrush(brushColor, &brush);
+
+						D2D1_RECT_F brushRect = dest;
+
+						dc->DrawRectangle(&brushRect, brush, 4, nullptr);
+
 #if TRACE_RENDER
 						std::cout << "Compose item#" << id << " " << dest.left << " " << dest.top << " " << dest.right << " " << dest.bottom << std::endl;
 #endif
 
-						winroot->getContext().getDeviceContext()->DrawBitmap(w.second->getBitmap(), &dest);
-
-						std::string temp = std::format("child {} {} counter", id, counter);
+						dc->DrawBitmap(w.second->getBitmap(), &dest);
 
 						counter++;
 					}

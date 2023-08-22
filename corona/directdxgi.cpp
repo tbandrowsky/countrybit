@@ -111,10 +111,10 @@ namespace corona
 				a = toInt2(_htmlColor, si + 6);
 			}
 
-			new_color.r = r / 256.0;
-			new_color.g = g / 256.0;
-			new_color.b = b / 256.0;
-			new_color.a = a / 256.0;
+			new_color.r = r / 255.0;
+			new_color.g = g / 255.0;
+			new_color.b = b / 255.0;
+			new_color.a = a / 255.0;
 
 			return new_color;
 		}

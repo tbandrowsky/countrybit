@@ -112,6 +112,7 @@ namespace corona
 				}
 			}
 
+			virtual void on_resize();
 			virtual void size_item(layout_context _ctx);
 			virtual rectangle layout(layout_context _ctx);
 			virtual void position(layout_context _ctx);
@@ -228,6 +229,7 @@ namespace corona
 			virtual void create(std::weak_ptr<win32::win32ControllerHost> _host);
 			virtual void destroy();
 			virtual void draw();
+			virtual void on_resize();
 		};
 
 		class container_control : public draw_control

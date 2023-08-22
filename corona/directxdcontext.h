@@ -30,9 +30,6 @@ namespace corona
 		{
 		protected:
 
-			D2D1_SIZE_F size_dips = {};
-			D2D1_SIZE_U size_pixels = {};
-
 			std::map<std::string, std::shared_ptr<bitmap>> bitmaps;
 			std::map<std::string, std::shared_ptr<deviceDependentAssetBase>> brushes;
 			std::map<std::string, std::shared_ptr<path>> paths;
@@ -65,9 +62,6 @@ namespace corona
 
 			CComPtr<ID2D1DeviceContext> beginDraw(bool& _adapter_blown_away);
 			HRESULT endDraw(bool& _adapter_blown_away);
-
-			virtual point getLayoutSize();
-			virtual point getSize();
 
 			virtual void clear(color* _color);
 

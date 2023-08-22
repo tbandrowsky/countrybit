@@ -51,9 +51,9 @@ namespace corona
 
 				DXGI_RGBA color;
 				color.a = 1.0;
-				color.r = 0.0;
-				color.g = 0.0;
-				color.b = 0.2;
+				color.r = 0.5;
+				color.g = 0.5;
+				color.b = 0.5;
 
 				swapChain->SetBackgroundColor(&color);
 
@@ -145,6 +145,7 @@ namespace corona
 			auto pixssz = context->getDeviceContext()->GetPixelSize();
 			context->getDeviceContext()->SetDpi(dpiWindow, dpiWindow);
 			context->getDeviceContext()->SetTarget(bitmap);
+			throwOnFail(hr, "Could not set device context target");
 			dipssz = context->getDeviceContext()->GetSize();
 
 #if TRACE_RENDER
@@ -205,10 +206,25 @@ namespace corona
 		void direct2dWindow::endDraw(bool& _adapter_blown_away)
 		{
 			_adapter_blown_away = false;
-			context->endDraw(_adapter_blown_away);
 
 			if (context->getDeviceContext()) {
-				HRESULT hr = context->getDeviceContext()->EndDraw();
+
+				CComPtr<ID2D1SolidColorBrush> brush;
+				D2D1_COLOR_F brushColor = {};
+				brushColor.a = 1.0;
+				brushColor.g = 1.0;
+
+				context->getDeviceContext()->CreateSolidColorBrush(brushColor, &brush);
+
+				D2D1_RECT_F brushRect = {};
+				brushRect.left = 50;
+				brushRect.top = 50;
+				brushRect.right = 150;
+				brushRect.bottom = 150;
+
+				context->getDeviceContext()->DrawRectangle(&brushRect, brush, 4, nullptr);
+
+				HRESULT hr = context->endDraw(_adapter_blown_away);
 
 				if (hr == D2DERR_RECREATE_TARGET)
 				{
@@ -259,7 +275,7 @@ namespace corona
 			std::cout << "%%%%%%%%% child resize " << GetDlgCtrlID(hwnd) << " " << width << " " << height << std::endl;
 #endif
 
-			childBitmap = nullptr;
+			childBitmap.reset();
 
 			if (auto pwindow = parent.lock()) {
 				int dpiWindow;
@@ -273,8 +289,11 @@ namespace corona
 				if (auto pfactory = context->getFactory().lock()) 
 				{
 					childBitmap = std::make_shared<direct2dBitmapCore>(size, pfactory, dpiWindow);
+					context->getDeviceContext()->SetTarget(childBitmap->getBitmap());
 				}
 			}
+
+			
 		}
 
 		void direct2dChildWindow::moveWindow(UINT _xdips, UINT _ydips, UINT _wdips, UINT _hdips)
@@ -551,7 +570,7 @@ namespace corona
 				istring<2048> fontName;
 
 				int state = 0;
-				char* fontExtractedName = fontList.next_token(',', state);
+				char* fontExtractedName = fontList.next_token({ ',', ';' }, state);
 				lpWriteTextFormat = NULL;
 
 				while (fontExtractedName)
@@ -1281,21 +1300,6 @@ namespace corona
 
 		// -------------------------------------------------------
 
-		point direct2dContext::getLayoutSize()
-		{
-			point fsize;
-			fsize.x = size_dips.width;
-			fsize.y = size_dips.height;
-			return fsize;
-		}
-
-		point direct2dContext::getSize()
-		{
-			point asize;
-			asize.x = size_pixels.width;
-			asize.y = size_pixels.height;
-			return asize;
-		}
 
 		void direct2dContext::clear(color* _color)
 		{

@@ -151,139 +151,159 @@ namespace corona
 
 		title_control& control_base::title(std::string text, int id)
 		{
-			auto tc = create<title_control>(id);
+			auto &tc = create<title_control>(id);
 			tc.text = text;
 			return tc;
 		}
 
 		subtitle_control& control_base::subtitle(std::string text, int id)
 		{
-			auto tc = create<subtitle_control>(id);
+			auto &tc = create<subtitle_control>(id);
+			tc.text = text;
 			return tc;
 		}
 
 		chaptertitle_control& control_base::chaptertitle(std::string text, int id)
 		{
-			auto tc = create<chaptertitle_control>(id);
+			auto &tc = create<chaptertitle_control>(id);
+			tc.text = text;
 			return tc;
 		}
 
 		chaptersubtitle_control& control_base::chaptersubtitle(std::string text, int id)
 		{
-			auto tc = create<chaptersubtitle_control>(id);
+			auto &tc = create<chaptersubtitle_control>(id);
+			tc.text = text;
 			return tc;
 		}
 
 		paragraph_control& control_base::paragraph(std::string text, int id)
 		{
-			auto tc = create<paragraph_control>(id);
+			auto &tc = create<paragraph_control>(id);
+			tc.text = text;
 			return tc;
 		}
 
 		code_control& control_base::code(std::string text, int id)
 		{
-			auto tc = create<code_control>(id);
+			auto &tc = create<code_control>(id);
+			tc.text = text;
 			return tc;
 		}
 
 
 		static_control& control_base::label(int id)
 		{
-			auto tc = create<static_control>(id);
+			auto &tc = create<static_control>(id);
 			return tc;
 		}
 
 		button_control& control_base::button(int id)
 		{
-			auto tc = create<button_control>(id);
+			auto &tc = create<button_control>(id);
 			return tc;
 		}
 
 		listbox_control& control_base::listbox(int id)
 		{
-			auto tc = create<listbox_control>(id);
+			auto &tc = create<listbox_control>(id);
 			return tc;
 		}
 
 		combobox_control& control_base::combobox(int id)
 		{
-			auto tc = create<combobox_control>(id);
+			auto &tc = create<combobox_control>(id);
 			return tc;
 		}
 
 		edit_control& control_base::edit(int id)
 		{
-			return create<edit_control>(id);
+			auto& tc = create<edit_control>(id);
+			return tc;
 		}
 
 		scrollbar_control& control_base::scrollbar(int id)
 		{
-			return create<scrollbar_control>(id);
+			auto& tc = create<scrollbar_control>(id);
+			return tc;
 		}
 
 		listview_control& control_base::listview(int id)
 		{
-			return create<listview_control>(id);
+			auto& tc = create<listview_control>(id);
+			return tc;
 		}
 
 		treeview_control& control_base::treeview(int id)
 		{
-			return create<treeview_control>(id);
+			auto& tc = create<treeview_control>(id);
+			return tc;
 		}
 
 		header_control& control_base::header(int id)
 		{
-			return create<header_control>(id);
+			auto& tc = create<header_control>(id);
+			return tc;
 		}
 
 		toolbar_control& control_base::toolbar(int id)
 		{
-			return create<toolbar_control>(id);
+			auto& tc = create<toolbar_control>(id);
+			return tc;
 		}
 
 		statusbar_control& control_base::statusbar(int id)
 		{
-			return create<statusbar_control>(id);
+			auto& tc = create<statusbar_control>(id);
+			return tc;
 		}
 
 		hotkey_control& control_base::hotkey(int id)
 		{
-			return create<hotkey_control>(id);
+			auto& tc = create<hotkey_control>(id);
+			return tc;
 		}
 
 		animate_control& control_base::animate(int id)
 		{
-			return create<animate_control>(id);
+			auto& tc = create<animate_control>(id);
+			return tc;
 		}
 
 		richedit_control& control_base::richedit(int id)
 		{
-			return create<richedit_control>(id);
+			auto& tc = create<richedit_control>(id);
+			return tc;
 		}
 
 		draglistbox_control& control_base::draglistbox(int id)
 		{
-			return create<draglistbox_control>(id);
+			auto& tc = create<draglistbox_control>(id);
+			return tc;
 		}
 
 		rebar_control& control_base::rebar(int id)
 		{
-			return create<rebar_control>(id);
+			auto& tc = create<rebar_control>(id);
+			return tc;
 		}
 
 		comboboxex_control& control_base::comboboxex(int id)
 		{
-			return create<comboboxex_control>(id);
+			auto& tc = create<comboboxex_control>(id);
+			return tc;
 		}
 
 		datetimepicker_control& control_base::datetimepicker(int id)
 		{
-			return create<datetimepicker_control>(id);
+			auto& tc = create<datetimepicker_control>(id);
+			return tc;
 		}
 
 		monthcalendar_control& control_base::monthcalendar(int id)
 		{
-			return create<monthcalendar_control>(id);
+			auto& tc = create<monthcalendar_control>(id);
+			return tc;
 		}
 
 		void control_base::size_constant(layout_context _ctx)
@@ -786,6 +806,11 @@ namespace corona
 
 		}
 
+		void control_base::on_resize()
+		{
+			;
+		}
+
 		void draw_control::create(std::weak_ptr<win32::win32ControllerHost> _host)
 		{
 			host = _host;
@@ -802,6 +827,16 @@ namespace corona
 		{
 			for (auto child : children) {
 				child->destroy();
+			}
+		}
+
+		void draw_control::on_resize()
+		{
+			if (auto pwindow = window.lock()) {
+				pwindow->resize(bounds.w, bounds.h);
+			}
+			for (auto child : children) {
+				child->on_resize();
 			}
 		}
 
@@ -834,7 +869,8 @@ namespace corona
 
 		text_display_control::text_display_control()
 		{
-			set_size_base(100.0_container, 1.0_fontgr);
+			set_origin_base(0.0_px, 0.0_px);
+			set_size_base(100.0_container, 3.0_fontgr);
 
 			on_create = [this](draw_control* _src) 
 			{				
@@ -849,6 +885,10 @@ namespace corona
 				if (auto pwindow = this->window.lock())
 				{
 					auto draw_bounds = pwindow->getContext().getCanvasSize();
+					D2D1_COLOR_F colors = {};
+					colors.a = 1.0;
+					colors.g = 1.0;
+					pwindow->getContext().getDeviceContext()->Clear(&colors);
 					pwindow->getContext().drawText(text.c_str(), &draw_bounds, this->text_style.name, this->text_fill_brush.name);
 				}
 			};
@@ -1119,7 +1159,7 @@ namespace corona
 			root->size_item(ctx);
 			root->position(ctx);
 			root->layout(ctx);
-
+			root->on_resize();
 		}
 
 		void page::on_key_up(int _control_id, std::function< void(key_up_event) > handler)

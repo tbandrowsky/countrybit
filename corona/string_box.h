@@ -487,6 +487,25 @@ namespace corona
 				return *this;
 			}
 
+			char* next_token(std::vector<char> delim, int& start)
+			{
+				if (start < 0) start = 0;
+				if (start >= size()) {
+					start = size();
+					return nullptr;
+				}
+				char* s = &data[start];
+				char* e = s;
+				while (*e && std::all_of(delim.begin(), delim.end(), [e](auto a){ return a != *e; }))
+				{
+					start++;
+					e = &data[start];
+				}
+				*e = 0;
+				start++;
+				return s;
+			}
+
 			char* next_token(char delim, int& start)
 			{
 				if (start < 0) start = 0;

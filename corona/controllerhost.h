@@ -15,8 +15,6 @@ namespace corona
 		class drawableHost {
 		public:
 
-			virtual point getLayoutSize() = 0;
-
 			virtual void clear(color* _color) = 0;
 			virtual std::string setBitmap(bitmapRequest* _bitmap) = 0;
 			virtual bool setBitmapSizes(bitmapRequest* _bitmap, bool _forceResize) = 0;
@@ -48,8 +46,6 @@ namespace corona
 
 			virtual void popCamera() = 0;
 			virtual void pushCamera(point* _position, float _rotation, float _scale = 1.0) = 0;
-
-			virtual point getSize() = 0;
 
 			virtual std::shared_ptr<direct2dBitmap> createBitmap(point& _size) = 0;
 			virtual void drawBitmap(drawableHost* _directBitmap, point& _dest, point& _size) = 0;
