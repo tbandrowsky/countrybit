@@ -872,7 +872,7 @@ namespace corona
 		text_display_control::text_display_control()
 		{
 			set_origin_base(0.0_px, 0.0_px);
-			set_size_base(100.0_container, 3.0_fontgr);
+			set_size_base(1.0_container, 3.0_fontgr);
 
 			on_create = [this](draw_control* _src) 
 			{				

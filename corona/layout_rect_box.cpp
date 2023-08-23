@@ -12,37 +12,31 @@ namespace corona
 
 		measure operator ""_remaining(long double pct)
 		{
-			if (pct >= 100.0) pct /= 100.0;
 			return measure(pct, measure_units::percent_remaining);
 		}
 
 		measure operator ""_container(long double pcc)
 		{
-			if (pcc >= 100.0) pcc /= 100.0;
 			return measure(pcc, measure_units::percent_container);
 		}
 
 		measure operator ""_aspect(long double pct)
 		{
-			if (pct >= 100.0) pct /= 100.0;
 			return measure(pct, measure_units::percent_aspect);
 		}
 
 		measure operator ""_children(long double pct)
 		{
-			if (pct >= 100.0) pct /= 100.0;
 			return measure(pct, measure_units::percent_child);
 		}
 
 		measure operator ""_font(long double fnt)
 		{
-			if (fnt >= 100.0) fnt /= 100.0;
 			return measure(fnt, measure_units::font);
 		}
 
 		measure operator ""_fontgr(long double fnt)
 		{
-			if (fnt >= 100.0) fnt /= 100.0;
 			return measure(fnt, measure_units::font_golden_ratio);
 		}
 
