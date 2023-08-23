@@ -227,7 +227,7 @@ namespace corona
 
 			if (context->getDeviceContext()) {
 
-				CComPtr<ID2D1SolidColorBrush> brush;
+/*				CComPtr<ID2D1SolidColorBrush> brush;
 				D2D1_COLOR_F brushColor = {};
 				brushColor.a = 1.0;
 				brushColor.g = 1.0;
@@ -241,7 +241,7 @@ namespace corona
 				brushRect.bottom = 200;
 
 				context->getDeviceContext()->DrawRectangle(&brushRect, brush, 4, nullptr);
-
+				*/
 				HRESULT hr = context->endDraw(_adapter_blown_away);
 
 				if (hr == D2DERR_RECREATE_TARGET)
