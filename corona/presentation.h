@@ -179,42 +179,42 @@ namespace corona
 			absolute_layout& absolute_begin(int id = id_counter::next());
 			control_base& end();
 
-			title_control& title(std::string _text, int id = id_counter::next());
-			subtitle_control& subtitle(std::string _text, int id = id_counter::next());
-			chaptertitle_control& chaptertitle(std::string _text, int id = id_counter::next());
-			chaptersubtitle_control& chaptersubtitle(std::string _text, int id = id_counter::next());
-			paragraph_control& paragraph(std::string _text, int id = id_counter::next());
-			code_control& code(std::string _text, int id = id_counter::next());
+			control_base& title(std::string _text, int id = id_counter::next());
+			control_base& subtitle(std::string _text, int id = id_counter::next());
+			control_base& chaptertitle(std::string _text, int id = id_counter::next());
+			control_base& chaptersubtitle(std::string _text, int id = id_counter::next());
+			control_base& paragraph(std::string _text, int id = id_counter::next());
+			control_base& code(std::string _text, int id = id_counter::next());
 
-			title_control& title(int id = id_counter::next());
-			subtitle_control& subtitle(int id = id_counter::next());
-			chaptertitle_control& chaptertitle(int id = id_counter::next());
-			chaptersubtitle_control& chaptersubtitle(int id = id_counter::next());
-			paragraph_control& paragraph(int id = id_counter::next());
-			code_control& code(int id = id_counter::next());
+			control_base& title(int id = id_counter::next());
+			control_base& subtitle(int id = id_counter::next());
+			control_base& chaptertitle(int id = id_counter::next());
+			control_base& chaptersubtitle(int id = id_counter::next());
+			control_base& paragraph(int id = id_counter::next());
+			control_base& code(int id = id_counter::next());
 
-			image_control& image(int id = id_counter::next());
+			control_base& image(int id = id_counter::next());
 
-			static_control& label(int id = id_counter::next());
-			button_control& button(int id);
-			listbox_control& listbox(int id);
-			combobox_control& combobox(int id);
-			edit_control& edit(int id);
-			scrollbar_control& scrollbar(int id);
+			control_base& label(int id = id_counter::next());
+			control_base& button(int id);
+			control_base& listbox(int id);
+			control_base& combobox(int id);
+			control_base& edit(int id);
+			control_base& scrollbar(int id);
 
-			listview_control& listview(int id);
-			treeview_control& treeview(int id);
-			header_control& header(int id);
-			toolbar_control& toolbar(int id);
-			statusbar_control& statusbar(int id);
-			hotkey_control& hotkey(int id);
-			animate_control& animate(int id);
-			richedit_control& richedit(int id);
-			draglistbox_control& draglistbox(int id);
-			rebar_control& rebar(int id);
-			comboboxex_control& comboboxex(int id);
-			datetimepicker_control& datetimepicker(int id);
-			monthcalendar_control& monthcalendar(int id);
+			control_base& listview(int id);
+			control_base& treeview(int id);
+			control_base& header(int id);
+			control_base& toolbar(int id);
+			control_base& statusbar(int id);
+			control_base& hotkey(int id);
+			control_base& animate(int id);
+			control_base& richedit(int id);
+			control_base& draglistbox(int id);
+			control_base& rebar(int id);
+			control_base& comboboxex(int id);
+			control_base& datetimepicker(int id);
+			control_base& monthcalendar(int id);
 
 		};
 
@@ -246,38 +246,12 @@ namespace corona
 
 			text_display_control();
 
-			text_display_control& set_text(std::string _text)
-			{
-				text = _text;
-				return *this;
-			}
-			text_display_control& set_text_fill(solidBrushRequest _brushFill)
-			{
-				text_fill_brush = _brushFill;
-				return *this;
-			}
-			text_display_control& set_text_fill(std::string _color)
-			{
-				text_fill_brush.name = typeid(this).name();
-				text_fill_brush.brushColor = toColor(_color.c_str());
-				return *this;
-			}
-			text_display_control& set_text_style(std::string _font_name, int _font_size, bool _bold = false, bool _underline = false, bool _italic = false, bool _strike_through = false)
-			{
-				text_style.name = typeid(this).name();
-				text_style.fontName = _font_name;
-				text_style.fontSize = _font_size;
-				text_style.bold = _bold;
-				text_style.underline = _underline;
-				text_style.italics = _italic;
-				text_style.strike_through = _strike_through;
-				return *this;
-			}
-			text_display_control& set_text_style(textStyleRequest request)
-			{
-				text_style = request;
-				return *this;
-			}
+			text_display_control& set_text(std::string _text);
+			text_display_control& set_text_fill(solidBrushRequest _brushFill);
+			text_display_control& set_text_fill(std::string _color);
+			text_display_control& set_text_style(std::string _font_name, int _font_size, bool _bold = false, bool _underline = false, bool _italic = false, bool _strike_through = false);
+			text_display_control& set_text_style(textStyleRequest request);
+			void on_resize();
 
 		};
 
@@ -360,6 +334,12 @@ namespace corona
 			WtlWindowClass window;
 			win32::win32ControllerHost* window_host;
 
+			windows_control()
+			{
+				set_origin_base(0.0_px, 0.0_px);
+				set_size_base(150.0_px, 2.0_fontgr);
+			}
+
 			virtual void create(win32::win32ControllerHost* _host)
 			{
 				window_host = _host;
@@ -380,7 +360,9 @@ namespace corona
 			virtual void destroy()
 			{
 				window_host = nullptr;
-				window.DestroyWindow();
+				if (window.m_hWnd) {
+					window.DestroyWindow();
+				}
 			}
 
 			virtual ~windows_control()

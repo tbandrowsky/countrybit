@@ -40,10 +40,12 @@ namespace corona
 			if (currentController) 
 			{
 			
+				// here, we tell the children to draw on their own surfaces...
 				currentController->drawFrame();
 
 				bool failedDevice = false;
 
+				// and here, we compose those surfaces onto our screen.
 				auto pfactory = factory.lock();
 				if (!pfactory) return;
 

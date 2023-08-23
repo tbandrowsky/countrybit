@@ -57,7 +57,7 @@ namespace corona
 
 				swapChain->SetBackgroundColor(&color);
 
-				applySwapChain();
+				applySwapChain(width, height);
 			}
 		}
 
@@ -82,7 +82,7 @@ namespace corona
 				surface = nullptr;
 			}
 
-			applySwapChain();
+			applySwapChain(width, height);
 		}
 
 		void direct2dWindow::moveWindow(UINT x, UINT y, UINT w, UINT h)
@@ -92,7 +92,7 @@ namespace corona
 			MoveWindow(hwnd, x, y, w, h, false);
 		}
 
-		void direct2dWindow::applySwapChain()
+		void direct2dWindow::applySwapChain(UINT w, UINT h)
 		{
 			HRESULT hr;
 
@@ -103,9 +103,8 @@ namespace corona
 			dpiWindow = ::GetDpiForWindow(hwnd);
 			context->getDeviceContext()->GetDpi(&dpix, &dpiy);
 
-			GetClientRect(hwnd, &r);
-			int x = r.right - r.left;
-			int y = r.bottom - r.top;
+			int x = w;
+			int y = h;
 
 			hr = swapChain->ResizeBuffers(2, x, y, DXGI_FORMAT_B8G8R8A8_UNORM, 0);
 			throwOnFail(hr, "Couldn't resize swapchain");
@@ -141,12 +140,14 @@ namespace corona
 			throwOnFail(hr, "Could create bitmap from surface");
 
 			// Now we can set the Direct2D render target.
-			auto dipssz = context->getDeviceContext()->GetSize();
-			auto pixssz = context->getDeviceContext()->GetPixelSize();
+
 			context->getDeviceContext()->SetDpi(dpiWindow, dpiWindow);
 			context->getDeviceContext()->SetTarget(bitmap);
 			throwOnFail(hr, "Could not set device context target");
-			dipssz = context->getDeviceContext()->GetSize();
+
+			// just look at the sizes here and see if that much lines up.
+			auto dipssz = context->getDeviceContext()->GetSize();
+			auto pixssz = context->getDeviceContext()->GetPixelSize();
 
 #if TRACE_RENDER
 			std::cout << "render target pixel size " << pixssz.width << " " << pixssz.height << " " << std::endl;
@@ -217,10 +218,10 @@ namespace corona
 				context->getDeviceContext()->CreateSolidColorBrush(brushColor, &brush);
 
 				D2D1_RECT_F brushRect = {};
-				brushRect.left = 50;
-				brushRect.top = 50;
-				brushRect.right = 150;
-				brushRect.bottom = 150;
+				brushRect.left = 600;
+				brushRect.top = 150;
+				brushRect.right = 750;
+				brushRect.bottom = 200;
 
 				context->getDeviceContext()->DrawRectangle(&brushRect, brush, 4, nullptr);
 
@@ -271,11 +272,8 @@ namespace corona
 		{
 			HRESULT hr;
 
-#if TRACE_RENDER
-			std::cout << "%%%%%%%%% child resize " << GetDlgCtrlID(hwnd) << " " << width << " " << height << std::endl;
-#endif
-
-			childBitmap.reset();
+			windowPosition.w = _wdips;
+			windowPosition.h = _hdips;
 
 			if (auto pwindow = parent.lock()) {
 				int dpiWindow;
@@ -288,8 +286,9 @@ namespace corona
 
 				if (auto pfactory = context->getFactory().lock()) 
 				{
-					childBitmap = std::make_shared<direct2dBitmapCore>(size, pfactory, dpiWindow);
-					context->getDeviceContext()->SetTarget(childBitmap->getBitmap());
+					auto tempBitmap = std::make_shared<direct2dBitmapCore>(size, pfactory, dpiWindow);
+					context->getDeviceContext()->SetTarget(tempBitmap->getBitmap());
+					childBitmap = tempBitmap;
 				}
 			}
 

@@ -202,7 +202,7 @@ namespace corona
 
 			std::map<relative_ptr_type, std::shared_ptr<direct2dChildWindow>> children;
 
-			void applySwapChain();
+			void applySwapChain(UINT w, UINT h);
 
 		public:
 

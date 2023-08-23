@@ -49,6 +49,11 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 
 	std::shared_ptr<corona::win32::presentation> test_app = std::make_shared<corona::win32::presentation>();
 
+	int IDC_TEST_LABEL = 1001;
+	int IDC_TEST_EDIT = 1002;
+	int IDC_TEST_LABEL2 = 1003;
+	int IDC_TEST_EDIT2 = 1004;
+
 	test_app->create_page("home")
 		.column_begin()
 		.set_size(100.0_container, 100.0_container)
@@ -56,6 +61,11 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 		.title("Corona")
 		.subtitle("Corona User Interface Test")
 		.chaptertitle("The book of something")
+		.label(IDC_TEST_LABEL)
+		.edit(IDC_TEST_EDIT)
+		.chaptertitle("The book of else")
+		.label(IDC_TEST_LABEL2)
+		.edit(IDC_TEST_EDIT2)
 		.end();
 
 	if (forceWindowed)

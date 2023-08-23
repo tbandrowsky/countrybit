@@ -114,196 +114,196 @@ namespace corona
 		}
 
 
-		title_control& control_base::title(int id)
+		control_base& control_base::title(int id)
 		{
 			return create<title_control>(id);
 		}
 
-		subtitle_control& control_base::subtitle(int id)
+		control_base& control_base::subtitle(int id)
 		{
 			return create<subtitle_control>(id);
 		}
 
-		chaptertitle_control& control_base::chaptertitle(int id)
+		control_base& control_base::chaptertitle(int id)
 		{
 			return create<chaptertitle_control>(id);
 		}
 
-		chaptersubtitle_control& control_base::chaptersubtitle(int id)
+		control_base& control_base::chaptersubtitle(int id)
 		{
 			return create<chaptersubtitle_control>(id);
 		}
 
-		paragraph_control& control_base::paragraph(int id)
+		control_base& control_base::paragraph(int id)
 		{
 			return create<paragraph_control>(id);
 		}
 
-		code_control& control_base::code(int id)
+		control_base& control_base::code(int id)
 		{
 			return create<code_control>(id);
 		}
 
-		image_control& control_base::image(int id)
+		control_base& control_base::image(int id)
 		{
 			return create<image_control>(id);
 		}
 
-		title_control& control_base::title(std::string text, int id)
+		control_base& control_base::title(std::string text, int id)
 		{
 			auto &tc = create<title_control>(id);
 			tc.text = text;
-			return tc;
+			return *this;
 		}
 
-		subtitle_control& control_base::subtitle(std::string text, int id)
+		control_base& control_base::subtitle(std::string text, int id)
 		{
 			auto &tc = create<subtitle_control>(id);
 			tc.text = text;
-			return tc;
+			return *this;
 		}
 
-		chaptertitle_control& control_base::chaptertitle(std::string text, int id)
+		control_base& control_base::chaptertitle(std::string text, int id)
 		{
 			auto &tc = create<chaptertitle_control>(id);
 			tc.text = text;
-			return tc;
+			return *this;
 		}
 
-		chaptersubtitle_control& control_base::chaptersubtitle(std::string text, int id)
+		control_base& control_base::chaptersubtitle(std::string text, int id)
 		{
 			auto &tc = create<chaptersubtitle_control>(id);
 			tc.text = text;
-			return tc;
+			return *this;
 		}
 
-		paragraph_control& control_base::paragraph(std::string text, int id)
+		control_base& control_base::paragraph(std::string text, int id)
 		{
 			auto &tc = create<paragraph_control>(id);
 			tc.text = text;
-			return tc;
+			return *this;
 		}
 
-		code_control& control_base::code(std::string text, int id)
+		control_base& control_base::code(std::string text, int id)
 		{
 			auto &tc = create<code_control>(id);
 			tc.text = text;
-			return tc;
+			return *this;
 		}
 
 
-		static_control& control_base::label(int id)
+		control_base& control_base::label(int id)
 		{
 			auto &tc = create<static_control>(id);
-			return tc;
+			return *this;
 		}
 
-		button_control& control_base::button(int id)
+		control_base& control_base::button(int id)
 		{
 			auto &tc = create<button_control>(id);
-			return tc;
+			return *this;
 		}
 
-		listbox_control& control_base::listbox(int id)
+		control_base& control_base::listbox(int id)
 		{
 			auto &tc = create<listbox_control>(id);
-			return tc;
+			return *this;
 		}
 
-		combobox_control& control_base::combobox(int id)
+		control_base& control_base::combobox(int id)
 		{
 			auto &tc = create<combobox_control>(id);
-			return tc;
+			return *this;
 		}
 
-		edit_control& control_base::edit(int id)
+		control_base& control_base::edit(int id)
 		{
 			auto& tc = create<edit_control>(id);
-			return tc;
+			return *this;
 		}
 
-		scrollbar_control& control_base::scrollbar(int id)
+		control_base& control_base::scrollbar(int id)
 		{
 			auto& tc = create<scrollbar_control>(id);
-			return tc;
+			return *this;
 		}
 
-		listview_control& control_base::listview(int id)
+		control_base& control_base::listview(int id)
 		{
 			auto& tc = create<listview_control>(id);
-			return tc;
+			return *this;
 		}
 
-		treeview_control& control_base::treeview(int id)
+		control_base& control_base::treeview(int id)
 		{
 			auto& tc = create<treeview_control>(id);
-			return tc;
+			return *this;
 		}
 
-		header_control& control_base::header(int id)
+		control_base& control_base::header(int id)
 		{
 			auto& tc = create<header_control>(id);
-			return tc;
+			return *this;
 		}
 
-		toolbar_control& control_base::toolbar(int id)
+		control_base& control_base::toolbar(int id)
 		{
 			auto& tc = create<toolbar_control>(id);
-			return tc;
+			return *this;
 		}
 
-		statusbar_control& control_base::statusbar(int id)
+		control_base& control_base::statusbar(int id)
 		{
 			auto& tc = create<statusbar_control>(id);
-			return tc;
+			return *this;
 		}
 
-		hotkey_control& control_base::hotkey(int id)
+		control_base& control_base::hotkey(int id)
 		{
 			auto& tc = create<hotkey_control>(id);
-			return tc;
+			return *this;
 		}
 
-		animate_control& control_base::animate(int id)
+		control_base& control_base::animate(int id)
 		{
 			auto& tc = create<animate_control>(id);
-			return tc;
+			return *this;
 		}
 
-		richedit_control& control_base::richedit(int id)
+		control_base& control_base::richedit(int id)
 		{
 			auto& tc = create<richedit_control>(id);
-			return tc;
+			return *this;
 		}
 
-		draglistbox_control& control_base::draglistbox(int id)
+		control_base& control_base::draglistbox(int id)
 		{
 			auto& tc = create<draglistbox_control>(id);
-			return tc;
+			return *this;
 		}
 
-		rebar_control& control_base::rebar(int id)
+		control_base& control_base::rebar(int id)
 		{
 			auto& tc = create<rebar_control>(id);
-			return tc;
+			return *this;
 		}
 
-		comboboxex_control& control_base::comboboxex(int id)
+		control_base& control_base::comboboxex(int id)
 		{
 			auto& tc = create<comboboxex_control>(id);
-			return tc;
+			return *this;
 		}
 
-		datetimepicker_control& control_base::datetimepicker(int id)
+		control_base& control_base::datetimepicker(int id)
 		{
 			auto& tc = create<datetimepicker_control>(id);
-			return tc;
+			return *this;
 		}
 
-		monthcalendar_control& control_base::monthcalendar(int id)
+		control_base& control_base::monthcalendar(int id)
 		{
 			auto& tc = create<monthcalendar_control>(id);
-			return tc;
+			return *this;
 		}
 
 		void control_base::size_constant(layout_context _ctx)
@@ -887,11 +887,56 @@ namespace corona
 					auto draw_bounds = pwindow->getContext().getCanvasSize();
 					D2D1_COLOR_F colors = {};
 					colors.a = 1.0;
-					colors.g = 1.0;
+					colors.r = .1;
+					colors.g = .1;
+					colors.b = .0;
 					pwindow->getContext().getDeviceContext()->Clear(&colors);
 					pwindow->getContext().drawText(text.c_str(), &draw_bounds, this->text_style.name, this->text_fill_brush.name);
 				}
 			};
+		}
+
+		text_display_control& text_display_control::set_text(std::string _text)
+		{
+			text = _text;
+			return *this;
+		}
+
+		text_display_control& text_display_control::set_text_fill(solidBrushRequest _brushFill)
+		{
+			text_fill_brush = _brushFill;
+			return *this;
+		}
+
+		text_display_control& text_display_control::set_text_fill(std::string _color)
+		{
+			text_fill_brush.name = typeid(this).name();
+			text_fill_brush.brushColor = toColor(_color.c_str());
+			return *this;
+		}
+
+		text_display_control& text_display_control::set_text_style(std::string _font_name, int _font_size, bool _bold, bool _underline, bool _italic, bool _strike_through)
+		{
+			text_style.name = typeid(this).name();
+			text_style.fontName = _font_name;
+			text_style.fontSize = _font_size;
+			text_style.bold = _bold;
+			text_style.underline = _underline;
+			text_style.italics = _italic;
+			text_style.strike_through = _strike_through;
+			return *this;
+		}
+
+		text_display_control& text_display_control::set_text_style(textStyleRequest request)
+		{
+			text_style = request;
+			return *this;
+		}
+
+		void text_display_control::on_resize()
+		{
+			std::cout << "resize:" << text << " " << bounds.w << " " << bounds.h << std::endl;
+			draw_control::on_resize();
 		}
 
 		image_control::image_control()
@@ -1155,6 +1200,8 @@ namespace corona
 			if (root->box.height.units == measure_units::percent_child ||
 				root->box.width.units == measure_units::percent_child)
 				throw std::logic_error("Cannot use child based sizing on a root element");
+
+//			std::cout << "Resizing:" << width << " " << height << std::endl;
 
 			root->size_item(ctx);
 			root->position(ctx);
