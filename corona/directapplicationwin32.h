@@ -78,6 +78,7 @@ namespace corona
 			virtual rectangle getWindowPos(int ddlControlId);
 			virtual void setWindowPos(int ddlControlId, rectangle rect);
 			virtual void setMinimumWindowSize(point size);
+			virtual rectangle toPixelsFromDips(const rectangle& r);
 
 			// icon control
 			virtual void setPictureIcon(int controlId, dtoIconId iconId);

@@ -157,6 +157,23 @@ namespace corona
 
 		}
 
+		rectangle direct2dWindow::getBoundsDips()
+		{
+			const rectangle r;
+
+			float dpiScale = 96.0 / GetDpiForWindow(hwnd);
+			rectangle rx;
+
+			RECT rct;
+			GetClientRect(hwnd, &rct);
+
+			rx.x = 0;
+			rx.y = 0;
+			rx.w = (rct.right - rct.left) * dpiScale;
+			rx.h = (rct.bottom - rct.top) * dpiScale;
+			return rx;
+		}
+
 		direct2dWindow::~direct2dWindow()
 		{
 			children.clear();

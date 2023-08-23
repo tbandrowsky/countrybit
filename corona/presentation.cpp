@@ -814,7 +814,9 @@ namespace corona
 		void draw_control::create(std::weak_ptr<win32::win32ControllerHost> _host)
 		{
 			host = _host;
-			window = _host.lock()->createDirect2Window(id, bounds);
+			if (auto phost = _host.lock()) {
+				window = phost->createDirect2Window(id, bounds);
+			}
 			if (on_create) {
 				on_create(this);
 			}

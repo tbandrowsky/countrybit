@@ -36,6 +36,8 @@ namespace corona
 		void directApplicationWin32::redraw()
 		{
 			static int counter = 0;
+			static int sign = 1;
+			static int pos = 0;
 
 			if (currentController) 
 			{
@@ -62,11 +64,17 @@ namespace corona
 				{
 					auto wins = winroot->getChildren();
 					auto dc = winroot->getContext().getDeviceContext();
+					rectangle rmaster = winroot->getBoundsDips();
 
 					color c = { .5, .6, .2, 1.0 };
 					winroot->getContext().clear(&c);
 
+					auto wbounds = winroot->getBoundsDips();
+
 					relative_ptr_type id = 0;
+
+					D2D1_RECT_F dest;
+
 
 					for (auto& w : wins)
 					{
@@ -74,22 +82,10 @@ namespace corona
 
 						id = w.first;
 
-						D2D1_RECT_F dest;
 						dest.left = r.x;
 						dest.top = r.y;
 						dest.right = r.x + r.w;
 						dest.bottom = r.y + r.h;
-
-						CComPtr<ID2D1SolidColorBrush> brush;
-						D2D1_COLOR_F brushColor = {};
-						brushColor.a = 1.0;
-						brushColor.b = 1.0;
-
-						dc->CreateSolidColorBrush(brushColor, &brush);
-
-						D2D1_RECT_F brushRect = dest;
-
-						dc->DrawRectangle(&brushRect, brush, 4, nullptr);
 
 #if TRACE_RENDER
 						std::cout << "Compose item#" << id << " " << dest.left << " " << dest.top << " " << dest.right << " " << dest.bottom << std::endl;
@@ -99,6 +95,33 @@ namespace corona
 
 						counter++;
 					}
+
+					pos += sign;
+					double boxw = wbounds.w / 4;
+					double boxh = 150;
+
+					if (pos < 0)
+					{
+						sign = 1;
+					}
+					else if (pos > (wbounds.w - boxw))
+					{
+						sign = -1;
+					}
+
+					dest.left = pos;
+					dest.top = (wbounds.h - boxh) / 2;
+					dest.right = pos + boxw;
+					dest.bottom = dest.top + boxh;
+
+					CComPtr<ID2D1SolidColorBrush> brush;
+					D2D1_COLOR_F brushColor = {};
+					brushColor.a = 1.0;
+					brushColor.b = 1.0;
+
+					dc->CreateSolidColorBrush(brushColor, &brush);
+					dc->DrawRectangle(&dest, brush, 4, nullptr);
+
 
 					winroot->endDraw(failedDevice);
 				}
@@ -1395,6 +1418,18 @@ namespace corona
 			return rd;
 		}
 
+		rectangle directApplicationWin32::toPixelsFromDips(const rectangle& r)
+		{
+			dpiScale = 96.0 / GetDpiForWindow(hwndRoot);
+			rectangle rx;
+
+			rx.x = r.x * dpiScale;
+			rx.y = r.y * dpiScale;
+			rx.w = r.w * dpiScale;
+			rx.h = r.h * dpiScale;
+			return rx;
+		}
+
 		rectangle directApplicationWin32::getWindowClientPos()
 		{
 			RECT r;
@@ -1407,12 +1442,7 @@ namespace corona
 			rd.w = r.right - r.left;
 			rd.h = r.bottom - r.top;
 
-			dpiScale = 96.0 / GetDpiForWindow(hwndRoot);
-
-			rd.x *= dpiScale;
-			rd.y *= dpiScale;
-			rd.w *= dpiScale;
-			rd.h *= dpiScale;
+			rd = toPixelsFromDips(rd);
 
 			return rd;
 		}

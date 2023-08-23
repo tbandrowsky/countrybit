@@ -332,7 +332,7 @@ namespace corona
 			using control_base::id;
 
 			WtlWindowClass window;
-			win32::win32ControllerHost* window_host;
+			std::weak_ptr<win32::win32ControllerHost> window_host;
 
 			windows_control()
 			{
@@ -340,27 +340,30 @@ namespace corona
 				set_size_base(150.0_px, 2.0_fontgr);
 			}
 
-			virtual void create(win32::win32ControllerHost* _host)
+			virtual void create(std::weak_ptr<win32::win32ControllerHost> _host)
 			{
 				window_host = _host;
 
-				HWND parent = window_host->getMainWindow();
+				if (auto phost = window_host.lock()) {
+					HWND parent = phost->getMainWindow();
 
-				RECT r;
-				r.left = bounds.x;
-				r.top = bounds.y;
-				r.right = bounds.x + bounds.w;
-				r.bottom = bounds.y + bounds.h;
+					auto boundsPixels = phost->toPixelsFromDips(bounds);
 
-				if (((HWND)window) == nullptr) {
-					window.Create(parent, r, NULL, dwStyle, dwExStyle, id, NULL);
+					RECT r;
+					r.left = boundsPixels.x;
+					r.top = boundsPixels.y;
+					r.right = boundsPixels.x + bounds.w;
+					r.bottom = boundsPixels.y + bounds.h;
+
+					if (((HWND)window) == nullptr) {
+						window.Create(parent, r, NULL, dwStyle, dwExStyle, id, NULL);
+					}
 				}
 			}
 
 			virtual void destroy()
 			{
-				window_host = nullptr;
-				if (window.m_hWnd) {
+				if (::IsWindow(window.m_hWnd)) {
 					window.DestroyWindow();
 				}
 			}
