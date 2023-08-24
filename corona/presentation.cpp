@@ -20,6 +20,8 @@ namespace corona
 			return id;
 		}
 
+		int control_base::debug_indent = 0;
+
 		const control_base* control_base::find(int _id) const
 		{
 			const control_base* result = nullptr;
@@ -104,15 +106,13 @@ namespace corona
 
 		control_base& control_base::end()
 		{
-			if (auto pparent = parent.lock()) {
-				return *pparent.get();
-			}
-			else 
-			{
-				return *this;
+			if (parent) {
+				auto& temp = *parent;
+				auto string_name = typeid(temp).name();
+				std::cout << " ** " << string_name << std::endl;
+				return temp;
 			}
 		}
-
 
 		control_base& control_base::title(int id)
 		{
@@ -808,7 +808,13 @@ namespace corona
 
 		void control_base::on_resize()
 		{
-			;
+			auto ti = typeid(*this).name();
+			std::cout << "resize:" << std::string( control_base::debug_indent, ' ' ) <<  ti << " " << bounds.x << "," << bounds.y << " x " << bounds.w << " " << bounds.h << std::endl;
+			debug_indent += 2;
+			for (auto child : children) {
+				child->on_resize();
+			}
+			debug_indent -= 2;
 		}
 
 		void draw_control::create(std::weak_ptr<win32::win32ControllerHost> _host)
@@ -834,11 +840,9 @@ namespace corona
 
 		void draw_control::on_resize()
 		{
+			control_base::on_resize();
 			if (auto pwindow = window.lock()) {
 				pwindow->resize(bounds.w, bounds.h);
-			}
-			for (auto child : children) {
-				child->on_resize();
 			}
 		}
 
@@ -871,15 +875,26 @@ namespace corona
 
 		text_display_control::text_display_control()
 		{
+			init();
+		}
+
+		text_display_control::text_display_control(control_base * _parent, int _id) 
+			: draw_control(_parent, _id)
+		{
+			init();
+		}
+
+		void text_display_control::init()
+		{
 			set_origin_base(0.0_px, 0.0_px);
 			set_size_base(1.0_container, 3.0_fontgr);
 
-			on_create = [this](draw_control* _src) 
-			{				
-				if (auto pwindow = this->window.lock()) 
+			on_create = [this](draw_control* _src)
+			{
+				if (auto pwindow = this->window.lock())
 				{
 					pwindow->getContext().setSolidColorBrush(&this->text_fill_brush);
-					pwindow->getContext().setTextStyle(&this->text_style );
+					pwindow->getContext().setTextStyle(&this->text_style);
 				}
 			};
 
@@ -937,7 +952,6 @@ namespace corona
 
 		void text_display_control::on_resize()
 		{
-			std::cout << "resize:" << text << " " << bounds.w << " " << bounds.h << std::endl;
 			draw_control::on_resize();
 		}
 
@@ -1208,6 +1222,7 @@ namespace corona
 			root->size_item(ctx);
 			root->position(ctx);
 			root->layout(ctx);
+			control_base::debug_indent = 0;
 			root->on_resize();
 		}
 
