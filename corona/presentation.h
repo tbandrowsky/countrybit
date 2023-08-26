@@ -59,26 +59,22 @@ namespace corona
 		class control_base : public std::enable_shared_from_this<control_base>
 		{
 		protected:
-
-
-			virtual void size_constant(layout_context _ctx);
-			virtual void size_constants(layout_context _ctx);
-
-			virtual void size_aspect(layout_context _ctx);
-			virtual void size_aspect_widths(layout_context _ctx, int safety);
-			virtual void size_aspect_heights(layout_context _ctx, int safety);
-			virtual void size_aspects(layout_context _ctx);
-			virtual void size_children(layout_context _ctx);
-
-			virtual void size_remaining(layout_context _ctx);
-			virtual void size_remainings(layout_context _ctx);
-			virtual layout_context get_remaining(layout_context _ctx);
-
-			virtual void size_items(layout_context _ctx);
-			virtual void positions(layout_context _ctx);
-
+			point get_size(rectangle _ctx, point _remaining);
+			point get_position(rectangle _ctx);
+			double get_item_space(rectangle _ctx);
+			virtual point get_remaining(point _ctx);
+			virtual void on_resize();
+			void arrange_children(rectangle _bounds,
+				std::function<point(rectangle *_bounds, control_base*)> _initial_origin,
+				std::function<point(rectangle *_bounds, point* _origin, control_base*)> _next_origin);
 
 		public:
+
+			friend class absolute_layout;
+			friend class row_layout;
+			friend class column_layout;
+			friend class draw_control;
+
 			static int				debug_indent;
 
 			int						id;
@@ -99,30 +95,28 @@ namespace corona
 				id(-1),
 				item_space(),
 				parent(nullptr),
-				item_space_amount({ 0.0, 0.0 })
+				item_space_amount({ 0.0, 0.0 }),
+				alignment(visual_alignment::align_near)
 			{
 				id = id_counter::next();
 			}
 
-			control_base(control_base* _parent, int _id) :
-				parent(_parent),
-				id(_id),
-				item_space(),
-				item_space_amount({ 0.0, 0.0 })
+			control_base(control_base* _parent, int _id) : control_base()
 			{
+				parent = _parent;
 				if (_id < 0) {
 					id = id_counter::next();
 				}
+				else {
+					id = _id;
+				}
 			}
 
-			virtual void on_resize();
-			virtual void size_item(layout_context _ctx);
-			virtual rectangle layout(layout_context _ctx);
-			virtual void position(layout_context _ctx);
-			virtual bool contains(point pt);
+			virtual void arrange(rectangle _ctx);
+			bool contains(point pt);
 
-			const control_base* find(int _id) const;
-			static std::weak_ptr<control_base> get(std::shared_ptr<control_base> &_root, int _id);
+			control_base* find(int _id);
+			control_base* get(control_base* _root, int _id);
 			void foreach(std::function<void(control_base* _root)> _item);
 
 			virtual void create(std::weak_ptr<win32::win32ControllerHost> _host);
@@ -131,8 +125,8 @@ namespace corona
 
 			template <typename control_type> control_type& create(int _id)
 			{
-				std::shared_ptr<control_type> temp = std::make_shared<control_type>(this, _id);
 				id_counter::check(_id);
+				std::shared_ptr<control_type> temp = std::make_shared<control_type>(this, _id);
 				children.push_back(temp);
 				return *temp.get();
 			}
@@ -260,7 +254,6 @@ namespace corona
 			text_display_control& set_text_fill(std::string _color);
 			text_display_control& set_text_style(std::string _font_name, int _font_size, bool _bold = false, bool _underline = false, bool _italic = false, bool _strike_through = false);
 			text_display_control& set_text_style(textStyleRequest request);
-			void on_resize();
 
 		};
 
@@ -321,32 +314,33 @@ namespace corona
 			absolute_layout() { ; }
 			absolute_layout(control_base * _parent, int _id) : container_control(_parent, _id) { ; }
 			virtual ~absolute_layout() { ; }
+
+			virtual void arrange(rectangle _ctx);
 		};
 
 		class column_layout : 
 			public container_control
 		{
-		protected:
-			virtual layout_context get_remaining(layout_context _ctx);
-			virtual void size_children(layout_context _ctx);
-			virtual void positions(layout_context _ctx);
 		public:
 			column_layout() { ; }
 			column_layout(control_base * _parent, int _id) : container_control(_parent, _id) { ; }
 			virtual ~column_layout() { ; }
+
+			virtual void arrange(rectangle _ctx);
+			virtual point get_remaining(point _ctx);
 		};
 
 		class row_layout : 
 			public container_control
 		{
 		protected:
-			virtual layout_context get_remaining(layout_context _ctx);
-			virtual void size_children(layout_context _ctx);
-			virtual void positions(layout_context _ctx);
 		public:
 			row_layout() { ; }
 			row_layout(control_base * _parent, int _id) : container_control(_parent, _id) { ; }
 			virtual ~row_layout() { ; }
+
+			virtual void arrange(rectangle _ctx);
+			virtual point get_remaining(point _ctx);
 		};
 
 		template <typename WtlWindowClass, DWORD dwStyle, DWORD dwExStyle = 0> class windows_control : public control_base

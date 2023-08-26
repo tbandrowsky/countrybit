@@ -14,6 +14,7 @@ namespace corona
 		{ 
 			return ++id; 
 		}
+
 		int id_counter::check(int _id) { 
 			if (_id > id) 
 				id = _id;
@@ -22,9 +23,9 @@ namespace corona
 
 		int control_base::debug_indent = 0;
 
-		const control_base* control_base::find(int _id) const
+		control_base* control_base::find(int _id)
 		{
-			const control_base* result = nullptr;
+			control_base* result = nullptr;
 			if (this->id == _id) {
 				result = this;
 			}
@@ -41,18 +42,18 @@ namespace corona
 			return result;
 		}
 
-		std::weak_ptr<control_base> control_base::get(std::shared_ptr<control_base>& _root, int _id)
+		control_base *control_base::get(control_base* _root, int _id)
 		{
-			std::weak_ptr<control_base> result;
+			control_base *result = nullptr;
 			if (_root->id == _id) {
-				return _root;
+				result = _root;
 			}
 			else
 			{
 				for (auto child : _root->children)
 				{
-					result = get(child, _id);
-					if (!result.expired()) {
+					result = get(child.get(), _id);
+					if (result) {
 						return result;
 					}
 				}
@@ -306,106 +307,153 @@ namespace corona
 			return *this;
 		}
 
-		void control_base::size_constant(layout_context _ctx)
+		double control_base::get_item_space(rectangle _ctx)
 		{
+			double sz = 0.0;
 
 			control_base& pi = *this;
-			pi.bounds.w = 0;
-			pi.bounds.h = 0;
+
+			switch (item_space.units) {
+			case measure_units::pixels:
+				sz = item_space.amount;
+				break;
+			case measure_units::percent_container:
+				sz = item_space.amount * _ctx.w;
+				break;
+			case measure_units::percent_remaining:
+				sz = item_space.amount * _ctx.w;
+				break;
+			case measure_units::font:
+			case measure_units::font_golden_ratio:
+				double font_height = 12.0;
+				sz = font_height * pi.box.width.amount;
+				if (pi.box.width.units == measure_units::font_golden_ratio)
+				{
+					sz /= 1.618;
+				}
+				break;
+			}
+			return sz;
+		}
+
+		point control_base::get_size(rectangle _ctx, point _remaining)
+		{
+			point sz;
+
+			control_base& pi = *this;
 
 			if (pi.box.width.units == measure_units::pixels)
 			{
-				pi.bounds.w = pi.box.width.amount;
+				sz.x = pi.box.width.amount;
+			}
+			else if (box.width.units == measure_units::percent_remaining)
+			{
+				sz.x = box.width.amount * _remaining.x;
 			}
 			else if (pi.box.width.units == measure_units::percent_container)
 			{
-				pi.bounds.w = pi.box.width.amount * _ctx.container_size.x;
+				sz.x = pi.box.width.amount * _ctx.w;
 			}
 			else if (pi.box.width.units == measure_units::font || pi.box.width.units == measure_units::font_golden_ratio)
 			{
 				double font_height = 12.0;
-				pi.bounds.w = font_height * pi.box.width.amount;
+				sz.x = font_height * pi.box.width.amount;
 				if (pi.box.width.units == measure_units::font_golden_ratio)
 				{
-					pi.bounds.w /= 1.618;
+					sz.x /= 1.618;
 				}
 			}
 
 			if (pi.box.height.units == measure_units::pixels)
 			{
-				pi.bounds.h = pi.box.height.amount;
+				sz.y = pi.box.height.amount;
+			}
+			else if (box.height.units == measure_units::percent_remaining)
+			{
+				sz.y = pi.box.height.amount * _remaining.y;
 			}
 			else if (pi.box.height.units == measure_units::percent_container)
 			{
-				pi.bounds.h = pi.box.height.amount * _ctx.container_size.y;
+				sz.y = pi.box.height.amount * _ctx.y;
 			}
 			else if (pi.box.height.units == measure_units::font || pi.box.height.units == measure_units::font_golden_ratio)
 			{
 				double font_height = 12.0;
-				pi.bounds.h = font_height * pi.box.height.amount;
+				sz.y = font_height * pi.box.height.amount;
 				if (pi.box.height.units == measure_units::font_golden_ratio)
 				{
-					pi.bounds.h *= 1.618;
+					sz.y *= 1.618;
 				}
 			}
-		}
-
-		void control_base::size_constants(layout_context _ctx)
-		{
-			for (auto child : children)
-			{
-				child->size_constant(_ctx);
-			}
-		}
-
-		void control_base::size_aspect_widths(layout_context _ctx, int safety)
-		{
-			if (safety > 2)
-				return;
 
 			if (box.width.units == measure_units::percent_aspect)
 			{
-				size_aspect_heights(_ctx, safety + 1);
-				bounds.w = box.width.amount * bounds.h;
+				sz.x = box.width.amount * bounds.h;
 			}
-		}
-
-		void control_base::size_aspect_heights(layout_context _ctx, int safety)
-		{
-			if (safety > 2)
-				return;
 
 			if (box.height.units == measure_units::percent_aspect)
 			{
-				size_aspect_widths(_ctx, safety + 1);
-				bounds.h = box.height.amount * bounds.w;
+				sz.x = box.height.amount * bounds.w;
 			}
+
+			return sz;
 		}
 
-		void control_base::size_aspect(layout_context _ctx)
+		point control_base::get_position(rectangle _ctx)
 		{
-			size_aspect_heights(_ctx, 0);
-			size_aspect_widths(_ctx, 0);
-		}
+			point pos;
 
-		void control_base::size_aspects(layout_context _ctx)
-		{
-			for (auto child : children)
+			switch (box.x.units)
 			{
-				child->size_aspect(_ctx);
+			case measure_units::percent_container:
+			case measure_units::percent_remaining:
+				pos.x = box.x.amount * _ctx.x;
+				break;
+			case measure_units::pixels:
+				pos.x = box.x.amount;
+				break;
+			case measure_units::font:
+			case measure_units::font_golden_ratio:
+			case measure_units::percent_aspect:
+			case measure_units::percent_child:
+				throw std::logic_error("font, aspect and child units cannot be used for position");
+				break;
+			default:
+				pos.x = 0;
+				break;
 			}
+
+			switch (box.y.units)
+			{
+			case measure_units::percent_container:
+			case measure_units::percent_remaining:
+				pos.y = box.y.amount * _ctx.y;
+				break;
+			case measure_units::pixels:
+				pos.y = box.y.amount;
+				break;
+			case measure_units::font:
+			case measure_units::font_golden_ratio:
+			case measure_units::percent_aspect:
+			case measure_units::percent_child:
+				throw std::logic_error("font, aspect and child units cannot be used for position");
+				break;
+			default:
+				pos.y = 0;
+				break;
+			}
+
+			return pos;
 		}
 
-		layout_context control_base::get_remaining(layout_context _ctx)
+		point control_base::get_remaining(point _ctx)
 		{
 			point pt = { 0.0, 0.0, 0.0 };
-			_ctx.remaining_size = _ctx.container_size - pt;
-			return _ctx;
+			pt = _ctx - pt;
+			return pt;
 		}
 
-
-
-		layout_context row_layout::get_remaining(layout_context _ctx)
+		point row_layout::get_remaining(point _ctx)
 		{
 			point pt = { 0.0, 0.0, 0.0 };
 
@@ -417,11 +465,11 @@ namespace corona
 				}
 			}
 
-			_ctx.remaining_size = _ctx.container_size - pt;
-			return _ctx;
+			pt = _ctx - pt;
+			return pt;
 		}
 
-		layout_context column_layout::get_remaining(layout_context _ctx)
+		point column_layout::get_remaining(point _ctx)
 		{
 			point pt = { 0.0, 0.0, 0.0 };
 
@@ -433,219 +481,13 @@ namespace corona
 				}
 			}
 
-			_ctx.remaining_size = _ctx.container_size - pt;
-			return _ctx;
-		}
-
-
-		void control_base::size_remaining(layout_context _ctx)
-		{
-			if (box.width.units == measure_units::percent_remaining)
-			{
-				bounds.w = box.width.amount * _ctx.remaining_size.x;
-			}
-			if (box.height.units == measure_units::percent_remaining)
-			{
-				bounds.h = box.height.amount * _ctx.remaining_size.y;
-			}
-		}
-
-		void control_base::size_remainings(layout_context _ctx)
-		{
-			_ctx = get_remaining(_ctx);
-			for (auto child : children)
-			{
-				child->size_remaining(_ctx);
-			}
-		}
-
-		void control_base::size_children(layout_context _ctx)
-		{
-			bool sheight = box.height.units == measure_units::percent_child;
-			bool swidth = box.width.units == measure_units::percent_child;
-			if (sheight || swidth)
-			{
-				point sizes = { 0.0, 0.0 };
-				for (auto child : children)
-				{
-					auto ew = child->bounds.w + child->bounds.x - bounds.x;
-					if (ew > sizes.x)
-					{
-						sizes.x = ew;
-					}
-					auto eh = child->bounds.h + child->bounds.y - bounds.y;
-					if (child->bounds.h > sizes.y)
-					{
-						sizes.y = child->bounds.h;
-					}
-				}
-				if (sheight)
-				{
-					bounds.h = sizes.y * box.height.amount;
-				}
-				if (swidth)
-				{
-					bounds.w = sizes.x * box.width.amount;
-				}
-			}
-			size_remainings(_ctx);
-		}
-
-		void column_layout::size_children(layout_context _ctx)
-		{
-			bool sheight = box.height.units == measure_units::percent_child;
-			bool swidth = box.width.units == measure_units::percent_child;
-			if (sheight || swidth)
-			{
-				point sizes = { 0.0, 0.0 };
-				for (auto child : children)
-				{
-					auto ew = child->bounds.w + child->bounds.x - bounds.x;
-					if (ew > sizes.x)
-					{
-						sizes.x = ew;
-					}
-					sizes.y += child->bounds.h;
-				}
-				if (sheight)
-				{
-					bounds.h = sizes.y * box.height.amount;
-				}
-				if (swidth)
-				{
-					bounds.w = sizes.x * box.width.amount;
-				}
-			}
-			size_remainings(_ctx);
-		}
-
-		void row_layout::size_children(layout_context _ctx)
-		{
-			bool sheight = box.height.units == measure_units::percent_child;
-			bool swidth = box.width.units == measure_units::percent_child;
-			if (sheight || swidth)
-			{
-				point sizes = { 0.0, 0.0 };
-				for (auto child : children)
-				{
-					auto eh = child->bounds.h + child->bounds.y - bounds.y;
-					if (child->bounds.h > sizes.y)
-					{
-						sizes.y = child->bounds.h;
-					}
-					sizes.x += child->bounds.w;
-				}
-				if (sheight)
-				{
-					bounds.h = sizes.y * box.height.amount;
-				}
-				if (swidth)
-				{
-					bounds.w = sizes.x * box.width.amount;
-				}
-			}
-			size_remainings(_ctx);
+			pt = _ctx - pt;
+			return pt;
 		}
 
 		bool control_base::contains(point pt)
 		{
 			return rectangle_math::contains(bounds, pt.x, pt.y);
-		}
-
-		void control_base::size_item(layout_context _ctx)
-		{
-			size_constant(_ctx);
-			size_aspect(_ctx);
-			size_remaining(_ctx);
-		}
-
-		void control_base::size_items(layout_context _ctx)
-		{
-			size_constants(_ctx);
-			size_aspects(_ctx);
-			size_remainings(_ctx);
-		}
-
-		void control_base::position(layout_context _ctx)
-		{
-			switch (box.x.units)
-			{
-			case measure_units::percent_container:
-			case measure_units::percent_remaining:
-				bounds.x = box.x.amount * _ctx.container_size.x + _ctx.flow_origin.x + _ctx.container_origin.x;
-				break;
-			case measure_units::pixels:
-				bounds.x = box.x.amount + _ctx.flow_origin.x + _ctx.container_origin.x;
-				break;
-			case measure_units::font:
-			case measure_units::font_golden_ratio:
-			case measure_units::percent_aspect:
-			case measure_units::percent_child:
-				throw std::logic_error("font, aspect and child units cannot be used for position");
-				break;
-			default:
-				bounds.x = _ctx.flow_origin.x + _ctx.container_origin.x;
-				break;
-			}
-
-			switch (box.y.units)
-			{
-			case measure_units::percent_container:
-			case measure_units::percent_remaining:
-				bounds.y = box.y.amount * _ctx.container_size.y + _ctx.flow_origin.y + _ctx.container_origin.y;
-				break;
-			case measure_units::pixels:
-				bounds.y = box.y.amount + _ctx.flow_origin.y + _ctx.container_origin.y;
-				break;
-			case measure_units::font:
-			case measure_units::font_golden_ratio:
-			case measure_units::percent_aspect:
-			case measure_units::percent_child:
-				throw std::logic_error("font, aspect and child units cannot be used for position");
-				break;
-			default:
-				bounds.y = _ctx.flow_origin.y + _ctx.container_origin.y;
-				break;
-			}
-
-
-			switch (item_space.units)
-			{
-			case measure_units::font:
-				item_space_amount.x = item_space.amount * 16.0;
-				item_space_amount.y = item_space.amount * 16.0;
-				break;
-			case measure_units::font_golden_ratio:
-				item_space_amount.x = item_space.amount * 16.0 / 1.618;
-				item_space_amount.y = item_space.amount * 16.0 / 1.618;
-				break;
-			case measure_units::percent_aspect:
-				item_space_amount.x = item_space.amount * _ctx.container_size.y;
-				item_space_amount.y = item_space.amount * _ctx.container_size.x;
-				break;
-			case measure_units::percent_remaining:
-				item_space_amount.x = item_space.amount * _ctx.remaining_size.x;
-				item_space_amount.y = item_space.amount * _ctx.remaining_size.y;
-				break;
-			case measure_units::pixels:
-				item_space_amount.x = item_space.amount;
-				item_space_amount.y = item_space.amount;
-				break;
-			}
-		}
-
-		void control_base::positions(layout_context _ctx)
-		{
-			_ctx.flow_origin.x = 0;
-			_ctx.flow_origin.y = 0;
-
-			for (auto child : children)
-			{
-				child->position(_ctx);
-				child->layout(_ctx);
-			}
-
-			size_children(_ctx);
 		}
 
 		control_base* control_base::set_align_base(visual_alignment _new_alignment)
@@ -680,33 +522,118 @@ namespace corona
 			return this;
 		}
 
-		void row_layout::positions(layout_context _ctx)
+		void control_base::arrange(rectangle _bounds)
 		{
+			bounds = _bounds;
+			item_space_amount.x = item_space_amount.y = get_item_space(_bounds);
+			std::cout << "base " << this << " " << typeid(*this).name() << " " << bounds.x << ", " << bounds.y << " x " << bounds.w << " x " << bounds.h << std::endl;
+		}
+
+		void control_base::arrange_children(rectangle _bounds, 
+			std::function<point(rectangle *_bounds, control_base*)> _initial_origin,
+			std::function<point (rectangle *_bounds, point *_origin, control_base *)> _next_origin)
+		{
+			point origin = { _bounds.x, _bounds.y };
+			point remaining = { _bounds.w, _bounds.h };
+
+			origin = _initial_origin(&bounds, this);
+
+			for (auto child : children)
+			{
+				auto sz = child->get_size(_bounds, remaining);
+				auto pos = child->get_position(_bounds);
+
+				child->bounds.x = origin.x + pos.x;
+				child->bounds.y = origin.y + pos.y;
+				child->bounds.w = sz.x;
+				child->bounds.h = sz.y;
+
+				origin = _next_origin(&bounds, &origin, this);
+			}
+
+			remaining = get_remaining(remaining);
+
+			origin = _initial_origin(&bounds, this);
+
+			for (auto child : children)
+			{
+				auto sz = child->get_size(_bounds, remaining);
+				auto pos = child->get_position(_bounds);
+
+				child->bounds.x = origin.x + pos.x;
+				child->bounds.y = origin.y + pos.y;
+				child->bounds.w = sz.x;
+				child->bounds.h = sz.y;
+
+				origin = _next_origin(&bounds, &origin, this);
+
+				child->arrange(child->bounds);
+			}
+
+		}
+
+		void absolute_layout::arrange(rectangle _bounds)
+		{
+			bounds = _bounds;
+			item_space_amount.x = item_space_amount.y = get_item_space(_bounds);
+
+			point origin = { _bounds.x, _bounds.y };
+			point remaining = { _bounds.w, _bounds.h };
+
+			arrange_children(bounds, 
+				[this](rectangle* _bounds, control_base* _item) {
+					point temp = { _bounds->x, _bounds->y };
+					return temp;
+				},
+				[this](rectangle* _bounds, point* _origin, control_base* _item) {
+					point temp = { _bounds->x, _bounds->y };
+					return temp;
+				}
+			);
+
+			std::cout << "absolute " << typeid(*this).name() << " " << bounds.x << ", " << bounds.y << " x " << bounds.w << " x " << bounds.h << std::endl;
+			on_resize();
+		}
+
+
+		void row_layout::arrange(rectangle _bounds)
+		{
+			point origin;
+
 			if (alignment == visual_alignment::align_near)
 			{
-				_ctx.flow_origin.x = 0;
-				_ctx.flow_origin.y = 0;
+				arrange_children(bounds,
+					[this](rectangle* _bounds, control_base* _item) {
+						point temp;
+						temp.x = _bounds->x;
+						temp.y = _bounds->y;
+						return temp;
+					},
+					[this](rectangle* _bounds, point* _origin, control_base* _item) {
+						point temp = *_origin;
+						temp.x += _item->bounds.w;
+						temp.x += _item->item_space_amount.x;
+						return temp;
+					}
+					);
 
-				for (auto child : children)
-				{
-					child->position(_ctx);
-					child->layout(_ctx);
-					_ctx.flow_origin.x += (child->bounds.w);
-					_ctx.flow_origin.x += _ctx.space_amount.x;
-				}
 			}
 			else if (alignment == visual_alignment::align_far)
 			{
-				_ctx.flow_origin.x = _ctx.container_size.x;
-				_ctx.flow_origin.y = 0;
-
-				for (auto child : children)
-				{
-					_ctx.flow_origin.x -= (child->bounds.w);
-					child->position(_ctx);
-					child->layout(_ctx);
-					_ctx.flow_origin.x -= _ctx.space_amount.x;
-				}
+				arrange_children(bounds,
+					[this](rectangle* _bounds, control_base* _item) {
+						point temp;
+						temp.x = _bounds->w + _bounds->x;
+						temp.y = _bounds->y;
+						return temp;
+					},
+					[this](rectangle* _bounds, point* _origin, control_base* _item) {
+						point temp = *_origin;
+						temp.x += _item->bounds.w;
+						temp.x += _item->item_space_amount.x;
+						return temp;
+					}
+					);
 			}
 			else if (alignment == visual_alignment::align_center)
 			{
@@ -714,107 +641,83 @@ namespace corona
 
 				for (auto child : children)
 				{
-					child->position(_ctx);
-					child->layout(_ctx);
 					w += child->bounds.w;
 				}
 
-				_ctx.flow_origin.x = (_ctx.container_size.x - w) / 2;
-				_ctx.flow_origin.y = 0;
+				origin.x = bounds.x + (bounds.w - w) / 2;
+				origin.y = bounds.y;
 
 				for (auto child : children)
 				{
-					child->position(_ctx);
-					child->layout(_ctx);
-					_ctx.flow_origin.x += (child->bounds.w);
-					_ctx.flow_origin.x += _ctx.space_amount.x;
+					auto pos = child->get_position(bounds);
+					child->bounds.x = origin.x + pos.x;
+					child->bounds.y = origin.y + pos.y;
+					origin.x += (child->bounds.w);
+					origin.x += child->item_space_amount.x;
+					child->arrange(child->bounds);
 				}
 			}
-
-			size_children(_ctx);
+			std::cout << "row " << this << " " << typeid(*this).name() << " " << bounds.x << ", " << bounds.y << " x " << bounds.w << " x " << bounds.h << std::endl;
+			on_resize();
 		}
 
-		void column_layout::positions(layout_context _ctx)
+		void column_layout::arrange(rectangle _ctx)
 		{
+			control_base::arrange(_ctx);
+
+			point origin;
+
 			if (alignment == visual_alignment::align_near)
 			{
-				_ctx.flow_origin.x = 0;
-				_ctx.flow_origin.y = 0;
-
+				origin = { bounds.x, bounds.y, 0 };
 				for (auto child : children)
 				{
-					child->position(_ctx);
-					child->layout(_ctx);
-					_ctx.flow_origin.y += (child->bounds.h);
-					_ctx.flow_origin.y += _ctx.space_amount.y;
+					auto pos = child->get_position(bounds);
+					child->bounds.x = origin.x + pos.x;
+					child->bounds.y = origin.y + pos.y;
+					origin.y += (child->bounds.h + child->item_space_amount.y);
 				}
 			}
 			else if (alignment == visual_alignment::align_far)
 			{
-				_ctx.flow_origin.x = 0;
-				_ctx.flow_origin.y = _ctx.container_size.y;
+				origin = { bounds.w + bounds.x, bounds.y, 0 };
 
 				for (auto child : children)
 				{
-					_ctx.flow_origin.y -= (child->bounds.h);
-					child->position(_ctx);
-					child->layout(_ctx);
-					_ctx.flow_origin.y -= _ctx.space_amount.x;
+					auto pos = child->get_position(bounds);
+					child->bounds.x = origin.x + pos.x;
+					child->bounds.y = origin.y + pos.y;
+					origin.y -= (child->bounds.h + child->item_space_amount.y);
 				}
 			}
 			else if (alignment == visual_alignment::align_center)
 			{
-				double h = 0;
+				double h = 0.0;
 
 				for (auto child : children)
 				{
-					child->position(_ctx);
-					child->layout(_ctx);
 					h += child->bounds.h;
 				}
 
-				_ctx.flow_origin.x = 0;
-				_ctx.flow_origin.y = (_ctx.container_size.y - h) / 2;
+				origin.x = bounds.x;
+				origin.y = bounds.y + (bounds.h - h) / 2;
 
 				for (auto child : children)
 				{
-					child->position(_ctx);
-					child->layout(_ctx);
-					_ctx.flow_origin.y += (child->bounds.h);
-					_ctx.flow_origin.y += _ctx.space_amount.y;
+					auto pos = child->get_position(bounds);
+					child->bounds.x = origin.x + pos.x;
+					child->bounds.y = origin.y + pos.y;
+					origin.y += (child->bounds.h + child->item_space_amount.y);
 				}
 			}
-
-			size_children(_ctx);
-		}
-
-		rectangle control_base::layout(layout_context _ctx)
-		{
-			_ctx.container_origin.x = bounds.x;
-			_ctx.container_origin.y = bounds.y;
-			_ctx.container_size.x = bounds.w;
-			_ctx.container_size.y = bounds.h;
-			_ctx.remaining_size = _ctx.container_size;
-			_ctx.space_amount = { (double)item_space.amount, (double)item_space.amount };
-			_ctx.flow_origin.x = 0;
-			_ctx.flow_origin.y = 0;
-
-			size_items(_ctx);
-			positions(_ctx);
-
-			return bounds;
-
+			std::cout << "column " << this << " "<<typeid(*this).name() << " " << bounds.x << ", " << bounds.y << " x " << bounds.w << " x " << bounds.h << std::endl;
+			on_resize();
 		}
 
 		void control_base::on_resize()
 		{
 			auto ti = typeid(*this).name();
 			std::cout << "resize:" << std::string( control_base::debug_indent, ' ' ) <<  ti << " " << bounds.x << "," << bounds.y << " x " << bounds.w << " " << bounds.h << std::endl;
-			debug_indent += 2;
-			for (auto child : children) {
-				child->on_resize();
-			}
-			debug_indent -= 2;
 		}
 
 		void draw_control::create(std::weak_ptr<win32::win32ControllerHost> _host)
@@ -840,7 +743,9 @@ namespace corona
 
 		void draw_control::on_resize()
 		{
-			control_base::on_resize();
+			auto ti = typeid(*this).name();
+			std::cout << "resize:" << std::string(control_base::debug_indent, ' ') << ti << " " << bounds.x << "," << bounds.y << " x " << bounds.w << " " << bounds.h << std::endl;
+
 			if (auto pwindow = window.lock()) {
 				pwindow->resize(bounds.w, bounds.h);
 			}
@@ -948,11 +853,6 @@ namespace corona
 		{
 			text_style = request;
 			return *this;
-		}
-
-		void text_display_control::on_resize()
-		{
-			draw_control::on_resize();
 		}
 
 		image_control::image_control()
@@ -1206,24 +1106,14 @@ namespace corona
 		{
 
 			double pd = _padding * 2.0;
-			layout_context ctx;
-			ctx.space_amount = { 0.0, 0.0 };
-			ctx.container_size = { width - pd, height - pd };
-			ctx.container_origin = { _padding, _padding };
-			ctx.flow_origin = { 0, 0 };
-			ctx.remaining_size = ctx.container_size;
+			rectangle bounds;
+			bounds.x = 0;
+			bounds.y = 0;
+			bounds.w = width;
+			bounds.h = height;
 
-			if (root->box.height.units == measure_units::percent_child ||
-				root->box.width.units == measure_units::percent_child)
-				throw std::logic_error("Cannot use child based sizing on a root element");
-
-//			std::cout << "Resizing:" << width << " " << height << std::endl;
-
-			root->size_item(ctx);
-			root->position(ctx);
-			root->layout(ctx);
+			root->arrange(bounds);
 			control_base::debug_indent = 0;
-			root->on_resize();
 		}
 
 		void page::on_key_up(int _control_id, std::function< void(key_up_event) > handler)
