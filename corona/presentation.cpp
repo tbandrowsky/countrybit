@@ -629,86 +629,102 @@ namespace corona
 					},
 					[this](rectangle* _bounds, point* _origin, control_base* _item) {
 						point temp = *_origin;
-						temp.x += _item->bounds.w;
-						temp.x += _item->item_space_amount.x;
+						temp.x -= (_item->bounds.w + _item->item_space_amount.x);
 						return temp;
 					}
 					);
 			}
 			else if (alignment == visual_alignment::align_center)
 			{
-				double w = 0.0;
 
-				for (auto child : children)
-				{
-					w += child->bounds.w;
-				}
+				arrange_children(bounds,
+					[this](rectangle* _bounds, control_base* _item) {
 
-				origin.x = bounds.x + (bounds.w - w) / 2;
-				origin.y = bounds.y;
+						double w = 0.0;
+						point origin;
 
-				for (auto child : children)
-				{
-					auto pos = child->get_position(bounds);
-					child->bounds.x = origin.x + pos.x;
-					child->bounds.y = origin.y + pos.y;
-					origin.x += (child->bounds.w);
-					origin.x += child->item_space_amount.x;
-					child->arrange(child->bounds);
-				}
+						for (auto child : children)
+						{
+							w += child->bounds.w;
+						}
+
+						origin.x = bounds.x + (bounds.w - w) / 2;
+						origin.y = bounds.y;
+						return origin;
+					},
+					[this](rectangle* _bounds, point* _origin, control_base* _item) {
+						point temp = *_origin;
+						temp.x += (_item->bounds.w + _item->item_space_amount.x);
+						return temp;
+					}
+				);
 			}
 			std::cout << "row " << this << " " << typeid(*this).name() << " " << bounds.x << ", " << bounds.y << " x " << bounds.w << " x " << bounds.h << std::endl;
 			on_resize();
 		}
 
 		void column_layout::arrange(rectangle _ctx)
-		{
-			control_base::arrange(_ctx);
-
+		{			
 			point origin;
 
 			if (alignment == visual_alignment::align_near)
 			{
-				origin = { bounds.x, bounds.y, 0 };
-				for (auto child : children)
-				{
-					auto pos = child->get_position(bounds);
-					child->bounds.x = origin.x + pos.x;
-					child->bounds.y = origin.y + pos.y;
-					origin.y += (child->bounds.h + child->item_space_amount.y);
-				}
+				arrange_children(bounds,
+					[this](rectangle* _bounds, control_base* _item) {
+						point temp;
+						temp.x = _bounds->x;
+						temp.y = _bounds->y;
+						return temp;
+					},
+					[this](rectangle* _bounds, point* _origin, control_base* _item) {
+						point temp = *_origin;
+						temp.y += _item->bounds.h;
+						temp.y += _item->item_space_amount.y;
+						return temp;
+					}
+				);
+
 			}
 			else if (alignment == visual_alignment::align_far)
 			{
-				origin = { bounds.w + bounds.x, bounds.y, 0 };
-
-				for (auto child : children)
-				{
-					auto pos = child->get_position(bounds);
-					child->bounds.x = origin.x + pos.x;
-					child->bounds.y = origin.y + pos.y;
-					origin.y -= (child->bounds.h + child->item_space_amount.y);
-				}
+				arrange_children(bounds,
+					[this](rectangle* _bounds, control_base* _item) {
+						point temp;
+						temp.x = _bounds->x;
+						temp.y = _bounds->h + _bounds->y;
+						return temp;
+					},
+					[this](rectangle* _bounds, point* _origin, control_base* _item) {
+						point temp = *_origin;
+						temp.x -= (_item->bounds.h + _item->item_space_amount.y);
+						return temp;
+					}
+				);
 			}
 			else if (alignment == visual_alignment::align_center)
 			{
-				double h = 0.0;
 
-				for (auto child : children)
-				{
-					h += child->bounds.h;
-				}
+				arrange_children(bounds,
+					[this](rectangle* _bounds, control_base* _item) {
 
-				origin.x = bounds.x;
-				origin.y = bounds.y + (bounds.h - h) / 2;
+						double h = 0.0;
+						point origin;
 
-				for (auto child : children)
-				{
-					auto pos = child->get_position(bounds);
-					child->bounds.x = origin.x + pos.x;
-					child->bounds.y = origin.y + pos.y;
-					origin.y += (child->bounds.h + child->item_space_amount.y);
-				}
+						for (auto child : children)
+						{
+							h += child->bounds.h;
+						}
+
+						origin.x = bounds.x;
+						origin.y = bounds.h + (bounds.h - h) / 2;
+						return origin;
+					},
+					[this](rectangle* _bounds, point* _origin, control_base* _item) {
+						point temp = *_origin;
+						temp.y += (_item->bounds.h + _item->item_space_amount.y);
+						return temp;
+					}
+				);
 			}
 			std::cout << "column " << this << " "<<typeid(*this).name() << " " << bounds.x << ", " << bounds.y << " x " << bounds.w << " x " << bounds.h << std::endl;
 			on_resize();
