@@ -92,25 +92,36 @@ namespace corona
 
 		row_layout& control_base::row_begin(int id)
 		{
-			return create<row_layout>(id);
+			row_layout& temp = create<row_layout>(id);
+			debug_indent += 2;
+			return temp;
 		}
 
 		column_layout& control_base::column_begin(int id)
 		{
-			return create<column_layout>(id);
+			column_layout& temp = create<column_layout>(id);
+			debug_indent += 2;
+			return temp;
 		}
 
 		absolute_layout& control_base::absolute_begin(int id)
 		{
-			return create<absolute_layout>(id);
+			absolute_layout& temp = create<absolute_layout>(id);
+			debug_indent += 2;
+			return temp;
 		}
 
 		control_base& control_base::end()
 		{
+			debug_indent -= 2;
+			if (debug_indent < 0) {
+				debug_indent = 0;
+			}
 			if (parent) {
 				auto& temp = *parent;
 				auto string_name = typeid(temp).name();
-				std::cout << " ** " << string_name << std::endl;
+				std::string indent(debug_indent, ' ');
+				std::cout << indent << " " << typeid(*this).name() << " ->navigate " << string_name << std::endl;
 				return temp;
 			}
 		}
@@ -374,7 +385,7 @@ namespace corona
 			}
 			else if (pi.box.height.units == measure_units::percent_container)
 			{
-				sz.y = pi.box.height.amount * _ctx.y;
+				sz.y = pi.box.height.amount * _ctx.h;
 			}
 			else if (pi.box.height.units == measure_units::font || pi.box.height.units == measure_units::font_golden_ratio)
 			{
@@ -407,7 +418,7 @@ namespace corona
 			{
 			case measure_units::percent_container:
 			case measure_units::percent_remaining:
-				pos.x = box.x.amount * _ctx.x;
+				pos.x = box.x.amount * _ctx.w;
 				break;
 			case measure_units::pixels:
 				pos.x = box.x.amount;
@@ -427,7 +438,7 @@ namespace corona
 			{
 			case measure_units::percent_container:
 			case measure_units::percent_remaining:
-				pos.y = box.y.amount * _ctx.y;
+				pos.y = box.y.amount * _ctx.h;
 				break;
 			case measure_units::pixels:
 				pos.y = box.y.amount;
@@ -525,16 +536,18 @@ namespace corona
 		void control_base::arrange(rectangle _bounds)
 		{
 			bounds = _bounds;
+			on_resize();
 			item_space_amount.x = item_space_amount.y = get_item_space(_bounds);
-			std::cout << "base " << this << " " << typeid(*this).name() << " " << bounds.x << ", " << bounds.y << " x " << bounds.w << " x " << bounds.h << std::endl;
 		}
 
 		void control_base::arrange_children(rectangle _bounds, 
 			std::function<point(rectangle *_bounds, control_base*)> _initial_origin,
-			std::function<point (rectangle *_bounds, point *_origin, control_base *)> _next_origin)
+			std::function<point (point* _origin, rectangle *_bounds, control_base *)> _next_origin)
 		{
-			point origin = { _bounds.x, _bounds.y };
-			point remaining = { _bounds.w, _bounds.h };
+			point origin = { _bounds.x, _bounds.y, 0 };
+			point remaining = { _bounds.w, _bounds.h, 0 };
+
+			on_resize();
 
 			origin = _initial_origin(&bounds, this);
 
@@ -548,24 +561,32 @@ namespace corona
 				child->bounds.w = sz.x;
 				child->bounds.h = sz.y;
 
-				origin = _next_origin(&bounds, &origin, this);
+				origin = _next_origin(&origin, &bounds, child.get());
 			}
 
 			remaining = get_remaining(remaining);
 
 			origin = _initial_origin(&bounds, this);
+	//		std::cout << "origin start:" << typeid(*this).name() << origin.x << ", " << origin.y << std::endl;
 
 			for (auto child : children)
 			{
 				auto sz = child->get_size(_bounds, remaining);
 				auto pos = child->get_position(_bounds);
 
+//				std::cout << typeid(*this).name() << " sz:" << typeid(*child).name() << " " << sz.x << ", " << sz.y << std::endl;
+//				std::cout << typeid(*this).name() << " pos:" << typeid(*child).name() << " " << pos.x << ", " << pos.y << std::endl;
+
 				child->bounds.x = origin.x + pos.x;
 				child->bounds.y = origin.y + pos.y;
 				child->bounds.w = sz.x;
 				child->bounds.h = sz.y;
 
-				origin = _next_origin(&bounds, &origin, this);
+				std::cout << typeid(*this).name() << " arrange:" << typeid(*child).name() << " " << child->bounds.x << "," << child->bounds.y << " x " << child->bounds.w << "," << child->bounds.h << std::endl;
+
+				origin = _next_origin(&origin, &bounds, child.get());
+
+//				std::cout << "   next origin:" << typeid(*this).name() << "  child:" << typeid(*child).name() << " " << origin.x << ", " << origin.y << std::endl;
 
 				child->arrange(child->bounds);
 			}
@@ -577,39 +598,38 @@ namespace corona
 			bounds = _bounds;
 			item_space_amount.x = item_space_amount.y = get_item_space(_bounds);
 
-			point origin = { _bounds.x, _bounds.y };
-			point remaining = { _bounds.w, _bounds.h };
+			point origin = { _bounds.x, _bounds.y, 0 };
+			point remaining = { _bounds.w, _bounds.h, 0 };
 
 			arrange_children(bounds, 
 				[this](rectangle* _bounds, control_base* _item) {
 					point temp = { _bounds->x, _bounds->y };
 					return temp;
 				},
-				[this](rectangle* _bounds, point* _origin, control_base* _item) {
+				[this](point* _origin, rectangle* _bounds, control_base* _item) {
 					point temp = { _bounds->x, _bounds->y };
 					return temp;
 				}
 			);
-
-			std::cout << "absolute " << typeid(*this).name() << " " << bounds.x << ", " << bounds.y << " x " << bounds.w << " x " << bounds.h << std::endl;
-			on_resize();
 		}
 
 
 		void row_layout::arrange(rectangle _bounds)
 		{
-			point origin;
+			point origin = { 0, 0, 0 };
+
+			bounds = _bounds;
 
 			if (alignment == visual_alignment::align_near)
 			{
 				arrange_children(bounds,
 					[this](rectangle* _bounds, control_base* _item) {
-						point temp;
+						point temp = { 0, 0, 0 };
 						temp.x = _bounds->x;
 						temp.y = _bounds->y;
 						return temp;
 					},
-					[this](rectangle* _bounds, point* _origin, control_base* _item) {
+					[this](point* _origin, rectangle* _bounds, control_base* _item) {
 						point temp = *_origin;
 						temp.x += _item->bounds.w;
 						temp.x += _item->item_space_amount.x;
@@ -622,12 +642,12 @@ namespace corona
 			{
 				arrange_children(bounds,
 					[this](rectangle* _bounds, control_base* _item) {
-						point temp;
+						point temp = { 0, 0, 0 };
 						temp.x = _bounds->w + _bounds->x;
 						temp.y = _bounds->y;
 						return temp;
 					},
-					[this](rectangle* _bounds, point* _origin, control_base* _item) {
+					[this](point* _origin, rectangle* _bounds, control_base* _item) {
 						point temp = *_origin;
 						temp.x -= (_item->bounds.w + _item->item_space_amount.x);
 						return temp;
@@ -641,42 +661,46 @@ namespace corona
 					[this](rectangle* _bounds, control_base* _item) {
 
 						double w = 0.0;
-						point origin;
+						point origin = { 0, 0, 0 };
+						point remaining = { 0, 0, 0 };
+						remaining.x = _bounds->w;
+						remaining.y = _bounds->h;
 
 						for (auto child : children)
 						{
-							w += child->bounds.w;
+							auto sz = child->get_size(*_bounds, remaining);
+							w += sz.x;
 						}
 
-						origin.x = bounds.x + (bounds.w - w) / 2;
+						origin.x = (bounds.x + bounds.w - w) / 2;
 						origin.y = bounds.y;
 						return origin;
 					},
-					[this](rectangle* _bounds, point* _origin, control_base* _item) {
+					[this](point* _origin, rectangle* _bounds, control_base* _item) {
 						point temp = *_origin;
 						temp.x += (_item->bounds.w + _item->item_space_amount.x);
 						return temp;
 					}
 				);
 			}
-			std::cout << "row " << this << " " << typeid(*this).name() << " " << bounds.x << ", " << bounds.y << " x " << bounds.w << " x " << bounds.h << std::endl;
-			on_resize();
 		}
 
-		void column_layout::arrange(rectangle _ctx)
+		void column_layout::arrange(rectangle _bounds)
 		{			
-			point origin;
+			point origin = { 0, 0, 0 };
+
+			bounds = _bounds;
 
 			if (alignment == visual_alignment::align_near)
 			{
 				arrange_children(bounds,
 					[this](rectangle* _bounds, control_base* _item) {
-						point temp;
+						point temp = { 0, 0, 0 };
 						temp.x = _bounds->x;
 						temp.y = _bounds->y;
 						return temp;
 					},
-					[this](rectangle* _bounds, point* _origin, control_base* _item) {
+					[this](point* _origin, rectangle* _bounds, control_base* _item) {
 						point temp = *_origin;
 						temp.y += _item->bounds.h;
 						temp.y += _item->item_space_amount.y;
@@ -689,14 +713,14 @@ namespace corona
 			{
 				arrange_children(bounds,
 					[this](rectangle* _bounds, control_base* _item) {
-						point temp;
+						point temp = { 0, 0, 0 };
 						temp.x = _bounds->x;
 						temp.y = _bounds->h + _bounds->y;
 						return temp;
 					},
-					[this](rectangle* _bounds, point* _origin, control_base* _item) {
+					[this](point* _origin, rectangle* _bounds, control_base* _item) {
 						point temp = *_origin;
-						temp.x -= (_item->bounds.h + _item->item_space_amount.y);
+						temp.y -= (_item->bounds.h + _item->item_space_amount.y);
 						return temp;
 					}
 				);
@@ -708,36 +732,64 @@ namespace corona
 					[this](rectangle* _bounds, control_base* _item) {
 
 						double h = 0.0;
-						point origin;
+						point origin = { 0, 0, 0 };
+						point remaining = { 0, 0, 0 };
+						remaining.x = _bounds->w;
+						remaining.y = _bounds->h;
 
 						for (auto child : children)
 						{
-							h += child->bounds.h;
+							auto sz = child->get_size(*_bounds, remaining);
+							h += sz.y;
 						}
 
 						origin.x = bounds.x;
-						origin.y = bounds.h + (bounds.h - h) / 2;
+						origin.y = (bounds.y + bounds.h - h) / 2;
 						return origin;
 					},
-					[this](rectangle* _bounds, point* _origin, control_base* _item) {
+					[this](point* _origin, rectangle* _bounds, control_base* _item) {
 						point temp = *_origin;
 						temp.y += (_item->bounds.h + _item->item_space_amount.y);
 						return temp;
 					}
 				);
 			}
-			std::cout << "column " << this << " "<<typeid(*this).name() << " " << bounds.x << ", " << bounds.y << " x " << bounds.w << " x " << bounds.h << std::endl;
-			on_resize();
 		}
 
 		void control_base::on_resize()
 		{
 			auto ti = typeid(*this).name();
-			std::cout << "resize:" << std::string( control_base::debug_indent, ' ' ) <<  ti << " " << bounds.x << "," << bounds.y << " x " << bounds.w << " " << bounds.h << std::endl;
+//			std::cout << "resize control_base:" << ti << " " << bounds.x << "," << bounds.y << " x " << bounds.w << " " << bounds.h << std::endl;
+		}
+
+
+		container_control::container_control()
+		{
+			parent = nullptr;
+			id = id_counter::next();
+		}
+
+		container_control::container_control(control_base* _parent, int _id)
+		{
+			parent = _parent;
+			id = id_counter::next();
+		}
+
+		draw_control::draw_control()
+		{
+			parent = nullptr;
+			id = id_counter::next();
+		}
+
+		draw_control::draw_control(control_base* _parent, int _id)
+		{
+			parent = _parent;
+			id = _id;
 		}
 
 		void draw_control::create(std::weak_ptr<win32::win32ControllerHost> _host)
 		{
+
 			host = _host;
 			if (auto phost = _host.lock()) {
 				window = phost->createDirect2Window(id, bounds);
@@ -760,10 +812,10 @@ namespace corona
 		void draw_control::on_resize()
 		{
 			auto ti = typeid(*this).name();
-			std::cout << "resize:" << std::string(control_base::debug_indent, ' ') << ti << " " << bounds.x << "," << bounds.y << " x " << bounds.w << " " << bounds.h << std::endl;
+//			std::cout << "resize draw_control:" << ti << " " << bounds.x << "," << bounds.y << " x " << bounds.w << " " << bounds.h << std::endl;
 
 			if (auto pwindow = window.lock()) {
-				pwindow->resize(bounds.w, bounds.h);
+				pwindow->moveWindow(bounds.x, bounds.y, bounds.w, bounds.h);
 			}
 		}
 
@@ -848,14 +900,14 @@ namespace corona
 
 		text_display_control& text_display_control::set_text_fill(std::string _color)
 		{
-			text_fill_brush.name = typeid(this).name();
+			text_fill_brush.name = typeid(*this).name();
 			text_fill_brush.brushColor = toColor(_color.c_str());
 			return *this;
 		}
 
 		text_display_control& text_display_control::set_text_style(std::string _font_name, int _font_size, bool _bold, bool _underline, bool _italic, bool _strike_through)
 		{
-			text_style.name = typeid(this).name();
+			text_style.name = typeid(*this).name();
 			text_style.fontName = _font_name;
 			text_style.fontSize = _font_size;
 			text_style.bold = _bold;
@@ -875,14 +927,15 @@ namespace corona
 		{
 		}
 
-		title_control::title_control()
+
+		void title_control::set_default_styles()
 		{
 			text_fill_brush.name = "title_text_fill";
-			text_fill_brush.brushColor = toColor("#C0C0C0");
+			text_fill_brush.brushColor = toColor("#F0F0F0");
 
 			text_style = {};
 			text_style.name = "title_text_style";
-			text_style.fontName = "Open Sans;Arial";
+			text_style.fontName = "Open Sans,Arial";
 			text_style.fontSize = 34;
 			text_style.bold = false;
 			text_style.italics = false;
@@ -893,14 +946,25 @@ namespace corona
 			text_style.wrap_text = true;
 		}
 
-		subtitle_control::subtitle_control()
+		title_control::title_control(control_base* _parent, int _id) : text_display_control(_parent, _id)
+		{
+			set_default_styles();
+		}
+
+		title_control::title_control()
+		{
+			set_default_styles();
+		}
+
+
+		void subtitle_control::set_default_styles()
 		{
 			text_fill_brush.name = "subtitle_text_fill";
 			text_fill_brush.brushColor = toColor("#C0C0C0");
 
 			text_style = {};
 			text_style.name = "subtitle_text_style";
-			text_style.fontName = "Open Sans;Arial";
+			text_style.fontName = "Open Sans,Arial";
 			text_style.fontSize = 25;
 			text_style.bold = false;
 			text_style.italics = false;
@@ -911,7 +975,17 @@ namespace corona
 			text_style.wrap_text = true;
 		}
 
-		chaptertitle_control::chaptertitle_control()
+		subtitle_control::subtitle_control(control_base* _parent, int _id) : text_display_control(_parent, _id)
+		{
+			set_default_styles();
+		}
+
+		subtitle_control::subtitle_control()
+		{
+			set_default_styles();
+		}
+
+		void chaptertitle_control::set_default_styles()
 		{
 			text_fill_brush.name = "chaptertitle_text_fill";
 			text_fill_brush.brushColor = toColor("#C0C0C0");
@@ -929,7 +1003,17 @@ namespace corona
 			text_style.wrap_text = true;
 		}
 
-		chaptersubtitle_control::chaptersubtitle_control()
+		chaptertitle_control::chaptertitle_control(control_base* _parent, int _id) : text_display_control(_parent, _id)
+		{
+			set_default_styles();
+		}
+
+		chaptertitle_control::chaptertitle_control()
+		{
+			set_default_styles();
+		}
+
+		void chaptersubtitle_control::set_default_styles()
 		{
 			text_fill_brush.name = "chaptersubtitle_text_fill";
 			text_fill_brush.brushColor = toColor("#C0C0C0");
@@ -947,7 +1031,18 @@ namespace corona
 			text_style.wrap_text = true;
 		}
 
-		paragraph_control::paragraph_control()
+
+		chaptersubtitle_control::chaptersubtitle_control(control_base* _parent, int _id) : text_display_control(_parent, _id)
+		{
+			set_default_styles();
+		}
+
+		chaptersubtitle_control::chaptersubtitle_control()
+		{
+			set_default_styles();
+		}
+
+		void paragraph_control::set_default_styles()
 		{
 			text_fill_brush.name = "chaptersubtitle_text_fill";
 			text_fill_brush.brushColor = toColor("#C0C0C0");
@@ -965,7 +1060,17 @@ namespace corona
 			text_style.wrap_text = true;
 		}
 
-		code_control::code_control()
+		paragraph_control::paragraph_control(control_base* _parent, int _id) : text_display_control(_parent, _id)
+		{
+			set_default_styles();
+		}
+
+		paragraph_control::paragraph_control()
+		{
+			set_default_styles();
+		}
+		
+		void code_control::set_default_styles()
 		{
 			text_fill_brush.name = "chaptersubtitle_text_fill";
 			text_fill_brush.brushColor = toColor("#C0C0C0");
@@ -981,6 +1086,16 @@ namespace corona
 			text_style.horizontal_align = visual_alignment::align_center;
 			text_style.vertical_align = visual_alignment::align_center;
 			text_style.wrap_text = false;
+		}
+
+		code_control::code_control(control_base* _parent, int _id) : text_display_control(_parent, _id)
+		{
+			set_default_styles();
+		}
+
+		code_control::code_control()
+		{
+			set_default_styles();
 		}
 
 		void richedit_control::set_html(const std::string& _text)
@@ -1089,21 +1204,24 @@ namespace corona
 
 		row_layout& page::row_begin(int id)
 		{
-			auto new_row = std::make_shared<row_layout>();
+			std::cout << "create: row"<< std::endl;
+			auto new_row = std::make_shared<row_layout>((control_base *)nullptr, id);
 			root = new_row;
 			return *new_row.get();
 		}
 
 		column_layout& page::column_begin(int id)
 		{
-			auto new_row = std::make_shared<column_layout>();
+			std::cout << "create: column" << std::endl;
+			auto new_row = std::make_shared<column_layout>((control_base*)nullptr, id);
 			root = new_row;
 			return *new_row.get();
 		}
 
 		absolute_layout& page::absolute_begin(int id)
 		{
-			auto new_row = std::make_shared<absolute_layout>();
+			std::cout << "create: begin" << std::endl;
+			auto new_row = std::make_shared<absolute_layout>((control_base*)nullptr, id);
 			root = new_row;
 			return *new_row.get();
 		}
@@ -1128,7 +1246,10 @@ namespace corona
 			bounds.w = width;
 			bounds.h = height;
 
+			std::cout << "page arrange: " << bounds.w << " " << bounds.h << std::endl;
+
 			root->arrange(bounds);
+			std::cout << std::endl;
 			control_base::debug_indent = 0;
 		}
 

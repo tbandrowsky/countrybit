@@ -66,7 +66,7 @@ namespace corona
 			virtual void on_resize();
 			void arrange_children(rectangle _bounds,
 				std::function<point(rectangle *_bounds, control_base*)> _initial_origin,
-				std::function<point(rectangle *_bounds, point* _origin, control_base*)> _next_origin);
+				std::function<point(point* _origin, rectangle *_bounds, control_base*)> _next_origin);
 
 		public:
 
@@ -128,6 +128,8 @@ namespace corona
 				id_counter::check(_id);
 				std::shared_ptr<control_type> temp = std::make_shared<control_type>(this, _id);
 				children.push_back(temp);
+				std::string indent(debug_indent, ' ');
+				std::cout << indent << " " << typeid(*this).name() << " ->create:" << typeid(control_type).name() << std::endl;
 				return *temp.get();
 			}
 
@@ -216,14 +218,15 @@ namespace corona
 
 		class draw_control : public control_base
 		{
+			void init();
 		protected:
 			std::weak_ptr<win32::win32ControllerHost> host;
 			std::weak_ptr<win32::direct2dChildWindow> window;
 			std::function<void(draw_control*)> on_draw;
 			std::function<void(draw_control*)> on_create;
 
-			draw_control() { ; }
-			draw_control(control_base * _parent, int _id) : control_base(_parent, _id) { ; }
+			draw_control();
+			draw_control(control_base* _parent, int _id);
 			virtual void create(std::weak_ptr<win32::win32ControllerHost> _host);
 			virtual void destroy();
 			virtual void draw();
@@ -233,8 +236,8 @@ namespace corona
 		class container_control : public draw_control
 		{
 		public:
-			container_control() { ; }
-			container_control(control_base * _parent, int _id) : draw_control(_parent, _id) { ; }
+			container_control();
+			container_control(control_base * _parent, int _id);
 			virtual ~container_control() { ; }
 		};
 
@@ -259,44 +262,50 @@ namespace corona
 
 		class title_control : public text_display_control
 		{
+			void set_default_styles();
 		public:
 			title_control();
-			title_control(control_base * _parent, int _id) : text_display_control(_parent, _id) { ; }
+			title_control(control_base* _parent, int _id);
 		};
 
 		class subtitle_control : public text_display_control
 		{
+			void set_default_styles();
 		public:
 			subtitle_control();
-			subtitle_control(control_base * _parent, int _id) : text_display_control(_parent, _id) { ; }
+			subtitle_control(control_base* _parent, int _id);
 		};
 
 		class chaptertitle_control : public text_display_control
 		{
+			void set_default_styles();
 		public:
 			chaptertitle_control();
-			chaptertitle_control(control_base * _parent, int _id) : text_display_control(_parent, _id) { ; }
+			chaptertitle_control(control_base* _parent, int _id);
 		};
 
 		class chaptersubtitle_control : public text_display_control
 		{
+			void set_default_styles();
 		public:
 			chaptersubtitle_control();
-			chaptersubtitle_control(control_base * _parent, int _id) : text_display_control(_parent, _id) { ; }
+			chaptersubtitle_control(control_base* _parent, int _id);
 		};
 
 		class paragraph_control : public text_display_control
 		{
+			void set_default_styles();
 		public:
 			paragraph_control();
-			paragraph_control(control_base * _parent, int _id) : text_display_control(_parent, _id) { ; }
+			paragraph_control(control_base* _parent, int _id);
 		};
 
 		class code_control : public text_display_control
 		{
+			void set_default_styles();
 		public:
 			code_control();
-			code_control(control_base * _parent, int _id) : text_display_control(_parent, _id) { ; }
+			code_control(control_base* _parent, int _id);
 		};
 
 		class image_control : 
