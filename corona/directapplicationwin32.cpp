@@ -1420,7 +1420,7 @@ namespace corona
 
 		rectangle directApplicationWin32::toPixelsFromDips(const rectangle& r)
 		{
-			dpiScale = 96.0 / GetDpiForWindow(hwndRoot);
+			dpiScale = GetDpiForWindow(hwndRoot) / 96.0;
 			rectangle rx;
 
 			rx.x = r.x * dpiScale;

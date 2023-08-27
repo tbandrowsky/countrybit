@@ -642,8 +642,20 @@ namespace corona
 			{
 				arrange_children(bounds,
 					[this](rectangle* _bounds, control_base* _item) {
+
+						double w = 0.0;
+						point remaining;
+						remaining.x = _bounds->w;
+						remaining.y = _bounds->h;
+
+						for (auto child : children)
+						{
+							auto sz = child->get_size(*_bounds, remaining);
+							w += sz.x;
+						}
+
 						point temp = { 0, 0, 0 };
-						temp.x = _bounds->w + _bounds->x;
+						temp.x = _bounds->x + _bounds->w - w;
 						temp.y = _bounds->y;
 						return temp;
 					},
@@ -665,6 +677,7 @@ namespace corona
 						point remaining = { 0, 0, 0 };
 						remaining.x = _bounds->w;
 						remaining.y = _bounds->h;
+						remaining = this->get_remaining(remaining);
 
 						for (auto child : children)
 						{
@@ -714,13 +727,26 @@ namespace corona
 				arrange_children(bounds,
 					[this](rectangle* _bounds, control_base* _item) {
 						point temp = { 0, 0, 0 };
+
+						double h = 0.0;
+						point remaining = { };
+						remaining.x = _bounds->w;
+						remaining.y = _bounds->h;
+						remaining = this->get_remaining(remaining);
+
+						for (auto child : children)
+						{
+							auto sz = child->get_size(*_bounds, remaining);
+							h += sz.y;
+						}
+
 						temp.x = _bounds->x;
-						temp.y = _bounds->h + _bounds->y;
+						temp.y = _bounds->y +_bounds->h - h;
 						return temp;
 					},
 					[this](point* _origin, rectangle* _bounds, control_base* _item) {
 						point temp = *_origin;
-						temp.y -= (_item->bounds.h + _item->item_space_amount.y);
+						temp.y += (_item->bounds.h + _item->item_space_amount.y);
 						return temp;
 					}
 				);
@@ -736,6 +762,7 @@ namespace corona
 						point remaining = { 0, 0, 0 };
 						remaining.x = _bounds->w;
 						remaining.y = _bounds->h;
+						remaining = this->get_remaining(remaining);
 
 						for (auto child : children)
 						{

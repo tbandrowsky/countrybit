@@ -373,6 +373,24 @@ namespace corona
 				set_size_base(150.0_px, 2.0_fontgr);
 			}
 
+			virtual void on_resize()
+			{
+				if (auto phost = window_host.lock()) {
+					HWND parent = phost->getMainWindow();
+
+					auto boundsPixels = phost->toPixelsFromDips(bounds);
+					RECT r;
+					r.left = boundsPixels.x;
+					r.top = boundsPixels.y;
+					r.right = boundsPixels.x + boundsPixels.w;
+					r.bottom = boundsPixels.y + boundsPixels.h;
+
+					if (((HWND)window) != nullptr) {
+						window.MoveWindow(&r);
+					}
+				}
+			}
+
 			virtual void create(std::weak_ptr<win32::win32ControllerHost> _host)
 			{
 				window_host = _host;
