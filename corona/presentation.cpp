@@ -95,28 +95,28 @@ namespace corona
 
 		}
 
-		row_layout& control_base::row_begin(int id)
+		row_layout& container_control::row_begin(int id)
 		{
 			row_layout& temp = create<row_layout>(id);
 			debug_indent += 2;
 			return temp;
 		}
 
-		column_layout& control_base::column_begin(int id)
+		column_layout& container_control::column_begin(int id)
 		{
 			column_layout& temp = create<column_layout>(id);
 			debug_indent += 2;
 			return temp;
 		}
 
-		absolute_layout& control_base::absolute_begin(int id)
+		absolute_layout& container_control::absolute_begin(int id)
 		{
 			absolute_layout& temp = create<absolute_layout>(id);
 			debug_indent += 2;
 			return temp;
 		}
 
-		control_base& control_base::end()
+		container_control& container_control::end()
 		{
 			debug_indent -= 2;
 			if (debug_indent < 0) {
@@ -131,42 +131,39 @@ namespace corona
 			}
 		}
 
-		control_base& control_base::title(int id)
+		container_control& container_control::set_align(visual_alignment _new_alignment)
 		{
-			return create<title_control>(id);
+			alignment = _new_alignment;
+			return *this;
 		}
 
-		control_base& control_base::subtitle(int id)
+		container_control& container_control::set_origin(measure _x, measure _y)
 		{
-			return create<subtitle_control>(id);
+			box.x = _x;
+			box.y = _y;
+			return *this;
 		}
 
-		control_base& control_base::chaptertitle(int id)
+		container_control& container_control::set_size(measure _width, measure _height)
 		{
-			return create<chaptertitle_control>(id);
+			box.width = _width;
+			box.height = _height;
+			return *this;
 		}
 
-		control_base& control_base::chaptersubtitle(int id)
+		container_control& container_control::set_position(layout_rect _new_layout)
 		{
-			return create<chaptersubtitle_control>(id);
+			box = _new_layout;
+			return *this;
 		}
 
-		control_base& control_base::paragraph(int id)
+		container_control& container_control::image(int id)
 		{
-			return create<paragraph_control>(id);
+			auto& tc = create<image_control>(id);
+			return *this;
 		}
 
-		control_base& control_base::code(int id)
-		{
-			return create<code_control>(id);
-		}
-
-		control_base& control_base::image(int id)
-		{
-			return create<image_control>(id);
-		}
-
-		control_base& control_base::title(std::string text, int id)
+		container_control& container_control::title(std::string text, int id)
 		{
 			auto &tc = create<title_control>(id);
 			apply(tc);
@@ -174,7 +171,7 @@ namespace corona
 			return *this;
 		}
 
-		control_base& control_base::subtitle(std::string text, int id)
+		container_control& container_control::subtitle(std::string text, int id)
 		{
 			auto &tc = create<subtitle_control>(id);
 			apply(tc);
@@ -182,7 +179,7 @@ namespace corona
 			return *this;
 		}
 
-		control_base& control_base::chaptertitle(std::string text, int id)
+		container_control& container_control::chaptertitle(std::string text, int id)
 		{
 			auto &tc = create<chaptertitle_control>(id);
 			apply(tc);
@@ -190,7 +187,7 @@ namespace corona
 			return *this;
 		}
 
-		control_base& control_base::chaptersubtitle(std::string text, int id)
+		container_control& container_control::chaptersubtitle(std::string text, int id)
 		{
 			auto &tc = create<chaptersubtitle_control>(id);
 			apply(tc);
@@ -198,7 +195,7 @@ namespace corona
 			return *this;
 		}
 
-		control_base& control_base::paragraph(std::string text, int id)
+		container_control& container_control::paragraph(std::string text, int id)
 		{
 			auto &tc = create<paragraph_control>(id);
 			apply(tc);
@@ -206,7 +203,7 @@ namespace corona
 			return *this;
 		}
 
-		control_base& control_base::code(std::string text, int id)
+		container_control& container_control::code(std::string text, int id)
 		{
 			auto &tc = create<code_control>(id);
 			apply(tc);
@@ -215,14 +212,14 @@ namespace corona
 		}
 
 
-		control_base& control_base::label(int id)
+		container_control& container_control::label(int id)
 		{
 			auto &tc = create<static_control>(id);
 			apply(tc);
 			return *this;
 		}
 
-		control_base& control_base::label(std::string _text, int id)
+		container_control& container_control::label(std::string _text, int id)
 		{
 			auto& tc = create<static_control>(id);
 			apply(tc);
@@ -230,126 +227,126 @@ namespace corona
 			return *this;
 		}
 
-		control_base& control_base::button(int id)
+		container_control& container_control::button(int id)
 		{
 			auto &tc = create<button_control>(id);
 			apply(tc);
 			return *this;
 		}
 
-		control_base& control_base::listbox(int id)
+		container_control& container_control::listbox(int id)
 		{
 			auto &tc = create<listbox_control>(id);
 			apply(tc);
 			return *this;
 		}
 
-		control_base& control_base::combobox(int id)
+		container_control& container_control::combobox(int id)
 		{
 			auto &tc = create<combobox_control>(id);
 			apply(tc);
 			return *this;
 		}
 
-		control_base& control_base::edit(int id)
+		container_control& container_control::edit(int id)
 		{
 			auto& tc = create<edit_control>(id);
 			apply(tc);
 			return *this;
 		}
 
-		control_base& control_base::scrollbar(int id)
+		container_control& container_control::scrollbar(int id)
 		{
 			auto& tc = create<scrollbar_control>(id);
 			apply(tc);
 			return *this;
 		}
 
-		control_base& control_base::listview(int id)
+		container_control& container_control::listview(int id)
 		{
 			auto& tc = create<listview_control>(id);
 			apply(tc);
 			return *this;
 		}
 
-		control_base& control_base::treeview(int id)
+		container_control& container_control::treeview(int id)
 		{
 			auto& tc = create<treeview_control>(id);
 			apply(tc);
 			return *this;
 		}
 
-		control_base& control_base::header(int id)
+		container_control& container_control::header(int id)
 		{
 			auto& tc = create<header_control>(id);
 			apply(tc);
 			return *this;
 		}
 
-		control_base& control_base::toolbar(int id)
+		container_control& container_control::toolbar(int id)
 		{
 			auto& tc = create<toolbar_control>(id);
 			apply(tc);
 			return *this;
 		}
 
-		control_base& control_base::statusbar(int id)
+		container_control& container_control::statusbar(int id)
 		{
 			auto& tc = create<statusbar_control>(id);
 			apply(tc);
 			return *this;
 		}
 
-		control_base& control_base::hotkey(int id)
+		container_control& container_control::hotkey(int id)
 		{
 			auto& tc = create<hotkey_control>(id);
 			apply(tc);
 			return *this;
 		}
 
-		control_base& control_base::animate(int id)
+		container_control& container_control::animate(int id)
 		{
 			auto& tc = create<animate_control>(id);
 			apply(tc);
 			return *this;
 		}
 
-		control_base& control_base::richedit(int id)
+		container_control& container_control::richedit(int id)
 		{
 			auto& tc = create<richedit_control>(id);
 			apply(tc);
 			return *this;
 		}
 
-		control_base& control_base::draglistbox(int id)
+		container_control& container_control::draglistbox(int id)
 		{
 			auto& tc = create<draglistbox_control>(id);
 			apply(tc);
 			return *this;
 		}
 
-		control_base& control_base::rebar(int id)
+		container_control& container_control::rebar(int id)
 		{
 			auto& tc = create<rebar_control>(id);
 			apply(tc);
 			return *this;
 		}
 
-		control_base& control_base::comboboxex(int id)
+		container_control& container_control::comboboxex(int id)
 		{
 			auto& tc = create<comboboxex_control>(id);
 			apply(tc);
 			return *this;
 		}
 
-		control_base& control_base::datetimepicker(int id)
+		container_control& container_control::datetimepicker(int id)
 		{
 			auto& tc = create<datetimepicker_control>(id);
 			apply(tc);
 			return *this;
 		}
 
-		control_base& control_base::monthcalendar(int id)
+		container_control& container_control::monthcalendar(int id)
 		{
 			auto& tc = create<monthcalendar_control>(id);
 			apply(tc);
@@ -504,90 +501,41 @@ namespace corona
 
 		void container_control::apply(control_base& _ref)
 		{
-			_ref.alignment = item_alignment;
-			_ref.box = item_box;
+			if (item_alignment != visual_alignment::align_none) {
+				_ref.alignment = item_alignment;
+			}
+
+			if (item_box.height.amount > 0 && item_box.width.amount > 0)
+			{
+				_ref.box = item_box;
+			}
 		}
 
-		row_layout& row_layout::set_item_align(visual_alignment _new_alignment)
+		container_control& container_control::set_item_align(visual_alignment _new_alignment)
 		{
 			item_alignment = _new_alignment;
 			return *this;
 		}
 
-		row_layout& row_layout::set_item_origin(measure _x, measure _y)
+		container_control& container_control::set_item_origin(measure _x, measure _y)
 		{
 			item_box.x = _x;
 			item_box.y = _y;
 			return *this;
 		}
 
-		row_layout& row_layout::set_item_size(measure _width, measure _height)
+		container_control& container_control::set_item_size(measure _width, measure _height)
 		{
 			item_box.width = _width;
 			item_box.height = _height;
 			return *this;
 		}
 
-		row_layout& row_layout::set_item_position(layout_rect _new_layout)
+		container_control& container_control::set_item_position(layout_rect _new_layout)
 		{
 			item_box = _new_layout;
 			return *this;
 		}
-
-
-		column_layout& column_layout::set_item_align(visual_alignment _new_alignment)
-		{
-			item_alignment = _new_alignment;
-			return *this;
-		}
-
-		column_layout& column_layout::set_item_origin(measure _x, measure _y)
-		{
-			item_box.x = _x;
-			item_box.y = _y;
-			return *this;
-		}
-
-		column_layout& column_layout::set_item_size(measure _width, measure _height)
-		{
-			item_box.width = _width;
-			item_box.height = _height;
-			return *this;
-		}
-
-		column_layout& column_layout::set_item_position(layout_rect _new_layout)
-		{
-			item_box = _new_layout;
-			return *this;
-		}
-
-		absolute_layout& absolute_layout::set_item_align(visual_alignment _new_alignment)
-		{
-			item_alignment = _new_alignment;
-			return *this;
-		}
-
-		absolute_layout& absolute_layout::set_item_origin(measure _x, measure _y)
-		{
-			item_box.x = _x;
-			item_box.y = _y;
-			return *this;
-		}
-
-		absolute_layout& absolute_layout::set_item_size(measure _width, measure _height)
-		{
-			item_box.width = _width;
-			item_box.height = _height;
-			return *this;
-		}
-
-		absolute_layout& absolute_layout::set_item_position(layout_rect _new_layout)
-		{
-			item_box = _new_layout;
-			return *this;
-		}
-
-
 
 		point row_layout::get_remaining(point _ctx)
 		{
@@ -624,38 +572,6 @@ namespace corona
 		bool control_base::contains(point pt)
 		{
 			return rectangle_math::contains(bounds, pt.x, pt.y);
-		}
-
-		control_base* control_base::set_align_base(visual_alignment _new_alignment)
-		{
-			alignment = _new_alignment;
-			return this;
-		}
-
-		control_base* control_base::set_origin_base(measure _x, measure _y)
-		{
-			box.x = _x;
-			box.y = _y;
-			return this;
-		}
-
-		control_base* control_base::set_size_base(measure _width, measure _height)
-		{
-			box.width = _width;
-			box.height = _height;
-			return this;
-		}
-
-		control_base* control_base::set_position_base(layout_rect _new_layout)
-		{
-			box = _new_layout;
-			return this;
-		}
-
-		control_base* control_base::set_spacing_base(measure _spacing)
-		{
-			this->item_space= _spacing;
-			return this;
 		}
 
 		void control_base::arrange(rectangle _bounds)
@@ -921,7 +837,7 @@ namespace corona
 			id = id_counter::next();
 		}
 
-		container_control::container_control(control_base* _parent, int _id)
+		container_control::container_control(container_control* _parent, int _id)
 		{
 			parent = _parent;
 			id = id_counter::next();
@@ -933,7 +849,7 @@ namespace corona
 			id = id_counter::next();
 		}
 
-		draw_control::draw_control(control_base* _parent, int _id)
+		draw_control::draw_control(container_control* _parent, int _id)
 		{
 			parent = _parent;
 			id = _id;
@@ -1003,7 +919,7 @@ namespace corona
 			init();
 		}
 
-		text_display_control::text_display_control(control_base * _parent, int _id) 
+		text_display_control::text_display_control(container_control* _parent, int _id)
 			: draw_control(_parent, _id)
 		{
 			init();
@@ -1011,8 +927,8 @@ namespace corona
 
 		void text_display_control::init()
 		{
-			set_origin_base(0.0_px, 0.0_px);
-			set_size_base(1.0_container, 3.0_fontgr);
+			set_origin(0.0_px, 0.0_px);
+			set_size(1.0_container, 3.0_fontgr);
 
 			on_create = [this](draw_control* _src)
 			{
@@ -1098,7 +1014,7 @@ namespace corona
 			text_style.wrap_text = true;
 		}
 
-		title_control::title_control(control_base* _parent, int _id) : text_display_control(_parent, _id)
+		title_control::title_control(container_control* _parent, int _id) : text_display_control(_parent, _id)
 		{
 			set_default_styles();
 		}
@@ -1127,7 +1043,7 @@ namespace corona
 			text_style.wrap_text = true;
 		}
 
-		subtitle_control::subtitle_control(control_base* _parent, int _id) : text_display_control(_parent, _id)
+		subtitle_control::subtitle_control(container_control* _parent, int _id) : text_display_control(_parent, _id)
 		{
 			set_default_styles();
 		}
@@ -1155,7 +1071,7 @@ namespace corona
 			text_style.wrap_text = true;
 		}
 
-		chaptertitle_control::chaptertitle_control(control_base* _parent, int _id) : text_display_control(_parent, _id)
+		chaptertitle_control::chaptertitle_control(container_control* _parent, int _id) : text_display_control(_parent, _id)
 		{
 			set_default_styles();
 		}
@@ -1184,7 +1100,7 @@ namespace corona
 		}
 
 
-		chaptersubtitle_control::chaptersubtitle_control(control_base* _parent, int _id) : text_display_control(_parent, _id)
+		chaptersubtitle_control::chaptersubtitle_control(container_control* _parent, int _id) : text_display_control(_parent, _id)
 		{
 			set_default_styles();
 		}
@@ -1212,7 +1128,7 @@ namespace corona
 			text_style.wrap_text = true;
 		}
 
-		paragraph_control::paragraph_control(control_base* _parent, int _id) : text_display_control(_parent, _id)
+		paragraph_control::paragraph_control(container_control* _parent, int _id) : text_display_control(_parent, _id)
 		{
 			set_default_styles();
 		}
@@ -1240,7 +1156,7 @@ namespace corona
 			text_style.wrap_text = false;
 		}
 
-		code_control::code_control(control_base* _parent, int _id) : text_display_control(_parent, _id)
+		code_control::code_control(container_control* _parent, int _id) : text_display_control(_parent, _id)
 		{
 			set_default_styles();
 		}
@@ -1357,7 +1273,7 @@ namespace corona
 		row_layout& page::row_begin(int id)
 		{
 			std::cout << "create: row"<< std::endl;
-			auto new_row = std::make_shared<row_layout>((control_base *)nullptr, id);
+			auto new_row = std::make_shared<row_layout>((container_control*)nullptr, id);
 			root = new_row;
 			return *new_row.get();
 		}
@@ -1365,7 +1281,7 @@ namespace corona
 		column_layout& page::column_begin(int id)
 		{
 			std::cout << "create: column" << std::endl;
-			auto new_row = std::make_shared<column_layout>((control_base*)nullptr, id);
+			auto new_row = std::make_shared<column_layout>((container_control*)nullptr, id);
 			root = new_row;
 			return *new_row.get();
 		}
@@ -1373,7 +1289,7 @@ namespace corona
 		absolute_layout& page::absolute_begin(int id)
 		{
 			std::cout << "create: begin" << std::endl;
-			auto new_row = std::make_shared<absolute_layout>((control_base*)nullptr, id);
+			auto new_row = std::make_shared<absolute_layout>((container_control*)nullptr, id);
 			root = new_row;
 			return *new_row.get();
 		}

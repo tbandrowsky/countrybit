@@ -24,6 +24,7 @@ namespace corona
 			point space_amount;
 		};
 
+		class container_control;
 		class row_layout;
 		class column_layout;
 		class absolute_layout;
@@ -86,7 +87,7 @@ namespace corona
 			point					item_space_amount;
 
 			win32::directApplicationWin32* app;
-			control_base *parent;
+			container_control *parent;
 
 			std::vector<std::shared_ptr<control_base>> children;
 
@@ -100,7 +101,7 @@ namespace corona
 				id = id_counter::next();
 			}
 
-			control_base(control_base* _parent, int _id) : control_base()
+			control_base(container_control* _parent, int _id) : control_base()
 			{
 				parent = _parent;
 				if (_id < 0) {
@@ -116,27 +117,27 @@ namespace corona
 
 			control_base* find(int _id);
 			control_base* get(control_base* _root, int _id);
+
+
+			template <typename control_type> control_type& find(int _id)
+			{
+				control_base* temp = find(_id);
+				control_type* citem = dynamic_cast<control_type>(temp);
+				return *citem;
+			}
+
+			template <typename control_type> control_type& get(control_base* _root, int _id)
+			{
+				control_base* temp = get(_root, _id);
+				control_type* citem = dynamic_cast<control_type>(temp);
+				return *citem;
+			}
+
 			void foreach(std::function<void(control_base* _root)> _item);
 
 			virtual void create(std::weak_ptr<win32::directApplicationWin32> _host);
 			virtual void destroy();
 			virtual void draw();
-
-			template <typename control_type> control_type& create(int _id)
-			{
-				id_counter::check(_id);
-				std::shared_ptr<control_type> temp = std::make_shared<control_type>(this, _id);
-				children.push_back(temp);
-				std::string indent(debug_indent, ' ');
-				std::cout << indent << " " << typeid(*this).name() << " ->create:" << typeid(control_type).name() << std::endl;
-				return *temp.get();
-			}
-
-			control_base* set_align_base(visual_alignment _new_alignment);
-			control_base* set_origin_base(measure _x, measure _y);
-			control_base* set_size_base(measure _width, measure _height);
-			control_base* set_position_base(layout_rect _new_layout);
-			control_base* set_spacing_base(measure _spacing);
 
 			control_base& set_align(visual_alignment _new_alignment)
 			{
@@ -173,49 +174,6 @@ namespace corona
 
 			virtual void apply(control_base& _ref);
 
-			row_layout& row_begin(int id = id_counter::next());
-			column_layout& column_begin(int id = id_counter::next());
-			absolute_layout& absolute_begin(int id = id_counter::next());
-			control_base& end();
-
-			control_base& title(std::string _text, int id = id_counter::next() );
-			control_base& subtitle(std::string _text, int id = id_counter::next());
-			control_base& chaptertitle(std::string _text, int id = id_counter::next());
-			control_base& chaptersubtitle(std::string _text, int id = id_counter::next());
-			control_base& paragraph(std::string _text, int id = id_counter::next());
-			control_base& code(std::string _text, int id = id_counter::next());
-
-			control_base& title(int id = id_counter::next());
-			control_base& subtitle(int id = id_counter::next());
-			control_base& chaptertitle(int id = id_counter::next());
-			control_base& chaptersubtitle(int id = id_counter::next());
-			control_base& paragraph(int id = id_counter::next());
-			control_base& code(int id = id_counter::next());
-
-			control_base& image(int id = id_counter::next());
-
-			control_base& label(int id = id_counter::next());
-			control_base& label(std::string _text, int id = id_counter::next());
-			control_base& button(int id);
-			control_base& listbox(int id);
-			control_base& combobox(int id);
-			control_base& edit(int id);
-			control_base& scrollbar(int id);
-
-			control_base& listview(int id);
-			control_base& treeview(int id);
-			control_base& header(int id);
-			control_base& toolbar(int id);
-			control_base& statusbar(int id);
-			control_base& hotkey(int id);
-			control_base& animate(int id);
-			control_base& richedit(int id);
-			control_base& draglistbox(int id);
-			control_base& rebar(int id);
-			control_base& comboboxex(int id);
-			control_base& datetimepicker(int id);
-			control_base& monthcalendar(int id);
-
 		};
 
 		class draw_control : public control_base
@@ -228,7 +186,7 @@ namespace corona
 			std::function<void(draw_control*)> on_create;
 
 			draw_control();
-			draw_control(control_base* _parent, int _id);
+			draw_control(container_control* _parent, int _id);
 			virtual void create(std::weak_ptr<win32::directApplicationWin32> _host);
 			virtual void destroy();
 			virtual void draw();
@@ -240,14 +198,78 @@ namespace corona
 
 		public:
 
-			layout_rect				item_box;
-			visual_alignment		item_alignment;
+			layout_rect				item_box = {};
+			visual_alignment		item_alignment = visual_alignment::align_none;
 
 			container_control();
-			container_control(control_base * _parent, int _id);
+			container_control(container_control* _parent, int _id);
 			virtual ~container_control() { ; }
 
 			virtual void apply(control_base& _ref);
+
+			template <typename control_type> control_type& create(int _id)
+			{
+				id_counter::check(_id);
+				std::shared_ptr<control_type> temp = std::make_shared<control_type>(this, _id);
+				children.push_back(temp);
+				std::string indent(debug_indent, ' ');
+				std::cout << indent << " " << typeid(*this).name() << " ->create:" << typeid(control_type).name() << std::endl;
+				return *temp.get();
+			}
+
+			container_control& set_item_align(visual_alignment _new_alignment);
+			container_control& set_item_origin(measure _x, measure _y);
+			container_control& set_item_size(measure _width, measure _height);
+			container_control& set_item_position(layout_rect _new_layout);
+
+			container_control& set_align(visual_alignment _new_alignment);
+			container_control& set_origin(measure _x, measure _y);
+			container_control& set_size(measure _width, measure _height);
+			container_control& set_position(layout_rect _new_layout);
+
+			row_layout& row_begin(int id = id_counter::next());
+			column_layout& column_begin(int id = id_counter::next());
+			absolute_layout& absolute_begin(int id = id_counter::next());
+			container_control& end();
+
+			container_control& title(std::string _text, int id = id_counter::next());
+			container_control& subtitle(std::string _text, int id = id_counter::next());
+			container_control& chaptertitle(std::string _text, int id = id_counter::next());
+			container_control& chaptersubtitle(std::string _text, int id = id_counter::next());
+			container_control& paragraph(std::string _text, int id = id_counter::next());
+			container_control& code(std::string _text, int id = id_counter::next());
+
+			container_control& title(int id = id_counter::next());
+			container_control& subtitle(int id = id_counter::next());
+			container_control& chaptertitle(int id = id_counter::next());
+			container_control& chaptersubtitle(int id = id_counter::next());
+			container_control& paragraph(int id = id_counter::next());
+			container_control& code(int id = id_counter::next());
+
+			container_control& image(int id = id_counter::next());
+
+			container_control& label(int id = id_counter::next());
+			container_control& label(std::string _text, int id = id_counter::next());
+			container_control& button(int id);
+			container_control& listbox(int id);
+			container_control& combobox(int id);
+			container_control& edit(int id);
+			container_control& scrollbar(int id);
+
+			container_control& listview(int id);
+			container_control& treeview(int id);
+			container_control& header(int id);
+			container_control& toolbar(int id);
+			container_control& statusbar(int id);
+			container_control& hotkey(int id);
+			container_control& animate(int id);
+			container_control& richedit(int id);
+			container_control& draglistbox(int id);
+			container_control& rebar(int id);
+			container_control& comboboxex(int id);
+			container_control& datetimepicker(int id);
+			container_control& monthcalendar(int id);
+
 
 		};
 
@@ -259,7 +281,7 @@ namespace corona
 			textStyleRequest	text_style;
 
 			text_display_control();
-			text_display_control(control_base * _parent, int _id); 
+			text_display_control(container_control* _parent, int _id);
 
 			void init();
 			text_display_control& set_text(std::string _text);
@@ -275,7 +297,7 @@ namespace corona
 			void set_default_styles();
 		public:
 			title_control();
-			title_control(control_base* _parent, int _id);
+			title_control(container_control* _parent, int _id);
 		};
 
 		class subtitle_control : public text_display_control
@@ -283,7 +305,7 @@ namespace corona
 			void set_default_styles();
 		public:
 			subtitle_control();
-			subtitle_control(control_base* _parent, int _id);
+			subtitle_control(container_control* _parent, int _id);
 		};
 
 		class chaptertitle_control : public text_display_control
@@ -291,7 +313,7 @@ namespace corona
 			void set_default_styles();
 		public:
 			chaptertitle_control();
-			chaptertitle_control(control_base* _parent, int _id);
+			chaptertitle_control(container_control* _parent, int _id);
 		};
 
 		class chaptersubtitle_control : public text_display_control
@@ -299,7 +321,7 @@ namespace corona
 			void set_default_styles();
 		public:
 			chaptersubtitle_control();
-			chaptersubtitle_control(control_base* _parent, int _id);
+			chaptersubtitle_control(container_control* _parent, int _id);
 		};
 
 		class paragraph_control : public text_display_control
@@ -307,7 +329,7 @@ namespace corona
 			void set_default_styles();
 		public:
 			paragraph_control();
-			paragraph_control(control_base* _parent, int _id);
+			paragraph_control(container_control* _parent, int _id);
 		};
 
 		class code_control : public text_display_control
@@ -315,7 +337,7 @@ namespace corona
 			void set_default_styles();
 		public:
 			code_control();
-			code_control(control_base* _parent, int _id);
+			code_control(container_control* _parent, int _id);
 		};
 
 		class image_control : 
@@ -323,7 +345,7 @@ namespace corona
 		{
 		public:
 			image_control();
-			image_control(control_base * _parent, int _id) : draw_control(_parent, _id) { ; }
+			image_control(container_control* _parent, int _id) : draw_control(_parent, _id) { ; }
 		};
 
 		class absolute_layout : 
@@ -331,16 +353,10 @@ namespace corona
 		{
 		public:
 			absolute_layout() { ; }
-			absolute_layout(control_base * _parent, int _id) : container_control(_parent, _id) { ; }
+			absolute_layout(container_control* _parent, int _id) : container_control(_parent, _id) { ; }
 			virtual ~absolute_layout() { ; }
 
 			virtual void arrange(rectangle _ctx);
-
-			absolute_layout& set_item_align(visual_alignment _new_alignment);
-			absolute_layout& set_item_origin(measure _x, measure _y);
-			absolute_layout& set_item_size(measure _width, measure _height);
-			absolute_layout& set_item_position(layout_rect _new_layout);
-
 		};
 
 		class column_layout : 
@@ -349,17 +365,11 @@ namespace corona
 			layout_rect item_size;
 		public:
 			column_layout() { ; }
-			column_layout(control_base * _parent, int _id) : container_control(_parent, _id) { ; }
+			column_layout(container_control* _parent, int _id) : container_control(_parent, _id) { ; }
 			virtual ~column_layout() { ; }
 
 			virtual void arrange(rectangle _ctx);
 			virtual point get_remaining(point _ctx);
-
-			column_layout& set_item_align(visual_alignment _new_alignment);
-			column_layout& set_item_origin(measure _x, measure _y);
-			column_layout& set_item_size(measure _width, measure _height);
-			column_layout& set_item_position(layout_rect _new_layout);
-
 		};
 
 		class row_layout : 
@@ -368,17 +378,11 @@ namespace corona
 		protected:
 		public:
 			row_layout() { ; }
-			row_layout(control_base * _parent, int _id) : container_control(_parent, _id) { ; }
+			row_layout(container_control* _parent, int _id) : container_control(_parent, _id) { ; }
 			virtual ~row_layout() { ; }
 
 			virtual void arrange(rectangle _ctx);
 			virtual point get_remaining(point _ctx);
-
-			row_layout& set_item_align(visual_alignment _new_alignment);
-			row_layout& set_item_origin(measure _x, measure _y);
-			row_layout& set_item_size(measure _width, measure _height);
-			row_layout& set_item_position(layout_rect _new_layout);
-
 		};
 
 		template <typename WtlWindowClass, DWORD dwStyle, DWORD dwExStyle = 0> class windows_control : public control_base
@@ -411,15 +415,15 @@ namespace corona
 
 			windows_control()
 			{
-				set_origin_base(0.0_px, 0.0_px);
-				set_size_base(150.0_px, 2.0_fontgr);
+				set_origin(0.0_px, 0.0_px);
+				set_size(1.0_container, 2.0_fontgr);
 				set_default_styles();
 			}
 
-			windows_control(control_base * _parent, int _id) : control_base(_parent, _id)
+			windows_control(container_control* _parent, int _id) : control_base(_parent, _id)
 			{
-				set_origin_base(0.0_px, 0.0_px);
-				set_size_base(150.0_px, 2.0_fontgr);
+				set_origin(0.0_px, 0.0_px);
+				set_size(1.0_container, 2.0_fontgr);
 				set_default_styles();
 			}
 
@@ -461,9 +465,12 @@ namespace corona
 					if (((HWND)window) == nullptr) {
 						window.Create(parent, r, NULL, dwStyle, dwExStyle, id, NULL);
 						window.SetFont(text_font);
+						on_create();
 					}
 				}
 			}
+
+			virtual void on_create() { ;  }
 
 			virtual void destroy()
 			{
@@ -518,7 +525,7 @@ namespace corona
 				;
 			}
 
-			text_control_base(control_base * _parent, int _id) : windows_control<WtlWindowClass, dwStyle, dwExStyle>(_parent, _id)
+			text_control_base(container_control* _parent, int _id) : windows_control<WtlWindowClass, dwStyle, dwExStyle>(_parent, _id)
 			{
 				;
 			}
@@ -549,48 +556,126 @@ namespace corona
 
 		};
 
+		class mini_table 
+		{
+			std::shared_ptr<dynamic_box> box;
+			std::vector<relative_ptr_type> indeces;
+			int row_size;
+			int max_rows;
+		public:
+
+			mini_table(  )
+			{
+				row_size = 1;
+				max_rows = 1;
+				box = std::make_shared<dynamic_box>();
+			}
+
+			void init(int _row_size, int _max_rows)
+			{
+				max_rows = _max_rows;
+				row_size = _row_size;
+				indeces.clear();
+				int c = (max_rows + 1) * row_size;
+				if (indeces.size() < max_rows)
+				{
+					indeces.resize(c);
+				}
+				int b = c * 100;
+				box->init(b);
+			}
+
+			char *set(int i, int j, std::string& src)
+			{
+				int idx = j * row_size + i;
+
+				indeces[idx] = box->put_null_terminated(src.c_str(), 0);
+				char *temp = box->get_object<char>(indeces[idx]);
+				return temp;
+			}
+		};
+
 		template <typename WtlWindowClass, DWORD dwStyle, DWORD dwExStyle = 0> class table_control_base : public windows_control<WtlWindowClass, dwStyle, dwExStyle>
 		{
+			mini_table mtable;
+			char blank[256] = { 0 };
+
+			void data_changed()
+			{
+				strcpy_s(blank, "N/A");
+				if (auto phost = window_host.lock())
+				{
+					phost->clearListView(id);
+					int row_size = choices.columns.size();
+					int num_rows = choices.items.size() * 2;
+					mtable.init(row_size, num_rows);
+					std::map<std::string, int> column_map;
+					int row_index = 0;
+					int col_index = 0;
+					for (auto col : choices.columns) {
+						char *t = mtable.set(col_index, row_index, col.display_name);
+						phost->addListViewColumn(id, col_index, t, col.width, col.alignment);
+						column_map[col.json_field] = col_index;
+						col_index++;
+					}
+					std::vector<char*> data_row;
+					data_row.resize(choices.columns.size());
+					row_index++;
+					for (auto item : choices.items)
+					{
+						col_index = 0;
+						for (auto col : choices.columns)
+						{
+							data_row[col_index] = blank;
+							bool has_field = item.contains(col.json_field);
+							if (has_field) {
+								auto item_value = item[col.json_field];
+								std::string contents;
+								if (item_value.is_string())
+									contents = item_value;
+								else if (item_value.is_number()) {
+									double temp = item_value;
+									contents = std::to_string(temp);
+								}
+								char *value = mtable.set(col_index, row_index, contents);
+								if (value) {
+									data_row[ col_index ] = value;
+								}
+							}
+							col_index++;
+						}
+						//virtual void addListViewRow(int ddlControlId, LPARAM data, const std::vector<std::string>&_items) = 0;
+						phost->addListViewRow(id, row_index, data_row);
+						row_index++;
+					}
+				}
+			}
+
 		public:
 			using control_base::id;
 			using windows_control<WtlWindowClass, dwStyle, dwExStyle>::window_host;
+			table_data choices;
 
 			table_control_base()
 			{
 				;
 			}
 
-			table_control_base(control_base * _parent, int _id) : windows_control<WtlWindowClass, dwStyle, dwExStyle>(_parent, _id)
+			table_control_base(container_control* _parent, int _id) : windows_control<WtlWindowClass, dwStyle, dwExStyle>(_parent, _id)
 			{
 				;
 			}
 
-			void set_table(table_data& choices)
+			virtual void on_create() 
+			{ 
+				windows_control<WtlWindowClass, dwStyle, dwExStyle>::window.SetExtendedListViewStyle(LVS_EX_FULLROWSELECT);
+				data_changed();
+			}
+
+			void set_table(table_data& _choices)
 			{
-				window_host->clearListView();
-				int idx = 1;
-				std::map<std::string, int> column_map;
-				for (auto col : choices.columns) {
-					//virtual void addListViewColumn(int ddlControlId, int column_id, const char* _text, int _width, visual_alignment _alignment);
-					window_host->addListViewColumn(id, idx, col.display_name, col.width, col.alignment);
-					column_map[col.json_field] = idx;
-				}
-				int row_idx = 0;
-				for (auto item : choices.items)
-				{
-					std::vector<std::string> data;
-					for (auto col : choices.columns) 
-					{
-						bool has_field = item.contains(col.json_field);
-						if (has_field) {
-							std::string contents = item[col.json_field].get<std::string>();
-							data.push_back(contents);
-						}
-					}
-					//virtual void addListViewRow(int ddlControlId, LPARAM data, const std::vector<std::string>&_items) = 0;
-					window_host->addListViewRow(id, row_idx, data);
-					row_idx++;
-				}
+				choices = _choices;
+				data_changed();
 			}
 		};
 
@@ -605,7 +690,7 @@ namespace corona
 				;
 			}
 
-			list_control_base(control_base * _parent, int _id) : windows_control<WtlWindowClass, dwStyle, dwExStyle>(_parent, _id)
+			list_control_base(container_control* _parent, int _id) : windows_control<WtlWindowClass, dwStyle, dwExStyle>(_parent, _id)
 			{
 				;
 			}
@@ -658,56 +743,56 @@ namespace corona
 		class static_control : public text_control_base<WTL::CStatic, DefaultWindowStyles>
 		{
 		public:
-			static_control(control_base * _parent, int _id) : text_control_base<WTL::CStatic, DefaultWindowStyles>(_parent, _id) { ; }
+			static_control(container_control* _parent, int _id) : text_control_base<WTL::CStatic, DefaultWindowStyles>(_parent, _id) { ; }
 			virtual ~static_control() { ; }
 		};
 
 		class button_control : public text_control_base<WTL::CButton, DefaultWindowStyles>
 		{
 		public:
-			button_control(control_base * _parent, int _id) : text_control_base<WTL::CButton, DefaultWindowStyles>(_parent, _id) { ; }
+			button_control(container_control* _parent, int _id) : text_control_base<WTL::CButton, DefaultWindowStyles>(_parent, _id) { ; }
 			virtual ~button_control() { ; }
 		};
 
 		class edit_control : public text_control_base<WTL::CEdit, DefaultWindowStyles>
 		{
 		public:
-			edit_control(control_base * _parent, int _id) : text_control_base<WTL::CEdit, DefaultWindowStyles>(_parent, _id) { ; }
+			edit_control(container_control* _parent, int _id) : text_control_base<WTL::CEdit, DefaultWindowStyles>(_parent, _id) { ; }
 			virtual ~edit_control() { ; }
 		};
 
 		class listbox_control : public list_control_base<WTL::CListBox, DefaultWindowStyles>
 		{
 		public:
-			listbox_control(control_base * _parent, int _id) : list_control_base<WTL::CListBox, DefaultWindowStyles>(_parent, _id) { ; }
+			listbox_control(container_control* _parent, int _id) : list_control_base<WTL::CListBox, DefaultWindowStyles>(_parent, _id) { ; }
 			virtual ~listbox_control() { ; }
 		};
 
 		class combobox_control : public list_control_base<WTL::CComboBox, DefaultWindowStyles>
 		{
 		public:
-			combobox_control(control_base * _parent, int _id) : list_control_base<WTL::CComboBox, DefaultWindowStyles>(_parent, _id) { ; }
+			combobox_control(container_control* _parent, int _id) : list_control_base<WTL::CComboBox, DefaultWindowStyles>(_parent, _id) { ; }
 			virtual ~combobox_control() { ; }
 		};
 
 		class comboboxex_control : public list_control_base<WTL::CComboBoxEx, DefaultWindowStyles>
 		{
 		public:
-			comboboxex_control(control_base * _parent, int _id) : list_control_base<WTL::CComboBoxEx, DefaultWindowStyles>(_parent, _id) { ; }
+			comboboxex_control(container_control* _parent, int _id) : list_control_base<WTL::CComboBoxEx, DefaultWindowStyles>(_parent, _id) { ; }
 			virtual ~comboboxex_control() { ; }
 		};
 
-		class listview_control : public table_control_base<WTL::CListViewCtrl, DefaultWindowStyles>
+		class listview_control : public table_control_base<WTL::CListViewCtrl, DefaultWindowStyles | LVS_REPORT | LVS_SINGLESEL>
 		{
 		public:
-			listview_control(control_base * _parent, int _id) : table_control_base<WTL::CListViewCtrl, DefaultWindowStyles>(_parent, _id) { ; }
+			listview_control(container_control* _parent, int _id) : table_control_base<WTL::CListViewCtrl, DefaultWindowStyles |  LVS_REPORT | LVS_SINGLESEL>(_parent, _id) { ; }
 			virtual ~listview_control() { ; }
 		};
 
 		class scrollbar_control : public windows_control<WTL::CScrollBar, DefaultWindowStyles>
 		{
 		public:
-			scrollbar_control(control_base * _parent, int _id) : windows_control<WTL::CScrollBar, DefaultWindowStyles>(_parent, _id) { ; }
+			scrollbar_control(container_control* _parent, int _id) : windows_control<WTL::CScrollBar, DefaultWindowStyles>(_parent, _id) { ; }
 			virtual ~scrollbar_control() { ; }
 		};
 
@@ -717,7 +802,7 @@ namespace corona
 			void set_html(const std::string& _text);
 			std::string get_html();
 
-			richedit_control(control_base * _parent, int _id) : text_control_base<WTL::CRichEditCtrl, DefaultWindowStyles>(_parent, _id) { ; }
+			richedit_control(container_control* _parent, int _id) : text_control_base<WTL::CRichEditCtrl, DefaultWindowStyles>(_parent, _id) { ; }
 			virtual ~richedit_control() { ; }
 		};
 
@@ -727,21 +812,21 @@ namespace corona
 			void set_text(const std::string& _text);
 			std::string get_text();
 
-			datetimepicker_control(control_base * _parent, int _id) : windows_control<CDateTimePickerCtrl, DefaultWindowStyles>(_parent, _id) { ; }
+			datetimepicker_control(container_control* _parent, int _id) : windows_control<CDateTimePickerCtrl, DefaultWindowStyles>(_parent, _id) { ; }
 			virtual ~datetimepicker_control() { ; }
 		};
 
 		class monthcalendar_control : public windows_control<CMonthCalendarCtrl, DefaultWindowStyles>
 		{
 		public:
-			monthcalendar_control(control_base * _parent, int _id) : windows_control<CMonthCalendarCtrl, DefaultWindowStyles>(_parent, _id) { ; }
+			monthcalendar_control(container_control* _parent, int _id) : windows_control<CMonthCalendarCtrl, DefaultWindowStyles>(_parent, _id) { ; }
 			virtual ~monthcalendar_control() { ; }
 		};
 
 		class animate_control : public windows_control<WTL::CAnimateCtrl, DefaultWindowStyles>
 		{
 		public:
-			animate_control(control_base * _parent, int _id) : windows_control<WTL::CAnimateCtrl, DefaultWindowStyles>(_parent, _id) { ; }
+			animate_control(container_control* _parent, int _id) : windows_control<WTL::CAnimateCtrl, DefaultWindowStyles>(_parent, _id) { ; }
 			virtual ~animate_control() { ; }
 
 			bool open(const std::string& _name);
@@ -754,28 +839,28 @@ namespace corona
 		class treeview_control : public windows_control<WTL::CTreeViewCtrl, DefaultWindowStyles>
 		{
 		public:
-			treeview_control(control_base * _parent, int _id) : windows_control<WTL::CTreeViewCtrl, DefaultWindowStyles>(_parent, _id) { ; }
+			treeview_control(container_control* _parent, int _id) : windows_control<WTL::CTreeViewCtrl, DefaultWindowStyles>(_parent, _id) { ; }
 			virtual ~treeview_control() { ; }
 		};
 
 		class header_control : public windows_control<WTL::CHeaderCtrl, DefaultWindowStyles>
 		{
 		public:
-			header_control(control_base * _parent, int _id) : windows_control<WTL::CHeaderCtrl, DefaultWindowStyles>(_parent, _id) { ; }
+			header_control(container_control* _parent, int _id) : windows_control<WTL::CHeaderCtrl, DefaultWindowStyles>(_parent, _id) { ; }
 			virtual ~header_control() { ; }
 		};
 
 		class toolbar_control : public windows_control<WTL::CToolBarCtrl, DefaultWindowStyles>
 		{
 		public:
-			toolbar_control(control_base * _parent, int _id) : windows_control<WTL::CToolBarCtrl, DefaultWindowStyles>(_parent, _id) { ; }
+			toolbar_control(container_control* _parent, int _id) : windows_control<WTL::CToolBarCtrl, DefaultWindowStyles>(_parent, _id) { ; }
 			virtual ~toolbar_control() { ; }
 		};
 
 		class statusbar_control : public windows_control<WTL::CStatusBarCtrl, DefaultWindowStyles>
 		{
 		public:
-			statusbar_control(control_base * _parent, int _id) : windows_control<WTL::CStatusBarCtrl, DefaultWindowStyles>(_parent, _id) { ; }
+			statusbar_control(container_control* _parent, int _id) : windows_control<WTL::CStatusBarCtrl, DefaultWindowStyles>(_parent, _id) { ; }
 			virtual ~statusbar_control() { ; }
 
 		};
@@ -783,21 +868,21 @@ namespace corona
 		class hotkey_control : public windows_control<WTL::CHotKeyCtrl, DefaultWindowStyles>
 		{
 		public:
-			hotkey_control(control_base * _parent, int _id) : windows_control<WTL::CHotKeyCtrl, DefaultWindowStyles>(_parent, _id) { ; }
+			hotkey_control(container_control* _parent, int _id) : windows_control<WTL::CHotKeyCtrl, DefaultWindowStyles>(_parent, _id) { ; }
 			virtual ~hotkey_control() { ; }
 		};
 
 		class draglistbox_control : public windows_control<WTL::CDragListBox, DefaultWindowStyles>
 		{
 		public:
-			draglistbox_control(control_base * _parent, int _id) : windows_control<WTL::CDragListBox, DefaultWindowStyles>(_parent, _id) { ; }
+			draglistbox_control(container_control* _parent, int _id) : windows_control<WTL::CDragListBox, DefaultWindowStyles>(_parent, _id) { ; }
 			virtual ~draglistbox_control() { ; }
 		};
 
 		class rebar_control : public windows_control<WTL::CReBarCtrl, DefaultWindowStyles>
 		{
 		public:
-			rebar_control(control_base * _parent, int _id) : windows_control<WTL::CReBarCtrl, DefaultWindowStyles>(_parent, _id) { ; }
+			rebar_control(container_control* _parent, int _id) : windows_control<WTL::CReBarCtrl, DefaultWindowStyles>(_parent, _id) { ; }
 			virtual ~rebar_control() { ; }
 		};
 
@@ -1005,6 +1090,46 @@ namespace corona
 
 			virtual page& create_page(std::string _name);
 			virtual void select_page(const std::string& _page_name);
+
+			template <typename control_type> control_type& find(int _id)
+			{
+				if (auto cp = current_page.lock()) {
+					control_base* temp = cp->root->find(_id);
+					if (temp == nullptr)
+					{
+						auto str = std::format("Control {0} not found ", _id);
+						throw std::invalid_argument(str);
+					}
+					control_type* citem = dynamic_cast<control_type *>(temp);
+					if (citem == nullptr)
+					{
+						auto str = std::format("Object is not {0} ", typeid(*citem).name());
+						throw std::invalid_argument(str);
+					}
+					return *citem;
+				}
+				throw std::exception("could not lock current page");
+			}
+
+			template <typename control_type> control_type& get(control_base* _root, int _id)
+			{
+				if (auto cp = current_page.lock()) {
+					control_base* temp = cp->root->get(_root, _id);
+					if (temp == nullptr)
+					{
+						auto str = std::format("Control {0} not found ", _id);
+						throw std::invalid_argument(str);
+					}
+					control_type* citem = dynamic_cast<control_type *>(temp);
+					if (citem == nullptr)
+					{
+						auto str = std::format("Object is not {0} ", typeid(*citem).name());
+							throw std::invalid_argument(str);
+					}
+					return *citem;
+				}
+				throw std::exception("could not lock current page");
+			}
 
 			virtual bool drawFrame();
 			virtual bool update(double _elapsedSeconds, double _totalSeconds);

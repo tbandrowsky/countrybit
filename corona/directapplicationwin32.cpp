@@ -324,6 +324,8 @@ namespace corona
 						}
 					}
 					break;
+
+/*
 					case NM_CUSTOMDRAW:
 					{
 						LPNMLVCUSTOMDRAW  lplvcd = (LPNMLVCUSTOMDRAW)lParam;
@@ -356,7 +358,8 @@ namespace corona
 							}
 							return CDRF_SKIPDEFAULT;
 						}
-					}
+
+*/
 					}
 				}
 				break;
@@ -535,8 +538,6 @@ namespace corona
 			if (!_firstController)
 				return false;
 
-			::InitCommonControls();
-
 			auto ptr = weak_from_this();
 			_firstController->setHost(ptr);
 
@@ -622,9 +623,7 @@ namespace corona
 		{
 			if (!_firstController)
 				return false;
-
-			::InitCommonControls();
-
+			
 			auto ptr = weak_from_this();
 			_firstController->setHost(ptr);
 
@@ -1106,23 +1105,23 @@ namespace corona
 
 		void directApplicationWin32::addListViewColumn(int ddlControlId, 
 			int column_id,
-			const char* _text,
+			char* _text,
 			int _width, 
 			visual_alignment _alignment)
 		{
 			HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
 			LVCOLUMN lvitem;
 			ZeroMemory(&lvitem, sizeof(lvitem));
-			lvitem.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM | LVCF_ORDER;
+			lvitem.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
 			lvitem.iSubItem = column_id;
-			lvitem.iOrder = column_id;
 			lvitem.pszText = (LPSTR)_text;
+			lvitem.cchTextMax = 0;
+			lvitem.fmt = LVCFMT_LEFT;
 			lvitem.cx = _width;
-			lvitem.cxIdeal = _width;
-			ListView_InsertItem(control, &lvitem);
+			ListView_InsertColumn(control, column_id, &lvitem);
 		}
 
-		void directApplicationWin32::addListViewRow(int ddlControlId, LPARAM _data, const std::vector<std::string>& _items)
+		void directApplicationWin32::addListViewRow(int ddlControlId, LPARAM _data, const std::vector<char*>& _items)
 		{
 			HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
 
@@ -1130,15 +1129,23 @@ namespace corona
 			ZeroMemory(&lvitem, sizeof(lvitem));
 			lvitem.mask = LVIF_TEXT | LVIF_PARAM;
 			lvitem.iItem = ListView_GetItemCount(control);
-			lvitem.pszText = (LPSTR)_items[0].c_str();
+			lvitem.iSubItem = 0;
+			lvitem.pszText = (LPSTR)_items[0];
+			lvitem.cchTextMax = 0;
 			lvitem.lParam = _data;
-			ListView_InsertItem(control, &lvitem);
+			bool success = ListView_InsertItem(control, &lvitem);
+			int row = lvitem.iItem;
 
-			for (int i = 1; i < _items.size(); i++) {
-				lvitem.mask = LVIF_TEXT;
+			ZeroMemory(&lvitem, sizeof(lvitem)); 
+			lvitem.mask = LVIF_TEXT;
+			bool subitemSuccess = false;
+
+			for (int i = 0; i < _items.size(); i++) 
+			{
+				lvitem.pszText = _items[i];
+				lvitem.iItem = row;
 				lvitem.iSubItem = i;
-				lvitem.pszText = (LPSTR)_items[i].c_str();
-				ListView_SetItem(control, &lvitem);
+				subitemSuccess = ListView_SetItem(control, &lvitem);
 			}
 		}
 

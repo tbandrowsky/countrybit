@@ -422,10 +422,11 @@ namespace corona
 
 		enum class visual_alignment
 		{
-			align_near = 0,
-			align_center = 1,
-			align_justify = 2,
-			align_far = 3,
+			align_none = 0,
+			align_near = 1,
+			align_center = 2,
+			align_justify = 3,
+			align_far = 4,
 		};
 
 	}

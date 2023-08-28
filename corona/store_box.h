@@ -247,6 +247,7 @@ namespace corona
 				destptr->payload_length = length;
 				destptr->location = start;
 				destptr->deleted = false;
+				destptr->block_type_id = 0;
 				sbdata->_top = stop;
 
 				return destptr;
@@ -365,6 +366,7 @@ namespace corona
 			char* allocate(int64_t sizeofobj, int length, relative_ptr_type& dest)
 			{
 				auto allocation = boxi->allocate(sizeofobj, length);
+				dest = allocation->location;
 				return allocation ? &allocation->data[0] : nullptr;
 			}
 
@@ -420,14 +422,16 @@ namespace corona
 			template <typename T>
 			T* allocate(int length, relative_ptr_type& dest)
 			{
-				return (T*)get_box()->allocate(sizeof(T), length, dest);
+				auto obj = get_box()->allocate(sizeof(T), length, dest);
+				return (T*)obj;
 			}
 
 			template <typename T>
 				requires (std::is_standard_layout<T>::value)
 			T* get_object(relative_ptr_type offset, T* dummy = nullptr)
 			{
-				return (T*)get_box()->get_object(offset);
+				auto b = get_box()->get_object(offset);
+				return (T*)b->data;
 			}
 
 			template <typename T>
@@ -722,6 +726,9 @@ namespace corona
 
 		public:
 
+			virtual serialized_box* get_box() { return &box; }
+			virtual const serialized_box* get_box_const() const { return &box; }
+
 			dynamic_box() : stuff(nullptr), stuff_size(0), own_the_data(true)
 			{
 #if	TRACE_DYNAMIC_BOX
@@ -729,7 +736,7 @@ namespace corona
 #endif
 			}
 
-			~dynamic_box()
+			virtual ~dynamic_box()
 			{
 #if	TRACE_DYNAMIC_BOX
 				std::cout << "box:" << this << " " << (void*)stuff << " delete " << std::endl;

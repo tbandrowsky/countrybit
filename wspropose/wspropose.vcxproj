@@ -203,6 +203,12 @@
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup>
+    <Xml Include="XMLFile.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Manifest Include="wspropose.exe.manifest" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="..\packages\wtl.10.0.10320\build\native\wtl.targets" Condition="Exists('..\packages\wtl.10.0.10320\build\native\wtl.targets')" />

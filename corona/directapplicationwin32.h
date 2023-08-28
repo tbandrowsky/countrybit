@@ -125,8 +125,8 @@ namespace corona
 			virtual void clearListView(int ddlControlId);
 			virtual void addListViewItem(int ddlControlId, std::string& _text, LPARAM _data);
 			virtual void addListViewItem(int ddlControlId, const char* _text, LPARAM _data);
-			virtual void addListViewColumn(int ddlControlId, int column_id, const char* _text, int _width, visual_alignment _alignment);
-			virtual void addListViewRow(int ddlControlId, LPARAM data, const std::vector<std::string>& _items);
+			virtual void addListViewColumn(int ddlControlId, int column_id, char *_text, int _width, visual_alignment _alignment);
+			virtual void addListViewRow(int ddlControlId, LPARAM data, const std::vector<char*>& _items);
 
 			virtual std::string getListViewSelectedText(int ddlControlId);
 			virtual int getListViewSelectedIndex(int ddlControlId);
