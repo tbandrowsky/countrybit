@@ -22,7 +22,7 @@ namespace corona
 		class controller
 		{
 
-			std::weak_ptr<win32ControllerHost> host;
+			std::weak_ptr<directApplicationWin32> host;
 
 		public:
 
@@ -41,8 +41,8 @@ namespace corona
 
 			}
 
-			inline void setHost(std::weak_ptr<win32ControllerHost> _host) { host = _host; }
-			inline std::shared_ptr<win32ControllerHost> getHost() { return host.lock(); }
+			inline void setHost(std::weak_ptr<directApplicationWin32> _host) { host = _host; }
+			inline std::shared_ptr<directApplicationWin32> getHost() { return host.lock(); }
 
 			virtual void keyDown(std::shared_ptr<win32::direct2dWindow>& win, short _key) = 0;
 			virtual void keyUp(std::shared_ptr<win32::direct2dWindow>& win, short _key) = 0;

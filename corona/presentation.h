@@ -67,7 +67,6 @@ namespace corona
 			void arrange_children(rectangle _bounds,
 				std::function<point(rectangle *_bounds, control_base*)> _initial_origin,
 				std::function<point(point* _origin, rectangle *_bounds, control_base*)> _next_origin);
-
 		public:
 
 			friend class absolute_layout;
@@ -119,7 +118,7 @@ namespace corona
 			control_base* get(control_base* _root, int _id);
 			void foreach(std::function<void(control_base* _root)> _item);
 
-			virtual void create(std::weak_ptr<win32::win32ControllerHost> _host);
+			virtual void create(std::weak_ptr<win32::directApplicationWin32> _host);
 			virtual void destroy();
 			virtual void draw();
 
@@ -172,12 +171,14 @@ namespace corona
 				return *this;
 			}
 
+			virtual void apply(control_base& _ref);
+
 			row_layout& row_begin(int id = id_counter::next());
 			column_layout& column_begin(int id = id_counter::next());
 			absolute_layout& absolute_begin(int id = id_counter::next());
 			control_base& end();
 
-			control_base& title(std::string _text, int id = id_counter::next());
+			control_base& title(std::string _text, int id = id_counter::next() );
 			control_base& subtitle(std::string _text, int id = id_counter::next());
 			control_base& chaptertitle(std::string _text, int id = id_counter::next());
 			control_base& chaptersubtitle(std::string _text, int id = id_counter::next());
@@ -194,6 +195,7 @@ namespace corona
 			control_base& image(int id = id_counter::next());
 
 			control_base& label(int id = id_counter::next());
+			control_base& label(std::string _text, int id = id_counter::next());
 			control_base& button(int id);
 			control_base& listbox(int id);
 			control_base& combobox(int id);
@@ -220,14 +222,14 @@ namespace corona
 		{
 			void init();
 		protected:
-			std::weak_ptr<win32::win32ControllerHost> host;
+			std::weak_ptr<win32::directApplicationWin32> host;
 			std::weak_ptr<win32::direct2dChildWindow> window;
 			std::function<void(draw_control*)> on_draw;
 			std::function<void(draw_control*)> on_create;
 
 			draw_control();
 			draw_control(control_base* _parent, int _id);
-			virtual void create(std::weak_ptr<win32::win32ControllerHost> _host);
+			virtual void create(std::weak_ptr<win32::directApplicationWin32> _host);
 			virtual void destroy();
 			virtual void draw();
 			virtual void on_resize();
@@ -235,10 +237,18 @@ namespace corona
 
 		class container_control : public draw_control
 		{
+
 		public:
+
+			layout_rect				item_box;
+			visual_alignment		item_alignment;
+
 			container_control();
 			container_control(control_base * _parent, int _id);
 			virtual ~container_control() { ; }
+
+			virtual void apply(control_base& _ref);
+
 		};
 
 		class text_display_control : public draw_control
@@ -325,11 +335,18 @@ namespace corona
 			virtual ~absolute_layout() { ; }
 
 			virtual void arrange(rectangle _ctx);
+
+			absolute_layout& set_item_align(visual_alignment _new_alignment);
+			absolute_layout& set_item_origin(measure _x, measure _y);
+			absolute_layout& set_item_size(measure _width, measure _height);
+			absolute_layout& set_item_position(layout_rect _new_layout);
+
 		};
 
 		class column_layout : 
 			public container_control
 		{
+			layout_rect item_size;
 		public:
 			column_layout() { ; }
 			column_layout(control_base * _parent, int _id) : container_control(_parent, _id) { ; }
@@ -337,6 +354,12 @@ namespace corona
 
 			virtual void arrange(rectangle _ctx);
 			virtual point get_remaining(point _ctx);
+
+			column_layout& set_item_align(visual_alignment _new_alignment);
+			column_layout& set_item_origin(measure _x, measure _y);
+			column_layout& set_item_size(measure _width, measure _height);
+			column_layout& set_item_position(layout_rect _new_layout);
+
 		};
 
 		class row_layout : 
@@ -350,27 +373,54 @@ namespace corona
 
 			virtual void arrange(rectangle _ctx);
 			virtual point get_remaining(point _ctx);
+
+			row_layout& set_item_align(visual_alignment _new_alignment);
+			row_layout& set_item_origin(measure _x, measure _y);
+			row_layout& set_item_size(measure _width, measure _height);
+			row_layout& set_item_position(layout_rect _new_layout);
+
 		};
 
 		template <typename WtlWindowClass, DWORD dwStyle, DWORD dwExStyle = 0> class windows_control : public control_base
 		{
+
+			void set_default_styles()
+			{
+				text_style = {};
+				text_style.name = "windows_control_style";
+				text_style.fontName = "Open Sans";
+				text_style.fontSize = 18;
+				text_style.bold = false;
+				text_style.italics = false;
+				text_style.underline = false;
+				text_style.strike_through = false;
+				text_style.horizontal_align = visual_alignment::align_near;
+				text_style.vertical_align = visual_alignment::align_near;
+				text_style.wrap_text = true;
+			}
+
+			CFont text_font;
+
 		public:
 
 			using control_base::id;
 
 			WtlWindowClass window;
-			std::weak_ptr<win32::win32ControllerHost> window_host;
+			std::weak_ptr<win32::directApplicationWin32> window_host;
+			textStyleRequest	text_style;
 
 			windows_control()
 			{
 				set_origin_base(0.0_px, 0.0_px);
 				set_size_base(150.0_px, 2.0_fontgr);
+				set_default_styles();
 			}
 
 			windows_control(control_base * _parent, int _id) : control_base(_parent, _id)
 			{
 				set_origin_base(0.0_px, 0.0_px);
 				set_size_base(150.0_px, 2.0_fontgr);
+				set_default_styles();
 			}
 
 			virtual void on_resize()
@@ -391,12 +441,14 @@ namespace corona
 				}
 			}
 
-			virtual void create(std::weak_ptr<win32::win32ControllerHost> _host)
+			virtual void create(std::weak_ptr<win32::directApplicationWin32> _host)
 			{
 				window_host = _host;
 
 				if (auto phost = window_host.lock()) {
 					HWND parent = phost->getMainWindow();
+					HFONT font = phost->createFont(text_style.fontName, text_style.fontSize, text_style.bold, text_style.italics);
+					text_font.Attach(font);
 
 					auto boundsPixels = phost->toPixelsFromDips(bounds);
 
@@ -408,6 +460,7 @@ namespace corona
 
 					if (((HWND)window) == nullptr) {
 						window.Create(parent, r, NULL, dwStyle, dwExStyle, id, NULL);
+						window.SetFont(text_font);
 					}
 				}
 			}
@@ -453,6 +506,8 @@ namespace corona
 
 		template <typename WtlWindowClass, DWORD dwStyle, DWORD dwExStyle = 0> class text_control_base : public windows_control<WtlWindowClass, dwStyle, dwExStyle>
 		{
+			std::string text;
+
 		public:
 
 			using control_base::id;
@@ -470,13 +525,28 @@ namespace corona
 
 			void set_text(const std::string& _text)
 			{
-				window_host->setEditText(id, _text);
+				text = _text;
+				if (auto phost = window_host.lock()) {
+					phost->setEditText(id, _text);
+				}
 			}
 
 			std::string get_text()
 			{
-				return window_host->getEditText(id);
+				if (auto phost = window_host.lock()) {
+					text = phost->getEditText(id);
+				}
+				return text;
 			}
+
+			virtual void create(std::weak_ptr<win32::directApplicationWin32> _host)
+			{
+				windows_control<WtlWindowClass, dwStyle, dwExStyle>::create(_host);
+				if (auto phost = window_host.lock()) {
+					phost->setEditText(id, text);
+				}
+			}
+
 		};
 
 		template <typename WtlWindowClass, DWORD dwStyle, DWORD dwExStyle = 0> class table_control_base : public windows_control<WtlWindowClass, dwStyle, dwExStyle>
@@ -883,7 +953,7 @@ namespace corona
 
 			void arrange(double _width, double _height, double _padding = 0.0);
 
-			virtual void create(std::weak_ptr<corona::win32::win32ControllerHost> _host);
+			virtual void create(std::weak_ptr<corona::win32::directApplicationWin32> _host);
 			virtual void destroy();
 			virtual void draw();
 			virtual void update(double _elapsedSeconds, double _totalSeconds);

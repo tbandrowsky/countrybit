@@ -69,7 +69,7 @@ namespace corona
 			}
 		}
 
-		void control_base::create(std::weak_ptr<win32::win32ControllerHost> _host)
+		void control_base::create(std::weak_ptr<win32::directApplicationWin32> _host)
 		{
 			for (auto child : children) {
 				child->create(_host);
@@ -88,6 +88,11 @@ namespace corona
 			for (auto child : children) {
 				child->draw();
 			}
+		}
+
+		void control_base::apply(control_base& _ref)
+		{
+
 		}
 
 		row_layout& control_base::row_begin(int id)
@@ -164,6 +169,7 @@ namespace corona
 		control_base& control_base::title(std::string text, int id)
 		{
 			auto &tc = create<title_control>(id);
+			apply(tc);
 			tc.text = text;
 			return *this;
 		}
@@ -171,6 +177,7 @@ namespace corona
 		control_base& control_base::subtitle(std::string text, int id)
 		{
 			auto &tc = create<subtitle_control>(id);
+			apply(tc);
 			tc.text = text;
 			return *this;
 		}
@@ -178,6 +185,7 @@ namespace corona
 		control_base& control_base::chaptertitle(std::string text, int id)
 		{
 			auto &tc = create<chaptertitle_control>(id);
+			apply(tc);
 			tc.text = text;
 			return *this;
 		}
@@ -185,6 +193,7 @@ namespace corona
 		control_base& control_base::chaptersubtitle(std::string text, int id)
 		{
 			auto &tc = create<chaptersubtitle_control>(id);
+			apply(tc);
 			tc.text = text;
 			return *this;
 		}
@@ -192,6 +201,7 @@ namespace corona
 		control_base& control_base::paragraph(std::string text, int id)
 		{
 			auto &tc = create<paragraph_control>(id);
+			apply(tc);
 			tc.text = text;
 			return *this;
 		}
@@ -199,6 +209,7 @@ namespace corona
 		control_base& control_base::code(std::string text, int id)
 		{
 			auto &tc = create<code_control>(id);
+			apply(tc);
 			tc.text = text;
 			return *this;
 		}
@@ -207,114 +218,141 @@ namespace corona
 		control_base& control_base::label(int id)
 		{
 			auto &tc = create<static_control>(id);
+			apply(tc);
+			return *this;
+		}
+
+		control_base& control_base::label(std::string _text, int id)
+		{
+			auto& tc = create<static_control>(id);
+			apply(tc);
+			tc.set_text(_text);
 			return *this;
 		}
 
 		control_base& control_base::button(int id)
 		{
 			auto &tc = create<button_control>(id);
+			apply(tc);
 			return *this;
 		}
 
 		control_base& control_base::listbox(int id)
 		{
 			auto &tc = create<listbox_control>(id);
+			apply(tc);
 			return *this;
 		}
 
 		control_base& control_base::combobox(int id)
 		{
 			auto &tc = create<combobox_control>(id);
+			apply(tc);
 			return *this;
 		}
 
 		control_base& control_base::edit(int id)
 		{
 			auto& tc = create<edit_control>(id);
+			apply(tc);
 			return *this;
 		}
 
 		control_base& control_base::scrollbar(int id)
 		{
 			auto& tc = create<scrollbar_control>(id);
+			apply(tc);
 			return *this;
 		}
 
 		control_base& control_base::listview(int id)
 		{
 			auto& tc = create<listview_control>(id);
+			apply(tc);
 			return *this;
 		}
 
 		control_base& control_base::treeview(int id)
 		{
 			auto& tc = create<treeview_control>(id);
+			apply(tc);
 			return *this;
 		}
 
 		control_base& control_base::header(int id)
 		{
 			auto& tc = create<header_control>(id);
+			apply(tc);
 			return *this;
 		}
 
 		control_base& control_base::toolbar(int id)
 		{
 			auto& tc = create<toolbar_control>(id);
+			apply(tc);
 			return *this;
 		}
 
 		control_base& control_base::statusbar(int id)
 		{
 			auto& tc = create<statusbar_control>(id);
+			apply(tc);
 			return *this;
 		}
 
 		control_base& control_base::hotkey(int id)
 		{
 			auto& tc = create<hotkey_control>(id);
+			apply(tc);
 			return *this;
 		}
 
 		control_base& control_base::animate(int id)
 		{
 			auto& tc = create<animate_control>(id);
+			apply(tc);
 			return *this;
 		}
 
 		control_base& control_base::richedit(int id)
 		{
 			auto& tc = create<richedit_control>(id);
+			apply(tc);
 			return *this;
 		}
 
 		control_base& control_base::draglistbox(int id)
 		{
 			auto& tc = create<draglistbox_control>(id);
+			apply(tc);
 			return *this;
 		}
 
 		control_base& control_base::rebar(int id)
 		{
 			auto& tc = create<rebar_control>(id);
+			apply(tc);
 			return *this;
 		}
 
 		control_base& control_base::comboboxex(int id)
 		{
 			auto& tc = create<comboboxex_control>(id);
+			apply(tc);
 			return *this;
 		}
 
 		control_base& control_base::datetimepicker(int id)
 		{
 			auto& tc = create<datetimepicker_control>(id);
+			apply(tc);
 			return *this;
 		}
 
 		control_base& control_base::monthcalendar(int id)
 		{
 			auto& tc = create<monthcalendar_control>(id);
+			apply(tc);
 			return *this;
 		}
 
@@ -463,6 +501,93 @@ namespace corona
 			pt = _ctx - pt;
 			return pt;
 		}
+
+		void container_control::apply(control_base& _ref)
+		{
+			_ref.alignment = item_alignment;
+			_ref.box = item_box;
+		}
+
+		row_layout& row_layout::set_item_align(visual_alignment _new_alignment)
+		{
+			item_alignment = _new_alignment;
+			return *this;
+		}
+
+		row_layout& row_layout::set_item_origin(measure _x, measure _y)
+		{
+			item_box.x = _x;
+			item_box.y = _y;
+			return *this;
+		}
+
+		row_layout& row_layout::set_item_size(measure _width, measure _height)
+		{
+			item_box.width = _width;
+			item_box.height = _height;
+			return *this;
+		}
+
+		row_layout& row_layout::set_item_position(layout_rect _new_layout)
+		{
+			item_box = _new_layout;
+			return *this;
+		}
+
+
+		column_layout& column_layout::set_item_align(visual_alignment _new_alignment)
+		{
+			item_alignment = _new_alignment;
+			return *this;
+		}
+
+		column_layout& column_layout::set_item_origin(measure _x, measure _y)
+		{
+			item_box.x = _x;
+			item_box.y = _y;
+			return *this;
+		}
+
+		column_layout& column_layout::set_item_size(measure _width, measure _height)
+		{
+			item_box.width = _width;
+			item_box.height = _height;
+			return *this;
+		}
+
+		column_layout& column_layout::set_item_position(layout_rect _new_layout)
+		{
+			item_box = _new_layout;
+			return *this;
+		}
+
+		absolute_layout& absolute_layout::set_item_align(visual_alignment _new_alignment)
+		{
+			item_alignment = _new_alignment;
+			return *this;
+		}
+
+		absolute_layout& absolute_layout::set_item_origin(measure _x, measure _y)
+		{
+			item_box.x = _x;
+			item_box.y = _y;
+			return *this;
+		}
+
+		absolute_layout& absolute_layout::set_item_size(measure _width, measure _height)
+		{
+			item_box.width = _width;
+			item_box.height = _height;
+			return *this;
+		}
+
+		absolute_layout& absolute_layout::set_item_position(layout_rect _new_layout)
+		{
+			item_box = _new_layout;
+			return *this;
+		}
+
+
 
 		point row_layout::get_remaining(point _ctx)
 		{
@@ -814,7 +939,7 @@ namespace corona
 			id = _id;
 		}
 
-		void draw_control::create(std::weak_ptr<win32::win32ControllerHost> _host)
+		void draw_control::create(std::weak_ptr<win32::directApplicationWin32> _host)
 		{
 
 			host = _host;
@@ -1194,7 +1319,7 @@ namespace corona
 			root = std::make_shared<column_layout>();
 		}
 
-		void page::create(std::weak_ptr<win32::win32ControllerHost> _host)
+		void page::create(std::weak_ptr<win32::directApplicationWin32> _host)
 		{
 			if (auto whost = _host.lock()) {
 				auto pos = whost->getWindowClientPos();

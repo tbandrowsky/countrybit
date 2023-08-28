@@ -53,14 +53,21 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 	int IDC_TEST_EDIT = 1002;
 	int IDC_TEST_LABEL2 = 1003;
 	int IDC_TEST_EDIT2 = 1004;
+	int IDC_TEST_LABEL3 = 1003;
+	int IDC_TEST_COMBO1 = 1004;
+	int IDC_TEST_LABEL4 = 1003;
+	int IDC_TEST_LISTVIEW = 1004;
 
 	test_app->create_page("home")
 		.row_begin()
 		.set_size(1.0_container, 1.0_container)
 			.column_begin()
+			.set_item_size( 1.0_container, 50.0_px)
 			.set_size(.5_container, 1.0_container)
 				.title("Title")
 				.subtitle("Subtitle")
+				.label("List View", IDC_TEST_LABEL)
+				.listview(IDC_TEST_LISTVIEW)
 			.end()
 			.column_begin()
 			.set_size(.5_container, 1.0_container)
@@ -71,7 +78,7 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 					.set_align(visual_alignment::align_center)
 						.chaptertitle("Chapter Title 1")
 						.chaptersubtitle("Chapter Subtitle 1")
-						.label(IDC_TEST_LABEL)
+						.label("Test Edit", IDC_TEST_LABEL)
 						.edit(IDC_TEST_EDIT)
 					.end()
 					.column_begin()
@@ -79,7 +86,7 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 					.set_align(visual_alignment::align_far)
 						.chaptertitle("Chapter Title 2")
 						.chaptersubtitle("Chapter Subtitle 2")
-						.label(IDC_TEST_LABEL2)
+						.label("Test Edit 2", IDC_TEST_LABEL2)
 						.edit(IDC_TEST_EDIT2)
 					.end()
 				.end()
