@@ -104,7 +104,7 @@ namespace corona
 			inline ID3D11Device *getD3DDevice() { return direct3d->getD3DDevice(); }
 			inline D3D_FEATURE_LEVEL getFeatureLevel() { return direct3d->getFeatureLevel(); }
 
-			std::weak_ptr<direct2dWindow> createD2dWindow(HWND parent);
+			std::weak_ptr<direct2dWindow> createD2dWindow(HWND parent, color backgroundColor);
 
 			std::weak_ptr<direct2dWindow> getWindow(HWND parent);
 			bool containsWindow(HWND parent);

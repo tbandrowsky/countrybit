@@ -54,6 +54,8 @@ namespace corona
 			directApplicationWin32(std::weak_ptr<adapterSet>  _factory);
 			virtual ~directApplicationWin32();
 
+			color backgroundColor;
+
 			HWND getMainWindow() { return hwndRoot;  }
 			HWND createWindow( DWORD window_id, LPCTSTR		lpClassName, LPCTSTR		lpWindowName, DWORD       dwStyle, rectangle bounds, LPVOID		lpParam, HFONT		font);
 			void destroyWindow( HWND hwnd );

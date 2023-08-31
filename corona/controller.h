@@ -26,14 +26,8 @@ namespace corona
 
 		public:
 
-			color backgroundColor;
-
 			controller()
 			{
-				backgroundColor.a = 1.0;
-				backgroundColor.r = 1.0;
-				backgroundColor.g = 1.0;
-				backgroundColor.b = 1.0;
 			}
 
 			virtual ~controller()

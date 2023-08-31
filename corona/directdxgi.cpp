@@ -189,10 +189,10 @@ namespace corona
 			direct2d->setDevice(direct3d->getD3DDevice());
 		}
 
-		std::weak_ptr<direct2dWindow> adapterSet::createD2dWindow(HWND parent)
+		std::weak_ptr<direct2dWindow> adapterSet::createD2dWindow(HWND parent, color backgroundColor)
 		{
 			auto pthis = weak_from_this();
-			std::shared_ptr<direct2dWindow> win = std::make_shared<direct2dWindow>(parent, pthis);
+			std::shared_ptr<direct2dWindow> win = std::make_shared<direct2dWindow>(parent, pthis, backgroundColor);
 			parent_windows.insert_or_assign(parent, win);
 			return win;
 		}

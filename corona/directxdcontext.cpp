@@ -16,7 +16,7 @@ namespace corona
 
 		//-------
 
-		direct2dWindow::direct2dWindow(HWND _hwnd, std::weak_ptr<adapterSet> _adapterSet) 
+		direct2dWindow::direct2dWindow(HWND _hwnd, std::weak_ptr<adapterSet> _adapterSet, color _background_color ) 
 		{
 			HRESULT hr;
 
@@ -50,10 +50,10 @@ namespace corona
 				throwOnFail(hr, "Could not create swap chain");
 
 				DXGI_RGBA color;
-				color.a = 1.0;
-				color.r = 0.5;
-				color.g = 0.5;
-				color.b = 0.5;
+				color.a = _background_color.a;
+				color.r = _background_color.r;
+				color.g = _background_color.g;
+				color.b = _background_color.b;
 
 				swapChain->SetBackgroundColor(&color);
 

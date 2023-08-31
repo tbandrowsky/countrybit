@@ -38,7 +38,10 @@ namespace corona
 		class image_control;
 
 		class static_control;
-		class button_control;
+		class pushbutton_control;
+		class checkbox_control;
+		class radiobutton_control;
+		class linkbutton_control;
 		class listbox_control;
 		class combobox_control;
 		class edit_control;
@@ -62,7 +65,7 @@ namespace corona
 		protected:
 			point get_size(rectangle _ctx, point _remaining);
 			point get_position(rectangle _ctx);
-			double get_item_space(rectangle _ctx);
+			double get_margin(rectangle _ctx);
 			virtual point get_remaining(point _ctx);
 			virtual void on_resize();
 			void arrange_children(rectangle _bounds,
@@ -81,10 +84,10 @@ namespace corona
 
 			visual_alignment		alignment;
 			layout_rect				box;
-			measure					item_space;
+			measure					margin;
 
 			rectangle				bounds;
-			point					item_space_amount;
+			point					margin_amount;
 
 			win32::directApplicationWin32* app;
 			container_control *parent;
@@ -93,9 +96,9 @@ namespace corona
 
 			control_base() :
 				id(-1),
-				item_space(),
+				margin(),
 				parent(nullptr),
-				item_space_amount({ 0.0, 0.0 }),
+				margin_amount({ 0.0, 0.0 }),
 				alignment(visual_alignment::align_near)
 			{
 				id = id_counter::next();
@@ -165,10 +168,16 @@ namespace corona
 				return *this;
 			}
 
+			control_base& set_margin(measure _space)
+			{
+				margin = _space;
+				return *this;
+			}
+
 			template <typename control_class> control_class& set_spacing(measure _spacing)
 			{
 				control_class* r = dynamic_cast<control_class>(this);
-				r->item_space = _spacing;
+				r->margin = _spacing;
 				return *this;
 			}
 
@@ -180,6 +189,9 @@ namespace corona
 		{
 			void init();
 		protected:
+
+			solidBrushRequest	background_brush;
+
 			std::weak_ptr<win32::directApplicationWin32> host;
 			std::weak_ptr<win32::direct2dChildWindow> window;
 			std::function<void(draw_control*)> on_draw;
@@ -226,6 +238,10 @@ namespace corona
 			container_control& set_origin(measure _x, measure _y);
 			container_control& set_size(measure _width, measure _height);
 			container_control& set_position(layout_rect _new_layout);
+			container_control& set_margin(measure _space);
+
+			container_control& set_background_color(solidBrushRequest _brushFill);
+			container_control& set_background_color(std::string _color);
 
 			row_layout& row_begin(int id = id_counter::next());
 			column_layout& column_begin(int id = id_counter::next());
@@ -250,7 +266,14 @@ namespace corona
 
 			container_control& label(int id = id_counter::next());
 			container_control& label(std::string _text, int id = id_counter::next());
-			container_control& button(int id);
+			container_control& push_button(int id);
+			container_control& radio_button(int id);
+			container_control& checkbox(int id);
+			container_control& link_button(int id);
+			container_control& push_button(std::string _text, int id);
+			container_control& radio_button(std::string _text, int id);
+			container_control& checkbox(std::string _text, int id);
+			container_control& link_button(std::string _text, int id);
 			container_control& listbox(int id);
 			container_control& combobox(int id);
 			container_control& edit(int id);
@@ -459,8 +482,8 @@ namespace corona
 					RECT r;
 					r.left = boundsPixels.x;
 					r.top = boundsPixels.y;
-					r.right = boundsPixels.x + bounds.w;
-					r.bottom = boundsPixels.y + bounds.h;
+					r.right = boundsPixels.x + boundsPixels.w;
+					r.bottom = boundsPixels.y + boundsPixels.h;
 
 					if (((HWND)window) == nullptr) {
 						window.Create(parent, r, NULL, dwStyle, dwExStyle, id, NULL);
@@ -529,6 +552,8 @@ namespace corona
 			{
 				;
 			}
+
+			virtual ~text_control_base() { ; }
 
 			void set_text(const std::string& _text)
 			{
@@ -658,13 +683,17 @@ namespace corona
 
 			table_control_base()
 			{
-				;
+				control_base::set_origin(0.0_px, 0.0_px);
+				control_base::set_size(1.0_container, 10.0_fontgr);
 			}
 
 			table_control_base(container_control* _parent, int _id) : windows_control<WtlWindowClass, dwStyle, dwExStyle>(_parent, _id)
 			{
-				;
+				control_base::set_origin(0.0_px, 0.0_px);
+				control_base::set_size(1.0_container, 10.0_fontgr);
 			}
+
+			virtual ~table_control_base() { ; }
 
 			virtual void on_create() 
 			{ 
@@ -684,28 +713,47 @@ namespace corona
 		public:
 			using control_base::id;
 			using windows_control<WtlWindowClass, dwStyle, dwExStyle>::window_host;
+			list_data choices;
 
 			list_control_base()
 			{
-				;
+				control_base::set_origin(0.0_px, 0.0_px);
+				control_base::set_size(1.0_container, 10.0_fontgr);
 			}
 
 			list_control_base(container_control* _parent, int _id) : windows_control<WtlWindowClass, dwStyle, dwExStyle>(_parent, _id)
 			{
-				;
+				control_base::set_origin(0.0_px, 0.0_px);
+				control_base::set_size(1.0_container, 10.0_fontgr);
 			}
 
-			void set_list(list_data& choices)
+			virtual ~list_control_base() { ; }
+
+			void data_changed()
 			{
-				window_host->clearListItems();
-				for (auto element : choices.items.items()) 
-				{
-					auto c = element.value();
-					int id = c[choices.id_field].template get<int>();
-					std::string description = c[choices.text_field].template get<std::string>();
-					window_host->addListItem(id, description, id);
+				if (auto phost = window_host.lock()) {
+					phost->clearListItems(id);
+					for (auto element : choices.items.items())
+					{
+						auto c = element.value();
+						int lid = c[choices.id_field].template get<int>();
+						std::string description = c[choices.text_field].template get<std::string>();
+						phost->addListItem(id, description, lid);
+					}
 				}
 			}
+
+			void set_list(list_data& _choices)
+			{
+				choices = _choices;
+				data_changed();
+			}
+
+			virtual void on_create()
+			{
+				data_changed();
+			}
+
 		};
 
 		template <typename WtlWindowClass, DWORD dwStyle, DWORD dwExStyle = 0> class dropdown_control_base : public windows_control<WtlWindowClass, dwStyle, dwExStyle>
@@ -714,78 +762,166 @@ namespace corona
 
 			using control_base::id;
 			using windows_control<WtlWindowClass, dwStyle, dwExStyle>::window_host;
+			list_data choices;
 
 			dropdown_control_base()
 			{
-				;
+				control_base::set_origin(0.0_px, 0.0_px);
+				control_base::set_size(1.0_container, 2.0_fontgr);
 			}
 
-			dropdown_control_base(control_base * _parent, int _id) : windows_control<WtlWindowClass, dwStyle, dwExStyle>(_parent, _id)
+			dropdown_control_base(container_control * _parent, int _id) : windows_control<WtlWindowClass, dwStyle, dwExStyle>(_parent, _id)
 			{
-				;
+				control_base::set_origin(0.0_px, 0.0_px);
+				control_base::set_size(1.0_container, 2.0_fontgr);
 			}
 
-			void set_list(list_data& choices)
+			virtual ~dropdown_control_base() { ; }
+
+			void data_changed()
 			{
-				window_host->clearComboItems();
-				for (auto element : choices.items.items())
-				{
-					auto c = element.value();
-					int id = c[choices.id_field].template get<int>();
-					std::string description = c[choices.text_field].template get<std::string>();
-					window_host->addComboItem(id, description, id);
+				if (auto phost = window_host.lock()) {
+					phost->clearComboItems(id);
+					for (auto element : choices.items.items())
+					{
+						auto c = element.value();
+						int lid = c[choices.id_field].template get<int>();
+						std::string description = c[choices.text_field].template get<std::string>();
+						phost->addComboItem(id, description, lid);
+					}
 				}
 			}
+
+			void set_list(list_data& _choices)
+			{
+				choices = _choices;
+				data_changed();
+			}
+
+			virtual void on_resize()
+			{
+				if (auto phost = window_host.lock()) {
+					auto boundsPixels = phost->toPixelsFromDips(control_base::bounds);
+
+					RECT r;
+					r.left = boundsPixels.x;
+					r.top = boundsPixels.y;
+					r.right = boundsPixels.x + boundsPixels.w;
+					r.bottom = boundsPixels.y + windows_control<WtlWindowClass, dwStyle, dwExStyle>::text_style.fontSize * 8;
+					windows_control<WtlWindowClass, dwStyle, dwExStyle>::window.MoveWindow(&r);
+				}
+			}
+
+			virtual void on_create()
+			{
+				on_resize();
+				data_changed();
+			}
+
 		};
 
-		const int DefaultWindowStyles = WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP;
+		const int DefaultWindowStyles = WS_VISIBLE | WS_CHILD | WS_TABSTOP;
+		const int DisplayOnlyWindowStyles = WS_VISIBLE | WS_CHILD;
+		const int EditWindowStyles = WS_VISIBLE | WS_BORDER | WS_CHILD;
+		const int RichEditWindowStyles = WS_VISIBLE | WS_BORDER | WS_CHILD | ES_MULTILINE | ES_WANTRETURN | WS_VSCROLL;
+		const int ComboWindowStyles = WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP | CBS_DROPDOWN | CBS_SORT;
+		const int ComboExWindowStyles = WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP | CBS_DROPDOWN | CBS_SORT;
+		const int PushButtonWindowStyles = WS_VISIBLE | WS_CHILD | WS_TABSTOP | BS_FLAT;
+		const int CheckboxWindowStyles = WS_VISIBLE | WS_CHILD | WS_TABSTOP | BS_AUTOCHECKBOX | BS_FLAT;
+		const int RadioButtonWindowStyles = WS_VISIBLE |WS_CHILD | WS_TABSTOP | BS_AUTORADIOBUTTON | BS_FLAT;
+		const int LinkButtonWindowStyles = WS_VISIBLE | WS_CHILD | WS_TABSTOP | BS_COMMANDLINK | BS_FLAT;
+		const int ListViewWindowsStyles = DefaultWindowStyles | LVS_REPORT | LVS_SINGLESEL | WS_BORDER | WS_VSCROLL;
+		const int ListBoxWindowsStyles = DefaultWindowStyles | WS_BORDER | WS_VSCROLL;
 
-		class static_control : public text_control_base<WTL::CStatic, DefaultWindowStyles>
+		class static_control : public text_control_base<WTL::CStatic, DisplayOnlyWindowStyles>
 		{
 		public:
-			static_control(container_control* _parent, int _id) : text_control_base<WTL::CStatic, DefaultWindowStyles>(_parent, _id) { ; }
+			static_control(container_control* _parent, int _id) : text_control_base<WTL::CStatic, DisplayOnlyWindowStyles>(_parent, _id) { ; }
 			virtual ~static_control() { ; }
 		};
 
-		class button_control : public text_control_base<WTL::CButton, DefaultWindowStyles>
+		template <long ButtonWindowStyles> class button_control : public text_control_base<WTL::CButton, ButtonWindowStyles>
 		{
+			using control_base::id;
+			using windows_control<WTL::CButton, ButtonWindowStyles>::window_host;
+			std::string caption_text;
+			long caption_icon_id;
+			CIcon caption_icon;
 		public:
-			button_control(container_control* _parent, int _id) : text_control_base<WTL::CButton, DefaultWindowStyles>(_parent, _id) { ; }
+			button_control(container_control* _parent, int _id) : text_control_base<WTL::CButton, ButtonWindowStyles>(_parent, _id) { ; }
 			virtual ~button_control() { ; }
+
 		};
 
-		class edit_control : public text_control_base<WTL::CEdit, DefaultWindowStyles>
+		class pushbutton_control : public button_control<PushButtonWindowStyles>
 		{
 		public:
-			edit_control(container_control* _parent, int _id) : text_control_base<WTL::CEdit, DefaultWindowStyles>(_parent, _id) { ; }
+			pushbutton_control(container_control* _parent, int _id) : button_control<PushButtonWindowStyles>(_parent, _id) { ; }
+			virtual ~pushbutton_control() { ; }
+		};
+
+		class radiobutton_control : public button_control<RadioButtonWindowStyles>
+		{
+		public:
+			radiobutton_control(container_control* _parent, int _id) : button_control<RadioButtonWindowStyles>(_parent, _id) { ; }
+			virtual ~radiobutton_control() { ; }
+		};
+
+		class checkbox_control : public button_control<CheckboxWindowStyles>
+		{
+		public:
+			checkbox_control(container_control* _parent, int _id) : button_control<CheckboxWindowStyles>(_parent, _id) { ; }
+			virtual ~checkbox_control() { ; }
+		};
+
+		class linkbutton_control : public button_control<LinkButtonWindowStyles>
+		{
+		public:
+			linkbutton_control(container_control* _parent, int _id) : button_control<LinkButtonWindowStyles>(_parent, _id) { ; }
+			virtual ~linkbutton_control() { ; }
+		};
+
+		class edit_control : public text_control_base<WTL::CEdit, EditWindowStyles>
+		{
+		public:
+			edit_control(container_control* _parent, int _id) : text_control_base<WTL::CEdit, EditWindowStyles>(_parent, _id) { ; }
 			virtual ~edit_control() { ; }
 		};
 
-		class listbox_control : public list_control_base<WTL::CListBox, DefaultWindowStyles>
+		class listbox_control : public list_control_base<WTL::CListBox, ListBoxWindowsStyles>
 		{
 		public:
-			listbox_control(container_control* _parent, int _id) : list_control_base<WTL::CListBox, DefaultWindowStyles>(_parent, _id) { ; }
+			listbox_control(container_control* _parent, int _id) : list_control_base<WTL::CListBox, ListBoxWindowsStyles>(_parent, _id) { ; }
 			virtual ~listbox_control() { ; }
 		};
 
-		class combobox_control : public list_control_base<WTL::CComboBox, DefaultWindowStyles>
+		class combobox_control : public dropdown_control_base<WTL::CComboBox, ComboWindowStyles>
 		{
 		public:
-			combobox_control(container_control* _parent, int _id) : list_control_base<WTL::CComboBox, DefaultWindowStyles>(_parent, _id) { ; }
+			combobox_control(container_control* _parent, int _id) : dropdown_control_base<WTL::CComboBox, ComboWindowStyles>(_parent, _id) { ; }
 			virtual ~combobox_control() { ; }
 		};
 
-		class comboboxex_control : public list_control_base<WTL::CComboBoxEx, DefaultWindowStyles>
+		class comboboxex_control : public windows_control<WTL::CComboBoxEx, ComboExWindowStyles>
 		{
 		public:
-			comboboxex_control(container_control* _parent, int _id) : list_control_base<WTL::CComboBoxEx, DefaultWindowStyles>(_parent, _id) { ; }
+			using control_base::id;
+			using windows_control<WTL::CComboBoxEx, ComboExWindowStyles>::window_host;
+			list_data choices;
+
+			comboboxex_control();
+			comboboxex_control(container_control* _parent, int _id);
 			virtual ~comboboxex_control() { ; }
+			void data_changed();
+			void set_list(list_data& _choices);
+			virtual void on_create();
+			virtual void on_resize();
 		};
 
-		class listview_control : public table_control_base<WTL::CListViewCtrl, DefaultWindowStyles | LVS_REPORT | LVS_SINGLESEL>
+		class listview_control : public table_control_base<WTL::CListViewCtrl, ListViewWindowsStyles>
 		{
 		public:
-			listview_control(container_control* _parent, int _id) : table_control_base<WTL::CListViewCtrl, DefaultWindowStyles |  LVS_REPORT | LVS_SINGLESEL>(_parent, _id) { ; }
+			listview_control(container_control* _parent, int _id) : table_control_base<WTL::CListViewCtrl, ListViewWindowsStyles>(_parent, _id) { ; }
 			virtual ~listview_control() { ; }
 		};
 
@@ -796,13 +932,15 @@ namespace corona
 			virtual ~scrollbar_control() { ; }
 		};
 
-		class richedit_control : public text_control_base<WTL::CRichEditCtrl, DefaultWindowStyles>
+		class richedit_control : public text_control_base<WTL::CRichEditCtrl, EditWindowStyles>
 		{
 		public:
 			void set_html(const std::string& _text);
 			std::string get_html();
 
-			richedit_control(container_control* _parent, int _id) : text_control_base<WTL::CRichEditCtrl, DefaultWindowStyles>(_parent, _id) { ; }
+			richedit_control(container_control* _parent, int _id) : text_control_base<WTL::CRichEditCtrl, EditWindowStyles>(_parent, _id) {
+				LoadLibrary(TEXT("Msftedit.dll"));
+			}
 			virtual ~richedit_control() { ; }
 		};
 

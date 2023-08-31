@@ -151,9 +151,29 @@ namespace corona
 			return *this;
 		}
 
+		container_control& container_control::set_background_color(solidBrushRequest _brushFill)
+		{
+			background_brush = _brushFill;
+			background_brush.name = typeid(*this).name();
+			return *this;
+		}
+
+		container_control& container_control::set_background_color(std::string _color)
+		{
+			background_brush.brushColor = toColor(_color.c_str());
+			background_brush.name = typeid(*this).name();
+			return *this;
+		}
+
 		container_control& container_control::set_position(layout_rect _new_layout)
 		{
 			box = _new_layout;
+			return *this;
+		}
+
+		container_control& container_control::set_margin(measure _item_space)
+		{
+			margin = _item_space;
 			return *this;
 		}
 
@@ -226,11 +246,48 @@ namespace corona
 			tc.set_text(_text);
 			return *this;
 		}
-
-		container_control& container_control::button(int id)
+		container_control& container_control::push_button(int id)
 		{
-			auto &tc = create<button_control>(id);
+			auto& tc = create<pushbutton_control>(id);
 			apply(tc);
+			return *this;
+		}
+
+		container_control& container_control::radio_button(int id)
+		{
+			auto& tc = create<radiobutton_control>(id);
+			apply(tc);
+			return *this;
+		}
+
+		container_control& container_control::checkbox(int id)
+		{
+			auto& tc = create<checkbox_control>(id);
+			apply(tc);
+			return *this;
+		}
+
+		container_control& container_control::push_button(std::string _text, int id)
+		{
+			auto& tc = create<pushbutton_control>(id);
+			apply(tc);
+			tc.set_text(_text);
+			return *this;
+		}
+
+		container_control& container_control::radio_button(std::string _text, int id)
+		{
+			auto& tc = create<radiobutton_control>(id);
+			apply(tc);
+			tc.set_text(_text);
+			return *this;
+		}
+
+		container_control& container_control::checkbox(std::string _text, int id)
+		{
+			auto& tc = create<checkbox_control>(id);
+			apply(tc);
+			tc.set_text(_text);
 			return *this;
 		}
 
@@ -353,21 +410,21 @@ namespace corona
 			return *this;
 		}
 
-		double control_base::get_item_space(rectangle _ctx)
+		double control_base::get_margin(rectangle _ctx)
 		{
 			double sz = 0.0;
 
 			control_base& pi = *this;
 
-			switch (item_space.units) {
+			switch (margin.units) {
 			case measure_units::pixels:
-				sz = item_space.amount;
+				sz = margin.amount;
 				break;
 			case measure_units::percent_container:
-				sz = item_space.amount * _ctx.w;
+				sz = margin.amount * _ctx.w;
 				break;
 			case measure_units::percent_remaining:
-				sz = item_space.amount * _ctx.w;
+				sz = margin.amount * _ctx.w;
 				break;
 			case measure_units::font:
 			case measure_units::font_golden_ratio:
@@ -577,8 +634,8 @@ namespace corona
 		void control_base::arrange(rectangle _bounds)
 		{
 			bounds = _bounds;
+			margin_amount.x = margin_amount.y = get_margin(_bounds);
 			on_resize();
-			item_space_amount.x = item_space_amount.y = get_item_space(_bounds);
 		}
 
 		void control_base::arrange_children(rectangle _bounds, 
@@ -637,7 +694,7 @@ namespace corona
 		void absolute_layout::arrange(rectangle _bounds)
 		{
 			bounds = _bounds;
-			item_space_amount.x = item_space_amount.y = get_item_space(_bounds);
+			margin_amount.x = margin_amount.y = get_margin(_bounds);
 
 			point origin = { _bounds.x, _bounds.y, 0 };
 			point remaining = { _bounds.w, _bounds.h, 0 };
@@ -658,6 +715,7 @@ namespace corona
 		void row_layout::arrange(rectangle _bounds)
 		{
 			point origin = { 0, 0, 0 };
+			margin_amount.x = margin_amount.y = get_margin(_bounds);
 
 			bounds = _bounds;
 
@@ -673,7 +731,7 @@ namespace corona
 					[this](point* _origin, rectangle* _bounds, control_base* _item) {
 						point temp = *_origin;
 						temp.x += _item->bounds.w;
-						temp.x += _item->item_space_amount.x;
+						temp.x += _item->margin_amount.x;
 						return temp;
 					}
 					);
@@ -702,7 +760,7 @@ namespace corona
 					},
 					[this](point* _origin, rectangle* _bounds, control_base* _item) {
 						point temp = *_origin;
-						temp.x -= (_item->bounds.w + _item->item_space_amount.x);
+						temp.x -= (_item->bounds.w + _item->margin_amount.x);
 						return temp;
 					}
 					);
@@ -732,7 +790,7 @@ namespace corona
 					},
 					[this](point* _origin, rectangle* _bounds, control_base* _item) {
 						point temp = *_origin;
-						temp.x += (_item->bounds.w + _item->item_space_amount.x);
+						temp.x += (_item->bounds.w + _item->margin_amount.x);
 						return temp;
 					}
 				);
@@ -742,6 +800,7 @@ namespace corona
 		void column_layout::arrange(rectangle _bounds)
 		{			
 			point origin = { 0, 0, 0 };
+			margin_amount.x = margin_amount.y = get_margin(_bounds);
 
 			bounds = _bounds;
 
@@ -757,7 +816,7 @@ namespace corona
 					[this](point* _origin, rectangle* _bounds, control_base* _item) {
 						point temp = *_origin;
 						temp.y += _item->bounds.h;
-						temp.y += _item->item_space_amount.y;
+						temp.y += _item->margin_amount.y;
 						return temp;
 					}
 				);
@@ -787,7 +846,7 @@ namespace corona
 					},
 					[this](point* _origin, rectangle* _bounds, control_base* _item) {
 						point temp = *_origin;
-						temp.y += (_item->bounds.h + _item->item_space_amount.y);
+						temp.y += (_item->bounds.h + _item->margin_amount.y);
 						return temp;
 					}
 				);
@@ -817,7 +876,7 @@ namespace corona
 					},
 					[this](point* _origin, rectangle* _bounds, control_base* _item) {
 						point temp = *_origin;
-						temp.y += (_item->bounds.h + _item->item_space_amount.y);
+						temp.y += (_item->bounds.h + _item->margin_amount.y);
 						return temp;
 					}
 				);
@@ -896,8 +955,26 @@ namespace corona
 				pwindow->beginDraw(adapter_blown_away);
 				if (!adapter_blown_away)
 				{
+					auto context = pwindow->getContext();
+
+					auto& bc = background_brush.brushColor;
+					if (bc.a > 0 || bc.b > 0 || bc.g > 0 || bc.r > 0) {
+						auto dc = context.getDeviceContext();
+						D2D1_COLOR_F color = toColor(bc);
+						dc->Clear(color);
+					}
+					else if (auto phost = host.lock()) {
+						auto dc = context.getDeviceContext();
+						D2D1_COLOR_F color = toColor(phost->backgroundColor);
+						dc->Clear(color);
+					}
+
 					if (on_draw != nullptr) {
 						on_draw(this);
+					}
+					else 
+					{
+						
 					}
 				}
 				pwindow->endDraw(adapter_blown_away);
@@ -942,14 +1019,23 @@ namespace corona
 			on_draw = [this](draw_control* _src) {
 				if (auto pwindow = this->window.lock())
 				{
-					auto draw_bounds = pwindow->getContext().getCanvasSize();
-					D2D1_COLOR_F colors = {};
-					colors.a = 1.0;
-					colors.r = .1;
-					colors.g = .1;
-					colors.b = .0;
-					pwindow->getContext().getDeviceContext()->Clear(&colors);
-					pwindow->getContext().drawText(text.c_str(), &draw_bounds, this->text_style.name, this->text_fill_brush.name);
+					if (auto phost = host.lock()) {
+						auto draw_bounds = pwindow->getContext().getCanvasSize();
+
+						auto& bc = background_brush.brushColor;
+						if (bc.a > 0 || bc.b > 0 || bc.g > 0 || bc.r > 0) {
+							auto dc = pwindow->getContext().getDeviceContext();
+							D2D1_COLOR_F color = toColor(bc);
+							dc->Clear(color);
+						}
+						else if (auto phost = host.lock()) {
+							auto dc = pwindow->getContext().getDeviceContext();
+							D2D1_COLOR_F color = toColor(phost->backgroundColor);
+							dc->Clear(color);
+						}
+
+						pwindow->getContext().drawText(text.c_str(), &draw_bounds, this->text_style.name, this->text_fill_brush.name);
+					}
 				}
 			};
 		}
@@ -999,7 +1085,7 @@ namespace corona
 		void title_control::set_default_styles()
 		{
 			text_fill_brush.name = "title_text_fill";
-			text_fill_brush.brushColor = toColor("#F0F0F0");
+			text_fill_brush.brushColor = toColor("#000000");
 
 			text_style = {};
 			text_style.name = "title_text_style";
@@ -1028,7 +1114,7 @@ namespace corona
 		void subtitle_control::set_default_styles()
 		{
 			text_fill_brush.name = "subtitle_text_fill";
-			text_fill_brush.brushColor = toColor("#C0C0C0");
+			text_fill_brush.brushColor = toColor("#000000");
 
 			text_style = {};
 			text_style.name = "subtitle_text_style";
@@ -1056,7 +1142,7 @@ namespace corona
 		void chaptertitle_control::set_default_styles()
 		{
 			text_fill_brush.name = "chaptertitle_text_fill";
-			text_fill_brush.brushColor = toColor("#C0C0C0");
+			text_fill_brush.brushColor = toColor("#000000");
 
 			text_style = {};
 			text_style.name = "chaptertitle_text_style";
@@ -1084,7 +1170,7 @@ namespace corona
 		void chaptersubtitle_control::set_default_styles()
 		{
 			text_fill_brush.name = "chaptersubtitle_text_fill";
-			text_fill_brush.brushColor = toColor("#C0C0C0");
+			text_fill_brush.brushColor = toColor("#000000");
 
 			text_style = {};
 			text_style.name = "chaptersubtitle_text_style";
@@ -1113,7 +1199,7 @@ namespace corona
 		void paragraph_control::set_default_styles()
 		{
 			text_fill_brush.name = "chaptersubtitle_text_fill";
-			text_fill_brush.brushColor = toColor("#C0C0C0");
+			text_fill_brush.brushColor = toColor("#000000");
 
 			text_style = {};
 			text_style.name = "chaptersubtitle_text_style";
@@ -1141,7 +1227,7 @@ namespace corona
 		void code_control::set_default_styles()
 		{
 			text_fill_brush.name = "chaptersubtitle_text_fill";
-			text_fill_brush.brushColor = toColor("#C0C0C0");
+			text_fill_brush.brushColor = toColor("#000000");
 
 			text_style = {};
 			text_style.name = "chaptersubtitle_text_style";
@@ -1165,6 +1251,79 @@ namespace corona
 		{
 			set_default_styles();
 		}
+
+		comboboxex_control::comboboxex_control()
+		{
+			control_base::set_origin(0.0_px, 0.0_px);
+			control_base::set_size(1.0_container, 2.0_fontgr);
+		}
+
+		comboboxex_control::comboboxex_control(container_control* _parent, int _id) : windows_control<WTL::CComboBoxEx, ComboExWindowStyles>(_parent, _id)
+		{
+			control_base::set_origin(0.0_px, 0.0_px);
+			control_base::set_size(1.0_container, 2.0_fontgr);
+		}
+
+		void comboboxex_control::data_changed()
+		{
+			if (window.IsWindow()) {
+				window.ResetContent();
+				for (auto element : choices.items.items())
+				{
+					auto c = element.value();
+					int lid = c[choices.id_field].template get<int>();
+					std::string description = c[choices.text_field].template get<std::string>();
+
+					COMBOBOXEXITEM cbex = {};
+					cbex.mask = CBEIF_TEXT | CBEIF_LPARAM;
+					cbex.iItem = -1;
+					cbex.pszText = (LPTSTR)description.c_str();
+					cbex.iImage = 0;
+					cbex.iSelectedImage = 0;
+					cbex.iIndent = 0;
+					cbex.lParam = lid;
+					window.InsertItem(&cbex);
+				}
+			}
+		}
+
+		void comboboxex_control::set_list(list_data& _choices)
+		{
+			choices = _choices;
+			data_changed();
+		}
+
+		void comboboxex_control::on_create()
+		{
+			if (auto phost = window_host.lock()) {
+				auto boundsPixels = phost->toPixelsFromDips(bounds);
+
+				RECT r;
+				r.left = boundsPixels.x;
+				r.top = boundsPixels.y;
+				r.right = boundsPixels.x + bounds.w;
+				r.bottom = boundsPixels.y + text_style.fontSize * 8;
+				window.MoveWindow(&r);
+			}
+
+			data_changed();
+		}
+
+		void comboboxex_control::on_resize()
+		{
+			if (auto phost = window_host.lock()) {
+				auto boundsPixels = phost->toPixelsFromDips(control_base::bounds);
+
+				RECT r;
+				r.left = boundsPixels.x;
+				r.top = boundsPixels.y;
+				r.right = boundsPixels.x + boundsPixels.w;
+				r.bottom = boundsPixels.y + windows_control<WTL::CComboBoxEx, ComboExWindowStyles>::text_style.fontSize * 8;
+				windows_control<WTL::CComboBoxEx, ComboExWindowStyles>::window.MoveWindow(&r);
+			}
+		}
+
+
 
 		void richedit_control::set_html(const std::string& _text)
 		{

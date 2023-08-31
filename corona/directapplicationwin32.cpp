@@ -24,14 +24,17 @@ namespace corona
 			titleFont = nullptr;
 			dpiScale = 1.0;
 			disableChangeProcessing = false;
+
+			backgroundColor.a = 1.0;
+			backgroundColor.r = 1.0;
+			backgroundColor.g = 1.0;
+			backgroundColor.b = 1.0;
 		}
 
 		directApplicationWin32::~directApplicationWin32()
 		{
 
 		}
-
-
 
 		void directApplicationWin32::redraw()
 		{
@@ -66,15 +69,18 @@ namespace corona
 					auto dc = winroot->getContext().getDeviceContext();
 					rectangle rmaster = winroot->getBoundsDips();
 
-					color c = { .5, .6, .2, 1.0 };
-					winroot->getContext().clear(&c);
+					D2D1_COLOR_F backgroundColor = {};
+					backgroundColor.a = backgroundColor.a;
+					backgroundColor.r = backgroundColor.r;
+					backgroundColor.g = backgroundColor.g;
+					backgroundColor.b = backgroundColor.b;
+					dc->Clear(&backgroundColor);
 
 					auto wbounds = winroot->getBoundsDips();
 
 					relative_ptr_type id = 0;
 
 					D2D1_RECT_F dest;
-
 
 					for (auto& w : wins)
 					{
@@ -236,7 +242,7 @@ namespace corona
 			case WM_CREATE:
 				hwndRoot = hwnd;
 				if (currentController) {
-					pfactory->createD2dWindow(hwnd);
+					pfactory->createD2dWindow(hwnd, backgroundColor);
 					dpiScale = 96.0 / GetDpiForWindow(hwnd);
 					loadStyleSheet();
 					currentController->onCreated();

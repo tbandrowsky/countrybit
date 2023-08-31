@@ -206,7 +206,7 @@ namespace corona
 
 		public:
 
-			direct2dWindow(HWND hwnd, std::weak_ptr<adapterSet> _adapter);
+			direct2dWindow(HWND hwnd, std::weak_ptr<adapterSet> _adapter, color _background_color);
 			virtual ~direct2dWindow();
 
 			rectangle getBoundsDips();

@@ -69,49 +69,75 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 
 	std::shared_ptr<corona::win32::presentation> test_app = std::make_shared<corona::win32::presentation>();
 
-	int IDC_TEST_LABEL = 1001;
-	int IDC_TEST_EDIT = 1002;
+	int IDC_TEST_LABEL1 = 1001;
+	int IDC_TEST_EDIT1 = 1002;
 	int IDC_TEST_LABEL2 = 1003;
 	int IDC_TEST_EDIT2 = 1004;
-	int IDC_TEST_LABEL3 = 1003;
-	int IDC_TEST_COMBO1 = 1004;
-	int IDC_TEST_LABEL4 = 1003;
-	int IDC_TEST_LISTVIEW = 1004;
+	int IDC_TEST_LABEL3 = 1005;
+	int IDC_TEST_COMBO1 = 1006;
+	int IDC_TEST_LABEL4 = 1007;
+	int IDC_TEST_LISTVIEW = 1008;
+	int IDC_RICH_EDIT1 = 1009;
+	int IDC_COMBO_BOX1 = 1010;
+	int IDC_COMBO_BOXEX1 = 1011;
+	int IDC_TEST_LABEL5 = 1012;
+	int IDC_TEST_LABEL6 = 1013;
+	int IDC_BUTTON1 = 1014;
+	int IDC_PUSHBUTTON1 = 1015;
+	int IDC_RADIOBUTTON1 = 1016;
+	int IDC_RADIOBUTTON2 = 1017;
+	int IDC_TEST_LABEL7 = 1018;
+	int IDC_TEST_LABEL8 = 1019;
 
 	test_app->create_page("home")
 		.row_begin()
+		.set_background_color("#FFFFFF")
+		.set_margin(4.0_px)
 		.set_size(1.0_container, 1.0_container)
-		.column_begin()
-		.set_size(.3_container, 1.0_container)
-		.title("Title")
-		.subtitle("Subtitle")
-		.label("List View", IDC_TEST_LABEL)
-		.set_item_size(1.0_container, 1.0_remaining)
-		.listview(IDC_TEST_LISTVIEW)
+			.column_begin()
+			.set_size(.3_container, 1.0_container)
+			.set_margin( 4.0_px )
+				.chaptertitle("List Controls")
+				.chaptersubtitle("For viewing lists")
+				.label("List View", IDC_TEST_LABEL1)
+				.set_item_size(1.0_container, .5_remaining)
+				.listview(IDC_TEST_LISTVIEW)
+				.label("List Box", IDC_TEST_LABEL2)
+			.end()
+			.column_begin()
+			.set_size(.2_container, 1.0_container)
+			.set_margin(4.0_px)
+			.set_align(visual_alignment::align_near)
+				.chaptertitle("Edit Controls")
+				.chaptersubtitle("Test Panel For Edits")
+				.label("Edit 1", IDC_TEST_LABEL3)
+				.edit(IDC_TEST_EDIT1)
+				.label("Edit 2", IDC_TEST_LABEL4)
+				.edit(IDC_TEST_EDIT2)
+				.label("Combo ", IDC_TEST_LABEL5)
+				.combobox(IDC_COMBO_BOX1)
+				.label("Combo EX", IDC_TEST_LABEL6)
+				.comboboxex(IDC_COMBO_BOXEX1)
+				.label("Checkbox", IDC_TEST_LABEL7)
+				.checkbox("Check", IDC_BUTTON1)
+				.label("Radio", IDC_TEST_LABEL8)
+				.radio_button("Radio 1", IDC_RADIOBUTTON1)
+				.radio_button("Radio 2", IDC_RADIOBUTTON2)
+				.set_item_size(1.0_container, 1.0_remaining)
+				.push_button("Ok", IDC_PUSHBUTTON1)
+			.end()
+			.column_begin()
+			.set_size(1.0_remaining, 1.0_container)
+			.set_margin(4.0_px)
+			.set_align(visual_alignment::align_near)
+				.chaptertitle("Content Controls")
+				.chaptersubtitle("Windows Text Editor")
+				.label("Text Editor", IDC_TEST_LABEL8)
+				.richedit(IDC_RICH_EDIT1)
+				.chaptersubtitle("Direct 2d Controls")
+			.end()
 		.end()
-		.column_begin()
-		.set_size(.7_container, 1.0_container)
-		.row_begin()
-		.set_size(1.0_container, 1.0_container)
-		.column_begin()
-		.set_size(0.5_container, 1.0_container)
-		.set_align(visual_alignment::align_center)
-		.chaptertitle("Chapter Title 1")
-		.chaptersubtitle("Chapter Subtitle 1")
-		.label("Test Edit 1", IDC_TEST_LABEL2)
-		.edit(IDC_TEST_EDIT)
-		.end()
-		.column_begin()
-		.set_size(0.5_container, 1.0_container)
-		.set_align(visual_alignment::align_far)
-		.chaptertitle("Chapter Title 2")
-		.chaptersubtitle("Chapter Subtitle 2")
-		.label("Test Edit 2", IDC_TEST_LABEL3)
-		.edit(IDC_TEST_EDIT2)
-		.end()
-		.end()
-		.end()
-		.end();
+	.end();
 
 	// now load the data
 	auto &lv = test_app->find<listview_control>(IDC_TEST_LISTVIEW);
@@ -155,7 +181,41 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 
 	lv.set_table(tdata);
 
+	auto& cb = test_app->find<combobox_control>(IDC_COMBO_BOX1);
 
+	list_data ldata;
+	ldata.id_field = "Id";
+	ldata.text_field = "Name";
+	ldata.items = R"([
+{ "Id":0, "Name":"Bob" },
+{ "Id":1, "Name":"Ted" },
+{ "Id":2, "Name":"Isiah" },
+{ "Id":3, "Name":"April" },
+{ "Id":4, "Name":"Moesha" },
+{ "Id":5, "Name":"Joe" },
+{ "Id":6, "Name":"Raghu" },
+{ "Id":7, "Name":"Harmeet" }
+])"_json;
+	cb.set_list(ldata);
+
+	auto& cbex = test_app->find<comboboxex_control>(IDC_COMBO_BOXEX1);
+
+	list_data ldata2;
+	ldata2.id_field = "Id";
+	ldata2.text_field = "Name";
+	ldata2.items = R"([
+{ "Id":0, "Name":"Akron" },
+{ "Id":1, "Name":"Cleveland" },
+{ "Id":2, "Name":"Barberton" },
+{ "Id":3, "Name":"Youngstown" },
+{ "Id":4, "Name":"Breezewood" },
+{ "Id":5, "Name":"Leesville" },
+{ "Id":6, "Name":"Phillipsburg" },
+{ "Id":7, "Name":"Marlton" },
+{ "Id":8, "Name":"Elkton" },
+{ "Id":9, "Name":"Philadelphia" }
+])"_json;
+	cbex.set_list(ldata2);
 
 	if (forceWindowed)
 	{
