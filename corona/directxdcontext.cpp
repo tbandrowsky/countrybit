@@ -282,6 +282,8 @@ namespace corona
 			windowPosition.w = _wdips;
 			windowPosition.h = _hdips;
 
+			zOrder = 0;
+
 			resize(_wdips, _hdips);
 		}
 

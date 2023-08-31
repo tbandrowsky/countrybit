@@ -35,6 +35,7 @@ namespace corona
 		class chaptersubtitle_control;
 		class paragraph_control;
 		class code_control;
+		class label_control;
 		class image_control;
 
 		class static_control;
@@ -68,7 +69,7 @@ namespace corona
 			double get_margin(rectangle _ctx);
 			virtual point get_remaining(point _ctx);
 			virtual void on_resize();
-			void arrange_children(rectangle _bounds,
+			void arrange_children(rectangle _bounds, int zorder, 
 				std::function<point(rectangle *_bounds, control_base*)> _initial_origin,
 				std::function<point(point* _origin, rectangle *_bounds, control_base*)> _next_origin);
 		public:
@@ -115,12 +116,13 @@ namespace corona
 				}
 			}
 
-			virtual void arrange(rectangle _ctx);
+			virtual void arrange(rectangle _ctx, int zorder);
 			bool contains(point pt);
 
 			control_base* find(int _id);
 			control_base* get(control_base* _root, int _id);
 
+			virtual double get_font_size() { return 12; }
 
 			template <typename control_type> control_type& find(int _id)
 			{
@@ -212,6 +214,7 @@ namespace corona
 
 			layout_rect				item_box = {};
 			visual_alignment		item_alignment = visual_alignment::align_none;
+			measure					item_margin = {};
 
 			container_control();
 			container_control(container_control* _parent, int _id);
@@ -233,6 +236,7 @@ namespace corona
 			container_control& set_item_origin(measure _x, measure _y);
 			container_control& set_item_size(measure _width, measure _height);
 			container_control& set_item_position(layout_rect _new_layout);
+			container_control& set_item_margin(measure _item_margin);
 
 			container_control& set_align(visual_alignment _new_alignment);
 			container_control& set_origin(measure _x, measure _y);
@@ -261,19 +265,17 @@ namespace corona
 			container_control& chaptersubtitle(int id = id_counter::next());
 			container_control& paragraph(int id = id_counter::next());
 			container_control& code(int id = id_counter::next());
+			container_control& label(int id = id_counter::next());
+			container_control& label(std::string _text, int id = id_counter::next());
 
 			container_control& image(int id = id_counter::next());
 
-			container_control& label(int id = id_counter::next());
-			container_control& label(std::string _text, int id = id_counter::next());
 			container_control& push_button(int id);
 			container_control& radio_button(int id);
 			container_control& checkbox(int id);
-			container_control& link_button(int id);
 			container_control& push_button(std::string _text, int id);
 			container_control& radio_button(std::string _text, int id);
 			container_control& checkbox(std::string _text, int id);
-			container_control& link_button(std::string _text, int id);
 			container_control& listbox(int id);
 			container_control& combobox(int id);
 			container_control& edit(int id);
@@ -307,6 +309,7 @@ namespace corona
 			text_display_control(container_control* _parent, int _id);
 
 			void init();
+			virtual double get_font_size() { return text_style.fontSize; }
 			text_display_control& set_text(std::string _text);
 			text_display_control& set_text_fill(solidBrushRequest _brushFill);
 			text_display_control& set_text_fill(std::string _color);
@@ -363,6 +366,14 @@ namespace corona
 			code_control(container_control* _parent, int _id);
 		};
 
+		class label_control: public text_display_control
+		{
+			void set_default_styles();
+		public:
+			label_control();
+			label_control(container_control* _parent, int _id);
+		};
+
 		class image_control : 
 			public draw_control
 		{
@@ -379,7 +390,7 @@ namespace corona
 			absolute_layout(container_control* _parent, int _id) : container_control(_parent, _id) { ; }
 			virtual ~absolute_layout() { ; }
 
-			virtual void arrange(rectangle _ctx);
+			virtual void arrange(rectangle _ctx, int zorder);
 		};
 
 		class column_layout : 
@@ -391,7 +402,7 @@ namespace corona
 			column_layout(container_control* _parent, int _id) : container_control(_parent, _id) { ; }
 			virtual ~column_layout() { ; }
 
-			virtual void arrange(rectangle _ctx);
+			virtual void arrange(rectangle _ctx, int zorder);
 			virtual point get_remaining(point _ctx);
 		};
 
@@ -404,7 +415,7 @@ namespace corona
 			row_layout(container_control* _parent, int _id) : container_control(_parent, _id) { ; }
 			virtual ~row_layout() { ; }
 
-			virtual void arrange(rectangle _ctx);
+			virtual void arrange(rectangle _ctx, int zorder);
 			virtual point get_remaining(point _ctx);
 		};
 
@@ -416,7 +427,7 @@ namespace corona
 				text_style = {};
 				text_style.name = "windows_control_style";
 				text_style.fontName = "Open Sans";
-				text_style.fontSize = 18;
+				text_style.fontSize = 20;
 				text_style.bold = false;
 				text_style.italics = false;
 				text_style.underline = false;
@@ -439,16 +450,18 @@ namespace corona
 			windows_control()
 			{
 				set_origin(0.0_px, 0.0_px);
-				set_size(1.0_container, 2.0_fontgr);
+				set_size(1.0_container, 1.2_fontgr);
 				set_default_styles();
 			}
 
 			windows_control(container_control* _parent, int _id) : control_base(_parent, _id)
 			{
 				set_origin(0.0_px, 0.0_px);
-				set_size(1.0_container, 2.0_fontgr);
+				set_size(1.0_container, 1.2_fontgr);
 				set_default_styles();
 			}
+
+			virtual double get_font_size() { return text_style.fontSize; }
 
 			virtual void on_resize()
 			{

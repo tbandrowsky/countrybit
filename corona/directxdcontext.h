@@ -256,6 +256,8 @@ namespace corona
 			void resize(UINT _wdips, UINT _hdips);
 			void moveWindow(UINT _xdips, UINT _ydips, UINT _wdips, UINT _hdips);
 
+			int zOrder;
+
 			ID2D1Bitmap1* getBitmap() { return childBitmap->getBitmap(); }
 
 			virtual direct2dContext& getContext()

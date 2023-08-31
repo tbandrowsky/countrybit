@@ -98,6 +98,7 @@ namespace corona
 		row_layout& container_control::row_begin(int id)
 		{
 			row_layout& temp = create<row_layout>(id);
+			apply(temp);
 			debug_indent += 2;
 			return temp;
 		}
@@ -105,6 +106,7 @@ namespace corona
 		column_layout& container_control::column_begin(int id)
 		{
 			column_layout& temp = create<column_layout>(id);
+			apply(temp);
 			debug_indent += 2;
 			return temp;
 		}
@@ -112,6 +114,7 @@ namespace corona
 		absolute_layout& container_control::absolute_begin(int id)
 		{
 			absolute_layout& temp = create<absolute_layout>(id);
+			apply(temp);
 			debug_indent += 2;
 			return temp;
 		}
@@ -231,21 +234,21 @@ namespace corona
 			return *this;
 		}
 
-
 		container_control& container_control::label(int id)
 		{
-			auto &tc = create<static_control>(id);
+			auto &tc = create<label_control>(id);
 			apply(tc);
 			return *this;
 		}
 
 		container_control& container_control::label(std::string _text, int id)
 		{
-			auto& tc = create<static_control>(id);
+			auto& tc = create<label_control>(id);
 			apply(tc);
 			tc.set_text(_text);
 			return *this;
 		}
+
 		container_control& container_control::push_button(int id)
 		{
 			auto& tc = create<pushbutton_control>(id);
@@ -459,7 +462,7 @@ namespace corona
 			}
 			else if (pi.box.width.units == measure_units::font || pi.box.width.units == measure_units::font_golden_ratio)
 			{
-				double font_height = 12.0;
+				double font_height = get_font_size();
 				sz.x = font_height * pi.box.width.amount;
 				if (pi.box.width.units == measure_units::font_golden_ratio)
 				{
@@ -481,7 +484,7 @@ namespace corona
 			}
 			else if (pi.box.height.units == measure_units::font || pi.box.height.units == measure_units::font_golden_ratio)
 			{
-				double font_height = 12.0;
+				double font_height = get_font_size();
 				sz.y = font_height * pi.box.height.amount;
 				if (pi.box.height.units == measure_units::font_golden_ratio)
 				{
@@ -516,7 +519,7 @@ namespace corona
 				pos.x = box.x.amount;
 				break;
 			case measure_units::font:
-			case measure_units::font_golden_ratio:
+			case measure_units::font_golden_ratio:				
 			case measure_units::percent_aspect:
 			case measure_units::percent_child:
 				throw std::logic_error("font, aspect and child units cannot be used for position");
@@ -566,6 +569,11 @@ namespace corona
 			{
 				_ref.box = item_box;
 			}
+
+			if (item_margin.amount > 0)
+			{
+				_ref.margin = item_margin;
+			}
 		}
 
 		container_control& container_control::set_item_align(visual_alignment _new_alignment)
@@ -591,6 +599,12 @@ namespace corona
 		container_control& container_control::set_item_position(layout_rect _new_layout)
 		{
 			item_box = _new_layout;
+			return *this;
+		}
+
+		container_control& container_control::set_item_margin(measure _item_margin)
+		{
+			item_margin = _item_margin;
 			return *this;
 		}
 
@@ -631,7 +645,7 @@ namespace corona
 			return rectangle_math::contains(bounds, pt.x, pt.y);
 		}
 
-		void control_base::arrange(rectangle _bounds)
+		void control_base::arrange(rectangle _bounds, int zorder)
 		{
 			bounds = _bounds;
 			margin_amount.x = margin_amount.y = get_margin(_bounds);
@@ -639,6 +653,7 @@ namespace corona
 		}
 
 		void control_base::arrange_children(rectangle _bounds, 
+			int zorder,
 			std::function<point(rectangle *_bounds, control_base*)> _initial_origin,
 			std::function<point (point* _origin, rectangle *_bounds, control_base *)> _next_origin)
 		{
@@ -686,12 +701,12 @@ namespace corona
 
 //				std::cout << "   next origin:" << typeid(*this).name() << "  child:" << typeid(*child).name() << " " << origin.x << ", " << origin.y << std::endl;
 
-				child->arrange(child->bounds);
+				child->arrange(child->bounds, zorder + 1 );
 			}
 
 		}
 
-		void absolute_layout::arrange(rectangle _bounds)
+		void absolute_layout::arrange(rectangle _bounds, int zorder)
 		{
 			bounds = _bounds;
 			margin_amount.x = margin_amount.y = get_margin(_bounds);
@@ -699,7 +714,7 @@ namespace corona
 			point origin = { _bounds.x, _bounds.y, 0 };
 			point remaining = { _bounds.w, _bounds.h, 0 };
 
-			arrange_children(bounds, 
+			arrange_children(bounds, zorder,
 				[this](rectangle* _bounds, control_base* _item) {
 					point temp = { _bounds->x, _bounds->y };
 					return temp;
@@ -712,7 +727,7 @@ namespace corona
 		}
 
 
-		void row_layout::arrange(rectangle _bounds)
+		void row_layout::arrange(rectangle _bounds, int zorder)
 		{
 			point origin = { 0, 0, 0 };
 			margin_amount.x = margin_amount.y = get_margin(_bounds);
@@ -721,7 +736,7 @@ namespace corona
 
 			if (alignment == visual_alignment::align_near)
 			{
-				arrange_children(bounds,
+				arrange_children(bounds, zorder,
 					[this](rectangle* _bounds, control_base* _item) {
 						point temp = { 0, 0, 0 };
 						temp.x = _bounds->x;
@@ -739,7 +754,7 @@ namespace corona
 			}
 			else if (alignment == visual_alignment::align_far)
 			{
-				arrange_children(bounds,
+				arrange_children(bounds, zorder,
 					[this](rectangle* _bounds, control_base* _item) {
 
 						double w = 0.0;
@@ -768,7 +783,7 @@ namespace corona
 			else if (alignment == visual_alignment::align_center)
 			{
 
-				arrange_children(bounds,
+				arrange_children(bounds, zorder,
 					[this](rectangle* _bounds, control_base* _item) {
 
 						double w = 0.0;
@@ -797,7 +812,7 @@ namespace corona
 			}
 		}
 
-		void column_layout::arrange(rectangle _bounds)
+		void column_layout::arrange(rectangle _bounds, int zorder)
 		{			
 			point origin = { 0, 0, 0 };
 			margin_amount.x = margin_amount.y = get_margin(_bounds);
@@ -807,6 +822,7 @@ namespace corona
 			if (alignment == visual_alignment::align_near)
 			{
 				arrange_children(bounds,
+					zorder,
 					[this](rectangle* _bounds, control_base* _item) {
 						point temp = { 0, 0, 0 };
 						temp.x = _bounds->x;
@@ -824,7 +840,7 @@ namespace corona
 			}
 			else if (alignment == visual_alignment::align_far)
 			{
-				arrange_children(bounds,
+				arrange_children(bounds, zorder,
 					[this](rectangle* _bounds, control_base* _item) {
 						point temp = { 0, 0, 0 };
 
@@ -854,7 +870,7 @@ namespace corona
 			else if (alignment == visual_alignment::align_center)
 			{
 
-				arrange_children(bounds,
+				arrange_children(bounds, zorder,
 					[this](rectangle* _bounds, control_base* _item) {
 
 						double h = 0.0;
@@ -904,12 +920,14 @@ namespace corona
 
 		draw_control::draw_control()
 		{
+			background_brush = {};
 			parent = nullptr;
 			id = id_counter::next();
 		}
 
 		draw_control::draw_control(container_control* _parent, int _id)
 		{
+			background_brush = {};
 			parent = _parent;
 			id = _id;
 		}
@@ -958,6 +976,7 @@ namespace corona
 					auto context = pwindow->getContext();
 
 					auto& bc = background_brush.brushColor;
+
 					if (bc.a > 0 || bc.b > 0 || bc.g > 0 || bc.r > 0) {
 						auto dc = context.getDeviceContext();
 						D2D1_COLOR_F color = toColor(bc);
@@ -1005,7 +1024,7 @@ namespace corona
 		void text_display_control::init()
 		{
 			set_origin(0.0_px, 0.0_px);
-			set_size(1.0_container, 3.0_fontgr);
+			set_size(1.0_container, 1.2_fontgr);
 
 			on_create = [this](draw_control* _src)
 			{
@@ -1022,7 +1041,7 @@ namespace corona
 					if (auto phost = host.lock()) {
 						auto draw_bounds = pwindow->getContext().getCanvasSize();
 
-						auto& bc = background_brush.brushColor;
+				/*		auto& bc = background_brush.brushColor;
 						if (bc.a > 0 || bc.b > 0 || bc.g > 0 || bc.r > 0) {
 							auto dc = pwindow->getContext().getDeviceContext();
 							D2D1_COLOR_F color = toColor(bc);
@@ -1033,8 +1052,9 @@ namespace corona
 							D2D1_COLOR_F color = toColor(phost->backgroundColor);
 							dc->Clear(color);
 						}
-
+						*/
 						pwindow->getContext().drawText(text.c_str(), &draw_bounds, this->text_style.name, this->text_fill_brush.name);
+//						pwindow->getContext().drawRectangle(&draw_bounds, this->text_fill_brush.name, 4, nullptr);
 					}
 				}
 			};
@@ -1198,11 +1218,11 @@ namespace corona
 
 		void paragraph_control::set_default_styles()
 		{
-			text_fill_brush.name = "chaptersubtitle_text_fill";
+			text_fill_brush.name = "paragraph_text_fill";
 			text_fill_brush.brushColor = toColor("#000000");
 
 			text_style = {};
-			text_style.name = "chaptersubtitle_text_style";
+			text_style.name = "paragraph_text_style";
 			text_style.fontName = "Century,Courier New,Arial";
 			text_style.fontSize = 12;
 			text_style.bold = false;
@@ -1226,11 +1246,11 @@ namespace corona
 		
 		void code_control::set_default_styles()
 		{
-			text_fill_brush.name = "chaptersubtitle_text_fill";
+			text_fill_brush.name = "code_text_fill";
 			text_fill_brush.brushColor = toColor("#000000");
 
 			text_style = {};
-			text_style.name = "chaptersubtitle_text_style";
+			text_style.name = "code_text_style";
 			text_style.fontName = "Cascadia Mono,Courier New";
 			text_style.fontSize = 12;
 			text_style.bold = false;
@@ -1248,6 +1268,34 @@ namespace corona
 		}
 
 		code_control::code_control()
+		{
+			set_default_styles();
+		}
+
+		void label_control::set_default_styles()
+		{
+			text_fill_brush.name = "label_text_fill";
+			text_fill_brush.brushColor = toColor("#000000");
+
+			text_style = {};
+			text_style.name = "label_text_style";
+			text_style.fontName = "Open Sans;Arial";
+			text_style.fontSize = 18;
+			text_style.bold = false;
+			text_style.italics = false;
+			text_style.underline = false;
+			text_style.strike_through = false;
+			text_style.horizontal_align = visual_alignment::align_near;
+			text_style.vertical_align = visual_alignment::align_far;
+			text_style.wrap_text = false;
+		}
+
+		label_control::label_control()
+		{
+			set_default_styles();
+		}
+
+		label_control::label_control(container_control* _parent, int _id) : text_display_control(_parent, _id)
 		{
 			set_default_styles();
 		}
@@ -1470,12 +1518,13 @@ namespace corona
 			rectangle bounds;
 			bounds.x = 0;
 			bounds.y = 0;
-			bounds.w = width;
+			bounds.w = width - 32;
 			bounds.h = height;
 
 			std::cout << "page arrange: " << bounds.w << " " << bounds.h << std::endl;
 
-			root->arrange(bounds);
+			int zOrder = 0;
+			root->arrange(bounds, zOrder);
 			std::cout << std::endl;
 			control_base::debug_indent = 0;
 		}

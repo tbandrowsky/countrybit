@@ -45,6 +45,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)object_id_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)rectangle_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)store_box_file.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)styles.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)time_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)file.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)float_box.h" />
@@ -111,6 +112,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)sorted_index.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)jobject.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)queue.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)styles.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)table.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)time_box.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)utility.cpp" />

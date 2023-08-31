@@ -69,35 +69,34 @@ namespace corona
 					auto dc = winroot->getContext().getDeviceContext();
 					rectangle rmaster = winroot->getBoundsDips();
 
-					D2D1_COLOR_F backgroundColor = {};
-					backgroundColor.a = backgroundColor.a;
-					backgroundColor.r = backgroundColor.r;
-					backgroundColor.g = backgroundColor.g;
-					backgroundColor.b = backgroundColor.b;
-					dc->Clear(&backgroundColor);
-
 					auto wbounds = winroot->getBoundsDips();
 
 					relative_ptr_type id = 0;
 
 					D2D1_RECT_F dest;
 
+					std::vector<direct2dChildWindow*> items;
 					for (auto& w : wins)
 					{
-						rectangle r = w.second->getBoundsDips();
+						items.push_back(w.second.get());
+					}
 
-						id = w.first;
+					std::sort(items.begin(), items.end(), [this](corona::win32::direct2dChildWindow* sourceA, corona::win32::direct2dChildWindow* sourceB) {
+						auto bdA = sourceA->getBoundsDips();
+						auto bdB = sourceB->getBoundsDips();
+						return std::tuple(sourceA->zOrder, bdA.y, bdA.x)  < std::tuple(sourceB->zOrder, bdB.y, bdB.x);
+						});
+
+					for (auto& w : items)
+					{
+						rectangle r = w->getBoundsDips();
 
 						dest.left = r.x;
 						dest.top = r.y;
 						dest.right = r.x + r.w;
 						dest.bottom = r.y + r.h;
 
-#if TRACE_RENDER
-						std::cout << "Compose item#" << id << " " << dest.left << " " << dest.top << " " << dest.right << " " << dest.bottom << std::endl;
-#endif
-
-						dc->DrawBitmap(w.second->getBitmap(), &dest);
+						dc->DrawBitmap(w->getBitmap(), &dest);
 
 						counter++;
 					}
@@ -492,13 +491,11 @@ namespace corona
 			}
 			case WM_SIZE:
 			{
-				RECT l;
-				::GetClientRect(hwnd, &l);
 				rectangle rect;
 				rect.x = 0;
 				rect.y = 0;
-				rect.w = abs(l.right - l.left);
-				rect.h = abs(l.bottom - l.top);
+				rect.w = LOWORD(lParam);
+				rect.h = HIWORD(lParam);
 				auto wwin = pfactory->getWindow(hwnd);
 				if (auto win = wwin.lock()) {
 					win->resize(rect.w, rect.h);
