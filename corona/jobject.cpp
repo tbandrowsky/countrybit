@@ -112,8 +112,8 @@ namespace corona
 			}
 			else 
 			{
-				jobject empty;
-				return empty;
+				jobject active;
+				return active;
 			}
 		}
 

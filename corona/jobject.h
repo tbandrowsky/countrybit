@@ -394,7 +394,7 @@ namespace corona
 			class_index_type		classes_by_name;
 			field_index_type		fields_by_name;
 
-			jfield					empty;
+			jfield					active;
 
 		public:	
 
@@ -403,7 +403,7 @@ namespace corona
 
 			const jfield &get_empty() const
 			{
-				return empty;
+				return active;
 			}
 
 			virtual void on_update(jfield& f) { ; }
@@ -454,10 +454,10 @@ namespace corona
 				schema.classes = class_store_type::get_table(_b, pschema_map->classes_table_id);
 				schema.classes_by_name = class_index_type::get_sorted_index(_b, pschema_map->classes_by_name_id);
 				schema.fields_by_name = field_index_type::get_sorted_index(_b, pschema_map->fields_by_name_id);
-				schema.empty.field_id = null_row;
-				schema.empty.type_id = jtype::type_null;
-				schema.empty.name = "empty";
-				schema.empty.description = "indicates a field not found";
+				schema.active.field_id = null_row;
+				schema.active.type_id = jtype::type_null;
+				schema.active.name = "empty";
+				schema.active.description = "indicates a field not found";
 				return schema;
 			}
 

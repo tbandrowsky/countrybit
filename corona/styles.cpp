@@ -9,11 +9,16 @@ namespace corona
         {
             presentation_style woodruff;
 
-            woodruff.PrimaryFont = "Open Sans;Arial;Helvetica";
+            woodruff.PrimaryFont = "Open Sans,Arial";
 
             woodruff.MasterBrandColors = { "319B42", "78BE20", "1F2A44", "D0D3D4", "FFFFFF" };
             woodruff.SecondaryBrandColors = { "6399AE", "34657F", "A0D1CA", "6BBBAE", "621244", "C1C6C8", "A2AAAD", "7C878E", "5B6770", "081F2C" };
             woodruff.SupportingBrandColors = { "5CAA7F", "EED484", "B04A5A", "893B67", "7E5475", "C1C6C8", "A2AAAD", "7C878E", "5B6770", "007396" };
+
+            woodruff.MasterBrandTextColors = { "FFFFFF", "000000", "FFFFFF", "000000", "000000" };
+            woodruff.SecondaryBrandTextColors = { "000000", "34657F", "000000", "6BBBAE", "621244", "000000", "000000", "000000", "5B6770", "081F2C" };
+            woodruff.SupportingBrandTextColors = { "000000", "000000", "000000", "000000", "000000", "000000", "000000", "000000", "5B6770", "007396" };
+
             woodruff.DataColors = {
                 { "Blue", {"34657F", "D4E1E8", "AACDDA", "6399AE", "34657F", "081F2C" } },
                 { "Gray", { "7C878E", "DEE1E1", "C1C6C8", "A2AAAD", "7C878E", "5B6770" } },
@@ -31,7 +36,55 @@ namespace corona
                 { "Earth", { "E1DACE", "D8CEBE", "C4B69D" } },
                 { "Stone", { "DEE1E1", "C1C6C8", "A2AAAD" } }
             };
+
+
+            woodruff.PageBackgroundColor = "FFFFFF";
+            woodruff.PageTextColor = "000000";
+
+            woodruff.HeaderBackgroundColor = woodruff.MasterBrandColors[0];
+            woodruff.HeaderTextColor = woodruff.MasterBrandTextColors[0];
+
+            woodruff.TitleBackgroundColor = woodruff.MasterBrandColors[0];
+            woodruff.TitleTextColor = woodruff.MasterBrandTextColors[0];
+
+            woodruff.SubtitleBackgroundColor = woodruff.MasterBrandColors[0];
+            woodruff.SubtitleTextColor = woodruff.MasterBrandTextColors[0];
+
+            woodruff.ChapterTitleBackgroundColor = "FFFFFF";
+            woodruff.ChapterTitleTextColor = "111111";
+
+            woodruff.SubchapterTitleBackgroundColor = "FFFFFF";
+            woodruff.SubchapterTitleTextColor = "111111";
+
+            woodruff.ParagraphBackgroundColor = "FFFFFF";
+            woodruff.ParagraphTextColor = "111111";
+
+            woodruff.CodeBackgroundColor = "FFFFFF";
+            woodruff.CodeTextColor = "111111";
+
+            woodruff.Section1BackgroundColor = woodruff.SupportingBrandColors[0];
+            woodruff.Section1TextColor = woodruff.SupportingBrandTextColors[0];
+
+            woodruff.Section2BackgroundColor = woodruff.SupportingBrandColors[1];
+            woodruff.Section2TextColor = woodruff.SupportingBrandTextColors[1];
+
+            woodruff.Section3BackgroundColor = woodruff.SupportingBrandColors[2];
+            woodruff.Section3TextColor = woodruff.SupportingBrandTextColors[2];
+
+            woodruff.Section4BackgroundColor = woodruff.SupportingBrandColors[3];
+            woodruff.Section4TextColor = woodruff.SupportingBrandTextColors[3];
+
+            woodruff.FooterBackgroundColor = woodruff.MasterBrandColors[0];
+            woodruff.FooterTextColor = woodruff.MasterBrandTextColors[0];
+
             styles["Woodruff"] = woodruff;
+            current_style = "Woodruff";
         }
+
+        presentation_style& presentation_style_factory::get_style()
+        {
+            return styles[current_style];
+        }
+
 	}
 }

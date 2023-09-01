@@ -121,6 +121,7 @@ namespace corona
 		struct solidBrushRequest {
 			object_name_composed name;
 			color brushColor;
+			bool active;
 		};
 
 		struct drawTextRequest {

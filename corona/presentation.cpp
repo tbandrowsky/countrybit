@@ -9,6 +9,8 @@ namespace corona
 
 	namespace database
 	{
+		presentation_style_factory styles;
+
 		int id_counter::id = 0;
 		int id_counter::next() 
 		{ 
@@ -158,6 +160,7 @@ namespace corona
 		{
 			background_brush = _brushFill;
 			background_brush.name = typeid(*this).name();
+			background_brush.active = true;
 			return *this;
 		}
 
@@ -165,6 +168,7 @@ namespace corona
 		{
 			background_brush.brushColor = toColor(_color.c_str());
 			background_brush.name = typeid(*this).name();
+			background_brush.active = true;
 			return *this;
 		}
 
@@ -413,7 +417,7 @@ namespace corona
 			return *this;
 		}
 
-		double control_base::get_margin(rectangle _ctx)
+		double control_base::get_margin(measure margin)
 		{
 			double sz = 0.0;
 
@@ -424,10 +428,10 @@ namespace corona
 				sz = margin.amount;
 				break;
 			case measure_units::percent_container:
-				sz = margin.amount * _ctx.w;
+				sz = margin.amount * bounds.w;
 				break;
 			case measure_units::percent_remaining:
-				sz = margin.amount * _ctx.w;
+				sz = margin.amount * bounds.w;
 				break;
 			case measure_units::font:
 			case measure_units::font_golden_ratio:
@@ -591,8 +595,10 @@ namespace corona
 
 		container_control& container_control::set_item_size(measure _width, measure _height)
 		{
-			item_box.width = _width;
-			item_box.height = _height;
+			if (_width.amount > 0)
+				item_box.width = _width;
+			if (_height.amount > 0)
+				item_box.height = _height;
 			return *this;
 		}
 
@@ -648,7 +654,7 @@ namespace corona
 		void control_base::arrange(rectangle _bounds, int zorder)
 		{
 			bounds = _bounds;
-			margin_amount.x = margin_amount.y = get_margin(_bounds);
+			margin_amount.x = margin_amount.y = get_margin(margin);
 			on_resize();
 		}
 
@@ -666,6 +672,7 @@ namespace corona
 
 			for (auto child : children)
 			{
+
 				auto sz = child->get_size(_bounds, remaining);
 				auto pos = child->get_position(_bounds);
 
@@ -709,7 +716,7 @@ namespace corona
 		void absolute_layout::arrange(rectangle _bounds, int zorder)
 		{
 			bounds = _bounds;
-			margin_amount.x = margin_amount.y = get_margin(_bounds);
+			margin_amount.x = margin_amount.y = get_margin(margin);
 
 			point origin = { _bounds.x, _bounds.y, 0 };
 			point remaining = { _bounds.w, _bounds.h, 0 };
@@ -730,16 +737,17 @@ namespace corona
 		void row_layout::arrange(rectangle _bounds, int zorder)
 		{
 			point origin = { 0, 0, 0 };
-			margin_amount.x = margin_amount.y = get_margin(_bounds);
+			margin_amount.x = margin_amount.y = get_margin(margin);
+			auto item_margin_amount = get_margin(item_margin);
 
 			bounds = _bounds;
 
 			if (alignment == visual_alignment::align_near)
 			{
 				arrange_children(bounds, zorder,
-					[this](rectangle* _bounds, control_base* _item) {
+					[this, item_margin_amount](rectangle* _bounds, control_base* _item) {
 						point temp = { 0, 0, 0 };
-						temp.x = _bounds->x;
+						temp.x = _bounds->x + item_margin_amount;
 						temp.y = _bounds->y;
 						return temp;
 					},
@@ -755,17 +763,18 @@ namespace corona
 			else if (alignment == visual_alignment::align_far)
 			{
 				arrange_children(bounds, zorder,
-					[this](rectangle* _bounds, control_base* _item) {
+					[this, item_margin_amount](rectangle* _bounds, control_base* _item) {
 
-						double w = 0.0;
+						double w = item_margin_amount;
 						point remaining;
-						remaining.x = _bounds->w;
+						remaining.x = _bounds->w - item_margin_amount * 2.0;
 						remaining.y = _bounds->h;
 
 						for (auto child : children)
 						{
 							auto sz = child->get_size(*_bounds, remaining);
 							w += sz.x;
+							w += get_margin(child->margin);
 						}
 
 						point temp = { 0, 0, 0 };
@@ -775,7 +784,7 @@ namespace corona
 					},
 					[this](point* _origin, rectangle* _bounds, control_base* _item) {
 						point temp = *_origin;
-						temp.x -= (_item->bounds.w + _item->margin_amount.x);
+						temp.x -= _item->bounds.w + get_margin(_item->margin);
 						return temp;
 					}
 					);
@@ -784,7 +793,7 @@ namespace corona
 			{
 
 				arrange_children(bounds, zorder,
-					[this](rectangle* _bounds, control_base* _item) {
+					[this, item_margin_amount](rectangle* _bounds, control_base* _item) {
 
 						double w = 0.0;
 						point origin = { 0, 0, 0 };
@@ -799,7 +808,7 @@ namespace corona
 							w += sz.x;
 						}
 
-						origin.x = (bounds.x + bounds.w - w) / 2;
+						origin.x = (bounds.x + bounds.w - (w+ item_margin_amount)) / 2;
 						origin.y = bounds.y;
 						return origin;
 					},
@@ -815,7 +824,8 @@ namespace corona
 		void column_layout::arrange(rectangle _bounds, int zorder)
 		{			
 			point origin = { 0, 0, 0 };
-			margin_amount.x = margin_amount.y = get_margin(_bounds);
+			margin_amount.x = margin_amount.y = get_margin(margin);
+			auto item_margin_amount = get_margin(item_margin);
 
 			bounds = _bounds;
 
@@ -823,13 +833,13 @@ namespace corona
 			{
 				arrange_children(bounds,
 					zorder,
-					[this](rectangle* _bounds, control_base* _item) {
+					[this, item_margin_amount](rectangle* _bounds, control_base* _item) {
 						point temp = { 0, 0, 0 };
 						temp.x = _bounds->x;
-						temp.y = _bounds->y;
+						temp.y = _bounds->y + item_margin_amount;
 						return temp;
 					},
-					[this](point* _origin, rectangle* _bounds, control_base* _item) {
+					[this, item_margin_amount](point* _origin, rectangle* _bounds, control_base* _item) {
 						point temp = *_origin;
 						temp.y += _item->bounds.h;
 						temp.y += _item->margin_amount.y;
@@ -841,10 +851,10 @@ namespace corona
 			else if (alignment == visual_alignment::align_far)
 			{
 				arrange_children(bounds, zorder,
-					[this](rectangle* _bounds, control_base* _item) {
+					[this, item_margin_amount](rectangle* _bounds, control_base* _item) {
 						point temp = { 0, 0, 0 };
 
-						double h = 0.0;
+						double h = item_margin_amount;
 						point remaining = { };
 						remaining.x = _bounds->w;
 						remaining.y = _bounds->h;
@@ -860,7 +870,7 @@ namespace corona
 						temp.y = _bounds->y +_bounds->h - h;
 						return temp;
 					},
-					[this](point* _origin, rectangle* _bounds, control_base* _item) {
+					[this, item_margin_amount](point* _origin, rectangle* _bounds, control_base* _item) {
 						point temp = *_origin;
 						temp.y += (_item->bounds.h + _item->margin_amount.y);
 						return temp;
@@ -871,7 +881,7 @@ namespace corona
 			{
 
 				arrange_children(bounds, zorder,
-					[this](rectangle* _bounds, control_base* _item) {
+					[this, item_margin_amount](rectangle* _bounds, control_base* _item) {
 
 						double h = 0.0;
 						point origin = { 0, 0, 0 };
@@ -890,7 +900,7 @@ namespace corona
 						origin.y = (bounds.y + bounds.h - h) / 2;
 						return origin;
 					},
-					[this](point* _origin, rectangle* _bounds, control_base* _item) {
+					[this, item_margin_amount](point* _origin, rectangle* _bounds, control_base* _item) {
 						point temp = *_origin;
 						temp.y += (_item->bounds.h + _item->margin_amount.y);
 						return temp;
@@ -977,14 +987,10 @@ namespace corona
 
 					auto& bc = background_brush.brushColor;
 
-					if (bc.a > 0 || bc.b > 0 || bc.g > 0 || bc.r > 0) {
+					if (background_brush.active) 
+					{
 						auto dc = context.getDeviceContext();
 						D2D1_COLOR_F color = toColor(bc);
-						dc->Clear(color);
-					}
-					else if (auto phost = host.lock()) {
-						auto dc = context.getDeviceContext();
-						D2D1_COLOR_F color = toColor(phost->backgroundColor);
 						dc->Clear(color);
 					}
 
@@ -1039,20 +1045,13 @@ namespace corona
 				if (auto pwindow = this->window.lock())
 				{
 					if (auto phost = host.lock()) {
-						auto draw_bounds = pwindow->getContext().getCanvasSize();
+						auto draw_bounds = bounds;
 
-				/*		auto& bc = background_brush.brushColor;
-						if (bc.a > 0 || bc.b > 0 || bc.g > 0 || bc.r > 0) {
-							auto dc = pwindow->getContext().getDeviceContext();
-							D2D1_COLOR_F color = toColor(bc);
-							dc->Clear(color);
-						}
-						else if (auto phost = host.lock()) {
-							auto dc = pwindow->getContext().getDeviceContext();
-							D2D1_COLOR_F color = toColor(phost->backgroundColor);
-							dc->Clear(color);
-						}
-						*/
+						auto bdips = pwindow->getBoundsDips();
+
+						bounds.x = 0;
+						bounds.y = 0;
+
 						pwindow->getContext().drawText(text.c_str(), &draw_bounds, this->text_style.name, this->text_fill_brush.name);
 //						pwindow->getContext().drawRectangle(&draw_bounds, this->text_fill_brush.name, 4, nullptr);
 					}
@@ -1104,12 +1103,18 @@ namespace corona
 
 		void title_control::set_default_styles()
 		{
+
+			auto& st = styles.get_style();
+
+			background_brush.name = "title_fill";
+			background_brush.brushColor = toColor(st.TitleBackgroundColor);
+
 			text_fill_brush.name = "title_text_fill";
-			text_fill_brush.brushColor = toColor("#000000");
+			text_fill_brush.brushColor = toColor(st.TitleTextColor);
 
 			text_style = {};
 			text_style.name = "title_text_style";
-			text_style.fontName = "Open Sans,Arial";
+			text_style.fontName = st.PrimaryFont;
 			text_style.fontSize = 34;
 			text_style.bold = false;
 			text_style.italics = false;
@@ -1133,12 +1138,17 @@ namespace corona
 
 		void subtitle_control::set_default_styles()
 		{
+			auto& st = styles.get_style();
+
+			background_brush.name = "subtitle_fill";
+			background_brush.brushColor = toColor(st.SubtitleBackgroundColor);
+
 			text_fill_brush.name = "subtitle_text_fill";
-			text_fill_brush.brushColor = toColor("#000000");
+			text_fill_brush.brushColor = toColor(st.SubtitleTextColor);
 
 			text_style = {};
 			text_style.name = "subtitle_text_style";
-			text_style.fontName = "Open Sans,Arial";
+			text_style.fontName = st.PrimaryFont;
 			text_style.fontSize = 25;
 			text_style.bold = false;
 			text_style.italics = false;
@@ -1161,12 +1171,17 @@ namespace corona
 
 		void chaptertitle_control::set_default_styles()
 		{
+			auto& st = styles.get_style();
+
+			background_brush.name = "chaptertitle_fill";
+			background_brush.brushColor = toColor(st.ChapterTitleBackgroundColor);
+
 			text_fill_brush.name = "chaptertitle_text_fill";
-			text_fill_brush.brushColor = toColor("#000000");
+			text_fill_brush.brushColor = toColor(st.ChapterTitleTextColor);
 
 			text_style = {};
 			text_style.name = "chaptertitle_text_style";
-			text_style.fontName = "Century,Courier New,Arial";
+			text_style.fontName = st.PrimaryFont;
 			text_style.fontSize = 18;
 			text_style.bold = false;
 			text_style.italics = false;
@@ -1189,12 +1204,17 @@ namespace corona
 
 		void chaptersubtitle_control::set_default_styles()
 		{
+			auto& st = styles.get_style();
+
+			background_brush.name = "chaptersubtitle_fill";
+			background_brush.brushColor = toColor(st.SubchapterTitleBackgroundColor);
+
 			text_fill_brush.name = "chaptersubtitle_text_fill";
-			text_fill_brush.brushColor = toColor("#000000");
+			text_fill_brush.brushColor = toColor(st.SubchapterTitleTextColor);
 
 			text_style = {};
 			text_style.name = "chaptersubtitle_text_style";
-			text_style.fontName = "Century,Courier New,Arial";
+			text_style.fontName = st.PrimaryFont;
 			text_style.fontSize = 18;
 			text_style.bold = false;
 			text_style.italics = false;
@@ -1218,12 +1238,17 @@ namespace corona
 
 		void paragraph_control::set_default_styles()
 		{
+			auto& st = styles.get_style();
+
+			background_brush.name = "paragraph_fill";
+			background_brush.brushColor = toColor(st.ParagraphBackgroundColor);
+
 			text_fill_brush.name = "paragraph_text_fill";
-			text_fill_brush.brushColor = toColor("#000000");
+			text_fill_brush.brushColor = toColor(st.ParagraphTextColor);
 
 			text_style = {};
 			text_style.name = "paragraph_text_style";
-			text_style.fontName = "Century,Courier New,Arial";
+			text_style.fontName = styles.get_style().PrimaryFont;
 			text_style.fontSize = 12;
 			text_style.bold = false;
 			text_style.italics = false;
@@ -1246,8 +1271,13 @@ namespace corona
 		
 		void code_control::set_default_styles()
 		{
-			text_fill_brush.name = "code_text_fill";
-			text_fill_brush.brushColor = toColor("#000000");
+			auto& st = styles.get_style();
+
+			background_brush.name = "paragraph_fill";
+			background_brush.brushColor = toColor(st.CodeBackgroundColor);
+
+			text_fill_brush.name = "paragraph_text_fill";
+			text_fill_brush.brushColor = toColor(st.CodeTextColor);
 
 			text_style = {};
 			text_style.name = "code_text_style";
@@ -1275,11 +1305,11 @@ namespace corona
 		void label_control::set_default_styles()
 		{
 			text_fill_brush.name = "label_text_fill";
-			text_fill_brush.brushColor = toColor("#000000");
+			text_fill_brush.brushColor = toColor(styles.get_style().TextColor.c_str());
 
 			text_style = {};
 			text_style.name = "label_text_style";
-			text_style.fontName = "Open Sans;Arial";
+			text_style.fontName = styles.get_style().PrimaryFont;
 			text_style.fontSize = 18;
 			text_style.bold = false;
 			text_style.italics = false;
@@ -1518,7 +1548,7 @@ namespace corona
 			rectangle bounds;
 			bounds.x = 0;
 			bounds.y = 0;
-			bounds.w = width - 32;
+			bounds.w = width;
 			bounds.h = height;
 
 			std::cout << "page arrange: " << bounds.w << " " << bounds.h << std::endl;

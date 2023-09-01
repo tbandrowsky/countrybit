@@ -67,7 +67,6 @@ namespace corona
 				{
 					auto wins = winroot->getChildren();
 					auto dc = winroot->getContext().getDeviceContext();
-					rectangle rmaster = winroot->getBoundsDips();
 
 					auto wbounds = winroot->getBoundsDips();
 
@@ -103,7 +102,7 @@ namespace corona
 
 					pos += sign;
 					double boxw = wbounds.w / 4;
-					double boxh = 150;
+					double boxh = wbounds.h - 150;
 
 					if (pos < 0)
 					{

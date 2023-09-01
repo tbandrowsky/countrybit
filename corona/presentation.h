@@ -6,6 +6,8 @@ namespace corona
 	{
 		using namespace win32;
 
+		extern presentation_style_factory styles;
+
 		class id_counter
 		{
 		public:
@@ -66,7 +68,7 @@ namespace corona
 		protected:
 			point get_size(rectangle _ctx, point _remaining);
 			point get_position(rectangle _ctx);
-			double get_margin(rectangle _ctx);
+			double get_margin(measure _margin);
 			virtual point get_remaining(point _ctx);
 			virtual void on_resize();
 			void arrange_children(rectangle _bounds, int zorder, 
@@ -419,6 +421,20 @@ namespace corona
 			virtual point get_remaining(point _ctx);
 		};
 
+		class banner_control :
+			public row_layout
+		{
+		protected:
+			std::string logo_filename;
+		public:
+			banner_control() { ; }
+			banner_control(container_control* _parent, int _id) : row_layout(_parent, _id) { ; }
+			virtual ~banner_control() { ; }
+
+			virtual void arrange(rectangle _ctx, int zorder);
+			virtual point get_remaining(point _ctx);
+		};
+
 		template <typename WtlWindowClass, DWORD dwStyle, DWORD dwExStyle = 0> class windows_control : public control_base
 		{
 
@@ -426,7 +442,7 @@ namespace corona
 			{
 				text_style = {};
 				text_style.name = "windows_control_style";
-				text_style.fontName = "Open Sans";
+				text_style.fontName = styles.get_style().PrimaryFont;
 				text_style.fontSize = 20;
 				text_style.bold = false;
 				text_style.italics = false;

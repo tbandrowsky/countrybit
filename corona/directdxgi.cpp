@@ -118,6 +118,12 @@ namespace corona
 
 			return new_color;
 		}
+		
+		D2D1_COLOR_F toColor(std::string& _htmlColor)
+		{
+			return toColor(_htmlColor.c_str());
+		}
+
 
 		D2D1_COLOR_F toColor(color& _color)
 		{

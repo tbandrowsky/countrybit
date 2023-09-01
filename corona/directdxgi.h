@@ -22,6 +22,7 @@ namespace corona
 		point toSize(D2D1_SIZE_U& _size);
 		D2D1_COLOR_F toColor(color& _color);
 		D2D1_COLOR_F toColor(const char *_htmlColor);
+		D2D1_COLOR_F toColor(std::string& _htmlColor);
 		int toInt(char hex);
 		int toInt2(const std::string& item, int _baseIndex);
 		D2D1_POINT_2F toPoint(point& _point);
