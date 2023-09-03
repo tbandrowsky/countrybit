@@ -85,7 +85,6 @@ namespace corona
 
 			int						id;
 
-			visual_alignment		alignment;
 			layout_rect				box;
 			measure					margin;
 
@@ -101,8 +100,7 @@ namespace corona
 				id(-1),
 				margin(),
 				parent(nullptr),
-				margin_amount({ 0.0, 0.0 }),
-				alignment(visual_alignment::align_near)
+				margin_amount({ 0.0, 0.0 })
 			{
 				id = id_counter::next();
 			}
@@ -145,12 +143,7 @@ namespace corona
 			virtual void create(std::weak_ptr<win32::directApplicationWin32> _host);
 			virtual void destroy();
 			virtual void draw();
-
-			control_base& set_align(visual_alignment _new_alignment)
-			{
-				alignment = _new_alignment;
-				return *this;
-			}
+			virtual void render(CComPtr<ID2D1DeviceContext>& _dest);
 
 			control_base& set_origin(measure _x, measure _y)
 			{
@@ -206,6 +199,7 @@ namespace corona
 			virtual void create(std::weak_ptr<win32::directApplicationWin32> _host);
 			virtual void destroy();
 			virtual void draw();
+			virtual void render(CComPtr<ID2D1DeviceContext>& _dest);
 			virtual void on_resize();
 		};
 
@@ -215,8 +209,10 @@ namespace corona
 		public:
 
 			layout_rect				item_box = {};
-			visual_alignment		item_alignment = visual_alignment::align_none;
 			measure					item_margin = {};
+
+			visual_alignment		content_alignment = visual_alignment::align_near;
+			visual_alignment		content_cross_alignment = visual_alignment::align_near;
 
 			container_control();
 			container_control(container_control* _parent, int _id);
@@ -234,13 +230,14 @@ namespace corona
 				return *temp.get();
 			}
 
-			container_control& set_item_align(visual_alignment _new_alignment);
 			container_control& set_item_origin(measure _x, measure _y);
 			container_control& set_item_size(measure _width, measure _height);
 			container_control& set_item_position(layout_rect _new_layout);
 			container_control& set_item_margin(measure _item_margin);
 
-			container_control& set_align(visual_alignment _new_alignment);
+			container_control& set_content_align(visual_alignment _new_alignment);
+			container_control& set_content_cross_align(visual_alignment _new_alignment);
+
 			container_control& set_origin(measure _x, measure _y);
 			container_control& set_size(measure _width, measure _height);
 			container_control& set_position(layout_rect _new_layout);
@@ -297,7 +294,6 @@ namespace corona
 			container_control& datetimepicker(int id);
 			container_control& monthcalendar(int id);
 
-
 		};
 
 		class text_display_control : public draw_control
@@ -326,6 +322,7 @@ namespace corona
 		public:
 			title_control();
 			title_control(container_control* _parent, int _id);
+			virtual ~title_control();
 		};
 
 		class subtitle_control : public text_display_control
@@ -334,6 +331,7 @@ namespace corona
 		public:
 			subtitle_control();
 			subtitle_control(container_control* _parent, int _id);
+			virtual ~subtitle_control();
 		};
 
 		class chaptertitle_control : public text_display_control
@@ -342,6 +340,7 @@ namespace corona
 		public:
 			chaptertitle_control();
 			chaptertitle_control(container_control* _parent, int _id);
+			virtual ~chaptertitle_control();
 		};
 
 		class chaptersubtitle_control : public text_display_control
@@ -350,6 +349,7 @@ namespace corona
 		public:
 			chaptersubtitle_control();
 			chaptersubtitle_control(container_control* _parent, int _id);
+			virtual ~chaptersubtitle_control();
 		};
 
 		class paragraph_control : public text_display_control
@@ -358,6 +358,7 @@ namespace corona
 		public:
 			paragraph_control();
 			paragraph_control(container_control* _parent, int _id);
+			virtual ~paragraph_control();
 		};
 
 		class code_control : public text_display_control
@@ -366,6 +367,7 @@ namespace corona
 		public:
 			code_control();
 			code_control(container_control* _parent, int _id);
+			virtual ~code_control();
 		};
 
 		class label_control: public text_display_control
@@ -374,6 +376,7 @@ namespace corona
 		public:
 			label_control();
 			label_control(container_control* _parent, int _id);
+			virtual ~label_control();
 		};
 
 		class image_control : 
@@ -382,6 +385,7 @@ namespace corona
 		public:
 			image_control();
 			image_control(container_control* _parent, int _id) : draw_control(_parent, _id) { ; }
+			virtual ~image_control();
 		};
 
 		class absolute_layout : 
@@ -1207,6 +1211,7 @@ namespace corona
 			virtual void create(std::weak_ptr<corona::win32::directApplicationWin32> _host);
 			virtual void destroy();
 			virtual void draw();
+			virtual void render(CComPtr<ID2D1DeviceContext>& _context);
 			virtual void update(double _elapsedSeconds, double _totalSeconds);
 
 		public:
@@ -1297,7 +1302,7 @@ namespace corona
 				throw std::exception("could not lock current page");
 			}
 
-			virtual bool drawFrame();
+			virtual bool drawFrame(CComPtr<ID2D1DeviceContext>& _window);
 			virtual bool update(double _elapsedSeconds, double _totalSeconds);
 
 			virtual void keyDown(std::shared_ptr<win32::direct2dWindow>& win, short _key);

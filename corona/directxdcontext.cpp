@@ -297,11 +297,10 @@ namespace corona
 			if (auto pwindow = parent.lock()) {
 				int dpiWindow;
 				dpiWindow = ::GetDpiForWindow(pwindow->getWindow());
-				double dipsToPixels = dpiWindow / 96.0;
 
 				D2D1_SIZE_F size;
-				size.width = _wdips * dipsToPixels;
-				size.height = _hdips * dipsToPixels;
+				size.width = _wdips;
+				size.height = _hdips;
 
 				if (auto pfactory = context->getFactory().lock()) 
 				{
@@ -309,8 +308,7 @@ namespace corona
 					context->getDeviceContext()->SetTarget(tempBitmap->getBitmap());
 					childBitmap = tempBitmap;
 				}
-			}
-
+		}
 			
 		}
 
@@ -413,35 +411,39 @@ namespace corona
 
 				D2D1_SIZE_U bmsize;
 
-				bmsize.height = _size.height;
-				bmsize.width = _size.width;
+				bmsize.height = _size.height * dpi / 96.0;
+				bmsize.width = _size.width * dpi / 96.0;
 
 				D2D1_BITMAP_PROPERTIES1 props = {};
 
-				props.dpiX = dpi;
-				props.dpiY = dpi;
+				props.dpiX = 96;
+				props.dpiY = 96;
 				props.pixelFormat.format = DXGI_FORMAT::DXGI_FORMAT_B8G8R8A8_UNORM;
 				props.pixelFormat.alphaMode = D2D1_ALPHA_MODE::D2D1_ALPHA_MODE_IGNORE;
 				props.bitmapOptions = D2D1_BITMAP_OPTIONS::D2D1_BITMAP_OPTIONS_TARGET;
 
+				auto ps = targetContext->GetSize();
+				auto pxs = targetContext->GetPixelSize();
+				auto unitMode = targetContext->GetUnitMode();
+
+				targetContext->SetDpi(dpi, dpi);
 				hr = targetContext->CreateBitmap(bmsize, nullptr, 0, props, &bitmap);
 				throwOnFail(hr, "Could not create BITMAP");
 
-				auto pxs = bitmap->GetPixelSize();
-				auto ps = bitmap->GetSize();
+				pxs = bitmap->GetPixelSize();
+				ps = bitmap->GetSize();
 
 #if TRACE_RENDER
 				std::cout << "bitmap pixel size " << pxs.width << " " << pxs.height << std::endl;
 				std::cout << "bitmap dips size " << ps.width << " " << ps.height << std::endl;
 #endif
 
-				targetContext->SetDpi(dpi, dpi);
 				targetContext->SetTarget(bitmap);
-
 				ps = targetContext->GetSize();
 				pxs = targetContext->GetPixelSize();
 
-				auto unitMode = targetContext->GetUnitMode();
+				unitMode = targetContext->GetUnitMode();
+				return;
 
 #if TRACE_RENDER
 				std::cout << "target pixel size " << pxs.width << " " << pxs.height << std::endl;

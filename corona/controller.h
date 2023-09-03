@@ -43,7 +43,7 @@ namespace corona
 			virtual void mouseMove(std::shared_ptr<win32::direct2dWindow>& win, point* _point) = 0;
 			virtual void mouseClick(std::shared_ptr<win32::direct2dWindow>& win, point* _point) = 0;
 			virtual void pointSelected(std::shared_ptr<win32::direct2dWindow>& win, point* _point, color* _color) = 0;
-			virtual bool drawFrame() = 0;
+			virtual bool drawFrame(CComPtr<ID2D1DeviceContext>& _context) = 0;
 			virtual bool update(double _elapsedSeconds, double _totalSeconds) = 0;
 
 			virtual void onCreated() = 0;

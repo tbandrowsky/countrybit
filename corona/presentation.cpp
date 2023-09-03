@@ -92,6 +92,13 @@ namespace corona
 			}
 		}
 
+		void control_base::render(CComPtr<ID2D1DeviceContext>& _dest)
+		{
+			for (auto child : children) {
+				child->render(_dest);
+			}
+		}
+
 		void control_base::apply(control_base& _ref)
 		{
 
@@ -134,12 +141,6 @@ namespace corona
 				std::cout << indent << " " << typeid(*this).name() << " ->navigate " << string_name << std::endl;
 				return temp;
 			}
-		}
-
-		container_control& container_control::set_align(visual_alignment _new_alignment)
-		{
-			alignment = _new_alignment;
-			return *this;
 		}
 
 		container_control& container_control::set_origin(measure _x, measure _y)
@@ -565,10 +566,6 @@ namespace corona
 
 		void container_control::apply(control_base& _ref)
 		{
-			if (item_alignment != visual_alignment::align_none) {
-				_ref.alignment = item_alignment;
-			}
-
 			if (item_box.height.amount > 0 && item_box.width.amount > 0)
 			{
 				_ref.box = item_box;
@@ -580,9 +577,15 @@ namespace corona
 			}
 		}
 
-		container_control& container_control::set_item_align(visual_alignment _new_alignment)
+		container_control& container_control::set_content_align(visual_alignment _new_alignment)
 		{
-			item_alignment = _new_alignment;
+			content_alignment = _new_alignment;
+			return *this;
+		}
+
+		container_control& container_control::set_content_cross_align(visual_alignment _new_alignment)
+		{
+			content_cross_alignment = _new_alignment;
 			return *this;
 		}
 
@@ -668,47 +671,58 @@ namespace corona
 
 			on_resize();
 
-			origin = _initial_origin(&bounds, this);
+			if (children.size()) {
 
-			for (auto child : children)
-			{
+				auto sichild = std::begin(children);
 
-				auto sz = child->get_size(_bounds, remaining);
-				auto pos = child->get_position(_bounds);
+				origin = _initial_origin(&bounds, children[0].get());
 
-				child->bounds.x = origin.x + pos.x;
-				child->bounds.y = origin.y + pos.y;
-				child->bounds.w = sz.x;
-				child->bounds.h = sz.y;
+				while (sichild != std::end(children))
+				{
+					auto child = *sichild;
 
-				origin = _next_origin(&origin, &bounds, child.get());
-			}
+					auto sz = child->get_size(_bounds, remaining);
+					auto pos = child->get_position(_bounds);
 
-			remaining = get_remaining(remaining);
+					child->bounds.x = origin.x + pos.x;
+					child->bounds.y = origin.y + pos.y;
+					child->bounds.w = sz.x;
+					child->bounds.h = sz.y;
+					origin = _next_origin(&origin, &bounds, child.get());
 
-			origin = _initial_origin(&bounds, this);
-	//		std::cout << "origin start:" << typeid(*this).name() << origin.x << ", " << origin.y << std::endl;
+					sichild++;
+				}
 
-			for (auto child : children)
-			{
-				auto sz = child->get_size(_bounds, remaining);
-				auto pos = child->get_position(_bounds);
+				remaining = get_remaining(remaining);
 
-//				std::cout << typeid(*this).name() << " sz:" << typeid(*child).name() << " " << sz.x << ", " << sz.y << std::endl;
-//				std::cout << typeid(*this).name() << " pos:" << typeid(*child).name() << " " << pos.x << ", " << pos.y << std::endl;
+				auto ichild = std::begin(children);
 
-				child->bounds.x = origin.x + pos.x;
-				child->bounds.y = origin.y + pos.y;
-				child->bounds.w = sz.x;
-				child->bounds.h = sz.y;
+				origin = _initial_origin(&bounds, children[0].get());
+						std::cout << "origin start:" << typeid(*this).name() << origin.x << ", " << origin.y << std::endl;
 
-				std::cout << typeid(*this).name() << " arrange:" << typeid(*child).name() << " " << child->bounds.x << "," << child->bounds.y << " x " << child->bounds.w << "," << child->bounds.h << std::endl;
+				while (ichild != std::end(children))
+				{
+					auto child = *ichild;
+					auto sz = child->get_size(_bounds, remaining);
+					auto pos = child->get_position(_bounds);
 
-				origin = _next_origin(&origin, &bounds, child.get());
+									std::cout << typeid(*this).name() << " sz:" << typeid(*child).name() << " " << sz.x << ", " << sz.y << std::endl;
+									std::cout << typeid(*this).name() << " pos:" << typeid(*child).name() << " " << pos.x << ", " << pos.y << std::endl;
 
-//				std::cout << "   next origin:" << typeid(*this).name() << "  child:" << typeid(*child).name() << " " << origin.x << ", " << origin.y << std::endl;
+					child->bounds.x = origin.x + pos.x;
+					child->bounds.y = origin.y + pos.y;
+					child->bounds.w = sz.x;
+					child->bounds.h = sz.y;
+					child->arrange(child->bounds, zorder + 1);
 
-				child->arrange(child->bounds, zorder + 1 );
+					std::cout << typeid(*this).name() << " arrange:" << typeid(*child).name() << " " << child->bounds.x << "," << child->bounds.y << " x " << child->bounds.w << "," << child->bounds.h << std::endl;
+
+					origin = _next_origin(&origin, &bounds, child.get());
+
+									std::cout << "   next origin:" << typeid(*this).name() << "  child:" << typeid(*child).name() << " " << origin.x << ", " << origin.y << std::endl;
+
+					ichild++;
+				}
 			}
 
 		}
@@ -742,25 +756,50 @@ namespace corona
 
 			bounds = _bounds;
 
-			if (alignment == visual_alignment::align_near)
+			if (content_alignment == visual_alignment::align_near)
 			{
 				arrange_children(bounds, zorder,
 					[this, item_margin_amount](rectangle* _bounds, control_base* _item) {
 						point temp = { 0, 0, 0 };
-						temp.x = _bounds->x;
-						temp.y = _bounds->y;
+						if (this->content_cross_alignment == visual_alignment::align_near)
+						{
+							temp.x = _bounds->x;
+							temp.y = _bounds->y;
+						}
+						else if (this->content_cross_alignment == visual_alignment::align_center)
+						{
+							temp.x = _bounds->x;
+							temp.y = _bounds->y + (_bounds->h - _item->get_size(bounds, {_bounds->w, _bounds->h}).y) / 2.0;
+						}
+						else if (this->content_cross_alignment == visual_alignment::align_far)
+						{
+							temp.x = _bounds->x;
+							temp.y = _bounds->y + (_bounds->h - _item->get_size(bounds, { _bounds->w, _bounds->h }).y);
+						}
 						return temp;
 					},
 					[this](point* _origin, rectangle* _bounds, control_base* _item) {
 						point temp = *_origin;
 						temp.x += _item->bounds.w;
 						temp.x += _item->margin_amount.x;
+						if (this->content_cross_alignment == visual_alignment::align_near)
+						{
+							temp.y = _bounds->y;
+						}
+						else if (this->content_cross_alignment == visual_alignment::align_center)
+						{
+							temp.y = _bounds->y + (_bounds->h - _item->get_size(bounds, { _bounds->w, _bounds->h }).y) / 2.0;
+						}
+						else if (this->content_cross_alignment == visual_alignment::align_far)
+						{
+							temp.y = _bounds->y + (_bounds->h - _item->get_size(bounds, { _bounds->w, _bounds->h }).y);
+						}
 						return temp;
 					}
 					);
 
 			}
-			else if (alignment == visual_alignment::align_far)
+			else if (content_alignment == visual_alignment::align_far)
 			{
 				arrange_children(bounds, zorder,
 					[this, item_margin_amount](rectangle* _bounds, control_base* _item) {
@@ -779,17 +818,43 @@ namespace corona
 
 						point temp = { 0, 0, 0 };
 						temp.x = _bounds->x + _bounds->w - w;
-						temp.y = _bounds->y;
+
+						if (this->content_cross_alignment == visual_alignment::align_near)
+						{
+							temp.y = _bounds->y;
+						}
+						else if (this->content_cross_alignment == visual_alignment::align_center)
+						{
+							temp.y = _bounds->y + (_bounds->h - _item->get_size(bounds, { _bounds->w, _bounds->h }).y) / 2.0;
+						}
+						else if (this->content_cross_alignment == visual_alignment::align_far)
+						{
+							temp.y = _bounds->y + (_bounds->h - _item->get_size(bounds, { _bounds->w, _bounds->h }).y);
+						}
+
 						return temp;
 					},
 					[this](point* _origin, rectangle* _bounds, control_base* _item) {
 						point temp = *_origin;
 						temp.x -= _item->bounds.w + get_margin(_item->margin);
+						if (this->content_cross_alignment == visual_alignment::align_near)
+						{
+							temp.y = _bounds->y;
+						}
+						else if (this->content_cross_alignment == visual_alignment::align_center)
+						{
+							temp.y = _bounds->y + (_bounds->h - _item->get_size(bounds, { _bounds->w, _bounds->h }).y) / 2.0;
+						}
+						else if (this->content_cross_alignment == visual_alignment::align_far)
+						{
+							temp.y = _bounds->y + (_bounds->h - _item->get_size(bounds, { _bounds->w, _bounds->h }).y);
+						}
+
 						return temp;
 					}
 					);
 			}
-			else if (alignment == visual_alignment::align_center)
+			else if (content_alignment == visual_alignment::align_center)
 			{
 
 				arrange_children(bounds, zorder,
@@ -810,11 +875,38 @@ namespace corona
 
 						origin.x = (bounds.x + bounds.w - (w+ item_margin_amount)) / 2;
 						origin.y = bounds.y;
+
+						if (this->content_cross_alignment == visual_alignment::align_near)
+						{
+							origin.y = _bounds->y;
+						}
+						else if (this->content_cross_alignment == visual_alignment::align_center)
+						{
+							origin.y= _bounds->y + (_bounds->h - _item->get_size(bounds, { _bounds->w, _bounds->h }).y) / 2.0;
+						}
+						else if (this->content_cross_alignment == visual_alignment::align_far)
+						{
+							origin.y = _bounds->y + (_bounds->h - _item->get_size(bounds, { _bounds->w, _bounds->h }).y);
+						}
+
 						return origin;
 					},
 					[this](point* _origin, rectangle* _bounds, control_base* _item) {
 						point temp = *_origin;
 						temp.x += (_item->bounds.w + _item->margin_amount.x);
+
+						if (this->content_cross_alignment == visual_alignment::align_near)
+						{
+							temp.y = _bounds->y;
+						}
+						else if (this->content_cross_alignment == visual_alignment::align_center)
+						{
+							temp.y = _bounds->y + (_bounds->h - _item->get_size(bounds, { _bounds->w, _bounds->h }).y) / 2.0;
+						}
+						else if (this->content_cross_alignment == visual_alignment::align_far)
+						{
+							temp.y = _bounds->y + (_bounds->h - _item->get_size(bounds, { _bounds->w, _bounds->h }).y);
+						}
 						return temp;
 					}
 				);
@@ -829,7 +921,7 @@ namespace corona
 
 			bounds = _bounds;
 
-			if (alignment == visual_alignment::align_near)
+			if (content_alignment == visual_alignment::align_near)
 			{
 				arrange_children(bounds,
 					zorder,
@@ -837,24 +929,52 @@ namespace corona
 						point temp = { 0, 0, 0 };
 						temp.x = _bounds->x;
 						temp.y = _bounds->y;
+
+						if (this->content_cross_alignment == visual_alignment::align_near)
+						{
+							temp.x = _bounds->x;
+						}
+						else if (this->content_cross_alignment == visual_alignment::align_center)
+						{
+							temp.x = _bounds->x + (_bounds->w - _item->get_size(bounds, { _bounds->w, _bounds->h }).x) / 2.0;
+						}
+						else if (this->content_cross_alignment == visual_alignment::align_far)
+						{
+							temp.x = _bounds->x + (_bounds->w - _item->get_size(bounds, { _bounds->w, _bounds->h }).x);
+						}
+
 						return temp;
 					},
 					[this, item_margin_amount](point* _origin, rectangle* _bounds, control_base* _item) {
 						point temp = *_origin;
 						temp.y += _item->bounds.h;
 						temp.y += _item->margin_amount.y;
+
+						if (this->content_cross_alignment == visual_alignment::align_near)
+						{
+							temp.x = _bounds->x;
+						}
+						else if (this->content_cross_alignment == visual_alignment::align_center)
+						{
+							temp.x = _bounds->x + (_bounds->w - _item->get_size(bounds, { _bounds->w, _bounds->h }).x) / 2.0;
+						}
+						else if (this->content_cross_alignment == visual_alignment::align_far)
+						{
+							temp.x = _bounds->x + (_bounds->w - _item->get_size(bounds, { _bounds->w, _bounds->h }).x);
+						}
+
 						return temp;
 					}
 				);
 
 			}
-			else if (alignment == visual_alignment::align_far)
+			else if (content_alignment == visual_alignment::align_far)
 			{
 				arrange_children(bounds, zorder,
 					[this, item_margin_amount](rectangle* _bounds, control_base* _item) {
 						point temp = { 0, 0, 0 };
 
-						double h = item_margin_amount;
+						double h = 0;
 						point remaining = { };
 						remaining.x = _bounds->w;
 						remaining.y = _bounds->h;
@@ -868,16 +988,45 @@ namespace corona
 
 						temp.x = _bounds->x;
 						temp.y = _bounds->y +_bounds->h - h;
+
+						if (this->content_cross_alignment == visual_alignment::align_near)
+						{
+							temp.x = _bounds->x;
+						}
+						else if (this->content_cross_alignment == visual_alignment::align_center)
+						{
+							temp.x = _bounds->x + (_bounds->w - _item->get_size(bounds, { _bounds->w, _bounds->h }).x) / 2.0;
+						}
+						else if (this->content_cross_alignment == visual_alignment::align_far)
+						{
+							temp.x = _bounds->x + (_bounds->w - _item->get_size(bounds, { _bounds->w, _bounds->h }).x);
+						}
+
 						return temp;
 					},
 					[this, item_margin_amount](point* _origin, rectangle* _bounds, control_base* _item) {
 						point temp = *_origin;
-						temp.y += (_item->bounds.h + _item->margin_amount.y);
+						auto size = _item->get_size(bounds, { bounds.w, bounds.h });
+						temp.y += (size.y + _item->margin_amount.y);
+
+						if (this->content_cross_alignment == visual_alignment::align_near)
+						{
+							temp.x = _bounds->x;
+						}
+						else if (this->content_cross_alignment == visual_alignment::align_center)
+						{
+							temp.x = _bounds->x + (_bounds->w - size.x) / 2.0;
+						}
+						else if (this->content_cross_alignment == visual_alignment::align_far)
+						{
+							temp.x = _bounds->x + (_bounds->w - size.x);
+						}
+
 						return temp;
 					}
 				);
 			}
-			else if (alignment == visual_alignment::align_center)
+			else if (content_alignment == visual_alignment::align_center)
 			{
 
 				arrange_children(bounds, zorder,
@@ -898,11 +1047,38 @@ namespace corona
 
 						origin.x = bounds.x;
 						origin.y = (bounds.y + bounds.h - h) / 2;
+
+						if (this->content_cross_alignment == visual_alignment::align_near)
+						{
+							origin.x = _bounds->x;
+						}
+						else if (this->content_cross_alignment == visual_alignment::align_center)
+						{
+							origin.x = _bounds->x + (_bounds->w - _item->get_size(bounds, { _bounds->w, _bounds->h }).x) / 2.0;
+						}
+						else if (this->content_cross_alignment == visual_alignment::align_far)
+						{
+							origin.x = _bounds->x + (_bounds->w - _item->get_size(bounds, { _bounds->w, _bounds->h }).x);
+						}
+
 						return origin;
 					},
 					[this, item_margin_amount](point* _origin, rectangle* _bounds, control_base* _item) {
 						point temp = *_origin;
 						temp.y += (_item->bounds.h + _item->margin_amount.y);
+
+						if (this->content_cross_alignment == visual_alignment::align_near)
+						{
+							temp.x = _bounds->x;
+						}
+						else if (this->content_cross_alignment == visual_alignment::align_center)
+						{
+							temp.x = _bounds->x + (_bounds->w - _item->get_size(bounds, { _bounds->w, _bounds->h }).x) / 2.0;
+						}
+						else if (this->content_cross_alignment == visual_alignment::align_far)
+						{
+							temp.x = _bounds->x + (_bounds->w - _item->get_size(bounds, { _bounds->w, _bounds->h }).x);
+						}
 						return temp;
 					}
 				);
@@ -967,7 +1143,7 @@ namespace corona
 		void draw_control::on_resize()
 		{
 			auto ti = typeid(*this).name();
-//			std::cout << "resize draw_control:" << ti << " " << bounds.x << "," << bounds.y << " x " << bounds.w << " " << bounds.h << std::endl;
+			//std::cout << "resize draw_control:" << ti << " " << bounds.x << "," << bounds.y << " x " << bounds.w << " " << bounds.h << std::endl;
 
 			if (auto pwindow = window.lock()) {
 				pwindow->moveWindow(bounds.x, bounds.y, bounds.w, bounds.h);
@@ -1006,6 +1182,29 @@ namespace corona
 			}
 			for (auto child : children) {
 				child->draw();
+			}
+		}
+
+		void draw_control::render(CComPtr<ID2D1DeviceContext>& _dest)
+		{
+			if (auto pwindow = window.lock())
+			{
+				auto bm = pwindow->getBitmap();
+				D2D1_RECT_F dest;
+				dest.left = bounds.x;
+				dest.top = bounds.y;
+				dest.right = bounds.w + bounds.x;
+				dest.bottom = bounds.h + bounds.y;
+				auto size = bm->GetPixelSize();
+				D2D1_RECT_F source;
+				source.left = 0;
+				source.right = 0;
+				source.bottom = bounds.h;
+				source.right = bounds.w;
+				_dest->DrawBitmap(bm, &dest, 1.0, D2D1_INTERPOLATION_MODE::D2D1_INTERPOLATION_MODE_LINEAR, &source );
+			}
+			for (auto child : children) {
+				child->render(_dest);
 			}
 		}
  
@@ -1047,10 +1246,10 @@ namespace corona
 					if (auto phost = host.lock()) {
 						auto draw_bounds = bounds;
 
-						auto bdips = pwindow->getBoundsDips();
+						draw_bounds.x = 0;
+						draw_bounds.y = 0;
 
-						bounds.x = 0;
-						bounds.y = 0;
+//						std::string test_text = std::format("{0}, {1}, {2}", bounds.x, text, (long)this);
 
 						pwindow->getContext().drawText(text.c_str(), &draw_bounds, this->text_style.name, this->text_fill_brush.name);
 						pwindow->getContext().drawRectangle(&draw_bounds, this->text_fill_brush.name, 4, nullptr);
@@ -1100,6 +1299,9 @@ namespace corona
 		{
 		}
 
+		image_control::~image_control()
+		{
+		}
 
 		void title_control::set_default_styles()
 		{
@@ -1135,6 +1337,9 @@ namespace corona
 			set_default_styles();
 		}
 
+		title_control::~title_control()
+		{
+		}
 
 		void subtitle_control::set_default_styles()
 		{
@@ -1169,6 +1374,10 @@ namespace corona
 			set_default_styles();
 		}
 
+		subtitle_control::~subtitle_control()
+		{
+		}
+
 		void chaptertitle_control::set_default_styles()
 		{
 			auto& st = styles.get_style();
@@ -1200,6 +1409,10 @@ namespace corona
 		chaptertitle_control::chaptertitle_control()
 		{
 			set_default_styles();
+		}
+
+		chaptertitle_control::~chaptertitle_control()
+		{
 		}
 
 		void chaptersubtitle_control::set_default_styles()
@@ -1236,6 +1449,10 @@ namespace corona
 			set_default_styles();
 		}
 
+		chaptersubtitle_control::~chaptersubtitle_control()
+		{
+		}
+
 		void paragraph_control::set_default_styles()
 		{
 			auto& st = styles.get_style();
@@ -1268,7 +1485,11 @@ namespace corona
 		{
 			set_default_styles();
 		}
-		
+
+		paragraph_control::~paragraph_control()
+		{
+		}
+
 		void code_control::set_default_styles()
 		{
 			auto& st = styles.get_style();
@@ -1302,6 +1523,10 @@ namespace corona
 			set_default_styles();
 		}
 
+		code_control::~code_control()
+		{
+		}
+
 		void label_control::set_default_styles()
 		{
 			text_fill_brush.name = "label_text_fill";
@@ -1328,6 +1553,11 @@ namespace corona
 		label_control::label_control(container_control* _parent, int _id) : text_display_control(_parent, _id)
 		{
 			set_default_styles();
+		}
+
+		label_control::~label_control()
+		{
+			
 		}
 
 		comboboxex_control::comboboxex_control()
@@ -1498,6 +1728,14 @@ namespace corona
 			if (root.get())
 			{
 				root->draw();
+			}
+		}
+
+		void page::render(CComPtr<ID2D1DeviceContext>& _context)
+		{
+			if (root.get())
+			{
+				root->render(_context);
 			}
 		}
 
@@ -1749,11 +1987,12 @@ namespace corona
 			}
 		}
 
-		bool presentation::drawFrame()
+		bool presentation::drawFrame(CComPtr<ID2D1DeviceContext>& dc)
 		{
 			auto cp = current_page.lock();
 			if (cp) {
 				cp->draw();
+				cp->render(dc);
 			}
 			return false;
 		}

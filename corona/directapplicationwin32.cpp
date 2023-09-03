@@ -45,8 +45,6 @@ namespace corona
 			if (currentController) 
 			{
 			
-				// here, we tell the children to draw on their own surfaces...
-				currentController->drawFrame();
 
 				bool failedDevice = false;
 
@@ -66,37 +64,11 @@ namespace corona
 					auto wins = winroot->getChildren();
 					auto dc = winroot->getContext().getDeviceContext();
 
+					// here, we tell the children to draw on their own surfaces...
+					// and then, draw on this one.
+					currentController->drawFrame(dc);
+
 					auto wbounds = winroot->getBoundsDips();
-
-					relative_ptr_type id = 0;
-
-					D2D1_RECT_F dest;
-
-					std::vector<direct2dChildWindow*> items;
-					for (auto& w : wins)
-					{
-						items.push_back(w.second.get());
-					}
-
-					std::sort(items.begin(), items.end(), [this](corona::win32::direct2dChildWindow* sourceA, corona::win32::direct2dChildWindow* sourceB) {
-						auto bdA = sourceA->getBoundsDips();
-						auto bdB = sourceB->getBoundsDips();
-						return std::tuple(sourceA->zOrder, bdA.y, bdA.x)  < std::tuple(sourceB->zOrder, bdB.y, bdB.x);
-						});
-
-					for (auto& w : items)
-					{
-						rectangle r = w->getBoundsDips();
-
-						dest.left = r.x;
-						dest.top = r.y;
-						dest.right = r.x + r.w;
-						dest.bottom = r.y + r.h;
-
-						dc->DrawBitmap(w->getBitmap(), &dest);
-
-						counter++;
-					}
 
 					pos += sign;
 					double boxw = wbounds.w / 4;
@@ -111,6 +83,7 @@ namespace corona
 						sign = -1;
 					}
 
+					D2D1_RECT_F dest;
 					dest.left = pos;
 					dest.top = (wbounds.h - boxh) / 2;
 					dest.right = pos + boxw;
@@ -123,7 +96,6 @@ namespace corona
 
 					dc->CreateSolidColorBrush(brushColor, &brush);
 					dc->DrawRectangle(&dest, brush, 4, nullptr);
-
 
 					winroot->endDraw(failedDevice);
 				}
