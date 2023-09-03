@@ -59,8 +59,6 @@ namespace corona
 				if (winroot == nullptr)
 					return;
 
-				double toDips = 96.0 / GetDpiForWindow(winroot->getWindow());
-
 				winroot->beginDraw(failedDevice);						
 
 				if (!failedDevice) 
@@ -179,11 +177,12 @@ namespace corona
 			::DestroyWindow(hwnd);
 		}
 
-		HFONT directApplicationWin32::createFont(const char *_fontName, double fontSize, bool bold, bool italic )
+		HFONT directApplicationWin32::createFontDips(HWND target, const char *_fontName, double fontSize, bool bold, bool italic )
 		{
 			HFONT hfont = nullptr;
 
-			double ifontSize = fontSize / dpiScale;
+			double targetScale = 96.0 / ::GetDpiForWindow(target);
+			double ifontSize = fontSize * dpiScale;
 			istring<2048> fontList = _fontName;
 
 			int state = 0;
@@ -196,6 +195,48 @@ namespace corona
 			}
 			return hfont;
 		}
+
+		HFONT directApplicationWin32::createFontPixels(const char* _fontName, double fontSizePixels, bool bold, bool italic)
+		{
+			HFONT hfont = nullptr;
+
+			double ifontSize = fontSizePixels;
+			istring<2048> fontList = _fontName;
+
+			int state = 0;
+			char* fontExtractedName = fontList.next_token(',', state);
+
+			while (fontExtractedName && !hfont)
+			{
+				hfont = CreateFont(ifontSize, 0, 0, 0, bold ? FW_BOLD : FW_NORMAL, italic, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH, fontExtractedName);
+				fontExtractedName = fontList.next_token(',', state);
+			}
+			return hfont;
+		}
+
+		HFONT directApplicationWin32::createFontIndirect(LOGFONT srcFont, const char* _fontName, double fontSizePixels, bool bold, bool italic)
+		{
+			HFONT hfont = nullptr;
+
+			double ifontSize = fontSizePixels;
+			istring<2048> fontList = _fontName;
+
+			int state = 0;
+			char* fontExtractedName = fontList.next_token(',', state);
+
+			while (fontExtractedName && !hfont)
+			{
+				strcpy_s(srcFont.lfFaceName, fontExtractedName);
+				srcFont.lfWeight = bold ? FW_BOLD : FW_NORMAL;
+				srcFont.lfItalic = italic;
+				fontExtractedName = fontList.next_token(',', state);
+
+				hfont = ::CreateFontIndirect(&srcFont);
+			}
+			return hfont;
+		}
+
+
 
 		std::weak_ptr<direct2dChildWindow> directApplicationWin32::createDirect2Window(DWORD control_id, rectangle bounds)	
 		{
@@ -1427,9 +1468,31 @@ namespace corona
 			return rd;
 		}
 
+		double directApplicationWin32::toPixelsFromDips(double r)
+		{
+			return r * GetDpiForWindow(hwndRoot) / 96.0;
+		}
+
+		double directApplicationWin32::toDipsFromPixels(double r)
+		{
+			return r * 96.0 / GetDpiForWindow(hwndRoot);
+		}
+
 		rectangle directApplicationWin32::toPixelsFromDips(const rectangle& r)
 		{
 			dpiScale = GetDpiForWindow(hwndRoot) / 96.0;
+			rectangle rx;
+
+			rx.x = r.x * dpiScale;
+			rx.y = r.y * dpiScale;
+			rx.w = r.w * dpiScale;
+			rx.h = r.h * dpiScale;
+			return rx;
+		}
+
+		rectangle directApplicationWin32::toDipsFromPixels(const rectangle& r)
+		{
+			dpiScale = 96.0 / GetDpiForWindow(hwndRoot);
 			rectangle rx;
 
 			rx.x = r.x * dpiScale;

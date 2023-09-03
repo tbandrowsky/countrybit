@@ -443,7 +443,7 @@ namespace corona
 				text_style = {};
 				text_style.name = "windows_control_style";
 				text_style.fontName = styles.get_style().PrimaryFont;
-				text_style.fontSize = 20;
+				text_style.fontSize = 12;
 				text_style.bold = false;
 				text_style.italics = false;
 				text_style.underline = false;
@@ -502,10 +502,6 @@ namespace corona
 				window_host = _host;
 
 				if (auto phost = window_host.lock()) {
-					HWND parent = phost->getMainWindow();
-					HFONT font = phost->createFont(text_style.fontName, text_style.fontSize, text_style.bold, text_style.italics);
-					text_font.Attach(font);
-
 					auto boundsPixels = phost->toPixelsFromDips(bounds);
 
 					RECT r;
@@ -515,7 +511,10 @@ namespace corona
 					r.bottom = boundsPixels.y + boundsPixels.h;
 
 					if (((HWND)window) == nullptr) {
+						HWND parent = phost->getMainWindow();
 						window.Create(parent, r, NULL, dwStyle, dwExStyle, id, NULL);
+						HFONT font = phost->createFontDips(window, text_style.fontName, text_style.fontSize, text_style.bold, text_style.italics);
+						text_font.Attach(font);
 						window.SetFont(text_font);
 						on_create();
 					}
@@ -851,7 +850,7 @@ namespace corona
 
 		const int DefaultWindowStyles = WS_VISIBLE | WS_CHILD | WS_TABSTOP;
 		const int DisplayOnlyWindowStyles = WS_VISIBLE | WS_CHILD;
-		const int EditWindowStyles = WS_VISIBLE | WS_BORDER | WS_CHILD;
+		const int EditWindowStyles = WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP;
 		const int RichEditWindowStyles = WS_VISIBLE | WS_BORDER | WS_CHILD | ES_MULTILINE | ES_WANTRETURN | WS_VSCROLL;
 		const int ComboWindowStyles = WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP | CBS_DROPDOWN | CBS_SORT;
 		const int ComboExWindowStyles = WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP | CBS_DROPDOWN | CBS_SORT;
@@ -961,13 +960,13 @@ namespace corona
 			virtual ~scrollbar_control() { ; }
 		};
 
-		class richedit_control : public text_control_base<WTL::CRichEditCtrl, EditWindowStyles>
+		class richedit_control : public text_control_base<WTL::CRichEditCtrl,RichEditWindowStyles>
 		{
 		public:
 			void set_html(const std::string& _text);
 			std::string get_html();
 
-			richedit_control(container_control* _parent, int _id) : text_control_base<WTL::CRichEditCtrl, EditWindowStyles>(_parent, _id) {
+			richedit_control(container_control* _parent, int _id) : text_control_base<WTL::CRichEditCtrl, RichEditWindowStyles>(_parent, _id) {
 				LoadLibrary(TEXT("Msftedit.dll"));
 			}
 			virtual ~richedit_control() { ; }

@@ -747,7 +747,7 @@ namespace corona
 				arrange_children(bounds, zorder,
 					[this, item_margin_amount](rectangle* _bounds, control_base* _item) {
 						point temp = { 0, 0, 0 };
-						temp.x = _bounds->x + item_margin_amount;
+						temp.x = _bounds->x;
 						temp.y = _bounds->y;
 						return temp;
 					},
@@ -836,7 +836,7 @@ namespace corona
 					[this, item_margin_amount](rectangle* _bounds, control_base* _item) {
 						point temp = { 0, 0, 0 };
 						temp.x = _bounds->x;
-						temp.y = _bounds->y + item_margin_amount;
+						temp.y = _bounds->y;
 						return temp;
 					},
 					[this, item_margin_amount](point* _origin, rectangle* _bounds, control_base* _item) {
@@ -1053,7 +1053,7 @@ namespace corona
 						bounds.y = 0;
 
 						pwindow->getContext().drawText(text.c_str(), &draw_bounds, this->text_style.name, this->text_fill_brush.name);
-//						pwindow->getContext().drawRectangle(&draw_bounds, this->text_fill_brush.name, 4, nullptr);
+						pwindow->getContext().drawRectangle(&draw_bounds, this->text_fill_brush.name, 4, nullptr);
 					}
 				}
 			};
@@ -1476,6 +1476,7 @@ namespace corona
 		{
 			if (auto whost = _host.lock()) {
 				auto pos = whost->getWindowClientPos();
+				pos = whost->toDipsFromPixels(pos);
 				arrange(pos.w, pos.h);
 				if (root.get())
 				{
@@ -1742,6 +1743,7 @@ namespace corona
 			if (cp) {
 				auto host = getHost();
 				auto post = host->getWindowClientPos();
+				host->toPixelsFromDips(post);
 				cp->arrange(post.w, post.h);
 				cp->create(host);
 			}

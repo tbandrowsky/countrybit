@@ -68,7 +68,9 @@ namespace corona
 
 			virtual void setController(std::shared_ptr<controller> _newCurrentController);
 
-			HFONT createFont(const char* _fontName, double fontSize, bool bold, bool italic);
+			HFONT createFontDips(HWND target, const char* _fontName, double fontSize, bool bold, bool italic);
+			HFONT createFontPixels(const char* _fontName, double fontSize, bool bold, bool italic);
+			HFONT createFontIndirect(LOGFONT _font, const char* _fontName, double fontSize, bool bold, bool italic);
 
 			// general
 			virtual void redraw();
@@ -80,7 +82,11 @@ namespace corona
 			virtual rectangle getWindowPos(int ddlControlId);
 			virtual void setWindowPos(int ddlControlId, rectangle rect);
 			virtual void setMinimumWindowSize(point size);
+
+			double toDipsFromPixels(double r);
+			virtual double toPixelsFromDips(double r);
 			virtual rectangle toPixelsFromDips(const rectangle& r);
+			virtual rectangle toDipsFromPixels(const rectangle& r);
 
 			// icon control
 			virtual void setPictureIcon(int controlId, dtoIconId iconId);
