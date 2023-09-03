@@ -439,6 +439,8 @@ namespace corona
 #endif
 
 				targetContext->SetTarget(bitmap);
+				auto color = toColor("#00000000");
+				targetContext->Clear(&color);
 				ps = targetContext->GetSize();
 				pxs = targetContext->GetPixelSize();
 
