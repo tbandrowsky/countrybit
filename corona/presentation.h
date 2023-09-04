@@ -66,9 +66,9 @@ namespace corona
 		class control_base : public std::enable_shared_from_this<control_base>
 		{
 		protected:
-			point get_size(rectangle _ctx, point _remaining);
+			point get_size(rectangle _ctx, point _remaining, bool _include_margin);
 			point get_position(rectangle _ctx);
-			double get_margin(measure _margin);
+			double to_pixels(measure _margin);
 			virtual point get_remaining(point _ctx);
 			virtual void on_resize();
 			void arrange_children(rectangle _bounds, int zorder, 
@@ -87,9 +87,11 @@ namespace corona
 
 			layout_rect				box;
 			measure					margin;
+			measure					padding;
 
 			rectangle				bounds;
 			point					margin_amount;
+			point					padding_amount;
 
 			win32::directApplicationWin32* app;
 			container_control *parent;

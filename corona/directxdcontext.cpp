@@ -227,21 +227,6 @@ namespace corona
 
 			if (context->getDeviceContext()) {
 
-/*				CComPtr<ID2D1SolidColorBrush> brush;
-				D2D1_COLOR_F brushColor = {};
-				brushColor.a = 1.0;
-				brushColor.g = 1.0;
-
-				context->getDeviceContext()->CreateSolidColorBrush(brushColor, &brush);
-
-				D2D1_RECT_F brushRect = {};
-				brushRect.left = 600;
-				brushRect.top = 150;
-				brushRect.right = 750;
-				brushRect.bottom = 200;
-
-				context->getDeviceContext()->DrawRectangle(&brushRect, brush, 4, nullptr);
-				*/
 				HRESULT hr = context->endDraw(_adapter_blown_away);
 
 				if (hr == D2DERR_RECREATE_TARGET)
@@ -419,7 +404,7 @@ namespace corona
 				props.dpiX = 96;
 				props.dpiY = 96;
 				props.pixelFormat.format = DXGI_FORMAT::DXGI_FORMAT_B8G8R8A8_UNORM;
-				props.pixelFormat.alphaMode = D2D1_ALPHA_MODE::D2D1_ALPHA_MODE_IGNORE;
+				props.pixelFormat.alphaMode = D2D1_ALPHA_MODE::D2D1_ALPHA_MODE_PREMULTIPLIED;
 				props.bitmapOptions = D2D1_BITMAP_OPTIONS::D2D1_BITMAP_OPTIONS_TARGET;
 
 				auto ps = targetContext->GetSize();
@@ -439,8 +424,6 @@ namespace corona
 #endif
 
 				targetContext->SetTarget(bitmap);
-				auto color = toColor("#00000000");
-				targetContext->Clear(&color);
 				ps = targetContext->GetSize();
 				pxs = targetContext->GetPixelSize();
 
