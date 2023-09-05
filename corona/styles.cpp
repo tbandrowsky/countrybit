@@ -62,17 +62,17 @@ namespace corona
             woodruff.CodeBackgroundColor = "FFFFFF";
             woodruff.CodeTextColor = "111111";
 
-            woodruff.Section1BackgroundColor = woodruff.SupportingBrandColors[0];
-            woodruff.Section1TextColor = woodruff.SupportingBrandTextColors[0];
+            woodruff.Section1BackgroundColor = "DEE1E1";
+            woodruff.Section1TextColor = woodruff.ParagraphTextColor;
 
-            woodruff.Section2BackgroundColor = woodruff.SupportingBrandColors[1];
-            woodruff.Section2TextColor = woodruff.SupportingBrandTextColors[1];
+            woodruff.Section2BackgroundColor = "D4E1E8";
+            woodruff.Section2TextColor = woodruff.ParagraphTextColor;
 
-            woodruff.Section3BackgroundColor = woodruff.SupportingBrandColors[2];
-            woodruff.Section3TextColor = woodruff.SupportingBrandTextColors[2];
+            woodruff.Section3BackgroundColor = "D7D3DB";
+            woodruff.Section3TextColor = woodruff.ParagraphTextColor;
 
-            woodruff.Section4BackgroundColor = woodruff.SupportingBrandColors[3];
-            woodruff.Section4TextColor = woodruff.SupportingBrandTextColors[3];
+            woodruff.Section4BackgroundColor = "DEDDD3";
+            woodruff.Section4TextColor = woodruff.ParagraphTextColor;
 
             woodruff.FooterBackgroundColor = woodruff.MasterBrandColors[0];
             woodruff.FooterTextColor = woodruff.MasterBrandTextColors[0];

@@ -96,8 +96,8 @@ namespace corona
 					brushColor.a = 1.0;
 					brushColor.b = 1.0;
 
-					dc->CreateSolidColorBrush(brushColor, &brush);
-					dc->DrawRectangle(&dest, brush, 4, nullptr);
+					// dc->CreateSolidColorBrush(brushColor, &brush);
+					// dc->DrawRectangle(&dest, brush, 4, nullptr);
 
 					winroot->endDraw(failedDevice);
 				}
