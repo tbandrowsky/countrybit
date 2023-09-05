@@ -64,6 +64,8 @@ namespace corona
 					auto wins = winroot->getChildren();
 					auto dc = winroot->getContext().getDeviceContext();
 
+					dc->Clear(&backgroundColor);
+
 					// here, we tell the children to draw on their own surfaces...
 					// and then, draw on this one.
 					currentController->drawFrame(dc);

@@ -8,6 +8,9 @@ namespace corona
 		struct rectangle 
 		{
 			double x, y, w, h;
+
+			double right() const { return x + w; }
+			double bottom() const { return y + h; }
 		};
 
 		class rectangle_math

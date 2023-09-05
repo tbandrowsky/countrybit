@@ -293,7 +293,7 @@ namespace corona
 					context->getDeviceContext()->SetTarget(tempBitmap->getBitmap());
 					childBitmap = tempBitmap;
 				}
-		}
+			}
 			
 		}
 
@@ -1789,6 +1789,9 @@ namespace corona
 			{
 				getDeviceContext()->DrawText(buff, ret, format, &r, brush);
 			}
+
+			// uncomment this to show the text borders 
+			//getDeviceContext()->DrawRectangle(&r, brush);
 
 			delete[] buff;
 		}

@@ -66,14 +66,20 @@ namespace corona
 		class control_base : public std::enable_shared_from_this<control_base>
 		{
 		protected:
-			point get_size(rectangle _ctx, point _remaining, bool _include_margin);
+			point get_size(rectangle _ctx, point _remaining);
 			point get_position(rectangle _ctx);
 			double to_pixels(measure _margin);
 			virtual point get_remaining(point _ctx);
 			virtual void on_resize();
-			void arrange_children(rectangle _bounds, int zorder, 
-				std::function<point(rectangle *_bounds, control_base*)> _initial_origin,
-				std::function<point(point* _origin, rectangle *_bounds, control_base*)> _next_origin);
+			void arrange_children(rectangle _bounds,  
+				std::function<point(const rectangle *_bounds, control_base*)> _initial_origin,
+				std::function<point(point* _origin, const rectangle *_bounds, control_base*)> _next_origin);
+
+			rectangle				bounds;
+			rectangle				inner_bounds;
+			point					margin_amount;
+			point					padding_amount;
+
 		public:
 
 			friend class absolute_layout;
@@ -81,17 +87,11 @@ namespace corona
 			friend class column_layout;
 			friend class draw_control;
 
-			static int				debug_indent;
-
 			int						id;
 
 			layout_rect				box;
 			measure					margin;
 			measure					padding;
-
-			rectangle				bounds;
-			point					margin_amount;
-			point					padding_amount;
 
 			win32::directApplicationWin32* app;
 			container_control *parent;
@@ -118,7 +118,12 @@ namespace corona
 				}
 			}
 
-			virtual void arrange(rectangle _ctx, int zorder);
+			rectangle& get_bounds() { return bounds;  }
+			rectangle& get_inner_bounds() { return inner_bounds; }
+
+			rectangle& set_bounds(rectangle& _bounds);
+
+			virtual void arrange(rectangle _ctx);
 			bool contains(point pt);
 
 			control_base* find(int _id);
@@ -227,8 +232,7 @@ namespace corona
 				id_counter::check(_id);
 				std::shared_ptr<control_type> temp = std::make_shared<control_type>(this, _id);
 				children.push_back(temp);
-				std::string indent(debug_indent, ' ');
-				std::cout << indent << " " << typeid(*this).name() << " ->create:" << typeid(control_type).name() << std::endl;
+				std::cout << " " << typeid(*this).name() << " ->create:" << typeid(control_type).name() << std::endl;
 				return *temp.get();
 			}
 
@@ -398,7 +402,7 @@ namespace corona
 			absolute_layout(container_control* _parent, int _id) : container_control(_parent, _id) { ; }
 			virtual ~absolute_layout() { ; }
 
-			virtual void arrange(rectangle _ctx, int zorder);
+			virtual void arrange(rectangle _ctx);
 		};
 
 		class column_layout : 
@@ -410,7 +414,7 @@ namespace corona
 			column_layout(container_control* _parent, int _id) : container_control(_parent, _id) { ; }
 			virtual ~column_layout() { ; }
 
-			virtual void arrange(rectangle _ctx, int zorder);
+			virtual void arrange(rectangle _ctx);
 			virtual point get_remaining(point _ctx);
 		};
 
@@ -423,7 +427,7 @@ namespace corona
 			row_layout(container_control* _parent, int _id) : container_control(_parent, _id) { ; }
 			virtual ~row_layout() { ; }
 
-			virtual void arrange(rectangle _ctx, int zorder);
+			virtual void arrange(rectangle _ctx);
 			virtual point get_remaining(point _ctx);
 		};
 
@@ -437,7 +441,7 @@ namespace corona
 			banner_control(container_control* _parent, int _id) : row_layout(_parent, _id) { ; }
 			virtual ~banner_control() { ; }
 
-			virtual void arrange(rectangle _ctx, int zorder);
+			virtual void arrange(rectangle _ctx);
 			virtual point get_remaining(point _ctx);
 		};
 
@@ -490,7 +494,7 @@ namespace corona
 				if (auto phost = window_host.lock()) {
 					HWND parent = phost->getMainWindow();
 
-					auto boundsPixels = phost->toPixelsFromDips(bounds);
+					auto boundsPixels = phost->toPixelsFromDips(inner_bounds);
 					RECT r;
 					r.left = boundsPixels.x;
 					r.top = boundsPixels.y;
@@ -508,7 +512,7 @@ namespace corona
 				window_host = _host;
 
 				if (auto phost = window_host.lock()) {
-					auto boundsPixels = phost->toPixelsFromDips(bounds);
+					auto boundsPixels = phost->toPixelsFromDips(inner_bounds);
 
 					RECT r;
 					r.left = boundsPixels.x;
