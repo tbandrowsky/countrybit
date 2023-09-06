@@ -91,6 +91,8 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 	int IDC_TEST_LABEL9 = 1020;
 	int IDC_APP_TITLE = 1021;
 	int IDC_APP_SUBTITLE = 1022;
+	int IDC_TEST_LISTBOX = 1023;
+	int IDC_IMAGE_LOGO = 1024;
 
 	auto& st = styles.get_style();
 
@@ -101,6 +103,11 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 				.set_background_color(st.HeaderBackgroundColor)
 				.set_content_align(visual_alignment::align_center)
 				.set_content_cross_align(visual_alignment::align_near)
+					.column_begin()
+					.set_size(60.0_px, 60.0_px)
+					.set_content_align(visual_alignment::align_far)
+					.image(IDC_IMAGE_LOGO, "assets\\Square150x150Logo.scale-200.png")
+					.end()
 					.column_begin()
 					.set_size(0.5_container, 60.0_px)
 					.set_content_align(visual_alignment::align_far)
@@ -122,9 +129,12 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 						.chaptertitle("List Controls")
 						.chaptersubtitle("For viewing lists")
 						.label("List View", IDC_TEST_LABEL1)
-						.set_item_size(1.0_container, .5_remaining)
+						.set_item_size(1.0_container, 10.0_fontgr)
 						.listview(IDC_TEST_LISTVIEW)
+						.set_item_size(1.0_container, 1.2_fontgr)
 						.label("List Box", IDC_TEST_LABEL2)
+						.set_item_size(1.0_container, 10.0_fontgr)
+						.listbox(IDC_TEST_LISTBOX)
 					.end()
 					.column_begin()
 					.set_background_color(st.Section2BackgroundColor)
@@ -242,6 +252,20 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 { "Id":9, "Name":"Philadelphia" }
 ])"_json;
 	cbex.set_list(ldata2);
+
+	auto& lb = test_app->find<listbox_control>(IDC_TEST_LISTBOX);
+
+		list_data ldata3;
+	ldata3.id_field = "Id";
+	ldata3.text_field = "Name";
+	ldata3.items = R"([
+{ "Id":0, "Name":"Bentley" },
+{ "Id":1, "Name":"Cadillac" },
+{ "Id":2, "Name":"Scout" },
+{ "Id":3, "Name":"Chevy SS" },
+{ "Id":4, "Name":"GMC" }
+])"_json;
+	lb.set_list(ldata3);
 
 	if (forceWindowed)
 	{

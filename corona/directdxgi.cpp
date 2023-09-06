@@ -9,21 +9,21 @@ namespace corona
 		void throwOnFail(HRESULT hr, const char* _message)
 		{
 			if (!SUCCEEDED(hr)) {
-				throw std::exception("COM failure");
+				throw std::exception(std::format("COM failure:{0}", _message).c_str());
 			}
 		}
 
 		void throwOnNull(void* _ptr, const char* _message)
 		{
 			if (!_ptr) {
-				throw std::exception("null reference failure");
+				throw std::exception(std::format("null reference failure:{0}", _message).c_str());
 			}
 		}
 
 		void throwOnFalse(bool _ptr, const char* _message)
 		{
 			if (!_ptr) {
-				throw std::exception("object reference failure");
+				throw std::exception(std::format("object reference failure:{0}", _message).c_str());
 			}
 		}
 

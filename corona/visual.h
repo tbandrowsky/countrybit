@@ -15,6 +15,7 @@ namespace corona
 		struct bitmapRequest {
 			object_name name;
 			file_path file_name;
+			DWORD resource_id;
 			bool cropEnabled;
 			rectangle crop;
 			std::list<point> sizes;

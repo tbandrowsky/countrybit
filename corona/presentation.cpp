@@ -12,13 +12,13 @@ namespace corona
 		presentation_style_factory styles;
 
 		int id_counter::id = 0;
-		int id_counter::next() 
-		{ 
-			return ++id; 
+		int id_counter::next()
+		{
+			return ++id;
 		}
 
-		int id_counter::check(int _id) { 
-			if (_id > id) 
+		int id_counter::check(int _id) {
+			if (_id > id)
 				id = _id;
 			return id;
 		}
@@ -42,9 +42,9 @@ namespace corona
 			return result;
 		}
 
-		control_base *control_base::get(control_base* _root, int _id)
+		control_base* control_base::get(control_base* _root, int _id)
 		{
-			control_base *result = nullptr;
+			control_base* result = nullptr;
 			if (_root->id == _id) {
 				result = _root;
 			}
@@ -61,7 +61,7 @@ namespace corona
 			return result;
 		}
 
-		void control_base::foreach(std::function<void(control_base * _root)> _item)
+		void control_base::foreach(std::function<void(control_base* _root)> _item)
 		{
 			_item(this);
 			for (auto child : children) {
@@ -127,9 +127,9 @@ namespace corona
 		{
 			if (parent) {
 				auto& temp = *parent;
-		//		auto string_name = typeid(temp).name();
-//				std::string indent(debug_indent, ' ');
-	//			std::cout << indent << " " << typeid(*this).name() << " ->navigate " << string_name << std::endl;
+				//		auto string_name = typeid(temp).name();
+		//				std::string indent(debug_indent, ' ');
+			//			std::cout << indent << " " << typeid(*this).name() << " ->navigate " << string_name << std::endl;
 				return temp;
 			}
 		}
@@ -179,6 +179,20 @@ namespace corona
 		container_control& container_control::image(int id)
 		{
 			auto& tc = create<image_control>(id);
+			return *this;
+		}
+
+		container_control& container_control::image(int id, int _control_id)
+		{
+			auto& tc = create<image_control>(id);
+			tc.load_from_control(_control_id);
+			return *this;
+		}
+
+		container_control& container_control::image(int id, std::string _filename)
+		{
+			auto& tc = create<image_control>(id);
+			tc.load_from_file(_filename);
 			return *this;
 		}
 
@@ -1335,10 +1349,119 @@ namespace corona
 
 		image_control::image_control()
 		{
+			init();
+		}
+
+		image_control::image_control(container_control* _parent, int _id)
+			: draw_control(_parent, _id)
+		{
+			init();
+		}
+
+		image_control::image_control(container_control* _parent, int _id, std::string _file_name) : draw_control(_parent, _id)
+		{
+			init();
+			load_from_file(_file_name);
+		}
+
+		image_control::image_control(container_control* _parent, int _id, int _source_control_id) : draw_control(_parent, _id)
+		{
+			init();
+			load_from_control(_source_control_id);
+		}
+
+		void image_control::load_from_file(std::string _name)
+		{
+			image_mode = image_modes::use_file_name;
+			image_file_name = _name;
+			instance.bitmapName = std::format("image_bitmap_file_{0}", id);
+		}
+
+		void image_control::load_from_resource(DWORD _resource_id)
+		{
+			image_mode = image_modes::use_resource_id;
+			image_resource_id = _resource_id;
+			instance.bitmapName = std::format("image_bitmap_resource_{0}_{1}", id, _resource_id);
+		}
+
+		void image_control::load_from_control(int _control_id)
+		{
+			image_mode = image_modes::use_control_id;
+			image_control_id = _control_id;
+			instance.bitmapName = std::format("image_bitmap_control_{0}_{1}", id, _control_id);
+		}
+
+		void image_control::init()
+		{
+			set_origin(0.0_px, 0.0_px);
+			set_size(1.0_container, 1.0_aspect);
+
+			on_create = [this](draw_control* _src)
+			{
+				if (auto pwindow = this->window.lock())
+				{
+					auto &context = pwindow->getContext();
+
+					switch (image_mode) {
+					case image_modes::use_control_id:
+						break;
+					case image_modes::use_resource_id:
+						{
+							bitmapRequest request = {};
+							request.resource_id = image_resource_id;
+							request.name = instance.bitmapName;
+							request.cropEnabled = false;
+							point pt = {};
+							request.sizes.push_back(pt);
+							context.setBitmap(&request);
+							break;
+						}
+						break;
+					case image_modes::use_file_name:
+						{
+							bitmapRequest request = {};
+							request.file_name = image_file_name;
+							request.name = instance.bitmapName;
+							request.cropEnabled = false;
+							point pt = {};
+							request.sizes.push_back(pt);
+							context.setBitmap(&request);
+							break;
+						}
+					}
+				}
+			};
+
+			on_draw = [this](draw_control* _src) {
+				if (auto pwindow = this->window.lock())
+				{
+					if (auto phost = host.lock()) {
+						auto draw_bounds = inner_bounds;
+
+						draw_bounds.x = 0;
+						draw_bounds.y = 0;
+
+						instance.copyId = 0;
+						instance.selected = false;
+						instance.x = draw_bounds.x;
+						instance.y = draw_bounds.y;
+						instance.width = 0;
+						instance.height = 0;
+
+						pwindow->getContext().drawBitmap(&instance);
+
+//						std::string test_text = std::format("{0}, {1}, {2}", text, draw_bounds.x, draw_bounds.y, (long)this);
+
+//						pwindow->getContext().drawText(text.c_str(), &draw_bounds, this->text_style.name, this->text_fill_brush.name);
+						//	pwindow->getContext().drawRectangle(&draw_bounds, this->text_fill_brush.name, 4, nullptr);
+					}
+				}
+			};
 		}
 
 		image_control::~image_control()
 		{
+			;
 		}
 
 		void title_control::set_default_styles()
@@ -1648,7 +1771,7 @@ namespace corona
 		void comboboxex_control::on_create()
 		{
 			if (auto phost = window_host.lock()) {
-				auto boundsPixels = phost->toPixelsFromDips(bounds);
+				auto boundsPixels = phost->toPixelsFromDips(get_inner_bounds());
 
 				RECT r;
 				r.left = boundsPixels.x;
@@ -1664,7 +1787,7 @@ namespace corona
 		void comboboxex_control::on_resize()
 		{
 			if (auto phost = window_host.lock()) {
-				auto boundsPixels = phost->toPixelsFromDips(control_base::bounds);
+				auto boundsPixels = phost->toPixelsFromDips(get_inner_bounds());
 
 				RECT r;
 				r.left = boundsPixels.x;

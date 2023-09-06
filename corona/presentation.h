@@ -274,6 +274,8 @@ namespace corona
 			container_control& label(std::string _text, int id = id_counter::next());
 
 			container_control& image(int id = id_counter::next());
+			container_control& image(int id, int _control_id);
+			container_control& image(int id, std::string _filename);
 
 			container_control& push_button(int id);
 			container_control& radio_button(int id);
@@ -388,10 +390,35 @@ namespace corona
 		class image_control : 
 			public draw_control
 		{
+
+			enum image_modes {
+				no_image,
+				use_file_name,
+				use_control_id,
+				use_resource_id
+			};
+
+			bitmapInstanceDto instance;
+
+			image_modes		image_mode;
+
+			std::string		image_file_name;
+			int				image_control_id;
+			DWORD			image_resource_id;
+			std::string		image_name;
+
+			void init();
+
 		public:
 			image_control();
-			image_control(container_control* _parent, int _id) : draw_control(_parent, _id) { ; }
+			image_control(container_control* _parent, int _id);
+			image_control(container_control* _parent, int _id, std::string _file_name);
+			image_control(container_control* _parent, int _id, int _source_control_id);
 			virtual ~image_control();
+
+			void load_from_file(std::string _name);
+			void load_from_resource(DWORD _resource_id);
+			void load_from_control(int _control_id);
 		};
 
 		class absolute_layout : 
@@ -839,7 +866,7 @@ namespace corona
 			virtual void on_resize()
 			{
 				if (auto phost = window_host.lock()) {
-					auto boundsPixels = phost->toPixelsFromDips(control_base::bounds);
+					auto boundsPixels = phost->toPixelsFromDips(control_base::get_inner_bounds());
 
 					RECT r;
 					r.left = boundsPixels.x;
@@ -860,10 +887,10 @@ namespace corona
 
 		const int DefaultWindowStyles = WS_VISIBLE | WS_CHILD | WS_TABSTOP;
 		const int DisplayOnlyWindowStyles = WS_VISIBLE | WS_CHILD;
-		const int EditWindowStyles = WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP;
+		const int EditWindowStyles = WS_VISIBLE | WS_CHILD | WS_TABSTOP;
 		const int RichEditWindowStyles = WS_VISIBLE | WS_BORDER | WS_CHILD | ES_MULTILINE | ES_WANTRETURN | WS_VSCROLL;
-		const int ComboWindowStyles = WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP | CBS_DROPDOWN | CBS_SORT;
-		const int ComboExWindowStyles = WS_VISIBLE | WS_BORDER | WS_CHILD | WS_TABSTOP | CBS_DROPDOWN | CBS_SORT;
+		const int ComboWindowStyles = WS_VISIBLE | WS_CHILD | WS_TABSTOP | CBS_DROPDOWNLIST | CBS_SORT;
+		const int ComboExWindowStyles = WS_VISIBLE | WS_CHILD | WS_TABSTOP | CBS_DROPDOWNLIST | CBS_SORT;
 		const int PushButtonWindowStyles = WS_VISIBLE | WS_CHILD | WS_TABSTOP | BS_FLAT;
 		const int CheckboxWindowStyles = WS_VISIBLE | WS_CHILD | WS_TABSTOP | BS_AUTOCHECKBOX | BS_FLAT;
 		const int RadioButtonWindowStyles = WS_VISIBLE |WS_CHILD | WS_TABSTOP | BS_AUTORADIOBUTTON | BS_FLAT;

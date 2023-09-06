@@ -276,7 +276,7 @@ namespace corona
 
 			deviceDependentAssetBase();
 			virtual ~deviceDependentAssetBase();
-			virtual bool create(std::weak_ptr<direct2dContext>& target) = 0;
+			virtual bool create(direct2dContext* target) = 0;
 			virtual void release() = 0;
 
 			virtual ID2D1Brush* getBrush();
@@ -324,9 +324,9 @@ namespace corona
 				return *this;
 			}
 
-			virtual bool create(std::weak_ptr<direct2dContext>& target) = 0;
+			virtual bool create(direct2dContext* target) = 0;
 
-			bool recreate(std::weak_ptr<direct2dContext>& target)
+			bool recreate(direct2dContext* target)
 			{
 				release();
 				create(target);
@@ -400,7 +400,7 @@ namespace corona
 			visual_alignment get_vertical_align() { return vertical_align; }
 			bool get_wrap_text() { return wrap_text; }
 
-			virtual bool create(std::weak_ptr<direct2dContext>& target);
+			virtual bool create(direct2dContext * target);
 			virtual void release();
 
 			IDWriteTextFormat* getFormat()
@@ -412,7 +412,7 @@ namespace corona
 
 		class filteredBitmap
 		{
-			filteredBitmap(std::weak_ptr<direct2dContext>& _targetContext, filteredBitmap* _src)
+			filteredBitmap(direct2dContext* _targetContext, filteredBitmap* _src)
 				: size(_src->size),
 				cropEnabled(_src->cropEnabled),
 				crop(_src->crop),
@@ -449,13 +449,14 @@ namespace corona
 
 			}
 
-			filteredBitmap* clone(std::weak_ptr<direct2dContext>& _targetContext)
+			filteredBitmap* clone(direct2dContext* _targetContext)
 			{
 				return new filteredBitmap(_targetContext, this);
 			}
 
-			bool create(std::weak_ptr<direct2dContext>& _target, IWICBitmapSource* _source);
-			bool make(std::weak_ptr<direct2dContext>& _target);
+			bool create(direct2dContext* _target, IWICBitmapSource* _source);
+			bool create(direct2dContext* _target, HBITMAP _source);
+			bool make(direct2dContext* _target);
 			virtual ~filteredBitmap();
 			void release();
 
@@ -470,20 +471,26 @@ namespace corona
 		class bitmap : public deviceDependentAssetBase
 		{
 			bool useFile;
+			bool useResource;
 			std::string filename;
+			int resource_id;
 			std::list<filteredBitmap*> filteredBitmaps;
 			std::function<bool(point, int, int, char*)> filterFunction;
 
 			void clearFilteredBitmaps();
 			void setFilteredBitmaps(std::list<sizeCrop>& _sizes);
-			void copyFilteredBitmaps(std::weak_ptr<direct2dContext>& _targetContext, bitmap* _src);
+			void copyFilteredBitmaps(direct2dContext* _targetContext, bitmap* _src);
+
+			virtual bool create_from_file(direct2dContext *_target);
+			virtual bool create_from_resource(direct2dContext* _target);
 
 		public:
 
-			bitmap(std::weak_ptr<direct2dContext>& _targetContext, bitmap* _src);
+			bitmap(direct2dContext* _targetContext, bitmap* _src);
 			bitmap(std::string& _filename, std::list<sizeCrop>& _sizes);
+			bitmap(int _resouce_id, std::list<sizeCrop>& _sizes);
 			virtual ~bitmap();
-			virtual std::shared_ptr<bitmap> clone(std::weak_ptr<direct2dContext>& _src);
+			virtual std::shared_ptr<bitmap> clone(direct2dContext* _src);
 			void setSizes(std::list<sizeCrop>& _sizes);
 			bool getSize(int* _sizex, int* _sizey);
 			ID2D1Bitmap* getFirst();
@@ -493,8 +500,8 @@ namespace corona
 			void setFilter(std::function<bool(point, int, int, char* bytes)> _filter);
 			void filter();
 
-			virtual bool applyFilters(std::weak_ptr<direct2dContext>& _target);
-			virtual bool create(std::weak_ptr<direct2dContext>& _target);
+			virtual bool applyFilters(direct2dContext* _target);
+			virtual bool create(direct2dContext* _target);
 			virtual void release();
 		};
 
@@ -507,7 +514,7 @@ namespace corona
 			bitmapBrush();
 			virtual ~bitmapBrush();
 
-			virtual bool create(std::weak_ptr<direct2dContext>& target);
+			virtual bool create(direct2dContext *target);
 			virtual ID2D1Brush* getBrush();
 		};
 
@@ -518,7 +525,7 @@ namespace corona
 
 			solidColorBrush();
 			virtual ~solidColorBrush();
-			bool create(std::weak_ptr<direct2dContext>& target);
+			bool create(direct2dContext* target);
 			ID2D1Brush* getBrush();
 		};
 
@@ -528,7 +535,7 @@ namespace corona
 			D2D1_POINT_2F					start,
 				stop;
 
-			virtual bool create(std::weak_ptr<direct2dContext>& target);
+			virtual bool create(direct2dContext* target);
 			virtual ID2D1Brush* getBrush();
 		};
 
@@ -537,7 +544,7 @@ namespace corona
 			std::vector<D2D1_GRADIENT_STOP> stops;
 			D2D1_RADIAL_GRADIENT_BRUSH_PROPERTIES radialProperties;
 
-			bool create(std::weak_ptr<direct2dContext>& target);
+			bool create(direct2dContext* target);
 			virtual ID2D1Brush* getBrush();
 		};
 
