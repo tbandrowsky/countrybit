@@ -163,6 +163,7 @@ namespace corona
 			int copyId;
 			float x, y, width, height;
 			bool selected;
+			double alpha;
 
 			bool contains(point pt)
 			{

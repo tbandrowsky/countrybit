@@ -1374,33 +1374,39 @@ namespace corona
 		{
 			image_mode = image_modes::use_file_name;
 			image_file_name = _name;
-			instance.bitmapName = std::format("image_bitmap_file_{0}", id);
+			instance.bitmapName = std::format("bitmap_file_{0}", id);
 		}
 
 		void image_control::load_from_resource(DWORD _resource_id)
 		{
 			image_mode = image_modes::use_resource_id;
 			image_resource_id = _resource_id;
-			instance.bitmapName = std::format("image_bitmap_resource_{0}_{1}", id, _resource_id);
+			instance.bitmapName = std::format("bitmap_resource_{0}_{1}", id, _resource_id);
 		}
 
 		void image_control::load_from_control(int _control_id)
 		{
 			image_mode = image_modes::use_control_id;
 			image_control_id = _control_id;
-			instance.bitmapName = std::format("image_bitmap_control_{0}_{1}", id, _control_id);
+			instance.bitmapName = std::format("bitmap_control_{0}_{1}", id, _control_id);
 		}
 
 		void image_control::init()
 		{
 			set_origin(0.0_px, 0.0_px);
-			set_size(1.0_container, 1.0_aspect);
+			set_size(50.0_px, 50.0_px);
 
 			on_create = [this](draw_control* _src)
 			{
 				if (auto pwindow = this->window.lock())
 				{
 					auto &context = pwindow->getContext();
+
+					solidBrushRequest sbr;
+					sbr.active = true;
+					sbr.brushColor = toColor("FFFF00");
+					sbr.name = "image_control_test";
+					context.setSolidColorBrush(&sbr);
 
 					switch (image_mode) {
 					case image_modes::use_control_id:
@@ -1411,7 +1417,7 @@ namespace corona
 							request.resource_id = image_resource_id;
 							request.name = instance.bitmapName;
 							request.cropEnabled = false;
-							point pt = {};
+							point pt = { inner_bounds.w, inner_bounds.h };
 							request.sizes.push_back(pt);
 							context.setBitmap(&request);
 							break;
@@ -1423,10 +1429,20 @@ namespace corona
 							request.file_name = image_file_name;
 							request.name = instance.bitmapName;
 							request.cropEnabled = false;
-							point pt = {};
+							point pt = { inner_bounds.w, inner_bounds.h };
 							request.sizes.push_back(pt);
 							context.setBitmap(&request);
-							break;
+							auto szfound = std::begin(request.sizes);
+							if (szfound != std::end(request.sizes)) {
+								instance.width = request.sizes.begin()->x;
+								instance.height = request.sizes.begin()->y;
+							}
+							else 
+							{
+								instance.width = 0;
+								instance.height = 0;
+							}
+						break;
 						}
 					}
 				}
@@ -1445,15 +1461,18 @@ namespace corona
 						instance.selected = false;
 						instance.x = draw_bounds.x;
 						instance.y = draw_bounds.y;
-						instance.width = 0;
-						instance.height = 0;
+						instance.width = draw_bounds.w;
+						instance.height = draw_bounds.h;
+						instance.alpha = .5;
 
-						pwindow->getContext().drawBitmap(&instance);
+						auto& context = pwindow->getContext();
+
+						context.drawBitmap(&instance);
 
 //						std::string test_text = std::format("{0}, {1}, {2}", text, draw_bounds.x, draw_bounds.y, (long)this);
 
 //						pwindow->getContext().drawText(text.c_str(), &draw_bounds, this->text_style.name, this->text_fill_brush.name);
-						//	pwindow->getContext().drawRectangle(&draw_bounds, this->text_fill_brush.name, 4, nullptr);
+						context.drawRectangle(&draw_bounds, "image_control_test", 4, nullptr);
 					}
 				}
 			};

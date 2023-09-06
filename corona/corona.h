@@ -160,6 +160,7 @@ const int WM_PUSH_CONTROLLER = WM_APP + 102;
 const int WM_POP_CONTROLLER = WM_APP + 103;
 
 #include "directapplicationwin32.h"
+#include "bitmap_filters.h"
 #include "styles.h"
 #include "presentation.h"
 

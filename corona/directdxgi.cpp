@@ -312,7 +312,9 @@ namespace corona
 			wicFactory = nullptr;
 			dWriteFactory = nullptr;
 
-			HRESULT hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED, &d2DFactory);
+			D2D1_FACTORY_OPTIONS options;
+			options.debugLevel = D2D1_DEBUG_LEVEL_WARNING;
+			HRESULT hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED, options, &d2DFactory);
 			throwOnFail(hr, "Could not create D2D1 factory");
 
 			hr = CoCreateInstance(CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&wicFactory));

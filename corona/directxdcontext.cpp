@@ -6,13 +6,65 @@ namespace corona
 {
 	namespace win32
 	{
+
+
 		class nullFilterFunction {
 		public:
-			bool operator()(point, int, int, char*)
+			bool operator()(point _size, int cbBufferSize, int cbStride, char* pv)
 			{
 				return true;
 			}
 		};
+
+		class whiteFilterFunction {
+		public:
+			bool operator()(point _size, int cbBufferSize, int cbStride, char* pv)
+			{
+				PBGRAPixel* base = (PBGRAPixel*)pv;
+
+				for (int r = 0; r < _size.y; r++) {
+					auto row = (PBGRAPixel*)(pv + cbStride * r);
+					auto rowo = (PBGRAPixel*)(pv + cbStride * (int)(_size.y - (r + 1)));
+					for (int x = 0; x < _size.x; x++) {
+						auto pix = row[x];
+						if (pix.alpha == 0) {
+							pix.green = 255;
+							pix.blue = 255;
+							pix.red = 255;
+						}
+						row[x] = pix;
+					}
+				}
+
+				return true;
+			}
+		};
+
+		class testFilterFunction {
+		public:
+			bool operator()(point _size, int cbBufferSize, int cbStride, char* pv)
+			{
+				PBGRAPixel* base = (PBGRAPixel*)pv;
+
+				for (int r = 0; r < _size.y; r++) {
+					auto row = (PBGRAPixel*)(pv + cbStride * r);
+					auto rowo = (PBGRAPixel*)(pv + cbStride * (int)(_size.y - (r + 1)));
+					for (int x = 0; x < _size.x; x++) {
+						auto pix = row[x];
+						pix.alpha = 255;
+						if (x > _size.x / 2)
+							pix.blue = 255;
+						else
+							pix.green = 255;
+						row[x] = pix;
+					}
+				}
+
+				return true;
+			}
+		};
+
+		nullFilterFunction defaultfilter;
 
 		//-------
 
@@ -334,13 +386,13 @@ namespace corona
 
 			D2D1_DEVICE_CONTEXT_OPTIONS options;
 
-			options = D2D1_DEVICE_CONTEXT_OPTIONS::D2D1_DEVICE_CONTEXT_OPTIONS_ENABLE_MULTITHREADED_OPTIMIZATIONS;
+			options = D2D1_DEVICE_CONTEXT_OPTIONS::D2D1_DEVICE_CONTEXT_OPTIONS_NONE;
 
 			auto padapter = _factory.lock();
 			ID2D1DeviceContext *temp = nullptr;
 
 			HRESULT hr = padapter->getD2DDevice()->CreateDeviceContext(options, &temp);
-			context = temp;
+			context.Attach(temp);
 			throwOnFail(hr, "Could not create device context");
 		}
 
@@ -699,8 +751,8 @@ namespace corona
 			}
 
 			if (auto pfactory = ptarget->getFactory().lock()) {
-				hr = pfactory->getWicFactory()->CreateBitmapFromHBITMAP(_source, nullptr, WICBitmapAlphaChannelOption::WICBitmapUseAlpha, &originalScaledBitmap);
-				hr = pfactory->getWicFactory()->CreateBitmapFromHBITMAP(_source, nullptr, WICBitmapAlphaChannelOption::WICBitmapUseAlpha, &wicFilteredScaledBitmap);
+				hr = pfactory->getWicFactory()->CreateBitmapFromHBITMAP(_source, nullptr, WICBitmapAlphaChannelOption::WICBitmapIgnoreAlpha, &originalScaledBitmap);
+				hr = pfactory->getWicFactory()->CreateBitmapFromHBITMAP(_source, nullptr, WICBitmapAlphaChannelOption::WICBitmapIgnoreAlpha, &wicFilteredScaledBitmap);
 			}
 
 			return SUCCEEDED(hr);
@@ -891,19 +943,17 @@ namespace corona
 
 		bitmap::bitmap(std::string& _filename, std::list<sizeCrop>& _sizes) :
 			useFile(true),
-			filename(_filename)
+			filename(_filename),
+			filterFunction(defaultfilter)
 		{
-			nullFilterFunction defaultFunc;
-			filterFunction = defaultFunc;
 			setFilteredBitmaps(_sizes);
 		}
 
 		bitmap::bitmap(int _resource_id, std::list<sizeCrop>& _sizes) :
 			useFile(false),
-			useResource(true)
+			useResource(true), 
+			filterFunction(defaultfilter)
 		{		
-			nullFilterFunction defaultFunc;
-			filterFunction = defaultFunc;
 			setFilteredBitmaps(_sizes);
 		}
 
@@ -954,13 +1004,18 @@ namespace corona
 
 		ID2D1Bitmap* bitmap::getBySize(int _width, int _height)
 		{
-			auto iter = std::find_if(filteredBitmaps.begin(), filteredBitmaps.end(), [_width, _height](filteredBitmap* _bm) { return _bm->size.width == _width && _bm->size.height == _height; });
-			if (iter != filteredBitmaps.end()) {
-				return (*iter)->filteredScaledBitmap;
+			ID2D1Bitmap* current = nullptr;
+			int current_largest = 0;
+
+			for (auto fbm : filteredBitmaps) {
+				if (fbm->size.height >= _width &&
+					(fbm->size.height <= current_largest ||
+						!_height || !current_largest)) {
+					current_largest = fbm->size.height;
+					current = fbm->filteredScaledBitmap;
+				}
 			}
-			else {
-				return NULL;
-			}
+			return current;
 		}
 
 		color bitmap::getColorAtPoint(int _width, int _height, point point)
@@ -1022,6 +1077,7 @@ namespace corona
 		void bitmap::filter()
 		{
 			HRESULT hr;
+
 			for (auto ifb = filteredBitmaps.begin(); ifb != filteredBitmaps.end(); ifb++) {
 				filteredBitmap* bm = *ifb;
 				WICRect rcLock = { 0, 0, bm->size.width, bm->size.height };
@@ -1407,7 +1463,7 @@ namespace corona
 			bm->create(this);
 
 			for (auto it = _bitmap->sizes.begin(); it != _bitmap->sizes.end(); it++) {
-				int sx, sy;
+				int sx = 0, sy = 0;
 				bm->getSize(&sx, &sy);
 				it->x = sx;
 				it->y = sy;
@@ -1924,14 +1980,15 @@ namespace corona
 			throwOnFalse(static_cast<bool>(bm), "Bitmap not found in context");
 			auto ibm = bm->getBySize(_bitmapInstanceDto->width, _bitmapInstanceDto->height);
 			throwOnNull(ibm, "Bitmap size not found in context");
-			D2D1_RECT_F rect;
+			D2D1_RECT_F rect, source;
 			rect.left = _bitmapInstanceDto->x;
 			rect.top = _bitmapInstanceDto->y;
 			auto size = ibm->GetSize();
 			if (_bitmapInstanceDto->width) {
 				rect.right = rect.left + _bitmapInstanceDto->width;
 			}
-			else {
+			else 
+			{
 				rect.right = rect.left + size.width;
 			}
 			if (_bitmapInstanceDto->height) {
@@ -1940,7 +1997,11 @@ namespace corona
 			else {
 				rect.bottom = rect.top + size.height;
 			}
-			getDeviceContext()->DrawBitmap(ibm, rect);
+			source.left = 0;
+			source.top = 0;
+			source.right = size.width;
+			source.bottom = size.height;
+			getDeviceContext()->DrawBitmap(ibm, rect, _bitmapInstanceDto->alpha, D2D1_INTERPOLATION_MODE_MULTI_SAMPLE_LINEAR, source);
 		}
 
 		void direct2dContext::popCamera()

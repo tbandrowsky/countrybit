@@ -18,6 +18,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)application.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)array_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)assert_if.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)bitmap_filters.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)collection_id_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)color_box.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)concept_lock.h" />
@@ -79,6 +80,7 @@
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)array_box.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)assert_if.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)bitmap_filters.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)collection_id_box.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)color_box.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)concept_lock.cpp" />

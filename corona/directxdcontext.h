@@ -474,6 +474,7 @@ namespace corona
 			bool useResource;
 			std::string filename;
 			int resource_id;
+
 			std::list<filteredBitmap*> filteredBitmaps;
 			std::function<bool(point, int, int, char*)> filterFunction;
 
