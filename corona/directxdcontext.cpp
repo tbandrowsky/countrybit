@@ -65,6 +65,8 @@ namespace corona
 		};
 
 		nullFilterFunction defaultfilter;
+		whiteFilterFunction whitefilter;
+		testFilterFunction testfilter;
 
 		//-------
 

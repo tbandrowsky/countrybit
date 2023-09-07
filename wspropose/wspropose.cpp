@@ -69,28 +69,17 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 
 	std::shared_ptr<corona::win32::presentation> test_app = std::make_shared<corona::win32::presentation>();
 
-	int IDC_TEST_LABEL1 = 1001;
 	int IDC_TEST_EDIT1 = 1002;
-	int IDC_TEST_LABEL2 = 1003;
 	int IDC_TEST_EDIT2 = 1004;
-	int IDC_TEST_LABEL3 = 1005;
 	int IDC_TEST_COMBO1 = 1006;
-	int IDC_TEST_LABEL4 = 1007;
 	int IDC_TEST_LISTVIEW = 1008;
 	int IDC_RICH_EDIT1 = 1009;
 	int IDC_COMBO_BOX1 = 1010;
 	int IDC_COMBO_BOXEX1 = 1011;
-	int IDC_TEST_LABEL5 = 1012;
-	int IDC_TEST_LABEL6 = 1013;
 	int IDC_BUTTON1 = 1014;
 	int IDC_PUSHBUTTON1 = 1015;
 	int IDC_RADIOBUTTON1 = 1016;
 	int IDC_RADIOBUTTON2 = 1017;
-	int IDC_TEST_LABEL7 = 1018;
-	int IDC_TEST_LABEL8 = 1019;
-	int IDC_TEST_LABEL9 = 1020;
-	int IDC_APP_TITLE = 1021;
-	int IDC_APP_SUBTITLE = 1022;
 	int IDC_TEST_LISTBOX = 1023;
 	int IDC_IMAGE_LOGO = 1024;
 
@@ -99,25 +88,21 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 	test_app->create_page("home")
 			.column_begin()
 				.row_begin()
-				.set_size(1.0_container, 75.0_px)
+				.set_size(1.0_container, 100.0_px)
 				.set_background_color(st.HeaderBackgroundColor)
-				.set_content_align(visual_alignment::align_center)
+				.set_content_align(visual_alignment::align_near)
 				.set_content_cross_align(visual_alignment::align_near)
+					.image( "assets\\Square150x150Logo.scale-200.png")
 					.column_begin()
-					.set_size(60.0_px, 60.0_px)
-					.set_content_align(visual_alignment::align_far)
-					.image(IDC_IMAGE_LOGO, "assets\\Square150x150Logo.scale-200.png")
-					.paragraph("Test Image")
-					.end()
-					.column_begin()
-					.set_size(0.5_remaining, 60.0_px)
-					.set_content_align(visual_alignment::align_far)
-						.title( "WOODRUFF SAWYER", IDC_APP_TITLE )
-					.end()
-					.column_begin()
-					.set_size(.5_remaining, 60.0_px)
-					.set_content_align(visual_alignment::align_far)
-						.subtitle("Technology Test", IDC_APP_SUBTITLE)
+					.set_content_align(visual_alignment::align_near)
+					.set_content_cross_align(visual_alignment::align_near)
+					.set_size(.5_container, 1.0_container)
+					.title("WOODRUFF SAWYER", [](title_control& control) {
+							control.set_size(300.0_px, 1.2_fontgr);
+							})
+					.subtitle( "Technology Test", [](subtitle_control& control) {
+							control.set_size(300.0_px, 1.2_fontgr);
+						})
 					.end()
 				.end()
 				.row_begin()
@@ -129,11 +114,11 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 					.set_item_margin(8.0_px)
 						.chaptertitle("List Controls")
 						.chaptersubtitle("For viewing lists")
-						.label("List View", IDC_TEST_LABEL1)
+						.label("List View" )
 						.set_item_size(1.0_container, 10.0_fontgr)
 						.listview(IDC_TEST_LISTVIEW)
 						.set_item_size(1.0_container, 1.2_fontgr)
-						.label("List Box", IDC_TEST_LABEL2)
+						.label("List Box")
 						.set_item_size(1.0_container, 10.0_fontgr)
 						.listbox(IDC_TEST_LISTBOX)
 					.end()
@@ -143,21 +128,21 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 					.set_item_margin(4.0_px)
 						.chaptertitle("Edit Controls")
 						.chaptersubtitle("Test Panel For Edits")
-						.label("Edit 1", IDC_TEST_LABEL3)
+						.label("Edit 1")
 						.edit(IDC_TEST_EDIT1)
-						.label("Edit 2", IDC_TEST_LABEL4)
+						.label("Edit 2")
 						.edit(IDC_TEST_EDIT2)
-						.label("Combo ", IDC_TEST_LABEL5)
+						.label("Combo ")
 						.combobox(IDC_COMBO_BOX1)
-						.label("Combo EX", IDC_TEST_LABEL6)
+						.label("Combo EX")
 						.comboboxex(IDC_COMBO_BOXEX1)
-						.label("Checkbox", IDC_TEST_LABEL7)
-						.checkbox("Check", IDC_BUTTON1)
-						.label("Radio", IDC_TEST_LABEL8)
-						.radio_button("Radio 1", IDC_RADIOBUTTON1)
-						.radio_button("Radio 2", IDC_RADIOBUTTON2)
+						.label("Checkbox")
+						.checkbox(IDC_BUTTON1, "Check" )
+						.label("Radio")
+						.radio_button( IDC_RADIOBUTTON1, "Radio 1")
+						.radio_button( IDC_RADIOBUTTON2, "Radio 2")
 						.set_item_size(1.0_container, 2.0_fontgr)
-						.push_button("Ok", IDC_PUSHBUTTON1)
+						.push_button(IDC_PUSHBUTTON1, "Ok" )
 					.end()
 					.column_begin()
 					.set_background_color(st.Section3BackgroundColor)
@@ -166,7 +151,7 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 					.set_item_margin(4.0_px)
 						.chaptertitle("Content Controls")
 						.chaptersubtitle("Windows Text Editor")
-						.label("Text Editor", IDC_TEST_LABEL9)
+						.label("Text Editor")
 						.set_item_size(1.0_container, .5_remaining)
 						.richedit(IDC_RICH_EDIT1)
 						.chaptersubtitle("Direct 2d Controls")

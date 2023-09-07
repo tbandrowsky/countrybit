@@ -11,16 +11,10 @@ namespace corona
 	{
 		presentation_style_factory styles;
 
-		int id_counter::id = 0;
+		int id_counter::id = 50000;
 		int id_counter::next()
 		{
 			return ++id;
-		}
-
-		int id_counter::check(int _id) {
-			if (_id > id)
-				id = _id;
-			return id;
 		}
 
 		control_base* control_base::find(int _id)
@@ -176,252 +170,307 @@ namespace corona
 			return *this;
 		}
 
-		container_control& container_control::image(int id)
-		{
-			auto& tc = create<image_control>(id);
-			return *this;
-		}
-
-		container_control& container_control::image(int id, int _control_id)
+		container_control& container_control::image(int id, int _control_id, std::function<void(title_control&)> _settings)
 		{
 			auto& tc = create<image_control>(id);
 			tc.load_from_control(_control_id);
 			return *this;
 		}
 
-		container_control& container_control::image(int id, std::string _filename)
+		container_control& container_control::image(int id, std::string _filename, std::function<void(title_control&)> _settings)
 		{
 			auto& tc = create<image_control>(id);
 			tc.load_from_file(_filename);
 			return *this;
 		}
 
-		container_control& container_control::title(std::string text, int id)
+		container_control& container_control::image(std::string _filename, std::function<void(title_control&)> _settings)
 		{
-			auto &tc = create<title_control>(id);
+			auto& tc = create<image_control>(id_counter::next());
+			tc.load_from_file(_filename);
+			return *this;
+		}
+
+		container_control& container_control::title(std::string text, std::function<void(title_control&)> _settings, int _id)
+		{
+			auto &tc = create<title_control>(_id);
 			apply(tc);
 			tc.text = text;
+			if (_settings) {
+				_settings(tc);
+			}
 			return *this;
 		}
 
-		container_control& container_control::subtitle(std::string text, int id)
+		container_control& container_control::subtitle(std::string text, std::function<void(subtitle_control&)> _settings, int _id)
 		{
-			auto &tc = create<subtitle_control>(id);
+			auto &tc = create<subtitle_control>(_id);
 			apply(tc);
 			tc.text = text;
+			if (_settings) {
+				_settings(tc);
+			}
 			return *this;
 		}
 
-		container_control& container_control::chaptertitle(std::string text, int id)
+		container_control& container_control::chaptertitle(std::string text, std::function<void(chaptertitle_control&)> _settings, int _id)
 		{
-			auto &tc = create<chaptertitle_control>(id);
+			auto &tc = create<chaptertitle_control>(_id);
 			apply(tc);
 			tc.text = text;
+			if (_settings) {
+				_settings(tc);
+			}
 			return *this;
 		}
 
-		container_control& container_control::chaptersubtitle(std::string text, int id)
+		container_control& container_control::chaptersubtitle(std::string text, std::function<void(chaptersubtitle_control&)> _settings, int _id)
 		{
-			auto &tc = create<chaptersubtitle_control>(id);
+			auto &tc = create<chaptersubtitle_control>(_id);
 			apply(tc);
 			tc.text = text;
+			if (_settings) {
+				_settings(tc);
+			}
 			return *this;
 		}
 
-		container_control& container_control::paragraph(std::string text, int id)
+		container_control& container_control::paragraph(std::string text, std::function<void(paragraph_control&)> _settings, int _id)
 		{
-			auto &tc = create<paragraph_control>(id);
+			auto &tc = create<paragraph_control>(_id);
 			apply(tc);
 			tc.text = text;
+			if (_settings) {
+				_settings(tc);
+			}
 			return *this;
 		}
 
-		container_control& container_control::code(std::string text, int id)
+		container_control& container_control::code(std::string text, std::function<void(code_control&)> _settings, int _id)
 		{
-			auto &tc = create<code_control>(id);
+			auto &tc = create<code_control>(_id);
 			apply(tc);
 			tc.text = text;
+			if (_settings) {
+				_settings(tc);
+			}
 			return *this;
 		}
 
-		container_control& container_control::label(int id)
+		container_control& container_control::label(std::string _text, std::function<void(label_control&)> _settings, int _id)
 		{
-			auto &tc = create<label_control>(id);
-			apply(tc);
-			return *this;
-		}
-
-		container_control& container_control::label(std::string _text, int id)
-		{
-			auto& tc = create<label_control>(id);
+			auto& tc = create<label_control>(_id);
 			apply(tc);
 			tc.set_text(_text);
+			if (_settings) {
+				_settings(tc);
+			}
 			return *this;
 		}
 
-		container_control& container_control::push_button(int id)
+		container_control& container_control::push_button(int _id, std::string text, std::function<void(pushbutton_control&)> _settings)
 		{
-			auto& tc = create<pushbutton_control>(id);
+			auto& tc = create<pushbutton_control>(_id);
 			apply(tc);
+			tc.set_text(text);
+			if (_settings) {
+				_settings(tc);
+			}
 			return *this;
 		}
 
-		container_control& container_control::radio_button(int id)
+		container_control& container_control::radio_button(int _id, std::string text, std::function<void(radiobutton_control&)> _settings)
 		{
-			auto& tc = create<radiobutton_control>(id);
+			auto& tc = create<radiobutton_control>(_id);
 			apply(tc);
+			tc.set_text(text);
+			if (_settings) {
+				_settings(tc);
+			}
 			return *this;
 		}
 
-		container_control& container_control::checkbox(int id)
+		container_control& container_control::checkbox(int _id, std::string text, std::function<void(checkbox_control&)> _settings)
 		{
-			auto& tc = create<checkbox_control>(id);
+			auto& tc = create<checkbox_control>(_id);
 			apply(tc);
+			tc.set_text(text);
+			if (_settings) {
+				_settings(tc);
+			}
 			return *this;
 		}
 
-		container_control& container_control::push_button(std::string _text, int id)
+		container_control& container_control::listbox(int _id, std::function<void(listbox_control&)> _settings)
 		{
-			auto& tc = create<pushbutton_control>(id);
+			auto& tc = create<listbox_control>(_id);
 			apply(tc);
-			tc.set_text(_text);
+			if (_settings) {
+				_settings(tc);
+			}
 			return *this;
 		}
 
-		container_control& container_control::radio_button(std::string _text, int id)
+		container_control& container_control::combobox(int _id, std::function<void(combobox_control&)> _settings)
 		{
-			auto& tc = create<radiobutton_control>(id);
+			auto& tc = create<combobox_control>(_id);
 			apply(tc);
-			tc.set_text(_text);
+			if (_settings) {
+				_settings(tc);
+			}
 			return *this;
 		}
 
-		container_control& container_control::checkbox(std::string _text, int id)
+		container_control& container_control::edit(int _id, std::function<void(edit_control&)> _settings)
 		{
-			auto& tc = create<checkbox_control>(id);
+			auto& tc = create<edit_control>(_id);
 			apply(tc);
-			tc.set_text(_text);
+			if (_settings) {
+				_settings(tc);
+			}
 			return *this;
 		}
 
-		container_control& container_control::listbox(int id)
+		container_control& container_control::scrollbar(int _id, std::function<void(scrollbar_control&)> _settings)
 		{
-			auto &tc = create<listbox_control>(id);
+			auto& tc = create<scrollbar_control>(_id);
 			apply(tc);
+			if (_settings) {
+				_settings(tc);
+			}
 			return *this;
 		}
 
-		container_control& container_control::combobox(int id)
+		container_control& container_control::listview(int _id, std::function<void(listview_control&)> _settings)
 		{
-			auto &tc = create<combobox_control>(id);
+			auto& tc = create<listview_control>(_id);
 			apply(tc);
+			if (_settings) {
+				_settings(tc);
+			}
 			return *this;
 		}
 
-		container_control& container_control::edit(int id)
+		container_control& container_control::treeview(int _id, std::function<void(treeview_control&)> _settings)
 		{
-			auto& tc = create<edit_control>(id);
+			auto& tc = create<treeview_control>(_id);
 			apply(tc);
+			if (_settings) {
+				_settings(tc);
+			}
 			return *this;
 		}
 
-		container_control& container_control::scrollbar(int id)
+		container_control& container_control::header(int _id, std::function<void(header_control&)> _settings)
 		{
-			auto& tc = create<scrollbar_control>(id);
+			auto& tc = create<header_control>(_id);
 			apply(tc);
+			if (_settings) {
+				_settings(tc);
+			}
 			return *this;
 		}
 
-		container_control& container_control::listview(int id)
+		container_control& container_control::toolbar(int _id, std::function<void(toolbar_control&)> _settings)
 		{
-			auto& tc = create<listview_control>(id);
+			auto& tc = create<toolbar_control>(_id);
 			apply(tc);
+			if (_settings) {
+				_settings(tc);
+			}
 			return *this;
 		}
 
-		container_control& container_control::treeview(int id)
+		container_control& container_control::statusbar(int _id, std::function<void(statusbar_control&)> _settings)
 		{
-			auto& tc = create<treeview_control>(id);
+			auto& tc = create<statusbar_control>(_id);
 			apply(tc);
+			if (_settings) {
+				_settings(tc);
+			}
 			return *this;
 		}
 
-		container_control& container_control::header(int id)
+		container_control& container_control::hotkey(int _id, std::function<void(hotkey_control&)> _settings)
 		{
-			auto& tc = create<header_control>(id);
+			auto& tc = create<hotkey_control>(_id);
 			apply(tc);
+			if (_settings) {
+				_settings(tc);
+			}
 			return *this;
 		}
 
-		container_control& container_control::toolbar(int id)
+		container_control& container_control::animate(int _id, std::function<void(animate_control&)> _settings)
 		{
-			auto& tc = create<toolbar_control>(id);
+			auto& tc = create<animate_control>(_id);
 			apply(tc);
+			if (_settings) {
+				_settings(tc);
+			}
 			return *this;
 		}
 
-		container_control& container_control::statusbar(int id)
+		container_control& container_control::richedit(int _id, std::function<void(richedit_control&)> _settings)
 		{
-			auto& tc = create<statusbar_control>(id);
+			auto& tc = create<richedit_control>(_id);
 			apply(tc);
+			if (_settings) {
+				_settings(tc);
+			}
 			return *this;
 		}
 
-		container_control& container_control::hotkey(int id)
+		container_control& container_control::draglistbox(int _id, std::function<void(draglistbox_control&)> _settings)
 		{
-			auto& tc = create<hotkey_control>(id);
+			auto& tc = create<draglistbox_control>(_id);
 			apply(tc);
+			if (_settings) {
+				_settings(tc);
+			}
 			return *this;
 		}
 
-		container_control& container_control::animate(int id)
+		container_control& container_control::rebar(int _id, std::function<void(rebar_control&)> _settings)
 		{
-			auto& tc = create<animate_control>(id);
+			auto& tc = create<rebar_control>(_id);
 			apply(tc);
+			if (_settings) {
+				_settings(tc);
+			}
 			return *this;
 		}
 
-		container_control& container_control::richedit(int id)
+		container_control& container_control::comboboxex(int _id, std::function<void(comboboxex_control&)> _settings)
 		{
-			auto& tc = create<richedit_control>(id);
+			auto& tc = create<comboboxex_control>(_id);
 			apply(tc);
+			if (_settings) {
+				_settings(tc);
+			}
 			return *this;
 		}
 
-		container_control& container_control::draglistbox(int id)
+		container_control& container_control::datetimepicker(int _id, std::function<void(datetimepicker_control&)> _settings)
 		{
-			auto& tc = create<draglistbox_control>(id);
+			auto& tc = create<datetimepicker_control>(_id);
 			apply(tc);
+			if (_settings) {
+				_settings(tc);
+			}
 			return *this;
 		}
 
-		container_control& container_control::rebar(int id)
+		container_control& container_control::monthcalendar(int _id, std::function<void(monthcalendar_control&)> _settings)
 		{
-			auto& tc = create<rebar_control>(id);
+			auto& tc = create<monthcalendar_control>(_id);
 			apply(tc);
+			if (_settings) {
+				_settings(tc);
+			}
 			return *this;
 		}
 
-		container_control& container_control::comboboxex(int id)
-		{
-			auto& tc = create<comboboxex_control>(id);
-			apply(tc);
-			return *this;
-		}
-
-		container_control& container_control::datetimepicker(int id)
-		{
-			auto& tc = create<datetimepicker_control>(id);
-			apply(tc);
-			return *this;
-		}
-
-		container_control& container_control::monthcalendar(int id)
-		{
-			auto& tc = create<monthcalendar_control>(id);
-			apply(tc);
-			return *this;
-		}
 
 		double control_base::to_pixels(measure length)
 		{
@@ -1472,7 +1521,7 @@ namespace corona
 //						std::string test_text = std::format("{0}, {1}, {2}", text, draw_bounds.x, draw_bounds.y, (long)this);
 
 //						pwindow->getContext().drawText(text.c_str(), &draw_bounds, this->text_style.name, this->text_fill_brush.name);
-						context.drawRectangle(&draw_bounds, "image_control_test", 4, nullptr);
+						//context.drawRectangle(&draw_bounds, "image_control_test", 4, nullptr);
 					}
 				}
 			};
