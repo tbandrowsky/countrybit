@@ -11,48 +11,62 @@ namespace corona
 	{
 		presentation_style_factory styles;
 
-		int id_counter::id = 50000;
+		int id_counter::id = 77776;
 		int id_counter::next()
 		{
-			return ++id;
+			id++;
+			return id;
+		}
+
+		void control_base::push(int _destination_control_id, bool _push_left, bool _push_top, bool _push_right, bool _push_bottom)
+		{
+
+			control_push_request cpr = {};
+
+			cpr.dest_control_id = _destination_control_id;
+			if (_push_left) {
+				cpr.properties_to_push |= cp_left_bounds;
+			}
+			if (_push_top) {
+				cpr.properties_to_push |= cp_top_bounds;
+			}
+			if (_push_right) {
+				cpr.properties_to_push |= cp_right_bounds;
+			}
+			if (_push_bottom) {
+				cpr.properties_to_push |= cp_bottom_bounds;
+			}
+
+			push_requests.push_back(cpr);
 		}
 
 		control_base* control_base::find(int _id)
 		{
-			control_base* result = nullptr;
-			if (this->id == _id) {
-				result = this;
+			control_base* root = this;
+			while (root->parent) {
+				root = root->parent;
 			}
-			else
-			{
-				for (auto child : children)
-				{
-					result = child->find(_id);
-					if (result != nullptr) {
-						break;
-					}
-				}
-			}
+			// just to make sure you getting the right root.
+			control_base* result = control_base::get(root, _id);
 			return result;
 		}
 
 		control_base* control_base::get(control_base* _root, int _id)
 		{
-			control_base* result = nullptr;
-			if (_root->id == _id) {
-				result = _root;
-			}
-			else
-			{
-				for (auto child : _root->children)
-				{
-					result = get(child.get(), _id);
-					if (result) {
-						return result;
-					}
-				}
-			}
+			control_base* result = _root->find_if([_id](control_base* c) { return c->id == _id; });
 			return result;
+		}
+
+		control_base* control_base::find_if(std::function<bool(control_base* _root)> _item)
+		{
+			if (_item(this))
+				return this;
+			for (auto child : children) {
+				auto result = child->find_if(_item);
+				if (result)
+					return result;
+			}
+			return nullptr;
 		}
 
 		void control_base::foreach(std::function<void(control_base* _root)> _item)
@@ -96,25 +110,35 @@ namespace corona
 
 		}
 
-		row_layout& container_control::row_begin(int id)
+
+		row_layout& container_control::row_begin(int _id, std::function<void(row_layout&)> _settings)
 		{
-			row_layout& temp = create<row_layout>(id);
-			apply(temp);
-			return temp;
+			auto& tc = create<row_layout>(_id);
+			apply(tc);
+			if (_settings) {
+				_settings(tc);
+			}
+			return tc;
 		}
 
-		column_layout& container_control::column_begin(int id)
+		column_layout& container_control::column_begin(int _id, std::function<void(column_layout&)> _settings)
 		{
-			column_layout& temp = create<column_layout>(id);
-			apply(temp);
-			return temp;
+			auto& tc = create<column_layout>(_id);
+			apply(tc);
+			if (_settings) {
+				_settings(tc);
+			}
+			return tc;
 		}
 
-		absolute_layout& container_control::absolute_begin(int id)
+		absolute_layout& container_control::absolute_begin(int _id, std::function<void(absolute_layout&)> _settings)
 		{
-			absolute_layout& temp = create<absolute_layout>(id);
-			apply(temp);
-			return temp;
+			auto& tc = create<absolute_layout>(_id);
+			apply(tc);
+			if (_settings) {
+				_settings(tc);
+			}
+			return tc;
 		}
 
 		container_control& container_control::end()
@@ -170,24 +194,36 @@ namespace corona
 			return *this;
 		}
 
-		container_control& container_control::image(int id, int _control_id, std::function<void(title_control&)> _settings)
+		container_control& container_control::image(int id, int _control_id, std::function<void(image_control&)> _settings)
 		{
 			auto& tc = create<image_control>(id);
+			apply(tc);
 			tc.load_from_control(_control_id);
+			if (_settings) {
+				_settings(tc);
+			}
 			return *this;
 		}
 
-		container_control& container_control::image(int id, std::string _filename, std::function<void(title_control&)> _settings)
+		container_control& container_control::image(int id, std::string _filename, std::function<void(image_control&)> _settings)
 		{
 			auto& tc = create<image_control>(id);
+			apply(tc);
 			tc.load_from_file(_filename);
+			if (_settings) {
+				_settings(tc);
+			}
 			return *this;
 		}
 
-		container_control& container_control::image(std::string _filename, std::function<void(title_control&)> _settings)
+		container_control& container_control::image(std::string _filename, std::function<void(image_control&)> _settings)
 		{
 			auto& tc = create<image_control>(id_counter::next());
+			apply(tc);
 			tc.load_from_file(_filename);
+			if (_settings) {
+				_settings(tc);
+			}
 			return *this;
 		}
 
@@ -754,6 +790,31 @@ namespace corona
 			if (inner_bounds.w < 0) inner_bounds.w = 0;
 			if (inner_bounds.h < 0) inner_bounds.h = 0;
 
+			for (auto pr : push_requests) {
+				auto target = find(pr.dest_control_id);
+
+				if (target) {
+					auto temp_bounds = target->bounds;
+					if (pr.properties_to_push & control_push_property::cp_left_bounds)
+					{
+						temp_bounds.x = bounds.x;
+					}
+					if (pr.properties_to_push & control_push_property::cp_top_bounds)
+					{
+						temp_bounds.y = bounds.y;
+					}
+					if (pr.properties_to_push & control_push_property::cp_right_bounds)
+					{
+						temp_bounds.x += bounds.right() - temp_bounds.right();
+					}
+					if (pr.properties_to_push & control_push_property::cp_bottom_bounds)
+					{
+						temp_bounds.x += bounds.bottom() - temp_bounds.bottom();
+					}
+					target->arrange(temp_bounds);
+				}
+			}
+
 			on_resize();
 			return bounds;
 		}
@@ -1195,7 +1256,7 @@ namespace corona
 		container_control::container_control(container_control* _parent, int _id)
 		{
 			parent = _parent;
-			id = id_counter::next();
+			id = _id;
 		}
 
 		draw_control::draw_control()
@@ -1865,8 +1926,6 @@ namespace corona
 				windows_control<WTL::CComboBoxEx, ComboExWindowStyles>::window.MoveWindow(&r);
 			}
 		}
-
-
 
 		void richedit_control::set_html(const std::string& _text)
 		{

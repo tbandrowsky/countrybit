@@ -69,49 +69,80 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 
 	std::shared_ptr<corona::win32::presentation> test_app = std::make_shared<corona::win32::presentation>();
 
-	int IDC_TEST_EDIT1 = 1002;
-	int IDC_TEST_EDIT2 = 1004;
-	int IDC_TEST_COMBO1 = 1006;
-	int IDC_TEST_LISTVIEW = 1008;
-	int IDC_RICH_EDIT1 = 1009;
-	int IDC_COMBO_BOX1 = 1010;
-	int IDC_COMBO_BOXEX1 = 1011;
-	int IDC_BUTTON1 = 1014;
-	int IDC_PUSHBUTTON1 = 1015;
-	int IDC_RADIOBUTTON1 = 1016;
-	int IDC_RADIOBUTTON2 = 1017;
-	int IDC_TEST_LISTBOX = 1023;
-	int IDC_IMAGE_LOGO = 1024;
+	const int IDC_TEST_EDIT1 = 1002;
+	const int IDC_TEST_EDIT2 = 1004;
+	const int IDC_TEST_COMBO1 = 1006;
+	const int IDC_TEST_LISTVIEW = 1008;
+	const int IDC_RICH_EDIT1 = 1009;
+	const int IDC_COMBO_BOX1 = 1010;
+	const int IDC_COMBO_BOXEX1 = 1011;
+	const int IDC_BUTTON1 = 1014;
+	const int IDC_PUSHBUTTON1 = 1015;
+	const int IDC_RADIOBUTTON1 = 1016;
+	const int IDC_RADIOBUTTON2 = 1017;
+	const int IDC_TEST_LISTBOX = 1023;
+	const int IDC_IMAGE_LOGO = 1024;
+	const int IDC_COMPANY_NAME = 1025;
+	const int IDC_PLATFORM_TEST = 1026;
+
+	const int IDC_HOME = 1027;
+	const int IDC_TITLE_BAR = 1028;
 
 	auto& st = styles.get_style();
 
 	test_app->create_page("home")
-			.column_begin()
-				.row_begin()
-				.set_size(1.0_container, 100.0_px)
-				.set_background_color(st.HeaderBackgroundColor)
-				.set_content_align(visual_alignment::align_near)
-				.set_content_cross_align(visual_alignment::align_near)
-					.image( "assets\\Square150x150Logo.scale-200.png")
-					.column_begin()
-					.set_content_align(visual_alignment::align_near)
-					.set_content_cross_align(visual_alignment::align_near)
-					.set_size(.5_container, 1.0_container)
-					.title("WOODRUFF SAWYER", [](title_control& control) {
-							control.set_size(300.0_px, 1.2_fontgr);
-							})
-					.subtitle( "Technology Test", [](subtitle_control& control) {
-							control.set_size(300.0_px, 1.2_fontgr);
+		.column_begin(IDC_HOME)
+		.row_begin(IDC_TITLE_BAR,[st](row_layout& rl) {
+				rl.set_size(1.0_container, 80.0_px);
+				rl.set_background_color(st.HeaderBackgroundColor);
+				rl.set_content_align(visual_alignment::align_near);
+				rl.set_content_cross_align(visual_alignment::align_near);
+				rl.set_item_margin(10.0_px);
+			})
+			.image("assets\\Square150x150Logo.scale-200.png", [](image_control& control) {
+				;
+				})
+			.column_begin(IDC_COMPANY_NAME, [](column_layout& cl) {
+				cl.set_content_align(visual_alignment::align_near);
+				cl.set_content_cross_align(visual_alignment::align_near);
+				cl.set_size(.3_container, 1.0_container);
+				cl.set_item_margin(0.0_px);
+				})
+				.title("WOODRUFF SAWYER", [](title_control& control) {
+						control.text_style.horizontal_align = visual_alignment::align_near;
+						control.text_style.vertical_align = visual_alignment::align_near;
+						control.set_size(300.0_px, 1.2_fontgr);
 						})
-					.end()
-				.end()
-				.row_begin()
+			.end()
+			.column_begin(IDC_PLATFORM_TEST, [](column_layout& cl) {
+				cl.set_content_align(visual_alignment::align_near);
+				cl.set_content_cross_align(visual_alignment::align_near);
+				cl.set_item_margin(0.0_px);
+				cl.set_size(1.0_remaining, 1.0_container);
+				})
+				.title("TECHNOLOGY TEST", [](title_control& control) {
+					control.text_style.horizontal_align = visual_alignment::align_near;
+					control.text_style.vertical_align = visual_alignment::align_near;
+					control.set_size(400.0_px, 1.2_fontgr);
+				})
+				.subtitle("Mixed Win32 and Direct X Controls and Layout", [](subtitle_control& control) {
+					control.text_style.horizontal_align = visual_alignment::align_near;
+					control.text_style.vertical_align = visual_alignment::align_near;
+					control.text_style.underline = true;
+					control.set_size(400.0_px, 1.2_fontgr);
+				})
+			.end()
+		.end()
+		.row_begin()
 				.set_item_margin(10.0_px)
 				.set_size(1.0_container, 1.0_remaining)
-					.column_begin()
-					.set_background_color(st.Section1BackgroundColor)
-					.set_size(.3_container, 1.0_container)
-					.set_item_margin(8.0_px)
+					.column_begin([st, IDC_COMPANY_NAME](column_layout& target) 
+						{
+							target.set_background_color(st.Section1BackgroundColor);
+							target.set_size(.3_container, 1.0_container);
+							target.set_item_margin(8.0_px);
+							target.push(IDC_COMPANY_NAME, true, false, false, false );
+						})
 						.chaptertitle("List Controls")
 						.chaptersubtitle("For viewing lists")
 						.label("List View" )
@@ -122,10 +153,13 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 						.set_item_size(1.0_container, 10.0_fontgr)
 						.listbox(IDC_TEST_LISTBOX)
 					.end()
-					.column_begin()
-					.set_background_color(st.Section2BackgroundColor)
-					.set_size(.2_container, 1.0_container)
-					.set_item_margin(4.0_px)
+					.column_begin([st, IDC_PLATFORM_TEST ](column_layout& target)
+						{
+							target.set_background_color(st.Section2BackgroundColor);
+							target.set_size(.2_container, 1.0_container);
+							target.set_item_margin(4.0_px);
+							target.push(IDC_PLATFORM_TEST, true, false, false, false);
+						})
 						.chaptertitle("Edit Controls")
 						.chaptersubtitle("Test Panel For Edits")
 						.label("Edit 1")

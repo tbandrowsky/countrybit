@@ -62,6 +62,23 @@ namespace corona
 		class comboboxex_control;
 		class datetimepicker_control;
 		class monthcalendar_control;
+		class control_base;
+
+		enum control_push_property 
+		{
+			cp_none = 0,
+			cp_left_bounds = 1,
+			cp_top_bounds = 2,
+			cp_right_bounds = 4,
+			cp_bottom_bounds = 8
+		};
+
+		class control_push_request 
+		{
+		public:
+			int dest_control_id;
+			int properties_to_push;
+		};
 
 		class control_base : public std::enable_shared_from_this<control_base>
 		{
@@ -118,6 +135,8 @@ namespace corona
 				}
 			}
 
+			std::vector<control_push_request> push_requests;
+
 			rectangle& get_bounds() { return bounds;  }
 			rectangle& get_inner_bounds() { return inner_bounds; }
 
@@ -125,6 +144,8 @@ namespace corona
 
 			virtual void arrange(rectangle _ctx);
 			bool contains(point pt);
+
+			void push(int _destination_control_id, bool _push_left, bool _push_top, bool _push_right, bool _push_bottom);
 
 			control_base* find(int _id);
 			control_base* get(control_base* _root, int _id);
@@ -146,6 +167,7 @@ namespace corona
 			}
 
 			void foreach(std::function<void(control_base* _root)> _item);
+			control_base *find_if(std::function<bool(control_base* _root)> _item);
 
 			virtual void create(std::weak_ptr<win32::directApplicationWin32> _host);
 			virtual void destroy();
@@ -251,18 +273,23 @@ namespace corona
 			container_control& set_background_color(solidBrushRequest _brushFill);
 			container_control& set_background_color(std::string _color);
 
-			row_layout& row_begin(int id = id_counter::next());
-			column_layout& column_begin(int id = id_counter::next());
-			absolute_layout& absolute_begin(int id = id_counter::next());
+			row_layout& row_begin(int id = id_counter::next(), std::function<void(row_layout&)> _settings = nullptr);
+			column_layout& column_begin(int id = id_counter::next(), std::function<void(column_layout&)> _settings = nullptr);
+			absolute_layout& absolute_begin(int id = id_counter::next(), std::function<void(absolute_layout&)> _settings = nullptr);
+
+			row_layout& row_begin(std::function<void(row_layout&)> _settings) { return row_begin(id_counter::next(), _settings); }
+			column_layout& column_begin(std::function<void(column_layout&)> _settings) { return column_begin(id_counter::next(), _settings); }
+			absolute_layout& absolute_begin(std::function<void(absolute_layout&)> _settings) { return absolute_begin(id_counter::next(), _settings); }
+
 			container_control& end();
 
-			container_control& title(std::string _text, std::function<void(title_control&)> _settings, int id);
-			container_control& subtitle(std::string _text, std::function<void(subtitle_control&)> _settings, int id);
-			container_control& chaptertitle(std::string _text, std::function<void(chaptertitle_control&)> _settings, int id);
-			container_control& chaptersubtitle(std::string _text, std::function<void(chaptersubtitle_control&)> _settings, int id);
-			container_control& paragraph(std::string _text, std::function<void(paragraph_control&)> _settings, int id);
-			container_control& code(std::string _text, std::function<void(code_control&)> _settings, int id);
-			container_control& label(std::string _text, std::function<void(label_control&)> _settings, int id);
+			container_control& title(std::string _text, std::function<void(title_control&)> _settings, int _id);
+			container_control& subtitle(std::string _text, std::function<void(subtitle_control&)> _settings, int _id);
+			container_control& chaptertitle(std::string _text, std::function<void(chaptertitle_control&)> _settings, int _id);
+			container_control& chaptersubtitle(std::string _text, std::function<void(chaptersubtitle_control&)> _settings, int _id);
+			container_control& paragraph(std::string _text, std::function<void(paragraph_control&)> _settings, int _id);
+			container_control& code(std::string _text, std::function<void(code_control&)> _settings, int _id);
+			container_control& label(std::string _text, std::function<void(label_control&)> _settings, int _id);
 
 			inline container_control& title(std::string _text) { return title(_text, nullptr, id_counter::next()); }
 			inline container_control& subtitle(std::string _text) { return subtitle(_text, nullptr, id_counter::next()); }
@@ -272,13 +299,13 @@ namespace corona
 			inline container_control& code(std::string _text) { return code(_text, nullptr, id_counter::next()); }
 			inline container_control& label(std::string _text) { return label (_text, nullptr, id_counter::next()); }
 
-			inline container_control& title(int id, std::string _text) { return title(_text, nullptr, id); }
-			inline container_control& subtitle(int id, std::string _text) { return subtitle(_text, nullptr, id); }
-			inline container_control& chaptertitle(int id, std::string _text) { return chaptertitle(_text, nullptr, id); }
-			inline container_control& chaptersubtitle(int id, std::string _text) { return chaptersubtitle(_text, nullptr, id); }
-			inline container_control& paragraph(int id, std::string _text) { return paragraph(_text, nullptr, id); }
-			inline container_control& code(int id, std::string _text) { return code(_text, nullptr, id); }
-			inline container_control& label(int id, std::string _text) { return label(_text, nullptr, id); }
+			inline container_control& title(int _id, std::string _text) { return title(_text, nullptr, _id); }
+			inline container_control& subtitle(int _id, std::string _text) { return subtitle(_text, nullptr, _id); }
+			inline container_control& chaptertitle(int _id, std::string _text) { return chaptertitle(_text, nullptr, _id); }
+			inline container_control& chaptersubtitle(int _id, std::string _text) { return chaptersubtitle(_text, nullptr, _id); }
+			inline container_control& paragraph(int _id, std::string _text) { return paragraph(_text, nullptr, _id); }
+			inline container_control& code(int _id, std::string _text) { return code(_text, nullptr, _id); }
+			inline container_control& label(int _id, std::string _text) { return label(_text, nullptr, _id); }
 
 			inline container_control& title(int _id, std::function<void(title_control&)> _settings) { return title("", _settings, _id); }
 			inline container_control& subtitle(int _id, std::function<void(subtitle_control&)> _settings) { return subtitle("", _settings, _id); }
@@ -296,32 +323,32 @@ namespace corona
 			inline container_control& code(std::string _text, std::function<void(code_control&)> _settings) { return code(_text, _settings, id_counter::next()); }
 			inline container_control& label(std::string _text, std::function<void(label_control&)> _settings) { return label(_text, _settings, id_counter::next()); }
 
-			container_control& image(int id, int _control_id, std::function<void(title_control&)> _settings = nullptr);
-			container_control& image(int id, std::string _filename, std::function<void(title_control&)> _settings = nullptr);
-			container_control& image(std::string _filename, std::function<void(title_control&)> _settings = nullptr);
+			container_control& image(int _id, int _control_id, std::function<void(image_control&)> _settings = nullptr);
+			container_control& image(int _id, std::string _filename, std::function<void(image_control&)> _settings = nullptr);
+			container_control& image(std::string _filename, std::function<void(image_control&)> _settings = nullptr);
 
-			container_control& push_button(int id, std::string text, std::function<void(pushbutton_control&)> _settings = nullptr);
-			container_control& radio_button(int id, std::string text, std::function<void(radiobutton_control&)> _settings = nullptr);
-			container_control& checkbox(int id, std::string text, std::function<void(checkbox_control&)> _settings = nullptr);
+			container_control& push_button(int _id, std::string text, std::function<void(pushbutton_control&)> _settings = nullptr);
+			container_control& radio_button(int _id, std::string text, std::function<void(radiobutton_control&)> _settings = nullptr);
+			container_control& checkbox(int _id, std::string text, std::function<void(checkbox_control&)> _settings = nullptr);
 
-			container_control& listbox(int id, std::function<void(listbox_control&)> _settings = nullptr);
-			container_control& combobox(int id, std::function<void(combobox_control&)> _settings = nullptr);
-			container_control& edit(int id, std::function<void(edit_control&)> _settings = nullptr);
-			container_control& scrollbar(int id, std::function<void(scrollbar_control&)> _settings = nullptr);
+			container_control& listbox(int _id, std::function<void(listbox_control&)> _settings = nullptr);
+			container_control& combobox(int _id, std::function<void(combobox_control&)> _settings = nullptr);
+			container_control& edit(int _id, std::function<void(edit_control&)> _settings = nullptr);
+			container_control& scrollbar(int _id, std::function<void(scrollbar_control&)> _settings = nullptr);
 
-			container_control& listview(int id, std::function<void(listview_control&)> _settings = nullptr);
-			container_control& treeview(int id, std::function<void(treeview_control&)> _settings = nullptr);
-			container_control& header(int id, std::function<void(header_control&)> _settings = nullptr);
-			container_control& toolbar(int id, std::function<void(toolbar_control&)> _settings = nullptr);
-			container_control& statusbar(int id, std::function<void(statusbar_control&)> _settings = nullptr);
-			container_control& hotkey(int id, std::function<void(hotkey_control&)> _settings = nullptr);
-			container_control& animate(int id, std::function<void(animate_control&)> _settings = nullptr);
-			container_control& richedit(int id, std::function<void(richedit_control&)> _settings = nullptr);
-			container_control& draglistbox(int id, std::function<void(draglistbox_control&)> _settings = nullptr);
-			container_control& rebar(int id, std::function<void(rebar_control&)> _settings = nullptr);
-			container_control& comboboxex(int id, std::function<void(comboboxex_control&)> _settings = nullptr);
-			container_control& datetimepicker(int id, std::function<void(datetimepicker_control&)> _settings = nullptr);
-			container_control& monthcalendar(int id, std::function<void(monthcalendar_control&)> _settings = nullptr);
+			container_control& listview(int _id, std::function<void(listview_control&)> _settings = nullptr);
+			container_control& treeview(int _id, std::function<void(treeview_control&)> _settings = nullptr);
+			container_control& header(int _id, std::function<void(header_control&)> _settings = nullptr);
+			container_control& toolbar(int _id, std::function<void(toolbar_control&)> _settings = nullptr);
+			container_control& statusbar(int _id, std::function<void(statusbar_control&)> _settings = nullptr);
+			container_control& hotkey(int _id, std::function<void(hotkey_control&)> _settings = nullptr);
+			container_control& animate(int _id, std::function<void(animate_control&)> _settings = nullptr);
+			container_control& richedit(int _id, std::function<void(richedit_control&)> _settings = nullptr);
+			container_control& draglistbox(int _id, std::function<void(draglistbox_control&)> _settings = nullptr);
+			container_control& rebar(int _id, std::function<void(rebar_control&)> _settings = nullptr);
+			container_control& comboboxex(int _id, std::function<void(comboboxex_control&)> _settings = nullptr);
+			container_control& datetimepicker(int _id, std::function<void(datetimepicker_control&)> _settings = nullptr);
+			container_control& monthcalendar(int _id, std::function<void(monthcalendar_control&)> _settings = nullptr);
 
 		};
 
