@@ -236,7 +236,6 @@ namespace corona
 		{
 			bool found = false;
 			point point;
-			static HBRUSH hbrBkgnd = NULL;
 			static HBRUSH hbrBkgnd2 = NULL;
 			char className[256];
 			database::point ptz;
@@ -395,10 +394,7 @@ namespace corona
 			{
 				HDC hdcStatic = (HDC)wParam;
 				SetBkColor(hdcStatic, RGB(255, 255, 255));
-				if (hbrBkgnd == NULL)
-				{
-					hbrBkgnd = CreateSolidBrush(RGB(255, 255, 255));
-				}
+				HBRUSH hbrBkgnd = (HBRUSH)::GetStockObject(WHITE_BRUSH);
 				return (INT_PTR)hbrBkgnd;
 			}
 			break;
@@ -407,10 +403,22 @@ namespace corona
 			{
 				HDC hdcStatic = (HDC)wParam;
 				SetBkColor(hdcStatic, RGB(255, 255, 255));
-				if (hbrBkgnd == NULL)
+				HBRUSH hbrBkgnd = (HBRUSH)::GetStockObject(WHITE_BRUSH);
+
+				if (currentController)
 				{
-					hbrBkgnd = CreateSolidBrush(RGB(255, 255, 255));
+					DWORD id = ::GetDlgCtrlID((HWND)lParam);
+					if (auto pcontroller = dynamic_cast<presentation*>(currentController.get()))
+					{
+						if (draw_control* pdraw = pcontroller->get_parent_control<draw_control>(id)) {
+
+							hbrBkgnd = pdraw->background_brush_win32;
+							auto cv = pdraw->background_brush.brushColor;
+							SetBkColor(hdcStatic, RGB(int(cv.r * 255), int(255 * cv.g), int(255 * cv.b)));
+						}
+					}
 				}
+
 				return (INT_PTR)hbrBkgnd;
 			}
 			break;
@@ -418,10 +426,7 @@ namespace corona
 			{
 				RECT rect, rect2;
 				HDC eraseDc = (HDC)wParam;
-				if (hbrBkgnd == NULL)
-				{
-					hbrBkgnd = CreateSolidBrush(RGB(255, 255, 255));
-				}
+				HBRUSH hbrBkgnd = (HBRUSH)::GetStockObject(WHITE_BRUSH);
 				::GetClientRect(hwnd, &rect);
 				::FillRect((HDC)wParam, &rect, hbrBkgnd);
 				return 0;

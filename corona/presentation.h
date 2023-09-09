@@ -214,8 +214,10 @@ namespace corona
 		class draw_control : public control_base
 		{
 			void init();
-		protected:
 
+		public:
+
+			HBRUSH background_brush_win32;
 			solidBrushRequest	background_brush;
 
 			std::weak_ptr<win32::directApplicationWin32> host;
@@ -1318,9 +1320,11 @@ namespace corona
 			absolute_layout& absolute_begin(int id = id_counter::next());
 			control_base& end();		
 
-			control_base* get_root();
+			inline control_base* get_root() {
+				return root.get();
+			}
 
-			const control_base *operator[](int _id)
+			control_base *operator[](int _id)
 			{
 				return get_root()->find(_id);
 			}
@@ -1402,6 +1406,36 @@ namespace corona
 			virtual int onVScroll(int controlId, win32::scrollTypes scrollType);
 			virtual int onResize(const rectangle& newSize, double d2dScale);
 			virtual int onSpin(int controlId, int newPosition);
+
+			template <typename control_type> control_type* get_control(int _id)
+			{
+				control_type* r = nullptr;
+				if (auto ppage = current_page.lock()) 
+				{
+					auto& rpage = *ppage;
+					control_base* cb = rpage[_id];
+					r = dynamic_cast<control_type*>(cb);
+				}
+				return r;
+			}
+
+			template <typename control_type> control_type* get_parent_control(int _id)
+			{
+				control_type* r = nullptr;
+				if (auto ppage = current_page.lock())
+				{
+					auto& rpage = *ppage;
+					control_base* cb = rpage[_id];
+					r = dynamic_cast<control_type*>(cb);
+					while (!r && cb) {
+						cb = cb->parent;
+						if (cb) {
+							r = dynamic_cast<control_type*>(cb);
+						}
+					}
+				}
+				return r;
+			}
 
 		};
 	}

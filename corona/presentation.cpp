@@ -1261,6 +1261,7 @@ namespace corona
 
 		draw_control::draw_control()
 		{
+			background_brush_win32 = nullptr;
 			background_brush = {};
 			parent = nullptr;
 			id = id_counter::next();
@@ -1268,6 +1269,7 @@ namespace corona
 
 		draw_control::draw_control(container_control* _parent, int _id)
 		{
+			background_brush_win32 = nullptr;
 			background_brush = {};
 			parent = _parent;
 			id = _id;
@@ -1275,7 +1277,6 @@ namespace corona
 
 		void draw_control::create(std::weak_ptr<win32::directApplicationWin32> _host)
 		{
-
 			host = _host;
 			if (auto phost = _host.lock()) {
 				window = phost->createDirect2Window(id, inner_bounds);
@@ -1320,8 +1321,12 @@ namespace corona
 
 					if (background_brush.active) 
 					{
+						if (background_brush_win32)
+							::DeleteBrush(background_brush_win32);
+
 						auto dc = context.getDeviceContext();
 						D2D1_COLOR_F color = toColor(bc);
+						background_brush_win32 = ::CreateSolidBrush(RGB(color.a * color.r * 255.0, color.a * color.g * 255.0, color.a * color.b * 255.0));
 						dc->Clear(color);
 					}
 					else 
