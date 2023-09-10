@@ -199,7 +199,7 @@
     <ResourceCompile Include="wspropose.rc" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="assets\Square150x150Logo.scale-200.png">
+    <Image Include="assets\small_logo.png">
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</DeploymentContent>
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
     </Image>

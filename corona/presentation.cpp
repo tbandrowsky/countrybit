@@ -141,6 +141,61 @@ namespace corona
 			return tc;
 		}
 
+		container_control& container_control::corporate_logo_bar(
+				presentation_style& st,
+				int	title_bar_id,
+				int image_control_id, 
+				std::string image_file,
+				std::string corporate_name,
+				int id_title_column_id,
+				std::string title_name,
+				std::string subtitle_name		
+		)
+		{
+			auto return_control = row_begin(title_bar_id, [st](row_layout& rl) {
+				rl.set_size(1.0_container, 80.0_px);
+				rl.set_background_color(st.HeaderBackgroundColor);
+				rl.set_content_align(visual_alignment::align_near);
+				rl.set_content_cross_align(visual_alignment::align_near);
+				rl.set_item_margin(10.0_px);
+				})
+				.image(image_control_id, image_file, [](image_control& control) {
+					control.set_size(50.0_px, 50.0_px);
+					})
+				.column_begin([](column_layout& cl) {
+					cl.set_content_align(visual_alignment::align_near);
+					cl.set_content_cross_align(visual_alignment::align_near);
+					cl.set_size(.3_container, 1.0_container);
+					cl.set_item_margin(0.0_px);
+					})
+					.title(corporate_name, [](title_control& control) {
+						control.text_style.horizontal_align = visual_alignment::align_near;
+						control.text_style.vertical_align = visual_alignment::align_near;
+						control.set_size(300.0_px, 1.2_fontgr);
+						})
+				.end()
+				.column_begin(id_title_column_id, [](column_layout& cl) {
+					cl.set_content_align(visual_alignment::align_near);
+					cl.set_content_cross_align(visual_alignment::align_near);
+					cl.set_item_margin(0.0_px);
+					cl.set_size(1.0_remaining, 1.0_container);
+						})
+					.title(title_name, [](title_control& control) {
+							control.text_style.horizontal_align = visual_alignment::align_near;
+							control.text_style.vertical_align = visual_alignment::align_near;
+							control.set_size(400.0_px, 1.2_fontgr);
+						})
+					.subtitle(subtitle_name, [](subtitle_control& control) {
+							control.text_style.horizontal_align = visual_alignment::align_near;
+							control.text_style.vertical_align = visual_alignment::align_near;
+							control.text_style.underline = true;
+							control.set_size(400.0_px, 1.2_fontgr);
+						})
+				.end()
+			.end();
+			return *this;
+		}
+
 		container_control& container_control::end()
 		{
 			if (parent) {
@@ -307,6 +362,17 @@ namespace corona
 		container_control& container_control::push_button(int _id, std::string text, std::function<void(pushbutton_control&)> _settings)
 		{
 			auto& tc = create<pushbutton_control>(_id);
+			apply(tc);
+			tc.set_text(text);
+			if (_settings) {
+				_settings(tc);
+			}
+			return *this;
+		}
+
+		container_control& container_control::press_button(int _id, std::string text, std::function<void(pressbutton_control&)> _settings)
+		{
+			auto& tc = create<pressbutton_control>(_id);
 			apply(tc);
 			tc.set_text(text);
 			if (_settings) {

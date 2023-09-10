@@ -42,6 +42,7 @@ namespace corona
 
 		class static_control;
 		class pushbutton_control;
+		class pressbutton_control;
 		class checkbox_control;
 		class radiobutton_control;
 		class linkbutton_control;
@@ -332,6 +333,7 @@ namespace corona
 			container_control& push_button(int _id, std::string text, std::function<void(pushbutton_control&)> _settings = nullptr);
 			container_control& radio_button(int _id, std::string text, std::function<void(radiobutton_control&)> _settings = nullptr);
 			container_control& checkbox(int _id, std::string text, std::function<void(checkbox_control&)> _settings = nullptr);
+			container_control& press_button(int _id, std::string text, std::function<void(pressbutton_control&)> _settings = nullptr);
 
 			container_control& listbox(int _id, std::function<void(listbox_control&)> _settings = nullptr);
 			container_control& combobox(int _id, std::function<void(combobox_control&)> _settings = nullptr);
@@ -351,6 +353,17 @@ namespace corona
 			container_control& comboboxex(int _id, std::function<void(comboboxex_control&)> _settings = nullptr);
 			container_control& datetimepicker(int _id, std::function<void(datetimepicker_control&)> _settings = nullptr);
 			container_control& monthcalendar(int _id, std::function<void(monthcalendar_control&)> _settings = nullptr);
+
+			container_control& corporate_logo_bar(
+				presentation_style& st,
+				int	title_bar_id,
+				int image_control_id,
+				std::string image_file,
+				std::string corporate_name,
+				int id_title_column_id,
+				std::string title_name,
+				std::string subtitle_name
+			);
 
 		};
 
@@ -942,6 +955,7 @@ namespace corona
 		const int ComboWindowStyles = WS_VISIBLE | WS_CHILD | WS_TABSTOP | CBS_DROPDOWNLIST | CBS_SORT;
 		const int ComboExWindowStyles = WS_VISIBLE | WS_CHILD | WS_TABSTOP | CBS_DROPDOWNLIST | CBS_SORT;
 		const int PushButtonWindowStyles = WS_VISIBLE | WS_CHILD | WS_TABSTOP | BS_FLAT;
+		const int PressButtonWindowStyles = WS_VISIBLE | WS_CHILD | WS_TABSTOP | BS_FLAT | BS_AUTOCHECKBOX | BS_PUSHLIKE;
 		const int CheckboxWindowStyles = WS_VISIBLE | WS_CHILD | WS_TABSTOP | BS_AUTOCHECKBOX | BS_FLAT;
 		const int RadioButtonWindowStyles = WS_VISIBLE |WS_CHILD | WS_TABSTOP | BS_AUTORADIOBUTTON | BS_FLAT;
 		const int LinkButtonWindowStyles = WS_VISIBLE | WS_CHILD | WS_TABSTOP | BS_COMMANDLINK | BS_FLAT;
@@ -973,6 +987,13 @@ namespace corona
 		public:
 			pushbutton_control(container_control* _parent, int _id) : button_control<PushButtonWindowStyles>(_parent, _id) { ; }
 			virtual ~pushbutton_control() { ; }
+		};
+
+		class pressbutton_control : public button_control<PressButtonWindowStyles>
+		{
+		public:
+			pressbutton_control(container_control* _parent, int _id) : button_control<PressButtonWindowStyles>(_parent, _id) { ; }
+			virtual ~pressbutton_control() { ; }
 		};
 
 		class radiobutton_control : public button_control<RadioButtonWindowStyles>

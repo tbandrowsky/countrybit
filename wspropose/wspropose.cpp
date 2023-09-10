@@ -88,51 +88,53 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 	const int IDC_HOME = 1027;
 	const int IDC_TITLE_BAR = 1028;
 
+	const int IDC_FONT_PICK = 1029;
+	const int IDC_BOLD = 1030;
+	const int IDC_ITALIC = 1031;
+	const int IDC_UNDERLINE = 1032;
+	const int IDC_STRIKETHROUGH = 1033;
+	const int IDC_SUPERSCRIPT = 1034;
+	const int IDC_SUBSCRIPT = 1035;
+	const int IDC_FONT_SIZE = 1036;
+	const int IDC_FONT_NAME = 1037;
+
 	auto& st = styles.get_style();
 
-	test_app->create_page("home")
+	test_app->create_page("test")
 		.column_begin(IDC_HOME)
-		.row_begin(IDC_TITLE_BAR,[st](row_layout& rl) {
-				rl.set_size(1.0_container, 80.0_px);
-				rl.set_background_color(st.HeaderBackgroundColor);
-				rl.set_content_align(visual_alignment::align_near);
-				rl.set_content_cross_align(visual_alignment::align_near);
-				rl.set_item_margin(10.0_px);
-			})
-			.image("assets\\Square150x150Logo.scale-200.png", [](image_control& control) {
-				;
-				})
-			.column_begin(IDC_COMPANY_NAME, [](column_layout& cl) {
-				cl.set_content_align(visual_alignment::align_near);
-				cl.set_content_cross_align(visual_alignment::align_near);
-				cl.set_size(.3_container, 1.0_container);
-				cl.set_item_margin(0.0_px);
-				})
-				.title("WOODRUFF SAWYER", [](title_control& control) {
-						control.text_style.horizontal_align = visual_alignment::align_near;
-						control.text_style.vertical_align = visual_alignment::align_near;
-						control.set_size(300.0_px, 1.2_fontgr);
-						})
+		.corporate_logo_bar(
+			st,
+			IDC_TITLE_BAR,
+			IDC_IMAGE_LOGO,
+			"assets\\small_logo.png",
+			"WOODRUFF SAWYER",
+			IDC_PLATFORM_TEST,
+			"TECHNOLOGY TEST",
+			"Corona UI"
+		)
+		.row_begin()
+			.column_begin()
+				.label()
+				.input()
+				.input()
+				.label()
+				.button()
+				.end()
 			.end()
-			.column_begin(IDC_PLATFORM_TEST, [](column_layout& cl) {
-				cl.set_content_align(visual_alignment::align_near);
-				cl.set_content_cross_align(visual_alignment::align_near);
-				cl.set_item_margin(0.0_px);
-				cl.set_size(1.0_remaining, 1.0_container);
-				})
-				.title("TECHNOLOGY TEST", [](title_control& control) {
-					control.text_style.horizontal_align = visual_alignment::align_near;
-					control.text_style.vertical_align = visual_alignment::align_near;
-					control.set_size(400.0_px, 1.2_fontgr);
-				})
-				.subtitle("Mixed Win32 and Direct X Controls and Layout", [](subtitle_control& control) {
-					control.text_style.horizontal_align = visual_alignment::align_near;
-					control.text_style.vertical_align = visual_alignment::align_near;
-					control.text_style.underline = true;
-					control.set_size(400.0_px, 1.2_fontgr);
-				})
-			.end()
-		.end()
+	.end();
+
+	test_app->create_page("test")
+		.column_begin(IDC_HOME)
+		.corporate_logo_bar(
+			st,
+			IDC_TITLE_BAR,
+			IDC_IMAGE_LOGO,
+			"assets\\small_logo.png",
+			"WOODRUFF SAWYER",
+			IDC_PLATFORM_TEST,
+			"TECHNOLOGY TEST",
+			"Corona UI"
+		)
 		.row_begin()
 				.set_item_margin(10.0_px)
 				.set_size(1.0_container, 1.0_remaining)
@@ -178,14 +180,27 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 						.set_item_size(1.0_container, 2.0_fontgr)
 						.push_button(IDC_PUSHBUTTON1, "Ok" )
 					.end()
-					.column_begin()
-					.set_background_color(st.Section3BackgroundColor)
-					.set_size(1.0_remaining, 1.0_container)
-					.set_item_size(.95_remaining, 0.0_px)
-					.set_item_margin(4.0_px)
+					.column_begin([st](column_layout& control) {
+						control.set_background_color(st.Section3BackgroundColor);
+						control.set_size(1.0_remaining, 1.0_container);
+						control.set_item_margin(4.0_px);
+					})
 						.chaptertitle("Content Controls")
 						.chaptersubtitle("Windows Text Editor")
-						.label("Text Editor")
+						.row_begin([st](row_layout& _layout) {
+							_layout.set_content_align(visual_alignment::align_near);
+							_layout.set_size(1.0_container, 1.0_fontgr);
+							_layout.set_item_size(8.0_fontgr, 1.0_fontgr);
+							_layout.set_background_color(st.Section3BackgroundColor);
+							})
+							.label("Text Editor", [](label_control& _control) {
+							_control.set_size(15.0_fontgr, 50.0_px);
+								})
+								.press_button(IDC_BOLD, "B", [](pressbutton_control& _control) { _control.text_style.bold = true;  })
+							.press_button( IDC_ITALIC, "I", [](pressbutton_control& _control) { _control.text_style.italics = true;  })
+							.press_button(IDC_UNDERLINE, "U", [](pressbutton_control& _control) { _control.text_style.underline = true;  })
+							.press_button(IDC_STRIKETHROUGH, "S", [](pressbutton_control& _control) { _control.text_style.strike_through = true;  })
+						.end()
 						.set_item_size(1.0_container, .5_remaining)
 						.richedit(IDC_RICH_EDIT1)
 						.chaptersubtitle("Direct 2d Controls")
@@ -286,6 +301,8 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 { "Id":4, "Name":"GMC" }
 ])"_json;
 	lb.set_list(ldata3);
+
+
 
 	if (forceWindowed)
 	{

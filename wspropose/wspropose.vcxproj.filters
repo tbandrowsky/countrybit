@@ -45,7 +45,7 @@
     <Image Include="wspropose.ico">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="assets\Square150x150Logo.scale-200.png">
+    <Image Include="assets\small_logo.png">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>
