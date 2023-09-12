@@ -11,7 +11,10 @@ namespace corona
 	{
 		presentation_style_factory styles;
 
-		int id_counter::id = 77776;
+		int id_counter::status_text_title_id = 100000;
+		int id_counter::status_text_subtitle_id = 100001;
+
+		int id_counter::id = 100010;
 		int id_counter::next()
 		{
 			id++;
@@ -194,6 +197,35 @@ namespace corona
 				.end()
 			.end();
 			return *this;
+		}
+
+		container_control& container_control::status_bar(presentation_style& st)
+		{
+			auto return_control = row_begin(id_counter::status_bar_id, [st](row_layout& rl) {
+				rl.set_size(1.0_container, 80.0_px);
+				rl.set_background_color(st.HeaderBackgroundColor);
+				rl.set_content_align(visual_alignment::align_near);
+				rl.set_content_cross_align(visual_alignment::align_near);
+				rl.set_item_margin(10.0_px);
+				})
+					.column_begin([](column_layout& cl) {
+						cl.set_content_align(visual_alignment::align_near);
+						cl.set_content_cross_align(visual_alignment::align_near);
+						cl.set_size(.3_container, 1.0_container);
+						cl.set_item_margin(0.0_px);
+					})
+						.title(id_counter::status_text_title_id, [](title_control& control) {
+							control.text_style.horizontal_align = visual_alignment::align_near;
+							control.text_style.vertical_align = visual_alignment::align_near;
+							control.set_size(300.0_px, 1.2_fontgr);
+							})
+						.subtitle(id_counter::status_text_subtitle_id, [](title_control& control) {
+								control.text_style.horizontal_align = visual_alignment::align_near;
+								control.text_style.vertical_align = visual_alignment::align_near;
+								control.set_size(300.0_px, 1.2_fontgr);
+							})
+				.end();
+			end();
 		}
 
 		container_control& container_control::end()

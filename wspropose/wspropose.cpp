@@ -98,9 +98,19 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 	const int IDC_FONT_SIZE = 1036;
 	const int IDC_FONT_NAME = 1037;
 
+
+
+	const int IDC_REGISTER_NEW_ACCOUNT = 1204;
+
 	auto& st = styles.get_style();
 
-	test_app->create_page("test")
+
+	const int IDC_LOGIN = 1101;
+	const int IDC_LOGIN_USERS = 1102;
+	const int IDC_LOGIN_HELLO = 1103;
+	const int IDC_LOGIN_REGISTER = 1104;
+
+	test_app->create_page("quick_login")
 		.column_begin(IDC_HOME)
 		.corporate_logo_bar(
 			st,
@@ -109,19 +119,269 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 			"assets\\small_logo.png",
 			"WOODRUFF SAWYER",
 			IDC_PLATFORM_TEST,
-			"TECHNOLOGY TEST",
-			"Corona UI"
+			"Social Property Demonstration",
+			"Quick Login"
 		)
 		.row_begin()
 			.column_begin()
-				.label()
-				.input()
-				.input()
-				.label()
-				.button()
+				.chaptertitle("Quick Login")
+				.paragraph("Select yourself from this list of users who have previously logged in on this computer.")
+				.label("Select User")
+				.listbox( IDC_LOGIN_USERS )
+				.push_button(IDC_LOGIN_HELLO, "Login")
+				.push_button(IDC_LOGIN_REGISTER, "Add User")
 				.end()
 			.end()
+		.end()
 	.end();
+
+	const int IDC_LOGIN_MANUAL = 1201;
+	const int IDC_LOGIN_USERNAME = 1202;
+	const int IDC_LOGIN_PASSWORD = 1203;
+	const int IDC_LOGIN_FORGOT = 1204;
+	const int IDC_LOGIN_FORGOT = 1205;
+	const int IDC_LOGIN_CANCEL = 1206;
+	const int IDC_CREATE_NEW_ACCOUNT = 1207;
+	const int IDC_LOGIN_FIRST_NAME = 1208;
+	const int IDC_LOGIN_LAST_NAME = 1208;
+
+	test_app->create_page("full_login")
+		.column_begin(IDC_HOME)
+			.corporate_logo_bar(
+				st,
+				IDC_TITLE_BAR,
+				IDC_IMAGE_LOGO,
+				"assets\\small_logo.png",
+				"WOODRUFF SAWYER",
+				IDC_PLATFORM_TEST,
+				"Social Property Demonstration",
+				"Full Login"
+			)
+			.row_begin()
+				.column_begin()
+					.chaptertitle("Full Login")
+					.chaptersubtitle("Identification")
+					.label("Password")
+					.edit(IDC_LOGIN_PASSWORD)
+					.label("Scan your RealID")
+					.subtitle("Placeholder for Camera")
+					.label("First Name")
+					.edit(IDC_LOGIN_FIRST_NAME)
+					.label("Last Name")
+					.edit(IDC_LOGIN_LAST_NAME)
+					.push_button(IDC_LOGIN_MANUAL, "Login")
+					.push_button(IDC_LOGIN_CANCEL, "Cancel")
+					.chaptersubtitle("Need help?")
+					.push_button(IDC_LOGIN_MANUAL, "")
+					.push_button(IDC_LOGIN_CANCEL, "Cancel")
+				.end()
+			.end()
+		.end()
+	.end();
+
+	const int IDC_FIRST_NAME = 1301;
+	const int IDC_LAST_NAME = 1302;
+	const int IDC_EMAIL = 1303;
+	const int IDC_PHONE = 1304;
+	const int IDC_NEW_PASSWORD1 = 1305;
+	const int IDC_NEW_PASSWORD2 = 1306;
+	const int IDC_CREATE_ACCOUNT = 1307;
+	const int IDC_CANCEL_ACCOUNT = 1308;
+
+	const int IDC_CREATE_NEW_ACCOUNT = 1309;
+
+	test_app->create_page("create_account")
+		.column_begin(IDC_HOME)
+		.corporate_logo_bar(
+			st,
+			IDC_TITLE_BAR,
+			IDC_IMAGE_LOGO,
+			"assets\\small_logo.png",
+			"WOODRUFF SAWYER",
+			IDC_PLATFORM_TEST,
+		"Social Property Demonstration",
+			"Create New Account"
+		)
+		.row_begin()
+			.column_begin()
+				.chaptertitle("Create New Account")
+				.chaptersubtitle("Identification")
+				.label("Scan your RealID")
+				.subtitle("Placeholder for Camera")
+				.chaptersubtitle("About you")
+				.label("First Name")
+				.edit(IDC_FIRST_NAME)
+				.label("Last Name")
+				.edit(IDC_LAST_NAME)
+				.label("Email")
+				.edit(IDC_EMAIL)
+				.label("Phone")
+				.edit(IDC_PHONE)
+				.chaptertitle("Set password")
+				.label("Password")
+				.edit(IDC_NEW_PASSWORD1)
+				.label("Confirm Password")
+				.edit(IDC_NEW_PASSWORD2)
+				.push_button(IDC_CREATE_ACCOUNT, "Create Account")
+				.push_button(IDC_CANCEL_ACCOUNT, "Cancel")
+				.paragraph("To ensure all members of this community are real, legal Americans, this application uses your RealID.")
+			.end()
+		.end()
+		.end()
+	.end();
+
+	const int IDC_SEND_ACCOUNT_CONFIRM = 1400;
+	const int IDC_EDIT_ACCOUNT_CONFIRM = 1401;
+	const int IDC_ACCOUNT_CONFIRM = 1402;
+	const int IDC_CANCEL_ACCOUNT = 1403;
+
+	test_app->create_page("confirm_account")
+		.column_begin(IDC_HOME)
+		.corporate_logo_bar(
+			st,
+			IDC_TITLE_BAR,
+			IDC_IMAGE_LOGO,
+			"assets\\small_logo.png",
+			"WOODRUFF SAWYER",
+			IDC_PLATFORM_TEST,
+			"Social Property Demonstration",
+			"Confirm Account"
+		)
+		.row_begin()
+		.column_begin()
+		.chaptertitle("Confirm Account")
+		.chaptersubtitle("Confirmation Code.")
+		.push_button(IDC_SEND_ACCOUNT_CONFIRM, "Send Code")
+		.label("Enter Code")
+		.edit(IDC_EDIT_ACCOUNT_CONFIRM)
+		.push_button(IDC_ACCOUNT_CONFIRM, "Confirm")
+		.push_button(IDC_CANCEL_ACCOUNT, "Confirm")
+		.end()
+		.end()
+		.end()
+		.end();
+
+	const int IDC_LOGIN_AGAIN = 1500;
+	const int IDC_LOGIN_FORGOT_PASSWORD = 1501;
+	const int IDC_PASSWORD = 1502;
+	const int IDC_DO_LOGIN = 1503;
+
+	test_app->create_page("access_denied")
+		.column_begin(IDC_HOME)
+		.corporate_logo_bar(
+			st,
+			IDC_TITLE_BAR,
+			IDC_IMAGE_LOGO,
+			"assets\\small_logo.png",
+			"WOODRUFF SAWYER",
+			IDC_PLATFORM_TEST,
+			"Social Property Demonstration",
+			"Access Denied"
+		)
+		.row_begin()
+		.column_begin()
+		.chaptertitle("Denied")
+		.chaptersubtitle("Access is denied.")
+		.push_button(IDC_LOGIN_AGAIN, "Try again")
+		.chaptersubtitle("You can try to reset your password here.")
+		.push_button(IDC_LOGIN_FORGOT, "Forgot password")
+		.end()
+		.end()
+		.end()
+		.end();
+
+	const int IDC_SEND_PASSWORD_CHANGE_CODE = 1600;
+	const int IDC_EDIT_PASSWORD_CHANGE_CODE = 1601;
+	const int IDC_NEW_RESET_PASSWORD1 = 1602;
+	const int IDC_NEW_RESET_PASSWORD2 = 1603;
+	const int IDC_SET_NEW_PASSWORD = 1604;
+	const int IDC_CANCEL_PASSWORD = 1606;
+
+	test_app->create_page("reset_password")
+		.column_begin(IDC_HOME)
+		.corporate_logo_bar(
+			st,
+			IDC_TITLE_BAR,
+			IDC_IMAGE_LOGO,
+			"assets\\small_logo.png",
+			"WOODRUFF SAWYER",
+			IDC_PLATFORM_TEST,
+			"Social Property Demonstration",
+			"Reset Password"
+		)
+		.row_begin()
+		.column_begin()
+		.chaptertitle("Reset Password")
+		.chaptersubtitle("Confirmation Code.")
+		.push_button(IDC_SEND_PASSWORD_CHANGE_CODE, "Send Code")
+		.label("Enter Code")
+		.edit(IDC_EDIT_PASSWORD_CHANGE_CODE)
+		.chaptersubtitle("Create New Password.")
+		.label("New Password")
+		.edit(IDC_NEW_RESET_PASSWORD1)
+		.label("Confirm New Password")
+		.edit(IDC_NEW_RESET_PASSWORD2)
+		.push_button(IDC_SET_NEW_PASSWORD, "Set password")
+		.push_button(IDC_CANCEL_PASSWORD, "Cancel")
+		.end()
+		.end()
+		.end()
+		.end();
+
+
+	const int IDC_TO_LOGIN = 1701;
+
+	test_app->create_page("password_changed")
+		.column_begin(IDC_HOME)
+		.corporate_logo_bar(
+			st,
+			IDC_TITLE_BAR,
+			IDC_IMAGE_LOGO,
+			"assets\\small_logo.png",
+			"WOODRUFF SAWYER",
+			IDC_PLATFORM_TEST,
+			"Social Property Demonstration",
+			"Password Changed"
+		)
+		.row_begin()
+		.column_begin()
+		.chaptertitle("Password Changed")
+		.chaptersubtitle("Password changed successfully")
+		.paragraph("Your password was reset just fine, and now you can login.")
+		.push_button(IDC_TO_LOGIN, "Login")
+		.end()
+		.end()
+		.end()
+		.end();
+
+	const int IDC_ADMIN_HOME = 1801;
+
+	test_app->create_page("customer_home")
+		.column_begin(IDC_HOME)
+		.corporate_logo_bar(
+			st,
+			IDC_TITLE_BAR,
+			IDC_IMAGE_LOGO,
+			"assets\\small_logo.png",
+			"WOODRUFF SAWYER",
+			IDC_PLATFORM_TEST,
+			"Social Property Demonstration",
+			"Home"
+		)
+		.row_begin()
+		.column_begin()
+		.chaptertitle("Home")
+		.chaptersubtitle("News")
+		.paragraph("Alert or news item.")
+		.chaptersubtitle("Property")
+		.listview(IDC_PROPERTY_BUILDINGS)
+		.end()
+		.end()
+		.end()
+		.end();
+
+
+	const int IDC_LOGIN = 1801;
 
 	test_app->create_page("test")
 		.column_begin(IDC_HOME)

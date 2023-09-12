@@ -14,6 +14,9 @@ namespace corona
 			static int id;
 			static int next();
 			static int check(int _id);
+			static int status_bar_id;
+			static int status_text_title_id;
+			static int status_text_subtitle_id;
 		};
 
 		class layout_context
@@ -364,6 +367,8 @@ namespace corona
 				std::string title_name,
 				std::string subtitle_name
 			);
+
+			container_control& status_bar(presentation_style& st);
 
 		};
 
