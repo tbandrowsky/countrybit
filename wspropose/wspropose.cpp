@@ -139,10 +139,9 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 	const int IDC_LOGIN_USERNAME = 1202;
 	const int IDC_LOGIN_PASSWORD = 1203;
 	const int IDC_LOGIN_FORGOT = 1204;
-	const int IDC_LOGIN_FORGOT = 1205;
-	const int IDC_LOGIN_CANCEL = 1206;
-	const int IDC_CREATE_NEW_ACCOUNT = 1207;
-	const int IDC_LOGIN_FIRST_NAME = 1208;
+	const int IDC_LOGIN_CANCEL = 1205;
+	const int IDC_CREATE_NEW_ACCOUNT = 1206;
+	const int IDC_LOGIN_FIRST_NAME = 1207;
 	const int IDC_LOGIN_LAST_NAME = 1208;
 
 	test_app->create_page("full_login")
@@ -188,8 +187,6 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 	const int IDC_CREATE_ACCOUNT = 1307;
 	const int IDC_CANCEL_ACCOUNT = 1308;
 
-	const int IDC_CREATE_NEW_ACCOUNT = 1309;
-
 	test_app->create_page("create_account")
 		.column_begin(IDC_HOME)
 		.corporate_logo_bar(
@@ -233,7 +230,7 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 	const int IDC_SEND_ACCOUNT_CONFIRM = 1400;
 	const int IDC_EDIT_ACCOUNT_CONFIRM = 1401;
 	const int IDC_ACCOUNT_CONFIRM = 1402;
-	const int IDC_CANCEL_ACCOUNT = 1403;
+	const int IDC_CANCEL_ACCOUNT_CONFIRM = 1403;
 
 	test_app->create_page("confirm_account")
 		.column_begin(IDC_HOME)
@@ -255,7 +252,7 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 		.label("Enter Code")
 		.edit(IDC_EDIT_ACCOUNT_CONFIRM)
 		.push_button(IDC_ACCOUNT_CONFIRM, "Confirm")
-		.push_button(IDC_CANCEL_ACCOUNT, "Confirm")
+		.push_button(IDC_CANCEL_ACCOUNT_CONFIRM, "Confirm")
 		.end()
 		.end()
 		.end()
@@ -354,7 +351,8 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 		.end()
 		.end();
 
-	const int IDC_ADMIN_HOME = 1801;
+	const int IDC_USER_NAVIGATION = 1801;
+	const int IDC_USER_FRAME = 1802;
 
 	test_app->create_page("customer_home")
 		.column_begin(IDC_HOME)
@@ -369,19 +367,41 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 			"Home"
 		)
 		.row_begin()
-		.column_begin()
-		.chaptertitle("Home")
-		.chaptersubtitle("News")
-		.paragraph("Alert or news item.")
-		.chaptersubtitle("Property")
-		.listview(IDC_PROPERTY_BUILDINGS)
-		.end()
-		.end()
-		.end()
-		.end();
-
-
-	const int IDC_LOGIN = 1801;
+			.column_begin(IDC_USER_NAVIGATION, [st](column_layout& col) {
+			col.set_size(.5_container, 1.0_container);
+				})
+			.chaptertitle("Projects")
+			.chaptersubtitle("News")
+			.chaptersubtitle("Current")
+			.chaptersubtitle("Closed")
+			.chaptertitle("Products")
+			.chaptersubtitle("Home Page")
+			.chaptersubtitle("Services")
+			.chaptertitle("Property")
+			.chaptersubtitle("Buildings")
+			.chaptersubtitle("Vehicles")
+			.chaptertitle("Find")
+			.chaptersubtitle("Electricians")
+			.chaptersubtitle("Lawyers")
+			.chaptersubtitle("Plumbers")
+			.chaptersubtitle("Landscapers")
+			.chaptersubtitle("Contractor")
+			.chaptersubtitle("Insurance")
+			.chaptertitle("News")
+			.chaptersubtitle("Social")
+			.chaptersubtitle("Insurance")
+			.end()
+			.column_begin(IDC_USER_FRAME, [st](column_layout& col) {
+					col.set_size(.5_container, 1.0_container);
+				})
+			.frame_begin()
+				.paragraph( "Frame Contents")
+			.end()
+			.end()
+			.end()
+			.end()
+			.end()
+	.end();
 
 	test_app->create_page("test")
 		.column_begin(IDC_HOME)
@@ -409,11 +429,63 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 						.chaptersubtitle("For viewing lists")
 						.label("List View" )
 						.set_item_size(1.0_container, 10.0_fontgr)
-						.listview(IDC_TEST_LISTVIEW)
+							.listview(IDC_TEST_LISTVIEW, [st](listview_control& lv) {
+								table_data tdata;
+								table_column column;
+
+								column.alignment = visual_alignment::align_near;
+								column.display_name = "Id";
+								column.json_field = "Id";
+								column.width = 50;
+								tdata.columns.push_back(column);
+
+								column.alignment = visual_alignment::align_near;
+								column.display_name = "First Name";
+								column.json_field = "FirstName";
+								column.width = 200;
+								tdata.columns.push_back(column);
+
+								column.alignment = visual_alignment::align_near;
+								column.display_name = "Last Name";
+								column.json_field = "LastName";
+								column.width = 200;
+								tdata.columns.push_back(column);
+
+								column.alignment = visual_alignment::align_far;
+								column.display_name = "Age";
+								column.json_field = "Age";
+								column.width = 200;
+								tdata.columns.push_back(column);
+
+								tdata.items = R"([
+	{ "Id":0, "FirstName":"Bob", "LastName":"Richards", "Age":42 },
+	{ "Id":1, "FirstName":"Ted", "LastName":"Baxter", "Age":42 },
+	{ "Id":2, "FirstName":"Carol", "LastName":"Sandcrete", "Age":42 },
+	{ "Id":3, "FirstName":"Alice", "LastName":"Laker", "Age":42 },
+	{ "Id":4, "FirstName":"Sandy", "LastName":"Smith", "Age":42 },
+	{ "Id":6, "FirstName":"Holly", "LastName":"Rogers", "Age":34 }
+	]
+	)"_json;
+
+								lv.set_table(tdata);
+							})
 						.set_item_size(1.0_container, 1.2_fontgr)
 						.label("List Box")
 						.set_item_size(1.0_container, 10.0_fontgr)
-						.listbox(IDC_TEST_LISTBOX)
+								.listbox(IDC_TEST_LISTBOX, [st](listbox_control& lb) {
+								list_data ldata3;
+								ldata3.id_field = "Id";
+								ldata3.text_field = "Name";
+								ldata3.items = R"([
+{ "Id":0, "Name":"Bentley" },
+{ "Id":1, "Name":"Cadillac" },
+{ "Id":2, "Name":"Scout" },
+{ "Id":3, "Name":"Chevy SS" },
+{ "Id":4, "Name":"GMC" }
+])"_json;
+								lb.set_list(ldata3);
+
+							})
 					.end()
 					.column_begin([st, IDC_PLATFORM_TEST ](column_layout& target)
 						{
@@ -429,9 +501,42 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 						.label("Edit 2")
 						.edit(IDC_TEST_EDIT2)
 						.label("Combo ")
-						.combobox(IDC_COMBO_BOX1)
+							.combobox(IDC_COMBO_BOX1, [st](combobox_control& cb) {
+							list_data ldata;
+							ldata.id_field = "Id";
+							ldata.text_field = "Name";
+							ldata.items = R"([
+{ "Id":0, "Name":"Bob" },
+{ "Id":1, "Name":"Ted" },
+{ "Id":2, "Name":"Isiah" },
+{ "Id":3, "Name":"April" },
+{ "Id":4, "Name":"Moesha" },
+{ "Id":5, "Name":"Joe" },
+{ "Id":6, "Name":"Raghu" },
+{ "Id":7, "Name":"Harmeet" }
+])"_json;
+							cb.set_list(ldata);
+							})
 						.label("Combo EX")
-						.comboboxex(IDC_COMBO_BOXEX1)
+								.comboboxex(IDC_COMBO_BOXEX1, [st](comboboxex_control& cbex) {
+								list_data ldata2;
+								ldata2.id_field = "Id";
+								ldata2.text_field = "Name";
+								ldata2.items = R"([
+{ "Id":0, "Name":"Akron" },
+{ "Id":1, "Name":"Cleveland" },
+{ "Id":2, "Name":"Barberton" },
+{ "Id":3, "Name":"Youngstown" },
+{ "Id":4, "Name":"Breezewood" },
+{ "Id":5, "Name":"Leesville" },
+{ "Id":6, "Name":"Phillipsburg" },
+{ "Id":7, "Name":"Marlton" },
+{ "Id":8, "Name":"Elkton" },
+{ "Id":9, "Name":"Philadelphia" }
+])"_json;
+								cbex.set_list(ldata2);
+
+							})
 						.label("Checkbox")
 						.checkbox(IDC_BUTTON1, "Check" )
 						.label("Radio")
@@ -469,99 +574,6 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 			.end()
 		.end()
 	.end();
-
-	// now load the data
-	auto &lv = test_app->find<listview_control>(IDC_TEST_LISTVIEW);
-
-	table_data tdata;
-	table_column column;
-
-	column.alignment = visual_alignment::align_near;
-	column.display_name = "Id";
-	column.json_field = "Id";
-	column.width = 50;
-	tdata.columns.push_back(column);
-
-	column.alignment = visual_alignment::align_near;
-	column.display_name = "First Name";
-	column.json_field = "FirstName";
-	column.width = 200;
-	tdata.columns.push_back(column);
-
-	column.alignment = visual_alignment::align_near;
-	column.display_name = "Last Name";
-	column.json_field = "LastName";
-	column.width = 200;
-	tdata.columns.push_back(column);
-
-	column.alignment = visual_alignment::align_far;
-	column.display_name = "Age";
-	column.json_field = "Age";
-	column.width = 200;
-	tdata.columns.push_back(column);
-
-	tdata.items = R"([
-{ "Id":0, "FirstName":"Bob", "LastName":"Richards", "Age":42 },
-{ "Id":1, "FirstName":"Ted", "LastName":"Baxter", "Age":42 },
-{ "Id":2, "FirstName":"Carol", "LastName":"Sandcrete", "Age":42 },
-{ "Id":3, "FirstName":"Alice", "LastName":"Laker", "Age":42 },
-{ "Id":4, "FirstName":"Sandy", "LastName":"Smith", "Age":42 },
-{ "Id":6, "FirstName":"Holly", "LastName":"Rogers", "Age":34 }
-]
-)"_json;
-
-	lv.set_table(tdata);
-
-	auto& cb = test_app->find<combobox_control>(IDC_COMBO_BOX1);
-
-	list_data ldata;
-	ldata.id_field = "Id";
-	ldata.text_field = "Name";
-	ldata.items = R"([
-{ "Id":0, "Name":"Bob" },
-{ "Id":1, "Name":"Ted" },
-{ "Id":2, "Name":"Isiah" },
-{ "Id":3, "Name":"April" },
-{ "Id":4, "Name":"Moesha" },
-{ "Id":5, "Name":"Joe" },
-{ "Id":6, "Name":"Raghu" },
-{ "Id":7, "Name":"Harmeet" }
-])"_json;
-	cb.set_list(ldata);
-
-	auto& cbex = test_app->find<comboboxex_control>(IDC_COMBO_BOXEX1);
-
-	list_data ldata2;
-	ldata2.id_field = "Id";
-	ldata2.text_field = "Name";
-	ldata2.items = R"([
-{ "Id":0, "Name":"Akron" },
-{ "Id":1, "Name":"Cleveland" },
-{ "Id":2, "Name":"Barberton" },
-{ "Id":3, "Name":"Youngstown" },
-{ "Id":4, "Name":"Breezewood" },
-{ "Id":5, "Name":"Leesville" },
-{ "Id":6, "Name":"Phillipsburg" },
-{ "Id":7, "Name":"Marlton" },
-{ "Id":8, "Name":"Elkton" },
-{ "Id":9, "Name":"Philadelphia" }
-])"_json;
-	cbex.set_list(ldata2);
-
-	auto& lb = test_app->find<listbox_control>(IDC_TEST_LISTBOX);
-
-		list_data ldata3;
-	ldata3.id_field = "Id";
-	ldata3.text_field = "Name";
-	ldata3.items = R"([
-{ "Id":0, "Name":"Bentley" },
-{ "Id":1, "Name":"Cadillac" },
-{ "Id":2, "Name":"Scout" },
-{ "Id":3, "Name":"Chevy SS" },
-{ "Id":4, "Name":"GMC" }
-])"_json;
-	lb.set_list(ldata3);
-
 
 
 	if (forceWindowed)

@@ -33,6 +33,9 @@ namespace corona
 		class row_layout;
 		class column_layout;
 		class absolute_layout;
+		class frame_layout;
+
+		class page;
 
 		class title_control;
 		class subtitle_control;
@@ -282,10 +285,12 @@ namespace corona
 			row_layout& row_begin(int id = id_counter::next(), std::function<void(row_layout&)> _settings = nullptr);
 			column_layout& column_begin(int id = id_counter::next(), std::function<void(column_layout&)> _settings = nullptr);
 			absolute_layout& absolute_begin(int id = id_counter::next(), std::function<void(absolute_layout&)> _settings = nullptr);
+			frame_layout& frame_begin(int id = id_counter::next(), std::function<void(frame_layout&)> _settings = nullptr);
 
 			row_layout& row_begin(std::function<void(row_layout&)> _settings) { return row_begin(id_counter::next(), _settings); }
 			column_layout& column_begin(std::function<void(column_layout&)> _settings) { return column_begin(id_counter::next(), _settings); }
 			absolute_layout& absolute_begin(std::function<void(absolute_layout&)> _settings) { return absolute_begin(id_counter::next(), _settings); }
+			frame_layout& frame_begin(std::function<void(frame_layout&)> _settings) { return frame_begin(id_counter::next(), _settings); }
 
 			container_control& end();
 
@@ -455,6 +460,15 @@ namespace corona
 			virtual ~label_control();
 		};
 
+		class placeholder_control: public text_display_control
+		{
+			void set_default_styles();
+		public:
+			placeholder_control();
+			placeholder_control(container_control* _parent, int _id);
+			virtual ~placeholder_control();
+		};
+
 		class image_control : 
 			public draw_control
 		{
@@ -524,6 +538,20 @@ namespace corona
 
 			virtual void arrange(rectangle _ctx);
 			virtual point get_remaining(point _ctx);
+		};
+
+		class frame_layout :
+			public container_control
+		{
+		protected:
+			std::string selected_page_name;
+
+		public:
+			frame_layout() { ; }
+			frame_layout(container_control* _parent, int _id) : container_control(_parent, _id) { ; }
+			virtual ~frame_layout() { ; }
+
+			virtual void set_page(page& _page);
 		};
 
 		class banner_control :
@@ -1289,8 +1317,6 @@ namespace corona
 			std::weak_ptr<control_base> control;
 			std::function< void(list_changed_event) > on_change;
 		};
-
-		class page;
 
 		using update_function = std::function< void(page* _page, double _elapsedSeconds, double _totalSeconds) >;
 

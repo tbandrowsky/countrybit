@@ -13,6 +13,7 @@ namespace corona
 
 		int id_counter::status_text_title_id = 100000;
 		int id_counter::status_text_subtitle_id = 100001;
+		int id_counter::status_bar_id = 100002;
 
 		int id_counter::id = 100010;
 		int id_counter::next()
@@ -114,6 +115,7 @@ namespace corona
 		}
 
 
+
 		row_layout& container_control::row_begin(int _id, std::function<void(row_layout&)> _settings)
 		{
 			auto& tc = create<row_layout>(_id);
@@ -137,6 +139,16 @@ namespace corona
 		absolute_layout& container_control::absolute_begin(int _id, std::function<void(absolute_layout&)> _settings)
 		{
 			auto& tc = create<absolute_layout>(_id);
+			apply(tc);
+			if (_settings) {
+				_settings(tc);
+			}
+			return tc;
+		}
+
+		frame_layout& container_control::frame_begin(int _id, std::function<void(frame_layout&)> _settings)
+		{
+			auto& tc = create<frame_layout>(_id);
 			apply(tc);
 			if (_settings) {
 				_settings(tc);
@@ -219,13 +231,14 @@ namespace corona
 							control.text_style.vertical_align = visual_alignment::align_near;
 							control.set_size(300.0_px, 1.2_fontgr);
 							})
-						.subtitle(id_counter::status_text_subtitle_id, [](title_control& control) {
+						.subtitle(id_counter::status_text_subtitle_id, [](subtitle_control& control) {
 								control.text_style.horizontal_align = visual_alignment::align_near;
 								control.text_style.vertical_align = visual_alignment::align_near;
 								control.set_size(300.0_px, 1.2_fontgr);
 							})
 				.end();
 			end();
+			return *this;
 		}
 
 		container_control& container_control::end()
@@ -1339,6 +1352,13 @@ namespace corona
 			}
 		}
 
+		void frame_layout::set_page(page& _page)
+		{
+			children.clear();
+			children.push_back(_page.root);
+			arrange(bounds);
+		}
+
 		void control_base::on_resize()
 		{
 			auto ti = typeid(*this).name();
@@ -1957,6 +1977,39 @@ namespace corona
 		label_control::~label_control()
 		{
 			
+		}
+
+		void placeholder_control::set_default_styles()
+		{
+			text_fill_brush.name = "placeholder_text_fill";
+			text_fill_brush.brushColor = toColor(styles.get_style().TextColor.c_str());
+
+			text_style = {};
+			text_style.name = "placeholder_text_style";
+			text_style.fontName = styles.get_style().PrimaryFont;
+			text_style.fontSize = 14;
+			text_style.bold = false;
+			text_style.italics = false;
+			text_style.underline = false;
+			text_style.strike_through = false;
+			text_style.horizontal_align = visual_alignment::align_center;
+			text_style.vertical_align = visual_alignment::align_center;
+			text_style.wrap_text = false;
+		}
+
+		placeholder_control::placeholder_control()
+		{
+			text = "Placeholder";
+		}
+
+		placeholder_control::placeholder_control(container_control* _parent, int _id) : text_display_control(_parent, _id)
+		{
+			text = "Placeholder";
+		}
+
+		placeholder_control::~placeholder_control()
+		{
+
 		}
 
 		comboboxex_control::comboboxex_control()
