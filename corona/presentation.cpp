@@ -63,7 +63,7 @@ namespace corona
 
 		menu_item& menu_item::begin_submenu(int _id, std::string _name, std::function<void(menu_item& _item)> _settings)
 		{
-			auto mi = std::make_shared<menu_item>(_id, "", _settings);
+			auto mi = std::make_shared<menu_item>(_id, _name, _settings);
 			mi->parent = this;
 			if (_settings) {
 				_settings(*mi.get());
@@ -1417,44 +1417,48 @@ namespace corona
 			arrange(bounds);
 		}
 
-		HMENU menu_item::to_menu(HMENU hmenu)
+		HMENU menu_item::to_menu_children(HMENU hmenu, int idx)
 		{
-			if (!hmenu)
-			{
-				hmenu = ::CreateMenu();
-			}
-
-			MENUITEMINFO info = {};
-
-			info.cbSize = sizeof(info);
-			info.wID = id;
-			info.fMask = MIIM_FTYPE | MIIM_ID | MIIM_STRING;
-
-			if (is_separator) 
-			{
-				info.fType = MFT_SEPARATOR;
-			}
-			else 
-			{
-				info.fType = MFT_STRING;
-			}
-
 			if (children.size())
 			{
-				info.fMask |= MIIM_SUBMENU;
-				info.hSubMenu = ::CreateMenu();
-
+				HMENU popupMenu = ::CreatePopupMenu();
+				int counter = 0;
 				for (auto child : children) 
 				{
-					child->to_menu(info.hSubMenu);
+					child->to_menu_children(popupMenu, counter++);
 				}
+				::AppendMenu(hmenu, MF_POPUP, (UINT_PTR)popupMenu, name.c_str());
 			}
-
-			::InsertMenuItem(hmenu, id, false, &info);
+			else if (is_separator)
+			{
+				::AppendMenu(hmenu, MF_SEPARATOR, id, nullptr);
+			}
+			else
+			{
+				::AppendMenu(hmenu, MF_STRING, id, name.c_str());
+			}
 
 			return hmenu;
 		}
 
+		HMENU menu_item::to_menu()
+		{
+
+			MENUITEMINFO info = {};
+
+			HMENU menuBar = ::CreateMenu();
+
+			if (children.size())
+			{
+				int counter = 0;
+				for (auto child : children)
+				{
+					child->to_menu_children(menuBar, counter++);
+				}
+			}
+
+			return menuBar;
+		}
 
 		void control_base::on_resize()
 		{
@@ -2327,6 +2331,14 @@ namespace corona
 			;
 		}
 
+		menu_item& presentation::create_menu()
+		{
+			menu = std::make_shared<menu_item>();
+
+			auto& m = *menu.get();
+			return m;
+		}
+
 		void page::arrange(double width, double height, double _padding)
 		{
 
@@ -2412,8 +2424,6 @@ namespace corona
 
 		void page::handle_mouse_move(int _control_id, mouse_move_event evt)
 		{
-			mouse_move_event* pevt = &evt;
-
 			if (mouse_move_events.contains(_control_id)) {
 				auto& ptrx = mouse_move_events[_control_id];
 				if (auto temp = ptrx.get()->control.lock()) {
@@ -2445,8 +2455,6 @@ namespace corona
 
 		void page::handle_mouse_click(int _control_id, mouse_click_event evt)
 		{
-			mouse_click_event* pevt = &evt;
-
 			if (mouse_click_events.contains(_control_id)) {
 				auto& ptrx = mouse_click_events[_control_id];
 				if (auto temp = ptrx.get()->control.lock()) {
@@ -2477,8 +2485,6 @@ namespace corona
 
 		void page::handle_item_changed(int _control_id, item_changed_event evt)
 		{
-			item_changed_event* pevt = &evt;
-
 			if (item_changed_events.contains(_control_id)) {
 				auto& ptrx = item_changed_events[_control_id];
 				if (auto temp = ptrx.get()->control.lock()) {
@@ -2491,8 +2497,6 @@ namespace corona
 
 		void page::handle_list_changed(int _control_id, list_changed_event evt)
 		{
-			list_changed_event* pevt = &evt;
-
 			if (list_changed_events.contains(_control_id)) {
 				auto& ptrx = list_changed_events[_control_id];
 				if (auto temp = ptrx.get()->control.lock()) {
@@ -2503,6 +2507,14 @@ namespace corona
 			}
 		}
 
+		void page::handle_command(int _control_id, command_event evt)
+		{
+			if (command_events.contains(_control_id)) {
+				auto& ptrx = command_events[_control_id];
+				ptrx->on_command(evt);
+			}
+		}
+
 		page& presentation::create_page(std::string _name, std::function<void(page& pg)> _settings)
 		{
 			auto new_page = std::make_shared<page>();
@@ -2510,11 +2522,11 @@ namespace corona
 			if (current_page.expired()) {
 				current_page = new_page;
 			}
-			page& pg = 
+			page& pg = *new_page.get();
 			if (_settings) {
-
+				_settings(pg);
 			}
-			return *new_page.get();
+			return pg;
 		}
 
 		void presentation::select_page(const std::string& _page_name)
@@ -2529,7 +2541,7 @@ namespace corona
 				if (auto ppage = current_page.lock()) {
 					if (ppage->menu) 
 					{
-						HMENU hmenu = ppage->menu->to_menu(nullptr);
+						HMENU hmenu = ppage->menu->to_menu();
 						::SetMenu(hwndMainMenu, hmenu);
 						::DrawMenuBar(hwndMainMenu);
 					}
@@ -2546,6 +2558,13 @@ namespace corona
 				host->toPixelsFromDips(post);
 				cp->arrange(post.w, post.h);
 				cp->create(host);
+				if (menu) 
+				{
+					HMENU hmenu = menu->to_menu();
+					HWND hwnd = host->getMainWindow();
+					::SetMenu(hwnd, hmenu);
+					::DrawMenuBar(hwnd);
+				}
 			}
 		}
 
@@ -2620,12 +2639,27 @@ namespace corona
 
 		void presentation::onCommand(int buttonId)
 		{
-			;
+			auto cp = current_page.lock();
+			if (cp) {
+				command_event ce;
+				ce.control_id = buttonId;
+				cp->handle_command(buttonId, ce);
+			}
 		}
 
 		void presentation::onTextChanged(int textControlId)
 		{
-			std::string newText = getHost()->getEditText(textControlId);
+			auto ptr = getHost();
+			if (ptr) {
+				std::string new_text = ptr->getEditText(textControlId);
+				item_changed_event lce;
+				lce.control_id = textControlId;
+				lce.text_value = new_text;
+				auto cp = current_page.lock();
+				if (cp) {
+					cp->handle_item_changed(textControlId, lce);
+				}
+			}
 		}
 
 		void presentation::onDropDownChanged(int dropDownId)

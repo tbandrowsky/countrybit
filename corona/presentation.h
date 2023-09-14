@@ -22,6 +22,7 @@ namespace corona
 		class menu_item : public std::enable_shared_from_this<menu_item>
 		{
 			menu_item* parent;
+			HMENU to_menu_children(HMENU hmenu, int idx = 0);
 
 		public:
 
@@ -33,13 +34,13 @@ namespace corona
 			menu_item();
 			menu_item(int _id, std::string _name = "Empty", std::function<void(menu_item& _item)> _settings = nullptr);
 
-			menu_item& item(int _id, std::string _name, std::function<void(menu_item& _item)> _settings);
-			menu_item& separator(int _id, std::function<void(menu_item& _item)> _settings);
+			menu_item& item(int _id, std::string _name, std::function<void(menu_item& _item)>  _settings = nullptr);
+			menu_item& separator(int _id, std::function<void(menu_item& _item)>  _settings = nullptr);
 
-			menu_item& begin_submenu(int _id, std::string _name, std::function<void(menu_item& _item)> _settings);
+			menu_item& begin_submenu(int _id, std::string _name, std::function<void(menu_item& _item)>  _settings = nullptr);
 			menu_item& end();
 
-			HMENU to_menu(HMENU hmenu);
+			HMENU to_menu();
 		};
 
 		class layout_context
@@ -575,7 +576,6 @@ namespace corona
 			virtual ~frame_layout() { ; }
 
 			virtual void set_page(page& _page);
-			virtual void create(std::weak_ptr<win32::directApplicationWin32> _host);
 		};
 
 		class banner_control :
@@ -1231,6 +1231,11 @@ namespace corona
 			control_base *control;
 		};
 
+		class command_event : public control_event
+		{
+		public:
+		};
+
 		class mouse_event : public control_event
 		{
 		public:
@@ -1334,6 +1339,13 @@ namespace corona
 			std::function< void(item_changed_event) > on_change;
 		};
 
+		class command_event_binding
+		{
+		public:
+			int subscribed_item_id;
+			std::function< void(command_event) > on_command;
+		};
+
 		class list_changed_event_binding
 		{
 		public:
@@ -1354,6 +1366,7 @@ namespace corona
 			std::map<int, std::shared_ptr<mouse_click_event_binding> > mouse_click_events;
 			std::map<int, std::shared_ptr<item_changed_event_binding> > item_changed_events;
 			std::map<int, std::shared_ptr<list_changed_event_binding> > list_changed_events;
+			std::map<int, std::shared_ptr<command_event_binding> > command_events;
 			update_function update_event;
 
 		protected:
@@ -1364,6 +1377,7 @@ namespace corona
 			void handle_mouse_click(int _control_id, mouse_click_event evt);
 			void handle_item_changed(int _control_id, item_changed_event evt);
 			void handle_list_changed(int _control_id, list_changed_event evt);
+			void handle_command(int _command_id, command_event evt);
 
 			void arrange(double _width, double _height, double _padding = 0.0);
 
@@ -1384,12 +1398,15 @@ namespace corona
 
 			void clear();
 
+			menu_item& create_menu();
+
 			void on_key_up( int _control_id, std::function< void(key_up_event) > );
 			void on_key_down( int _control_id, std::function< void(key_down_event) > );
 			void on_mouse_move( int _control_id, std::function< void(mouse_move_event) > );
 			void on_mouse_click( int _control_id, std::function< void(mouse_click_event) > );
 			void on_item_changed( int _control_id, std::function< void(item_changed_event) > );
 			void on_list_changed( int _control_id, std::function< void(list_changed_event) > );
+			void on_command(int _item_id, std::function< void(command_event) >);
 			void on_update(update_function fnc);
 
 			row_layout& row_begin(int id = id_counter::next());
@@ -1413,6 +1430,7 @@ namespace corona
 		{
 
 			std::weak_ptr<page> current_page;
+			std::shared_ptr<menu_item> menu;
 
 		public:
 
@@ -1421,8 +1439,9 @@ namespace corona
 			presentation();
 			virtual ~presentation();
 
-			virtual page& create_page(std::string _name);
+			virtual page& create_page(std::string _name, std::function<void(page& pg)> _settings = nullptr);
 			virtual void select_page(const std::string& _page_name);
+			menu_item& create_menu();
 
 			template <typename control_type> control_type& find(int _id)
 			{

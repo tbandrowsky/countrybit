@@ -69,36 +69,51 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 
 	std::shared_ptr<corona::win32::presentation> test_app = std::make_shared<corona::win32::presentation>();
 
-	const int IDC_TEST_EDIT1 = 1002;
-	const int IDC_TEST_EDIT2 = 1004;
-	const int IDC_TEST_COMBO1 = 1006;
-	const int IDC_TEST_LISTVIEW = 1008;
-	const int IDC_RICH_EDIT1 = 1009;
-	const int IDC_COMBO_BOX1 = 1010;
-	const int IDC_COMBO_BOXEX1 = 1011;
-	const int IDC_BUTTON1 = 1014;
-	const int IDC_PUSHBUTTON1 = 1015;
-	const int IDC_RADIOBUTTON1 = 1016;
-	const int IDC_RADIOBUTTON2 = 1017;
-	const int IDC_TEST_LISTBOX = 1023;
+	const int IDM_VIEW = 5001;
+	const int IDM_VIEW_QUICK_LOGIN = 5002;
+	const int IDM_VIEW_FULL_LOGIN = 5003;
+	const int IDM_VIEW_CREATE_ACCOUNT = 5004;
+	const int IDM_VIEW_CONFIRM_ACCOUNT = 5005;
+	const int IDM_VIEW_ACCESS_DENIED = 5006;
+	const int IDM_VIEW_CUSTOMER_HOME = 5007;
+	const int IDM_VIEW_TEST = 5008;
+	const int IDM_ACCOUNT = 5101;
+	const int IDM_ACCOUNT_LOGOUT = 5102;
+	const int IDM_ACCOUNT_LOGIN = 5103;
+
+	const int IDM_SETTINGS = 5201;
+
+	const int IDM_COMPANY = 5301;
+	const int IDM_COMPANY_ABOUT = 5302;
+	const int IDM_COMPANY_HOME = 5303;
+	const int IDM_COMPANY_WIKIPEDIA = 5304;
+
+	test_app->create_menu()
+		.begin_submenu(IDM_COMPANY, "Woodruff &Sawyer")
+			.item(IDM_COMPANY_ABOUT, "A&bout")
+			.item(IDM_COMPANY_HOME, "H&ome")
+			.item(IDM_COMPANY_WIKIPEDIA, "Wiki&pedia")
+		.end()
+		.begin_submenu(IDM_VIEW, "&View")
+			.item(IDM_VIEW_QUICK_LOGIN, "&Quick Login")
+			.item(IDM_VIEW_FULL_LOGIN, "&Full Login")
+			.item(IDM_VIEW_CREATE_ACCOUNT, "&Create Account")
+			.item(IDM_VIEW_CONFIRM_ACCOUNT, "C&onfirm Account")
+			.item(IDM_VIEW_ACCESS_DENIED, "Access &Denied")
+			.item(IDM_VIEW_CUSTOMER_HOME, "C&ustomer Home")
+			.item(IDM_VIEW_TEST, "Control &Test")
+		.end()
+		.begin_submenu(IDM_ACCOUNT, "&Account")
+			.item(IDM_ACCOUNT_LOGOUT, "L&ogout")
+			.item(IDM_ACCOUNT_LOGIN, "Log&in")
+		.end();
+
 	const int IDC_IMAGE_LOGO = 1024;
 	const int IDC_COMPANY_NAME = 1025;
 	const int IDC_PLATFORM_TEST = 1026;
 
 	const int IDC_HOME = 1027;
 	const int IDC_TITLE_BAR = 1028;
-
-	const int IDC_FONT_PICK = 1029;
-	const int IDC_BOLD = 1030;
-	const int IDC_ITALIC = 1031;
-	const int IDC_UNDERLINE = 1032;
-	const int IDC_STRIKETHROUGH = 1033;
-	const int IDC_SUPERSCRIPT = 1034;
-	const int IDC_SUBSCRIPT = 1035;
-	const int IDC_FONT_SIZE = 1036;
-	const int IDC_FONT_NAME = 1037;
-
-
 
 	const int IDC_REGISTER_NEW_ACCOUNT = 1204;
 
@@ -403,6 +418,29 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 			.end()
 	.end();
 
+	const int IDC_TEST_EDIT1 = 1002;
+	const int IDC_TEST_EDIT2 = 1004;
+	const int IDC_TEST_COMBO1 = 1006;
+	const int IDC_TEST_LISTVIEW = 1008;
+	const int IDC_RICH_EDIT1 = 1009;
+	const int IDC_COMBO_BOX1 = 1010;
+	const int IDC_COMBO_BOXEX1 = 1011;
+	const int IDC_BUTTON1 = 1014;
+	const int IDC_PUSHBUTTON1 = 1015;
+	const int IDC_RADIOBUTTON1 = 1016;
+	const int IDC_RADIOBUTTON2 = 1017;
+	const int IDC_TEST_LISTBOX = 1023;
+	const int IDC_FONT_PICK = 1029;
+	const int IDC_BOLD = 1030;
+	const int IDC_ITALIC = 1031;
+	const int IDC_UNDERLINE = 1032;
+	const int IDC_STRIKETHROUGH = 1033;
+	const int IDC_SUPERSCRIPT = 1034;
+	const int IDC_SUBSCRIPT = 1035;
+	const int IDC_FONT_SIZE = 1036;
+	const int IDC_FONT_NAME = 1037;
+
+
 	test_app->create_page("test")
 		.column_begin(IDC_HOME)
 		.corporate_logo_bar(
@@ -586,3 +624,4 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 	}
 
 }
+
