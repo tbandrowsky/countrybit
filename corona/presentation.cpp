@@ -22,6 +22,63 @@ namespace corona
 			return id;
 		}
 
+		menu_item::menu_item() :
+			id(0),
+			name("test"),
+			is_separator(false)
+		{
+			;
+		}
+
+		menu_item::menu_item(int _id, std::string _name, std::function<void(menu_item& _item)> _settings) :
+			id(_id),
+			name(_name),
+			is_separator(false)
+		{
+			;
+		}
+
+		menu_item& menu_item::item(int _id, std::string _name, std::function<void(menu_item& _item)> _settings)
+		{
+			auto mi = std::make_shared<menu_item>(_id, _name, _settings);
+			mi->parent = this;
+			if (_settings) {
+				_settings(*mi.get());
+			}
+			children.push_back(mi);
+			return *this;
+		}
+
+		menu_item& menu_item::separator(int _id, std::function<void(menu_item& _item)> _settings)
+		{
+			auto mi = std::make_shared<menu_item>(_id, "", _settings);
+			mi->parent = this;
+			if (_settings) {
+				_settings(*mi.get());
+			}
+			mi->is_separator = true;
+			children.push_back(mi);
+			return *this;
+		}
+
+		menu_item& menu_item::begin_submenu(int _id, std::string _name, std::function<void(menu_item& _item)> _settings)
+		{
+			auto mi = std::make_shared<menu_item>(_id, "", _settings);
+			mi->parent = this;
+			if (_settings) {
+				_settings(*mi.get());
+			}
+			mi->is_separator = true;
+			children.push_back(mi);
+			auto ptr = mi.get();
+			return *ptr;
+		}
+
+		menu_item& menu_item::end()
+		{
+			return *parent;
+		}
+
 		void control_base::push(int _destination_control_id, bool _push_left, bool _push_top, bool _push_right, bool _push_bottom)
 		{
 
@@ -155,6 +212,7 @@ namespace corona
 			}
 			return tc;
 		}
+
 
 		container_control& container_control::corporate_logo_bar(
 				presentation_style& st,
@@ -1359,6 +1417,45 @@ namespace corona
 			arrange(bounds);
 		}
 
+		HMENU menu_item::to_menu(HMENU hmenu)
+		{
+			if (!hmenu)
+			{
+				hmenu = ::CreateMenu();
+			}
+
+			MENUITEMINFO info = {};
+
+			info.cbSize = sizeof(info);
+			info.wID = id;
+			info.fMask = MIIM_FTYPE | MIIM_ID | MIIM_STRING;
+
+			if (is_separator) 
+			{
+				info.fType = MFT_SEPARATOR;
+			}
+			else 
+			{
+				info.fType = MFT_STRING;
+			}
+
+			if (children.size())
+			{
+				info.fMask |= MIIM_SUBMENU;
+				info.hSubMenu = ::CreateMenu();
+
+				for (auto child : children) 
+				{
+					child->to_menu(info.hSubMenu);
+				}
+			}
+
+			::InsertMenuItem(hmenu, id, false, &info);
+
+			return hmenu;
+		}
+
+
 		void control_base::on_resize()
 		{
 			auto ti = typeid(*this).name();
@@ -2406,12 +2503,16 @@ namespace corona
 			}
 		}
 
-		page& presentation::create_page(std::string _name)
+		page& presentation::create_page(std::string _name, std::function<void(page& pg)> _settings)
 		{
 			auto new_page = std::make_shared<page>();
 			pages[_name] = new_page;
 			if (current_page.expired()) {
 				current_page = new_page;
+			}
+			page& pg = 
+			if (_settings) {
+
 			}
 			return *new_page.get();
 		}
@@ -2420,6 +2521,19 @@ namespace corona
 		{
 			if (pages.contains(_page_name)) {
 				current_page = pages[_page_name];
+			}
+
+			if (auto phost = getHost())
+			{
+				HWND hwndMainMenu = phost->getMainWindow();
+				if (auto ppage = current_page.lock()) {
+					if (ppage->menu) 
+					{
+						HMENU hmenu = ppage->menu->to_menu(nullptr);
+						::SetMenu(hwndMainMenu, hmenu);
+						::DrawMenuBar(hwndMainMenu);
+					}
+				}
 			}
 		}
 

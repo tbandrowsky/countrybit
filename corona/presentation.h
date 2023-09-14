@@ -19,6 +19,29 @@ namespace corona
 			static int status_text_subtitle_id;
 		};
 
+		class menu_item : public std::enable_shared_from_this<menu_item>
+		{
+			menu_item* parent;
+
+		public:
+
+			int	 id;
+			bool is_separator;
+			std::string name;
+			std::vector<std::shared_ptr<menu_item>> children;
+
+			menu_item();
+			menu_item(int _id, std::string _name = "Empty", std::function<void(menu_item& _item)> _settings = nullptr);
+
+			menu_item& item(int _id, std::string _name, std::function<void(menu_item& _item)> _settings);
+			menu_item& separator(int _id, std::function<void(menu_item& _item)> _settings);
+
+			menu_item& begin_submenu(int _id, std::string _name, std::function<void(menu_item& _item)> _settings);
+			menu_item& end();
+
+			HMENU to_menu(HMENU hmenu);
+		};
+
 		class layout_context
 		{
 		public:
@@ -552,6 +575,7 @@ namespace corona
 			virtual ~frame_layout() { ; }
 
 			virtual void set_page(page& _page);
+			virtual void create(std::weak_ptr<win32::directApplicationWin32> _host);
 		};
 
 		class banner_control :
@@ -1351,6 +1375,7 @@ namespace corona
 
 		public:
 
+			std::shared_ptr<menu_item> menu;
 			std::shared_ptr<control_base> root;
 			std::string name;
 
