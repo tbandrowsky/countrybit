@@ -95,6 +95,11 @@ namespace corona
 		class monthcalendar_control;
 		class control_base;
 
+		class minimize_button_control;
+		class maximize_button_control;
+		class close_button_control;
+		class menu_button_control;
+
 		enum control_push_property 
 		{
 			cp_none = 0,
@@ -111,9 +116,86 @@ namespace corona
 			int properties_to_push;
 		};
 
+		template <typename T> class change_monitored_property
+		{
+			T last_value;
+			T current_value;
+			bool is_changed;
+
+		public:
+
+			change_monitored_property()
+			{
+				current_value = {};
+				last_value = {};
+				is_changed = false;
+			}
+
+			change_monitored_property(T _default_value)
+			{
+				current_value = _default_value;
+				last_value = _default_value;
+				is_changed = false;
+			}
+
+			virtual ~change_monitored_property()
+			{
+				;
+			}
+
+			operator T () 
+			{
+				return current_value;
+			}
+
+			T operator = (T _new_value)
+			{
+				is_changed = (_new_value != current_value);
+				last_value = current_value;
+				current_value = _new_value;
+				return current_value;
+			}
+
+			void reset(T _value)
+			{
+				is_changed = false;
+				last_value = current_value;
+				current_value = _value;
+				return current_value;
+			}
+
+			T& value()
+			{
+				return current_value;
+			}
+
+			bool changed_from(T _from_value)
+			{
+				bool really_changed = (is_changed &&
+					_from_value == current_value);
+				return really_changed;
+			}
+
+			bool changed_to(T _to_value)
+			{
+				bool really_changed = (is_changed &&					
+					_to_value == current_value);
+				return really_changed;
+			}
+
+			bool changed( T _from_value, T _to_value )
+			{
+				bool really_changed = (is_changed &&
+					_from_value == last_value &&
+					_to_value == current_value);
+				return really_changed;
+			}
+		};
+
 		class control_base : public std::enable_shared_from_this<control_base>
 		{
 		protected:
+
 			point get_size(rectangle _ctx, point _remaining);
 			point get_position(rectangle _ctx);
 			double to_pixels(measure _margin);
@@ -127,6 +209,11 @@ namespace corona
 			rectangle				inner_bounds;
 			point					margin_amount;
 			point					padding_amount;
+
+			change_monitored_property<bool> mouse_over;
+			change_monitored_property<bool> mouse_left_down;
+			change_monitored_property<bool> mouse_right_down;
+			point		 mouse_relative_position;
 
 		public:
 
@@ -145,6 +232,8 @@ namespace corona
 			container_control *parent;
 
 			std::vector<std::shared_ptr<control_base>> children;
+
+			virtual LRESULT get_nchittest() { return HTCLIENT; }
 
 			control_base() :
 				id(-1),
@@ -179,6 +268,7 @@ namespace corona
 			void push(int _destination_control_id, bool _push_left, bool _push_top, bool _push_right, bool _push_bottom);
 
 			control_base* find(int _id);
+			control_base* find(point p);
 			control_base* get(control_base* _root, int _id);
 
 			virtual double get_font_size() { return 12; }
@@ -239,7 +329,12 @@ namespace corona
 			}
 
 			virtual void apply(control_base& _ref);
-
+			virtual bool set_mouse(point _position,
+				bool *_left_down,
+				bool *_right_down,
+				std::function<void(control_base* _item)> _left_click,
+				std::function<void(control_base* _item)> _right_click
+			);
 		};
 
 		class draw_control : public control_base
@@ -386,6 +481,11 @@ namespace corona
 			container_control& datetimepicker(int _id, std::function<void(datetimepicker_control&)> _settings = nullptr);
 			container_control& monthcalendar(int _id, std::function<void(monthcalendar_control&)> _settings = nullptr);
 
+			container_control& minimize_button(std::function<void(minimize_button_control&)> _settings = nullptr);
+			container_control& maximize_button(std::function<void(maximize_button_control&)> _settings = nullptr);
+			container_control& close_button(std::function<void(close_button_control&)> _settings = nullptr);
+			container_control& menu_button(int _id, std::string text, std::function<void(menu_button_control&)> _settings = nullptr);
+
 			container_control& corporate_logo_bar(
 				presentation_style& st,
 				int	title_bar_id,
@@ -419,6 +519,66 @@ namespace corona
 			text_display_control& set_text_style(std::string _font_name, int _font_size, bool _bold = false, bool _underline = false, bool _italic = false, bool _strike_through = false);
 			text_display_control& set_text_style(textStyleRequest request);
 
+		};
+
+		class gradient_button_control : public draw_control
+		{
+		public:
+
+			linearGradientBrushRequest buttonFaceNormal;
+			linearGradientBrushRequest buttonFaceDown;
+			linearGradientBrushRequest buttonFaceOver;
+			radialGradientBrushRequest buttonBackLight;
+
+			solidBrushRequest foregroundNormal;
+			solidBrushRequest foregroundOver;
+			solidBrushRequest foregroundDown;
+
+			gradient_button_control(container_control* _parent, int _id, std::string _name);
+			virtual ~gradient_button_control();
+
+			virtual void arrange(rectangle _ctx);
+			virtual void draw_button_background();
+		};
+
+		class minimize_button_control : public gradient_button_control
+		{
+		public:
+
+			minimize_button_control(container_control* _parent, int _id);
+
+			virtual ~minimize_button_control();
+			virtual LRESULT get_nchittest() { return HTMINBUTTON; }
+		};
+
+		class maximize_button_control : public gradient_button_control
+		{
+		public:
+
+			maximize_button_control(container_control* _parent, int _id);
+
+			virtual ~maximize_button_control();
+			virtual LRESULT get_nchittest() { return HTMAXBUTTON; }
+		};
+
+		class close_button_control : public gradient_button_control
+		{
+		public:
+
+			close_button_control(container_control* _parent, int _id);
+
+			virtual ~close_button_control();
+			virtual LRESULT get_nchittest() { return HTCLOSE; }
+		};
+
+		class menu_button_control : public gradient_button_control
+		{
+		public:
+
+			std::string text;
+
+			menu_button_control(container_control* _parent, int _id);
+			virtual ~menu_button_control() { ; }
 		};
 
 		class title_control : public text_display_control
@@ -993,7 +1153,9 @@ namespace corona
 					r.top = boundsPixels.y;
 					r.right = boundsPixels.x + boundsPixels.w;
 					r.bottom = boundsPixels.y + windows_control<WtlWindowClass, dwStyle, dwExStyle>::text_style.fontSize * 8;
-					windows_control<WtlWindowClass, dwStyle, dwExStyle>::window.MoveWindow(&r);
+					if (windows_control<WtlWindowClass, dwStyle, dwExStyle>::window.m_hWnd) {
+						windows_control<WtlWindowClass, dwStyle, dwExStyle>::window.MoveWindow(&r);
+					}
 				}
 			}
 
@@ -1253,6 +1415,16 @@ namespace corona
 
 		};
 
+		class mouse_left_click_event : public mouse_event
+		{
+
+		};
+
+		class mouse_right_click_event : public mouse_event
+		{
+
+		};
+
 		class key_event : public control_event
 		{
 		public:
@@ -1323,12 +1495,28 @@ namespace corona
 			std::function< void(mouse_click_event) > on_mouse_click;
 		};
 
+		class mouse_left_click_event_binding
+		{
+		public:
+			int subscribed_item_id;
+			std::weak_ptr<control_base> control;
+			std::function< void(mouse_left_click_event) > on_mouse_left_click;
+		};
+
+		class mouse_right_click_event_binding
+		{
+		public:
+			int subscribed_item_id;
+			std::weak_ptr<control_base> control;
+			std::function< void(mouse_right_click_event) > on_mouse_right_click;
+		};
+
 		class draw_event_binding
 		{
 		public:
 			int subscribed_item_id;
 			std::weak_ptr<control_base> control;
-			std::function< void(mouse_click_event) > on_mouse_click;
+			std::function< void(draw_event) > on_draw;
 		};
 
 		class item_changed_event_binding
@@ -1364,6 +1552,8 @@ namespace corona
 			std::map<int, std::shared_ptr<key_down_event_binding> > key_down_events;
 			std::map<int, std::shared_ptr<mouse_move_event_binding> > mouse_move_events;
 			std::map<int, std::shared_ptr<mouse_click_event_binding> > mouse_click_events;
+			std::map<int, std::shared_ptr<mouse_left_click_event_binding> > mouse_left_click_events;
+			std::map<int, std::shared_ptr<mouse_right_click_event_binding> > mouse_right_click_events;
 			std::map<int, std::shared_ptr<item_changed_event_binding> > item_changed_events;
 			std::map<int, std::shared_ptr<list_changed_event_binding> > list_changed_events;
 			std::map<int, std::shared_ptr<command_event_binding> > command_events;
@@ -1375,6 +1565,8 @@ namespace corona
 			void handle_key_down(int _control_id, key_down_event evt);
 			void handle_mouse_move(int _control_id, mouse_move_event evt);
 			void handle_mouse_click(int _control_id, mouse_click_event evt);
+			void handle_mouse_left_click(int _control_id, mouse_left_click_event evt);
+			void handle_mouse_right_click(int _control_id, mouse_right_click_event evt);
 			void handle_item_changed(int _control_id, item_changed_event evt);
 			void handle_list_changed(int _control_id, list_changed_event evt);
 			void handle_command(int _command_id, command_event evt);
@@ -1404,6 +1596,8 @@ namespace corona
 			void on_key_down( int _control_id, std::function< void(key_down_event) > );
 			void on_mouse_move( int _control_id, std::function< void(mouse_move_event) > );
 			void on_mouse_click( int _control_id, std::function< void(mouse_click_event) > );
+			void on_mouse_left_click(int _control_id, std::function< void(mouse_left_click_event) >);
+			void on_mouse_right_click(int _control_id, std::function< void(mouse_right_click_event) >);
 			void on_item_changed( int _control_id, std::function< void(item_changed_event) > );
 			void on_list_changed( int _control_id, std::function< void(list_changed_event) > );
 			void on_command(int _item_id, std::function< void(command_event) >);
@@ -1428,9 +1622,22 @@ namespace corona
 
 		class presentation : public win32::controller
 		{
+		protected:
 
 			std::weak_ptr<page> current_page;
 			std::shared_ptr<menu_item> menu;
+
+			std::map<int, std::shared_ptr<key_up_event_binding> > key_up_events;
+			std::map<int, std::shared_ptr<key_down_event_binding> > key_down_events;
+			std::map<int, std::shared_ptr<mouse_move_event_binding> > mouse_move_events;
+			std::map<int, std::shared_ptr<mouse_click_event_binding> > mouse_click_events;
+			std::map<int, std::shared_ptr<mouse_left_click_event_binding> > mouse_left_click_events;
+			std::map<int, std::shared_ptr<mouse_right_click_event_binding> > mouse_right_click_events;
+			std::map<int, std::shared_ptr<item_changed_event_binding> > item_changed_events;
+			std::map<int, std::shared_ptr<list_changed_event_binding> > list_changed_events;
+			std::map<int, std::shared_ptr<command_event_binding> > command_events;
+
+			rectangle current_size;
 
 		public:
 
@@ -1438,6 +1645,26 @@ namespace corona
 
 			presentation();
 			virtual ~presentation();
+
+			void on_key_up(int _control_id, std::function< void(key_up_event) >);
+			void on_key_down(int _control_id, std::function< void(key_down_event) >);
+			void on_mouse_move(int _control_id, std::function< void(mouse_move_event) >);
+			void on_mouse_click(int _control_id, std::function< void(mouse_click_event) >);
+			void on_mouse_left_click(int _control_id, std::function< void(mouse_left_click_event) >);
+			void on_mouse_right_click(int _control_id, std::function< void(mouse_right_click_event) >);
+			void on_item_changed(int _control_id, std::function< void(item_changed_event) >);
+			void on_list_changed(int _control_id, std::function< void(list_changed_event) >);
+			void on_command(int _item_id, std::function< void(command_event) >);
+
+			void handle_key_up(int _control_id, key_up_event evt);
+			void handle_key_down(int _control_id, key_down_event evt);
+			void handle_mouse_move(int _control_id, mouse_move_event evt);
+			void handle_mouse_click(int _control_id, mouse_click_event evt);
+			void handle_mouse_left_click(int _control_id, mouse_left_click_event evt);
+			void handle_mouse_right_click(int _control_id, mouse_right_click_event evt);
+			void handle_item_changed(int _control_id, item_changed_event evt);
+			void handle_list_changed(int _control_id, list_changed_event evt);
+			void handle_command(int _command_id, command_event evt);
 
 			virtual page& create_page(std::string _name, std::function<void(page& pg)> _settings = nullptr);
 			virtual void select_page(const std::string& _page_name);
@@ -1489,8 +1716,12 @@ namespace corona
 			virtual void keyDown(std::shared_ptr<win32::direct2dWindow>& win, short _key);
 			virtual void keyUp(std::shared_ptr<win32::direct2dWindow>& win, short _key);
 			virtual void mouseMove(std::shared_ptr<win32::direct2dWindow>& win, point* _point);
-			virtual void mouseClick(std::shared_ptr<win32::direct2dWindow>& win, point* _point);
+			virtual void mouseLeftDown(std::shared_ptr<win32::direct2dWindow>& win, point* _point);
+			virtual void mouseLeftUp(std::shared_ptr<win32::direct2dWindow>& win, point* _point);
+			virtual void mouseRightDown(std::shared_ptr<win32::direct2dWindow>& win, point* _point);
+			virtual void mouseRightUp(std::shared_ptr<win32::direct2dWindow>& win, point* _point);
 			virtual void pointSelected(std::shared_ptr<win32::direct2dWindow>& win, point* _point, color* _color);
+			virtual LRESULT ncHitTest(std::shared_ptr<win32::direct2dWindow>& win, point* _point);
 
 			virtual void onCreated();
 			virtual void onCommand(int buttonId);

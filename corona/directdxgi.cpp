@@ -142,8 +142,8 @@ namespace corona
 		{
 			D2D1_GRADIENT_STOP stop;
 
-			stop.position = _gradientStop.position;
-			stop.color = toColor(_gradientStop.color);
+			stop.position = _gradientStop.stop_position;
+			stop.color = toColor(_gradientStop.stop_color);
 			return stop;
 		}
 

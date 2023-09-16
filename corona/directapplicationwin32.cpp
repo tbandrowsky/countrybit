@@ -239,29 +239,57 @@ namespace corona
 			static HBRUSH hbrBkgnd2 = NULL;
 			char className[256];
 			database::point ptz;
+			HRESULT hr;
 
 			auto pfactory = factory.lock();
-			if (!pfactory) 
-			{
-				return DefWindowProc(hwnd, message, wParam, lParam);
-			}
 
-			auto current_window = pfactory->getWindow(hwnd);
-			auto pcurrent_window = current_window.lock();
+			std::weak_ptr<direct2dWindow> current_window;
+			std::shared_ptr< direct2dWindow> pcurrent_window = nullptr;
+
+			if (pfactory) {
+				current_window = pfactory->getWindow(hwnd);
+				pcurrent_window = current_window.lock();
+			}
 
 			switch (message)
 			{
 			case WM_CREATE:
-				hwndRoot = hwnd;
-				if (currentController) {
-					pfactory->createD2dWindow(hwnd, backgroundColor);
-					dpiScale = 96.0 / GetDpiForWindow(hwnd);
-					loadStyleSheet();
-					currentController->onCreated();
+				{
+					hwndRoot = hwnd;
+					RECT rcClient;
+					GetWindowRect(hwnd, &rcClient);
+					SetWindowPos(hwnd,NULL,rcClient.left, rcClient.top, abs(rcClient.right - rcClient.left), abs(rcClient.bottom - rcClient.top),SWP_FRAMECHANGED);
+					if (currentController) {
+						pfactory->createD2dWindow(hwnd, backgroundColor);
+						dpiScale = 96.0 / GetDpiForWindow(hwnd);
+						loadStyleSheet();
+						currentController->onCreated();
+					}
 				}
 				break;
-			case WM_INITDIALOG:
+			case WM_NCCALCSIZE:
+				return 0;
+/*			case WM_NCHITTEST:
+				if (false && currentController)
+				{
+					point.x = GET_X_LPARAM(lParam);
+					point.y = GET_Y_LPARAM(lParam);
+
+					point.x = point.x * 96.0 / GetDpiForWindow(hwnd);
+					point.y = point.y * 96.0 / GetDpiForWindow(hwnd);
+
+					LRESULT ret = currentController->ncHitTest(pcurrent_window, &point);
+					return ret;
+				}
 				break;
+	*/		case WM_NCPAINT:
+				{
+					HDC hdc;
+					hdc = GetDCEx(hwnd, (HRGN)wParam, DCX_WINDOW | DCX_INTERSECTRGN);
+					// Paint into this DC 
+					ReleaseDC(hwnd, hdc);
+				}
+				return 0;
 			case WM_DESTROY:
 				pfactory->closeWindow(hwnd);
 				PostQuitMessage(0);
@@ -434,7 +462,6 @@ namespace corona
 			break;
 
 			case WM_CHAR:
-			case WM_RBUTTONDOWN:
 			case WM_CANCELMODE:
 				if (colorCapture) {
 					colorCapture = false;
@@ -473,6 +500,7 @@ namespace corona
 				else if (currentController)
 				{
 					POINT p;
+					bool lbutton = true;
 					if (GetCursorPos(&p))
 					{
 						ScreenToClient(hwnd, &p);
@@ -480,7 +508,62 @@ namespace corona
 						ptxo.x = p.x * 96.0 / GetDpiForWindow(hwnd);
 						ptxo.y = p.y * 96.0 / GetDpiForWindow(hwnd);
 						if (pcurrent_window) {
-							currentController->mouseClick(pcurrent_window, &ptxo);
+							currentController->mouseLeftDown(pcurrent_window, &ptxo);
+						}
+					}
+				}
+				break;
+			case WM_LBUTTONUP:
+				if (currentController)
+				{
+					POINT p;
+					if (GetCursorPos(&p))
+					{
+						ScreenToClient(hwnd, &p);
+						database::point ptxo;
+						ptxo.x = p.x * 96.0 / GetDpiForWindow(hwnd);
+						ptxo.y = p.y * 96.0 / GetDpiForWindow(hwnd);
+						if (pcurrent_window) {
+							currentController->mouseLeftUp(pcurrent_window, &ptxo);
+						}
+					}
+				}
+				break;
+			case WM_RBUTTONDOWN:
+				{
+					if (colorCapture) {
+						colorCapture = false;
+						::ReleaseCapture();
+						::SetCursor(LoadCursor(NULL, IDC_ARROW));
+					}
+					if (currentController)
+					{
+						POINT p;
+						if (GetCursorPos(&p))
+						{
+							ScreenToClient(hwnd, &p);
+							database::point ptxo;
+							ptxo.x = p.x * 96.0 / GetDpiForWindow(hwnd);
+							ptxo.y = p.y * 96.0 / GetDpiForWindow(hwnd);
+							if (pcurrent_window) {
+								currentController->mouseRightDown(pcurrent_window, &ptxo);
+							}
+						}
+					}
+				}
+				break;
+			case WM_RBUTTONUP:
+				if (currentController)
+				{
+					POINT p;
+					if (GetCursorPos(&p))
+					{
+						ScreenToClient(hwnd, &p);
+						database::point ptxo;
+						ptxo.x = p.x * 96.0 / GetDpiForWindow(hwnd);
+						ptxo.y = p.y * 96.0 / GetDpiForWindow(hwnd);
+						if (pcurrent_window) {
+							currentController->mouseRightUp(pcurrent_window, &ptxo);
 						}
 					}
 				}

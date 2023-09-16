@@ -11,7 +11,7 @@
 #include <io.h>
 #include <fcntl.h>
 #include "oleauto.h"
-
+#include "dwmapi.h"
 #include <unknwn.h>
 
 #ifdef CORONA_USE_WINRT
@@ -148,6 +148,8 @@ using json = nlohmann::json;
 #include "directdxgi.h"
 #include "directxdcontext.h"
 #include "controller.h"
+
+
 
 #ifdef CORONA_USE_WINRT
 

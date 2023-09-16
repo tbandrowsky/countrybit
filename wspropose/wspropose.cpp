@@ -127,28 +127,34 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 
 	test_app->create_page("quick_login")
 		.column_begin(IDC_HOME)
-		.corporate_logo_bar(
-			st,
-			IDC_TITLE_BAR,
-			IDC_IMAGE_LOGO,
-			"assets\\small_logo.png",
-			"WOODRUFF SAWYER",
-			IDC_PLATFORM_TEST,
-			"Social Property Demonstration",
-			"Quick Login"
-		)
-		.row_begin()
-			.column_begin()
-				.chaptertitle("Quick Login")
-				.paragraph("Select yourself from this list of users who have previously logged in on this computer.")
-				.label("Select User")
-				.listbox( IDC_LOGIN_USERS )
-				.push_button(IDC_LOGIN_HELLO, "Login")
-				.push_button(IDC_LOGIN_REGISTER, "Add User")
+			.corporate_logo_bar(
+				st,
+				IDC_TITLE_BAR,
+				IDC_IMAGE_LOGO,
+				"assets\\small_logo.png",
+				"WOODRUFF SAWYER",
+				IDC_PLATFORM_TEST,
+				"Social Property Demonstration",
+				"Quick Login"
+			)
+			.row_begin([](row_layout& r) 
+				{ 
+					r.set_size(1.0_container, 1.0_container); 
+					r.set_content_align(visual_alignment::align_center);
+				})
+				.column_begin([](column_layout& r)
+					{
+						r.set_size(.50_container, 0.5_container);
+					})
+					.chaptertitle("Quick Login")
+					.paragraph("Select yourself from this list of users who have previously logged in on this computer.")
+					.label("Select User")
+					.listbox( IDC_LOGIN_USERS )
+					.push_button(IDC_LOGIN_HELLO, "Login")
+					.push_button(IDC_LOGIN_REGISTER, "Add User")
 				.end()
 			.end()
-		.end()
-	.end();
+		.end();
 
 	const int IDC_LOGIN_MANUAL = 1201;
 	const int IDC_LOGIN_USERNAME = 1202;
@@ -171,9 +177,16 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 				"Social Property Demonstration",
 				"Full Login"
 			)
-			.row_begin()
-				.column_begin()
-					.chaptertitle("Full Login")
+		.row_begin([](row_layout& r)
+			{
+				r.set_size(1.0_container, 1.0_container);
+				r.set_content_align(visual_alignment::align_center);
+			})
+		.column_begin([](column_layout& r)
+			{
+				r.set_size(.50_container, 0.5_container);
+			})
+				.chaptertitle("Full Login")
 					.chaptersubtitle("Identification")
 					.label("Password")
 					.edit(IDC_LOGIN_PASSWORD)
@@ -214,8 +227,15 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 		"Social Property Demonstration",
 			"Create New Account"
 		)
-		.row_begin()
-			.column_begin()
+		.row_begin([](row_layout& r)
+			{
+				r.set_size(1.0_container, 1.0_container);
+				r.set_content_align(visual_alignment::align_center);
+			})
+		.column_begin([](column_layout& r)
+			{
+				r.set_size(.50_container, 0.5_container);
+			})
 				.chaptertitle("Create New Account")
 				.chaptersubtitle("Identification")
 				.label("Scan your RealID")
@@ -259,9 +279,16 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 			"Social Property Demonstration",
 			"Confirm Account"
 		)
-		.row_begin()
-		.column_begin()
-		.chaptertitle("Confirm Account")
+		.row_begin([](row_layout& r)
+			{
+				r.set_size(1.0_container, 1.0_container);
+				r.set_content_align(visual_alignment::align_center);
+			})
+		.column_begin([](column_layout& r)
+			{
+				r.set_size(.50_container, 0.5_container);
+			})
+				.chaptertitle("Confirm Account")
 		.chaptersubtitle("Confirmation Code.")
 		.push_button(IDC_SEND_ACCOUNT_CONFIRM, "Send Code")
 		.label("Enter Code")
@@ -290,9 +317,16 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 			"Social Property Demonstration",
 			"Access Denied"
 		)
-		.row_begin()
-		.column_begin()
-		.chaptertitle("Denied")
+		.row_begin([](row_layout& r)
+			{
+				r.set_size(1.0_container, 1.0_container);
+				r.set_content_align(visual_alignment::align_center);
+			})
+		.column_begin([](column_layout& r)
+			{
+				r.set_size(.50_container, 0.5_container);
+			})
+				.chaptertitle("Denied")
 		.chaptersubtitle("Access is denied.")
 		.push_button(IDC_LOGIN_AGAIN, "Try again")
 		.chaptersubtitle("You can try to reset your password here.")
@@ -321,9 +355,16 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 			"Social Property Demonstration",
 			"Reset Password"
 		)
-		.row_begin()
-		.column_begin()
-		.chaptertitle("Reset Password")
+		.row_begin([](row_layout& r)
+			{
+				r.set_size(1.0_container, 1.0_container);
+				r.set_content_align(visual_alignment::align_center);
+			})
+		.column_begin([](column_layout& r)
+			{
+				r.set_size(.50_container, 0.5_container);
+			})
+				.chaptertitle("Reset Password")
 		.chaptersubtitle("Confirmation Code.")
 		.push_button(IDC_SEND_PASSWORD_CHANGE_CODE, "Send Code")
 		.label("Enter Code")
@@ -355,9 +396,16 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 			"Social Property Demonstration",
 			"Password Changed"
 		)
-		.row_begin()
-		.column_begin()
-		.chaptertitle("Password Changed")
+		.row_begin([](row_layout& r)
+			{
+				r.set_size(1.0_container, 1.0_container);
+				r.set_content_align(visual_alignment::align_center);
+			})
+		.column_begin([](column_layout& r)
+			{
+				r.set_size(.50_container, 0.5_container);
+			})
+				.chaptertitle("Password Changed")
 		.chaptersubtitle("Password changed successfully")
 		.paragraph("Your password was reset just fine, and now you can login.")
 		.push_button(IDC_TO_LOGIN, "Login")
@@ -381,8 +429,12 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 			"Social Property Demonstration",
 			"Home"
 		)
-		.row_begin()
-			.column_begin(IDC_USER_NAVIGATION, [st](column_layout& col) {
+		.row_begin([](row_layout& r)
+			{
+				r.set_size(1.0_container, 1.0_container);
+				r.set_content_align(visual_alignment::align_center);
+			})
+				.column_begin(IDC_USER_NAVIGATION, [st](column_layout& col) {
 			col.set_size(.5_container, 1.0_container);
 				})
 			.chaptertitle("Projects")
@@ -441,7 +493,7 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 	const int IDC_FONT_NAME = 1037;
 
 
-	test_app->create_page("test")
+	test_app->create_page("control_test1")
 		.column_begin(IDC_HOME)
 		.corporate_logo_bar(
 			st,
@@ -612,6 +664,67 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 			.end()
 		.end()
 	.end();
+
+
+	test_app->on_command(IDM_COMPANY_ABOUT, [test_app](command_event evt)
+		{
+			//test_app->select_page("");
+		});
+
+	test_app->on_command(IDM_COMPANY_HOME, [test_app](command_event evt)
+		{
+			//test_app->select_page("");
+		});
+
+	test_app->on_command(IDM_COMPANY_WIKIPEDIA, [test_app](command_event evt)
+		{
+			//test_app->select_page("");
+		});
+
+	test_app->on_command(IDM_VIEW_QUICK_LOGIN, [test_app](command_event evt)
+		{
+			test_app->select_page("quick_login");
+		});
+
+	test_app->on_command(IDM_VIEW_FULL_LOGIN, [test_app](command_event evt)
+		{
+			test_app->select_page("full_login");
+		});
+	
+	test_app->on_command(IDM_VIEW_CREATE_ACCOUNT, [test_app](command_event evt)
+		{
+			test_app->select_page("create_account");
+		});
+
+	test_app->on_command(IDM_VIEW_CONFIRM_ACCOUNT, [test_app](command_event evt)
+		{
+			test_app->select_page("confirm_account");
+		});
+
+	test_app->on_command(IDM_VIEW_ACCESS_DENIED, [test_app](command_event evt)
+		{
+			test_app->select_page("access_denied");
+		});
+
+	test_app->on_command(IDM_VIEW_CUSTOMER_HOME, [test_app](command_event evt)
+		{
+			test_app->select_page("customer_home");
+		});
+
+	test_app->on_command(IDM_VIEW_TEST, [test_app](command_event evt)
+		{
+			test_app->select_page("control_test1");
+		});
+
+	test_app->on_command(IDM_ACCOUNT_LOGOUT, [test_app](command_event evt)
+		{
+			//test_app->select_page("");
+		});
+
+	test_app->on_command(IDM_ACCOUNT_LOGIN, [test_app](command_event evt)
+		{
+			//test_app->select_page("");
+		});
 
 
 	if (forceWindowed)

@@ -1575,11 +1575,11 @@ namespace corona
 		{
 			D2D1_GRADIENT_STOP gradientStop;
 			auto brush = std::make_shared<linearGradientBrush>();
-			brush->stock = _linearGradientBrushDto->stock;
+			brush->stock = false;
 			brush->start = toPoint(_linearGradientBrushDto->start);
 			brush->stop = toPoint(_linearGradientBrushDto->stop);
 			for (auto i : _linearGradientBrushDto->gradientStops) {
-				gradientStop = toGradientStop(i.item);
+				gradientStop = toGradientStop(i);
 				brush->stops.push_back(gradientStop);
 			}
 			brushes[_linearGradientBrushDto->name.c_str()] = brush;
@@ -1591,13 +1591,13 @@ namespace corona
 		{
 			D2D1_GRADIENT_STOP gradientStop;
 			auto brush = std::make_shared<radialGradientBrush>();
-			brush->stock = _radialGradientBrushDto->stock;
+			brush->stock = false;
 			brush->radialProperties.center = toPoint(_radialGradientBrushDto->center);
 			brush->radialProperties.gradientOriginOffset = toPoint(_radialGradientBrushDto->offset);
 			brush->radialProperties.radiusX = _radialGradientBrushDto->radiusX;
 			brush->radialProperties.radiusY = _radialGradientBrushDto->radiusY;
 			for (auto i : _radialGradientBrushDto->gradientStops) {
-				gradientStop = toGradientStop(i.item);
+				gradientStop = toGradientStop(i);
 				brush->stops.push_back(gradientStop);
 			}
 			brushes[_radialGradientBrushDto->name.c_str()] = brush;
@@ -1615,20 +1615,7 @@ namespace corona
 		{
 			auto wft = weak_from_this();
 			std::shared_ptr<path> newPath = std::make_shared<path>(wft);
-			std::list<pathBaseDto*>::iterator i;
 
-			// skip everything until we get to the starting point
-			for (i = _pathDto->points.begin(); i != _pathDto->points.end(); i++) {
-				pathBaseDto* t = *i;
-				pathLineDto* l = t->asPathLineDto();
-				if (l) {
-					D2D1_POINT_2F point = toPoint(t->asPathLineDto()->point);
-					newPath->start_figure(point);
-					break;
-				}
-			}
-
-			// now draw the rest of the path
 			D2D1_POINT_2F point1, point2, point3;
 			D2D1_SIZE_F size1;
 			FLOAT float1;
@@ -1637,37 +1624,51 @@ namespace corona
 			pathBezierDto* pbezier;
 			pathQuadraticBezierDto* pquadraticbezier;
 
-			while (i != _pathDto->points.end()) {
-				pathBaseDto* t = *i;
-				switch (t->eType) {
-				case e_line:
-					pline = t->asPathLineDto();
-					point1 = toPoint(pline->point);
-					newPath->add_line(point1);
-					break;
-				case e_arc:
-					parc = t->asPathArcDto();
-					point1 = toPoint(parc->point);
-					size1.height = parc->radiusX;
-					size1.width = parc->radiusY;
-					newPath->add_arc(point1, size1, parc->angleDegrees);
-					break;
-				case e_bezier:
-					pbezier = t->asPathBezierDto();
-					point1 = toPoint(pbezier->point1);
-					point2 = toPoint(pbezier->point2);
-					point3 = toPoint(pbezier->point3);
-					newPath->add_bezier(point1, point2, point3);
-					break;
-				case e_quadractic_bezier:
-					pquadraticbezier = t->asPathQuadraticBezierDto();
-					point1 = toPoint(pquadraticbezier->point1);
-					point2 = toPoint(pquadraticbezier->point2);
-					newPath->add_quadratic_bezier(point1, point2);
-					break;
+			bool findingMoveTo = true;
+
+			for (auto i : _pathDto->points) {
+				pathBaseDto* t = i.get();
+				if (findingMoveTo) {
+					pathLineDto* l = t->asPathLineDto();
+					if (l) {
+						D2D1_POINT_2F point = toPoint(t->asPathLineDto()->point);
+						newPath->start_figure(point);
+						findingMoveTo = false;
+					}
 				}
-				i++;
+				else 
+				{
+					switch (t->eType) {
+					case e_line:
+						pline = t->asPathLineDto();
+						point1 = toPoint(pline->point);
+						newPath->add_line(point1);
+						break;
+					case e_arc:
+						parc = t->asPathArcDto();
+						point1 = toPoint(parc->point);
+						size1.height = parc->radiusX;
+						size1.width = parc->radiusY;
+						newPath->add_arc(point1, size1, parc->angleDegrees);
+						break;
+					case e_bezier:
+						pbezier = t->asPathBezierDto();
+						point1 = toPoint(pbezier->point1);
+						point2 = toPoint(pbezier->point2);
+						point3 = toPoint(pbezier->point3);
+						newPath->add_bezier(point1, point2, point3);
+						break;
+					case e_quadractic_bezier:
+						pquadraticbezier = t->asPathQuadraticBezierDto();
+						point1 = toPoint(pquadraticbezier->point1);
+						point2 = toPoint(pquadraticbezier->point2);
+						newPath->add_quadratic_bezier(point1, point2);
+						break;
+					}
+				}
 			}
+
+			// now draw the rest of the path
 
 			newPath->close_figure(_closed);
 			return newPath;

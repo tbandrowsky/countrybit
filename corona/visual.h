@@ -4,10 +4,13 @@ namespace corona
 {
 	namespace database
 	{
+		struct gradientStop 
+		{
+			float stop_position;
+			color stop_color;
 
-		struct gradientStop {
-			float position;
-			color color;
+			gradientStop();
+			gradientStop(color _color, float _position);
 		};
 
 		/* std::string& _name, std::string& _filename, UINT _destinationWidth = 0, UINT _destinationHeight  = 0 */
@@ -30,8 +33,7 @@ namespace corona
 			object_name name;
 			point	start,
 				stop;
-			iarray<gradientStop, 16> gradientStops;
-			bool stock;
+			std::vector<gradientStop> gradientStops;
 		};
 
 		struct radialGradientBrushRequest {
@@ -40,8 +42,7 @@ namespace corona
 				offset;
 			float		radiusX,
 				radiusY;
-			bool stock;
-			iarray<gradientStop, 16> gradientStops;
+			std::vector<gradientStop> gradientStops;
 		};
 
 		enum ePathPointType {
@@ -64,15 +65,16 @@ namespace corona
 			inline pathArcDto* asPathArcDto() { return eType == e_line ? (pathArcDto*)this : NULL; }
 			inline pathBezierDto* asPathBezierDto() { return eType == e_line ? (pathBezierDto*)this : NULL; }
 			inline pathQuadraticBezierDto* asPathQuadraticBezierDto() { return eType == e_line ? (pathQuadraticBezierDto*)this : NULL; }
-			virtual pathBaseDto* clone() = 0;
 		};
 
 		class pathLineDto : public pathBaseDto {
 		public:
 			point point;
 
-			pathLineDto();
-			virtual pathBaseDto* clone();
+			pathLineDto() { 
+				eType = ePathPointType::e_line; 
+				point = {}; 
+			}
 		};
 
 		class pathArcDto : public pathBaseDto {
@@ -82,8 +84,10 @@ namespace corona
 			double radiusX;
 			double radiusY;
 
-			pathArcDto();
-			virtual pathBaseDto* clone();
+			pathArcDto() { 
+				eType = ePathPointType::e_arc; 
+				point = {}; 
+			}
 		};
 
 		class pathQuadraticBezierDto : public pathBaseDto {
@@ -91,8 +95,11 @@ namespace corona
 			point point1;
 			point point2;
 
-			pathQuadraticBezierDto();
-			virtual pathBaseDto* clone();
+			pathQuadraticBezierDto() {
+				eType = ePathPointType::e_quadractic_bezier;
+				point1 = {};
+				point2 = {};
+			}
 		};
 
 		class pathBezierDto : public pathBaseDto {
@@ -101,22 +108,71 @@ namespace corona
 			point point2;
 			point point3;
 
-			pathBezierDto();
-			virtual pathBaseDto* clone();
+			pathBezierDto() {
+				eType = ePathPointType::e_bezier;
+				point1 = {};
+				point2 = {};
+				point3 = {};
+			}
 		};
 
 		class pathDto {
 		public:
 			object_name name;
-			std::list<pathBaseDto*> points;
+			std::vector<std::shared_ptr<pathBaseDto>> points;
 
-			pathDto();
-			pathDto(const pathDto& _src);
-			pathDto operator =(const pathDto& _src);
-			virtual ~pathDto();
-			void copyPoints(const pathDto& _src);
+			pathDto& addLineTo(double x, double y)
+			{
+				std::shared_ptr<pathLineDto> ndto = std::make_shared<pathLineDto>();
+				ndto->point.x = x;
+				ndto->point.y = y;
+				ndto->point.z = 0;
+				points.push_back(ndto);
+				return *this;
+			}
 
-			void clear();
+			pathDto& addPathArc(double x, double y, double _angleDegrees, double _radiusX, double _radiusY)
+			{
+				std::shared_ptr<pathArcDto> ndto = std::make_shared<pathArcDto>();
+				ndto->point.x = x;
+				ndto->point.y = y;
+				ndto->point.z = 0;
+				ndto->angleDegrees = _angleDegrees;
+				ndto->radiusX = _radiusX;
+				ndto->radiusY = _radiusY;
+				points.push_back(ndto);
+				return *this;
+			}
+
+			pathDto& addPathQuadraticBezier(double x, double y, double x1, double y1)
+			{
+				std::shared_ptr<pathQuadraticBezierDto> ndto = std::make_shared<pathQuadraticBezierDto>();
+				ndto->point1.x = x;
+				ndto->point1.y = y;
+				ndto->point1.z = 0;
+				ndto->point2.x = x1;
+				ndto->point2.y = y1;
+				ndto->point2.z = 0;
+				points.push_back(ndto);
+				return *this;
+			}
+
+			pathDto& addPathQuadraticBezier(double x, double y, double x1, double y1, double x2, double y2)
+			{
+				std::shared_ptr<pathBezierDto> ndto = std::make_shared<pathBezierDto>();
+				ndto->point1.x = x;
+				ndto->point1.y = y;
+				ndto->point1.z = 0;
+				ndto->point2.x = x1;
+				ndto->point2.y = y1;
+				ndto->point2.z = 0;
+				ndto->point3.x = x2;
+				ndto->point3.y = y2;
+				ndto->point3.z = 0;
+				points.push_back(ndto);
+				return *this;
+			}
+
 		};
 
 		struct solidBrushRequest {
