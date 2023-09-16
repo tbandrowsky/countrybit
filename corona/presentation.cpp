@@ -2435,7 +2435,7 @@ namespace corona
 			;
 		}
 
-		void gradient_button_control::draw_button_background()
+		void gradient_button_control::draw_button(std::function<void(rectangle* _bounds, solidBrushRequest* _foreground)> draw_shape)
 		{
 			if (auto pwindow = window.lock())
 			{
@@ -2451,16 +2451,19 @@ namespace corona
 					{
 						context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonFaceDown.name);
 						//context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonBackLight.name);
+						draw_shape(&draw_bounds, &foregroundDown);
 					}
 					else if (mouse_over.value())
 					{
 						context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonFaceOver.name);
 						//context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonBackLight.name);
+						draw_shape(&draw_bounds, &foregroundOver);
 					}
 					else 
 					{
-						context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonFaceOver.name);
+						context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonFaceNormal.name);
 						//context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonBackLight.name);
+						draw_shape(&draw_bounds, &foregroundNormal);
 					}
 				}
 			}
@@ -2511,24 +2514,8 @@ namespace corona
 							pcontext->drawPath(&pid);
 						};
 
-						if (mouse_left_down.value())
-						{
-							context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonFaceNormal.name);
-							context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonBackLight.name);
-							draw_shape(&draw_bounds, &foregroundDown);
-						}
-						else if (mouse_over.value())
-						{
-							context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonFaceOver.name);
-							context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonBackLight.name);
-							draw_shape(&draw_bounds, &foregroundOver);
-						}
-						else
-						{
-							context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonFaceOver.name);
-							context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonBackLight.name);
-							draw_shape(&draw_bounds, &foregroundNormal);
-						}
+						draw_button(draw_shape);
+
 					}
 				}
 			};
@@ -2578,24 +2565,8 @@ namespace corona
 							pcontext->drawPath(&pid);
 						};
 
-						if (mouse_left_down.value())
-						{
-							context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonFaceNormal.name);
-							context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonBackLight.name);
-							draw_shape(&draw_bounds, &foregroundDown);
-						}
-						else if (mouse_over.value())
-						{
-							context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonFaceOver.name);
-							context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonBackLight.name);
-							draw_shape(&draw_bounds, &foregroundOver);
-						}
-						else
-						{
-							context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonFaceOver.name);
-							context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonBackLight.name);
-							draw_shape(&draw_bounds, &foregroundNormal);
-						}
+						draw_button(draw_shape);
+
 					}
 				}
 			};
@@ -2642,24 +2613,7 @@ namespace corona
 							pcontext->drawLine(&start, &stop, _foreground->name, 4);
 						};
 
-						if (mouse_left_down.value())
-						{
-							context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonFaceNormal.name);
-							context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonBackLight.name);
-							draw_shape(&draw_bounds, &foregroundDown);
-						}
-						else if (mouse_over.value())
-						{
-							context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonFaceOver.name);
-							context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonBackLight.name);
-							draw_shape(&draw_bounds, &foregroundOver);
-						}
-						else
-						{
-							context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonFaceOver.name);
-							context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonBackLight.name);
-							draw_shape(&draw_bounds, &foregroundNormal);
-						}
+						draw_button(draw_shape);
 					}
 				}
 			};

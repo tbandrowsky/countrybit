@@ -538,7 +538,7 @@ namespace corona
 			virtual ~gradient_button_control();
 
 			virtual void arrange(rectangle _ctx);
-			virtual void draw_button_background();
+			virtual void draw_button(std::function<void(rectangle* _bounds, solidBrushRequest* _foreground)> draw_shape);
 		};
 
 		class minimize_button_control : public gradient_button_control
