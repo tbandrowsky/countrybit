@@ -127,24 +127,25 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 
 	test_app->create_page("quick_login")
 		.column_begin(IDC_HOME)
-			.corporate_logo_bar(
+			.caption_bar(
 				st,
 				IDC_TITLE_BAR,
 				IDC_IMAGE_LOGO,
 				"assets\\small_logo.png",
 				"WOODRUFF SAWYER",
 				IDC_PLATFORM_TEST,
-				"Social Property Demonstration",
+				"CONNECT PROPERTY",
 				"Quick Login"
 			)
 			.row_begin([](row_layout& r) 
 				{ 
 					r.set_size(1.0_container, 1.0_container); 
 					r.set_content_align(visual_alignment::align_center);
+					r.push(IDC_TITLE_BAR, true, false, false, false);
 				})
 				.column_begin([](column_layout& r)
 					{
-						r.set_size(.50_container, 0.5_container);
+						r.set_size(.50_container, 1.0_container);
 					})
 					.chaptertitle("Quick Login")
 					.paragraph("Select yourself from this list of users who have previously logged in on this computer.")
@@ -167,14 +168,14 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 
 	test_app->create_page("full_login")
 		.column_begin(IDC_HOME)
-			.corporate_logo_bar(
+			.caption_bar(
 				st,
 				IDC_TITLE_BAR,
 				IDC_IMAGE_LOGO,
 				"assets\\small_logo.png",
 				"WOODRUFF SAWYER",
 				IDC_PLATFORM_TEST,
-				"Social Property Demonstration",
+				"CONNECT PROPERTY",
 				"Full Login"
 			)
 		.row_begin([](row_layout& r)
@@ -217,14 +218,14 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 
 	test_app->create_page("create_account")
 		.column_begin(IDC_HOME)
-		.corporate_logo_bar(
+		.caption_bar(
 			st,
 			IDC_TITLE_BAR,
 			IDC_IMAGE_LOGO,
 			"assets\\small_logo.png",
 			"WOODRUFF SAWYER",
 			IDC_PLATFORM_TEST,
-		"Social Property Demonstration",
+			"CONNECT PROPERTY",
 			"Create New Account"
 		)
 		.row_begin([](row_layout& r)
@@ -269,14 +270,14 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 
 	test_app->create_page("confirm_account")
 		.column_begin(IDC_HOME)
-		.corporate_logo_bar(
+		.caption_bar(
 			st,
 			IDC_TITLE_BAR,
 			IDC_IMAGE_LOGO,
 			"assets\\small_logo.png",
 			"WOODRUFF SAWYER",
 			IDC_PLATFORM_TEST,
-			"Social Property Demonstration",
+			"CONNECT PROPERTY",
 			"Confirm Account"
 		)
 		.row_begin([](row_layout& r)
@@ -307,14 +308,14 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 
 	test_app->create_page("access_denied")
 		.column_begin(IDC_HOME)
-		.corporate_logo_bar(
+		.caption_bar(
 			st,
 			IDC_TITLE_BAR,
 			IDC_IMAGE_LOGO,
 			"assets\\small_logo.png",
 			"WOODRUFF SAWYER",
 			IDC_PLATFORM_TEST,
-			"Social Property Demonstration",
+			"CONNECT PROPERTY",
 			"Access Denied"
 		)
 		.row_begin([](row_layout& r)
@@ -345,14 +346,14 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 
 	test_app->create_page("reset_password")
 		.column_begin(IDC_HOME)
-		.corporate_logo_bar(
+		.caption_bar(
 			st,
 			IDC_TITLE_BAR,
 			IDC_IMAGE_LOGO,
 			"assets\\small_logo.png",
 			"WOODRUFF SAWYER",
 			IDC_PLATFORM_TEST,
-			"Social Property Demonstration",
+			"CONNECT PROPERTY",
 			"Reset Password"
 		)
 		.row_begin([](row_layout& r)
@@ -386,14 +387,14 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 
 	test_app->create_page("password_changed")
 		.column_begin(IDC_HOME)
-		.corporate_logo_bar(
+		.caption_bar(
 			st,
 			IDC_TITLE_BAR,
 			IDC_IMAGE_LOGO,
 			"assets\\small_logo.png",
 			"WOODRUFF SAWYER",
 			IDC_PLATFORM_TEST,
-			"Social Property Demonstration",
+			"CONNECT PROPERTY",
 			"Password Changed"
 		)
 		.row_begin([](row_layout& r)
@@ -419,14 +420,14 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 
 	test_app->create_page("customer_home")
 		.column_begin(IDC_HOME)
-		.corporate_logo_bar(
+		.caption_bar(
 			st,
 			IDC_TITLE_BAR,
 			IDC_IMAGE_LOGO,
 			"assets\\small_logo.png",
 			"WOODRUFF SAWYER",
 			IDC_PLATFORM_TEST,
-			"Social Property Demonstration",
+			"CONNECT PROPERTY",
 			"Home"
 		)
 		.row_begin([](row_layout& r)
@@ -495,7 +496,7 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 
 	test_app->create_page("control_test1")
 		.column_begin(IDC_HOME)
-		.corporate_logo_bar(
+		.caption_bar(
 			st,
 			IDC_TITLE_BAR,
 			IDC_IMAGE_LOGO,

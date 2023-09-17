@@ -46,7 +46,7 @@ namespace corona
 			virtual void mouseRightDown(std::shared_ptr<win32::direct2dWindow>& win, point* _point) = 0;
 			virtual void mouseRightUp(std::shared_ptr<win32::direct2dWindow>& win, point* _point) = 0;
 			virtual void pointSelected(std::shared_ptr<win32::direct2dWindow>& win, point* _point, color* _color) = 0;
-			virtual bool drawFrame(CComPtr<ID2D1DeviceContext>& _context) = 0;
+			virtual bool drawFrame(win32::direct2dContext& _ctx) = 0;
 			virtual bool update(double _elapsedSeconds, double _totalSeconds) = 0;
 			virtual LRESULT ncHitTest(std::shared_ptr<win32::direct2dWindow>& win, point* _point) = 0;
 

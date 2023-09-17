@@ -26,25 +26,33 @@ namespace corona
             std::string HeaderTextColor;
 
             std::string PageBackgroundColor;
+            std::string PageBorderColor;
             std::string PageTextColor;
+            std::string PageTextFont;
 
             std::string TitleBackgroundColor;
             std::string TitleTextColor;
+            std::string TitleTextFont;
 
             std::string SubtitleBackgroundColor;
             std::string SubtitleTextColor;
+            std::string SubtitleTextFont;
 
             std::string ChapterTitleBackgroundColor;
             std::string ChapterTitleTextColor;
+            std::string ChapterTextFont;
 
             std::string SubchapterTitleBackgroundColor;
             std::string SubchapterTitleTextColor;
+            std::string SubchapterTextFont;
 
             std::string ParagraphBackgroundColor;
             std::string ParagraphTextColor;
+            std::string ParagraphTextFont;
 
             std::string CodeBackgroundColor;
             std::string CodeTextColor;
+            std::string CodeTextFont;
 
             std::string BackgroundColor;
             std::string TextColor;

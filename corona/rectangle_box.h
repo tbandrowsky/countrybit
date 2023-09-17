@@ -20,12 +20,23 @@ namespace corona
 			{
 				return point{ std::midpoint(i.x, i.x + i.w), std::midpoint(i.y, i.y + i.h)};
 			}
+
 			static bool contains(rectangle r, double x, double y)
 			{
-				return (r.x <= x) &&
-					((r.x + r.w) > x) &&
-					(r.y <= y) &&
-					((r.y + r.h) > y);
+				return (r.x <= x) && (r.right()> x) &&
+					(r.y <= y) && (r.bottom() > y);
+			}
+
+			static rectangle deflate(rectangle r0, rectangle amt)
+			{
+				rectangle r1 = r0;
+				r1.x += amt.x;
+				r1.y += amt.y;
+				r1.w -= (amt.w + amt.x);
+				r1.h -= (amt.h + amt.y);
+				if (r1.h < 0) r1.h = 0;
+				if (r1.w < 0) r1.w = 0;
+				return r1;
 			}
 		};
 

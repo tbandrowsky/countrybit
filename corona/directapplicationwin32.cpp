@@ -62,13 +62,14 @@ namespace corona
 				if (!failedDevice) 
 				{
 					auto wins = winroot->getChildren();
-					auto dc = winroot->getContext().getDeviceContext();
+					auto& ctx = winroot->getContext();
+					auto dc = ctx.getDeviceContext();
 
 					dc->Clear(&backgroundColor);
 
 					// here, we tell the children to draw on their own surfaces...
 					// and then, draw on this one.
-					currentController->drawFrame(dc);
+					currentController->drawFrame(ctx);
 
 					auto wbounds = winroot->getBoundsDips();
 
@@ -240,6 +241,7 @@ namespace corona
 			char className[256];
 			database::point ptz;
 			HRESULT hr;
+			const int BORDERWIDTH = 8;
 
 			auto pfactory = factory.lock();
 
@@ -268,28 +270,59 @@ namespace corona
 				}
 				break;
 			case WM_NCCALCSIZE:
-				return 0;
-/*			case WM_NCHITTEST:
-				if (false && currentController)
+				if (wParam)
 				{
-					point.x = GET_X_LPARAM(lParam);
-					point.y = GET_Y_LPARAM(lParam);
-
-					point.x = point.x * 96.0 / GetDpiForWindow(hwnd);
-					point.y = point.y * 96.0 / GetDpiForWindow(hwnd);
-
-					LRESULT ret = currentController->ncHitTest(pcurrent_window, &point);
-					return ret;
+					NCCALCSIZE_PARAMS* Params = reinterpret_cast<NCCALCSIZE_PARAMS*>(lParam);
+					Params->rgrc[0].bottom += BORDERWIDTH; // rgrc[0] is what makes this work, don't know what others (rgrc[1], rgrc[2]) do, but why not change them all?
+					Params->rgrc[0].right += BORDERWIDTH;
+					Params->rgrc[1].bottom += BORDERWIDTH;
+					Params->rgrc[1].right += BORDERWIDTH;
+					Params->rgrc[2].bottom += BORDERWIDTH;
+					Params->rgrc[2].right += BORDERWIDTH;
+					return 0;
 				}
+				return DefWindowProc(hwnd, message, wParam, lParam);
+			case WM_NCHITTEST:
+				{
+					RECT WindowRect;
+					int x, y;
+
+					GetWindowRect(hwnd, &WindowRect);
+					x = GET_X_LPARAM(lParam) - WindowRect.left;
+					y = GET_Y_LPARAM(lParam) - WindowRect.top;
+					LRESULT test_hit = HTCLIENT;
+
+					if (x < BORDERWIDTH && y < BORDERWIDTH)
+						test_hit = HTTOPLEFT;
+					else if (x > WindowRect.right - WindowRect.left - BORDERWIDTH && y < BORDERWIDTH)
+						test_hit = HTTOPRIGHT;
+					else if (x > WindowRect.right - WindowRect.left - BORDERWIDTH && y > WindowRect.bottom - WindowRect.top - BORDERWIDTH)
+						test_hit = HTBOTTOMRIGHT;
+					else if (x < BORDERWIDTH && y > WindowRect.bottom - WindowRect.top - BORDERWIDTH)
+						test_hit = HTBOTTOMLEFT;
+					else if (x < BORDERWIDTH)
+						test_hit = HTLEFT;
+					else if (y < BORDERWIDTH)
+						test_hit = HTTOP;
+					else if (x > WindowRect.right - WindowRect.left - BORDERWIDTH)
+						test_hit = HTRIGHT;
+					else if (y > WindowRect.bottom - WindowRect.top - BORDERWIDTH)
+						test_hit = HTBOTTOM;
+					else if (currentController) {
+						database::point hitpoint;
+						hitpoint = { x, y };
+						hitpoint.x = x * 96.0 / GetDpiForWindow(hwnd);
+						hitpoint.y = y * 96.0 / GetDpiForWindow(hwnd);
+						test_hit = currentController->ncHitTest(pcurrent_window, &hitpoint);						
+					}
+					else
+						test_hit = HTCLIENT;
+
+					std::cout << x << " " << y << " " << test_hit << std::endl;
+
+					return test_hit;
+				}				
 				break;
-	*/		case WM_NCPAINT:
-				{
-					HDC hdc;
-					hdc = GetDCEx(hwnd, (HRGN)wParam, DCX_WINDOW | DCX_INTERSECTRGN);
-					// Paint into this DC 
-					ReleaseDC(hwnd, hdc);
-				}
-				return 0;
 			case WM_DESTROY:
 				pfactory->closeWindow(hwnd);
 				PostQuitMessage(0);
@@ -1576,7 +1609,7 @@ namespace corona
 			rd.w = r.right - r.left;
 			rd.h = r.bottom - r.top;
 
-			rd = toPixelsFromDips(rd);
+			rd = toDipsFromPixels(rd);
 
 			return rd;
 		}

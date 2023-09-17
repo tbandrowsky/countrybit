@@ -1783,13 +1783,13 @@ namespace corona
 			if (!p)
 				return;
 
-			D2D1::Matrix3x2F product = currentTransform * D2D1::Matrix3x2F::Rotation(_pathImmediateDto->rotation) * D2D1::Matrix3x2F::Translation(_pathImmediateDto->position.x, _pathImmediateDto->position.y);
-			getDeviceContext()->SetTransform(product);
+//			D2D1::Matrix3x2F product = currentTransform * D2D1::Matrix3x2F::Rotation(_pathImmediateDto->rotation) * D2D1::Matrix3x2F::Translation(_pathImmediateDto->position.x, _pathImmediateDto->position.y);
+	//		getDeviceContext()->SetTransform(product);
 
-			if (fill) {
+			if (fill && _pathImmediateDto->fillBrushName.size() > 0) {
 				getDeviceContext()->FillGeometry(p->geometry, fill->getBrush());
 			}
-			if (border && _pathImmediateDto->strokeWidth > 0.0) {
+			if (border && _pathImmediateDto->borderBrushName.size() > 0 && _pathImmediateDto->strokeWidth > 0.0) {
 				getDeviceContext()->DrawGeometry(p->geometry, border->getBrush(), _pathImmediateDto->strokeWidth);
 			}
 		}

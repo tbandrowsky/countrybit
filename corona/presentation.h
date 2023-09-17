@@ -233,7 +233,10 @@ namespace corona
 
 			std::vector<std::shared_ptr<control_base>> children;
 
-			virtual LRESULT get_nchittest() { return HTCLIENT; }
+			LRESULT hittest = HTCLIENT;
+
+			virtual LRESULT get_nchittest() { return hittest; }
+			virtual void set_nchittest( LRESULT _hittest ) { hittest = _hittest; }
 
 			control_base() :
 				id(-1),
@@ -247,6 +250,7 @@ namespace corona
 			control_base(container_control* _parent, int _id) : control_base()
 			{
 				parent = _parent;
+
 				if (_id < 0) {
 					id = id_counter::next();
 				}
@@ -486,7 +490,7 @@ namespace corona
 			container_control& close_button(std::function<void(close_button_control&)> _settings = nullptr);
 			container_control& menu_button(int _id, std::string text, std::function<void(menu_button_control&)> _settings = nullptr);
 
-			container_control& corporate_logo_bar(
+			container_control& caption_bar(
 				presentation_style& st,
 				int	title_bar_id,
 				int image_control_id,
@@ -495,6 +499,11 @@ namespace corona
 				int id_title_column_id,
 				std::string title_name,
 				std::string subtitle_name
+			);
+
+			container_control& form_single_column(int _align_id,
+				std::string _form_name,
+				std::function<void(container_control& _settings)> _add_controls
 			);
 
 			container_control& status_bar(presentation_style& st);
@@ -539,6 +548,7 @@ namespace corona
 
 			virtual void arrange(rectangle _ctx);
 			virtual void draw_button(std::function<void(rectangle* _bounds, solidBrushRequest* _foreground)> draw_shape);
+
 		};
 
 		class minimize_button_control : public gradient_button_control
@@ -548,7 +558,9 @@ namespace corona
 			minimize_button_control(container_control* _parent, int _id);
 
 			virtual ~minimize_button_control();
-			virtual LRESULT get_nchittest() { return HTMINBUTTON; }
+			virtual LRESULT get_nchittest() { 
+				return HTCLIENT; // we lie here 
+			}
 		};
 
 		class maximize_button_control : public gradient_button_control
@@ -558,7 +570,9 @@ namespace corona
 			maximize_button_control(container_control* _parent, int _id);
 
 			virtual ~maximize_button_control();
-			virtual LRESULT get_nchittest() { return HTMAXBUTTON; }
+			virtual LRESULT get_nchittest() { 
+				return HTCLIENT;// we lie here 
+			}
 		};
 
 		class close_button_control : public gradient_button_control
@@ -568,7 +582,9 @@ namespace corona
 			close_button_control(container_control* _parent, int _id);
 
 			virtual ~close_button_control();
-			virtual LRESULT get_nchittest() { return HTCLOSE; }
+			virtual LRESULT get_nchittest() { 
+				return HTCLIENT;// we lie here 
+			}
 		};
 
 		class menu_button_control : public gradient_button_control
@@ -1710,7 +1726,7 @@ namespace corona
 				throw std::exception("could not lock current page");
 			}
 
-			virtual bool drawFrame(CComPtr<ID2D1DeviceContext>& _window);
+			virtual bool drawFrame(win32::direct2dContext& _ctx);
 			virtual bool update(double _elapsedSeconds, double _totalSeconds);
 
 			virtual void keyDown(std::shared_ptr<win32::direct2dWindow>& win, short _key);

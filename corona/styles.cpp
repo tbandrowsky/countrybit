@@ -40,14 +40,15 @@ namespace corona
 
             woodruff.PageBackgroundColor = "FFFFFF";
             woodruff.PageTextColor = "000000";
+            woodruff.PageBorderColor = "#203020";
 
-            woodruff.HeaderBackgroundColor = woodruff.PageBackgroundColor;
+            woodruff.HeaderBackgroundColor = "1F241F";
             woodruff.HeaderTextColor = woodruff.MasterBrandColors[0];
 
-            woodruff.TitleBackgroundColor = woodruff.PageBackgroundColor;
+            woodruff.TitleBackgroundColor = "#00000000";
             woodruff.TitleTextColor = woodruff.MasterBrandColors[0];
 
-            woodruff.SubtitleBackgroundColor = woodruff.PageBackgroundColor;
+            woodruff.SubtitleBackgroundColor = "#00000000";
             woodruff.SubtitleTextColor = woodruff.MasterBrandColors[0];
 
             woodruff.ChapterTitleBackgroundColor = "FFFFFF";

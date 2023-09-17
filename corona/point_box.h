@@ -9,6 +9,21 @@ namespace corona
 			double x;
 			double y;
 			double z;
+
+			point(double _x = 0.0, double _y = 0.0, double _z = 0.0)
+			{
+				x = _x;
+				y = _y;
+				z = _z;
+			}
+
+			point(int _x, int _y, int _z = 0)
+			{
+				x = _x;
+				y = _y;
+				z = _z;
+			}
+
 		};
 
 		double distance(const point& a, const point& b);

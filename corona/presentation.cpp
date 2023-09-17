@@ -103,16 +103,17 @@ namespace corona
 
 		control_base* control_base::find(point p)
 		{
-			control_base *result = this;
+			control_base *result = nullptr;
 
-			for (auto child : children) 
+			if (rectangle_math::contains(inner_bounds, p.x, p.y)) 
 			{
-				if (rectangle_math::contains(bounds, p.x, p.y)) {
-					return nullptr;
-				}
-				else 
+				result = this;
+				for (auto child : children)
 				{
-					result = child->find(p);
+					auto temp = child->find(p);
+					if (temp) {
+						return temp;
+					}
 				}
 			}
 
@@ -275,7 +276,7 @@ namespace corona
 		}
 
 
-		container_control& container_control::corporate_logo_bar(
+		container_control& container_control::caption_bar(
 				presentation_style& st,
 				int	title_bar_id,
 				int image_control_id, 
@@ -293,57 +294,85 @@ namespace corona
 				rl.set_content_align(visual_alignment::align_near);
 				rl.set_content_cross_align(visual_alignment::align_near);
 				rl.set_item_margin(10.0_px);
+				rl.set_nchittest(HTCAPTION);
 				})
-				.image(image_control_id, image_file, [](image_control& control) {
-					control.set_size(50.0_px, 50.0_px);
+				.row_begin([](row_layout& rl) {
+					rl.set_size(.24_container, 1.0_container);
 					})
-				.column_begin([](column_layout& cl) {
-					cl.set_content_align(visual_alignment::align_near);
-					cl.set_content_cross_align(visual_alignment::align_near);
-					cl.set_size(.30_container, 1.0_container);
-					cl.set_item_margin(0.0_px);
-					})
-					.title(corporate_name, [](title_control& control) {
-						control.text_style.horizontal_align = visual_alignment::align_near;
-						control.text_style.vertical_align = visual_alignment::align_near;
-						control.set_size(300.0_px, 1.2_fontgr);
+					.column_begin([](column_layout& cl) {
+						cl.set_content_align(visual_alignment::align_near);
+						cl.set_content_cross_align(visual_alignment::align_near);
+						cl.set_size( 60.0_px, 1.0_container);
+						cl.set_item_margin(0.0_px);
 						})
+						.image(image_control_id, image_file, [](image_control& control) {
+						control.set_size(50.0_px, 50.0_px);
+						})
+					.end()
+					.column_begin([](column_layout& cl) {
+						cl.set_content_align(visual_alignment::align_near);
+						cl.set_content_cross_align(visual_alignment::align_near);
+						cl.set_size(1.0_container, 1.0_container);
+						cl.set_item_margin(0.0_px);
+						})
+						.title(corporate_name, [](title_control& control) {
+							control.text_style.horizontal_align = visual_alignment::align_near;
+							control.text_style.vertical_align = visual_alignment::align_near;
+							control.set_size(300.0_px, 1.0_container);
+							})
+					.end()
 				.end()
 				.column_begin(id_title_column_id, [](column_layout& cl) {
 					cl.set_content_align(visual_alignment::align_near);
 					cl.set_content_cross_align(visual_alignment::align_near);
 					cl.set_item_margin(0.0_px);
-					cl.set_size(.30_container, 1.0_container);
+					cl.set_size(.33_container, 1.0_container);
 						})
 					.title(title_name, [](title_control& control) {
 							control.text_style.horizontal_align = visual_alignment::align_near;
 							control.text_style.vertical_align = visual_alignment::align_near;
-							control.set_size(400.0_px, 1.2_fontgr);
+							control.set_size(400.0_px, 1.0_fontgr);
 						})
 					.subtitle(subtitle_name, [](subtitle_control& control) {
 							control.text_style.horizontal_align = visual_alignment::align_near;
 							control.text_style.vertical_align = visual_alignment::align_near;
 							control.text_style.underline = true;
-							control.set_size(400.0_px, 1.2_fontgr);
+							control.set_size(400.0_px, 1.0_fontgr);
 						})
 				.end()
-				.column_begin(id_title_column_id, [](column_layout& cl) {
-						cl.set_content_align(visual_alignment::align_near);
-						cl.set_content_cross_align(visual_alignment::align_near);
-						cl.set_item_margin(0.0_px);
-						cl.set_size(1.0_remaining, 1.0_container);
+				.row_begin([](row_layout& rl) {
+					rl.set_size(.95_remaining, 1.0_container);
+					rl.set_item_margin(5.0_px );
+					rl.set_content_cross_align(visual_alignment::align_center);
+					rl.set_content_align(visual_alignment::align_far);
+						})
+					.minimize_button([](auto& _ctrl) { _ctrl.set_size(50.0_px, 50.0_px); })
+					.maximize_button([](auto& _ctrl) { _ctrl.set_size(50.0_px, 50.0_px); })
+					.close_button([](auto& _ctrl) { _ctrl.set_size(50.0_px, 50.0_px); })
+				.end()
+			.end();
+			return *this;
+		}
+
+		container_control& container_control::form_single_column(int _align_id,
+			std::string _form_name,
+			std::function<void (container_control& _settings)> _add_controls
+		)
+		{
+			auto return_control = row_begin([](row_layout& r)
+				{
+					r.set_size(1.0_container, 1.0_container);
+					r.set_content_align(visual_alignment::align_center);
+				})
+				.column_begin([_add_controls, _align_id](column_layout& r)
+					{
+						r.set_size(.50_container, 1.0_container);
+						r.push(_align_id, true, false, false, false);
+						_add_controls(r);
 					})
-						.row_begin([](row_layout& rl) {
-							rl.set_size(1.0_remaining, 50.0_px);
-							rl.set_item_size(50.0_px, 50.0_px);
-							rl.set_content_align(visual_alignment::align_far);
-								})
-							.close_button()
-							.maximize_button()
-							.minimize_button()
-						.end()
-						.end()
-						.end();
+				.end()
+			.end();
+
 			return *this;
 		}
 
@@ -1010,10 +1039,8 @@ namespace corona
 
 			for (auto child : children)
 			{
-				if (child->box.width.units != measure_units::percent_remaining)
-				{
-					pt.x += child->bounds.w;
-				}
+				auto sz = child->get_size(bounds, { 0.0, 0.0 });
+				pt.x += sz.x;
 			}
 
 			pt = _ctx - pt;
@@ -1115,14 +1142,16 @@ namespace corona
 			std::function<point(const rectangle* _bounds, control_base*)> _initial_origin,
 			std::function<point (point* _origin, const rectangle *_bounds, control_base *)> _next_origin)
 		{
-			point origin = { _bounds.x, _bounds.y, 0 };
-			point remaining = { _bounds.w, _bounds.h, 0 };
+			point origin = { _bounds.x, _bounds.y, 0.0 };
+			point remaining = { _bounds.w, _bounds.h, 0.0 };
 
 			if (children.size()) {
 
 				auto sichild = std::begin(children);
 
-				origin = _initial_origin(&bounds, sichild->get());
+				origin = _initial_origin(&_bounds, sichild->get());
+
+				remaining = get_remaining(remaining);
 
 				while (sichild != std::end(children))
 				{
@@ -1137,37 +1166,13 @@ namespace corona
 					new_bounds.w = sz.x;
 					new_bounds.h = sz.y;
 
-					child->set_bounds(new_bounds);
+					child->arrange(new_bounds);
 
 					origin = _next_origin(&origin, &bounds, child.get());
 
 					sichild++;
 				}
 
-				remaining = get_remaining(remaining);
-
-				auto ichild = std::begin(children);
-
-				origin = _initial_origin(&bounds, ichild->get());
-
-				while (ichild != std::end(children))
-				{
-					auto child = *ichild;
-					auto sz = child->get_size(_bounds, remaining);
-					auto pos = child->get_position(_bounds);
-
-					rectangle new_bounds;
-					new_bounds.x = origin.x + pos.x;
-					new_bounds.y = origin.y + pos.y;
-					new_bounds.w = sz.x;
-					new_bounds.h = sz.y;
-
-					child->arrange(new_bounds);
-
-					origin = _next_origin(&origin, &bounds, child.get());
-
-					ichild++;
-				}
 			}
 		}
 
@@ -1175,8 +1180,8 @@ namespace corona
 		{
 			set_bounds(_bounds);
 
-			point origin = { _bounds.x, _bounds.y, 0 };
-			point remaining = { _bounds.w, _bounds.h, 0 };
+			point origin = { _bounds.x, _bounds.y, 0.0 };
+			point remaining = { _bounds.w, _bounds.h, 0.0 };
 
 			arrange_children(bounds, 
 				[this](const rectangle* _bounds, control_base* _item) {
@@ -1245,9 +1250,10 @@ namespace corona
 					[this](const rectangle* _bounds, control_base* _item) {
 
 						double w = 0;
-						point remaining;
+						point remaining = { 0, 0, 0 };
 						remaining.x = _bounds->w;
 						remaining.y = _bounds->h;
+						remaining = this->get_remaining(remaining);
 
 						for (auto child : children)
 						{
@@ -1255,9 +1261,10 @@ namespace corona
 							w += sz.x;
 						}
 
+						auto sz = _item->get_size(bounds, remaining);
+
 						point temp = { 0, 0, 0 };
-						temp.x = _bounds->x + _bounds->w - w;
-						auto sz = _item->get_size(bounds, { _bounds->w, _bounds->h });
+						temp.x = _bounds->right() - w;
 
 						if (this->content_cross_alignment == visual_alignment::align_near)
 						{
@@ -1277,7 +1284,7 @@ namespace corona
 					[this](point* _origin, const rectangle* _bounds, control_base* _item) {
 						point temp = *_origin;
 						auto sz = _item->get_size(bounds, { _bounds->w, _bounds->h });
-						temp.x -= sz.x;
+						temp.x += sz.x;
 						if (this->content_cross_alignment == visual_alignment::align_near)
 						{
 							temp.y = _bounds->y;
@@ -1594,6 +1601,9 @@ namespace corona
 		{
 			parent = _parent;
 			id = _id;
+			if (parent && get_nchittest() == HTCLIENT) {
+				set_nchittest(parent->get_nchittest());
+			}
 		}
 
 		draw_control::draw_control()
@@ -1702,7 +1712,7 @@ namespace corona
 				auto size = bm->GetPixelSize();
 				D2D1_RECT_F source;
 				source.left = 0;
-				source.right = 0;
+				source.top = 0;
 				source.bottom = inner_bounds.h;
 				source.right = inner_bounds.w;
 				_dest->DrawBitmap(bm, &dest, 1.0, D2D1_INTERPOLATION_MODE::D2D1_INTERPOLATION_MODE_LINEAR, &source );
@@ -1728,6 +1738,10 @@ namespace corona
 			: draw_control(_parent, _id)
 		{
 			init();
+			if (_parent)
+			{
+				set_nchittest(_parent->get_nchittest());
+			}
 		}
 
 		void text_display_control::init()
@@ -1915,7 +1929,7 @@ namespace corona
 						instance.y = draw_bounds.y;
 						instance.width = draw_bounds.w;
 						instance.height = draw_bounds.h;
-						instance.alpha = .5;
+						instance.alpha = 1.0;
 
 						auto& context = pwindow->getContext();
 
@@ -2354,8 +2368,8 @@ namespace corona
 		gradient_button_control::gradient_button_control(container_control* _parent, int _id, std::string _base_name)
 		{
 			buttonFaceNormal.name = _base_name + "_face_normal";
-			buttonFaceDown.name = _base_name + "_face_down";
 			buttonFaceOver.name = _base_name + "_face_over";
+			buttonFaceDown.name = _base_name + "_face_down";
 
 			foregroundNormal.name = _base_name + "_fore_normal";
 			foregroundOver.name = _base_name + "_fore_over";
@@ -2363,19 +2377,19 @@ namespace corona
 
 			buttonFaceNormal.gradientStops = {
 				{ toColor("#202020FF"), 0.0 },
-				{ toColor("#404040FF"), 0.5 },
-				{ toColor("#202020FF"), 1.0 },
-			};
-
-			buttonFaceDown.gradientStops = {
-				{ toColor("#202020FF"), 0.0 },
-				{ toColor("#404040FF"), 9.0 },
+				{ toColor("#707070FF"), 0.8 },
 				{ toColor("#202020FF"), 1.0 },
 			};
 
 			buttonFaceOver.gradientStops = {
 				{ toColor("#202020FF"), 0.0 },
-				{ toColor("#404040FF"), 0.7 },
+				{ toColor("#707070FF"), 0.8 },
+				{ toColor("#202020FF"), 1.0 },
+			};
+
+			buttonFaceDown.gradientStops = {
+				{ toColor("#202020FF"), 0.0 },
+				{ toColor("#707070FF"), 0.9 },
 				{ toColor("#202020FF"), 1.0 },
 			};
 
@@ -2386,11 +2400,11 @@ namespace corona
 			};
 
 			foregroundNormal.active = true;
-			foregroundNormal.brushColor = toColor("#D0E0D0");
+			foregroundNormal.brushColor = toColor("#808080");
 			foregroundOver.active = true;
-			foregroundOver.brushColor = toColor("#D0F0D0");
+			foregroundOver.brushColor = toColor("#70A070");
 			foregroundDown.active = true;
-			foregroundDown.brushColor = toColor("#E0FFE0");
+			foregroundDown.brushColor = toColor("#00FF00");
 
 		}
 
@@ -2400,25 +2414,25 @@ namespace corona
 
 			if (auto pwindow = this->window.lock())
 			{
-				buttonFaceNormal.start.x = 0;
+				buttonFaceNormal.start.x = inner_bounds.w / 2;
 				buttonFaceNormal.start.y = 0;
-				buttonFaceNormal.stop.y = _ctx.h;
-				buttonFaceNormal.stop.x = _ctx.w;
+				buttonFaceNormal.stop.y = inner_bounds.h;
+				buttonFaceNormal.stop.x = inner_bounds.w / 2;
 
-				buttonFaceDown.start.x = 0;
+				buttonFaceDown.start.x = inner_bounds.w / 2;
 				buttonFaceDown.start.y = 0;
-				buttonFaceDown.stop.y = _ctx.h;
-				buttonFaceDown.stop.x = _ctx.w;
+				buttonFaceDown.stop.y = inner_bounds.h;
+				buttonFaceDown.stop.x = inner_bounds.w / 2;
 
-				buttonFaceOver.start.x = 0;
+				buttonFaceOver.start.x = inner_bounds.w / 2;
 				buttonFaceOver.start.y = 0;
-				buttonFaceOver.stop.y = _ctx.h;
-				buttonFaceOver.stop.x = _ctx.w;
+				buttonFaceOver.stop.y = inner_bounds.h;
+				buttonFaceOver.stop.x = inner_bounds.w / 2;
 
 				buttonBackLight.center = rectangle_math::center( _ctx );
 				buttonBackLight.offset = {};
-				buttonBackLight.radiusX = _ctx.w / 2.0;
-				buttonBackLight.radiusY = _ctx.h / 2.0;
+				buttonBackLight.radiusX = inner_bounds.w / 2.0;
+				buttonBackLight.radiusY = inner_bounds.h / 2.0;
 
 				pwindow->getContext().setLinearGradientBrush(&this->buttonFaceNormal);
 				pwindow->getContext().setLinearGradientBrush(&this->buttonFaceDown);
@@ -2450,20 +2464,23 @@ namespace corona
 					if (mouse_left_down.value())
 					{
 						context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonFaceDown.name);
+						auto face_bounds = rectangle_math::deflate(draw_bounds, { 8, 8, 8, 8 });
 						//context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonBackLight.name);
-						draw_shape(&draw_bounds, &foregroundDown);
+						draw_shape(&face_bounds, &foregroundDown);
 					}
 					else if (mouse_over.value())
 					{
 						context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonFaceOver.name);
+						auto face_bounds = rectangle_math::deflate(draw_bounds, { 8, 8, 8, 16 });
 						//context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonBackLight.name);
-						draw_shape(&draw_bounds, &foregroundOver);
+						draw_shape(&face_bounds, &foregroundOver);
 					}
 					else 
 					{
 						context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonFaceNormal.name);
+						auto face_bounds = rectangle_math::deflate(draw_bounds, { 8, 8, 8, 16 });
 						//context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonBackLight.name);
-						draw_shape(&draw_bounds, &foregroundNormal);
+						draw_shape(&face_bounds, &foregroundNormal);
 					}
 				}
 			}
@@ -2508,9 +2525,8 @@ namespace corona
 							pid.position = *porigin;
 							pid.rotation = 0;
 							pid.strokeWidth = 4;
-							pid.fillBrushName = _foreground->name;
 							pid.borderBrushName = _foreground->name;
-							pid.closed = false;
+							pid.closed = true;
 							pcontext->drawPath(&pid);
 						};
 
@@ -2559,9 +2575,8 @@ namespace corona
 							pid.position = *porigin;
 							pid.rotation = 0;
 							pid.strokeWidth = 4;
-							pid.fillBrushName = _foreground->name;
 							pid.borderBrushName = _foreground->name;
-							pid.closed = false;
+							pid.closed = true;
 							pcontext->drawPath(&pid);
 						};
 
@@ -3009,6 +3024,8 @@ namespace corona
 			auto cp = current_page.lock();
 			if (cp) {
 				auto host = getHost();
+				auto sheet = styles.get_style();
+			
 				auto post = host->getWindowClientPos();
 				host->toPixelsFromDips(post);
 				cp->arrange(post.w, post.h);
@@ -3023,12 +3040,83 @@ namespace corona
 			}
 		}
 
-		bool presentation::drawFrame(CComPtr<ID2D1DeviceContext>& dc)
+		bool presentation::drawFrame(win32::direct2dContext& _ctx)
 		{
 			auto cp = current_page.lock();
 			if (cp) {
 				cp->draw();
+
+				auto dc = _ctx.getDeviceContext();
 				cp->render(dc);
+
+				auto host = getHost();
+				auto post = host->getWindowClientPos();
+
+				double border_thickness = 4;
+
+				linearGradientBrushRequest lgbr;
+				lgbr.start.x = 0;
+				lgbr.start.y = 0;
+				lgbr.stop.x = border_thickness;
+				lgbr.stop.y = 0;
+				lgbr.name = "presentation_border_left";
+				lgbr.gradientStops = {
+					{ toColor("#202020FF"), 0.0 },
+					{ toColor("#707070FF"), 0.9 },
+					{ toColor("#F0F0F0FF"), 1.0 },
+				};
+				_ctx.setLinearGradientBrush(&lgbr);
+
+				lgbr.start.x = 0;
+				lgbr.start.y = 0;
+				lgbr.stop.x = border_thickness;
+				lgbr.stop.y = 0;
+				lgbr.name = "presentation_border_right";
+				lgbr.gradientStops = {
+					{ toColor("#F0F0F0FF"), 0.0 },
+					{ toColor("#707070FF"), 0.9 },
+					{ toColor("#202020FF"), 1.0 },
+				};
+
+				_ctx.setLinearGradientBrush(&lgbr);
+
+				lgbr.start.x = 0;
+				lgbr.start.y = 0;
+				lgbr.stop.x = 0;
+				lgbr.stop.y = border_thickness;
+				lgbr.name = "presentation_border_bottom";
+				lgbr.gradientStops = {
+					{ toColor("#F0F0F0FF"), 0.0 },
+					{ toColor("#707070FF"), 0.4 },
+					{ toColor("#202020FF"), 1.0 },
+				};
+
+				_ctx.setLinearGradientBrush(&lgbr);
+
+				post.x = border_thickness;
+				post.y = 0;
+				post.w -= border_thickness * 2;
+				post.h -= border_thickness * 2;
+
+				point start, stop;
+				start.x = 0;
+				start.y = 0;
+				stop.x = 0;
+				stop.y = post.h;
+				_ctx.drawLine(&start, &stop, "presentation_border_left", border_thickness);
+
+				start.x = post.w;
+				start.y = 0;
+				stop.x = start.x;
+				stop.y = post.h;
+				_ctx.drawLine(&start, &stop, "presentation_border_right", border_thickness);
+
+				start.x = 0;
+				start.y = post.h;
+				stop.x = post.w;
+				stop.y = post.h;
+				_ctx.drawLine(&start, &stop, "presentation_border_bottom", border_thickness);
+
 			}
 			return false;
 		}
