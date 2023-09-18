@@ -33,7 +33,7 @@ namespace corona
 		{
 			control_id = _source_control_id;
 			target_page = _target_page;
-			handler = [this](std::weak_ptr<presentation> _presentation, std::weak_ptr<page> _page)
+			handler = [this](presentation* _presentation, std::weak_ptr<page> _page)
 			{
 				if (auto ppresent = _presentation.lock())
 				{
@@ -153,7 +153,7 @@ namespace corona
 			return *parent;
 		}
 
-		void menu_item::subscribe(std::weak_ptr<presentation> _present, std::weak_ptr<page> _page)
+		void menu_item::subscribe(presentation* _presentation, std::weak_ptr<page> _page)
 		{
 			if (auto ppage = _page.lock()) {
 				ppage->on_command(id, [this, _present, _page](command_event evt) {
@@ -475,7 +475,7 @@ namespace corona
 			return *this;
 		}
 
-		void control_base::on_subscribe(std::weak_ptr<presentation> _presentation, std::weak_ptr<page> _page)
+		void control_base::on_subscribe(presentation* _presentation, std::weak_ptr<page> _page)
 		{
 			for(auto child : children) {
 				child->on_subscribe(_presentation, _page);
@@ -2688,7 +2688,7 @@ namespace corona
 			};
 		}
 
-		void menu_button_control::on_subscribe(std::weak_ptr<presentation> _presentation, std::weak_ptr<page> _page)
+		void menu_button_control::on_subscribe(presentation* _presentation, std::weak_ptr<page> _page)
 		{
 			if (auto ppage = _page.lock()) {
 				ppage->on_mouse_left_click(id, [this, _presentation, _page](mouse_left_click_event evt)
@@ -2743,7 +2743,7 @@ namespace corona
 			};
 		}
 
-		void minimize_button_control::on_subscribe(std::weak_ptr<presentation> _presentation, std::weak_ptr<page> _page)
+		void minimize_button_control::on_subscribe(presentation* _presentation, std::weak_ptr<page> _page)
 		{
 
 		}
@@ -2798,7 +2798,7 @@ namespace corona
 			};
 		}
 
-		void maximize_button_control::on_subscribe(std::weak_ptr<presentation> _presentation, std::weak_ptr<page> _page)
+		void maximize_button_control::on_subscribe(presentation* _presentation, std::weak_ptr<page> _page)
 		{
 
 		}
@@ -2850,7 +2850,7 @@ namespace corona
 			};
 		}
 
-		void close_button_control::on_subscribe(std::weak_ptr<presentation> _presentation, std::weak_ptr<page> _page)
+		void close_button_control::on_subscribe(presentation* _presentation, std::weak_ptr<page> _page)
 		{
 			;
 		}
@@ -2921,7 +2921,7 @@ namespace corona
 			}
 		}
 
-		void page::subscribe(std::weak_ptr<presentation> _presentation)
+		void page::subscribe(presentation* _presentation)
 		{
 			root->on_subscribe(_presentation, shared_from_this() );
 		}
@@ -3284,7 +3284,7 @@ namespace corona
 				host->toPixelsFromDips(post);
 				cp->arrange(post.w, post.h);
 				cp->create(host);
-				cp->subscribe(shared_from_this());
+				cp->subscribe(this);
 			}
 		}
 

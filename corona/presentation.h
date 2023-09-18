@@ -77,7 +77,7 @@ namespace corona
 		class close_button_control;
 		class menu_button_control;
 
-		using menu_click_handler = std::function<void(std::weak_ptr<presentation> _presentation, std::weak_ptr<page> _page)>;
+		using menu_click_handler = std::function<void(presentation *_presentation, std::weak_ptr<page> _page)>;
 
 		class menu_item_navigate 
 		{
@@ -120,7 +120,7 @@ namespace corona
 			menu_item& begin_submenu(int _id, std::string _name, std::function<void(menu_item& _item)>  _settings = nullptr);
 			menu_item& end();
 
-			void subscribe(std::weak_ptr<presentation> _present, std::weak_ptr<page> _page);
+			void subscribe(presentation* _presentation, std::weak_ptr<page> _page);
 
 			HMENU to_menu();
 		};
@@ -365,7 +365,7 @@ namespace corona
 				std::function<void(control_base* _item)> _right_click
 			);
 
-			virtual void on_subscribe(std::weak_ptr<presentation> _presentation, std::weak_ptr<page> _page);
+			virtual void on_subscribe(presentation* _presentation, std::weak_ptr<page> _page);
 		};
 
 		class draw_control : public control_base
@@ -597,7 +597,7 @@ namespace corona
 				return HTCLIENT; // we lie here 
 			}
 
-			virtual void on_subscribe(std::weak_ptr<presentation> _presentation, std::weak_ptr<page> _page);
+			virtual void on_subscribe(presentation* _presentation, std::weak_ptr<page> _page);
 		};
 
 		class maximize_button_control : public gradient_button_control
@@ -611,7 +611,7 @@ namespace corona
 				return HTCLIENT;// we lie here 
 			}
 
-			virtual void on_subscribe(std::weak_ptr<presentation> _presentation, std::weak_ptr<page> _page);
+			virtual void on_subscribe(presentation* _presentation, std::weak_ptr<page> _page);
 		};
 
 		class close_button_control : public gradient_button_control
@@ -625,7 +625,7 @@ namespace corona
 				return HTCLIENT;// we lie here 
 			}
 
-			virtual void on_subscribe(std::weak_ptr<presentation> _presentation, std::weak_ptr<page> _page);
+			virtual void on_subscribe(presentation* _presentation, std::weak_ptr<page> _page);
 		};
 
 		class menu_button_control : public gradient_button_control
@@ -637,7 +637,7 @@ namespace corona
 			menu_button_control(container_control* _parent, int _id);
 			virtual ~menu_button_control() { ; }
 
-			virtual void on_subscribe(std::weak_ptr<presentation> _presentation, std::weak_ptr<page> _page);
+			virtual void on_subscribe(presentation* _presentation, std::weak_ptr<page> _page);
 		};
 
 		class title_control : public text_display_control
@@ -1638,7 +1638,7 @@ namespace corona
 			virtual void render(CComPtr<ID2D1DeviceContext>& _context);
 			virtual void update(double _elapsedSeconds, double _totalSeconds);
 
-			void subscribe(std::weak_ptr<presentation> _presentation);
+			void subscribe(presentation* _presentation);
 
 		public:
 
@@ -1681,7 +1681,7 @@ namespace corona
 			friend class presentation;
 		};
 
-		class presentation : public win32::controller, std::enable_shared_from_this<presentation>
+		class presentation : public win32::controller
 		{
 		protected:
 
