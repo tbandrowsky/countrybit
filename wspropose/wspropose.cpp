@@ -11,6 +11,7 @@ Use CComPtr for COM objects and CAdapt for collections
 
 */
 
+
 void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam);
 
 int __stdcall WinMain(HINSTANCE hInstance,
@@ -88,25 +89,91 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 	const int IDM_COMPANY_HOME = 5303;
 	const int IDM_COMPANY_WIKIPEDIA = 5304;
 
-	test_app->create_menu()
-		.begin_submenu(IDM_COMPANY, "Woodruff &Sawyer")
-			.item(IDM_COMPANY_ABOUT, "A&bout")
-			.item(IDM_COMPANY_HOME, "H&ome")
-			.item(IDM_COMPANY_WIKIPEDIA, "Wiki&pedia")
-		.end()
-		.begin_submenu(IDM_VIEW, "&View")
-			.item(IDM_VIEW_QUICK_LOGIN, "&Quick Login")
-			.item(IDM_VIEW_FULL_LOGIN, "&Full Login")
-			.item(IDM_VIEW_CREATE_ACCOUNT, "&Create Account")
-			.item(IDM_VIEW_CONFIRM_ACCOUNT, "C&onfirm Account")
-			.item(IDM_VIEW_ACCESS_DENIED, "Access &Denied")
-			.item(IDM_VIEW_CUSTOMER_HOME, "C&ustomer Home")
-			.item(IDM_VIEW_TEST, "Control &Test")
-		.end()
-		.begin_submenu(IDM_ACCOUNT, "&Account")
-			.item(IDM_ACCOUNT_LOGOUT, "L&ogout")
-			.item(IDM_ACCOUNT_LOGIN, "Log&in")
-		.end();
+	menu_item app_menu;
+
+	app_menu.begin_submenu(IDM_COMPANY, "Woodruff &Sawyer")
+		.item(IDM_COMPANY_ABOUT, "A&bout")
+		.item(IDM_COMPANY_HOME, "H&ome")
+		.item(IDM_COMPANY_WIKIPEDIA, "Wiki&pedia")
+	.end()
+	.begin_submenu(IDM_VIEW, "&View")
+		.item(IDM_VIEW_QUICK_LOGIN, "&Quick Login")
+		.item(IDM_VIEW_FULL_LOGIN, "&Full Login")
+		.item(IDM_VIEW_CREATE_ACCOUNT, "&Create Account")
+		.item(IDM_VIEW_CONFIRM_ACCOUNT, "C&onfirm Account")
+		.item(IDM_VIEW_ACCESS_DENIED, "Access &Denied")
+		.item(IDM_VIEW_CUSTOMER_HOME, "C&ustomer Home")
+		.item(IDM_VIEW_TEST, "Control &Test")
+	.end()
+	.begin_submenu(IDM_ACCOUNT, "&Account")
+		.item(IDM_ACCOUNT_LOGOUT, "L&ogout")
+		.item(IDM_ACCOUNT_LOGIN, "Log&in")
+	.end();
+
+	std::function<void(corona::database::page& _host, presentation *test_app)> config_menu_handlers;
+
+	config_menu_handlers = [](corona::database::page& _host, presentation* test_app)
+	{
+		_host.on_command(IDM_COMPANY_ABOUT, [test_app](command_event evt)
+			{
+				//test_app->select_page("");
+			});
+
+		_host.on_command(IDM_COMPANY_HOME, [test_app](command_event evt)
+			{
+				//test_app->select_page("");
+			});
+
+		_host.on_command(IDM_COMPANY_WIKIPEDIA, [test_app](command_event evt)
+			{
+				//test_app->select_page("");
+			});
+
+		_host.on_command(IDM_VIEW_QUICK_LOGIN, [test_app](command_event evt)
+			{
+				test_app->select_page("quick_login");
+			});
+
+		_host.on_command(IDM_VIEW_FULL_LOGIN, [test_app](command_event evt)
+			{
+				test_app->select_page("full_login");
+			});
+
+		_host.on_command(IDM_VIEW_CREATE_ACCOUNT, [test_app](command_event evt)
+			{
+				test_app->select_page("create_account");
+			});
+
+		_host.on_command(IDM_VIEW_CONFIRM_ACCOUNT, [test_app](command_event evt)
+			{
+				test_app->select_page("confirm_account");
+			});
+
+		_host.on_command(IDM_VIEW_ACCESS_DENIED, [test_app](command_event evt)
+			{
+				test_app->select_page("access_denied");
+			});
+
+		_host.on_command(IDM_VIEW_CUSTOMER_HOME, [test_app](command_event evt)
+			{
+				test_app->select_page("customer_home");
+			});
+
+		_host.on_command(IDM_VIEW_TEST, [test_app](command_event evt)
+			{
+				test_app->select_page("control_test1");
+			});
+
+		_host.on_command(IDM_ACCOUNT_LOGOUT, [test_app](command_event evt)
+			{
+				//test_app->select_page("");
+			});
+
+		_host.on_command(IDM_ACCOUNT_LOGIN, [test_app](command_event evt)
+			{
+				//test_app->select_page("");
+			});
+	};
 
 	const int IDC_IMAGE_LOGO = 1024;
 	const int IDC_COMPANY_NAME = 1025;
@@ -137,6 +204,7 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 				st,
 				IDC_TITLE_BAR,
 				IDC_SYSTEM_MENU,
+				app_menu,
 				IDC_IMAGE_LOGO,
 				"assets\\small_logo.png",
 				"WOODRUFF SAWYER",
@@ -178,6 +246,7 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 				st,
 				IDC_TITLE_BAR,
 				IDC_SYSTEM_MENU,
+				app_menu,
 				IDC_IMAGE_LOGO,
 				"assets\\small_logo.png",
 				"WOODRUFF SAWYER",
@@ -229,6 +298,7 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 			st,
 			IDC_TITLE_BAR,
 			IDC_SYSTEM_MENU,
+			app_menu,
 			IDC_IMAGE_LOGO,
 			"assets\\small_logo.png",
 			"WOODRUFF SAWYER",
@@ -282,6 +352,7 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 			st,
 			IDC_TITLE_BAR,
 			IDC_SYSTEM_MENU,
+			app_menu,
 			IDC_IMAGE_LOGO,
 			"assets\\small_logo.png",
 			"WOODRUFF SAWYER",
@@ -321,6 +392,7 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 			st,
 			IDC_TITLE_BAR,
 			IDC_SYSTEM_MENU,
+			app_menu,
 			IDC_IMAGE_LOGO,
 			"assets\\small_logo.png",
 			"WOODRUFF SAWYER",
@@ -360,6 +432,7 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 			st,
 			IDC_TITLE_BAR,
 			IDC_SYSTEM_MENU,
+			app_menu,
 			IDC_IMAGE_LOGO,
 			"assets\\small_logo.png",
 			"WOODRUFF SAWYER",
@@ -402,6 +475,7 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 			st,
 			IDC_TITLE_BAR,
 			IDC_SYSTEM_MENU,
+			app_menu,
 			IDC_IMAGE_LOGO,
 			"assets\\small_logo.png",
 			"WOODRUFF SAWYER",
@@ -436,6 +510,7 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 			st,
 			IDC_TITLE_BAR,
 			IDC_SYSTEM_MENU,
+			app_menu,
 			IDC_IMAGE_LOGO,
 			"assets\\small_logo.png",
 			"WOODRUFF SAWYER",
@@ -513,6 +588,7 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 			st,
 			IDC_TITLE_BAR,
 			IDC_SYSTEM_MENU,
+			app_menu,
 			IDC_IMAGE_LOGO,
 			"assets\\small_logo.png",
 			"WOODRUFF SAWYER",
@@ -681,65 +757,6 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 	.end();
 
 
-	test_app->on_command(IDM_COMPANY_ABOUT, [test_app](command_event evt)
-		{
-			//test_app->select_page("");
-		});
-
-	test_app->on_command(IDM_COMPANY_HOME, [test_app](command_event evt)
-		{
-			//test_app->select_page("");
-		});
-
-	test_app->on_command(IDM_COMPANY_WIKIPEDIA, [test_app](command_event evt)
-		{
-			//test_app->select_page("");
-		});
-
-	test_app->on_command(IDM_VIEW_QUICK_LOGIN, [test_app](command_event evt)
-		{
-			test_app->select_page("quick_login");
-		});
-
-	test_app->on_command(IDM_VIEW_FULL_LOGIN, [test_app](command_event evt)
-		{
-			test_app->select_page("full_login");
-		});
-	
-	test_app->on_command(IDM_VIEW_CREATE_ACCOUNT, [test_app](command_event evt)
-		{
-			test_app->select_page("create_account");
-		});
-
-	test_app->on_command(IDM_VIEW_CONFIRM_ACCOUNT, [test_app](command_event evt)
-		{
-			test_app->select_page("confirm_account");
-		});
-
-	test_app->on_command(IDM_VIEW_ACCESS_DENIED, [test_app](command_event evt)
-		{
-			test_app->select_page("access_denied");
-		});
-
-	test_app->on_command(IDM_VIEW_CUSTOMER_HOME, [test_app](command_event evt)
-		{
-			test_app->select_page("customer_home");
-		});
-
-	test_app->on_command(IDM_VIEW_TEST, [test_app](command_event evt)
-		{
-			test_app->select_page("control_test1");
-		});
-
-	test_app->on_command(IDM_ACCOUNT_LOGOUT, [test_app](command_event evt)
-		{
-			//test_app->select_page("");
-		});
-
-	test_app->on_command(IDM_ACCOUNT_LOGIN, [test_app](command_event evt)
-		{
-			//test_app->select_page("");
-		});
 
 
 	if (forceWindowed)

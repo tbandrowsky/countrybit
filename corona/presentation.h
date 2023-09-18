@@ -19,30 +19,6 @@ namespace corona
 			static int status_text_subtitle_id;
 		};
 
-		class menu_item : public std::enable_shared_from_this<menu_item>
-		{
-			menu_item* parent;
-			HMENU to_menu_children(HMENU hmenu, int idx = 0);
-
-		public:
-
-			int	 id;
-			bool is_separator;
-			std::string name;
-			std::vector<std::shared_ptr<menu_item>> children;
-
-			menu_item();
-			menu_item(int _id, std::string _name = "Empty", std::function<void(menu_item& _item)> _settings = nullptr);
-
-			menu_item& item(int _id, std::string _name, std::function<void(menu_item& _item)>  _settings = nullptr);
-			menu_item& separator(int _id, std::function<void(menu_item& _item)>  _settings = nullptr);
-
-			menu_item& begin_submenu(int _id, std::string _name, std::function<void(menu_item& _item)>  _settings = nullptr);
-			menu_item& end();
-
-			HMENU to_menu();
-		};
-
 		class layout_context
 		{
 		public:
@@ -59,6 +35,7 @@ namespace corona
 		class absolute_layout;
 		class frame_layout;
 
+		class presentation;
 		class page;
 
 		class title_control;
@@ -99,6 +76,54 @@ namespace corona
 		class maximize_button_control;
 		class close_button_control;
 		class menu_button_control;
+
+		using menu_click_handler = std::function<void(std::weak_ptr<presentation> _presentation, std::weak_ptr<page> _page)>;
+
+		class menu_item_navigate 
+		{
+		public:
+			int control_id;
+			std::string target_page;
+			menu_click_handler handler;
+
+			menu_item_navigate();
+			menu_item_navigate(int _source_control_id, std::string _target_page);
+			menu_item_navigate(const menu_item_navigate& _src);
+			menu_item_navigate operator =(const menu_item_navigate& _src);
+			menu_item_navigate(menu_item_navigate&& _src);
+			menu_item_navigate& operator =(menu_item_navigate&& _src);
+			operator menu_click_handler ();
+		};
+
+		class menu_item : public std::enable_shared_from_this<menu_item>
+		{
+			menu_item* parent;
+			HMENU to_menu_children(HMENU hmenu, int idx = 0);
+			HMENU created_menu;
+
+		public:
+
+			int	 id;
+			bool is_separator;
+			std::string name;
+			std::vector<std::shared_ptr<menu_item>> children;
+			menu_click_handler handler;	
+
+			menu_item();
+			menu_item(int _id, std::string _name = "Empty", std::function<void(menu_item& _item)> _settings = nullptr);
+			virtual ~menu_item();
+
+			menu_item& item(int _id, std::string _name, std::function<void(menu_item& _item)>  _settings = nullptr);
+			menu_item& destination(int _id, std::string _name, std::string _destination_name, std::function<void(menu_item& _item)>  _settings = nullptr);
+			menu_item& separator(int _id, std::function<void(menu_item& _item)>  _settings = nullptr);
+
+			menu_item& begin_submenu(int _id, std::string _name, std::function<void(menu_item& _item)>  _settings = nullptr);
+			menu_item& end();
+
+			void subscribe(std::weak_ptr<presentation> _present, std::weak_ptr<page> _page);
+
+			HMENU to_menu();
+		};
 
 		enum control_push_property 
 		{
@@ -340,7 +365,7 @@ namespace corona
 				std::function<void(control_base* _item)> _right_click
 			);
 
-			virtual void on_subscribe() { ; }
+			virtual void on_subscribe(std::weak_ptr<presentation> _presentation, std::weak_ptr<page> _page);
 		};
 
 		class draw_control : public control_base
@@ -496,6 +521,7 @@ namespace corona
 				presentation_style& st,
 				int	title_bar_id,
 				int menu_button_id,
+				menu_item& menu,
 				int image_control_id,
 				std::string image_file,
 				std::string corporate_name,
@@ -560,8 +586,6 @@ namespace corona
 
 		};
 
-		class presentation;
-
 		class minimize_button_control : public gradient_button_control
 		{
 		public:
@@ -573,7 +597,7 @@ namespace corona
 				return HTCLIENT; // we lie here 
 			}
 
-			virtual void on_subscribe(presentation* p);
+			virtual void on_subscribe(std::weak_ptr<presentation> _presentation, std::weak_ptr<page> _page);
 		};
 
 		class maximize_button_control : public gradient_button_control
@@ -587,7 +611,7 @@ namespace corona
 				return HTCLIENT;// we lie here 
 			}
 
-			virtual void on_subscribe(presentation* p);
+			virtual void on_subscribe(std::weak_ptr<presentation> _presentation, std::weak_ptr<page> _page);
 		};
 
 		class close_button_control : public gradient_button_control
@@ -601,19 +625,19 @@ namespace corona
 				return HTCLIENT;// we lie here 
 			}
 
-			virtual void on_subscribe(presentation* p);
+			virtual void on_subscribe(std::weak_ptr<presentation> _presentation, std::weak_ptr<page> _page);
 		};
 
 		class menu_button_control : public gradient_button_control
 		{
 		public:
 
-			std::string text;
+			menu_item menu;
 
 			menu_button_control(container_control* _parent, int _id);
 			virtual ~menu_button_control() { ; }
 
-			virtual void on_subscribe(presentation *p);
+			virtual void on_subscribe(std::weak_ptr<presentation> _presentation, std::weak_ptr<page> _page);
 		};
 
 		class title_control : public text_display_control
@@ -1579,7 +1603,7 @@ namespace corona
 
 		using update_function = std::function< void(page* _page, double _elapsedSeconds, double _totalSeconds) >;
 
-		class page
+		class page : public std::enable_shared_from_this<page>
 		{
 
 			rectangle layout(control_base* _item, layout_context _ctx);
@@ -1613,6 +1637,8 @@ namespace corona
 			virtual void draw();
 			virtual void render(CComPtr<ID2D1DeviceContext>& _context);
 			virtual void update(double _elapsedSeconds, double _totalSeconds);
+
+			void subscribe(std::weak_ptr<presentation> _presentation);
 
 		public:
 
@@ -1655,23 +1681,11 @@ namespace corona
 			friend class presentation;
 		};
 
-		class presentation : public win32::controller
+		class presentation : public win32::controller, std::enable_shared_from_this<presentation>
 		{
 		protected:
 
 			std::weak_ptr<page> current_page;
-			std::shared_ptr<menu_item> menu;
-
-			std::map<int, std::shared_ptr<key_up_event_binding> > key_up_events;
-			std::map<int, std::shared_ptr<key_down_event_binding> > key_down_events;
-			std::map<int, std::shared_ptr<mouse_move_event_binding> > mouse_move_events;
-			std::map<int, std::shared_ptr<mouse_click_event_binding> > mouse_click_events;
-			std::map<int, std::shared_ptr<mouse_left_click_event_binding> > mouse_left_click_events;
-			std::map<int, std::shared_ptr<mouse_right_click_event_binding> > mouse_right_click_events;
-			std::map<int, std::shared_ptr<item_changed_event_binding> > item_changed_events;
-			std::map<int, std::shared_ptr<list_changed_event_binding> > list_changed_events;
-			std::map<int, std::shared_ptr<command_event_binding> > command_events;
-
 			rectangle current_size;
 
 		public:
@@ -1681,25 +1695,7 @@ namespace corona
 			presentation();
 			virtual ~presentation();
 
-			void on_key_up(int _control_id, std::function< void(key_up_event) >);
-			void on_key_down(int _control_id, std::function< void(key_down_event) >);
-			void on_mouse_move(int _control_id, std::function< void(mouse_move_event) >);
-			void on_mouse_click(int _control_id, std::function< void(mouse_click_event) >);
-			void on_mouse_left_click(int _control_id, std::function< void(mouse_left_click_event) >);
-			void on_mouse_right_click(int _control_id, std::function< void(mouse_right_click_event) >);
-			void on_item_changed(int _control_id, std::function< void(item_changed_event) >);
-			void on_list_changed(int _control_id, std::function< void(list_changed_event) >);
-			void on_command(int _item_id, std::function< void(command_event) >);
-
-			void handle_key_up(int _control_id, key_up_event evt);
-			void handle_key_down(int _control_id, key_down_event evt);
-			void handle_mouse_move(int _control_id, mouse_move_event evt);
-			void handle_mouse_click(int _control_id, mouse_click_event evt);
-			void handle_mouse_left_click(int _control_id, mouse_left_click_event evt);
-			void handle_mouse_right_click(int _control_id, mouse_right_click_event evt);
-			void handle_item_changed(int _control_id, item_changed_event evt);
-			void handle_list_changed(int _control_id, list_changed_event evt);
-			void handle_command(int _command_id, command_event evt);
+			void open_menu(control_base* _base, menu_item& _menu);
 
 			virtual page& create_page(std::string _name, std::function<void(page& pg)> _settings = nullptr);
 			virtual void select_page(const std::string& _page_name);

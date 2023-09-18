@@ -1010,9 +1010,9 @@ namespace corona
 			int current_largest = 0;
 
 			for (auto fbm : filteredBitmaps) {
-				if (fbm->size.height >= _width &&
-					(fbm->size.height <= current_largest ||
-						!_height || !current_largest)) {
+				if ((fbm->size.height >= _width && fbm->size.height <= current_largest) 
+					|| !_height 
+					|| !current_largest) {
 					current_largest = fbm->size.height;
 					current = fbm->filteredScaledBitmap;
 				}

@@ -22,10 +22,63 @@ namespace corona
 			return id;
 		}
 
+		menu_item_navigate::menu_item_navigate()
+		{
+			control_id = {};
+			target_page = {};
+			handler = {};
+		}
+
+		menu_item_navigate::menu_item_navigate(int _source_control_id, std::string _target_page)
+		{
+			control_id = _source_control_id;
+			target_page = _target_page;
+			handler = [this](std::weak_ptr<presentation> _presentation, std::weak_ptr<page> _page)
+			{
+				if (auto ppresent = _presentation.lock())
+				{
+					ppresent->select_page(target_page);
+				}
+			};
+		}
+
+		menu_item_navigate::menu_item_navigate(const menu_item_navigate& _src)
+		{
+			target_page = _src.target_page;
+			handler = _src.handler;
+		}
+
+		menu_item_navigate menu_item_navigate::operator =(const menu_item_navigate& _src)
+		{
+			target_page = _src.target_page;
+			handler = _src.handler;
+			return *this;
+		}
+
+		menu_item_navigate::menu_item_navigate(menu_item_navigate&& _src)
+		{
+			target_page = std::move(_src.target_page);
+			handler = std::move(_src.handler);
+		}
+
+		menu_item_navigate& menu_item_navigate::operator =(menu_item_navigate&& _src)
+		{
+			target_page = std::move(_src.target_page);
+			handler = std::move(_src.handler);
+			return *this;
+		}
+
+
+		menu_item_navigate::operator menu_click_handler ()
+		{
+			return handler;
+		}
+
 		menu_item::menu_item() :
 			id(0),
 			name("test"),
-			is_separator(false)
+			is_separator(false),
+			created_menu(nullptr)
 		{
 			;
 		}
@@ -33,15 +86,36 @@ namespace corona
 		menu_item::menu_item(int _id, std::string _name, std::function<void(menu_item& _item)> _settings) :
 			id(_id),
 			name(_name),
-			is_separator(false)
+			is_separator(false),
+			created_menu(nullptr)
 		{
 			;
+		}
+
+		menu_item::~menu_item()
+		{
+			if (created_menu) {
+				::DestroyMenu(created_menu);
+				created_menu = nullptr;
+			}
 		}
 
 		menu_item& menu_item::item(int _id, std::string _name, std::function<void(menu_item& _item)> _settings)
 		{
 			auto mi = std::make_shared<menu_item>(_id, _name, _settings);
 			mi->parent = this;
+			if (_settings) {
+				_settings(*mi.get());
+			}
+			children.push_back(mi);
+			return *this;
+		}
+
+		menu_item& menu_item::destination(int _id, std::string _name, std::string _target_page, std::function<void(menu_item& _item)> _settings)
+		{
+			auto mi = std::make_shared<menu_item>(_id, _name, _settings);
+			mi->parent = this;
+			mi->handler = menu_item_navigate(_id, _target_page);
 			if (_settings) {
 				_settings(*mi.get());
 			}
@@ -77,6 +151,24 @@ namespace corona
 		menu_item& menu_item::end()
 		{
 			return *parent;
+		}
+
+		void menu_item::subscribe(std::weak_ptr<presentation> _present, std::weak_ptr<page> _page)
+		{
+			if (auto ppage = _page.lock()) {
+				ppage->on_command(id, [this, _present, _page](command_event evt) {
+					if (auto ppresent = _present.lock()) {
+						if (handler) {
+							handler(_present, _page);
+						}
+					}
+				});
+
+				for (auto child : children)
+				{
+					child->subscribe(_present, _page);
+				}
+			}
 		}
 
 		void control_base::push(int _destination_control_id, bool _push_left, bool _push_top, bool _push_right, bool _push_bottom)
@@ -280,6 +372,7 @@ namespace corona
 				presentation_style& st,
 				int	title_bar_id,
 				int menu_button_id,
+				menu_item &menu,
 				int image_control_id, 
 				std::string image_file,
 				std::string corporate_name,
@@ -300,16 +393,18 @@ namespace corona
 				.row_begin([](row_layout& rl) {
 					rl.set_size(.24_container, 1.0_container);
 					})
-					.column_begin([](column_layout& cl) {
+					.row_begin([](row_layout& cl) {
 						cl.set_content_align(visual_alignment::align_near);
 						cl.set_content_cross_align(visual_alignment::align_near);
-						cl.set_size( 60.0_px, 1.0_container);
-						cl.set_item_margin(0.0_px);
+						cl.set_size( 120.0_px, 1.0_container);
+						cl.set_item_margin(5.0_px);
 						})
-						.menu_button(menu_button_id,[](auto& _ctrl) { _ctrl.set_size(50.0_px, 50.0_px); })
-						.image(image_control_id, image_file, [](image_control& control) {
-						control.set_size(50.0_px, 50.0_px);
-						})
+						.menu_button(menu_button_id,[menu](auto& _ctrl) { 
+							_ctrl.set_size(50.0_px, 50.0_px); 
+							_ctrl.set_margin(5.0_px);
+							_ctrl.menu = menu;
+							})
+						.image(image_control_id, image_file, [](image_control& control) { control.set_size(50.0_px, 50.0_px); })
 					.end()
 					.column_begin([](column_layout& cl) {
 						cl.set_content_align(visual_alignment::align_near);
@@ -378,6 +473,13 @@ namespace corona
 			.end();
 
 			return *this;
+		}
+
+		void control_base::on_subscribe(std::weak_ptr<presentation> _presentation, std::weak_ptr<page> _page)
+		{
+			for(auto child : children) {
+				child->on_subscribe(_presentation, _page);
+			}
 		}
 
 		container_control& container_control::form_double_column(int _align_id,
@@ -1609,18 +1711,22 @@ namespace corona
 
 			MENUITEMINFO info = {};
 
-			HMENU menuBar = ::CreateMenu();
+			if (!created_menu) {
 
-			if (children.size())
-			{
-				int counter = 0;
-				for (auto child : children)
+				created_menu = ::CreatePopupMenu();
+
+				if (children.size())
 				{
-					child->to_menu_children(menuBar, counter++);
+					int counter = 0;
+					for (auto child : children)
+					{
+						child->to_menu_children(created_menu, counter++);
+					}
 				}
+
 			}
 
-			return menuBar;
+			return created_menu;
 		}
 
 		void control_base::on_resize()
@@ -2526,9 +2632,71 @@ namespace corona
 
 		menu_button_control::menu_button_control(container_control* _parent, int _id) : gradient_button_control(_parent, _id, "menu")
 		{
-			;
+			auto ctrl = this;
+
+			on_draw = [this](control_base* _item)
+			{
+				if (auto pwindow = window.lock())
+				{
+					if (auto phost = host.lock()) {
+						auto draw_bounds = inner_bounds;
+
+						std::function<void(rectangle* _bounds, solidBrushRequest* _foreground)> draw_shape;
+
+						draw_bounds.x = 0;
+						draw_bounds.y = 0;
+
+						point shape_origin;
+						point* porigin = &shape_origin;
+
+						auto& context = pwindow->getContext();
+						auto pcontext = &context;
+
+						draw_shape = [this, porigin, pcontext](rectangle* _bounds, solidBrushRequest* _foreground) {
+
+							point start;
+							point stop;
+
+							start.x = _bounds->x;
+							start.y = _bounds->y + _bounds->h / 2.0;
+							stop.x = _bounds->right();
+							stop.y = _bounds->y + _bounds->h / 2.0;
+
+							pcontext->drawLine(&start, &stop, _foreground->name, 4);
+
+							pathImmediateDto pid;
+							porigin->x = _bounds->x;
+							porigin->y = _bounds->y;
+							porigin->z = 0;
+							pid.path.addLineTo(_bounds->x, _bounds->y);
+							pid.path.addLineTo(_bounds->right(), _bounds->y);
+							pid.path.addLineTo(_bounds->right(), _bounds->bottom());
+							pid.path.addLineTo(_bounds->x, _bounds->bottom());
+							pid.path.addLineTo(_bounds->x, _bounds->y);
+							pid.position = *porigin;
+							pid.rotation = 0;
+							pid.strokeWidth = 4;
+							pid.borderBrushName = _foreground->name;
+							pid.closed = true;
+							pcontext->drawPath(&pid);
+						};
+
+						draw_button(draw_shape);
+
+					}
+				}
+			};
 		}
 
+		void menu_button_control::on_subscribe(std::weak_ptr<presentation> _presentation, std::weak_ptr<page> _page)
+		{
+			if (auto ppage = _page.lock()) {
+				ppage->on_mouse_left_click(id, [this, _presentation, _page](mouse_left_click_event evt)
+				{
+						this->menu.subscribe(_presentation, _page);
+				});
+			}
+		}
 
 		minimize_button_control::minimize_button_control(container_control* _parent, int _id) : gradient_button_control(_parent, _id, "minimize")
 		{
@@ -2575,7 +2743,7 @@ namespace corona
 			};
 		}
 
-		void minimize_button_control::on_subscribe(presentation* _presentation)
+		void minimize_button_control::on_subscribe(std::weak_ptr<presentation> _presentation, std::weak_ptr<page> _page)
 		{
 
 		}
@@ -2630,7 +2798,7 @@ namespace corona
 			};
 		}
 
-		void maximize_button_control::on_subscribe(presentation* _presentation)
+		void maximize_button_control::on_subscribe(std::weak_ptr<presentation> _presentation, std::weak_ptr<page> _page)
 		{
 
 		}
@@ -2682,7 +2850,7 @@ namespace corona
 			};
 		}
 
-		void close_button_control::on_subscribe(presentation *_presentation)
+		void close_button_control::on_subscribe(std::weak_ptr<presentation> _presentation, std::weak_ptr<page> _page)
 		{
 			;
 		}
@@ -2753,6 +2921,11 @@ namespace corona
 			}
 		}
 
+		void page::subscribe(std::weak_ptr<presentation> _presentation)
+		{
+			root->on_subscribe(_presentation, shared_from_this() );
+		}
+
 		row_layout& page::row_begin(int id)
 		{
 //			std::cout << "create: row"<< std::endl;
@@ -2787,12 +2960,15 @@ namespace corona
 			;
 		}
 
-		menu_item& presentation::create_menu()
+		void presentation::open_menu(control_base* _base, menu_item& _menu)
 		{
-			menu = std::make_shared<menu_item>();
-
-			auto& m = *menu.get();
-			return m;
+			auto menu = _menu.to_menu();
+			HWND hwndMenu = this->getHost()->getMainWindow();
+			point tpstart;
+			auto &bpos = _base->get_bounds();
+			tpstart.x = bpos.x * ::GetDpiForWindow(hwndMenu) / 96.0;
+			tpstart.y = bpos.y * ::GetDpiForWindow(hwndMenu) / 96.0;
+			::TrackPopupMenuEx(menu, TPM_CENTERALIGN | TPM_TOPALIGN, tpstart.x, tpstart.y, hwndMenu, nullptr);
 		}
 
 		void page::arrange(double width, double height, double _padding)
@@ -2827,6 +3003,23 @@ namespace corona
 			key_down_events[_control_id] = evt;
 		}
 
+		void page::on_mouse_left_click(int _control_id, std::function< void(mouse_left_click_event) > handler)
+		{
+			auto evt = std::make_shared<mouse_left_click_event_binding>();
+			evt->subscribed_item_id = _control_id;
+			evt->on_mouse_left_click = handler;
+			mouse_left_click_events[_control_id] = evt;
+		}
+
+		void page::on_mouse_right_click(int _control_id, std::function< void(mouse_right_click_event) > handler)
+		{
+			auto evt = std::make_shared<mouse_right_click_event_binding>();
+			evt->subscribed_item_id = _control_id;
+			evt->on_mouse_right_click = handler;
+			mouse_right_click_events[_control_id] = evt;
+		}
+
+
 		void page::on_mouse_move(int _control_id, std::function< void(mouse_move_event) > handler)
 		{
 			auto evt = std::make_shared<mouse_move_event_binding>();
@@ -2857,6 +3050,14 @@ namespace corona
 			evt->subscribed_item_id = _control_id;
 			evt->on_change = handler;
 			list_changed_events[_control_id] = evt;
+		}
+
+		void page::on_command(int _control_id, std::function< void(command_event) > handler)
+		{
+			auto evt = std::make_shared<command_event_binding>();
+			evt->subscribed_item_id = _control_id;
+			evt->on_command  = handler;
+			command_events[_control_id] = evt;
 		}
 
 		void page::on_update(update_function fnc)
@@ -3053,10 +3254,10 @@ namespace corona
 					ppage->destroy();
 				}
 				current_page = pages[_page_name];
-
-				onCreated();
-				onResize(current_size, 1.0);
 			}
+
+			onCreated();
+			onResize(current_size, 1.0);
 
 			if (auto phost = getHost())
 			{
@@ -3083,13 +3284,7 @@ namespace corona
 				host->toPixelsFromDips(post);
 				cp->arrange(post.w, post.h);
 				cp->create(host);
-				if (menu) 
-				{
-					HMENU hmenu = menu->to_menu();
-					HWND hwnd = host->getMainWindow();
-					::SetMenu(hwnd, hmenu);
-					::DrawMenuBar(hwnd);
-				}
+				cp->subscribe(shared_from_this());
 			}
 		}
 
@@ -3156,247 +3351,6 @@ namespace corona
 			return true;
 		}
 
-
-		void presentation::on_key_up(int _control_id, std::function< void(key_up_event) > handler)
-		{
-			auto evt = std::make_shared<key_up_event_binding>();
-			evt->subscribed_item_id = _control_id;
-			evt->on_key_up = handler;
-			key_up_events[_control_id] = evt;
-		}
-
-		void presentation::on_key_down(int _control_id, std::function< void(key_down_event) >  handler)
-		{
-			auto evt = std::make_shared<key_down_event_binding>();
-			evt->subscribed_item_id = _control_id;
-			evt->on_key_down = handler;
-			key_down_events[_control_id] = evt;
-		}
-
-		void presentation::on_mouse_move(int _control_id, std::function< void(mouse_move_event) > handler)
-		{
-			auto evt = std::make_shared<mouse_move_event_binding>();
-			evt->subscribed_item_id = _control_id;
-			evt->on_mouse_move = handler;
-			mouse_move_events[_control_id] = evt;
-		}
-
-		void presentation::on_mouse_click(int _control_id, std::function< void(mouse_click_event) > handler)
-		{
-			auto evt = std::make_shared<mouse_click_event_binding>();
-			evt->subscribed_item_id = _control_id;
-			evt->on_mouse_click = handler;
-			mouse_click_events[_control_id] = evt;
-		}
-
-		void presentation::on_mouse_left_click(int _control_id, std::function< void(mouse_left_click_event) > handler)
-		{
-			auto evt = std::make_shared<mouse_left_click_event_binding>();
-			evt->subscribed_item_id = _control_id;
-			evt->on_mouse_left_click = handler;
-			mouse_left_click_events[_control_id] = evt;
-		}
-
-		void presentation::on_mouse_right_click(int _control_id, std::function< void(mouse_right_click_event) > handler)
-		{
-			auto evt = std::make_shared<mouse_right_click_event_binding>();
-			evt->subscribed_item_id = _control_id;
-			evt->on_mouse_right_click = handler;
-			mouse_right_click_events[_control_id] = evt;
-		}
-
-		void presentation::on_item_changed(int _control_id, std::function< void(item_changed_event) > handler)
-		{
-			auto evt = std::make_shared<item_changed_event_binding>();
-			evt->subscribed_item_id = _control_id;
-			evt->on_change = handler;
-			item_changed_events[_control_id] = evt;
-		}
-
-		void presentation::on_list_changed(int _control_id, std::function< void(list_changed_event) > handler)
-		{
-			auto evt = std::make_shared<list_changed_event_binding>();
-			evt->subscribed_item_id = _control_id;
-			evt->on_change = handler;
-			list_changed_events[_control_id] = evt;
-		}
-
-		void presentation::on_command(int _control_id, std::function< void(command_event) > handler)
-		{
-			auto evt = std::make_shared<command_event_binding>();
-			evt->subscribed_item_id = _control_id;
-			evt->on_command = handler;
-			command_events[_control_id] = evt;
-		}
-
-		void presentation::handle_key_up(int _control_id, key_up_event evt)
-		{
-			if (key_up_events.contains(_control_id)) {
-				key_up_events[_control_id]->on_key_up(evt);
-			}
-		}
-
-		void presentation::handle_key_down(int _control_id, key_down_event evt)
-		{
-			if (key_down_events.contains(_control_id)) {
-				key_down_events[_control_id]->on_key_down(evt);
-			}
-		}
-
-		void presentation::handle_mouse_move(int _control_id, mouse_move_event evt)
-		{
-			if (mouse_move_events.contains(_control_id)) {
-				auto& ptrx = mouse_move_events[_control_id];
-				if (auto temp = ptrx.get()->control.lock()) {
-					evt.relative_point.x = evt.absolute_point.x - temp->get_bounds().x;
-					evt.relative_point.y = evt.absolute_point.y - temp->get_bounds().y;
-					evt.control = temp.get();
-					evt.control_id = temp->id;
-					ptrx->on_mouse_move(evt);
-				}
-			}
-
-			if (!_control_id)
-			{
-				for (auto evh : mouse_move_events)
-				{
-					auto lck = evh.second->control.lock();
-					if (lck && lck->contains(evt.absolute_point))
-					{
-						evt.relative_point.x = evt.absolute_point.x - lck->get_bounds().x;
-						evt.relative_point.y = evt.absolute_point.y - lck->get_bounds().y;
-						evt.control = lck.get();
-						evt.control_id = lck->id;
-						evh.second->on_mouse_move(evt);
-					}
-				}
-			}
-
-		}
-
-		void presentation::handle_mouse_click(int _control_id, mouse_click_event evt)
-		{
-			if (mouse_click_events.contains(_control_id)) {
-				auto& ptrx = mouse_click_events[_control_id];
-				if (auto temp = ptrx.get()->control.lock()) {
-					evt.relative_point.x = evt.absolute_point.x - temp->get_bounds().x;
-					evt.relative_point.y = evt.absolute_point.y - temp->get_bounds().y;
-					evt.control = temp.get();
-					evt.control_id = temp->id;
-					ptrx->on_mouse_click(evt);
-				}
-			}
-
-			if (!_control_id)
-			{
-				for (auto evh : mouse_click_events)
-				{
-					auto lck = evh.second->control.lock();
-					if (lck && lck->contains(evt.absolute_point))
-					{
-						evt.relative_point.x = evt.absolute_point.x - lck->get_bounds().x;
-						evt.relative_point.y = evt.absolute_point.y - lck->get_bounds().y;
-						evt.control = lck.get();
-						evt.control_id = lck->id;
-						evh.second->on_mouse_click(evt);
-					}
-				}
-			}
-		}
-
-		void presentation::handle_mouse_left_click(int _control_id, mouse_left_click_event evt)
-		{
-			if (mouse_left_click_events.contains(_control_id)) {
-				auto& ptrx = mouse_left_click_events[_control_id];
-				if (auto temp = ptrx.get()->control.lock()) {
-					evt.relative_point.x = evt.absolute_point.x - temp->get_bounds().x;
-					evt.relative_point.y = evt.absolute_point.y - temp->get_bounds().y;
-					evt.control = temp.get();
-					evt.control_id = temp->id;
-					ptrx->on_mouse_left_click(evt);
-				}
-			}
-
-			if (!_control_id)
-			{
-				for (auto evh : mouse_left_click_events)
-				{
-					auto lck = evh.second->control.lock();
-					if (lck && lck->contains(evt.absolute_point))
-					{
-						evt.relative_point.x = evt.absolute_point.x - lck->get_bounds().x;
-						evt.relative_point.y = evt.absolute_point.y - lck->get_bounds().y;
-						evt.control = lck.get();
-						evt.control_id = lck->id;
-						evh.second->on_mouse_left_click(evt);
-					}
-				}
-			}
-		}
-
-		void presentation::handle_mouse_right_click(int _control_id, mouse_right_click_event evt)
-		{
-			if (mouse_right_click_events.contains(_control_id)) {
-				auto& ptrx = mouse_right_click_events[_control_id];
-				if (auto temp = ptrx.get()->control.lock()) {
-					evt.relative_point.x = evt.absolute_point.x - temp->get_bounds().x;
-					evt.relative_point.y = evt.absolute_point.y - temp->get_bounds().y;
-					evt.control = temp.get();
-					evt.control_id = temp->id;
-					ptrx->on_mouse_right_click(evt);
-				}
-			}
-
-			if (!_control_id)
-			{
-				for (auto evh : mouse_right_click_events)
-				{
-					auto lck = evh.second->control.lock();
-					if (lck && lck->contains(evt.absolute_point))
-					{
-						evt.relative_point.x = evt.absolute_point.x - lck->get_bounds().x;
-						evt.relative_point.y = evt.absolute_point.y - lck->get_bounds().y;
-						evt.control = lck.get();
-						evt.control_id = lck->id;
-						evh.second->on_mouse_right_click(evt);
-					}
-				}
-			}
-		}
-
-		void presentation::handle_item_changed(int _control_id, item_changed_event evt)
-		{
-			if (item_changed_events.contains(_control_id)) {
-				auto& ptrx = item_changed_events[_control_id];
-				if (auto temp = ptrx.get()->control.lock()) {
-					evt.control = temp.get();
-					evt.control_id = temp->id;
-					ptrx->on_change(evt);
-				}
-			}
-		}
-
-		void presentation::handle_list_changed(int _control_id, list_changed_event evt)
-		{
-			if (list_changed_events.contains(_control_id)) {
-				auto& ptrx = list_changed_events[_control_id];
-				if (auto temp = ptrx.get()->control.lock()) {
-					evt.control = temp.get();
-					evt.control_id = temp->id;
-					ptrx->on_change(evt);
-				}
-			}
-		}
-
-		void presentation::handle_command(int _control_id, command_event evt)
-		{
-			if (command_events.contains(_control_id)) {
-				auto& ptrx = command_events[_control_id];
-				ptrx->on_command(evt);
-			}
-		}
-
-
 		void presentation::keyDown(std::shared_ptr<win32::direct2dWindow>& win, short _key)
 		{
 			auto cp = current_page.lock();
@@ -3404,22 +3358,19 @@ namespace corona
 			kde.control_id = 0;
 			kde.key = _key;
 			if (cp) {
-				auto children = win->getChildren();
 				cp->handle_key_down(0, kde);
 			}
-			handle_key_down(0, kde);
 		}
 
 		void presentation::keyUp(std::shared_ptr<win32::direct2dWindow>& win, short _key)
 		{
+			auto cp = current_page.lock();
 			key_up_event kde;
 			kde.control_id = 0;
 			kde.key = _key;
-			auto cp = current_page.lock();
 			if (cp) {
 				cp->handle_key_up(0, kde);
 			}
-			handle_key_up(0, kde);
 		}
 
 		void presentation::mouseMove(std::shared_ptr<win32::direct2dWindow>& win, point* _point)
@@ -3431,9 +3382,7 @@ namespace corona
 			if (cp) {
 				cp->handle_mouse_move(0, kde);
 			}
-			handle_mouse_move(0, kde);
 			cp->root->set_mouse(*_point, nullptr, nullptr, nullptr, nullptr);
-
 		}
 
 		void presentation::mouseLeftDown(std::shared_ptr<win32::direct2dWindow>& win, point* _point)
@@ -3441,14 +3390,14 @@ namespace corona
 			bool leftMouse = true;
 			auto cp = current_page.lock();
 			presentation* p = this;
-			cp->root->set_mouse(*_point, &leftMouse, nullptr, [p,_point](control_base* _item) {
+			cp->root->set_mouse(*_point, &leftMouse, nullptr, [cp, p,_point](control_base* _item) {
 				mouse_click_event mce;
 				mce.control = _item;
 				mce.control_id = _item->id;
 				mce.absolute_point.x = _point->x;
 				mce.absolute_point.y = _point->y;
 				mce.absolute_point.z = 0;
-				p->handle_mouse_click(_item->id, mce);
+				cp->handle_mouse_click(_item->id, mce);
 				}, nullptr);
 		}
 
@@ -3457,21 +3406,21 @@ namespace corona
 			bool leftMouse = false;
 			auto cp = current_page.lock();
 			presentation* p = this;
-			cp->root->set_mouse(*_point, &leftMouse, nullptr, [p, _point](control_base* _item) {
+			cp->root->set_mouse(*_point, &leftMouse, nullptr, [cp, p, _point](control_base* _item) {
 				mouse_click_event mce;
 				mce.control = _item;
 				mce.control_id = _item->id;
 				mce.absolute_point.x = _point->x;
 				mce.absolute_point.y = _point->y;
 				mce.absolute_point.z = 0;
-				p->handle_mouse_click(_item->id, mce);
+				cp->handle_mouse_click(_item->id, mce);
 				mouse_right_click_event mcel;
 				mcel.control = _item;
 				mcel.control_id = _item->id;
 				mcel.absolute_point.x = _point->x;
 				mcel.absolute_point.y = _point->y;
 				mcel.absolute_point.z = 0;
-				p->handle_mouse_right_click(_item->id, mcel);
+				cp->handle_mouse_right_click(_item->id, mcel);
 				}, nullptr);
 		}
 
@@ -3480,14 +3429,14 @@ namespace corona
 			bool rightMouse = true;
 			auto cp = current_page.lock();
 			presentation* p = this;
-			cp->root->set_mouse(*_point, &rightMouse, nullptr, nullptr,[p, _point](control_base* _item) {
+			cp->root->set_mouse(*_point, &rightMouse, nullptr, nullptr,[cp, p, _point](control_base* _item) {
 				mouse_click_event mce;
 				mce.control = _item;
 				mce.control_id = _item->id;
 				mce.absolute_point.x = _point->x;
 				mce.absolute_point.y = _point->y;
 				mce.absolute_point.z = 0;
-				p->handle_mouse_click(_item->id, mce);
+				cp->handle_mouse_click(_item->id, mce);
 				});
 		}
 
@@ -3496,21 +3445,21 @@ namespace corona
 			bool rightMouse = false;
 			auto cp = current_page.lock();
 			presentation* p = this;
-			cp->root->set_mouse(*_point, &rightMouse, nullptr, nullptr, [p, _point](control_base* _item) {
+			cp->root->set_mouse(*_point, &rightMouse, nullptr, nullptr, [cp, p, _point](control_base* _item) {
 				mouse_click_event mce;
 				mce.control = _item;
 				mce.control_id = _item->id;
 				mce.absolute_point.x = _point->x;
 				mce.absolute_point.y = _point->y;
 				mce.absolute_point.z = 0;
-				p->handle_mouse_click(_item->id, mce);
+				cp->handle_mouse_click(_item->id, mce);
 				mouse_right_click_event mcel;
 				mcel.control = _item;
 				mcel.control_id = _item->id;
 				mcel.absolute_point.x = _point->x;
 				mcel.absolute_point.y = _point->y;
 				mcel.absolute_point.z = 0;
-				p->handle_mouse_right_click(_item->id, mcel);
+				cp->handle_mouse_right_click(_item->id, mcel);
 				});
 		}
 		void presentation::pointSelected(std::shared_ptr<win32::direct2dWindow>& win, point* _point, color* _color)
@@ -3541,7 +3490,6 @@ namespace corona
 			if (cp) {
 				cp->handle_command(buttonId, ce);
 			}
-			handle_command(buttonId, ce);
 		}
 
 		void presentation::onTextChanged(int textControlId)
