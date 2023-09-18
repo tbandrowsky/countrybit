@@ -51,13 +51,15 @@ namespace corona
             woodruff.SubtitleBackgroundColor = "#00000000";
             woodruff.SubtitleTextColor = woodruff.MasterBrandColors[0];
 
-            woodruff.ChapterTitleBackgroundColor = "FFFFFF";
+            woodruff.FormBackgroundColor = "#EEEFEE";
+
+            woodruff.ChapterTitleBackgroundColor = "#COC2CO";
             woodruff.ChapterTitleTextColor = "111111";
 
             woodruff.SubchapterTitleBackgroundColor = "FFFFFF";
             woodruff.SubchapterTitleTextColor = "111111";
 
-            woodruff.ParagraphBackgroundColor = "FFFFFF";
+            woodruff.ParagraphBackgroundColor = "#00000000";
             woodruff.ParagraphTextColor = "111111";
 
             woodruff.CodeBackgroundColor = "FFFFFF";

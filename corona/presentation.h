@@ -339,6 +339,8 @@ namespace corona
 				std::function<void(control_base* _item)> _left_click,
 				std::function<void(control_base* _item)> _right_click
 			);
+
+			virtual void on_subscribe() { ; }
 		};
 
 		class draw_control : public control_base
@@ -488,11 +490,12 @@ namespace corona
 			container_control& minimize_button(std::function<void(minimize_button_control&)> _settings = nullptr);
 			container_control& maximize_button(std::function<void(maximize_button_control&)> _settings = nullptr);
 			container_control& close_button(std::function<void(close_button_control&)> _settings = nullptr);
-			container_control& menu_button(int _id, std::string text, std::function<void(menu_button_control&)> _settings = nullptr);
+			container_control& menu_button(int _id,  std::function<void(menu_button_control&)> _settings = nullptr);
 
 			container_control& caption_bar(
 				presentation_style& st,
 				int	title_bar_id,
+				int menu_button_id,
 				int image_control_id,
 				std::string image_file,
 				std::string corporate_name,
@@ -557,6 +560,8 @@ namespace corona
 
 		};
 
+		class presentation;
+
 		class minimize_button_control : public gradient_button_control
 		{
 		public:
@@ -567,6 +572,8 @@ namespace corona
 			virtual LRESULT get_nchittest() { 
 				return HTCLIENT; // we lie here 
 			}
+
+			virtual void on_subscribe(presentation* p);
 		};
 
 		class maximize_button_control : public gradient_button_control
@@ -579,6 +586,8 @@ namespace corona
 			virtual LRESULT get_nchittest() { 
 				return HTCLIENT;// we lie here 
 			}
+
+			virtual void on_subscribe(presentation* p);
 		};
 
 		class close_button_control : public gradient_button_control
@@ -591,6 +600,8 @@ namespace corona
 			virtual LRESULT get_nchittest() { 
 				return HTCLIENT;// we lie here 
 			}
+
+			virtual void on_subscribe(presentation* p);
 		};
 
 		class menu_button_control : public gradient_button_control
@@ -601,6 +612,8 @@ namespace corona
 
 			menu_button_control(container_control* _parent, int _id);
 			virtual ~menu_button_control() { ; }
+
+			virtual void on_subscribe(presentation *p);
 		};
 
 		class title_control : public text_display_control

@@ -279,6 +279,7 @@ namespace corona
 		container_control& container_control::caption_bar(
 				presentation_style& st,
 				int	title_bar_id,
+				int menu_button_id,
 				int image_control_id, 
 				std::string image_file,
 				std::string corporate_name,
@@ -305,6 +306,7 @@ namespace corona
 						cl.set_size( 60.0_px, 1.0_container);
 						cl.set_item_margin(0.0_px);
 						})
+						.menu_button(menu_button_id,[](auto& _ctrl) { _ctrl.set_size(50.0_px, 50.0_px); })
 						.image(image_control_id, image_file, [](image_control& control) {
 						control.set_size(50.0_px, 50.0_px);
 						})
@@ -363,6 +365,7 @@ namespace corona
 				{
 					r.set_size(1.0_container, 1.0_container);
 					r.set_content_align(visual_alignment::align_center);
+					r.set_background_color(styles.get_style().FormBackgroundColor);
 				})
 				.column_begin([_add_controls, _align_id](column_layout& r)
 					{
@@ -393,6 +396,7 @@ namespace corona
 						r.set_margin(10.0_px);
 						r.set_size(.30_container, 1.0_container);
 						r.push(_align_id, true, false, false, false);
+						r.set_background_color(styles.get_style().FormBackgroundColor);
 						_add_controls1(r);
 					})
 				.end()
@@ -401,6 +405,7 @@ namespace corona
 						r.set_margin(10.0_px);
 						r.set_size(.30_container, 1.0_container);
 						r.push(_align_id, true, false, false, false);
+						r.set_background_color(styles.get_style().FormBackgroundColor);
 						_add_controls2(r);
 					})
 				.end()
@@ -847,7 +852,7 @@ namespace corona
 			return *this;
 		}
 
-		container_control& container_control::menu_button(int _id, std::string text, std::function<void(menu_button_control&)> _settings)
+		container_control& container_control::menu_button(int _id, std::function<void(menu_button_control&)> _settings)
 		{
 			auto& tc = create<menu_button_control>(_id);
 			apply(tc);
@@ -2145,7 +2150,7 @@ namespace corona
 			text_style = {};
 			text_style.name = "paragraph_text_style";
 			text_style.fontName = styles.get_style().PrimaryFont;
-			text_style.fontSize = 10;
+			text_style.fontSize = 12;
 			text_style.bold = false;
 			text_style.italics = false;
 			text_style.underline = false;
@@ -2570,6 +2575,11 @@ namespace corona
 			};
 		}
 
+		void minimize_button_control::on_subscribe(presentation* _presentation)
+		{
+
+		}
+
 		minimize_button_control::~minimize_button_control() 
 		{ 
 			; 
@@ -2620,6 +2630,11 @@ namespace corona
 			};
 		}
 
+		void maximize_button_control::on_subscribe(presentation* _presentation)
+		{
+
+		}
+
 		maximize_button_control::~maximize_button_control() 
 		{
 			; 
@@ -2665,6 +2680,11 @@ namespace corona
 					}
 				}
 			};
+		}
+
+		void close_button_control::on_subscribe(presentation *_presentation)
+		{
+			;
 		}
 
 		close_button_control::~close_button_control() 

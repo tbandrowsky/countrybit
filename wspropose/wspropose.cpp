@@ -125,6 +125,8 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 	const int IDC_LOGIN_HELLO = 1103;
 	const int IDC_LOGIN_REGISTER = 1104;
 
+	const int IDC_SYSTEM_MENU = 5001;
+
 	std::function<void(pushbutton_control& _set_defaults)> push_button_defaults = [](pushbutton_control& ctrl) {
 		ctrl.set_size(.50_container, 50.0_px);
 	};
@@ -134,6 +136,7 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 			.caption_bar(
 				st,
 				IDC_TITLE_BAR,
+				IDC_SYSTEM_MENU,
 				IDC_IMAGE_LOGO,
 				"assets\\small_logo.png",
 				"WOODRUFF SAWYER",
@@ -144,6 +147,7 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 			.form_double_column(IDC_PLATFORM_TEST, "Quick Login", [push_button_defaults](container_control& c) {
 					c.chaptertitle("");
 					c.chaptertitle("On the List?");
+					c.paragraph("");
 					c.paragraph("Select yourself and then click login. You'll be prompted for your pin.");
 					c.label("Select User");
 					c.listbox(IDC_LOGIN_USERS);
@@ -152,6 +156,7 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 				[push_button_defaults](container_control& c) {
 					c.chaptertitle("");
 					c.chaptertitle("Not on the list");
+					c.paragraph("");
 					c.paragraph("If you are not on the list, you can login or register for a new account.");
 					c.label("");
 					c.push_button(IDC_LOGIN_REGISTER, "Not on the List", push_button_defaults);
@@ -172,6 +177,7 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 			.caption_bar(
 				st,
 				IDC_TITLE_BAR,
+				IDC_SYSTEM_MENU,
 				IDC_IMAGE_LOGO,
 				"assets\\small_logo.png",
 				"WOODRUFF SAWYER",
@@ -222,6 +228,7 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 		.caption_bar(
 			st,
 			IDC_TITLE_BAR,
+			IDC_SYSTEM_MENU,
 			IDC_IMAGE_LOGO,
 			"assets\\small_logo.png",
 			"WOODRUFF SAWYER",
@@ -274,6 +281,7 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 		.caption_bar(
 			st,
 			IDC_TITLE_BAR,
+			IDC_SYSTEM_MENU,
 			IDC_IMAGE_LOGO,
 			"assets\\small_logo.png",
 			"WOODRUFF SAWYER",
@@ -312,6 +320,7 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 		.caption_bar(
 			st,
 			IDC_TITLE_BAR,
+			IDC_SYSTEM_MENU,
 			IDC_IMAGE_LOGO,
 			"assets\\small_logo.png",
 			"WOODRUFF SAWYER",
@@ -350,6 +359,7 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 		.caption_bar(
 			st,
 			IDC_TITLE_BAR,
+			IDC_SYSTEM_MENU,
 			IDC_IMAGE_LOGO,
 			"assets\\small_logo.png",
 			"WOODRUFF SAWYER",
@@ -391,6 +401,7 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 		.caption_bar(
 			st,
 			IDC_TITLE_BAR,
+			IDC_SYSTEM_MENU,
 			IDC_IMAGE_LOGO,
 			"assets\\small_logo.png",
 			"WOODRUFF SAWYER",
@@ -424,6 +435,7 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 		.caption_bar(
 			st,
 			IDC_TITLE_BAR,
+			IDC_SYSTEM_MENU,
 			IDC_IMAGE_LOGO,
 			"assets\\small_logo.png",
 			"WOODRUFF SAWYER",
@@ -500,6 +512,7 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 		.caption_bar(
 			st,
 			IDC_TITLE_BAR,
+			IDC_SYSTEM_MENU,
 			IDC_IMAGE_LOGO,
 			"assets\\small_logo.png",
 			"WOODRUFF SAWYER",

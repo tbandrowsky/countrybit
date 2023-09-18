@@ -57,6 +57,8 @@ namespace corona
             std::string BackgroundColor;
             std::string TextColor;
 
+            std::string FormBackgroundColor;
+
             std::string Section1BackgroundColor;
             std::string Section1TextColor;
 
