@@ -125,6 +125,10 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 	const int IDC_LOGIN_HELLO = 1103;
 	const int IDC_LOGIN_REGISTER = 1104;
 
+	std::function<void(pushbutton_control& _set_defaults)> push_button_defaults = [](pushbutton_control& ctrl) {
+		ctrl.set_size(.50_container, 50.0_px);
+	};
+
 	test_app->create_page("quick_login")
 		.column_begin(IDC_HOME)
 			.caption_bar(
@@ -137,24 +141,21 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 				"CONNECT PROPERTY",
 				"Quick Login"
 			)
-			.row_begin([](row_layout& r) 
-				{ 
-					r.set_size(1.0_container, 1.0_container); 
-					r.set_content_align(visual_alignment::align_center);
-					r.push(IDC_TITLE_BAR, true, false, false, false);
+			.form_double_column(IDC_PLATFORM_TEST, "Quick Login", [push_button_defaults](container_control& c) {
+					c.chaptertitle("");
+					c.chaptertitle("On the List?");
+					c.paragraph("Select yourself and then click login. You'll be prompted for your pin.");
+					c.label("Select User");
+					c.listbox(IDC_LOGIN_USERS);
+					c.push_button(IDC_LOGIN_HELLO, "Login", push_button_defaults);
+				},
+				[push_button_defaults](container_control& c) {
+					c.chaptertitle("");
+					c.chaptertitle("Not on the list");
+					c.paragraph("If you are not on the list, you can login or register for a new account.");
+					c.label("");
+					c.push_button(IDC_LOGIN_REGISTER, "Not on the List", push_button_defaults);
 				})
-				.column_begin([](column_layout& r)
-					{
-						r.set_size(.50_container, 1.0_container);
-					})
-					.chaptertitle("Quick Login")
-					.paragraph("Select yourself from this list of users who have previously logged in on this computer.")
-					.label("Select User")
-					.listbox( IDC_LOGIN_USERS )
-					.push_button(IDC_LOGIN_HELLO, "Login")
-					.push_button(IDC_LOGIN_REGISTER, "Add User")
-				.end()
-			.end()
 		.end();
 
 	const int IDC_LOGIN_MANUAL = 1201;

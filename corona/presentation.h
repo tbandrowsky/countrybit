@@ -506,6 +506,12 @@ namespace corona
 				std::function<void(container_control& _settings)> _add_controls
 			);
 
+			container_control& form_double_column(int _align_id,
+				std::string _form_name,
+				std::function<void(container_control& _settings)> _add_controls1,
+				std::function<void(container_control& _settings)> _add_controls2
+			);
+
 			container_control& status_bar(presentation_style& st);
 
 		};

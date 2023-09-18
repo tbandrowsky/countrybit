@@ -71,6 +71,8 @@ namespace corona
 
             std::string FooterBackgroundColor;
             std::string FooterTextColor;
+
+            visual_alignment PrevailingAlignment;
         };
 
         class presentation_style_factory

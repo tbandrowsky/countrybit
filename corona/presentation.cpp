@@ -366,9 +366,42 @@ namespace corona
 				})
 				.column_begin([_add_controls, _align_id](column_layout& r)
 					{
+						r.set_margin(10.0_px);
 						r.set_size(.50_container, 1.0_container);
 						r.push(_align_id, true, false, false, false);
 						_add_controls(r);
+					})
+				.end()
+			.end();
+
+			return *this;
+		}
+
+		container_control& container_control::form_double_column(int _align_id,
+			std::string _form_name,
+			std::function<void(container_control& _settings)> _add_controls1,
+			std::function<void(container_control& _settings)> _add_controls2
+		)
+		{
+			auto return_control = row_begin([](row_layout& r)
+				{
+					r.set_size(1.0_container, 1.0_container);
+					r.set_content_align(visual_alignment::align_center);
+				})
+				.column_begin([_add_controls1, _align_id](column_layout& r)
+					{
+						r.set_margin(10.0_px);
+						r.set_size(.30_container, 1.0_container);
+						r.push(_align_id, true, false, false, false);
+						_add_controls1(r);
+					})
+				.end()
+				.column_begin([_add_controls2, _align_id](column_layout& r)
+					{
+						r.set_margin(10.0_px);
+						r.set_size(.30_container, 1.0_container);
+						r.push(_align_id, true, false, false, false);
+						_add_controls2(r);
 					})
 				.end()
 			.end();
@@ -1964,8 +1997,8 @@ namespace corona
 			text_style.italics = false;
 			text_style.underline = false;
 			text_style.strike_through = false;
-			text_style.horizontal_align = visual_alignment::align_center;
-			text_style.vertical_align = visual_alignment::align_center;
+			text_style.horizontal_align = st.PrevailingAlignment;
+			text_style.vertical_align = visual_alignment::align_near;
 			text_style.wrap_text = true;
 		}
 
@@ -2002,8 +2035,8 @@ namespace corona
 			text_style.italics = false;
 			text_style.underline = true;
 			text_style.strike_through = false;
-			text_style.horizontal_align = visual_alignment::align_center;
-			text_style.vertical_align = visual_alignment::align_center;
+			text_style.horizontal_align = st.PrevailingAlignment;
+			text_style.vertical_align = visual_alignment::align_near;
 			text_style.wrap_text = true;
 		}
 
@@ -2040,8 +2073,8 @@ namespace corona
 			text_style.italics = false;
 			text_style.underline = false;
 			text_style.strike_through = false;
-			text_style.horizontal_align = visual_alignment::align_center;
-			text_style.vertical_align = visual_alignment::align_center;
+			text_style.horizontal_align = st.PrevailingAlignment;
+			text_style.vertical_align = visual_alignment::align_near;
 			text_style.wrap_text = true;
 		}
 
@@ -2078,8 +2111,8 @@ namespace corona
 			text_style.italics = false;
 			text_style.underline = false;
 			text_style.strike_through = false;
-			text_style.horizontal_align = visual_alignment::align_center;
-			text_style.vertical_align = visual_alignment::align_center;
+			text_style.horizontal_align = st.PrevailingAlignment;
+			text_style.vertical_align = visual_alignment::align_near;
 			text_style.wrap_text = true;
 		}
 
@@ -2117,8 +2150,8 @@ namespace corona
 			text_style.italics = false;
 			text_style.underline = false;
 			text_style.strike_through = false;
-			text_style.horizontal_align = visual_alignment::align_center;
-			text_style.vertical_align = visual_alignment::align_center;
+			text_style.horizontal_align = visual_alignment::align_near;
+			text_style.vertical_align = visual_alignment::align_near;
 			text_style.wrap_text = true;
 		}
 
@@ -2155,8 +2188,8 @@ namespace corona
 			text_style.italics = false;
 			text_style.underline = false;
 			text_style.strike_through = false;
-			text_style.horizontal_align = visual_alignment::align_center;
-			text_style.vertical_align = visual_alignment::align_center;
+			text_style.horizontal_align = visual_alignment::align_near;
+			text_style.vertical_align = visual_alignment::align_near;
 			text_style.wrap_text = false;
 		}
 
@@ -3055,67 +3088,40 @@ namespace corona
 				double border_thickness = 4;
 
 				linearGradientBrushRequest lgbr;
-				lgbr.start.x = 0;
-				lgbr.start.y = 0;
-				lgbr.stop.x = border_thickness;
-				lgbr.stop.y = 0;
-				lgbr.name = "presentation_border_left";
-				lgbr.gradientStops = {
-					{ toColor("#202020FF"), 0.0 },
-					{ toColor("#707070FF"), 0.9 },
-					{ toColor("#F0F0F0FF"), 1.0 },
-				};
-				_ctx.setLinearGradientBrush(&lgbr);
-
-				lgbr.start.x = 0;
-				lgbr.start.y = 0;
-				lgbr.stop.x = border_thickness;
-				lgbr.stop.y = 0;
-				lgbr.name = "presentation_border_right";
-				lgbr.gradientStops = {
-					{ toColor("#F0F0F0FF"), 0.0 },
-					{ toColor("#707070FF"), 0.9 },
-					{ toColor("#202020FF"), 1.0 },
-				};
-
-				_ctx.setLinearGradientBrush(&lgbr);
-
-				lgbr.start.x = 0;
-				lgbr.start.y = 0;
+				lgbr.start.x = post.w;
+				lgbr.start.y = post.h;
 				lgbr.stop.x = 0;
-				lgbr.stop.y = border_thickness;
-				lgbr.name = "presentation_border_bottom";
+				lgbr.stop.y = 0;
+				lgbr.name = "presentation_shade";
 				lgbr.gradientStops = {
 					{ toColor("#F0F0F0FF"), 0.0 },
-					{ toColor("#707070FF"), 0.4 },
-					{ toColor("#202020FF"), 1.0 },
+					{ toColor("#303030FF"), 0.10 },
+					{ toColor("#404040FF"), 0.90 },
+					{ toColor("#202020FF"), 0.95 },
+					{ toColor("#A0A0A0FF"), 1.0 },
 				};
-
 				_ctx.setLinearGradientBrush(&lgbr);
 
-				post.x = border_thickness;
-				post.y = 0;
-				post.w -= border_thickness * 2;
-				post.h -= border_thickness * 2;
+				double inner_right = post.w - border_thickness * 2;
+				double inner_bottom = post.h - border_thickness * 2;
+				double left_side = border_thickness - 1;
 
-				point start, stop;
-				start.x = 0;
-				start.y = 0;
-				stop.x = 0;
-				stop.y = post.h;
-				_ctx.drawLine(&start, &stop, "presentation_border_left", border_thickness);
+				pathImmediateDto pathx;
+				pathx.fillBrushName = "presentation_shade";
+				pathx.borderBrushName = "presentation_shade";
+				pathx.strokeWidth = 2;
+				pathx.path.addLineTo(0, 0);
+				pathx.path.addLineTo(left_side, 0);
+				pathx.path.addLineTo(left_side, inner_bottom);
+				pathx.path.addLineTo(inner_right, inner_bottom);
+				pathx.path.addLineTo(inner_right, 0);
+				pathx.path.addLineTo(post.w, 0);
+				pathx.path.addLineTo(post.w, post.h);
+				pathx.path.addLineTo(0, post.h);
+				pathx.path.addLineTo(0, 0);
+				pathx.closed = true;
 
-				start.x = post.w;
-				start.y = 0;
-				stop.x = start.x;
-				stop.y = post.h;
-				_ctx.drawLine(&start, &stop, "presentation_border_right", border_thickness);
-
-				start.x = 0;
-				start.y = post.h;
-				stop.x = post.w;
-				stop.y = post.h;
-				_ctx.drawLine(&start, &stop, "presentation_border_bottom", border_thickness);
+				_ctx.drawPath(&pathx);
 
 			}
 			return false;

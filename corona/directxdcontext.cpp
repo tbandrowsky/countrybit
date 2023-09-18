@@ -1732,6 +1732,7 @@ namespace corona
 			auto border = brushes[_pathInstanceDto->borderBrushName];
 			auto p = paths[_pathInstanceDto->pathName];
 
+			/*
 			if (!fill) {
 #if TRACE_GUI
 				std::cout << "missing fill " << _pathInstanceDto->fillBrushName << std::endl;
@@ -1745,12 +1746,13 @@ namespace corona
 #endif
 				return;
 			}
+			*/
 
-			if ((!border && !fill) || !p)
+			if (!p)
 				return;
 
-			D2D1::Matrix3x2F product = currentTransform * D2D1::Matrix3x2F::Rotation(_pathInstanceDto->rotation) * D2D1::Matrix3x2F::Translation(_pathInstanceDto->position.x, _pathInstanceDto->position.y);
-			getDeviceContext()->SetTransform(product);
+//			D2D1::Matrix3x2F product = currentTransform * D2D1::Matrix3x2F::Rotation(_pathInstanceDto->rotation) * D2D1::Matrix3x2F::Translation(_pathInstanceDto->position.x, _pathInstanceDto->position.y);
+//			getDeviceContext()->SetTransform(product);
 
 			if (fill) {
 				getDeviceContext()->FillGeometry(p->geometry, fill->getBrush());
