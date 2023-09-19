@@ -92,7 +92,8 @@ namespace corona
 			menu_item_navigate operator =(const menu_item_navigate& _src);
 			menu_item_navigate(menu_item_navigate&& _src);
 			menu_item_navigate& operator =(menu_item_navigate&& _src);
-			operator menu_click_handler ();
+			void operator()(presentation* _presentation, std::weak_ptr<page> _page);
+			operator bool() { return control_id > 0; }
 		};
 
 		class menu_item : public std::enable_shared_from_this<menu_item>
@@ -107,7 +108,7 @@ namespace corona
 			bool is_separator;
 			std::string name;
 			std::vector<std::shared_ptr<menu_item>> children;
-			menu_click_handler handler;	
+			menu_item_navigate navigate_handler;	
 
 			menu_item();
 			menu_item(int _id, std::string _name = "Empty", std::function<void(menu_item& _item)> _settings = nullptr);

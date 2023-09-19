@@ -318,7 +318,7 @@ namespace corona
 					else
 						test_hit = HTCLIENT;
 
-					std::cout << x << " " << y << " " << test_hit << std::endl;
+					//std::cout << x << " " << y << " " << test_hit << std::endl;
 
 					return test_hit;
 				}				

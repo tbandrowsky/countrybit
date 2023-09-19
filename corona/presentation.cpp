@@ -33,20 +33,18 @@ namespace corona
 		{
 			control_id = _source_control_id;
 			target_page = _target_page;
-			handler = [this](presentation* _presentation, std::weak_ptr<page> _page)
-			{
-					_presentation->select_page(target_page);
-			};
 		}
 
 		menu_item_navigate::menu_item_navigate(const menu_item_navigate& _src)
 		{
+			control_id = _src.control_id;
 			target_page = _src.target_page;
 			handler = _src.handler;
 		}
 
 		menu_item_navigate menu_item_navigate::operator =(const menu_item_navigate& _src)
 		{
+			control_id = _src.control_id;
 			target_page = _src.target_page;
 			handler = _src.handler;
 			return *this;
@@ -54,21 +52,22 @@ namespace corona
 
 		menu_item_navigate::menu_item_navigate(menu_item_navigate&& _src)
 		{
+			control_id = _src.control_id;
 			target_page = std::move(_src.target_page);
 			handler = std::move(_src.handler);
 		}
 
 		menu_item_navigate& menu_item_navigate::operator =(menu_item_navigate&& _src)
 		{
+			control_id = _src.control_id;
 			target_page = std::move(_src.target_page);
 			handler = std::move(_src.handler);
 			return *this;
 		}
 
-
-		menu_item_navigate::operator menu_click_handler ()
+		void menu_item_navigate::operator()(presentation* _presentation, std::weak_ptr<page> _page)
 		{
-			return handler;
+			_presentation->select_page(this->target_page);
 		}
 
 		menu_item::menu_item() :
@@ -112,7 +111,8 @@ namespace corona
 		{
 			auto mi = std::make_shared<menu_item>(_id, _name, _settings);
 			mi->parent = this;
-			mi->handler = menu_item_navigate(_id, _target_page);
+			menu_item_navigate min(_id, _target_page);
+			mi->navigate_handler = min;
 			if (_settings) {
 				_settings(*mi.get());
 			}
@@ -154,8 +154,8 @@ namespace corona
 		{
 			if (auto ppage = _page.lock()) {
 				ppage->on_command(id, [this, _presentation, _page](command_event evt) {
-					if (handler) {
-						handler(_presentation, _page);
+					if (navigate_handler) {
+						navigate_handler(_presentation, _page);
 					}
 				});
 
