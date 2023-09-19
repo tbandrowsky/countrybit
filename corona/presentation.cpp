@@ -35,10 +35,7 @@ namespace corona
 			target_page = _target_page;
 			handler = [this](presentation* _presentation, std::weak_ptr<page> _page)
 			{
-				if (auto ppresent = _presentation.lock())
-				{
-					ppresent->select_page(target_page);
-				}
+					_presentation->select_page(target_page);
 			};
 		}
 
@@ -156,19 +153,31 @@ namespace corona
 		void menu_item::subscribe(presentation* _presentation, std::weak_ptr<page> _page)
 		{
 			if (auto ppage = _page.lock()) {
-				ppage->on_command(id, [this, _present, _page](command_event evt) {
-					if (auto ppresent = _present.lock()) {
-						if (handler) {
-							handler(_present, _page);
-						}
+				ppage->on_command(id, [this, _presentation, _page](command_event evt) {
+					if (handler) {
+						handler(_presentation, _page);
 					}
 				});
 
 				for (auto child : children)
 				{
-					child->subscribe(_present, _page);
+					child->subscribe(_presentation, _page);
 				}
 			}
+		}
+
+		std::weak_ptr<control_base> control_base::get_shared()
+		{
+			std::weak_ptr<control_base> empty;
+			if (parent) {
+				for (auto& child : parent->children)
+				{
+					if (child->id == id) {
+						return child;
+					}
+				}
+			}
+			return empty;
 		}
 
 		void control_base::push(int _destination_control_id, bool _push_left, bool _push_top, bool _push_right, bool _push_bottom)
@@ -2509,7 +2518,7 @@ namespace corona
 			return window.Stop();
 		}
 
-		gradient_button_control::gradient_button_control(container_control* _parent, int _id, std::string _base_name)
+		gradient_button_control::gradient_button_control(container_control* _parent, int _id, std::string _base_name) : draw_control(_parent, _id)
 		{
 			buttonFaceNormal.name = _base_name + "_face_normal";
 			buttonFaceOver.name = _base_name + "_face_over";
@@ -2691,9 +2700,11 @@ namespace corona
 		void menu_button_control::on_subscribe(presentation* _presentation, std::weak_ptr<page> _page)
 		{
 			if (auto ppage = _page.lock()) {
-				ppage->on_mouse_left_click(id, [this, _presentation, _page](mouse_left_click_event evt)
+				menu.subscribe(_presentation, _page);
+				auto pcontrol = get_shared();
+				ppage->on_mouse_left_click(pcontrol, [this, _presentation, _page](mouse_left_click_event evt)
 				{
-						this->menu.subscribe(_presentation, _page);
+						_presentation->open_menu(this, this->menu);
 				});
 			}
 		}
@@ -2964,10 +2975,11 @@ namespace corona
 		{
 			auto menu = _menu.to_menu();
 			HWND hwndMenu = this->getHost()->getMainWindow();
-			point tpstart;
+			POINT tpstart;
 			auto &bpos = _base->get_bounds();
 			tpstart.x = bpos.x * ::GetDpiForWindow(hwndMenu) / 96.0;
 			tpstart.y = bpos.y * ::GetDpiForWindow(hwndMenu) / 96.0;
+			::ClientToScreen(hwndMenu, &tpstart);
 			::TrackPopupMenuEx(menu, TPM_CENTERALIGN | TPM_TOPALIGN, tpstart.x, tpstart.y, hwndMenu, nullptr);
 		}
 
@@ -3003,37 +3015,52 @@ namespace corona
 			key_down_events[_control_id] = evt;
 		}
 
-		void page::on_mouse_left_click(int _control_id, std::function< void(mouse_left_click_event) > handler)
+		void page::on_mouse_left_click(std::weak_ptr<control_base> _base, std::function< void(mouse_left_click_event) > handler)
 		{
 			auto evt = std::make_shared<mouse_left_click_event_binding>();
-			evt->subscribed_item_id = _control_id;
-			evt->on_mouse_left_click = handler;
-			mouse_left_click_events[_control_id] = evt;
+			if (auto pbase = _base.lock()) 
+			{
+				evt->control = pbase;
+				evt->subscribed_item_id = pbase->id;
+				evt->on_mouse_left_click = handler;
+				mouse_left_click_events[pbase->id] = evt;
+			}
 		}
 
-		void page::on_mouse_right_click(int _control_id, std::function< void(mouse_right_click_event) > handler)
+		void page::on_mouse_right_click(std::weak_ptr<control_base> _base, std::function< void(mouse_right_click_event) > handler)
 		{
 			auto evt = std::make_shared<mouse_right_click_event_binding>();
-			evt->subscribed_item_id = _control_id;
-			evt->on_mouse_right_click = handler;
-			mouse_right_click_events[_control_id] = evt;
+			if (auto pbase = _base.lock())
+			{
+				evt->control = pbase;
+				evt->subscribed_item_id = pbase->id;
+				evt->on_mouse_right_click = handler;
+				mouse_right_click_events[pbase->id] = evt;
+			}
 		}
 
-
-		void page::on_mouse_move(int _control_id, std::function< void(mouse_move_event) > handler)
+		void page::on_mouse_move(std::weak_ptr<control_base> _base, std::function< void(mouse_move_event) > handler)
 		{
 			auto evt = std::make_shared<mouse_move_event_binding>();
-			evt->subscribed_item_id = _control_id;
-			evt->on_mouse_move = handler;
-			mouse_move_events[_control_id] = evt;
+			if (auto pbase = _base.lock())
+			{
+				evt->control = pbase;
+				evt->subscribed_item_id = pbase->id;
+				evt->on_mouse_move = handler;
+				mouse_move_events[pbase->id] = evt;
+			}
 		}
 
-		void page::on_mouse_click(int _control_id, std::function< void(mouse_click_event) > handler)
+		void page::on_mouse_click(std::weak_ptr<control_base> _base, std::function< void(mouse_click_event) > handler)
 		{
 			auto evt = std::make_shared<mouse_click_event_binding>();
-			evt->subscribed_item_id = _control_id;
-			evt->on_mouse_click = handler;
-			mouse_click_events[_control_id] = evt;
+			if (auto pbase = _base.lock())
+			{
+				evt->control = pbase;
+				evt->subscribed_item_id = pbase->id;
+				evt->on_mouse_click = handler;
+				mouse_click_events[pbase->id] = evt;
+			}
 		}
 
 		void page::on_item_changed(int _control_id, std::function< void(item_changed_event) > handler)
@@ -3091,52 +3118,17 @@ namespace corona
 					ptrx->on_mouse_move(evt);
 				}
 			}
-
-			if (!_control_id) 
-			{
-				for (auto evh : mouse_move_events)
-				{
-					auto lck = evh.second->control.lock();
-					if (lck && lck->contains(evt.absolute_point))
-					{
-						evt.relative_point.x = evt.absolute_point.x - lck->get_bounds().x;
-						evt.relative_point.y = evt.absolute_point.y - lck->get_bounds().y;
-						evt.control = lck.get();
-						evt.control_id = lck->id;
-						evh.second->on_mouse_move(evt);
-					}
-				}
-			}
-
 		}
 
 		void page::handle_mouse_click(int _control_id, mouse_click_event evt)
 		{
 			if (mouse_click_events.contains(_control_id)) {
 				auto& ptrx = mouse_click_events[_control_id];
-				if (auto temp = ptrx.get()->control.lock()) {
-					evt.relative_point.x = evt.absolute_point.x - temp->get_bounds().x;
-					evt.relative_point.y = evt.absolute_point.y - temp->get_bounds().y;
-					evt.control = temp.get();
-					evt.control_id = temp->id;
-					ptrx->on_mouse_click(evt);
-				}
-			}
-
-			if (!_control_id)
-			{
-				for (auto evh : mouse_click_events)
-				{
-					auto lck = evh.second->control.lock();
-					if (lck && lck->contains(evt.absolute_point))
-					{
-						evt.relative_point.x = evt.absolute_point.x - lck->get_bounds().x;
-						evt.relative_point.y = evt.absolute_point.y - lck->get_bounds().y;
-						evt.control = lck.get();
-						evt.control_id = lck->id;
-						evh.second->on_mouse_click(evt);
-					}
-				}
+				evt.relative_point.x = evt.absolute_point.x - evt.control->get_bounds().x;
+				evt.relative_point.y = evt.absolute_point.y - evt.control->get_bounds().y;
+				evt.control = evt.control;
+				evt.control_id = evt.control->id;
+				ptrx->on_mouse_click(evt);
 			}
 		}
 
@@ -3144,29 +3136,9 @@ namespace corona
 		{
 			if (mouse_left_click_events.contains(_control_id)) {
 				auto& ptrx = mouse_left_click_events[_control_id];
-				if (auto temp = ptrx.get()->control.lock()) {
-					evt.relative_point.x = evt.absolute_point.x - temp->get_bounds().x;
-					evt.relative_point.y = evt.absolute_point.y - temp->get_bounds().y;
-					evt.control = temp.get();
-					evt.control_id = temp->id;
-					ptrx->on_mouse_left_click(evt);
-				}
-			}
-
-			if (!_control_id)
-			{
-				for (auto evh : mouse_left_click_events)
-				{
-					auto lck = evh.second->control.lock();
-					if (lck && lck->contains(evt.absolute_point))
-					{
-						evt.relative_point.x = evt.absolute_point.x - lck->get_bounds().x;
-						evt.relative_point.y = evt.absolute_point.y - lck->get_bounds().y;
-						evt.control = lck.get();
-						evt.control_id = lck->id;
-						evh.second->on_mouse_left_click(evt);
-					}
-				}
+				evt.relative_point.x = evt.absolute_point.x - evt.control->get_bounds().x;
+				evt.relative_point.y = evt.absolute_point.y - evt.control->get_bounds().y;
+				ptrx->on_mouse_left_click(evt);
 			}
 		}
 
@@ -3174,29 +3146,11 @@ namespace corona
 		{
 			if (mouse_right_click_events.contains(_control_id)) {
 				auto& ptrx = mouse_right_click_events[_control_id];
-				if (auto temp = ptrx.get()->control.lock()) {
-					evt.relative_point.x = evt.absolute_point.x - temp->get_bounds().x;
-					evt.relative_point.y = evt.absolute_point.y - temp->get_bounds().y;
-					evt.control = temp.get();
-					evt.control_id = temp->id;
-					ptrx->on_mouse_right_click(evt);
-				}
-			}
-
-			if (!_control_id)
-			{
-				for (auto evh : mouse_right_click_events)
-				{
-					auto lck = evh.second->control.lock();
-					if (lck && lck->contains(evt.absolute_point))
-					{
-						evt.relative_point.x = evt.absolute_point.x - lck->get_bounds().x;
-						evt.relative_point.y = evt.absolute_point.y - lck->get_bounds().y;
-						evt.control = lck.get();
-						evt.control_id = lck->id;
-						evh.second->on_mouse_right_click(evt);
-					}
-				}
+				evt.relative_point.x = evt.absolute_point.x - evt.control->get_bounds().x;
+				evt.relative_point.y = evt.absolute_point.y - evt.control->get_bounds().y;
+				evt.control = evt.control;
+				evt.control_id = evt.control->id;
+				ptrx->on_mouse_right_click(evt);
 			}
 		}
 
@@ -3391,12 +3345,30 @@ namespace corona
 			auto cp = current_page.lock();
 			presentation* p = this;
 			cp->root->set_mouse(*_point, &leftMouse, nullptr, [cp, p,_point](control_base* _item) {
-				mouse_click_event mce;
+				mouse_left_click_event mcel = {};
+				mcel.control = _item;
+				mcel.control_id = _item->id;
+				mcel.absolute_point.x = _point->x;
+				mcel.absolute_point.y = _point->y;
+				mcel.absolute_point.z = 0;
+				if (_item) {
+					mcel.relative_point.x = _point->x - _item->get_bounds().x;
+					mcel.relative_point.y = _point->y - _item->get_bounds().y;
+					mcel.relative_point.z = 0;
+				}
+				cp->handle_mouse_left_click(_item->id, mcel);
+
+				mouse_click_event mce = {};
 				mce.control = _item;
 				mce.control_id = _item->id;
 				mce.absolute_point.x = _point->x;
 				mce.absolute_point.y = _point->y;
 				mce.absolute_point.z = 0;
+				if (_item) {
+					mcel.relative_point.x = _point->x - _item->get_bounds().x;
+					mcel.relative_point.y = _point->y - _item->get_bounds().y;
+					mcel.relative_point.z = 0;
+				}
 				cp->handle_mouse_click(_item->id, mce);
 				}, nullptr);
 		}
@@ -3414,13 +3386,14 @@ namespace corona
 				mce.absolute_point.y = _point->y;
 				mce.absolute_point.z = 0;
 				cp->handle_mouse_click(_item->id, mce);
-				mouse_right_click_event mcel;
+
+				mouse_left_click_event mcel;
 				mcel.control = _item;
 				mcel.control_id = _item->id;
 				mcel.absolute_point.x = _point->x;
 				mcel.absolute_point.y = _point->y;
 				mcel.absolute_point.z = 0;
-				cp->handle_mouse_right_click(_item->id, mcel);
+				cp->handle_mouse_left_click(_item->id, mcel);
 				}, nullptr);
 		}
 

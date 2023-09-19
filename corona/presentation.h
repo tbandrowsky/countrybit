@@ -217,7 +217,7 @@ namespace corona
 			}
 		};
 
-		class control_base : public std::enable_shared_from_this<control_base>
+		class control_base
 		{
 		protected:
 
@@ -284,6 +284,7 @@ namespace corona
 				}
 			}
 
+			std::weak_ptr<control_base> get_shared();
 			std::vector<control_push_request> push_requests;
 
 			rectangle& get_bounds() { return bounds;  }
@@ -1655,10 +1656,10 @@ namespace corona
 
 			void on_key_up( int _control_id, std::function< void(key_up_event) > );
 			void on_key_down( int _control_id, std::function< void(key_down_event) > );
-			void on_mouse_move( int _control_id, std::function< void(mouse_move_event) > );
-			void on_mouse_click( int _control_id, std::function< void(mouse_click_event) > );
-			void on_mouse_left_click(int _control_id, std::function< void(mouse_left_click_event) >);
-			void on_mouse_right_click(int _control_id, std::function< void(mouse_right_click_event) >);
+			void on_mouse_move( std::weak_ptr<control_base> _base, std::function< void(mouse_move_event) > );
+			void on_mouse_click( std::weak_ptr<control_base> _base, std::function< void(mouse_click_event) > );
+			void on_mouse_left_click( std::weak_ptr<control_base> _base, std::function< void(mouse_left_click_event) >);
+			void on_mouse_right_click( std::weak_ptr<control_base> _base, std::function< void(mouse_right_click_event) >);
 			void on_item_changed( int _control_id, std::function< void(item_changed_event) > );
 			void on_list_changed( int _control_id, std::function< void(list_changed_event) > );
 			void on_command(int _item_id, std::function< void(command_event) >);
