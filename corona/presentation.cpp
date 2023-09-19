@@ -2977,10 +2977,10 @@ namespace corona
 			HWND hwndMenu = this->getHost()->getMainWindow();
 			POINT tpstart;
 			auto &bpos = _base->get_bounds();
-			tpstart.x = bpos.x * ::GetDpiForWindow(hwndMenu) / 96.0;
-			tpstart.y = bpos.y * ::GetDpiForWindow(hwndMenu) / 96.0;
+			tpstart.x = bpos.right() * ::GetDpiForWindow(hwndMenu) / 96.0;
+			tpstart.y = bpos.bottom()  * ::GetDpiForWindow(hwndMenu) / 96.0;
 			::ClientToScreen(hwndMenu, &tpstart);
-			::TrackPopupMenuEx(menu, TPM_CENTERALIGN | TPM_TOPALIGN, tpstart.x, tpstart.y, hwndMenu, nullptr);
+			::TrackPopupMenuEx(menu, TPM_LEFTALIGN | TPM_TOPALIGN, tpstart.x, tpstart.y, hwndMenu, nullptr);
 		}
 
 		void page::arrange(double width, double height, double _padding)
