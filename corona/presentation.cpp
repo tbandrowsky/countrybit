@@ -501,13 +501,13 @@ namespace corona
 				{
 					r.set_size(1.0_container, 1.0_container);
 					r.set_content_align(visual_alignment::align_center);
+					r.set_background_color(styles.get_style().FormBackgroundColor);
 				})
 				.column_begin([_add_controls1, _align_id](column_layout& r)
 					{
 						r.set_margin(10.0_px);
 						r.set_size(.30_container, 1.0_container);
 						r.push(_align_id, true, false, false, false);
-						r.set_background_color(styles.get_style().FormBackgroundColor);
 						_add_controls1(r);
 					})
 				.end()
@@ -516,7 +516,6 @@ namespace corona
 						r.set_margin(10.0_px);
 						r.set_size(.30_container, 1.0_container);
 						r.push(_align_id, true, false, false, false);
-						r.set_background_color(styles.get_style().FormBackgroundColor);
 						_add_controls2(r);
 					})
 				.end()
@@ -972,6 +971,17 @@ namespace corona
 			}
 			return *this;
 		}
+
+		camera_control& container_control::camera(int _id, std::function<void(camera_control&)> _settings)
+		{
+			auto& tc = create<camera_control>(_id);
+			apply(tc);
+			if (_settings) {
+				_settings(tc);
+			}
+			return *this;
+		}
+
 
 		double control_base::to_pixels(measure length)
 		{
@@ -1870,9 +1880,50 @@ namespace corona
 				source.right = inner_bounds.w;
 				_dest->DrawBitmap(bm, &dest, 1.0, D2D1_INTERPOLATION_MODE::D2D1_INTERPOLATION_MODE_LINEAR, &source );
 			}
-			for (auto child : children) {
+			for (auto child : children) 
+			{
 				child->render(_dest);
 			}
+		}
+
+		camera_control::camera_control(container_control* _parent, int _id, std::string _name) : draw_control(_parent, _id)
+		{
+			init();
+		}
+
+		void camera_control::init()
+		{
+			set_origin(0.0_px, 0.0_px);
+			set_size(1.0_container, 1.2_fontgr);
+
+			on_create = [this](draw_control* _src)
+			{
+				if (auto pwindow = this->window.lock())
+				{
+					solidBrushRequest	border_brush;
+					pwindow->getContext().setSolidColorBrush(&this->background_brush);
+					pwindow->getContext().setSolidColorBrush(&this->border_brush);
+				}
+			};
+
+			on_draw = [this](draw_control* _src) {
+				if (auto pwindow = this->window.lock())
+				{
+					if (auto phost = host.lock()) {
+						auto draw_bounds = inner_bounds;
+
+						draw_bounds.x = 0;
+						draw_bounds.y = 0;
+
+						pwindow->getContext().drawRectangle(& draw_bounds, this->border_brush.name, 8, this->background_brush.name);
+					}
+				}
+			};
+		}
+
+		camera_control::~camera_control()
+		{
+			;
 		}
  
 		/*

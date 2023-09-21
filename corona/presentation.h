@@ -8,6 +8,31 @@ namespace corona
 
 		extern presentation_style_factory styles;
 
+		class list_data
+		{
+		public:
+			std::string id_field;
+			std::string text_field;
+			json items;
+		};
+
+		class table_column
+		{
+		public:
+			std::string display_name;
+			std::string json_field;
+			int width;
+			visual_alignment alignment;
+		};
+
+		class table_data
+		{
+		public:
+			std::vector<table_column> columns;
+			std::string id_field;
+			json items;
+		};
+
 		class id_counter
 		{
 		public:
@@ -76,6 +101,8 @@ namespace corona
 		class maximize_button_control;
 		class close_button_control;
 		class menu_button_control;
+
+		class camera_control;
 
 		using menu_click_handler = std::function<void(presentation *_presentation, std::weak_ptr<page> _page)>;
 
@@ -372,8 +399,6 @@ namespace corona
 
 		class draw_control : public control_base
 		{
-			void init();
-
 		public:
 
 			HBRUSH background_brush_win32;
@@ -392,6 +417,76 @@ namespace corona
 			virtual void render(CComPtr<ID2D1DeviceContext>& _dest);
 			virtual void on_resize();
 		};
+
+
+		class camera_control : public draw_control
+		{
+			void init();
+			solidBrushRequest	border_brush;
+		public:
+			camera_control(container_control* _parent, int _id, std::string _name);
+			virtual ~camera_control();
+		};
+
+		class grid_control : public draw_control
+		{
+			void init();
+			solidBrushRequest	border_brush;
+		public:
+			grid_control(container_control* _parent, int _id, std::string _name);
+			virtual ~grid_control();
+		};
+
+		const int IDC_CHART_BASE = 1000000;
+		const int IDC_CHART_PROGRAM = 1 + IDC_CHART_BASE;
+		const int IDC_CHART_BAR = 2 + IDC_CHART_BASE;
+		const int IDC_CHART_LINE = 3 + IDC_CHART_BASE;
+		const int IDC_CHART_PIE = 4 + IDC_CHART_BASE;
+		const int IDC_CHART_SCATTER = 5 + IDC_CHART_BASE;
+		const int IDC_CHART_BUBBLE = 6 + IDC_CHART_BASE;
+		const int IDC_CHART_TREE_BOX = 7 + IDC_CHART_BASE; 
+		const int IDC_CHART_TREE_MAP = 8 + IDC_CHART_BASE;
+
+		class chart_control : public draw_control
+		{
+			void init();
+			solidBrushRequest	border_brush;
+
+			/*
+			
+			The big thing for the design here is to just be the mainframe sleazes when it comes to handling loads of options.
+			For the type of chart, you can make in the menu into it.
+			
+			*/
+
+		public:
+
+			int chart_type;
+			table_data  data;
+			std::string color_series;
+			std::string sseries1;
+			std::string sseries2;
+			std::string sseries3;
+			std::string sseries4;
+
+			chart_control(container_control* _parent, int _id, std::string _name);
+			virtual ~chart_control();
+		};
+
+
+		class slide_control : public draw_control
+		{
+			void init();
+			solidBrushRequest	border_brush;
+
+		public:
+
+			int source_object_id;
+
+			slide_control(container_control* _parent, int _id, std::string _name);
+			virtual ~slide_control();
+		};
+
 
 		class container_control : public draw_control
 		{
@@ -912,31 +1007,6 @@ namespace corona
 			{
 				destroy();
 			}
-		};
-
-		class list_data
-		{
-		public:
-			std::string id_field;
-			std::string text_field;
-			json items;
-		};
-
-		class table_column
-		{
-		public:
-			std::string display_name;
-			std::string json_field;
-			int width;
-			visual_alignment alignment;
-		};
-
-		class table_data
-		{
-		public:
-			std::vector<table_column> columns;
-			std::string id_field;
-			json items;
 		};
 
 

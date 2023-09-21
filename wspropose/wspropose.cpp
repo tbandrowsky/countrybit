@@ -71,7 +71,6 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 	std::shared_ptr<corona::win32::presentation> test_app = std::make_shared<corona::win32::presentation>();
 
 	const int IDM_VIEW = 5001;
-	const int IDM_VIEW_QUICK_LOGIN = 5002;
 	const int IDM_VIEW_FULL_LOGIN = 5003;
 	const int IDM_VIEW_CREATE_ACCOUNT = 5004;
 	const int IDM_VIEW_CONFIRM_ACCOUNT = 5005;
@@ -97,8 +96,7 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 		.item(IDM_COMPANY_WIKIPEDIA, "Wiki&pedia")
 	.end()
 	.begin_submenu(IDM_VIEW, "&View")
-		.destination(IDM_VIEW_QUICK_LOGIN, "&Quick Login", "quick_login")
-		.destination(IDM_VIEW_FULL_LOGIN, "&Full Login", "full_login")
+		.destination(IDM_VIEW_FULL_LOGIN, "&Login", "full_login")
 		.destination(IDM_VIEW_CREATE_ACCOUNT, "&Create Account", "create_account")
 		.destination(IDM_VIEW_CONFIRM_ACCOUNT, "C&onfirm Account", "confirm_account")
 		.destination(IDM_VIEW_ACCESS_DENIED, "Access &Denied", "access_denied")
@@ -109,71 +107,6 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 		.item(IDM_ACCOUNT_LOGOUT, "L&ogout")
 		.item(IDM_ACCOUNT_LOGIN, "Log&in")
 	.end();
-
-	std::function<void(corona::database::page& _host, presentation *test_app)> config_menu_handlers;
-
-	config_menu_handlers = [](corona::database::page& _host, presentation* test_app)
-	{
-		_host.on_command(IDM_COMPANY_ABOUT, [test_app](command_event evt)
-			{
-				//test_app->select_page("");
-			});
-
-		_host.on_command(IDM_COMPANY_HOME, [test_app](command_event evt)
-			{
-				//test_app->select_page("");
-			});
-
-		_host.on_command(IDM_COMPANY_WIKIPEDIA, [test_app](command_event evt)
-			{
-				//test_app->select_page("");
-			});
-
-		_host.on_command(IDM_VIEW_QUICK_LOGIN, [test_app](command_event evt)
-			{
-				test_app->select_page("quick_login");
-			});
-
-		_host.on_command(IDM_VIEW_FULL_LOGIN, [test_app](command_event evt)
-			{
-				test_app->select_page("full_login");
-			});
-
-		_host.on_command(IDM_VIEW_CREATE_ACCOUNT, [test_app](command_event evt)
-			{
-				test_app->select_page("create_account");
-			});
-
-		_host.on_command(IDM_VIEW_CONFIRM_ACCOUNT, [test_app](command_event evt)
-			{
-				test_app->select_page("confirm_account");
-			});
-
-		_host.on_command(IDM_VIEW_ACCESS_DENIED, [test_app](command_event evt)
-			{
-				test_app->select_page("access_denied");
-			});
-
-		_host.on_command(IDM_VIEW_CUSTOMER_HOME, [test_app](command_event evt)
-			{
-				test_app->select_page("customer_home");
-			});
-
-		_host.on_command(IDM_VIEW_TEST, [test_app](command_event evt)
-			{
-				test_app->select_page("control_test1");
-			});
-
-		_host.on_command(IDM_ACCOUNT_LOGOUT, [test_app](command_event evt)
-			{
-				//test_app->select_page("");
-			});
-
-		_host.on_command(IDM_ACCOUNT_LOGIN, [test_app](command_event evt)
-			{
-				//test_app->select_page("");
-			});
-	};
 
 	const int IDC_IMAGE_LOGO = 1024;
 	const int IDC_COMPANY_NAME = 1025;
@@ -198,39 +131,6 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 		ctrl.set_size(.50_container, 50.0_px);
 	};
 
-	test_app->create_page("quick_login")
-		.column_begin(IDC_HOME)
-			.caption_bar(
-				st,
-				IDC_TITLE_BAR,
-				IDC_SYSTEM_MENU,
-				app_menu,
-				IDC_IMAGE_LOGO,
-				"assets\\small_logo.png",
-				"WOODRUFF SAWYER",
-				IDC_PLATFORM_TEST,
-				"CONNECT PROPERTY",
-				"Quick Login"
-			)
-			.form_double_column(IDC_PLATFORM_TEST, "Quick Login", [push_button_defaults](container_control& c) {
-					c.chaptertitle("");
-					c.chaptertitle("On the List?");
-					c.paragraph("");
-					c.paragraph("Select yourself and then click login. You'll be prompted for your pin.");
-					c.label("Select User");
-					c.listbox(IDC_LOGIN_USERS);
-					c.push_button(IDC_LOGIN_HELLO, "Login", push_button_defaults);
-				},
-				[push_button_defaults](container_control& c) {
-					c.chaptertitle("");
-					c.chaptertitle("Not on the list");
-					c.paragraph("");
-					c.paragraph("If you are not on the list, you can login or register for a new account.");
-					c.label("");
-					c.push_button(IDC_LOGIN_REGISTER, "Not on the List", push_button_defaults);
-				})
-		.end();
-
 	const int IDC_LOGIN_MANUAL = 1201;
 	const int IDC_LOGIN_USERNAME = 1202;
 	const int IDC_LOGIN_PASSWORD = 1203;
@@ -239,6 +139,8 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 	const int IDC_CREATE_NEW_ACCOUNT = 1206;
 	const int IDC_LOGIN_FIRST_NAME = 1207;
 	const int IDC_LOGIN_LAST_NAME = 1208;
+	const int IDC_LOGIN_ID_NUMBER = 1209;
+	const int IDC_LOGIN_STATE = 1210;
 
 	test_app->create_page("full_login")
 		.column_begin(IDC_HOME)
@@ -254,33 +156,26 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 				"CONNECT PROPERTY",
 				"Full Login"
 			)
-		.row_begin([](row_layout& r)
-			{
-				r.set_size(1.0_container, 1.0_container);
-				r.set_content_align(visual_alignment::align_center);
-			})
-		.column_begin([](column_layout& r)
-			{
-				r.set_size(.50_container, 0.5_container);
-			})
-				.chaptertitle("Full Login")
-					.chaptersubtitle("Identification")
-					.label("Password")
-					.edit(IDC_LOGIN_PASSWORD)
-					.label("Scan your RealID")
-					.subtitle("Placeholder for Camera")
-					.label("First Name")
-					.edit(IDC_LOGIN_FIRST_NAME)
-					.label("Last Name")
-					.edit(IDC_LOGIN_LAST_NAME)
-					.push_button(IDC_LOGIN_MANUAL, "Login")
-					.push_button(IDC_LOGIN_CANCEL, "Cancel")
-					.chaptersubtitle("Need help?")
-					.push_button(IDC_LOGIN_MANUAL, "")
-					.push_button(IDC_LOGIN_CANCEL, "Cancel")
-				.end()
-			.end()
-		.end()
+		.form_double_column(IDC_PLATFORM_TEST, "Full Login", [push_button_defaults](container_control& c) {
+				c.chaptertitle("Identification");
+				c.label("Scan RealID");
+				c.subtitle("Placeholder for Camera");
+				c.label("First Name");
+				c.edit(IDC_LOGIN_FIRST_NAME);
+				c.label("Last Name");
+				c.edit(IDC_LOGIN_LAST_NAME);
+				c.label("State");
+				c.edit(IDC_LOGIN_STATE);
+				c.label("ID Number");
+				c.edit(IDC_LOGIN_ID_NUMBER);
+			},
+		[push_button_defaults](container_control& c2) {
+				c2.chaptertitle("Authentication");
+				c2.label("Enter Password");
+				c2.label("Enter Password");
+			}
+			
+			)
 	.end();
 
 	const int IDC_FIRST_NAME = 1301;
@@ -306,38 +201,29 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 			"CONNECT PROPERTY",
 			"Create New Account"
 		)
-		.row_begin([](row_layout& r)
-			{
-				r.set_size(1.0_container, 1.0_container);
-				r.set_content_align(visual_alignment::align_center);
-			})
-		.column_begin([](column_layout& r)
-			{
-				r.set_size(.50_container, 0.5_container);
-			})
-				.chaptertitle("Create New Account")
-				.chaptersubtitle("Identification")
-				.label("Scan your RealID")
-				.subtitle("Placeholder for Camera")
-				.chaptersubtitle("About you")
-				.label("First Name")
-				.edit(IDC_FIRST_NAME)
-				.label("Last Name")
-				.edit(IDC_LAST_NAME)
-				.label("Email")
-				.edit(IDC_EMAIL)
-				.label("Phone")
-				.edit(IDC_PHONE)
-				.chaptertitle("Set password")
-				.label("Password")
-				.edit(IDC_NEW_PASSWORD1)
-				.label("Confirm Password")
-				.edit(IDC_NEW_PASSWORD2)
-				.push_button(IDC_CREATE_ACCOUNT, "Create Account")
-				.push_button(IDC_CANCEL_ACCOUNT, "Cancel")
-				.paragraph("To ensure all members of this community are real, legal Americans, this application uses your RealID.")
-			.end()
-		.end()
+		.form_single_column(IDC_PLATFORM_TEST, "Create New Account", [push_button_defaults](container_control& c) {
+			c.chaptertitle("Create New Account");
+			c.chaptersubtitle("Identification");
+			c.label("Scan your RealID");
+			c.subtitle("Placeholder for Camera");
+			c.chaptersubtitle("About you");
+			c.label("First Name");
+			c.edit(IDC_FIRST_NAME);
+			c.label("Last Name");
+			c.edit(IDC_LAST_NAME);
+			c.label("Email");
+			c.edit(IDC_EMAIL);
+			c.label("Phone");
+			c.edit(IDC_PHONE);
+			c.chaptertitle("Set password");
+			c.label("Password");
+			c.edit(IDC_NEW_PASSWORD1);
+			c.label("Confirm Password");
+			c.edit(IDC_NEW_PASSWORD2);
+			c.push_button(IDC_CREATE_ACCOUNT, "Create Account");
+			c.push_button(IDC_CANCEL_ACCOUNT, "Cancel");
+			c.paragraph("To ensure all members of this community are real, legal Americans, this application uses your RealID.");
+		})
 		.end()
 	.end();
 
@@ -360,25 +246,16 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 			"CONNECT PROPERTY",
 			"Confirm Account"
 		)
-		.row_begin([](row_layout& r)
-			{
-				r.set_size(1.0_container, 1.0_container);
-				r.set_content_align(visual_alignment::align_center);
+		.form_single_column(IDC_PLATFORM_TEST, "Full Login", [push_button_defaults](container_control& c) {
+			c.chaptertitle("Confirm Account");
+			c.chaptersubtitle("Confirmation Code.");
+			c.push_button(IDC_SEND_ACCOUNT_CONFIRM, "Send Code");
+			c.label("Enter Code");
+			c.edit(IDC_EDIT_ACCOUNT_CONFIRM);
+			c.push_button(IDC_ACCOUNT_CONFIRM, "Confirm");
+			c.push_button(IDC_CANCEL_ACCOUNT_CONFIRM, "Confirm");
+			c.end();
 			})
-		.column_begin([](column_layout& r)
-			{
-				r.set_size(.50_container, 0.5_container);
-			})
-				.chaptertitle("Confirm Account")
-		.chaptersubtitle("Confirmation Code.")
-		.push_button(IDC_SEND_ACCOUNT_CONFIRM, "Send Code")
-		.label("Enter Code")
-		.edit(IDC_EDIT_ACCOUNT_CONFIRM)
-		.push_button(IDC_ACCOUNT_CONFIRM, "Confirm")
-		.push_button(IDC_CANCEL_ACCOUNT_CONFIRM, "Confirm")
-		.end()
-		.end()
-		.end()
 		.end();
 
 	const int IDC_LOGIN_AGAIN = 1500;
@@ -400,24 +277,14 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 			"CONNECT PROPERTY",
 			"Access Denied"
 		)
-		.row_begin([](row_layout& r)
-			{
-				r.set_size(1.0_container, 1.0_container);
-				r.set_content_align(visual_alignment::align_center);
-			})
-		.column_begin([](column_layout& r)
-			{
-				r.set_size(.50_container, 0.5_container);
-			})
-				.chaptertitle("Denied")
-		.chaptersubtitle("Access is denied.")
-		.push_button(IDC_LOGIN_AGAIN, "Try again")
-		.chaptersubtitle("You can try to reset your password here.")
-		.push_button(IDC_LOGIN_FORGOT, "Forgot password")
-		.end()
-		.end()
-		.end()
-		.end();
+		.form_single_column(IDC_PLATFORM_TEST, "Full Login", [push_button_defaults](container_control& c) {
+			c.chaptertitle("Access Denied");
+			c.chaptersubtitle("Access is denied.");
+			c.push_button(IDC_LOGIN_AGAIN, "Try again");
+			c.chaptersubtitle("You can try to reset your password here.");
+			c.push_button(IDC_LOGIN_FORGOT, "Forgot password");
+		})
+	.end();
 
 	const int IDC_SEND_PASSWORD_CHANGE_CODE = 1600;
 	const int IDC_EDIT_PASSWORD_CHANGE_CODE = 1601;
@@ -440,30 +307,20 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 			"CONNECT PROPERTY",
 			"Reset Password"
 		)
-		.row_begin([](row_layout& r)
-			{
-				r.set_size(1.0_container, 1.0_container);
-				r.set_content_align(visual_alignment::align_center);
+		.form_single_column(IDC_PLATFORM_TEST, "Full Login", [push_button_defaults](container_control& c) {
+			c.chaptertitle("Reset Password");
+			c.chaptersubtitle("Confirmation Code.");
+			c.push_button(IDC_SEND_PASSWORD_CHANGE_CODE, "Send Code");
+			c.label("Enter Code");
+			c.edit(IDC_EDIT_PASSWORD_CHANGE_CODE);
+			c.chaptersubtitle("Create New Password.");
+			c.label("New Password");
+			c.edit(IDC_NEW_RESET_PASSWORD1);
+			c.label("Confirm New Password");
+			c.edit(IDC_NEW_RESET_PASSWORD2);
+			c.push_button(IDC_SET_NEW_PASSWORD, "Set password");
+			c.push_button(IDC_CANCEL_PASSWORD, "Cancel");
 			})
-		.column_begin([](column_layout& r)
-			{
-				r.set_size(.50_container, 0.5_container);
-			})
-				.chaptertitle("Reset Password")
-		.chaptersubtitle("Confirmation Code.")
-		.push_button(IDC_SEND_PASSWORD_CHANGE_CODE, "Send Code")
-		.label("Enter Code")
-		.edit(IDC_EDIT_PASSWORD_CHANGE_CODE)
-		.chaptersubtitle("Create New Password.")
-		.label("New Password")
-		.edit(IDC_NEW_RESET_PASSWORD1)
-		.label("Confirm New Password")
-		.edit(IDC_NEW_RESET_PASSWORD2)
-		.push_button(IDC_SET_NEW_PASSWORD, "Set password")
-		.push_button(IDC_CANCEL_PASSWORD, "Cancel")
-		.end()
-		.end()
-		.end()
 		.end();
 
 
