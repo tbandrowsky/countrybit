@@ -366,6 +366,36 @@ namespace corona
 			return tc;
 		}
 
+		row_view_layout& container_control::row_view_begin(int id, std::function<void(row_view_layout&)> _settings)
+		{
+			auto& tc = create<row_view_layout>(id);
+			apply(tc);
+			if (_settings) {
+				_settings(tc);
+			}
+			return tc;
+		}
+
+		column_view_layout& container_control::column_view_begin(int id, std::function<void(column_view_layout&)> _settings)
+		{
+			auto& tc = create<column_view_layout>(id);
+			apply(tc);
+			if (_settings) {
+				_settings(tc);
+			}
+			return tc;
+		}
+
+		absolute_view_layout& container_control::absolute_view_begin(int id, std::function<void(absolute_view_layout&)> _settings)
+		{
+			auto& tc = create<absolute_view_layout>(id);
+			apply(tc);
+			if (_settings) {
+				_settings(tc);
+			}
+			return tc;
+		}
+
 		frame_layout& container_control::frame_begin(int _id, std::function<void(frame_layout&)> _settings)
 		{
 			auto& tc = create<frame_layout>(_id);
@@ -972,7 +1002,7 @@ namespace corona
 			return *this;
 		}
 
-		camera_control& container_control::camera(int _id, std::function<void(camera_control&)> _settings)
+		container_control& container_control::camera(int _id, std::function<void(camera_control&)> _settings)
 		{
 			auto& tc = create<camera_control>(_id);
 			apply(tc);
@@ -982,6 +1012,35 @@ namespace corona
 			return *this;
 		}
 
+		container_control& container_control::grid(int _id, std::function<void(grid_control&)> _settings)
+		{
+			auto& tc = create<grid_control>(_id);
+			apply(tc);
+			if (_settings) {
+				_settings(tc);
+			}
+			return *this;
+		}
+
+		container_control& container_control::chart(int _id, std::function<void(chart_control&)> _settings)
+		{
+			auto& tc = create<chart_control>(_id);
+			apply(tc);
+			if (_settings) {
+				_settings(tc);
+			}
+			return *this;
+		}
+
+		container_control& container_control::slide(int _id, std::function<void(slide_control&)> _settings)
+		{
+			auto& tc = create<slide_control>(_id);
+			apply(tc);
+			if (_settings) {
+				_settings(tc);
+			}
+			return *this;
+		}
 
 		double control_base::to_pixels(measure length)
 		{
@@ -1886,7 +1945,7 @@ namespace corona
 			}
 		}
 
-		camera_control::camera_control(container_control* _parent, int _id, std::string _name) : draw_control(_parent, _id)
+		camera_control::camera_control(container_control* _parent, int _id) : draw_control(_parent, _id)
 		{
 			init();
 		}

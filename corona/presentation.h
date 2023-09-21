@@ -59,6 +59,9 @@ namespace corona
 		class column_layout;
 		class absolute_layout;
 		class frame_layout;
+		class row_view_layout;
+		class column_view_layout;
+		class absolute_view_layout;
 
 		class presentation;
 		class page;
@@ -424,7 +427,7 @@ namespace corona
 			void init();
 			solidBrushRequest	border_brush;
 		public:
-			camera_control(container_control* _parent, int _id, std::string _name);
+			camera_control(container_control* _parent, int _id);
 			virtual ~camera_control();
 		};
 
@@ -433,7 +436,7 @@ namespace corona
 			void init();
 			solidBrushRequest	border_brush;
 		public:
-			grid_control(container_control* _parent, int _id, std::string _name);
+			grid_control(container_control* _parent, int _id);
 			virtual ~grid_control();
 		};
 
@@ -469,7 +472,7 @@ namespace corona
 			std::string sseries3;
 			std::string sseries4;
 
-			chart_control(container_control* _parent, int _id, std::string _name);
+			chart_control(container_control* _parent, int _id);
 			virtual ~chart_control();
 		};
 
@@ -483,7 +486,7 @@ namespace corona
 
 			int source_object_id;
 
-			slide_control(container_control* _parent, int _id, std::string _name);
+			slide_control(container_control* _parent, int _id);
 			virtual ~slide_control();
 		};
 
@@ -532,6 +535,11 @@ namespace corona
 			row_layout& row_begin(int id = id_counter::next(), std::function<void(row_layout&)> _settings = nullptr);
 			column_layout& column_begin(int id = id_counter::next(), std::function<void(column_layout&)> _settings = nullptr);
 			absolute_layout& absolute_begin(int id = id_counter::next(), std::function<void(absolute_layout&)> _settings = nullptr);
+
+			row_view_layout& row_view_begin(int id = id_counter::next(), std::function<void(row_view_layout&)> _settings = nullptr);
+			column_view_layout& column_view_begin(int id = id_counter::next(), std::function<void(column_view_layout&)> _settings = nullptr);
+			absolute_view_layout& absolute_view_begin(int id = id_counter::next(), std::function<void(absolute_view_layout&)> _settings = nullptr);
+
 			frame_layout& frame_begin(int id = id_counter::next(), std::function<void(frame_layout&)> _settings = nullptr);
 
 			row_layout& row_begin(std::function<void(row_layout&)> _settings) { return row_begin(id_counter::next(), _settings); }
@@ -613,6 +621,11 @@ namespace corona
 			container_control& maximize_button(std::function<void(maximize_button_control&)> _settings = nullptr);
 			container_control& close_button(std::function<void(close_button_control&)> _settings = nullptr);
 			container_control& menu_button(int _id,  std::function<void(menu_button_control&)> _settings = nullptr);
+
+			container_control& camera(int _id, std::function<void(camera_control&)> _settings = nullptr);
+			container_control& grid(int _id, std::function<void(grid_control&)> _settings = nullptr);
+			container_control& chart(int _id, std::function<void(chart_control&)> _settings = nullptr);
+			container_control& slide(int _id, std::function<void(slide_control&)> _settings = nullptr);
 
 			container_control& caption_bar(
 				presentation_style& st,
@@ -878,6 +891,136 @@ namespace corona
 
 			virtual void arrange(rectangle _ctx);
 			virtual point get_remaining(point _ctx);
+		};
+
+		class data_scroller
+		{
+			table_data data;
+			control_base* parent;
+
+			void update_children(control_base* _target);
+			std::map<int, bool> selected_indeces;
+
+			int current_scroll_location;
+			int current_scroll_page;
+			int current_item;
+			double page_size;
+			bool size_valid;
+
+		public:
+
+			std::function<control_base* (table_data& td, int index, bool selected, bool navigated)> mapper;
+
+			data_scroller(control_base* _parent) : parent( _parent ) 			
+			{			
+				size_valid = false;
+			}
+			
+			data_scroller(control_base* _parent, table_data& td) : parent(_parent) 
+			{			
+				data = td;
+				data.items.size();
+				size_valid = false;
+			}
+
+			data_scroller operator = (table_data& td)
+			{
+				data = td;
+				size_valid = false;
+				return *this;
+			}
+
+			void generate_items(rectangle _ctx)
+			{
+				// loop through the items and call the mapper and put the data into the children
+				// parent->children.clear();
+
+				// we don't need to do this on every frame, so
+				if (!size_valid) {
+
+					size_valid = true;
+				}
+			}
+
+			void line_down()
+			{
+				size_valid = false;
+			}
+
+			void line_up()
+			{
+				size_valid = false;
+			}
+
+			void page_up()
+			{
+				size_valid = false;
+			}
+
+			void page_down()
+			{
+				size_valid = false;
+			}
+
+			void home()
+			{
+				size_valid = false;
+			}
+
+			void end()
+			{
+				size_valid = false;
+			}
+
+		};
+
+		class column_view_layout :
+			public column_layout, public data_scroller
+		{
+		public:
+			column_view_layout() : data_scroller(this) { 
+				; 
+			}
+			column_view_layout(container_control* _parent, int _id) : data_scroller(this), column_layout(_parent, _id) { ; }
+			virtual ~column_view_layout() { ; }
+
+			virtual void arrange(rectangle _ctx)
+			{
+				generate_items(_ctx);
+				column_layout::arrange(_ctx);
+			}
+		};
+
+		class row_view_layout :
+			public row_layout, public data_scroller
+		{
+		protected:
+		public:
+			row_view_layout() : data_scroller(this) { ; }
+			row_view_layout(container_control* _parent, int _id) : data_scroller(this), row_layout(_parent, _id) { ; }
+			virtual ~row_view_layout() { ; }
+
+			virtual void arrange(rectangle _ctx)
+			{
+				generate_items(_ctx);
+				row_layout::arrange(_ctx);
+			}
+		};
+
+		class absolute_view_layout :
+			public absolute_layout, public data_scroller
+		{
+		protected:
+		public:
+			absolute_view_layout() : data_scroller(this) { ; }
+			absolute_view_layout(container_control* _parent, int _id) : data_scroller(this), absolute_layout(_parent, _id) { ; }
+			virtual ~absolute_view_layout() { ; }
+
+			virtual void arrange(rectangle _ctx)
+			{
+				generate_items(_ctx);
+				absolute_layout::arrange(_ctx);
+			}
 		};
 
 		class frame_layout :
