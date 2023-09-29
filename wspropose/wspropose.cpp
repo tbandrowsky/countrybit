@@ -156,26 +156,21 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 				"CONNECT PROPERTY",
 				"Full Login"
 			)
-		.form_double_column(IDC_PLATFORM_TEST, "Full Login", [push_button_defaults](container_control& c) {
+		.form_double_column(IDC_PLATFORM_TEST, "Full Login",
+			[push_button_defaults](container_control& c) {
 				c.chaptertitle("Identification");
 				c.label("Scan RealID");
 				c.subtitle("Placeholder for Camera");
-				c.label("First Name");
-				c.edit(IDC_LOGIN_FIRST_NAME);
-				c.label("Last Name");
-				c.edit(IDC_LOGIN_LAST_NAME);
-				c.label("State");
-				c.edit(IDC_LOGIN_STATE);
-				c.label("ID Number");
-				c.edit(IDC_LOGIN_ID_NUMBER);
 			},
-		[push_button_defaults](container_control& c2) {
+			[push_button_defaults](container_control& c2) {
 				c2.chaptertitle("Authentication");
+				c2.edit_field(IDC_LOGIN_FIRST_NAME, "First Name", "First name from Driver's license");
+				c2.edit_field(IDC_LOGIN_LAST_NAME, "Last Name", "Last name from Driver's license");
+				c2.edit_field(IDC_LOGIN_STATE, "State", "State from Driver's license");
+				c2.edit_field(IDC_LOGIN_ID_NUMBER, "ID Number", "Driver's license ID number");
 				c2.label("Enter Password");
-				c2.label("Enter Password");
-			}
-			
-			)
+			}		
+	)
 	.end();
 
 	const int IDC_FIRST_NAME = 1301;

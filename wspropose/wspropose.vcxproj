@@ -217,6 +217,202 @@
   <ItemGroup>
     <Manifest Include="wspropose.exe.manifest" />
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Update="C:\Users\toddb\Dev\countrybit\corona\corona.database-assert_if.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\toddb\Dev\countrybit\corona\corona.database-bitmap_filters.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\toddb\Dev\countrybit\corona\corona.database-collection_id_box.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\toddb\Dev\countrybit\corona\corona.database-concept_lock.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\toddb\Dev\countrybit\corona\corona.database-constants.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\toddb\Dev\countrybit\corona\corona.database-controller.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\toddb\Dev\countrybit\corona\corona.database-controllerhost.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\toddb\Dev\countrybit\corona\corona.database-directapplication.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\toddb\Dev\countrybit\corona\corona.database-directdxgi.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\toddb\Dev\countrybit\corona\corona.database-directory.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\toddb\Dev\countrybit\corona\corona.database-directxdcontext.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\toddb\Dev\countrybit\corona\corona.database-file.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\toddb\Dev\countrybit\corona\corona.database-float_box.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\toddb\Dev\countrybit\corona\corona.database-function.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\toddb\Dev\countrybit\corona\corona.database-grouping.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\toddb\Dev\countrybit\corona\corona.database-int_box.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\toddb\Dev\countrybit\corona\corona.database-jdatabase_server.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\toddb\Dev\countrybit\corona\corona.database-jfield.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\toddb\Dev\countrybit\corona\corona.database-jobject.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\toddb\Dev\countrybit\corona\corona.database-jvalue.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\toddb\Dev\countrybit\corona\corona.database-layout_rect_box.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\toddb\Dev\countrybit\corona\corona.database-list_box.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\toddb\Dev\countrybit\corona\corona.database-loader.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\toddb\Dev\countrybit\corona\corona.database-messages.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\toddb\Dev\countrybit\corona\corona.database-object_id_box.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\toddb\Dev\countrybit\corona\corona.database-point_box.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\toddb\Dev\countrybit\corona\corona.database-presentation.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\toddb\Dev\countrybit\corona\corona.database-queue.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\toddb\Dev\countrybit\corona\corona.database-read_all_string.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\toddb\Dev\countrybit\corona\corona.database-sorted_index.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\toddb\Dev\countrybit\corona\corona.database-store_box.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\toddb\Dev\countrybit\corona\corona.database-store_box_file.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\toddb\Dev\countrybit\corona\corona.database-string_box.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\toddb\Dev\countrybit\corona\corona.database-styles.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\toddb\Dev\countrybit\corona\corona.database-table.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\toddb\Dev\countrybit\corona\corona.database-time_box.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\toddb\Dev\countrybit\corona\corona.database-utility.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\toddb\Dev\countrybit\corona\corona.database-visual.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\toddb\Dev\countrybit\corona\corona.databse-bitmap_filters.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\toddb\Dev\countrybit\corona\corona.win32-bitmap_filters.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\toddb\Dev\countrybit\corona\corona.win32-controller.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\toddb\Dev\countrybit\corona\corona.win32-controllerhost.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\toddb\Dev\countrybit\corona\corona.win32-directapplication.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\toddb\Dev\countrybit\corona\corona.win32-directapplicationwin32.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\toddb\Dev\countrybit\corona\corona.win32-directdxgi.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\toddb\Dev\countrybit\corona\corona.win32-directory.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\toddb\Dev\countrybit\corona\corona.win32-directxdcontext.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\toddb\Dev\countrybit\corona\corona.win32-file.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\toddb\Dev\countrybit\corona\corona.win32-presentation.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\toddb\Dev\countrybit\corona\corona.win32-stdapi.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\toddb\Dev\countrybit\corona\corona.win32-styles.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="C:\Users\toddb\Dev\countrybit\corona\corona.win32-visual.ixx">
+      <FileType>Document</FileType>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Update="C:\Users\toddb\Dev\countrybit\corona\application.ixx">
+      <FileType>Document</FileType>
+    </ClInclude>
+    <ClInclude Update="C:\Users\toddb\Dev\countrybit\corona\corona.database-application.ixx">
+      <FileType>Document</FileType>
+    </ClInclude>
+    <ClInclude Update="C:\Users\toddb\Dev\countrybit\corona\corona.database-color_box.ixx">
+      <FileType>Document</FileType>
+    </ClInclude>
+    <ClInclude Update="C:\Users\toddb\Dev\countrybit\corona\corona.database-datatransfer.ixx">
+      <FileType>Document</FileType>
+    </ClInclude>
+    <ClInclude Update="C:\Users\toddb\Dev\countrybit\corona\corona.database-filterable_iterator.ixx">
+      <FileType>Document</FileType>
+    </ClInclude>
+    <ClInclude Update="C:\Users\toddb\Dev\countrybit\corona\corona.database-iarray.ixx">
+      <FileType>Document</FileType>
+    </ClInclude>
+    <ClInclude Update="C:\Users\toddb\Dev\countrybit\corona\corona.database-image_box.ixx">
+      <FileType>Document</FileType>
+    </ClInclude>
+    <ClInclude Update="C:\Users\toddb\Dev\countrybit\corona\corona.database-midi_box.ixx">
+      <FileType>Document</FileType>
+    </ClInclude>
+    <ClInclude Update="C:\Users\toddb\Dev\countrybit\corona\corona.database-rectangle_box.ixx">
+      <FileType>Document</FileType>
+    </ClInclude>
+    <ClInclude Update="C:\Users\toddb\Dev\countrybit\corona\corona.database-skip_list.ixx">
+      <FileType>Document</FileType>
+    </ClInclude>
+    <ClInclude Update="C:\Users\toddb\Dev\countrybit\corona\corona.database-wave_box.ixx">
+      <FileType>Document</FileType>
+    </ClInclude>
+    <ClInclude Update="C:\Users\toddb\Dev\countrybit\corona\corona.win32-datatransfer.ixx">
+      <FileType>Document</FileType>
+    </ClInclude>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="..\packages\wtl.10.0.10320\build\native\wtl.targets" Condition="Exists('..\packages\wtl.10.0.10320\build\native\wtl.targets')" />

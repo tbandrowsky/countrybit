@@ -1,0 +1,33 @@
+#pragma once
+
+#include "windows.h"
+#include "windowsx.h"
+#include "process.h"
+#include "combaseapi.h"
+#include "Winhttp.h"
+#include "shellapi.h"
+#include <io.h>
+#include <fcntl.h>
+#include "oleauto.h"
+#include "dwmapi.h"
+#include <unknwn.h>
+#include "commctrl.h"
+#include "commdlg.h"
+#include "Shlwapi.h"
+#include "Shlobj.h"
+#include <stdlib.h>
+#include <malloc.h>
+#include <memory.h>
+#include <tchar.h>
+#include <dxgi1_4.h>
+#include <d3d12.h>
+#include <d3d11.h>
+#include <d2d1.h>
+#include <d2d1_1.h>
+#include <d2d1helper.h>
+#include <dwrite.h>
+#include <wincodec.h>
+#include <clocale>
+#include <locale>
+#include "sys/stat.h"
+

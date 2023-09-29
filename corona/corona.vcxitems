@@ -15,110 +15,58 @@
     <ProjectCapability Include="SourceItemsFromImports" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="$(MSBuildThisFileDirectory)application.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)array_box.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)assert_if.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)bitmap_filters.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)collection_id_box.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)color_box.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)concept_lock.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)constants.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)controller.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)controllerhost.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)corona.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)datatransfer.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)directapplicationwinui.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)directdxgi.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)directxdcontext.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)directapplicationwin32.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)jvalue.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)filterable_iterator.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)grouping.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)jdatabase_server.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)list_box.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)directory.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)image_box.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)layout_rect_box.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)jfield.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)loader.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)midi_box.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)point_box.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)object_id_box.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)rectangle_box.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)store_box_file.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)styles.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)time_box.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)file.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)float_box.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)function.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)grid_index.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)int_box.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)sorted_index.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)jobject.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)string_box.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)messages.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)queue.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)read_all_string.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)skip_list.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)store_box.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)table.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)presentation.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)utility.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)visual.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)wave_box.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona.database-application.ixx" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona.database-iarray.ixx" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona.database-color_box.ixx" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona_platform.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona.database-datatransfer.ixx" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona.database-filterable_iterator.ixx" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona.database-image_box.ixx" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona.database-midi_box.ixx" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona.database-rectangle_box.ixx" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona.database-skip_list.ixx" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona.database-wave_box.ixx" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="$(MSBuildThisFileDirectory)application.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">Use</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">Use</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">Use</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">Use</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)array_box.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)assert_if.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)bitmap_filters.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)collection_id_box.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)color_box.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)concept_lock.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)constants.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)controller.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)controllerhost.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)datatransfer.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)directapplicationwinui.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)directdxgi.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)directxdcontext.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)directapplicationwin32.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)jvalue.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)grouping.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)jdatabase_server.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)jfield.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)layout_rect_box.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)list_box.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)directory.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)file.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)float_box.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)function.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)int_box.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)loader.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)messages.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)object_id_box.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)point_box.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)read_all_string.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)store_box.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)store_box_file.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)string_box.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)sorted_index.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)jobject.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)queue.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)styles.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)table.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)time_box.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)utility.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)presentation.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)visual.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)array_box_test.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-assert_if.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-stdapi.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-bitmap_filters.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-collection_id_box.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-concept_lock.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-constants.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)corona.database.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-controller.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-controllerhost.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)corona.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-directxdcontext.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-directapplication.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-jvalue.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-grouping.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-jdatabase_server.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-jfield.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-layout_rect_box.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-list_box.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-directory.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-file.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-float_box.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-function.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-int_box.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-messages.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-object_id_box.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-point_box.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-read_all_string.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-store_box.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-store_box_file.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-string_box.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-sorted_index.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-jobject.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-queue.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-styles.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-table.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-time_box.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-utility.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-presentation.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-visual.ixx" />
   </ItemGroup>
 </Project>
