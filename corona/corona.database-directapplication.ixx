@@ -1,13 +1,16 @@
 
 module;
 
+#include "corona_platform.h"
+
 #include <memory>
 #include <list>
 #include <string>
+#include <iostream>
 
 export module corona.database:directapplication;
-import :stdapi;
 import :controllerhost;
+import :constants;
 
 export class directApplicationWin32 : public win32ControllerHost, public std::enable_shared_from_this<directApplicationWin32>
 {

@@ -3,9 +3,11 @@ module;
 #include <cmath>
 #include <bit>
 #include <numeric>
+#include <iostream>
 
 export module corona.database:int_box;
 import :store_box;
+import :float_box;
 
 export template <typename integer>
 class int_math

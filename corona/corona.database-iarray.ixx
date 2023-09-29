@@ -3,10 +3,18 @@ module;
 
 #include <functional>
 #include <algorithm>
+#include <vector>
+#include <initializer_list>
+#include <memory>
+#include <exception>
+#include <iterator>
+#include <stdexcept>
 
 export module corona.database:iarray;
-import :stdapi;
+import :constants;
 import :assert_if;
+import :filterable_iterator;
+import :store_box;
 
 export template <typename item_type, int max_items>
 struct iarray
@@ -488,10 +496,10 @@ export bool array_box_tests()
 		}
 		iteration_count++;
 	}
-	assert_if([iteration_count]() { return iteration_count == 10; }, "Wrong count");
+	assert_if(iteration_count == 10, "Wrong count");
 
 	auto count = test_iarray.count_if([](auto& t) { return t.item < 3;  });
-	assert_if([count]() { return count == 3; }, "Wrong count");
+	assert_if(count == 3, "Wrong count");
 
 	auto items = test_iarray.where([](auto& t) { return t.item < 5;  });
 
@@ -499,10 +507,10 @@ export bool array_box_tests()
 	for (auto r : items)
 	{
 		auto rti = r.item;
-		assert_if([rti]() { return rti < 5;  }, "Wrong values");
+		assert_if(rti < 5, "Wrong values");
 		count++;
 	}
-	assert_if([count]() { return count == 5; }, "Wrong count");
+	assert_if(count == 5, "Wrong count");
 
 	items = test_iarray.where([](auto& t) { return true;  });
 
@@ -519,10 +527,10 @@ export bool array_box_tests()
 	for (auto r : items)
 	{
 		auto rti = r.item;
-		assert_if([rti]() { return rti < 5 && rti % 2 == 0;  }, "Wrong values");
+		assert_if(rti < 5 && rti % 2 == 0, "Wrong values");
 		count++;
 	}
-	assert_if([count]() { return count == 3; }, "Wrong count");
+	assert_if(count == 3, "Wrong count");
 
 	return true;
 }

@@ -5,7 +5,6 @@ module;
 
 export module corona.database:application;
 
-import :stdapi;
 import :function;
 import :file;
 import :file;

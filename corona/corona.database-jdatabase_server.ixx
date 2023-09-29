@@ -5,10 +5,12 @@ module;
 
 
 export module corona.database:jdatabase_server;
+import :constants;
 import :store_box;
-import :stdapi;
+import :collection_id_box;
 import :jobject;
 import :jfield;
+import :jvalue;
 
 		using collection_table_type = table<jcollection_ref>;
 		using collections_by_name_type = sorted_index<object_name, collection_id_type, 1>;

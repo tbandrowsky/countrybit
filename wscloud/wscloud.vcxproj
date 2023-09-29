@@ -31,6 +31,7 @@
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
+    <PreferredToolArchitecture>x64</PreferredToolArchitecture>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -38,12 +39,14 @@
     <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
+    <PreferredToolArchitecture>x64</PreferredToolArchitecture>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
+    <PreferredToolArchitecture>x64</PreferredToolArchitecture>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -51,13 +54,12 @@
     <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
+    <PreferredToolArchitecture>x64</PreferredToolArchitecture>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
-  <ImportGroup Label="Shared">
-    <Import Project="..\corona\corona.vcxitems" Label="Shared" />
-  </ImportGroup>
+  <ImportGroup Label="Shared" />
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
@@ -73,35 +75,51 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <ExtensionsToDeleteOnClean>*.cdf;*.cache;*.obj;*.obj.enc;*.ilk;*.ipdb;*.iobj;*.resources;*.tlb;*.tli;*.tlh;*.tmp;*.rsp;*.pgc;*.pgd;*.meta;*.tlog;*.manifest;*.res;*.pch;*.exp;*.idb;*.rep;*.xdc;*.pdb;*_manifest.rc;*.bsc;*.sbr;*.xml;*.metagen;*.bi; *.ifc</ExtensionsToDeleteOnClean>
+    <CopyLocalDeploymentContent>true</CopyLocalDeploymentContent>
+    <AllProjectBMIsArePublic>true</AllProjectBMIsArePublic>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
+    <ExtensionsToDeleteOnClean>*.cdf;*.cache;*.obj;*.obj.enc;*.ilk;*.ipdb;*.iobj;*.resources;*.tlb;*.tli;*.tlh;*.tmp;*.rsp;*.pgc;*.pgd;*.meta;*.tlog;*.manifest;*.res;*.pch;*.exp;*.idb;*.rep;*.xdc;*.pdb;*_manifest.rc;*.bsc;*.sbr;*.xml;*.metagen;*.bi; *.ifc</ExtensionsToDeleteOnClean>
+    <CopyLocalDeploymentContent>true</CopyLocalDeploymentContent>
+    <AllProjectBMIsArePublic>true</AllProjectBMIsArePublic>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)\packages\wtl.10.0.10320\lib\native\include;C:\Users\toddb\Dev\opencv\sources\include\opencv2</IncludePath>
     <ExternalIncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);C:\Users\toddb\Dev\opencv\sources\include\opencv2</ExternalIncludePath>
     <CopyLocalDeploymentContent>true</CopyLocalDeploymentContent>
+    <ExtensionsToDeleteOnClean>*.cdf;*.cache;*.obj;*.obj.enc;*.ilk;*.ipdb;*.iobj;*.resources;*.tlb;*.tli;*.tlh;*.tmp;*.rsp;*.pgc;*.pgd;*.meta;*.tlog;*.manifest;*.res;*.pch;*.exp;*.idb;*.rep;*.xdc;*.pdb;*_manifest.rc;*.bsc;*.sbr;*.xml;*.metagen;*.bi; *.ifc</ExtensionsToDeleteOnClean>
+    <AllProjectBMIsArePublic>true</AllProjectBMIsArePublic>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <CopyLocalDeploymentContent>true</CopyLocalDeploymentContent>
     <ExternalIncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);C:\Users\toddb\Dev\opencv\sources\include\opencv2</ExternalIncludePath>
     <IncludePath>C:\Users\toddb\Dev\opencv\sources\include\opencv2;$(IncludePath)</IncludePath>
+    <ExtensionsToDeleteOnClean>*.cdf;*.cache;*.obj;*.obj.enc;*.ilk;*.ipdb;*.iobj;*.resources;*.tlb;*.tli;*.tlh;*.tmp;*.rsp;*.pgc;*.pgd;*.meta;*.tlog;*.manifest;*.res;*.pch;*.exp;*.idb;*.rep;*.xdc;*.pdb;*_manifest.rc;*.bsc;*.sbr;*.xml;*.metagen;*.bi; *.ifc</ExtensionsToDeleteOnClean>
+    <AllProjectBMIsArePublic>true</AllProjectBMIsArePublic>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <WarningLevel>Level4</WarningLevel>
+      <WarningLevel>Level2</WarningLevel>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <PrecompiledHeaderFile>corona.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile>
+      </PrecompiledHeaderFile>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(MSBuildThisFileDirectory);$(SolutionDir)Corona</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
       <AdditionalModuleDependencies>corona=$(SolutionDir)corona</AdditionalModuleDependencies>
+      <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
+      <DiagnosticsFormat>Column</DiagnosticsFormat>
+      <OpenMPSupport>true</OpenMPSupport>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <EnableModules>true</EnableModules>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -112,19 +130,25 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <WarningLevel>Level4</WarningLevel>
+      <WarningLevel>Level2</WarningLevel>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <PrecompiledHeaderFile>corona.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile>
+      </PrecompiledHeaderFile>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(MSBuildThisFileDirectory);$(SolutionDir)Corona</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
       <AdditionalModuleDependencies>corona=$(SolutionDir)corona</AdditionalModuleDependencies>
+      <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
+      <DiagnosticsFormat>Column</DiagnosticsFormat>
+      <OpenMPSupport>true</OpenMPSupport>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <EnableModules>true</EnableModules>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -137,18 +161,24 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <WarningLevel>Level4</WarningLevel>
+      <WarningLevel>Level2</WarningLevel>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <PrecompiledHeaderFile>corona.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile>
+      </PrecompiledHeaderFile>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(MSBuildThisFileDirectory);$(SolutionDir)Corona</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
       <BuildStlModules>false</BuildStlModules>
       <AdditionalModuleDependencies>corona=$(SolutionDir)corona</AdditionalModuleDependencies>
+      <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
+      <DiagnosticsFormat>Column</DiagnosticsFormat>
+      <OpenMPSupport>true</OpenMPSupport>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <EnableModules>true</EnableModules>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -159,20 +189,26 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <WarningLevel>Level4</WarningLevel>
+      <WarningLevel>Level2</WarningLevel>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <PrecompiledHeaderFile>corona.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile>
+      </PrecompiledHeaderFile>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(MSBuildThisFileDirectory);$(SolutionDir)Corona</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
       <BuildStlModules>false</BuildStlModules>
       <AdditionalModuleDependencies>corona=$(SolutionDir)corona</AdditionalModuleDependencies>
+      <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
+      <DiagnosticsFormat>Column</DiagnosticsFormat>
+      <OpenMPSupport>true</OpenMPSupport>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <EnableModules>true</EnableModules>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -190,6 +226,53 @@
     <ClInclude Include="wscloud.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="corona.database-application.ixx" />
+    <ClCompile Include="corona.database-assert_if.ixx" />
+    <ClCompile Include="corona.database-bitmap_filters.ixx" />
+    <ClCompile Include="corona.database-collection_id_box.ixx" />
+    <ClCompile Include="corona.database-color_box.ixx" />
+    <ClCompile Include="corona.database-concept_lock.ixx" />
+    <ClCompile Include="corona.database-constants.ixx" />
+    <ClCompile Include="corona.database-controller.ixx" />
+    <ClCompile Include="corona.database-controllerhost.ixx" />
+    <ClCompile Include="corona.database-datatransfer.ixx" />
+    <ClCompile Include="corona.database-directapplication.ixx" />
+    <ClCompile Include="corona.database-directory.ixx" />
+    <ClCompile Include="corona.database-directxdcontext.ixx" />
+    <ClCompile Include="corona.database-file.ixx" />
+    <ClCompile Include="corona.database-filterable_iterator.ixx" />
+    <ClCompile Include="corona.database-float_box.ixx" />
+    <ClCompile Include="corona.database-function.ixx" />
+    <ClCompile Include="corona.database-grouping.ixx" />
+    <ClCompile Include="corona.database-iarray.ixx" />
+    <ClCompile Include="corona.database-image_box.ixx" />
+    <ClCompile Include="corona.database-int_box.ixx" />
+    <ClCompile Include="corona.database-jdatabase_server.ixx" />
+    <ClCompile Include="corona.database-jfield.ixx" />
+    <ClCompile Include="corona.database-jobject.ixx" />
+    <ClCompile Include="corona.database-jvalue.ixx" />
+    <ClCompile Include="corona.database-layout_rect_box.ixx" />
+    <ClCompile Include="corona.database-list_box.ixx" />
+    <ClCompile Include="corona.database-messages.ixx" />
+    <ClCompile Include="corona.database-midi_box.ixx" />
+    <ClCompile Include="corona.database-object_id_box.ixx" />
+    <ClCompile Include="corona.database-point_box.ixx" />
+    <ClCompile Include="corona.database-presentation.ixx" />
+    <ClCompile Include="corona.database-queue.ixx" />
+    <ClCompile Include="corona.database-read_all_string.ixx" />
+    <ClCompile Include="corona.database-rectangle_box.ixx" />
+    <ClCompile Include="corona.database-skip_list.ixx" />
+    <ClCompile Include="corona.database-sorted_index.ixx" />
+    <ClCompile Include="corona.database-store_box.ixx" />
+    <ClCompile Include="corona.database-store_box_file.ixx" />
+    <ClCompile Include="corona.database-string_box.ixx" />
+    <ClCompile Include="corona.database-styles.ixx" />
+    <ClCompile Include="corona.database-table.ixx" />
+    <ClCompile Include="corona.database-time_box.ixx" />
+    <ClCompile Include="corona.database-utility.ixx" />
+    <ClCompile Include="corona.database-visual.ixx" />
+    <ClCompile Include="corona.database-wave_box.ixx" />
+    <ClCompile Include="corona.database.ixx" />
     <ClCompile Include="wscloud.cpp" />
   </ItemGroup>
   <ItemGroup>

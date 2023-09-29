@@ -1,8 +1,6 @@
 module;
 
-#include <memory>
-#include <string>
-#include <vector>
+#include "windows.h"
 
 #include <atlbase.h>
 #include <atlapp.h>
@@ -13,11 +11,15 @@ module;
 #include <atlctrlx.h>
 #include <atlmisc.h>
 
+#include <memory>
+#include <string>
+#include <vector>
+#include <utility>
+
 extern CAppModule _Module;
 
 export module corona.database:presentation;
 
-import :stdapi;
 import :visual;
 import :directxdcontext;
 import :directapplication;

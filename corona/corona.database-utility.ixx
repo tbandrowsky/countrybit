@@ -7,7 +7,6 @@ module;
 
 export module corona.database:utility;
 
-import :stdapi;
 import :store_box;
 
 export template<typename Out>

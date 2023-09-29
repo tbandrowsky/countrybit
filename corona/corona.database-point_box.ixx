@@ -8,7 +8,7 @@ module;
 export module corona.database:point_box;
 
 import :store_box;
-import :stdapi;
+import :float_box;
 
 export struct point
 {
@@ -31,22 +31,70 @@ export struct point
 	}
 };
 
-export double distance(const point& a, const point& b);
-export int compare(const point& a, const point& b);
 
-export auto operator<=>(const point& a, const point& b);
+export std::partial_ordering operator<=>(const point& a, const point& b)
+{
+	return std::tie(a.z, a.y, a.x) <=> std::tie(b.z, b.y, b.x);
+}
 
-export int operator<(const point& a, const point& b);
-export int operator>(const point& a, const point& b);
-export int operator>=(const point& a, const point& b);
-export int operator<=(const point& a, const point& b);
-export int operator==(const point& a, const point& b);
-export int operator!=(const point& a, const point& b);
+export int compare(const point& a, const point& b)
+{
+	return (std::tie(a.z, a.y, a.x) <=> std::tie(b.z, b.y, b.x))._Value;
+}
 
-export point operator+(const point& a, const point& b);
-export point operator-(const point& a, const point& b);
-export point operator*(const point& a, const point& b);
-export point operator/(const point& a, const point& b);
+export int operator<(const point& a, const point& b)
+{
+	return compare(a, b) < 0;
+}
+
+export int operator>(const point& a, const point& b)
+{
+	return compare(a, b) > 0;
+}
+
+export int operator>=(const point& a, const point& b)
+{
+	return compare(a, b) >= 0;
+}
+
+export int operator<=(const point& a, const point& b)
+{
+	return compare(a, b) <= 0;
+}
+
+export int operator==(const point& a, const point& b)
+{
+	return compare(a, b) == 0;
+}
+
+export int operator!=(const point& a, const point& b)
+{
+	return compare(a, b) != 0;
+}
+
+export point operator+(const point& a, const point& b)
+{
+	point pt{ a.x + b.x, a.y + b.y, b.z + b.z };
+	return pt;
+}
+
+export point operator-(const point& a, const point& b)
+{
+	point pt{ a.x - b.x, a.y - b.y, b.z - b.z };
+	return pt;
+}
+
+export point operator*(const point& a, const point& b)
+{
+	point pt{ a.x * b.x, a.y * b.y, b.z * b.z };
+	return pt;
+}
+
+export point operator/(const point& a, const point& b)
+{
+	point pt{ a.x / b.x, a.y / b.y, b.z / b.z };
+	return pt;
+}
 
 export class point_math
 {
@@ -137,88 +185,13 @@ public:
 
 };
 
-export std::ostream& operator <<(std::ostream& output, point_box& src);
-
-export bool test_points();
-
-module corona.database:point_box;
-
-auto operator<=>(const point& a, const point& b)
-{
-	return std::tie(a.z, a.y, a.x) <=> std::tie(b.z, b.y, b.x);
-}
-
-double distance(const point& a, const point& b)
-{
-	return point_math::distance(a, b);
-}
-
-int compare(const point& a, const point& b)
-{
-	return (std::tie(a.z, a.y, a.x) <=> std::tie(b.z, b.y, b.x))._Value;
-}
-
-int operator<(const point& a, const point& b)
-{
-	return compare(a, b) < 0;
-}
-
-int operator>(const point& a, const point& b)
-{
-	return compare(a, b) > 0;
-}
-
-int operator>=(const point& a, const point& b)
-{
-	return compare(a, b) >= 0;
-}
-
-int operator<=(const point& a, const point& b)
-{
-	return compare(a, b) <= 0;
-}
-
-int operator==(const point& a, const point& b)
-{
-	return compare(a, b) == 0;
-}
-
-int operator!=(const point& a, const point& b)
-{
-	return compare(a, b) != 0;
-}
-
-std::ostream& operator <<(std::ostream& output, point_box& src)
+export std::ostream& operator <<(std::ostream& output, point_box& src)
 {
 	output << src.value().x << ", ";
 	return output;
 }
 
-point operator+(const point& a, const point& b)
-{
-	point pt { a.x + b.x, a.y + b.y, b.z + b.z };
-	return pt;
-}
-
-point operator-(const point& a, const point& b)
-{
-	point pt{ a.x - b.x, a.y - b.y, b.z - b.z };
-	return pt;
-}
-
-point operator*(const point& a, const point& b)
-{
-	point pt{ a.x * b.x, a.y * b.y, b.z * b.z };
-	return pt;
-}
-
-point operator/(const point& a, const point& b)
-{
-	point pt{ a.x / b.x, a.y / b.y, b.z / b.z };
-	return pt;
-}
-
-bool test_points()
+export bool test_points()
 {
 	point ptA{ 0,0,0 };
 	point ptB{ 0,1,0 };

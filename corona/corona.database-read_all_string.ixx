@@ -7,7 +7,6 @@ module;
 export module corona.database:read_all_string;
 
 import :store_box;
-import :stdapi;
 
 export std::string read_all_string(std::string& _filename)
 		{

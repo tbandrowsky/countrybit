@@ -1,10 +1,9 @@
 module;
 
-
+#include "windows.h"
 
 export module corona.database:directory;
 import :constants;
-import :stdapi;
 import :queue;
 import :messages;
 import :file;
@@ -13,7 +12,7 @@ export class directory_change_instance
 {
 public:
 	job_queue* queue;
-	database::file_path		directory_name;
+	file_path		directory_name;
 	HANDLE					hdirectory;
 	char* buffer_bytes;
 	DWORD					buffer_size;
@@ -35,7 +34,7 @@ public:
 
 	~directory_change_instance() = default;
 
-	directory_change_instance(job_queue* _queue, const database::object_path& _directory_name, HANDLE _hdirectory) :
+	directory_change_instance(job_queue* _queue, const object_path& _directory_name, HANDLE _hdirectory) :
 		queue(_queue),
 		directory_name(_directory_name),
 		hdirectory(_hdirectory),
@@ -56,8 +55,8 @@ public:
 
 		struct value_ref
 		{
-			database::object_path directory_name;
-			database::object_path file_name;
+			object_path directory_name;
+			object_path file_name;
 
 			value_ref& from(directory_change_instance* _base, FILE_NOTIFY_INFORMATION* change)
 			{
@@ -166,7 +165,7 @@ public:
 
 	void run()
 	{
-		::ReadDirectoryChangesW(params->hdirectory, params->buffer_bytes, params->buffer_size, FALSE, FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_LAST_WRITE, NULL, (LPOVERLAPPED)this, NULL);
+		::ReadDirectoryChangesW(params->hdirectory, params->buffer_bytes, params->buffer_size, false, FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_LAST_WRITE, nullptr, (LPOVERLAPPED)this, nullptr);
 	}
 };
 
@@ -177,7 +176,7 @@ class directory
 
 protected:
 
-	directory(job_queue* _queue, const database::object_path& _directory_name)
+	directory(job_queue* _queue, object_path& _directory_name)
 		: instance(_queue, _directory_name, INVALID_HANDLE_VALUE)
 	{
 		DWORD disposition;
@@ -188,10 +187,10 @@ protected:
 
 		params.dwSize = sizeof(params);
 		params.dwFileAttributes = FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OVERLAPPED | FILE_FLAG_BACKUP_SEMANTICS;
-		params.dwSecurityQosFlags = SECURITY_ANONYMOUS;
-		params.hTemplateFile = NULL;
-		params.lpSecurityAttributes = NULL;
-		instance.hdirectory = ::CreateFile2(filename.c_str(), (GENERIC_READ | GENERIC_WRITE), 0, disposition, &params);
+		params.dwSecurityQosFlags = SECURITY_IMPERSONATION_LEVEL::SecurityAnonymous << 16;
+		params.hTemplateFile = nullptr;
+		params.lpSecurityAttributes = nullptr;
+		instance.hdirectory = CreateFile2(filename.c_str(), (GENERIC_READ | GENERIC_WRITE), 0, disposition, &params);
 
 		if (instance.hdirectory == INVALID_HANDLE_VALUE) {
 			os_result osr;
@@ -200,8 +199,8 @@ protected:
 				return;
 			}
 		}
-		auto hfileport = ::CreateIoCompletionPort(instance.hdirectory, instance.queue->getPort(), 0, instance.queue->getThreadCount());
-		if (hfileport == NULL)
+		auto hfileport = CreateIoCompletionPort(instance.hdirectory, instance.queue->getPort(), 0, instance.queue->getThreadCount());
+		if (hfileport == nullptr)
 		{
 			os_result osr;
 			{

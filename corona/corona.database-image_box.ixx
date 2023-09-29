@@ -1,7 +1,6 @@
 module;
 
 export module corona.database:image_box;
-import :stdapi;
 import :store_box;
 
 export struct image_instance

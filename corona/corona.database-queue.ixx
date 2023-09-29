@@ -1,14 +1,17 @@
 
 module;
 
+#include "windows.h"
+
 #include <coroutine>
 #include <vector>
 #include <thread>
+#include <atomic>
 
 export module corona.database:queue;
 
 import :store_box;
-import :stdapi;
+import :constants;
 
 		class application;
 
@@ -49,7 +52,7 @@ import :stdapi;
 
 			job_container() :jobdata(nullptr)
 			{
-				::ZeroMemory(&ovp, sizeof(ovp));
+				ovp = {};
 			}
 
 			~job_container()
@@ -131,7 +134,7 @@ import :stdapi;
 			virtual ~scope_lock();
 		};
 
-		export const int maxWorkerThreads = MAXIMUM_WAIT_OBJECTS;
+		export const int maxWorkerThreads = 63;
 
 		export class job_queue : public lockable
 		{
@@ -143,7 +146,7 @@ import :stdapi;
 
 			bool shutDownOrdered;
 
-			int num_outstanding_jobs;
+			std::atomic<int> num_outstanding_jobs;
 			HANDLE empty_queue_event;
 
 		public:
@@ -186,7 +189,7 @@ import :stdapi;
 			repost = false;
 			notification = none;
 			shouldDelete = false;
-			ZeroMemory(&msg, sizeof(msg));
+			msg = {};
 		}
 
 		job_notify::job_notify(job_notify&& _src)
@@ -258,7 +261,7 @@ import :stdapi;
 
 		finish_job::finish_job() : job()
 		{
-			handle = CreateEvent(NULL, FALSE, FALSE, NULL);
+			handle = CreateEventW(NULL, false, false, NULL);
 		}
 
 		finish_job::~finish_job()
@@ -329,9 +332,9 @@ import :stdapi;
 
 		job_queue::job_queue()
 		{
-			ioCompPort = NULL;
+			ioCompPort = nullptr;
 			num_outstanding_jobs = 0;
-			empty_queue_event = CreateEvent(NULL, FALSE, TRUE, NULL);
+			empty_queue_event = CreateEventW(nullptr, false, true, nullptr);
 		}
 
 		job_queue::~job_queue()
@@ -390,9 +393,9 @@ import :stdapi;
 		void job_queue::postJobMessage(job* _jobMessage)
 		{
 			LONG result;
-			::InterlockedIncrement((LONG*)&num_outstanding_jobs);
-			::ResetEvent(empty_queue_event);
-			result = ::PostQueuedCompletionStatus(ioCompPort, 0, 0, (LPOVERLAPPED)(&_jobMessage->container));
+			++num_outstanding_jobs;
+			ResetEvent(empty_queue_event);
+			result = PostQueuedCompletionStatus(ioCompPort, 0, 0, (LPOVERLAPPED)(&_jobMessage->container));
 		}
 
 		unsigned int job_queue::jobQueueThread(job_queue* jobQueue)
@@ -434,7 +437,7 @@ import :stdapi;
 						}
 					}
 
-					LONG numJobs = ::InterlockedDecrement((LONG*)(&jobQueue->num_outstanding_jobs));
+					LONG numJobs = --jobQueue->num_outstanding_jobs;
 
 					if (!numJobs) {
 						::SetEvent(jobQueue->empty_queue_event);
@@ -453,12 +456,12 @@ import :stdapi;
 		{
 			finish_job fj;
 			postJobMessage(&fj);
-			::WaitForSingleObject(fj.handle, INFINITE);
+			WaitForSingleObject(fj.handle, INFINITE);
 		}
 
 		void job_queue::waitForEmptyQueue()
 		{
-			::WaitForSingleObject(empty_queue_event, INFINITE);
+			WaitForSingleObject(empty_queue_event, INFINITE);
 		}
 
 		int job_queue::numberOfProcessors()

@@ -1,7 +1,10 @@
 
-import corona;
-
+#include "corona_platform.h"
 #include "resource.h"
+
+#include <functional>
+
+import corona;
 
 /*
 
@@ -49,12 +52,12 @@ int __stdcall WinMain(HINSTANCE hInstance,
 
 void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 {
-	corona::win32::EnableGuiStdOuts();
+	EnableGuiStdOuts();
 
-	std::shared_ptr<corona::win32::adapterSet> factory = std::make_shared<corona::win32::adapterSet>();
+	std::shared_ptr<adapterSet> factory = std::make_shared<adapterSet>();
 	factory->refresh();
 
-	std::shared_ptr<corona::win32::directApplicationWin32> wsPropose = std::make_shared<corona::win32::directApplicationWin32>(factory);
+	std::shared_ptr<directApplicationWin32> wsPropose = std::make_shared<directApplicationWin32>(factory);
 
 	bool forceWindowed = false;
 
@@ -66,7 +69,7 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 	forceWindowed = true;
 #endif
 
-	std::shared_ptr<corona::win32::presentation> test_app = std::make_shared<corona::win32::presentation>();
+	std::shared_ptr<presentation> test_app = std::make_shared<presentation>();
 
 	const int IDM_VIEW = 5000;
 	const int IDM_VIEW_ENVIRONMENTS = 5001;

@@ -1,10 +1,10 @@
 module;
 
-import <memory>
+#include <memory>
+#include "windows.h"
 
 export module corona.database:controller;
 
-import :stdapi;
 import :directapplication;
 		
 export enum scrollTypes

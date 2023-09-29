@@ -1,11 +1,11 @@
 module;
 
+#include "windows.h"
 #include <iostream>
 #include <string>
 
 export module corona.database:messages;
 
-import :stdapi;
 import :store_box;
 import :string_box;
 import :constants;
@@ -29,7 +29,7 @@ export class base_parse_result : public base_result
 		public:
 			int char_offset;
 			int line_number;
-			database::block_id block;
+			block_id block;
 
 			base_parse_result() : char_offset(0), line_number(0)
 			{
@@ -52,7 +52,7 @@ export std::ostream& operator <<(std::ostream& output, const os_result& src);
 			error_code = ::GetLastError();
 			if (error_code) {
 				success = false;
-				::FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM, nullptr, error_code, 0, message.c_str_w(), message.capacity(), nullptr);
+				FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM, nullptr, error_code, 0, message.c_str_w(), message.capacity(), nullptr);
 			}
 			else {
 				success = true;

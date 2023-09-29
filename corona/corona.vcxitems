@@ -28,9 +28,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)corona.database-wave_box.ixx" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="$(MSBuildThisFileDirectory)array_box_test.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-assert_if.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-stdapi.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-bitmap_filters.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-collection_id_box.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-concept_lock.ixx" />
@@ -68,5 +66,8 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-utility.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-presentation.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-visual.ixx" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory)header-units.json" />
   </ItemGroup>
 </Project>

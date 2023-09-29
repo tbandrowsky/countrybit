@@ -7,13 +7,15 @@ module;
 #include <functional>
 #include <memory>
 #include <algorithm>
+#include <stdexcept>
 
 export module corona.database:table;
 
-import :stdapi;
 import :constants;
 import :store_box;
 import :assert_if;
+import :string_box;
+
 
 export struct row_range
 {
@@ -452,9 +454,9 @@ public:
 };
 
 
-template <typename P, typename C>
-	requires (std::is_standard_layout<P>::value&& std::is_standard_layout<C>::value)
-export class item_details_table
+export template <typename P, typename C>
+requires (std::is_standard_layout<P>::value&& std::is_standard_layout<C>::value)
+class item_details_table
 {
 
 	struct item_type
@@ -707,10 +709,7 @@ public:
 
 };
 
-export bool table_tests();
-
-
-bool table_tests()
+export bool table_tests()
 {
     int r = true;
 
@@ -746,7 +745,7 @@ bool table_tests()
     };
 
     int s = sizeof(objects) / sizeof(test_item);
-    r = r && assert_if([s]() { return s == 5; }, "size isn't 5");
+    r = r && assert_if(s == 5, "size isn't 5");
 
     using box_type = dynamic_box;
 
@@ -775,7 +774,8 @@ bool table_tests()
     auto count = basic.count_if([](auto& t) { return t.item.name == "yes" || t.item.name == "no";  });
     assert_if(count == 2, "Wrong count");
 
-    auto items = basic.where([](auto& t) { return t.item.name == "yes" || t.item.name == "no";  });
+	auto fnbasic = [](auto& t) { return t.item.name == "yes" || t.item.name == "no";  };
+    auto items = basic.where(fnbasic);
     count = 0;
     for (auto r : items) 
     {
@@ -784,7 +784,7 @@ bool table_tests()
     }
     assert_if(count == 2, "Wrong count");
 
-    for (corona::database::relative_ptr_type i = 0; i < basic.size(); i++) {
+    for (relative_ptr_type i = 0; i < basic.size(); i++) {
         auto nr = basic[i];
         r = r && assert_if(ti[i].id == nr.id && ti[i].description == nr.description && ti[i].name == nr.name, "item not stored correctly");
     }
@@ -797,12 +797,12 @@ bool table_tests()
 
 #if DETAILS
 
-    for (corona::database::relative_ptr_type i = 0; i < basic.size(); i++) {
+    for (relative_ptr_type i = 0; i < basic.size(); i++) {
         auto b = basic[i];
         std::cout << b.id << " " << b.name << " " << b.description << std::endl;
     }
 #endif
-    for (corona::database::relative_ptr_type i = 0; i < basic.size(); i++) {
+    for (relative_ptr_type i = 0; i < basic.size(); i++) {
         auto nr = basic[i];
         r = r && assert_if(tif[i].id == nr.id && tif[i].description == nr.description && tif[i].name == nr.name, "forward not moved correctly");
     }
@@ -814,13 +814,13 @@ bool table_tests()
     basic.erase(0, 1);
 
 #if DETAILS
-    for (corona::database::relative_ptr_type i = 0; i < basic.size(); i++) {
+    for (relative_ptr_type i = 0; i < basic.size(); i++) {
         auto b = basic[i];
         std::cout << b.id << " " << b.name << " " << b.description << std::endl;
     }
 #endif
 
-    for (corona::database::relative_ptr_type i = 0; i < basic.size(); i++) {
+    for (relative_ptr_type i = 0; i < basic.size(); i++) {
         auto nr = basic[i];
         r = r && assert_if(tib[i].id == nr.id && tib[i].description == nr.description && tib[i].name == nr.name, "backward not moved correctly");
     }

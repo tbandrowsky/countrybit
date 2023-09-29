@@ -1,11 +1,18 @@
 module;
 
+#include "corona_platform.h"
+
 #include <string>
 #include <exception>
+#include <stdexcept>
+#include <format>
 
 export module corona.database:directxdcontext;
-import :stdapi;
+import :color_box;
+import :point_box;
+import :rectangle_box;
 import :visual;
+import :point_box;
 
 export struct sizeCrop {
 	D2D1_SIZE_U size;

@@ -2,9 +2,11 @@ module;
 
 export module corona.database:jfield;
 
-import :stdapi;
 import :constants;
 import :store_box;
+import :string_box;
+import :iarray;
+import :table;
 
 export const int max_query_filters = 32;
 export const int max_path_nodes = 16;

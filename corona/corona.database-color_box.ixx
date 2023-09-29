@@ -2,11 +2,15 @@ module;
 
 export module corona.database:color_box;
 
-import :stdapi;
-
 import :store_box;
 
-export using color = D3DCOLORVALUE;
+export struct color
+{
+	float r;
+	float g;
+	float b;
+	float a;
+};
 
 export class color_box : protected boxed<color>
 {

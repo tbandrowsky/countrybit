@@ -78,7 +78,6 @@ Global
 		SolutionGuid = {BA47BF18-71C4-44D3-A412-2F875C556B7D}
 	EndGlobalSection
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
-		corona\corona.vcxitems*{1bac5fc2-de01-4b92-8327-6fb4704045b2}*SharedItemsImports = 4
 		corona\corona.vcxitems*{8ba13569-58de-4105-9694-1ed9f2f85445}*SharedItemsImports = 4
 		corona\corona.vcxitems*{c12de1f8-9a25-4e3b-af11-93f4b3aceee9}*SharedItemsImports = 9
 		corona\corona.vcxitems*{df369a3e-4fee-4f1c-871d-a63d3ac30e3c}*SharedItemsImports = 4

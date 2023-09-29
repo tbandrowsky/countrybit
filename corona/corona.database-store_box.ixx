@@ -1,5 +1,7 @@
 module;
 
+#include "windows.h"
+
 #include <string>
 #include <iostream>
 #include <algorithm>
@@ -10,13 +12,15 @@ module;
 export module corona.database:store_box;
 
 import :constants;
-import :concept_lock;
 
 export template <typename box_class>
 concept box_data = requires(box_class c, char* b, int x) {
 	x = c.size();
 	b = c.data();
 };
+
+#undef min
+#undef max
 
 export struct box_block
 {
@@ -61,20 +65,10 @@ export struct serialized_box_data
 
 export class serialized_box_implementation
 {
-	concept_locker* locker;
-
-protected:
-
-	lockable_concept box_lock;
 
 public:
 
-	serialized_box_implementation() : locker(nullptr)
-	{
-		;
-	}
-
-	serialized_box_implementation(concept_locker* _locker) : locker(_locker)
+	serialized_box_implementation()
 	{
 		;
 	}
@@ -82,28 +76,6 @@ public:
 	virtual ~serialized_box_implementation()
 	{
 		;
-	}
-
-	void set_locker(concept_locker* _locker)
-	{
-		locker = _locker;
-	}
-
-	concept_locker* get_locker()
-	{
-		return locker;
-	}
-
-	concept_lock checkout(std::string _name)
-	{
-		if (locker) {
-			return locker->checkout(_name);
-		}
-		else
-		{
-			concept_lock lck;
-			return lck;
-		}
 	}
 
 	virtual void init(corona_size_t _length) = 0;
@@ -162,7 +134,6 @@ public:
 		requires (box_data<bx>)
 	serialized_box_memory_implementation operator = (const bx& _src)
 	{
-		auto method_lock = box_lock.lock();
 		int64_t new_size = _src.size();
 		if (sbdata->_size < new_size)
 			throw std::invalid_argument("target box too small");
@@ -174,7 +145,6 @@ public:
 
 	virtual void init(corona_size_t _length)
 	{
-		auto method_lock = box_lock.lock();
 		sbdata->_top = 0;
 		sbdata->_size = _length;
 		sbdata->_box_id = block_id::box_id();
@@ -182,7 +152,6 @@ public:
 
 	virtual void adjust(corona_size_t _length)
 	{
-		auto method_lock = box_lock.lock();
 		sbdata->_size = _length;
 	}
 
@@ -208,7 +177,6 @@ public:
 
 	virtual box_block* reserve(corona_size_t length)
 	{
-		auto method_lock = box_lock.lock();
 		relative_ptr_type placement;
 		auto ac = allocate(1, length);
 		return ac;
@@ -216,7 +184,6 @@ public:
 
 	virtual box_block* allocate(int64_t sizeofobj, int length)
 	{
-		auto method_lock = box_lock.lock();
 		relative_ptr_type alignment = sizeof(sizeofobj);
 
 		if (sizeofobj < 8)
@@ -251,7 +218,6 @@ public:
 
 	virtual box_block* get_object(relative_ptr_type _src)
 	{
-		auto method_lock = box_lock.lock();
 		if (_src == null_row) {
 			return nullptr;
 		}
@@ -261,7 +227,6 @@ public:
 
 	virtual relative_ptr_type create_object(char* _src, int _length)
 	{
-		auto method_lock = box_lock.lock();
 		box_block* item = allocate(1, _length);
 		if (!item) return null_row;
 		memcpy(&item->data[0], _src, _length);
@@ -270,7 +235,6 @@ public:
 
 	virtual relative_ptr_type update_object(relative_ptr_type _placement, char* _src, int _length)
 	{
-		auto method_lock = box_lock.lock();
 		box_block* item = (box_block*)&sbdata->_data[_placement];
 		char* dest;
 		dest = &item->data[0];
@@ -280,7 +244,6 @@ public:
 
 	virtual bool delete_object(relative_ptr_type _location)
 	{
-		auto method_lock = box_lock.lock();
 		box_block* item = (box_block*)&sbdata->_data[_location];
 		item->deleted = true;
 		return true;
@@ -288,7 +251,6 @@ public:
 
 	virtual relative_ptr_type copy_object(relative_ptr_type _location)
 	{
-		auto method_lock = box_lock.lock();
 		relative_ptr_type dest_location = null_row;
 		box_block* dest_block;
 		box_block* item = (box_block*)&sbdata->_data[_location];
@@ -655,6 +617,11 @@ public:
 		box = serialized_box_memory_implementation::create(_src.stuff, _src.length);
 	}
 
+	virtual ~inline_box()
+	{
+		;
+	}
+
 	virtual serialized_box* get_box() { return &box; }
 	virtual const serialized_box* get_box_const() const {
 		return box.get_address();
@@ -929,7 +896,7 @@ using basic_currency_box = boxed<CY>;
 using basic_collection_id_box = boxed<collection_id_type>;
 using basic_object_id_box = boxed<object_id_type>;
 
-export bool test_box(serialized_box_container *b)
+bool test_box(serialized_box_container *b)
 {
 	struct test_struct {
 		int i1,

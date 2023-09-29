@@ -5,17 +5,18 @@ module;
 #include <memory>
 #include <exception>
 #include <algorithm>
+#include <utility>
+#include <functional>
+#include <stdexcept>
 
 export module corona.database:store_box_file;
 
-import :stdapi;
 import :store_box;
 import :constants;
 import :sorted_index;
 import :file;
 import :application;
-import :store_box_file;
-
+import :function;
 
 export using io_block_store = sorted_index<relative_ptr_type, box_block*>;
 
@@ -41,8 +42,8 @@ export class serialized_box_file_implementation : public serialized_box_implemen
 		int64_t				bytes_added;
 	} header;
 
-	corona::database::task<os_result> get_header_async();
-	corona::database::task<os_result> put_header_async();
+	task<os_result> get_header_async();
+	task<os_result> put_header_async();
 
 public:
 
@@ -64,29 +65,29 @@ public:
 	virtual relative_ptr_type top() const;
 	virtual corona_size_t free() const;
 
-	corona::database::task<os_result> init_task(corona_size_t _length);
-	corona::database::task<os_result> adjust_task(corona_size_t _length);
-	corona::database::task<os_result> clear_task();
-	corona::database::task<box_block*> reserve_task(corona_size_t _length);
-	corona::database::task<box_block*> allocate_task(int64_t sizeofobj, int length);
-	corona::database::task<box_block*> get_object_task(relative_ptr_type _length);
-	corona::database::task<relative_ptr_type> create_object_task(char* _src, int _length);
-	corona::database::task<relative_ptr_type> update_object_task(relative_ptr_type _destination, char* _src, int _length);
-	corona::database::task<bool> delete_object_task(relative_ptr_type _location);
-	corona::database::task<relative_ptr_type> copy_object_task(relative_ptr_type _location);
-	corona::database::task<relative_ptr_type> commit_task();
+	task<os_result> init_task(corona_size_t _length);
+	task<os_result> adjust_task(corona_size_t _length);
+	task<os_result> clear_task();
+	task<box_block*> reserve_task(corona_size_t _length);
+	task<box_block*> allocate_task(int64_t sizeofobj, int length);
+	task<box_block*> get_object_task(relative_ptr_type _length);
+	task<relative_ptr_type> create_object_task(char* _src, int _length);
+	task<relative_ptr_type> update_object_task(relative_ptr_type _destination, char* _src, int _length);
+	task<bool> delete_object_task(relative_ptr_type _location);
+	task<relative_ptr_type> copy_object_task(relative_ptr_type _location);
+	task<relative_ptr_type> commit_task();
 
-	corona::database::sync<os_result> init_async(corona_size_t _length);
-	corona::database::sync<os_result> adjust_async(corona_size_t _length);
-	corona::database::sync<os_result> clear_async();
-	corona::database::sync<box_block*> reserve_async(corona_size_t _length);
-	corona::database::sync<box_block*> allocate_async(int64_t sizeofobj, int length);
-	corona::database::sync<box_block*> get_object_async(relative_ptr_type _length);
-	corona::database::sync<relative_ptr_type> create_object_async(char* _src, int _length);
-	corona::database::sync<relative_ptr_type> update_object_async(relative_ptr_type _destination, char* _src, int _length);
-	corona::database::sync<bool> delete_object_async(relative_ptr_type _location);
-	corona::database::sync<relative_ptr_type> copy_object_async(relative_ptr_type _location);
-	corona::database::sync<relative_ptr_type> commit_async();
+	sync<os_result> init_async(corona_size_t _length);
+	sync<os_result> adjust_async(corona_size_t _length);
+	sync<os_result> clear_async();
+	sync<box_block*> reserve_async(corona_size_t _length);
+	sync<box_block*> allocate_async(int64_t sizeofobj, int length);
+	sync<box_block*> get_object_async(relative_ptr_type _length);
+	sync<relative_ptr_type> create_object_async(char* _src, int _length);
+	sync<relative_ptr_type> update_object_async(relative_ptr_type _destination, char* _src, int _length);
+	sync<bool> delete_object_async(relative_ptr_type _location);
+	sync<relative_ptr_type> copy_object_async(relative_ptr_type _location);
+	sync<relative_ptr_type> commit_async();
 
 	virtual void init(corona_size_t _length);
 	virtual void adjust(corona_size_t _length);
@@ -195,7 +196,7 @@ serialized_box_file_implementation::~serialized_box_file_implementation()
 {
 }
 
-corona::database::task<os_result> serialized_box_file_implementation::init_task(corona_size_t _length)
+task<os_result> serialized_box_file_implementation::init_task(corona_size_t _length)
 {
 	os_result r;
 	try
@@ -220,7 +221,7 @@ corona::database::task<os_result> serialized_box_file_implementation::init_task(
 	co_return r;
 }
 
-corona::database::task<os_result> serialized_box_file_implementation::clear_task()
+task<os_result> serialized_box_file_implementation::clear_task()
 {
 	os_result r;
 	try
@@ -237,7 +238,7 @@ corona::database::task<os_result> serialized_box_file_implementation::clear_task
 	co_return r;
 }
 
-corona::database::task<os_result> serialized_box_file_implementation::adjust_task(corona_size_t _length)
+task<os_result> serialized_box_file_implementation::adjust_task(corona_size_t _length)
 {
 	os_result r;
 	try
@@ -261,7 +262,7 @@ corona::database::task<os_result> serialized_box_file_implementation::adjust_tas
 	co_return r;
 }
 
-corona::database::task<box_block *> serialized_box_file_implementation::reserve_task(corona_size_t _length)
+task<box_block *> serialized_box_file_implementation::reserve_task(corona_size_t _length)
 {
 	box_block* bb = nullptr;
 	try
@@ -315,7 +316,7 @@ corona::database::task<box_block *> serialized_box_file_implementation::reserve_
 	co_return bb;
 }
 
-corona::database::task<box_block *> serialized_box_file_implementation::allocate_task(int64_t sizeofobj, int length)
+task<box_block *> serialized_box_file_implementation::allocate_task(int64_t sizeofobj, int length)
 {
 	box_block *atr;
 	relative_ptr_type l = sizeofobj * length;
@@ -323,7 +324,7 @@ corona::database::task<box_block *> serialized_box_file_implementation::allocate
 	co_return atr;
 }
 
-corona::database::task<box_block*> serialized_box_file_implementation::get_object_task(relative_ptr_type location)
+task<box_block*> serialized_box_file_implementation::get_object_task(relative_ptr_type location)
 {
 	box_block* bb = nullptr;
 	if (transaction.contains(location))
@@ -340,7 +341,7 @@ corona::database::task<box_block*> serialized_box_file_implementation::get_objec
 	co_return bb;
 }
 
-corona::database::task<relative_ptr_type> serialized_box_file_implementation::create_object_task(char* _src, int _length)
+task<relative_ptr_type> serialized_box_file_implementation::create_object_task(char* _src, int _length)
 {
 	auto atr = co_await allocate_task(1, _length);
 	if (atr != nullptr) 
@@ -354,7 +355,7 @@ corona::database::task<relative_ptr_type> serialized_box_file_implementation::cr
 	co_return null_row;
 }
 
-corona::database::task<relative_ptr_type> serialized_box_file_implementation::update_object_task(relative_ptr_type _location, char* _src, int _length)
+task<relative_ptr_type> serialized_box_file_implementation::update_object_task(relative_ptr_type _location, char* _src, int _length)
 {
 	relative_ptr_type r = null_row;
 	if (transaction.contains(_location))
@@ -368,7 +369,7 @@ corona::database::task<relative_ptr_type> serialized_box_file_implementation::up
 	co_return r;
 }
 
-corona::database::task<bool> serialized_box_file_implementation::delete_object_task(relative_ptr_type _location)
+task<bool> serialized_box_file_implementation::delete_object_task(relative_ptr_type _location)
 {
 	auto block = co_await get_object_task(_location);
 	if (block) {
@@ -382,7 +383,7 @@ corona::database::task<bool> serialized_box_file_implementation::delete_object_t
 	}
 }
 
-corona::database::task<relative_ptr_type> serialized_box_file_implementation::copy_object_task(relative_ptr_type _location)
+task<relative_ptr_type> serialized_box_file_implementation::copy_object_task(relative_ptr_type _location)
 {
 	relative_ptr_type new_location = null_row;
 	auto block = co_await get_object_task(_location);
@@ -396,7 +397,7 @@ corona::database::task<relative_ptr_type> serialized_box_file_implementation::co
 	co_return new_location;
 }
 
-corona::database::task<relative_ptr_type> serialized_box_file_implementation::commit_task()
+task<relative_ptr_type> serialized_box_file_implementation::commit_task()
 {
 	relative_ptr_type count_bytes = 0;
 	for (auto trans : transaction)
@@ -408,57 +409,57 @@ corona::database::task<relative_ptr_type> serialized_box_file_implementation::co
 	co_return count_bytes;
 }
 
-corona::database::sync<os_result> serialized_box_file_implementation::init_async(corona_size_t _length)
+sync<os_result> serialized_box_file_implementation::init_async(corona_size_t _length)
 {
 	co_return init_task(_length);
 }
 
-corona::database::sync<os_result> serialized_box_file_implementation::adjust_async(corona_size_t _length)
+sync<os_result> serialized_box_file_implementation::adjust_async(corona_size_t _length)
 {
 	co_return adjust_task(_length);
 }
 
-corona::database::sync<os_result> serialized_box_file_implementation::clear_async()
+sync<os_result> serialized_box_file_implementation::clear_async()
 {
 	co_return clear_task();
 }
 
-corona::database::sync<box_block*> serialized_box_file_implementation::reserve_async(corona_size_t _length)
+sync<box_block*> serialized_box_file_implementation::reserve_async(corona_size_t _length)
 {
 	co_return reserve_task(_length);
 }
 
-corona::database::sync<box_block*> serialized_box_file_implementation::allocate_async(int64_t sizeofobj, int length)
+sync<box_block*> serialized_box_file_implementation::allocate_async(int64_t sizeofobj, int length)
 {
 	co_return allocate_task(sizeofobj, length);
 }
 
-corona::database::sync<box_block*> serialized_box_file_implementation::get_object_async(relative_ptr_type _position)
+sync<box_block*> serialized_box_file_implementation::get_object_async(relative_ptr_type _position)
 {
 	co_return get_object_task(_position);
 }
 
-corona::database::sync<relative_ptr_type> serialized_box_file_implementation::create_object_async(char* _src, int _length)
+sync<relative_ptr_type> serialized_box_file_implementation::create_object_async(char* _src, int _length)
 {
 	co_return create_object_task(_src, _length);
 }
 
-corona::database::sync<relative_ptr_type> serialized_box_file_implementation::update_object_async(relative_ptr_type _destination, char* _src, int _length)
+sync<relative_ptr_type> serialized_box_file_implementation::update_object_async(relative_ptr_type _destination, char* _src, int _length)
 {
 	co_return update_object_task(_destination, _src, _length);
 }
 
-corona::database::sync<bool> serialized_box_file_implementation::delete_object_async(relative_ptr_type _location)
+sync<bool> serialized_box_file_implementation::delete_object_async(relative_ptr_type _location)
 {
 	co_return delete_object_task(_location);
 }
 
-corona::database::sync<relative_ptr_type> serialized_box_file_implementation::copy_object_async(relative_ptr_type _location)
+sync<relative_ptr_type> serialized_box_file_implementation::copy_object_async(relative_ptr_type _location)
 {
 	co_return copy_object_task(_location);
 }
 
-corona::database::sync<relative_ptr_type> serialized_box_file_implementation::commit_async()
+sync<relative_ptr_type> serialized_box_file_implementation::commit_async()
 {
 	co_return commit_task();
 }

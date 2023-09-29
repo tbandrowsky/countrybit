@@ -5,8 +5,9 @@ module;
 #include "omp.h"
 
 export module corona.database:bitmap_filters;
-import :stdapi;
+
 import :point_box;
+import :directxdcontext;
 
 export class bitmapFilter {
 	bool flipHorizontalEnable,

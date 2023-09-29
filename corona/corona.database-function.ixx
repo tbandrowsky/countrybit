@@ -1,11 +1,12 @@
 module;
 
+#include "windows.h"
+
 #include <functional>
 #include <coroutine>
 #include <iostream>
 
 export module corona.database:function;
-import :stdapi;
 import :queue;
 
 export class task_job : public job
@@ -112,7 +113,7 @@ public:
 
 	void await_suspend(std::coroutine_handle<> _handle)
 	{
-		HANDLE hevent = ::CreateEvent(NULL, FALSE, FALSE, NULL);
+		HANDLE hevent = ::CreateEvent(NULL, false, false, NULL);
 		std::cout << this << ", task await_suspend:" << GetCurrentThreadId() << std::endl;
 		task_job tj(coroutine, hevent);
 		application::get_application()->add_job(&tj);
@@ -199,7 +200,7 @@ public:
 	void await_suspend(std::coroutine_handle<> handle)
 	{
 		JobType my_job;
-		HANDLE hevent = ::CreateEvent(NULL, FALSE, FALSE, NULL);
+		HANDLE hevent = ::CreateEvent(NULL, false, false, NULL);
 		std::cout << this << ", async_io_task await_suspend:" << GetCurrentThreadId() << std::endl;
 		my_job.params = &params;
 		my_job.handle = coroutine;

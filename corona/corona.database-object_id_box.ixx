@@ -5,7 +5,6 @@ module;
 
 export module corona.database:object_id_box;
 
-import :stdapi;
 import :store_box;
 import :jobject;
 import :jdatabase_server;

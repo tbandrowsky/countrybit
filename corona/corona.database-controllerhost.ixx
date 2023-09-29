@@ -1,10 +1,15 @@
 module;
 
-import <memory>
+#include "windows.h"
+
+#include <memory>
+#include <list>
+#include <string>
 
 export module corona.database:controllerhost;
 
-import :stdapi;
+import :direct2dBitmap;
+import :rectangle_box;
 import :color_box;
 import :visual;
 
@@ -51,7 +56,7 @@ public:
 	virtual void drawView(const char* _style, const char* _text, rectangle& _rect, int _state, const char* _debug_comment) = 0;
 };
 
-class controllerHost {
+export class controllerHost {
 
 public:
 
@@ -65,7 +70,7 @@ public:
 
 class controller;
 
-class win32ControllerHost : public controllerHost {
+export class win32ControllerHost : public controllerHost {
 
 public:
 

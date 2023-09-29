@@ -4,8 +4,6 @@ module;
 #include <string>
 
 export module corona.database:datatransfer;
-import :stdapi;
-import :store_box;
 
 export class directException {
 public:

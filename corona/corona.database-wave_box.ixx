@@ -2,7 +2,6 @@ module;
 
 export module corona.database:wave_box;
 
-import :stdapi;
 import :store_box;
 
 export struct wave_instance

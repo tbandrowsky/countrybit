@@ -24,6 +24,15 @@ export bool assert_if(std::function<int()> test, const char* fail)
     return true;
 }
 
+export bool assert_if(int test, const wchar_t* fail)
+{
+    if (!test) {
+        std::wcout << fail << std::endl;
+        return false;
+    }
+    return true;
+}
+
 export bool assert_if(std::function<int()> test, const wchar_t* fail)
 {
     if (!test()) {

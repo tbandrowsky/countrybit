@@ -4,12 +4,15 @@ module;
 #include <functional>
 #include <string>
 #include <iostream>
+#include <compare>
 
 export module corona.database:list_box;
 
-import :store_box;
-import :stdapi;
+import :constants;
 import :assert_if;
+import :store_box;
+import :filterable_iterator;
+import :iarray;
 
 export struct list_box_data
 		{
@@ -377,17 +380,17 @@ export template <typename item_type>
 			}
 
 			count = ix.count_if([](auto& t) { return t < 3;  });
-			assert_if([count]() { return count == 3; }, "Wrong count");
+			assert_if(count == 3, "Wrong count");
 
 			auto items = ix.where([](auto& t) { return t < 3;  });
 
 			count = 0;
 			for (auto r : items)
 			{
-				assert_if([r]() { return r < 3;  }, "Wrong values");
+				assert_if(r < 3, "Wrong values");
 				count++;
 			}
-			assert_if([count]() { return count == 3; }, "Wrong count");
+			assert_if(count == 3, "Wrong count");
 
 
 			return true;

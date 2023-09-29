@@ -4,7 +4,6 @@ module;
 
 export module corona.database:rectangle_box;
 
-import :stdapi;
 import :store_box;
 
 export struct rectangle

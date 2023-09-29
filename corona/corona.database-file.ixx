@@ -1,11 +1,17 @@
 module;
 
+#include "windows.h"
+
 #include <exception>
+#include <stdexcept>
+#include <iostream>
 
 export module corona.database:file;
-import :stdapi;
 import :queue;
 import :string_box;
+import :constants;
+import :messages;
+import :function;
 
 export class file_result
 {
@@ -117,7 +123,7 @@ protected:
 			throw std::runtime_error("Invalid enum to open file ");
 		}
 
-		resize_event = ::CreateEvent(NULL, TRUE, TRUE, NULL);
+		resize_event = CreateEventA(NULL, true, true, NULL);
 		if (resize_event == NULL) {
 			os_result osr;
 			{
