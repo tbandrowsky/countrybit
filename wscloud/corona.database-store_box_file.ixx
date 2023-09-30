@@ -9,6 +9,7 @@ module;
 #include <functional>
 #include <stdexcept>
 #include <compare>
+#include <coroutine>
 
 export module corona.database:store_box_file;
 
@@ -375,7 +376,7 @@ task<bool> serialized_box_file_implementation::delete_object_task(relative_ptr_t
 	auto block = co_await get_object_task(_location);
 	if (block) {
 		block->deleted = true;
-		::ZeroMemory(&block->data[0], block->payload_length);
+		memset(&block->data[0], 0, block->payload_length);
 		co_return block->deleted;
 	}
 	else 

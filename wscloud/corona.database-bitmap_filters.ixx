@@ -3,12 +3,17 @@
 module;
 
 #include <compare>
+#include <vector>
 #include "omp.h"
 
 export module corona.database:bitmap_filters;
 
 import :point_box;
-import :directxdcontext;
+
+export struct PBGRAPixel
+{
+	unsigned char blue, green, red, alpha;
+};
 
 export class bitmapFilter {
 	bool flipHorizontalEnable,
@@ -227,8 +232,10 @@ bool bitmapFilter::adjustBrightness(point size, int cbBufferSize, int cbStride, 
 	PBGRAPixel* base = (PBGRAPixel*)pv;
 	int r, x;
 
+	int szy = size.y;
+
 #pragma omp parallel for
-	for (r = 0; r < size.y; r++) {
+	for (r = 0; r < szy; r++) {
 		adjustBrightnessInner(pv, cbStride, r, size.x, brightness);
 	}
 
@@ -301,8 +308,10 @@ bool bitmapFilter::adjustContrast(point _size, int cbBufferSize, int cbStride, c
 	// center - 20
 	// nv = 
 
+	int szy = _size.y;
+
 #pragma omp parallel for
-	for (int r = 0; r < _size.y; r++) {
+	for (int r = 0; r < szy; r++) {
 		adjustContrastInner(pv, cbStride, r, _size.x, center, mRange);
 	}
 
@@ -378,8 +387,9 @@ bool bitmapFilter::adjustChromaKey(point _size, int cbBufferSize, int cbStride, 
 		chromas.push_back(keyHsl);
 	}
 
+	int szy = _size.y;
 #pragma omp parallel for
-	for (int r = 0; r < _size.y; r++) {
+	for (int r = 0; r < szy; r++) {
 		adjustChromaKeyInner(pv, cbStride, r, _size.x, chromas, chromaKeyThreshold);
 	}
 

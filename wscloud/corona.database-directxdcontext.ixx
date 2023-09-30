@@ -2,18 +2,76 @@ module;
 
 #include "corona_platform.h"
 
+#include "atlbase.h"
+
 #include <string>
 #include <exception>
 #include <stdexcept>
 #include <format>
 #include <compare>
+#include <map>
+#include <vector>
+#include <stack>
+#include <functional>
+#include <memory>
+#include <algorithm>
 
 export module corona.database:directxdcontext;
+import :constants;
 import :color_box;
 import :point_box;
 import :rectangle_box;
 import :visual;
 import :point_box;
+import :jobject;
+import :bitmap_filters;
+
+class direct2dWindow;
+class direct2dChildWindow;
+class direct2dBitmap;
+
+export class drawableHost {
+public:
+
+	virtual void clear(color* _color) = 0;
+	virtual std::string setBitmap(bitmapRequest* _bitmap) = 0;
+	virtual bool setBitmapSizes(bitmapRequest* _bitmap, bool _forceResize) = 0;
+	virtual bool setBitmapFilter(bitmapRequest* _bitmap, std::function<bool(point, int, int, char* bytes)> _filter) = 0;
+	virtual std::string  setBitmapBrush(bitmapBrushRequest* _bitmapBrush) = 0;
+	virtual std::string setSolidColorBrush(solidBrushRequest* _solidBrushDto) = 0;
+	virtual std::string setLinearGradientBrush(linearGradientBrushRequest* _linearGradientBrushDto) = 0;
+	virtual std::string setRadialGradientBrush(radialGradientBrushRequest* _radialGradientBrushDto) = 0;
+	virtual void clearBitmapsAndBrushes(bool deleteStockObjects = false) = 0;
+
+	virtual std::string  setPath(pathDto* _pathDto, bool _closed = true) = 0;
+
+	virtual void setViewStyle(viewStyleRequest& _textStyle) = 0;
+	virtual void clearViewStyles() = 0;
+	virtual void setTextStyle(textStyleRequest* _textStyle) = 0;
+	virtual void clearTextStyles() = 0;
+
+	virtual void clearPaths() = 0;
+
+	virtual void drawPath(pathInstance2dDto* _pathInstanceDto) = 0;
+	virtual void drawPath(pathImmediateDto* _pathImmediateDto) = 0;
+	virtual void drawText(drawTextRequest* _textInstanceDto) = 0;
+	virtual void drawBitmap(bitmapInstanceDto* _bitmapInstanceDto) = 0;
+
+	virtual void drawLine(point* start, point* stop, const char* _fillBrush, double thickness) = 0;
+	virtual void drawRectangle(rectangle* _rectDto, const char* _borderBrush, double _borderWidth, const char* _fillBrush) = 0;
+	virtual void drawText(const char* _text, rectangle* _rectDto, const char* _textStyle, const char* _fillBrush) = 0;
+	virtual rectangle getCanvasSize() = 0;
+
+	virtual void popCamera() = 0;
+	virtual void pushCamera(point* _position, float _rotation, float _scale = 1.0) = 0;
+
+	virtual std::shared_ptr<direct2dBitmap> createBitmap(point& _size) = 0;
+	virtual void drawBitmap(drawableHost* _directBitmap, point& _dest, point& _size) = 0;
+	virtual bool isBitmap() { return false; }
+	virtual void save(const char* _filename) = 0;
+
+	virtual void drawView(const char* _style, const char* _text, rectangle& _rect, int _state, const char* _debug_comment) = 0;
+};
 
 export struct sizeCrop {
 	D2D1_SIZE_U size;
@@ -249,10 +307,7 @@ public:
 
 };
 
-export struct PBGRAPixel
-{
-	unsigned char blue, green, red, alpha;
-};
+class direct2dContext;
 
 export class deviceDependentAssetBase {
 public:
@@ -267,7 +322,6 @@ public:
 	virtual ID2D1Brush* getBrush();
 };
 
-class direct2dContext;
 
 export template <typename Direct2DAsset> class deviceDependentAsset : public deviceDependentAssetBase {
 protected:
@@ -717,7 +771,7 @@ protected:
 
 public:
 	direct2dContext(std::weak_ptr<adapterSet> _factory);
-	direct2dContext(std::weak_ptr<corona::win32::adapterSet> _factory, ID2D1DeviceContext* _context);
+	direct2dContext(std::weak_ptr<adapterSet> _factory, ID2D1DeviceContext* _context);
 
 	virtual ~direct2dContext();
 
@@ -761,10 +815,10 @@ public:
 	virtual void drawText(drawTextRequest* _textInstanceDto);
 	virtual void drawBitmap(bitmapInstanceDto* _bitmapInstanceDto);
 
-	virtual void drawLine(database::point* start, database::point* stop, const char* _fillBrush, double thickness);
-	virtual void drawRectangle(database::rectangle* _rectangle, const char* _borderBrush, double _borderWidth, const char* _fillBrush);
-	virtual void drawText(const char* _text, database::rectangle* _rectangle, const char* _textStyle, const char* _fillBrush);
-	virtual database::rectangle getCanvasSize();
+	virtual void drawLine(point* start, point* stop, const char* _fillBrush, double thickness);
+	virtual void drawRectangle(rectangle* _rectangle, const char* _borderBrush, double _borderWidth, const char* _fillBrush);
+	virtual void drawText(const char* _text, rectangle* _rectangle, const char* _textStyle, const char* _fillBrush);
+	virtual rectangle getCanvasSize();
 
 	virtual std::shared_ptr<direct2dBitmap> createBitmap(point& _size);
 	virtual void drawBitmap(drawableHost* _directBitmap, point& _dest, point& _size);
@@ -1191,7 +1245,7 @@ direct2dChildWindow::~direct2dChildWindow()
 
 //---
 
-direct2dContext::direct2dContext(std::weak_ptr<corona::win32::adapterSet> _factory) :
+direct2dContext::direct2dContext(std::weak_ptr<adapterSet> _factory) :
 	factory(_factory)
 {
 	currentTransform = D2D1::Matrix3x2F::Identity();
@@ -1208,7 +1262,7 @@ direct2dContext::direct2dContext(std::weak_ptr<corona::win32::adapterSet> _facto
 	throwOnFail(hr, "Could not create device context");
 }
 
-direct2dContext::direct2dContext(std::weak_ptr<corona::win32::adapterSet> _factory, ID2D1DeviceContext* _context) :
+direct2dContext::direct2dContext(std::weak_ptr<adapterSet> _factory, ID2D1DeviceContext* _context) :
 	factory(_factory)
 {
 	currentTransform = D2D1::Matrix3x2F::Identity();
@@ -2606,7 +2660,7 @@ void direct2dContext::drawPath(pathImmediateDto* _pathImmediateDto)
 	}
 }
 
-void direct2dContext::drawLine(database::point* start, database::point* stop, const char* _fillBrush, double thickness)
+void direct2dContext::drawLine(point* start, point* stop, const char* _fillBrush, double thickness)
 {
 	auto fill = brushes[_fillBrush];
 
@@ -2622,7 +2676,7 @@ void direct2dContext::drawLine(database::point* start, database::point* stop, co
 	}
 }
 
-void direct2dContext::drawRectangle(database::rectangle* _rectangle, const char* _borderBrush, double _borderWidth, const char* _fillBrush)
+void direct2dContext::drawRectangle(rectangle* _rectangle, const char* _borderBrush, double _borderWidth, const char* _fillBrush)
 {
 	D2D1_RECT_F r;
 	r.left = _rectangle->x;
@@ -2655,7 +2709,7 @@ void direct2dContext::drawRectangle(database::rectangle* _rectangle, const char*
 	}
 }
 
-void direct2dContext::drawText(const char* _text, database::rectangle* _rectangle, const char* _textStyle, const char* _fillBrush)
+void direct2dContext::drawText(const char* _text, rectangle* _rectangle, const char* _textStyle, const char* _fillBrush)
 {
 	auto style = _textStyle ? textStyles[_textStyle] : nullptr;
 	auto fill = _fillBrush ? brushes[_fillBrush] : nullptr;
@@ -2734,7 +2788,7 @@ void direct2dContext::drawText(const char* _text, database::rectangle* _rectangl
 	delete[] buff;
 }
 
-database::rectangle direct2dContext::getCanvasSize()
+rectangle direct2dContext::getCanvasSize()
 {
 
 	D2D1_SIZE_F size;
@@ -2749,7 +2803,7 @@ database::rectangle direct2dContext::getCanvasSize()
 		size.height = 0;
 	}
 
-	return database::rectangle{ 0, 0, size.width, size.height };
+	return rectangle{ 0, 0, size.width, size.height };
 }
 
 void direct2dContext::drawText(drawTextRequest* _textInstanceDto)
@@ -3120,7 +3174,7 @@ bool direct3dDevice::setDevice(IDXGIAdapter1* _adapter)
 		NULL
 	);
 
-	if (SUCCEEDED(hr) && d3d11Device != nullptr)
+	if (SUCCEEDED(hr) && d3d11Device.p != nullptr)
 	{
 		return true;
 	}

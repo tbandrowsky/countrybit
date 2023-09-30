@@ -8,7 +8,9 @@ export module corona.database:collection_id_box;
 
 import :constants;
 import :store_box;
+import :jfield;
 import :jobject;
+import :jdatabase_server;
 
 export class collection_id_math
 {

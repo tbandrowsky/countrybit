@@ -1,18 +1,13 @@
 module;
 
+#include "corona_platform.h"
 #include <compare>
 
 export module corona.database:color_box;
 
 import :store_box;
 
-export struct color
-{
-	float r;
-	float g;
-	float b;
-	float a;
-};
+export using color = D2D1_COLOR_F;
 
 export class color_box : protected boxed<color>
 {

@@ -7,56 +7,17 @@ module;
 #include <string>
 #include <memory>
 #include <compare>
+#include <vector>
 
 export module corona.database:controllerhost;
 
-import :direct2dBitmap;
+import :constants;
+import :datatransfer;
+import :directxdcontext;
 import :rectangle_box;
 import :color_box;
+import :point_box;
 import :visual;
-
-export class drawableHost {
-public:
-
-	virtual void clear(color* _color) = 0;
-	virtual std::string setBitmap(bitmapRequest* _bitmap) = 0;
-	virtual bool setBitmapSizes(bitmapRequest* _bitmap, bool _forceResize) = 0;
-	virtual bool setBitmapFilter(bitmapRequest* _bitmap, std::function<bool(point, int, int, char* bytes)> _filter) = 0;
-	virtual std::string  setBitmapBrush(bitmapBrushRequest* _bitmapBrush) = 0;
-	virtual std::string setSolidColorBrush(solidBrushRequest* _solidBrushDto) = 0;
-	virtual std::string setLinearGradientBrush(linearGradientBrushRequest* _linearGradientBrushDto) = 0;
-	virtual std::string setRadialGradientBrush(radialGradientBrushRequest* _radialGradientBrushDto) = 0;
-	virtual void clearBitmapsAndBrushes(bool deleteStockObjects = false) = 0;
-
-	virtual std::string  setPath(pathDto* _pathDto, bool _closed = true) = 0;
-
-	virtual void setViewStyle(viewStyleRequest& _textStyle) = 0;
-	virtual void clearViewStyles() = 0;
-	virtual void setTextStyle(textStyleRequest* _textStyle) = 0;
-	virtual void clearTextStyles() = 0;
-
-	virtual void clearPaths() = 0;
-
-	virtual void drawPath(pathInstance2dDto* _pathInstanceDto) = 0;
-	virtual void drawPath(pathImmediateDto* _pathImmediateDto) = 0;
-	virtual void drawText(drawTextRequest* _textInstanceDto) = 0;
-	virtual void drawBitmap(bitmapInstanceDto* _bitmapInstanceDto) = 0;
-
-	virtual void drawLine(database::point* start, database::point* stop, const char* _fillBrush, double thickness) = 0;
-	virtual void drawRectangle(database::rectangle* _rectDto, const char* _borderBrush, double _borderWidth, const char* _fillBrush) = 0;
-	virtual void drawText(const char* _text, database::rectangle* _rectDto, const char* _textStyle, const char* _fillBrush) = 0;
-	virtual database::rectangle getCanvasSize() = 0;
-
-	virtual void popCamera() = 0;
-	virtual void pushCamera(point* _position, float _rotation, float _scale = 1.0) = 0;
-
-	virtual std::shared_ptr<direct2dBitmap> createBitmap(point& _size) = 0;
-	virtual void drawBitmap(drawableHost* _directBitmap, point& _dest, point& _size) = 0;
-	virtual bool isBitmap() { return false; }
-	virtual void save(const char* _filename) = 0;
-
-	virtual void drawView(const char* _style, const char* _text, rectangle& _rect, int _state, const char* _debug_comment) = 0;
-};
 
 export class controllerHost {
 

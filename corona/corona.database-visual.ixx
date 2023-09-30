@@ -282,7 +282,7 @@ export struct viewStyleRequest
 	solidBrushRequest shape_fill_color;
 };
 
-export struct bitmapFilter {
+export struct bitmapFilterFunction {
 	std::function<bool(point, int, int, char*)> filterFunction;
 };
 
