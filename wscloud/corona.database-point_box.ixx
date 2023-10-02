@@ -11,13 +11,21 @@ export module corona.database:point_box;
 import :store_box;
 import :float_box;
 
-export struct point
+export class point
 {
+public:
 	double x;
 	double y;
 	double z;
 
-	point(double _x = 0.0, double _y = 0.0, double _z = 0.0)
+	point()
+	{
+		x = 0;
+		y = 0;
+		z = 0;
+	}
+
+	point(double _x, double _y, double _z = 0.0)
 	{
 		x = _x;
 		y = _y;

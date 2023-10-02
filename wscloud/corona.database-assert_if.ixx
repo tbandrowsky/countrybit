@@ -1,5 +1,7 @@
 module;
 
+#include "windows.h"
+
 #include <string>
 #include <functional>
 #include <iostream>
@@ -41,5 +43,26 @@ export bool assert_if(std::function<int()> test, const wchar_t* fail)
         return false;
     }
     return true;
+}
+
+export void throwOnFail(HRESULT hr, const char* _message)
+{
+    if (!SUCCEEDED(hr)) {
+        throw std::exception(std::format("COM failure:{0}", _message).c_str());
+    }
+}
+
+export void throwOnNull(void* _ptr, const char* _message)
+{
+    if (!_ptr) {
+        throw std::exception(std::format("null reference failure:{0}", _message).c_str());
+    }
+}
+
+export void throwOnFalse(bool _ptr, const char* _message)
+{
+    if (!_ptr) {
+        throw std::exception(std::format("object reference failure:{0}", _message).c_str());
+    }
 }
 

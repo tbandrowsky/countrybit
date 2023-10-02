@@ -1,50 +1,39 @@
 module;
 
+#include <memory>
+#include <string>
+#include <vector>
+#include <list>
 #include "windows.h"
 
-#include <memory>
-#include <list>
-#include <string>
-#include <memory>
-#include <compare>
-#include <vector>
-
-export module corona.database:controllerhost;
-
+export module corona.database:application_base;
 import :constants;
-import :datatransfer;
-import :directxdcontext;
-import :rectangle_box;
-import :color_box;
-import :point_box;
+import :direct2dcontext;
 import :visual;
+import :store_box;
+import :rectangle_box;
+import :point_box;
+import :datatransfer;
+import :controller;
 
-export class controllerHost {
+export class applicationBase
+{
+protected:
 
-public:
-
-
-	virtual bool getSaveFilename(std::string& _saveFileName, const char* _pathExtensions, const char* _defaultExtension) = 0;
-	virtual rectangle getWindowClientPos() = 0;
-	virtual rectangle getWindowPos(int ddlControlId) = 0;
-	virtual void setWindowPos(int ddlControlId, rectangle rect) = 0;
-	virtual void setMinimumWindowSize(point size) = 0;
-};
-
-class controller;
-
-export class win32ControllerHost : public controllerHost {
+	std::shared_ptr<controller> currentController;
 
 public:
-
 	virtual HWND getMainWindow() = 0;
 	virtual HWND createWindow(DWORD window_id, LPCTSTR		lpClassName, LPCTSTR		lpWindowName, DWORD       dwStyle, rectangle bounds, LPVOID		lpParam, HFONT		font) = 0;
 	virtual void destroyWindow(HWND hwnd) = 0;
 
+	virtual void setController(std::shared_ptr<controller> _newCurrentController)
+	{
+		currentController = _newCurrentController;
+	}
+
 	virtual std::weak_ptr<direct2dChildWindow> createDirect2Window(DWORD control_id, rectangle bounds) = 0;
 	virtual std::weak_ptr<direct2dChildWindow> getDirect2dWindow(relative_ptr_type ctrlId) = 0;
-
-	virtual void setController(std::shared_ptr<controller> _newCurrentController) = 0;
 
 	virtual void setPictureIcon(int controlId, dtoIconId iconId) = 0;
 	virtual void setButtonIcon(int controlId, dtoIconId iconId) = 0;
@@ -114,16 +103,5 @@ public:
 
 	virtual void setSysLinkText(int ddlControlId, const char* _text) = 0;
 	virtual std::vector<std::string> readInternet(const char* _domain, const char* _path) = 0;
-
-	virtual void redraw() = 0;
-
-	virtual void setColorCapture(int _iconResourceId) = 0;
-
-	virtual bool getSaveFilename(std::string& _saveFileName, const char* _pathExtensions, const char* _defaultExtension) = 0;
-	virtual rectangle getWindowClientPos() = 0;
-	virtual rectangle getWindowPos(int ddlControlId) = 0;
-	virtual rectangle toPixelsFromDips(const rectangle& r) = 0;
-	virtual void setWindowPos(int ddlControlId, rectangle rect) = 0;
-	virtual void setMinimumWindowSize(point size) = 0;
 
 };

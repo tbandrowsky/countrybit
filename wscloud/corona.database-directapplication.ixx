@@ -9,17 +9,25 @@ module;
 #include <iostream>
 #include <compare>
 
-export module corona.database:directapplication;
-import :controllerhost;
-import :constants;
+#include <atlbase.h>
 
-export class directApplicationWin32 : public win32ControllerHost, public std::enable_shared_from_this<directApplicationWin32>
+export module corona.database:directapplication;
+import :constants;
+import :store_box;
+import :string_box;
+import :point_box;
+import :rectangle_box;
+import :application_base;
+import :controller;
+import :constants;
+import :visual;
+import :direct2dcontext;
+import :utility;
+import :presentation;
+
+export class directApplicationWin32 : public applicationBase, public std::enable_shared_from_this<directApplicationWin32>
 {
 protected:
-
-	bool controllerLoaded;
-
-	std::shared_ptr<controller> currentController;
 
 	static directApplicationWin32* current;
 	static LRESULT CALLBACK windowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
@@ -41,15 +49,13 @@ protected:
 
 	double dpiScale;
 
-	void loadStyleSheet();
-
 	bool disableChangeProcessing;
-	std::weak_ptr<adapterSet> factory;
+	std::weak_ptr<directXAdapter> factory;
 	HWND tooltip;
 
 public:
 
-	directApplicationWin32(std::weak_ptr<adapterSet>  _factory);
+	directApplicationWin32(std::weak_ptr<directXAdapter>  _factory);
 	virtual ~directApplicationWin32();
 
 	color backgroundColor;
@@ -175,10 +181,9 @@ export void EnableGuiStdOuts();
 
 directApplicationWin32* directApplicationWin32::current;
 
-directApplicationWin32::directApplicationWin32(std::weak_ptr<adapterSet> _factory) : factory(_factory), colorCapture(false)
+directApplicationWin32::directApplicationWin32(std::weak_ptr<directXAdapter> _factory) : factory(_factory), colorCapture(false)
 {
 	current = this;
-	currentController = NULL;
 	controlFont = nullptr;
 	labelFont = nullptr,
 	titleFont = nullptr;
@@ -270,11 +275,6 @@ void directApplicationWin32::redraw()
 			pfactory->refresh();
 		}
 	}
-}
-
-void directApplicationWin32::loadStyleSheet()
-{
-
 }
 
 HWND directApplicationWin32::createWindow(
@@ -396,10 +396,9 @@ LRESULT CALLBACK directApplicationWin32::windowProc(HWND hwnd, UINT message, WPA
 LRESULT directApplicationWin32::windowProcHandler(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	bool found = false;
-	point point;
+	point temp_pt;
 	static HBRUSH hbrBkgnd2 = NULL;
 	char className[256];
-	database::point ptz;
 	HRESULT hr;
 	const int BORDERWIDTH = 8;
 
@@ -424,7 +423,6 @@ LRESULT directApplicationWin32::windowProcHandler(HWND hwnd, UINT message, WPARA
 			if (currentController) {
 				pfactory->createD2dWindow(hwnd, backgroundColor);
 				dpiScale = 96.0 / GetDpiForWindow(hwnd);
-				loadStyleSheet();
 
 				tooltip = CreateWindowEx(NULL, TOOLTIPS_CLASS, NULL,
 					WS_POPUP | TTS_ALWAYSTIP | TTS_BALLOON,
@@ -477,7 +475,7 @@ LRESULT directApplicationWin32::windowProcHandler(HWND hwnd, UINT message, WPARA
 			else if (y > WindowRect.bottom - WindowRect.top - BORDERWIDTH)
 				test_hit = HTBOTTOM;
 			else if (currentController) {
-				database::point hitpoint;
+				point hitpoint;
 				hitpoint = { x, y };
 				hitpoint.x = x * 96.0 / GetDpiForWindow(hwnd);
 				hitpoint.y = y * 96.0 / GetDpiForWindow(hwnd);
@@ -556,7 +554,7 @@ LRESULT directApplicationWin32::windowProcHandler(HWND hwnd, UINT message, WPARA
 			case LVN_ITEMCHANGED:
 			{
 				auto lpmnlv = (LPNMLISTVIEW)lParam;
-				database::control_base pi;
+				control_base pi;
 				if (lpmnlv->uNewState & LVIS_SELECTED)
 					currentController->onListViewChanged(lpnm->idFrom);
 			}
@@ -690,10 +688,10 @@ LRESULT directApplicationWin32::windowProcHandler(HWND hwnd, UINT message, WPARA
 					pickedColor.r = GetRValue(cr) / 255.0;
 					pickedColor.g = GetGValue(cr) / 255.0;
 					pickedColor.b = GetBValue(cr) / 255.0;
-					ptz.x = p.x;
-					ptz.y = p.y;
+					temp_pt.x = p.x;
+					temp_pt.y = p.y;
 					if (currentController) {
-						currentController->pointSelected(pcurrent_window, &ptz, &pickedColor);
+						currentController->pointSelected(pcurrent_window, &temp_pt, &pickedColor);
 					}
 				}
 			}
@@ -705,7 +703,7 @@ LRESULT directApplicationWin32::windowProcHandler(HWND hwnd, UINT message, WPARA
 			if (GetCursorPos(&p))
 			{
 				ScreenToClient(hwnd, &p);
-				database::point ptxo;
+				point ptxo;
 				ptxo.x = p.x * 96.0 / GetDpiForWindow(hwnd);
 				ptxo.y = p.y * 96.0 / GetDpiForWindow(hwnd);
 				if (pcurrent_window) {
@@ -721,7 +719,7 @@ LRESULT directApplicationWin32::windowProcHandler(HWND hwnd, UINT message, WPARA
 			if (GetCursorPos(&p))
 			{
 				ScreenToClient(hwnd, &p);
-				database::point ptxo;
+				point ptxo;
 				ptxo.x = p.x * 96.0 / GetDpiForWindow(hwnd);
 				ptxo.y = p.y * 96.0 / GetDpiForWindow(hwnd);
 				if (pcurrent_window) {
@@ -743,7 +741,7 @@ LRESULT directApplicationWin32::windowProcHandler(HWND hwnd, UINT message, WPARA
 				if (GetCursorPos(&p))
 				{
 					ScreenToClient(hwnd, &p);
-					database::point ptxo;
+					point ptxo;
 					ptxo.x = p.x * 96.0 / GetDpiForWindow(hwnd);
 					ptxo.y = p.y * 96.0 / GetDpiForWindow(hwnd);
 					if (pcurrent_window) {
@@ -760,7 +758,7 @@ LRESULT directApplicationWin32::windowProcHandler(HWND hwnd, UINT message, WPARA
 			if (GetCursorPos(&p))
 			{
 				ScreenToClient(hwnd, &p);
-				database::point ptxo;
+				point ptxo;
 				ptxo.x = p.x * 96.0 / GetDpiForWindow(hwnd);
 				ptxo.y = p.y * 96.0 / GetDpiForWindow(hwnd);
 				if (pcurrent_window) {
@@ -776,7 +774,7 @@ LRESULT directApplicationWin32::windowProcHandler(HWND hwnd, UINT message, WPARA
 			if (GetCursorPos(&p))
 			{
 				ScreenToClient(hwnd, &p);
-				database::point ptxo;
+				point ptxo;
 				ptxo.x = p.x * 96.0 / GetDpiForWindow(hwnd);
 				ptxo.y = p.y * 96.0 / GetDpiForWindow(hwnd);
 				currentController->mouseMove(pcurrent_window, &ptxo);
@@ -845,7 +843,6 @@ bool directApplicationWin32::runFull(HINSTANCE _hinstance, const char* _title, i
 		return false;
 
 	auto ptr = weak_from_this();
-	_firstController->setHost(ptr);
 
 	WNDCLASS wcMain;
 	MSG msg;
@@ -931,7 +928,6 @@ bool directApplicationWin32::runDialog(HINSTANCE _hinstance, const char* _title,
 		return false;
 			
 	auto ptr = weak_from_this();
-	_firstController->setHost(ptr);
 
 	WNDCLASS wcMain;
 	MSG msg;

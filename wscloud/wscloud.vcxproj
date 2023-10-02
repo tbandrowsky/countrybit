@@ -220,25 +220,33 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="corona_platform.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="wscloud.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="corona.database-application_base.ixx" />
     <ClCompile Include="corona.database-application.ixx" />
     <ClCompile Include="corona.database-assert_if.ixx" />
+    <ClCompile Include="corona.database-bitmaps.ixx" />
     <ClCompile Include="corona.database-bitmap_filters.ixx" />
+    <ClCompile Include="corona.database-brushes.ixx" />
     <ClCompile Include="corona.database-collection_id_box.ixx" />
     <ClCompile Include="corona.database-color_box.ixx" />
     <ClCompile Include="corona.database-concept_lock.ixx" />
     <ClCompile Include="corona.database-constants.ixx" />
     <ClCompile Include="corona.database-controller.ixx" />
-    <ClCompile Include="corona.database-controllerhost.ixx" />
     <ClCompile Include="corona.database-datatransfer.ixx" />
+    <ClCompile Include="corona.database-direct2dcontextbase.ixx" />
+    <ClCompile Include="corona.database-direct2dresources.ixx" />
+    <ClCompile Include="corona.database-direct2dwindow.ixx" />
     <ClCompile Include="corona.database-directapplication.ixx" />
     <ClCompile Include="corona.database-directory.ixx" />
-    <ClCompile Include="corona.database-directxdcontext.ixx" />
+    <ClCompile Include="corona.database-direct2dcontext.ixx" />
+    <ClCompile Include="corona.database-directxadapterbase.ixx" />
+    <ClCompile Include="corona.database-directxdevices.ixx" />
     <ClCompile Include="corona.database-file.ixx" />
     <ClCompile Include="corona.database-filterable_iterator.ixx" />
     <ClCompile Include="corona.database-float_box.ixx" />
@@ -256,6 +264,7 @@
     <ClCompile Include="corona.database-messages.ixx" />
     <ClCompile Include="corona.database-midi_box.ixx" />
     <ClCompile Include="corona.database-object_id_box.ixx" />
+    <ClCompile Include="corona.database-path.ixx" />
     <ClCompile Include="corona.database-point_box.ixx" />
     <ClCompile Include="corona.database-presentation.ixx" />
     <ClCompile Include="corona.database-queue.ixx" />
@@ -268,10 +277,12 @@
     <ClCompile Include="corona.database-string_box.ixx" />
     <ClCompile Include="corona.database-styles.ixx" />
     <ClCompile Include="corona.database-table.ixx" />
+    <ClCompile Include="corona.database-textstyle.ixx" />
     <ClCompile Include="corona.database-time_box.ixx" />
     <ClCompile Include="corona.database-utility.ixx" />
     <ClCompile Include="corona.database-visual.ixx" />
     <ClCompile Include="corona.database-wave_box.ixx" />
+    <ClCompile Include="corona.database-directxadapter.ixx" />
     <ClCompile Include="corona.database.ixx" />
     <ClCompile Include="wscloud.cpp" />
   </ItemGroup>

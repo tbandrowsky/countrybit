@@ -8,12 +8,12 @@ module;
 
 export module corona.database:controllerhost;
 
-import :direct2dBitmap;
+import :direct2dcontext;
 import :rectangle_box;
 import :color_box;
 import :visual;
 
-export class drawableHost {
+export class drawable {
 public:
 
 	virtual void clear(color* _color) = 0;

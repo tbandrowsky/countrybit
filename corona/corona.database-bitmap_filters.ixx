@@ -7,7 +7,7 @@ module;
 export module corona.database:bitmap_filters;
 
 import :point_box;
-import :directxdcontext;
+import :direct2dcontext;
 
 export class bitmapFilter {
 	bool flipHorizontalEnable,

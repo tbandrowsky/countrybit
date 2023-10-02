@@ -5,15 +5,9 @@ module;
 
 export module corona.database:object_id_box;
 
+import :constants;
 import :store_box;
 import :jobject;
-import :jdatabase_server;
-
-export class object_id_math
-{
-public:
-	jarray get_object(object_id_type _object_id, jdatabase* _db);
-};
 
 export class object_id_box : protected boxed<object_id_type>
 {
@@ -42,8 +36,6 @@ public:
 	}
 
 	object_id_type value() const { return boxed<object_id_type>::get_value(); }
-
-	jarray get_object(jdatabase* _db);
 
 };
 

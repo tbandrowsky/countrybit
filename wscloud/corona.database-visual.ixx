@@ -3,7 +3,7 @@
 
 module;
 
-#include "windows.h"
+#include "corona_platform.h"
 
 #include <list>
 #include <vector>
@@ -19,6 +19,13 @@ import :string_box;
 import :color_box;
 import :point_box;
 import :rectangle_box;
+
+export struct sizeCrop 
+{
+	D2D1_SIZE_U size;
+	bool cropEnabled;
+	D2D1_RECT_F crop;
+};
 
 export enum class visual_alignment
 {
@@ -292,6 +299,124 @@ export struct bitmapFilterFunction {
 	std::function<bool(point, int, int, char*)> filterFunction;
 };
 
+export sizeCrop toSizeC(point& _size, bool _cropEnabled, rectangle& _crop)
+{
+	sizeCrop sz;
+	sz.size.width = _size.x;
+	sz.size.height = _size.y;
+	sz.cropEnabled = _cropEnabled;
+	sz.crop.left = _crop.x;
+	sz.crop.top = _crop.y;
+	sz.crop.right = _crop.x + _crop.w;
+	sz.crop.bottom = _crop.y + _crop.h;
+	return sz;
+}
 
+export D2D1_SIZE_U toSizeU(point& _size)
+{
+	D2D1_SIZE_U newSize;
+	newSize.width = _size.x;
+	newSize.height = _size.y;
+	return newSize;
+}
+
+export D2D1_SIZE_F toSizeF(point& _size)
+{
+	D2D1_SIZE_F newSize;
+	newSize.width = _size.x;
+	newSize.height = _size.y;
+	return newSize;
+}
+
+export point toSize(D2D1_SIZE_U& _size)
+{
+	point newSize;
+	newSize.x = _size.width;
+	newSize.y = _size.height;
+	return newSize;
+}
+
+export int toInt(char hex, int shift)
+{
+	int d = {};
+	hex = toupper(hex);
+
+	if (hex >= 'A' && hex <= 'F')
+	{
+		d = hex - 'A' + 10;
+	}
+	else if (hex >= '0' && hex <= '9')
+	{
+		d = hex - '0';
+	}
+	d <<= shift;
+	return d;
+}
+
+export int toInt2(const std::string& item, int _baseIndex)
+{
+	int r = toInt(item[_baseIndex], 4) + toInt(item[_baseIndex + 1], 0);
+	return r;
+}
+
+export D2D1_COLOR_F toColor(const char* _htmlColor)
+{
+	D2D1_COLOR_F new_color = {};
+
+	int si = {}, r = {}, g = {}, b = {}, a = 255;
+	int sz = strlen(_htmlColor);
+
+	if (sz > 0)
+	{
+		si = _htmlColor[0] == '#' ? 1 : 0;
+	}
+
+	if (sz >= 6)
+	{
+		r = toInt2(_htmlColor, si);
+		g = toInt2(_htmlColor, si + 2);
+		b = toInt2(_htmlColor, si + 4);
+	}
+
+	if (sz >= 8)
+	{
+		a = toInt2(_htmlColor, si + 6);
+	}
+
+	new_color.r = r / 255.0;
+	new_color.g = g / 255.0;
+	new_color.b = b / 255.0;
+	new_color.a = a / 255.0;
+
+	return new_color;
+}
+
+export D2D1_COLOR_F toColor(std::string& _htmlColor)
+{
+	return toColor(_htmlColor.c_str());
+}
+
+
+export D2D1_COLOR_F toColor(color& _color)
+{
+	return _color;
+}
+
+export D2D1_POINT_2F toPoint(point& _point)
+{
+	D2D1_POINT_2F point2;
+	point2.x = _point.x;
+	point2.y = _point.y;
+	return point2;
+}
+
+export D2D1_GRADIENT_STOP toGradientStop(gradientStop& _gradientStop)
+{
+	D2D1_GRADIENT_STOP stop;
+
+	stop.position = _gradientStop.stop_position;
+	stop.color = toColor(_gradientStop.stop_color);
+	return stop;
+}
 
 

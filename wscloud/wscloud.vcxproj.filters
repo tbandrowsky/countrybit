@@ -27,6 +27,9 @@
     <ClInclude Include="wscloud.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="corona_platform.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="corona.database.ixx">
@@ -56,9 +59,6 @@
     <ClCompile Include="corona.database-controller.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="corona.database-controllerhost.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="corona.database-datatransfer.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -68,7 +68,7 @@
     <ClCompile Include="corona.database-directory.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="corona.database-directxdcontext.ixx">
+    <ClCompile Include="corona.database-direct2dcontext.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="corona.database-file.ixx">
@@ -171,6 +171,39 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="wscloud.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="corona.database-application_base.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="corona.database-directxadapter.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="corona.database-directxdevices.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="corona.database-direct2dwindow.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="corona.database-directxadapterbase.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="corona.database-direct2dresources.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="corona.database-direct2dcontextbase.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="corona.database-bitmaps.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="corona.database-brushes.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="corona.database-textstyle.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="corona.database-path.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

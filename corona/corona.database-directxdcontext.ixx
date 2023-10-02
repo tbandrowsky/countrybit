@@ -7,159 +7,14 @@ module;
 #include <stdexcept>
 #include <format>
 
-export module corona.database:directxdcontext;
+export module corona.database:direct2dcontext;
+import :assert_if;
 import :color_box;
 import :point_box;
 import :rectangle_box;
 import :visual;
 import :point_box;
 
-export struct sizeCrop {
-	D2D1_SIZE_U size;
-	bool cropEnabled;
-	D2D1_RECT_F crop;
-};
-
-export void throwOnFail(HRESULT hr, const char* _message)
-{
-	if (!SUCCEEDED(hr)) {
-		throw std::exception(std::format("COM failure:{0}", _message).c_str());
-	}
-}
-
-export void throwOnNull(void* _ptr, const char* _message)
-{
-	if (!_ptr) {
-		throw std::exception(std::format("null reference failure:{0}", _message).c_str());
-	}
-}
-
-export void throwOnFalse(bool _ptr, const char* _message)
-{
-	if (!_ptr) {
-		throw std::exception(std::format("object reference failure:{0}", _message).c_str());
-	}
-}
-
-export sizeCrop toSizeC(point& _size, bool _cropEnabled, rectangle& _crop)
-{
-	sizeCrop sz;
-	sz.size.width = _size.x;
-	sz.size.height = _size.y;
-	sz.cropEnabled = _cropEnabled;
-	sz.crop.left = _crop.x;
-	sz.crop.top = _crop.y;
-	sz.crop.right = _crop.x + _crop.w;
-	sz.crop.bottom = _crop.y + _crop.h;
-	return sz;
-}
-
-export D2D1_SIZE_U toSizeU(point& _size)
-{
-	D2D1_SIZE_U newSize;
-	newSize.width = _size.x;
-	newSize.height = _size.y;
-	return newSize;
-}
-
-export D2D1_SIZE_F toSizeF(point& _size)
-{
-	D2D1_SIZE_F newSize;
-	newSize.width = _size.x;
-	newSize.height = _size.y;
-	return newSize;
-}
-
-export point toSize(D2D1_SIZE_U& _size)
-{
-	point newSize;
-	newSize.x = _size.width;
-	newSize.y = _size.height;
-	return newSize;
-}
-
-export int toInt(char hex, int shift)
-{
-	int d = {};
-	hex = toupper(hex);
-
-	if (hex >= 'A' && hex <= 'F')
-	{
-		d = hex - 'A' + 10;
-	}
-	else if (hex >= '0' && hex <= '9')
-	{
-		d = hex - '0';
-	}
-	d <<= shift;
-	return d;
-}
-
-export int toInt2(const std::string& item, int _baseIndex)
-{
-	int r = toInt(item[_baseIndex], 4) + toInt(item[_baseIndex + 1], 0);
-	return r;
-}
-
-export D2D1_COLOR_F toColor(const char* _htmlColor)
-{
-	D2D1_COLOR_F new_color = {};
-
-	int si = {}, r = {}, g = {}, b = {}, a = 255;
-	int sz = strlen(_htmlColor);
-
-	if (sz > 0)
-	{
-		si = _htmlColor[0] == '#' ? 1 : 0;
-	}
-
-	if (sz >= 6)
-	{
-		r = toInt2(_htmlColor, si);
-		g = toInt2(_htmlColor, si + 2);
-		b = toInt2(_htmlColor, si + 4);
-	}
-
-	if (sz >= 8)
-	{
-		a = toInt2(_htmlColor, si + 6);
-	}
-
-	new_color.r = r / 255.0;
-	new_color.g = g / 255.0;
-	new_color.b = b / 255.0;
-	new_color.a = a / 255.0;
-
-	return new_color;
-}
-
-export D2D1_COLOR_F toColor(std::string& _htmlColor)
-{
-	return toColor(_htmlColor.c_str());
-}
-
-
-export D2D1_COLOR_F toColor(color& _color)
-{
-	return _color;
-}
-
-export D2D1_POINT_2F toPoint(point& _point)
-{
-	D2D1_POINT_2F point2;
-	point2.x = _point.x;
-	point2.y = _point.y;
-	return point2;
-}
-
-export D2D1_GRADIENT_STOP toGradientStop(gradientStop& _gradientStop)
-{
-	D2D1_GRADIENT_STOP stop;
-
-	stop.position = _gradientStop.stop_position;
-	stop.color = toColor(_gradientStop.stop_color);
-	return stop;
-}
 
 export class direct3dWindowInstance
 {
@@ -243,8 +98,6 @@ public:
 	std::weak_ptr<direct2dChildWindow> findChild(relative_ptr_type _child);
 
 	std::unique_ptr<direct2dBitmap> createD2dBitmap(D2D1_SIZE_F size);
-
-	void loadStyleSheet(jobject& sheet, int style_state);
 
 };
 
@@ -770,8 +623,6 @@ public:
 	virtual void save(const char* _filename);
 
 	virtual void drawView(const char* _style, const char* _text, rectangle& _rect, int _state, const char* _debug_comment);
-
-	virtual void loadStyleSheet(jobject& style_sheet, int _style_state);
 
 protected:
 
@@ -2963,11 +2814,6 @@ void direct2dContext::shape_border_brush_name(const object_name& _style_sheet_na
 	_object_style_name = _style_sheet_name + "-shape-border-" + std::to_string(_index);
 }
 
-void direct2dContext::loadStyleSheet(jobject& style_sheet, int _style_state)
-{
-	;
-}
-
 
 
 adapterSet::adapterSet()
@@ -3065,116 +2911,10 @@ std::weak_ptr<direct2dChildWindow> adapterSet::findChild(relative_ptr_type _chil
 	return w;
 }
 
-void adapterSet::loadStyleSheet(jobject& sheet, int _state)
-{
-	direct2dChildWindow* w = nullptr;
-	for (auto win : parent_windows)
-	{
-		win.second->getContext().loadStyleSheet(sheet, _state);
-		for (auto& child : win.second->getChildren())
-		{
-			child.second->getContext().loadStyleSheet(sheet, _state);
-		}
-	}
-}
-
 std::unique_ptr<direct2dBitmap> adapterSet::createD2dBitmap(D2D1_SIZE_F size)
 {
 	auto padapter = weak_from_this();
 	std::unique_ptr<direct2dBitmap> win = std::make_unique<direct2dBitmap>(size, padapter);
 	return win;
-}
-
-direct3dDevice::direct3dDevice()
-{
-	d3d11Device = nullptr;
-}
-
-direct3dDevice::~direct3dDevice()
-{
-}
-
-bool direct3dDevice::setDevice(IDXGIAdapter1* _adapter)
-{
-	d3d11Device.Release();
-
-	feature_level = D3D_FEATURE_LEVEL::D3D_FEATURE_LEVEL_1_0_CORE;
-
-	D3D_FEATURE_LEVEL feature_levels[] = {
-		D3D_FEATURE_LEVEL_10_0,
-		D3D_FEATURE_LEVEL_10_1,
-		D3D_FEATURE_LEVEL_11_0,
-		D3D_FEATURE_LEVEL_11_1
-	};
-
-	HRESULT hr = D3D11CreateDevice(_adapter,
-		D3D_DRIVER_TYPE_UNKNOWN,
-		NULL,
-		D3D11_CREATE_DEVICE_BGRA_SUPPORT,
-		feature_levels,
-		2,
-		D3D11_SDK_VERSION,
-		&d3d11Device,
-		&feature_level,
-		NULL
-	);
-
-	if (SUCCEEDED(hr) && d3d11Device != nullptr)
-	{
-		return true;
-	}
-}
-
-direct2dDevice::direct2dDevice()
-{
-	dxDevice = nullptr;
-	d2dDevice = nullptr;
-
-	d2DFactory = nullptr;
-	wicFactory = nullptr;
-	dWriteFactory = nullptr;
-
-	D2D1_FACTORY_OPTIONS options;
-	options.debugLevel = D2D1_DEBUG_LEVEL_WARNING;
-	HRESULT hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED, options, &d2DFactory);
-	throwOnFail(hr, "Could not create D2D1 factory");
-
-	hr = CoCreateInstance(CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&wicFactory));
-	throwOnFail(hr, "Could not create WIC Imaging factory");
-
-	hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(dWriteFactory), reinterpret_cast<IUnknown**>(&dWriteFactory));
-	throwOnFail(hr, "Could not create direct write factory");
-}
-
-direct2dDevice::~direct2dDevice()
-{
-	if (wicFactory)
-		wicFactory->Release();
-	if (dWriteFactory)
-		dWriteFactory->Release();
-
-	if (dxDevice)
-		dxDevice->Release();
-	if (d2dDevice)
-		d2dDevice->Release();
-	if (d2DFactory)
-		d2DFactory->Release();
-
-	dxDevice = nullptr;
-	d2dDevice = nullptr;
-
-	d2DFactory = nullptr;
-	wicFactory = nullptr;
-	dWriteFactory = nullptr;
-
-}
-
-bool direct2dDevice::setDevice(ID3D11Device* _d3dDevice)
-{
-	HRESULT hr = _d3dDevice->QueryInterface(&this->dxDevice);
-
-	hr = d2DFactory->CreateDevice(dxDevice, &d2dDevice);
-
-	return SUCCEEDED(hr);
 }
 

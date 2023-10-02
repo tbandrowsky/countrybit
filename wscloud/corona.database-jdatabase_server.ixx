@@ -3,12 +3,16 @@ module;
 #include <string>
 #include <iostream>
 #include <compare>
-
+#include <coroutine>
+#include <filesystem>
 
 export module corona.database:jdatabase_server;
 import :constants;
 import :store_box;
+import :string_box;
 import :collection_id_box;
+import :table;
+import :sorted_index;
 import :jobject;
 import :jfield;
 import :jvalue;
@@ -486,8 +490,6 @@ query_response jdatabase::query(const std::string& _query_expression)
 	return response;
 }
 
-	}
-}
 /*
 std::stack<std::shared_ptr<query_element>> items;
 

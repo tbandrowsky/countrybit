@@ -4,7 +4,7 @@
 
 #include <functional>
 
-import corona;
+import corona.database;
 
 /*
 
@@ -54,7 +54,7 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 {
 	EnableGuiStdOuts();
 
-	std::shared_ptr<adapterSet> factory = std::make_shared<adapterSet>();
+	std::shared_ptr<directXAdapter> factory = std::make_shared<directXAdapter>();
 	factory->refresh();
 
 	std::shared_ptr<directApplicationWin32> wsPropose = std::make_shared<directApplicationWin32>(factory);

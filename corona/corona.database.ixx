@@ -44,7 +44,7 @@ export import :controller;
 export import :controllerhost;
 export import :datatransfer;
 export import :directapplication;
-export import :directxdcontext;
+export import :direct2dcontext;
 export import :presentation;
 export import :styles;
 export import :visual;

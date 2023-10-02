@@ -9,8 +9,11 @@ module;
 #include <iostream>
 
 export module corona.database:directapplication;
-import :controllerhost;
+import :controller;
 import :constants;
+import :point_box;
+import :color_box;
+import :rectangle_box;
 
 export class directApplicationWin32 : public win32ControllerHost, public std::enable_shared_from_this<directApplicationWin32>
 {
@@ -39,8 +42,6 @@ protected:
 		titleFont;
 
 	double dpiScale;
-
-	void loadStyleSheet();
 
 	bool disableChangeProcessing;
 	std::weak_ptr<adapterSet> factory;
@@ -271,11 +272,6 @@ void directApplicationWin32::redraw()
 	}
 }
 
-void directApplicationWin32::loadStyleSheet()
-{
-
-}
-
 HWND directApplicationWin32::createWindow(
 	DWORD window_id,
 	LPCTSTR		lpClassName,
@@ -423,7 +419,6 @@ LRESULT directApplicationWin32::windowProcHandler(HWND hwnd, UINT message, WPARA
 			if (currentController) {
 				pfactory->createD2dWindow(hwnd, backgroundColor);
 				dpiScale = 96.0 / GetDpiForWindow(hwnd);
-				loadStyleSheet();
 
 				tooltip = CreateWindowEx(NULL, TOOLTIPS_CLASS, NULL,
 					WS_POPUP | TTS_ALWAYSTIP | TTS_BALLOON,
