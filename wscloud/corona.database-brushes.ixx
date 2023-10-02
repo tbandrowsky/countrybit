@@ -30,6 +30,7 @@ import :directxdevices;
 import :direct2dcontextbase;
 import :bitmap_filters;
 import :direct2dresources;
+import :bitmaps;
 
 
 export class brush
@@ -37,7 +38,6 @@ export class brush
 public:
 	virtual ID2D1Brush* getBrush() = 0;
 };
-
 
 
 export class bitmapBrush : public deviceDependentAsset<ID2D1BitmapBrush*>, brush {

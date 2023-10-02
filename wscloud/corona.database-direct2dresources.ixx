@@ -35,8 +35,6 @@ public:
 	virtual bool create(direct2dContextBase* target) = 0;
 	virtual void release() = 0;
 
-	virtual ID2D1Brush* getBrush();
-
 	deviceDependentAssetBase() : stock(false)
 	{
 		;
@@ -47,7 +45,7 @@ public:
 		;
 	}
 
-	ID2D1Brush* getBrush()
+	virtual ID2D1Brush* getBrush()
 	{
 		return NULL;
 	}

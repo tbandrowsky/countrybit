@@ -31,9 +31,6 @@ import :direct2dcontextbase;
 import :bitmap_filters;
 import :direct2dresources;
 
-
-
-
 export class direct2dBitmapCore
 {
 protected:
@@ -148,12 +145,6 @@ public:
 
 	D2D1_SIZE_F size;
 
-	direct2dBitmap(D2D1_SIZE_F _size, std::weak_ptr<directXAdapterBase>& _factory);
-	virtual ~direct2dBitmap();
-
-	IWICBitmap* getBitmap();
-	void save(const char* _filename);
-	virtual bool isBitmap() { return true; }
 
 	direct2dBitmap(D2D1_SIZE_F _size, std::weak_ptr<directXAdapterBase>& _factory)
 	{
@@ -173,7 +164,7 @@ public:
 			hr = target->QueryInterface(&targetContext);
 			throwOnFail(hr, "Could not get WIC context");
 
-			context = std::make_shared<direct2dContext>(_factory, targetContext);
+			context = std::make_shared<direct2dContextBase>(_factory, targetContext);
 		}
 	}
 
@@ -188,12 +179,63 @@ public:
 		return wicBitmap;
 	}
 
+	virtual bool isBitmap() { return true; }
+
 	void save(const char* _filename)
 	{
+		IWICStream* fileStream = nullptr;
+		IWICBitmapEncoder* bitmapEncoder = nullptr;
+		IWICBitmapFrameEncode* bitmapFrameEncode = nullptr;
+
+		HRESULT hr;
 		wchar_t buff[8192];
 		int ret = ::MultiByteToWideChar(CP_ACP, 0, _filename, -1, buff, sizeof(buff) - 1);
-		directBitmapSaveImpl saver(this);
-		saver.save(buff);
+
+		if (auto padapter = getContext().getFactory().lock()) {
+
+			hr = padapter->getWicFactory()->CreateStream(&fileStream);
+			throwOnFail(hr, "Could not create file stream");
+
+			hr = padapter->getWicFactory()->CreateEncoder(GUID_ContainerFormatPng, NULL, &bitmapEncoder);
+			throwOnFail(hr, "Could not create bitmap encoder");
+
+			hr = fileStream->InitializeFromFilename(buff, GENERIC_WRITE);
+			throwOnFail(hr, "Could not initialize file stream");
+
+			hr = bitmapEncoder->Initialize(fileStream, WICBitmapEncoderCacheOption::WICBitmapEncoderNoCache);
+			throwOnFail(hr, "Could not intialize bitmap encoder");
+
+			hr = bitmapEncoder->CreateNewFrame(&bitmapFrameEncode, NULL);
+			throwOnFail(hr, "Could not create frame");
+
+			hr = bitmapFrameEncode->Initialize(NULL);
+			throwOnFail(hr, "Could not initialize bitmap frame encoder");
+
+			hr = bitmapFrameEncode->SetSize(size.width, size.height);
+			throwOnFail(hr, "Could not initialize set size");
+
+			WICPixelFormatGUID format = GUID_WICPixelFormatDontCare;
+
+			WICRect rect;
+			rect.X = 0;
+			rect.Y = 0;
+			rect.Width = size.width;
+			rect.Height = size.height;
+
+			hr = bitmapFrameEncode->WriteSource(getBitmap(), &rect);
+			throwOnFail(hr, "Could not write source");
+
+			hr = bitmapFrameEncode->Commit();
+			throwOnFail(hr, "Could not commit frame");
+
+			hr = bitmapEncoder->Commit();
+			throwOnFail(hr, "Could not commit bitmap");
+		}
+
+		if (fileStream) fileStream->Release();
+		if (bitmapEncoder) bitmapEncoder->Release();
+		if (bitmapFrameEncode) bitmapFrameEncode->Release();
+
 	}
 
 
@@ -433,78 +475,6 @@ public:
 
 };
 
-class directBitmapSaveImpl {
-public:
-
-	direct2dBitmap* dBitmap;
-	IWICStream* fileStream;
-	IWICBitmapEncoder* bitmapEncoder;
-	IWICBitmapFrameEncode* bitmapFrameEncode;
-
-	directBitmapSaveImpl(direct2dBitmap* _dbitmap) :
-		dBitmap(_dbitmap),
-		fileStream(NULL),
-		bitmapEncoder(NULL),
-		bitmapFrameEncode(NULL)
-	{
-
-	}
-
-	virtual ~directBitmapSaveImpl()
-	{
-		if (fileStream) fileStream->Release();
-		if (bitmapEncoder) bitmapEncoder->Release();
-		if (bitmapFrameEncode) bitmapFrameEncode->Release();
-	}
-
-	void save(const wchar_t* _filename)
-	{
-
-		HRESULT hr;
-
-		if (auto padapter = dBitmap->getContext().getFactory().lock()) {
-
-			hr = padapter->getWicFactory()->CreateStream(&fileStream);
-			throwOnFail(hr, "Could not create file stream");
-
-			hr = padapter->getWicFactory()->CreateEncoder(GUID_ContainerFormatPng, NULL, &bitmapEncoder);
-			throwOnFail(hr, "Could not create bitmap encoder");
-
-			hr = fileStream->InitializeFromFilename(_filename, GENERIC_WRITE);
-			throwOnFail(hr, "Could not initialize file stream");
-
-			hr = bitmapEncoder->Initialize(fileStream, WICBitmapEncoderCacheOption::WICBitmapEncoderNoCache);
-			throwOnFail(hr, "Could not intialize bitmap encoder");
-
-			hr = bitmapEncoder->CreateNewFrame(&bitmapFrameEncode, NULL);
-			throwOnFail(hr, "Could not create frame");
-
-			hr = bitmapFrameEncode->Initialize(NULL);
-			throwOnFail(hr, "Could not initialize bitmap frame encoder");
-
-			hr = bitmapFrameEncode->SetSize(dBitmap->size.width, dBitmap->size.height);
-			throwOnFail(hr, "Could not initialize set size");
-
-			WICPixelFormatGUID format = GUID_WICPixelFormatDontCare;
-
-			WICRect rect;
-			rect.X = 0;
-			rect.Y = 0;
-			rect.Width = dBitmap->size.width;
-			rect.Height = dBitmap->size.height;
-
-			hr = bitmapFrameEncode->WriteSource(dBitmap->getBitmap(), &rect);
-			throwOnFail(hr, "Could not write source");
-
-			hr = bitmapFrameEncode->Commit();
-			throwOnFail(hr, "Could not commit frame");
-
-			hr = bitmapEncoder->Commit();
-			throwOnFail(hr, "Could not commit bitmap");
-		}
-
-	}
-};
 
 export class bitmap : public deviceDependentAssetBase
 {
@@ -612,17 +582,52 @@ export class bitmap : public deviceDependentAssetBase
 
 public:
 
-	virtual std::shared_ptr<bitmap> clone(direct2dContextBase* _src);
-	void setSizes(std::list<sizeCrop>& _sizes);
-	bool getSize(int* _sizex, int* _sizey);
-	ID2D1Bitmap* getFirst();
-	ID2D1Bitmap* getBySize(int _width, int _height);
+	bitmap(direct2dContextBase* _targetContext, bitmap* _src)
+		: useFile(_src->useFile),
+		useResource(_src->useResource),
+		filename(_src->filename),
+		filterFunction(_src->filterFunction)
+	{
+		copyFilteredBitmaps(_targetContext, _src);
+		applyFilters(_targetContext);
+	}
 
-	color getColorAtPoint(int _width, int _height, point point);
-	void setFilter(std::function<bool(point, int, int, char* bytes)> _filter);
-	void filter();
+	bitmap(std::string& _filename, std::list<sizeCrop>& _sizes) :
+		useFile(true),
+		filename(_filename)
+	{
+		setFilteredBitmaps(_sizes);
+	}
 
-	virtual bool applyFilters(direct2dContextBase* _target);
+	bitmap(int _resource_id, std::list<sizeCrop>& _sizes) :
+		useFile(false),
+		useResource(true)
+	{
+		setFilteredBitmaps(_sizes);
+	}
+
+	virtual ~bitmap()
+	{
+		clearFilteredBitmaps();
+	}
+
+	std::shared_ptr<bitmap> clone(direct2dContextBase* _src)
+	{
+		return std::make_shared<bitmap>(_src, this);
+	}
+
+
+	virtual bool applyFilters(direct2dContextBase* _target)
+	{
+		filter();
+
+		for (auto ifb = filteredBitmaps.begin(); ifb != filteredBitmaps.end(); ifb++) {
+			filteredBitmap* bm = *ifb;
+			bm->make(_target);
+		}
+
+		return true;
+	}
 
 	bool create(direct2dContextBase* _target)
 	{
@@ -643,42 +648,6 @@ public:
 			filteredBitmap* bm = *ifb;
 			bm->release();
 		}
-	}
-
-	bitmap(direct2dContextBase* _targetContext, bitmap* _src)
-		: useFile(_src->useFile),
-		useResource(_src->useResource),
-		filename(_src->filename),
-		filterFunction(_src->filterFunction)
-	{
-		copyFilteredBitmaps(_targetContext, _src);
-		applyFilters(_targetContext);
-	}
-
-	bitmap(std::string& _filename, std::list<sizeCrop>& _sizes) :
-		useFile(true),
-		filename(_filename),
-		filterFunction(direct2dContextBase)
-	{
-		setFilteredBitmaps(_sizes);
-	}
-
-	bitmap(int _resource_id, std::list<sizeCrop>& _sizes) :
-		useFile(false),
-		useResource(true),
-		filterFunction(direct2dContextBase)
-	{
-		setFilteredBitmaps(_sizes);
-	}
-
-	virtual ~bitmap()
-	{
-		clearFilteredBitmaps();
-	}
-
-	std::shared_ptr<bitmap> clone(direct2dContextBase* _src)
-	{
-		return std::make_shared<bitmap>(_src, this);
 	}
 
 	void setSizes(std::list<sizeCrop>& _sizes)
@@ -792,6 +761,13 @@ public:
 	{
 		HRESULT hr;
 
+		if (!filterFunction) 
+		{
+			filterFunction = [](point _size, int cbBufferSize, int cbStride, char* pv) {
+				return true;
+				};
+		}
+
 		for (auto ifb = filteredBitmaps.begin(); ifb != filteredBitmaps.end(); ifb++) {
 			filteredBitmap* bm = *ifb;
 			WICRect rcLock = { 0, 0, bm->size.width, bm->size.height };
@@ -826,7 +802,9 @@ public:
 							if (SUCCEEDED(hr) && pvSrc && pvDst && cbBufferSizeDst && cbBufferSizeSrc && (cbBufferSizeSrc == cbBufferSizeDst)) {
 								memcpy(pvDst, pvSrc, cbBufferSizeSrc);
 								point size = toSize(bm->size);
-								filterFunction(size, (int)cbBufferSizeDst, (int)cbStride, (char*)pvDst);
+								if (filterFunction) {
+									filterFunction(size, (int)cbBufferSizeDst, (int)cbStride, (char*)pvDst);
+								}
 							}
 						}
 					}
@@ -840,16 +818,5 @@ public:
 		}
 	}
 
-	bool applyFilters(direct2dContextBase* _target)
-	{
-		filter();
-
-		for (auto ifb = filteredBitmaps.begin(); ifb != filteredBitmaps.end(); ifb++) {
-			filteredBitmap* bm = *ifb;
-			bm->make(_target);
-		}
-
-		return true;
-	}
 
 };

@@ -27,7 +27,6 @@ import :visual;
 import :point_box;
 import :directxadapterbase;
 import :directxdevices;
-import :direct2dresources;
 import :bitmap_filters;
 
 export class direct2dContextBase
