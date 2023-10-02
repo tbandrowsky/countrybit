@@ -1,5 +1,7 @@
 module;
 
+#include "windows.h"
+
 #include <memory>
 #include <exception>
 #include <compare>
@@ -21,10 +23,12 @@ import :midi_box;
 import :point_box;
 import :rectangle_box;
 import :string_box;
+import :image_box;
 import :time_box;
 import :wave_box;
 import :jfield;
 import :jvalue;
+import :store_box_file;
 
 export bool init_collection_id(collection_id_type& collection_id);
 
@@ -72,7 +76,6 @@ export struct jschema_map
 };
 
 class jschema;
-class jclass;
 
 export class jobject
 {
@@ -968,7 +971,7 @@ int operator!=(const dimensions_type& a, const dimensions_type& b)
 
 bool init_collection_id(collection_id_type& collection_id)
 {
-	::GUID gidReference;
+	GUID gidReference;
 	HRESULT hr = ::CoCreateGuid((GUID*)&collection_id);
 	return hr == S_OK;
 }
@@ -2371,7 +2374,7 @@ bool collection_tests()
 
 	try {
 
-		corona::database::application app;
+		application app;
 
 		std::shared_ptr<dynamic_box> box = std::make_shared<dynamic_box>();
 		box->init(1 << 21);
@@ -2540,7 +2543,7 @@ bool array_tests()
 	try {
 		std::shared_ptr<dynamic_box> box = std::make_shared<dynamic_box>();
 		box->init(1 << 21);
-		corona::database::application app;
+		application app;
 
 		jschema schema;
 		relative_ptr_type schema_id;

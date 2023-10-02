@@ -1,5 +1,7 @@
 module;
 
+#include <compare>
+
 export module corona.database:midi_box;
 
 import :store_box;

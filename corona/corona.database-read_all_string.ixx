@@ -3,6 +3,7 @@ module;
 #include <cstdio>
 #include <string>
 #include <sys/stat.h>
+#include <compare>
 
 export module corona.database:read_all_string;
 

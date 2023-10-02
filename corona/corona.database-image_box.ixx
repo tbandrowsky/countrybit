@@ -1,7 +1,10 @@
 module;
 
+#include <compare>
+
 export module corona.database:image_box;
 import :store_box;
+import :rectangle_box;
 
 export struct image_instance
 {

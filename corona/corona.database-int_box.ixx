@@ -4,6 +4,7 @@ module;
 #include <bit>
 #include <numeric>
 #include <iostream>
+#include <compare>
 
 export module corona.database:int_box;
 import :store_box;

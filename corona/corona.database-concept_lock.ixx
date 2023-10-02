@@ -5,6 +5,7 @@ module;
 #include <map>
 #include <utility>
 #include <string>
+#include <compare>
 
 export module corona.database:concept_lock;
 

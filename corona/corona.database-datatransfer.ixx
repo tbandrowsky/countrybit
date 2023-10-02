@@ -2,6 +2,8 @@
 module;
 
 #include <string>
+#include <memory>
+#include <compare>
 
 export module corona.database:datatransfer;
 

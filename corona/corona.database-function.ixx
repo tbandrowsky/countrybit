@@ -5,6 +5,8 @@ module;
 #include <functional>
 #include <coroutine>
 #include <iostream>
+#include <memory>
+#include <compare>
 
 export module corona.database:function;
 import :queue;

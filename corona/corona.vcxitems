@@ -28,16 +28,26 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)corona.database-wave_box.ixx" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-application_base.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-assert_if.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-bitmaps.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-bitmap_filters.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-brushes.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-collection_id_box.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-concept_lock.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-constants.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-direct2dcontext.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-direct2dcontextbase.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-direct2dresources.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-direct2dwindow.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-directxadapter.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-directxadapterbase.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-directxdevices.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-paths.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-textstyles.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)corona.database.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-controller.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-controllerhost.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)corona.ixx" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-directxdcontext.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-directapplication.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-jvalue.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-grouping.ixx" />

@@ -27,183 +27,186 @@
     <ClInclude Include="wscloud.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="corona_platform.h">
+    <ClInclude Include="..\corona\corona_platform.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="corona.database.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="corona.database-application.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="corona.database-assert_if.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="corona.database-bitmap_filters.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="corona.database-collection_id_box.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="corona.database-color_box.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="corona.database-concept_lock.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="corona.database-constants.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="corona.database-controller.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="corona.database-datatransfer.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="corona.database-directapplication.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="corona.database-directory.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="corona.database-direct2dcontext.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="corona.database-file.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="corona.database-filterable_iterator.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="corona.database-float_box.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="corona.database-function.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="corona.database-grouping.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="corona.database-iarray.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="corona.database-image_box.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="corona.database-int_box.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="corona.database-jdatabase_server.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="corona.database-jfield.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="corona.database-jobject.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="corona.database-jvalue.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="corona.database-layout_rect_box.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="corona.database-list_box.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="corona.database-messages.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="corona.database-midi_box.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="corona.database-object_id_box.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="corona.database-point_box.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="corona.database-presentation.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="corona.database-queue.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="corona.database-read_all_string.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="corona.database-rectangle_box.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="corona.database-skip_list.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="corona.database-sorted_index.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="corona.database-store_box.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="corona.database-store_box_file.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="corona.database-string_box.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="corona.database-styles.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="corona.database-table.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="corona.database-time_box.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="corona.database-utility.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="corona.database-visual.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="corona.database-wave_box.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="wscloud.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="corona.database-application_base.ixx">
+    <ClCompile Include="..\corona\corona.database.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="corona.database-directxadapter.ixx">
+    <ClCompile Include="..\corona\corona.database-application.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="corona.database-directxdevices.ixx">
+    <ClCompile Include="..\corona\corona.database-application_base.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="corona.database-direct2dwindow.ixx">
+    <ClCompile Include="..\corona\corona.database-assert_if.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="corona.database-directxadapterbase.ixx">
+    <ClCompile Include="..\corona\corona.database-bitmap_filters.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="corona.database-direct2dresources.ixx">
+    <ClCompile Include="..\corona\corona.database-bitmaps.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="corona.database-direct2dcontextbase.ixx">
+    <ClCompile Include="..\corona\corona.database-brushes.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="corona.database-bitmaps.ixx">
+    <ClCompile Include="..\corona\corona.database-collection_id_box.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="corona.database-brushes.ixx">
+    <ClCompile Include="..\corona\corona.database-color_box.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="corona.database-textstyles.ixx">
+    <ClCompile Include="..\corona\corona.database-concept_lock.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="corona.database-paths.ixx">
+    <ClCompile Include="..\corona\corona.database-constants.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-controller.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-datatransfer.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-direct2dcontext.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-direct2dcontextbase.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-direct2dresources.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-direct2dwindow.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-directapplication.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-directory.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-directxadapter.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-directxadapterbase.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-directxdevices.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-file.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-filterable_iterator.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-float_box.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-function.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-grouping.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-iarray.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-image_box.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-int_box.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-jdatabase_server.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-jfield.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-jobject.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-jvalue.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-layout_rect_box.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-list_box.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-messages.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-midi_box.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-object_id_box.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-paths.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-point_box.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-presentation.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-queue.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-read_all_string.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-rectangle_box.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-skip_list.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-sorted_index.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-store_box.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-store_box_file.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-string_box.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-styles.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-table.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-textstyles.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-time_box.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-utility.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-visual.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-wave_box.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -225,5 +228,16 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="corona\corona.database-assert_if.ixx.ifc" />
+    <None Include="corona\corona.database-concept_lock.ixx.ifc" />
+    <None Include="corona\corona.database-constants.ixx.ifc" />
+    <None Include="corona\corona.database-float_box.ixx.ifc" />
+    <None Include="corona\corona.database-layout_rect_box.ixx.ifc" />
+    <None Include="corona\corona.database-queue.ixx.ifc" />
+    <None Include="corona\corona.database-read_all_string.ixx.ifc" />
+    <None Include="corona\corona.database-store_box.ixx.ifc" />
+    <None Include="corona\corona.database-string_box.ixx.ifc" />
+    <None Include="corona\corona.database-time_box.ixx.ifc" />
+    <None Include="corona\corona.database-utility.ixx.ifc" />
   </ItemGroup>
 </Project>

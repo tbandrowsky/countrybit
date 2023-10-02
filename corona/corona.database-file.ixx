@@ -5,6 +5,7 @@ module;
 #include <exception>
 #include <stdexcept>
 #include <iostream>
+#include <compare>
 
 export module corona.database:file;
 import :queue;

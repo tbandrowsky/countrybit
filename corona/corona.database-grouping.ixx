@@ -3,6 +3,8 @@ module;
 #include <iostream>
 #include <functional>
 #include <algorithm>
+#include <memory>
+#include <compare>
 
 export module corona.database:grouping;
 

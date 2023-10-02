@@ -3,6 +3,7 @@ module;
 #include "windows.h"
 #include <iostream>
 #include <string>
+#include <compare>
 
 export module corona.database:messages;
 

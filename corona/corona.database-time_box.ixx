@@ -2,6 +2,7 @@ module;
 
 #include "windows.h"
 #include <iostream>
+#include <compare>
 
 export module corona.database:time_box;
 

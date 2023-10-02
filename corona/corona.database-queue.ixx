@@ -7,6 +7,7 @@ module;
 #include <vector>
 #include <thread>
 #include <atomic>
+#include <compare>
 
 export module corona.database:queue;
 

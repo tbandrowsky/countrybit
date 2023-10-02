@@ -8,6 +8,7 @@ module;
 #include <memory>
 #include <algorithm>
 #include <stdexcept>
+#include <compare>
 
 export module corona.database:table;
 
@@ -15,6 +16,7 @@ import :constants;
 import :store_box;
 import :assert_if;
 import :string_box;
+import :filterable_iterator;
 
 
 export struct row_range

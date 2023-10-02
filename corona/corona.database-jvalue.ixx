@@ -11,6 +11,7 @@ module;
 #include <vector>
 #include <string>
 #include <stdexcept>
+#include <compare>
 
 export module corona.database:jvalue;
 import :store_box;

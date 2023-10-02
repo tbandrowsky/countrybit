@@ -2,6 +2,12 @@ module;
 
 #include "windows.h"
 
+#include <iterator>
+#include <compare>
+#include <coroutine>
+#include <memory>
+#include <compare>
+
 export module corona.database:directory;
 import :constants;
 import :queue;

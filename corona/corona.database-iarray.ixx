@@ -9,6 +9,7 @@ module;
 #include <exception>
 #include <iterator>
 #include <stdexcept>
+#include <compare>
 
 export module corona.database:iarray;
 import :constants;

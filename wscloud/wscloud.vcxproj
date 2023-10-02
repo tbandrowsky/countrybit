@@ -103,7 +103,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <WarningLevel>Level2</WarningLevel>
+      <WarningLevel>EnableAllWarnings</WarningLevel>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
@@ -111,15 +111,20 @@
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(MSBuildThisFileDirectory);$(SolutionDir)Corona</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(MSBuildThisFileDirectory);$(SolutionDir)corona</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
-      <AdditionalModuleDependencies>corona=$(SolutionDir)corona</AdditionalModuleDependencies>
+      <AdditionalModuleDependencies>corona=$(SolutionDir)corona\</AdditionalModuleDependencies>
       <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
-      <DiagnosticsFormat>Column</DiagnosticsFormat>
+      <DiagnosticsFormat>Classic</DiagnosticsFormat>
       <OpenMPSupport>true</OpenMPSupport>
-      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions</EnableEnhancedInstructionSet>
       <EnableModules>true</EnableModules>
+      <AdditionalHeaderUnitDependencies>
+      </AdditionalHeaderUnitDependencies>
+      <AdditionalBMIDirectories>$(SolutionDir)corona\</AdditionalBMIDirectories>
+      <ModuleOutputFile>$(SolutionDir)\corona\</ModuleOutputFile>
+      <ModuleDependenciesFile>$(IntDir)</ModuleDependenciesFile>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -130,7 +135,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <WarningLevel>Level2</WarningLevel>
+      <WarningLevel>EnableAllWarnings</WarningLevel>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
@@ -140,15 +145,20 @@
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(MSBuildThisFileDirectory);$(SolutionDir)Corona</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(MSBuildThisFileDirectory);$(SolutionDir)corona</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
-      <AdditionalModuleDependencies>corona=$(SolutionDir)corona</AdditionalModuleDependencies>
+      <AdditionalModuleDependencies>corona=$(SolutionDir)corona\</AdditionalModuleDependencies>
       <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
-      <DiagnosticsFormat>Column</DiagnosticsFormat>
+      <DiagnosticsFormat>Classic</DiagnosticsFormat>
       <OpenMPSupport>true</OpenMPSupport>
-      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions</EnableEnhancedInstructionSet>
       <EnableModules>true</EnableModules>
+      <AdditionalHeaderUnitDependencies>
+      </AdditionalHeaderUnitDependencies>
+      <AdditionalBMIDirectories>$(SolutionDir)corona\</AdditionalBMIDirectories>
+      <ModuleOutputFile>$(SolutionDir)\corona\</ModuleOutputFile>
+      <ModuleDependenciesFile>$(IntDir)</ModuleDependenciesFile>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -161,7 +171,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <WarningLevel>Level2</WarningLevel>
+      <WarningLevel>EnableAllWarnings</WarningLevel>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
@@ -169,16 +179,21 @@
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(MSBuildThisFileDirectory);$(SolutionDir)Corona</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(MSBuildThisFileDirectory);$(SolutionDir)corona</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
       <BuildStlModules>false</BuildStlModules>
-      <AdditionalModuleDependencies>corona=$(SolutionDir)corona</AdditionalModuleDependencies>
+      <AdditionalModuleDependencies>corona=$(SolutionDir)corona\</AdditionalModuleDependencies>
       <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
-      <DiagnosticsFormat>Column</DiagnosticsFormat>
+      <DiagnosticsFormat>Classic</DiagnosticsFormat>
       <OpenMPSupport>true</OpenMPSupport>
-      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions</EnableEnhancedInstructionSet>
       <EnableModules>true</EnableModules>
+      <AdditionalHeaderUnitDependencies>
+      </AdditionalHeaderUnitDependencies>
+      <AdditionalBMIDirectories>$(SolutionDir)corona\</AdditionalBMIDirectories>
+      <ModuleOutputFile>$(SolutionDir)\corona\</ModuleOutputFile>
+      <ModuleDependenciesFile>$(IntDir)</ModuleDependenciesFile>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -189,7 +204,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <WarningLevel>Level2</WarningLevel>
+      <WarningLevel>EnableAllWarnings</WarningLevel>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
@@ -199,16 +214,21 @@
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(MSBuildThisFileDirectory);$(SolutionDir)Corona</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(MSBuildThisFileDirectory);$(SolutionDir)corona</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
       <BuildStlModules>false</BuildStlModules>
-      <AdditionalModuleDependencies>corona=$(SolutionDir)corona</AdditionalModuleDependencies>
+      <AdditionalModuleDependencies>corona=$(SolutionDir)corona\</AdditionalModuleDependencies>
       <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
-      <DiagnosticsFormat>Column</DiagnosticsFormat>
+      <DiagnosticsFormat>Classic</DiagnosticsFormat>
       <OpenMPSupport>true</OpenMPSupport>
-      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions</EnableEnhancedInstructionSet>
       <EnableModules>true</EnableModules>
+      <AdditionalHeaderUnitDependencies>
+      </AdditionalHeaderUnitDependencies>
+      <AdditionalBMIDirectories>$(SolutionDir)corona\</AdditionalBMIDirectories>
+      <ModuleOutputFile>$(SolutionDir)\corona\</ModuleOutputFile>
+      <ModuleDependenciesFile>$(IntDir)</ModuleDependenciesFile>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -220,70 +240,139 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="corona_platform.h" />
+    <ClInclude Include="..\corona\corona_platform.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="wscloud.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="corona.database-application_base.ixx" />
-    <ClCompile Include="corona.database-application.ixx" />
-    <ClCompile Include="corona.database-assert_if.ixx" />
-    <ClCompile Include="corona.database-bitmaps.ixx" />
-    <ClCompile Include="corona.database-bitmap_filters.ixx" />
-    <ClCompile Include="corona.database-brushes.ixx" />
-    <ClCompile Include="corona.database-collection_id_box.ixx" />
-    <ClCompile Include="corona.database-color_box.ixx" />
-    <ClCompile Include="corona.database-concept_lock.ixx" />
-    <ClCompile Include="corona.database-constants.ixx" />
-    <ClCompile Include="corona.database-controller.ixx" />
-    <ClCompile Include="corona.database-datatransfer.ixx" />
-    <ClCompile Include="corona.database-direct2dcontextbase.ixx" />
-    <ClCompile Include="corona.database-direct2dresources.ixx" />
-    <ClCompile Include="corona.database-direct2dwindow.ixx" />
-    <ClCompile Include="corona.database-directapplication.ixx" />
-    <ClCompile Include="corona.database-directory.ixx" />
-    <ClCompile Include="corona.database-direct2dcontext.ixx" />
-    <ClCompile Include="corona.database-directxadapterbase.ixx" />
-    <ClCompile Include="corona.database-directxdevices.ixx" />
-    <ClCompile Include="corona.database-file.ixx" />
-    <ClCompile Include="corona.database-filterable_iterator.ixx" />
-    <ClCompile Include="corona.database-float_box.ixx" />
-    <ClCompile Include="corona.database-function.ixx" />
-    <ClCompile Include="corona.database-grouping.ixx" />
-    <ClCompile Include="corona.database-iarray.ixx" />
-    <ClCompile Include="corona.database-image_box.ixx" />
-    <ClCompile Include="corona.database-int_box.ixx" />
-    <ClCompile Include="corona.database-jdatabase_server.ixx" />
-    <ClCompile Include="corona.database-jfield.ixx" />
-    <ClCompile Include="corona.database-jobject.ixx" />
-    <ClCompile Include="corona.database-jvalue.ixx" />
-    <ClCompile Include="corona.database-layout_rect_box.ixx" />
-    <ClCompile Include="corona.database-list_box.ixx" />
-    <ClCompile Include="corona.database-messages.ixx" />
-    <ClCompile Include="corona.database-midi_box.ixx" />
-    <ClCompile Include="corona.database-object_id_box.ixx" />
-    <ClCompile Include="corona.database-paths.ixx" />
-    <ClCompile Include="corona.database-point_box.ixx" />
-    <ClCompile Include="corona.database-presentation.ixx" />
-    <ClCompile Include="corona.database-queue.ixx" />
-    <ClCompile Include="corona.database-read_all_string.ixx" />
-    <ClCompile Include="corona.database-rectangle_box.ixx" />
-    <ClCompile Include="corona.database-skip_list.ixx" />
-    <ClCompile Include="corona.database-sorted_index.ixx" />
-    <ClCompile Include="corona.database-store_box.ixx" />
-    <ClCompile Include="corona.database-store_box_file.ixx" />
-    <ClCompile Include="corona.database-string_box.ixx" />
-    <ClCompile Include="corona.database-styles.ixx" />
-    <ClCompile Include="corona.database-table.ixx" />
-    <ClCompile Include="corona.database-textstyles.ixx" />
-    <ClCompile Include="corona.database-time_box.ixx" />
-    <ClCompile Include="corona.database-utility.ixx" />
-    <ClCompile Include="corona.database-visual.ixx" />
-    <ClCompile Include="corona.database-wave_box.ixx" />
-    <ClCompile Include="corona.database-directxadapter.ixx" />
-    <ClCompile Include="corona.database.ixx" />
+    <ClCompile Include="..\corona\corona.database-application.ixx" />
+    <ClCompile Include="..\corona\corona.database-application_base.ixx" />
+    <ClCompile Include="..\corona\corona.database-assert_if.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-bitmaps.ixx" />
+    <ClCompile Include="..\corona\corona.database-bitmap_filters.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-brushes.ixx" />
+    <ClCompile Include="..\corona\corona.database-collection_id_box.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-color_box.ixx" />
+    <ClCompile Include="..\corona\corona.database-concept_lock.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-constants.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-controller.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-datatransfer.ixx" />
+    <ClCompile Include="..\corona\corona.database-direct2dcontext.ixx" />
+    <ClCompile Include="..\corona\corona.database-direct2dcontextbase.ixx" />
+    <ClCompile Include="..\corona\corona.database-direct2dresources.ixx" />
+    <ClCompile Include="..\corona\corona.database-direct2dwindow.ixx" />
+    <ClCompile Include="..\corona\corona.database-directapplication.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-directory.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-directxadapter.ixx" />
+    <ClCompile Include="..\corona\corona.database-directxadapterbase.ixx" />
+    <ClCompile Include="..\corona\corona.database-directxdevices.ixx" />
+    <ClCompile Include="..\corona\corona.database-file.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-filterable_iterator.ixx" />
+    <ClCompile Include="..\corona\corona.database-float_box.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-function.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-grouping.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-iarray.ixx" />
+    <ClCompile Include="..\corona\corona.database-image_box.ixx" />
+    <ClCompile Include="..\corona\corona.database-int_box.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-jdatabase_server.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-jfield.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-jobject.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-jvalue.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-layout_rect_box.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-list_box.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-messages.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-midi_box.ixx" />
+    <ClCompile Include="..\corona\corona.database-object_id_box.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-paths.ixx" />
+    <ClCompile Include="..\corona\corona.database-point_box.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-presentation.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-queue.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-read_all_string.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-rectangle_box.ixx" />
+    <ClCompile Include="..\corona\corona.database-skip_list.ixx" />
+    <ClCompile Include="..\corona\corona.database-sorted_index.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-store_box.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-store_box_file.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-string_box.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-styles.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-table.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-textstyles.ixx" />
+    <ClCompile Include="..\corona\corona.database-time_box.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-utility.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-visual.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-wave_box.ixx" />
+    <ClCompile Include="..\corona\corona.database.ixx" />
+    <ClCompile Include="..\corona\corona.ixx" />
     <ClCompile Include="wscloud.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -297,6 +386,17 @@
     <Image Include="wscloud.ico" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="corona\corona.database-assert_if.ixx.ifc" />
+    <None Include="corona\corona.database-concept_lock.ixx.ifc" />
+    <None Include="corona\corona.database-constants.ixx.ifc" />
+    <None Include="corona\corona.database-float_box.ixx.ifc" />
+    <None Include="corona\corona.database-layout_rect_box.ixx.ifc" />
+    <None Include="corona\corona.database-queue.ixx.ifc" />
+    <None Include="corona\corona.database-read_all_string.ixx.ifc" />
+    <None Include="corona\corona.database-store_box.ixx.ifc" />
+    <None Include="corona\corona.database-string_box.ixx.ifc" />
+    <None Include="corona\corona.database-time_box.ixx.ifc" />
+    <None Include="corona\corona.database-utility.ixx.ifc" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>

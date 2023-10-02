@@ -8,12 +8,13 @@ export module corona.database:collection_id_box;
 
 import :constants;
 import :store_box;
+import :jfield;
 import :jobject;
 
 export class collection_id_math
 {
 public:
-	static jcollection get_collection(collection_id_type _collection_id, jdatabase* _database);
+
 };
 
 export class collection_id_box : protected boxed<collection_id_type>
@@ -50,7 +51,6 @@ public:
 
 	collection_id_type value() const { return boxed<collection_id_type>::get_value(); }
 
-	static jcollection get_collection(jdatabase* _database);
 
 };
 

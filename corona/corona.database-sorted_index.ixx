@@ -8,6 +8,7 @@ module;
 #include <exception>
 #include <iostream>
 #include <stdexcept>
+#include <compare>
 
 export module corona.database:sorted_index;
 
@@ -294,7 +295,7 @@ public:
 		return get_node(offset).item();
 	}
 
-	auto where(std::function<bool(const data_pair&)> _predicate)
+	iterator_type where(std::function<bool(const data_pair&)> _predicate)
 	{
 		mapper_check();
 		return iterator_type(this, _predicate, &mapper);
@@ -709,7 +710,7 @@ bool test_index()
 		return false;
 	}
 
-	count = std::count_if(test.begin(), test.end(), [](auto& _item) {
+	count = std::count_if(test.begin(), test.end(), [](auto _item) {
 		return true;
 		});
 
@@ -733,7 +734,7 @@ bool test_index()
 	int tests2[3] = { 2, 5, 7 };
 
 	k = 0;
-	for (auto item : test.where([](test_sorted_index_type::data_pair& kvpi) { return kvpi.first > 1; }))
+	for (auto item : test.where([](auto& kvpi) { return kvpi.first > 1; }))
 	{
 		if (tests2[k] != item.first) {
 			std::cout << __LINE__ << " starting from key failed" << std::endl;
@@ -743,7 +744,7 @@ bool test_index()
 	}
 
 	k = 0;
-	for (auto item : test.where([](test_sorted_index_type::data_pair& kvpi) { return kvpi.first > 1; }))
+	for (auto item : test.where([](auto& kvpi) { return kvpi.first > 1; }))
 	{
 		if (tests2[k] != item.first) {
 			std::cout << __LINE__ << " loop failed" << std::endl;

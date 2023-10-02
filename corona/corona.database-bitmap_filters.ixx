@@ -2,12 +2,74 @@
 
 module;
 
+#include <compare>
+#include <vector>
 #include "omp.h"
 
 export module corona.database:bitmap_filters;
 
 import :point_box;
-import :direct2dcontext;
+
+export struct PBGRAPixel
+{
+	unsigned char blue, green, red, alpha;
+};
+
+export class nullFilterFunction {
+public:
+	bool operator()(point _size, int cbBufferSize, int cbStride, char* pv)
+	{
+		return true;
+	}
+};
+
+export class whiteFilterFunction {
+public:
+	bool operator()(point _size, int cbBufferSize, int cbStride, char* pv)
+	{
+		PBGRAPixel* base = (PBGRAPixel*)pv;
+
+		for (int r = 0; r < _size.y; r++) {
+			auto row = (PBGRAPixel*)(pv + cbStride * r);
+			auto rowo = (PBGRAPixel*)(pv + cbStride * (int)(_size.y - (r + 1)));
+			for (int x = 0; x < _size.x; x++) {
+				auto pix = row[x];
+				if (pix.alpha == 0) {
+					pix.green = 255;
+					pix.blue = 255;
+					pix.red = 255;
+				}
+				row[x] = pix;
+			}
+		}
+
+		return true;
+	}
+};
+
+export class testFilterFunction {
+public:
+	bool operator()(point _size, int cbBufferSize, int cbStride, char* pv)
+	{
+		PBGRAPixel* base = (PBGRAPixel*)pv;
+
+		for (int r = 0; r < _size.y; r++) {
+			auto row = (PBGRAPixel*)(pv + cbStride * r);
+			auto rowo = (PBGRAPixel*)(pv + cbStride * (int)(_size.y - (r + 1)));
+			for (int x = 0; x < _size.x; x++) {
+				auto pix = row[x];
+				pix.alpha = 255;
+				if (x > _size.x / 2)
+					pix.blue = 255;
+				else
+					pix.green = 255;
+				row[x] = pix;
+			}
+		}
+
+		return true;
+	}
+};
 
 export class bitmapFilter {
 	bool flipHorizontalEnable,
@@ -226,8 +288,10 @@ bool bitmapFilter::adjustBrightness(point size, int cbBufferSize, int cbStride, 
 	PBGRAPixel* base = (PBGRAPixel*)pv;
 	int r, x;
 
+	int szy = size.y;
+
 #pragma omp parallel for
-	for (r = 0; r < size.y; r++) {
+	for (r = 0; r < szy; r++) {
 		adjustBrightnessInner(pv, cbStride, r, size.x, brightness);
 	}
 
@@ -300,8 +364,10 @@ bool bitmapFilter::adjustContrast(point _size, int cbBufferSize, int cbStride, c
 	// center - 20
 	// nv = 
 
+	int szy = _size.y;
+
 #pragma omp parallel for
-	for (int r = 0; r < _size.y; r++) {
+	for (int r = 0; r < szy; r++) {
 		adjustContrastInner(pv, cbStride, r, _size.x, center, mRange);
 	}
 
@@ -377,8 +443,9 @@ bool bitmapFilter::adjustChromaKey(point _size, int cbBufferSize, int cbStride, 
 		chromas.push_back(keyHsl);
 	}
 
+	int szy = _size.y;
 #pragma omp parallel for
-	for (int r = 0; r < _size.y; r++) {
+	for (int r = 0; r < szy; r++) {
 		adjustChromaKeyInner(pv, cbStride, r, _size.x, chromas, chromaKeyThreshold);
 	}
 
