@@ -1,16 +1,5 @@
 module;
 
-#include "windows.h"
-
-#include <atlbase.h>
-#include <atlapp.h>
-#include <atlwin.h>
-#include <atlframe.h>
-#include <atlctrls.h>
-#include <atldlgs.h>
-#include <atlctrlx.h>
-#include <atlmisc.h>
-
 #include <nlohmann/json.hpp>
 
 #include <memory>
@@ -19,12 +8,10 @@ module;
 #include <utility>
 #include <compare>
 
-extern CAppModule _Module;
-
 using json = nlohmann::json;
 
 export module corona.database:presentation;
-
+import "corona.database-windows-all.h";
 import :visual;
 import :styles;
 import :store_box;
@@ -34,8 +21,10 @@ import :rectangle_box;
 import :controller;
 import :direct2dcontext;
 import :application_base;
+import :direct2dwindow;
 
 extern presentation_style_factory styles;
+extern CAppModule _Module;
 
 export class list_data
 {

@@ -1,8 +1,6 @@
 
 module;
 
-#include "corona_platform.h"
-
 #include "atlbase.h"
 
 #include <string>
@@ -18,7 +16,7 @@ module;
 #include <algorithm>
 
 export module corona.database:directxdevices;
-
+import "corona.database-windows-all.h";
 import :constants;
 import :visual;
 import :store_box;

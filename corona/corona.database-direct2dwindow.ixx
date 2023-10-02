@@ -1,8 +1,4 @@
 
-
-
-#include "corona_platform.h"
-
 #include "atlbase.h"
 
 #include <string>
@@ -18,16 +14,19 @@
 #include <algorithm>
 
 export module corona.database:direct2dwindow;
+import "corona.database-windows-all.h";
 import :constants;
 import :directxadapterbase;
 import :direct2dcontext;
-import :bitmap;
+import :bitmaps;
 import :visual;
 import :store_box;
 import :rectangle_box;
 import :point_box;
 import :datatransfer;
 import :controller;
+
+export class direct2dWindow;
 
 export class direct2dChildWindow
 {
@@ -37,11 +36,11 @@ private:
 	std::shared_ptr<direct2dBitmapCore> childBitmap;
 	std::shared_ptr<direct2dContext> context;
 	rectangle windowPosition;
-
+	std::weak_ptr<direct2dWindow> parent;
 
 public:
 
-	direct2dChildWindow(std::weak_ptr<directXAdapterBase> _adapterSet, UINT _xdips, UINT _ydips, UINT _wdips, UINT _hdips);
+	direct2dChildWindow(std::weak_ptr<direct2dWindow> _parent, std::weak_ptr<directXAdapterBase> _adapterSet, UINT _xdips, UINT _ydips, UINT _wdips, UINT _hdips);
 	virtual ~direct2dChildWindow();
 
 	friend class direct2dWindow;
@@ -285,7 +284,7 @@ std::weak_ptr<direct2dChildWindow> direct2dWindow::createChild(relative_ptr_type
 {
 	if (!children.contains(_id)) {
 		auto pthis = weak_from_this();
-		auto new_ptr = std::make_shared<direct2dChildWindow>(pthis, getContext().getFactory(), _x, _y, _w, _h);
+		auto new_ptr = std::make_shared<direct2dChildWindow>(pthis, getContext().getAdapter(), _x, _y, _w, _h);
 		children.insert_or_assign(_id, new_ptr);
 	}
 
@@ -349,9 +348,11 @@ void direct2dWindow::endDraw(bool& _adapter_blown_away)
 
 //-------
 
-direct2dChildWindow::direct2dChildWindow(std::weak_ptr<directXAdapterBase> _adapterSet, UINT _xdips, UINT _ydips, UINT _wdips, UINT _hdips)
+direct2dChildWindow::direct2dChildWindow(std::weak_ptr<direct2dWindow> _parent, std::weak_ptr<directXAdapterBase> _adapterSet, UINT _xdips, UINT _ydips, UINT _wdips, UINT _hdips)
 {
 	HRESULT hr;
+
+	parent = _parent;
 
 	context = std::make_shared<direct2dContext>(_adapterSet);
 	childBitmap = nullptr;
@@ -381,7 +382,7 @@ void direct2dChildWindow::resize(UINT _wdips, UINT _hdips)
 		size.width = _wdips;
 		size.height = _hdips;
 
-		if (auto pfactory = context->getFactory().lock())
+		if (auto pfactory = context->getAdapter().lock())
 		{
 			auto tempBitmap = std::make_shared<direct2dBitmapCore>(size, pfactory, dpiWindow);
 			context->getDeviceContext()->SetTarget(tempBitmap->getBitmap());

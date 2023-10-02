@@ -1,12 +1,11 @@
 module;
 
-#include "windows.h"
 #include <iostream>
 #include <string>
 #include <compare>
 
 export module corona.database:messages;
-
+import "corona.database-windows-all.h";
 import :store_box;
 import :string_box;
 import :constants;

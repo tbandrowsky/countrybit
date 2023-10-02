@@ -1,8 +1,6 @@
 
 module;
 
-#include "windows.h"
-
 #include <coroutine>
 #include <vector>
 #include <thread>
@@ -10,7 +8,7 @@ module;
 #include <compare>
 
 export module corona.database:queue;
-
+import "corona.database-windows-all.h";
 import :store_box;
 import :constants;
 

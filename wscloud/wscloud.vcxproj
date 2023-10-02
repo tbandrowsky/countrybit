@@ -103,18 +103,19 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <WarningLevel>EnableAllWarnings</WarningLevel>
+      <WarningLevel>Level2</WarningLevel>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(MSBuildThisFileDirectory);$(SolutionDir)corona</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(MSBuildThisFileDirectory);$(SolutionDir)corona\</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
-      <AdditionalModuleDependencies>corona=$(SolutionDir)corona\</AdditionalModuleDependencies>
+      <AdditionalModuleDependencies>
+      </AdditionalModuleDependencies>
       <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
       <DiagnosticsFormat>Classic</DiagnosticsFormat>
       <OpenMPSupport>true</OpenMPSupport>
@@ -123,8 +124,9 @@
       <AdditionalHeaderUnitDependencies>
       </AdditionalHeaderUnitDependencies>
       <AdditionalBMIDirectories>$(SolutionDir)corona\</AdditionalBMIDirectories>
-      <ModuleOutputFile>$(SolutionDir)\corona\</ModuleOutputFile>
+      <ModuleOutputFile>$(IntDir)</ModuleOutputFile>
       <ModuleDependenciesFile>$(IntDir)</ModuleDependenciesFile>
+      <TranslateIncludes>false</TranslateIncludes>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -144,11 +146,12 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(MSBuildThisFileDirectory);$(SolutionDir)corona</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
-      <AdditionalModuleDependencies>corona=$(SolutionDir)corona\</AdditionalModuleDependencies>
+      <AdditionalModuleDependencies>
+      </AdditionalModuleDependencies>
       <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
       <DiagnosticsFormat>Classic</DiagnosticsFormat>
       <OpenMPSupport>true</OpenMPSupport>
@@ -157,7 +160,7 @@
       <AdditionalHeaderUnitDependencies>
       </AdditionalHeaderUnitDependencies>
       <AdditionalBMIDirectories>$(SolutionDir)corona\</AdditionalBMIDirectories>
-      <ModuleOutputFile>$(SolutionDir)\corona\</ModuleOutputFile>
+      <ModuleOutputFile>$(IntDir)</ModuleOutputFile>
       <ModuleDependenciesFile>$(IntDir)</ModuleDependenciesFile>
     </ClCompile>
     <Link>
@@ -171,19 +174,20 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <WarningLevel>EnableAllWarnings</WarningLevel>
+      <WarningLevel>Level2</WarningLevel>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(MSBuildThisFileDirectory);$(SolutionDir)corona</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(MSBuildThisFileDirectory);$(SolutionDir)corona\</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
       <BuildStlModules>false</BuildStlModules>
-      <AdditionalModuleDependencies>corona=$(SolutionDir)corona\</AdditionalModuleDependencies>
+      <AdditionalModuleDependencies>
+      </AdditionalModuleDependencies>
       <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
       <DiagnosticsFormat>Classic</DiagnosticsFormat>
       <OpenMPSupport>true</OpenMPSupport>
@@ -192,8 +196,9 @@
       <AdditionalHeaderUnitDependencies>
       </AdditionalHeaderUnitDependencies>
       <AdditionalBMIDirectories>$(SolutionDir)corona\</AdditionalBMIDirectories>
-      <ModuleOutputFile>$(SolutionDir)\corona\</ModuleOutputFile>
+      <ModuleOutputFile>$(IntDir)</ModuleOutputFile>
       <ModuleDependenciesFile>$(IntDir)</ModuleDependenciesFile>
+      <TranslateIncludes>false</TranslateIncludes>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -213,12 +218,13 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(MSBuildThisFileDirectory);$(SolutionDir)corona</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
       <BuildStlModules>false</BuildStlModules>
-      <AdditionalModuleDependencies>corona=$(SolutionDir)corona\</AdditionalModuleDependencies>
+      <AdditionalModuleDependencies>
+      </AdditionalModuleDependencies>
       <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
       <DiagnosticsFormat>Classic</DiagnosticsFormat>
       <OpenMPSupport>true</OpenMPSupport>
@@ -227,7 +233,7 @@
       <AdditionalHeaderUnitDependencies>
       </AdditionalHeaderUnitDependencies>
       <AdditionalBMIDirectories>$(SolutionDir)corona\</AdditionalBMIDirectories>
-      <ModuleOutputFile>$(SolutionDir)\corona\</ModuleOutputFile>
+      <ModuleOutputFile>$(IntDir)</ModuleOutputFile>
       <ModuleDependenciesFile>$(IntDir)</ModuleDependenciesFile>
     </ClCompile>
     <Link>
@@ -240,6 +246,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\corona\corona.database-windows-all.h" />
+    <ClCompile Include="..\corona\corona.database-windows-lite.h" />
     <ClInclude Include="..\corona\corona_platform.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="Resource.h" />
@@ -370,7 +378,28 @@
     <ClCompile Include="..\corona\corona.database-visual.ixx">
       <FileType>CppModule</FileType>
     </ClCompile>
-    <ClCompile Include="..\corona\corona.database-wave_box.ixx" />
+    <ClCompile Include="..\corona\corona.database-wave_box.ixx">
+      <AdditionalBMIDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+      </AdditionalBMIDirectories>
+      <AdditionalModuleDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+      </AdditionalModuleDependencies>
+      <AdditionalBMIDirectories Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+      </AdditionalBMIDirectories>
+      <AdditionalModuleDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+      </AdditionalModuleDependencies>
+      <AdditionalBMIDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+      </AdditionalBMIDirectories>
+      <AdditionalModuleDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+      </AdditionalModuleDependencies>
+      <AdditionalBMIDirectories Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+      </AdditionalBMIDirectories>
+      <AdditionalModuleDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+      </AdditionalModuleDependencies>
+      <ModuleOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)</ModuleOutputFile>
+      <ModuleOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)</ModuleOutputFile>
+      <ModuleOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)</ModuleOutputFile>
+      <ModuleOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)</ModuleOutputFile>
+    </ClCompile>
     <ClCompile Include="..\corona\corona.database.ixx" />
     <ClCompile Include="..\corona\corona.ixx" />
     <ClCompile Include="wscloud.cpp" />
@@ -386,17 +415,6 @@
     <Image Include="wscloud.ico" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="corona\corona.database-assert_if.ixx.ifc" />
-    <None Include="corona\corona.database-concept_lock.ixx.ifc" />
-    <None Include="corona\corona.database-constants.ixx.ifc" />
-    <None Include="corona\corona.database-float_box.ixx.ifc" />
-    <None Include="corona\corona.database-layout_rect_box.ixx.ifc" />
-    <None Include="corona\corona.database-queue.ixx.ifc" />
-    <None Include="corona\corona.database-read_all_string.ixx.ifc" />
-    <None Include="corona\corona.database-store_box.ixx.ifc" />
-    <None Include="corona\corona.database-string_box.ixx.ifc" />
-    <None Include="corona\corona.database-time_box.ixx.ifc" />
-    <None Include="corona\corona.database-utility.ixx.ifc" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>

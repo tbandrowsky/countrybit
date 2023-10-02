@@ -1,9 +1,6 @@
 
-
-
 module;
 
-#include "corona_platform.h"
 
 #include <list>
 #include <vector>
@@ -13,6 +10,7 @@ module;
 #include <functional>
 
 export module corona.database:visual;
+import "corona.database-windows-all.h";
 
 import :constants;
 import :string_box;

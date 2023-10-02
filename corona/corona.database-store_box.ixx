@@ -1,7 +1,5 @@
 module;
 
-#include "windows.h"
-
 #include <string>
 #include <iostream>
 #include <algorithm>
@@ -11,7 +9,7 @@ module;
 #include <compare>
 
 export module corona.database:store_box;
-
+import "corona.database-windows-all.h";
 import :constants;
 
 export template <typename box_class>

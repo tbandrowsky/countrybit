@@ -1,7 +1,5 @@
 module;
 
-#include "corona_platform.h"
-
 #include "atlbase.h"
 
 #include <string>
@@ -17,6 +15,7 @@ module;
 #include <algorithm>
 
 export module corona.database:direct2dcontext;
+import "corona.database-windows-all.h";
 import :constants;
 import :color_box;
 import :point_box;
@@ -82,7 +81,7 @@ public:
 };
 
 
-export class direct2dContext : public drawableHost, public direct2dContextBase, public std::enable_shared_from_this<direct2dContext>
+export class direct2dContext : public direct2dContextBase, public drawableHost, public std::enable_shared_from_this<direct2dContext>
 {
 protected:
 
@@ -126,7 +125,28 @@ protected:
 
 public:
 
-	std::string setBitmap(bitmapRequest* _bitmap)
+	direct2dContext(std::weak_ptr<directXAdapterBase> _factory) :
+		direct2dContextBase(_factory)
+	{
+	}
+
+	virtual ~direct2dContext() 
+	{
+	}
+
+	virtual void clear(color* _color)
+	{
+		D2D1_COLOR_F color;
+
+		color.a = _color->a;
+		color.b = _color->b;
+		color.g = _color->g;
+		color.r = _color->r;
+
+		this->getDeviceContext()->Clear(color);
+	}
+
+	virtual std::string setBitmap(bitmapRequest* _bitmap)
 	{
 		std::string filename, name;
 
@@ -160,7 +180,7 @@ public:
 		return name;
 	}
 
-	bool getBitmapSize(bitmapRequest* _bitmap, point* _size)
+	virtual bool getBitmapSize(bitmapRequest* _bitmap, point* _size)
 	{
 		bool success = false;
 		auto i = bitmaps[_bitmap->name.c_str()];
@@ -173,7 +193,7 @@ public:
 		return success;
 	}
 
-	color getColorAtPoint(bitmapInstanceDto* _bitmap, point& _point)
+	virtual color getColorAtPoint(bitmapInstanceDto* _bitmap, point& _point)
 	{
 		color color;
 		auto i = bitmaps[_bitmap->bitmapName];
@@ -183,7 +203,7 @@ public:
 		return color;
 	}
 
-	bool setBitmapSizes(bitmapRequest* _bitmap, bool _forceResize)
+	virtual bool setBitmapSizes(bitmapRequest* _bitmap, bool _forceResize)
 	{
 		bool success = false;
 		auto bm = bitmaps[_bitmap->name.c_str()];
@@ -225,7 +245,7 @@ public:
 		return success;
 	}
 
-	bool setBitmapFilter(bitmapRequest* _bitmap, std::function<bool(point, int, int, char* bytes)> _filter)
+	virtual bool setBitmapFilter(bitmapRequest* _bitmap, std::function<bool(point, int, int, char* bytes)> _filter)
 	{
 		bool success = false;
 		auto bm = bitmaps[_bitmap->name.c_str()];
@@ -236,7 +256,7 @@ public:
 		return success;
 	}
 
-	std::string setBitmapBrush(bitmapBrushRequest* _bitmapBrush)
+	virtual std::string setBitmapBrush(bitmapBrushRequest* _bitmapBrush)
 	{
 		auto brush = std::make_shared<bitmapBrush>();
 		std::string name, bitmapName;
@@ -248,7 +268,7 @@ public:
 		return name;
 	}
 
-	std::string setSolidColorBrush(solidBrushRequest* _solidBrushDto)
+	virtual std::string setSolidColorBrush(solidBrushRequest* _solidBrushDto)
 	{
 		auto brush = std::make_shared<solidColorBrush>();
 		brush->stock = false;
@@ -258,7 +278,7 @@ public:
 		return _solidBrushDto->name.c_str();
 	}
 
-	std::string setLinearGradientBrush(linearGradientBrushRequest* _linearGradientBrushDto)
+	virtual std::string setLinearGradientBrush(linearGradientBrushRequest* _linearGradientBrushDto)
 	{
 		D2D1_GRADIENT_STOP gradientStop;
 		auto brush = std::make_shared<linearGradientBrush>();
@@ -274,7 +294,7 @@ public:
 		return _linearGradientBrushDto->name.c_str();
 	}
 
-	std::string setRadialGradientBrush(radialGradientBrushRequest* _radialGradientBrushDto)
+	virtual std::string setRadialGradientBrush(radialGradientBrushRequest* _radialGradientBrushDto)
 	{
 		D2D1_GRADIENT_STOP gradientStop;
 		auto brush = std::make_shared<radialGradientBrush>();
@@ -292,13 +312,13 @@ public:
 		return _radialGradientBrushDto->name.c_str();
 	}
 
-	void clearBitmapsAndBrushes(bool deleteStock)
+	virtual void clearBitmapsAndBrushes(bool deleteStock)
 	{
 		brushes.clear();
 		bitmaps.clear();
 	}
 
-	std::shared_ptr<path> createPath(pathDto* _pathDto, bool _closed)
+	virtual std::shared_ptr<path> createPath(pathDto* _pathDto, bool _closed)
 	{
 		std::shared_ptr<path> newPath = std::make_shared<path>(this);
 
@@ -360,19 +380,19 @@ public:
 		return newPath;
 	}
 
-	std::string setPath(pathDto* _pathDto, bool _closed)
+	virtual std::string setPath(pathDto* _pathDto, bool _closed)
 	{
 		auto newPath = createPath(_pathDto, _closed);
 		paths[_pathDto->name.c_str()] = newPath;
 		return _pathDto->name.c_str();
 	}
 
-	void clearPaths()
+	virtual void clearPaths()
 	{
 		paths.clear();
 	}
 
-	void setTextStyle(textStyleRequest* _textStyleDto)
+	virtual void setTextStyle(textStyleRequest* _textStyleDto)
 	{
 		auto newStyle = std::make_shared<textStyle>(
 			_textStyleDto->fontName.c_str(),
@@ -390,12 +410,12 @@ public:
 		newStyle->create(this);
 	}
 
-	void clearTextStyles()
+	virtual void clearTextStyles()
 	{
 		textStyles.clear();
 	}
 
-	void setViewStyle(viewStyleRequest& _request)
+	virtual void setViewStyle(viewStyleRequest& _request)
 	{
 		auto vs = std::make_shared<viewStyleRequest>();
 		*(vs.get()) = _request;
@@ -407,12 +427,12 @@ public:
 		setSolidColorBrush(&_request.shape_fill_color);
 	}
 
-	void clearViewStyles()
+	virtual void clearViewStyles()
 	{
 		viewStyles.clear();
 	}
 
-	void drawPath(pathInstance2dDto* _pathInstanceDto)
+	virtual void drawPath(pathInstance2dDto* _pathInstanceDto)
 	{
 		auto fill = brushes[_pathInstanceDto->fillBrushName];
 		auto border = brushes[_pathInstanceDto->borderBrushName];
@@ -448,7 +468,7 @@ public:
 		}
 	}
 
-	void drawPath(pathImmediateDto* _pathImmediateDto)
+	virtual void drawPath(pathImmediateDto* _pathImmediateDto)
 	{
 		auto fill = brushes[_pathImmediateDto->fillBrushName];
 		auto border = brushes[_pathImmediateDto->borderBrushName];
@@ -482,7 +502,7 @@ public:
 		}
 	}
 
-	void drawLine(point* start, point* stop, const char* _fillBrush, double thickness)
+	virtual void drawLine(point* start, point* stop, const char* _fillBrush, double thickness)
 	{
 		auto fill = brushes[_fillBrush];
 
@@ -498,7 +518,7 @@ public:
 		}
 	}
 
-	void drawRectangle(rectangle* _rectangle, const char* _borderBrush, double _borderWidth, const char* _fillBrush)
+	virtual void drawRectangle(rectangle* _rectangle, const char* _borderBrush, double _borderWidth, const char* _fillBrush)
 	{
 		D2D1_RECT_F r;
 		r.left = _rectangle->x;
@@ -531,7 +551,7 @@ public:
 		}
 	}
 
-	void drawText(const char* _text, rectangle* _rectangle, const char* _textStyle, const char* _fillBrush)
+	virtual void drawText(const char* _text, rectangle* _rectangle, const char* _textStyle, const char* _fillBrush)
 	{
 		auto style = _textStyle ? textStyles[_textStyle] : nullptr;
 		auto fill = _fillBrush ? brushes[_fillBrush] : nullptr;
@@ -610,7 +630,7 @@ public:
 		delete[] buff;
 	}
 
-	rectangle getCanvasSize()
+	virtual rectangle getCanvasSize()
 	{
 
 		D2D1_SIZE_F size;
@@ -628,7 +648,7 @@ public:
 		return rectangle{ 0, 0, size.width, size.height };
 	}
 
-	void drawText(drawTextRequest* _textInstanceDto)
+	virtual void drawText(drawTextRequest* _textInstanceDto)
 	{
 		auto style = textStyles[_textInstanceDto->styleName];
 		auto fill = brushes[_textInstanceDto->fillBrushName];
@@ -665,7 +685,7 @@ public:
 		delete[] buff;
 	}
 
-	void drawBitmap(bitmapInstanceDto* _bitmapInstanceDto)
+	virtual void drawBitmap(bitmapInstanceDto* _bitmapInstanceDto)
 	{
 		auto bm = bitmaps[_bitmapInstanceDto->bitmapName];
 		throwOnFalse(static_cast<bool>(bm), "Bitmap not found in context");
@@ -695,7 +715,7 @@ public:
 		getDeviceContext()->DrawBitmap(ibm, rect, _bitmapInstanceDto->alpha, D2D1_INTERPOLATION_MODE_MULTI_SAMPLE_LINEAR, source);
 	}
 
-	void popCamera()
+	virtual void popCamera()
 	{
 		if (transforms.empty())
 			currentTransform = D2D1::Matrix3x2F::Identity();
@@ -705,7 +725,7 @@ public:
 		}
 	}
 
-	void pushCamera(point* _position, float _rotation, float _scale)
+	virtual void pushCamera(point* _position, float _rotation, float _scale)
 	{
 		transforms.push(currentTransform);
 		currentTransform = currentTransform * D2D1::Matrix3x2F::Rotation(_rotation)
@@ -715,21 +735,21 @@ public:
 	}
 
 
-	std::shared_ptr<direct2dBitmap> createBitmap(point& _size)
+	virtual std::shared_ptr<direct2dBitmap> createBitmap(point& _size)
 	{
 		auto adapt = getAdapter();
 		auto bp = std::make_shared<direct2dBitmap>(toSizeF(_size), adapt);
 		return bp;
 	}
 
-	std::unique_ptr<direct2dBitmap> createD2dBitmap(D2D1_SIZE_F _size)
+	virtual std::unique_ptr<direct2dBitmap> createD2dBitmap(D2D1_SIZE_F _size)
 	{
 		auto adapt = getAdapter();
 		std::unique_ptr<direct2dBitmap> win = std::make_unique<direct2dBitmap>(_size, adapt);
 		return win;
 	}
 
-	void drawBitmap(drawableHost* _drawableHost, point& _dest, point& _size)
+	virtual void drawBitmap(drawableHost* _drawableHost, point& _dest, point& _size)
 	{
 		if (_drawableHost->isBitmap()) {
 			direct2dBitmap* bp = (direct2dBitmap*)_drawableHost;
@@ -748,7 +768,7 @@ public:
 		}
 	}
 
-	void drawView(const char* _style, const char* _text, rectangle& _rect, int _state, const char* _debug_comment)
+	virtual void drawView(const char* _style, const char* _text, rectangle& _rect, int _state, const char* _debug_comment)
 	{
 		if (!_style) return;
 
@@ -778,7 +798,7 @@ public:
 	}
 
 
-	void save(const char* _filename)
+	virtual void save(const char* _filename)
 	{
 		;
 	}

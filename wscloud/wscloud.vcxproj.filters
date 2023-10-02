@@ -209,6 +209,12 @@
     <ClCompile Include="..\corona\corona.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\corona\corona.database-windows-all.h">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-windows-lite.h">
+      <Filter>Header Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="wscloud.rc">
@@ -228,16 +234,5 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-    <None Include="corona\corona.database-assert_if.ixx.ifc" />
-    <None Include="corona\corona.database-concept_lock.ixx.ifc" />
-    <None Include="corona\corona.database-constants.ixx.ifc" />
-    <None Include="corona\corona.database-float_box.ixx.ifc" />
-    <None Include="corona\corona.database-layout_rect_box.ixx.ifc" />
-    <None Include="corona\corona.database-queue.ixx.ifc" />
-    <None Include="corona\corona.database-read_all_string.ixx.ifc" />
-    <None Include="corona\corona.database-store_box.ixx.ifc" />
-    <None Include="corona\corona.database-string_box.ixx.ifc" />
-    <None Include="corona\corona.database-time_box.ixx.ifc" />
-    <None Include="corona\corona.database-utility.ixx.ifc" />
   </ItemGroup>
 </Project>

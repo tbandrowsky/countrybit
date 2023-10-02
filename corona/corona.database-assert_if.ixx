@@ -1,13 +1,12 @@
 module;
 
-#include "windows.h"
-
-#include <string>
-#include <functional>
-#include <iostream>
-#include <compare>
-
 export module corona.database:assert_if;
+
+import "corona.database-windows-all.h";
+
+import <iostream>;
+import <format>;
+import <functional>;
 
 export bool assert_if(int test, const char* fail)
 {

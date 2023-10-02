@@ -1,8 +1,6 @@
 
 module;
 
-#include "corona_platform.h"
-
 #include <memory>
 #include <list>
 #include <string>
@@ -12,6 +10,7 @@ module;
 #include <atlbase.h>
 
 export module corona.database:directapplication;
+import "corona.database-windows-all.h";
 import :constants;
 import :store_box;
 import :string_box;

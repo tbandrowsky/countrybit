@@ -1,9 +1,9 @@
 module;
 
-#include <string>
-#include <cstring>
-#include <coroutine>
-#include <compare>
+import <string>;
+import <cstring>;
+import <coroutine>;
+import <compare>;
 
 export module corona.database:application;
 

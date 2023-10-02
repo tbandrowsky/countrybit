@@ -18,6 +18,8 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)corona.database-application.ixx" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona.database-iarray.ixx" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona.database-color_box.ixx" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona.database-windows-all.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona.database-windows-lite.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona_platform.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona.database-datatransfer.ixx" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona.database-filterable_iterator.ixx" />

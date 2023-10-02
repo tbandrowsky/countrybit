@@ -1,13 +1,12 @@
 module;
 
-#include "windows.h"
-
 #include <exception>
 #include <stdexcept>
 #include <iostream>
 #include <compare>
 
 export module corona.database:file;
+import "corona.database-windows-all.h";
 import :queue;
 import :string_box;
 import :constants;

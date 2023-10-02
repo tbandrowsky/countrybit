@@ -1,6 +1,3 @@
-
-#include "corona_platform.h"
-
 #include "atlbase.h"
 
 #include <string>
@@ -16,6 +13,7 @@
 #include <algorithm>
 
 export module corona.database:directxadapter;
+import "corona.database-windows-all.h";
 import :constants;
 import :directxdevices;
 import :visual;

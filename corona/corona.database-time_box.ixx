@@ -1,10 +1,10 @@
 module;
 
-#include "windows.h"
 #include <iostream>
 #include <compare>
 
 export module corona.database:time_box;
+import "corona.database-windows-all.h";
 
 import :store_box;
 

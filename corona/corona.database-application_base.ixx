@@ -4,9 +4,9 @@ module;
 #include <string>
 #include <vector>
 #include <list>
-#include "windows.h"
 
 export module corona.database:application_base;
+import "corona.database-windows-all.h";
 import :constants;
 import :direct2dcontext;
 import :visual;

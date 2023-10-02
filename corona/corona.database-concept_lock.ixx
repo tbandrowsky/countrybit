@@ -1,13 +1,13 @@
 module;
 
-#include "windows.h"
-
 #include <map>
 #include <utility>
 #include <string>
 #include <compare>
 
 export module corona.database:concept_lock;
+
+import "corona.database-windows-all.h";
 
 export class concept_lock;
 

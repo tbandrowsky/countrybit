@@ -1,14 +1,12 @@
 module;
 
-#include "windows.h"
-
 #include <iostream>
 #include <string>
 #include <cinttypes>
 #include <compare>
 
 export module corona.database:jfield;
-
+import "corona.database-windows-all.h";
 import :constants;
 import :store_box;
 import :string_box;

@@ -1,7 +1,5 @@
 
 
-#include "corona_platform.h"
-
 #include "atlbase.h"
 
 #include <string>
@@ -17,6 +15,7 @@
 #include <algorithm>
 
 export module corona.database:direct2dresources;
+import "corona.database-windows-all.h";
 import :constants;
 import :directxdevices;
 import :direct2dcontextbase;

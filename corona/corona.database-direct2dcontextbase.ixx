@@ -1,7 +1,5 @@
 module;
 
-#include "corona_platform.h"
-
 #include "atlbase.h"
 
 #include <string>
@@ -17,6 +15,7 @@ module;
 #include <algorithm>
 
 export module corona.database:direct2dcontextbase;
+import "corona.database-windows-all.h";
 import :assert_if;
 import :constants;
 import :color_box;
@@ -59,7 +58,7 @@ public:
 		context = _context;
 	}
 
-	~direct2dContextBase()
+	virtual ~direct2dContextBase()
 	{
 	}
 
@@ -88,18 +87,6 @@ public:
 	virtual CComPtr<ID2D1DeviceContext>& getDeviceContext()
 	{
 		return context;
-	}
-
-	void clear(color* _color)
-	{
-		D2D1_COLOR_F color;
-
-		color.a = _color->a;
-		color.b = _color->b;
-		color.g = _color->g;
-		color.r = _color->r;
-
-		this->getDeviceContext()->Clear(color);
 	}
 
 };

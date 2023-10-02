@@ -17,6 +17,8 @@ module;
 #include <algorithm>
 
 export module corona.database:bitmaps;
+
+import "corona.database-windows-all.h";
 import :assert_if;
 import :constants;
 import :color_box;

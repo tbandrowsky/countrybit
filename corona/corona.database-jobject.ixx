@@ -1,7 +1,5 @@
 module;
 
-#include "windows.h"
-
 #include <memory>
 #include <exception>
 #include <compare>
@@ -11,8 +9,10 @@ module;
 #include <algorithm>
 #include <ctime>
 #include <stdexcept>
+#include <format>
 
 export module corona.database:jobject;
+import "corona.database-windows-all.h";
 import :store_box;
 import :color_box;
 import :float_box;

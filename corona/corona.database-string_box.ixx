@@ -1,7 +1,5 @@
 module;
 
-#include "windows.h"
-
 #include <cstdlib>
 #include <string>
 #include <compare>
@@ -9,7 +7,7 @@ module;
 #include <algorithm>
 
 export module corona.database:string_box;
-
+import "corona.database-windows-all.h";
 import :store_box;
 import :assert_if;
 import :constants;

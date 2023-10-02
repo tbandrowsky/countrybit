@@ -1,7 +1,5 @@
 module;
 
-#include "windows.h"
-
 #include <functional>
 #include <coroutine>
 #include <iostream>
@@ -9,6 +7,7 @@ module;
 #include <compare>
 
 export module corona.database:function;
+import "corona.database-windows-all.h";
 import :queue;
 
 export class task_job : public job

@@ -1,9 +1,9 @@
 module;
 
-#include "corona_platform.h"
 #include <compare>
 
 export module corona.database:color_box;
+import "corona.database-windows-all.h";
 
 import :store_box;
 

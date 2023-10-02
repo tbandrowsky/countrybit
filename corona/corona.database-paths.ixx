@@ -1,7 +1,5 @@
 module;
 
-#include "corona_platform.h"
-
 #include "atlbase.h"
 
 #include <string>
@@ -17,6 +15,7 @@ module;
 #include <algorithm>
 
 export module corona.database:paths;
+import "corona.database-windows-all.h";
 import :assert_if;
 import :constants;
 import :color_box;
