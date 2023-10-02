@@ -45,6 +45,10 @@ export import :jvalue;
 export import :queue;
 
 export import :bitmap_filters;
+export import :bitmaps;
+export import :brushes;
+export import :paths;
+
 export import :controller;
 export import :datatransfer;
 export import :directxadapter;

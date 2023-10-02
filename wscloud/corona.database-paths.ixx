@@ -16,7 +16,7 @@ module;
 #include <memory>
 #include <algorithm>
 
-export module corona.database:path;
+export module corona.database:paths;
 import :assert_if;
 import :constants;
 import :color_box;

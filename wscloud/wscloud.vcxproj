@@ -264,7 +264,7 @@
     <ClCompile Include="corona.database-messages.ixx" />
     <ClCompile Include="corona.database-midi_box.ixx" />
     <ClCompile Include="corona.database-object_id_box.ixx" />
-    <ClCompile Include="corona.database-path.ixx" />
+    <ClCompile Include="corona.database-paths.ixx" />
     <ClCompile Include="corona.database-point_box.ixx" />
     <ClCompile Include="corona.database-presentation.ixx" />
     <ClCompile Include="corona.database-queue.ixx" />

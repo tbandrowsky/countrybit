@@ -203,7 +203,7 @@
     <ClCompile Include="corona.database-textstyle.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="corona.database-path.ixx">
+    <ClCompile Include="corona.database-paths.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

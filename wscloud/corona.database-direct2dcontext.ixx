@@ -29,6 +29,9 @@ import :directxdevices;
 import :directxresources;
 import :direct2dcontextbase;
 import :bitmap_filters;
+import :brushes;
+import :bitmaps;
+import :paths;
 
 export class direct2dWindow;
 export class direct2dChildWindow;
