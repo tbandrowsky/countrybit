@@ -277,7 +277,7 @@
     <ClCompile Include="corona.database-string_box.ixx" />
     <ClCompile Include="corona.database-styles.ixx" />
     <ClCompile Include="corona.database-table.ixx" />
-    <ClCompile Include="corona.database-textstyle.ixx" />
+    <ClCompile Include="corona.database-textstyles.ixx" />
     <ClCompile Include="corona.database-time_box.ixx" />
     <ClCompile Include="corona.database-utility.ixx" />
     <ClCompile Include="corona.database-visual.ixx" />

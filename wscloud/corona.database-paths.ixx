@@ -45,7 +45,7 @@ public:
 		{
 			if (ptarget->getDeviceContext())
 			{
-				if (auto pfactory = ptarget->getFactory().lock()) {
+				if (auto pfactory = ptarget->getAdapter().lock()) {
 					hr = pfactory->getD2DFactory()->CreatePathGeometry(&geometry);
 					if (!SUCCEEDED(hr)) {
 						// UH, SOMETHING;

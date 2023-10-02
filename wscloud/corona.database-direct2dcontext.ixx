@@ -26,12 +26,13 @@ import :visual;
 import :point_box;
 import :directxadapterbase;
 import :directxdevices;
-import :directxresources;
+import :direct2dresources;
 import :direct2dcontextbase;
 import :bitmap_filters;
 import :brushes;
 import :bitmaps;
 import :paths;
+import :textstyles;
 
 export class direct2dWindow;
 export class direct2dChildWindow;
@@ -91,23 +92,39 @@ protected:
 	std::map<std::string, std::shared_ptr<textStyle>> textStyles;
 	std::map<std::string, std::shared_ptr<viewStyleRequest>> viewStyles;
 
-protected:
 
-	void view_style_name(const object_name& _style_sheet_name, object_name& _object_style_name, int _index);
-	void text_style_name(const object_name& _style_sheet_name, object_name_composed& _object_style_name, int _index);
-	void box_border_brush_name(const object_name& _style_sheet_name, object_name_composed& _object_style_name, int _index);
-	void box_fill_brush_name(const object_name& _style_sheet_name, object_name_composed& _object_style_name, int _index);
-	void shape_fill_brush_name(const object_name& _style_sheet_name, object_name_composed& _object_style_name, int _index);
-	void shape_border_brush_name(const object_name& _style_sheet_name, object_name_composed& _object_style_name, int _index);
+	void view_style_name(const object_name& _style_sheet_name, object_name& _object_style_name, int _index)
+	{
+		_object_style_name = _style_sheet_name + "-view-" + std::to_string(_index);
+	}
+
+	void text_style_name(const object_name& _style_sheet_name, object_name_composed& _object_style_name, int _index)
+	{
+		_object_style_name = _style_sheet_name + "-text-" + std::to_string(_index);
+	}
+
+	void box_border_brush_name(const object_name& _style_sheet_name, object_name_composed& _object_style_name, int _index)
+	{
+		_object_style_name = _style_sheet_name + "-box-border-" + std::to_string(_index);
+	}
+
+	void box_fill_brush_name(const object_name& _style_sheet_name, object_name_composed& _object_style_name, int _index)
+	{
+		_object_style_name = _style_sheet_name + "-box-fill-" + std::to_string(_index);
+	}
+
+	void shape_fill_brush_name(const object_name& _style_sheet_name, object_name_composed& _object_style_name, int _index)
+	{
+		_object_style_name = _style_sheet_name + "-shape-fill-" + std::to_string(_index);
+	}
+
+	void shape_border_brush_name(const object_name& _style_sheet_name, object_name_composed& _object_style_name, int _index)
+	{
+		_object_style_name = _style_sheet_name + "-shape-border-" + std::to_string(_index);
+	}
+
 
 public:
-
-	std::unique_ptr<direct2dBitmap> createD2dBitmap(D2D1_SIZE_F size)
-	{
-		auto padapter = weak_from_this();
-		std::unique_ptr<direct2dBitmap> win = std::make_unique<direct2dBitmap>(size, padapter);
-		return win;
-	}
 
 	std::string setBitmap(bitmapRequest* _bitmap)
 	{
@@ -567,7 +584,7 @@ public:
 			int l = wcslen(buff);
 			IDWriteTextLayout* textLayout = nullptr;
 
-			if (auto pfactory = getFactory().lock()) {
+			if (auto pfactory = getAdapter().lock()) {
 
 				pfactory->getDWriteFactory()->CreateTextLayout(buff, l, format, r.right - r.left, r.bottom - r.top, &textLayout);
 				if (textLayout != nullptr) {
@@ -631,7 +648,7 @@ public:
 			return;
 		}
 
-		D2D1::Matrix3x2F product = currentTransform * D2D1::Matrix3x2F::Rotation(_textInstanceDto->rotation) * D2D1::Matrix3x2F::Translation(_textInstanceDto->position.x, _textInstanceDto->position.y);
+		D2D1::Matrix3x2F product = D2D1::Matrix3x2F::Rotation(_textInstanceDto->rotation) * D2D1::Matrix3x2F::Translation(_textInstanceDto->position.x, _textInstanceDto->position.y);
 		getDeviceContext()->SetTransform(product);
 
 		D2D1_RECT_F rect = {};
@@ -701,30 +718,16 @@ public:
 
 	std::shared_ptr<direct2dBitmap> createBitmap(point& _size)
 	{
-		auto rfact = getFactory();
-		auto bp = std::make_shared<direct2dBitmap>(toSizeF(_size), rfact);
-
-		if (auto pfactory = rfact.lock()) {
-
-			// now for the fun thing.  we need copy all of the objects over that we created from this context into the new one.  
-			// i guess every architecture has its unforseen ugh moment, and this one is mine.
-
-			std::for_each(bitmaps.begin(), bitmaps.end(), [this, bp](auto ib) {
-				bp->getContext().bitmaps[ib.first] = ib.second->clone(this);
-				});
-
-			// will need this for all objects
-			/*
-			std::for_each( brushes.begin(), brushes.end(), [ this, bp ]( std::pair<std::string, deviceDependentAssetBase *> ib ) {
-				ib.second->create(this);
-			});
-			std::for_each( textStyles.begin(), textStyles.end(), [ this, bp ]( std::pair<std::string, textStyle *> ib ) {
-				ib.second->create(this);
-			});
-			*/
-		}
-
+		auto adapt = getAdapter();
+		auto bp = std::make_shared<direct2dBitmap>(toSizeF(_size), adapt);
 		return bp;
+	}
+
+	std::unique_ptr<direct2dBitmap> createD2dBitmap(D2D1_SIZE_F _size)
+	{
+		auto adapt = getAdapter();
+		std::unique_ptr<direct2dBitmap> win = std::make_unique<direct2dBitmap>(_size, adapt);
+		return win;
 	}
 
 	void drawBitmap(drawableHost* _drawableHost, point& _dest, point& _size)
@@ -781,42 +784,11 @@ public:
 		;
 	}
 
-	void view_style_name(const object_name& _style_sheet_name, object_name& _object_style_name, int _index)
-	{
-		_object_style_name = _style_sheet_name + "-view-" + std::to_string(_index);
-	}
-
-	void text_style_name(const object_name& _style_sheet_name, object_name_composed& _object_style_name, int _index)
-	{
-		_object_style_name = _style_sheet_name + "-text-" + std::to_string(_index);
-	}
-
-	void box_border_brush_name(const object_name& _style_sheet_name, object_name_composed& _object_style_name, int _index)
-	{
-		_object_style_name = _style_sheet_name + "-box-border-" + std::to_string(_index);
-	}
-
-	void box_fill_brush_name(const object_name& _style_sheet_name, object_name_composed& _object_style_name, int _index)
-	{
-		_object_style_name = _style_sheet_name + "-box-fill-" + std::to_string(_index);
-	}
-
-	void shape_fill_brush_name(const object_name& _style_sheet_name, object_name_composed& _object_style_name, int _index)
-	{
-		_object_style_name = _style_sheet_name + "-shape-fill-" + std::to_string(_index);
-	}
-
-	void shape_border_brush_name(const object_name& _style_sheet_name, object_name_composed& _object_style_name, int _index)
-	{
-		_object_style_name = _style_sheet_name + "-shape-border-" + std::to_string(_index);
-	}
-
 
 protected:
 
 	std::stack<D2D1::Matrix3x2F> transforms;
 	D2D1::Matrix3x2F currentTransform;
-	std::shared_ptr<path> createPath(pathDto* _pathDto, bool _closed);
 
 public:
 

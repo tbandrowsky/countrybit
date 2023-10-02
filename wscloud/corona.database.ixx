@@ -48,6 +48,7 @@ export import :bitmap_filters;
 export import :bitmaps;
 export import :brushes;
 export import :paths;
+export import :textStyles;
 
 export import :controller;
 export import :datatransfer;

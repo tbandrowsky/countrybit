@@ -33,13 +33,13 @@ export class direct2dContextBase
 {
 protected:
 
-	std::weak_ptr<directXAdapterBase> factory;
+	std::weak_ptr<directXAdapterBase> adapter;
 	CComPtr<ID2D1DeviceContext> context;
 
 public:
 
 	direct2dContextBase(std::weak_ptr<directXAdapterBase> _factory) :
-		factory(_factory)
+		adapter(_factory)
 	{
 		D2D1_DEVICE_CONTEXT_OPTIONS options;
 
@@ -54,7 +54,7 @@ public:
 	}
 
 	direct2dContextBase(std::weak_ptr<directXAdapterBase> _factory, ID2D1DeviceContext* _context) :
-		factory(_factory)
+		adapter(_factory)
 	{
 		context = _context;
 	}
@@ -80,9 +80,9 @@ public:
 		return hr;
 	}
 
-	std::weak_ptr<directXAdapterBase> getFactory()
+	std::weak_ptr<directXAdapterBase> getAdapter()
 	{
-		return factory;
+		return adapter;
 	}
 
 	virtual CComPtr<ID2D1DeviceContext>& getDeviceContext()

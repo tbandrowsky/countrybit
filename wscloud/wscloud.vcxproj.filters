@@ -200,7 +200,7 @@
     <ClCompile Include="corona.database-brushes.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="corona.database-textstyle.ixx">
+    <ClCompile Include="corona.database-textstyles.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="corona.database-paths.ixx">

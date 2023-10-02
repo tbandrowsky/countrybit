@@ -146,7 +146,7 @@ public:
 	D2D1_SIZE_F size;
 
 
-	direct2dBitmap(D2D1_SIZE_F _size, std::weak_ptr<directXAdapterBase>& _factory)
+	direct2dBitmap(D2D1_SIZE_F _size, std::weak_ptr<directXAdapterBase> _factory)
 	{
 		HRESULT hr;
 		D2D1_RENDER_TARGET_PROPERTIES props = D2D1::RenderTargetProperties();
@@ -191,7 +191,7 @@ public:
 		wchar_t buff[8192];
 		int ret = ::MultiByteToWideChar(CP_ACP, 0, _filename, -1, buff, sizeof(buff) - 1);
 
-		if (auto padapter = getContext().getFactory().lock()) {
+		if (auto padapter = getContext().getAdapter().lock()) {
 
 			hr = padapter->getWicFactory()->CreateStream(&fileStream);
 			throwOnFail(hr, "Could not create file stream");
@@ -318,7 +318,7 @@ public:
 			wicFilteredScaledBitmap = NULL;
 		}
 
-		if (auto pfactory = ptarget->getFactory().lock()) {
+		if (auto pfactory = ptarget->getAdapter().lock()) {
 			hr = pfactory->getWicFactory()->CreateBitmapFromHBITMAP(_source, nullptr, WICBitmapAlphaChannelOption::WICBitmapIgnoreAlpha, &originalScaledBitmap);
 			hr = pfactory->getWicFactory()->CreateBitmapFromHBITMAP(_source, nullptr, WICBitmapAlphaChannelOption::WICBitmapIgnoreAlpha, &wicFilteredScaledBitmap);
 		}
@@ -345,7 +345,7 @@ public:
 		}
 
 
-		if (auto pfactory = ptarget->getFactory().lock()) {
+		if (auto pfactory = ptarget->getAdapter().lock()) {
 			hr = pfactory->getWicFactory()->CreateFormatConverter(&pConverter);
 			hr = _source->GetSize(&originalWidth, &originalHeight);
 
@@ -526,7 +526,7 @@ export class bitmap : public deviceDependentAssetBase
 		hr = HRESULT_FROM_WIN32(ERROR_BAD_ENVIRONMENT);
 
 		if (pfactory) {
-			if (auto padapter = pfactory->getFactory().lock()) {
+			if (auto padapter = pfactory->getAdapter().lock()) {
 				hr = padapter->getWicFactory()->CreateDecoderFromFilename(fileBuff, NULL, GENERIC_READ, WICDecodeMetadataCacheOnLoad, &pDecoder);
 
 				if (SUCCEEDED(hr))

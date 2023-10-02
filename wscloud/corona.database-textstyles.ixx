@@ -16,7 +16,7 @@ module;
 #include <memory>
 #include <algorithm>
 
-export module corona.database:textstyle;
+export module corona.database:textstyles;
 import :assert_if;
 import :constants;
 import :color_box;
@@ -118,7 +118,7 @@ public:
 				FLOAT dpiX = 96.0, dpiY = 96.0;
 				ptarget->getDeviceContext()->GetDpi(&dpiX, &dpiY);
 
-				if (auto fact = ptarget->getFactory().lock())
+				if (auto fact = ptarget->getAdapter().lock())
 				{
 
 					HRESULT hr = fact->getDWriteFactory()->CreateTextFormat(wideName.c_str(),

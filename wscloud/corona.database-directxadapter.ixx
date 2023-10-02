@@ -24,9 +24,10 @@ import :rectangle_box;
 import :point_box;
 import :datatransfer;
 import :controller;
-import :direct2dwindow
+import :direct2dwindow;
+import :directxadapterbase;
 
-export class directXAdapter : public directAdapterBase
+export class directXAdapter : public directXAdapterBase
 {
 	std::map<HWND, std::shared_ptr<direct2dWindow>> parent_windows;
 

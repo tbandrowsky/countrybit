@@ -16,7 +16,8 @@ module;
 #include <memory>
 #include <algorithm>
 
-export module corona.database:bitmaps;
+export module corona.database:brushes;
+
 import :assert_if;
 import :constants;
 import :color_box;
@@ -107,7 +108,7 @@ public:
 		return SUCCEEDED(hr);
 	}
 
-	ID2D1Brush* getBrush()
+	virtual ID2D1Brush* getBrush()
 	{
 		return asset;
 	}
@@ -148,7 +149,7 @@ public:
 		return SUCCEEDED(hr);
 	}
 
-	ID2D1Brush* getBrush()
+	virtual ID2D1Brush* getBrush()
 	{
 		return asset;
 	}
@@ -187,7 +188,7 @@ public:
 		return SUCCEEDED(hr);
 	}
 
-	ID2D1Brush* radialGradientBrush::getBrush()
+	virtual ID2D1Brush* getBrush()
 	{
 		return asset;
 	}
