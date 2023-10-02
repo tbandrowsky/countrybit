@@ -104,4 +104,15 @@ public:
 	virtual void setSysLinkText(int ddlControlId, const char* _text) = 0;
 	virtual std::vector<std::string> readInternet(const char* _domain, const char* _path) = 0;
 
+	virtual rectangle getWindowClientPos() = 0;
+	virtual rectangle getWindowPos(int ddlControlId) = 0;
+	virtual void setWindowPos(int ddlControlId, rectangle rect) = 0;
+	virtual void setMinimumWindowSize(point size) = 0;
+
+	virtual double toDipsFromPixels(double r) = 0;
+	virtual double toPixelsFromDips(double r) = 0;
+	virtual rectangle toPixelsFromDips(const rectangle& r) = 0;
+	virtual rectangle toDipsFromPixels(const rectangle& r) = 0;
+
+
 };

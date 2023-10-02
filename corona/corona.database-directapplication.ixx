@@ -174,7 +174,6 @@ public:
 	bool getSaveFilename(std::string& _saveFileName, const char* _pathExtensions, const char* _defaultExtension);
 
 	virtual void setColorCapture(int _iconResourceId);
-
 };
 
 export void EnableGuiStdOuts();

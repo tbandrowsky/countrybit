@@ -5227,13 +5227,15 @@ presentation::~presentation()
 void presentation::open_menu(control_base* _base, menu_item& _menu)
 {
 	auto menu = _menu.to_menu();
-	HWND hwndMenu = this->getHost()->getMainWindow();
-	POINT tpstart;
-	auto& bpos = _base->get_bounds();
-	tpstart.x = bpos.right() * ::GetDpiForWindow(hwndMenu) / 96.0;
-	tpstart.y = bpos.bottom() * ::GetDpiForWindow(hwndMenu) / 96.0;
-	::ClientToScreen(hwndMenu, &tpstart);
-	::TrackPopupMenuEx(menu, TPM_LEFTALIGN | TPM_TOPALIGN, tpstart.x, tpstart.y, hwndMenu, nullptr);
+	if (auto ptr = window_host.lock()) {
+		HWND hwndMenu = ptr->getMainWindow();
+		POINT tpstart;
+		auto& bpos = _base->get_bounds();
+		tpstart.x = bpos.right() * ::GetDpiForWindow(hwndMenu) / 96.0;
+		tpstart.y = bpos.bottom() * ::GetDpiForWindow(hwndMenu) / 96.0;
+		::ClientToScreen(hwndMenu, &tpstart);
+		::TrackPopupMenuEx(menu, TPM_LEFTALIGN | TPM_TOPALIGN, tpstart.x, tpstart.y, hwndMenu, nullptr);
+	}
 }
 
 void page::arrange(double width, double height, double _padding)
@@ -5466,7 +5468,7 @@ void presentation::select_page(const std::string& _page_name)
 	onCreated();
 	onResize(current_size, 1.0);
 
-	if (auto phost = getHost())
+	if (auto phost = window_host.lock())
 	{
 		HWND hwndMainMenu = phost->getMainWindow();
 		if (auto ppage = current_page.lock()) {
@@ -5484,14 +5486,14 @@ void presentation::onCreated()
 {
 	auto cp = current_page.lock();
 	if (cp) {
-		auto host = getHost();
-		auto sheet = styles.get_style();
-
-		auto post = host->getWindowClientPos();
-		host->toPixelsFromDips(post);
-		cp->arrange(post.w, post.h);
-		cp->create(host);
-		cp->subscribe(this);
+		if (auto phost = window_host.lock()) {
+			auto sheet = styles.get_style();
+			auto pos = phost->getWindowClientPos();
+			host->toPixelsFromDips(pos);
+			cp->arrange(pos.w, pos.h);
+			cp->create(host);
+			cp->subscribe(this);
+		}
 	}
 }
 
@@ -5504,46 +5506,47 @@ bool presentation::drawFrame(direct2dContext& _ctx)
 		auto dc = _ctx.getDeviceContext();
 		cp->render(dc);
 
-		auto host = getHost();
-		auto post = host->getWindowClientPos();
+		if (auto host = window_host.lock()) {
+			auto pos = host->getWindowClientPos();
 
-		double border_thickness = 4;
+			double border_thickness = 4;
 
-		linearGradientBrushRequest lgbr;
-		lgbr.start.x = post.w;
-		lgbr.start.y = post.h;
-		lgbr.stop.x = 0;
-		lgbr.stop.y = 0;
-		lgbr.name = "presentation_shade";
-		lgbr.gradientStops = {
-			{ toColor("#F0F0F0FF"), 0.0 },
-			{ toColor("#303030FF"), 0.10 },
-			{ toColor("#404040FF"), 0.90 },
-			{ toColor("#202020FF"), 0.95 },
-			{ toColor("#A0A0A0FF"), 1.0 },
-		};
-		_ctx.setLinearGradientBrush(&lgbr);
+			linearGradientBrushRequest lgbr;
+			lgbr.start.x = pos.w;
+			lgbr.start.y = pos.h;
+			lgbr.stop.x = 0;
+			lgbr.stop.y = 0;
+			lgbr.name = "presentation_shade";
+			lgbr.gradientStops = {
+				{ toColor("#F0F0F0FF"), 0.0 },
+				{ toColor("#303030FF"), 0.10 },
+				{ toColor("#404040FF"), 0.90 },
+				{ toColor("#202020FF"), 0.95 },
+				{ toColor("#A0A0A0FF"), 1.0 },
+			};
+			_ctx.setLinearGradientBrush(&lgbr);
 
-		double inner_right = post.w - border_thickness * 2;
-		double inner_bottom = post.h - border_thickness * 2;
-		double left_side = border_thickness - 1;
+			double inner_right = pos.w - border_thickness * 2;
+			double inner_bottom = pos.h - border_thickness * 2;
+			double left_side = border_thickness - 1;
 
-		pathImmediateDto pathx;
-		pathx.fillBrushName = "presentation_shade";
-		pathx.borderBrushName = "presentation_shade";
-		pathx.strokeWidth = 2;
-		pathx.path.addLineTo(0, 0);
-		pathx.path.addLineTo(left_side, 0);
-		pathx.path.addLineTo(left_side, inner_bottom);
-		pathx.path.addLineTo(inner_right, inner_bottom);
-		pathx.path.addLineTo(inner_right, 0);
-		pathx.path.addLineTo(post.w, 0);
-		pathx.path.addLineTo(post.w, post.h);
-		pathx.path.addLineTo(0, post.h);
-		pathx.path.addLineTo(0, 0);
-		pathx.closed = true;
+			pathImmediateDto pathx;
+			pathx.fillBrushName = "presentation_shade";
+			pathx.borderBrushName = "presentation_shade";
+			pathx.strokeWidth = 2;
+			pathx.path.addLineTo(0, 0);
+			pathx.path.addLineTo(left_side, 0);
+			pathx.path.addLineTo(left_side, inner_bottom);
+			pathx.path.addLineTo(inner_right, inner_bottom);
+			pathx.path.addLineTo(inner_right, 0);
+			pathx.path.addLineTo(pos.w, 0);
+			pathx.path.addLineTo(pos.w, pos.h);
+			pathx.path.addLineTo(0, post.h);
+			pathx.path.addLineTo(0, 0);
+			pathx.closed = true;
 
-		_ctx.drawPath(&pathx);
+			_ctx.drawPath(&pathx);
+		}
 
 	}
 	return false;
@@ -5720,8 +5723,7 @@ void presentation::onCommand(int buttonId)
 
 void presentation::onTextChanged(int textControlId)
 {
-	auto ptr = getHost();
-	if (ptr) {
+	if (auto ptr = window_host.lock()) {
 		std::string new_text = ptr->getEditText(textControlId);
 		item_changed_event lce;
 		lce.control_id = textControlId;
@@ -5735,8 +5737,7 @@ void presentation::onTextChanged(int textControlId)
 
 void presentation::onDropDownChanged(int dropDownId)
 {
-	auto ptr = getHost();
-	if (ptr) {
+	if (auto ptr = window_host.lock()) {
 		std::string new_text = ptr->getComboSelectedText(dropDownId);
 		int index = ptr->getComboSelectedIndex(dropDownId);
 		int value = ptr->getComboSelectedValue(dropDownId);
@@ -5756,8 +5757,7 @@ void presentation::onDropDownChanged(int dropDownId)
 
 void presentation::onListBoxChanged(int dropDownId)
 {
-	auto ptr = getHost();
-	if (ptr) {
+	if (auto ptr = window_host.lock()) {
 		std::string new_text = ptr->getListSelectedText(dropDownId);
 		int index = ptr->getListSelectedIndex(dropDownId);
 		int value = ptr->getListSelectedValue(dropDownId);
@@ -5777,8 +5777,7 @@ void presentation::onListBoxChanged(int dropDownId)
 
 void presentation::onListViewChanged(int listViewId)
 {
-	auto ptr = getHost();
-	if (ptr) {
+	if (ptr = window_host.lock()) {
 		std::string new_text = ptr->getListViewSelectedText(listViewId);
 		int index = ptr->getListViewSelectedIndex(listViewId);
 		int value = ptr->getListViewSelectedValue(listViewId);
