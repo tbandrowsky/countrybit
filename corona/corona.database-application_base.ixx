@@ -24,6 +24,7 @@ protected:
 
 public:
 	virtual HWND getMainWindow() = 0;
+	virtual HWND getTooltipWindow() = 0;
 	virtual HWND createWindow(DWORD window_id, LPCTSTR		lpClassName, LPCTSTR		lpWindowName, DWORD       dwStyle, rectangle bounds, LPVOID		lpParam, HFONT		font) = 0;
 	virtual void destroyWindow(HWND hwnd) = 0;
 
@@ -114,5 +115,8 @@ public:
 	virtual rectangle toPixelsFromDips(const rectangle& r) = 0;
 	virtual rectangle toDipsFromPixels(const rectangle& r) = 0;
 
+	virtual HFONT createFontDips(HWND target, const char* _fontName, double fontSize, bool bold, bool italic) = 0;
+	virtual HFONT createFontPixels(const char* _fontName, double fontSize, bool bold, bool italic) = 0;
+	virtual HFONT createFontIndirect(LOGFONT _font, const char* _fontName, double fontSize, bool bold, bool italic) = 0;
 
 };

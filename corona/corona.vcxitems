@@ -45,6 +45,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-directxadapter.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-directxadapterbase.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-directxdevices.ixx" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-json.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-paths.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)corona.database-textstyles.ixx" />
     <ClCompile Include="$(MSBuildThisFileDirectory)corona.database.ixx" />

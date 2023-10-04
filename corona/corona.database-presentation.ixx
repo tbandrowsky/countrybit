@@ -1,14 +1,11 @@
 module;
 
-#include <nlohmann/json.hpp>
 
 #include <memory>
 #include <string>
 #include <vector>
 #include <utility>
 #include <compare>
-
-using json = nlohmann::json;
 
 export module corona.database:presentation;
 import "corona.database-windows-all.h";
@@ -22,16 +19,20 @@ import :controller;
 import :direct2dcontext;
 import :application_base;
 import :direct2dwindow;
+import :json;
 
 extern presentation_style_factory styles;
-extern CAppModule _Module;
+//extern CAppModule _Module;
 
 export class list_data
 {
 public:
+	using json_data = nlohmann::json;
+
 	std::string id_field;
 	std::string text_field;
-	json items;
+
+	json_data items;
 };
 
 export class table_column
@@ -46,9 +47,11 @@ public:
 export class table_data
 {
 public:
+	using json_data = nlohmann::json;
+
 	std::vector<table_column> columns;
 	std::string id_field;
-	json items;
+	json_data items;
 };
 
 export class id_counter
@@ -1940,6 +1943,7 @@ protected:
 public:
 
 	std::map<std::string, std::shared_ptr<page>> pages;
+	std::weak_ptr<applicationBase> window_host;
 
 	presentation();
 	virtual ~presentation();
@@ -5489,9 +5493,9 @@ void presentation::onCreated()
 		if (auto phost = window_host.lock()) {
 			auto sheet = styles.get_style();
 			auto pos = phost->getWindowClientPos();
-			host->toPixelsFromDips(pos);
+			phost->toPixelsFromDips(pos);
 			cp->arrange(pos.w, pos.h);
-			cp->create(host);
+			cp->create(phost);
 			cp->subscribe(this);
 		}
 	}
@@ -5506,8 +5510,8 @@ bool presentation::drawFrame(direct2dContext& _ctx)
 		auto dc = _ctx.getDeviceContext();
 		cp->render(dc);
 
-		if (auto host = window_host.lock()) {
-			auto pos = host->getWindowClientPos();
+		if (auto phost = window_host.lock()) {
+			auto pos = phost->getWindowClientPos();
 
 			double border_thickness = 4;
 
@@ -5541,7 +5545,7 @@ bool presentation::drawFrame(direct2dContext& _ctx)
 			pathx.path.addLineTo(inner_right, 0);
 			pathx.path.addLineTo(pos.w, 0);
 			pathx.path.addLineTo(pos.w, pos.h);
-			pathx.path.addLineTo(0, post.h);
+			pathx.path.addLineTo(0, pos.h);
 			pathx.path.addLineTo(0, 0);
 			pathx.closed = true;
 
@@ -5777,7 +5781,7 @@ void presentation::onListBoxChanged(int dropDownId)
 
 void presentation::onListViewChanged(int listViewId)
 {
-	if (ptr = window_host.lock()) {
+	if (auto ptr = window_host.lock()) {
 		std::string new_text = ptr->getListViewSelectedText(listViewId);
 		int index = ptr->getListViewSelectedIndex(listViewId);
 		int value = ptr->getListViewSelectedValue(listViewId);
