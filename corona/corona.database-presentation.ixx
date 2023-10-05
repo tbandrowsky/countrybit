@@ -1,6 +1,5 @@
 module;
 
-
 #include <memory>
 #include <string>
 #include <vector>
@@ -27,12 +26,11 @@ extern presentation_style_factory styles;
 export class list_data
 {
 public:
-	using json_data = nlohmann::json;
 
 	std::string id_field;
 	std::string text_field;
 
-	json_data items;
+	json_navigator items;
 };
 
 export class table_column
@@ -47,11 +45,9 @@ public:
 export class table_data
 {
 public:
-	using json_data = nlohmann::json;
-
 	std::vector<table_column> columns;
 	std::string id_field;
-	json_data items;
+	json_navigator items;
 };
 
 export class id_counter
@@ -4666,11 +4662,11 @@ void comboboxex_control::data_changed()
 {
 	if (window.IsWindow()) {
 		window.ResetContent();
-		for (auto element : choices.items.items())
+		for (int i = 0; i < choices.items.size(); i++)
 		{
-			auto c = element.value();
-			int lid = c[choices.id_field].template get<int>();
-			std::string description = c[choices.text_field].template get<std::string>();
+			auto c = choices.items[i];
+			int lid = c[choices.id_field];
+			std::string description = c[choices.text_field];
 
 			COMBOBOXEXITEM cbex = {};
 			cbex.mask = CBEIF_TEXT | CBEIF_LPARAM;

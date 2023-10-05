@@ -4,6 +4,7 @@
 #define NTDDI_VERSION NTDDI_WIN10_19H1 
 
 #include "windows.h"
+#include "windowsx.h"
 
 #include <iostream>
 

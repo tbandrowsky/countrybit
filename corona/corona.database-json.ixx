@@ -22,56 +22,101 @@ public:
 		;
 	}
 
-	T& as<T>()
-	{
-		auto pas = dynamic_cast<T*>(this);
-		if (!*pas)
-			throw std::logic_error();
-		T& temp = *pas;
-		return temp;
-	}
-
-	const char* eat_white(const char* _src)
-	{
-		while (std::isspace(*_src))
-			_src++;
-		return _src;
-	}
 };
 
 export class json_double : public json_value
 {
 public:
 	double value;
-
 };
 
 export class json_string : public json_value
 {
 public:
 	std::string value;
-
 };
 
 export class json_array : public json_value
 {
 public:
 	std::vector<shared_ptr<json_value>> elements;
-
 };
 
 export class json_object : public json_value
 {
 public:
 	std::map<std::string, std::shared_ptr<json_value>> members;
+};
+
+export class json_navigator 
+{
+	std::shared_ptr<json_value> value_base;
+	std::shared_ptr<json_double> double_impl;
+	std::shared_ptr<json_string> string_impl;
+	std::shared_ptr<json_array> array_impl;
+	std::shared_ptr<json_object> object_impl;
+
+public:
+
+	json_navigator()
+	{
+	}
+
+	json_navigator(std::shared_ptr<json_value> _value)
+	{
+		value_base = _value;
+		double_impl = dynamic_cast<json_double>(_value);
+		string_impl = dynamic_cast<json_string>(_value);
+		array_impl = dynamic_cast<json_array>(_value);
+		object_impl = dynamic_cast<json_object>(_value);
+	}
+
+	operator bool()
+	{
+		return value_base != null_ptr;
+	}
+
+	operator double&() 
+	{
+		return double_impl->value;
+	}
+
+	operator std::string&() 
+	{
+		return string_impl->value;
+	}
+
+	json_navigator operator [](int _index)
+	{
+		json_navigator jn(array_impl->elements[_index]);
+		return jn;
+	}
+
+	json_navigator operator [](std::string _key)
+	{
+		json_navigator jn(object_impl->members[_key]);
+		return jn;
+	}
+
+	int size()
+	{
+		if (object_impl)
+			return object_impl->members.size();
+		else if (array_impl)
+			return array_impl->elements.size();
+		else
+			return 1;
+	}
 
 };
 
 export class json_parser
 {
-public:
+private:
 
 	int line_number = 1;
+
+public:
 
 	class parse_message
 	{
@@ -81,7 +126,29 @@ public:
 		std::string error;
 	};
 
-	std::vector<parse_message> parse_error;
+	std::vector<parse_message> parse_errors;
+
+	json_navigator parse_object(std::string _object)
+	{
+		line_number = 1;
+		parse_errors.clear();
+		auto jo = std::make_shared<json_object>();
+		const char* start = _object.c_str();
+		parse_object(jo, start, &start);
+		json_navigator jn(jo)
+		return jn;
+	}
+
+	json_navigator parse_array(std::string _object)
+	{
+		line_number = 1;
+		parse_errors.clear();
+		auto jo = std::make_shared<json_array>();
+		const char* start = _object.c_str();
+		parse_array(jo, start, &start);
+		json_navigator jn(jo);
+		return jn;
+	}
 
 private:
 
@@ -150,16 +217,9 @@ private:
 					temp += *_src;
 				}
 			}
-			if (*_src) 
-			{
-				_src++;
-			}
+			_src++;
 		}
-		if (_modified)
-		{
-			*_modified = _src;
-			result = true;
-		}
+		*_modified = _src;
 		return result;
 	}
 
@@ -177,12 +237,10 @@ private:
 				temp += *_src;
 				_src++;
 			}
-			if (_modified)
-			{
-				*_modified = _src;
-			}
+			_src++;
 			result = std::strtod(temp.c_str());
 		}
+		*_modified = _src;
 		return result;
 	}
 
@@ -248,11 +306,8 @@ private:
 				_src++;
 			}
 			_src++;
-			if (_modified)
-			{
-				*_modified = _src;
-			}
 		}
+		*_modified = _src;
 		return result;
 	}
 
@@ -282,21 +337,20 @@ private:
 					}
 					else
 					{
-						error("parse_member_name", "Invalid member name \"name\" : value pair.");
+						error("parse_member_name", "Invalid member name.");
 					}
-					_src++;
 				}
 				else if (parse_object_state == parse_colon)
 				{
 					_src = eat_white(_src);
 					if (*_src == ':') {
 						parse_object_state = parse_value;
+						_src++;
 					}
 					else 
 					{
-						error("parse_colon", "Invalid \":\" in \"name\" : value pair.");
+						error("parse_colon", std::format("Expected colon for  \"{0}\".", member_name));
 					}
-					_src++;
 				}
 				else if (parse_object_state == parse_value)
 				{
@@ -304,18 +358,15 @@ private:
 					if (parse_value(member_value, _src, &_src)) {
 						object.members[member_name] = member_value;
 					}
-					else 
+					else
 					{
-						_src++;
+						error("parse_value", std::format("Invalid value for \"{0}\".", member_name));
 					}
 				}
 			}
 			_src++;
-			if (_modified)
-			{
-				*_modified = _src;
-			}
 		}
+		*_modified = _src;
 		return result;
 	}
 };

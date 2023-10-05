@@ -3,13 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "coronatest", "coronatest\coronatest.vcxproj", "{8BA13569-58DE-4105-9694-1ED9F2F85445}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "corona", "corona\corona.vcxitems", "{C12DE1F8-9A25-4E3B-AF11-93F4B3ACEEE9}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "wspropose", "wspropose\wspropose.vcxproj", "{DF369A3E-4FEE-4F1C-871D-A63D3AC30E3C}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "wscloud", "wscloud\wscloud.vcxproj", "{1BAC5FC2-DE01-4B92-8327-6FB4704045B2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,21 +19,6 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{8BA13569-58DE-4105-9694-1ED9F2F85445}.Debug|ARM.ActiveCfg = Debug|x64
-		{8BA13569-58DE-4105-9694-1ED9F2F85445}.Debug|ARM.Build.0 = Debug|x64
-		{8BA13569-58DE-4105-9694-1ED9F2F85445}.Debug|ARM64.ActiveCfg = Debug|x64
-		{8BA13569-58DE-4105-9694-1ED9F2F85445}.Debug|ARM64.Build.0 = Debug|x64
-		{8BA13569-58DE-4105-9694-1ED9F2F85445}.Debug|x64.ActiveCfg = Debug|x64
-		{8BA13569-58DE-4105-9694-1ED9F2F85445}.Debug|x86.ActiveCfg = Debug|Win32
-		{8BA13569-58DE-4105-9694-1ED9F2F85445}.Debug|x86.Build.0 = Debug|Win32
-		{8BA13569-58DE-4105-9694-1ED9F2F85445}.Release|ARM.ActiveCfg = Release|x64
-		{8BA13569-58DE-4105-9694-1ED9F2F85445}.Release|ARM.Build.0 = Release|x64
-		{8BA13569-58DE-4105-9694-1ED9F2F85445}.Release|ARM64.ActiveCfg = Release|x64
-		{8BA13569-58DE-4105-9694-1ED9F2F85445}.Release|ARM64.Build.0 = Release|x64
-		{8BA13569-58DE-4105-9694-1ED9F2F85445}.Release|x64.ActiveCfg = Release|x64
-		{8BA13569-58DE-4105-9694-1ED9F2F85445}.Release|x64.Build.0 = Release|x64
-		{8BA13569-58DE-4105-9694-1ED9F2F85445}.Release|x86.ActiveCfg = Release|Win32
-		{8BA13569-58DE-4105-9694-1ED9F2F85445}.Release|x86.Build.0 = Release|Win32
 		{DF369A3E-4FEE-4F1C-871D-A63D3AC30E3C}.Debug|ARM.ActiveCfg = Debug|x64
 		{DF369A3E-4FEE-4F1C-871D-A63D3AC30E3C}.Debug|ARM.Build.0 = Debug|x64
 		{DF369A3E-4FEE-4F1C-871D-A63D3AC30E3C}.Debug|ARM64.ActiveCfg = Debug|x64
@@ -54,22 +35,6 @@ Global
 		{DF369A3E-4FEE-4F1C-871D-A63D3AC30E3C}.Release|x64.Build.0 = Release|x64
 		{DF369A3E-4FEE-4F1C-871D-A63D3AC30E3C}.Release|x86.ActiveCfg = Release|Win32
 		{DF369A3E-4FEE-4F1C-871D-A63D3AC30E3C}.Release|x86.Build.0 = Release|Win32
-		{1BAC5FC2-DE01-4B92-8327-6FB4704045B2}.Debug|ARM.ActiveCfg = Debug|x64
-		{1BAC5FC2-DE01-4B92-8327-6FB4704045B2}.Debug|ARM.Build.0 = Debug|x64
-		{1BAC5FC2-DE01-4B92-8327-6FB4704045B2}.Debug|ARM64.ActiveCfg = Debug|x64
-		{1BAC5FC2-DE01-4B92-8327-6FB4704045B2}.Debug|ARM64.Build.0 = Debug|x64
-		{1BAC5FC2-DE01-4B92-8327-6FB4704045B2}.Debug|x64.ActiveCfg = Debug|x64
-		{1BAC5FC2-DE01-4B92-8327-6FB4704045B2}.Debug|x64.Build.0 = Debug|x64
-		{1BAC5FC2-DE01-4B92-8327-6FB4704045B2}.Debug|x86.ActiveCfg = Debug|Win32
-		{1BAC5FC2-DE01-4B92-8327-6FB4704045B2}.Debug|x86.Build.0 = Debug|Win32
-		{1BAC5FC2-DE01-4B92-8327-6FB4704045B2}.Release|ARM.ActiveCfg = Release|x64
-		{1BAC5FC2-DE01-4B92-8327-6FB4704045B2}.Release|ARM.Build.0 = Release|x64
-		{1BAC5FC2-DE01-4B92-8327-6FB4704045B2}.Release|ARM64.ActiveCfg = Release|x64
-		{1BAC5FC2-DE01-4B92-8327-6FB4704045B2}.Release|ARM64.Build.0 = Release|x64
-		{1BAC5FC2-DE01-4B92-8327-6FB4704045B2}.Release|x64.ActiveCfg = Release|x64
-		{1BAC5FC2-DE01-4B92-8327-6FB4704045B2}.Release|x64.Build.0 = Release|x64
-		{1BAC5FC2-DE01-4B92-8327-6FB4704045B2}.Release|x86.ActiveCfg = Release|Win32
-		{1BAC5FC2-DE01-4B92-8327-6FB4704045B2}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -78,7 +43,6 @@ Global
 		SolutionGuid = {BA47BF18-71C4-44D3-A412-2F875C556B7D}
 	EndGlobalSection
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
-		corona\corona.vcxitems*{8ba13569-58de-4105-9694-1ed9f2f85445}*SharedItemsImports = 4
 		corona\corona.vcxitems*{c12de1f8-9a25-4e3b-af11-93f4b3aceee9}*SharedItemsImports = 9
 		corona\corona.vcxitems*{df369a3e-4fee-4f1c-871d-a63d3ac30e3c}*SharedItemsImports = 4
 	EndGlobalSection
