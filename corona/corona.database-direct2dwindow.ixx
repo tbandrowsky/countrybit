@@ -59,7 +59,7 @@ public:
 		return *context.get();
 	}
 
-	virtual CComPtr<ID2D1DeviceContext>  beginDraw(bool& _adapter_blown_away);
+	virtual ID2D1DeviceContext *beginDraw(bool& _adapter_blown_away);
 	virtual void endDraw(bool& _adapter_blown_away);
 };
 
@@ -98,7 +98,7 @@ public:
 
 	ID2D1Bitmap1* getBitmap() { return bitmap; }
 
-	virtual CComPtr<ID2D1DeviceContext>  beginDraw(bool& _adapter_blown_away);
+	virtual ID2D1DeviceContext *beginDraw(bool& _adapter_blown_away);
 	virtual void endDraw(bool& _adapter_blown_away);
 
 	HWND getWindow() { return hwnd; }
@@ -310,7 +310,7 @@ void direct2dWindow::deleteChild(relative_ptr_type _id)
 	}
 }
 
-CComPtr<ID2D1DeviceContext> direct2dWindow::beginDraw(bool& _adapter_blown_away)
+ID2D1DeviceContext *direct2dWindow::beginDraw(bool& _adapter_blown_away)
 {
 	return context->beginDraw(_adapter_blown_away);
 }
@@ -406,7 +406,7 @@ rectangle direct2dChildWindow::getBoundsDips()
 	return windowPosition;
 }
 
-CComPtr<ID2D1DeviceContext>  direct2dChildWindow::beginDraw(bool& _adapter_blown_away)
+ID2D1DeviceContext *direct2dChildWindow::beginDraw(bool& _adapter_blown_away)
 {
 	return context->beginDraw(_adapter_blown_away);
 }

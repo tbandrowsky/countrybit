@@ -26,7 +26,7 @@ import :datatransfer;
 
 export class direct3dDevice : public std::enable_shared_from_this<direct3dDevice>
 {
-	CComPtr<ID3D11Device> d3d11Device;
+	ID3D11Device *d3d11Device;
 	D3D_FEATURE_LEVEL	feature_level;
 
 public:
@@ -42,7 +42,9 @@ public:
 
 	bool setDevice(IDXGIAdapter1* _adapter)
 	{
-		d3d11Device.Release();
+		if (d3d11Device)
+			d3d11Device->Release();
+		d3d11Device = nullptr;
 
 		feature_level = D3D_FEATURE_LEVEL::D3D_FEATURE_LEVEL_1_0_CORE;
 
@@ -52,6 +54,8 @@ public:
 			D3D_FEATURE_LEVEL_11_0,
 			D3D_FEATURE_LEVEL_11_1
 		};
+
+		ID3D11Device* temp = nullptr;
 
 		HRESULT hr = D3D11CreateDevice(_adapter,
 			D3D_DRIVER_TYPE_UNKNOWN,

@@ -6,7 +6,7 @@ module;
 #include <compare>
 
 export module corona.database:file;
-import "corona.database-windows-all.h";
+import "corona.database-windows-lite.h";
 import :queue;
 import :string_box;
 import :constants;

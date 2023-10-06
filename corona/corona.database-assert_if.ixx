@@ -2,7 +2,7 @@ module;
 
 export module corona.database:assert_if;
 
-import "corona.database-windows-all.h";
+import "corona.database-windows-lite.h";
 
 import <iostream>;
 import <format>;

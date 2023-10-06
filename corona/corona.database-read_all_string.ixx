@@ -6,7 +6,7 @@ module;
 #include <filesystem>
 
 export module corona.database:read_all_string;
-import "corona.database-windows-all.h";
+import "corona.database-windows-lite.h";
 import :store_box;
 
 export std::string read_all_string(std::string& _filename)

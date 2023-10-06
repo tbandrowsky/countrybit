@@ -26,27 +26,31 @@ import :datatransfer;
 
 export class directXAdapterBase : public std::enable_shared_from_this<directXAdapterBase>
 {
-	CComPtr<IDXGIFactory2> dxFactory;
-	CComPtr<IDXGIAdapter1> dxAdapter;
+	IDXGIFactory2 *dxFactory;
+	IDXGIAdapter1 *dxAdapter;
 
 	std::shared_ptr<direct2dDevice> direct2d;
 	std::shared_ptr<direct3dDevice> direct3d;
 
 public:
 
-	directXAdapterBase() {
-
+	directXAdapterBase() 
+	{
+		dxFactory = nullptr;
+		dxAdapter = nullptr;
 	}
 
 	virtual ~directXAdapterBase()
 	{
-
+		cleanup();
 	}
 
 	void cleanup()
 	{
-		dxAdapter.Release();
-		dxFactory.Release();
+		if (dxAdapter)
+			dxAdapter->Release();
+		if (dxFactory)
+			dxFactory->Release();
 	}
 
 	void refresh()

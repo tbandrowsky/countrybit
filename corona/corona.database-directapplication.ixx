@@ -256,13 +256,14 @@ void directApplicationWin32::redraw()
 			dest.right = pos + boxw;
 			dest.bottom = dest.top + boxh;
 
-			CComPtr<ID2D1SolidColorBrush> brush;
+			ID2D1SolidColorBrush *brush;
 			D2D1_COLOR_F brushColor = {};
 			brushColor.a = 1.0;
 			brushColor.b = 1.0;
 
 			// dc->CreateSolidColorBrush(brushColor, &brush);
 			// dc->DrawRectangle(&dest, brush, 4, nullptr);
+			// brush->Release();
 
 			winroot->endDraw(failedDevice);
 		}

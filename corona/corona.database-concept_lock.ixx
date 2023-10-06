@@ -7,7 +7,7 @@ module;
 
 export module corona.database:concept_lock;
 
-import "corona.database-windows-all.h";
+import "corona.database-windows-lite.h";
 
 export class concept_lock;
 

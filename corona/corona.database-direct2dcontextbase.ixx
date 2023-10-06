@@ -33,7 +33,7 @@ export class direct2dContextBase
 protected:
 
 	std::weak_ptr<directXAdapterBase> adapter;
-	CComPtr<ID2D1DeviceContext> context;
+	ID2D1DeviceContext *context;
 
 public:
 
@@ -45,10 +45,7 @@ public:
 		options = D2D1_DEVICE_CONTEXT_OPTIONS::D2D1_DEVICE_CONTEXT_OPTIONS_NONE;
 
 		auto padapter = _factory.lock();
-		ID2D1DeviceContext* temp = nullptr;
-
-		HRESULT hr = padapter->getD2DDevice()->CreateDeviceContext(options, &temp);
-		context.Attach(temp);
+		HRESULT hr = padapter->getD2DDevice()->CreateDeviceContext(options, &context);
 		throwOnFail(hr, "Could not create device context");
 	}
 
@@ -60,9 +57,13 @@ public:
 
 	virtual ~direct2dContextBase()
 	{
+		if (context) {
+			context->Release();
+			context = nullptr;
+		}
 	}
 
-	CComPtr<ID2D1DeviceContext> beginDraw(bool& _adapter_blown_away)
+	ID2D1DeviceContext *beginDraw(bool& _adapter_blown_away)
 	{
 		_adapter_blown_away = false;
 
@@ -84,7 +85,7 @@ public:
 		return adapter;
 	}
 
-	virtual CComPtr<ID2D1DeviceContext>& getDeviceContext()
+	virtual ID2D1DeviceContext *getDeviceContext()
 	{
 		return context;
 	}

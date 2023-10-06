@@ -7,7 +7,7 @@ module;
 #include <algorithm>
 
 export module corona.database:string_box;
-import "corona.database-windows-all.h";
+import "corona.database-windows-lite.h";
 import :store_box;
 import :assert_if;
 import :constants;

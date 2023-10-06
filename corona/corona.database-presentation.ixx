@@ -5,9 +5,11 @@ module;
 #include <vector>
 #include <utility>
 #include <compare>
+#include <functional>
 
 export module corona.database:presentation;
 import "corona.database-windows-all.h";
+import :constants;
 import :visual;
 import :styles;
 import :store_box;
@@ -371,7 +373,7 @@ public:
 	virtual void create(std::weak_ptr<applicationBase> _host);
 	virtual void destroy();
 	virtual void draw();
-	virtual void render(CComPtr<ID2D1DeviceContext>& _dest);
+	virtual void render(ID2D1DeviceContext* _dest);
 
 	control_base& set_origin(measure _x, measure _y)
 	{
@@ -434,7 +436,7 @@ public:
 	virtual void create(std::weak_ptr<applicationBase> _host);
 	virtual void destroy();
 	virtual void draw();
-	virtual void render(CComPtr<ID2D1DeviceContext>& _dest);
+	virtual void render(ID2D1DeviceContext *_dest);
 	virtual void on_resize();
 };
 
@@ -1082,8 +1084,9 @@ public:
 	virtual point get_remaining(point _ctx);
 };
 
-export template <typename WtlWindowClass, DWORD dwStyle, DWORD dwExStyle = 0> class windows_control : public control_base
+export class windows_control : public control_base
 {
+protected:
 
 	void set_default_styles()
 	{
@@ -1100,13 +1103,14 @@ export template <typename WtlWindowClass, DWORD dwStyle, DWORD dwExStyle = 0> cl
 		text_style.wrap_text = true;
 	}
 
-	CFont text_font;
+	HFONT text_font;
+	HWND window;
 
 public:
 
+
 	using control_base::id;
 
-	WtlWindowClass window;
 	std::weak_ptr<applicationBase> window_host;
 	textStyleRequest	text_style;
 
@@ -1124,6 +1128,10 @@ public:
 		set_default_styles();
 	}
 
+	virtual const wchar_t* get_window_class() = 0;
+	virtual DWORD get_window_style() = 0;
+	virtual DWORD get_window_ex_style() = 0;
+
 	virtual double get_font_size() { return text_style.fontSize; }
 
 	virtual void on_resize()
@@ -1138,8 +1146,8 @@ public:
 			r.right = boundsPixels.x + boundsPixels.w;
 			r.bottom = boundsPixels.y + boundsPixels.h;
 
-			if (((HWND)window) != nullptr) {
-				window.MoveWindow(&r);
+			if (window != nullptr) {
+				MoveWindow(window, r.left, r.top, r.right, r.bottom, TRUE);
 			}
 		}
 	}
@@ -1151,25 +1159,18 @@ public:
 		if (auto phost = window_host.lock()) {
 			auto boundsPixels = phost->toPixelsFromDips(inner_bounds);
 
-			RECT r;
-			r.left = boundsPixels.x;
-			r.top = boundsPixels.y;
-			r.right = boundsPixels.x + boundsPixels.w;
-			r.bottom = boundsPixels.y + boundsPixels.h;
-
-			if (((HWND)window) == nullptr) {
+			if (window == nullptr) {
 				HWND parent = phost->getMainWindow();
-				window.Create(parent, r, NULL, dwStyle, dwExStyle, id, NULL);
-				HFONT font = phost->createFontDips(window, text_style.fontName, text_style.fontSize, text_style.bold, text_style.italics);
-				text_font.Attach(font);
-				window.SetFont(text_font);
+				window = CreateWindowEx(get_window_ex_style(), get_window_class(), "", get_window_style(), boundsPixels.x, boundsPixels.y, boundsPixels.w, boundsPixels.h, parent, (HMENU)id, NULL, NULL);
+				text_font = phost->createFontDips(window, text_style.fontName, text_style.fontSize, text_style.bold, text_style.italics);
+				SendMessage(window, WM_SETFONT, (WPARAM)text_font, 0);
 				HWND tooltip = phost->getTooltipWindow();
 				if (tooltip && tooltip_text.size() > 0) {
 					TOOLINFO toolInfo = { 0 };
 					toolInfo.cbSize = sizeof(toolInfo);
 					toolInfo.hwnd = parent;
 					toolInfo.uFlags = TTF_IDISHWND | TTF_SUBCLASS;
-					toolInfo.uId = (UINT_PTR)window.m_hWnd;
+					toolInfo.uId = (UINT_PTR)window;
 					toolInfo.lpszText = (LPSTR)tooltip_text.c_str();
 					SendMessage(tooltip, TTM_ADDTOOL, 0, (LPARAM)&toolInfo);
 				}
@@ -1182,8 +1183,8 @@ public:
 
 	virtual void destroy()
 	{
-		if (::IsWindow(window.m_hWnd)) {
-			window.DestroyWindow();
+		if (::IsWindow(window)) {
+			DestroyWindow(window);
 		}
 	}
 
@@ -1194,21 +1195,21 @@ public:
 };
 
 
-export template <typename WtlWindowClass, DWORD dwStyle, DWORD dwExStyle = 0> class text_control_base : public windows_control<WtlWindowClass, dwStyle, dwExStyle>
+export class text_control_base : public windows_control
 {
 	std::string text;
 
 public:
 
 	using control_base::id;
-	using windows_control<WtlWindowClass, dwStyle, dwExStyle>::window_host;
+	using windows_control::window_host;
 
 	text_control_base()
 	{
 		;
 	}
 
-	text_control_base(container_control* _parent, int _id) : windows_control<WtlWindowClass, dwStyle, dwExStyle>(_parent, _id)
+	text_control_base(container_control* _parent, int _id) : windows_control(_parent, _id)
 	{
 		;
 	}
@@ -1233,7 +1234,7 @@ public:
 
 	virtual void create(std::weak_ptr<applicationBase> _host)
 	{
-		windows_control<WtlWindowClass, dwStyle, dwExStyle>::create(_host);
+		windows_control::create(_host);
 		if (auto phost = window_host.lock()) {
 			phost->setEditText(id, text);
 		}
@@ -1280,7 +1281,7 @@ public:
 	}
 };
 
-export template <typename WtlWindowClass, DWORD dwStyle, DWORD dwExStyle = 0> class table_control_base : public windows_control<WtlWindowClass, dwStyle, dwExStyle>
+export class table_control_base : public windows_control
 {
 	mini_table mtable;
 	char blank[256] = { 0 };
@@ -1334,7 +1335,7 @@ export template <typename WtlWindowClass, DWORD dwStyle, DWORD dwExStyle = 0> cl
 public:
 
 	using control_base::id;
-	using windows_control<WtlWindowClass, dwStyle, dwExStyle>::window_host;
+	using windows_control::window_host;
 	table_data choices;
 
 	table_control_base()
@@ -1343,7 +1344,7 @@ public:
 		control_base::set_size(1.0_container, 10.0_fontgr);
 	}
 
-	table_control_base(container_control* _parent, int _id) : windows_control<WtlWindowClass, dwStyle, dwExStyle>(_parent, _id)
+	table_control_base(container_control* _parent, int _id) : windows_control(_parent, _id)
 	{
 		control_base::set_origin(0.0_px, 0.0_px);
 		control_base::set_size(1.0_container, 10.0_fontgr);
@@ -1353,7 +1354,7 @@ public:
 
 	virtual void on_create()
 	{
-		windows_control<WtlWindowClass, dwStyle, dwExStyle>::window.SetExtendedListViewStyle(LVS_EX_FULLROWSELECT);
+		ListView_SetExtendedListViewStyle(window, LVS_EX_FULLROWSELECT);
 		data_changed();
 	}
 
@@ -1364,11 +1365,11 @@ public:
 	}
 };
 
-export template <typename WtlWindowClass, DWORD dwStyle, DWORD dwExStyle = 0> class list_control_base : public windows_control<WtlWindowClass, dwStyle, dwExStyle>
+export class list_control_base : public windows_control
 {
 public:
 	using control_base::id;
-	using windows_control<WtlWindowClass, dwStyle, dwExStyle>::window_host;
+	using windows_control::window_host;
 	list_data choices;
 
 	list_control_base()
@@ -1377,7 +1378,7 @@ public:
 		control_base::set_size(1.0_container, 10.0_fontgr);
 	}
 
-	list_control_base(container_control* _parent, int _id) : windows_control<WtlWindowClass, dwStyle, dwExStyle>(_parent, _id)
+	list_control_base(container_control* _parent, int _id) : windows_control(_parent, _id)
 	{
 		control_base::set_origin(0.0_px, 0.0_px);
 		control_base::set_size(1.0_container, 10.0_fontgr);
@@ -1412,12 +1413,12 @@ public:
 
 };
 
-export template <typename WtlWindowClass, DWORD dwStyle, DWORD dwExStyle = 0> class dropdown_control_base : public windows_control<WtlWindowClass, dwStyle, dwExStyle>
+export class dropdown_control_base : public windows_control
 {
 public:
 
 	using control_base::id;
-	using windows_control<WtlWindowClass, dwStyle, dwExStyle>::window_host;
+	using windows_control::window_host;
 	list_data choices;
 
 	dropdown_control_base()
@@ -1426,7 +1427,7 @@ public:
 		control_base::set_size(1.0_container, 2.0_fontgr);
 	}
 
-	dropdown_control_base(container_control* _parent, int _id) : windows_control<WtlWindowClass, dwStyle, dwExStyle>(_parent, _id)
+	dropdown_control_base(container_control* _parent, int _id) : windows_control(_parent, _id)
 	{
 		control_base::set_origin(0.0_px, 0.0_px);
 		control_base::set_size(1.0_container, 2.0_fontgr);
@@ -1459,13 +1460,9 @@ public:
 		if (auto phost = window_host.lock()) {
 			auto boundsPixels = phost->toPixelsFromDips(control_base::get_inner_bounds());
 
-			RECT r;
-			r.left = boundsPixels.x;
-			r.top = boundsPixels.y;
-			r.right = boundsPixels.x + boundsPixels.w;
-			r.bottom = boundsPixels.y + windows_control<WtlWindowClass, dwStyle, dwExStyle>::text_style.fontSize * 8;
-			if (windows_control<WtlWindowClass, dwStyle, dwExStyle>::window.m_hWnd) {
-				windows_control<WtlWindowClass, dwStyle, dwExStyle>::window.MoveWindow(&r);
+			if (windows_control::window != nullptr) {
+				int h = windows_control::text_style.fontSize * 8;
+				::MoveWindow(windows_control::window,  boundsPixels.x, boundsPixels.y, boundsPixels.w, h, TRUE);
 			}
 		}
 	}
@@ -1492,24 +1489,30 @@ const int LinkButtonWindowStyles = WS_VISIBLE | WS_CHILD | WS_TABSTOP | BS_COMMA
 const int ListViewWindowsStyles = DefaultWindowStyles | LVS_REPORT | LVS_SINGLESEL | WS_BORDER | WS_VSCROLL;
 const int ListBoxWindowsStyles = DefaultWindowStyles | WS_BORDER | WS_VSCROLL;
 
-export class static_control : public text_control_base<WTL::CStatic, DisplayOnlyWindowStyles>
+export class static_control : public text_control_base
 {
 public:
-	static_control(container_control* _parent, int _id) : text_control_base<WTL::CStatic, DisplayOnlyWindowStyles>(_parent, _id) { ; }
+	static_control(container_control* _parent, int _id) : text_control_base(_parent, _id) { ; }
 	virtual ~static_control() { ; }
+
+	virtual const wchar_t *get_window_class() { return WC_STATIC; }
+	virtual DWORD get_window_style() { return DisplayOnlyWindowStyles; }
+	virtual DWORD get_window_ex_style() { return 0; }
 };
 
-export template <long ButtonWindowStyles> class button_control : public text_control_base<WTL::CButton, ButtonWindowStyles>
+export template <long ButtonWindowStyles> class button_control : public text_control_base
 {
 	using control_base::id;
-	using windows_control<WTL::CButton, ButtonWindowStyles>::window_host;
+	using windows_control::window_host;
 	std::string caption_text;
 	long caption_icon_id;
-	CIcon caption_icon;
+	HICON caption_icon;
 public:
-	button_control(container_control* _parent, int _id) : text_control_base<WTL::CButton, ButtonWindowStyles>(_parent, _id) { ; }
+	button_control(container_control* _parent, int _id) : text_control_base(_parent, _id) { ; }
 	virtual ~button_control() { ; }
-
+	virtual const wchar_t* get_window_class() { return WC_BUTTON; }
+	virtual DWORD get_window_style() { return ButtonWindowStyles; }
+	virtual DWORD get_window_ex_style() { return 0; }
 };
 
 export class pushbutton_control : public button_control<PushButtonWindowStyles>
@@ -1547,32 +1550,47 @@ public:
 	virtual ~linkbutton_control() { ; }
 };
 
-export class edit_control : public text_control_base<WTL::CEdit, EditWindowStyles>
+export class edit_control : public text_control_base
 {
 public:
-	edit_control(container_control* _parent, int _id) : text_control_base<WTL::CEdit, EditWindowStyles>(_parent, _id) { ; }
+	edit_control(container_control* _parent, int _id) : text_control_base(_parent, _id) { ; }
 	virtual ~edit_control() { ; }
+
+	virtual const wchar_t* get_window_class() { return WC_EDIT; }
+	virtual DWORD get_window_style() { return EditWindowStyles; }
+	virtual DWORD get_window_ex_style() { return 0; }
+
 };
 
-export class listbox_control : public list_control_base<WTL::CListBox, ListBoxWindowsStyles>
+export class listbox_control : public list_control_base
 {
 public:
-	listbox_control(container_control* _parent, int _id) : list_control_base<WTL::CListBox, ListBoxWindowsStyles>(_parent, _id) { ; }
+	listbox_control(container_control* _parent, int _id) : list_control_base(_parent, _id) { ; }
 	virtual ~listbox_control() { ; }
+
+	virtual const wchar_t* get_window_class() { return WC_LISTBOX; }
+	virtual DWORD get_window_style() { return ListBoxWindowsStyles; }
+	virtual DWORD get_window_ex_style() { return 0; }
+
 };
 
-export class combobox_control : public dropdown_control_base<WTL::CComboBox, ComboWindowStyles>
+export class combobox_control : public dropdown_control_base
 {
 public:
-	combobox_control(container_control* _parent, int _id) : dropdown_control_base<WTL::CComboBox, ComboWindowStyles>(_parent, _id) { ; }
+	combobox_control(container_control* _parent, int _id) : dropdown_control_base(_parent, _id) { ; }
 	virtual ~combobox_control() { ; }
+
+	virtual const wchar_t* get_window_class() { return WC_COMBOBOX; }
+	virtual DWORD get_window_style() { return ComboWindowStyles; }
+	virtual DWORD get_window_ex_style() { return 0; }
+
 };
 
-export class comboboxex_control : public windows_control<WTL::CComboBoxEx, ComboExWindowStyles>
+export class comboboxex_control : public windows_control
 {
 public:
 	using control_base::id;
-	using windows_control<WTL::CComboBoxEx, ComboExWindowStyles>::window_host;
+	using windows_control::window_host;
 	list_data choices;
 
 	comboboxex_control();
@@ -1582,55 +1600,85 @@ public:
 	void set_list(list_data& _choices);
 	virtual void on_create();
 	virtual void on_resize();
+
+	virtual const wchar_t* get_window_class() { return WC_COMBOBOXEX; }
+	virtual DWORD get_window_style() { return ComboWindowStyles; }
+	virtual DWORD get_window_ex_style() { return 0; }
+
 };
 
-export class listview_control : public table_control_base<WTL::CListViewCtrl, ListViewWindowsStyles>
+export class listview_control : public table_control_base
 {
 public:
-	listview_control(container_control* _parent, int _id) : table_control_base<WTL::CListViewCtrl, ListViewWindowsStyles>(_parent, _id) { ; }
+	listview_control(container_control* _parent, int _id) : table_control_base(_parent, _id) { ; }
 	virtual ~listview_control() { ; }
+
+	virtual const wchar_t* get_window_class() { return WC_LISTVIEW; }
+	virtual DWORD get_window_style() { return ListViewWindowsStyles; }
+	virtual DWORD get_window_ex_style() { return 0; }
+
 };
 
-export class scrollbar_control : public windows_control<WTL::CScrollBar, DefaultWindowStyles>
+export class scrollbar_control : public windows_control
 {
 public:
-	scrollbar_control(container_control* _parent, int _id) : windows_control<WTL::CScrollBar, DefaultWindowStyles>(_parent, _id) { ; }
+	scrollbar_control(container_control* _parent, int _id) : windows_control(_parent, _id) { ; }
 	virtual ~scrollbar_control() { ; }
+
+	virtual const wchar_t* get_window_class() { return WC_LISTVIEW; }
+	virtual DWORD get_window_style() { return DefaultWindowStyles; }
+	virtual DWORD get_window_ex_style() { return 0; }
+
 };
 
-export class richedit_control : public text_control_base<WTL::CRichEditCtrl, RichEditWindowStyles>
+export class richedit_control : public text_control_base
 {
 public:
 	void set_html(const std::string& _text);
 	std::string get_html();
 
-	richedit_control(container_control* _parent, int _id) : text_control_base<WTL::CRichEditCtrl, RichEditWindowStyles>(_parent, _id) {
+	richedit_control(container_control* _parent, int _id) : text_control_base(_parent, _id) {
 		LoadLibrary(TEXT("Msftedit.dll"));
 	}
 	virtual ~richedit_control() { ; }
+
+	virtual const wchar_t* get_window_class() { return MSFTEDIT_CLASS; }
+	virtual DWORD get_window_style() { return RichEditWindowStyles; }
+	virtual DWORD get_window_ex_style() { return 0; }
+
 };
 
-export class datetimepicker_control : public windows_control<CDateTimePickerCtrl, DefaultWindowStyles>
+export class datetimepicker_control : public windows_control
 {
 public:
 	void set_text(const std::string& _text);
 	std::string get_text();
 
-	datetimepicker_control(container_control* _parent, int _id) : windows_control<CDateTimePickerCtrl, DefaultWindowStyles>(_parent, _id) { ; }
+	datetimepicker_control(container_control* _parent, int _id) : windows_control(_parent, _id) { ; }
 	virtual ~datetimepicker_control() { ; }
+
+	virtual const wchar_t* get_window_class() { return DATETIMEPICK_CLASS; }
+	virtual DWORD get_window_style() { return DefaultWindowStyles; }
+	virtual DWORD get_window_ex_style() { return 0; }
+
 };
 
-export class monthcalendar_control : public windows_control<CMonthCalendarCtrl, DefaultWindowStyles>
+export class monthcalendar_control : public windows_control
 {
 public:
-	monthcalendar_control(container_control* _parent, int _id) : windows_control<CMonthCalendarCtrl, DefaultWindowStyles>(_parent, _id) { ; }
+	monthcalendar_control(container_control* _parent, int _id) : windows_control(_parent, _id) { ; }
 	virtual ~monthcalendar_control() { ; }
+
+	virtual const wchar_t* get_window_class() { return MONTHCAL_CLASS; }
+	virtual DWORD get_window_style() { return DefaultWindowStyles; }
+	virtual DWORD get_window_ex_style() { return 0; }
+
 };
 
-export class animate_control : public windows_control<WTL::CAnimateCtrl, DefaultWindowStyles>
+export class animate_control : public windows_control
 {
 public:
-	animate_control(container_control* _parent, int _id) : windows_control<WTL::CAnimateCtrl, DefaultWindowStyles>(_parent, _id) { ; }
+	animate_control(container_control* _parent, int _id) : windows_control(_parent, _id) { ; }
 	virtual ~animate_control() { ; }
 
 	bool open(const std::string& _name);
@@ -1638,49 +1686,80 @@ public:
 	bool play(UINT from, UINT to, UINT rep);
 	bool play();
 	bool stop();
+
+	virtual const wchar_t* get_window_class() { return ANIMATE_CLASS; }
+	virtual DWORD get_window_style() { return DefaultWindowStyles; }
+	virtual DWORD get_window_ex_style() { return 0; }
 };
 
-export class treeview_control : public windows_control<WTL::CTreeViewCtrl, DefaultWindowStyles>
+export class treeview_control : public windows_control
 {
 public:
-	treeview_control(container_control* _parent, int _id) : windows_control<WTL::CTreeViewCtrl, DefaultWindowStyles>(_parent, _id) { ; }
+	treeview_control(container_control* _parent, int _id) : windows_control(_parent, _id) { ; }
 	virtual ~treeview_control() { ; }
+
+	virtual const wchar_t* get_window_class() { return WC_TREEVIEW; }
+	virtual DWORD get_window_style() { return DefaultWindowStyles; }
+	virtual DWORD get_window_ex_style() { return 0; }
+
 };
 
-export class header_control : public windows_control<WTL::CHeaderCtrl, DefaultWindowStyles>
+export class header_control : public windows_control
 {
 public:
-	header_control(container_control* _parent, int _id) : windows_control<WTL::CHeaderCtrl, DefaultWindowStyles>(_parent, _id) { ; }
+	header_control(container_control* _parent, int _id) : windows_control(_parent, _id) { ; }
 	virtual ~header_control() { ; }
+
+	virtual const wchar_t* get_window_class() { return WC_HEADER; }
+	virtual DWORD get_window_style() { return DefaultWindowStyles; }
+	virtual DWORD get_window_ex_style() { return 0; }
+
 };
 
-export class toolbar_control : public windows_control<WTL::CToolBarCtrl, DefaultWindowStyles>
+export class toolbar_control : public windows_control
 {
 public:
-	toolbar_control(container_control* _parent, int _id) : windows_control<WTL::CToolBarCtrl, DefaultWindowStyles>(_parent, _id) { ; }
+	toolbar_control(container_control* _parent, int _id) : windows_control(_parent, _id) { ; }
 	virtual ~toolbar_control() { ; }
+	
+	virtual const wchar_t* get_window_class() { return TOOLBARCLASSNAME; }
+	virtual DWORD get_window_style() { return DefaultWindowStyles; }
+	virtual DWORD get_window_ex_style() { return 0; }
+
 };
 
-export class statusbar_control : public windows_control<WTL::CStatusBarCtrl, DefaultWindowStyles>
+export class statusbar_control : public windows_control
 {
 public:
-	statusbar_control(container_control* _parent, int _id) : windows_control<WTL::CStatusBarCtrl, DefaultWindowStyles>(_parent, _id) { ; }
+	statusbar_control(container_control* _parent, int _id) : windows_control(_parent, _id) { ; }
 	virtual ~statusbar_control() { ; }
 
+	virtual const wchar_t* get_window_class() { return STATUSCLASSNAME; }
+	virtual DWORD get_window_style() { return DefaultWindowStyles; }
+	virtual DWORD get_window_ex_style() { return 0; }
+
 };
 
-export class hotkey_control : public windows_control<WTL::CHotKeyCtrl, DefaultWindowStyles>
+export class hotkey_control : public windows_control
 {
 public:
-	hotkey_control(container_control* _parent, int _id) : windows_control<WTL::CHotKeyCtrl, DefaultWindowStyles>(_parent, _id) { ; }
+	hotkey_control(container_control* _parent, int _id) : windows_control(_parent, _id) { ; }
 	virtual ~hotkey_control() { ; }
+
+	virtual const wchar_t* get_window_class() { return TOOLBARCLASSNAME; }
+	virtual DWORD get_window_style() { return DefaultWindowStyles; }
+	virtual DWORD get_window_ex_style() { return 0; }
 };
 
-export class draglistbox_control : public windows_control<WTL::CDragListBox, DefaultWindowStyles>
+export class draglistbox_control : public windows_control
 {
 public:
-	draglistbox_control(container_control* _parent, int _id) : windows_control<WTL::CDragListBox, DefaultWindowStyles>(_parent, _id) { ; }
+	draglistbox_control(container_control* _parent, int _id) : windows_control(_parent, _id) { ; }
 	virtual ~draglistbox_control() { ; }
+
+	virtual const wchar_t* get_window_class() { return HOTKEY_CLASS; }
+	virtual DWORD get_window_style() { return DefaultWindowStyles; }
+	virtual DWORD get_window_ex_style() { return 0; }
 };
 
 export enum class field_layout
@@ -1879,7 +1958,7 @@ protected:
 	virtual void create(std::weak_ptr<applicationBase> _host);
 	virtual void destroy();
 	virtual void draw();
-	virtual void render(CComPtr<ID2D1DeviceContext>& _context);
+	virtual void render(ID2D1DeviceContext *_context);
 	virtual void update(double _elapsedSeconds, double _totalSeconds);
 
 	void subscribe(presentation* _presentation);
@@ -1986,7 +2065,7 @@ public:
 		throw std::exception("could not lock current page");
 	}
 
-	virtual bool drawFrame(direct2dContext& _ctx);
+	virtual bool drawFrame(direct2dContext *_ctx);
 	virtual bool update(double _elapsedSeconds, double _totalSeconds);
 
 	virtual void keyDown(short _key);
@@ -2313,7 +2392,7 @@ void control_base::draw()
 	}
 }
 
-void control_base::render(CComPtr<ID2D1DeviceContext>& _dest)
+void control_base::render(ID2D1DeviceContext *_dest)
 {
 	for (auto child : children) {
 		child->render(_dest);
@@ -4027,7 +4106,7 @@ void draw_control::draw()
 	}
 }
 
-void draw_control::render(CComPtr<ID2D1DeviceContext>& _dest)
+void draw_control::render(_com_ptr_t<ID2D1DeviceContext>& _dest)
 {
 	if (auto pwindow = window.lock())
 	{
@@ -4648,7 +4727,7 @@ comboboxex_control::comboboxex_control()
 	control_base::set_size(1.0_container, 2.0_fontgr);
 }
 
-comboboxex_control::comboboxex_control(container_control* _parent, int _id) : windows_control<WTL::CComboBoxEx, ComboExWindowStyles>(_parent, _id)
+comboboxex_control::comboboxex_control(container_control* _parent, int _id) : windows_control(_parent, _id)
 {
 	control_base::set_origin(0.0_px, 0.0_px);
 	control_base::set_size(1.0_container, 2.0_fontgr);
@@ -4656,24 +4735,27 @@ comboboxex_control::comboboxex_control(container_control* _parent, int _id) : wi
 
 void comboboxex_control::data_changed()
 {
-	if (window.IsWindow()) {
-		window.ResetContent();
-		for (int i = 0; i < choices.items.size(); i++)
-		{
-			auto c = choices.items[i];
-			if (c.has_member(choices.id_field) && c.has_member(choices.text_field)) {
-				int lid = c[choices.id_field];
-				std::string description = c[choices.text_field];
+	if (IsWindow(window)) {
+		if (auto phost = window_host.lock()) {
+			post->
+			window.ResetContent();
+			for (int i = 0; i < choices.items.size(); i++)
+			{
+				auto c = choices.items[i];
+				if (c.has_member(choices.id_field) && c.has_member(choices.text_field)) {
+					int lid = c[choices.id_field];
+					std::string description = c[choices.text_field];
 
-				COMBOBOXEXITEM cbex = {};
-				cbex.mask = CBEIF_TEXT | CBEIF_LPARAM;
-				cbex.iItem = -1;
-				cbex.pszText = (LPTSTR)description.c_str();
-				cbex.iImage = 0;
-				cbex.iSelectedImage = 0;
-				cbex.iIndent = 0;
-				cbex.lParam = lid;
-				window.InsertItem(&cbex);
+					COMBOBOXEXITEM cbex = {};
+					cbex.mask = CBEIF_TEXT | CBEIF_LPARAM;
+					cbex.iItem = -1;
+					cbex.pszText = (LPTSTR)description.c_str();
+					cbex.iImage = 0;
+					cbex.iSelectedImage = 0;
+					cbex.iIndent = 0;
+					cbex.lParam = lid;
+					window.InsertItem(&cbex);
+				}
 			}
 		}
 	}
@@ -4706,13 +4788,8 @@ void comboboxex_control::on_resize()
 	if (auto phost = window_host.lock()) {
 		auto boundsPixels = phost->toPixelsFromDips(get_inner_bounds());
 
-		RECT r;
-		r.left = boundsPixels.x;
-		r.top = boundsPixels.y;
-		r.right = boundsPixels.x + boundsPixels.w;
-		r.bottom = boundsPixels.y + windows_control<WTL::CComboBoxEx, ComboExWindowStyles>::text_style.fontSize * 8;
-		if (window.m_hWnd) {
-			windows_control<WTL::CComboBoxEx, ComboExWindowStyles>::window.MoveWindow(&r);
+		if (windows_control::window) {
+			MoveWindow( window, boundsPixels.x, boundsPixels.y, boundsPixels.w, windows_control::text_style.fontSize * 8, TRUE);
 		}
 	}
 }
@@ -5168,7 +5245,7 @@ void page::draw()
 	}
 }
 
-void page::render(CComPtr<ID2D1DeviceContext>& _context)
+void page::render(_com_ptr_t<ID2D1DeviceContext>& _context)
 {
 	if (root.get())
 	{

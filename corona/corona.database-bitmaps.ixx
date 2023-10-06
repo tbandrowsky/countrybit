@@ -37,7 +37,7 @@ import :direct2dresources;
 export class direct2dBitmapCore
 {
 protected:
-	CComPtr<ID2D1DeviceContext> targetContext;
+	ID2D1DeviceContext *targetContext;
 	ID2D1RenderTarget* target;
 	ID2D1Bitmap1* bitmap;
 
@@ -109,7 +109,7 @@ public:
 		if (bitmap) bitmap->Release();
 	}
 
-	CComPtr<ID2D1DeviceContext> beginDraw(bool& blownAdapter)
+	ID2D1DeviceContext *beginDraw(bool& blownAdapter)
 	{
 		blownAdapter = false;
 		targetContext->BeginDraw();
@@ -247,7 +247,7 @@ public:
 		return *context.get();
 	}
 
-	CComPtr<ID2D1DeviceContext>  beginDraw(bool& _adapter_blown_away)
+	ID2D1DeviceContext *beginDraw(bool& _adapter_blown_away)
 	{
 		_adapter_blown_away = false;
 

@@ -9,7 +9,7 @@ module;
 #include <compare>
 
 export module corona.database:store_box;
-import "corona.database-windows-all.h";
+import "corona.database-windows-lite.h";
 import :constants;
 
 export template <typename box_class>

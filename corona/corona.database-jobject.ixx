@@ -12,7 +12,7 @@ module;
 #include <format>
 
 export module corona.database:jobject;
-import "corona.database-windows-all.h";
+import "corona.database-windows-lite.h";
 import :store_box;
 import :color_box;
 import :float_box;

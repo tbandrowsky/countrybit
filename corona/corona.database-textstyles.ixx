@@ -15,7 +15,7 @@ module;
 #include <algorithm>
 
 export module corona.database:textstyles;
-import "corona.database-windows-all.h";
+import "corona.database-windows-lite.h";
 import :assert_if;
 import :constants;
 import :color_box;
