@@ -55,9 +55,7 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
-  <ImportGroup Label="Shared">
-    <Import Project="..\corona\corona.vcxitems" Label="Shared" />
-  </ImportGroup>
+  <ImportGroup Label="Shared" />
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
@@ -181,11 +179,141 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\corona\corona.database-windows-all.h" />
+    <ClInclude Include="..\corona\corona.database-windows-lite.h" />
+    <ClInclude Include="..\corona\corona_platform.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="wspropose.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\corona\corona.database-application.ixx" />
+    <ClCompile Include="..\corona\corona.database-application_base.ixx" />
+    <ClCompile Include="..\corona\corona.database-assert_if.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-bitmaps.ixx" />
+    <ClCompile Include="..\corona\corona.database-bitmap_filters.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-brushes.ixx" />
+    <ClCompile Include="..\corona\corona.database-collection_id_box.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-color_box.ixx" />
+    <ClCompile Include="..\corona\corona.database-concept_lock.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-constants.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-controller.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-datatransfer.ixx" />
+    <ClCompile Include="..\corona\corona.database-direct2dcontext.ixx" />
+    <ClCompile Include="..\corona\corona.database-direct2dcontextbase.ixx" />
+    <ClCompile Include="..\corona\corona.database-direct2dresources.ixx" />
+    <ClCompile Include="..\corona\corona.database-direct2dwindow.ixx" />
+    <ClCompile Include="..\corona\corona.database-directapplication.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-directory.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-directxadapter.ixx" />
+    <ClCompile Include="..\corona\corona.database-directxadapterbase.ixx" />
+    <ClCompile Include="..\corona\corona.database-directxdevices.ixx" />
+    <ClCompile Include="..\corona\corona.database-file.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-filterable_iterator.ixx" />
+    <ClCompile Include="..\corona\corona.database-float_box.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-function.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-grouping.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-iarray.ixx" />
+    <ClCompile Include="..\corona\corona.database-image_box.ixx" />
+    <ClCompile Include="..\corona\corona.database-int_box.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-jdatabase_server.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-jfield.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-jobject.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-json.ixx" />
+    <ClCompile Include="..\corona\corona.database-jvalue.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-layout_rect_box.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-list_box.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-messages.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-midi_box.ixx" />
+    <ClCompile Include="..\corona\corona.database-object_id_box.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-paths.ixx" />
+    <ClCompile Include="..\corona\corona.database-point_box.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-presentation.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-queue.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-read_all_string.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-rectangle_box.ixx" />
+    <ClCompile Include="..\corona\corona.database-skip_list.ixx" />
+    <ClCompile Include="..\corona\corona.database-sorted_index.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-store_box.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-store_box_file.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-string_box.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-styles.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-table.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-textstyles.ixx" />
+    <ClCompile Include="..\corona\corona.database-time_box.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-utility.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-visual.ixx">
+      <FileType>CppModule</FileType>
+    </ClCompile>
+    <ClCompile Include="..\corona\corona.database-wave_box.ixx" />
+    <ClCompile Include="..\corona\corona.database.ixx" />
+    <ClCompile Include="..\corona\corona.ixx" />
     <ClCompile Include="wspropose.cpp" />
   </ItemGroup>
   <ItemGroup>

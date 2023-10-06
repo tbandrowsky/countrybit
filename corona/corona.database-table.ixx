@@ -18,7 +18,6 @@ import :assert_if;
 import :string_box;
 import :filterable_iterator;
 
-
 export struct row_range
 {
 	relative_ptr_type			start;

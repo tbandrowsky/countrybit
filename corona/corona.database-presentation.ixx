@@ -1306,23 +1306,18 @@ export template <typename WtlWindowClass, DWORD dwStyle, DWORD dwExStyle = 0> cl
 			std::vector<char*> data_row;
 			data_row.resize(choices.columns.size());
 			row_index++;
-			for (auto item : choices.items)
+			
+			for (int i = 0; i < choices.items.size(); i++)
 			{
+				auto item = choices.items[i];
 				col_index = 0;
 				for (auto col : choices.columns)
 				{
 					data_row[col_index] = blank;
-					bool has_field = item.contains(col.json_field);
+					bool has_field = item.has_member(col.json_field);
 					if (has_field) {
-						auto item_value = item[col.json_field];
-						std::string contents;
-						if (item_value.is_string())
-							contents = item_value;
-						else if (item_value.is_number()) {
-							double temp = item_value;
-							contents = std::to_string(temp);
-						}
-						char* value = mtable.set(col_index, row_index, contents);
+						std::string item_value = item[col.json_field];
+						char* value = mtable.set(col_index, row_index, item_value);
 						if (value) {
 							data_row[col_index] = value;
 						}
@@ -1337,6 +1332,7 @@ export template <typename WtlWindowClass, DWORD dwStyle, DWORD dwExStyle = 0> cl
 	}
 
 public:
+
 	using control_base::id;
 	using windows_control<WtlWindowClass, dwStyle, dwExStyle>::window_host;
 	table_data choices;
@@ -1393,11 +1389,11 @@ public:
 	{
 		if (auto phost = window_host.lock()) {
 			phost->clearListItems(id);
-			for (auto element : choices.items.items())
+			for (int i = 0; i < choices.items.size(); i++)
 			{
-				auto c = element.value();
-				int lid = c[choices.id_field].template get<int>();
-				std::string description = c[choices.text_field].template get<std::string>();
+				auto c = choices.items[i];
+				int lid = c[choices.id_field];
+				std::string description = c[choices.text_field];
 				phost->addListItem(id, description, lid);
 			}
 		}
@@ -1442,11 +1438,11 @@ public:
 	{
 		if (auto phost = window_host.lock()) {
 			phost->clearComboItems(id);
-			for (auto element : choices.items.items())
+			for (int i = 0; i < choices.items.size(); i++)
 			{
-				auto c = element.value();
-				int lid = c[choices.id_field].template get<int>();
-				std::string description = c[choices.text_field].template get<std::string>();
+				auto element = choices.items[i];
+				int lid = element[choices.id_field];
+				std::string description = element[choices.text_field];
 				phost->addComboItem(id, description, lid);
 			}
 		}
@@ -4665,18 +4661,20 @@ void comboboxex_control::data_changed()
 		for (int i = 0; i < choices.items.size(); i++)
 		{
 			auto c = choices.items[i];
-			int lid = c[choices.id_field];
-			std::string description = c[choices.text_field];
+			if (c.has_member(choices.id_field) && c.has_member(choices.text_field)) {
+				int lid = c[choices.id_field];
+				std::string description = c[choices.text_field];
 
-			COMBOBOXEXITEM cbex = {};
-			cbex.mask = CBEIF_TEXT | CBEIF_LPARAM;
-			cbex.iItem = -1;
-			cbex.pszText = (LPTSTR)description.c_str();
-			cbex.iImage = 0;
-			cbex.iSelectedImage = 0;
-			cbex.iIndent = 0;
-			cbex.lParam = lid;
-			window.InsertItem(&cbex);
+				COMBOBOXEXITEM cbex = {};
+				cbex.mask = CBEIF_TEXT | CBEIF_LPARAM;
+				cbex.iItem = -1;
+				cbex.pszText = (LPTSTR)description.c_str();
+				cbex.iImage = 0;
+				cbex.iSelectedImage = 0;
+				cbex.iIndent = 0;
+				cbex.lParam = lid;
+				window.InsertItem(&cbex);
+			}
 		}
 	}
 }

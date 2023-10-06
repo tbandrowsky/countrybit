@@ -5,8 +5,10 @@ module;
 #include <map>
 #include <cctype>
 #include <stdexcept>
+#include <memory>
+#include <format>
 
-export module corona.database_json;
+export module corona.database:json;
 
 export class json_value
 {
@@ -39,7 +41,7 @@ public:
 export class json_array : public json_value
 {
 public:
-	std::vector<shared_ptr<json_value>> elements;
+	std::vector<std::shared_ptr<json_value>> elements;
 };
 
 export class json_object : public json_value
@@ -65,40 +67,113 @@ public:
 	json_navigator(std::shared_ptr<json_value> _value)
 	{
 		value_base = _value;
-		double_impl = dynamic_cast<json_double>(_value);
-		string_impl = dynamic_cast<json_string>(_value);
-		array_impl = dynamic_cast<json_array>(_value);
-		object_impl = dynamic_cast<json_object>(_value);
+		double_impl = std::dynamic_pointer_cast<json_double>(_value);
+		string_impl = std::dynamic_pointer_cast<json_string>(_value);
+		array_impl = std::dynamic_pointer_cast<json_array>(_value);
+		object_impl = std::dynamic_pointer_cast<json_object>(_value);
 	}
 
-	operator bool()
+	bool is_double() const
 	{
-		return value_base != null_ptr;
+		return (bool)double_impl;
 	}
 
-	operator double&() 
+	bool is_string() const
+	{
+		return (bool)string_impl;
+	}
+
+	bool is_array() const
+	{
+		return (bool)array_impl;
+	}
+
+	bool is_object() const
+	{
+		return (bool)object_impl;
+	}
+
+	operator bool() const
+	{
+		return value_base != nullptr;
+	}
+
+	explicit operator double&()  const
 	{
 		return double_impl->value;
 	}
 
-	operator std::string&() 
+	explicit operator std::string& () const
 	{
 		return string_impl->value;
 	}
 
-	json_navigator operator [](int _index)
+	operator double () const
+	{
+		if (double_impl)
+			return double_impl->value;
+		else if (string_impl)
+			return std::stod(string_impl->value);
+		else
+			return 0.0;
+	}
+
+	operator std::string () const
+	{
+		if (double_impl)
+			return std::format( "{0}", double_impl->value );
+		else if (string_impl)
+			return string_impl->value;
+		else
+			return "";
+	}
+
+	operator std::shared_ptr<json_array>& ()
+	{
+		return array_impl;
+	}
+
+	operator std::shared_ptr<json_object>& ()
+	{
+		return object_impl;
+	}
+
+	std::shared_ptr<json_object> operator ->()
+	{
+		return object_impl;
+	}
+
+	json_navigator operator[](int _index) const
 	{
 		json_navigator jn(array_impl->elements[_index]);
 		return jn;
 	}
 
-	json_navigator operator [](std::string _key)
+	json_navigator operator[](std::string _key) const
 	{
 		json_navigator jn(object_impl->members[_key]);
 		return jn;
 	}
 
-	int size()
+	bool has_member(std::string _key) const
+	{
+		bool has_value = object_impl->members.contains(_key);
+		return has_value;
+	}
+
+	json_navigator get_element(int _index) const
+	{
+		json_navigator jn(array_impl->elements[_index]);
+		return jn;
+	}
+
+	json_navigator get_member(std::string _key) const
+	{
+		json_navigator jn(object_impl->members[_key]);
+		return jn;
+	}
+
+	int size() const
 	{
 		if (object_impl)
 			return object_impl->members.size();
@@ -135,7 +210,7 @@ public:
 		auto jo = std::make_shared<json_object>();
 		const char* start = _object.c_str();
 		parse_object(jo, start, &start);
-		json_navigator jn(jo)
+		json_navigator jn(jo);
 		return jn;
 	}
 
@@ -160,14 +235,22 @@ private:
 
 	void error(std::string _topic, std::string _message)
 	{
-		parse_error_message new_message = { line_number, _topic, _message };
+		parse_message new_message = { line_number, _topic, _message };
+		parse_errors.push_back(new_message);
+	}
+
+	const char* eat_white(const char* _src)
+	{
+		while (std::isspace(*_src))
+			_src++;
+		return _src;
 	}
 
 	bool parse_string(std::string& _result, const char* _src, const char** _modified)
 	{
 		bool result = false;
 		std::string temp = "";
-		if (*src == '"')
+		if (*_src == '"')
 		{
 			result = true;
 			bool parsing = false;
@@ -227,7 +310,7 @@ private:
 	{
 		bool result = false;
 		_src = eat_white(_src);
-		if (isdigit(*_src) || *src == '.')
+		if (isdigit(*_src) || *_src == '.')
 		{
 			std::string temp = "";
 			result = true;
@@ -238,7 +321,7 @@ private:
 				_src++;
 			}
 			_src++;
-			result = std::strtod(temp.c_str());
+			result = std::strtod(temp.c_str(), nullptr);
 		}
 		*_modified = _src;
 		return result;
@@ -254,21 +337,21 @@ private:
 
 		if (parse_string(new_string_value, _src, &_src))
 		{
-			_value = std::make_shared<json_string>();
+			auto js = std::make_shared<json_string>();		
 			js->value = new_string_value;
 		}
 		else if (parse_number(new_number_value, _src, &_src))
 		{
-			_value = std::make_shared<json_double>();
+			auto js = std::make_shared<json_double>();
 			js->value = new_number_value;
 		}
 		else if (parse_array(new_array_value, _src, &_src))
 		{
-			_value = _new_array_value;
+			_value = new_array_value;
 		}
 		else if (parse_object(new_object_value, _src, &_src))
 		{
-			_value = _new_object_value;
+			_value = new_object_value;
 		}
 		else
 		{
@@ -279,25 +362,25 @@ private:
 		return result;
 	}
 
-	bool parse_array(std::shared_ptr<json_array>& _object, const char* _src, const char** _modified)
+	bool parse_array(std::shared_ptr<json_array>& _array, const char* _src, const char** _modified)
 	{
 		bool result = false;
 		_src = eat_white(_src);
 		std::string temp = "";
-		if (*src == '[')
+
+		if (*_src == '[')
 		{
 			result = true;
-			enum parse_object_states = {
-				parse_name,
-				parse_colon,
-				parse_value
-			};
+
+			if (!_array) {
+				_array = std::make_shared<json_array>();
+			}
 
 			while (*_src && *_src != ']') {
 				check_line(_src);
 				std::shared_ptr<json_value> value;
-				if (parse_value(value, _src, &_src)) {
-					_object->elements.push_back(value);
+				if (parse_value(value, _src, _modified)) {
+					_array->elements.push_back(value);
 				}
 				_src = eat_white(_src);
 				if (*_src != ',' && *_src != ']') {
@@ -317,34 +400,34 @@ private:
 		bool result = false;
 		std::string temp = "";
 		_src = eat_white(_src);
-		if (*src == '{')
+		if (*_src == '{')
 		{
 			result = true;
 			_object = std::make_shared<json_object>();
 			std::string member_name;
-			enum parse_object_states = {
-				parse_name,
-				parse_colon,
-				parse_value
+			enum parse_object_states {
+				parsing_name,
+				parsing_colon,
+				parsing_value
 			};
-			parse_object_state = parse_name;
+			parse_object_states parse_object_state = parse_object_states::parsing_name;
 			while (*_src && *_src != '}')
 			{
 				check_line(_src);
-				if (parse_object_state == parse_name) {
+				if (parse_object_state == parse_object_states::parsing_name) {
 					if (parse_string(member_name, _src, &_src)) {
-						parse_object_state = parse_colon;
+						parse_object_state = parse_object_states::parsing_colon;
 					}
 					else
 					{
 						error("parse_member_name", "Invalid member name.");
 					}
 				}
-				else if (parse_object_state == parse_colon)
+				else if (parse_object_state == parse_object_states::parsing_colon)
 				{
 					_src = eat_white(_src);
 					if (*_src == ':') {
-						parse_object_state = parse_value;
+						parse_object_state = parse_object_states::parsing_value;
 						_src++;
 					}
 					else 
@@ -352,11 +435,11 @@ private:
 						error("parse_colon", std::format("Expected colon for  \"{0}\".", member_name));
 					}
 				}
-				else if (parse_object_state == parse_value)
+				else if (parse_object_state == parse_object_states::parsing_value)
 				{
 					std::shared_ptr<json_value> member_value;
 					if (parse_value(member_value, _src, &_src)) {
-						object.members[member_name] = member_value;
+						_object->members[member_name] = member_value;
 					}
 					else
 					{
