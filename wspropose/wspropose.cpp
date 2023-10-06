@@ -1,16 +1,16 @@
 
-#include "corona.h"
-#include "resource.h"
+#include "corona-windows-all.h"
+#include <memory>
 
-using namespace corona::database;
-using namespace corona::win32;
+import corona;
+
+#include "resource.h"
 
 /*
 
 Use CComPtr for COM objects and CAdapt for collections
 
 */
-
 
 void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam);
 
@@ -51,12 +51,12 @@ int __stdcall WinMain(HINSTANCE hInstance,
 
 void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 {
-	corona::win32::EnableGuiStdOuts();
+	EnableGuiStdOuts();
 
-	std::shared_ptr<corona::win32::adapterSet> factory = std::make_shared<corona::win32::adapterSet>();
+	std::shared_ptr<directXAdapter> factory = std::make_shared<directXAdapter>();
 	factory->refresh();
 
-	std::shared_ptr<corona::win32::directApplicationWin32> wsPropose = std::make_shared<corona::win32::directApplicationWin32>(factory);
+	std::shared_ptr<directApplicationWin32> wsPropose = std::make_shared<directApplicationWin32>(factory);
 
 	bool forceWindowed = false;
 
@@ -68,7 +68,7 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 	forceWindowed = true;
 #endif
 
-	std::shared_ptr<corona::win32::presentation> test_app = std::make_shared<corona::win32::presentation>();
++	std::shared_ptr<presentation> test_app = std::make_shared<presentation>();
 
 	const int IDM_VIEW = 5001;
 	const int IDM_VIEW_FULL_LOGIN = 5003;
@@ -498,7 +498,7 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 	{ "Id":4, "FirstName":"Sandy", "LastName":"Smith", "Age":42 },
 	{ "Id":6, "FirstName":"Holly", "LastName":"Rogers", "Age":34 }
 	]
-	)"_json;
+	)"_json_array;
 
 								lv.set_table(tdata);
 							})
@@ -515,7 +515,7 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 { "Id":2, "Name":"Scout" },
 { "Id":3, "Name":"Chevy SS" },
 { "Id":4, "Name":"GMC" }
-])"_json;
+])"_json_array;
 								lb.set_list(ldata3);
 
 							})
@@ -547,7 +547,7 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 { "Id":5, "Name":"Joe" },
 { "Id":6, "Name":"Raghu" },
 { "Id":7, "Name":"Harmeet" }
-])"_json;
+])"_json_array;
 							cb.set_list(ldata);
 							})
 						.label("Combo EX")
@@ -566,7 +566,7 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 { "Id":7, "Name":"Marlton" },
 { "Id":8, "Name":"Elkton" },
 { "Id":9, "Name":"Philadelphia" }
-])"_json;
+])"_json_array;
 								cbex.set_list(ldata2);
 
 							})
@@ -608,9 +608,6 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 		.end()
 	.end();
 
-
-
-
 	if (forceWindowed)
 	{
 		wsPropose->runDialog(hInstance, "Technology Demonstrator", IDI_WSPROPOSE, false, test_app);
@@ -619,6 +616,5 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 	{
 		wsPropose->runDialog(hInstance, "Technology Demonstrator", IDI_WSPROPOSE, true, test_app);
 	}
-
 }
 
