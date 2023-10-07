@@ -1,16 +1,16 @@
+#pragma once
 
 #include "corona-windows-all.h"
-#include <memory>
-
-import corona;
-
 #include "resource.h"
+#include <memory>
 
 /*
 
 Use CComPtr for COM objects and CAdapt for collections
 
 */
+
+#include "corona.h"
 
 void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam);
 
@@ -20,7 +20,7 @@ int __stdcall WinMain(HINSTANCE hInstance,
 	int    nCmdShow)
 {
 
-	auto dpiResult = ::SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+	auto dpiResult = SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
 
 	CoInitialize(NULL);
 	INITCOMMONCONTROLSEX ice;
@@ -51,12 +51,12 @@ int __stdcall WinMain(HINSTANCE hInstance,
 
 void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 {
-	EnableGuiStdOuts();
+	corona::EnableGuiStdOuts();
 
-	std::shared_ptr<directXAdapter> factory = std::make_shared<directXAdapter>();
+	std::shared_ptr<corona::directXAdapter> factory = std::make_shared<corona::directXAdapter>();
 	factory->refresh();
 
-	std::shared_ptr<directApplicationWin32> wsPropose = std::make_shared<directApplicationWin32>(factory);
+	std::shared_ptr<corona::directApplicationWin32> wsPropose = std::make_shared<corona::directApplicationWin32>(factory);
 
 	bool forceWindowed = false;
 
@@ -68,7 +68,7 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 	forceWindowed = true;
 #endif
 
-+	std::shared_ptr<presentation> test_app = std::make_shared<presentation>();
++	std::shared_ptr<corona::presentation> test_app = std::make_shared<corona::presentation>();
 
 	const int IDM_VIEW = 5001;
 	const int IDM_VIEW_FULL_LOGIN = 5003;

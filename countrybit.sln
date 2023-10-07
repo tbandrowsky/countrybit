@@ -44,5 +44,6 @@ Global
 	EndGlobalSection
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		corona\corona.vcxitems*{c12de1f8-9a25-4e3b-af11-93f4b3aceee9}*SharedItemsImports = 9
+		corona\corona.vcxitems*{df369a3e-4fee-4f1c-871d-a63d3ac30e3c}*SharedItemsImports = 4
 	EndGlobalSection
 EndGlobal

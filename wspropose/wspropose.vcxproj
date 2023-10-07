@@ -55,7 +55,9 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
-  <ImportGroup Label="Shared" />
+  <ImportGroup Label="Shared">
+    <Import Project="..\corona\corona.vcxitems" Label="Shared" />
+  </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
@@ -96,12 +98,15 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(MSBuildThisFileDirectory);$(SolutionDir)Corona</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
       <AdditionalModuleDependencies>%(AdditionalModuleDependencies)</AdditionalModuleDependencies>
-      <AdditionalBMIDirectories>$(SolutionDir)corona;</AdditionalBMIDirectories>
+      <AdditionalBMIDirectories>
+      </AdditionalBMIDirectories>
+      <TranslateIncludes>false</TranslateIncludes>
+      <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -121,12 +126,15 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(MSBuildThisFileDirectory);$(SolutionDir)Corona</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
       <AdditionalModuleDependencies>%(AdditionalModuleDependencies)</AdditionalModuleDependencies>
-      <AdditionalBMIDirectories>$(SolutionDir)corona;</AdditionalBMIDirectories>
+      <AdditionalBMIDirectories>
+      </AdditionalBMIDirectories>
+      <TranslateIncludes>false</TranslateIncludes>
+      <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -146,13 +154,16 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(MSBuildThisFileDirectory);$(SolutionDir)Corona</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
       <BuildStlModules>false</BuildStlModules>
       <AdditionalModuleDependencies>%(AdditionalModuleDependencies)</AdditionalModuleDependencies>
-      <AdditionalBMIDirectories>$(SolutionDir)corona;</AdditionalBMIDirectories>
+      <AdditionalBMIDirectories>
+      </AdditionalBMIDirectories>
+      <TranslateIncludes>false</TranslateIncludes>
+      <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -172,13 +183,16 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(MSBuildThisFileDirectory);$(SolutionDir)Corona</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
       <BuildStlModules>false</BuildStlModules>
       <AdditionalModuleDependencies>%(AdditionalModuleDependencies)</AdditionalModuleDependencies>
-      <AdditionalBMIDirectories>$(SolutionDir)corona;</AdditionalBMIDirectories>
+      <AdditionalBMIDirectories>
+      </AdditionalBMIDirectories>
+      <TranslateIncludes>false</TranslateIncludes>
+      <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -190,70 +204,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\corona\corona_platform.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="wspropose.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\corona\corona-application.ixx" />
-    <ClCompile Include="..\corona\corona-application_base.ixx" />
-    <ClCompile Include="..\corona\corona-assert_if.ixx" />
-    <ClCompile Include="..\corona\corona-bitmaps.ixx" />
-    <ClCompile Include="..\corona\corona-bitmap_filters.ixx" />
-    <ClCompile Include="..\corona\corona-brushes.ixx" />
-    <ClCompile Include="..\corona\corona-collection_id_box.ixx" />
-    <ClCompile Include="..\corona\corona-color_box.ixx" />
-    <ClCompile Include="..\corona\corona-concept_lock.ixx" />
-    <ClCompile Include="..\corona\corona-constants.ixx" />
-    <ClCompile Include="..\corona\corona-controller.ixx" />
-    <ClCompile Include="..\corona\corona-datatransfer.ixx" />
-    <ClCompile Include="..\corona\corona-direct2dcontext.ixx" />
-    <ClCompile Include="..\corona\corona-direct2dcontextbase.ixx" />
-    <ClCompile Include="..\corona\corona-direct2dresources.ixx" />
-    <ClCompile Include="..\corona\corona-direct2dwindow.ixx" />
-    <ClCompile Include="..\corona\corona-directapplication.ixx" />
-    <ClCompile Include="..\corona\corona-directory.ixx" />
-    <ClCompile Include="..\corona\corona-directxadapter.ixx" />
-    <ClCompile Include="..\corona\corona-directxadapterbase.ixx" />
-    <ClCompile Include="..\corona\corona-directxdevices.ixx" />
-    <ClCompile Include="..\corona\corona-file.ixx" />
-    <ClCompile Include="..\corona\corona-filterable_iterator.ixx" />
-    <ClCompile Include="..\corona\corona-float_box.ixx" />
-    <ClCompile Include="..\corona\corona-function.ixx" />
-    <ClCompile Include="..\corona\corona-grouping.ixx" />
-    <ClCompile Include="..\corona\corona-iarray.ixx" />
-    <ClCompile Include="..\corona\corona-image_box.ixx" />
-    <ClCompile Include="..\corona\corona-int_box.ixx" />
-    <ClCompile Include="..\corona\corona-jdatabase_server.ixx" />
-    <ClCompile Include="..\corona\corona-jfield.ixx" />
-    <ClCompile Include="..\corona\corona-jobject.ixx" />
-    <ClCompile Include="..\corona\corona-json.ixx" />
-    <ClCompile Include="..\corona\corona-jvalue.ixx" />
-    <ClCompile Include="..\corona\corona-layout_rect_box.ixx" />
-    <ClCompile Include="..\corona\corona-list_box.ixx" />
-    <ClCompile Include="..\corona\corona-messages.ixx" />
-    <ClCompile Include="..\corona\corona-midi_box.ixx" />
-    <ClCompile Include="..\corona\corona-object_id_box.ixx" />
-    <ClCompile Include="..\corona\corona-paths.ixx" />
-    <ClCompile Include="..\corona\corona-point_box.ixx" />
-    <ClCompile Include="..\corona\corona-presentation.ixx" />
-    <ClCompile Include="..\corona\corona-queue.ixx" />
-    <ClCompile Include="..\corona\corona-read_all_string.ixx" />
-    <ClCompile Include="..\corona\corona-rectangle_box.ixx" />
-    <ClCompile Include="..\corona\corona-skip_list.ixx" />
-    <ClCompile Include="..\corona\corona-sorted_index.ixx" />
-    <ClCompile Include="..\corona\corona-store_box.ixx" />
-    <ClCompile Include="..\corona\corona-store_box_file.ixx" />
-    <ClCompile Include="..\corona\corona-string_box.ixx" />
-    <ClCompile Include="..\corona\corona-styles.ixx" />
-    <ClCompile Include="..\corona\corona-table.ixx" />
-    <ClCompile Include="..\corona\corona-textstyles.ixx" />
-    <ClCompile Include="..\corona\corona-time_box.ixx" />
-    <ClCompile Include="..\corona\corona-utility.ixx" />
-    <ClCompile Include="..\corona\corona-visual.ixx" />
-    <ClCompile Include="..\corona\corona-wave_box.ixx" />
-    <ClCompile Include="..\corona\corona.ixx" />
     <ClCompile Include="wspropose.cpp" />
   </ItemGroup>
   <ItemGroup>
