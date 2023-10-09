@@ -60,8 +60,7 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 #if _DEBUG
 	forceWindowed = true;
 #endif
-
-	auto test_app = std::make_shared<presentation>();
+	auto test_app = std::make_shared<presentation>(wsPropose);
 
 	const int IDM_VIEW = 5001;
 	const int IDM_VIEW_FULL_LOGIN = 5003;

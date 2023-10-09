@@ -104,6 +104,7 @@ namespace corona
 		{
 			if (target) target->Release();
 			if (bitmap) bitmap->Release();
+			if (targetContext) targetContext->Release();
 		}
 
 		ID2D1DeviceContext* beginDraw(bool& blownAdapter)

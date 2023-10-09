@@ -57,6 +57,25 @@ namespace corona
 			context = _context;
 		}
 
+		direct2dContextBase(const direct2dContextBase& _src) :
+			adapter(_src.adapter),
+			context(_src.context)
+		{
+			if (context) {
+				context->AddRef();
+			}
+		}
+
+		direct2dContextBase& operator =(const direct2dContextBase& _src) 
+		{
+			if (context)
+				context->Release();
+			context = _src.context;
+			if (context) {
+				context->AddRef();
+			}
+		}
+
 		virtual ~direct2dContextBase()
 		{
 			if (context) {

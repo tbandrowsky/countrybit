@@ -1115,14 +1115,19 @@ namespace corona {
 		std::weak_ptr<applicationBase> window_host;
 		textStyleRequest	text_style;
 
-		windows_control()
+		windows_control() : 
+			window(nullptr), 
+			text_font(nullptr)
 		{
 			set_origin(0.0_px, 0.0_px);
 			set_size(1.0_container, 1.2_fontgr);
 			set_default_styles();
 		}
 
-		windows_control(container_control* _parent, int _id) : control_base(_parent, _id)
+		windows_control(container_control* _parent, int _id) 
+			: control_base(_parent, _id), 
+			window(nullptr),
+			text_font(nullptr)
 		{
 			set_origin(0.0_px, 0.0_px);
 			set_size(1.0_container, 1.2_fontgr);
@@ -1141,14 +1146,9 @@ namespace corona {
 				HWND parent = phost->getMainWindow();
 
 				auto boundsPixels = phost->toPixelsFromDips(inner_bounds);
-				RECT r;
-				r.left = boundsPixels.x;
-				r.top = boundsPixels.y;
-				r.right = boundsPixels.x + boundsPixels.w;
-				r.bottom = boundsPixels.y + boundsPixels.h;
 
 				if (window != nullptr) {
-					MoveWindow(window, r.left, r.top, r.right, r.bottom, TRUE);
+					MoveWindow(window, boundsPixels.x, boundsPixels.y, boundsPixels.w, boundsPixels.h, TRUE);
 				}
 			}
 		}
@@ -2015,8 +2015,20 @@ namespace corona {
 		std::map<std::string, std::shared_ptr<page>> pages;
 		std::weak_ptr<applicationBase> window_host;
 
-		presentation();
-		virtual ~presentation();
+		presentation()
+		{
+
+		}
+
+		presentation(std::weak_ptr<applicationBase> _window_host) : window_host(_window_host)
+		{
+
+		}
+
+		virtual ~presentation()
+		{
+			;
+		}
 
 		void open_menu(control_base* _base, menu_item& _menu);
 
@@ -4066,7 +4078,7 @@ namespace corona {
 			pwindow->beginDraw(adapter_blown_away);
 			if (!adapter_blown_away)
 			{
-				auto context = pwindow->getContext();
+				auto &context = pwindow->getContext();
 
 				auto& bc = background_brush.brushColor;
 
@@ -5076,7 +5088,15 @@ namespace corona {
 
 	void minimize_button_control::on_subscribe(presentation* _presentation, std::weak_ptr<page> _page)
 	{
-
+		if (auto ppage = _page.lock()) {
+			auto pcontrol = get_shared();
+			ppage->on_mouse_left_click(pcontrol, [this, _presentation, _page](mouse_left_click_event evt)
+				{
+					if (auto pw = _presentation->window_host.lock()) {
+						SendMessage(pw->getMainWindow(), WM_SYSCOMMAND, SC_MINIMIZE, 0);
+					}
+				});
+		}
 	}
 
 	minimize_button_control::~minimize_button_control()
@@ -5131,6 +5151,25 @@ namespace corona {
 
 	void maximize_button_control::on_subscribe(presentation* _presentation, std::weak_ptr<page> _page)
 	{
+		if (auto ppage = _page.lock()) {
+			auto pcontrol = get_shared();
+			ppage->on_mouse_left_click(pcontrol, [this, _presentation, _page](mouse_left_click_event evt)
+				{
+					if (auto pw = _presentation->window_host.lock()) {
+
+						WINDOWPLACEMENT wp = {};
+						wp.length = sizeof(wp);
+						GetWindowPlacement(pw->getMainWindow(), &wp);
+						if (wp.showCmd == SW_SHOWMAXIMIZED) {
+							SendMessage(pw->getMainWindow(), WM_SYSCOMMAND, SC_RESTORE, 0);
+						}
+						else 
+						{
+							SendMessage(pw->getMainWindow(), WM_SYSCOMMAND, SC_MAXIMIZE, 0);
+						}
+					}
+				});
+		}
 
 	}
 
@@ -5183,7 +5222,15 @@ namespace corona {
 
 	void close_button_control::on_subscribe(presentation* _presentation, std::weak_ptr<page> _page)
 	{
-		;
+		if (auto ppage = _page.lock()) {
+			auto pcontrol = get_shared();
+			ppage->on_mouse_left_click(pcontrol, [this, _presentation, _page](mouse_left_click_event evt)
+				{
+					if (auto pw = _presentation->window_host.lock()) {
+						SendMessage(pw->getMainWindow(), WM_SYSCOMMAND, SC_CLOSE, 0);
+					}
+				});
+		}
 	}
 
 	close_button_control::~close_button_control()
@@ -5281,15 +5328,6 @@ namespace corona {
 		return *new_row.get();
 	}
 
-	presentation::presentation()
-	{
-		;
-	}
-
-	presentation::~presentation()
-	{
-		;
-	}
 
 	void presentation::open_menu(control_base* _base, menu_item& _menu)
 	{
