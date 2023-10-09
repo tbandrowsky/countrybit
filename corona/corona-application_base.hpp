@@ -1,21 +1,21 @@
 #ifndef CORONA_APPLICATION_BASE_H
 #define CORONA_APPLICATION_BASE_H
 
-#include "corona-windows-all.h";
+#include "corona-windows-all.h"
+
+#include "corona-constants.hpp"
+#include "corona-direct2dcontext.hpp"
+#include "corona-visual.hpp"
+#include "corona-store_box.hpp"
+#include "corona-rectangle_box.hpp"
+#include "corona-point_box.hpp"
+#include "corona-datatransfer.hpp"
+#include "corona-controller.hpp"
 
 #include <memory>
 #include <string>
 #include <vector>
 #include <list>
-
-#include "corona-constants.hpp";
-#include "corona-direct2dcontext.hpp";
-#include "corona-visual.hpp";
-#include "corona-store_box.hpp";
-#include "corona-rectangle_box.hpp";
-#include "corona-point_box.hpp";
-#include "corona-datatransfer.hpp";
-#include "corona-controller.hpp";
 
 namespace corona
 {
@@ -120,7 +120,7 @@ namespace corona
 
 		virtual HFONT createFontDips(HWND target, const char* _fontName, double fontSize, bool bold, bool italic) = 0;
 		virtual HFONT createFontPixels(const char* _fontName, double fontSize, bool bold, bool italic) = 0;
-		virtual HFONT createFontIndirect(LOGFONT _font, const char* _fontName, double fontSize, bool bold, bool italic) = 0;
+		virtual HFONT createFontIndirect(LOGFONTA _font, const char* _fontName, double fontSize, bool bold, bool italic) = 0;
 
 	};
 

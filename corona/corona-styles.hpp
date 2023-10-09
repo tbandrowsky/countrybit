@@ -1,11 +1,11 @@
 #ifndef CORONA_STYLES_H
 #define CORONA_STYLES_H
 
+#include "corona-visual.hpp"
+
 #include <string>
 #include <vector>
 #include <map>
-
-#include "corona-visual.hpp"
 
 namespace corona {
 

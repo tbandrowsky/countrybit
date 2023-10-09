@@ -1,18 +1,6 @@
 #ifndef CORONA_DIRECTXADAPTER_H
 #define CORONA_DIRECTXADAPTER_H
 
-#include <string>
-#include <exception>
-#include <stdexcept>
-#include <format>
-#include <compare>
-#include <map>
-#include <vector>
-#include <stack>
-#include <functional>
-#include <memory>
-#include <algorithm>
-
 #include "corona-windows-all.h"
 #include "corona-constants.hpp"
 #include "corona-directxdevices.hpp"
@@ -25,6 +13,17 @@
 #include "corona-direct2dwindow.hpp"
 #include "corona-directxadapterbase.hpp"
 
+#include <string>
+#include <exception>
+#include <stdexcept>
+#include <format>
+#include <compare>
+#include <map>
+#include <vector>
+#include <stack>
+#include <functional>
+#include <memory>
+#include <algorithm>
 
 namespace corona
 {

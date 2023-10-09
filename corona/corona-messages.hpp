@@ -1,14 +1,14 @@
 #ifndef CORONA_MESSAGE_H
 #define CORONA_MESSAGE_H
 
-#include <iostream>
-#include <string>
-#include <compare>
-
 #include "corona-windows-lite.h"
 #include "corona-store_box.hpp"
 #include "corona-string_box.hpp"
 #include "corona-constants.hpp"
+
+#include <iostream>
+#include <string>
+#include <compare>
 
 namespace corona {
 

@@ -1,16 +1,9 @@
 #pragma once
 
-#include "corona-windows-all.h"
 #include "resource.h"
-#include <memory>
+#include "corona.hpp"
 
-/*
-
-Use CComPtr for COM objects and CAdapt for collections
-
-*/
-
-#include "corona.h"
+using namespace corona;
 
 void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam);
 
@@ -51,12 +44,12 @@ int __stdcall WinMain(HINSTANCE hInstance,
 
 void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 {
-	corona::EnableGuiStdOuts();
+	EnableGuiStdOuts();
 
-	std::shared_ptr<corona::directXAdapter> factory = std::make_shared<corona::directXAdapter>();
+	std::shared_ptr<directXAdapter> factory = std::make_shared<directXAdapter>();
 	factory->refresh();
 
-	std::shared_ptr<corona::directApplicationWin32> wsPropose = std::make_shared<corona::directApplicationWin32>(factory);
+	std::shared_ptr<directApplicationWin32> wsPropose = std::make_shared<directApplicationWin32>(factory);
 
 	bool forceWindowed = false;
 
@@ -68,7 +61,7 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 	forceWindowed = true;
 #endif
 
-+	std::shared_ptr<corona::presentation> test_app = std::make_shared<corona::presentation>();
+	auto test_app = std::make_shared<presentation>();
 
 	const int IDM_VIEW = 5001;
 	const int IDM_VIEW_FULL_LOGIN = 5003;
@@ -88,7 +81,7 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 	const int IDM_COMPANY_HOME = 5303;
 	const int IDM_COMPANY_WIKIPEDIA = 5304;
 
-	menu_item app_menu;
+	corona::menu_item app_menu;
 
 	app_menu.begin_submenu(IDM_COMPANY, "Woodruff &Sawyer")
 		.item(IDM_COMPANY_ABOUT, "A&bout")

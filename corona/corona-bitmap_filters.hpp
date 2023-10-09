@@ -1,11 +1,11 @@
 #ifndef CORONA_BITMAP_FILTERS_H
 #define CORONA_BITMAP_FILTERS_H
 
+#include "corona-point_box.hpp"
+
 #include <compare>
 #include <vector>
 #include "omp.h"
-
-#include "corona-point_box.hpp"
 
 namespace corona
 {

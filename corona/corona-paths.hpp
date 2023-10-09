@@ -1,18 +1,6 @@
 #ifndef CORONA_PATHS_H
 #define CORONA_PATHS_H
 
-#include <string>
-#include <exception>
-#include <stdexcept>
-#include <format>
-#include <compare>
-#include <map>
-#include <vector>
-#include <stack>
-#include <functional>
-#include <memory>
-#include <algorithm>
-
 #include "corona-windows-all.h"
 #include "corona-assert_if.hpp"
 #include "corona-constants.hpp"
@@ -27,6 +15,18 @@
 #include "corona-direct2dcontextbase.hpp"
 #include "corona-bitmap_filters.hpp"
 #include "corona-direct2dresources.hpp"
+
+#include <string>
+#include <exception>
+#include <stdexcept>
+#include <format>
+#include <compare>
+#include <map>
+#include <vector>
+#include <stack>
+#include <functional>
+#include <memory>
+#include <algorithm>
 
 namespace corona {
 

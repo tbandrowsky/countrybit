@@ -1,17 +1,19 @@
 #ifndef CORONA_FILE_H
 #define CORONA_FILE_H
 
-#include <exception>
-#include <stdexcept>
-#include <iostream>
-#include <compare>
-
 #include "corona-windows-lite.h"
+#include "corona-messages.hpp"
 #include "corona-queue.hpp"
+#include "corona-function.hpp"
 #include "corona-string_box.hpp"
 #include "corona-constants.hpp"
 #include "corona-messages.hpp"
 #include "corona-function.hpp"
+
+#include <exception>
+#include <stdexcept>
+#include <iostream>
+#include <compare>
 
 namespace corona
 {
@@ -80,9 +82,9 @@ namespace corona
 		{
 			LARGE_INTEGER li;
 			li.QuadPart = params->location;
-			container.ovp.Offset = li.LowPart;
-			container.ovp.OffsetHigh = li.HighPart;
-			BOOL success = ::ReadFile(params->hfile, params->buffer_bytes, params->buffer_size, NULL, (LPOVERLAPPED)&container);
+			job::container.ovp.Offset = li.LowPart;
+			job::container.ovp.OffsetHigh = li.HighPart;
+			BOOL success = ::ReadFile(params->hfile, params->buffer_bytes, params->buffer_size, NULL, (LPOVERLAPPED)&(job::container.ovp));
 			os_result result;
 			std::cout << "Read:" << success << " " << result.message << std::endl;
 			return result.error_code == ERROR_IO_PENDING || result.error_code == ERROR_SUCCESS;
@@ -102,7 +104,28 @@ namespace corona
 		lockable size_locker;
 		HANDLE resize_event;
 
-	protected:
+	public:
+
+		file() :
+			resize_event(NULL)
+		{
+			;
+		}
+
+		file(file&& _srcFile) noexcept
+		{
+			instance = _srcFile.instance;
+			resize_event = _srcFile.resize_event;
+			_srcFile.instance = {};
+		}
+
+		file& operator = (file&& _srcFile) noexcept
+		{
+			instance = _srcFile.instance;
+			resize_event = _srcFile.resize_event;
+			_srcFile.instance = {};
+			return *this;
+		}
 
 		file(job_queue* _queue, const file_path& _filename, file_open_types _file_open_type)
 			: instance(_queue, _filename, INVALID_HANDLE_VALUE),
@@ -167,31 +190,6 @@ namespace corona
 					throw std::logic_error(osr.message.c_str());
 				}
 			}
-		}
-
-		friend class application;
-
-	public:
-
-		file() :
-			resize_event(NULL)
-		{
-			;
-		}
-
-		file(file&& _srcFile) noexcept
-		{
-			instance = _srcFile.instance;
-			resize_event = _srcFile.resize_event;
-			_srcFile.instance = {};
-		}
-
-		file& operator = (file&& _srcFile) noexcept
-		{
-			instance = _srcFile.instance;
-			resize_event = _srcFile.resize_event;
-			_srcFile.instance = {};
-			return *this;
 		}
 
 		file(const file& src) = delete;

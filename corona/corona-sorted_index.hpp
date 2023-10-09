@@ -1,5 +1,12 @@
 #ifndef SORTED_INDEX_H
 #define SORTED_INDEX_H
+
+#include "corona-constants.hpp"
+#include "corona-store_box.hpp"
+#include "corona-string_box.hpp"
+#include "corona-iarray.hpp"
+#include "corona-filterable_iterator.hpp"
+
 #include <memory>
 #include <functional>
 #include <algorithm>
@@ -9,16 +16,10 @@
 #include <stdexcept>
 #include <compare>
 
-#include "corona-constants.hpp"
-#include "corona-store_box.hpp"
-#include "corona-string_box.hpp"
-#include "corona-iarray.hpp"
-#include "corona-filterable_iterator.hpp"
-
 namespace corona {
 
-const int MaxNumberOfLevels = 20;
-const int MaxLevel = MaxNumberOfLevels - 1;
+const int SortedIndexMaxNumberOfLevels = 20;
+const int SortedIndexMaxLevel = SortedIndexMaxNumberOfLevels - 1;
 
 using index_ref = relative_ptr_type;
 
@@ -236,7 +237,7 @@ public:
 		relative_ptr_type header_location = _b->put_object(hdr);
 		phdr = _b->get_object<index_header_type>(header_location);
 
-		index_node new_node = create_node(_b, MaxNumberOfLevels);
+		index_node new_node = create_node(_b, SortedIndexMaxNumberOfLevels);
 		phdr->header_id = new_node.row_id();
 
 		return header_location;
@@ -257,7 +258,7 @@ public:
 
 	static int64_t get_box_size()
 	{
-		return sizeof(index_header_type) + sizeof(relative_ptr_type) * MaxNumberOfLevels + sizeof(data_pair);
+		return sizeof(index_header_type) + sizeof(relative_ptr_type) * SortedIndexMaxNumberOfLevels + sizeof(data_pair);
 	}
 
 	bool pop_front()
@@ -399,7 +400,7 @@ private:
 		double r = ((double)rand() / (RAND_MAX));
 		int level = (int)(log(1. - r) / log(1. - .5));
 		if (level < 1) level = 0;
-		else if (level >= MaxLevel) level = MaxLevel;
+		else if (level >= SortedIndexMaxLevel) level = SortedIndexMaxLevel;
 		return level;
 	}
 
@@ -499,7 +500,7 @@ private:
 	relative_ptr_type update_node(data_pair& kvp, std::function<void(VALUE& existing_value)> predicate)
 	{
 		int k;
-		relative_ptr_type update[MaxNumberOfLevels];
+		relative_ptr_type update[SortedIndexMaxNumberOfLevels];
 		relative_ptr_type q = find_node(update, kvp.first);
 		index_node qnd;
 
@@ -535,7 +536,7 @@ private:
 	bool remove_node(const KEY& key)
 	{
 		int k;
-		relative_ptr_type update[MaxNumberOfLevels], p;
+		relative_ptr_type update[SortedIndexMaxNumberOfLevels], p;
 		index_node qnd, pnd;
 
 		relative_ptr_type q = find_node(update, key);
@@ -576,7 +577,7 @@ private:
 #ifdef	TIME_SKIP_LIST
 		benchmark::auto_timer_type methodtimer("skip_list_type::search");
 #endif
-		relative_ptr_type update[MaxNumberOfLevels];
+		relative_ptr_type update[SortedIndexMaxNumberOfLevels];
 		return find_node(update, key);
 }
 
@@ -585,7 +586,7 @@ private:
 #ifdef	TIME_SKIP_LIST
 		benchmark::auto_timer_type methodtimer("skip_list_type::search");
 #endif
-		relative_ptr_type update[MaxNumberOfLevels];
+		relative_ptr_type update[SortedIndexMaxNumberOfLevels];
 		return find_first(update, key);
 			}
 

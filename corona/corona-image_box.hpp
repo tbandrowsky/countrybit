@@ -1,10 +1,10 @@
 #ifndef CORONA_IMAGE_H
 #define CORONA_IMAGE_H
 
-#include <compare>
-
 #include "corona-store_box.hpp"
 #include "corona-rectangle_box.hpp"
+
+#include <compare>
 
 namespace corona {
 

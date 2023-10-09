@@ -1,18 +1,6 @@
 #ifndef CORONA_DIRECT2DWINDOW_H
 #define CORONA_DIRECT2DWINDOW_H
 
-#include <string>
-#include <exception>
-#include <stdexcept>
-#include <format>
-#include <compare>
-#include <map>
-#include <vector>
-#include <stack>
-#include <functional>
-#include <memory>
-#include <algorithm>
-
 #include "corona-windows-all.h"
 #include "corona-constants.hpp"
 #include "corona-directxadapterbase.hpp"
@@ -25,6 +13,17 @@
 #include "corona-datatransfer.hpp"
 #include "corona-controller.hpp"
 
+#include <string>
+#include <exception>
+#include <stdexcept>
+#include <format>
+#include <compare>
+#include <map>
+#include <vector>
+#include <stack>
+#include <functional>
+#include <memory>
+#include <algorithm>
 
 namespace corona
 {

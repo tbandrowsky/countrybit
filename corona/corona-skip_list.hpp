@@ -1,13 +1,13 @@
 #ifndef CORONA_SKIP_LIST_H
 #define CORONA_SKIP_LIST_H
 
+#include "corona-store_box.hpp"
+
 #include <map>
 #include <functional>
 #include <algorithm>
 #include <iostream>
 #include <compare>
-
-#include "corona-store_box.hpp"
 
 namespace corona {
 

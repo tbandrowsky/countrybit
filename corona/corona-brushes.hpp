@@ -1,18 +1,6 @@
 #ifndef CORONA_BRUSHES_H
 #define CORONA_BRUSHES_H
 
-#include <string>
-#include <exception>
-#include <stdexcept>
-#include <format>
-#include <compare>
-#include <map>
-#include <vector>
-#include <stack>
-#include <functional>
-#include <memory>
-#include <algorithm>
-
 #include "corona-windows-all.h";
 #include "corona-assert_if.hpp";
 #include "corona-constants.hpp";
@@ -29,6 +17,17 @@
 #include "corona-direct2dresources.hpp";
 #include "corona-bitmaps.hpp";
 
+#include <string>
+#include <exception>
+#include <stdexcept>
+#include <format>
+#include <compare>
+#include <map>
+#include <vector>
+#include <stack>
+#include <functional>
+#include <memory>
+#include <algorithm>
 
 namespace corona
 {

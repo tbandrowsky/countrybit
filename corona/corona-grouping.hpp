@@ -1,17 +1,17 @@
 #ifndef CORONA_GROUPING_H
 #define CORONA_GROUPING_H
 
-#include <iostream>
-#include <functional>
-#include <algorithm>
-#include <memory>
-#include <compare>
-
 #include "corona-constants.hpp"
 #include "corona-list_box.hpp"
 #include "corona-sorted_index.hpp"
 #include "corona-filterable_iterator.hpp"
 
+
+#include <iostream>
+#include <functional>
+#include <algorithm>
+#include <memory>
+#include <compare>
 
 namespace corona {
 

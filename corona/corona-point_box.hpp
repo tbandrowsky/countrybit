@@ -1,14 +1,14 @@
 #ifndef CORONA_POINT_BOX_H
 #define CORONA_POINT_BOX_H
 
+#include "corona-store_box.hpp"
+#include "corona-float_box.hpp"
+
 
 #include <cmath>
 #include <iostream>
 #include <numeric>
 #include <compare>
-
-#include "corona-store_box.hpp"
-#include "corona-float_box.hpp"
 
 namespace corona {
 

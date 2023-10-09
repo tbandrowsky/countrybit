@@ -1,6 +1,14 @@
 #ifndef CORONA_STORE_BOX_FILE
 #define CORONA_STORE_BOX_FILE
 
+#include "corona-store_box.hpp"
+#include "corona-constants.hpp"
+#include "corona-sorted_index.hpp"
+#include "corona-queue.hpp"
+#include "corona-function.hpp"
+#include "corona-file.hpp"
+#include "corona-application.hpp"
+
 #include <string>
 #include <iostream>
 #include <memory>
@@ -11,13 +19,6 @@
 #include <stdexcept>
 #include <compare>
 #include <coroutine>
-
-#include "corona-store_box.hpp"
-#include "corona-constants.hpp"
-#include "corona-sorted_index.hpp"
-#include "corona-file.hpp"
-#include "corona-application.hpp"
-#include "corona-function.hpp"
 
 namespace corona {
 
@@ -138,12 +139,12 @@ namespace corona {
 
 	void serialized_box_file_implementation::open_file()
 	{
-		box_file = app->open_file(box_name, file_open_types::open_existing);
+		box_file = file(global_job_queue.get(), box_name, file_open_types::open_existing);
 	}
 
 	void serialized_box_file_implementation::create_file()
 	{
-		box_file = app->open_file(box_name, file_open_types::create_new);
+		box_file = file(global_job_queue.get(), box_name, file_open_types::create_new);
 	}
 
 	serialized_box_file_implementation::serialized_box_file_implementation() : app(nullptr)

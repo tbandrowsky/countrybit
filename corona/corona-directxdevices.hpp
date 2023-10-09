@@ -1,7 +1,13 @@
-#ifndef CORONA_DIRECTORIES_H
-#define CORONA_DIRECTORIES_H
+#ifndef CORONA_DIRECTXDEVICES_H
+#define CORONA_DIRECTXDEVICES_H
 
-module;
+#include "corona-windows-all.h"
+#include "corona-constants.hpp"
+#include "corona-visual.hpp"
+#include "corona-store_box.hpp"
+#include "corona-rectangle_box.hpp"
+#include "corona-point_box.hpp"
+#include "corona-datatransfer.hpp"
 
 #include <string>
 #include <exception>
@@ -14,16 +20,6 @@ module;
 #include <functional>
 #include <memory>
 #include <algorithm>
-
-#include "corona-windows-all.h"
-#include "corona-constants.hpp"
-#include "corona-visual.hpp"
-#include "corona-store_box.hpp"
-#include "corona-rectangle_box.hpp"
-#include "corona-point_box.hpp"
-#include "corona-datatransfer.hpp"
-
-module corona:directxdevices;
 
 namespace corona
 {

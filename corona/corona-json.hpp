@@ -221,9 +221,10 @@ namespace corona {
 			parse_errors.clear();
 			auto jo = std::make_shared<json_array>();
 			const char* start = _object.c_str();
-			parse_array(jo, start, &start);
-			json_navigator jn(jo);
-			return jn;
+			if (parse_array(jo, start, &start)) {
+				json_navigator jn(jo);
+				return jn;
+			}
 		}
 
 	private:
@@ -251,14 +252,16 @@ namespace corona {
 		{
 			bool result = false;
 			std::string temp = "";
+			_src = eat_white(_src);
 			if (*_src == '"')
 			{
+				_src++;
 				result = true;
 				bool parsing = false;
 				while (*_src != '"')
 				{
 					check_line(_src);
-					if (std::iscntrl(*_src))
+					if (*_src < 0 || std::iscntrl(*_src))
 					{
 						_src++;
 						continue;
@@ -300,7 +303,9 @@ namespace corona {
 					{
 						temp += *_src;
 					}
+					_src++;
 				}
+				_result = temp;
 				_src++;
 			}
 			*_modified = _src;
@@ -321,8 +326,8 @@ namespace corona {
 					temp += *_src;
 					_src++;
 				}
-				_src++;
-				result = std::strtod(temp.c_str(), nullptr);
+				_result = std::strtod(temp.c_str(), nullptr);
+				result = true;
 			}
 			*_modified = _src;
 			return result;
@@ -340,11 +345,13 @@ namespace corona {
 			{
 				auto js = std::make_shared<json_string>();
 				js->value = new_string_value;
+				_value = js;
 			}
 			else if (parse_number(new_number_value, _src, &_src))
 			{
 				auto js = std::make_shared<json_double>();
 				js->value = new_number_value;
+				_value = js;
 			}
 			else if (parse_array(new_array_value, _src, &_src))
 			{
@@ -376,18 +383,30 @@ namespace corona {
 				if (!_array) {
 					_array = std::make_shared<json_array>();
 				}
-
+				_src++;
 				while (*_src && *_src != ']') {
 					check_line(_src);
 					std::shared_ptr<json_value> value;
-					if (parse_value(value, _src, _modified)) {
+					if (parse_value(value, _src, &_src)) {
 						_array->elements.push_back(value);
 					}
 					_src = eat_white(_src);
-					if (*_src != ',' && *_src != ']') {
+					if (*_src == ',') {
+						_src++;
+						_src = eat_white(_src);
+					}
+					else if (*_src == ']')
+					{
+					}
+					else if (*_src)
+					{
+						_src++;
+						_src = eat_white(_src);
+					}
+					else 
+					{
 						error("parse_array", "Comma or end of array expected.");
 					}
-					_src++;
 				}
 				_src++;
 			}
@@ -403,13 +422,15 @@ namespace corona {
 			_src = eat_white(_src);
 			if (*_src == '{')
 			{
+				_src++;
 				result = true;
 				_object = std::make_shared<json_object>();
 				std::string member_name;
 				enum parse_object_states {
 					parsing_name,
 					parsing_colon,
-					parsing_value
+					parsing_value,
+					parsing_comma
 				};
 				parse_object_states parse_object_state = parse_object_states::parsing_name;
 				while (*_src && *_src != '}')
@@ -440,11 +461,24 @@ namespace corona {
 					{
 						std::shared_ptr<json_value> member_value;
 						if (parse_value(member_value, _src, &_src)) {
+							parse_object_state = parse_object_states::parsing_comma;
 							_object->members[member_name] = member_value;
 						}
 						else
 						{
 							error("parse_value", std::format("Invalid value for \"{0}\".", member_name));
+						}
+					}
+					else if (parse_object_state == parse_object_states::parsing_comma)
+					{
+						_src = eat_white(_src);
+						if (*_src == ',') {
+							_src++;
+							parse_object_state = parse_object_states::parsing_name;
+						}
+						else
+						{
+							error("parse_value", std::format("Expected a comma\".", member_name));
 						}
 					}
 				}
@@ -455,20 +489,35 @@ namespace corona {
 		}
 	};
 
-	json_navigator operator ""_json_array(const char* _src)
-	{
-		json_parser parser;
-		auto result = parser.parse_array(_src);
-		return result;
-	}
 
-	json_navigator operator ""_json_object(const char* _src)
-	{
-		json_parser parser;
-		auto result = parser.parse_object(_src);
-		return result;
-	}
+}
 
+corona::json_navigator operator ""_json_array(const char* _src, size_t _length)
+{
+	corona::json_parser parser;
+	auto result = parser.parse_array(_src);
+	return result;
+}
+
+corona::json_navigator operator ""_json_object(const char* _src, size_t _length)
+{
+	corona::json_parser parser;
+	auto result = parser.parse_object(_src);
+	return result;
+}
+
+corona::json_navigator operator ""_json_array(const char* _src)
+{
+	corona::json_parser parser;
+	auto result = parser.parse_array(_src);
+	return result;
+}
+
+corona::json_navigator operator ""_json_object(const char* _src)
+{
+	corona::json_parser parser;
+	auto result = parser.parse_object(_src);
+	return result;
 }
 
 #endif

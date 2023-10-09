@@ -1,16 +1,6 @@
 #ifndef CORONA_DIRECTAPPLICATION_H
 #define CORONA_DIRECTAPPLICATION_H
 
-
-#include <memory>
-#include <list>
-#include <string>
-#include <iostream>
-#include <compare>
-
-#include <io.h>
-#include <fcntl.h>
-
 #include "corona-windows-all.h"
 #include "corona-constants.hpp"
 #include "corona-store_box.hpp"
@@ -26,6 +16,15 @@
 #include "corona-direct2dcontext.hpp"
 #include "corona-direct2dwindow.hpp"
 #include "corona-presentation.hpp"
+
+#include <memory>
+#include <list>
+#include <string>
+#include <iostream>
+#include <compare>
+
+#include <io.h>
+#include <fcntl.h>
 
 
 namespace corona

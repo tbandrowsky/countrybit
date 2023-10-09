@@ -1,6 +1,15 @@
 #ifndef CORONA_DIRECTXADAPTERBASE_H
 #define CORONA_DIRECTXADAPTERBASE_H
 
+#include "corona-windows-all.h"
+#include "corona-constants.hpp"
+#include "corona-directxdevices.hpp"
+#include "corona-visual.hpp"
+#include "corona-store_box.hpp"
+#include "corona-rectangle_box.hpp"
+#include "corona-point_box.hpp"
+#include "corona-datatransfer.hpp"
+
 #include <string>
 #include <exception>
 #include <stdexcept>
@@ -12,16 +21,6 @@
 #include <functional>
 #include <memory>
 #include <algorithm>
-
-#include "corona-windows-all.h"
-#include "corona-constants.hpp"
-#include "corona-directxdevices.hpp"
-#include "corona-visual.hpp"
-#include "corona-store_box.hpp"
-#include "corona-rectangle_box.hpp"
-#include "corona-point_box.hpp"
-#include "corona-datatransfer.hpp"
-
 
 namespace corona
 {

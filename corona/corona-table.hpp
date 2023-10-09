@@ -1,6 +1,12 @@
 #ifndef CORONA_TABLE_H
 #define CORONA_TABLE_H
 
+#include "corona-constants.hpp"
+#include "corona-store_box.hpp"
+#include "corona-assert_if.hpp"
+#include "corona-string_box.hpp"
+#include "corona-filterable_iterator.hpp"
+
 #include <iostream>
 #include <string>
 #include <exception>
@@ -10,12 +16,6 @@
 #include <algorithm>
 #include <stdexcept>
 #include <compare>
-
-#include "corona-constants.hpp"
-#include "corona-store_box.hpp"
-#include "corona-assert_if.hpp"
-#include "corona-string_box.hpp"
-#include "corona-filterable_iterator.hpp"
 
 namespace corona {
 

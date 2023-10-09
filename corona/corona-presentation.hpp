@@ -1,13 +1,6 @@
 #ifndef CORONA_PRESENTATION_H
 #define CORONA_PRESENTATION_H
 
-#include <memory>
-#include <string>
-#include <vector>
-#include <utility>
-#include <compare>
-#include <functional>
-
 #include "corona-windows-all.h"
 #include "corona-constants.hpp"
 #include "corona-visual.hpp"
@@ -21,6 +14,13 @@
 #include "corona-application_base.hpp"
 #include "corona-direct2dwindow.hpp"
 #include "corona-json.hpp"
+
+#include <memory>
+#include <string>
+#include <vector>
+#include <utility>
+#include <compare>
+#include <functional>
 
 namespace corona {
 
@@ -1975,8 +1975,6 @@ namespace corona {
 
 		void clear();
 
-		menu_item& create_menu();
-
 		void on_key_up(int _control_id, std::function< void(key_up_event) >);
 		void on_key_down(int _control_id, std::function< void(key_down_event) >);
 		void on_mouse_move(std::weak_ptr<control_base> _base, std::function< void(mouse_move_event) >);
@@ -2024,7 +2022,6 @@ namespace corona {
 
 		virtual page& create_page(std::string _name, std::function<void(page& pg)> _settings = nullptr);
 		virtual void select_page(const std::string& _page_name);
-		menu_item& create_menu();
 
 		template <typename control_type> control_type& find(int _id)
 		{
@@ -2432,11 +2429,11 @@ namespace corona {
 			mouse_right_down = false;
 		}
 
-		if (mouse_left_down.changed_to(false) && _left_click != nullptr) {
+		if (mouse_left_down.changed_to(false) && _left_click) {
 			_left_click(this);
 		}
 
-		if (mouse_right_down.changed_to(false) && _right_click != nullptr) {
+		if (mouse_right_down.changed_to(false) && _right_click) {
 			_right_click(this);
 		}
 
@@ -2704,6 +2701,7 @@ namespace corona {
 		//			std::cout << indent << " " << typeid(*this).name() << " ->navigate " << string_name << std::endl;
 			return temp;
 		}
+		return *this;
 	}
 
 	container_control& container_control::set_origin(measure _x, measure _y)
@@ -4089,7 +4087,8 @@ namespace corona {
 					dc->Clear(color);
 				}
 
-				if (on_draw != nullptr) {
+				if (on_draw) 
+				{
 					on_draw(this);
 				}
 				else

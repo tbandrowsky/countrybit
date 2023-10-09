@@ -1,9 +1,9 @@
 #ifndef CORONA_MIDI_BOX_H
 #define CORONA_MIDI_BOX_H
 
-#include <compare>
-
 #include "corona-store_box.hpp"
+
+#include <compare>
 
 namespace corona {
 

@@ -1,16 +1,15 @@
 #ifndef CORONA_QUEUE_H
 #define CORONA_QUEUE_H
 
+#include "corona-windows-lite.h"
+#include "corona-store_box.hpp"
+#include "corona-constants.hpp"
 
 #include <coroutine>
 #include <vector>
 #include <thread>
 #include <atomic>
 #include <compare>
-
-#include "corona-windows-lite.h"
-#include "corona-store_box.hpp"
-#include "corona-constants.hpp"
 
 namespace corona {
 
@@ -172,6 +171,8 @@ namespace corona {
 		int numberOfProcessors();
 
 	};
+
+	std::unique_ptr<job_queue> global_job_queue;
 
 	void job_notify::notify()
 	{

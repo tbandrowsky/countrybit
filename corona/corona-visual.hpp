@@ -1,13 +1,6 @@
 #ifndef CORONA_VISUAL
 #define CORONA_VISUAL
 
-#include <list>
-#include <vector>
-#include <string>
-#include <memory>
-#include <compare>
-#include <functional>
-
 #include "corona-windows-all.h"
 
 #include "corona-constants.hpp"
@@ -15,6 +8,13 @@
 #include "corona-color_box.hpp"
 #include "corona-point_box.hpp"
 #include "corona-rectangle_box.hpp"
+
+#include <list>
+#include <vector>
+#include <string>
+#include <memory>
+#include <compare>
+#include <functional>
 
 namespace corona {
 

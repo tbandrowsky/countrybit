@@ -2,16 +2,16 @@
 #ifndef CORONA_FUNCTION_H
 #define CORONA_FUNCTION_H
 
+#include "corona-windows-all.h"
+#include "corona-queue.hpp"
+
 #include <functional>
 #include <coroutine>
 #include <iostream>
 #include <memory>
 #include <compare>
 
-#include "corona-windows-all.h";
-#include "corona-queue.hpp";
-
-namespace
+namespace corona
 {
 
 	class task_job : public job
@@ -321,6 +321,5 @@ namespace
 
 	};
 }
-
 
 #endif

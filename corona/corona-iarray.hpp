@@ -1,6 +1,10 @@
 #ifndef CORONA_IARRAY_H
 #define CORONA_IARRAY_H
 
+#include "corona-constants.hpp";
+#include "corona-assert_if.hpp";
+#include "corona-filterable_iterator.hpp";
+#include "corona-store_box.hpp";
 
 #include <functional>
 #include <algorithm>
@@ -11,11 +15,6 @@
 #include <iterator>
 #include <stdexcept>
 #include <compare>
-
-#include "corona-constants.hpp";
-#include "corona-assert_if.hpp";
-#include "corona-filterable_iterator.hpp";
-#include "corona-store_box.hpp";
 
 namespace corona {
 
