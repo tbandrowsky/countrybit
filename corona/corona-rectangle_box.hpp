@@ -43,6 +43,20 @@ namespace corona {
 			if (r1.w < 0) r1.w = 0;
 			return r1;
 		}
+
+		static rectangle join(rectangle r0, rectangle r1)
+		{
+			rectangle rv = r0;
+			double ex, ey;
+
+			rv.x = std::min(r0.x, r1.x);
+			rv.y = std::min(r0.y, r1.y);
+			ex = std::max(r0.right(), r1.right());
+			ey = std::max(r0.bottom(), r1.bottom());
+
+			return r1;
+		}
+
 	};
 
 	class rectangle_box : protected boxed<rectangle>

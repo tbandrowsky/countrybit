@@ -242,7 +242,6 @@ namespace corona
 			return aw;
 		}
 
-
 		auto read(uint64_t location, void* _buffer, int _buffer_length)
 		{
 			async_io_task<file_read_job, file_result> aw;

@@ -41,6 +41,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-float_box.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-function.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-grouping.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-httpclient.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-iarray.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-image_box.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-int_box.hpp" />
@@ -72,6 +73,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-utility.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-visual.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-wave_box.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-wchart_convert.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-windows-all.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-windows-lite.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona.hpp" />

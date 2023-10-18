@@ -1,6 +1,7 @@
 #ifndef CORONA_H
 #define CORONA_H
 
+#include "corona-wchart_convert.hpp"
 #include "corona-utility.hpp"
 #include "corona-read_all_string.hpp"
 #include "corona-function.hpp"

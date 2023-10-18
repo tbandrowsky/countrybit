@@ -27,6 +27,7 @@ namespace corona
 		std::shared_ptr<controller> currentController;
 
 	public:
+
 		virtual HWND getMainWindow() = 0;
 		virtual HWND getTooltipWindow() = 0;
 		virtual HWND createWindow(DWORD window_id, LPCTSTR		lpClassName, LPCTSTR		lpWindowName, DWORD       dwStyle, rectangle bounds, LPVOID		lpParam, HFONT		font) = 0;

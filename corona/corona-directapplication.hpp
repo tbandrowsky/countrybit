@@ -224,7 +224,7 @@ namespace corona
 
 			auto winroot = pfactory->getWindow(hwndRoot).lock();
 
-			if (winroot == nullptr)
+			if (!winroot)
 				return;
 
 			winroot->beginDraw(failedDevice);
@@ -331,7 +331,7 @@ namespace corona
 
 		while (fontExtractedName && !hfont)
 		{
-			hfont = CreateFontA(-ifontSize, 0, 0, 0, bold ? FW_BOLD : FW_NORMAL, italic, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH, fontExtractedName);
+			hfont = CreateFont(-ifontSize, 0, 0, 0, bold ? FW_BOLD : FW_NORMAL, italic, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH, fontExtractedName);
 			fontExtractedName = fontList.next_token(',', state);
 		}
 		return hfont;
@@ -349,7 +349,7 @@ namespace corona
 
 		while (fontExtractedName && !hfont)
 		{
-			hfont = CreateFontA(ifontSize, 0, 0, 0, bold ? FW_BOLD : FW_NORMAL, italic, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH, fontExtractedName);
+			hfont = CreateFont(ifontSize, 0, 0, 0, bold ? FW_BOLD : FW_NORMAL, italic, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, VARIABLE_PITCH, fontExtractedName);
 			fontExtractedName = fontList.next_token(',', state);
 		}
 		return hfont;
@@ -372,7 +372,7 @@ namespace corona
 			srcFont.lfItalic = italic;
 			fontExtractedName = fontList.next_token(',', state);
 
-			hfont = ::CreateFontIndirectA(&srcFont);
+			hfont = ::CreateFontIndirect(&srcFont);
 		}
 		return hfont;
 	}
@@ -514,10 +514,12 @@ namespace corona
 					break;
 				case CBN_SELCHANGE:
 				{
-					wchar_t window_class[500];
-					if (::RealGetWindowClassW(controlWindow, window_class, sizeof(window_class) - 1)) {
-						if (wcscmp(WC_COMBOBOX, window_class) ||
-							wcscmp(WC_COMBOBOXEX, window_class) == 0) {
+					char window_class[500];
+					if (::RealGetWindowClass(controlWindow, window_class, sizeof(window_class) - 1)) {
+						if (
+							(strcmp(WC_COMBOBOX, window_class) == 0) ||
+							(strcmp(WC_COMBOBOXEX, window_class) == 0)
+							) {
 							currentController->onDropDownChanged(controlId);
 						}
 						else
@@ -568,7 +570,7 @@ namespace corona
 				case NM_CLICK:
 				{
 
-					::GetClassNameA(lpnm->hwndFrom, className, sizeof(className) - 1);
+					::GetClassName(lpnm->hwndFrom, className, sizeof(className) - 1);
 					if (strcmp(className, "SysLink") == 0) {
 						auto plink = (PNMLINK)lParam;
 						auto r = ::ShellExecuteW(NULL, L"open", plink->item.szUrl, NULL, NULL, SW_SHOWNORMAL);
@@ -857,8 +859,8 @@ namespace corona
 		wcMain.hbrBackground = NULL;
 		wcMain.lpszMenuName = NULL;
 		wcMain.lpszClassName = "Corona2dBase";
-		if (!RegisterClassA(&wcMain)) {
-			::MessageBoxA(NULL, "Could not start because the  class could not be registered", "Couldn't Start", MB_ICONERROR);
+		if (!RegisterClass(&wcMain)) {
+			::MessageBox(NULL, "Could not start because the  class could not be registered", "Couldn't Start", MB_ICONERROR);
 			return 0;
 		}
 
@@ -876,14 +878,14 @@ namespace corona
 
 		setController(_firstController);
 
-		hwndRoot = CreateWindowExA(dwExStyle,
+		hwndRoot = CreateWindowEx(dwExStyle,
 			wcMain.lpszClassName, _title,
 			dwStyle | WS_CLIPSIBLINGS,
 			CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
 			NULL, NULL, hinstance, NULL);
 
 		if (!hwndRoot) {
-			MessageBoxA(NULL, "Could not start because of a problem creating the main window.", _title, MB_OK);
+			MessageBox(NULL, "Could not start because of a problem creating the main window.", _title, MB_OK);
 			return FALSE;
 		}
 
@@ -942,8 +944,8 @@ namespace corona
 		wcMain.hbrBackground = NULL;
 		wcMain.lpszMenuName = NULL;
 		wcMain.lpszClassName = "Corona2dBase";
-		if (!RegisterClassA(&wcMain)) {
-			::MessageBoxA(NULL, "Could not start because the main window class could not be registered", "Couldn't Start", MB_ICONERROR);
+		if (!RegisterClass(&wcMain)) {
+			::MessageBox(NULL, "Could not start because the main window class could not be registered", "Couldn't Start", MB_ICONERROR);
 			return 0;
 		}
 
@@ -961,14 +963,14 @@ namespace corona
 
 		setController(_firstController);
 
-		hwndRoot = CreateWindowExA(dwExStyle,
+		hwndRoot = CreateWindowEx(dwExStyle,
 			wcMain.lpszClassName, _title,
 			dwStyle | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
 			CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
 			NULL, NULL, hinstance, NULL);
 
 		if (!hwndRoot) {
-			MessageBoxA(NULL, "Could not start because of a problem creating the main window.", _title, MB_OK);
+			MessageBox(NULL, "Could not start because of a problem creating the main window.", _title, MB_OK);
 			return FALSE;
 		}
 
@@ -1040,23 +1042,23 @@ namespace corona
 	void directApplicationWin32::setEditText(int textControlId, const std::string& _string)
 	{
 		HWND control = ::GetDlgItem(hwndRoot, textControlId);
-		::SetWindowTextA(control, _string.c_str());
+		::SetWindowText(control, _string.c_str());
 	}
 
 	void directApplicationWin32::setEditText(int textControlId, const char* _string)
 	{
 		HWND control = ::GetDlgItem(hwndRoot, textControlId);
-		::SetWindowTextA(control, _string);
+		::SetWindowText(control, _string);
 	}
 
 	std::string directApplicationWin32::getEditText(int textControlId)
 	{
 		std::string value = "";
 		HWND control = ::GetDlgItem(hwndRoot, textControlId);
-		int length = ::GetWindowTextLengthA(control) + 1;
+		int length = ::GetWindowTextLength(control) + 1;
 		char* buffer = new char[length];
 		if (buffer) {
-			::GetWindowTextA(control, buffer, length);
+			::GetWindowText(control, buffer, length);
 			value = buffer;
 			delete[] buffer;
 		}
@@ -1098,7 +1100,7 @@ namespace corona
 	void directApplicationWin32::setComboSelectedIndex(int ddlControlId, int index)
 	{
 		HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
-		::SendMessageA(control, CB_SETCURSEL, index, NULL);
+		::SendMessage(control, CB_SETCURSEL, index, NULL);
 	}
 
 	void directApplicationWin32::setComboSelectedText(int ddlControlId, std::string& _text)
@@ -1109,18 +1111,18 @@ namespace corona
 	void directApplicationWin32::setComboSelectedText(int ddlControlId, const char* _text)
 	{
 		HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
-		int index = ::SendMessageA(control, CB_FINDSTRINGEXACT, (WPARAM)-1, (LPARAM)_text);
-		::SendMessageA(control, CB_SETCURSEL, index, NULL);
+		int index = ::SendMessage(control, CB_FINDSTRINGEXACT, (WPARAM)-1, (LPARAM)_text);
+		::SendMessage(control, CB_SETCURSEL, index, NULL);
 	}
 
 	void directApplicationWin32::setComboSelectedValue(int ddlControlId, int value)
 	{
 		HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
-		int count = ::SendMessageA(control, CB_GETCOUNT, NULL, NULL);
+		int count = ::SendMessage(control, CB_GETCOUNT, NULL, NULL);
 		for (int i = 0; i < count; i++) {
-			int data = (int)::SendMessageA(control, CB_GETITEMDATA, i, 0);
+			int data = (int)::SendMessage(control, CB_GETITEMDATA, i, 0);
 			if (data == value) {
-				::SendMessageA(control, CB_SETCURSEL, i, NULL);
+				::SendMessage(control, CB_SETCURSEL, i, NULL);
 				break;
 			}
 		}
@@ -1129,7 +1131,7 @@ namespace corona
 	void directApplicationWin32::clearComboItems(int ddlControlId)
 	{
 		HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
-		::SendMessageA(control, CB_RESETCONTENT, NULL, NULL);
+		::SendMessage(control, CB_RESETCONTENT, NULL, NULL);
 	}
 
 	void directApplicationWin32::addComboItem(int ddlControlId, std::string& _text, int _data)
@@ -1140,9 +1142,9 @@ namespace corona
 	void directApplicationWin32::addComboItem(int ddlControlId, const char* _text, int _data)
 	{
 		HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
-		int newItemIndex = (int)::SendMessageA(control, CB_ADDSTRING, NULL, (LPARAM)_text);
+		int newItemIndex = (int)::SendMessage(control, CB_ADDSTRING, NULL, (LPARAM)_text);
 		if (newItemIndex != CB_ERR) {
-			int err = ::SendMessageA(control, CB_SETITEMDATA, newItemIndex, (LPARAM)_data);
+			int err = ::SendMessage(control, CB_SETITEMDATA, newItemIndex, (LPARAM)_data);
 		}
 	}
 
@@ -1183,7 +1185,7 @@ namespace corona
 	void directApplicationWin32::setListSelectedIndex(int ddlControlId, int index)
 	{
 		HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
-		::SendMessageA(control, LB_SETCURSEL, index, NULL);
+		::SendMessage(control, LB_SETCURSEL, index, NULL);
 	}
 
 	void directApplicationWin32::setListSelectedText(int ddlControlId, std::string& _text)
@@ -1194,18 +1196,18 @@ namespace corona
 	void directApplicationWin32::setListSelectedText(int ddlControlId, const char* _text)
 	{
 		HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
-		int index = ::SendMessageA(control, LB_FINDSTRINGEXACT, (WPARAM)-1, (LPARAM)_text);
-		::SendMessageA(control, LB_SETCURSEL, index, NULL);
+		int index = ::SendMessage(control, LB_FINDSTRINGEXACT, (WPARAM)-1, (LPARAM)_text);
+		::SendMessage(control, LB_SETCURSEL, index, NULL);
 	}
 
 	void directApplicationWin32::setListSelectedValue(int ddlControlId, int value)
 	{
 		HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
-		int count = ::SendMessageA(control, LB_GETCOUNT, NULL, NULL);
+		int count = ::SendMessage(control, LB_GETCOUNT, NULL, NULL);
 		for (int i = 0; i < count; i++) {
-			int data = (int)::SendMessageA(control, LB_GETITEMDATA, i, 0);
+			int data = (int)::SendMessage(control, LB_GETITEMDATA, i, 0);
 			if (data == value) {
-				::SendMessageA(control, LB_SETCURSEL, i, NULL);
+				::SendMessage(control, LB_SETCURSEL, i, NULL);
 				break;
 			}
 		}
@@ -1214,7 +1216,7 @@ namespace corona
 	void directApplicationWin32::clearListItems(int ddlControlId)
 	{
 		HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
-		::SendMessageA(control, LB_RESETCONTENT, NULL, NULL);
+		::SendMessage(control, LB_RESETCONTENT, NULL, NULL);
 	}
 
 	void directApplicationWin32::addListItem(int ddlControlId, std::string& _text, int _data)
@@ -1225,9 +1227,9 @@ namespace corona
 	void directApplicationWin32::addListItem(int ddlControlId, const char* _text, int _data)
 	{
 		HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
-		int newItemIndex = (int)::SendMessageA(control, LB_ADDSTRING, NULL, (LPARAM)_text);
+		int newItemIndex = (int)::SendMessage(control, LB_ADDSTRING, NULL, (LPARAM)_text);
 		if (newItemIndex != LB_ERR) {
-			int err = ::SendMessageA(control, LB_SETITEMDATA, newItemIndex, (LPARAM)_data);
+			int err = ::SendMessage(control, LB_SETITEMDATA, newItemIndex, (LPARAM)_data);
 		}
 	}
 
@@ -1263,7 +1265,7 @@ namespace corona
 
 		HANDLE hfind = INVALID_HANDLE_VALUE;
 
-		hfind = ::FindFirstFileA(searchPath, &findData);
+		hfind = ::FindFirstFile(searchPath, &findData);
 		if (hfind != INVALID_HANDLE_VALUE) {
 			do
 			{
@@ -1279,12 +1281,12 @@ namespace corona
 					char recurseBuff[MAX_PATH + 8];
 					strncpy_s(recurseBuff, _path, MAX_PATH);
 					recurseBuff[MAX_PATH] = 0;
-					::PathAddBackslashA(recurseBuff);
-					::PathAppendA(recurseBuff, findData.cFileName);
+					::PathAddBackslash(recurseBuff);
+					::PathAppend(recurseBuff, findData.cFileName);
 					addComboItem(ddlControlId, recurseBuff, 0);
 					addFoldersToCombo(ddlControlId, recurseBuff);
 				}
-			} while (FindNextFileA(hfind, &findData) != 0);
+			} while (FindNextFile(hfind, &findData) != 0);
 		}
 
 	}
@@ -1341,7 +1343,7 @@ namespace corona
 
 		HANDLE hfind = INVALID_HANDLE_VALUE;
 
-		hfind = ::FindFirstFileA(searchPath, &findData);
+		hfind = ::FindFirstFile(searchPath, &findData);
 		if (hfind != INVALID_HANDLE_VALUE) {
 			do
 			{
@@ -1357,12 +1359,12 @@ namespace corona
 					char recurseBuff[MAX_PATH + 8];
 					strncpy_s(recurseBuff, _path, MAX_PATH);
 					recurseBuff[MAX_PATH] = 0;
-					::PathAddBackslashA(recurseBuff);
-					::PathAppendA(recurseBuff, findData.cFileName);
+					::PathAddBackslash(recurseBuff);
+					::PathAppend(recurseBuff, findData.cFileName);
 					addComboItem(ddlControlId, recurseBuff, 0);
 					addFoldersToCombo(ddlControlId, recurseBuff);
 				}
-			} while (FindNextFileA(hfind, &findData) != 0);
+			} while (FindNextFile(hfind, &findData) != 0);
 		}
 	}
 
@@ -1405,13 +1407,13 @@ namespace corona
 	void directApplicationWin32::addListViewItem(int ddlControlId, const char* _text, LPARAM _data)
 	{
 		HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
-		LVITEMA lvitem;
+		LVITEM lvitem;
 		ZeroMemory(&lvitem, sizeof(lvitem));
 		lvitem.mask = LVIF_TEXT | LVIF_PARAM;
 		lvitem.iItem = ListView_GetItemCount(control);
 		lvitem.pszText = (LPSTR)_text;
 		lvitem.lParam = _data;
-		ListView_InsertItem(control, &lvitem);
+		bool success = ::SendMessage(control, LVM_INSERTITEMA, 0, (LPARAM)&lvitem);
 	}
 
 	void directApplicationWin32::addListViewColumn(int ddlControlId,
@@ -1421,7 +1423,7 @@ namespace corona
 		visual_alignment _alignment)
 	{
 		HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
-		LVCOLUMNA lvitem;
+		LVCOLUMN lvitem;
 		ZeroMemory(&lvitem, sizeof(lvitem));
 		lvitem.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT | LVCF_SUBITEM;
 		lvitem.iSubItem = column_id;
@@ -1429,22 +1431,22 @@ namespace corona
 		lvitem.cchTextMax = 0;
 		lvitem.fmt = LVCFMT_LEFT;
 		lvitem.cx = _width;
-		ListView_InsertColumn(control, column_id, &lvitem);
+		bool success = ::SendMessage(control, LVM_INSERTCOLUMNA, column_id, (LPARAM)&lvitem);
 	}
 
 	void directApplicationWin32::addListViewRow(int ddlControlId, LPARAM _data, const std::vector<char*>& _items)
 	{
 		HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
 
-		LVITEMA lvitem;
+		LVITEM lvitem;
 		ZeroMemory(&lvitem, sizeof(lvitem));
 		lvitem.mask = LVIF_TEXT | LVIF_PARAM;
 		lvitem.iItem = ListView_GetItemCount(control);
 		lvitem.iSubItem = 0;
-		lvitem.pszText = (LPSTR)_items[0];
+		lvitem.pszText = _items[0];
 		lvitem.cchTextMax = 0;
 		lvitem.lParam = _data;
-		bool success = ListView_InsertItem(control, &lvitem);
+		bool success =  ListView_InsertItem(control, &lvitem);
 		int row = lvitem.iItem;
 
 		ZeroMemory(&lvitem, sizeof(lvitem));
@@ -1815,7 +1817,7 @@ namespace corona
 	void directApplicationWin32::setSysLinkText(int ddlControlId, const char* _text)
 	{
 		HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
-		::SetWindowTextA(control, _text);
+		::SetWindowText(control, _text);
 	}
 
 	class WinHttpSession {
@@ -1944,7 +1946,7 @@ namespace corona
 		ofn.Flags = OFN_EXPLORER | OFN_HIDEREADONLY;
 		ofn.lpstrDefExt = _defaultExtension;
 
-		retval = GetSaveFileNameA(&ofn);
+		retval = GetSaveFileName(&ofn);
 		if (retval)
 			_saveFileName = szFileName;
 

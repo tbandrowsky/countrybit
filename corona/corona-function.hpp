@@ -124,6 +124,7 @@ namespace corona
 			application::get_application()->add_job(&tj);
 			std::cout << this << ", task await_suspend away:" << GetCurrentThreadId() << std::endl;
 			::WaitForSingleObject(hevent, INFINITE);
+			::CloseHandle(hevent);
 			std::cout << "task await_suspend finished:" << GetCurrentThreadId() << std::endl;
 			_handle.resume();
 		}
@@ -213,6 +214,7 @@ namespace corona
 			if (my_job.run()) {
 				std::cout << this << ", async_io_task await_suspend away:" << GetCurrentThreadId() << std::endl;
 				::WaitForSingleObject(hevent, INFINITE);
+				::CloseHandle(hevent);
 				std::cout << "async_io_task await_suspend finished:" << GetCurrentThreadId() << std::endl;
 			}
 			else {

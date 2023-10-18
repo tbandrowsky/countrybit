@@ -927,134 +927,204 @@ namespace corona {
 		virtual point get_remaining(point _ctx);
 	};
 
-	class data_scroller
+	using control_json_mapper = std::function<std::weak_ptr<control_base>(json_navigator& _array, int _index)>;
+
+	class array_data_source 
 	{
-		table_data data;
-		control_base* parent;
+	public:
+		json_navigator		data;
+		control_json_mapper data_to_control;
+	};
 
-		void update_children(control_base* _target);
-		std::map<int, bool> selected_indeces;
+	class column_view_layout :
+		public column_layout
+	{
+		array_data_source item_source;
+		std::vector<std::shared_ptr<control_base>> items; 
+		std::vector<int> page_to_item_index;
+		std::vector<int> item_to_page_index;
+		// we keep the set of controls here on the back end, because they are small as they are not dragging around any 
+		// back end bitmaps or windows.  (arranging doesn't create the assets on a control, create does)
+		rectangle view_port;
+		rectangle child_area;
 
-		int current_scroll_location;
-		int current_scroll_page;
-		int current_item;
-		double page_size;
-		bool size_valid;
+		int selected_page_index;
+		int selected_item_index;
+
+		void position_children()
+		{
+			child_area = bounds;
+			view_port.w = bounds.w;
+			view_port.h = bounds.h;
+			children.clear();
+
+			for (auto item : items)
+			{
+				child_area = rectangle_math::join(child_area, item->get_bounds());
+				if (rectangle_math::contains(view_port, item->get_bounds().x, item->get_bounds().y) ||
+					rectangle_math::contains(view_port, item->get_bounds().right(), item->get_bounds().y) ||
+					rectangle_math::contains(view_port, item->get_bounds().right(), item->get_bounds().bottom()) ||
+					rectangle_math::contains(view_port, item->get_bounds().x, item->get_bounds().bottom()))
+				{
+					children.push_back(item);
+				}
+			}
+		}
+
+		void check_scroll()
+		{
+			if (selected_item_index > item_source.data.size()) 
+			{
+				selected_item_index = item_source.data.size() - 1;
+				selected_page_index = item_to_page_index[selected_item_index];
+			}
+			if (selected_item_index < 0)
+			{
+				selected_item_index = 0;
+				selected_page_index = 0;
+			}
+		}
 
 	public:
 
-		std::function<control_base* (table_data& td, int index, bool selected, bool navigated)> mapper;
-
-		data_scroller(control_base* _parent) : parent(_parent)
+		column_view_layout() 
 		{
-			size_valid = false;
+			view_port = {};
+			child_area = {};
+			selected_item_index = 0;
 		}
 
-		data_scroller(control_base* _parent, table_data& td) : parent(_parent)
+		column_view_layout(container_control* _parent, int _id) : column_layout(_parent, _id) 
 		{
-			data = td;
-			data.items.size();
-			size_valid = false;
+			view_port = {};
+			child_area = {};
+			selected_item_index = 0;
 		}
 
-		data_scroller operator = (table_data& td)
+		virtual ~column_view_layout() 
 		{
-			data = td;
-			size_valid = false;
-			return *this;
+			;
 		}
 
-		void generate_items(rectangle _ctx)
+		void set_item_source(array_data_source _item_source)
 		{
-			// loop through the items and call the mapper and put the data into the children
-			// parent->children.clear();
+			item_source = _item_source;
+			selected_item_index = 0;
+		}
 
-			// we don't need to do this on every frame, so
-			if (!size_valid) {
+		virtual void arrange(rectangle _ctx)
+		{
+			children.clear();
+			items.clear();
 
-				size_valid = true;
+			int i;
+			for (i = 0; i < item_source.data.size(); i++)
+			{
+				auto cb = item_source.data_to_control(item_source.data, i);
+				if (auto sp = cb.lock()) {
+					children.push_back(sp);
+					items.push_back(sp);
+				}
+			}
+
+			column_layout::arrange(_ctx);
+
+			page_to_item_index.clear();
+			item_to_page_index.clear();
+			view_port.w = _ctx.w;
+			view_port.h = _ctx.h;
+			double h = 0.0;
+			int current_page = -1;
+			int index = 0;
+			for (auto item : items) 
+			{
+				h += item->get_bounds().h;
+				if (h > view_port.h || current_page < 0) {
+					current_page++;
+					page_to_item_index.push_back(index);
+				}
+				item_to_page_index.push_back(current_page);
+				index++;
 			}
 		}
 
 		void line_down()
 		{
-			size_valid = false;
+			selected_item_index--;
+			check_scroll();
+
+			auto& temp = items[ selected_item_index ];
+			view_port.y -= temp->get_bounds().h;
+			position_children();
 		}
 
 		void line_up()
 		{
-			size_valid = false;
+			selected_item_index++;
+			check_scroll();
+			auto& temp = items[selected_item_index];
+			view_port.y += temp->get_bounds().h;
+			position_children();
 		}
 
 		void page_up()
 		{
-			size_valid = false;
+			selected_page_index--;
+			if (selected_page_index < 0)
+				selected_page_index = 0;
+			selected_item_index = page_to_item_index[selected_page_index];
+			view_port.y = items[selected_item_index].get()->get_bounds().y;
+			view_port.x = items[selected_item_index].get()->get_bounds().x;
+			position_children();
 		}
 
 		void page_down()
 		{
-			size_valid = false;
+			selected_page_index++;
+			if (selected_page_index >= page_to_item_index.size())
+				selected_page_index = page_to_item_index.size()-1;
+			selected_item_index = page_to_item_index[selected_page_index];
+			view_port.y = items[selected_item_index].get()->get_bounds().y;
+			view_port.x = items[selected_item_index].get()->get_bounds().x;
+			position_children();
 		}
 
 		void home()
 		{
-			size_valid = false;
+			selected_item_index = 0;
+			view_port.y = 0;
+			position_children();
 		}
 
 		void end()
 		{
-			size_valid = false;
+			selected_item_index = item_source.data.size() - 1;
+			auto& temp = items[selected_item_index];
+			view_port.y = temp->get_bounds().y;
+			position_children();
 		}
 
-	};
-
-	class column_view_layout :
-		public column_layout, public data_scroller
-	{
-	public:
-		column_view_layout() : data_scroller(this) {
-			;
-		}
-		column_view_layout(container_control* _parent, int _id) : data_scroller(this), column_layout(_parent, _id) { ; }
-		virtual ~column_view_layout() { ; }
-
-		virtual void arrange(rectangle _ctx)
-		{
-			generate_items(_ctx);
-			column_layout::arrange(_ctx);
-		}
 	};
 
 	class row_view_layout :
-		public row_layout, public data_scroller
+		public row_layout
 	{
 	protected:
 	public:
-		row_view_layout() : data_scroller(this) { ; }
-		row_view_layout(container_control* _parent, int _id) : data_scroller(this), row_layout(_parent, _id) { ; }
+		row_view_layout() { ; }
+		row_view_layout(container_control* _parent, int _id) : row_layout(_parent, _id) { ; }
 		virtual ~row_view_layout() { ; }
 
-		virtual void arrange(rectangle _ctx)
-		{
-			generate_items(_ctx);
-			row_layout::arrange(_ctx);
-		}
 	};
 
 	class absolute_view_layout :
-		public absolute_layout, public data_scroller
+		public absolute_layout
 	{
 	protected:
 	public:
-		absolute_view_layout() : data_scroller(this) { ; }
-		absolute_view_layout(container_control* _parent, int _id) : data_scroller(this), absolute_layout(_parent, _id) { ; }
+		absolute_view_layout() { ; }
+		absolute_view_layout(container_control* _parent, int _id) : absolute_layout(_parent, _id) { ; }
 		virtual ~absolute_view_layout() { ; }
-
-		virtual void arrange(rectangle _ctx)
-		{
-			generate_items(_ctx);
-			absolute_layout::arrange(_ctx);
-		}
 	};
 
 	class frame_layout :
@@ -1134,7 +1204,8 @@ namespace corona {
 			set_default_styles();
 		}
 
-		virtual const wchar_t* get_window_class() = 0;
+		virtual const char* get_window_class() = 0;
+		virtual const wchar_t* get_window_class_w() { return nullptr;  }
 		virtual DWORD get_window_style() = 0;
 		virtual DWORD get_window_ex_style() = 0;
 
@@ -1162,7 +1233,11 @@ namespace corona {
 
 				if (window == nullptr) {
 					HWND parent = phost->getMainWindow();
-					window = CreateWindowEx(get_window_ex_style(), get_window_class(), L"", get_window_style(), boundsPixels.x, boundsPixels.y, boundsPixels.w, boundsPixels.h, parent, (HMENU)id, NULL, NULL);
+					if (auto wclassname = get_window_class_w())
+						window = CreateWindowExW(get_window_ex_style(), get_window_class_w(), L"", get_window_style(), boundsPixels.x, boundsPixels.y, boundsPixels.w, boundsPixels.h, parent, (HMENU)id, NULL, NULL);
+					else 
+						window = CreateWindowEx(get_window_ex_style(), get_window_class(), "", get_window_style(), boundsPixels.x, boundsPixels.y, boundsPixels.w, boundsPixels.h, parent, (HMENU)id, NULL, NULL);
+
 					text_font = phost->createFontDips(window, text_style.fontName, text_style.fontSize, text_style.bold, text_style.italics);
 					SendMessage(window, WM_SETFONT, (WPARAM)text_font, 0);
 					HWND tooltip = phost->getTooltipWindow();
@@ -1496,7 +1571,7 @@ namespace corona {
 		static_control(container_control* _parent, int _id) : text_control_base(_parent, _id) { ; }
 		virtual ~static_control() { ; }
 
-		virtual const wchar_t* get_window_class() { return WC_STATIC; }
+		virtual const char* get_window_class() { return WC_STATIC; }
 		virtual DWORD get_window_style() { return DisplayOnlyWindowStyles; }
 		virtual DWORD get_window_ex_style() { return 0; }
 	};
@@ -1511,7 +1586,7 @@ namespace corona {
 	public:
 		button_control(container_control* _parent, int _id) : text_control_base(_parent, _id) { ; }
 		virtual ~button_control() { ; }
-		virtual const wchar_t* get_window_class() { return WC_BUTTON; }
+		virtual const char* get_window_class() { return WC_BUTTON; }
 		virtual DWORD get_window_style() { return ButtonWindowStyles; }
 		virtual DWORD get_window_ex_style() { return 0; }
 	};
@@ -1557,7 +1632,7 @@ namespace corona {
 		edit_control(container_control* _parent, int _id) : text_control_base(_parent, _id) { ; }
 		virtual ~edit_control() { ; }
 
-		virtual const wchar_t* get_window_class() { return WC_EDIT; }
+		virtual const char* get_window_class() { return WC_EDIT; }
 		virtual DWORD get_window_style() { return EditWindowStyles; }
 		virtual DWORD get_window_ex_style() { return 0; }
 
@@ -1569,7 +1644,7 @@ namespace corona {
 		listbox_control(container_control* _parent, int _id) : list_control_base(_parent, _id) { ; }
 		virtual ~listbox_control() { ; }
 
-		virtual const wchar_t* get_window_class() { return WC_LISTBOX; }
+		virtual const char* get_window_class() { return WC_LISTBOX; }
 		virtual DWORD get_window_style() { return ListBoxWindowsStyles; }
 		virtual DWORD get_window_ex_style() { return 0; }
 
@@ -1581,7 +1656,7 @@ namespace corona {
 		combobox_control(container_control* _parent, int _id) : dropdown_control_base(_parent, _id) { ; }
 		virtual ~combobox_control() { ; }
 
-		virtual const wchar_t* get_window_class() { return WC_COMBOBOX; }
+		virtual const char* get_window_class() { return WC_COMBOBOX; }
 		virtual DWORD get_window_style() { return ComboWindowStyles; }
 		virtual DWORD get_window_ex_style() { return 0; }
 
@@ -1602,7 +1677,7 @@ namespace corona {
 		virtual void on_create();
 		virtual void on_resize();
 
-		virtual const wchar_t* get_window_class() { return WC_COMBOBOXEX; }
+		virtual const char* get_window_class() { return WC_COMBOBOXEX; }
 		virtual DWORD get_window_style() { return ComboWindowStyles; }
 		virtual DWORD get_window_ex_style() { return 0; }
 
@@ -1614,7 +1689,7 @@ namespace corona {
 		listview_control(container_control* _parent, int _id) : table_control_base(_parent, _id) { ; }
 		virtual ~listview_control() { ; }
 
-		virtual const wchar_t* get_window_class() { return WC_LISTVIEW; }
+		virtual const char* get_window_class() { return WC_LISTVIEW; }
 		virtual DWORD get_window_style() { return ListViewWindowsStyles; }
 		virtual DWORD get_window_ex_style() { return 0; }
 
@@ -1626,7 +1701,7 @@ namespace corona {
 		scrollbar_control(container_control* _parent, int _id) : windows_control(_parent, _id) { ; }
 		virtual ~scrollbar_control() { ; }
 
-		virtual const wchar_t* get_window_class() { return WC_SCROLLBAR; }
+		virtual const char* get_window_class() { return WC_SCROLLBAR; }
 		virtual DWORD get_window_style() { return DefaultWindowStyles; }
 		virtual DWORD get_window_ex_style() { return 0; }
 
@@ -1643,7 +1718,8 @@ namespace corona {
 		}
 		virtual ~richedit_control() { ; }
 
-		virtual const wchar_t* get_window_class() { return MSFTEDIT_CLASS; }
+		virtual const char* get_window_class() { return nullptr; }
+		virtual const wchar_t* get_window_class_w() { return MSFTEDIT_CLASS; }
 		virtual DWORD get_window_style() { return RichEditWindowStyles; }
 		virtual DWORD get_window_ex_style() { return 0; }
 
@@ -1658,7 +1734,7 @@ namespace corona {
 		datetimepicker_control(container_control* _parent, int _id) : windows_control(_parent, _id) { ; }
 		virtual ~datetimepicker_control() { ; }
 
-		virtual const wchar_t* get_window_class() { return DATETIMEPICK_CLASS; }
+		virtual const char* get_window_class() { return DATETIMEPICK_CLASS; }
 		virtual DWORD get_window_style() { return DefaultWindowStyles; }
 		virtual DWORD get_window_ex_style() { return 0; }
 
@@ -1670,7 +1746,7 @@ namespace corona {
 		monthcalendar_control(container_control* _parent, int _id) : windows_control(_parent, _id) { ; }
 		virtual ~monthcalendar_control() { ; }
 
-		virtual const wchar_t* get_window_class() { return MONTHCAL_CLASS; }
+		virtual const char* get_window_class() { return MONTHCAL_CLASS; }
 		virtual DWORD get_window_style() { return DefaultWindowStyles; }
 		virtual DWORD get_window_ex_style() { return 0; }
 
@@ -1688,7 +1764,7 @@ namespace corona {
 		bool play();
 		bool stop();
 
-		virtual const wchar_t* get_window_class() { return ANIMATE_CLASS; }
+		virtual const char* get_window_class() { return ANIMATE_CLASS; }
 		virtual DWORD get_window_style() { return DefaultWindowStyles; }
 		virtual DWORD get_window_ex_style() { return 0; }
 	};
@@ -1699,7 +1775,7 @@ namespace corona {
 		treeview_control(container_control* _parent, int _id) : windows_control(_parent, _id) { ; }
 		virtual ~treeview_control() { ; }
 
-		virtual const wchar_t* get_window_class() { return WC_TREEVIEW; }
+		virtual const char* get_window_class() { return WC_TREEVIEW; }
 		virtual DWORD get_window_style() { return DefaultWindowStyles; }
 		virtual DWORD get_window_ex_style() { return 0; }
 
@@ -1711,7 +1787,7 @@ namespace corona {
 		header_control(container_control* _parent, int _id) : windows_control(_parent, _id) { ; }
 		virtual ~header_control() { ; }
 
-		virtual const wchar_t* get_window_class() { return WC_HEADER; }
+		virtual const char* get_window_class() { return WC_HEADER; }
 		virtual DWORD get_window_style() { return DefaultWindowStyles; }
 		virtual DWORD get_window_ex_style() { return 0; }
 
@@ -1723,7 +1799,7 @@ namespace corona {
 		toolbar_control(container_control* _parent, int _id) : windows_control(_parent, _id) { ; }
 		virtual ~toolbar_control() { ; }
 
-		virtual const wchar_t* get_window_class() { return TOOLBARCLASSNAME; }
+		virtual const char* get_window_class() { return TOOLBARCLASSNAME; }
 		virtual DWORD get_window_style() { return DefaultWindowStyles; }
 		virtual DWORD get_window_ex_style() { return 0; }
 
@@ -1735,7 +1811,7 @@ namespace corona {
 		statusbar_control(container_control* _parent, int _id) : windows_control(_parent, _id) { ; }
 		virtual ~statusbar_control() { ; }
 
-		virtual const wchar_t* get_window_class() { return STATUSCLASSNAME; }
+		virtual const char* get_window_class() { return STATUSCLASSNAME; }
 		virtual DWORD get_window_style() { return DefaultWindowStyles; }
 		virtual DWORD get_window_ex_style() { return 0; }
 
@@ -1747,7 +1823,7 @@ namespace corona {
 		hotkey_control(container_control* _parent, int _id) : windows_control(_parent, _id) { ; }
 		virtual ~hotkey_control() { ; }
 
-		virtual const wchar_t* get_window_class() { return TOOLBARCLASSNAME; }
+		virtual const char* get_window_class() { return TOOLBARCLASSNAME; }
 		virtual DWORD get_window_style() { return DefaultWindowStyles; }
 		virtual DWORD get_window_ex_style() { return 0; }
 	};
@@ -1758,15 +1834,91 @@ namespace corona {
 		draglistbox_control(container_control* _parent, int _id) : windows_control(_parent, _id) { ; }
 		virtual ~draglistbox_control() { ; }
 
-		virtual const wchar_t* get_window_class() { return HOTKEY_CLASS; }
+		virtual const char* get_window_class() { return HOTKEY_CLASS; }
 		virtual DWORD get_window_style() { return DefaultWindowStyles; }
 		virtual DWORD get_window_ex_style() { return 0; }
+	};
+
+	class part_source_code_control : public draw_control
+	{
+	public:
+		std::string source_image;
+		std::string 
+	};
+
+	class iis_application_control : public draw_control
+	{
+	public:
+
+		std::string iis_website_image;
+
+		std::string web_site_url;
+		std::string web_site_server;
+		std::string web_site_name;
+		std::string web_site_file_path;
+		std::string web_site_binding;
+		std::string application_pool;
+
+		iis_application_control(container_control* _parent, int _id, std::string _name);
+		virtual ~iis_application_control();
+	};
+
+	class iis_sql_server_control : public draw_control
+	{
+	public:
+
+		std::string iis_website_image;
+
+		std::string web_site_url;
+		std::string web_site_server;
+		std::string web_site_name;
+		std::string web_site_file_path;
+		std::string web_site_binding;
+		std::string application_pool;
+
+		iis_website_control(container_control* _parent, int _id, std::string _name);
+		virtual ~iis_website_control();
+	};
+
+	class iis_website_control : public draw_control
+	{
+	public:
+
+		std::string iis_website_image;
+
+		std::string web_site_url;
+		std::string web_site_server;
+		std::string web_site_name;
+		std::string web_site_file_path;
+		std::string web_site_binding;
+		std::string application_pool;
+
+		iis_website_control(container_control* _parent, int _id, std::string _name);
+		virtual ~iis_website_control();
 	};
 
 	enum class field_layout
 	{
 		label_on_left = 1,
 		label_on_top = 2
+	};
+
+	class page_event 
+	{
+	public:
+
+	};
+
+	class page_load_event : public page_event
+	{
+	public:
+
+	};
+
+	class page_unload_event : public page_event
+	{
+	public:
+
 	};
 
 	class control_event
@@ -1917,6 +2069,18 @@ namespace corona {
 		std::function< void(command_event) > on_command;
 	};
 
+	class page_load_event_binding
+	{
+	public:
+		std::function< void(page_load_event) > on_load;
+	};
+
+	class page_unload_event_binding
+	{
+	public:
+		std::function< void(page_unload_event) > on_unload;
+	};
+
 	class list_changed_event_binding
 	{
 	public:
@@ -1926,20 +2090,23 @@ namespace corona {
 	};
 
 	using update_function = std::function< void(page* _page, double _elapsedSeconds, double _totalSeconds) >;
+	using update_function = std::function< void(page* _page, double _elapsedSeconds, double _totalSeconds) >;
 
 	class page : public std::enable_shared_from_this<page>
 	{
 
 		rectangle layout(control_base* _item, layout_context _ctx);
-		std::map<int, std::shared_ptr<key_up_event_binding> > key_up_events;
-		std::map<int, std::shared_ptr<key_down_event_binding> > key_down_events;
-		std::map<int, std::shared_ptr<mouse_move_event_binding> > mouse_move_events;
-		std::map<int, std::shared_ptr<mouse_click_event_binding> > mouse_click_events;
-		std::map<int, std::shared_ptr<mouse_left_click_event_binding> > mouse_left_click_events;
-		std::map<int, std::shared_ptr<mouse_right_click_event_binding> > mouse_right_click_events;
-		std::map<int, std::shared_ptr<item_changed_event_binding> > item_changed_events;
+		std::map<int, std::shared_ptr<key_up_event_binding> > key_up_bindings;
+		std::map<int, std::shared_ptr<key_down_event_binding> > key_down_bindings;
+		std::map<int, std::shared_ptr<mouse_move_event_binding> > mouse_move_bindings;
+		std::map<int, std::shared_ptr<mouse_click_event_binding> > mouse_click_bindings;
+		std::map<int, std::shared_ptr<mouse_left_click_event_binding> > mouse_left_click_bindings;
+		std::map<int, std::shared_ptr<mouse_right_click_event_binding> > mouse_right_click_bindings;
+		std::map<int, std::shared_ptr<item_changed_event_binding> > item_changed_bindings;
 		std::map<int, std::shared_ptr<list_changed_event_binding> > list_changed_events;
-		std::map<int, std::shared_ptr<command_event_binding> > command_events;
+		std::map<int, std::shared_ptr<command_event_binding> > command_bindings;
+		std::vector<std::shared_ptr<page_unload_event_binding>> unload_bindings;
+		std::vector<std::shared_ptr<page_load_event_binding>> load_bindings;
 		update_function update_event;
 
 	protected:
@@ -1984,6 +2151,10 @@ namespace corona {
 		void on_item_changed(int _control_id, std::function< void(item_changed_event) >);
 		void on_list_changed(int _control_id, std::function< void(list_changed_event) >);
 		void on_command(int _item_id, std::function< void(command_event) >);
+
+		void on_load(std::function< void(page_load_event) >);
+		void on_unload(std::function< void(page_unload_event) >);
+
 		void on_update(update_function fnc);
 
 		row_layout& row_begin(int id = id_counter::next());
@@ -5364,7 +5535,7 @@ namespace corona {
 		auto evt = std::make_shared<key_up_event_binding>();
 		evt->subscribed_item_id = _control_id;
 		evt->on_key_up = handler;
-		key_up_events[_control_id] = evt;
+		key_up_bindings[_control_id] = evt;
 	}
 
 	void page::on_key_down(int _control_id, std::function< void(key_down_event) >  handler)
@@ -5372,7 +5543,7 @@ namespace corona {
 		auto evt = std::make_shared<key_down_event_binding>();
 		evt->subscribed_item_id = _control_id;
 		evt->on_key_down = handler;
-		key_down_events[_control_id] = evt;
+		key_down_bindings[_control_id] = evt;
 	}
 
 	void page::on_mouse_left_click(std::weak_ptr<control_base> _base, std::function< void(mouse_left_click_event) > handler)
@@ -5383,7 +5554,7 @@ namespace corona {
 			evt->control = pbase;
 			evt->subscribed_item_id = pbase->id;
 			evt->on_mouse_left_click = handler;
-			mouse_left_click_events[pbase->id] = evt;
+			mouse_left_click_bindings[pbase->id] = evt;
 		}
 	}
 
@@ -5395,7 +5566,7 @@ namespace corona {
 			evt->control = pbase;
 			evt->subscribed_item_id = pbase->id;
 			evt->on_mouse_right_click = handler;
-			mouse_right_click_events[pbase->id] = evt;
+			mouse_right_click_bindings[pbase->id] = evt;
 		}
 	}
 
@@ -5407,7 +5578,7 @@ namespace corona {
 			evt->control = pbase;
 			evt->subscribed_item_id = pbase->id;
 			evt->on_mouse_move = handler;
-			mouse_move_events[pbase->id] = evt;
+			mouse_move_bindings[pbase->id] = evt;
 		}
 	}
 
@@ -5419,7 +5590,7 @@ namespace corona {
 			evt->control = pbase;
 			evt->subscribed_item_id = pbase->id;
 			evt->on_mouse_click = handler;
-			mouse_click_events[pbase->id] = evt;
+			mouse_click_bindings[pbase->id] = evt;
 		}
 	}
 
@@ -5428,7 +5599,7 @@ namespace corona {
 		auto evt = std::make_shared<item_changed_event_binding>();
 		evt->subscribed_item_id = _control_id;
 		evt->on_change = handler;
-		item_changed_events[_control_id] = evt;
+		item_changed_bindings[_control_id] = evt;
 	}
 
 	void page::on_list_changed(int _control_id, std::function< void(list_changed_event) > handler)
@@ -5444,7 +5615,7 @@ namespace corona {
 		auto evt = std::make_shared<command_event_binding>();
 		evt->subscribed_item_id = _control_id;
 		evt->on_command = handler;
-		command_events[_control_id] = evt;
+		command_bindings[_control_id] = evt;
 	}
 
 	void page::on_update(update_function fnc)
@@ -5452,24 +5623,38 @@ namespace corona {
 		update_event = fnc;
 	}
 
+	void page::on_load(std::function< void(page_load_event) > fnc)
+	{
+		auto plet = std::make_shared<page_load_event_binding>();
+		plet->on_load = fnc;
+		load_bindings.push_back(plet);
+	}
+
+	void page::on_unload(std::function< void(page_unload_event) > fnc)
+	{
+		auto plet = std::make_shared<page_unload_event_binding>();
+		plet->on_unload = fnc;
+		unload_bindings.push_back(plet);
+	}
+
 	void page::handle_key_up(int _control_id, key_up_event evt)
 	{
-		if (key_up_events.contains(_control_id)) {
-			key_up_events[_control_id]->on_key_up(evt);
+		if (key_up_bindings.contains(_control_id)) {
+			key_up_bindings[_control_id]->on_key_up(evt);
 		}
 	}
 
 	void page::handle_key_down(int _control_id, key_down_event evt)
 	{
-		if (key_down_events.contains(_control_id)) {
-			key_down_events[_control_id]->on_key_down(evt);
+		if (key_down_bindings.contains(_control_id)) {
+			key_down_bindings[_control_id]->on_key_down(evt);
 		}
 	}
 
 	void page::handle_mouse_move(int _control_id, mouse_move_event evt)
 	{
-		if (mouse_move_events.contains(_control_id)) {
-			auto& ptrx = mouse_move_events[_control_id];
+		if (mouse_move_bindings.contains(_control_id)) {
+			auto& ptrx = mouse_move_bindings[_control_id];
 			if (auto temp = ptrx.get()->control.lock()) {
 				evt.relative_point.x = evt.absolute_point.x - temp->get_bounds().x;
 				evt.relative_point.y = evt.absolute_point.y - temp->get_bounds().y;
@@ -5482,8 +5667,8 @@ namespace corona {
 
 	void page::handle_mouse_click(int _control_id, mouse_click_event evt)
 	{
-		if (mouse_click_events.contains(_control_id)) {
-			auto& ptrx = mouse_click_events[_control_id];
+		if (mouse_click_bindings.contains(_control_id)) {
+			auto& ptrx = mouse_click_bindings[_control_id];
 			evt.relative_point.x = evt.absolute_point.x - evt.control->get_bounds().x;
 			evt.relative_point.y = evt.absolute_point.y - evt.control->get_bounds().y;
 			evt.control = evt.control;
@@ -5494,8 +5679,8 @@ namespace corona {
 
 	void page::handle_mouse_left_click(int _control_id, mouse_left_click_event evt)
 	{
-		if (mouse_left_click_events.contains(_control_id)) {
-			auto& ptrx = mouse_left_click_events[_control_id];
+		if (mouse_left_click_bindings.contains(_control_id)) {
+			auto& ptrx = mouse_left_click_bindings[_control_id];
 			evt.relative_point.x = evt.absolute_point.x - evt.control->get_bounds().x;
 			evt.relative_point.y = evt.absolute_point.y - evt.control->get_bounds().y;
 			ptrx->on_mouse_left_click(evt);
@@ -5504,8 +5689,8 @@ namespace corona {
 
 	void page::handle_mouse_right_click(int _control_id, mouse_right_click_event evt)
 	{
-		if (mouse_right_click_events.contains(_control_id)) {
-			auto& ptrx = mouse_right_click_events[_control_id];
+		if (mouse_right_click_bindings.contains(_control_id)) {
+			auto& ptrx = mouse_right_click_bindings[_control_id];
 			evt.relative_point.x = evt.absolute_point.x - evt.control->get_bounds().x;
 			evt.relative_point.y = evt.absolute_point.y - evt.control->get_bounds().y;
 			evt.control = evt.control;
@@ -5517,8 +5702,8 @@ namespace corona {
 
 	void page::handle_item_changed(int _control_id, item_changed_event evt)
 	{
-		if (item_changed_events.contains(_control_id)) {
-			auto& ptrx = item_changed_events[_control_id];
+		if (item_changed_bindings.contains(_control_id)) {
+			auto& ptrx = item_changed_bindings[_control_id];
 			if (auto temp = ptrx.get()->control.lock()) {
 				evt.control = temp.get();
 				evt.control_id = temp->id;
@@ -5541,8 +5726,8 @@ namespace corona {
 
 	void page::handle_command(int _control_id, command_event evt)
 	{
-		if (command_events.contains(_control_id)) {
-			auto& ptrx = command_events[_control_id];
+		if (command_bindings.contains(_control_id)) {
+			auto& ptrx = command_bindings[_control_id];
 			ptrx->on_command(evt);
 		}
 	}

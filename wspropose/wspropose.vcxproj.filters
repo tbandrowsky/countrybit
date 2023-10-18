@@ -29,6 +29,9 @@
     <ClCompile Include="wspropose.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="old_code_for_cut_and_paste.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="wspropose.rc">
