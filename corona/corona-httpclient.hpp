@@ -315,6 +315,8 @@ namespace corona
                 return false;
             }
 
+            std::cout << ::GetCurrentThreadId() << " http request thread" << std::endl;
+
             wchar_converter converter;
 
             DWORD       dwSize = 0;
@@ -374,14 +376,14 @@ namespace corona
                     allowed_types_lies,
                     WINHTTP_FLAG_SECURE);
 
-            int total_length = wheader_length + body_length;
+            int total_length = body_length;
 
             // Send a request.
             if (hRequest) {
                 auto body_buffer = params->request.body.get_ptr();
                 bResults = WinHttpSendRequest(hRequest,
                     wheaders,
-                    wheader_length,
+                    -1,
                     (LPVOID)body_buffer,
                     body_length,
                     total_length, 0);
@@ -435,11 +437,6 @@ namespace corona
 
             }
 
-
-            // Report any errors.
-            if (!bResults)
-                printf("Error %d has occurred.\n", GetLastError());
-
             // Close any open handles.
             if (hRequest) WinHttpCloseHandle(hRequest);
             if (hConnect) WinHttpCloseHandle(hConnect);
@@ -478,7 +475,8 @@ namespace corona
             buffer url_buffer = ub.get_string();
             reader.params->request.path = url_buffer.get_ptr();
             reader.params->request.allowed_types = {
-                "application/json"
+                "application/json",
+                "text/plain"
             };
             if (_headers)
                 reader.params->request.headers = _headers;
@@ -500,7 +498,8 @@ namespace corona
             reader.params->request.port = _port;
 
             reader.params->request.allowed_types = {
-                "application/json"
+                "application/json",
+                "text/plain"
             };
             if (_headers)
                 reader.params->request.headers = _headers;
@@ -520,8 +519,10 @@ namespace corona
             reader.params->request.port = _port;
 
             reader.params->request.path = _url;
+            reader.params->request.headers = "Content-Type: application/json\r\n";
             reader.params->request.allowed_types = {
-                "application/json"
+                "application/json",
+                "text/plain"
             };
             std::string body_string = _body.to_json();
             reader.params->request.body = buffer(body_string.c_str());

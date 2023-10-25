@@ -609,12 +609,12 @@ namespace corona
 						_src = eat_white(_src);
 						if (*_src == ',') {
 							_src++;
-							parse_object_state = parse_object_states::parsing_name;
 						}
 						else
 						{
 							error("parse_value", std::format("Expected a comma\".", member_name));
 						}
+						parse_object_state = parse_object_states::parsing_name;
 					}
 				}
 				_src++;
