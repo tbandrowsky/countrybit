@@ -37,6 +37,10 @@ namespace corona
 
 		static application* get_application()
 		{
+			if (!home) 
+			{				
+				home = new application();
+			}
 			return home;
 		}
 

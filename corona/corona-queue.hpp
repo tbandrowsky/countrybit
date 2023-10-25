@@ -146,7 +146,7 @@ namespace corona {
 
 		bool shutDownOrdered;
 
-		std::atomic<int> num_outstanding_jobs;
+		std::atomic_int num_outstanding_jobs;
 		HANDLE empty_queue_event;
 
 	public:
@@ -435,7 +435,6 @@ namespace corona {
 
 					if (jobNotify.shouldDelete) {
 						delete waiting_job;
-						delete container;
 					}
 				}
 

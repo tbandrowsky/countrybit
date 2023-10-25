@@ -14,17 +14,22 @@
 namespace corona
 {
 
-	class task_job : public job
+	template <typename parameter_type> class task_job : public job
 	{
 	public:
 		std::coroutine_handle<> handle;
 		HANDLE					event;
+		std::shared_ptr<parameter_type> params;
+		std::function<void(std::shared_ptr<parameter_type>_params)> run;
 
 		task_job() : job()
 		{
 		}
 
-		task_job(std::coroutine_handle<> _handle, HANDLE _event) : handle(_handle), event(_event)
+		task_job(std::coroutine_handle<> _handle, 
+			HANDLE _event, 
+			std::shared_ptr<parameter_type> _params,
+			std::function<void(std::shared_ptr<parameter_type>_params)> _run) : handle(_handle), event(_event), params(_params), run(_run)
 		{
 			;
 		}
@@ -32,11 +37,26 @@ namespace corona
 		virtual job_notify execute(job_queue* _callingQueue, DWORD _bytesTransferred, BOOL _success)
 		{
 			job_notify jn;
-			jn.setSignal(event);
+
 			std::cout << "job start:" << GetCurrentThreadId() << std::endl;
+
+			try 
+			{
+				if (run)
+				{
+					run(params);
+				}
+			}
+			catch (...)
+			{
+				;
+			}
+
+			jn.setSignal(event);
 			if (handle) handle();
 			std::cout << "job end:" << GetCurrentThreadId() << std::endl;
-			jn.shouldDelete = false;
+			jn.shouldDelete = true;
+
 			return jn;
 		}
 	};
@@ -47,7 +67,7 @@ namespace corona
 	};
 
 	template <typename Param>
-		requires(task_io_params<Param>)
+	requires(task_io_params<Param>)
 	class async_io_job : public job
 	{
 	public:
@@ -78,33 +98,40 @@ namespace corona
 	{
 	public:
 
+		std::shared_ptr<T> params;
+		std::function<void(std::shared_ptr<T>_params)> runner;
+
 		struct promise_type
 		{
 
 			promise_type()
 			{
 				std::cout << "task promise_type:" << this << " " << GetCurrentThreadId() << std::endl;
+				m_value = {};
 			}
 
-			task get_return_object()
+			task<T> get_return_object()
 			{
 				std::cout << "task get_return_object:" << this << " " << GetCurrentThreadId() << std::endl;
-				task my_task;
+				task<T> my_task;
 				my_task.coroutine = std::coroutine_handle<promise_type>::from_promise(*this);
 				return my_task;
 			};
 
-			void return_value(T value) {
+			void return_value(T value) 
+			{
 				std::cout << "task return_value:" << value << " " << this << GetCurrentThreadId() << std::endl;
 				m_value = value;
 			}
 
-			std::suspend_always initial_suspend() {
+			std::suspend_always initial_suspend() 
+			{
 				std::cout << "task initial_suspend:" << this << GetCurrentThreadId() << std::endl;
 				return {};
 			}
 
-			std::suspend_always final_suspend() noexcept {
+			std::suspend_always final_suspend() noexcept 
+			{
 				std::cout << "task final_suspend:" << this << GetCurrentThreadId() << std::endl;
 				return {};
 			}
@@ -120,8 +147,8 @@ namespace corona
 		{
 			HANDLE hevent = ::CreateEvent(NULL, false, false, NULL);
 			std::cout << this << ", task await_suspend:" << GetCurrentThreadId() << std::endl;
-			task_job tj(coroutine, hevent);
-			application::get_application()->add_job(&tj);
+			task_job<T> *tj = new task_job<T>(coroutine, hevent, params, runner);
+			application::get_application()->add_job(tj);
 			std::cout << this << ", task await_suspend away:" << GetCurrentThreadId() << std::endl;
 			::WaitForSingleObject(hevent, INFINITE);
 			::CloseHandle(hevent);
@@ -132,7 +159,10 @@ namespace corona
 		T await_resume()
 		{
 			std::cout << "task await_resume:" << GetCurrentThreadId() << std::endl;
-			auto t = coroutine.promise().m_value;
+			T t = {};
+			if (coroutine) {
+				t = coroutine.promise().m_value;
+			}
 			return t;
 		}
 
@@ -153,16 +183,18 @@ namespace corona
 
 	};
 
-	template <typename JobType, typename IOParams> struct async_io_task : public std::suspend_always
+	template <typename IOParams> struct async_io_task : public std::suspend_always
 	{
 	public:
 		job_queue* queue;
 		IOParams	params;
+		std::function<bool(HANDLE hevent, IOParams* _src)> runner;
 
-		void configure(job_queue* _queue, const IOParams& _params)
+		void configure(job_queue* _queue, const IOParams& _params, std::function<bool(HANDLE hevent, IOParams* _src)> _runner)
 		{
 			queue = _queue;
 			params = _params;
+			runner = _runner;
 		}
 
 		struct promise_type
@@ -205,20 +237,19 @@ namespace corona
 
 		void await_suspend(std::coroutine_handle<> handle)
 		{
-			JobType my_job;
 			HANDLE hevent = ::CreateEvent(NULL, false, false, NULL);
 			std::cout << this << ", async_io_task await_suspend:" << GetCurrentThreadId() << std::endl;
-			my_job.params = &params;
-			my_job.handle = coroutine;
-			my_job.event = hevent;
-			if (my_job.run()) {
-				std::cout << this << ", async_io_task await_suspend away:" << GetCurrentThreadId() << std::endl;
-				::WaitForSingleObject(hevent, INFINITE);
-				::CloseHandle(hevent);
-				std::cout << "async_io_task await_suspend finished:" << GetCurrentThreadId() << std::endl;
-			}
-			else {
-				std::cout << "error skipped finished:" << GetCurrentThreadId() << std::endl;
+			if (runner) {
+				if (runner(hevent, &params)) {
+					std::cout << this << ", async_io_task await_suspend away:" << GetCurrentThreadId() << std::endl;
+					::WaitForSingleObject(hevent, INFINITE);
+					::CloseHandle(hevent);
+					std::cout << "async_io_task await_suspend finished:" << GetCurrentThreadId() << std::endl;
+				}
+				else 
+				{
+					std::cout << "error skipped finished:" << GetCurrentThreadId() << std::endl;
+				}
 			}
 			handle.resume();
 		}

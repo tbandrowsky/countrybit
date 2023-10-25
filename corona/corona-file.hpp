@@ -54,43 +54,6 @@ namespace corona
 		}
 	};
 
-	class file_write_job : public task_job
-	{
-	public:
-
-		file_result* params;
-
-		bool run()
-		{
-			LARGE_INTEGER li;
-			li.QuadPart = params->location;
-			container.ovp.Offset = li.LowPart;
-			container.ovp.OffsetHigh = li.HighPart;
-			BOOL success = ::WriteFile(params->hfile, params->buffer_bytes, params->buffer_size, NULL, (LPOVERLAPPED)&container);
-			os_result result;
-			std::cout << "Write:" << success << " " << result.message << std::endl;
-			return result.error_code == ERROR_IO_PENDING || result.error_code == ERROR_SUCCESS;
-		}
-	};
-
-	class file_read_job : public task_job
-	{
-	public:
-		file_result* params;
-
-		bool run()
-		{
-			LARGE_INTEGER li;
-			li.QuadPart = params->location;
-			job::container.ovp.Offset = li.LowPart;
-			job::container.ovp.OffsetHigh = li.HighPart;
-			BOOL success = ::ReadFile(params->hfile, params->buffer_bytes, params->buffer_size, NULL, (LPOVERLAPPED)&(job::container.ovp));
-			os_result result;
-			std::cout << "Read:" << success << " " << result.message << std::endl;
-			return result.error_code == ERROR_IO_PENDING || result.error_code == ERROR_SUCCESS;
-		}
-	};
-
 	enum class file_open_types
 	{
 		create_new,
@@ -237,18 +200,41 @@ namespace corona
 			instance.location = location;
 			instance.buffer_bytes = (char*)_buffer;
 			instance.buffer_size = _buffer_length;
-			async_io_task<file_write_job, file_result> aw;
-			aw.configure(instance.queue, instance);
+
+			async_io_task<file_result> aw;
+			async_io_job<file_result>* aij = new async_io_job<file_result>();
+
+			aw.configure(instance.queue, instance, [aij](HANDLE hevent, file_result* params) {
+				LARGE_INTEGER li;
+				li.QuadPart = params->location;
+				aij->container.ovp.Offset = li.LowPart;
+				aij->container.ovp.OffsetHigh = li.HighPart;
+				BOOL success = ::WriteFile(params->hfile, params->buffer_bytes, params->buffer_size, NULL, (LPOVERLAPPED)&aij->container);
+				os_result result;
+				std::cout << "Write:" << success << " " << result.message << std::endl;
+				return result.error_code == ERROR_IO_PENDING || result.error_code == ERROR_SUCCESS;
+			});
 			return aw;
 		}
 
 		auto read(uint64_t location, void* _buffer, int _buffer_length)
 		{
-			async_io_task<file_read_job, file_result> aw;
+			async_io_task<file_result> aw;
+			async_io_job<file_result>* aij = new async_io_job<file_result>();
+
 			instance.location = location;
 			instance.buffer_bytes = (char*)_buffer;
 			instance.buffer_size = _buffer_length;
-			aw.configure(instance.queue, instance);
+			aw.configure(instance.queue, instance, [aij](HANDLE hevent, file_result* params) {
+				LARGE_INTEGER li;
+				li.QuadPart = params->location;
+				aij->container.ovp.Offset = li.LowPart;
+				aij->container.ovp.OffsetHigh = li.HighPart;
+				BOOL success = ::ReadFile(params->hfile, params->buffer_bytes, params->buffer_size, NULL, (LPOVERLAPPED) & (aij->container));
+				os_result result;
+				std::cout << "Read:" << success << " " << result.message << std::endl;
+				return result.error_code == ERROR_IO_PENDING || result.error_code == ERROR_SUCCESS;
+				});
 			return aw;
 		}
 

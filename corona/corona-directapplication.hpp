@@ -180,6 +180,8 @@ namespace corona
 		bool getSaveFilename(std::string& _saveFileName, const char* _pathExtensions, const char* _defaultExtension);
 
 		virtual void setColorCapture(int _iconResourceId);
+
+		std::string getUserName();
 	};
 
 	void EnableGuiStdOuts();
@@ -1958,6 +1960,17 @@ namespace corona
 		::SetCapture(hwndRoot);
 		colorCapture = true;
 		SetCursor(LoadCursor(hinstance, MAKEINTRESOURCE(_iconResourceId)));
+	}
+
+	std::string directApplicationWin32::getUserName()
+	{
+		std::string result;
+		char buffer[UNLEN+1] = {};
+		DWORD max_length = sizeof(buffer) / sizeof(char);
+		if (::GetUserName(buffer, &max_length)) {
+			result = buffer;
+		}
+		return result;
 	}
 
 	// This was taken from a stack overflow article

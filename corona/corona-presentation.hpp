@@ -1839,63 +1839,6 @@ namespace corona {
 		virtual DWORD get_window_ex_style() { return 0; }
 	};
 
-	class part_source_code_control : public draw_control
-	{
-	public:
-		std::string source_image;
-		std::string 
-	};
-
-	class iis_application_control : public draw_control
-	{
-	public:
-
-		std::string iis_website_image;
-
-		std::string web_site_url;
-		std::string web_site_server;
-		std::string web_site_name;
-		std::string web_site_file_path;
-		std::string web_site_binding;
-		std::string application_pool;
-
-		iis_application_control(container_control* _parent, int _id, std::string _name);
-		virtual ~iis_application_control();
-	};
-
-	class iis_sql_server_control : public draw_control
-	{
-	public:
-
-		std::string iis_website_image;
-
-		std::string web_site_url;
-		std::string web_site_server;
-		std::string web_site_name;
-		std::string web_site_file_path;
-		std::string web_site_binding;
-		std::string application_pool;
-
-		iis_website_control(container_control* _parent, int _id, std::string _name);
-		virtual ~iis_website_control();
-	};
-
-	class iis_website_control : public draw_control
-	{
-	public:
-
-		std::string iis_website_image;
-
-		std::string web_site_url;
-		std::string web_site_server;
-		std::string web_site_name;
-		std::string web_site_file_path;
-		std::string web_site_binding;
-		std::string application_pool;
-
-		iis_website_control(container_control* _parent, int _id, std::string _name);
-		virtual ~iis_website_control();
-	};
 
 	enum class field_layout
 	{

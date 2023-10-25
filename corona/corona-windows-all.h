@@ -25,5 +25,6 @@
 #include <wincodec.h>
 
 #include "richedit.h"
+#include "Lmcons.h"
 
 #endif

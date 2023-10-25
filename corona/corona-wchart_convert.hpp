@@ -1,9 +1,13 @@
+#ifndef CORONA_WCHAR_CONVERT_H
+#define CORONA_WCHAR_CONVERT_H
+
 
 #include "corona-windows-lite.h"
 #include <string>
 #include <vector>
 
-namespace corona {
+namespace corona 
+{
 
 	class wchar_converter 
 	{
@@ -27,6 +31,9 @@ namespace corona {
 
 		wchar_t* to_wchar_t( const char *_src )
 		{
+			if (!_src)
+				return nullptr;
+
 			int max_len = strlen(_src);
 			int max_len_bytes = max_len * sizeof(wchar_t);
 			std::unique_ptr<wchar_t[]> temp;
@@ -48,12 +55,16 @@ namespace corona {
 					temp[0] = 0;
 				}
 			}
-
+			wchar_t* ret_value = temp.get();
 			converted_to_wchars.push_back(std::move(temp));
+			return ret_value;
 		}
 
 		char* to_char(const wchar_t* _src)
 		{
+			if (!_src)
+				return nullptr;
+
 			int max_len = wcslen(_src);
 			std::unique_ptr<char[]> temp;
 
@@ -73,8 +84,12 @@ namespace corona {
 					temp[0] = 0;
 				}
 			}
-
+			char* ret_value = temp.get();
 			converted_to_chars.push_back(std::move(temp));
+			return ret_value;
 		}
 	};
 }
+
+
+#endif

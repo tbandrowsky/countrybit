@@ -42,6 +42,23 @@ int __stdcall WinMain(HINSTANCE hInstance,
 	CoUninitialize();
 }
 
+sync<int> calico_login(std::string _user_name)
+{
+	int success = 1;
+
+	json_parser jp;
+	http_client calico_client;
+	const char* calico_host = "localhost";
+	int calico_port = 7277;
+	json_navigator login_object = jp.create_object();
+
+	login_object.add_member("userName", _user_name);
+	login_object.add_member("modelName", "Zoos");
+	http_params login_result = co_await calico_client.post(calico_host, calico_port, "api/LoginActor", login_object);
+
+	co_return success;
+}
+
 void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 {
 	EnableGuiStdOuts();
@@ -61,6 +78,12 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 	forceWindowed = true;
 #endif
 	auto wspropose_pages = std::make_shared<presentation>(wsPropose);
+
+	DWORD thread_id_before = ::GetCurrentThreadId();
+
+	calico_login(wsPropose->getUserName());
+
+	DWORD thread_id_after = ::GetCurrentThreadId();
 
 	corona::menu_item app_menu;
 //		.item(IDM_PRESENTATION_DETAILS, "Pro&jects")
@@ -196,63 +219,20 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 			"ArtifactsFolder" : "cd {ArtifactsFolder}"
 		},
 		{ 
-			"ArtifactTypeCode":"Static.React.Application", 
-			"ArtifactTypeName":"React Application", 
-			"DeploymentPipeline" : [
-	 			{ "GitClone": "git clone {GitUserName}:{GitRepositoryName}" },  
-				{ "GitCheckout": "git checkout {GitBranchName}" }, 
-				{ "BuildFolder": "cd {BuildFolder}" }, 
-				{ "BuildCommand":"npm build {ProjectName}" }
-			],
-			"ArtifactsFolder" : "cd {ArtifactsFolder}"
-		},
-		{ 
-			"ArtifactTypeCode":"Windows.Docker.Service", 
-			"ArtifactTypeName":"Windows Docker Container Service", 
-			"DeploymentPipeline" : [
-	 			{ "GitClone": "git clone {GitUserName}:{GitRepositoryName}" },  
-				{ "GitCheckout": "git checkout {GitBranchName}" }, 
-				{ "BuildFolder": "cd {BuildFolder}" }, 
-				{ "BuildCommand":"npm build {ProjectName}" }
-			],
-			"ArtifactsFolder" : "cd {ArtifactsFolder}"
-		},
-		{ 
-			"ArtifactTypeCode":"Windows.Docker.Job", 
-			"ArtifactTypeName":"Windows Docker Container Job", 
-			"DeploymentPipeline" : [
-	 			{ "GitClone": "git clone {GitUserName}:{GitRepositoryName}" },  
-				{ "GitCheckout": "git checkout {GitBranchName}" }, 
-				{ "BuildFolder": "cd {BuildFolder}" }, 
-				{ "BuildCommand":"npm build {ProjectName}" }
-			],
-			"ArtifactsFolder" : "cd {ArtifactsFolder}"
-		},
-		{ 
-			"ArtifactTypeCode":"Linux.Docker.Service", 
-			"ArtifactTypeName":"Linux Docker Container Service", 
-			"DeploymentPipeline" : [
-	 			{ "GitClone": "git clone {GitUserName}:{GitRepositoryName}" },  
-				{ "GitCheckout": "git checkout {GitBranchName}" }, 
-				{ "BuildFolder": "cd {BuildFolder}" }, 
-				{ "BuildCommand":"npm build {ProjectName}" }
-			],
-			"ArtifactsFolder" : "cd {ArtifactsFolder}"
-		},
-		{ 
-			"ArtifactTypeCode":"Linux.Docker.Job", 
-			"ArtifactTypeName":"Linux Docker Container Job", 
-			"DeploymentPipeline" : [
-	 			{ "GitClone": "git clone {GitUserName}:{GitRepositoryName}" },  
-				{ "GitCheckout": "git checkout {GitBranchName}" }, 
-				{ "BuildFolder": "cd {BuildFolder}" }, 
-				{ "BuildCommand":"npm build {ProjectName}" }
-			],
-			"ArtifactsFolder" : "cd {ArtifactsFolder}"
-		},
-		{ 
 			"ArtifactTypeCode" : "SqlServer.Dacpac"
 			"ArtifactTypeName":"Sql Server Deployment Project", 
+		    "ArtifactTypeDescription" : "",
+			"DeploymentPipeline" : [
+	 			{ "GitClone": "git clone {GitUserName}:{GitRepositoryName}" },  
+				{ "GitCheckout": "git checkout {GitBranchName}" }, 
+				{ "BuildFolder": "cd {BuildFolder}"  }, 
+				{ "BuildCommand":"msbuild {SolutionFileName}.sln /t:build /fl /flp:logfile={LogFileName}.log" }
+			],
+			"ArtifactsFolder" : "cd {ArtifactsFolder}"
+		},
+		{ 
+			"ArtifactTypeCode" : "SqlServer.Script"
+			"ArtifactTypeName":"Sql Server Deployment Scripts", 
 		    "ArtifactTypeDescription" : "",
 			"DeploymentPipeline" : [
 	 			{ "GitClone": "git clone {GitUserName}:{GitRepositoryName}" },  
@@ -343,94 +323,6 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 	]
 	)");
 
-	json_navigator hostTypes = parser.parse_array( R"(
-		[
-			{
-				"HostCode" : "Windows.Store",
-				"HostTypeName": "Windows Store"
-			},
-			{
-				"HostCode" : "Windows.InTune",
-				"HostTypeName": "Windows InTune"
-			},
-			{
-				"HostCode" : "Windows.Desktop",
-				"HostTypeName": "Windows Desktop"
-			},
-			{
-				"HostCode" : "Windows.Service",
-				"HostTypeName": "Windows Service"
-			},
-			{
-				"HostCode" : "Windows.Service",
-				"HostTypeName": "Windows IIS Web Service"
-			},
-			{
-				"HostCode" : "Windows.SqlServer",
-				"HostTypeName": "Windows Sql Server"
-			},
-			{
-				"HostCode" : "Linux.Daemon",
-				"HostTypeName": "Linux Daemon"
-			},
-			{
-				"HostCode" : "Linux.Application",
-				"HostTypeName": "Linux Application"
-			},
-			{
-				"HostCode" : "Windows.Docker.Registry",
-				"HostTypeName": "Windows Docker Registry"
-			},
-			{
-				"HostCode": "Linux.Docker.Registry"
-				"HostTypeName": "Linux Docker Registry"
-			},
-			{
-				"HostCode": "Azure.Docker.Host",
-				"HostTypeName": "Azure Docker Host"
-			},
-			{
-				"HostCode": "Kubernetes.Docker.Host",
-				"HostTypeName": "Kubernetes Docker Host"
-			},
-			{
-				"HostCode": "Azure.Host",
-				"HostTypeName": "Azure Host"
-			}
-		]
-)"
-	);
-
-	class HostFactory
-	{
-	public:
-		json_object WindowsServerParameters();
-		json_object WindowsContainerHostParameters();
-		json_object LinuxContainerHostParameters();
-		json_object IISWebServerParameters();
-		json_object SqlServerParameters();
-		json_object AzureFunctionParameters();
-		json_object AzureStorageParameters();
-
-		json_object WindowsServerDeploy();
-		json_object WindowsContainerHostDeploy();
-		json_object LinuxContainerHostDeploy();
-		json_object IISWebServerDeploy();
-		json_object SqlServerDeploy();
-		json_object AzureFunctionDeploy();
-		json_object AzureStorageDeploy();
-	};
-
-	enum TicketTypes
-	{
-		ArtifactUpdate,
-		ArtifactPut,
-		ArtifactAccess,
-		ArtifactDelete,
-		HostPut,
-		HostAccess,
-		HostDelete,
-	};
 
 	json_navigator application_schema = parser.parse_array(R"(
 [

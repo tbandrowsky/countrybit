@@ -60,4 +60,6 @@
 #include "corona-styles.hpp"
 #include "corona-visual.hpp"
 
+#include "corona-httpclient.hpp"
+
 #endif

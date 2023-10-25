@@ -9,7 +9,8 @@
 #include <memory>
 #include <format>
 
-namespace corona {
+namespace corona 
+{
 
 	class json_value
 	{
@@ -25,30 +26,95 @@ namespace corona {
 			;
 		}
 
+		virtual std::string to_json()
+		{
+			return "";
+		}
+		virtual std::string to_string()
+		{
+			return "";
+		}
 	};
 
 	class json_double : public json_value
 	{
 	public:
 		double value;
+
+		virtual std::string to_json()
+		{
+			return std::to_string(value);
+		}
+		virtual std::string to_string()
+		{
+			return std::to_string(value);
+		}
 	};
 
 	class json_string : public json_value
 	{
 	public:
 		std::string value;
+
+		virtual std::string to_json()
+		{
+			return "\"" + value + "\"";
+		}
+		virtual std::string to_string()
+		{
+			return value;
+		}
 	};
 
 	class json_array : public json_value
 	{
 	public:
 		std::vector<std::shared_ptr<json_value>> elements;
+
+		virtual std::string to_json()
+		{
+			std::string ret = "[ ";
+			std::string comma = "";
+			for (auto el : elements) {
+				ret += comma;
+				comma = ", ";
+				ret += el->to_json();
+			}
+			ret += " ]";
+			return ret;
+		}
+
+		virtual std::string to_string()
+		{
+			return to_json();
+		}
 	};
 
 	class json_object : public json_value
 	{
 	public:
 		std::map<std::string, std::shared_ptr<json_value>> members;
+
+		virtual std::string to_json()
+		{
+			std::string ret = "{ ";
+			std::string comma = "";
+			for (auto el : members) {
+				ret += comma;
+				comma = ", ";
+				ret += "\"" + el.first + "\"";
+				ret += ":";
+				ret += el.second->to_json();
+			}
+			ret += " }";
+			return ret;
+		}
+
+		virtual std::string to_string()
+		{
+			return to_json();
+		}
+
 	};
 
 	class json_navigator
@@ -72,6 +138,11 @@ namespace corona {
 			string_impl = std::dynamic_pointer_cast<json_string>(_value);
 			array_impl = std::dynamic_pointer_cast<json_array>(_value);
 			object_impl = std::dynamic_pointer_cast<json_object>(_value);
+		}
+
+		std::string to_json()
+		{
+			return value_base->to_json();
 		}
 
 		bool is_double() const
@@ -174,6 +245,41 @@ namespace corona {
 			return jn;
 		}
 
+		json_navigator add_member(std::string _key, std::string _value)
+		{
+			auto new_member = std::make_shared<json_string>();
+			new_member->value = _value;
+			object_impl->members[_key] = new_member;
+			return *this;
+		}
+
+		json_navigator add_member(std::string _key, double _value)
+		{
+			auto new_member = std::make_shared<json_double>();
+			new_member->value = _value;
+			object_impl->members[_key] = new_member;
+			return *this;
+		}
+
+		json_navigator add_member_array(std::string _key)
+		{
+			auto new_member = std::make_shared<json_array>();
+			object_impl->members[_key] = new_member;
+			return *this;
+		}
+
+		json_navigator add_member_object(std::string _key)
+		{
+			auto new_member = std::make_shared<json_object>();
+			object_impl->members[_key] = new_member;
+			return *this;
+		}
+
+		std::map<std::string, std::shared_ptr<json_value>> get_members()
+		{
+			return object_impl->members;
+		}
+
 		int size() const
 		{
 			if (object_impl)
@@ -215,6 +321,15 @@ namespace corona {
 			return jn;
 		}
 
+		json_navigator create_object()
+		{
+			line_number = 1;
+			parse_errors.clear();
+			auto jo = std::make_shared<json_object>();
+			json_navigator jn(jo);
+			return jn;
+		}
+
 		json_navigator parse_array(std::string _object)
 		{
 			line_number = 1;
@@ -225,6 +340,26 @@ namespace corona {
 				json_navigator jn(jo);
 				return jn;
 			}
+		}
+
+		json_navigator create_array()
+		{
+			line_number = 1;
+			parse_errors.clear();
+			auto jo = std::make_shared<json_array>();
+			json_navigator jn(jo);
+			return jn;
+		}
+
+		std::shared_ptr<json_value> parse_value(std::shared_ptr<json_object> _object, std::string _name, std::string _value)
+		{
+			const char* start = _value.c_str();
+			auto existing = _object->members.contains(_name);
+			std::shared_ptr<json_value> modified_value;
+			if (parse_value(modified_value, start, &start)) {
+				_object->members[_name] = modified_value;
+			}
+			return modified_value;
 		}
 
 	private:
