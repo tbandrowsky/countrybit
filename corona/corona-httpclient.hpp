@@ -451,7 +451,7 @@ namespace corona
             const char *_host, 
             int _port,
             const char *_url, 
-            json_navigator _params,
+            json _params,
             const char* _headers = nullptr)
 		{
             task<http_params> reader;
@@ -506,7 +506,7 @@ namespace corona
             return reader;
         }
 
-		auto post(const char* _host, int _port, const char* _url, json_navigator _body, const char* _headers = nullptr)
+		auto post(const char* _host, int _port, const char* _url, json _body, const char* _headers = nullptr)
 		{
             task<http_params> reader;
             reader.runner = [this](std::shared_ptr<http_params>_params) {

@@ -33,7 +33,7 @@ namespace corona {
 		std::string id_field;
 		std::string text_field;
 
-		json_navigator items;
+		json items;
 	};
 
 	class table_column
@@ -50,7 +50,7 @@ namespace corona {
 	public:
 		std::vector<table_column> columns;
 		std::string id_field;
-		json_navigator items;
+		json items;
 	};
 
 	class id_counter
@@ -726,7 +726,7 @@ namespace corona {
 		virtual ~gradient_button_control();
 
 		virtual void arrange(rectangle _ctx);
-		virtual void draw_button(std::function<void(rectangle* _bounds, solidBrushRequest* _foreground)> draw_shape);
+		virtual void draw_button(std::function<void(gradient_button_control *_parent, rectangle* _bounds, solidBrushRequest* _foreground)> draw_shape);
 
 	};
 
@@ -780,6 +780,30 @@ namespace corona {
 
 		menu_button_control(container_control* _parent, int _id);
 		virtual ~menu_button_control() { ; }
+
+		virtual void on_subscribe(presentation* _presentation, std::weak_ptr<page> _page);
+	};
+
+	class tab_button_control : public gradient_button_control
+	{
+	public:
+
+		std::string			text;
+		solidBrushRequest	text_fill_brush;
+		textStyleRequest	text_style;
+		measure				icon_width;
+		bool				is_active;
+
+		tab_button_control(container_control* _parent, int _id);
+		virtual ~tab_button_control() { ; }
+
+		void init();
+		virtual double get_font_size() { return text_style.fontSize; }
+		tab_button_control& set_text(std::string _text);
+		tab_button_control& set_text_fill(solidBrushRequest _brushFill);
+		tab_button_control& set_text_fill(std::string _color);
+		tab_button_control& set_text_style(std::string _font_name, int _font_size, bool _bold = false, bool _underline = false, bool _italic = false, bool _strike_through = false);
+		tab_button_control& set_text_style(textStyleRequest request);
 
 		virtual void on_subscribe(presentation* _presentation, std::weak_ptr<page> _page);
 	};
@@ -927,12 +951,12 @@ namespace corona {
 		virtual point get_remaining(point _ctx);
 	};
 
-	using control_json_mapper = std::function<std::weak_ptr<control_base>(json_navigator& _array, int _index)>;
+	using control_json_mapper = std::function<std::weak_ptr<control_base>(json& _array, int _index)>;
 
 	class array_data_source 
 	{
 	public:
-		json_navigator		data;
+		json		data;
 		control_json_mapper data_to_control;
 	};
 
@@ -1393,7 +1417,7 @@ namespace corona {
 						data_row[col_index] = blank;
 						bool has_field = item.has_member(col.json_field);
 						if (has_field) {
-							std::string item_value = item[col.json_field];
+							std::string item_value = item[col.json_field.c_str()];
 							char* value = mtable.set(col_index, row_index, item_value);
 							if (value) {
 								data_row[col_index] = value;
@@ -4395,7 +4419,7 @@ namespace corona {
 	text_display_control& text_display_control::set_text_fill(std::string _color)
 	{
 		text_fill_brush.name = typeid(*this).name();
-		text_fill_brush.brushColor = toColor(_color.c_str());
+		text_fill_brush.brushColor = toColor(_color);
 		return *this;
 	}
 
@@ -4781,7 +4805,7 @@ namespace corona {
 	void label_control::set_default_styles()
 	{
 		text_fill_brush.name = "label_text_fill";
-		text_fill_brush.brushColor = toColor(styles.get_style().TextColor.c_str());
+		text_fill_brush.brushColor = toColor(styles.get_style().TextColor);
 
 		text_style = {};
 		text_style.name = "label_text_style";
@@ -4814,7 +4838,7 @@ namespace corona {
 	void placeholder_control::set_default_styles()
 	{
 		text_fill_brush.name = "placeholder_text_fill";
-		text_fill_brush.brushColor = toColor(styles.get_style().TextColor.c_str());
+		text_fill_brush.brushColor = toColor(styles.get_style().TextColor);
 
 		text_style = {};
 		text_style.name = "placeholder_text_style";
@@ -5048,7 +5072,7 @@ namespace corona {
 		;
 	}
 
-	void gradient_button_control::draw_button(std::function<void(rectangle* _bounds, solidBrushRequest* _foreground)> draw_shape)
+	void gradient_button_control::draw_button(std::function<void(gradient_button_control *_src, rectangle* _bounds, solidBrushRequest* _foreground)> draw_shape)
 	{
 		if (auto pwindow = window.lock())
 		{
@@ -5065,21 +5089,21 @@ namespace corona {
 					context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonFaceDown.name);
 					auto face_bounds = rectangle_math::deflate(draw_bounds, { 8, 8, 8, 8 });
 					//context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonBackLight.name);
-					draw_shape(&face_bounds, &foregroundDown);
+					draw_shape(this, &face_bounds, &foregroundDown);
 				}
 				else if (mouse_over.value())
 				{
 					context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonFaceOver.name);
 					auto face_bounds = rectangle_math::deflate(draw_bounds, { 8, 8, 8, 16 });
 					//context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonBackLight.name);
-					draw_shape(&face_bounds, &foregroundOver);
+					draw_shape(this, &face_bounds, &foregroundOver);
 				}
 				else
 				{
 					context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonFaceNormal.name);
 					auto face_bounds = rectangle_math::deflate(draw_bounds, { 8, 8, 8, 16 });
 					//context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonBackLight.name);
-					draw_shape(&face_bounds, &foregroundNormal);
+					draw_shape(this, &face_bounds, &foregroundNormal);
 				}
 			}
 		}
@@ -5096,7 +5120,7 @@ namespace corona {
 					if (auto phost = host.lock()) {
 						auto draw_bounds = inner_bounds;
 
-						std::function<void(rectangle* _bounds, solidBrushRequest* _foreground)> draw_shape;
+						std::function<void(gradient_button_control* _src, rectangle* _bounds, solidBrushRequest* _foreground)> draw_shape;
 
 						draw_bounds.x = 0;
 						draw_bounds.y = 0;
@@ -5107,7 +5131,7 @@ namespace corona {
 						auto& context = pwindow->getContext();
 						auto pcontext = &context;
 
-						draw_shape = [this, porigin, pcontext](rectangle* _bounds, solidBrushRequest* _foreground) {
+						draw_shape = [this, porigin, pcontext](gradient_button_control *_src, rectangle* _bounds, solidBrushRequest* _foreground) {
 
 							point start;
 							point stop;
@@ -5166,7 +5190,7 @@ namespace corona {
 					if (auto phost = host.lock()) {
 						auto draw_bounds = inner_bounds;
 
-						std::function<void(rectangle* _bounds, solidBrushRequest* _foreground)> draw_shape;
+						std::function<void(gradient_button_control *_src, rectangle* _bounds, solidBrushRequest* _foreground)> draw_shape;
 
 						draw_bounds.x = 0;
 						draw_bounds.y = 0;
@@ -5177,7 +5201,7 @@ namespace corona {
 						auto& context = pwindow->getContext();
 						auto pcontext = &context;
 
-						draw_shape = [this, porigin, pcontext](rectangle* _bounds, solidBrushRequest* _foreground) {
+						draw_shape = [this, porigin, pcontext](gradient_button_control* _src, rectangle* _bounds, solidBrushRequest* _foreground) {
 							pathImmediateDto pid;
 							porigin->x = _bounds->x;
 							porigin->y = _bounds->y;
@@ -5229,7 +5253,7 @@ namespace corona {
 					if (auto phost = host.lock()) {
 						auto draw_bounds = inner_bounds;
 
-						std::function<void(rectangle* _bounds, solidBrushRequest* _foreground)> draw_shape;
+						std::function<void(gradient_button_control* _src, rectangle* _bounds, solidBrushRequest* _foreground)> draw_shape;
 
 						draw_bounds.x = 0;
 						draw_bounds.y = 0;
@@ -5240,7 +5264,7 @@ namespace corona {
 						auto& context = pwindow->getContext();
 						auto pcontext = &context;
 
-						draw_shape = [this, porigin, pcontext](rectangle* _bounds, solidBrushRequest* _foreground) {
+						draw_shape = [this, porigin, pcontext](gradient_button_control* _src, rectangle* _bounds, solidBrushRequest* _foreground) {
 							pathImmediateDto pid;
 							porigin->x = _bounds->x;
 							porigin->y = _bounds->y;
@@ -5303,7 +5327,7 @@ namespace corona {
 					if (auto phost = host.lock()) {
 						auto draw_bounds = inner_bounds;
 
-						std::function<void(rectangle* _bounds, solidBrushRequest* _foreground)> draw_shape;
+						std::function<void(gradient_button_control* _src, rectangle* _bounds, solidBrushRequest* _foreground)> draw_shape;
 
 						draw_bounds.x = 0;
 						draw_bounds.y = 0;
@@ -5314,7 +5338,7 @@ namespace corona {
 						auto& context = pwindow->getContext();
 						auto pcontext = &context;
 
-						draw_shape = [this, porigin, pcontext](rectangle* _bounds, solidBrushRequest* _foreground) {
+						draw_shape = [this, porigin, pcontext](gradient_button_control* _src, rectangle* _bounds, solidBrushRequest* _foreground) {
 							point start, stop;
 							start.x = _bounds->x;
 							start.y = _bounds->y;
@@ -5350,6 +5374,135 @@ namespace corona {
 	close_button_control::~close_button_control()
 	{
 		;
+	}
+
+
+	tab_button_control::tab_button_control(container_control* _parent, int _id) : gradient_button_control(_parent, _id, "menu")
+	{
+		init();
+
+	}
+
+	void tab_button_control::on_subscribe(presentation* _presentation, std::weak_ptr<page> _page)
+	{
+		if (auto ppage = _page.lock()) {
+			auto pcontrol = get_shared();
+			ppage->on_mouse_left_click(pcontrol, [this, _presentation, _page](mouse_left_click_event evt)
+				{
+					is_active = true;
+				});
+		}
+	}
+
+	void tab_button_control::init()
+	{
+		set_origin(0.0_px, 0.0_px);
+		set_size(1.0_container, 1.2_fontgr);
+
+		auto ctrl = this;
+
+		on_create = [this](draw_control* _src)
+			{
+				if (auto pwindow = this->window.lock())
+				{
+					pwindow->getContext().setSolidColorBrush(&this->text_fill_brush);
+					pwindow->getContext().setTextStyle(&this->text_style);
+				}
+			};
+
+		on_draw = [this](control_base* _item)
+			{
+				if (auto pwindow = window.lock())
+				{
+					if (auto phost = host.lock()) {
+						auto draw_bounds = inner_bounds;
+
+						std::function<void(gradient_button_control* _src, rectangle* _bounds, solidBrushRequest* _foreground)> draw_shape;
+
+						draw_bounds.x = 0;
+						draw_bounds.y = 0;
+
+						point shape_origin;
+						point* porigin = &shape_origin;
+
+						auto& context = pwindow->getContext();
+						auto pcontext = &context;
+
+						draw_shape = [this, porigin, pcontext](gradient_button_control* _src, rectangle* _bounds, solidBrushRequest* _foreground) {
+
+							point start;
+							point stop;
+
+							start.x = _bounds->x;
+							start.y = _bounds->y + _bounds->h / 2.0;
+							stop.x = _bounds->right();
+							stop.y = _bounds->y + _bounds->h / 2.0;
+
+							pcontext->drawLine(&start, &stop, _foreground->name, 4);
+
+							pathImmediateDto pid;
+							porigin->x = _bounds->x;
+							porigin->y = _bounds->y;
+							porigin->z = 0;
+							pid.path.addLineTo(_bounds->x, _bounds->y);
+							pid.path.addLineTo(_bounds->right(), _bounds->y);
+							pid.path.addLineTo(_bounds->right(), _bounds->bottom());
+							pid.path.addLineTo(_bounds->x, _bounds->bottom());
+							pid.path.addLineTo(_bounds->x, _bounds->y);
+							pid.position = *porigin;
+							pid.rotation = 0;
+							pid.strokeWidth = 4;
+							pid.borderBrushName = _foreground->name;
+							pid.closed = true;
+							pcontext->drawPath(&pid);
+							pcontext->drawText(text.c_str(), _bounds, this->text_style.name, _foreground->name);
+
+							};
+
+						draw_button(draw_shape);
+
+						//	pwindow->getContext().drawRectangle(&draw_bounds, this->text_fill_brush.name, 4, nullptr);
+
+					}
+				}
+			};
+	}
+
+	tab_button_control& tab_button_control::set_text(std::string _text)
+	{
+		text = _text;
+		return *this;
+	}
+
+	tab_button_control& tab_button_control::set_text_fill(solidBrushRequest _brushFill)
+	{
+		text_fill_brush = _brushFill;
+		return *this;
+	}
+
+	tab_button_control& tab_button_control::set_text_fill(std::string _color)
+	{
+		text_fill_brush.name = typeid(*this).name();
+		text_fill_brush.brushColor = toColor(_color);
+		return *this;
+	}
+
+	tab_button_control& tab_button_control::set_text_style(std::string _font_name, int _font_size, bool _bold, bool _underline, bool _italic, bool _strike_through)
+	{
+		text_style.name = typeid(*this).name();
+		text_style.fontName = _font_name;
+		text_style.fontSize = _font_size;
+		text_style.bold = _bold;
+		text_style.underline = _underline;
+		text_style.italics = _italic;
+		text_style.strike_through = _strike_through;
+		return *this;
+	}
+
+	tab_button_control& tab_button_control::set_text_style(textStyleRequest request)
+	{
+		text_style = request;
+		return *this;
 	}
 
 	page::page(const char* _name)

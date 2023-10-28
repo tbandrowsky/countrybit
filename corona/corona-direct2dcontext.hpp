@@ -69,6 +69,7 @@ namespace corona
 		virtual void drawLine(point* start, point* stop, const char* _fillBrush, double thickness) = 0;
 		virtual void drawRectangle(rectangle* _rectDto, const char* _borderBrush, double _borderWidth, const char* _fillBrush) = 0;
 		virtual void drawText(const char* _text, rectangle* _rectDto, const char* _textStyle, const char* _fillBrush) = 0;
+		virtual void drawText(const std::string& _text, rectangle* _rectDto, const std::string& _textStyle, const std::string& _fillBrush) = 0;
 		virtual rectangle getCanvasSize() = 0;
 
 		virtual void popCamera() = 0;
@@ -551,6 +552,11 @@ namespace corona
 				else
 					getDeviceContext()->DrawRectangle(&r, border->getBrush(), _borderWidth);
 			}
+		}
+
+		virtual void drawText(const std::string& _text, rectangle* _rectangle, const std::string& _textStyle, const std::string& _fillBrush)
+		{
+			drawText(_text.c_str(), _rectangle, _textStyle.c_str(), _fillBrush.c_str());
 		}
 
 		virtual void drawText(const char* _text, rectangle* _rectangle, const char* _textStyle, const char* _fillBrush)

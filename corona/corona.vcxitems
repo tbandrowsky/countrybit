@@ -81,4 +81,7 @@
   <ItemGroup>
     <None Include="$(MSBuildThisFileDirectory)header-units.json" />
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="$(MSBuildThisFileDirectory)corona-calicoclient.cpp" />
+  </ItemGroup>
 </Project>

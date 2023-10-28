@@ -34,6 +34,11 @@ namespace corona
 		{
 			return "";
 		}
+
+		virtual std::shared_ptr<json_value> clone()
+		{
+			return std::make_shared<json_value>();
+		}
 	};
 
 	class json_double : public json_value
@@ -49,6 +54,12 @@ namespace corona
 		{
 			return std::to_string(value);
 		}
+		virtual std::shared_ptr<json_value> clone()
+		{
+			auto t = std::make_shared<json_double>();
+			t->value = value;
+			return t;
+		}
 	};
 
 	class json_string : public json_value
@@ -63,6 +74,12 @@ namespace corona
 		virtual std::string to_string()
 		{
 			return value;
+		}
+		virtual std::shared_ptr<json_value> clone()
+		{
+			auto t = std::make_shared<json_string>();
+			t->value = value;
+			return t;
 		}
 	};
 
@@ -87,6 +104,15 @@ namespace corona
 		virtual std::string to_string()
 		{
 			return to_json();
+		}
+		virtual std::shared_ptr<json_value> clone()
+		{
+			auto t = std::make_shared<json_array>();
+			for (auto element : elements) {
+				auto c = element->clone();
+				t->elements.push_back(c);
+			}
+			return t;
 		}
 	};
 
@@ -114,10 +140,18 @@ namespace corona
 		{
 			return to_json();
 		}
-
+		virtual std::shared_ptr<json_value> clone()
+		{
+			auto t = std::make_shared<json_object>();
+			for (auto member : members) {
+				auto c = member.second->clone();
+				t->members[member.first] = c;
+			}
+			return t;
+		}
 	};
 
-	class json_navigator
+	class json
 	{
 		std::shared_ptr<json_value> value_base;
 		std::shared_ptr<json_double> double_impl;
@@ -127,11 +161,11 @@ namespace corona
 
 	public:
 
-		json_navigator()
+		json()
 		{
 		}
 
-		json_navigator(std::shared_ptr<json_value> _value)
+		json(std::shared_ptr<json_value> _value)
 		{
 			value_base = _value;
 			double_impl = std::dynamic_pointer_cast<json_double>(_value);
@@ -215,15 +249,21 @@ namespace corona
 			return object_impl;
 		}
 
-		json_navigator operator[](int _index) const
+		json operator[](int _index) const
 		{
-			json_navigator jn(array_impl->elements[_index]);
+			json jn(array_impl->elements[_index]);
 			return jn;
 		}
 
-		json_navigator operator[](std::string _key) const
+		json operator[](const std::string& _key) const
 		{
-			json_navigator jn(object_impl->members[_key]);
+			json jn(object_impl->members[_key]);
+			return jn;
+		}
+
+		json operator[](const char *_key) const
+		{
+			json jn(object_impl->members[_key]);
 			return jn;
 		}
 
@@ -233,19 +273,38 @@ namespace corona
 			return has_value;
 		}
 
-		json_navigator get_element(int _index) const
+		json get_element(int _index) const
 		{
-			json_navigator jn(array_impl->elements[_index]);
+			json jn(array_impl->elements[_index]);
 			return jn;
 		}
 
-		json_navigator get_member(std::string _key) const
+		json get_member(std::string _key) const
 		{
-			json_navigator jn(object_impl->members[_key]);
+			json jn(object_impl->members[_key]);
 			return jn;
 		}
 
-		json_navigator add_member(std::string _key, std::string _value)
+		json put_member(std::string _key, json& _member)
+		{
+			if (_member.is_array()) {
+				put_member_array(_key, _member);
+			}
+			else if (_member.is_double()) {
+				double d = _member;
+				put_member(_key, d);
+			}
+			else if (_member.is_object()) {
+				put_member_object(_key, _member);
+			}
+			else if (_member.is_string()) {
+				std::string d = _member;
+				put_member(_key, d);
+			}
+			return *this;
+		}
+
+		json put_member(std::string _key, std::string _value)
 		{
 			auto new_member = std::make_shared<json_string>();
 			new_member->value = _value;
@@ -253,7 +312,7 @@ namespace corona
 			return *this;
 		}
 
-		json_navigator add_member(std::string _key, double _value)
+		json put_member(std::string _key, double _value)
 		{
 			auto new_member = std::make_shared<json_double>();
 			new_member->value = _value;
@@ -261,23 +320,288 @@ namespace corona
 			return *this;
 		}
 
-		json_navigator add_member_array(std::string _key)
+		json put_member_array(std::string _key)
 		{
 			auto new_member = std::make_shared<json_array>();
 			object_impl->members[_key] = new_member;
 			return *this;
 		}
 
-		json_navigator add_member_object(std::string _key)
+		json put_member_object(std::string _key)
 		{
 			auto new_member = std::make_shared<json_object>();
 			object_impl->members[_key] = new_member;
 			return *this;
 		}
 
+		json put_member_array(std::string _key, json& _array)
+		{
+			std::shared_ptr<json_array> existing_array = _array;
+			auto new_array = existing_array->clone();
+			object_impl->members[_key] = new_array;
+			return *this;
+		}
+
+		json put_member_object(std::string _key, json& _object)
+		{
+			std::shared_ptr<json_object> existing_object = _object;
+			auto new_object = existing_object->clone();
+			object_impl->members[_key] = new_object;
+			return *this;
+		}
+
 		std::map<std::string, std::shared_ptr<json_value>> get_members()
 		{
 			return object_impl->members;
+		}
+
+		json put_element(int _index, json &_element)
+		{
+			if (_element.is_array()) {
+				put_element_array(_index, _element);
+			}
+			else if (_element.is_double()) {
+				double d = _element;
+				put_element(_index, d);
+			}
+			else if (_element.is_object()) {
+				put_element_object(_index, _element);
+			}
+			else if (_element.is_string()) {
+				std::string d = _element;
+				put_element(_index, d);
+			}
+			return *this;
+		}
+
+		json put_element(int _index, std::string _value)
+		{
+			auto new_member = std::make_shared<json_string>();
+			new_member->value = _value;
+
+			if (_index < 0 || _index >= array_impl->elements.size()) {
+				array_impl->elements.push_back(new_member);
+			}
+			else {
+				array_impl->elements[_index] = new_member;
+			}
+			return *this;
+		}
+
+		json put_element(int _index, double _value)
+		{
+			auto new_member = std::make_shared<json_double>();
+			new_member->value = _value;
+			if (_index < 0 || _index >= array_impl->elements.size()) {
+				array_impl->elements.push_back(new_member);
+			}
+			else {
+				array_impl->elements[_index] = new_member;
+			}
+			return *this;
+		}
+
+		json put_element_array(int _index)
+		{
+			auto new_member = std::make_shared<json_array>();
+			if (_index < 0 || _index >= array_impl->elements.size()) {
+				array_impl->elements.push_back(new_member);
+			}
+			else {
+				array_impl->elements[_index] = new_member;
+			}
+			return *this;
+		}
+
+		json put_element_object(int _index)
+		{
+			auto new_member = std::make_shared<json_object>();
+			if (_index < 0 || _index >= array_impl->elements.size()) {
+				array_impl->elements.push_back(new_member);
+			}
+			else {
+				array_impl->elements[_index] = new_member;
+			}
+			return *this;
+		}
+
+		json put_element_array(int _index, json& _array)
+		{
+			std::shared_ptr<json_array> existing_array = _array;
+			auto new_array = existing_array->clone();
+
+			if (_index < 0 || _index >= array_impl->elements.size()) 
+			{
+				array_impl->elements.push_back(new_array);
+			}
+			else 
+			{
+				array_impl->elements[_index] = new_array;
+			}
+			return *this;
+		}
+
+		json put_element_object(int _index, json& _object)
+		{
+			std::shared_ptr<json_object> existing_object = _object;
+			auto new_object = existing_object->clone();
+
+			if (_index < 0 || _index >= array_impl->elements.size()) {
+				array_impl->elements.push_back(new_object);
+			}
+			else 
+			{
+				array_impl->elements[_index] = new_object;
+			}
+			return *this;
+		}
+
+		json for_each(std::function<void(json& _item)> _transform)
+		{
+			for (int i = 0; i < size(); i++)
+			{
+				auto element = get_element(i);
+				_transform(element);
+			}
+			return *this;
+		}
+
+		json filter(std::function<bool(json& _item)> _where_clause)
+		{
+			json new_array( std::make_shared<json_array>() );
+			for (int i = 0; i < size(); i++)
+			{
+				auto element = get_element(i);
+				if (_where_clause(element)) {
+					json jnew = element->clone();
+					new_array.put_element(-1, jnew );
+				}
+			}
+			return new_array;
+		}
+
+		json map(std::function<json(json& _item)> _transform)
+		{
+			json new_array(std::make_shared<json_array>());
+			for (int i = 0; i < size(); i++)
+			{
+				auto element = get_element(i);
+				auto new_element = _transform(element);
+				new_array.put_element(-1, new_element);
+			}
+			return new_array;
+		}
+
+		json update(std::function<json&(json& _item)> _transform)
+		{
+			for (int i = 0; i < size(); i++)
+			{
+				auto element = get_element(i);
+				auto new_element = _transform(element);
+				put_element(1, new_element);
+			}
+			return *this;
+		}
+
+		json join(json& _right, 
+			std::function<bool(json&_item1, json&_item2)> _compare,
+			std::function<json(json& _item1, json& _item2)> _compose
+			)
+		{
+			json new_array(std::make_shared<json_array>());
+
+			for (int i = 0; i < size(); i++)
+			{
+				json left_item = get_element(i);
+				for (int j = 0; j < _right.size(); j++)
+				{
+					json right_item = _right.get_element(j);
+					if (_compare(left_item, right_item)) {
+						json new_item = _compose(left_item, right_item);
+						new_array.put_element(-1, new_item);
+					}
+				}
+			}
+
+			return new_array;
+		}
+
+		json join(json& _right,
+			std::function<std::string(json& _item)> _get_key,
+			std::function<json(json& _item1, json& _item2)> _compose
+		)
+		{
+
+			int i, j;
+
+			class match_set
+			{
+			public:
+				std::vector<int> left;
+				std::vector<int> right;
+			};
+
+			std::map<std::string, match_set> join_items;
+
+			json new_array(std::make_shared<json_array>());
+
+			for (i = 0; i < size(); i++)
+			{
+				json left_item = get_element(i);				
+				std::string key = _get_key(left_item);
+				if (!join_items.contains(key)) {
+					match_set m;
+					join_items[key] = m;
+				}
+				join_items[key].left.push_back(i);
+			}
+
+			for (j = 0; j < _right.size(); j++)
+			{
+				json right_item = _right.get_element(j);
+				std::string key = _get_key(right_item);
+				if (!join_items.contains(key)) {
+					match_set m;
+					join_items[key] = m;
+				}
+				join_items[key].left.push_back(j);
+			}
+
+			for (auto join_item : join_items)
+			{
+				for (i = 0; i < join_item.second.left.size(); i++) 
+				{
+					auto left_id = join_item.second.left[i];
+					auto left_item = get_element(i);
+
+					for (j = 0; i < join_item.second.right.size(); j++)
+					{
+						auto right_id = join_item.second.right[i];
+						auto right_item = get_element(i);
+						auto new_item = _compose(left_item, right_item);
+						new_array.put_element(-1, new_item);
+					}
+				}
+			}
+
+			return new_array;
+		}
+
+		json group(std::function<std::string(json& _item)> _get_group)
+		{
+			json_parser jp;
+			json new_object = jp.create_object();
+
+			for (int i = 0; i < size(); i++)
+			{
+				auto element = get_element(i);
+				std::string key = _get_group(element);
+				if (!new_object.has_member(key)) {
+					new_object.put_member_array(key);
+				}
+				new_object[key.c_str()].put_element(-1, element);
+			}
+			return new_object;
 		}
 
 		int size() const
@@ -310,44 +634,44 @@ namespace corona
 
 		std::vector<parse_message> parse_errors;
 
-		json_navigator parse_object(std::string _object)
+		json parse_object(std::string _object)
 		{
 			line_number = 1;
 			parse_errors.clear();
 			auto jo = std::make_shared<json_object>();
 			const char* start = _object.c_str();
 			parse_object(jo, start, &start);
-			json_navigator jn(jo);
+			json jn(jo);
 			return jn;
 		}
 
-		json_navigator create_object()
+		json create_object()
 		{
 			line_number = 1;
 			parse_errors.clear();
 			auto jo = std::make_shared<json_object>();
-			json_navigator jn(jo);
+			json jn(jo);
 			return jn;
 		}
 
-		json_navigator parse_array(std::string _object)
+		json parse_array(std::string _object)
 		{
 			line_number = 1;
 			parse_errors.clear();
 			auto jo = std::make_shared<json_array>();
 			const char* start = _object.c_str();
 			if (parse_array(jo, start, &start)) {
-				json_navigator jn(jo);
+				json jn(jo);
 				return jn;
 			}
 		}
 
-		json_navigator create_array()
+		json create_array()
 		{
 			line_number = 1;
 			parse_errors.clear();
 			auto jo = std::make_shared<json_array>();
-			json_navigator jn(jo);
+			json jn(jo);
 			return jn;
 		}
 
@@ -627,28 +951,28 @@ namespace corona
 
 }
 
-corona::json_navigator operator ""_json_array(const char* _src, size_t _length)
+corona::json operator ""_json_array(const char* _src, size_t _length)
 {
 	corona::json_parser parser;
 	auto result = parser.parse_array(_src);
 	return result;
 }
 
-corona::json_navigator operator ""_json_object(const char* _src, size_t _length)
+corona::json operator ""_json_object(const char* _src, size_t _length)
 {
 	corona::json_parser parser;
 	auto result = parser.parse_object(_src);
 	return result;
 }
 
-corona::json_navigator operator ""_json_array(const char* _src)
+corona::json operator ""_json_array(const char* _src)
 {
 	corona::json_parser parser;
 	auto result = parser.parse_array(_src);
 	return result;
 }
 
-corona::json_navigator operator ""_json_object(const char* _src)
+corona::json operator ""_json_object(const char* _src)
 {
 	corona::json_parser parser;
 	auto result = parser.parse_object(_src);

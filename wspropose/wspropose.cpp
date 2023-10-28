@@ -42,22 +42,6 @@ int __stdcall WinMain(HINSTANCE hInstance,
 	CoUninitialize();
 }
 
-sync<int> calico_login(std::string _user_name)
-{
-	int success = 1;
-
-	json_parser jp;
-	http_client calico_client;
-	const char* calico_host = "localhost";
-	int calico_port = 7277;
-	json_navigator login_object = jp.create_object();
-
-	login_object.add_member("userName", _user_name);
-	login_object.add_member("modelName", "Zoos");
-	http_params login_result = co_await calico_client.post(calico_host, calico_port, "api/LoginActor", login_object);
-
-	co_return success;
-}
 
 void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 {
@@ -120,7 +104,7 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 
 	json_parser parser;
 
-	json_navigator artifactTypes = parser.parse_array( R"(
+	json artifactTypes = parser.parse_array( R"(
 	[
 		{ 
 			"ArtifactTypeCode" : "Windows.Native.Console",
@@ -324,7 +308,7 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 	)");
 
 
-	json_navigator application_schema = parser.parse_array(R"(
+	json application_schema = parser.parse_array(R"(
 [
 	{ 
 		"ProductName" : "",
