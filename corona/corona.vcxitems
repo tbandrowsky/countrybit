@@ -57,6 +57,15 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-object_id_box.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-paths.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-point_box.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-presentation-base.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-presentation-controls-base.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-presentation-controls-dx-container.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-presentation-controls-dx-text.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-presentation-controls-dx.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-presentation-events.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-presentation-menu.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-presentation-page.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-presentation-controls-win32.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-presentation.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-queue.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-read_all_string.hpp" />

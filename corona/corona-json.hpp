@@ -204,12 +204,12 @@ namespace corona
 			return value_base != nullptr;
 		}
 
-		explicit operator double& ()  const
+		double& get_double()  const
 		{
 			return double_impl->value;
 		}
 
-		explicit operator std::string& () const
+		std::string& get_string() const
 		{
 			return string_impl->value;
 		}
@@ -283,6 +283,13 @@ namespace corona
 		{
 			json jn(object_impl->members[_key]);
 			return jn;
+		}
+
+		int get_member_int(std::string _key) const
+		{
+			json jn(object_impl->members[_key]);
+			double jnd = (double)jn;
+			return jnd;
 		}
 
 		json put_member(std::string _key, json& _member)
@@ -589,8 +596,7 @@ namespace corona
 
 		json group(std::function<std::string(json& _item)> _get_group)
 		{
-			json_parser jp;
-			json new_object = jp.create_object();
+			json new_object(std::make_shared<json_object>());
 
 			for (int i = 0; i < size(); i++)
 			{

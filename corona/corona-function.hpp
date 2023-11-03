@@ -148,7 +148,7 @@ namespace corona
 			HANDLE hevent = ::CreateEvent(NULL, false, false, NULL);
 			std::cout << this << ", task await_suspend:" << GetCurrentThreadId() << std::endl;
 			task_job<T> *tj = new task_job<T>(coroutine, hevent, params, runner);
-			application::get_application()->add_job(tj);
+			global_job_queue->postJobMessage(tj);
 			std::cout << this << ", task await_suspend away:" << GetCurrentThreadId() << std::endl;
 			::WaitForSingleObject(hevent, INFINITE);
 			::CloseHandle(hevent);

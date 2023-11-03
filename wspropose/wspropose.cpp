@@ -7,6 +7,8 @@ using namespace corona;
 
 void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam);
 
+application app;
+
 int __stdcall WinMain(HINSTANCE hInstance,
 	HINSTANCE hPrevInstance,
 	LPSTR  lpszCmdParam,
@@ -96,351 +98,134 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 		.destination(IDM_TEAM, "T&eam", "team")
 		.destination(IDM_OBSTACLES, "Se&ttings", "settings");
 
-	auto& st = styles.get_style();
+	auto st = styles.get_style();
 
 	std::function<void(pushbutton_control& _set_defaults)> push_button_defaults = [](pushbutton_control& ctrl) {
 		ctrl.set_size(150.0_px, 50.0_px);
 	};
 
-	json_parser parser;
-
-	json artifactTypes = parser.parse_array( R"(
-	[
-		{ 
-			"ArtifactTypeCode" : "Windows.Native.Console",
-			"ArtifactTypeName":"Windows Console Application", 
-			"ArtifactTypeDescription" : "",
-			"DeploymentPipeline" : [
-							{ "GitClone": "git clone {GitUserName}:{GitRepositoryName}" }{ ,  
-							{ "GitCheckout": "git checkout {GitBranchName}" }, 
-							{ "BuildFolder": "cd {BuildFolder}" }, 
-							{ "BuildCommand":"msbuild {SolutionFileName}.sln /t:build /fl /flp:logfile={LogFileName}.log" }
-							],
-			"ArtifactsFolder" : "cd {ArtifactsFolder}"
-		},
-		{ 
-			"ArtifactTypeCode" : "Windows.Native.Desktop",
-			"ArtifactTypeName":"Windows Destkop Application" , 
-			"ArtifactTypeDescription" : "",
-			"DeploymentPipeline" : [
-							{ "GitClone": "git clone {GitUserName}:{GitRepositoryName}" },  
-						    { "GitCheckout": "git checkout {GitBranchName}"  }, 
-							{ "BuildFolder": "cd {BuildFolder}"  }, 
-							{ "BuildCommand":"msbuild {SolutionFileName}.sln /t:build /fl /flp:logfile={LogFileName}.log"  }
-			],
-			"ArtifactsFolder" : "cd {ArtifactsFolder}"
-		},
-		{
-			"ArtifactTypeCode" : "Windows.Native.Service",
-			"ArtifactTypeName":"Windows Service" , 
-			"ArtifactTypeDescription" : "",
-			"DeploymentPipeline" : [
-							{ "GitClone": "git clone {GitUserName}:{GitRepositoryName}"  },  
-							{ "GitCheckout": "git checkout {GitBranchName}"  }, 
-							{ "BuildFolder": "cd {BuildFolder}"  }, 
-							{ "BuildCommand":"msbuild {SolutionFileName}.sln /t:build /fl /flp:logfile={LogFileName}.log" }
-			],
-			"ArtifactsFolder" : "cd {ArtifactsFolder}",
-		},
-		{ 
-			"ArtifactTypeCode" : "Windows.Net.Asp.WebForm",
-			"ArtifactTypeName":"ASP.Net WebForms", 
-	  	    "ArtifactTypeDescription" : "",
-			"DeploymentPipeline" : [
-	 						{ "GitClone": "git clone {GitUserName}:{GitRepositoryName}" },  
-							{ "GitCheckout": "git checkout {GitBranchName}"  }, 
-							{ "BuildFolder": "cd {BuildFolder}"   }, 
-							{ "BuildCommand":"msbuild {SolutionFileName}.sln /t:build /fl /flp:logfile={LogFileName}.log"  } 
-			],
-			"ArtifactsFolder" : "cd {ArtifactsFolder}"
-		},
-		{ 
-			"ArtifactTypeCode" : "Windows.Net.Asp.Mvc",
-			"ArtifactTypeName":"ASP.Net Web MVC", 
-		    "ArtifactTypeDescription" : "",
-			"DeploymentPipeline" : [
-			 		{ "GitClone": "git clone {GitUserName}:{GitRepositoryName}" },  
-					{ "GitCheckout": "git checkout {GitBranchName}" }, 
-					{ "BuildFolder": "cd {BuildFolder}" }, 
-					{ "BuildCommand":"msbuild {SolutionFileName}.sln /t:build /fl /flp:logfile={LogFileName}.log" }
-			], 
-			"ArtifactsFolder" : "cd {ArtifactsFolder}"
-		},
-		{ 
-			"ArtifactTypeCode" : "NetCore.Web.Mvc",
-			"ArtifactTypeName":".NET Core MVC", 
-		    "ArtifactTypeDescription" : "",
-			"DeploymentPipeline" : [
-	 				{ "GitClone": "git clone {GitUserName}:{GitRepositoryName}" },  
-					{ "GitCheckout": "git checkout {GitBranchName}" }, 
-					{ "BuildFolder": "cd {BuildFolder}" }, 
-					{ "BuildCommand":"msbuild {SolutionFileName}.sln /t:build /fl /flp:logfile={LogFileName}.log" }
-			],
-			"ArtifactsFolder" : "cd {ArtifactsFolder}"
-		},
-		{ 
-			"ArtifactTypeCode":"NetCore.Web.Api", 
-			"ArtifactTypeName":".NET Core Web API", 
-		    "ArtifactTypeDescription" : "",
-			"DeploymentPipeline" : [
-	 			{ "GitClone": "git clone {GitUserName}:{GitRepositoryName}" },  
-				{ "GitCheckout": "git checkout {GitBranchName}" }, 
-				{ "BuildFolder": "cd {BuildFolder}" }, 
-				{ "BuildCommand":"msbuild {SolutionFileName}.sln /t:build /fl /flp:logfile={LogFileName}.log" }
-			],
-			"ArtifactsFolder" : "cd {ArtifactsFolder}"
-		},
-		{ 
-			"ArtifactTypeCode":"Static.Angular.Application", 
-			"ArtifactTypeName":"Angular Application", 
-		    "ArtifactTypeDescription" : "",
-			"DeploymentPipeline" : [
-	 			{ "GitClone": "git clone {GitUserName}:{GitRepositoryName}" },  
-				{ "GitCheckout": "git checkout {GitBranchName}"  }, 
-				{ "BuildFolder": "cd {BuildFolder}" }, 
-				{ "BuildCommand":"ng build {ProjectName}"  }
-			]
-			"ArtifactsFolder" : "cd {ArtifactsFolder}"
-		},
-		{ 
-			"ArtifactTypeCode" : "SqlServer.Dacpac"
-			"ArtifactTypeName":"Sql Server Deployment Project", 
-		    "ArtifactTypeDescription" : "",
-			"DeploymentPipeline" : [
-	 			{ "GitClone": "git clone {GitUserName}:{GitRepositoryName}" },  
-				{ "GitCheckout": "git checkout {GitBranchName}" }, 
-				{ "BuildFolder": "cd {BuildFolder}"  }, 
-				{ "BuildCommand":"msbuild {SolutionFileName}.sln /t:build /fl /flp:logfile={LogFileName}.log" }
-			],
-			"ArtifactsFolder" : "cd {ArtifactsFolder}"
-		},
-		{ 
-			"ArtifactTypeCode" : "SqlServer.Script"
-			"ArtifactTypeName":"Sql Server Deployment Scripts", 
-		    "ArtifactTypeDescription" : "",
-			"DeploymentPipeline" : [
-	 			{ "GitClone": "git clone {GitUserName}:{GitRepositoryName}" },  
-				{ "GitCheckout": "git checkout {GitBranchName}" }, 
-				{ "BuildFolder": "cd {BuildFolder}"  }, 
-				{ "BuildCommand":"msbuild {SolutionFileName}.sln /t:build /fl /flp:logfile={LogFileName}.log" }
-			],
-			"ArtifactsFolder" : "cd {ArtifactsFolder}"
-		},
-		{ 
-			"ArtifactTypeCode":"Azure.Subscription", 
-			"ArtifactTypeName":"Azure Subscription", 
-			"ArtifactTypeDescription" : "",
-			"CreateableArtifacts" : [ "Azure.Tenant" ]
-		},
-		{ 
-			"ArtifactTypeCode":"Azure.Tenant", 
-			"ArtifactTypeName":"Azure Tenant", 
-			"ArtifactTypeDescription" : "",
-			"CreateableArtifacts" : [ "Azure.ActiveDirectory.Group" ]
-		},
-		{
-			"ArtifactTypeCode":"Windows.ActiveDirectory.User", 
-			"ArtifactTypeName":"Active Directory Security User", 
-			"ArtifactTypeDescription" : "",
-		},
-		{ 
-			"ArtifactTypeCode":"Windows.ActiveDirectory.Group", 
-			"ArtifactTypeName":"Active Directory Security Group", 
-			"ArtifactTypeDescription" : "",
-		},
-		{ 
-			"ArtifactTypeCode":"Azure.ActiveDirectory.Group", 
-			"ArtifactTypeName":"Azure AD Security Group", 
-			"ArtifactTypeDescription" : "",
-		},
-		{ 
-			"ArtifactTypeCode":"Azure.B2C.Group", 
-			"ArtifactTypeName":"Azure B2C Security Group", 
-			"ArtifactTypeDescription" : "",
-		},
-		{ 
-			"ArtifactTypeCode":"Azure.Resource.Group", 
-			"ArtifactTypeName":"Azure Resource Group", 
-			"ArtifactTypeDescription" : "",
-		},
-		{ 
-			"ArtifactTypeCode":"Azure.VNET", 
-			"ArtifactTypeName":"Azure VNet", 
-			"ArtifactTypeDescription" : "",
-		},
-		{ 
-			"ArtifactTypeCode":"Azure.Subnet", 
-			"ArtifactTypeName":"Azure Subnet", 
-			"ArtifactTypeDescription" : "",
-		},
-		{	
-			"ArtifactTypeCode":"Azure.Application.Registration", 
-			"ArtifactTypeName":"Azure Application Registration", 
-			"ArtifactTypeDescription" : "",
-		},
-		{	
-			"ArtifactTypeCode":"Azure.Application.Function", 
-			"ArtifactTypeName":"Azure Function Application", 
-			"ArtifactTypeDescription" : "",
-		},
-		{	
-			"ArtifactTypeCode":"Azure.Application.Storage", 
-			"ArtifactTypeName":"Azure Storage Application", 
-			"ArtifactTypeDescription" : "",
-		},
-		{	
-			"ArtifactTypeCode":"Azure.VM.Windows", 
-			"ArtifactTypeName":"Azure Windows Virtual Machine", 
-			"ArtifactTypeDescription" : "",
-		},
-		{	
-			"ArtifactTypeCode":"Azure.VM.Linux", 
-			"ArtifactTypeName":"Azure Linux Virtual Machine", 
-			"ArtifactTypeDescription" : "",
-		},
-		{
-			"ArtifactTypeCode":"Azure.VM.SqlServer", 
-			"ArtifactTypeName":"Azure SQL Server Virtual Machine", 
-			"ArtifactTypeDescription" : "",
-		},
-
-	]
-	)");
-
-
-	json application_schema = parser.parse_array(R"(
-[
-	{ 
-		"ProductName" : "",
-		"ProductCharterText" : "",
-		"ProductDocumentsUrl" : "",
-		"ProductGroups" : [
-			{  "GroupName": "" },
-		],
-		"ProductTickets" : [
-			{  
-				"TicketType": "",
-				"TicketStatus": "",
-				"TicketURL" : ""
-			},
-		],
-		"ProductArtifacts" : [
-			{	"ArtifactName": "", 
-				"ArtifactBitbucket":"", 
-				"ArtifactJira": "", 
-				"ArtifactType":"", 
-				"Hosts" : [
-						{
-							"HostEnvironment" : "Dev",
-							"HostType" : "",
-						},
-						{
-
-						},
-						{
-
-						}
-				] 
-			},
-		],
-	}
-]
-
-)");
+	/*
+			presentation_style *st;
+		int	title_bar_id;
+		int menu_button_id;
+		menu_item* menu;
+		int image_control_id;
+		std::string image_file;
+		std::string corporate_name;
+		int id_title_column_id;
+		std::string title_name;
+		std::string subtitle_name;
+*/
 
 	wspropose_pages->create_page("home")
 		.column_begin()
-		.caption_bar(
-			st,
-			IDC_TITLE_BAR,
-			IDC_SYSTEM_MENU,
-			app_menu,
-			IDC_COMPANY_LOGO,
-			"assets\\small_logo.png",
-			"WOODRUFF SAWYER",
-			0,
-			"DEVELOPER STATION",
-			"Home"
+		.caption_bar(id_counter::next(), [st, &app_menu](caption_bar_control& _cb)
+			{	
+				_cb.st = st;
+				_cb.title_bar_id = IDC_TITLE_BAR;
+				_cb.menu_button_id = IDC_SYSTEM_MENU;
+				_cb.menu = &app_menu;
+				_cb.image_control_id = IDC_COMPANY_LOGO;
+				_cb.image_file = "assets\\small_logo.png";
+				_cb.corporate_name = "WOODRUFF SAWYER";
+				_cb.id_title_column_id = 0;
+				_cb.title_name = "DEVELOPER STATION";
+				_cb.subtitle_name = "Home";
+			}
 		)
 		.end();
 
 	wspropose_pages->create_page("presentations")
 		.column_begin()
 		.caption_bar(
-			st,
-			IDC_TITLE_BAR,
-			IDC_SYSTEM_MENU,
-			app_menu,
-			IDC_COMPANY_LOGO,
-			"assets\\small_logo.png",
-			"WOODRUFF SAWYER",
-			0,
-			"DEVELOPER STATION",
-			"Presentations"
+			id_counter::next(), [st, &app_menu](caption_bar_control& _cb)
+			{
+				_cb.st = st;
+				_cb.title_bar_id = IDC_TITLE_BAR;
+				_cb.menu_button_id = IDC_SYSTEM_MENU;
+				_cb.menu = &app_menu;
+				_cb.image_control_id = IDC_COMPANY_LOGO;
+				_cb.image_file = "assets\\small_logo.png";
+				_cb.corporate_name = "WOODRUFF SAWYER";
+				_cb.id_title_column_id = 0;
+				_cb.title_name = "DEVELOPER STATION";
+				_cb.subtitle_name = "Presentations";
+			}
 		)
+		.end();
+
+			wspropose_pages->create_page("presentation")
+				.column_begin()
+				.caption_bar(
+					id_counter::next(), [st, &app_menu](caption_bar_control& _cb)
+					{
+						_cb.st = st;
+						_cb.title_bar_id = IDC_TITLE_BAR;
+						_cb.menu_button_id = IDC_SYSTEM_MENU;
+						_cb.menu = &app_menu;
+						_cb.image_control_id = IDC_COMPANY_LOGO;
+						_cb.image_file = "assets\\small_logo.png";
+						_cb.corporate_name = "WOODRUFF SAWYER";
+						_cb.id_title_column_id = 0;
+						_cb.title_name = "DEVELOPER STATION";
+						_cb.subtitle_name = "Presentation Detail";
+					}
+				)
 		.end();
 
 	wspropose_pages->create_page("products")
 		.column_begin()
 		.caption_bar(
-			st,
-			IDC_TITLE_BAR,
-			IDC_SYSTEM_MENU,
-			app_menu,
-			IDC_COMPANY_LOGO,
-			"assets\\small_logo.png",
-			"WOODRUFF SAWYER",
-			0,
-			"DEVELOPER STATION",
-			"Presentations"
+			id_counter::next(), [st, &app_menu](caption_bar_control& _cb)
+			{
+				_cb.st = st;
+				_cb.title_bar_id = IDC_TITLE_BAR;
+				_cb.menu_button_id = IDC_SYSTEM_MENU;
+				_cb.menu = &app_menu;
+				_cb.image_control_id = IDC_COMPANY_LOGO;
+				_cb.image_file = "assets\\small_logo.png";
+				_cb.corporate_name = "WOODRUFF SAWYER";
+				_cb.id_title_column_id = 0;
+				_cb.title_name = "DEVELOPER STATION";
+				_cb.subtitle_name = "Products";
+			}
 		)
 		.end();
 
-	wspropose_pages->create_page("projects")
+	wspropose_pages->create_page("product")
 		.column_begin()
 		.caption_bar(
-			st,
-			IDC_TITLE_BAR,
-			IDC_SYSTEM_MENU,
-			app_menu,
-			IDC_COMPANY_LOGO,
-			"assets\\small_logo.png",
-			"WOODRUFF SAWYER",
-			0,
-			"DEVELOPER STATION",
-			"Projects"
+			id_counter::next(), [st, &app_menu](caption_bar_control& _cb)
+			{
+				_cb.st = st;
+				_cb.title_bar_id = IDC_TITLE_BAR;
+				_cb.menu_button_id = IDC_SYSTEM_MENU;
+				_cb.menu = &app_menu;
+				_cb.image_control_id = IDC_COMPANY_LOGO;
+				_cb.image_file = "assets\\small_logo.png";
+				_cb.corporate_name = "WOODRUFF SAWYER";
+				_cb.id_title_column_id = 0;
+				_cb.title_name = "DEVELOPER STATION";
+				_cb.subtitle_name = "Product Details";
+			}
 		)
 		.end();
 
-	wspropose_pages->create_page("team")
+		wspropose_pages->create_page("settings")
 		.column_begin()
-		.caption_bar(
-			st,
-			IDC_TITLE_BAR,
-			IDC_SYSTEM_MENU,
-			app_menu,
-			IDC_COMPANY_LOGO,
-			"assets\\small_logo.png",
-			"WOODRUFF SAWYER",
-			0,
-			"DEVELOPER STATION",
-			"Team"
-		)
-		.end();
-
-	wspropose_pages->create_page("settings")
-		.column_begin()
-		.caption_bar(
-			st,
-			IDC_TITLE_BAR,
-			IDC_SYSTEM_MENU,
-			app_menu,
-			IDC_COMPANY_LOGO,
-			"assets\\small_logo.png",
-			"WOODRUFF SAWYER",
-			0,
-			"DEVELOPER STATION",
-			"Team"
+		.caption_bar(id_counter::next(), [st, &app_menu](caption_bar_control& _cb)
+			{
+				_cb.st = st;
+				_cb.title_bar_id = IDC_TITLE_BAR;
+				_cb.menu_button_id = IDC_SYSTEM_MENU;
+				_cb.menu = &app_menu;
+				_cb.image_control_id = IDC_COMPANY_LOGO;
+				_cb.image_file = "assets\\small_logo.png";
+				_cb.corporate_name = "WOODRUFF SAWYER";
+				_cb.id_title_column_id = 0;
+				_cb.title_name = "DEVELOPER STATION";
+				_cb.subtitle_name = "Settings";
+			}
 		)
 		.end();
 

@@ -88,7 +88,7 @@ namespace corona {
 		std::map<std::string, presentation_style> styles;
 
 		presentation_style_factory();
-		presentation_style& get_style();
+		presentation_style* get_style();
 	};
 
 	presentation_style_factory::presentation_style_factory()
@@ -170,9 +170,9 @@ namespace corona {
 		current_style = "Woodruff";
 	}
 
-	presentation_style& presentation_style_factory::get_style()
+	presentation_style *presentation_style_factory::get_style()
 	{
-		return styles[current_style];
+		return &styles[current_style];
 	}
 
 }
