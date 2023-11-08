@@ -213,8 +213,13 @@
     <ClInclude Include="wspropose.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="old_code_for_cut_and_paste.cpp" />
-    <ClCompile Include="wspropose.cpp" />
+    <ClInclude Include="app_devdesk.hpp">
+      <FileType>CppCode</FileType>
+    </ClInclude>
+    <ClCompile Include="winmain.cpp" />
+    <ClInclude Include="app_wspropose.hpp">
+      <FileType>CppCode</FileType>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="wspropose.rc" />

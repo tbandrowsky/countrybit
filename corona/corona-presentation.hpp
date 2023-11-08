@@ -224,6 +224,7 @@ namespace corona {
 	{
 		if (pages.contains(_page_name)) {
 			if (auto ppage = current_page.lock()) {
+				ppage->handle_unload();
 				ppage->destroy();
 			}
 			current_page = pages[_page_name];
@@ -245,6 +246,11 @@ namespace corona {
 				}
 			}
 		}
+
+		if (auto ppage = current_page.lock()) {
+			ppage->handle_onload();
+		}
+
 	}
 
 	void presentation::onCreated()

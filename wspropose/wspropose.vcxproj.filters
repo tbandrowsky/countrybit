@@ -24,12 +24,15 @@
     <ClInclude Include="wspropose.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="app_wspropose.hpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="app_devdesk.hpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="wspropose.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="old_code_for_cut_and_paste.cpp">
+    <ClCompile Include="winmain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

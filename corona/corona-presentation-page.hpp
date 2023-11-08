@@ -336,7 +336,6 @@ namespace corona
 			}
 		}
 
-
 		void handle_item_changed(int _control_id, item_changed_event evt)
 		{
 			if (item_changed_bindings.contains(_control_id)) {
@@ -366,6 +365,22 @@ namespace corona
 			if (command_bindings.contains(_control_id)) {
 				auto& ptrx = command_bindings[_control_id];
 				ptrx->on_command(evt);
+			}
+		}
+
+		void handle_onload()
+		{
+			for (auto evt : load_bindings) {
+				page_load_event ple = {};
+				evt->on_load(ple);
+			}
+		}
+
+		void handle_unload()
+		{
+			for (auto evt : unload_bindings) {
+				page_unload_event ple = {};
+				evt->on_unload(ple);
 			}
 		}
 
