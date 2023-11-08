@@ -175,6 +175,9 @@ namespace corona
 			auto evt = std::make_shared<mouse_left_click_event_binding>();
 			if (auto pbase = _base)
 			{
+				if (_base->id == 0) {
+					throw std::logic_error("You need to have an id on a control to subscribe to events");
+				}
 				evt->control = pbase;
 				evt->subscribed_item_id = pbase->id;
 				evt->on_mouse_left_click = handler;
@@ -187,6 +190,9 @@ namespace corona
 			auto evt = std::make_shared<mouse_right_click_event_binding>();
 			if (auto pbase = _base)
 			{
+				if (_base->id == 0) {
+					throw std::logic_error("You need to have an id on a control to subscribe to events");
+				}
 				evt->control = pbase;
 				evt->subscribed_item_id = pbase->id;
 				evt->on_mouse_right_click = handler;
@@ -199,6 +205,9 @@ namespace corona
 			auto evt = std::make_shared<mouse_move_event_binding>();
 			if (auto pbase = _base)
 			{
+				if (_base->id == 0) {
+					throw std::logic_error("You need to have an id on a control to subscribe to events");
+				}
 				evt->control = pbase;
 				evt->subscribed_item_id = pbase->id;
 				evt->on_mouse_move = handler;
@@ -211,6 +220,9 @@ namespace corona
 			auto evt = std::make_shared<mouse_click_event_binding>();
 			if (auto pbase = _base)
 			{
+				if (_base->id == 0) {
+					throw std::logic_error("You need to have an id on a control to subscribe to events");
+				}
 				evt->control = pbase;
 				evt->subscribed_item_id = pbase->id;
 				evt->on_mouse_click = handler;

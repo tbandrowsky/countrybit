@@ -827,10 +827,6 @@ namespace corona
 	{
 		void init()
 		{
-			title_bar_id = 0;
-			menu_button_id = 0;
-			image_control_id = 0;
-			id_title_column_id = 0;
 			set_size(1.0_container, 80.0_px);
 
 			control_builder cb;
@@ -924,6 +920,11 @@ namespace corona
 		{
 			st = nullptr;
 			menu = nullptr;
+			title_bar_id = 0;
+			menu_button_id = 0;
+			image_control_id = 0;
+			id_title_column_id = 0;
+
 		}
 
 		caption_bar_control(container_control_base *_parent, 
@@ -933,6 +934,10 @@ namespace corona
 		{
 			st = _st;
 			menu = _mi;
+			title_bar_id = id_counter::next();
+			menu_button_id = id_counter::next();
+			image_control_id = id_counter::next();
+			id_title_column_id = id_counter::next();
 		}
 
 		void build()
