@@ -35,7 +35,7 @@ namespace corona
 			on_create = _src.on_create;
 		}
 
-		draw_control(container_control_base* _parent, int _id)
+		draw_control(container_control_base *_parent, int _id) 
 		{
 			background_brush_win32 = nullptr;
 			background_brush = {};
@@ -48,10 +48,13 @@ namespace corona
 			;
 		}
 
-		void create(std::weak_ptr<applicationBase> _host)
+		virtual void create(std::weak_ptr<applicationBase> _host)
 		{
 			host = _host;
 			if (auto phost = _host.lock()) {
+				if (inner_bounds.x < 0 || inner_bounds.y < 0 || inner_bounds.w < 0 || inner_bounds.h < 0) {
+					throw std::logic_error("inner bounds not initialized");
+				}
 				window = phost->createDirect2Window(id, inner_bounds);
 			}
 			if (on_create) {
@@ -227,8 +230,15 @@ namespace corona
 			sseries4 = _src.sseries4;
 		}
 
-		chart_control(container_control_base* _parent, int _id);
-		virtual ~chart_control();
+		chart_control(container_control_base* _parent, int _id) : draw_control(_parent, _id)
+		{
+			;
+		}
+
+		virtual ~chart_control()
+		{
+			;
+		}
 
 	};
 
@@ -242,8 +252,8 @@ namespace corona
 
 		int source_object_id;
 
-		slide_control(container_control_base* _parent, int _id);
-		virtual ~slide_control();
+		slide_control(container_control_base* _parent, int _id) : draw_control(_parent, _id) { ; }
+		virtual ~slide_control() { ; }
 
 	};
 
@@ -259,6 +269,11 @@ namespace corona
 		solidBrushRequest foregroundNormal;
 		solidBrushRequest foregroundOver;
 		solidBrushRequest foregroundDown;
+
+		gradient_button_control()
+		{
+			;
+		}
 
 		gradient_button_control(const gradient_button_control& _src) : draw_control(_src)
 		{
@@ -400,6 +415,7 @@ namespace corona
 	{
 	public:
 
+		minimize_button_control() { ; }
 		minimize_button_control(const minimize_button_control& _src) : gradient_button_control(_src) { ; }
 		minimize_button_control(container_control_base* _parent, int _id);
 
@@ -416,6 +432,7 @@ namespace corona
 	{
 	public:
 
+		maximize_button_control() { ; }
 		maximize_button_control(const maximize_button_control& _src) : gradient_button_control(_src) { ; }
 		maximize_button_control(container_control_base* _parent, int _id);
 
@@ -432,6 +449,7 @@ namespace corona
 	{
 	public:
 
+		close_button_control() { ; }
 		close_button_control(const close_button_control& _src) : gradient_button_control(_src) { ; }
 
 		close_button_control(container_control_base* _parent, int _id) : gradient_button_control(_parent, _id, "close")
@@ -502,6 +520,10 @@ namespace corona
 
 		menu_item menu;
 
+		menu_button_control()
+		{
+			;
+		}
 		menu_button_control(const menu_button_control& _src) : gradient_button_control(_src) {
 			menu = _src.menu; 
 		}
@@ -520,6 +542,11 @@ namespace corona
 		textStyleRequest	text_style;
 		double				icon_width;
 		int* active_id;
+
+		tab_button_control() : active_id(nullptr)
+		{
+			;
+		}
 
 		tab_button_control(const tab_button_control& _src) : gradient_button_control(_src) {
 			text = _src.text;
@@ -619,46 +646,6 @@ namespace corona
 		;
 	}
 
-	grid_control::grid_control(container_control_base* _parent, int _id)
-	{
-		;
-	}
-
-	grid_control::~grid_control()
-	{
-		;
-	}
-
-
-	chart_control::chart_control(container_control_base* _parent, int _id)
-	{
-		;
-	}
-
-	chart_control::~chart_control()
-	{
-		;
-	}
-
-
-	slide_control::slide_control(container_control_base* _parent, int _id)
-	{
-		;
-	}
-
-	slide_control::~slide_control()
-	{
-		;
-	}
-
-	/*
-	class scrollbar_control : public windows_control<WTL::CScrollBar, WS_VISIBLE | WS_BORDER | WS_CHILD>
-	{
-	public:
-	};
-	*/
-
-
 	image_control::image_control()
 	{
 		init();
@@ -737,6 +724,8 @@ namespace corona
 					break;
 					case image_modes::use_file_name:
 					{
+						if (image_file_name.size() == 0)
+							throw std::logic_error("Missing file name for image");
 						bitmapRequest request = {};
 						request.file_name = image_file_name;
 						request.name = instance.bitmapName;

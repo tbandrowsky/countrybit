@@ -193,7 +193,7 @@ namespace corona
 		current = this;
 		controlFont = nullptr;
 		labelFont = nullptr,
-			titleFont = nullptr;
+		titleFont = nullptr;
 		dpiScale = 1.0;
 		disableChangeProcessing = false;
 
@@ -201,6 +201,22 @@ namespace corona
 		backgroundColor.r = 1.0;
 		backgroundColor.g = 1.0;
 		backgroundColor.b = 1.0;
+
+		hinstance = nullptr;
+		hwndRoot = nullptr;
+
+		performanceFrequency = 0;
+		startCounter = lastCounter = 0;
+		minimumWindowSize = { 500, 300 };
+
+		colorCapture = false;
+		iconResourceId = 0;
+
+		dpiScale = 0;
+
+		disableChangeProcessing = false;
+		tooltip = nullptr;
+
 	}
 
 	directApplicationWin32::~directApplicationWin32()
@@ -564,7 +580,6 @@ namespace corona
 				case LVN_ITEMCHANGED:
 				{
 					auto lpmnlv = (LPNMLISTVIEW)lParam;
-					control_base pi;
 					if (lpmnlv->uNewState & LVIS_SELECTED)
 						currentController->onListViewChanged(lpnm->idFrom);
 				}
@@ -647,7 +662,7 @@ namespace corona
 				DWORD id = ::GetDlgCtrlID((HWND)lParam);
 				if (auto pcontroller = dynamic_cast<presentation*>(currentController.get()))
 				{
-					if (draw_control* pdraw = pcontroller->get_parent_control<draw_control>(id)) {
+					if (draw_control* pdraw = pcontroller->get_parent_for_control_by_id<draw_control>(id)) {
 
 						hbrBkgnd = pdraw->background_brush_win32;
 						auto cv = pdraw->background_brush.brushColor;

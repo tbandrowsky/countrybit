@@ -58,6 +58,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-paths.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-point_box.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-presentation-base.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-presentation-builder.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-presentation-controls-base.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-presentation-controls-dx-container.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-presentation-controls-dx-text.hpp" />
@@ -91,6 +92,6 @@
     <None Include="$(MSBuildThisFileDirectory)header-units.json" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="$(MSBuildThisFileDirectory)corona-calicoclient.cpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-calicoclient.hpp" />
   </ItemGroup>
 </Project>

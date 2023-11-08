@@ -32,6 +32,12 @@ namespace corona
 			root = std::make_shared<column_layout>();
 		}
 
+		page()
+		{
+			name = "Test";
+			root = std::make_shared<column_layout>();
+		}
+
 		virtual ~page()
 		{
 			destroy();
@@ -101,28 +107,35 @@ namespace corona
 			root->on_subscribe(_presentation, this);
 		}
 
-		row_layout& row_begin(int id = id_counter::next())
+		control_builder row_begin(int id = id_counter::next())
 		{
+
 			//			std::cout << "create: row"<< std::endl;
-			auto new_row = std::make_shared<row_layout>((container_control*)nullptr, id);
+			auto new_row = std::make_shared<row_layout>((container_control_base*)nullptr, id);
 			root = new_row;
-			return *new_row.get();
+			std::shared_ptr<container_control> build_root = std::dynamic_pointer_cast<container_control>(root);
+			control_builder builder(build_root);
+			return builder;
 		}
 
-		column_layout& column_begin(int id = id_counter::next())
+		control_builder column_begin(int id = id_counter::next())
 		{
 			//		std::cout << "create: column" << std::endl;
-			auto new_row = std::make_shared<column_layout>((container_control*)nullptr, id);
+			auto new_row = std::make_shared<column_layout>((container_control_base*)nullptr, id);
 			root = new_row;
-			return *new_row.get();
+			std::shared_ptr<container_control> build_root = std::dynamic_pointer_cast<container_control>(root);
+			control_builder builder(build_root);
+			return builder;
 		}
 
-		absolute_layout& absolute_begin(int id = id_counter::next())
+		control_builder absolute_begin(int id = id_counter::next())
 		{
 			//			std::cout << "create: begin" << std::endl;
-			auto new_row = std::make_shared<absolute_layout>((container_control*)nullptr, id);
+			auto new_row = std::make_shared<absolute_layout>((container_control_base*)nullptr, id);
 			root = new_row;
-			return *new_row.get();
+			std::shared_ptr<container_control> build_root = std::dynamic_pointer_cast<container_control>(root);
+			control_builder builder(build_root);
+			return builder;
 		}
 
 		void arrange(double width, double height, double _padding = 0)

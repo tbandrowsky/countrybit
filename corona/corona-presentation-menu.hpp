@@ -7,7 +7,7 @@ namespace corona
 
 	class presentation_base {
 	public:
-		virtual void select_page(std::string _page_name, page_base* _page) = 0;
+		virtual void select_page(const std::string& _page_name) = 0;
 		virtual void restore_window() = 0;
 		virtual void minimize_window() = 0;
 		virtual void close_window() = 0;
@@ -29,7 +29,7 @@ namespace corona
 		menu_item_navigate operator =(const menu_item_navigate& _src);
 		menu_item_navigate(menu_item_navigate&& _src);
 		menu_item_navigate& operator =(menu_item_navigate&& _src);
-		void operator()(presentation_base* _presentation, page_base *_page);
+		void operator()(presentation_base* _presentation);
 		operator bool() { return control_id > 0; }
 	};
 
@@ -108,9 +108,9 @@ namespace corona
 		return *this;
 	}
 
-	void menu_item_navigate::operator()(presentation_base* _presentation, page_base *_page)
+	void menu_item_navigate::operator()(presentation_base* _presentation)
 	{
-		_presentation->select_page(this->target_page, _page);
+		_presentation->select_page(this->target_page);
 	}
 
 	menu_item::menu_item() :
@@ -197,10 +197,9 @@ namespace corona
 	{
 		ppage->on_command(id, [this, _presentation, ppage](command_event evt) {
 			if (navigate_handler) {
-				navigate_handler(_presentation, ppage);
+				navigate_handler(_presentation);
 			}
-
-			});
+		});
 
 		for (auto child : children)
 		{

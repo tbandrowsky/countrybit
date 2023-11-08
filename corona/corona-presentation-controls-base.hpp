@@ -168,6 +168,7 @@ namespace corona
 			;
 		}
 
+		virtual control_base* get_control() = 0;
 		virtual LRESULT get_nchittest() = 0;
 	};
 
@@ -175,7 +176,8 @@ namespace corona
 	public:
 		virtual std::shared_ptr<control_base> clone(container_control_base* _parent)
 		{
-			std::shared_ptr<control_base> cb = std::make_shared<T>(*this);
+			T* base = dynamic_cast<T*>(this);
+			std::shared_ptr<control_base> cb = std::make_shared<T>(*base);
 			cb->parent = _parent;
 			return cb;
 		}
@@ -265,7 +267,7 @@ namespace corona
 			id = id_counter::next();
 		}
 
-		control_base(container_control_base* _parent, int _id) : control_base()
+		control_base(container_control_base *_parent, int _id) : control_base()
 		{
 			parent = _parent;
 
@@ -275,6 +277,11 @@ namespace corona
 			else {
 				id = _id;
 			}
+		}
+
+		virtual control_base* get_control()
+		{
+			return this;
 		}
 
 		control_base( const control_base& _src ) 
@@ -325,14 +332,14 @@ namespace corona
 		template <typename control_type> control_type& find(int _id)
 		{
 			control_base* temp = find(_id);
-			control_type* citem = dynamic_cast<control_type>(temp);
+			control_type* citem = dynamic_cast<control_type *>(temp);
 			return *citem;
 		}
 
 		template <typename control_type> control_type& get(control_base* _root, int _id)
 		{
 			control_base* temp = get(_root, _id);
-			control_type* citem = dynamic_cast<control_type>(temp);
+			control_type* citem = dynamic_cast<control_type *>(temp);
 			return *citem;
 		}
 
@@ -377,7 +384,7 @@ namespace corona
 			return *this;
 		}
 
-		virtual void apply(control_base& _ref);
+		virtual void apply_item_sizes(control_base& _ref);
 		virtual bool set_mouse(point _position,
 			bool* _left_down,
 			bool* _right_down,
@@ -385,11 +392,12 @@ namespace corona
 			std::function<void(control_base* _item)> _right_click
 		);
 
-		virtual void on_subscribe(presentation_base* _presentation, page_base *_page);
+		virtual void on_subscribe(presentation_base* _presentation, page_base* _page)
+		{
+			;
+		}
 
 	};
-
-
 
 	control_base* control_base::find(point p)
 	{
@@ -412,11 +420,11 @@ namespace corona
 
 	control_base* control_base::find(int _id)
 	{
-		control_base* root = this;
-		while (root->parent) {
-			root = dynamic_cast<control_base *>(root->parent);
+		control_base* root = (control_base *)parent;
+		while (root->parent) 
+		{
+			root = (control_base*)root->parent;
 		}
-		// just to make sure you getting the right root.
 		control_base* result = control_base::get(root, _id);
 		return result;
 	}
@@ -475,7 +483,7 @@ namespace corona
 		}
 	}
 
-	void control_base::apply(control_base& _ref)
+	void control_base::apply_item_sizes(control_base& _ref)
 	{
 
 	}
@@ -693,7 +701,7 @@ namespace corona
 
 		if (parent)
 		{
-			auto pparent = dynamic_cast<control_base*>(parent);
+			auto pparent = (control_base *)(parent);
 			if (pparent) {
 				auto pbounds = pparent->get_inner_bounds();
 				if (bounds.x < pbounds.x)
@@ -802,7 +810,7 @@ namespace corona
 	void control_base::on_resize()
 	{
 		auto ti = typeid(*this).name();
-		//			std::cout << "resize control_base:" << ti << " " << bounds.x << "," << bounds.y << " x " << bounds.w << " " << bounds.h << std::endl;
+		//std::cout << "resize control_base:" << ti << " " << bounds.x << "," << bounds.y << " x " << bounds.w << " " << bounds.h << std::endl;
 	}
 
 	using control_json_mapper = std::function<std::weak_ptr<control_base>(json& _array, int _index)>;

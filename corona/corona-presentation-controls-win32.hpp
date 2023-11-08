@@ -5,7 +5,7 @@
 namespace corona
 {
 
-	class windows_control : public control_base, public cloneable<windows_control>
+	class windows_control : public control_base
 	{
 	protected:
 
@@ -44,7 +44,7 @@ namespace corona
 			set_default_styles();
 		}
 
-		windows_control(container_control_base* _parent, int _id)
+		windows_control(container_control_base *_parent, int _id)
 			: control_base(_parent, _id),
 			window(nullptr),
 			text_font(nullptr)
@@ -121,7 +121,7 @@ namespace corona
 	};
 
 
-	class text_control_base : public windows_control, public cloneable<text_control_base>
+	class text_control_base : public windows_control
 	{
 		std::string text;
 
@@ -169,7 +169,7 @@ namespace corona
 	};
 
 
-	class table_control_base : public windows_control, public cloneable<table_control_base>
+	class table_control_base : public windows_control
 	{
 		mini_table mtable;
 		char blank[256] = { 0 };
@@ -253,7 +253,7 @@ namespace corona
 		}
 	};
 
-	class list_control_base : public windows_control, public cloneable<list_control_base>
+	class list_control_base : public windows_control
 	{
 	public:
 		using control_base::id;
@@ -301,7 +301,7 @@ namespace corona
 
 	};
 
-	class dropdown_control_base : public windows_control, public cloneable<dropdown_control_base>
+	class dropdown_control_base : public windows_control
 	{
 	public:
 

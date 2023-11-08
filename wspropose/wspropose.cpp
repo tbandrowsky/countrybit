@@ -52,7 +52,8 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 	std::shared_ptr<directXAdapter> factory = std::make_shared<directXAdapter>();
 	factory->refresh();
 
-	std::shared_ptr<directApplicationWin32> wsPropose = std::make_shared<directApplicationWin32>(factory);
+	std::shared_ptr<directApplicationWin32> application = std::make_shared<directApplicationWin32>(factory);
+	std::shared_ptr<calico_client> calico_application = std::make_shared<calico_client>();
 
 	bool forceWindowed = false;
 
@@ -63,13 +64,8 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 #if _DEBUG
 	forceWindowed = true;
 #endif
-	auto wspropose_pages = std::make_shared<presentation>(wsPropose);
+	auto application_presentation = std::make_shared<presentation>(application);
 
-	DWORD thread_id_before = ::GetCurrentThreadId();
-
-	calico_login(wsPropose->getUserName());
-
-	DWORD thread_id_after = ::GetCurrentThreadId();
 
 	corona::menu_item app_menu;
 //		.item(IDM_PRESENTATION_DETAILS, "Pro&jects")
@@ -117,14 +113,23 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 		std::string subtitle_name;
 */
 
-	wspropose_pages->create_page("home")
+	application_presentation->create_page("home", [calico_application, application](page& _pg)
+		{
+			_pg.on_load([calico_application, application](page_load_event _evt)
+				{
+					DWORD thread_id_before = ::GetCurrentThreadId();
+					std::string model_name = "Zoos";
+					std::string user_name = application->getUserName();
+					calico_application->login(model_name, user_name);
+					DWORD thread_id_after = ::GetCurrentThreadId();
+				}
+			);
+		})
 		.column_begin()
-		.caption_bar(id_counter::next(), [st, &app_menu](caption_bar_control& _cb)
+		.caption_bar(id_counter::next(), st, &app_menu, [](caption_bar_control& _cb)
 			{	
-				_cb.st = st;
 				_cb.title_bar_id = IDC_TITLE_BAR;
 				_cb.menu_button_id = IDC_SYSTEM_MENU;
-				_cb.menu = &app_menu;
 				_cb.image_control_id = IDC_COMPANY_LOGO;
 				_cb.image_file = "assets\\small_logo.png";
 				_cb.corporate_name = "WOODRUFF SAWYER";
@@ -135,15 +140,12 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 		)
 		.end();
 
-	wspropose_pages->create_page("presentations")
+	application_presentation->create_page("presentations")
 		.column_begin()
-		.caption_bar(
-			id_counter::next(), [st, &app_menu](caption_bar_control& _cb)
+		.caption_bar(id_counter::next(), st, &app_menu, [](caption_bar_control& _cb)
 			{
-				_cb.st = st;
 				_cb.title_bar_id = IDC_TITLE_BAR;
 				_cb.menu_button_id = IDC_SYSTEM_MENU;
-				_cb.menu = &app_menu;
 				_cb.image_control_id = IDC_COMPANY_LOGO;
 				_cb.image_file = "assets\\small_logo.png";
 				_cb.corporate_name = "WOODRUFF SAWYER";
@@ -154,15 +156,12 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 		)
 		.end();
 
-			wspropose_pages->create_page("presentation")
+			application_presentation->create_page("presentation")
 				.column_begin()
-				.caption_bar(
-					id_counter::next(), [st, &app_menu](caption_bar_control& _cb)
+				.caption_bar(id_counter::next(), st, &app_menu, [](caption_bar_control& _cb)
 					{
-						_cb.st = st;
 						_cb.title_bar_id = IDC_TITLE_BAR;
 						_cb.menu_button_id = IDC_SYSTEM_MENU;
-						_cb.menu = &app_menu;
 						_cb.image_control_id = IDC_COMPANY_LOGO;
 						_cb.image_file = "assets\\small_logo.png";
 						_cb.corporate_name = "WOODRUFF SAWYER";
@@ -173,15 +172,12 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 				)
 		.end();
 
-	wspropose_pages->create_page("products")
+	application_presentation->create_page("products")
 		.column_begin()
-		.caption_bar(
-			id_counter::next(), [st, &app_menu](caption_bar_control& _cb)
+		.caption_bar(id_counter::next(), st, &app_menu, [](caption_bar_control& _cb)
 			{
-				_cb.st = st;
 				_cb.title_bar_id = IDC_TITLE_BAR;
 				_cb.menu_button_id = IDC_SYSTEM_MENU;
-				_cb.menu = &app_menu;
 				_cb.image_control_id = IDC_COMPANY_LOGO;
 				_cb.image_file = "assets\\small_logo.png";
 				_cb.corporate_name = "WOODRUFF SAWYER";
@@ -192,15 +188,12 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 		)
 		.end();
 
-	wspropose_pages->create_page("product")
+	application_presentation->create_page("product")
 		.column_begin()
-		.caption_bar(
-			id_counter::next(), [st, &app_menu](caption_bar_control& _cb)
+		.caption_bar(id_counter::next(), st, &app_menu, [](caption_bar_control& _cb)
 			{
-				_cb.st = st;
 				_cb.title_bar_id = IDC_TITLE_BAR;
 				_cb.menu_button_id = IDC_SYSTEM_MENU;
-				_cb.menu = &app_menu;
 				_cb.image_control_id = IDC_COMPANY_LOGO;
 				_cb.image_file = "assets\\small_logo.png";
 				_cb.corporate_name = "WOODRUFF SAWYER";
@@ -211,14 +204,12 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 		)
 		.end();
 
-		wspropose_pages->create_page("settings")
+		application_presentation->create_page("settings")
 		.column_begin()
-		.caption_bar(id_counter::next(), [st, &app_menu](caption_bar_control& _cb)
+		.caption_bar(id_counter::next(), st, &app_menu, [](caption_bar_control& _cb)
 			{
-				_cb.st = st;
 				_cb.title_bar_id = IDC_TITLE_BAR;
 				_cb.menu_button_id = IDC_SYSTEM_MENU;
-				_cb.menu = &app_menu;
 				_cb.image_control_id = IDC_COMPANY_LOGO;
 				_cb.image_file = "assets\\small_logo.png";
 				_cb.corporate_name = "WOODRUFF SAWYER";
@@ -229,13 +220,15 @@ void run_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 		)
 		.end();
 
+		application_presentation->select_page("home");
+
 	if (forceWindowed)
 	{
-		wsPropose->runDialog(hInstance, "Developer Station", IDI_WSPROPOSE, false, wspropose_pages);
+		application->runDialog(hInstance, "Developer Station", IDI_WSPROPOSE, false, application_presentation);
 	}
 	else
 	{
-		wsPropose->runDialog(hInstance, "Developer Station", IDI_WSPROPOSE, true, wspropose_pages);
+		application->runDialog(hInstance, "Developer Station", IDI_WSPROPOSE, true, application_presentation);
 	}
 }
 

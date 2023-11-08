@@ -9,6 +9,7 @@
 #include "corona-presentation-controls-dx-text.hpp"
 #include "corona-presentation-controls-win32.hpp"
 #include "corona-presentation-controls-dx-container.hpp"
+#include "corona-presentation-builder.hpp"
 #include "corona-presentation-page.hpp"
 
 namespace corona {
@@ -33,12 +34,10 @@ namespace corona {
 
 		presentation()
 		{
-
 		}
 
 		presentation(std::weak_ptr<applicationBase> _window_host) : window_host(_window_host)
 		{
-
 		}
 
 		virtual ~presentation()
@@ -125,18 +124,22 @@ namespace corona {
 			return r;
 		}
 
-		template <typename control_type> control_type* get_parent_control(int _id)
+		template <typename control_type> control_type* get_parent_for_control_by_id(int _id)
 		{
 			control_type* r = nullptr;
 			if (auto ppage = current_page.lock())
 			{
 				auto& rpage = *ppage;
 				control_base* cb = rpage[_id];
-				r = dynamic_cast<control_type*>(cb);
-				while (!r && cb) {
-					cb = cb->parent;
-					if (cb) {
-						r = dynamic_cast<control_type*>(cb);
+				if (cb) {
+					r = dynamic_cast<control_type*>(cb);
+					if (r && r->parent) 
+					{
+						r = dynamic_cast<control_type*>(r->parent->get_control());
+					}
+					else 
+					{
+						r = nullptr;
 					}
 				}
 			}
@@ -226,18 +229,19 @@ namespace corona {
 			current_page = pages[_page_name];
 		}
 
-		onCreated();
-		onResize(current_size, 1.0);
-
 		if (auto phost = window_host.lock())
 		{
 			HWND hwndMainMenu = phost->getMainWindow();
-			if (auto ppage = current_page.lock()) {
-				if (ppage->menu)
-				{
-					HMENU hmenu = ppage->menu->to_menu();
-					::SetMenu(hwndMainMenu, hmenu);
-					::DrawMenuBar(hwndMainMenu);
+			if (hwndMainMenu) {
+				onCreated();
+				onResize(current_size, 1.0);
+				if (auto ppage = current_page.lock()) {
+					if (ppage->menu)
+					{
+						HMENU hmenu = ppage->menu->to_menu();
+						::SetMenu(hwndMainMenu, hmenu);
+						::DrawMenuBar(hwndMainMenu);
+					}
 				}
 			}
 		}

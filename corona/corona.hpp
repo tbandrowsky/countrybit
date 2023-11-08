@@ -61,5 +61,6 @@
 #include "corona-visual.hpp"
 
 #include "corona-httpclient.hpp"
+#include "corona-calicoclient.hpp"
 
 #endif
