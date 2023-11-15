@@ -15,6 +15,8 @@
 namespace corona
 {
 
+	class ui_task_result_base;
+
 	enum scrollTypes
 	{
 		ScrollPageUp,
@@ -51,6 +53,7 @@ namespace corona
 		virtual int onVScroll(int controlId, scrollTypes scrollType) = 0;
 		virtual int onResize(const rectangle& newSize, double d2dScale) = 0;
 		virtual int onSpin(int controlId, int newPosition) = 0;
+
 	};
 
 }

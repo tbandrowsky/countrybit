@@ -28,6 +28,7 @@ namespace corona
 
 	public:
 
+
 		virtual HWND getMainWindow() = 0;
 		virtual HWND getTooltipWindow() = 0;
 		virtual HWND createWindow(DWORD window_id, LPCTSTR		lpClassName, LPCTSTR		lpWindowName, DWORD       dwStyle, rectangle bounds, LPVOID		lpParam, HFONT		font) = 0;
@@ -123,8 +124,8 @@ namespace corona
 		virtual HFONT createFontPixels(const char* _fontName, double fontSize, bool bold, bool italic) = 0;
 		virtual HFONT createFontIndirect(LOGFONTA _font, const char* _fontName, double fontSize, bool bold, bool italic) = 0;
 
-	};
 
+	};
 }
 
 #endif

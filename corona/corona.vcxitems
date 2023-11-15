@@ -26,6 +26,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-concept_lock.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-constants.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-controller.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-dataplane.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-datatransfer.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-direct2dcontext.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-direct2dcontextbase.hpp" />

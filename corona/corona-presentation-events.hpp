@@ -171,18 +171,6 @@ namespace corona {
 		std::function< void(command_event) > on_command;
 	};
 
-	class page_load_event_binding
-	{
-	public:
-		std::function< void(page_load_event) > on_load;
-	};
-
-	class page_unload_event_binding
-	{
-	public:
-		std::function< void(page_unload_event) > on_unload;
-	};
-
 	class list_changed_event_binding
 	{
 	public:

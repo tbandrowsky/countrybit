@@ -4,6 +4,7 @@
 
 #include "corona-windows-all.h"
 #include "corona-queue.hpp"
+#include "corona-json.hpp"
 
 #include <functional>
 #include <coroutine>
@@ -13,6 +14,9 @@
 
 namespace corona
 {
+
+	const int WM_CORONA_JOB_COMPLETE = WM_APP + 1;
+	const int WM_CORONA_TASK_COMPLETE = WM_APP + 2;
 
 	template <typename parameter_type> class task_job : public job
 	{
@@ -61,6 +65,80 @@ namespace corona
 		}
 	};
 
+	class ui_task_result
+	{
+	public:
+		json parameters;
+		std::function<void(json)> on_gui;
+
+		ui_task_result(json _param, std::function<void(json)> _on_gui)
+			: parameters(_param),
+			on_gui(_on_gui)
+		{
+			;
+		}
+	};
+
+	class ui_task_job : public job
+	{
+	public:
+		std::coroutine_handle<> handle;
+		HANDLE					event;
+		json params;
+		std::function<void(json)> run;
+		std::function<void(json)> on_gui;
+
+		ui_task_job() : job()
+		{
+		}
+
+		ui_task_job(std::coroutine_handle<> _handle,
+			HANDLE _event,
+			json _params,
+			std::function<void(json)> _run,
+			std::function<void(json)> _on_gui) :
+			handle(_handle), 
+			event(_event), 
+			params(_params), 
+			run(_run),
+			on_gui(_on_gui)
+		{
+			;
+		}
+
+		virtual job_notify execute(job_queue* _callingQueue, DWORD _bytesTransferred, BOOL _success)
+		{
+			job_notify jn;
+
+			std::cout << "ui task start:" << GetCurrentThreadId() << std::endl;
+
+			auto result = new ui_task_result(params, on_gui);
+
+			try
+			{
+				if (run)
+				{
+					run(params);
+					::PostMessage(NULL, WM_CORONA_TASK_COMPLETE, TRUE, (LPARAM)result);
+				}
+				else {
+					::PostMessage(NULL, WM_CORONA_TASK_COMPLETE, FALSE, (LPARAM)result);
+				}
+			}
+			catch (...)
+			{
+				::PostMessage(NULL, WM_CORONA_TASK_COMPLETE, FALSE, (LPARAM)result);
+			}
+			
+			jn.setSignal(event);
+			if (handle) handle();
+			std::cout << "ui job end:" << GetCurrentThreadId() << std::endl;
+			jn.shouldDelete = true;
+
+			return jn;
+		}
+	};
+
 	template <typename Param> concept task_io_params = requires(Param param) {
 		param.bytes_transferred = 0;
 		param.success = false;
@@ -100,6 +178,12 @@ namespace corona
 
 		std::shared_ptr<T> params;
 		std::function<void(std::shared_ptr<T>_params)> runner;
+
+		void configure(std::shared_ptr<T> params, std::function < std::function<void(std::shared_ptr<T>_params)> _runner)
+		{
+			params = _params;
+			runner = _runner;
+		}
 
 		struct promise_type
 		{
@@ -148,7 +232,7 @@ namespace corona
 			HANDLE hevent = ::CreateEvent(NULL, false, false, NULL);
 			std::cout << this << ", task await_suspend:" << GetCurrentThreadId() << std::endl;
 			task_job<T> *tj = new task_job<T>(coroutine, hevent, params, runner);
-			global_job_queue->postJobMessage(tj);
+			global_job_queue->add_job(tj);
 			std::cout << this << ", task await_suspend away:" << GetCurrentThreadId() << std::endl;
 			::WaitForSingleObject(hevent, INFINITE);
 			::CloseHandle(hevent);
@@ -182,6 +266,107 @@ namespace corona
 		}
 
 	};
+
+
+	class ui_task : public std::suspend_always
+	{
+	public:
+
+		json params;
+		std::function<void(json)> runner;
+		std::function<void(json)> on_gui;
+
+		void configure(json _params, 
+			std::function< void(json)> _runner,
+			std::function< void(json)> _on_gui)
+		{
+			params = _params;
+			runner = _runner;
+			on_gui = _on_gui;
+		}
+
+		struct promise_type
+		{
+
+			promise_type()
+			{
+				std::cout << "task promise_type:" << this << " " << GetCurrentThreadId() << std::endl;
+				m_value = {};
+			}
+
+			ui_task get_return_object()
+			{
+				std::cout << "task get_return_object:" << this << " " << GetCurrentThreadId() << std::endl;
+				ui_task my_task;
+				my_task.coroutine = std::coroutine_handle<promise_type>::from_promise(*this);
+				return my_task;
+			};
+
+			void return_value(json value)
+			{
+				std::cout << "task return_value:" << (std::string)value << " " << this << GetCurrentThreadId() << std::endl;
+				m_value = value;
+			}
+
+			std::suspend_always initial_suspend()
+			{
+				std::cout << "task initial_suspend:" << this << GetCurrentThreadId() << std::endl;
+				return {};
+			}
+
+			std::suspend_always final_suspend() noexcept
+			{
+				std::cout << "task final_suspend:" << this << GetCurrentThreadId() << std::endl;
+				return {};
+			}
+
+			void unhandled_exception() {}
+
+			json m_value;
+		};
+
+		std::coroutine_handle<promise_type> coroutine;
+
+		void await_suspend(std::coroutine_handle<> _handle)
+		{
+			HANDLE hevent = ::CreateEvent(NULL, false, false, NULL);
+			std::cout << this << ", task await_suspend:" << GetCurrentThreadId() << std::endl;
+			ui_task_job* tj = new ui_task_job(coroutine, hevent, params, runner, on_gui);
+			global_job_queue->add_job(tj);
+			std::cout << this << ", task await_suspend away:" << GetCurrentThreadId() << std::endl;
+			::WaitForSingleObject(hevent, INFINITE);
+			::CloseHandle(hevent);
+			std::cout << "task await_suspend finished:" << GetCurrentThreadId() << std::endl;
+			_handle.resume();
+		}
+
+		json await_resume()
+		{
+			std::cout << "task ui_await_resume:" << GetCurrentThreadId() << std::endl;
+			json t = {};
+			if (coroutine) {
+				t = coroutine.promise().m_value;
+			}
+			return t;
+		}
+
+		operator json() {
+			std::cout << this << ", ui_task cast to json:" << GetCurrentThreadId() << std::endl;
+			return coroutine.promise().m_value;
+		}
+
+		ui_task(std::coroutine_handle<> _coroutine) : coroutine(_coroutine)
+		{
+			std::cout << this << ", ui_task ctor coro:" << GetCurrentThreadId() << std::endl;
+		}
+
+		ui_task()
+		{
+			std::cout << this << ", ui_task ctor:" << GetCurrentThreadId() << std::endl;
+		}
+
+	};
+
 
 	template <typename IOParams> struct async_io_task : public std::suspend_always
 	{
@@ -243,7 +428,6 @@ namespace corona
 				if (runner(hevent, &params)) {
 					std::cout << this << ", async_io_task await_suspend away:" << GetCurrentThreadId() << std::endl;
 					::WaitForSingleObject(hevent, INFINITE);
-					::CloseHandle(hevent);
 					std::cout << "async_io_task await_suspend finished:" << GetCurrentThreadId() << std::endl;
 				}
 				else 
@@ -251,6 +435,7 @@ namespace corona
 					std::cout << "error skipped finished:" << GetCurrentThreadId() << std::endl;
 				}
 			}
+			::CloseHandle(hevent);
 			handle.resume();
 		}
 
@@ -323,6 +508,11 @@ namespace corona
 
 		std::coroutine_handle<promise_type> coroutine;
 
+		bool await_ready()
+		{
+			return false;
+		}
+
 		void await_suspend(std::coroutine_handle<> _handle)
 		{
 			std::cout << this << ",sync  await_suspend:" << GetCurrentThreadId() << std::endl;
@@ -353,6 +543,64 @@ namespace corona
 		}
 
 	};
+
+	class background_job : public job
+	{
+	public:
+		json data;
+		std::function<void(json)> run;
+		std::function<void(json)> on_gui;
+
+		background_job() : job()
+		{
+		}
+
+		virtual job_notify execute(job_queue* _callingQueue, DWORD _bytesTransferred, BOOL _success)
+		{
+			job_notify jn;
+
+			std::cout << "job start:" << GetCurrentThreadId() << std::endl;
+
+			ui_task_result* uir = new ui_task_result(data, on_gui);
+
+			try
+			{
+				if (run)
+				{
+					run(data);
+					::PostMessage(NULL, WM_CORONA_JOB_COMPLETE, TRUE, (LPARAM)uir);
+				}
+				else {
+					::PostMessage(NULL, WM_CORONA_JOB_COMPLETE, FALSE, (LPARAM)uir);
+				}
+			}
+			catch (...)
+			{
+				::PostMessage(NULL, WM_CORONA_JOB_COMPLETE, FALSE, (LPARAM)uir);
+			}
+
+			std::cout << "job end:" << GetCurrentThreadId() << std::endl;
+			jn.shouldDelete = true;
+
+			return jn;
+		}
+	};
+
+	class background
+	{
+
+	public:
+
+		void run(json _data, std::function<void(json)> _task, std::function<void(json)> _on_ui)
+		{
+			background_job *bj = new background_job();
+			bj->data = _data;
+			bj->run = _task;
+			bj->on_gui = _on_ui;
+			global_job_queue->add_job(bj);
+		}
+	};
+
 }
 
 #endif

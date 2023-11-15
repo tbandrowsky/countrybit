@@ -62,5 +62,6 @@
 
 #include "corona-httpclient.hpp"
 #include "corona-calicoclient.hpp"
+#include "corona-dataplane.hpp"
 
 #endif

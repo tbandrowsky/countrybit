@@ -62,7 +62,7 @@ namespace corona
 
 		void add_job(job* _job)
 		{
-			global_job_queue->postJobMessage(_job);
+			global_job_queue->add_job(_job);
 		}
 
 		virtual void log(const char* _msg)

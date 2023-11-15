@@ -10,6 +10,7 @@
 #include <thread>
 #include <atomic>
 #include <compare>
+#include <functional>
 
 namespace corona {
 
@@ -160,7 +161,7 @@ namespace corona {
 
 		void start(int _numThreads);
 
-		void postJobMessage(job* _jobMessage);
+		void add_job(job* _jobMessage);
 		void shutDown();
 		void kill();
 
@@ -392,7 +393,7 @@ namespace corona {
 		shutDown();
 	}
 
-	void job_queue::postJobMessage(job* _jobMessage)
+	void job_queue::add_job(job* _jobMessage)
 	{
 		LONG result;
 		++num_outstanding_jobs;
@@ -429,7 +430,7 @@ namespace corona {
 						jobNotify = waiting_job->execute(jobQueue, bytesTransferred, success);
 						jobNotify.notify();
 						if (jobNotify.repost && (!jobQueue->wasShutDownOrdered())) {
-							jobQueue->postJobMessage(waiting_job);
+							jobQueue->add_job(waiting_job);
 						}
 					}
 
@@ -456,7 +457,7 @@ namespace corona {
 	void job_queue::waitForThreadFinished()
 	{
 		finish_job fj;
-		postJobMessage(&fj);
+		add_job(&fj);
 		WaitForSingleObject(fj.handle, INFINITE);
 	}
 

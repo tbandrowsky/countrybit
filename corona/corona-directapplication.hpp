@@ -12,6 +12,9 @@
 #include "corona-constants.hpp"
 #include "corona-visual.hpp"
 #include "corona-utility.hpp"
+#include "corona-function.hpp"
+#include "corona-queue.hpp"
+#include "corona-file.hpp"
 #include "corona-directxadapter.hpp"
 #include "corona-direct2dcontext.hpp"
 #include "corona-direct2dwindow.hpp"
@@ -182,6 +185,28 @@ namespace corona
 		virtual void setColorCapture(int _iconResourceId);
 
 		std::string getUserName();
+
+		void wait()
+		{
+			global_job_queue->waitForEmptyQueue();
+		}
+
+		file open_file(file_path filename, file_open_types _file_open_type)
+		{
+			file f(global_job_queue.get(), filename, _file_open_type);
+			return f;
+		}
+
+		file create_file(file_path filename)
+		{
+			return file(global_job_queue.get(), filename, file_open_types::create_new);
+		}
+
+		void add_job(job* _job)
+		{
+			global_job_queue->add_job(_job);
+		}
+
 	};
 
 	void EnableGuiStdOuts();
@@ -190,6 +215,10 @@ namespace corona
 
 	directApplicationWin32::directApplicationWin32(std::weak_ptr<directXAdapter> _factory) : factory(_factory), colorCapture(false)
 	{
+
+		global_job_queue = std::make_unique<job_queue>();
+		global_job_queue->start(0);
+
 		current = this;
 		controlFont = nullptr;
 		labelFont = nullptr,
@@ -221,7 +250,7 @@ namespace corona
 
 	directApplicationWin32::~directApplicationWin32()
 	{
-
+		global_job_queue->shutDown();
 	}
 
 	void directApplicationWin32::redraw()
@@ -916,7 +945,15 @@ namespace corona
 			if (::PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE)) {
 				if (!::GetMessage(&msg, NULL, 0, 0))
 					break;
-				if (!::IsDialogMessage(hwndRoot, &msg)) {
+				if (msg.message == WM_CORONA_JOB_COMPLETE)
+				{
+					currentController->onJobComplete(msg.wParam, msg.lParam);
+				}
+				else if (msg.message == WM_CORONA_TASK_COMPLETE)
+				{
+					currentController->onTaskComplete(msg.wParam, (ui_task_result_base*)msg.lParam);
+				}
+				else if (!::IsDialogMessage(hwndRoot, &msg)) {
 					::TranslateMessage(&msg);
 					::DispatchMessage(&msg);
 				}
@@ -998,10 +1035,18 @@ namespace corona
 		::QueryPerformanceCounter((LARGE_INTEGER*)&lastCounter);
 
 		while (true) {
-			if (::PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE)) {
+			if (::PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE)) {								
 				if (!::GetMessage(&msg, NULL, 0, 0))
 					break;
-				if (!::IsDialogMessage(hwndRoot, &msg)) {
+				if (msg.message == WM_CORONA_JOB_COMPLETE)
+				{
+					currentController->onJobComplete(msg.wParam, msg.lParam);
+				}
+				else if (msg.message == WM_CORONA_TASK_COMPLETE)
+				{
+					currentController->onTaskComplete(msg.wParam, (ui_task_result_base *)msg.lParam);
+				}
+				else if (!::IsDialogMessage(hwndRoot, &msg)) {
 					::TranslateMessage(&msg);
 					::DispatchMessage(&msg);
 				}

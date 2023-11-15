@@ -19,6 +19,7 @@ namespace corona
 
 		std::shared_ptr<directApplicationWin32> application = std::make_shared<directApplicationWin32>(factory);
 		std::shared_ptr<calico_client> calico_application = std::make_shared<calico_client>();
+		std::shared_ptr<data_plane> app_data;
 
 		bool forceWindowed = false;
 
@@ -67,7 +68,7 @@ namespace corona
 						DWORD thread_id_before = ::GetCurrentThreadId();
 						std::string model_name = "Zoos";
 						std::string user_name = application->getUserName();
-						calico_application->login(model_name, user_name);
+						calico_application->login_async(model_name, user_name);
 						DWORD thread_id_after = ::GetCurrentThreadId();
 					}
 				);

@@ -111,6 +111,8 @@ namespace corona {
 		virtual int onVScroll(int controlId, scrollTypes scrollType);
 		virtual int onResize(const rectangle& newSize, double d2dScale);
 		virtual int onSpin(int controlId, int newPosition);
+		virtual void onJobComplete(bool _success, int _id);
+		virtual void onTaskComplete(bool _success, ui_task_result_base* _result);
 
 		template <typename control_type> control_type* get_control(int _id)
 		{
@@ -592,6 +594,15 @@ namespace corona {
 		return 0;
 	}
 
+	void presentation::onJobComplete(bool _success, int _id)
+	{
+		;
+	}
+
+	void presentation::onTaskComplete(bool _success, ui_task_result_base* _result)
+	{
+		;
+	}
 }
 
 #endif

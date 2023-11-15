@@ -30,7 +30,7 @@ namespace corona
 			;
 		}
 
-		task<int> login(std::string _model, std::string _user_name)
+		task<int> login_async(std::string _model, std::string _user_name)
 		{
 			int success = 0;
 
@@ -107,6 +107,30 @@ namespace corona
 			co_return success;
 		}
 
+		task<int> create_class(json _source)
+		{
+			int success = false;
+
+			http_client calico_client;
+			const char* calico_host = host.c_str();
+			int calico_port = port;
+
+			json request(std::make_shared<json_object>());
+			request.put_member("jwtToken", user_token);
+			request.put_member("namespace", default_namespace);
+			request.put_member("classFullName", _source);
+			request.put_member("baseClassName", _source);
+			request.put_member("relatedClassList", _source);
+			request.put_member("delimitedClassFieldList", _source);
+
+			http_params calico_http = co_await calico_client.post(calico_host, calico_port, "api/PutClassEx", request);
+			if (calico_http.response.content_type.starts_with("application/json"))
+			{
+				success = true;
+			}
+			co_return success;
+		}
+
 		task<int> get_actor_options()
 		{
 			int success = 0;
@@ -127,30 +151,6 @@ namespace corona
 					json new_item = _item->clone();
 					return new_item;
 					});
-				success = true;
-			}
-			co_return success;
-		}
-
-		task<int> create_class( json _source )
-		{
-			int success = false;
-
-			http_client calico_client;
-			const char* calico_host = host.c_str();
-			int calico_port = port;
-
-			json request(std::make_shared<json_object>());
-			request.put_member("jwtToken", user_token);
-			request.put_member("namespace", default_namespace);
-			request.put_member("classFullName", _source);
-			request.put_member("baseClassName", _source);
-			request.put_member("relatedClassList", _source);
-			request.put_member("delimitedClassFieldList", _source);
-
-			http_params calico_http = co_await calico_client.post(calico_host, calico_port, "api/PutClassEx", request);
-			if (calico_http.response.content_type.starts_with("application/json"))
-			{
 				success = true;
 			}
 			co_return success;
