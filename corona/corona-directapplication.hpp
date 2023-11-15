@@ -79,6 +79,7 @@ namespace corona
 
 		virtual bool runFull(HINSTANCE _hinstance, const char* _title, int _iconId, bool _fullScreen, std::shared_ptr<controller> _firstController);
 		virtual bool runDialog(HINSTANCE _hinstance, const char* _title, int _iconId, bool _fullScreen, std::shared_ptr<controller> _firstController);
+		virtual bool checkBackgroundComplete(MSG *_msg);
 
 		virtual void setController(std::shared_ptr<controller> _newCurrentController);
 
@@ -945,13 +946,9 @@ namespace corona
 			if (::PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE)) {
 				if (!::GetMessage(&msg, NULL, 0, 0))
 					break;
-				if (msg.message == WM_CORONA_JOB_COMPLETE)
+				else if (checkBackgroundComplete(&msg))
 				{
-					currentController->onJobComplete(msg.wParam, msg.lParam);
-				}
-				else if (msg.message == WM_CORONA_TASK_COMPLETE)
-				{
-					currentController->onTaskComplete(msg.wParam, (ui_task_result_base*)msg.lParam);
+					;
 				}
 				else if (!::IsDialogMessage(hwndRoot, &msg)) {
 					::TranslateMessage(&msg);
@@ -1038,13 +1035,9 @@ namespace corona
 			if (::PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE)) {								
 				if (!::GetMessage(&msg, NULL, 0, 0))
 					break;
-				if (msg.message == WM_CORONA_JOB_COMPLETE)
+				else if (checkBackgroundComplete(&msg))
 				{
-					currentController->onJobComplete(msg.wParam, msg.lParam);
-				}
-				else if (msg.message == WM_CORONA_TASK_COMPLETE)
-				{
-					currentController->onTaskComplete(msg.wParam, (ui_task_result_base *)msg.lParam);
+					;
 				}
 				else if (!::IsDialogMessage(hwndRoot, &msg)) {
 					::TranslateMessage(&msg);
@@ -2020,6 +2013,29 @@ namespace corona
 		::SetCapture(hwndRoot);
 		colorCapture = true;
 		SetCursor(LoadCursor(hinstance, MAKEINTRESOURCE(_iconResourceId)));
+	}
+
+	bool directApplicationWin32::checkBackgroundComplete(MSG* _msg)
+	{
+		bool handled = false;
+		ui_task_result* result = nullptr;
+
+		if (_msg->message == WM_CORONA_JOB_COMPLETE)
+		{
+			result = (ui_task_result *)_msg->lParam;
+			result->on_gui(result->parameters);
+			delete result;
+			handled = true;
+		}
+		else if (_msg->message == WM_CORONA_TASK_COMPLETE)
+		{
+			result = (ui_task_result*)_msg->lParam;
+			result->on_gui(result->parameters);
+			delete result;
+			handled = true;
+		}
+		
+		return handled;
 	}
 
 	std::string directApplicationWin32::getUserName()
