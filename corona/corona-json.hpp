@@ -281,7 +281,10 @@ namespace corona
 
 		json get_member(std::string _key) const
 		{
-			json jn(object_impl->members[_key]);
+			json jn;
+			if (jn->members.contains(_key)) {
+				jn = json(object_impl->members[_key]);
+			}
 			return jn;
 		}
 
@@ -290,6 +293,13 @@ namespace corona
 			json jn(object_impl->members[_key]);
 			double jnd = (double)jn;
 			return jnd;
+		}
+
+		json copy_member(std::string _key, json& _source)
+		{
+			json member = _source.get_member(_key);
+			put_member(_key, member);
+			return *this;
 		}
 
 		json put_member(std::string _key, json& _member)

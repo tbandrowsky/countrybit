@@ -17,41 +17,130 @@ namespace corona
 	};
 
 	class data_plane;
+	class data_set;
 
-	using json_method = std::function<task<json>(json _params)>;
+	using json_method = std::function<sync<int>(json _params, data_set *_set)>;
+	using gui_method = std::function<int(json _params, data_set* _set)>;
 
 	class data_set
 	{
 	public:
 		std::string						name;
 		json							data;
+		json							parameters;
 		time_t							last_refresh = 0;
 		int								cache_seconds = 0;
-		json_method						update;
+		json_method						fetch;
+		gui_method						share;
 		std::shared_ptr<data_source>	source;
 
-		task<json> get(json _params)
+		ui_task get(json _params)
 		{
-			json result;
+			ui_task uit;
+			parameters = _params;
 
-			time_t current_time;
-			time(&current_time);
-			time_t seconds = current_time - last_refresh;
+			uit.configure(
+				_params,
+				[this](json _data) {
+					time_t current_time;
+					time(&current_time);
+					time_t seconds = current_time - last_refresh;
 
-			if (seconds >= cache_seconds) {
-				last_refresh = current_time;
-				data = update(_params);
-			}
+					if (seconds >= cache_seconds) {
+						last_refresh = current_time;
+						fetch(_data, this);
+					}
+				},
+				[this](json _data) {
+					share(_data, this);
+				}
+			);
 
-			result = data;
-			co_return result;
+			return uit;
 		}
+
+		ui_task get()
+		{
+			ui_task uit;
+
+			uit.configure(
+				parameters,
+				[this](json _data) {
+					time_t current_time;
+					time(&current_time);
+					time_t seconds = current_time - last_refresh;
+
+					if (seconds >= cache_seconds) {
+						last_refresh = current_time;
+						fetch(_data, this);
+					}
+				},
+				[this](json _data) {
+					share(_data, this);
+				}
+			);
+
+			return uit;
+		}
+
 	};
 
 	class data_plane
 	{
 	public:
 		std::map<std::string, data_set> data_sets;
+		std::map<std::string, std::shared_ptr<data_source>> data_sources;
+
+		sync<json> get(std::string _name)
+		{
+			json set;
+			if (data_sets.contains(_name)) {
+				auto& ds = data_sets[_name];
+				co_await ds.get();
+				set = ds.data;
+			}
+			co_return set;
+		}
+
+		void put_data_source(
+			std::string _name,
+			std::string _description,
+			std::string _icon_path
+		)
+		{
+			std::shared_ptr<data_source> source;
+			if (data_sources.contains(_name)) {
+				source = data_sources[_name];
+			}
+			else 
+			{
+				source = std::make_shared<data_source>();
+			}
+			source->name = _name;
+			source->description = _description;
+			source->icon_path = _icon_path;
+			data_sources.insert_or_assign(_name, source);
+		}
+
+		void put_data_set(
+			std::string _source_name,
+			std::string _set_name,
+			json_method _fetch,
+			gui_method _gui,
+			int _cache_seconds
+			)
+		{
+			if (!data_sources.contains(_source_name)) {
+				throw std::invalid_argument("Invalid source name for dataset");
+			}
+			data_set ds;
+			ds.source = data_sources[_source_name];
+			ds.cache_seconds = _cache_seconds;
+			ds.fetch = _fetch;
+			ds.share = _gui;
+			ds.name = _set_name;
+			data_sets.insert_or_assign(_set_name, ds);
+		}
 
 		sync<int> query(json sets)
 		{

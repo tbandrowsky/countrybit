@@ -14,14 +14,10 @@ namespace corona
 		std::string host;
 		int port;
 
-		std::string user_token;
-
-		std::string last_message;
-		std::string last_success_string;
-		std::string last_execution_time;
-
 		json actor_options;
 		json allowed_base_classes;
+		json class_list;
+		json field_list;
 
 		std::string default_namespace;
 
@@ -30,7 +26,7 @@ namespace corona
 			;
 		}
 
-		task<int> login_async(std::string _model, std::string _user_name)
+		task<int> login(std::string _model, std::string _user_name, json& login_json)
 		{
 			int success = 0;
 
@@ -46,26 +42,15 @@ namespace corona
 
 			if (login_result.response.content_type.starts_with("application/json"))
 			{
-				json login_json = jp.parse_object(login_result.response.response_body.get_ptr());
-				if (login_json.has_member("jwtToken")) 
-				{
-					user_token = login_json.get_member("jwtToken");
-				}
-				else 
-				{
-					user_token = "";
-				}
-				last_message = login_json.get_member("message");
-				last_success_string = login_json.get_member("success");
-				if (last_success_string == "true") {
-					success = 1;
-				}
+				login_json = jp.parse_object(login_result.response.response_body.get_ptr());
+				// login_json["jwtToken"] will have the token
+				success = 1;
 			}
-
+			+
 			co_return success;
 		}
 
-		task<int> get_classes()
+		task<int> get_classes(json& credentials, json& calico_response)
 		{
 			int success = 0;
 
@@ -75,18 +60,17 @@ namespace corona
 			const char* calico_host = host.c_str();
 			int calico_port = port;
 			json calico_request = jp.create_object();
-			calico_request.put_member("JwtToken", user_token);
+			calico_request.copy_member("jwtToken", credentials);
 			http_params calico_http = co_await calico_client.post(calico_host, calico_port, "api/GetClassList", calico_request);
 
 			if (calico_http.response.content_type.starts_with("application/json"))
 			{
-				json calico_response = jp.parse_object(calico_http.response.response_body.get_ptr());
-				auto classList = calico_response["calicoClassList"]["classes"];
+				calico_response = jp.parse_object(calico_http.response.response_body.get_ptr());
 			}
 			co_return success;
 		}
 
-		task<int> get_fields()
+		task<int> get_fields(json& credentials, json& calico_response)
 		{
 			int success = 0;
 
@@ -96,27 +80,28 @@ namespace corona
 			const char* calico_host = host.c_str();
 			int calico_port = port;
 			json calico_request = jp.create_object();
-			calico_request.put_member("JwtToken", user_token);
+			calico_request.copy_member("jwtToken", credentials);
 			http_params calico_http = co_await calico_client.post(calico_host, calico_port, "api/GetFieldList", calico_request);
 
 			if (calico_http.response.content_type.starts_with("application/json"))
 			{
-				json calico_response = jp.parse_object(calico_http.response.response_body.get_ptr());
-				auto fieldList = calico_response["fieldList"]["fields"];
+				calico_response = jp.parse_object(calico_http.response.response_body.get_ptr());
 			}
 			co_return success;
 		}
 
-		task<int> create_class(json _source)
+		task<int> create_class(json _source, json& credentials, json& calico_response)
 		{
 			int success = false;
+
+			json_parser jp;
 
 			http_client calico_client;
 			const char* calico_host = host.c_str();
 			int calico_port = port;
 
 			json request(std::make_shared<json_object>());
-			request.put_member("jwtToken", user_token);
+			request.put_member("jwtToken", credentials);
 			request.put_member("namespace", default_namespace);
 			request.put_member("classFullName", _source);
 			request.put_member("baseClassName", _source);
@@ -126,12 +111,12 @@ namespace corona
 			http_params calico_http = co_await calico_client.post(calico_host, calico_port, "api/PutClassEx", request);
 			if (calico_http.response.content_type.starts_with("application/json"))
 			{
-				success = true;
+				calico_response = jp.parse_object(calico_http.response.response_body.get_ptr());
 			}
 			co_return success;
 		}
 
-		task<int> get_actor_options()
+		task<int> get_actor_options(json& credentials, json& calico_response)
 		{
 			int success = 0;
 
@@ -141,16 +126,200 @@ namespace corona
 			const char* calico_host = host.c_str();
 			int calico_port = port;
 			json calico_request = jp.create_object();
-			calico_request.put_member("JwtToken", user_token);
-			http_params calico_http = co_await calico_client.post(calico_host, calico_port, "api/GetFieldList", calico_request);
+			calico_request.copy_member("jwtToken", credentials);
+
+			http_params calico_http = co_await calico_client.post(calico_host, calico_port, "api/GetActorOptions", calico_request);
 
 			if (calico_http.response.content_type.starts_with("application/json"))
 			{
-				actor_options = jp.parse_object(calico_http.response.response_body.get_ptr());
-				allowed_base_classes = actor_options["actor_options"]["create_options"].map([](json& _item) {
-					json new_item = _item->clone();
-					return new_item;
-					});
+				calico_response = jp.parse_object(calico_http.response.response_body.get_ptr());
+				success = true;
+			}
+			co_return success;
+		}
+
+		task<int> create_object(json source, json& credentials, json& calico_response)
+		{
+			int success = 0;
+
+			json_parser jp;
+
+			http_client calico_client;
+			const char* calico_host = host.c_str();
+			int calico_port = port;
+			json calico_request = jp.create_object();
+			calico_request.copy_member("jwtToken", credentials);
+			calico_request.put_member("objectJson", source);
+			http_params calico_http = co_await calico_client.post(calico_host, calico_port, "api/CreateObject", calico_request);
+
+			if (calico_http.response.content_type.starts_with("application/json"))
+			{
+				calico_response = jp.parse_object(calico_http.response.response_body.get_ptr());
+				success = true;
+			}
+			co_return success;
+		}
+
+		task<int> put_object(json source, json& credentials, json& calico_response)
+		{
+			int success = 0;
+
+			json_parser jp;
+
+			http_client calico_client;
+			const char* calico_host = host.c_str();
+			int calico_port = port;
+			json calico_request = jp.create_object();
+			calico_request.copy_member("jwtToken", credentials);
+			calico_request.put_member("objectJson", source);
+			http_params calico_http = co_await calico_client.post(calico_host, calico_port, "api/CreateObject", calico_request);
+
+			if (calico_http.response.content_type.starts_with("application/json"))
+			{
+				calico_response = jp.parse_object(calico_http.response.response_body.get_ptr());
+				success = true;
+			}
+			co_return success;
+		}
+
+		task<int> select_object(json source, json& credentials, json& calico_response)
+		{
+			int success = 0;
+
+			json_parser jp;
+
+			http_client calico_client;
+			const char* calico_host = host.c_str();
+			int calico_port = port;
+
+			json calico_request = jp.create_object();
+			calico_request.copy_member("jwtToken", credentials);
+			calico_request.copy_member("objectId", source);
+			calico_request.copy_member("multiselect", source);
+
+			http_params calico_http = co_await calico_client.post(calico_host, calico_port, "api/SelectObject", calico_request);
+
+			if (calico_http.response.content_type.starts_with("application/json"))
+			{
+				calico_response = jp.parse_object(calico_http.response.response_body.get_ptr());
+				success = true;
+			}
+			co_return success;
+		}
+
+		task<int> select_home(json& credentials, json& calico_response)
+		{
+			int success = 0;
+
+			json_parser jp;
+
+			http_client calico_client;
+			const char* calico_host = host.c_str();
+			int calico_port = port;
+
+			json calico_request = jp.create_object();
+			calico_request.copy_member("jwtToken", credentials);
+
+			http_params calico_http = co_await calico_client.post(calico_host, calico_port, "api/SelectHome", calico_request);
+
+			if (calico_http.response.content_type.starts_with("application/json"))
+			{
+				calico_response = jp.parse_object(calico_http.response.response_body.get_ptr());
+				success = true;
+			}
+			co_return success;
+		}
+
+		task<int> select_class(std::string className, json& credentials, json& calico_response)
+		{
+			int success = 0;
+
+			json_parser jp;
+
+			http_client calico_client;
+			const char* calico_host = host.c_str();
+			int calico_port = port;
+
+			json calico_request = jp.create_object();
+
+			calico_request.copy_member("jwtToken", credentials);
+			calico_request.put_member("className", className);
+
+			http_params calico_http = co_await calico_client.post(calico_host, calico_port, "api/SelectClass", calico_request);
+
+			if (calico_http.response.content_type.starts_with("application/json"))
+			{
+				calico_response = jp.parse_object(calico_http.response.response_body.get_ptr());
+				success = true;
+			}
+			co_return success;
+		}
+
+		task<int> delete_object(json source, json& credentials, json& calico_response)
+		{
+			int success = 0;
+
+			json_parser jp;
+
+			http_client calico_client;
+			const char* calico_host = host.c_str();
+			int calico_port = port;
+			json calico_request = jp.create_object();
+			calico_request.copy_member("jwtToken", credentials);
+			calico_request.copy_member("objectId", source);
+			http_params calico_http = co_await calico_client.post(calico_host, calico_port, "api/DeleteObject", calico_request);
+
+			if (calico_http.response.content_type.starts_with("application/json"))
+			{
+				calico_response = jp.parse_object(calico_http.response.response_body.get_ptr());
+				success = true;
+			}
+			co_return success;
+		}
+
+		task<int> put_object(json source, json& credentials, json& calico_response)
+		{
+			int success = 0;
+
+			json_parser jp;
+
+			http_client calico_client;
+			const char* calico_host = host.c_str();
+			int calico_port = port;
+			json calico_request = jp.create_object();
+
+			calico_request.copy_member("jwtToken", credentials);
+			calico_request.copy_member("objectJSON", source);
+			calico_request.copy_member("ruleName", source);
+			http_params calico_http = co_await calico_client.post(calico_host, calico_port, "api/DeleteObject", calico_request);
+
+			if (calico_http.response.content_type.starts_with("application/json"))
+			{
+				calico_response = jp.parse_object(calico_http.response.response_body.get_ptr());
+				success = true;
+			}
+			co_return success;
+		}
+
+		task<int> query(json source, json& credentials, json& calico_response)
+		{
+			int success = 0;
+
+			json_parser jp;
+
+			http_client calico_client;
+			const char* calico_host = host.c_str();
+			int calico_port = port;
+			json calico_request = jp.create_object();
+			calico_request.copy_member("jwtToken", credentials);
+			calico_request.copy_member("className", source);
+			calico_request.copy_member("searchObjectJson", source);
+			calico_request.copy_member("filterSelections", source);
+			http_params calico_http = co_await calico_client.post(calico_host, calico_port, "api/Query", calico_request);
+
+			if (calico_http.response.content_type.starts_with("application/json"))
+			{
+				calico_response = jp.parse_object(calico_http.response.response_body.get_ptr());
 				success = true;
 			}
 			co_return success;
