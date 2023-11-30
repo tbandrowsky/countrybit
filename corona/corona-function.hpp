@@ -487,7 +487,7 @@ namespace corona
 			};
 
 			void return_value(T value) {
-				std::cout << "sync return_value:" << value << " " << this << GetCurrentThreadId() << std::endl;
+				std::cout << "sync return_value:" << " " << this << GetCurrentThreadId() << std::endl;
 				m_value = value;
 			}
 

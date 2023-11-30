@@ -119,13 +119,6 @@ namespace corona
 			return *this;
 		}
 
-		control_builder& operator =(control_builder&& _src)
-		{
-			parent = std::move(_src.parent);
-			root = std::move(_src.root);
-			return *this;
-		}
-
 		void apply_controls(control_base* _control)
 		{
 			_control->children.clear();

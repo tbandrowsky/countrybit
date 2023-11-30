@@ -26,7 +26,7 @@ namespace corona
 
 	void create_devdesk_page(
 		json actor_options,
-		std::shared_ptr<page> _page,
+		page& _page,
 		std::shared_ptr<directApplicationWin32> application,
 		std::shared_ptr<calico_client> calico_svc,
 		std::shared_ptr<data_plane> app_data,
@@ -47,25 +47,34 @@ namespace corona
 		// clearing the page should also clear the event handlers.
 		// we hope.
 
-		_page->clear();
+		_page.clear();
 
-		auto contents = _page->column_begin();
+		auto contents_root = _page.column_begin();
 
 		// first we put a caption bar in our standard page
 
-		contents.caption_bar(id_counter::next(), st, app_menu.get(), [](caption_bar_control& _cb)
-				{
-					_cb.title_bar_id = IDC_TITLE_BAR;
-					_cb.menu_button_id = IDC_SYSTEM_MENU;
-					_cb.image_control_id = IDC_COMPANY_LOGO;
-					_cb.image_file = "assets\\small_logo.png";
-					_cb.corporate_name = "WOODRUFF SAWYER";
-					_cb.id_title_column_id = 0;
-					_cb.title_name = "DEVELOPER STATION";
-					_cb.subtitle_name = "Home";
-				}
-			)
-			.end();
+		contents_root.caption_bar(id_counter::next(), st, app_menu.get(), [](caption_bar_control& _cb)
+			{
+				_cb.title_bar_id = IDC_TITLE_BAR;
+				_cb.menu_button_id = IDC_SYSTEM_MENU;
+				_cb.image_control_id = IDC_COMPANY_LOGO;
+				_cb.image_file = "assets\\small_logo.png";
+				_cb.corporate_name = "WOODRUFF SAWYER";
+				_cb.id_title_column_id = 0;
+				_cb.title_name = "DEVELOPER STATION";
+				_cb.subtitle_name = "Home";
+			}
+		)
+		.end();
+
+		// then, below the caption bar, an overall contents pane
+		// which has a navigation column on the left, and, the tab view on the right
+
+		auto contents = contents_root.row_begin(
+			app_data->get_control_id("main_row", []() { return id_counter::next(); }), 
+			[](row_layout& _settings) {
+				_settings.set_size(1.0_container, 1.0_remaining);
+			});
 
 		// then, we get the objects the user has selected.  this can be used to build a breadcrumb trail and show the user where they are at, navigationally.
 		json selected_objects = actor_options["selectedObjects"];
@@ -82,12 +91,14 @@ namespace corona
 
 		// show time.  First we build out where our high level stuff is.  So first we have a row that has a bunch of buttons on it, and that is our breadcrumb trail.
 		// these selected objects are, well, things that we have selected in this path to get where we are now.
-		int selected_objects_container_id = app_data->get_control_id("selected_objects_container", []() { return id_counter::next(); });
+		int command_container_id = app_data->get_control_id("command_container", []() { return id_counter::next(); });
 
-		// note that, we are putting the breadcrumbs on a row, so they are in a row container
-		auto selected_objects_container = contents.row_begin(selected_objects_container_id, [](row_layout& rl) {
-			rl.set_size(100.0_px, 50.0_px);
+		// note that, we are putting the breadcrumbs on a nav pane to the left.
+		auto command_container = contents.column_begin(command_container_id, [](column_layout& rl) {
+			rl.set_size(300.0_px, 1.0_container);
 			});
+
+		command_container.chaptertitle("Your location");
 
 		// and now we go through our selected objects....
 		for (int i = 0; i < selected_objects.size(); i++)
@@ -109,7 +120,7 @@ namespace corona
 			// and, now, create our button.  here, the class name is used as a label
 			// in the future we can create data set aware buttons but for now this is really all we need, because in calico this sort of 
 			// sequence does everything.
-			selected_objects_container.push_button(select_button_id, class_name);
+			command_container.push_button(select_button_id, class_name);
 
 			// so, we have to bind our button to our data.. first, we describe what the button does with data...
 			// whenever we get a data set with this key, this stuff gets invoked.
@@ -139,18 +150,11 @@ namespace corona
 				0);
 		}
 
-		selected_objects_container.end();
-
 		/*  ---------------------------------------------------------------------------------------------------
 			Creating New Objects 
 		*/
 
-		int create_button_container_id = app_data->get_control_id("create_button_container", []() { return id_counter::next(); });
-
-		// put the create options on a row
-		auto create_button_container = contents.row_begin(create_button_container_id, [](row_layout& rl) {
-			rl.set_size(1.0_container, 100.0_px);
-			});
+		command_container.chaptertitle("Create New");
 
 		for (int i = 0; i < create_options.size(); i++)
 		{
@@ -166,7 +170,7 @@ namespace corona
 			int button_id = app_data->get_control_id(button_name, []() { return id_counter::next(); });
 
 			// and, create our button and add it to our container
-			create_button_container.push_button(button_id, class_name);
+			command_container.push_button(button_id, class_name);
 
 			// and now, we associate creating the object with the application data...
 			// whenever we get a data set with this key, this stuff gets invoked.
@@ -198,7 +202,7 @@ namespace corona
 
 			// and, now add an event handler, to select the object on the back end, when this is pressed.
 			// the [capture,..](param,...) notation is how C++ does lambda expressions.
-			_page->on_command(button_id, [button_name, app_data, class_name, calico_svc](command_event ce) {	
+			_page.on_command(button_id, [button_name, app_data, class_name, calico_svc](command_event ce) {	
 					json options = app_data->get("button_name");
 				});
 
@@ -290,11 +294,11 @@ namespace corona
 		}
 
 		auto selected_objects_container = contents.tab_view(id_counter::next(), [tabs](tab_view_control& tv) {
-			tv.set_size(1.0_container, 1.0_container);
+			tv.set_size(1.0_remaining, 1.0_container);
 			tv.set_tabs(tabs);
 			});
 
-		contents.apply_controls(_page->get_root());
+//		contents.apply_controls(_page.get_root());
 	}
 
 	void run_developer_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
@@ -319,10 +323,34 @@ namespace corona
 
 		app_data->put_data_source("calico", "calico service", "assets\\images\\calico.png");
 
+		app_data->put_data_set("calico", "actoroptions",
+			[calico_svc, application, app_data](json _params, data_set* _set) -> sync<int>
+			{
+				json credentials = app_data->get("login");
+				int temp = co_await calico_svc->get_actor_options(credentials, _set->data);
+				co_return temp;
+			},
+			[calico_svc, application, application_presentation, app_data, app_menu, st](json _params, data_set* _set) -> int {
+				// when logged in, do something;				
+				if (_set->data.has_member("jwtToken")) {
+					auto& new_page = application_presentation->create_page("home");
+					create_devdesk_page(_set->data, new_page, application, calico_svc, app_data, application_presentation, app_menu, st);
+					application_presentation->select_page("home");
+				}
+				return 0;
+			},
+			0);
+
 		app_data->put_data_set("calico", "login", 
-			[calico_svc, application](json _params, data_set* _set) -> sync<int> 
+			[calico_svc, application, app_data](json _params, data_set* _set) -> sync<int> 
 				{
+					json classes_json;
+					json fields_json;
 					int temp = co_await calico_svc->login("devdesk", application->getUserName(), _set->data);
+					temp = co_await calico_svc->get_classes(_set->data, classes_json);
+					temp = co_await calico_svc->get_fields(_set->data, fields_json);
+					app_data->put_data_set("calico", "classes", classes_json);
+					app_data->put_data_set("calico", "fields", fields_json);
 					co_return temp;
 				}, 
 				[calico_svc, application, application_presentation](json _params, data_set* _set) {
@@ -334,43 +362,6 @@ namespace corona
 				},
 				5
 			);
-
-		app_data->put_data_set("calico", "actoroptions",
-			[calico_svc, application, app_data](json _params, data_set* _set) -> sync<int>
-			{
-				json credentials = app_data->get("login");
-				int temp = co_await calico_svc->get_actor_options(credentials, _set->data);
-				co_return temp;
-			},
-			[calico_svc, application, application_presentation](json _params, data_set* _set) -> int {
-				// when logged in, do something;				
-				return 0;
-			},
-			0);
-
-		app_data->put_data_set("calico", "fields",
-			[calico_svc, application, app_data](json _params, data_set* _set) -> sync<int>
-			{
-				json credentials = app_data->get("login");
-				int temp = co_await calico_svc->get_fields(credentials, _set->data);
-				co_return temp;
-			},
-			[calico_svc, application, application_presentation](json _params, data_set* _set) -> int {
-				return 0;
-			},
-			10);
-
-		app_data->put_data_set("calico", "classes",
-			[calico_svc, application, app_data](json _params, data_set* _set) -> sync<int>
-			{
-				json credentials = app_data->get("login");
-				int temp = co_await calico_svc->get_classes(credentials, _set->data);
-				co_return temp;
-			},
-			[calico_svc, application, application_presentation](json _params, data_set* _set) -> int {
-				return 0;
-			},
-			10);
 
 		bool forceWindowed = false;
 
@@ -390,43 +381,44 @@ namespace corona
 			{
 				_pg.on_select([calico_svc, application, app_data, st, app_menu](page_select_event _evt)
 					{
+						
 					}
 				);
 			});
 
-		application_presentation->create_page("login", [calico_svc, application](page& _pg)
+		application_presentation->create_page("login", [calico_svc, application, app_data, st, app_menu](page& _pg)
+			{
+				_pg.on_load([calico_svc, application, app_data, st, app_menu](page_load_event _evt)
 					{
-						_pg.on_load([calico_svc, application](page_load_event _evt)
-							{
+						app_data->get("login");
+					}
+				);
+			})
+			.column_begin()
+				.caption_bar(id_counter::next(), st, app_menu.get(), [](caption_bar_control& _cb)
+					{
+						_cb.title_bar_id = IDC_TITLE_BAR;
+						_cb.menu_button_id = IDC_SYSTEM_MENU;
+						_cb.image_control_id = IDC_COMPANY_LOGO;
+						_cb.image_file = "assets\\small_logo.png";
+						_cb.corporate_name = "WOODRUFF SAWYER";
+						_cb.id_title_column_id = 0;
+						_cb.title_name = "DEVELOPER STATION";
+						_cb.subtitle_name = "Login";
+					}
+				)
+				.end();
 
-							}
-						);
-					})
-					.column_begin()
-						.caption_bar(id_counter::next(), st, app_menu.get(), [](caption_bar_control& _cb)
-							{
-								_cb.title_bar_id = IDC_TITLE_BAR;
-								_cb.menu_button_id = IDC_SYSTEM_MENU;
-								_cb.image_control_id = IDC_COMPANY_LOGO;
-								_cb.image_file = "assets\\small_logo.png";
-								_cb.corporate_name = "WOODRUFF SAWYER";
-								_cb.id_title_column_id = 0;
-								_cb.title_name = "DEVELOPER STATION";
-								_cb.subtitle_name = "Login";
-							}
-						)
-						.end();
+		application_presentation->select_page("login");
 
-			application_presentation->select_page("home");
-
-			if (forceWindowed)
-			{
-				application->runDialog(hInstance, "Developer Station", IDI_WSPROPOSE, false, application_presentation);
-			}
-			else
-			{
-				application->runDialog(hInstance, "Developer Station", IDI_WSPROPOSE, true, application_presentation);
-			}
+		if (forceWindowed)
+		{
+			application->runDialog(hInstance, "Developer Station", IDI_WSPROPOSE, false, application_presentation);
+		}
+		else
+		{
+			application->runDialog(hInstance, "Developer Station", IDI_WSPROPOSE, true, application_presentation);
+		}
 	}
 
 }

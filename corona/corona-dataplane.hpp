@@ -167,6 +167,37 @@ namespace corona
 			data_sets.insert_or_assign(_set_name, ds);
 		}
 
+		void put_data_set(
+			std::string _source_name,
+			std::string _set_name,
+			json _data
+		)
+		{
+
+			if (!data_sources.contains(_source_name)) {
+				throw std::invalid_argument("Invalid source name for dataset");
+			}
+
+			data_set ds;
+			ds.source = data_sources[_source_name];
+			ds.cache_seconds = 3600;
+			ds.data = _data;
+
+			using json_method = std::function<sync<int>(json _params, data_set* _set)>;
+			using gui_method = std::function<int(json _params, data_set* _set)>;
+
+			ds.fetch = [](json _params, data_set* _set)->sync<int> {				
+				co_return 0;
+				};
+
+			ds.share = [](json _params, data_set* _set)->int {
+				return 0;
+			};
+
+			ds.name = _set_name;
+			data_sets.insert_or_assign(_set_name, ds);
+		}
+
 		sync<int> query(json sets)
 		{
 			int count = 0;

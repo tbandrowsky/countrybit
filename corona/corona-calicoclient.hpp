@@ -46,7 +46,6 @@ namespace corona
 				// login_json["jwtToken"] will have the token
 				success = 1;
 			}
-			+
 			co_return success;
 		}
 
