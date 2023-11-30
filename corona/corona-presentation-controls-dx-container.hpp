@@ -1,6 +1,12 @@
 #ifndef CORONA_PRESENTATION_CONTROLS_DX_CONTAINER_H
 #define CORONA_PRESENTATION_CONTROLS_DX_CONTAINER_H
 
+#include "corona-presentation-base.hpp"
+#include "corona-presentation-controls-base.hpp"
+#include "corona-presentation-controls-dx.hpp"
+#include "corona-presentation-controls-dx-text.hpp"
+#include "corona-presentation-controls-win32.hpp"
+
 namespace corona
 {
 
@@ -275,7 +281,7 @@ namespace corona
 			int i;
 			for (i = 0; i < item_source.data.size(); i++)
 			{
-				auto cb = item_source.data_to_control(item_source.data, i);
+				auto cb = item_source.data_to_control(this, item_source.data, i);
 				if (auto sp = cb.lock()) {
 					children.push_back(sp);
 					items.push_back(sp);
@@ -300,6 +306,41 @@ namespace corona
 				}
 				item_to_page_index.push_back(current_page);
 				index++;
+			}
+		}
+
+		virtual void on_subscribe(presentation_base* _presentation, page_base* _page)
+		{
+			_page->on_key_down(id, [](key_down_event evt) {
+				});
+			_page->on_key_up(id, [](key_up_event evt) {
+					column_view_layout* cvt = (column_view_layout*)evt.control;
+					switch (evt.key) {
+					case VK_BACK:
+						break;
+					case VK_UP:
+						cvt->line_up();
+						break;
+					case VK_DOWN:
+						cvt->line_down();
+						break;
+					case VK_PRIOR:
+						cvt->page_up();
+						break;
+					case VK_NEXT:
+						cvt->page_down();
+						break;
+					case VK_DELETE:
+						cvt->delete_selected();
+						break;
+					case VK_RETURN:
+						cvt->navigate_selected();
+						break;
+					}
+				});
+
+			for (auto child : children) {
+				child->on_subscribe(_presentation, _page);
 			}
 		}
 
@@ -357,6 +398,16 @@ namespace corona
 			auto& temp = items[selected_item_index];
 			view_port.y = temp->get_bounds().y;
 			position_children();
+		}
+
+		void navigate_selected()
+		{
+			;
+		}
+
+		void delete_selected()
+		{
+			;
 		}
 
 	};

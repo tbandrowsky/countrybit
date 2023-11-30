@@ -20,6 +20,7 @@ namespace corona
 		std::map<int, std::shared_ptr<command_event_binding> > command_bindings;
 		std::vector<std::shared_ptr<page_unload_event_binding>> unload_bindings;
 		std::vector<std::shared_ptr<page_load_event_binding>> load_bindings;
+		std::vector<std::shared_ptr<page_select_event_binding>> select_bindings;
 		update_function update_event;
 
 	public:
@@ -259,6 +260,13 @@ namespace corona
 			update_event = fnc;
 		}
 
+		void on_select(std::function< void(page_select_event) > fnc)
+		{
+			auto plet = std::make_shared<page_select_event_binding>();
+			plet->on_select = fnc;
+			select_bindings.push_back(plet);
+		}
+
 		void on_load(std::function< void(page_load_event) > fnc)
 		{
 			auto plet = std::make_shared<page_load_event_binding>();
@@ -368,18 +376,29 @@ namespace corona
 			}
 		}
 
-		void handle_onload()
+		void handle_onselect(std::shared_ptr<page> _pg)
+		{
+			for (auto evt : select_bindings) {
+				page_select_event ple = {};
+				ple.pg = _pg;
+				evt->on_select(ple);
+			}
+		}
+
+		void handle_onload(std::shared_ptr<page> _pg)
 		{
 			for (auto evt : load_bindings) {
 				page_load_event ple = {};
+				ple.pg = _pg;
 				evt->on_load(ple);
 			}
 		}
 
-		void handle_unload()
+		void handle_unload(std::shared_ptr<page> _pg)
 		{
 			for (auto evt : unload_bindings) {
 				page_unload_event ple = {};
+				ple.pg = _pg;
 				evt->on_unload(ple);
 			}
 		}

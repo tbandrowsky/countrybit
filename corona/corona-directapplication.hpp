@@ -716,6 +716,7 @@ namespace corona
 		break;
 
 		case WM_CHAR:
+			break;
 		case WM_CANCELMODE:
 			if (colorCapture) {
 				colorCapture = false;
@@ -764,6 +765,22 @@ namespace corona
 					if (pcurrent_window) {
 						currentController->mouseLeftDown(&ptxo);
 					}
+				}
+			}
+			break;
+		case WM_KEYDOWN:
+			if (currentController)
+			{
+				if (pcurrent_window) {
+					currentController->keyDown(wParam);
+				}
+			}
+			break;
+		case WM_KEYUP:
+			if (currentController)
+			{
+				if (pcurrent_window) {
+					currentController->keyUp(wParam);
 				}
 			}
 			break;

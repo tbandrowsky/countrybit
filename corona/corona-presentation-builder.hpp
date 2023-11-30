@@ -3,6 +3,10 @@
 #define CORONA_PRESENTATION_BUILDER_H
 
 #include <corona-presentation-controls-base.hpp>
+#include <corona-presentation-controls-dx.hpp>
+#include <corona-presentation-controls-dx-container.hpp>
+#include <corona-presentation-controls-dx-text.hpp>
+#include <corona-presentation-controls-win32.hpp>
 
 namespace corona
 {
@@ -115,6 +119,13 @@ namespace corona
 			return *this;
 		}
 
+		control_builder& operator =(control_builder&& _src)
+		{
+			parent = std::move(_src.parent);
+			root = std::move(_src.root);
+			return *this;
+		}
+
 		void apply_controls(control_base* _control)
 		{
 			_control->children.clear();
@@ -122,6 +133,11 @@ namespace corona
 				child->parent = _control;
 				_control->children.push_back(child);
 			}
+		}
+
+		std::shared_ptr<container_control> get_root()
+		{
+			return root;
 		}
 
 		inline control_builder& title(std::string _text) { return title(_text, nullptr, id_counter::next()); }
@@ -710,12 +726,19 @@ namespace corona
 
 	};
 
+	class tab_pane
+	{
+	public:
+		int id;
+		std::string name;
+		std::shared_ptr<control_base> tab_controls;
+	};
+
 	class tab_view_control : public column_layout, public cloneable<tab_view_control>
 	{
-		json tab_data;
-
-		std::shared_ptr<row_layout>	 tabs;
-		std::shared_ptr<frame_layout> frame;
+		std::shared_ptr<row_layout>	 tab_buttons;
+		std::shared_ptr<frame_layout> current_tab;
+		std::vector<tab_pane> tab_panes;
 
 		int active_id;
 
@@ -729,10 +752,9 @@ namespace corona
 				_settings.set_size(1.0_container, 1.0_remaining);
 				});
 			builder.apply_controls(this);
-			tabs = std::dynamic_pointer_cast<row_layout>(children[0]);
-			frame = std::dynamic_pointer_cast<frame_layout>(children[1]);
+			tab_buttons = std::dynamic_pointer_cast<row_layout>(children[0]);
+			current_tab = std::dynamic_pointer_cast<frame_layout>(children[1]);
 		}
-
 
 	public:
 
@@ -746,17 +768,18 @@ namespace corona
 			init();
 		}
 
-		void set_tab_data(json& _data)
+		void set_tabs(std::vector<tab_pane> _new_panes)
 		{
-			tabs->children.clear();
-			for (int i = 0; i < _data.size(); i++)
+			tab_panes = _new_panes;
+			tab_buttons->children.clear();
+			for (int i = 0; i < tab_panes.size(); i++)
 			{
 				auto tb = std::make_shared<tab_button_control>();
-				auto dat = _data[i];
-				tb->id = dat["tab_id"];
-				tb->text = dat["tab_text"];
+				auto dat = tab_panes[i];
+				tb->id = dat.id;
+				tb->text = dat.name;
 				tb->active_id = &active_id;
-				tabs->children.push_back(tb);
+				tab_buttons->children.push_back(tb);
 				if (!i) {
 					active_id = tb->id;
 				}

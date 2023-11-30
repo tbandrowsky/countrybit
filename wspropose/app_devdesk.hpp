@@ -15,6 +15,288 @@ namespace corona
 
 	*/
 
+	const int IDC_COMPANY_NAME = 1001;
+	const int IDC_COMPANY_LOGO = 1002;
+	const int IDC_TITLE_BAR = 1003;
+	const int IDC_SYSTEM_MENU = 1004;
+
+	const int IDM_VIEW_MENU = 2001;
+	const int IDM_HOME = 2002;
+	const int IDM_LOGIN = 2003;
+
+	void create_devdesk_page(
+		json actor_options,
+		std::shared_ptr<page> _page,
+		std::shared_ptr<directApplicationWin32> application,
+		std::shared_ptr<calico_client> calico_svc,
+		std::shared_ptr<data_plane> app_data,
+		std::shared_ptr<presentation> application_presentation,
+		std::shared_ptr<menu_item> app_menu,
+		presentation_style *st
+		)
+	{
+		// First check to make sure we have all the things
+
+		if (!(actor_options.has_member("selectedObjects") &&
+			actor_options.has_member("createOptions") &&
+			actor_options.has_member("selectOptions"))) {
+			return;
+		}
+
+		// we clear the page of all of its children controls, and start building our form
+		// clearing the page should also clear the event handlers.
+		// we hope.
+
+		_page->clear();
+
+		auto contents = _page->column_begin();
+
+		// first we put a caption bar in our standard page
+
+		contents.caption_bar(id_counter::next(), st, app_menu.get(), [](caption_bar_control& _cb)
+				{
+					_cb.title_bar_id = IDC_TITLE_BAR;
+					_cb.menu_button_id = IDC_SYSTEM_MENU;
+					_cb.image_control_id = IDC_COMPANY_LOGO;
+					_cb.image_file = "assets\\small_logo.png";
+					_cb.corporate_name = "WOODRUFF SAWYER";
+					_cb.id_title_column_id = 0;
+					_cb.title_name = "DEVELOPER STATION";
+					_cb.subtitle_name = "Home";
+				}
+			)
+			.end();
+
+		// then, we get the objects the user has selected.  this can be used to build a breadcrumb trail and show the user where they are at, navigationally.
+		json selected_objects = actor_options["selectedObjects"];
+
+		// then, we get a list of classes of objects that we are allowed to create.  this gets visualized as buttons, to allow creating of a new object
+		json create_options = actor_options["createOptions"];
+
+		// now, select options are, all the objects that we may select. These are objects of classes that match the hiearachy of selected objects
+		json select_options = actor_options["selectOptions"];
+
+		/*  ---------------------------------------------------------------------------------------------------
+			Navigating back up through previous selections
+		*/
+
+		// show time.  First we build out where our high level stuff is.  So first we have a row that has a bunch of buttons on it, and that is our breadcrumb trail.
+		// these selected objects are, well, things that we have selected in this path to get where we are now.
+		int selected_objects_container_id = app_data->get_control_id("selected_objects_container", []() { return id_counter::next(); });
+
+		// note that, we are putting the breadcrumbs on a row, so they are in a row container
+		auto selected_objects_container = contents.row_begin(selected_objects_container_id, [](row_layout& rl) {
+			rl.set_size(100.0_px, 50.0_px);
+			});
+
+		// and now we go through our selected objects....
+		for (int i = 0; i < selected_objects.size(); i++)
+		{
+			// pull our current object out of this json array
+			auto selected_object = selected_objects[i];
+
+			std::string class_name = selected_object["className"].get_string();
+			int64_t class_id = selected_object["classId"].get_double();
+			int64_t object_id = selected_object["objectId"].get_double();
+			std::string object_id_string = selected_object["objectId"].get_string();
+
+			// then, come up with a canonical name for the button, so that, if we keep invoking this, we have the same ids.
+			// we also use this, to tie to our data, which actually drives the application
+			std::string button_name = "select_object." + object_id_string;
+
+			int select_button_id = app_data->get_control_id(button_name, []() { return id_counter::next(); });
+
+			// and, now, create our button.  here, the class name is used as a label
+			// in the future we can create data set aware buttons but for now this is really all we need, because in calico this sort of 
+			// sequence does everything.
+			selected_objects_container.push_button(select_button_id, class_name);
+
+			// so, we have to bind our button to our data.. first, we describe what the button does with data...
+			// whenever we get a data set with this key, this stuff gets invoked.
+			// and this all happens on background threads.
+			app_data->put_data_set("calico", button_name,
+				[calico_svc, application, app_data, class_name, object_id](json _params, data_set* _set) -> sync<int>
+				{
+					// get our login credentials from the data set.
+					json credentials = app_data->get("login");
+
+					// create a new object
+					json_parser jp;
+					json object_select_request = jp.create_object();
+					object_select_request.put_member("objectId", object_id);
+
+					// call our application
+					int temp = co_await calico_svc->select_object(object_select_request, credentials, _set->data);
+
+					// and, while we are it now, we can update our actor options, to show our created object
+					co_return temp;
+				},
+				[app_data](json _params, data_set* _set) -> int {
+					// when back on the ui thread, kick off our refresh, which is to just call actor options again
+					json options = app_data->get("actoroptions");
+					return 0;
+				},
+				0);
+		}
+
+		selected_objects_container.end();
+
+		/*  ---------------------------------------------------------------------------------------------------
+			Creating New Objects 
+		*/
+
+		int create_button_container_id = app_data->get_control_id("create_button_container", []() { return id_counter::next(); });
+
+		// put the create options on a row
+		auto create_button_container = contents.row_begin(create_button_container_id, [](row_layout& rl) {
+			rl.set_size(1.0_container, 100.0_px);
+			});
+
+		for (int i = 0; i < create_options.size(); i++)
+		{
+			auto co = create_options[i];
+
+			// then, fish out the stuff we need
+			std::string class_name = co["className"].get_string();
+
+			// then, come up with a canonical name for the button, so that, if we keep invoking this, we have the same ids.
+			// we also use this, to tie to our data, which actually drives the application
+			std::string button_name = "create_class." + class_name;
+
+			int button_id = app_data->get_control_id(button_name, []() { return id_counter::next(); });
+
+			// and, create our button and add it to our container
+			create_button_container.push_button(button_id, class_name);
+
+			// and now, we associate creating the object with the application data...
+			// whenever we get a data set with this key, this stuff gets invoked.
+			// and this all happens on background threads.
+
+			app_data->put_data_set("calico", button_name,
+				[calico_svc, application, app_data, class_name](json _params, data_set* _set) -> sync<int>
+				{
+					// get our login credentials from the data set.
+					json credentials = app_data->get("login");
+
+					// create a new object
+					json_parser jp;
+					json new_object_request = jp.create_object();
+					new_object_request.put_member("className", class_name);
+
+					// call our application
+					int temp = co_await calico_svc->create_object(new_object_request, credentials, _set->data);
+
+					// and, while we are it now, we can update our actor options, to show our created object
+					co_return temp;
+				},
+				[app_data](json _params, data_set* _set) -> int {
+					// when back on the ui thread, kick off our refresh
+					json options = app_data->get("actoroptions");
+					return 0;
+				},
+				0);
+
+			// and, now add an event handler, to select the object on the back end, when this is pressed.
+			// the [capture,..](param,...) notation is how C++ does lambda expressions.
+			_page->on_command(button_id, [button_name, app_data, class_name, calico_svc](command_event ce) {	
+					json options = app_data->get("button_name");
+				});
+
+		}
+
+		/*  ---------------------------------------------------------------------------------------------------
+			Viewing and manipulating new objects
+			these we present in a basic form, with the edit fields of the base selected object, and then, the details (children), of each, in tabs.
+		*/
+
+		// define our tabs
+		std::vector<tab_pane> tabs;
+
+		// now, we have to build up our tabs
+		for (int i = 0; i < select_options.size(); i++)
+		{
+			// get our element out of this json array
+			auto selected_rule = select_options[i];
+
+			// get our data out of this element
+			// the rule name and description are the model rules by which this object was selected.
+			// these will be needed to do further object manipulations.
+
+			std::string rule_name = selected_rule["ruleName"];
+			std::string rule_description = selected_rule["ruleDescription"];
+			std::string class_name = selected_rule["className"];
+			std::string class_id = selected_rule["classId"];
+			std::string view_name = selected_rule["viewName"];
+			auto objects_in_rule = selected_rule["items"];
+
+			std::string bind_name = "rule." + rule_name;
+
+			// now we specify our tab.
+			// for the tab, we're going to specify what our control is, and then put items in the control
+			// because there could be a lot of items, we will define some data sources that do the transformation
+			// the column view is associated with the tab and it can do selection and the other things
+			tab_pane new_tab;
+			new_tab.id = app_data->get_control_id(bind_name, []() { return id_counter::next(); });
+			new_tab.name = class_name;
+			auto tab_controls = std::make_shared<column_view_layout>();
+			new_tab.tab_controls = tab_controls;
+
+			// group scans an array, then creates a new object whose each member corresponds to the key 
+			// used to group by.
+			auto objects_by_class = objects_in_rule.group([](json& _item) {
+				return _item["className"].get_string();
+				});
+
+			array_data_source ads;
+			json_parser jp;
+
+			ads.data = jp.create_array();
+			ads.data_to_control = [app_data](control_base* _parent, json& _array, int _index) {
+				auto json_object = _array[_index];
+				auto class_name = json_object["className"];
+				auto factory = app_data->get_class_control_factory(class_name);
+				return factory(_parent, _array, _index);
+				};
+
+			// so grouped, we go through the members
+			// note that, here is our chance to change the visualization based upon the item type
+
+			auto members = objects_by_class.get_members();
+
+			for (auto member : members)
+			{
+				// convert this to a member array, and...
+				json member_array(member.second);
+
+				// add a header for this class name
+				json header_obj = jp.create_object();
+				header_obj.put_member("className", ".section");
+				header_obj.put_member("name", member.first);
+				ads.data.put_element(-1, header_obj);
+
+				// and, within the group, we go through the array
+				for (int k = 0; k < member_array.size(); k++)
+				{
+					json member_obj = member_array[i];
+					json item_obj = jp.create_object();
+					item_obj.copy_member("className", member_obj);
+					item_obj.copy_member("name", member_obj);
+					item_obj.put_member("source", member_obj);
+					ads.data.put_element(-1, item_obj);
+				}
+			}
+
+			tab_controls->set_item_source(ads);
+		}
+
+		auto selected_objects_container = contents.tab_view(id_counter::next(), [tabs](tab_view_control& tv) {
+			tv.set_size(1.0_container, 1.0_container);
+			tv.set_tabs(tabs);
+			});
+
+		contents.apply_controls(_page->get_root());
+	}
+
 	void run_developer_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 	{
 		application app;
@@ -28,24 +310,10 @@ namespace corona
 		std::shared_ptr<calico_client> calico_svc = std::make_shared<calico_client>();
 		std::shared_ptr<data_plane> app_data = std::make_shared<data_plane>();
 		std::shared_ptr<presentation> application_presentation = std::make_shared<presentation>(application);
+		std::shared_ptr<menu_item> app_menu = std::make_shared<menu_item>();
 
-		corona::menu_item app_menu;
-
-		const int IDC_COMPANY_NAME = 1001;
-		const int IDC_COMPANY_LOGO = 1002;
-		const int IDC_TITLE_BAR = 1003;
-		const int IDC_SYSTEM_MENU = 1004;
-
-		const int IDM_VIEW_MENU = 2001;
-		const int IDM_HOME = 2002;
-		const int IDM_PRODUCTS = 2004;
-		const int IDM_TEAM = 2006;
-		const int IDM_OBSTACLES = 2007;
-
-		app_menu.destination(IDM_HOME, "Ho&me", "home")
-			.destination(IDM_PRODUCTS, "Pro&ducts", "products")
-			.destination(IDM_TEAM, "T&eam", "team")
-			.destination(IDM_OBSTACLES, "Se&ttings", "settings");
+		app_menu->destination(IDM_HOME, "&Home", "home")
+			.destination(IDM_LOGIN, "&Login", "login");
 
 		auto st = styles.get_style();
 
@@ -67,6 +335,19 @@ namespace corona
 				5
 			);
 
+		app_data->put_data_set("calico", "actoroptions",
+			[calico_svc, application, app_data](json _params, data_set* _set) -> sync<int>
+			{
+				json credentials = app_data->get("login");
+				int temp = co_await calico_svc->get_actor_options(credentials, _set->data);
+				co_return temp;
+			},
+			[calico_svc, application, application_presentation](json _params, data_set* _set) -> int {
+				// when logged in, do something;				
+				return 0;
+			},
+			0);
+
 		app_data->put_data_set("calico", "fields",
 			[calico_svc, application, app_data](json _params, data_set* _set) -> sync<int>
 			{
@@ -74,8 +355,7 @@ namespace corona
 				int temp = co_await calico_svc->get_fields(credentials, _set->data);
 				co_return temp;
 			},
-			[calico_svc, application](json _params, data_set* _set) -> int {
-				// when logged in, do something;				
+			[calico_svc, application, application_presentation](json _params, data_set* _set) -> int {
 				return 0;
 			},
 			10);
@@ -87,29 +367,10 @@ namespace corona
 				int temp = co_await calico_svc->get_classes(credentials, _set->data);
 				co_return temp;
 			},
-			[calico_svc, application](json _params, data_set* _set) -> int {
-				// when logged in, do something;				
+			[calico_svc, application, application_presentation](json _params, data_set* _set) -> int {
 				return 0;
 			},
 			10);
-
-		app_data->put_data_set("calico", "actoroptions",
-			[calico_svc, application, app_data](json _params, data_set* _set) -> sync<int>
-			{
-				json credentials = app_data->get("login");
-				int temp = co_await calico_svc->get_actor_options(credentials, _set->data);
-				co_return temp;
-			},
-			[calico_svc, application, application_presentation](json _params, data_set* _set) -> int {
-				// when logged in, do something;				
-				if (_set->data.has_member("jwtToken")) {
-					if (set->data.has_member("")) {
-						application_presentation->select_page("home");
-					}
-				}
-				return 0;
-			},
-			0);
 
 		bool forceWindowed = false;
 
@@ -125,142 +386,47 @@ namespace corona
 			ctrl.set_size(150.0_px, 50.0_px);
 			};
 
-		application_presentation->create_page("home", [calico_svc, application](page& _pg)
+		application_presentation->create_page("home", [calico_svc, app_data, application, st, app_menu](page& _pg)
 			{
-				_pg.on_load([calico_svc, application](page_load_event _evt)
+				_pg.on_select([calico_svc, application, app_data, st, app_menu](page_select_event _evt)
 					{
-
 					}
 				);
-			})
-			.column_begin()
-			.caption_bar(id_counter::next(), st, &app_menu, [](caption_bar_control& _cb)
+			});
+
+		application_presentation->create_page("login", [calico_svc, application](page& _pg)
 					{
-						_cb.title_bar_id = IDC_TITLE_BAR;
-						_cb.menu_button_id = IDC_SYSTEM_MENU;
-						_cb.image_control_id = IDC_COMPANY_LOGO;
-						_cb.image_file = "assets\\small_logo.png";
-						_cb.corporate_name = "WOODRUFF SAWYER";
-						_cb.id_title_column_id = 0;
-						_cb.title_name = "DEVELOPER STATION";
-						_cb.subtitle_name = "Home";
-					}
-				)
-				.end();
+						_pg.on_load([calico_svc, application](page_load_event _evt)
+							{
 
-			application_presentation->create_page("login", [calico_svc, application](page& _pg)
-						{
-							_pg.on_load([calico_svc, application](page_load_event _evt)
-								{
-
-								}
-							);
-						})
-						.column_begin()
-							.caption_bar(id_counter::next(), st, &app_menu, [](caption_bar_control& _cb)
-								{
-									_cb.title_bar_id = IDC_TITLE_BAR;
-									_cb.menu_button_id = IDC_SYSTEM_MENU;
-									_cb.image_control_id = IDC_COMPANY_LOGO;
-									_cb.image_file = "assets\\small_logo.png";
-									_cb.corporate_name = "WOODRUFF SAWYER";
-									_cb.id_title_column_id = 0;
-									_cb.title_name = "DEVELOPER STATION";
-									_cb.subtitle_name = "Login";
-								}
-							)
-							.end();
-
-			application_presentation->create_page("presentations")
-				.column_begin()
-				.caption_bar(id_counter::next(), st, &app_menu, [](caption_bar_control& _cb)
-					{
-						_cb.title_bar_id = IDC_TITLE_BAR;
-						_cb.menu_button_id = IDC_SYSTEM_MENU;
-						_cb.image_control_id = IDC_COMPANY_LOGO;
-						_cb.image_file = "assets\\small_logo.png";
-						_cb.corporate_name = "WOODRUFF SAWYER";
-						_cb.id_title_column_id = 0;
-						_cb.title_name = "DEVELOPER STATION";
-						_cb.subtitle_name = "Presentations";
-					}
-				)
-				.end();
-
-			application_presentation->create_page("presentation")
-				.column_begin()
-				.caption_bar(id_counter::next(), st, &app_menu, [](caption_bar_control& _cb)
-					{
-						_cb.title_bar_id = IDC_TITLE_BAR;
-						_cb.menu_button_id = IDC_SYSTEM_MENU;
-						_cb.image_control_id = IDC_COMPANY_LOGO;
-						_cb.image_file = "assets\\small_logo.png";
-						_cb.corporate_name = "WOODRUFF SAWYER";
-						_cb.id_title_column_id = 0;
-						_cb.title_name = "DEVELOPER STATION";
-						_cb.subtitle_name = "Presentation Detail";
-					}
-				)
-				.end();
-
-			application_presentation->create_page("products")
-				.column_begin()
-				.caption_bar(id_counter::next(), st, &app_menu, [](caption_bar_control& _cb)
-					{
-						_cb.title_bar_id = IDC_TITLE_BAR;
-						_cb.menu_button_id = IDC_SYSTEM_MENU;
-						_cb.image_control_id = IDC_COMPANY_LOGO;
-						_cb.image_file = "assets\\small_logo.png";
-						_cb.corporate_name = "WOODRUFF SAWYER";
-						_cb.id_title_column_id = 0;
-						_cb.title_name = "DEVELOPER STATION";
-						_cb.subtitle_name = "Products";
-					}
-				)
-				.end();
-
-				application_presentation->create_page("product")
+							}
+						);
+					})
 					.column_begin()
-					.caption_bar(id_counter::next(), st, &app_menu, [](caption_bar_control& _cb)
-						{
-							_cb.title_bar_id = IDC_TITLE_BAR;
-							_cb.menu_button_id = IDC_SYSTEM_MENU;
-							_cb.image_control_id = IDC_COMPANY_LOGO;
-							_cb.image_file = "assets\\small_logo.png";
-							_cb.corporate_name = "WOODRUFF SAWYER";
-							_cb.id_title_column_id = 0;
-							_cb.title_name = "DEVELOPER STATION";
-							_cb.subtitle_name = "Product Details";
-						}
-					)
-					.end();
+						.caption_bar(id_counter::next(), st, app_menu.get(), [](caption_bar_control& _cb)
+							{
+								_cb.title_bar_id = IDC_TITLE_BAR;
+								_cb.menu_button_id = IDC_SYSTEM_MENU;
+								_cb.image_control_id = IDC_COMPANY_LOGO;
+								_cb.image_file = "assets\\small_logo.png";
+								_cb.corporate_name = "WOODRUFF SAWYER";
+								_cb.id_title_column_id = 0;
+								_cb.title_name = "DEVELOPER STATION";
+								_cb.subtitle_name = "Login";
+							}
+						)
+						.end();
 
-				application_presentation->create_page("settings")
-					.column_begin()
-					.caption_bar(id_counter::next(), st, &app_menu, [](caption_bar_control& _cb)
-						{
-							_cb.title_bar_id = IDC_TITLE_BAR;
-							_cb.menu_button_id = IDC_SYSTEM_MENU;
-							_cb.image_control_id = IDC_COMPANY_LOGO;
-							_cb.image_file = "assets\\small_logo.png";
-							_cb.corporate_name = "WOODRUFF SAWYER";
-							_cb.id_title_column_id = 0;
-							_cb.title_name = "DEVELOPER STATION";
-							_cb.subtitle_name = "Settings";
-						}
-					)
-					.end();
+			application_presentation->select_page("home");
 
-				application_presentation->select_page("home");
-
-				if (forceWindowed)
-				{
-					application->runDialog(hInstance, "Developer Station", IDI_WSPROPOSE, false, application_presentation);
-				}
-				else
-				{
-					application->runDialog(hInstance, "Developer Station", IDI_WSPROPOSE, true, application_presentation);
-				}
+			if (forceWindowed)
+			{
+				application->runDialog(hInstance, "Developer Station", IDI_WSPROPOSE, false, application_presentation);
+			}
+			else
+			{
+				application->runDialog(hInstance, "Developer Station", IDI_WSPROPOSE, true, application_presentation);
+			}
 	}
 
 }

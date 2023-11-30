@@ -813,7 +813,7 @@ namespace corona
 		//std::cout << "resize control_base:" << ti << " " << bounds.x << "," << bounds.y << " x " << bounds.w << " " << bounds.h << std::endl;
 	}
 
-	using control_json_mapper = std::function<std::weak_ptr<control_base>(json& _array, int _index)>;
+	using control_json_mapper = std::function<std::weak_ptr<control_base>(control_base *_parent, json& _array, int _index)>;
 
 	class array_data_source
 	{

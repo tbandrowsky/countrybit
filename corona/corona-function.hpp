@@ -179,7 +179,7 @@ namespace corona
 		std::shared_ptr<T> params;
 		std::function<void(std::shared_ptr<T>_params)> runner;
 
-		void configure(std::shared_ptr<T> params, std::function < std::function<void(std::shared_ptr<T>_params)> _runner)
+		void configure(std::shared_ptr<T> _params, std::function<void(std::shared_ptr<T>_params)> _runner)
 		{
 			params = _params;
 			runner = _runner;
@@ -355,7 +355,7 @@ namespace corona
 			return coroutine.promise().m_value;
 		}
 
-		ui_task(std::coroutine_handle<> _coroutine) : coroutine(_coroutine)
+		ui_task(std::coroutine_handle<promise_type> _coroutine) : coroutine(_coroutine)
 		{
 			std::cout << this << ", ui_task ctor coro:" << GetCurrentThreadId() << std::endl;
 		}

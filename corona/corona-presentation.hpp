@@ -226,10 +226,14 @@ namespace corona {
 	{
 		if (pages.contains(_page_name)) {
 			if (auto ppage = current_page.lock()) {
-				ppage->handle_unload();
+				ppage->handle_unload(ppage);
 				ppage->destroy();
 			}
 			current_page = pages[_page_name];
+		}
+
+		if (auto ppage = current_page.lock()) {
+			ppage->handle_onselect(ppage);
 		}
 
 		if (auto phost = window_host.lock())
@@ -250,7 +254,7 @@ namespace corona {
 		}
 
 		if (auto ppage = current_page.lock()) {
-			ppage->handle_onload();
+			ppage->handle_onload(ppage);
 		}
 
 	}

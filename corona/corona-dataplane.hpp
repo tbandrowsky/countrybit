@@ -90,6 +90,16 @@ namespace corona
 	public:
 		std::map<std::string, data_set> data_sets;
 		std::map<std::string, std::shared_ptr<data_source>> data_sources;
+		std::map<std::string, int> control_ids;
+		std::map<std::string, control_json_mapper> class_control_map;
+
+		int get_control_id(std::string _name, std::function<int()> _id)
+		{
+			if (!control_ids.contains(_name)) {
+				control_ids.insert_or_assign(_name, _id());
+			}
+			return control_ids[_name];
+		}
 
 		sync<json> get(std::string _name)
 		{
@@ -100,6 +110,21 @@ namespace corona
 				set = ds.data;
 			}
 			co_return set;
+		}
+
+		control_json_mapper get_class_control_factory(std::string class_name)
+		{
+			control_json_mapper cjm;
+
+			if (class_control_map.contains(class_name)) {
+				cjm = class_control_map[class_name];
+			}
+			return cjm;
+		}
+
+		void put_class_control_factory(std::string class_name, control_json_mapper mapper)
+		{
+			class_control_map.insert_or_assign(class_name, mapper);
 		}
 
 		void put_data_source(
