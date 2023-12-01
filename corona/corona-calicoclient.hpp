@@ -45,7 +45,18 @@ namespace corona
 			{
 				login_json = jp.parse_object(login_result.response.response_body.get_ptr());
 				// login_json["jwtToken"] will have the token
-				success = 1;
+				if (!login_json.has_member("jwtToken")) {
+					login_json.put_member("jwtToken", "this won't work");
+				}
+
+				if (login_json.has_member("errors"))
+				{
+					success = false;
+				}
+				else 
+				{
+					success = true;
+				}
 			}
 			return success;
 		}
@@ -83,7 +94,7 @@ namespace corona
 			int calico_port = port;
 			json calico_request = jp.create_object();
 			calico_request.copy_member("JwtToken", credentials);
-			http_params calico_http = calico_client.post(calico_host, calico_port, "api/GetClassList", calico_request);
+			http_params calico_http = calico_client.get(calico_host, calico_port, "api/GetClassList", calico_request);
 
 			if (calico_http.response.content_type.starts_with("application/json"))
 			{
@@ -103,7 +114,7 @@ namespace corona
 			int calico_port = port;
 			json calico_request = jp.create_object();
 			calico_request.copy_member("JwtToken", credentials);
-			http_params calico_http = calico_client.post(calico_host, calico_port, "api/GetFieldList", calico_request);
+			http_params calico_http = calico_client.get(calico_host, calico_port, "api/GetFieldList", calico_request);
 
 			if (calico_http.response.content_type.starts_with("application/json"))
 			{

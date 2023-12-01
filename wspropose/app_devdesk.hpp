@@ -346,7 +346,7 @@ namespace corona
 				{
 					json classes_json;
 					json fields_json;
-					int temp = calico_svc->login("devdesk", application->getUserName(), _set->data);
+					int temp = calico_svc->login("DevStation", application->getUserName(), _set->data);
 					temp = calico_svc->get_classes(_set->data, classes_json);
 					temp = calico_svc->get_fields(_set->data, fields_json);
 					app_data->put_data_set("calico", "classes", classes_json);

@@ -714,6 +714,27 @@ namespace corona
 
 		int line_number = 1;
 
+		json get_errors()
+		{
+			json error_root(std::make_shared<json_object>());
+
+			error_root.put_member("success", false);
+
+			json error_array(std::make_shared<json_array>());
+
+			for (auto parse_error : parse_errors)
+			{
+				json err(std::make_shared<json_object>());
+				err.put_member("line", parse_error.line);
+				err.put_member("topic", parse_error.topic);
+				err.put_member("error", parse_error.error);
+				error_array.put_element(-1, err);
+			}
+
+			error_root.put_member("errors", error_array);
+			return error_root;
+		}
+
 	public:
 
 		class parse_message
@@ -732,9 +753,13 @@ namespace corona
 			parse_errors.clear();
 			auto jo = std::make_shared<json_object>();
 			const char* start = _object.c_str();
-			parse_object(jo, start, &start);
-			json jn(jo);
-			return jn;
+			if (parse_object(jo, start, &start)) {
+				json jn(jo);
+				return jn;
+			}
+			else {
+				return get_errors();
+			}
 		}
 
 		json create_object()
@@ -755,6 +780,9 @@ namespace corona
 			if (parse_array(jo, start, &start)) {
 				json jn(jo);
 				return jn;
+			}
+			else {
+				return get_errors();
 			}
 		}
 
@@ -884,6 +912,67 @@ namespace corona
 			return result;
 		}
 
+		bool parse_boolean(double& _result, const char* _src, const char** _modified)
+		{
+			bool result = false;
+			_src = eat_white(_src);
+			if (isalpha(*_src))
+			{
+				std::string temp = "";
+				result = true;
+				while (isalnum(*_src) || *_src == '_')
+				{
+					check_line(_src);
+					temp += *_src;
+					_src++;
+				}
+				if (temp == "true") 
+				{
+					_result = 1.0;
+					result = true;
+				}
+				else if (temp == "false") 
+				{
+					_result = 0.0;
+					result = true;
+				}
+				else
+				{
+					result = false;
+				}
+				
+			}
+			*_modified = _src;
+			return result;
+		}
+
+		bool parse_null(const char* _src, const char** _modified)
+		{
+			bool result = false;
+			_src = eat_white(_src);
+			if (isalpha(*_src))
+			{
+				std::string temp = "";
+				result = true;
+				while (isalnum(*_src) || *_src == '_')
+				{
+					check_line(_src);
+					temp += *_src;
+					_src++;
+				}
+				if (temp == "null")
+				{
+					result = true;
+				}
+				else
+				{
+					result = false;
+				}
+			}
+			*_modified = _src;
+			return result;
+		}
+
 		bool parse_value(std::shared_ptr<json_value>& _value, const char* _src, const char** _modified)
 		{
 			std::shared_ptr<json_array> new_array_value;
@@ -892,32 +981,44 @@ namespace corona
 			double new_number_value;
 			bool result = true;
 
-			if (parse_string(new_string_value, _src, &_src))
+			const char* new_src = _src;
+
+			if (parse_string(new_string_value, _src, &new_src))
 			{
 				auto js = std::make_shared<json_string>();
 				js->value = new_string_value;
 				_value = js;
 			}
-			else if (parse_number(new_number_value, _src, &_src))
+			else if (parse_number(new_number_value, _src, &new_src))
 			{
 				auto js = std::make_shared<json_double>();
 				js->value = new_number_value;
 				_value = js;
 			}
-			else if (parse_array(new_array_value, _src, &_src))
+			else if (parse_array(new_array_value, _src, &new_src))
 			{
 				_value = new_array_value;
 			}
-			else if (parse_object(new_object_value, _src, &_src))
+			else if (parse_object(new_object_value, _src, &new_src))
 			{
 				_value = new_object_value;
+			}
+			else if (parse_null(_src, &new_src))
+			{
+				// don't put anything into it... it's null!
+			}
+			else if (parse_boolean(new_number_value, _src, &new_src))
+			{
+				auto js = std::make_shared<json_double>();
+				js->value = new_number_value;
+				_value = js;
 			}
 			else
 			{
 				result = false;
 				error("parse_value", "Invalid value.");
 			}
-			*_modified = _src;
+			*_modified = new_src;
 			return result;
 		}
 
@@ -957,6 +1058,7 @@ namespace corona
 					else 
 					{
 						error("parse_array", "Comma or end of array expected.");
+						return false;
 					}
 				}
 				_src++;
@@ -994,6 +1096,7 @@ namespace corona
 						else
 						{
 							error("parse_member_name", "Invalid member name.");
+							return false;
 						}
 					}
 					else if (parse_object_state == parse_object_states::parsing_colon)
@@ -1006,6 +1109,7 @@ namespace corona
 						else
 						{
 							error("parse_colon", std::format("Expected colon for  \"{0}\".", member_name));
+							return false;
 						}
 					}
 					else if (parse_object_state == parse_object_states::parsing_value)
@@ -1018,6 +1122,7 @@ namespace corona
 						else
 						{
 							error("parse_value", std::format("Invalid value for \"{0}\".", member_name));
+							return false;
 						}
 					}
 					else if (parse_object_state == parse_object_states::parsing_comma)
@@ -1029,6 +1134,7 @@ namespace corona
 						else
 						{
 							error("parse_value", std::format("Expected a comma\".", member_name));
+							return false;
 						}
 						parse_object_state = parse_object_states::parsing_name;
 					}
