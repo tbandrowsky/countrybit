@@ -46,8 +46,8 @@ namespace corona {
 			int64_t				bytes_added;
 		} header;
 
-		task<os_result> get_header_async();
-		task<os_result> put_header_async();
+		os_result get_header_async();
+		os_result put_header_async();
 
 	public:
 
@@ -68,30 +68,6 @@ namespace corona {
 		virtual corona_size_t size() const;
 		virtual relative_ptr_type top() const;
 		virtual corona_size_t free() const;
-
-		task<os_result> init_task(corona_size_t _length);
-		task<os_result> adjust_task(corona_size_t _length);
-		task<os_result> clear_task();
-		task<box_block*> reserve_task(corona_size_t _length);
-		task<box_block*> allocate_task(int64_t sizeofobj, int length);
-		task<box_block*> get_object_task(relative_ptr_type _length);
-		task<relative_ptr_type> create_object_task(char* _src, int _length);
-		task<relative_ptr_type> update_object_task(relative_ptr_type _destination, char* _src, int _length);
-		task<bool> delete_object_task(relative_ptr_type _location);
-		task<relative_ptr_type> copy_object_task(relative_ptr_type _location);
-		task<relative_ptr_type> commit_task();
-
-		sync<os_result> init_async(corona_size_t _length);
-		sync<os_result> adjust_async(corona_size_t _length);
-		sync<os_result> clear_async();
-		sync<box_block*> reserve_async(corona_size_t _length);
-		sync<box_block*> allocate_async(int64_t sizeofobj, int length);
-		sync<box_block*> get_object_async(relative_ptr_type _length);
-		sync<relative_ptr_type> create_object_async(char* _src, int _length);
-		sync<relative_ptr_type> update_object_async(relative_ptr_type _destination, char* _src, int _length);
-		sync<bool> delete_object_async(relative_ptr_type _location);
-		sync<relative_ptr_type> copy_object_async(relative_ptr_type _location);
-		sync<relative_ptr_type> commit_async();
 
 		virtual void init(corona_size_t _length);
 		virtual void adjust(corona_size_t _length);
@@ -200,7 +176,7 @@ namespace corona {
 	{
 	}
 
-	task<os_result> serialized_box_file_implementation::init_task(corona_size_t _length)
+	void serialized_box_file_implementation::init(corona_size_t _length)
 	{
 		os_result r;
 		try
@@ -215,34 +191,33 @@ namespace corona {
 			header.sbd._box_id = block_id::database_id();
 			header.sbd._size = size_bytes;
 			header.sbd._top = sizeof(header);
-			auto ret = co_await box_file.write(0, &header, sizeof(header));
+			file_result ret = box_file.write(0, &header, sizeof(header));
 			r = ret.last_result;
 		}
 		catch (std::exception e)
 		{
-			co_return r;
+			os_result rx;
 		}
-		co_return r;
 	}
 
-	task<os_result> serialized_box_file_implementation::clear_task()
+	void serialized_box_file_implementation::clear()
 	{
 		os_result r;
 		try
 		{
-			auto ret_read = co_await box_file.read(0, &header, sizeof(header));
+			file_result ret_read = box_file.read(0, &header, sizeof(header));
 			header.sbd._top = sizeof(header);
-			auto ret_write = co_await box_file.write(0, &header, sizeof(header));
+			file_result ret_write = box_file.write(0, &header, sizeof(header));
 			r = ret_write.last_result;
 		}
 		catch (std::exception e)
 		{
-			co_return r;
+			os_result rx;
 		}
-		co_return r;
+		return;
 	}
 
-	task<os_result> serialized_box_file_implementation::adjust_task(corona_size_t _length)
+	void serialized_box_file_implementation::adjust(corona_size_t _length)
 	{
 		os_result r;
 		try
@@ -255,18 +230,17 @@ namespace corona {
 				header.sbd._box_id = block_id::database_id();
 				header.sbd._size = size_bytes;
 				header.sbd._top = sizeof(header);
-				auto ret = co_await box_file.write(0, &header, sizeof(header));
+				file_result ret = box_file.write(0, &header, sizeof(header));
 				r = ret.last_result;
 			}
 		}
 		catch (std::exception e)
 		{
-			co_return r;
+			os_result rx;
 		}
-		co_return r;
 	}
 
-	task<box_block*> serialized_box_file_implementation::reserve_task(corona_size_t _length)
+	box_block*serialized_box_file_implementation::reserve(corona_size_t _length)
 	{
 		box_block* bb = nullptr;
 		try
@@ -274,7 +248,7 @@ namespace corona {
 			time_t current_time;
 			time(&current_time);
 
-			co_await box_file.read(0, &header, sizeof(header));
+			box_file.read(0, &header, sizeof(header));
 			int total_length = free() - _length;
 
 			if (total_length < 0)
@@ -310,25 +284,25 @@ namespace corona {
 			transaction.insert_or_assign(bb->location, bb);
 
 			header.sbd._top += _length;
-			auto ret = co_await box_file.write(0, &header, sizeof(header));
+			auto ret = box_file.write(0, &header, sizeof(header));
 		}
 		catch (std::exception e)
 		{
-			co_return bb;
+			return bb;
 		}
 
-		co_return bb;
+		return bb;
 	}
 
-	task<box_block*> serialized_box_file_implementation::allocate_task(int64_t sizeofobj, int length)
+	box_block* serialized_box_file_implementation::allocate(int64_t sizeofobj, int length)
 	{
 		box_block* atr;
 		relative_ptr_type l = sizeofobj * length;
-		atr = co_await reserve_task(l + sizeof(box_block));
-		co_return atr;
+		atr = reserve(l + sizeof(box_block));
+		return atr;
 	}
 
-	task<box_block*> serialized_box_file_implementation::get_object_task(relative_ptr_type location)
+	box_block* serialized_box_file_implementation::get_object(relative_ptr_type location)
 	{
 		box_block* bb = nullptr;
 		if (transaction.contains(location))
@@ -338,28 +312,28 @@ namespace corona {
 		else
 		{
 			box_block temp, * actual;
-			co_await box_file.read(location, &temp, sizeof(box_block));
+			box_file.read(location, &temp, sizeof(box_block));
 			actual = (box_block*)transaction_data->allocate<char>(temp.payload_length);
-			co_await box_file.read(location, actual, actual->allocated_length);
+			box_file.read(location, actual, actual->allocated_length);
 		}
-		co_return bb;
+		return bb;
 	}
 
-	task<relative_ptr_type> serialized_box_file_implementation::create_object_task(char* _src, int _length)
+	relative_ptr_type serialized_box_file_implementation::create_object(char* _src, int _length)
 	{
-		auto atr = co_await allocate_task(1, _length);
+		auto atr = allocate(1, _length);
 		if (atr != nullptr)
 		{
 			char* d = &atr->data[0];
 			if (_src != d) {
 				std::copy(_src, _src + _length, &atr->data[0]);
 			}
-			co_return atr->location;
+			return atr->location;
 		}
-		co_return null_row;
+		return null_row;
 	}
 
-	task<relative_ptr_type> serialized_box_file_implementation::update_object_task(relative_ptr_type _location, char* _src, int _length)
+	relative_ptr_type serialized_box_file_implementation::update_object(relative_ptr_type _location, char* _src, int _length)
 	{
 		relative_ptr_type r = null_row;
 		if (transaction.contains(_location))
@@ -368,29 +342,29 @@ namespace corona {
 		}
 		else
 		{
-			r = create_object_task(_src, _length);
+			r = create_object(_src, _length);
 		}
-		co_return r;
+		return r;
 	}
 
-	task<bool> serialized_box_file_implementation::delete_object_task(relative_ptr_type _location)
+	bool serialized_box_file_implementation::delete_object(relative_ptr_type _location)
 	{
-		auto block = co_await get_object_task(_location);
+		auto block = get_object(_location);
 		if (block) {
 			block->deleted = true;
 			memset(&block->data[0], 0, block->payload_length);
-			co_return block->deleted;
+			return block->deleted;
 		}
 		else
 		{
-			co_return false;
+			return false;
 		}
 	}
 
-	task<relative_ptr_type> serialized_box_file_implementation::copy_object_task(relative_ptr_type _location)
+	relative_ptr_type serialized_box_file_implementation::copy_object(relative_ptr_type _location)
 	{
 		relative_ptr_type new_location = null_row;
-		auto block = co_await get_object_task(_location);
+		auto block = get_object(_location);
 		if (block) {
 			auto new_block = allocate(1, block->payload_length);
 			char* s = &block->data[0];
@@ -398,129 +372,19 @@ namespace corona {
 			std::copy(s, s + block->payload_length, d);
 			new_location = new_block->location;
 		}
-		co_return new_location;
+		return new_location;
 	}
 
-	task<relative_ptr_type> serialized_box_file_implementation::commit_task()
+	relative_ptr_type serialized_box_file_implementation::commit()
 	{
 		relative_ptr_type count_bytes = 0;
 		for (auto trans : transaction)
 		{
 			auto io = trans.second;
-			co_await box_file.write(io->location, io, io->allocated_length);
+			box_file.write(io->location, io, io->allocated_length);
 			count_bytes += io->allocated_length;
 		}
-		co_return count_bytes;
-	}
-
-	sync<os_result> serialized_box_file_implementation::init_async(corona_size_t _length)
-	{
-		co_return init_task(_length);
-	}
-
-	sync<os_result> serialized_box_file_implementation::adjust_async(corona_size_t _length)
-	{
-		co_return adjust_task(_length);
-	}
-
-	sync<os_result> serialized_box_file_implementation::clear_async()
-	{
-		co_return clear_task();
-	}
-
-	sync<box_block*> serialized_box_file_implementation::reserve_async(corona_size_t _length)
-	{
-		co_return reserve_task(_length);
-	}
-
-	sync<box_block*> serialized_box_file_implementation::allocate_async(int64_t sizeofobj, int length)
-	{
-		co_return allocate_task(sizeofobj, length);
-	}
-
-	sync<box_block*> serialized_box_file_implementation::get_object_async(relative_ptr_type _position)
-	{
-		co_return get_object_task(_position);
-	}
-
-	sync<relative_ptr_type> serialized_box_file_implementation::create_object_async(char* _src, int _length)
-	{
-		co_return create_object_task(_src, _length);
-	}
-
-	sync<relative_ptr_type> serialized_box_file_implementation::update_object_async(relative_ptr_type _destination, char* _src, int _length)
-	{
-		co_return update_object_task(_destination, _src, _length);
-	}
-
-	sync<bool> serialized_box_file_implementation::delete_object_async(relative_ptr_type _location)
-	{
-		co_return delete_object_task(_location);
-	}
-
-	sync<relative_ptr_type> serialized_box_file_implementation::copy_object_async(relative_ptr_type _location)
-	{
-		co_return copy_object_task(_location);
-	}
-
-	sync<relative_ptr_type> serialized_box_file_implementation::commit_async()
-	{
-		co_return commit_task();
-	}
-
-	void serialized_box_file_implementation::init(corona_size_t _length)
-	{
-		init_async(_length);
-	}
-
-	void serialized_box_file_implementation::adjust(corona_size_t _length)
-	{
-		adjust_async(_length);
-	}
-
-	void serialized_box_file_implementation::clear()
-	{
-		clear_async();
-	}
-
-	box_block* serialized_box_file_implementation::reserve(corona_size_t length)
-	{
-		return reserve_async(length);
-	}
-
-	box_block* serialized_box_file_implementation::allocate(int64_t sizeofobj, int length)
-	{
-		return allocate_async(sizeofobj, length);
-	}
-
-	box_block* serialized_box_file_implementation::get_object(relative_ptr_type _src)
-	{
-		return get_object_async(_src);
-	}
-
-	relative_ptr_type serialized_box_file_implementation::create_object(char* _src, int _length)
-	{
-		return create_object_async(_src, _length);
-	}
-
-	relative_ptr_type serialized_box_file_implementation::update_object(relative_ptr_type _rp, char* _src, int _length)
-	{
-		return update_object_async(_rp, _src, _length);
-	}
-
-	bool serialized_box_file_implementation::delete_object(relative_ptr_type _location)
-	{
-		return delete_object_async(_location);
-	}
-
-	relative_ptr_type serialized_box_file_implementation::copy_object(relative_ptr_type _location)
-	{
-		return copy_object_async(_location);
-	}
-
-	relative_ptr_type serialized_box_file_implementation::commit()
-	{
-		return commit_async();
+		return count_bytes;
 	}
 
 	corona_size_t serialized_box_file_implementation::size() const

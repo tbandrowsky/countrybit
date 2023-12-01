@@ -251,8 +251,8 @@ namespace corona {
 		jdatabase(application* _application);
 		~jdatabase();
 
-		task<db_response> open(open_db_request _open);
-		task<db_response> create(create_db_request _create);
+		db_response open(open_db_request _open);
+		db_response create(create_db_request _create);
 
 		field_response put_string_field(put_string_field_request request);
 		field_response put_time_field(put_time_field_request request);
@@ -290,7 +290,7 @@ namespace corona {
 		return output;
 	}
 
-	task<db_response> jdatabase::open(open_db_request _open)
+	db_response jdatabase::open(open_db_request _open)
 	{
 		int success = 1;
 		database_box->open(current_application, _open.filename);
@@ -298,10 +298,10 @@ namespace corona {
 		collections_by_id = collections_by_id_type::get_sorted_index(database_box, map->collections_by_id_location);
 		db_response jfr;
 		jfr.success = true;
-		co_return jfr;
+		return jfr;
 	}
 
-	task<db_response> jdatabase::create(create_db_request _create)
+	db_response jdatabase::create(create_db_request _create)
 	{
 		os_result last_err;
 
@@ -327,7 +327,7 @@ namespace corona {
 
 		db_response jfr;
 		jfr.success = true;
-		co_return jfr;
+		return jfr;
 	}
 
 	collection_response jdatabase::create_collection(create_collection_request _create_collection)

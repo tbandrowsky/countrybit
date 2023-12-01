@@ -308,13 +308,8 @@ namespace corona
             return header;
         }
 
-        bool run(std::shared_ptr<http_params> params)
+        bool run(http_params& params)
         {
-            if (!params)
-            {
-                return false;
-            }
-
             std::cout << ::GetCurrentThreadId() << " http request thread" << std::endl;
 
             wchar_converter converter;
@@ -330,17 +325,17 @@ namespace corona
             url_builder builder;
 
             const wchar_t* wuser_agent = converter.to_wchar_t("Corona 1.0.0");
-            const wchar_t* whost = converter.to_wchar_t(params->request.host.c_str());
-            const wchar_t* wpath = converter.to_wchar_t(params->request.path.c_str());
-            const wchar_t* wmethod = converter.to_wchar_t(params->request.http_method.c_str());
-            const wchar_t* wheaders = converter.to_wchar_t(params->request.headers.c_str());
+            const wchar_t* whost = converter.to_wchar_t(params.request.host.c_str());
+            const wchar_t* wpath = converter.to_wchar_t(params.request.path.c_str());
+            const wchar_t* wmethod = converter.to_wchar_t(params.request.http_method.c_str());
+            const wchar_t* wheaders = converter.to_wchar_t(params.request.headers.c_str());
 
             std::vector<LPCWSTR> allowed_types;
             LPCWSTR* allowed_types_lies = nullptr;
 
-            auto body_length = params->request.body.get_size();
+            auto body_length = params.request.body.get_size();
 
-            for (auto ati : params->request.allowed_types)
+            for (auto ati : params.request.allowed_types)
             {
                 LPCWSTR wallowed_types = converter.to_wchar_t(ati.c_str());
                 allowed_types.push_back(wallowed_types);
@@ -364,7 +359,7 @@ namespace corona
             // Specify an HTTP server.
             if (hSession)
                 hConnect = WinHttpConnect(hSession, whost,
-                    params->request.port, 0);
+                    params.request.port, 0);
 
             // Create an HTTP request handle.
             if (hConnect)
@@ -380,7 +375,7 @@ namespace corona
 
             // Send a request.
             if (hRequest) {
-                auto body_buffer = params->request.body.get_ptr();
+                auto body_buffer = params.request.body.get_ptr();
                 bResults = WinHttpSendRequest(hRequest,
                     wheaders,
                     -1,
@@ -395,8 +390,8 @@ namespace corona
 
             // Check the headers
 
-            params->response.content_type = get_header(hRequest, WINHTTP_QUERY_CONTENT_TYPE);
-            params->response.content_length = get_header(hRequest, WINHTTP_QUERY_CONTENT_LENGTH);
+            params.response.content_type = get_header(hRequest, WINHTTP_QUERY_CONTENT_TYPE);
+            params.response.content_length = get_header(hRequest, WINHTTP_QUERY_CONTENT_LENGTH);
 
             // Keep checking for data until there is nothing left.
             if (bResults)
@@ -407,7 +402,7 @@ namespace corona
                     dwSize = 0;
                     if (!WinHttpQueryDataAvailable(hRequest, &dwSize))
                     {
-                        params->response.system_result = os_result();
+                        params.response.system_result = os_result();
                     }
 
                     if (dwSize) {
@@ -415,8 +410,8 @@ namespace corona
                         char* buf = ba.append(dwSize);
                         if (!buf)
                         {
-                            params->response.system_result.success = false;
-                            params->response.system_result.message = "Out of memory";
+                            params.response.system_result.success = false;
+                            params.response.system_result.message = "Out of memory";
                             dwSize = 0;
                         }
                         else
@@ -426,14 +421,14 @@ namespace corona
 
                             if (!WinHttpReadData(hRequest, buf, dwSize, &dwDownloaded))
                             {
-                                params->response.system_result = os_result();
+                                params.response.system_result = os_result();
                                 dwSize = 0;
                             }
                         }
                     }
                 } while (dwSize > 0);
 
-                params->response.response_body = ba.consolidate();
+                params.response.response_body = ba.consolidate();
 
             }
 
@@ -447,22 +442,18 @@ namespace corona
 
 	public:
 
-        auto get(
+        http_params get(
             const char *_host, 
             int _port,
             const char *_url, 
             json _params,
             const char* _headers = nullptr)
 		{
-            task<http_params> reader;
+            http_params params;
 
-            reader.runner = [this](std::shared_ptr<http_params>_params) {
-                return run(_params);
-                };
-            reader.params = std::make_shared<http_params>();
-            reader.params->request.host = _host;
-            reader.params->request.http_method = "GET";
-            reader.params->request.port = _port;
+            params.request.host = _host;
+            params.request.http_method = "GET";
+            params.request.port = _port;
 
             url_builder ub;
             ub.path(_url);
@@ -473,62 +464,61 @@ namespace corona
                 ub.value(ky.second->to_string());
             }
             buffer url_buffer = ub.get_string();
-            reader.params->request.path = url_buffer.get_ptr();
-            reader.params->request.allowed_types = {
+            params.request.path = url_buffer.get_ptr();
+            params.request.allowed_types = {
                 "application/json",
                 "text/plain"
             };
             if (_headers)
-                reader.params->request.headers = _headers;
-            return reader;
+                params.request.headers = _headers;
+
+            run(params);
+
+            return params;
 		}
 
-		auto get(const char* _host, int _port, const char* _url, const char *_headers = nullptr)
+        http_params get(const char* _host, int _port, const char* _url, const char *_headers = nullptr)
 		{
-            task<http_params> reader;
+            http_params params;
 
-            reader.runner = [this](std::shared_ptr<http_params>_params) {
-                return run(_params);
-                };
+            params.request.host = _host;
+            params.request.http_method = "GET";
+            params.request.path = _url;
+            params.request.port = _port;
 
-            reader.params = std::make_unique<http_params>();
-            reader.params->request.host = _host;
-            reader.params->request.http_method = "GET";
-            reader.params->request.path = _url;
-            reader.params->request.port = _port;
-
-            reader.params->request.allowed_types = {
+            params.request.allowed_types = {
                 "application/json",
                 "text/plain"
             };
             if (_headers)
-                reader.params->request.headers = _headers;
-            return reader;
+                params.request.headers = _headers;
+
+            run(params);
+
+            return params;
         }
 
-		auto post(const char* _host, int _port, const char* _url, json _body, const char* _headers = nullptr)
+		http_params post(const char* _host, int _port, const char* _url, json _body, const char* _headers = nullptr)
 		{
-            task<http_params> reader;
-            reader.runner = [this](std::shared_ptr<http_params>_params) {
-                return run(_params);
-                };
+            http_params params;
 
-            reader.params = std::make_unique<http_params>();
-            reader.params->request.host = _host;
-            reader.params->request.http_method = "POST";
-            reader.params->request.port = _port;
+            params.request.host = _host;
+            params.request.http_method = "POST";
+            params.request.port = _port;
 
-            reader.params->request.path = _url;
-            reader.params->request.headers = "Content-Type: application/json\r\n";
-            reader.params->request.allowed_types = {
+            params.request.path = _url;
+            params.request.headers = "Content-Type: application/json\r\n";
+            params.request.allowed_types = {
                 "application/json",
                 "text/plain"
             };
             std::string body_string = _body.to_json();
-            reader.params->request.body = buffer(body_string.c_str());
+            params.request.body = buffer(body_string.c_str());
             if (_headers)
-                reader.params->request.headers = _headers;
-            return reader;
+                params.request.headers = _headers;
+
+            run(params);
+            return params;
         }
 	};
 }

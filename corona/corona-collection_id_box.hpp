@@ -1,10 +1,10 @@
 #ifndef CORONA_COLLECTION_ID_H
 #define CORONA_COLLECTION_ID_H
 
-#include "corona-constants.hpp";
-#include "corona-store_box.hpp";
-#include "corona-jfield.hpp";
-#include "corona-jobject.hpp";
+#include "corona-constants.hpp"
+#include "corona-store_box.hpp"
+#include "corona-jfield.hpp"
+#include "corona-jobject.hpp"
 
 #include <tuple>
 #include <compare>

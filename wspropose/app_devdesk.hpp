@@ -126,7 +126,7 @@ namespace corona
 			// whenever we get a data set with this key, this stuff gets invoked.
 			// and this all happens on background threads.
 			app_data->put_data_set("calico", button_name,
-				[calico_svc, application, app_data, class_name, object_id](json _params, data_set* _set) -> sync<int>
+				[calico_svc, application, app_data, class_name, object_id](json _params, data_set* _set) -> int
 				{
 					// get our login credentials from the data set.
 					json credentials = app_data->get("login");
@@ -137,10 +137,10 @@ namespace corona
 					object_select_request.put_member("objectId", object_id);
 
 					// call our application
-					int temp = co_await calico_svc->select_object(object_select_request, credentials, _set->data);
+					int temp = calico_svc->select_object(object_select_request, credentials, _set->data);
 
 					// and, while we are it now, we can update our actor options, to show our created object
-					co_return temp;
+					return temp;
 				},
 				[app_data](json _params, data_set* _set) -> int {
 					// when back on the ui thread, kick off our refresh, which is to just call actor options again
@@ -177,7 +177,7 @@ namespace corona
 			// and this all happens on background threads.
 
 			app_data->put_data_set("calico", button_name,
-				[calico_svc, application, app_data, class_name](json _params, data_set* _set) -> sync<int>
+				[calico_svc, application, app_data, class_name](json _params, data_set* _set) -> int
 				{
 					// get our login credentials from the data set.
 					json credentials = app_data->get("login");
@@ -188,10 +188,10 @@ namespace corona
 					new_object_request.put_member("className", class_name);
 
 					// call our application
-					int temp = co_await calico_svc->create_object(new_object_request, credentials, _set->data);
+					int temp = calico_svc->create_object(new_object_request, credentials, _set->data);
 
 					// and, while we are it now, we can update our actor options, to show our created object
-					co_return temp;
+					return temp;
 				},
 				[app_data](json _params, data_set* _set) -> int {
 					// when back on the ui thread, kick off our refresh
@@ -311,7 +311,7 @@ namespace corona
 		factory->refresh();
 
 		std::shared_ptr<directApplicationWin32> application = std::make_shared<directApplicationWin32>(factory);
-		std::shared_ptr<calico_client> calico_svc = std::make_shared<calico_client>();
+		std::shared_ptr<calico_client> calico_svc = std::make_shared<calico_client>("localhost", 7277);
 		std::shared_ptr<data_plane> app_data = std::make_shared<data_plane>();
 		std::shared_ptr<presentation> application_presentation = std::make_shared<presentation>(application);
 		std::shared_ptr<menu_item> app_menu = std::make_shared<menu_item>();
@@ -324,11 +324,11 @@ namespace corona
 		app_data->put_data_source("calico", "calico service", "assets\\images\\calico.png");
 
 		app_data->put_data_set("calico", "actoroptions",
-			[calico_svc, application, app_data](json _params, data_set* _set) -> sync<int>
+			[calico_svc, application, app_data](json _params, data_set* _set) -> int
 			{
 				json credentials = app_data->get("login");
-				int temp = co_await calico_svc->get_actor_options(credentials, _set->data);
-				co_return temp;
+				int temp = calico_svc->get_actor_options(credentials, _set->data);
+				return temp;
 			},
 			[calico_svc, application, application_presentation, app_data, app_menu, st](json _params, data_set* _set) -> int {
 				// when logged in, do something;				
@@ -342,16 +342,16 @@ namespace corona
 			0);
 
 		app_data->put_data_set("calico", "login", 
-			[calico_svc, application, app_data](json _params, data_set* _set) -> sync<int> 
+			[calico_svc, application, app_data](json _params, data_set* _set) -> int
 				{
 					json classes_json;
 					json fields_json;
-					int temp = co_await calico_svc->login("devdesk", application->getUserName(), _set->data);
-					temp = co_await calico_svc->get_classes(_set->data, classes_json);
-					temp = co_await calico_svc->get_fields(_set->data, fields_json);
+					int temp = calico_svc->login("devdesk", application->getUserName(), _set->data);
+					temp = calico_svc->get_classes(_set->data, classes_json);
+					temp = calico_svc->get_fields(_set->data, fields_json);
 					app_data->put_data_set("calico", "classes", classes_json);
 					app_data->put_data_set("calico", "fields", fields_json);
-					co_return temp;
+					return temp;
 				}, 
 				[calico_svc, application, application_presentation](json _params, data_set* _set) {
 					// when logged in, do something;

@@ -5,6 +5,7 @@
 #include "corona-function.hpp"
 #include "corona-json.hpp"
 #include "corona-httpclient.hpp"
+#include "corona-presentation.hpp"
 
 namespace corona
 {
@@ -19,7 +20,7 @@ namespace corona
 	class data_plane;
 	class data_set;
 
-	using json_method = std::function<sync<int>(json _params, data_set *_set)>;
+	using json_method = std::function<int(json _params, data_set *_set)>;
 	using gui_method = std::function<int(json _params, data_set* _set)>;
 
 	class data_set
@@ -34,96 +35,113 @@ namespace corona
 		gui_method						share;
 		std::shared_ptr<data_source>	source;
 
-		ui_task get(json _params)
+		void run_share()
 		{
-			ui_task uit;
-			parameters = _params;
-
-			uit.configure(
-				_params,
-				[this](json _data) {
-					time_t current_time;
-					time(&current_time);
-					time_t seconds = current_time - last_refresh;
-
-					if (seconds >= cache_seconds) {
-						last_refresh = current_time;
-						fetch(_data, this);
-					}
-				},
-				[this](json _data) {
-					share(_data, this);
-				}
-			);
-
-			return uit;
+			share(data, this);
 		}
 
-		ui_task get()
+		void queue_share()
 		{
-			ui_task uit;
+			threadomatic::run_complete([]() {}, [this]() { run_share(); });
+		}
 
-			uit.configure(
-				parameters,
-				[this](json _data) {
-					time_t current_time;
-					time(&current_time);
-					time_t seconds = current_time - last_refresh;
+		int get(json _params)
+		{
+			parameters = _params;
 
-					if (seconds >= cache_seconds) {
-						last_refresh = current_time;
-						fetch(_data, this);
-					}
-				},
-				[this](json _data) {
-					share(_data, this);
-				}
-			);
+			time_t current_time;
+			time(&current_time);
+			time_t seconds = current_time - last_refresh;
 
-			return uit;
+			if (seconds >= cache_seconds) {
+				last_refresh = current_time;
+				fetch(_params, this);
+			}
+
+			share(_params, this);
+		}
+
+		void get()
+		{
+			time_t current_time;
+			time(&current_time);
+			time_t seconds = current_time - last_refresh;
+
+			if (seconds >= cache_seconds) {
+				last_refresh = current_time;
+				fetch(data, this);
+			}
+
+			share(data, this);
 		}
 
 	};
 
 	class data_plane
 	{
-	public:
-		std::map<std::string, data_set> data_sets;
+
+		lockable set_lock;
+		lockable control_lock;
+
+		std::map<std::string, std::shared_ptr<data_set>> data_sets;
 		std::map<std::string, std::shared_ptr<data_source>> data_sources;
 		std::map<std::string, int> control_ids;
 		std::map<std::string, control_json_mapper> class_control_map;
 
+	public:
+
 		int get_control_id(std::string _name, std::function<int()> _id)
 		{
+			int temp = 0;
+			scope_lock lockit(set_lock);
+
 			if (!control_ids.contains(_name)) {
 				control_ids.insert_or_assign(_name, _id());
 			}
 			return control_ids[_name];
 		}
 
-		sync<json> get(std::string _name)
+		std::shared_ptr<data_set> get_data_set(std::string _name)
+		{
+			scope_lock locker(set_lock);
+
+			std::shared_ptr<data_set> sp;
+			if (data_sets.contains(_name)) {
+				sp = data_sets[_name];
+			}
+			return sp;
+		}
+
+		json get(std::string _name)
 		{
 			json set;
-			if (data_sets.contains(_name)) {
-				auto& ds = data_sets[_name];
-				co_await ds.get();
-				set = ds.data;
+
+			std::shared_ptr<data_set> dsp = get_data_set(_name);
+
+			if (dsp) {
+				dsp->get();
+				set = dsp->data;
 			}
-			co_return set;
+			return set;
 		}
 
 		control_json_mapper get_class_control_factory(std::string class_name)
 		{
+			scope_lock locker(control_lock);
+
 			control_json_mapper cjm;
 
 			if (class_control_map.contains(class_name)) {
 				cjm = class_control_map[class_name];
 			}
+
 			return cjm;
 		}
 
 		void put_class_control_factory(std::string class_name, control_json_mapper mapper)
 		{
+			scope_lock locker(control_lock);
+
 			class_control_map.insert_or_assign(class_name, mapper);
 		}
 
@@ -134,6 +152,7 @@ namespace corona
 		)
 		{
 			std::shared_ptr<data_source> source;
+
 			if (data_sources.contains(_name)) {
 				source = data_sources[_name];
 			}
@@ -141,6 +160,7 @@ namespace corona
 			{
 				source = std::make_shared<data_source>();
 			}
+
 			source->name = _name;
 			source->description = _description;
 			source->icon_path = _icon_path;
@@ -155,15 +175,18 @@ namespace corona
 			int _cache_seconds
 			)
 		{
+			scope_lock locker(set_lock);
+
 			if (!data_sources.contains(_source_name)) {
 				throw std::invalid_argument("Invalid source name for dataset");
 			}
-			data_set ds;
-			ds.source = data_sources[_source_name];
-			ds.cache_seconds = _cache_seconds;
-			ds.fetch = _fetch;
-			ds.share = _gui;
-			ds.name = _set_name;
+
+			auto ds = std::make_shared<data_set>();
+			ds->source = data_sources[_source_name];
+			ds->cache_seconds = _cache_seconds;
+			ds->fetch = _fetch;
+			ds->share = _gui;
+			ds->name = _set_name;
 			data_sets.insert_or_assign(_set_name, ds);
 		}
 
@@ -173,48 +196,29 @@ namespace corona
 			json _data
 		)
 		{
+			scope_lock locker(set_lock);
 
 			if (!data_sources.contains(_source_name)) {
 				throw std::invalid_argument("Invalid source name for dataset");
 			}
 
-			data_set ds;
-			ds.source = data_sources[_source_name];
-			ds.cache_seconds = 3600;
-			ds.data = _data;
+			auto ds = std::make_shared<data_set>();
+			ds->source = data_sources[_source_name];
+			ds->cache_seconds = 3600;
+			ds->data = _data;
 
-			using json_method = std::function<sync<int>(json _params, data_set* _set)>;
-			using gui_method = std::function<int(json _params, data_set* _set)>;
-
-			ds.fetch = [](json _params, data_set* _set)->sync<int> {				
-				co_return 0;
+			ds->fetch = [](json _params, data_set* _set)->int {
+				return 0;
 				};
 
-			ds.share = [](json _params, data_set* _set)->int {
+			ds->share = [](json _params, data_set* _set)->int {
 				return 0;
 			};
 
-			ds.name = _set_name;
+			ds->name = _set_name;
 			data_sets.insert_or_assign(_set_name, ds);
 		}
 
-		sync<int> query(json sets)
-		{
-			int count = 0;
-			for (int i = 0; i < sets.size(); i++)
-			{
-				auto set = sets[i];
-				std::string setName = set["set"];
-				json params = set["param"];
-				if (data_sets.contains(setName)) {
-					auto& ds = data_sets[setName];
-					json result = co_await ds.get(params);
-					set.put_member("result", result );
-					count++;
-				}
-			}
-			co_return count;
-		}
 	};
 }
 

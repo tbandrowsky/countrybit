@@ -281,15 +281,21 @@ namespace corona
 
 		json get_member(std::string _key) const
 		{
-			json jn;
-			if (jn->members.contains(_key)) {
-				jn = json(object_impl->members[_key]);
+			json jn, jx;
+
+			if (!object_impl) {
+				throw std::logic_error("Not an object");
 			}
+
+			jn = json(object_impl->members[_key]);
 			return jn;
 		}
 
 		int get_member_int(std::string _key) const
 		{
+			if (!object_impl) {
+				throw std::logic_error("Not an object");
+			}
 			json jn(object_impl->members[_key]);
 			double jnd = (double)jn;
 			return jnd;
@@ -297,6 +303,9 @@ namespace corona
 
 		json copy_member(std::string _key, json& _source)
 		{
+			if (!object_impl) {
+				throw std::logic_error("Not an object");
+			}
 			json member = _source.get_member(_key);
 			put_member(_key, member);
 			return *this;
@@ -304,6 +313,9 @@ namespace corona
 
 		json put_member(std::string _key, json& _member)
 		{
+			if (!object_impl) {
+				throw std::logic_error("Not an object");
+			}
 			if (_member.is_array()) {
 				put_member_array(_key, _member);
 			}
@@ -323,6 +335,9 @@ namespace corona
 
 		json put_member(std::string _key, std::string _value)
 		{
+			if (!object_impl) {
+				throw std::logic_error("Not an object");
+			}
 			auto new_member = std::make_shared<json_string>();
 			new_member->value = _value;
 			object_impl->members[_key] = new_member;
@@ -331,6 +346,9 @@ namespace corona
 
 		json put_member(std::string _key, double _value)
 		{
+			if (!object_impl) {
+				throw std::logic_error("Not an object");
+			}
 			auto new_member = std::make_shared<json_double>();
 			new_member->value = _value;
 			object_impl->members[_key] = new_member;
@@ -339,6 +357,9 @@ namespace corona
 
 		json put_member_array(std::string _key)
 		{
+			if (!object_impl) {
+				throw std::logic_error("Not an object");
+			}
 			auto new_member = std::make_shared<json_array>();
 			object_impl->members[_key] = new_member;
 			return *this;
@@ -346,6 +367,9 @@ namespace corona
 
 		json put_member_object(std::string _key)
 		{
+			if (!object_impl) {
+				throw std::logic_error("Not an object");
+			}
 			auto new_member = std::make_shared<json_object>();
 			object_impl->members[_key] = new_member;
 			return *this;
@@ -353,6 +377,9 @@ namespace corona
 
 		json put_member_array(std::string _key, json& _array)
 		{
+			if (!object_impl) {
+				throw std::logic_error("Not an object");
+			}
 			std::shared_ptr<json_array> existing_array = _array;
 			auto new_array = existing_array->clone();
 			object_impl->members[_key] = new_array;
@@ -361,6 +388,9 @@ namespace corona
 
 		json put_member_object(std::string _key, json& _object)
 		{
+			if (!object_impl) {
+				throw std::logic_error("Not an object");
+			}
 			std::shared_ptr<json_object> existing_object = _object;
 			auto new_object = existing_object->clone();
 			object_impl->members[_key] = new_object;
@@ -369,11 +399,18 @@ namespace corona
 
 		std::map<std::string, std::shared_ptr<json_value>> get_members()
 		{
+			if (!object_impl) {
+				throw std::logic_error("Not an object");
+			}
 			return object_impl->members;
 		}
 
 		json put_element(int _index, json &_element)
 		{
+			if (!array_impl) {
+				throw std::logic_error("Not an array");
+			}
+
 			if (_element.is_array()) {
 				put_element_array(_index, _element);
 			}
@@ -393,6 +430,9 @@ namespace corona
 
 		json put_element(int _index, std::string _value)
 		{
+			if (!array_impl) {
+				throw std::logic_error("Not an array");
+			}
 			auto new_member = std::make_shared<json_string>();
 			new_member->value = _value;
 
@@ -407,6 +447,9 @@ namespace corona
 
 		json put_element(int _index, double _value)
 		{
+			if (!array_impl) {
+				throw std::logic_error("Not an array");
+			}
 			auto new_member = std::make_shared<json_double>();
 			new_member->value = _value;
 			if (_index < 0 || _index >= array_impl->elements.size()) {
@@ -420,6 +463,9 @@ namespace corona
 
 		json put_element_array(int _index)
 		{
+			if (!array_impl) {
+				throw std::logic_error("Not an array");
+			}
 			auto new_member = std::make_shared<json_array>();
 			if (_index < 0 || _index >= array_impl->elements.size()) {
 				array_impl->elements.push_back(new_member);
@@ -432,6 +478,9 @@ namespace corona
 
 		json put_element_object(int _index)
 		{
+			if (!array_impl) {
+				throw std::logic_error("Not an array");
+			}
 			auto new_member = std::make_shared<json_object>();
 			if (_index < 0 || _index >= array_impl->elements.size()) {
 				array_impl->elements.push_back(new_member);
@@ -444,6 +493,9 @@ namespace corona
 
 		json put_element_array(int _index, json& _array)
 		{
+			if (!array_impl) {
+				throw std::logic_error("Not an array");
+			}
 			std::shared_ptr<json_array> existing_array = _array;
 			auto new_array = existing_array->clone();
 
@@ -460,6 +512,9 @@ namespace corona
 
 		json put_element_object(int _index, json& _object)
 		{
+			if (!array_impl) {
+				throw std::logic_error("Not an array");
+			}
 			std::shared_ptr<json_object> existing_object = _object;
 			auto new_object = existing_object->clone();
 
@@ -475,6 +530,9 @@ namespace corona
 
 		json for_each(std::function<void(json& _item)> _transform)
 		{
+			if (!array_impl) {
+				throw std::logic_error("Not an array");
+			}
 			for (int i = 0; i < size(); i++)
 			{
 				auto element = get_element(i);
@@ -485,6 +543,9 @@ namespace corona
 
 		json filter(std::function<bool(json& _item)> _where_clause)
 		{
+			if (!array_impl) {
+				throw std::logic_error("Not an array");
+			}
 			json new_array( std::make_shared<json_array>() );
 			for (int i = 0; i < size(); i++)
 			{
@@ -499,6 +560,9 @@ namespace corona
 
 		json map(std::function<json(json& _item)> _transform)
 		{
+			if (!array_impl) {
+				throw std::logic_error("Not an array");
+			}
 			json new_array(std::make_shared<json_array>());
 			for (int i = 0; i < size(); i++)
 			{
@@ -511,6 +575,9 @@ namespace corona
 
 		json update(std::function<json&(json& _item)> _transform)
 		{
+			if (!array_impl) {
+				throw std::logic_error("Not an array");
+			}
 			for (int i = 0; i < size(); i++)
 			{
 				auto element = get_element(i);
@@ -525,6 +592,9 @@ namespace corona
 			std::function<json(json& _item1, json& _item2)> _compose
 			)
 		{
+			if (!array_impl) {
+				throw std::logic_error("Not an array");
+			}
 			json new_array(std::make_shared<json_array>());
 
 			for (int i = 0; i < size(); i++)
@@ -548,6 +618,9 @@ namespace corona
 			std::function<json(json& _item1, json& _item2)> _compose
 		)
 		{
+			if (!array_impl) {
+				throw std::logic_error("Not an array");
+			}
 
 			int i, j;
 
@@ -606,6 +679,9 @@ namespace corona
 
 		json group(std::function<std::string(json& _item)> _get_group)
 		{
+			if (!array_impl) {
+				throw std::logic_error("Not an array");
+			}
 			json new_object(std::make_shared<json_object>());
 
 			for (int i = 0; i < size(); i++)

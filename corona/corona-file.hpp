@@ -201,10 +201,9 @@ namespace corona
 			instance.buffer_bytes = (char*)_buffer;
 			instance.buffer_size = _buffer_length;
 
-			async_io_task<file_result> aw;
 			async_io_job<file_result>* aij = new async_io_job<file_result>();
 
-			aw.configure(instance.queue, instance, [aij](HANDLE hevent, file_result* params) {
+			threadomatic::run_io<file_result>(instance.queue, instance, [aij](HANDLE hevent, file_result* params) -> bool {
 				LARGE_INTEGER li;
 				li.QuadPart = params->location;
 				aij->container.ovp.Offset = li.LowPart;
@@ -213,8 +212,9 @@ namespace corona
 				os_result result;
 				std::cout << "Write:" << success << " " << result.message << std::endl;
 				return result.error_code == ERROR_IO_PENDING || result.error_code == ERROR_SUCCESS;
-			});
-			return aw;
+				});
+
+			return instance;
 		}
 
 		auto read(uint64_t location, void* _buffer, int _buffer_length)
@@ -225,7 +225,7 @@ namespace corona
 			instance.location = location;
 			instance.buffer_bytes = (char*)_buffer;
 			instance.buffer_size = _buffer_length;
-			aw.configure(instance.queue, instance, [aij](HANDLE hevent, file_result* params) {
+			threadomatic::run_io<file_result>(instance.queue, instance, [aij](HANDLE hevent, file_result* params) -> bool {
 				LARGE_INTEGER li;
 				li.QuadPart = params->location;
 				aij->container.ovp.Offset = li.LowPart;
@@ -235,7 +235,8 @@ namespace corona
 				std::cout << "Read:" << success << " " << result.message << std::endl;
 				return result.error_code == ERROR_IO_PENDING || result.error_code == ERROR_SUCCESS;
 				});
-			return aw;
+
+			return instance;
 		}
 
 		uint64_t size()

@@ -2040,14 +2040,14 @@ namespace corona
 		if (_msg->message == WM_CORONA_JOB_COMPLETE)
 		{
 			result = (ui_task_result *)_msg->lParam;
-			result->on_gui(result->parameters);
+			result->on_gui();
 			delete result;
 			handled = true;
 		}
 		else if (_msg->message == WM_CORONA_TASK_COMPLETE)
 		{
 			result = (ui_task_result*)_msg->lParam;
-			result->on_gui(result->parameters);
+			result->on_gui();
 			delete result;
 			handled = true;
 		}

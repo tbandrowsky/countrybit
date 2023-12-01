@@ -71,6 +71,20 @@ namespace corona {
 		friend class job_queue;
 	};
 
+	using runnable = std::function<void()>;
+
+	class general_job : public job
+	{
+	public:
+		runnable function_to_run;
+		job_container container;
+		general_job();
+		general_job(runnable _runnable);
+		virtual ~general_job();
+		virtual job_notify execute(job_queue* _callingQueue, DWORD _bytesTransferred, BOOL _success);
+		friend class job_queue;
+	};
+
 	class finish_job : public job {
 
 	public:
@@ -259,6 +273,36 @@ namespace corona {
 		return jobNotify;
 	}
 
+	// -------------------------------------------------------------------------------
+
+	general_job::general_job()
+	{
+		;
+	}
+
+	general_job::general_job(runnable _runnable)
+	{
+		;
+	}
+
+	general_job::~general_job()
+	{
+		;
+	}
+
+	job_notify general_job::execute(job_queue* _callingQueue, DWORD _bytesTransferred, BOOL _success)
+	{
+		job_notify jobNotify;
+
+		if (function_to_run)
+		{
+			function_to_run();
+		}
+
+		jobNotify.shouldDelete = true;
+
+		return jobNotify;
+	}
 
 	// -------------------------------------------------------------------------------
 
