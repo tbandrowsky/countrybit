@@ -58,7 +58,7 @@ namespace corona
 				fetch(_params, this);
 			}
 
-			share(_params, this);
+			queue_share();
 		}
 
 		void get()
@@ -72,7 +72,7 @@ namespace corona
 				fetch(data, this);
 			}
 
-			share(data, this);
+			queue_share();
 		}
 
 	};

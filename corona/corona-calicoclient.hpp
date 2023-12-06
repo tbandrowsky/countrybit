@@ -44,12 +44,14 @@ namespace corona
 			if (login_result.response.content_type.starts_with("application/json"))
 			{
 				login_json = jp.parse_object(login_result.response.response_body.get_ptr());
-				// login_json["jwtToken"] will have the token
-				if (!login_json.has_member("jwtToken")) {
-					login_json.put_member("jwtToken", "this won't work");
+				std::cout << login_json.to_json() << std::endl;
+
+				// put a bogus token in there so downstream things will fail silently.
+				if (!login_json.has_member("JwtToken")) {
+					login_json.put_member("JwtToken", "this won't work");
 				}
 
-				if (login_json.has_member("errors"))
+				if (login_json.has_member("Errors"))
 				{
 					success = false;
 				}
@@ -71,13 +73,17 @@ namespace corona
 			const char* calico_host = host.c_str();
 			int calico_port = port;
 			json calico_request = jp.create_object();
-			calico_request.copy_member("JwtToken", credentials);
-			calico_request.put_member("FieldName", _field_name);
-			http_params calico_http = calico_client.post(calico_host, calico_port, "api/GetFieldOptions", calico_request);
+			if (credentials.has_member("JwtToken")) {
+				calico_request.copy_member("JwtToken", credentials);
+				calico_request.put_member("FieldName", _field_name);
+				http_params calico_http = calico_client.get(calico_host, calico_port, "api/GetFieldOptions", calico_request);
 
-			if (calico_http.response.content_type.starts_with("application/json"))
-			{
-				calico_response = jp.parse_object(calico_http.response.response_body.get_ptr());
+				if (calico_http.response.content_type.starts_with("application/json"))
+				{
+					calico_response = jp.parse_object(calico_http.response.response_body.get_ptr());
+					std::cout << calico_response.to_json() << std::endl;
+					success = true;
+				}
 			}
 			return success;
 		}
@@ -93,12 +99,16 @@ namespace corona
 			const char* calico_host = host.c_str();
 			int calico_port = port;
 			json calico_request = jp.create_object();
-			calico_request.copy_member("JwtToken", credentials);
-			http_params calico_http = calico_client.get(calico_host, calico_port, "api/GetClassList", calico_request);
+			if (credentials.has_member("JwtToken")) {
+				calico_request.copy_member("JwtToken", credentials);
+				http_params calico_http = calico_client.get(calico_host, calico_port, "api/GetClassList", calico_request);
 
-			if (calico_http.response.content_type.starts_with("application/json"))
-			{
-				calico_response = jp.parse_object(calico_http.response.response_body.get_ptr());
+				if (calico_http.response.content_type.starts_with("application/json"))
+				{
+					calico_response = jp.parse_object(calico_http.response.response_body.get_ptr());
+					std::cout << calico_response.to_json() << std::endl;
+					success = true;
+				}
 			}
 			return success;
 		}
@@ -113,12 +123,15 @@ namespace corona
 			const char* calico_host = host.c_str();
 			int calico_port = port;
 			json calico_request = jp.create_object();
-			calico_request.copy_member("JwtToken", credentials);
-			http_params calico_http = calico_client.get(calico_host, calico_port, "api/GetFieldList", calico_request);
+			if (credentials.has_member("JwtToken")) {
+				calico_request.copy_member("JwtToken", credentials);
+				http_params calico_http = calico_client.get(calico_host, calico_port, "api/GetFieldList", calico_request);
 
-			if (calico_http.response.content_type.starts_with("application/json"))
-			{
-				calico_response = jp.parse_object(calico_http.response.response_body.get_ptr());
+				if (calico_http.response.content_type.starts_with("application/json"))
+				{
+					calico_response = jp.parse_object(calico_http.response.response_body.get_ptr());
+					success = true;
+				}
 			}
 			return success;
 		}
@@ -134,17 +147,19 @@ namespace corona
 			int calico_port = port;
 
 			json request(std::make_shared<json_object>());
-			request.put_member("JwtToken", credentials);
-			request.put_member("Namespace", default_namespace);
-			request.put_member("ClassFullName", _source);
-			request.put_member("BaseClassName", _source);
-			request.put_member("RelatedClassList", _source);
-			request.put_member("DelimitedClassFieldList", _source);
+			if (credentials.has_member("JwtToken")) {
+				request.put_member("JwtToken", credentials);
+				request.put_member("Namespace", default_namespace);
+				request.put_member("ClassFullName", _source);
+				request.put_member("BaseClassName", _source);
+				request.put_member("RelatedClassList", _source);
+				request.put_member("DelimitedClassFieldList", _source);
 
-			http_params calico_http = calico_client.post(calico_host, calico_port, "api/PutClassEx", request);
-			if (calico_http.response.content_type.starts_with("application/json"))
-			{
-				calico_response = jp.parse_object(calico_http.response.response_body.get_ptr());
+				http_params calico_http = calico_client.post(calico_host, calico_port, "api/PutClassEx", request);
+				if (calico_http.response.content_type.starts_with("application/json"))
+				{
+					calico_response = jp.parse_object(calico_http.response.response_body.get_ptr());
+				}
 			}
 			return success;
 		}
@@ -159,14 +174,17 @@ namespace corona
 			const char* calico_host = host.c_str();
 			int calico_port = port;
 			json calico_request = jp.create_object();
-			calico_request.copy_member("JwtToken", credentials);
+			if (credentials.has_member("JwtToken")) {
+				calico_request.copy_member("JwtToken", credentials);
+				calico_request.put_member("SearchObjectJson", "{}");
 
-			http_params calico_http = calico_client.post(calico_host, calico_port, "api/GetActorOptions", calico_request);
+				http_params calico_http = calico_client.get(calico_host, calico_port, "api/GetActorOptions", calico_request);
 
-			if (calico_http.response.content_type.starts_with("application/json"))
-			{
-				calico_response = jp.parse_object(calico_http.response.response_body.get_ptr());
-				success = true;
+				if (calico_http.response.content_type.starts_with("application/json"))
+				{
+					calico_response = jp.parse_object(calico_http.response.response_body.get_ptr());
+					success = true;
+				}
 			}
 			return success;
 		}
@@ -181,14 +199,16 @@ namespace corona
 			const char* calico_host = host.c_str();
 			int calico_port = port;
 			json calico_request = jp.create_object();
-			calico_request.copy_member("JwtToken", credentials);
-			calico_request.put_member("ObjectJson", source);
-			http_params calico_http = calico_client.post(calico_host, calico_port, "api/CreateObject", calico_request);
+			if (credentials.has_member("JwtToken")) {
+				calico_request.copy_member("JwtToken", credentials);
+				calico_request.put_member("ObjectJson", source);
+				http_params calico_http = calico_client.post(calico_host, calico_port, "api/CreateObject", calico_request);
 
-			if (calico_http.response.content_type.starts_with("application/json"))
-			{
-				calico_response = jp.parse_object(calico_http.response.response_body.get_ptr());
-				success = true;
+				if (calico_http.response.content_type.starts_with("application/json"))
+				{
+					calico_response = jp.parse_object(calico_http.response.response_body.get_ptr());
+					success = true;
+				}
 			}
 			return success;
 		}
@@ -203,14 +223,16 @@ namespace corona
 			const char* calico_host = host.c_str();
 			int calico_port = port;
 			json calico_request = jp.create_object();
-			calico_request.copy_member("JwtToken", credentials);
-			calico_request.put_member("ObjectJson", source);
-			http_params calico_http = calico_client.post(calico_host, calico_port, "api/PutObject", calico_request);
+			if (credentials.has_member("JwtToken")) {
+				calico_request.copy_member("JwtToken", credentials);
+				calico_request.put_member("ObjectJson", source);
+				http_params calico_http = calico_client.post(calico_host, calico_port, "api/PutObject", calico_request);
 
-			if (calico_http.response.content_type.starts_with("application/json"))
-			{
-				calico_response = jp.parse_object(calico_http.response.response_body.get_ptr());
-				success = true;
+				if (calico_http.response.content_type.starts_with("application/json"))
+				{
+					calico_response = jp.parse_object(calico_http.response.response_body.get_ptr());
+					success = true;
+				}
 			}
 			return success;
 		}
@@ -226,16 +248,18 @@ namespace corona
 			int calico_port = port;
 
 			json calico_request = jp.create_object();
-			calico_request.copy_member("JwtToken", credentials);
-			calico_request.copy_member("ObjectId", source);
-			calico_request.copy_member("Multiselect", source);
+			if (credentials.has_member("JwtToken")) {
+				calico_request.copy_member("JwtToken", credentials);
+				calico_request.copy_member("ObjectId", source);
+				calico_request.copy_member("Multiselect", source);
 
-			http_params calico_http = calico_client.post(calico_host, calico_port, "api/SelectObject", calico_request);
+				http_params calico_http = calico_client.post(calico_host, calico_port, "api/SelectObject", calico_request);
 
-			if (calico_http.response.content_type.starts_with("application/json"))
-			{
-				calico_response = jp.parse_object(calico_http.response.response_body.get_ptr());
-				success = true;
+				if (calico_http.response.content_type.starts_with("application/json"))
+				{
+					calico_response = jp.parse_object(calico_http.response.response_body.get_ptr());
+					success = true;
+				}
 			}
 			return success;
 		}
@@ -251,14 +275,16 @@ namespace corona
 			int calico_port = port;
 
 			json calico_request = jp.create_object();
-			calico_request.copy_member("JwtToken", credentials);
+			if (credentials.has_member("JwtToken")) {
+				calico_request.copy_member("JwtToken", credentials);
 
-			http_params calico_http = calico_client.post(calico_host, calico_port, "api/SelectHome", calico_request);
+				http_params calico_http = calico_client.post(calico_host, calico_port, "api/SelectHome", calico_request);
 
-			if (calico_http.response.content_type.starts_with("application/json"))
-			{
-				calico_response = jp.parse_object(calico_http.response.response_body.get_ptr());
-				success = true;
+				if (calico_http.response.content_type.starts_with("application/json"))
+				{
+					calico_response = jp.parse_object(calico_http.response.response_body.get_ptr());
+					success = true;
+				}
 			}
 			return success;
 		}
@@ -275,15 +301,17 @@ namespace corona
 
 			json calico_request = jp.create_object();
 
-			calico_request.copy_member("JwtToken", credentials);
-			calico_request.put_member("ClassName", className);
+			if (credentials.has_member("JwtToken")) {
+				calico_request.copy_member("JwtToken", credentials);
+				calico_request.put_member("ClassName", className);
 
-			http_params calico_http = calico_client.post(calico_host, calico_port, "api/SelectClass", calico_request);
+				http_params calico_http = calico_client.post(calico_host, calico_port, "api/SelectClass", calico_request);
 
-			if (calico_http.response.content_type.starts_with("application/json"))
-			{
-				calico_response = jp.parse_object(calico_http.response.response_body.get_ptr());
-				success = true;
+				if (calico_http.response.content_type.starts_with("application/json"))
+				{
+					calico_response = jp.parse_object(calico_http.response.response_body.get_ptr());
+					success = true;
+				}
 			}
 			return success;
 		}
@@ -298,14 +326,16 @@ namespace corona
 			const char* calico_host = host.c_str();
 			int calico_port = port;
 			json calico_request = jp.create_object();
-			calico_request.copy_member("JwtToken", credentials);
-			calico_request.copy_member("ObjectId", source);
-			http_params calico_http = calico_client.post(calico_host, calico_port, "api/DeleteObject", calico_request);
+			if (credentials.has_member("JwtToken")) {
+				calico_request.copy_member("JwtToken", credentials);
+				calico_request.copy_member("ObjectId", source);
+				http_params calico_http = calico_client.post(calico_host, calico_port, "api/DeleteObject", calico_request);
 
-			if (calico_http.response.content_type.starts_with("application/json"))
-			{
-				calico_response = jp.parse_object(calico_http.response.response_body.get_ptr());
-				success = true;
+				if (calico_http.response.content_type.starts_with("application/json"))
+				{
+					calico_response = jp.parse_object(calico_http.response.response_body.get_ptr());
+					success = true;
+				}
 			}
 			return success;
 		}
@@ -320,16 +350,18 @@ namespace corona
 			const char* calico_host = host.c_str();
 			int calico_port = port;
 			json calico_request = jp.create_object();
-			calico_request.copy_member("JwtToken", credentials);
-			calico_request.copy_member("ClassName", source);
-			calico_request.copy_member("SearchObjectJson", source);
-			calico_request.copy_member("FilterSelections", source);
-			http_params calico_http = calico_client.post(calico_host, calico_port, "api/Query", calico_request);
+			if (credentials.has_member("JwtToken")) {
+				calico_request.copy_member("JwtToken", credentials);
+				calico_request.copy_member("ClassName", source);
+				calico_request.copy_member("SearchObjectJson", source);
+				calico_request.copy_member("FilterSelections", source);
+				http_params calico_http = calico_client.post(calico_host, calico_port, "api/Query", calico_request);
 
-			if (calico_http.response.content_type.starts_with("application/json"))
-			{
-				calico_response = jp.parse_object(calico_http.response.response_body.get_ptr());
-				success = true;
+				if (calico_http.response.content_type.starts_with("application/json"))
+				{
+					calico_response = jp.parse_object(calico_http.response.response_body.get_ptr());
+					success = true;
+				}
 			}
 			return success;
 		}

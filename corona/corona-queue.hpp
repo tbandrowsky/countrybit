@@ -164,6 +164,8 @@ namespace corona {
 		std::atomic_int num_outstanding_jobs;
 		HANDLE empty_queue_event;
 
+		DWORD thread_id;
+
 	public:
 
 		inline HANDLE getPort() { return ioCompPort; }
@@ -175,6 +177,7 @@ namespace corona {
 
 		void start(int _numThreads);
 
+		void post_ui_message (UINT msg, WPARAM wparam, LPARAM lparam);
 		void add_job(job* _jobMessage);
 		void shutDown();
 		void kill();
@@ -282,7 +285,7 @@ namespace corona {
 
 	general_job::general_job(runnable _runnable)
 	{
-		;
+		function_to_run = _runnable;
 	}
 
 	general_job::~general_job()
@@ -382,6 +385,7 @@ namespace corona {
 		ioCompPort = nullptr;
 		num_outstanding_jobs = 0;
 		empty_queue_event = CreateEventW(nullptr, false, true, nullptr);
+		thread_id = ::GetCurrentThreadId();
 	}
 
 	job_queue::~job_queue()
@@ -443,6 +447,11 @@ namespace corona {
 		++num_outstanding_jobs;
 		ResetEvent(empty_queue_event);
 		result = PostQueuedCompletionStatus(ioCompPort, 0, 0, (LPOVERLAPPED)(&_jobMessage->container));
+	}
+
+	void job_queue::post_ui_message(UINT msg, WPARAM wparam, LPARAM lparam)
+	{
+		auto success = ::PostThreadMessage(thread_id, msg, wparam, lparam);		
 	}
 
 	unsigned int job_queue::jobQueueThread(job_queue* jobQueue)

@@ -210,11 +210,9 @@ namespace corona {
 
 	page& presentation::create_page(std::string _name, std::function<void(page& pg)> _settings)
 	{
-		auto new_page = std::make_shared<page>();
+		auto new_page = std::make_shared<page>(_name);
 		pages[_name] = new_page;
-		if (current_page.expired()) {
-			current_page = new_page;
-		}
+		current_page = new_page;
 		page& pg = *new_page.get();
 		if (_settings) {
 			_settings(pg);
@@ -224,6 +222,17 @@ namespace corona {
 
 	void presentation::select_page(const std::string& _page_name)
 	{
+
+		auto phost = window_host.lock();
+		if (!phost) {
+			throw std::logic_error("Cannot select a page without the window host being created.");
+		}
+
+		HWND hwndMainMenu = phost->getMainWindow();
+		if (!hwndMainMenu) {
+			throw std::logic_error("Cannot select a page without the window being created first.");
+		}
+
 		if (pages.contains(_page_name)) {
 			if (auto ppage = current_page.lock()) {
 				ppage->handle_unload(ppage);
@@ -236,20 +245,14 @@ namespace corona {
 			ppage->handle_onselect(ppage);
 		}
 
-		if (auto phost = window_host.lock())
-		{
-			HWND hwndMainMenu = phost->getMainWindow();
-			if (hwndMainMenu) {
-				onCreated();
-				onResize(current_size, 1.0);
-				if (auto ppage = current_page.lock()) {
-					if (ppage->menu)
-					{
-						HMENU hmenu = ppage->menu->to_menu();
-						::SetMenu(hwndMainMenu, hmenu);
-						::DrawMenuBar(hwndMainMenu);
-					}
-				}
+		onCreated();
+		onResize(current_size, 1.0);
+		if (auto ppage = current_page.lock()) {
+			if (ppage->menu)
+			{
+				HMENU hmenu = ppage->menu->to_menu();
+				::SetMenu(hwndMainMenu, hmenu);
+				::DrawMenuBar(hwndMainMenu);
 			}
 		}
 
@@ -263,6 +266,7 @@ namespace corona {
 	{
 		auto cp = current_page.lock();
 		if (cp) {
+			cp->handle_onselect(cp);
 			if (auto phost = window_host.lock()) {
 				auto sheet = styles.get_style();
 				auto pos = phost->getWindowClientPos();

@@ -134,11 +134,11 @@ namespace corona
 					handle.resume();
 					handle.destroy();
 				}
-				::PostMessage(NULL, WM_CORONA_TASK_COMPLETE, TRUE, (LPARAM)result);
+				_callingQueue->post_ui_message(WM_CORONA_TASK_COMPLETE, TRUE, (LPARAM)result);
 			}
 			catch (...)
 			{
-				::PostMessage(NULL, WM_CORONA_TASK_COMPLETE, FALSE, (LPARAM)result);
+				_callingQueue->post_ui_message(WM_CORONA_TASK_COMPLETE, FALSE, (LPARAM)result);
 			}
 			
 			jn.setSignal(event);
@@ -160,10 +160,10 @@ namespace corona
 		}
 
 		general_ui_job(
-			runnable _on_gui,
-			runnable _on_run) :
-			on_gui(_on_gui),
-			on_run(_on_run)
+			runnable _on_run,
+			runnable _on_gui) :
+			on_run(_on_run),
+			on_gui(_on_gui)
 		{
 			;
 		}
@@ -184,11 +184,11 @@ namespace corona
 				{
 					on_run();
 				}
-				::PostMessage(NULL, WM_CORONA_TASK_COMPLETE, TRUE, (LPARAM)result);
+				_callingQueue->post_ui_message(WM_CORONA_TASK_COMPLETE, TRUE, (LPARAM)result);
 			}
 			catch (...)
 			{
-				::PostMessage(NULL, WM_CORONA_TASK_COMPLETE, FALSE, (LPARAM)result);
+				_callingQueue->post_ui_message(WM_CORONA_TASK_COMPLETE, FALSE, (LPARAM)result);
 			}
 
 			std::cout << "ui job end:" << GetCurrentThreadId() << std::endl;

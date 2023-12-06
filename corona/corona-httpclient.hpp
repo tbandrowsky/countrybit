@@ -135,6 +135,11 @@ namespace corona
             *t = 0;
             return consolidated;
         }
+
+        int size()
+        {
+            return buffers.size();
+        }
     };
 
     class url_builder
@@ -184,12 +189,17 @@ namespace corona
         }
         url_builder& path(std::string _path)
         {
-            if (_path.size() > 0) {
-                if (_path[0] != '/') {
-                    _path = "/" + _path;
+            if (_path.size() > 0) 
+            {                
+                if (ba.size() > 0) 
+                {
+                    if (_path[0] != '/') {
+                        _path = "/" + _path;
+                    }
                 }
                 while (_path.ends_with('/'))
                     _path.pop_back();
+                ba.append(_path);
             }
             else 
             {
@@ -218,11 +228,47 @@ namespace corona
             }
             return *this;
         }
+
         url_builder& value(std::string _value)
         {
             if (_value.size() > 0) 
             {
-                ba.append(_value);
+                char escape_buffer[4096] = {  };
+                char* pbuffer = &escape_buffer[0];
+                DWORD escape_buffer_size = sizeof(escape_buffer) / sizeof(char);
+
+                for (char c : _value)
+                {
+                    if (isalnum(c) || c == '_') {
+                        *pbuffer = c;
+                        pbuffer++;
+                        escape_buffer_size--;
+                    }
+                    else 
+                    {
+                        char temp[128];
+                        int ct = c;
+                        sprintf_s(temp, "%0X", ct);
+                        char* t = &temp[0];
+                        *pbuffer = '%';
+                        pbuffer++;
+                        escape_buffer_size--;
+                        while (*t) 
+                        {
+                            if (escape_buffer_size <= 0)
+                                throw std::logic_error("Url escape buffer is too small");
+                            *pbuffer = *t;
+                            pbuffer++;
+                            t++;
+                            escape_buffer_size--;
+                        }
+                    }
+                    if (escape_buffer_size <= 0)
+                        throw std::logic_error("Url escape buffer is too small");
+                }
+                *pbuffer = 0;
+
+                ba.append(escape_buffer);
             }
             return *this;
         }

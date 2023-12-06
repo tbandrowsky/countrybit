@@ -147,7 +147,7 @@ namespace corona
 				source.right = inner_bounds.w;
 				_dest->DrawBitmap(bm, &dest, 1.0, D2D1_INTERPOLATION_MODE::D2D1_INTERPOLATION_MODE_LINEAR, &source);
 			}
-			for (auto child : children)
+			for (auto &child : children)
 			{
 				child->render(_dest);
 			}

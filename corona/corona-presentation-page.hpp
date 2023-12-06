@@ -33,6 +33,12 @@ namespace corona
 			root = std::make_shared<column_layout>();
 		}
 
+		page(std::string _name)
+		{
+			name = _name;
+			root = std::make_shared<column_layout>();
+		}
+
 		page()
 		{
 			name = "Test";

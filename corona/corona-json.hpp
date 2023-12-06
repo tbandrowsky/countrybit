@@ -130,7 +130,9 @@ namespace corona
 				comma = ", ";
 				ret += "\"" + el.first + "\"";
 				ret += ":";
-				ret += el.second->to_json();
+				if (el.second) {
+					ret += el.second->to_json();
+				}
 			}
 			ret += " }";
 			return ret;
@@ -269,7 +271,7 @@ namespace corona
 
 		bool has_member(std::string _key) const
 		{
-			bool has_value = object_impl->members.contains(_key);
+			bool has_value = object_impl && object_impl->members.contains(_key);
 			return has_value;
 		}
 
@@ -306,8 +308,11 @@ namespace corona
 			if (!object_impl) {
 				throw std::logic_error("Not an object");
 			}
-			json member = _source.get_member(_key);
-			put_member(_key, member);
+			std::string search_key = _key;
+			if (_source.has_member(search_key)) {
+				json member = _source.get_member(search_key);
+				put_member(_key, member);
+			}
 			return *this;
 		}
 

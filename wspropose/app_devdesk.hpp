@@ -37,9 +37,9 @@ namespace corona
 	{
 		// First check to make sure we have all the things
 
-		if (!(actor_options.has_member("selectedObjects") &&
-			actor_options.has_member("createOptions") &&
-			actor_options.has_member("selectOptions"))) {
+		if (!(actor_options.has_member("SelectedObjects") &&
+			actor_options.has_member("CreateOptions") &&
+			actor_options.has_member("SelectOptions"))) {
 			return;
 		}
 
@@ -61,7 +61,7 @@ namespace corona
 				_cb.image_file = "assets\\small_logo.png";
 				_cb.corporate_name = "WOODRUFF SAWYER";
 				_cb.id_title_column_id = 0;
-				_cb.title_name = "DEVELOPER STATION";
+				_cb.title_name = "PROPERTY AND CASUALTY";
 				_cb.subtitle_name = "Home";
 			}
 		)
@@ -77,13 +77,13 @@ namespace corona
 			});
 
 		// then, we get the objects the user has selected.  this can be used to build a breadcrumb trail and show the user where they are at, navigationally.
-		json selected_objects = actor_options["selectedObjects"];
+		json selected_objects = actor_options["SelectedObjects"];
 
 		// then, we get a list of classes of objects that we are allowed to create.  this gets visualized as buttons, to allow creating of a new object
-		json create_options = actor_options["createOptions"];
+		json create_options = actor_options["CreateOptions"];
 
 		// now, select options are, all the objects that we may select. These are objects of classes that match the hiearachy of selected objects
-		json select_options = actor_options["selectOptions"];
+		json select_options = actor_options["SelectOptions"];
 
 		/*  ---------------------------------------------------------------------------------------------------
 			Navigating back up through previous selections
@@ -106,10 +106,10 @@ namespace corona
 			// pull our current object out of this json array
 			auto selected_object = selected_objects[i];
 
-			std::string class_name = selected_object["className"].get_string();
-			int64_t class_id = selected_object["classId"].get_double();
-			int64_t object_id = selected_object["objectId"].get_double();
-			std::string object_id_string = selected_object["objectId"].get_string();
+			std::string class_name = selected_object["ClassName"].get_string();
+			int64_t class_id = selected_object["ClassId"].get_double();
+			int64_t object_id = selected_object["ObjectId"].get_double();
+			std::string object_id_string = selected_object["ObjectId"].get_string();
 
 			// then, come up with a canonical name for the button, so that, if we keep invoking this, we have the same ids.
 			// we also use this, to tie to our data, which actually drives the application
@@ -134,7 +134,7 @@ namespace corona
 					// create a new object
 					json_parser jp;
 					json object_select_request = jp.create_object();
-					object_select_request.put_member("objectId", object_id);
+					object_select_request.put_member("ObjectId", object_id);
 
 					// call our application
 					int temp = calico_svc->select_object(object_select_request, credentials, _set->data);
@@ -161,7 +161,7 @@ namespace corona
 			auto co = create_options[i];
 
 			// then, fish out the stuff we need
-			std::string class_name = co["className"].get_string();
+			std::string class_name = co["ClassName"].get_string();
 
 			// then, come up with a canonical name for the button, so that, if we keep invoking this, we have the same ids.
 			// we also use this, to tie to our data, which actually drives the application
@@ -185,7 +185,7 @@ namespace corona
 					// create a new object
 					json_parser jp;
 					json new_object_request = jp.create_object();
-					new_object_request.put_member("className", class_name);
+					new_object_request.put_member("ClassName", class_name);
 
 					// call our application
 					int temp = calico_svc->create_object(new_object_request, credentials, _set->data);
@@ -226,12 +226,12 @@ namespace corona
 			// the rule name and description are the model rules by which this object was selected.
 			// these will be needed to do further object manipulations.
 
-			std::string rule_name = selected_rule["ruleName"];
-			std::string rule_description = selected_rule["ruleDescription"];
-			std::string class_name = selected_rule["className"];
-			std::string class_id = selected_rule["classId"];
-			std::string view_name = selected_rule["viewName"];
-			auto objects_in_rule = selected_rule["items"];
+			std::string rule_name = selected_rule["RuleName"];
+			std::string rule_description = selected_rule["RuleDescription"];
+			std::string class_name = selected_rule["ClassName"];
+			std::string class_id = selected_rule["ClassId"];
+			std::string view_name = selected_rule["ViewName"];
+			auto objects_in_rule = selected_rule["Items"];
 
 			std::string bind_name = "rule." + rule_name;
 
@@ -248,7 +248,7 @@ namespace corona
 			// group scans an array, then creates a new object whose each member corresponds to the key 
 			// used to group by.
 			auto objects_by_class = objects_in_rule.group([](json& _item) {
-				return _item["className"].get_string();
+				return _item["ClassName"].get_string();
 				});
 
 			array_data_source ads;
@@ -257,7 +257,7 @@ namespace corona
 			ads.data = jp.create_array();
 			ads.data_to_control = [app_data](control_base* _parent, json& _array, int _index) {
 				auto json_object = _array[_index];
-				auto class_name = json_object["className"];
+				auto class_name = json_object["ClassName"];
 				auto factory = app_data->get_class_control_factory(class_name);
 				return factory(_parent, _array, _index);
 				};
@@ -274,8 +274,8 @@ namespace corona
 
 				// add a header for this class name
 				json header_obj = jp.create_object();
-				header_obj.put_member("className", ".section");
-				header_obj.put_member("name", member.first);
+				header_obj.put_member("ClassName", ".section");
+				header_obj.put_member("Name", member.first);
 				ads.data.put_element(-1, header_obj);
 
 				// and, within the group, we go through the array
@@ -283,9 +283,9 @@ namespace corona
 				{
 					json member_obj = member_array[i];
 					json item_obj = jp.create_object();
-					item_obj.copy_member("className", member_obj);
-					item_obj.copy_member("name", member_obj);
-					item_obj.put_member("source", member_obj);
+					item_obj.copy_member("ClassName", member_obj);
+					item_obj.copy_member("Name", member_obj);
+					item_obj.put_member("Source", member_obj);
 					ads.data.put_element(-1, item_obj);
 				}
 			}
@@ -332,10 +332,10 @@ namespace corona
 			},
 			[calico_svc, application, application_presentation, app_data, app_menu, st](json _params, data_set* _set) -> int {
 				// when logged in, do something;				
-				if (_set->data.has_member("jwtToken")) {
-					auto& new_page = application_presentation->create_page("home");
-					create_devdesk_page(_set->data, new_page, application, calico_svc, app_data, application_presentation, app_menu, st);
-					application_presentation->select_page("home");
+				if (_set->data.has_member("JwtToken")) {
+					auto& new_page = application_presentation->create_page("home", [_set, application, calico_svc, app_data, application_presentation, app_menu, st](page& new_page) {
+							create_devdesk_page(_set->data, new_page, application, calico_svc, app_data, application_presentation, app_menu, st);
+						});
 				}
 				return 0;
 			},
@@ -346,16 +346,18 @@ namespace corona
 				{
 					json classes_json;
 					json fields_json;
-					int temp = calico_svc->login("DevStation", application->getUserName(), _set->data);
-					temp = calico_svc->get_classes(_set->data, classes_json);
-					temp = calico_svc->get_fields(_set->data, fields_json);
+					int temp = calico_svc->login("Property", application->getUserName(), _set->data);
+					if (temp) {
+						temp = calico_svc->get_classes(_set->data, classes_json);
+						temp = calico_svc->get_fields(_set->data, fields_json);
+					}
 					app_data->put_data_set("calico", "classes", classes_json);
 					app_data->put_data_set("calico", "fields", fields_json);
 					return temp;
 				}, 
 				[calico_svc, application, application_presentation](json _params, data_set* _set) {
 					// when logged in, do something;
-					if (_set->data.has_member("jwtToken")) {
+					if (_set->data.has_member("JwtToken")) {
 						application_presentation->select_page("home");
 					}
 					return 1;
@@ -377,47 +379,61 @@ namespace corona
 			ctrl.set_size(150.0_px, 50.0_px);
 			};
 
-		application_presentation->create_page("home", [calico_svc, app_data, application, st, app_menu](page& _pg)
+		auto& home_page = application_presentation->create_page("home", [calico_svc, app_data, application, st, app_menu](page& _pg)
 			{
-				_pg.on_select([calico_svc, application, app_data, st, app_menu](page_select_event _evt)
+				_pg.column_begin()
+					.caption_bar(id_counter::next(), st, app_menu.get(), [](caption_bar_control& _cb)
+						{
+							_cb.title_bar_id = IDC_TITLE_BAR;
+							_cb.menu_button_id = IDC_SYSTEM_MENU;
+							_cb.image_control_id = IDC_COMPANY_LOGO;
+							_cb.image_file = "assets\\small_logo.png";
+							_cb.corporate_name = "WOODRUFF SAWYER";
+							_cb.id_title_column_id = 0;
+							_cb.title_name = "DEVELOPER STATION";
+							_cb.subtitle_name = "Home";
+						}
+					)
+					.end();
+					_pg.on_select([calico_svc, application, app_data, st, app_menu](page_select_event _evt)
 					{
-						
+//						threadomatic::run([app_data]() { app_data->get("actoroptions"); });
 					}
 				);
 			});
 
-		application_presentation->create_page("login", [calico_svc, application, app_data, st, app_menu](page& _pg)
+		auto &login_page = application_presentation->create_page("login", [calico_svc, application, app_data, st, app_menu](page& _pg)
 			{
-				_pg.on_load([calico_svc, application, app_data, st, app_menu](page_load_event _evt)
+				_pg.column_begin()
+					.caption_bar(id_counter::next(), st, app_menu.get(), [](caption_bar_control& _cb)
+						{
+							_cb.title_bar_id = IDC_TITLE_BAR;
+							_cb.menu_button_id = IDC_SYSTEM_MENU;
+							_cb.image_control_id = IDC_COMPANY_LOGO;
+							_cb.image_file = "assets\\small_logo.png";
+							_cb.corporate_name = "WOODRUFF SAWYER";
+							_cb.id_title_column_id = 0;
+							_cb.title_name = "DEVELOPER STATION";
+							_cb.subtitle_name = "Login";
+						}
+					)
+					.title("Connecting...")
+					.end();
+
+				_pg.on_select([calico_svc, application, app_data, st, app_menu](page_select_event _evt)
 					{
-						app_data->get("login");
+						threadomatic::run([app_data]() { app_data->get("login"); });
 					}
 				);
-			})
-			.column_begin()
-				.caption_bar(id_counter::next(), st, app_menu.get(), [](caption_bar_control& _cb)
-					{
-						_cb.title_bar_id = IDC_TITLE_BAR;
-						_cb.menu_button_id = IDC_SYSTEM_MENU;
-						_cb.image_control_id = IDC_COMPANY_LOGO;
-						_cb.image_file = "assets\\small_logo.png";
-						_cb.corporate_name = "WOODRUFF SAWYER";
-						_cb.id_title_column_id = 0;
-						_cb.title_name = "DEVELOPER STATION";
-						_cb.subtitle_name = "Login";
-					}
-				)
-				.end();
-
-		application_presentation->select_page("login");
+			});
 
 		if (forceWindowed)
 		{
-			application->runDialog(hInstance, "Developer Station", IDI_WSPROPOSE, false, application_presentation);
+			application->runDialog(hInstance, "Property and Casualty", IDI_WSPROPOSE, false, application_presentation);
 		}
 		else
 		{
-			application->runDialog(hInstance, "Developer Station", IDI_WSPROPOSE, true, application_presentation);
+			application->runDialog(hInstance, "Property and Casualty", IDI_WSPROPOSE, true, application_presentation);
 		}
 	}
 
