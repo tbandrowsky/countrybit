@@ -317,7 +317,7 @@ namespace corona
 	{
         const char *user_agent = "Corona/1.0";
 
-        std::string get_header(HINTERNET hRequest, DWORD header_id)
+        std::string get_header(std::string context, HINTERNET hRequest, DWORD header_id)
         {
             std::string header;
 
@@ -325,7 +325,7 @@ namespace corona
             DWORD dwHeaderSize;
             wchar_converter converter;
 
-            WinHttpQueryHeaders(hRequest,
+            BOOL success = WinHttpQueryHeaders(hRequest,
                 header_id,
                 WINHTTP_HEADER_NAME_BY_INDEX,
                 NULL,  &dwHeaderSize, 
@@ -346,12 +346,22 @@ namespace corona
                     0);
 
                 if (bResults) {
-                    wchar_t* header_w = (wchar_t *)headerBuffer.get_ptr();
+                    wchar_t* header_w = (wchar_t*)headerBuffer.get_ptr();
                     header = converter.to_char(header_w);
                 }
             }
+            else {
+                throw_error(context, "Reading Http Headers");
+            }
 
             return header;
+        }
+
+        void throw_error(std::string host, std::string context)
+        {
+            os_result osr;
+            auto str = std::format("Host:{0}, Activity:{1}, ErrorCode:{2}, Message:{3}", host, context, osr.error_code, osr.message.c_str());
+            throw std::runtime_error(str);
         }
 
         bool run(http_params& params)
@@ -404,11 +414,17 @@ namespace corona
 
             // Specify an HTTP server.
             if (hSession)
+            {
                 hConnect = WinHttpConnect(hSession, whost,
                     params.request.port, 0);
+            }
+            else 
+            {
+                throw_error(params.request.host, "Opening Connection");
+            }
 
             // Create an HTTP request handle.
-            if (hConnect)
+            if (hConnect) {
                 hRequest = WinHttpOpenRequest(hConnect,
                     wmethod,
                     wpath,
@@ -416,6 +432,11 @@ namespace corona
                     WINHTTP_NO_REFERER,
                     allowed_types_lies,
                     WINHTTP_FLAG_SECURE);
+            }
+            else 
+            {
+                throw_error(params.request.host, "Opening Request");
+            }
 
             int total_length = body_length;
 
@@ -429,15 +450,25 @@ namespace corona
                     body_length,
                     total_length, 0);
             }
+            else 
+            {
+                throw_error(params.request.host + "/" + params.request.path, "Sending Request");
+            }
 
             // End the request.
-            if (bResults)
+            if (bResults) 
+            {
                 bResults = WinHttpReceiveResponse(hRequest, NULL);
+            }
+            else
+            {
+                throw_error(params.request.host + "/" + params.request.path, "Receiving Response");
+            }
 
             // Check the headers
 
-            params.response.content_type = get_header(hRequest, WINHTTP_QUERY_CONTENT_TYPE);
-            params.response.content_length = get_header(hRequest, WINHTTP_QUERY_CONTENT_LENGTH);
+            params.response.content_type = get_header(params.request.host + "/" + params.request.path, hRequest, WINHTTP_QUERY_CONTENT_TYPE);
+            params.response.content_length = get_header(params.request.host + "/" + params.request.path, hRequest, WINHTTP_QUERY_CONTENT_LENGTH);
 
             // Keep checking for data until there is nothing left.
             if (bResults)
@@ -448,7 +479,7 @@ namespace corona
                     dwSize = 0;
                     if (!WinHttpQueryDataAvailable(hRequest, &dwSize))
                     {
-                        params.response.system_result = os_result();
+                        throw_error(params.request.host + "/" + params.request.path, "Checking for Data");
                     }
 
                     if (dwSize) {
@@ -458,6 +489,7 @@ namespace corona
                         {
                             params.response.system_result.success = false;
                             params.response.system_result.message = "Out of memory";
+                            throw_error(params.request.host + "/" + params.request.path, "Allocating buffers");
                             dwSize = 0;
                         }
                         else
@@ -469,6 +501,7 @@ namespace corona
                             {
                                 params.response.system_result = os_result();
                                 dwSize = 0;
+                                throw_error(params.request.host + "/" + params.request.path, "Reading Data");
                             }
                         }
                     }

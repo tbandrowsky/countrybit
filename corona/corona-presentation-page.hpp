@@ -5,6 +5,7 @@ namespace corona
 {
 
 	using update_function = std::function< void(page* _page, double _elapsedSeconds, double _totalSeconds) >;
+	using change_function = std::function< void(page& _page, std::string _changed_set_name) >;
 
 	class page : public page_base
 	{
@@ -22,6 +23,7 @@ namespace corona
 		std::vector<std::shared_ptr<page_load_event_binding>> load_bindings;
 		std::vector<std::shared_ptr<page_select_event_binding>> select_bindings;
 		update_function update_event;
+		change_function change_event;
 
 	public:
 
@@ -104,8 +106,17 @@ namespace corona
 
 		void update(double _elapsedSeconds, double _totalSeconds)
 		{
-			if (update_event) {
+			if (update_event) 
+			{
 				update_event(this, _elapsedSeconds, _totalSeconds);
+			}
+		}
+		
+		void changed(std::string _set_name)
+		{
+			if (change_event) 
+			{
+				change_event(*this, _set_name);
 			}
 		}
 
@@ -259,6 +270,11 @@ namespace corona
 			evt->subscribed_item_id = _control_id;
 			evt->on_command = handler;
 			command_bindings[_control_id] = evt;
+		}
+
+		void on_changed(change_function fnc)
+		{
+			change_event = fnc;
 		}
 
 		void on_update(update_function fnc)

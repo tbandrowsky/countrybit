@@ -357,9 +357,16 @@ namespace corona
 				}, 
 				[calico_svc, application, application_presentation](json _params, data_set* _set) {
 					// when logged in, do something;
-					if (_set->data.has_member("JwtToken")) {
+					auto err = _set->get_error();
+					if (!err.error) 
+					{
 						application_presentation->select_page("home");
 					}
+					else 
+					{
+						application_presentation->pages["login"]->changed("login");
+					}
+
 					return 1;
 				},
 				5
@@ -390,17 +397,20 @@ namespace corona
 							_cb.image_file = "assets\\small_logo.png";
 							_cb.corporate_name = "WOODRUFF SAWYER";
 							_cb.id_title_column_id = 0;
-							_cb.title_name = "DEVELOPER STATION";
+							_cb.title_name = "PROPERTY and CASUALTY";
 							_cb.subtitle_name = "Home";
 						}
 					)
 					.end();
+
 					_pg.on_select([calico_svc, application, app_data, st, app_menu](page_select_event _evt)
 					{
-//						threadomatic::run([app_data]() { app_data->get("actoroptions"); });
+						threadomatic::run([app_data]() { app_data->get("actoroptions"); });
 					}
 				);
 			});
+
+		const int IDC_STATUS_MESSAGE = 1001;
 
 		auto &login_page = application_presentation->create_page("login", [calico_svc, application, app_data, st, app_menu](page& _pg)
 			{
@@ -413,16 +423,28 @@ namespace corona
 							_cb.image_file = "assets\\small_logo.png";
 							_cb.corporate_name = "WOODRUFF SAWYER";
 							_cb.id_title_column_id = 0;
-							_cb.title_name = "DEVELOPER STATION";
+							_cb.title_name = "PROPERTY and CASUALTY";
 							_cb.subtitle_name = "Login";
 						}
 					)
-					.title("Connecting...")
+					.row_begin(id_counter::next(), [](row_layout& rl) {
+							rl.set_size(1.0_container, 1.0_remaining);
+							rl.set_item_margin(48.0_px);
+						})
+					.title(IDC_STATUS_MESSAGE, "Connecting")
 					.end();
 
 				_pg.on_select([calico_svc, application, app_data, st, app_menu](page_select_event _evt)
 					{
 						threadomatic::run([app_data]() { app_data->get("login"); });
+					}
+				);
+
+				_pg.on_changed([calico_svc, application, app_data, st, app_menu](page& _pg, std::string _set_name)
+					{
+						auto& tc = _pg.root->find<title_control>(IDC_STATUS_MESSAGE);
+						auto err = app_data->get_data_set("login")->get_error();
+						tc.text = err.message;
 					}
 				);
 			});

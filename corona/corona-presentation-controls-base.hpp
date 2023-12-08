@@ -332,7 +332,13 @@ namespace corona
 		template <typename control_type> control_type& find(int _id)
 		{
 			control_base* temp = find(_id);
+			if (!temp) {
+				throw std::invalid_argument(std::format("Control id {0} not found", _id));
+			}
 			control_type* citem = dynamic_cast<control_type *>(temp);
+			if (!citem) {
+				throw std::invalid_argument(std::format("Control id {0} is a {1}.", _id, typeid(*temp).name()));
+			}
 			return *citem;
 		}
 
@@ -420,7 +426,7 @@ namespace corona
 
 	control_base* control_base::find(int _id)
 	{
-		control_base* root = (control_base *)parent;
+		control_base* root = (control_base *)this;
 		while (root->parent) 
 		{
 			root = (control_base*)root->parent;

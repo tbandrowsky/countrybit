@@ -35,6 +35,12 @@ namespace corona
 		gui_method						share;
 		std::shared_ptr<data_source>	source;
 
+		data_set()
+		{
+			json_parser jp;
+			data = jp.create_object();
+		}
+
 		void run_share()
 		{
 			share(data, this);
@@ -45,34 +51,94 @@ namespace corona
 			threadomatic::run_complete([]() {}, [this]() { run_share(); });
 		}
 
+		auto get_error()
+		{
+			struct result { std::string message;  bool error; };
+			std::string err_string;
+			bool err = false;
+			if (data.has_member("status")) {
+				err_string = data["status"]["message"];
+				err = data["status"]["success"];
+			}
+			return result{ err_string, err };
+		}
+
 		int get(json _params)
 		{
-			parameters = _params;
+			json_parser jp;
+			auto jobj = jp.create_object();
 
-			time_t current_time;
-			time(&current_time);
-			time_t seconds = current_time - last_refresh;
+			try
+			{
+				parameters = _params;
 
-			if (seconds >= cache_seconds) {
-				last_refresh = current_time;
-				fetch(_params, this);
+				time_t current_time;
+				time(&current_time);
+				time_t seconds = current_time - last_refresh;
+
+				if (seconds >= cache_seconds) {
+
+					last_refresh = current_time;
+					fetch(_params, this);
+				}
+
+				jobj.put_member("success", true);
+				jobj.put_member("message", "Ok.");
+				data.put_member_object("status", jobj);
+
+				queue_share();
 			}
-
-			queue_share();
+			catch (std::logic_error exc)
+			{
+				jobj.put_member("success", false);
+				jobj.put_member("message", exc.what() ? exc.what() : "logic error.");
+				data.put_member_object("status", jobj);
+				queue_share();
+			}
+			catch (std::exception exc)
+			{
+				jobj.put_member("success", false);
+				jobj.put_member("message", exc.what() ? exc.what() : "general exception.");
+				data.put_member_object("status", jobj);
+				queue_share();
+				return 0;
+			}
+			return 1;
 		}
 
 		void get()
 		{
-			time_t current_time;
-			time(&current_time);
-			time_t seconds = current_time - last_refresh;
+			json_parser jp;
+			auto jobj = jp.create_object();
 
-			if (seconds >= cache_seconds) {
-				last_refresh = current_time;
-				fetch(data, this);
+			try
+			{
+				time_t current_time;
+				time(&current_time);
+				time_t seconds = current_time - last_refresh;
+
+				if (seconds >= cache_seconds) {
+					last_refresh = current_time;
+					fetch(data, this);
+				}
+				jobj.put_member("success", true);
+				data.put_member_object("status", jobj);
+				queue_share();
 			}
-
-			queue_share();
+			catch (std::logic_error exc)
+			{
+				jobj.put_member("success", false);
+				jobj.put_member("message", exc.what() ? exc.what() : "logic error.");
+				data.put_member_object("status", jobj);
+				queue_share();
+			}
+			catch (std::exception exc)
+			{
+				jobj.put_member("success", false);
+				jobj.put_member("message", exc.what());
+				data.put_member_object("status", jobj);
+				queue_share();
+			}
 		}
 
 	};
