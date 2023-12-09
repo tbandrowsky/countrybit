@@ -55,14 +55,11 @@ namespace corona
 
 		contents_root.caption_bar(id_counter::next(), st, app_menu.get(), [](caption_bar_control& _cb)
 			{
-				_cb.title_bar_id = IDC_TITLE_BAR;
 				_cb.menu_button_id = IDC_SYSTEM_MENU;
 				_cb.image_control_id = IDC_COMPANY_LOGO;
 				_cb.image_file = "assets\\small_logo.png";
 				_cb.corporate_name = "WOODRUFF SAWYER";
-				_cb.id_title_column_id = 0;
 				_cb.title_name = "PROPERTY AND CASUALTY";
-				_cb.subtitle_name = "Home";
 			}
 		)
 		.end();
@@ -386,65 +383,76 @@ namespace corona
 			ctrl.set_size(150.0_px, 50.0_px);
 			};
 
+		const int IDC_STATUS_MESSAGE = 5001;
+		const int IDC_STATUS_DETAIL = 5002;
+
 		auto& home_page = application_presentation->create_page("home", [calico_svc, app_data, application, st, app_menu](page& _pg)
 			{
 				_pg.column_begin()
 					.caption_bar(id_counter::next(), st, app_menu.get(), [](caption_bar_control& _cb)
 						{
-							_cb.title_bar_id = IDC_TITLE_BAR;
 							_cb.menu_button_id = IDC_SYSTEM_MENU;
 							_cb.image_control_id = IDC_COMPANY_LOGO;
 							_cb.image_file = "assets\\small_logo.png";
 							_cb.corporate_name = "WOODRUFF SAWYER";
-							_cb.id_title_column_id = 0;
 							_cb.title_name = "PROPERTY and CASUALTY";
-							_cb.subtitle_name = "Home";
+							_cb.code_detail_id = IDC_STATUS_DETAIL;
+							_cb.code_status_id = IDC_STATUS_MESSAGE;
 						}
 					)
 					.end();
 
 					_pg.on_select([calico_svc, application, app_data, st, app_menu](page_select_event _evt)
 					{
+						auto& tc_message = _evt.pg->root->find<code_control>(IDC_STATUS_MESSAGE);
+						auto& tc_detail = _evt.pg->root->find<code_control>(IDC_STATUS_DETAIL);
+						tc_message.text = "Connected";
+						tc_detail.text = "Getting Options";
+
 						threadomatic::run([app_data]() { app_data->get("actoroptions"); });
 					}
 				);
 			});
 
-		const int IDC_STATUS_MESSAGE = 1001;
-
 		auto &login_page = application_presentation->create_page("login", [calico_svc, application, app_data, st, app_menu](page& _pg)
 			{
+				int title_column_id = id_counter::next();
 				_pg.column_begin()
-					.caption_bar(id_counter::next(), st, app_menu.get(), [](caption_bar_control& _cb)
+					.caption_bar(id_counter::next(), st, app_menu.get(), [title_column_id](caption_bar_control& _cb)
 						{
-							_cb.title_bar_id = IDC_TITLE_BAR;
 							_cb.menu_button_id = IDC_SYSTEM_MENU;
 							_cb.image_control_id = IDC_COMPANY_LOGO;
 							_cb.image_file = "assets\\small_logo.png";
 							_cb.corporate_name = "WOODRUFF SAWYER";
-							_cb.id_title_column_id = 0;
 							_cb.title_name = "PROPERTY and CASUALTY";
-							_cb.subtitle_name = "Login";
+							_cb.code_detail_id = IDC_STATUS_DETAIL;
+							_cb.code_status_id = IDC_STATUS_MESSAGE;
 						}
 					)
-					.row_begin(id_counter::next(), [](row_layout& rl) {
-							rl.set_size(1.0_container, 1.0_remaining);
-							rl.set_item_margin(48.0_px);
+					.column_begin(title_column_id, [](column_layout& rl) {
+							rl.set_size(0.5_container, 1.0_remaining);
+							rl.set_item_size(1.0_container, 150.0_px);
 						})
-					.title(IDC_STATUS_MESSAGE, "Connecting")
-					.end();
+						.end()
+				.end();
 
 				_pg.on_select([calico_svc, application, app_data, st, app_menu](page_select_event _evt)
 					{
+						auto& tc_message = _evt.pg->root->find<code_control>(IDC_STATUS_MESSAGE);
+						auto& tc_detail = _evt.pg->root->find<code_control>(IDC_STATUS_DETAIL);
+						tc_message.text = "Connecting";
+						tc_detail.text = "";
 						threadomatic::run([app_data]() { app_data->get("login"); });
 					}
 				);
 
 				_pg.on_changed([calico_svc, application, app_data, st, app_menu](page& _pg, std::string _set_name)
 					{
-						auto& tc = _pg.root->find<title_control>(IDC_STATUS_MESSAGE);
+						auto& tc_message = _pg.root->find<code_control>(IDC_STATUS_MESSAGE);
+						auto& tc_detail = _pg.root->find<code_control>(IDC_STATUS_DETAIL);
 						auto err = app_data->get_data_set("login")->get_error();
-						tc.text = err.message;
+						tc_message.text = _set_name + " error.";
+						tc_detail.text = err.message;
 					}
 				);
 			});

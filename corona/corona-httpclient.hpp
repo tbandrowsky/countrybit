@@ -360,7 +360,7 @@ namespace corona
         void throw_error(std::string host, std::string context)
         {
             os_result osr;
-            auto str = std::format("Host:{0}, Activity:{1}, ErrorCode:{2}, Message:{3}", host, context, osr.error_code, osr.message.c_str());
+            auto str = std::format("{0}, {1}, ErrorCode:{2}, {3}", host, context, osr.error_code, osr.message.c_str());
             throw std::runtime_error(str);
         }
 

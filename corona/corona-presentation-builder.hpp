@@ -847,7 +847,7 @@ namespace corona
 
 			control_builder cb;
 
-			auto main_row = cb.row_begin(title_bar_id, [this](row_layout& rl) {
+			auto main_row = cb.row_begin(id_counter::next(), [this](row_layout& rl) {
 				rl.set_size(1.0_container, 80.0_px);
 				rl.set_background_color(st->HeaderBackgroundColor);
 				rl.set_content_align(visual_alignment::align_near);
@@ -857,12 +857,12 @@ namespace corona
 				});
 
 			auto logo_row = main_row.row_begin(id_counter::next(), [](row_layout& rl) {
-				rl.set_size(.24_container, 1.0_container);
+				rl.set_size(.50_container, 1.0_container);
 				})
 				.row_begin(id_counter::next(), [](row_layout& cl) {
 					cl.set_content_align(visual_alignment::align_near);
 					cl.set_content_cross_align(visual_alignment::align_near);
-					cl.set_size(120.0_px, 1.0_container);
+					cl.set_size(130.0_px, 1.0_container);
 					cl.set_item_margin(5.0_px);
 					})
 					.menu_button(menu_button_id, [this](auto& _ctrl) {
@@ -870,40 +870,68 @@ namespace corona
 						_ctrl.set_margin(5.0_px);
 						_ctrl.menu = *menu;
 						})
-					.image(image_control_id, image_file, [](image_control& control) { control.set_size(50.0_px, 50.0_px); })
 				.end()
 				.column_begin(id_counter::next(), [](column_layout& cl) {
-							cl.set_content_align(visual_alignment::align_near);
+							cl.set_content_align(visual_alignment::align_center);
 							cl.set_content_cross_align(visual_alignment::align_near);
 							cl.set_size(1.0_container, 1.0_container);
-							cl.set_item_margin(0.0_px);
+							cl.set_item_margin(5.0_px);
 				})
-				.title(corporate_name, [](title_control& control) {
-							control.text_style.horizontal_align = visual_alignment::align_near;
-							control.text_style.vertical_align = visual_alignment::align_near;
-							control.set_size(300.0_px, 1.0_container);
-					})
-				.end()
-			.end();
-
-			auto title_column = main_row.column_begin(id_title_column_id, [](column_layout& cl) {
-				cl.set_content_align(visual_alignment::align_near);
-				cl.set_content_cross_align(visual_alignment::align_near);
-				cl.set_item_margin(0.0_px);
-				cl.set_size(.33_container, 1.0_container);
-					})
-					.title(title_name, [](title_control& control) {
-							control.text_style.horizontal_align = visual_alignment::align_near;
-							control.text_style.vertical_align = visual_alignment::align_near;
-							control.set_size(400.0_px, 1.0_fontgr);
-						})
-					.subtitle(subtitle_name, [](subtitle_control& control) {
+				.code(code_status_id, [](code_control& control) {
 					control.text_style.horizontal_align = visual_alignment::align_near;
 					control.text_style.vertical_align = visual_alignment::align_near;
 					control.text_style.underline = true;
-					control.set_size(400.0_px, 1.0_fontgr);
+					control.set_size(1.0_container, 1.4_fontgr);
+								})
+				.code(code_detail_id, [](code_control& control) {
+									control.text_style.horizontal_align = visual_alignment::align_near;
+									control.text_style.vertical_align = visual_alignment::align_far;
+									control.text_style.underline = false;
+									control.set_size(1.0_container, 2.2_fontgr);
 						})
 			.end();
+
+			auto title_column = main_row.row_begin(id_counter::next(), [](row_layout& cl) {
+				cl.set_content_align(visual_alignment::align_near);
+				cl.set_content_cross_align(visual_alignment::align_near);
+				cl.set_item_margin(0.0_px);
+				cl.set_size(500.0_px, 1.0_container);
+					})
+				.column_begin(id_counter::next(), [](column_layout& cl) {
+						cl.set_content_align(visual_alignment::align_near);
+						cl.set_content_cross_align(visual_alignment::align_near);
+						cl.set_item_margin(6.0_px);
+						cl.set_size(80.0_px, 1.0_container);
+					})
+				.image(image_control_id, image_file, [](image_control& control) {
+						control.set_size(50.0_px, 50.0_px);
+				})
+				.end()
+				.column_begin(id_counter::next(), [](column_layout& cl) {
+								cl.set_content_align(visual_alignment::align_near);
+								cl.set_content_cross_align(visual_alignment::align_near);
+								cl.set_item_margin(0.0_px);
+								cl.set_size(1.0_remaining, 1.0_container);
+					})
+						.title(corporate_name, [](title_control& control) {
+						control.text_style.horizontal_align = visual_alignment::align_near;
+						control.text_style.vertical_align = visual_alignment::align_near;
+						control.set_size(400.0_px, 1.2_font);
+							})
+						.title(title_name, [](title_control& control) {
+								control.text_style.horizontal_align = visual_alignment::align_near;
+								control.text_style.vertical_align = visual_alignment::align_near;
+								control.set_size(400.0_px, 1.2_font);
+							})
+				.end()
+				.end()
+			.end();
+
+/*			if (title_bar_id)
+			{
+				title_column.get_root()->push(title_bar_id, true, false, false, false);
+			}
+			*/
 
 			auto frame_buttons = main_row.row_begin(id_counter::next(), [](row_layout& rl) {
 					rl.set_size(.95_remaining, 1.0_container);
@@ -922,25 +950,21 @@ namespace corona
 
 	public:
 		presentation_style* st;
-		int	title_bar_id;
 		int menu_button_id;
 		menu_item* menu;
 		int image_control_id;
 		std::string image_file;
 		std::string corporate_name;
-		int id_title_column_id;
 		std::string title_name;
-		std::string subtitle_name;
+		int code_status_id;
+		int code_detail_id;
 
 		caption_bar_control()
 		{
 			st = nullptr;
 			menu = nullptr;
-			title_bar_id = 0;
 			menu_button_id = 0;
 			image_control_id = 0;
-			id_title_column_id = 0;
-
 		}
 
 		caption_bar_control(container_control_base *_parent, 
@@ -950,10 +974,8 @@ namespace corona
 		{
 			st = _st;
 			menu = _mi;
-			title_bar_id = id_counter::next();
 			menu_button_id = id_counter::next();
 			image_control_id = id_counter::next();
-			id_title_column_id = id_counter::next();
 		}
 
 		void build()

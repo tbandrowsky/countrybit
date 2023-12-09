@@ -388,7 +388,7 @@ namespace corona
 		text_style = {};
 		text_style.name = "code_text_style";
 		text_style.fontName = "Cascadia Mono,Courier New";
-		text_style.fontSize = 10;
+		text_style.fontSize = 14;
 		text_style.bold = false;
 		text_style.italics = false;
 		text_style.underline = false;

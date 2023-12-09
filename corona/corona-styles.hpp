@@ -148,8 +148,8 @@ namespace corona {
 		woodruff.ParagraphBackgroundColor = "#00000000";
 		woodruff.ParagraphTextColor = "111111";
 
-		woodruff.CodeBackgroundColor = "FFFFFF";
-		woodruff.CodeTextColor = "111111";
+		woodruff.CodeBackgroundColor = "00000000";
+		woodruff.CodeTextColor = "F8E0A4";
 
 		woodruff.Section1BackgroundColor = "DEE1E1";
 		woodruff.Section1TextColor = woodruff.ParagraphTextColor;
