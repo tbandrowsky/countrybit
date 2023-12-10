@@ -58,7 +58,7 @@ namespace corona
 			bool err = false;
 			if (data.has_member("status")) {
 				err_string = data["status"]["message"];
-				err = data["status"]["success"];
+				err = (double)(data["status"]["success"]) == 0;
 			}
 			return result{ err_string, err };
 		}

@@ -37,11 +37,10 @@ namespace corona
 	{
 		// First check to make sure we have all the things
 
-		if (!(actor_options.has_member("SelectedObjects") &&
-			actor_options.has_member("CreateOptions") &&
-			actor_options.has_member("SelectOptions"))) {
+		if (!actor_options.has_member("ActorOptions"))
 			return;
-		}
+
+		actor_options = actor_options["ActorOptions"];
 
 		// we clear the page of all of its children controls, and start building our form
 		// clearing the page should also clear the event handlers.
@@ -63,6 +62,12 @@ namespace corona
 			}
 		)
 		.end();
+
+		contents_root.apply_controls(_page.get_root());
+
+		
+
+		return;
 
 		// then, below the caption bar, an overall contents pane
 		// which has a navigation column on the left, and, the tab view on the right
@@ -106,7 +111,7 @@ namespace corona
 			std::string class_name = selected_object["ClassName"].get_string();
 			int64_t class_id = selected_object["ClassId"].get_double();
 			int64_t object_id = selected_object["ObjectId"].get_double();
-			std::string object_id_string = selected_object["ObjectId"].get_string();
+			std::string object_id_string = selected_object["ObjectId"];
 
 			// then, come up with a canonical name for the button, so that, if we keep invoking this, we have the same ids.
 			// we also use this, to tie to our data, which actually drives the application
@@ -158,7 +163,7 @@ namespace corona
 			auto co = create_options[i];
 
 			// then, fish out the stuff we need
-			std::string class_name = co["ClassName"].get_string();
+			std::string class_name = co["CreateClass"].get_string();
 
 			// then, come up with a canonical name for the button, so that, if we keep invoking this, we have the same ids.
 			// we also use this, to tie to our data, which actually drives the application
@@ -295,7 +300,6 @@ namespace corona
 			tv.set_tabs(tabs);
 			});
 
-//		contents.apply_controls(_page.get_root());
 	}
 
 	void run_developer_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
@@ -328,12 +332,9 @@ namespace corona
 				return temp;
 			},
 			[calico_svc, application, application_presentation, app_data, app_menu, st](json _params, data_set* _set) -> int {
-				// when logged in, do something;				
-				if (_set->data.has_member("JwtToken")) {
-					auto& new_page = application_presentation->create_page("home", [_set, application, calico_svc, app_data, application_presentation, app_menu, st](page& new_page) {
-							create_devdesk_page(_set->data, new_page, application, calico_svc, app_data, application_presentation, app_menu, st);
-						});
-				}
+				// when logged in, do something;		
+				// 
+				// 		
 				return 0;
 			},
 			0);
@@ -344,24 +345,29 @@ namespace corona
 					json classes_json;
 					json fields_json;
 					int temp = calico_svc->login("Property", application->getUserName(), _set->data);
+
 					if (temp) {
 						temp = calico_svc->get_classes(_set->data, classes_json);
 						temp = calico_svc->get_fields(_set->data, fields_json);
+						app_data->put_data_set("calico", "classes", classes_json);
+						app_data->put_data_set("calico", "fields", fields_json);
+						app_data->get("actoroptions");
 					}
-					app_data->put_data_set("calico", "classes", classes_json);
-					app_data->put_data_set("calico", "fields", fields_json);
 					return temp;
 				}, 
-				[calico_svc, application, application_presentation](json _params, data_set* _set) {
+				[calico_svc, app_menu, app_data, application, application_presentation, st](json _params, data_set* _set) {
 					// when logged in, do something;
 					auto err = _set->get_error();
-					if (!err.error) 
+					if (err.error) 
 					{
-						application_presentation->select_page("home");
+						application_presentation->pages["login"]->changed("login");
 					}
 					else 
 					{
-						application_presentation->pages["login"]->changed("login");
+						auto& new_page = application_presentation->create_page("home", [_set, application, calico_svc, app_data, application_presentation, app_menu, st](page& new_page) {
+							auto ao = app_data->get_data_set("actoroptions")->data;
+							create_devdesk_page(ao, new_page, application, calico_svc, app_data, application_presentation, app_menu, st);
+							});
 					}
 
 					return 1;
@@ -450,8 +456,8 @@ namespace corona
 					{
 						auto& tc_message = _pg.root->find<code_control>(IDC_STATUS_MESSAGE);
 						auto& tc_detail = _pg.root->find<code_control>(IDC_STATUS_DETAIL);
-						auto err = app_data->get_data_set("login")->get_error();
-						tc_message.text = _set_name + " error.";
+						auto err = app_data->get_data_set(_set_name)->get_error();
+						tc_message.text = _set_name;
 						tc_detail.text = err.message;
 					}
 				);
