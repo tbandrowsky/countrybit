@@ -48,7 +48,7 @@ namespace corona
 
 		_page.clear();
 
-		auto contents_root = _page.column_begin();
+		control_builder contents_root(_page.get_root_container());
 
 		// first we put a caption bar in our standard page
 
@@ -60,21 +60,15 @@ namespace corona
 				_cb.corporate_name = "WOODRUFF SAWYER";
 				_cb.title_name = "PROPERTY AND CASUALTY";
 			}
-		)
-		.end();
+		);
 
-		contents_root.apply_controls(_page.get_root());
-
-		
-
-		return;
-
-		// then, below the caption bar, an overall contents pane
+			// then, below the caption bar, an overall contents pane
 		// which has a navigation column on the left, and, the tab view on the right
 
 		auto contents = contents_root.row_begin(
 			app_data->get_control_id("main_row", []() { return id_counter::next(); }), 
 			[](row_layout& _settings) {
+				_settings.set_margin(10.0_px);
 				_settings.set_size(1.0_container, 1.0_remaining);
 			});
 
@@ -205,7 +199,7 @@ namespace corona
 			// and, now add an event handler, to select the object on the back end, when this is pressed.
 			// the [capture,..](param,...) notation is how C++ does lambda expressions.
 			_page.on_command(button_id, [button_name, app_data, class_name, calico_svc](command_event ce) {	
-					json options = app_data->get("button_name");
+					json options = app_data->get(button_name);
 				});
 
 		}
@@ -368,6 +362,7 @@ namespace corona
 							auto ao = app_data->get_data_set("actoroptions")->data;
 							create_devdesk_page(ao, new_page, application, calico_svc, app_data, application_presentation, app_menu, st);
 							});
+						application_presentation->select_page("home");
 					}
 
 					return 1;

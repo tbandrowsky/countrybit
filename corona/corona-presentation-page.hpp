@@ -54,8 +54,27 @@ namespace corona
 
 		void clear()
 		{
+			key_up_bindings.clear();
+			key_down_bindings.clear();
+			mouse_move_bindings.clear();
+			mouse_click_bindings.clear();
+			mouse_left_click_bindings.clear();
+			mouse_right_click_bindings.clear();
+			item_changed_bindings.clear();
+			list_changed_events.clear();
+			command_bindings.clear();
+			unload_bindings.clear();
+			load_bindings.clear();
+			select_bindings.clear();
+			update_event = nullptr;
+			change_event = nullptr;
 			destroy();
 			root = std::make_shared<column_layout>();
+		}
+
+		auto get_root_container() 
+		{
+			return std::dynamic_pointer_cast<column_layout>(root);
 		}
 
 		inline control_base* get_root() {

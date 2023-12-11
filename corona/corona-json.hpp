@@ -181,6 +181,31 @@ namespace corona
 			return value_base->to_json();
 		}
 
+		std::string to_json_string()
+		{
+			std::string json_str = to_json();
+			std::string escaped_json_str = "";
+
+			for (auto in : json_str)
+			{
+				switch (in) {
+				case '\\':
+				case '"':
+					escaped_json_str += '\\';
+					escaped_json_str += in;
+					break;
+				case '\n':
+					escaped_json_str += '\\';
+					escaped_json_str += 'n';
+					break;
+				default:
+					escaped_json_str += in;
+					break;
+				}
+			}
+			return escaped_json_str;
+		}
+
 		bool is_double() const
 		{
 			return (bool)double_impl;

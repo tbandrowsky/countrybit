@@ -87,6 +87,12 @@ namespace corona
 			root = _root;
 		}
 
+		control_builder(std::shared_ptr<column_layout> _root)
+		{
+			parent = nullptr;
+			root = std::dynamic_pointer_cast<container_control>(_root);
+		}
+
 		control_builder(control_builder* _parent, std::shared_ptr<container_control>& _root)
 		{
 			parent = _parent;
@@ -121,6 +127,8 @@ namespace corona
 
 		void apply_controls(control_base* _control)
 		{
+			if (_control == root.get())
+				return;
 			_control->children.clear();
 			for (auto child : root->children) {
 				child->parent = _control;

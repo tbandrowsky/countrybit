@@ -196,11 +196,11 @@ namespace corona {
 
 	};
 
-	int id_counter::status_text_title_id = 100000;
-	int id_counter::status_text_subtitle_id = 100001;
-	int id_counter::status_bar_id = 100002;
+	int id_counter::status_text_title_id = 20000;
+	int id_counter::status_text_subtitle_id = 20001;
+	int id_counter::status_bar_id = 20002;
 
-	int id_counter::id = 100010;
+	int id_counter::id = 10001;
 	int id_counter::next()
 	{
 		id++;

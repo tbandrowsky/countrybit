@@ -201,7 +201,8 @@ namespace corona
 			json calico_request = jp.create_object();
 			if (credentials.has_member("JwtToken")) {
 				calico_request.copy_member("JwtToken", credentials);
-				calico_request.put_member("ObjectJson", source);
+				std::string object_json = source.to_json_string();
+				calico_request.put_member("ObjectJson", object_json);
 				http_params calico_http = calico_client.post(calico_host, calico_port, "api/CreateObject", calico_request);
 
 				if (calico_http.response.content_type.starts_with("application/json"))
