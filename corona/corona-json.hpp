@@ -925,14 +925,16 @@ namespace corona
 		{
 			bool result = false;
 			_src = eat_white(_src);
-			if (isdigit(*_src) || *_src == '.')
+			if (isdigit(*_src) || *_src == '.' || *_src == '-')
 			{
 				std::string temp = "";
 				result = true;
-				while (isdigit(*_src) || *_src == '.' || *_src == '_')
+				while (isdigit(*_src) || *_src == '.' || *_src == '_' || *_src == '-')
 				{
 					check_line(_src);
-					temp += *_src;
+					if (*_src != '_') {
+						temp += *_src;
+					}
 					_src++;
 				}
 				_result = std::strtod(temp.c_str(), nullptr);

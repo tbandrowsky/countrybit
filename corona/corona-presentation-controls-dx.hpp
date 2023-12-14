@@ -6,7 +6,7 @@
 namespace corona
 {
 
-	class draw_control : public control_base, public cloneable<draw_control>
+	class draw_control : public control_base
 	{
 	public:
 
@@ -28,9 +28,8 @@ namespace corona
 
 		draw_control(const draw_control& _src) : control_base( _src )
 		{
+			background_brush_win32 = nullptr;
 			background_brush = _src.background_brush;
-			host = _src.host;
-			window = _src.window;
 			on_draw = _src.on_draw;
 			on_create = _src.on_create;
 		}
@@ -45,7 +44,10 @@ namespace corona
 
 		virtual ~draw_control()
 		{
-			;
+			if (background_brush_win32) 
+			{
+				::DeleteObject(background_brush_win32);
+			}
 		}
 
 		virtual void create(std::weak_ptr<applicationBase> _host)
@@ -156,7 +158,7 @@ namespace corona
 	};
 
 
-	class camera_control : public draw_control, public cloneable<camera_control>
+	class camera_control : public draw_control
 	{
 		void init();
 		solidBrushRequest	border_brush;
@@ -172,7 +174,7 @@ namespace corona
 
 	};
 
-	class grid_control : public draw_control, public cloneable<grid_control>
+	class grid_control : public draw_control
 	{
 		void init();
 		solidBrushRequest	border_brush;
@@ -196,7 +198,7 @@ namespace corona
 	const int IDC_CHART_TREE_BOX = 7 + IDC_CHART_BASE;
 	const int IDC_CHART_TREE_MAP = 8 + IDC_CHART_BASE;
 
-	class chart_control : public draw_control, public cloneable<chart_control>
+	class chart_control : public draw_control
 	{
 		void init();
 		solidBrushRequest	border_brush;
@@ -243,7 +245,7 @@ namespace corona
 	};
 
 
-	class slide_control : public draw_control, public cloneable<slide_control>
+	class slide_control : public draw_control
 	{
 		void init();
 		solidBrushRequest	border_brush;
@@ -257,7 +259,7 @@ namespace corona
 
 	};
 
-	class gradient_button_control : public draw_control, public cloneable<gradient_button_control>
+	class gradient_button_control : public draw_control
 	{
 	public:
 
@@ -411,7 +413,7 @@ namespace corona
 
 	};
 
-	class minimize_button_control : public gradient_button_control, public cloneable<minimize_button_control>
+	class minimize_button_control : public gradient_button_control
 	{
 	public:
 
@@ -428,7 +430,7 @@ namespace corona
 
 	};
 
-	class maximize_button_control : public gradient_button_control, public cloneable<maximize_button_control>
+	class maximize_button_control : public gradient_button_control
 	{
 	public:
 
@@ -445,7 +447,7 @@ namespace corona
 
 	};
 
-	class close_button_control : public gradient_button_control, public cloneable<close_button_control>
+	class close_button_control : public gradient_button_control
 	{
 	public:
 
@@ -514,7 +516,7 @@ namespace corona
 
 	};
 
-	class menu_button_control : public gradient_button_control, public cloneable<menu_button_control>
+	class menu_button_control : public gradient_button_control
 	{
 	public:
 
@@ -533,7 +535,7 @@ namespace corona
 		virtual void on_subscribe(presentation_base* _presentation, page_base* _page);
 	};
 
-	class tab_button_control : public gradient_button_control, public cloneable<tab_button_control>
+	class tab_button_control : public gradient_button_control
 	{
 	public:
 
@@ -541,14 +543,16 @@ namespace corona
 		solidBrushRequest	text_fill_brush;
 		textStyleRequest	text_style;
 		double				icon_width;
-		int* active_id;
+		int*				active_id;
+		std::function<void(tab_button_control& _tb)> tab_selected;
 
 		tab_button_control() : active_id(nullptr)
 		{
-			;
+			init();
 		}
 
 		tab_button_control(const tab_button_control& _src) : gradient_button_control(_src) {
+			init();
 			text = _src.text;
 			text_fill_brush = _src.text_fill_brush;
 			text_style = _src.text_style;
@@ -571,7 +575,7 @@ namespace corona
 
 
 	class image_control :
-		public draw_control, public cloneable<image_control>
+		public draw_control
 	{
 
 		enum image_modes {
@@ -976,13 +980,17 @@ namespace corona
 				if (active_id) {
 					*active_id = id;
 				}
+				if (tab_selected)
+				{
+					tab_selected(*this);
+				}
 			});
 	}
 
 	void tab_button_control::init()
 	{
 		set_origin(0.0_px, 0.0_px);
-		set_size(1.0_container, 1.2_fontgr);
+		set_size(200.0_px, 1.0_container);
 		icon_width = 40;
 
 		auto ctrl = this;

@@ -93,6 +93,18 @@ namespace corona
 			root = std::dynamic_pointer_cast<container_control>(_root);
 		}
 
+		control_builder(std::shared_ptr<row_layout> _root)
+		{
+			parent = nullptr;
+			root = std::dynamic_pointer_cast<container_control>(_root);
+		}
+
+		control_builder(std::shared_ptr<absolute_layout> _root)
+		{
+			parent = nullptr;
+			root = std::dynamic_pointer_cast<container_control>(_root);
+		}
+
 		control_builder(control_builder* _parent, std::shared_ptr<container_control>& _root)
 		{
 			parent = _parent;
@@ -718,6 +730,7 @@ namespace corona
 			return *this;
 		}
 
+		control_builder& tab_button(int _id, std::function<void(tab_button_control&)> _settings = nullptr);
 		control_builder& tab_view(int _id, std::function<void(tab_view_control&)> _settings = nullptr);
 		control_builder& search_view(int _id, std::function<void(search_view_control&)> _settings = nullptr);
 		control_builder& caption_bar(int _id, presentation_style* _st, menu_item* _mi, std::function<void(caption_bar_control&)> _settings = nullptr);
@@ -735,60 +748,96 @@ namespace corona
 		std::shared_ptr<control_base> tab_controls;
 	};
 
-	class tab_view_control : public column_layout, public cloneable<tab_view_control>
+	class tab_view_control : public column_layout
 	{
-		std::shared_ptr<row_layout>	 tab_buttons;
-		std::shared_ptr<frame_layout> current_tab;
 		std::vector<tab_pane> tab_panes;
+		frame_layout* content_frame = nullptr;
 
 		int active_id;
 
 		void init()
 		{
+			children.clear();
+
 			control_builder builder;
-			builder.row_begin(id_counter::next(), [](row_layout& _settings) {
-				_settings.set_size(1.0_container, 50.0_px);
+
+			auto tab_row = builder.row_begin(id_counter::next(), [](row_layout& _settings) {
+				_settings.set_size(1.0_container, 100.0_px);
 				});
-			builder.frame_begin(id_counter::next(), [](frame_layout& _settings) {
+			auto frame_row = builder.frame_begin(id_counter::next(), [this](frame_layout& _settings) {
 				_settings.set_size(1.0_container, 1.0_remaining);
+				content_frame = &_settings;
 				});
+
+			for (int i = 0; i < tab_panes.size(); i++)
+			{
+				auto dat = tab_panes[i];
+
+				if (!i)
+				{
+					active_id = dat.id;
+				}
+
+				tab_row.tab_button(dat.id, [this, dat](tab_button_control& _tb) {
+					_tb.text = dat.name;
+					_tb.active_id = &active_id;
+					_tb.tab_selected = [this](tab_button_control& _src)->void
+						{
+							tab_selected(_src);
+						};
+				});
+			}
+
 			builder.apply_controls(this);
-			tab_buttons = std::dynamic_pointer_cast<row_layout>(children[0]);
-			current_tab = std::dynamic_pointer_cast<frame_layout>(children[1]);
 		}
 
 	public:
 
 		tab_view_control()
 		{
-			init();
+			
+		}
+
+		tab_view_control(const tab_view_control& _src) : column_layout(_src)
+		{
+
 		}
 
 		tab_view_control(container_control_base *_parent, int _id) : column_layout(_parent, _id)
 		{
-			init();
+			
+		}
+
+		virtual std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<tab_view_control>(*this);
+			return tv;
+		}
+
+		virtual ~tab_view_control()
+		{
+			;
 		}
 
 		void set_tabs(std::vector<tab_pane> _new_panes)
 		{
 			tab_panes = _new_panes;
-			tab_buttons->children.clear();
-			for (int i = 0; i < tab_panes.size(); i++)
-			{
-				auto tb = std::make_shared<tab_button_control>();
-				auto dat = tab_panes[i];
-				tb->id = dat.id;
-				tb->text = dat.name;
-				tb->active_id = &active_id;
-				tab_buttons->children.push_back(tb);
-				if (!i) {
-					active_id = tb->id;
-				}
+			init();
+		}
+
+		void tab_selected(tab_button_control& _tab)
+		{
+			auto tbi = std::find_if(tab_panes.begin(), tab_panes.end(), [this](tab_pane& _tb) {
+				return _tb.id = this->active_id;
+				});
+
+			if (tbi != tab_panes.end()) {
+				content_frame->set_contents(tbi->tab_controls.get());
 			}
 		}
 	};
 
-	class search_view_control : public column_layout, public cloneable<search_view_control>
+	class search_view_control : public column_layout
 	{
 
 		void init()
@@ -828,11 +877,19 @@ namespace corona
 			idc_search_results = -1;
 		}
 
+		search_view_control(const search_view_control& _src) = default;
+
 		search_view_control(container_control_base* _parent, int _id) : column_layout(_parent, _id)
 		{
 			idc_search_text = -1;
 			idc_search_command = -1;
 			idc_search_results = -1;
+		}
+
+		virtual std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<search_view_control>(*this);
+			return tv;
 		}
 
 		void set_item_source(array_data_source _item_source)
@@ -847,7 +904,7 @@ namespace corona
 		}
 	};
 
-	class caption_bar_control : public container_control, public cloneable<caption_bar_control>
+	class caption_bar_control : public container_control
 	{
 		void init()
 		{
@@ -975,6 +1032,8 @@ namespace corona
 			image_control_id = 0;
 		}
 
+		caption_bar_control(const caption_bar_control& _src) = default;
+
 		caption_bar_control(container_control_base *_parent, 
 			int _id, 
 			presentation_style *_st, 
@@ -986,6 +1045,13 @@ namespace corona
 			image_control_id = id_counter::next();
 		}
 
+		std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<caption_bar_control>(*this);
+			return tv;
+		}
+
+
 		void build()
 		{
 			init();
@@ -995,7 +1061,7 @@ namespace corona
 
 	};
 
-	class status_bar_control : public container_control, public cloneable<status_bar_control>
+	class status_bar_control : public container_control
 	{
 	public:
 
@@ -1034,11 +1100,19 @@ namespace corona
 		presentation_style* st = nullptr;
 
 		status_bar_control() { ; }
+		status_bar_control(const status_bar_control& _src) { ; }
 		status_bar_control(container_control_base* _parent, int _id) : container_control(_parent, _id) { ; }
+
+		std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<status_bar_control>(*this);
+			return tv;
+		}
+
 		virtual ~status_bar_control() { ; }
 	};
 
-	class form_single_column_control : public container_control, public cloneable<form_single_column_control>
+	class form_single_column_control : public container_control
 	{
 	public:
 
@@ -1047,8 +1121,15 @@ namespace corona
 		std::function<void(container_control& _settings)> add_controls;
 
 		form_single_column_control() { ; }
+		form_single_column_control(const form_single_column_control& _src) = default;
 		form_single_column_control(container_control_base* _parent, int _id) : container_control(_parent, _id) { ; }
 		virtual ~form_single_column_control() { ; }
+
+		std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<form_single_column_control>(*this);
+			return tv;
+		}
 
 		void init()
 		{
@@ -1075,7 +1156,7 @@ namespace corona
 		}
 	};
 
-	class form_double_column_control : public container_control, public cloneable<container_control>
+	class form_double_column_control : public container_control
 	{
 
 	public:
@@ -1117,12 +1198,29 @@ namespace corona
 		std::function<void(container_control& _settings)> add_controls2;
 
 		form_double_column_control() { ; }
+		form_double_column_control(const form_double_column_control& _src) = default;
 		form_double_column_control(container_control_base* _parent, int _id) : container_control(_parent, _id) { ; }
 		virtual ~form_double_column_control() { ; }
+
+		std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<form_double_column_control>(*this);
+			return tv;
+		}
 
 	};
 
 	// implementation
+
+	control_builder& control_builder::tab_button(int _id, std::function<void(tab_button_control&)> _settings)
+	{
+		auto tc = create<tab_button_control>(_id);
+		apply_item_sizes(tc);
+		if (_settings) {
+			_settings(*tc);
+		}
+		return *this;
+	}
 
 	control_builder& control_builder::tab_view(int _id, std::function<void(tab_view_control&)> _settings)
 	{

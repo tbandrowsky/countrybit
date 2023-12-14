@@ -5,16 +5,30 @@
 
 namespace corona
 {
-	class text_display_control : public draw_control, public cloneable<text_display_control>
+	class text_display_control : public draw_control
 	{
 	public:
 		std::string			text;
 		solidBrushRequest	text_fill_brush;
 		textStyleRequest	text_style;
 
-		text_display_control(const text_display_control& _src) = default;
+		text_display_control(const text_display_control& _src) : draw_control(_src)
+		{
+			text = _src.text;
+			text_fill_brush = _src.text_fill_brush;
+			text_style = _src.text_style;
+		}
+
 		text_display_control();
 		text_display_control(container_control_base* _parent, int _id);
+		virtual ~text_display_control() { ; }
+
+		virtual std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<text_display_control>(*this);
+			return tv;
+		}
+
 
 		void init();
 		virtual double get_font_size() { return text_style.fontSize; }
@@ -26,75 +40,164 @@ namespace corona
 
 	};
 
-	class title_control : public text_display_control, public cloneable<title_control>
+	class title_control : public text_display_control
 	{
 		void set_default_styles();
 	public:
 		title_control();
+		title_control(const title_control& _src) : text_display_control(_src) 
+		{
+			;
+		}
 		title_control(container_control_base* _parent, int _id);
+
+		virtual std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<title_control>(*this);
+			return tv;
+		}
+
 		virtual ~title_control();
 	};
 
-	class subtitle_control : public text_display_control, public cloneable<subtitle_control>
+	class subtitle_control : public text_display_control
 	{
 		void set_default_styles();
 	public:
 		subtitle_control();
+		subtitle_control(const subtitle_control& _src) : text_display_control(_src)
+		{
+			;
+		}
 		subtitle_control(container_control_base* _parent, int _id);
+
+		virtual std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<subtitle_control>(*this);
+			return tv;
+		}
+
 		virtual ~subtitle_control();
 	};
 
-	class chaptertitle_control : public text_display_control, public cloneable<chaptertitle_control>
+	class chaptertitle_control : public text_display_control
 	{
 		void set_default_styles();
 	public:
 		chaptertitle_control();
+		chaptertitle_control(const chaptertitle_control& _src) : text_display_control(_src)
+		{
+			;
+		}
 		chaptertitle_control(container_control_base* _parent, int _id);
+
+		virtual std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<chaptertitle_control>(*this);
+			return tv;
+		}
+
 		virtual ~chaptertitle_control();
 	};
 
-	class chaptersubtitle_control : public text_display_control, public cloneable<chaptersubtitle_control>
+	class chaptersubtitle_control : public text_display_control
 	{
 		void set_default_styles();
 	public:
 		chaptersubtitle_control();
+		chaptersubtitle_control(const chaptersubtitle_control& _src) : text_display_control(_src)
+		{
+			;
+		}
 		chaptersubtitle_control(container_control_base* _parent, int _id);
+
+		virtual std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<chaptersubtitle_control>(*this);
+			return tv;
+		}
+
 		virtual ~chaptersubtitle_control();
 	};
 
-	class paragraph_control : public text_display_control, public cloneable<paragraph_control>
+	class paragraph_control : public text_display_control
 	{
 		void set_default_styles();
 	public:
 		paragraph_control();
 		paragraph_control(container_control_base* _parent, int _id);
+		paragraph_control(const paragraph_control& _src) : text_display_control(_src)
+		{
+			;
+		}
+
+		virtual std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<paragraph_control>(*this);
+			return tv;
+		}
+
+
 		virtual ~paragraph_control();
 	};
 
-	class code_control : public text_display_control, public cloneable<code_control>
+	class code_control : public text_display_control
 	{
 		void set_default_styles();
 	public:
 		code_control();
 		code_control(container_control_base* _parent, int _id);
+		code_control(const code_control& _src) : text_display_control(_src)
+		{
+			;
+		}
+
+		virtual std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<code_control>(*this);
+			return tv;
+		}
+
 		virtual ~code_control();
 	};
 
-	class label_control : public text_display_control, public cloneable<label_control>
+	class label_control : public text_display_control
 	{
 		void set_default_styles();
 	public:
 		label_control();
 		label_control(container_control_base* _parent, int _id);
+		label_control(const label_control& _src) : text_display_control(_src)
+		{
+			;
+		}
+
+		virtual std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<label_control>(*this);
+			return tv;
+		}
+
 		virtual ~label_control();
 	};
 
-	class placeholder_control : public text_display_control, public cloneable<placeholder_control>
+	class placeholder_control : public text_display_control
 	{
 		void set_default_styles();
 	public:
 		placeholder_control();
 		placeholder_control(container_control_base* _parent, int _id);
+		placeholder_control(const placeholder_control& _src) : text_display_control(_src)
+		{
+			;
+		}
+
+		virtual std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<placeholder_control>(*this);
+			return tv;
+		}
+
 		virtual ~placeholder_control();
 	};
 

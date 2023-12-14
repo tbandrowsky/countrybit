@@ -200,6 +200,16 @@ namespace corona
 			if (class_control_map.contains(class_name)) {
 				cjm = class_control_map[class_name];
 			}
+			else 
+			{
+				//std::function<std::weak_ptr<control_base>(control_base *_parent, json& _array, int _index)>;
+				cjm = [class_name](control_base* _parent, json& _array, int _index) -> std::weak_ptr<control_base>
+					{
+						std::shared_ptr<paragraph_control> new_ptr = std::make_shared<paragraph_control>(_parent, id_counter::next());
+						new_ptr->text = class_name;
+						return new_ptr;
+					};
+			}
 
 			return cjm;
 		}
@@ -247,13 +257,23 @@ namespace corona
 				throw std::invalid_argument("Invalid source name for dataset");
 			}
 
-			auto ds = std::make_shared<data_set>();
+			std::shared_ptr<data_set> ds;
+
+			if (data_sets.contains(_set_name))
+			{
+				ds = data_sets[_set_name];
+			}
+			else 
+			{
+				ds = std::make_shared<data_set>();
+				data_sets.insert_or_assign(_set_name, ds);
+			}
+
 			ds->source = data_sources[_source_name];
 			ds->cache_seconds = _cache_seconds;
 			ds->fetch = _fetch;
 			ds->share = _gui;
 			ds->name = _set_name;
-			data_sets.insert_or_assign(_set_name, ds);
 		}
 
 		void put_data_set(
@@ -268,10 +288,22 @@ namespace corona
 				throw std::invalid_argument("Invalid source name for dataset");
 			}
 
-			auto ds = std::make_shared<data_set>();
+			std::shared_ptr<data_set> ds;
+
+			if (data_sets.contains(_set_name))
+			{
+				ds = data_sets[_set_name];
+			}
+			else
+			{
+				ds = std::make_shared<data_set>();
+				data_sets.insert_or_assign(_set_name, ds);
+			}
+
 			ds->source = data_sources[_source_name];
 			ds->cache_seconds = 3600;
 			ds->data = _data;
+			ds->name = _set_name;
 
 			ds->fetch = [](json _params, data_set* _set)->int {
 				return 0;
@@ -281,8 +313,6 @@ namespace corona
 				return 0;
 			};
 
-			ds->name = _set_name;
-			data_sets.insert_or_assign(_set_name, ds);
 		}
 
 	};

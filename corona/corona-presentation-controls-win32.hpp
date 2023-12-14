@@ -44,6 +44,13 @@ namespace corona
 			set_default_styles();
 		}
 
+		windows_control(const windows_control& _src) : control_base(_src),
+			window(nullptr),
+			text_font(nullptr)
+		{
+			text_style = _src.text_style;
+		}
+
 		windows_control(container_control_base *_parent, int _id)
 			: control_base(_parent, _id),
 			window(nullptr),
@@ -52,6 +59,12 @@ namespace corona
 			set_origin(0.0_px, 0.0_px);
 			set_size(1.0_container, 1.2_fontgr);
 			set_default_styles();
+		}
+
+		virtual std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<windows_control>(*this);
+			return tv;
 		}
 
 		virtual const char* get_window_class() = 0;
@@ -138,6 +151,17 @@ namespace corona
 		text_control_base(container_control_base* _parent, int _id) : windows_control(_parent, _id)
 		{
 			;
+		}
+
+		text_control_base(const text_control_base& _src) : windows_control(_src)
+		{
+			text = _src.text;
+		}
+
+		virtual std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<title_control>(*this);
+			return tv;
 		}
 
 		virtual ~text_control_base() { ; }
@@ -232,11 +256,24 @@ namespace corona
 			control_base::set_size(1.0_container, 10.0_fontgr);
 		}
 
+		table_control_base(const table_control_base& _src) : windows_control(_src)
+		{
+			mtable = _src.mtable;
+			choices = _src.choices;
+		}
+
 		table_control_base(container_control_base* _parent, int _id) : windows_control(_parent, _id)
 		{
 			control_base::set_origin(0.0_px, 0.0_px);
 			control_base::set_size(1.0_container, 10.0_fontgr);
 		}
+
+		virtual std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<title_control>(*this);
+			return tv;
+		}
+
 
 		virtual ~table_control_base() { ; }
 
@@ -266,11 +303,23 @@ namespace corona
 			control_base::set_size(1.0_container, 10.0_fontgr);
 		}
 
+		list_control_base(const list_control_base& _src) : windows_control(_src)
+		{
+			choices = _src.choices;
+		}
+
 		list_control_base(container_control_base* _parent, int _id) : windows_control(_parent, _id)
 		{
 			control_base::set_origin(0.0_px, 0.0_px);
 			control_base::set_size(1.0_container, 10.0_fontgr);
 		}
+
+		virtual std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<title_control>(*this);
+			return tv;
+		}
+
 
 		virtual ~list_control_base() { ; }
 
@@ -315,10 +364,21 @@ namespace corona
 			control_base::set_size(1.0_container, 2.0_fontgr);
 		}
 
+		dropdown_control_base(const dropdown_control_base& _src) : windows_control(_src)
+		{
+			choices = _src.choices;
+		}
+
 		dropdown_control_base(container_control_base* _parent, int _id) : windows_control(_parent, _id)
 		{
 			control_base::set_origin(0.0_px, 0.0_px);
 			control_base::set_size(1.0_container, 2.0_fontgr);
+		}
+
+		virtual std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<title_control>(*this);
+			return tv;
 		}
 
 		virtual ~dropdown_control_base() { ; }
@@ -377,18 +437,31 @@ namespace corona
 	const int ListViewWindowsStyles = DefaultWindowStyles | LVS_REPORT | LVS_SINGLESEL | WS_BORDER | WS_VSCROLL;
 	const int ListBoxWindowsStyles = DefaultWindowStyles | WS_BORDER | WS_VSCROLL;
 
-	class static_control : public text_control_base, public cloneable<static_control>
+	class static_control : public text_control_base
 	{
 	public:
 		static_control(container_control_base* _parent, int _id) : text_control_base(_parent, _id) { ; }
 		virtual ~static_control() { ; }
+
+
+		static_control(const static_control& _src) : text_control_base(_src)
+		{
+			
+		}
+
+		virtual std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<title_control>(*this);
+			return tv;
+		}
+
 
 		virtual const char* get_window_class() { return WC_STATIC; }
 		virtual DWORD get_window_style() { return DisplayOnlyWindowStyles; }
 		virtual DWORD get_window_ex_style() { return 0; }
 	};
 
-	template <long ButtonWindowStyles> class button_control : public text_control_base, public cloneable<button_control<ButtonWindowStyles>>
+	template <long ButtonWindowStyles> class button_control : public text_control_base
 	{
 		using control_base::id;
 		using windows_control::window_host;
@@ -397,52 +470,121 @@ namespace corona
 		HICON caption_icon;
 	public:
 		button_control(container_control_base* _parent, int _id) : text_control_base(_parent, _id) { ; }
+		button_control(const button_control& _src) : text_control_base(_src)
+		{
+
+		}
+		virtual std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<title_control>(*this);
+			return tv;
+		}
+
 		virtual ~button_control() { ; }
 		virtual const char* get_window_class() { return WC_BUTTON; }
 		virtual DWORD get_window_style() { return ButtonWindowStyles; }
 		virtual DWORD get_window_ex_style() { return 0; }
 	};
 
-	class pushbutton_control : public button_control<PushButtonWindowStyles>, public cloneable<pushbutton_control>
+	class pushbutton_control : public button_control<PushButtonWindowStyles>
 	{
 	public:
 		pushbutton_control(container_control_base* _parent, int _id) : button_control<PushButtonWindowStyles>(_parent, _id) { ; }
+		pushbutton_control(const pushbutton_control& _src) : button_control<PushButtonWindowStyles>(_src)
+		{
+
+		}
+		virtual std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<title_control>(*this);
+			return tv;
+		}
+
 		virtual ~pushbutton_control() { ; }
 	};
 
-	class pressbutton_control : public button_control<PressButtonWindowStyles>, public cloneable<pressbutton_control>
+	class pressbutton_control : public button_control<PressButtonWindowStyles>
 	{
 	public:
 		pressbutton_control(container_control_base* _parent, int _id) : button_control<PressButtonWindowStyles>(_parent, _id) { ; }
+		pressbutton_control(const pressbutton_control& _src) : button_control<PressButtonWindowStyles>(_src)
+		{
+
+		}
+		virtual std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<title_control>(*this);
+			return tv;
+		}
+
 		virtual ~pressbutton_control() { ; }
 	};
 
-	class radiobutton_control : public button_control<RadioButtonWindowStyles>, public cloneable<radiobutton_control>
+	class radiobutton_control : public button_control<RadioButtonWindowStyles>
 	{
 	public:
 		radiobutton_control(container_control_base* _parent, int _id) : button_control<RadioButtonWindowStyles>(_parent, _id) { ; }
+		radiobutton_control(const radiobutton_control& _src) : button_control<RadioButtonWindowStyles>(_src)
+		{
+
+		}
+		virtual std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<title_control>(*this);
+			return tv;
+		}
+
 		virtual ~radiobutton_control() { ; }
 	};
 
-	class checkbox_control : public button_control<CheckboxWindowStyles>, public cloneable<checkbox_control>
+	class checkbox_control : public button_control<CheckboxWindowStyles>
 	{
 	public:
 		checkbox_control(container_control_base* _parent, int _id) : button_control<CheckboxWindowStyles>(_parent, _id) { ; }
+		checkbox_control(const checkbox_control& _src) : button_control<CheckboxWindowStyles>(_src)
+		{
+
+		}
+		virtual std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<title_control>(*this);
+			return tv;
+		}
+
 		virtual ~checkbox_control() { ; }
 	};
 
-	class linkbutton_control : public button_control<LinkButtonWindowStyles>, public cloneable<linkbutton_control>
+	class linkbutton_control : public button_control<LinkButtonWindowStyles>
 	{
 	public:
 		linkbutton_control(container_control_base* _parent, int _id) : button_control<LinkButtonWindowStyles>(_parent, _id) { ; }
+		linkbutton_control(const linkbutton_control& _src) : button_control<LinkButtonWindowStyles>(_src)
+		{
+
+		}
+		virtual std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<title_control>(*this);
+			return tv;
+		}
+
 		virtual ~linkbutton_control() { ; }
 	};
 
-	class edit_control : public text_control_base, public cloneable<edit_control>
+	class edit_control : public text_control_base
 	{
 	public:
 		edit_control(container_control_base* _parent, int _id) : text_control_base(_parent, _id) { ; }
 		virtual ~edit_control() { ; }
+		edit_control(const edit_control& _src) : text_control_base(_src)
+		{
+
+		}
+		virtual std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<title_control>(*this);
+			return tv;
+		}
 
 		virtual const char* get_window_class() { return WC_EDIT; }
 		virtual DWORD get_window_style() { return EditWindowStyles; }
@@ -450,11 +592,21 @@ namespace corona
 
 	};
 
-	class listbox_control : public list_control_base, public cloneable<listbox_control>
+	class listbox_control : public list_control_base
 	{
 	public:
 		listbox_control(container_control_base* _parent, int _id) : list_control_base(_parent, _id) { ; }
 		virtual ~listbox_control() { ; }
+
+		listbox_control(const listbox_control& _src) : list_control_base(_src)
+		{
+
+		}
+		virtual std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<title_control>(*this);
+			return tv;
+		}
 
 		virtual const char* get_window_class() { return WC_LISTBOX; }
 		virtual DWORD get_window_style() { return ListBoxWindowsStyles; }
@@ -462,11 +614,21 @@ namespace corona
 
 	};
 
-	class combobox_control : public dropdown_control_base, public cloneable<combobox_control>
+	class combobox_control : public dropdown_control_base
 	{
 	public:
 		combobox_control(container_control_base* _parent, int _id) : dropdown_control_base(_parent, _id) { ; }
 		virtual ~combobox_control() { ; }
+
+		combobox_control(const combobox_control& _src) : dropdown_control_base(_src)
+		{
+
+		}
+		virtual std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<title_control>(*this);
+			return tv;
+		}
 
 		virtual const char* get_window_class() { return WC_COMBOBOX; }
 		virtual DWORD get_window_style() { return ComboWindowStyles; }
@@ -474,7 +636,7 @@ namespace corona
 
 	};
 
-	class comboboxex_control : public windows_control, public cloneable<comboboxex_control>
+	class comboboxex_control : public windows_control
 	{
 	public:
 		using control_base::id;
@@ -483,6 +645,17 @@ namespace corona
 
 		comboboxex_control();
 		comboboxex_control(container_control_base* _parent, int _id);
+
+		comboboxex_control(const comboboxex_control& _src) : windows_control(_src)
+		{
+			choices = _src.choices;
+		}
+		virtual std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<title_control>(*this);
+			return tv;
+		}
+
 		virtual ~comboboxex_control() { ; }
 		void data_changed();
 		void set_list(list_data& _choices);
@@ -495,11 +668,21 @@ namespace corona
 
 	};
 
-	class listview_control : public table_control_base, public cloneable<listview_control>
+	class listview_control : public table_control_base
 	{
 	public:
 		listview_control(container_control_base* _parent, int _id) : table_control_base(_parent, _id) { ; }
 		virtual ~listview_control() { ; }
+
+		listview_control(const listview_control& _src) : table_control_base(_src)
+		{
+			;
+		}
+		virtual std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<title_control>(*this);
+			return tv;
+		}
 
 		virtual const char* get_window_class() { return WC_LISTVIEW; }
 		virtual DWORD get_window_style() { return ListViewWindowsStyles; }
@@ -507,11 +690,21 @@ namespace corona
 
 	};
 
-	class scrollbar_control : public windows_control, public cloneable<scrollbar_control>
+	class scrollbar_control : public windows_control
 	{
 	public:
 		scrollbar_control(container_control_base* _parent, int _id) : windows_control(_parent, _id) { ; }
 		virtual ~scrollbar_control() { ; }
+
+		scrollbar_control(const scrollbar_control& _src) : windows_control(_src)
+		{
+			;
+		}
+		virtual std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<title_control>(*this);
+			return tv;
+		}
 
 		virtual const char* get_window_class() { return WC_SCROLLBAR; }
 		virtual DWORD get_window_style() { return DefaultWindowStyles; }
@@ -519,7 +712,7 @@ namespace corona
 
 	};
 
-	class richedit_control : public text_control_base, public cloneable<richedit_control>
+	class richedit_control : public text_control_base
 	{
 	public:
 		void set_html(const std::string& _text);
@@ -528,7 +721,19 @@ namespace corona
 		richedit_control(container_control_base* _parent, int _id) : text_control_base(_parent, _id) {
 			LoadLibrary(TEXT("Msftedit.dll"));
 		}
+
+		richedit_control(const richedit_control& _src) : text_control_base(_src)
+		{
+			;
+		}
+		virtual std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<title_control>(*this);
+			return tv;
+		}
+
 		virtual ~richedit_control() { ; }
+
 
 		virtual const char* get_window_class() { return nullptr; }
 		virtual const wchar_t* get_window_class_w() { return MSFTEDIT_CLASS; }
@@ -537,13 +742,24 @@ namespace corona
 
 	};
 
-	class datetimepicker_control : public windows_control, public cloneable<datetimepicker_control>
+	class datetimepicker_control : public windows_control
 	{
 	public:
 		void set_text(const std::string& _text);
 		std::string get_text();
 
 		datetimepicker_control(container_control_base* _parent, int _id) : windows_control(_parent, _id) { ; }
+
+		datetimepicker_control(const datetimepicker_control& _src) : windows_control(_src)
+		{
+			;
+		}
+		virtual std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<title_control>(*this);
+			return tv;
+		}
+
 		virtual ~datetimepicker_control() { ; }
 
 		virtual const char* get_window_class() { return DATETIMEPICK_CLASS; }
@@ -552,11 +768,21 @@ namespace corona
 
 	};
 
-	class monthcalendar_control : public windows_control, public cloneable<monthcalendar_control>
+	class monthcalendar_control : public windows_control
 	{
 	public:
 		monthcalendar_control(container_control_base* _parent, int _id) : windows_control(_parent, _id) { ; }
 		virtual ~monthcalendar_control() { ; }
+
+		monthcalendar_control(const monthcalendar_control& _src) : windows_control(_src)
+		{
+			;
+		}
+		virtual std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<monthcalendar_control>(*this);
+			return tv;
+		}
 
 		virtual const char* get_window_class() { return MONTHCAL_CLASS; }
 		virtual DWORD get_window_style() { return DefaultWindowStyles; }
@@ -564,11 +790,22 @@ namespace corona
 
 	};
 
-	class animate_control : public windows_control, public cloneable<animate_control>
+	class animate_control : public windows_control
 	{
 	public:
 		animate_control(container_control_base* _parent, int _id) : windows_control(_parent, _id) { ; }
 		virtual ~animate_control() { ; }
+
+
+		animate_control(const animate_control& _src) : windows_control(_src)
+		{
+			;
+		}
+		virtual std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<animate_control>(*this);
+			return tv;
+		}
 
 		bool open(const std::string& _name);
 		bool open(DWORD resource_id);
@@ -581,11 +818,21 @@ namespace corona
 		virtual DWORD get_window_ex_style() { return 0; }
 	};
 
-	class treeview_control : public windows_control, public cloneable<treeview_control>
+	class treeview_control : public windows_control
 	{
 	public:
 		treeview_control(container_control_base* _parent, int _id) : windows_control(_parent, _id) { ; }
 		virtual ~treeview_control() { ; }
+
+		treeview_control(const treeview_control& _src) : windows_control(_src)
+		{
+			;
+		}
+		virtual std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<treeview_control>(*this);
+			return tv;
+		}
 
 		virtual const char* get_window_class() { return WC_TREEVIEW; }
 		virtual DWORD get_window_style() { return DefaultWindowStyles; }
@@ -593,11 +840,21 @@ namespace corona
 
 	};
 
-	class header_control : public windows_control, public cloneable<header_control>
+	class header_control : public windows_control
 	{
 	public:
 		header_control(container_control_base* _parent, int _id) : windows_control(_parent, _id) { ; }
 		virtual ~header_control() { ; }
+
+		header_control(const treeview_control& _src) : windows_control(_src)
+		{
+			;
+		}
+		virtual std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<header_control>(*this);
+			return tv;
+		}
 
 		virtual const char* get_window_class() { return WC_HEADER; }
 		virtual DWORD get_window_style() { return DefaultWindowStyles; }
@@ -605,11 +862,21 @@ namespace corona
 
 	};
 
-	class toolbar_control : public windows_control, public cloneable<toolbar_control>
+	class toolbar_control : public windows_control
 	{
 	public:
 		toolbar_control(container_control_base* _parent, int _id) : windows_control(_parent, _id) { ; }
 		virtual ~toolbar_control() { ; }
+
+		toolbar_control(const toolbar_control& _src) : windows_control(_src)
+		{
+			;
+		}
+		virtual std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<toolbar_control>(*this);
+			return tv;
+		}
 
 		virtual const char* get_window_class() { return TOOLBARCLASSNAME; }
 		virtual DWORD get_window_style() { return DefaultWindowStyles; }
@@ -617,11 +884,21 @@ namespace corona
 
 	};
 
-	class statusbar_control : public windows_control, public cloneable<statusbar_control>
+	class statusbar_control : public windows_control
 	{
 	public:
 		statusbar_control(container_control_base* _parent, int _id) : windows_control(_parent, _id) { ; }
 		virtual ~statusbar_control() { ; }
+
+		statusbar_control(const statusbar_control& _src) : windows_control(_src)
+		{
+			;
+		}
+		virtual std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<statusbar_control>(*this);
+			return tv;
+		}
 
 		virtual const char* get_window_class() { return STATUSCLASSNAME; }
 		virtual DWORD get_window_style() { return DefaultWindowStyles; }
@@ -629,10 +906,20 @@ namespace corona
 
 	};
 
-	class hotkey_control : public windows_control, public cloneable<hotkey_control>
+	class hotkey_control : public windows_control
 	{
 	public:
 		hotkey_control(container_control_base* _parent, int _id) : windows_control(_parent, _id) { ; }
+		hotkey_control(const hotkey_control& _src) : windows_control(_src)
+		{
+			;
+		}
+		virtual std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<hotkey_control>(*this);
+			return tv;
+		}
+
 		virtual ~hotkey_control() { ; }
 
 		virtual const char* get_window_class() { return TOOLBARCLASSNAME; }
@@ -640,10 +927,20 @@ namespace corona
 		virtual DWORD get_window_ex_style() { return 0; }
 	};
 
-	class draglistbox_control : public windows_control, public cloneable<draglistbox_control>
+	class draglistbox_control : public windows_control
 	{
 	public:
 		draglistbox_control(container_control_base* _parent, int _id) : windows_control(_parent, _id) { ; }
+		draglistbox_control(const draglistbox_control& _src) : windows_control(_src)
+		{
+			;
+		}
+		virtual std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<draglistbox_control>(*this);
+			return tv;
+		}
+
 		virtual ~draglistbox_control() { ; }
 
 		virtual const char* get_window_class() { return HOTKEY_CLASS; }

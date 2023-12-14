@@ -11,7 +11,7 @@ namespace corona
 {
 
 
-	class container_control : public draw_control, public cloneable<container_control>
+	class container_control : public draw_control
 	{
 
 	public:
@@ -28,6 +28,8 @@ namespace corona
 			id = id_counter::next();
 		}
 
+		container_control(const container_control& _src) = default;
+
 		container_control(container_control_base *_parent, int _id)
 		{
 			parent = _parent;
@@ -35,6 +37,12 @@ namespace corona
 			if (parent && get_nchittest() == HTCLIENT) {
 				set_nchittest(parent->get_nchittest());
 			}
+		}
+
+		virtual std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<container_control>(*this);
+			return tv;
 		}
 
 		virtual ~container_control()
@@ -143,62 +151,98 @@ namespace corona
 	};
 
 	class absolute_layout :
-		public container_control, public cloneable<grid_control>
+		public container_control
 	{
 	public:
 		absolute_layout() { ; }
+		absolute_layout(const absolute_layout& _src) = default;
 		absolute_layout(container_control_base *_parent, int _id) : container_control(_parent, _id) { ; }
 		virtual ~absolute_layout() { ; }
+
+		virtual std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<absolute_layout>(*this);
+			return tv;
+		}
 
 		virtual void arrange(rectangle _ctx);
 	};
 
 	class column_layout :
-		public container_control, public cloneable<column_layout>
+		public container_control
 	{
 		layout_rect item_size;
 	public:
 		column_layout() { ; }
+		column_layout(const column_layout& _src) = default;
 		column_layout(container_control_base* _parent, int _id) : container_control(_parent, _id) { ; }
 		virtual ~column_layout() { ; }
+
+		virtual std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<column_layout>(*this);
+			return tv;
+		}
+
 
 		virtual void arrange(rectangle _ctx);
 		virtual point get_remaining(point _ctx);
 	};
 
 	class row_layout :
-		public container_control, public cloneable<row_layout>
+		public container_control
 	{
 	protected:
 	public:
 		row_layout() { ; }
+		row_layout(const row_layout& _src) = default;
 		row_layout(container_control_base* _parent, int _id) : container_control(_parent, _id) { ; }
 		virtual ~row_layout() { ; }
+
+		virtual std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<row_layout>(*this);
+			return tv;
+		}
 
 		virtual void arrange(rectangle _ctx);
 		virtual point get_remaining(point _ctx);
 	};
 
 	class frame_layout :
-		public container_control, public cloneable<frame_layout>
+		public container_control
 	{
 	protected:
 	public:
 		frame_layout() { ; }
+		frame_layout(const frame_layout& _src) = default;
 		frame_layout(container_control_base* _parent, int _id) : container_control(_parent, _id) { ; }
 		virtual ~frame_layout() { ; }
 
 		void set_contents(control_base* _page)
 		{
 			children.clear();
-			children.push_back(_page->clone(this));
+			auto temp = _page->clone();
+			apply_item_sizes(*temp);
+			children.push_back(temp);
 			arrange(bounds);
+			create(host);
 		}
+
+		virtual std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<frame_layout>(*this);
+			return tv;
+		}
+
+
+		virtual void arrange(rectangle _ctx);
+		virtual point get_remaining(point _ctx);
 	};
 
 
 	class column_view_layout :
-		public column_layout, public cloneable<column_view_layout>
+		public column_layout
 	{
 		array_data_source item_source;
 		std::vector<std::shared_ptr<control_base>> items;
@@ -261,6 +305,15 @@ namespace corona
 			child_area = {};
 			selected_item_index = 0;
 		}
+
+		column_view_layout(const column_view_layout& _src) = default;
+
+		virtual std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<column_view_layout>(*this);
+			return tv;
+		}
+
 
 		virtual ~column_view_layout()
 		{
@@ -413,12 +466,20 @@ namespace corona
 	};
 
 	class row_view_layout :
-		public row_layout, public cloneable<row_view_layout>
+		public row_layout
 	{
 	protected:
 	public:
 		row_view_layout() { ; }
+		row_view_layout(const row_view_layout& _src) = default;
 		row_view_layout(container_control_base* _parent, int _id) : row_layout(_parent, _id) { ; }
+
+		virtual std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<row_view_layout>(*this);
+			return tv;
+		}
+
 		virtual ~row_view_layout() { ; }
 	};
 
@@ -428,7 +489,15 @@ namespace corona
 	protected:
 	public:
 		absolute_view_layout() { ; }
+		absolute_view_layout(const absolute_view_layout& _src) = default;
 		absolute_view_layout(container_control_base* _parent, int _id) : absolute_layout(_parent, _id) { ; }
+
+		virtual std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<absolute_view_layout>(*this);
+			return tv;
+		}
+
 		virtual ~absolute_view_layout() { ; }
 	};
 
@@ -822,10 +891,28 @@ namespace corona
 		}
 	}
 
+	void frame_layout::arrange(rectangle _bounds)
+	{
+		set_bounds(_bounds);
 
-	/*
-	implementation details
-	*/
+		point origin = { _bounds.x, _bounds.y, 0.0 };
+		point remaining = { _bounds.w, _bounds.h, 0.0 };
+
+		arrange_children(bounds,
+			[this](const rectangle* _bounds, control_base* _item) {
+				point temp = { _bounds->x, _bounds->y };
+				return temp;
+			},
+			[this](point* _origin, const rectangle* _bounds, control_base* _item) {
+				return *_origin;
+			}
+		);
+	}
+
+	point frame_layout::get_remaining(point _ctx)
+	{
+		return _ctx;
+	}
 
 }
 

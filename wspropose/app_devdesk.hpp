@@ -62,7 +62,7 @@ namespace corona
 			}
 		);
 
-			// then, below the caption bar, an overall contents pane
+		// then, below the caption bar, an overall contents pane
 		// which has a navigation column on the left, and, the tab view on the right
 
 		auto contents = contents_root.row_begin(
@@ -237,9 +237,11 @@ namespace corona
 			// the column view is associated with the tab and it can do selection and the other things
 			tab_pane new_tab;
 			new_tab.id = app_data->get_control_id(bind_name, []() { return id_counter::next(); });
-			new_tab.name = class_name;
-			auto tab_controls = std::make_shared<column_view_layout>();
-			new_tab.tab_controls = tab_controls;
+			new_tab.name = rule_description;
+			auto tab_pane_contents = std::make_shared<title_control>(nullptr, new_tab.id);
+			tab_pane_contents->text = rule_description;
+			tab_pane_contents->set_size(1.0_container, 1.0_container);
+			new_tab.tab_controls = tab_pane_contents;
 
 			// group scans an array, then creates a new object whose each member corresponds to the key 
 			// used to group by.
@@ -277,7 +279,7 @@ namespace corona
 				// and, within the group, we go through the array
 				for (int k = 0; k < member_array.size(); k++)
 				{
-					json member_obj = member_array[i];
+					json member_obj = member_array[k];
 					json item_obj = jp.create_object();
 					item_obj.copy_member("ClassName", member_obj);
 					item_obj.copy_member("Name", member_obj);
@@ -285,11 +287,14 @@ namespace corona
 					ads.data.put_element(-1, item_obj);
 				}
 			}
-
-			tab_controls->set_item_source(ads);
+		
+			//tab_controls->set_item_source(ads);
+			tabs.push_back(new_tab);
 		}
 
-		auto selected_objects_container = contents.tab_view(id_counter::next(), [tabs](tab_view_control& tv) {
+		int tab_view_id = app_data->get_control_id("actor_options_tab_view", []() { return id_counter::next(); });
+
+		contents.tab_view(tab_view_id, [tabs](tab_view_control& tv) {
 			tv.set_size(1.0_remaining, 1.0_container);
 			tv.set_tabs(tabs);
 			});

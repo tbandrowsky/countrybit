@@ -172,18 +172,13 @@ namespace corona
 		virtual LRESULT get_nchittest() = 0;
 	};
 
-	template <typename T> class cloneable {
-	public:
-		virtual std::shared_ptr<control_base> clone(container_control_base* _parent)
-		{
-			T* base = dynamic_cast<T*>(this);
-			std::shared_ptr<control_base> cb = std::make_shared<T>(*base);
-			cb->parent = _parent;
-			return cb;
-		}
-	};
+	template <typename T> std::shared_ptr<control_base> clone(T* _src, container_control_base* _parent)
+	{
+		std::shared_ptr<T> cb = std::make_shared<T>(*_src);
+		return cb;
+	}
 
-	class control_base : public container_control_base, public cloneable<control_base>
+	class control_base : public container_control_base
 	{
 	protected:
 
@@ -279,19 +274,37 @@ namespace corona
 			}
 		}
 
-		virtual control_base* get_control()
-		{
-			return this;
-		}
-
-		control_base( const control_base& _src ) 
+		control_base(const control_base& _src)
 		{
 			copy(_src);
+		}
+
+		virtual std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<control_base>(*this);
+			return tv;
 		}
 
 		virtual ~control_base()
 		{
 			;
+		}
+
+		template <typename control_type> std::shared_ptr<control_type> create(int _id)
+		{
+			std::shared_ptr<control_type> temp;
+			temp = std::make_shared<control_type>(this, _id);
+			if (temp) {
+				children.push_back(temp);
+				std::cout << " " << typeid(*this).name() << " ->create:" << typeid(control_type).name() << std::endl;
+			}
+			apply_item_sizes(*temp);
+			return temp;
+		}
+
+		virtual control_base* get_control()
+		{
+			return this;
 		}
 
 		rectangle& get_bounds() { return bounds; }
@@ -538,6 +551,7 @@ namespace corona
 		}
 		return mouse_over;
 	}
+
 	double control_base::to_pixels(measure length)
 	{
 		double sz = 0.0;
