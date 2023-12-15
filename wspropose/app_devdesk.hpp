@@ -24,8 +24,10 @@ namespace corona
 	const int IDM_HOME = 2002;
 	const int IDM_LOGIN = 2003;
 
+	const int IDC_STATUS_MESSAGE = 5001;
+	const int IDC_STATUS_DETAIL = 5002;
+
 	void create_devdesk_page(
-		json actor_options,
 		page& _page,
 		std::shared_ptr<directApplicationWin32> application,
 		std::shared_ptr<calico_client> calico_svc,
@@ -35,16 +37,12 @@ namespace corona
 		presentation_style *st
 		)
 	{
-		// First check to make sure we have all the things
-
-		if (!actor_options.has_member("ActorOptions"))
-			return;
-
-		actor_options = actor_options["ActorOptions"];
 
 		// we clear the page of all of its children controls, and start building our form
 		// clearing the page should also clear the event handlers.
-		// we hope.
+		// we hope. and... we know.
+
+				// First check to make sure we have all the things
 
 		_page.clear();
 
@@ -59,8 +57,30 @@ namespace corona
 				_cb.image_file = "assets\\small_logo.png";
 				_cb.corporate_name = "WOODRUFF SAWYER";
 				_cb.title_name = "PROPERTY AND CASUALTY";
+				_cb.code_detail_id = IDC_STATUS_DETAIL;
+				_cb.code_status_id = IDC_STATUS_MESSAGE;
 			}
 		);
+
+		auto& tc_message = _page.root->find<code_control>(IDC_STATUS_MESSAGE);
+		auto& tc_detail = _page.root->find<code_control>(IDC_STATUS_DETAIL);
+
+		json actor_options;
+
+		auto base_ds = app_data->get_data_set("current_state");
+
+		actor_options = base_ds->data;
+
+		if (!actor_options.has_member("ActorOptions")) {
+			tc_message.text = "No data yet";
+			tc_detail.text = "";
+			return;
+		}
+
+		actor_options = actor_options["ActorOptions"];
+
+		tc_message.text = "Connected";
+		tc_detail.text = "";
 
 		// then, below the caption bar, an overall contents pane
 		// which has a navigation column on the left, and, the tab view on the right
@@ -138,13 +158,13 @@ namespace corona
 
 					// call our application
 					int temp = calico_svc->select_object(object_select_request, credentials, _set->data);
+					json options = app_data->get("current_state");
 
 					// and, while we are it now, we can update our actor options, to show our created object
 					return temp;
 				},
 				[app_data](json _params, data_set* _set) -> int {
 					// when back on the ui thread, kick off our refresh, which is to just call actor options again
-					json options = app_data->get("actoroptions");
 					return 0;
 				},
 				0);
@@ -193,13 +213,13 @@ namespace corona
 
 					// call our application
 					int temp = calico_svc->create_object(new_object_request, credentials, _set->data);
+					app_data->get("current_state");
 
 					// and, while we are it now, we can update our actor options, to show our created object
 					return temp;
 				},
 				[app_data](json _params, data_set* _set) -> int {
-					// when back on the ui thread, kick off our refresh
-					json options = app_data->get("actoroptions");
+					// when back on the ui thread, kick off our refresh					
 					return 0;
 				},
 				0);
@@ -329,59 +349,6 @@ namespace corona
 
 		auto st = styles.get_style();
 
-		app_data->put_data_source("calico", "calico service", "assets\\images\\calico.png");
-
-		app_data->put_data_set("calico", "actoroptions",
-			[calico_svc, application, app_data](json _params, data_set* _set) -> int
-			{
-				json credentials = app_data->get("login");
-				int temp = calico_svc->get_actor_options(credentials, _set->data);
-				return temp;
-			},
-			[calico_svc, application, application_presentation, app_data, app_menu, st](json _params, data_set* _set) -> int {
-				// when logged in, do something;		
-				// 
-				// 		
-				return 0;
-			},
-			0);
-
-		app_data->put_data_set("calico", "login", 
-			[calico_svc, application, app_data](json _params, data_set* _set) -> int
-				{
-					json classes_json;
-					json fields_json;
-					int temp = calico_svc->login("Property", application->getUserName(), _set->data);
-
-					if (temp) {
-						temp = calico_svc->get_classes(_set->data, classes_json);
-						temp = calico_svc->get_fields(_set->data, fields_json);
-						app_data->put_data_set("calico", "classes", classes_json);
-						app_data->put_data_set("calico", "fields", fields_json);
-						app_data->get("actoroptions");
-					}
-					return temp;
-				}, 
-				[calico_svc, app_menu, app_data, application, application_presentation, st](json _params, data_set* _set) {
-					// when logged in, do something;
-					auto err = _set->get_error();
-					if (err.error) 
-					{
-						application_presentation->pages["login"]->changed("login");
-					}
-					else 
-					{
-						auto& new_page = application_presentation->create_page("home", [_set, application, calico_svc, app_data, application_presentation, app_menu, st](page& new_page) {
-							auto ao = app_data->get_data_set("actoroptions")->data;
-							create_devdesk_page(ao, new_page, application, calico_svc, app_data, application_presentation, app_menu, st);
-							});
-						application_presentation->select_page("home");
-					}
-
-					return 1;
-				},
-				5
-			);
 
 		bool forceWindowed = false;
 
@@ -397,10 +364,7 @@ namespace corona
 			ctrl.set_size(150.0_px, 50.0_px);
 			};
 
-		const int IDC_STATUS_MESSAGE = 5001;
-		const int IDC_STATUS_DETAIL = 5002;
-
-		auto& home_page = application_presentation->create_page("home", [calico_svc, app_data, application, st, app_menu](page& _pg)
+		auto& home_page = application_presentation->create_page("home", [application_presentation, calico_svc, app_data, application, st, app_menu](page& _pg)
 			{
 				_pg.column_begin()
 					.caption_bar(id_counter::next(), st, app_menu.get(), [](caption_bar_control& _cb)
@@ -416,23 +380,24 @@ namespace corona
 					)
 					.end();
 
-					_pg.on_select([calico_svc, application, app_data, st, app_menu](page_select_event _evt)
+				_pg.on_select([calico_svc, application, application_presentation, app_data, st, app_menu](page_select_event _evt)
 					{
-						auto& tc_message = _evt.pg->root->find<code_control>(IDC_STATUS_MESSAGE);
-						auto& tc_detail = _evt.pg->root->find<code_control>(IDC_STATUS_DETAIL);
-						tc_message.text = "Connected";
-						tc_detail.text = "Getting Options";
+						create_devdesk_page( *(_evt.pg), application, calico_svc, app_data, application_presentation, app_menu, st);
+					});
 
-						threadomatic::run([app_data]() { app_data->get("actoroptions"); });
+				_pg.on_changed([calico_svc, application, application_presentation, app_data, st, app_menu](page& _pg, std::string _set_name)
+					{
+						create_devdesk_page( _pg, application, calico_svc, app_data, application_presentation, app_menu, st);
 					}
 				);
+
 			});
 
-		auto &login_page = application_presentation->create_page("login", [calico_svc, application, app_data, st, app_menu](page& _pg)
+		auto &login_page = application_presentation->create_page("login", [calico_svc, application_presentation, application, app_data, st, app_menu](page& _pg)
 			{
-				int title_column_id = id_counter::next();
+
 				_pg.column_begin()
-					.caption_bar(id_counter::next(), st, app_menu.get(), [title_column_id](caption_bar_control& _cb)
+					.caption_bar(id_counter::next(), st, app_menu.get(), [](caption_bar_control& _cb)
 						{
 							_cb.menu_button_id = IDC_SYSTEM_MENU;
 							_cb.image_control_id = IDC_COMPANY_LOGO;
@@ -443,33 +408,98 @@ namespace corona
 							_cb.code_status_id = IDC_STATUS_MESSAGE;
 						}
 					)
-					.column_begin(title_column_id, [](column_layout& rl) {
-							rl.set_size(0.5_container, 1.0_remaining);
-							rl.set_item_size(1.0_container, 150.0_px);
-						})
-						.end()
-				.end();
+					.end();
 
-				_pg.on_select([calico_svc, application, app_data, st, app_menu](page_select_event _evt)
+				_pg.on_select([calico_svc, application, application_presentation, app_data, st, app_menu](page_select_event _evt)
 					{
-						auto& tc_message = _evt.pg->root->find<code_control>(IDC_STATUS_MESSAGE);
-						auto& tc_detail = _evt.pg->root->find<code_control>(IDC_STATUS_DETAIL);
-						tc_message.text = "Connecting";
-						tc_detail.text = "";
-						threadomatic::run([app_data]() { app_data->get("login"); });
-					}
-				);
+						auto ao = app_data->get("login");
+					});
 
-				_pg.on_changed([calico_svc, application, app_data, st, app_menu](page& _pg, std::string _set_name)
+				_pg.on_changed([calico_svc, application, application_presentation, app_data, st, app_menu](page& _pg, std::string _set_name)
 					{
 						auto& tc_message = _pg.root->find<code_control>(IDC_STATUS_MESSAGE);
 						auto& tc_detail = _pg.root->find<code_control>(IDC_STATUS_DETAIL);
-						auto err = app_data->get_data_set(_set_name)->get_error();
-						tc_message.text = _set_name;
-						tc_detail.text = err.message;
-					}
-				);
+
+						auto err_set = app_data->get_data_set("login");
+						auto err = err_set->get_error();
+						if (err.error)
+						{
+							tc_message.text = err.error;
+							tc_detail.text = err.message;
+						}
+					});
 			});
+
+		app_data->put_data_source("calico", "calico service", "assets\\images\\calico.png");
+
+		app_data->put_data_set("calico", "login",
+			[calico_svc, application, app_data](json _params, data_set* _set) -> int
+			{
+				json classes_json;
+				json fields_json;
+				int temp = calico_svc->login("Property", application->getUserName(), _set->data);
+
+				if (temp) {
+					temp = calico_svc->get_classes(_set->data, classes_json);
+					temp = calico_svc->get_fields(_set->data, fields_json);
+					app_data->put_data_set("calico", "classes", classes_json);
+					app_data->put_data_set("calico", "fields", fields_json);
+					app_data->get("current_state");
+				}
+				return temp;
+			},
+			[calico_svc, app_menu, app_data, application, application_presentation, st](json _params, data_set* _set) {
+				// when logged in, do something;
+				auto err = _set->get_error();
+				if (err.error)
+				{
+					application_presentation->select_page("login");
+					application_presentation->pages["login"]->changed("login");
+				}
+				else
+				{
+					/*						auto& new_page = application_presentation->create_page("home", [_set, application, calico_svc, app_data, application_presentation, app_menu, st](page& new_page) {
+												auto ao = app_data->get_data_set("actoroptions")->data;
+												create_devdesk_page(ao, new_page, application, calico_svc, app_data, application_presentation, app_menu, st);
+												});
+												*/
+					application_presentation->select_page("home");
+				}
+
+				return 1;
+			},
+			5
+		);
+
+		app_data->put_data_set("calico", "credentials",
+			[calico_svc, application, app_data](json _params, data_set* _set) -> int
+			{
+				json classes_json;
+				json fields_json;
+				int temp = calico_svc->login("Property", application->getUserName(), _set->data);
+				return temp;
+			},
+			[calico_svc, app_menu, app_data, application, application_presentation, st](json _params, data_set* _set) {
+				auto err = _set->get_error();
+				return 1;
+			},
+			5
+		);
+
+		app_data->put_data_set("calico", "current_state",
+			[calico_svc, application, app_data](json _params, data_set* _set) -> int
+			{
+				json credentials = app_data->get("credentials");
+				int temp = calico_svc->get_actor_options(credentials, _set->data);
+				return temp;
+			},
+			[calico_svc, application, application_presentation, app_data, app_menu, st](json _params, data_set* _set) -> int {
+
+				application_presentation->pages["home"]->changed("current_state");
+				return 0;
+			},
+			0);
+
 
 		if (forceWindowed)
 		{

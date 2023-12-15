@@ -1086,7 +1086,7 @@ namespace corona
 								stop.x = start.x;
 								stop.y = icon_bounds.y + icon_bounds.h;
 								pcontext->drawLine(&start, &stop, _foreground->name, 4);
-								_bounds->y -= 8;
+								_bounds->y -= 4;
 							}
 							else
 							{
@@ -1097,6 +1097,7 @@ namespace corona
 								radius.x = icon_width / 2;
 								radius.y = icon_bounds.h / 2;
 								pcontext->drawEllipse(&center, &radius, _foreground->name, 4, nullptr);
+								_bounds->y -= 8;
 							}
 
 							_bounds->x += icon_width + 4;
