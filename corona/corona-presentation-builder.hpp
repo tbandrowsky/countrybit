@@ -259,7 +259,8 @@ namespace corona
 			if (_settings) {
 				_settings(*tc);
 			}
-			return *this;
+			auto cc = std::dynamic_pointer_cast<container_control>(tc);
+			return control_builder(this, cc);
 		}
 
 		control_builder end()
@@ -751,7 +752,7 @@ namespace corona
 	class tab_view_control : public column_layout
 	{
 		std::vector<tab_pane> tab_panes;
-		frame_layout* content_frame = nullptr;
+		std::shared_ptr<frame_layout> content_frame;
 
 		int active_id;
 
@@ -762,12 +763,18 @@ namespace corona
 			control_builder builder;
 
 			auto tab_row = builder.row_begin(id_counter::next(), [](row_layout& _settings) {
-				_settings.set_size(1.0_container, 100.0_px);
+				_settings.set_size(1.0_container, 30.0_px);
 				});
+			builder.end();
+
 			auto frame_row = builder.frame_begin(id_counter::next(), [this](frame_layout& _settings) {
 				_settings.set_size(1.0_container, 1.0_remaining);
-				content_frame = &_settings;
+				_settings.set_item_size(1.0_container, 1.0_container);
 				});
+			builder.end();
+
+			auto froot = frame_row.get_root();
+			content_frame = std::dynamic_pointer_cast<frame_layout>(froot);
 
 			for (int i = 0; i < tab_panes.size(); i++)
 			{
@@ -831,8 +838,11 @@ namespace corona
 				return _tb.id = this->active_id;
 				});
 
-			if (tbi != tab_panes.end()) {
-				content_frame->set_contents(tbi->tab_controls.get());
+			if (tbi != tab_panes.end()) 
+			{
+				// set contents will clone this for us.
+				auto new_contents = tbi->tab_controls.get();
+				//content_frame->set_contents(new_contents);
 			}
 		}
 	};

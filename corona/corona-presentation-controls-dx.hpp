@@ -373,7 +373,7 @@ namespace corona
 			;
 		}
 
-		void draw_button(std::function<void(gradient_button_control* _src, rectangle* _bounds, solidBrushRequest* _foreground)> draw_shape)
+		virtual void draw_button(std::function<void(gradient_button_control* _src, rectangle* _bounds, solidBrushRequest* _foreground)> draw_shape)
 		{
 			if (auto pwindow = window.lock())
 			{
@@ -571,6 +571,44 @@ namespace corona
 		tab_button_control& set_text_style(textStyleRequest request);
 
 		virtual void on_subscribe(presentation_base* _presentation, page_base* _page);
+
+		virtual void draw_button(std::function<void(gradient_button_control* _src, rectangle* _bounds, solidBrushRequest* _foreground)> draw_shape)
+		{
+			if (auto pwindow = window.lock())
+			{
+				if (auto phost = host.lock()) {
+					auto draw_bounds = inner_bounds;
+
+					draw_bounds.x = 0;
+					draw_bounds.y = 0;
+
+					auto& context = pwindow->getContext();
+
+					if (mouse_left_down.value() || *active_id == id)
+					{
+						context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonFaceDown.name);
+						auto face_bounds = rectangle_math::deflate(draw_bounds, { 8, 8, 8, 8 });
+						//context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonBackLight.name);
+						draw_shape(this, &face_bounds, &foregroundDown);
+					}
+					else if (mouse_over.value())
+					{
+						context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonFaceOver.name);
+						auto face_bounds = rectangle_math::deflate(draw_bounds, { 8, 8, 8, 16 });
+						//context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonBackLight.name);
+						draw_shape(this, &face_bounds, &foregroundOver);
+					}
+					else
+					{
+						context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonFaceNormal.name);
+						auto face_bounds = rectangle_math::deflate(draw_bounds, { 8, 8, 8, 16 });
+						//context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonBackLight.name);
+						draw_shape(this, &face_bounds, &foregroundNormal);
+					}
+				}
+			}
+		}
+
 	};
 
 
@@ -991,7 +1029,21 @@ namespace corona
 	{
 		set_origin(0.0_px, 0.0_px);
 		set_size(200.0_px, 1.0_container);
-		icon_width = 40;
+		icon_width = 30;
+
+		auto st = styles.get_style();
+
+		text_style = {};
+		text_style.name = "tab_text_style";
+		text_style.fontName = st->PrimaryFont;
+		text_style.fontSize = 14;
+		text_style.bold = false;
+		text_style.italics = false;
+		text_style.underline = false;
+		text_style.strike_through = false;
+		text_style.horizontal_align = st->PrevailingAlignment;
+		text_style.vertical_align = visual_alignment::align_near;
+		text_style.wrap_text = true;
 
 		auto ctrl = this;
 
@@ -1034,13 +1086,14 @@ namespace corona
 								stop.x = start.x;
 								stop.y = icon_bounds.y + icon_bounds.h;
 								pcontext->drawLine(&start, &stop, _foreground->name, 4);
+								_bounds->y -= 8;
 							}
 							else
 							{
 								point center;
 								point radius;
 								center.x = icon_bounds.x + icon_width / 2;
-								center.y = icon_bounds.y + icon_width / 2;
+								center.y = icon_bounds.y + icon_bounds.h / 2;
 								radius.x = icon_width / 2;
 								radius.y = icon_bounds.h / 2;
 								pcontext->drawEllipse(&center, &radius, _foreground->name, 4, nullptr);

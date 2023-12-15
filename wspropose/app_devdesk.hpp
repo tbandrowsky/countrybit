@@ -94,7 +94,9 @@ namespace corona
 			rl.set_size(300.0_px, 1.0_container);
 			});
 
-		command_container.chaptertitle("Your location");
+		command_container.chaptertitle("Your location", [](chaptertitle_control& ct) {
+			ct.set_size(.95_container, 30.0_px);
+			});
 
 		// and now we go through our selected objects....
 		for (int i = 0; i < selected_objects.size(); i++)
@@ -116,7 +118,9 @@ namespace corona
 			// and, now, create our button.  here, the class name is used as a label
 			// in the future we can create data set aware buttons but for now this is really all we need, because in calico this sort of 
 			// sequence does everything.
-			command_container.push_button(select_button_id, class_name);
+			command_container.push_button(select_button_id, class_name, [](pushbutton_control& pc) {
+				pc.set_size(.95_container, 30.0_px );
+				});
 
 			// so, we have to bind our button to our data.. first, we describe what the button does with data...
 			// whenever we get a data set with this key, this stuff gets invoked.
@@ -150,7 +154,9 @@ namespace corona
 			Creating New Objects 
 		*/
 
-		command_container.chaptertitle("Create New");
+		command_container.chaptertitle("Create New", [](chaptertitle_control& ct) {
+			ct.set_size(.95_container, 30.0_px);
+			});
 
 		for (int i = 0; i < create_options.size(); i++)
 		{
@@ -166,7 +172,9 @@ namespace corona
 			int button_id = app_data->get_control_id(button_name, []() { return id_counter::next(); });
 
 			// and, create our button and add it to our container
-			command_container.push_button(button_id, class_name);
+			command_container.push_button(button_id, class_name, [](pushbutton_control& pc) {
+				pc.set_size(.95_container, 30.0_px);
+				});
 
 			// and now, we associate creating the object with the application data...
 			// whenever we get a data set with this key, this stuff gets invoked.

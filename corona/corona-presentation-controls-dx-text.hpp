@@ -221,12 +221,13 @@ namespace corona
 		set_origin(0.0_px, 0.0_px);
 		set_size(1.0_container, 1.2_fontgr);
 
-		on_create = [this](draw_control* _src)
+		on_create = [](draw_control* _src)
 			{
-				if (auto pwindow = this->window.lock())
+				text_display_control *t = dynamic_cast<text_display_control*>(_src);
+				if (auto pwindow = _src->window.lock())
 				{
-					pwindow->getContext().setSolidColorBrush(&this->text_fill_brush);
-					pwindow->getContext().setTextStyle(&this->text_style);
+					pwindow->getContext().setSolidColorBrush(&t->text_fill_brush);
+					pwindow->getContext().setTextStyle(&t->text_style);
 				}
 			};
 

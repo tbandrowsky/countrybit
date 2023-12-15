@@ -223,6 +223,7 @@ namespace corona
 		{
 			children.clear();
 			auto temp = _page->clone();
+			temp->parent = this;
 			apply_item_sizes(*temp);
 			children.push_back(temp);
 			arrange(bounds);

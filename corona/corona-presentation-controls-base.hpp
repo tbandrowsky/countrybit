@@ -224,7 +224,8 @@ namespace corona
 
 			children.clear();
 			for (auto child : _src.children) {
-				auto new_child = child->clone(this);
+				auto new_child = child->clone();
+				new_child->parent = this;
 				children.push_back(new_child);
 			}
 		}

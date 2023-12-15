@@ -67,10 +67,25 @@ namespace corona
 			return tv;
 		}
 
-		virtual const char* get_window_class() = 0;
-		virtual const wchar_t* get_window_class_w() { return nullptr; }
-		virtual DWORD get_window_style() = 0;
-		virtual DWORD get_window_ex_style() = 0;
+		virtual const char* get_window_class()
+		{
+			return nullptr;
+		}
+
+		virtual const wchar_t* get_window_class_w() 
+		{ 
+			return nullptr; 
+		}
+
+		virtual DWORD get_window_style()
+		{
+			return 0;
+		}
+
+		virtual DWORD get_window_ex_style()
+		{
+			return 0;
+		}
 
 		virtual double get_font_size() { return text_style.fontSize; }
 
@@ -160,7 +175,7 @@ namespace corona
 
 		virtual std::shared_ptr<control_base> clone()
 		{
-			auto tv = std::make_shared<title_control>(*this);
+			auto tv = std::make_shared<text_control_base>(*this);
 			return tv;
 		}
 
@@ -270,7 +285,7 @@ namespace corona
 
 		virtual std::shared_ptr<control_base> clone()
 		{
-			auto tv = std::make_shared<title_control>(*this);
+			auto tv = std::make_shared<table_control_base>(*this);
 			return tv;
 		}
 
@@ -316,7 +331,7 @@ namespace corona
 
 		virtual std::shared_ptr<control_base> clone()
 		{
-			auto tv = std::make_shared<title_control>(*this);
+			auto tv = std::make_shared<list_control_base>(*this);
 			return tv;
 		}
 
@@ -377,7 +392,7 @@ namespace corona
 
 		virtual std::shared_ptr<control_base> clone()
 		{
-			auto tv = std::make_shared<title_control>(*this);
+			auto tv = std::make_shared<dropdown_control_base>(*this);
 			return tv;
 		}
 
@@ -451,7 +466,7 @@ namespace corona
 
 		virtual std::shared_ptr<control_base> clone()
 		{
-			auto tv = std::make_shared<title_control>(*this);
+			auto tv = std::make_shared<static_control>(*this);
 			return tv;
 		}
 
@@ -476,7 +491,7 @@ namespace corona
 		}
 		virtual std::shared_ptr<control_base> clone()
 		{
-			auto tv = std::make_shared<title_control>(*this);
+			auto tv = std::make_shared<button_control<ButtonWindowStyles>>(*this);
 			return tv;
 		}
 
@@ -496,7 +511,7 @@ namespace corona
 		}
 		virtual std::shared_ptr<control_base> clone()
 		{
-			auto tv = std::make_shared<title_control>(*this);
+			auto tv = std::make_shared<pushbutton_control>(*this);
 			return tv;
 		}
 
@@ -513,7 +528,7 @@ namespace corona
 		}
 		virtual std::shared_ptr<control_base> clone()
 		{
-			auto tv = std::make_shared<title_control>(*this);
+			auto tv = std::make_shared<pressbutton_control>(*this);
 			return tv;
 		}
 
@@ -530,7 +545,7 @@ namespace corona
 		}
 		virtual std::shared_ptr<control_base> clone()
 		{
-			auto tv = std::make_shared<title_control>(*this);
+			auto tv = std::make_shared<radiobutton_control>(*this);
 			return tv;
 		}
 
@@ -547,7 +562,7 @@ namespace corona
 		}
 		virtual std::shared_ptr<control_base> clone()
 		{
-			auto tv = std::make_shared<title_control>(*this);
+			auto tv = std::make_shared<checkbox_control>(*this);
 			return tv;
 		}
 
@@ -564,7 +579,7 @@ namespace corona
 		}
 		virtual std::shared_ptr<control_base> clone()
 		{
-			auto tv = std::make_shared<title_control>(*this);
+			auto tv = std::make_shared<linkbutton_control>(*this);
 			return tv;
 		}
 
@@ -582,7 +597,7 @@ namespace corona
 		}
 		virtual std::shared_ptr<control_base> clone()
 		{
-			auto tv = std::make_shared<title_control>(*this);
+			auto tv = std::make_shared<edit_control>(*this);
 			return tv;
 		}
 
@@ -604,7 +619,7 @@ namespace corona
 		}
 		virtual std::shared_ptr<control_base> clone()
 		{
-			auto tv = std::make_shared<title_control>(*this);
+			auto tv = std::make_shared<listbox_control>(*this);
 			return tv;
 		}
 
@@ -626,7 +641,7 @@ namespace corona
 		}
 		virtual std::shared_ptr<control_base> clone()
 		{
-			auto tv = std::make_shared<title_control>(*this);
+			auto tv = std::make_shared<combobox_control>(*this);
 			return tv;
 		}
 
@@ -652,7 +667,7 @@ namespace corona
 		}
 		virtual std::shared_ptr<control_base> clone()
 		{
-			auto tv = std::make_shared<title_control>(*this);
+			auto tv = std::make_shared<comboboxex_control>(*this);
 			return tv;
 		}
 
@@ -680,7 +695,7 @@ namespace corona
 		}
 		virtual std::shared_ptr<control_base> clone()
 		{
-			auto tv = std::make_shared<title_control>(*this);
+			auto tv = std::make_shared<listview_control>(*this);
 			return tv;
 		}
 
@@ -702,7 +717,7 @@ namespace corona
 		}
 		virtual std::shared_ptr<control_base> clone()
 		{
-			auto tv = std::make_shared<title_control>(*this);
+			auto tv = std::make_shared<scrollbar_control>(*this);
 			return tv;
 		}
 
@@ -728,7 +743,7 @@ namespace corona
 		}
 		virtual std::shared_ptr<control_base> clone()
 		{
-			auto tv = std::make_shared<title_control>(*this);
+			auto tv = std::make_shared<richedit_control>(*this);
 			return tv;
 		}
 
@@ -756,7 +771,7 @@ namespace corona
 		}
 		virtual std::shared_ptr<control_base> clone()
 		{
-			auto tv = std::make_shared<title_control>(*this);
+			auto tv = std::make_shared<datetimepicker_control>(*this);
 			return tv;
 		}
 
