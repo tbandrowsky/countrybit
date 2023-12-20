@@ -392,13 +392,12 @@ namespace corona {
 	{
 		auto cp = current_page.lock();
 		if (cp) {
-			if (!cp->set_focus()) {
-				if (auto phost = window_host.lock()) 
-				{
-					HWND hwnd = phost->getMainWindow();
-					::SetFocus(hwnd);
-				}
+			if (auto phost = window_host.lock())
+			{
+				HWND hwnd = phost->getMainWindow();
+				::SetFocus(hwnd);
 			}
+			cp->set_focus();
 		}
 	}
 

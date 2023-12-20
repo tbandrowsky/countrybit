@@ -41,7 +41,9 @@ namespace corona
 
 		static directApplicationWin32* current;
 		static LRESULT CALLBACK windowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+		static LRESULT CALLBACK controlWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 		virtual LRESULT windowProcHandler(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+		virtual LRESULT controlWindowProcHandler(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 		HINSTANCE hinstance;
 		HWND hwndRoot;
 		std::list<int> pressedKeys;
@@ -448,6 +450,11 @@ namespace corona
 		return current->windowProcHandler(hwnd, message, wParam, lParam);
 	}
 
+	LRESULT CALLBACK directApplicationWin32::controlWindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+	{
+		return current->controlWindowProcHandler(hwnd, message, wParam, lParam);
+	}
+
 	bool directApplicationWin32::isDialogMessage(HWND hwnd, LPMSG msg)
 	{
 		auto pfactory = factory.lock();
@@ -467,6 +474,34 @@ namespace corona
 		}
 
 		return navigationKey;
+	}
+
+	LRESULT directApplicationWin32::controlWindowProcHandler(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+	{
+		switch (message)
+		{
+		case WM_CREATE:
+			{
+			}
+			break;
+		case WM_PAINT:
+			{
+				ValidateRect(hwnd, nullptr);
+				redraw();
+				return 0;
+			}
+		case WM_ERASEBKGND:
+			{
+				RECT rect, rect2;
+				HDC eraseDc = (HDC)wParam;
+				HBRUSH hbrBkgnd = (HBRUSH)::GetStockObject(WHITE_BRUSH);
+				::GetClientRect(hwnd, &rect);
+				::FillRect((HDC)wParam, &rect, hbrBkgnd);
+				return 0;
+			}
+			break;
+		}
+		return DefWindowProc(hwnd, message, wParam, lParam);
 	}
 
 	LRESULT directApplicationWin32::windowProcHandler(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -930,7 +965,7 @@ namespace corona
 
 		auto ptr = weak_from_this();
 
-		WNDCLASSA wcMain;
+		WNDCLASSA wcMain, wcControl;
 		MSG msg;
 		DWORD dwStyle, dwExStyle;
 
@@ -949,6 +984,21 @@ namespace corona
 		wcMain.lpszMenuName = NULL;
 		wcMain.lpszClassName = "Corona2dBase";
 		if (!RegisterClass(&wcMain)) {
+			::MessageBox(NULL, "Could not start because the  class could not be registered", "Couldn't Start", MB_ICONERROR);
+			return 0;
+		}
+
+		wcControl.style = CS_OWNDC;
+		wcControl.lpfnWndProc = &directApplicationWin32::controlWindowProc;
+		wcControl.cbClsExtra = 0;
+		wcControl.cbWndExtra = DLGWINDOWEXTRA;
+		wcControl.hInstance = hinstance;
+		wcControl.hIcon = NULL;
+		wcControl.hCursor = NULL;
+		wcControl.hbrBackground = NULL;
+		wcControl.lpszMenuName = NULL;
+		wcControl.lpszClassName = "Corona2dControl";
+		if (!RegisterClass(&wcControl)) {
 			::MessageBox(NULL, "Could not start because the  class could not be registered", "Couldn't Start", MB_ICONERROR);
 			return 0;
 		}
@@ -992,7 +1042,7 @@ namespace corona
 				{
 					;
 				}
-				else if (!isDialogMessage(hwndRoot, &msg)) {
+				else if (!::IsDialogMessage(hwndRoot, &msg)) {
 					::TranslateMessage(&msg);
 					::DispatchMessage(&msg);
 				}
@@ -1019,7 +1069,7 @@ namespace corona
 
 		auto ptr = weak_from_this();
 
-		WNDCLASSA wcMain;
+		WNDCLASSA wcMain, wcControl;
 		MSG msg;
 		DWORD dwStyle, dwExStyle;
 
@@ -1039,6 +1089,21 @@ namespace corona
 		wcMain.lpszClassName = "Corona2dBase";
 		if (!RegisterClass(&wcMain)) {
 			::MessageBox(NULL, "Could not start because the main window class could not be registered", "Couldn't Start", MB_ICONERROR);
+			return 0;
+		}
+
+		wcControl.style = CS_HREDRAW | CS_VREDRAW;
+		wcControl.lpfnWndProc = &directApplicationWin32::controlWindowProc;
+		wcControl.cbClsExtra = 0;
+		wcControl.cbWndExtra = 0;
+		wcControl.hInstance = hinstance;
+		wcControl.hIcon = NULL;
+		wcControl.hCursor = NULL;
+		wcControl.hbrBackground = NULL;
+		wcControl.lpszMenuName = NULL;
+		wcControl.lpszClassName = "Corona2dControl";
+		if (!RegisterClass(&wcControl)) {
+			::MessageBox(NULL, "Could not start because the  class could not be registered", "Couldn't Start", MB_ICONERROR);
 			return 0;
 		}
 
@@ -1081,7 +1146,7 @@ namespace corona
 				{
 					;
 				}
-				else if (!isDialogMessage(hwndRoot, &msg)) 
+				else if (!::IsDialogMessage(hwndRoot, &msg)) 
 				{
 					::TranslateMessage(&msg);
 					::DispatchMessage(&msg);

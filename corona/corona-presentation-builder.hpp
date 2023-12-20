@@ -749,7 +749,7 @@ namespace corona
 		std::function<void(tab_pane& _src, control_base*)> create_tab_controls;
 	};
 
-	class tab_view_control : public column_layout
+	class tab_view_control : public windows_control
 	{
 		std::vector<tab_pane> tab_panes;
 		std::shared_ptr<frame_layout> content_frame;
@@ -802,25 +802,92 @@ namespace corona
 
 	public:
 
+		virtual const char* get_window_class() { return "Corona2dControl"; }
+		virtual DWORD get_window_style() { return DefaultWindowStyles; }
+		virtual DWORD get_window_ex_style() { return WS_EX_LAYERED; }
+
+		HBRUSH background_brush_win32;
+		solidBrushRequest	background_brush;
+
+		HBRUSH border_brush_win32;
+		solidBrushRequest	border_brush;
+
+		std::weak_ptr<applicationBase> host;
+		std::weak_ptr<direct2dChildWindow> window;
+		std::function<void(tab_view_control*)> on_draw;
+		std::function<void(tab_view_control*)> on_create;
+
 		tab_view_control()
 		{
-			
+			background_brush_win32 = nullptr;
+			background_brush = {};
+			border_brush_win32 = nullptr;
+			border_brush = {};
+			parent = nullptr;
+			id = id_counter::next();
 		}
 
-		tab_view_control(const tab_view_control& _src) : column_layout(_src)
+		tab_view_control(const tab_view_control& _src)
 		{
-
+			background_brush_win32 = nullptr;
+			background_brush = _src.background_brush;
+			border_brush_win32 = nullptr;
+			border_brush = _src.border_brush;
+			on_draw = _src.on_draw;
+			on_create = _src.on_create;
 		}
 
-		tab_view_control(container_control_base *_parent, int _id) : column_layout(_parent, _id)
+		tab_view_control(container_control_base* _parent, int _id)
 		{
-			
+			background_brush_win32 = nullptr;
+			background_brush = {};
+			border_brush_win32 = nullptr;
+			border_brush = {};
+			parent = _parent;
+			id = _id;
+		}
+
+		virtual ~tab_view_control()
+		{
+			if (background_brush_win32)
+			{
+				::DeleteObject(background_brush_win32);
+			}
+			if (border_brush_win32)
+			{
+				::DeleteObject(border_brush_win32);
+			}
 		}
 
 		virtual void arrange(rectangle _bounds)
 		{
-			column_layout::arrange(_bounds);
+			set_bounds(_bounds);
+
+			point origin = { 0, 0, 0 };
+			point remaining = { _bounds.w, _bounds.h, 0.0 };
+
+			arrange_children(bounds,
+				[this](const rectangle* _bounds, control_base* _item) {
+					point temp = { 0, 0, 0 };
+					temp.x = _bounds->x;
+					temp.y = _bounds->y;
+					return temp;
+				},
+				[this](point* _origin, const rectangle* _bounds, control_base* _item) {
+					point temp = *_origin;
+					auto sz = _item->get_size(bounds, { _bounds->w, _bounds->h });
+					temp.y += sz.y;
+					temp.x = _bounds->x;
+					return temp;
+				}
+			);
 		}
+
+		virtual point get_remaining(point _ctx)
+		{
+			return _ctx;
+		}
+
 
 		virtual std::shared_ptr<control_base> clone()
 		{
@@ -828,10 +895,6 @@ namespace corona
 			return tv;
 		}
 
-		virtual ~tab_view_control()
-		{
-			;
-		}
 
 		void set_tabs(std::vector<tab_pane> _new_panes)
 		{
@@ -857,6 +920,125 @@ namespace corona
 				content_frame->set_contents(cg);
 			}
 		}
+
+
+		virtual void create(std::weak_ptr<applicationBase> _host)
+		{
+			host = _host;
+			if (auto phost = _host.lock()) {
+				if (inner_bounds.x < 0 || inner_bounds.y < 0 || inner_bounds.w < 0 || inner_bounds.h < 0) {
+					throw std::logic_error("inner bounds not initialized");
+				}
+				window = phost->createDirect2Window(id, inner_bounds);
+			}
+			if (on_create) {
+				on_create(this);
+			}
+			for (auto child : children) {
+				child->create(_host);
+			}
+			windows_control::create(_host);
+		}
+
+		void destroy()
+		{
+			for (auto child : children) {
+				child->destroy();
+			}
+		}
+
+		void on_resize()
+		{
+			auto ti = typeid(*this).name();
+
+			if (auto pwindow = window.lock())
+			{
+				pwindow->moveWindow(inner_bounds.x, inner_bounds.y, inner_bounds.w, inner_bounds.h);
+			}
+		}
+
+		void draw()
+		{
+			bool adapter_blown_away = false;
+
+			if (auto pwindow = window.lock())
+			{
+				pwindow->beginDraw(adapter_blown_away);
+				if (!adapter_blown_away)
+				{
+					auto& context = pwindow->getContext();
+
+					auto& bc = background_brush.brushColor;
+
+					if (border_brush.active)
+					{
+						if (border_brush_win32)
+							DeleteBrush(border_brush_win32);
+
+						auto dc = context.getDeviceContext();
+						D2D1_COLOR_F color = toColor(bc);
+						border_brush_win32 = ::CreateSolidBrush(RGB(color.a * color.r * 255.0, color.a * color.g * 255.0, color.a * color.b * 255.0));
+					}
+
+					if (background_brush.active)
+					{
+						if (background_brush_win32)
+							DeleteBrush(background_brush_win32);
+
+						auto dc = context.getDeviceContext();
+						D2D1_COLOR_F color = toColor(bc);
+						background_brush_win32 = ::CreateSolidBrush(RGB(color.a * color.r * 255.0, color.a * color.g * 255.0, color.a * color.b * 255.0));
+						dc->Clear(color);
+					}
+					else
+					{
+						auto dc = context.getDeviceContext();
+						D2D1_COLOR_F color = toColor("00000000");
+						dc->Clear(color);
+					}
+
+					if (on_draw)
+					{
+						on_draw(this);
+					}
+					else
+					{
+
+					}
+				}
+				pwindow->endDraw(adapter_blown_away);
+			}
+			for (auto& child : children) {
+				child->draw();
+			}
+		}
+
+		void render(ID2D1DeviceContext* _dest)
+		{
+			if (auto pwindow = window.lock())
+			{
+				auto bm = pwindow->getBitmap();
+				D2D1_RECT_F dest;
+				dest.left = inner_bounds.x;
+				dest.top = inner_bounds.y;
+				dest.right = inner_bounds.w + inner_bounds.x;
+				dest.bottom = inner_bounds.h + inner_bounds.y;
+
+				auto size = bm->GetPixelSize();
+				D2D1_RECT_F source;
+				source.left = 0;
+				source.top = 0;
+				source.bottom = inner_bounds.h;
+				source.right = inner_bounds.w;
+				_dest->DrawBitmap(bm, &dest, 1.0, D2D1_INTERPOLATION_MODE::D2D1_INTERPOLATION_MODE_LINEAR, &source);
+			}
+			for (auto& child : children)
+			{
+				child->render(_dest);
+			}
+		}
+
+
 	};
 
 	class search_view_control : public column_layout

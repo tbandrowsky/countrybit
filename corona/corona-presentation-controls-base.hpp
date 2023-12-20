@@ -237,6 +237,7 @@ namespace corona
 		friend class column_layout;
 		friend class absolute_layout;
 		friend class frame_layout;
+		friend class tab_view_control;
 
 		int						id;
 
@@ -299,11 +300,11 @@ namespace corona
 
 		virtual bool set_focus()
 		{
-			std::cout << "Focus to:" << id << " " << typeid(*this).name() << std::endl;
+//			std::cout << "Focus to:" << id << " " << typeid(*this).name() << std::endl;
 			is_focused = true;
 			return false;
 		}
-
+		 
 		virtual bool kill_focus()
 		{
 			is_focused = false;
