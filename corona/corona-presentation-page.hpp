@@ -22,6 +22,8 @@ namespace corona
 		std::vector<std::shared_ptr<page_unload_event_binding>> unload_bindings;
 		std::vector<std::shared_ptr<page_load_event_binding>> load_bindings;
 		std::vector<std::shared_ptr<page_select_event_binding>> select_bindings;
+		std::vector<int> focus_list;
+		int	current_focus;
 		update_function update_event;
 		change_function change_event;
 
@@ -33,18 +35,21 @@ namespace corona
 		{
 			name = _name != nullptr ? _name : "Test";
 			root = std::make_shared<column_layout>();
+			current_focus = 0;
 		}
 
 		page(std::string _name)
 		{
 			name = _name;
 			root = std::make_shared<column_layout>();
+			current_focus = 0;
 		}
 
 		page()
 		{
 			name = "Test";
 			root = std::make_shared<column_layout>();
+			current_focus = 0;
 		}
 
 		virtual ~page()
@@ -119,6 +124,7 @@ namespace corona
 		{
 			if (root.get())
 			{
+				update_focus_list();
 				root->render(_context);
 			}
 		}
@@ -322,11 +328,68 @@ namespace corona
 			unload_bindings.push_back(plet);
 		}
 
-		void handle_key_up(int _control_id, key_up_event evt)
+		bool set_focus()
 		{
+			bool r = false;
+			if (current_focus >= 0 && focus_list.size() > 0)
+			{
+				auto focused_id = focus_list[current_focus];
+				auto focused_control = root->find(focused_id);
+				if (focused_control) {
+					r = focused_control->set_focus();
+				}
+			}
+			return r;
+		}
+
+		bool kill_focus()
+		{
+			bool r = false;
+			if (current_focus >= 0 && focus_list.size() > 0)
+			{
+				auto focused_id = focus_list[current_focus];
+				auto focused_control = root->find(focused_id);
+				if (focused_control) {
+					r = focused_control->kill_focus();
+				}
+			}
+			return r;
+		}
+
+		bool handle_navigation_keys(int _key)
+		{
+			switch (_key) {
+			case VK_TAB:
+			{
+				kill_focus();
+				int pressed = ::GetKeyState(VK_SHIFT);
+				if (pressed < 0) {
+					current_focus--;
+					if (current_focus < 0)
+						current_focus = focus_list.size() - 1;
+				}
+				else
+				{
+					current_focus++;
+					if (current_focus >= focus_list.size())
+						current_focus = 0;
+				}
+				return set_focus();
+				return true;
+			}
+			break;
+			}
+			return false;
+		}
+
+		bool handle_key_up(int _control_id, key_up_event evt)
+		{
+			bool handled = false;
 			if (key_up_bindings.contains(_control_id)) {
 				key_up_bindings[_control_id]->on_key_up(evt);
+				handled = true;
 			}
+			return handled;
 		}
 
 		void handle_key_down(int _control_id, key_down_event evt)
@@ -426,8 +489,28 @@ namespace corona
 			}
 		}
 
+		void update_focus_list()
+		{
+			focus_list.clear();
+			update_focus_list(root.get());
+		}
+
+		void update_focus_list(control_base *_base)
+		{
+			if (_base->accept_focus) {
+				focus_list.push_back(_base->id);
+			}
+			for (auto c : _base->children)
+			{
+				update_focus_list(c.get());
+			}
+		}
+
 		void handle_onload(std::shared_ptr<page> _pg)
 		{
+			_pg->update_focus_list();
+			_pg->set_focus();
+
 			for (auto evt : load_bindings) {
 				page_load_event ple = {};
 				ple.pg = _pg;

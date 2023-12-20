@@ -165,6 +165,7 @@ namespace corona
 				},
 				[app_data](json _params, data_set* _set) -> int {
 					// when back on the ui thread, kick off our refresh, which is to just call actor options again
+
 					return 0;
 				},
 				0);
@@ -192,8 +193,13 @@ namespace corona
 			int button_id = app_data->get_control_id(button_name, []() { return id_counter::next(); });
 
 			// and, create our button and add it to our container
-			command_container.push_button(button_id, class_name, [](pushbutton_control& pc) {
+/*			command_container.push_button(button_id, class_name, [](pushbutton_control& pc) {
 				pc.set_size(.95_container, 30.0_px);
+				});
+				*/
+			command_container.edit(button_id, [class_name](edit_control& pc) {
+				pc.set_size(.95_container, 30.0_px);
+				pc.set_text(class_name);
 				});
 
 			// and now, we associate creating the object with the application data...
@@ -226,7 +232,12 @@ namespace corona
 
 			// and, now add an event handler, to select the object on the back end, when this is pressed.
 			// the [capture,..](param,...) notation is how C++ does lambda expressions.
-			_page.on_command(button_id, [button_name, app_data, class_name, calico_svc](command_event ce) {	
+			_page.on_command(button_id, [_page, button_name, app_data, class_name, calico_svc](command_event ce) {	
+					auto& tc_message = _page.root->find<code_control>(IDC_STATUS_MESSAGE);
+					auto& tc_detail = _page.root->find<code_control>(IDC_STATUS_DETAIL);
+					tc_message.text = "Creating";
+					tc_message.text = "Creating Object";
+
 					json options = app_data->get(button_name);
 				});
 
@@ -266,10 +277,6 @@ namespace corona
 			tab_pane new_tab;
 			new_tab.id = app_data->get_control_id(bind_name, []() { return id_counter::next(); });
 			new_tab.name = rule_description;
-			auto tab_pane_contents = std::make_shared<title_control>(nullptr, new_tab.id);
-			tab_pane_contents->text = rule_description;
-			tab_pane_contents->set_size(1.0_container, 1.0_container);
-			new_tab.tab_controls = tab_pane_contents;
 
 			// group scans an array, then creates a new object whose each member corresponds to the key 
 			// used to group by.
@@ -315,8 +322,16 @@ namespace corona
 					ads.data.put_element(-1, item_obj);
 				}
 			}
-		
-			//tab_controls->set_item_source(ads);
+
+			new_tab.create_tab_controls = [rule_description,ads](tab_pane& _pane, control_base* _cont) {
+				control_builder cb;
+				cb.column_view_begin(id_counter::next(), [ads](column_view_layout& _layout) {
+					_layout.set_item_source(ads);
+					_layout.set_size(1.0_container, 1.0_container);
+					});
+				cb.apply_controls(_cont);
+				};
+			 
 			tabs.push_back(new_tab);
 		}
 
@@ -458,11 +473,6 @@ namespace corona
 				}
 				else
 				{
-					/*						auto& new_page = application_presentation->create_page("home", [_set, application, calico_svc, app_data, application_presentation, app_menu, st](page& new_page) {
-												auto ao = app_data->get_data_set("actoroptions")->data;
-												create_devdesk_page(ao, new_page, application, calico_svc, app_data, application_presentation, app_menu, st);
-												});
-												*/
 					application_presentation->select_page("home");
 				}
 

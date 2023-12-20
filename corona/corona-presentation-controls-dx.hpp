@@ -13,6 +13,9 @@ namespace corona
 		HBRUSH background_brush_win32;
 		solidBrushRequest	background_brush;
 
+		HBRUSH border_brush_win32;
+		solidBrushRequest	border_brush;
+
 		std::weak_ptr<applicationBase> host;
 		std::weak_ptr<direct2dChildWindow> window;
 		std::function<void(draw_control*)> on_draw;
@@ -22,6 +25,8 @@ namespace corona
 		{
 			background_brush_win32 = nullptr;
 			background_brush = {};
+			border_brush_win32 = nullptr;
+			border_brush = {};
 			parent = nullptr;
 			id = id_counter::next();
 		}
@@ -30,6 +35,8 @@ namespace corona
 		{
 			background_brush_win32 = nullptr;
 			background_brush = _src.background_brush;
+			border_brush_win32 = nullptr;
+			border_brush = _src.border_brush;
 			on_draw = _src.on_draw;
 			on_create = _src.on_create;
 		}
@@ -38,6 +45,8 @@ namespace corona
 		{
 			background_brush_win32 = nullptr;
 			background_brush = {};
+			border_brush_win32 = nullptr;
+			border_brush = {};
 			parent = _parent;
 			id = _id;
 		}
@@ -47,6 +56,10 @@ namespace corona
 			if (background_brush_win32) 
 			{
 				::DeleteObject(background_brush_win32);
+			}
+			if (border_brush_win32)
+			{
+				::DeleteObject(border_brush_win32);
 			}
 		}
 
@@ -96,6 +109,16 @@ namespace corona
 					auto& context = pwindow->getContext();
 
 					auto& bc = background_brush.brushColor;
+
+					if (border_brush.active)
+					{
+						if (border_brush_win32)
+							DeleteBrush(border_brush_win32);
+
+						auto dc = context.getDeviceContext();
+						D2D1_COLOR_F color = toColor(bc);
+						border_brush_win32 = ::CreateSolidBrush(RGB(color.a * color.r * 255.0, color.a * color.g * 255.0, color.a * color.b * 255.0));
+					}
 
 					if (background_brush.active)
 					{

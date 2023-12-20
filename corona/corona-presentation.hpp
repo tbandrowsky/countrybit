@@ -101,6 +101,9 @@ namespace corona {
 		virtual void mouseRightUp(point* _point);
 		virtual void pointSelected(point* _point, color* _color);
 		virtual LRESULT ncHitTest(point* _point);
+		virtual void setFocus();
+		virtual void killFocus();
+		virtual bool navigationKey(int _key);
 
 		virtual void onCreated();
 		virtual void onCommand(int buttonId);
@@ -383,6 +386,38 @@ namespace corona {
 			cp->update(_elapsedSeconds, _totalSeconds);
 		}
 		return true;
+	}
+
+	void presentation::setFocus()
+	{
+		auto cp = current_page.lock();
+		if (cp) {
+			if (!cp->set_focus()) {
+				if (auto phost = window_host.lock()) 
+				{
+					HWND hwnd = phost->getMainWindow();
+					::SetFocus(hwnd);
+				}
+			}
+		}
+	}
+
+	void presentation::killFocus()
+	{
+		auto cp = current_page.lock();
+		if (cp) {
+			cp->kill_focus();
+		}
+	}
+
+	bool presentation::navigationKey(int _key)
+	{
+		bool r = false;
+		auto cp = current_page.lock();
+		if (cp) {
+			r = cp->handle_navigation_keys(_key);
+		}
+		return r;
 	}
 
 	void presentation::keyDown(short _key)

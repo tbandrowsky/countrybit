@@ -42,6 +42,9 @@ namespace corona
 		virtual void mouseRightUp(point* _point) = 0;
 		virtual void pointSelected(point* _point, color* _color) = 0;
 		virtual LRESULT ncHitTest(point* _point) = 0;
+		virtual void setFocus() = 0;
+		virtual void killFocus() = 0;
+		virtual bool navigationKey(int _key) = 0;
 
 		virtual void onCreated() = 0;
 		virtual void onCommand(int buttonId) = 0;

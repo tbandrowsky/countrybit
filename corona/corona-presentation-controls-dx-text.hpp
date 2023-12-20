@@ -237,13 +237,13 @@ namespace corona
 				if (auto phost = host.lock()) {
 					auto draw_bounds = inner_bounds;
 
+					std::string test_text = std::format("{0}, {1}, {2}", text, draw_bounds.x, draw_bounds.y, (long)this);
+
 					draw_bounds.x = 0;
 					draw_bounds.y = 0;
 
-					std::string test_text = std::format("{0}, {1}, {2}", text, draw_bounds.x, draw_bounds.y, (long)this);
-
 					pwindow->getContext().drawText(text.c_str(), &draw_bounds, this->text_style.name, this->text_fill_brush.name);
-					//	pwindow->getContext().drawRectangle(&draw_bounds, this->text_fill_brush.name, 4, nullptr);
+					pwindow->getContext().drawRectangle(&draw_bounds, this->text_fill_brush.name, 4, nullptr);
 				}
 			}
 			};

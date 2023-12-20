@@ -203,7 +203,7 @@ namespace corona
 			else 
 			{
 				//std::function<std::weak_ptr<control_base>(control_base *_parent, json& _array, int _index)>;
-				cjm = [class_name](control_base* _parent, json& _array, int _index) -> std::weak_ptr<control_base>
+				cjm = [class_name](control_base* _parent, json& _array, int _index) -> std::shared_ptr<control_base>
 					{
 						std::shared_ptr<paragraph_control> new_ptr = std::make_shared<paragraph_control>(_parent, id_counter::next());
 						new_ptr->text = class_name;

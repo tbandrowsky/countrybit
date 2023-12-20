@@ -10,6 +10,17 @@
 namespace corona
 {
 
+	template <typename DATA> class contents_generator
+	{
+	public:
+		DATA data;
+		std::function<void(DATA& data, control_base* generator)> generator;
+
+		void operator() ( control_base* _this )
+		{
+			generator(data, _this);
+		}
+	};
 
 	class container_control : public draw_control
 	{
@@ -48,6 +59,14 @@ namespace corona
 		virtual ~container_control()
 		{
 			;
+		}
+
+		virtual void set_contents(std::function<void(control_base* _page)> _contents)
+		{
+			_contents(this);
+
+			arrange(bounds);
+			create(host);
 		}
 
 		virtual void on_subscribe(presentation_base* _presentation, page_base* _page)
@@ -125,6 +144,22 @@ namespace corona
 			background_brush.brushColor = toColor(_color.c_str());
 			background_brush.name = typeid(*this).name();
 			background_brush.active = true;
+			return *this;
+		}
+
+		container_control& set_border_color(solidBrushRequest _brushFill)
+		{
+			border_brush = _brushFill;
+			border_brush.name = typeid(*this).name();
+			border_brush.active = true;
+			return *this;
+		}
+
+		container_control& set_border_color(std::string _color)
+		{
+			border_brush.brushColor = toColor(_color.c_str());
+			border_brush.name = typeid(*this).name();
+			border_brush.active = true;
 			return *this;
 		}
 
@@ -214,28 +249,17 @@ namespace corona
 	{
 	protected:
 	public:
+
 		frame_layout() { ; }
 		frame_layout(const frame_layout& _src) = default;
 		frame_layout(container_control_base* _parent, int _id) : container_control(_parent, _id) { ; }
 		virtual ~frame_layout() { ; }
-
-		void set_contents(control_base* _page)
-		{
-			children.clear();
-			auto temp = _page->clone();
-			temp->parent = this;
-			apply_item_sizes(*temp);
-			children.push_back(temp);
-			arrange(bounds);
-			create(host);
-		}
 
 		virtual std::shared_ptr<control_base> clone()
 		{
 			auto tv = std::make_shared<frame_layout>(*this);
 			return tv;
 		}
-
 
 		virtual void arrange(rectangle _ctx);
 		virtual point get_remaining(point _ctx);
@@ -291,6 +315,40 @@ namespace corona
 			}
 		}
 
+		void init()
+		{
+			set_border_color("#C0C0C0");
+
+			on_draw = [this](control_base* _item)
+				{
+					if (auto pwindow = window.lock())
+					{
+						if (auto phost = host.lock()) {
+							auto draw_bounds = inner_bounds;
+
+							draw_bounds.x = 0;
+							draw_bounds.y = 0;
+
+							auto& context = pwindow->getContext();
+
+							if (this->is_focused) {
+
+								if (selected_item_index >= 0 && items.size()) 
+								{
+									auto rect_bounds = items[selected_item_index].get()->get_bounds();
+									context.drawRectangle(&rect_bounds, border_brush.name, 4, nullptr);
+								}
+								else 
+								{
+									context.drawRectangle(&draw_bounds, border_brush.name, 4, nullptr);
+								}
+							}
+						}
+					}
+				};
+
+		}
+
 	public:
 
 		column_view_layout()
@@ -298,6 +356,7 @@ namespace corona
 			view_port = {};
 			child_area = {};
 			selected_item_index = 0;
+			accept_focus = true;
 		}
 
 		column_view_layout(container_control_base* _parent, int _id) : column_layout(_parent, _id)
@@ -305,6 +364,7 @@ namespace corona
 			view_port = {};
 			child_area = {};
 			selected_item_index = 0;
+			accept_focus = true;
 		}
 
 		column_view_layout(const column_view_layout& _src) = default;
@@ -336,9 +396,9 @@ namespace corona
 			for (i = 0; i < item_source.data.size(); i++)
 			{
 				auto cb = item_source.data_to_control(this, item_source.data, i);
-				if (auto sp = cb.lock()) {
-					children.push_back(sp);
-					items.push_back(sp);
+				if (cb) {
+					children.push_back(cb);
+					items.push_back(cb);
 				}
 			}
 
@@ -361,40 +421,33 @@ namespace corona
 				item_to_page_index.push_back(current_page);
 				index++;
 			}
+
+			position_children();
 		}
 
-		virtual void on_subscribe(presentation_base* _presentation, page_base* _page)
+		virtual void key_press(int _key)
 		{
-			_page->on_key_down(id, [](key_down_event evt) {
-				});
-			_page->on_key_up(id, [](key_up_event evt) {
-					column_view_layout* cvt = (column_view_layout*)evt.control;
-					switch (evt.key) {
-					case VK_BACK:
-						break;
-					case VK_UP:
-						cvt->line_up();
-						break;
-					case VK_DOWN:
-						cvt->line_down();
-						break;
-					case VK_PRIOR:
-						cvt->page_up();
-						break;
-					case VK_NEXT:
-						cvt->page_down();
-						break;
-					case VK_DELETE:
-						cvt->delete_selected();
-						break;
-					case VK_RETURN:
-						cvt->navigate_selected();
-						break;
-					}
-				});
-
-			for (auto child : children) {
-				child->on_subscribe(_presentation, _page);
+			switch (_key) {
+			case VK_BACK:
+				break;
+			case VK_UP:
+				line_up();
+				break;
+			case VK_DOWN:
+				line_down();
+				break;
+			case VK_PRIOR:
+				page_up();
+				break;
+			case VK_NEXT:
+				page_down();
+				break;
+			case VK_DELETE:
+				delete_selected();
+				break;
+			case VK_RETURN:
+				navigate_selected();
+				break;
 			}
 		}
 
@@ -896,16 +949,22 @@ namespace corona
 	{
 		set_bounds(_bounds);
 
-		point origin = { _bounds.x, _bounds.y, 0.0 };
+		point origin = { 0, 0, 0 };
 		point remaining = { _bounds.w, _bounds.h, 0.0 };
 
 		arrange_children(bounds,
 			[this](const rectangle* _bounds, control_base* _item) {
-				point temp = { _bounds->x, _bounds->y };
+				point temp = { 0, 0, 0 };
+				temp.x = _bounds->x;
+				temp.y = _bounds->y;
 				return temp;
 			},
 			[this](point* _origin, const rectangle* _bounds, control_base* _item) {
-				return *_origin;
+				point temp = *_origin;
+				auto sz = _item->get_size(bounds, { _bounds->w, _bounds->h });
+				temp.y += sz.y;
+				temp.x = _bounds->x;
+				return temp;
 			}
 		);
 	}

@@ -39,6 +39,7 @@ namespace corona
 			window(nullptr),
 			text_font(nullptr)
 		{
+			accept_focus = true;
 			set_origin(0.0_px, 0.0_px);
 			set_size(1.0_container, 1.2_fontgr);
 			set_default_styles();
@@ -48,6 +49,7 @@ namespace corona
 			window(nullptr),
 			text_font(nullptr)
 		{
+			accept_focus = true;
 			text_style = _src.text_style;
 		}
 
@@ -56,6 +58,7 @@ namespace corona
 			window(nullptr),
 			text_font(nullptr)
 		{
+			accept_focus = true;
 			set_origin(0.0_px, 0.0_px);
 			set_size(1.0_container, 1.2_fontgr);
 			set_default_styles();
@@ -88,6 +91,22 @@ namespace corona
 		}
 
 		virtual double get_font_size() { return text_style.fontSize; }
+
+		virtual bool kill_focus()
+		{
+			is_focused = false;
+			return true;
+		}
+
+		virtual bool set_focus()
+		{
+			is_focused = true;
+			std::cout << "Focus to Win32:" << id << " " << typeid(*this).name() << std::endl;
+
+			SetFocus(window);
+//			SendMessage(GetParent(window), WM_NEXTDLGCTL, (WPARAM)window, TRUE);
+			return true;
+		}
 
 		virtual void on_resize()
 		{
@@ -444,11 +463,11 @@ namespace corona
 	const int RichEditWindowStyles = WS_VISIBLE | WS_BORDER | WS_CHILD | ES_MULTILINE | ES_WANTRETURN | WS_VSCROLL;
 	const int ComboWindowStyles = WS_VISIBLE | WS_CHILD | WS_TABSTOP | CBS_DROPDOWNLIST | CBS_SORT;
 	const int ComboExWindowStyles = WS_VISIBLE | WS_CHILD | WS_TABSTOP | CBS_DROPDOWNLIST | CBS_SORT;
-	const int PushButtonWindowStyles = WS_VISIBLE | WS_CHILD | WS_TABSTOP | BS_FLAT;
-	const int PressButtonWindowStyles = WS_VISIBLE | WS_CHILD | WS_TABSTOP | BS_FLAT | BS_AUTOCHECKBOX | BS_PUSHLIKE;
-	const int CheckboxWindowStyles = WS_VISIBLE | WS_CHILD | WS_TABSTOP | BS_AUTOCHECKBOX | BS_FLAT;
-	const int RadioButtonWindowStyles = WS_VISIBLE | WS_CHILD | WS_TABSTOP | BS_AUTORADIOBUTTON | BS_FLAT;
-	const int LinkButtonWindowStyles = WS_VISIBLE | WS_CHILD | WS_TABSTOP | BS_COMMANDLINK | BS_FLAT;
+	const int PushButtonWindowStyles = WS_VISIBLE | WS_CHILD | WS_TABSTOP | BS_FLAT | BS_NOTIFY;
+	const int PressButtonWindowStyles = WS_VISIBLE | WS_CHILD | WS_TABSTOP | BS_FLAT | BS_AUTOCHECKBOX | BS_PUSHLIKE | BS_NOTIFY;
+	const int CheckboxWindowStyles = WS_VISIBLE | WS_CHILD | WS_TABSTOP | BS_AUTOCHECKBOX | BS_FLAT | BS_NOTIFY;
+	const int RadioButtonWindowStyles = WS_VISIBLE | WS_CHILD | WS_TABSTOP | BS_AUTORADIOBUTTON | BS_FLAT | BS_NOTIFY;
+	const int LinkButtonWindowStyles = WS_VISIBLE | WS_CHILD | WS_TABSTOP | BS_COMMANDLINK | BS_FLAT | BS_NOTIFY;
 	const int ListViewWindowsStyles = DefaultWindowStyles | LVS_REPORT | LVS_SINGLESEL | WS_BORDER | WS_VSCROLL;
 	const int ListBoxWindowsStyles = DefaultWindowStyles | WS_BORDER | WS_VSCROLL;
 
@@ -493,6 +512,17 @@ namespace corona
 		{
 			auto tv = std::make_shared<button_control<ButtonWindowStyles>>(*this);
 			return tv;
+		}
+
+		virtual bool set_focus()
+		{
+			is_focused = true;
+			std::cout << "Focus to Button:" << id << " " << typeid(*this).name() << std::endl;
+
+			//SendMessage(GetParent(window), WM_NEXTDLGCTL, (WPARAM)window, TRUE);
+
+			::SetFocus(window);
+			return true;
 		}
 
 		virtual ~button_control() { ; }

@@ -746,7 +746,7 @@ namespace corona
 	public:
 		int id;
 		std::string name;
-		std::shared_ptr<control_base> tab_controls;
+		std::function<void(tab_pane& _src, control_base*)> create_tab_controls;
 	};
 
 	class tab_view_control : public column_layout
@@ -762,16 +762,18 @@ namespace corona
 
 			control_builder builder;
 
-			auto tab_row = builder.row_begin(id_counter::next(), [](row_layout& _settings) {
-				_settings.set_size(1.0_container, 30.0_px);
-				});
-			builder.end();
-
-			auto frame_row = builder.frame_begin(id_counter::next(), [this](frame_layout& _settings) {
-				_settings.set_size(1.0_container, 1.0_remaining);
+			auto main = builder.column_begin(id_counter::next(), [this](column_layout& _settings) {
+				_settings.set_size(1.0_container, 1.0_container);
 				_settings.set_item_size(1.0_container, 1.0_container);
 				});
-			builder.end();
+
+			auto tab_row = main.row_begin(id_counter::next(), [](row_layout& _settings) {
+				_settings.set_size(1.0_container, 30.0_px);
+				});
+
+			auto frame_row = main.frame_begin(id_counter::next(), [this](frame_layout& _settings) {
+				_settings.set_size(1.0_container, 1.0_remaining);
+				});
 
 			auto froot = frame_row.get_root();
 			content_frame = std::dynamic_pointer_cast<frame_layout>(froot);
@@ -795,7 +797,7 @@ namespace corona
 				});
 			}
 
-			builder.apply_controls(this);
+			main.apply_controls(this);
 		}
 
 	public:
@@ -813,6 +815,11 @@ namespace corona
 		tab_view_control(container_control_base *_parent, int _id) : column_layout(_parent, _id)
 		{
 			
+		}
+
+		virtual void arrange(rectangle _bounds)
+		{
+			column_layout::arrange(_bounds);
 		}
 
 		virtual std::shared_ptr<control_base> clone()
@@ -835,14 +842,19 @@ namespace corona
 		void tab_selected(tab_button_control& _tab)
 		{
 			auto tbi = std::find_if(tab_panes.begin(), tab_panes.end(), [this](tab_pane& _tb) {
-				return _tb.id = this->active_id;
+				return _tb.id == this->active_id;
 				});
 
 			if (tbi != tab_panes.end()) 
 			{
+				contents_generator<tab_pane *> cg;
 				// set contents will clone this for us.
-				auto new_contents = tbi->tab_controls.get();
-				//content_frame->set_contents(new_contents);
+				cg.data = &*tbi;
+				cg.generator = [](tab_pane* _tp, control_base* _args)
+					{
+						_tp->create_tab_controls(*_tp, _args);
+					};
+				content_frame->set_contents(cg);
 			}
 		}
 	};
@@ -1060,7 +1072,6 @@ namespace corona
 			auto tv = std::make_shared<caption_bar_control>(*this);
 			return tv;
 		}
-
 
 		void build()
 		{

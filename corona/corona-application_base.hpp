@@ -123,8 +123,6 @@ namespace corona
 		virtual HFONT createFontDips(HWND target, const char* _fontName, double fontSize, bool bold, bool italic) = 0;
 		virtual HFONT createFontPixels(const char* _fontName, double fontSize, bool bold, bool italic) = 0;
 		virtual HFONT createFontIndirect(LOGFONTA _font, const char* _fontName, double fontSize, bool bold, bool italic) = 0;
-
-
 	};
 }
 

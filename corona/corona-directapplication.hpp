@@ -77,6 +77,7 @@ namespace corona
 
 		std::weak_ptr<direct2dChildWindow> createDirect2Window(DWORD control_id, rectangle bounds);
 
+		virtual bool isDialogMessage(HWND hwnd, LPMSG msg);
 		virtual bool runFull(HINSTANCE _hinstance, const char* _title, int _iconId, bool _fullScreen, std::shared_ptr<controller> _firstController);
 		virtual bool runDialog(HINSTANCE _hinstance, const char* _title, int _iconId, bool _fullScreen, std::shared_ptr<controller> _firstController);
 		virtual bool checkBackgroundComplete(MSG *_msg);
@@ -447,6 +448,27 @@ namespace corona
 		return current->windowProcHandler(hwnd, message, wParam, lParam);
 	}
 
+	bool directApplicationWin32::isDialogMessage(HWND hwnd, LPMSG msg)
+	{
+		auto pfactory = factory.lock();
+
+		std::weak_ptr<direct2dWindow> current_window;
+		std::shared_ptr< direct2dWindow> pcurrent_window = nullptr;
+
+		if (pfactory) {
+			current_window = pfactory->getWindow(hwndRoot);
+			pcurrent_window = current_window.lock();
+		}
+
+		bool navigationKey = false;
+
+		if (currentController && msg->message == WM_KEYUP) {
+			navigationKey = currentController->navigationKey(msg->wParam );
+		}
+
+		return navigationKey;
+	}
+
 	LRESULT directApplicationWin32::windowProcHandler(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 		bool found = false;
@@ -469,26 +491,26 @@ namespace corona
 		switch (message)
 		{
 		case WM_CREATE:
-		{
-			hwndRoot = hwnd;
-			RECT rcClient;
-			GetWindowRect(hwnd, &rcClient);
-			SetWindowPos(hwnd, NULL, rcClient.left, rcClient.top, abs(rcClient.right - rcClient.left), abs(rcClient.bottom - rcClient.top), SWP_FRAMECHANGED);
-			if (currentController) {
-				pfactory->createD2dWindow(hwnd, backgroundColor);
-				dpiScale = 96.0 / GetDpiForWindow(hwnd);
+			{
+				hwndRoot = hwnd;
+				RECT rcClient;
+				GetWindowRect(hwnd, &rcClient);
+				SetWindowPos(hwnd, NULL, rcClient.left, rcClient.top, abs(rcClient.right - rcClient.left), abs(rcClient.bottom - rcClient.top), SWP_FRAMECHANGED);
+				if (currentController) {
+					pfactory->createD2dWindow(hwnd, backgroundColor);
+					dpiScale = 96.0 / GetDpiForWindow(hwnd);
 
-				tooltip = CreateWindowEx(NULL, TOOLTIPS_CLASS, NULL,
-					WS_POPUP | TTS_ALWAYSTIP | TTS_BALLOON,
-					CW_USEDEFAULT, CW_USEDEFAULT,
-					CW_USEDEFAULT, CW_USEDEFAULT,
-					hwndRoot, NULL,
-					hinstance, NULL);
+					tooltip = CreateWindowEx(NULL, TOOLTIPS_CLASS, NULL,
+						WS_POPUP | TTS_ALWAYSTIP | TTS_BALLOON,
+						CW_USEDEFAULT, CW_USEDEFAULT,
+						CW_USEDEFAULT, CW_USEDEFAULT,
+						hwndRoot, NULL,
+						hinstance, NULL);
 
-				currentController->onCreated();
+					currentController->onCreated();
+				}
 			}
-		}
-		break;
+			break;
 		case WM_NCCALCSIZE:
 			if (wParam)
 			{
@@ -503,46 +525,46 @@ namespace corona
 			}
 			return DefWindowProc(hwnd, message, wParam, lParam);
 		case WM_NCHITTEST:
-		{
-			RECT WindowRect;
-			int x, y;
+			{
+				RECT WindowRect;
+				int x, y;
 
-			GetWindowRect(hwnd, &WindowRect);
-			x = GET_X_LPARAM(lParam) - WindowRect.left;
-			y = GET_Y_LPARAM(lParam) - WindowRect.top;
-			LRESULT test_hit = HTCLIENT;
+				GetWindowRect(hwnd, &WindowRect);
+				x = GET_X_LPARAM(lParam) - WindowRect.left;
+				y = GET_Y_LPARAM(lParam) - WindowRect.top;
+				LRESULT test_hit = HTCLIENT;
 
-			if (x < BORDERWIDTH && y < BORDERWIDTH)
-				test_hit = HTTOPLEFT;
-			else if (x > WindowRect.right - WindowRect.left - BORDERWIDTH && y < BORDERWIDTH)
-				test_hit = HTTOPRIGHT;
-			else if (x > WindowRect.right - WindowRect.left - BORDERWIDTH && y > WindowRect.bottom - WindowRect.top - BORDERWIDTH)
-				test_hit = HTBOTTOMRIGHT;
-			else if (x < BORDERWIDTH && y > WindowRect.bottom - WindowRect.top - BORDERWIDTH)
-				test_hit = HTBOTTOMLEFT;
-			else if (x < BORDERWIDTH)
-				test_hit = HTLEFT;
-			else if (y < BORDERWIDTH)
-				test_hit = HTTOP;
-			else if (x > WindowRect.right - WindowRect.left - BORDERWIDTH)
-				test_hit = HTRIGHT;
-			else if (y > WindowRect.bottom - WindowRect.top - BORDERWIDTH)
-				test_hit = HTBOTTOM;
-			else if (currentController) {
-				point hitpoint;
-				hitpoint = { x, y };
-				hitpoint.x = x * 96.0 / GetDpiForWindow(hwnd);
-				hitpoint.y = y * 96.0 / GetDpiForWindow(hwnd);
-				test_hit = currentController->ncHitTest(&hitpoint);
+				if (x < BORDERWIDTH && y < BORDERWIDTH)
+					test_hit = HTTOPLEFT;
+				else if (x > WindowRect.right - WindowRect.left - BORDERWIDTH && y < BORDERWIDTH)
+					test_hit = HTTOPRIGHT;
+				else if (x > WindowRect.right - WindowRect.left - BORDERWIDTH && y > WindowRect.bottom - WindowRect.top - BORDERWIDTH)
+					test_hit = HTBOTTOMRIGHT;
+				else if (x < BORDERWIDTH && y > WindowRect.bottom - WindowRect.top - BORDERWIDTH)
+					test_hit = HTBOTTOMLEFT;
+				else if (x < BORDERWIDTH)
+					test_hit = HTLEFT;
+				else if (y < BORDERWIDTH)
+					test_hit = HTTOP;
+				else if (x > WindowRect.right - WindowRect.left - BORDERWIDTH)
+					test_hit = HTRIGHT;
+				else if (y > WindowRect.bottom - WindowRect.top - BORDERWIDTH)
+					test_hit = HTBOTTOM;
+				else if (currentController) {
+					point hitpoint;
+					hitpoint = { x, y };
+					hitpoint.x = x * 96.0 / GetDpiForWindow(hwnd);
+					hitpoint.y = y * 96.0 / GetDpiForWindow(hwnd);
+					test_hit = currentController->ncHitTest(&hitpoint);
+				}
+				else
+					test_hit = HTCLIENT;
+
+				//std::cout << x << " " << y << " " << test_hit << std::endl;
+
+				return test_hit;
 			}
-			else
-				test_hit = HTCLIENT;
-
-			//std::cout << x << " " << y << " " << test_hit << std::endl;
-
-			return test_hit;
-		}
-		break;
+			break;
 		case WM_DESTROY:
 			pfactory->closeWindow(hwnd);
 			PostQuitMessage(0);
@@ -759,6 +781,7 @@ namespace corona
 				if (GetCursorPos(&p))
 				{
 					ScreenToClient(hwnd, &p);
+					::SetFocus(hwnd);
 					point ptxo;
 					ptxo.x = p.x * 96.0 / GetDpiForWindow(hwnd);
 					ptxo.y = p.y * 96.0 / GetDpiForWindow(hwnd);
@@ -773,6 +796,7 @@ namespace corona
 			{
 				if (pcurrent_window) {
 					currentController->keyDown(wParam);
+					return 0;
 				}
 			}
 			break;
@@ -781,6 +805,7 @@ namespace corona
 			{
 				if (pcurrent_window) {
 					currentController->keyUp(wParam);
+					return 0;
 				}
 			}
 			break;
@@ -944,7 +969,7 @@ namespace corona
 
 		hwndRoot = CreateWindowEx(dwExStyle,
 			wcMain.lpszClassName, _title,
-			dwStyle | WS_CLIPSIBLINGS,
+			dwStyle | WS_CLIPSIBLINGS | WS_TABSTOP,
 			CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
 			NULL, NULL, hinstance, NULL);
 
@@ -967,7 +992,7 @@ namespace corona
 				{
 					;
 				}
-				else if (!::IsDialogMessage(hwndRoot, &msg)) {
+				else if (!isDialogMessage(hwndRoot, &msg)) {
 					::TranslateMessage(&msg);
 					::DispatchMessage(&msg);
 				}
@@ -1033,7 +1058,7 @@ namespace corona
 
 		hwndRoot = CreateWindowEx(dwExStyle,
 			wcMain.lpszClassName, _title,
-			dwStyle | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
+			dwStyle | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_TABSTOP,
 			CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
 			NULL, NULL, hinstance, NULL);
 
@@ -1056,7 +1081,8 @@ namespace corona
 				{
 					;
 				}
-				else if (!::IsDialogMessage(hwndRoot, &msg)) {
+				else if (!isDialogMessage(hwndRoot, &msg)) 
+				{
 					::TranslateMessage(&msg);
 					::DispatchMessage(&msg);
 				}

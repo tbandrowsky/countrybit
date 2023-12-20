@@ -236,6 +236,7 @@ namespace corona
 		friend class row_layout;
 		friend class column_layout;
 		friend class absolute_layout;
+		friend class frame_layout;
 
 		int						id;
 
@@ -243,6 +244,8 @@ namespace corona
 		measure					margin;
 		measure					padding;
 		std::string				tooltip_text;
+		bool					accept_focus;
+		bool					is_focused;
 
 		container_control_base* parent;
 		std::vector<control_push_request> push_requests;
@@ -258,9 +261,11 @@ namespace corona
 			id(-1),
 			margin(),
 			parent(nullptr),
+			accept_focus(false),
 			margin_amount({ 0.0, 0.0 })
 		{
 			id = id_counter::next();
+			is_focused = false;
 		}
 
 		control_base(container_control_base *_parent, int _id) : control_base()
@@ -273,6 +278,7 @@ namespace corona
 			else {
 				id = _id;
 			}
+			is_focused = false;
 		}
 
 		control_base(const control_base& _src)
@@ -287,6 +293,24 @@ namespace corona
 		}
 
 		virtual ~control_base()
+		{
+			;
+		}
+
+		virtual bool set_focus()
+		{
+			std::cout << "Focus to:" << id << " " << typeid(*this).name() << std::endl;
+			is_focused = true;
+			return false;
+		}
+
+		virtual bool kill_focus()
+		{
+			is_focused = false;
+			return false;
+		}
+
+		virtual void key_press(int _key)
 		{
 			;
 		}
@@ -834,7 +858,7 @@ namespace corona
 		//std::cout << "resize control_base:" << ti << " " << bounds.x << "," << bounds.y << " x " << bounds.w << " " << bounds.h << std::endl;
 	}
 
-	using control_json_mapper = std::function<std::weak_ptr<control_base>(control_base *_parent, json& _array, int _index)>;
+	using control_json_mapper = std::function<std::shared_ptr<control_base>(control_base *_parent, json& _array, int _index)>;
 
 	class array_data_source
 	{
