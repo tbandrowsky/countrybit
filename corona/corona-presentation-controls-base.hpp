@@ -300,7 +300,7 @@ namespace corona
 
 		virtual bool set_focus()
 		{
-//			std::cout << "Focus to:" << id << " " << typeid(*this).name() << std::endl;
+			std::cout << "Focus to:" << id << " " << typeid(*this).name() << std::endl;
 			is_focused = true;
 			return false;
 		}
@@ -312,6 +312,31 @@ namespace corona
 		}
 
 		virtual void key_press(int _key)
+		{
+			;
+		}
+
+		virtual void key_up(int _key)
+		{
+			;
+		}
+
+		virtual void key_down(int _key)
+		{
+			;
+		}
+
+		virtual void mouse_move(point position)
+		{
+			;
+		}
+
+		virtual void mouse_left_click(point position)
+		{
+			;
+		}
+
+		virtual void mouse_right_click(point position)
 		{
 			;
 		}
@@ -545,6 +570,7 @@ namespace corona
 
 		if (mouse_over)
 		{
+			mouse_move(_position);
 			mouse_relative_position = _position;
 			mouse_relative_position.x -= bounds.x;
 			mouse_relative_position.y -= bounds.y;
@@ -564,10 +590,12 @@ namespace corona
 		}
 
 		if (mouse_left_down.changed_to(false) && _left_click) {
+			mouse_left_click(_position);
 			_left_click(this);
 		}
 
 		if (mouse_right_down.changed_to(false) && _right_click) {
+			mouse_right_click(_position);
 			_right_click(this);
 		}
 

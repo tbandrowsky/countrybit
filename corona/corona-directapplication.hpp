@@ -95,6 +95,7 @@ namespace corona
 		virtual void setVisible(int controlId, bool visible);
 		virtual void setEnable(int controlId, bool enabled);
 		virtual void setFocus(int ddlControlId);
+		virtual void killFocus(int ddlControlId);
 
 		virtual rectangle getWindowClientPos();
 		virtual rectangle getWindowPos(int ddlControlId);
@@ -476,8 +477,21 @@ namespace corona
 		return navigationKey;
 	}
 
-	LRESULT directApplicationWin32::controlWindowProcHandler(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+	LRESULT directApplicationWin32::controlWindowProcHandler(HWND hwndchild, UINT message, WPARAM wParam, LPARAM lParam)
 	{
+		auto pfactory = factory.lock();
+
+		std::weak_ptr<direct2dWindow> current_window;
+		std::shared_ptr< direct2dWindow> pcurrent_window = nullptr;
+
+		HWND hwnd = ::GetParent(hwndchild);
+		int ctrlId = ::GetDlgCtrlID(hwndchild);
+
+		if (pfactory) {
+			current_window = pfactory->getWindow(hwnd);
+			pcurrent_window = current_window.lock();
+		}
+
 		switch (message)
 		{
 		case WM_CREATE:
@@ -495,9 +509,95 @@ namespace corona
 				RECT rect, rect2;
 				HDC eraseDc = (HDC)wParam;
 				HBRUSH hbrBkgnd = (HBRUSH)::GetStockObject(WHITE_BRUSH);
-				::GetClientRect(hwnd, &rect);
+				::GetClientRect(hwndchild, &rect);
 				::FillRect((HDC)wParam, &rect, hbrBkgnd);
 				return 0;
+			}
+			break;
+		case WM_SETFOCUS:
+			if (currentController)
+			{
+				currentController->setFocus(ctrlId);
+			}
+			break;
+		case WM_KILLFOCUS:
+			if (currentController)
+			{
+				currentController->killFocus(ctrlId);
+			}
+			break;
+
+		case WM_LBUTTONUP:
+		case WM_LBUTTONDOWN:
+		case WM_RBUTTONUP:
+		case WM_RBUTTONDOWN:
+		case WM_MOUSEMOVE:
+			if (currentController)
+			{
+				POINT p;
+				bool lbutton = true;
+				if (GetCursorPos(&p))
+				{
+					ScreenToClient(hwnd, &p);
+					point ptxo;
+					ptxo.x = p.x * 96.0 / GetDpiForWindow(hwnd);
+					ptxo.y = p.y * 96.0 / GetDpiForWindow(hwnd);
+
+					if (pcurrent_window) {
+						switch (message) {
+						case WM_LBUTTONUP:
+							setFocus(ctrlId);
+							currentController->mouseLeftUp(&ptxo);
+							currentController->mouseLeftUp(ctrlId, &ptxo);
+							break;
+						case WM_LBUTTONDOWN:
+							currentController->mouseLeftDown(&ptxo);
+							currentController->mouseLeftDown(ctrlId, &ptxo);
+							break;
+						case WM_RBUTTONUP:
+							currentController->mouseRightUp(&ptxo);
+							currentController->mouseRightUp(ctrlId, &ptxo);
+							break;
+						case WM_RBUTTONDOWN:
+							currentController->mouseRightDown(&ptxo);
+							currentController->mouseRightDown(ctrlId, &ptxo);
+							break;
+						case WM_MOUSEMOVE:
+							currentController->mouseMove(&ptxo);
+							currentController->mouseMove(ctrlId, &ptxo);
+							break;
+						}
+					}
+				}
+			}
+			break;
+		case WM_CHAR:
+			if (currentController)
+			{
+				if (pcurrent_window) {
+					currentController->keyPress(ctrlId, wParam);
+					return 0;
+				}
+			}
+			break;
+		case WM_KEYDOWN:
+			if (currentController)
+			{
+				if (pcurrent_window) {
+					currentController->keyDown(wParam);
+					currentController->keyDown(ctrlId, wParam);
+					return 0;
+				}
+			}
+			break;
+		case WM_KEYUP:
+			if (currentController)
+			{
+				if (pcurrent_window) {
+					currentController->keyUp(wParam);
+					currentController->keyUp(ctrlId, wParam);
+					return 0;
+				}
 			}
 			break;
 		}
@@ -988,13 +1088,13 @@ namespace corona
 			return 0;
 		}
 
-		wcControl.style = CS_OWNDC;
+		wcControl.style = CS_HREDRAW | CS_VREDRAW;
 		wcControl.lpfnWndProc = &directApplicationWin32::controlWindowProc;
 		wcControl.cbClsExtra = 0;
 		wcControl.cbWndExtra = DLGWINDOWEXTRA;
 		wcControl.hInstance = hinstance;
 		wcControl.hIcon = NULL;
-		wcControl.hCursor = NULL;
+		wcMain.hCursor = LoadCursor(NULL, IDC_ARROW);
 		wcControl.hbrBackground = NULL;
 		wcControl.lpszMenuName = NULL;
 		wcControl.lpszClassName = "Corona2dControl";
@@ -1098,7 +1198,7 @@ namespace corona
 		wcControl.cbWndExtra = 0;
 		wcControl.hInstance = hinstance;
 		wcControl.hIcon = NULL;
-		wcControl.hCursor = NULL;
+		wcControl.hCursor = LoadCursor(NULL, IDC_ARROW);
 		wcControl.hbrBackground = NULL;
 		wcControl.lpszMenuName = NULL;
 		wcControl.lpszClassName = "Corona2dControl";
@@ -1200,6 +1300,18 @@ namespace corona
 	{
 		HWND control = ::GetDlgItem(hwndRoot, controlId);
 		::EnableWindow(control, enabled);
+	}
+
+	void directApplicationWin32::setFocus(int ddlControlId)
+	{
+		HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
+		::SetFocus(control);
+//		::PostMessage(hwndRoot, WM_NEXTDLGCTL, (WPARAM)control, TRUE);
+	}
+
+	void directApplicationWin32::killFocus(int ddlControlId)
+	{
+		;
 	}
 
 	void directApplicationWin32::setEditText(int textControlId, const std::string& _string)
@@ -1466,12 +1578,6 @@ namespace corona
 			picturePathi.copy(picturePathiw.c_str_w(), 1 << 16);
 			addFoldersToList(ddlControlId, picturePathi.c_str());
 		}
-	}
-
-	void directApplicationWin32::setFocus(int ddlControlId)
-	{
-		HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
-		::SetFocus(control);
 	}
 
 	void directApplicationWin32::addFoldersToCombo(int ddlControlId, const char* _path)

@@ -34,10 +34,12 @@ namespace corona {
 
 		presentation()
 		{
+			;
 		}
 
 		presentation(std::weak_ptr<applicationBase> _window_host) : window_host(_window_host)
 		{
+			;
 		}
 
 		virtual ~presentation()
@@ -101,8 +103,8 @@ namespace corona {
 		virtual void mouseRightUp(point* _point);
 		virtual void pointSelected(point* _point, color* _color);
 		virtual LRESULT ncHitTest(point* _point);
-		virtual void setFocus();
-		virtual void killFocus();
+		virtual void setFocus(int ddlControlId);
+		virtual void killFocus(int ddlControlId);
 		virtual bool navigationKey(int _key);
 
 		virtual void onCreated();
@@ -117,6 +119,15 @@ namespace corona {
 		virtual int onSpin(int controlId, int newPosition);
 		virtual void onJobComplete(bool _success, int _id);
 		virtual void onTaskComplete(bool _success, ui_task_result_base* _result);
+
+		virtual void keyDown(int _id, short _key);
+		virtual void keyUp(int _id, short _key);
+		virtual void keyPress(int _id, short _key);
+		virtual void mouseMove(int _id, point* _point);
+		virtual void mouseLeftDown(int _id, point* _point);
+		virtual void mouseLeftUp(int _id, point* _point);
+		virtual void mouseRightDown(int _id, point* _point);
+		virtual void mouseRightUp(int _id, point* _point);
 
 		template <typename control_type> control_type* get_control(int _id)
 		{
@@ -388,34 +399,24 @@ namespace corona {
 		return true;
 	}
 
-	void presentation::setFocus()
+	void presentation::setFocus(int _ctrl_id)
 	{
-		auto cp = current_page.lock();
-		if (cp) {
-			if (auto phost = window_host.lock())
-			{
-				HWND hwnd = phost->getMainWindow();
-				::SetFocus(hwnd);
-			}
-			cp->set_focus();
-		}
+		auto ctrl = get_control<control_base>(_ctrl_id);
+		if (ctrl)
+			ctrl->set_focus();
 	}
 
-	void presentation::killFocus()
+	void presentation::killFocus(int _ctrl_id)
 	{
-		auto cp = current_page.lock();
-		if (cp) {
-			cp->kill_focus();
-		}
+		auto ctrl = get_control<control_base>(_ctrl_id);
+		if (ctrl)
+			ctrl->kill_focus();
 	}
 
 	bool presentation::navigationKey(int _key)
 	{
 		bool r = false;
 		auto cp = current_page.lock();
-		if (cp) {
-			r = cp->handle_navigation_keys(_key);
-		}
 		return r;
 	}
 
@@ -552,6 +553,66 @@ namespace corona {
 	void presentation::pointSelected(point* _point, color* _color)
 	{
 		;
+	}
+
+	void presentation::keyDown(int _id, short _key)
+	{
+		if (auto ctrl = get_control<control_base>(_id)) {
+			ctrl->key_down(_key);
+		}
+	}
+
+	void presentation::keyUp(int _id, short _key)
+	{
+		if (auto ctrl = get_control<control_base>(_id)) {
+			ctrl->key_up(_key);
+		}
+	}
+
+	void presentation::keyPress(int _id, short _key)
+	{
+		if (auto ctrl = get_control<control_base>(_id)) {
+			ctrl->key_press(_key);
+		}
+	}
+
+	void presentation::mouseMove(int _id, point* _point)
+	{
+		if (auto ctrl = get_control<control_base>(_id)) {
+			ctrl->set_mouse(*_point, nullptr, nullptr, nullptr, nullptr);
+		}
+	}
+
+	void presentation::mouseLeftDown(int _id, point* _point)
+	{
+		if (auto ctrl = get_control<control_base>(_id)) {
+			bool left_down = true;
+			ctrl->set_mouse(*_point, &left_down, nullptr, nullptr, nullptr);
+		}
+	}
+
+	void presentation::mouseLeftUp(int _id, point* _point)
+	{
+		if (auto ctrl = get_control<control_base>(_id)) {
+			bool left_down = false;
+			ctrl->set_mouse(*_point, &left_down, nullptr, nullptr, nullptr);
+		}
+	}
+
+	void presentation::mouseRightDown(int _id, point* _point)
+	{
+		if (auto ctrl = get_control<control_base>(_id)) {
+			bool right_down = true;
+			ctrl->set_mouse(*_point, nullptr, &right_down, nullptr, nullptr);
+		}
+	}
+
+	void presentation::mouseRightUp(int _id, point* _point)
+	{
+		if (auto ctrl = get_control<control_base>(_id)) {
+			bool right_down = false;
+			ctrl->set_mouse(*_point, nullptr, &right_down, nullptr, nullptr);
+		}
 	}
 
 	LRESULT presentation::ncHitTest(point* _point)

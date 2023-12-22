@@ -101,10 +101,6 @@ namespace corona
 		virtual bool set_focus()
 		{
 			is_focused = true;
-			std::cout << "Focus to Win32:" << id << " " << typeid(*this).name() << std::endl;
-
-			SetFocus(window);
-//			SendMessage(GetParent(window), WM_NEXTDLGCTL, (WPARAM)window, TRUE);
 			return true;
 		}
 
@@ -512,17 +508,6 @@ namespace corona
 		{
 			auto tv = std::make_shared<button_control<ButtonWindowStyles>>(*this);
 			return tv;
-		}
-
-		virtual bool set_focus()
-		{
-			is_focused = true;
-			std::cout << "Focus to Button:" << id << " " << typeid(*this).name() << std::endl;
-
-			//SendMessage(GetParent(window), WM_NEXTDLGCTL, (WPARAM)window, TRUE);
-
-			::SetFocus(window);
-			return true;
 		}
 
 		virtual ~button_control() { ; }

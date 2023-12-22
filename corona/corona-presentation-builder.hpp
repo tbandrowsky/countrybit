@@ -756,11 +756,40 @@ namespace corona
 
 		int active_id;
 
+
+
 		void init()
 		{
 			children.clear();
 
 			control_builder builder;
+
+			on_create = [this](control_base* _item)
+				{
+					if (auto pwindow = window.lock())
+					{
+						pwindow->getContext().setSolidColorBrush(&border_brush);
+					}
+				};
+
+			on_draw = [this](control_base* _item)
+				{
+					if (auto pwindow = window.lock())
+					{
+						if (auto phost = host.lock()) {
+							auto draw_bounds = inner_bounds;
+
+							draw_bounds.x = 0;
+							draw_bounds.y = 0;
+
+							auto& context = pwindow->getContext();
+
+							if (this->is_focused) {
+								context.drawRectangle(&draw_bounds, border_brush.name, 4, nullptr);
+							}
+						}
+					}
+				};
 
 			auto main = builder.column_begin(id_counter::next(), [this](column_layout& _settings) {
 				_settings.set_size(1.0_container, 1.0_container);
@@ -825,16 +854,19 @@ namespace corona
 			border_brush = {};
 			parent = nullptr;
 			id = id_counter::next();
+			set_border_color("#C0C0C0");
 		}
 
 		tab_view_control(const tab_view_control& _src)
 		{
+			tab_panes = _src.tab_panes;
 			background_brush_win32 = nullptr;
 			background_brush = _src.background_brush;
 			border_brush_win32 = nullptr;
 			border_brush = _src.border_brush;
 			on_draw = _src.on_draw;
 			on_create = _src.on_create;
+			set_border_color("#C0C0C0");
 		}
 
 		tab_view_control(container_control_base* _parent, int _id)
@@ -845,6 +877,7 @@ namespace corona
 			border_brush = {};
 			parent = _parent;
 			id = _id;
+			set_border_color("#C0C0C0");
 		}
 
 		virtual ~tab_view_control()
@@ -900,17 +933,16 @@ namespace corona
 		{
 			tab_panes = _new_panes;
 			init();
+
+			
+			default_tab_selected();
 		}
 
-		void tab_selected(tab_button_control& _tab)
+		void tab_selected(std::vector<tab_pane>::iterator tbi)
 		{
-			auto tbi = std::find_if(tab_panes.begin(), tab_panes.end(), [this](tab_pane& _tb) {
-				return _tb.id == this->active_id;
-				});
-
-			if (tbi != tab_panes.end()) 
+			if (tbi != tab_panes.end())
 			{
-				contents_generator<tab_pane *> cg;
+				contents_generator<tab_pane*> cg;
 				// set contents will clone this for us.
 				cg.data = &*tbi;
 				cg.generator = [](tab_pane* _tp, control_base* _args)
@@ -921,7 +953,28 @@ namespace corona
 			}
 		}
 
+		void tab_selected(tab_button_control& _tab)
+		{
+			auto tbi = std::find_if(tab_panes.begin(), tab_panes.end(), [this](tab_pane& _tb) {
+				return _tb.id == this->active_id;
+				});
 
+			tab_selected(tbi);
+		}
+
+		void default_tab_selected()
+		{
+
+			auto tbi = tab_panes.begin();
+			tab_selected(tbi);
+		}
+
+		virtual void on_subscribe(presentation_base* _presentation, page_base* _page)
+		{
+			for (auto child : children) {
+				child->on_subscribe(_presentation, _page);
+			}
+		}
 		virtual void create(std::weak_ptr<applicationBase> _host)
 		{
 			host = _host;
@@ -1001,9 +1054,13 @@ namespace corona
 					{
 						on_draw(this);
 					}
-					else
-					{
 
+					if (is_focused) 
+					{
+						rectangle r = get_inner_bounds();
+						r.x = 0;
+						r.y = 0;
+						context.drawRectangle(&r, border_brush.name, 4, nullptr);
 					}
 				}
 				pwindow->endDraw(adapter_blown_away);
@@ -1036,6 +1093,80 @@ namespace corona
 			{
 				child->render(_dest);
 			}
+		}
+
+		tab_view_control& set_origin(measure _x, measure _y)
+		{
+			box.x = _x;
+			box.y = _y;
+			return *this;
+		}
+
+		tab_view_control& set_size(measure _width, measure _height)
+		{
+			box.width = _width;
+			box.height = _height;
+			return *this;
+		}
+
+		tab_view_control& set_background_color(solidBrushRequest _brushFill)
+		{
+			background_brush = _brushFill;
+			background_brush.name = typeid(*this).name();
+			background_brush.active = true;
+			if (auto pwindow = window.lock())
+			{
+				pwindow->getContext().setSolidColorBrush(&background_brush);
+			}
+			return *this;
+		}
+
+		tab_view_control& set_background_color(std::string _color)
+		{
+			background_brush.brushColor = toColor(_color.c_str());
+			background_brush.name = typeid(*this).name();
+			background_brush.active = true;
+			if (auto pwindow = window.lock())
+			{
+				pwindow->getContext().setSolidColorBrush(&background_brush);
+			}
+			return *this;
+		}
+
+		tab_view_control& set_border_color(solidBrushRequest _brushFill)
+		{
+			border_brush = _brushFill;
+			border_brush.name = typeid(*this).name();
+			border_brush.active = true;
+			if (auto pwindow = window.lock())
+			{
+				pwindow->getContext().setSolidColorBrush(&border_brush);
+			}
+			return *this;
+		}
+
+		tab_view_control& set_border_color(std::string _color)
+		{
+			border_brush.brushColor = toColor(_color.c_str());
+			border_brush.name = typeid(*this).name();
+			border_brush.active = true;
+			if (auto pwindow = window.lock())
+			{
+				pwindow->getContext().setSolidColorBrush(&border_brush);
+			}
+			return *this;
+		}
+
+		tab_view_control& set_position(layout_rect _new_layout)
+		{
+			box = _new_layout;
+			return *this;
+		}
+
+		tab_view_control& set_margin(measure _item_space)
+		{
+			margin = _item_space;
+			return *this;
 		}
 
 

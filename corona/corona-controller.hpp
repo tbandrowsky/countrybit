@@ -42,9 +42,18 @@ namespace corona
 		virtual void mouseRightUp(point* _point) = 0;
 		virtual void pointSelected(point* _point, color* _color) = 0;
 		virtual LRESULT ncHitTest(point* _point) = 0;
-		virtual void setFocus() = 0;
-		virtual void killFocus() = 0;
+		virtual void setFocus(int ddlControlId) = 0;
+		virtual void killFocus(int ddlControlId) = 0;
 		virtual bool navigationKey(int _key) = 0;
+
+		virtual void keyDown(int _id, short _key) = 0;
+		virtual void keyUp(int _id, short _key) = 0;
+		virtual void keyPress(int _id, short _key) = 0;
+		virtual void mouseMove(int _id, point* _point) = 0;
+		virtual void mouseLeftDown(int _id, point* _point) = 0;
+		virtual void mouseLeftUp(int _id, point* _point) = 0;
+		virtual void mouseRightDown(int _id, point* _point) = 0;
+		virtual void mouseRightUp(int _id, point* _point) = 0;
 
 		virtual void onCreated() = 0;
 		virtual void onCommand(int buttonId) = 0;
