@@ -12,6 +12,7 @@ namespace corona
 
 		std::map<int, std::shared_ptr<key_up_event_binding> > key_up_bindings;
 		std::map<int, std::shared_ptr<key_down_event_binding> > key_down_bindings;
+		std::map<int, std::shared_ptr<key_press_event_binding> > key_press_bindings;
 		std::map<int, std::shared_ptr<mouse_move_event_binding> > mouse_move_bindings;
 		std::map<int, std::shared_ptr<mouse_click_event_binding> > mouse_click_bindings;
 		std::map<int, std::shared_ptr<mouse_left_click_event_binding> > mouse_left_click_bindings;
@@ -54,6 +55,7 @@ namespace corona
 
 		void clear()
 		{
+			key_press_bindings.clear();
 			key_up_bindings.clear();
 			key_down_bindings.clear();
 			mouse_move_bindings.clear();
@@ -70,6 +72,20 @@ namespace corona
 			change_event = nullptr;
 			destroy();
 			root = std::make_shared<column_layout>();
+		}
+
+		void clear_events(int _control_id)
+		{
+			key_press_bindings.erase(_control_id);
+			key_up_bindings.erase(_control_id);
+			key_down_bindings.erase(_control_id);
+			mouse_move_bindings.erase(_control_id);
+			mouse_click_bindings.erase(_control_id);
+			mouse_left_click_bindings.erase(_control_id);
+			mouse_right_click_bindings.erase(_control_id);
+			item_changed_bindings.erase(_control_id);
+			list_changed_events.erase(_control_id);
+			command_bindings.erase(_control_id);
 		}
 
 		auto get_root_container() 
@@ -189,6 +205,14 @@ namespace corona
 
 			root->arrange(bounds);
 			//			std::cout << std::endl;
+		}
+
+		void on_key_press(int _control_id, std::function< void(key_press_event) > handler)
+		{
+			auto evt = std::make_shared<key_press_event_binding>();
+			evt->subscribed_item_id = _control_id;
+			evt->on_key_press = handler;
+			key_press_bindings[_control_id] = evt;
 		}
 
 		void on_key_up(int _control_id, std::function< void(key_up_event) > handler)
@@ -336,6 +360,13 @@ namespace corona
 		{
 			if (key_down_bindings.contains(_control_id)) {
 				key_down_bindings[_control_id]->on_key_down(evt);
+			}
+		}
+
+		void handle_key_press(int _control_id, key_press_event evt)
+		{
+			if (key_press_bindings.contains(_control_id)) {
+				key_press_bindings[_control_id]->on_key_press(evt);
 			}
 		}
 

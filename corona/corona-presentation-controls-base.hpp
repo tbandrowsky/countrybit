@@ -311,36 +311,6 @@ namespace corona
 			return false;
 		}
 
-		virtual void key_press(int _key)
-		{
-			;
-		}
-
-		virtual void key_up(int _key)
-		{
-			;
-		}
-
-		virtual void key_down(int _key)
-		{
-			;
-		}
-
-		virtual void mouse_move(point position)
-		{
-			;
-		}
-
-		virtual void mouse_left_click(point position)
-		{
-			;
-		}
-
-		virtual void mouse_right_click(point position)
-		{
-			;
-		}
-
 		template <typename control_type> std::shared_ptr<control_type> create(int _id)
 		{
 			std::shared_ptr<control_type> temp;
@@ -462,6 +432,8 @@ namespace corona
 			std::function<void(control_base* _item)> _right_click
 		);
 
+
+
 		virtual void on_subscribe(presentation_base* _presentation, page_base* _page)
 		{
 			;
@@ -570,7 +542,6 @@ namespace corona
 
 		if (mouse_over)
 		{
-			mouse_move(_position);
 			mouse_relative_position = _position;
 			mouse_relative_position.x -= bounds.x;
 			mouse_relative_position.y -= bounds.y;
@@ -590,12 +561,10 @@ namespace corona
 		}
 
 		if (mouse_left_down.changed_to(false) && _left_click) {
-			mouse_left_click(_position);
 			_left_click(this);
 		}
 
 		if (mouse_right_down.changed_to(false) && _right_click) {
-			mouse_right_click(_position);
 			_right_click(this);
 		}
 

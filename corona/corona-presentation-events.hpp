@@ -88,6 +88,12 @@ namespace corona {
 
 	};
 
+	class key_press_event : public key_event
+	{
+	public:
+
+	};
+
 	class draw_event : public control_event
 	{
 	public:
@@ -122,6 +128,13 @@ namespace corona {
 	public:
 		int subscribed_item_id;
 		std::function< void(key_down_event) > on_key_down;
+	};
+	 
+	class key_press_event_binding
+	{
+	public:
+		int subscribed_item_id;
+		std::function< void(key_press_event) > on_key_press;
 	};
 
 	class mouse_move_event_binding
@@ -216,6 +229,7 @@ namespace corona {
 
 		virtual void on_key_up(int _control_id, std::function< void(key_up_event) >) = 0;
 		virtual void on_key_down(int _control_id, std::function< void(key_down_event) >) = 0;
+		virtual void on_key_press(int _control_id, std::function< void(key_press_event) >) = 0;
 		virtual void on_mouse_move(control_base *_base, std::function< void(mouse_move_event) >) = 0;
 		virtual void on_mouse_click(control_base* _base, std::function< void(mouse_click_event) >) = 0;
 		virtual void on_mouse_left_click(control_base* _base, std::function< void(mouse_left_click_event) >) = 0;

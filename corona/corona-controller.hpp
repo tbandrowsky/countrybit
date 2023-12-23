@@ -33,6 +33,7 @@ namespace corona
 		virtual bool drawFrame(direct2dContext& _ctx) = 0;
 		virtual bool update(double _elapsedSeconds, double _totalSeconds) = 0;
 
+		virtual void keyPress(short _key) = 0;
 		virtual void keyDown(short _key) = 0;
 		virtual void keyUp(short _key) = 0;
 		virtual void mouseMove(point* _point) = 0;
@@ -45,15 +46,6 @@ namespace corona
 		virtual void setFocus(int ddlControlId) = 0;
 		virtual void killFocus(int ddlControlId) = 0;
 		virtual bool navigationKey(int _key) = 0;
-
-		virtual void keyDown(int _id, short _key) = 0;
-		virtual void keyUp(int _id, short _key) = 0;
-		virtual void keyPress(int _id, short _key) = 0;
-		virtual void mouseMove(int _id, point* _point) = 0;
-		virtual void mouseLeftDown(int _id, point* _point) = 0;
-		virtual void mouseLeftUp(int _id, point* _point) = 0;
-		virtual void mouseRightDown(int _id, point* _point) = 0;
-		virtual void mouseRightUp(int _id, point* _point) = 0;
 
 		virtual void onCreated() = 0;
 		virtual void onCommand(int buttonId) = 0;

@@ -94,6 +94,7 @@ namespace corona {
 		virtual bool drawFrame(direct2dContext& _ctx);
 		virtual bool update(double _elapsedSeconds, double _totalSeconds);
 
+		virtual void keyPress(short _key);
 		virtual void keyDown(short _key);
 		virtual void keyUp(short _key);
 		virtual void mouseMove(point* _point);
@@ -119,15 +120,6 @@ namespace corona {
 		virtual int onSpin(int controlId, int newPosition);
 		virtual void onJobComplete(bool _success, int _id);
 		virtual void onTaskComplete(bool _success, ui_task_result_base* _result);
-
-		virtual void keyDown(int _id, short _key);
-		virtual void keyUp(int _id, short _key);
-		virtual void keyPress(int _id, short _key);
-		virtual void mouseMove(int _id, point* _point);
-		virtual void mouseLeftDown(int _id, point* _point);
-		virtual void mouseLeftUp(int _id, point* _point);
-		virtual void mouseRightDown(int _id, point* _point);
-		virtual void mouseRightUp(int _id, point* _point);
 
 		template <typename control_type> control_type* get_control(int _id)
 		{
@@ -420,6 +412,17 @@ namespace corona {
 		return r;
 	}
 
+	void presentation::keyPress(short _key)
+	{
+		auto cp = current_page.lock();
+		key_press_event kde;
+		kde.control_id = 0;
+		kde.key = _key;
+		if (cp) {
+			cp->handle_key_press(0, kde);
+		}
+	}
+
 	void presentation::keyDown(short _key)
 	{
 		auto cp = current_page.lock();
@@ -550,69 +553,10 @@ namespace corona {
 			cp->handle_mouse_right_click(_item->id, mcel);
 			});
 	}
+
 	void presentation::pointSelected(point* _point, color* _color)
 	{
 		;
-	}
-
-	void presentation::keyDown(int _id, short _key)
-	{
-		if (auto ctrl = get_control<control_base>(_id)) {
-			ctrl->key_down(_key);
-		}
-	}
-
-	void presentation::keyUp(int _id, short _key)
-	{
-		if (auto ctrl = get_control<control_base>(_id)) {
-			ctrl->key_up(_key);
-		}
-	}
-
-	void presentation::keyPress(int _id, short _key)
-	{
-		if (auto ctrl = get_control<control_base>(_id)) {
-			ctrl->key_press(_key);
-		}
-	}
-
-	void presentation::mouseMove(int _id, point* _point)
-	{
-		if (auto ctrl = get_control<control_base>(_id)) {
-			ctrl->set_mouse(*_point, nullptr, nullptr, nullptr, nullptr);
-		}
-	}
-
-	void presentation::mouseLeftDown(int _id, point* _point)
-	{
-		if (auto ctrl = get_control<control_base>(_id)) {
-			bool left_down = true;
-			ctrl->set_mouse(*_point, &left_down, nullptr, nullptr, nullptr);
-		}
-	}
-
-	void presentation::mouseLeftUp(int _id, point* _point)
-	{
-		if (auto ctrl = get_control<control_base>(_id)) {
-			bool left_down = false;
-			ctrl->set_mouse(*_point, &left_down, nullptr, nullptr, nullptr);
-		}
-	}
-
-	void presentation::mouseRightDown(int _id, point* _point)
-	{
-		if (auto ctrl = get_control<control_base>(_id)) {
-			bool right_down = true;
-			ctrl->set_mouse(*_point, nullptr, &right_down, nullptr, nullptr);
-		}
-	}
-
-	void presentation::mouseRightUp(int _id, point* _point)
-	{
-		if (auto ctrl = get_control<control_base>(_id)) {
-			bool right_down = false;
-			ctrl->set_mouse(*_point, nullptr, &right_down, nullptr, nullptr);
-		}
 	}
 
 	LRESULT presentation::ncHitTest(point* _point)

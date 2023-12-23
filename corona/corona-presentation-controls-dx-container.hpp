@@ -263,6 +263,8 @@ namespace corona
 
 		virtual void arrange(rectangle _ctx);
 		virtual point get_remaining(point _ctx);
+
+
 	};
 
 
@@ -319,6 +321,14 @@ namespace corona
 		{
 			set_border_color("#C0C0C0");
 
+			on_create = [this](draw_control *_src)
+				{
+					if (auto pwindow = _src->window.lock())
+					{
+						pwindow->getContext().setSolidColorBrush(&_src->border_brush);
+					}
+				};
+
 			on_draw = [this](control_base* _item)
 				{
 					if (auto pwindow = window.lock())
@@ -331,17 +341,13 @@ namespace corona
 
 							auto& context = pwindow->getContext();
 
-							if (this->is_focused) {
-
-								if (selected_item_index >= 0 && items.size()) 
-								{
-									auto rect_bounds = items[selected_item_index].get()->get_bounds();
-									context.drawRectangle(&rect_bounds, border_brush.name, 4, nullptr);
-								}
-								else 
-								{
-									context.drawRectangle(&draw_bounds, border_brush.name, 4, nullptr);
-								}
+							if (selected_item_index >= 0 && items.size()) 
+							{
+								auto rect_bounds = items[selected_item_index].get()->get_bounds();
+								auto this_bounds = get_bounds();
+								rect_bounds.x -= this_bounds.x;
+								rect_bounds.y -= this_bounds.y;
+								context.drawRectangle(&rect_bounds, border_brush.name, 4, nullptr);
 							}
 						}
 					}
@@ -423,6 +429,8 @@ namespace corona
 			}
 
 			position_children();
+
+			init();
 		}
 
 		virtual void key_press(int _key)
@@ -515,6 +523,17 @@ namespace corona
 		void delete_selected()
 		{
 			;
+		}
+
+		virtual void on_subscribe(presentation_base* _presentation, page_base* _page)
+		{
+			_page->on_key_press(id, [this](key_press_event evt)
+				{
+					this->key_press(evt.key);
+				});
+			for (auto child : children) {
+				child->on_subscribe(_presentation, _page);
+			}
 		}
 
 	};

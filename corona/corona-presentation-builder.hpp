@@ -1168,8 +1168,6 @@ namespace corona
 			margin = _item_space;
 			return *this;
 		}
-
-
 	};
 
 	class search_view_control : public column_layout

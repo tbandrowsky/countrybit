@@ -548,23 +548,18 @@ namespace corona
 						case WM_LBUTTONUP:
 							setFocus(ctrlId);
 							currentController->mouseLeftUp(&ptxo);
-							currentController->mouseLeftUp(ctrlId, &ptxo);
 							break;
 						case WM_LBUTTONDOWN:
 							currentController->mouseLeftDown(&ptxo);
-							currentController->mouseLeftDown(ctrlId, &ptxo);
 							break;
 						case WM_RBUTTONUP:
 							currentController->mouseRightUp(&ptxo);
-							currentController->mouseRightUp(ctrlId, &ptxo);
 							break;
 						case WM_RBUTTONDOWN:
 							currentController->mouseRightDown(&ptxo);
-							currentController->mouseRightDown(ctrlId, &ptxo);
 							break;
 						case WM_MOUSEMOVE:
 							currentController->mouseMove(&ptxo);
-							currentController->mouseMove(ctrlId, &ptxo);
 							break;
 						}
 					}
@@ -575,7 +570,7 @@ namespace corona
 			if (currentController)
 			{
 				if (pcurrent_window) {
-					currentController->keyPress(ctrlId, wParam);
+					currentController->keyPress(wParam);
 					return 0;
 				}
 			}
@@ -585,7 +580,6 @@ namespace corona
 			{
 				if (pcurrent_window) {
 					currentController->keyDown(wParam);
-					currentController->keyDown(ctrlId, wParam);
 					return 0;
 				}
 			}
@@ -595,7 +589,6 @@ namespace corona
 			{
 				if (pcurrent_window) {
 					currentController->keyUp(wParam);
-					currentController->keyUp(ctrlId, wParam);
 					return 0;
 				}
 			}
