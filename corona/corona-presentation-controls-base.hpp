@@ -245,7 +245,6 @@ namespace corona
 		measure					margin;
 		measure					padding;
 		std::string				tooltip_text;
-		bool					accept_focus;
 		bool					is_focused;
 
 		container_control_base* parent;
@@ -262,7 +261,6 @@ namespace corona
 			id(-1),
 			margin(),
 			parent(nullptr),
-			accept_focus(false),
 			margin_amount({ 0.0, 0.0 })
 		{
 			id = id_counter::next();
@@ -298,9 +296,13 @@ namespace corona
 			;
 		}
 
+		virtual bool gets_real_focus() 
+		{ 
+			return false; 
+		}
+
 		virtual bool set_focus()
 		{
-			std::cout << "Focus to:" << id << " " << typeid(*this).name() << std::endl;
 			is_focused = true;
 			return false;
 		}
@@ -308,6 +310,11 @@ namespace corona
 		virtual bool kill_focus()
 		{
 			is_focused = false;
+			return false;
+		}
+
+		virtual bool is_control_message(int _key)
+		{
 			return false;
 		}
 

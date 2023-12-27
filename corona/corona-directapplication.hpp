@@ -458,21 +458,15 @@ namespace corona
 
 	bool directApplicationWin32::isDialogMessage(HWND hwnd, LPMSG msg)
 	{
-		auto pfactory = factory.lock();
-
-		std::weak_ptr<direct2dWindow> current_window;
-		std::shared_ptr< direct2dWindow> pcurrent_window = nullptr;
-
-		if (pfactory) {
-			current_window = pfactory->getWindow(hwndRoot);
-			pcurrent_window = current_window.lock();
-		}
-
 		bool navigationKey = false;
 
-		if (currentController && msg->message == WM_KEYUP) {
+		if (currentController) {
 			navigationKey = currentController->navigationKey(msg->wParam );
+			if (navigationKey)
+				return !navigationKey;
 		}
+
+		navigationKey = ::IsDialogMessage(hwnd, msg);
 
 		return navigationKey;
 	}
@@ -570,7 +564,7 @@ namespace corona
 			if (currentController)
 			{
 				if (pcurrent_window) {
-					currentController->keyPress(wParam);
+					currentController->keyPress(ctrlId, wParam);
 					return 0;
 				}
 			}
@@ -579,7 +573,7 @@ namespace corona
 			if (currentController)
 			{
 				if (pcurrent_window) {
-					currentController->keyDown(wParam);
+					currentController->keyDown(ctrlId, wParam);
 					return 0;
 				}
 			}
@@ -588,7 +582,7 @@ namespace corona
 			if (currentController)
 			{
 				if (pcurrent_window) {
-					currentController->keyUp(wParam);
+					currentController->keyUp(ctrlId, wParam);
 					return 0;
 				}
 			}
@@ -923,8 +917,8 @@ namespace corona
 			if (currentController)
 			{
 				if (pcurrent_window) {
-					currentController->keyDown(wParam);
-					return 0;
+					int ctrlId = ::GetDlgCtrlID(hwnd);
+					currentController->keyDown(ctrlId, wParam);
 				}
 			}
 			break;
@@ -932,8 +926,8 @@ namespace corona
 			if (currentController)
 			{
 				if (pcurrent_window) {
-					currentController->keyUp(wParam);
-					return 0;
+					int ctrlId = ::GetDlgCtrlID(hwnd);
+					currentController->keyUp(ctrlId, wParam);
 				}
 			}
 			break;
@@ -1135,7 +1129,7 @@ namespace corona
 				{
 					;
 				}
-				else if (!::IsDialogMessage(hwndRoot, &msg)) {
+				else if (!isDialogMessage(hwndRoot, &msg)) {
 					::TranslateMessage(&msg);
 					::DispatchMessage(&msg);
 				}
@@ -1239,7 +1233,7 @@ namespace corona
 				{
 					;
 				}
-				else if (!::IsDialogMessage(hwndRoot, &msg)) 
+				else if (!isDialogMessage(hwndRoot, &msg))
 				{
 					::TranslateMessage(&msg);
 					::DispatchMessage(&msg);

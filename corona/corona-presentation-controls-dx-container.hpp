@@ -305,9 +305,9 @@ namespace corona
 
 		void check_scroll()
 		{
-			if (selected_item_index > item_source.data.size())
+			if (selected_item_index >= items.size())
 			{
-				selected_item_index = item_source.data.size() - 1;
+				selected_item_index = items.size() - 1;
 				selected_page_index = item_to_page_index[selected_item_index];
 			}
 			if (selected_item_index < 0)
@@ -362,7 +362,6 @@ namespace corona
 			view_port = {};
 			child_area = {};
 			selected_item_index = 0;
-			accept_focus = true;
 		}
 
 		column_view_layout(container_control_base* _parent, int _id) : column_layout(_parent, _id)
@@ -370,7 +369,6 @@ namespace corona
 			view_port = {};
 			child_area = {};
 			selected_item_index = 0;
-			accept_focus = true;
 		}
 
 		column_view_layout(const column_view_layout& _src) = default;
@@ -433,7 +431,7 @@ namespace corona
 			init();
 		}
 
-		virtual void key_press(int _key)
+		virtual void key_down(int _key)
 		{
 			switch (_key) {
 			case VK_BACK:
@@ -461,9 +459,8 @@ namespace corona
 
 		void line_down()
 		{
-			selected_item_index--;
+			selected_item_index++;
 			check_scroll();
-
 			auto& temp = items[selected_item_index];
 			view_port.y -= temp->get_bounds().h;
 			position_children();
@@ -471,7 +468,7 @@ namespace corona
 
 		void line_up()
 		{
-			selected_item_index++;
+			selected_item_index--;
 			check_scroll();
 			auto& temp = items[selected_item_index];
 			view_port.y += temp->get_bounds().h;
@@ -527,9 +524,9 @@ namespace corona
 
 		virtual void on_subscribe(presentation_base* _presentation, page_base* _page)
 		{
-			_page->on_key_press(id, [this](key_press_event evt)
+			_page->on_key_down(id, [this](key_down_event evt)
 				{
-					this->key_press(evt.key);
+					this->key_down(evt.key);
 				});
 			for (auto child : children) {
 				child->on_subscribe(_presentation, _page);

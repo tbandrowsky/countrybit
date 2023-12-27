@@ -39,7 +39,6 @@ namespace corona
 			window(nullptr),
 			text_font(nullptr)
 		{
-			accept_focus = true;
 			set_origin(0.0_px, 0.0_px);
 			set_size(1.0_container, 1.2_fontgr);
 			set_default_styles();
@@ -49,7 +48,6 @@ namespace corona
 			window(nullptr),
 			text_font(nullptr)
 		{
-			accept_focus = true;
 			text_style = _src.text_style;
 		}
 
@@ -58,11 +56,12 @@ namespace corona
 			window(nullptr),
 			text_font(nullptr)
 		{
-			accept_focus = true;
 			set_origin(0.0_px, 0.0_px);
 			set_size(1.0_container, 1.2_fontgr);
 			set_default_styles();
 		}
+
+		virtual bool gets_real_focus() { return true; }
 
 		virtual std::shared_ptr<control_base> clone()
 		{

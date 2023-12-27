@@ -33,9 +33,9 @@ namespace corona
 		virtual bool drawFrame(direct2dContext& _ctx) = 0;
 		virtual bool update(double _elapsedSeconds, double _totalSeconds) = 0;
 
-		virtual void keyPress(short _key) = 0;
-		virtual void keyDown(short _key) = 0;
-		virtual void keyUp(short _key) = 0;
+		virtual void keyPress(int _ctrl_id, short _key) = 0;
+		virtual void keyDown(int _ctrl_id, short _key) = 0;
+		virtual void keyUp(int _ctrl_id, short _key) = 0;
 		virtual void mouseMove(point* _point) = 0;
 		virtual void mouseLeftDown(point* _point) = 0;
 		virtual void mouseLeftUp(point* _point) = 0;

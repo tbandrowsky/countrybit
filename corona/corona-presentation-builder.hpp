@@ -753,10 +753,10 @@ namespace corona
 	{
 		std::vector<tab_pane> tab_panes;
 		std::shared_ptr<frame_layout> content_frame;
+		presentation_base* current_presentation;
+		page_base* current_page;
 
 		int active_id;
-
-
 
 		void init()
 		{
@@ -854,6 +854,8 @@ namespace corona
 			border_brush = {};
 			parent = nullptr;
 			id = id_counter::next();
+			current_presentation = nullptr;
+			current_page = nullptr;
 			set_border_color("#C0C0C0");
 		}
 
@@ -866,6 +868,9 @@ namespace corona
 			border_brush = _src.border_brush;
 			on_draw = _src.on_draw;
 			on_create = _src.on_create;
+			current_presentation = nullptr;
+			current_page = nullptr;
+
 			set_border_color("#C0C0C0");
 		}
 
@@ -877,6 +882,9 @@ namespace corona
 			border_brush = {};
 			parent = _parent;
 			id = _id;
+			current_presentation = nullptr;
+			current_page = nullptr;
+
 			set_border_color("#C0C0C0");
 		}
 
@@ -916,6 +924,17 @@ namespace corona
 			);
 		}
 
+		virtual bool is_control_message(int _key)
+		{
+			bool is_message = is_focused && 
+				(_key == VK_TAB || 
+					_key == VK_LEFT || _key == VK_RIGHT || 
+					_key == VK_UP || _key == VK_DOWN || 
+					_key == VK_PRIOR || _key == VK_NEXT || 
+					_key == VK_DELETE || _key == VK_INSERT);
+			return is_message;
+		}
+
 		virtual point get_remaining(point _ctx)
 		{
 			return _ctx;
@@ -950,6 +969,9 @@ namespace corona
 						_tp->create_tab_controls(*_tp, _args);
 					};
 				content_frame->set_contents(cg);
+				if (current_presentation && current_page) {
+					content_frame->on_subscribe(current_presentation, current_page);
+				}
 			}
 		}
 
@@ -971,6 +993,8 @@ namespace corona
 
 		virtual void on_subscribe(presentation_base* _presentation, page_base* _page)
 		{
+			current_presentation = _presentation;
+			current_page = _page;
 			for (auto child : children) {
 				child->on_subscribe(_presentation, _page);
 			}

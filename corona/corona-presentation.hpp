@@ -94,9 +94,9 @@ namespace corona {
 		virtual bool drawFrame(direct2dContext& _ctx);
 		virtual bool update(double _elapsedSeconds, double _totalSeconds);
 
-		virtual void keyPress(short _key);
-		virtual void keyDown(short _key);
-		virtual void keyUp(short _key);
+		virtual void keyPress(int _ctrl_id, short _key);
+		virtual void keyDown(int _ctrl_id, short _key);
+		virtual void keyUp(int _ctrl_id, short _key);
 		virtual void mouseMove(point* _point);
 		virtual void mouseLeftDown(point* _point);
 		virtual void mouseLeftUp(point* _point);
@@ -409,39 +409,51 @@ namespace corona {
 	{
 		bool r = false;
 		auto cp = current_page.lock();
+
+		HWND focusedWindow = ::GetFocus();
+		while (focusedWindow || focusedWindow == ::GetDesktopWindow()) {
+			int focusedWindowId = ::GetDlgCtrlID(focusedWindow);
+			auto ctrl = get_control<control_base>(focusedWindowId);
+			if (ctrl) {
+				bool is_cm = ctrl->is_control_message(_key);
+				if (is_cm)
+					return is_cm;
+			}
+			focusedWindow = ::GetAncestor(focusedWindow, GA_PARENT);
+		}
 		return r;
 	}
 
-	void presentation::keyPress(short _key)
+	void presentation::keyPress(int _ctrl_id, short _key)
 	{
 		auto cp = current_page.lock();
 		key_press_event kde;
-		kde.control_id = 0;
+		kde.control_id = _ctrl_id;
 		kde.key = _key;
 		if (cp) {
-			cp->handle_key_press(0, kde);
+			cp->handle_key_press(_ctrl_id, kde);
 		}
 	}
 
-	void presentation::keyDown(short _key)
+	void presentation::keyDown(int _ctrl_id, short _key)
 	{
 		auto cp = current_page.lock();
 		key_down_event kde;
-		kde.control_id = 0;
+		kde.control_id = _ctrl_id;
 		kde.key = _key;
 		if (cp) {
-			cp->handle_key_down(0, kde);
+			cp->handle_key_down(_ctrl_id, kde);
 		}
 	}
 
-	void presentation::keyUp(short _key)
+	void presentation::keyUp(int _ctrl_id, short _key)
 	{
 		auto cp = current_page.lock();
 		key_up_event kde;
-		kde.control_id = 0;
+		kde.control_id = _ctrl_id;
 		kde.key = _key;
 		if (cp) {
-			cp->handle_key_up(0, kde);
+			cp->handle_key_up(_ctrl_id, kde);
 		}
 	}
 

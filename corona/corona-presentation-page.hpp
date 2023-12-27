@@ -207,12 +207,27 @@ namespace corona
 			//			std::cout << std::endl;
 		}
 
+		int get_keyboard_parent(int _control_id)
+		{
+			control_base* p = root->find(_control_id);
+			while (p) {
+				if (p->gets_real_focus()) {
+					return p->id;
+				}
+				p = (control_base*)p->parent;
+			}
+			return -1;
+		}
+
 		void on_key_press(int _control_id, std::function< void(key_press_event) > handler)
 		{
 			auto evt = std::make_shared<key_press_event_binding>();
 			evt->subscribed_item_id = _control_id;
 			evt->on_key_press = handler;
-			key_press_bindings[_control_id] = evt;
+			int event_capture_id = get_keyboard_parent(_control_id);
+			if (event_capture_id > -1) {
+				key_press_bindings[event_capture_id] = evt;
+			}
 		}
 
 		void on_key_up(int _control_id, std::function< void(key_up_event) > handler)
@@ -220,7 +235,10 @@ namespace corona
 			auto evt = std::make_shared<key_up_event_binding>();
 			evt->subscribed_item_id = _control_id;
 			evt->on_key_up = handler;
-			key_up_bindings[_control_id] = evt;
+			int event_capture_id = get_keyboard_parent(_control_id);
+			if (event_capture_id > -1) {
+				key_up_bindings[event_capture_id] = evt;
+			}
 		}
 
 		void on_key_down(int _control_id, std::function< void(key_down_event) >  handler)
@@ -229,6 +247,10 @@ namespace corona
 			evt->subscribed_item_id = _control_id;
 			evt->on_key_down = handler;
 			key_down_bindings[_control_id] = evt;
+			int event_capture_id = get_keyboard_parent(_control_id);
+			if (event_capture_id > -1) {
+				key_down_bindings[event_capture_id] = evt;
+			}
 		}
 
 		void on_mouse_left_click(control_base* _base, std::function< void(mouse_left_click_event) > handler)
