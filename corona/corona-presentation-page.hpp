@@ -69,7 +69,8 @@ namespace corona
 			load_bindings.clear();
 			select_bindings.clear();
 			update_event = nullptr;
-			change_event = nullptr;
+// we do not clear the change event because it may be firing the thing that causes us to clear the page
+//			change_event = nullptr;
 			destroy();
 			root = std::make_shared<column_layout>();
 		}
@@ -149,9 +150,14 @@ namespace corona
 		
 		void changed(std::string _set_name)
 		{
-			if (change_event) 
+			if (change_event)
 			{
-				change_event(*this, _set_name);
+				threadomatic::run_complete(nullptr, [this,_set_name]() {
+					if (change_event) 
+					{
+						change_event(*this, _set_name);
+					}
+				});				
 			}
 		}
 

@@ -285,6 +285,21 @@ namespace corona
 			copy(_src);
 		}
 
+		bool is_mouse_over()
+		{
+			return mouse_over;
+		}
+
+		bool is_mouse_left_down()
+		{
+			return mouse_left_down;
+		}
+
+		point get_relative_mouse_position()
+		{
+			return mouse_relative_position;
+		}
+
 		virtual std::shared_ptr<control_base> clone()
 		{
 			auto tv = std::make_shared<control_base>(*this);

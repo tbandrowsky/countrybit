@@ -55,6 +55,7 @@
 #include "corona-direct2dcontext.hpp"
 #include "corona-direct2dwindow.hpp"
 #include "corona-json.hpp"
+#include "corona-dataplane.hpp"
 #include "corona-presentation.hpp"
 #include "corona-directapplication.hpp"
 #include "corona-styles.hpp"
@@ -62,6 +63,5 @@
 
 #include "corona-httpclient.hpp"
 #include "corona-calicoclient.hpp"
-#include "corona-dataplane.hpp"
 
 #endif

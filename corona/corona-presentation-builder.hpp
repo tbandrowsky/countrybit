@@ -7,6 +7,7 @@
 #include <corona-presentation-controls-dx-container.hpp>
 #include <corona-presentation-controls-dx-text.hpp>
 #include <corona-presentation-controls-win32.hpp>
+#include <corona-presentation-controls-calico.hpp>
 
 namespace corona
 {
@@ -691,6 +692,16 @@ namespace corona
 			return *this;
 		}
 
+		control_builder& calico_button(std::function<void(calico_button_control&)> _settings = nullptr)
+		{
+			auto tc = create<calico_button_control>(id_counter::next());
+			apply_item_sizes(tc);
+			if (_settings) {
+				_settings(*tc);
+			}
+			return *this;
+		}
+
 		control_builder& camera(int _id, std::function<void(camera_control&)> _settings = nullptr)
 		{
 			auto tc = create<camera_control>(_id);
@@ -931,6 +942,7 @@ namespace corona
 					_key == VK_LEFT || _key == VK_RIGHT || 
 					_key == VK_UP || _key == VK_DOWN || 
 					_key == VK_PRIOR || _key == VK_NEXT || 
+					_key == VK_HOME || _key == VK_END ||
 					_key == VK_DELETE || _key == VK_INSERT);
 			return is_message;
 		}
@@ -951,9 +963,7 @@ namespace corona
 		void set_tabs(std::vector<tab_pane> _new_panes)
 		{
 			tab_panes = _new_panes;
-			init();
-
-			
+			init();		
 			default_tab_selected();
 		}
 
@@ -980,13 +990,11 @@ namespace corona
 			auto tbi = std::find_if(tab_panes.begin(), tab_panes.end(), [this](tab_pane& _tb) {
 				return _tb.id == this->active_id;
 				});
-
 			tab_selected(tbi);
 		}
 
 		void default_tab_selected()
 		{
-
 			auto tbi = tab_panes.begin();
 			tab_selected(tbi);
 		}

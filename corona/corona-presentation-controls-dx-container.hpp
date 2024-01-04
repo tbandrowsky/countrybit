@@ -308,12 +308,23 @@ namespace corona
 			if (selected_item_index >= items.size())
 			{
 				selected_item_index = items.size() - 1;
-				selected_page_index = item_to_page_index[selected_item_index];
 			}
 			if (selected_item_index < 0)
 			{
 				selected_item_index = 0;
-				selected_page_index = 0;
+			}
+			selected_page_index = item_to_page_index[selected_item_index];
+
+			auto& temp = items[selected_item_index];
+			auto bd = temp->get_bounds();
+			int db = bd.bottom() - view_port.bottom();
+			int dt = view_port.y - bd.y;
+			if (db > 0) {
+				view_port.y += db;
+			}
+			else if (dt > 0)
+			{
+				view_port.y -= dt;
 			}
 		}
 
@@ -340,6 +351,8 @@ namespace corona
 							draw_bounds.y = 0;
 
 							auto& context = pwindow->getContext();
+
+							
 
 							if (selected_item_index >= 0 && items.size()) 
 							{
@@ -448,6 +461,12 @@ namespace corona
 			case VK_NEXT:
 				page_down();
 				break;
+			case VK_HOME:
+				home();
+				break;
+			case VK_END:
+				end();
+				break;
 			case VK_DELETE:
 				delete_selected();
 				break;
@@ -461,8 +480,6 @@ namespace corona
 		{
 			selected_item_index++;
 			check_scroll();
-			auto& temp = items[selected_item_index];
-			view_port.y -= temp->get_bounds().h;
 			position_children();
 		}
 
@@ -470,8 +487,6 @@ namespace corona
 		{
 			selected_item_index--;
 			check_scroll();
-			auto& temp = items[selected_item_index];
-			view_port.y += temp->get_bounds().h;
 			position_children();
 		}
 
@@ -481,8 +496,7 @@ namespace corona
 			if (selected_page_index < 0)
 				selected_page_index = 0;
 			selected_item_index = page_to_item_index[selected_page_index];
-			view_port.y = items[selected_item_index].get()->get_bounds().y;
-			view_port.x = items[selected_item_index].get()->get_bounds().x;
+			check_scroll();
 			position_children();
 		}
 
@@ -492,23 +506,21 @@ namespace corona
 			if (selected_page_index >= page_to_item_index.size())
 				selected_page_index = page_to_item_index.size() - 1;
 			selected_item_index = page_to_item_index[selected_page_index];
-			view_port.y = items[selected_item_index].get()->get_bounds().y;
-			view_port.x = items[selected_item_index].get()->get_bounds().x;
+			check_scroll();
 			position_children();
 		}
 
 		void home()
 		{
 			selected_item_index = 0;
-			view_port.y = 0;
+			check_scroll();
 			position_children();
 		}
 
 		void end()
 		{
 			selected_item_index = item_source.data.size() - 1;
-			auto& temp = items[selected_item_index];
-			view_port.y = temp->get_bounds().y;
+			check_scroll();
 			position_children();
 		}
 

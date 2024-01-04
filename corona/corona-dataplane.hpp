@@ -4,26 +4,46 @@
 #include "corona-queue.hpp"
 #include "corona-function.hpp"
 #include "corona-json.hpp"
-#include "corona-httpclient.hpp"
-#include "corona-presentation.hpp"
+#include "corona-presentation-controls-base.hpp"
 
 namespace corona
 {
-	class data_source
+	class data_lake;
+	class data_function;
+
+	using json_method = std::function<int(json _params, data_lake *_api, data_function* _set)>;
+	using gui_method = std::function<int(json _params, data_lake *_api, data_function* _set)>;
+
+	struct dataplane_promise
 	{
-	public:
-		std::string name;
-		std::string description;
-		std::string icon_path;
+		dataplane_promise()
+		{
+			std::cout << "dataplane_task promise_type:" << this << " " << GetCurrentThreadId() << std::endl;
+		}
+
+		dataplane_task get_return_object()
+		{
+			std::cout << "dataplane_task get_return_object:" << this << " " << GetCurrentThreadId() << std::endl;
+			dataplane_task my_task;
+			return my_task;
+		};
+
+		std::suspend_always initial_suspend() {
+			std::cout << "dataplane_task initial_suspend:" << this << GetCurrentThreadId() << std::endl;
+			return {};
+		}
+
+		std::suspend_always final_suspend() noexcept {
+			std::cout << "dataplane_task final_suspend:" << this << GetCurrentThreadId() << std::endl;
+			return {};
+		}
+
+		void unhandled_exception() {}
+
 	};
 
-	class data_plane;
-	class data_set;
 
-	using json_method = std::function<int(json _params, data_set *_set)>;
-	using gui_method = std::function<int(json _params, data_set* _set)>;
-
-	class data_set
+	class data_function
 	{
 	public:
 		std::string						name;
@@ -33,9 +53,8 @@ namespace corona
 		int								cache_seconds = 0;
 		json_method						fetch;
 		gui_method						share;
-		std::shared_ptr<data_source>	source;
 
-		data_set()
+		data_function()
 		{
 			json_parser jp;
 			data = jp.create_object();
@@ -43,123 +62,203 @@ namespace corona
 
 		void run_share()
 		{
-			share(data, this);
+			share(data, nullptr, this);
 		}
 
-		void queue_share()
-		{
-			threadomatic::run_complete([]() {}, [this]() { run_share(); });
+		int get(data_lake* _lake, json _params);
+		void get(data_lake* _lake);
+
+	};
+
+	struct dataplane_task : public std::suspend_always
+	{
+	public:
+		using promise_type = dataplane_promise;
+
+		std::shared_ptr<data_function> fn;
+		data_lake* lake;
+		json params;
+
+		void configure(data_lake* _lake, std::shared_ptr<data_function> _fn, json _params = {})
+		{		
+			fn = _fn;
+			lake = _lake;
+			params = _params;
 		}
 
-		auto get_error()
+		void await_suspend(std::coroutine_handle<> handle)
 		{
-			struct result { std::string message;  bool error; };
-			std::string err_string;
-			bool err = false;
-			if (data.has_member("status")) {
-				err_string = data["status"]["message"];
-				err = (double)(data["status"]["success"]) == 0;
-			}
-			return result{ err_string, err };
-		}
-
-		int get(json _params)
-		{
-			json_parser jp;
-			auto jobj = jp.create_object();
-
-			try
-			{
-				parameters = _params;
-
-				time_t current_time;
-				time(&current_time);
-				time_t seconds = current_time - last_refresh;
-
-				if (seconds >= cache_seconds) {
-
-					last_refresh = current_time;
-					fetch(_params, this);
+			threadomatic::run_complete(
+				[this, handle]() {
+					if (params.is_object()) 
+					{
+						fn->get(lake, params);
+					}
+					else 
+					{
+						fn->get(lake );
+					}
+					handle();
+				},
+				[this]() {
+					fn->run_share();
 				}
-
-				jobj.put_member("success", true);
-				jobj.put_member("message", "Ok.");
-				data.put_member_object("status", jobj);
-
-				queue_share();
-			}
-			catch (std::logic_error exc)
-			{
-				jobj.put_member("success", false);
-				jobj.put_member("message", exc.what() ? exc.what() : "logic error.");
-				data.put_member_object("status", jobj);
-				queue_share();
-			}
-			catch (std::exception exc)
-			{
-				jobj.put_member("success", false);
-				jobj.put_member("message", exc.what() ? exc.what() : "general exception.");
-				data.put_member_object("status", jobj);
-				queue_share();
-				return 0;
-			}
-			return 1;
+			);
 		}
 
-		void get()
+		void await_resume()
 		{
-			json_parser jp;
-			auto jobj = jp.create_object();
+			std::cout << "dataplane_task await_resume:" << GetCurrentThreadId() << std::endl;
+		}
 
-			try
-			{
-				time_t current_time;
-				time(&current_time);
-				time_t seconds = current_time - last_refresh;
-
-				if (seconds >= cache_seconds) {
-					last_refresh = current_time;
-					fetch(data, this);
-				}
-				jobj.put_member("success", true);
-				data.put_member_object("status", jobj);
-				queue_share();
-			}
-			catch (std::logic_error exc)
-			{
-				jobj.put_member("success", false);
-				jobj.put_member("message", exc.what() ? exc.what() : "logic error.");
-				data.put_member_object("status", jobj);
-				queue_share();
-			}
-			catch (std::exception exc)
-			{
-				jobj.put_member("success", false);
-				jobj.put_member("message", exc.what());
-				data.put_member_object("status", jobj);
-				queue_share();
-			}
+		dataplane_task()
+		{
+			std::cout << this << ", dataplane_task ctor:" << GetCurrentThreadId() << std::endl;
 		}
 
 	};
 
-	class data_plane
+	class data_api
 	{
-
-		lockable set_lock;
-		lockable control_lock;
-
-		std::map<std::string, std::shared_ptr<data_set>> data_sets;
-		std::map<std::string, std::shared_ptr<data_source>> data_sources;
-		std::map<std::string, int> control_ids;
-		std::map<std::string, control_json_mapper> class_control_map;
+		lockable api_lock;
+		std::map<std::string, std::shared_ptr<data_function>> functions;
 
 	public:
+
+		std::string name;
+		std::string description;
+		std::string icon_path;
+
+		void put_function(
+			std::string _function_name,
+			json_method _fetch,
+			gui_method _gui,
+			int _cache_seconds
+		)
+		{
+			scope_lock locker(api_lock);
+
+			std::shared_ptr<data_function> ds;
+			std::shared_ptr<data_api> ds;
+
+			if (functions.contains(_function_name))
+			{
+				ds = functions[_function_name];
+			}
+			else
+			{
+				ds = std::make_shared<data_function>();
+				functions.insert_or_assign(_function_name, ds);
+			}
+
+			ds->cache_seconds = _cache_seconds;
+			ds->fetch = _fetch;
+			ds->share = _gui;
+			ds->name = _function_name;
+		}
+
+		void put_function(
+			std::string _function_name,
+			json _data
+		)
+		{
+			scope_lock locker(api_lock);
+
+			std::shared_ptr<data_function> ds;
+
+			if (functions.contains(_function_name))
+			{
+				ds = functions[_function_name];
+			}
+			else
+			{
+				ds = std::make_shared<data_function>();
+				functions.insert_or_assign(_function_name, ds);
+			}
+
+			ds->cache_seconds = 3600;
+			ds->data = _data;
+			ds->name = _function_name;
+
+			ds->fetch = [](json _params, data_lake* _lake, data_function* _set)->int {
+				return 0;
+				};
+
+			ds->share = [](json _params, data_lake* _lake, data_function* _set)->int {
+				return 0;
+				};
+
+		}
+
+		std::shared_ptr<data_function> get_function(std::string _name)
+		{
+			scope_lock locker(api_lock);
+
+			std::shared_ptr<data_function> sp;
+			if (functions.contains(_name)) {
+				sp = functions[_name];
+			}
+			return sp;
+		}
+
+		void call_function(data_lake* _lake, std::string _name)
+		{
+			std::shared_ptr<data_function> dsp = get_function(_name);
+
+			if (dsp) {
+				dsp->get(_lake);
+			}
+		}
+
+		void call_function(data_lake* _lake, std::string _name, json _parameters)
+		{
+			std::shared_ptr<data_function> dsp = get_function(_name);
+
+			if (dsp) {
+				dsp->get(_lake, _parameters);
+			}
+		}
+
+		json get_result(std::string _name)
+		{
+			json set;
+
+			std::shared_ptr<data_function> dsp = get_function(_name);
+
+			if (dsp) {
+				set = dsp->data;
+			}
+			return set;
+		}
+
+	};
+
+	class data_lake;
+	class data_function;
+
+	class data_lake
+	{
+		lockable api_lock;
+
+		std::map<std::string, std::shared_ptr<data_api>> apis;
+		std::map<std::string, int> control_ids;
+		json ds_log;
+
+	public:
+
+		gui_method on_logged;
+
+		void logged(json _params, data_lake* _api, data_function* _set)
+		{
+			if (on_logged) {
+				;
+			}
+		}
 
 		int get_control_id(std::string _name, std::function<int()> _id)
 		{
 			int temp = 0;
-			scope_lock lockit(set_lock);
+			scope_lock lockit(api_lock);
 
 			if (!control_ids.contains(_name)) {
 				control_ids.insert_or_assign(_name, _id());
@@ -167,83 +266,110 @@ namespace corona
 			return control_ids[_name];
 		}
 
-		std::shared_ptr<data_set> get_data_set(std::string _name)
+		std::shared_ptr<data_api> get_api(std::string _source)
 		{
-			scope_lock locker(set_lock);
+			scope_lock locker(api_lock);
+			std::shared_ptr<data_api> source;
 
-			std::shared_ptr<data_set> sp;
-			if (data_sets.contains(_name)) {
-				sp = data_sets[_name];
+			if (apis.contains(_source))
+			{
+				auto& source = apis[_source];
 			}
-			return sp;
+			else {
+				std::string message = "API " + _source + " not found";
+				throw std::invalid_argument(message);
+			}
+			return source;
 		}
 
-		json get(std::string _name)
+		std::shared_ptr<data_function> get_function(std::string _source, std::string _name)
+		{
+			std::shared_ptr<data_function> fn;
+
+			auto ds = get_api(_source);
+
+			fn = ds->get_function(_name);
+			if (!fn) {
+				std::string message = "Function " + _name + " not found";
+				throw std::invalid_argument(message);
+			}
+
+			return fn;
+		}
+
+		dataplane_task invoke_function(std::string _source, std::string _name)
+		{
+			dataplane_task ts;
+
+			std::shared_ptr<data_function> dsp = get_function(_source, _name);
+
+			ts.configure(this, dsp);
+
+			return ts;
+		}
+
+		dataplane_task invoke_function(std::string _source, std::string _name, json _parameters)
+		{
+			dataplane_task ts;
+
+			std::shared_ptr<data_function> dsp = get_function(_source, _name);
+
+			ts.configure(this, dsp);
+
+			return ts;
+		}
+
+		task call_function(std::string _source, std::string _name, json _parameters)
+		{
+			std::cout << "call function -before- " << _name << " on thread " << GetCurrentThreadId() << std::endl;
+			co_await invoke_function(_source, _name, _parameters);
+			std::cout << "call function -after- " << _name << " on thread " << GetCurrentThreadId() << std::endl;
+		}
+
+		task call_function(std::string _source, std::string _name)
+		{
+			std::cout << "call function -before- " << _name << " on thread " << GetCurrentThreadId() << std::endl;
+			co_await invoke_function(_source, _name);
+			std::cout << "call function -after- " << _name << " on thread " << GetCurrentThreadId() << std::endl;
+		}
+
+		json get_result(std::string _source, std::string _name)
 		{
 			json set;
 
-			std::shared_ptr<data_set> dsp = get_data_set(_name);
+			std::shared_ptr<data_function> dsp = get_function(_source, _name);
 
 			if (dsp) {
-				dsp->get();
 				set = dsp->data;
 			}
 			return set;
 		}
 
-		control_json_mapper get_class_control_factory(std::string class_name)
-		{
-			scope_lock locker(control_lock);
-
-			control_json_mapper cjm;
-
-			if (class_control_map.contains(class_name)) {
-				cjm = class_control_map[class_name];
-			}
-			else 
-			{
-				//std::function<std::weak_ptr<control_base>(control_base *_parent, json& _array, int _index)>;
-				cjm = [class_name](control_base* _parent, json& _array, int _index) -> std::shared_ptr<control_base>
-					{
-						std::shared_ptr<paragraph_control> new_ptr = std::make_shared<paragraph_control>(_parent, id_counter::next());
-						new_ptr->text = class_name;
-						return new_ptr;
-					};
-			}
-
-			return cjm;
-		}
-
-		void put_class_control_factory(std::string class_name, control_json_mapper mapper)
-		{
-			scope_lock locker(control_lock);
-
-			class_control_map.insert_or_assign(class_name, mapper);
-		}
-
-		void put_data_source(
+		void put_api(
 			std::string _name,
 			std::string _description,
 			std::string _icon_path
 		)
 		{
-			std::shared_ptr<data_source> source;
+			scope_lock locker(api_lock);
 
-			if (data_sources.contains(_name)) {
-				source = data_sources[_name];
+			std::shared_ptr<data_api> source;
+
+			if (apis.contains(_name)) {
+				source = apis[_name];
 			}
 			else 
 			{
-				source = std::make_shared<data_source>();
+				source = std::make_shared<data_api>();
 			}
 
 			source->name = _name;
 			source->description = _description;
 			source->icon_path = _icon_path;
-			data_sources.insert_or_assign(_name, source);
+			apis.insert_or_assign(_name, source);
 		}
 
-		void put_data_set(
+		void put_function(
 			std::string _source_name,
 			std::string _set_name,
 			json_method _fetch,
@@ -251,71 +377,180 @@ namespace corona
 			int _cache_seconds
 			)
 		{
-			scope_lock locker(set_lock);
+			scope_lock locker(api_lock);
 
-			if (!data_sources.contains(_source_name)) {
-				throw std::invalid_argument("Invalid source name for dataset");
-			}
+			std::shared_ptr<data_api> dapi;
 
-			std::shared_ptr<data_set> ds;
-
-			if (data_sets.contains(_set_name))
+			if (apis.contains(_set_name))
 			{
-				ds = data_sets[_set_name];
+				dapi = get_api(_set_name);
+				dapi->put_function(_set_name, _fetch, _gui, _cache_seconds);
 			}
-			else 
-			{
-				ds = std::make_shared<data_set>();
-				data_sets.insert_or_assign(_set_name, ds);
-			}
-
-			ds->source = data_sources[_source_name];
-			ds->cache_seconds = _cache_seconds;
-			ds->fetch = _fetch;
-			ds->share = _gui;
-			ds->name = _set_name;
 		}
 
-		void put_data_set(
+		void put_function(
 			std::string _source_name,
 			std::string _set_name,
 			json _data
 		)
 		{
-			scope_lock locker(set_lock);
+			scope_lock locker(api_lock);
 
-			if (!data_sources.contains(_source_name)) {
-				throw std::invalid_argument("Invalid source name for dataset");
-			}
+			std::shared_ptr<data_api> dapi;
 
-			std::shared_ptr<data_set> ds;
-
-			if (data_sets.contains(_set_name))
+			if (apis.contains(_set_name))
 			{
-				ds = data_sets[_set_name];
+				dapi = get_api(_set_name);
+				dapi->put_function(_set_name, 
+					[](json _params, data_lake *_lake, data_function* _set)->int {
+						return 0;
+					},
+					[](json _params, data_lake* _lake, data_function* _set)->int {
+						return 0;
+					},
+					3600					
+					);
 			}
-			else
-			{
-				ds = std::make_shared<data_set>();
-				data_sets.insert_or_assign(_set_name, ds);
-			}
+		}
 
-			ds->source = data_sources[_source_name];
-			ds->cache_seconds = 3600;
-			ds->data = _data;
-			ds->name = _set_name;
+		void log_clear()
+		{
+			json_parser jp;
+			ds_log = jp.create_array();
+		}
 
-			ds->fetch = [](json _params, data_set* _set)->int {
-				return 0;
-				};
+		void log_information(std::string _function, std::string _message)
+		{
+			scope_lock lock_me(api_lock);
+			json_parser jp;
 
-			ds->share = [](json _params, data_set* _set)->int {
-				return 0;
-			};
+			auto ds_object = jp.create_object();
+			ds_object.put_member("function", _function);
+			ds_object.put_member("status", "ok");
+			ds_object.put_member("message", _message);
+			ds_log.put_element_object(-1, ds_object);
+			if (logged) logged(ds_object, this, nullptr);
+		}
 
+		void log_success(std::string _function, double _time_seconds, std::string _message, std::string _request, std::string _response)
+		{
+			scope_lock lock_me(api_lock);
+			json_parser jp;
+
+			auto ds_object = jp.create_object();
+			ds_object.put_member("function", _function);
+			ds_object.put_member("status", "ok");
+			ds_object.put_member("message", _message);
+			ds_object.put_member("request", _request);
+			ds_object.put_member("response", _response);
+			ds_object.put_member("time_seconds", _time_seconds);
+			ds_log.put_element_object(-1, ds_object);
+			if (logged) logged(ds_object, this, nullptr);
+		}
+
+		void log_error(std::string _function, double _time_seconds, std::string _message, std::string _request, std::string _response)
+		{
+			scope_lock lock_me(api_lock);
+			json_parser jp;
+
+			auto ds_object = jp.create_object();
+			ds_object.put_member("function", _function);
+			ds_object.put_member("status", "error");
+			ds_object.put_member("message", _message);
+			ds_object.put_member("request", _request);
+			ds_object.put_member("response", _response);
+			ds_object.put_member("time_seconds", _time_seconds);
+			ds_log.put_element_object(-1, ds_object);
+			if (logged) logged(ds_object, this, nullptr);
+		}
+
+		json& get_log()
+		{
+			return ds_log;
 		}
 
 	};
+
+	int data_function::get(data_lake* _lake, json _params)
+	{
+		json_parser jp;
+		auto jobj = jp.create_object();
+
+		try
+		{
+			parameters = _params;
+
+			time_t current_time, time_after;
+			time(&current_time);
+			time_t seconds = current_time - last_refresh;
+
+			if (seconds >= cache_seconds) {
+
+				last_refresh = current_time;
+				fetch(_params, _lake, this);
+
+				time(&time_after);
+				time_t exec_seconds = time_after - current_time;
+
+				_lake->log_success(name, exec_seconds, "Ok", "", "");
+			}
+
+			data.put_member_object("status", jobj);
+		}
+		catch (std::logic_error exc)
+		{
+			data.put_member_object("status", jobj);
+			_lake->log_error(name, 0.0, exc.what(), "", "");
+		}
+		catch (std::exception exc)
+		{
+			data.put_member_object("status", jobj);
+			_lake->log_error(name, 0.0, exc.what(), "", "");
+			return 0;
+		}
+		return 1;
+	}
+
+	void data_function::get(data_lake* _lake)
+	{
+		json_parser jp;
+		auto jobj = jp.create_object();
+
+		try
+		{
+			time_t current_time, time_after;
+			time(&current_time);
+			time_t seconds = current_time - last_refresh;
+
+			if (seconds >= cache_seconds) {
+				last_refresh = current_time;
+				fetch(data, _lake, this);
+			}
+
+			time(&time_after);
+			time_t exec_seconds = time_after - current_time;
+
+			jobj.put_member("success", true);
+			jobj.put_member("message", "Ok");
+			data.put_member_object("status", jobj);
+			_lake->log_success(name, exec_seconds, "Ok", "", "");
+		}
+		catch (std::logic_error exc)
+		{
+			jobj.put_member("success", false);
+			jobj.put_member("message", exc.what() ? exc.what() : "logic error.");
+			data.put_member_object("status", jobj);
+			_lake->log_error(name, 0, exc.what(), "", "");
+		}
+		catch (std::exception exc)
+		{
+			jobj.put_member("success", false);
+			jobj.put_member("message", exc.what() ? exc.what() : "error.");
+			data.put_member_object("status", jobj);
+			_lake->log_error(name, 0, exc.what(), "", "");
+		}
+	}
+
 }
 
 #endif

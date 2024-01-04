@@ -13,16 +13,17 @@ namespace corona
 
 		std::string host;
 		int port;
-
 		std::string default_namespace;
+		std::shared_ptr<data_lake> app_lake;
 
 		calico_client()
 		{
-			;
+			
 		}
 
-		calico_client(std::string _host, int _port)
+		calico_client(std::shared_ptr<data_lake> _app_lake, std::string _host, int _port)
 		{
+			app_lake = _app_lake;
 			host = _host;
 			port = _port;
 		}
@@ -365,6 +366,130 @@ namespace corona
 				}
 			}
 			return success;
+		}
+
+		json_method on_get_credentials;
+		json_method on_get_classes;
+		json_method on_get_fields;
+		json_method on_update;
+		json_method on_get_state;
+
+		void bind(std::shared_ptr<data_lake> shared_plane)
+		{
+			std::string user_name;
+
+			shared_plane->put_api("calico", "calico api", "");
+
+			shared_plane->put_function("calico", "credentials",
+				[this, user_name](json _params, data_lake* _lake, data_function* _set) -> int
+				{
+					// get our login credentials from the data set.
+					json classes_json;
+					json fields_json;
+					int temp = login("Property", user_name, _set->data);
+					// and, while we are it now, we can update our actor options, to show our created object
+					return temp;
+				},
+				on_get_credentials,
+				0);
+
+			shared_plane->put_function("calico", "classes",
+				[this](json _params, data_lake* _lake, data_function* _set) -> int
+				{
+					// get our login credentials from the data set.
+					json credentials = _lake->get_result("calico", "credentials");
+
+					// call our application
+					int temp = get_classes(credentials, _set->data);
+					// and, while we are it now, we can update our actor options, to show our created object
+					return temp;
+				},
+				on_get_classes,
+				0);
+
+			shared_plane->put_function("calico", "fields",
+				[this](json _params, data_lake* _lake, data_function* _set) -> int
+				{
+					// get our login credentials from the data set.
+					json credentials = _lake->get_result("calico", "credentials");
+
+					// call our application
+					int temp = get_fields(credentials, _set->data);
+					// and, while we are it now, we can update our actor options, to show our created object
+					return temp;
+				},
+				on_get_fields,
+				0);
+
+			shared_plane->put_function("calico", "get_state",
+				[this](json _params, data_lake* _lake, data_function* _set) -> int
+				{
+					// get our login credentials from the data set.
+					json credentials = _lake->get_result("calico", "credentials");
+
+					// call our application
+					int temp = get_actor_options(credentials, _set->data);
+					// and, while we are it now, we can update our actor options, to show our created object
+					return temp;
+				},
+				on_get_state,
+				0);
+
+			shared_plane->put_function("calico", "select_object",
+				[this](json _params, data_lake* _lake, data_function* _set) -> int
+				{
+					// get our login credentials from the data set.
+					json credentials = _lake->get_result("calico", "credentials");
+
+					// call our application
+					int temp = select_object(_params, credentials, _set->data);
+					// and, while we are it now, we can update our actor options, to show our created object
+					return temp;
+				},
+				on_update,
+				0);
+
+			shared_plane->put_function("calico", "create_object",
+				[this](json _params, data_lake* _lake, data_function* _set) -> int
+				{
+					// get our login credentials from the data set.
+					json credentials = _lake->get_result("calico", "credentials");
+
+					// call our application
+					int temp = create_object(_params, credentials, _set->data);
+					// and, while we are it now, we can update our actor options, to show our created object
+					return temp;
+				},
+				on_update,
+				0);
+
+			shared_plane->put_function("calico", "delete_object",
+				[this](json _params, data_lake* _lake, data_function* _set) -> int
+				{
+					// get our login credentials from the data set.
+					json credentials = _lake->get_result("calico", "credentials");
+
+					// call our application
+					int temp = delete_object(_params, credentials, _set->data);
+					// and, while we are it now, we can update our actor options, to show our created object
+					return temp;
+				},
+				on_update,
+				0);
+
+			shared_plane->put_function("calico", "put_object",
+				[this](json _params, data_lake* _lake, data_function* _set) -> int
+				{
+					// get our login credentials from the data set.
+					json credentials = _lake->get_result("calico", "credentials");
+
+					// call our application
+					int temp = put_object(_params, credentials, _set->data);
+					// and, while we are it now, we can update our actor options, to show our created object
+					return temp;
+				},
+				on_update,
+				0);
 		}
 
 	};

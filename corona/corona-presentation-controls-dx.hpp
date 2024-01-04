@@ -634,7 +634,6 @@ namespace corona
 
 	};
 
-
 	class image_control :
 		public draw_control
 	{
@@ -1172,9 +1171,6 @@ namespace corona
 		text_style = request;
 		return *this;
 	}
-
-
 }
 
 #endif
-

@@ -300,6 +300,16 @@ namespace corona
 			return has_value;
 		}
 
+		json get_first_element() const
+		{
+			return get_element(0);
+		}
+
+		json get_last_element() const
+		{
+			return get_element(array_impl->elements.size() - 1);
+		}
+
 		json get_element(int _index) const
 		{
 			json jn(array_impl->elements[_index]);

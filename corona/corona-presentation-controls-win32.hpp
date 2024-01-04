@@ -153,6 +153,7 @@ namespace corona
 		{
 			if (::IsWindow(window)) {
 				DestroyWindow(window);
+				window = nullptr;
 			}
 		}
 

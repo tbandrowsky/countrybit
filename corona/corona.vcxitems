@@ -61,6 +61,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-presentation-base.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-presentation-builder.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-presentation-controls-base.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-presentation-controls-calico.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-presentation-controls-dx-container.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-presentation-controls-dx-text.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-presentation-controls-dx.hpp" />

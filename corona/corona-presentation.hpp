@@ -11,6 +11,7 @@
 #include "corona-presentation-controls-dx-container.hpp"
 #include "corona-presentation-builder.hpp"
 #include "corona-presentation-page.hpp"
+#include "corona-dataplane.hpp"
 
 namespace corona {
 
@@ -26,20 +27,53 @@ namespace corona {
 
 		std::weak_ptr<page> current_page;
 		rectangle current_size;
+		std::map<std::string, control_json_mapper> class_control_map;
+		lockable control_lock;
 
 	public:
 
 		std::map<std::string, std::shared_ptr<page>> pages;
 		std::weak_ptr<applicationBase> window_host;
+		std::shared_ptr<data_lake> data;
 
 		presentation()
 		{
-			;
+			data = std::make_shared<data_lake>();
 		}
 
 		presentation(std::weak_ptr<applicationBase> _window_host) : window_host(_window_host)
 		{
-			;
+			data = std::make_shared<data_lake>();
+		}
+
+		control_json_mapper get_class_control_factory(std::string class_name)
+		{
+			scope_lock locker(control_lock);
+
+			control_json_mapper cjm;
+
+			if (class_control_map.contains(class_name)) {
+				cjm = class_control_map[class_name];
+			}
+			else
+			{
+				//std::function<std::weak_ptr<control_base>(control_base *_parent, json& _array, int _index)>;
+				cjm = [class_name](control_base* _parent, json& _array, int _index) -> std::shared_ptr<control_base>
+					{
+						std::shared_ptr<paragraph_control> new_ptr = std::make_shared<paragraph_control>(_parent, id_counter::next());
+						new_ptr->text = class_name;
+						return new_ptr;
+					};
+			}
+
+			return cjm;
+		}
+
+		void put_class_control_factory(std::string class_name, control_json_mapper mapper)
+		{
+			scope_lock locker(control_lock);
+
+			class_control_map.insert_or_assign(class_name, mapper);
 		}
 
 		virtual ~presentation()
