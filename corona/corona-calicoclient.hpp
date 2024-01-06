@@ -26,11 +26,14 @@ namespace corona
 			app_lake = _app_lake;
 			host = _host;
 			port = _port;
+			bind(_app_lake);
 		}
 
-		int login(std::string _model, std::string _user_name, json& login_json)
+		call_status login(std::string _model, std::string _user_name, json& login_json)
 		{
 			int success = 0;
+
+			call_status dfs;
 
 			json_parser jp;
 			http_client calico_client;
@@ -41,6 +44,9 @@ namespace corona
 			login_object.put_member("UserName", _user_name);
 			login_object.put_member("ModelName", _model);
 			http_params login_result = calico_client.post(calico_host, calico_port, "api/LoginActor", login_object);
+
+			dfs.request = login_result.request;
+			dfs.response = login_result.response;
 
 			if (login_result.response.content_type.starts_with("application/json"))
 			{
@@ -54,46 +60,47 @@ namespace corona
 
 				if (login_json.has_member("Errors"))
 				{
-					success = false;
+					dfs.success = false;
 				}
 				else 
 				{
-					success = true;
+					dfs.success = true;
 				}
 			}
-			return success;
+			return dfs;
 		}
 
-		int get_field_options(json& credentials, std::string _field_name, json& calico_response)
+		call_status get_field_options(json& credentials, std::string _field_name, json& calico_response)
 		{
-			int success = 0;
-
+			call_status dfs;
 			json_parser jp;
 
 			http_client calico_client;
 			const char* calico_host = host.c_str();
 			int calico_port = port;
 			json calico_request = jp.create_object();
+
 			if (credentials.has_member("JwtToken")) {
 				calico_request.copy_member("JwtToken", credentials);
 				calico_request.put_member("FieldName", _field_name);
 				http_params calico_http = calico_client.get(calico_host, calico_port, "api/GetFieldOptions", calico_request);
+				dfs.request = calico_http.request;
+				dfs.response = calico_http.response;
 
 				if (calico_http.response.content_type.starts_with("application/json"))
 				{
 					calico_response = jp.parse_object(calico_http.response.response_body.get_ptr());
 					std::cout << calico_response.to_json() << std::endl;
-					success = true;
+					dfs.success = true;
 				}
 			}
-			return success;
+			return dfs;
 		}
 
 
-		int get_classes(json& credentials, json& calico_response)
+		call_status get_classes(json& credentials, json& calico_response)
 		{
-			int success = 0;
-
+			call_status dfs;
 			json_parser jp;
 
 			http_client calico_client;
@@ -103,21 +110,22 @@ namespace corona
 			if (credentials.has_member("JwtToken")) {
 				calico_request.copy_member("JwtToken", credentials);
 				http_params calico_http = calico_client.get(calico_host, calico_port, "api/GetClassList", calico_request);
+				dfs.request = calico_http.request;
+				dfs.response = calico_http.response;
 
 				if (calico_http.response.content_type.starts_with("application/json"))
 				{
 					calico_response = jp.parse_object(calico_http.response.response_body.get_ptr());
 					std::cout << calico_response.to_json() << std::endl;
-					success = true;
+					dfs.success = true;
 				}
 			}
-			return success;
+			return dfs;
 		}
 
-		int get_fields(json& credentials, json& calico_response)
+		call_status get_fields(json& credentials, json& calico_response)
 		{
-			int success = 0;
-
+			call_status dfs;
 			json_parser jp;
 
 			http_client calico_client;
@@ -131,16 +139,16 @@ namespace corona
 				if (calico_http.response.content_type.starts_with("application/json"))
 				{
 					calico_response = jp.parse_object(calico_http.response.response_body.get_ptr());
-					success = true;
+					dfs.success = true;
 				}
 			}
-			return success;
+			return dfs;
 		}
 
-		int create_class(json _source, json& credentials, json& calico_response)
+		call_status create_class(json _source, json& credentials, json& calico_response)
 		{
-			int success = false;
 
+			call_status dfs;
 			json_parser jp;
 
 			http_client calico_client;
@@ -157,18 +165,19 @@ namespace corona
 				request.put_member("DelimitedClassFieldList", _source);
 
 				http_params calico_http = calico_client.post(calico_host, calico_port, "api/PutClassEx", request);
+				dfs.request = calico_http.request;
+				dfs.response = calico_http.response;
 				if (calico_http.response.content_type.starts_with("application/json"))
 				{
 					calico_response = jp.parse_object(calico_http.response.response_body.get_ptr());
 				}
 			}
-			return success;
+			return dfs;
 		}
 
-		int get_actor_options(json& credentials, json& calico_response)
+		call_status get_actor_options(json& credentials, json& calico_response)
 		{
-			int success = 0;
-
+			call_status dfs;
 			json_parser jp;
 
 			http_client calico_client;
@@ -180,20 +189,21 @@ namespace corona
 				calico_request.put_member("SearchObjectJson", "{}");
 
 				http_params calico_http = calico_client.get(calico_host, calico_port, "api/GetActorOptions", calico_request);
+				dfs.request = calico_http.request;
+				dfs.response = calico_http.response;
 
 				if (calico_http.response.content_type.starts_with("application/json"))
 				{
 					calico_response = jp.parse_object(calico_http.response.response_body.get_ptr());
-					success = true;
+					dfs.success = true;
 				}
 			}
-			return success;
+			return dfs;
 		}
 
-		int create_object(json source, json& credentials, json& calico_response)
+		call_status create_object(json source, json& credentials, json& calico_response)
 		{
-			int success = 0;
-
+			call_status dfs;
 			json_parser jp;
 
 			http_client calico_client;
@@ -205,20 +215,21 @@ namespace corona
 				std::string object_json = source.to_json_string();
 				calico_request.put_member("ObjectJson", object_json);
 				http_params calico_http = calico_client.post(calico_host, calico_port, "api/CreateObject", calico_request);
+				dfs.request = calico_http.request;
+				dfs.response = calico_http.response;
 
 				if (calico_http.response.content_type.starts_with("application/json"))
 				{
 					calico_response = jp.parse_object(calico_http.response.response_body.get_ptr());
-					success = true;
+					dfs.success = true;
 				}
 			}
-			return success;
+			return dfs;
 		}
 
-		int put_object(json source, json& credentials, json& calico_response)
+		call_status put_object(json source, json& credentials, json& calico_response)
 		{
-			int success = 0;
-
+			call_status dfs;
 			json_parser jp;
 
 			http_client calico_client;
@@ -229,20 +240,21 @@ namespace corona
 				calico_request.copy_member("JwtToken", credentials);
 				calico_request.put_member("ObjectJson", source);
 				http_params calico_http = calico_client.post(calico_host, calico_port, "api/PutObject", calico_request);
+				dfs.request = calico_http.request;
+				dfs.response = calico_http.response;
 
 				if (calico_http.response.content_type.starts_with("application/json"))
 				{
 					calico_response = jp.parse_object(calico_http.response.response_body.get_ptr());
-					success = true;
+					dfs.success = true;
 				}
 			}
-			return success;
+			return dfs;
 		}
 
-		int select_object(json source, json& credentials, json& calico_response)
+		call_status select_object(json source, json& credentials, json& calico_response)
 		{
-			int success = 0;
-
+			call_status dfs;
 			json_parser jp;
 
 			http_client calico_client;
@@ -256,20 +268,21 @@ namespace corona
 				calico_request.copy_member("Multiselect", source);
 
 				http_params calico_http = calico_client.post(calico_host, calico_port, "api/SelectObject", calico_request);
+				dfs.request = calico_http.request;
+				dfs.response = calico_http.response;
 
 				if (calico_http.response.content_type.starts_with("application/json"))
 				{
 					calico_response = jp.parse_object(calico_http.response.response_body.get_ptr());
-					success = true;
+					dfs.success = true;
 				}
 			}
-			return success;
+			return dfs;
 		}
 
-		int select_home(json& credentials, json& calico_response)
+		call_status select_home(json& credentials, json& calico_response)
 		{
-			int success = 0;
-
+			call_status dfs;
 			json_parser jp;
 
 			http_client calico_client;
@@ -281,22 +294,25 @@ namespace corona
 				calico_request.copy_member("JwtToken", credentials);
 
 				http_params calico_http = calico_client.post(calico_host, calico_port, "api/SelectHome", calico_request);
+				dfs.request = calico_http.request;
+				dfs.response = calico_http.response;
 
 				if (calico_http.response.content_type.starts_with("application/json"))
 				{
 					calico_response = jp.parse_object(calico_http.response.response_body.get_ptr());
-					success = true;
+					dfs.success = true;
 				}
 			}
-			return success;
+			return dfs;
 		}
 
-		int select_class(std::string className, json& credentials, json& calico_response)
+		call_status select_class(std::string className, json& credentials, json& calico_response)
 		{
 			int success = 0;
 
 			json_parser jp;
 
+			call_status dfs;
 			http_client calico_client;
 			const char* calico_host = host.c_str();
 			int calico_port = port;
@@ -308,19 +324,21 @@ namespace corona
 				calico_request.put_member("ClassName", className);
 
 				http_params calico_http = calico_client.post(calico_host, calico_port, "api/SelectClass", calico_request);
+				dfs.request = calico_http.request;
+				dfs.response = calico_http.response;
 
 				if (calico_http.response.content_type.starts_with("application/json"))
 				{
 					calico_response = jp.parse_object(calico_http.response.response_body.get_ptr());
-					success = true;
+					dfs.success = true;
 				}
 			}
-			return success;
+			return dfs;
 		}
 
-		int delete_object(json source, json& credentials, json& calico_response)
+		call_status delete_object(json source, json& credentials, json& calico_response)
 		{
-			int success = 0;
+			call_status dfs;
 
 			json_parser jp;
 
@@ -332,19 +350,21 @@ namespace corona
 				calico_request.copy_member("JwtToken", credentials);
 				calico_request.copy_member("ObjectId", source);
 				http_params calico_http = calico_client.post(calico_host, calico_port, "api/DeleteObject", calico_request);
+				dfs.request = calico_http.request;
+				dfs.response = calico_http.response;
 
 				if (calico_http.response.content_type.starts_with("application/json"))
 				{
 					calico_response = jp.parse_object(calico_http.response.response_body.get_ptr());
-					success = true;
+					dfs.success = true;
 				}
 			}
-			return success;
+			return dfs;
 		}
 
-		int query(json source, json& credentials, json& calico_response)
+		call_status query(json source, json& credentials, json& calico_response)
 		{
-			int success = 0;
+			call_status dfs;
 
 			json_parser jp;
 
@@ -358,21 +378,23 @@ namespace corona
 				calico_request.copy_member("SearchObjectJson", source);
 				calico_request.copy_member("FilterSelections", source);
 				http_params calico_http = calico_client.post(calico_host, calico_port, "api/Query", calico_request);
+				dfs.request = calico_http.request;
+				dfs.response = calico_http.response;
 
 				if (calico_http.response.content_type.starts_with("application/json"))
 				{
 					calico_response = jp.parse_object(calico_http.response.response_body.get_ptr());
-					success = true;
+					dfs.success = true;
 				}
 			}
-			return success;
+			return dfs;
 		}
 
-		json_method on_get_credentials;
-		json_method on_get_classes;
-		json_method on_get_fields;
-		json_method on_update;
-		json_method on_get_state;
+		gui_method on_get_credentials;
+		gui_method on_get_classes;
+		gui_method on_get_fields;
+		gui_method on_update;
+		gui_method on_get_state;
 
 		void bind(std::shared_ptr<data_lake> shared_plane)
 		{
@@ -381,12 +403,12 @@ namespace corona
 			shared_plane->put_api("calico", "calico api", "");
 
 			shared_plane->put_function("calico", "credentials",
-				[this, user_name](json _params, data_lake* _lake, data_function* _set) -> int
+				[this, user_name](json _params, data_lake* _lake, data_function* _set) -> call_status
 				{
 					// get our login credentials from the data set.
 					json classes_json;
 					json fields_json;
-					int temp = login("Property", user_name, _set->data);
+					call_status temp = login("Property", user_name, _set->data);
 					// and, while we are it now, we can update our actor options, to show our created object
 					return temp;
 				},
@@ -394,13 +416,13 @@ namespace corona
 				0);
 
 			shared_plane->put_function("calico", "classes",
-				[this](json _params, data_lake* _lake, data_function* _set) -> int
+				[this](json _params, data_lake* _lake, data_function* _set) -> call_status
 				{
 					// get our login credentials from the data set.
 					json credentials = _lake->get_result("calico", "credentials");
 
 					// call our application
-					int temp = get_classes(credentials, _set->data);
+					call_status temp = get_classes(credentials, _set->data);
 					// and, while we are it now, we can update our actor options, to show our created object
 					return temp;
 				},
@@ -408,13 +430,13 @@ namespace corona
 				0);
 
 			shared_plane->put_function("calico", "fields",
-				[this](json _params, data_lake* _lake, data_function* _set) -> int
+				[this](json _params, data_lake* _lake, data_function* _set) -> call_status
 				{
 					// get our login credentials from the data set.
 					json credentials = _lake->get_result("calico", "credentials");
 
 					// call our application
-					int temp = get_fields(credentials, _set->data);
+					call_status temp = get_fields(credentials, _set->data);
 					// and, while we are it now, we can update our actor options, to show our created object
 					return temp;
 				},
@@ -422,13 +444,13 @@ namespace corona
 				0);
 
 			shared_plane->put_function("calico", "get_state",
-				[this](json _params, data_lake* _lake, data_function* _set) -> int
+				[this](json _params, data_lake* _lake, data_function* _set) -> call_status
 				{
 					// get our login credentials from the data set.
 					json credentials = _lake->get_result("calico", "credentials");
 
 					// call our application
-					int temp = get_actor_options(credentials, _set->data);
+					call_status temp = get_actor_options(credentials, _set->data);
 					// and, while we are it now, we can update our actor options, to show our created object
 					return temp;
 				},
@@ -436,13 +458,13 @@ namespace corona
 				0);
 
 			shared_plane->put_function("calico", "select_object",
-				[this](json _params, data_lake* _lake, data_function* _set) -> int
+				[this](json _params, data_lake* _lake, data_function* _set) -> call_status
 				{
 					// get our login credentials from the data set.
 					json credentials = _lake->get_result("calico", "credentials");
 
 					// call our application
-					int temp = select_object(_params, credentials, _set->data);
+					call_status temp = select_object(_params, credentials, _set->data);
 					// and, while we are it now, we can update our actor options, to show our created object
 					return temp;
 				},
@@ -450,13 +472,13 @@ namespace corona
 				0);
 
 			shared_plane->put_function("calico", "create_object",
-				[this](json _params, data_lake* _lake, data_function* _set) -> int
+				[this](json _params, data_lake* _lake, data_function* _set) -> call_status
 				{
 					// get our login credentials from the data set.
 					json credentials = _lake->get_result("calico", "credentials");
 
 					// call our application
-					int temp = create_object(_params, credentials, _set->data);
+					call_status temp = create_object(_params, credentials, _set->data);
 					// and, while we are it now, we can update our actor options, to show our created object
 					return temp;
 				},
@@ -464,13 +486,13 @@ namespace corona
 				0);
 
 			shared_plane->put_function("calico", "delete_object",
-				[this](json _params, data_lake* _lake, data_function* _set) -> int
+				[this](json _params, data_lake* _lake, data_function* _set) -> call_status
 				{
 					// get our login credentials from the data set.
 					json credentials = _lake->get_result("calico", "credentials");
 
 					// call our application
-					int temp = delete_object(_params, credentials, _set->data);
+					call_status temp = delete_object(_params, credentials, _set->data);
 					// and, while we are it now, we can update our actor options, to show our created object
 					return temp;
 				},
@@ -478,13 +500,13 @@ namespace corona
 				0);
 
 			shared_plane->put_function("calico", "put_object",
-				[this](json _params, data_lake* _lake, data_function* _set) -> int
+				[this](json _params, data_lake* _lake, data_function* _set) -> call_status
 				{
 					// get our login credentials from the data set.
 					json credentials = _lake->get_result("calico", "credentials");
 
 					// call our application
-					int temp = put_object(_params, credentials, _set->data);
+					call_status temp = put_object(_params, credentials, _set->data);
 					// and, while we are it now, we can update our actor options, to show our created object
 					return temp;
 				},

@@ -9,13 +9,13 @@ namespace corona
 	{
 	public:
 		std::string			text;
-		solidBrushRequest	text_fill_brush;
+		solidBrushRequest	text_idle_brush;
 		textStyleRequest	text_style;
 
 		text_display_control(const text_display_control& _src) : draw_control(_src)
 		{
 			text = _src.text;
-			text_fill_brush = _src.text_fill_brush;
+			text_idle_brush = _src.text_idle_brush;
 			text_style = _src.text_style;
 		}
 
@@ -226,7 +226,7 @@ namespace corona
 				text_display_control *t = dynamic_cast<text_display_control*>(_src);
 				if (auto pwindow = _src->window.lock())
 				{
-					pwindow->getContext().setSolidColorBrush(&t->text_fill_brush);
+					pwindow->getContext().setSolidColorBrush(&t->text_idle_brush);
 					pwindow->getContext().setTextStyle(&t->text_style);
 				}
 			};
@@ -242,7 +242,7 @@ namespace corona
 					draw_bounds.x = 0;
 					draw_bounds.y = 0;
 
-					pwindow->getContext().drawText(text.c_str(), &draw_bounds, this->text_style.name, this->text_fill_brush.name);
+					pwindow->getContext().drawText(text.c_str(), &draw_bounds, this->text_style.name, this->text_idle_brush.name);
 //					pwindow->getContext().drawRectangle(&draw_bounds, this->text_fill_brush.name, 4, nullptr);
 				}
 			}
@@ -257,14 +257,14 @@ namespace corona
 
 	text_display_control& text_display_control::set_text_fill(solidBrushRequest _brushFill)
 	{
-		text_fill_brush = _brushFill;
+		text_idle_brush = _brushFill;
 		return *this;
 	}
 
 	text_display_control& text_display_control::set_text_fill(std::string _color)
 	{
-		text_fill_brush.name = typeid(*this).name();
-		text_fill_brush.brushColor = toColor(_color);
+		text_idle_brush.name = typeid(*this).name();
+		text_idle_brush.brushColor = toColor(_color);
 		return *this;
 	}
 
@@ -295,8 +295,8 @@ namespace corona
 		background_brush.brushColor = toColor(st->TitleBackgroundColor);
 		background_brush.active = true;
 
-		text_fill_brush.name = "title_text_fill";
-		text_fill_brush.brushColor = toColor(st->TitleTextColor);
+		text_idle_brush.name = "title_text_fill";
+		text_idle_brush.brushColor = toColor(st->TitleTextColor);
 
 		text_style = {};
 		text_style.name = "title_text_style";
@@ -333,8 +333,8 @@ namespace corona
 		background_brush.brushColor = toColor(st->SubtitleBackgroundColor);
 		background_brush.active = true;
 
-		text_fill_brush.name = "subtitle_text_fill";
-		text_fill_brush.brushColor = toColor(st->SubtitleTextColor);
+		text_idle_brush.name = "subtitle_text_fill";
+		text_idle_brush.brushColor = toColor(st->SubtitleTextColor);
 
 		text_style = {};
 		text_style.name = "subtitle_text_style";
@@ -371,8 +371,8 @@ namespace corona
 		background_brush.brushColor = toColor(st->ChapterTitleBackgroundColor);
 		background_brush.active = true;
 
-		text_fill_brush.name = "chaptertitle_text_fill";
-		text_fill_brush.brushColor = toColor(st->ChapterTitleTextColor);
+		text_idle_brush.name = "chaptertitle_text_fill";
+		text_idle_brush.brushColor = toColor(st->ChapterTitleTextColor);
 
 		text_style = {};
 		text_style.name = "chaptertitle_text_style";
@@ -409,8 +409,8 @@ namespace corona
 		background_brush.brushColor = toColor(st->SubchapterTitleBackgroundColor);
 		background_brush.active = true;
 
-		text_fill_brush.name = "chaptersubtitle_text_fill";
-		text_fill_brush.brushColor = toColor(st->SubchapterTitleTextColor);
+		text_idle_brush.name = "chaptersubtitle_text_fill";
+		text_idle_brush.brushColor = toColor(st->SubchapterTitleTextColor);
 
 		text_style = {};
 		text_style.name = "chaptersubtitle_text_style";
@@ -448,8 +448,8 @@ namespace corona
 		background_brush.brushColor = toColor(st->ParagraphBackgroundColor);
 		background_brush.active = true;
 
-		text_fill_brush.name = "paragraph_text_fill";
-		text_fill_brush.brushColor = toColor(st->ParagraphTextColor);
+		text_idle_brush.name = "paragraph_text_fill";
+		text_idle_brush.brushColor = toColor(st->ParagraphTextColor);
 
 		text_style = {};
 		text_style.name = "paragraph_text_style";
@@ -486,8 +486,8 @@ namespace corona
 		background_brush.brushColor = toColor(st->CodeBackgroundColor);
 		background_brush.active = true;
 
-		text_fill_brush.name = "code_text_fill";
-		text_fill_brush.brushColor = toColor(st->CodeTextColor);
+		text_idle_brush.name = "code_text_fill";
+		text_idle_brush.brushColor = toColor(st->CodeTextColor);
 
 		text_style = {};
 		text_style.name = "code_text_style";
@@ -518,8 +518,8 @@ namespace corona
 
 	void label_control::set_default_styles()
 	{
-		text_fill_brush.name = "label_text_fill";
-		text_fill_brush.brushColor = toColor(styles.get_style()->TextColor);
+		text_idle_brush.name = "label_text_fill";
+		text_idle_brush.brushColor = toColor(styles.get_style()->TextColor);
 
 		text_style = {};
 		text_style.name = "label_text_style";
@@ -551,8 +551,8 @@ namespace corona
 
 	void placeholder_control::set_default_styles()
 	{
-		text_fill_brush.name = "placeholder_text_fill";
-		text_fill_brush.brushColor = toColor(styles.get_style()->TextColor);
+		text_idle_brush.name = "placeholder_text_fill";
+		text_idle_brush.brushColor = toColor(styles.get_style()->TextColor);
 
 		text_style = {};
 		text_style.name = "placeholder_text_style";

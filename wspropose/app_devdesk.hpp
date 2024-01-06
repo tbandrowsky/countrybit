@@ -59,11 +59,11 @@ namespace corona
 
 		json actor_options;
 
-		auto base_ds = app_show->get_data_set("current_state");
+		auto base_ds = app_show->data->get_function("calico", "current_state");
 		actor_options = base_ds->data;
 
-		auto err = base_ds->get_error();
-		if (err.error) {
+		auto err = base_ds->status;
+		if (!err.success) {
 			tc_message.text = "Error";
 			tc_detail.text = err.message;
 			contents_root.apply_controls(_page.root.get());
@@ -71,7 +71,7 @@ namespace corona
 		} else if (!actor_options.has_member("ActorOptions")) {
 			tc_message.text = "No data yet";
 			tc_detail.text = "";
-			auto control_to_apply_to = _page.root.get();
+			control_base *control_to_apply_to = _page.root.get();
 			contents_root.apply_controls(control_to_apply_to);
 			return;
 		}
@@ -124,6 +124,7 @@ namespace corona
 			auto selected_object = selected_objects[i];
 
 			std::string class_name = selected_object["ClassName"].get_string();
+			std::string class_description = selected_object["ClassDescription"].get_string();
 			int64_t class_id = selected_object["ClassId"].get_double();
 			int64_t object_id = selected_object["ObjectId"].get_double();
 			std::string object_id_string = selected_object["ObjectId"];
@@ -136,11 +137,17 @@ namespace corona
 
 			int select_button_id = app_show->get_control_id(button_name, []() { return id_counter::next(); });
 
-			// and, now, create our button.  here, the class name is used as a label
-			// in the future we can create data set aware buttons but for now this is really all we need, because in calico this sort of 
-			// sequence does everything.
-			command_container.push_button(select_button_id, class_name, [](pushbutton_control& pc) {
-				pc.set_size(.95_container, 30.0_px );
+			command_container.calico_button(select_button_id,[object_id, class_description](calico_button_control& pc) {
+				pc.set_size(.95_container, 30.0_px);
+				pc.text = class_description;
+
+				json_parser jp;
+				json object_request = jp.create_object();
+				object_request.put_member("ObjectId", object_id);
+
+				pc.function_name = "select_object";
+				pc.function_parameters = object_request;
+
 				});
 
 			// so, we have to bind our button to our data.. first, we describe what the button does with data...
@@ -175,66 +182,18 @@ namespace corona
 				pc.set_size(.95_container, 30.0_px);
 				});
 				*/
-			command_container.push_button(button_id, class_description, [](pushbutton_control& pc) {
+			command_container.calico_button(button_id, [class_description, class_name](calico_button_control& pc) {
 				pc.set_size(.95_container, 30.0_px);
+				pc.text = class_description;
+
+				json_parser jp;
+				json new_object_request = jp.create_object();
+				new_object_request.put_member("ClassName", class_name);
+
+				pc.function_name = "create_object";
+				pc.function_parameters = new_object_request;
+
 				});
-
-			// and now, we associate creating the object with the application data...
-			// whenever we get a data set with this key, this stuff gets invoked.
-			// and this all happens on background threads.
-
-			app_show->put_data_set("calico", button_name,
-				[calico_svc, application, app_show, class_name](json _params, data_function* _set) -> int
-				{
-					// get our login credentials from the data set.
-					json credentials = app_show->get_data("login");
-
-					// create a new object
-					json_parser jp;
-					json new_object_request = jp.create_object();
-					new_object_request.put_member("ClassName", class_name);
-
-					// call our application
-					int temp = calico_svc->create_object(new_object_request, credentials, _set->data);
-					app_show->update_data_set("current_state");
-
-					// and, while we are it now, we can update our actor options, to show our created object
-					return temp;
-				},
-				[_page, app_show](json _params, data_function* _set) -> int {
-					// when back on the ui thread, kick off our refresh					
-					auto& tc_message = _page.root->find<code_control>(IDC_STATUS_MESSAGE);
-					auto& tc_detail = _page.root->find<code_control>(IDC_STATUS_DETAIL);
-					auto loginstate = app_show->get_data_set("login");
-					auto login_error = loginstate->get_error();
-					if (login_error.error) {
-						tc_message.set_text( "Error With Credentials" );
-						tc_detail.set_text(login_error.message);
-					}
-					else 
-					{
-						auto stateds = app_show->get_data_set("current_state");
-						auto stateds_error = stateds->get_error();
-						if (stateds_error.error) {
-							tc_message.set_text("Error With Credentials");
-							tc_detail.set_text(stateds_error.message);
-						}
-					}
-					return 0;
-				},
-				0);
-
-			// and, now add an event handler, to select the object on the back end, when this is pressed.
-			// the [capture,..](param,...) notation is how C++ does lambda expressions.
-			_page.on_command(button_id, [_page, button_name, app_show, class_name, calico_svc](command_event ce) {
-					auto& tc_message = _page.root->find<code_control>(IDC_STATUS_MESSAGE);
-					auto& tc_detail = _page.root->find<code_control>(IDC_STATUS_DETAIL);
-					tc_message.text = "Creating";
-					tc_message.text = "Creating Object";
-
-					app_show->update_data_set(button_name);
-				});
-
 		}
 
 		/*  ---------------------------------------------------------------------------------------------------
@@ -356,12 +315,21 @@ namespace corona
 
 		// create the data store and bind the calico client to it.
 		std::shared_ptr<data_lake> app_data = std::make_shared<data_lake>();
-		std::shared_ptr<calico_client> calico_svc = std::make_shared<calico_client>("localhost", 7277);
-		calico_svc->bind(app_data);
+		std::shared_ptr<calico_client> calico_svc = std::make_shared<calico_client>(app_data, "localhost", 7277);
 
 		// create the presentation - this holds the data of what is on screen, for various pages.
 		std::shared_ptr<presentation> application_presentation = std::make_shared<presentation>(application);
 		application_presentation->data = app_data;
+		app_data->on_changed("calico", [application_presentation](json _params, data_lake* _api, data_function* _set) -> int {
+			application_presentation->onDataChanged(_params, _api, _set );
+			return 0;
+			});
+
+		// and now wire the data to the presentation 
+		// the presentation can invoke the data
+		// the data invokes whatever client
+		// json for analytics
+		// off to C++ structures for heavy duty
 
 		std::shared_ptr<menu_item> app_menu = std::make_shared<menu_item>();
 
@@ -406,14 +374,6 @@ namespace corona
 						create_home_page( *(_evt.pg), application, calico_svc,  application_presentation, app_menu, st);
 					});
 
-				_pg.on_changed([calico_svc, application, application_presentation, st, app_menu](page& _pg, std::string _set_name)
-					{
-						std::cout << "home:  changed (" << _set_name << ")" << std::endl;
-//						application_presentation->select_page("home");
-						create_home_page( _pg, application, calico_svc, application_presentation, app_menu, st);
-					}
-				);
-
 			});
 
 		auto &login_page = application_presentation->create_page("login", [calico_svc, application_presentation, application, app_data, st, app_menu](page& _pg)
@@ -435,24 +395,9 @@ namespace corona
 
 				_pg.on_select([calico_svc, application, application_presentation, app_data, st, app_menu](page_select_event _evt)
 					{
-						app_data->update_data_set("login");
-					});
-
-				_pg.on_changed([calico_svc, application, application_presentation, app_data, st, app_menu](page& _pg, std::string _set_name)
-					{
-						auto& tc_message = _pg.root->find<code_control>(IDC_STATUS_MESSAGE);
-						auto& tc_detail = _pg.root->find<code_control>(IDC_STATUS_DETAIL);
-
-						auto err_set = app_data->get_data_set("login");
-						auto err = err_set->get_error();
-						if (err.error)
-						{
-							tc_message.text = err.error;
-							tc_detail.text = err.message;
-						}
+						app_data->call_function("calico", "login");
 					});
 			});
-
 
 		if (forceWindowed)
 		{

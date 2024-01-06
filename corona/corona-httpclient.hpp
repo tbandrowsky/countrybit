@@ -200,7 +200,7 @@ namespace corona
                 while (_path.ends_with('/'))
                     _path.pop_back();
                 ba.append(_path);
-            }
+            } 
             else 
             {
                 throw std::invalid_argument("Invalid path.");
@@ -311,6 +311,24 @@ namespace corona
     public:
         http_request  request;
         http_response response;
+    };
+
+    class call_status
+    {
+    public:
+        bool success;
+        std::string message;
+        http_request request;
+        http_response response;
+        int http_code;
+        time_t call_time;
+
+        call_status()
+        {
+            time(&call_time);
+            http_code = 0;
+            success = false;
+        }
     };
 
 	class http_client

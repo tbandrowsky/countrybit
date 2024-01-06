@@ -563,7 +563,7 @@ namespace corona
 	public:
 
 		std::string			text;
-		solidBrushRequest	text_fill_brush;
+		solidBrushRequest	text_idle_brush;
 		textStyleRequest	text_style;
 		double				icon_width;
 		int*				active_id;
@@ -577,7 +577,7 @@ namespace corona
 		tab_button_control(const tab_button_control& _src) : gradient_button_control(_src) {
 			init();
 			text = _src.text;
-			text_fill_brush = _src.text_fill_brush;
+			text_idle_brush = _src.text_idle_brush;
 			text_style = _src.text_style;
 			icon_width = _src.icon_width;
 			active_id = _src.active_id;
@@ -1073,7 +1073,7 @@ namespace corona
 			{
 				if (auto pwindow = this->window.lock())
 				{
-					pwindow->getContext().setSolidColorBrush(&this->text_fill_brush);
+					pwindow->getContext().setSolidColorBrush(&this->text_idle_brush);
 					pwindow->getContext().setTextStyle(&this->text_style);
 				}
 			};
@@ -1143,14 +1143,14 @@ namespace corona
 
 	tab_button_control& tab_button_control::set_text_fill(solidBrushRequest _brushFill)
 	{
-		text_fill_brush = _brushFill;
+		text_idle_brush = _brushFill;
 		return *this;
 	}
 
 	tab_button_control& tab_button_control::set_text_fill(std::string _color)
 	{
-		text_fill_brush.name = typeid(*this).name();
-		text_fill_brush.brushColor = toColor(_color);
+		text_idle_brush.name = typeid(*this).name();
+		text_idle_brush.brushColor = toColor(_color);
 		return *this;
 	}
 

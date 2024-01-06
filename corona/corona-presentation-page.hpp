@@ -5,7 +5,6 @@ namespace corona
 {
 
 	using update_function = std::function< void(page* _page, double _elapsedSeconds, double _totalSeconds) >;
-	using change_function = std::function< void(page& _page, std::string _changed_set_name) >;
 
 	class page : public page_base
 	{
@@ -23,8 +22,8 @@ namespace corona
 		std::vector<std::shared_ptr<page_unload_event_binding>> unload_bindings;
 		std::vector<std::shared_ptr<page_load_event_binding>> load_bindings;
 		std::vector<std::shared_ptr<page_select_event_binding>> select_bindings;
+		std::list<std::shared_ptr<page_data_event_binding>> page_data_bindings;
 		update_function update_event;
-		change_function change_event;
 
 	public:
 
@@ -68,9 +67,7 @@ namespace corona
 			unload_bindings.clear();
 			load_bindings.clear();
 			select_bindings.clear();
-			update_event = nullptr;
-// we do not clear the change event because it may be firing the thing that causes us to clear the page
-//			change_event = nullptr;
+			page_data_bindings.clear();
 			destroy();
 			root = std::make_shared<column_layout>();
 		}
@@ -87,6 +84,7 @@ namespace corona
 			item_changed_bindings.erase(_control_id);
 			list_changed_events.erase(_control_id);
 			command_bindings.erase(_control_id);
+			page_data_bindings.remove_if([_control_id](std::shared_ptr<page_data_event_binding>& x) { return x->subscribed_item_id == _control_id; });
 		}
 
 		auto get_root_container() 
@@ -148,19 +146,6 @@ namespace corona
 			}
 		}
 		
-		void changed(std::string _set_name)
-		{
-			if (change_event)
-			{
-				threadomatic::run_complete(nullptr, [this,_set_name]() {
-					if (change_event) 
-					{
-						change_event(*this, _set_name);
-					}
-				});				
-			}
-		}
-
 		void subscribe(presentation_base* _presentation)
 		{
 			root->on_subscribe(_presentation, this);
@@ -343,11 +328,6 @@ namespace corona
 			command_bindings[_control_id] = evt;
 		}
 
-		void on_changed(change_function fnc)
-		{
-			change_event = fnc;
-		}
-
 		void on_update(update_function fnc)
 		{
 			update_event = fnc;
@@ -372,6 +352,14 @@ namespace corona
 			auto plet = std::make_shared<page_unload_event_binding>();
 			plet->on_unload = fnc;
 			unload_bindings.push_back(plet);
+		}
+
+		void on_changed(int _control_id, std::string _function_name, std::function< void(page_data_event) >)
+		{
+			auto plet = std::make_shared<page_data_event_binding>();
+			plet->function_name = _function_name;
+			plet->subscribed_item_id = _control_id;
+			page_data_bindings.push_back(plet);
 		}
 
 		bool handle_key_up(int _control_id, key_up_event evt)
@@ -503,6 +491,22 @@ namespace corona
 				page_unload_event ple = {};
 				ple.pg = _pg;
 				evt->on_unload(ple);
+			}
+		}
+
+		void handle_changed(json _params, data_lake* _api, data_function* _set)
+		{
+			for (auto pdb : page_data_bindings) {
+				if (pdb->function_name == _set->name) {
+					threadomatic::run_complete(nullptr, [this, _params, _api, _set, pdb]() {
+						page_data_event pde;
+						pde.changed_fn = _set;
+						pde.destination_control_id = pdb->subscribed_item_id;
+						pde.params = _params;
+						pde.lake = _api;
+						pdb->on_changed(pde);
+						});
+				}
 			}
 		}
 

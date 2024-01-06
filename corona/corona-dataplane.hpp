@@ -4,15 +4,98 @@
 #include "corona-queue.hpp"
 #include "corona-function.hpp"
 #include "corona-json.hpp"
+#include "corona-json.hpp"
 #include "corona-presentation-controls-base.hpp"
+#include "corona-httpclient.hpp"
 
 namespace corona
 {
 	class data_lake;
 	class data_function;
 
-	using json_method = std::function<int(json _params, data_lake *_api, data_function* _set)>;
+	using json_method = std::function<call_status(json _params, data_lake *_api, data_function* _set)>;
 	using gui_method = std::function<int(json _params, data_lake *_api, data_function* _set)>;
+
+	struct dataplane_promise;
+
+	class data_function
+	{
+	public:
+
+		std::string						name;
+		json							data;
+		json							parameters;
+		time_t							last_refresh = 0;
+		int								cache_seconds = 0;
+		json_method						fetch;
+		gui_method						share;
+		call_status						status;
+		bool							busy;
+
+		data_function()
+		{
+			busy = false;
+			json_parser jp;
+			data = jp.create_object();
+		}
+
+		void run_share()
+		{
+			share(data, nullptr, this);
+		}
+
+		int get(data_lake* _lake, json _params);
+		void get(data_lake* _lake);
+
+	};
+
+	struct dataplane_task : public std::suspend_always
+	{
+	public:
+		using promise_type = dataplane_promise;
+
+		std::shared_ptr<data_function> fn;
+		data_lake* lake;
+		json params;
+
+		void configure(data_lake* _lake, std::shared_ptr<data_function> _fn, json _params = {})
+		{
+			fn = _fn;
+			lake = _lake;
+			params = _params;
+		}
+
+		void await_suspend(std::coroutine_handle<> handle)
+		{
+			threadomatic::run_complete(
+				[this, handle]() {
+					if (params.is_object())
+					{
+						fn->get(lake, params);
+					}
+					else
+					{
+						fn->get(lake);
+					}
+					handle();
+				},
+				[this]() {
+					fn->run_share();
+				}
+			);
+		}
+
+		void await_resume()
+		{
+			std::cout << "dataplane_task await_resume:" << GetCurrentThreadId() << std::endl;
+		}
+
+		dataplane_task()
+		{
+			std::cout << this << ", dataplane_task ctor:" << GetCurrentThreadId() << std::endl;
+		}
+
+	};
 
 	struct dataplane_promise
 	{
@@ -43,81 +126,6 @@ namespace corona
 	};
 
 
-	class data_function
-	{
-	public:
-		std::string						name;
-		json							data;
-		json							parameters;
-		time_t							last_refresh = 0;
-		int								cache_seconds = 0;
-		json_method						fetch;
-		gui_method						share;
-
-		data_function()
-		{
-			json_parser jp;
-			data = jp.create_object();
-		}
-
-		void run_share()
-		{
-			share(data, nullptr, this);
-		}
-
-		int get(data_lake* _lake, json _params);
-		void get(data_lake* _lake);
-
-	};
-
-	struct dataplane_task : public std::suspend_always
-	{
-	public:
-		using promise_type = dataplane_promise;
-
-		std::shared_ptr<data_function> fn;
-		data_lake* lake;
-		json params;
-
-		void configure(data_lake* _lake, std::shared_ptr<data_function> _fn, json _params = {})
-		{		
-			fn = _fn;
-			lake = _lake;
-			params = _params;
-		}
-
-		void await_suspend(std::coroutine_handle<> handle)
-		{
-			threadomatic::run_complete(
-				[this, handle]() {
-					if (params.is_object()) 
-					{
-						fn->get(lake, params);
-					}
-					else 
-					{
-						fn->get(lake );
-					}
-					handle();
-				},
-				[this]() {
-					fn->run_share();
-				}
-			);
-		}
-
-		void await_resume()
-		{
-			std::cout << "dataplane_task await_resume:" << GetCurrentThreadId() << std::endl;
-		}
-
-		dataplane_task()
-		{
-			std::cout << this << ", dataplane_task ctor:" << GetCurrentThreadId() << std::endl;
-		}
-
-	};
-
 	class data_api
 	{
 		lockable api_lock;
@@ -129,6 +137,8 @@ namespace corona
 		std::string description;
 		std::string icon_path;
 
+		std::vector<gui_method> on_changed;
+
 		void put_function(
 			std::string _function_name,
 			json_method _fetch,
@@ -139,7 +149,6 @@ namespace corona
 			scope_lock locker(api_lock);
 
 			std::shared_ptr<data_function> ds;
-			std::shared_ptr<data_api> ds;
 
 			if (functions.contains(_function_name))
 			{
@@ -180,14 +189,23 @@ namespace corona
 			ds->data = _data;
 			ds->name = _function_name;
 
-			ds->fetch = [](json _params, data_lake* _lake, data_function* _set)->int {
-				return 0;
-				};
+			ds->fetch = [](json _params, data_lake* _lake, data_function* _set)->call_status
+			{
+				call_status dfs;
+
+				return dfs;
+			};
 
 			ds->share = [](json _params, data_lake* _lake, data_function* _set)->int {
 				return 0;
 				};
 
+		}
+
+		call_status get_status(std::string _name)
+		{
+			auto spdf = get_function(_name);
+			return spdf->status;
 		}
 
 		std::shared_ptr<data_function> get_function(std::string _name)
@@ -207,6 +225,9 @@ namespace corona
 
 			if (dsp) {
 				dsp->get(_lake);
+				for (auto cn : on_changed) {
+					cn(dsp->parameters, _lake, dsp.get());
+				}
 			}
 		}
 
@@ -216,6 +237,9 @@ namespace corona
 
 			if (dsp) {
 				dsp->get(_lake, _parameters);
+				for (auto cn : on_changed) {
+					cn(dsp->parameters, _lake, dsp.get());
+				}
 			}
 		}
 
@@ -246,24 +270,19 @@ namespace corona
 
 	public:
 
-		gui_method on_logged;
+		std::vector<gui_method> on_logged;
 
 		void logged(json _params, data_lake* _api, data_function* _set)
 		{
-			if (on_logged) {
-				;
+			for (auto ol : on_logged) {
+				ol(_params, _api, _set);
 			}
 		}
 
-		int get_control_id(std::string _name, std::function<int()> _id)
+		void on_changed(std::string _source, gui_method _method)
 		{
-			int temp = 0;
-			scope_lock lockit(api_lock);
-
-			if (!control_ids.contains(_name)) {
-				control_ids.insert_or_assign(_name, _id());
-			}
-			return control_ids[_name];
+			auto api = get_api(_source);
+			api->on_changed.push_back(_method);
 		}
 
 		std::shared_ptr<data_api> get_api(std::string _source)
@@ -333,6 +352,17 @@ namespace corona
 			std::cout << "call function -after- " << _name << " on thread " << GetCurrentThreadId() << std::endl;
 		}
 
+		bool is_busy(std::string _source, std::string _name)
+		{
+			bool busy = false;
+			std::shared_ptr<data_function> dsp = get_function(_source, _name);
+
+			if (dsp) {
+				busy = dsp->busy;
+			}
+			return busy;
+		}
+
 		json get_result(std::string _source, std::string _name)
 		{
 			json set;
@@ -355,7 +385,8 @@ namespace corona
 
 			std::shared_ptr<data_api> source;
 
-			if (apis.contains(_name)) {
+			if (apis.contains(_name)) 
+			{
 				source = apis[_name];
 			}
 			else 
@@ -402,8 +433,9 @@ namespace corona
 			{
 				dapi = get_api(_set_name);
 				dapi->put_function(_set_name, 
-					[](json _params, data_lake *_lake, data_function* _set)->int {
-						return 0;
+					[](json _params, data_lake *_lake, data_function* _set)-> call_status {
+						call_status dfs;
+						return dfs;
 					},
 					[](json _params, data_lake* _lake, data_function* _set)->int {
 						return 0;
@@ -429,7 +461,7 @@ namespace corona
 			ds_object.put_member("status", "ok");
 			ds_object.put_member("message", _message);
 			ds_log.put_element_object(-1, ds_object);
-			if (logged) logged(ds_object, this, nullptr);
+			logged(ds_object, this, nullptr);
 		}
 
 		void log_success(std::string _function, double _time_seconds, std::string _message, std::string _request, std::string _response)
@@ -445,7 +477,7 @@ namespace corona
 			ds_object.put_member("response", _response);
 			ds_object.put_member("time_seconds", _time_seconds);
 			ds_log.put_element_object(-1, ds_object);
-			if (logged) logged(ds_object, this, nullptr);
+			logged(ds_object, this, nullptr);
 		}
 
 		void log_error(std::string _function, double _time_seconds, std::string _message, std::string _request, std::string _response)
@@ -461,7 +493,7 @@ namespace corona
 			ds_object.put_member("response", _response);
 			ds_object.put_member("time_seconds", _time_seconds);
 			ds_log.put_element_object(-1, ds_object);
-			if (logged) logged(ds_object, this, nullptr);
+			logged(ds_object, this, nullptr);
 		}
 
 		json& get_log()
@@ -487,12 +519,14 @@ namespace corona
 			if (seconds >= cache_seconds) {
 
 				last_refresh = current_time;
-				fetch(_params, _lake, this);
+				busy = true;
+				status = fetch(_params, _lake, this);
 
 				time(&time_after);
 				time_t exec_seconds = time_after - current_time;
 
 				_lake->log_success(name, exec_seconds, "Ok", "", "");
+				busy = false;
 			}
 
 			data.put_member_object("status", jobj);
@@ -522,9 +556,10 @@ namespace corona
 			time(&current_time);
 			time_t seconds = current_time - last_refresh;
 
+			busy = true;
 			if (seconds >= cache_seconds) {
 				last_refresh = current_time;
-				fetch(data, _lake, this);
+				status = fetch(data, _lake, this);
 			}
 
 			time(&time_after);
@@ -534,6 +569,7 @@ namespace corona
 			jobj.put_member("message", "Ok");
 			data.put_member_object("status", jobj);
 			_lake->log_success(name, exec_seconds, "Ok", "", "");
+			busy = false;
 		}
 		catch (std::logic_error exc)
 		{

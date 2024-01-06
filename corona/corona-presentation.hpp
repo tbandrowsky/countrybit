@@ -9,6 +9,7 @@
 #include "corona-presentation-controls-dx-text.hpp"
 #include "corona-presentation-controls-win32.hpp"
 #include "corona-presentation-controls-dx-container.hpp"
+#include "corona-presentation-controls-calico.hpp"
 #include "corona-presentation-builder.hpp"
 #include "corona-presentation-page.hpp"
 #include "corona-dataplane.hpp"
@@ -30,6 +31,7 @@ namespace corona {
 		std::map<std::string, control_json_mapper> class_control_map;
 		lockable control_lock;
 
+
 	public:
 
 		std::map<std::string, std::shared_ptr<page>> pages;
@@ -44,6 +46,18 @@ namespace corona {
 		presentation(std::weak_ptr<applicationBase> _window_host) : window_host(_window_host)
 		{
 			data = std::make_shared<data_lake>();
+		}
+
+		int get_control_id(std::string _name, std::function<int()> _id)
+		{
+			int temp = 0;
+			scope_lock lockit(control_lock);
+			std::map<std::string, int> control_ids;
+
+			if (!control_ids.contains(_name)) {
+				control_ids.insert_or_assign(_name, _id());
+			}
+			return control_ids[_name];
 		}
 
 		control_json_mapper get_class_control_factory(std::string class_name)
@@ -154,6 +168,7 @@ namespace corona {
 		virtual int onSpin(int controlId, int newPosition);
 		virtual void onJobComplete(bool _success, int _id);
 		virtual void onTaskComplete(bool _success, ui_task_result_base* _result);
+		virtual void onDataChanged(json _params, data_lake* _api, data_function* _set);
 
 		template <typename control_type> control_type* get_control(int _id)
 		{
@@ -247,7 +262,6 @@ namespace corona {
 		id++;
 		return id;
 	}
-
 
 	page& presentation::create_page(std::string _name, std::function<void(page& pg)> _settings)
 	{
@@ -738,6 +752,13 @@ namespace corona {
 	void presentation::onTaskComplete(bool _success, ui_task_result_base* _result)
 	{
 		;
+	}
+
+	void presentation::onDataChanged(json _params, data_lake* _api, data_function* _set)
+	{
+		if (auto pg = current_page.lock()) {
+			pg->handle_changed(_params, _api, _set);
+		}
 	}
 }
 

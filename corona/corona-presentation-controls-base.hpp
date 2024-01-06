@@ -8,6 +8,8 @@
 
 namespace corona
 {
+	class applicationBase;
+
 	class row_layout;
 	class column_layout;
 	class absolute_layout;
@@ -454,11 +456,9 @@ namespace corona
 			std::function<void(control_base* _item)> _right_click
 		);
 
-
-
 		virtual void on_subscribe(presentation_base* _presentation, page_base* _page)
 		{
-			;
+			
 		}
 
 	};

@@ -15,14 +15,17 @@ namespace corona
 	{
 	public:
 
-		std::string					text;
-		solidBrushRequest			text_fill_brush;
-		textStyleRequest			text_style;
-		double						icon_width;
-		std::string					source_name;
-		std::string					function_name;
-		json						function_parameters;
-		std::shared_ptr<data_lake>	lake;
+		std::string						text;
+		solidBrushRequest				foreground_processing_brush;
+		solidBrushRequest				foreground_error_brush;
+		solidBrushRequest				foreground_complete_brush;
+		textStyleRequest				text_style;
+		double							icon_width;
+		std::string						source_name;
+		std::string						function_name;
+		json							function_parameters;
+		std::shared_ptr<data_lake>		lake;
+		std::shared_ptr<call_status>	status;
 
 		calico_button_control() 
 		{
@@ -32,18 +35,39 @@ namespace corona
 		calico_button_control(const calico_button_control& _src) : gradient_button_control(_src) {
 			init();
 			text = _src.text;
-			text_fill_brush = _src.text_fill_brush;
+			foreground_processing_brush = _src.foreground_processing_brush;
+			foreground_error_brush = _src.foreground_error_brush;
+			foreground_complete_brush = _src.foreground_complete_brush;
 			text_style = _src.text_style;
 			icon_width = _src.icon_width;
 		}
+
 		calico_button_control(container_control_base* _parent, int _id);
+
 		virtual ~calico_button_control() { ; }
 
 		void init();
 		virtual double get_font_size() { return text_style.fontSize; }
 		calico_button_control& set_text(std::string _text);
-		calico_button_control& set_text_fill(solidBrushRequest _brushFill);
-		calico_button_control& set_text_fill(std::string _color);
+
+		calico_button_control& set_text_fill(
+			solidBrushRequest _brushNormal,
+			solidBrushRequest _brushOver,
+			solidBrushRequest _brushDown,
+			solidBrushRequest _brushError,
+			solidBrushRequest _brushProcessing,
+			solidBrushRequest _brushComplete
+			);
+
+		calico_button_control& set_text_fill(
+			std::string _colorNormal,
+			std::string _colorOver,
+			std::string _colorDown,
+			std::string _colorError,
+			std::string _colorProcessing,
+			std::string _colorComplete
+		);
+
 		calico_button_control& set_text_style(std::string _font_name, int _font_size, bool _bold = false, bool _underline = false, bool _italic = false, bool _strike_through = false);
 		calico_button_control& set_text_style(textStyleRequest request);
 
@@ -51,6 +75,9 @@ namespace corona
 
 		virtual void draw_button(std::function<void(gradient_button_control* _src, rectangle* _bounds, solidBrushRequest* _foreground)> draw_shape)
 		{
+			time_t draw_time;
+			time(&draw_time);
+
 			if (auto pwindow = window.lock())
 			{
 				if (auto phost = host.lock()) {
@@ -61,7 +88,14 @@ namespace corona
 
 					auto& context = pwindow->getContext();
 
-					if (mouse_left_down.value())
+					if (lake->is_busy(source_name, function_name))
+					{
+						context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonFaceOver.name);
+						auto face_bounds = rectangle_math::deflate(draw_bounds, { 8, 8, 8, 16 });
+						//context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonBackLight.name);
+						draw_shape(this, &face_bounds, &foreground_processing_brush);
+					}
+					else if (mouse_left_down.value())
 					{
 						context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonFaceDown.name);
 						auto face_bounds = rectangle_math::deflate(draw_bounds, { 8, 8, 8, 8 });
@@ -74,6 +108,40 @@ namespace corona
 						auto face_bounds = rectangle_math::deflate(draw_bounds, { 8, 8, 8, 16 });
 						//context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonBackLight.name);
 						draw_shape(this, &face_bounds, &foregroundOver);
+					}
+					else if (status && status->success)
+					{
+						time_t difference = draw_time - status->call_time;
+						if (difference > 3) {
+							context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonFaceNormal.name);
+							auto face_bounds = rectangle_math::deflate(draw_bounds, { 8, 8, 8, 16 });
+							//context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonBackLight.name);
+							draw_shape(this, &face_bounds, &foregroundNormal);
+						}
+						else 
+						{
+							context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonFaceNormal.name);
+							auto face_bounds = rectangle_math::deflate(draw_bounds, { 8, 8, 8, 16 });
+							//context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonBackLight.name);
+							draw_shape(this, &face_bounds, &foreground_complete_brush);
+						}
+					}
+					else if (status && !status->success)
+					{
+						time_t difference = draw_time - status->call_time;
+						if (difference > 3) {
+							context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonFaceNormal.name);
+							auto face_bounds = rectangle_math::deflate(draw_bounds, { 8, 8, 8, 16 });
+							//context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonBackLight.name);
+							draw_shape(this, &face_bounds, &foregroundNormal);
+						}
+						else
+						{
+							context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonFaceNormal.name);
+							auto face_bounds = rectangle_math::deflate(draw_bounds, { 8, 8, 8, 16 });
+							//context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonBackLight.name);
+							draw_shape(this, &face_bounds, &foreground_processing_brush);
+						}
 					}
 					else
 					{
@@ -96,7 +164,13 @@ namespace corona
 	{
 		_page->on_mouse_left_click(this, [this, _presentation, _page](mouse_left_click_event evt)
 			{
+				status = nullptr;
 				lake->call_function(source_name, function_name, function_parameters);
+			});
+
+		_page->on_changed(id, function_name, [this](page_data_event evt) {
+				auto fn = evt.lake->get_function(source_name, function_name);
+				status = std::make_shared<call_status>(fn->status);
 			});
 	}
 
@@ -126,7 +200,12 @@ namespace corona
 			{
 				if (auto pwindow = this->window.lock())
 				{
-					pwindow->getContext().setSolidColorBrush(&this->text_fill_brush);
+					pwindow->getContext().setSolidColorBrush(&this->foreground_processing_brush);
+					pwindow->getContext().setSolidColorBrush(&this->foreground_error_brush);
+					pwindow->getContext().setSolidColorBrush(&this->foreground_complete_brush);
+					pwindow->getContext().setSolidColorBrush(&this->foregroundDown);
+					pwindow->getContext().setSolidColorBrush(&this->foregroundNormal);
+					pwindow->getContext().setSolidColorBrush(&this->foregroundOver);
 					pwindow->getContext().setTextStyle(&this->text_style);
 				}
 			};
@@ -194,16 +273,58 @@ namespace corona
 		return *this;
 	}
 
-	calico_button_control& calico_button_control::set_text_fill(solidBrushRequest _brushFill)
+	calico_button_control& calico_button_control::set_text_fill(solidBrushRequest _brushNormal,
+		solidBrushRequest _brushOver,
+		solidBrushRequest _brushDown,
+		solidBrushRequest _brushError,
+		solidBrushRequest _brushProcessing,
+		solidBrushRequest _brushComplete
+	)
 	{
-		text_fill_brush = _brushFill;
+		foregroundNormal = _brushNormal;
+		foregroundOver = _brushOver;
+		foregroundDown = _brushDown;
+		foreground_processing_brush = _brushError;
+		foreground_error_brush = _brushError;
+		foreground_complete_brush = _brushComplete;
+
 		return *this;
 	}
 
-	calico_button_control& calico_button_control::set_text_fill(std::string _color)
+	calico_button_control& calico_button_control::set_text_fill(std::string _colorNormal,
+		std::string _colorOver,
+		std::string _colorDown,
+		std::string _colorError,
+		std::string _colorProcessing,
+		std::string _colorComplete
+	)
 	{
-		text_fill_brush.name = typeid(*this).name();
-		text_fill_brush.brushColor = toColor(_color);
+		std::string name_base = typeid(*this).name();
+		foregroundNormal.name = name_base + "_normal";
+		foregroundOver.name = name_base + "_over";
+		foregroundDown.name = name_base + "_down";
+		foreground_processing_brush.name = name_base + "_processing";
+		foreground_error_brush.name = name_base + "_error";
+		foreground_complete_brush.name = name_base + "_complete";
+
+		foregroundNormal.brushColor = toColor(_colorNormal);
+		foregroundOver.brushColor = toColor(_colorOver);
+		foregroundDown.brushColor = toColor(_colorDown);
+		foreground_processing_brush.brushColor = toColor(_colorProcessing);
+		foreground_error_brush.brushColor = toColor(_colorError );
+		foreground_complete_brush.brushColor = toColor(_colorComplete );
+
+		if (auto pwindow = this->window.lock())
+		{
+			pwindow->getContext().setSolidColorBrush(&this->foreground_processing_brush);
+			pwindow->getContext().setSolidColorBrush(&this->foreground_error_brush);
+			pwindow->getContext().setSolidColorBrush(&this->foreground_complete_brush);
+			pwindow->getContext().setSolidColorBrush(&this->foregroundDown);
+			pwindow->getContext().setSolidColorBrush(&this->foregroundNormal);
+			pwindow->getContext().setSolidColorBrush(&this->foregroundOver);
+			pwindow->getContext().setTextStyle(&this->text_style);
+		}
+
 		return *this;
 	}
 
@@ -216,12 +337,24 @@ namespace corona
 		text_style.underline = _underline;
 		text_style.italics = _italic;
 		text_style.strike_through = _strike_through;
+
+		if (auto pwindow = this->window.lock())
+		{
+			pwindow->getContext().setTextStyle(&this->text_style);
+		}
+
 		return *this;
 	}
 
 	calico_button_control& calico_button_control::set_text_style(textStyleRequest request)
 	{
 		text_style = request;
+
+		if (auto pwindow = this->window.lock())
+		{
+			pwindow->getContext().setTextStyle(&this->text_style);
+		}
+
 		return *this;
 	}
 

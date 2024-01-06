@@ -1,8 +1,12 @@
 #ifndef CORONA_PRESENTATION_EVENTS_H
 #define CORONA_PRESENTATION_EVENTS_H
 
+#include "corona-json.hpp"
+
 namespace corona {
 
+	class data_lake;
+	class data_function;
 	class control_base;
 
 	class page;
@@ -11,6 +15,15 @@ namespace corona {
 	{
 	public:
 		std::shared_ptr<page> pg;
+	};
+
+	class page_data_event : public page_event
+	{
+	public:
+		int destination_control_id;
+		json params;
+		data_lake* lake;
+		data_function *changed_fn;
 	};
 
 	class page_select_event : public page_event
@@ -200,6 +213,14 @@ namespace corona {
 		std::function< void(list_changed_event) > on_change;
 	};
 
+	class page_data_event_binding
+	{
+	public:
+		int subscribed_item_id;
+		std::string function_name;
+		std::function< void(page_data_event) > on_changed;
+	};
+
 	class page_select_event_binding
 	{
 	public:
@@ -240,6 +261,8 @@ namespace corona {
 		virtual void on_select(std::function< void(page_select_event) >) = 0;
 		virtual void on_load(std::function< void(page_load_event) >) = 0;
 		virtual void on_unload(std::function< void(page_unload_event) >) = 0;
+		virtual void on_changed(int _control_id, std::string _function_name, std::function< void(page_data_event) >) = 0;
+
 	};
 }
 

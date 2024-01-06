@@ -2,12 +2,7 @@
 #ifndef CORONA_PRESENTATION_BUILDER_H
 #define CORONA_PRESENTATION_BUILDER_H
 
-#include <corona-presentation-controls-base.hpp>
-#include <corona-presentation-controls-dx.hpp>
-#include <corona-presentation-controls-dx-container.hpp>
-#include <corona-presentation-controls-dx-text.hpp>
-#include <corona-presentation-controls-win32.hpp>
-#include <corona-presentation-controls-calico.hpp>
+#include "corona-presentation.hpp"
 
 namespace corona
 {
@@ -692,9 +687,9 @@ namespace corona
 			return *this;
 		}
 
-		control_builder& calico_button(std::function<void(calico_button_control&)> _settings = nullptr)
+		control_builder& calico_button(int _id, std::function<void(calico_button_control&)> _settings = nullptr)
 		{
-			auto tc = create<calico_button_control>(id_counter::next());
+			auto tc = create<calico_button_control>(_id);
 			apply_item_sizes(tc);
 			if (_settings) {
 				_settings(*tc);
@@ -1379,6 +1374,7 @@ namespace corona
 		}
 
 	public:
+
 		presentation_style* st;
 		int menu_button_id;
 		menu_item* menu;
@@ -1388,6 +1384,7 @@ namespace corona
 		std::string title_name;
 		int code_status_id;
 		int code_detail_id;
+		data_lake* lake;
 
 		caption_bar_control()
 		{
@@ -1395,6 +1392,7 @@ namespace corona
 			menu = nullptr;
 			menu_button_id = 0;
 			image_control_id = 0;
+			lake = nullptr;
 		}
 
 		caption_bar_control(const caption_bar_control& _src) = default;

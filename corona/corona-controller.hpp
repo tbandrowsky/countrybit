@@ -6,6 +6,8 @@
 #include "corona-rectangle_box.hpp"
 #include "corona-point_box.hpp"
 #include "corona-datatransfer.hpp"
+#include "corona-json.hpp"
+#include "corona-dataplane.hpp"
 
 #include <memory>
 #include <string>
@@ -58,6 +60,7 @@ namespace corona
 		virtual int onResize(const rectangle& newSize, double d2dScale) = 0;
 		virtual int onSpin(int controlId, int newPosition) = 0;
 
+		virtual void onDataChanged(json _params, data_lake* _api, data_function* _set) = 0;
 	};
 
 }
