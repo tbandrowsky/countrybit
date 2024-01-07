@@ -26,7 +26,7 @@ namespace corona
 			temp = std::make_shared<control_type>(cp, _id);
 			if (temp) {
 				root->children.push_back(temp);
-				std::cout << " " << typeid(*this).name() << " ->create:" << typeid(control_type).name() << std::endl;
+//				std::cout << " " << typeid(*this).name() << " ->create:" << typeid(control_type).name() << std::endl;
 			}
 			return temp;
 		}
@@ -1431,12 +1431,17 @@ namespace corona
 
 		virtual void on_subscribe(presentation_base* _presentation, page_base* _page)
 		{
-			_page->on_changed(id, "calico", "*", [this](page_data_event evt)
+			_page->on_changed(id, "calico", "*", [](page_data_event evt)
 				{
 					auto& stat = evt.changed_fn->status;
-					set_status(evt.changed_fn->name, stat.message);
+					if (evt.control) 
+					{
+						auto control = (caption_bar_control*)evt.control;
+						control->set_status(evt.changed_fn->name, stat.message);
+					}
 				}
 			);
+
 			for (auto child : children) {
 				child->on_subscribe(_presentation, _page);
 			}
@@ -1632,7 +1637,7 @@ namespace corona
 		tc = std::make_shared<caption_bar_control>(cp, _id, _st, _mi);
 		if (tc) {
 			root->children.push_back(tc);
-			std::cout << " " << typeid(*this).name() << " ->create:" << typeid(control_type).name() << std::endl;
+//			std::cout << " " << typeid(*this).name() << " ->create:" << typeid(control_type).name() << std::endl;
 			apply_item_sizes(tc);
 			if (_settings) {
 				_settings(*tc);

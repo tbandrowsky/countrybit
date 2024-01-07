@@ -66,14 +66,35 @@ namespace corona
 
 		auto err = base_ds->status;
 
-		if (!err.success) {
-			cp_caption.set_status("Error", err.message);
+		// here, we tell the page to subscribe to data changes
+		// and then we schedule our data change
+
+		_page.schedule_refresh(1, "calico", "get_state");
+
+		if (err.message.size()>0) {
+			cp_caption.set_status(err.success ? "Ok": "Error", err.message);
 			contents_root.apply_controls(_page.root.get());
+			_page.on_changed(0, "calico", "get_state", [app_show, calico_svc, application, st, app_menu](page_data_event pde) {
+				create_home_page(*(pde.pg), application, calico_svc, app_show, app_menu, st);
+				});
+
+			_page.on_changed(0, "calico", "credentials", [app_show, calico_svc, application, st, app_menu](page_data_event pde) {
+				create_home_page(*(pde.pg), application, calico_svc, app_show, app_menu, st);
+				});
+
 			return;
 		} else if (!actor_options.has_member("ActorOptions")) {
 			cp_caption.set_status("Data", "Waiting for data");
 			control_base *control_to_apply_to = _page.root.get();
 			contents_root.apply_controls(control_to_apply_to);
+			_page.on_changed(0, "calico", "get_state", [app_show, calico_svc, application, st, app_menu](page_data_event pde) {
+				create_home_page(*(pde.pg), application, calico_svc, app_show, app_menu, st);
+				});
+
+			_page.on_changed(0, "calico", "credentials", [app_show, calico_svc, application, st, app_menu](page_data_event pde) {
+				create_home_page(*(pde.pg), application, calico_svc, app_show, app_menu, st);
+				});
+
 			return;
 		}
 
@@ -137,14 +158,16 @@ namespace corona
 
 			int select_button_id = app_show->get_control_id(button_name, []() { return id_counter::next(); });
 
-			command_container.calico_button(select_button_id,[object_id, class_description](calico_button_control& pc) {
+			command_container.calico_button(select_button_id,[object_id, class_description, app_show](calico_button_control& pc) {
 				pc.set_size(.95_container, 30.0_px);
 				pc.text = class_description;
+				pc.lake = app_show->data;
 
 				json_parser jp;
 				json object_request = jp.create_object();
 				object_request.put_member("ObjectId", object_id);
 
+				pc.source_name = "calico";
 				pc.function_name = "select_object";
 				pc.function_parameters = object_request;
 
@@ -182,7 +205,7 @@ namespace corona
 				pc.set_size(.95_container, 30.0_px);
 				});
 				*/
-			command_container.calico_button(button_id, [class_description, class_name](calico_button_control& pc) {
+			command_container.calico_button(button_id, [class_description, class_name, app_show](calico_button_control& pc) {
 				pc.set_size(.95_container, 30.0_px);
 				pc.text = class_description;
 
@@ -190,9 +213,10 @@ namespace corona
 				json new_object_request = jp.create_object();
 				new_object_request.put_member("ClassName", class_name);
 
+				pc.source_name = "calico";
 				pc.function_name = "create_object";
 				pc.function_parameters = new_object_request;
-
+				pc.lake = app_show->data;
 				});
 		}
 
@@ -298,16 +322,13 @@ namespace corona
 
 		contents_root.apply_controls(_page.root.get());
 
-		_page.on_select([calico_svc, application, app_show, st, app_menu](page_select_event _evt)
-			{
-				create_home_page(*(_evt.pg), application, calico_svc, app_show, app_menu, st);
-				std::cout << "get_state: selected" << std::endl;
-				app_show->data->call_function("calico", "get_state");
-				std::cout << "home: selected" << std::endl;
+		_page.on_select([app_show, calico_svc, application, st, app_menu](page_select_event psevt) {
+			page& pg = *psevt.pg;
+			create_home_page(pg, application, calico_svc, app_show, app_menu, st);
 			});
 
-		_page.on_changed(0, "calico", "credentials", [app_show, calico_svc, application, st, app_menu](page_data_event pde) {
-			create_home_page(*(pde.pg), application, calico_svc, app_show, app_menu, st);
+		_page.on_changed(0, "calico", "get_state", [app_show, calico_svc, application, st, app_menu](page_data_event pde) {
+			app_show->select_page("home");
 			});
 	}
 

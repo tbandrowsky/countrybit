@@ -341,7 +341,7 @@ namespace corona
 			temp = std::make_shared<control_type>(this, _id);
 			if (temp) {
 				children.push_back(temp);
-				std::cout << " " << typeid(*this).name() << " ->create:" << typeid(control_type).name() << std::endl;
+//				std::cout << " " << typeid(*this).name() << " ->create:" << typeid(control_type).name() << std::endl;
 			}
 			apply_item_sizes(*temp);
 			return temp;

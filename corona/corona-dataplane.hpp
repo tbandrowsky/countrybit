@@ -364,7 +364,7 @@ namespace corona
 
 			std::shared_ptr<data_function> dsp = get_function(_source, _name);
 
-			ts.configure(this, dsp);
+			ts.configure(this, dsp, _parameters);
 
 			return ts;
 		}

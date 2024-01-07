@@ -267,6 +267,7 @@ namespace corona {
 	{
 		auto new_page = std::make_shared<page>(_name);
 		page& pg = *new_page.get();
+		pg.parent = this;
 		if (_settings) {
 			_settings(pg);
 		}
@@ -434,7 +435,7 @@ namespace corona {
 	{
 		auto cp = current_page.lock();
 		if (cp) {
-			cp->update(_elapsedSeconds, _totalSeconds);
+			cp->update(data, _elapsedSeconds, _totalSeconds);
 		}
 		return true;
 	}
@@ -757,7 +758,7 @@ namespace corona {
 	void presentation::onDataChanged(json _params, data_lake* _api, data_function* _set)
 	{
 		if (auto pg = current_page.lock()) {
-			pg->handle_changed(_params, _api, _set);
+			pg->handle_changed(pg, _params, _api, _set);
 		}
 	}
 }

@@ -221,7 +221,8 @@ namespace corona
 				if (calico_http.response.content_type.starts_with("application/json"))
 				{
 					calico_response = jp.parse_object(calico_http.response.response_body.get_ptr());
-					dfs.success = true;
+					dfs.success = calico_response["Success"];
+					dfs.message = calico_response["Message"];
 				}
 			}
 			return dfs;
@@ -246,7 +247,8 @@ namespace corona
 				if (calico_http.response.content_type.starts_with("application/json"))
 				{
 					calico_response = jp.parse_object(calico_http.response.response_body.get_ptr());
-					dfs.success = true;
+					dfs.success = calico_response["Success"];
+					dfs.message = calico_response["Message"];
 				}
 			}
 			return dfs;

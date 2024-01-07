@@ -40,6 +40,11 @@ namespace corona
 			foreground_complete_brush = _src.foreground_complete_brush;
 			text_style = _src.text_style;
 			icon_width = _src.icon_width;
+			source_name = _src.source_name;
+			function_name = _src.function_name;
+			function_parameters = _src.function_parameters;
+			lake = _src.lake;
+			status = _src.status;
 		}
 
 		calico_button_control(container_control_base* _parent, int _id);

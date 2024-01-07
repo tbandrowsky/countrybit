@@ -23,26 +23,33 @@ namespace corona
 		std::vector<std::shared_ptr<page_load_event_binding>> load_bindings;
 		std::vector<std::shared_ptr<page_select_event_binding>> select_bindings;
 		std::list<std::shared_ptr<page_data_event_binding>> page_data_bindings;
+		std::vector<std::shared_ptr<page_refresh_data_binding>> page_refresh_bindings;
 		update_function update_event;
+
+		lockable binding_lock;
 
 	public:
 
 		std::shared_ptr<menu_item> menu;
+		presentation* parent;
 
 		page(const char* _name)
 		{
+			parent = nullptr;
 			name = _name != nullptr ? _name : "Test";
 			root = std::make_shared<column_layout>();
 		}
 
 		page(std::string _name)
 		{
+			parent = nullptr;
 			name = _name;
 			root = std::make_shared<column_layout>();
 		}
 
 		page()
 		{
+			parent = nullptr;
 			name = "Test";
 			root = std::make_shared<column_layout>();
 		}
@@ -54,6 +61,7 @@ namespace corona
 
 		void clear()
 		{
+			scope_lock locker(binding_lock);
 			key_press_bindings.clear();
 			key_up_bindings.clear();
 			key_down_bindings.clear();
@@ -68,12 +76,14 @@ namespace corona
 			load_bindings.clear();
 			select_bindings.clear();
 			page_data_bindings.clear();
+			page_refresh_bindings.clear();
 			destroy();
 			root = std::make_shared<column_layout>();
 		}
 
 		void clear_events(int _control_id)
 		{
+			scope_lock locker(binding_lock);
 			key_press_bindings.erase(_control_id);
 			key_up_bindings.erase(_control_id);
 			key_down_bindings.erase(_control_id);
@@ -94,6 +104,10 @@ namespace corona
 
 		inline control_base* get_root() {
 			return root.get();
+		}
+
+		inline control_base* find(int _id) {
+			return get_root()->find(_id);
 		}
 
 		control_base* operator[](int _id)
@@ -138,11 +152,29 @@ namespace corona
 			}
 		}
 
-		void update(double _elapsedSeconds, double _totalSeconds)
+		double last_update_seconds = 0;
+		const double refresh_pulse_seconds = .5;
+
+		void update(std::shared_ptr<data_lake> _lake, double _elapsedSeconds, double _totalSeconds)
 		{
 			if (update_event) 
 			{
 				update_event(this, _elapsedSeconds, _totalSeconds);
+			}
+			last_update_seconds += _elapsedSeconds;
+			if (last_update_seconds > refresh_pulse_seconds) {
+				double previous_last_update_seconds = last_update_seconds;
+				last_update_seconds = 0;
+				scope_lock locker(binding_lock);
+				for (auto sch : page_refresh_bindings) {
+					std::cout << "refresh check " << sch->source_name << " " << sch->function_name << " " << sch->seconds_since_update << std::endl;
+					sch->seconds_since_update += previous_last_update_seconds;
+					if (sch->seconds_since_update > sch->period_seconds)
+					{
+						sch->seconds_since_update = 0;
+						_lake->call_function(sch->source_name, sch->function_name);
+					}
+				}
 			}
 		}
 		
@@ -212,6 +244,7 @@ namespace corona
 
 		virtual void on_key_press(int _control_id, std::function< void(key_press_event) > handler)
 		{
+			scope_lock locker(binding_lock);
 			auto evt = std::make_shared<key_press_event_binding>();
 			evt->subscribed_item_id = _control_id;
 			evt->on_key_press = handler;
@@ -223,6 +256,7 @@ namespace corona
 
 		virtual void on_key_up(int _control_id, std::function< void(key_up_event) > handler)
 		{
+			scope_lock locker(binding_lock);
 			auto evt = std::make_shared<key_up_event_binding>();
 			evt->subscribed_item_id = _control_id;
 			evt->on_key_up = handler;
@@ -234,6 +268,7 @@ namespace corona
 
 		virtual void on_key_down(int _control_id, std::function< void(key_down_event) >  handler)
 		{
+			scope_lock locker(binding_lock);
 			auto evt = std::make_shared<key_down_event_binding>();
 			evt->subscribed_item_id = _control_id;
 			evt->on_key_down = handler;
@@ -246,6 +281,7 @@ namespace corona
 
 		virtual void on_mouse_left_click(control_base* _base, std::function< void(mouse_left_click_event) > handler)
 		{
+			scope_lock locker(binding_lock);
 			auto evt = std::make_shared<mouse_left_click_event_binding>();
 			if (auto pbase = _base)
 			{
@@ -261,6 +297,7 @@ namespace corona
 
 		virtual void on_mouse_right_click(control_base* _base, std::function< void(mouse_right_click_event) > handler)
 		{
+			scope_lock locker(binding_lock);
 			auto evt = std::make_shared<mouse_right_click_event_binding>();
 			if (auto pbase = _base)
 			{
@@ -276,6 +313,7 @@ namespace corona
 
 		virtual void on_mouse_move(control_base* _base, std::function< void(mouse_move_event) > handler)
 		{
+			scope_lock locker(binding_lock);
 			auto evt = std::make_shared<mouse_move_event_binding>();
 			if (auto pbase = _base)
 			{
@@ -291,6 +329,7 @@ namespace corona
 
 		virtual void on_mouse_click(control_base* _base, std::function< void(mouse_click_event) > handler)
 		{
+			scope_lock locker(binding_lock);
 			auto evt = std::make_shared<mouse_click_event_binding>();
 			if (auto pbase = _base)
 			{
@@ -306,6 +345,7 @@ namespace corona
 
 		virtual void on_item_changed(int _control_id, std::function< void(item_changed_event) > handler)
 		{
+			scope_lock locker(binding_lock);
 			auto evt = std::make_shared<item_changed_event_binding>();
 			evt->subscribed_item_id = _control_id;
 			evt->on_change = handler;
@@ -314,6 +354,7 @@ namespace corona
 
 		virtual void on_list_changed(int _control_id, std::function< void(list_changed_event) > handler)
 		{
+			scope_lock locker(binding_lock);
 			auto evt = std::make_shared<list_changed_event_binding>();
 			evt->subscribed_item_id = _control_id;
 			evt->on_change = handler;
@@ -322,6 +363,7 @@ namespace corona
 
 		virtual void on_command(int _control_id, std::function< void(command_event) > handler)
 		{
+			scope_lock locker(binding_lock);
 			auto evt = std::make_shared<command_event_binding>();
 			evt->subscribed_item_id = _control_id;
 			evt->on_command = handler;
@@ -330,11 +372,13 @@ namespace corona
 
 		virtual void on_update(update_function fnc)
 		{
+			scope_lock locker(binding_lock);
 			update_event = fnc;
 		}
 
 		virtual void on_select(std::function< void(page_select_event) > fnc)
 		{
+			scope_lock locker(binding_lock);
 			auto plet = std::make_shared<page_select_event_binding>();
 			plet->on_select = fnc;
 			select_bindings.push_back(plet);
@@ -342,6 +386,7 @@ namespace corona
 
 		virtual void on_load(std::function< void(page_load_event) > fnc)
 		{
+			scope_lock locker(binding_lock);
 			auto plet = std::make_shared<page_load_event_binding>();
 			plet->on_load = fnc;
 			load_bindings.push_back(plet);
@@ -349,6 +394,7 @@ namespace corona
 
 		virtual void on_unload(std::function< void(page_unload_event) > fnc)
 		{
+			scope_lock locker(binding_lock);
 			auto plet = std::make_shared<page_unload_event_binding>();
 			plet->on_unload = fnc;
 			unload_bindings.push_back(plet);
@@ -356,6 +402,7 @@ namespace corona
 
 		virtual void on_changed(int _control_id, std::string _source_name, std::string _function_name, std::function< void(page_data_event) > evt)
 		{
+			scope_lock locker(binding_lock);
 			auto plet = std::make_shared<page_data_event_binding>();
 			plet->source_name = _source_name;
 			plet->function_name = _function_name;
@@ -364,8 +411,20 @@ namespace corona
 			page_data_bindings.push_back(plet);
 		}
 
+		virtual void schedule_refresh(time_t _period_seconds, std::string _source_name, std::string _function_name)
+		{
+			scope_lock locker(binding_lock);
+			auto plet = std::make_shared<page_refresh_data_binding>();
+			plet->source_name = _source_name;
+			plet->function_name = _function_name;
+			plet->period_seconds = _period_seconds;
+			plet->seconds_since_update = 0;
+			page_refresh_bindings.push_back(plet);
+		}
+
 		bool handle_key_up(int _control_id, key_up_event evt)
 		{
+			scope_lock locker(binding_lock);
 			bool handled = false;
 			if (key_up_bindings.contains(_control_id)) {
 				key_up_bindings[_control_id]->on_key_up(evt);
@@ -376,6 +435,7 @@ namespace corona
 
 		void handle_key_down(int _control_id, key_down_event evt)
 		{
+			scope_lock locker(binding_lock);
 			if (key_down_bindings.contains(_control_id)) {
 				key_down_bindings[_control_id]->on_key_down(evt);
 			}
@@ -383,6 +443,7 @@ namespace corona
 
 		void handle_key_press(int _control_id, key_press_event evt)
 		{
+			scope_lock locker(binding_lock);
 			if (key_press_bindings.contains(_control_id)) {
 				key_press_bindings[_control_id]->on_key_press(evt);
 			}
@@ -390,6 +451,7 @@ namespace corona
 
 		void handle_mouse_move(int _control_id, mouse_move_event evt)
 		{
+			scope_lock locker(binding_lock);
 			if (mouse_move_bindings.contains(_control_id)) {
 				auto& ptrx = mouse_move_bindings[_control_id];
 				if (auto temp = ptrx.get()->control) {
@@ -404,6 +466,7 @@ namespace corona
 
 		void handle_mouse_click(int _control_id, mouse_click_event evt)
 		{
+			scope_lock locker(binding_lock);
 			if (mouse_click_bindings.contains(_control_id)) {
 				auto& ptrx = mouse_click_bindings[_control_id];
 				evt.relative_point.x = evt.absolute_point.x - evt.control->get_bounds().x;
@@ -416,6 +479,7 @@ namespace corona
 
 		void handle_mouse_left_click(int _control_id, mouse_left_click_event evt)
 		{
+			scope_lock locker(binding_lock);
 			if (mouse_left_click_bindings.contains(_control_id)) {
 				auto& ptrx = mouse_left_click_bindings[_control_id];
 				evt.relative_point.x = evt.absolute_point.x - evt.control->get_bounds().x;
@@ -427,6 +491,7 @@ namespace corona
 
 		void handle_mouse_right_click(int _control_id, mouse_right_click_event evt)
 		{
+			scope_lock locker(binding_lock);
 			if (mouse_right_click_bindings.contains(_control_id)) {
 				auto& ptrx = mouse_right_click_bindings[_control_id];
 				evt.relative_point.x = evt.absolute_point.x - evt.control->get_bounds().x;
@@ -439,6 +504,7 @@ namespace corona
 
 		void handle_item_changed(int _control_id, item_changed_event evt)
 		{
+			scope_lock locker(binding_lock);
 			if (item_changed_bindings.contains(_control_id)) {
 				auto& ptrx = item_changed_bindings[_control_id];
 				if (auto temp = ptrx.get()->control) {
@@ -451,6 +517,7 @@ namespace corona
 
 		void handle_list_changed(int _control_id, list_changed_event evt)
 		{
+			scope_lock locker(binding_lock);
 			if (list_changed_events.contains(_control_id)) {
 				auto& ptrx = list_changed_events[_control_id];
 				if (auto temp = ptrx.get()->control.lock()) {
@@ -463,6 +530,7 @@ namespace corona
 
 		void handle_command(int _control_id, command_event evt)
 		{
+			scope_lock locker(binding_lock);
 			if (command_bindings.contains(_control_id)) {
 				auto& ptrx = command_bindings[_control_id];
 				ptrx->on_command(evt);
@@ -471,6 +539,7 @@ namespace corona
 
 		void handle_onselect(std::shared_ptr<page> _pg)
 		{
+			scope_lock locker(binding_lock);
 			for (auto evt : select_bindings) {
 				page_select_event ple = {};
 				ple.pg = _pg;
@@ -480,6 +549,7 @@ namespace corona
 
 		void handle_onload(std::shared_ptr<page> _pg)
 		{
+			scope_lock locker(binding_lock);
 			for (auto evt : load_bindings) {
 				page_load_event ple = {};
 				ple.pg = _pg;
@@ -489,6 +559,7 @@ namespace corona
 
 		void handle_unload(std::shared_ptr<page> _pg)
 		{
+			scope_lock locker(binding_lock);
 			for (auto evt : unload_bindings) {
 				page_unload_event ple = {};
 				ple.pg = _pg;
@@ -496,18 +567,21 @@ namespace corona
 			}
 		}
 
-		void handle_changed(json _params, data_lake* _api, data_function* _set)
+		void handle_changed(std::shared_ptr<page> _pg, json _params, data_lake* _api, data_function* _set)
 		{
+			scope_lock locker(binding_lock);
 			for (auto pdb : page_data_bindings) {
 				if (pdb->source_name == _set->api->name &&
 					(pdb->function_name == _set->name || pdb->function_name == "*"))
 				{
-					threadomatic::run_complete(nullptr, [this, _params, _api, _set, pdb]() {
+					threadomatic::run_complete(nullptr, [_pg, this, _params, _api, _set, pdb]() {
 						page_data_event pde;
 						pde.changed_fn = _set;
 						pde.destination_control_id = pdb->subscribed_item_id;
 						pde.params = _params;
 						pde.lake = _api;
+						pde.pg = _pg;
+						pde.control = _pg->find(pde.destination_control_id);
 						pdb->on_changed(pde);
 						});
 				}

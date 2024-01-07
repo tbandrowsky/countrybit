@@ -24,6 +24,7 @@ namespace corona {
 		json params;
 		data_lake* lake;
 		data_function *changed_fn;
+		control_base* control;
 	};
 
 	class page_select_event : public page_event
@@ -222,6 +223,16 @@ namespace corona {
 		std::function< void(page_data_event) > on_changed;
 	};
 
+	class page_refresh_data_binding
+	{
+	public:
+		double seconds_since_update;
+		int period_seconds;
+		int subscribed_item_id;
+		std::string source_name;
+		std::string function_name;
+	};
+
 	class page_select_event_binding
 	{
 	public:
@@ -263,6 +274,7 @@ namespace corona {
 		virtual void on_load(std::function< void(page_load_event) >) = 0;
 		virtual void on_unload(std::function< void(page_unload_event) >) = 0;
 		virtual void on_changed(int _control_id, std::string _source_name, std::string _function_name, std::function< void(page_data_event) >) = 0;
+		virtual void schedule_refresh(time_t _period_seconds, std::string _source_name, std::string _function_name) = 0;
 
 	};
 }
