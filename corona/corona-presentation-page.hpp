@@ -210,7 +210,7 @@ namespace corona
 			return -1;
 		}
 
-		void on_key_press(int _control_id, std::function< void(key_press_event) > handler)
+		virtual void on_key_press(int _control_id, std::function< void(key_press_event) > handler)
 		{
 			auto evt = std::make_shared<key_press_event_binding>();
 			evt->subscribed_item_id = _control_id;
@@ -221,7 +221,7 @@ namespace corona
 			}
 		}
 
-		void on_key_up(int _control_id, std::function< void(key_up_event) > handler)
+		virtual void on_key_up(int _control_id, std::function< void(key_up_event) > handler)
 		{
 			auto evt = std::make_shared<key_up_event_binding>();
 			evt->subscribed_item_id = _control_id;
@@ -232,7 +232,7 @@ namespace corona
 			}
 		}
 
-		void on_key_down(int _control_id, std::function< void(key_down_event) >  handler)
+		virtual void on_key_down(int _control_id, std::function< void(key_down_event) >  handler)
 		{
 			auto evt = std::make_shared<key_down_event_binding>();
 			evt->subscribed_item_id = _control_id;
@@ -244,7 +244,7 @@ namespace corona
 			}
 		}
 
-		void on_mouse_left_click(control_base* _base, std::function< void(mouse_left_click_event) > handler)
+		virtual void on_mouse_left_click(control_base* _base, std::function< void(mouse_left_click_event) > handler)
 		{
 			auto evt = std::make_shared<mouse_left_click_event_binding>();
 			if (auto pbase = _base)
@@ -259,7 +259,7 @@ namespace corona
 			}
 		}
 
-		void on_mouse_right_click(control_base* _base, std::function< void(mouse_right_click_event) > handler)
+		virtual void on_mouse_right_click(control_base* _base, std::function< void(mouse_right_click_event) > handler)
 		{
 			auto evt = std::make_shared<mouse_right_click_event_binding>();
 			if (auto pbase = _base)
@@ -274,7 +274,7 @@ namespace corona
 			}
 		}
 
-		void on_mouse_move(control_base* _base, std::function< void(mouse_move_event) > handler)
+		virtual void on_mouse_move(control_base* _base, std::function< void(mouse_move_event) > handler)
 		{
 			auto evt = std::make_shared<mouse_move_event_binding>();
 			if (auto pbase = _base)
@@ -289,7 +289,7 @@ namespace corona
 			}
 		}
 
-		void on_mouse_click(control_base* _base, std::function< void(mouse_click_event) > handler)
+		virtual void on_mouse_click(control_base* _base, std::function< void(mouse_click_event) > handler)
 		{
 			auto evt = std::make_shared<mouse_click_event_binding>();
 			if (auto pbase = _base)
@@ -304,7 +304,7 @@ namespace corona
 			}
 		}
 
-		void on_item_changed(int _control_id, std::function< void(item_changed_event) > handler)
+		virtual void on_item_changed(int _control_id, std::function< void(item_changed_event) > handler)
 		{
 			auto evt = std::make_shared<item_changed_event_binding>();
 			evt->subscribed_item_id = _control_id;
@@ -312,7 +312,7 @@ namespace corona
 			item_changed_bindings[_control_id] = evt;
 		}
 
-		void on_list_changed(int _control_id, std::function< void(list_changed_event) > handler)
+		virtual void on_list_changed(int _control_id, std::function< void(list_changed_event) > handler)
 		{
 			auto evt = std::make_shared<list_changed_event_binding>();
 			evt->subscribed_item_id = _control_id;
@@ -320,7 +320,7 @@ namespace corona
 			list_changed_events[_control_id] = evt;
 		}
 
-		void on_command(int _control_id, std::function< void(command_event) > handler)
+		virtual void on_command(int _control_id, std::function< void(command_event) > handler)
 		{
 			auto evt = std::make_shared<command_event_binding>();
 			evt->subscribed_item_id = _control_id;
@@ -328,37 +328,39 @@ namespace corona
 			command_bindings[_control_id] = evt;
 		}
 
-		void on_update(update_function fnc)
+		virtual void on_update(update_function fnc)
 		{
 			update_event = fnc;
 		}
 
-		void on_select(std::function< void(page_select_event) > fnc)
+		virtual void on_select(std::function< void(page_select_event) > fnc)
 		{
 			auto plet = std::make_shared<page_select_event_binding>();
 			plet->on_select = fnc;
 			select_bindings.push_back(plet);
 		}
 
-		void on_load(std::function< void(page_load_event) > fnc)
+		virtual void on_load(std::function< void(page_load_event) > fnc)
 		{
 			auto plet = std::make_shared<page_load_event_binding>();
 			plet->on_load = fnc;
 			load_bindings.push_back(plet);
 		}
 
-		void on_unload(std::function< void(page_unload_event) > fnc)
+		virtual void on_unload(std::function< void(page_unload_event) > fnc)
 		{
 			auto plet = std::make_shared<page_unload_event_binding>();
 			plet->on_unload = fnc;
 			unload_bindings.push_back(plet);
 		}
 
-		void on_changed(int _control_id, std::string _function_name, std::function< void(page_data_event) >)
+		virtual void on_changed(int _control_id, std::string _source_name, std::string _function_name, std::function< void(page_data_event) > evt)
 		{
 			auto plet = std::make_shared<page_data_event_binding>();
+			plet->source_name = _source_name;
 			plet->function_name = _function_name;
 			plet->subscribed_item_id = _control_id;
+			plet->on_changed = evt;
 			page_data_bindings.push_back(plet);
 		}
 
@@ -497,7 +499,9 @@ namespace corona
 		void handle_changed(json _params, data_lake* _api, data_function* _set)
 		{
 			for (auto pdb : page_data_bindings) {
-				if (pdb->function_name == _set->name) {
+				if (pdb->source_name == _set->api->name &&
+					(pdb->function_name == _set->name || pdb->function_name == "*"))
+				{
 					threadomatic::run_complete(nullptr, [this, _params, _api, _set, pdb]() {
 						page_data_event pde;
 						pde.changed_fn = _set;

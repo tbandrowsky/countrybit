@@ -168,7 +168,7 @@ namespace corona
 				lake->call_function(source_name, function_name, function_parameters);
 			});
 
-		_page->on_changed(id, function_name, [this](page_data_event evt) {
+		_page->on_changed(id, source_name, function_name, [this](page_data_event evt) {
 				auto fn = evt.lake->get_function(source_name, function_name);
 				status = std::make_shared<call_status>(fn->status);
 			});

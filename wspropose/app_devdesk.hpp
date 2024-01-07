@@ -42,7 +42,9 @@ namespace corona
 
 		// first we put a caption bar in our standard page
 
-		contents_root.caption_bar(id_counter::next(), st, app_menu.get(), [](caption_bar_control& _cb)
+		int id_caption_bar = id_counter::next();
+
+		contents_root.caption_bar(id_caption_bar, st, app_menu.get(), [](caption_bar_control& _cb)
 			{
 				_cb.menu_button_id = IDC_SYSTEM_MENU;
 				_cb.image_control_id = IDC_COMPANY_LOGO;
@@ -54,23 +56,22 @@ namespace corona
 			}
 		);
 
-		auto& tc_message = contents_root.get_root()->find<code_control>(IDC_STATUS_MESSAGE);
-		auto& tc_detail = contents_root.get_root()->find<code_control>(IDC_STATUS_DETAIL);
+
+		auto& cp_caption = contents_root.get_root()->find<caption_bar_control>(id_caption_bar);
 
 		json actor_options;
 
-		auto base_ds = app_show->data->get_function("calico", "current_state");
+		auto base_ds = app_show->data->get_function("calico", "get_state");
 		actor_options = base_ds->data;
 
 		auto err = base_ds->status;
+
 		if (!err.success) {
-			tc_message.text = "Error";
-			tc_detail.text = err.message;
+			cp_caption.set_status("Error", err.message);
 			contents_root.apply_controls(_page.root.get());
 			return;
 		} else if (!actor_options.has_member("ActorOptions")) {
-			tc_message.text = "No data yet";
-			tc_detail.text = "";
+			cp_caption.set_status("Data", "Waiting for data");
 			control_base *control_to_apply_to = _page.root.get();
 			contents_root.apply_controls(control_to_apply_to);
 			return;
@@ -78,8 +79,7 @@ namespace corona
 
 		actor_options = actor_options["ActorOptions"];
 
-		tc_message.text = "Connected";
-		tc_detail.text = "";
+		cp_caption.set_status("Ready", "");
 
 		// then, below the caption bar, an overall contents pane
 		// which has a navigation column on the left, and, the tab view on the right
@@ -297,6 +297,18 @@ namespace corona
 			});
 
 		contents_root.apply_controls(_page.root.get());
+
+		_page.on_select([calico_svc, application, app_show, st, app_menu](page_select_event _evt)
+			{
+				create_home_page(*(_evt.pg), application, calico_svc, app_show, app_menu, st);
+				std::cout << "get_state: selected" << std::endl;
+				app_show->data->call_function("calico", "get_state");
+				std::cout << "home: selected" << std::endl;
+			});
+
+		_page.on_changed(0, "calico", "credentials", [app_show, calico_svc, application, st, app_menu](page_data_event pde) {
+			create_home_page(*(pde.pg), application, calico_svc, app_show, app_menu, st);
+			});
 	}
 
 	void run_developer_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
@@ -320,7 +332,7 @@ namespace corona
 		// create the presentation - this holds the data of what is on screen, for various pages.
 		std::shared_ptr<presentation> application_presentation = std::make_shared<presentation>(application);
 		application_presentation->data = app_data;
-		app_data->on_changed("calico", [application_presentation](json _params, data_lake* _api, data_function* _set) -> int {
+		app_data->on_changed("calico", "*", [application_presentation](json _params, data_lake* _api, data_function* _set) -> int {
 			application_presentation->onDataChanged(_params, _api, _set );
 			return 0;
 			});
@@ -354,26 +366,7 @@ namespace corona
 
 		auto& home_page = application_presentation->create_page("home", [application_presentation, calico_svc, app_data, application, st, app_menu](page& _pg)
 			{
-				_pg.column_begin()
-					.caption_bar(id_counter::next(), st, app_menu.get(), [](caption_bar_control& _cb)
-						{
-							_cb.menu_button_id = IDC_SYSTEM_MENU;
-							_cb.image_control_id = IDC_COMPANY_LOGO;
-							_cb.image_file = "assets\\small_logo.png";
-							_cb.corporate_name = "WOODRUFF SAWYER";
-							_cb.title_name = "PROPERTY and CASUALTY";
-							_cb.code_detail_id = IDC_STATUS_DETAIL;
-							_cb.code_status_id = IDC_STATUS_MESSAGE;
-						}
-					)
-					.end();
-
-				_pg.on_select([calico_svc, application, application_presentation, app_data, st, app_menu](page_select_event _evt)
-					{
-						std::cout << "home: selected" << std::endl;
-						create_home_page( *(_evt.pg), application, calico_svc,  application_presentation, app_menu, st);
-					});
-
+				create_home_page(_pg, application, calico_svc, application_presentation, app_menu, st);
 			});
 
 		auto &login_page = application_presentation->create_page("login", [calico_svc, application_presentation, application, app_data, st, app_menu](page& _pg)
@@ -395,8 +388,13 @@ namespace corona
 
 				_pg.on_select([calico_svc, application, application_presentation, app_data, st, app_menu](page_select_event _evt)
 					{
-						app_data->call_function("calico", "login");
+						app_data->call_function("calico", "credentials");
 					});
+
+				_pg.on_changed(0, "calico", "credentials", [application_presentation](page_data_event pde) {
+					application_presentation->select_page("home");
+					});
+
 			});
 
 		if (forceWindowed)

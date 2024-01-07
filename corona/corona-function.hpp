@@ -142,7 +142,7 @@ namespace corona
 			}
 			
 			jn.setSignal(event);
-			std::cout << "ui job end:" << GetCurrentThreadId() << std::endl;
+			std::cout << "ui task end:" << GetCurrentThreadId() << std::endl;
 			jn.shouldDelete = true;
 
 			return jn;
@@ -174,7 +174,7 @@ namespace corona
 
 			json empty_default;
 
-			std::cout << "ui task start:" << GetCurrentThreadId() << std::endl;
+			std::cout << "gen ui task start:" << GetCurrentThreadId() << std::endl;
 
 			auto result = new ui_task_result(empty_default, on_gui);
 
@@ -191,7 +191,7 @@ namespace corona
 				_callingQueue->post_ui_message(WM_CORONA_TASK_COMPLETE, FALSE, (LPARAM)result);
 			}
 
-			std::cout << "ui job end:" << GetCurrentThreadId() << std::endl;
+			std::cout << "gen ui job end:" << GetCurrentThreadId() << std::endl;
 			jn.shouldDelete = true;
 
 			return jn;

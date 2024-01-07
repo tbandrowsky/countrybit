@@ -1421,6 +1421,26 @@ namespace corona
 
 		virtual ~caption_bar_control() { ; }
 
+		void set_status(std::string _status, std::string _detail)
+		{
+			auto& tc_message = find<code_control>(code_status_id);
+			auto& tc_detail = find<code_control>(code_detail_id);
+			tc_message.set_text(_status);
+			tc_detail.set_text(_detail);
+		}
+
+		virtual void on_subscribe(presentation_base* _presentation, page_base* _page)
+		{
+			_page->on_changed(id, "calico", "*", [this](page_data_event evt)
+				{
+					auto& stat = evt.changed_fn->status;
+					set_status(evt.changed_fn->name, stat.message);
+				}
+			);
+			for (auto child : children) {
+				child->on_subscribe(_presentation, _page);
+			}
+		}
 	};
 
 	class status_bar_control : public container_control

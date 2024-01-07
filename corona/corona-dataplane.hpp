@@ -10,6 +10,7 @@
 
 namespace corona
 {
+	class data_api;
 	class data_lake;
 	class data_function;
 
@@ -22,6 +23,7 @@ namespace corona
 	{
 	public:
 
+		data_api*						api;
 		std::string						name;
 		json							data;
 		json							parameters;
@@ -31,6 +33,7 @@ namespace corona
 		gui_method						share;
 		call_status						status;
 		bool							busy;
+		std::vector<gui_method>			on_changed;
 
 		data_function()
 		{
@@ -41,7 +44,9 @@ namespace corona
 
 		void run_share()
 		{
-			share(data, nullptr, this);
+			if (share) {
+				share(data, nullptr, this);
+			}
 		}
 
 		int get(data_lake* _lake, json _params);
@@ -49,39 +54,48 @@ namespace corona
 
 	};
 
+	struct dataplane_task_ui
+	{
+	public:
+		std::shared_ptr<data_function> fn;
+		data_lake* lake;
+		json params;
+
+		void operator()()
+		{
+			fn->run_share();
+		}
+	};
+
 	struct dataplane_task : public std::suspend_always
 	{
 	public:
 		using promise_type = dataplane_promise;
 
-		std::shared_ptr<data_function> fn;
-		data_lake* lake;
-		json params;
+		dataplane_task_ui dptui;
 
 		void configure(data_lake* _lake, std::shared_ptr<data_function> _fn, json _params = {})
 		{
-			fn = _fn;
-			lake = _lake;
-			params = _params;
+			dptui.fn = _fn;
+			dptui.lake = _lake;
+			dptui.params = _params;
 		}
 
 		void await_suspend(std::coroutine_handle<> handle)
 		{
 			threadomatic::run_complete(
 				[this, handle]() {
-					if (params.is_object())
+					if (dptui.params.is_object())
 					{
-						fn->get(lake, params);
+						dptui.fn->get(dptui.lake, dptui.params);
 					}
 					else
 					{
-						fn->get(lake);
+						dptui.fn->get(dptui.lake);
 					}
 					handle();
 				},
-				[this]() {
-					fn->run_share();
-				}
+				dptui
 			);
 		}
 
@@ -93,6 +107,11 @@ namespace corona
 		dataplane_task()
 		{
 			std::cout << this << ", dataplane_task ctor:" << GetCurrentThreadId() << std::endl;
+		}
+
+		~dataplane_task()
+		{
+			std::cout << this << ", dataplane_task destroyed:" << GetCurrentThreadId() << std::endl;
 		}
 
 	};
@@ -121,7 +140,9 @@ namespace corona
 			return {};
 		}
 
-		void unhandled_exception() {}
+		void unhandled_exception() {
+			std::cout << "dataplane_task exception:" << this << GetCurrentThreadId() << std::endl;
+		}
 
 	};
 
@@ -137,7 +158,7 @@ namespace corona
 		std::string description;
 		std::string icon_path;
 
-		std::vector<gui_method> on_changed;
+		friend class data_lake;
 
 		void put_function(
 			std::string _function_name,
@@ -160,6 +181,7 @@ namespace corona
 				functions.insert_or_assign(_function_name, ds);
 			}
 
+			ds->api = this;
 			ds->cache_seconds = _cache_seconds;
 			ds->fetch = _fetch;
 			ds->share = _gui;
@@ -185,6 +207,7 @@ namespace corona
 				functions.insert_or_assign(_function_name, ds);
 			}
 
+			ds->api = this;
 			ds->cache_seconds = 3600;
 			ds->data = _data;
 			ds->name = _function_name;
@@ -225,9 +248,6 @@ namespace corona
 
 			if (dsp) {
 				dsp->get(_lake);
-				for (auto cn : on_changed) {
-					cn(dsp->parameters, _lake, dsp.get());
-				}
 			}
 		}
 
@@ -237,9 +257,6 @@ namespace corona
 
 			if (dsp) {
 				dsp->get(_lake, _parameters);
-				for (auto cn : on_changed) {
-					cn(dsp->parameters, _lake, dsp.get());
-				}
 			}
 		}
 
@@ -272,6 +289,11 @@ namespace corona
 
 		std::vector<gui_method> on_logged;
 
+		data_lake()
+		{
+			log_clear();
+		}
+
 		void logged(json _params, data_lake* _api, data_function* _set)
 		{
 			for (auto ol : on_logged) {
@@ -279,10 +301,19 @@ namespace corona
 			}
 		}
 
-		void on_changed(std::string _source, gui_method _method)
+		void on_changed(std::string _source, std::string _function, gui_method _method)
 		{
-			auto api = get_api(_source);
-			api->on_changed.push_back(_method);
+			if (_function != "*") {
+				auto fnx = get_function(_source, _function);
+				fnx->on_changed.push_back(_method);
+			}
+			else 
+			{
+				auto apix = get_api(_source);
+				for (auto fnx : apix->functions) {
+					fnx.second->on_changed.push_back(_method);
+				}
+			}
 		}
 
 		std::shared_ptr<data_api> get_api(std::string _source)
@@ -292,7 +323,7 @@ namespace corona
 
 			if (apis.contains(_source))
 			{
-				auto& source = apis[_source];
+				source = apis[_source];
 			}
 			else {
 				std::string message = "API " + _source + " not found";
@@ -340,16 +371,30 @@ namespace corona
 
 		task call_function(std::string _source, std::string _name, json _parameters)
 		{
-			std::cout << "call function -before- " << _name << " on thread " << GetCurrentThreadId() << std::endl;
-			co_await invoke_function(_source, _name, _parameters);
-			std::cout << "call function -after- " << _name << " on thread " << GetCurrentThreadId() << std::endl;
+			try 
+			{
+				std::cout << "call function -before- " << _name << " on thread " << GetCurrentThreadId() << std::endl;
+				co_await invoke_function(_source, _name, _parameters);
+				std::cout << "call function -after- " << _name << " on thread " << GetCurrentThreadId() << std::endl;
+			}
+			catch (std::exception exc)
+			{
+				std::cout << "exception:" << exc.what() << std::endl;
+			}
 		}
 
 		task call_function(std::string _source, std::string _name)
 		{
-			std::cout << "call function -before- " << _name << " on thread " << GetCurrentThreadId() << std::endl;
-			co_await invoke_function(_source, _name);
-			std::cout << "call function -after- " << _name << " on thread " << GetCurrentThreadId() << std::endl;
+			try
+			{
+				std::cout << "call function -before- " << _name << " on thread " << GetCurrentThreadId() << std::endl;
+				co_await invoke_function(_source, _name);
+				std::cout << "call function -after- " << _name << " on thread " << GetCurrentThreadId() << std::endl;
+			}
+			catch (std::exception exc)
+			{				
+				std::cout << "exception:" << exc.what() << std::endl;
+			}
 		}
 
 		bool is_busy(std::string _source, std::string _name)
@@ -412,9 +457,9 @@ namespace corona
 
 			std::shared_ptr<data_api> dapi;
 
-			if (apis.contains(_set_name))
+			if (apis.contains(_source_name))
 			{
-				dapi = get_api(_set_name);
+				dapi = get_api(_source_name);
 				dapi->put_function(_set_name, _fetch, _gui, _cache_seconds);
 			}
 		}
@@ -429,9 +474,9 @@ namespace corona
 
 			std::shared_ptr<data_api> dapi;
 
-			if (apis.contains(_set_name))
+			if (apis.contains(_source_name))
 			{
-				dapi = get_api(_set_name);
+				dapi = get_api(_source_name);
 				dapi->put_function(_set_name, 
 					[](json _params, data_lake *_lake, data_function* _set)-> call_status {
 						call_status dfs;
@@ -522,6 +567,10 @@ namespace corona
 				busy = true;
 				status = fetch(_params, _lake, this);
 
+				for (auto cn : on_changed) {
+					cn(parameters, _lake, this);
+				}
+
 				time(&time_after);
 				time_t exec_seconds = time_after - current_time;
 
@@ -560,6 +609,9 @@ namespace corona
 			if (seconds >= cache_seconds) {
 				last_refresh = current_time;
 				status = fetch(data, _lake, this);
+				for (auto cn : on_changed) {
+					cn(parameters, _lake, this);
+				}
 			}
 
 			time(&time_after);
