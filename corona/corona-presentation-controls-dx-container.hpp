@@ -65,6 +65,10 @@ namespace corona
 		{
 			_contents(this);
 
+			for (auto child : children) {
+				child->parent = this;
+			}
+
 			arrange(bounds);
 			create(host);
 		}

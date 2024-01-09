@@ -251,6 +251,9 @@ namespace corona
 
 		int get_keyboard_parent(int _control_id)
 		{
+			if (!root) 
+				return -1;
+
 			control_base* p = root->find(_control_id);
 			while (p) {
 				if (p->gets_real_focus()) {

@@ -771,6 +771,7 @@ namespace corona
 	public:
 		int id;
 		std::string name;
+		std::function<void(tab_pane& _src, control_base*)> apply_data;
 		std::function<void(tab_pane& _src, control_base*)> create_tab_controls;
 	};
 
@@ -780,7 +781,7 @@ namespace corona
 		std::shared_ptr<frame_layout> content_frame;
 		presentation_base* current_presentation;
 		page_base* current_page;
-
+		std::map<int, std::shared_ptr<control_base>> pane_controls;
 		int active_id;
 
 		void init()
@@ -987,14 +988,32 @@ namespace corona
 			if (tbi != tab_panes.end())
 			{
 				active_id = tbi->id;
-				contents_generator<tab_pane*> cg;
-				// set contents will clone this for us.
-				cg.data = &*tbi;
-				cg.generator = [](tab_pane* _tp, control_base* _args)
-					{
-						_tp->create_tab_controls(*_tp, _args);
-					};
-				content_frame->set_contents(cg);
+
+				if (pane_controls.contains(active_id)) 
+				{
+					contents_generator<tab_pane*> cg;
+					// set contents will clone this for us.
+					cg.data = &*tbi;
+					cg.generator = [this](tab_pane* _tp, control_base* _args)
+						{
+							_args->children.clear();
+							_args->children.push_back(pane_controls[active_id]);
+							_tp->apply_data(*_tp, pane_controls[active_id].get());
+						};
+					content_frame->set_contents(cg);
+				}
+				else 
+				{
+					contents_generator<tab_pane*> cg;
+					// set contents will clone this for us.
+					cg.data = &*tbi;
+					cg.generator = [](tab_pane* _tp, control_base* _args)
+						{
+							_tp->create_tab_controls(*_tp, _args);
+						};
+					content_frame->set_contents(cg);
+					pane_controls[active_id] = content_frame->children[0];
+				}
 				if (current_presentation && current_page) {
 					content_frame->on_subscribe(current_presentation, current_page);
 				}

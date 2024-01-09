@@ -336,6 +336,13 @@ namespace corona
 				}
 			}
 
+			new_tab.apply_data = [rule_description, ads](tab_pane& _pane, control_base* _cont) {
+				grid_view* gv = dynamic_cast<grid_view *>(_cont);
+				if (gv) {
+					gv->set_item_source(ads);
+				}
+			};
+
 			new_tab.create_tab_controls = [rule_description,ads](tab_pane& _pane, control_base* _cont) {
 				control_builder cb;
 				cb.grid_view_begin(id_counter::next(), [ads](grid_view& _layout) {
