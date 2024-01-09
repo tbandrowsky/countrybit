@@ -133,11 +133,15 @@ namespace corona {
 
 		woodruff.TitleBackgroundColor = "#00000000";
 		woodruff.TitleTextColor = woodruff.MasterBrandColors[0];
+		woodruff.TitleTextFont = woodruff.PrimaryFont;
 
 		woodruff.SubtitleBackgroundColor = "#00000000";
 		woodruff.SubtitleTextColor = woodruff.MasterBrandColors[0];
+		woodruff.SubtitleTextFont = woodruff.PrimaryFont;
 
 		woodruff.FormBackgroundColor = "#EEEFEE";
+
+		woodruff.ChapterTextFont = woodruff.PrimaryFont;
 
 		woodruff.ChapterTitleBackgroundColor = "#COC2CO";
 		woodruff.ChapterTitleTextColor = "111111";
@@ -147,9 +151,11 @@ namespace corona {
 
 		woodruff.ParagraphBackgroundColor = "#00000000";
 		woodruff.ParagraphTextColor = "111111";
+		woodruff.ParagraphTextFont = woodruff.PrimaryFont;
 
 		woodruff.CodeBackgroundColor = "00000000";
 		woodruff.CodeTextColor = "F8E0A4";
+		woodruff.CodeTextFont = "Courier New";
 
 		woodruff.Section1BackgroundColor = "DEE1E1";
 		woodruff.Section1TextColor = woodruff.ParagraphTextColor;

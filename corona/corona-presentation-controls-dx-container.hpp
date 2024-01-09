@@ -267,76 +267,80 @@ namespace corona
 
 	};
 
-
-	class column_view_layout :
-		public column_layout
+	class grid_view_row
 	{
-		array_data_source item_source;
-		std::vector<std::shared_ptr<control_base>> items;
+	public:
+		int item_id;
+		int page_index;
+		rectangle bounds;
+	};
+
+	class grid_view : public draw_control
+	{
+		array_data_source items_source;
+		std::vector<grid_view_row> rows;
 		std::vector<int> page_to_item_index;
-		std::vector<int> item_to_page_index;
+		solidBrushRequest selection_border;
+
 		// we keep the set of controls here on the back end, because they are small as they are not dragging around any 
 		// back end bitmaps or windows.  (arranging doesn't create the assets on a control, create does)
 		rectangle view_port;
-		rectangle child_area;
 
 		int selected_page_index;
 		int selected_item_index;
 
-		void position_children()
-		{
-			child_area = bounds;
-			view_port.w = bounds.w;
-			view_port.h = bounds.h;
-			children.clear();
-
-			for (auto item : items)
-			{
-				child_area = rectangle_math::join(child_area, item->get_bounds());
-				if (rectangle_math::contains(view_port, item->get_bounds().x, item->get_bounds().y) ||
-					rectangle_math::contains(view_port, item->get_bounds().right(), item->get_bounds().y) ||
-					rectangle_math::contains(view_port, item->get_bounds().right(), item->get_bounds().bottom()) ||
-					rectangle_math::contains(view_port, item->get_bounds().x, item->get_bounds().bottom()))
-				{
-					children.push_back(item);
-				}
-			}
-		}
-
 		void check_scroll()
 		{
-			if (selected_item_index >= items.size())
+			if (selected_item_index >= rows.size())
 			{
-				selected_item_index = items.size() - 1;
+				selected_item_index = rows.size() - 1;
 			}
 			if (selected_item_index < 0)
 			{
 				selected_item_index = 0;
 			}
-			selected_page_index = item_to_page_index[selected_item_index];
+			selected_page_index = rows[selected_item_index].page_index;
+			int selected_item_page_index = page_to_item_index[selected_page_index];
+			view_port.y = rows[selected_item_page_index].bounds.y;
+		}
 
-			auto& temp = items[selected_item_index];
-			auto bd = temp->get_bounds();
-			int db = bd.bottom() - view_port.bottom();
-			int dt = view_port.y - bd.y;
-			if (db > 0) {
-				view_port.y += db;
-			}
-			else if (dt > 0)
+		void set_selection_border(solidBrushRequest _brushFill)
+		{
+			selection_border = _brushFill;
+			selection_border.name = typeid(*this).name();
+			selection_border.name +="_selection";
+			selection_border.active = true;
+			if (auto pwindow = window.lock())
 			{
-				view_port.y -= dt;
+				pwindow->getContext().setSolidColorBrush(&selection_border);
+			}
+		}
+
+		void set_selection_border(std::string _color)
+		{
+			selection_border.brushColor = toColor(_color.c_str());
+			selection_border.name = typeid(*this).name();
+			selection_border.name += "_selection";
+			selection_border.active = true;
+			if (auto pwindow = window.lock())
+			{
+				pwindow->getContext().setSolidColorBrush(&selection_border);
 			}
 		}
 
 		void init()
 		{
-			set_border_color("#C0C0C0");
-
 			on_create = [this](draw_control *_src)
 				{
+					if (items_source.assets)
+					{
+						items_source.assets(this, bounds);
+					}
+
 					if (auto pwindow = _src->window.lock())
 					{
-						pwindow->getContext().setSolidColorBrush(&_src->border_brush);
+						pwindow->getContext().setSolidColorBrush(&border_brush);
+						pwindow->getContext().setSolidColorBrush(&selection_border);
 					}
 				};
 
@@ -345,22 +349,43 @@ namespace corona
 					if (auto pwindow = window.lock())
 					{
 						if (auto phost = host.lock()) {
+
 							auto draw_bounds = inner_bounds;
 
 							draw_bounds.x = 0;
 							draw_bounds.y = 0;
 
+							point offset = { view_port.x, view_port.y };
+
 							auto& context = pwindow->getContext();
 
-							
+							if (page_to_item_index.size() == 0) {
+								return;
+							}
 
-							if (selected_item_index >= 0 && items.size()) 
+							int idx = page_to_item_index[ selected_page_index ];
+
+							while (idx < rows.size())
 							{
-								auto rect_bounds = items[selected_item_index].get()->get_bounds();
-								auto this_bounds = get_bounds();
-								rect_bounds.x -= this_bounds.x;
-								rect_bounds.y -= this_bounds.y;
-								context.drawRectangle(&rect_bounds, border_brush.name, 4, nullptr);
+								auto& row = rows[idx];
+
+								if (row.bounds.y < bounds.bottom()) 
+								{
+									auto rect_bounds = row.bounds;
+									rect_bounds.x -= offset.x;
+									rect_bounds.y -= offset.y;
+									items_source.draw_item(this, idx, rect_bounds);
+									if (selected_item_index == idx) 
+									{
+										context.drawRectangle(&rect_bounds, selection_border.name, 4, nullptr);
+									}
+								}
+								else 
+								{
+									break;
+								}
+
+								idx++;
 							}
 						}
 					}
@@ -370,78 +395,100 @@ namespace corona
 
 	public:
 
-		column_view_layout()
+		grid_view()
 		{
 			view_port = {};
-			child_area = {};
 			selected_item_index = 0;
+			selected_page_index = 0;
+			set_selection_border("#000000");
+			init();
 		}
 
-		column_view_layout(container_control_base* _parent, int _id) : column_layout(_parent, _id)
+		grid_view(container_control_base* _parent, int _id) : draw_control(_parent, _id)
 		{
 			view_port = {};
-			child_area = {};
 			selected_item_index = 0;
+			selected_page_index = 0;
+			set_selection_border("#000000");
+			init();
 		}
 
-		column_view_layout(const column_view_layout& _src) = default;
+		grid_view(const grid_view& _src) = default;
 
 		virtual std::shared_ptr<control_base> clone()
 		{
-			auto tv = std::make_shared<column_view_layout>(*this);
+			auto tv = std::make_shared<grid_view>(*this);
 			return tv;
 		}
 
-
-		virtual ~column_view_layout()
+		virtual ~grid_view()
 		{
 			;
 		}
 
-		void set_item_source(array_data_source _item_source)
+		virtual void arrange(rectangle _bounds)
 		{
-			item_source = _item_source;
-			selected_item_index = 0;
+			draw_control::arrange(_bounds);
+
+			view_port.w = _bounds.w;
+			view_port.h = _bounds.h;
+
+			double h = _bounds.h;
+			double y = 0;
+
+			int page_index, last_page = -1;
+			page_to_item_index.clear();
+
+			int sz = rows.size();
+			for (int i = 0; i < sz; i++)
+			{
+				auto isz = items_source.size_item(this, i, _bounds);
+				auto& r = rows[i];
+				r.bounds.x = 0;
+				r.bounds.y = y;
+				r.bounds.w = _bounds.w;
+				r.bounds.h = isz.y;
+				page_index = (r.bounds.bottom() / h);
+				r.page_index = page_index;
+				if (page_index > last_page)
+				{
+					page_to_item_index.push_back(page_index);
+				}
+				y += isz.y;
+			}
 		}
 
-		virtual void arrange(rectangle _ctx)
+		void set_item_source(array_data_source _item_source)
 		{
-			children.clear();
-			items.clear();
+			items_source = _item_source;
+			rows.clear();
 
 			int i;
-			for (i = 0; i < item_source.data.size(); i++)
+			rectangle item_bounds;
+			item_bounds.x = 0;
+			item_bounds.y = 0;
+			item_bounds.w = 0;
+			item_bounds.h = 0;
+
+			for (i = 0; i < items_source.data.size(); i++)
 			{
-				auto cb = item_source.data_to_control(this, item_source.data, i);
-				if (cb) {
-					children.push_back(cb);
-					items.push_back(cb);
+				grid_view_row gvr;
+				gvr.page_index = 0;
+				gvr.bounds = item_bounds;
+				gvr.item_id = i;
+				rows.push_back(gvr);
+			}
+
+			if (auto pwindow = window.lock()) {
+				arrange(bounds);
+
+				if (rows.size() <= selected_item_index)
+				{
+					selected_item_index = 0;
+					check_scroll();
 				}
 			}
 
-			column_layout::arrange(_ctx);
-
-			page_to_item_index.clear();
-			item_to_page_index.clear();
-			view_port.w = _ctx.w;
-			view_port.h = _ctx.h;
-			double h = 0.0;
-			int current_page = -1;
-			int index = 0;
-			for (auto item : items)
-			{
-				h += item->get_bounds().h;
-				if (h > view_port.h || current_page < 0) {
-					current_page++;
-					page_to_item_index.push_back(index);
-				}
-				item_to_page_index.push_back(current_page);
-				index++;
-			}
-
-			position_children();
-
-			init();
 		}
 
 		virtual void key_down(int _key)
@@ -480,14 +527,12 @@ namespace corona
 		{
 			selected_item_index++;
 			check_scroll();
-			position_children();
 		}
 
 		void line_up()
 		{
 			selected_item_index--;
 			check_scroll();
-			position_children();
 		}
 
 		void page_up()
@@ -497,7 +542,6 @@ namespace corona
 				selected_page_index = 0;
 			selected_item_index = page_to_item_index[selected_page_index];
 			check_scroll();
-			position_children();
 		}
 
 		void page_down()
@@ -507,21 +551,18 @@ namespace corona
 				selected_page_index = page_to_item_index.size() - 1;
 			selected_item_index = page_to_item_index[selected_page_index];
 			check_scroll();
-			position_children();
 		}
 
 		void home()
 		{
 			selected_item_index = 0;
 			check_scroll();
-			position_children();
 		}
 
 		void end()
 		{
-			selected_item_index = item_source.data.size() - 1;
+			selected_item_index = items_source.data.size() - 1;
 			check_scroll();
-			position_children();
 		}
 
 		void navigate_selected()
@@ -536,9 +577,12 @@ namespace corona
 
 		virtual void on_subscribe(presentation_base* _presentation, page_base* _page)
 		{
-			_page->on_key_down(id, [this](key_down_event evt)
+			_page->on_key_down(id, [](key_down_event evt)
 				{
-					this->key_down(evt.key);
+					grid_view* gv = dynamic_cast<grid_view *>(evt.control);
+					if (gv) {
+						gv->key_down(evt.key);
+					}
 				});
 			for (auto child : children) {
 				child->on_subscribe(_presentation, _page);

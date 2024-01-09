@@ -28,9 +28,8 @@ namespace corona {
 
 		std::weak_ptr<page> current_page;
 		rectangle current_size;
-		std::map<std::string, control_json_mapper> class_control_map;
 		lockable control_lock;
-
+		std::map<std::string, int> control_ids;
 
 	public:
 
@@ -52,42 +51,11 @@ namespace corona {
 		{
 			int temp = 0;
 			scope_lock lockit(control_lock);
-			std::map<std::string, int> control_ids;
 
 			if (!control_ids.contains(_name)) {
 				control_ids.insert_or_assign(_name, _id());
 			}
 			return control_ids[_name];
-		}
-
-		control_json_mapper get_class_control_factory(std::string class_name)
-		{
-			scope_lock locker(control_lock);
-
-			control_json_mapper cjm;
-
-			if (class_control_map.contains(class_name)) {
-				cjm = class_control_map[class_name];
-			}
-			else
-			{
-				//std::function<std::weak_ptr<control_base>(control_base *_parent, json& _array, int _index)>;
-				cjm = [class_name](control_base* _parent, json& _array, int _index) -> std::shared_ptr<control_base>
-					{
-						std::shared_ptr<paragraph_control> new_ptr = std::make_shared<paragraph_control>(_parent, id_counter::next());
-						new_ptr->text = class_name;
-						return new_ptr;
-					};
-			}
-
-			return cjm;
-		}
-
-		void put_class_control_factory(std::string class_name, control_json_mapper mapper)
-		{
-			scope_lock locker(control_lock);
-
-			class_control_map.insert_or_assign(class_name, mapper);
 		}
 
 		virtual ~presentation()
@@ -169,6 +137,7 @@ namespace corona {
 		virtual void onJobComplete(bool _success, int _id);
 		virtual void onTaskComplete(bool _success, ui_task_result_base* _result);
 		virtual void onDataChanged(json _params, data_lake* _api, data_function* _set);
+		virtual int layout();
 
 		template <typename control_type> control_type* get_control(int _id)
 		{
@@ -735,6 +704,15 @@ namespace corona {
 		auto pg = current_page.lock();
 		if (pg) {
 			pg->arrange(newSize.w, newSize.h);
+		}
+		return 0;
+	}
+
+	int presentation::layout()
+	{
+		auto pg = current_page.lock();
+		if (pg) {
+			pg->arrange(current_size.w, current_size.h);
 		}
 		return 0;
 	}

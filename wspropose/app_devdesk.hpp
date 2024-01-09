@@ -26,38 +26,74 @@ namespace corona
 		std::shared_ptr<calico_client> calico_svc,
 		std::shared_ptr<presentation> app_show,
 		std::shared_ptr<menu_item> app_menu,
-		presentation_style *st
-		)
+		presentation_style* st
+	)
 	{
+		int id_caption_bar = app_show->get_control_id("caption_bar", []() { return id_counter::next(); });
+		int id_main_row = app_show->get_control_id("main_row", []() { return id_counter::next(); });
+		int id_command_container = app_show->get_control_id("command_container", []() { return id_counter::next(); });
+		int id_location_title = app_show->get_control_id("location_title", []() { return id_counter::next(); });
+		int id_create_title = app_show->get_control_id("create_title", []() { return id_counter::next(); });
+		int id_tab_view = app_show->get_control_id("actor_options_tab_view", []() { return id_counter::next(); });
 
-		// we clear the page of all of its children controls, and start building our form
-		// clearing the page should also clear the event handlers.
-		// we hope. and... we know.
+		control_builder command_container;
+		caption_bar_control* caption_container;
+		tab_view_control* tab_container;
+		// then we must be a new page
 
-		_page.clear();
+		if (_page.get_root()->children.size() == 0) 
+		{
+			// First check to make sure we have all the things
 
-		// First check to make sure we have all the things
+			control_builder contents_root(_page.get_root_container());
 
-		control_builder contents_root;
+			contents_root.caption_bar(id_caption_bar, st, app_menu.get(), [](caption_bar_control& _cb)
+				{
+					_cb.menu_button_id = IDC_SYSTEM_MENU;
+					_cb.image_control_id = IDC_COMPANY_LOGO;
+					_cb.image_file = "assets\\small_logo.png";
+					_cb.corporate_name = "WOODRUFF SAWYER";
+					_cb.title_name = "PROPERTY AND CASUALTY";
+					_cb.code_detail_id = IDC_STATUS_DETAIL;
+					_cb.code_status_id = IDC_STATUS_MESSAGE;
+				}
+			);
 
+			auto contents = contents_root.row_begin(
+				id_main_row,
+				[](row_layout& _settings) {
+					_settings.set_margin(10.0_px);
+					_settings.set_size(1.0_container, 1.0_remaining);
+				});
+
+			// note that, we are putting the breadcrumbs on a nav pane to the left.
+			auto command_container = contents.column_begin(id_command_container, [](column_layout& rl) {
+				rl.set_size(300.0_px, 1.0_container);
+				});
+			
+			contents.tab_view(id_tab_view, [](tab_view_control& tv) {
+				tv.set_size(1.0_remaining, 1.0_container);
+				});
+
+			_page.schedule_refresh(1, "calico", "get_state");
+
+			_page.on_select([app_show, calico_svc, application, st, app_menu](page_select_event psevt) {
+				page& pg = *psevt.pg;
+				create_home_page(pg, application, calico_svc, app_show, app_menu, st);
+				});
+
+			_page.on_changed(0, "calico", "get_state", [app_show, calico_svc, application, st, app_menu](page_data_event pde) {
+				app_show->select_page("home");
+				});
+
+			contents_root.apply_controls(_page.root.get());
+
+		}
+
+		command_container = _page.edit(id_command_container);
+		caption_container = _page.find_container<caption_bar_control>(id_caption_bar);
+		tab_container = _page.find_container<tab_view_control>(id_tab_view);
 		// first we put a caption bar in our standard page
-
-		int id_caption_bar = id_counter::next();
-
-		contents_root.caption_bar(id_caption_bar, st, app_menu.get(), [](caption_bar_control& _cb)
-			{
-				_cb.menu_button_id = IDC_SYSTEM_MENU;
-				_cb.image_control_id = IDC_COMPANY_LOGO;
-				_cb.image_file = "assets\\small_logo.png";
-				_cb.corporate_name = "WOODRUFF SAWYER";
-				_cb.title_name = "PROPERTY AND CASUALTY";
-				_cb.code_detail_id = IDC_STATUS_DETAIL;
-				_cb.code_status_id = IDC_STATUS_MESSAGE;
-			}
-		);
-
-
-		auto& cp_caption = contents_root.get_root()->find<caption_bar_control>(id_caption_bar);
 
 		json actor_options;
 
@@ -69,48 +105,20 @@ namespace corona
 		// here, we tell the page to subscribe to data changes
 		// and then we schedule our data change
 
-		_page.schedule_refresh(1, "calico", "get_state");
-
 		if (err.message.size()>0) {
-			cp_caption.set_status(err.success ? "Ok": "Error", err.message);
-			contents_root.apply_controls(_page.root.get());
-			_page.on_changed(0, "calico", "get_state", [app_show, calico_svc, application, st, app_menu](page_data_event pde) {
-				create_home_page(*(pde.pg), application, calico_svc, app_show, app_menu, st);
-				});
-
-			_page.on_changed(0, "calico", "credentials", [app_show, calico_svc, application, st, app_menu](page_data_event pde) {
-				create_home_page(*(pde.pg), application, calico_svc, app_show, app_menu, st);
-				});
-
+			caption_container->set_status(err.success ? "Ok": "Error", err.message);
 			return;
 		} else if (!actor_options.has_member("ActorOptions")) {
-			cp_caption.set_status("Data", "Waiting for data");
-			control_base *control_to_apply_to = _page.root.get();
-			contents_root.apply_controls(control_to_apply_to);
-			_page.on_changed(0, "calico", "get_state", [app_show, calico_svc, application, st, app_menu](page_data_event pde) {
-				create_home_page(*(pde.pg), application, calico_svc, app_show, app_menu, st);
-				});
-
-			_page.on_changed(0, "calico", "credentials", [app_show, calico_svc, application, st, app_menu](page_data_event pde) {
-				create_home_page(*(pde.pg), application, calico_svc, app_show, app_menu, st);
-				});
-
+			caption_container->set_status("Data", "Waiting for data");
 			return;
 		}
 
 		actor_options = actor_options["ActorOptions"];
 
-		cp_caption.set_status("Ready", "");
+		caption_container->set_status("Ready", "");
 
 		// then, below the caption bar, an overall contents pane
 		// which has a navigation column on the left, and, the tab view on the right
-
-		auto contents = contents_root.row_begin(
-			app_show->get_control_id("main_row", []() { return id_counter::next(); }),
-			[](row_layout& _settings) {
-				_settings.set_margin(10.0_px);
-				_settings.set_size(1.0_container, 1.0_remaining);
-			});
 
 		// then, we get the objects the user has selected.  this can be used to build a breadcrumb trail and show the user where they are at, navigationally.
 		json selected_objects = actor_options["SelectedObjects"];
@@ -125,18 +133,9 @@ namespace corona
 			Navigating back up through previous selections
 		*/
 
-		// show time.  First we build out where our high level stuff is.  So first we have a row that has a bunch of buttons on it, and that is our breadcrumb trail.
-		// these selected objects are, well, things that we have selected in this path to get where we are now.
-		int command_container_id = app_show->get_control_id("command_container", []() { return id_counter::next(); });
-
-		// note that, we are putting the breadcrumbs on a nav pane to the left.
-		auto command_container = contents.column_begin(command_container_id, [](column_layout& rl) {
-			rl.set_size(300.0_px, 1.0_container);
-			});
-
 		command_container.chaptertitle("Your location", [](chaptertitle_control& ct) {
 			ct.set_size(.95_container, 30.0_px);
-			});
+			}, id_location_title);
 
 		// and now we go through our selected objects....
 		for (int i = 0; i < selected_objects.size(); i++)
@@ -184,7 +183,7 @@ namespace corona
 
 		command_container.chaptertitle("Create New", [](chaptertitle_control& ct) {
 			ct.set_size(.95_container, 30.0_px);
-			});
+			}, id_create_title);
 
 		for (int i = 0; i < create_options.size(); i++)
 		{
@@ -266,11 +265,47 @@ namespace corona
 			json_parser jp;
 
 			ads.data = jp.create_array();
-			ads.data_to_control = [app_show](control_base* _parent, json& _array, int _index) {
-				auto json_object = _array[_index];
-				auto class_name = json_object["ClassName"];
-				auto factory = app_show->get_class_control_factory(class_name);
-				return factory(_parent, _array, _index);
+
+			ads.assets = [st, app_show](draw_control* _parent, rectangle _bounds) 
+			{
+				if (auto win = _parent->window.lock()) {
+					auto& ctxt = win->getContext();
+
+					textStyleRequest tsr = {};
+					tsr.fontName = st->ParagraphTextFont;
+					tsr.fontSize = 14;
+					tsr.name = "item_paragraph";
+					ctxt.setTextStyle(&tsr);
+
+					solidBrushRequest sbr;
+					sbr.active = true;
+					sbr.brushColor = toColor("#000000");
+					sbr.name = "item_foreground";
+					ctxt.setSolidColorBrush(&sbr);
+
+					sbr.brushColor = toColor("#FFFFFF");
+					sbr.name = "item_background";
+					ctxt.setSolidColorBrush(&sbr);
+
+					sbr.brushColor = toColor("#C0C0C0");
+					sbr.name = "item_border";
+					ctxt.setSolidColorBrush(&sbr);
+				}
+			};
+
+			ads.draw_item = [app_show, ads](draw_control* _parent, int _index, rectangle _bounds) {
+				auto json_object = ads.data[_index];
+				std::string class_name = json_object["ClassName"];
+				if (auto win = _parent->window.lock()) {
+					auto &ctxt = win->getContext();
+					ctxt.drawRectangle(&_bounds, "item_border", 1, nullptr);
+					ctxt.drawText(class_name, &_bounds, "item_paragraph", "item_foreground");
+				}
+			};
+
+			ads.size_item = [app_show](draw_control* _parent, int _index, rectangle _bounds) -> point {
+				point p(_bounds.w, 40.0, 0.0);
+				return p;
 				};
 
 			// so grouped, we go through the members
@@ -303,7 +338,7 @@ namespace corona
 
 			new_tab.create_tab_controls = [rule_description,ads](tab_pane& _pane, control_base* _cont) {
 				control_builder cb;
-				cb.column_view_begin(id_counter::next(), [ads](column_view_layout& _layout) {
+				cb.grid_view_begin(id_counter::next(), [ads](grid_view& _layout) {
 					_layout.set_item_source(ads);
 					_layout.set_size(1.0_container, 1.0_container);
 					});
@@ -313,23 +348,9 @@ namespace corona
 			tabs.push_back(new_tab);
 		}
 
-		int tab_view_id = app_show->get_control_id("actor_options_tab_view", []() { return id_counter::next(); });
+		tab_container->set_tabs(tabs);
 
-		contents.tab_view(tab_view_id, [tabs](tab_view_control& tv) {
-			tv.set_size(1.0_remaining, 1.0_container);
-			tv.set_tabs(tabs);
-			});
-
-		contents_root.apply_controls(_page.root.get());
-
-		_page.on_select([app_show, calico_svc, application, st, app_menu](page_select_event psevt) {
-			page& pg = *psevt.pg;
-			create_home_page(pg, application, calico_svc, app_show, app_menu, st);
-			});
-
-		_page.on_changed(0, "calico", "get_state", [app_show, calico_svc, application, st, app_menu](page_data_event pde) {
-			app_show->select_page("home");
-			});
+		app_show->layout();
 	}
 
 	void run_developer_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)

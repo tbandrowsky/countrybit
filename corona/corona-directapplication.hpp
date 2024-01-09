@@ -442,8 +442,14 @@ namespace corona
 		if (!pfactory) return cx;
 
 		auto win = pfactory->getWindow(hwndRoot).lock();
-		auto child = win->createChild(control_id, bounds.x, bounds.y, bounds.w, bounds.h);
-		return child;
+		if (win) {
+			auto child = win->createChild(control_id, bounds.x, bounds.y, bounds.w, bounds.h);
+			return child;
+		}
+		else {
+			std::weak_ptr<direct2dChildWindow> child;
+			return child;
+		}
 	}
 
 	LRESULT CALLBACK directApplicationWin32::windowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)

@@ -15,7 +15,7 @@ namespace corona
 	class absolute_layout;
 	class frame_layout;
 	class row_view_layout;
-	class column_view_layout;
+	class grid_view;
 	class absolute_view_layout;
 	class single_column_form;
 	class double_column_form;
@@ -240,6 +240,7 @@ namespace corona
 		friend class absolute_layout;
 		friend class frame_layout;
 		friend class tab_view_control;
+		friend class grid_view;
 
 		int						id;
 
@@ -384,6 +385,27 @@ namespace corona
 		control_base* find(int _id);
 		control_base* find(point p);
 		control_base* get(control_base* _root, int _id);
+
+		template <typename control_type> std::shared_ptr<control_type> find_by_id(int _id)
+		{
+			std::shared_ptr<control_type> ptr;
+
+			control_base* root = (control_base*)this;
+			for (auto cntrl : children) {
+				if (cntrl->id == _id)
+				{
+					ptr = std::dynamic_pointer_cast<control_type>(cntrl);
+				}
+				else
+				{
+					ptr = cntrl->find_by_id<control_type>(_id);
+				}
+				if (ptr) {
+					return ptr;
+				}
+			}
+			return ptr;
+		}
 
 		virtual double get_font_size() { return 12; }
 
@@ -878,13 +900,17 @@ namespace corona
 		//std::cout << "resize control_base:" << ti << " " << bounds.x << "," << bounds.y << " x " << bounds.w << " " << bounds.h << std::endl;
 	}
 
-	using control_json_mapper = std::function<std::shared_ptr<control_base>(control_base *_parent, json& _array, int _index)>;
+	using cell_json_size = std::function<point(draw_control* _parent, int _index, rectangle _bounds)>;
+	using cell_json_draw = std::function<void(draw_control* _parent, int _index, rectangle _bounds)>;
+	using cell_json_assets = std::function<void(draw_control* _parent, rectangle _bounds)>;
 
 	class array_data_source
 	{
 	public:
-		json		data;
-		control_json_mapper data_to_control;
+		json		   data;
+		cell_json_assets	assets;
+		cell_json_draw		draw_item;
+		cell_json_size		size_item;
 	};
 
 }

@@ -106,9 +106,22 @@ namespace corona
 			return root.get();
 		}
 
+		template <typename T> inline T* find(int _id) {
+			return dynamic_cast<T *>(get_root()->find(_id));
+		}
+
+		std::shared_ptr<container_control> find_child(int _id) {
+			return get_root()->find_by_id<container_control>(_id);
+		}
+
 		inline control_base* find(int _id) {
 			return get_root()->find(_id);
 		}
+
+		template <typename T> inline T* find_container(int _id) {
+			return dynamic_cast<T*>(get_root()->find(_id));
+		}
+
 
 		control_base* operator[](int _id)
 		{
@@ -181,6 +194,12 @@ namespace corona
 		void subscribe(presentation_base* _presentation)
 		{
 			root->on_subscribe(_presentation, this);
+		}
+
+		control_builder edit(int id)
+		{
+			std::shared_ptr<container_control> ct = root->find_by_id<container_control>(id);
+			return control_builder(ct);
 		}
 
 		control_builder row_begin(int id = id_counter::next())
@@ -427,6 +446,14 @@ namespace corona
 			scope_lock locker(binding_lock);
 			bool handled = false;
 			if (key_up_bindings.contains(_control_id)) {
+				auto sc = key_up_bindings[_control_id]->subscribed_item_id;
+				auto fnd = root->find_by_id<control_base>(sc);
+				if (fnd) {
+					evt.control = fnd.get();
+				}
+				else {
+					evt.control = nullptr;
+				}
 				key_up_bindings[_control_id]->on_key_up(evt);
 				handled = true;
 			}
@@ -437,6 +464,14 @@ namespace corona
 		{
 			scope_lock locker(binding_lock);
 			if (key_down_bindings.contains(_control_id)) {
+				auto sc = key_down_bindings[_control_id]->subscribed_item_id;
+				auto fnd = root->find_by_id<control_base>(sc);
+				if (fnd) {
+					evt.control = fnd.get();
+				}
+				else {
+					evt.control = nullptr;
+				}
 				key_down_bindings[_control_id]->on_key_down(evt);
 			}
 		}
@@ -445,6 +480,14 @@ namespace corona
 		{
 			scope_lock locker(binding_lock);
 			if (key_press_bindings.contains(_control_id)) {
+				auto sc = key_press_bindings[_control_id]->subscribed_item_id;
+				auto fnd = root->find_by_id<control_base>(sc);
+				if (fnd) {
+					evt.control = fnd.get();
+				}
+				else {
+					evt.control = nullptr;
+				}
 				key_press_bindings[_control_id]->on_key_press(evt);
 			}
 		}

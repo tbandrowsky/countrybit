@@ -23,10 +23,22 @@ namespace corona
 		{
 			auto cp = root.get();
 			std::shared_ptr<control_type> temp;
-			temp = std::make_shared<control_type>(cp, _id);
-			if (temp) {
-				root->children.push_back(temp);
-//				std::cout << " " << typeid(*this).name() << " ->create:" << typeid(control_type).name() << std::endl;
+			auto found = std::find_if(root->children.begin(), root->children.end(), [_id](auto& ch) {
+				return ch->id == _id;
+				});
+			if (found != std::end(root->children)) {
+				temp = std::dynamic_pointer_cast<control_type>(*found);
+				if (temp == nullptr) {
+					temp = std::make_shared<control_type>(cp, _id);
+					*found = temp;
+				}
+			}
+			else 
+			{
+				temp = std::make_shared<control_type>(cp, _id);
+				if (temp) {
+					root->children.push_back(temp);
+				}
 			}
 			return temp;
 		}
@@ -99,6 +111,13 @@ namespace corona
 		{
 			parent = nullptr;
 			root = std::dynamic_pointer_cast<container_control>(_root);
+		}
+
+		control_builder(std::shared_ptr<container_control> _root, int _id )
+		{
+			parent = nullptr;
+			_root->find(_id);
+			root = _root;
 		}
 
 		control_builder(control_builder* _parent, std::shared_ptr<container_control>& _root)
@@ -226,9 +245,9 @@ namespace corona
 			return control_builder(this, cc);
 		}
 
-		control_builder column_view_begin(int id, std::function<void(column_view_layout&)> _settings)
+		control_builder grid_view_begin(int id, std::function<void(grid_view&)> _settings)
 		{
-			auto tc = create<column_view_layout>(id);
+			auto tc = create<grid_view>(id);
 			apply_item_sizes(tc);
 			if (_settings) {
 				_settings(*tc);
@@ -817,7 +836,7 @@ namespace corona
 			{
 				auto dat = tab_panes[i];
 
-				if (!i)
+				if (!i && active_id <= 0)
 				{
 					active_id = dat.id;
 				}
@@ -863,6 +882,7 @@ namespace corona
 			current_presentation = nullptr;
 			current_page = nullptr;
 			set_border_color("#C0C0C0");
+			active_id = 0;
 		}
 
 		tab_view_control(const tab_view_control& _src)
@@ -876,6 +896,7 @@ namespace corona
 			on_create = _src.on_create;
 			current_presentation = nullptr;
 			current_page = nullptr;
+			active_id = 0;
 
 			set_border_color("#C0C0C0");
 		}
@@ -954,18 +975,18 @@ namespace corona
 			return tv;
 		}
 
-
 		void set_tabs(std::vector<tab_pane> _new_panes)
 		{
 			tab_panes = _new_panes;
-			init();		
-			default_tab_selected();
+			init();
+			tab_selected(active_id);
 		}
 
 		void tab_selected(std::vector<tab_pane>::iterator tbi)
 		{
 			if (tbi != tab_panes.end())
 			{
+				active_id = tbi->id;
 				contents_generator<tab_pane*> cg;
 				// set contents will clone this for us.
 				cg.data = &*tbi;
@@ -978,9 +999,12 @@ namespace corona
 					content_frame->on_subscribe(current_presentation, current_page);
 				}
 			}
+			else if (tab_panes.size()>0) {
+				tab_selected(tab_panes.begin());
+			}
 		}
 
-		void tab_selected(tab_button_control& _tab)
+		void tab_selected(int _active_id)
 		{
 			auto tbi = std::find_if(tab_panes.begin(), tab_panes.end(), [this](tab_pane& _tb) {
 				return _tb.id == this->active_id;
@@ -988,9 +1012,11 @@ namespace corona
 			tab_selected(tbi);
 		}
 
-		void default_tab_selected()
+		void tab_selected(tab_button_control& _tab)
 		{
-			auto tbi = tab_panes.begin();
+			auto tbi = std::find_if(tab_panes.begin(), tab_panes.end(), [this](tab_pane& _tb) {
+				return _tb.id == this->active_id;
+				});
 			tab_selected(tbi);
 		}
 
@@ -1216,7 +1242,7 @@ namespace corona
 					.edit(idc_search_text)
 					.push_button(idc_search_command, "Go")
 					.end()
-					.column_view_begin(idc_search_results, [](column_view_layout& _cvl) {
+					.grid_view_begin(idc_search_results, [](grid_view& _cvl) {
 					_cvl.set_size(1.0_container, 1.0_remaining);
 						})
 					.end();
@@ -1254,7 +1280,7 @@ namespace corona
 
 		void set_item_source(array_data_source _item_source)
 		{
-			auto& cview = control_base::find<column_view_layout>(idc_search_results);
+			auto& cview = control_base::find<grid_view>(idc_search_results);
 			cview.set_item_source(_item_source);
 		}
 
