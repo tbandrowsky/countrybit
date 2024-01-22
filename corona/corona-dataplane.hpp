@@ -487,22 +487,12 @@ namespace corona
 		{
 			scope_lock locker(lake_lock);
 
-
 			std::shared_ptr<data_api> dapi;
 
 			if (apis.contains(_source_name))
 			{
 				dapi = get_api(_source_name);
-				dapi->put_function(_set_name, 
-					[](json _params, data_lake *_lake, data_function* _set)-> call_status {
-						call_status dfs;
-						return dfs;
-					},
-					[](json _params, data_lake* _lake, data_function* _set)->int {
-						return 0;
-					},
-					3600					
-					);
+				dapi->put_function(_set_name, _data);
 			}
 		}
 

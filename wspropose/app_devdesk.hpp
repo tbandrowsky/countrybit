@@ -553,7 +553,7 @@ namespace corona
 
 		// create the data store and bind the calico client to it.
 		std::shared_ptr<data_lake> app_data = std::make_shared<data_lake>();
-		std::shared_ptr<calico_client> calico_svc = std::make_shared<calico_client>(app_data, "localhost", 7277);
+		std::shared_ptr<calico_client> calico_svc = std::make_shared<calico_client>(app_data, "localhost", 7277, "CountrybitRevolution", application->getUserName());
 
 		// create the presentation - this holds the data of what is on screen, for various pages.
 		std::shared_ptr<presentation> application_presentation = std::make_shared<presentation>(application);

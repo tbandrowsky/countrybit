@@ -21,12 +21,12 @@ namespace corona
 			
 		}
 
-		calico_client(std::shared_ptr<data_lake> _app_lake, std::string _host, int _port)
+		calico_client(std::shared_ptr<data_lake> _app_lake, std::string _host, int _port, std::string _model_name, std::string _user_name )
 		{
 			app_lake = _app_lake;
 			host = _host;
 			port = _port;
-			bind(_app_lake);
+			bind(_app_lake, _model_name, _user_name);
 		}
 
 		call_status login(std::string _model, std::string _user_name, json& login_json)
@@ -473,16 +473,14 @@ namespace corona
 
 		void bind(std::shared_ptr<data_lake> shared_plane, std::string model_name, std::string user_name)
 		{
-			std::string user_name;
-
 			json_parser jp;
 			json user_model = jp.create_object();
+
+			shared_plane->put_api("calico", "calico api", "");
 
 			user_model.put_member("ModelName", model_name );
 			user_model.put_member("UserName", user_name);
 			shared_plane->put_function("calico", "context", user_model); 
-
-			shared_plane->put_api("calico", "calico api", "");
 
 			on_get_credentials = [](json _params, data_lake* _lake, data_function* _set) {
 				_lake->call_function("calico", "fields");
