@@ -27,6 +27,14 @@ namespace corona {
 		control_base* control;
 	};
 
+	class page_logged_event : public page_event
+	{
+	public:
+		int destination_control_id;
+		data_lake* lake;
+		control_base* control;
+	};
+
 	class page_select_event : public page_event
 	{
 	public:
@@ -223,6 +231,13 @@ namespace corona {
 		std::function< void(page_data_event) > on_changed;
 	};
 
+	class page_logged_event_binding
+	{
+	public:
+		int subscribed_item_id;
+		std::function< void(page_logged_event) > on_changed;
+	};
+
 	class page_refresh_data_binding
 	{
 	public:
@@ -274,6 +289,7 @@ namespace corona {
 		virtual void on_load(std::function< void(page_load_event) >) = 0;
 		virtual void on_unload(std::function< void(page_unload_event) >) = 0;
 		virtual void on_changed(int _control_id, std::string _source_name, std::string _function_name, std::function< void(page_data_event) >) = 0;
+		virtual void on_logged(int _control_id, std::function< void(page_logged_event) > evt) = 0;
 		virtual void schedule_refresh(time_t _period_seconds, std::string _source_name, std::string _function_name) = 0;
 
 	};

@@ -42,13 +42,7 @@ namespace corona
 			data = jp.create_object();
 		}
 
-		void run_share()
-		{
-			if (share) {
-				share(data, nullptr, this);
-			}
-		}
-
+		void run_share();
 		int get(data_lake* _lake, json _params);
 		void get(data_lake* _lake);
 
@@ -153,6 +147,8 @@ namespace corona
 		std::map<std::string, std::shared_ptr<data_function>> functions;
 
 	public:
+
+		data_lake* parent;
 
 		std::string name;
 		std::string description;
@@ -279,15 +275,14 @@ namespace corona
 
 	class data_lake
 	{
-		lockable api_lock;
+		lockable lake_lock, log_lock;
 
 		std::map<std::string, std::shared_ptr<data_api>> apis;
-		std::map<std::string, int> control_ids;
+		std::vector<gui_method> logevent_bindings;
 		json ds_log;
 
 	public:
 
-		std::vector<gui_method> on_logged;
 
 		data_lake()
 		{
@@ -296,9 +291,14 @@ namespace corona
 
 		void logged(json _params, data_lake* _api, data_function* _set)
 		{
-			for (auto ol : on_logged) {
+			for (auto ol : logevent_bindings) {
 				ol(_params, _api, _set);
 			}
+		}
+
+		void on_logged(gui_method _method)
+		{
+			logevent_bindings.push_back(_method);
 		}
 
 		void on_changed(std::string _source, std::string _function, gui_method _method)
@@ -318,7 +318,7 @@ namespace corona
 
 		std::shared_ptr<data_api> get_api(std::string _source)
 		{
-			scope_lock locker(api_lock);
+			scope_lock locker(lake_lock);
 			std::shared_ptr<data_api> source;
 
 			if (apis.contains(_source))
@@ -408,6 +408,19 @@ namespace corona
 			return busy;
 		}
 
+		call_status get_status(std::string _source, std::string _name)
+		{
+			call_status status;
+
+			std::shared_ptr<data_function> dsp = get_function(_source, _name);
+
+			if (dsp) {
+				status = dsp->status;
+			}
+
+			return status;
+		}
+
 		json get_result(std::string _source, std::string _name)
 		{
 			json set;
@@ -426,7 +439,7 @@ namespace corona
 			std::string _icon_path
 		)
 		{
-			scope_lock locker(api_lock);
+			scope_lock locker(lake_lock);
 
 			std::shared_ptr<data_api> source;
 
@@ -439,6 +452,7 @@ namespace corona
 				source = std::make_shared<data_api>();
 			}
 
+			source->parent = this;
 			source->name = _name;
 			source->description = _description;
 			source->icon_path = _icon_path;
@@ -453,7 +467,8 @@ namespace corona
 			int _cache_seconds
 			)
 		{
-			scope_lock locker(api_lock);
+			scope_lock locker(lake_lock);
+
 
 			std::shared_ptr<data_api> dapi;
 
@@ -470,7 +485,8 @@ namespace corona
 			json _data
 		)
 		{
-			scope_lock locker(api_lock);
+			scope_lock locker(lake_lock);
+
 
 			std::shared_ptr<data_api> dapi;
 
@@ -496,47 +512,42 @@ namespace corona
 			ds_log = jp.create_array();
 		}
 
-		void log_information(std::string _function, std::string _message)
+		void log_information(std::string _source, std::string _function, std::string _status, std::string _message)
 		{
-			scope_lock lock_me(api_lock);
+			scope_lock lock_me(log_lock);
 			json_parser jp;
 
 			auto ds_object = jp.create_object();
+			ds_object.put_member("source", _source);
 			ds_object.put_member("function", _function);
-			ds_object.put_member("status", "ok");
+			ds_object.put_member("status", _status);
 			ds_object.put_member("message", _message);
 			ds_log.put_element_object(-1, ds_object);
 			logged(ds_object, this, nullptr);
 		}
 
-		void log_success(std::string _function, double _time_seconds, std::string _message, std::string _request, std::string _response)
+		void log_status(std::string _source, std::string _function, call_status _status)
 		{
-			scope_lock lock_me(api_lock);
+			scope_lock lock_me(log_lock);
 			json_parser jp;
 
 			auto ds_object = jp.create_object();
-			ds_object.put_member("function", _function);
-			ds_object.put_member("status", "ok");
-			ds_object.put_member("message", _message);
-			ds_object.put_member("request", _request);
-			ds_object.put_member("response", _response);
-			ds_object.put_member("time_seconds", _time_seconds);
-			ds_log.put_element_object(-1, ds_object);
-			logged(ds_object, this, nullptr);
-		}
-
-		void log_error(std::string _function, double _time_seconds, std::string _message, std::string _request, std::string _response)
-		{
-			scope_lock lock_me(api_lock);
-			json_parser jp;
-
-			auto ds_object = jp.create_object();
+			ds_object.put_member("source", _source);
 			ds_object.put_member("function", _function);
 			ds_object.put_member("status", "error");
-			ds_object.put_member("message", _message);
-			ds_object.put_member("request", _request);
-			ds_object.put_member("response", _response);
-			ds_object.put_member("time_seconds", _time_seconds);
+			ds_object.put_member("message", _status.message);
+			ds_object.put_member("method", _status.request.http_method);
+			ds_object.put_member("host", _status.request.host);
+			ds_object.put_member("path", _status.request.path);
+			ds_object.put_member("headers", _status.request.headers);
+			if (_status.request.body.get_ptr()) {
+				std::string body = _status.request.body.get_ptr();
+				ds_object.put_member("request_body", body);
+			}
+			if (_status.response.response_body.get_ptr()) {
+				std::string body = _status.response.response_body.get_ptr();
+				ds_object.put_member("response_body", body);
+			}
 			ds_log.put_element_object(-1, ds_object);
 			logged(ds_object, this, nullptr);
 		}
@@ -566,15 +577,14 @@ namespace corona
 				last_refresh = current_time;
 				busy = true;
 				status = fetch(_params, _lake, this);
-
+				time(&time_after);
+				time_t exec_seconds = time_after - current_time;
+				status.call_time = exec_seconds;
+				_lake->log_status(api->name, name, status);
 				for (auto cn : on_changed) {
 					cn(parameters, _lake, this);
 				}
 
-				time(&time_after);
-				time_t exec_seconds = time_after - current_time;
-
-				_lake->log_success(name, exec_seconds, "Ok", "", "");
 				busy = false;
 			}
 
@@ -582,13 +592,12 @@ namespace corona
 		}
 		catch (std::logic_error exc)
 		{
-			data.put_member_object("status", jobj);
-			_lake->log_error(name, 0.0, exc.what(), "", "");
+			_lake->log_information(api->name, name, "Error", exc.what());
+			return 0;
 		}
 		catch (std::exception exc)
 		{
-			data.put_member_object("status", jobj);
-			_lake->log_error(name, 0.0, exc.what(), "", "");
+			_lake->log_information(api->name, name, "Error", exc.what());
 			return 0;
 		}
 		return 1;
@@ -609,36 +618,32 @@ namespace corona
 			if (seconds >= cache_seconds) {
 				last_refresh = current_time;
 				status = fetch(data, _lake, this);
+				time(&time_after);
+				time_t exec_seconds = time_after - current_time;
+				status.call_time = exec_seconds;
+				_lake->log_status(api->name, name, status);
 				for (auto cn : on_changed) {
 					cn(parameters, _lake, this);
 				}
 			}
-
-			time(&time_after);
-			time_t exec_seconds = time_after - current_time;
-
-			jobj.put_member("success", true);
-			jobj.put_member("message", "Ok");
-			data.put_member_object("status", jobj);
-			_lake->log_success(name, exec_seconds, "Ok", "", "");
 			busy = false;
 		}
 		catch (std::logic_error exc)
 		{
-			jobj.put_member("success", false);
-			jobj.put_member("message", exc.what() ? exc.what() : "logic error.");
-			data.put_member_object("status", jobj);
-			_lake->log_error(name, 0, exc.what(), "", "");
+			_lake->log_information(api->name, name, "Error", exc.what());
 		}
 		catch (std::exception exc)
 		{
-			jobj.put_member("success", false);
-			jobj.put_member("message", exc.what() ? exc.what() : "error.");
-			data.put_member_object("status", jobj);
-			_lake->log_error(name, 0, exc.what(), "", "");
+			_lake->log_information(api->name, name, "Error", exc.what());
 		}
 	}
 
+	void data_function::run_share()
+	{
+		if (share) {
+			share(data, api->parent, this);
+		}
+	}
 }
 
 #endif

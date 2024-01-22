@@ -13,6 +13,7 @@ namespace corona
 	class status_bar_control;
 	class form_single_column_control;
 	class form_double_column_control;
+	class form_view_control;
 
 	class control_builder
 	{
@@ -763,7 +764,206 @@ namespace corona
 		control_builder& status_bar(int _id, std::function<void(status_bar_control&)> _settings = nullptr);
 		control_builder& form_single_column(int _id, std::function<void(form_single_column_control&)> _settings = nullptr);
 		control_builder& form_double_column(int _id, std::function<void(form_double_column_control&)> _settings = nullptr);
+		control_builder& form_view(int _id, std::function<void(form_view_control&)> _settings = nullptr);
+	};
 
+	class item_field
+	{
+	public:
+		int field_id;
+		std::string json_member_name;
+		std::string field_label;
+		std::string field_type;
+		std::string field_tooltip;
+		bool read_only;
+		json field_options;
+	};
+
+	class item_data_source
+	{
+	public:
+		std::string				name;
+		std::vector<item_field> fields;
+		json					data;
+	};
+
+	class form_view_control : public row_layout
+	{
+		item_data_source ids;
+		presentation_base* current_presentation;
+		page_base* current_page;
+
+	public:
+
+		int fields_per_column;
+
+		form_view_control()
+		{
+			fields_per_column = 4;
+		}
+
+		form_view_control(const form_view_control& _src) : row_layout(_src)
+		{
+			ids = _src.ids;
+			current_presentation = _src.current_presentation;
+			current_page = _src.current_page;
+			fields_per_column = _src.fields_per_column;
+		}
+
+		form_view_control(container_control_base* _parent, int _id) : row_layout(_parent, _id)
+		{
+			current_presentation = nullptr;
+			current_page = nullptr;
+			fields_per_column = 4;
+		}
+
+		virtual ~form_view_control()
+		{
+		}
+
+		void set_data(item_data_source _ids)
+		{
+			children.clear();
+
+			control_builder cb, field_column;
+
+			ids = _ids;
+
+			int field_counter = 0;
+
+			int column_count = _ids.fields.size() / fields_per_column;
+			if (_ids.fields.size() % fields_per_column > 0 || column_count == 0) {
+				column_count++;
+			}
+
+			double width = 1.0 / column_count;
+			if (width >= .5) width = 1.0 / 3.0;
+
+			field_column = cb.column_begin(id_counter::next(), [width](column_layout& _cl) {
+				_cl.set_size(measure(width, measure_units::percent_container), 1.0_container);
+				});
+
+			for (auto &ctrl : ids.fields) 
+			{
+				if (ctrl.field_type == "edit_double")
+				{
+					field_column.edit_field(ctrl.field_id, ctrl.field_label, ctrl.field_tooltip, [ctrl, this](edit_control& _settings) {
+						if (ids.data.has_member(ctrl.json_member_name)) {
+							std::string _existing = ids.data[ctrl.json_member_name];
+							_settings.set_text(_existing);
+						}
+						});
+				}
+				else if (ctrl.field_type == "edit_integer")
+				{
+					field_column.edit_field(ctrl.field_id, ctrl.field_label, ctrl.field_tooltip, [ctrl, this](edit_control& _settings) {
+						if (ids.data.has_member(ctrl.json_member_name)) {
+							std::string _existing = ids.data[ctrl.json_member_name];
+							_settings.set_text(_existing);
+						}
+						});
+				}
+				else if (ctrl.field_type == "edit_currency")
+				{
+					field_column.edit_field(ctrl.field_id, ctrl.field_label, ctrl.field_tooltip, [ctrl, this](edit_control& _settings) {
+						if (ids.data.has_member(ctrl.json_member_name)) {
+							std::string _existing = ids.data[ctrl.json_member_name];
+							_settings.set_text(_existing);
+						}
+						});
+				}
+				else if (ctrl.field_type == "richedit_string")
+				{
+					field_column.edit_field(ctrl.field_id, ctrl.field_label, ctrl.field_tooltip, [ctrl, this](edit_control& _settings) {
+						if (ids.data.has_member(ctrl.json_member_name)) {
+							std::string _existing = ids.data[ctrl.json_member_name];
+							_settings.set_text(_existing);
+						}
+						});
+				}
+				else if (ctrl.field_type == "edit_string")
+				{
+					field_column.edit_field(ctrl.field_id, ctrl.field_label, ctrl.field_tooltip, [ctrl, this](edit_control& _settings) {
+						if (ids.data.has_member(ctrl.json_member_name)) {
+							std::string _existing = ids.data[ctrl.json_member_name];
+							_settings.set_text(_existing);
+						}
+						});
+				}
+				else if (ctrl.field_type == "listbox_field") 
+				{
+					field_column.listbox_field(ctrl.field_id, ctrl.field_label, ctrl.field_tooltip, [ctrl, this](listbox_control& _settings) {
+						if (ids.data.has_member(ctrl.json_member_name)) {
+							std::string _existing = ids.data[ctrl.json_member_name];
+						}
+						});
+
+				}
+				else if (ctrl.field_type == "combobox_field")
+				{
+					field_column.combobox_field(ctrl.field_id, ctrl.field_label, ctrl.field_tooltip, [ctrl, this](combobox_control& _settings) {
+						if (ids.data.has_member(ctrl.json_member_name)) {
+							std::string _existing = ids.data[ctrl.json_member_name];
+						}
+
+						});
+
+				}
+				else if (ctrl.field_type == "comboboxex_field")
+				{
+					field_column.comboboxex_field(ctrl.field_id, ctrl.field_label, ctrl.field_tooltip, [ctrl, this](comboboxex_control& _settings) {
+						if (ids.data.has_member(ctrl.json_member_name)) {
+							std::string _existing = ids.data[ctrl.json_member_name];
+						}
+
+						});
+
+				}
+				else if (ctrl.field_type == "datetimepicker_field")
+				{
+					field_column.datetimepicker_field(ctrl.field_id, ctrl.field_label, ctrl.field_tooltip, [ctrl, this](datetimepicker_control& _settings) {
+						if (ids.data.has_member(ctrl.json_member_name)) {
+							std::string _existing = ids.data[ctrl.json_member_name];
+						}
+
+						});
+				}
+				else if (ctrl.field_type == "richeedit_field")
+				{
+					field_column.richedit_field(ctrl.field_id, ctrl.field_label, ctrl.field_tooltip, [ctrl, this](richedit_control& _settings) {
+						if (ids.data.has_member(ctrl.json_member_name)) {
+							std::string _existing = ids.data[ctrl.json_member_name];
+						}
+
+						});
+				}
+				else 
+				{
+					field_column.edit_field(ctrl.field_id, ctrl.field_label, ctrl.field_tooltip, [ctrl, this](edit_control& _settings) {
+						if (ids.data.has_member(ctrl.json_member_name)) {
+							std::string _existing = ids.data[ctrl.json_member_name];
+							_settings.set_text(_existing);
+						}
+						});
+				}
+
+				field_counter++;
+				if (field_counter >= fields_per_column) {
+					field_column = cb.column_begin(id_counter::next(), [width](column_layout& _cl) {
+						_cl.set_size(measure(width, measure_units::percent_container), 1.0_container);
+						});
+				}
+			}
+
+			cb.apply_controls(this);
+		}
+
+		virtual void on_subscribe(presentation_base* _presentation, page_base* _page)
+		{
+			for (auto child : children) {
+				child->on_subscribe(_presentation, _page);
+			}
+		}
 	};
 
 	class tab_pane
@@ -1476,13 +1676,19 @@ namespace corona
 
 		virtual void on_subscribe(presentation_base* _presentation, page_base* _page)
 		{
-			_page->on_changed(id, "calico", "*", [](page_data_event evt)
+			auto queue = global_job_queue.get();
+			_page->on_logged(id, [queue](page_logged_event evt)
 				{
-					auto& stat = evt.changed_fn->status;
-					if (evt.control) 
-					{
-						auto control = (caption_bar_control*)evt.control;
-						control->set_status(evt.changed_fn->name, stat.message);
+					auto& lg = evt.lake->get_log();
+					caption_bar_control* cbc = dynamic_cast<caption_bar_control*>(evt.control);
+					if (cbc && lg.size()) {
+						auto last = lg.get_last_element();
+
+						std::string src = last["source"];
+						std::string fn = last["function"];
+						std::string status = last["status"];
+						std::string message = last["response_body"];
+						cbc->set_status(src + "." + fn, status + " " + message);
 					}
 				}
 			);
@@ -1721,6 +1927,17 @@ namespace corona
 		}
 		return *this;
 	}
+
+	control_builder& control_builder::form_view(int _id, std::function<void(form_view_control&)> _settings)
+	{
+		auto tc = create<form_view_control>(_id);
+		apply_item_sizes(tc);
+		if (_settings) {
+			_settings(*tc);
+		}
+		return *this;
+	}
+
 }
 
 #endif

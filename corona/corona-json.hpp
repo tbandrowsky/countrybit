@@ -52,7 +52,7 @@ namespace corona
 		}
 		virtual std::string to_string()
 		{
-			return std::to_string(value);
+			return std::format("{}", value);
 		}
 		virtual std::shared_ptr<json_value> clone()
 		{
@@ -146,8 +146,13 @@ namespace corona
 		{
 			auto t = std::make_shared<json_object>();
 			for (auto member : members) {
-				auto c = member.second->clone();
-				t->members[member.first] = c;
+				if (member.second) {
+					auto c = member.second->clone();
+					t->members[member.first] = c;
+				}
+				else {
+					t->members[member.first] = nullptr;
+				}
 			}
 			return t;
 		}
@@ -226,9 +231,21 @@ namespace corona
 			return (bool)object_impl;
 		}
 
-		operator bool() const
+		bool is_empty() const
 		{
 			return value_base != nullptr;
+		}
+
+		operator bool() const
+		{
+			bool value = false;
+			if (is_double()) {
+				value = double_impl->value != 0.0;
+			}
+			else if (is_string()) {
+				value = string_impl->value == "true";
+			}
+			return value;
 		}
 
 		double& get_double()  const
@@ -249,6 +266,16 @@ namespace corona
 				return std::stod(string_impl->value);
 			else
 				return 0.0;
+		}
+
+		operator int64_t() const
+		{
+			if (double_impl)
+				return double_impl->value;
+			else if (string_impl)
+				return std::stod(string_impl->value);
+			else
+				return 0;
 		}
 
 		operator std::string() const
@@ -579,6 +606,22 @@ namespace corona
 				_transform(element);
 			}
 			return *this;
+		}
+
+		bool any(std::function<bool(json& _item)> _where_clause)
+		{
+			if (!array_impl) {
+				throw std::logic_error("Not an array");
+			}
+			json new_array(std::make_shared<json_array>());
+			for (int i = 0; i < size(); i++)
+			{
+				auto element = get_element(i);
+				if (_where_clause(element)) {
+					return true;
+				}
+			}
+			return false;
 		}
 
 		json filter(std::function<bool(json& _item)> _where_clause)

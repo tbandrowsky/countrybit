@@ -32,13 +32,16 @@ namespace corona
 		int id_caption_bar = app_show->get_control_id("caption_bar", []() { return id_counter::next(); });
 		int id_main_row = app_show->get_control_id("main_row", []() { return id_counter::next(); });
 		int id_command_container = app_show->get_control_id("command_container", []() { return id_counter::next(); });
+		int id_current_container = app_show->get_control_id("current_container", []() { return id_counter::next(); });
 		int id_location_title = app_show->get_control_id("location_title", []() { return id_counter::next(); });
 		int id_create_title = app_show->get_control_id("create_title", []() { return id_counter::next(); });
+		int id_form_view = app_show->get_control_id("actor_options_form_view", []() { return id_counter::next(); });
 		int id_tab_view = app_show->get_control_id("actor_options_tab_view", []() { return id_counter::next(); });
 
 		control_builder command_container;
 		caption_bar_control* caption_container;
 		tab_view_control* tab_container;
+		form_view_control* form_view;
 		// then we must be a new page
 
 		if (_page.get_root()->children.size() == 0) 
@@ -52,8 +55,8 @@ namespace corona
 					_cb.menu_button_id = IDC_SYSTEM_MENU;
 					_cb.image_control_id = IDC_COMPANY_LOGO;
 					_cb.image_file = "assets\\small_logo.png";
-					_cb.corporate_name = "WOODRUFF SAWYER";
-					_cb.title_name = "PROPERTY AND CASUALTY";
+					_cb.corporate_name = "COUNTRYBIT";
+					_cb.title_name = "REVOLUTION";
 					_cb.code_detail_id = IDC_STATUS_DETAIL;
 					_cb.code_status_id = IDC_STATUS_MESSAGE;
 				}
@@ -70,52 +73,66 @@ namespace corona
 			auto command_container = contents.column_begin(id_command_container, [](column_layout& rl) {
 				rl.set_size(300.0_px, 1.0_container);
 				});
-			
-			contents.tab_view(id_tab_view, [](tab_view_control& tv) {
+
+			auto current_container = contents.column_begin(id_current_container, [](column_layout& rl) {
+				rl.set_size(1.0_remaining, 1.0_container);
+				});
+
+			current_container.form_view(id_form_view, [](form_view_control& _fv)
+				{
+					item_data_source ids;
+					_fv.fields_per_column = 3;
+					_fv.set_size(1.0_container, .15_container);
+					_fv.set_data(ids);
+				});
+
+			current_container.tab_view(id_tab_view, [](tab_view_control& tv) {
 				tv.set_size(1.0_remaining, 1.0_container);
 				});
 
-			_page.schedule_refresh(1, "calico", "get_state");
+			_page.schedule_refresh(10, "calico", "get_ui");
 
 			_page.on_select([app_show, calico_svc, application, st, app_menu](page_select_event psevt) {
 				page& pg = *psevt.pg;
 				create_home_page(pg, application, calico_svc, app_show, app_menu, st);
 				});
 
-			_page.on_changed(0, "calico", "get_state", [app_show, calico_svc, application, st, app_menu](page_data_event pde) {
+			_page.on_changed(0, "calico", "get_ui", [app_show, calico_svc, application, st, app_menu](page_data_event pde) {
 				app_show->select_page("home");
 				});
 
 			contents_root.apply_controls(_page.root.get());
-
 		}
 
 		command_container = _page.edit(id_command_container);
 		caption_container = _page.find_container<caption_bar_control>(id_caption_bar);
 		tab_container = _page.find_container<tab_view_control>(id_tab_view);
+	
 		// first we put a caption bar in our standard page
+
+		json general_options;
 
 		json actor_options;
 
-		auto base_ds = app_show->data->get_function("calico", "get_state");
-		actor_options = base_ds->data;
+		auto base_ds = app_show->data->get_function("calico", "get_ui");
+		general_options = base_ds->data;
 
 		auto err = base_ds->status;
 
 		// here, we tell the page to subscribe to data changes
 		// and then we schedule our data change
 
-		if (err.message.size()>0) {
-			caption_container->set_status(err.success ? "Ok": "Error", err.message);
+		if (!err.success) 
+		{
 			return;
-		} else if (!actor_options.has_member("ActorOptions")) {
-			caption_container->set_status("Data", "Waiting for data");
+		} 
+		else if (!general_options.has_member("current_state")) {
 			return;
 		}
 
-		actor_options = actor_options["ActorOptions"];
+		actor_options = general_options["current_state"];
 
-		caption_container->set_status("Ready", "");
+		actor_options = actor_options["ActorOptions"];
 
 		// then, below the caption bar, an overall contents pane
 		// which has a navigation column on the left, and, the tab view on the right
@@ -137,6 +154,10 @@ namespace corona
 			ct.set_size(.95_container, 30.0_px);
 			}, id_location_title);
 
+		int64_t current_edited_object_id = -1;
+		std::string current_edited_class_name;
+		std::string current_edited_class_description;
+
 		// and now we go through our selected objects....
 		for (int i = 0; i < selected_objects.size(); i++)
 		{
@@ -148,6 +169,13 @@ namespace corona
 			int64_t class_id = selected_object["ClassId"].get_double();
 			int64_t object_id = selected_object["ObjectId"].get_double();
 			std::string object_id_string = selected_object["ObjectId"];
+
+			if (current_edited_object_id < object_id)
+			{
+				current_edited_object_id = object_id;
+				current_edited_class_name = class_name;
+				current_edited_class_description = class_description;
+			}
 
 			std::cout << "selected object:" << class_name << " " << object_id_string << std::endl;
 
@@ -175,6 +203,120 @@ namespace corona
 			// so, we have to bind our button to our data.. first, we describe what the button does with data...
 			// whenever we get a data set with this key, this stuff gets invoked.
 			// and this all happens on background threads.
+		}
+
+		/* 
+		and now build our form view
+		*/
+
+		json current_class = general_options["current_class"];
+		json current_object = general_options["current_object"];
+		json current_fields = general_options["current_fields"];
+
+		// extract our class data
+		auto class_obj = current_class["CalicoClass"];
+		std::string classDescription = class_obj["ClassDescription"];
+		std::string classFullName = class_obj["ClassFullName"];
+		json relatedClassList = class_obj["RelatedClassList"];
+		json classFieldList = class_obj["ClassFieldList"];
+		std::string primaryKeyField = class_obj["PrimaryKeyField"];
+		std::string sqlTableName = class_obj["SqlTableName"];
+		std::string sqlViewName = class_obj["SqlViewName"];
+		int64_t primary_key_field_id = class_obj["PrimaryKeyField"];
+
+		// and load it into our form editor...
+		json_parser jp;
+
+		item_data_source ids;
+		ids.name = classDescription;
+		ids.data = current_object;
+
+		for (int i = 0; i < current_fields.size(); i++)
+		{
+			auto fieldDefinition = current_fields.get_element(i);
+
+			std::string fieldName = fieldDefinition["FieldName"];
+			std::string fieldDescription = fieldDefinition["FieldDescription"];
+			std::string fieldType = fieldDefinition["FieldType"];
+			std::string columnDataType = fieldDefinition["ColumnDataType"];
+			std::string dotNetFormat = fieldDefinition["DotNetFormat"];
+			std::string excelFormat = fieldDefinition["ExcelFormat"];
+			std::string javaScriptFormat = fieldDefinition["JavaScriptFormat"];
+			std::string basicValidationMessage = fieldDefinition["BasicValidationMessage"];
+			std::string minimumValue = fieldDefinition["MinimumValue"];
+			std::string maximumValue = fieldDefinition["MaximumValue"];
+			std::string gridColumnWidth = fieldDefinition["GridColumnWidth"];
+			int64_t field_id = fieldDefinition["FieldId"];
+
+			item_field new_field;
+
+			new_field.field_label = fieldDescription;
+			new_field.json_member_name = fieldName;
+			new_field.field_tooltip = classFullName + "." + fieldName + " " + columnDataType;
+			new_field.read_only = false;
+			new_field.field_id = app_show->get_control_id("form_view_" + fieldName, []() { return id_counter::next(); });
+
+			if (fieldType == "Currency") {
+				//edit_currency
+				new_field.field_type = "edit_currency";
+				ids.fields.push_back(new_field);
+			}
+			else if (fieldType == "DateTime") {
+				//datetimepicker_field
+				new_field.field_type = "datetimepicker_field";
+				ids.fields.push_back(new_field);
+			}
+			else if (fieldType == "Double") {
+				//edit_double
+				new_field.field_type = "edit_double";
+				ids.fields.push_back(new_field);
+			}
+			else if (fieldType == "Integer") {
+				new_field.field_type = "edit_integer";
+				ids.fields.push_back(new_field);
+			}
+			else if (fieldType == "String") {
+				new_field.field_type = "edit_string";
+				ids.fields.push_back(new_field);
+			}
+			else if (fieldType == "EnumerationDataSource") {
+				//comboboxex_field
+				new_field.field_type = "comboboxex_field";
+				ids.fields.push_back(new_field);
+			}
+			else if (fieldType == "EnumerationList") {
+				//comboboxex_field
+				new_field.field_type = "comboboxex_field";
+				ids.fields.push_back(new_field);
+			}
+			else if (fieldType == "Key") {
+				//edit_integer
+
+				if (primary_key_field_id == primary_key_field_id) 
+				{
+					new_field.read_only = true;
+					new_field.field_type = "edit_integer";
+					ids.fields.push_back(new_field);
+				}
+				else 
+				{
+					new_field.read_only = true;
+					new_field.field_type = "combobox_field";
+					ids.fields.push_back(new_field);
+				}
+			}
+			else if (fieldType == "Property") 
+			{
+				//edit_string
+				new_field.read_only = true;
+				new_field.field_type = "edit_string";
+				ids.fields.push_back(new_field);
+			}
+		}
+
+		auto fv = app_show->get_control<form_view_control>(id_form_view);
+		if (fv) {
+			fv->set_data(ids);
 		}
 
 		/*  ---------------------------------------------------------------------------------------------------
@@ -223,6 +365,19 @@ namespace corona
 			Viewing and manipulating new objects
 			these we present in a basic form, with the edit fields of the base selected object, and then, the details (children), of each, in tabs.
 		*/
+
+		// first the edit area of the current object.
+
+		/*
+				int64_t current_edited_object_id = -1;
+		std::string current_edited_class_name;
+		std::string current_edited_class_description;
+
+		the form view will be handled in parallel.
+
+		*/
+
+		// now the tab area
 
 		// define our tabs
 		std::vector<tab_pane> tabs;
@@ -295,11 +450,32 @@ namespace corona
 
 			ads.draw_item = [app_show, ads](draw_control* _parent, int _index, rectangle _bounds) {
 				auto json_object = ads.data[_index];
-				std::string class_name = json_object["ClassName"];
+				if (json_object.has_member("Source")) {
+					json_object = json_object["Source"];
+				}
+				auto object_members = json_object.get_members();
+				double x = _bounds.x;
+				double w = 0.0;
 				if (auto win = _parent->window.lock()) {
-					auto &ctxt = win->getContext();
-					ctxt.drawRectangle(&_bounds, "item_border", 1, nullptr);
-					ctxt.drawText(class_name, &_bounds, "item_paragraph", "item_foreground");
+					auto fieldResponse = app_show->data->get_result("calico", "fields");
+					auto fieldsByName = fieldResponse["FieldsByName"];
+					for (auto om : object_members) {
+						auto field = fieldsByName[om.first];
+						if (field.is_double()) {
+							w = field["GridColumnWidth"];
+						}
+						else 
+						{
+							w = 100;
+						}
+						auto& ctxt = win->getContext();
+						ctxt.drawRectangle(&_bounds, "item_border", 1, nullptr);
+						std::string text = om.second->to_string();
+						auto field_bounds = _bounds;
+						field_bounds.x = x;
+						ctxt.drawText(text, &field_bounds, "item_paragraph", "item_foreground");
+						x += w;
+					}
 				}
 			};
 
@@ -358,6 +534,7 @@ namespace corona
 		tab_container->set_tabs(tabs);
 
 		app_show->layout();
+
 	}
 
 	void run_developer_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
@@ -381,10 +558,19 @@ namespace corona
 		// create the presentation - this holds the data of what is on screen, for various pages.
 		std::shared_ptr<presentation> application_presentation = std::make_shared<presentation>(application);
 		application_presentation->data = app_data;
-		app_data->on_changed("calico", "*", [application_presentation](json _params, data_lake* _api, data_function* _set) -> int {
-			application_presentation->onDataChanged(_params, _api, _set );
+
+		// and now we want the application presentation 
+		app_data->on_changed("calico", "*", [application_presentation](json _params, data_lake* _lake, data_function* _set) -> int {
+			application_presentation->onDataChanged(_params, _lake, _set );
 			return 0;
-			});
+		});
+
+		auto logged_handler = [application_presentation](json _params, data_lake* _lake, data_function* _set)
+		{
+			application_presentation->onLogged(_lake);
+			return 1;
+		};
+		app_data->on_logged(logged_handler);
 
 		// and now wire the data to the presentation 
 		// the presentation can invoke the data
@@ -427,8 +613,8 @@ namespace corona
 							_cb.menu_button_id = IDC_SYSTEM_MENU;
 							_cb.image_control_id = IDC_COMPANY_LOGO;
 							_cb.image_file = "assets\\small_logo.png";
-							_cb.corporate_name = "WOODRUFF SAWYER";
-							_cb.title_name = "PROPERTY and CASUALTY";
+							_cb.corporate_name = "COUNTRYBIT";
+							_cb.title_name = "REVOLUTION";
 							_cb.code_detail_id = IDC_STATUS_DETAIL;
 							_cb.code_status_id = IDC_STATUS_MESSAGE;
 						}
@@ -437,10 +623,16 @@ namespace corona
 
 				_pg.on_select([calico_svc, application, application_presentation, app_data, st, app_menu](page_select_event _evt)
 					{
-						app_data->call_function("calico", "credentials");
+						json_parser jp;
+						auto params = jp.create_object();
+						std::string user_name = application->getUserName();
+						std::string model_name = "Security";
+						params.put_member("UserName", user_name);
+						params.put_member("ModelName", model_name);
+						app_data->call_function("calico", "credentials", params);
 					});
 
-				_pg.on_changed(0, "calico", "credentials", [application_presentation](page_data_event pde) {
+				_pg.on_changed(0, "calico", "fields", [application_presentation](page_data_event pde) {
 					application_presentation->select_page("home");
 					});
 
@@ -448,11 +640,11 @@ namespace corona
 
 		if (forceWindowed)
 		{
-			application->runDialog(hInstance, "Property and Casualty", IDI_WSPROPOSE, false, application_presentation);
+			application->runDialog(hInstance, "COUNTRYBIT REVOLUTION", IDI_WSPROPOSE, false, application_presentation);
 		}
 		else
 		{
-			application->runDialog(hInstance, "Property and Casualty", IDI_WSPROPOSE, true, application_presentation);
+			application->runDialog(hInstance, "COUNTRYBIT REVOLUTION", IDI_WSPROPOSE, true, application_presentation);
 		}
 	}
 

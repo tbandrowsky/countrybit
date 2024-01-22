@@ -137,6 +137,8 @@ namespace corona {
 		virtual void onJobComplete(bool _success, int _id);
 		virtual void onTaskComplete(bool _success, ui_task_result_base* _result);
 		virtual void onDataChanged(json _params, data_lake* _api, data_function* _set);
+		virtual void onLogged(data_lake* _api);
+
 		virtual int layout();
 
 		template <typename control_type> control_type* get_control(int _id)
@@ -739,6 +741,14 @@ namespace corona {
 			pg->handle_changed(pg, _params, _api, _set);
 		}
 	}
+
+	void presentation::onLogged(data_lake* _api)
+	{
+		if (auto pg = current_page.lock()) {
+			pg->handle_logged(pg, _api);
+		}
+	}
+
 }
 
 #endif

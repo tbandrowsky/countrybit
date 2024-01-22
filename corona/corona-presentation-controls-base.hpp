@@ -907,7 +907,7 @@ namespace corona
 	class array_data_source
 	{
 	public:
-		json		   data;
+		json				data;
 		cell_json_assets	assets;
 		cell_json_draw		draw_item;
 		cell_json_size		size_item;
