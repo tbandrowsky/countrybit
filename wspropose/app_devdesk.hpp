@@ -222,7 +222,7 @@ namespace corona
 		std::string primaryKeyField = class_obj["PrimaryKeyField"];
 		std::string sqlTableName = class_obj["SqlTableName"];
 		std::string sqlViewName = class_obj["SqlViewName"];
-		int64_t primary_key_field_id = class_obj["PrimaryKeyField"];
+		std::string primary_key_field_name = class_obj["PrimaryKeyField"];
 
 		// and load it into our form editor...
 		json_parser jp;
@@ -292,7 +292,7 @@ namespace corona
 			else if (fieldType == "Key") {
 				//edit_integer
 
-				if (primary_key_field_id == primary_key_field_id) 
+				if (primary_key_field_name == new_field.json_member_name)
 				{
 					new_field.read_only = true;
 					new_field.field_type = "edit_integer";
