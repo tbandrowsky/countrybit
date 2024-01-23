@@ -1513,12 +1513,12 @@ namespace corona
 	{
 		void init()
 		{
-			set_size(1.0_container, 80.0_px);
+			set_size(1.0_container, 100.0_px);
 
 			control_builder cb;
 
 			auto main_row = cb.row_begin(id_counter::next(), [this](row_layout& rl) {
-				rl.set_size(1.0_container, 80.0_px);
+				rl.set_size(1.0_container, 100.0_px);
 				rl.set_background_color(st->HeaderBackgroundColor);
 				rl.set_content_align(visual_alignment::align_near);
 				rl.set_content_cross_align(visual_alignment::align_near);
@@ -1529,18 +1529,6 @@ namespace corona
 			auto logo_row = main_row.row_begin(id_counter::next(), [](row_layout& rl) {
 				rl.set_size(.50_container, 1.0_container);
 				})
-				.row_begin(id_counter::next(), [](row_layout& cl) {
-					cl.set_content_align(visual_alignment::align_near);
-					cl.set_content_cross_align(visual_alignment::align_near);
-					cl.set_size(130.0_px, 1.0_container);
-					cl.set_item_margin(5.0_px);
-					})
-					.menu_button(menu_button_id, [this](auto& _ctrl) {
-						_ctrl.set_size(50.0_px, 50.0_px);
-						_ctrl.set_margin(5.0_px);
-						_ctrl.menu = *menu;
-						})
-				.end()
 				.column_begin(id_counter::next(), [](column_layout& cl) {
 							cl.set_content_align(visual_alignment::align_center);
 							cl.set_content_cross_align(visual_alignment::align_near);
@@ -1565,43 +1553,22 @@ namespace corona
 				cl.set_content_align(visual_alignment::align_near);
 				cl.set_content_cross_align(visual_alignment::align_near);
 				cl.set_item_margin(0.0_px);
-				cl.set_size(500.0_px, 1.0_container);
+				cl.set_size(1.0_remaining, 1.0_container);
 					})
-				.column_begin(id_counter::next(), [](column_layout& cl) {
-						cl.set_content_align(visual_alignment::align_near);
-						cl.set_content_cross_align(visual_alignment::align_near);
-						cl.set_item_margin(6.0_px);
-						cl.set_size(80.0_px, 1.0_container);
+				.title(corporate_name, [](title_control& control) {
+				control.text_style.horizontal_align = visual_alignment::align_near;
+				control.text_style.vertical_align = visual_alignment::align_near;
+				control.set_size(120.0_px, 1.2_font);
 					})
-				.image(image_control_id, image_file, [](image_control& control) {
-						control.set_size(50.0_px, 50.0_px);
-				})
-				.end()
-				.column_begin(id_counter::next(), [](column_layout& cl) {
-								cl.set_content_align(visual_alignment::align_near);
-								cl.set_content_cross_align(visual_alignment::align_near);
-								cl.set_item_margin(0.0_px);
-								cl.set_size(1.0_remaining, 1.0_container);
-					})
-						.title(corporate_name, [](title_control& control) {
+				.title(title_name, [](title_control& control) {
 						control.text_style.horizontal_align = visual_alignment::align_near;
 						control.text_style.vertical_align = visual_alignment::align_near;
 						control.set_size(400.0_px, 1.2_font);
-							})
-						.title(title_name, [](title_control& control) {
-								control.text_style.horizontal_align = visual_alignment::align_near;
-								control.text_style.vertical_align = visual_alignment::align_near;
-								control.set_size(400.0_px, 1.2_font);
-							})
+						control.text_style.bold = true;
+					})
 				.end()
 				.end()
 			.end();
-
-/*			if (title_bar_id)
-			{
-				title_column.get_root()->push(title_bar_id, true, false, false, false);
-			}
-			*/
 
 			auto frame_buttons = main_row.row_begin(id_counter::next(), [](row_layout& rl) {
 					rl.set_size(.95_remaining, 1.0_container);
@@ -1609,6 +1576,11 @@ namespace corona
 					rl.set_content_cross_align(visual_alignment::align_center);
 					rl.set_content_align(visual_alignment::align_far);
 				})
+				.menu_button(menu_button_id, [this](auto& _ctrl) {
+					_ctrl.set_size(50.0_px, 50.0_px);
+					_ctrl.set_margin(5.0_px);
+					_ctrl.menu = *menu;
+					})
 				.minimize_button([](auto& _ctrl) { _ctrl.set_size(50.0_px, 50.0_px); })
 				.maximize_button([](auto& _ctrl) { _ctrl.set_size(50.0_px, 50.0_px); })
 				.close_button([](auto& _ctrl) { _ctrl.set_size(50.0_px, 50.0_px); })

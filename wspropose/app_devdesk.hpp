@@ -35,8 +35,9 @@ namespace corona
 		int id_current_container = app_show->get_control_id("current_container", []() { return id_counter::next(); });
 		int id_location_title = app_show->get_control_id("location_title", []() { return id_counter::next(); });
 		int id_create_title = app_show->get_control_id("create_title", []() { return id_counter::next(); });
-		int id_form_view = app_show->get_control_id("actor_options_form_view", []() { return id_counter::next(); });
-		int id_tab_view = app_show->get_control_id("actor_options_tab_view", []() { return id_counter::next(); });
+		int id_form_view = app_show->get_control_id("get_ui_form_view", []() { return id_counter::next(); });
+		int id_tab_view = app_show->get_control_id("get_ui_tab_view", []() { return id_counter::next(); });
+		int image_control_id = app_show->get_control_id("get_ui_logo", []() { return id_counter::next(); });
 
 		control_builder command_container;
 		caption_bar_control* caption_container;
@@ -50,7 +51,26 @@ namespace corona
 
 			control_builder contents_root(_page.get_root_container());
 
-			contents_root.caption_bar(id_caption_bar, st, app_menu.get(), [](caption_bar_control& _cb)
+			auto contents = contents_root.row_begin(
+				id_main_row,
+				[](row_layout& _settings) {
+					_settings.set_size(1.0_container, 1.0_container);
+				});
+
+			// note that, we are putting the breadcrumbs on a nav pane to the left.
+			auto command_container = contents.column_begin(id_command_container, [](column_layout& rl) {
+				rl.set_size(300.0_px, 1.0_container);
+				});
+
+			command_container.image(image_control_id, "assets\\small_logo.png", [](image_control& control) {
+				control.set_size(300.0_px, 300.0_px);
+				});
+
+			auto current_container = contents.column_begin(id_current_container, [](column_layout& rl) {
+				rl.set_size(1.0_remaining, 1.0_container);
+				});
+
+			current_container.caption_bar(id_caption_bar, st, app_menu.get(), [](caption_bar_control& _cb)
 				{
 					_cb.menu_button_id = IDC_SYSTEM_MENU;
 					_cb.image_control_id = IDC_COMPANY_LOGO;
@@ -61,22 +81,6 @@ namespace corona
 					_cb.code_status_id = IDC_STATUS_MESSAGE;
 				}
 			);
-
-			auto contents = contents_root.row_begin(
-				id_main_row,
-				[](row_layout& _settings) {
-					_settings.set_margin(10.0_px);
-					_settings.set_size(1.0_container, 1.0_remaining);
-				});
-
-			// note that, we are putting the breadcrumbs on a nav pane to the left.
-			auto command_container = contents.column_begin(id_command_container, [](column_layout& rl) {
-				rl.set_size(300.0_px, 1.0_container);
-				});
-
-			auto current_container = contents.column_begin(id_current_container, [](column_layout& rl) {
-				rl.set_size(1.0_remaining, 1.0_container);
-				});
 
 			current_container.form_view(id_form_view, [](form_view_control& _fv)
 				{
