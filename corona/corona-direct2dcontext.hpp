@@ -408,7 +408,9 @@ namespace corona
 				_textStyleDto->line_spacing,
 				_textStyleDto->horizontal_align,
 				_textStyleDto->vertical_align,
-				_textStyleDto->wrap_text
+				_textStyleDto->wrap_text,
+				_textStyleDto->character_spacing,
+				_textStyleDto->font_stretch ? _textStyleDto->font_stretch : DWRITE_FONT_STRETCH_NORMAL
 			);
 			textStyles[_textStyleDto->name.c_str()] = newStyle;
 			newStyle->create(this);

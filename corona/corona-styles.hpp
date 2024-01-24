@@ -124,6 +124,7 @@ namespace corona {
 			{ "Khaki", { "B6B7A2", "DEDDD3", "CBCBBC", "B6B7A2", "888F6E", "67724C" } },
 			{ "Khaki", { "B6B7A2", "DEDDD3", "CBCBBC", "B6B7A2", "888F6E", "67724C" } },
 		};
+
 		woodruff.ChartColors = {
 			{ "Deductible", { "34657F" } },
 			{ "Lavender", { "E0D4D9", "CDB9C2", "B898A7" } },
@@ -133,7 +134,6 @@ namespace corona {
 			{ "Earth", { "E1DACE", "D8CEBE", "C4B69D" } },
 			{ "Stone", { "DEE1E1", "C1C6C8", "A2AAAD" } }
 		};
-
 
 		woodruff.PageBackgroundColor = "FFFFFF";
 		woodruff.PageTextColor = "000000";
@@ -191,7 +191,7 @@ namespace corona {
 	{
 		presentation_style countrybit;
 
-		std::string bigFont = "Century Gothic,Arial";
+		std::string bigFont = "Latin Wide,Century Gothic,Arial";
 		std::string textFont = "Tahoma,Arial";
 
 		countrybit.PrimaryFont = textFont;

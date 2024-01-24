@@ -279,6 +279,8 @@ namespace corona {
 		visual_alignment horizontal_align;
 		visual_alignment vertical_align;
 		bool wrap_text;
+		double character_spacing;
+		DWRITE_FONT_STRETCH font_stretch;
 	};
 
 	struct viewStyleRequest

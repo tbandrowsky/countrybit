@@ -22,6 +22,7 @@ namespace corona
 			text_style.horizontal_align = visual_alignment::align_near;
 			text_style.vertical_align = visual_alignment::align_near;
 			text_style.wrap_text = true;
+			text_style.font_stretch = DWRITE_FONT_STRETCH_NORMAL;
 		}
 
 		HFONT text_font;

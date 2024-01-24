@@ -198,6 +198,8 @@ namespace corona
 		text_style.horizontal_align = st->PrevailingAlignment;
 		text_style.vertical_align = visual_alignment::align_near;
 		text_style.wrap_text = true;
+		text_style.character_spacing = 0;
+		text_style.font_stretch = DWRITE_FONT_STRETCH_NORMAL;
 
 		auto ctrl = this;
 

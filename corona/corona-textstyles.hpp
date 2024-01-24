@@ -44,6 +44,8 @@ namespace corona {
 		visual_alignment horizontal_align;
 		visual_alignment vertical_align;
 		bool wrap_text;
+		double character_spacing;
+		DWRITE_FONT_STRETCH font_stretch;
 
 	public:
 
@@ -56,7 +58,9 @@ namespace corona {
 			double _line_spacing,
 			visual_alignment _horizontal_align,
 			visual_alignment _vertical_align,
-			bool _wrap_text) :
+			bool _wrap_text,
+			double _character_spacing,
+			DWRITE_FONT_STRETCH _font_stretch) :
 			fontName(_fontName),
 			size(_size),
 			bold(_bold),
@@ -66,6 +70,8 @@ namespace corona {
 			line_spacing(_line_spacing),
 			horizontal_align(_horizontal_align),
 			vertical_align(_vertical_align),
+			character_spacing(_character_spacing),
+			font_stretch(_font_stretch),
 			lpWriteTextFormat(NULL)
 		{
 			;
@@ -83,6 +89,7 @@ namespace corona {
 		bool get_underline() { return underline; }
 		bool get_strike_through() { return strike_through; }
 		double get_line_spacing() { return line_spacing; }
+		double get_character_spacing() { return character_spacing; }
 		visual_alignment get_horizontal_align() { return horizontal_align; }
 		visual_alignment get_vertical_align() { return vertical_align; }
 		bool get_wrap_text() { return wrap_text; }
@@ -124,7 +131,7 @@ namespace corona {
 							NULL,
 							bold ? DWRITE_FONT_WEIGHT_BOLD : DWRITE_FONT_WEIGHT_REGULAR,
 							fontStyle,
-							DWRITE_FONT_STRETCH_NORMAL,
+							font_stretch,
 							size,
 							L"en-US",
 							&lpWriteTextFormat);
@@ -195,6 +202,7 @@ namespace corona {
 					{
 						lpWriteTextFormat->SetWordWrapping(DWRITE_WORD_WRAPPING_EMERGENCY_BREAK);
 					}
+
 
 					return true;
 				}

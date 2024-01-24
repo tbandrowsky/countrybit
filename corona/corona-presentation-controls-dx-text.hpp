@@ -300,7 +300,7 @@ namespace corona
 
 		text_style = {};
 		text_style.name = "title_text_style";
-		text_style.fontName = st->PrimaryFont;
+		text_style.fontName = st->TitleTextFont;
 		text_style.fontSize = 40;
 		text_style.bold = false;
 		text_style.italics = false;
@@ -309,6 +309,9 @@ namespace corona
 		text_style.horizontal_align = st->PrevailingAlignment;
 		text_style.vertical_align = visual_alignment::align_near;
 		text_style.wrap_text = true;
+		text_style.font_stretch = DWRITE_FONT_STRETCH_NORMAL;
+		text_style.character_spacing = 0;
+
 	}
 
 	title_control::title_control(container_control_base* _parent, int _id) : text_display_control(_parent, _id)
@@ -338,7 +341,7 @@ namespace corona
 
 		text_style = {};
 		text_style.name = "subtitle_text_style";
-		text_style.fontName = st->PrimaryFont;
+		text_style.fontName = st->SubtitleTextFont;
 		text_style.fontSize = 24;
 		text_style.bold = false;
 		text_style.italics = false;
@@ -347,6 +350,9 @@ namespace corona
 		text_style.horizontal_align = st->PrevailingAlignment;
 		text_style.vertical_align = visual_alignment::align_near;
 		text_style.wrap_text = true;
+		text_style.font_stretch = DWRITE_FONT_STRETCH_NORMAL;
+		text_style.character_spacing = 0;
+
 	}
 
 	subtitle_control::subtitle_control(container_control_base* _parent, int _id) : text_display_control(_parent, _id)
@@ -376,7 +382,7 @@ namespace corona
 
 		text_style = {};
 		text_style.name = "chaptertitle_text_style";
-		text_style.fontName = st->PrimaryFont;
+		text_style.fontName = st->ChapterTextFont;
 		text_style.fontSize = 16;
 		text_style.bold = false;
 		text_style.italics = false;
@@ -385,6 +391,9 @@ namespace corona
 		text_style.horizontal_align = st->PrevailingAlignment;
 		text_style.vertical_align = visual_alignment::align_near;
 		text_style.wrap_text = true;
+		text_style.font_stretch = DWRITE_FONT_STRETCH_NORMAL;
+		text_style.character_spacing = 0;
+
 	}
 
 	chaptertitle_control::chaptertitle_control(container_control_base* _parent, int _id) : text_display_control(_parent, _id)
@@ -414,7 +423,7 @@ namespace corona
 
 		text_style = {};
 		text_style.name = "chaptersubtitle_text_style";
-		text_style.fontName = st->PrimaryFont;
+		text_style.fontName = st->ChapterTextFont;
 		text_style.fontSize = 14;
 		text_style.bold = false;
 		text_style.italics = false;
@@ -423,6 +432,9 @@ namespace corona
 		text_style.horizontal_align = st->PrevailingAlignment;
 		text_style.vertical_align = visual_alignment::align_near;
 		text_style.wrap_text = true;
+		text_style.font_stretch = DWRITE_FONT_STRETCH_NORMAL;
+		text_style.character_spacing = 0;
+
 	}
 
 
@@ -453,7 +465,7 @@ namespace corona
 
 		text_style = {};
 		text_style.name = "paragraph_text_style";
-		text_style.fontName = styles.get_style()->PrimaryFont;
+		text_style.fontName = styles.get_style()->ParagraphTextFont;
 		text_style.fontSize = 12;
 		text_style.bold = false;
 		text_style.italics = false;
@@ -462,6 +474,9 @@ namespace corona
 		text_style.horizontal_align = visual_alignment::align_near;
 		text_style.vertical_align = visual_alignment::align_near;
 		text_style.wrap_text = true;
+		text_style.font_stretch = DWRITE_FONT_STRETCH_NORMAL;
+		text_style.character_spacing = 0;
+
 	}
 
 	paragraph_control::paragraph_control(container_control_base* _parent, int _id) : text_display_control(_parent, _id)
@@ -491,7 +506,7 @@ namespace corona
 
 		text_style = {};
 		text_style.name = "code_text_style";
-		text_style.fontName = "Cascadia Mono,Courier New";
+		text_style.fontName = st->CodeTextFont;
 		text_style.fontSize = 14;
 		text_style.bold = false;
 		text_style.italics = false;
@@ -500,6 +515,9 @@ namespace corona
 		text_style.horizontal_align = visual_alignment::align_near;
 		text_style.vertical_align = visual_alignment::align_near;
 		text_style.wrap_text = false;
+		text_style.font_stretch = DWRITE_FONT_STRETCH_NORMAL;
+		text_style.character_spacing = 0;
+
 	}
 
 	code_control::code_control(container_control_base* _parent, int _id) : text_display_control(_parent, _id)
@@ -532,6 +550,9 @@ namespace corona
 		text_style.horizontal_align = visual_alignment::align_near;
 		text_style.vertical_align = visual_alignment::align_far;
 		text_style.wrap_text = false;
+		text_style.font_stretch = DWRITE_FONT_STRETCH_NORMAL;
+		text_style.character_spacing = 0;
+
 	}
 
 	label_control::label_control()
@@ -565,6 +586,9 @@ namespace corona
 		text_style.horizontal_align = visual_alignment::align_center;
 		text_style.vertical_align = visual_alignment::align_center;
 		text_style.wrap_text = false;
+		text_style.font_stretch = DWRITE_FONT_STRETCH_NORMAL;
+		text_style.character_spacing = 0;
+
 	}
 
 	placeholder_control::placeholder_control()
