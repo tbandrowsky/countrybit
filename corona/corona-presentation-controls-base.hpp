@@ -190,8 +190,8 @@ namespace corona
 		virtual point get_remaining(point _ctx);
 		virtual void on_resize();
 		void arrange_children(rectangle _bounds,
-			std::function<point(const rectangle* _bounds, control_base*)> _initial_origin,
-			std::function<point(point* _origin, const rectangle* _bounds, control_base*)> _next_origin);
+			std::function<point(point _remaining, const rectangle* _bounds, control_base*)> _initial_origin,
+			std::function<point(point _remaining, point* _origin, const rectangle* _bounds, control_base*)> _next_origin);
 
 		rectangle				bounds;
 		rectangle				inner_bounds;
@@ -444,6 +444,13 @@ namespace corona
 			return *this;
 		}
 
+		control_base& set_size(std::string _str, measure _height)
+		{
+			box.width = measure( _str.size(), measure_units::text );
+			box.height = _height;
+			return *this;
+		}
+
 		control_base& set_size(measure _width, measure _height)
 		{
 			box.width = _width;
@@ -678,6 +685,12 @@ namespace corona
 			}
 			sz.x += mm * 2.0;
 		}
+		else if (pi.box.width.units == measure_units::text)
+		{
+			double font_height = get_font_size();
+			sz.x = font_height * pi.box.width.amount;
+			sz.x += mm * 2.0;
+		}
 
 		if (pi.box.height.units == measure_units::pixels)
 		{
@@ -701,6 +714,12 @@ namespace corona
 				sz.y *= 1.618;
 			}
 			sz.y += mm * 2.0;
+		}
+		else if (pi.box.height.units == measure_units::text)
+		{
+			double font_height = get_font_size();
+			sz.x = font_height * pi.box.height.amount;
+			sz.x += mm * 2.0;
 		}
 
 		if (box.width.units == measure_units::percent_aspect)
@@ -857,8 +876,8 @@ namespace corona
 	}
 
 	void control_base::arrange_children(rectangle _bounds,
-		std::function<point(const rectangle* _bounds, control_base*)> _initial_origin,
-		std::function<point(point* _origin, const rectangle* _bounds, control_base*)> _next_origin)
+		std::function<point(point _remaining, const rectangle* _bounds, control_base*)> _initial_origin,
+		std::function<point(point _remaining, point* _origin, const rectangle* _bounds, control_base*)> _next_origin)
 	{
 		point origin = { _bounds.x, _bounds.y, 0.0 };
 		point remaining = { _bounds.w, _bounds.h, 0.0 };
@@ -867,7 +886,7 @@ namespace corona
 
 			auto sichild = std::begin(children);
 
-			origin = _initial_origin(&_bounds, sichild->get());
+			origin = _initial_origin(remaining, &_bounds, sichild->get());
 
 			remaining = get_remaining(remaining);
 
@@ -886,7 +905,7 @@ namespace corona
 
 				child->arrange(new_bounds);
 
-				origin = _next_origin(&origin, &bounds, child.get());
+				origin = _next_origin(remaining, &origin, &bounds, child.get());
 
 				sichild++;
 			}

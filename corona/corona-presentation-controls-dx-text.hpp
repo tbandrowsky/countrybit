@@ -301,7 +301,7 @@ namespace corona
 		text_style = {};
 		text_style.name = "title_text_style";
 		text_style.fontName = st->PrimaryFont;
-		text_style.fontSize = 24;
+		text_style.fontSize = 40;
 		text_style.bold = false;
 		text_style.italics = false;
 		text_style.underline = false;
@@ -339,7 +339,7 @@ namespace corona
 		text_style = {};
 		text_style.name = "subtitle_text_style";
 		text_style.fontName = st->PrimaryFont;
-		text_style.fontSize = 18;
+		text_style.fontSize = 24;
 		text_style.bold = false;
 		text_style.italics = false;
 		text_style.underline = true;

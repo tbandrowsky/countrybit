@@ -1136,13 +1136,13 @@ namespace corona
 			point remaining = { _bounds.w, _bounds.h, 0.0 };
 
 			arrange_children(bounds,
-				[this](const rectangle* _bounds, control_base* _item) {
+				[this](point _remaining, const rectangle* _bounds, control_base* _item) {
 					point temp = { 0, 0, 0 };
 					temp.x = _bounds->x;
 					temp.y = _bounds->y;
 					return temp;
 				},
-				[this](point* _origin, const rectangle* _bounds, control_base* _item) {
+				[this](point _remaining, point* _origin, const rectangle* _bounds, control_base* _item) {
 					point temp = *_origin;
 					auto sz = _item->get_size(bounds, { _bounds->w, _bounds->h });
 					temp.y += sz.y;
@@ -1520,50 +1520,22 @@ namespace corona
 			auto main_row = cb.row_begin(id_counter::next(), [this](row_layout& rl) {
 				rl.set_size(1.0_container, 100.0_px);
 				rl.set_background_color(st->HeaderBackgroundColor);
-				rl.set_content_align(visual_alignment::align_near);
-				rl.set_content_cross_align(visual_alignment::align_near);
+				rl.set_content_align(visual_alignment::align_far);
+				rl.set_content_cross_align(visual_alignment::align_center);
 				rl.set_item_margin(10.0_px);
 				rl.set_nchittest(HTCAPTION);
 				});
 
-			auto logo_row = main_row.row_begin(id_counter::next(), [](row_layout& rl) {
-				rl.set_size(.50_container, 1.0_container);
-				})
-				.column_begin(id_counter::next(), [](column_layout& cl) {
-							cl.set_content_align(visual_alignment::align_center);
-							cl.set_content_cross_align(visual_alignment::align_near);
-							cl.set_size(1.0_container, 1.0_container);
-							cl.set_item_margin(5.0_px);
-				})
-				.code(code_status_id, [](code_control& control) {
-					control.text_style.horizontal_align = visual_alignment::align_near;
-					control.text_style.vertical_align = visual_alignment::align_near;
-					control.text_style.underline = true;
-					control.set_size(1.0_container, 1.4_fontgr);
-								})
-				.code(code_detail_id, [](code_control& control) {
-									control.text_style.horizontal_align = visual_alignment::align_near;
-									control.text_style.vertical_align = visual_alignment::align_far;
-									control.text_style.underline = false;
-									control.set_size(1.0_container, 2.2_fontgr);
-						})
-			.end();
-
 			auto title_column = main_row.row_begin(id_counter::next(), [](row_layout& cl) {
 				cl.set_content_align(visual_alignment::align_near);
-				cl.set_content_cross_align(visual_alignment::align_near);
+				cl.set_content_cross_align(visual_alignment::align_center);
 				cl.set_item_margin(0.0_px);
 				cl.set_size(1.0_remaining, 1.0_container);
 					})
-				.title(corporate_name, [](title_control& control) {
-				control.text_style.horizontal_align = visual_alignment::align_near;
-				control.text_style.vertical_align = visual_alignment::align_near;
-				control.set_size(120.0_px, 1.2_font);
-					})
-				.title(title_name, [](title_control& control) {
+				.title(title_name, [this](title_control& control) {
 						control.text_style.horizontal_align = visual_alignment::align_near;
-						control.text_style.vertical_align = visual_alignment::align_near;
-						control.set_size(400.0_px, 1.2_font);
+						control.text_style.vertical_align = visual_alignment::align_center;
+						control.set_size(title_name, 1.2_font);
 						control.text_style.bold = true;
 					})
 				.end()
@@ -1571,19 +1543,34 @@ namespace corona
 			.end();
 
 			auto frame_buttons = main_row.row_begin(id_counter::next(), [](row_layout& rl) {
-					rl.set_size(.95_remaining, 1.0_container);
+					rl.set_size(500.0_px, 1.0_container);
 					rl.set_item_margin(5.0_px);
 					rl.set_content_cross_align(visual_alignment::align_center);
 					rl.set_content_align(visual_alignment::align_far);
 				})
-				.menu_button(menu_button_id, [this](auto& _ctrl) {
-					_ctrl.set_size(50.0_px, 50.0_px);
-					_ctrl.set_margin(5.0_px);
-					_ctrl.menu = *menu;
+				.column_begin(id_counter::next(), [](column_layout& cl) {
+					cl.set_content_align(visual_alignment::align_center);
+					cl.set_content_cross_align(visual_alignment::align_near);
+					cl.set_size(200.0_px, 1.0_container);
+					cl.set_item_margin(0.0_px);
+						})
+					.code(code_status_id, [](code_control& control) {
+							control.text_style.horizontal_align = visual_alignment::align_near;
+							control.text_style.vertical_align = visual_alignment::align_near;
+							control.text_style.underline = true;
+							control.set_size(1.0_container, 1.4_fontgr);
+						})
+					.code(code_detail_id, [](code_control& control) {
+							control.text_style.horizontal_align = visual_alignment::align_near;
+							control.text_style.vertical_align = visual_alignment::align_far;
+							control.text_style.underline = false;
+							control.set_size(1.0_container, .9_remaining);
 					})
+				.end()
+				.menu_button(menu_button_id, [this](auto& _ctrl) { _ctrl.set_size(50.0_px, 50.0_px);_ctrl.menu = *menu;	})
+				.close_button([](auto& _ctrl) { _ctrl.set_size(50.0_px, 50.0_px); })
 				.minimize_button([](auto& _ctrl) { _ctrl.set_size(50.0_px, 50.0_px); })
 				.maximize_button([](auto& _ctrl) { _ctrl.set_size(50.0_px, 50.0_px); })
-				.close_button([](auto& _ctrl) { _ctrl.set_size(50.0_px, 50.0_px); })
 			.end();
 
 			cb.apply_controls(this);

@@ -638,8 +638,11 @@ namespace corona
 
 		for (auto child : children)
 		{
-			auto sz = child->get_size(bounds, { 0.0, 0.0 });
-			pt.x += sz.x;
+			if (child->box.width.units != measure_units::percent_remaining)
+			{
+				auto sz = child->get_size(bounds, { 0.0, 0.0 });
+				pt.x += sz.x;
+			}
 		}
 
 		pt = _ctx - pt;
@@ -670,11 +673,11 @@ namespace corona
 		point remaining = { _bounds.w, _bounds.h, 0.0 };
 
 		arrange_children(bounds,
-			[this](const rectangle* _bounds, control_base* _item) {
+			[this](point _remaining, const rectangle* _bounds, control_base* _item) {
 				point temp = { _bounds->x, _bounds->y };
 				return temp;
 			},
-			[this](point* _origin, const rectangle* _bounds, control_base* _item) {
+			[this](point _remaining, point* _origin, const rectangle* _bounds, control_base* _item) {
 				point temp = { _bounds->x, _bounds->y };
 				return temp;
 			}
@@ -689,7 +692,7 @@ namespace corona
 		if (content_alignment == visual_alignment::align_near)
 		{
 			arrange_children(bounds,
-				[this](const rectangle* _bounds, control_base* _item) {
+				[this](point _remaining, const rectangle* _bounds, control_base* _item) {
 					point temp = { 0, 0, 0 };
 					auto sz = _item->get_size(bounds, { _bounds->w, _bounds->h });
 					if (this->content_cross_alignment == visual_alignment::align_near)
@@ -709,7 +712,7 @@ namespace corona
 					}
 					return temp;
 				},
-				[this](point* _origin, const rectangle* _bounds, control_base* _item) {
+				[this](point _remaining, point* _origin, const rectangle* _bounds, control_base* _item) {
 					point temp = *_origin;
 					auto sz = _item->get_size(bounds, { _bounds->w, _bounds->h });
 					temp.x += sz.x;
@@ -733,24 +736,20 @@ namespace corona
 		else if (content_alignment == visual_alignment::align_far)
 		{
 			arrange_children(bounds,
-				[this](const rectangle* _bounds, control_base* _item) {
+				[this](point _remaining, const rectangle* _bounds, control_base* _item) {
 
 					double w = 0;
-					point remaining = { 0, 0, 0 };
-					remaining.x = _bounds->w;
-					remaining.y = _bounds->h;
-					remaining = this->get_remaining(remaining);
 
 					for (auto child : children)
 					{
-						auto sz = child->get_size(*_bounds, remaining);
+						auto sz = child->get_size(*_bounds, _remaining);
 						w += sz.x;
 					}
 
-					auto sz = _item->get_size(bounds, remaining);
+					auto sz = _item->get_size(bounds, { _bounds->w, _bounds->h });
 
 					point temp = { 0, 0, 0 };
-					temp.x = _bounds->right() - w;
+					temp.x = (_bounds->right() - w);
 
 					if (this->content_cross_alignment == visual_alignment::align_near)
 					{
@@ -767,7 +766,7 @@ namespace corona
 
 					return temp;
 				},
-				[this](point* _origin, const rectangle* _bounds, control_base* _item) {
+				[this](point _remaining, point* _origin, const rectangle* _bounds, control_base* _item) {
 					point temp = *_origin;
 					auto sz = _item->get_size(bounds, { _bounds->w, _bounds->h });
 					temp.x += sz.x;
@@ -792,7 +791,7 @@ namespace corona
 		{
 
 			arrange_children(bounds,
-				[this](const rectangle* _bounds, control_base* _item) {
+				[this](point _remaining, const rectangle* _bounds, control_base* _item) {
 
 					double w = 0.0;
 					point origin = { 0, 0, 0 };
@@ -826,7 +825,7 @@ namespace corona
 
 					return origin;
 				},
-				[this](point* _origin, const rectangle* _bounds, control_base* _item) {
+				[this](point _remaining, point* _origin, const rectangle* _bounds, control_base* _item) {
 					point temp = *_origin;
 					auto sz = _item->get_size(bounds, { _bounds->w, _bounds->h });
 					temp.x += sz.x;
@@ -858,7 +857,7 @@ namespace corona
 		if (content_alignment == visual_alignment::align_near)
 		{
 			arrange_children(bounds,
-				[this](const rectangle* _bounds, control_base* _item) {
+				[this](point _remaining, const rectangle* _bounds, control_base* _item) {
 					point temp = { 0, 0, 0 };
 					temp.x = _bounds->x;
 					temp.y = _bounds->y;
@@ -879,7 +878,7 @@ namespace corona
 
 					return temp;
 				},
-				[this](point* _origin, const rectangle* _bounds, control_base* _item) {
+				[this](point _remaining, point* _origin, const rectangle* _bounds, control_base* _item) {
 					point temp = *_origin;
 					auto sz = _item->get_size(bounds, { _bounds->w, _bounds->h });
 					temp.y += sz.y;
@@ -905,7 +904,7 @@ namespace corona
 		else if (content_alignment == visual_alignment::align_far)
 		{
 			arrange_children(bounds,
-				[this](const rectangle* _bounds, control_base* _item) {
+				[this](point _remaining, const rectangle* _bounds, control_base* _item) {
 					point temp = { 0, 0, 0 };
 
 					double h = 0;
@@ -939,7 +938,7 @@ namespace corona
 
 					return temp;
 				},
-				[this](point* _origin, const rectangle* _bounds, control_base* _item) {
+				[this](point _remaining, point* _origin, const rectangle* _bounds, control_base* _item) {
 					point temp = *_origin;
 					auto size = _item->get_size(bounds, { bounds.w, bounds.h });
 					temp.y += (size.y);
@@ -965,7 +964,7 @@ namespace corona
 		{
 
 			arrange_children(bounds,
-				[this](const rectangle* _bounds, control_base* _item) {
+				[this](point _remaining, const rectangle* _bounds, control_base* _item) {
 
 					double h = 0.0;
 					point origin = { 0, 0, 0 };
@@ -998,7 +997,7 @@ namespace corona
 
 					return origin;
 				},
-				[this](point* _origin, const rectangle* _bounds, control_base* _item) {
+				[this](point _remaining, point* _origin, const rectangle* _bounds, control_base* _item) {
 					point temp = *_origin;
 					auto sz = _item->get_size(bounds, { _bounds->w, _bounds->h });
 					temp.y += sz.y;
@@ -1029,13 +1028,13 @@ namespace corona
 		point remaining = { _bounds.w, _bounds.h, 0.0 };
 
 		arrange_children(bounds,
-			[this](const rectangle* _bounds, control_base* _item) {
+			[this](point _remaining, const rectangle* _bounds, control_base* _item) {
 				point temp = { 0, 0, 0 };
 				temp.x = _bounds->x;
 				temp.y = _bounds->y;
 				return temp;
 			},
-			[this](point* _origin, const rectangle* _bounds, control_base* _item) {
+			[this](point _remaining, point* _origin, const rectangle* _bounds, control_base* _item) {
 				point temp = *_origin;
 				auto sz = _item->get_size(bounds, { _bounds->w, _bounds->h });
 				temp.y += sz.y;

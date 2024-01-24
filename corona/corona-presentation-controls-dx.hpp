@@ -322,37 +322,41 @@ namespace corona
 			foregroundOver.name = _base_name + "_fore_over";
 			foregroundDown.name = _base_name + "_fore_down";
 
+			std::string face_step = "#bdc3c7ff";
+			std::string light_step = "#bdc3c7ff";
+			std::string dark_step =    "#2c3e50ff";
+			std::string darkest_step = "#1c2e40ff";
+
 			buttonFaceNormal.gradientStops = {
-				{ toColor("#202020FF"), 0.0 },
-				{ toColor("#707070FF"), 0.8 },
-				{ toColor("#202020FF"), 1.0 },
+				{ toColor(dark_step), 0.0 },
+				{ toColor(light_step), 0.8 },
+				{ toColor(dark_step), 1.0 },
 			};
 
 			buttonFaceOver.gradientStops = {
-				{ toColor("#202020FF"), 0.0 },
-				{ toColor("#707070FF"), 0.8 },
-				{ toColor("#202020FF"), 1.0 },
+				{ toColor(dark_step), 0.0 },
+				{ toColor(light_step), 0.8 },
+				{ toColor(dark_step), 1.0 },
 			};
 
 			buttonFaceDown.gradientStops = {
-				{ toColor("#202020FF"), 0.0 },
-				{ toColor("#707070FF"), 0.9 },
-				{ toColor("#202020FF"), 1.0 },
+				{ toColor(dark_step), 0.0 },
+				{ toColor(light_step), 0.9 },
+				{ toColor(dark_step), 1.0 },
 			};
 
 			buttonBackLight.gradientStops = {
 				{ toColor("#00000000"), 0.0 },
-				{ toColor("#20202020"), 0.9 },
+				{ toColor("#C0C0C040"), 0.9 },
 				{ toColor("#E0F0E0FF"), 1.0 }
 			};
 
 			foregroundNormal.active = true;
-			foregroundNormal.brushColor = toColor("#808080");
+			foregroundNormal.brushColor = toColor(dark_step);
 			foregroundOver.active = true;
-			foregroundOver.brushColor = toColor("#70A070");
+			foregroundOver.brushColor = toColor("#7070A0");
 			foregroundDown.active = true;
-			foregroundDown.brushColor = toColor("#00FF00");
-
+			foregroundDown.brushColor = toColor("#A0A0C0");
 		}
 
 		virtual void arrange(rectangle _ctx)
