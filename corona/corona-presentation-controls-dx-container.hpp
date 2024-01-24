@@ -680,6 +680,10 @@ namespace corona
 			[this](point _remaining, point* _origin, const rectangle* _bounds, control_base* _item) {
 				point temp = { _bounds->x, _bounds->y };
 				return temp;
+			},
+			[this](point _remaining, point* _origin, const rectangle* _bounds, control_base* _item) {
+				point temp = { _bounds->x, _bounds->y };
+				return temp;
 			}
 		);
 	}
@@ -689,49 +693,46 @@ namespace corona
 		point origin = { 0, 0, 0 };
 		set_bounds(_bounds);
 
+		std::function<point(point _remaining, point* _origin, const rectangle* _bounds, control_base* _item)> align_item = [this](point _remaining, point* _origin, const rectangle* _bounds, control_base* _item) -> point
+		{
+			point temp = { 0, 0, 0 };
+
+			auto sz = _item->get_size(bounds, { _bounds->w, _bounds->h });
+
+			if (this->content_cross_alignment == visual_alignment::align_near)
+			{
+				temp.x = _origin->x;
+				temp.y = _bounds->y;
+			}
+			else if (this->content_cross_alignment == visual_alignment::align_center)
+			{
+				temp.x = _origin->x;
+				temp.y = _bounds->y + (_bounds->h - sz.y) / 2.0;
+			}
+			else if (this->content_cross_alignment == visual_alignment::align_far)
+			{
+				temp.x = _origin->x;
+				temp.y = _bounds->y + (_bounds->h - sz.y);
+			}
+
+			return temp;
+		};
+
 		if (content_alignment == visual_alignment::align_near)
 		{
 			arrange_children(bounds,
 				[this](point _remaining, const rectangle* _bounds, control_base* _item) {
-					point temp = { 0, 0, 0 };
-					auto sz = _item->get_size(bounds, { _bounds->w, _bounds->h });
-					if (this->content_cross_alignment == visual_alignment::align_near)
-					{
-						temp.x = _bounds->x;
-						temp.y = _bounds->y;
-					}
-					else if (this->content_cross_alignment == visual_alignment::align_center)
-					{
-						temp.x = _bounds->x;
-						temp.y = _bounds->y + (_bounds->h - sz.y) / 2.0;
-					}
-					else if (this->content_cross_alignment == visual_alignment::align_far)
-					{
-						temp.x = _bounds->x;
-						temp.y = _bounds->y + (_bounds->h - sz.y);
-					}
+					point temp = { _bounds->x, _bounds->y };
 					return temp;
 				},
+				align_item,
 				[this](point _remaining, point* _origin, const rectangle* _bounds, control_base* _item) {
 					point temp = *_origin;
 					auto sz = _item->get_size(bounds, { _bounds->w, _bounds->h });
 					temp.x += sz.x;
-					if (this->content_cross_alignment == visual_alignment::align_near)
-					{
-						temp.y = _bounds->y;
-					}
-					else if (this->content_cross_alignment == visual_alignment::align_center)
-					{
-						temp.y = _bounds->y + (_bounds->h - sz.y) / 2.0;
-					}
-					else if (this->content_cross_alignment == visual_alignment::align_far)
-					{
-						temp.y = _bounds->y + (_bounds->h - sz.y);
-					}
 					return temp;
 				}
 			);
-
 		}
 		else if (content_alignment == visual_alignment::align_far)
 		{
@@ -750,39 +751,13 @@ namespace corona
 
 					point temp = { 0, 0, 0 };
 					temp.x = (_bounds->right() - w);
-
-					if (this->content_cross_alignment == visual_alignment::align_near)
-					{
-						temp.y = _bounds->y;
-					}
-					else if (this->content_cross_alignment == visual_alignment::align_center)
-					{
-						temp.y = _bounds->y + (_bounds->h - sz.y) / 2.0;
-					}
-					else if (this->content_cross_alignment == visual_alignment::align_far)
-					{
-						temp.y = _bounds->y + (_bounds->h - sz.y);
-					}
-
 					return temp;
 				},
+				align_item,
 				[this](point _remaining, point* _origin, const rectangle* _bounds, control_base* _item) {
 					point temp = *_origin;
 					auto sz = _item->get_size(bounds, { _bounds->w, _bounds->h });
 					temp.x += sz.x;
-					if (this->content_cross_alignment == visual_alignment::align_near)
-					{
-						temp.y = _bounds->y;
-					}
-					else if (this->content_cross_alignment == visual_alignment::align_center)
-					{
-						temp.y = _bounds->y + (_bounds->h - sz.y) / 2.0;
-					}
-					else if (this->content_cross_alignment == visual_alignment::align_far)
-					{
-						temp.y = _bounds->y + (_bounds->h - sz.y);
-					}
-
 					return temp;
 				}
 			);
@@ -808,43 +783,21 @@ namespace corona
 
 					origin.x = (bounds.x + bounds.w - w) / 2;
 					origin.y = bounds.y;
-					auto sz = _item->get_size(bounds, { _bounds->w, _bounds->h });
-
-					if (this->content_cross_alignment == visual_alignment::align_near)
-					{
-						origin.y = _bounds->y;
-					}
-					else if (this->content_cross_alignment == visual_alignment::align_center)
-					{
-						origin.y = _bounds->y + (_bounds->h - sz.y) / 2.0;
-					}
-					else if (this->content_cross_alignment == visual_alignment::align_far)
-					{
-						origin.y = _bounds->y + (_bounds->h - sz.y);
-					}
 
 					return origin;
 				},
+				align_item,
 				[this](point _remaining, point* _origin, const rectangle* _bounds, control_base* _item) {
 					point temp = *_origin;
 					auto sz = _item->get_size(bounds, { _bounds->w, _bounds->h });
 					temp.x += sz.x;
-
-					if (this->content_cross_alignment == visual_alignment::align_near)
-					{
-						temp.y = _bounds->y;
-					}
-					else if (this->content_cross_alignment == visual_alignment::align_center)
-					{
-						temp.y = _bounds->y + (_bounds->h - sz.y) / 2.0;
-					}
-					else if (this->content_cross_alignment == visual_alignment::align_far)
-					{
-						temp.y = _bounds->y + (_bounds->h - sz.y);
-					}
 					return temp;
 				}
 			);
+		} 
+		else 
+		{
+			throw std::exception("row content_alignment not set");
 		}
 	}
 
@@ -854,6 +807,31 @@ namespace corona
 
 		set_bounds(_bounds);
 
+		std::function<point(point _remaining, point* _origin, const rectangle* _bounds, control_base* _item)> align_item = [this](point _remaining, point* _origin, const rectangle* _bounds, control_base* _item) -> point
+		{
+			point temp = { 0, 0, 0 };
+
+			auto sz = _item->get_size(bounds, { _bounds->w, _bounds->h });
+
+			if (this->content_cross_alignment == visual_alignment::align_near)
+			{
+				temp.x = _bounds->x;
+				temp.y = _origin->y;
+			}
+			else if (this->content_cross_alignment == visual_alignment::align_center)
+			{
+				temp.x = _bounds->x + (_bounds->w - sz.x) / 2.0;
+				temp.y = _origin->y;
+			}
+			else if (this->content_cross_alignment == visual_alignment::align_far)
+			{
+				temp.x = _bounds->x + (_bounds->w - sz.x);
+				temp.y = _origin->y;
+			}
+
+			return temp;
+		};
+
 		if (content_alignment == visual_alignment::align_near)
 		{
 			arrange_children(bounds,
@@ -861,41 +839,14 @@ namespace corona
 					point temp = { 0, 0, 0 };
 					temp.x = _bounds->x;
 					temp.y = _bounds->y;
-					auto sz = _item->get_size(bounds, { _bounds->w, _bounds->h });
-
-					if (this->content_cross_alignment == visual_alignment::align_near)
-					{
-						temp.x = _bounds->x;
-					}
-					else if (this->content_cross_alignment == visual_alignment::align_center)
-					{
-						temp.x = _bounds->x + (_bounds->w - sz.x) / 2.0;
-					}
-					else if (this->content_cross_alignment == visual_alignment::align_far)
-					{
-						temp.x = _bounds->x + (_bounds->w - sz.x);
-					}
 
 					return temp;
 				},
+				align_item,
 				[this](point _remaining, point* _origin, const rectangle* _bounds, control_base* _item) {
 					point temp = *_origin;
 					auto sz = _item->get_size(bounds, { _bounds->w, _bounds->h });
 					temp.y += sz.y;
-
-					if (this->content_cross_alignment == visual_alignment::align_near)
-					{
-						temp.x = _bounds->x;
-					}
-					else if (this->content_cross_alignment == visual_alignment::align_center)
-					{
-						temp.x = _bounds->x + (_bounds->w - sz.x) / 2.0;
-					}
-					else if (this->content_cross_alignment == visual_alignment::align_far)
-					{
-						temp.x = _bounds->x + (_bounds->w - sz.x);
-					}
-
 					return temp;
 				}
 			);
@@ -923,38 +874,13 @@ namespace corona
 					temp.y = _bounds->y + _bounds->h - h;
 					auto sz = _item->get_size(bounds, { _bounds->w, _bounds->h });
 
-					if (this->content_cross_alignment == visual_alignment::align_near)
-					{
-						temp.x = _bounds->x;
-					}
-					else if (this->content_cross_alignment == visual_alignment::align_center)
-					{
-						temp.x = _bounds->x + (_bounds->w - sz.x) / 2.0;
-					}
-					else if (this->content_cross_alignment == visual_alignment::align_far)
-					{
-						temp.x = _bounds->x + (_bounds->w - sz.x);
-					}
-
 					return temp;
 				},
+				align_item,
 				[this](point _remaining, point* _origin, const rectangle* _bounds, control_base* _item) {
 					point temp = *_origin;
 					auto size = _item->get_size(bounds, { bounds.w, bounds.h });
 					temp.y += (size.y);
-
-					if (this->content_cross_alignment == visual_alignment::align_near)
-					{
-						temp.x = _bounds->x;
-					}
-					else if (this->content_cross_alignment == visual_alignment::align_center)
-					{
-						temp.x = _bounds->x + (_bounds->w - size.x) / 2.0;
-					}
-					else if (this->content_cross_alignment == visual_alignment::align_far)
-					{
-						temp.x = _bounds->x + (_bounds->w - size.x);
-					}
 
 					return temp;
 				}
@@ -981,42 +907,20 @@ namespace corona
 
 					origin.x = bounds.x;
 					origin.y = (bounds.y + bounds.h - h) / 2;
-					auto sz = _item->get_size(bounds, { _bounds->w, _bounds->h });
-					if (this->content_cross_alignment == visual_alignment::align_near)
-					{
-						origin.x = _bounds->x;
-					}
-					else if (this->content_cross_alignment == visual_alignment::align_center)
-					{
-						origin.x = _bounds->x + (_bounds->w - sz.x) / 2.0;
-					}
-					else if (this->content_cross_alignment == visual_alignment::align_far)
-					{
-						origin.x = _bounds->x + (_bounds->w - sz.x);
-					}
-
 					return origin;
 				},
+				align_item,
 				[this](point _remaining, point* _origin, const rectangle* _bounds, control_base* _item) {
 					point temp = *_origin;
 					auto sz = _item->get_size(bounds, { _bounds->w, _bounds->h });
 					temp.y += sz.y;
-
-					if (this->content_cross_alignment == visual_alignment::align_near)
-					{
-						temp.x = _bounds->x;
-					}
-					else if (this->content_cross_alignment == visual_alignment::align_center)
-					{
-						temp.x = _bounds->x + (_bounds->w - sz.x) / 2.0;
-					}
-					else if (this->content_cross_alignment == visual_alignment::align_far)
-					{
-						temp.x = _bounds->x + (_bounds->w - sz.x);
-					}
 					return temp;
 				}
 			);
+		}
+		else
+		{
+			throw std::exception("column content_alignment not set");
 		}
 	}
 
@@ -1032,6 +936,12 @@ namespace corona
 				point temp = { 0, 0, 0 };
 				temp.x = _bounds->x;
 				temp.y = _bounds->y;
+				return temp;
+			},
+			[this](point _remaining, point* _origin, const rectangle* _bounds, control_base* _item) {
+				point temp = *_origin;
+				auto sz = _item->get_size(bounds, { _bounds->w, _bounds->h });
+				temp.x = _bounds->x;
 				return temp;
 			},
 			[this](point _remaining, point* _origin, const rectangle* _bounds, control_base* _item) {

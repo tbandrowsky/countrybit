@@ -12,7 +12,7 @@ namespace corona {
 
 	struct rectangle
 	{
-		double x, y, w, h;
+		double x = 0, y = 0, w = 0, h = 0;
 
 		double right() const { return x + w; }
 		double bottom() const { return y + h; }

@@ -191,6 +191,7 @@ namespace corona
 		virtual void on_resize();
 		void arrange_children(rectangle _bounds,
 			std::function<point(point _remaining, const rectangle* _bounds, control_base*)> _initial_origin,
+			std::function<point(point _remaining, point* _origin, const rectangle* _bounds, control_base*)> _align_item,
 			std::function<point(point _remaining, point* _origin, const rectangle* _bounds, control_base*)> _next_origin);
 
 		rectangle				bounds;
@@ -877,6 +878,7 @@ namespace corona
 
 	void control_base::arrange_children(rectangle _bounds,
 		std::function<point(point _remaining, const rectangle* _bounds, control_base*)> _initial_origin,
+		std::function<point(point _remaining, point* _origin, const rectangle* _bounds, control_base*)> _align_item,
 		std::function<point(point _remaining, point* _origin, const rectangle* _bounds, control_base*)> _next_origin)
 	{
 		point origin = { _bounds.x, _bounds.y, 0.0 };
@@ -887,29 +889,34 @@ namespace corona
 			auto sichild = std::begin(children);
 
 			origin = _initial_origin(remaining, &_bounds, sichild->get());
-
+			std::cout << typeid(*this).name() << " first result origin:" << origin.x << ", " << origin.y << std::endl;
 			remaining = get_remaining(remaining);
-
 			while (sichild != std::end(children))
 			{
 				auto child = *sichild;
+				auto* c = child.get();
+
+				auto location  = _align_item(remaining, &origin, &bounds, child.get());
 
 				auto sz = child->get_size(_bounds, remaining);
 				auto pos = child->get_position(_bounds);
 
 				rectangle new_bounds;
-				new_bounds.x = origin.x + pos.x;
-				new_bounds.y = origin.y + pos.y;
+				new_bounds.x = location.x + pos.x;
+				new_bounds.y = location.y + pos.y;
 				new_bounds.w = sz.x;
 				new_bounds.h = sz.y;
 
+				//std::cout << typeid(*c).name() << " " << new_bounds.x << ", " << new_bounds.y << " x (" << new_bounds.w << ", " << new_bounds.h << ")" << std::endl;
+
 				child->arrange(new_bounds);
 
+				//std::cout << typeid(*this).name() << " next result origin:" << origin.x << ", " << origin.y << std::endl;
+
 				origin = _next_origin(remaining, &origin, &bounds, child.get());
-
 				sichild++;
-			}
 
+			}
 		}
 	}
 

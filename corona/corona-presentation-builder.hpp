@@ -50,9 +50,14 @@ namespace corona
 				return;
 			}
 
-			if (root->item_box.height.amount > 0 && root->item_box.width.amount > 0)
+			if (root->item_box.height.amount > 0)
 			{
-				_ref->box = root->item_box;
+				_ref->box.height = root->item_box.height;
+			}
+
+			if (root->item_box.width.amount > 0)
+			{
+				_ref->box.width = root->item_box.width;
 			}
 
 			if (root->item_margin.amount > 0)
@@ -666,9 +671,9 @@ namespace corona
 			return *this;
 		}
 
-		control_builder& minimize_button(std::function<void(minimize_button_control&)> _settings = nullptr)
+		control_builder& minimize_button(int _id, std::function<void(minimize_button_control&)> _settings = nullptr)
 		{
-			auto tc = create<minimize_button_control>(id_counter::next());
+			auto tc = create<minimize_button_control>(_id);
 			apply_item_sizes(tc);
 			if (_settings) {
 				_settings(*tc);
@@ -677,9 +682,9 @@ namespace corona
 			;
 		}
 
-		control_builder& maximize_button(std::function<void(maximize_button_control&)> _settings = nullptr)
+		control_builder& maximize_button(int _id, std::function<void(maximize_button_control&)> _settings = nullptr)
 		{
-			auto tc = create<maximize_button_control>(id_counter::next());
+			auto tc = create<maximize_button_control>(_id);
 			apply_item_sizes(tc);
 			if (_settings) {
 				_settings(*tc);
@@ -687,9 +692,9 @@ namespace corona
 			return *this;
 		}
 
-		control_builder& close_button(std::function<void(close_button_control&)> _settings = nullptr)
+		control_builder& close_button(int _id, std::function<void(close_button_control&)> _settings = nullptr)
 		{
-			auto tc = create<close_button_control>(id_counter::next());
+			auto tc = create<close_button_control>(_id);
 			apply_item_sizes(tc);
 			if (_settings) {
 				_settings(*tc);
@@ -1145,6 +1150,12 @@ namespace corona
 				[this](point _remaining, point* _origin, const rectangle* _bounds, control_base* _item) {
 					point temp = *_origin;
 					auto sz = _item->get_size(bounds, { _bounds->w, _bounds->h });
+					temp.x = _bounds->x;
+					return temp;
+				},
+				[this](point _remaining, point* _origin, const rectangle* _bounds, control_base* _item) {
+					point temp = *_origin;
+					auto sz = _item->get_size(bounds, { _bounds->w, _bounds->h });
 					temp.y += sz.y;
 					temp.x = _bounds->x;
 					return temp;
@@ -1568,9 +1579,9 @@ namespace corona
 					})
 				.end()
 				.menu_button(menu_button_id, [this](auto& _ctrl) { _ctrl.set_size(50.0_px, 50.0_px);_ctrl.menu = *menu;	})
-				.close_button([](auto& _ctrl) { _ctrl.set_size(50.0_px, 50.0_px); })
-				.minimize_button([](auto& _ctrl) { _ctrl.set_size(50.0_px, 50.0_px); })
-				.maximize_button([](auto& _ctrl) { _ctrl.set_size(50.0_px, 50.0_px); })
+				.close_button(close_button_id, [](auto& _ctrl) { _ctrl.set_size(50.0_px, 50.0_px); })
+				.minimize_button(min_button_id, [](auto& _ctrl) { _ctrl.set_size(50.0_px, 50.0_px); })
+				.maximize_button(max_button_id, [](auto& _ctrl) { _ctrl.set_size(50.0_px, 50.0_px); })
 			.end();
 
 			cb.apply_controls(this);
@@ -1581,6 +1592,9 @@ namespace corona
 
 		presentation_style* st;
 		int menu_button_id;
+		int min_button_id;
+		int max_button_id;
+		int close_button_id;
 		menu_item* menu;
 		int image_control_id;
 		std::string image_file;
@@ -1610,6 +1624,9 @@ namespace corona
 			menu = _mi;
 			menu_button_id = id_counter::next();
 			image_control_id = id_counter::next();
+			min_button_id = id_counter::next();
+			max_button_id = id_counter::next();
+			close_button_id = id_counter::next();
 		}
 
 		std::shared_ptr<control_base> clone()
