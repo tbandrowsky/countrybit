@@ -176,6 +176,7 @@ namespace corona
 		container_control& set_margin(measure _item_space)
 		{
 			margin = _item_space;
+			calculate_margins();
 			return *this;
 		}
 
@@ -723,6 +724,8 @@ namespace corona
 			arrange_children(bounds,
 				[this](point _remaining, const rectangle* _bounds, control_base* _item) {
 					point temp = { _bounds->x, _bounds->y };
+					temp.x += _item->margin.amount;
+					temp.y += _item->margin.amount;
 					return temp;
 				},
 				align_item,
@@ -730,6 +733,7 @@ namespace corona
 					point temp = *_origin;
 					auto sz = _item->get_size(bounds, { _bounds->w, _bounds->h });
 					temp.x += sz.x;
+					temp.y += _item->margin.amount;
 					return temp;
 				}
 			);
@@ -741,13 +745,14 @@ namespace corona
 
 					double w = 0;
 
+					w = _item->margin.amount;
 					for (auto child : children)
 					{
+						child->calculate_margins();
 						auto sz = child->get_size(*_bounds, _remaining);
 						w += sz.x;
+						w += child->margin.amount;
 					}
-
-					auto sz = _item->get_size(bounds, { _bounds->w, _bounds->h });
 
 					point temp = { 0, 0, 0 };
 					temp.x = (_bounds->right() - w);
@@ -758,6 +763,7 @@ namespace corona
 					point temp = *_origin;
 					auto sz = _item->get_size(bounds, { _bounds->w, _bounds->h });
 					temp.x += sz.x;
+					temp.x += _item->margin.amount;
 					return temp;
 				}
 			);
@@ -775,10 +781,12 @@ namespace corona
 					remaining.y = _bounds->h;
 					remaining = this->get_remaining(remaining);
 
+					w = _item->margin.amount;
 					for (auto child : children)
 					{
 						auto sz = child->get_size(*_bounds, remaining);
 						w += sz.x;
+						w += child->margin.amount;
 					}
 
 					origin.x = (bounds.x + bounds.w - w) / 2;
@@ -791,6 +799,7 @@ namespace corona
 					point temp = *_origin;
 					auto sz = _item->get_size(bounds, { _bounds->w, _bounds->h });
 					temp.x += sz.x;
+					temp.x += _item->margin.amount;
 					return temp;
 				}
 			);
@@ -837,9 +846,8 @@ namespace corona
 			arrange_children(bounds,
 				[this](point _remaining, const rectangle* _bounds, control_base* _item) {
 					point temp = { 0, 0, 0 };
-					temp.x = _bounds->x;
-					temp.y = _bounds->y;
-
+					temp.x = _bounds->x + _item->margin.amount;
+					temp.y = _bounds->y + _item->margin.amount;
 					return temp;
 				},
 				align_item,
@@ -847,6 +855,7 @@ namespace corona
 					point temp = *_origin;
 					auto sz = _item->get_size(bounds, { _bounds->w, _bounds->h });
 					temp.y += sz.y;
+					temp.y += _item->margin.amount;
 					return temp;
 				}
 			);
@@ -868,6 +877,7 @@ namespace corona
 					{
 						auto sz = child->get_size(*_bounds, remaining);
 						h += sz.y;
+						h += child->margin.amount;
 					}
 
 					temp.x = _bounds->x;
@@ -881,6 +891,7 @@ namespace corona
 					point temp = *_origin;
 					auto size = _item->get_size(bounds, { bounds.w, bounds.h });
 					temp.y += (size.y);
+					temp.y += _item->margin.amount;
 
 					return temp;
 				}
@@ -903,6 +914,7 @@ namespace corona
 					{
 						auto sz = child->get_size(*_bounds, remaining);
 						h += sz.y;
+						h += child->margin.amount;
 					}
 
 					origin.x = bounds.x;

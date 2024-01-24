@@ -358,6 +358,7 @@ namespace corona
 		rectangle& get_inner_bounds() { return inner_bounds; }
 
 		rectangle& set_bounds(rectangle& _bounds);
+		void calculate_margins();
 
 		virtual void arrange(rectangle _ctx);
 		bool contains(point pt);
@@ -462,6 +463,12 @@ namespace corona
 		control_base& set_position(layout_rect _new_layout)
 		{
 			box = _new_layout;
+			return *this;
+		}
+
+		control_base& set_padding(measure _space)
+		{
+			padding = _space;
 			return *this;
 		}
 
@@ -661,12 +668,12 @@ namespace corona
 		point sz;
 
 		control_base& pi = *this;
-		auto mm = to_pixels(margin);
+
+		calculate_margins();
 
 		if (pi.box.width.units == measure_units::pixels)
 		{
 			sz.x = pi.box.width.amount;
-			sz.x += mm * 2.0;
 		}
 		else if (box.width.units == measure_units::percent_remaining)
 		{
@@ -684,19 +691,16 @@ namespace corona
 			{
 				sz.x /= 1.618;
 			}
-			sz.x += mm * 2.0;
 		}
 		else if (pi.box.width.units == measure_units::text)
 		{
 			double font_height = get_font_size();
 			sz.x = font_height * pi.box.width.amount;
-			sz.x += mm * 2.0;
 		}
 
 		if (pi.box.height.units == measure_units::pixels)
 		{
 			sz.y = pi.box.height.amount;
-			sz.y += mm * 2.0;
 		}
 		else if (box.height.units == measure_units::percent_remaining)
 		{
@@ -714,13 +718,11 @@ namespace corona
 			{
 				sz.y *= 1.618;
 			}
-			sz.y += mm * 2.0;
 		}
 		else if (pi.box.height.units == measure_units::text)
 		{
 			double font_height = get_font_size();
 			sz.x = font_height * pi.box.height.amount;
-			sz.x += mm * 2.0;
 		}
 
 		if (box.width.units == measure_units::percent_aspect)
@@ -799,12 +801,17 @@ namespace corona
 		return rectangle_math::contains(bounds, pt.x, pt.y);
 	}
 
+	void control_base::calculate_margins()
+	{
+		margin_amount.x = margin_amount.y = to_pixels(margin);
+		padding_amount.x = padding_amount.y = to_pixels(padding);
+	}
+
 	rectangle& control_base::set_bounds(rectangle& _bounds)
 	{
 		bounds = _bounds;
 
-		margin_amount.x = margin_amount.y = to_pixels(margin);
-		padding_amount.x = padding_amount.y = to_pixels(padding);
+		calculate_margins();
 
 		if (parent)
 		{
@@ -834,10 +841,10 @@ namespace corona
 
 		inner_bounds = bounds;
 
-		inner_bounds.x += margin_amount.x;
-		inner_bounds.y += margin_amount.y;
-		inner_bounds.w -= (margin_amount.x * 2);
-		inner_bounds.h -= (margin_amount.y * 2);
+		inner_bounds.x += padding_amount.x;
+		inner_bounds.y += padding_amount.y;
+		inner_bounds.w -= (padding_amount.x * 2);
+		inner_bounds.h -= (padding_amount.y * 2);
 
 		if (inner_bounds.w < 0) inner_bounds.w = 0;
 		if (inner_bounds.h < 0) inner_bounds.h = 0;
@@ -889,7 +896,6 @@ namespace corona
 			auto sichild = std::begin(children);
 
 			origin = _initial_origin(remaining, &_bounds, sichild->get());
-			std::cout << typeid(*this).name() << " first result origin:" << origin.x << ", " << origin.y << std::endl;
 			remaining = get_remaining(remaining);
 			while (sichild != std::end(children))
 			{
@@ -907,11 +913,7 @@ namespace corona
 				new_bounds.w = sz.x;
 				new_bounds.h = sz.y;
 
-				//std::cout << typeid(*c).name() << " " << new_bounds.x << ", " << new_bounds.y << " x (" << new_bounds.w << ", " << new_bounds.h << ")" << std::endl;
-
 				child->arrange(new_bounds);
-
-				//std::cout << typeid(*this).name() << " next result origin:" << origin.x << ", " << origin.y << std::endl;
 
 				origin = _next_origin(remaining, &origin, &bounds, child.get());
 				sichild++;

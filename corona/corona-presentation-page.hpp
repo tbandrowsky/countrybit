@@ -239,17 +239,13 @@ namespace corona
 		void arrange(double width, double height, double _padding = 0)
 		{
 
-			double pd = _padding * 2.0;
 			rectangle bounds;
 			bounds.x = 0;
 			bounds.y = 0;
 			bounds.w = width;
 			bounds.h = height;
 
-			//			std::cout << "page arrange: " << bounds.w << " " << bounds.h << std::endl;
-
 			root->arrange(bounds);
-			//			std::cout << std::endl;
 		}
 
 		int get_keyboard_parent(int _control_id)
