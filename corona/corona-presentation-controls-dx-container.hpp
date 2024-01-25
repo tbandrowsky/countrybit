@@ -296,7 +296,7 @@ namespace corona
 
 		void check_scroll()
 		{
-			if (selected_item_index >= rows.size())
+			if (selected_item_index >= rows.size() - 1)
 			{
 				selected_item_index = rows.size() - 1;
 			}
@@ -307,6 +307,7 @@ namespace corona
 			selected_page_index = rows[selected_item_index].page_index;
 			int selected_item_page_index = page_to_item_index[selected_page_index];
 			view_port.y = rows[selected_item_page_index].bounds.y;
+			std::cout << selected_page_index << " " << selected_item_index << " " << selected_item_page_index << " " << view_port.y << std::endl;
 		}
 
 		void set_selection_border(solidBrushRequest _brushFill)
@@ -374,16 +375,18 @@ namespace corona
 							{
 								auto& row = rows[idx];
 
-								if (row.bounds.y < bounds.bottom()) 
+								auto rect_bounds = row.bounds;
+								rect_bounds.x -= offset.x;
+								rect_bounds.y -= offset.y;
+
+								if (rect_bounds.y < bounds.bottom()) 
 								{
-									auto rect_bounds = row.bounds;
-									rect_bounds.x -= offset.x;
-									rect_bounds.y -= offset.y;
 									items_source.draw_item(this, idx, rect_bounds);
 									if (selected_item_index == idx) 
 									{
 										context.drawRectangle(&rect_bounds, selection_border.name, 4, nullptr);
 									}
+									context.drawText("Test", &rect_bounds, nullptr ,selection_border.name);
 								}
 								else 
 								{
@@ -438,6 +441,11 @@ namespace corona
 			view_port.w = _bounds.w;
 			view_port.h = _bounds.h;
 
+			if (_bounds.h == 0 || _bounds.w == 0) 
+			{
+				return;
+			}
+
 			double h = _bounds.h;
 			double y = 0;
 
@@ -445,7 +453,8 @@ namespace corona
 			page_to_item_index.clear();
 
 			int sz = rows.size();
-			for (int i = 0; i < sz; i++)
+			int i;
+			for (i = 0; i < sz; i++)
 			{
 				auto isz = items_source.size_item(this, i, _bounds);
 				auto& r = rows[i];
@@ -457,7 +466,8 @@ namespace corona
 				r.page_index = page_index;
 				if (page_index > last_page)
 				{
-					page_to_item_index.push_back(page_index);
+					page_to_item_index.push_back(i);
+					last_page = page_index;
 				}
 				y += isz.y;
 			}
