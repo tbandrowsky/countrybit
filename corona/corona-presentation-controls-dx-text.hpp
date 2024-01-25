@@ -239,8 +239,8 @@ namespace corona
 
 					std::string test_text = std::format("{0}, {1}, {2}", text, draw_bounds.x, draw_bounds.y, (long)this);
 
-					draw_bounds.x = 0;
-					draw_bounds.y = 0;
+					draw_bounds.x -= bounds.x;
+					draw_bounds.y -= bounds.y;
 
 					pwindow->getContext().drawText(text.c_str(), &draw_bounds, this->text_style.name, this->text_idle_brush.name);
 //					pwindow->getContext().drawRectangle(&draw_bounds, this->text_fill_brush.name, 4, nullptr);
@@ -301,7 +301,7 @@ namespace corona
 		text_style = {};
 		text_style.name = "title_text_style";
 		text_style.fontName = st->TitleTextFont;
-		text_style.fontSize = 40;
+		text_style.fontSize = 72;
 		text_style.bold = false;
 		text_style.italics = false;
 		text_style.underline = false;

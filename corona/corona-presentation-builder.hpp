@@ -1028,7 +1028,7 @@ namespace corona
 				});
 
 			auto tab_row = main.row_begin(id_counter::next(), [](row_layout& _settings) {
-				_settings.set_size(1.0_container, 30.0_px);
+				_settings.set_size(1.0_container, 40.0_px);
 				});
 
 			auto frame_row = main.frame_begin(id_counter::next(), [this](frame_layout& _settings) {
@@ -1539,13 +1539,13 @@ namespace corona
 				});
 
 			auto title_column = main_row.row_begin(id_counter::next(), [](row_layout& cl) {
-				cl.set_content_align(visual_alignment::align_near);
+				cl.set_content_align(visual_alignment::align_center);
 				cl.set_content_cross_align(visual_alignment::align_center);
 				cl.set_item_margin(0.0_px);
 				cl.set_size(1.0_remaining, 1.0_container);
 					})
 				.title(title_name, [this](title_control& control) {
-						control.text_style.horizontal_align = visual_alignment::align_near;
+						control.text_style.horizontal_align = visual_alignment::align_center;
 						control.text_style.vertical_align = visual_alignment::align_center;
 						control.set_size(title_name, 1.2_font);
 						control.text_style.bold = true;

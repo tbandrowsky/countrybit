@@ -469,12 +469,14 @@ namespace corona
 		control_base& set_padding(measure _space)
 		{
 			padding = _space;
+			calculate_margins();
 			return *this;
 		}
 
 		control_base& set_margin(measure _space)
 		{
 			margin = _space;
+			calculate_margins();
 			return *this;
 		}
 

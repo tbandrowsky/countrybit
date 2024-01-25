@@ -76,7 +76,7 @@ namespace corona
 					_cb.image_control_id = IDC_COMPANY_LOGO;
 					_cb.image_file = "assets\\small_logo.png";
 					_cb.corporate_name = "COUNTRYBIT";
-					_cb.title_name = "REVOLUTION";
+					_cb.title_name = "Revolution";
 					_cb.code_detail_id = IDC_STATUS_DETAIL;
 					_cb.code_status_id = IDC_STATUS_MESSAGE;
 				}
@@ -155,7 +155,9 @@ namespace corona
 		*/
 
 		command_container.chaptertitle("Your location", [](chaptertitle_control& ct) {
-			ct.set_size(.95_container, 30.0_px);
+			ct.set_size(.95_container, 50.0_px);
+			ct.text_style.horizontal_align = visual_alignment::align_center;
+			ct.text_style.vertical_align = visual_alignment::align_center;
 			}, id_location_title);
 
 		int64_t current_edited_object_id = -1;
@@ -328,7 +330,9 @@ namespace corona
 		*/
 
 		command_container.chaptertitle("Create New", [](chaptertitle_control& ct) {
-			ct.set_size(.95_container, 30.0_px);
+			ct.set_size(.95_container, 50.0_px);
+			ct.text_style.horizontal_align = visual_alignment::align_center;
+			ct.text_style.vertical_align = visual_alignment::align_center;
 			}, id_create_title);
 
 		for (int i = 0; i < create_options.size(); i++)
@@ -351,7 +355,7 @@ namespace corona
 				});
 				*/
 			command_container.calico_button(button_id, [class_description, class_name, app_show](calico_button_control& pc) {
-				pc.set_size(.95_container, 30.0_px);
+				pc.set_size(.95_container, 40.0_px);
 				pc.text = class_description;
 
 				json_parser jp;
@@ -618,7 +622,7 @@ namespace corona
 							_cb.image_control_id = IDC_COMPANY_LOGO;
 							_cb.image_file = "assets\\small_logo.png";
 							_cb.corporate_name = "COUNTRYBIT";
-							_cb.title_name = "REVOLUTION";
+							_cb.title_name = "Revolution";
 							_cb.code_detail_id = IDC_STATUS_DETAIL;
 							_cb.code_status_id = IDC_STATUS_MESSAGE;
 						}

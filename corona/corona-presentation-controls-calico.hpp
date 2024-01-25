@@ -183,7 +183,7 @@ namespace corona
 	{
 		set_origin(0.0_px, 0.0_px);
 		set_size(200.0_px, 1.0_container);
-		icon_width = 30;
+		icon_width = 4;
 
 		auto st = styles.get_style();
 
@@ -246,7 +246,7 @@ namespace corona
 								start.y = icon_bounds.y;
 								stop.x = start.x;
 								stop.y = icon_bounds.y + icon_bounds.h;
-								pcontext->drawLine(&start, &stop, _foreground->name, 4);
+//								pcontext->drawLine(&start, &stop, _foreground->name, 4);
 								_bounds->y -= 4;
 							}
 							else
@@ -257,8 +257,8 @@ namespace corona
 								center.y = icon_bounds.y + icon_bounds.h / 2;
 								radius.x = icon_width / 2;
 								radius.y = icon_bounds.h / 2;
-								pcontext->drawEllipse(&center, &radius, _foreground->name, 4, nullptr);
-								_bounds->y -= 8;
+								//pcontext->drawEllipse(&center, &radius, _foreground->name, 4, nullptr);
+								_bounds->y -= 6;
 							}
 
 							_bounds->x += icon_width + 4;

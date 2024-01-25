@@ -322,10 +322,10 @@ namespace corona
 			foregroundOver.name = _base_name + "_fore_over";
 			foregroundDown.name = _base_name + "_fore_down";
 
-			std::string face_step = "#bdc3c7ff";
-			std::string light_step = "#bdc3c7ff";
-			std::string dark_step =    "#2c3e50ff";
-			std::string darkest_step = "#1c2e40ff";
+			std::string face_step = "#79726eff";
+			std::string light_step = "#adb3b7ff";
+			std::string dark_step =    "#3b413cff";
+			std::string darkest_step = "#353535ff";
 
 			buttonFaceNormal.gradientStops = {
 				{ toColor(dark_step), 0.0 },
@@ -352,11 +352,11 @@ namespace corona
 			};
 
 			foregroundNormal.active = true;
-			foregroundNormal.brushColor = toColor(dark_step);
+			foregroundNormal.brushColor = toColor("#C5C6CA");
 			foregroundOver.active = true;
-			foregroundOver.brushColor = toColor("#7070A0");
+			foregroundOver.brushColor = toColor("#F5F6FA");
 			foregroundDown.active = true;
-			foregroundDown.brushColor = toColor("#A0A0C0");
+			foregroundDown.brushColor = toColor("#E5E6EA");
 		}
 
 		virtual void arrange(rectangle _ctx)
@@ -569,6 +569,7 @@ namespace corona
 		std::string			text;
 		solidBrushRequest	text_idle_brush;
 		textStyleRequest	text_style;
+		textStyleRequest	selected_text_style;
 		double				icon_width;
 		int*				active_id;
 		std::function<void(tab_button_control& _tb)> tab_selected;
@@ -621,14 +622,14 @@ namespace corona
 					else if (mouse_over.value())
 					{
 						context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonFaceOver.name);
-						auto face_bounds = rectangle_math::deflate(draw_bounds, { 8, 8, 8, 16 });
+						auto face_bounds = rectangle_math::deflate(draw_bounds, { 8, 8, 8, 8 });
 						//context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonBackLight.name);
 						draw_shape(this, &face_bounds, &foregroundOver);
 					}
 					else
 					{
 						context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonFaceNormal.name);
-						auto face_bounds = rectangle_math::deflate(draw_bounds, { 8, 8, 8, 16 });
+						auto face_bounds = rectangle_math::deflate(draw_bounds, { 8, 8, 8, 8 });
 						//context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonBackLight.name);
 						draw_shape(this, &face_bounds, &foregroundNormal);
 					}
@@ -1055,7 +1056,7 @@ namespace corona
 	{
 		set_origin(0.0_px, 0.0_px);
 		set_size(200.0_px, 1.0_container);
-		icon_width = 30;
+		icon_width = 8;
 
 		auto st = styles.get_style();
 
@@ -1068,7 +1069,7 @@ namespace corona
 		text_style.underline = false;
 		text_style.strike_through = false;
 		text_style.horizontal_align = st->PrevailingAlignment;
-		text_style.vertical_align = visual_alignment::align_near;
+		text_style.vertical_align = visual_alignment::align_center;
 		text_style.wrap_text = true;
 		text_style.font_stretch = DWRITE_FONT_STRETCH_NORMAL;
 
@@ -1112,7 +1113,7 @@ namespace corona
 								start.y = icon_bounds.y;
 								stop.x = start.x;
 								stop.y = icon_bounds.y + icon_bounds.h;
-								pcontext->drawLine(&start, &stop, _foreground->name, 4);
+//								pcontext->drawLine(&start, &stop, _foreground->name, 4);
 								_bounds->y -= 4;
 							}
 							else
@@ -1123,7 +1124,7 @@ namespace corona
 								center.y = icon_bounds.y + icon_bounds.h / 2;
 								radius.x = icon_width / 2;
 								radius.y = icon_bounds.h / 2;
-								pcontext->drawEllipse(&center, &radius, _foreground->name, 4, nullptr);
+	//							pcontext->drawEllipse(&center, &radius, _foreground->name, 4, nullptr);
 								_bounds->y -= 8;
 							}
 

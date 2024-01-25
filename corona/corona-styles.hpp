@@ -191,13 +191,13 @@ namespace corona {
 	{
 		presentation_style countrybit;
 
-		std::string bigFont = "Latin Wide,Century Gothic,Arial";
+		std::string bigFont = "Blackadder ITC,Segoe Script,Century Gothic,Arial";
 		std::string textFont = "Tahoma,Arial";
 
 		countrybit.PrimaryFont = textFont;
 
 		countrybit.MasterBrandColors = { "353535", "ffffff", "d2d7df", "bdbbb0", "8a897c", };
-		countrybit.SecondaryBrandColors = { "9db5b2", "3b413c", "9db5b2", "daf0ee", "94d1be", "79726e", "7c7977", "808080", "5B6770", "081F2C" };
+		countrybit.SecondaryBrandColors = { "94d1be", "3b413c", "9db5b2", "daf0ee", "94d1be", "79726e", "7c7977", "808080", "5B6770", "081F2C" };
 		countrybit.SupportingBrandColors = {  };
 
 		countrybit.MasterBrandTextColors = { "FFFFFF", "000000", "FFFFFF", "000000", "000000" };
