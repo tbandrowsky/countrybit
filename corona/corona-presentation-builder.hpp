@@ -1171,7 +1171,8 @@ namespace corona
 					_key == VK_UP || _key == VK_DOWN || 
 					_key == VK_PRIOR || _key == VK_NEXT || 
 					_key == VK_HOME || _key == VK_END ||
-					_key == VK_DELETE || _key == VK_INSERT);
+					_key == VK_DELETE || _key == VK_INSERT ||
+					_key == VK_RETURN || _key == VK_DELETE);
 			return is_message;
 		}
 

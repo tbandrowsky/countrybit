@@ -218,9 +218,35 @@ namespace corona
 			return box_id;
 		}
 
+		static block_id json_id()
+		{
+			block_id box_id;
+			strncpy_s(box_id.name, "json", sizeof(box_id.name));
+			return box_id;
+		}
+
+		static block_id general_id()
+		{
+			block_id box_id;
+			strncpy_s(box_id.name, "gen", sizeof(box_id.name));
+			return box_id;
+		}
+
 		bool is_box()
 		{
 			block_id t = block_id::box_id();
+			return strcmp(t.name, name) == 0;
+		}
+
+		bool is_json()
+		{
+			block_id t = block_id::json_id();
+			return strcmp(t.name, name) == 0;
+		}
+
+		bool is_general()
+		{
+			block_id t = block_id::general_id();
 			return strcmp(t.name, name) == 0;
 		}
 
@@ -345,7 +371,15 @@ namespace corona
 			return strcmp(t.name, name) == 0;
 		}
 
+	};
 
+	struct block_header_struct
+	{
+		block_id	block_type;
+		int64_t		object_id;
+		int64_t		data_length;
+		int64_t		data_location;
+		int64_t		next_free_block;
 	};
 
 	template <typename blocked_type> concept named_block =
@@ -417,6 +451,193 @@ namespace corona
 	const int style_selected = 2;
 	const int style_busy = 3;
 	const int style_disabled = 4;
+
+	auto toHex(char i)
+	{
+		struct char_pair
+		{
+			char str[4];
+		} cp;
+
+		int major, minor;
+		major = i / 16;
+		minor = i & 16;
+
+		if (major < 10)
+		{
+			cp.str[0] = major + '0';
+		}
+		else
+		{
+			cp.str[0] = (major - 10) + 'A';
+		}
+
+		if (minor < 10)
+		{
+			cp.str[1] = minor + '0';
+		}
+		else
+		{
+			cp.str[1] = (minor - 10) + 'A';
+		}
+		cp.str[2] = 0;
+
+		return cp;
+	}
+
+	int toInt(char hex, int shift)
+	{
+		int d = {};
+		hex = toupper(hex);
+
+		if (hex >= 'A' && hex <= 'F')
+		{
+			d = hex - 'A' + 10;
+		}
+		else if (hex >= '0' && hex <= '9')
+		{
+			d = hex - '0';
+		}
+		d <<= shift;
+		return d;
+	}
+
+	int toInt2(const std::string& item, int _baseIndex)
+	{
+		int r = toInt(item[_baseIndex], 4) + toInt(item[_baseIndex + 1], 0);
+		return r;
+	}
+
+	class buffer
+	{
+		size_t buffer_size;
+		std::unique_ptr<char[]> buffer_bytes;
+
+	public:
+
+		buffer() 
+		{
+			buffer_size = 0;
+			buffer_bytes = nullptr;
+		}
+
+		buffer(const char* _src) {
+			buffer_size = strlen(_src);
+			buffer_bytes = std::make_unique<char[]>(buffer_size + 1);
+			std::copy(_src, _src + buffer_size, buffer_bytes.get());
+		}
+
+		buffer(size_t _size)
+		{
+			buffer_bytes = std::make_unique<char[]>(_size + 1);
+			buffer_size = _size;
+		}
+
+		buffer(buffer&& _src)
+		{
+			buffer_bytes = std::move(_src.buffer_bytes);
+			buffer_size = _src.buffer_size;
+		}
+
+		buffer(const buffer& _src)
+		{
+			buffer_size = _src.buffer_size;
+			buffer_bytes = std::make_unique<char[]>(buffer_size + 1);
+			std::copy(_src.buffer_bytes.get(), _src.buffer_bytes.get() + buffer_size, buffer_bytes.get());
+		}
+
+		buffer& operator = (const buffer& _src)
+		{
+			buffer_size = _src.buffer_size;
+			buffer_bytes = std::make_unique<char[]>(buffer_size + 1);
+			std::copy(_src.buffer_bytes.get(), _src.buffer_bytes.get() + buffer_size, buffer_bytes.get());
+			return *this;
+		}
+
+		template <typename poco_type> buffer& operator = (const poco_type& _src)
+		{
+			buffer_size = sizeof(poco_type);
+			buffer_bytes = std::make_unique<char[]>(buffer_size + 1);
+			char* p = (char*)&_src;
+			std::copy(p, p + buffer_size, buffer_bytes.get());
+			return *this;
+		}
+
+		buffer operator = (buffer&& _src)
+		{
+			buffer_bytes = std::move(_src.buffer_bytes);
+			buffer_size = _src.buffer_size;
+			return *this;
+		}
+
+		char* get_ptr()
+		{
+			return buffer_bytes.get();
+		}
+
+		char* get_ptr_end()
+		{
+			return buffer_bytes.get() + buffer_size;
+		}
+
+		size_t get_size()
+		{
+			return buffer_size;
+		}
+	};
+
+	class buffer_assembler
+	{
+		std::vector<buffer> buffers;
+
+	public:
+
+		char* append(std::string _str)
+		{
+			buffer temp(_str.size());
+			char* d = temp.get_ptr();
+			const char* s = _str.c_str();
+			while (*s) {
+				*d = *s;
+				s++;
+				d++;
+			}
+			*d = 0;
+			buffers.push_back(std::move(temp));
+			return buffers[buffers.size() - 1].get_ptr();
+		}
+
+		char* append(size_t _size)
+		{
+			buffer temp(_size);
+			buffers.push_back(std::move(temp));
+			return buffers[buffers.size() - 1].get_ptr();
+		}
+
+		buffer consolidate()
+		{
+			size_t total = 0;
+			for (auto& b : buffers) {
+				total += b.get_size();
+			}
+			size_t end_buffer = total;
+			total++;
+			buffer consolidated(total);
+			char* t = consolidated.get_ptr();
+			for (auto& b : buffers) {
+				std::copy(b.get_ptr(), b.get_ptr_end(), t);
+				t += b.get_size();
+			}
+			*t = 0;
+			return consolidated;
+		}
+
+		int size()
+		{
+			return buffers.size();
+		}
+	};
+
 
 }
 

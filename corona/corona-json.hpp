@@ -20,13 +20,15 @@ namespace corona
 		{
 			;
 		}
-
 		virtual ~json_value()
 		{
 			;
 		}
-
 		virtual std::string to_json()
+		{
+			return "";
+		}
+		virtual std::string to_json_typed()
 		{
 			return "";
 		}
@@ -34,7 +36,10 @@ namespace corona
 		{
 			return "";
 		}
-
+		virtual std::string get_type_prefix()
+		{
+			return "";
+		}
 		virtual std::shared_ptr<json_value> clone()
 		{
 			return std::make_shared<json_value>();
@@ -50,13 +55,130 @@ namespace corona
 		{
 			return std::to_string(value);
 		}
+		virtual std::string to_json_typed()
+		{
+			return get_type_prefix() + " " + to_json();
+		}
 		virtual std::string to_string()
 		{
 			return std::format("{}", value);
 		}
+		virtual std::string get_type_prefix()
+		{
+			return "$double";
+		}
 		virtual std::shared_ptr<json_value> clone()
 		{
 			auto t = std::make_shared<json_double>();
+			t->value = value;
+			return t;
+		}
+	};
+
+	class json_datetime : public json_value
+	{
+	public:
+		LARGE_INTEGER value;
+
+		virtual std::string to_json()
+		{
+			return std::to_string(value.QuadPart);
+		}
+		virtual std::string to_json_typed()
+		{
+			return get_type_prefix() + " " + to_json();
+		}
+		virtual std::string to_string()
+		{
+			return std::format("{}", value.QuadPart);
+		}
+		virtual std::string get_type_prefix()
+		{
+			return "$datetime";
+		}
+		virtual std::shared_ptr<json_value> clone()
+		{
+			auto t = std::make_shared<json_datetime>();
+			t->value = value;
+			return t;
+		}
+	};
+
+	class json_blob : public json_value
+	{
+	public:
+		std::vector<char> value;
+
+		virtual std::string to_json()
+		{
+			return "\"" + to_string() + "\"";
+		}
+
+		virtual std::string to_json_typed()
+		{
+			return get_type_prefix() + " " + to_json();
+		}
+
+		virtual std::string to_string()
+		{
+			std::string st;
+			for (auto ea : value) 
+			{
+				auto c = toHex(ea);
+				st += c.str;
+			}
+			return st;
+		}
+
+		virtual void from_string(std::string st)
+		{
+			value.clear();
+			for (int i = 0; i < st.size(); i += 2)
+			{
+				int item = toInt2(st, i);
+				value.push_back(item);
+			}
+		}
+
+		virtual std::string get_type_prefix()
+		{
+			return "$blob";
+		}
+
+		virtual std::shared_ptr<json_value> clone()
+		{
+			auto t = std::make_shared<json_blob>();
+			t->value = value;
+			return t;
+		}
+	};
+
+	class json_int64 : public json_value
+	{
+	public:
+		int64_t value;
+
+		virtual std::string to_json()
+		{
+			return std::to_string(value);
+		}
+
+		virtual std::string to_json_typed()
+		{
+			return get_type_prefix() + " " + to_json();
+		}
+
+		virtual std::string to_string()
+		{
+			return std::format("{}", value);
+		}
+		virtual std::string get_type_prefix()
+		{
+			return "$int64";
+		}
+		virtual std::shared_ptr<json_value> clone()
+		{
+			auto t = std::make_shared<json_int64>();
 			t->value = value;
 			return t;
 		}
@@ -71,9 +193,17 @@ namespace corona
 		{
 			return "\"" + value + "\"";
 		}
+		virtual std::string to_json_typed()
+		{
+			return get_type_prefix() + " " + to_json();
+		}
 		virtual std::string to_string()
 		{
 			return value;
+		}
+		virtual std::string get_type_prefix()
+		{
+			return "$string";
 		}
 		virtual std::shared_ptr<json_value> clone()
 		{
@@ -99,6 +229,11 @@ namespace corona
 			}
 			ret += " ]";
 			return ret;
+		}
+
+		virtual std::string to_json_typed()
+		{
+			return to_json();
 		}
 
 		virtual std::string to_string()
@@ -138,6 +273,11 @@ namespace corona
 			return ret;
 		}
 
+		virtual std::string to_json_typed()
+		{
+			return to_json();
+		}
+
 		virtual std::string to_string()
 		{
 			return to_json();
@@ -164,6 +304,9 @@ namespace corona
 		std::shared_ptr<json_double> double_impl;
 		std::shared_ptr<json_string> string_impl;
 		std::shared_ptr<json_array> array_impl;
+		std::shared_ptr<json_int64> int64_impl;
+		std::shared_ptr<json_datetime> datetime_impl;
+		std::shared_ptr<json_blob> blob_impl;
 		std::shared_ptr<json_object> object_impl;
 
 	public:
@@ -179,11 +322,44 @@ namespace corona
 			string_impl = std::dynamic_pointer_cast<json_string>(_value);
 			array_impl = std::dynamic_pointer_cast<json_array>(_value);
 			object_impl = std::dynamic_pointer_cast<json_object>(_value);
+			int64_impl = std::dynamic_pointer_cast<json_int64>(_value);
+			datetime_impl = std::dynamic_pointer_cast<json_datetime>(_value);
+			blob_impl = std::dynamic_pointer_cast<json_blob>(_value);
 		}
 
 		std::string to_json()
 		{
 			return value_base->to_json();
+		}
+
+		std::string to_json_typed()
+		{
+			return value_base->to_json_typed();
+		}
+
+		std::string to_json_typed_string()
+		{
+			std::string json_str = to_json_typed();
+			std::string escaped_json_str = "";
+
+			for (auto in : json_str)
+			{
+				switch (in) {
+				case '\\':
+				case '"':
+					escaped_json_str += '\\';
+					escaped_json_str += in;
+					break;
+				case '\n':
+					escaped_json_str += '\\';
+					escaped_json_str += 'n';
+					break;
+				default:
+					escaped_json_str += in;
+					break;
+				}
+			}
+			return escaped_json_str;
 		}
 
 		std::string to_json_string()
@@ -209,6 +385,21 @@ namespace corona
 				}
 			}
 			return escaped_json_str;
+		}
+
+		bool is_int64() const
+		{
+			return (bool)int64_impl;
+		}
+
+		bool is_datetime() const
+		{
+			return (bool)datetime_impl;
+		}
+
+		bool is_blob() const
+		{
+			return (bool)blob_impl;
 		}
 
 		bool is_double() const
@@ -248,6 +439,16 @@ namespace corona
 			return value;
 		}
 
+		int64_t& get_int64()  const
+		{
+			return int64_impl->value;
+		}
+
+		LARGE_INTEGER& get_time()  const
+		{
+			return datetime_impl->value;
+		}
+
 		double& get_double()  const
 		{
 			return double_impl->value;
@@ -264,14 +465,34 @@ namespace corona
 				return double_impl->value;
 			else if (string_impl)
 				return std::stod(string_impl->value);
+			else if (datetime_impl)
+				return datetime_impl->value.QuadPart;
 			else
 				return 0.0;
+		}
+
+		operator LARGE_INTEGER() const
+		{
+			if (datetime_impl)
+			{
+				return datetime_impl->value;
+			}
+			else 
+			{
+				LARGE_INTEGER t;
+				t.QuadPart = (int64_t)*this;
+				return t;
+			}
 		}
 
 		operator int64_t() const
 		{
 			if (double_impl)
 				return double_impl->value;
+			else if (int64_impl)
+				return int64_impl->value;
+			else if (datetime_impl)
+				return datetime_impl->value.QuadPart;
 			else if (string_impl)
 				return std::stod(string_impl->value);
 			else
@@ -282,8 +503,14 @@ namespace corona
 		{
 			if (double_impl)
 				return std::format("{0}", double_impl->value);
+			else if (int64_impl)
+				return int64_impl->to_string();
+			else if (datetime_impl)
+				return datetime_impl->to_string();
 			else if (string_impl)
 				return string_impl->value;
+			else if (blob_impl)
+				return blob_impl->to_string();
 			else
 				return "";
 		}
@@ -296,6 +523,11 @@ namespace corona
 		operator std::shared_ptr<json_object>& ()
 		{
 			return object_impl;
+		}
+
+		operator std::shared_ptr<json_blob>& ()
+		{
+			return blob_impl;
 		}
 
 		std::shared_ptr<json_object> operator ->()
@@ -390,6 +622,14 @@ namespace corona
 				double d = _member;
 				put_member(_key, d);
 			}
+			else if (_member.is_int64()) {
+				int64_t d = _member;
+				put_member(_key, d);
+			}
+			else if (_member.is_datetime()) {
+				int64_t d = _member;
+				put_member(_key, d);
+			}
 			else if (_member.is_object()) {
 				put_member_object(_key, _member);
 			}
@@ -406,6 +646,17 @@ namespace corona
 				throw std::logic_error("Not an object");
 			}
 			auto new_member = std::make_shared<json_string>();
+			new_member->value = _value;
+			object_impl->members[_key] = new_member;
+			return *this;
+		}
+
+		json put_member_i64(std::string _key,  int64_t _value)
+		{
+			if (!object_impl) {
+				throw std::logic_error("Not an object");
+			}
+			auto new_member = std::make_shared<json_int64>();
 			new_member->value = _value;
 			object_impl->members[_key] = new_member;
 			return *this;
@@ -485,6 +736,14 @@ namespace corona
 				double d = _element;
 				put_element(_index, d);
 			}
+			else if (_element.is_int64()) {
+				int64_t d = _element;
+				put_element(_index, d);
+			}
+			else if (_element.is_datetime()) {
+				LARGE_INTEGER timex = _element;
+				put_element(_index, timex);
+			}
 			else if (_element.is_object()) {
 				put_element_object(_index, _element);
 			}
@@ -503,6 +762,38 @@ namespace corona
 			auto new_member = std::make_shared<json_string>();
 			new_member->value = _value;
 
+			if (_index < 0 || _index >= array_impl->elements.size()) {
+				array_impl->elements.push_back(new_member);
+			}
+			else {
+				array_impl->elements[_index] = new_member;
+			}
+			return *this;
+		}
+
+		json put_element(int _index, int64_t _value)
+		{
+			if (!array_impl) {
+				throw std::logic_error("Not an array");
+			}
+			auto new_member = std::make_shared<json_int64>();
+			new_member->value = _value;
+			if (_index < 0 || _index >= array_impl->elements.size()) {
+				array_impl->elements.push_back(new_member);
+			}
+			else {
+				array_impl->elements[_index] = new_member;
+			}
+			return *this;
+		}
+
+		json put_element(int _index, LARGE_INTEGER _value)
+		{
+			if (!array_impl) {
+				throw std::logic_error("Not an array");
+			}
+			auto new_member = std::make_shared<json_datetime>();
+			new_member->value = _value;
 			if (_index < 0 || _index >= array_impl->elements.size()) {
 				array_impl->elements.push_back(new_member);
 			}
@@ -910,6 +1201,27 @@ namespace corona
 			return _src;
 		}
 
+		bool parse_member_type(std::string& _result, const char* _src, const char** _modified)
+		{
+			bool result = false;
+			std::string temp = "";
+			_src = eat_white(_src);
+			if (*_src == '$')
+			{
+				_src++;
+				result = true;
+				while (isalpha(*_src))
+				{
+					check_line(_src);
+					temp += *_src;
+					_src++;
+				}
+				*_modified = _src;
+				_result = temp;
+			}
+			return result;
+		}
+
 		bool parse_string(std::string& _result, const char* _src, const char** _modified)
 		{
 			bool result = false;
@@ -997,6 +1309,29 @@ namespace corona
 			return result;
 		}
 
+		bool parse_int64(int64_t& _result, const char* _src, const char** _modified)
+		{
+			bool result = false;
+			_src = eat_white(_src);
+			if (isdigit(*_src) || *_src == '-')
+			{
+				std::string temp = "";
+				result = true;
+				while (isdigit(*_src) || *_src == '_' || *_src == '-')
+				{
+					check_line(_src);
+					if (*_src != '_') {
+						temp += *_src;
+					}
+					_src++;
+				}
+				_result = std::strtoll(temp.c_str(), nullptr, 10);
+				result = true;
+			}
+			*_modified = _src;
+			return result;
+		}
+
 		bool parse_boolean(double& _result, const char* _src, const char** _modified)
 		{
 			bool result = false;
@@ -1063,10 +1398,77 @@ namespace corona
 			std::shared_ptr<json_array> new_array_value;
 			std::shared_ptr<json_object> new_object_value;
 			std::string new_string_value;
+			int64_t new_int64_value;
 			double new_number_value;
 			bool result = true;
 
 			const char* new_src = _src;
+
+			std::string member_type;
+			if (parse_member_type(member_type, _src, &new_src))
+			{
+				if (member_type == "$double")
+				{
+					if (parse_number(new_number_value, _src, &new_src))
+					{
+						auto js = std::make_shared<json_double>();
+						js->value = new_number_value;
+						_value = js;
+						*_modified = new_src;
+						return result;
+					}
+				}
+				else if (member_type == "$datetime")
+				{
+					if (parse_int64(new_int64_value, _src, &new_src))
+					{
+						auto js = std::make_shared<json_int64>();
+						js->value = new_int64_value;
+						_value = js;
+						*_modified = new_src;
+						return result;
+					}
+				}
+				else if (member_type == "$int64")
+				{
+					if (parse_int64(new_int64_value, _src, &new_src))
+					{
+						auto js = std::make_shared<json_int64>();
+						js->value = new_int64_value;
+						_value = js;
+						*_modified = new_src;
+						return result;
+					}
+				}
+				else if (member_type == "$blob")
+				{
+					if (parse_string(new_string_value, _src, &new_src))
+					{
+						auto js = std::make_shared<json_blob>();
+						js->from_string(new_string_value);
+						_value = js;
+						*_modified = new_src;
+						return result;
+					}
+				}
+				else if (member_type == "$string")
+				{
+					if (parse_string(new_string_value, _src, &new_src))
+					{
+						auto js = std::make_shared<json_string>();
+						js->value = new_string_value;
+						_value = js;
+						*_modified = new_src;
+						return result;
+					}
+				}
+
+				result = false;
+				member_type += " invalid";
+				error("parse_value", member_type);
+				*_modified = new_src;
+				return result;
+			}
 
 			if (parse_string(new_string_value, _src, &new_src))
 			{

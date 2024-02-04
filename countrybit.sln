@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "corona", "corona\corona.vcx
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "wspropose", "wspropose\wspropose.vcxproj", "{DF369A3E-4FEE-4F1C-871D-A63D3AC30E3C}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "coronaserver", "coronaserver\coronaserver.vcxproj", "{452D538A-8559-48CC-8ACC-A8DFF6CEC6B5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|ARM = Debug|ARM
@@ -35,6 +37,22 @@ Global
 		{DF369A3E-4FEE-4F1C-871D-A63D3AC30E3C}.Release|x64.Build.0 = Release|x64
 		{DF369A3E-4FEE-4F1C-871D-A63D3AC30E3C}.Release|x86.ActiveCfg = Release|Win32
 		{DF369A3E-4FEE-4F1C-871D-A63D3AC30E3C}.Release|x86.Build.0 = Release|Win32
+		{452D538A-8559-48CC-8ACC-A8DFF6CEC6B5}.Debug|ARM.ActiveCfg = Debug|x64
+		{452D538A-8559-48CC-8ACC-A8DFF6CEC6B5}.Debug|ARM.Build.0 = Debug|x64
+		{452D538A-8559-48CC-8ACC-A8DFF6CEC6B5}.Debug|ARM64.ActiveCfg = Debug|x64
+		{452D538A-8559-48CC-8ACC-A8DFF6CEC6B5}.Debug|ARM64.Build.0 = Debug|x64
+		{452D538A-8559-48CC-8ACC-A8DFF6CEC6B5}.Debug|x64.ActiveCfg = Debug|x64
+		{452D538A-8559-48CC-8ACC-A8DFF6CEC6B5}.Debug|x64.Build.0 = Debug|x64
+		{452D538A-8559-48CC-8ACC-A8DFF6CEC6B5}.Debug|x86.ActiveCfg = Debug|Win32
+		{452D538A-8559-48CC-8ACC-A8DFF6CEC6B5}.Debug|x86.Build.0 = Debug|Win32
+		{452D538A-8559-48CC-8ACC-A8DFF6CEC6B5}.Release|ARM.ActiveCfg = Release|x64
+		{452D538A-8559-48CC-8ACC-A8DFF6CEC6B5}.Release|ARM.Build.0 = Release|x64
+		{452D538A-8559-48CC-8ACC-A8DFF6CEC6B5}.Release|ARM64.ActiveCfg = Release|x64
+		{452D538A-8559-48CC-8ACC-A8DFF6CEC6B5}.Release|ARM64.Build.0 = Release|x64
+		{452D538A-8559-48CC-8ACC-A8DFF6CEC6B5}.Release|x64.ActiveCfg = Release|x64
+		{452D538A-8559-48CC-8ACC-A8DFF6CEC6B5}.Release|x64.Build.0 = Release|x64
+		{452D538A-8559-48CC-8ACC-A8DFF6CEC6B5}.Release|x86.ActiveCfg = Release|Win32
+		{452D538A-8559-48CC-8ACC-A8DFF6CEC6B5}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

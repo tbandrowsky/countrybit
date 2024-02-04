@@ -197,13 +197,16 @@ namespace corona
 		auto write(uint64_t location, void* _buffer, int _buffer_length)
 		{
 			::WaitForSingleObject(resize_event, INFINITE);
-			instance.location = location;
-			instance.buffer_bytes = (char*)_buffer;
-			instance.buffer_size = _buffer_length;
 
+			async_io_task<file_result> aw;
 			async_io_job<file_result>* aij = new async_io_job<file_result>();
 
-			threadomatic::run_io<file_result>(instance.queue, instance, [aij](HANDLE hevent, file_result* params) -> bool {
+			file_result local_instance = instance;
+			local_instance.buffer_bytes = (char *)_buffer;
+			local_instance.buffer_size = _buffer_length;
+			local_instance.location = location;
+
+			aw.configure(instance.queue, local_instance, [aij](HANDLE hevent, file_result* params) -> bool {
 				LARGE_INTEGER li;
 				li.QuadPart = params->location;
 				aij->container.ovp.Offset = li.LowPart;
@@ -212,9 +215,10 @@ namespace corona
 				os_result result;
 				std::cout << "Write:" << success << " " << result.message << std::endl;
 				return result.error_code == ERROR_IO_PENDING || result.error_code == ERROR_SUCCESS;
-				});
+				}
+			);
 
-			return instance;
+			return aw;
 		}
 
 		auto read(uint64_t location, void* _buffer, int _buffer_length)
@@ -222,10 +226,12 @@ namespace corona
 			async_io_task<file_result> aw;
 			async_io_job<file_result>* aij = new async_io_job<file_result>();
 
-			instance.location = location;
-			instance.buffer_bytes = (char*)_buffer;
-			instance.buffer_size = _buffer_length;
-			threadomatic::run_io<file_result>(instance.queue, instance, [aij](HANDLE hevent, file_result* params) -> bool {
+			file_result local_instance = instance;
+			local_instance.buffer_bytes = (char*)_buffer;
+			local_instance.buffer_size = _buffer_length;
+			local_instance.location = location;
+
+			aw.configure(instance.queue, instance, [aij](HANDLE hevent, file_result* params) -> bool {
 				LARGE_INTEGER li;
 				li.QuadPart = params->location;
 				aij->container.ovp.Offset = li.LowPart;
@@ -236,7 +242,7 @@ namespace corona
 				return result.error_code == ERROR_IO_PENDING || result.error_code == ERROR_SUCCESS;
 				});
 
-			return instance;
+			return aw;
 		}
 
 		uint64_t size()

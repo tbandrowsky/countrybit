@@ -224,13 +224,15 @@ namespace corona
 			params->success = _success;
 			jn.setSignal(event);
 			std::cout << "job start:" << GetCurrentThreadId() << std::endl;
-			if (handle) handle();
+			if (handle) {
+				handle.resume();
+				handle.destroy();
+			}
 			std::cout << "job end:" << GetCurrentThreadId() << std::endl;
 			jn.shouldDelete = false;
 			return jn;
 		}
 	};
-
 
 	template <typename IOParams> struct async_io_task : public std::suspend_always
 	{
@@ -327,6 +329,62 @@ namespace corona
 			std::cout << this << ", async_io_task ctor:" << GetCurrentThreadId() << std::endl;
 		}
 
+	};
+
+	template <typename T> struct sync
+	{
+	public:
+
+		T	result;
+
+		void configure(T& _result)
+		{
+			result = _result;
+		}
+
+		struct promise_type
+		{
+			T m_value;
+
+			promise_type()
+			{
+				std::cout << "sync promise_type:" << this << " " << GetCurrentThreadId() << std::endl;
+			}
+
+			sync<T> get_return_object()
+			{
+				std::cout << "sync get_return_object:" << this << " " << GetCurrentThreadId() << std::endl;
+				async_io_task my_task;
+				my_task.coroutine = std::coroutine_handle<promise_type>::from_promise(*this);
+				return my_task;
+			};
+
+			void return_value(T value) {
+				std::cout << "sync return_value:" << value << " " << this << GetCurrentThreadId() << std::endl;
+				m_value = value;
+			}
+
+			std::suspend_always initial_suspend() {
+				std::cout << "sync initial_suspend:" << this << GetCurrentThreadId() << std::endl;
+				return {};
+			}
+
+			std::suspend_always final_suspend() noexcept {
+				std::cout << "sync final_suspend:" << this << GetCurrentThreadId() << std::endl;
+				return {};
+			}
+
+			void unhandled_exception() {}
+		};
+
+		constexpr bool await_ready() const noexcept { return true; }
+		constexpr void await_suspend(std::coroutine_handle<>) const noexcept {}
+		constexpr void await_resume() const noexcept {}
+
+		operator T() {
+			std::cout << this << ", sync cast to T:" << GetCurrentThreadId() << std::endl;
+			return result;
+		}
 	};
 
 	struct task

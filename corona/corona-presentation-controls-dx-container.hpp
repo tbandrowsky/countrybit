@@ -284,7 +284,7 @@ namespace corona
 	{
 		array_data_source items_source;
 		std::vector<grid_view_row> rows;
-		std::vector<int> page_to_item_index;
+		std::map<int,int> page_to_item_index;
 		solidBrushRequest selection_border;
 
 		// we keep the set of controls here on the back end, because they are small as they are not dragging around any 
@@ -365,7 +365,8 @@ namespace corona
 
 							auto& context = pwindow->getContext();
 
-							if (page_to_item_index.size() == 0) {
+							if (!page_to_item_index.contains(selected_page_index )) {
+								std::cout << "selected_page_index not found." << std::endl;
 								return;
 							}
 
@@ -449,7 +450,7 @@ namespace corona
 			double h = _bounds.h;
 			double y = 0;
 
-			int page_index, last_page = -1;
+			int page_index;
 			page_to_item_index.clear();
 
 			int sz = rows.size();
@@ -464,10 +465,9 @@ namespace corona
 				r.bounds.h = isz.y;
 				page_index = (r.bounds.bottom() / h);
 				r.page_index = page_index;
-				if (page_index > last_page)
+				if (!page_to_item_index.contains(page_index))
 				{
-					page_to_item_index.push_back(i);
-					last_page = page_index;
+					page_to_item_index[page_index] = i;
 				}
 				y += isz.y;
 			}

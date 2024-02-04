@@ -336,29 +336,6 @@ namespace corona {
 		return newSize;
 	}
 
-	int toInt(char hex, int shift)
-	{
-		int d = {};
-		hex = toupper(hex);
-
-		if (hex >= 'A' && hex <= 'F')
-		{
-			d = hex - 'A' + 10;
-		}
-		else if (hex >= '0' && hex <= '9')
-		{
-			d = hex - '0';
-		}
-		d <<= shift;
-		return d;
-	}
-
-	int toInt2(const std::string& item, int _baseIndex)
-	{
-		int r = toInt(item[_baseIndex], 4) + toInt(item[_baseIndex + 1], 0);
-		return r;
-	}
-
 	D2D1_COLOR_F toColor(const std::string& _htmlColor)
 	{
 		return toColor(_htmlColor.c_str());
