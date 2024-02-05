@@ -319,8 +319,8 @@ namespace corona
 	{
 	public:
 		int64_t	header_node_location;
-		int		count;
-		int		level;
+		int64_t count;
+		long	level;
 	};
 
 	class json_table
@@ -329,6 +329,26 @@ namespace corona
 		file *database_file;
 
 		const int SORT_ORDER = 1;
+
+		using KEY = int64_t;
+		using VALUE = json_node;
+		
+		struct data_pair
+		{
+			KEY key;
+			VALUE value;
+
+			data_pair()
+			{
+				;
+			}
+
+			data_pair(KEY _key, VALUE _value)
+			{
+				key = _key;
+				value = _value;
+			}
+		};
 
 	public:
 
@@ -372,11 +392,11 @@ namespace corona
 			co_return new_node;
 		}
 
-		sync<json_node> get_node(file* _file, relative_ptr_type _node_id) const
+		sync<json_node> get_node(file* _file, relative_ptr_type _node_location) const
 		{
 			json_node node;
 
-			co_await node.read(_file, _node_id);
+			co_await node.read(_file, _node_location);
 			co_return node;
 		}
 
@@ -424,12 +444,12 @@ namespace corona
 			return get_node(database_file, offset);
 		}
 
-		bool erase(int64_t key)
+		bool erase(KEY key)
 		{
 			return this->remove_node(key);
 		}
 
-		json_node operator[](const int64_t key) 
+		json_node operator[](const KEY key)
 		{
 			relative_ptr_type n = find_node(key);
 			if (n == null_row) {
@@ -438,26 +458,20 @@ namespace corona
 			return get_node(database_file, n);
 		}
 
-		bool contains(const int64_t key) const
+		bool contains(const KEY key) const
 		{
 			return this->find_node(key) != null_row;
 		}
 
-		json_node get(const int64_t key)
+		json_node get(const KEY key)
 		{
 			auto n = this->find_node(key);
 			return get_node(database_file, n);
 		}
 
-		bool contains(const int64_t key)
-		{
-			auto n = this->find_node(key);
-			return n != null_row;
-		}
-
 		void insert_or_assign(data_pair& kvp)
 		{
-			relative_ptr_type modified_node = this->update_node(kvp, [kvp](VALUE& dest) { dest = kvp.second; });
+			relative_ptr_type modified_node = this->update_node(kvp, [kvp](VALUE& dest) { dest = kvp.value; });
 		}
 
 		void insert_or_assign(KEY key, VALUE value)
@@ -468,7 +482,7 @@ namespace corona
 
 		void put(data_pair& kvp)
 		{
-			relative_ptr_type modified_node = this->update_node(kvp, [kvp](VALUE& dest) { dest = kvp.second; });
+			relative_ptr_type modified_node = this->update_node(kvp, [kvp](VALUE& dest) { dest = kvp.value; });
 		}
 
 		void put(KEY key, VALUE value)
@@ -532,7 +546,7 @@ namespace corona
 			}
 		}
 
-		relative_ptr_type find_node(relative_ptr_type* update, int64_t _key) const
+		sync<relative_ptr_type> find_node(relative_ptr_type* update, int64_t _key) const
 		{
 			relative_ptr_type found = null_row, p, q;
 
@@ -554,10 +568,10 @@ namespace corona
 				update[k] = p;
 			}
 
-			return found;
+			co_return found;
 		}
 
-		relative_ptr_type find_first(relative_ptr_type* update, int64_t _key)
+		sync<relative_ptr_type> find_first_gte(relative_ptr_type* update, int64_t _key)
 		{
 			relative_ptr_type found = null_row, p, q, last_link;
 
@@ -583,105 +597,109 @@ namespace corona
 				update[k] = p;
 			}
 
-			return found;
+			co_return found;
 		}
 
-		relative_ptr_type update_node(data_pair& kvp, std::function<void(VALUE& existing_value)> predicate)
+		sync<relative_ptr_type> update_node(data_pair& kvp, std::function<void(VALUE& existing_value)> predicate)
 		{
 			int k;
 			relative_ptr_type update[SortedIndexMaxNumberOfLevels];
-			relative_ptr_type q = find_node(update, kvp.first);
+			relative_ptr_type q = find_node(update, kvp.key);
 			json_node qnd;
 
 			if (q != null_row)
 			{
-				qnd = get_node(datebase_file, q);
-				predicate(qnd.item().second);
-				return q;
+				qnd = get_node(database_file, q);
+				predicate(qnd);
+				co_return qnd.storage.current_location;
 			}
 
 			k = randomLevel();
-			if (k > get_index_header()->level)
+			if (k > index_header.data.level)
 			{
-				k = ++(get_index_header()->level);
-				update[k] = get_index_header()->header_id;
+				::InterlockedIncrement(&index_header.data.level);
+				k = index_header.data.level;
+				update[k] = index_header.data.header_node_location;
 			}
 
 			qnd = create_node(k);
-
-			qnd.item() = kvp;
-			predicate(qnd.item().second);
-			get_index_header()->count++;
+			qnd.object_id = kvp.key;
+			qnd.data = kvp.value.data;
+			predicate(qnd);
+			::InterlockedIncrement64(&index_header.data.count);
 
 			do {
-				auto pnd = get_node(update[k]);
-				qnd.detail(k) = pnd.detail(k);
-				pnd.detail(k) = qnd.row_id();
+				json_node pnd = get_node(database_file, update[k]);
+				qnd.forward[k] = pnd.forward[k];
+				pnd.forward[k] = qnd.storage.current_location;
+				co_await qnd.write(database_file);
+				co_await pnd.write(database_file);
 			} while (--k >= 0);
 
-			return qnd.row_id();
+			co_await index_header.write(database_file);
+
+			co_return qnd.storage.current_location;
 		}
 
-		bool remove_node(const KEY& key)
+		sync<bool> remove_node(const KEY& key)
 		{
 			int k;
 			relative_ptr_type update[SortedIndexMaxNumberOfLevels], p;
-			index_node qnd, pnd;
+			json_node qnd, pnd;
 
 			relative_ptr_type q = find_node(update, key);
-
-			mapper_dirty = true;
 
 			if (q != null_row)
 			{
 				k = 0;
 				p = update[k];
-				qnd = get_node(q);
-				pnd = get_node(p);
-				int m = get_index_header()->level;
-				while (k <= m && pnd.detail(k) == q)
+				qnd = get_node(database_file, q);
+				pnd = get_node(database_file, p);
+				int m = index_header.data.level;
+				while (k <= m && pnd.forward[k] == q)
 				{
-					pnd.detail(k) = qnd.detail(k);
+					pnd.forward[k] = qnd.forward[k];
 					k++;
 					if (k <= m) {
 						p = update[k];
-						pnd = get_node(p);
+						pnd = get_node(database_file, p);
 					}
 				}
-				get_index_header()->count--;
-				while (get_header().detail(m) == null_row && m > 0) {
+
+				::InterlockedDecrement64(&index_header.data.count);
+				while (index_header.forward[m] == null_row && m > 0) {
 					m--;
 				}
-				get_index_header()->level = m;
-				return true;
+				index_header.data.level = m;
+				co_return true;
 			}
 			else
 			{
-				return false;
+				co_return false;
 			}
 		}
 
-		relative_ptr_type find_node(const KEY& key) const
+		sync<relative_ptr_type> find_node(const KEY& key) const
 		{
 #ifdef	TIME_SKIP_LIST
 			benchmark::auto_timer_type methodtimer("skip_list_type::search");
 #endif
 			relative_ptr_type update[SortedIndexMaxNumberOfLevels];
-			return find_node(update, key);
+			co_return find_node(update, key);
 		}
 
-		relative_ptr_type find_first_node(const KEY& key)
+		sync<relative_ptr_type> find_first_node_gte(const KEY& key)
 		{
 #ifdef	TIME_SKIP_LIST
 			benchmark::auto_timer_type methodtimer("skip_list_type::search");
 #endif
 			relative_ptr_type update[SortedIndexMaxNumberOfLevels];
-			return find_first(update, key);
+			return find_first_gte(update, key);
 		}
 
 		relative_ptr_type first_node()
 		{
-			return get_header().detail(0);
+			return index_header.forward[0];
 		}
 
 		relative_ptr_type next_node(relative_ptr_type _node)
@@ -689,8 +707,8 @@ namespace corona
 			if (_node == null_row)
 				return _node;
 
-			auto nd = get_node(_node);
-			_node = nd.detail(0);
+			json_node nd = get_node(database_file, _node);
+			_node = nd.forward[0];
 			return _node;
 		}
 	};
