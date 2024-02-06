@@ -354,13 +354,12 @@ namespace corona
 			sync<T> get_return_object()
 			{
 				std::cout << "sync get_return_object:" << this << " " << GetCurrentThreadId() << std::endl;
-				async_io_task my_task;
-				my_task.coroutine = std::coroutine_handle<promise_type>::from_promise(*this);
+				sync<T> my_task;
 				return my_task;
 			};
 
 			void return_value(T value) {
-				std::cout << "sync return_value:" << value << " " << this << GetCurrentThreadId() << std::endl;
+				std::cout << "sync return_value:" << " " << this << GetCurrentThreadId() << std::endl;
 				m_value = value;
 			}
 

@@ -67,33 +67,11 @@ namespace corona
 		lockable size_locker;
 		HANDLE resize_event;
 
-	public:
-
-		file() :
-			resize_event(NULL)
+		void open(job_queue* _queue, const file_path& _filename, file_open_types _file_open_type)
 		{
-			;
-		}
+			instance = file_result(_queue, _filename, INVALID_HANDLE_VALUE);
+			resize_event = 0;
 
-		file(file&& _srcFile) noexcept
-		{
-			instance = _srcFile.instance;
-			resize_event = _srcFile.resize_event;
-			_srcFile.instance = {};
-		}
-
-		file& operator = (file&& _srcFile) noexcept
-		{
-			instance = _srcFile.instance;
-			resize_event = _srcFile.resize_event;
-			_srcFile.instance = {};
-			return *this;
-		}
-
-		file(job_queue* _queue, const file_path& _filename, file_open_types _file_open_type)
-			: instance(_queue, _filename, INVALID_HANDLE_VALUE),
-			resize_event(NULL)
-		{
 			DWORD disposition;
 
 			switch (_file_open_type)
@@ -153,6 +131,51 @@ namespace corona
 					throw std::logic_error(osr.message.c_str());
 				}
 			}
+		}
+
+	public:
+
+		file() :
+			resize_event(NULL)
+		{
+			;
+		}
+
+		file(file&& _srcFile) noexcept
+		{
+			instance = _srcFile.instance;
+			resize_event = _srcFile.resize_event;
+			_srcFile.instance = {};
+		}
+
+		file& operator = (file&& _srcFile) noexcept
+		{
+			instance = _srcFile.instance;
+			resize_event = _srcFile.resize_event;
+			_srcFile.instance = {};
+			return *this;
+		}
+
+		file(job_queue* _queue, KNOWNFOLDERID _folder_id, const file_path& _filename, file_open_types _file_open_type)
+			: instance(_queue, _filename, INVALID_HANDLE_VALUE),
+			resize_event(NULL)
+		{
+			wchar_t* wide_path = nullptr;
+			::SHGetKnownFolderPath(_folder_id, KF_FLAG_DEFAULT, NULL, &wide_path );
+			if (wide_path) 
+			{
+				istring<2048> temp = wide_path;
+				temp += "\\";
+				temp += _filename;
+				open(_queue, temp, _file_open_type);
+			}
+		}
+
+		file(job_queue* _queue, const file_path& _filename, file_open_types _file_open_type)
+			: instance(_queue, _filename, INVALID_HANDLE_VALUE),
+			resize_event(NULL)
+		{
+			open(_queue, _filename, _file_open_type);
 		}
 
 		file(const file& src) = delete;

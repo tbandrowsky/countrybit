@@ -327,6 +327,12 @@ namespace corona
 			blob_impl = std::dynamic_pointer_cast<json_blob>(_value);
 		}
 
+		json clone()
+		{
+			json result(value_base->clone());
+			return result;
+		}
+
 		std::string to_json()
 		{
 			return value_base->to_json();

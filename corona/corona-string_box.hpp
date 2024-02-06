@@ -997,7 +997,7 @@ namespace corona {
 	using string_validation_pattern = istring<100>;
 	using string_validation_message = istring<100>;
 	using query_body = istring<8192>;
-	using file_path = istring<260>;
+	using file_path = istring<512>;
 
 
 

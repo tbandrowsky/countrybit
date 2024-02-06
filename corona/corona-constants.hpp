@@ -529,8 +529,7 @@ namespace corona
 
 		buffer(size_t _size)
 		{
-			buffer_bytes = std::make_unique<char[]>(_size + 1);
-			buffer_size = _size;
+			init(_size);
 		}
 
 		buffer(buffer&& _src)
@@ -541,23 +540,26 @@ namespace corona
 
 		buffer(const buffer& _src)
 		{
-			buffer_size = _src.buffer_size;
-			buffer_bytes = std::make_unique<char[]>(buffer_size + 1);
+			init(_src.buffer_size);
 			std::copy(_src.buffer_bytes.get(), _src.buffer_bytes.get() + buffer_size, buffer_bytes.get());
+		}
+
+		void init(size_t _size)
+		{
+			buffer_bytes = std::make_unique<char[]>(_size + 1);
+			buffer_size = _size;
 		}
 
 		buffer& operator = (const buffer& _src)
 		{
-			buffer_size = _src.buffer_size;
-			buffer_bytes = std::make_unique<char[]>(buffer_size + 1);
+			init(_src.buffer_size);
 			std::copy(_src.buffer_bytes.get(), _src.buffer_bytes.get() + buffer_size, buffer_bytes.get());
 			return *this;
 		}
 
 		template <typename poco_type> buffer& operator = (const poco_type& _src)
 		{
-			buffer_size = sizeof(poco_type);
-			buffer_bytes = std::make_unique<char[]>(buffer_size + 1);
+			init(sizeof(poco_type));
 			char* p = (char*)&_src;
 			std::copy(p, p + buffer_size, buffer_bytes.get());
 			return *this;

@@ -17,51 +17,11 @@
 #include <stdexcept>
 #include <compare>
 
-/*
-
-namespace std
-{
-	struct coroutine_traits<corona::json_node, corona::json_table*>
-	{
-		struct promise_type
-		{
-			corona::json_node value;
-
-			result_holder<T> get_return_object() const noexcept
-			{
-				return holder;
-			}
-
-			void return_value(T const& v) const
-			{
-				holder.set_result(v);
-			}
-
-			void unhandled_exception() const noexcept
-			{
-				holder.set_exception(std::current_exception());
-			}
-
-			suspend_never initial_suspend() const noexcept
-			{
-				return{};
-			}
-
-			suspend_never final_suspend() const noexcept
-			{
-				return{};
-			}
-		};
-	};
-}
-
-*/
-
 namespace corona 
 {
 
-	const int SortedIndexMaxNumberOfLevels = 32;
-	const int SortedIndexMaxLevel = SortedIndexMaxNumberOfLevels - 1;
+	static const int JsonTableMaxNumberOfLevels = 40;
+	static const int JsonTableMaxLevel = JsonTableMaxNumberOfLevels - 1;
 
 	class data_block
 	{
@@ -83,6 +43,11 @@ namespace corona
 			std::string json_string = _src.to_json_typed_string();
 			bytes = buffer(json_string.c_str());
 			return *this;
+		}
+
+		void init(int _size_bytes)
+		{
+			bytes.init(_size_bytes);
 		}
 
 		async_io_task<int64_t> read(file* _file, int64_t location)
@@ -109,7 +74,7 @@ namespace corona
 		{
 			if (current_location < 0) 
 			{
-				return append(_file);
+				co_return append(_file);
 			}
 
 			int size = bytes.get_size();
@@ -163,6 +128,16 @@ namespace corona
 		json					data;
 		data_block				storage;
 
+		json_node()
+		{
+			object_id = -1;
+		}
+
+		bool is_empty()
+		{
+			return forward.size()==0;
+		}
+
 		void clear()
 		{
 			json_parser jp;
@@ -189,6 +164,7 @@ namespace corona
 		{
 			object_id = _src["ObjectId"];
 			data = _src["Data"];
+			forward.clear();
 			auto forwardjson = _src["Forward"];
 			forwardjson.for_each([this](json& _item) {
 				int64_t ptr = _item;
@@ -252,15 +228,13 @@ namespace corona
 	{
 	public:
 		int64_t					object_id;
-		std::vector<int64_t>	forward;
 		poco_type				data;
 		data_block				storage;
 
 		void clear()
 		{
 			object_id = 0;
-			forward.clear();
-			data = {}
+			data = {};
 		}
 
 		poco_node& operator = (const poco_type& _src)
@@ -273,7 +247,7 @@ namespace corona
 		{
 			sync<int64_t> sw;
 
-			storage = buffer(sizeof(poco_type));
+			storage.init(sizeof(poco_type));
 
 			int64_t status = co_await storage.read(_file, location);
 
@@ -290,7 +264,7 @@ namespace corona
 		{
 			sync<int64_t> sw;
 
-			storage = buffer(sizeof(poco_type));
+			storage.init(sizeof(poco_type));
 			poco_type* c = (poco_type*)storage.bytes.get_ptr();
 			*c = data;
 
@@ -304,9 +278,9 @@ namespace corona
 		{
 			sync<int64_t> sw;
 
-			auto json_payload = get_json();
-
-			storage = json_payload;
+			storage.init(sizeof(poco_type));
+			poco_type* c = (poco_type*)storage.bytes.get_ptr();
+			*c = data;
 
 			int64_t status = co_await storage.write(_file);
 			sw.configure(status);
@@ -321,44 +295,30 @@ namespace corona
 		int64_t	header_node_location;
 		int64_t count;
 		long	level;
+		int64_t forward[JsonTableMaxNumberOfLevels];
 	};
 
 	class json_table
 	{
 		poco_node<index_header_struct> index_header;
-		file *database_file;
+		file* database_file;
 
 		const int SORT_ORDER = 1;
 
 		using KEY = int64_t;
 		using VALUE = json_node;
 		
-		struct data_pair
-		{
-			KEY key;
-			VALUE value;
-
-			data_pair()
-			{
-				;
-			}
-
-			data_pair(KEY _key, VALUE _value)
-			{
-				key = _key;
-				value = _value;
-			}
-		};
-
 	public:
 
 		void create_header()
 		{
 			index_header.data.header_node_location = index_header.append(database_file);
 			index_header.data.count = 0;
-			index_header.data.level = SortedIndexMaxNumberOfLevels;
-			auto header_node = create_node(SortedIndexMaxNumberOfLevels);
-			index_header.data.header_node_location = header_node.result.storage.current_location;
+			for (int i = 0; i < JsonTableMaxNumberOfLevels; i++)
+			{
+				index_header.data.forward[i] = null_row;
+			}
+			index_header.data.level = JsonTableMaxNumberOfLevels;
 			index_header.write(database_file);
 		}
 
@@ -469,32 +429,44 @@ namespace corona
 			return get_node(database_file, n);
 		}
 
-		void insert_or_assign(data_pair& kvp)
+		void insert_or_assign(KEY key, json value)
 		{
-			relative_ptr_type modified_node = this->update_node(kvp, [kvp](VALUE& dest) { dest = kvp.value; });
-		}
-
-		void insert_or_assign(KEY key, VALUE value)
-		{
-			data_pair kvp(key, value);
-			insert_or_assign(kvp);
-		}
-
-		void put(data_pair& kvp)
-		{
-			relative_ptr_type modified_node = this->update_node(kvp, [kvp](VALUE& dest) { dest = kvp.value; });
+			relative_ptr_type modified_node = this->update_node(key, [value](VALUE& dest) { dest.data = value; });
 		}
 
 		void put(KEY key, VALUE value)
 		{
-			data_pair kvp(key, value);
-			insert_or_assign(kvp);
+			relative_ptr_type modified_node = this->update_node(key, [value](VALUE& dest) { dest.data = value.data; });
 		}
 
-		void put(const KEY& key, VALUE& _default_value, std::function<void(VALUE& existing_value)> predicate)
+		void put(KEY key, std::string _json)
 		{
-			data_pair kvp(key, _default_value);
-			relative_ptr_type modified_node = this->update_node(kvp, predicate);
+			json_parser jp;
+			json jx = jp.parse_object(_json);
+			relative_ptr_type modified_node = this->update_node(key, [jx](VALUE& dest) { dest.data = jx; });
+		}
+
+		json query(std::function<bool(int _index, json_node& _predicate)> _predicate,
+			std::function<void(json& _dest_array, int _index, json_node& _predicate)> _transform = nullptr)
+		{
+			json_parser jp;
+			json ja = jp.create_array();
+
+			json_node jn;
+			int index = 0;
+			for (jn = first_node(); !jn.is_empty(); jn = next_node(jn)) {
+				if (_predicate(index, jn)) {
+					if (_transform) {
+						_transform(ja, index, jn);
+					}
+					else {
+						ja.put_element(-1, jn.data);
+					}
+					index++;
+				}
+			}
+
+			return ja;
 		}
 
 	private:
@@ -504,7 +476,7 @@ namespace corona
 			double r = ((double)rand() / (RAND_MAX));
 			int level = (int)(log(1. - r) / log(1. - .5));
 			if (level < 1) level = 0;
-			else if (level >= SortedIndexMaxLevel) level = SortedIndexMaxLevel;
+			else if (level >= JsonTableMaxLevel) level = JsonTableMaxLevel;
 			return level;
 		}
 
@@ -552,10 +524,10 @@ namespace corona
 
 			for (int k = index_header.data.level; k >= 0; k--)
 			{
-				p = index_header.data.header_node_location;
+				p = index_header.data.forward[k];
 				json_node jn = get_node(database_file, p);
 				q = jn.forward[k];
-				auto comp = compare(q, _key);
+				int comp = compare(q, _key);
 				while (comp < 0)
 				{
 					p = q;
@@ -577,11 +549,11 @@ namespace corona
 
 			for (int k = index_header.data.level; k >= 0; k--)
 			{
-				p = index_header.data.header_node_location;
+				p = index_header.data.forward[k];
 				json_node jn = get_node(database_file, p);
 				q = jn.forward[k];
 				last_link = q;
-				auto comp = compare(q, _key);
+				int comp = compare(q, _key);
 				while (comp < 0)
 				{
 					p = q;
@@ -600,17 +572,18 @@ namespace corona
 			co_return found;
 		}
 
-		sync<relative_ptr_type> update_node(data_pair& kvp, std::function<void(VALUE& existing_value)> predicate)
+		sync<relative_ptr_type> update_node(KEY _key, std::function<void(VALUE& existing_value)> predicate)
 		{
 			int k;
-			relative_ptr_type update[SortedIndexMaxNumberOfLevels];
-			relative_ptr_type q = find_node(update, kvp.key);
+			relative_ptr_type update[JsonTableMaxNumberOfLevels];
+			relative_ptr_type q = find_node(update, _key);
 			json_node qnd;
 
 			if (q != null_row)
 			{
 				qnd = get_node(database_file, q);
 				predicate(qnd);
+				qnd.write(database_file);
 				co_return qnd.storage.current_location;
 			}
 
@@ -619,21 +592,28 @@ namespace corona
 			{
 				::InterlockedIncrement(&index_header.data.level);
 				k = index_header.data.level;
-				update[k] = index_header.data.header_node_location;
+				update[k] = index_header.data.forward[k];
 			}
 
 			qnd = create_node(k);
-			qnd.object_id = kvp.key;
-			qnd.data = kvp.value.data;
+			qnd.object_id = _key;
 			predicate(qnd);
 			::InterlockedIncrement64(&index_header.data.count);
 
-			do {
+			if (update[k] == null_row) {
+				update[k] = qnd.storage.current_location;
+				index_header.data.forward[k] = index_header.data.forward[k];
+			}
+
+			do 
+			{
 				json_node pnd = get_node(database_file, update[k]);
 				qnd.forward[k] = pnd.forward[k];
 				pnd.forward[k] = qnd.storage.current_location;
+
 				co_await qnd.write(database_file);
 				co_await pnd.write(database_file);
+
 			} while (--k >= 0);
 
 			co_await index_header.write(database_file);
@@ -641,10 +621,9 @@ namespace corona
 			co_return qnd.storage.current_location;
 		}
 
-		sync<bool> remove_node(const KEY& key)
-		{
+		sync<bool> remove_node(const KEY& key)		{
 			int k;
-			relative_ptr_type update[SortedIndexMaxNumberOfLevels], p;
+			relative_ptr_type update[JsonTableMaxNumberOfLevels], p;
 			json_node qnd, pnd;
 
 			relative_ptr_type q = find_node(update, key);
@@ -659,6 +638,7 @@ namespace corona
 				while (k <= m && pnd.forward[k] == q)
 				{
 					pnd.forward[k] = qnd.forward[k];
+					pnd.write(database_file);
 					k++;
 					if (k <= m) {
 						p = update[k];
@@ -667,10 +647,11 @@ namespace corona
 				}
 
 				::InterlockedDecrement64(&index_header.data.count);
-				while (index_header.forward[m] == null_row && m > 0) {
+				while (index_header.data.forward[m] == null_row && m > 0) {
 					m--;
 				}
 				index_header.data.level = m;
+				index_header.write(database_file);
 				co_return true;
 			}
 			else
@@ -684,7 +665,7 @@ namespace corona
 #ifdef	TIME_SKIP_LIST
 			benchmark::auto_timer_type methodtimer("skip_list_type::search");
 #endif
-			relative_ptr_type update[SortedIndexMaxNumberOfLevels];
+			relative_ptr_type update[JsonTableMaxNumberOfLevels];
 			co_return find_node(update, key);
 		}
 
@@ -693,82 +674,75 @@ namespace corona
 #ifdef	TIME_SKIP_LIST
 			benchmark::auto_timer_type methodtimer("skip_list_type::search");
 #endif
-			relative_ptr_type update[SortedIndexMaxNumberOfLevels];
+			relative_ptr_type update[JsonTableMaxNumberOfLevels];
 			return find_first_gte(update, key);
 		}
 
-		relative_ptr_type first_node()
+		json_node first_node()
 		{
-			return index_header.forward[0];
+			json_node jn;
+			if (index_header.data.forward[0] != null_row) {
+				jn = get_node(database_file, index_header.data.forward[0]);
+			}
+			return jn;
 		}
 
-		relative_ptr_type next_node(relative_ptr_type _node)
+		json_node next_node(json_node _node)
 		{
-			if (_node == null_row)
+			if (_node.is_empty())
 				return _node;
 
-			json_node nd = get_node(database_file, _node);
-			_node = nd.forward[0];
-			return _node;
+			json_node nd = get_node(database_file, _node.forward[0]);
+			return nd;
 		}
+
 	};
 
-	template <typename KEY, typename VALUE, int SORT_ORDER> std::ostream& operator <<(std::ostream& output, sorted_index<KEY, VALUE, SORT_ORDER>& src)
+	std::ostream& operator <<(std::ostream& output, json_table& src)
 	{
 		bool space = false;
-		for (auto& l : src)
-		{
-			if (space)
-				output << "  ";
-			space = true;
-			output << l.second;
-		}
+		json r = src.query([](int _index, json_node& nd) -> bool { return true; });
+		std::string temp = r.to_json_typed_string();
+		output << temp;
 		return output;
 	}
 
-	bool test_index();
+	bool test_json_table();
 
-
-	bool test_index()
+	bool test_json_table()
 	{
+		long object_id = 100;
 
-		std::shared_ptr<static_box<20000>> box =
-			std::make_shared<static_box<20000>>();
+		file f(global_job_queue.get(), FOLDERID_Documents, "corona_table.ctb", file_open_types::create_new);
 
-		using test_sorted_index_type = sorted_index<int, istring<30>, 1>;
+		object_id = 5;
+		json_table test(&f);
+		test.put(object_id, R"({ "Name" : "Joe" })");
+		auto t1 = test[object_id];
 
-		test_sorted_index_type test;
-
-		relative_ptr_type test_location;
-		test = test_sorted_index_type::create_sorted_index(box, test_location);
-
-		test.insert_or_assign(5, "hello");
-		auto t1 = test[5];
-		if (t1.get_key() != 5 || t1.get_value() != "hello")
+		if (t1.object_id != object_id || t1.data["Name"].get_string() != "Joe")
 		{
 			std::cout << __LINE__ << " fail: wrong inserted value." << std::endl;
 			return false;
 		}
-		test.insert_or_assign(7, "goodbye");
-		auto t2 = test[7];
-		if (t2.get_key() != 7 || t2.get_value() != "goodbye" || t2.get_value() != "goodbye")
+
+		object_id = 7;
+		test.put(object_id, R"({ "Name" : "Jack" })");
+		auto t2 = test[object_id];
+		if (t2.object_id != object_id || t2.data["Name"].get_string() != "Jack")
 		{
 			std::cout << __LINE__ << " fail: wrong inserted value." << std::endl;
 			return false;
 		}
-		test.insert_or_assign(7, "something");
-		auto t3 = test[7];
-		if (t3.get_key() != 7 || t3.get_value() != "something")
+
+		test.put(object_id, R"({ "Name" : "Jill" })");
+		auto t3 = test[object_id];
+		if (t2.object_id != object_id || t2.data["Name"].get_string() != "Jill")
 		{
 			std::cout << __LINE__ << " fail: wrong updated value." << std::endl;
 			return false;
 		}
-		auto t4 = test[7];
-		if (t4.get_key() != 7 || t4.get_value() != "something")
-		{
-			std::cout << __LINE__ << " fail: wrong [] access." << std::endl;
-			return false;
-		}
+
 		try
 		{
 			auto t5 = test[6];
@@ -780,113 +754,125 @@ namespace corona
 			;
 		}
 
-		int count = 0;
-
-		for (auto t : test)
-		{
-			count++;
-		}
-
-		if (count != 2)
-		{
-			std::cout << __LINE__ << " fail: wrong number of iterations." << std::endl;
-			return false;
-		}
-
-		test.put(2, "hello super");
-		auto t6 = test[2];
-		if (t6.get_key() != 2 || t6.get_value() != "hello super")
-		{
-			std::cout << __LINE__ << " fail: wrong inserted value." << std::endl;
-			return false;
-		}
-
-		test.put(1, "first");
-		auto t7 = test[1];
-		if (t7.get_key() != 1 || t7.get_value() != "first")
-		{
-			std::cout << __LINE__ << " fail: wrong inserted value." << std::endl;
-			return false;
-		}
-
-		test.put(1, "second");
-		t7 = test[1];
-		if (t7.get_key() != 1 || t7.get_value() != "second")
-		{
-			std::cout << __LINE__ << " fail: wrong inserted value." << std::endl;
-			return false;
-		}
-
-		count = std::count_if(test.begin(), test.end(), [](auto _item) {
+		auto db_contents = test.query([](int _index, json_node& item) {
 			return true;
 			});
 
-		if (count != 4)
+		if (db_contents.size() != 2)
 		{
-			std::cout << __LINE__ << " fail: wrong number of iterations." << std::endl;
+			std::cout << __LINE__ << " fail: wrong number of result elements." << std::endl;
+			return false;
+		}
+
+		object_id = 2;
+		test.put(object_id, R"({ "Name" : "Sidney" })");
+		t2 = test[object_id];
+		if (t2.object_id != object_id || t2.data["Name"].get_string() != "Sidney")
+		{
+			std::cout << __LINE__ << " fail: wrong inserted value." << std::endl;
+			return false;
+		}
+
+		object_id = 7;
+		test.put(object_id, R"({ "Name" : "Zeus" })");
+		t2 = test[object_id];
+		if (t2.object_id != object_id || t2.data["Name"].get_string() != "Zeus")
+		{
+			std::cout << __LINE__ << " fail: wrong inserted value." << std::endl;
+			return false;
+		}
+
+		object_id = 1;
+		test.put(object_id, R"({ "Name" : "Canada" })");
+		t2 = test[object_id];
+		if (t2.object_id != object_id || t2.data["Name"].get_string() != "Canada")
+		{
+			std::cout << __LINE__ << " fail: wrong inserted value." << std::endl;
+			return false;
+		}
+
+		object_id = 1;
+		test.put(object_id, R"({ "Name" : "Maraca" })");
+		t2 = test[object_id];
+		if (t2.object_id != object_id || t2.data["Name"].get_string() != "Maraca")
+		{
+			std::cout << __LINE__ << " fail: wrong updated value." << std::endl;
+			return false;
+		}
+
+		db_contents = test.query([](int _index, json_node& item) {
+			return true;
+			});
+
+		if (test.size() != 4)
+		{
+			std::cout << __LINE__ << " fail: wrong number of result elements in test." << std::endl;
+			return false;
+		}
+
+		if (db_contents.size() != 4)
+		{
+			std::cout << __LINE__ << " fail: wrong number of result elements." << std::endl;
 			return false;
 		}
 
 		int tests[4] = { 1, 2, 5, 7 };
 		int k = 0;
-		for (auto item : test)
-		{
-			if (tests[k] != item.first) {
-				std::cout << __LINE__ << " loop failed" << std::endl;
+
+		db_contents = test.query([tests](int _index, json_node& item) {
+			if (tests[_index] != item.object_id) {
+				std::cout << __LINE__ << " order failed" << std::endl;
 				return false;
 			}
-			k++;
-		}
+			});
 
-		int tests2[3] = { 2, 5, 7 };
+		db_contents = test.query([tests](int _index, json_node& item) {
+			return (item.object_id > 1);
+			},
+			[](json& _dest_array, int _index, json_node& _item) {
+				json new_json = _item.data;
+				new_json.put_member_i64("ObjectId", _item.object_id);
+				_dest_array.put_element(-1, new_json);
+			});
 
-		k = 0;
-		for (auto item : test.where([](auto& kvpi) { return kvpi.first > 1; }))
-		{
-			if (tests2[k] != item.first) {
-				std::cout << __LINE__ << " starting from key failed" << std::endl;
-				return false;
-			}
-			k++;
-		}
+		bool any_fails = db_contents.any([](json& _item)->bool {
+			return _item["ObjectId"].get_int64() <= 1;
+			});
 
-		k = 0;
-		for (auto item : test.where([](auto& kvpi) { return kvpi.first > 1; }))
-		{
-			if (tests2[k] != item.first) {
-				std::cout << __LINE__ << " loop failed" << std::endl;
-				return false;
-			}
-			k++;
+		if (any_fails) {
+			std::cout << __LINE__ << " query failed" << std::endl;
+			return false;
 		}
 
 		test.erase(1);
 		test.erase(7);
 
-		auto testi = test
-			.where([](auto& a) { return a.first == 7; });
+		auto testi = test.query([tests](int _index, json_node& item) -> bool {
+			return (item.object_id == 7);
+			});
 
-		if (testi.exists()) {
-			std::cout << __LINE__ << " existence failed" << std::endl;
+		if (testi.size() > 0) {
+			std::cout << __LINE__ << " retrieved a deleted item" << std::endl;
 			return false;
 		}
 
-		if (!testi.eoi()) {
-			std::cout << __LINE__ << " eoi failed" << std::endl;
+		db_contents = test.query([tests](int _index, json_node& item) {
+			return true;
+			},
+			[](json& _dest_array, int _index, json_node& _item) {
+				json new_json = _item.data;
+				new_json.put_member_i64("ObjectId", _item.object_id);
+				_dest_array.put_element(-1, new_json);
+			});
+
+		bool any_iteration_fails = db_contents.any([](json& _item)->bool {
+			int64_t object_id = _item["ObjectId"].get_int64();
+			return  object_id != 2 && object_id != 5;
+			});
+
+		if (any_iteration_fails) {
+			std::cout << __LINE__ << " iteration after delete failed." << std::endl;
 			return false;
-		}
-
-		int tests3[2] = { 2, 5 };
-
-		k = 0;
-
-		for (auto item : test)
-		{
-			if (tests3[k] != item.first) {
-				std::cout << __LINE__ << " erasing iterator failed" << std::endl;
-				return false;
-			}
-			k++;
 		}
 
 		return true;
