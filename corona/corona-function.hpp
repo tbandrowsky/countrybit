@@ -332,6 +332,11 @@ namespace corona
 			ftr.success = success;
 			ftr.bytes_transferred = bytes_transferred;
 			std::cout << "file task await_result: success:" << ftr.success << " bytes:" << ftr.bytes_transferred << std::endl;
+
+			if (coro) {
+				coro.resume();
+			}
+
 			return ftr;
 		}
 
@@ -464,11 +469,6 @@ namespace corona
 			metask->bytes_transferred = _bytesTransferred;
 			metask->success = _success;
 			jn.setSignal(metask->hevent);
-		}
-
-		if (handle) {
-			handle.resume();
-			handle.destroy();
 		}
 
 		std::cout << "job end:" << GetCurrentThreadId() << std::endl;
