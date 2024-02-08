@@ -227,7 +227,7 @@ namespace corona
 
 			file_write_task ft(instance.hfile, location, (char *)_buffer, _buffer_length);
 
-			co_return ft;
+			return ft;
 		}
 
 		file_read_task read(uint64_t location, void* _buffer, int _buffer_length)
@@ -237,7 +237,7 @@ namespace corona
 
 			file_read_task ft(instance.hfile, location, (char*)_buffer, _buffer_length);
 
-			co_return ft;
+			return ft;
 		}
 
 		uint64_t size()

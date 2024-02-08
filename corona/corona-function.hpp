@@ -286,6 +286,9 @@ namespace corona
 			hevent = CreateEvent(NULL, FALSE, FALSE, nullptr);
 		}
 
+		file_task(const file_task& _src) = default;
+		file_task(file_task&& _src) = default;
+
 		file_task(HANDLE _fi, int64_t _location, char *_buffer, int _size)
 		{
 			file = _fi;
@@ -309,6 +312,7 @@ namespace corona
 		// this creates the 
 		void await_suspend(std::coroutine_handle<> handle)
 		{
+			coro = handle;
 			std::cout << "file task suspend " << std::endl;
 			file_result_job* aij = new file_result_job();
 
@@ -317,16 +321,17 @@ namespace corona
 			aij->container.ovp.Offset = li.LowPart;
 			aij->container.ovp.OffsetHigh = li.HighPart;
 			aij->handle = coro;
+			aij->metask = this;
 			initiate((LPOVERLAPPED)&aij->container);
 			::WaitForSingleObject(hevent, INFINITE);
 		}
 
 		file_task_result await_resume()
 		{
-			std::cout << "file task await_result" << std::endl;
 			file_task_result ftr = {};
 			ftr.success = success;
 			ftr.bytes_transferred = bytes_transferred;
+			std::cout << "file task await_result: success:" << ftr.success << " bytes:" << ftr.bytes_transferred << std::endl;
 			return ftr;
 		}
 
@@ -349,8 +354,7 @@ namespace corona
 
 			promise_type()
 			{
-				std::cout << "file_read_task::promise:" << this << " " << GetCurrentThreadId() << std::endl;
-			
+				std::cout << "file_read_task::promise:" << this << " " << GetCurrentThreadId() << std::endl;			
 			}
 			
 			file_read_task get_return_object() { return {  }; }
@@ -369,15 +373,22 @@ namespace corona
 
 		file_read_task() : file_task()
 		{
-
+			std::cout << "file_read_task empty ctor:" << this << " " << GetCurrentThreadId() << std::endl;
 		}
 
-		file_read_task(const file_read_task& _src) = default;
-		file_read_task(file_read_task&& _src) = default;
+		file_read_task(const file_read_task& _src) : file_task(_src)
+		{
+			std::cout << "file_read_task copy ctor:" << this << " " << GetCurrentThreadId() << std::endl;
+		}
+
+		file_read_task(file_read_task&& _src) : file_task(_src)
+		{
+			std::cout << "file_read_task move ctor:" << this << " " << GetCurrentThreadId() << std::endl;
+		}
 
 		file_read_task(HANDLE _fi, int64_t _location, char* _buffer, int _size) : file_task(_fi, _location, _buffer, _size)
 		{
-			;
+			std::cout << "file_read_task actual:" << this << " " << GetCurrentThreadId() << std::endl;
 		}
 
 		virtual BOOL initiate(LPOVERLAPPED _ovp) {
@@ -416,17 +427,25 @@ namespace corona
 
 		file_write_task() : file_task()
 		{
-
+			std::cout << "file_write_task empty ctor:" << this << " " << GetCurrentThreadId() << std::endl;
 		}
 
-		file_write_task(const file_write_task& _src) = default;
-		file_write_task(file_write_task&& _src) = default;
 
 		file_write_task(HANDLE _fi, int64_t _location, char* _buffer, int _size) : file_task(_fi, _location, _buffer, _size)
 		{
-			;
+			std::cout << "file_write_task legit ctor:" << this << " " << GetCurrentThreadId() << std::endl;;
 		}
 
+		file_write_task(const file_write_task& _src) : file_task(_src)
+		{
+			std::cout << "file_write_task copy ctor:" << this << " " << GetCurrentThreadId() << std::endl;
+		}
+
+		file_write_task(file_write_task&& _src) : file_task(_src)
+		{
+			std::cout << "file_write_task move ctor:" << this << " " << GetCurrentThreadId() << std::endl;
+		}
+		
 		virtual BOOL initiate(LPOVERLAPPED _ovp) {
 			std::cout << "initiate write" << std::endl;
 			return ::WriteFile(file, (void*)buffer, size, nullptr, _ovp);
@@ -437,14 +456,16 @@ namespace corona
 	job_notify file_result_job::execute(job_queue* _callingQueue, DWORD _bytesTransferred, BOOL _success)
 	{
 		job_notify jn;
+
+		std::cout << "job start: receiving IO results " << GetCurrentThreadId() << std::endl;
 		
 		if (metask) {
+			std::cout << "mettask: " << _bytesTransferred << std::endl;
 			metask->bytes_transferred = _bytesTransferred;
 			metask->success = _success;
 			jn.setSignal(metask->hevent);
 		}
 
-		std::cout << "job start:" << GetCurrentThreadId() << std::endl;
 		if (handle) {
 			handle.resume();
 			handle.destroy();
