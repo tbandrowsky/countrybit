@@ -221,21 +221,24 @@ namespace corona
 			return position;
 		}
 
-		file_write_task write(uint64_t location, void* _buffer, int _buffer_length)
+		file_task write(uint64_t location, void* _buffer, int _buffer_length)
 		{
 			std::cout << "write file:" << location << " " << GetCurrentThreadId() << std::endl;
 
-			file_write_task ft(instance.hfile, location, (char *)_buffer, _buffer_length);
+			file_task ft;
+			
+			ft.write(instance.hfile, location, (char*)_buffer, _buffer_length);
 
 			return ft;
 		}
 
-		file_read_task read(uint64_t location, void* _buffer, int _buffer_length)
+		file_task read(uint64_t location, void* _buffer, int _buffer_length)
 		{
-
 			std::cout << "read file:" << location << " " << GetCurrentThreadId() << std::endl;
 
-			file_read_task ft(instance.hfile, location, (char*)_buffer, _buffer_length);
+			file_task ft;
+
+			ft.read(instance.hfile, location, (char*)_buffer, _buffer_length);
 
 			return ft;
 		}

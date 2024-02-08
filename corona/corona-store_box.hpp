@@ -715,6 +715,14 @@ namespace corona {
 #endif
 		}
 
+		dynamic_box(int64_t _size) : stuff(nullptr), stuff_size(0), own_the_data(true)
+		{
+#if	TRACE_DYNAMIC_BOX
+			std::cout << "box:" << this << " " << (void*)stuff << " create " << std::endl;
+#endif
+			init(_size);
+		}
+
 		virtual ~dynamic_box()
 		{
 #if	TRACE_DYNAMIC_BOX

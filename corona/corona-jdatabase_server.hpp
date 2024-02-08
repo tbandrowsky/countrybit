@@ -95,7 +95,7 @@ namespace corona {
 
 	class jdatabase
 	{
-		std::shared_ptr<persistent_box>	database_box;
+		std::shared_ptr<dynamic_box>	database_box;
 		jschema							schema;
 		collections_by_id_type			collections_by_id;
 		collections_by_name_type		collections_by_name;
@@ -276,7 +276,7 @@ namespace corona {
 
 	jdatabase::jdatabase(application* _application) : current_application(_application)
 	{
-		database_box = std::make_shared<persistent_box>();
+		database_box = std::make_shared<dynamic_box>();
 	}
 
 	jdatabase::~jdatabase()
@@ -293,7 +293,6 @@ namespace corona {
 	db_response jdatabase::open(open_db_request _open)
 	{
 		int success = 1;
-		database_box->open(current_application, _open.filename);
 		map = database_box->get_object<jdatabase_control_map>(0);
 		collections_by_id = collections_by_id_type::get_sorted_index(database_box, map->collections_by_id_location);
 		db_response jfr;
@@ -311,7 +310,6 @@ namespace corona {
 		int64_t collection_by_name_bytes = collections_by_name_type::get_box_size();
 		int64_t collection_by_id_bytes = collections_by_id_type::get_box_size();
 
-		database_box->create(current_application, _create.database_filename);
 		map = database_box->allocate<jdatabase_control_map>(1);
 
 		std::filesystem::path dbpath = _create.database_filename.c_str();
@@ -413,9 +411,8 @@ namespace corona {
 			return response;
 		}
 		auto ref = collections_by_id[_id];
-		if (ref.second.data == nullptr) {
-			ref.second.data = std::make_shared<persistent_box>();
-			ref.second.data->open(current_application, ref.second.collection_file_name);
+		if (ref.second.data.get() == nullptr) {
+			ref.second.data = std::make_shared<dynamic_box>(1<<20);
 		}
 		response.collection = jcollection(&schema, &ref.second);
 		response.success = true;

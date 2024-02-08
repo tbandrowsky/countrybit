@@ -16,7 +16,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <compare>
-
+#include <conio.h>
 
 namespace corona 
 {
@@ -56,36 +56,47 @@ namespace corona
 			return *this;
 		}
 
+		std::string get_string()
+		{
+			std::string x = bytes.get_ptr();
+			return x;
+		}
+
 		void init(int _size_bytes)
 		{
 			bytes.init(_size_bytes);
 		}
 
-		sync<int64_t> read(file* _file, int64_t location)
+		file_batch read(file* _file, int64_t location)
 		{
 			current_location = location;
 
-			std::cout << "read begin:" << *this << std::endl;
+			std::cout << "datablock:read begin:" << *this << " " << GetCurrentThreadId() << std::endl;
 
 			file_task_result header_result = co_await _file->read(location, &header, sizeof(header));
 
 			if (header_result.success) 
 			{
+				std::cout << "datablock:read data begin:" << *this << " " << GetCurrentThreadId() << std::endl;
+
 				bytes = buffer(header.data_length);
 				file_task_result  data_result = co_await _file->read(header.data_location, bytes.get_ptr(), header.data_length);
 
 				if (data_result.success) 
 				{
+					std::cout << "datablock:read data worked:" << *this << " " << GetCurrentThreadId() << std::endl;
 					co_return data_result.bytes_transferred; // want to make this 0 or -1 if error
 				}
 			}
 
+			std::cout << "header read failed:" << *this << " " << GetCurrentThreadId() << std::endl;
+
 			co_return -1i64;
 		}
 
-		sync<int64_t> write(file* _file)
+		file_batch write(file* _file)
 		{
-			std::cout << "write begin:" << *this << std::endl;
+			std::cout << "datablock:write begin:" << *this << " " << GetCurrentThreadId() << std::endl;
 
 			if (current_location < 0) 
 			{
@@ -100,9 +111,11 @@ namespace corona
 				header.data_location = _file->add(size);
 			}
 
+			std::cout << "datablock:write header start:" << *this << " " << GetCurrentThreadId() << std::endl;
+
 			file_task_result data_result = co_await _file->write(header.data_location, bytes.get_ptr(), size);
 
-			std::cout << "write step:" << *this << " " << GetCurrentThreadId() << std::endl;
+			std::cout << "datablock:write header end:" << *this << " " << GetCurrentThreadId() << std::endl;
 
 			if (data_result.success)
 			{
@@ -113,7 +126,7 @@ namespace corona
 			co_return -1i64;
 		}
 
-		sync<int64_t> append(file* _file)
+		file_batch append(file* _file)
 		{
 			int size = bytes.get_size();
 
@@ -125,14 +138,16 @@ namespace corona
 			header.next_free_block = 0;
 			header.data_location = _file->add(size);
 
-			file_task_result data_result = co_await _file->write(header.data_location, bytes.get_ptr(), size);
+			file_task_result data_result = co_await _file->write( header.data_location, bytes.get_ptr(), size);
 
-			std::cout << "append step:" << *this << " " << GetCurrentThreadId() << std::endl;
+			std::cout << "append write header:" << *this << " " << GetCurrentThreadId() << std::endl;
 
 			if (data_result.success)
 			{
+				std::cout << "append write data:" << *this << " " << GetCurrentThreadId() << std::endl;
 				file_task_result header_result = co_await _file->write(current_location, &header, sizeof(header));
 
+				std::cout << "append write data finished:" << *this << " " << GetCurrentThreadId() << std::endl;
 				co_return current_location;
 			}
 
@@ -750,18 +765,70 @@ namespace corona
 	}
 
 	bool test_json_table(corona::application& _app);
-	bool test_file(corona::application& _app);
+	sync<bool> test_data_block(corona::application& _app);
+	file_batch test_file(corona::application& _app);
 
-	bool test_file(corona::application& _app)
+	file_batch test_file(corona::application& _app)
+	{
+
+		std::cout << "\ntest_file: entry:" << ::GetCurrentThreadId() << std::endl;
+		std::cout << "-----------------------" << std::endl;
+
+		file dtest = _app.create_file(FOLDERID_Documents, "corona_data_block_test.ctb");
+
+		char buffer_write[2048], buffer_read[2048];
+
+		strcpy_s(buffer_write, R"({ "name": "test" })");
+		int l = strlen(buffer_write) + 1;
+
+		dtest.add(1000);
+		std::cout << "\ntest_file: before co_await write:" << ::GetCurrentThreadId() << std::endl;
+		std::cout << "-----------------------" << std::endl;
+		file_task_result tsk = co_await dtest.write(0, (void *)buffer_write, l);
+
+		std::cout << "\ntest_file: before co_await read:" << ::GetCurrentThreadId() << std::endl;
+		std::cout << "-----------------------" << std::endl;
+		file_task_result tsk2 = co_await dtest.read(0, (void*)buffer_read, l);
+		std::cout << "\ntest_file: after co_await read:" << ::GetCurrentThreadId() << std::endl;
+		std::cout << "-----------------------" << std::endl;
+		
+		if (!strcmp(buffer_write, buffer_read))
+		{
+			std::cout << "\ntest_file: success read, before co_return:" << ::GetCurrentThreadId() << std::endl;
+			std::cout << "-----------------------" << std::endl;
+			co_return 42;
+		}
+
+		std::cout << "\ntest_file: success fail, before co_return:" << ::GetCurrentThreadId() << std::endl;
+		std::cout << "-----------------------" << std::endl;
+		co_return 0;
+	}
+
+	sync<bool> test_data_block(corona::application& _app)
 	{
 		file dtest = _app.create_file(FOLDERID_Documents, "corona_data_block_test.ctb");
 
+		std::cout << "-----------------------" << std::endl;
+		std::cout << "test_data_block:" << ::GetCurrentThreadId() << std::endl;
+
 		json_parser jp;
 		json jx = jp.parse_object(R"({ "name" : "bill", "age":42 })");
-		data_block db;
+		data_block db, dc;
 		db = jx;
-		db.write(&dtest);
-		return true;
+		std::cout << "-----------------------" << std::endl;
+		std::cout << "test_data_block write:" << ::GetCurrentThreadId() << std::endl;
+		co_await db.write(&dtest);
+
+		std::cout << "-----------------------" << std::endl;
+		std::cout << "test_data_block read:" << ::GetCurrentThreadId() << std::endl;
+		co_await dc.read(&dtest, db.current_location);
+
+		std::cout << "-----------------------" << std::endl;
+		std::cout << "test_data_block check:" << ::GetCurrentThreadId() << std::endl;
+
+		std::string x = dc.get_string();
+		std::cout << x << std::endl;
+		co_return true;
 	}
 
 	bool test_json_table(corona::application& _app)

@@ -234,16 +234,165 @@ namespace corona
 		}
 	};
 
+	class file_batch;
+
+	class file_batch_job : public job
+	{
+	public:
+		file_batch				*metask;
+		HANDLE					event;
+		std::coroutine_handle<> routine;
+
+		file_batch_job() : job()
+		{
+			event = {};
+			metask = nullptr;
+		}
+
+		virtual job_notify execute(job_queue* _callingQueue, DWORD _bytesTransferred, BOOL _success);
+	};
+
+	class file_batch
+	{
+	public:
+		HANDLE hevent;
+		std::shared_ptr<file_batch_job> fbj;
+
+		struct promise_type
+		{
+			int m_value;
+
+			promise_type()
+			{
+				std::cout << "file_batch::promise:" << this << " " << GetCurrentThreadId() << std::endl;
+			}
+
+			file_batch get_return_object() {
+				std::cout << "file_batch::get_return_object:" << this << " " << GetCurrentThreadId() << std::endl;
+				std::coroutine_handle<promise_type> promise_coro = std::coroutine_handle<promise_type>::from_promise(*this);
+				file_batch fbr(promise_coro);
+				return fbr;
+			}
+
+			std::suspend_always initial_suspend() noexcept { return {}; }
+			std::suspend_always final_suspend() noexcept { return {}; }
+
+			void return_value(int value) {
+				std::cout << "file_batch::promise return_value:" << " " << value << " " << GetCurrentThreadId() << std::endl;
+				m_value = value;
+			}
+
+			void unhandled_exception() {
+				std::cout << "file_batch::promise unhandled exception:" << this << GetCurrentThreadId() << std::endl;
+			}
+		};
+
+		std::coroutine_handle<promise_type> coro;
+
+		// object manip
+
+		file_batch(std::coroutine_handle<promise_type> _promise_coro)
+		{
+			hevent = ::CreateEvent(NULL, FALSE, FALSE, NULL);
+			coro = _promise_coro;
+			fbj = std::make_shared<file_batch_job>();
+			fbj->event = hevent;
+			fbj->routine = coro;
+			fbj->metask = this;
+			std::cout << "file_batch: coro ctor:" << ::GetCurrentThreadId() << std::endl;
+		}
+
+		file_batch()
+		{
+			hevent = ::CreateEvent(NULL, FALSE, FALSE, NULL);
+			std::cout << "file_batch: empty ctor:" << ::GetCurrentThreadId() << std::endl;
+			fbj = std::make_shared<file_batch_job>();
+			fbj->event = hevent;
+			fbj->routine = nullptr;
+			fbj->metask = this;
+		}
+
+		// awaiter
+
+		bool await_ready() 
+		{
+			std::cout << "file_batch::await_ready:" << this << " " << GetCurrentThreadId() << std::endl;
+			return true;
+		}
+
+		// this creates the 
+		void await_suspend(std::coroutine_handle<> handle)
+		{
+			std::cout << "file_batch::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
+			global_job_queue->add_job(fbj.get());
+			std::cout << "file_batch: suspend initiate" << " " << ::GetCurrentThreadId() << std::endl;
+			::WaitForSingleObject(hevent, INFINITE);
+			std::cout << "file_batch: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
+			handle.resume();
+		}
+
+		int await_resume()
+		{
+			std::cout << "file_batch::await_resume:" << this << " " << GetCurrentThreadId() << std::endl;
+			int result = coro.promise().m_value;
+			return result;
+		}
+
+		int wait()
+		{
+			std::cout << "file_batch::wait:" << this << " " << GetCurrentThreadId() << std::endl;
+			int result = -1;
+
+			std::cout << "file_batch::create_job:" << this << " " << GetCurrentThreadId() << std::endl;
+			global_job_queue->add_job(fbj.get());
+			std::cout << "file_batch: wait for job" << " " << ::GetCurrentThreadId() << std::endl;
+			::WaitForSingleObject(hevent, INFINITE);
+			std::cout << "file_batch: complete" << " " << ::GetCurrentThreadId() << std::endl;
+
+			if (coro) {
+				result = coro.promise().m_value;
+			}
+			return result;
+		}
+
+		operator int()
+		{
+			int result = coro.promise().m_value;
+			return result;
+		}
+	};
+
+	job_notify file_batch_job::execute(job_queue* _callingQueue, DWORD _bytesTransferred, BOOL _success)
+	{
+		job_notify jn;
+
+		std::cout << "file_batch_job: execution." << GetCurrentThreadId() << std::endl;
+
+		if (routine) {
+			routine.resume();
+		}
+
+		if (metask) {
+			std::cout << "file_batch_job: executed: " << _bytesTransferred << std::endl;
+			jn.setSignal(metask->hevent);
+		}
+
+		std::cout << "file_result_job end:" << GetCurrentThreadId() << std::endl;
+
+		jn.shouldDelete = false;
+		return jn;
+	}
+
 	class file_task;
 
-	class file_result_job : public job
+	class file_task_job : public job
 	{
 	public:
 		std::coroutine_handle<> handle;
 		HANDLE					event;
-		file_task				*metask;
+		file_task* metask;
 
-		file_result_job() : job()
+		file_task_job() : job()
 		{
 			handle = {};
 			event = {};
@@ -260,13 +409,18 @@ namespace corona
 		int  bytes_transferred;
 	};
 
+	enum file_function {
+		no_function,
+		read_function,
+		write_function
+	};
+
 	class file_task 
 	{
 
 	public:
 
-		std::coroutine_handle<> coro;
-
+		file_function fun;
 		HANDLE file;
 		HANDLE hevent;
 		int64_t location;
@@ -274,9 +428,45 @@ namespace corona
 		int size;
 		int bytes_transferred;
 		bool success;
+		std::shared_ptr<file_task_job> frj;
+		std::function<void(HANDLE _fi, int64_t _location, char* _buffer, int _size)> chumpy;
+
+		struct promise_type
+		{
+			file_task_result m_value;
+			std::coroutine_handle<promise_type> promise_coro;
+
+			promise_type()
+			{
+				std::cout << "file_task::promise:" << this << " " << GetCurrentThreadId() << std::endl;
+			}
+
+			file_task get_return_object() { 
+				std::cout << "file_batch_result::get_return_object:" << this << " " << GetCurrentThreadId() << std::endl;
+				std::coroutine_handle<promise_type> promise_coro = std::coroutine_handle<promise_type>::from_promise(*this);
+				file_task fbr(promise_coro);
+				return fbr;
+			}
+
+			std::suspend_always initial_suspend() noexcept { return {}; }
+			std::suspend_always final_suspend() noexcept { return {}; }
+
+			void return_value(file_task_result value) {
+				std::cout << "file_task::promise return_value:" << " " << this << GetCurrentThreadId() << std::endl;
+				m_value = value;
+			}
+
+			void unhandled_exception() {
+				std::cout << "file_task::promise unhandled exception:" << this << GetCurrentThreadId() << std::endl;
+			}
+		};
+
+		std::coroutine_handle<promise_type> coro;
 
 		file_task()
 		{
+			fun = file_function::no_function;
+			frj = std::make_shared<file_task_job>();
 			file = nullptr;
 			location = 0;
 			buffer = nullptr;
@@ -284,18 +474,98 @@ namespace corona
 			bytes_transferred = 0;
 			success = false;
 			hevent = CreateEvent(NULL, FALSE, FALSE, nullptr);
+			coro = nullptr;
 		}
 
-		file_task(const file_task& _src) = default;
-		file_task(file_task&& _src) = default;
-
-		file_task(HANDLE _fi, int64_t _location, char *_buffer, int _size)
+		file_task(const file_task& _src)
 		{
+			fun = _src.fun;
+			frj = std::make_shared<file_task_job>();
+			file = _src.file;
+			location = _src.location;
+			buffer = _src.buffer;
+			size = _src.size;
+			bytes_transferred = _src.bytes_transferred;
+			success = _src.success;
+			hevent = CreateEvent(NULL, FALSE, FALSE, nullptr);
+			frj = _src.frj;
+		}
+
+		file_task(file_task&& _src)
+		{
+			fun = _src.fun;
+			frj = std::make_shared<file_task_job>();
+			file = _src.file;
+			location = _src.location;
+			buffer = _src.buffer;
+			size = _src.size;
+			hevent = _src.hevent;
+			bytes_transferred = _src.bytes_transferred;
+			success = _src.success;
+			_src.hevent = nullptr;
+			frj = std::move(_src.frj);
+		}
+
+		file_task(std::coroutine_handle<promise_type> _coro)
+		{
+			frj = std::make_shared<file_task_job>();
+			location = 0;
+			buffer = nullptr;
+			size = 0;
+			bytes_transferred = 0;
+			success = false;
+			hevent = CreateEvent(NULL, FALSE, FALSE, nullptr);
+			coro = _coro;
+		}
+
+		void read(HANDLE _fi, int64_t _location, char* _buffer, int _size)
+		{
+			fun = read_function;
 			file = _fi;
 			location = _location;
 			buffer = _buffer;
 			size = _size;
+			bytes_transferred = 0;
+			success = false;
 			hevent = CreateEvent(NULL, FALSE, FALSE, nullptr);
+
+			LARGE_INTEGER li;
+			li.QuadPart = location;
+			frj->container.ovp.Offset = li.LowPart;
+			frj->container.ovp.OffsetHigh = li.HighPart;
+			frj->handle = coro;
+			frj->metask = this;
+		}
+
+		void write(HANDLE _fi, int64_t _location, char* _buffer, int _size)
+		{
+			fun = write_function;
+			file = _fi;
+			location = _location;
+			buffer = _buffer;
+			size = _size;
+			bytes_transferred = 0;
+			success = false;
+			hevent = CreateEvent(NULL, FALSE, FALSE, nullptr);
+
+			LARGE_INTEGER li;
+			li.QuadPart = location;
+			frj->container.ovp.Offset = li.LowPart;
+			frj->container.ovp.OffsetHigh = li.HighPart;
+			frj->handle = coro;
+			frj->metask = this;			
+		}
+
+		void initiate()
+		{
+			switch (fun) {
+			case read_function:
+				ReadFile(file, (void*)buffer, size, nullptr, (LPOVERLAPPED)&frj->container);
+				break;
+			case write_function:
+				WriteFile(file, (void*)buffer, size, nullptr, (LPOVERLAPPED)&frj->container);
+				break;
+			}
 		}
 
 		virtual ~file_task()
@@ -303,27 +573,29 @@ namespace corona
 			::CloseHandle(hevent);
 		}
 
-		virtual BOOL initiate(LPOVERLAPPED _ovp) = 0;
-
 		bool await_ready() {
 			return false;
 		}
 
-		// this creates the 
-		void await_suspend(std::coroutine_handle<> handle)
+		void await_suspend(std::coroutine_handle<promise_type> handle)
 		{
-			coro = handle;
-			std::cout << "file task suspend " << std::endl;
-			file_result_job* aij = new file_result_job();
-
-			LARGE_INTEGER li;
-			li.QuadPart = location;
-			aij->container.ovp.Offset = li.LowPart;
-			aij->container.ovp.OffsetHigh = li.HighPart;
-			aij->handle = coro;
-			aij->metask = this;
-			initiate((LPOVERLAPPED)&aij->container);
+			std::cout << "file_task: suspend file_task" << " " << ::GetCurrentThreadId() << std::endl;
+			initiate();
+			std::cout << "file_task: suspend initiate" << " " << ::GetCurrentThreadId() << std::endl;
 			::WaitForSingleObject(hevent, INFINITE);
+			std::cout << "file_task:io complete" << " " << ::GetCurrentThreadId() << std::endl;
+			handle.resume();
+		}
+
+		// this creates the 
+		void await_suspend(std::coroutine_handle<file_batch::promise_type> handle)
+		{
+			std::cout << "file_task: suspend file_batch_result" << " " << ::GetCurrentThreadId() << std::endl;
+			initiate();
+			std::cout << "file_task: suspend initiate" << " " << ::GetCurrentThreadId() << std::endl;
+			::WaitForSingleObject(hevent, INFINITE);
+			std::cout << "file_task:io complete" << " " << ::GetCurrentThreadId() << std::endl;
+			handle.resume();
 		}
 
 		file_task_result await_resume()
@@ -331,12 +603,7 @@ namespace corona
 			file_task_result ftr = {};
 			ftr.success = success;
 			ftr.bytes_transferred = bytes_transferred;
-			std::cout << "file task await_result: success:" << ftr.success << " bytes:" << ftr.bytes_transferred << std::endl;
-
-			if (coro) {
-				coro.resume();
-			}
-
+			std::cout << "file_task: await_resume:" << ftr.success << " bytes:" << ftr.bytes_transferred << " " << ::GetCurrentThreadId() << std::endl;
 			return ftr;
 		}
 
@@ -345,135 +612,32 @@ namespace corona
 			file_task_result ftr = {};
 			ftr.success = success;
 			ftr.bytes_transferred = bytes_transferred;
+			std::cout << "file_task: result:" << ftr.success << " bytes:" << ftr.bytes_transferred << " " << ::GetCurrentThreadId() << std::endl;
 			return ftr;
 		}
 	};
 
-	class file_read_task : public file_task 
-	{
-	public:
-
-		struct promise_type 
-		{
-			file_task_result m_value;
-
-			promise_type()
-			{
-				std::cout << "file_read_task::promise:" << this << " " << GetCurrentThreadId() << std::endl;			
-			}
-			
-			file_read_task get_return_object() { return {  }; }
-			std::suspend_always initial_suspend() noexcept { return {}; }
-			std::suspend_always final_suspend() noexcept { return {}; }
-
-			void return_value(file_task_result value) {
-				std::cout << "file_read_task::promise return_value:" << " " << this << GetCurrentThreadId() << std::endl;
-				m_value = value;
-			}
-
-			void unhandled_exception() {
-				std::cout << "file_read_task::promise unhandled exception:" << this << GetCurrentThreadId() << std::endl;
-			}
-		};
-
-		file_read_task() : file_task()
-		{
-			std::cout << "file_read_task empty ctor:" << this << " " << GetCurrentThreadId() << std::endl;
-		}
-
-		file_read_task(const file_read_task& _src) : file_task(_src)
-		{
-			std::cout << "file_read_task copy ctor:" << this << " " << GetCurrentThreadId() << std::endl;
-		}
-
-		file_read_task(file_read_task&& _src) : file_task(_src)
-		{
-			std::cout << "file_read_task move ctor:" << this << " " << GetCurrentThreadId() << std::endl;
-		}
-
-		file_read_task(HANDLE _fi, int64_t _location, char* _buffer, int _size) : file_task(_fi, _location, _buffer, _size)
-		{
-			std::cout << "file_read_task actual:" << this << " " << GetCurrentThreadId() << std::endl;
-		}
-
-		virtual BOOL initiate(LPOVERLAPPED _ovp) {
-			std::cout << "initiate read" << std::endl;
-			return ::ReadFile(file, (void *)buffer, size, nullptr, _ovp);
-		}
-	};
-
-	class file_write_task : public file_task 
-	{
-	public:
-
-		struct promise_type
-		{
-			file_task_result m_value;
-
-			promise_type()
-			{
-				std::cout << "file_write_task::promise:" << this << " " << GetCurrentThreadId() << std::endl;
-			}
-
-			file_write_task get_return_object() { return {  }; }
-			std::suspend_always initial_suspend() noexcept { return {}; }
-			std::suspend_always final_suspend() noexcept { return {}; }
-
-			void return_value(file_task_result value) {
-				std::cout << "file_write_task::promise return_value:" << " " << this << GetCurrentThreadId() << std::endl;
-				m_value = value;
-			}
-
-			void unhandled_exception() {
-				std::cout << "file_write_task::promise unhandled exception:" << this << GetCurrentThreadId() << std::endl;
-			}
-		};
-
-
-		file_write_task() : file_task()
-		{
-			std::cout << "file_write_task empty ctor:" << this << " " << GetCurrentThreadId() << std::endl;
-		}
-
-
-		file_write_task(HANDLE _fi, int64_t _location, char* _buffer, int _size) : file_task(_fi, _location, _buffer, _size)
-		{
-			std::cout << "file_write_task legit ctor:" << this << " " << GetCurrentThreadId() << std::endl;;
-		}
-
-		file_write_task(const file_write_task& _src) : file_task(_src)
-		{
-			std::cout << "file_write_task copy ctor:" << this << " " << GetCurrentThreadId() << std::endl;
-		}
-
-		file_write_task(file_write_task&& _src) : file_task(_src)
-		{
-			std::cout << "file_write_task move ctor:" << this << " " << GetCurrentThreadId() << std::endl;
-		}
-		
-		virtual BOOL initiate(LPOVERLAPPED _ovp) {
-			std::cout << "initiate write" << std::endl;
-			return ::WriteFile(file, (void*)buffer, size, nullptr, _ovp);
-		}
-
-	};
-
-	job_notify file_result_job::execute(job_queue* _callingQueue, DWORD _bytesTransferred, BOOL _success)
+	job_notify file_task_job::execute(job_queue* _callingQueue, DWORD _bytesTransferred, BOOL _success)
 	{
 		job_notify jn;
 
-		std::cout << "job start: receiving IO results " << GetCurrentThreadId() << std::endl;
+		std::cout << "file_task_job: receiving IO results " << GetCurrentThreadId() << std::endl;
 		
 		if (metask) {
-			std::cout << "mettask: " << _bytesTransferred << std::endl;
+			std::cout << "file_task_job: bytes transferred: " << _bytesTransferred << std::endl;
 			metask->bytes_transferred = _bytesTransferred;
 			metask->success = _success;
 			jn.setSignal(metask->hevent);
 		}
 
-		std::cout << "job end:" << GetCurrentThreadId() << std::endl;
+		if (handle) {
+			handle.resume();
+			handle.destroy();
+		}
 
-		jn.shouldDelete = true;
+		std::cout << "file_task_job: end:" << GetCurrentThreadId() << std::endl;
+
+		jn.shouldDelete = false;
 		return jn;
 	}
 

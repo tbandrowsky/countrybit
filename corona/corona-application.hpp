@@ -95,10 +95,10 @@ namespace corona
 			char buffer[10] = { 0 };
 
 			strcpy_s(buffer, "test1");
-			my_file.write(0, buffer, 5);
+			my_file.write( 0, buffer, 5);
 			strcpy_s(buffer, "test2");
-			my_file.write(5, buffer, 5);
-			my_file.read(0, buffer, 5);
+			my_file.write( 5, buffer, 5);
+			my_file.read( 0, buffer, 5);
 
 			if (strcmp(buffer, "test1") != 0)
 			{
@@ -146,8 +146,7 @@ namespace corona
 			schema.bind_field("institutionName", institution_field_id);
 
 			jcollection_ref ref;
-			ref.data = std::make_shared<persistent_box>();
-			ref.data->create(&app, "test.dat");
+			ref.data = std::make_shared<dynamic_box>(1<<20);
 			ref.max_objects = 50;
 			ref.collection_size_bytes = 1 << 19;
 
@@ -325,8 +324,7 @@ namespace corona
 			relative_ptr_type classesb[2] = { sprite_class_id, null_row };
 
 			jcollection_ref ref;
-			ref.data = std::make_shared<persistent_box>();
-			ref.data->create(&app, "test.dat");
+			ref.data = std::make_shared<dynamic_box>(1<<20);
 			ref.max_objects = 50;
 			ref.collection_size_bytes = 1 << 19;
 

@@ -14,7 +14,6 @@
 #include "corona-concept_lock.hpp"
 #include "corona-constants.hpp"
 #include "corona-store_box.hpp"
-#include "corona-store_box_file.hpp"
 #include "corona-string_box.hpp"
 #include "corona-image_box.hpp"
 #include "corona-int_box.hpp"

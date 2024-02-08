@@ -19,9 +19,9 @@
 #include "corona-time_box.hpp"
 #include "corona-wave_box.hpp"
 #include "corona-collection_id_box.hpp"
+#include "corona-sorted_index.hpp"
 #include "corona-jfield.hpp"
 #include "corona-jvalue.hpp"
-#include "corona-store_box_file.hpp"
 
 #include <memory>
 #include <exception>
@@ -54,7 +54,7 @@ namespace corona {
 
 		relative_ptr_type	objects_id;
 
-		std::shared_ptr<persistent_box>		data;
+		std::shared_ptr<dynamic_box>		data;
 
 		jcollection_ref() :
 			collection_name(""),
@@ -268,7 +268,7 @@ namespace corona {
 			ref(_ref),
 			collection_id(_ref->collection_id)
 		{
-			if (!ref || ref->data == nullptr) {
+			if (!ref || ref->data.get() == nullptr) {
 				throw std::invalid_argument("jcollection ref must have data initialized");
 			}
 			objects = object_collection::get_table(_ref->data, _ref->objects_id);
@@ -279,7 +279,7 @@ namespace corona {
 			ref(_src.ref),
 			collection_id(_src.collection_id)
 		{
-			if (!ref || ref->data == nullptr) {
+			if (!ref || ref->data.get() == nullptr) {
 				throw std::invalid_argument("jcollection ref must have data initialized");
 			}
 			objects = object_collection::get_table(ref->data, ref->objects_id);
@@ -290,7 +290,7 @@ namespace corona {
 			ref(_src.ref),
 			collection_id(_src.collection_id)
 		{
-			if (!ref || ref->data == nullptr) {
+			if (!ref || ref->data.get() == nullptr) {
 				throw std::invalid_argument("jcollection ref must have data initialized");
 			}
 			objects = object_collection::get_table(ref->data, ref->objects_id);

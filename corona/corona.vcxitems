@@ -77,7 +77,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-skip_list.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-sorted_index.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-store_box.hpp" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)corona-store_box_file.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-string_box.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-styles.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-table.hpp" />
