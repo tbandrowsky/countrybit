@@ -55,9 +55,20 @@ namespace corona
 			return f;
 		}
 
+		file open_file(KNOWNFOLDERID folderId, file_path filename, file_open_types _file_open_type)
+		{
+			file f(global_job_queue.get(), folderId, filename, _file_open_type);
+			return f;
+		}
+
+		file create_file(KNOWNFOLDERID folderId, file_path filename)
+		{
+			return file(global_job_queue.get(), folderId, filename, file_open_types::create_always);
+		}
+
 		file create_file(file_path filename)
 		{
-			return file(global_job_queue.get(), filename, file_open_types::create_new);
+			return file(global_job_queue.get(), filename, file_open_types::create_always);
 		}
 
 		void add_job(job* _job)

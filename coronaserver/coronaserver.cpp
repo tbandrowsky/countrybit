@@ -5,6 +5,17 @@
 
 int main()
 {
-    corona::test_json_table();
+    corona::application app;
+
+    try 
+    {
+        std::cout << "Before Thread Id:" << GetCurrentThreadId() << std::endl;
+        corona::test_file(app);
+        std::cout << "After Thread Id:" << GetCurrentThreadId() << std::endl;
+    }
+    catch (std::exception exc)
+    {
+        std::cout << exc.what() << std::endl;
+    }
 }
 

@@ -255,6 +255,8 @@ namespace corona
 			}
 		}
 
+		/*
+
 		auto get_changes(char* _buffer_bytes, DWORD _buffer_size)
 		{
 			directory_change_instance dci;
@@ -265,6 +267,8 @@ namespace corona
 			aw.configure(instance.queue, dci);
 			return aw;
 		}
+
+		*/
 
 		os_result& result()
 		{

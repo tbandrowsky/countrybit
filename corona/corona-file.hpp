@@ -23,7 +23,7 @@ namespace corona
 		job_queue* queue;
 		file_path	file_name;
 		HANDLE		hfile;
-		char* buffer_bytes;
+		char*		buffer_bytes;
 		DWORD		buffer_size;
 		uint64_t	location;
 		DWORD		bytes_transferred;
@@ -57,6 +57,7 @@ namespace corona
 	enum class file_open_types
 	{
 		create_new,
+		create_always,
 		open_existing,
 		open_always
 	};
@@ -78,6 +79,9 @@ namespace corona
 			{
 			case file_open_types::create_new:
 				disposition = CREATE_NEW;
+				break;
+			case file_open_types::create_always:
+				disposition = CREATE_ALWAYS;
 				break;
 			case file_open_types::open_existing:
 				disposition = OPEN_EXISTING;
@@ -217,55 +221,23 @@ namespace corona
 			return position;
 		}
 
-		auto write(uint64_t location, void* _buffer, int _buffer_length)
+		file_write_task write(uint64_t location, void* _buffer, int _buffer_length)
 		{
-			::WaitForSingleObject(resize_event, INFINITE);
+			std::cout << "write file:" << location << " " << GetCurrentThreadId() << std::endl;
 
-			async_io_task<file_result> aw;
-			async_io_job<file_result>* aij = new async_io_job<file_result>();
+			file_write_task ft(instance.hfile, location, (char *)_buffer, _buffer_length);
 
-			file_result local_instance = instance;
-			local_instance.buffer_bytes = (char *)_buffer;
-			local_instance.buffer_size = _buffer_length;
-			local_instance.location = location;
-
-			aw.configure(instance.queue, local_instance, [aij](HANDLE hevent, file_result* params) -> bool {
-				LARGE_INTEGER li;
-				li.QuadPart = params->location;
-				aij->container.ovp.Offset = li.LowPart;
-				aij->container.ovp.OffsetHigh = li.HighPart;
-				BOOL success = ::WriteFile(params->hfile, params->buffer_bytes, params->buffer_size, NULL, (LPOVERLAPPED)&aij->container);
-				os_result result;
-				std::cout << "Write:" << success << " " << result.message << std::endl;
-				return result.error_code == ERROR_IO_PENDING || result.error_code == ERROR_SUCCESS;
-				}
-			);
-
-			return aw;
+			co_return ft;
 		}
 
-		auto read(uint64_t location, void* _buffer, int _buffer_length)
+		file_read_task read(uint64_t location, void* _buffer, int _buffer_length)
 		{
-			async_io_task<file_result> aw;
-			async_io_job<file_result>* aij = new async_io_job<file_result>();
 
-			file_result local_instance = instance;
-			local_instance.buffer_bytes = (char*)_buffer;
-			local_instance.buffer_size = _buffer_length;
-			local_instance.location = location;
+			std::cout << "read file:" << location << " " << GetCurrentThreadId() << std::endl;
 
-			aw.configure(instance.queue, instance, [aij](HANDLE hevent, file_result* params) -> bool {
-				LARGE_INTEGER li;
-				li.QuadPart = params->location;
-				aij->container.ovp.Offset = li.LowPart;
-				aij->container.ovp.OffsetHigh = li.HighPart;
-				BOOL success = ::ReadFile(params->hfile, params->buffer_bytes, params->buffer_size, NULL, (LPOVERLAPPED) & (aij->container));
-				os_result result;
-				std::cout << "Read:" << success << " " << result.message << std::endl;
-				return result.error_code == ERROR_IO_PENDING || result.error_code == ERROR_SUCCESS;
-				});
+			file_read_task ft(instance.hfile, location, (char*)_buffer, _buffer_length);
 
-			return aw;
+			co_return ft;
 		}
 
 		uint64_t size()

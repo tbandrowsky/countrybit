@@ -17,11 +17,22 @@
 #include <stdexcept>
 #include <compare>
 
+
 namespace corona 
 {
 
 	static const int JsonTableMaxNumberOfLevels = 40;
 	static const int JsonTableMaxLevel = JsonTableMaxNumberOfLevels - 1;
+
+	class data_block;
+	std::ostream& operator <<(std::ostream& output, data_block& src);
+
+	template <typename T> class poco_node;
+	template <typename T> std::ostream& operator <<(std::ostream& output, poco_node<T>& src);
+
+	class json_node;
+	std::ostream& operator <<(std::ostream& output, json_node& src);
+
 
 	class data_block
 	{
@@ -50,16 +61,18 @@ namespace corona
 			bytes.init(_size_bytes);
 		}
 
-		async_io_task<int64_t> read(file* _file, int64_t location)
+		sync<int64_t> read(file* _file, int64_t location)
 		{
 			current_location = location;
 
-			auto header_result = co_await _file->read(location, &header, sizeof(header));
+			std::cout << "read begin:" << *this << std::endl;
+
+			file_task_result header_result = co_await _file->read(location, &header, sizeof(header));
 
 			if (header_result.success) 
 			{
 				bytes = buffer(header.data_length);
-				auto data_result = co_await _file->read(header.data_location, bytes.get_ptr(), header.data_length);
+				file_task_result  data_result = co_await _file->read(header.data_location, bytes.get_ptr(), header.data_length);
 
 				if (data_result.success) 
 				{
@@ -70,8 +83,10 @@ namespace corona
 			co_return -1i64;
 		}
 
-		async_io_task<int64_t> write(file* _file)
+		sync<int64_t> write(file* _file)
 		{
+			std::cout << "write begin:" << *this << std::endl;
+
 			if (current_location < 0) 
 			{
 				co_return append(_file);
@@ -85,20 +100,24 @@ namespace corona
 				header.data_location = _file->add(size);
 			}
 
-			auto data_result = co_await _file->write(header.data_location, bytes.get_ptr(), size);
+			file_task_result data_result = co_await _file->write(header.data_location, bytes.get_ptr(), size);
+
+			std::cout << "write step:" << *this << " " << GetCurrentThreadId() << std::endl;
 
 			if (data_result.success)
 			{
-				auto header_result = co_await _file->write(current_location, &header, sizeof(header));
+				file_task_result header_result = co_await _file->write(current_location, &header, sizeof(header));
 				co_return header_result.bytes_transferred;
 			}
 
 			co_return -1i64;
 		}
 
-		async_io_task<int64_t> append(file* _file)
+		sync<int64_t> append(file* _file)
 		{
 			int size = bytes.get_size();
+
+			std::cout << "append begin:" << *this << " " << GetCurrentThreadId() << std::endl;
 
 			current_location = _file->add(sizeof(header));
 
@@ -106,18 +125,27 @@ namespace corona
 			header.next_free_block = 0;
 			header.data_location = _file->add(size);
 
-			auto data_result = co_await _file->write(header.data_location, bytes.get_ptr(), size);
+			file_task_result data_result = co_await _file->write(header.data_location, bytes.get_ptr(), size);
+
+			std::cout << "append step:" << *this << " " << GetCurrentThreadId() << std::endl;
 
 			if (data_result.success)
 			{
-				auto header_result = co_await _file->write(current_location, &header, sizeof(header));
+				file_task_result header_result = co_await _file->write(current_location, &header, sizeof(header));
 
 				co_return current_location;
 			}
 
 			co_return -1i64;
 		}
+
 	};
+
+	std::ostream& operator <<(std::ostream& output, data_block& src)
+	{
+		output << "datablock:" << src.current_location << ", " << src.bytes.get_size() << " bytes";
+		return output;
+	}
 
 	class json_node
 	{
@@ -178,11 +206,10 @@ namespace corona
 			return put_json(_src);
 		}
 
-		sync<int64_t> read(file* _file, int64_t location)
+		int64_t  read(file* _file, int64_t location)
 		{
-			sync<int64_t> sw;
-
-			int64_t status = co_await storage.read(_file, location);
+			std::cout << "read:" << *this << std::endl;
+			int64_t status = storage.read(_file, location);
 
 			if (status > -1) 
 			{
@@ -191,38 +218,38 @@ namespace corona
 				json payload = jp.parse_object(c);
 				put_json(payload);
 			}
-			sw.configure(status);
-			co_return sw;
+			return status;
 		}
 
-		sync<int64_t> write(file* _file)
+		int64_t  write(file* _file)
 		{
-			sync<int64_t> sw;
-
+			std::cout << "write:" << *this << std::endl;
 			auto json_payload = get_json();
 
 			storage = json_payload;
 
-			int64_t result = co_await storage.write(_file);
-			sw.configure(result);
-
-			co_return sw;
+			int64_t result = storage.write(_file);
+			return result;
 		}
 
-		sync<int64_t> append(file* _file)
+		int64_t  append(file* _file)
 		{
-			sync<int64_t> sw;
-
+			std::cout << "append:" << *this << std::endl;
 			auto json_payload = get_json();
 
 			storage = json_payload;
 
-			int64_t result = co_await storage.append(_file);
-			sw.configure(result);
+			int64_t result = storage.append(_file);
 
-			co_return sw;
+			return result;
 		}
 	};
+
+	std::ostream& operator <<(std::ostream& output, json_node& src)
+	{
+		output << "json_node:" << src.object_id << " bytes";
+		return output;
+	}
 
 	template <typename poco_type> class poco_node
 	{
@@ -243,13 +270,13 @@ namespace corona
 			return *this;
 		}
 
-		sync<int64_t> read(file* _file, int64_t location)
+		int64_t read(file* _file, int64_t location)
 		{
-			sync<int64_t> sw;
-
 			storage.init(sizeof(poco_type));
 
-			int64_t status = co_await storage.read(_file, location);
+			std::cout << "read:" << *this << std::endl;
+
+			int64_t status = storage.read(_file, location);
 
 			if (status > -1)
 			{
@@ -257,37 +284,41 @@ namespace corona
 				data = *c;
 			}
 
-			co_return status;
+			return status;
 		}
 
-		sync<int64_t> write(file* _file)
+		int64_t write(file* _file)
 		{
-			sync<int64_t> sw;
-
 			storage.init(sizeof(poco_type));
 			poco_type* c = (poco_type*)storage.bytes.get_ptr();
 			*c = data;
 
-			int64_t status = co_await storage.write(_file);
-			sw.configure(status);
+			std::cout << "write:" << *this << std::endl;
 
-			co_return sw;
+			int64_t status = storage.write(_file);
+
+			return status;
 		}
 
-		sync<int64_t> append(file* _file)
+		int64_t append(file* _file)
 		{
-			sync<int64_t> sw;
-
 			storage.init(sizeof(poco_type));
 			poco_type* c = (poco_type*)storage.bytes.get_ptr();
 			*c = data;
 
-			int64_t status = co_await storage.write(_file);
-			sw.configure(status);
+			std::cout << "append:" << *this << std::endl;
 
-			co_return sw;
+			int64_t status = storage.write(_file);
+
+			return status;
 		}
 	};
+
+	template<typename T> std::ostream& operator <<(std::ostream& output, poco_node<T>& src)
+	{
+		output << "json_node:" << src.object_id << " bytes";
+		return output;
+	}
 
 	struct index_header_struct
 	{
@@ -304,11 +335,11 @@ namespace corona
 		file* database_file;
 
 		const int SORT_ORDER = 1;
+		
+	public:
 
 		using KEY = int64_t;
 		using VALUE = json_node;
-		
-	public:
 
 		void create_header()
 		{
@@ -322,7 +353,7 @@ namespace corona
 			index_header.write(database_file);
 		}
 
-		sync<json_node> get_header()
+		json_node get_header()
 		{
 			json_node in;
 
@@ -333,10 +364,10 @@ namespace corona
 				throw std::logic_error("Couldn't read table header.");
 			}
 
-			co_return in;
+			return in;
 		}
 
-		sync<json_node> create_node(int _max_level)
+		json_node create_node(int _max_level)
 		{
 			json_node new_node;
 
@@ -349,15 +380,15 @@ namespace corona
 			}
 
 			new_node.append(database_file);
-			co_return new_node;
+			return new_node;
 		}
 
-		sync<json_node> get_node(file* _file, relative_ptr_type _node_location) const
+		json_node get_node(file* _file, relative_ptr_type _node_location) const
 		{
 			json_node node;
 
-			co_await node.read(_file, _node_location);
-			co_return node;
+			node.read(_file, _node_location);
+			return node;
 		}
 
 	public:
@@ -401,7 +432,8 @@ namespace corona
 
 		json_node get_at(relative_ptr_type offset)
 		{
-			return get_node(database_file, offset);
+			json_node n = get_node(database_file, offset);
+			return n;
 		}
 
 		bool erase(KEY key)
@@ -415,7 +447,8 @@ namespace corona
 			if (n == null_row) {
 				throw std::invalid_argument("bad key");
 			}
-			return get_node(database_file, n);
+			json_node jn = get_node(database_file, n);
+			return jn;
 		}
 
 		bool contains(const KEY key) const
@@ -429,21 +462,24 @@ namespace corona
 			return get_node(database_file, n);
 		}
 
-		void insert_or_assign(KEY key, json value)
+		relative_ptr_type insert_or_assign(KEY key, json value)
 		{
 			relative_ptr_type modified_node = this->update_node(key, [value](VALUE& dest) { dest.data = value; });
+			return modified_node;
 		}
 
-		void put(KEY key, VALUE value)
+		relative_ptr_type put(KEY key, VALUE value)
 		{
 			relative_ptr_type modified_node = this->update_node(key, [value](VALUE& dest) { dest.data = value.data; });
+			return modified_node;
 		}
 
-		void put(KEY key, std::string _json)
+		relative_ptr_type put(KEY key, std::string _json)
 		{
 			json_parser jp;
 			json jx = jp.parse_object(_json);
 			relative_ptr_type modified_node = this->update_node(key, [jx](VALUE& dest) { dest.data = jx; });
+			return modified_node;
 		}
 
 		json query(std::function<bool(int _index, json_node& _predicate)> _predicate,
@@ -498,7 +534,7 @@ namespace corona
 
 		// compare a node to a key for equality
 
-		sync<int> compare(relative_ptr_type _node, int64_t _id) const
+		int compare(relative_ptr_type _node, int64_t _id) const
 		{
 			if (_node != null_row)
 			{
@@ -506,19 +542,19 @@ namespace corona
 				auto ndkey = nd.object_id;
 
 				if (ndkey < _id)
-					co_return -SORT_ORDER;
+					return -SORT_ORDER;
 				else if (ndkey > _id)
-					co_return SORT_ORDER;
+					return SORT_ORDER;
 				else
-					co_return 0;
+					return 0;
 			}
 			else
 			{
-				co_return 1;
+				return 1;
 			}
 		}
 
-		sync<relative_ptr_type> find_node(relative_ptr_type* update, int64_t _key) const
+		relative_ptr_type find_node(relative_ptr_type* update, int64_t _key) const
 		{
 			relative_ptr_type found = null_row, p, q;
 
@@ -540,10 +576,10 @@ namespace corona
 				update[k] = p;
 			}
 
-			co_return found;
+			return found;
 		}
 
-		sync<relative_ptr_type> find_first_gte(relative_ptr_type* update, int64_t _key)
+		relative_ptr_type find_first_gte(relative_ptr_type* update, int64_t _key)
 		{
 			relative_ptr_type found = null_row, p, q, last_link;
 
@@ -569,22 +605,27 @@ namespace corona
 				update[k] = p;
 			}
 
-			co_return found;
+			return found;
 		}
 
-		sync<relative_ptr_type> update_node(KEY _key, std::function<void(VALUE& existing_value)> predicate)
+		relative_ptr_type update_node(KEY _key, std::function<void(VALUE& existing_value)> predicate)
 		{
 			int k;
+
+			std::cout << "json_table update_node" << std::endl;
+
 			relative_ptr_type update[JsonTableMaxNumberOfLevels];
+
 			relative_ptr_type q = find_node(update, _key);
 			json_node qnd;
+
 
 			if (q != null_row)
 			{
 				qnd = get_node(database_file, q);
 				predicate(qnd);
 				qnd.write(database_file);
-				co_return qnd.storage.current_location;
+				qnd.storage.current_location;
 			}
 
 			k = randomLevel();
@@ -611,17 +652,17 @@ namespace corona
 				qnd.forward[k] = pnd.forward[k];
 				pnd.forward[k] = qnd.storage.current_location;
 
-				co_await qnd.write(database_file);
-				co_await pnd.write(database_file);
+				qnd.write(database_file);
+				pnd.write(database_file);
 
 			} while (--k >= 0);
 
-			co_await index_header.write(database_file);
+			index_header.write(database_file);
 
-			co_return qnd.storage.current_location;
+			return qnd.storage.current_location;
 		}
 
-		sync<bool> remove_node(const KEY& key)		{
+		bool remove_node(const KEY& key)		{
 			int k;
 			relative_ptr_type update[JsonTableMaxNumberOfLevels], p;
 			json_node qnd, pnd;
@@ -652,30 +693,32 @@ namespace corona
 				}
 				index_header.data.level = m;
 				index_header.write(database_file);
-				co_return true;
+				return true;
 			}
 			else
 			{
-				co_return false;
+				return false;
 			}
 		}
 
-		sync<relative_ptr_type> find_node(const KEY& key) const
+		relative_ptr_type find_node(const KEY& key) const
 		{
 #ifdef	TIME_SKIP_LIST
 			benchmark::auto_timer_type methodtimer("skip_list_type::search");
 #endif
 			relative_ptr_type update[JsonTableMaxNumberOfLevels];
-			co_return find_node(update, key);
+			relative_ptr_type value = find_node(update, key);
+			return value;
 		}
 
-		sync<relative_ptr_type> find_first_node_gte(const KEY& key)
+		relative_ptr_type find_first_node_gte(const KEY& key)
 		{
 #ifdef	TIME_SKIP_LIST
 			benchmark::auto_timer_type methodtimer("skip_list_type::search");
 #endif
 			relative_ptr_type update[JsonTableMaxNumberOfLevels];
-			return find_first_gte(update, key);
+			relative_ptr_type fn = find_first_gte(update, key);
+			return fn;
 		}
 
 		json_node first_node()
@@ -695,7 +738,6 @@ namespace corona
 			json_node nd = get_node(database_file, _node.forward[0]);
 			return nd;
 		}
-
 	};
 
 	std::ostream& operator <<(std::ostream& output, json_table& src)
@@ -707,18 +749,31 @@ namespace corona
 		return output;
 	}
 
-	bool test_json_table();
+	bool test_json_table(corona::application& _app);
+	bool test_file(corona::application& _app);
 
-	bool test_json_table()
+	bool test_file(corona::application& _app)
+	{
+		file dtest = _app.create_file(FOLDERID_Documents, "corona_data_block_test.ctb");
+
+		json_parser jp;
+		json jx = jp.parse_object(R"({ "name" : "bill", "age":42 })");
+		data_block db;
+		db = jx;
+		db.write(&dtest);
+		return true;
+	}
+
+	bool test_json_table(corona::application& _app)
 	{
 		long object_id = 100;
 
-		file f(global_job_queue.get(), FOLDERID_Documents, "corona_table.ctb", file_open_types::create_new);
+		file f = _app.create_file(FOLDERID_Documents, "corona_table.ctb");
 
 		object_id = 5;
 		json_table test(&f);
 		test.put(object_id, R"({ "Name" : "Joe" })");
-		auto t1 = test[object_id];
+		json_node t1 = test[object_id];
 
 		if (t1.object_id != object_id || t1.data["Name"].get_string() != "Joe")
 		{
@@ -728,7 +783,7 @@ namespace corona
 
 		object_id = 7;
 		test.put(object_id, R"({ "Name" : "Jack" })");
-		auto t2 = test[object_id];
+		json_node t2 = test[object_id];
 		if (t2.object_id != object_id || t2.data["Name"].get_string() != "Jack")
 		{
 			std::cout << __LINE__ << " fail: wrong inserted value." << std::endl;
@@ -736,7 +791,7 @@ namespace corona
 		}
 
 		test.put(object_id, R"({ "Name" : "Jill" })");
-		auto t3 = test[object_id];
+		json_node t3 = test[object_id];
 		if (t2.object_id != object_id || t2.data["Name"].get_string() != "Jill")
 		{
 			std::cout << __LINE__ << " fail: wrong updated value." << std::endl;

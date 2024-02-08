@@ -214,7 +214,7 @@ namespace corona
 
 		async_io_job() : job()
 		{
-			;
+			params = {};
 		}
 
 		virtual job_notify execute(job_queue* _callingQueue, DWORD _bytesTransferred, BOOL _success)
@@ -234,15 +234,238 @@ namespace corona
 		}
 	};
 
+	class file_task;
+
+	class file_result_job : public job
+	{
+	public:
+		std::coroutine_handle<> handle;
+		HANDLE					event;
+		file_task				*metask;
+
+		file_result_job() : job()
+		{
+			handle = {};
+			event = {};
+			metask = nullptr;
+		}
+
+		virtual job_notify execute(job_queue* _callingQueue, DWORD _bytesTransferred, BOOL _success);
+	};
+
+	class file_task_result
+	{
+	public:
+		bool success;
+		int  bytes_transferred;
+	};
+
+	class file_task 
+	{
+
+	public:
+
+		std::coroutine_handle<> coro;
+
+		HANDLE file;
+		HANDLE hevent;
+		int64_t location;
+		char* buffer;
+		int size;
+		int bytes_transferred;
+		bool success;
+
+		file_task()
+		{
+			file = nullptr;
+			location = 0;
+			buffer = nullptr;
+			size = 0;
+			bytes_transferred = 0;
+			success = false;
+			hevent = CreateEvent(NULL, FALSE, FALSE, nullptr);
+		}
+
+		file_task(HANDLE _fi, int64_t _location, char *_buffer, int _size)
+		{
+			file = _fi;
+			location = _location;
+			buffer = _buffer;
+			size = _size;
+			hevent = CreateEvent(NULL, FALSE, FALSE, nullptr);
+		}
+
+		virtual ~file_task()
+		{
+			::CloseHandle(hevent);
+		}
+
+		virtual BOOL initiate(LPOVERLAPPED _ovp) = 0;
+
+		bool await_ready() {
+			return false;
+		}
+
+		// this creates the 
+		void await_suspend(std::coroutine_handle<> handle)
+		{
+			std::cout << "file task suspend " << std::endl;
+			file_result_job* aij = new file_result_job();
+
+			LARGE_INTEGER li;
+			li.QuadPart = location;
+			aij->container.ovp.Offset = li.LowPart;
+			aij->container.ovp.OffsetHigh = li.HighPart;
+			aij->handle = coro;
+			initiate((LPOVERLAPPED)&aij->container);
+			::WaitForSingleObject(hevent, INFINITE);
+		}
+
+		file_task_result await_resume()
+		{
+			std::cout << "file task await_result" << std::endl;
+			file_task_result ftr = {};
+			ftr.success = success;
+			ftr.bytes_transferred = bytes_transferred;
+			return ftr;
+		}
+
+		operator file_task_result()
+		{
+			file_task_result ftr = {};
+			ftr.success = success;
+			ftr.bytes_transferred = bytes_transferred;
+			return ftr;
+		}
+	};
+
+	class file_read_task : public file_task 
+	{
+	public:
+
+		struct promise_type 
+		{
+			file_task_result m_value;
+
+			promise_type()
+			{
+				std::cout << "file_read_task::promise:" << this << " " << GetCurrentThreadId() << std::endl;
+			
+			}
+			
+			file_read_task get_return_object() { return {  }; }
+			std::suspend_always initial_suspend() noexcept { return {}; }
+			std::suspend_always final_suspend() noexcept { return {}; }
+
+			void return_value(file_task_result value) {
+				std::cout << "file_read_task::promise return_value:" << " " << this << GetCurrentThreadId() << std::endl;
+				m_value = value;
+			}
+
+			void unhandled_exception() {
+				std::cout << "file_read_task::promise unhandled exception:" << this << GetCurrentThreadId() << std::endl;
+			}
+		};
+
+		file_read_task() : file_task()
+		{
+
+		}
+
+		file_read_task(const file_read_task& _src) = default;
+		file_read_task(file_read_task&& _src) = default;
+
+		file_read_task(HANDLE _fi, int64_t _location, char* _buffer, int _size) : file_task(_fi, _location, _buffer, _size)
+		{
+			;
+		}
+
+		virtual BOOL initiate(LPOVERLAPPED _ovp) {
+			std::cout << "initiate read" << std::endl;
+			return ::ReadFile(file, (void *)buffer, size, nullptr, _ovp);
+		}
+	};
+
+	class file_write_task : public file_task 
+	{
+	public:
+
+		struct promise_type
+		{
+			file_task_result m_value;
+
+			promise_type()
+			{
+				std::cout << "file_write_task::promise:" << this << " " << GetCurrentThreadId() << std::endl;
+			}
+
+			file_write_task get_return_object() { return {  }; }
+			std::suspend_always initial_suspend() noexcept { return {}; }
+			std::suspend_always final_suspend() noexcept { return {}; }
+
+			void return_value(file_task_result value) {
+				std::cout << "file_write_task::promise return_value:" << " " << this << GetCurrentThreadId() << std::endl;
+				m_value = value;
+			}
+
+			void unhandled_exception() {
+				std::cout << "file_write_task::promise unhandled exception:" << this << GetCurrentThreadId() << std::endl;
+			}
+		};
+
+
+		file_write_task() : file_task()
+		{
+
+		}
+
+		file_write_task(const file_write_task& _src) = default;
+		file_write_task(file_write_task&& _src) = default;
+
+		file_write_task(HANDLE _fi, int64_t _location, char* _buffer, int _size) : file_task(_fi, _location, _buffer, _size)
+		{
+			;
+		}
+
+		virtual BOOL initiate(LPOVERLAPPED _ovp) {
+			std::cout << "initiate write" << std::endl;
+			return ::WriteFile(file, (void*)buffer, size, nullptr, _ovp);
+		}
+
+	};
+
+	job_notify file_result_job::execute(job_queue* _callingQueue, DWORD _bytesTransferred, BOOL _success)
+	{
+		job_notify jn;
+		
+		if (metask) {
+			metask->bytes_transferred = _bytesTransferred;
+			metask->success = _success;
+			jn.setSignal(metask->hevent);
+		}
+
+		std::cout << "job start:" << GetCurrentThreadId() << std::endl;
+		if (handle) {
+			handle.resume();
+			handle.destroy();
+		}
+
+		std::cout << "job end:" << GetCurrentThreadId() << std::endl;
+
+		jn.shouldDelete = true;
+		return jn;
+	}
+
 	template <typename IOParams> struct async_io_task : public std::suspend_always
 	{
 	public:
 		job_queue* queue;
 		IOParams	params;
-		std::function<bool(HANDLE hevent, IOParams* _src)> runner;
+		std::function<bool(HANDLE hevent, IOParams* _src, std::coroutine_handle<> _handle)> runner;
 
-		void configure(job_queue* _queue, const IOParams& _params, std::function<bool(HANDLE hevent, IOParams* _src)> _runner)
+		void configure(job_queue* _queue, const IOParams& _params, std::function<bool(HANDLE hevent, IOParams* _src, std::coroutine_handle<> _handle)> _runner)
 		{
+			std::cout << "configure:" << this << GetCurrentThreadId() << std::endl;
 			queue = _queue;
 			params = _params;
 			runner = _runner;
@@ -250,16 +473,17 @@ namespace corona
 
 		struct promise_type
 		{
+			IOParams m_value;
 
 			promise_type()
 			{
-				std::cout << "task promise_type:" << this << " " << GetCurrentThreadId() << std::endl;
+				std::cout << "async_io_task promise_type:" << this << " " << GetCurrentThreadId() << std::endl;
 			}
 
-			async_io_task get_return_object()
+			async_io_task<IOParams> get_return_object()
 			{
 				std::cout << "task get_return_object:" << this << " " << GetCurrentThreadId() << std::endl;
-				async_io_task my_task;
+				async_io_task<IOParams> my_task;
 				my_task.coroutine = std::coroutine_handle<promise_type>::from_promise(*this);
 				return my_task;
 			};
@@ -279,9 +503,9 @@ namespace corona
 				return {};
 			}
 
-			void unhandled_exception() {}
-
-			IOParams m_value;
+			void unhandled_exception() {
+				std::cout << "async_io_task unhandled exception:" << this << GetCurrentThreadId() << std::endl;
+			}
 		};
 
 		std::coroutine_handle<promise_type> coroutine;
@@ -291,7 +515,7 @@ namespace corona
 			HANDLE hevent = ::CreateEvent(NULL, false, false, NULL);
 			std::cout << this << ", async_io_task await_suspend:" << GetCurrentThreadId() << std::endl;
 			if (runner) {
-				if (runner(hevent, &params)) {
+				if (runner(hevent, &params, handle)) {
 					std::cout << this << ", async_io_task await_suspend away:" << GetCurrentThreadId() << std::endl;
 					::WaitForSingleObject(hevent, INFINITE);
 					std::cout << "async_io_task await_suspend finished:" << GetCurrentThreadId() << std::endl;
@@ -321,26 +545,22 @@ namespace corona
 
 		async_io_task(std::coroutine_handle<> _coroutine) : coroutine(_coroutine)
 		{
-			std::cout << this << ", async_io_task ctor coro:" << GetCurrentThreadId() << std::endl;
+			std::cout << typeid(*this).name() << " ctor:" << GetCurrentThreadId() << std::endl;
 		}
 
 		async_io_task()
 		{
-			std::cout << this << ", async_io_task ctor:" << GetCurrentThreadId() << std::endl;
+			std::cout << typeid(*this).name() << " ctor" << GetCurrentThreadId() << std::endl;
 		}
 
 	};
 
-	template <typename T> struct sync
+
+	template <typename T> class sync 
 	{
 	public:
 
-		T	result;
-
-		void configure(T& _result)
-		{
-			result = _result;
-		}
+		T value;
 
 		struct promise_type
 		{
@@ -348,42 +568,90 @@ namespace corona
 
 			promise_type()
 			{
-				std::cout << "sync promise_type:" << this << " " << GetCurrentThreadId() << std::endl;
+				m_value = {};
+				std::cout << typeid(*this).name() << " promise_type(" << m_value << ")" << GetCurrentThreadId() << std::endl;
 			}
 
 			sync<T> get_return_object()
 			{
-				std::cout << "sync get_return_object:" << this << " " << GetCurrentThreadId() << std::endl;
-				sync<T> my_task;
-				return my_task;
-			};
+				std::cout << typeid(*this).name() << " get_return_object(" << m_value << ")" << GetCurrentThreadId() << std::endl;
+				return m_value;
+			}
 
 			void return_value(T value) {
-				std::cout << "sync return_value:" << " " << this << GetCurrentThreadId() << std::endl;
+				std::cout << typeid(*this).name() << " return_value(" << m_value << ")" << GetCurrentThreadId() << std::endl;
 				m_value = value;
 			}
 
-			std::suspend_always initial_suspend() {
-				std::cout << "sync initial_suspend:" << this << GetCurrentThreadId() << std::endl;
+			std::suspend_never initial_suspend() {
+				std::cout << typeid(*this).name() << " initial_suspend(" << m_value << ")" << GetCurrentThreadId() << std::endl;
 				return {};
 			}
 
 			std::suspend_always final_suspend() noexcept {
-				std::cout << "sync final_suspend:" << this << GetCurrentThreadId() << std::endl;
+				std::cout << typeid(*this).name() << " final_suspend(" << m_value << ")" << GetCurrentThreadId() << std::endl;
 				return {};
 			}
 
 			void unhandled_exception() {}
 		};
 
-		constexpr bool await_ready() const noexcept { return true; }
-		constexpr void await_suspend(std::coroutine_handle<>) const noexcept {}
-		constexpr void await_resume() const noexcept {}
+		std::coroutine_handle<> coro;
+
+		sync()
+		{
+			value = {};
+			coro = {};
+		}
+
+		sync(const T& _value)
+		{
+			value = _value;
+			coro = {};
+			std::cout << typeid(*this).name() << " ctor (" << value << ")" << GetCurrentThreadId() << std::endl;
+		}
+
+		sync(const sync & _src)
+		{
+			value = _src.value;
+			coro = {};
+			std::cout << typeid(*this).name() << " ctor (" << value << ")" << GetCurrentThreadId() << std::endl;
+		}
+
+		sync operator =(const sync& _src)
+		{
+			value = _src.value;
+			coro = {};
+			std::cout << typeid(*this).name() << " op= (" << value << ")" << GetCurrentThreadId() << std::endl;
+			return *this;
+		}
+
+		bool await_ready()
+		{
+			std::cout << typeid(*this).name() << " await_ready(" << value << ")" <<  GetCurrentThreadId() << std::endl;
+			return false;
+		}
+
+		void await_suspend(std::coroutine_handle<> handle)
+		{
+			coro = handle;
+			std::cout << typeid(*this).name() << " await_suspend(" << value << ")" << GetCurrentThreadId() << std::endl;
+		}
+
+		T await_resume()
+		{
+			std::cout << typeid(*this).name() << " await_resume.(" << value << ")" <<  GetCurrentThreadId() << std::endl;
+			if (coro) {
+				coro.resume();
+			}
+			return value;
+		}
 
 		operator T() {
-			std::cout << this << ", sync cast to T:" << GetCurrentThreadId() << std::endl;
-			return result;
+			std::cout << typeid(*this).name() << " cast (" << value << ")" <<  GetCurrentThreadId() << std::endl;
+			return value;
 		}
+
 	};
 
 	struct task

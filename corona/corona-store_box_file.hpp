@@ -191,8 +191,8 @@ namespace corona {
 			header.sbd._box_id = block_id::database_id();
 			header.sbd._size = size_bytes;
 			header.sbd._top = sizeof(header);
-			file_result ret = box_file.write(0, &header, sizeof(header));
-			r = ret.last_result;
+//			file_result ret = box_file.write(0, &header, sizeof(header));
+//			r = ret.last_result;
 		}
 		catch (std::exception e)
 		{
@@ -205,10 +205,9 @@ namespace corona {
 		os_result r;
 		try
 		{
-			file_result ret_read = box_file.read(0, &header, sizeof(header));
+			//file_result ret_read = box_file.read(0, &header, sizeof(header));
 			header.sbd._top = sizeof(header);
-			file_result ret_write = box_file.write(0, &header, sizeof(header));
-			r = ret_write.last_result;
+			//file_result ret_write = box_file.write(0, &header, sizeof(header));
 		}
 		catch (std::exception e)
 		{
@@ -230,8 +229,8 @@ namespace corona {
 				header.sbd._box_id = block_id::database_id();
 				header.sbd._size = size_bytes;
 				header.sbd._top = sizeof(header);
-				file_result ret = box_file.write(0, &header, sizeof(header));
-				r = ret.last_result;
+				//file_result ret = box_file.write(0, &header, sizeof(header));
+				//r = ret.last_result;
 			}
 		}
 		catch (std::exception e)

@@ -327,6 +327,13 @@ namespace corona {
 			copy(s);
 		}
 
+		istring(const std::wstring& src) : last_char(length_bytes - 1), length(0)
+		{
+			length = 0;
+			const wchar_t* s = src.c_str();
+			copy(s);
+		}
+
 		template <int length> istring(const istring<length>& src) : last_char(length_bytes - 1), length(0)
 		{
 			const char* s = src.c_str();
@@ -348,17 +355,10 @@ namespace corona {
 			return *this;
 		}
 
-		istring(const wchar_t* _src)
+		istring(const wchar_t* _src) :last_char(length_bytes - 1), length(0)
 		{
 			length = 0;
 			copy(_src);
-		}
-
-		istring(const std::wstring& src)
-		{
-			length = 0;
-			const wchar_t* s = src.c_str();
-			copy(s);
 		}
 
 		istring& operator = (const std::wstring& src)
