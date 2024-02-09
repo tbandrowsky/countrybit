@@ -221,42 +221,42 @@ namespace corona
 			return put_json(_src);
 		}
 
-		int64_t  read(file* _file, int64_t location)
+		file_transaction read(file* _file, int64_t location)
 		{
 			std::cout << "read:" << *this << std::endl;
-			int64_t status = storage.read(_file, location);
+			int64_t status = co_await storage.read(_file, location);
 
-			if (status > -1) 
+			if (status > -1)
 			{
-				char *c = storage.bytes.get_ptr();
+				char* c = storage.bytes.get_ptr();
 				json_parser jp;
 				json payload = jp.parse_object(c);
 				put_json(payload);
 			}
-			return status;
+			co_return status;
 		}
 
-		int64_t  write(file* _file)
+		file_transaction write(file* _file)
 		{
 			std::cout << "write:" << *this << std::endl;
 			auto json_payload = get_json();
 
 			storage = json_payload;
 
-			int64_t result = storage.write(_file);
-			return result;
+			int64_t result = co_await storage.write(_file);
+			co_return result;
 		}
 
-		int64_t  append(file* _file)
+		file_transaction append(file* _file)
 		{
 			std::cout << "append:" << *this << std::endl;
 			auto json_payload = get_json();
 
 			storage = json_payload;
 
-			int64_t result = storage.append(_file);
+			int64_t result = co_await storage.append(_file);
 
-			return result;
+			co_return result;
 		}
 	};
 
@@ -285,13 +285,13 @@ namespace corona
 			return *this;
 		}
 
-		int64_t read(file* _file, int64_t location)
+		file_transaction read(file* _file, int64_t location)
 		{
 			storage.init(sizeof(poco_type));
 
 			std::cout << "read:" << *this << std::endl;
 
-			int64_t status = storage.read(_file, location);
+			int64_t status = co_await storage.read(_file, location);
 
 			if (status > -1)
 			{
@@ -299,10 +299,10 @@ namespace corona
 				data = *c;
 			}
 
-			return status;
+			co_return status;
 		}
 
-		int64_t write(file* _file)
+		file_transaction write(file* _file)
 		{
 			storage.init(sizeof(poco_type));
 			poco_type* c = (poco_type*)storage.bytes.get_ptr();
@@ -310,12 +310,12 @@ namespace corona
 
 			std::cout << "write:" << *this << std::endl;
 
-			int64_t status = storage.write(_file);
+			int64_t status = co_await storage.write(_file);
 
-			return status;
+			co_return status;
 		}
 
-		int64_t append(file* _file)
+		file_transaction append(file* _file)
 		{
 			storage.init(sizeof(poco_type));
 			poco_type* c = (poco_type*)storage.bytes.get_ptr();
@@ -323,9 +323,9 @@ namespace corona
 
 			std::cout << "append:" << *this << std::endl;
 
-			int64_t status = storage.write(_file);
+			int64_t status = co_await storage.write(_file);
 
-			return status;
+			co_return status;
 		}
 	};
 
@@ -765,14 +765,15 @@ namespace corona
 	}
 
 	bool test_json_table(corona::application& _app);
-	sync<bool> test_data_block(corona::application& _app);
+
 	file_batch test_file(corona::application& _app);
+	file_transaction test_data_block(corona::application& _app);
+	file_transaction test_json_node(corona::application& _app);
 
 	file_batch test_file(corona::application& _app)
 	{
 
-		std::cout << "\ntest_file: entry:" << ::GetCurrentThreadId() << std::endl;
-		std::cout << "-----------------------" << std::endl;
+		std::cout << "\ntest_file: entry, thread:" << ::GetCurrentThreadId() << std::endl;
 
 		file dtest = _app.create_file(FOLDERID_Documents, "corona_data_block_test.ctb");
 
@@ -782,54 +783,74 @@ namespace corona
 		int l = strlen(buffer_write) + 1;
 
 		dtest.add(1000);
-		std::cout << "\ntest_file: before co_await write:" << ::GetCurrentThreadId() << std::endl;
-		std::cout << "-----------------------" << std::endl;
+
+		std::cout << "\ntest_file: co_await write, thread:" << ::GetCurrentThreadId() << std::endl;
 		file_task_result tsk = co_await dtest.write(0, (void *)buffer_write, l);
 
-		std::cout << "\ntest_file: before co_await read:" << ::GetCurrentThreadId() << std::endl;
-		std::cout << "-----------------------" << std::endl;
+		std::cout << "\ntest_file: co_await read, thread:" << ::GetCurrentThreadId() << std::endl;
 		file_task_result tsk2 = co_await dtest.read(0, (void*)buffer_read, l);
-		std::cout << "\ntest_file: after co_await read:" << ::GetCurrentThreadId() << std::endl;
-		std::cout << "-----------------------" << std::endl;
+
+		std::cout << "\ntest_file: co_await read, thread:" << ::GetCurrentThreadId() << std::endl;
 		
 		if (!strcmp(buffer_write, buffer_read))
 		{
-			std::cout << "\ntest_file: success read, before co_return:" << ::GetCurrentThreadId() << std::endl;
-			std::cout << "-----------------------" << std::endl;
+			std::cout << "\ntest_file: co_return success, thread:" << ::GetCurrentThreadId() << std::endl;
 			co_return 42;
 		}
 
-		std::cout << "\ntest_file: success fail, before co_return:" << ::GetCurrentThreadId() << std::endl;
-		std::cout << "-----------------------" << std::endl;
+		std::cout << "\ntest_file: co_return fail, thread:" << ::GetCurrentThreadId() << std::endl;
 		co_return 0;
 	}
 
-	sync<bool> test_data_block(corona::application& _app)
+	file_transaction test_data_block(corona::application& _app)
 	{
 		file dtest = _app.create_file(FOLDERID_Documents, "corona_data_block_test.ctb");
 
-		std::cout << "-----------------------" << std::endl;
-		std::cout << "test_data_block:" << ::GetCurrentThreadId() << std::endl;
+		std::cout << "test_data_block, thread:" << ::GetCurrentThreadId() << std::endl;
 
 		json_parser jp;
 		json jx = jp.parse_object(R"({ "name" : "bill", "age":42 })");
 		data_block db, dc;
 		db = jx;
-		std::cout << "-----------------------" << std::endl;
-		std::cout << "test_data_block write:" << ::GetCurrentThreadId() << std::endl;
-		co_await db.write(&dtest);
+		std::cout << "test_data_block, write, thread:" << ::GetCurrentThreadId() << std::endl;
+		int64_t r1 = co_await db.write(&dtest);
+		
+		std::cout << "test_data_block, read, thread:" << ::GetCurrentThreadId() << std::endl;
+		int64_t r2 = co_await dc.read(&dtest, db.current_location);
 
-		std::cout << "-----------------------" << std::endl;
-		std::cout << "test_data_block read:" << ::GetCurrentThreadId() << std::endl;
-		co_await dc.read(&dtest, db.current_location);
-
-		std::cout << "-----------------------" << std::endl;
-		std::cout << "test_data_block check:" << ::GetCurrentThreadId() << std::endl;
-
+		std::cout << "test_data_block_nested, check, thread:" << ::GetCurrentThreadId() << std::endl;
 		std::string x = dc.get_string();
 		std::cout << x << std::endl;
-		co_return true;
+		co_return 32;
 	}
+
+	file_transaction test_json_node(corona::application& _app)
+	{
+		file dtest = _app.create_file(FOLDERID_Documents, "corona_json_node_test.ctb");
+
+		std::cout << "test_json_node, thread:" << ::GetCurrentThreadId() << std::endl;
+
+		json_node jnwrite, jnread;
+		json_parser jp;
+
+		jnwrite.data = jp.create_array();
+		for (double i = 0; i < 42; i++)
+		{
+			jnread.data.put_element(-1, i);
+		}
+
+		std::cout << "test_json_node, write, thread:" << ::GetCurrentThreadId() << std::endl;
+		int64_t location = co_await jnwrite.append(&dtest);
+
+		std::cout << "test_json_node, read, thread:" << ::GetCurrentThreadId() << std::endl;
+		int64_t bytes_ex = jnread.read(&dtest, location);
+		
+		std::cout << "test_json_node, check, thread:" << ::GetCurrentThreadId() << std::endl;
+		std::string x = jnread.data.to_json_string();
+		std::cout << x << std::endl;
+		co_return 1;
+	}
+
 
 	bool test_json_table(corona::application& _app)
 	{

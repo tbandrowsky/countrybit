@@ -223,7 +223,7 @@ namespace corona
 
 		file_task write(uint64_t location, void* _buffer, int _buffer_length)
 		{
-			std::cout << "write file:" << location << " " << GetCurrentThreadId() << std::endl;
+			std::cout << "write file:" << location << ", thread:" << GetCurrentThreadId() << std::endl;
 
 			file_task ft;
 			
@@ -234,7 +234,7 @@ namespace corona
 
 		file_task read(uint64_t location, void* _buffer, int _buffer_length)
 		{
-			std::cout << "read file:" << location << " " << GetCurrentThreadId() << std::endl;
+			std::cout << "read file:" << location << ", thread:" << GetCurrentThreadId() << std::endl;
 
 			file_task ft;
 

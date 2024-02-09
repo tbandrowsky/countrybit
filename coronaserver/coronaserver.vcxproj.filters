@@ -23,5 +23,8 @@
     <ClInclude Include="corona_service.Hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="corona_tests.hpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

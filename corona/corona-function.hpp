@@ -12,6 +12,8 @@
 #include <memory>
 #include <compare>
 
+const int debug_functions = 0;
+
 namespace corona
 {
 
@@ -41,7 +43,7 @@ namespace corona
 		{
 			job_notify jn;
 
-			std::cout << "job start:" << GetCurrentThreadId() << std::endl;
+			debug_functions&& std::cout << "job start:" << GetCurrentThreadId() << std::endl;
 
 			try 
 			{
@@ -60,7 +62,7 @@ namespace corona
 			}
 
 			jn.setSignal(event);
-			std::cout << "job end:" << GetCurrentThreadId() << std::endl;
+			debug_functions && std::cout << "job end:" << GetCurrentThreadId() << std::endl;
 			jn.shouldDelete = true;
 
 			return jn;
@@ -110,7 +112,7 @@ namespace corona
 		{
 			job_notify jn;
 
-			std::cout << "ui task start:" << GetCurrentThreadId() << std::endl;
+			debug_functions&& std::cout << "ui task start:" << GetCurrentThreadId() << std::endl;
 
 			json blank_params;
 
@@ -142,7 +144,7 @@ namespace corona
 			}
 			
 			jn.setSignal(event);
-			std::cout << "ui task end:" << GetCurrentThreadId() << std::endl;
+			debug_functions&& std::cout << "ui task end:" << GetCurrentThreadId() << std::endl;
 			jn.shouldDelete = true;
 
 			return jn;
@@ -223,18 +225,213 @@ namespace corona
 			params->bytes_transferred = _bytesTransferred;
 			params->success = _success;
 			jn.setSignal(event);
-			std::cout << "job start:" << GetCurrentThreadId() << std::endl;
+			debug_functions&& std::cout << "job start:" << GetCurrentThreadId() << std::endl;
 			if (handle) {
 				handle.resume();
 				handle.destroy();
 			}
-			std::cout << "job end:" << GetCurrentThreadId() << std::endl;
+			debug_functions&& std::cout << "job end:" << GetCurrentThreadId() << std::endl;
 			jn.shouldDelete = false;
 			return jn;
 		}
 	};
 
+	template <typename IOParams> struct async_io_task : public std::suspend_always
+	{
+	public:
+		job_queue* queue;
+		IOParams	params;
+		std::function<bool(HANDLE hevent, IOParams* _src, std::coroutine_handle<> _handle)> runner;
+
+		void configure(job_queue* _queue, const IOParams& _params, std::function<bool(HANDLE hevent, IOParams* _src, std::coroutine_handle<> _handle)> _runner)
+		{
+			debug_functions&& std::cout << "configure:" << this << GetCurrentThreadId() << std::endl;
+			queue = _queue;
+			params = _params;
+			runner = _runner;
+		}
+
+		struct promise_type
+		{
+			IOParams m_value;
+
+			promise_type()
+			{
+				debug_functions&& std::cout << "async_io_task promise_type:" << this << " " << GetCurrentThreadId() << std::endl;
+			}
+
+			async_io_task<IOParams> get_return_object()
+			{
+				debug_functions&& std::cout << "task get_return_object:" << this << " " << GetCurrentThreadId() << std::endl;
+				async_io_task<IOParams> my_task;
+				my_task.coroutine = std::coroutine_handle<promise_type>::from_promise(*this);
+				return my_task;
+			};
+
+			void return_value(IOParams value) {
+				debug_functions&& std::cout << "async_io_task return_value:" << value << " " << this << GetCurrentThreadId() << std::endl;
+				m_value = value;
+			}
+
+			std::suspend_always initial_suspend() {
+				debug_functions&& std::cout << "async_io_task initial_suspend:" << this << GetCurrentThreadId() << std::endl;
+				return {};
+			}
+
+			std::suspend_always final_suspend() noexcept {
+				debug_functions&& std::cout << "async_io_task final_suspend:" << this << GetCurrentThreadId() << std::endl;
+				return {};
+			}
+
+			void unhandled_exception() {
+				debug_functions&& std::cout << "async_io_task unhandled exception:" << this << GetCurrentThreadId() << std::endl;
+			}
+		};
+
+		std::coroutine_handle<promise_type> coroutine;
+
+		void await_suspend(std::coroutine_handle<> handle)
+		{
+			HANDLE hevent = ::CreateEvent(NULL, false, false, NULL);
+			debug_functions&& std::cout << this << ", async_io_task await_suspend:" << GetCurrentThreadId() << std::endl;
+			if (runner) {
+				if (runner(hevent, &params, handle)) {
+					debug_functions&& std::cout << this << ", async_io_task await_suspend away:" << GetCurrentThreadId() << std::endl;
+					::WaitForSingleObject(hevent, INFINITE);
+					debug_functions&& std::cout << "async_io_task await_suspend finished:" << GetCurrentThreadId() << std::endl;
+				}
+				else
+				{
+					debug_functions&& std::cout << "error skipped finished:" << GetCurrentThreadId() << std::endl;
+				}
+			}
+			::CloseHandle(hevent);
+		}
+
+		IOParams await_resume()
+		{
+			IOParams t = {};
+			debug_functions&& std::cout << "async_io_task await_resume:" << GetCurrentThreadId() << std::endl;
+			if (coroutine) {
+				t = coroutine.promise().m_value;
+			}
+			return t;
+		}
+
+		operator IOParams() {
+			debug_functions&& std::cout << this << ", async_io_task cast to T:" << GetCurrentThreadId() << std::endl;
+			return coroutine.promise().m_value;
+		}
+
+		async_io_task(std::coroutine_handle<> _coroutine) : coroutine(_coroutine)
+		{
+			debug_functions&& std::cout << typeid(*this).name() << " ctor:" << GetCurrentThreadId() << std::endl;
+		}
+
+		async_io_task()
+		{
+			debug_functions&& std::cout << typeid(*this).name() << " ctor" << GetCurrentThreadId() << std::endl;
+		}
+
+	};
+
 	class file_batch;
+
+	class file_transaction {
+	public:
+
+		struct promise_type
+		{
+			int64_t m_value;
+
+			promise_type()
+			{
+				m_value = 0;
+				debug_functions&& std::cout << "file_transaction::promise:" << this << " " << GetCurrentThreadId() << std::endl;
+			}
+
+			file_transaction  get_return_object() {
+				debug_functions&& std::cout << "file_transaction::get_return_object:" << this << " " << GetCurrentThreadId() << std::endl;
+				std::coroutine_handle<promise_type> promise_coro = std::coroutine_handle<promise_type>::from_promise(*this);
+				file_transaction  fbr(promise_coro);
+				return fbr;
+			}
+
+			std::suspend_always initial_suspend() noexcept { return {}; }
+			std::suspend_always final_suspend() noexcept { return {}; }
+
+			void return_value(int64_t value) {
+				debug_functions&& std::cout << "file_transaction::promise return_value:" << " " << value << " " << GetCurrentThreadId() << std::endl;
+				m_value = value;
+			}
+
+			void unhandled_exception() {
+				debug_functions&& std::cout << "file_transaction::promise unhandled exception:" << this << GetCurrentThreadId() << std::endl;
+			}
+		};
+
+		std::coroutine_handle<promise_type> coro;
+
+		// object manip
+
+		file_transaction(std::coroutine_handle<promise_type> _promise_coro)
+		{
+			coro = _promise_coro;
+			debug_functions&& std::cout << "file_transaction: coro ctor:" << ::GetCurrentThreadId() << std::endl;
+		}
+
+		file_transaction()
+		{
+			debug_functions&& std::cout << "file_transaction: empty ctor:" << ::GetCurrentThreadId() << std::endl;
+		}
+
+		// awaiter
+
+		bool await_ready()
+		{
+			debug_functions&& std::cout << "file_transaction::await_ready:" << this << " " << GetCurrentThreadId() << std::endl;
+			return false;
+		}
+
+		// this creates the 
+		void await_suspend(std::coroutine_handle<> handle)
+		{
+			debug_functions&& std::cout << "file_transaction::await_suspend, transaction" << this << " " << GetCurrentThreadId() << std::endl;
+			handle.resume();
+			debug_functions&& std::cout << "file_transaction: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
+		}
+
+		int64_t await_resume()
+		{
+			debug_functions&& std::cout << "file_transaction::await_resume:" << this << " " << GetCurrentThreadId() << std::endl;
+			int64_t result;
+			if (coro) {
+				coro.resume();
+				result = coro.promise().m_value;
+			}
+			return result;
+		}
+
+		int64_t wait()
+		{
+			debug_functions&& std::cout << "file_transaction::wait:" << this << " " << GetCurrentThreadId() << std::endl;
+			int64_t result = -1;
+
+			if (coro) {
+				coro.resume();
+				result = coro.promise().m_value;
+			}
+			debug_functions&& std::cout << "file_transaction: complete" << " " << ::GetCurrentThreadId() << std::endl;
+
+			return result;
+		}
+
+		operator int()
+		{
+			int result = coro.promise().m_value;
+			return result;
+		}
+	};
 
 	class file_batch_job : public job
 	{
@@ -255,20 +452,19 @@ namespace corona
 	class file_batch
 	{
 	public:
-		HANDLE hevent;
-		std::shared_ptr<file_batch_job> fbj;
 
 		struct promise_type
 		{
-			int m_value;
+			int64_t m_value;
 
 			promise_type()
 			{
-				std::cout << "file_batch::promise:" << this << " " << GetCurrentThreadId() << std::endl;
+				m_value = 0;
+				debug_functions&& std::cout << "file_batch::promise:" << this << " " << GetCurrentThreadId() << std::endl;
 			}
 
 			file_batch get_return_object() {
-				std::cout << "file_batch::get_return_object:" << this << " " << GetCurrentThreadId() << std::endl;
+				debug_functions&& std::cout << "file_batch::get_return_object:" << this << " " << GetCurrentThreadId() << std::endl;
 				std::coroutine_handle<promise_type> promise_coro = std::coroutine_handle<promise_type>::from_promise(*this);
 				file_batch fbr(promise_coro);
 				return fbr;
@@ -277,13 +473,13 @@ namespace corona
 			std::suspend_always initial_suspend() noexcept { return {}; }
 			std::suspend_always final_suspend() noexcept { return {}; }
 
-			void return_value(int value) {
-				std::cout << "file_batch::promise return_value:" << " " << value << " " << GetCurrentThreadId() << std::endl;
+			void return_value(int64_t value) {
+				debug_functions&& std::cout << "file_batch::promise return_value:" << " " << value << " " << GetCurrentThreadId() << std::endl;
 				m_value = value;
 			}
 
 			void unhandled_exception() {
-				std::cout << "file_batch::promise unhandled exception:" << this << GetCurrentThreadId() << std::endl;
+				debug_functions&& std::cout << "file_batch::promise unhandled exception:" << this << GetCurrentThreadId() << std::endl;
 			}
 		};
 
@@ -293,65 +489,60 @@ namespace corona
 
 		file_batch(std::coroutine_handle<promise_type> _promise_coro)
 		{
-			hevent = ::CreateEvent(NULL, FALSE, FALSE, NULL);
 			coro = _promise_coro;
-			fbj = std::make_shared<file_batch_job>();
-			fbj->event = hevent;
-			fbj->routine = coro;
-			fbj->metask = this;
-			std::cout << "file_batch: coro ctor:" << ::GetCurrentThreadId() << std::endl;
+			debug_functions&& std::cout << "file_batch: coro ctor:" << ::GetCurrentThreadId() << std::endl;
 		}
 
 		file_batch()
 		{
-			hevent = ::CreateEvent(NULL, FALSE, FALSE, NULL);
-			std::cout << "file_batch: empty ctor:" << ::GetCurrentThreadId() << std::endl;
-			fbj = std::make_shared<file_batch_job>();
-			fbj->event = hevent;
-			fbj->routine = nullptr;
-			fbj->metask = this;
+			debug_functions&& std::cout << "file_batch: empty ctor:" << ::GetCurrentThreadId() << std::endl;
 		}
 
 		// awaiter
 
 		bool await_ready() 
 		{
-			std::cout << "file_batch::await_ready:" << this << " " << GetCurrentThreadId() << std::endl;
-			return true;
+			debug_functions&& std::cout << "file_batch::await_ready:" << this << " " << GetCurrentThreadId() << std::endl;
+			return false;
+		}
+
+		void await_suspend(std::coroutine_handle<file_transaction::promise_type> handle)
+		{
+			debug_functions&& std::cout << "file_transaction::await_suspend, batch:" << this << " " << GetCurrentThreadId() << std::endl;
+			handle.resume();
+			debug_functions&& std::cout << "file_transaction: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
 		}
 
 		// this creates the 
-		void await_suspend(std::coroutine_handle<> handle)
+		void await_suspend(std::coroutine_handle<promise_type> handle)
 		{
-			std::cout << "file_batch::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
-			global_job_queue->add_job(fbj.get());
-			std::cout << "file_batch: suspend initiate" << " " << ::GetCurrentThreadId() << std::endl;
-			::WaitForSingleObject(hevent, INFINITE);
-			std::cout << "file_batch: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
+			debug_functions&& std::cout << "file_batch::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
 			handle.resume();
+			debug_functions&& std::cout << "file_batch: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
 		}
 
-		int await_resume()
+		int64_t await_resume()
 		{
-			std::cout << "file_batch::await_resume:" << this << " " << GetCurrentThreadId() << std::endl;
-			int result = coro.promise().m_value;
+			debug_functions&& std::cout << "file_batch::await_resume:" << this << " " << GetCurrentThreadId() << std::endl;
+			int64_t result;
+			if (coro) {
+				coro.resume();
+				result = coro.promise().m_value;
+			}
 			return result;
 		}
 
-		int wait()
+		int64_t wait()
 		{
-			std::cout << "file_batch::wait:" << this << " " << GetCurrentThreadId() << std::endl;
-			int result = -1;
-
-			std::cout << "file_batch::create_job:" << this << " " << GetCurrentThreadId() << std::endl;
-			global_job_queue->add_job(fbj.get());
-			std::cout << "file_batch: wait for job" << " " << ::GetCurrentThreadId() << std::endl;
-			::WaitForSingleObject(hevent, INFINITE);
-			std::cout << "file_batch: complete" << " " << ::GetCurrentThreadId() << std::endl;
+			debug_functions&& std::cout << "file_batch::wait:" << this << " " << GetCurrentThreadId() << std::endl;
+			int64_t result = -1;
 
 			if (coro) {
+				coro.resume();
 				result = coro.promise().m_value;
 			}
+			debug_functions&& std::cout << "file_batch: complete" << " " << ::GetCurrentThreadId() << std::endl;
+
 			return result;
 		}
 
@@ -362,26 +553,6 @@ namespace corona
 		}
 	};
 
-	job_notify file_batch_job::execute(job_queue* _callingQueue, DWORD _bytesTransferred, BOOL _success)
-	{
-		job_notify jn;
-
-		std::cout << "file_batch_job: execution." << GetCurrentThreadId() << std::endl;
-
-		if (routine) {
-			routine.resume();
-		}
-
-		if (metask) {
-			std::cout << "file_batch_job: executed: " << _bytesTransferred << std::endl;
-			jn.setSignal(metask->hevent);
-		}
-
-		std::cout << "file_result_job end:" << GetCurrentThreadId() << std::endl;
-
-		jn.shouldDelete = false;
-		return jn;
-	}
 
 	class file_task;
 
@@ -438,11 +609,11 @@ namespace corona
 
 			promise_type()
 			{
-				std::cout << "file_task::promise:" << this << " " << GetCurrentThreadId() << std::endl;
+				debug_functions&& std::cout << "file_task::promise:" << this << " " << GetCurrentThreadId() << std::endl;
 			}
 
 			file_task get_return_object() { 
-				std::cout << "file_batch_result::get_return_object:" << this << " " << GetCurrentThreadId() << std::endl;
+				debug_functions&& std::cout << "file_batch_result::get_return_object:" << this << " " << GetCurrentThreadId() << std::endl;
 				std::coroutine_handle<promise_type> promise_coro = std::coroutine_handle<promise_type>::from_promise(*this);
 				file_task fbr(promise_coro);
 				return fbr;
@@ -452,12 +623,12 @@ namespace corona
 			std::suspend_always final_suspend() noexcept { return {}; }
 
 			void return_value(file_task_result value) {
-				std::cout << "file_task::promise return_value:" << " " << this << GetCurrentThreadId() << std::endl;
+				debug_functions&& std::cout << "file_task::promise return_value:" << " " << this << GetCurrentThreadId() << std::endl;
 				m_value = value;
 			}
 
 			void unhandled_exception() {
-				std::cout << "file_task::promise unhandled exception:" << this << GetCurrentThreadId() << std::endl;
+				debug_functions&& std::cout << "file_task::promise unhandled exception:" << this << GetCurrentThreadId() << std::endl;
 			}
 		};
 
@@ -579,22 +750,22 @@ namespace corona
 
 		void await_suspend(std::coroutine_handle<promise_type> handle)
 		{
-			std::cout << "file_task: suspend file_task" << " " << ::GetCurrentThreadId() << std::endl;
+			debug_functions&& std::cout << "file_task: suspend file_task" << " " << ::GetCurrentThreadId() << std::endl;
 			initiate();
-			std::cout << "file_task: suspend initiate" << " " << ::GetCurrentThreadId() << std::endl;
+			debug_functions&& std::cout << "file_task: suspend initiate" << " " << ::GetCurrentThreadId() << std::endl;
 			::WaitForSingleObject(hevent, INFINITE);
-			std::cout << "file_task:io complete" << " " << ::GetCurrentThreadId() << std::endl;
+			debug_functions&& std::cout << "file_task:io complete" << " " << ::GetCurrentThreadId() << std::endl;
 			handle.resume();
 		}
 
 		// this creates the 
 		void await_suspend(std::coroutine_handle<file_batch::promise_type> handle)
 		{
-			std::cout << "file_task: suspend file_batch_result" << " " << ::GetCurrentThreadId() << std::endl;
+			debug_functions&& std::cout << "file_task: suspend file_batch_result" << " " << ::GetCurrentThreadId() << std::endl;
 			initiate();
-			std::cout << "file_task: suspend initiate" << " " << ::GetCurrentThreadId() << std::endl;
+			debug_functions&& std::cout << "file_task: suspend initiate" << " " << ::GetCurrentThreadId() << std::endl;
 			::WaitForSingleObject(hevent, INFINITE);
-			std::cout << "file_task:io complete" << " " << ::GetCurrentThreadId() << std::endl;
+			debug_functions&& std::cout << "file_task:io complete" << " " << ::GetCurrentThreadId() << std::endl;
 			handle.resume();
 		}
 
@@ -603,7 +774,7 @@ namespace corona
 			file_task_result ftr = {};
 			ftr.success = success;
 			ftr.bytes_transferred = bytes_transferred;
-			std::cout << "file_task: await_resume:" << ftr.success << " bytes:" << ftr.bytes_transferred << " " << ::GetCurrentThreadId() << std::endl;
+			debug_functions&& std::cout << "file_task: await_resume:" << ftr.success << " bytes:" << ftr.bytes_transferred << " " << ::GetCurrentThreadId() << std::endl;
 			return ftr;
 		}
 
@@ -612,7 +783,7 @@ namespace corona
 			file_task_result ftr = {};
 			ftr.success = success;
 			ftr.bytes_transferred = bytes_transferred;
-			std::cout << "file_task: result:" << ftr.success << " bytes:" << ftr.bytes_transferred << " " << ::GetCurrentThreadId() << std::endl;
+			debug_functions&& std::cout << "file_task: result:" << ftr.success << " bytes:" << ftr.bytes_transferred << " " << ::GetCurrentThreadId() << std::endl;
 			return ftr;
 		}
 	};
@@ -621,10 +792,10 @@ namespace corona
 	{
 		job_notify jn;
 
-		std::cout << "file_task_job: receiving IO results " << GetCurrentThreadId() << std::endl;
+		debug_functions&& std::cout << "file_task_job: receiving IO results " << GetCurrentThreadId() << std::endl;
 		
 		if (metask) {
-			std::cout << "file_task_job: bytes transferred: " << _bytesTransferred << std::endl;
+			debug_functions&& std::cout << "file_task_job: bytes transferred: " << _bytesTransferred << std::endl;
 			metask->bytes_transferred = _bytesTransferred;
 			metask->success = _success;
 			jn.setSignal(metask->hevent);
@@ -635,111 +806,11 @@ namespace corona
 			handle.destroy();
 		}
 
-		std::cout << "file_task_job: end:" << GetCurrentThreadId() << std::endl;
+		debug_functions&& std::cout << "file_task_job: end:" << GetCurrentThreadId() << std::endl;
 
 		jn.shouldDelete = false;
 		return jn;
 	}
-
-	template <typename IOParams> struct async_io_task : public std::suspend_always
-	{
-	public:
-		job_queue* queue;
-		IOParams	params;
-		std::function<bool(HANDLE hevent, IOParams* _src, std::coroutine_handle<> _handle)> runner;
-
-		void configure(job_queue* _queue, const IOParams& _params, std::function<bool(HANDLE hevent, IOParams* _src, std::coroutine_handle<> _handle)> _runner)
-		{
-			std::cout << "configure:" << this << GetCurrentThreadId() << std::endl;
-			queue = _queue;
-			params = _params;
-			runner = _runner;
-		}
-
-		struct promise_type
-		{
-			IOParams m_value;
-
-			promise_type()
-			{
-				std::cout << "async_io_task promise_type:" << this << " " << GetCurrentThreadId() << std::endl;
-			}
-
-			async_io_task<IOParams> get_return_object()
-			{
-				std::cout << "task get_return_object:" << this << " " << GetCurrentThreadId() << std::endl;
-				async_io_task<IOParams> my_task;
-				my_task.coroutine = std::coroutine_handle<promise_type>::from_promise(*this);
-				return my_task;
-			};
-
-			void return_value(IOParams value) {
-				std::cout << "async_io_task return_value:" << value << " " << this << GetCurrentThreadId() << std::endl;
-				m_value = value;
-			}
-
-			std::suspend_always initial_suspend() {
-				std::cout << "async_io_task initial_suspend:" << this << GetCurrentThreadId() << std::endl;
-				return {};
-			}
-
-			std::suspend_always final_suspend() noexcept {
-				std::cout << "async_io_task final_suspend:" << this << GetCurrentThreadId() << std::endl;
-				return {};
-			}
-
-			void unhandled_exception() {
-				std::cout << "async_io_task unhandled exception:" << this << GetCurrentThreadId() << std::endl;
-			}
-		};
-
-		std::coroutine_handle<promise_type> coroutine;
-
-		void await_suspend(std::coroutine_handle<> handle)
-		{
-			HANDLE hevent = ::CreateEvent(NULL, false, false, NULL);
-			std::cout << this << ", async_io_task await_suspend:" << GetCurrentThreadId() << std::endl;
-			if (runner) {
-				if (runner(hevent, &params, handle)) {
-					std::cout << this << ", async_io_task await_suspend away:" << GetCurrentThreadId() << std::endl;
-					::WaitForSingleObject(hevent, INFINITE);
-					std::cout << "async_io_task await_suspend finished:" << GetCurrentThreadId() << std::endl;
-				}
-				else 
-				{
-					std::cout << "error skipped finished:" << GetCurrentThreadId() << std::endl;
-				}
-			}
-			::CloseHandle(hevent);
-		}
-
-		IOParams await_resume()
-		{
-			IOParams t = {};
-			std::cout << "async_io_task await_resume:" << GetCurrentThreadId() << std::endl;
-			if (coroutine) {
-				t = coroutine.promise().m_value;
-			}
-			return t;
-		}
-
-		operator IOParams() {
-			std::cout << this << ", async_io_task cast to T:" << GetCurrentThreadId() << std::endl;
-			return coroutine.promise().m_value;
-		}
-
-		async_io_task(std::coroutine_handle<> _coroutine) : coroutine(_coroutine)
-		{
-			std::cout << typeid(*this).name() << " ctor:" << GetCurrentThreadId() << std::endl;
-		}
-
-		async_io_task()
-		{
-			std::cout << typeid(*this).name() << " ctor" << GetCurrentThreadId() << std::endl;
-		}
-
-	};
-
 
 	template <typename T> class sync 
 	{
@@ -750,38 +821,41 @@ namespace corona
 		struct promise_type
 		{
 			T m_value;
+			std::coroutine_handle<promise_type> coro;
 
 			promise_type()
 			{
 				m_value = {};
-				std::cout << typeid(*this).name() << " promise_type(" << m_value << ")" << GetCurrentThreadId() << std::endl;
+				debug_functions&& std::cout << typeid(*this).name() << " promise_type(" << m_value << ")" << GetCurrentThreadId() << std::endl;
 			}
 
 			sync<T> get_return_object()
 			{
-				std::cout << typeid(*this).name() << " get_return_object(" << m_value << ")" << GetCurrentThreadId() << std::endl;
-				return m_value;
+				debug_functions&& std::cout << typeid(*this).name() << " get_return_object(" << m_value << ")" << GetCurrentThreadId() << std::endl;
+				std::coroutine_handle<promise_type> promise_coro = std::coroutine_handle<promise_type>::from_promise(*this);
+				sync<T> sn(promise_coro);
+				return sn;
 			}
 
 			void return_value(T value) {
-				std::cout << typeid(*this).name() << " return_value(" << m_value << ")" << GetCurrentThreadId() << std::endl;
+				debug_functions&& std::cout << typeid(*this).name() << " return_value(" << m_value << ")" << GetCurrentThreadId() << std::endl;
 				m_value = value;
 			}
 
 			std::suspend_never initial_suspend() {
-				std::cout << typeid(*this).name() << " initial_suspend(" << m_value << ")" << GetCurrentThreadId() << std::endl;
+				debug_functions&& std::cout << typeid(*this).name() << " initial_suspend(" << m_value << ")" << GetCurrentThreadId() << std::endl;
 				return {};
 			}
 
 			std::suspend_always final_suspend() noexcept {
-				std::cout << typeid(*this).name() << " final_suspend(" << m_value << ")" << GetCurrentThreadId() << std::endl;
+				debug_functions&& std::cout << typeid(*this).name() << " final_suspend(" << m_value << ")" << GetCurrentThreadId() << std::endl;
 				return {};
 			}
 
 			void unhandled_exception() {}
 		};
 
-		std::coroutine_handle<> coro;
+		std::coroutine_handle<promise_type> coro;
 
 		sync()
 		{
@@ -789,43 +863,49 @@ namespace corona
 			coro = {};
 		}
 
+		sync(std::coroutine_handle<promise_type> _coro)
+		{
+			value = {};
+			coro = _coro;
+		}
+
 		sync(const T& _value)
 		{
 			value = _value;
 			coro = {};
-			std::cout << typeid(*this).name() << " ctor (" << value << ")" << GetCurrentThreadId() << std::endl;
+			debug_functions&& std::cout << typeid(*this).name() << " ctor (" << value << ")" << GetCurrentThreadId() << std::endl;
 		}
 
 		sync(const sync & _src)
 		{
 			value = _src.value;
 			coro = {};
-			std::cout << typeid(*this).name() << " ctor (" << value << ")" << GetCurrentThreadId() << std::endl;
+			debug_functions&& std::cout << typeid(*this).name() << " ctor (" << value << ")" << GetCurrentThreadId() << std::endl;
 		}
 
 		sync operator =(const sync& _src)
 		{
 			value = _src.value;
 			coro = {};
-			std::cout << typeid(*this).name() << " op= (" << value << ")" << GetCurrentThreadId() << std::endl;
+			debug_functions&& std::cout << typeid(*this).name() << " op= (" << value << ")" << GetCurrentThreadId() << std::endl;
 			return *this;
 		}
 
 		bool await_ready()
 		{
-			std::cout << typeid(*this).name() << " await_ready(" << value << ")" <<  GetCurrentThreadId() << std::endl;
+			debug_functions&& std::cout << typeid(*this).name() << " await_ready(" << value << ")" <<  GetCurrentThreadId() << std::endl;
 			return false;
 		}
 
 		void await_suspend(std::coroutine_handle<> handle)
 		{
 			coro = handle;
-			std::cout << typeid(*this).name() << " await_suspend(" << value << ")" << GetCurrentThreadId() << std::endl;
+			debug_functions&& std::cout << typeid(*this).name() << " await_suspend(" << value << ")" << GetCurrentThreadId() << std::endl;
 		}
 
 		T await_resume()
 		{
-			std::cout << typeid(*this).name() << " await_resume.(" << value << ")" <<  GetCurrentThreadId() << std::endl;
+			debug_functions&& std::cout << typeid(*this).name() << " await_resume.(" << value << ")" <<  GetCurrentThreadId() << std::endl;
 			if (coro) {
 				coro.resume();
 			}
@@ -833,7 +913,16 @@ namespace corona
 		}
 
 		operator T() {
-			std::cout << typeid(*this).name() << " cast (" << value << ")" <<  GetCurrentThreadId() << std::endl;
+			debug_functions&& std::cout << typeid(*this).name() << " cast (" << value << ")" <<  GetCurrentThreadId() << std::endl;
+			return value;
+		}
+
+		T wait()
+		{
+			debug_functions&& std::cout << typeid(*this).name() << " await_resume.(" << value << ")" << GetCurrentThreadId() << std::endl;
+			if (coro) {
+				coro.resume();
+			}
 			return value;
 		}
 
@@ -870,16 +959,16 @@ namespace corona
 		template <typename IOParams> static void run_io(job_queue* queue, IOParams params, std::function<bool(HANDLE hevent, IOParams* _src)> runner)
 		{
 			HANDLE hevent = ::CreateEvent(NULL, false, false, NULL);
-			std::cout << "run_io_task start:" << GetCurrentThreadId() << std::endl;
+			debug_functions&& std::cout << "run_io_task start:" << GetCurrentThreadId() << std::endl;
 			if (runner) {
 				if (runner(hevent, &params)) {
-					std::cout << "run_io await_suspend away : " << GetCurrentThreadId() << std::endl;
+					debug_functions&& std::cout << "run_io await_suspend away : " << GetCurrentThreadId() << std::endl;
 					::WaitForSingleObject(hevent, INFINITE);
-					std::cout << "run_io await_suspend finished:" << GetCurrentThreadId() << std::endl;
+					debug_functions&& std::cout << "run_io await_suspend finished:" << GetCurrentThreadId() << std::endl;
 				}
 				else
 				{
-					std::cout << "error skipped finished:" << GetCurrentThreadId() << std::endl;
+					debug_functions&& std::cout << "error skipped finished:" << GetCurrentThreadId() << std::endl;
 				}
 			}
 			::CloseHandle(hevent);
