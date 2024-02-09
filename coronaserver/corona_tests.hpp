@@ -28,17 +28,17 @@ void corona_tests()
         std::cout << "test_file_awaitable::result " << result << ", thread:" << GetCurrentThreadId() << std::endl;
 
         std::cout << "\n\n=============================================" << std::endl;
-        std::cout << "main:test_data_block_nested, thread:" << GetCurrentThreadId() << std::endl;
+        std::cout << "main:test_data_block, thread:" << GetCurrentThreadId() << std::endl;
 
         corona::file_transaction fb2 = corona::test_data_block(app);
         auto result2 = fb2.wait();
-        std::cout << "test_data_block_nested::result " << result << ", thread:" << GetCurrentThreadId() << std::endl;
+        std::cout << "test_data_block::result " << result << ", thread:" << GetCurrentThreadId() << std::endl;
 
         std::cout << "\n\n=============================================" << std::endl;
         std::cout << "main:test_json_node, thread:" << GetCurrentThreadId() << std::endl;
 
         corona::file_transaction fb3 = corona::test_json_node(app);
-        fb3.wait();
+        auto result3 = fb3.wait();
 
         std::cout << "\nmain::end,thread:" << GetCurrentThreadId() << std::endl;
     }

@@ -729,6 +729,11 @@ namespace corona
 			return object_impl->members;
 		}
 
+		template <typename element_type> json append_element(element_type et)
+		{
+			return put_element( -1, et);
+		}
+
 		json put_element(int _index, json &_element)
 		{
 			if (!array_impl) {
@@ -1093,6 +1098,7 @@ namespace corona
 	private:
 
 		int line_number = 1;
+		int char_index = 0;
 
 		json get_errors()
 		{
@@ -1106,9 +1112,10 @@ namespace corona
 			{
 				json err(std::make_shared<json_object>());
 				err.put_member("line", parse_error.line);
+				err.put_member("char", parse_error.char_index);
 				err.put_member("topic", parse_error.topic);
 				err.put_member("error", parse_error.error);
-				error_array.put_element(-1, err);
+				error_array.append_element( err);
 			}
 
 			error_root.put_member("errors", error_array);
@@ -1121,6 +1128,7 @@ namespace corona
 		{
 		public:
 			int line;
+			int char_index;
 			std::string topic;
 			std::string error;
 		};
@@ -1130,6 +1138,7 @@ namespace corona
 		json parse_object(std::string _object)
 		{
 			line_number = 1;
+			char_index = 0;
 			parse_errors.clear();
 			auto jo = std::make_shared<json_object>();
 			const char* start = _object.c_str();
@@ -1145,6 +1154,7 @@ namespace corona
 		json create_object()
 		{
 			line_number = 1;
+			char_index = 0;
 			parse_errors.clear();
 			auto jo = std::make_shared<json_object>();
 			json jn(jo);
@@ -1154,6 +1164,7 @@ namespace corona
 		json parse_array(std::string _object)
 		{
 			line_number = 1;
+			char_index = 0;
 			parse_errors.clear();
 			auto jo = std::make_shared<json_array>();
 			const char* start = _object.c_str();
@@ -1169,6 +1180,7 @@ namespace corona
 		json create_array()
 		{
 			line_number = 1;
+			char_index = 0;
 			parse_errors.clear();
 			auto jo = std::make_shared<json_array>();
 			json jn(jo);
@@ -1190,13 +1202,16 @@ namespace corona
 
 		void check_line(const char* nl)
 		{
-			if (*nl == '\r')
+			char_index++;
+			if (*nl == '\r') {
 				line_number++;
+				char_index = 0;
+			}
 		}
 
 		void error(std::string _topic, std::string _message)
 		{
-			parse_message new_message = { line_number, _topic, _message };
+			parse_message new_message = { line_number, char_index, _topic, _message };
 			parse_errors.push_back(new_message);
 		}
 
@@ -1623,6 +1638,10 @@ namespace corona
 						_src = eat_white(_src);
 						if (*_src == ',') {
 							_src++;
+						}
+						else if (*_src == '}')
+						{
+							continue;
 						}
 						else
 						{

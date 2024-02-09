@@ -51,7 +51,7 @@ namespace corona
 
 		data_block &operator = (json& _src)
 		{
-			std::string json_string = _src.to_json_typed_string();
+			std::string json_string = _src.to_json_typed();
 			bytes = buffer(json_string.c_str());
 			return *this;
 		}
@@ -199,7 +199,7 @@ namespace corona
 			payload.put_member("ObjectId", object_id);
 			payload.put_member("Data", data);
 			for (auto pt : forward) {
-				fow.put_element(-1, pt);
+				fow.append_element( pt);
 			}
 			payload.put_member("Forward", fow);
 			return payload;
@@ -811,7 +811,7 @@ namespace corona
 		std::cout << "test_data_block, thread:" << ::GetCurrentThreadId() << std::endl;
 
 		json_parser jp;
-		json jx = jp.parse_object(R"({ "name" : "bill", "age":42 })");
+		json jx = jp.parse_object(R"({ "name":"bill", "age":42 })");
 		data_block db, dc;
 		db = jx;
 		std::cout << "test_data_block, write, thread:" << ::GetCurrentThreadId() << std::endl;
@@ -838,14 +838,14 @@ namespace corona
 		jnwrite.data = jp.create_array();
 		for (double i = 0; i < 42; i++)
 		{
-			jnread.data.put_element(-1, i);
+			jnwrite.data.append_element( i);
 		}
 
 		std::cout << "test_json_node, write, thread:" << ::GetCurrentThreadId() << std::endl;
 		int64_t location = co_await jnwrite.append(&dtest);
 
 		std::cout << "test_json_node, read, thread:" << ::GetCurrentThreadId() << std::endl;
-		int64_t bytes_ex = jnread.read(&dtest, location);
+		int64_t bytes_ex = co_await jnread.read(&dtest, location);
 		
 		std::cout << "test_json_node, check, thread:" << ::GetCurrentThreadId() << std::endl;
 		std::string x = jnread.data.to_json_string();
