@@ -335,6 +335,102 @@ namespace corona
 
 	};
 
+	class file_node {
+	public:
+
+		struct promise_type
+		{
+			int64_t m_value;
+
+			promise_type()
+			{
+				m_value = 0;
+				debug_functions&& std::cout << "file_node::promise:" << this << " " << GetCurrentThreadId() << std::endl;
+			}
+
+			file_node  get_return_object() {
+				debug_functions&& std::cout << "file_node::get_return_object:" << this << " " << GetCurrentThreadId() << std::endl;
+				std::coroutine_handle<promise_type> promise_coro = std::coroutine_handle<promise_type>::from_promise(*this);
+				file_node  fbr(promise_coro);
+				return fbr;
+			}
+
+			std::suspend_always initial_suspend() noexcept { return {}; }
+			std::suspend_always final_suspend() noexcept { return {}; }
+
+			void return_value(int64_t value) {
+				debug_functions&& std::cout << "file_node::promise return_value:" << " " << value << " " << GetCurrentThreadId() << std::endl;
+				m_value = value;
+			}
+
+			void unhandled_exception() {
+				debug_functions&& std::cout << "file_node::promise unhandled exception:" << this << GetCurrentThreadId() << std::endl;
+			}
+		};
+
+		std::coroutine_handle<promise_type> coro;
+
+		// object manip
+
+		file_node(std::coroutine_handle<promise_type> _promise_coro)
+		{
+			coro = _promise_coro;
+			debug_functions&& std::cout << "file_node: coro ctor:" << ::GetCurrentThreadId() << std::endl;
+		}
+
+		file_node()
+		{
+			debug_functions&& std::cout << "file_node: empty ctor:" << ::GetCurrentThreadId() << std::endl;
+		}
+
+		// awaiter
+
+		bool await_ready()
+		{
+			debug_functions&& std::cout << "file_node::await_ready:" << this << " " << GetCurrentThreadId() << std::endl;
+			return false;
+		}
+
+		// this creates the 
+		void await_suspend(std::coroutine_handle<> handle)
+		{
+			debug_functions&& std::cout << "file_node::await_suspend, transaction" << this << " " << GetCurrentThreadId() << std::endl;
+			handle.resume();
+			debug_functions&& std::cout << "file_node: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
+		}
+
+		int64_t await_resume()
+		{
+			debug_functions&& std::cout << "file_node::await_resume:" << this << " " << GetCurrentThreadId() << std::endl;
+			int64_t result;
+			if (coro) {
+				coro.resume();
+				result = coro.promise().m_value;
+			}
+			return result;
+		}
+
+		int64_t wait()
+		{
+			debug_functions&& std::cout << "file_node::wait:" << this << " " << GetCurrentThreadId() << std::endl;
+			int64_t result = -1;
+
+			if (coro) {
+				coro.resume();
+				result = coro.promise().m_value;
+			}
+			debug_functions&& std::cout << "file_node: complete" << " " << ::GetCurrentThreadId() << std::endl;
+
+			return result;
+		}
+
+		operator int()
+		{
+			int result = coro.promise().m_value;
+			return result;
+		}
+	};
+
 	class file_batch;
 
 	class file_transaction {
@@ -393,12 +489,19 @@ namespace corona
 			return false;
 		}
 
-		// this creates the 
-		void await_suspend(std::coroutine_handle<> handle)
+		void await_suspend(std::coroutine_handle<file_node::promise_type> handle)
 		{
-			debug_functions&& std::cout << "file_transaction::await_suspend, transaction" << this << " " << GetCurrentThreadId() << std::endl;
+			debug_functions&& std::cout << "file_transaction::await_suspend, batch:" << this << " " << GetCurrentThreadId() << std::endl;
 			handle.resume();
 			debug_functions&& std::cout << "file_transaction: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
+		}
+
+		// this creates the 
+		void await_suspend(std::coroutine_handle<promise_type> handle)
+		{
+			debug_functions&& std::cout << "file_batch::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
+			handle.resume();
+			debug_functions&& std::cout << "file_batch: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
 		}
 
 		int64_t await_resume()

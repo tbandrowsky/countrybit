@@ -100,13 +100,14 @@ namespace corona
 
 			if (current_location < 0) 
 			{
-				co_return append(_file);
+				throw std::invalid_argument("use append for new blocks");
 			}
 
 			int size = bytes.get_size();
 
 			if (size > header.data_length)
 			{
+				header.data_length = size;
 				header.next_free_block = header.data_location;
 				header.data_location = _file->add(size);
 			}
@@ -137,6 +138,7 @@ namespace corona
 			header.block_type = block_id::general_id();
 			header.next_free_block = 0;
 			header.data_location = _file->add(size);
+			header.data_length = size;
 
 			file_task_result data_result = co_await _file->write( header.data_location, bytes.get_ptr(), size);
 
@@ -221,7 +223,7 @@ namespace corona
 			return put_json(_src);
 		}
 
-		file_transaction read(file* _file, int64_t location)
+		file_batch read(file* _file, int64_t location)
 		{
 			std::cout << "read:" << *this << std::endl;
 			int64_t status = co_await storage.read(_file, location);
@@ -236,7 +238,7 @@ namespace corona
 			co_return status;
 		}
 
-		file_transaction write(file* _file)
+		file_batch write(file* _file)
 		{
 			std::cout << "write:" << *this << std::endl;
 			auto json_payload = get_json();
@@ -247,7 +249,7 @@ namespace corona
 			co_return result;
 		}
 
-		file_transaction append(file* _file)
+		file_batch append(file* _file)
 		{
 			std::cout << "append:" << *this << std::endl;
 			auto json_payload = get_json();
