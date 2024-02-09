@@ -813,7 +813,7 @@ namespace corona
 		data_block db, dc;
 		db = jx;
 		std::cout << "test_data_block, write, thread:" << ::GetCurrentThreadId() << std::endl;
-		int64_t r1 = co_await db.write(&dtest);
+		int64_t r1 = co_await db.append(&dtest);
 		
 		std::cout << "test_data_block, read, thread:" << ::GetCurrentThreadId() << std::endl;
 		int64_t r2 = co_await dc.read(&dtest, db.current_location);
