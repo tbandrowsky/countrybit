@@ -83,7 +83,7 @@ namespace corona
 
 	};
 
-	int application_tests()
+	file_batch<> application_tests()
 	{
 		try {
 			auto app = application::get_application();
@@ -95,22 +95,22 @@ namespace corona
 			char buffer[10] = { 0 };
 
 			strcpy_s(buffer, "test1");
-			my_file.write( 0, buffer, 5);
+			co_await my_file.write<file_batch<>>( 0, buffer, 5);
 			strcpy_s(buffer, "test2");
-			my_file.write( 5, buffer, 5);
-			my_file.read( 0, buffer, 5);
+			co_await my_file.write<file_batch<>>( 5, buffer, 5);
+			co_await my_file.read<file_batch<>>( 0, buffer, 5);
 
 			if (strcmp(buffer, "test1") != 0)
 			{
 				std::cout << "read / write test failed" << std::endl;
 			}
 
-			return true;
+			co_return true;
 		}
 		catch (std::exception exc)
 		{
 			std::cout << __LINE__ << " " << exc.what() << std::endl;
-			return false;
+			co_return false;
 		}
 	}
 
