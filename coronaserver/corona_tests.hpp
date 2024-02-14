@@ -3,7 +3,7 @@
 
 #include "corona.hpp"
 
-corona::file_batch<> test_file_awaitable(corona::application& app);
+corona::file_batch test_file_awaitable(corona::application& app);
 int test_file_straight(corona::application& app);
 
 void corona_tests()
@@ -48,13 +48,13 @@ void corona_tests()
     }
 }
 
-corona::file_batch<> test_file_nested_awaitable(corona::application& app)
+corona::file_batch test_file_nested_awaitable(corona::application& app)
 {
     auto fbr = test_file_awaitable(app);
     return fbr;
 }
 
-corona::file_batch<> test_file_awaitable(corona::application& app)
+corona::file_batch test_file_awaitable(corona::application& app)
 {
     std::cout << "test_file_awaitable::entry, thread:" << GetCurrentThreadId() << std::endl;
     auto fb = corona::test_file(app);

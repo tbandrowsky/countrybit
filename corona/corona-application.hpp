@@ -83,7 +83,7 @@ namespace corona
 
 	};
 
-	file_batch<> application_tests()
+	file_batch application_tests()
 	{
 		try {
 			auto app = application::get_application();
@@ -95,10 +95,10 @@ namespace corona
 			char buffer[10] = { 0 };
 
 			strcpy_s(buffer, "test1");
-			co_await my_file.write<file_batch<>>( 0, buffer, 5);
+			co_await my_file.write( 0, buffer, 5);
 			strcpy_s(buffer, "test2");
-			co_await my_file.write<file_batch<>>( 5, buffer, 5);
-			co_await my_file.read<file_batch<>>( 0, buffer, 5);
+			co_await my_file.write( 5, buffer, 5);
+			co_await my_file.read( 0, buffer, 5);
 
 			if (strcmp(buffer, "test1") != 0)
 			{

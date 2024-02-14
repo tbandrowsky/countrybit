@@ -25,9 +25,6 @@ namespace corona
 
 	const int debug_json_table = 0;
 
-	static const int JsonTableMaxNumberOfLevels = 40;
-	static const int JsonTableMaxLevel = JsonTableMaxNumberOfLevels - 1;
-
 	// data blocks
 	class data_block;
 	std::ostream& operator <<(std::ostream& output, data_block& src);
@@ -75,20 +72,20 @@ namespace corona
 			bytes.init(_size_bytes);
 		}
 
-		template <typename calling_awaitable> file_batch<calling_awaitable> read(file* _file, int64_t location)
+		file_batch read(file* _file, int64_t location)
 		{
 			current_location = location;
 
 			debug_json_table && std::cout << "datablock:read begin:" << *this << " " << GetCurrentThreadId() << std::endl;
 
-			file_task_result header_result = co_await _file->read<calling_awaitable>(location, &header, sizeof(header));
+			file_task_result header_result = co_await _file->read(location, &header, sizeof(header));
 
 			if (header_result.success) 
 			{
 				debug_json_table && std::cout << "datablock:read data begin:" << *this << " " << GetCurrentThreadId() << std::endl;
 
 				bytes = buffer(header.data_length);
-				file_task_result  data_result = co_await _file->read<calling_awaitable>(header.data_location, bytes.get_ptr(), header.data_length);
+				file_task_result  data_result = co_await _file->read(header.data_location, bytes.get_ptr(), header.data_length);
 
 				if (data_result.success) 
 				{
@@ -102,7 +99,7 @@ namespace corona
 			co_return -1i64;
 		}
 
-		template <typename calling_awaitable> file_batch<calling_awaitable> write(file* _file)
+		file_batch write(file* _file)
 		{
 			debug_json_table&& std::cout << "datablock:write begin:" << *this << " " << GetCurrentThreadId() << std::endl;
 
@@ -122,20 +119,20 @@ namespace corona
 
 			debug_json_table&& std::cout << "datablock:write header start:" << *this << " " << GetCurrentThreadId() << std::endl;
 
-			file_task_result data_result = co_await _file->write<calling_awaitable>(header.data_location, bytes.get_ptr(), size);
+			file_task_result data_result = co_await _file->write(header.data_location, bytes.get_ptr(), size);
 
 			debug_json_table && std::cout << "datablock:write header end:" << *this << " " << GetCurrentThreadId() << std::endl;
 
 			if (data_result.success)
 			{
-				file_task_result header_result = co_await _file->write<calling_awaitable>(current_location, &header, sizeof(header));
+				file_task_result header_result = co_await _file->write(current_location, &header, sizeof(header));
 				co_return header_result.bytes_transferred;
 			}
 
 			co_return -1i64;
 		}
 
-		template <typename calling_awaitable> file_batch<calling_awaitable> append(file* _file)
+		file_batch append(file* _file)
 		{
 			int size = bytes.get_size();
 
@@ -148,14 +145,14 @@ namespace corona
 			header.data_location = _file->add(size);
 			header.data_length = size;
 
-			file_task_result data_result = co_await _file->write<calling_awaitable>( header.data_location, bytes.get_ptr(), size);
+			file_task_result data_result = co_await _file->write( header.data_location, bytes.get_ptr(), size);
 
 			debug_json_table&& std::cout << "append write header:" << *this << " " << GetCurrentThreadId() << std::endl;
 
 			if (data_result.success)
 			{
 				debug_json_table&& std::cout << "append write data:" << *this << " " << GetCurrentThreadId() << std::endl;
-				file_task_result header_result = co_await _file->write<calling_awaitable>(current_location, &header, sizeof(header));
+				file_task_result header_result = co_await _file->write(current_location, &header, sizeof(header));
 
 				debug_json_table&& std::cout << "append write data finished:" << *this << " " << GetCurrentThreadId() << std::endl;
 				co_return current_location;
@@ -231,10 +228,10 @@ namespace corona
 			return put_json(_src);
 		}
 
-		template <typename calling_awaitable> file_batch<calling_awaitable> read(file* _file, int64_t location)
+		file_batch read(file* _file, int64_t location)
 		{
 			debug_json_table&& std::cout << "read:" << *this << std::endl;
-			int64_t status = co_await storage.read<calling_awaitable>(_file, location);
+			int64_t status = co_await storage.read(_file, location);
 
 			if (status > -1)
 			{
@@ -246,25 +243,25 @@ namespace corona
 			co_return status;
 		}
 
-		template <typename calling_awaitable> file_batch<calling_awaitable> write(file* _file)
+		file_batch write(file* _file)
 		{
 			debug_json_table&& std::cout << "write:" << *this << std::endl;
 			auto json_payload = get_json();
 
 			storage = json_payload;
 
-			int64_t result = co_await storage.write<calling_awaitable>(_file);
+			int64_t result = co_await storage.write(_file);
 			co_return result;
 		}
 
-		template <typename calling_awaitable> file_batch<calling_awaitable> append(file* _file)
+		file_batch append(file* _file)
 		{
 			debug_json_table&& std::cout << "append:" << *this << std::endl;
 			auto json_payload = get_json();
 
 			storage = json_payload;
 
-			int64_t result = co_await storage.append<calling_awaitable>(_file);
+			int64_t result = co_await storage.append(_file);
 
 			co_return result;
 		}
@@ -295,7 +292,7 @@ namespace corona
 			return *this;
 		}
 
-		template <typename calling_awaitable> file_batch<calling_awaitable> read(file* _file, int64_t location)
+		file_batch read(file* _file, int64_t location)
 		{
 			storage.init(sizeof(poco_type));
 
@@ -312,7 +309,7 @@ namespace corona
 			co_return status;
 		}
 
-		template <typename calling_awaitable> file_batch<calling_awaitable> write(file* _file)
+		file_batch write(file* _file)
 		{
 			storage.init(sizeof(poco_type));
 			poco_type* c = (poco_type*)storage.bytes.get_ptr();
@@ -325,7 +322,7 @@ namespace corona
 			co_return status;
 		}
 
-		template <typename calling_awaitable> file_batch<calling_awaitable> append(file* _file)
+		file_batch append(file* _file)
 		{
 			storage.init(sizeof(poco_type));
 			poco_type* c = (poco_type*)storage.bytes.get_ptr();
@@ -345,28 +342,19 @@ namespace corona
 		return output;
 	}
 
-	struct index_header_struct
-	{
-	public:
-		int64_t	header_node_location;
-		int64_t count;
-		long	level;
-		int64_t forward[JsonTableMaxNumberOfLevels];
-	};
-
 	class json_table
 	{
+	private:
+
 		poco_node<index_header_struct> index_header;
 		file* database_file;
 
 		const int SORT_ORDER = 1;
 		
-	public:
-
 		using KEY = int64_t;
 		using VALUE = json_node;
 
-		template <typename calling_awaitable> file_transaction<int64_t, calling_awaitable> create_header()
+		file_transaction<int64_t> create_header()
 		{
 			index_header.data.header_node_location = co_await index_header.append(database_file);
 			index_header.data.count = 0;
@@ -379,7 +367,7 @@ namespace corona
 			co_return index_header.data.header_node_location;
 		}
 
-		template <typename calling_awaitable> file_transaction<json_node, calling_awaitable> get_header()
+		file_transaction<json_node> get_header()
 		{
 			json_node in;
 
@@ -393,7 +381,7 @@ namespace corona
 			co_return in;
 		}
 
-		template <typename calling_awaitable> file_transaction<json_node, calling_awaitable> create_node(int _max_level)
+		file_transaction<json_node> create_node(int _max_level)
 		{
 			json_node new_node;
 
@@ -409,7 +397,7 @@ namespace corona
 			co_return new_node;
 		}
 
-		template <typename calling_awaitable> file_transaction<json_node, calling_awaitable> get_node(file* _file, relative_ptr_type _node_location) const
+		file_transaction<json_node> get_node(file* _file, relative_ptr_type _node_location) const
 		{
 			json_node node;
 
@@ -437,27 +425,27 @@ namespace corona
 			return *this;
 		}
 
-		template <typename calling_awaitable> table_transaction<bool, calling_awaitable> contains(const KEY key) const
+		table_transaction<bool> contains(const KEY key) const
 		{
-			relative_ptr_type result = co_await this->find_node<table_transaction<bool>>(key);
+			relative_ptr_type result = co_await find_node(key);
 			co_return  result != null_row;
 		}
 
-		template <typename calling_awaitable> table_transaction<json_node, calling_awaitable> get(const KEY key)
+		table_transaction<json_node> get(const KEY key)
 		{
-			auto n = this->find_node(key);
-			json_node r = co_await get_node<table_transaction<json_node>>(database_file, n);
+			relative_ptr_type n = co_await find_node(key);
+			json_node r = co_await get_node(database_file, n);
 			co_return r;
 		}
 
-		template <typename calling_awaitable> table_transaction<relative_ptr_type, calling_awaitable>
+		table_transaction<relative_ptr_type>
 		put(KEY key, VALUE value)
 		{
 			relative_ptr_type modified_node = co_await this->update_node(key, [value](VALUE& dest) { dest.data = value.data; });
 			co_return modified_node;
 		}
 
-		template <typename calling_awaitable> table_transaction<relative_ptr_type, calling_awaitable>
+		table_transaction<relative_ptr_type>
 		put(KEY key, std::string _json)
 		{
 			json_parser jp;
@@ -466,7 +454,7 @@ namespace corona
 			co_return modified_node;
 		}
 
-		template <typename calling_awaitable> table_transaction<bool, calling_awaitable> 
+		table_transaction<bool> 
 		erase(const KEY& key)
 		{
 			int k;
@@ -479,17 +467,17 @@ namespace corona
 			{
 				k = 0;
 				p = update[k];
-				qnd = co_await get_node<table_transaction<bool>>(database_file, q);
-				pnd = co_await get_node<table_transaction<bool>>(database_file, p);
+				qnd = co_await get_node(database_file, q);
+				pnd = co_await get_node(database_file, p);
 				int m = index_header.data.level;
 				while (k <= m && pnd.forward[k] == q)
 				{
 					pnd.forward[k] = qnd.forward[k];
-					co_await pnd.write<table_transaction<bool>>(database_file);
+					co_await pnd.write(database_file);
 					k++;
 					if (k <= m) {
 						p = update[k];
-						pnd = co_await get_node<table_transaction<bool>>(database_file, p);
+						pnd = co_await get_node(database_file, p);
 					}
 				}
 
@@ -498,7 +486,7 @@ namespace corona
 					m--;
 				}
 				index_header.data.level = m;
-				co_await index_header.write<table_transaction<bool>>(database_file);
+				co_await index_header.write(database_file);
 				co_return true;
 			}
 			else
@@ -507,9 +495,8 @@ namespace corona
 			}
 		}
 
-		template <typename calling_awaitable> table_transaction<json, calling_awaitable>
-		query(std::function<bool(int _index, json_node& _predicate)> _predicate,
-			std::function<void(json& _dest_array, int _index, json_node& _predicate)> _transform = nullptr)
+		table_transaction<json>
+		query(std::function<bool(int _index, json_node& _item)> _where_clause)
 		{
 			json_parser jp;
 			json ja = jp.create_array();
@@ -517,22 +504,15 @@ namespace corona
 			json_node jn;
 			int index = 0;
 			for (jn = co_await first_node(); !jn.is_empty(); jn = co_await next_node(jn)) {
-				if (_predicate(index, jn)) {
-					if (_transform) 
-					{
-						_transform(ja, index, jn);
-					}
-					else 
-					{
-						ja.put_element(-1, jn.data);
-					}
+				if (_where_clause == nullptr || _where_clause(index, jn)) {
+					jn.data.put_member_i64("ObjectId", jn.object_id);
+					ja.put_element(-1, jn.data);
 					index++;
 				}
 			}
 
 			co_return ja;
 		}
-
 
 		inline int size() { return index_header.data.count; }
 
@@ -552,8 +532,7 @@ namespace corona
 
 		// compare a node to a key for equality
 
-		template <typename calling_awaitable> table_transaction<int, calling_awaitable> 
-		compare(relative_ptr_type _node, int64_t _id) const
+		compare_transaction compare(relative_ptr_type _node, int64_t _id) const
 		{
 			if (_node != null_row)
 			{
@@ -573,7 +552,7 @@ namespace corona
 			}
 		}
 
-		template <typename calling_awaitable> table_transaction<relative_ptr_type, calling_awaitable> 
+		table_private_transaction<relative_ptr_type>
 		find_node(relative_ptr_type* update, int64_t _key) const
 		{
 			relative_ptr_type found = null_row, p, q;
@@ -581,13 +560,13 @@ namespace corona
 			for (int k = index_header.data.level; k >= 0; k--)
 			{
 				p = index_header.data.forward[k];
-				json_node jn = co_await get_node<calling_awaitable>(database_file, p);
+				json_node jn = co_await get_node(database_file, p);
 				q = jn.forward[k];
 				int comp = compare(q, _key);
 				while (comp < 0)
 				{
 					p = q;
-					json_node jn = co_await get_node<calling_awaitable>(database_file, p);
+					json_node jn = co_await get_node(database_file, p);
 					q = jn.forward[k];
 					comp = co_await compare(q, _key);
 				}
@@ -596,10 +575,10 @@ namespace corona
 				update[k] = p;
 			}
 
-			return found;
+			co_return found;
 		}
 
-		template <typename calling_awaitable> table_transaction<relative_ptr_type, calling_awaitable> 
+		table_private_transaction<relative_ptr_type>
 		find_first_gte(relative_ptr_type* update, int64_t _key)
 		{
 			relative_ptr_type found = null_row, p, q, last_link;
@@ -629,7 +608,7 @@ namespace corona
 			co_return found;
 		}
 
-		template <typename calling_awaitable> table_transaction<relative_ptr_type, calling_awaitable>
+		table_private_transaction<relative_ptr_type>
 		update_node(KEY _key, std::function<void(VALUE& existing_value)> predicate)
 		{
 			int k;
@@ -640,7 +619,6 @@ namespace corona
 
 			relative_ptr_type q = co_await find_node(update, _key);
 			json_node qnd;
-
 
 			if (q != null_row)
 			{
@@ -681,11 +659,11 @@ namespace corona
 
 			co_await index_header.write(database_file);
 
-			return qnd.storage.current_location;
+			co_return qnd.storage.current_location;
 		}
 
 
-		template <typename calling_awaitable> table_transaction<relative_ptr_type, calling_awaitable>
+		table_private_transaction<relative_ptr_type>
 		find_node(const KEY& key) const
 		{
 #ifdef	TIME_SKIP_LIST
@@ -693,10 +671,10 @@ namespace corona
 #endif
 			relative_ptr_type update[JsonTableMaxNumberOfLevels];
 			relative_ptr_type value = co_await find_node(update, key);
-			return value;
+			co_return value;
 		}
 
-		template <typename calling_awaitable> table_transaction<relative_ptr_type, calling_awaitable>
+		table_private_transaction<relative_ptr_type>
 		find_first_node_gte(const KEY& key)
 		{
 #ifdef	TIME_SKIP_LIST
@@ -704,19 +682,19 @@ namespace corona
 #endif
 			relative_ptr_type update[JsonTableMaxNumberOfLevels];
 			relative_ptr_type fn = find_first_gte(update, key);
-			return fn;
+			co_return fn;
 		}
 
-		template <typename calling_awaitable> table_transaction<json_node, calling_awaitable> first_node()
+		table_private_transaction<json_node> first_node()
 		{
 			json_node jn;
 			if (index_header.data.forward[0] != null_row) {
 				jn = get_node(database_file, index_header.data.forward[0]);
 			}
-			return jn;
+			co_return jn;
 		}
 
-		template <typename calling_awaitable> table_transaction<json_node, calling_awaitable> next_node(json_node _node)
+		table_private_transaction<json_node> next_node(json_node _node)
 		{
 			if (_node.is_empty())
 				return _node;
@@ -729,7 +707,7 @@ namespace corona
 	std::ostream& operator <<(std::ostream& output, json_table& src)
 	{
 		bool space = false;
-		auto awaiter = src.query<json>([](int _index, json_node& nd) -> bool { return true; });
+		table_transaction<json> awaiter = src.query([](int _index, json_node& nd) -> bool { return true; });
 		json j = awaiter.wait();
 		std::string temp = j.to_json_typed_string();
 		output << temp;
@@ -738,11 +716,11 @@ namespace corona
 
 	user_transaction<bool> test_json_table(corona::application& _app);
 
-	file_batch<> test_file(corona::application& _app);
+	file_batch test_file(corona::application& _app);
 	file_transaction<int64_t> test_data_block(corona::application& _app);
 	file_transaction<int64_t> test_json_node(corona::application& _app);
 
-	file_batch<> test_file(corona::application& _app)
+	file_batch test_file(corona::application& _app)
 	{
 
 		std::cout << "\ntest_file: entry, thread:" << ::GetCurrentThreadId() << std::endl;
@@ -757,10 +735,10 @@ namespace corona
 		dtest.add(1000);
 
 		std::cout << "\ntest_file: co_await write, thread:" << ::GetCurrentThreadId() << std::endl;
-		file_task_result tsk = co_await dtest.write<file_batch<>>(0, (void *)buffer_write, l);
+		file_task_result tsk = co_await dtest.write(0, (void *)buffer_write, l);
 
 		std::cout << "\ntest_file: co_await read, thread:" << ::GetCurrentThreadId() << std::endl;
-		file_task_result tsk2 = co_await dtest.read<file_batch<>>(0, (void*)buffer_read, l);
+		file_task_result tsk2 = co_await dtest.read(0, (void*)buffer_read, l);
 
 		std::cout << "\ntest_file: co_await read, thread:" << ::GetCurrentThreadId() << std::endl;
 		
@@ -785,10 +763,10 @@ namespace corona
 		data_block db, dc;
 		db = jx;
 		std::cout << "test_data_block, write, thread:" << ::GetCurrentThreadId() << std::endl;
-		int64_t r1 = co_await db.append<file_transaction<int64_t>>(&dtest);
+		int64_t r1 = co_await db.append(&dtest);
 		
 		std::cout << "test_data_block, read, thread:" << ::GetCurrentThreadId() << std::endl;
-		int64_t r2 = co_await dc.read<file_transaction<int64_t>>(&dtest, db.current_location);
+		int64_t r2 = co_await dc.read(&dtest, db.current_location);
 
 		std::cout << "test_data_block_nested, check, thread:" << ::GetCurrentThreadId() << std::endl;
 		std::string x = dc.get_string();
@@ -812,10 +790,10 @@ namespace corona
 		}
 
 		std::cout << "test_json_node, write, thread:" << ::GetCurrentThreadId() << std::endl;
-		int64_t location = co_await jnwrite.append<file_transaction<int64_t>>(&dtest);
+		int64_t location = co_await jnwrite.append(&dtest);
 
 		std::cout << "test_json_node, read, thread:" << ::GetCurrentThreadId() << std::endl;
-		int64_t bytes_ex = co_await jnread.read<file_transaction<int64_t>>(&dtest, location);
+		int64_t bytes_ex = co_await jnread.read(&dtest, location);
 		
 		std::cout << "test_json_node, check, thread:" << ::GetCurrentThreadId() << std::endl;
 		std::string x = jnread.data.to_json_string();
@@ -833,8 +811,8 @@ namespace corona
 
 		object_id = 5;
 		json_table test(&f);
-		test.put<return_type>(object_id, R"({ "Name" : "Joe" })");
-		json_node t1 = co_await test.get<return_type>(object_id);
+		test.put(object_id, R"({ "Name" : "Joe" })");
+		json_node t1 = co_await test.get(object_id);
 
 		if (t1.object_id != object_id || t1.data["Name"].get_string() != "Joe")
 		{
@@ -843,16 +821,16 @@ namespace corona
 		}
 
 		object_id = 7;
-		test.put<return_type>(object_id, R"({ "Name" : "Jack" })");
-		json_node t2 = co_await test.get<return_type>(object_id);
+		test.put(object_id, R"({ "Name" : "Jack" })");
+		json_node t2 = co_await test.get(object_id);
 		if (t2.object_id != object_id || t2.data["Name"].get_string() != "Jack")
 		{
 			std::cout << __LINE__ << " fail: wrong inserted value." << std::endl;
 			co_return false;
 		}
 
-		co_await test.put<return_type>(object_id, R"({ "Name" : "Jill" })");
-		json_node t3 = co_await test.get<return_type>(object_id);
+		co_await test.put(object_id, R"({ "Name" : "Jill" })");
+		json_node t3 = co_await test.get(object_id);
 		if (t2.object_id != object_id || t2.data["Name"].get_string() != "Jill")
 		{
 			std::cout << __LINE__ << " fail: wrong updated value." << std::endl;
@@ -861,7 +839,7 @@ namespace corona
 
 		try
 		{
-			json_node t5 = co_await test.get<return_type>(6);
+			json_node t5 = co_await test.get(6);
 			std::cout << __LINE__ << " fail: wrong null access." << std::endl;
 			co_return false;
 		}
@@ -870,7 +848,7 @@ namespace corona
 			;
 		}
 
-		auto db_contents = co_await test.query<return_type>([](int _index, json_node& item) {
+		auto db_contents = co_await test.query([](int _index, json_node& item) {
 			return true;
 			});
 
@@ -881,8 +859,8 @@ namespace corona
 		}
 
 		object_id = 2;
-		co_await test.put<return_type>(object_id, R"({ "Name" : "Sidney" })");
-		t2 = co_await test.get<return_type>(object_id);
+		co_await test.put(object_id, R"({ "Name" : "Sidney" })");
+		t2 = co_await test.get(object_id);
 		if (t2.object_id != object_id || t2.data["Name"].get_string() != "Sidney")
 		{
 			std::cout << __LINE__ << " fail: wrong inserted value." << std::endl;
@@ -890,8 +868,8 @@ namespace corona
 		}
 
 		object_id = 7;
-		test.put<return_type>(object_id, R"({ "Name" : "Zeus" })");
-		t2 = co_await test.get<return_type>(object_id);
+		test.put(object_id, R"({ "Name" : "Zeus" })");
+		t2 = co_await test.get(object_id);
 		if (t2.object_id != object_id || t2.data["Name"].get_string() != "Zeus")
 		{
 			std::cout << __LINE__ << " fail: wrong inserted value." << std::endl;
@@ -899,8 +877,8 @@ namespace corona
 		}
 
 		object_id = 1;
-		test.put<return_type>(object_id, R"({ "Name" : "Canada" })");
-		t2 = co_await test.get<return_type>(object_id);
+		test.put(object_id, R"({ "Name" : "Canada" })");
+		t2 = co_await test.get(object_id);
 		if (t2.object_id != object_id || t2.data["Name"].get_string() != "Canada")
 		{
 			std::cout << __LINE__ << " fail: wrong inserted value." << std::endl;
@@ -908,15 +886,15 @@ namespace corona
 		}
 
 		object_id = 1;
-		test.put<return_type>(object_id, R"({ "Name" : "Maraca" })");
-		t2 = co_await test.get<return_type>(object_id);
+		test.put(object_id, R"({ "Name" : "Maraca" })");
+		t2 = co_await test.get(object_id);
 		if (t2.object_id != object_id || t2.data["Name"].get_string() != "Maraca")
 		{
 			std::cout << __LINE__ << " fail: wrong updated value." << std::endl;
 			co_return false;
 		}
 
-		db_contents = test.query<return_type>([](int _index, json_node& item) {
+		db_contents = test.query([](int _index, json_node& item) {
 			return true;
 			});
 
@@ -935,21 +913,17 @@ namespace corona
 		int tests[4] = { 1, 2, 5, 7 };
 		int k = 0;
 
-		db_contents = test.query<return_type>([tests](int _index, json_node& item) {
+		db_contents = test.query([tests](int _index, json_node& item) {
 			if (tests[_index] != item.object_id) {
 				std::cout << __LINE__ << " order failed" << std::endl;
 				return false;
 			}
 			});
 
-		db_contents = test.query<return_type>([tests](int _index, json_node& item) {
+		db_contents = test.query([tests](int _index, json_node& item) {
 			return (item.object_id > 1);
-			},
-			[](json& _dest_array, int _index, json_node& _item) {
-				json new_json = _item.data;
-				new_json.put_member_i64("ObjectId", _item.object_id);
-				_dest_array.put_element(-1, new_json);
-			});
+			}
+		);
 
 		bool any_fails = db_contents.any([](json& _item)->bool {
 			return _item["ObjectId"].get_int64() <= 1;
@@ -960,10 +934,10 @@ namespace corona
 			co_return false;
 		}
 
-		co_await test.erase<return_type>(1);
-		co_await test.erase<return_type>(7);
+		co_await test.erase(1);
+		co_await test.erase(7);
 
-		auto testi = co_await test.query<return_type>([tests](int _index, json_node& item) -> bool {
+		auto testi = co_await test.query([tests](int _index, json_node& item) -> bool {
 			return (item.object_id == 7);
 			});
 
@@ -972,14 +946,10 @@ namespace corona
 			co_return false;
 		}
 		 
-		db_contents = test.query<return_type>([tests](int _index, json_node& item) {
+		db_contents = co_await test.query([tests](int _index, json_node& item) {
 			return true;
-			},
-			[](json& _dest_array, int _index, json_node& _item) {
-				json new_json = _item.data;
-				new_json.put_member_i64("ObjectId", _item.object_id);
-				_dest_array.put_element(-1, new_json);
-			});
+			}
+		);
 
 		bool any_iteration_fails = db_contents.any([](json& _item)->bool {
 			int64_t object_id = _item["ObjectId"].get_int64();
