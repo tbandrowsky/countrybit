@@ -42,18 +42,6 @@ namespace corona
 
 	// nesting of transactions
 
-	using user_int64_t = user_transaction<int64_t>;
-	using user_json  = user_transaction<json>;
-
-	using table_int64_t = table_transaction<int64_t>;
-	using table_json  = table_transaction<json>;
-
-	using file_int64_t = file_transaction<int64_t>;
-	using file_json = file_transaction<json>;
-
-	using batch_int64_t = file_batch<int64_t>;
-	using batch_json = file_batch<json>;
-
 	class data_block
 	{
 	public:
@@ -449,17 +437,6 @@ namespace corona
 			return *this;
 		}
 
-		template <typename calling_awaitable> table_transaction<bool, calling_awaitable> 
-		operator[](const KEY key)
-		{
-			relative_ptr_type n = find_node(key);
-			if (n == null_row) {
-				throw std::invalid_argument("bad key");
-			}
-			json_node jn = co_await get_node<table_transaction<json_node>>(database_file, n);
-			co_return jn;
-		}
-
 		template <typename calling_awaitable> table_transaction<bool, calling_awaitable> contains(const KEY key) const
 		{
 			relative_ptr_type result = co_await this->find_node<table_transaction<bool>>(key);
@@ -759,13 +736,13 @@ namespace corona
 		return output;
 	}
 
-	bool test_json_table(corona::application& _app);
+	user_transaction<bool> test_json_table(corona::application& _app);
 
 	file_batch<> test_file(corona::application& _app);
 	file_transaction<int64_t> test_data_block(corona::application& _app);
 	file_transaction<int64_t> test_json_node(corona::application& _app);
 
-	file_batch<int64_T> test_file(corona::application& _app)
+	file_batch<> test_file(corona::application& _app)
 	{
 
 		std::cout << "\ntest_file: entry, thread:" << ::GetCurrentThreadId() << std::endl;
@@ -850,12 +827,14 @@ namespace corona
 	{
 		long object_id = 100;
 
+		using return_type = user_transaction<bool>;
+
 		file f = _app.create_file(FOLDERID_Documents, "corona_table.ctb");
 
 		object_id = 5;
 		json_table test(&f);
-		test.put<user_transaction<bool>>(object_id, R"({ "Name" : "Joe" })");
-		json_node t1 = co_await test[object_id];
+		test.put<return_type>(object_id, R"({ "Name" : "Joe" })");
+		json_node t1 = co_await test.get<return_type>(object_id);
 
 		if (t1.object_id != object_id || t1.data["Name"].get_string() != "Joe")
 		{
@@ -864,16 +843,16 @@ namespace corona
 		}
 
 		object_id = 7;
-		test.put<user_transaction<bool>>(object_id, R"({ "Name" : "Jack" })");
-		json_node t2 = co_await test[object_id];
+		test.put<return_type>(object_id, R"({ "Name" : "Jack" })");
+		json_node t2 = co_await test.get<return_type>(object_id);
 		if (t2.object_id != object_id || t2.data["Name"].get_string() != "Jack")
 		{
 			std::cout << __LINE__ << " fail: wrong inserted value." << std::endl;
 			co_return false;
 		}
 
-		test.put<user_transaction<bool>>(object_id, R"({ "Name" : "Jill" })");
-		json_node t3 = co_await test[object_id];
+		co_await test.put<return_type>(object_id, R"({ "Name" : "Jill" })");
+		json_node t3 = co_await test.get<return_type>(object_id);
 		if (t2.object_id != object_id || t2.data["Name"].get_string() != "Jill")
 		{
 			std::cout << __LINE__ << " fail: wrong updated value." << std::endl;
@@ -882,7 +861,7 @@ namespace corona
 
 		try
 		{
-			json_node t5 = co_await test.get<user_transaction<json_node>>(6);
+			json_node t5 = co_await test.get<return_type>(6);
 			std::cout << __LINE__ << " fail: wrong null access." << std::endl;
 			co_return false;
 		}
@@ -891,79 +870,79 @@ namespace corona
 			;
 		}
 
-		auto db_contents = test.query([](int _index, json_node& item) {
+		auto db_contents = co_await test.query<return_type>([](int _index, json_node& item) {
 			return true;
 			});
 
 		if (db_contents.size() != 2)
 		{
 			std::cout << __LINE__ << " fail: wrong number of result elements." << std::endl;
-			return false;
+			co_return false;
 		}
 
 		object_id = 2;
-		test.put(object_id, R"({ "Name" : "Sidney" })");
-		t2 = test[object_id];
+		co_await test.put<return_type>(object_id, R"({ "Name" : "Sidney" })");
+		t2 = co_await test.get<return_type>(object_id);
 		if (t2.object_id != object_id || t2.data["Name"].get_string() != "Sidney")
 		{
 			std::cout << __LINE__ << " fail: wrong inserted value." << std::endl;
-			return false;
+			co_return false;
 		}
 
 		object_id = 7;
-		test.put(object_id, R"({ "Name" : "Zeus" })");
-		t2 = test[object_id];
+		test.put<return_type>(object_id, R"({ "Name" : "Zeus" })");
+		t2 = co_await test.get<return_type>(object_id);
 		if (t2.object_id != object_id || t2.data["Name"].get_string() != "Zeus")
 		{
 			std::cout << __LINE__ << " fail: wrong inserted value." << std::endl;
-			return false;
+			co_return false;
 		}
 
 		object_id = 1;
-		test.put(object_id, R"({ "Name" : "Canada" })");
-		t2 = test[object_id];
+		test.put<return_type>(object_id, R"({ "Name" : "Canada" })");
+		t2 = co_await test.get<return_type>(object_id);
 		if (t2.object_id != object_id || t2.data["Name"].get_string() != "Canada")
 		{
 			std::cout << __LINE__ << " fail: wrong inserted value." << std::endl;
-			return false;
+			co_return false;
 		}
 
 		object_id = 1;
-		test.put(object_id, R"({ "Name" : "Maraca" })");
-		t2 = test[object_id];
+		test.put<return_type>(object_id, R"({ "Name" : "Maraca" })");
+		t2 = co_await test.get<return_type>(object_id);
 		if (t2.object_id != object_id || t2.data["Name"].get_string() != "Maraca")
 		{
 			std::cout << __LINE__ << " fail: wrong updated value." << std::endl;
-			return false;
+			co_return false;
 		}
 
-		db_contents = test.query([](int _index, json_node& item) {
+		db_contents = test.query<return_type>([](int _index, json_node& item) {
 			return true;
 			});
 
 		if (test.size() != 4)
 		{
 			std::cout << __LINE__ << " fail: wrong number of result elements in test." << std::endl;
-			return false;
+			co_return false;
 		}
 
 		if (db_contents.size() != 4)
 		{
 			std::cout << __LINE__ << " fail: wrong number of result elements." << std::endl;
-			return false;
+			co_return false;
 		}
 
 		int tests[4] = { 1, 2, 5, 7 };
 		int k = 0;
 
-		db_contents = test.query([tests](int _index, json_node& item) {
+		db_contents = test.query<return_type>([tests](int _index, json_node& item) {
 			if (tests[_index] != item.object_id) {
 				std::cout << __LINE__ << " order failed" << std::endl;
 				return false;
 			}
 			});
 
-		db_contents = test.query([tests](int _index, json_node& item) {
+		db_contents = test.query<return_type>([tests](int _index, json_node& item) {
 			return (item.object_id > 1);
 			},
 			[](json& _dest_array, int _index, json_node& _item) {
@@ -978,22 +957,22 @@ namespace corona
 
 		if (any_fails) {
 			std::cout << __LINE__ << " query failed" << std::endl;
-			return false;
+			co_return false;
 		}
 
-		test.erase(1);
-		test.erase(7);
+		co_await test.erase<return_type>(1);
+		co_await test.erase<return_type>(7);
 
-		auto testi = test.query([tests](int _index, json_node& item) -> bool {
+		auto testi = co_await test.query<return_type>([tests](int _index, json_node& item) -> bool {
 			return (item.object_id == 7);
 			});
 
 		if (testi.size() > 0) {
 			std::cout << __LINE__ << " retrieved a deleted item" << std::endl;
-			return false;
+			co_return false;
 		}
-
-		db_contents = test.query([tests](int _index, json_node& item) {
+		 
+		db_contents = test.query<return_type>([tests](int _index, json_node& item) {
 			return true;
 			},
 			[](json& _dest_array, int _index, json_node& _item) {
@@ -1009,10 +988,10 @@ namespace corona
 
 		if (any_iteration_fails) {
 			std::cout << __LINE__ << " iteration after delete failed." << std::endl;
-			return false;
+			co_return false;
 		}
 
-		return true;
+		co_return true;
 	}
 
 }

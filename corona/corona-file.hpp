@@ -94,8 +94,6 @@ namespace corona
 		};
 	};
 
-	using empty_coroutine = std::coroutine_handle<empty_awaiter::promise_type>;
-
 	template <typename transaction_result> 	class user_transaction
 	{
 	public:
@@ -201,7 +199,7 @@ namespace corona
 		int64_t location;
 	};
 
-	template <typename transaction_result, typename parent_coro = empty_coroutine>
+	template <typename transaction_result, typename parent_awaiter = empty_awaiter>
 	class table_transaction
 	{
 	public:
@@ -259,7 +257,7 @@ namespace corona
 		}
 
 		// this creates the 
-		void await_suspend(parent_coro handle)
+		void await_suspend(std::coroutine_handle<promise_type> handle)
 		{
 			debug_functions&& std::cout << "table_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
 			handle.resume();
@@ -267,7 +265,7 @@ namespace corona
 		}
 
 		// this creates the 
-		void await_suspend(std::coroutine_handle<promise_type> handle)
+		void await_suspend(std::coroutine_handle<typename parent_awaiter::promise_type> handle)
 		{
 			debug_functions&& std::cout << "table_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
 			handle.resume();
