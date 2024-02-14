@@ -697,7 +697,7 @@ namespace corona
 		table_private_transaction<json_node> next_node(json_node _node)
 		{
 			if (_node.is_empty())
-				return _node;
+				co_return _node;
 
 			json_node nd = co_await get_node(database_file, _node.forward[0]);
 			co_return nd;
