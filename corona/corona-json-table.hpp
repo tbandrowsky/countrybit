@@ -25,6 +25,8 @@ namespace corona
 
 	const int debug_json_table = 0;
 
+	using db_object_id_type = int64_t;
+
 	// data blocks
 	class data_block;
 	std::ostream& operator <<(std::ostream& output, data_block& src);
@@ -43,9 +45,9 @@ namespace corona
 	{
 	public:
 
-		block_header_struct header;
-		buffer				bytes;
-		int64_t				current_location;
+		block_header_struct				header;
+		buffer							bytes;
+		relative_ptr_type				current_location;
 
 		data_block()
 		{
@@ -72,7 +74,7 @@ namespace corona
 			bytes.init(_size_bytes);
 		}
 
-		file_batch read(file* _file, int64_t location)
+		file_batch read(file* _file, relative_ptr_type location)
 		{
 			current_location = location;
 
@@ -173,10 +175,10 @@ namespace corona
 	{
 	public:
 
-		int64_t					object_id;
-		std::vector<int64_t>	forward;
-		json					data;
-		data_block				storage;
+		db_object_id_type				object_id;
+		std::vector<relative_ptr_type>	forward;
+		json							data;
+		data_block						storage;
 
 		json_node()
 		{
@@ -217,7 +219,7 @@ namespace corona
 			forward.clear();
 			auto forwardjson = _src["Forward"];
 			forwardjson.for_each([this](json& _item) {
-				int64_t ptr = _item;
+				relative_ptr_type ptr = _item;
 				forward.push_back(ptr);
 				});
 			return *this;
@@ -228,10 +230,10 @@ namespace corona
 			return put_json(_src);
 		}
 
-		file_batch read(file* _file, int64_t location)
+		file_batch read(file* _file, relative_ptr_type location)
 		{
 			debug_json_table&& std::cout << "read:" << *this << std::endl;
-			int64_t status = co_await storage.read(_file, location);
+			relative_ptr_type status = co_await storage.read(_file, location);
 
 			if (status > -1)
 			{
@@ -250,7 +252,7 @@ namespace corona
 
 			storage = json_payload;
 
-			int64_t result = co_await storage.write(_file);
+			relative_ptr_type result = co_await storage.write(_file);
 			co_return result;
 		}
 
@@ -261,7 +263,7 @@ namespace corona
 
 			storage = json_payload;
 
-			int64_t result = co_await storage.append(_file);
+			relative_ptr_type result = co_await storage.append(_file);
 
 			co_return result;
 		}
@@ -276,7 +278,7 @@ namespace corona
 	template <typename poco_type> class poco_node
 	{
 	public:
-		int64_t					object_id;
+		db_object_id_type		object_id;
 		poco_type				data;
 		data_block				storage;
 
@@ -292,13 +294,13 @@ namespace corona
 			return *this;
 		}
 
-		file_batch read(file* _file, int64_t location)
+		file_batch read(file* _file, relative_ptr_type location)
 		{
 			storage.init(sizeof(poco_type));
 
 			debug_json_table&& std::cout << "read:" << *this << std::endl;
 
-			int64_t status = co_await storage.read(_file, location);
+			relative_ptr_type status = co_await storage.read(_file, location);
 
 			if (status > -1)
 			{
@@ -317,7 +319,7 @@ namespace corona
 
 			debug_json_table&& std::cout << "write:" << *this << std::endl;
 
-			int64_t status = co_await storage.write(_file);
+			relative_ptr_type status = co_await storage.write(_file);
 
 			co_return status;
 		}
@@ -330,7 +332,7 @@ namespace corona
 
 			debug_json_table&& std::cout << "append:" << *this << std::endl;
 
-			int64_t status = co_await storage.write(_file);
+			relative_ptr_type status = co_await storage.write(_file);
 
 			co_return status;
 		}
@@ -351,10 +353,10 @@ namespace corona
 
 		const int SORT_ORDER = 1;
 		
-		using KEY = int64_t;
+		using KEY = db_object_id_type;
 		using VALUE = json_node;
 
-		file_transaction<int64_t> create_header()
+		file_transaction<relative_ptr_type> create_header()
 		{
 			index_header.data.header_node_location = co_await index_header.append(database_file);
 			index_header.data.count = 0;
@@ -423,6 +425,18 @@ namespace corona
 			index_header = _src.index_header;
 			database_file = _src.database_file;
 			return *this;
+		}
+
+		table_transaction<int64_t> create()
+		{
+			int64_t location = co_await create_header();
+			co_return location;
+		}
+
+		table_transaction<relative_ptr_type> open(relative_ptr_type location)
+		{
+			co_await index_header.read(database_file, location);
+			co_return location;
 		}
 
 		table_transaction<bool> contains(const KEY key) const
@@ -504,7 +518,7 @@ namespace corona
 			json_node jn;
 			int index = 0;
 			for (jn = co_await first_node(); !jn.is_empty(); jn = co_await next_node(jn)) {
-				if (_where_clause == nullptr || _where_clause(index, jn)) {
+				if (!_where_clause || _where_clause(index, jn)) {
 					jn.data.put_member_i64("ObjectId", jn.object_id);
 					ja.put_element(-1, jn.data);
 					index++;
@@ -532,7 +546,7 @@ namespace corona
 
 		// compare a node to a key for equality
 
-		compare_transaction compare(relative_ptr_type _node, int64_t _id) const
+		compare_transaction compare(relative_ptr_type _node, KEY _id) const
 		{
 			if (_node != null_row)
 			{
@@ -553,7 +567,7 @@ namespace corona
 		}
 
 		table_private_transaction<relative_ptr_type>
-		find_node(relative_ptr_type* update, int64_t _key) const
+		find_node(relative_ptr_type* update, KEY _key) const
 		{
 			relative_ptr_type found = null_row, p, q;
 
@@ -579,7 +593,7 @@ namespace corona
 		}
 
 		table_private_transaction<relative_ptr_type>
-		find_first_gte(relative_ptr_type* update, int64_t _key)
+		find_first_gte(relative_ptr_type* update, KEY _key)
 		{
 			relative_ptr_type found = null_row, p, q, last_link;
 

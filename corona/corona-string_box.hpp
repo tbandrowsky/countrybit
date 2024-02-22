@@ -779,12 +779,13 @@ namespace corona {
 			}
 		}
 
-		void copy(const wchar_t* s)
+		void copy(const wchar_t* s, int _s_length = -1)
 		{
 			wchar_t* d = &data[0];
 			int l = 0;
+			int end_marker = (_s_length == -1 || _s_length >= last_char) ? last_char : _s_length;
 
-			while (l <= last_char && *s)
+			while (l <= end_marker && *s)
 			{
 				*d = *s;
 				l++;

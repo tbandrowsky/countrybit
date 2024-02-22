@@ -173,11 +173,13 @@ namespace corona {
 		inline bool wasShutDownOrdered() { return shutDownOrdered; }
 
 		job_queue();
+
 		virtual ~job_queue();
 
 		void start(int _numThreads);
+		void listen(HANDLE _otherQueue);
 
-		void post_ui_message (UINT msg, WPARAM wparam, LPARAM lparam);
+		void post_ui_message(UINT msg, WPARAM wparam, LPARAM lparam);
 		void add_job(job* _jobMessage);
 		void shutDown();
 		void kill();
@@ -415,6 +417,13 @@ namespace corona {
 					threads.push_back(std::thread(jobQueueThread, this));
 				}
 			}
+		}
+	}
+
+	void job_queue::listen(HANDLE _otherQueue)
+	{
+		if (CreateIoCompletionPort(_otherQueue, ioCompPort, (ULONG_PTR)_otherQueue, 0) == NULL) {
+			throw std::invalid_argument("job_queue:cannot listen.");
 		}
 	}
 

@@ -40,6 +40,10 @@ namespace corona
 		{
 			return "";
 		}
+		virtual std::string get_type_name()
+		{
+			return typeid(*this).name();
+		}
 		virtual std::shared_ptr<json_value> clone()
 		{
 			return std::make_shared<json_value>();
