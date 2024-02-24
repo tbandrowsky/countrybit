@@ -921,6 +921,12 @@ namespace corona
 			debug_functions&& std::cout << "table_private_transaction: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
 		}
 
+		void await_suspend(std::coroutine_handle<database_transaction<json>::promise_type> handle)
+		{
+			debug_functions&& std::cout << "file_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
+			handle.resume();
+			debug_functions&& std::cout << "file_transaction: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
+		}
 
 		void await_suspend(std::coroutine_handle<database_transaction<relative_ptr_type>::promise_type> handle)
 		{

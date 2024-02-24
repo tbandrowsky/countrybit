@@ -193,7 +193,6 @@ namespace corona
 			}
 
 			co_return result;
-
 		}
 
 		lockable header_lock;
@@ -272,7 +271,24 @@ namespace corona
 
 		database_transaction<json> put_class(json _class_definition)
 		{
-			;
+			json result = check_class(_class_definition);
+
+			if (result["Success"]) {
+				db_object_id_type object_id;
+				if (_class_definition.has_member("ObjectId")) {
+					object_id = _class_definition["ObjectId"];
+				}
+				else 
+				{
+					object_id = co_await get_next_object_id();
+					_class_definition.put_member_i64("ObjectId", object_id);
+				}
+				std::string className = _class_definition["ClassName"];
+				classes_index.data.put_member_i64(className, object_id);
+				co_await classes_index.write(database_file);
+				result = create_response(true, "Ok");
+			}
+			co_return result;
 		}
 
 		database_transaction<json> create_object(std::string _class_name)
@@ -370,9 +386,48 @@ namespace corona
 			co_return result;
 		}
 
-		database_transaction<json> copy_object(json _object_definition)
+		database_transaction<json> get_object(json _object_search)
 		{
-			;
+
+			json response;
+
+			std::string			class_name;
+			db_object_id_type	object_id;
+
+			if (!_object_search.is_object() || !_object_search.has_member("ClassName") || !_object_search.has_member("ObjectId"))
+			{
+				response = create_response(false, "Invalid get_object, must have ClassName and ObjectId as members", _object_search, 0 );
+				co_return response;
+			}
+
+			class_name = _object_search["ClassName"];
+			object_id = _object_search["ObjectId"];
+
+			json class_def = co_await get_class(class_name);
+
+			if (class_def["Success"])
+			{
+				json obj = class_def["Data"];
+				json class_def = class_def["ClassDefinition"];
+
+				relative_ptr_type table_location = -1;
+				table_location = class_def["TableLocation"];
+
+				json_table jt(database_file);
+				jt.open(table_location);
+				co_await jt.get(object_id, _object_definition);
+			}
+
+			co_return _object_definition;
+		}
+
+		database_transaction<json> copy_object(db_object_id_type _object_id, json _object_changes)
+		{
+			json object_copy = co_await get_object( _object_id );
+
+			co_await object_copy.put_member("ObjectId", object_id);
+
+			co_return object_copy;
 		}
 
 		database_transaction<json> delete_object(json _class_definition)
