@@ -9,21 +9,20 @@ namespace corona
 	class corona_db_header_struct
 	{
 	public:
-		int64_t object_id;
-		relative_ptr_type directory_location;
+		int64_t			  class_id;
+		int64_t			  object_id;
 		relative_ptr_type classes_location;
 		relative_ptr_type frames_location;
 		relative_ptr_type classes_index_location;
-		relative_ptr_type fields_index_location;
+		relative_ptr_type objects_location;
 
 		corona_db_header_struct() 
 		{
 			object_id = -1;
-			directory_location = -1;
 			classes_location = -1;
 			frames_location = -1;
 			classes_index_location = -1;
-			fields_index_location = -1;
+			objects_location = -1;
 		}
 	};
 
@@ -36,6 +35,7 @@ namespace corona
 		json_table classes;
 		json_table frames;
 		json_node classes_index;
+		json_table objects;
 
 		file* database_file;
 
@@ -202,7 +202,8 @@ namespace corona
 		corona_database(file *_file) 
 			: database_file(_file),
 			classes(_file),
-			frames(_file)
+			frames(_file),
+			objects(_file)
 		{
 			;
 		}
@@ -230,6 +231,7 @@ namespace corona
 			header.data.classes_location = co_await classes.create();
 			header.data.frames_location = co_await frames.create();
 			header.data.classes_index_location = co_await classes_index.append(database_file);
+			header.data.objects_location = co_await objects.create();
 
 			co_await header.write(database_file);
 			co_return header_location;
@@ -363,10 +365,7 @@ namespace corona
 			if (result["Success"])
 			{
 				json obj = result["Data"];
-				json class_def = result["ClassDefinition"];
 
-				relative_ptr_type table_location = -1;
-				table_location = class_def["TableLocation"];
 				db_object_id_type object_id = -1;
 
 				if (obj.has_member("ObjectId")) 
@@ -378,61 +377,63 @@ namespace corona
 					object_id = co_await get_next_object_id();
 				}
 
-				json_table jt(database_file);
-				jt.open(table_location);
-				co_await jt.put(object_id, _object_definition);
+				relative_ptr_type put_result = co_await objects.put(object_id, _object_definition);
+
+				result = create_response(true, "Ok");
+			}
+			else 
+			{
+				result = create_response(false, "Invalid object", _object_definition, 0);
 			}
 
 			co_return result;
 		}
 
-		database_transaction<json> get_object(json _object_search)
+		database_transaction<json> get_object(db_object_id_type _object_id)
 		{
-
 			json response;
 
-			std::string			class_name;
-			db_object_id_type	object_id;
+			co_await objects.get(_object_id);
 
-			if (!_object_search.is_object() || !_object_search.has_member("ClassName") || !_object_search.has_member("ObjectId"))
-			{
-				response = create_response(false, "Invalid get_object, must have ClassName and ObjectId as members", _object_search, 0 );
-				co_return response;
-			}
-
-			class_name = _object_search["ClassName"];
-			object_id = _object_search["ObjectId"];
-
-			json class_def = co_await get_class(class_name);
-
-			if (class_def["Success"])
-			{
-				json obj = class_def["Data"];
-				json class_def = class_def["ClassDefinition"];
-
-				relative_ptr_type table_location = -1;
-				table_location = class_def["TableLocation"];
-
-				json_table jt(database_file);
-				jt.open(table_location);
-				co_await jt.get(object_id, _object_definition);
-			}
-
-			co_return _object_definition;
+			co_return response;
 		}
 
-		database_transaction<json> copy_object(db_object_id_type _object_id, json _object_changes)
+		database_transaction<json> copy_object(db_object_id_type _object_id, std::function<bool(json _object_changes)> _fn)
 		{
 			json object_copy = co_await get_object( _object_id );
 
-			co_await object_copy.put_member("ObjectId", object_id);
+			if (!object_copy["Success"])
+				co_return object_copy;
 
-			co_return object_copy;
+			json response;
+
+			if (_fn(object_copy)) 
+			{
+				json new_object = object_copy["Data"];
+				db_object_id_type new_object_id = co_await get_next_object_id();
+				new_object.put_member("ObjectId", new_object_id);
+				json result = co_await put_object(new_object);
+				if (result["Success"]) {
+					response = create_response(true, "Ok", result["Data"], 0);
+				}
+				else 
+				{
+					response = result;
+				}
+			}
+			else 
+			{
+				response = create_response(true, "Ok, not copied");
+			}
+
+			co_return response;
 		}
 
-		database_transaction<json> delete_object(json _class_definition)
+		database_transaction<json> delete_object(db_object_id_type _object_id)
 		{
-			;
+			bool success = co_await objects.erase(_object_id);
+			json ret = create_response(success, "Delete result", 0.0);
+			co_return ret;
 		}
 
 	};

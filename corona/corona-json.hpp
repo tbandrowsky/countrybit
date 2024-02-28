@@ -176,10 +176,12 @@ namespace corona
 		{
 			return std::format("{}", value);
 		}
+
 		virtual std::string get_type_prefix()
 		{
 			return "$int64";
 		}
+
 		virtual std::shared_ptr<json_value> clone()
 		{
 			auto t = std::make_shared<json_int64>();
@@ -620,6 +622,24 @@ namespace corona
 			return *this;
 		}
 
+		void put_members(json& _member)
+		{
+			if (!object_impl) {
+				throw std::logic_error("Target is not an object");
+			}
+
+			if (!_member.object_impl) {
+				throw std::logic_error("Source is not an object");
+			}
+
+			auto members = _member.get_members();
+
+			for (auto src : members) 
+			{
+				put_member_value(src.first, src.second);
+			}
+		}
+
 		json put_member(std::string _key, json& _member)
 		{
 			if (!object_impl) {
@@ -714,6 +734,16 @@ namespace corona
 			return *this;
 		}
 
+		json put_member_value(std::string _key, std::shared_ptr<json_value> _obj)
+		{
+			if (!object_impl) {
+				throw std::logic_error("Not an object");
+			}
+			auto new_object = _obj->clone();
+			object_impl->members[_key] = new_object;
+			return *this;
+		}
+
 		json put_member_object(std::string _key, json& _object)
 		{
 			if (!object_impl) {
@@ -723,6 +753,27 @@ namespace corona
 			auto new_object = existing_object->clone();
 			object_impl->members[_key] = new_object;
 			return *this;
+		}
+
+		json extract(std::initializer_list<std::string> _fields)
+		{
+			if (!object_impl) 
+			{
+				throw std::logic_error("Not an object");
+			}
+
+			json_parser jp;
+			json jn = jp.create_object();
+
+			for (auto f : _fields) 
+			{
+				if (object_impl->members.contains(f)) {
+					auto fn = object_impl->members[f];
+					jn.put_member_value(f, fn);
+				}
+			}
+
+			return jn;
 		}
 
 		std::map<std::string, std::shared_ptr<json_value>> get_members()
@@ -899,6 +950,92 @@ namespace corona
 				array_impl->elements[_index] = new_object;
 			}
 			return *this;
+		}
+
+		int compare(json& _item)
+		{
+			int comparison = 0;
+
+			if (!is_object() && !_item.is_object()) 
+			{
+				throw std::logic_error("Both objects must be string");
+			}
+
+			for (auto m : object_impl->members)
+			{
+				std::string key = m.first;
+
+				if (!_item.has_member(key)) 
+				{
+					return 1;
+				}				
+
+				auto member_dest = _item[key];
+				auto member_src = json(m.second);
+
+				if (member_src.is_string()) 
+				{
+					std::string tst_src, tst_dst;
+					tst_src = member_dest[member_src];
+					tst_dst = member_src;
+
+					comparison = stricmp(tst_src.c_str(), tst_dst.c_str());
+				}
+				else if (member_src.is_int64())
+				{
+					int64_t itst_src, itst_dst;
+					itst_src = member_dest[member_src];
+					itst_dst = member_src;
+
+					if (itst_src < itst_dst) {
+						comparison = -1;
+					}
+					else if (itst_src > itst_dst) {
+						comparison = 1;
+					}
+					else if (itst_src == itst_dst) {
+						comparison = 0;
+					}
+				}
+				else if (member_src.is_double())
+				{
+					double dtst_src, dtst_dst;
+					dtst_src = member_dest[member_src];
+					dtst_dst = member_src;
+
+					if (dtst_src < dtst_dst) {
+						comparison = -1;
+					}
+					else if (dtst_src > dtst_dst) {
+						comparison = 1;
+					}
+					else if (dtst_src == dtst_dst) {
+						comparison = 0;
+					}
+				}
+				else if (member_src.is_datetime())
+				{
+					LARGE_INTEGER dtst_src, dtst_dst;
+					dtst_src = member_dest[member_src];
+					dtst_dst = member_src;
+
+					if (dtst_src.QuadPart < dtst_dst.QuadPart) {
+						comparison = -1;
+					}
+					else if (dtst_src.QuadPart > dtst_dst.QuadPart) {
+						comparison = 1;
+					}
+					else if (dtst_src.QuadPart == dtst_dst.QuadPart) {
+						comparison = 0;
+					}
+				}
+
+				if (comparison) {
+					return comparison;
+				}
+			}
+
+			return 0;
 		}
 
 		json for_each(std::function<void(json& _item)> _transform)
@@ -1162,6 +1299,39 @@ namespace corona
 			parse_errors.clear();
 			auto jo = std::make_shared<json_object>();
 			json jn(jo);
+			return jn;
+		}
+
+		json create_object(std::string _name, std::string _value)
+		{
+			line_number = 1;
+			char_index = 0;
+			parse_errors.clear();
+			auto jo = std::make_shared<json_object>();
+			json jn(jo);
+			jn.put_member(_name, _value);
+			return jn;
+		}
+
+		json create_object(std::string _name, double _value)
+		{
+			line_number = 1;
+			char_index = 0;
+			parse_errors.clear();
+			auto jo = std::make_shared<json_object>();
+			json jn(jo);
+			jn.put_member(_name, _value);
+			return jn;
+		}
+
+		json create_object(std::string _name, int64_t _value)
+		{
+			line_number = 1;
+			char_index = 0;
+			parse_errors.clear();
+			auto jo = std::make_shared<json_object>();
+			json jn(jo);
+			jn.put_member(_name, _value);
 			return jn;
 		}
 

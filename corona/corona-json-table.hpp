@@ -175,14 +175,12 @@ namespace corona
 	{
 	public:
 
-		db_object_id_type				object_id;
 		std::vector<relative_ptr_type>	forward;
 		json							data;
 		data_block						storage;
 
 		json_node()
 		{
-			object_id = -1;
 		}
 
 		bool is_empty()
@@ -195,7 +193,6 @@ namespace corona
 			json_parser jp;
 			data = jp.create_object();
 			forward.clear();
-			object_id = 0;
 		}
 
 		json get_json()
@@ -203,7 +200,6 @@ namespace corona
 			json_parser jp;
 			json payload = jp.create_object();
 			json fow = jp.create_array();
-			payload.put_member("ObjectId", object_id);
 			payload.put_member("Data", data);
 			for (auto pt : forward) {
 				fow.append_element( pt);
@@ -214,7 +210,6 @@ namespace corona
 
 		json_node& put_json(json& _src)
 		{
-			object_id = _src["ObjectId"];
 			data = _src["Data"];
 			forward.clear();
 			auto forwardjson = _src["Forward"];
@@ -271,7 +266,7 @@ namespace corona
 
 	std::ostream& operator <<(std::ostream& output, json_node& src)
 	{
-		output << "json_node:" << src.object_id << " bytes";
+		output << "json_node:" << src.data.to_json();
 		return output;
 	}
 
@@ -351,11 +346,11 @@ namespace corona
 		poco_node<index_header_struct> index_header;
 		file* database_file;
 
-		const int SORT_ORDER = 1;
-		
-		using KEY = db_object_id_type;
+		using KEY = json;
 		using VALUE = json_node;
 
+		const int SORT_ORDER = 1;
+		
 		file_transaction<relative_ptr_type> create_header()
 		{
 			index_header.data.header_node_location = co_await index_header.append(database_file);
@@ -409,6 +404,8 @@ namespace corona
 
 	public:
 
+		std::function<json(json&)> get_key;
+
 		json_table(file* _database_file) : database_file(_database_file)
 		{
 
@@ -427,9 +424,9 @@ namespace corona
 			return *this;
 		}
 
-		table_transaction<int64_t> create()
+		table_transaction<relative_ptr_type> create()
 		{
-			int64_t location = co_await create_header();
+			relative_ptr_type location = co_await create_header();
 			co_return location;
 		}
 
@@ -445,25 +442,27 @@ namespace corona
 			co_return  result != null_row;
 		}
 
-		table_transaction<json_node> get(const KEY key)
+		table_transaction<json> get(const KEY key)
 		{
 			relative_ptr_type n = co_await find_node(key);
 			json_node r = co_await get_node(database_file, n);
-			co_return r;
+			co_return r.data;
 		}
 
 		table_transaction<relative_ptr_type>
-		put(KEY key, VALUE value)
+		put(json value)
 		{
-			relative_ptr_type modified_node = co_await this->update_node(key, [value](VALUE& dest) { dest.data = value.data; });
+			auto key = get_key(value);
+			relative_ptr_type modified_node = co_await this->update_node(key, [value](VALUE& dest) { dest.data = value; });
 			co_return modified_node;
 		}
 
 		table_transaction<relative_ptr_type>
-		put(KEY key, std::string _json)
+		put(std::string _json)
 		{
 			json_parser jp;
 			json jx = jp.parse_object(_json);
+			auto key = get_key(jx);
 			relative_ptr_type modified_node = co_await this->update_node(key, [jx](VALUE& dest) { dest.data = jx; });
 			co_return modified_node;
 		}
@@ -510,7 +509,7 @@ namespace corona
 		}
 
 		table_transaction<json>
-		query(std::function<bool(int _index, json_node& _item)> _where_clause)
+		query(std::function<bool(int _index, json& _item)> _where_clause)
 		{
 			json_parser jp;
 			json ja = jp.create_array();
@@ -518,8 +517,7 @@ namespace corona
 			json_node jn;
 			int index = 0;
 			for (jn = co_await first_node(); !jn.is_empty(); jn = co_await next_node(jn)) {
-				if (!_where_clause || _where_clause(index, jn)) {
-					jn.data.put_member_i64("ObjectId", jn.object_id);
+				if (!_where_clause || _where_clause(index, jn.data)) {
 					ja.put_element(-1, jn.data);
 					index++;
 				}
@@ -546,16 +544,16 @@ namespace corona
 
 		// compare a node to a key for equality
 
-		compare_transaction compare(relative_ptr_type _node, KEY _id) const
+		compare_transaction compare(relative_ptr_type _node, KEY _id_key) const
 		{
 			if (_node != null_row)
 			{
 				json_node nd = co_await get_node(database_file, _node);
-				auto ndkey = nd.object_id;
-
-				if (ndkey < _id)
+				KEY ndkey = get_key( nd.data );
+				int k = ndkey.compare(_id_key);
+				if (k < 0)
 					co_return -SORT_ORDER;
-				else if (ndkey > _id)
+				else if (k > 0)
 					co_return SORT_ORDER;
 				else
 					co_return 0;
@@ -651,7 +649,6 @@ namespace corona
 			}
 
 			qnd = co_await create_node(k);
-			qnd.object_id = _key;
 			predicate(qnd);
 			::InterlockedIncrement64(&index_header.data.count);
 
@@ -718,10 +715,10 @@ namespace corona
 		}
 	};
 
-	std::ostream& operator <<(std::ostream& output, json_table& src)
+	std::ostream& operator <<(std::ostream& output, json_table & src)
 	{
 		bool space = false;
-		table_transaction<json> awaiter = src.query([](int _index, json_node& nd) -> bool { return true; });
+		table_transaction<json> awaiter = src.query([](int _index, json& nd) -> bool { return true; });
 		json j = awaiter.wait();
 		std::string temp = j.to_json_typed_string();
 		output << temp;
@@ -817,43 +814,62 @@ namespace corona
 
 	user_transaction<bool> test_json_table(corona::application& _app)
 	{
-		long object_id = 100;
-
 		using return_type = user_transaction<bool>;
 
 		file f = _app.create_file(FOLDERID_Documents, "corona_table.ctb");
 
-		object_id = 5;
-		json_table test(&f);
-		test.put(object_id, R"({ "Name" : "Joe" })");
-		json_node t1 = co_await test.get(object_id);
+		json_parser jp;
 
-		if (t1.object_id != object_id || t1.data["Name"].get_string() != "Joe")
+		json test_write = jp.create_object();		
+		test_write.put_member_i64("ObjectId", 5);
+		test_write.put_member("Name", "Joe");
+		json test_key = test_write.extract({ "ObjectId" });
+
+		json_table test_table(&f);
+		test_table.get_key = [](json& jn) -> json
+			{
+				return jn.extract( { "ObjectId" });
+			};
+
+		co_await test_table.put(test_write);
+		json test_read = co_await test_table.get(test_key);
+
+		if (test_read.compare(test_write))
 		{
 			std::cout << __LINE__ << " fail: wrong inserted value." << std::endl;
 			co_return false;
 		}
 
-		object_id = 7;
-		test.put(object_id, R"({ "Name" : "Jack" })");
-		json_node t2 = co_await test.get(object_id);
-		if (t2.object_id != object_id || t2.data["Name"].get_string() != "Jack")
+		test_write.put_member_i64("ObjectId", 7);
+		test_write.put_member("Name", "Jack");
+		test_key = test_write.extract({ "ObjectId" });
+		co_await test_table.put(test_write);
+
+		json test_read = co_await test_table.get(test_key);
+
+		if (test_read.compare(test_write))
 		{
 			std::cout << __LINE__ << " fail: wrong inserted value." << std::endl;
 			co_return false;
 		}
 
-		co_await test.put(object_id, R"({ "Name" : "Jill" })");
-		json_node t3 = co_await test.get(object_id);
-		if (t2.object_id != object_id || t2.data["Name"].get_string() != "Jill")
+		test_write.put_member_i64("ObjectId", 7);
+		test_write.put_member("Name", "Jill");
+		test_key = test_write.extract({ "ObjectId" });
+		co_await test_table.put(test_write);
+
+		json test_read = co_await test_table.get(test_key);
+
+		if (test_read.compare(test_write))
 		{
-			std::cout << __LINE__ << " fail: wrong updated value." << std::endl;
+			std::cout << __LINE__ << " fail: wrong inserted value." << std::endl;
 			co_return false;
 		}
 
 		try
 		{
-			json_node t5 = co_await test.get(6);
+			test_key.put_member_i64("ObjectId", 6);
+			json t5 = co_await test_table.get(test_key);
 			std::cout << __LINE__ << " fail: wrong null access." << std::endl;
 			co_return false;
 		}
@@ -862,7 +878,7 @@ namespace corona
 			;
 		}
 
-		auto db_contents = co_await test.query([](int _index, json_node& item) {
+		auto db_contents = co_await test_table.query([](int _index, json& item) {
 			return true;
 			});
 
@@ -872,47 +888,76 @@ namespace corona
 			co_return false;
 		}
 
-		object_id = 2;
-		co_await test.put(object_id, R"({ "Name" : "Sidney" })");
-		t2 = co_await test.get(object_id);
-		if (t2.object_id != object_id || t2.data["Name"].get_string() != "Sidney")
+		test_write.put_member_i64("ObjectId", 2);
+		test_write.put_member("Name", "Sydney");
+		test_key = test_write.extract({ "ObjectId" });
+		co_await test_table.put(test_write);
+
+		json test_read = co_await test_table.get(test_key);
+
+		if (test_read.compare(test_write))
 		{
 			std::cout << __LINE__ << " fail: wrong inserted value." << std::endl;
 			co_return false;
 		}
 
-		object_id = 7;
-		test.put(object_id, R"({ "Name" : "Zeus" })");
-		t2 = co_await test.get(object_id);
-		if (t2.object_id != object_id || t2.data["Name"].get_string() != "Zeus")
+		test_write.put_member_i64("ObjectId", 7);
+		test_write.put_member("Name", "Zeus");
+		test_key = test_write.extract({ "ObjectId" });
+		co_await test_table.put(test_write);
+
+		json test_read = co_await test_table.get(test_key);
+
+		if (test_read.compare(test_write))
 		{
 			std::cout << __LINE__ << " fail: wrong inserted value." << std::endl;
 			co_return false;
 		}
 
-		object_id = 1;
-		test.put(object_id, R"({ "Name" : "Canada" })");
-		t2 = co_await test.get(object_id);
-		if (t2.object_id != object_id || t2.data["Name"].get_string() != "Canada")
+		test_write.put_member_i64("ObjectId", 1);
+		test_write.put_member("Name", "Canada");
+		test_key = test_write.extract({ "ObjectId" });
+		co_await test_table.put(test_write);
+
+		json test_read = co_await test_table.get(test_key);
+
+		if (test_read.compare(test_write))
 		{
 			std::cout << __LINE__ << " fail: wrong inserted value." << std::endl;
 			co_return false;
 		}
 
-		object_id = 1;
-		test.put(object_id, R"({ "Name" : "Maraca" })");
-		t2 = co_await test.get(object_id);
-		if (t2.object_id != object_id || t2.data["Name"].get_string() != "Maraca")
+		test_write.put_member_i64("ObjectId", 7);
+		test_write.put_member("Name", "Zeus");
+		test_key = test_write.extract({ "ObjectId" });
+		co_await test_table.put(test_write);
+
+		json test_read = co_await test_table.get(test_key);
+
+		if (test_read.compare(test_write))
 		{
-			std::cout << __LINE__ << " fail: wrong updated value." << std::endl;
+			std::cout << __LINE__ << " fail: wrong inserted value." << std::endl;
 			co_return false;
 		}
 
-		db_contents = test.query([](int _index, json_node& item) {
+		test_write.put_member_i64("ObjectId", 1);
+		test_write.put_member("Name", "Maraca");
+		test_key = test_write.extract({ "ObjectId" });
+		co_await test_table.put(test_write);
+
+		json test_read = co_await test_table.get(test_key);
+
+		if (test_read.compare(test_write))
+		{
+			std::cout << __LINE__ << " fail: wrong inserted value." << std::endl;
+			co_return false;
+		}
+
+		db_contents = test_table.query([](int _index, json& item) {
 			return true;
 			});
 
-		if (test.size() != 4)
+		if (test_table.size() != 4)
 		{
 			std::cout << __LINE__ << " fail: wrong number of result elements in test." << std::endl;
 			co_return false;
@@ -924,23 +969,23 @@ namespace corona
 			co_return false;
 		}
 
-		int tests[4] = { 1, 2, 5, 7 };
+		int64_t tests[4] = { 1, 2, 5, 7 };
 		int k = 0;
 
-		db_contents = test.query([tests](int _index, json_node& item) {
-			if (tests[_index] != item.object_id) {
+		db_contents = test_table.query([tests](int _index, json& _item) {
+			if (tests[_index] != (int64_t)_item["ObjectId"]) {
 				std::cout << __LINE__ << " order failed" << std::endl;
 				return false;
 			}
 			});
 
-		db_contents = test.query([tests](int _index, json_node& item) {
-			return (item.object_id > 1);
+		db_contents = test_table.query([tests](int _index, json& _item) {
+			return (_item["ObjectId"].get_int64() > 1i64);
 			}
 		);
 
 		bool any_fails = db_contents.any([](json& _item)->bool {
-			return _item["ObjectId"].get_int64() <= 1;
+			return _item["ObjectId"].get_int64() <= 1i64;
 			});
 
 		if (any_fails) {
@@ -948,11 +993,14 @@ namespace corona
 			co_return false;
 		}
 
-		co_await test.erase(1);
-		co_await test.erase(7);
+		test_key.put_member_i64("ObjectId", 1);
+		co_await test_table.erase(test_key);
 
-		auto testi = co_await test.query([tests](int _index, json_node& item) -> bool {
-			return (item.object_id == 7);
+		test_key.put_member_i64("ObjectId", 7);
+		co_await test_table.erase(test_key);
+
+		auto testi = co_await test_table.query([tests](int _index, json& item) -> bool {
+			return (item["ObjectId"].get_int64() == 7);
 			});
 
 		if (testi.size() > 0) {
@@ -960,7 +1008,7 @@ namespace corona
 			co_return false;
 		}
 		 
-		db_contents = co_await test.query([tests](int _index, json_node& item) {
+		db_contents = co_await test_table.query([tests](int _index, json& item) {
 			return true;
 			}
 		);
