@@ -9,33 +9,34 @@ namespace corona
 	class corona_db_header_struct
 	{
 	public:
-		int64_t			  class_id;
 		int64_t			  object_id;
 		relative_ptr_type classes_location;
+		relative_ptr_type class_objects_location;
 		relative_ptr_type frames_location;
-		relative_ptr_type classes_index_location;
 		relative_ptr_type objects_location;
 
 		corona_db_header_struct() 
 		{
 			object_id = -1;
 			classes_location = -1;
+			class_objects_location = -1;
 			frames_location = -1;
-			classes_index_location = -1;
 			objects_location = -1;
 		}
 	};
 
 	using corona_db_header = poco_node<corona_db_header_struct>;
+	using class_method_key = std::tuple<std::string, std::string>;
 
 	class corona_database
 	{
 		corona_db_header header;
 
 		json_table classes;
+		json_table class_objects;
 		json_table frames;
-		json_node classes_index;
 		json_table objects;
+		std::map<class_method_key, json_function_function> functions;
 
 		file* database_file;
 
@@ -43,10 +44,11 @@ namespace corona
 			{ "object", true },
 			{ "array", true },
 			{ "number", true },
-			{ "string", true },
 			{ "int64", true },
+			{ "string", true },
+			{ "bool", true },
 			{ "datetime", true },
-			{ "objectref", true }
+			{ "function", true }
 		};
 
 		json create_response(bool _success,
@@ -85,7 +87,7 @@ namespace corona
 			return j;
 		}
 
-		json check_class(json _class_definition)
+		database_transaction<json> check_class(json _class_definition)
 		{
 			json result;
 
@@ -95,7 +97,12 @@ namespace corona
 			{
 				std::string bc = _class_definition["BaseClass"];
 
-				if (!classes_index.data.has_member(bc)) 
+				json_parser jp;
+				json class_key = jp.create_object("ClassName", bc);
+
+				bool has_class = co_await classes.contains(class_key);
+
+				if (!has_class) 
 				{
 					result = create_response(false, "Base class not found", _class_definition, 0);
 				}
@@ -129,7 +136,7 @@ namespace corona
 						if (!allowed_field_types.contains(field_type)) 
 						{
 							result = create_response(false, "Bad field", fields_object, 0);
-							return result;
+							co_return result;
 						}
 					}
 					else if (jp.is_object() || jp.is_array())
@@ -143,7 +150,7 @@ namespace corona
 				}
 			}
 
-			return result;
+			co_return result;
 		}
 
 		database_transaction<json> check_object(json _object_definition)
@@ -166,7 +173,7 @@ namespace corona
 
 			std::string class_name = _object_definition["ClassName"];		
 
-			json class_definition = co_await get_class(class_name);
+			json class_definition = co_await get_class(_object_definition);
 
 			if (class_definition["Success"]) 
 			{
@@ -202,10 +209,22 @@ namespace corona
 		corona_database(file *_file) 
 			: database_file(_file),
 			classes(_file),
+			class_objects(_file),
 			frames(_file),
 			objects(_file)
 		{
-			;
+			classes.get_key = [](json& _item) {
+				return _item.extract({ "ClassName" } );
+				};
+			class_objects.get_key = [](json& _item) {
+				return _item.extract({ "ClassName", "ObjectId" });
+				};
+			frames.get_key = [](json& _item) {
+				return _item.extract({ "FrameName" });
+				};
+			objects.get_key = [](json& _item) {
+				return _item.extract({ "ObjectId" });
+				};
 		}
 
 		table_transaction<db_object_id_type> get_next_object_id()
@@ -230,45 +249,93 @@ namespace corona
 			header.data.object_id = 1;
 			header.data.classes_location = co_await classes.create();
 			header.data.frames_location = co_await frames.create();
-			header.data.classes_index_location = co_await classes_index.append(database_file);
 			header.data.objects_location = co_await objects.create();
+			header.data.class_objects_location = co_await class_objects.create();
+
+			json_parser jp;
+
+			std::string object_base_class_string = R"(
+{
+	"ClassName" : "SysObjectBase",
+	"ClassDescription" : "Base Class of All Objects",
+	"Fields" : {			
+			"ObjectId" : "int64",
+			"ClassName" : "string",
+			"Activity" : "array"
+	}
+}
+)";
+			json object_base_class = jp.parse_object(object_base_class_string);
+			co_await put_class(object_base_class);
+
+			std::string user_base_class_string = R"(
+{
+	"ClassName" : "SysUserBase",
+	"ClassDescription" : "Base Class of All Users",
+	"Fields" : {			
+			"ObjectId" : "int64",
+			"ClassName" : "string",
+			"Activity" : "array"
+	}
+}
+)";
+			json object_base_class = jp.parse_object(object_base_class_string);
+			co_await put_class(object_base_class);
+
+			std::string system_activity_class_string = R"(
+{
+	"ClassName" : "SysActivityBase",
+	"ClassDescription" : "Records a review, approval or modification",
+	"Fields" : {
+			"ActivityId" : "int64",
+			"UserName" : "string",
+			"DateTime" : "object",
+			"ActivityType" : "string"
+	}
+}
+)";
+
+			json activity_base_class = jp.parse_object(system_activity_class_string);
+			co_await put_class(activity_base_class);
+
+			std::string object_reference_class_string = R"(
+{
+	"ClassName" : "SysObjectReference",
+	"ClassDescription" : "A link to an object",
+	"Fields" : {
+			"LinkObjectId" : "int64",
+			"DeepCopy" : "bool",
+			"DeepGet" : "bool"
+	}
+}
+)";
+
+			json object_reference_class = jp.parse_object(object_reference_class_string);
+			co_await put_class(object_reference_class);
+
 
 			co_await header.write(database_file);
 			co_return header_location;
 		}
 
-		database_transaction<json> get_class(std::string _name)
+		database_transaction<json> get_class(json& _object)
 		{
+			json class_def;
+			json key = _object.extract({ "ClassName" });
 			json result;
 
-			if (classes_index.data.has_member(_name)) {
-				db_object_id_type class_id = classes_index.data[_name].get_int64();
-				result = co_await get_class(class_id);
+			class_def = co_await get_class(key);
+
+			if (class_def.is_empty())
+			{
+				result = create_response(false, "Undefined class", key, 0);
 			}
 			else 
 			{
-				result = create_response(false, "Undefined class", _name);
+				result = create_response(true, "Ok", class_def, 0);
 			}
 
 			co_return result;
-		}
-
-		database_transaction<json> get_class(db_object_id_type _class_id)
-		{
-			json return_obj;
-
-			bool has_class = co_await classes.contains(_class_id);
-
-			if (!has_class) 
-			{
-				json_node class_node = co_await classes.get(_class_id);
-				return_obj = create_response(true, "Ok", class_node.data, 0);
-			}
-			else 
-			{
-				return_obj = create_response(false, "Class not found" );
-			}
-			co_return return_obj;
 		}
 
 		database_transaction<json> put_class(json _class_definition)
@@ -276,28 +343,124 @@ namespace corona
 			json result = check_class(_class_definition);
 
 			if (result["Success"]) {
-				db_object_id_type object_id;
-				if (_class_definition.has_member("ObjectId")) {
-					object_id = _class_definition["ObjectId"];
-				}
-				else 
-				{
-					object_id = co_await get_next_object_id();
-					_class_definition.put_member_i64("ObjectId", object_id);
-				}
-				std::string className = _class_definition["ClassName"];
-				classes_index.data.put_member_i64(className, object_id);
-				co_await classes_index.write(database_file);
+				co_await classes.put(_class_definition);
 				result = create_response(true, "Ok");
 			}
 			co_return result;
+		}
+
+		database_transaction<json> get_derived_classes(json _class_definition)
+		{
+			json_parser jp;
+			json derived_classes = jp.create_object();
+
+			json class_ancestry_key = _class_definition.extract({ "BaseClassName" });
+
+			co_await classes.select_object(
+				derived_classes,
+				class_ancestry_key,
+				[](int _index, json& _item) ->json {
+					auto ret = _item.extract({ "ClassName" });
+					return ret;
+				},
+				[](int _index, json& _item) ->json {
+					std::string class_to_search = _item["ClassName"];
+					json_parser jpx;
+					json new_key = jpx.create_object("BaseClassName", class_to_search);
+					return new_key;
+				},
+				{ "ClassName" }
+			);
+
+			json result = create_response(true, "Ok", derived_classes, 0.0);
+
+			co_return result;
+		}
+
+		database_transaction<json> get_ancestor_classes(json _class_definition)
+		{
+			json_parser jp;
+			json ancestor_classes = jp.create_object();
+
+			json class_ancestry_key = _class_definition.extract({ "ClassName" });
+
+			co_await classes.select_object(
+				ancestor_classes,
+				class_ancestry_key,
+				[](int _index, json& _item) ->json {
+					auto ret = _item.extract({ "ClassName" });
+					return ret;
+				},
+				[](int _index, json& _item) ->json {
+					std::string class_to_search = _item["BaseClassName"];
+					json_parser jpx;
+					json new_key = jpx.create_object("ClassName", class_to_search);
+					return new_key;
+				},
+				{ "ClassName" }
+			);
+
+			json result = create_response(true, "Ok", ancestor_classes, 0.0);
+
+			co_return result;
+		}
+
+		database_transaction<bool> is_descendant_of(std::string _base_class, std::string _class_to_check )
+		{
+			json_parser jp;
+			json class_check = jp.create_object("ClassName", _class_to_check);
+			json ancestors = co_await get_ancestor_classes(class_check);
+			
+			if (ancestors["Success"]) 
+			{
+				json class_defs = ancestors["Data"];
+				if (class_defs.has_member(_base_class)) {
+					co_return true;
+				}
+			}
+
+			co_return false;
+		}
+
+		database_transaction<json> get_objects_by_class(json _object_definition)
+		{
+			json_parser jp;
+
+			json response;
+			json objects = jp.create_array();
+
+			json class_def = co_await get_class(_object_definition);
+			json derived_classes = co_await get_derived_classes(class_def);
+			auto members = derived_classes.get_members();
+
+			for (auto member : members) 
+			{
+				json_parser jp;
+				json search_key = jp.create_object("ClassName", member.first);
+				json class_object_ids = co_await class_objects.select_array(search_key, [](int _index, json& _item)->json {
+					return _item;
+					});
+				json get_object_id = jp.create_object("ObjectId", 0i64);
+
+				for (db_object_id_type i = 0; i < class_object_ids.size(); i++) 
+				{
+					db_object_id_type ri = class_object_ids[i]["ObjectId"];
+					get_object_id.put_member("ObjectId", ri);
+					json obj = co_await get_object(get_object_id);
+					objects.append_element(obj);
+				}
+			}
+
+			response = create_response(true, "Ok", objects, 0.0);
+			co_return response;
 		}
 
 		database_transaction<json> create_object(std::string _class_name)
 		{
 			json_parser jp;
 			json new_object = jp.create_object();
-			json classdef_response = co_await get_class(_class_name);
+			json class_key = jp.create_object( "ClassName", _class_name );
+			json classdef_response = co_await get_class(class_key);
 			json response;
 
 			if (classdef_response["Success"]) {
@@ -337,9 +500,17 @@ namespace corona
 						{
 							new_object.put_member(member.first, 0);
 						}
-						else if (field_type == "objectref")
+						else if (field_type == "function")
 						{
-							new_object.put_member_object(member.first);
+							auto key = std::make_tuple(_class_name, member.first);
+							if (functions.contains(key)) {
+								new_object.put_member_function(member.first, functions[key]);
+							}
+							else 
+							{
+								std::string err_message = std::format("function {0} {1} not defined", _class_name, member.first);
+								new_object.put_member(member.first, err_message);
+							}
 						}
 					}
 					else if (jpx.is_object())
@@ -350,9 +521,8 @@ namespace corona
 					{
 						new_object.put_member_array(member.first);
 					}
-
-					response = create_response(true, "Created", new_object, 0);
 				}
+				response = create_response(true, "Created", new_object, 0);
 			}
 			co_return response;
 			
@@ -360,6 +530,8 @@ namespace corona
 
 		database_transaction<json> put_object(json _object_definition)
 		{
+			json_parser jp;
+
 			json result = co_await check_object(_object_definition);
 
 			if (result["Success"])
@@ -377,7 +549,38 @@ namespace corona
 					object_id = co_await get_next_object_id();
 				}
 
-				relative_ptr_type put_result = co_await objects.put(object_id, _object_definition);
+				auto child_members = obj.get_members();
+
+				for (auto child_member : child_members)
+				{
+					auto cm = child_member.second;
+					if (cm.is_array())
+					{
+						for (int64_t index = 0; index < cm.size(); index++)
+						{
+							json em = cm.get_element(index);
+							if (em.is_object() &&
+								em.is_member("ClassName", "SysObjectReference") &&
+								em.is_member("DeepGet", true)
+								)
+							{
+								em.erase_member("Data");
+							}
+						}
+					}
+					else if (
+						cm.is_member("ClassName", "SysObjectReference") &&
+						cm.is_member("DeepCopy", true)
+						)
+					{
+						cm.erase_member("Data");
+					}
+				}
+
+				relative_ptr_type put_result = co_await objects.put( _object_definition);
+
+				json cobj = _object_definition.extract({ "ClassName", "ObjectId" });
+				relative_ptr_type classput_result = co_await class_objects.put(cobj);
 
 				result = create_response(true, "Ok");
 			}
@@ -389,18 +592,61 @@ namespace corona
 			co_return result;
 		}
 
-		database_transaction<json> get_object(db_object_id_type _object_id)
+		database_transaction<json> get_object(json _object_key)
 		{
-			json response;
+			json_parser jp;
 
-			co_await objects.get(_object_id);
+			json response;
+			json my_object = co_await objects.get(_object_key);
+
+			auto child_members = my_object["Data"].get_members();
+
+			for (auto child_member : child_members)
+			{
+				auto cm = child_member.second;
+				if (cm.is_array())
+				{
+					for (int64_t index = 0; index < cm.size(); index++)
+					{
+						json em = cm.get_element(index);
+						if (em.is_object() &&
+							em.is_member("ClassName", "SysObjectReference") &&
+							em.is_member("DeepGet", true)
+							)
+						{
+							db_object_id_type old_id = cm["LinkObjectId"];
+							json object_key = jp.create_object("ObjectId", old_id);
+							json child_obj = co_await get_object(object_key);
+							if (child_obj["Success"]) {
+								json data = child_obj["Data"];
+								em.put_member("Data", data);
+							}
+						}
+					}
+				}
+				else if (
+					cm.is_member("ClassName", "SysObjectReference") &&
+					cm.is_member("DeepCopy", true)
+					)
+				{
+					db_object_id_type old_id = cm["LinkObjectId"];
+					json object_key = jp.create_object("ObjectId", old_id);
+					json child_obj = co_await get_object(object_key);
+					if (child_obj["Success"]) {
+						json data = child_obj["Data"];
+						cm.put_member("Data", data);
+					}
+				}
+			}
 
 			co_return response;
 		}
 
-		database_transaction<json> copy_object(db_object_id_type _object_id, std::function<bool(json _object_changes)> _fn)
+		database_transaction<json> copy_object(json _object_key, 
+			std::function<bool(json _object_changes)> _fn)
 		{
-			json object_copy = co_await get_object( _object_id );
+			json_parser jp;
+			json object_copy = co_await get_object( _object_key );
 
 			if (!object_copy["Success"])
 				co_return object_copy;
@@ -412,7 +658,49 @@ namespace corona
 				json new_object = object_copy["Data"];
 				db_object_id_type new_object_id = co_await get_next_object_id();
 				new_object.put_member("ObjectId", new_object_id);
+
+				auto child_members = new_object.get_members();
+
+				for (auto child_member : child_members)
+				{
+					auto cm = child_member.second;
+					if (cm.is_array()) 
+					{
+						for (int64_t index = 0; index < cm.size(); index++)
+						{
+							json em = cm.get_element(index);
+							if (em.is_object() &&
+								em.is_member("ClassName", "SysObjectReference") &&
+								em.is_member("DeepCopy", true)
+								)
+							{
+								db_object_id_type old_id = cm["LinkObjectId"];
+								json object_key = jp.create_object("ObjectId", old_id);
+								json new_object = co_await copy_object(object_key, [](json _changes) -> bool
+									{
+										return true;
+									});
+								em.put_member_i64("LinkObjectId", new_object["ObjectId"]);
+							}
+						}
+					}
+					else if (
+						cm.is_member("ClassName", "SysObjectReference") &&
+						cm.is_member("DeepCopy", true)
+						)
+					{
+						db_object_id_type old_id = cm["LinkObjectId"];
+						json object_key = jp.create_object("ObjectId", old_id);
+						json new_object = co_await copy_object(object_key, [](json _changes) -> bool
+							{
+								return true;
+							});
+						cm.put_member_i64("LinkObjectId", new_object["ObjectId"]);
+					}
+				}
+
 				json result = co_await put_object(new_object);
+
 				if (result["Success"]) {
 					response = create_response(true, "Ok", result["Data"], 0);
 				}
@@ -429,10 +717,61 @@ namespace corona
 			co_return response;
 		}
 
-		database_transaction<json> delete_object(db_object_id_type _object_id)
+		database_transaction<json> delete_object(json _object_key)
 		{
-			bool success = co_await objects.erase(_object_id);
-			json ret = create_response(success, "Delete result", 0.0);
+			json ret;
+			json_parser jp;
+
+			json object_def = co_await objects.get(_object_key);
+
+			ret = create_response(false, "Still there", 0.0);
+
+			if (object_def["Success"]) {
+				bool success = co_await class_objects.erase(object_def["Data"]);
+				if (success) {
+					success = co_await objects.erase(_object_key);
+					if (success) {
+						ret = create_response(success, "Ok", 0.0);
+					}
+				}
+
+				auto child_members = object_def["Data"].get_members();
+
+				for (auto child_member : child_members)
+				{
+					auto cm = child_member.second;
+					if (cm.is_array())
+					{
+						for (int64_t index = 0; index < cm.size(); index++)
+						{
+							json em = cm.get_element(index);
+							if (em.is_object() &&
+								em.is_member("ClassName", "SysObjectReference") &&
+								em.is_member("DeepCopy", true)
+								)
+							{
+								db_object_id_type old_id = cm["LinkObjectId"];
+								json object_key = jp.create_object("ObjectId", old_id);
+								json new_object = co_await delete_object(object_key);
+							}
+						}
+					}
+					else if (
+						cm.is_member("ClassName", "SysObjectReference") &&
+						cm.is_member("DeepCopy", true)
+						)
+					{
+						db_object_id_type old_id = cm["LinkObjectId"];
+						json object_key = jp.create_object("ObjectId", old_id);
+						json new_object = co_await delete_object(object_key);
+					}
+				}
+
+			}
+			else 
+			{
+				ret = create_response(false, "Not found", _object_key, 0.0);
+			}
 			co_return ret;
 		}
 

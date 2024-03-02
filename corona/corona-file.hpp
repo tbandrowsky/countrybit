@@ -256,6 +256,27 @@ namespace corona
 			debug_functions&& std::cout << "database_transaction: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
 		}
 
+		void await_suspend(std::coroutine_handle<database_transaction<json>::promise_type> handle)
+		{
+			debug_functions&& std::cout << "database_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
+			handle.resume();
+			debug_functions&& std::cout << "database_transaction: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
+		}
+
+		void await_suspend(std::coroutine_handle<database_transaction<bool>::promise_type> handle)
+		{
+			debug_functions&& std::cout << "database_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
+			handle.resume();
+			debug_functions&& std::cout << "database_transaction: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
+		}
+
+		void await_suspend(std::coroutine_handle<database_transaction<int64_t>::promise_type> handle)
+		{
+			debug_functions&& std::cout << "database_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
+			handle.resume();
+			debug_functions&& std::cout << "database_transaction: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
+		}
+
 		transaction_result await_resume()
 		{
 			debug_functions&& std::cout << "database_transaction::await_resume:" << this << " " << GetCurrentThreadId() << std::endl;
@@ -343,6 +364,20 @@ namespace corona
 		{
 			debug_functions&& std::cout << "table_transaction::await_ready:" << this << " " << GetCurrentThreadId() << std::endl;
 			return false;
+		}
+
+		void await_suspend(std::coroutine_handle<table_transaction<json>::promise_type > handle)
+		{
+			debug_functions&& std::cout << "table_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
+			handle.resume();
+			debug_functions&& std::cout << "table_transaction: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
+		}
+
+		void await_suspend(std::coroutine_handle<table_transaction<relative_ptr_type>::promise_type > handle)
+		{
+			debug_functions&& std::cout << "table_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
+			handle.resume();
+			debug_functions&& std::cout << "table_transaction: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
 		}
 
 		void await_suspend(std::coroutine_handle<database_transaction<bool>::promise_type > handle)

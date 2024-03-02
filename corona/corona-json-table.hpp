@@ -444,9 +444,13 @@ namespace corona
 
 		table_transaction<json> get(const KEY key)
 		{
+			json result;
 			relative_ptr_type n = co_await find_node(key);
-			json_node r = co_await get_node(database_file, n);
-			co_return r.data;
+			if (n != null_row) {
+				json_node r = co_await get_node(database_file, n);
+				result = r.data;
+			}
+			co_return result;
 		}
 
 		table_transaction<relative_ptr_type>
@@ -508,22 +512,99 @@ namespace corona
 			}
 		}
 
-		table_transaction<json>
-		query(std::function<bool(int _index, json& _item)> _where_clause)
+		table_transaction<int64_t> 
+		for_each(json _key_fragment, std::function<table_transaction<relative_ptr_type>(int _index, json& _item)> _process_clause)
 		{
-			json_parser jp;
-			json ja = jp.create_array();
+			relative_ptr_type location = co_await find_first_node_gte(_key_fragment);
+			int64_t index = 0;
 
-			json_node jn;
-			int index = 0;
-			for (jn = co_await first_node(); !jn.is_empty(); jn = co_await next_node(jn)) {
-				if (!_where_clause || _where_clause(index, jn.data)) {
-					ja.put_element(-1, jn.data);
-					index++;
+			while (location != null_row) 
+			{
+				json_node node;
+				node = co_await get_node(database_file, location);
+				int comparison = _key_fragment.compare(node.data);
+				if (comparison == 0) 
+				{
+					relative_ptr_type process_result = co_await _process_clause(index, node.data);
+					if (process_result > 0)
+					{
+						index++;
+					}
+					location = node.forward[0];
+				}
+				else 
+				{
+					location = null_row;
 				}
 			}
 
+			co_return index;
+		}
+
+		table_transaction<json>
+		select_array(json _key_fragment, 
+			std::function<json(int _index, json& _item)> _project
+		)
+		{
+			json_parser jp;
+			json ja = jp.create_array();
+			json* pja = &ja;
+
+			int64_t count = co_await for_each(_key_fragment, [pja, _project](int _index, json& _data) -> table_transaction<relative_ptr_type> 
+				{
+					relative_ptr_type count = 0;
+					json new_item = _project(_index, _data);
+					if (!new_item.is_empty()) {
+						pja->append_element(new_item);
+						count = 1;
+					}
+					co_return count;
+				});
+
 			co_return ja;
+		}
+
+		table_transaction<json>
+		select_object(json& _destination,
+				json _key_fragment,
+				std::function<json(int _index, json& _item)> _project,
+				std::function<json(int _index, json& _item)> _get_child_key,
+				std::initializer_list<std::string> _group_by
+			)
+		{
+			json* pdestination = &_destination;
+
+			int64_t count = co_await for_each(_key_fragment, [this, _group_by, pdestination, _project, _get_child_key](int _index, json& _data) -> table_transaction<int64_t>
+				{
+					json new_item = _project(_index, _data);
+					if (!new_item.is_empty()) {
+						json group_key = new_item.extract(_group_by);
+						std::string member_name = group_key.to_key();
+						if (pdestination->has_member(member_name))
+						{
+							json jx = pdestination->get_member(member_name);
+							if (jx.is_array())
+							{
+								jx.append_element(new_item);
+							}
+						}
+						else
+						{
+							json_parser jp;
+							json item_array = jp.create_array();
+							item_array.append_element(new_item);
+							pdestination->put_member_array(member_name, item_array);
+
+							json child_key = _get_child_key(_index, _data);
+							if (child_key.is_object()) {
+								json children = co_await select_object(*pdestination, child_key, _project, _get_child_key, _group_by);
+							}
+						}
+					}
+					co_return true;
+				});
+
+			co_return _destination;
 		}
 
 		inline int size() { return index_header.data.count; }

@@ -24,6 +24,10 @@ namespace corona
 		{
 			;
 		}
+		virtual std::string to_key()
+		{
+			return "";
+		}
 		virtual std::string to_json()
 		{
 			return "";
@@ -55,6 +59,10 @@ namespace corona
 	public:
 		double value;
 
+		virtual std::string to_key()
+		{
+			return std::to_string(value);
+		}
 		virtual std::string to_json()
 		{
 			return std::to_string(value);
@@ -84,6 +92,10 @@ namespace corona
 	public:
 		LARGE_INTEGER value;
 
+		virtual std::string to_key()
+		{
+			return std::to_string(value.QuadPart);
+		}
 		virtual std::string to_json()
 		{
 			return std::to_string(value.QuadPart);
@@ -162,6 +174,11 @@ namespace corona
 	public:
 		int64_t value;
 
+		virtual std::string to_key()
+		{
+			return std::to_string(value);
+		}
+
 		virtual std::string to_json()
 		{
 			return std::to_string(value);
@@ -195,6 +212,10 @@ namespace corona
 	public:
 		std::string value;
 
+		virtual std::string to_key()
+		{
+			return value;
+		}
 		virtual std::string to_json()
 		{
 			return "\"" + value + "\"";
@@ -223,6 +244,18 @@ namespace corona
 	{
 	public:
 		std::vector<std::shared_ptr<json_value>> elements;
+
+		virtual std::string to_key()
+		{
+			std::string ret = "";
+			std::string comma = "";
+			for (auto el : elements) {
+				ret += comma;
+				comma = "\t";
+				ret += el->to_key();
+			}
+			return ret;
+		}
 
 		virtual std::string to_json()
 		{
@@ -261,6 +294,20 @@ namespace corona
 	{
 	public:
 		std::map<std::string, std::shared_ptr<json_value>> members;
+
+		virtual std::string to_key()
+		{
+			std::string ret = "";
+			std::string comma = "";
+			for (auto el : members) {
+				ret += comma;
+				comma = "-";
+				if (el.second) {
+					ret += el.second->to_key();
+				}
+			}
+			return ret;
+		}
 
 		virtual std::string to_json()
 		{
@@ -304,6 +351,27 @@ namespace corona
 		}
 	};
 
+	class json;
+
+	using json_function_function = std::function<json(json parent, json params)>;
+
+	class json_function : public json_value
+	{
+	public:
+
+		json* function_this = {};
+		json_function_function fn;
+
+		virtual std::string to_key();
+		virtual std::string to_json();
+		virtual std::string to_json_typed();
+		virtual std::string to_string();
+		virtual std::string get_type_prefix();
+		virtual std::shared_ptr<json_value> clone();
+
+	};
+
+
 	class json
 	{
 		std::shared_ptr<json_value> value_base;
@@ -314,6 +382,7 @@ namespace corona
 		std::shared_ptr<json_datetime> datetime_impl;
 		std::shared_ptr<json_blob> blob_impl;
 		std::shared_ptr<json_object> object_impl;
+		std::shared_ptr<json_function> function_impl;
 
 	public:
 
@@ -331,12 +400,19 @@ namespace corona
 			int64_impl = std::dynamic_pointer_cast<json_int64>(_value);
 			datetime_impl = std::dynamic_pointer_cast<json_datetime>(_value);
 			blob_impl = std::dynamic_pointer_cast<json_blob>(_value);
+			object_impl = std::dynamic_pointer_cast<json_object>(_value);
+			function_impl = std::dynamic_pointer_cast<json_function>(_value);
 		}
 
 		json clone()
 		{
 			json result(value_base->clone());
 			return result;
+		}
+
+		std::string to_key()
+		{
+			return value_base->to_key();
 		}
 
 		std::string to_json()
@@ -432,6 +508,16 @@ namespace corona
 		bool is_object() const
 		{
 			return (bool)object_impl;
+		}
+
+		bool is_function() const
+		{
+			return (bool)function_impl;
+		}
+
+		bool is_blob() const
+		{
+			return (bool)function_impl;
 		}
 
 		bool is_empty() const
@@ -542,6 +628,11 @@ namespace corona
 			return blob_impl;
 		}
 
+		operator std::shared_ptr<json_function>& ()
+		{
+			return function_impl;
+		}
+
 		std::shared_ptr<json_object> operator ->()
 		{
 			return object_impl;
@@ -568,6 +659,36 @@ namespace corona
 		bool has_member(std::string _key) const
 		{
 			bool has_value = object_impl && object_impl->members.contains(_key);
+			return has_value;
+		}
+
+		bool is_member(std::string _key, std::string _value) const
+		{
+			bool has_value = object_impl && object_impl->members.contains(_key);
+			if (has_value) {
+				std::string svalue = object_impl->members[_key]->to_string();
+				has_value = svalue == _value;
+			}
+			return has_value;
+		}
+
+		bool is_member(std::string _key, int64_t _value) const
+		{
+			bool has_value = object_impl && object_impl->members.contains(_key);
+			if (has_value) {
+				int64_t svalue = get_member(_key);
+				has_value = svalue == _value;
+			}
+			return has_value;
+		}
+
+		bool is_member(std::string _key, bool _value) const
+		{
+			bool has_value = object_impl && object_impl->members.contains(_key);
+			if (has_value) {
+				bool svalue = get_member(_key);
+				has_value = svalue == _value;
+			}
 			return has_value;
 		}
 
@@ -632,7 +753,7 @@ namespace corona
 				throw std::logic_error("Source is not an object");
 			}
 
-			auto members = _member.get_members();
+			auto members = _member.get_members_raw();
 
 			for (auto src : members) 
 			{
@@ -666,6 +787,13 @@ namespace corona
 			else if (_member.is_string()) {
 				std::string d = _member;
 				put_member(_key, d);
+			}
+			else if (_member.is_blob()) {
+				std::string d = _member;
+				put_member(_key, d);
+			}
+			else if (_member.is_function()) {
+				put_member_function(_key, _member);
 			}
 			return *this;
 		}
@@ -723,6 +851,16 @@ namespace corona
 			return *this;
 		}
 
+		json put_member_blob(std::string _key)
+		{
+			if (!object_impl) {
+				throw std::logic_error("Not an object");
+			}
+			auto new_member = std::make_shared<json_object>();
+			object_impl->members[_key] = new_member;
+			return *this;
+		}
+
 		json put_member_array(std::string _key, json& _array)
 		{
 			if (!object_impl) {
@@ -755,6 +893,44 @@ namespace corona
 			return *this;
 		}
 
+		json put_member_function(std::string _key, json& _object)
+		{
+			if (!object_impl) {
+				throw std::logic_error("Not an object");
+			}
+			std::shared_ptr<json_function> existing_object = _object;
+			auto new_object = existing_object->clone();
+			object_impl->members[_key] = new_object;
+			return *this;
+		}
+
+		json put_member_function(std::string _key, json_function_function fn)
+		{
+			if (!object_impl) {
+				throw std::logic_error("Not an object");
+			}
+			std::shared_ptr<json_function> new_object = std::make_shared<json_function>();
+			object_impl->members[_key] = new_object;
+			return *this;
+		}
+
+		json erase_member(std::string _key)
+		{
+			if (!object_impl) {
+				throw std::logic_error("Not an object");
+			}
+			object_impl->members.erase(_key);
+			return *this;
+		}
+
+		json operator()(json _params)
+		{
+			if (!function_impl) {
+				throw std::logic_error("Not a function");
+			}
+			return function_impl->fn(*function_impl->function_this, _params);
+		}
+
 		json extract(std::initializer_list<std::string> _fields)
 		{
 			if (!object_impl) 
@@ -776,12 +952,26 @@ namespace corona
 			return jn;
 		}
 
-		std::map<std::string, std::shared_ptr<json_value>> get_members()
+		std::map<std::string, std::shared_ptr<json_value>> get_members_raw()
 		{
 			if (!object_impl) {
 				throw std::logic_error("Not an object");
 			}
 			return object_impl->members;
+		}
+
+		std::map<std::string, json> get_members()
+		{
+			if (!object_impl) {
+				throw std::logic_error("Not an object");
+			}
+			std::map<std::string, json> mp;
+			for (auto m : object_impl->members) 
+			{
+				json jx(m.second);
+				mp.insert_or_assign(m.first, jx);
+			}
+			return mp;
 		}
 
 		template <typename element_type> json append_element(element_type et)
@@ -1029,6 +1219,22 @@ namespace corona
 						comparison = 0;
 					}
 				}
+				else if (member_src.is_function())
+				{
+					json dtst_src, dtst_dst;
+					dtst_src = member_dest[member_src];
+					dtst_dst = member_src;
+
+					comparison = dtst_src.compare(dtst_dst);
+				}
+				else if (member_src.is_object())
+				{
+					json dtst_src, dtst_dst;
+					dtst_src = member_dest[member_src];
+					dtst_dst = member_src;
+
+					comparison = dtst_src.compare(dtst_dst);
+				}
 
 				if (comparison) {
 					return comparison;
@@ -1038,7 +1244,19 @@ namespace corona
 			return 0;
 		}
 
-		json for_each(std::function<void(json& _item)> _transform)
+		json for_each_member(std::function<void(const std::string& _key_name)> _transform)
+		{
+			if (!object_impl) {
+				throw std::logic_error("Not an array");
+			}
+			for (auto m : object_impl->members)
+			{
+				_transform(m.first);
+			}
+			return *this;
+		}
+
+		json for_each_element(std::function<void(json& _item)> _transform)
 		{
 			if (!array_impl) {
 				throw std::logic_error("Not an array");
@@ -1205,9 +1423,11 @@ namespace corona
 
 		json group(std::function<std::string(json& _item)> _get_group)
 		{
-			if (!array_impl) {
+			if (!array_impl) 
+			{
 				throw std::logic_error("Not an array");
 			}
+
 			json new_object(std::make_shared<json_object>());
 
 			for (int i = 0; i < size(); i++)
@@ -1219,6 +1439,7 @@ namespace corona
 				}
 				new_object[key.c_str()].put_element(-1, element);
 			}
+
 			return new_object;
 		}
 
@@ -1657,6 +1878,15 @@ namespace corona
 						return result;
 					}
 				}
+				else if (member_type == "$function")
+				{
+					if (parse_string(new_string_value, _src, &new_src))
+					{
+						auto js = std::make_shared<json_function>();
+						*_modified = new_src;
+						return result;
+					}
+				}
 
 				result = false;
 				member_type += " invalid";
@@ -1832,7 +2062,45 @@ namespace corona
 		}
 	};
 
+	json json_function::get_json()
+	{
+		json result = fn(*function_this);
+		return result;
+	}
 
+	std::string json_function::to_key()
+	{
+		json result = fn(*function_this);
+		return result.to_key();
+	}
+	std::string json_function::to_json()
+	{
+		json result = fn(*function_this);
+		return result.to_json();
+	}
+	std::string json_function::to_json_typed()
+	{
+		json result = fn(*function_this);
+		return result.to_json_typed();
+	}
+
+	std::string json_function::to_string()
+	{
+		json result = fn(*function_this);
+		return result.to_json_typed_string();
+	}
+
+	std::string json_function::get_type_prefix()
+	{
+		return "$function";
+	}
+
+	std::shared_ptr<json_value> json_function::clone()
+	{
+		auto t = std::make_shared<json_function>();
+		t->fn = fn;
+		return t;
+	}
 }
 
 corona::json operator ""_json_array(const char* _src, size_t _length)
