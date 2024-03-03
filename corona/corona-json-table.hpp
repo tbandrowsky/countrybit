@@ -1001,6 +1001,7 @@ namespace corona
 			{
 				return jn.extract( { "ObjectId" });
 			};
+		co_await test_table.create();
 
 		co_await test_table.put(test_write);
 		json test_read = co_await test_table.get(test_key);

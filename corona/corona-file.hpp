@@ -249,6 +249,13 @@ namespace corona
 			return false;
 		}
 
+		void await_suspend(std::coroutine_handle<user_transaction<relative_ptr_type>::promise_type > handle)
+		{
+			debug_functions&& std::cout << "table_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
+			handle.resume();
+			debug_functions&& std::cout << "table_transaction: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
+		}
+
 		// this creates the 
 		void await_suspend(std::coroutine_handle<promise_type> handle)
 		{
@@ -817,11 +824,18 @@ namespace corona
 			debug_functions&& std::cout << "file_transaction: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
 		}
 
+		void await_suspend(std::coroutine_handle<user_transaction<relative_ptr_type>::promise_type > handle)
+		{
+			debug_functions&& std::cout << "file_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
+			handle.resume();
+			debug_functions&& std::cout << "file_transaction: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
+		}
+
 		void await_suspend(std::coroutine_handle<promise_type> handle)
 		{
-			debug_functions&& std::cout << "file_batch::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
+			debug_functions&& std::cout << "file_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
 			handle.resume();
-			debug_functions&& std::cout << "file_batch: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
+			debug_functions&& std::cout << "file_transaction: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
 		}
 
 		transaction_result await_resume()
@@ -915,60 +929,67 @@ namespace corona
 			return false;
 		}
 
+		void await_suspend(std::coroutine_handle<user_transaction<relative_ptr_type>::promise_type > handle)
+		{
+			debug_functions&& std::cout << "file_batch::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
+			handle.resume();
+			debug_functions&& std::cout << "file_batch: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
+		}
+
 		void await_suspend(std::coroutine_handle<compare_transaction::promise_type> handle)
 		{
-			debug_functions&& std::cout << "table_private_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
+			debug_functions&& std::cout << "file_batch::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
 			handle.resume();
-			debug_functions&& std::cout << "table_private_transaction: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
+			debug_functions&& std::cout << "file_batch: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
 		}
 
 		void await_suspend(std::coroutine_handle<database_transaction<json>::promise_type> handle)
 		{
-			debug_functions&& std::cout << "file_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
+			debug_functions&& std::cout << "file_batch::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
 			handle.resume();
-			debug_functions&& std::cout << "file_transaction: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
+			debug_functions&& std::cout << "file_batch: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
 		}
 
 		void await_suspend(std::coroutine_handle<database_transaction<relative_ptr_type>::promise_type> handle)
 		{
-			debug_functions&& std::cout << "file_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
+			debug_functions&& std::cout << "file_batch::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
 			handle.resume();
-			debug_functions&& std::cout << "file_transaction: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
+			debug_functions&& std::cout << "file_batch: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
 		}
 
 		void await_suspend(std::coroutine_handle<table_transaction<bool>::promise_type> handle)
 		{
-			debug_functions&& std::cout << "file_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
+			debug_functions&& std::cout << "file_batch::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
 			handle.resume();
-			debug_functions&& std::cout << "file_transaction: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
+			debug_functions&& std::cout << "file_batch: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
 		}
 
 		void await_suspend(std::coroutine_handle<table_transaction<json>::promise_type> handle)
 		{
-			debug_functions&& std::cout << "file_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
+			debug_functions&& std::cout << "file_batch::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
 			handle.resume();
-			debug_functions&& std::cout << "file_transaction: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
+			debug_functions&& std::cout << "file_batch: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
 		}
 
 		void await_suspend(std::coroutine_handle<table_transaction<relative_ptr_type>::promise_type> handle)
 		{
-			debug_functions&& std::cout << "file_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
+			debug_functions&& std::cout << "file_batch::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
 			handle.resume();
-			debug_functions&& std::cout << "file_transaction: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
+			debug_functions&& std::cout << "file_batch: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
 		}
 
 		void await_suspend(std::coroutine_handle<table_transaction<json_node>::promise_type> handle)
 		{
-			debug_functions&& std::cout << "file_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
+			debug_functions&& std::cout << "file_batch::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
 			handle.resume();
-			debug_functions&& std::cout << "file_transaction: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
+			debug_functions&& std::cout << "file_batch: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
 		}
 
 		void await_suspend(std::coroutine_handle<table_private_transaction<relative_ptr_type>::promise_type> handle)
 		{
-			debug_functions&& std::cout << "file_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
+			debug_functions&& std::cout << "file_batch::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
 			handle.resume();
-			debug_functions&& std::cout << "file_transaction: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
+			debug_functions&& std::cout << "file_batch: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
 		}
 
 

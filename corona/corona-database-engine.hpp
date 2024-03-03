@@ -241,7 +241,7 @@ namespace corona
 			co_return header_location;
 		}
 
-		database_transaction<relative_ptr_type> create_database()
+		user_transaction<relative_ptr_type> create_database()
 		{
 			header.object_id = 1;
 			relative_ptr_type header_location = co_await header.append(database_file);
@@ -279,8 +279,8 @@ namespace corona
 	}
 }
 )";
-			json object_base_class = jp.parse_object(object_base_class_string);
-			co_await put_class(object_base_class);
+			json user_base_class = jp.parse_object(user_base_class_string);
+			co_await put_class(user_base_class);
 
 			std::string system_activity_class_string = R"(
 {
@@ -356,7 +356,7 @@ namespace corona
 
 			json class_ancestry_key = _class_definition.extract({ "BaseClassName" });
 
-			co_await classes.select_object(
+			auto so_task = classes.select_object(
 				derived_classes,
 				class_ancestry_key,
 				[](int _index, json& _item) ->json {
@@ -372,6 +372,8 @@ namespace corona
 				{ "ClassName" }
 			);
 
+			so_task.wait();
+
 			json result = create_response(true, "Ok", derived_classes, 0.0);
 
 			co_return result;
@@ -384,7 +386,7 @@ namespace corona
 
 			json class_ancestry_key = _class_definition.extract({ "ClassName" });
 
-			co_await classes.select_object(
+			auto so_task = classes.select_object(
 				ancestor_classes,
 				class_ancestry_key,
 				[](int _index, json& _item) ->json {
@@ -400,6 +402,8 @@ namespace corona
 				{ "ClassName" }
 			);
 
+			so_task.wait();
+
 			json result = create_response(true, "Ok", ancestor_classes, 0.0);
 
 			co_return result;
@@ -409,7 +413,8 @@ namespace corona
 		{
 			json_parser jp;
 			json class_check = jp.create_object("ClassName", _class_to_check);
-			json ancestors = co_await get_ancestor_classes(class_check);
+			auto ancestors_task = get_ancestor_classes(class_check);
+			json ancestors = ancestors_task.wait();
 			
 			if (ancestors["Success"]) 
 			{
@@ -437,14 +442,15 @@ namespace corona
 			{
 				json_parser jp;
 				json search_key = jp.create_object("ClassName", member.first);
-				json class_object_ids = co_await class_objects.select_array(search_key, [](int _index, json& _item)->json {
+				auto class_object_ids_task = class_objects.select_array(search_key, [](int _index, json& _item)->json {
 					return _item;
 					});
+				json class_object_ids = class_object_ids_task.wait();
 				json get_object_id = jp.create_object("ObjectId", 0i64);
 
 				for (db_object_id_type i = 0; i < class_object_ids.size(); i++) 
 				{
-					db_object_id_type ri = class_object_ids[i]["ObjectId"];
+					db_object_id_type ri = class_object_ids.get_element(i)["ObjectId"];
 					get_object_id.put_member("ObjectId", ri);
 					json obj = co_await get_object(get_object_id);
 					objects.append_element(obj);
