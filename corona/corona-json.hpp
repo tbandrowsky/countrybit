@@ -367,6 +367,7 @@ namespace corona
 		virtual std::string to_json_typed();
 		virtual std::string to_string();
 		virtual std::string get_type_prefix();
+		virtual json get_json();
 		virtual std::shared_ptr<json_value> clone();
 
 	};
@@ -515,11 +516,6 @@ namespace corona
 			return (bool)function_impl;
 		}
 
-		bool is_blob() const
-		{
-			return (bool)function_impl;
-		}
-
 		bool is_empty() const
 		{
 			return value_base != nullptr;
@@ -636,12 +632,6 @@ namespace corona
 		std::shared_ptr<json_object> operator ->()
 		{
 			return object_impl;
-		}
-
-		json operator[](int _index) const
-		{
-			json jn(array_impl->elements[_index]);
-			return jn;
 		}
 
 		json operator[](const std::string& _key) const
@@ -938,8 +928,7 @@ namespace corona
 				throw std::logic_error("Not an object");
 			}
 
-			json_parser jp;
-			json jn = jp.create_object();
+			json jn( std::make_shared<json_object>() );
 
 			for (auto f : _fields) 
 			{
@@ -1169,7 +1158,7 @@ namespace corona
 					tst_src = member_dest[member_src];
 					tst_dst = member_src;
 
-					comparison = stricmp(tst_src.c_str(), tst_dst.c_str());
+					comparison = _stricmp(tst_src.c_str(), tst_dst.c_str());
 				}
 				else if (member_src.is_int64())
 				{
@@ -2064,29 +2053,34 @@ namespace corona
 
 	json json_function::get_json()
 	{
-		json result = fn(*function_this);
+		json default_params;
+		json result = fn(*function_this, default_params);
 		return result;
 	}
 
 	std::string json_function::to_key()
 	{
-		json result = fn(*function_this);
+		json default_params;
+		json result = fn(*function_this, default_params);
 		return result.to_key();
 	}
 	std::string json_function::to_json()
 	{
-		json result = fn(*function_this);
+		json default_params;
+		json result = fn(*function_this, default_params);
 		return result.to_json();
 	}
 	std::string json_function::to_json_typed()
 	{
-		json result = fn(*function_this);
+		json default_params;
+		json result = fn(*function_this, default_params);
 		return result.to_json_typed();
 	}
 
 	std::string json_function::to_string()
 	{
-		json result = fn(*function_this);
+		json default_params;
+		json result = fn(*function_this, default_params);
 		return result.to_json_typed_string();
 	}
 

@@ -39,7 +39,9 @@
 #include "corona-jobject.hpp"
 #include "corona-jvalue.hpp"
 #include "corona-queue.hpp"
+#include "corona-json.hpp"
 
+#ifndef CORONA_CONSOLE
 #include "corona-bitmap_filters.hpp"
 #include "corona-bitmaps.hpp"
 #include "corona-brushes.hpp"
@@ -53,18 +55,22 @@
 #include "corona-direct2dcontextbase.hpp"
 #include "corona-direct2dcontext.hpp"
 #include "corona-direct2dwindow.hpp"
-#include "corona-json.hpp"
+#endif
+
 #include "corona-json-table.hpp"
 #include "corona-dataplane.hpp"
+
+#ifndef CORONA_CONSOLE
 #include "corona-presentation.hpp"
 #include "corona-directapplication.hpp"
 #include "corona-styles.hpp"
 #include "corona-visual.hpp"
+#endif
 
 #include "corona-httpclient.hpp"
 #include "corona-calicoclient.hpp"
 
-#include "corona-httpserver.hpp"
-#include "corona-database-engine.hpp"
+//#include "corona-httpserver.hpp"
+//#include "corona-database-engine.hpp"
 
 #endif

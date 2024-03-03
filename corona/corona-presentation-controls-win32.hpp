@@ -253,14 +253,14 @@ namespace corona
 
 				for (int i = 0; i < choices.items.size(); i++)
 				{
-					auto item = choices.items[i];
+					auto item = choices.items.get_element(i);
 					col_index = 0;
 					for (auto col : choices.columns)
 					{
 						data_row[col_index] = blank;
 						bool has_field = item.has_member(col.json_field);
 						if (has_field) {
-							std::string item_value = item[col.json_field.c_str()];
+							std::string item_value = item[col.json_field];
 							char* value = mtable.set(col_index, row_index, item_value);
 							if (value) {
 								data_row[col_index] = value;
@@ -360,7 +360,7 @@ namespace corona
 				phost->clearListItems(id);
 				for (int i = 0; i < choices.items.size(); i++)
 				{
-					auto c = choices.items[i];
+					auto c = choices.items.get_element(i);
 					int lid = c[choices.id_field];
 					std::string description = c[choices.text_field];
 					phost->addListItem(id, description, lid);
@@ -420,7 +420,7 @@ namespace corona
 				phost->clearComboItems(id);
 				for (int i = 0; i < choices.items.size(); i++)
 				{
-					auto element = choices.items[i];
+					auto element = choices.items.get_element(i);
 					int lid = element[choices.id_field];
 					std::string description = element[choices.text_field];
 					phost->addComboItem(id, description, lid);
@@ -998,7 +998,7 @@ namespace corona
 				phost->clearComboItems(id);
 				for (int i = 0; i < choices.items.size(); i++)
 				{
-					auto c = choices.items[i];
+					auto c = choices.items.get_element(i);
 					if (c.has_member(choices.id_field) && c.has_member(choices.text_field)) {
 						int lid = c[choices.id_field];
 						std::string description = c[choices.text_field];

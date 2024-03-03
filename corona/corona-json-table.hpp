@@ -213,7 +213,7 @@ namespace corona
 			data = _src["Data"];
 			forward.clear();
 			auto forwardjson = _src["Forward"];
-			forwardjson.for_each([this](json& _item) {
+			forwardjson.for_each_element([this](json& _item) {
 				relative_ptr_type ptr = _item;
 				forward.push_back(ptr);
 				});
@@ -513,7 +513,7 @@ namespace corona
 		}
 
 		table_transaction<int64_t> 
-		for_each(json _key_fragment, std::function<table_transaction<relative_ptr_type>(int _index, json& _item)> _process_clause)
+			co_for_each(json _key_fragment, std::function<table_transaction<relative_ptr_type>(int _index, json& _item)> _process_clause)
 		{
 			relative_ptr_type location = co_await find_first_node_gte(_key_fragment);
 			int64_t index = 0;
@@ -541,16 +541,86 @@ namespace corona
 			co_return index;
 		}
 
-		table_transaction<json>
-		select_array(json _key_fragment, 
-			std::function<json(int _index, json& _item)> _project
-		)
+		table_transaction<int64_t>
+			for_each(json _key_fragment, std::function<relative_ptr_type(int _index, json& _item)> _process_clause)
+		{
+			relative_ptr_type location = co_await find_first_node_gte(_key_fragment);
+			int64_t index = 0;
+
+			while (location != null_row)
+			{
+				json_node node;
+				node = co_await get_node(database_file, location);
+				int comparison = _key_fragment.compare(node.data);
+				if (comparison == 0)
+				{
+					relative_ptr_type process_result = _process_clause(index, node.data);
+					if (process_result > 0)
+					{
+						index++;
+					}
+					location = node.forward[0];
+				}
+				else
+				{
+					location = null_row;
+				}
+			}
+
+			co_return index;
+		}
+
+
+		table_transaction<int64_t>
+			co_for_each(std::function<table_transaction<relative_ptr_type>(int _index, json& _item)> _process_clause)
+		{
+			relative_ptr_type location = index_header.data.forward[0];
+			int64_t index = 0;
+
+			while (location != null_row)
+			{
+				json_node node;
+				node = co_await get_node(database_file, location);
+				relative_ptr_type process_result = co_await _process_clause(index, node.data);
+				if (process_result > 0)
+				{
+					index++;
+				}
+				location = node.forward[0];
+			}
+
+			co_return index;
+		}
+
+		table_transaction<int64_t>
+			for_each(std::function<relative_ptr_type(int _index, json& _item)> _process_clause)
+		{
+			relative_ptr_type location = index_header.data.forward[0];
+			int64_t index = 0;
+
+			while (location != null_row)
+			{
+				json_node node;
+				node = co_await get_node(database_file, location);
+				relative_ptr_type process_result = _process_clause(index, node.data);
+				if (process_result > 0)
+				{
+					index++;
+				}
+				location = node.forward[0];
+			}
+
+			co_return index;
+		}
+
+		database_transaction<json>
+		select_array(std::function<json(int _index, json& _item)> _project)
 		{
 			json_parser jp;
 			json ja = jp.create_array();
 			json* pja = &ja;
 
-			int64_t count = co_await for_each(_key_fragment, [pja, _project](int _index, json& _data) -> table_transaction<relative_ptr_type> 
+			int64_t count = co_await co_for_each([pja, _project](int _index, json& _data) -> table_transaction<relative_ptr_type>
 				{
 					relative_ptr_type count = 0;
 					json new_item = _project(_index, _data);
@@ -564,7 +634,30 @@ namespace corona
 			co_return ja;
 		}
 
-		table_transaction<json>
+		user_transaction<json>
+		select_array(json _key_fragment, 
+			std::function<json(int _index, json& _item)> _project
+		)
+		{
+			json_parser jp;
+			json ja = jp.create_array();
+			json* pja = &ja;
+
+			int64_t count = co_await co_for_each(_key_fragment, [pja, _project](int _index, json& _data) -> table_transaction<relative_ptr_type> 
+				{
+					relative_ptr_type count = 0;
+					json new_item = _project(_index, _data);
+					if (!new_item.is_empty()) {
+						pja->append_element(new_item);
+						count = 1;
+					}
+					co_return count;
+				});
+
+			co_return ja;
+		}
+
+		user_transaction<json>
 		select_object(json& _destination,
 				json _key_fragment,
 				std::function<json(int _index, json& _item)> _project,
@@ -574,7 +667,7 @@ namespace corona
 		{
 			json* pdestination = &_destination;
 
-			int64_t count = co_await for_each(_key_fragment, [this, _group_by, pdestination, _project, _get_child_key](int _index, json& _data) -> table_transaction<int64_t>
+			int64_t count = co_await co_for_each(_key_fragment, [this, _group_by, pdestination, _project, _get_child_key](int _index, json& _data) -> table_transaction<int64_t>
 				{
 					json new_item = _project(_index, _data);
 					if (!new_item.is_empty()) {
@@ -597,7 +690,8 @@ namespace corona
 
 							json child_key = _get_child_key(_index, _data);
 							if (child_key.is_object()) {
-								json children = co_await select_object(*pdestination, child_key, _project, _get_child_key, _group_by);
+								auto children_task = select_object(*pdestination, child_key, _project, _get_child_key, _group_by);
+								children_task.wait();
 							}
 						}
 					}
@@ -798,11 +892,7 @@ namespace corona
 
 	std::ostream& operator <<(std::ostream& output, json_table & src)
 	{
-		bool space = false;
-		table_transaction<json> awaiter = src.query([](int _index, json& nd) -> bool { return true; });
-		json j = awaiter.wait();
-		std::string temp = j.to_json_typed_string();
-		output << temp;
+		std::cout << "[json_table]" << std::endl;
 		return output;
 	}
 
@@ -926,7 +1016,7 @@ namespace corona
 		test_key = test_write.extract({ "ObjectId" });
 		co_await test_table.put(test_write);
 
-		json test_read = co_await test_table.get(test_key);
+		test_read = co_await test_table.get(test_key);
 
 		if (test_read.compare(test_write))
 		{
@@ -939,7 +1029,7 @@ namespace corona
 		test_key = test_write.extract({ "ObjectId" });
 		co_await test_table.put(test_write);
 
-		json test_read = co_await test_table.get(test_key);
+		test_read = co_await test_table.get(test_key);
 
 		if (test_read.compare(test_write))
 		{
@@ -959,9 +1049,11 @@ namespace corona
 			;
 		}
 
-		auto db_contents = co_await test_table.query([](int _index, json& item) {
-			return true;
+		auto db_contents_task = test_table.select_array([](int _index, json& item) {
+			return item;
 			});
+
+		auto db_contents = db_contents_task.wait();
 
 		if (db_contents.size() != 2)
 		{
@@ -974,7 +1066,7 @@ namespace corona
 		test_key = test_write.extract({ "ObjectId" });
 		co_await test_table.put(test_write);
 
-		json test_read = co_await test_table.get(test_key);
+		test_read = co_await test_table.get(test_key);
 
 		if (test_read.compare(test_write))
 		{
@@ -987,7 +1079,7 @@ namespace corona
 		test_key = test_write.extract({ "ObjectId" });
 		co_await test_table.put(test_write);
 
-		json test_read = co_await test_table.get(test_key);
+		test_read = co_await test_table.get(test_key);
 
 		if (test_read.compare(test_write))
 		{
@@ -1000,7 +1092,7 @@ namespace corona
 		test_key = test_write.extract({ "ObjectId" });
 		co_await test_table.put(test_write);
 
-		json test_read = co_await test_table.get(test_key);
+		test_read = co_await test_table.get(test_key);
 
 		if (test_read.compare(test_write))
 		{
@@ -1013,7 +1105,7 @@ namespace corona
 		test_key = test_write.extract({ "ObjectId" });
 		co_await test_table.put(test_write);
 
-		json test_read = co_await test_table.get(test_key);
+		test_read = co_await test_table.get(test_key);
 
 		if (test_read.compare(test_write))
 		{
@@ -1026,7 +1118,7 @@ namespace corona
 		test_key = test_write.extract({ "ObjectId" });
 		co_await test_table.put(test_write);
 
-		json test_read = co_await test_table.get(test_key);
+		test_read = co_await test_table.get(test_key);
 
 		if (test_read.compare(test_write))
 		{
@@ -1034,9 +1126,11 @@ namespace corona
 			co_return false;
 		}
 
-		db_contents = test_table.query([](int _index, json& item) {
-			return true;
+		db_contents_task = test_table.select_array([](int _index, json& item) {
+			return item;
 			});
+
+		db_contents = db_contents_task.wait();
 
 		if (test_table.size() != 4)
 		{
@@ -1053,17 +1147,19 @@ namespace corona
 		int64_t tests[4] = { 1, 2, 5, 7 };
 		int k = 0;
 
-		db_contents = test_table.query([tests](int _index, json& _item) {
+		relative_ptr_type count = co_await test_table.for_each([tests](int _index, json& _item) -> bool {
 			if (tests[_index] != (int64_t)_item["ObjectId"]) {
 				std::cout << __LINE__ << " order failed" << std::endl;
-				return false;
+				return true;
 			}
 			});
 
-		db_contents = test_table.query([tests](int _index, json& _item) {
-			return (_item["ObjectId"].get_int64() > 1i64);
+		db_contents_task = test_table.select_array([tests](int _index, json& _item) -> json {
+			return (_item["ObjectId"].get_int64() > 1i64) ? _item : json();
 			}
 		);
+
+		db_contents = db_contents_task.wait();
 
 		bool any_fails = db_contents.any([](json& _item)->bool {
 			return _item["ObjectId"].get_int64() <= 1i64;
@@ -1080,19 +1176,23 @@ namespace corona
 		test_key.put_member_i64("ObjectId", 7);
 		co_await test_table.erase(test_key);
 
-		auto testi = co_await test_table.query([tests](int _index, json& item) -> bool {
-			return (item["ObjectId"].get_int64() == 7);
+		auto testi_task = test_table.select_array([tests](int _index, json& item) -> json {
+			return (item["ObjectId"].get_int64() == 7) ? item : json();
 			});
+
+		auto testi = testi_task.wait();
 
 		if (testi.size() > 0) {
 			std::cout << __LINE__ << " retrieved a deleted item" << std::endl;
 			co_return false;
 		}
 		 
-		db_contents = co_await test_table.query([tests](int _index, json& item) {
-			return true;
+		db_contents_task = test_table.select_array([tests](int _index, json& item) {
+			return item;
 			}
 		);
+
+		db_contents = db_contents_task.wait();
 
 		bool any_iteration_fails = db_contents.any([](json& _item)->bool {
 			int64_t object_id = _item["ObjectId"].get_int64();

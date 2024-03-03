@@ -1,6 +1,7 @@
-// coronaserver.cpp : This file contains the 'main' function. Program execution begins and ends there.
-//
+#ifndef CORONA_TESTS_HPP
+#define CORONA_TESTS_HPP
 
+#define CORONA_CONSOLE 1
 #include "corona.hpp"
 
 corona::file_batch test_file_awaitable(corona::application& app);
@@ -39,7 +40,10 @@ void corona_tests()
 
         corona::file_transaction fb3 = corona::test_json_node(app);
         auto result3 = fb3.wait();
-   
+
+        corona::user_transaction fb4 = corona::test_json_table(app);
+        auto result4 = fb4.wait();
+
         std::cout << "\nmain::end,thread:" << GetCurrentThreadId() << std::endl;
     }
     catch (std::exception exc)
@@ -71,3 +75,5 @@ int test_file_straight(corona::application& app)
     std::cout << "\ntest_file_straight::result " << result << ", thread:" << GetCurrentThreadId() << std::endl;
     return result;
 }
+
+#endif

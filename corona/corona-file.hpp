@@ -96,7 +96,7 @@ namespace corona
 
 			promise_type()
 			{
-				m_value = 0;
+				m_value = {};
 				debug_functions&& std::cout << "user_transaction::promise:" << this << " " << GetCurrentThreadId() << std::endl;
 			}
 
@@ -111,7 +111,7 @@ namespace corona
 			std::suspend_always final_suspend() noexcept { return {}; }
 
 			void return_value(transaction_result value) {
-				debug_functions&& std::cout << "user_transaction::promise return_value:" << " " << value << " " << GetCurrentThreadId() << std::endl;
+				debug_functions&& std::cout << "user_transaction::promise return_value, thread:" <<  GetCurrentThreadId() << std::endl;
 				m_value = value;
 			}
 
@@ -150,6 +150,7 @@ namespace corona
 			handle.resume();
 			debug_functions&& std::cout << "user_transaction: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
 		}
+
 
 		transaction_result await_resume()
 		{
@@ -201,7 +202,7 @@ namespace corona
 
 			promise_type()
 			{
-				m_value = 0;
+				m_value = {};
 				debug_functions&& std::cout << "user_transaction::promise:" << this << " " << GetCurrentThreadId() << std::endl;
 			}
 
@@ -216,7 +217,7 @@ namespace corona
 			std::suspend_always final_suspend() noexcept { return {}; }
 
 			void return_value(transaction_result value) {
-				debug_functions&& std::cout << "user_transaction::promise return_value:" << " " << value << " " << GetCurrentThreadId() << std::endl;
+				debug_functions&& std::cout << "user_transaction::promise return_value, thread:" << GetCurrentThreadId() << std::endl;
 				m_value = value;
 			}
 
@@ -250,27 +251,6 @@ namespace corona
 
 		// this creates the 
 		void await_suspend(std::coroutine_handle<promise_type> handle)
-		{
-			debug_functions&& std::cout << "database_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
-			handle.resume();
-			debug_functions&& std::cout << "database_transaction: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
-		}
-
-		void await_suspend(std::coroutine_handle<database_transaction<json>::promise_type> handle)
-		{
-			debug_functions&& std::cout << "database_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
-			handle.resume();
-			debug_functions&& std::cout << "database_transaction: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
-		}
-
-		void await_suspend(std::coroutine_handle<database_transaction<bool>::promise_type> handle)
-		{
-			debug_functions&& std::cout << "database_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
-			handle.resume();
-			debug_functions&& std::cout << "database_transaction: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
-		}
-
-		void await_suspend(std::coroutine_handle<database_transaction<int64_t>::promise_type> handle)
 		{
 			debug_functions&& std::cout << "database_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
 			handle.resume();
@@ -366,21 +346,7 @@ namespace corona
 			return false;
 		}
 
-		void await_suspend(std::coroutine_handle<table_transaction<json>::promise_type > handle)
-		{
-			debug_functions&& std::cout << "table_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
-			handle.resume();
-			debug_functions&& std::cout << "table_transaction: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
-		}
-
-		void await_suspend(std::coroutine_handle<table_transaction<relative_ptr_type>::promise_type > handle)
-		{
-			debug_functions&& std::cout << "table_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
-			handle.resume();
-			debug_functions&& std::cout << "table_transaction: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
-		}
-
-		void await_suspend(std::coroutine_handle<database_transaction<bool>::promise_type > handle)
+		void await_suspend(std::coroutine_handle<database_transaction<bool>::promise_type> handle)
 		{
 			debug_functions&& std::cout << "table_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
 			handle.resume();

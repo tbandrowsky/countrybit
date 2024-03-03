@@ -646,7 +646,7 @@ namespace corona
 						for (int i = 0; i < selected_objects.size(); i++)
 						{
 							// pull our current object out of this json array
-							auto selected_object = selected_objects[i];
+							auto selected_object = selected_objects.get_element(i);
 
 							std::string class_name = selected_object["ClassName"].get_string();
 							std::string class_description = selected_object["ClassDescription"].get_string();

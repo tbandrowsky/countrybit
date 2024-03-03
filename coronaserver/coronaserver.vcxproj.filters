@@ -20,7 +20,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="corona_service.Hpp">
+    <ClInclude Include="corona_service.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="corona_tests.hpp">

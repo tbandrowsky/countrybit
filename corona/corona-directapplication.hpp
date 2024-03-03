@@ -2131,7 +2131,6 @@ namespace corona
 					if (!WinHttpReceiveResponse(hRequest, NULL)) {
 						throwOnNull(hRequest, "Could not open receive http response");
 					}
-
 					do
 					{
 						// Check for available data.
