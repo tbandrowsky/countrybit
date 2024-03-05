@@ -1051,7 +1051,7 @@ namespace corona
 
 		json_parser jp;
 
-		json test_write = jp.create_object();		
+		json test_write = jp.create_object();
 		test_write.put_member_i64("ObjectId", 5);
 		test_write.put_member("Name", "Joe");
 		test_write.set_natural_order();
