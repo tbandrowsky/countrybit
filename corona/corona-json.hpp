@@ -15,6 +15,7 @@ namespace corona
 	class json_value
 	{
 	public:
+		int comparison_index = 0;
 
 		json_value()
 		{
@@ -24,6 +25,7 @@ namespace corona
 		{
 			;
 		}
+
 		virtual std::string to_key()
 		{
 			return "";
@@ -50,7 +52,9 @@ namespace corona
 		}
 		virtual std::shared_ptr<json_value> clone()
 		{
-			return std::make_shared<json_value>();
+			auto jv = std::make_shared<json_value>(*this);
+			jv->comparison_index = comparison_index;
+			return jv;
 		}
 	};
 
@@ -83,6 +87,7 @@ namespace corona
 		{
 			auto t = std::make_shared<json_double>();
 			t->value = value;
+			t->comparison_index = comparison_index;
 			return t;
 		}
 	};
@@ -116,6 +121,7 @@ namespace corona
 		{
 			auto t = std::make_shared<json_datetime>();
 			t->value = value;
+			t->comparison_index = comparison_index;
 			return t;
 		}
 	};
@@ -165,6 +171,7 @@ namespace corona
 		{
 			auto t = std::make_shared<json_blob>();
 			t->value = value;
+			t->comparison_index = comparison_index;
 			return t;
 		}
 	};
@@ -203,6 +210,7 @@ namespace corona
 		{
 			auto t = std::make_shared<json_int64>();
 			t->value = value;
+			t->comparison_index = comparison_index;
 			return t;
 		}
 	};
@@ -236,6 +244,7 @@ namespace corona
 		{
 			auto t = std::make_shared<json_string>();
 			t->value = value;
+			t->comparison_index = comparison_index;
 			return t;
 		}
 	};
@@ -286,6 +295,7 @@ namespace corona
 				auto c = element->clone();
 				t->elements.push_back(c);
 			}
+			t->comparison_index = comparison_index;
 			return t;
 		}
 	};
@@ -347,6 +357,7 @@ namespace corona
 					t->members[member.first] = nullptr;
 				}
 			}
+			t->comparison_index = comparison_index;
 			return t;
 		}
 	};
@@ -375,6 +386,10 @@ namespace corona
 
 	class json
 	{
+		using compared_item = std::tuple<int, std::pair<std::string, std::shared_ptr<json_value>>>;
+
+		std::vector<compared_item> comparison_fields;
+
 		std::shared_ptr<json_value> value_base;
 		std::shared_ptr<json_double> double_impl;
 		std::shared_ptr<json_string> string_impl;
@@ -518,7 +533,7 @@ namespace corona
 
 		bool is_empty() const
 		{
-			return value_base != nullptr;
+			return value_base == nullptr;
 		}
 
 		operator bool() const
@@ -557,6 +572,8 @@ namespace corona
 		{
 			if (double_impl)
 				return double_impl->value;
+			else if (int64_impl)
+				return int64_impl->value;
 			else if (string_impl)
 				return std::stod(string_impl->value);
 			else if (datetime_impl)
@@ -921,6 +938,53 @@ namespace corona
 			return function_impl->fn(*function_impl->function_this, _params);
 		}
 
+		json set_natural_order()
+		{
+			comparison_fields.clear();
+
+			int comparison_index = 1;
+			for (auto m : object_impl->members) {
+				if (m.second) {
+					m.second->comparison_index = comparison_index++;
+					compared_item sort_tuple = std::make_tuple(m.second->comparison_index, m);
+					comparison_fields.push_back(sort_tuple);
+				}
+			}
+
+			std::sort(comparison_fields.begin(), comparison_fields.end());
+
+			return *this;
+		}
+
+		json set_compare_order(std::initializer_list<std::string> _fields)
+		{
+			comparison_fields.clear();
+
+			int comparison_index = 1;
+			for (auto m : object_impl->members) {
+				if (m.second) m.second->comparison_index = 0;
+			}
+			for (auto f : _fields)
+			{
+				if (object_impl->members.contains(f)) {
+					auto fn = object_impl->members[f];
+					fn->comparison_index = ++comparison_index;
+				}
+			}
+
+			for (auto m : object_impl->members)
+			{
+				if (m.second->comparison_index) {
+					compared_item sort_tuple = std::make_tuple(m.second->comparison_index, m);
+					comparison_fields.push_back(sort_tuple);
+				}
+			}
+
+			std::sort(comparison_fields.begin(), comparison_fields.end());
+
+			return *this;
+		}
+
 		json extract(std::initializer_list<std::string> _fields)
 		{
 			if (!object_impl) 
@@ -930,13 +994,17 @@ namespace corona
 
 			json jn( std::make_shared<json_object>() );
 
+			int comparison_index = 1;
 			for (auto f : _fields) 
 			{
 				if (object_impl->members.contains(f)) {
 					auto fn = object_impl->members[f];
+					fn->comparison_index = ++comparison_index;
 					jn.put_member_value(f, fn);
 				}
 			}
+
+			jn.set_compare_order(_fields);
 
 			return jn;
 		}
@@ -949,19 +1017,7 @@ namespace corona
 			return object_impl->members;
 		}
 
-		std::map<std::string, json> get_members()
-		{
-			if (!object_impl) {
-				throw std::logic_error("Not an object");
-			}
-			std::map<std::string, json> mp;
-			for (auto m : object_impl->members) 
-			{
-				json jx(m.second);
-				mp.insert_or_assign(m.first, jx);
-			}
-			return mp;
-		}
+		std::map<std::string, json> get_members();
 
 		template <typename element_type> json append_element(element_type et)
 		{
@@ -1135,14 +1191,26 @@ namespace corona
 		{
 			int comparison = 0;
 
-			if (!is_object() && !_item.is_object()) 
+			if (is_object() && !_item.is_object())
 			{
-				throw std::logic_error("Both objects must be string");
+				return 1;
 			}
 
-			for (auto m : object_impl->members)
+			if (!is_object() && _item.is_object())
 			{
-				std::string key = m.first;
+				return -1;
+			}
+
+			if (!is_object() && !_item.is_object()) 
+			{
+				throw std::logic_error("At least one of the being compared must be json_object (not array or value, yet)");
+			}
+
+
+			for (auto m : comparison_fields)
+			{
+				std::string key = std::get<1>(m).first;
+				auto member_value = std::get<1>(m).second;
 
 				if (!_item.has_member(key)) 
 				{
@@ -1150,21 +1218,21 @@ namespace corona
 				}				
 
 				auto member_dest = _item[key];
-				auto member_src = json(m.second);
+				auto member_src = json(member_value);
 
 				if (member_src.is_string()) 
 				{
 					std::string tst_src, tst_dst;
-					tst_src = member_dest[member_src];
-					tst_dst = member_src;
+					tst_src = member_src;
+					tst_dst = member_dest;
 
 					comparison = _stricmp(tst_src.c_str(), tst_dst.c_str());
 				}
 				else if (member_src.is_int64())
 				{
 					int64_t itst_src, itst_dst;
-					itst_src = member_dest[member_src];
-					itst_dst = member_src;
+					itst_src = member_src;
+					itst_dst = (int64_t)member_dest;
 
 					if (itst_src < itst_dst) {
 						comparison = -1;
@@ -1179,8 +1247,8 @@ namespace corona
 				else if (member_src.is_double())
 				{
 					double dtst_src, dtst_dst;
-					dtst_src = member_dest[member_src];
-					dtst_dst = member_src;
+					dtst_src = member_src;
+					dtst_dst = (double)member_dest;
 
 					if (dtst_src < dtst_dst) {
 						comparison = -1;
@@ -1195,8 +1263,8 @@ namespace corona
 				else if (member_src.is_datetime())
 				{
 					LARGE_INTEGER dtst_src, dtst_dst;
-					dtst_src = member_dest[member_src];
-					dtst_dst = member_src;
+					dtst_src = member_src;
+					dtst_dst = (LARGE_INTEGER)member_dest;
 
 					if (dtst_src.QuadPart < dtst_dst.QuadPart) {
 						comparison = -1;
@@ -1208,20 +1276,11 @@ namespace corona
 						comparison = 0;
 					}
 				}
-				else if (member_src.is_function())
+				else if (member_src.is_object() || member_src.is_array() || member_src.is_function())
 				{
 					json dtst_src, dtst_dst;
-					dtst_src = member_dest[member_src];
-					dtst_dst = member_src;
-
-					comparison = dtst_src.compare(dtst_dst);
-				}
-				else if (member_src.is_object())
-				{
-					json dtst_src, dtst_dst;
-					dtst_src = member_dest[member_src];
-					dtst_dst = member_src;
-
+					dtst_src = member_src;
+					dtst_dst = member_dest;
 					comparison = dtst_src.compare(dtst_dst);
 				}
 
@@ -1443,6 +1502,20 @@ namespace corona
 		}
 
 	};
+
+	std::map<std::string, json> json::get_members()
+	{
+		if (!object_impl) {
+			throw std::logic_error("Not an object");
+		}
+		std::map<std::string, json> mp;
+		for (auto m : object_impl->members)
+		{
+			json jx(m.second);
+			mp.insert_or_assign(m.first, jx);
+		}
+		return mp;
+	}
 
 	class json_parser
 	{
@@ -1970,7 +2043,7 @@ namespace corona
 
 		bool parse_object(std::shared_ptr<json_object>& _object, const char* _src, const char** _modified)
 		{
-
+			int comparison_index = 0;
 			bool result = false;
 			std::string temp = "";
 			_src = eat_white(_src);
@@ -2018,6 +2091,7 @@ namespace corona
 						std::shared_ptr<json_value> member_value;
 						if (parse_value(member_value, _src, &_src)) {
 							parse_object_state = parse_object_states::parsing_comma;
+							member_value->comparison_index = ++comparison_index;
 							_object->members[member_name] = member_value;
 						}
 						else
@@ -2124,5 +2198,88 @@ corona::json operator ""_json_object(const char* _src)
 	auto result = parser.parse_object(_src);
 	return result;
 }
+
+namespace corona 
+{
+
+	bool test_json_parser()
+	{
+		bool success = true;
+
+		corona::json_parser jp;
+
+		corona::json empty;
+
+		corona::json test_eq1 = jp.parse_object(R"({ "name":"bill", "age":42 })");
+		corona::json test_eq2 = jp.parse_object(R"({ "name":"bill", "age":42 })");
+
+		if (test_eq1.has_member("box"))
+		{
+			std::cout << "negative membership test failed" << std::endl;
+			success = false;
+		}
+
+		if (test_eq1.has_member("bill"))
+		{
+			std::cout << "positive membership basic test failed" << std::endl;
+			success = false;
+		}
+
+		if (!test_eq1.has_member("age"))
+		{
+			std::cout << "positive membership extent test failed" << std::endl;
+			success = false;
+		}
+
+		if (empty.compare(test_eq1) >= 0) 
+		{
+			std::cout << "empty < test_eq1 failed" << std::endl;
+			success = false;
+		}
+
+		if (test_eq1.compare(test_eq2) != 0)
+		{
+			std::cout << "test_eq1 == test_eq1 failed" << std::endl;
+			success = false;
+		}
+
+		test_eq1.set_compare_order({ "name", "age" });
+		if (test_eq1.compare(test_eq2) != 0)
+		{
+			std::cout << "test_eq1 == test_eq1 failed" << std::endl;
+			success = false;
+		}
+
+		test_eq2.set_compare_order({ "name", "age" });
+		if (test_eq2.compare(test_eq1) != 0)
+		{
+			std::cout << "test_eq1 == test_eq1 failed" << std::endl;
+			success = false;
+		}
+
+		corona::json test_lt1 = jp.parse_object(R"({ "name":"zak", "age":34 })");
+		corona::json test_lt2 = jp.parse_object(R"({ "name":"zak", "age":37 })");
+		test_lt1.set_compare_order({ "name", "age" });
+
+		if (test_lt1.compare(test_lt2) >= 0)
+		{
+			std::cout << "test_lt1 < test_lt2 failed" << std::endl;
+			success = false;
+		}
+
+		test_lt2.set_compare_order({ "name", "age" });
+
+		if (test_lt2.compare(test_lt1) < 0)
+		{
+			std::cout << "test_lt2 < test_lt1 failed" << std::endl;
+			success = false;
+		}
+
+		return success;
+	}
+
+}
+
+/* todo, unit tests for the json parser, in particular, compare */
 
 #endif

@@ -168,7 +168,7 @@ namespace corona
 		for (int i = 0; i < selected_objects.size(); i++)
 		{
 			// pull our current object out of this json array
-			auto selected_object = selected_objects[i];
+			auto selected_object = selected_objects.get_element(i);
 
 			std::string class_name = selected_object["ClassName"].get_string();
 			std::string class_description = selected_object["ClassDescription"].get_string();
@@ -337,7 +337,7 @@ namespace corona
 
 		for (int i = 0; i < create_options.size(); i++)
 		{
-			auto co = create_options[i];
+			auto co = create_options.get_element(i);
 
 			// then, fish out the stuff we need
 			std::string class_name = co["CreateClassName"].get_string();
@@ -394,7 +394,7 @@ namespace corona
 		for (int i = 0; i < select_options.size(); i++)
 		{
 			// get our element out of this json array
-			auto selected_rule = select_options[i];
+			auto selected_rule = select_options.get_element(i);
 
 			// get our data out of this element
 			// the rule name and description are the model rules by which this object was selected.
@@ -457,7 +457,7 @@ namespace corona
 				};
 
 			ads.draw_item = [app_show, ads](draw_control* _parent, int _index, rectangle _bounds) {
-				auto json_object = ads.data[_index];
+				auto json_object = ads.data.get_element(_index);
 				if (json_object.has_member("Source")) {
 					json_object = json_object["Source"];
 				}

@@ -36,15 +36,31 @@ void corona_tests()
         std::cout << "test_data_block::result " << result << ", thread:" << GetCurrentThreadId() << std::endl;
 
         std::cout << "\n\n=============================================" << std::endl;
+        std::cout << "main:test_json_parser, thread:" << GetCurrentThreadId() << std::endl;
+        corona::test_json_parser();
+
+        std::cout << "\n\n=============================================" << std::endl;
         std::cout << "main:test_json_node, thread:" << GetCurrentThreadId() << std::endl;
 
         corona::file_transaction fb3 = corona::test_json_node(app);
         auto result3 = fb3.wait();
 
+        std::cout << "\n\n=============================================" << std::endl;
+        std::cout << "main:test_json_table, thread:" << GetCurrentThreadId() << std::endl;
+
         corona::user_transaction fb4 = corona::test_json_table(app);
         auto result4 = fb4.wait();
 
         std::cout << "\nmain::end,thread:" << GetCurrentThreadId() << std::endl;
+
+        std::string prompto;
+
+        while (getline(std::cin, prompto)) {
+            std::cout << "Ok" << std::endl;
+        }
+
+        std::cout << "Goodbye" << std::endl;
+
     }
     catch (std::exception exc)
     {

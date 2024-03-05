@@ -78,10 +78,9 @@ namespace corona
 	struct index_header_struct
 	{
 	public:
-		int64_t	header_node_location;
-		int64_t count;
-		long	level;
-		int64_t forward[JsonTableMaxNumberOfLevels];
+		int64_t		header_node_location;
+		int64_t		count;
+		long		level;
 	};
 
 	template <typename data> class poco_node;
@@ -1335,6 +1334,7 @@ namespace corona
 		file_result instance;
 		lockable size_locker;
 		HANDLE resize_event;
+		LARGE_INTEGER end_of_file_position;
 
 		void open(job_queue* _queue, const file_path& _filename, file_open_types _file_open_type)
 		{
@@ -1403,6 +1403,7 @@ namespace corona
 					throw std::logic_error(osr.message.c_str());
 				}
 			}
+			::GetFileSizeEx(instance.hfile, &end_of_file_position);
 		}
 
 	public:
@@ -1471,7 +1472,6 @@ namespace corona
 		uint64_t add(uint64_t _bytes_to_add) // adds size_bytes to file and returns the position of the start
 		{
 			uint64_t position;
-			LARGE_INTEGER file_size;
 
 			if (instance.hfile == INVALID_HANDLE_VALUE)
 				return 0;
@@ -1479,11 +1479,9 @@ namespace corona
 			::WaitForSingleObject(resize_event, INFINITE);
 			::ResetEvent(resize_event);
 
-			file_size.QuadPart = 0;
-			::GetFileSizeEx(instance.hfile, &file_size);
-			position = file_size.QuadPart;
-			file_size.QuadPart += _bytes_to_add;
-			::SetFilePointerEx(instance.hfile, file_size, NULL, FILE_BEGIN);
+			position = end_of_file_position.QuadPart;
+			end_of_file_position.QuadPart += _bytes_to_add;
+			::SetFilePointerEx(instance.hfile, end_of_file_position, &end_of_file_position, FILE_BEGIN);
 			::SetEndOfFile(instance.hfile);
 			::SetEvent(resize_event);
 			return position;
@@ -1511,9 +1509,9 @@ namespace corona
 			return ft;
 		}
 
-		file_task append(uint64_t location, void* _buffer, int _buffer_length)
+		file_task append(void* _buffer, int _buffer_length)
 		{
-			debug_file&& std::cout << "append file:" << location << ", thread:" << GetCurrentThreadId() << std::endl;
+			debug_file&& std::cout << "append file:" << end_of_file_position.QuadPart <<  ", thread:" << GetCurrentThreadId() << std::endl;
 
 			int64_t file_position = add(_buffer_length);
 
