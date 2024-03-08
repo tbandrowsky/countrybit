@@ -1278,6 +1278,19 @@ namespace corona
 			co_return false;
 		}
 
+		std::cout << db_contents.to_json() << std::endl;
+
+		// and break it up
+
+		auto summary = db_contents.array_to_object([](json& _item) {
+			return (std::string)_item["ObjectId"];
+			},
+			[](json& _target) {
+				return _target;
+			});
+
+		std::cout << summary.to_json() << std::endl;
+
 		test_key.put_member_i64("ObjectId", 3);
 		bool rdel3 = co_await test_table.erase(test_key);
 
