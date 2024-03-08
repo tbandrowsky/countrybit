@@ -386,7 +386,7 @@ namespace corona
 
 	class json
 	{
-		using compared_item = std::tuple<int, std::pair<std::string, std::shared_ptr<json_value>>>;
+		using compared_item = std::tuple<int, std::string>;
 
 		std::vector<compared_item> comparison_fields;
 
@@ -546,6 +546,20 @@ namespace corona
 				value = string_impl->value == "true";
 			}
 			return value;
+		}
+
+		int64_t get_int64s()  const
+		{
+			if (double_impl)
+				return double_impl->value;
+			else if (int64_impl)
+				return int64_impl->value;
+			else if (datetime_impl)
+				return datetime_impl->value.QuadPart;
+			else if (string_impl)
+				return std::stod(string_impl->value);
+			else
+				return 0;
 		}
 
 		int64_t& get_int64()  const
@@ -946,7 +960,7 @@ namespace corona
 			for (auto m : object_impl->members) {
 				if (m.second) {
 					m.second->comparison_index = comparison_index++;
-					compared_item sort_tuple = std::make_tuple(m.second->comparison_index, m);
+					compared_item sort_tuple = std::make_tuple(m.second->comparison_index, m.first);
 					comparison_fields.push_back(sort_tuple);
 				}
 			}
@@ -975,7 +989,7 @@ namespace corona
 			for (auto m : object_impl->members)
 			{
 				if (m.second->comparison_index) {
-					compared_item sort_tuple = std::make_tuple(m.second->comparison_index, m);
+					compared_item sort_tuple = std::make_tuple(m.second->comparison_index, m.first);
 					comparison_fields.push_back(sort_tuple);
 				}
 			}
@@ -1209,8 +1223,8 @@ namespace corona
 
 			for (auto m : comparison_fields)
 			{
-				std::string key = std::get<1>(m).first;
-				auto member_value = std::get<1>(m).second;
+				std::string key = std::get<1>(m);
+				auto member_value = object_impl->members[key];
 
 				if (!_item.has_member(key)) 
 				{
@@ -1231,7 +1245,7 @@ namespace corona
 				else if (member_src.is_int64())
 				{
 					int64_t itst_src, itst_dst;
-					itst_src = member_src;
+					itst_src = (int64_t)member_src;
 					itst_dst = (int64_t)member_dest;
 
 					if (itst_src < itst_dst) {
@@ -1247,7 +1261,7 @@ namespace corona
 				else if (member_src.is_double())
 				{
 					double dtst_src, dtst_dst;
-					dtst_src = member_src;
+					dtst_src = (double)member_src;
 					dtst_dst = (double)member_dest;
 
 					if (dtst_src < dtst_dst) {
@@ -1263,7 +1277,7 @@ namespace corona
 				else if (member_src.is_datetime())
 				{
 					LARGE_INTEGER dtst_src, dtst_dst;
-					dtst_src = member_src;
+					dtst_src = (LARGE_INTEGER)member_src;
 					dtst_dst = (LARGE_INTEGER)member_dest;
 
 					if (dtst_src.QuadPart < dtst_dst.QuadPart) {
@@ -1319,50 +1333,197 @@ namespace corona
 
 		bool any(std::function<bool(json& _item)> _where_clause)
 		{
-			if (!array_impl) {
-				throw std::logic_error("Not an array");
-			}
-			json new_array(std::make_shared<json_array>());
-			for (int i = 0; i < size(); i++)
-			{
-				auto element = get_element(i);
-				if (_where_clause(element)) {
-					return true;
+			if (object_impl) {
+				auto members = get_members();
+				for (auto m : members)
+				{
+					if (_where_clause(m.second)) {
+						return true;
+					}
 				}
+			}
+			else if (array_impl) 
+			{
+				for (int i = 0; i < size(); i++)
+				{
+					auto element = get_element(i);
+					if (_where_clause(element)) {
+						return true;
+					}
+				}
+			}
+			else
+			{
+				throw std::logic_error("Not an array or an object");
 			}
 			return false;
 		}
 
-		json filter(std::function<bool(json& _item)> _where_clause)
+		bool all(std::function<bool(json& _item)> _where_clause)
 		{
-			if (!array_impl) {
-				throw std::logic_error("Not an array");
-			}
-			json new_array( std::make_shared<json_array>() );
-			for (int i = 0; i < size(); i++)
-			{
-				auto element = get_element(i);
-				if (_where_clause(element)) {
-					json jnew = element->clone();
-					new_array.put_element(-1, jnew );
+			if (object_impl) {
+				auto members = get_members();
+				for (auto m : members)
+				{
+					if (!_where_clause(m.second)) {
+						return false;
+					}
 				}
 			}
-			return new_array;
+			else if (array_impl)
+			{
+				for (int i = 0; i < size(); i++)
+				{
+					auto element = get_element(i);
+					if (!_where_clause(element)) {
+						return false;
+					}
+				}
+			}
+			else
+			{
+				throw std::logic_error("Not an array or an object");
+			}
+			return true;
 		}
 
-		json map(std::function<json(json& _item)> _transform)
+		json filter(std::function<bool(json& _item)> _where_clause)
 		{
-			if (!array_impl) {
-				throw std::logic_error("Not an array");
+			json result_item;
+
+			if (object_impl) {
+				result_item = json(std::make_shared<json_object>());
+				auto members = get_members();
+				for (auto m : members)
+				{
+					if (_where_clause(m.second)) {
+						json j = m.second.clone();
+						result_item.put_member(m.first, j);
+					}
+				}
 			}
-			json new_array(std::make_shared<json_array>());
-			for (int i = 0; i < size(); i++)
+			else if (array_impl)
 			{
-				auto element = get_element(i);
-				auto new_element = _transform(element);
-				new_array.put_element(-1, new_element);
+				result_item = json(std::make_shared<json_array>());
+				for (int i = 0; i < size(); i++)
+				{
+					auto element = get_element(i);
+					if (_where_clause(element)) {
+						json jnew = element->clone();
+						result_item.put_element(-1, jnew);
+					}
+				}
 			}
-			return new_array;
+			else
+			{
+				throw std::logic_error("Not an array or an object");
+			}
+
+			return result_item;
+		}
+
+		json array_to_object(std::function<std::string(json& _item)> _get_key,
+			std::function<json(json& _target)> _get_payload)
+		{
+			json result_item;
+			result_item = json(std::make_shared<json_object>());
+
+			if (array_impl)
+			{
+				for (int i = 0; i < size(); i++)
+				{
+					auto element = get_element(i);
+					if (element.is_object()) {
+						std::string key = _get_key(element);
+						json new_item = _get_payload(element);
+						if (result_item.has_member(key)) 
+						{
+							result_item[key].append_element(new_item);
+						}
+						else 
+						{
+							result_item.put_member_array(key);
+							result_item[key].append_element(new_item);
+						}
+					}
+				}
+			}
+			else {
+				throw std::exception("Item is not array");
+			}
+			return result_item;
+		}
+
+		json object_to_array(std::function<json(std::string _member_name, json& _src)> _get_payload)
+		{
+			json result_item;
+			result_item = json(std::make_shared<json_array>());
+
+			if (object_impl)
+			{
+				auto members = get_members();
+				for (auto member: members)
+				{
+					json new_object = _get_payload(member.first, member.second);
+					if (!new_object.is_empty()) {
+						result_item.append_element(new_object);
+					}
+				}
+			}
+			else {
+				throw std::exception("Item is not array");
+			}
+			return result_item;
+		}
+
+
+		json map(std::function<json(std::string _member, int _index, json& _item)> _transform)
+		{
+			json result_item;
+
+			if (array_impl) 
+			{
+				result_item = json(std::make_shared<json_array>());
+				for (int i = 0; i < size(); i++)
+				{
+					auto element = get_element(i);
+					auto new_element = _transform("", i, element);
+					if (new_element.is_array()) {
+						for (int i = 0; i < new_element.size(); i++) {
+							json j = new_element.get_element(i);
+							result_item.append_element( j);
+						}
+					}
+					else 
+					{
+						result_item.append_element(new_element);
+					}
+				}
+			}
+			else if (object_impl)
+			{
+				result_item = json(std::make_shared<json_object>());
+				auto members = get_members();
+				for (auto member : members)
+				{
+					auto new_member = _transform(member.first, 0, member.second);
+					if (new_member.is_object()) {
+						auto members = new_member.get_members();
+						for (auto member : members) {
+							if (!result_item.has_member(member.first)) {
+								result_item.put_member_array(member.first);
+							}
+							result_item[member.first].append_element(member.second);
+						}
+					}
+					else
+					{
+						result_item.put_member(member.first, new_member);
+					}
+				}
+			}
+
+			return result_item;
 		}
 
 		json update(std::function<json&(json& _item)> _transform)
@@ -2274,6 +2435,59 @@ namespace corona
 			std::cout << "test_lt2 < test_lt1 failed" << std::endl;
 			success = false;
 		}
+
+		corona::json test_array = jp.parse_array(R"(
+[
+{ "name":"holly", "age":37, "sex":"female" },
+{ "name":"susan", "age":22, "sex":"female" },
+{ "name":"tina", "age":19, "sex":"female" },
+{ "name":"kirsten", "age":19, "sex":"female" },
+{ "name":"cheri", "age":22, "sex":"female" },
+{ "name":"dorothy", "age":22, "sex":"female" },
+{ "name":"leila", "age":25, "sex":"female" },
+{ "name":"dennis", "age":40, "sex":"male" },
+{ "name":"kevin", "age":44, "sex":"male" },
+{ "name":"kirk", "age":42, "sex":"male" },
+{ "name":"dan", "age":25, "sex":"male" },
+{ "name":"peter", "age":33, "sex":"male" }
+])");
+
+		if (!test_array.any([](json& _item) {
+			return (double)_item["age"] > 35;
+			}))
+		{
+			std::cout << "any failed" << std::endl;
+		}
+
+		if (!test_array.all([](json& _item) {
+			return (double)_item["age"] > 17;
+			}))
+		{
+			std::cout << "all failed" << std::endl;
+		}
+
+		json test_array_group = test_array.array_to_object(
+			[](json& _item)->std::string {
+				double age = _item["age"];
+				if (age < 21) 
+				{
+					return "teen";
+				}
+				else if (age < 30) 
+				{
+					return "adult";
+				}
+				else 
+				{
+					return "middle";
+				}
+			},
+			[](json& _item)->json {
+				return _item;
+			}
+			);
+
+		std::cout << test_array_group.to_json() << std::endl;
 
 		return success;
 	}

@@ -23,7 +23,7 @@ namespace corona
 
 	class json_node;
 
-	const int debug_json_table = 1;
+	const int debug_json_table = 0;
 
 	using db_object_id_type = int64_t;
 
@@ -494,7 +494,7 @@ namespace corona
 			relative_ptr_type update[JsonTableMaxNumberOfLevels], p;
 			json_node qnd, pnd;
 
-			relative_ptr_type q = find_node(update, key);
+			relative_ptr_type q = co_await find_node(update, key);
 
 			if (q != null_row)
 			{
@@ -745,6 +745,9 @@ namespace corona
 	private:
 
 		// compare a node to a key for equality
+		// return -1 if the node < key
+		// return 1 if the node > key
+		// return 0 if the node == key
 
 		compare_transaction compare(relative_ptr_type _node, KEY _id_key) const
 		{
@@ -752,7 +755,7 @@ namespace corona
 			{
 				json_node nd = co_await get_node(database_file, _node);
 				KEY ndkey = get_key( nd.data );
-				int k = _id_key.compare(ndkey);
+				int k = -_id_key.compare(ndkey); // the - is here because the comparison is actually backwards. 
 				if (k < 0)
 					co_return -SORT_ORDER;
 				else if (k > 0)
@@ -781,7 +784,7 @@ namespace corona
 				}
 				json_node jn = hdr;
 				q = jn.forward[k];
-				int comp = compare(q, _key);
+				int comp = co_await compare(q, _key);
 				while (comp < 0)
 				{
 					p = q;
@@ -831,7 +834,7 @@ namespace corona
 				json_node jn = co_await get_node(database_file, p);
 				q = jn.forward[k];
 				last_link = q;
-				int comp = compare(q, _key);
+				int comp = co_await compare(q, _key);
 				while (comp < 0)
 				{
 					p = q;
@@ -880,7 +883,7 @@ namespace corona
 			{
 				::InterlockedIncrement(&index_header.data.level);
 				k = index_header.data.level;
-				update[k] = header.forward[k];
+				update[k] = header.storage.current_location;
 			}
 
 			UPDATE_VALUE initial_value;
@@ -1074,6 +1077,13 @@ namespace corona
 			std::cout << __LINE__ << " fail: wrong inserted value." << std::endl;
 			co_return false;
 		}
+		auto db_contents_task = test_table.select_array([](int _index, json& item) {
+			return item;
+			});
+
+		auto db_contents = db_contents_task.wait();
+
+		std::cout << db_contents.to_json_string() << std::endl;
 
 		test_write.put_member_i64("ObjectId", 7);
 		test_write.put_member("Name", "Jack");
@@ -1089,6 +1099,14 @@ namespace corona
 			co_return false;
 		}
 
+		db_contents_task = test_table.select_array([](int _index, json& item) {
+			return item;
+			});
+
+		db_contents = db_contents_task.wait();
+
+		std::cout << db_contents.to_json_string() << std::endl;
+
 		test_write.put_member_i64("ObjectId", 7);
 		test_write.put_member("Name", "Jill");
 		test_key = test_write.extract({ "ObjectId" });
@@ -1103,6 +1121,14 @@ namespace corona
 			co_return false;
 		}
 
+		db_contents_task = test_table.select_array([](int _index, json& item) {
+			return item;
+			});
+
+		db_contents = db_contents_task.wait();
+
+		std::cout << db_contents.to_json_string() << std::endl;
+
 		try
 		{
 			test_key.put_member_i64("ObjectId", 6);
@@ -1114,11 +1140,11 @@ namespace corona
 			co_return false;
 		}
 
-		auto db_contents_task = test_table.select_array([](int _index, json& item) {
+		db_contents_task = test_table.select_array([](int _index, json& item) {
 			return item;
 			});
 
-		auto db_contents = db_contents_task.wait();
+		db_contents = db_contents_task.wait();
 
 		std::cout << db_contents.to_json_string() << std::endl;
 
@@ -1210,26 +1236,41 @@ namespace corona
 			std::cout << __LINE__ << " fail: wrong number of result elements." << std::endl;
 			co_return false;
 		}
-
+		
 		int64_t tests[4] = { 1, 2, 5, 7 };
 		int k = 0;
 
-		relative_ptr_type count = co_await test_table.for_each([tests](int _index, json& _item) -> bool {
-			if (tests[_index] != (int64_t)_item["ObjectId"]) {
-				std::cout << __LINE__ << " order failed" << std::endl;
-				return true;
+		json counts = jp.create_object();
+		json *pcounts = &counts;
+
+		relative_ptr_type count = co_await test_table.for_each([tests,pcounts](int _index, json& _item) -> bool {
+
+			int64_t test_index = tests[_index];
+			std::string member_names = std::format("item{0}", (int64_t)_item["ObjectId"]);
+			int64_t counto = 0;
+			if (pcounts->has_member(member_names)) {
+				counto = pcounts->get_member(member_names);
 			}
+			counto++;
+			pcounts->put_member_i64(member_names, counto);
+			return 1;
 			});
 
+		std::string count_string = counts.to_json();
+
+		std::cout << count_string << std::endl;
+
 		db_contents_task = test_table.select_array([tests](int _index, json& _item) -> json {
-			return (_item["ObjectId"].get_int64() > 1i64) ? _item : json();
+			int64_t temp = _item["ObjectId"];
+			return (temp > 1i64) ? _item : json();
 			}
 		);
 
 		db_contents = db_contents_task.wait();
 
 		bool any_fails = db_contents.any([](json& _item)->bool {
-			return _item["ObjectId"].get_int64() <= 1i64;
+			int64_t temp = _item["ObjectId"];
+			return temp <= 1i64;
 			});
 
 		if (any_fails) {
@@ -1237,14 +1278,30 @@ namespace corona
 			co_return false;
 		}
 
+		test_key.put_member_i64("ObjectId", 3);
+		bool rdel3 = co_await test_table.erase(test_key);
+
+		if (rdel3) {
+			std::cout << "delete non-existing failed" << std::endl;
+		}
+
 		test_key.put_member_i64("ObjectId", 1);
-		co_await test_table.erase(test_key);
+		bool rdel1 = co_await test_table.erase(test_key);
+
+		if (!rdel1) {
+			std::cout << "delete existing failed" << std::endl;
+		}
 
 		test_key.put_member_i64("ObjectId", 7);
-		co_await test_table.erase(test_key);
+		relative_ptr_type rdel7 = co_await test_table.erase(test_key);
+
+		if (!rdel7) {
+			std::cout << "delete existing failed" << std::endl;
+		}
 
 		auto testi_task = test_table.select_array([tests](int _index, json& item) -> json {
-			return (item["ObjectId"].get_int64() == 7) ? item : json();
+			int64_t object_id = item["ObjectId"];
+			return object_id == 7 ? item : json();
 			});
 
 		auto testi = testi_task.wait();
@@ -1262,7 +1319,7 @@ namespace corona
 		db_contents = db_contents_task.wait();
 
 		bool any_iteration_fails = db_contents.any([](json& _item)->bool {
-			int64_t object_id = _item["ObjectId"].get_int64();
+			int64_t object_id = _item["ObjectId"];
 			return  object_id != 2 && object_id != 5;
 			});
 
