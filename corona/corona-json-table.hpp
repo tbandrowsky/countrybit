@@ -415,12 +415,12 @@ namespace corona
 			co_return node;
 		}
 
-	public:
-
-		std::function<json(json&)> get_key;
+		std::initializer_list<std::string> key_fields;
 		json header_key;
 
-		json_table(file* _database_file) : database_file(_database_file)
+	public:
+
+		json_table(file* _database_file, std::initializer_list<std::string> _key_fields) : database_file(_database_file), key_fields(_key_fields)
 		{
 
 		}
@@ -429,13 +429,29 @@ namespace corona
 		{
 			index_header = _src.index_header;
 			database_file = _src.database_file;
+			key_fields = _src.key_fields;
+			header_key = _src.header_key;
 		}
 
 		json_table operator = (const json_table& _src)
 		{
 			index_header = _src.index_header;
 			database_file = _src.database_file;
+			key_fields = _src.key_fields;
+			header_key = _src.header_key;
 			return *this;
+		}
+
+		json get_key(json& _object) 
+		{		
+			json key = _object.extract(key_fields);
+			return key;
+		}
+
+		bool key_covered(json& _key)
+		{
+			bool r = _key.keys_compatible(key_fields);
+			return r;
 		}
 
 		table_transaction<relative_ptr_type> create()
@@ -469,11 +485,24 @@ namespace corona
 			co_return result;
 		}
 
+		table_transaction<json> get(const KEY key, std::initializer_list<std::string> include_fields)
+		{
+			json result;
+			relative_ptr_type n = co_await find_node(key);
+			if (n != null_row) {
+				json_node r = co_await get_node(database_file, n);
+				if (!r.data.is_empty()) {
+					result = r.data.extract(include_fields);
+				}
+			}
+			co_return result;
+		}
+
 		table_transaction<relative_ptr_type>
 		put(json value)
 		{
 			auto key = get_key(value);
-			relative_ptr_type modified_node = co_await this->update_node(key, [value](UPDATE_VALUE& dest) { dest = value; });
+			relative_ptr_type modified_node = co_await this->update_node(key, [value](UPDATE_VALUE& dest) { dest.assign_update(value); });
 			co_return modified_node;
 		}
 
@@ -483,7 +512,25 @@ namespace corona
 			json_parser jp;
 			json jx = jp.parse_object(_json);
 			auto key = get_key(jx);
-			relative_ptr_type modified_node = co_await this->update_node(key, [jx](UPDATE_VALUE& dest) { dest = jx; });
+			relative_ptr_type modified_node = co_await this->update_node(key, [jx](UPDATE_VALUE& dest) { dest.assign_update(jx); });
+			co_return modified_node;
+		}
+
+		table_transaction<relative_ptr_type>
+			replace(json value)
+		{
+			auto key = get_key(value);
+			relative_ptr_type modified_node = co_await this->update_node(key, [value](UPDATE_VALUE& dest) { dest.assign_replace(value); });
+			co_return modified_node;
+		}
+
+		table_transaction<relative_ptr_type>
+			replace(std::string _json)
+		{
+			json_parser jp;
+			json jx = jp.parse_object(_json);
+			auto key = get_key(jx);
+			relative_ptr_type modified_node = co_await this->update_node(key, [jx](UPDATE_VALUE& dest) { dest.assign_replace(jx); });
 			co_return modified_node;
 		}
 
@@ -749,7 +796,7 @@ namespace corona
 		// return 1 if the node > key
 		// return 0 if the node == key
 
-		compare_transaction compare(relative_ptr_type _node, KEY _id_key) const
+		compare_transaction compare(relative_ptr_type _node, KEY _id_key)
 		{
 			if (_node != null_row)
 			{
@@ -800,26 +847,6 @@ namespace corona
 			co_return found;
 		}
 
-		/*
-		
-				relative_ptr_type found = null_row, p, q;
-		auto hdr = get_header();
-
-		for (int k = get_index_header()->level; k >= 0; k--)
-		{
-			p = get_index_header()->header_id;
-			q = hdr.detail(k);
-			auto comp = compare(q, key);
-			while (comp < 0)
-			{
-				p = q;
-				q = get_node(q).detail(k);
-				comp = compare(q, key);
-			}
-			if (comp == 0)
-				found = q;
-			update[k] = p;
-*/
 		table_private_transaction<relative_ptr_type>
 		find_first_gte(relative_ptr_type* update, KEY _key)
 		{
@@ -827,6 +854,10 @@ namespace corona
 
 			auto get_header_task = get_header();
 			json_node header = get_header_task.wait();
+
+			if (!_key.keys_compatible(key_fields)) {
+				co_return header.forward[0];
+			}
 
 			for (int k = index_header.data.level; k >= 0; k--)
 			{
@@ -1060,11 +1091,7 @@ namespace corona
 		test_write.set_natural_order();
 		json test_key = test_write.extract({ "ObjectId" });
 
-		json_table test_table(&f);
-		test_table.get_key = [](json& jn) -> json
-			{
-				return jn.extract( { "ObjectId" });
-			};
+		json_table test_table(&f, { "ObjectId" });
 
 		co_await test_table.create();
 
@@ -1262,15 +1289,18 @@ namespace corona
 
 		db_contents_task = test_table.select_array([tests](int _index, json& _item) -> json {
 			int64_t temp = _item["ObjectId"];
-			return (temp > 1i64) ? _item : json();
+			return (temp > 0i64) ? _item : json();
 			}
 		);
 
 		db_contents = db_contents_task.wait();
 
+		std::cout << "..." << std::endl;
+		std::cout << "Check negative objects." << std::endl;
+
 		bool any_fails = db_contents.any([](json& _item)->bool {
 			int64_t temp = _item["ObjectId"];
-			return temp <= 1i64;
+			return temp <= 0i64;
 			});
 
 		if (any_fails) {
@@ -1281,6 +1311,8 @@ namespace corona
 		std::cout << db_contents.to_json() << std::endl;
 
 		// and break it up
+		std::cout << "..." << std::endl;
+		std::cout << "Create summary object." << std::endl;
 
 		auto summary = db_contents.array_to_object([](json& _item) {
 			return (std::string)_item["ObjectId"];
@@ -1290,6 +1322,34 @@ namespace corona
 			});
 
 		std::cout << summary.to_json() << std::endl;
+
+		// and, see, now we can explore partial keys
+
+		std::cout << "..." << std::endl;
+		std::cout << "Extract only those that have the name Zeus." << std::endl;
+
+		json search_key = jp.create_object("Name", "Zeus");
+		search_key.set_compare_order({ "Name" });
+
+		auto db_contents_task2 = test_table.select_array(search_key, [tests](int _index, json& _item) -> json {
+			return _item;
+			}
+		);
+
+		db_contents = db_contents_task2.wait();
+
+		bool any_fails = db_contents.all([](json& _item)->bool {
+			std::string temp = _item["Name"];
+			return temp == "Zeus";
+			});
+
+		if (any_fails) {
+			std::cout << __LINE__ << " find bad key query failed" << std::endl;
+			co_return false;
+		}
+
+		std::cout << db_contents.to_json() << std::endl;
+
 
 		test_key.put_member_i64("ObjectId", 3);
 		bool rdel3 = co_await test_table.erase(test_key);

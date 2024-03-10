@@ -572,6 +572,79 @@ namespace corona
 			return *this;
 		}
 
+		std::string to_hex()
+		{
+			std::string temp = "";
+			for (int i = 0; i < buffer_size; i++) {
+				auto bi = buffer_bytes[i];
+				auto ret = corona::toHex(bi);
+				temp += ret.str;
+			}
+			return temp;
+		}
+
+		void from_hex(std::string _hex_string)
+		{
+			std::vector<char> bytes;
+			int index = 0;
+			int byte_count = 0;
+
+			while (index < _hex_string.size())
+			{
+				unsigned char t = corona::toInt2(_hex_string, index);
+				bytes.push_back(t);
+				index += 2;
+				byte_count++;
+			}
+
+			buffer_size = byte_count;
+			buffer_bytes = std::make_unique<char[]>(byte_count);
+			std::copy(buffer_bytes.get(), buffer_bytes.get() + byte_count, buffer_bytes.get());
+		}
+
+		void set_hex(std::string _hex_string)
+		{
+			int index = 0;
+			int byte_count = 0;
+
+			while (index < _hex_string.size() && byte_count < buffer_size)
+			{
+				unsigned char t = corona::toInt2(_hex_string, index);
+				buffer_bytes[byte_count] = t;
+				index += 2;
+				byte_count++;
+			}
+
+			while (byte_count < buffer_size)
+			{
+				buffer_bytes[byte_count] = 0;
+				byte_count++;
+			}
+		}
+
+		void set_buffer(std::string _string)
+		{
+			int byte_count = 0;
+
+			while (byte_count < buffer_size && byte_count < _string.size())
+			{
+				unsigned char t = _string[byte_count];
+				buffer_bytes[byte_count] = t;
+				byte_count++;
+			}
+
+			while (byte_count < buffer_size)
+			{
+				buffer_bytes[byte_count] = 0;
+				byte_count++;
+			}
+		}
+
+		unsigned char* get_uptr()
+		{
+			return (unsigned char *)buffer_bytes.get();
+		}
+
 		char* get_ptr()
 		{
 			return buffer_bytes.get();

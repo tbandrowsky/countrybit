@@ -408,6 +408,11 @@ namespace corona
 
 		json(std::shared_ptr<json_value> _value)
 		{
+			set(_value);
+		}
+
+		void set(std::shared_ptr<json_value> _value)
+		{
 			value_base = _value;
 			double_impl = std::dynamic_pointer_cast<json_double>(_value);
 			string_impl = std::dynamic_pointer_cast<json_string>(_value);
@@ -675,6 +680,29 @@ namespace corona
 		{
 			json jn(object_impl->members[_key]);
 			return jn;
+		}
+
+		void assign_update(json _member)
+		{
+			if (!object_impl) {
+				throw std::logic_error("Target is not an object");
+			}
+
+			if (!_member.object_impl) {
+				throw std::logic_error("Source is not an object");
+			}
+
+			auto members = _member.get_members_raw();
+
+			for (auto src : members)
+			{
+				put_member_value(src.first, src.second);
+			}
+		}
+
+		void assign_replace(json _member)
+		{
+			set(_member.value_base);
 		}
 
 		bool has_member(std::string _key) const
@@ -997,6 +1025,35 @@ namespace corona
 			std::sort(comparison_fields.begin(), comparison_fields.end());
 
 			return *this;
+		}
+
+		bool keys_compatible(std::initializer_list<std::string> keys)
+		{
+			if (!object_impl)
+			{
+				throw std::logic_error("Not an object");
+			}
+
+			auto	index_keys = keys.begin();
+			auto				   my_keys = comparison_fields.begin();
+
+			int chk = 0;
+			while (index_keys != std::end(keys))
+			{
+				if (my_keys != std::end(comparison_fields))
+					return false;
+
+				std::string ifx = std::get<1>(*my_keys);
+				std::string ify = *index_keys;
+
+				if (ifx != ify)
+					return false;
+
+				index_keys++;
+				my_keys++;
+			}
+			
+			return true;
 		}
 
 		json extract(std::initializer_list<std::string> _fields)
