@@ -672,14 +672,22 @@ namespace corona
 
 		json operator[](const std::string& _key) const
 		{
-			json jn(object_impl->members[_key]);
-			return jn;
+			if (object_impl && object_impl->members.contains(_key)) {
+				json jn(object_impl->members[_key]);
+				return jn;
+			}
+			json empty;
+			return empty;
 		}
 
 		json operator[](const char *_key) const
 		{
-			json jn(object_impl->members[_key]);
-			return jn;
+			if (object_impl && object_impl->members.contains(_key)) {
+				json jn(object_impl->members[_key]);
+				return jn;
+			}
+			json empty;
+			return empty;
 		}
 
 		void assign_update(json _member)

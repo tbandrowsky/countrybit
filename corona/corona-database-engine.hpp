@@ -94,6 +94,50 @@ namespace corona
 			return j;
 		}
 
+		bool check_permissions(json& _permissions)
+		{
+			std::string class_name = _permissions["ClassName"];
+			return _permissions.is_object() &&
+				class_name == "Permissions" &&
+				(_permissions.has_member("Get") ||
+					_permissions.has_member("Put") ||
+					_permissions.has_member("Delete") ||
+					_permissions.has_member("Replace") ||
+					_permissions.has_member("Subclass"));
+		}
+
+		bool check_team_grant(json& _grant)
+		{
+			std::string class_name = _grant["ClassName"];
+			std::string grant_class = _grant["GrantClass"];
+			std::string grant_team = _grant["GrantTeam"];
+
+			json filter = _grant["ObjectFilter"];
+			json permissions = _grant["Permissions"];
+
+			json token = create_system_token();
+
+			bool success = (class_name == "Grant") && 
+				check_permissions(permissions) &&
+				!(class_name_available(token, grant_class) || team_name_available(token, grant_team)) &&
+				(filter.is_object() || filter.is_array());
+
+			return success;
+		}
+
+		bool check_team_member(json& _member)
+		{
+			std::string class_name = _member["ClassName"];
+			json filter = _member["UserFilter"];
+
+			json token = create_system_token();
+
+			bool success = (class_name == "Member") &&
+				(filter.is_object() || filter.is_array());
+
+			return success;
+		}
+
 		database_transaction<json> check_class(json _class_definition)
 		{
 			json result;
@@ -496,6 +540,225 @@ namespace corona
 			return envelope;
 		}
 
+		database_transaction<json> get_token_user(json& _token, std::initializer_list<std::string> _fields)
+		{
+			json_parser jp;
+			json user_token;
+			std::string user_name = _token["Contents"]["UserName"];
+			json user_key = jp.create_object("UserName", user_name);
+			json user = co_await users.get(user_key);
+			co_return user;
+		}
+
+		bool has_permission(
+			json& _token, 
+			json_table *_data, 
+			json _match_key,
+			std::string _permission)
+		{
+			bool granted = false;
+			auto token_user_task = get_token_user(_token, { "UserName", "Teams" });
+			json token_user = token_user_task.wait();
+
+			granted = token_user["Teams"].any([this, _permission, _data, _match_key](json& _item) -> bool {
+				if (_item.is_string())
+				{
+					auto team_get_task = teams.get(_item);
+					auto team = team_get_task.wait();
+
+					if (team.is_object()) {
+						auto team_grants = team["Grants"];
+						team_grants.any([this, _permission, _data, _match_key](json& _grant)-> bool {
+
+							if (!_grant.has_member("GrantTeam"))
+								return false;
+
+							json filter = _grant["ObjectFilter"];
+
+							auto any_task = _data->any(filter, [_match_key](int _index, json& _item) -> bool {
+								return true;								
+								});
+
+							bool has_matching_team = any_task.wait();
+
+							bool has_permissions = _grant["Permissions"][_permission];
+
+							return has_matching_team && has_permissions;
+
+						});
+					}
+				}
+			});
+
+			return granted;
+		}
+
+		bool can_get_team(json& _token, json& _team_definition)
+		{
+			bool granted = false;
+			json team_key = _team_definition.extract({ "TeamName" });
+
+			granted = has_permission(_token, &teams, team_key, "Get");
+
+			return granted;
+		}
+
+		bool can_put_team(json& _token, json& _team_definition)
+		{
+			bool granted = false;
+			json team_key = _team_definition.extract({ "TeamName" });
+
+			granted = has_permission(_token, &teams, team_key, "Put");
+
+			return granted;
+		}
+
+		bool can_delete_team(json& _token, json& _team_definition)
+		{
+			bool granted = false;
+			json team_key = _team_definition.extract({ "TeamName" });
+
+			granted = has_permission(_token, &teams, team_key, "Delete");
+
+			return granted;
+		}
+
+		bool can_get_user(json& _token, json& _user_definition)
+		{
+			bool granted = false;
+			json user_key = _user_definition.extract({ "UserName" });
+
+			granted = has_permission(_token, &users, user_key, "Get");
+
+			return granted;
+		}
+
+		bool can_put_user(json& _token, json& _user_definition)
+		{
+			bool granted = false;
+			json user_key = _user_definition.extract({ "UserName" });
+
+			granted = has_permission(_token, &users, user_key, "Put");
+
+			return granted;
+		}
+
+		bool can_delete_user(json& _token, json& _user_definition)
+		{
+			bool granted = false;
+			json user_key = _user_definition.extract({ "UserName" });
+
+			granted = has_permission(_token, &users, user_key, "Delete");
+
+			return granted;
+		}
+
+
+
+		bool can_get_class(json& _token, json& _class_definition)
+		{
+			bool granted = false;
+			json user_key = _class_definition.extract({ "ClassName" });
+
+			granted = has_permission(_token, &classes, user_key, "Get");
+
+			return granted;
+		}
+
+		bool can_put_class(json& _token, json& _class_definition)
+		{
+			bool granted = false;
+			json user_key = _class_definition.extract({ "ClassName" });
+
+			granted = has_permission(_token, &classes, user_key, "Put");
+
+			return granted;
+		}
+
+		bool can_delete_class(json& _token, json& _class_definition)
+		{
+			bool granted = false;
+			json user_key = _class_definition.extract({ "ClassName" });
+
+			granted = has_permission(_token, &classes, user_key, "Delete");
+
+			return granted;
+		}
+
+		bool can_subclass_class(json& _token, json& _class_definition)
+		{
+			bool granted = false;
+			json user_key = _class_definition.extract({ "ClassName" });
+
+			granted = has_permission(_token, &classes, user_key, "Subclass");
+
+			return granted;
+		}
+
+
+		bool can_get_object(json& _token, json& _object_definition)
+		{
+			bool granted = false;
+			json user_key = _object_definition.extract({ "ObjectId" });
+
+			granted = has_permission(_token, &objects, user_key, "Get");
+
+			return granted;
+		}
+
+		bool can_put_object(json& _token, json& _object_definition)
+		{
+			bool granted = false;
+			json user_key = _object_definition.extract({ "ObjectId" });
+
+			granted = has_permission(_token, &objects, user_key, "Put");
+
+			return granted;
+		}
+
+		bool can_delete_object(json& _token, json& _object_definition)
+		{
+			bool granted = false;
+			json user_key = _object_definition.extract({ "ObjectId" });
+
+			granted = has_permission(_token, &objects, user_key, "Delete");
+
+			return granted;
+		}
+
+
+		bool can_get_form(json& _token, json& _form_definition)
+		{
+			bool granted = false;
+			json user_key = _form_definition.extract({ "FormName" });
+
+			granted = has_permission(_token, &forms, user_key, "Get");
+
+			return granted;
+		}
+
+		bool can_put_form(json& _token, json& _form_definition)
+		{
+			bool granted = false;
+			json user_key = _form_definition.extract({ "FormName" });
+
+			granted = has_permission(_token, &forms, user_key, "Put");
+
+			return granted;
+		}
+
+		bool can_delete_form(json& _token, json& _form_definition)
+		{
+			bool granted = false;
+			json user_key = _form_definition.extract({ "FormName" });
+
+			granted = has_permission(_token, &forms, user_key, "Delete");
+
+			return granted;
+		}
+
+
+
 		bool check_token(json& _token, std::string _expected_role)
 		{
 			if (!_token.is_object()) 
@@ -533,6 +796,56 @@ namespace corona
 
 			return true;
 		}
+
+		database_transaction<json> check_team(json _team_def)
+		{
+			json result;
+
+			result = create_response(true, "Ok");
+
+			if (!_team_def.is_object())
+			{
+				result = create_response(false, "This is not an object", _team_def, 0);
+				co_return result;
+			}
+
+			std::vector<std::string> required_fields = { "TeamName", "TeamDescription", "Members", "Grants" };
+
+			for (auto rf : required_fields)
+			{
+				if (!_team_def.has_member(rf)) {
+					result = create_response(false, "This is not a team", _team_def, 0);
+					co_return result;
+				}
+			}
+
+			json systoken = create_system_token();
+
+			json tm = _team_def["Members"];
+
+			bool valid_members = tm.all([this, systoken](json& _item)->bool {
+				return check_team_member(_item);
+				});
+
+			if (!valid_members)
+			{
+				result = create_response(false, "Invalid team members", _team_def, 0);
+				co_return result;
+			}
+
+			json gm = _team_def["Grants"];
+
+			gm.all([this, systoken](json& _item)->bool {
+					return check_team_grant(_item);
+				});
+
+			co_await teams.put(_team_def);
+
+			result = create_response(true, "user updated", _team_def, 0);
+			co_return result;
+
+		}
+
 
 		std::string get_pass_phrase()
 		{
@@ -608,7 +921,6 @@ namespace corona
 
 		}
 
-
 		database_transaction<relative_ptr_type> open_database(relative_ptr_type _header_location)
 		{
 			relative_ptr_type header_location = co_await header.read(database_file, _header_location);
@@ -668,8 +980,16 @@ namespace corona
 		database_transaction<json> create_user_password(json _token, std::string _user_name, std::string _new_password)
 		{
 			json result = create_response(false, "Could not log in");
+			json_parser jpx;
 
 			if (!check_token(_token, "login")) {
+				co_return result;
+			}
+
+			json user_key = jpx.create_object("UserName", _user_name);
+			user_key.set_natural_order();
+
+			if (!can_put_user(_token, user_key)) {
 				co_return result;
 			}
 
@@ -704,6 +1024,15 @@ namespace corona
 			json result = create_response(false, "Could not log in" );
 
 			if (!check_token(_token, "login")) {
+				co_return result;
+			}
+
+			json_parser jpx;
+
+			json user_key = jpx.create_object("UserName", _user_name);
+			user_key.set_natural_order();
+
+			if (!can_put_user(_token, user_key)) {
 				co_return result;
 			}
 
@@ -758,6 +1087,15 @@ namespace corona
 				co_return result;
 			}
 
+			json_parser jpx;
+
+			json user_key = jpx.create_object("UserName", _user_name);
+			user_key.set_natural_order();
+
+			if (!can_put_user(_token, user_key)) {
+				co_return result;
+			}
+
 			json user_result = co_await get_user(_token, _user_name, {"UserName"});
 			if (user_result["Success"]) {
 				if (user_result.has_member("Data")) {
@@ -788,6 +1126,15 @@ namespace corona
 			json result = create_response(false, "Could not log in");
 
 			if (!check_token(_token, "login")) {
+				co_return result;
+			}
+
+			json_parser jpx;
+
+			json user_key = jpx.create_object("UserName", _user_name);
+			user_key.set_natural_order();
+
+			if (!can_put_user(_token, user_key)) {
 				co_return result;
 			}
 
@@ -833,6 +1180,15 @@ namespace corona
 			co_return result;
 		}
 
+		bool class_name_available(json _token, std::string _name)
+		{
+			json_parser jp;
+			json key = jp.create_object("ClassName", _name);
+			auto contains_task = classes.contains(key);
+			bool answer = contains_task.wait();
+			return answer;
+		}
+
 		bool form_name_available(json _token, std::string _name)
 		{
 			json_parser jp;
@@ -860,20 +1216,16 @@ namespace corona
 			return answer;
 		}
 
-		bool class_name_available(json _token, std::string _name)
-		{
-			json_parser jp;
-			json key = jp.create_object("TeamName", _name);
-			auto contains_task = teams.contains(key);
-			bool answer = contains_task.wait();
-			return answer;
-		}
-
 		database_transaction<json> put_user(json _token, json _user_def)
 		{
 			json result;
 
 			if (!check_token(_token, "user")) {
+				result = create_response(false, "Cannot put user");
+				co_return result;
+			}
+
+			if (!can_put_user(_token, _user_def)) {
 				result = create_response(false, "Cannot put user");
 				co_return result;
 			}
@@ -912,6 +1264,11 @@ namespace corona
 				co_return result;
 			}
 
+			if (!can_put_user(_token, _user_def)) {
+				result = create_response(false, "Cannot put user");
+				co_return result;
+			}
+
 			result = create_response(true, "Ok");
 
 			json key = jp.create_object("UserName", _user_name);
@@ -931,55 +1288,20 @@ namespace corona
 				result = create_response(false, "Cannot put team");
 				co_return result;
 			}
-
-			result = create_response(true, "Ok");
-
-			if (!_team_def.is_object())
-			{
-				result = create_response(false, "This is not an object", _team_def, 0);
+			if (!can_put_user(_token, _user_def)) {
+				result = create_response(false, "Cannot put user");
 				co_return result;
 			}
 
-			std::vector<std::string> required_fields = { "TeamName", "TeamDescription", "TeamMembers", "Grants" };
+			result = check_team(_team_def);
 
-			for (auto rf : required_fields)
+			if (result["Success"]) 
 			{
-				if (!_team_def.has_member(rf)) {
-					result = create_response(false, "This is not a team", _team_def, 0);
-					co_return result;
-				}
+				co_await teams.put(_team_def);
 			}
-
-			json tm = _team_def["TeamMembers"];
-			bool invalid_team = tm.any([this, _token](json& _item)->bool {
-				bool invalid_user_name = user_name_available(_token, _item["UserName"]);
-				});
-
-			if (!invalid_team)
-			{
-				result = create_response(false, "Team missing members", _team_def, 0);
-				co_return result;
-			}
-
-			json gm = _team_def["Grants"];
-
-			tm.any([this, _token](json& _item)->bool {
-				if (_item.is_object()) 
-				{
-					std::string grant_class_name = _item["ClassName"];
-					return class_name_available(_token, _item["ClassName"]);
-				}
-				else if (_item.is_string()) 
-				{
-					return class_name_available(_token, _item);
-				}
-				});
-
-			co_await teams.put(_team_def);
 
 			result = create_response(true, "user updated", _team_def, 0);
 			co_return result;
-
 		}
 
 		database_transaction<json> get_team(json _token, std::string _team_name)
@@ -1171,7 +1493,7 @@ namespace corona
 			co_return false;
 		}
 
-		database_transaction<json> get_objects_by_class(json _token, json _object_definition)
+		database_transaction<json> get_objects_by_class(json _token, json _object_definition, json _filter)
 		{
 			json_parser jp;
 
@@ -1203,7 +1525,10 @@ namespace corona
 					db_object_id_type ri = class_object_ids.get_element(i)["ObjectId"];
 					get_object_id.put_member("ObjectId", ri);
 					json obj = co_await get_object(_token, get_object_id);
-					objects.append_element(obj);
+					if (obj["Success"]) 
+					{
+						objects.append_element(obj);
+					}
 				}
 			}
 
@@ -1424,6 +1749,11 @@ namespace corona
 				co_return result;
 			}
 
+			if (!can_get_object(_token, _object_key)) {
+				json result = create_response(false, "Cannot copy object");
+				co_return result;
+			}
+
 			json object_copy = co_await get_object(_token, _object_key );
 
 			if (!object_copy["Success"])
@@ -1436,6 +1766,11 @@ namespace corona
 				json new_object = object_copy["Data"];
 				db_object_id_type new_object_id = co_await get_next_object_id();
 				new_object.put_member("ObjectId", new_object_id);
+
+				if (!can_put_object(_token, new_object)) {
+					json result = create_response(false, "Cannot copy object");
+					co_return result;
+				}
 
 				auto child_members = new_object.get_members();
 
@@ -1501,7 +1836,12 @@ namespace corona
 			json_parser jp;
 
 			if (!check_token(_token, "user")) {
-				json result = create_response(false, "Cannot copy object");
+				json result = create_response(false, "Cannot delete object");
+				co_return result;
+			}
+
+			if (!can_delete_object(_token, _object_key)) {
+				json result = create_response(false, "Cannot delete object");
 				co_return result;
 			}
 

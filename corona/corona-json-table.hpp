@@ -638,6 +638,65 @@ namespace corona
 			co_return index;
 		}
 
+		table_transaction<bool> any(json _key_fragment, std::function<relative_ptr_type(int _index, json& _item)> _process_clause)
+		{
+			relative_ptr_type location = co_await find_first_node_gte(_key_fragment);
+			int64_t index = 0;
+			bool is_any = false;
+
+			while (location != null_row && !is_any)
+			{
+				json_node node;
+				node = co_await get_node(database_file, location);
+				int comparison = _key_fragment.compare(node.data);
+				if (comparison == 0)
+				{
+					relative_ptr_type process_result = _process_clause(index, node.data);
+					if (process_result > 0)
+					{
+						index++;
+						is_any = true;
+					}
+					location = node.forward[0];
+				}
+				else
+				{
+					location = null_row;
+				}
+			}
+
+			co_return is_any;
+		}
+
+		table_transaction<bool> all(json _key_fragment, std::function<relative_ptr_type(int _index, json& _item)> _process_clause)
+		{
+			relative_ptr_type location = co_await find_first_node_gte(_key_fragment);
+			int64_t index = 0;
+			bool is_all = true;
+
+			while (location != null_row && is_all)
+			{
+				json_node node;
+				node = co_await get_node(database_file, location);
+				int comparison = _key_fragment.compare(node.data);
+				if (comparison == 0)
+				{
+					relative_ptr_type process_result = _process_clause(index, node.data);
+					if (process_result > 0)
+					{
+						index++;
+						is_all = false;
+					}
+					location = node.forward[0];
+				}
+				else
+				{
+					location = null_row;
+				}
+			}
+
+			co_return is_all;
+		}
 
 		table_transaction<int64_t>
 			co_for_each(std::function<table_transaction<relative_ptr_type>(int _index, json& _item)> _process_clause)
