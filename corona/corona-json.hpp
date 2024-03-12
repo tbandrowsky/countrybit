@@ -95,15 +95,17 @@ namespace corona
 	class json_datetime : public json_value
 	{
 	public:
-		LARGE_INTEGER value;
+		date_time value;
 
 		virtual std::string to_key()
 		{
-			return std::to_string(value.QuadPart);
+			std::string v = value;
+			return value;
 		}
 		virtual std::string to_json()
 		{
-			return std::to_string(value.QuadPart);
+			std::string v = value;
+			return v;
 		}
 		virtual std::string to_json_typed()
 		{
@@ -111,7 +113,7 @@ namespace corona
 		}
 		virtual std::string to_string()
 		{
-			return std::format("{}", value.QuadPart);
+			return value;
 		}
 		virtual std::string get_type_prefix()
 		{
@@ -560,7 +562,7 @@ namespace corona
 			else if (int64_impl)
 				return int64_impl->value;
 			else if (datetime_impl)
-				return datetime_impl->value.QuadPart;
+				return (time_t)datetime_impl->value;
 			else if (string_impl)
 				return std::stod(string_impl->value);
 			else
@@ -572,7 +574,7 @@ namespace corona
 			return int64_impl->value;
 		}
 
-		LARGE_INTEGER& get_time()  const
+		date_time& get_time()  const
 		{
 			return datetime_impl->value;
 		}
@@ -596,22 +598,21 @@ namespace corona
 			else if (string_impl)
 				return std::stod(string_impl->value);
 			else if (datetime_impl)
-				return datetime_impl->value.QuadPart;
+				return (time_t)datetime_impl->value;
 			else
 				return 0.0;
 		}
 
-		operator LARGE_INTEGER() const
+		operator date_time() const
 		{
 			if (datetime_impl)
 			{
 				return datetime_impl->value;
 			}
-			else 
+			else
 			{
-				LARGE_INTEGER t;
-				t.QuadPart = (int64_t)*this;
-				return t;
+				date_time temp;
+				return temp;
 			}
 		}
 
@@ -622,7 +623,7 @@ namespace corona
 			else if (int64_impl)
 				return int64_impl->value;
 			else if (datetime_impl)
-				return datetime_impl->value.QuadPart;
+				return (time_t)datetime_impl->value;
 			else if (string_impl)
 				return std::stod(string_impl->value);
 			else
@@ -835,7 +836,7 @@ namespace corona
 				put_member(_key, d);
 			}
 			else if (_member.is_datetime()) {
-				int64_t d = _member;
+				date_time d = _member;
 				put_member(_key, d);
 			}
 			else if (_member.is_object()) {
@@ -1121,7 +1122,7 @@ namespace corona
 				put_element(_index, d);
 			}
 			else if (_element.is_datetime()) {
-				LARGE_INTEGER timex = _element;
+				date_time timex = _element;
 				put_element(_index, timex);
 			}
 			else if (_element.is_object()) {
@@ -1167,7 +1168,7 @@ namespace corona
 			return *this;
 		}
 
-		json put_element(int _index, LARGE_INTEGER _value)
+		json put_element(int _index, date_time _value)
 		{
 			if (!array_impl) {
 				throw std::logic_error("Not an array");
@@ -1341,19 +1342,10 @@ namespace corona
 				}
 				else if (member_src.is_datetime())
 				{
-					LARGE_INTEGER dtst_src, dtst_dst;
-					dtst_src = (LARGE_INTEGER)member_src;
-					dtst_dst = (LARGE_INTEGER)member_dest;
+					date_time dtst_src = (date_time)member_src;
+					date_time dtst_dst = (date_time)member_dest;
 
-					if (dtst_src.QuadPart < dtst_dst.QuadPart) {
-						comparison = -1;
-					}
-					else if (dtst_src.QuadPart > dtst_dst.QuadPart) {
-						comparison = 1;
-					}
-					else if (dtst_src.QuadPart == dtst_dst.QuadPart) {
-						comparison = 0;
-					}
+					comparison = dtst_src.compare(dtst_dst);
 				}
 				else if (member_src.is_object() || member_src.is_array() || member_src.is_function())
 				{

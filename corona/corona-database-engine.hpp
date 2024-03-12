@@ -556,6 +556,12 @@ namespace corona
 			json _match_key,
 			std::string _permission)
 		{
+
+			if (_token["Data"].is_member("Authorization", "system"))
+			{
+				return true;
+			}
+
 			bool granted = false;
 			auto token_user_task = get_token_user(_token, { "UserName", "Teams" });
 			json token_user = token_user_task.wait();
@@ -1138,7 +1144,7 @@ namespace corona
 				co_return result;
 			}
 
-			json user_result = co_await get_user(_token, _user_name, { "UserName", "LoginAttempts", "LoginChallengeCode" });
+			json user_result = co_await get_user(_token, _user_name, { "UserName", "LoginAttempts", "LoginChallengeCode", "LoginPassword"});
 			if (user_result["Success"]) {
 				if (user_result.has_member("Data")) {
 
@@ -1178,6 +1184,60 @@ namespace corona
 				}
 			}
 			co_return result;
+		}
+
+		database_transaction<json> login_get_token(json _token, std::string _user_name)
+		{
+			json_parser jpx;
+			json user_key = jpx.create_object("UserName", _user_name);
+			user_key.set_natural_order();
+			json result = create_response(false, "can't get token");
+
+			if (!can_put_user(_token, user_key)) {
+				co_return result;
+			}
+
+			json user_result = co_await get_user(_token, _user_name, { "UserName", "LoginAttempts", "LoginChallengeCodeSuccess", "LoginPasswordSuccess"});
+			if (user_result["Success"]) {
+				if (user_result.has_member("Data")) {
+
+					json_parser jp;
+
+					auto user_data = user_result["Data"];
+
+					if (!user_data.has_member("LoginAttempts"))
+					{
+						user_data.put_member("LoginAttempts", 0);
+					}
+
+					int attempt_count = user_data["LoginAttempts"];
+
+					attempt_count++;
+					user_data.put_member("LoginAttempts", attempt_count);
+
+					bool challenge_code_accepted = user_data["LoginChallengeCodeSuccess"];
+					bool password_accepted = user_data["LoginPasswordSuccess"];
+
+					if (challenge_code_accepted && password_accepted) {
+						user_data.put_member("LoginChallengeCodeSuccess", true);
+						user_data.erase_member("LoginChallengeCode");
+						result = create_response(true, "Ok", user_data, 0);
+					}
+					else if (attempt_count > 3)
+					{
+						user_data.put_member("LoginChallengeCodeSuccess", false);
+						result = create_response(false, "Too many login attempts", user_data, 0);
+					}
+					else
+					{
+						user_data.put_member("LoginChallengeCodeSuccess", false);
+						result = create_response(false, "Incorrect code", user_data, 0);
+					}
+
+					co_await users.put(user_data);
+				}
+			}
+
 		}
 
 		bool class_name_available(json _token, std::string _name)
@@ -1264,15 +1324,16 @@ namespace corona
 				co_return result;
 			}
 
-			if (!can_put_user(_token, _user_def)) {
+			json key = jp.create_object("UserName", _user_name);
+			key.set_natural_order();
+
+			if (!can_put_user(_token, key)) {
 				result = create_response(false, "Cannot put user");
 				co_return result;
 			}
 
 			result = create_response(true, "Ok");
 
-			json key = jp.create_object("UserName", _user_name);
-			key.set_natural_order();
 
 			json result = co_await users.get(key, _include_fields);	
 
@@ -1288,8 +1349,9 @@ namespace corona
 				result = create_response(false, "Cannot put team");
 				co_return result;
 			}
-			if (!can_put_user(_token, _user_def)) {
-				result = create_response(false, "Cannot put user");
+
+			if (!can_put_team(_token, _team_def)) {
+				result = create_response(false, "Cannot put team");
 				co_return result;
 			}
 
@@ -1314,10 +1376,15 @@ namespace corona
 				co_return result;
 			}
 
-			result = create_response(true, "Ok");
-
 			json key = jp.create_object("TeamName", _team_name);
 			key.set_natural_order();
+
+			if (!can_get_team(_token, key)) {
+				result = create_response(false, "Cannot get team");
+				co_return result;
+			}
+
+			result = create_response(true, "Ok");
 
 			json result = co_await teams.get(key);
 
@@ -1335,10 +1402,13 @@ namespace corona
 				co_return result;
 			}
 
-			result = create_response(true, "Ok");
-
 			json key = jp.create_object("ClassName", _class_name);
 			key.set_natural_order();
+
+			if (!can_get_class(_token, key)) {
+				result = create_response(false, "Cannot get team");
+				co_return result;
+			}
 
 			json result = co_await classes.get(key);
 
@@ -1380,6 +1450,11 @@ namespace corona
 				co_return result;
 			}
 
+			if (!can_put_class(_token, _class_definition)) {
+				result = create_response(false, "Cannot get team");
+				co_return result;
+			}
+
 			result = check_class(_class_definition);
 			json_parser jp;
 
@@ -1395,7 +1470,7 @@ namespace corona
 						auto class_fields = _class_definition["Fields"];
 						for (auto field : fields) {
 							class_fields.put_member(field.first, field.second);
-						}						
+						}
 					}
 				}
 				co_await classes.put(_class_definition);
