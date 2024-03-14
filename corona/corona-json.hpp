@@ -889,6 +889,17 @@ namespace corona
 			return *this;
 		}
 
+		json put_member(std::string _key, date_time _value)
+		{
+			if (!object_impl) {
+				throw std::logic_error("Not an object");
+			}
+			auto new_member = std::make_shared<json_datetime>();
+			new_member->value = _value;
+			object_impl->members[_key] = new_member;
+			return *this;
+		}
+
 		json put_member_array(std::string _key)
 		{
 			if (!object_impl) {

@@ -534,7 +534,7 @@ namespace corona
 			co_return modified_node;
 		}
 
-		table_transaction<bool> 
+		table_transaction<bool>
 		erase(const KEY& key)
 		{
 			int k;
@@ -638,6 +638,31 @@ namespace corona
 			co_return index;
 		}
 
+		table_transaction<json>
+			get_first(json _key_fragment)
+		{
+			relative_ptr_type location = co_await find_first_node_gte(_key_fragment);
+			int64_t index = 0;
+			json result_data;
+
+			while (location != null_row)
+			{
+				json_node node;
+				node = co_await get_node(database_file, location);
+				int comparison = _key_fragment.compare(node.data);
+				if (comparison == 0)
+				{
+					result_data = node.data;
+					location = null_row;
+				} 
+				else {
+					location = node.forward[0];
+				}
+			}
+
+			co_return result_data;
+		}
+
 		table_transaction<bool> any(json _key_fragment, std::function<relative_ptr_type(int _index, json& _item)> _process_clause)
 		{
 			relative_ptr_type location = co_await find_first_node_gte(_key_fragment);
@@ -699,7 +724,7 @@ namespace corona
 		}
 
 		table_transaction<int64_t>
-			co_for_each(std::function<table_transaction<relative_ptr_type>(int _index, json& _item)> _process_clause)
+			co_for_each(std::function<table_method_transaction<relative_ptr_type>(int _index, json& _item)> _process_clause)
 		{
 			auto get_header_task = get_header();
 			json_node header = get_header_task.wait();
@@ -746,14 +771,14 @@ namespace corona
 			co_return index;
 		}
 
-		database_transaction<json>
+		table_transaction<json>
 		select_array(std::function<json(int _index, json& _item)> _project)
 		{
 			json_parser jp;
 			json ja = jp.create_array();
 			json* pja = &ja;
 
-			int64_t count = co_await co_for_each([pja, _project](int _index, json& _data) -> table_transaction<relative_ptr_type>
+			int64_t count = co_await co_for_each([pja, _project](int _index, json& _data) -> table_method_transaction<relative_ptr_type>
 				{
 					relative_ptr_type count = 0;
 					json new_item = _project(_index, _data);
@@ -767,7 +792,7 @@ namespace corona
 			co_return ja;
 		}
 
-		user_transaction<json>
+		table_transaction<json>
 		select_array(json _key_fragment, 
 			std::function<json(int _index, json& _item)> _project
 		)
@@ -790,7 +815,7 @@ namespace corona
 			co_return ja;
 		}
 
-		user_transaction<json>
+		table_transaction<json>
 		select_object(json& _destination,
 				json _key_fragment,
 				std::function<json(int _index, json& _item)> _project,
@@ -875,7 +900,7 @@ namespace corona
 			}
 		}
 
-		table_private_transaction<relative_ptr_type>
+		table_method_transaction<relative_ptr_type>
 		find_node(relative_ptr_type* update, KEY _key)
 		{
 			relative_ptr_type found = null_row, p, q;
@@ -906,7 +931,7 @@ namespace corona
 			co_return found;
 		}
 
-		table_private_transaction<relative_ptr_type>
+		table_method_transaction<relative_ptr_type>
 		find_first_gte(relative_ptr_type* update, KEY _key)
 		{
 			relative_ptr_type found = null_row, p, q, last_link;
@@ -943,7 +968,7 @@ namespace corona
 			co_return found;
 		}
 
-		table_private_transaction<relative_ptr_type>
+		table_method_transaction<relative_ptr_type>
 		update_node(KEY _key, std::function<void(UPDATE_VALUE& existing_value)> predicate)
 		{
 			int k;
@@ -999,7 +1024,7 @@ namespace corona
 		}
 
 
-		table_private_transaction<relative_ptr_type>
+		table_method_transaction<relative_ptr_type>
 		find_node(const KEY& key)
 		{
 #ifdef	TIME_SKIP_LIST
@@ -1011,7 +1036,7 @@ namespace corona
 			co_return value;
 		}
 
-		table_private_transaction<relative_ptr_type>
+		table_method_transaction<relative_ptr_type>
 		find_first_node_gte(const KEY& key)
 		{
 #ifdef	TIME_SKIP_LIST
@@ -1022,7 +1047,7 @@ namespace corona
 			co_return fn;
 		}
 
-		table_private_transaction<json_node> first_node()
+		table_method_transaction<json_node> first_node()
 		{
 			json_node jn;
 			auto header_task = get_header();
@@ -1033,7 +1058,7 @@ namespace corona
 			co_return jn;
 		}
 
-		table_private_transaction<json_node> next_node(json_node _node)
+		table_method_transaction<json_node> next_node(json_node _node)
 		{
 			if (_node.is_empty())
 				co_return _node;

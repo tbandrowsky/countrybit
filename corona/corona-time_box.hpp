@@ -176,7 +176,7 @@ namespace corona
 			system_time.wMilliseconds = _milliseconds;
 		}
 
-		operator time_span()
+		operator time_span() const
 		{
 			FILETIME ft;
 			LARGE_INTEGER li;
@@ -190,7 +190,7 @@ namespace corona
 			return ts;
 		}
 
-		operator time_t ()
+		operator time_t () const
 		{
 			auto ts_base = (time_span)date_time::epoch();
 			auto ts_now = (time_span)*this;
@@ -316,7 +316,7 @@ namespace corona
 			int c = 0;
 			const WORD* st_me = &system_time.wYear;
 			const WORD* st_src = &_src.system_time.wYear;
-			while (c < 6) 
+			while (c < 8) 
 			{
 				int x = *st_me - *st_src;
 				if (x) return x;
@@ -333,6 +333,13 @@ namespace corona
 		std::string temp = (std::string)_src;
 		output << temp;
 		return output;
+	}
+
+	time_span operator-(const date_time& a, const date_time& b)
+	{
+		time_span at = (time_span)a;
+		time_span bt = (time_span)b;
+
 	}
 
 	int operator<(const date_time& a, const date_time& b)
