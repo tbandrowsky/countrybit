@@ -589,7 +589,6 @@ namespace corona
 
 			std::string cipher_text = encrypt(payload, get_pass_phrase(), get_iv());
 			std::string signature = _token["Signature"];
-			std::string role;
 
 			date_time current = date_time::utc_now();
 			date_time expiration = (date_time)payload["TokenExpires"];
@@ -609,9 +608,12 @@ namespace corona
 				return false;
 			}
 
-			role = payload["Role"];
+			std::string role = payload["Role"];
+			std::string user = payload["Name"];
 
-			if (_expected_role != role)
+			if (_expected_role != role || 
+				(role == "system" &&
+				user == "system"))
 			{
 				return false;
 			}
@@ -624,7 +626,6 @@ namespace corona
 			json token_name = _token["Contents"].extract({ "Name" });
 			return token_name;
 		}
-
 
 		table_transaction<json> acquire_object(json _object_key)
 		{
@@ -661,7 +662,7 @@ namespace corona
 			json_parser jp;
 			json obj;
 
-			if (_object_definition.is_member("ClassName", "SysObjectReference"))
+			if (_object_definition.is_member("ClassName", "SysReference"))
 			{
 				json object_key = jp.create_object();
 				db_object_id_type object_id = (db_object_id_type)_object_definition["SysObjectId"];
@@ -937,6 +938,11 @@ namespace corona
 }
 )");
 
+			json test = classes.get(R"({"ClassName":"SysObject"})");
+			if (test.is_empty()) {
+				co_return null_row;
+			}
+
 			co_await classes.put(R"(
 {	
 	"ClassName" : "SysReference",
@@ -950,74 +956,10 @@ namespace corona
 }
 )");
 
-
-			co_await classes.put(R"(
-{	
-	"ClassName" : "SysStep",
-	"BaseClassName" : "SysObject",
-	"ClassDescription" : "A step in a process",
-	"Fields" : {			
-	}
-}
-)");
-
-			co_await classes.put(R"(
-{	
-	"ClassName" : "SysLoginStep",
-	"BaseClassName" : "SysObject",
-	"ClassDescription" : "A step in a process of logging in",
-	"Fields" : {			
-	}
-}
-)");
-
-			co_await classes.put(R"(
-{	
-	"ClassName" : "CreateVerificationCode",
-	"BaseClassName" : "SysLoginStep",
-	"ClassDescription" : "A user",
-	"Fields" : {
-			"GeneratedCode" : "string",
-			"EmailDeliveryId" : "string"
-	},
-}
-)");
-
-			co_await classes.put(R"(
-{	
-	"ClassName" : "CheckVerificationCode",
-	"BaseClassName" : "SysLoginStep",
-	"ClassDescription" : "A user",
-	"Fields" : {			
-			"GeneratedCodeEntered" : "string"
-	},
-}
-)");
-
-			co_await classes.put(R"(
-{	
-	"ClassName" : "CreatePassword",
-	"BaseClassName" : "SysLoginStep",
-	"ClassDescription" : "A user",
-	"Fields" : {			
-			"Text" : "string",
-			"PasswordEncrypted1" : "string",
-			"PasswordEncrypted2" : "string"
-	},
-}
-)");
-
-			co_await classes.put(R"(
-{	
-	"ClassName" : "CheckPassword",
-	"BaseClassName" : "SysLoginStep",
-	"ClassDescription" : "A user",
-	"Fields" : {			
-			"Text" : "string",
-			"ChallengePassword" : "string"
-	},
-}
-)");
+			test = classes.get(R"({"ClassName":"SysReference"})");
+			if (test.is_empty()) {
+				co_return null_row;
+			}
 
 			co_await classes.put(R"(
 {	
@@ -1041,16 +983,6 @@ namespace corona
 				"FieldType" : "array",
 				"AllowedClasses" : "SysTeam",
 			},
-			"LoginProgress" : {
-				"FieldType" : "array",
-				"AllowedClasses" : "SysLoginStep",
-				"Goal" : { 
-					"GoalType" : "AllSteps",
-					"RequiredObjects" : [ "CreateVerificationCode", "CheckVerificationCode", "CreatePassword", "CheckPassword" ],
-					"CreateObjectClass" : "LoginToken",
-					"CreateObjectMember" : "CurrentToken"
-				}
-			},
 			"CurrentObjectId" : "int64",
 			"CurrentForm" : {
 				"FieldType" : "object",
@@ -1062,6 +994,11 @@ namespace corona
 )");
 
 
+			test = classes.get(R"({"ClassName":"SysUser"})");
+			if (test.is_empty()) {
+				co_return null_row;
+			}
+
 
 			co_await classes.put(R"(
 {	
@@ -1072,31 +1009,16 @@ namespace corona
 			"Get" : "bool",
 			"Put" : "bool",
 			"Delete" : "bool",
-	},
-}
-)");
-
-			co_await classes.put(R"(
-{	
-	"ClassName" : "SysPermissionClass",
-	"BaseClassName" : "SysPermission",
-	"ClassDescription" : "Permissions flags",
-	"Fields" : {			
 			"Replace" : "bool"
 	},
 }
 )");
 
-			co_await classes.put(R"(
-{	
-	"ClassName" : "SysPermissionObject",
-	"BaseClassName" : "SysPermission",
-	"ClassDescription" : "Permissions flags",
-	"Fields" : {			
-			"Replace" : "bool"
-	},
-}
-)");
+			test = classes.get(R"({"ClassName":"SysPermission"})");
+			if (test.is_empty()) {
+				co_return null_row;
+			}
+
 
 			co_await classes.put(R"(
 {	
@@ -1118,6 +1040,12 @@ namespace corona
 }
 )");
 
+			test = classes.get(R"({"ClassName":"SysMember"})");
+			if (test.is_empty()) {
+				co_return null_row;
+			}
+
+
 			co_await classes.put(R"(
 {	
 	"ClassName" : "SysGrant",
@@ -1134,10 +1062,16 @@ namespace corona
 }
 )");
 
+			test = classes.get(R"({"ClassName":"SysGrant"})");
+			if (test.is_empty()) {
+				co_return null_row;
+			}
+
+
 			co_await classes.put(R"(
 {	
 	"ClassName" : "SysClassGrant",
-	"BaseClassName" : "SysObect",
+	"BaseClassName" : "SysGrant",
 	"ClassDescription" : "Grant to a class",
 	"Fields" : {
 			
@@ -1145,16 +1079,27 @@ namespace corona
 }
 )");
 
+			test = classes.get(R"({"ClassName":"SysClassGrant"})");
+			if (test.is_empty()) {
+				co_return null_row;
+			}
+
 			co_await classes.put(R"(
 {	
 	"ClassName" : "SysObjectGrant",
-	"BaseClassName" : "SysObect",
+	"BaseClassName" : "SysGrant",
 	"ClassDescription" : "Grant to an object",
 	"Fields" : {
 			"ObjectFilter" : "object"
 	},
 }
 )");
+
+			test = classes.get(R"({"ClassName":"SysObjectGrant"})");
+			if (test.is_empty()) {
+				co_return null_row;
+			}
+
 
 			co_await classes.put(R"(
 {	
@@ -1177,542 +1122,10 @@ namespace corona
 }
 )");
 
-			co_await classes.put(R"(
-{
-	"ClassName" : "SysControl",
-	"BaseClassName" : "SysObject",
-	"ClassDescription" : "Control Base",
-	"Fields" : {			
-			"X" : "string",
-			"Y" : "string",
-			"Height" : "string",
-			"Width" : "string",
-			"History" : "array",
-			"Font" : "string",
-			"Background" : "string",
-			"Foreground" : "string"
-	},
-}
-)");
-
-			co_await classes.put(R"(
-{
-	"ClassName" : "SysColumnCell",
-	"BaseClassName" : "SysControl",
-	"ClassDescription" : "A cell in a column",
-	"Fields" : {			
-			"ColumnWidth" : "string",
-			"Contents" : {
-					"FieldType": "array",
-					"AllowedClasses" :  "SysControl"
+			test = classes.get(R"({"ClassName":"SysObjectGrant"})");
+			if (test.is_empty()) {
+				co_return null_row;
 			}
-	},
-}
-)");
-
-			co_await classes.put(R"(
-{
-	"ClassName" : "SysRowCell",
-	"BaseClassName" : "SysControl",
-	"ClassDescription" : "A cell in a row",
-	"Fields" : {			
-			"CellWidth" : "string",
-			"Contents" : {
-					"FieldType": "array",
-					"AllowedClasses" :  "SysControl"
-			}
-	},
-}
-)");
-
-			co_await classes.put(R"(
-{
-	"ClassName" : "SysAbsoluteCell",
-	"BaseClassName" : "SysControlBase",
-	"ClassDescription" : "A cell in an absolute",
-	"Fields" : {			
-			"Contents" : {
-					"FieldType": "array",
-					"AllowedClasses" :  "SysControl"
-			}
-	},
-}
-)");
-
-
-			co_await classes.put(R"(
-{
-	"ClassName" : "SysColumn",
-	"BaseClassName" : "SysControl",
-	"ClassDescription" : "A column",
-	"Fields" : {			
-			"Columns" : {
-					"FieldType": "array",
-					"AllowedClasses" :  "SysColumnCell"
-			}
-	},
-}
-)");
-
-			co_await classes.put(R"(
-{
-	"ClassName" : "SysRow",
-	"BaseClassName" : "SysControl",
-	"ClassDescription" : "A row on a form",
-	"Fields" : {			
-			"Rows" : {
-					"FieldType": "array",
-					"AllowedClasses" :  "SysRowCell"
-			}
-	},
-}
-)");
-
-			co_await classes.put(R"(
-{
-	"ClassName" : "SysAbsolute",
-	"BaseClassName" : "SysControl",
-	"ClassDescription" : "Control",
-	"Fields" : {			
-			"Items" : {
-					"FieldType": "array",
-					"AllowedClasses" :  "SysAbsoluteCell"
-			}
-	},
-}
-)");
-
-			co_await classes.put(R"(
-{
-	"ClassName" : "SysTitle",
-	"BaseClassName" : "SysControl",
-	"ClassDescription" : "Title",
-	"Fields" : {			
-		"Text": "string"
-	},
-}
-)");
-
-
-			co_await classes.put(R"(
-{
-	"ClassName" : "SysSubTitle",
-	"BaseClassName" : "SysControl",
-	"ClassDescription" : "SubTitle",
-	"Fields" : {			
-		"Text": "string"
-	},
-}
-)");
-
-			co_await classes.put(R"(
-{
-	"ClassName" : "SysSection",
-	"BaseClassName" : "SysControl",
-	"ClassDescription" : "Section",
-	"Fields" : {			
-		"Text": "string"
-	},
-}
-)");
-
-			co_await classes.put(R"(
-{
-	"ClassName" : "SysSubSection",
-	"BaseClassName" : "SysControl",
-	"ClassDescription" : "SysSubSection",
-	"Fields" : {			
-		"Text": "string"
-	},
-}
-)");
-
-			co_await classes.put(R"(
-{
-	"ClassName" : "SysParagraph",
-	"BaseClassName" : "SysControl",
-	"ClassDescription" : "Paragraph",
-	"Fields" : {			
-		"Text": "string"
-	},
-}
-)");
-
-			co_await classes.put(R"(
-{
-	"ClassName" : "SysImage",
-	"BaseClassName" : "SysControl",
-	"ClassDescription" : "Image",
-	"Fields" : {			
-		"ImagePath": "string",
-		"ImageName": "string"
-	},
-}
-)");
-
-			co_await classes.put(R"(
-{
-	"ClassName" : "SysPoint",
-	"BaseClassName" : "SysControl",
-	"ClassDescription" : "Image",
-	"Fields" : {			
-		"X": "number",
-		"Y": "number"
-	},
-}
-)");
-
-			co_await classes.put(R"(
-{
-	"ClassName" : "SysDrawPoint",
-	"BaseClassName" : "SysPoint",
-	"ClassDescription" : "Draw to Point",
-	"Fields" : {			
-	},
-}
-)");
-
-
-			co_await classes.put(R"(
-{
-	"ClassName" : "SysMovePoint",
-	"BaseClassName" : "SysPoint",
-	"ClassDescription" : "Move to Point",
-	"Fields" : {			
-	},
-}
-)");
-
-			co_await classes.put(R"(
-{
-	"ClassName" : "SysSignature",
-	"BaseClassName" : "SysControl",
-	"ClassDescription" : "Image",
-	"Fields" : {			
-			"Shape" : {  
-					"FieldType": "array", 	
-					"AllowedClasses" :  "SysPoint",
-					"UseReferences" : "False"
-			}
-	},
-}
-)");
-
-			co_await classes.put(R"(
-{
-	"ClassName" : "SysSearchList",
-	"BaseClassName" : "SysControl",
-	"ClassDescription" : "SearchList",
-	"Fields" : {		
-			"ClassToSearch" : "string",
-			"ClassForOptions" : "string"
-	},
-}
-)");
-
-			co_await classes.put(R"(
-{
-	"ClassName" : "SysInputBase",
-	"BaseClassName" : "SysControl",
-	"ClassDescription" : "Input",
-	"Fields" : {			
-			"Columns" : {
-					"FieldName": "string",
-					"TooltipText" : "string",
-					"Required": "bool"
-			}
-	},
-}
-)");
-
-			co_await classes.put(R"(
-{
-	"ClassName" : "SysText",
-	"BaseClassName" : "SysInput",
-	"ClassDescription" : "Text Input",
-	"Fields" : {			
-			"Columns" : {
-					"MinLength": "0",
-					"MaxLength": "0",
-			}
-	},
-}
-)");
-
-			co_await classes.put(R"(
-{
-	"ClassName" : "SysNumber",
-	"BaseClassName" : "SysInput",
-	"ClassDescription" : "Text Input",
-	"Fields" : {			
-			"Columns" : {
-					"MinValue": "number",
-					"MaxValue": "number",
-			}
-	},
-}
-)");
-
-			co_await classes.put(R"(
-{
-	"ClassName" : "SysCurrency",
-	"BaseClassName" : "SysInput",
-	"ClassDescription" : "Text Input",
-	"Fields" : {			
-			"Columns" : {
-					"MinValue": "number",
-					"MaxValue": "number",
-			}
-	},
-}
-)");
-
-
-			co_await classes.put(R"(
-{
-	"ClassName" : "SysInt64",
-	"BaseClassName" : "SysInput",
-	"ClassDescription" : "Number Input",
-	"Fields" : {			
-			"Columns" : {
-					"MinValue": "number",
-					"MaxValue": "number",
-			}
-	},
-}
-)");
-
-			co_await classes.put(R"(
-{
-	"ClassName" : "SysString",
-	"BaseClassName" : "SysInput",
-	"ClassDescription" : "String Input",
-	"Fields" : {			
-			"Columns" : {
-					"MinLength": "number",
-					"MaxLength": "number",
-			}
-	},
-}
-)");
-
-			co_await classes.put(R"(
-{
-	"ClassName" : "SysName",
-	"BaseClassName" : "SysInput",
-	"ClassDescription" : "Text Input",
-	"Fields" : {			
-			"Columns" : {
-					"MinLength": "number",
-					"MaxLength": "number",
-			}
-	},
-}
-)");
-
-			co_await classes.put(R"(
-{
-	"ClassName" : "SysDescription",
-	"BaseClassName" : "SysInput",
-	"ClassDescription" : "Text Input",
-	"Fields" : {			
-			"Columns" : {
-					"MinLength": "number",
-					"MaxLength": "number",
-			}
-	},
-}
-)");
-
-			co_await classes.put(R"(
-{
-	"ClassName" : "SysSsn",
-	"BaseClassName" : "SysInput",
-	"ClassDescription" : "SSN",
-	"Fields" : {			
-			"Columns" : {
-					"MinLength": "number",
-					"MaxLength": "10",
-			}
-	},
-}
-)");
-
-			co_await classes.put(R"(
-{
-	"ClassName" : "SysEin",
-	"BaseClassName" : "SysInput",
-	"ClassDescription" : "EIN",
-	"Fields" : {			
-			"Columns" : {
-					"MinLength": "number",
-					"MaxLength": "10",
-			}
-	},
-}
-)");
-
-
-			co_await classes.put(R"(
-{
-	"ClassName" : "SysRealId",
-	"BaseClassName" : "SysInput",
-	"ClassDescription" : "Real Id",
-	"Fields" : {			
-			"Columns" : {
-					"MinLength": "0",
-					"MaxLength": "20",
-			}
-	},
-}
-)");
-
-
-			co_await classes.put(R"(
-{
-	"ClassName" : "SysStreet",
-	"BaseClassName" : "SysInput",
-	"ClassDescription" : "Street",
-	"Fields" : {			
-			"Columns" : {
-					"MinLength": "0",
-					"MaxLength": "150",
-			}
-	},
-}
-)");
-
-			co_await classes.put(R"(
-{
-	"ClassName" : "SysCity",
-	"BaseClassName" : "SysInput",
-	"ClassDescription" : "City",
-	"Fields" : {			
-			"Columns" : {
-					"MinLength": "0",
-					"MaxLength": "150",
-			}
-	},
-}
-)");
-
-			co_await classes.put(R"(
-{
-	"ClassName" : "SysState",
-	"BaseClassName" : "SysInput",
-	"ClassDescription" : "State",
-	"Fields" : {			
-			"Columns" : {
-					"MinLength": "0",
-					"MaxLength": "150",
-			}
-	},
-}
-)");
-
-			co_await classes.put(R"(
-{
-	"ClassName" : "SysZip",
-	"BaseClassName" : "SysInput",
-	"ClassDescription" : "Zip",
-	"Fields" : {			
-			"Columns" : {
-					"MinLength": "0",
-					"MaxLength": "10",
-			}
-	},
-}
-)");
-
-			co_await classes.put(R"(
-{
-	"ClassName" : "SysEmail",
-	"BaseClassName" : "SysInput",
-	"ClassDescription" : "Email",
-	"Fields" : {			
-			"Columns" : {
-					"MinLength": "0",
-					"MaxLength": "100",
-			}
-	},
-}
-)");
-
-			co_await classes.put(R"(
-{
-	"ClassName" : "SysCommandButton",
-	"BaseClassName" : "SysControl",
-	"ClassDescription" : "Button",
-	"Fields" : {			
-			"Columns" : {
-					"Name": "string",
-					"ButtonText": "string",
-					"ButtonIcon": "string",
-					"MethodName": "string"
-			}
-	},
-}
-)");
-
-			co_await classes.put(R"(
-{
-	"ClassName" : "SysLinkButton",
-	"BaseClassName" : "SysControl",
-	"ClassDescription" : "Button",
-	"Fields" : {			
-			"Columns" : {
-					"ButtonText": "string",
-					"ButtonIcon": "string"
-			}
-	},
-}
-)");
-
-			co_await classes.put(R"(
-{
-	"ClassName" : "SysCheckbox",
-	"BaseClassName" : "SysInput",
-	"ClassDescription" : "Checkbox",
-	"Fields" : {			
-			"Columns" : {
-					"ButtonText": "string",
-					"ButtonIcon": "string"
-			}
-	},
-}
-)");
-
-			co_await classes.put(R"(
-{
-	"ClassName" : "SysDropdownList",
-	"BaseClassName" : "SysInput",
-	"ClassDescription" : "Checkbox",
-	"Fields" : {			
-			"Columns" : {
-					"ClassName": "string",
-					"MemberValue": "string",
-					"MemberDisplay": "string"
-			}
-	},
-}
-)");
-
-			co_await classes.put(R"(
-{	
-	"BaseClassName" : "SysControl",
-	"ClassName" : "SysForm",
-	"ClassDescription" : "A form",
-	"NameIndex" : true,
-	"Fields" : {			
-			"Name" : "string",
-			"Controls" : {
-				"FieldType" : "array",
-				"FieldControlClass" : "SysControl",
-				"FieldObjectClass" : "SysControl"
-			}
-	},
-}
-)");
 
 
 			co_return header_location;
@@ -1849,7 +1262,7 @@ namespace corona
 					json object_data;
 					json item = actual_objects.get_element(i);
 
-					if (item.is_member("ClassName", "SysObjectReference"))
+					if (item.is_member("ClassName", "SysReference"))
 					{
 						object_data = item["Data"];
 						int64_t object_id = item["LinkObjectId"];
@@ -2400,7 +1813,7 @@ namespace corona
 						{
 							json em = cm.get_element(index);
 							if (em.is_object() &&
-								em.is_member("ClassName", "SysObjectReference") &&
+								em.is_member("ClassName", "SysReference") &&
 								em.is_member("DeepCopy", true)
 								)
 							{
@@ -2415,7 +1828,7 @@ namespace corona
 						}
 					}
 					else if (
-						cm.is_member("ClassName", "SysObjectReference") &&
+						cm.is_member("ClassName", "SysReference") &&
 						cm.is_member("DeepCopy", true)
 						)
 					{
@@ -2497,7 +1910,7 @@ namespace corona
 						}
 					}
 					else if (
-						cm.is_member("ClassName", "SysObjectReference") &&
+						cm.is_member("ClassName", "SysReference") &&
 						cm.is_member("DeepCopy", true)
 						)
 					{
@@ -2529,8 +1942,6 @@ namespace corona
 
 		auto create_database_task = db.create_database();
 		create_database_task.wait();
-
-
 	}
 }
 

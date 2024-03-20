@@ -474,6 +474,19 @@ namespace corona
 			co_return  result != null_row;
 		}
 
+		table_transaction<json> get(std::string _key)
+		{
+			json_parser jp;
+			json key = jp.parse_object(_key);
+			json result;
+			relative_ptr_type n = co_await find_node(key);
+			if (n != null_row) {
+				json_node r = co_await get_node(database_file, n);
+				result = r.data;
+			}
+			co_return result;
+		}
+
 		table_transaction<json> get(const KEY key)
 		{
 			json result;
