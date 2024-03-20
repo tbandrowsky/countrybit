@@ -12,6 +12,9 @@ Create and list teams and users,
 Team permission checks for all objects,
 Create 
 
+3/15/2024 - log
+Create and edit 
+
 ***********************************************/
 
 
@@ -24,7 +27,6 @@ namespace corona
 		int64_t			  object_id;
 		relative_ptr_type classes_location;
 		relative_ptr_type class_objects_location;
-		relative_ptr_type teams_location;
 		relative_ptr_type objects_location;
 		relative_ptr_type objects_by_name_location;
 
@@ -33,7 +35,6 @@ namespace corona
 			object_id = -1;
 			classes_location = -1;
 			class_objects_location = -1;
-			teams_location = -1;
 			objects_location = -1;
 			objects_by_name_location = -1;
 		}
@@ -115,31 +116,51 @@ namespace corona
 			return j;
 		}
 
-
 		database_transaction<json> check_class(json _class_definition)
 		{
 			json result;
 
 			result = create_response(true, "Ok");
 
-			if (_class_definition.has_member("BaseClassName"))
-			{
-				std::string bc = _class_definition["BaseClassName"];
-
-				json_parser jp;
-				json class_key = jp.create_object("ClassName", bc);
-
-				bool has_class = co_await classes.contains(class_key);
-
-				if (!has_class)
-				{
-					result = create_response(false, "Base class not found", _class_definition, 0);
-				}
-			}
-
 			if (!_class_definition.has_member("ClassName"))
 			{
 				result = create_response(false, "Class must have a name", _class_definition, 0);
+			}
+
+			std::string class_name = _class_definition["ClassName"];
+
+			// here we are going to grab the ancestor chain for this class.
+
+			if (_class_definition.has_member("BaseClassName"))
+			{
+
+				std::string base_class_name = _class_definition["BaseClassName"];
+
+				json_parser jp;
+				json class_key = jp.create_object("ClassName", base_class_name);
+
+				json base_class_def = co_await classes.get(class_key);
+
+				if (!base_class_def.is_object())
+				{
+					result = create_response(false, "Base class not found", _class_definition, 0);
+				}
+
+				json ancestors = base_class_def["Ancestors"];
+				if (!ancestors.is_empty()) {
+					ancestors.put_member(base_class_name, base_class_name);
+					_class_definition.put_member("Ancestors", ancestors);
+				}
+
+				auto fields = base_class_def["Fields"].get_members();
+				auto class_fields = _class_definition["Fields"];
+				for (auto field : fields) {
+					class_fields.put_member(field.first, field.second);
+				}
+			}
+			else 
+			{
+				_class_definition.put_member_blob("Ancestors");
 			}
 
 			if (!_class_definition.has_member("ClassDescription"))
@@ -433,7 +454,7 @@ namespace corona
 			status = BCryptOpenAlgorithmProvider(&algorithm, BCRYPT_AES_ALGORITHM, MS_PRIMITIVE_PROVIDER, 0);
 
 			if (algorithm)
-			{
+				{
 				buffer key_buffer = get_crypto_buffer(algorithm, BCRYPT_OBJECT_LENGTH);
 				buffer iv_buffer = get_crypto_buffer(algorithm, BCRYPT_BLOCK_LENGTH);
 
@@ -523,12 +544,22 @@ namespace corona
 			return hash_check == _hash;
 		}
 
+		std::string get_pass_phrase()
+		{
+			return "This is a test pass phrase";
+		}
+
+		std::string get_iv()
+		{
+			return "This is a test iv";
+		}
+
 		json create_token(std::string _user_name, std::string _role, json _letter)
 		{
 			json_parser jp;
 
 			json payload = jp.create_object();
-			payload.put_member("UserName", _user_name);
+			payload.put_member("Name", _user_name);
 			payload.put_member("Role", _role);
 			date_time expiration = date_time::utc_now() + this->token_life;
 			payload.put_member("TokenExpires", expiration);
@@ -588,91 +619,140 @@ namespace corona
 			return true;
 		}
 
-		database_composed_transaction<bool> has_object_permission(
-			json _token,
-			json _user_key, 
-			json _match_key,
-			std::string _permission)
+		json get_token_user(json _token)
 		{
-
-			bool granted = false;
-
-			json user;
-			json sys_token = create_system_token();
-
-			// a user key could either by name or by object, so we get our object
-
-			if (_user_key.has_member("Name")) 
-			{
-				user = co_await get_object(sys_token, "SysUser", _user_key["Name"]);
-			}
-			else if (_user_key.has_member("ObjectId"))
-			{
-				user = co_await get_object(sys_token, _user_key);
-			}
-
-			json teams_list = user["Teams"];
-
-			bool granted = false;
-			for (int i = 0; i < teams_list.size(); i++)
-			{
-				json item = teams_list.get_element(i);
-
-				if (item.is_object() &&
-					item.is_member("ClassName", "SysObjectReference") &&
-					item.is_member("DeepGet", true)
-					)
-				{
-					json team = item["Data"];
-
-					if (team.is_object()) {
-						json team_grants = team["Grants"];
-
-						for (int i = 0; i < team_grants.size(); i++)
-						{
-							json grant = team_grants.get_element(i);
-
-							if (grant.is_member("ClassName", "SysObjectGrant"))
-							{
-								json filter = grant["ObjectFilter"];
-
-								bool has_matching_key = co_await objects.any(filter, [_match_key](int _index, json& _item) -> bool {
-									return true;
-									});
-
-								bool has_permissions = grant["Permissions"][_permission];
-
-								granted = has_permissions || has_matching_key;
-							}
-						}
-					}
-
-				}
-			}
-			co_return granted;
+			json token_name = _token["Contents"].extract({ "Name" });
+			return token_name;
 		}
 
-		database_composed_transaction<bool> has_class_permission(
+
+		table_transaction<json> acquire_object(json _object_key)
+		{
+			json_parser jp;
+			json obj;
+
+			if (_object_key.has_member("Name"))
+			{
+				json objects_by_name_key = jp.create_object();
+				objects_by_name_key.copy_member("ClassName", _object_key);
+				objects_by_name_key.put_member("Name", _object_key["Name"]);
+				objects_by_name_key.set_compare_order({ "ClassName", "Name" });
+				json name_id = co_await objects_by_name.get_first(objects_by_name_key);
+				if (name_id.is_object()) {
+					json object_key = jp.create_object();
+					object_key.copy_member("ObjectId", name_id);
+					object_key.set_natural_order();
+					obj = co_await objects.get(object_key);
+				}
+			}
+			else if (_object_key.has_member("ObjectId"))
+			{
+				json object_key = jp.create_object();
+				object_key.copy_member("ObjectId", _object_key);
+				object_key.set_natural_order();
+				obj = co_await objects.get(object_key);
+			}
+
+			co_return obj;
+		}
+
+		table_transaction<json> get_linked_object(json _object_definition)
+		{
+			json_parser jp;
+			json obj;
+
+			if (_object_definition.is_member("ClassName", "SysObjectReference"))
+			{
+				json object_key = jp.create_object();
+				db_object_id_type object_id = (db_object_id_type)_object_definition["SysObjectId"];
+				object_key.put_member("ObjectId", object_id);
+				object_key.set_natural_order();
+				obj = co_await objects.get(object_key);
+			}
+			else if (_object_definition.is_object())
+			{
+				obj = _object_definition;
+			}
+
+			co_return obj;
+		}
+
+		database_method_transaction<bool> has_class_permission(
 			json _token,
-			json _user_key,
 			std::string _class_name,
 			std::string _permission)
 		{
 
 			bool granted = false;
 
+			json_parser jp;
 			json user;
-			json sys_token = create_system_token();
 
-			// a user key could either by name or by object, so we get our object
-
-			if (_user_key.has_member("Name"))
-			{
-				user = co_await get_object(sys_token, "SysUser", _user_key["Name"]);
+			// check the token to make sure it is valid - this includes signature verification
+			if (!check_token(_token, "user")) {
+				co_return false;
 			}
-			else if (_user_key.has_member("ObjectId"))
+
+			// extract the user key from the token and get the user object
+			json user_key = get_token_user(_token);
+			user_key.put_member("ClassName", "SysUser");
+
+			user = co_await acquire_object(user_key);
+			if (user.is_empty()) {
+				co_return false;
+			}
+
+			// Now go through the teams the user is a member of and check the grants to see if we can access this
+			json teams_list = user["Teams"];
+
+			bool granted = false;
+			for (int i = 0; i < teams_list.size(); i++)
 			{
-				user = co_await get_object(sys_token, _user_key);
+				json item = teams_list.get_element(i);
+
+				json team = co_await get_linked_object(item);
+
+				if (team.is_member("ClassName", "Team")) {
+					json team_grants = team["Grants"];
+
+					for (int i = 0; i < team_grants.size(); i++)
+					{
+						json grant = team_grants.get_element(i);
+
+						if (grant.is_member("ClassName", "SysClassGrant"))
+						{
+							bool has_permissions = grant["Permissions"][_permission];
+							granted = has_permissions;
+						}
+					}
+				}
+			}
+			co_return granted;
+		}
+
+		database_method_transaction<bool> has_object_permission(
+			json _token,
+			json _object_key,
+			std::string _permission)
+		{
+
+			bool granted = false;
+
+			json_parser jp;
+			json user;
+
+			// check the token to make sure it is valid - this includes signature verification
+			if (!check_token(_token, "user")) {
+				co_return false;
+			}
+
+			// extract the user key from the token and get the user object
+			json user_key = get_token_user(_token);
+			user_key.put_member("ClassName", "SysUser");
+
+			user = co_await acquire_object(user_key);
+			if (user.is_empty()) {
+				co_return false;
 			}
 
 			json teams_list = user["Teams"];
@@ -682,160 +762,122 @@ namespace corona
 			{
 				json item = teams_list.get_element(i);
 
-				if (item.is_object() &&
-					item.is_member("ClassName", "SysObjectReference") &&
-					item.is_member("DeepGet", true)
-					)
+				json team = co_await get_linked_object(item);
+
+				if (team.is_member("ClassName", "SysTeam")) 
 				{
-					json team = item["Data"];
+					json team_grants = team["Grants"];
 
-					if (team.is_object()) {
-						json team_grants = team["Grants"];
+					for (int i = 0; i < team_grants.size(); i++)
+					{
+						json grant = team_grants.get_element(i);
 
-						for (int i = 0; i < team_grants.size(); i++)
+						if (grant.is_member("ClassName", "SysObjectGrant"))
 						{
-							json grant = team_grants.get_element(i);
+							json filter = grant["ObjectFilter"];
 
-							if (grant.is_member("ClassName", "SysClassGrant"))
-							{
-								bool has_permissions = grant["Permissions"][_permission];
-								if (has_permissions) {
-									granted = has_permissions;
-								}
+							json obj = co_await objects.get(_object_key);
+
+							bool has_matching_key = filter.compare(obj);
+
+							bool has_permissions = grant["Permissions"][_permission];
+
+							granted = has_permissions || has_matching_key;
+
+							if (granted) {
+								co_return granted;
 							}
 						}
 					}
-
 				}
 			}
 			co_return granted;
 		}
 
-
-		bool can_get_class(json& _token, json& _class_definition)
+		database_method_transaction<bool> has_object_permission(
+			json _token,
+			json _object,
+			std::string _permission)
 		{
+
 			bool granted = false;
-			json user_key = _class_definition.extract({ "ClassName" });
 
-			granted = has_class_permission(_token, user_key, "Get");
+			json_parser jp;
+			json user;
 
-			return granted;
-		}
+			// check the token to make sure it is valid - this includes signature verification
+			if (!check_token(_token, "user")) {
+				co_return false;
+			}
 
-		bool can_put_class(json& _token, json& _class_definition)
-		{
+			// extract the user key from the token and get the user object
+			json user_key = get_token_user(_token);
+			user_key.put_member("ClassName", "SysUser");
+
+			user = co_await acquire_object(user_key);
+			if (user.is_empty()) {
+				co_return false;
+			}
+
+			json teams_list = user["Teams"];
+
 			bool granted = false;
-			json user_key = _class_definition.extract({ "ClassName" });
+			for (int i = 0; i < teams_list.size(); i++)
+			{
+				json item = teams_list.get_element(i);
 
-			granted = has_permission(_token, &classes, user_key, "Put");
+				json team = co_await get_linked_object(item);
 
-			return granted;
+				if (team.is_member("ClassName", "SysTeam"))
+				{
+					json team_grants = team["Grants"];
+
+					for (int i = 0; i < team_grants.size(); i++)
+					{
+						json grant = team_grants.get_element(i);
+
+						if (grant.is_member("ClassName", "SysObjectGrant"))
+						{
+							json filter = grant["ObjectFilter"];
+
+							bool has_matching_key = filter.compare(_object);
+
+							bool has_permissions = grant["Permissions"][_permission];
+
+							granted = has_permissions || has_matching_key;
+
+							if (granted) {
+								co_return granted;
+							}
+						}
+					}
+				}
+			}
+			co_return granted;
 		}
 
-		bool can_delete_class(json& _token, json& _class_definition)
-		{
-			bool granted = false;
-			json user_key = _class_definition.extract({ "ClassName" });
-
-			granted = has_permission(_token, &classes, user_key, "Delete");
-
-			return granted;
-		}
-
-		bool can_subclass_class(json& _token, json& _class_definition)
-		{
-			bool granted = false;
-			json user_key = _class_definition.extract({ "ClassName" });
-
-			granted = has_permission(_token, &classes, user_key, "Subclass");
-
-			return granted;
-		}
-
-
-		bool can_get_object(json& _token, json& _object_definition)
-		{
-			bool granted = false;
-			json user_key = _object_definition.extract({ "ObjectId" });
-
-			granted = has_permission(_token, &objects, user_key, "Get");
-
-			return granted;
-		}
-
-		bool can_put_object(json& _token, json& _object_definition)
-		{
-			bool granted = false;
-			json user_key = _object_definition.extract({ "ObjectId" });
-
-			granted = has_permission(_token, &objects, user_key, "Put");
-
-			return granted;
-		}
-
-		bool can_delete_object(json& _token, json& _object_definition)
-		{
-			bool granted = false;
-			json user_key = _object_definition.extract({ "ObjectId" });
-
-			granted = has_permission(_token, &objects, user_key, "Delete");
-
-			return granted;
-		}
-
-		std::string get_pass_phrase()
-		{
-			return "This is a test pass phrase";
-		}
-
-		std::string get_iv()
-		{
-			return "This is a test iv";
-		}
-
-		json create_login_attempt_token(std::string _user_name)
+		json create_login_token(std::string _user_name)
 		{
 			json_parser jp;
+			json empty;
 
-			json payload = jp.create_object();
-			payload.put_member("UserName", _user_name);
-			payload.put_member("Authorization", "login");
-			payload.put_member("TokenCreated", date_time::utc_now());
-			std::string cipher_text = encrypt(payload, get_pass_phrase(), get_iv());
-
-			json envelope = jp.create_object();
-			envelope.put_member("Data", payload);
-			envelope.put_member("Signature", cipher_text);
+			return create_token(_user_name, "login", empty);
 		}
 
 		json create_user_token(std::string _user_name)
 		{
 			json_parser jp;
+			json empty;
 
-			json payload = jp.create_object();
-			payload.put_member("UserName", _user_name);
-			payload.put_member("Authorization", "user");
-			payload.put_member("TokenCreated", date_time::utc_now());
-			std::string cipher_text = encrypt(payload, get_pass_phrase(), get_iv());
-
-			json envelope = jp.create_object();
-			envelope.put_member("Data", payload);
-			envelope.put_member("Signature", cipher_text);
+			return create_token(_user_name, "user", empty);
 		}
 
 		json create_system_token()
 		{
 			json_parser jp;
+			json empty;
 
-			json payload = jp.create_object();
-			payload.put_member("UserName", "system");
-			payload.put_member("Authorization", "system");
-			payload.put_member("TokenCreated", date_time::utc_now());
-			std::string cipher_text = encrypt(payload, get_pass_phrase(), get_iv());
-
-			json envelope = jp.create_object();
-			envelope.put_member("Data", payload);
-			envelope.put_member("Signature", cipher_text);
+			return create_token("system", "system", empty);
 		}
 
 		table_transaction<db_object_id_type> get_next_object_id()
@@ -908,36 +950,33 @@ namespace corona
 }
 )");
 
+
 			co_await classes.put(R"(
 {	
 	"ClassName" : "SysStep",
+	"BaseClassName" : "SysObject",
 	"ClassDescription" : "A step in a process",
-	"NameIndex" : true,
 	"Fields" : {			
-			"Completed" : "bool",
-			"CompleteDate" : "datetime"
-	},
+	}
 }
 )");
 
 			co_await classes.put(R"(
 {	
 	"ClassName" : "SysLoginStep",
-	"BaseClassName" : "SysLoginStep",
-	"ClassDescription" : "A user",
-	"NameIndex" : true,
+	"BaseClassName" : "SysObject",
+	"ClassDescription" : "A step in a process of logging in",
 	"Fields" : {			
-	},
+	}
 }
 )");
 
 			co_await classes.put(R"(
 {	
-	"ClassName" : "SysCodeSend",
+	"ClassName" : "CreateVerificationCode",
 	"BaseClassName" : "SysLoginStep",
 	"ClassDescription" : "A user",
-	"NameIndex" : true,
-	"Fields" : {			
+	"Fields" : {
 			"GeneratedCode" : "string",
 			"EmailDeliveryId" : "string"
 	},
@@ -946,26 +985,22 @@ namespace corona
 
 			co_await classes.put(R"(
 {	
-	"ClassName" : "SysCodeChallenge",
+	"ClassName" : "CheckVerificationCode",
 	"BaseClassName" : "SysLoginStep",
 	"ClassDescription" : "A user",
-	"NameIndex" : true,
 	"Fields" : {			
-			"ChallengeCode" : "string"
+			"GeneratedCodeEntered" : "string"
 	},
 }
 )");
 
 			co_await classes.put(R"(
 {	
-	"ClassName" : "SysPasswordSet",
+	"ClassName" : "CreatePassword",
 	"BaseClassName" : "SysLoginStep",
 	"ClassDescription" : "A user",
-	"NameIndex" : true,
 	"Fields" : {			
 			"Text" : "string",
-			"Completed" : "bool",
-			"CompleteDate" : "datetime",
 			"PasswordEncrypted1" : "string",
 			"PasswordEncrypted2" : "string"
 	},
@@ -974,28 +1009,12 @@ namespace corona
 
 			co_await classes.put(R"(
 {	
-	"ClassName" : "SysPasswordChallenge",
+	"ClassName" : "CheckPassword",
 	"BaseClassName" : "SysLoginStep",
 	"ClassDescription" : "A user",
-	"NameIndex" : true,
 	"Fields" : {			
 			"Text" : "string",
-			"Completed" : "bool",
-			"CompleteDate" : "datetime",
 			"ChallengePassword" : "string"
-	},
-}
-)");
-
-			 co_await classes.put(R"(
-{	
-	"ClassName" : "SysTokenGenerated",
-	"BaseClassName" : "SysLoginStep",
-	"ClassDescription" : "A user",
-	"NameIndex" : true,
-	"Fields" : {			
-			"Text" : "string",
-			"Token" : "object"
 	},
 }
 )");
@@ -1020,18 +1039,35 @@ namespace corona
 			"Zip" : "string",
 			"Teams" : {
 				"FieldType" : "array",
-				"AllowedClasses" : "SysTeam"
-			}
+				"AllowedClasses" : "SysTeam",
+			},
+			"LoginProgress" : {
+				"FieldType" : "array",
+				"AllowedClasses" : "SysLoginStep",
+				"Goal" : { 
+					"GoalType" : "AllSteps",
+					"RequiredObjects" : [ "CreateVerificationCode", "CheckVerificationCode", "CreatePassword", "CheckPassword" ],
+					"CreateObjectClass" : "LoginToken",
+					"CreateObjectMember" : "CurrentToken"
+				}
+			},
+			"CurrentObjectId" : "int64",
+			"CurrentForm" : {
+				"FieldType" : "object",
+				"AllowedClasses" : "SysForm"
+			},
+			"CurrentToken" : "object"
 	},
 }
 )");
+
+
 
 			co_await classes.put(R"(
 {	
 	"ClassName" : "SysPermission",
 	"BaseClassName" : "SysObject",
 	"ClassDescription" : "Permissions flags",
-	"NameIndex" : true,
 	"Fields" : {			
 			"Get" : "bool",
 			"Put" : "bool",
@@ -1045,7 +1081,6 @@ namespace corona
 	"ClassName" : "SysPermissionClass",
 	"BaseClassName" : "SysPermission",
 	"ClassDescription" : "Permissions flags",
-	"NameIndex" : true,
 	"Fields" : {			
 			"Replace" : "bool"
 	},
@@ -1057,7 +1092,6 @@ namespace corona
 	"ClassName" : "SysPermissionObject",
 	"BaseClassName" : "SysPermission",
 	"ClassDescription" : "Permissions flags",
-	"NameIndex" : true,
 	"Fields" : {			
 			"Replace" : "bool"
 	},
@@ -1069,7 +1103,6 @@ namespace corona
 	"ClassName" : "SysMember",
 	"BaseClassName" : "SysObect",
 	"ClassDescription" : "Team member",
-	"NameIndex" : true,
 	"Fields" : {
 			"Permissions" : 
 			{
@@ -1612,8 +1645,10 @@ namespace corona
 	"ClassDescription" : "Button",
 	"Fields" : {			
 			"Columns" : {
+					"Name": "string",
 					"ButtonText": "string",
 					"ButtonIcon": "string",
+					"MethodName": "string"
 			}
 	},
 }
@@ -1683,100 +1718,223 @@ namespace corona
 			co_return header_location;
 		}
 
-		database_method_transaction<json> get_path(json _token, json _path)
-		{
-			json empty;
-
-			co_return put_path(_token, _path, empty);
-		}
-
-		database_method_transaction<json> put_path(json _token, json _path, json _update)
+		database_transaction<json> edit_object(json _token, json _object_key)
 		{
 			json_parser jp;
-			json response;
+			json result;
 
-			if (_path.is_array()) 
+			if (!check_token(_token, "user")) {
+				result = create_response(false, "Cannot get edit object");
+				co_return result;
+			}
+
+			json object_options = jp.create_object();
+
+			object_options.copy_member("ObjectId", _object_key);
+			object_options.put_member_object("Fields");
+			json object_fields = object_options["Fields"];
+			object_options.put_member_array("Edit");
+			json edit_options = object_options["Edit"];
+
+			json object_response = co_await get_object(_token, _object_key);
+			if (object_response["Success"]) {
+				json obj = object_response["Data"];
+				object_options.put_member("Data", obj);
+				json class_key = obj.extract({ "ClassName" });
+				json class_response = co_await get_class(_token, class_key);
+				if (class_response["Success"]) {
+					json class_definition = class_response["Data"];
+					object_options.put_member_object("ClassDefinition", class_definition);
+					auto fields = class_definition["Fields"].get_members();
+					for (auto field : fields) {
+						if (field.second.is_object()) {
+							std::string field_type = field.second["FieldType"];
+							if (field_type == "array" || field_type == "object")
+							{
+								if (field.second.has_member("Goal")) 
+								{
+									json field_options = co_await get_goal_field_options(class_definition, obj, field.first);
+									if (field_options.is_array()) {
+										for (int i = 0; i < field_options.size(); i++) {
+											edit_options.append_element(field_options.get_element(i));
+										}
+									}
+								}
+								else if (field.second.has_member("AllowedClasses")) 
+								{
+									json allowed = field.second["AllowedClasses"];
+									if (allowed.is_string()) {
+										json build_option = jp.create_object();
+										build_option.put_member("ClassName", "SysCreateObject");
+										build_option.put_member_i64("TargetObjectId", (int64_t)obj["ObjectId"]);
+										build_option.put_member("TargetMemberName", field.first);
+										build_option.put_member("TargetClassName", allowed);
+										build_option.put_member("TargetClassDescription", allowed);
+										edit_options.append_element(build_option);
+
+										json build_option = jp.create_object();
+										build_option.put_member("ClassName", "SysCreateSubClass");
+										build_option.put_member("TargetBaseClassName", allowed);
+										build_option.put_member("TargetClassDescription", allowed);
+										edit_options.append_element(build_option);
+									}
+								}
+							}
+							else if (field.second.has_member("Choices"))
+							{
+								json choices = field.second["Choices"];
+								if (choices.is_object()) 
+								{
+									std::string choice_class_name = choices["ChoiceClassName"];
+									std::string choice_name_field = choices["NameField"];
+									std::string choice_value_field = choices["ValueField"];
+									json choice_filter = choices["ChoiceFilter"];
+
+									json class_key = jp.create_object();
+									class_key.put_member("ClassName", choice_class_name);
+									json choice_list = co_await get_objects_by_class(_token, class_key, choice_filter);
+									choices.put_member("Items", choice_list);
+									object_fields.put_member(field.first, choices);
+								}
+							}
+							else {
+								object_fields.put_member(field.first, field.second);
+							}
+						}
+						else {
+							object_fields.put_member(field.first, field.second);
+						}
+					}
+				}
+				co_return create_response(true, "Ok", object_options, 0.0);
+			}
+			co_return create_response(false, "Sadly, this object eludes you.", object_options, 0.0);
+		}
+
+		database_method_transaction<json> get_goal_field_options(json class_def, json parent, std::string field_name)
+		{
+			json_parser jp;
+			json build_options;
+			build_options = jp.create_array();
+
+			std::string step_field_name = field_name;
+			json step_field_definition = class_def["Fields"][step_field_name];
+
+			if (!step_field_definition.is_object())
 			{
-				json current_obj, *pcurrent_obj = &current_obj;
-				json current_node, *pcurrent_node = &current_node;
-				std::string current_class;
-				std::string *pcurrent_class = &current_class;
-				db_object_id_type object_id, *pobject_id = &object_id;
-				object_id = -1;
+				json response = create_response(true, "Ok", build_options, 0.0);
+				co_return response;
+			}
 
-				_path.for_each_element([this, pcurrent_obj, pcurrent_node, pcurrent_class, pobject_id](json & _path_element) -> void {
-					std::string path_class_name = _path_element["ClassName"];
-					if (path_class_name == "PathId")
-					{
-						*pobject_id = _path_element["PathObjectId"];
-						json_parser jpx;
-						json filter = jpx.create_object("ObjectId", *pobject_id);
-						filter.set_natural_order();
-						auto obj_task = objects.get(filter);
-						*pcurrent_obj = obj_task.wait();
-						*pcurrent_node = *pcurrent_obj;
-					}
-					else if (path_class_name == "PathName")
-					{
-						json class_name = _path_element["PathObjectClass"];
-						std::string name = _path_element["PathObjectName"];
-						json_parser jpx;
-						json filter = jpx.create_object();
-						filter.put_member("ClassName", class_name);
-						filter.put_member("Name", name);
-						filter.set_natural_order();
-						auto obj_task = objects.get(filter);
-						*pcurrent_obj = obj_task.wait();
-						*pcurrent_node = *pcurrent_obj;
-					}
-					else if (path_class_name == "PathMember")
-					{
-						json path_member_name = _path_element["PathMember"];
-						if (pcurrent_node->is_object()) {
-							*pcurrent_node = pcurrent_node->get_member(path_member_name);
-						}
-					}
-					else if (path_class_name == "PathElement")
-					{
-						json path_element_index = _path_element["PathElement"];				
+			if (!step_field_definition.has_member("Goal"))
+			{
+				json response = create_response(true, "Ok", build_options, 0.0);
+				co_return response;
+			}
 
-						int64_t element_index;
+			json required_objects = step_field_definition["Goal"]["RequiredObjects"];
+			std::string class_of_object_to_create = step_field_definition["Goal"]["CreateObjectClass"];
+			std::string member_destination_of_object = step_field_definition["Goal"]["CreateObjectMember"];
 
-						if (path_element_index.is_int64() || path_element_index.is_double()) {
-							element_index = path_element_index.get_int64s();
-						}
-						else if ((std::string)path_element_index == "first")
+			json actual_objects = parent[step_field_name];
+			json token = create_system_token();
+
+			if (required_objects.is_array()) {
+				std::string object_to_add;
+
+				json actual_object_classes = jp.create_object();
+
+				for (int i = 0; i < actual_objects.size(); i++)
+				{
+					json object_data;
+					json item = actual_objects.get_element(i);
+
+					if (item.is_member("ClassName", "SysObjectReference"))
+					{
+						object_data = item["Data"];
+						int64_t object_id = item["LinkObjectId"];
+
+						if (object_data.is_empty())
 						{
-							element_index = 0;
+							json_parser jp;
+							json key = jp.create_object("ObjectId", object_id);
+							object_data = co_await objects.get(key);
 						}
-					
-						if (pcurrent_node->is_object()) 
-						{
-							*pcurrent_node = pcurrent_node->get_element(element_index);
-						}
-					}
-				});
 
-				if (current_obj.is_object()) 
-				{
-					if (!_update.is_empty()) {
-						current_node.assign_update(_update);
-						co_await objects.put(current_obj);
+						json build_option = jp.create_object();
+						build_option.put_member("ClassName", "SysEditObject");
+						build_option.put_member_i64("TargetObjectId", (int64_t)parent["ObjectId"]);
+						build_option.put_member("TargetMemberName", step_field_name);
+						build_option.put_member_i64("SelectObjectId", object_id);
+						build_options.append_element(build_option);
 					}
-					response = create_response(true, "Saved", current_node, 0);
+					else
+					{
+						object_data = item;
+
+						if (item.is_object()) 
+						{
+							json build_option = jp.create_object();
+							build_option.put_member("ClassName", "SysEditObject");
+							build_option.put_member_i64("TargetObjectId", (int64_t)parent["ObjectId"]);
+							build_option.put_member("TargetMemberName", step_field_name);
+							build_option.put_member_i64("SelectObjectId", item["ObjectId"]);
+							build_options.append_element(build_option);
+						}
+					}
+
+					if (object_data.is_object()) {
+						std::string object_class_name = object_data["ClassName"];
+						actual_object_classes.put_member(object_class_name, object_class_name);
+					}
 				}
-				else if (!current_node.is_empty())
+
+				json create_options = jp.create_object();
+				bool satisfied = true;
+
+				for (int i = 0; i < required_objects.size(); i++)
 				{
-					response = create_response(true, "Ok", current_node, 0);
+					std::string required_class_name = required_objects.get_element(i);
+					json required_class_key = jp.create_object("ClassName", required_class_name);
+					json required_class = co_await classes.get(required_class_key);
+					json required_class_description = required_class["ClassDescription"];
+					json descendants = required_class["Descendants"];
+					if (!descendants.any([this, actual_object_classes](json& _item) -> bool {
+						std::string class_name = _item;
+						return actual_object_classes.has_member(class_name);
+						})) {
+						json build_option = jp.create_object();
+						build_option.put_member("ClassName", "SysCreateObject");
+						build_option.put_member_i64("TargetObjectId", (int64_t)parent["ObjectId"]);
+						build_option.put_member("TargetMemberName", step_field_name );
+						build_option.put_member("TargetClassName", required_class_name);
+						build_option.put_member("TargetClassDescription", required_class["ClassDescription"]);
+						build_options.append_element(build_option);
+
+						json build_option = jp.create_object();
+						build_option.put_member("ClassName", "SysCreateSubClass");
+						build_option.put_member("TargetBaseClassName", required_class_name);
+						build_option.put_member("TargetClassDescription", required_class_description);
+						build_options.append_element(build_option);
+						satisfied = false;
+					}
 				}
-				else
-				{
-					response = create_response(false, "Not found", current_node, 0);
+
+				// now, if we are satisfied, then we can create a new option
+				if (satisfied) {
+					json build_option = jp.create_object();
+					build_option.put_member("ClassName", "SysCreateObject");
+					build_option.put_member_i64("TargetObjectId", (int64_t)parent["ObjectId"]);
+					build_option.put_member("TargetMemberName", member_destination_of_object);
+					build_option.put_member("TargetClassName", class_of_object_to_create);
+					build_options.append_element(build_option);
+					satisfied = false;
 				}
 			}
 
+			json response = create_response(true, "ok", build_options, 0);
 			co_return response;
-		}
+		};
 
 		database_method_transaction<json> get_classes(json _token)
 		{
@@ -1786,12 +1944,24 @@ namespace corona
 			json result_list;
 
 			if (!check_token(_token, "user")) {
-				result = create_response(false, "Cannot get class");
+				result = create_response(false, "Denied");
 				co_return result;
 			}
 
-			auto result_task = classes.select_array([](int _index, json& _item) {
-				return _item;
+			auto result_task = classes.select_array([this, _token](int _index, json& _item) {
+				json_parser jp;
+				auto permission_task = has_class_permission(_token, _item["ClassName"], "Get");
+				bool has_permission = permission_task.wait();
+
+				if (has_permission) 
+				{
+					return _item;
+				}
+				else 
+				{
+					json empty = jp.create_object();
+					return empty;
+				}
 				});
 
 			result_list = result_task.wait();
@@ -1800,71 +1970,65 @@ namespace corona
 			co_return result;
 		}
 
-		database_method_transaction<json> get_class(json _token, std::string _class_name)
+		database_composed_transaction<json> get_class(json _token, std::string _class_name)
 		{
 			json_parser jp;
 			json result;
 
-			if (!check_token(_token, "user")) {
-				result = create_response(false, "Cannot get class");
-				co_return result;
-			}
+			bool can_get_class = co_await has_class_permission(
+				_token,
+				_class_name,
+				"Get");
 
 			json key = jp.create_object("ClassName", _class_name);
 			key.set_natural_order();
 
-			if (!can_get_class(_token, key)) {
-				result = create_response(false, "Cannot get class");
-				co_return result;
-			}
-
 			json result = co_await classes.get(key);
 
-			result = create_response(true, "got class", result, 0);
+			result = create_response(true, "Ok", result, 0);
 			co_return result;
 		}
 
-		database_method_transaction<json> get_class(json _token, json& _object)
+		database_composed_transaction<json> get_class(json _token, json& _object)
 		{
 			json class_def;
 			json key = _object.extract({ "ClassName" });
 			json result;
 
-			if (!check_token(_token, "user")) {
-				result = create_response(false, "Cannot get class");
+			bool can_get_class = co_await has_class_permission(
+				_token,
+				key["ClassName"],
+				"Get");
+
+			if (!can_get_class) {
+				result = create_response(false, "Denied", _object, 0.0);
 				co_return result;
 			}
 
-			if (!can_get_class(_token, key)) {
-				result = create_response(false, "Cannot get class");
-				co_return result;
-			}
-
-			class_def = co_await get_class(_token, key);
+			class_def = co_await classes.get(key);
 
 			if (class_def.is_empty())
 			{
-				result = create_response(false, "Undefined class", key, 0);
+				result = create_response(false, "Undefined", key, 0);
 			}
 			else 
 			{
 				result = create_response(true, "Ok", class_def, 0);
 			}
-
 			co_return result;
 		}
 
-		database_method_transaction<json> put_class(json _token, json _class_definition)
+		database_composed_transaction<json> put_class(json _token, json _class_definition)
 		{
 			json result;
 
-			if (!check_token(_token, "user")) {
-				result = create_response(false, "Cannot put class");
-				co_return result;
-			}
+			bool can_put_class = co_await has_class_permission(
+				_token,
+				_class_definition["ClassName"] ,
+				"Put");
 
-			if (!can_put_class(_token, _class_definition)) {
-				result = create_response(false, "Cannot get class");
+			if (!can_put_class) {
+				result = create_response(false, "Denied", _class_definition, 0.0);
 				co_return result;
 			}
 
@@ -1872,140 +2036,90 @@ namespace corona
 			json_parser jp;
 
 			if (result["Success"]) {
-				if (_class_definition.has_member("BaseClass")) {
-					json class_key = jp.create_object();
-					class_key.put_member("ClassName", (std::string)_class_definition["BaseClass"]);
-					auto existing_class_task = get_class(_token, class_key);
-					json existing_class = existing_class_task.wait();
-					if (existing_class["Success"]) {
-						auto existing_definition = existing_class["Data"];
-						auto fields = existing_definition["Fields"].get_members();
-						auto class_fields = _class_definition["Fields"];
-						for (auto field : fields) {
-							class_fields.put_member(field.first, field.second);
-						}
-					}
-				}
 				co_await classes.put(_class_definition);
 				result = create_response(true, "Ok");
-			}
-			co_return result;
-		}
 
-		database_method_transaction<json> get_derived_classes(json _token, json _class_definition)
-		{
-			json_parser jp;
-			json derived_classes = jp.create_object();
-
-			if (!check_token(_token, "user")) {
-				json result = create_response(false, "Cannot get derived classes");
-				co_return result;
-			}
-
-			json class_ancestry_key = _class_definition.extract({ "BaseClassName" });
-
-			auto so_task = classes.select_object(
-				derived_classes,
-				class_ancestry_key,
-				[](int _index, json& _item) ->json {
-					auto ret = _item.extract({ "ClassName" });
-					return ret;
-				},
-				[](int _index, json& _item) ->json {
-					std::string class_to_search = _item["ClassName"];
-					json_parser jpx;
-					json new_key = jpx.create_object("BaseClassName", class_to_search);
-					return new_key;
-				},
-				{ "ClassName" }
-			);
-
-			so_task.wait();
-
-			json result = create_response(true, "Ok", derived_classes, 0.0);
-
-			co_return result;
-		}
-
-		database_method_transaction<json> get_ancestor_classes(json _token, json _class_definition)
-		{
-			json_parser jp;
-			json ancestor_classes = jp.create_object();
-
-			if (!check_token(_token, "user")) {
-				json result = create_response(false, "Cannot get ancestor classes");
-				co_return result;
-			}
-
-			json class_ancestry_key = _class_definition.extract({ "ClassName" });
-
-			auto so_task = classes.select_object(
-				ancestor_classes,
-				class_ancestry_key,
-				[](int _index, json& _item) ->json {
-					auto ret = _item.extract({ "ClassName" });
-					return ret;
-				},
-				[](int _index, json& _item) ->json {
-					std::string class_to_search = _item["BaseClassName"];
-					json_parser jpx;
-					json new_key = jpx.create_object("ClassName", class_to_search);
-					return new_key;
-				},
-				{ "ClassName" }
-			);
-
-			so_task.wait();
-
-			json result = create_response(true, "Ok", ancestor_classes, 0.0);
-
-			co_return result;
-		}
-
-		database_method_transaction<bool> is_descendant_of(json _token, std::string _base_class, std::string _class_to_check )
-		{
-			json_parser jp;
-
-			json class_check = jp.create_object("ClassName", _class_to_check);
-			auto ancestors_task = get_ancestor_classes(_token, class_check);
-			json ancestors = ancestors_task.wait();
-			
-			if (ancestors["Success"]) 
-			{
-				json class_defs = ancestors["Data"];
-				if (class_defs.has_member(_base_class)) {
-					co_return true;
+				auto ancestors = _class_definition["Ancestors"];
+				if (ancestors.is_object()) {
+					auto ancestor_classes = ancestors.get_members_raw();
+					for (auto acp : ancestor_classes) {
+						std::string acn = acp.first;
+						json class_key = jp.create_object();
+						class_key.put_member("ClassName", acn);
+						auto ancestor_class = co_await classes.get(class_key);
+						if (!ancestor_class.has_member("Descendants")) {
+							ancestor_class.put_member_object("Descendants");
+						}
+						ancestor_class["Descendants"].put_member(acn, acn);
+						co_await classes.put(ancestor_class);
+					}
 				}
+			}
+			co_return result;
+		}
+
+		database_method_transaction<bool> is_ancestor(json _token, std::string _base_class, std::string _class_to_check)
+		{
+			json_parser jp;
+
+			json class_key = jp.create_object("ClassName", _base_class);
+			class_key.set_natural_order();
+
+			json class_obj = co_await classes.get(class_key);
+
+			if (!class_obj.is_empty())
+			{
+				bool has_ancestor = class_obj["Ancestors"].has_member(_class_to_check);
+				co_return has_ancestor;
 			}
 
 			co_return false;
 		}
 
-		database_method_transaction<json> get_objects_by_class(json _token, json _object_definition, json _filter)
+		database_method_transaction<bool> is_descendant(json _token, std::string _base_class, std::string _class_to_check )
 		{
 			json_parser jp;
 
+			json class_key = jp.create_object("ClassName", _class_to_check);
+			class_key.set_natural_order();
+
+			json class_obj = co_await classes.get(class_key);
+			
+			if (!class_obj.is_empty()) 
+			{
+				bool has_ancestor = class_obj["Ancestors"].has_member(_base_class);
+				co_return has_ancestor;
+			}
+
+			co_return false;
+		}
+
+		database_method_transaction<json> get_objects_by_class(json _token, json _class_key, json _filter)
+		{
+			json_parser jp;
 			json response;
 
-			if (!check_token(_token, "user")) {
-				json result = create_response(false, "Cannot get ancestor classes");
-				co_return result;
+			std::string base_class_name = _class_key["ClassName"];
+
+			if (!has_class_permission(_token, base_class_name, "Get"))
+			{
+				response = create_response(false, "Denied", 0.0);
+				co_return response;
 			}
 
 			json objects = jp.create_array();
 
-			json class_def = co_await get_class(_token, _object_definition);
-			json derived_classes = co_await get_derived_classes(_token, class_def);
+			json class_def = co_await classes.get(_class_key);
+			json derived_classes = class_def["Descendants"];
 			auto members = derived_classes.get_members();
 
 			for (auto member : members) 
 			{
 				json_parser jp;
 				json search_key = jp.create_object("ClassName", member.first);
-				auto class_object_ids_task = class_objects.select_array(search_key, [](int _index, json& _item)->json {
+				auto class_object_ids = co_await class_objects.select_array(search_key, [](int _index, json& _item)->json {
 					return _item;
 					});
-				json class_object_ids = class_object_ids_task.wait();
 				json get_object_id = jp.create_object("ObjectId", 0i64);
 
 				for (db_object_id_type i = 0; i < class_object_ids.size(); i++)
@@ -2014,7 +2128,7 @@ namespace corona
 					get_object_id.put_member("ObjectId", ri);
 					get_object_id.set_natural_order();
 
-					if (can_get_object(_token, get_object_id))
+					if (has_object_permission(_token, get_object_id, "Get"))
 					{
 						json objx = co_await get_object(_token, get_object_id);
 						if (objx["Success"])
@@ -2038,19 +2152,19 @@ namespace corona
 				co_return result;
 			}
 
-			json class_key = jp.create_object("ClassName", _class_name);
-			class_key.set_natural_order();
-
-			if (!can_put_object(_token, class_key)) {
+			if (!has_class_permission(_token, _class_name, "Get")) {
 				json result = create_response(false, "Cannot get object");
 				co_return result;
 			}
 
-			json classdef_response = co_await get_class(_token, class_key);
+			json class_key = jp.create_object("ClassName", _class_name);
+			class_key.set_natural_order();
+
+			json class_data = co_await classes.get(class_key);
+
 			json response;
 
-			if (classdef_response["Success"]) {
-				json class_data = classdef_response["Data"];
+			if (class_data.is_object()) {
 				json field_definition = class_data["Fields"];
 				auto members = field_definition.get_members();
 				json new_object = jp.create_object();
@@ -2125,7 +2239,7 @@ namespace corona
 				co_return result;
 			}
 
-			if (!can_put_object(_token, _object_definition)) {
+			if (!has_object_permission(_token, _object_definition, "Put")) {
 				json result = create_response(false, "Cannot put object");
 				co_return result;
 			}
@@ -2213,28 +2327,16 @@ namespace corona
 			json_parser jp;
 			json result;
 
-			if (!check_token(_token, "user")) {
-				json result = create_response(false, "Cannot get object");
+			json obj_key = jp.create_object("Name", _object_name);
+			json obj = co_await acquire_object(obj_key);
+
+			if (!has_object_permission(_token, obj, "Get"))
+			{
+				result = create_response(false, "Denied", 0.0);
 				co_return result;
 			}
 
-			result = create_response(false, "Not found", 0.0);
-
-			json key_index = jp.create_object();
-			key_index.put_member("ClassName", _class_name);
-			key_index.put_member("Name", _object_name);
-			key_index.set_compare_order({ "ClassName", "Name" });
-			json index_entry = objects_by_name.get_first(key_index);
-
-			if (!index_entry.is_empty()) 
-			{
-				json key_obj= jp.create_object();
-				key_obj.put_member("ClassName", _class_name);
-				key_obj.set_compare_order({ "ObjectId" });
-				db_object_id_type obj_id = index_entry["ObjectId"];
-				json obj_data = co_await get_object(_token, key_obj);
-				result = create_response(true, "Ok", obj_data, 0.0);
-			}
+			result = create_response(true, "Ok", obj, 0.0);
 
 			co_return result;
 		}
@@ -2242,95 +2344,50 @@ namespace corona
 		database_method_transaction<json> get_object(json _token, json _object_key)
 		{
 			json_parser jp;
+			json result;
 
-			if (!check_token(_token, "user")) {
-				json result = create_response(false, "Cannot get object");
-				co_return result;
-			}
+			json obj = co_await acquire_object(_object_key);
 
-			if (!can_get_object(_token, _object_key)) {
-				json result = create_response(false, "Cannot get object");
-				co_return result;
-			}
-
-			json response;
-			json my_object = co_await objects.get(_object_key);
-
-			auto child_members = my_object["Data"].get_members();
-
-			for (auto child_member : child_members)
+			if (!has_object_permission(_token, obj, "Get"))
 			{
-				auto cm = child_member.second;
-				if (cm.is_array())
-				{
-					for (int64_t index = 0; index < cm.size(); index++)
-					{
-						json em = cm.get_element(index);
-						if (em.is_object() &&
-							em.is_member("ClassName", "SysObjectReference") &&
-							em.is_member("DeepGet", true)
-							)
-						{
-							db_object_id_type old_id = cm["LinkObjectId"];
-							json object_key = jp.create_object("ObjectId", old_id);
-							json child_obj = co_await get_object(_token, object_key);
-							if (child_obj["Success"]) {
-								json data = child_obj["Data"];
-								em.put_member("Data", data);
-							}
-						}
-					}
-				}
-				else if (
-					cm.is_member("ClassName", "SysObjectReference") &&
-					cm.is_member("DeepGet", true)
-					)
-				{
-					db_object_id_type old_id = cm["LinkObjectId"];
-					json object_key = jp.create_object("ObjectId", old_id);
-					json child_obj = co_await get_object(_token, object_key);
-					if (child_obj["Success"]) {
-						json data = child_obj["Data"];
-						cm.put_member("Data", data);
-					}
-				}
+				result = create_response(false, "Denied", 0.0);
+				co_return result;
 			}
 
-			co_return response;
+			result = create_response(true, "Ok", obj, 0.0);
+
+			co_return result;
 		}
 
-		database_transaction<json> copy_object(json _token, json _object_key,
+		database_transaction<json> copy_object(json _token, json _object_key_src,
 			std::function<bool(json _object_changes)> _fn)
 		{
 			json_parser jp;
 
 			if (!check_token(_token, "user")) {
-				json result = create_response(false, "Cannot copy object");
+				json result = create_response(false, "Denied");
 				co_return result;
 			}
 
-			if (!can_get_object(_token, _object_key)) {
-				json result = create_response(false, "Cannot copy object");
+			json object_copy = co_await acquire_object(_object_key_src);
+
+			if (!has_object_permission(_token, object_copy, "Get")) {
+				json result = create_response(false, "Denied");
 				co_return result;
 			}
 
-			json object_copy = co_await get_object(_token, _object_key );
-
-			if (!object_copy["Success"])
-				co_return object_copy;
+			if (!has_object_permission(_token, object_copy, "Put")) {
+				json result = create_response(false, "Denied");
+				co_return result;
+			}
 
 			json response;
 
 			if (_fn(object_copy)) 
 			{
-				json new_object = object_copy["Data"];
+				json new_object = object_copy.clone();
 				db_object_id_type new_object_id = co_await get_next_object_id();
 				new_object.put_member("ObjectId", new_object_id);
-
-				if (!can_put_object(_token, new_object)) {
-					json result = create_response(false, "Cannot copy object");
-					co_return result;
-				}
 
 				auto child_members = new_object.get_members();
 
@@ -2400,17 +2457,17 @@ namespace corona
 				co_return result;
 			}
 
-			if (!can_delete_object(_token, _object_key)) {
+			if (!has_object_permission(_token, _object_key, "Delete")) {
 				json result = create_response(false, "Cannot delete object");
 				co_return result;
 			}
 
 			json object_def = co_await objects.get(_object_key);
 
-			ret = create_response(false, "Still there", 0.0);
+			ret = create_response(false, "Failed", 0.0);
 
-			if (object_def["Success"]) {
-				bool success = co_await class_objects.erase(object_def["Data"]);
+			if (object_def.is_object()) {
+				bool success = co_await class_objects.erase(object_def);
 				if (success) {
 					success = co_await objects.erase(_object_key);
 					if (success) {
@@ -2418,7 +2475,7 @@ namespace corona
 					}
 				}
 
-				auto child_members = object_def["Data"].get_members();
+				auto child_members = object_def.get_members();
 
 				for (auto child_member : child_members)
 				{
@@ -2468,12 +2525,12 @@ namespace corona
 
 		corona_database db(&dtest);
 
-		// create the database
-
 		std::cout << "test_database_engine, create_database, thread:" << ::GetCurrentThreadId() << std::endl;
 
 		auto create_database_task = db.create_database();
 		create_database_task.wait();
+
+
 	}
 }
 

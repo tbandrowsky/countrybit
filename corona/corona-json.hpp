@@ -1635,7 +1635,8 @@ namespace corona
 		}
 
 		json join(json& _right,
-			std::function<std::string(json& _item)> _get_key,
+			std::function<std::string(json& _item)> _get_key_left,
+			std::function<std::string(json& _item)> _get_key_right,
 			std::function<json(json& _item1, json& _item2)> _compose
 		)
 		{
@@ -1659,7 +1660,7 @@ namespace corona
 			for (i = 0; i < size(); i++)
 			{
 				json left_item = get_element(i);				
-				std::string key = _get_key(left_item);
+				std::string key = _get_key_left(left_item);
 				if (!join_items.contains(key)) {
 					match_set m;
 					join_items[key] = m;
@@ -1670,7 +1671,7 @@ namespace corona
 			for (j = 0; j < _right.size(); j++)
 			{
 				json right_item = _right.get_element(j);
-				std::string key = _get_key(right_item);
+				std::string key = _get_key_right(right_item);
 				if (!join_items.contains(key)) {
 					match_set m;
 					join_items[key] = m;
@@ -1690,7 +1691,7 @@ namespace corona
 						auto right_id = join_item.second.right[i];
 						auto right_item = get_element(i);
 						auto new_item = _compose(left_item, right_item);
-						new_array.put_element(-1, new_item);
+						new_array.append_element(new_item);
 					}
 				}
 			}
