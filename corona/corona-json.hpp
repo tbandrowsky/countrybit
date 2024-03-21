@@ -695,19 +695,26 @@ namespace corona
 
 		void assign_update(json _member)
 		{
-			if (!object_impl) {
-				throw std::logic_error("Target is not an object");
-			}
 
-			if (!_member.object_impl) {
-				throw std::logic_error("Source is not an object");
-			}
-
-			auto members = _member.get_members_raw();
-
-			for (auto src : members)
+			if (_member.is_empty())
 			{
-				put_member_value(src.first, src.second);
+				return;
+			}
+
+			if (is_empty())
+			{
+				set(_member.value_base);
+				return;
+			}
+
+			if (_member.is_object() && is_object()) 
+			{
+				auto members = _member.get_members_raw();
+
+				for (auto src : members)
+				{
+					put_member_value(src.first, src.second);
+				}
 			}
 		}
 
@@ -1020,7 +1027,7 @@ namespace corona
 			return *this;
 		}
 
-		json set_compare_order(std::initializer_list<std::string> _fields)
+		json set_compare_order(std::vector<std::string> _fields)
 		{
 			comparison_fields.clear();
 
@@ -1049,7 +1056,7 @@ namespace corona
 			return *this;
 		}
 
-		bool keys_compatible(std::initializer_list<std::string> keys)
+		bool keys_compatible(std::vector<std::string> keys)
 		{
 			if (!object_impl)
 			{
@@ -1078,17 +1085,17 @@ namespace corona
 			return true;
 		}
 
-		json extract(std::initializer_list<std::string> _fields)
+		json extract(std::vector<std::string> _fields)
 		{
-			if (!object_impl) 
+			if (!object_impl)
 			{
 				throw std::logic_error("Not an object");
 			}
 
-			json jn( std::make_shared<json_object>() );
+			json jn(std::make_shared<json_object>());
 
 			int comparison_index = 1;
-			for (auto f : _fields) 
+			for (auto f : _fields)
 			{
 				if (object_impl->members.contains(f)) {
 					auto fn = object_impl->members[f];
