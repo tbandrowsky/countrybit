@@ -935,8 +935,9 @@ namespace corona
 }
 )");
 
-			json test = classes.get(R"({"ClassName":"SysObject"})");
+			json test = co_await classes.get(R"({"ClassName":"SysObject"})");
 			if (test.is_empty()) {
+				std::cout << __FILE__ << " " << __LINE__ << ":Could not find class after creation." << std::endl;
 				co_return null_row;
 			}
 
@@ -953,8 +954,9 @@ namespace corona
 }
 )");
 
-			test = classes.get(R"({"ClassName":"SysReference"})");
+			test = co_await classes.get(R"({"ClassName":"SysReference"})");
 			if (test.is_empty()) {
+				std::cout << __FILE__ << " " << __LINE__ << ":Could not find class after creation." << std::endl;
 				co_return null_row;
 			}
 
@@ -991,8 +993,9 @@ namespace corona
 )");
 
 
-			test = classes.get(R"({"ClassName":"SysUser"})");
+			test = co_await classes.get(R"({"ClassName":"SysUser"})");
 			if (test.is_empty()) {
+				std::cout << __FILE__ << " " << __LINE__ << ":Could not find class after creation." << std::endl;
 				co_return null_row;
 			}
 
@@ -1011,8 +1014,9 @@ namespace corona
 }
 )");
 
-			test = classes.get(R"({"ClassName":"SysPermission"})");
+			test = co_await classes.get(R"({"ClassName":"SysPermission"})");
 			if (test.is_empty()) {
+				std::cout << __FILE__ << " " << __LINE__ << ":Could not find class after creation." << std::endl;
 				co_return null_row;
 			}
 
@@ -1037,8 +1041,9 @@ namespace corona
 }
 )");
 
-			test = classes.get(R"({"ClassName":"SysMember"})");
+			test = co_await classes.get(R"({"ClassName":"SysMember"})");
 			if (test.is_empty()) {
+				std::cout << __FILE__ << " " << __LINE__ << ":Could not find class after creation." << std::endl;
 				co_return null_row;
 			}
 
@@ -1059,8 +1064,9 @@ namespace corona
 }
 )");
 
-			test = classes.get(R"({"ClassName":"SysGrant"})");
+			test = co_await classes.get(R"({"ClassName":"SysGrant"})");
 			if (test.is_empty()) {
+				std::cout << __FILE__ << " " << __LINE__ << ":Could not find class after creation." << std::endl;
 				co_return null_row;
 			}
 
@@ -1076,8 +1082,9 @@ namespace corona
 }
 )");
 
-			test = classes.get(R"({"ClassName":"SysClassGrant"})");
+			test = co_await classes.get(R"({"ClassName":"SysClassGrant"})");
 			if (test.is_empty()) {
+				std::cout << __FILE__ << " " << __LINE__ << ":Could not find class after creation." << std::endl;
 				co_return null_row;
 			}
 
@@ -1092,8 +1099,9 @@ namespace corona
 }
 )");
 
-			test = classes.get(R"({"ClassName":"SysObjectGrant"})");
+			test = co_await classes.get(R"({"ClassName":"SysObjectGrant"})");
 			if (test.is_empty()) {
+				std::cout << __FILE__ << " " << __LINE__ << ":Could not find class after creation." << std::endl;
 				co_return null_row;
 			}
 
@@ -1119,8 +1127,9 @@ namespace corona
 }
 )");
 
-			test = classes.get(R"({"ClassName":"SysObjectGrant"})");
+			test = co_await classes.get(R"({"ClassName":"SysObjectGrant"})");
 			if (test.is_empty()) {
+				std::cout << __FILE__ << " " << __LINE__ << ":Could not find class after creation." << std::endl;
 				co_return null_row;
 			}
 
@@ -2043,7 +2052,9 @@ namespace corona
 		std::cout << "test_database_engine, create_database, thread:" << ::GetCurrentThreadId() << std::endl;
 
 		auto create_database_task = db.create_database();
-		create_database_task.wait();
+		relative_ptr_type database_location = create_database_task.wait();
+
+		success = database_location != null_row;
 
 		co_return success;
 	}
