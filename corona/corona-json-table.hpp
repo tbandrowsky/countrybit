@@ -593,7 +593,7 @@ namespace corona
 			}
 		}
 
-		table_transaction<int64_t> 
+		table_group_transaction<int64_t> 
 			co_for_each(json _key_fragment, std::function<table_transaction<relative_ptr_type>(int _index, json& _item)> _process_clause)
 		{
 			relative_ptr_type location = co_await find_first_node_gte(_key_fragment);
@@ -622,7 +622,7 @@ namespace corona
 			co_return index;
 		}
 
-		table_transaction<int64_t>
+		table_group_transaction<int64_t>
 			for_each(json _key_fragment, std::function<relative_ptr_type(int _index, json& _item)> _process_clause)
 		{
 			relative_ptr_type location = co_await find_first_node_gte(_key_fragment);
@@ -676,7 +676,7 @@ namespace corona
 			co_return result_data;
 		}
 
-		table_transaction<bool> any(json _key_fragment, std::function<relative_ptr_type(int _index, json& _item)> _process_clause)
+		table_group_transaction<bool> any(json _key_fragment, std::function<relative_ptr_type(int _index, json& _item)> _process_clause)
 		{
 			relative_ptr_type location = co_await find_first_node_gte(_key_fragment);
 			int64_t index = 0;
@@ -706,7 +706,7 @@ namespace corona
 			co_return is_any;
 		}
 
-		table_transaction<bool> all(json _key_fragment, std::function<relative_ptr_type(int _index, json& _item)> _process_clause)
+		table_group_transaction<bool> all(json _key_fragment, std::function<relative_ptr_type(int _index, json& _item)> _process_clause)
 		{
 			relative_ptr_type location = co_await find_first_node_gte(_key_fragment);
 			int64_t index = 0;
@@ -736,7 +736,7 @@ namespace corona
 			co_return is_all;
 		}
 
-		table_transaction<int64_t>
+		table_group_transaction<int64_t>
 			co_for_each(std::function<table_method_transaction<relative_ptr_type>(int _index, json& _item)> _process_clause)
 		{
 			auto get_header_task = get_header();
@@ -760,7 +760,7 @@ namespace corona
 			co_return index;
 		}
 
-		table_transaction<int64_t>
+		table_group_transaction<int64_t>
 			for_each(std::function<relative_ptr_type(int _index, json& _item)> _process_clause)
 		{
 			auto get_header_task = get_header();
@@ -784,14 +784,14 @@ namespace corona
 			co_return index;
 		}
 
-		table_transaction<json>
+		table_array_transaction<json>
 		select_array(std::function<json(int _index, json& _item)> _project)
 		{
 			json_parser jp;
 			json ja = jp.create_array();
 			json* pja = &ja;
 
-			int64_t count = co_await co_for_each([pja, _project](int _index, json& _data) -> table_method_transaction<relative_ptr_type>
+			int64_t count = co_await co_for_each([pja, _project](int _index, json& _data) ->table_method_transaction<relative_ptr_type>
 				{
 					relative_ptr_type count = 0;
 					json new_item = _project(_index, _data);
@@ -805,7 +805,7 @@ namespace corona
 			co_return ja;
 		}
 
-		table_transaction<json>
+		table_array_transaction<json>
 		select_array(json _key_fragment, 
 			std::function<json(int _index, json& _item)> _project
 		)
@@ -828,7 +828,7 @@ namespace corona
 			co_return ja;
 		}
 
-		table_transaction<json>
+		table_array_transaction<json>
 		select_object(json& _destination,
 				json _key_fragment,
 				std::function<json(int _index, json& _item)> _project,
@@ -871,6 +871,7 @@ namespace corona
 
 			co_return _destination;
 		}
+
 
 		inline int size() { return index_header.data.count; }
 
@@ -1435,7 +1436,7 @@ namespace corona
 
 		db_contents = db_contents_task2.wait();
 
-		bool any_fails = db_contents.all([](json& _item)->bool {
+		any_fails = db_contents.all([](json& _item)->bool {
 			std::string temp = _item["Name"];
 			return temp == "Zeus";
 			});

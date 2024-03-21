@@ -636,7 +636,7 @@ namespace corona
 			{
 				json objects_by_name_key = jp.create_object();
 				objects_by_name_key.copy_member("ClassName", _object_key);
-				objects_by_name_key.put_member("Name", _object_key["Name"]);
+				objects_by_name_key.copy_member("Name", _object_key);
 				objects_by_name_key.set_compare_order({ "ClassName", "Name" });
 				json name_id = co_await objects_by_name.get_first(objects_by_name_key);
 				if (name_id.is_object()) {
@@ -706,7 +706,6 @@ namespace corona
 			// Now go through the teams the user is a member of and check the grants to see if we can access this
 			json teams_list = user["Teams"];
 
-			bool granted = false;
 			for (int i = 0; i < teams_list.size(); i++)
 			{
 				json item = teams_list.get_element(i);
@@ -758,7 +757,6 @@ namespace corona
 
 			json teams_list = user["Teams"];
 
-			bool granted = false;
 			for (int i = 0; i < teams_list.size(); i++)
 			{
 				json item = teams_list.get_element(i);
@@ -822,7 +820,6 @@ namespace corona
 
 			json teams_list = user["Teams"];
 
-			bool granted = false;
 			for (int i = 0; i < teams_list.size(); i++)
 			{
 				json item = teams_list.get_element(i);
@@ -1185,7 +1182,7 @@ namespace corona
 										build_option.put_member("TargetClassDescription", allowed);
 										edit_options.append_element(build_option);
 
-										json build_option = jp.create_object();
+										build_option = jp.create_object();
 										build_option.put_member("ClassName", "SysCreateSubClass");
 										build_option.put_member("TargetBaseClassName", allowed);
 										build_option.put_member("TargetClassDescription", allowed);
@@ -1321,10 +1318,10 @@ namespace corona
 						build_option.put_member_i64("TargetObjectId", (int64_t)parent["ObjectId"]);
 						build_option.put_member("TargetMemberName", step_field_name );
 						build_option.put_member("TargetClassName", required_class_name);
-						build_option.put_member("TargetClassDescription", required_class["ClassDescription"]);
+						build_option.put_member("TargetClassDescription", (std::string)required_class["ClassDescription"]);
 						build_options.append_element(build_option);
 
-						json build_option = jp.create_object();
+						build_option = jp.create_object();
 						build_option.put_member("ClassName", "SysCreateSubClass");
 						build_option.put_member("TargetBaseClassName", required_class_name);
 						build_option.put_member("TargetClassDescription", required_class_description);
@@ -1396,7 +1393,7 @@ namespace corona
 			json key = jp.create_object("ClassName", _class_name);
 			key.set_natural_order();
 
-			json result = co_await classes.get(key);
+			result = co_await classes.get(key);
 
 			result = create_response(true, "Ok", result, 0);
 			co_return result;
@@ -1709,13 +1706,13 @@ namespace corona
 				if (previous_name != new_name)
 				{
 					json key_index = jp.create_object();
-					key_index.put_member("ClassName", previous_version["ClassName"]);
+					key_index.put_member("ClassName", (std::string)previous_version["ClassName"]);
 					key_index.put_member("Name", previous_name);
 					key_index.put_member("ObjectId", object_id);
 					key_index.set_compare_order({ "Name", "ObjectId" });
 					objects_by_name.erase(key_index);
 
-					key_index.put_member("ClassName", _object_definition["ClassName"]);
+					key_index.put_member("ClassName", (std::string)_object_definition["ClassName"]);
 					key_index.put_member("Name", new_name);
 					objects_by_name.put(key_index);
 				}
@@ -2035,6 +2032,8 @@ namespace corona
 
 	user_transaction<bool> test_database_engine(corona::application& _app)
 	{
+		bool success = true;
+
 		file dtest = _app.create_file(FOLDERID_Documents, "corona_json_database_test.ctb");
 
 		std::cout << "test_database_engine, thread:" << ::GetCurrentThreadId() << std::endl;
@@ -2045,6 +2044,8 @@ namespace corona
 
 		auto create_database_task = db.create_database();
 		create_database_task.wait();
+
+		co_return success;
 	}
 }
 

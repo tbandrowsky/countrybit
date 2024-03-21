@@ -190,7 +190,7 @@ namespace corona
 			return ts;
 		}
 
-		operator time_t () const
+		time_t get_time_t() const
 		{
 			auto ts_base = (time_span)date_time::epoch();
 			auto ts_now = (time_span)*this;
@@ -340,6 +340,8 @@ namespace corona
 		time_span at = (time_span)a;
 		time_span bt = (time_span)b;
 
+		time_span result = at - bt;
+		return result;
 	}
 
 	int operator<(const date_time& a, const date_time& b)

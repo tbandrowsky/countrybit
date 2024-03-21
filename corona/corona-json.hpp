@@ -9,6 +9,8 @@
 #include <memory>
 #include <format>
 
+#include "corona-time_box.hpp"
+
 namespace corona 
 {
 
@@ -562,7 +564,7 @@ namespace corona
 			else if (int64_impl)
 				return int64_impl->value;
 			else if (datetime_impl)
-				return (time_t)datetime_impl->value;
+				return datetime_impl->value.get_time_t();
 			else if (string_impl)
 				return std::stod(string_impl->value);
 			else
@@ -598,7 +600,7 @@ namespace corona
 			else if (string_impl)
 				return std::stod(string_impl->value);
 			else if (datetime_impl)
-				return (time_t)datetime_impl->value;
+				return datetime_impl->value.get_time_t();
 			else
 				return 0.0;
 		}
@@ -623,7 +625,7 @@ namespace corona
 			else if (int64_impl)
 				return int64_impl->value;
 			else if (datetime_impl)
-				return (time_t)datetime_impl->value;
+				return datetime_impl->value.get_time_t();
 			else if (string_impl)
 				return std::stod(string_impl->value);
 			else

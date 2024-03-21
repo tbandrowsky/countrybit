@@ -511,7 +511,7 @@ namespace corona
 				// and, within the group, we go through the array
 				for (int k = 0; k < member_array.size(); k++)
 				{
-					json member_obj = member_array[k];
+					json member_obj = member_array.get_element(k);
 					json item_obj = jp.create_object();
 					item_obj.copy_member("ClassName", member_obj);
 					item_obj.copy_member("Name", member_obj);
