@@ -3,6 +3,7 @@
 
 #include "corona-httpclient.hpp"
 #include "corona-function.hpp"
+#include "corona-time_box.hpp"
 #include "corona-json.hpp"
 
 namespace corona

@@ -731,7 +731,7 @@ namespace corona
 			co_return granted;
 		}
 
-		database_method_transaction<bool> has_object_permission(
+		database_method_transaction<bool> check_object_key_permission(
 			json _token,
 			json _object_key,
 			std::string _permission)
@@ -795,7 +795,7 @@ namespace corona
 			co_return granted;
 		}
 
-		database_method_transaction<bool> has_object_permission(
+		database_method_transaction<bool> check_object_permission(
 			json _token,
 			json _object,
 			std::string _permission)
@@ -1541,7 +1541,7 @@ namespace corona
 					get_object_id.put_member("ObjectId", ri);
 					get_object_id.set_natural_order();
 
-					if (has_object_permission(_token, get_object_id, "Get"))
+					if (check_object_key_permission(_token, get_object_id, "Get"))
 					{
 						json objx = co_await get_object(_token, get_object_id);
 						if (objx["Success"])
@@ -1652,7 +1652,7 @@ namespace corona
 				co_return result;
 			}
 
-			if (!has_object_permission(_token, _object_definition, "Put")) {
+			if (!check_object_permission(_token, _object_definition, "Put")) {
 				json result = create_response(false, "Cannot put object");
 				co_return result;
 			}
@@ -1743,11 +1743,60 @@ namespace corona
 			json obj_key = jp.create_object("Name", _object_name);
 			json obj = co_await acquire_object(obj_key);
 
-			if (!has_object_permission(_token, obj, "Get"))
+			if (!check_object_permission(_token, obj, "Get"))
 			{
 				result = create_response(false, "Denied", 0.0);
 				co_return result;
 			}
+
+			auto child_members = obj.get_members();
+
+			for (auto child_member : child_members)
+			{
+				auto cm = child_member.second;
+				if (cm.is_array())
+				{
+					for (int64_t index = 0; index < cm.size(); index++)
+					{
+						json em = cm.get_element(index);
+						if (em.is_object() &&
+							em.is_member("ClassName", "SysReference") &&
+							em.is_member("DeepGet", true)
+							)
+						{
+							int64_t linked_object_id = em["LinkedObjectId"];
+							json linked_object_key = jp.create_object();
+							linked_object_key.put_member("ObjectId", linked_object_id);
+							linked_object_key.set_natural_order();
+							database_method_transaction<json> get_object_task = get_object(_token, linked_object_key);
+							json get_response = get_object_task.wait();
+							if (get_response["Success"])
+							{
+								json data = get_response["Data"];
+								em.put_member("Data", data);
+							}
+						}
+					}
+				}
+				else if (
+					cm.is_member("ClassName", "SysReference") &&
+					cm.is_member("DeepGet", true)
+					)
+				{
+					int64_t linked_object_id = cm["LinkedObjectId"];
+					json linked_object_key = jp.create_object();
+					linked_object_key.put_member("ObjectId", linked_object_id);
+					linked_object_key.set_natural_order();
+					database_method_transaction<json> get_object_task = get_object(_token, linked_object_key);
+					json get_response = get_object_task.wait();
+					if (get_response["Success"])
+					{
+						json data = get_response["Data"];
+						cm.put_member("Data", data);
+					}
+				}
+			}
+
 
 			result = create_response(true, "Ok", obj, 0.0);
 
@@ -1761,10 +1810,64 @@ namespace corona
 
 			json obj = co_await acquire_object(_object_key);
 
-			if (!has_object_permission(_token, obj, "Get"))
+			if (!check_object_permission(_token, obj, "Get"))
 			{
 				result = create_response(false, "Denied", 0.0);
 				co_return result;
+			}
+
+			if (!check_object_permission(_token, obj, "Get"))
+			{
+				result = create_response(false, "Denied", 0.0);
+				co_return result;
+			}
+
+			auto child_members = obj.get_members();
+
+			for (auto child_member : child_members)
+			{
+				auto cm = child_member.second;
+				if (cm.is_array())
+				{
+					for (int64_t index = 0; index < cm.size(); index++)
+					{
+						json em = cm.get_element(index);
+						if (em.is_object() &&
+							em.is_member("ClassName", "SysReference") &&
+							em.is_member("DeepGet", true)
+							)
+						{
+							int64_t linked_object_id = em["LinkedObjectId"];
+							json linked_object_key = jp.create_object();
+							linked_object_key.put_member("ObjectId", linked_object_id);
+							linked_object_key.set_natural_order();
+							database_method_transaction<json> get_object_task = get_object(_token, linked_object_key);
+							json get_response = get_object_task.wait();
+							if (get_response["Success"])
+							{
+								json data = get_response["Data"];
+								em.put_member("Data", data);
+							}
+						}
+					}
+				}
+				else if (
+					cm.is_member("ClassName", "SysReference") &&
+					cm.is_member("DeepGet", true)
+					)
+				{
+					int64_t linked_object_id = cm["LinkedObjectId"];
+					json linked_object_key = jp.create_object();
+					linked_object_key.put_member("ObjectId", linked_object_id);
+					linked_object_key.set_natural_order();
+					database_method_transaction<json> get_object_task = get_object(_token, linked_object_key);
+					json get_response = get_object_task.wait();
+					if (get_response["Success"])
+					{
+						json data = get_response["Data"];
+						cm.put_member("Data", data);
+					}
+				}
 			}
 
 			result = create_response(true, "Ok", obj, 0.0);
@@ -1784,12 +1887,12 @@ namespace corona
 
 			json object_copy = co_await acquire_object(_object_key_src);
 
-			if (!has_object_permission(_token, object_copy, "Get")) {
+			if (!check_object_permission(_token, object_copy, "Get")) {
 				json result = create_response(false, "Denied");
 				co_return result;
 			}
 
-			if (!has_object_permission(_token, object_copy, "Put")) {
+			if (!check_object_permission(_token, object_copy, "Put")) {
 				json result = create_response(false, "Denied");
 				co_return result;
 			}
@@ -1870,7 +1973,7 @@ namespace corona
 				co_return result;
 			}
 
-			if (!has_object_permission(_token, _object_key, "Delete")) {
+			if (!check_object_key_permission(_token, _object_key, "Delete")) {
 				json result = create_response(false, "Cannot delete object");
 				co_return result;
 			}
