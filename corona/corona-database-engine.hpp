@@ -611,8 +611,8 @@ namespace corona
 			std::string role = payload["Role"];
 			std::string user = payload["Name"];
 
-			if (_expected_role != role || 
-				(role == "system" &&
+			if (_expected_role != role && 
+				!(role == "system" &&
 				user == "system"))
 			{
 				return false;
@@ -696,6 +696,10 @@ namespace corona
 
 			// extract the user key from the token and get the user object
 			json user_key = get_token_user(_token);
+			if ((std::string)user_key["Name"] == "system") {
+				co_return true;
+			}
+
 			user_key.put_member("ClassName", "SysUser");
 
 			user = co_await acquire_object(user_key);
@@ -1192,9 +1196,10 @@ namespace corona
 
 			json token = create_system_token();
 
-			json classes_array = co_await get_classes(token);
+			json classes_array_response = co_await get_classes(token);
+			json classes_array = classes_array_response["Data"];
 			json classes_grouped = classes_array.group([](json& _item) -> std::string {
-				return _item["ClassName"];
+				return (std::string)_item["ClassName"];
 				});
 
 			bool missing = classes_array.any([classes_grouped](json& _item) {
@@ -1442,7 +1447,7 @@ namespace corona
 				co_return result;
 			}
 
-			auto result_task = classes.select_array([this, _token](int _index, json& _item) {
+			result_list = co_await classes.select_array([this, _token](int _index, json& _item) {
 				json_parser jp;
 				auto permission_task = has_class_permission(_token, _item["ClassName"], "Get");
 				bool has_permission = permission_task.wait();
@@ -1453,12 +1458,13 @@ namespace corona
 				}
 				else 
 				{
-					json empty = jp.create_object();
+					json empty = jp.create_object("Skip", "this");
 					return empty;
 				}
 				});
 
-			result_list = result_task.wait();
+			std::cout << "result_list::" << result_list.to_json() << std::endl;
+
 			result = create_response(true, "Ok", result_list, 0);
 
 			co_return result;

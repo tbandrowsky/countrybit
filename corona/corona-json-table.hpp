@@ -793,7 +793,7 @@ namespace corona
 				{
 					relative_ptr_type count = 0;
 					json new_item = _project(_index, _data);
-					if (!new_item.is_empty()) {
+					if (!new_item.is_empty() && !new_item.is_member("Skip", "this")) {
 						pja->append_element(new_item);
 						count = 1;
 					}
@@ -816,7 +816,7 @@ namespace corona
 				{
 					relative_ptr_type count = 0;
 					json new_item = _project(_index, _data);
-					if (!new_item.is_empty()) {
+					if (!new_item.is_empty() && !new_item.is_member("Skip", "this")) {
 						pja->append_element(new_item);
 						count = 1;
 					}
