@@ -283,12 +283,23 @@ namespace corona
 			NTSTATUS status;
 			buffer new_buffer;
 
-			status = ::BCryptGetProperty(_item, _property_name, (PUCHAR)&bytes_length, sizeof(bytes_length), &result_bytes, 0);
+			if (wcscmp(_property_name, BCRYPT_AUTH_TAG_LENGTH) == 0) 
+			{
+				BCRYPT_AUTH_TAG_LENGTHS_STRUCT atls = {};
+				status = ::BCryptGetProperty(_item, _property_name, (PUCHAR)&atls, sizeof(atls), &result_bytes, 0);
+				bytes_length = atls.dwMaxLength;
+			}
+			else 
+			{
+				status = ::BCryptGetProperty(_item, _property_name, (PUCHAR)&bytes_length, sizeof(bytes_length), &result_bytes, 0);
+			}
+
 			if (!status) {
 				new_buffer = buffer(bytes_length);
 			}
 			else
 			{
+				std::cout << "Cannot get crypto property" << std::endl;
 				throw std::logic_error("Cannot get crypto property");
 			}
 			return new_buffer;
@@ -356,22 +367,19 @@ namespace corona
 
 			NTSTATUS status;
 
-			status = BCryptOpenAlgorithmProvider(&algorithm, BCRYPT_AES_ALGORITHM, MS_PRIMITIVE_PROVIDER, 0);
+			status = BCryptOpenAlgorithmProvider(&algorithm, BCRYPT_AES_ALGORITHM, 0, 0);
 
 			if (algorithm) 
 			{
 				buffer key_buffer = get_crypto_buffer(algorithm, BCRYPT_OBJECT_LENGTH);
 				buffer iv_buffer = get_crypto_buffer(algorithm, BCRYPT_BLOCK_LENGTH);
+				buffer pass_buffer = get_crypto_buffer(algorithm, BCRYPT_BLOCK_LENGTH);
 
-				if (status = BCryptSetProperty(
-					algorithm,
-					BCRYPT_CHAINING_MODE,
-					(PBYTE)BCRYPT_CHAIN_MODE_CBC,
-					sizeof(BCRYPT_CHAIN_MODE_CBC),
-					0))
-				{
-					goto cleanup;
-				}
+				PUCHAR pkey = key_buffer.get_uptr();
+				DWORD skey = key_buffer.get_size();
+				PUCHAR ppass = pass_buffer.get_uptr();
+				DWORD spass = pass_buffer.get_size();
+				pass_buffer.set_buffer(_pass_phrase);
 
 				// Generate the key from supplied input key bytes.
 				if (status = BCryptGenerateSymmetricKey(
@@ -379,10 +387,12 @@ namespace corona
 					&key,
 					key_buffer.get_uptr(),
 					key_buffer.get_size(),
-					(PBYTE)_pass_phrase.c_str(),
-					_pass_phrase.size(),
+					pass_buffer.get_uptr(),
+					pass_buffer.get_size(),
 					0))
 				{
+					os_result osr;
+					std::cout << osr << std::endl;
 					goto cleanup;
 				}
 
@@ -394,7 +404,7 @@ namespace corona
 						key,
 						(PUCHAR)plain_text.c_str(),
 						plain_text.size(),
-						NULL,
+						nullptr,
 						iv_buffer.get_uptr(),
 						iv_buffer.get_size(),
 						NULL,
@@ -402,8 +412,16 @@ namespace corona
 						&cipher_text_size,
 						BCRYPT_BLOCK_PADDING))
 					{
+						os_result osr;
+						std::cout << osr << std::endl;
 						goto cleanup;
 					}
+
+/*
+
+iv_buffer.get_uptr(),
+						iv_buffer.get_size(),
+*/					
 
 					buffer cipher_text_buffer(cipher_text_size);
 
@@ -411,18 +429,20 @@ namespace corona
 						key,
 						(PUCHAR)plain_text.c_str(),
 						plain_text.size(),
-						NULL,
-						iv_buffer.get_uptr(),
-						iv_buffer.get_size(),
+						nullptr,
+						nullptr ,
+						0,
 						cipher_text_buffer.get_uptr(),
 						cipher_text_buffer.get_size(),
 						&cipher_text_size,
 						BCRYPT_BLOCK_PADDING))
 					{
+						os_result osr;
+						std::cout << osr << std::endl;
 						goto cleanup;
 					}
 
-					cipher_text = cipher_text_buffer.to_hex();
+					cipher_text = cipher_text_buffer.to_hex(cipher_text_size);
 				}
 			}
 

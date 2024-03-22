@@ -452,7 +452,7 @@ namespace corona
 	const int style_busy = 3;
 	const int style_disabled = 4;
 
-	auto toHex(char i)
+	auto toHex(unsigned char i)
 	{
 		struct char_pair
 		{
@@ -461,7 +461,7 @@ namespace corona
 
 		int major, minor;
 		major = i / 16;
-		minor = i & 16;
+		minor = i % 16;
 
 		if (major < 10)
 		{
@@ -547,6 +547,8 @@ namespace corona
 		void init(size_t _size)
 		{
 			buffer_bytes = std::make_unique<char[]>(_size + 1);
+			char* p = buffer_bytes.get();
+			std::fill(p, p + _size, 0);
 			buffer_size = _size;
 		}
 
@@ -572,11 +574,14 @@ namespace corona
 			return *this;
 		}
 
-		std::string to_hex()
+		std::string to_hex(int _bytes = 0)
 		{
 			std::string temp = "";
+			if (_bytes > buffer_size || _bytes <= 0) {
+				_bytes = buffer_size;
+			}
 			for (int i = 0; i < buffer_size; i++) {
-				auto bi = buffer_bytes[i];
+				unsigned char bi = buffer_bytes[i];
 				auto ret = corona::toHex(bi);
 				temp += ret.str;
 			}
@@ -637,6 +642,13 @@ namespace corona
 			{
 				buffer_bytes[byte_count] = 0;
 				byte_count++;
+			}
+		}
+
+		void randomize()
+		{
+			for (int i = 0; i < buffer_size; i++) {
+				buffer_bytes[i] = rand();
 			}
 		}
 
