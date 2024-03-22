@@ -476,6 +476,12 @@ namespace corona
 		{
 			json_parser jp;
 			json key = jp.parse_object(_key);
+
+			if (key.is_member("ClassName", "SysParseError")) {
+				std::cout << key.to_json() << std::endl;
+				co_return key;
+			}
+
 			json result;
 			relative_ptr_type n = co_await find_node(key);
 			if (n != null_row) {
@@ -522,6 +528,10 @@ namespace corona
 		{
 			json_parser jp;
 			json jx = jp.parse_object(_json);
+			if (jx.is_empty() || jx.is_member("ClassName", "SysParseError")) {
+				std::cout << jx.to_json() << std::endl;
+				co_return null_row;
+			}
 			auto key = get_key(jx);
 			relative_ptr_type modified_node = co_await this->update_node(key, [jx](UPDATE_VALUE& dest) { dest.assign_update(jx); });
 			co_return modified_node;

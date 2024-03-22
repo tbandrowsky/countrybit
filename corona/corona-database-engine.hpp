@@ -920,10 +920,12 @@ namespace corona
 			header.data.objects_by_name_location = co_await objects_by_name.create();
 
 			json_parser jp;
+			json created_classes = jp.create_object();
+			relative_ptr_type class_location;
 
 			co_await header.write(database_file);
 
-			co_await classes.put(R"(
+			class_location = co_await classes.put(R"(
 {	
 	"ClassName" : "SysObject",
 	"ClassDescription" : "A reference to another object",
@@ -931,17 +933,24 @@ namespace corona
 			"ObjectId" : "int64",
 			"ClassName" : "string",
 			"Active" : "bool"
-	},
+	}
 }
 )");
 
+			if (class_location == null_row) {
+				std::cout << __FILE__ << " " << __LINE__ << ":classes.put failed." << std::endl;
+				co_return null_row;
+			}
+
 			json test = co_await classes.get(R"({"ClassName":"SysObject"})");
-			if (test.is_empty()) {
+			if (test.is_empty() || test.is_member("ClassName", "SysParseError")) {
 				std::cout << __FILE__ << " " << __LINE__ << ":Could not find class after creation." << std::endl;
 				co_return null_row;
 			}
 
-			co_await classes.put(R"(
+			created_classes.put_member("SysObject", true);
+
+			class_location = co_await classes.put(R"(
 {	
 	"ClassName" : "SysReference",
 	"BaseClassName" : "SysObject",
@@ -950,17 +959,24 @@ namespace corona
 			"DeepCopy" : "bool",
 			"DeepGet" : "bool",
 			"LinkObjectId" : "int64"
-	},
+	}
 }
 )");
 
+			created_classes.put_member("SysReference", true);
+
+			if (class_location == null_row) {
+				std::cout << __FILE__ << " " << __LINE__ << ":classes.put failed." << std::endl;
+				co_return null_row;
+			}
+
 			test = co_await classes.get(R"({"ClassName":"SysReference"})");
-			if (test.is_empty()) {
+			if (test.is_empty() || test.is_member("ClassName", "SysParseError")) {
 				std::cout << __FILE__ << " " << __LINE__ << ":Could not find class after creation." << std::endl;
 				co_return null_row;
 			}
 
-			co_await classes.put(R"(
+			class_location = co_await classes.put(R"(
 {	
 	"ClassName" : "SysUser",
 	"ClassDescription" : "A user",
@@ -980,7 +996,7 @@ namespace corona
 			"Zip" : "string",
 			"Teams" : {
 				"FieldType" : "array",
-				"AllowedClasses" : "SysTeam",
+				"AllowedClasses" : "SysTeam"
 			},
 			"CurrentObjectId" : "int64",
 			"CurrentForm" : {
@@ -988,19 +1004,25 @@ namespace corona
 				"AllowedClasses" : "SysForm"
 			},
 			"CurrentToken" : "object"
-	},
+	}
 }
 )");
 
+			if (class_location == null_row) {
+				std::cout << __FILE__ << " " << __LINE__ << ":classes.put failed." << std::endl;
+				co_return null_row;
+			}
 
 			test = co_await classes.get(R"({"ClassName":"SysUser"})");
-			if (test.is_empty()) {
+			if (test.is_empty() || test.is_member("ClassName", "SysParseError")) {
 				std::cout << __FILE__ << " " << __LINE__ << ":Could not find class after creation." << std::endl;
 				co_return null_row;
 			}
 
+			created_classes.put_member("SysUser", true);
 
-			co_await classes.put(R"(
+
+			class_location = co_await classes.put(R"(
 {	
 	"ClassName" : "SysPermission",
 	"BaseClassName" : "SysObject",
@@ -1010,18 +1032,25 @@ namespace corona
 			"Put" : "bool",
 			"Delete" : "bool",
 			"Replace" : "bool"
-	},
+	}
 }
 )");
 
+			if (class_location == null_row) {
+				std::cout << __FILE__ << " " << __LINE__ << ":classes.put failed." << std::endl;
+				co_return null_row;
+			}
+
 			test = co_await classes.get(R"({"ClassName":"SysPermission"})");
-			if (test.is_empty()) {
+			if (test.is_empty() || test.is_member("ClassName", "SysParseError")) {
 				std::cout << __FILE__ << " " << __LINE__ << ":Could not find class after creation." << std::endl;
 				co_return null_row;
 			}
 
+			created_classes.put_member("SysPermission", true);
 
-			co_await classes.put(R"(
+
+			class_location = co_await classes.put(R"(
 {	
 	"ClassName" : "SysMember",
 	"BaseClassName" : "SysObect",
@@ -1031,7 +1060,7 @@ namespace corona
 			{
 				"FieldType" : "object",					
 				"AllowedClasses" : "SysPermission"
-			}
+			},
 			"GrantUser" : 
 			{
 				"FieldType" : "object",
@@ -1041,14 +1070,20 @@ namespace corona
 }
 )");
 
+			if (class_location == null_row) {
+				std::cout << __FILE__ << " " << __LINE__ << ":classes.put failed." << std::endl;
+				co_return null_row;
+			}
+
 			test = co_await classes.get(R"({"ClassName":"SysMember"})");
-			if (test.is_empty()) {
+			if (test.is_empty() || test.is_member("ClassName", "SysParseError")) {
 				std::cout << __FILE__ << " " << __LINE__ << ":Could not find class after creation." << std::endl;
 				co_return null_row;
 			}
 
+			created_classes.put_member("SysMember", true);
 
-			co_await classes.put(R"(
+			class_location = co_await classes.put(R"(
 {	
 	"ClassName" : "SysGrant",
 	"BaseClassName" : "SysObect",
@@ -1060,53 +1095,68 @@ namespace corona
 					"AllowedClasses" : "SysPermission"
 			},
 			"GrantClassName" : "string"
-	},
+	}
 }
 )");
 
+			if (class_location == null_row) {
+				std::cout << __FILE__ << " " << __LINE__ << ":classes.put failed." << std::endl;
+				co_return null_row;
+			}
+
 			test = co_await classes.get(R"({"ClassName":"SysGrant"})");
-			if (test.is_empty()) {
+			if (test.is_empty() || test.is_member("ClassName", "SysParseError")) {
 				std::cout << __FILE__ << " " << __LINE__ << ":Could not find class after creation." << std::endl;
 				co_return null_row;
 			}
 
+			created_classes.put_member("SysGrant", true);
 
-			co_await classes.put(R"(
+			class_location = co_await classes.put(R"(
 {	
 	"ClassName" : "SysClassGrant",
 	"BaseClassName" : "SysGrant",
-	"ClassDescription" : "Grant to a class",
-	"Fields" : {
-			
-	},
+	"ClassDescription" : "Grant to a class"
 }
 )");
+			if (class_location == null_row) {
+				std::cout << __FILE__ << " " << __LINE__ << ":classes.put failed." << std::endl;
+				co_return null_row;
+			}
 
 			test = co_await classes.get(R"({"ClassName":"SysClassGrant"})");
-			if (test.is_empty()) {
+			if (test.is_empty() || test.is_member("ClassName", "SysParseError")) {
 				std::cout << __FILE__ << " " << __LINE__ << ":Could not find class after creation." << std::endl;
 				co_return null_row;
 			}
 
-			co_await classes.put(R"(
+			created_classes.put_member("SysClassGrant", true);
+
+			class_location = co_await classes.put(R"(
 {	
 	"ClassName" : "SysObjectGrant",
 	"BaseClassName" : "SysGrant",
 	"ClassDescription" : "Grant to an object",
 	"Fields" : {
 			"ObjectFilter" : "object"
-	},
+	}
 }
 )");
 
+			if (class_location == null_row) {
+				std::cout << __FILE__ << " " << __LINE__ << ":classes.put failed." << std::endl;
+				co_return null_row;
+			}
+
 			test = co_await classes.get(R"({"ClassName":"SysObjectGrant"})");
-			if (test.is_empty()) {
+			if (test.is_empty() || test.is_member("ClassName", "SysParseError")) {
 				std::cout << __FILE__ << " " << __LINE__ << ":Could not find class after creation." << std::endl;
 				co_return null_row;
 			}
 
+			created_classes.put_member("SysObjectGrant", true);
 
-			co_await classes.put(R"(
+			class_location = co_await classes.put(R"(
 {	
 	"ClassName" : "SysTeam",
 	"BaseClassName" : "SysObject",
@@ -1118,21 +1168,46 @@ namespace corona
 			"Members" : {
 				"FieldType":"array",
 				"AllowedClasses": "SysMember"
-			}
+			},
 			"Grants" : {
 				"FieldType":"array",
 				"AllowedClasses": "SysGrant"
 			}
-	},
+	}
 }
 )");
 
-			test = co_await classes.get(R"({"ClassName":"SysObjectGrant"})");
-			if (test.is_empty()) {
+			if (class_location == null_row) {
+				std::cout << __FILE__ << " " << __LINE__ << ":classes.put failed." << std::endl;
+				co_return null_row;
+			}
+
+			test = co_await classes.get(R"({"ClassName":"SysTeam"})");
+			if (test.is_empty() || test.is_member("ClassName", "SysParseError")) {
 				std::cout << __FILE__ << " " << __LINE__ << ":Could not find class after creation." << std::endl;
 				co_return null_row;
 			}
 
+			created_classes.put_member("SysTeam", true);
+
+			json token = create_system_token();
+
+			json classes_array = co_await get_classes(token);
+			json classes_grouped = classes_array.group([](json& _item) -> std::string {
+				return _item["ClassName"];
+				});
+
+			bool missing = classes_array.any([classes_grouped](json& _item) {
+				return !classes_grouped.has_member(_item["ClassName"]);
+				});
+
+			if (missing) {
+				std::cout << __FILE__ << " " << __LINE__ << ":Class list returned from database missed some classes." << std::endl;
+				co_return null_row;
+			}
+			else {
+				std::cout << "database creation complete with :" << classes_grouped.to_json() << std::endl;
+			}
 
 			co_return header_location;
 		}

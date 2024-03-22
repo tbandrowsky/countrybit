@@ -729,6 +729,17 @@ namespace corona
 			return has_value;
 		}
 
+		bool is_member(std::string _key, const char *_value) const
+		{
+			bool has_value = object_impl && object_impl->members.contains(_key);
+			if (has_value) {
+				std::string svalue = object_impl->members[_key]->to_string();
+				std::string xvalue = _value;
+				has_value = svalue == xvalue;
+			}
+			return has_value;
+		}
+
 		bool is_member(std::string _key, std::string _value) const
 		{
 			bool has_value = object_impl && object_impl->members.contains(_key);
@@ -1767,7 +1778,8 @@ namespace corona
 		{
 			json error_root(std::make_shared<json_object>());
 
-			error_root.put_member("success", false);
+			error_root.put_member("ClassName", "SysParseError");
+			error_root.put_member("Success", false);
 
 			json error_array(std::make_shared<json_array>());
 
