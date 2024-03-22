@@ -204,7 +204,7 @@ namespace corona
 
 		operator std::string() const
 		{
-			std::string temp = std::format("{0:04d}-{1:2d}-{2:2d}T{3}:{4:02d}:{5:02d}.{6:3d}Z",
+			std::string temp = std::format("{0:04d}-{1:d}-{2:d}T{3}:{4:02d}:{5:02d}.{6:d}Z",
 				system_time.wYear,
 				system_time.wMonth,
 				system_time.wDay,
@@ -220,7 +220,7 @@ namespace corona
 		{
 			system_time = {};
 
-			int args = sscanf_s(_src.c_str(), "%04d-%2d-%2dT%d:%d:%d.%dZ",
+			int args = sscanf_s(_src.c_str(), "%04d-%d-%dT%d:%d:%d.%dZ",
 				&system_time.wMonth,
 				&system_time.wDay,
 				&system_time.wYear,

@@ -472,23 +472,18 @@ iv_buffer.get_uptr(),
 			NTSTATUS status;
 
 			status = BCryptOpenAlgorithmProvider(&algorithm, BCRYPT_AES_ALGORITHM, MS_PRIMITIVE_PROVIDER, 0);
+			int cipher_text_length = cipher_text.size();
+			buffer cipher_buffer(cipher_text_length);
+			cipher_buffer.from_hex(cipher_text);
 
 			if (algorithm)
 				{
 				buffer key_buffer = get_crypto_buffer(algorithm, BCRYPT_OBJECT_LENGTH);
 				buffer iv_buffer = get_crypto_buffer(algorithm, BCRYPT_BLOCK_LENGTH);
+				buffer pass_buffer = get_crypto_buffer(algorithm, BCRYPT_BLOCK_LENGTH);
 
+				pass_buffer.set_buffer(_pass_phrase);
 				iv_buffer.set_buffer(_iv);
-
-				if (status = BCryptSetProperty(
-					algorithm,
-					BCRYPT_CHAINING_MODE,
-					(PBYTE)BCRYPT_CHAIN_MODE_CBC,
-					sizeof(BCRYPT_CHAIN_MODE_CBC),
-					0))
-				{
-					goto cleanup;
-				}
 
 				// Generate the key from supplied input key bytes.
 				if (status = BCryptGenerateSymmetricKey(
@@ -496,8 +491,8 @@ iv_buffer.get_uptr(),
 					&key,
 					key_buffer.get_uptr(),
 					key_buffer.get_size(),
-					(PBYTE)_pass_phrase.c_str(),
-					_pass_phrase.size(),
+					pass_buffer.get_uptr(),
+					pass_buffer.get_size(),
 					0))
 				{
 					goto cleanup;
@@ -509,11 +504,11 @@ iv_buffer.get_uptr(),
 
 					if (status = BCryptDecrypt(
 						key,
-						(PUCHAR)cipher_text.c_str(),
-						cipher_text.size(),
+						cipher_buffer.get_uptr(),
+						cipher_buffer.get_size(),
 						NULL,
-						iv_buffer.get_uptr(),
-						iv_buffer.get_size(),
+						nullptr,
+						0,
 						NULL,
 						0,
 						&plain_text_size,
@@ -526,11 +521,11 @@ iv_buffer.get_uptr(),
 
 					if (status = BCryptDecrypt(
 						key,
-						(PUCHAR)cipher_text.c_str(),
-						cipher_text.size(),
+						cipher_buffer.get_uptr(),
+						cipher_buffer.get_size(),
 						NULL,
-						iv_buffer.get_uptr(),
-						iv_buffer.get_size(),
+						nullptr,
+						0,
 						plain_text_buffer.get_uptr(),
 						plain_text_buffer.get_size(),
 						&plain_text_size,
@@ -585,6 +580,7 @@ iv_buffer.get_uptr(),
 			payload.put_member("TokenExpires", expiration);
 			payload.put_member("Data", _letter);
 			std::string cipher_text = encrypt(payload, get_pass_phrase(), get_iv());
+			std::string plain_text = decrypt(cipher_text, get_pass_phrase(), get_iv());
 
 			json envelope = jp.create_object();
 			envelope.put_member("Contents", payload);

@@ -106,8 +106,7 @@ namespace corona
 		}
 		virtual std::string to_json()
 		{
-			std::string v = value;
-			return v;
+			return "\"" + to_string() + "\"";
 		}
 		virtual std::string to_json_typed()
 		{

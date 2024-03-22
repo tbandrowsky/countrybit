@@ -604,7 +604,7 @@ namespace corona
 
 			buffer_size = byte_count;
 			buffer_bytes = std::make_unique<char[]>(byte_count);
-			std::copy(buffer_bytes.get(), buffer_bytes.get() + byte_count, buffer_bytes.get());
+			std::copy(&bytes[0], &bytes[0] + byte_count, buffer_bytes.get());
 		}
 
 		void set_hex(std::string _hex_string)
