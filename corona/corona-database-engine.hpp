@@ -15,6 +15,9 @@ Create
 3/15/2024 - log
 Create and edit 
 
+3/28/2024 - 
+API close to complete, rounding out for testing.
+
 ***********************************************/
 
 
@@ -56,6 +59,8 @@ namespace corona
 
 		std::map<class_method_key, json_function_function> functions;
 
+		crypto crypter;
+
 		file* database_file;
 
 		std::map<std::string, bool> allowed_field_types = {
@@ -69,6 +74,386 @@ namespace corona
 			{ "function", true }
 		};
 
+	public:
+
+		user_transaction<relative_ptr_type> create_database()
+		{
+			header.object_id = 1;
+			relative_ptr_type header_location = co_await header.append(database_file);
+
+			header.data.object_id = 1;
+			header.data.classes_location = co_await classes.create();
+			header.data.class_objects_location = co_await class_objects.create();
+			header.data.objects_location = co_await objects.create();
+			header.data.objects_by_name_location = co_await objects_by_name.create();
+
+			json_parser jp;
+			json created_classes = jp.create_object();
+			relative_ptr_type class_location;
+
+			co_await header.write(database_file);
+
+			class_location = co_await classes.put(R"(
+{	
+	"ClassName" : "SysObject",
+	"ClassDescription" : "A reference to another object",
+	"Fields" : {			
+			"ObjectId" : "int64",
+			"ClassName" : "string",
+			"Active" : "bool"
+	}
+}
+)");
+
+			if (class_location == null_row) {
+				std::cout << __FILE__ << " " << __LINE__ << ":classes.put failed." << std::endl;
+				co_return null_row;
+			}
+
+			json test = co_await classes.get(R"({"ClassName":"SysObject"})");
+			if (test.is_empty() || test.is_member("ClassName", "SysParseError")) {
+				std::cout << __FILE__ << " " << __LINE__ << ":Could not find class after creation." << std::endl;
+				co_return null_row;
+			}
+
+			created_classes.put_member("SysObject", true);
+
+			class_location = co_await classes.put(R"(
+{	
+	"ClassName" : "SysReference",
+	"BaseClassName" : "SysObject",
+	"ClassDescription" : "A reference to another object",
+	"Fields" : {			
+			"DeepCopy" : "bool",
+			"DeepGet" : "bool",
+			"LinkObjectId" : "int64"
+	}
+}
+)");
+
+			created_classes.put_member("SysReference", true);
+
+			if (class_location == null_row) {
+				std::cout << __FILE__ << " " << __LINE__ << ":classes.put failed." << std::endl;
+				co_return null_row;
+			}
+
+			test = co_await classes.get(R"({"ClassName":"SysReference"})");
+			if (test.is_empty() || test.is_member("ClassName", "SysParseError")) {
+				std::cout << __FILE__ << " " << __LINE__ << ":Could not find class after creation." << std::endl;
+				co_return null_row;
+			}
+
+			class_location = co_await classes.put(R"(
+{	
+	"BaseClassName" : "SysObject",
+	"ClassName" : "SysUser",
+	"ClassDescription" : "A user",
+	"NameIndex" : true,
+	"Fields" : {			
+			"ObjectId" : "int64",
+			"ClassName" : "string",
+			"FirstName" : "string",
+			"LastName" : "string",
+			"Name" : "string",
+			"Email" : "string",
+			"Mobile" : "string",
+			"Street" : "string",
+			"City" : "string",
+			"State" : "string",
+			"Zip" : "string",
+			"Teams" : {
+				"FieldType" : "array",
+				"AllowedClasses" : "SysTeam"
+			}
+	}
+}
+)");
+
+			if (class_location == null_row) {
+				std::cout << __FILE__ << " " << __LINE__ << ":classes.put failed." << std::endl;
+				co_return null_row;
+			}
+
+			test = co_await classes.get(R"({"ClassName":"SysUser"})");
+			if (test.is_empty() || test.is_member("ClassName", "SysParseError")) {
+				std::cout << __FILE__ << " " << __LINE__ << ":Could not find class after creation." << std::endl;
+				co_return null_row;
+			}
+
+			created_classes.put_member("SysUser", true);
+
+
+			class_location = co_await classes.put(R"(
+{	
+	"BaseClassName" : "SysObject",
+	"ClassName" : "SysLoginFeature",
+	"ClassDescription" : "A login of a user",
+	"NameIndex" : true,
+	"Fields" : {			
+			"Name" : "string"
+	}
+}
+)");
+
+			class_location = co_await classes.put(R"(
+{	
+	"BaseClassName" : "SysLoginFeature",
+	"ClassName" : "SysLoginPassword",
+	"ClassDescription" : "A login of a user",
+	"NameIndex" : true,
+	"Fields" : {			
+			"Password" : "string"
+	}
+}
+)");
+
+			class_location = co_await classes.put(R"(
+{	
+	"BaseClassName" : "SysLoginFeature",
+	"ClassName" : "SysLoginCode",
+	"ClassDescription" : "A login of a user",
+	"NameIndex" : true,
+	"Fields" : {			
+			"ConfirmationCode" : "string"
+	}
+}
+)");
+
+			class_location = co_await classes.put(R"(
+{	
+	"BaseClassName" : "SysObject",
+	"ClassName" : "SysLogin",
+	"ClassDescription" : "A login of a user",
+	"NameIndex" : true,
+	"Fields" : {			
+			"Name" : "string",
+			"Password" : "string",
+			"ConfirmCode" : "string",
+			"LoginState" : "string",
+			"CurrentObjectId" : "int64",
+			"CurrentForm" : {
+				"FieldType" : "object",
+				"AllowedClasses" : "SysForm"
+			},
+			"Status" : {
+				"FieldType" : "array",
+				"AllowedClasses" : "SysLoginFeature"
+			}
+	}
+}
+)");
+
+			if (class_location == null_row) {
+				std::cout << __FILE__ << " " << __LINE__ << ":classes.put failed." << std::endl;
+				co_return null_row;
+			}
+
+			test = co_await classes.get(R"({"ClassName":"SysLogin"})");
+			if (test.is_empty() || test.is_member("ClassName", "SysParseError")) {
+				std::cout << __FILE__ << " " << __LINE__ << ":Could not find class after creation." << std::endl;
+				co_return null_row;
+			}
+
+			created_classes.put_member("SysLogin", true);
+
+
+
+
+
+			class_location = co_await classes.put(R"(
+{	
+	"ClassName" : "SysPermission",
+	"BaseClassName" : "SysObject",
+	"ClassDescription" : "Permissions flags",
+	"Fields" : {			
+			"Get" : "bool",
+			"Put" : "bool",
+			"Delete" : "bool",
+			"Replace" : "bool"
+	}
+}
+)");
+
+			if (class_location == null_row) {
+				std::cout << __FILE__ << " " << __LINE__ << ":classes.put failed." << std::endl;
+				co_return null_row;
+			}
+
+			test = co_await classes.get(R"({"ClassName":"SysPermission"})");
+			if (test.is_empty() || test.is_member("ClassName", "SysParseError")) {
+				std::cout << __FILE__ << " " << __LINE__ << ":Could not find class after creation." << std::endl;
+				co_return null_row;
+			}
+
+			created_classes.put_member("SysPermission", true);
+
+
+			class_location = co_await classes.put(R"(
+{	
+	"ClassName" : "SysMember",
+	"BaseClassName" : "SysObect",
+	"ClassDescription" : "Team member",
+	"Fields" : {
+			"Permissions" : 
+			{
+				"FieldType" : "object",					
+				"AllowedClasses" : "SysPermission"
+			},
+			"GrantUser" : 
+			{
+				"FieldType" : "object",
+				"AllowedClasses" : "SysUser"
+			}
+	}
+}
+)");
+
+			if (class_location == null_row) {
+				std::cout << __FILE__ << " " << __LINE__ << ":classes.put failed." << std::endl;
+				co_return null_row;
+			}
+
+			test = co_await classes.get(R"({"ClassName":"SysMember"})");
+			if (test.is_empty() || test.is_member("ClassName", "SysParseError")) {
+				std::cout << __FILE__ << " " << __LINE__ << ":Could not find class after creation." << std::endl;
+				co_return null_row;
+			}
+
+			created_classes.put_member("SysMember", true);
+
+			class_location = co_await classes.put(R"(
+{	
+	"ClassName" : "SysGrant",
+	"BaseClassName" : "SysObect",
+	"ClassDescription" : "Grant to an object",
+	"Fields" : {
+			"Permissions" : 
+			{
+					"FieldType" : "object",
+					"AllowedClasses" : "SysPermission"
+			},
+			"GrantClassName" : "string"
+	}
+}
+)");
+
+			if (class_location == null_row) {
+				std::cout << __FILE__ << " " << __LINE__ << ":classes.put failed." << std::endl;
+				co_return null_row;
+			}
+
+			test = co_await classes.get(R"({"ClassName":"SysGrant"})");
+			if (test.is_empty() || test.is_member("ClassName", "SysParseError")) {
+				std::cout << __FILE__ << " " << __LINE__ << ":Could not find class after creation." << std::endl;
+				co_return null_row;
+			}
+
+			created_classes.put_member("SysGrant", true);
+
+			class_location = co_await classes.put(R"(
+{	
+	"ClassName" : "SysClassGrant",
+	"BaseClassName" : "SysGrant",
+	"ClassDescription" : "Grant to a class"
+}
+)");
+			if (class_location == null_row) {
+				std::cout << __FILE__ << " " << __LINE__ << ":classes.put failed." << std::endl;
+				co_return null_row;
+			}
+
+			test = co_await classes.get(R"({"ClassName":"SysClassGrant"})");
+			if (test.is_empty() || test.is_member("ClassName", "SysParseError")) {
+				std::cout << __FILE__ << " " << __LINE__ << ":Could not find class after creation." << std::endl;
+				co_return null_row;
+			}
+
+			created_classes.put_member("SysClassGrant", true);
+
+			class_location = co_await classes.put(R"(
+{	
+	"ClassName" : "SysObjectGrant",
+	"BaseClassName" : "SysGrant",
+	"ClassDescription" : "Grant to an object",
+	"Fields" : {
+			"ObjectFilter" : "object"
+	}
+}
+)");
+
+			if (class_location == null_row) {
+				std::cout << __FILE__ << " " << __LINE__ << ":classes.put failed." << std::endl;
+				co_return null_row;
+			}
+
+			test = co_await classes.get(R"({"ClassName":"SysObjectGrant"})");
+			if (test.is_empty() || test.is_member("ClassName", "SysParseError")) {
+				std::cout << __FILE__ << " " << __LINE__ << ":Could not find class after creation." << std::endl;
+				co_return null_row;
+			}
+
+			created_classes.put_member("SysObjectGrant", true);
+
+			class_location = co_await classes.put(R"(
+{	
+	"ClassName" : "SysTeam",
+	"BaseClassName" : "SysObject",
+	"ClassDescription" : "A team",
+	"NameIndex" : true,
+	"Fields" : {			
+			"Name" : "string",
+			"Description" : "string",
+			"Members" : {
+				"FieldType":"array",
+				"AllowedClasses": "SysMember"
+			},
+			"Grants" : {
+				"FieldType":"array",
+				"AllowedClasses": "SysGrant"
+			}
+	}
+}
+)");
+
+			if (class_location == null_row) {
+				std::cout << __FILE__ << " " << __LINE__ << ":classes.put failed." << std::endl;
+				co_return null_row;
+			}
+
+			test = co_await classes.get(R"({"ClassName":"SysTeam"})");
+			if (test.is_empty() || test.is_member("ClassName", "SysParseError")) {
+				std::cout << __FILE__ << " " << __LINE__ << ":Could not find class after creation." << std::endl;
+				co_return null_row;
+			}
+
+			created_classes.put_member("SysTeam", true);
+
+			json token = create_system_token();
+
+			json classes_array_response = co_await get_classes(token);
+			json classes_array = classes_array_response["Data"];
+			json classes_grouped = classes_array.group([](json& _item) -> std::string {
+				return (std::string)_item["ClassName"];
+				});
+
+			bool missing = classes_array.any([classes_grouped](json& _item) {
+				return !classes_grouped.has_member(_item["ClassName"]);
+				});
+
+			if (missing) {
+				std::cout << __FILE__ << " " << __LINE__ << ":Class list returned from database missed some classes." << std::endl;
+				co_return null_row;
+			}
+			else {
+				std::cout << "database creation complete with :" << classes_grouped.to_json() << std::endl;
+			}
+
+			co_return header_location;
+		}
+
+private:
+
 		database_transaction<json> create_class(json& _token, std::string _text)
 		{
 			json_parser jp;
@@ -80,41 +465,6 @@ namespace corona
 			co_return j;
 		}
 
-		json create_response(bool _success,
-			std::string _message,
-			json _payload,
-			double _seconds
-		)
-		{
-			json_parser jp;
-			json j = jp.create_object();
-			j.put_member("Success", _success);
-			j.put_member("Message", _message);
-			j.put_member("Data", _payload);
-			j.put_member("Seconds", _seconds);
-			return j;
-		}
-
-		json create_response(bool _success, std::string _message, std::string _object_name, double _seconds = 0.0)
-		{
-			json_parser jp;
-			json j = jp.create_object();
-			j.put_member("Success", _success);
-			j.put_member("Message", _message);
-			j.put_member("Seconds", _seconds);
-			j.put_member("Name", _object_name);
-			return j;
-		}
-
-		json create_response(bool _success, std::string _message, double _seconds = 0.0)
-		{
-			json_parser jp;
-			json j = jp.create_object();
-			j.put_member("Success", _success);
-			j.put_member("Message", _message);
-			j.put_member("Seconds", _seconds);
-			return j;
-		}
 
 		database_transaction<json> check_class(json _class_definition)
 		{
@@ -276,289 +626,6 @@ namespace corona
 
 		lockable header_lock;
 
-		buffer get_crypto_buffer(BCRYPT_HANDLE _item, const wchar_t* _property_name)
-		{
-			DWORD bytes_length = {};
-			DWORD result_bytes = {};
-			NTSTATUS status;
-			buffer new_buffer;
-
-			if (wcscmp(_property_name, BCRYPT_AUTH_TAG_LENGTH) == 0) 
-			{
-				BCRYPT_AUTH_TAG_LENGTHS_STRUCT atls = {};
-				status = ::BCryptGetProperty(_item, _property_name, (PUCHAR)&atls, sizeof(atls), &result_bytes, 0);
-				bytes_length = atls.dwMaxLength;
-			}
-			else 
-			{
-				status = ::BCryptGetProperty(_item, _property_name, (PUCHAR)&bytes_length, sizeof(bytes_length), &result_bytes, 0);
-			}
-
-			if (!status) {
-				new_buffer = buffer(bytes_length);
-			}
-			else
-			{
-				std::cout << "Cannot get crypto property" << std::endl;
-				throw std::logic_error("Cannot get crypto property");
-			}
-			return new_buffer;
-		}
-
-
-		std::string hash(json& _src)
-		{
-			std::string signature;
-
-			BCRYPT_ALG_HANDLE algorithm = {};
-			BCRYPT_HASH_HANDLE hash_handle = {};
-
-			NTSTATUS status;
-
-			status = BCryptOpenAlgorithmProvider(&algorithm, BCRYPT_SHA256_ALGORITHM, MS_PRIMITIVE_PROVIDER, 0);
-
-			if (algorithm)
-			{
-				status = BCryptCreateHash(algorithm, &hash_handle, nullptr, 0, nullptr, 0, 0);
-
-				if (hash_handle)
-				{
-					std::string hash_data = _src.to_json_typed();
-					status = BCryptHashData(hash_handle, (PUCHAR)hash_data.c_str(), hash_data.size(), 0);
-					if (!status)
-					{
-						DWORD hash_length = {};
-						DWORD count_bytes = {};
-						status = ::BCryptGetProperty(hash_handle, BCRYPT_HASH_LENGTH, (PUCHAR)&hash_length, sizeof(hash_length), &count_bytes, 0);
-
-						if (hash_length)
-						{
-							buffer buff(hash_length);
-							::BCryptFinishHash(hash_handle, (PUCHAR)buff.get_ptr(), hash_length, 0);
-
-							signature = buff.to_hex();
-						}
-					}
-				}
-			}
-
-			if (hash_handle)
-			{
-				BCryptDestroyHash(hash_handle);
-			}
-
-			if (algorithm)
-			{
-				BCryptCloseAlgorithmProvider(algorithm, 0);
-			}
-
-			return signature;
-		}
-
-		std::string encrypt(json& _src, std::string _pass_phrase, std::string _iv)
-		{
-			std::string cipher_text;
-			std::string plain_text;
-
-			plain_text = _src.to_json_typed();
-
-			BCRYPT_ALG_HANDLE algorithm = {};
-			BCRYPT_KEY_HANDLE key = {};
-
-			NTSTATUS status;
-
-			status = BCryptOpenAlgorithmProvider(&algorithm, BCRYPT_AES_ALGORITHM, 0, 0);
-
-			if (algorithm) 
-			{
-				buffer key_buffer = get_crypto_buffer(algorithm, BCRYPT_OBJECT_LENGTH);
-				buffer iv_buffer = get_crypto_buffer(algorithm, BCRYPT_BLOCK_LENGTH);
-				buffer pass_buffer = get_crypto_buffer(algorithm, BCRYPT_BLOCK_LENGTH);
-
-				PUCHAR pkey = key_buffer.get_uptr();
-				DWORD skey = key_buffer.get_size();
-				PUCHAR ppass = pass_buffer.get_uptr();
-				DWORD spass = pass_buffer.get_size();
-				pass_buffer.set_buffer(_pass_phrase);
-
-				// Generate the key from supplied input key bytes.
-				if (status = BCryptGenerateSymmetricKey(
-					algorithm,
-					&key,
-					key_buffer.get_uptr(),
-					key_buffer.get_size(),
-					pass_buffer.get_uptr(),
-					pass_buffer.get_size(),
-					0))
-				{
-					os_result osr;
-					std::cout << osr << std::endl;
-					goto cleanup;
-				}
-
-				if (key) 
-				{
-					DWORD cipher_text_size = {};
-
-					if (status = BCryptEncrypt(
-						key,
-						(PUCHAR)plain_text.c_str(),
-						plain_text.size(),
-						nullptr,
-						iv_buffer.get_uptr(),
-						iv_buffer.get_size(),
-						NULL,
-						0,
-						&cipher_text_size,
-						BCRYPT_BLOCK_PADDING))
-					{
-						os_result osr;
-						std::cout << osr << std::endl;
-						goto cleanup;
-					}
-
-/*
-
-iv_buffer.get_uptr(),
-						iv_buffer.get_size(),
-*/					
-
-					buffer cipher_text_buffer(cipher_text_size);
-
-					if (status = BCryptEncrypt(
-						key,
-						(PUCHAR)plain_text.c_str(),
-						plain_text.size(),
-						nullptr,
-						nullptr ,
-						0,
-						cipher_text_buffer.get_uptr(),
-						cipher_text_buffer.get_size(),
-						&cipher_text_size,
-						BCRYPT_BLOCK_PADDING))
-					{
-						os_result osr;
-						std::cout << osr << std::endl;
-						goto cleanup;
-					}
-
-					cipher_text = cipher_text_buffer.to_hex(cipher_text_size);
-				}
-			}
-
-
-		cleanup:
-
-			if (key)
-			{
-				BCryptDestroyKey(key);
-			}
-
-			if (algorithm)
-			{
-				BCryptCloseAlgorithmProvider(algorithm, 0);
-			}			
-
-			return cipher_text;
-		}
-
-		std::string decrypt(std::string cipher_text, std::string _pass_phrase, std::string _iv)
-		{
-			std::string plain_text;
-
-			BCRYPT_ALG_HANDLE algorithm = {};
-			BCRYPT_KEY_HANDLE key = {};
-
-			NTSTATUS status;
-
-			status = BCryptOpenAlgorithmProvider(&algorithm, BCRYPT_AES_ALGORITHM, MS_PRIMITIVE_PROVIDER, 0);
-			int cipher_text_length = cipher_text.size();
-			buffer cipher_buffer(cipher_text_length);
-			cipher_buffer.from_hex(cipher_text);
-
-			if (algorithm)
-				{
-				buffer key_buffer = get_crypto_buffer(algorithm, BCRYPT_OBJECT_LENGTH);
-				buffer iv_buffer = get_crypto_buffer(algorithm, BCRYPT_BLOCK_LENGTH);
-				buffer pass_buffer = get_crypto_buffer(algorithm, BCRYPT_BLOCK_LENGTH);
-
-				pass_buffer.set_buffer(_pass_phrase);
-				iv_buffer.set_buffer(_iv);
-
-				// Generate the key from supplied input key bytes.
-				if (status = BCryptGenerateSymmetricKey(
-					algorithm,
-					&key,
-					key_buffer.get_uptr(),
-					key_buffer.get_size(),
-					pass_buffer.get_uptr(),
-					pass_buffer.get_size(),
-					0))
-				{
-					goto cleanup;
-				}
-
-				if (key)
-				{
-					DWORD plain_text_size = {};
-
-					if (status = BCryptDecrypt(
-						key,
-						cipher_buffer.get_uptr(),
-						cipher_buffer.get_size(),
-						NULL,
-						nullptr,
-						0,
-						NULL,
-						0,
-						&plain_text_size,
-						BCRYPT_BLOCK_PADDING))
-					{
-						goto cleanup;
-					}
-
-					buffer plain_text_buffer(plain_text_size);
-
-					if (status = BCryptDecrypt(
-						key,
-						cipher_buffer.get_uptr(),
-						cipher_buffer.get_size(),
-						NULL,
-						nullptr,
-						0,
-						plain_text_buffer.get_uptr(),
-						plain_text_buffer.get_size(),
-						&plain_text_size,
-						BCRYPT_BLOCK_PADDING))
-					{
-						goto cleanup;
-					}
-
-					plain_text = plain_text_buffer.get_ptr();
-				}
-			}
-
-		cleanup:
-
-			if (key)
-			{
-				BCryptDestroyKey(key);
-			}
-
-			if (algorithm)
-			{
-				BCryptCloseAlgorithmProvider(algorithm, 0);
-			}
-
-			return plain_text;
-		}
-
-		bool check(json& _src, std::string _hash)
-		{
-			std::string hash_check = hash(_src);
-			return hash_check == _hash;
-		}
-
 		std::string get_pass_phrase()
 		{
 			return "This is a test pass phrase";
@@ -567,6 +634,31 @@ iv_buffer.get_uptr(),
 		std::string get_iv()
 		{
 			return "This is a test iv";
+		}
+
+		json create_response(bool _success,
+			std::string _message,
+			json _payload,
+			double _seconds
+		)
+		{
+			json_parser jp;
+			json j = jp.create_object();
+			j.put_member("Success", _success);
+			j.put_member("Message", _message);
+			j.put_member("Data", _payload);
+			j.put_member("Seconds", _seconds);
+			return j;
+		}
+
+		json create_response(bool _success, std::string _message, double _seconds = 0.0)
+		{
+			json_parser jp;
+			json j = jp.create_object();
+			j.put_member("Success", _success);
+			j.put_member("Message", _message);
+			j.put_member("Seconds", _seconds);
+			return j;
 		}
 
 		json create_token(std::string _user_name, std::string _role, json _letter)
@@ -579,8 +671,8 @@ iv_buffer.get_uptr(),
 			date_time expiration = date_time::utc_now() + this->token_life;
 			payload.put_member("TokenExpires", expiration);
 			payload.put_member("Data", _letter);
-			std::string cipher_text = encrypt(payload, get_pass_phrase(), get_iv());
-			std::string plain_text = decrypt(cipher_text, get_pass_phrase(), get_iv());
+			std::string cipher_text = crypter.encrypt(payload, get_pass_phrase(), get_iv());
+			std::string plain_text = crypter.decrypt(cipher_text, get_pass_phrase(), get_iv());
 
 			json envelope = jp.create_object();
 			envelope.put_member("Contents", payload);
@@ -603,7 +695,7 @@ iv_buffer.get_uptr(),
 
 			json payload = _token["Contents"];
 
-			std::string cipher_text = encrypt(payload, get_pass_phrase(), get_iv());
+			std::string cipher_text = crypter.encrypt(payload, get_pass_phrase(), get_iv());
 			std::string signature = _token["Signature"];
 
 			date_time current = date_time::utc_now();
@@ -874,14 +966,6 @@ iv_buffer.get_uptr(),
 			co_return granted;
 		}
 
-		json create_login_token(std::string _user_name)
-		{
-			json_parser jp;
-			json empty;
-
-			return create_token(_user_name, "login", empty);
-		}
-
 		json create_user_token(std::string _user_name)
 		{
 			json_parser jp;
@@ -904,426 +988,6 @@ iv_buffer.get_uptr(),
 			header.data.object_id++;
 			co_await header.write(database_file);
 			co_return header.data.object_id;
-		}
-
-	public:
-
-		time_span token_life;
-
-		// constructing and opening a database
-
-		corona_database(file* _file)
-			: database_file(_file),
-			classes(_file, { "ClassName" }),
-			class_objects(_file, { "ClassName", "ObjectId" }),
-			objects(_file, { "ObjectId" }),
-			objects_by_name(_file, { "ClassName", "Name", "ObjectId" })
-		{
-			token_life = time_span(1, time_models::hours);
-		}
-
-		database_transaction<relative_ptr_type> open_database(relative_ptr_type _header_location)
-		{
-			relative_ptr_type header_location = co_await header.read(database_file, _header_location);
-			co_return header_location;
-		}
-
-		user_transaction<relative_ptr_type> create_database()
-		{
-			header.object_id = 1;
-			relative_ptr_type header_location = co_await header.append(database_file);
-
-			header.data.object_id = 1;
-			header.data.classes_location = co_await classes.create();
-			header.data.class_objects_location = co_await class_objects.create();
-			header.data.objects_location = co_await objects.create();
-			header.data.objects_by_name_location = co_await objects_by_name.create();
-
-			json_parser jp;
-			json created_classes = jp.create_object();
-			relative_ptr_type class_location;
-
-			co_await header.write(database_file);
-
-			class_location = co_await classes.put(R"(
-{	
-	"ClassName" : "SysObject",
-	"ClassDescription" : "A reference to another object",
-	"Fields" : {			
-			"ObjectId" : "int64",
-			"ClassName" : "string",
-			"Active" : "bool"
-	}
-}
-)");
-
-			if (class_location == null_row) {
-				std::cout << __FILE__ << " " << __LINE__ << ":classes.put failed." << std::endl;
-				co_return null_row;
-			}
-
-			json test = co_await classes.get(R"({"ClassName":"SysObject"})");
-			if (test.is_empty() || test.is_member("ClassName", "SysParseError")) {
-				std::cout << __FILE__ << " " << __LINE__ << ":Could not find class after creation." << std::endl;
-				co_return null_row;
-			}
-
-			created_classes.put_member("SysObject", true);
-
-			class_location = co_await classes.put(R"(
-{	
-	"ClassName" : "SysReference",
-	"BaseClassName" : "SysObject",
-	"ClassDescription" : "A reference to another object",
-	"Fields" : {			
-			"DeepCopy" : "bool",
-			"DeepGet" : "bool",
-			"LinkObjectId" : "int64"
-	}
-}
-)");
-
-			created_classes.put_member("SysReference", true);
-
-			if (class_location == null_row) {
-				std::cout << __FILE__ << " " << __LINE__ << ":classes.put failed." << std::endl;
-				co_return null_row;
-			}
-
-			test = co_await classes.get(R"({"ClassName":"SysReference"})");
-			if (test.is_empty() || test.is_member("ClassName", "SysParseError")) {
-				std::cout << __FILE__ << " " << __LINE__ << ":Could not find class after creation." << std::endl;
-				co_return null_row;
-			}
-
-			class_location = co_await classes.put(R"(
-{	
-	"ClassName" : "SysUser",
-	"ClassDescription" : "A user",
-	"NameIndex" : true,
-	"Fields" : {			
-			"ObjectId" : "int64",
-			"ClassName" : "string",
-			"FirstName" : "string",
-			"LastName" : "string",
-			"Name" : "string",
-			"SSN" : "string",
-			"Email" : "string",
-			"Mobile" : "string",
-			"Street" : "string",
-			"City" : "string",
-			"State" : "string",
-			"Zip" : "string",
-			"Teams" : {
-				"FieldType" : "array",
-				"AllowedClasses" : "SysTeam"
-			},
-			"CurrentObjectId" : "int64",
-			"CurrentForm" : {
-				"FieldType" : "object",
-				"AllowedClasses" : "SysForm"
-			},
-			"CurrentToken" : "object"
-	}
-}
-)");
-
-			if (class_location == null_row) {
-				std::cout << __FILE__ << " " << __LINE__ << ":classes.put failed." << std::endl;
-				co_return null_row;
-			}
-
-			test = co_await classes.get(R"({"ClassName":"SysUser"})");
-			if (test.is_empty() || test.is_member("ClassName", "SysParseError")) {
-				std::cout << __FILE__ << " " << __LINE__ << ":Could not find class after creation." << std::endl;
-				co_return null_row;
-			}
-
-			created_classes.put_member("SysUser", true);
-
-
-			class_location = co_await classes.put(R"(
-{	
-	"ClassName" : "SysPermission",
-	"BaseClassName" : "SysObject",
-	"ClassDescription" : "Permissions flags",
-	"Fields" : {			
-			"Get" : "bool",
-			"Put" : "bool",
-			"Delete" : "bool",
-			"Replace" : "bool"
-	}
-}
-)");
-
-			if (class_location == null_row) {
-				std::cout << __FILE__ << " " << __LINE__ << ":classes.put failed." << std::endl;
-				co_return null_row;
-			}
-
-			test = co_await classes.get(R"({"ClassName":"SysPermission"})");
-			if (test.is_empty() || test.is_member("ClassName", "SysParseError")) {
-				std::cout << __FILE__ << " " << __LINE__ << ":Could not find class after creation." << std::endl;
-				co_return null_row;
-			}
-
-			created_classes.put_member("SysPermission", true);
-
-
-			class_location = co_await classes.put(R"(
-{	
-	"ClassName" : "SysMember",
-	"BaseClassName" : "SysObect",
-	"ClassDescription" : "Team member",
-	"Fields" : {
-			"Permissions" : 
-			{
-				"FieldType" : "object",					
-				"AllowedClasses" : "SysPermission"
-			},
-			"GrantUser" : 
-			{
-				"FieldType" : "object",
-				"AllowedClasses" : "SysUser"
-			}
-	}
-}
-)");
-
-			if (class_location == null_row) {
-				std::cout << __FILE__ << " " << __LINE__ << ":classes.put failed." << std::endl;
-				co_return null_row;
-			}
-
-			test = co_await classes.get(R"({"ClassName":"SysMember"})");
-			if (test.is_empty() || test.is_member("ClassName", "SysParseError")) {
-				std::cout << __FILE__ << " " << __LINE__ << ":Could not find class after creation." << std::endl;
-				co_return null_row;
-			}
-
-			created_classes.put_member("SysMember", true);
-
-			class_location = co_await classes.put(R"(
-{	
-	"ClassName" : "SysGrant",
-	"BaseClassName" : "SysObect",
-	"ClassDescription" : "Grant to an object",
-	"Fields" : {
-			"Permissions" : 
-			{
-					"FieldType" : "object",
-					"AllowedClasses" : "SysPermission"
-			},
-			"GrantClassName" : "string"
-	}
-}
-)");
-
-			if (class_location == null_row) {
-				std::cout << __FILE__ << " " << __LINE__ << ":classes.put failed." << std::endl;
-				co_return null_row;
-			}
-
-			test = co_await classes.get(R"({"ClassName":"SysGrant"})");
-			if (test.is_empty() || test.is_member("ClassName", "SysParseError")) {
-				std::cout << __FILE__ << " " << __LINE__ << ":Could not find class after creation." << std::endl;
-				co_return null_row;
-			}
-
-			created_classes.put_member("SysGrant", true);
-
-			class_location = co_await classes.put(R"(
-{	
-	"ClassName" : "SysClassGrant",
-	"BaseClassName" : "SysGrant",
-	"ClassDescription" : "Grant to a class"
-}
-)");
-			if (class_location == null_row) {
-				std::cout << __FILE__ << " " << __LINE__ << ":classes.put failed." << std::endl;
-				co_return null_row;
-			}
-
-			test = co_await classes.get(R"({"ClassName":"SysClassGrant"})");
-			if (test.is_empty() || test.is_member("ClassName", "SysParseError")) {
-				std::cout << __FILE__ << " " << __LINE__ << ":Could not find class after creation." << std::endl;
-				co_return null_row;
-			}
-
-			created_classes.put_member("SysClassGrant", true);
-
-			class_location = co_await classes.put(R"(
-{	
-	"ClassName" : "SysObjectGrant",
-	"BaseClassName" : "SysGrant",
-	"ClassDescription" : "Grant to an object",
-	"Fields" : {
-			"ObjectFilter" : "object"
-	}
-}
-)");
-
-			if (class_location == null_row) {
-				std::cout << __FILE__ << " " << __LINE__ << ":classes.put failed." << std::endl;
-				co_return null_row;
-			}
-
-			test = co_await classes.get(R"({"ClassName":"SysObjectGrant"})");
-			if (test.is_empty() || test.is_member("ClassName", "SysParseError")) {
-				std::cout << __FILE__ << " " << __LINE__ << ":Could not find class after creation." << std::endl;
-				co_return null_row;
-			}
-
-			created_classes.put_member("SysObjectGrant", true);
-
-			class_location = co_await classes.put(R"(
-{	
-	"ClassName" : "SysTeam",
-	"BaseClassName" : "SysObject",
-	"ClassDescription" : "A team",
-	"NameIndex" : true,
-	"Fields" : {			
-			"Name" : "string",
-			"Description" : "string",
-			"Members" : {
-				"FieldType":"array",
-				"AllowedClasses": "SysMember"
-			},
-			"Grants" : {
-				"FieldType":"array",
-				"AllowedClasses": "SysGrant"
-			}
-	}
-}
-)");
-
-			if (class_location == null_row) {
-				std::cout << __FILE__ << " " << __LINE__ << ":classes.put failed." << std::endl;
-				co_return null_row;
-			}
-
-			test = co_await classes.get(R"({"ClassName":"SysTeam"})");
-			if (test.is_empty() || test.is_member("ClassName", "SysParseError")) {
-				std::cout << __FILE__ << " " << __LINE__ << ":Could not find class after creation." << std::endl;
-				co_return null_row;
-			}
-
-			created_classes.put_member("SysTeam", true);
-
-			json token = create_system_token();
-
-			json classes_array_response = co_await get_classes(token);
-			json classes_array = classes_array_response["Data"];
-			json classes_grouped = classes_array.group([](json& _item) -> std::string {
-				return (std::string)_item["ClassName"];
-				});
-
-			bool missing = classes_array.any([classes_grouped](json& _item) {
-				return !classes_grouped.has_member(_item["ClassName"]);
-				});
-
-			if (missing) {
-				std::cout << __FILE__ << " " << __LINE__ << ":Class list returned from database missed some classes." << std::endl;
-				co_return null_row;
-			}
-			else {
-				std::cout << "database creation complete with :" << classes_grouped.to_json() << std::endl;
-			}
-
-			co_return header_location;
-		}
-
-		database_transaction<json> edit_object(json _token, json _object_key)
-		{
-			json_parser jp;
-			json result;
-
-			if (!check_token(_token, "user")) {
-				result = create_response(false, "Cannot get edit object");
-				co_return result;
-			}
-
-			json object_options = jp.create_object();
-
-			object_options.copy_member("ObjectId", _object_key);
-			object_options.put_member_object("Fields");
-			json object_fields = object_options["Fields"];
-			object_options.put_member_array("Edit");
-			json edit_options = object_options["Edit"];
-
-			json object_response = co_await get_object(_token, _object_key);
-			if (object_response["Success"]) {
-				json obj = object_response["Data"];
-				object_options.put_member("Data", obj);
-				json class_key = obj.extract({ "ClassName" });
-				json class_response = co_await get_class(_token, class_key);
-				if (class_response["Success"]) {
-					json class_definition = class_response["Data"];
-					object_options.put_member_object("ClassDefinition", class_definition);
-					auto fields = class_definition["Fields"].get_members();
-					for (auto field : fields) {
-						if (field.second.is_object()) {
-							std::string field_type = field.second["FieldType"];
-							if (field_type == "array" || field_type == "object")
-							{
-								if (field.second.has_member("Goal")) 
-								{
-									json field_options = co_await get_goal_field_options(class_definition, obj, field.first);
-									if (field_options.is_array()) {
-										for (int i = 0; i < field_options.size(); i++) {
-											edit_options.append_element(field_options.get_element(i));
-										}
-									}
-								}
-								else if (field.second.has_member("AllowedClasses")) 
-								{
-									json allowed = field.second["AllowedClasses"];
-									if (allowed.is_string()) {
-										json build_option = jp.create_object();
-										build_option.put_member("ClassName", "SysCreateObject");
-										build_option.put_member_i64("TargetObjectId", (int64_t)obj["ObjectId"]);
-										build_option.put_member("TargetMemberName", field.first);
-										build_option.put_member("TargetClassName", allowed);
-										build_option.put_member("TargetClassDescription", allowed);
-										edit_options.append_element(build_option);
-
-										build_option = jp.create_object();
-										build_option.put_member("ClassName", "SysCreateSubClass");
-										build_option.put_member("TargetBaseClassName", allowed);
-										build_option.put_member("TargetClassDescription", allowed);
-										edit_options.append_element(build_option);
-									}
-								}
-							}
-							else if (field.second.has_member("Choices"))
-							{
-								json choices = field.second["Choices"];
-								if (choices.is_object()) 
-								{
-									std::string choice_class_name = choices["ChoiceClassName"];
-									std::string choice_name_field = choices["NameField"];
-									std::string choice_value_field = choices["ValueField"];
-									json choice_filter = choices["ChoiceFilter"];
-
-									json class_key = jp.create_object();
-									class_key.put_member("ClassName", choice_class_name);
-									json choice_list = co_await get_objects_by_class(_token, class_key, choice_filter);
-									choices.put_member("Items", choice_list);
-									object_fields.put_member(field.first, choices);
-								}
-							}
-							else {
-								object_fields.put_member(field.first, field.second);
-							}
-						}
-						else {
-							object_fields.put_member(field.first, field.second);
-						}
-					}
-				}
-				co_return create_response(true, "Ok", object_options, 0.0);
-			}
-			co_return create_response(false, "Sadly, this object eludes you.", object_options, 0.0);
 		}
 
 		database_method_transaction<json> get_goal_field_options(json class_def, json parent, std::string field_name)
@@ -1387,7 +1051,7 @@ iv_buffer.get_uptr(),
 					{
 						object_data = item;
 
-						if (item.is_object()) 
+						if (item.is_object())
 						{
 							json build_option = jp.create_object();
 							build_option.put_member("ClassName", "SysEditObject");
@@ -1421,7 +1085,7 @@ iv_buffer.get_uptr(),
 						json build_option = jp.create_object();
 						build_option.put_member("ClassName", "SysCreateObject");
 						build_option.put_member_i64("TargetObjectId", (int64_t)parent["ObjectId"]);
-						build_option.put_member("TargetMemberName", step_field_name );
+						build_option.put_member("TargetMemberName", step_field_name);
 						build_option.put_member("TargetClassName", required_class_name);
 						build_option.put_member("TargetClassDescription", (std::string)required_class["ClassDescription"]);
 						build_options.append_element(build_option);
@@ -1451,21 +1115,455 @@ iv_buffer.get_uptr(),
 			co_return response;
 		};
 
-		database_method_transaction<json> get_classes(json _token)
+		database_method_transaction<bool> is_ancestor(json _token, std::string _base_class, std::string _class_to_check)
+		{
+			json_parser jp;
+
+			json class_key = jp.create_object("ClassName", _base_class);
+			class_key.set_natural_order();
+
+			json class_obj = co_await classes.get(class_key);
+
+			if (!class_obj.is_empty())
+			{
+				bool has_ancestor = class_obj["Ancestors"].has_member(_class_to_check);
+				co_return has_ancestor;
+			}
+
+			co_return false;
+		}
+
+		database_method_transaction<bool> is_descendant(json _token, std::string _base_class, std::string _class_to_check)
+		{
+			json_parser jp;
+
+			json class_key = jp.create_object("ClassName", _class_to_check);
+			class_key.set_natural_order();
+
+			json class_obj = co_await classes.get(class_key);
+
+			if (!class_obj.is_empty())
+			{
+				bool has_ancestor = class_obj["Ancestors"].has_member(_base_class);
+				co_return has_ancestor;
+			}
+
+			co_return false;
+		}
+
+	public:
+
+		time_span token_life;
+
+		// constructing and opening a database
+
+		corona_database(file* _file)
+			: database_file(_file),
+			classes(_file, { "ClassName" }),
+			class_objects(_file, { "ClassName", "ObjectId" }),
+			objects(_file, { "ObjectId" }),
+			objects_by_name(_file, { "ClassName", "Name", "ObjectId" })
+		{
+			token_life = time_span(1, time_models::hours);
+		}
+
+		database_transaction<relative_ptr_type> open_database(relative_ptr_type _header_location)
+		{
+			relative_ptr_type header_location = co_await header.read(database_file, _header_location);
+			co_return header_location;
+		}
+
+		// this creates a user account, using an email and a phone number to send a confirmation code to.
+		database_transaction<json> create_user(json create_user_request)
+		{
+			json_parser jp;
+			json response;
+
+			json _token = create_user_request["Token"];
+			std::string _user_class = create_user_request["UserClass"];
+			std::string _user_name = create_user_request["Name"];
+			std::string _first_name = create_user_request["FirstName"];
+			std::string _last_name = create_user_request["LastName"];
+			std::string _email = create_user_request["Email"];
+			std::string _phone = create_user_request["Phone"];
+			std::string _street = create_user_request["Street"];
+			std::string _city = create_user_request["City"];
+			std::string _state = create_user_request["State"];
+			std::string _zip = create_user_request["Zip"];
+			std::string _password = create_user_request["Password"];
+
+			std::string user_name = _user_name;	
+			bool user_exists = true;
+			int attempt_count = 0;
+
+			do 
+			{
+				json user_key = jp.create_object();
+				user_key.put_member("ClassName", _user_class);
+				user_key.put_member("Name", user_name);
+				user_key.set_compare_order({ "ClassName" });
+				json existing_user_link = co_await objects_by_name.get(user_key);
+
+				if (existing_user_link.is_object()) 
+				{
+					attempt_count++;
+					char buff[128];
+					buff[0] = ('0' + rand() % 10);
+					buff[1] = 0;
+					user_name = user_name + buff;
+				}
+
+			} while (user_exists);
+
+			json new_user = co_await create_object(_token, _user_class);
+			new_user.put_member("Name", user_name);
+			new_user.put_member("FirstName", _first_name);
+			new_user.put_member("LastName", _last_name);
+			new_user.put_member("Email", _email);
+			new_user.put_member("Phone", _phone);
+			new_user.put_member("Street", _street);
+			new_user.put_member("City", _city);
+			new_user.put_member("State", _state);
+			new_user.put_member("Zip", _zip);
+			co_await put_object(_token, new_user);
+
+			json new_login = co_await create_object(_token, "SysLogin");
+			new_login.put_member("Name", _user_name);
+			_password = crypter.hash(_password);
+			new_login.put_member("Password", _password);
+			new_login.put_member("LoginState", "NewUser");
+			db_object_id_type objid = new_user["ObjectId"].get_int64();
+			new_login.put_member("CurrentObjectId", objid);
+			co_await put_object(_token, new_login);
+
+			response = create_response(true, "Ok", new_user, 0.0);
+
+			co_return response;
+		}
+
+		// this starts a login attempt
+		database_transaction<json> login_user(json _login_request)
+		{
+			json token = _login_request["Token"];
+			std::string user_name = _login_request["Name"];
+			std::string password = _login_request["Password"];
+
+			json response = create_response(false, "Ok", 0.0);
+
+			json user_login = co_await get_object(token, "SysLogin", user_name);
+
+			if (user_login["Success"]) 
+			{
+				json ul = user_login["Data"];
+				password = crypter.hash(password);
+				std::string existing_hashed_password = user_login["Data"]["Password"];
+				if (password == existing_hashed_password) 
+				{
+					ul.put_member("LoginState", "PasswordAccepted");
+					co_await put_object(token, user_login);
+
+					json token = create_user_token(user_name);
+					response = create_response(true, "Ok", token, 0.0);
+				}
+			}
+
+			co_return response;
+		}
+
+		std::string get_random_code()
+		{
+			std::string s_confirmation_code = "";
+			int confirmation_code_digits = 6;
+			char confirmation_code[32] = {};
+
+			int rc = 0;
+			int lc = 0;
+			int i = 0;
+			while (i < confirmation_code_digits && i < sizeof(confirmation_code))
+			{
+				do
+				{
+					rc = rand() % 26 + 'A';
+					confirmation_code[i] = rc;
+				} while (rc == lc);
+				lc = rc;
+				i++;
+			}
+			confirmation_code[i] = 0;
+			s_confirmation_code = confirmation_code;
+			return s_confirmation_code;
+		}
+
+		// this creates a confirmation code and sends it to the user
+		database_transaction<json> send_login_confirmation_code(json _send_request)
+		{
+			json token = _send_request["Token"];
+			std::string user_name = _send_request["Name"];
+
+			json response = create_response(false, "Denied", 0.0);
+
+			json user_login = co_await get_object(token, "SysLogin", user_name);
+
+			if (user_login["Success"])
+			{
+				json ul = user_login["Data"];
+
+				std::string confirmation_code = get_random_code();
+				ul.put_member("ConfirmationCode", confirmation_code);
+				ul.put_member("LoginState", "ConfirmationCodeSent");
+				co_await put_object(token, ul);
+
+				std::string code_email = "Your Countrybit confirmation code is " + confirmation_code;
+
+				sendgrid_client sgc;
+
+				json user = co_await get_object(token, "SysUser", user_name);
+				if (user.is_object()) 
+				{				
+					sgc.send_email(user, "Countrybit Confirmation Code", code_email, "text/plain");
+					json token = create_user_token(user_name);
+					response = create_response(true, "Ok", token, 0.0);
+				}
+			}
+			co_return response;
+		}
+
+		// this creates a user account, using an email and a phone number to send a confirmation code to.
+		database_transaction<json> receive_login_confirmation_code(json _receive_request)
+		{
+
+			json token = _receive_request["Token"];
+			std::string user_name = _receive_request["Name"];
+			std::string confirmation_code = _receive_request["ConfirmationCode"];
+
+			json response = create_response(false, "Denied", 0.0);
+
+			json user_login = co_await get_object(token, "SysLogin", user_name);
+
+			if (user_login["Success"])
+			{
+				json ul = user_login["Data"];
+				std::string status = ul["LoginState"];
+				std::string existing_code = ul["ConfirmationCode"];
+				if (status == "ConfirmationCodeSent" && existing_code == confirmation_code) {
+					ul.put_member("LoginState", "ConfirmationCodeAccepted");
+					co_await put_object(token, ul);
+
+					json token = create_user_token(user_name);
+					response = create_response(true, "Ok", token, 0.0);
+				}
+			}
+			co_return response;
+		}
+
+		// this creates a user account, using an email and a phone number to send a confirmation code to.
+		database_transaction<json> send_password_reset_code(json _send_request)
+		{
+
+			json token = _send_request["Token"];
+			std::string user_name = _send_request["Name"];
+			std::string confirmation_code = _send_request["ConfirmationCode"];
+
+			json response = create_response(false, "Denied", 0.0);
+
+			json user_login = co_await get_object(token, "SysLogin", user_name);
+
+			if (user_login["Success"])
+			{
+				json ul = user_login["Data"];
+				std::string status = ul["LoginState"];
+				std::string existing_code = ul["ConfirmationCode"];
+				if (status == "ConfirmationCodeSent" && existing_code == confirmation_code) {
+					ul.put_member("LoginState", "ConfirmationCodeAccepted");
+					co_await put_object(token, ul);
+
+					json token = create_user_token(user_name);
+					response = create_response(true, "Ok", token, 0.0);
+				}
+			}
+			co_return response;
+		}
+
+
+		database_transaction<json> receive_reset_password_code(json _receive_request)
+		{
+			json token = _receive_request["Token"];
+			std::string user_name = _receive_request["Name"];
+			std::string confirmation_code = _receive_request["ConfirmationCode"];
+
+			json response = create_response(false, "Denied", 0.0);
+
+			json user_login = co_await get_object(token, "SysLogin", user_name);
+
+			if (user_login["Success"])
+			{
+				json ul = user_login["Data"];
+				std::string status = ul["LoginState"];
+				std::string existing_code = ul["ConfirmationCode"];
+				if (status == "ConfirmationCodeSent" && existing_code == confirmation_code) {
+					ul.put_member("LoginState", "ConfirmationCodeAccepted");
+					co_await put_object(token, ul);
+
+					json token = create_user_token(user_name);
+					response = create_response(true, "Ok", token, 0.0);
+				}
+			}
+			co_return response;
+		}
+
+
+		database_transaction<json> set_user_password(json _set_password_request)
+		{
+			json token = _set_password_request["Token"];
+			std::string user_name = _set_password_request["Name"];
+			std::string password1 = _set_password_request["Password1"];
+			std::string password2 = _set_password_request["Password2"];
+
+			json response = create_response(false, "Denied", 0.0);
+
+			if (password1 != password2) {
+				co_return response;
+			}
+
+			json user_login = co_await get_object(token, "SysLogin", user_name);
+
+			if (user_login["Success"])
+			{
+				std::string status = user_login["LoginState"];
+				if (status == "Connected") {
+					user_login.put_member("LoginState", "Disconnected");
+					password1 = crypter.hash(password1);
+					user_login.put_member("Password", password1);
+					co_await put_object(token, user_login);
+
+					json token = create_user_token(user_name);
+					response = create_response(true, "Ok", token, 0.0);
+				}
+			}
+			co_return response;
+		}
+
+
+		// this creates a user account, using an email and a phone number to send a confirmation code to.
+
+
+		database_transaction<json> edit_object(json _edit_object_request)
+		{
+			json_parser jp;
+			json result;
+
+			json token = _edit_object_request["Token"];
+			json object_key = _edit_object_request["ObjectId"];
+
+			if (!check_token(token, "user")) {
+				result = create_response(false, "Cannot get edit object");
+				co_return result;
+			}
+
+			json object_options = jp.create_object();
+
+			object_options.copy_member("ObjectId", object_key);
+			object_options.put_member_object("Fields");
+			json object_fields = object_options["Fields"];
+			object_options.put_member_array("Edit");
+			json edit_options = object_options["Edit"];
+
+			json object_response = co_await get_object(_edit_object_request);
+			if (object_response["Success"]) {
+				json obj = object_response["Data"];
+				object_options.put_member("Data", obj);
+				json class_key = obj.extract({ "ClassName" });
+				class_key.put_member("Token", token);
+				json class_response = co_await get_class(class_key);
+				if (class_response["Success"]) {
+					json class_definition = class_response["Data"];
+					object_options.put_member_object("ClassDefinition", class_definition);
+					auto fields = class_definition["Fields"].get_members();
+					for (auto field : fields) {
+						if (field.second.is_object()) {
+							std::string field_type = field.second["FieldType"];
+							if (field_type == "array" || field_type == "object")
+							{
+								if (field.second.has_member("Goal")) 
+								{
+									json field_options = co_await get_goal_field_options(class_definition, obj, field.first);
+									if (field_options.is_array()) {
+										for (int i = 0; i < field_options.size(); i++) {
+											edit_options.append_element(field_options.get_element(i));
+										}
+									}
+								}
+								else if (field.second.has_member("AllowedClasses")) 
+								{
+									json allowed = field.second["AllowedClasses"];
+									if (allowed.is_string()) {
+										json build_option = jp.create_object();
+										build_option.put_member("ClassName", "SysCreateObject");
+										build_option.put_member_i64("TargetObjectId", (int64_t)obj["ObjectId"]);
+										build_option.put_member("TargetMemberName", field.first);
+										build_option.put_member("TargetClassName", allowed);
+										build_option.put_member("TargetClassDescription", allowed);
+										edit_options.append_element(build_option);
+
+										build_option = jp.create_object();
+										build_option.put_member("ClassName", "SysCreateSubClass");
+										build_option.put_member("TargetBaseClassName", allowed);
+										build_option.put_member("TargetClassDescription", allowed);
+										edit_options.append_element(build_option);
+									}
+								}
+							}
+							else if (field.second.has_member("Choices"))
+							{
+								json choices = field.second["Choices"];
+								if (choices.is_object()) 
+								{
+									std::string choice_class_name = choices["ChoiceClassName"];
+									std::string choice_name_field = choices["NameField"];
+									std::string choice_value_field = choices["ValueField"];
+									json choice_filter = choices["ChoiceFilter"];
+
+									json class_key = jp.create_object();
+									class_key.put_member("ClassName", choice_class_name);
+									class_key.put_member("Token", token);
+									class_key.put_member("Filter", token);
+									json choice_list = co_await query_class(class_key);
+									choices.put_member("Items", choice_list);
+									object_fields.put_member(field.first, choices);
+								}
+							}
+							else {
+								object_fields.put_member(field.first, field.second);
+							}
+						}
+						else {
+							object_fields.put_member(field.first, field.second);
+						}
+					}
+				}
+				co_return create_response(true, "Ok", object_options, 0.0);
+			}
+			co_return create_response(false, "Sadly, this object eludes you.", object_options, 0.0);
+		}
+
+
+		database_method_transaction<json> get_classes(json get_classses_request)
 		{
 			json_parser jp;
 
 			json result;
 			json result_list;
+			
+			json token = get_classses_request["Token"];
 
-			if (!check_token(_token, "user")) {
+			if (!check_token(token, "user")) {
 				result = create_response(false, "Denied");
 				co_return result;
 			}
 
-			result_list = co_await classes.select_array([this, _token](int _index, json& _item) {
+			result_list = co_await classes.select_array([this, token](int _index, json& _item) {
 				json_parser jp;
-				auto permission_task = has_class_permission(_token, _item["ClassName"], "Get");
+				auto permission_task = has_class_permission(token, _item["ClassName"], "Get");
 				bool has_permission = permission_task.wait();
 
 				if (has_permission) 
@@ -1486,17 +1584,20 @@ iv_buffer.get_uptr(),
 			co_return result;
 		}
 
-		database_composed_transaction<json> get_class(json _token, std::string _class_name)
+		database_composed_transaction<json> get_class(json get_class_request)
 		{
 			json_parser jp;
 			json result;
 
+			json token = get_class_request["Token"];
+			std::string class_name = get_class_request["ClassName"];
+
 			bool can_get_class = co_await has_class_permission(
-				_token,
-				_class_name,
+				token,
+				class_name,
 				"Get");
 
-			json key = jp.create_object("ClassName", _class_name);
+			json key = jp.create_object("ClassName", class_name);
 			key.set_natural_order();
 
 			result = co_await classes.get(key);
@@ -1505,57 +1606,31 @@ iv_buffer.get_uptr(),
 			co_return result;
 		}
 
-		database_composed_transaction<json> get_class(json _token, json& _object)
-		{
-			json class_def;
-			json key = _object.extract({ "ClassName" });
-			json result;
-
-			bool can_get_class = co_await has_class_permission(
-				_token,
-				key["ClassName"],
-				"Get");
-
-			if (!can_get_class) {
-				result = create_response(false, "Denied", _object, 0.0);
-				co_return result;
-			}
-
-			class_def = co_await classes.get(key);
-
-			if (class_def.is_empty())
-			{
-				result = create_response(false, "Undefined", key, 0);
-			}
-			else 
-			{
-				result = create_response(true, "Ok", class_def, 0);
-			}
-			co_return result;
-		}
-
-		database_composed_transaction<json> put_class(json _token, json _class_definition)
+		database_composed_transaction<json> put_class(json put_class_request)
 		{
 			json result;
+
+			json token = put_class_request["Token"];
+			json class_definition = put_class_request["Token"];
 
 			bool can_put_class = co_await has_class_permission(
-				_token,
-				_class_definition["ClassName"] ,
+				token,
+				class_definition["ClassName"] ,
 				"Put");
 
 			if (!can_put_class) {
-				result = create_response(false, "Denied", _class_definition, 0.0);
+				result = create_response(false, "Denied", class_definition, 0.0);
 				co_return result;
 			}
 
-			result = check_class(_class_definition);
+			result = check_class(class_definition);
 			json_parser jp;
 
 			if (result["Success"]) {
-				co_await classes.put(_class_definition);
+				co_await classes.put(class_definition);
 				result = create_response(true, "Ok");
 
-				auto ancestors = _class_definition["Ancestors"];
+				auto ancestors = class_definition["Ancestors"];
 				if (ancestors.is_object()) {
 					auto ancestor_classes = ancestors.get_members_raw();
 					for (auto acp : ancestor_classes) {
@@ -1574,50 +1649,17 @@ iv_buffer.get_uptr(),
 			co_return result;
 		}
 
-		database_method_transaction<bool> is_ancestor(json _token, std::string _base_class, std::string _class_to_check)
-		{
-			json_parser jp;
 
-			json class_key = jp.create_object("ClassName", _base_class);
-			class_key.set_natural_order();
-
-			json class_obj = co_await classes.get(class_key);
-
-			if (!class_obj.is_empty())
-			{
-				bool has_ancestor = class_obj["Ancestors"].has_member(_class_to_check);
-				co_return has_ancestor;
-			}
-
-			co_return false;
-		}
-
-		database_method_transaction<bool> is_descendant(json _token, std::string _base_class, std::string _class_to_check )
-		{
-			json_parser jp;
-
-			json class_key = jp.create_object("ClassName", _class_to_check);
-			class_key.set_natural_order();
-
-			json class_obj = co_await classes.get(class_key);
-			
-			if (!class_obj.is_empty()) 
-			{
-				bool has_ancestor = class_obj["Ancestors"].has_member(_base_class);
-				co_return has_ancestor;
-			}
-
-			co_return false;
-		}
-
-		database_method_transaction<json> get_objects_by_class(json _token, json _class_key, json _filter)
+		database_method_transaction<json> query_class(json query_class_request)
 		{
 			json_parser jp;
 			json response;
 
-			std::string base_class_name = _class_key["ClassName"];
+			json token = query_class_request["Token"];
+			json base_class_name = query_class_request["ClassName"];
+			json filter = query_class_request["Filter"];
 
-			if (!has_class_permission(_token, base_class_name, "Get"))
+			if (!has_class_permission(token, base_class_name, "Get"))
 			{
 				response = create_response(false, "Denied", 0.0);
 				co_return response;
@@ -1625,7 +1667,7 @@ iv_buffer.get_uptr(),
 
 			json objects = jp.create_array();
 
-			json class_def = co_await classes.get(_class_key);
+			json class_def = co_await classes.get(query_class_request);
 			json derived_classes = class_def["Descendants"];
 			auto members = derived_classes.get_members();
 
@@ -1637,6 +1679,7 @@ iv_buffer.get_uptr(),
 					return _item;
 					});
 				json get_object_id = jp.create_object("ObjectId", 0i64);
+				get_object_id.put_member("Token", token);
 
 				for (db_object_id_type i = 0; i < class_object_ids.size(); i++)
 				{
@@ -1644,9 +1687,9 @@ iv_buffer.get_uptr(),
 					get_object_id.put_member("ObjectId", ri);
 					get_object_id.set_natural_order();
 
-					if (check_object_key_permission(_token, get_object_id, "Get"))
+					if (check_object_key_permission(token, get_object_id, "Get"))
 					{
-						json objx = co_await get_object(_token, get_object_id);
+						json objx = co_await get_object(get_object_id);
 						if (objx["Success"])
 						{
 							objects.append_element(objx["Data"]);
@@ -1659,21 +1702,24 @@ iv_buffer.get_uptr(),
 			co_return response;
 		}
 
-		database_method_transaction<json> create_object(json _token, std::string _class_name)
+		database_method_transaction<json> create_object(json create_object_request)
 		{
 			json_parser jp;
 
-			if (!check_token(_token, "user")) {
+			json token = create_object_request["Token"];
+			std::string class_name = create_object_request["ClassName"];
+
+			if (!check_token(token, "user")) {
 				json result = create_response(false, "Cannot create object");
 				co_return result;
 			}
 
-			if (!has_class_permission(_token, _class_name, "Get")) {
+			if (!has_class_permission(token, class_name, "Get")) {
 				json result = create_response(false, "Cannot get object");
 				co_return result;
 			}
 
-			json class_key = jp.create_object("ClassName", _class_name);
+			json class_key = jp.create_object("ClassName", class_name);
 			class_key.set_natural_order();
 
 			json class_data = co_await classes.get(class_key);
@@ -1684,7 +1730,7 @@ iv_buffer.get_uptr(),
 				json field_definition = class_data["Fields"];
 				auto members = field_definition.get_members();
 				json new_object = jp.create_object();
-				new_object.put_member("ClassName", _class_name);
+				new_object.put_member("ClassName", class_name);
 
 				for (auto& member : members)
 				{
@@ -1720,13 +1766,13 @@ iv_buffer.get_uptr(),
 						}
 						else if (field_type == "function")
 						{
-							auto key = std::make_tuple(_class_name, member.first);
+							auto key = std::make_tuple(class_name, member.first);
 							if (functions.contains(key)) {
 								new_object.put_member_function(member.first, functions[key]);
 							}
 							else 
 							{
-								std::string err_message = std::format("function {0} {1} not defined", _class_name, member.first);
+								std::string err_message = std::format("function {0} {1} not defined", class_name, member.first);
 								new_object.put_member(member.first, err_message);
 							}
 						}
@@ -1746,21 +1792,27 @@ iv_buffer.get_uptr(),
 			
 		}
 
-		database_method_transaction<json> put_object(json _token, json _object_definition)
+		database_method_transaction<json> put_object(json put_object_request)
 		{
 			json_parser jp;
 
-			if (!check_token(_token, "user")) {
+			json token;
+			json object_definition;
+
+			token = put_object_request["Token"];
+			object_definition = put_object_request["Data"];
+
+			if (!check_token(token, "user")) {
 				json result = create_response(false, "Cannot create object");
 				co_return result;
 			}
 
-			if (!check_object_permission(_token, _object_definition, "Put")) {
+			if (!check_object_permission(token, object_definition, "Put")) {
 				json result = create_response(false, "Cannot put object");
 				co_return result;
 			}
 
-			json result = co_await check_object(_token, _object_definition);
+			json result = co_await check_object(token, object_definition);
 
 			if (result["Success"])
 			{
@@ -1807,7 +1859,7 @@ iv_buffer.get_uptr(),
 
 				json previous_version = result["PreviousVersion"];
 				std::string previous_name = previous_version["Name"];
-				std::string new_name = _object_definition["Name"];
+				std::string new_name = object_definition["Name"];
 
 				if (previous_name != new_name)
 				{
@@ -1818,35 +1870,37 @@ iv_buffer.get_uptr(),
 					key_index.set_compare_order({ "Name", "ObjectId" });
 					objects_by_name.erase(key_index);
 
-					key_index.put_member("ClassName", (std::string)_object_definition["ClassName"]);
+					key_index.put_member("ClassName", (std::string)object_definition["ClassName"]);
 					key_index.put_member("Name", new_name);
 					objects_by_name.put(key_index);
 				}
 
-				relative_ptr_type put_result = co_await objects.put( _object_definition);
+				relative_ptr_type put_result = co_await objects.put( object_definition );
 
-				json cobj = _object_definition.extract({ "ClassName", "ObjectId" });
+				json cobj = object_definition.extract({ "ClassName", "ObjectId" });
 				relative_ptr_type classput_result = co_await class_objects.put(cobj);
 
 				result = create_response(true, "Ok");
 			}
 			else 
 			{
-				result = create_response(false, "Invalid object", _object_definition, 0);
+				result = create_response(false, "Invalid object", object_definition, 0);
 			}
 
 			co_return result;
 		}
 
-		database_method_transaction<json> get_object(json _token, std::string _class_name, std::string _object_name)
+		database_method_transaction<json> get_object(
+			json get_object_request
+		)
 		{
 			json_parser jp;
 			json result;
 
-			json obj_key = jp.create_object("Name", _object_name);
-			json obj = co_await acquire_object(obj_key);
+			json token = get_object_request["Token"];
+			json obj = co_await acquire_object(get_object_request);
 
-			if (!check_object_permission(_token, obj, "Get"))
+			if (!check_object_permission(token, obj, "Get"))
 			{
 				result = create_response(false, "Denied", 0.0);
 				co_return result;
@@ -1859,6 +1913,8 @@ iv_buffer.get_uptr(),
 				auto cm = child_member.second;
 				if (cm.is_array())
 				{
+					json linked_object_key = jp.create_object();
+					linked_object_key.put_member("Token", token);
 					for (int64_t index = 0; index < cm.size(); index++)
 					{
 						json em = cm.get_element(index);
@@ -1868,10 +1924,9 @@ iv_buffer.get_uptr(),
 							)
 						{
 							int64_t linked_object_id = em["LinkedObjectId"];
-							json linked_object_key = jp.create_object();
 							linked_object_key.put_member("ObjectId", linked_object_id);
 							linked_object_key.set_natural_order();
-							database_method_transaction<json> get_object_task = get_object(_token, linked_object_key);
+							database_method_transaction<json> get_object_task = get_object(linked_object_key);
 							json get_response = get_object_task.wait();
 							if (get_response["Success"])
 							{
@@ -1890,80 +1945,7 @@ iv_buffer.get_uptr(),
 					json linked_object_key = jp.create_object();
 					linked_object_key.put_member("ObjectId", linked_object_id);
 					linked_object_key.set_natural_order();
-					database_method_transaction<json> get_object_task = get_object(_token, linked_object_key);
-					json get_response = get_object_task.wait();
-					if (get_response["Success"])
-					{
-						json data = get_response["Data"];
-						cm.put_member("Data", data);
-					}
-				}
-			}
-
-
-			result = create_response(true, "Ok", obj, 0.0);
-
-			co_return result;
-		}
-
-		database_method_transaction<json> get_object(json _token, json _object_key)
-		{
-			json_parser jp;
-			json result;
-
-			json obj = co_await acquire_object(_object_key);
-
-			if (!check_object_permission(_token, obj, "Get"))
-			{
-				result = create_response(false, "Denied", 0.0);
-				co_return result;
-			}
-
-			if (!check_object_permission(_token, obj, "Get"))
-			{
-				result = create_response(false, "Denied", 0.0);
-				co_return result;
-			}
-
-			auto child_members = obj.get_members();
-
-			for (auto child_member : child_members)
-			{
-				auto cm = child_member.second;
-				if (cm.is_array())
-				{
-					for (int64_t index = 0; index < cm.size(); index++)
-					{
-						json em = cm.get_element(index);
-						if (em.is_object() &&
-							em.is_member("ClassName", "SysReference") &&
-							em.is_member("DeepGet", true)
-							)
-						{
-							int64_t linked_object_id = em["LinkedObjectId"];
-							json linked_object_key = jp.create_object();
-							linked_object_key.put_member("ObjectId", linked_object_id);
-							linked_object_key.set_natural_order();
-							database_method_transaction<json> get_object_task = get_object(_token, linked_object_key);
-							json get_response = get_object_task.wait();
-							if (get_response["Success"])
-							{
-								json data = get_response["Data"];
-								em.put_member("Data", data);
-							}
-						}
-					}
-				}
-				else if (
-					cm.is_member("ClassName", "SysReference") &&
-					cm.is_member("DeepGet", true)
-					)
-				{
-					int64_t linked_object_id = cm["LinkedObjectId"];
-					json linked_object_key = jp.create_object();
-					linked_object_key.put_member("ObjectId", linked_object_id);
-					linked_object_key.set_natural_order();
-					database_method_transaction<json> get_object_task = get_object(_token, linked_object_key);
+					database_method_transaction<json> get_object_task = get_object(linked_object_key);
 					json get_response = get_object_task.wait();
 					if (get_response["Success"])
 					{
@@ -1977,6 +1959,7 @@ iv_buffer.get_uptr(),
 
 			co_return result;
 		}
+
 
 		database_transaction<json> copy_object(json _token, json _object_key_src,
 			std::function<bool(json _object_changes)> _fn)
@@ -2048,7 +2031,7 @@ iv_buffer.get_uptr(),
 					}
 				}
 
-				json result = co_await put_object(_token, new_object);
+				json result = co_await put_object(new_object);
 
 				if (result["Success"]) {
 					response = create_response(true, "Ok", result["Data"], 0);
@@ -2151,7 +2134,6 @@ iv_buffer.get_uptr(),
 		auto create_database_task = db.create_database();
 		relative_ptr_type database_location = create_database_task.wait();
 
-		success = database_location != null_row;
 
 		co_return success;
 	}

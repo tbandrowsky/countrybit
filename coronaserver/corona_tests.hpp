@@ -59,6 +59,11 @@ void corona_tests()
 
         std::cout << "\nmain::end,thread:" << GetCurrentThreadId() << std::endl;
 
+        std::cout << "\n\n=============================================" << std::endl;
+        std::cout << "main:test_encryption, thread:" << GetCurrentThreadId() << std::endl;
+
+        corona::test_encryption();
+
         std::string prompto;
 
         while (getline(std::cin, prompto)) {

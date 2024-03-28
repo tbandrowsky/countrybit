@@ -67,8 +67,11 @@
 #include "corona-visual.hpp"
 #endif
 
+#include "corona-cryptography.hpp"
+
 #include "corona-httpclient.hpp"
 #include "corona-calicoclient.hpp"
+#include "corona-sendgrid-client.hpp"
 
 //#include "corona-httpserver.hpp"
 #include "corona-database-engine.hpp"

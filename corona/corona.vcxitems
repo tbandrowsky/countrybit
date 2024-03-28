@@ -26,6 +26,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-concept_lock.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-constants.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-controller.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-cryptography.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-database-engine.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-dataplane.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-datatransfer.hpp" />
@@ -76,6 +77,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-queue.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-read_all_string.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-rectangle_box.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-sendgrid-client.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-skip_list.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-sorted_index.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-store_box.hpp" />
