@@ -1793,8 +1793,8 @@ private:
 					db_object_id_type ri = class_object_ids.get_element(i)["ObjectId"];
 					get_object_id.put_member("ObjectId", ri);
 					get_object_id.set_natural_order();
-
-					if (check_object_key_permission(token, get_object_id, "Get"))
+					json check_request = create_request(query_class_request, get_object_id);
+					if (check_object_key_permission(check_request, "Get"))
 					{
 						json objx = co_await get_object(get_object_id);
 						if (objx["Success"])
@@ -2146,91 +2146,85 @@ private:
 			co_return response;
 		}
 
-		database_transaction<json> copy_object(json copy_object_request, std::function<bool(json _object_changes)> _fn)
+		database_transaction<json> copy_object(json copy_request)
 		{
 			json_parser jp;
 
 			json response;
 
-			if (!check_message(copy_object_request, { auth_general }))
+			if (!check_message(copy_request, { auth_general }))
 			{
-				response = create_response(copy_object_request, false, "Denied", jp.create_object(), 0.0);
+				response = create_response(copy_request, false, "Denied", jp.create_object(), 0.0);
+				co_return response;
+			}
+
+			json source_key = copy_request["SourceKey"];
+
+			json object_copy = co_await acquire_object(source_key);
+
+			json check_request = create_request(copy_request, object_copy);
+
+			if (!check_object_permission(check_request, "Get")) {
+				json result = create_response(copy_request, false, "Denied", source_key, 0.0);
 				co_return result;
 			}
 
-			json object_copy = co_await acquire_object(_object_key_src);
-
-			if (!check_object_permission(_token, object_copy, "Get")) {
-				json result = create_response(false, "Denied");
-				co_return result;
-			}
-
-			if (!check_object_permission(_token, object_copy, "Put")) {
-				json result = create_response(false, "Denied");
+			if (!check_object_permission(check_request, "Put")) {
+				json result = create_response(copy_request, false, "Denied", source_key, 0.0);
 				co_return result;
 			}
 
 			json response;
 
-			if (_fn(object_copy))
+			json new_object = object_copy.clone();
+			db_object_id_type new_object_id = co_await get_next_object_id();
+			new_object.put_member("ObjectId", new_object_id);
+
+			auto child_members = new_object.get_members();
+
+			for (auto child_member : child_members)
 			{
-				json new_object = object_copy.clone();
-				db_object_id_type new_object_id = co_await get_next_object_id();
-				new_object.put_member("ObjectId", new_object_id);
-
-				auto child_members = new_object.get_members();
-
-				for (auto child_member : child_members)
+				auto cm = child_member.second;
+				if (cm.is_array())
 				{
-					auto cm = child_member.second;
-					if (cm.is_array())
+					for (int64_t index = 0; index < cm.size(); index++)
 					{
-						for (int64_t index = 0; index < cm.size(); index++)
+						json em = cm.get_element(index);
+						if (em.is_object() &&
+							em.is_member("ClassName", "SysReference") &&
+							em.is_member("DeepCopy", true)
+							)
 						{
-							json em = cm.get_element(index);
-							if (em.is_object() &&
-								em.is_member("ClassName", "SysReference") &&
-								em.is_member("DeepCopy", true)
-								)
-							{
-								db_object_id_type old_id = cm["LinkObjectId"];
-								json object_key = jp.create_object("ObjectId", old_id);
-								json new_object = co_await copy_object(_token, object_key, [](json _changes) -> bool
-									{
-										return true;
-									});
-								em.put_member_i64("LinkObjectId", new_object["ObjectId"]);
-							}
+							db_object_id_type old_id = cm["LinkObjectId"];
+							json object_key = jp.create_object("ObjectId", old_id);
+							json cy_request = create_request(copy_request, object_key);
+							json new_object = co_await copy_object(cy_request);
+							em.put_member_i64("LinkObjectId", new_object["ObjectId"]);
 						}
 					}
-					else if (
-						cm.is_member("ClassName", "SysReference") &&
-						cm.is_member("DeepCopy", true)
-						)
-					{
-						db_object_id_type old_id = cm["LinkObjectId"];
-						json object_key = jp.create_object("ObjectId", old_id);
-						json new_object = co_await copy_object(_token, object_key, [](json _changes) -> bool
-							{
-								return true;
-							});
-						cm.put_member_i64("LinkObjectId", new_object["ObjectId"]);
-					}
 				}
-
-				json result = co_await put_object(new_object);
-
-				if (result["Success"]) {
-					response = create_response(true, "Ok", result["Data"], 0);
-				}
-				else
+				else if (
+					cm.is_member("ClassName", "SysReference") &&
+					cm.is_member("DeepCopy", true)
+					)
 				{
-					response = result;
+					db_object_id_type old_id = cm["LinkObjectId"];
+					json object_key = jp.create_object("ObjectId", old_id);
+					json cy_request = create_request(copy_request, object_key);
+					json new_object = co_await copy_object(cy_request);
+					cm.put_member_i64("LinkObjectId", new_object["ObjectId"]);
 				}
+			}
+
+			json por = create_request(copy_request, new_object);
+			json result = co_await put_object(por);
+
+			if (result["Success"]) {
+				response = create_response(copy_request, true, "Ok", result["Data"], 0);
 			}
 			else
 			{
-				response = create_response(true, "Ok, not copied");
+				response = result;
 			}
 
 			co_return response;

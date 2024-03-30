@@ -11,7 +11,7 @@ namespace corona
 	class sendgrid_client
 	{
 
-		const char *default_api_key = "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";
+		const char *default_api_key = "";
         const char* sender_name = "Willie Otis";
         const char* sender_email = "willie.otis@countrybit.com";
 
