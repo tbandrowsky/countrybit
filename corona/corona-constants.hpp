@@ -567,6 +567,16 @@ namespace corona
 			return *this;
 		}
 
+
+		buffer& operator = (json& _src)
+		{
+			std::string temp = _src.to_json();
+			init(temp.size());
+			char* p = (char *)temp.c_str();
+			std::copy(p, p + buffer_size, buffer_bytes.get());
+			return *this;
+		}
+
 		buffer operator = (buffer&& _src)
 		{
 			buffer_bytes = std::move(_src.buffer_bytes);
@@ -657,6 +667,12 @@ namespace corona
 			return (unsigned char *)buffer_bytes.get();
 		}
 
+		bool is_safe_string()
+		{
+			char* t = buffer_bytes.get() + buffer_size - 1;
+			return *t == 0;
+		}
+
 		char* get_ptr()
 		{
 			return buffer_bytes.get();
@@ -698,6 +714,12 @@ namespace corona
 		{
 			buffer temp(_size);
 			buffers.push_back(std::move(temp));
+			return buffers[buffers.size() - 1].get_ptr();
+		}
+
+		char* append(buffer _b)
+		{
+			buffers.push_back(std::move(_b));
 			return buffers[buffers.size() - 1].get_ptr();
 		}
 

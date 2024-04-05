@@ -2,13 +2,16 @@
 #ifndef CORONA_HTTP_SERVER
 #define CORONA_HTTP_SERVER
 
+#include "corona-file.hpp"
 #include "corona-httpclient.hpp"
 #include "http.h"
 
 namespace corona
 {
     
-	using http_handler_function = std::function<http_response(http_request _request)>;
+	using http_handler_function = std::function<service_transaction<http_response>(http_request _request)>;
+	using http_handler_db_function = std::function<database_transaction<json>(json _request)>;
+	using http_handler_db_method_function = std::function<database_method_transaction<json>(json _request)>;
 
 	class http_handler_container
 	{
@@ -22,24 +25,22 @@ namespace corona
 	{
 	public:
 
-		virtual void excecute_request(PHTTP_REQUEST _request) = 0;
+		virtual void execute_request(PHTTP_REQUEST _request) = 0;
 	};
 
-	class http_server_task 
+	class http_server_task_launcher 
 	{
 		class http_server_task_job : public job
 		{
 		public:
 			std::coroutine_handle<> handle;
-			HANDLE					event;
-			http_server_task*		metask;
+			http_server_task_launcher*		metask;
 			http_server_base*		mebase;
 			buffer					buff;
 
 			http_server_task_job() : job()
 			{
 				handle = {};
-				event = {};
 				metask = nullptr;
 				buff = buffer(16384);
 			}
@@ -50,27 +51,22 @@ namespace corona
 
 				debug_functions&& std::cout << "http_server_task_job: receiving IO results " << GetCurrentThreadId() << std::endl;
 
-				if (metask) {
+				if (metask) 
+				{
 					debug_functions&& std::cout << "http_server_task_job: bytes transferred: " << _bytesTransferred << std::endl;
 					metask->bytes_transferred = _bytesTransferred;
 					metask->success = _success;
-					/*					LARGE_INTEGER li;
-										li.HighPart = container.ovp.OffsetHigh;
-										li.LowPart = container.ovp.Offset;
-										metask->location = li.QuadPart;
-										*/
+
 					if (_success) 
 					{
 						PHTTP_REQUEST prequest = (PHTTP_REQUEST)buff.get_ptr();
-						mebase->excecute_request(prequest);
+						mebase->execute_request(prequest);
 					}
 
 					if (handle) {
 						handle.resume();
 						handle.destroy();
 					}
-
-					jn.setSignal(metask->hevent);
 				}
 				else 
 				{
@@ -82,7 +78,7 @@ namespace corona
 
 				debug_functions&& std::cout << "http_server_task_job: end:" << GetCurrentThreadId() << std::endl;
 
-				jn.shouldDelete = false;
+				jn.shouldDelete = true;
 				return jn;
 			}
 
@@ -95,12 +91,8 @@ namespace corona
 
 	public:
 
-		HANDLE file;
-		HANDLE hevent;
-		int64_t location;
 		int bytes_transferred;
 		bool success;
-		http_server_task_job frj;
 
 		HANDLE requestQueue;
 		HTTP_REQUEST_ID requestId;
@@ -115,11 +107,11 @@ namespace corona
 				debug_functions&& std::cout << "http_server_task::promise:" << this << " " << GetCurrentThreadId() << std::endl;
 			}
 
-			http_server_task get_return_object() 
+			http_server_task_launcher get_return_object() 
 			{
 				debug_functions&& std::cout << "http_server_task::get_return_object:" << this << " " << GetCurrentThreadId() << std::endl;
 				std::coroutine_handle<promise_type> promise_coro = std::coroutine_handle<promise_type>::from_promise(*this);
-				http_server_task fbr(promise_coro);
+				http_server_task_launcher fbr(promise_coro);
 				return fbr;
 			}
 
@@ -138,43 +130,29 @@ namespace corona
 
 		std::coroutine_handle<promise_type> coro;
 
-		http_server_task()
+		http_server_task_launcher()
 		{
-			file = nullptr;
-			location = 0;
 			bytes_transferred = 0;
 			success = false;
-			hevent = CreateEvent(NULL, FALSE, FALSE, nullptr);
 			coro = nullptr;
 		}
 
-		http_server_task(const http_server_task& _src)
+		http_server_task_launcher(const http_server_task_launcher& _src)
 		{
-			file = _src.file;
-			location = _src.location;
 			bytes_transferred = _src.bytes_transferred;
 			success = _src.success;
-			hevent = CreateEvent(NULL, FALSE, FALSE, nullptr);
-			frj = _src.frj;
 		}
 
-		http_server_task(http_server_task&& _src)
+		http_server_task_launcher(http_server_task_launcher&& _src)
 		{
-			file = _src.file;
-			location = _src.location;
-			hevent = _src.hevent;
 			bytes_transferred = _src.bytes_transferred;
 			success = _src.success;
-			_src.hevent = nullptr;
-			frj = std::move(_src.frj);
 		}
 
-		http_server_task(std::coroutine_handle<promise_type> _coro)
+		http_server_task_launcher(std::coroutine_handle<promise_type> _coro)
 		{
-			location = 0;
 			bytes_transferred = 0;
 			success = false;
-			hevent = CreateEvent(NULL, FALSE, FALSE, nullptr);
 			coro = _coro;
 		}
 
@@ -191,20 +169,20 @@ namespace corona
 		{
 			bytes_transferred = 0;
 			success = false;
-			hevent = CreateEvent(NULL, FALSE, FALSE, nullptr);
 
 			LARGE_INTEGER li;
 			li.QuadPart = 0;
-			frj.container.ovp.Offset = li.LowPart;
-			frj.container.ovp.OffsetHigh = li.HighPart;
-			frj.handle = coro;
-			frj.metask = this;
-			frj.read_http_request(requestQueue, requestId, flags);
+			http_server_task_job* frj = new http_server_task_job();
+			frj->container.ovp.Offset = li.LowPart;
+			frj->container.ovp.OffsetHigh = li.HighPart;
+			frj->handle = coro;
+			frj->metask = this;
+			frj->read_http_request(requestQueue, requestId, flags);
 		}
 
-		virtual ~http_server_task()
+		virtual ~http_server_task_launcher()
 		{
-			::CloseHandle(hevent);
+			;
 		}
 
 		bool await_ready() 
@@ -215,17 +193,18 @@ namespace corona
 		// this creates the 
 		void await_suspend(std::coroutine_handle<promise_type> handle)
 		{
-			debug_functions&& std::cout << "http_server_task: suspend file_batch_result" << " " << ::GetCurrentThreadId() << std::endl;
+			coro = handle;
+			debug_functions&& std::cout << "http_server_task: suspend" << " " << ::GetCurrentThreadId() << std::endl;
 			initiate();
 		}
 
 		void await_resume()
 		{
-			;
+			debug_functions&& std::cout << "http_server_task: resume" << " " << ::GetCurrentThreadId() << std::endl;;
 		}
 	};
 
-	using handler_key = std::tuple<std::wstring, HTTP_VERB>;
+	using handler_key = std::tuple<std::string, HTTP_VERB>;
 
 	class http_server : public http_server_base
 	{
@@ -234,16 +213,11 @@ namespace corona
 
 		std::map<handler_key, std::shared_ptr<http_handler_container>> api_handlers;
 
-		std::string listen_domain;
-		std::string listen_url;
-		int			listen_port;
-
 		HANDLE      request_queue;
 
 	public:
 
-
-		http_server(std::string _domain, std::string _url, int _port)
+		http_server()
 		{
 			;
 		}
@@ -255,11 +229,7 @@ namespace corona
 			hhc->func = _handler;
 			hhc->url = _url;
 
-			iwstring<2048> url;
-			url = _url;
-			hhc->urlw = url.c_str_w();
-
-			auto key = std::tie( hhc->urlw, _verb);
+			auto key = std::tie( _url, _verb);
 
 			api_handlers.insert_or_assign(key, hhc);
 		}
@@ -367,15 +337,299 @@ namespace corona
 			global_job_queue->listen(request_queue);
 		}
 
-		virtual void excecute_request(PHTTP_REQUEST _request)
+		int read_body(buffer_assembler& _buff, PHTTP_REQUEST _request)
 		{
-			iwstring<2048> absPath;
-			absPath.copy(_request->CookedUrl.pAbsPath, _request->CookedUrl.AbsPathLength);
-			std::wstring path = absPath.c_str();
+			int count = _request->EntityChunkCount;
 
-			auto key = std::tie(path, verb);
+			for (int i = 0; i < count; i++) 
+			{
+				auto &pchunk = _request->pEntityChunks[i];
+				switch (pchunk.DataChunkType)
+				{
+				case HTTP_DATA_CHUNK_TYPE::HttpDataChunkFromFileHandle:
+					break;
+				case HTTP_DATA_CHUNK_TYPE::HttpDataChunkFromFragmentCache:
+					break;
+				case HTTP_DATA_CHUNK_TYPE::HttpDataChunkFromFragmentCacheEx:
+					break;
+				case HTTP_DATA_CHUNK_TYPE::HttpDataChunkFromMemory:
+					char* t = _buff.append(pchunk.FromMemory.BufferLength);
+					std::copy((PUCHAR)pchunk.FromMemory.pBuffer, (PUCHAR)pchunk.FromMemory.pBuffer + pchunk.FromMemory.BufferLength, t);
+					break;
+				}
+			}
+
+			return count;
 		}
 
+		std::string get_header_string(PHTTP_REQUEST _request, HTTP_HEADER_ID _header_id)
+		{
+			std::string header_string;
+			auto& headers = _request->Headers;
+			auto& header = headers.KnownHeaders[_header_id];
+			if (header.RawValueLength) 
+			{
+				buffer buff(header.RawValueLength);
+				char *temp = buff.get_ptr();
+				strncpy(temp, header.pRawValue, header.RawValueLength);
+				header_string = temp;
+			}
+			return header_string;
+		}
+
+		virtual void execute_request(PHTTP_REQUEST _request)
+		{
+			istring<2048> absPath;
+			istring<2048> queryString;
+			std::string sQueryString;
+			std::string sabsPath;
+
+			absPath.copy(_request->CookedUrl.pAbsPath, _request->CookedUrl.AbsPathLength);
+			sabsPath = absPath.c_str();
+
+			if (_request->CookedUrl.pQueryString) {
+				queryString.copy(_request->CookedUrl.pQueryString, _request->CookedUrl.QueryStringLength);
+				sQueryString = queryString.c_str();
+			}
+			
+			std::string authorization = get_header_string(_request, HTTP_HEADER_ID::HttpHeaderAuthorization);
+			std::string content_type = get_header_string(_request, HTTP_HEADER_ID::HttpHeaderContentType);
+
+			auto key = std::tie(sabsPath, _request->Verb);
+
+			http_request request = {};
+
+			request.path = sabsPath;
+
+			buffer_assembler body_builder;
+
+			if (_request->EntityChunkCount)
+			{
+				read_body(body_builder, _request);
+			}
+
+			switch (_request->Verb) {
+			case HttpVerbUnparsed:
+			case HttpVerbUnknown:
+			case HttpVerbInvalid:
+				request.http_method = "Invalid";
+				break;
+			case HttpVerbOPTIONS:
+				request.http_method = "OPTIONS";
+				break;
+			case HttpVerbGET:
+				request.http_method = "GET";
+				break;
+			case HttpVerbHEAD:
+				request.http_method = "HEAD";
+				break;
+			case HttpVerbPOST:
+				request.http_method = "POST";
+				break;
+			case HttpVerbPUT:
+				request.http_method = "PUT";
+				break;
+			case HttpVerbDELETE:
+				request.http_method = "DELETE";
+				break;
+			case HttpVerbTRACE:
+				request.http_method = "TRACE";
+				break;
+			case HttpVerbCONNECT:
+				request.http_method = "CONNECT";
+				break;
+			case HttpVerbTRACK:
+				request.http_method = "TRACK";
+				break;
+			case HttpVerbMOVE:
+				request.http_method = "MOVE";
+				break;
+			case HttpVerbCOPY:
+				request.http_method = "COPY";
+				break;
+			case HttpVerbPROPFIND:
+				request.http_method = "PROPFIND";
+				break;
+			case HttpVerbPROPPATCH:
+				request.http_method = "PROPPATCH";
+				break;
+			case HttpVerbMKCOL:
+				request.http_method = "MKCOL";
+				break;
+			case HttpVerbLOCK:
+				request.http_method = "LOCK";
+				break;
+			case HttpVerbUNLOCK:
+				request.http_method = "UNLOCK";
+				break;
+			case HttpVerbSEARCH:
+				request.http_method = "SEARCH";
+				break;
+			}
+
+			if (_request->Flags & HTTP_REQUEST_FLAG_MORE_ENTITY_BODY_EXISTS)
+			{
+				buffer buff(1 << 20);
+				DWORD bytes_returned;
+
+				DWORD receive_result = HttpReceiveRequestEntityBody(
+					request_queue,
+					_request->RequestId,
+					0,
+					buff.get_ptr(),
+					buff.get_size(),
+					&bytes_returned,
+					nullptr
+				);
+
+				while (receive_result != ERROR_HANDLE_EOF)
+				{
+					if (receive_result == NO_ERROR)
+					{
+						read_body(body_builder, (PHTTP_REQUEST)buff.get_ptr());
+
+						receive_result = HttpReceiveRequestEntityBody(
+							request_queue,
+							_request->RequestId,
+							0,
+							buff.get_ptr(),
+							buff.get_size(),
+							&bytes_returned,
+							nullptr
+						);
+					}
+				}
+			}
+
+			request.body = body_builder.consolidate();
+
+			bool unhandled = true;
+
+			try 
+			{
+				for (auto handler : api_handlers) 
+				{
+					std::string key = std::get<0>(handler.first);
+					HTTP_VERB verb = std::get<1>(handler.first);
+					if (sabsPath.starts_with(key) && verb == _request->Verb)
+					{
+						int szk = key.size();
+						int szp = sabsPath.size();
+						std::string remaining_path = sabsPath.substr(szk, szp-szk);
+						request.rest_path = split(remaining_path, '/');
+						service_transaction<http_response> trans = handler.second->func(request);
+						http_response trans_response = trans.wait();
+						send_response(_request->RequestId, trans_response.http_status_code, "", trans_response.content_type, trans_response.response_body.get_ptr(), trans_response.response_body.get_size());
+						unhandled = false;
+					}
+				}
+			}
+			catch (std::exception exc)
+			{
+				send_response(_request->RequestId, 500, "Server error, something blew up.", "text/plain", exc.what());
+			}
+			
+			if (unhandled)
+			{
+				send_response(_request->RequestId, 404, "I looked, but, didn't find anything. Probably should stop by the store and grab another.", "text/plain", "Well, that was a bust.");
+				std::cout << "HTTP Unhandled request:" << request.http_method << " " << request.path << std::endl;
+			}
+		}
+
+		DWORD send_response(
+			HTTP_REQUEST_ID _request_id, 
+			int _status_code,
+			std::string _reason, 
+			std::string _content_type, 
+			char* _buffer, 
+			DWORD _buffer_length_bytes)
+		{
+			HTTP_RESPONSE		response = {};
+			HTTP_DATA_CHUNK		dataChunk = {};
+			DWORD				result;
+			DWORD				bytesSent;
+
+			istring<1025> reason = _reason;
+			istring<1025> content_type = _content_type;
+
+			response.StatusCode = _status_code;
+			response.ReasonLength = reason.size();
+			response.pReason = reason.c_str();
+
+			if (_buffer) 
+			{
+				dataChunk.FromMemory.pBuffer = _buffer;
+				dataChunk.FromMemory.BufferLength = _buffer_length_bytes;
+				dataChunk.DataChunkType = HTTP_DATA_CHUNK_TYPE::HttpDataChunkFromMemory;
+
+				response.EntityChunkCount = 1;
+				response.pEntityChunks = &dataChunk;
+			}
+
+			response.Headers.KnownHeaders[HTTP_HEADER_ID::HttpHeaderContentType].pRawValue = content_type.c_str();
+			response.Headers.KnownHeaders[HTTP_HEADER_ID::HttpHeaderContentType].RawValueLength = content_type.size();
+
+			// 
+			// Because the entity body is sent in one call, it is not
+			// required to specify the Content-Length.
+			//
+
+			result = HttpSendHttpResponse(
+				request_queue,           // ReqQueueHandle
+				_request_id, // Request ID
+				0,                   // Flags
+				&response,           // HTTP response
+				NULL,                // pReserved1
+				&bytesSent,          // bytes sent  (OPTIONAL)
+				NULL,                // pReserved2  (must be NULL)
+				0,                   // Reserved3   (must be 0)
+				NULL,                // LPOVERLAPPED(OPTIONAL)
+				NULL                 // pReserved4  (must be NULL)
+			);
+
+			return result;
+		}
+
+		DWORD send_response(
+			HTTP_REQUEST_ID _request_id,
+			int _status_code,
+			std::string _reason,
+			json _response_json)
+		{
+			std::string response_data = _response_json.to_json();
+			DWORD result = send_response(_request_id,
+				_status_code,
+				_reason,
+				"application/json",
+				response_data);
+			return result;
+		}
+
+		DWORD send_response(HTTP_REQUEST_ID _request_id,
+			int _status_code,
+			std::string _reason,
+			std::string _content_type,
+			std::string _response_string)
+		{
+			char* buffer = (char *)_response_string.c_str();
+			DWORD buffer_length_bytes = _response_string.size();
+			DWORD response = send_response(_request_id,
+				_status_code,
+				_reason,
+				_content_type,
+				buffer,
+				buffer_length_bytes);
+			return response;
+		}
+
+		http_server_task_launcher next_request()
+		{
+			http_server_task_launcher launcher;
+
+			launcher.read_request(request_queue, HTTP_NULL_ID, 0);
+
+			return launcher;
+		}
 	};
 
 }

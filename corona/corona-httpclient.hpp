@@ -167,7 +167,6 @@ namespace corona
         os_result               system_result;
 
         int						http_status_code;
-        std::string				mime_type;
 
         buffer                  response_body;
         std::string             content_type;
@@ -181,10 +180,12 @@ namespace corona
         std::string                  host;
         int                          port;
         std::string                  path;
+        std::vector<std::string>     rest_path;
         std::string                  http_method;
         std::vector<std::string>     allowed_types;
         std::string                  headers;
         buffer                       body;
+        std::string                  query_string;
     };
 
     class http_params

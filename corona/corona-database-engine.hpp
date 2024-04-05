@@ -24,6 +24,51 @@ API close to complete, rounding out for testing.
 namespace corona
 {
 
+	class json_file_watcher 
+	{
+		std::string last_contents;
+	public:
+		std::string file_name;
+		json		contents;
+
+		json_file_watcher() 
+		{
+			;
+		}
+
+		file_transaction<relative_ptr_type> poll(application* _app)
+		{
+			json_parser jp;
+			try {
+				file f = _app->open_file(file_name, file_open_types::open_existing);
+				if (f.success()) {
+					auto fsize = f.size();
+					buffer b(fsize + 1);
+					auto result = co_await f.read(0, b.get_ptr(), fsize);
+					if (result.success) {
+						crypto crypter;
+						if (b.is_safe_string()) {
+							std::string s_contents = b.get_ptr();
+							if (s_contents != last_contents) {
+								json temp_contents = jp.parse_object(s_contents);
+								if (!jp.parse_errors.size()) {
+									last_contents = contents;
+									contents = temp_contents;
+									co_return true;
+								}
+							}
+						}
+					}
+				}
+			}
+			catch (std::exception exc)
+			{
+				std::cout << exc.what() << std::endl;
+			}
+			co_return false;
+		}
+	};
+
 	class corona_db_header_struct
 	{
 	public:
@@ -60,6 +105,12 @@ namespace corona
 		std::map<class_method_key, json_function_function> functions;
 
 		crypto crypter;
+
+		json_file_watcher config_file;
+		std::string send_grid_api_key;
+
+		json_file_watcher schema_file;
+		bool watch_polling;
 
 		file* database_file;
 
@@ -676,28 +727,6 @@ private:
 			return payload;
 		}
 
-		json create_request(json _request, json _data)
-		{
-			json_parser jp;
-
-			json payload = jp.create_object();
-			json src_token = _request["Token"];
-			json token = jp.create_object();
-
-			token.copy_member("Name", src_token);
-			token.copy_member("Authorization", src_token);
-			date_time expiration = date_time::utc_now() + this->token_life;
-			token.put_member("TokenExpires", expiration);
-			std::string cipher_text = crypter.encrypt(token, get_pass_phrase(), get_iv());
-			token.put_member("Signature", cipher_text);
-
-			payload.put_member("Token", token);
-			payload.put_member("Success", true);
-			payload.put_member("Message", "Ok");
-			payload.put_member("Data", _data);
-			payload.put_member("Signature", cipher_text);
-			return payload;
-		}
 
 		bool check_message(json& _message, std::vector<std::string> _authorizations)
 		{
@@ -739,7 +768,7 @@ private:
 			std::string authorization = token["Authorization"];
 			std::string user = token["Name"];
 
-			if (authorization == "system" && user == "system")
+			if (authorization == "System" && user == "System")
 			{
 				return true;
 			}
@@ -831,7 +860,7 @@ private:
 
 			// extract the user key from the token and get the user object
 			json user_key = get_message_user(_token);
-			if ((std::string)user_key["Name"] == "system") {
+			if ((std::string)user_key["Name"] == "System") {
 				co_return true;
 			}
 
@@ -1168,14 +1197,132 @@ private:
 
 		// constructing and opening a database
 
-		corona_database(file* _file)
+		corona_database(application& _app, file* _file)
 			: database_file(_file),
 			classes(_file, { "ClassName" }),
 			class_objects(_file, { "ClassName", "ObjectId" }),
 			objects(_file, { "ObjectId" }),
 			objects_by_name(_file, { "ClassName", "Name", "ObjectId" })
 		{
-			token_life = time_span(1, time_models::hours);
+			token_life = time_span(1, time_models::hours);	
+
+			config_file.file_name = "config.json";
+			schema_file.file_name = "schema.json";
+
+			watch_polling = true;
+
+		}
+
+		void apply_config(json _config)
+		{
+			if (_config.has_member("SendGrid")) 
+			{
+				json send_grid = _config["SendGrid"];
+				send_grid_api_key = send_grid["ApiKey"];
+			}
+			else 
+			{
+				std::cout << "Send grid api key not found in configuration" << std::endl;
+			}
+		}
+
+		database_transaction<json> apply_schema(json _schema)
+		{
+			if (_schema.has_member("Classes"))
+			{
+				json class_array = _schema["Classes"];
+				if (class_array.is_array()) 
+				{
+					for (int i = 0; i < class_array.size(); i++) 
+					{
+						json class_definition = class_array.get_element(i);
+						json put_class_request = create_system_request(class_definition);
+						co_await put_class(put_class_request);
+					}
+				}
+				else if (class_array.is_object()) 
+				{
+					json class_definition = class_array;
+					json put_class_request = create_system_request(class_definition);
+					co_await put_class(put_class_request);
+				}
+			}
+			else
+			{
+				std::cout << "Classes not found in schema." << std::endl;
+			}
+
+			if (_schema.has_member("Users"))
+			{
+				json user_array = _schema["Users"];
+				if (user_array.is_array())
+				{
+					for (int i = 0; i < user_array.size(); i++)
+					{
+						json user_definition = user_array.get_element(i);
+						json put_user_request = create_system_request(user_definition);
+						co_await create_user(put_user_request);
+					}
+				}
+				else if (user_array.is_object())
+				{
+					json user_definition = user_array;
+					json put_user_request = create_system_request(user_definition);
+					co_await create_user(put_user_request);
+				}
+			}
+			else
+			{
+				std::cout << "Send grid api key not found in configuration" << std::endl;
+			}
+
+			if (_schema.has_member("Objects"))
+			{
+				json object_array = _schema["Objects"];
+				if (object_array.is_array())
+				{
+					for (int i = 0; i < object_array.size(); i++)
+					{
+						json object_definition = object_array.get_element(i);
+						json put_object_request = create_system_request(object_definition);
+						co_await create_user(put_object_request);
+					}
+				}
+				else if (object_array.is_object())
+				{
+					json object_definition = object_array;
+					json put_object_request = create_system_request(object_definition);
+					co_await put_class(put_object_request);
+				}
+			}
+			else
+			{
+				std::cout << "Send grid api key not found in configuration" << std::endl;
+			}
+
+		}
+
+		void watch_config_schema(application* _app)
+		{
+			if (watch_polling) 
+			{
+				threadomatic::run([this, _app]() -> void
+					{
+						file_transaction<relative_ptr_type> config_tran = config_file.poll(_app);
+						if (config_tran.wait()) 
+						{
+							apply_config(config_file.contents);
+						}
+						file_transaction<relative_ptr_type> schema_tran = schema_file.poll(_app);
+						if (schema_tran.wait()) 
+						{
+							auto schema_task = apply_schema(schema_file.contents);
+							schema_task.wait();
+						}
+						::Sleep(1000);
+						watch_config_schema(_app);
+					});
+			}
 		}
 
 		database_transaction<relative_ptr_type> open_database(relative_ptr_type _header_location)
@@ -1216,27 +1363,42 @@ private:
 
 			} while (user_exists);
 
-			json create_user_params = data;
-			create_user_params.put_member("ClassName", user_class);
-			create_user_params.put_member("Name", user_name);
-			json create_object_request = create_request(create_user_request, create_user_params);
-			json user_result = co_await put_object(create_object_request);
-			json new_user = user_result["Data"];
+			std::string password1 = data["Password1"];
+			std::string password2 = data["Password2"];
 
-			json create_login_params = jp.create_object();
-			create_login_params.put_member("ClassName", "SysLogin");
-			create_login_params.put_member("Name", user_name);
-			create_login_params.put_member("LoginState", "UserCreated");
-			db_object_id_type objid = new_user["ObjectId"].get_int64();
-			create_login_params.put_member("CurrentObjectId", objid);
-			json put_object_request = create_request(create_user_request, create_login_params);
-			json put_response = co_await put_object(put_object_request);
+			if (password1 == password2 || password1.size()==0)
+			{
+				std::string hashed_pw = crypter.hash(password1);
 
-			if (put_response["Succeeded"]) {
-				response = create_response(user_name, auth_login_user, true, "User created", data, 0.0);
+				json create_user_params = data;
+				create_user_params.put_member("ClassName", user_class);
+				create_user_params.put_member("Name", user_name);
+				json create_object_request = create_request(create_user_request, create_user_params);
+				json user_result = co_await put_object(create_object_request);
+				json new_user = user_result["Data"];
+
+				json create_login_params = jp.create_object();
+				create_login_params.put_member("ClassName", "SysLogin");
+				create_login_params.put_member("Password", hashed_pw);
+				create_login_params.put_member("Name", user_name);
+				create_login_params.put_member("LoginState", "UserCreated");
+				db_object_id_type objid = new_user["ObjectId"].get_int64();
+				create_login_params.put_member("CurrentObjectId", objid);
+				json put_object_request = create_request(create_user_request, create_login_params);
+				json put_response = co_await put_object(put_object_request);
+
+				if (put_response["Succeeded"])
+				{
+					response = create_response(user_name, auth_login_user, true, "User created", data, 0.0);
+				}
+				else
+				{
+					response = create_response(create_user_request, false, "User not created", data, 0.0);
+				}
 			}
-			else {
-				response = create_response(create_user_request, false, "User not created", data, 0.0);
+			else 
+			{
+				response = create_response(create_user_request, false, "Passwords don't match", data, 0.0);
 			}
 
 			co_return response;
@@ -1266,9 +1428,20 @@ private:
 
 			std::string user_name = user_key["Name"];
 
+			/*   
+			
+			consider checking that when a user is a new user, you cannot log into it.
+
+			create_login_params.put_member("LoginState", "UserCreated");  */
+
 			if (user_login["Success"]) 
 			{
 				json ul = user_login["Data"];
+				std::string lstest = ul["LoginState"];
+				if (lstest == "UserCreated") {
+					response = create_response(_login_request, false, "Failed", jp.create_object(), 0.0);
+					co_return response;
+				}
 				password = crypter.hash(password);
 				std::string existing_hashed_password = ul["Password"];
 				if (password == existing_hashed_password) 
@@ -1354,8 +1527,8 @@ private:
 					co_await put_object(por);
 
 					std::string code_email = "Your Countrybit confirmation code is " + confirmation_code;
-
 					sendgrid_client sgc;
+					sgc.api_key = send_grid_api_key;
 
 					json gur = create_request(_send_request, ul);
 					obj_spec.put_member("ClassName", "SysUser");
@@ -1413,11 +1586,13 @@ private:
 					co_await put_object(por);
 					response = create_response(user_name, auth_general, true, "Ok", jp.create_object(), 0.0);
 				}
-				else {
+				else 
+				{
 					response = create_response(_receive_request, false, "Yup, you forgot to do something.", jp.create_object(), 0.0);
 				}
 			}
-			else {
+			else 
+			{
 				response = create_response(_receive_request, false, "Could not get user", jp.create_object(), 0.0);
 			}
 			co_return response;
@@ -1463,6 +1638,7 @@ private:
 					json por = create_request(_send_request, ul);
 					co_await put_object(por);
 					sendgrid_client sgc;
+					sgc.api_key = send_grid_api_key;
 
 					obj_spec.put_member("ClassName", "SysUser");
 					json gur = create_request(_send_request, obj_spec);
@@ -2230,7 +2406,184 @@ private:
 			co_return response;
 		}
 
+		json create_system_request(json _data)
+		{
+			json_parser jp;
+
+			json payload = jp.create_object();
+			json token = jp.create_object();
+			token.put_member("Name", "System");
+			token.put_member("Authorization", "System");
+			date_time expiration = date_time::utc_now() + this->token_life;
+			token.put_member("TokenExpires", expiration);
+			std::string cipher_text = crypter.encrypt(token, get_pass_phrase(), get_iv());
+			token.put_member("Signature", cipher_text);
+
+			payload.put_member("Token", token);
+			payload.put_member("Success", true);
+			payload.put_member("Message", "Ok");
+			payload.put_member("Data", _data);
+			payload.put_member("Seconds", 0);
+			return payload;
+		}
+
+		json create_request(json _request, json _data)
+		{
+			json_parser jp;
+
+			json payload = jp.create_object();
+			json src_token = _request["Token"];
+			json token = jp.create_object();
+
+			token.copy_member("Name", src_token);
+			token.copy_member("Authorization", src_token);
+			date_time expiration = date_time::utc_now() + this->token_life;
+			token.put_member("TokenExpires", expiration);
+			std::string cipher_text = crypter.encrypt(token, get_pass_phrase(), get_iv());
+			token.put_member("Signature", cipher_text);
+
+			payload.put_member("Token", token);
+			payload.put_member("Success", true);
+			payload.put_member("Message", "Ok");
+			payload.put_member("Data", _data);
+			payload.put_member("Signature", cipher_text);
+			return payload;
+		}
+
+
+		database_transaction<json> get_banner()
+		{
+			json_parser jp;
+			json body = jp.parse_object(R"(
+{
+	"Name":"Corona Server",
+	"Version":"1.0"
+}
+)");
+			co_return body;
+		}
+
+		void bind_web_server(http_server& _server, std::string _root_path)
+		{
+			std::string path = _root_path + "/test/";
+			put_handler(_server, HTTP_VERB::HttpVerbGET, path, [this](json _request)->database_transaction<json> {
+				json fn_response = this->get_banner();
+				co_return fn_response;
+				});
+
+			std::string path = _root_path + "/login/start/";
+			put_handler(_server, HTTP_VERB::HttpVerbPOST, path, [this](json _request)->database_transaction<json> {
+				json fn_response = this->login_user(_request);
+				co_return fn_response;
+				});
+
+			path = _root_path + "/login/send_confirmation/";
+			put_handler(_server, HTTP_VERB::HttpVerbPOST, path, [this](json _request)->database_transaction<json> {
+				json fn_response = this->send_login_confirmation_code(_request);
+				co_return fn_response;
+				});
+
+			path = _root_path + "/login/receive_confirmation/";
+			put_handler(_server, HTTP_VERB::HttpVerbPOST, path, [this](json _request)->database_transaction<json> {
+				json fn_response = this->login_user(_request);
+				co_return fn_response;
+				});
+
+			path = _root_path + "/login/send_password_reset/";
+			put_handler(_server, HTTP_VERB::HttpVerbPOST, path, [this](json _request)->database_transaction<json> {
+				json fn_response = this->login_user(_request);
+				co_return fn_response;
+				});
+
+			path = _root_path + "/classes/get/";
+			put_handler(_server, HTTP_VERB::HttpVerbPOST, path, [this](json _request)->database_transaction<json> {
+				json fn_response = this->get_classes(_request);
+				co_return fn_response;
+				});
+
+			path = _root_path + "/classes/put/";
+			put_handler(_server, HTTP_VERB::HttpVerbPOST, path, [this](json _request)->database_transaction<json> {
+				json fn_response = this->put_class(_request);
+				co_return fn_response;
+				});
+
+			path = _root_path + "/users/create/";
+			put_handler(_server, HTTP_VERB::HttpVerbPOST, path, [this](json _request)->database_transaction<json> {
+				json fn_response = this->create_user(_request);
+				co_return fn_response;
+				});
+
+			path = _root_path + "/objects/query/";
+			put_handler(_server, HTTP_VERB::HttpVerbPOST, path, [this](json _request)->database_transaction<json> {
+				json fn_response = this->query_class(_request);
+				co_return fn_response;
+				});
+
+			path = _root_path + "/users/get/";
+			put_handler(_server, HTTP_VERB::HttpVerbPOST, path, [this](json _request)->database_transaction<json> {
+				json fn_response = this->create_user(_request);
+				co_return fn_response;
+				});
+
+			path = _root_path + "/objects/create/";
+			put_handler(_server, HTTP_VERB::HttpVerbPOST, path, [this](json _request)->database_transaction<json> {
+				json fn_response = this->create_object(_request);
+				co_return fn_response;
+				});
+
+			path = _root_path + "/objects/put/";
+			put_handler(_server, HTTP_VERB::HttpVerbPOST, path, [this](json _request)->database_transaction<json> {
+				json fn_response = this->put_object(_request);
+				co_return fn_response;
+				});
+
+			path = _root_path + "/objects/delete/";
+			put_handler(_server, HTTP_VERB::HttpVerbPOST, path, [this](json _request)->database_transaction<json> {
+				json fn_response = this->delete_object(_request);
+				co_return fn_response;
+				});
+
+			path = _root_path + "/objects/edit/";
+			put_handler(_server, HTTP_VERB::HttpVerbPOST, path, [this](json _request)->database_transaction<json> {
+				json fn_response = this->edit_object(_request);
+				co_return fn_response;
+				});
+
+			path = _root_path + "/objects/";
+			put_handler(_server, HTTP_VERB::HttpVerbPOST, path, [this](json _request)->database_transaction<json> {
+				json fn_response = this->put_object(_request);
+				co_return fn_response;
+				});
+		}
+
+		private:
+
+		void put_handler(http_server& _server, HTTP_VERB _verb, std::string _path, http_handler_db_function _func) {
+			_server.put_handler( _verb, _path, [this, _func](http_request _request)->service_transaction<http_response> {
+				http_response response;
+				json_parser jph;
+				response.content_type = "application/json";
+
+				json request = jph.parse_object(_request.body.get_ptr());
+
+				if (request.is_member("ClassName", "SysParseError")) {
+					response.http_status_code = 504;
+					response.response_body = request;
+					response.content_length = response.response_body.get_size();
+					co_return response;
+				}
+
+				json login_response = co_await _func(request);
+
+				response.response_body = login_response;
+				response.content_length = response.response_body.get_size();
+				response.http_status_code = 200;
+
+				co_return response;
+			});
+		}
 	};
+
 
 	user_transaction<bool> test_database_engine(corona::application& _app)
 	{
@@ -2240,17 +2593,63 @@ private:
 
 		std::cout << "test_database_engine, thread:" << ::GetCurrentThreadId() << std::endl;
 
-		corona_database db(&dtest);
+		corona_database db( _app, & dtest);
 
 		std::cout << "test_database_engine, create_database, thread:" << ::GetCurrentThreadId() << std::endl;
 
 		auto create_database_task = db.create_database();
 		relative_ptr_type database_location = create_database_task.wait();
 
+		json_parser jp;
+		json user = jp.parse_object(R"(
+{
+"ClassName" : "SysUser",
+"Name" : "testuser",
+"FirstName" : "Jake",
+"LastName" : "Rogers",
+"Email" : "todd.bandrowsky@gmail.com",
+"Mobile" : "443 877 8606",
+"Street" : "120 West McLellan Rd",
+"City" : "Bowling Green",
+"State" : "KY",
+"Zip" : "42101",
+"Password1" : "Mypassword",
+"Password2" : "Mypassword"
+}
+)");
+
+		json sys_request = db.create_system_request(user);
+
+		json user_result = co_await db.create_user(sys_request);
 
 		co_return success;
+	}
+
+	user_transaction<bool> run_server(corona::application& _app)
+	{
+		file dtest = _app.create_file(FOLDERID_Documents, "corona_json_database_test.ctb");
+
+		std::cout << "test_database_engine, thread:" << ::GetCurrentThreadId() << std::endl;
+
+		corona_database db(_app, &dtest), * pdb = &db;
+
+		std::cout << "test_database_engine, create_database, thread:" << ::GetCurrentThreadId() << std::endl;
+
+		auto create_database_task = db.create_database();
+		relative_ptr_type database_location = create_database_task.wait();
+
+		std::cout << "test_database_engine, create_database, thread:" << ::GetCurrentThreadId() << std::endl;
+
+		http_server db_api_server;
+
+		db.bind_web_server(db_api_server, "http://localhost:5555/corona/");
+		db.watch_config_schema(&_app);
+
+		while (true) 
+		{
+			co_await db_api_server.next_request();
+		}
 	}
 }
 
 #endif
-
