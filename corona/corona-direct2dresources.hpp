@@ -1,29 +1,6 @@
 #ifndef CORONA_DIRECT2DRESOURCES_H
 #define CORONA_DIRECT2DRESOURCES_H
 
-#include "corona-windows-all.h"
-#include "corona-constants.hpp"
-#include "corona-directxdevices.hpp"
-#include "corona-direct2dcontextbase.hpp"
-#include "corona-visual.hpp"
-#include "corona-store_box.hpp"
-#include "corona-string_box.hpp"
-#include "corona-rectangle_box.hpp"
-#include "corona-point_box.hpp"
-#include "corona-datatransfer.hpp"
-
-
-#include <string>
-#include <exception>
-#include <stdexcept>
-#include <format>
-#include <compare>
-#include <map>
-#include <vector>
-#include <stack>
-#include <functional>
-#include <memory>
-#include <algorithm>
 
 namespace corona
 {

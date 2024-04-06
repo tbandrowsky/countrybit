@@ -1,10 +1,6 @@
 #ifndef CORONA_COLOR_BOX_H
 #define CORONA_COLOR_BOX_H
 
-#include "corona-windows-all.h";
-#include "corona-store_box.hpp";
-
-#include <compare>
 
 namespace corona
 {

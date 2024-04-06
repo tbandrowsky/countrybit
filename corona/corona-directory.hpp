@@ -1,18 +1,6 @@
 #ifndef CORONA_DIRECTORY_H
 #define CORONA_DIRECTORY_H
 
-#include "corona-windows-lite.h";
-#include "corona-constants.hpp"
-#include "corona-queue.hpp"
-#include "corona-messages.hpp"
-#include "corona-file.hpp"
-
-#include <iterator>
-#include <compare>
-#include <coroutine>
-#include <memory>
-#include <compare>
-
 namespace corona
 {
 

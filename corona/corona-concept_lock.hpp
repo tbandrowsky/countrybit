@@ -1,13 +1,6 @@
 #ifndef CORONA_CONCEPT_LOCK_H
 #define CORONA_CONCEPT_LOCK_H
 
-#include "corona-windows-lite.h";
-
-#include <map>
-#include <utility>
-#include <string>
-#include <compare>
-
 namespace corona
 {
 

@@ -1,11 +1,6 @@
 #ifndef CORONA_CONSTANTS_H
 #define CORONA_CONSTANTS_H
 
-#include <cstring>
-#include <concepts>
-#include <cstdlib>
-#include <compare>
-
 namespace corona
 {
 	enum jtype
@@ -567,16 +562,6 @@ namespace corona
 			return *this;
 		}
 
-
-		buffer& operator = (json& _src)
-		{
-			std::string temp = _src.to_json();
-			init(temp.size());
-			char* p = (char *)temp.c_str();
-			std::copy(p, p + buffer_size, buffer_bytes.get());
-			return *this;
-		}
-
 		buffer operator = (buffer&& _src)
 		{
 			buffer_bytes = std::move(_src.buffer_bytes);
@@ -694,6 +679,29 @@ namespace corona
 		std::vector<buffer> buffers;
 
 	public:
+
+		char* append(const char *_src)
+		{
+			if (_src) 
+			{
+				int len = strlen(_src);
+				buffer temp(len+1);
+				char* d = temp.get_ptr();
+				const char* s = _src;
+				while (*s) {
+					*d = *s;
+					s++;
+					d++;
+				}
+				*d = 0;
+				buffers.push_back(std::move(temp));
+				return buffers[buffers.size() - 1].get_ptr();
+			}
+			else 
+			{
+				return nullptr;
+			}
+		}
 
 		char* append(std::string _str)
 		{

@@ -2,10 +2,6 @@
 #ifndef CORONA_HTTP_SERVER
 #define CORONA_HTTP_SERVER
 
-#include "corona-file.hpp"
-#include "corona-httpclient.hpp"
-#include "http.h"
-
 namespace corona
 {
     
@@ -371,7 +367,7 @@ namespace corona
 			{
 				buffer buff(header.RawValueLength);
 				char *temp = buff.get_ptr();
-				strncpy(temp, header.pRawValue, header.RawValueLength);
+				strncpy_s(temp, header.RawValueLength, header.pRawValue, header.RawValueLength);
 				header_string = temp;
 			}
 			return header_string;

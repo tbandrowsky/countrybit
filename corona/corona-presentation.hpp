@@ -1,19 +1,6 @@
 #ifndef CORONA_PRESENTATION_H
 #define CORONA_PRESENTATION_H
 
-#include "corona-presentation-base.hpp"
-#include "corona-presentation-controls-base.hpp"
-#include "corona-presentation-menu.hpp"
-#include "corona-presentation-events.hpp"
-#include "corona-presentation-controls-dx.hpp"
-#include "corona-presentation-controls-dx-text.hpp"
-#include "corona-presentation-controls-win32.hpp"
-#include "corona-presentation-controls-dx-container.hpp"
-#include "corona-presentation-controls-calico.hpp"
-#include "corona-presentation-builder.hpp"
-#include "corona-presentation-page.hpp"
-#include "corona-dataplane.hpp"
-
 namespace corona {
 
 	enum class field_layout

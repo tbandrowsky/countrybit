@@ -1,13 +1,6 @@
 #ifndef CORONA_RECTANGLE_H
 #define CORONA_RECTANGLE_H
 
-#include "corona-store_box.hpp"
-#include "corona-point_box.hpp"
-
-#include <cmath>
-#include <compare>
-#include <numeric>
-
 namespace corona {
 
 	struct rectangle

@@ -2,8 +2,13 @@
 #ifndef CORONA_WINDOWS_ALL
 #define CORONA_WINDOWS_ALL
 
+#define WIN32_LEAN_AND_MEAN
+
 #include "windows.h"
 #include "windowsx.h"
+
+#include "http.h"
+#include "bcrypt.h"
 #include "combaseapi.h"
 #include "Winhttp.h"
 #include "shellapi.h"

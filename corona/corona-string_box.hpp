@@ -1,17 +1,6 @@
 #ifndef CORONA_STRING_BOX
 #define CORONA_STRING_BOX
 
-#include "corona-windows-lite.h"
-#include "corona-store_box.hpp"
-#include "corona-assert_if.hpp"
-#include "corona-constants.hpp"
-
-#include <cstdlib>
-#include <string>
-#include <compare>
-#include <functional>
-#include <algorithm>
-
 namespace corona {
 	struct string_box_data {
 	public:

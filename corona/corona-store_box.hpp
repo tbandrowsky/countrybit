@@ -1,17 +1,6 @@
 #ifndef CORONA_STORE_BOX_H
 #define CORONA_STORE_BOX_H
 
-#include "corona-windows-lite.h"
-#include "corona-constants.hpp"
-
-#include <string>
-#include <iostream>
-#include <algorithm>
-#include <concepts>
-#include <cstdlib>
-#include <numeric>
-#include <compare>
-
 namespace corona {
 
 	template <typename box_class>

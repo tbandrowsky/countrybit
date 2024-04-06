@@ -2,8 +2,6 @@
 #ifndef CORONA_PRESENTATION_BUILDER_H
 #define CORONA_PRESENTATION_BUILDER_H
 
-#include "corona-presentation.hpp"
-
 namespace corona
 {
 

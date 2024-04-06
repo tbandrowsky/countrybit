@@ -1,27 +1,6 @@
 #ifndef CORONA_PRESENTATION_BASE_H
 #define CORONA_PRESENTATION_BASE_H
 
-#include "corona-windows-all.h"
-#include "corona-constants.hpp"
-#include "corona-visual.hpp"
-#include "corona-styles.hpp"
-#include "corona-store_box.hpp"
-#include "corona-layout_rect_box.hpp"
-#include "corona-point_box.hpp"
-#include "corona-rectangle_box.hpp"
-#include "corona-controller.hpp"
-#include "corona-direct2dcontext.hpp"
-#include "corona-application_base.hpp"
-#include "corona-direct2dwindow.hpp"
-#include "corona-json.hpp"
-
-#include <memory>
-#include <string>
-#include <vector>
-#include <utility>
-#include <compare>
-#include <functional>
-
 namespace corona
 {
 	class presentation;

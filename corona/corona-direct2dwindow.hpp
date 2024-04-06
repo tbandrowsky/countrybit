@@ -1,30 +1,6 @@
 #ifndef CORONA_DIRECT2DWINDOW_H
 #define CORONA_DIRECT2DWINDOW_H
 
-#include "corona-windows-all.h"
-#include "corona-constants.hpp"
-#include "corona-directxadapterbase.hpp"
-#include "corona-direct2dcontext.hpp"
-#include "corona-bitmaps.hpp"
-#include "corona-visual.hpp"
-#include "corona-store_box.hpp"
-#include "corona-rectangle_box.hpp"
-#include "corona-point_box.hpp"
-#include "corona-datatransfer.hpp"
-#include "corona-controller.hpp"
-
-#include <string>
-#include <exception>
-#include <stdexcept>
-#include <format>
-#include <compare>
-#include <map>
-#include <vector>
-#include <stack>
-#include <functional>
-#include <memory>
-#include <algorithm>
-
 namespace corona
 {
 	class direct2dWindow;

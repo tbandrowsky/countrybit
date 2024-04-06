@@ -6,16 +6,6 @@
 #include "corona-filterable_iterator.hpp"
 #include "corona-store_box.hpp"
 
-#include <functional>
-#include <algorithm>
-#include <vector>
-#include <initializer_list>
-#include <memory>
-#include <exception>
-#include <iterator>
-#include <stdexcept>
-#include <compare>
-
 namespace corona {
 
 	template <typename item_type, int max_items>

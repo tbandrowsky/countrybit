@@ -1,19 +1,6 @@
 #ifndef CORONA_CONTROLLER_H
 #define CORONA_CONTROLLER_H
 
-#include "corona-constants.hpp"
-#include "corona-direct2dcontext.hpp"
-#include "corona-rectangle_box.hpp"
-#include "corona-point_box.hpp"
-#include "corona-datatransfer.hpp"
-#include "corona-json.hpp"
-#include "corona-dataplane.hpp"
-
-#include <memory>
-#include <string>
-#include <vector>
-#include <list>
-
 namespace corona
 {
 

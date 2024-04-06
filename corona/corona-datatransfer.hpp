@@ -1,10 +1,6 @@
 #ifndef CORONA_DATATRANSFER_H
 #define CORONA_DATATRANSFER_H
 
-#include <string>
-#include <memory>
-#include <compare>
-
 namespace corona
 {
 

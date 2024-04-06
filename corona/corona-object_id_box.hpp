@@ -1,13 +1,6 @@
 #ifndef CORONA_OBJECT_ID_H
 #define CORONA_OBJECT_ID_H
 
-#include "corona-constants.hpp"
-#include "corona-store_box.hpp"
-#include "corona-jobject.hpp"
-
-#include <iostream>
-#include <compare>
-
 namespace corona {
 
 	class object_id_box : protected boxed<object_id_type>

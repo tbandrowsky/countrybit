@@ -2,10 +2,6 @@
 #ifndef CORONA_PRESENTATION_CONTROLS_BASE_H
 #define CORONA_PRESENTATION_CONTROLS_BASE_H
 
-#include "corona-presentation-base.hpp"
-#include "corona-presentation-events.hpp"
-#include "corona-presentation-menu.hpp"
-
 namespace corona
 {
 	class applicationBase;

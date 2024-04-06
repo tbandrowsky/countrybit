@@ -1,10 +1,6 @@
 #ifndef CORONA_WAVE_BOX
 #define CORONA_WAVE_BOX
 
-#include "corona-store_box.hpp"
-
-#include <compare>
-
 namespace corona {
 
 	struct wave_instance

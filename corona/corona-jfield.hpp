@@ -2,18 +2,6 @@
 #ifndef CORONA_JFIELD_H
 #define CORONA_JFIELD_H
 
-#include "corona-windows-all.h"
-#include "corona-constants.hpp"
-#include "corona-store_box.hpp"
-#include "corona-string_box.hpp"
-#include "corona-iarray.hpp"
-#include "corona-table.hpp"
-
-#include <iostream>
-#include <string>
-#include <cinttypes>
-#include <compare>
-
 namespace corona {
 
 	const int max_query_filters = 32;

@@ -1,14 +1,6 @@
 #ifndef CORONA_FILTERABLE_ITERATOR_H
 #define CORONA_FILTERABLE_ITERATOR_H
 
-#include <algorithm>
-#include <vector>
-#include <functional>
-#include <algorithm>
-#include <utility>
-#include <iterator>
-#include <compare>
-
 namespace corona
 {
 

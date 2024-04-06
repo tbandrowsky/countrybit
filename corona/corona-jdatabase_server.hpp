@@ -1,22 +1,6 @@
 #ifndef CORONA_JDATABASE_SERVER_H
 #define CORONA_JDATABASE_SERVER_H
 
-#include "corona-constants.hpp"
-#include "corona-store_box.hpp"
-#include "corona-string_box.hpp"
-#include "corona-collection_id_box.hpp"
-#include "corona-table.hpp"
-#include "corona-sorted_index.hpp"
-#include "corona-jobject.hpp"
-#include "corona-jfield.hpp"
-#include "corona-jvalue.hpp"
-
-#include <string>
-#include <iostream>
-#include <compare>
-#include <coroutine>
-#include <filesystem>
-
 namespace corona {
 
 	using collection_table_type = table<jcollection_ref>;

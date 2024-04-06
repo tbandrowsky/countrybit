@@ -1,12 +1,6 @@
 #ifndef CORONA_PRESENTATION_CONTROLS_DX_CONTAINER_H
 #define CORONA_PRESENTATION_CONTROLS_DX_CONTAINER_H
 
-#include "corona-presentation-base.hpp"
-#include "corona-presentation-controls-base.hpp"
-#include "corona-presentation-controls-dx.hpp"
-#include "corona-presentation-controls-dx-text.hpp"
-#include "corona-presentation-controls-win32.hpp"
-
 namespace corona
 {
 

@@ -1,22 +1,6 @@
 #ifndef CORONA_APPLICATION_BASE_H
 #define CORONA_APPLICATION_BASE_H
 
-#include "corona-windows-all.h"
-
-#include "corona-constants.hpp"
-#include "corona-direct2dcontext.hpp"
-#include "corona-visual.hpp"
-#include "corona-store_box.hpp"
-#include "corona-rectangle_box.hpp"
-#include "corona-point_box.hpp"
-#include "corona-datatransfer.hpp"
-#include "corona-controller.hpp"
-
-#include <memory>
-#include <string>
-#include <vector>
-#include <list>
-
 namespace corona
 {
 

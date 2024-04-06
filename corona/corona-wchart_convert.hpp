@@ -1,11 +1,6 @@
 #ifndef CORONA_WCHAR_CONVERT_H
 #define CORONA_WCHAR_CONVERT_H
 
-
-#include "corona-windows-lite.h"
-#include <string>
-#include <vector>
-
 namespace corona 
 {
 

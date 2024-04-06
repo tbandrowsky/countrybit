@@ -1,20 +1,6 @@
 #ifndef SORTED_INDEX_H
 #define SORTED_INDEX_H
 
-#include "corona-constants.hpp"
-#include "corona-store_box.hpp"
-#include "corona-string_box.hpp"
-#include "corona-iarray.hpp"
-#include "corona-filterable_iterator.hpp"
-
-#include <memory>
-#include <functional>
-#include <algorithm>
-#include <iterator>
-#include <exception>
-#include <iostream>
-#include <stdexcept>
-#include <compare>
 
 namespace corona {
 

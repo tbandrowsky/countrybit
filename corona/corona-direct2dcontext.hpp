@@ -2,35 +2,6 @@
 #ifndef CORONA_DIRECT2DCONTEXT_H
 #define CORONA_DIRECT2DCONTEXT_H
 
-#include "corona-windows-all.h";
-#include "corona-constants.hpp"
-#include "corona-color_box.hpp"
-#include "corona-point_box.hpp"
-#include "corona-string_box.hpp"
-#include "corona-rectangle_box.hpp"
-#include "corona-visual.hpp"
-#include "corona-point_box.hpp"
-#include "corona-directxadapterbase.hpp"
-#include "corona-directxdevices.hpp"
-#include "corona-direct2dresources.hpp"
-#include "corona-direct2dcontextbase.hpp"
-#include "corona-bitmap_filters.hpp"
-#include "corona-brushes.hpp"
-#include "corona-bitmaps.hpp"
-#include "corona-paths.hpp"
-#include "corona-textstyles.hpp"
-
-#include <string>
-#include <exception>
-#include <stdexcept>
-#include <format>
-#include <compare>
-#include <map>
-#include <vector>
-#include <stack>
-#include <functional>
-#include <memory>
-#include <algorithm>
 
 
 namespace corona

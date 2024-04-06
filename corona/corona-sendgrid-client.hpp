@@ -1,11 +1,6 @@
 #ifndef CORONA_SENDGRID_CLIENT_H
 #define CORONA_SENDGRID_CLIENT_H
 
-#include "corona-httpclient.hpp"
-#include "corona-function.hpp"
-#include "corona-time_box.hpp"
-#include "corona-json.hpp"
-
 namespace corona
 {
 	class sendgrid_client

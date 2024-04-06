@@ -6,18 +6,6 @@
 #define _TRACE_GET_OBJECT 0
 #define _TRACE_SEARCH 1
 
-#include "corona-store_box.hpp"
-#include "corona-string_box.hpp"
-#include "corona-jfield.hpp"
-
-#include <memory>
-#include <exception>
-#include <format>
-#include <vector>
-#include <string>
-#include <stdexcept>
-#include <compare>
-
 namespace corona {
 
 	class jvariant

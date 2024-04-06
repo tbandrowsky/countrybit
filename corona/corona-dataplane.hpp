@@ -1,13 +1,6 @@
 #ifndef CORONA_DATAPLANE_H
 #define CORONA_DATAPLANE_H
 
-#include "corona-queue.hpp"
-#include "corona-function.hpp"
-#include "corona-json.hpp"
-#include "corona-json.hpp"
-#include "corona-presentation-controls-base.hpp"
-#include "corona-httpclient.hpp"
-
 namespace corona
 {
 	class data_api;

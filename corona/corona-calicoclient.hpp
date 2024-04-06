@@ -1,11 +1,6 @@
 #ifndef CORONA_CALICOCLIENT_H
 #define CORONA_CALICOCLIENT_H
 
-#include "corona-httpclient.hpp"
-#include "corona-function.hpp"
-#include "corona-time_box.hpp"
-#include "corona-json.hpp"
-
 namespace corona
 {
 	class calico_client
@@ -683,7 +678,7 @@ namespace corona
 
 							json object_parameters;
 							object_parameters = jp.create_object();
-							object_parameters.put_member("ObjectId", current_edited_object_id);
+							object_parameters.put_member_i64("ObjectId", current_edited_object_id);
 							temp3 = get_object(object_parameters, credentials, object_detail);
 
 							json ui_result = jp.create_object();

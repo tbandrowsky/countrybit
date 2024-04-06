@@ -1,23 +1,6 @@
 #ifndef CORONA_JSON_TABLE_H
 #define CORONA_JSON_TABLE_H
 
-#include "corona-constants.hpp"
-#include "corona-string_box.hpp"
-#include "corona-iarray.hpp"
-#include "corona-json.hpp"
-#include "corona-file.hpp"
-#include "corona-function.hpp"
-
-#include <memory>
-#include <functional>
-#include <algorithm>
-#include <iterator>
-#include <exception>
-#include <iostream>
-#include <stdexcept>
-#include <compare>
-#include <conio.h>
-
 namespace corona 
 {
 

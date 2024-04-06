@@ -1,20 +1,6 @@
 #ifndef CORONA_FILE_H
 #define CORONA_FILE_H
 
-#include "corona-windows-lite.h"
-#include "corona-messages.hpp"
-#include "corona-queue.hpp"
-#include "corona-function.hpp"
-#include "corona-string_box.hpp"
-#include "corona-constants.hpp"
-#include "corona-messages.hpp"
-#include "corona-function.hpp"
-
-#include <exception>
-#include <stdexcept>
-#include <iostream>
-#include <compare>
-
 namespace corona
 {
 	const int debug_file = 0;
@@ -361,13 +347,6 @@ namespace corona
 			return false;
 		}
 
-		void await_suspend(std::coroutine_handle<user_transaction<relative_ptr_type>::promise_type > handle)
-		{
-			debug_functions&& std::cout << "database_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
-			handle.resume();
-			debug_functions&& std::cout << "database_transaction: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
-		}
-
 		// this creates the 
 		void await_suspend(std::coroutine_handle<service_transaction<relative_ptr_type>::promise_type > handle)
 		{
@@ -377,6 +356,20 @@ namespace corona
 		}
 
 		void await_suspend(std::coroutine_handle<service_transaction<http_response>::promise_type > handle)
+		{
+			debug_functions&& std::cout << "database_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
+			handle.resume();
+			debug_functions&& std::cout << "database_transaction: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
+		}
+
+		void await_suspend(std::coroutine_handle<user_transaction<bool>::promise_type > handle)
+		{
+			debug_functions&& std::cout << "database_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
+			handle.resume();
+			debug_functions&& std::cout << "database_transaction: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
+		}
+
+		void await_suspend(std::coroutine_handle<user_transaction<json>::promise_type > handle)
 		{
 			debug_functions&& std::cout << "database_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
 			handle.resume();
@@ -2276,6 +2269,16 @@ namespace corona
 
 		bool await_ready() {
 			return false;
+		}
+
+		void await_suspend(std::coroutine_handle<file_transaction<relative_ptr_type>::promise_type> handle)
+		{
+			debug_functions&& std::cout << "file_task: suspend file_batch_result" << " " << ::GetCurrentThreadId() << std::endl;
+			initiate();
+			debug_functions&& std::cout << "file_task: suspend initiate" << " " << ::GetCurrentThreadId() << std::endl;
+			::WaitForSingleObject(hevent, INFINITE);
+			debug_functions&& std::cout << "file_task:io complete" << " " << ::GetCurrentThreadId() << std::endl;
+			handle.resume();
 		}
 
 		void await_suspend(std::coroutine_handle<file_batch::promise_type> handle)

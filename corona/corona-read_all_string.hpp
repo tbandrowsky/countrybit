@@ -2,14 +2,6 @@
 #ifndef CORONA_READ_ALL_STRING_H
 #define CORONA_READ_ALL_STRING_H
 
-#include <cstdio>
-#include <string>
-#include <compare>
-#include <filesystem>
-
-#include "corona-windows-lite.h"
-#include "corona-store_box.hpp"
-
 namespace corona {
 
 	std::string read_all_string(std::string& _filename)

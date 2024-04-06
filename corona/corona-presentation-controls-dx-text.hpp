@@ -1,8 +1,6 @@
 #ifndef CORONA_PRESENTATION_CONTROLS_DX_TEXT_H
 #define CORONA_PRESENTATION_CONTROLS_DX_TEXT_H
 
-#include "corona-presentation-controls-dx.hpp"
-
 namespace corona
 {
 	class text_display_control : public draw_control

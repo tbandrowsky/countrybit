@@ -2,12 +2,6 @@
 #ifndef CORONA_ASSERT_IF_H
 #define CORONA_ASSERT_IF_H
 
-#include "corona-windows-lite.h"
-
-#include <iostream>
-#include <format>
-#include <functional>
-
 namespace corona
 {
 

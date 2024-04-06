@@ -2,23 +2,20 @@
 #define CORONA_MESSAGE_H
 
 #include "corona-windows-lite.h"
-#include "corona-store_box.hpp"
-#include "corona-string_box.hpp"
 #include "corona-constants.hpp"
 
 #include <iostream>
 #include <string>
 #include <compare>
 
-namespace corona {
-
-	using error_string = istring<256>;
+namespace corona 
+{
 
 	class base_result
 	{
 	public:
 		bool success;
-		error_string message;
+		std::string message;
 
 		base_result() : success(true), message("")
 		{
@@ -54,7 +51,10 @@ namespace corona {
 		error_code = ::GetLastError();
 		if (error_code) {
 			success = false;
-			FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM, nullptr, error_code, 0, message.c_str_w(), message.capacity(), nullptr);
+			char buffer[2048];
+			int buffer_size = sizeof(buffer);
+			FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM, nullptr, error_code, 0, buffer, buffer_size, nullptr);
+			message = buffer;
 		}
 		else {
 			success = true;

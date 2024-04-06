@@ -1,10 +1,6 @@
 #ifndef CORONA_LAYOUT_RECT_H
 #define CORONA_LAYOUT_RECT_H
 
-#include "corona-store_box.hpp"
-
-#include <compare>
-
 namespace corona {
 
 	enum class measure_units

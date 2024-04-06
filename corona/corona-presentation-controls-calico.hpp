@@ -2,13 +2,6 @@
 #ifndef CORONA_PRESENTATION_CONTROLS_CALICO_H
 #define CORONA_PRESENTATION_CONTROLS_CALICO_H
 
-#include "corona-presentation-controls-dx.hpp"
-#include "corona-presentation-controls-dx-container.hpp"
-#include "corona-presentation-controls-dx-text.hpp"
-#include "corona-presentation-menu.hpp"
-#include "corona-calicoclient.hpp"
-#include "corona-dataplane.hpp"
-
 namespace corona
 {
 	class calico_button_control : public gradient_button_control

@@ -1,7 +1,6 @@
 #ifndef CORONA_PRESENTATION_CONTROLS_DX_H
 #define CORONA_PRESENTATION_CONTROLS_DX_H
 
-#include "corona-presentation-controls-base.hpp"
 
 namespace corona
 {

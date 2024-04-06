@@ -1,12 +1,6 @@
 #ifndef CORONA_TIME_BOX
 #define CORONA_TIME_BOX
 
-#include "corona-windows-lite.h"
-#include "corona-store_box.hpp"
-
-#include <iostream>
-#include <compare>
-
 namespace corona 
 {
 

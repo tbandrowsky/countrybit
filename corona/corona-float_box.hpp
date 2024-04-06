@@ -1,13 +1,6 @@
 #ifndef CORONA_FLOAT_BOX_H
 #define CORONA_FLOAT_BOX_H
 
-#include "corona-store_box.hpp"
-
-#include <cmath>
-#include <numbers>
-#include <iostream>
-#include <compare>
-
 namespace corona
 {
 

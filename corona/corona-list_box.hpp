@@ -1,18 +1,6 @@
 #ifndef CORONA_LIST_BOX_H
 #define CORONA_LIST_BOX_H
 
-#include "corona-constants.hpp"
-#include "corona-assert_if.hpp"
-#include "corona-store_box.hpp"
-#include "corona-filterable_iterator.hpp"
-#include "corona-iarray.hpp"
-
-#include <vector>
-#include <functional>
-#include <string>
-#include <iostream>
-#include <compare>
-#include <algorithm>
 
 namespace corona {
 

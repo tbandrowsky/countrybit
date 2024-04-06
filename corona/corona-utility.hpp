@@ -1,12 +1,6 @@
 #ifndef CORONA_UTILITY_H
 #define CORONA_UTILITY_H
 
-#include <string>
-#include <fstream>
-#include <vector>
-#include <sstream>
-#include <compare>
-
 namespace corona {
 
 	template<typename Out>

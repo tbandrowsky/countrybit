@@ -1,8 +1,6 @@
 #ifndef CORONA_PRESENTATION_EVENTS_H
 #define CORONA_PRESENTATION_EVENTS_H
 
-#include "corona-json.hpp"
-
 namespace corona {
 
 	class data_lake;

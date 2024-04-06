@@ -1,33 +1,6 @@
 #ifndef CORONA_BRUSHES_H
 #define CORONA_BRUSHES_H
 
-#include "corona-windows-all.h"
-#include "corona-assert_if.hpp"
-#include "corona-constants.hpp"
-#include "corona-color_box.hpp"
-#include "corona-point_box.hpp"
-#include "corona-string_box.hpp"
-#include "corona-rectangle_box.hpp"
-#include "corona-visual.hpp"
-#include "corona-point_box.hpp"
-#include "corona-directxadapterbase.hpp"
-#include "corona-directxdevices.hpp"
-#include "corona-direct2dcontextbase.hpp"
-#include "corona-bitmap_filters.hpp"
-#include "corona-direct2dresources.hpp"
-#include "corona-bitmaps.hpp"
-
-#include <string>
-#include <exception>
-#include <stdexcept>
-#include <format>
-#include <compare>
-#include <map>
-#include <vector>
-#include <stack>
-#include <functional>
-#include <memory>
-#include <algorithm>
 
 namespace corona
 {

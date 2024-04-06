@@ -1,38 +1,6 @@
 #ifndef CORONA_JOBJECT_H
 #define CORONA_JOBJECT_H
 
-#include "corona-windows-lite.h"
-
-#include "corona-constants.hpp"
-#include "corona-store_box.hpp"
-#include "corona-color_box.hpp"
-#include "corona-float_box.hpp"
-#include "corona-function.hpp"
-#include "corona-int_box.hpp"
-#include "corona-layout_rect_box.hpp"
-#include "corona-list_box.hpp"
-#include "corona-midi_box.hpp"
-#include "corona-point_box.hpp"
-#include "corona-rectangle_box.hpp"
-#include "corona-string_box.hpp"
-#include "corona-image_box.hpp"
-#include "corona-time_box.hpp"
-#include "corona-wave_box.hpp"
-#include "corona-collection_id_box.hpp"
-#include "corona-sorted_index.hpp"
-#include "corona-jfield.hpp"
-#include "corona-jvalue.hpp"
-
-#include <memory>
-#include <exception>
-#include <compare>
-#include <vector>
-#include <initializer_list>
-#include <iostream>
-#include <algorithm>
-#include <ctime>
-#include <stdexcept>
-#include <format>
 
 namespace corona {
 

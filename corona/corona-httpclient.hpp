@@ -3,22 +3,6 @@
 #ifndef CORONA_HTTP_CLIENT_H
 #define CORONA_HTTP_CLIENT_H
 
-#include "corona-windows-all.h"
-#include "corona-messages.hpp"
-#include "corona-queue.hpp"
-#include "corona-function.hpp"
-#include "corona-string_box.hpp"
-#include "corona-constants.hpp"
-#include "corona-messages.hpp"
-#include "corona-function.hpp"
-#include "corona-json.hpp"
-#include "corona-wchart_convert.hpp"
-
-#include <exception>
-#include <stdexcept>
-#include <iostream>
-#include <compare>
-
 namespace corona
 {
 
@@ -161,57 +145,6 @@ namespace corona
 
     };
 
-    class http_response
-    {
-    public:
-        os_result               system_result;
-
-        int						http_status_code;
-
-        buffer                  response_body;
-        std::string             content_type;
-        std::string             content_length;
-        std::string             server;
-    };
-
-    class http_request
-    {
-    public:
-        std::string                  host;
-        int                          port;
-        std::string                  path;
-        std::vector<std::string>     rest_path;
-        std::string                  http_method;
-        std::vector<std::string>     allowed_types;
-        std::string                  headers;
-        buffer                       body;
-        std::string                  query_string;
-    };
-
-    class http_params
-    {
-    public:
-        http_request  request;
-        http_response response;
-    };
-
-    class call_status
-    {
-    public:
-        bool success;
-        std::string message;
-        http_request request;
-        http_response response;
-        int http_code;
-        time_t call_time;
-
-        call_status()
-        {
-            time(&call_time);
-            http_code = 0;
-            success = false;
-        }
-    };
 
 	class http_client
 	{

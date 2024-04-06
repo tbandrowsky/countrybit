@@ -1,17 +1,6 @@
 #ifndef CORONA_QUEUE_H
 #define CORONA_QUEUE_H
 
-#include "corona-windows-lite.h"
-#include "corona-store_box.hpp"
-#include "corona-constants.hpp"
-
-#include <coroutine>
-#include <vector>
-#include <thread>
-#include <atomic>
-#include <compare>
-#include <functional>
-
 namespace corona {
 
 	class application;
