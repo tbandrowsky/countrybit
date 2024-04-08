@@ -472,9 +472,10 @@ namespace corona
 
 			created_classes.put_member("SysTeam", true);
 
-			json token = create_system_token();
+			json gc = jp.create_object();
+			json gcr = create_system_request( gc );
 
-			json classes_array_response = co_await get_classes(token);
+			json classes_array_response = co_await get_classes(gcr);
 			json classes_array = classes_array_response["Data"];
 			json classes_grouped = classes_array.group([](json& _item) -> std::string {
 				return (std::string)_item["ClassName"];
@@ -1752,7 +1753,7 @@ private:
 							{
 								if (field.second.has_member("Goal")) 
 								{
-									json field_options = co_await get_goal_field_options(class_definition, obj, field.first);
+									json field_options = co_await get_goal_field_options(_edit_object_request, class_definition, obj, field.first);
 									if (field_options.is_array()) {
 										for (int i = 0; i < field_options.size(); i++) {
 											edit_options.append_element(field_options.get_element(i));
@@ -2464,91 +2465,91 @@ private:
 
 		void bind_web_server(http_server& _server, std::string _root_path)
 		{
-			std::string path = _root_path + "/test/";
+			std::string path = _root_path + "test/";
 			put_handler(_server, HTTP_VERB::HttpVerbGET, path, [this](json _request)->database_transaction<json> {
 				json fn_response = this->get_banner();
 				co_return fn_response;
 				});
 
-			path = _root_path + "/login/start/";
+			path = _root_path + "login/start/";
 			put_handler(_server, HTTP_VERB::HttpVerbPOST, path, [this](json _request)->database_transaction<json> {
 				json fn_response = this->login_user(_request);
 				co_return fn_response;
 				});
 
-			path = _root_path + "/login/send_confirmation/";
+			path = _root_path + "login/send_confirmation/";
 			put_handler(_server, HTTP_VERB::HttpVerbPOST, path, [this](json _request)->database_transaction<json> {
 				json fn_response = this->send_login_confirmation_code(_request);
 				co_return fn_response;
 				});
 
-			path = _root_path + "/login/receive_confirmation/";
+			path = _root_path + "login/receive_confirmation/";
 			put_handler(_server, HTTP_VERB::HttpVerbPOST, path, [this](json _request)->database_transaction<json> {
 				json fn_response = this->login_user(_request);
 				co_return fn_response;
 				});
 
-			path = _root_path + "/login/send_password_reset/";
+			path = _root_path + "login/send_password_reset/";
 			put_handler(_server, HTTP_VERB::HttpVerbPOST, path, [this](json _request)->database_transaction<json> {
 				json fn_response = this->login_user(_request);
 				co_return fn_response;
 				});
 
-			path = _root_path + "/classes/get/";
+			path = _root_path + "classes/get/";
 			put_handler(_server, HTTP_VERB::HttpVerbPOST, path, [this](json _request)->database_transaction<json> {
 				json fn_response = this->get_classes(_request);
 				co_return fn_response;
 				});
 
-			path = _root_path + "/classes/put/";
+			path = _root_path + "classes/put/";
 			put_handler(_server, HTTP_VERB::HttpVerbPOST, path, [this](json _request)->database_transaction<json> {
 				json fn_response = this->put_class(_request);
 				co_return fn_response;
 				});
 
-			path = _root_path + "/users/create/";
+			path = _root_path + "users/create/";
 			put_handler(_server, HTTP_VERB::HttpVerbPOST, path, [this](json _request)->database_transaction<json> {
 				json fn_response = this->create_user(_request);
 				co_return fn_response;
 				});
 
-			path = _root_path + "/objects/query/";
+			path = _root_path + "objects/query/";
 			put_handler(_server, HTTP_VERB::HttpVerbPOST, path, [this](json _request)->database_transaction<json> {
 				json fn_response = this->query_class(_request);
 				co_return fn_response;
 				});
 
-			path = _root_path + "/users/get/";
+			path = _root_path + "users/get/";
 			put_handler(_server, HTTP_VERB::HttpVerbPOST, path, [this](json _request)->database_transaction<json> {
 				json fn_response = this->create_user(_request);
 				co_return fn_response;
 				});
 
-			path = _root_path + "/objects/create/";
+			path = _root_path + "objects/create/";
 			put_handler(_server, HTTP_VERB::HttpVerbPOST, path, [this](json _request)->database_transaction<json> {
 				json fn_response = this->create_object(_request);
 				co_return fn_response;
 				});
 
-			path = _root_path + "/objects/put/";
+			path = _root_path + "objects/put/";
 			put_handler(_server, HTTP_VERB::HttpVerbPOST, path, [this](json _request)->database_transaction<json> {
 				json fn_response = this->put_object(_request);
 				co_return fn_response;
 				});
 
-			path = _root_path + "/objects/delete/";
+			path = _root_path + "objects/delete/";
 			put_handler(_server, HTTP_VERB::HttpVerbPOST, path, [this](json _request)->database_transaction<json> {
 				json fn_response = this->delete_object(_request);
 				co_return fn_response;
 				});
 
-			path = _root_path + "/objects/edit/";
+			path = _root_path + "objects/edit/";
 			put_handler(_server, HTTP_VERB::HttpVerbPOST, path, [this](json _request)->database_transaction<json> {
 				json fn_response = this->edit_object(_request);
 				co_return fn_response;
 				});
 
-			path = _root_path + "/objects/";
+			path = _root_path + "objects/list/";
 			put_handler(_server, HTTP_VERB::HttpVerbPOST, path, [this](json _request)->database_transaction<json> {
 				json fn_response = this->put_object(_request);
 				co_return fn_response;

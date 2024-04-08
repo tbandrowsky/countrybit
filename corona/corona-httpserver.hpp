@@ -194,6 +194,21 @@ namespace corona
 			initiate();
 		}
 
+		// and this, let's us await for io while we are awaiting our http response
+		void await_suspend(std::coroutine_handle<user_transaction<bool>::promise_type> handle)
+		{
+			debug_functions&& std::cout << "http_server_task::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
+			handle.resume();
+			debug_functions&& std::cout << "http_server_task: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
+		}
+
+		void await_suspend(std::coroutine_handle<user_transaction<json>::promise_type> handle)
+		{
+			debug_functions&& std::cout << "http_server_task::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
+			handle.resume();
+			debug_functions&& std::cout << "http_server_task: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
+		}
+
 		void await_resume()
 		{
 			debug_functions&& std::cout << "http_server_task: resume" << " " << ::GetCurrentThreadId() << std::endl;;
