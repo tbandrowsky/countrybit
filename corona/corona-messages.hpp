@@ -41,11 +41,26 @@ namespace corona
 	public:
 		uint64_t error_code;
 		os_result();
+		os_result(uint64_t _error_code);
 	};
 
 	std::ostream& operator <<(std::ostream& output, const os_result& src);
 
 
+	os_result::os_result(uint64_t last_error)
+	{
+		error_code = last_error;
+		if (error_code) {
+			success = false;
+			char buffer[2048];
+			int buffer_size = sizeof(buffer);
+			FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM, nullptr, error_code, 0, buffer, buffer_size, nullptr);
+			message = buffer;
+		}
+		else {
+			success = true;
+		}
+	}
 	os_result::os_result()
 	{
 		error_code = ::GetLastError();

@@ -1311,19 +1311,25 @@ private:
 			{
 				threadomatic::run([this, _app]() -> void
 					{
-						file_transaction<relative_ptr_type> config_tran = config_file.poll(_app);
-						if (config_tran.wait()) 
-						{
-							apply_config(config_file.contents);
+						try {
+							file_transaction<relative_ptr_type> config_tran = config_file.poll(_app);
+							if (config_tran.wait())
+							{
+								apply_config(config_file.contents);
+							}
+							file_transaction<relative_ptr_type> schema_tran = schema_file.poll(_app);
+							if (schema_tran.wait())
+							{
+								auto schema_task = apply_schema(schema_file.contents);
+								schema_task.wait();
+							}
+							::Sleep(1000);
+							watch_config_schema(_app);
 						}
-						file_transaction<relative_ptr_type> schema_tran = schema_file.poll(_app);
-						if (schema_tran.wait()) 
+						catch (std::exception exc)
 						{
-							auto schema_task = apply_schema(schema_file.contents);
-							schema_task.wait();
+							std::cout << "File change exception:" << exc.what() << std::endl;
 						}
-						::Sleep(1000);
-						watch_config_schema(_app);
 					});
 			}
 		}
@@ -2627,27 +2633,34 @@ private:
 
 	user_transaction<bool> run_server(corona::application& _app)
 	{
-		file dtest = _app.create_file(FOLDERID_Documents, "corona_json_database_test.ctb");
+		try {
+			file dtest = _app.create_file(FOLDERID_Documents, "corona_json_database_test2.ctb");
 
-		std::cout << "test_database_engine, thread:" << ::GetCurrentThreadId() << std::endl;
+			std::cout << "test_database_engine, thread:" << ::GetCurrentThreadId() << std::endl;
 
-		corona_database db(_app, &dtest), * pdb = &db;
+			corona_database db(_app, &dtest), * pdb = &db;
 
-		std::cout << "test_database_engine, create_database, thread:" << ::GetCurrentThreadId() << std::endl;
+			std::cout << "test_database_engine, create_database, thread:" << ::GetCurrentThreadId() << std::endl;
 
-		auto create_database_task = db.create_database();
-		relative_ptr_type database_location = create_database_task.wait();
+			auto create_database_task = db.create_database();
+			relative_ptr_type database_location = create_database_task.wait();
 
-		std::cout << "test_database_engine, create_database, thread:" << ::GetCurrentThreadId() << std::endl;
+			std::cout << "test_database_engine, create_database, thread:" << ::GetCurrentThreadId() << std::endl;
 
-		http_server db_api_server;
+			http_server db_api_server;
 
-		db.bind_web_server(db_api_server, "http://localhost:5555/corona/");
-		db.watch_config_schema(&_app);
+			db.bind_web_server(db_api_server, "http://localhost:5555/corona");
+			db_api_server.start();
 
-		while (true) 
+			while (true)
+			{
+				co_await db_api_server.next_request();
+			}
+
+		}
+		catch (std::exception exc)
 		{
-			co_await db_api_server.next_request();
+			std::cout << "Exception:" << exc.what() << std::endl;
 		}
 
 		co_return true;

@@ -9,12 +9,13 @@ namespace corona
 	using http_handler_db_function = std::function<database_transaction<json>(json _request)>;
 	using http_handler_db_method_function = std::function<database_method_transaction<json>(json _request)>;
 
+	const int debug_http_servers = 1;
+
 	class http_handler_container
 	{
 	public:
 		http_handler_function func;
 		std::string url;
-		std::wstring urlw;
 	};
 
 	class http_server_base
@@ -45,11 +46,11 @@ namespace corona
 			{
 				job_notify jn;
 
-				debug_functions&& std::cout << "http_server_task_job: receiving IO results " << GetCurrentThreadId() << std::endl;
+				debug_http_servers&& std::cout << "http_server_task_job: receiving IO results " << GetCurrentThreadId() << std::endl;
 
 				if (metask) 
 				{
-					debug_functions&& std::cout << "http_server_task_job: bytes transferred: " << _bytesTransferred << std::endl;
+					debug_http_servers&& std::cout << "http_server_task_job: bytes transferred: " << _bytesTransferred << std::endl;
 					metask->bytes_transferred = _bytesTransferred;
 					metask->success = _success;
 
@@ -72,7 +73,7 @@ namespace corona
 					}
 				}
 
-				debug_functions&& std::cout << "http_server_task_job: end:" << GetCurrentThreadId() << std::endl;
+				debug_http_servers&& std::cout << "http_server_task_job: end:" << GetCurrentThreadId() << std::endl;
 
 				jn.shouldDelete = true;
 				return jn;
@@ -81,7 +82,7 @@ namespace corona
 			void read_http_request(HANDLE requestQueue, HTTP_REQUEST_ID requestId, ULONG flags )
 			{
 				PHTTP_REQUEST prequest = (PHTTP_REQUEST)buff.get_ptr();
-				HttpReceiveHttpRequest(requestQueue, requestId, flags, prequest, buff.get_size(), nullptr, &container.ovp );
+				DWORD error = HttpReceiveHttpRequest(requestQueue, requestId, flags, prequest, buff.get_size(), nullptr, &container.ovp );
 			}
 		};
 
@@ -100,12 +101,12 @@ namespace corona
 
 			promise_type()
 			{
-				debug_functions&& std::cout << "http_server_task::promise:" << this << " " << GetCurrentThreadId() << std::endl;
+				debug_http_servers&& std::cout << "http_server_task::promise:" << this << " " << GetCurrentThreadId() << std::endl;
 			}
 
 			http_server_task_launcher get_return_object() 
 			{
-				debug_functions&& std::cout << "http_server_task::get_return_object:" << this << " " << GetCurrentThreadId() << std::endl;
+				debug_http_servers&& std::cout << "http_server_task::get_return_object:" << this << " " << GetCurrentThreadId() << std::endl;
 				std::coroutine_handle<promise_type> promise_coro = std::coroutine_handle<promise_type>::from_promise(*this);
 				http_server_task_launcher fbr(promise_coro);
 				return fbr;
@@ -116,15 +117,16 @@ namespace corona
 
 			void return_void() 
 			{
-				debug_functions&& std::cout << "http_server_task::promise return_void:" << " " << this << GetCurrentThreadId() << std::endl;
+				debug_http_servers&& std::cout << "http_server_task::promise return_void:" << " " << this << GetCurrentThreadId() << std::endl;
 			}
 
 			void unhandled_exception() {
-				debug_functions&& std::cout << "http_server_task::promise unhandled exception:" << this << GetCurrentThreadId() << std::endl;
+				debug_http_servers&& std::cout << "http_server_task::promise unhandled exception:" << this << GetCurrentThreadId() << std::endl;
 			}
 		};
 
-		std::coroutine_handle<promise_type> coro;
+		std::coroutine_handle<> coro;
+		http_server_base* server;
 
 		http_server_task_launcher()
 		{
@@ -137,12 +139,14 @@ namespace corona
 		{
 			bytes_transferred = _src.bytes_transferred;
 			success = _src.success;
+			coro = nullptr;
 		}
 
 		http_server_task_launcher(http_server_task_launcher&& _src)
 		{
 			bytes_transferred = _src.bytes_transferred;
 			success = _src.success;
+			coro = std::move(_src.coro);
 		}
 
 		http_server_task_launcher(std::coroutine_handle<promise_type> _coro)
@@ -152,13 +156,14 @@ namespace corona
 			coro = _coro;
 		}
 
-		void read_request(HANDLE _requestQueue,
+		void read_request(http_server_base *_server, HANDLE _requestQueue,
 						  HTTP_REQUEST_ID _requestId,
 						  ULONG _flags)
 		{
 			requestQueue = _requestQueue;
 			requestId = _requestId;
 			flags = _flags;
+			server = _server;
 		}
 
 		void initiate()
@@ -173,6 +178,7 @@ namespace corona
 			frj->container.ovp.OffsetHigh = li.HighPart;
 			frj->handle = coro;
 			frj->metask = this;
+			frj->mebase = server;
 			frj->read_http_request(requestQueue, requestId, flags);
 		}
 
@@ -186,32 +192,17 @@ namespace corona
 			return false;
 		}
 
-		// this creates the 
-		void await_suspend(std::coroutine_handle<promise_type> handle)
+		// and this, let's us await for io while we are awaiting our http response
+		void await_suspend(std::coroutine_handle<> handle)
 		{
 			coro = handle;
-			debug_functions&& std::cout << "http_server_task: suspend" << " " << ::GetCurrentThreadId() << std::endl;
+			debug_http_servers&& std::cout << "http_server_task::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
 			initiate();
-		}
-
-		// and this, let's us await for io while we are awaiting our http response
-		void await_suspend(std::coroutine_handle<user_transaction<bool>::promise_type> handle)
-		{
-			debug_functions&& std::cout << "http_server_task::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
-			handle.resume();
-			debug_functions&& std::cout << "http_server_task: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
-		}
-
-		void await_suspend(std::coroutine_handle<user_transaction<json>::promise_type> handle)
-		{
-			debug_functions&& std::cout << "http_server_task::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
-			handle.resume();
-			debug_functions&& std::cout << "http_server_task: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
 		}
 
 		void await_resume()
 		{
-			debug_functions&& std::cout << "http_server_task: resume" << " " << ::GetCurrentThreadId() << std::endl;;
+			debug_http_servers&& std::cout << "http_server_task: resume" << " " << ::GetCurrentThreadId() << std::endl;;
 		}
 	};
 
@@ -229,23 +220,6 @@ namespace corona
 	public:
 
 		http_server()
-		{
-			;
-		}
-
-		void put_handler(HTTP_VERB _verb, std::string _url, http_handler_function _handler)
-		{
-			std::shared_ptr<http_handler_container> hhc = std::make_shared<http_handler_container>();
-
-			hhc->func = _handler;
-			hhc->url = _url;
-
-			auto key = std::tie( _url, _verb);
-
-			api_handlers.insert_or_assign(key, hhc);
-		}
-
-		void start()
 		{
 			//
 			// Create a Request Queue Handle
@@ -267,7 +241,7 @@ namespace corona
 			//
 			retCode = HttpCreateRequestQueue(
 				HTTPAPI_VERSION_2,
-				L"Corona Http Server",
+				NULL,
 				NULL,
 				0,
 				&request_queue
@@ -317,34 +291,48 @@ namespace corona
 				throw std::logic_error(s);
 			}
 
-			//
-			// Listen on the server
-			//
-			HTTP_LISTEN_ENDPOINT_INFO serverEndpointInfo = {};
+		}
 
-			serverEndpointInfo.Flags.Present = 1;
-			serverEndpointInfo.EnableSharing = 1;
+		virtual ~http_server()
+		{
+			if (group_id) {
+				HttpCloseUrlGroup(group_id);
+				group_id = 0;
+			}
+			if (session_id) {
+				HttpCloseServerSession(session_id);
+				session_id = 0;
+			}
+			if (request_queue) {
+				HttpCloseRequestQueue(request_queue);
+				request_queue = nullptr;
+			}
+		}
 
-			retCode = HttpSetUrlGroupProperty(
-				group_id,
-				HTTP_SERVER_PROPERTY::HttpServerListenEndpointProperty,
-				&serverEndpointInfo,
-				sizeof(serverEndpointInfo)
-			);
+		void put_handler(HTTP_VERB _verb, std::string _url, http_handler_function _handler)
+		{
+			std::shared_ptr<http_handler_container> hhc = std::make_shared<http_handler_container>();
 
-			if (retCode != NO_ERROR)
-			{
-				std::string s = std::format("Could not set server binding failed with {} \n", retCode);
-				throw std::logic_error(s);
+			hhc->func = _handler;
+			hhc->url = _url;
+
+			auto key = std::tie( _url, _verb);
+
+			api_handlers.insert_or_assign(key, hhc);
+
+			HTTP_URL_CONTEXT context = {};
+			iwstring<2048> url = _url;
+			DWORD error = HttpAddUrlToUrlGroup(group_id, url.c_str(), context, 0);
+			if (error != NO_ERROR) {
+				os_result orx(error);
+				std::string message = "Exception:" + _url + " " + orx.message;
+				throw std::logic_error(message.c_str());
 			}
 
-			// Add the handlers
-			for (auto h : api_handlers)
-			{
-				HTTP_URL_CONTEXT context = {};
-				HttpAddUrlToUrlGroup(group_id, h.second->urlw.c_str(), context, 0);
-			}
+		}
 
+		void start()
+		{
 			global_job_queue->listen(request_queue);
 		}
 
@@ -395,7 +383,7 @@ namespace corona
 			std::string sQueryString;
 			std::string sabsPath;
 
-			absPath.copy(_request->CookedUrl.pAbsPath, _request->CookedUrl.AbsPathLength);
+			absPath.copy(_request->CookedUrl.pFullUrl, _request->CookedUrl.FullUrlLength);
 			sabsPath = absPath.c_str();
 
 			if (_request->CookedUrl.pQueryString) {
@@ -637,7 +625,7 @@ namespace corona
 		{
 			http_server_task_launcher launcher;
 
-			launcher.read_request(request_queue, HTTP_NULL_ID, 0);
+			launcher.read_request(this, request_queue, HTTP_NULL_ID, HTTP_RECEIVE_REQUEST_FLAG_COPY_BODY);
 
 			return launcher;
 		}
