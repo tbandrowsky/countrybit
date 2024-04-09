@@ -214,7 +214,7 @@ namespace corona
 		{
 			system_time = {};
 
-			int args = sscanf_s(_src.c_str(), "%04d-%d-%dT%d:%d:%d.%dZ",
+			int args = sscanf_s(_src.c_str(), "%04h-%h-%hT%h:%h:%h.%hZ",
 				&system_time.wMonth,
 				&system_time.wDay,
 				&system_time.wYear,

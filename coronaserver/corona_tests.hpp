@@ -64,6 +64,12 @@ void corona_tests()
 
         corona::test_encryption();
 
+        std::cout << "\n\n=============================================" << std::endl;
+        std::cout << "main:test_web_server, thread:" << GetCurrentThreadId() << std::endl;
+
+        auto task = corona::run_server(app);
+        task.wait();
+
         std::string prompto;
 
         while (getline(std::cin, prompto)) {

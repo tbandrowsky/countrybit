@@ -2649,6 +2649,8 @@ private:
 		{
 			co_await db_api_server.next_request();
 		}
+
+		co_return true;
 	}
 
 	bool collection_tests()
