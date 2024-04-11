@@ -4,35 +4,87 @@
 
 namespace corona
 {
-    
-	using http_handler_function = std::function<service_transaction<http_response>(http_request _request)>;
-	using http_handler_db_function = std::function<database_transaction<json>(json _request)>;
-	using http_handler_db_method_function = std::function<database_method_transaction<json>(json _request)>;
+
 
 	const int debug_http_servers = 1;
-
-	class http_handler_container
-	{
-	public:
-		http_handler_function func;
-		std::string url;
-	};
 
 	class http_server_base
 	{
 	public:
-
 		virtual void execute_request(PHTTP_REQUEST _request) = 0;
+		virtual DWORD send_response(
+			HTTP_REQUEST_ID _request_id,
+			int _status_code,
+			std::string _reason,
+			std::string _content_type,
+			char* _buffer,
+			DWORD _buffer_length_bytes) = 0;
+
+		virtual DWORD send_response(
+			HTTP_REQUEST_ID _request_id,
+			int _status_code,
+			std::string _reason,
+			json _response_json) = 0;
+
+		virtual DWORD send_response(HTTP_REQUEST_ID _request_id,
+			int _status_code,
+			std::string _reason,
+			std::string _content_type,
+			std::string _response_string) = 0;
+
 	};
 
-	class http_server_task_launcher 
+	class http_action_request
+	{
+		http_server_base* server;
+		HTTP_REQUEST_ID request_id;
+
+		friend class http_server;
+
+	public:
+
+		http_request request;
+
+		DWORD send_response(int _status_code,
+			std::string _reason,
+			std::string _content_type,
+			char* _buffer,
+			DWORD _buffer_length_bytes);
+
+		DWORD send_response(int _status_code,
+			std::string _reason,
+			json _response_json);
+
+		DWORD send_response(int _status_code,
+			std::string _reason,
+			std::string _content_type,
+			std::string _response_string);
+	};
+
+	using http_handler_function = std::function<void(http_action_request)>;
+
+	class http_handler_method
+	{
+	public:
+		http_handler_function func;
+		HTTP_VERB method;
+	};
+
+	class http_handler_list
+	{
+	public:
+		std::string url;
+		std::vector<http_handler_method> functions;
+	};
+
+	class http_server_task_launcher
 	{
 		class http_server_task_job : public job
 		{
 		public:
 			std::coroutine_handle<> handle;
-			http_server_task_launcher*		metask;
-			http_server_base*		mebase;
+			http_server_task_launcher* metask;
+			http_server_base* mebase;
 			buffer					buff;
 
 			http_server_task_job() : job()
@@ -48,13 +100,13 @@ namespace corona
 
 				debug_http_servers&& std::cout << "http_server_task_job: receiving IO results " << GetCurrentThreadId() << std::endl;
 
-				if (metask) 
+				if (metask)
 				{
 					debug_http_servers&& std::cout << "http_server_task_job: bytes transferred: " << _bytesTransferred << std::endl;
 					metask->bytes_transferred = _bytesTransferred;
 					metask->success = _success;
 
-					if (_success) 
+					if (_success)
 					{
 						PHTTP_REQUEST prequest = (PHTTP_REQUEST)buff.get_ptr();
 						mebase->execute_request(prequest);
@@ -62,14 +114,12 @@ namespace corona
 
 					if (handle) {
 						handle.resume();
-						handle.destroy();
 					}
 				}
-				else 
+				else
 				{
 					if (handle) {
 						handle.resume();
-						handle.destroy();
 					}
 				}
 
@@ -79,10 +129,10 @@ namespace corona
 				return jn;
 			}
 
-			void read_http_request(HANDLE requestQueue, HTTP_REQUEST_ID requestId, ULONG flags )
+			void read_http_request(HANDLE requestQueue, HTTP_REQUEST_ID requestId, ULONG flags)
 			{
 				PHTTP_REQUEST prequest = (PHTTP_REQUEST)buff.get_ptr();
-				DWORD error = HttpReceiveHttpRequest(requestQueue, requestId, flags, prequest, buff.get_size(), nullptr, &container.ovp );
+				DWORD error = HttpReceiveHttpRequest(requestQueue, requestId, flags, prequest, buff.get_size(), nullptr, &container.ovp);
 			}
 		};
 
@@ -104,7 +154,7 @@ namespace corona
 				debug_http_servers&& std::cout << "http_server_task::promise:" << this << " " << GetCurrentThreadId() << std::endl;
 			}
 
-			http_server_task_launcher get_return_object() 
+			http_server_task_launcher get_return_object()
 			{
 				debug_http_servers&& std::cout << "http_server_task::get_return_object:" << this << " " << GetCurrentThreadId() << std::endl;
 				std::coroutine_handle<promise_type> promise_coro = std::coroutine_handle<promise_type>::from_promise(*this);
@@ -115,7 +165,7 @@ namespace corona
 			std::suspend_always initial_suspend() noexcept { return {}; }
 			std::suspend_always final_suspend() noexcept { return {}; }
 
-			void return_void() 
+			void return_void()
 			{
 				debug_http_servers&& std::cout << "http_server_task::promise return_void:" << " " << this << GetCurrentThreadId() << std::endl;
 			}
@@ -156,9 +206,9 @@ namespace corona
 			coro = _coro;
 		}
 
-		void read_request(http_server_base *_server, HANDLE _requestQueue,
-						  HTTP_REQUEST_ID _requestId,
-						  ULONG _flags)
+		void read_request(http_server_base* _server, HANDLE _requestQueue,
+			HTTP_REQUEST_ID _requestId,
+			ULONG _flags)
 		{
 			requestQueue = _requestQueue;
 			requestId = _requestId;
@@ -187,7 +237,7 @@ namespace corona
 			;
 		}
 
-		bool await_ready() 
+		bool await_ready()
 		{
 			return false;
 		}
@@ -207,13 +257,33 @@ namespace corona
 	};
 
 	using handler_key = std::tuple<std::string, HTTP_VERB>;
+}
+
+namespace std
+{
+	template <> struct coroutine_traits<void, corona::http_server&, PHTTP_REQUEST>
+	{
+		struct promise_type {
+			corona::synch get_return_object() {
+				corona::synch st;
+				return st;
+			}
+			std::suspend_always initial_suspend() { return {}; }
+			std::suspend_always final_suspend() noexcept { return {}; }
+			void return_void() noexcept { return; }
+			void unhandled_exception() noexcept { return; }
+		};
+	};
+}
+
+namespace corona {
 
 	class http_server : public http_server_base
 	{
 		HTTP_SERVER_SESSION_ID session_id;
 		HTTP_URL_GROUP_ID group_id;
 
-		std::map<handler_key, std::shared_ptr<http_handler_container>> api_handlers;
+		std::map<std::string, std::shared_ptr<http_handler_list>> api_handlers;
 
 		HANDLE      request_queue;
 
@@ -311,16 +381,24 @@ namespace corona
 
 		void put_handler(HTTP_VERB _verb, std::string _url, http_handler_function _handler)
 		{
-			std::shared_ptr<http_handler_container> hhc = std::make_shared<http_handler_container>();
+			std::shared_ptr<http_handler_list> handler_list;
 
-			hhc->func = _handler;
-			hhc->url = _url;
+			if (api_handlers.contains(_url)) 
+			{
+				handler_list = api_handlers[_url];
+			}
+			else 
+			{
+				handler_list = std::make_shared<http_handler_list>();
+				api_handlers.insert_or_assign(_url, handler_list);
+			}
 
-			auto key = std::tie( _url, _verb);
+			http_handler_method method;
+			method.method = _verb;
+			method.func = _handler;
+			handler_list->functions.push_back(method);
 
-			api_handlers.insert_or_assign(key, hhc);
-
-			HTTP_URL_CONTEXT context = {};
+			HTTP_URL_CONTEXT context = (HTTP_URL_CONTEXT)handler_list.get();
 			iwstring<2048> url = _url;
 			DWORD error = HttpAddUrlToUrlGroup(group_id, url.c_str(), context, 0);
 			if (error != NO_ERROR) {
@@ -407,65 +485,6 @@ namespace corona
 				read_body(body_builder, _request);
 			}
 
-			switch (_request->Verb) {
-			case HttpVerbUnparsed:
-			case HttpVerbUnknown:
-			case HttpVerbInvalid:
-				request.http_method = "Invalid";
-				break;
-			case HttpVerbOPTIONS:
-				request.http_method = "OPTIONS";
-				break;
-			case HttpVerbGET:
-				request.http_method = "GET";
-				break;
-			case HttpVerbHEAD:
-				request.http_method = "HEAD";
-				break;
-			case HttpVerbPOST:
-				request.http_method = "POST";
-				break;
-			case HttpVerbPUT:
-				request.http_method = "PUT";
-				break;
-			case HttpVerbDELETE:
-				request.http_method = "DELETE";
-				break;
-			case HttpVerbTRACE:
-				request.http_method = "TRACE";
-				break;
-			case HttpVerbCONNECT:
-				request.http_method = "CONNECT";
-				break;
-			case HttpVerbTRACK:
-				request.http_method = "TRACK";
-				break;
-			case HttpVerbMOVE:
-				request.http_method = "MOVE";
-				break;
-			case HttpVerbCOPY:
-				request.http_method = "COPY";
-				break;
-			case HttpVerbPROPFIND:
-				request.http_method = "PROPFIND";
-				break;
-			case HttpVerbPROPPATCH:
-				request.http_method = "PROPPATCH";
-				break;
-			case HttpVerbMKCOL:
-				request.http_method = "MKCOL";
-				break;
-			case HttpVerbLOCK:
-				request.http_method = "LOCK";
-				break;
-			case HttpVerbUNLOCK:
-				request.http_method = "UNLOCK";
-				break;
-			case HttpVerbSEARCH:
-				request.http_method = "SEARCH";
-				break;
-			}
-
 			if (_request->Flags & HTTP_REQUEST_FLAG_MORE_ENTITY_BODY_EXISTS)
 			{
 				buffer buff(1 << 20);
@@ -506,20 +525,25 @@ namespace corona
 
 			try 
 			{
-				for (auto handler : api_handlers) 
-				{
-					std::string key = std::get<0>(handler.first);
-					HTTP_VERB verb = std::get<1>(handler.first);
-					if (sabsPath.starts_with(key) && verb == _request->Verb)
+
+				if (_request->UrlContext) {
+					http_handler_list* hhl = (http_handler_list*)_request->UrlContext;
+
+					for (auto handler : hhl->functions)
 					{
-						int szk = key.size();
-						int szp = sabsPath.size();
-						std::string remaining_path = sabsPath.substr(szk, szp-szk);
-						request.rest_path = split(remaining_path, '/');
-						service_transaction<http_response> trans = handler.second->func(request);
-						http_response trans_response = trans.wait();
-						send_response(_request->RequestId, trans_response.http_status_code, "", trans_response.content_type, trans_response.response_body.get_ptr(), trans_response.response_body.get_size());
-						unhandled = false;
+						if (handler.method == _request->Verb)
+						{
+							int szk = hhl->url.size();
+							int szp = sabsPath.size();
+							std::string remaining_path = sabsPath.substr(szk, szp - szk);
+							request.rest_path = split(remaining_path, '/');
+							http_action_request harhar;
+							harhar.request_id = _request->RequestId;
+							harhar.request = request;
+							harhar.server = this;
+							handler.func(harhar);
+							unhandled = false;
+						}
 					}
 				}
 			}
@@ -535,7 +559,7 @@ namespace corona
 			}
 		}
 
-		DWORD send_response(
+		virtual DWORD send_response(
 			HTTP_REQUEST_ID _request_id, 
 			int _status_code,
 			std::string _reason, 
@@ -589,7 +613,7 @@ namespace corona
 			return result;
 		}
 
-		DWORD send_response(
+		virtual DWORD send_response(
 			HTTP_REQUEST_ID _request_id,
 			int _status_code,
 			std::string _reason,
@@ -604,7 +628,7 @@ namespace corona
 			return result;
 		}
 
-		DWORD send_response(HTTP_REQUEST_ID _request_id,
+		virtual DWORD send_response(HTTP_REQUEST_ID _request_id,
 			int _status_code,
 			std::string _reason,
 			std::string _content_type,
@@ -631,6 +655,31 @@ namespace corona
 		}
 	};
 
+	DWORD http_action_request::send_response(int _status_code,
+		std::string _reason,
+		std::string _content_type,
+		char* _buffer,
+		DWORD _buffer_length_bytes)
+	{
+		return server->send_response(request_id, _status_code, _reason, _content_type, _buffer, _buffer_length_bytes);
+	}
+
+	DWORD http_action_request::send_response(int _status_code,
+		std::string _reason,
+		json _response_json)
+	{
+		return server->send_response(request_id, _status_code, _reason, _response_json);
+	}
+
+	DWORD http_action_request::send_response(int _status_code,
+		std::string _reason,
+		std::string _content_type,
+		std::string _response_string)
+	{
+		return server->send_response(request_id, _status_code, _reason, _content_type, _response_string);
+	}
+
 }
+
 
 #endif

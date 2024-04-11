@@ -71,33 +71,90 @@ namespace corona
 
 	template <typename data> class poco_node;
 
-	template <typename transaction_result> 	class service_transaction
+
+
+	class synch 
 	{
 	public:
 
 		struct promise_type
 		{
-			transaction_result m_value;
 
 			promise_type()
 			{
-				m_value = {};
-				debug_functions&& std::cout << "service_transaction::promise:" << this << " " << GetCurrentThreadId() << std::endl;
-			}
-
-			service_transaction  get_return_object() {
-				debug_functions&& std::cout << "service_transaction::get_return_object:" << this << " " << GetCurrentThreadId() << std::endl;
-				std::coroutine_handle<promise_type> promise_coro = std::coroutine_handle<promise_type>::from_promise(*this);
-				service_transaction  fbr(promise_coro);
-				return fbr;
 			}
 
 			std::suspend_always initial_suspend() noexcept { return {}; }
 			std::suspend_always final_suspend() noexcept { return {}; }
 
-			void return_value(transaction_result value) {
+			synch get_return_object()
+			{
+				debug_functions&& std::cout << "synch::promise return_object, thread:" << GetCurrentThreadId() << std::endl;
+				synch st;
+				return st;
+			}
+
+			void return_void() {
+				debug_functions&& std::cout << "synch::promise return_value, thread:" << GetCurrentThreadId() << std::endl;
+			}
+
+			void unhandled_exception() {
+				debug_functions&& std::cout << "synch::promise unhandled exception:" << this << GetCurrentThreadId() << std::endl;
+			}
+		};
+
+		std::coroutine_handle<> suspend_coro;
+
+		// object manip
+
+		synch()
+		{
+			debug_functions&& std::cout << "synch: empty ctor:" << ::GetCurrentThreadId() << std::endl;
+		}
+
+		// awaiter
+
+		bool await_ready()
+		{
+			debug_functions&& std::cout << "synch::await_ready:" << this << " " << GetCurrentThreadId() << std::endl;
+			return true;
+		}
+
+		void await_resume()
+		{
+		}
+
+		void await_suspend(std::coroutine_handle<> handle)
+		{
+			debug_functions&& std::cout << "synch::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
+
+				handle();
+		}
+
+	};
+
+	class launch
+	{
+	public:
+
+		struct promise_type
+		{
+
+			promise_type()
+			{
+			}
+
+			std::suspend_always initial_suspend() noexcept { return {}; }
+			std::suspend_always final_suspend() noexcept { return {}; }
+
+			launch get_return_object()
+			{
+				launch st;
+				return st;
+			}
+
+			void return_void() {
 				debug_functions&& std::cout << "service_transaction::promise return_value, thread:" << GetCurrentThreadId() << std::endl;
-				m_value = value;
 			}
 
 			void unhandled_exception() {
@@ -105,20 +162,33 @@ namespace corona
 			}
 		};
 
-		std::coroutine_handle<promise_type> coro;
-		std::coroutine_handle<> suspend_coro;
 
 		// object manip
 
-		service_transaction(std::coroutine_handle<promise_type> _promise_coro)
+		std::coroutine_handle<> parent;
+		std::coroutine_handle<> sync_parent;
+
+		launch()
 		{
-			coro = _promise_coro;
+			debug_functions&& std::cout << "service_transaction: empty ctor:" << ::GetCurrentThreadId() << std::endl;
+		}
+
+		launch(std::coroutine_handle<> _parent)
+		{
+			parent = _parent;
 			debug_functions&& std::cout << "service_transaction: coro ctor:" << ::GetCurrentThreadId() << std::endl;
 		}
 
-		service_transaction()
+		launch(std::coroutine_handle<promise_type> _parent)
 		{
-			debug_functions&& std::cout << "service_transaction: empty ctor:" << ::GetCurrentThreadId() << std::endl;
+			parent = _parent;
+			debug_functions&& std::cout << "service_transaction: coro 2 ctor:" << ::GetCurrentThreadId() << std::endl;
+		}
+
+		launch(std::coroutine_handle<synch::promise_type> _sync_parent)
+		{
+			sync_parent = _sync_parent;
+			debug_functions&& std::cout << "service_transaction: coro 2 ctor:" << ::GetCurrentThreadId() << std::endl;
 		}
 
 		// awaiter
@@ -130,69 +200,25 @@ namespace corona
 		}
 
 		// this creates the 
-		void await_suspend(std::coroutine_handle<promise_type> handle)
+		void await_suspend(std::coroutine_handle<> handle)
 		{
 			debug_functions&& std::cout << "service_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
-			suspend_coro = handle;
-			debug_functions&& std::cout << "service_transaction: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
+
+			if (sync_parent) {
+				handle();
+			}
+			else {
+				threadomatic::run([handle]() {
+					handle();
+					});
+			}
 		}
 
-
-		transaction_result await_resume()
+		void await_resume()
 		{
-			debug_functions&& std::cout << "service_transaction::await_resume:" << this << " " << GetCurrentThreadId() << std::endl;
-			transaction_result result;
-			try
-			{
-				if (coro) {
-					coro.resume();
-					result = coro.promise().m_value;
-				}
-				if (suspend_coro && suspend_coro.address() != coro.address()) {
-					std::cout << "suspend coro != coro, resuming." << std::endl;
-					suspend_coro.resume();
-				}
-			}
-			catch (std::exception exc)
-			{
-				std::cout << exc.what() << std::endl;
-			}
-
-
-			return result;
+			debug_functions&& std::cout << "service_transaction::resume:" << this << " " << GetCurrentThreadId() << std::endl;
 		}
 
-		transaction_result wait()
-		{
-			debug_functions&& std::cout << "service_transaction::wait:" << this << " " << GetCurrentThreadId() << std::endl;
-			transaction_result result = {};
-
-			try
-			{
-				if (coro) {
-					coro.resume();
-					result = coro.promise().m_value;
-				}
-				if (suspend_coro && suspend_coro.address() != coro.address()) {
-					std::cout << "suspend coro != coro, resuming." << std::endl;
-					suspend_coro.resume();
-				}
-			}
-			catch (std::exception exc)
-			{
-				std::cout << exc.what() << std::endl;
-			}
-
-			debug_functions&& std::cout << "service_transaction: complete" << " " << ::GetCurrentThreadId() << std::endl;
-
-			return result;
-		}
-
-		operator transaction_result()
-		{
-			transaction_result result = coro.promise().m_value;
-			return result;
-		}
 	};
 
 	template <typename transaction_result> 	class user_transaction

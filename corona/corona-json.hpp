@@ -659,14 +659,17 @@ namespace corona
 		
 		operator buffer()
 		{
-			std::string temp_s = to_json();
-			int sz = temp_s.size();
-			buffer temp(sz+1);
-			char* dest = temp.get_ptr();
-			const char* src_begin = temp_s.c_str();
-			const char* src_end = temp_s.c_str() + sz + 1;
-			std::copy(src_begin, src_end, dest);
-			return temp;
+			if (!is_empty()) 
+			{
+				std::string temp_s = to_json();
+				int sz = temp_s.size();
+				buffer temp(sz + 1);
+				char* dest = temp.get_ptr();
+				const char* src_begin = temp_s.c_str();
+				const char* src_end = temp_s.c_str() + sz + 1;
+				std::copy(src_begin, src_end, dest);
+				return temp;
+			}
 		}
 
 		std::shared_ptr<json_object> operator ->()

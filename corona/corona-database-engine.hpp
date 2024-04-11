@@ -509,7 +509,6 @@ private:
 			co_return j;
 		}
 
-
 		database_transaction<json> check_class(json check_class_request)
 		{
 			json result;
@@ -1607,7 +1606,8 @@ private:
 			co_return response;
 		}
 
-		// this creates a user account, using an email and a phone number to send a confirmation code to.
+		// this looks at an existing account and forces it to send a password email to itself.
+		// this may only happen periodically.
 		database_transaction<json> send_password_reset_code(json _send_request)
 		{
 
@@ -2469,125 +2469,269 @@ private:
 			co_return body;
 		}
 
+		http_handler_function corona_test = [this](http_action_request _request)-> void {
+			json parsed_request = parse_request(_request.request);
+			if (parsed_request.is_member("ClassName", "SysParseError")) {
+				http_response error_response = create_response(500, parsed_request);
+				_request.send_response(500, "Parse error", parsed_request);
+			}
+			auto btask = this->get_banner();
+			json fn_response = btask.wait();
+			http_response response = create_response(200, fn_response);
+			_request.send_response(200, "Ok", fn_response);
+			};
+
+		http_handler_function corona_login_start = [this](http_action_request _request)-> void {
+			json parsed_request = parse_request(_request.request);
+			if (parsed_request.is_member("ClassName", "SysParseError")) {
+				http_response error_response = create_response(500, parsed_request);
+				_request.send_response(500, "Parse error", parsed_request);
+			}
+			auto lutask = this->login_user(parsed_request);
+			json fn_response = lutask.wait();
+			http_response response = create_response(200, fn_response);
+			_request.send_response(200, "Ok", fn_response);
+			};
+
+		http_handler_function corona_login_confirmation = [this](http_action_request _request)-> void{
+			json parsed_request = parse_request(_request.request);
+			if (parsed_request.is_member("ClassName", "SysParseError")) {
+				http_response error_response = create_response(500, parsed_request);
+				_request.send_response(500, "Parse error", parsed_request);
+			}
+			auto lotask = this->send_login_confirmation_code(parsed_request);
+			json fn_response = lotask.wait();
+			http_response response = create_response(200, fn_response);
+			_request.send_response(200, "Ok", fn_response);
+			};
+
+		http_handler_function corona_login_confirm = [this](http_action_request _request)->void {
+			json parsed_request = parse_request(_request.request);
+			if (parsed_request.is_member("ClassName", "SysParseError")) {
+				http_response error_response = create_response(500, parsed_request);
+				_request.send_response(500, "Parse error", parsed_request);
+			}
+			auto lotask = this->login_user(parsed_request);
+			json fn_response = lotask.wait();
+			http_response response = create_response(200, fn_response);
+			_request.send_response(200, "Ok", fn_response);
+			};
+
+		http_handler_function corona_login_password_reset = [this](http_action_request _request)->void {
+			json parsed_request = parse_request(_request.request);
+			if (parsed_request.is_member("ClassName", "SysParseError")) {
+				http_response error_response = create_response(500, parsed_request);
+				_request.send_response(500, "Parse error", parsed_request);
+			}
+			auto sptask = this->send_password_reset_code(parsed_request);
+			json fn_response = sptask.wait();
+			http_response response = create_response(200, fn_response);
+			_request.send_response(200, "Ok", fn_response);
+			};
+
+		http_handler_function corona_classes_get = [this](http_action_request _request)->void {
+			json parsed_request = parse_request(_request.request);
+			if (parsed_request.is_member("ClassName", "SysParseError")) {
+				http_response error_response = create_response(500, parsed_request);
+				_request.send_response(500, "Parse error", parsed_request);
+			}
+			auto gctask = this->get_classes(parsed_request);
+			json fn_response = gctask.wait();
+			http_response response = create_response(200, fn_response);
+			_request.send_response(200, "Ok", fn_response);
+			};
+
+		http_handler_function corona_classes_put = [this](http_action_request _request)->void {
+			json parsed_request = parse_request(_request.request);
+			if (parsed_request.is_member("ClassName", "SysParseError")) {
+				http_response error_response = create_response(500, parsed_request);
+				_request.send_response(500, "Parse error", parsed_request);
+			}
+			auto pctask = this->put_class(parsed_request);
+			json fn_response = pctask.wait();
+			http_response response = create_response(200, fn_response);
+			_request.send_response(200, "Ok", fn_response);
+			};
+
+		http_handler_function corona_users_create = [this](http_action_request _request)->void {
+			json parsed_request = parse_request(_request.request);
+			if (parsed_request.is_member("ClassName", "SysParseError")) {
+				http_response error_response = create_response(500, parsed_request);
+				_request.send_response(500, "Parse error", parsed_request);
+			}
+			auto pctask = this->create_user(parsed_request);
+			json fn_response = pctask.wait();
+			http_response response = create_response(200, fn_response);
+			_request.send_response(200, "Ok", fn_response);
+			};
+
+		http_handler_function corona_objects_query = [this](http_action_request _request)->void {
+			json parsed_request = parse_request(_request.request);
+			if (parsed_request.is_member("ClassName", "SysParseError")) {
+				http_response error_response = create_response(500, parsed_request);
+				_request.send_response(500, "Parse error", parsed_request);
+			}
+			auto pctask = this->query_class(parsed_request);
+			json fn_response = pctask.wait();
+			http_response response = create_response(200, fn_response);
+			_request.send_response(200, "Ok", fn_response);
+			};
+
+		http_handler_function corona_objects_create = [this](http_action_request _request)->void {
+			json parsed_request = parse_request(_request.request);
+			if (parsed_request.is_member("ClassName", "SysParseError")) {
+				http_response error_response = create_response(500, parsed_request);
+				_request.send_response(500, "Parse error", parsed_request);
+			}
+			auto pctask = this->create_object(parsed_request);
+			json fn_response = pctask.wait();
+			http_response response = create_response(200, fn_response);
+			_request.send_response(200, "Ok", fn_response);
+			};
+
+		http_handler_function corona_objects_put = [this](http_action_request _request)->void {
+			json parsed_request = parse_request(_request.request);
+			if (parsed_request.is_member("ClassName", "SysParseError")) {
+				http_response error_response = create_response(500, parsed_request);
+				_request.send_response(500, "Parse error", parsed_request);
+			}
+			auto pctask = this->put_object(parsed_request);
+			json fn_response = pctask.wait();
+			http_response response = create_response(200, fn_response);
+			_request.send_response(200, "Ok", fn_response);
+			};
+
+		http_handler_function corona_objects_delete = [this](http_action_request _request)->void {
+			json parsed_request = parse_request(_request.request);
+			if (parsed_request.is_member("ClassName", "SysParseError")) {
+				http_response error_response = create_response(500, parsed_request);
+				_request.send_response(500, "Parse error", parsed_request);
+			}
+			auto pctask = this->delete_object(parsed_request);
+			json fn_response = pctask.wait();
+			http_response response = create_response(200, fn_response);
+			_request.send_response(200, "Ok", fn_response);
+			};
+
+		http_handler_function corona_objects_edit = [this](http_action_request _request)->void {
+			json parsed_request = parse_request(_request.request);
+			if (parsed_request.is_member("ClassName", "SysParseError")) {
+				http_response error_response = create_response(500, parsed_request);
+				_request.send_response(500, "Parse error", parsed_request);
+			}
+			auto pctask = this->edit_object(parsed_request);
+			json fn_response = pctask.wait();
+			http_response response = create_response(200, fn_response);
+			_request.send_response(200, "Ok", fn_response);
+			};
+
+		http_handler_function corona_objects_list = [this](http_action_request _request)->void {
+			json parsed_request = parse_request(_request.request);
+			if (parsed_request.is_member("ClassName", "SysParseError")) {
+				http_response error_response = create_response(500, parsed_request);
+				_request.send_response(500, "Parse error", parsed_request);
+			}
+			auto pctask = this->put_object(parsed_request);
+			json fn_response = pctask.wait();
+			http_response response = create_response(200, fn_response);
+			_request.send_response(200, "Ok", fn_response);
+			};
+
+		json parse_request(http_request _request)
+		{
+			json_parser jph;
+			json request;
+
+			if (_request.body.get_size() > 1)
+			{
+				json request = jph.parse_object(_request.body.get_ptr());
+			}
+			else
+			{
+				request = jph.create_object();
+			}
+
+			return request;
+		}
+
+		http_response check_parse_error(json _request)
+		{
+			http_response response;
+
+			response.content_type = "application/json";
+			response.http_status_code = 200;
+
+			if (_request.is_member("ClassName", "SysParseError")) {
+				response.http_status_code = 504;
+				response.response_body = (buffer)_request;
+				response.content_length = response.response_body.get_size();
+				return response;
+			}
+
+			return response;
+		}
+
+		http_response create_response(int _http_status_code, json _source)
+		{
+			http_response response;
+
+			response.http_status_code = _http_status_code;
+			response.content_type = "application/json";
+			response.response_body = (buffer)_source;
+			response.content_length = response.response_body.get_size();
+			response.server = "Corona 1.0";
+			response.system_result = os_result(0);
+			return response;
+		}
+
 		void bind_web_server(http_server& _server, std::string _root_path)
 		{
+			if (!_root_path.ends_with('/')) {
+				_root_path += "/";
+			}
 			std::string path = _root_path + "test/";
-			put_handler(_server, HTTP_VERB::HttpVerbGET, path, [this](json _request)->database_transaction<json> {
-				json fn_response = this->get_banner();
-				co_return fn_response;
-				});
+			_server.put_handler( HTTP_VERB::HttpVerbGET, path, corona_test);
 
 			path = _root_path + "login/start/";
-			put_handler(_server, HTTP_VERB::HttpVerbPOST, path, [this](json _request)->database_transaction<json> {
-				json fn_response = this->login_user(_request);
-				co_return fn_response;
-				});
+			_server.put_handler( HTTP_VERB::HttpVerbPOST, path, corona_login_start );
 
-			path = _root_path + "login/send_confirmation/";
-			put_handler(_server, HTTP_VERB::HttpVerbPOST, path, [this](json _request)->database_transaction<json> {
-				json fn_response = this->send_login_confirmation_code(_request);
-				co_return fn_response;
-				});
+			path = _root_path + "login/confirmation/";
+			_server.put_handler( HTTP_VERB::HttpVerbPOST, path, corona_login_confirmation);
 
-			path = _root_path + "login/receive_confirmation/";
-			put_handler(_server, HTTP_VERB::HttpVerbPOST, path, [this](json _request)->database_transaction<json> {
-				json fn_response = this->login_user(_request);
-				co_return fn_response;
-				});
+			path = _root_path + "login/confirm/";
+			_server.put_handler( HTTP_VERB::HttpVerbPOST, path, corona_login_confirm);
 
-			path = _root_path + "login/send_password_reset/";
-			put_handler(_server, HTTP_VERB::HttpVerbPOST, path, [this](json _request)->database_transaction<json> {
-				json fn_response = this->login_user(_request);
-				co_return fn_response;
-				});
+			path = _root_path + "login/password_reset/";
+			_server.put_handler( HTTP_VERB::HttpVerbPOST, path, corona_login_password_reset);
 
 			path = _root_path + "classes/get/";
-			put_handler(_server, HTTP_VERB::HttpVerbPOST, path, [this](json _request)->database_transaction<json> {
-				json fn_response = this->get_classes(_request);
-				co_return fn_response;
-				});
+			_server.put_handler( HTTP_VERB::HttpVerbPOST, path, corona_classes_get);
 
 			path = _root_path + "classes/put/";
-			put_handler(_server, HTTP_VERB::HttpVerbPOST, path, [this](json _request)->database_transaction<json> {
-				json fn_response = this->put_class(_request);
-				co_return fn_response;
-				});
+			_server.put_handler( HTTP_VERB::HttpVerbPOST, path, corona_classes_put);
 
 			path = _root_path + "users/create/";
-			put_handler(_server, HTTP_VERB::HttpVerbPOST, path, [this](json _request)->database_transaction<json> {
-				json fn_response = this->create_user(_request);
-				co_return fn_response;
-				});
+			_server.put_handler( HTTP_VERB::HttpVerbPOST, path, corona_users_create);
 
 			path = _root_path + "objects/query/";
-			put_handler(_server, HTTP_VERB::HttpVerbPOST, path, [this](json _request)->database_transaction<json> {
-				json fn_response = this->query_class(_request);
-				co_return fn_response;
-				});
-
-			path = _root_path + "users/get/";
-			put_handler(_server, HTTP_VERB::HttpVerbPOST, path, [this](json _request)->database_transaction<json> {
-				json fn_response = this->create_user(_request);
-				co_return fn_response;
-				});
+			_server.put_handler( HTTP_VERB::HttpVerbPOST, path, corona_objects_query);
 
 			path = _root_path + "objects/create/";
-			put_handler(_server, HTTP_VERB::HttpVerbPOST, path, [this](json _request)->database_transaction<json> {
-				json fn_response = this->create_object(_request);
-				co_return fn_response;
-				});
+			_server.put_handler( HTTP_VERB::HttpVerbPOST, path, corona_objects_create);
 
 			path = _root_path + "objects/put/";
-			put_handler(_server, HTTP_VERB::HttpVerbPOST, path, [this](json _request)->database_transaction<json> {
-				json fn_response = this->put_object(_request);
-				co_return fn_response;
-				});
+			_server.put_handler( HTTP_VERB::HttpVerbPOST, path, corona_objects_put);
 
 			path = _root_path + "objects/delete/";
-			put_handler(_server, HTTP_VERB::HttpVerbPOST, path, [this](json _request)->database_transaction<json> {
-				json fn_response = this->delete_object(_request);
-				co_return fn_response;
-				});
+			_server.put_handler( HTTP_VERB::HttpVerbPOST, path, corona_objects_delete );
 
 			path = _root_path + "objects/edit/";
-			put_handler(_server, HTTP_VERB::HttpVerbPOST, path, [this](json _request)->database_transaction<json> {
-				json fn_response = this->edit_object(_request);
-				co_return fn_response;
-				});
+			_server.put_handler( HTTP_VERB::HttpVerbPOST, path, corona_objects_edit);
 
 			path = _root_path + "objects/list/";
-			put_handler(_server, HTTP_VERB::HttpVerbPOST, path, [this](json _request)->database_transaction<json> {
-				json fn_response = this->put_object(_request);
-				co_return fn_response;
-				});
+			_server.put_handler( HTTP_VERB::HttpVerbPOST, path, corona_objects_list);
 		}
 
-		private:
-
-		void put_handler(http_server& _server, HTTP_VERB _verb, std::string _path, http_handler_db_function _func) {
-			_server.put_handler( _verb, _path, [this, _func](http_request _request)->service_transaction<http_response> {
-				http_response response;
-				json_parser jph;
-				response.content_type = "application/json";
-
-				json request = jph.parse_object(_request.body.get_ptr());
-
-				if (request.is_member("ClassName", "SysParseError")) {
-					response.http_status_code = 504;
-					response.response_body = request;
-					response.content_length = response.response_body.get_size();
-					co_return response;
-				}
-
-				json login_response = co_await _func(request);
-
-				response.response_body = login_response;
-				response.content_length = response.response_body.get_size();
-				response.http_status_code = 200;
-
-				co_return response;
-			});
-		}
 	};
 
 
