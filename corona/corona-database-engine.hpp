@@ -749,6 +749,8 @@ private:
 
 			std::string cipher_text = crypter.encrypt(token, get_pass_phrase(), get_iv());
 
+			token.put_member("Signature", signature);
+
 			date_time current = date_time::utc_now();
 			date_time expiration = (date_time)token["TokenExpires"];
 
@@ -2138,7 +2140,8 @@ private:
 				co_return result;
 			}
 
-			if (!check_object_permission(put_object_request, "Put")) {
+			bool permission = co_await check_object_permission(put_object_request, "Put");
+			if (!permission) {
 				json result = create_response(put_object_request, false, "Cannot create object", put_object_request["Data"], 0.0);
 				co_return result;
 			}
@@ -2231,6 +2234,12 @@ private:
 			if (!check_message(get_object_request, { auth_general }))
 			{
 				result = create_response(get_object_request, false, "Denied", jp.create_object(), 0.0);
+				co_return result;
+			}
+
+			bool permission = co_await check_object_permission(get_object_request, "Get");
+			if (!permission) {
+				json result = create_response(get_object_request, false, "Denied", jp.create_object(), 0.0);
 				co_return result;
 			}
 
@@ -2386,12 +2395,8 @@ private:
 
 			json check_request = create_request(copy_request, object_copy);
 
-			if (!check_object_permission(check_request, "Get")) {
-				json result = create_response(copy_request, false, "Denied", source_key, 0.0);
-				co_return result;
-			}
-
-			if (!check_object_permission(check_request, "Put")) {
+			bool permission = co_await check_object_permission(copy_request, "Get");
+			if (!permission) {
 				json result = create_response(copy_request, false, "Denied", source_key, 0.0);
 				co_return result;
 			}
