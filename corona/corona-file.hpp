@@ -71,156 +71,6 @@ namespace corona
 
 	template <typename data> class poco_node;
 
-
-
-	class synch 
-	{
-	public:
-
-		struct promise_type
-		{
-
-			promise_type()
-			{
-			}
-
-			std::suspend_always initial_suspend() noexcept { return {}; }
-			std::suspend_always final_suspend() noexcept { return {}; }
-
-			synch get_return_object()
-			{
-				debug_functions&& std::cout << "synch::promise return_object, thread:" << GetCurrentThreadId() << std::endl;
-				synch st;
-				return st;
-			}
-
-			void return_void() {
-				debug_functions&& std::cout << "synch::promise return_value, thread:" << GetCurrentThreadId() << std::endl;
-			}
-
-			void unhandled_exception() {
-				debug_functions&& std::cout << "synch::promise unhandled exception:" << this << GetCurrentThreadId() << std::endl;
-			}
-		};
-
-		std::coroutine_handle<> suspend_coro;
-
-		// object manip
-
-		synch()
-		{
-			debug_functions&& std::cout << "synch: empty ctor:" << ::GetCurrentThreadId() << std::endl;
-		}
-
-		// awaiter
-
-		bool await_ready()
-		{
-			debug_functions&& std::cout << "synch::await_ready:" << this << " " << GetCurrentThreadId() << std::endl;
-			return true;
-		}
-
-		void await_resume()
-		{
-		}
-
-		void await_suspend(std::coroutine_handle<> handle)
-		{
-			debug_functions&& std::cout << "synch::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
-
-				handle();
-		}
-
-	};
-
-	class launch
-	{
-	public:
-
-		struct promise_type
-		{
-
-			promise_type()
-			{
-			}
-
-			std::suspend_always initial_suspend() noexcept { return {}; }
-			std::suspend_always final_suspend() noexcept { return {}; }
-
-			launch get_return_object()
-			{
-				launch st;
-				return st;
-			}
-
-			void return_void() {
-				debug_functions&& std::cout << "service_transaction::promise return_value, thread:" << GetCurrentThreadId() << std::endl;
-			}
-
-			void unhandled_exception() {
-				debug_functions&& std::cout << "service_transaction::promise unhandled exception:" << this << GetCurrentThreadId() << std::endl;
-			}
-		};
-
-
-		// object manip
-
-		std::coroutine_handle<> parent;
-		std::coroutine_handle<> sync_parent;
-
-		launch()
-		{
-			debug_functions&& std::cout << "service_transaction: empty ctor:" << ::GetCurrentThreadId() << std::endl;
-		}
-
-		launch(std::coroutine_handle<> _parent)
-		{
-			parent = _parent;
-			debug_functions&& std::cout << "service_transaction: coro ctor:" << ::GetCurrentThreadId() << std::endl;
-		}
-
-		launch(std::coroutine_handle<promise_type> _parent)
-		{
-			parent = _parent;
-			debug_functions&& std::cout << "service_transaction: coro 2 ctor:" << ::GetCurrentThreadId() << std::endl;
-		}
-
-		launch(std::coroutine_handle<synch::promise_type> _sync_parent)
-		{
-			sync_parent = _sync_parent;
-			debug_functions&& std::cout << "service_transaction: coro 2 ctor:" << ::GetCurrentThreadId() << std::endl;
-		}
-
-		// awaiter
-
-		bool await_ready()
-		{
-			debug_functions&& std::cout << "service_transaction::await_ready:" << this << " " << GetCurrentThreadId() << std::endl;
-			return false;
-		}
-
-		// this creates the 
-		void await_suspend(std::coroutine_handle<> handle)
-		{
-			debug_functions&& std::cout << "service_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
-
-			if (sync_parent) {
-				handle();
-			}
-			else {
-				threadomatic::run([handle]() {
-					handle();
-					});
-			}
-		}
-
-		void await_resume()
-		{
-			debug_functions&& std::cout << "service_transaction::resume:" << this << " " << GetCurrentThreadId() << std::endl;
-		}
-
-	};
-
 	template <typename transaction_result> 	class user_transaction
 	{
 	public:
@@ -256,7 +106,6 @@ namespace corona
 		};
 
 		std::coroutine_handle<promise_type> coro;
-		std::coroutine_handle<> suspend_coro;
 
 		// object manip
 
@@ -271,28 +120,18 @@ namespace corona
 			debug_functions&& std::cout << "user_transaction: empty ctor:" << ::GetCurrentThreadId() << std::endl;
 		}
 
-		// awaiter
-
 		bool await_ready()
 		{
 			debug_functions&& std::cout << "user_transaction::await_ready:" << this << " " << GetCurrentThreadId() << std::endl;
-			return false;
+			if (coro) {
+				coro.resume();
+			}
+			return true;
 		}
 
-		// this creates the 
-		void await_suspend(std::coroutine_handle<promise_type> handle)
-		{
-			debug_functions&& std::cout << "user_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
-			suspend_coro = handle;
-			debug_functions&& std::cout << "user_transaction: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
-		}
-
-		// this creates the 
 		void await_suspend(std::coroutine_handle<> handle)
 		{
 			debug_functions&& std::cout << "user_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
-			suspend_coro = handle;
-			debug_functions&& std::cout << "user_transaction: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
 		}
 
 		transaction_result await_resume()
@@ -302,12 +141,7 @@ namespace corona
 			try
 			{
 				if (coro) {
-					coro.resume();
 					result = coro.promise().m_value;
-				}
-				if (suspend_coro && suspend_coro.address() != coro.address()) {
-					std::cout << "suspend coro != coro, resuming." << std::endl;
-					suspend_coro.resume();
 				}
 			}
 			catch (std::exception exc)
@@ -329,10 +163,6 @@ namespace corona
 				if (coro) {
 					coro.resume();
 					result = coro.promise().m_value;
-				}
-				if (suspend_coro && suspend_coro.address() != coro.address()) {
-					std::cout << "suspend coro != coro, resuming." << std::endl;
-					suspend_coro.resume();
 				}
 
 			}
@@ -397,7 +227,6 @@ namespace corona
 		};
 
 		std::coroutine_handle<promise_type> coro;
-		std::coroutine_handle<> suspend_coro;
 
 		// object manip
 
@@ -417,21 +246,15 @@ namespace corona
 		bool await_ready()
 		{
 			debug_functions&& std::cout << "database_transaction::await_ready:" << this << " " << GetCurrentThreadId() << std::endl;
-			return false;
+			if (coro) {
+				coro.resume();
+			}
+			return true;
 		}
 
-		// this creates the 
 		void await_suspend(std::coroutine_handle<> handle)
 		{
-			suspend_coro = handle;
-		}
-
-		// this creates the 
-		void await_suspend(std::coroutine_handle<promise_type> handle)
-		{
 			debug_functions&& std::cout << "database_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
-			suspend_coro = handle;
-			debug_functions&& std::cout << "database_transaction: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
 		}
 
 		transaction_result await_resume()
@@ -441,12 +264,7 @@ namespace corona
 			try
 			{
 				if (coro) {
-					coro.resume();
 					result = coro.promise().m_value;
-				}
-				if (suspend_coro && suspend_coro.address() != coro.address()) {
-					std::cout << "suspend coro != coro, resuming." << std::endl;
-					suspend_coro.resume();
 				}
 			}
 			catch (std::exception exc)
@@ -468,10 +286,6 @@ namespace corona
 				if (coro) {
 					coro.resume();
 					result = coro.promise().m_value;
-				}
-				if (suspend_coro && suspend_coro.address() != coro.address()) {
-					std::cout << "suspend coro != coro, resuming." << std::endl;
-					suspend_coro.resume();
 				}
 			}
 			catch (std::exception exc)
@@ -526,7 +340,6 @@ namespace corona
 		};
 
 		std::coroutine_handle<promise_type> coro;
-		std::coroutine_handle<> suspend_coro;
 
 		// object manip
 
@@ -546,15 +359,17 @@ namespace corona
 		bool await_ready()
 		{
 			debug_functions&& std::cout << "database_composed_transaction::await_ready:" << this << " " << GetCurrentThreadId() << std::endl;
-			return false;
+			if (coro) {
+				coro.resume();
+			}
+			return true;
 		}
 
 		void await_suspend(std::coroutine_handle<> handle)
 		{
 			debug_functions&& std::cout << "database_composed_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
-			suspend_coro = handle;
-			debug_functions&& std::cout << "database_composed_transaction: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
 		}
+
 
 		transaction_result await_resume()
 		{
@@ -563,13 +378,8 @@ namespace corona
 			try
 			{
 				if (coro) {
-					coro.resume();
 					result = coro.promise().m_value;
-				}
-				if (suspend_coro && suspend_coro.address() != coro.address()) {
-					std::cout << "suspend coro != coro, resuming." << std::endl;
-					suspend_coro.resume();
-				}
+				}				
 			}
 			catch (std::exception exc)
 			{
@@ -590,10 +400,6 @@ namespace corona
 				if (coro) {
 					coro.resume();
 					result = coro.promise().m_value;
-				}
-				if (suspend_coro && suspend_coro.address() != coro.address()) {
-					std::cout << "suspend coro != coro, resuming." << std::endl;
-					suspend_coro.resume();
 				}
 			}
 			catch (std::exception exc)
@@ -648,7 +454,6 @@ namespace corona
 		};
 
 		std::coroutine_handle<promise_type> coro;
-		std::coroutine_handle<> suspend_coro;
 
 		// object manip
 
@@ -668,22 +473,15 @@ namespace corona
 		bool await_ready()
 		{
 			debug_functions&& std::cout << "database_method_transaction::await_ready:" << this << " " << GetCurrentThreadId() << std::endl;
-			return false;
+			if (coro) {
+				coro.resume();
+			}
+			return true;
 		}
 
 		void await_suspend(std::coroutine_handle<> handle)
 		{
 			debug_functions&& std::cout << "database_method_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
-			suspend_coro = handle;
-			debug_functions&& std::cout << "database_method_transaction: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
-		}
-
-		// this creates the 
-		void await_suspend(std::coroutine_handle<promise_type> handle)
-		{
-			debug_functions&& std::cout << "database_method_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
-			suspend_coro = handle;
-			debug_functions&& std::cout << "database_method_transaction: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
 		}
 
 		transaction_result await_resume()
@@ -693,12 +491,7 @@ namespace corona
 			try
 			{
 				if (coro) {
-					coro.resume();
 					result = coro.promise().m_value;
-				}
-				if (suspend_coro && suspend_coro.address() != coro.address()) {
-					std::cout << "suspend coro != coro, resuming." << std::endl;
-					suspend_coro.resume();
 				}
 			}
 			catch (std::exception exc)
@@ -719,10 +512,6 @@ namespace corona
 				if (coro) {
 					coro.resume();
 					result = coro.promise().m_value;
-				}
-				if (suspend_coro && suspend_coro.address() != coro.address()) {
-					std::cout << "suspend coro != coro, resuming." << std::endl;
-					suspend_coro.resume();
 				}
 			}
 			catch (std::exception exc)
@@ -779,7 +568,6 @@ namespace corona
 		};
 
 		std::coroutine_handle<promise_type> coro;
-		std::coroutine_handle<> suspend_coro;
 
 		// object manip
 
@@ -798,22 +586,15 @@ namespace corona
 		bool await_ready()
 		{
 			debug_functions&& std::cout << "table_array_transaction::await_ready:" << this << " " << GetCurrentThreadId() << std::endl;
-			return false;
+			if (coro) {
+				coro.resume();
+			}
+			return true;
 		}
 
 		void await_suspend(std::coroutine_handle<> handle)
 		{
 			debug_functions&& std::cout << "table_array_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
-			suspend_coro = handle;
-			debug_functions&& std::cout << "table_array_transaction: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
-		}
-
-		// this creates the 
-		void await_suspend(std::coroutine_handle<promise_type> handle)
-		{
-			debug_functions&& std::cout << "table_array_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
-			suspend_coro = handle;
-			debug_functions&& std::cout << "table_array_transaction: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
 		}
 
 		// this creates the 
@@ -824,12 +605,7 @@ namespace corona
 			try
 			{
 				if (coro) {
-					coro.resume();
 					result = coro.promise().m_value;
-				}
-				if (suspend_coro && suspend_coro.address() != coro.address()) {
-					std::cout << "suspend coro != coro, resuming." << std::endl;
-					suspend_coro.resume();
 				}
 			}
 			catch (std::exception exc)
@@ -851,10 +627,6 @@ namespace corona
 				if (coro) {
 					coro.resume();
 					result = coro.promise().m_value;
-				}
-				if (suspend_coro && suspend_coro.address() != coro.address()) {
-					std::cout << "suspend coro != coro, resuming." << std::endl;
-					suspend_coro.resume();
 				}
 			}
 			catch (std::exception exc)
@@ -910,7 +682,6 @@ namespace corona
 		};
 
 		std::coroutine_handle<promise_type> coro;
-		std::coroutine_handle<> suspend_coro;
 
 		// object manip
 
@@ -929,22 +700,15 @@ namespace corona
 		bool await_ready()
 		{
 			debug_functions&& std::cout << "table_group_transaction::await_ready:" << this << " " << GetCurrentThreadId() << std::endl;
-			return false;
+			if (coro) {
+				coro.resume();
+			}
+			return true;
 		}
 
 		void await_suspend(std::coroutine_handle<> handle)
 		{
 			debug_functions&& std::cout << "table_group_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
-			suspend_coro = handle;
-			debug_functions&& std::cout << "table_group_transaction: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
-		}
-
-		// this creates the 
-		void await_suspend(std::coroutine_handle<promise_type> handle)
-		{
-			debug_functions&& std::cout << "table_group_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
-			suspend_coro = handle;
-			debug_functions&& std::cout << "table_group_transaction: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
 		}
 
 		// this creates the 
@@ -955,12 +719,7 @@ namespace corona
 			try
 			{
 				if (coro) {
-					coro.resume();
 					result = coro.promise().m_value;
-				}
-				if (suspend_coro && suspend_coro.address() != coro.address()) {
-					std::cout << "suspend coro != coro, resuming." << std::endl;
-					suspend_coro.resume();
 				}
 			}
 			catch (std::exception exc)
@@ -982,10 +741,6 @@ namespace corona
 				if (coro) {
 					coro.resume();
 					result = coro.promise().m_value;
-				}
-				if (suspend_coro && suspend_coro.address() != coro.address()) {
-					std::cout << "suspend coro != coro, resuming." << std::endl;
-					suspend_coro.resume();
 				}
 			}
 			catch (std::exception exc)
@@ -1041,7 +796,6 @@ namespace corona
 		};
 
 		std::coroutine_handle<promise_type> coro;
-		std::coroutine_handle<> suspend_coro;
 
 		// object manip
 
@@ -1060,14 +814,15 @@ namespace corona
 		bool await_ready()
 		{
 			debug_functions&& std::cout << "table_transaction::await_ready:" << this << " " << GetCurrentThreadId() << std::endl;
-			return false;
+			if (coro) {
+				coro.resume();
+			}
+			return true;
 		}
 
 		void await_suspend(std::coroutine_handle<> handle)
 		{
 			debug_functions&& std::cout << "table_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
-			suspend_coro = handle;
-			debug_functions&& std::cout << "table_transaction: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
 		}
 
 		// this creates the 
@@ -1078,12 +833,7 @@ namespace corona
 			try
 			{
 				if (coro) {
-					coro.resume();
 					result = coro.promise().m_value;
-				}
-				if (suspend_coro && suspend_coro.address() != coro.address()) {
-					std::cout << "suspend coro != coro, resuming." << std::endl;
-					suspend_coro.resume();
 				}
 			}
 			catch (std::exception exc)
@@ -1104,10 +854,6 @@ namespace corona
 				if (coro) {
 					coro.resume();
 					result = coro.promise().m_value;
-				}
-				if (suspend_coro && suspend_coro.address() != coro.address()) {
-					std::cout << "suspend coro != coro, resuming." << std::endl;
-					suspend_coro.resume();
 				}
 			}
 			catch (std::exception exc)
@@ -1163,7 +909,6 @@ namespace corona
 		};
 
 		std::coroutine_handle<promise_type> coro;
-		std::coroutine_handle<> suspend_coro;
 
 		// object manip
 
@@ -1182,23 +927,17 @@ namespace corona
 		bool await_ready()
 		{
 			debug_functions&& std::cout << "table_method_transaction::await_ready:" << this << " " << GetCurrentThreadId() << std::endl;
-			return false;
+			if (coro) {
+				coro.resume();
+			}
+			return true;
 		}
 
 		void await_suspend(std::coroutine_handle<> handle)
 		{
 			debug_functions&& std::cout << "table_method_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
-			suspend_coro = handle;
-			debug_functions&& std::cout << "table_method_transaction: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
 		}
 
-		// this creates the 
-		void await_suspend(std::coroutine_handle<promise_type> handle)
-		{
-			debug_functions&& std::cout << "table_method_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
-			suspend_coro = handle;
-			debug_functions&& std::cout << "table_method_transaction: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
-		}
 
 		// this creates the 
 		transaction_result await_resume()
@@ -1208,12 +947,7 @@ namespace corona
 			try
 			{
 				if (coro) {
-					coro.resume();
 					result = coro.promise().m_value;
-				}
-				if (suspend_coro && suspend_coro.address() != coro.address()) {
-					std::cout << "suspend coro != coro, resuming." << std::endl;
-					suspend_coro.resume();
 				}
 			}
 			catch (std::exception exc)
@@ -1235,10 +969,6 @@ namespace corona
 				if (coro) {
 					coro.resume();
 					result = coro.promise().m_value;
-				}
-				if (suspend_coro && suspend_coro.address() != coro.address()) {
-					std::cout << "suspend coro != coro, resuming." << std::endl;
-					suspend_coro.resume();
 				}
 			}
 			catch (std::exception exc)
@@ -1295,7 +1025,6 @@ namespace corona
 		};
 
 		std::coroutine_handle<promise_type> coro;
-		std::coroutine_handle<> suspend_coro;
 
 		// object manip
 
@@ -1314,22 +1043,15 @@ namespace corona
 		bool await_ready()
 		{
 			debug_functions&& std::cout << "compare_transaction::await_ready:" << this << " " << GetCurrentThreadId() << std::endl;
-			return false;
+			if (coro) {
+				coro.resume();
+			}
+			return true;
 		}
 
 		void await_suspend(std::coroutine_handle<> handle)
 		{
-			debug_functions&& std::cout << "table_method_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
-			suspend_coro = handle;
-			debug_functions&& std::cout << "table_method_transaction: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
-		}
-
-		// this creates the 
-		void await_suspend(std::coroutine_handle<promise_type> handle)
-		{
 			debug_functions&& std::cout << "compare_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
-			suspend_coro = handle;
-			debug_functions&& std::cout << "compare_transaction: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
 		}
 
 		// this creates the 
@@ -1340,12 +1062,7 @@ namespace corona
 			try
 			{
 				if (coro) {
-					coro.resume();
 					result = coro.promise().m_value;
-				}
-				if (suspend_coro && suspend_coro.address() != coro.address()) {
-					std::cout << "suspend coro != coro, resuming." << std::endl;
-					suspend_coro.resume();
 				}
 			}
 			catch (std::exception exc)
@@ -1365,12 +1082,7 @@ namespace corona
 			try
 			{
 				if (coro) {
-					coro.resume();
 					result = coro.promise().m_value;
-				}
-				if (suspend_coro && suspend_coro.address() != coro.address()) {
-					std::cout << "suspend coro != coro, resuming." << std::endl;
-					suspend_coro.resume();
 				}
 			}
 			catch (std::exception exc)
@@ -1427,7 +1139,6 @@ namespace corona
 		};
 
 		std::coroutine_handle<promise_type> coro;
-		std::coroutine_handle<> suspend_coro;
 
 		// object manip
 
@@ -1447,21 +1158,15 @@ namespace corona
 		bool await_ready()
 		{
 			debug_functions&& std::cout << "file_transaction::await_ready:" << this << " " << GetCurrentThreadId() << std::endl;
-			return false;
+			if (coro) {
+				coro.resume();
+			}
+			return true;
 		}
 
 		void await_suspend(std::coroutine_handle<> handle)
 		{
 			debug_functions&& std::cout << "file_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
-			suspend_coro = handle;
-			debug_functions&& std::cout << "file_transaction: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
-		}
-
-		void await_suspend(std::coroutine_handle<promise_type> handle)
-		{
-			debug_functions&& std::cout << "file_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
-			suspend_coro = handle;
-			debug_functions&& std::cout << "file_transaction: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
 		}
 
 		transaction_result await_resume()
@@ -1472,12 +1177,7 @@ namespace corona
 			try
 			{
 				if (coro) {
-					coro.resume();
 					result = coro.promise().m_value;
-				}
-				if (suspend_coro && suspend_coro.address() != coro.address()) {
-					std::cout << "suspend coro != coro, resuming." << std::endl;
-					suspend_coro.resume();
 				}
 			}
 			catch (std::exception exc)
@@ -1497,12 +1197,7 @@ namespace corona
 			try
 			{
 				if (coro) {
-					coro.resume();
 					result = coro.promise().m_value;
-				}
-				if (suspend_coro && suspend_coro.address() != coro.address()) {
-					std::cout << "suspend coro != coro, resuming." << std::endl;
-					suspend_coro.resume();
 				}
 			}
 			catch (std::exception exc)
@@ -1560,7 +1255,6 @@ namespace corona
 		};
 
 		std::coroutine_handle<promise_type> coro;
-		std::coroutine_handle<> suspend_coro;
 
 		// object manip
 
@@ -1580,24 +1274,15 @@ namespace corona
 		bool await_ready()
 		{
 			debug_functions&& std::cout << "file_batch::await_ready:" << this << " " << GetCurrentThreadId() << std::endl;
-			return false;
+			if (coro) {
+				coro.resume();
+			}
+			return true;
 		}
-
 
 		void await_suspend(std::coroutine_handle<> handle)
 		{
 			debug_functions&& std::cout << "file_batch::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
-			suspend_coro = handle;
-			debug_functions&& std::cout << "file_batch: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
-		}
-
-		// this creates the 
-
-		void await_suspend(std::coroutine_handle<promise_type> handle)
-		{
-			debug_functions&& std::cout << "file_batch::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
-			suspend_coro = handle;
-			debug_functions&& std::cout << "file_batch: batch complete" << " " << ::GetCurrentThreadId() << std::endl;
 		}
 
 		int64_t await_resume()
@@ -1605,12 +1290,7 @@ namespace corona
 			debug_functions&& std::cout << "file_batch::await_resume:" << this << " " << GetCurrentThreadId() << std::endl;
 			int64_t result;
 			if (coro) {
-				coro.resume();
 				result = coro.promise().m_value;
-			}
-			if (suspend_coro && suspend_coro.address() != coro.address()) {
-				std::cout << "suspend coro != coro, resuming." << std::endl;
-				suspend_coro.resume();
 			}
 
 			return result;
@@ -1624,10 +1304,6 @@ namespace corona
 			if (coro) {
 				coro.resume();
 				result = coro.promise().m_value;
-			}
-			if (suspend_coro && suspend_coro.address() != coro.address()) {
-				std::cout << "suspend coro != coro, resuming." << std::endl;
-				suspend_coro.resume();
 			}
 
 			debug_functions&& std::cout << "file_batch: complete" << " " << ::GetCurrentThreadId() << std::endl;
@@ -1741,7 +1417,6 @@ namespace corona
 		};
 
 		std::coroutine_handle<promise_type> coro;
-		std::coroutine_handle<> suspend_coro;
 
 		file_task()
 		{
@@ -1877,24 +1552,13 @@ namespace corona
 
 		void await_suspend(std::coroutine_handle<> handle)
 		{
-			suspend_coro = handle;
 			debug_functions&& std::cout << "file_task: suspend file_batch_result" << " " << ::GetCurrentThreadId() << std::endl;
 			initiate();
 			debug_functions&& std::cout << "file_task: suspend initiate" << " " << ::GetCurrentThreadId() << std::endl;
 			::WaitForSingleObject(hevent, INFINITE);
 			debug_functions&& std::cout << "file_task:io complete" << " " << ::GetCurrentThreadId() << std::endl;
-		}
-
-
-		// this creates the 
-		void await_suspend(std::coroutine_handle<promise_type> handle)
-		{
-			suspend_coro = handle;
-			debug_functions&& std::cout << "file_task: suspend file_batch_result" << " " << ::GetCurrentThreadId() << std::endl;
-			initiate();
-			debug_functions&& std::cout << "file_task: suspend initiate" << " " << ::GetCurrentThreadId() << std::endl;
-			::WaitForSingleObject(hevent, INFINITE);
-			debug_functions&& std::cout << "file_task:io complete" << " " << ::GetCurrentThreadId() << std::endl;
+			handle();
+			debug_functions&& std::cout << "file_task:suspend complete" << " " << ::GetCurrentThreadId() << std::endl;
 		}
 
 		file_task_result await_resume()
@@ -1995,6 +1659,7 @@ namespace corona
 				}
 			}
 			::GetFileSizeEx(instance.hfile, &end_of_file_position);
+			instance.last_result = os_result(0);
 		}
 
 	public:
@@ -2009,14 +1674,14 @@ namespace corona
 		{
 			instance = _srcFile.instance;
 			resize_event = _srcFile.resize_event;
-			_srcFile.instance = {};
+			_srcFile.instance = file_result();
 		}
 
 		file& operator = (file&& _srcFile) noexcept
 		{
 			instance = _srcFile.instance;
 			resize_event = _srcFile.resize_event;
-			_srcFile.instance = {};
+			_srcFile.instance = file_result();
 			return *this;
 		}
 

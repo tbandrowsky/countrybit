@@ -259,22 +259,6 @@ namespace corona
 	using handler_key = std::tuple<std::string, HTTP_VERB>;
 }
 
-namespace std
-{
-	template <> struct coroutine_traits<void, corona::http_server&, PHTTP_REQUEST>
-	{
-		struct promise_type {
-			corona::synch get_return_object() {
-				corona::synch st;
-				return st;
-			}
-			std::suspend_always initial_suspend() { return {}; }
-			std::suspend_always final_suspend() noexcept { return {}; }
-			void return_void() noexcept { return; }
-			void unhandled_exception() noexcept { return; }
-		};
-	};
-}
 
 namespace corona {
 

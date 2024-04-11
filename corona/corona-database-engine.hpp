@@ -1193,36 +1193,20 @@ private:
 			co_return false;
 		}
 
-	public:
-
-		time_span token_life;
-
-		// constructing and opening a database
-
-		corona_database(application& _app, file* _file)
-			: database_file(_file),
-			classes(_file, { "ClassName" }),
-			class_objects(_file, { "ClassName", "ObjectId" }),
-			objects(_file, { "ObjectId" }),
-			objects_by_name(_file, { "ClassName", "Name", "ObjectId" })
-		{
-			token_life = time_span(1, time_models::hours);	
-
-			config_file.file_name = "config.json";
-			schema_file.file_name = "schema.json";
-
-			watch_polling = true;
-
-		}
-
 		void apply_config(json _config)
 		{
-			if (_config.has_member("SendGrid")) 
+			if (_config.has_member("SendGrid"))
 			{
 				json send_grid = _config["SendGrid"];
 				send_grid_api_key = send_grid["ApiKey"];
+				json server = _config["Server"];
+				listen_point = server["ListenPoint"];
+				default_user = server["DefaultUserName"];
+				default_password = server["DefaultUserPassword"];
+				default_email_address = server["DefaultUserEmailAddress"];
+				default_guest_team = server["DefaultGuestTeam"];
 			}
-			else 
+			else
 			{
 				std::cout << "Send grid api key not found in configuration" << std::endl;
 			}
@@ -1233,16 +1217,16 @@ private:
 			if (_schema.has_member("Classes"))
 			{
 				json class_array = _schema["Classes"];
-				if (class_array.is_array()) 
+				if (class_array.is_array())
 				{
-					for (int i = 0; i < class_array.size(); i++) 
+					for (int i = 0; i < class_array.size(); i++)
 					{
 						json class_definition = class_array.get_element(i);
 						json put_class_request = create_system_request(class_definition);
 						co_await put_class(put_class_request);
 					}
 				}
-				else if (class_array.is_object()) 
+				else if (class_array.is_object())
 				{
 					json class_definition = class_array;
 					json put_class_request = create_system_request(class_definition);
@@ -1304,6 +1288,55 @@ private:
 
 		}
 
+	public:
+
+		std::string listen_point;
+		std::string default_user;
+		std::string default_password;
+		std::string default_email_address;
+		std::string default_guest_team;
+		time_span token_life;
+
+		// constructing and opening a database
+
+		corona_database(application& _app, file* _file)
+			: database_file(_file),
+			classes(_file, { "ClassName" }),
+			class_objects(_file, { "ClassName", "ObjectId" }),
+			objects(_file, { "ObjectId" }),
+			objects_by_name(_file, { "ClassName", "Name", "ObjectId" })
+		{
+			token_life = time_span(1, time_models::hours);	
+
+			config_file.file_name = "config.json";
+			schema_file.file_name = "schema.json";
+
+			watch_polling = true;
+		}
+
+		void read_config(application* _app)
+		{
+			try {
+				file_transaction<relative_ptr_type> config_tran = config_file.poll(_app);
+				if (config_tran.wait())
+				{
+					apply_config(config_file.contents);
+				}
+				file_transaction<relative_ptr_type> schema_tran = schema_file.poll(_app);
+				if (schema_tran.wait())
+				{
+					auto schema_task = apply_schema(schema_file.contents);
+					schema_task.wait();
+				}
+				::Sleep(1000);
+				watch_config_schema(_app);
+			}
+			catch (std::exception exc)
+			{
+				std::cout << "File change exception:" << exc.what() << std::endl;
+			}
+		}
+
 		void watch_config_schema(application* _app)
 		{
 			if (watch_polling) 
@@ -1357,7 +1390,7 @@ private:
 				json user_key = jp.create_object();
 				user_key.put_member("ClassName", user_class);
 				user_key.put_member("Name", user_name);
-				user_key.set_compare_order({ "ClassName" });
+				user_key.set_compare_order({ "ClassName", "Name" });
 				json existing_user_link = co_await objects_by_name.get(user_key);
 
 				if (existing_user_link.is_object()) 
@@ -1367,6 +1400,10 @@ private:
 					buff[0] = ('0' + rand() % 10);
 					buff[1] = 0;
 					user_name = user_name + buff;
+				}
+				else 
+				{
+					user_exists = false;
 				}
 
 			} while (user_exists);
@@ -1603,6 +1640,7 @@ private:
 			{
 				response = create_response(_receive_request, false, "Could not get user", jp.create_object(), 0.0);
 			}
+
 			co_return response;
 		}
 
@@ -2684,11 +2722,14 @@ private:
 			return response;
 		}
 
-		void bind_web_server(http_server& _server, std::string _root_path)
+		void bind_web_server(http_server& _server)
 		{
+			std::string _root_path = listen_point;
+
 			if (!_root_path.ends_with('/')) {
 				_root_path += "/";
 			}
+
 			std::string path = _root_path + "test/";
 			_server.put_handler( HTTP_VERB::HttpVerbGET, path, corona_test);
 
@@ -2784,8 +2825,10 @@ private:
 
 			corona_database db(_app, &dtest), * pdb = &db;
 
-			std::cout << "test_database_engine, create_database, thread:" << ::GetCurrentThreadId() << std::endl;
+			db.read_config(&_app);
 
+			std::cout << "test_database_engine, create_database, thread:" << ::GetCurrentThreadId() << std::endl;
+			
 			auto create_database_task = db.create_database();
 			relative_ptr_type database_location = create_database_task.wait();
 
@@ -2793,7 +2836,7 @@ private:
 
 			http_server db_api_server;
 
-			db.bind_web_server(db_api_server, "http://localhost:5555/corona");
+			db.bind_web_server(db_api_server);
 			db_api_server.start();
 
 			while (true)

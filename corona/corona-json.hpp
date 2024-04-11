@@ -431,7 +431,7 @@ namespace corona
 
 		std::string to_json()
 		{
-			return value_base->to_json();
+			return value_base ? value_base->to_json() : "";
 		}
 
 		std::string to_json_typed()

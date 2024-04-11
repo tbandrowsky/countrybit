@@ -3,7 +3,7 @@
 #define CORONA_FUNCTION_H
 
 
-const int debug_functions = 1;
+const int debug_functions = 0;
 
 
 namespace corona
