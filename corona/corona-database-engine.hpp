@@ -176,21 +176,21 @@ namespace corona
 			relative_ptr_type class_location;
 
 			co_await header.write(database_file);
-
-			class_location = co_await classes.put(R"(
+		
+			json response = co_await create_class(R"(
 {	
 	"ClassName" : "SysObject",
 	"ClassDescription" : "A reference to another object",
 	"Fields" : {			
 			"ObjectId" : "int64",
-			"ClassName" : "string",
-			"Active" : "bool"
+			"ClassName" : "string"
 	}
 }
 )");
 
-			if (class_location == null_row) {
+			if (!response["Success"]) {
 				std::cout << __FILE__ << " " << __LINE__ << ":classes.put failed." << std::endl;
+				std::cout << response.to_json() << std::endl;
 				co_return null_row;
 			}
 
@@ -202,7 +202,7 @@ namespace corona
 
 			created_classes.put_member("SysObject", true);
 
-			class_location = co_await classes.put(R"(
+			response = co_await create_class(R"(
 {	
 	"ClassName" : "SysReference",
 	"BaseClassName" : "SysObject",
@@ -217,8 +217,9 @@ namespace corona
 
 			created_classes.put_member("SysReference", true);
 
-			if (class_location == null_row) {
+			if (!response["Success"]) {
 				std::cout << __FILE__ << " " << __LINE__ << ":classes.put failed." << std::endl;
+				std::cout << response.to_json() << std::endl;
 				co_return null_row;
 			}
 
@@ -228,14 +229,13 @@ namespace corona
 				co_return null_row;
 			}
 
-			class_location = co_await classes.put(R"(
+			response = co_await create_class(R"(
 {	
 	"BaseClassName" : "SysObject",
 	"ClassName" : "SysUser",
 	"ClassDescription" : "A user",
 	"NameIndex" : true,
 	"Fields" : {			
-			"ObjectId" : "int64",
 			"ClassName" : "string",
 			"FirstName" : "string",
 			"LastName" : "string",
@@ -254,8 +254,9 @@ namespace corona
 }
 )");
 
-			if (class_location == null_row) {
+			if (!response["Success"]) {
 				std::cout << __FILE__ << " " << __LINE__ << ":classes.put failed." << std::endl;
+				std::cout << response.to_json() << std::endl;
 				co_return null_row;
 			}
 
@@ -268,7 +269,7 @@ namespace corona
 			created_classes.put_member("SysUser", true);
 
 
-			class_location = co_await classes.put(R"(
+			response = co_await create_class(R"(
 {	
 	"BaseClassName" : "SysObject",
 	"ClassName" : "SysLogin",
@@ -287,8 +288,9 @@ namespace corona
 }
 )");
 
-			if (class_location == null_row) {
+			if (!response["Success"]) {
 				std::cout << __FILE__ << " " << __LINE__ << ":classes.put failed." << std::endl;
+				std::cout << response.to_json() << std::endl;
 				co_return null_row;
 			}
 
@@ -304,7 +306,7 @@ namespace corona
 
 
 
-			class_location = co_await classes.put(R"(
+			response = co_await create_class(R"(
 {	
 	"ClassName" : "SysPermission",
 	"BaseClassName" : "SysObject",
@@ -318,8 +320,9 @@ namespace corona
 }
 )");
 
-			if (class_location == null_row) {
+			if (!response["Success"]) {
 				std::cout << __FILE__ << " " << __LINE__ << ":classes.put failed." << std::endl;
+				std::cout << response.to_json() << std::endl;
 				co_return null_row;
 			}
 
@@ -332,10 +335,10 @@ namespace corona
 			created_classes.put_member("SysPermission", true);
 
 
-			class_location = co_await classes.put(R"(
+			response = co_await create_class(R"(
 {	
 	"ClassName" : "SysMember",
-	"BaseClassName" : "SysObect",
+	"BaseClassName" : "SysObject",
 	"ClassDescription" : "Team member",
 	"Fields" : {
 			"Permissions" : 
@@ -352,8 +355,9 @@ namespace corona
 }
 )");
 
-			if (class_location == null_row) {
+			if (!response["Success"]) {
 				std::cout << __FILE__ << " " << __LINE__ << ":classes.put failed." << std::endl;
+				std::cout << response.to_json() << std::endl;
 				co_return null_row;
 			}
 
@@ -365,10 +369,10 @@ namespace corona
 
 			created_classes.put_member("SysMember", true);
 
-			class_location = co_await classes.put(R"(
+			response = co_await create_class(R"(
 {	
 	"ClassName" : "SysGrant",
-	"BaseClassName" : "SysObect",
+	"BaseClassName" : "SysObject",
 	"ClassDescription" : "Grant to an object",
 	"Fields" : {
 			"Permissions" : 
@@ -381,8 +385,9 @@ namespace corona
 }
 )");
 
-			if (class_location == null_row) {
+			if (!response["Success"]) {
 				std::cout << __FILE__ << " " << __LINE__ << ":classes.put failed." << std::endl;
+				std::cout << response.to_json() << std::endl;
 				co_return null_row;
 			}
 
@@ -394,15 +399,17 @@ namespace corona
 
 			created_classes.put_member("SysGrant", true);
 
-			class_location = co_await classes.put(R"(
+			response = co_await create_class(R"(
 {	
 	"ClassName" : "SysClassGrant",
 	"BaseClassName" : "SysGrant",
 	"ClassDescription" : "Grant to a class"
 }
 )");
-			if (class_location == null_row) {
+
+			if (!response["Success"]) {
 				std::cout << __FILE__ << " " << __LINE__ << ":classes.put failed." << std::endl;
+				std::cout << response.to_json() << std::endl;
 				co_return null_row;
 			}
 
@@ -414,7 +421,7 @@ namespace corona
 
 			created_classes.put_member("SysClassGrant", true);
 
-			class_location = co_await classes.put(R"(
+			class_location = co_await create_class(R"(
 {	
 	"ClassName" : "SysObjectGrant",
 	"BaseClassName" : "SysGrant",
@@ -425,7 +432,8 @@ namespace corona
 }
 )");
 
-			if (class_location == null_row) {
+			if (!response["Success"]) {
+				std::cout << response.to_json() << std::endl;
 				std::cout << __FILE__ << " " << __LINE__ << ":classes.put failed." << std::endl;
 				co_return null_row;
 			}
@@ -438,7 +446,7 @@ namespace corona
 
 			created_classes.put_member("SysObjectGrant", true);
 
-			class_location = co_await classes.put(R"(
+			response = co_await create_class(R"(
 {	
 	"ClassName" : "SysTeam",
 	"BaseClassName" : "SysObject",
@@ -459,7 +467,8 @@ namespace corona
 }
 )");
 
-			if (class_location == null_row) {
+			if (!response["Success"]) {
+				std::cout << response.to_json() << std::endl;
 				std::cout << __FILE__ << " " << __LINE__ << ":classes.put failed." << std::endl;
 				co_return null_row;
 			}
@@ -498,15 +507,52 @@ namespace corona
 
 private:
 
-		database_transaction<json> create_class(json& _token, std::string _text)
+		database_transaction<json> create_class(std::string _text)
 		{
 			json_parser jp;
 			json j = jp.parse_object(_text);
-			json checked = check_class(j);
+			json check_request = create_system_request(j);
+			json checked = co_await check_class(check_request);
+			json response;
+
 			if (checked["Success"]) {
-				classes.put(j);
+				json adjusted_class = checked["Data"];
+				relative_ptr_type ptr = co_await classes.put(adjusted_class);
+				if (ptr != null_row) {
+					json key = adjusted_class.extract({ "ClassName" });
+					json temp = co_await classes.get(key); 
+					if (temp.is_empty()) {
+						response = create_response(check_request, false, "save check failed", adjusted_class, 0.0);
+						co_return response;
+					}
+					if (adjusted_class.has_member("Ancestors")) {
+						auto ancestors = adjusted_class["Ancestors"];
+						if (ancestors.is_object()) {
+							auto ancestor_classes = ancestors.get_members_raw();
+							for (auto acp : ancestor_classes) {
+								std::string acn = acp.first;
+								json class_key = jp.create_object();
+								class_key.put_member("ClassName", acn);
+								auto ancestor_class = co_await classes.get(class_key);
+								if (!ancestor_class.has_member("Descendants")) {
+									ancestor_class.put_member_object("Descendants");
+								}
+								ancestor_class["Descendants"].put_member(acn, acn);
+								co_await classes.put(ancestor_class);
+							}
+						}
+					}
+					response = create_response(check_request, true, "Ok", adjusted_class, 0.0);
+				}
+				else {
+					response = create_response(check_request, false, "didn't save", checked, 0.0);
+				}
 			}
-			co_return j;
+			else 
+			{
+				response = checked;
+			}
+			co_return response;
 		}
 
 		database_transaction<json> check_class(json check_class_request)
@@ -546,8 +592,14 @@ private:
 					ancestors.put_member(base_class_name, base_class_name);
 					class_definition.put_member("Ancestors", ancestors);
 				}
+				else {
+					class_definition.put_member_object("Ancestors");
+				}
 
 				auto fields = base_class_def["Fields"].get_members();
+				if (!class_definition.has_member("Fields")) {
+					class_definition.put_member_object("Fields");
+				}
 				auto class_fields = class_definition["Fields"];
 				for (auto field : fields) {
 					class_fields.put_member(field.first, field.second);
@@ -555,7 +607,7 @@ private:
 			}
 			else 
 			{
-				class_definition.put_member_blob("Ancestors");
+				class_definition.put_member_object("Ancestors");
 			}
 
 			if (!class_definition.has_member("ClassDescription"))
@@ -602,6 +654,7 @@ private:
 						result = create_response(check_class_request, false, "Class field incorrect", err_field, 0.0);
 					}
 				}
+				result = create_response(check_class_request, true, "Ok", class_definition, 0.0);
 			}
 
 			co_return result;
@@ -613,6 +666,7 @@ private:
 			json_parser jp;
 
 			json object_definition = check_object_request["Data"];
+			bool strict_enabled = check_object_request["Strict"];
 
 			result = create_response(check_object_request, true, "Ok", object_definition, 0.0);
 
@@ -628,6 +682,19 @@ private:
 				co_return result;
 			}
 
+			db_object_id_type object_id = -1;
+
+			if (object_definition.has_member("ObjectId"))
+			{
+				object_id = object_definition["ObjectId"].get_int64s();
+			}
+			else
+			{
+				object_id = co_await get_next_object_id();
+			}
+
+			object_definition.put_member_i64("ObjectId", object_id);
+
 			json key_boy = object_definition.extract({ "ClassName" });
 			json class_data = co_await classes.get(key_boy);
 
@@ -638,36 +705,18 @@ private:
 				auto members = field_definition.get_members();
 				for (auto kv : members) {
 					json err_field = jp.create_object("Name", kv.first);
-					if (!object_definition.has_member(kv.first)) {
-						result = create_response(check_object_request, false, "Object missing field", err_field, 0);
-						co_return result;
-					}
-					auto obj_type = object_definition[kv.first]->get_type_name();
-					auto member_type = kv.second->get_type_prefix();
-					if (member_type != obj_type) {
-						result = create_response(check_object_request, false, "Object field is incorrect type", err_field, 0);
-						co_return result;
+					if (object_definition.has_member(kv.first)) {
+						std::string obj_type = object_definition[kv.first]->get_type_name();
+						std::string member_type = kv.second;
+						if (member_type != obj_type) {
+							object_definition.change_member_type(kv.first, member_type);
+						}
 					}
 				}
 			}
 			else
 			{
 				result = class_data;
-			}
-
-			int64_t object_id = object_definition["ObjectId"];
-
-			if (object_id > 0)
-			{
-				json_parser jpy;
-				json key_object = jpy.create_object();
-
-				key_object.put_member_i64("ObjectId", object_id);
-				key_object.set_natural_order();
-
-				json obj = objects.get(key_object);
-
-				result.put_member("PreviousVersion", obj);
 			}
 
 			co_return result;
@@ -921,6 +970,10 @@ private:
 			json user_key = get_message_user(_message);
 			user_key.put_member("ClassName", "SysUser");
 
+			if ((std::string)user_key["Name"] == "System") {
+				co_return true;
+			}
+
 			user = co_await acquire_object(user_key);
 			if (user.is_empty()) {
 				co_return false;
@@ -974,18 +1027,18 @@ private:
 			json_parser jp;
 			json user;
 
-			json token = _request["Token"];
 			json object = _request["Data"];
 
 			// check the token to make sure it is valid - this includes signature verification
-			if (!check_message(_request, { auth_general })) {
-				co_return false;
+			json user_key = get_message_user(_request);
+			user_key.put_member("ClassName", "SysUser");
+
+			if ((std::string)user_key["Name"] == "System") {
+				co_return true;
 			}
 
 			// extract the user key from the token and get the user object
-			json user_key = get_message_user(token);
-			user_key.put_member("ClassName", "SysUser");
-
+			user_key.set_compare_order({ "ClassName", "Name" });
 			user = co_await acquire_object(user_key);
 			if (user.is_empty()) {
 				co_return false;
@@ -1422,21 +1475,23 @@ private:
 				create_user_params.put_member("Name", user_name);
 				json create_object_request = create_request(create_user_request, create_user_params);
 				json user_result = co_await put_object(create_object_request);
-				json new_user = user_result["Data"];
+				if (user_result["Success"]) {
+					json new_user = user_result["Data"];
 
-				json create_login_params = jp.create_object();
-				create_login_params.put_member("ClassName", "SysLogin");
-				create_login_params.put_member("Password", hashed_pw);
-				create_login_params.put_member("Name", user_name);
-				create_login_params.put_member("LoginState", "UserCreated");
-				db_object_id_type objid = new_user["ObjectId"].get_int64();
-				create_login_params.put_member("CurrentObjectId", objid);
-				json put_object_request = create_request(create_user_request, create_login_params);
-				json put_response = co_await put_object(put_object_request);
+					json create_login_params = jp.create_object();
+					create_login_params.put_member("ClassName", "SysLogin");
+					create_login_params.put_member("Password", hashed_pw);
+					create_login_params.put_member("Name", user_name);
+					create_login_params.put_member("LoginState", "UserCreated");
+					db_object_id_type objid = new_user["ObjectId"].get_int64();
+					create_login_params.put_member("CurrentObjectId", objid);
+					json put_object_request = create_request(create_user_request, create_login_params);
+					json put_response = co_await put_object(put_object_request);
 
-				if (put_response["Succeeded"])
-				{
-					response = create_response(user_name, auth_login_user, true, "User created", data, 0.0);
+					if (put_response["Succeeded"])
+					{
+						response = create_response(user_name, auth_login_user, true, "User created", data, 0.0);
+					}
 				}
 				else
 				{
@@ -1936,7 +1991,7 @@ private:
 			}
 
 			json token = put_class_request["Token"];
-			json class_definition = put_class_request["Token"];
+			json class_definition = put_class_request["Data"];
 
 			bool can_put_class = co_await has_class_permission(
 				token,
@@ -1948,31 +2003,38 @@ private:
 				co_return result;
 			}
 
-			result = check_class(class_definition);
-
-			if (result["Success"]) {
-				co_await classes.put(class_definition);
-				result = create_response(put_class_request, true, "Ok", jp.create_object(), 0.0);
-
-				auto ancestors = class_definition["Ancestors"];
-				if (ancestors.is_object()) {
-					auto ancestor_classes = ancestors.get_members_raw();
-					for (auto acp : ancestor_classes) {
-						std::string acn = acp.first;
-						json class_key = jp.create_object();
-						class_key.put_member("ClassName", acn);
-						auto ancestor_class = co_await classes.get(class_key);
-						if (!ancestor_class.has_member("Descendants")) {
-							ancestor_class.put_member_object("Descendants");
+			json checked = co_await check_class(class_definition);
+			if (checked["Success"]) {
+				json adjusted_class = checked["Data"];
+				relative_ptr_type ptr = co_await classes.put(adjusted_class);
+				if (ptr != null_row) {
+					auto ancestors = adjusted_class["Ancestors"];
+					if (ancestors.is_object()) {
+						auto ancestor_classes = ancestors.get_members_raw();
+						for (auto acp : ancestor_classes) {
+							std::string acn = acp.first;
+							json class_key = jp.create_object();
+							class_key.put_member("ClassName", acn);
+							auto ancestor_class = co_await classes.get(class_key);
+							if (!ancestor_class.has_member("Descendants")) {
+								ancestor_class.put_member_object("Descendants");
+							}
+							ancestor_class["Descendants"].put_member(acn, acn);
+							co_await classes.put(ancestor_class);
 						}
-						ancestor_class["Descendants"].put_member(acn, acn);
-						co_await classes.put(ancestor_class);
 					}
+					result = create_response(put_class_request, true, "Ok", adjusted_class, 0.0);
 				}
+				else {
+					result = create_response(put_class_request, false, "class not written", adjusted_class, 0.0);
+				}
+			}
+			else 
+			{
+				result = create_response(put_class_request, false, "class failed checks", checked, 0.0);
 			}
 			co_return result;
 		}
-
 
 		database_method_transaction<json> query_class(json query_class_request)
 		{
@@ -2015,7 +2077,7 @@ private:
 				for (db_object_id_type i = 0; i < class_object_ids.size(); i++)
 				{
 					db_object_id_type ri = class_object_ids.get_element(i)["ObjectId"];
-					get_object_id.put_member("ObjectId", ri);
+					get_object_id.put_member_i64("ObjectId", ri);
 					get_object_id.set_natural_order();
 					json check_request = create_request(query_class_request, get_object_id);
 					if (check_object_key_permission(check_request, "Get"))
@@ -2152,17 +2214,6 @@ private:
 			{
 				json obj = result["Data"];
 
-				db_object_id_type object_id = -1;
-
-				if (obj.has_member("ObjectId")) 
-				{
-					object_id = obj["ObjectId"];
-				}
-				else 
-				{
-					object_id = co_await get_next_object_id();
-				}
-
 				auto child_members = obj.get_members();
 
 				for (auto child_member : child_members)
@@ -2191,25 +2242,13 @@ private:
 					}
 				}
 
-				json previous_version = result["PreviousVersion"];
-				std::string previous_name = previous_version["Name"];
-				std::string new_name = object_definition["Name"];
+				json key_index = jp.create_object();
+				key_index.copy_member("ClassName", obj);
+				key_index.copy_member("Name", obj);
+				key_index.copy_member("ObjectId", obj);
+				co_await objects_by_name.put(key_index);
 
-				if (previous_name != new_name)
-				{
-					json key_index = jp.create_object();
-					key_index.put_member("ClassName", (std::string)previous_version["ClassName"]);
-					key_index.put_member("Name", previous_name);
-					key_index.put_member("ObjectId", object_id);
-					key_index.set_compare_order({ "Name", "ObjectId" });
-					objects_by_name.erase(key_index);
-
-					key_index.put_member("ClassName", (std::string)object_definition["ClassName"]);
-					key_index.put_member("Name", new_name);
-					objects_by_name.put(key_index);
-				}
-
-				relative_ptr_type put_result = co_await objects.put( object_definition );
+				relative_ptr_type put_result = co_await objects.put( obj );
 
 				json cobj = object_definition.extract({ "ClassName", "ObjectId" });
 				relative_ptr_type classput_result = co_await class_objects.put(cobj);
@@ -2264,7 +2303,7 @@ private:
 							)
 						{
 							int64_t linked_object_id = em["LinkedObjectId"];
-							linked_object_key.put_member("ObjectId", linked_object_id);
+							linked_object_key.put_member_i64("ObjectId", linked_object_id);
 							linked_object_key.set_natural_order();
 							json lo_req = create_request(get_object_request, linked_object_key);
 							database_method_transaction<json> get_object_task = get_object(lo_req);
@@ -2285,7 +2324,7 @@ private:
 					int64_t linked_object_id = cm["LinkedObjectId"];
 					json linked_object_key = jp.create_object();
 					linked_object_key.put_member("Token", token);
-					linked_object_key.put_member("ObjectId", linked_object_id);
+					linked_object_key.put_member_i64("ObjectId", linked_object_id);
 					linked_object_key.set_natural_order();
 					json lo_req = create_request(get_object_request, linked_object_key);
 					database_method_transaction<json> get_object_task = get_object(lo_req);
@@ -2403,7 +2442,7 @@ private:
 
 			json new_object = object_copy.clone();
 			db_object_id_type new_object_id = co_await get_next_object_id();
-			new_object.put_member("ObjectId", new_object_id);
+			new_object.put_member_i64("ObjectId", new_object_id);
 
 			auto child_members = new_object.get_members();
 

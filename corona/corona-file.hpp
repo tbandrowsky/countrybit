@@ -126,11 +126,12 @@ namespace corona
 			if (coro) {
 				coro.resume();
 			}
-			return true;
+			return false;
 		}
 
 		void await_suspend(std::coroutine_handle<> handle)
 		{
+			handle();
 			debug_functions&& std::cout << "user_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
 		}
 
@@ -249,11 +250,12 @@ namespace corona
 			if (coro) {
 				coro.resume();
 			}
-			return true;
+			return false;
 		}
 
 		void await_suspend(std::coroutine_handle<> handle)
 		{
+			handle();
 			debug_functions&& std::cout << "database_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
 		}
 
@@ -362,11 +364,13 @@ namespace corona
 			if (coro) {
 				coro.resume();
 			}
-			return true;
+			return false;
 		}
 
 		void await_suspend(std::coroutine_handle<> handle)
 		{
+			handle();
+
 			debug_functions&& std::cout << "database_composed_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
 		}
 
@@ -476,12 +480,13 @@ namespace corona
 			if (coro) {
 				coro.resume();
 			}
-			return true;
+			return false;
 		}
 
 		void await_suspend(std::coroutine_handle<> handle)
 		{
 			debug_functions&& std::cout << "database_method_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
+			handle();
 		}
 
 		transaction_result await_resume()
@@ -589,11 +594,12 @@ namespace corona
 			if (coro) {
 				coro.resume();
 			}
-			return true;
+			return false;
 		}
 
 		void await_suspend(std::coroutine_handle<> handle)
 		{
+			handle();
 			debug_functions&& std::cout << "table_array_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
 		}
 
@@ -703,11 +709,13 @@ namespace corona
 			if (coro) {
 				coro.resume();
 			}
-			return true;
+			return false;
 		}
 
 		void await_suspend(std::coroutine_handle<> handle)
 		{
+			handle();
+
 			debug_functions&& std::cout << "table_group_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
 		}
 
@@ -817,12 +825,15 @@ namespace corona
 			if (coro) {
 				coro.resume();
 			}
-			return true;
+			return false;
 		}
 
 		void await_suspend(std::coroutine_handle<> handle)
 		{
 			debug_functions&& std::cout << "table_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
+			debug_functions&& std::cout << "table_transaction::await_suspend post coro:" << this << " " << GetCurrentThreadId() << std::endl;
+			handle();
+			debug_functions&& std::cout << "table_transaction::await_suspend post handle:" << this << " " << GetCurrentThreadId() << std::endl;
 		}
 
 		// this creates the 
@@ -930,12 +941,14 @@ namespace corona
 			if (coro) {
 				coro.resume();
 			}
-			return true;
+
+			return false;
 		}
 
 		void await_suspend(std::coroutine_handle<> handle)
 		{
 			debug_functions&& std::cout << "table_method_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
+			handle();
 		}
 
 
@@ -1046,12 +1059,14 @@ namespace corona
 			if (coro) {
 				coro.resume();
 			}
-			return true;
+
+			return false;
 		}
 
 		void await_suspend(std::coroutine_handle<> handle)
 		{
 			debug_functions&& std::cout << "compare_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
+			handle();
 		}
 
 		// this creates the 
@@ -1161,12 +1176,14 @@ namespace corona
 			if (coro) {
 				coro.resume();
 			}
-			return true;
+
+			return false;
 		}
 
 		void await_suspend(std::coroutine_handle<> handle)
 		{
 			debug_functions&& std::cout << "file_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
+			handle();
 		}
 
 		transaction_result await_resume()
@@ -1277,12 +1294,14 @@ namespace corona
 			if (coro) {
 				coro.resume();
 			}
-			return true;
+
+			return false;
 		}
 
 		void await_suspend(std::coroutine_handle<> handle)
 		{
 			debug_functions&& std::cout << "file_batch::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
+			handle();
 		}
 
 		int64_t await_resume()
@@ -1547,13 +1566,14 @@ namespace corona
 		}
 
 		bool await_ready() {
+			debug_functions&& std::cout << "file_task: await_ready" << " " << ::GetCurrentThreadId() << std::endl;
+			initiate();
 			return false;
 		}
 
 		void await_suspend(std::coroutine_handle<> handle)
 		{
 			debug_functions&& std::cout << "file_task: suspend file_batch_result" << " " << ::GetCurrentThreadId() << std::endl;
-			initiate();
 			debug_functions&& std::cout << "file_task: suspend initiate" << " " << ::GetCurrentThreadId() << std::endl;
 			::WaitForSingleObject(hevent, INFINITE);
 			debug_functions&& std::cout << "file_task:io complete" << " " << ::GetCurrentThreadId() << std::endl;

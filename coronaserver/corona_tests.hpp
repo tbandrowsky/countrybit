@@ -52,7 +52,7 @@ void corona_tests()
         auto result4 = fb4.wait();
 
         std::cout << "\n\n=============================================" << std::endl;
-        std::cout << "main:test_datbase, thread:" << GetCurrentThreadId() << std::endl;
+        std::cout << "main:test_database, thread:" << GetCurrentThreadId() << std::endl;
 
         corona::user_transaction fb5 = corona::test_database_engine(app);
         auto result5 = fb5.wait();

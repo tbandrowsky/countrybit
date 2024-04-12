@@ -40,6 +40,17 @@ namespace corona
 		}
 		virtual std::string get_type_name()
 		{
+			std::string temp;
+
+			temp = get_type_prefix();
+			if (temp.size()) {
+				temp = temp.substr(1, temp.size() - 1);
+			}
+
+			return temp;
+		}
+		virtual std::string get_ctype_name()
+		{
 			return typeid(*this).name();
 		}
 		virtual std::shared_ptr<json_value> clone()
@@ -672,9 +683,9 @@ namespace corona
 			}
 		}
 
-		std::shared_ptr<json_object> operator ->()
+		std::shared_ptr<json_value> operator ->()
 		{
-			return object_impl;
+			return value_base;
 		}
 
 		json operator[](const std::string& _key) const
@@ -843,6 +854,46 @@ namespace corona
 			}
 		}
 
+		void change_member_type(std::string _key, std::string _new_type)
+		{
+			if (!object_impl) 
+			{
+				throw std::logic_error("Not an object");
+			}
+
+			if (!has_member(_key))
+			{
+				throw std::logic_error("Changing type on a non-existent member");
+			}
+
+			if (_new_type == "object") {
+				put_member_object(_key);
+			}
+			else if (_new_type == "array") {
+				put_member_array(_key);
+			}
+			else if (_new_type == "string") {
+				std::string s = get_member(_key);
+				put_member(_key, s);
+			}
+			else if (_new_type == "int64") {
+				int64_t i64 = get_member(_key).get_int64s();
+				put_member_i64(_key, i64);
+			}
+			else if (_new_type == "double") {
+				double d = get_member(_key);
+				put_member(_key, d);
+			}
+			else if (_new_type == "datetime") {
+				date_time dt = get_member(_key);
+				put_member(_key, dt);
+			}
+			else if (_new_type == "bool") {
+				bool b = get_member(_key);
+				put_member(_key, b);
+			}
+		}
+
 		json put_member(std::string _key, json& _member)
 		{
 			if (!object_impl) {
@@ -857,7 +908,7 @@ namespace corona
 			}
 			else if (_member.is_int64()) {
 				int64_t d = _member;
-				put_member(_key, d);
+				put_member_i64(_key, d);
 			}
 			else if (_member.is_datetime()) {
 				date_time d = _member;
@@ -2305,6 +2356,7 @@ namespace corona
 			if (*_src == '{')
 			{
 				_src++;
+				_src = eat_white(_src);
 				result = true;
 				_object = std::make_shared<json_object>();
 				std::string member_name;
@@ -2372,6 +2424,7 @@ namespace corona
 						}
 						parse_object_state = parse_object_states::parsing_name;
 					}
+					_src = eat_white(_src);
 				}
 				_src++;
 			}

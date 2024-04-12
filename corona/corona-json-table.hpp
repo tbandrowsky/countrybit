@@ -220,6 +220,12 @@ namespace corona
 				char* c = storage.bytes.get_ptr();
 				json_parser jp;
 				json payload = jp.parse_object(c);
+				if (payload.is_member("ClassName", "SysParseErrors")) {
+					std::string temp = "Could not parse:";
+					temp += c;
+					std::cout << std::endl << "*******" << std::endl << "Could not parse:" << std::endl <<  temp << std::endl;
+					throw std::logic_error( temp.c_str() );
+				}
 				put_json(payload);
 			}
 			co_return status;
@@ -460,6 +466,8 @@ namespace corona
 			json_parser jp;
 			json key = jp.parse_object(_key);
 
+			key.set_natural_order();
+
 			if (key.is_member("ClassName", "SysParseError")) {
 				std::cout << key.to_json() << std::endl;
 				co_return key;
@@ -502,7 +510,11 @@ namespace corona
 		put(json value)
 		{
 			auto key = get_key(value);
-			relative_ptr_type modified_node = co_await this->update_node(key, [value](UPDATE_VALUE& dest) { dest.assign_update(value); });
+			relative_ptr_type modified_node = co_await this->update_node(key, 
+				[value](UPDATE_VALUE& dest) { 
+					dest.assign_update(value); 
+				}
+			);
 			co_return modified_node;
 		}
 
