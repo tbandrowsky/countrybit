@@ -1097,6 +1097,7 @@ namespace corona
 			try
 			{
 				if (coro) {
+					coro.resume();
 					result = coro.promise().m_value;
 				}
 			}
@@ -1214,6 +1215,7 @@ namespace corona
 			try
 			{
 				if (coro) {
+					coro.resume();
 					result = coro.promise().m_value;
 				}
 			}

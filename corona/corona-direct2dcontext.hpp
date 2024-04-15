@@ -2,8 +2,6 @@
 #ifndef CORONA_DIRECT2DCONTEXT_H
 #define CORONA_DIRECT2DCONTEXT_H
 
-
-
 namespace corona
 {
 	class direct2dWindow;
@@ -170,12 +168,12 @@ namespace corona
 
 		virtual color getColorAtPoint(bitmapInstanceDto* _bitmap, point& _point)
 		{
-			color color;
+			color x;
 			auto i = bitmaps[_bitmap->bitmapName];
 			if (i) {
-				color = i->getColorAtPoint(_bitmap->width, _bitmap->height, _point);
+				x = i->getColorAtPoint(_bitmap->width, _bitmap->height, _point);
 			}
-			return color;
+			return x;
 		}
 
 		virtual bool setBitmapSizes(bitmapRequest* _bitmap, bool _forceResize)

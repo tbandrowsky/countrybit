@@ -5,9 +5,6 @@
 namespace corona
 {
 
-
-	using color = D2D1_COLOR_F;
-
 	class color_box : protected boxed<color>
 	{
 	public:

@@ -1373,18 +1373,26 @@ private:
 		{
 			try {
 				file_transaction<relative_ptr_type> config_tran = config_file.poll(_app);
-				if (config_tran.wait())
+				if (config_tran.wait() != null_row)
 				{
 					apply_config(config_file.contents);
 				}
+			}
+			catch (std::exception exc)
+			{
+				std::cout << "File change exception:" << exc.what() << std::endl;
+			}
+		}
+
+		void read_schema(application* _app)
+		{
+			try {
 				file_transaction<relative_ptr_type> schema_tran = schema_file.poll(_app);
-				if (schema_tran.wait())
+				if (schema_tran.wait() != null_row)
 				{
 					auto schema_task = apply_schema(schema_file.contents);
 					schema_task.wait();
 				}
-				::Sleep(1000);
-				watch_config_schema(_app);
 			}
 			catch (std::exception exc)
 			{
@@ -2862,7 +2870,8 @@ private:
 
 	user_transaction<bool> run_server(corona::application& _app)
 	{
-		try {
+		try 
+		{
 			file dtest = _app.create_file(FOLDERID_Documents, "corona_json_database_test2.ctb");
 
 			std::cout << "test_database_engine, thread:" << ::GetCurrentThreadId() << std::endl;

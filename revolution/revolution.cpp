@@ -2,11 +2,6 @@
 #define APPLICATION_GUITAR 2
 #define APPLICATION_ID APPLICATION_REVOLUTION
 
-#include "windows.h"
-#include "windowsx.h"
-#include <functional>
-
-
 #if APPLICATION_ID == APPLICATION_REVOLUTION
 #include "app_revolution.cpp"
 #define application_function corona::run_revolution_application;
