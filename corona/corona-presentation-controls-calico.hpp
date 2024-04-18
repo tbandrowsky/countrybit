@@ -4,6 +4,15 @@
 
 namespace corona
 {
+
+	struct calico_button_onclick_options
+	{
+		corona_client*					corona_client;
+		std::string						function_name;
+		json							function_data;
+		json							credentials;
+	};
+
 	class calico_button_control : public gradient_button_control
 	{
 	public:
@@ -14,11 +23,8 @@ namespace corona
 		solidBrushRequest				foreground_complete_brush;
 		textStyleRequest				text_style;
 		double							icon_width;
-		std::string						source_name;
-		std::string						function_name;
-		json							function_parameters;
-		std::shared_ptr<data_lake>		lake;
 		std::shared_ptr<call_status>	status;
+		calico_button_onclick_options	options;
 
 		calico_button_control() 
 		{
@@ -33,10 +39,6 @@ namespace corona
 			foreground_complete_brush = _src.foreground_complete_brush;
 			text_style = _src.text_style;
 			icon_width = _src.icon_width;
-			source_name = _src.source_name;
-			function_name = _src.function_name;
-			function_parameters = _src.function_parameters;
-			lake = _src.lake;
 			status = _src.status;
 		}
 
@@ -86,14 +88,7 @@ namespace corona
 
 					auto& context = pwindow->getContext();
 
-					if (lake->is_busy(source_name, function_name))
-					{
-						context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonFaceOver.name);
-						auto face_bounds = rectangle_math::deflate(draw_bounds, { 8, 8, 8, 16 });
-						//context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonBackLight.name);
-						draw_shape(this, &face_bounds, &foreground_processing_brush);
-					}
-					else if (mouse_left_down.value())
+					if (mouse_left_down.value())
 					{
 						context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonFaceDown.name);
 						auto face_bounds = rectangle_math::deflate(draw_bounds, { 8, 8, 8, 8 });
@@ -162,13 +157,9 @@ namespace corona
 	{
 		_page->on_mouse_left_click(this, [this, _presentation, _page](mouse_left_click_event evt)
 			{
-				status = nullptr;
-				lake->call_function(source_name, function_name, function_parameters);
-			});
-
-		_page->on_changed(id, source_name, function_name, [this](page_data_event evt) {
-				auto fn = evt.lake->get_function(source_name, function_name);
-				status = std::make_shared<call_status>(fn->status);
+				json_parser jp;
+				json results = jp.create_object();
+				options.corona_client->general_post(options.function_name, options.credentials, options.function_data, results);
 			});
 	}
 

@@ -780,6 +780,7 @@ namespace corona
 		std::string field_tooltip;
 		bool read_only;
 		json field_options;
+		list_data choice_options;
 	};
 
 	class item_data_source
@@ -848,7 +849,7 @@ namespace corona
 
 			for (auto &ctrl : ids.fields) 
 			{
-				if (ctrl.field_type == "edit_double")
+				if (ctrl.field_type == "double")
 				{
 					field_column.edit_field(ctrl.field_id, ctrl.field_label, ctrl.field_tooltip, [ctrl, this](edit_control& _settings) {
 						if (ids.data.has_member(ctrl.json_member_name)) {
@@ -857,7 +858,7 @@ namespace corona
 						}
 						});
 				}
-				else if (ctrl.field_type == "edit_integer")
+				else if (ctrl.field_type == "integer")
 				{
 					field_column.edit_field(ctrl.field_id, ctrl.field_label, ctrl.field_tooltip, [ctrl, this](edit_control& _settings) {
 						if (ids.data.has_member(ctrl.json_member_name)) {
@@ -866,7 +867,7 @@ namespace corona
 						}
 						});
 				}
-				else if (ctrl.field_type == "edit_currency")
+				else if (ctrl.field_type == "currency")
 				{
 					field_column.edit_field(ctrl.field_id, ctrl.field_label, ctrl.field_tooltip, [ctrl, this](edit_control& _settings) {
 						if (ids.data.has_member(ctrl.json_member_name)) {
@@ -875,7 +876,7 @@ namespace corona
 						}
 						});
 				}
-				else if (ctrl.field_type == "richedit_string")
+				else if (ctrl.field_type == "string")
 				{
 					field_column.edit_field(ctrl.field_id, ctrl.field_label, ctrl.field_tooltip, [ctrl, this](edit_control& _settings) {
 						if (ids.data.has_member(ctrl.json_member_name)) {
@@ -884,16 +885,7 @@ namespace corona
 						}
 						});
 				}
-				else if (ctrl.field_type == "edit_string")
-				{
-					field_column.edit_field(ctrl.field_id, ctrl.field_label, ctrl.field_tooltip, [ctrl, this](edit_control& _settings) {
-						if (ids.data.has_member(ctrl.json_member_name)) {
-							std::string _existing = ids.data[ctrl.json_member_name];
-							_settings.set_text(_existing);
-						}
-						});
-				}
-				else if (ctrl.field_type == "listbox_field") 
+				else if (ctrl.field_type == "listbox") 
 				{
 					field_column.listbox_field(ctrl.field_id, ctrl.field_label, ctrl.field_tooltip, [ctrl, this](listbox_control& _settings) {
 						if (ids.data.has_member(ctrl.json_member_name)) {
@@ -902,7 +894,7 @@ namespace corona
 						});
 
 				}
-				else if (ctrl.field_type == "combobox_field")
+				else if (ctrl.field_type == "combobox")
 				{
 					field_column.combobox_field(ctrl.field_id, ctrl.field_label, ctrl.field_tooltip, [ctrl, this](combobox_control& _settings) {
 						if (ids.data.has_member(ctrl.json_member_name)) {
@@ -912,7 +904,7 @@ namespace corona
 						});
 
 				}
-				else if (ctrl.field_type == "comboboxex_field")
+				else if (ctrl.field_type == "comboboxex")
 				{
 					field_column.comboboxex_field(ctrl.field_id, ctrl.field_label, ctrl.field_tooltip, [ctrl, this](comboboxex_control& _settings) {
 						if (ids.data.has_member(ctrl.json_member_name)) {
@@ -922,7 +914,7 @@ namespace corona
 						});
 
 				}
-				else if (ctrl.field_type == "datetimepicker_field")
+				else if (ctrl.field_type == "datetimepicker")
 				{
 					field_column.datetimepicker_field(ctrl.field_id, ctrl.field_label, ctrl.field_tooltip, [ctrl, this](datetimepicker_control& _settings) {
 						if (ids.data.has_member(ctrl.json_member_name)) {
@@ -931,7 +923,7 @@ namespace corona
 
 						});
 				}
-				else if (ctrl.field_type == "richeedit_field")
+				else if (ctrl.field_type == "richeedit")
 				{
 					field_column.richedit_field(ctrl.field_id, ctrl.field_label, ctrl.field_tooltip, [ctrl, this](richedit_control& _settings) {
 						if (ids.data.has_member(ctrl.json_member_name)) {
@@ -976,6 +968,8 @@ namespace corona
 		std::string name;
 		std::function<void(tab_pane& _src, control_base*)> apply_data;
 		std::function<void(tab_pane& _src, control_base*)> create_tab_controls;
+		std::vector<json> create_objects;
+		std::vector<json> create_classes;
 	};
 
 	class tab_view_control : public windows_control

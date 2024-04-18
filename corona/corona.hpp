@@ -105,6 +105,7 @@
 #include "corona-application_base.hpp"
 
 #include "corona-json-table.hpp"
+#include "corona-coronaclient.hpp"
 
 #include "corona-styles.hpp"
 #include "corona-presentation-events.hpp"
@@ -123,7 +124,6 @@
 
 #include "corona-cryptography.hpp"
 #include "corona-sendgrid-client.hpp"
-#include "corona-calicoclient.hpp"
 #include "corona-httpserver.hpp"
 #include "corona-database-engine.hpp"
 

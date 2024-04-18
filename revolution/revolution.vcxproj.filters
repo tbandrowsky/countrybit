@@ -21,15 +21,15 @@
     <ClInclude Include="revolution.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="app_guitar.hpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="app_revolution.hpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="revolution.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="app_revolution.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="app_guitar.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

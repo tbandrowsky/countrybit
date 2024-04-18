@@ -3,12 +3,12 @@
 #define APPLICATION_ID APPLICATION_REVOLUTION
 
 #if APPLICATION_ID == APPLICATION_REVOLUTION
-#include "app_revolution.cpp"
+#include "app_revolution.hpp"
 #define application_function corona::run_revolution_application;
 #endif
 
 #if APPLICATION_ID == APPLICATION_GUITAR
-#include "app_guitar.cpp"
+#include "app_guitar.hpp"
 #define application_function corona::run_proposal_application;
 #endif
 

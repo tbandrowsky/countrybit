@@ -926,18 +926,6 @@ namespace corona
 		//std::cout << "resize control_base:" << ti << " " << bounds.x << "," << bounds.y << " x " << bounds.w << " " << bounds.h << std::endl;
 	}
 
-	using cell_json_size = std::function<point(draw_control* _parent, int _index, rectangle _bounds)>;
-	using cell_json_draw = std::function<void(draw_control* _parent, int _index, rectangle _bounds)>;
-	using cell_json_assets = std::function<void(draw_control* _parent, rectangle _bounds)>;
-
-	class array_data_source
-	{
-	public:
-		json				data;
-		cell_json_assets	assets;
-		cell_json_draw		draw_item;
-		cell_json_size		size_item;
-	};
 
 }
 

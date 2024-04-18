@@ -1180,17 +1180,18 @@ private:
 						return actual_object_classes.has_member(class_name);
 						})) {
 						json build_option = jp.create_object();
-						build_option.put_member("ClassName", "SysCreateObject");
-						build_option.put_member_i64("TargetObjectId", (int64_t)parent["ObjectId"]);
-						build_option.put_member("TargetMemberName", step_field_name);
-						build_option.put_member("TargetClassName", required_class_name);
-						build_option.put_member("TargetClassDescription", (std::string)required_class["ClassDescription"]);
+						build_option.put_member("Function", "objects/create/");
+						json build_message = jp.create_object();
+						build_message.put_member("ClassName", required_class_name);
+						build_message.put_member_i64("TargetObjectId", (int64_t)parent["ObjectId"]);
+						build_message.put_member("TargetMemberName", step_field_name);
 						build_options.append_element(build_option);
 
 						build_option = jp.create_object();
-						build_option.put_member("ClassName", "SysCreateSubClass");
-						build_option.put_member("TargetBaseClassName", required_class_name);
-						build_option.put_member("TargetClassDescription", required_class_description);
+						build_message = jp.create_object();
+						build_option.put_member("Function", "classes/put/");
+						build_option.put_member("BaseClassName", required_class_name);
+						build_option.put_member("ClassDescription", required_class_description);
 						build_options.append_element(build_option);
 						satisfied = false;
 					}
@@ -1199,10 +1200,11 @@ private:
 				// now, if we are satisfied, then we can create a new option
 				if (satisfied) {
 					json build_option = jp.create_object();
-					build_option.put_member("ClassName", "SysCreateObject");
-					build_option.put_member_i64("TargetObjectId", (int64_t)parent["ObjectId"]);
-					build_option.put_member("TargetMemberName", member_destination_of_object);
-					build_option.put_member("TargetClassName", class_of_object_to_create);
+					build_option.put_member("Function", "objects/create/");
+					json build_message = jp.create_object();
+					build_message.put_member_i64("TargetObjectId", (int64_t)parent["ObjectId"]);
+					build_message.put_member("TargetMemberName", member_destination_of_object);
+					build_message.put_member("ClassName", class_of_object_to_create);
 					build_options.append_element(build_option);
 					satisfied = false;
 				}
@@ -1278,14 +1280,14 @@ private:
 					{
 						json class_definition = class_array.get_element(i);
 						json put_class_request = create_system_request(class_definition);
-						co_await put_class(put_class_request);
+						co_await create_class(put_class_request);
 					}
 				}
 				else if (class_array.is_object())
 				{
 					json class_definition = class_array;
 					json put_class_request = create_system_request(class_definition);
-					co_await put_class(put_class_request);
+					co_await create_class(put_class_request);
 				}
 			}
 			else
@@ -1520,23 +1522,17 @@ private:
 			json_parser jp;
 			json response;
 
-			if (!check_message(_login_request, { auth_login_user, auth_general, auth_receive_login_confirmation_code, auth_send_login_confirmation_code, auth_receive_reset_password_code, auth_send_password_reset_code })) 
-			{
-				response = create_response(_login_request, false, "Cannot login", jp.create_object(), 0.0);
-				co_return response;
-			}
-
-			json data = _login_request["Data"];
-			std::string password = data["Password"];
+			json data = _login_request;
+			std::string user_name = data["Name"];
+			std::string user_password = data["Password"];
+			std::string hashed_user_password;
 
 			json user_key = jp.create_object();
-			user_key.copy_member("Name", data);
+			user_key.put_member("Name", user_name);
 			user_key.put_member("ClassName", "SysLogin");
 			json gor = create_request(_login_request, user_key);		
 
 			json user_login = co_await get_object(gor);
-
-			std::string user_name = user_key["Name"];
 
 			/*   
 			
@@ -1552,9 +1548,9 @@ private:
 					response = create_response(_login_request, false, "Failed", jp.create_object(), 0.0);
 					co_return response;
 				}
-				password = crypter.hash(password);
+				hashed_user_password = crypter.hash(user_password);
 				std::string existing_hashed_password = ul["Password"];
-				if (password == existing_hashed_password) 
+				if (hashed_user_password == existing_hashed_password)
 				{
 					ul.put_member("LoginState", "PasswordAccepted");
 					json porq = create_request(_login_request, ul);
@@ -1837,16 +1833,15 @@ private:
 			}
 
 			json object_options = jp.create_object();
-
 			object_options.copy_member("ObjectId", object_key);
 			object_options.put_member_object("Fields");
 			json object_fields = object_options["Fields"];
-			object_options.put_member_array("Edit");
-			json edit_options = object_options["Edit"];
+			object_options.put_member_object("Edit");
+			json edit_options_root = object_options["Edit"];
 
-			json object_response = co_await get_object(_edit_object_request);
-			if (object_response["Success"]) {
-				json obj = object_response["Data"];
+			json get_response = co_await get_object(_edit_object_request);
+			if (get_response["Success"]) {
+				json obj = get_response["Data"];
 				object_options.put_member("Data", obj);
 				json class_key = obj.extract({ "ClassName" });
 				class_key.put_member("Token", token);
@@ -1856,6 +1851,9 @@ private:
 					object_options.put_member_object("ClassDefinition", class_definition);
 					auto fields = class_definition["Fields"].get_members();
 					for (auto field : fields) {
+
+						json edit_options = edit_options_root.put_member_array(field.first);
+
 						if (field.second.is_object()) {
 							std::string field_type = field.second["FieldType"];
 							if (field_type == "array" || field_type == "object")
@@ -1863,28 +1861,55 @@ private:
 								if (field.second.has_member("Goal")) 
 								{
 									json field_options = co_await get_goal_field_options(_edit_object_request, class_definition, obj, field.first);
-									if (field_options.is_array()) {
-										for (int i = 0; i < field_options.size(); i++) {
-											edit_options.append_element(field_options.get_element(i));
+									if (field_options["Success"]) {
+										json field_options_array = field_options["Data"];
+										for (int i = 0; i < field_options_array.size(); i++) {
+											edit_options.append_element(field_options_array.get_element(i));
 										}
 									}
 								}
 								else if (field.second.has_member("AllowedClasses")) 
 								{
 									json allowed = field.second["AllowedClasses"];
-									if (allowed.is_string()) {
+									if (allowed.is_array()) {
+										for (int i = 0; i < allowed.size(); i++) {
+											json allowed_class = allowed.get_element(i);
+											if (allowed_class.is_string()) {
+												json build_option = jp.create_object();
+												json build_message = jp.create_object();
+												build_message.put_member_i64("TargetObjectId", (int64_t)obj["ObjectId"]);
+												build_message.put_member("TargetMemberName", field.first);
+												build_message.put_member("ClassName", allowed_class);
+												build_message.put_member("ClassDescription", allowed_class);
+												build_option.put_member("Data", build_message);
+												build_option.put_member("Function", "/objects/create/");
+												edit_options.append_element(build_option);
+
+												build_option = jp.create_object();
+												json build_message = jp.create_object();
+												build_message.put_member("BaseClassName", allowed_class);
+												build_option.put_member("Data", build_message);
+												build_option.put_member("Function", "/classes/create/");
+												edit_options.append_element(build_option);
+											}
+										}
+									}
+									else if (allowed.is_string()) {
 										json build_option = jp.create_object();
-										build_option.put_member("ClassName", "SysCreateObject");
-										build_option.put_member_i64("TargetObjectId", (int64_t)obj["ObjectId"]);
-										build_option.put_member("TargetMemberName", field.first);
-										build_option.put_member("TargetClassName", allowed);
-										build_option.put_member("TargetClassDescription", allowed);
+										json build_message = jp.create_object();
+										build_message.put_member_i64("TargetObjectId", (int64_t)obj["ObjectId"]);
+										build_message.put_member("TargetMemberName", field.first);
+										build_message.put_member("ClassName", allowed);
+										build_message.put_member("ClassDescription", allowed);
+										build_option.put_member("Function", "/objects/create/");
+										build_option.put_member("Data", build_message);
 										edit_options.append_element(build_option);
 
 										build_option = jp.create_object();
-										build_option.put_member("ClassName", "SysCreateSubClass");
-										build_option.put_member("TargetBaseClassName", allowed);
-										build_option.put_member("TargetClassDescription", allowed);
+										json build_message = jp.create_object();
+										build_message.put_member("BaseClassName", allowed);
+										build_option.put_member("Data", build_message);
+										build_option.put_member("Function", "/classes/create/");
 										edit_options.append_element(build_option);
 									}
 								}
@@ -1904,8 +1929,16 @@ private:
 									class_key.put_member("Token", token);
 									class_key.put_member("Filter", token);
 									json choice_list = co_await query_class(class_key);
-									choices.put_member("Items", choice_list);
-									object_fields.put_member(field.first, choices);
+									if (choice_list["Success"]) 
+									{
+										json data = choice_list["Data"];
+										choices.put_member("Items", data );
+									}
+									else 
+									{
+										choices.put_member_array("Items");
+									}
+									object_fields.put_member(field.first, field.second);
 								}
 							}
 							else {
@@ -1984,6 +2017,73 @@ private:
 			result = co_await classes.get(key);
 
 			result = create_response(get_class_request, true, "Ok", result, 0);
+			co_return result;
+		}
+
+		database_composed_transaction<json> create_class(json put_class_request)
+		{
+			json result;
+			json_parser jp;
+
+			if (!check_message(put_class_request, { auth_general }))
+			{
+				result = create_response(put_class_request, false, "Denied", jp.create_object(), 0.0);
+				co_return result;
+			}
+
+			json token = put_class_request["Token"];
+			json class_definition = put_class_request["Data"];
+
+			bool can_put_class = co_await has_class_permission(
+				token,
+				class_definition["ClassName"],
+				"Put");
+
+			if (!can_put_class) {
+				result = create_response(put_class_request, false, "Denied", class_definition, 0.0);
+				co_return result;
+			}
+
+			std::string class_name = class_definition["ClassName"];
+			json class_key = jp.create_object();
+			class_key.put_member("ClassName", class_name);
+			class_key.set_compare_order({ "ClassName" });
+			json class_exists = classes.get(class_key);
+			if (class_exists.is_object()) {
+				result = create_response(put_class_request, false, "Class already exists", class_definition, 0.0);
+				co_return result;
+			}
+
+			json checked = co_await check_class(class_definition);
+			if (checked["Success"]) {
+				json adjusted_class = checked["Data"];
+				relative_ptr_type ptr = co_await classes.put(adjusted_class);
+				if (ptr != null_row) {
+					auto ancestors = adjusted_class["Ancestors"];
+					if (ancestors.is_object()) {
+						auto ancestor_classes = ancestors.get_members_raw();
+						for (auto acp : ancestor_classes) {
+							std::string acn = acp.first;
+							json class_key = jp.create_object();
+							class_key.put_member("ClassName", acn);
+							auto ancestor_class = co_await classes.get(class_key);
+							if (!ancestor_class.has_member("Descendants")) {
+								ancestor_class.put_member_object("Descendants");
+							}
+							ancestor_class["Descendants"].put_member(acn, acn);
+							co_await classes.put(ancestor_class);
+						}
+					}
+					result = create_response(put_class_request, true, "Ok", adjusted_class, 0.0);
+				}
+				else {
+					result = create_response(put_class_request, false, "class not written", adjusted_class, 0.0);
+				}
+			}
+			else
+			{
+				result = create_response(put_class_request, false, "class failed checks", checked, 0.0);
+			}
 			co_return result;
 		}
 
@@ -2108,7 +2208,8 @@ private:
 			json_parser jp;
 
 			json token = create_object_request["Token"];
-			std::string class_name = create_object_request["ClassName"];
+			json data = create_object_request["Data"];
+			std::string class_name = data["ClassName"];
 			json response;
 
 			if (!check_message(create_object_request, { auth_general }))
@@ -2118,7 +2219,7 @@ private:
 			}
 
 			if (!has_class_permission(token, class_name, "Get")) {
-				json result = create_response(create_object_request, false, "Cannot get class", create_object_request["Data"], 0.0);
+				json result = create_response(create_object_request, false, "Cannot get class", data, 0.0);
 				co_return result;
 			}
 
@@ -2631,6 +2732,18 @@ private:
 			_request.send_response(200, "Ok", fn_response);
 			};
 
+		http_handler_function corona_classes_create = [this](http_action_request _request)->void {
+			json parsed_request = parse_request(_request.request);
+			if (parsed_request.is_member("ClassName", "SysParseError")) {
+				http_response error_response = create_response(500, parsed_request);
+				_request.send_response(500, "Parse error", parsed_request);
+			}
+			auto pctask = this->create_class(parsed_request);
+			json fn_response = pctask.wait();
+			http_response response = create_response(200, fn_response);
+			_request.send_response(200, "Ok", fn_response);
+			};
+
 		http_handler_function corona_classes_put = [this](http_action_request _request)->void {
 			json parsed_request = parse_request(_request.request);
 			if (parsed_request.is_member("ClassName", "SysParseError")) {
@@ -2650,6 +2763,18 @@ private:
 				_request.send_response(500, "Parse error", parsed_request);
 			}
 			auto pctask = this->create_user(parsed_request);
+			json fn_response = pctask.wait();
+			http_response response = create_response(200, fn_response);
+			_request.send_response(200, "Ok", fn_response);
+			};
+
+		http_handler_function corona_objects_get = [this](http_action_request _request)->void {
+			json parsed_request = parse_request(_request.request);
+			if (parsed_request.is_member("ClassName", "SysParseError")) {
+				http_response error_response = create_response(500, parsed_request);
+				_request.send_response(500, "Parse error", parsed_request);
+			}
+			auto pctask = this->get_object(parsed_request);
 			json fn_response = pctask.wait();
 			http_response response = create_response(200, fn_response);
 			_request.send_response(200, "Ok", fn_response);
@@ -2715,18 +2840,6 @@ private:
 			_request.send_response(200, "Ok", fn_response);
 			};
 
-		http_handler_function corona_objects_list = [this](http_action_request _request)->void {
-			json parsed_request = parse_request(_request.request);
-			if (parsed_request.is_member("ClassName", "SysParseError")) {
-				http_response error_response = create_response(500, parsed_request);
-				_request.send_response(500, "Parse error", parsed_request);
-			}
-			auto pctask = this->put_object(parsed_request);
-			json fn_response = pctask.wait();
-			http_response response = create_response(200, fn_response);
-			_request.send_response(200, "Ok", fn_response);
-			};
-
 		json parse_request(http_request _request)
 		{
 			json_parser jph;
@@ -2785,26 +2898,32 @@ private:
 			std::string path = _root_path + "test/";
 			_server.put_handler( HTTP_VERB::HttpVerbGET, path, corona_test);
 
+			path = _root_path + "login/createuser/";
+			_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_users_create);
+
 			path = _root_path + "login/start/";
 			_server.put_handler( HTTP_VERB::HttpVerbPOST, path, corona_login_start );
 
-			path = _root_path + "login/confirmation/";
+			path = _root_path + "login/sendcode/";
 			_server.put_handler( HTTP_VERB::HttpVerbPOST, path, corona_login_confirmation);
 
-			path = _root_path + "login/confirm/";
+			path = _root_path + "login/confirmcode/";
 			_server.put_handler( HTTP_VERB::HttpVerbPOST, path, corona_login_confirm);
 
-			path = _root_path + "login/password_reset/";
+			path = _root_path + "login/passwordset/";
 			_server.put_handler( HTTP_VERB::HttpVerbPOST, path, corona_login_password_reset);
 
 			path = _root_path + "classes/get/";
 			_server.put_handler( HTTP_VERB::HttpVerbPOST, path, corona_classes_get);
 
+			path = _root_path + "classes/create/";
+			_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_classes_create);
+
 			path = _root_path + "classes/put/";
 			_server.put_handler( HTTP_VERB::HttpVerbPOST, path, corona_classes_put);
 
-			path = _root_path + "users/create/";
-			_server.put_handler( HTTP_VERB::HttpVerbPOST, path, corona_users_create);
+			path = _root_path + "objects/get/";
+			_server.put_handler(HTTP_VERB::HttpVerbPOST, path, corona_objects_get);
 
 			path = _root_path + "objects/query/";
 			_server.put_handler( HTTP_VERB::HttpVerbPOST, path, corona_objects_query);
@@ -2821,8 +2940,6 @@ private:
 			path = _root_path + "objects/edit/";
 			_server.put_handler( HTTP_VERB::HttpVerbPOST, path, corona_objects_edit);
 
-			path = _root_path + "objects/list/";
-			_server.put_handler( HTTP_VERB::HttpVerbPOST, path, corona_objects_list);
 		}
 
 	};

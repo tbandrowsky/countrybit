@@ -534,8 +534,12 @@
     <ClInclude Include="revolution.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="app_guitar.cpp" />
-    <ClCompile Include="app_revolution.cpp" />
+    <ClInclude Include="app_guitar.hpp">
+      <FileType>CppCode</FileType>
+    </ClInclude>
+    <ClInclude Include="app_revolution.hpp">
+      <FileType>CppCode</FileType>
+    </ClInclude>
     <ClCompile Include="revolution.cpp" />
   </ItemGroup>
   <ItemGroup>
