@@ -159,7 +159,18 @@ namespace corona
 			{
 				json_parser jp;
 				json results = jp.create_object();
-				options.corona_client->general_post(options.function_name, options.credentials, options.function_data, results);
+				json data;
+				if (options.function_data.is_object()) {
+					if (options.function_data.has_member("SourceControlId")) {
+						int64_t control_id = options.function_data["SourceControlId"];
+						control_base* fvc = this->find(control_id);
+						data = fvc->get_data();
+					}
+					else {
+						data = options.function_data;
+					}
+				}
+				options.corona_client->general_post(options.function_name, options.credentials, data, results);
 			});
 	}
 
