@@ -21,8 +21,13 @@ namespace corona
 	const int IDC_USER_PASSWORD2 = 2004;
 	const int IDC_USER_CONFIRMATION = 2005;
 
-	const int IDC_BTN_CANCEL = 2005;
-	const int IDC_BTN_LOGIN = 2006;
+	const int IDC_BTN_CANCEL = 2101;
+	const int IDC_BTN_LOGIN = 2102;
+	const int IDC_BTN_LOGIN_START = 2103;
+	const int IDC_BTN_LOGIN_SENDCODE = 2104;
+	const int IDC_BTN_LOGIN_CONFIRM = 2105;
+	const int IDC_BTN_OBJECTS_EDIT_SAVE = 2106;
+	const int IDC_BTN_REVERT = 2107;
 
 	// menu options
 	const int IDM_VIEW_MENU = 3001;
@@ -57,6 +62,8 @@ namespace corona
 		// create the presentation - this holds the data of what is on screen, for various pages.
 		std::shared_ptr<presentation> presentation_layer;
 
+		std::string current_page;
+
 		int id_caption_bar;
 		int id_main_row;
 		int id_command_container;
@@ -67,9 +74,8 @@ namespace corona
 		int id_tab_view;
 		int image_control_id;
 
-		json login_object;
-		json edited_object;
-		json query_result;
+		std::map<std::string, call_status> responses;
+		json credentials;
 
 		revolution_application()
 		{
@@ -80,7 +86,7 @@ namespace corona
 			application = std::make_shared<directApplicationWin32>(factory);
 
 			// create the data store and bind the calico client to it.
-			corona_api = std::make_shared<corona_client>("localhost", 7277, "CountrybitRevolution", application->getUserName());
+			corona_api = std::make_shared<corona_client>("localhost", 7277);
 
 			// create the presentation - this holds the data of what is on screen, for various pages.
 			presentation_layer = std::make_shared<presentation>(application);
@@ -104,10 +110,55 @@ namespace corona
 
 			factory->refresh();
 
+			threadomatic::run_complete(nullptr, [this]() {
+				page& plogin_start = presentation_layer->create_page("login_start");
+				create_login_start_page(plogin_start);
+				page& plogin_sendcode = presentation_layer->create_page("login_sendcode");
+				create_login_sendcode_page(plogin_sendcode);
+				page& plogin_confirmcode = presentation_layer->create_page("login_confirmcode");
+				create_login_confirmcode_page(plogin_confirmcode);
+				page& plogin_passwordset = presentation_layer->create_page("login_passwordset");
+				create_login_passwordset_page(plogin_passwordset);
+				page& pedit_object = presentation_layer->create_page("edit_object");
+				create_object_edit_page(pedit_object);
+				select_page("login_start");
+			});
+		}
+
+		file_transaction<relative_ptr_type> read_config(std::string _config_file_name)
+		{
+			json_parser jp;
+			try {
+				file f = application->open_file(_config_file_name, file_open_types::open_existing);
+				if (f.success()) {
+					auto fsize = f.size();
+					buffer b(fsize + 1);
+					auto result = co_await f.read(0, b.get_ptr(), fsize);
+					if (result.success) {
+						crypto crypter;
+						if (b.is_safe_string()) {
+							std::string s_contents = b.get_ptr();
+							json temp_contents = jp.parse_object(s_contents);
+							if (!jp.parse_errors.size()) {
+								json corona_config = temp_contents["CoronaServer"];
+								corona_api->host = corona_config["Host"];
+								corona_api->port = corona_config["Port"];
+								co_return true;
+							}
+						}
+					}
+				}
+			}
+			catch (std::exception exc)
+			{
+				std::cout << exc.what() << std::endl;
+			}
+			co_return false;
 		}
 
 		void run(HINSTANCE hInstance, bool forceWindowed)
 		{
+			read_config("config.json");
 			if (forceWindowed)
 			{
 				application->runDialog(hInstance, "COUNTRYBIT REVOLUTION", IDI_REVOLUTION, false, presentation_layer);
@@ -176,8 +227,10 @@ namespace corona
 			page& _page
 		)
 		{
-			create_page_frame(_page, [](control_builder cb) 
+			create_page_frame(_page, [this](control_builder cb) 
 			{
+					cb.title("Login");
+					cb.paragraph("Enter your username and password.");					
 					cb.form_view(IDC_FORM_VIEW, [](form_view_control& _fv)
 					{
 						item_data_source ids;
@@ -199,17 +252,54 @@ namespace corona
 						_fv.set_size(1.0_container, .15_container);
 						_fv.set_data(ids);
 					});
-					cb.calico_button(IDC_BTN_LOGIN);
+					cb.calico_button(IDC_BTN_LOGIN_START, [this](calico_button_control& cbc)
+						{
+							json_parser jp;
+							cbc.options = {};
+							cbc.options.corona_client = corona_api.get();
+							cbc.options.function_name = "/login/start/";
+							cbc.options.function_data.put_member_i64("SourceControlId", IDC_FORM_VIEW);
+							cbc.options.credentials = jp.create_object();
+						});
 					cb.calico_button(IDC_BTN_CANCEL);
 			});
+			_page.on_select([this](page_select_event evt) {
+				create_login_start_page(*evt.pg);
+				});
 		}
 
-		void create_login_confirm_code_page (
+		void create_login_sendcode_page(
 			page& _page
 		)
 		{
-			create_page_frame(_page, [](control_builder cb)
+			create_page_frame(_page, [this](control_builder cb)
 				{
+					cb.title("Send Login Code");
+					cb.paragraph("Bring up your email, and click send code.  You'll receive a code that you will enter to login.  This extra step helps protect you.");
+					cb.calico_button(IDC_BTN_LOGIN_SENDCODE, [this](calico_button_control& cbc)
+						{
+							json_parser jp;
+							cbc.options = {};
+							cbc.options.corona_client = corona_api.get();
+							cbc.options.function_name = "/login/sendcode/";
+							cbc.options.credentials = credentials;
+						});
+					cb.calico_button(IDC_BTN_CANCEL);
+				});
+			_page.on_select([this](page_select_event evt) {
+				create_login_sendcode_page(*evt.pg);
+				});
+
+		}
+
+		void create_login_confirmcode_page (
+			page& _page
+		)
+		{
+			create_page_frame(_page, [this](control_builder cb)
+				{
+					cb.title("Enter Confirmation Code");
+					cb.paragraph("An email was sent to you.  Please enter the code you received.");
 					cb.form_view(IDC_FORM_VIEW, [](form_view_control& _fv)
 						{
 							item_data_source ids;
@@ -224,17 +314,32 @@ namespace corona
 							_fv.set_size(1.0_container, .15_container);
 							_fv.set_data(ids);
 						});
-					cb.calico_button(IDC_BTN_LOGIN);
+					cb.calico_button(IDC_BTN_LOGIN_CONFIRM, [this](calico_button_control& cbc)
+					{
+						json_parser jp;
+						cbc.options = {};
+						cbc.options.corona_client = corona_api.get();
+						cbc.options.function_name = "/login/confirmcode/";
+						cbc.options.credentials = credentials;
+						cbc.options.function_data = jp.create_object();
+						cbc.options.function_data.put_member_i64("SourceControlId", IDC_FORM_VIEW);
+					});
 					cb.calico_button(IDC_BTN_CANCEL);
+				});
+			_page.on_select([this](page_select_event evt) {
+				create_login_confirmcode_page(*evt.pg);
 				});
 		}
 
-		void create_login_password_page (
+		void create_login_passwordset_page (
 			page& _page
 		)
 		{
-			create_page_frame(_page, [](control_builder cb)
+			create_page_frame(_page, [this](control_builder cb)
 				{
+					cb.title("Enter New Password");
+					cb.paragraph("An email was sent to you.  Please enter the code you received.");
+
 					cb.form_view(IDC_FORM_VIEW, [](form_view_control& _fv)
 						{
 							item_data_source ids;
@@ -253,18 +358,31 @@ namespace corona
 							ids.fields.push_back(iff);
 
 							_fv.fields_per_column = 3;
-							_fv.set_size(1.0_container, .15_container);
+							_fv.set_size(1.0_container, 1.0_remaining);
 							_fv.set_data(ids);
 						});
-					cb.calico_button(IDC_BTN_LOGIN);
+					cb.calico_button(IDC_BTN_LOGIN, [this](calico_button_control& cbc) 
+						{
+							json_parser jp;
+							cbc.options = {};
+							cbc.options.corona_client = corona_api.get();
+							cbc.options.function_name = "/login/passwordset/";
+							cbc.options.credentials = credentials;
+							cbc.options.function_data.put_member_i64("SourceControlId", IDC_FORM_VIEW);
+						});
 					cb.calico_button(IDC_BTN_CANCEL);
 				});
+			_page.on_select([this](page_select_event evt) {
+				create_login_passwordset_page(*evt.pg);
+				});
+
 		}
 
 		void create_object_edit_page(
 			page& _page
-		)
+		) 
 		{
+			json_parser jp;
 			control_builder command_container;
 			caption_bar_control* caption_container;
 			tab_view_control* tab_container;
@@ -273,16 +391,42 @@ namespace corona
 
 			// then we must be a new page
 
-			create_page_frame(_page, [](control_builder cb)
+			create_page_frame(_page, [this](control_builder cb)
 				{
 					cb.form_view(IDC_FORM_VIEW, [](form_view_control& _fv)
 						{
 							_fv.fields_per_column = 3;
 							_fv.set_size(1.0_container, .15_container);
 						});
-					cb.calico_button(IDC_BTN_LOGIN);
-					cb.calico_button(IDC_BTN_CANCEL);
+					cb.calico_button(IDC_BTN_OBJECTS_EDIT_SAVE, [this](calico_button_control& cbc)
+						{
+							json_parser jp;
+							cbc.options = {};
+							cbc.options.corona_client = corona_api.get();
+							cbc.options.function_name = "/objects/put/";
+							cbc.options.credentials = credentials;
+							cbc.options.function_data.put_member_i64("SourceControlId", IDC_FORM_VIEW);
+						});
+					cb.calico_button(IDC_BTN_REVERT, [this](calico_button_control& cbc)
+						{
+							json_parser jp;
+							cbc.options = {};
+							cbc.options.corona_client = corona_api.get();
+							cbc.options.function_name = "/objects/edit/";
+							cbc.options.credentials = credentials;
+							cbc.options.function_data.put_member_i64("SourceControlId", IDC_FORM_VIEW);
+						}););
 				});
+
+			if (!this->responses.contains("/objects/edit/")) {
+				return;
+			}
+			auto response_data = responses["/objects/edit/"];
+			json response_json = jp.parse_object(response_data.response);
+
+			if (!response_json["Success"]) {
+				return;
+			}
 
 			command_container = _page.edit(id_command_container);
 			caption_container = _page.find_container<caption_bar_control>(id_caption_bar);
@@ -302,12 +446,13 @@ namespace corona
 			json edited_build;
 			std::string class_name;
 
-			json token = edited_object["Token"];
-			edited_data = edited_object["Data"];
+
+			json token = response_json["Token"];
+			edited_data = response_json["Data"];
 			edited_class = edited_data["ClassDefinition"];
-			class_name = edited_data["ClassName"];
-			edited_fields = edited_object["Fields"];
-			edited_build = edited_object["Edit"];
+			class_name = edited_class["ClassName"];
+			edited_fields = edited_class["Fields"];
+			edited_build = edited_class["Edit"];
 
 			json_parser jp;
 			item_data_source ids;
@@ -330,7 +475,7 @@ namespace corona
 				std::string control_name = "fv_" + class_name + "_" + field_name;
 				new_field.field_id = presentation_layer->get_control_id(control_name, []() { return id_counter::next(); });
 
-				if (field.second.is_object()) 
+				if (field.second.is_object())
 				{
 					field_options = field.second;
 					field_type = field_options["FieldType"];
@@ -342,7 +487,7 @@ namespace corona
 					new_field.choice_options.text_field = field_choices["NameField"];
 					new_field.choice_options.items = field_choices["Items"];
 				}
-				else 
+				else
 				{
 					field_type = field.second;
 					new_field.field_label = field_name;
@@ -404,12 +549,12 @@ namespace corona
 
 					json child_create_options;
 
-					if (edited_build.has_member(field_name)) 
+					if (edited_build.has_member(field_name))
 					{
 						child_create_options = edited_build[field_name];
-						if (child_create_options.is_array()) 
+						if (child_create_options.is_array())
 						{
-							for (int i = 0; i < child_create_options.size(); i++) 
+							for (int i = 0; i < child_create_options.size(); i++)
 							{
 								json option_item = child_create_options.get_element(i);
 								std::string function_name = option_item["Function"];
@@ -426,32 +571,32 @@ namespace corona
 					}
 
 					ads.assets = [this](draw_control* _parent, rectangle _bounds) -> void
-					{
-						if (auto win = _parent->window.lock()) {
-							auto& ctxt = win->getContext();
+						{
+							if (auto win = _parent->window.lock()) {
+								auto& ctxt = win->getContext();
 
-							textStyleRequest tsr = {};
-							tsr.fontName = st->ParagraphTextFont;
-							tsr.fontSize = 14;
-							tsr.name = "item_paragraph";
-							ctxt.setTextStyle(&tsr);
+								textStyleRequest tsr = {};
+								tsr.fontName = st->ParagraphTextFont;
+								tsr.fontSize = 14;
+								tsr.name = "item_paragraph";
+								ctxt.setTextStyle(&tsr);
 
-							solidBrushRequest sbr;
-							sbr.active = true;
-							sbr.brushColor = toColor("#000000");
-							sbr.name = "item_foreground";
-							ctxt.setSolidColorBrush(&sbr);
+								solidBrushRequest sbr;
+								sbr.active = true;
+								sbr.brushColor = toColor("#000000");
+								sbr.name = "item_foreground";
+								ctxt.setSolidColorBrush(&sbr);
 
-							sbr.brushColor = toColor("#FFFFFF");
-							sbr.name = "item_background";
-							ctxt.setSolidColorBrush(&sbr);
+								sbr.brushColor = toColor("#FFFFFF");
+								sbr.name = "item_background";
+								ctxt.setSolidColorBrush(&sbr);
 
-							sbr.brushColor = toColor("#C0C0C0");
-							sbr.name = "item_border";
-							ctxt.setSolidColorBrush(&sbr);
-						}
-						return;
-					};
+								sbr.brushColor = toColor("#C0C0C0");
+								sbr.name = "item_border";
+								ctxt.setSolidColorBrush(&sbr);
+							}
+							return;
+						};
 
 					ads.draw_item = [ads, this](draw_control* _parent, int _index, rectangle _bounds) -> void {
 						auto json_object = ads.data.get_element(_index);
@@ -480,7 +625,7 @@ namespace corona
 						return p;
 						};
 
-					
+
 					array_tab.apply_data = [ads](tab_pane& _pane, control_base* _cont) {
 						grid_view* gv = dynamic_cast<grid_view*>(_cont);
 						if (gv) {
@@ -493,7 +638,7 @@ namespace corona
 					array_tab.create_tab_controls = [ads, corapi, token](tab_pane& _pane, control_base* _cont) {
 						control_builder cb;
 						cb.row_begin(id_counter::next(), [_pane, corapi, token](row_layout& _rl) {
-							for (auto& co : _pane.create_objects) 
+							for (auto& co : _pane.create_objects)
 							{
 								if (co.is_object()) {
 									control_builder rb;
@@ -506,7 +651,7 @@ namespace corona
 								}
 							}
 
-							for (auto& cc : _pane.create_classes) 
+							for (auto& cc : _pane.create_classes)
 							{
 								if (cc.is_object()) {
 									control_builder rb;
@@ -520,7 +665,7 @@ namespace corona
 										});
 								}
 							}
-						});
+							});
 						cb.end();
 						cb.grid_view_begin(id_counter::next(), [ads](grid_view& _layout) {
 							_layout.set_item_source(ads);
@@ -539,175 +684,94 @@ namespace corona
 				fv->set_data(ids);
 			}
 			tab_container->set_tabs(tabs);
+		}
 
-
-			/*
-			and now build our form view
-			*/
-
-			json current_class = general_options["current_class"];
-			json current_object = general_options["current_object"];
-			json current_fields = general_options["current_fields"];
-
-			// extract our class data
-			auto class_obj = current_class["CalicoClass"];
-			std::string classDescription = class_obj["ClassDescription"];
-			std::string classFullName = class_obj["ClassFullName"];
-			json relatedClassList = class_obj["RelatedClassList"];
-			json classFieldList = class_obj["ClassFieldList"];
-			std::string primaryKeyField = class_obj["PrimaryKeyField"];
-			std::string sqlTableName = class_obj["SqlTableName"];
-			std::string sqlViewName = class_obj["SqlViewName"];
-			std::string primary_key_field_name = class_obj["PrimaryKeyField"];
-
-			// and load it into our form editor...
-
-
-			for (int i = 0; i < current_fields.size(); i++)
-			{
-				auto fieldDefinition = current_fields.get_element(i);
-
-				std::string fieldName = fieldDefinition["FieldName"];
-				std::string fieldDescription = fieldDefinition["FieldDescription"];
-				std::string fieldType = fieldDefinition["FieldType"];
-				std::string columnDataType = fieldDefinition["ColumnDataType"];
-				std::string dotNetFormat = fieldDefinition["DotNetFormat"];
-				std::string excelFormat = fieldDefinition["ExcelFormat"];
-				std::string javaScriptFormat = fieldDefinition["JavaScriptFormat"];
-				std::string basicValidationMessage = fieldDefinition["BasicValidationMessage"];
-				std::string minimumValue = fieldDefinition["MinimumValue"];
-				std::string maximumValue = fieldDefinition["MaximumValue"];
-				std::string gridColumnWidth = fieldDefinition["GridColumnWidth"];
-				int64_t field_id = fieldDefinition["FieldId"];
-
-				item_field new_field;
-
-				new_field.field_label = fieldDescription;
-				new_field.json_member_name = fieldName;
-				new_field.field_tooltip = classFullName + "." + fieldName + " " + columnDataType;
-				new_field.read_only = false;
-				new_field.field_id = presentation_layer->get_control_id("form_view_" + fieldName, []() { return id_counter::next(); });
-
-			}
-
-			/*  ---------------------------------------------------------------------------------------------------
-				Creating New Objects
-			*/
-
-
-			for (int i = 0; i < create_options.size(); i++)
-			{
-				auto co = create_options.get_element(i);
-
-				// then, fish out the stuff we need
-				std::string class_name = co["CreateClassName"].get_string();
-				std::string class_description = co["CreateClassDescription"].get_string();
-
-				// then, come up with a canonical name for the button, so that, if we keep invoking this, we have the same ids.
-				// we also use this, to tie to our data, which actually drives the application
-				std::string button_name = "create_class." + class_name;
-
-				int button_id = presentation_layer->get_control_id(button_name, []() { return id_counter::next(); });
-
-				command_container.calico_button(button_id, [this, class_description, class_name](calico_button_control& pc) {
-					pc.set_size(.95_container, 40.0_px);
-					pc.text = class_description;
-
-					json_parser jp;
-					json new_object_request = jp.create_object();
-					new_object_request.put_member("ClassName", class_name);
-
-					pc.options.corona_client = this->corona;
-					pc.options.credentials = jp.create_object();
-					pc.options.function_data = jp.create_object();
-					});
-			}
-
-			/*  ---------------------------------------------------------------------------------------------------
-				Viewing and manipulating new objects
-				these we present in a basic form, with the edit fields of the base selected object, and then, the details (children), of each, in tabs.
-			*/
-
-			// first the edit area of the current object.
-
-			/*
-					int64_t current_edited_object_id = -1;
-			std::string current_edited_class_name;
-			std::string current_edited_class_description;
-
-			the form view will be handled in parallel.
-
-			*/
-
-			// now the tab area
-
-			// define our tabs
-			std::vector<tab_pane> tabs;
-
-			// now, we have to build up our tabs
-			for (int i = 0; i < select_options.size(); i++)
-			{
-				// get our element out of this json array
-				auto selected_rule = select_options.get_element(i);
-
-				// get our data out of this element
-				// the rule name and description are the model rules by which this object was selected.
-				// these will be needed to do further object manipulations.
-
-				std::string rule_name = selected_rule["RuleName"];
-				std::string rule_description = selected_rule["RuleDescription"];
-				std::string class_name = selected_rule["ClassName"];
-				std::string class_description = selected_rule["ClassDescription"];
-				std::string class_id = selected_rule["ClassId"];
-				std::string view_name = selected_rule["ViewName"];
-				auto objects_in_rule = selected_rule["Items"];
-
-				std::string bind_name = "rule." + rule_name;
-
-				// now we specify our tab.
-				// for the tab, we're going to specify what our control is, and then put items in the control
-				// because there could be a lot of items, we will define some data sources that do the transformation
-				// the column view is associated with the tab and it can do selection and the other things
-
-				// so grouped, we go through the members
-				// note that, here is our chance to change the visualization based upon the item type
-
-				auto members = objects_by_class.get_members();
-
-				for (auto member : members)
+		void set_corona_handlers()
+		{
+			corona_api->on_post_request = [this](std::string _function_name, json& _credentials, json& _payload, json& _corona_response)
 				{
-					// convert this to a member array, and...
-					json member_array(member.second);
 
-					// add a header for this class name
-					json header_obj = jp.create_object();
-					header_obj.put_member("ClassName", ".section");
-					header_obj.put_member("Name", member.first);
-					ads.data.put_element(-1, header_obj);
+				};
 
-					// and, within the group, we go through the array
-					for (int k = 0; k < member_array.size(); k++)
-					{
-						json member_obj = member_array.get_element(k);
-						json item_obj = jp.create_object();
-						item_obj.copy_member("ClassName", member_obj);
-						item_obj.copy_member("Name", member_obj);
-						item_obj.put_member("Source", member_obj);
-						ads.data.put_element(-1, item_obj);
+			corona_api->on_post_response = [this](call_status _status, std::string _function_name, json& _credentials, json& _payload, json& _corona_response)
+				{
+					responses.insert_or_assign(_function_name, _status);
+
+					if (_status.success) {
+						json_parser jp;
+						json temp = jp.parse_object(_status.response);
+						if (temp.has_member("Token")) {
+							credentials = temp;
+						}
 					}
-				}
-			
 
+					if (_function_name == "/login/start/") 
+					{
+						if (_status.success)
+						{
+							select_page("login_sendcode");
+						}
+						else
+						{
+							select_page("login_start");
+						}
+					}
+					else if (_function_name == "/login/sendcode/")
+					{
+						if (_status.success)
+						{
+							select_page( "login_confirmcode" );
+						}
+						else
+						{
+							select_page("login_sendcode");
+						}
+					}
+					else if (_function_name == "/login/confirmcode/") 
+					{
+						if (_status.success)
+						{
+							select_page( "edit_object" );
+						}
+						else
+						{
+							select_page("login_confirmcode");
+						}
+					}
+					else if (_function_name == "/login/passwordset/") 
+					{
+						if (_status.success)
+						{
+							select_page("login_start");
+						}
+						else
+						{
+							select_page("login_passwordset");
+						}
+					}
+					else if (_function_name == "/objects/edit/")
+					{
+						select_page("object_edit");
+					}
+				};
+		}
+
+		void select_page(std::string _new_page)
+		{
+			if (current_page == _new_page) return;
+
+			current_page = _new_page;
+
+			threadomatic::run_complete(nullptr, [this]() -> void {
+					presentation_layer->select_page(current_page);
+				});
 		}
 
 	};
 
-	revolution_application current_application;
-
-
 	void run_developer_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 	{
-		application app;
+		revolution_application app;
 
 		EnableGuiStdOuts();
 
@@ -727,10 +791,7 @@ namespace corona
 		forceWindowed = true;
 #endif
 
-		std::function<void(pushbutton_control& _set_defaults)> push_button_defaults = [](pushbutton_control& ctrl) {
-			ctrl.set_size(150.0_px, 50.0_px);
-			};
-
+		app.run(hInstance, forceWindowed);	
 	}
 
 }

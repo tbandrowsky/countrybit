@@ -1881,6 +1881,30 @@ namespace corona
 			}
 		}
 
+		json parse_object(http_response _response)
+		{
+			line_number = 1;
+			char_index = 0;
+			parse_errors.clear();
+			if (_response.content_type != "application/json") {
+				error("http_response", "content type is not json");
+				return get_errors();
+			}
+			if (_response.response_body.get_size() == 0) {
+				error("http_response", "response had no body");
+				return get_errors();
+			}
+
+			if (_response.response_body.is_safe_string()) {
+				json temp = parse_object(_response.response_body.get_ptr());
+				return temp;
+			}
+			else {
+				error("http_response", "response was not a valid string");
+				return get_errors();
+			}
+		}
+
 		json create_object()
 		{
 			line_number = 1;

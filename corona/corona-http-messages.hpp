@@ -46,6 +46,7 @@ namespace corona
 		http_response response;
 		int http_code;
 		time_t call_time;
+		std::string function_path;
 
 		call_status()
 		{

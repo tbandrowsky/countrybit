@@ -823,6 +823,47 @@ namespace corona
 
 		virtual ~form_view_control()
 		{
+			;
+		}
+
+		virtual json get_data()
+		{
+			json_parser jp;
+			json obj = jp.create_object();
+
+			for (auto& ctrl : ids.fields)
+			{
+				control_base *cb = find(ctrl.field_id);
+				if (cb) {
+					json field = cb->get_data();
+					if (field.is_object())
+					{
+						for (auto member : field.get_members())
+						{
+							obj.put_member(member.first, member.second);
+						}
+					}
+				}
+			}
+
+			return obj;
+		}
+
+		virtual json set_data(json _data)
+		{
+			json empty;
+
+			for (auto& ctrl : ids.fields)
+			{
+				control_base* cb = find(ctrl.field_id);
+				if (cb && cb->json_field_name.size()) {
+					if (_data.has_member(cb->json_field_name)) {
+						cb->set_data(_data);
+					}
+				}
+			}
+
+			return empty;
 		}
 
 		void set_data(item_data_source _ids)

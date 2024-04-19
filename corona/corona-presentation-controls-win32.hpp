@@ -221,6 +221,26 @@ namespace corona
 			}
 		}
 
+		virtual json get_data()
+		{
+			json result;
+			if (json_field_name.size() > 0) {
+				json_parser jp;
+				result = jp.create_object();
+				std::string text = get_text();
+				result.put_member(json_field_name, text);
+			}
+			return result;
+		}
+
+		virtual json set_data(json _data)
+		{
+			if (_data.has_member(json_field_name)) {
+				std::string text = _data[json_field_name];
+				set_text(text);
+			}
+		}
+
 	};
 
 

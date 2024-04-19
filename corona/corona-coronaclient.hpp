@@ -31,10 +31,17 @@ namespace corona
 			return request;
 		}
 
+		std::function<void(std::string _function_name, json& _credentials, json& _payload, json& _corona_response)> on_post_request;
+		std::function<void(call_status _status, std::string _function_name, json& _credentials, json& _payload, json& _corona_response)> on_post_response;
+
 		call_status general_post(std::string _function_name, json& _credentials, json& _payload, json& _corona_response)
 		{
 			call_status dfs;
 			json_parser jp;
+			
+			if (on_post_request) {
+				on_post_request(_function_name, _credentials, _payload, _corona_response);
+			}
 
 			http_client corona_client;
 			const char* corona_host = host.c_str();
@@ -43,6 +50,7 @@ namespace corona
 			http_params corona_http = corona_client.post(corona_host, corona_port, _function_name.c_str(), token_request);
 			dfs.request = corona_http.request;
 			dfs.response = corona_http.response;
+			dfs.function_path = _function_name;
 
 			if (corona_http.response.content_type.starts_with("application/json"))
 			{
@@ -50,6 +58,11 @@ namespace corona
 				dfs.success = _corona_response["Success"];
 				dfs.message = _corona_response["Message"];
 			}
+
+			if (on_post_response) {
+				on_post_response(dfs, _function_name, _credentials, _payload, _corona_response);
+			}
+
 			return dfs;
 		}
 

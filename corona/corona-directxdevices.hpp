@@ -38,7 +38,7 @@ namespace corona
 			ID3D11Device* temp = nullptr;
 
 			HRESULT hr = D3D11CreateDevice(_adapter,
-				D3D_DRIVER_TYPE_UNKNOWN,
+				D3D_DRIVER_TYPE_HARDWARE,
 				NULL,
 				D3D11_CREATE_DEVICE_BGRA_SUPPORT,
 				feature_levels,

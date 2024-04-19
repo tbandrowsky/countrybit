@@ -246,6 +246,7 @@ namespace corona
 		measure					padding;
 		std::string				tooltip_text;
 		bool					is_focused;
+		std::string				json_field_name;
 
 		container_control_base* parent;
 		std::vector<control_push_request> push_requests;
@@ -348,6 +349,18 @@ namespace corona
 		virtual control_base* get_control()
 		{
 			return this;
+		}
+
+		virtual json get_data()
+		{
+			json empty;
+			return empty;
+		}
+
+		virtual json set_data(json _data)
+		{
+			json empty;
+			return empty;
 		}
 
 		rectangle& get_bounds() { return bounds; }
@@ -484,6 +497,7 @@ namespace corona
 		}
 
 		virtual void apply_item_sizes(control_base& _ref);
+
 		virtual bool set_mouse(point _position,
 			bool* _left_down,
 			bool* _right_down,

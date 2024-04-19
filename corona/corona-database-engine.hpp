@@ -1886,7 +1886,7 @@ private:
 												edit_options.append_element(build_option);
 
 												build_option = jp.create_object();
-												json build_message = jp.create_object();
+												build_message = jp.create_object();
 												build_message.put_member("BaseClassName", allowed_class);
 												build_option.put_member("Data", build_message);
 												build_option.put_member("Function", "/classes/create/");
@@ -1906,7 +1906,7 @@ private:
 										edit_options.append_element(build_option);
 
 										build_option = jp.create_object();
-										json build_message = jp.create_object();
+										build_message = jp.create_object();
 										build_message.put_member("BaseClassName", allowed);
 										build_option.put_member("Data", build_message);
 										build_option.put_member("Function", "/classes/create/");
@@ -3011,6 +3011,8 @@ private:
 
 			while (true)
 			{
+				db.read_config(&_app);
+				std::cout << "Waiting for request." << std::endl;
 				co_await db_api_server.next_request();
 			}
 
