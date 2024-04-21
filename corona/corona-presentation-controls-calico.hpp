@@ -166,7 +166,8 @@ namespace corona
 						control_base* fvc = this->find(control_id);
 						data = fvc->get_data();
 					}
-					else {
+					else 
+					{
 						data = options.function_data;
 					}
 				}

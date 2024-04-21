@@ -880,7 +880,7 @@ namespace corona
 				int64_t i64 = get_member(_key).get_int64s();
 				put_member_i64(_key, i64);
 			}
-			else if (_new_type == "double") {
+			else if (_new_type == "double" || _new_type == "number") {
 				double d = get_member(_key);
 				put_member(_key, d);
 			}

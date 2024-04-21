@@ -239,6 +239,7 @@ namespace corona
 				std::string text = _data[json_field_name];
 				set_text(text);
 			}
+			return _data;
 		}
 
 	};

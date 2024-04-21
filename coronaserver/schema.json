@@ -1,0 +1,146 @@
+{
+  "Classes": [
+    {
+      "ClassName": "Point",
+      "BaseClassName": "SysObject",
+      "Fields": {
+        "X": "double",
+        "Y": "double"
+      }
+    },
+    {
+      "ClassName": "ShapePoint",
+      "BaseClassName": "Point"
+    },
+    {
+      "ClassName": "SlideShape",
+      "BaseClassName": "SysObject",
+      "Fields": {
+        "Name": "string",
+        "Text": "string",
+
+        "TextBrush": "string",
+        "LineBrush": "string",
+        "LineThickness": "string",
+        "FillBrush": "string",
+
+        "Points": {
+          "FieldType": "array",
+          "AllowedClasses": "Point"
+        },
+
+        "Left": "double",
+        "LeftUnits": "string",
+        "Top": "double",
+        "TopUnits": "string",
+
+        "Width": "double",
+        "WidthUnits": "string",
+        "Height": "double",
+        "HeightUnits": "string",
+
+        "ChildShapes": {
+          "FieldType": "array",
+          "AllowedClasses": [ "SlideShape" ]
+        },
+
+        "ChildrenLayout": "string"
+      }
+    },
+    {
+      "ClassName": "Slide",
+      "BaseClassName": "SysObject",
+      "Fields": {
+        "Name": "string",
+        "Description": "string",
+        "Slides": {
+          "FieldType": "array",
+          "AllowedClasses": "SlideShape"
+        }
+      }
+    },
+    {
+      "ClassName": "Presentation",
+      "BaseClassName": "SysObject",
+      "Fields": {
+        "Name": "string",
+        "Description": "string",
+        "Slides": {
+          "FieldType": "array",
+          "AllowedClasses": "Slide"
+        }
+      }
+    },
+    {
+      "ClassName": "CountyVote",
+      "BaseClassName": "SysObject",
+      "Fields": {
+        "County": "string",
+        "ProposalText": "string"
+      }
+    },
+
+    {
+      "ClassName": "CountyDocument",
+      "BaseClassName": "SysObject",
+      "Fields": {
+        "County": "string",
+        "Presentation": {
+          "FieldType": "object",
+          "HistoryFieldName": "string",
+          "AllowedClasses": "Presentation"
+        },
+        "Vote": {
+          "FieldType": "array",
+          "AllowedClasses": "CountyVote",
+          "WinnerFieldName": "string",
+          "ResultsFieldName": "string"
+        }
+      }
+    },
+
+    {
+      "ClassName": "CountyTeam",
+      "BaseClassName": "SysTeam",
+      "Fields": {
+        "County": "string",
+        "Teams": {
+          "FieldType": "array",
+          "AllowedClasses": "SysTeam"
+        },
+        "Documents": {
+          "FieldType": "array",
+          "AllowedClasses": "CountyDocument"
+        }
+      }
+    },
+
+    {
+      "ClassName": "County",
+      "BaseClassName": "SysObject",
+      "Fields": {
+        "Name": "string",
+        "Description": "string",
+        "State": "string",
+        "Teams": {
+          "FieldType": "array",
+          "AllowedClasses": "SysTeam"
+        }
+      }
+    }
+
+  ],
+  "Users": [],
+  "Objects": [
+    {
+      "ClassName": "SysTeam",
+      "Name": "Guest",
+      "Description": "Guest login for new users"
+    },
+    {
+      "ClassName": "SysTeam",
+      "Name": "CountryVideoGamesWriters",
+      "Description": "Country Video Games Writers"
+    }
+  ]
+}

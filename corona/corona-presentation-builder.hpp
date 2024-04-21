@@ -890,7 +890,7 @@ namespace corona
 
 			for (auto &ctrl : ids.fields) 
 			{
-				if (ctrl.field_type == "double")
+				if (ctrl.field_type == "double" || ctrl.field_type == "number")
 				{
 					field_column.edit_field(ctrl.field_id, ctrl.field_label, ctrl.field_tooltip, [ctrl, this](edit_control& _settings) {
 						if (ids.data.has_member(ctrl.json_member_name)) {

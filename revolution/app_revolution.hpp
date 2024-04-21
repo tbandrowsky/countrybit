@@ -415,7 +415,7 @@ namespace corona
 							cbc.options.function_name = "/objects/edit/";
 							cbc.options.credentials = credentials;
 							cbc.options.function_data.put_member_i64("SourceControlId", IDC_FORM_VIEW);
-						}););
+						});
 				});
 
 			if (!this->responses.contains("/objects/edit/")) {
@@ -454,7 +454,6 @@ namespace corona
 			edited_fields = edited_class["Fields"];
 			edited_build = edited_class["Edit"];
 
-			json_parser jp;
 			item_data_source ids;
 			ids.name = edited_class["Description"];
 			ids.data = edited_data;
@@ -695,13 +694,15 @@ namespace corona
 
 			corona_api->on_post_response = [this](call_status _status, std::string _function_name, json& _credentials, json& _payload, json& _corona_response)
 				{
+					json response_data;
+
 					responses.insert_or_assign(_function_name, _status);
 
 					if (_status.success) {
 						json_parser jp;
-						json temp = jp.parse_object(_status.response);
-						if (temp.has_member("Token")) {
-							credentials = temp;
+						response_data = jp.parse_object(_status.response);
+						if (response_data.has_member("Token")) {
+							credentials = response_data["Token"];
 						}
 					}
 
@@ -731,7 +732,10 @@ namespace corona
 					{
 						if (_status.success)
 						{
-							select_page( "edit_object" );
+							db_object_id_type object_id;
+							json response;
+							call_status status = corona_api->edit_object(credentials, object_id, response);
+							select_page("edit_object");
 						}
 						else
 						{

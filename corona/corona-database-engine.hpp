@@ -1180,7 +1180,7 @@ private:
 						return actual_object_classes.has_member(class_name);
 						})) {
 						json build_option = jp.create_object();
-						build_option.put_member("Function", "objects/create/");
+						build_option.put_member("Function", "/objects/create/");
 						json build_message = jp.create_object();
 						build_message.put_member("ClassName", required_class_name);
 						build_message.put_member_i64("TargetObjectId", (int64_t)parent["ObjectId"]);
@@ -1189,7 +1189,7 @@ private:
 
 						build_option = jp.create_object();
 						build_message = jp.create_object();
-						build_option.put_member("Function", "classes/put/");
+						build_option.put_member("Function", "/classes/put/");
 						build_option.put_member("BaseClassName", required_class_name);
 						build_option.put_member("ClassDescription", required_class_description);
 						build_options.append_element(build_option);
@@ -1200,7 +1200,7 @@ private:
 				// now, if we are satisfied, then we can create a new option
 				if (satisfied) {
 					json build_option = jp.create_object();
-					build_option.put_member("Function", "objects/create/");
+					build_option.put_member("Function", "/objects/create/");
 					json build_message = jp.create_object();
 					build_message.put_member_i64("TargetObjectId", (int64_t)parent["ObjectId"]);
 					build_message.put_member("TargetMemberName", member_destination_of_object);
@@ -1556,6 +1556,8 @@ private:
 					json porq = create_request(_login_request, ul);
 					co_await put_object(porq);
 
+					data.copy_member("ObjectId", ul);
+
 					response = create_response(user_name, auth_send_login_confirmation_code, true, "Ok", data, 0.0);
 				}
 				else 
@@ -1690,6 +1692,17 @@ private:
 					ul.put_member("LoginState", "LoggedIn");
 					json por = create_request(_receive_request, ul);
 					co_await put_object(por);
+
+					gor.put_member("ClassName", "SysUser");
+					gord = create_request(_receive_request, gor);
+					json user_obj_response = co_await get_object(gord);
+					json user_obj = user_obj_response["Data"];
+
+					if (user_obj["Success"]) {
+						json login_response_obj = jp.create_object();
+						login_response_obj.copy_member("ObjectId", user_obj);
+					}
+
 					response = create_response(user_name, auth_general, true, "Ok", jp.create_object(), 0.0);
 				}
 				else 
