@@ -31,15 +31,17 @@ namespace corona
 		{
 			if (dxAdapter)
 				dxAdapter->Release();
+			dxAdapter = nullptr;
 			if (dxFactory)
 				dxFactory->Release();
+			dxFactory = nullptr;
 		}
 
 		void refresh()
 		{
 			cleanup();
-			direct2d = std::make_shared<direct2dDevice>();
 			direct3d = std::make_shared<direct3dDevice>();
+			direct2d = std::make_shared<direct2dDevice>();
 
 			HRESULT hr = CreateDXGIFactory1(IID_IDXGIFactory1, (void**)&dxFactory);
 			throwOnFail(hr, "Could not create DXGI factory");
@@ -51,21 +53,36 @@ namespace corona
 				if (DXGI_ERROR_NOT_FOUND == dxFactory->EnumAdapters1(adapterIndex, &currentAdapter))
 				{
 					// No more adapters to enumerate.
+					std::cout << "adapter not found" << std::endl;
 					break;
+				}
+				else 
+				{
+					DXGI_ADAPTER_DESC desc;
+					istring<2048> temp;
+					if (currentAdapter->GetDesc(&desc) == S_OK) {
+						temp = desc.Description;
+						std::cout << "Scanning " << temp << std::endl;
+					}
 				}
 
 				if (direct3d->setDevice(currentAdapter))
 				{
+					std::cout << "Adapter Ok" << std::endl;
 					dxAdapter = currentAdapter;
 					break;
 				}
 				else
 				{
+					std::cout << "No adapters available, so, we are going nowhere." << std::endl;
 					currentAdapter->Release();
 				}
 			}
 
-			direct2d->setDevice(direct3d->getD3DDevice());
+			if (direct3d->getD3DDevice()) 
+			{
+				direct2d->setDevice(direct3d->getD3DDevice());
+			}
 		}
 
 		IDXGIFactory2* getDxFactory() { return dxFactory; }

@@ -76,45 +76,60 @@
       "BaseClassName": "SysObject",
       "Fields": {
         "County": "string",
-        "ProposalText": "string"
+        "VoteText": "string"
       }
     },
-
+    {
+      "ClassName": "CountyElection",
+      "BaseClassName": "SysObject",
+      "Fields": {
+        "Name": "string",
+        "Description": "string",
+        "ElectionPresentation": {
+          "FieldType": "object",
+          "AllowedClasses": "Presentation"
+        },
+        "Votes": {
+          "FieldType": "array",
+          "AllowedClasses": "CountyVote"
+        }
+      }
+    },
     {
       "ClassName": "CountyDocument",
       "BaseClassName": "SysObject",
       "Fields": {
-        "County": "string",
+        "Name": "string",
         "Presentation": {
           "FieldType": "object",
-          "HistoryFieldName": "string",
           "AllowedClasses": "Presentation"
-        },
-        "Vote": {
-          "FieldType": "array",
-          "AllowedClasses": "CountyVote",
-          "WinnerFieldName": "string",
-          "ResultsFieldName": "string"
         }
       }
     },
-
     {
       "ClassName": "CountyTeam",
       "BaseClassName": "SysTeam",
       "Fields": {
-        "County": "string",
-        "Teams": {
-          "FieldType": "array",
-          "AllowedClasses": "SysTeam"
-        },
         "Documents": {
           "FieldType": "array",
           "AllowedClasses": "CountyDocument"
         }
       }
     },
-
+    {
+      "ClassName": "CountyBusiness",
+      "BaseClassName": "CountyTeam",
+      "Fields": {
+        "Street1": "string",
+        "Street2": "string",
+        "City": "string",
+        "State": "string",
+        "Zip": "string",
+        "Website": "string",
+        "Hours": "string",
+        "Phone" :  "string"
+      }
+    },
     {
       "ClassName": "County",
       "BaseClassName": "SysObject",
@@ -125,10 +140,17 @@
         "Teams": {
           "FieldType": "array",
           "AllowedClasses": "SysTeam"
+        },
+        "Elections": {
+          "FieldType": "array",
+          "AllowedClasses": "SysTeam"
+        },
+        "Resources": {
+          "FieldType": "array",
+          "AllowedClasses": "Presentation"
         }
       }
     }
-
   ],
   "Users": [],
   "Objects": [
@@ -144,3 +166,4 @@
     }
   ]
 }
+  

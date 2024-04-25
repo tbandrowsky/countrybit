@@ -772,9 +772,9 @@ namespace corona
 				}
 			);
 		}
-		else if (content_alignment == visual_alignment::align_center)
+		else //  DOESN'T MATTER AND ALLOWS FOR A CORRUPTION if (content_alignment == visual_alignment::align_center)
 		{
-
+			content_alignment = visual_alignment::align_center;
 			arrange_children(bounds,
 				[this](point _remaining, const rectangle* _bounds, control_base* _item) {
 
@@ -808,10 +808,6 @@ namespace corona
 				}
 			);
 		} 
-		else 
-		{
-			throw std::exception("row content_alignment not set");
-		}
 	}
 
 	void column_layout::arrange(rectangle _bounds)

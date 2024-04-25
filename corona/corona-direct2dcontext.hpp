@@ -703,29 +703,31 @@ namespace corona
 			auto bm = bitmaps[_bitmapInstanceDto->bitmapName];
 			throwOnFalse(static_cast<bool>(bm), "Bitmap not found in context");
 			auto ibm = bm->getBySize(_bitmapInstanceDto->width, _bitmapInstanceDto->height);
-			throwOnNull(ibm, "Bitmap size not found in context");
-			D2D1_RECT_F rect, source;
-			rect.left = _bitmapInstanceDto->x;
-			rect.top = _bitmapInstanceDto->y;
-			auto size = ibm->GetSize();
-			if (_bitmapInstanceDto->width) {
-				rect.right = rect.left + _bitmapInstanceDto->width;
+			if (ibm) 
+			{ // if the size is stupid, don't draw it, but TODO: fill something in.
+				D2D1_RECT_F rect, source;
+				rect.left = _bitmapInstanceDto->x;
+				rect.top = _bitmapInstanceDto->y;
+				auto size = ibm->GetSize();
+				if (_bitmapInstanceDto->width) {
+					rect.right = rect.left + _bitmapInstanceDto->width;
+				}
+				else
+				{
+					rect.right = rect.left + size.width;
+				}
+				if (_bitmapInstanceDto->height) {
+					rect.bottom = rect.top + _bitmapInstanceDto->height;
+				}
+				else {
+					rect.bottom = rect.top + size.height;
+				}
+				source.left = 0;
+				source.top = 0;
+				source.right = size.width;
+				source.bottom = size.height;
+				getDeviceContext()->DrawBitmap(ibm, rect, _bitmapInstanceDto->alpha, D2D1_INTERPOLATION_MODE_MULTI_SAMPLE_LINEAR, source);
 			}
-			else
-			{
-				rect.right = rect.left + size.width;
-			}
-			if (_bitmapInstanceDto->height) {
-				rect.bottom = rect.top + _bitmapInstanceDto->height;
-			}
-			else {
-				rect.bottom = rect.top + size.height;
-			}
-			source.left = 0;
-			source.top = 0;
-			source.right = size.width;
-			source.bottom = size.height;
-			getDeviceContext()->DrawBitmap(ibm, rect, _bitmapInstanceDto->alpha, D2D1_INTERPOLATION_MODE_MULTI_SAMPLE_LINEAR, source);
 		}
 
 		virtual void popCamera()

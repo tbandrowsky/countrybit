@@ -1138,10 +1138,13 @@ private:
 						}
 
 						json build_option = jp.create_object();
-						build_option.put_member("ClassName", "SysEditObject");
-						build_option.put_member_i64("TargetObjectId", (int64_t)parent["ObjectId"]);
-						build_option.put_member("TargetMemberName", step_field_name);
-						build_option.put_member_i64("SelectObjectId", object_id);
+						build_option.put_member("Function", "/objects/edit/");
+						json build_message = jp.create_object();
+						build_message.put_member("ClassName", "SysEditObject");
+						build_message.put_member_i64("TargetObjectId", (int64_t)parent["ObjectId"]);
+						build_message.put_member("TargetMemberName", step_field_name);
+						build_message.put_member_i64("SelectObjectId", object_id);
+						build_option.put_member("Data", build_message);
 						build_options.append_element(build_option);
 					}
 					else
@@ -1151,10 +1154,13 @@ private:
 						if (item.is_object())
 						{
 							json build_option = jp.create_object();
-							build_option.put_member("ClassName", "SysEditObject");
-							build_option.put_member_i64("TargetObjectId", (int64_t)parent["ObjectId"]);
-							build_option.put_member("TargetMemberName", step_field_name);
-							build_option.put_member_i64("SelectObjectId", item["ObjectId"]);
+							build_option.put_member("Function", "/objects/edit/");
+							json build_message = jp.create_object();
+							build_message.put_member("ClassName", "SysEditObject");
+							build_message.put_member_i64("TargetObjectId", (int64_t)parent["ObjectId"]);
+							build_message.put_member("TargetMemberName", step_field_name);
+							build_message.put_member_i64("SelectObjectId", item["ObjectId"]);
+							build_option.put_member("Data", build_message);
 							build_options.append_element(build_option);
 						}
 					}
@@ -1185,13 +1191,15 @@ private:
 						build_message.put_member("ClassName", required_class_name);
 						build_message.put_member_i64("TargetObjectId", (int64_t)parent["ObjectId"]);
 						build_message.put_member("TargetMemberName", step_field_name);
+						build_option.put_member("Data", build_message);
 						build_options.append_element(build_option);
 
 						build_option = jp.create_object();
 						build_message = jp.create_object();
-						build_option.put_member("Function", "/classes/put/");
-						build_option.put_member("BaseClassName", required_class_name);
-						build_option.put_member("ClassDescription", required_class_description);
+						build_message.put_member("Function", "/classes/put/");
+						build_message.put_member("BaseClassName", required_class_name);
+						build_message.put_member("ClassDescription", required_class_description);
+						build_message.put_member("Data", build_message);
 						build_options.append_element(build_option);
 						satisfied = false;
 					}

@@ -152,11 +152,17 @@ namespace corona
 			}
 		}
 
-		void draw()
+		virtual void draw()
 		{
 			if (root.get())
 			{
-				root->draw();
+				try {
+					root->draw();
+				}
+				catch (std::exception exc)
+				{
+					std::cout << "Exception " << exc.what() << std::endl;
+				}
 			}
 		}
 
@@ -238,14 +244,14 @@ namespace corona
 
 		void arrange(double width, double height, double _padding = 0)
 		{
-
-			rectangle bounds;
-			bounds.x = 0;
-			bounds.y = 0;
-			bounds.w = width;
-			bounds.h = height;
-
-			root->arrange(bounds);
+			if (root) {
+				rectangle bounds;
+				bounds.x = 0;
+				bounds.y = 0;
+				bounds.w = width;
+				bounds.h = height;
+				root->arrange(bounds);
+			}
 		}
 
 		int get_keyboard_parent(int _control_id)
@@ -597,7 +603,9 @@ namespace corona
 			for (auto evt : select_bindings) {
 				page_select_event ple = {};
 				ple.pg = _pg;
-				evt->on_select(ple);
+				if (evt) {
+					evt->on_select(ple);
+				}
 			}
 		}
 
@@ -607,7 +615,9 @@ namespace corona
 			for (auto evt : load_bindings) {
 				page_load_event ple = {};
 				ple.pg = _pg;
-				evt->on_load(ple);
+				if (evt) {
+					evt->on_load(ple);
+				}
 			}
 		}
 
@@ -617,7 +627,9 @@ namespace corona
 			for (auto evt : unload_bindings) {
 				page_unload_event ple = {};
 				ple.pg = _pg;
-				evt->on_unload(ple);
+				if (evt) {
+					evt->on_unload(ple);
+				}
 			}
 		}
 

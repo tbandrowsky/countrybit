@@ -33,12 +33,12 @@ namespace corona
 		double dpiScale;
 
 		bool disableChangeProcessing;
-		std::weak_ptr<directXAdapter> factory;
+		std::shared_ptr<directXAdapter> factory;
 		HWND tooltip;
 
 	public:
 
-		directApplicationWin32(std::weak_ptr<directXAdapter>  _factory);
+		directApplicationWin32(std::shared_ptr<directXAdapter>  _factory);
 		virtual ~directApplicationWin32();
 
 		color backgroundColor;
@@ -189,7 +189,7 @@ namespace corona
 
 	directApplicationWin32* directApplicationWin32::current;
 
-	directApplicationWin32::directApplicationWin32(std::weak_ptr<directXAdapter> _factory) : factory(_factory), colorCapture(false)
+	directApplicationWin32::directApplicationWin32(std::shared_ptr<directXAdapter> _factory) : factory(_factory), colorCapture(false)
 	{
 
 		global_job_queue = std::make_unique<job_queue>();
@@ -242,10 +242,8 @@ namespace corona
 			bool failedDevice = false;
 
 			// and here, we compose those surfaces onto our screen.
-			auto pfactory = factory.lock();
-			if (!pfactory) return;
 
-			auto winroot = pfactory->getWindow(hwndRoot).lock();
+			auto winroot = factory->getWindow(hwndRoot).lock();
 
 			if (!winroot)
 				return;
@@ -290,9 +288,9 @@ namespace corona
 				brushColor.a = 1.0;
 				brushColor.b = 1.0;
 
-				// dc->CreateSolidColorBrush(brushColor, &brush);
-				// dc->DrawRectangle(&dest, brush, 4, nullptr);
-				// brush->Release();
+				dc->CreateSolidColorBrush(brushColor, &brush);
+				dc->DrawRectangle(&dest, brush, 4, nullptr);
+				brush->Release();
 
 				winroot->endDraw(failedDevice);
 			}
@@ -300,8 +298,8 @@ namespace corona
 		failed_check:
 
 			if (failedDevice) {
-				pfactory->clearWindows();
-				pfactory->refresh();
+				factory->clearWindows();
+				factory->refresh();
 			}
 		}
 	}
@@ -400,8 +398,6 @@ namespace corona
 		return hfont;
 	}
 
-
-
 	std::weak_ptr<direct2dChildWindow> directApplicationWin32::createDirect2Window(DWORD control_id, rectangle bounds)
 	{
 		std::weak_ptr<direct2dChildWindow> cx;
@@ -409,15 +405,17 @@ namespace corona
 			return cx;
 
 		auto dpi = GetDpiForWindow(hwndRoot);
-		auto pfactory = factory.lock();
-		if (!pfactory) return cx;
 
-		auto win = pfactory->getWindow(hwndRoot).lock();
-		if (win) {
+		auto win = factory->getWindow(hwndRoot).lock();
+
+		if (win) 
+		{
 			auto child = win->createChild(control_id, bounds.x, bounds.y, bounds.w, bounds.h);
 			return child;
 		}
-		else {
+		else 
+		{
+			std::cout << "could not create direct2d window because root window not found" << std::endl;
 			std::weak_ptr<direct2dChildWindow> child;
 			return child;
 		}
@@ -450,7 +448,7 @@ namespace corona
 
 	LRESULT directApplicationWin32::controlWindowProcHandler(HWND hwndchild, UINT message, WPARAM wParam, LPARAM lParam)
 	{
-		auto pfactory = factory.lock();
+		auto &pfactory = factory;
 
 		std::weak_ptr<direct2dWindow> current_window;
 		std::shared_ptr< direct2dWindow> pcurrent_window = nullptr;
@@ -577,7 +575,7 @@ namespace corona
 		HRESULT hr;
 		const int BORDERWIDTH = 8;
 
-		auto pfactory = factory.lock();
+		auto &pfactory = factory;
 
 		std::weak_ptr<direct2dWindow> current_window;
 		std::shared_ptr< direct2dWindow> pcurrent_window = nullptr;
@@ -606,7 +604,7 @@ namespace corona
 						hwndRoot, NULL,
 						hinstance, NULL);
 
-					currentController->onCreated();
+					currentController->onHostCreated();
 				}
 			}
 			break;
@@ -993,20 +991,22 @@ namespace corona
 			rect.y = 0;
 			rect.w = LOWORD(lParam);
 			rect.h = HIWORD(lParam);
-			auto wwin = pfactory->getWindow(hwnd);
-			if (auto win = wwin.lock()) {
-				win->resize(rect.w, rect.h);
-				if (currentController) {
-					dpiScale = 96.0 / GetDpiForWindow(hwnd);
+			if (pfactory) {
+				auto wwin = pfactory->getWindow(hwnd);
+				if (auto win = wwin.lock()) {
+					win->resize(rect.w, rect.h);
+					if (currentController) {
+						dpiScale = 96.0 / GetDpiForWindow(hwnd);
 #if TRACE_SIZE
-					std::cout << " w " << rect.w << "h " << rect.h << std::endl;
+						std::cout << " w " << rect.w << "h " << rect.h << std::endl;
 
 #endif
-					rect.w *= dpiScale;
-					rect.h *= dpiScale;
-					currentController->onResize(rect, dpiScale);
+						rect.w *= dpiScale;
+						rect.h *= dpiScale;
+						currentController->onResize(rect, dpiScale);
+					}
 				}
-		}
+			}
 		}
 		break;
 	}

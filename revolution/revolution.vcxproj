@@ -546,11 +546,14 @@
     <ResourceCompile Include="revolution.rc" />
   </ItemGroup>
   <ItemGroup>
+    <CopyFileToFolders Include="assets\small_logo.png">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</DeploymentContent>
+    </CopyFileToFolders>
     <Image Include="revolution.ico" />
     <Image Include="small.ico" />
   </ItemGroup>
   <ItemGroup>
-    <CopyFileToFolders Include="config.json">
+    <CopyFileToFolders Include="config\config.json">
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</DeploymentContent>
       <FileType>Document</FileType>
     </CopyFileToFolders>

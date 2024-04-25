@@ -13,9 +13,6 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Assets">
-      <UniqueIdentifier>{cf44466c-1de9-4130-a7c1-50eadd7f0641}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Resource.h">
@@ -50,8 +47,9 @@
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <CopyFileToFolders Include="config.json">
-      <Filter>Assets</Filter>
+    <CopyFileToFolders Include="assets\small_logo.png">
+      <Filter>Resource Files</Filter>
     </CopyFileToFolders>
+    <CopyFileToFolders Include="config\config.json" />
   </ItemGroup>
 </Project>

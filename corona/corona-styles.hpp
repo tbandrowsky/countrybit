@@ -186,7 +186,7 @@ namespace corona
 	{
 		presentation_style countrybit;
 
-		std::string bigFont = "Blackadder ITC,Segoe Script,Century Gothic,Arial";
+		std::string bigFont = "Century Gothic,Arial";
 		std::string textFont = "Tahoma,Arial";
 
 		countrybit.PrimaryFont = textFont;
@@ -225,11 +225,11 @@ namespace corona
 		countrybit.HeaderBackgroundColor = countrybit.MasterBrandColors[0];
 		countrybit.HeaderTextColor = countrybit.MasterBrandTextColors[0];
 
-		countrybit.TitleBackgroundColor = "#00000000";
+		countrybit.TitleBackgroundColor = "#000000";
 		countrybit.TitleTextColor = countrybit.MasterBrandTextColors[0];
 		countrybit.TitleTextFont = bigFont;
 
-		countrybit.SubtitleBackgroundColor = "#00000000";
+		countrybit.SubtitleBackgroundColor = "#000000";
 		countrybit.SubtitleTextColor = countrybit.MasterBrandTextColors[0];
 		countrybit.SubtitleTextFont = bigFont;
 
@@ -243,11 +243,11 @@ namespace corona
 		countrybit.SubchapterTitleBackgroundColor = countrybit.MasterBrandColors[0];
 		countrybit.SubchapterTitleTextColor = countrybit.MasterBrandTextColors[0];
 
-		countrybit.ParagraphBackgroundColor = "#00000000";
+		countrybit.ParagraphBackgroundColor = "#000000";
 		countrybit.ParagraphTextColor = countrybit.MasterBrandTextColors[0];
 		countrybit.ParagraphTextFont = textFont;
 
-		countrybit.CodeBackgroundColor = "00000000";
+		countrybit.CodeBackgroundColor = "000000";
 		countrybit.CodeTextColor = "F8E0A4";
 		countrybit.CodeTextFont = "Consolas";
 

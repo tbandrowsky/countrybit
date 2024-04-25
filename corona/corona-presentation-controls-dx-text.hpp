@@ -221,19 +221,24 @@ namespace corona
 
 		on_create = [](draw_control* _src)
 			{
+				std::cout << typeid(*_src).name() << " on_create" << std::endl;
 				text_display_control *t = dynamic_cast<text_display_control*>(_src);
 				if (auto pwindow = _src->window.lock())
 				{
+					std::cout << typeid(*_src).name() << " on_create created" << std::endl;
 					pwindow->getContext().setSolidColorBrush(&t->text_idle_brush);
 					pwindow->getContext().setTextStyle(&t->text_style);
 				}
 			};
 
 		on_draw = [this](draw_control* _src) {
+			std::cout << typeid(*_src).name() << " on_draw" << std::endl;
 			if (auto pwindow = this->window.lock())
 			{
 				if (auto phost = host.lock()) {
 					auto draw_bounds = inner_bounds;
+
+					if (!text.size()) text = "";
 
 					std::string test_text = std::format("{0}, {1}, {2}", text, draw_bounds.x, draw_bounds.y, (long)this);
 

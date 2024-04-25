@@ -335,7 +335,7 @@ namespace corona {
 
 		if (sz > 0)
 		{
-			si = _htmlColor[0] == '#' ? 1 : 0;
+			si = (_htmlColor[0] == '#') ? 1 : 0;
 		}
 
 		if (sz >= 6)

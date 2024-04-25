@@ -67,9 +67,14 @@ namespace corona
 			host = _host;
 			if (auto phost = _host.lock()) {
 				if (inner_bounds.x < 0 || inner_bounds.y < 0 || inner_bounds.w < 0 || inner_bounds.h < 0) {
+					std::cout << typeid(*this).name() << " inner bounds is jacked on create" << std::endl;
 					throw std::logic_error("inner bounds not initialized");
 				}
 				window = phost->createDirect2Window(id, inner_bounds);
+				std::cout << this << ":" << typeid(*this).name() << " created." << std::endl;
+			}
+			else {
+				std::cout << this << ":" << typeid(*this).name() << " NOT created because the host could not be locked" << std::endl;
 			}
 			if (on_create) {
 				on_create(this);
@@ -96,59 +101,84 @@ namespace corona
 			}
 		}
 
-		void draw()
+		virtual void draw()
 		{
-			bool adapter_blown_away = false;
+			try {
 
-			if (auto pwindow = window.lock())
-			{
-				pwindow->beginDraw(adapter_blown_away);
-				if (!adapter_blown_away)
+				// proves that the issue is not caused by some dumb misunderstanding of virtual methods
+				// this does get called.  So, if you have text not showing up, this is one to check
+		//		std::cout << typeid(*this).name() << " draw_control::draw" << std::endl;
+
+				bool adapter_blown_away = false;
+
+				if (auto pwindow = window.lock())
 				{
-					auto& context = pwindow->getContext();
-
-					auto& bc = background_brush.brushColor;
-
-					if (border_brush.active)
+					pwindow->beginDraw(adapter_blown_away);
+					if (!adapter_blown_away)
 					{
-						if (border_brush_win32)
-							DeleteBrush(border_brush_win32);
 
-						auto dc = context.getDeviceContext();
-						D2D1_COLOR_F color = toColor(bc);
-						border_brush_win32 = ::CreateSolidBrush(RGB(color.a * color.r * 255.0, color.a * color.g * 255.0, color.a * color.b * 255.0));
+						auto& context = pwindow->getContext();
+
+						auto& bc = background_brush.brushColor;
+
+						D2D1_COLOR_F color = {};
+
+						if (border_brush.active)
+						{
+							if (border_brush_win32)
+								DeleteBrush(border_brush_win32);
+
+							auto dc = context.getDeviceContext();
+							color = toColor(bc);
+							border_brush_win32 = ::CreateSolidBrush(RGB(color.a * color.r * 255.0, color.a * color.g * 255.0, color.a * color.b * 255.0));
+						}
+
+						if (background_brush.active)
+						{
+							if (background_brush_win32)
+								DeleteBrush(background_brush_win32);
+
+							auto dc = context.getDeviceContext();
+							color = toColor(bc);
+							background_brush_win32 = ::CreateSolidBrush(RGB(color.a * color.r * 255.0, color.a * color.g * 255.0, color.a * color.b * 255.0));
+							dc->Clear(color);
+						}
+						else
+						{
+							auto dc = context.getDeviceContext();
+
+							char letter_sequence[16] = "#CCAACC";
+
+							letter_sequence[4] = rand() % 9 + '0';
+
+							color = toColor(letter_sequence);
+							dc->Clear(color);
+						}
+
+						if (on_draw)
+						{
+							on_draw(this);
+						}
 					}
+					pwindow->endDraw(adapter_blown_away);
+				}
+				else {
+					std::cout << typeid(*this).name() << " draw_control::draw NOT DRAWN, not able to lock window" << std::endl;
+				}
 
-					if (background_brush.active)
-					{
-						if (background_brush_win32)
-							DeleteBrush(background_brush_win32);
-
-						auto dc = context.getDeviceContext();
-						D2D1_COLOR_F color = toColor(bc);
-						background_brush_win32 = ::CreateSolidBrush(RGB(color.a * color.r * 255.0, color.a * color.g * 255.0, color.a * color.b * 255.0));
-						dc->Clear(color);
+				for (auto& child : children) {
+					try {
+						child->draw();
 					}
-					else
+					catch (std::exception exc)
 					{
-						auto dc = context.getDeviceContext();
-						D2D1_COLOR_F color = toColor("00000000");
-						dc->Clear(color);
-					}
-
-					if (on_draw)
-					{
-						on_draw(this);
-					}
-					else
-					{
-
+						std::cout << "Draw Child Exception " << exc.what() << std::endl;
 					}
 				}
-				pwindow->endDraw(adapter_blown_away);
 			}
-			for (auto& child : children) {
-				child->draw();
+			catch (std::exception exc)
+			{
+				std::cout << "Draw Exception " << exc.what() << std::endl;
 			}
 		}
 

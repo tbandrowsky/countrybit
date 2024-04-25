@@ -571,7 +571,13 @@ namespace corona
 	void control_base::create(std::weak_ptr<applicationBase> _host)
 	{
 		for (auto child : children) {
-			child->create(_host);
+			try {
+				child->create(_host);
+			}
+			catch (std::exception exc)
+			{
+				std::cout << typeid(*this).name() << ": exception creating children." << std::endl;
+			}
 		}
 	}
 
@@ -584,8 +590,15 @@ namespace corona
 
 	void control_base::draw()
 	{
+		//std::cout << typeid(*this).name() << " control_base::draw" << std::endl;
 		for (auto child : children) {
-			child->draw();
+			try {
+				child->draw();
+			}
+			catch (std::exception exc)
+			{
+				std::cout << "Exception " << exc.what() << std::endl;
+			}
 		}
 	}
 
@@ -937,7 +950,7 @@ namespace corona
 	void control_base::on_resize()
 	{
 		auto ti = typeid(*this).name();
-		//std::cout << "resize control_base:" << ti << " " << bounds.x << "," << bounds.y << " x " << bounds.w << " " << bounds.h << std::endl;
+		std::cout << "resize control_base:" << ti << " " << bounds.x << "," << bounds.y << " x " << bounds.w << " " << bounds.h << std::endl;
 	}
 
 

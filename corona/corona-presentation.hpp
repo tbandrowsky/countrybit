@@ -17,6 +17,7 @@ namespace corona {
 		rectangle current_size;
 		lockable control_lock;
 		std::map<std::string, int> control_ids;
+		std::string home_page;
 
 	public:
 
@@ -53,6 +54,10 @@ namespace corona {
 		virtual page& create_page(std::string _name, std::function<void(page& pg)> _settings = nullptr);
 		virtual void select_page(const std::string& _page_name);
 		virtual void select_page(const std::string& _page_name, std::function<void(page& pg)> _settings);
+		virtual void set_home_page(const std::string& _page_name) 
+		{
+			home_page = _page_name;
+		}
 
 		template <typename control_type> control_type& find(int _id)
 		{
@@ -111,6 +116,9 @@ namespace corona {
 		virtual void killFocus(int ddlControlId);
 		virtual bool navigationKey(int _key);
 
+		std::function<void(presentation*)> create_pages;
+
+		virtual void onHostCreated();
 		virtual void onCreated();
 		virtual void onCommand(int buttonId);
 		virtual void onTextChanged(int textControlId);
@@ -331,6 +339,18 @@ namespace corona {
 				cp->create(phost);
 				cp->subscribe(this);
 			}
+		}
+	}
+
+	void presentation::onHostCreated()
+	{
+		if (create_pages) {
+			create_pages(this);
+		}
+
+		if (home_page.size()) 
+		{
+			select_page(home_page);
 		}
 	}
 
@@ -694,6 +714,7 @@ namespace corona {
 		if (pg) {
 			pg->arrange(newSize.w, newSize.h);
 		}
+		onCreated();
 		return 0;
 	}
 

@@ -36,6 +36,7 @@ namespace corona
 		virtual void killFocus(int ddlControlId) = 0;
 		virtual bool navigationKey(int _key) = 0;
 
+		virtual void onHostCreated() = 0;
 		virtual void onCreated() = 0;
 		virtual void onCommand(int buttonId) = 0;
 		virtual void onTextChanged(int textControlId) = 0;

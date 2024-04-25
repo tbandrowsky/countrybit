@@ -8,6 +8,21 @@
 namespace corona
 {
 
+
+	/*
+	
+	This is a boilerplate entry point for a corona based Windows client application.
+	It creates an application object, and illustrates how all the pre-requisites are tied together.
+	
+	*/
+
+	/*
+	
+	These are general constants, and they are used to identify specific controls.
+	The presentation system lets you use win32 controls and your own dx based controls interchangably.
+
+	*/
+
 	// important general
 	const int IDC_COMPANY_NAME = 1001;
 	const int IDC_COMPANY_LOGO = 1002;
@@ -41,15 +56,18 @@ namespace corona
 	const int IDC_STATUS_MESSAGE = 5001;
 	const int IDC_STATUS_DETAIL = 5002;
 
+	/* And now, this is the application */
+
 	class revolution_application
 	{
 	public:
 		presentation_style* st;
 
+		// the adapter, created first.  It is the graphics card on the machine
 		std::shared_ptr<directXAdapter> factory;
 
-		// create a win32 set of windows that can use this factory
-		// to make windows with a d2d / d3d image
+		// This creates the application window (and children), handling the mapping from the window and the events
+		// back through the presentation.
 		std::shared_ptr<directApplicationWin32> application;
 
 		// create a win32 set of windows that can use this factory
@@ -61,6 +79,7 @@ namespace corona
 
 		// create the presentation - this holds the data of what is on screen, for various pages.
 		std::shared_ptr<presentation> presentation_layer;
+
 
 		std::string current_page;
 
@@ -79,8 +98,14 @@ namespace corona
 
 		revolution_application()
 		{
-			std::shared_ptr<directXAdapter> factory = std::make_shared<directXAdapter>();
+			st = styles.get_style();
 
+			factory = std::make_shared<directXAdapter>();
+
+			// build the factory initially.  we may have occasion to call this 
+			// in the future in the event of a system setting change or something.
+			// otherwise.... I hate doing big things in constructors.
+			factory->refresh();
 			// create a win32 set of windows that can use this factory
 			// to make windows with a d2d / d3d image
 			application = std::make_shared<directApplicationWin32>(factory);
@@ -96,34 +121,54 @@ namespace corona
 			application_menu->destination(IDM_HOME, "&Home", "home")
 								.destination(IDM_LOGIN, "&Login", "login");
 
-			st = styles.get_style();
+			/*
+			
+			create pages is like, a handler to initialize the system at the time the main window has finished creating.
+			(WM_CREATE handler, basically).  In this way we can use this sort of like an init dialog.
+			
+			*/
 
-			id_caption_bar = presentation_layer->get_control_id("caption_bar", []() { return id_counter::next(); });
-			id_main_row = presentation_layer->get_control_id("main_row", []() { return id_counter::next(); });
-			id_command_container = presentation_layer->get_control_id("command_container", []() { return id_counter::next(); });
-			id_current_container = presentation_layer->get_control_id("current_container", []() { return id_counter::next(); });
-			id_location_title = presentation_layer->get_control_id("location_title", []() { return id_counter::next(); });
-			id_create_title = presentation_layer->get_control_id("create_title", []() { return id_counter::next(); });
-			id_form_view = presentation_layer->get_control_id("get_ui_form_view", []() { return id_counter::next(); });
-			id_tab_view = presentation_layer->get_control_id("get_ui_tab_view", []() { return id_counter::next(); });
-			image_control_id = presentation_layer->get_control_id("get_ui_logo", []() { return id_counter::next(); });
+			presentation_layer->create_pages = [this](presentation* _presentation)
+			{
+				id_caption_bar = _presentation->get_control_id("caption_bar", []() { return id_counter::next(); });
+				id_main_row = _presentation->get_control_id("main_row", []() { return id_counter::next(); });
+				id_command_container = _presentation->get_control_id("command_container", []() { return id_counter::next(); });
+				id_current_container = _presentation->get_control_id("current_container", []() { return id_counter::next(); });
+				id_location_title = _presentation->get_control_id("location_title", []() { return id_counter::next(); });
+				id_create_title = _presentation->get_control_id("create_title", []() { return id_counter::next(); });
+				id_form_view = _presentation->get_control_id("get_ui_form_view", []() { return id_counter::next(); });
+				id_tab_view = _presentation->get_control_id("get_ui_tab_view", []() { return id_counter::next(); });
+				image_control_id = _presentation->get_control_id("get_ui_logo", []() { return id_counter::next(); });
 
-			factory->refresh();
-
-			threadomatic::run_complete(nullptr, [this]() {
-				page& plogin_start = presentation_layer->create_page("login_start");
-				create_login_start_page(plogin_start);
-				page& plogin_sendcode = presentation_layer->create_page("login_sendcode");
-				create_login_sendcode_page(plogin_sendcode);
-				page& plogin_confirmcode = presentation_layer->create_page("login_confirmcode");
-				create_login_confirmcode_page(plogin_confirmcode);
-				page& plogin_passwordset = presentation_layer->create_page("login_passwordset");
-				create_login_passwordset_page(plogin_passwordset);
-				page& pedit_object = presentation_layer->create_page("edit_object");
-				create_object_edit_page(pedit_object);
-				select_page("login_start");
-			});
+				_presentation->create_page("home", [](page& _page) {
+					control_builder cb(_page.get_root_container());
+					cb.title("Test");
+					});
+				_presentation->create_page("login_start", [this](page& _page) {
+					create_login_start_page(_page);
+					});
+				_presentation->create_page("login_sendcode", [this](page& _page) {
+					create_login_sendcode_page(_page);
+					});
+				_presentation->create_page("login_confirmcode", [this](page& _page) {
+					create_login_confirmcode_page(_page);
+					});
+				_presentation->create_page("login_passwordset", [this](page& _page) {
+					create_login_passwordset_page(_page);
+					});
+				_presentation->create_page("edit_object", [this](page& _page) {
+					create_object_edit_page(_page);
+					});
+				_presentation->set_home_page("login_start");
+			};
 		}
+
+		/*
+		
+		This is a helper method to read a configuration file for the UI and point it.
+		In this way, users can connect to multiple corona servers.
+		
+		*/
 
 		file_transaction<relative_ptr_type> read_config(std::string _config_file_name)
 		{
@@ -156,6 +201,14 @@ namespace corona
 			co_return false;
 		}
 
+		/*
+		
+		This is the run method.  It reads the configuration for the application and then launches the application window.
+		Run dialog is a bit of a misnomer, in that, this is just a standard window that uses the dialogproc to handle 
+		keyboard navigation.
+
+		*/
+
 		void run(HINSTANCE hInstance, bool forceWindowed)
 		{
 			read_config("config.json");
@@ -177,50 +230,44 @@ namespace corona
 			caption_bar_control* caption_container;
 			tab_view_control* tab_container;
 			form_view_control* form_view;
-			// then we must be a new page
 
-			if (_page.get_root()->children.size() == 0)
-			{
-				// First check to make sure we have all the things
+			control_builder contents_root(_page.get_root_container());
 
-				control_builder contents_root(_page.get_root_container());
+			auto contents = contents_root.row_begin(
+				id_main_row,
+				[](row_layout& _settings) {
+					_settings.set_size(1.0_container, 1.0_container);
+				});
 
-				auto contents = contents_root.row_begin(
-					id_main_row,
-					[](row_layout& _settings) {
-						_settings.set_size(1.0_container, 1.0_container);
-					});
+			// note that, we are putting the breadcrumbs on a nav pane to the left.
+			command_container = contents.column_begin(id_command_container, [](column_layout& rl) {
+				rl.set_size(300.0_px, 1.0_container);
+				});
 
-				// note that, we are putting the breadcrumbs on a nav pane to the left.
-				auto command_container = contents.column_begin(id_command_container, [](column_layout& rl) {
-					rl.set_size(300.0_px, 1.0_container);
-					});
+			auto current_container = contents.column_begin(id_current_container, [](column_layout& rl) {
+				rl.set_size(1.0_remaining, 1.0_container);
+				});
 
-				command_container.image(image_control_id, "assets\\small_logo.png", [](image_control& control) {
-					control.set_size(300.0_px, 300.0_px);
-					});
+			command_container.image(image_control_id, "small_logo.png", [](image_control& control) {
+				control.set_size(300.0_px, 300.0_px);
+				});
 
-				auto current_container = contents.column_begin(id_current_container, [](column_layout& rl) {
-					rl.set_size(1.0_remaining, 1.0_container);
-					});
+			current_container.caption_bar(id_caption_bar, st, application_menu.get(), [](caption_bar_control& _cb)
+				{
+					_cb.set_size(1.0_container, 100.0_px);
+					_cb.menu_button_id = IDC_SYSTEM_MENU;
+					_cb.image_control_id = IDC_COMPANY_LOGO;
+					_cb.image_file = "small_logo.png";
+					_cb.corporate_name = "COUNTRY VIDEO GAMES";
+					_cb.title_name = "Revolution";
+					_cb.code_detail_id = IDC_STATUS_DETAIL;
+					_cb.code_status_id = IDC_STATUS_MESSAGE;
+				}
+			);
 
-				current_container.caption_bar(id_caption_bar, st, application_menu.get(), [](caption_bar_control& _cb)
-					{
-						_cb.menu_button_id = IDC_SYSTEM_MENU;
-						_cb.image_control_id = IDC_COMPANY_LOGO;
-						_cb.image_file = "assets\\small_logo.png";
-						_cb.corporate_name = "COUNTRY VIDEO GAMES";
-						_cb.title_name = "Revolution";
-						_cb.code_detail_id = IDC_STATUS_DETAIL;
-						_cb.code_status_id = IDC_STATUS_MESSAGE;
-					}
-				);
+			_fn(current_container);
 
-				_fn(current_container);
-
-
-				contents_root.apply_controls(_page.root.get());
-			}
+			contents_root.apply_controls(_page.root.get());
 		}
 
 		void create_login_start_page (
@@ -256,16 +303,16 @@ namespace corona
 						{
 							json_parser jp;
 							cbc.options = {};
+							cbc.options.function_data = jp.create_object();
+							cbc.options.function_data.put_member_i64("SourceControlId", IDC_FORM_VIEW);
 							cbc.options.corona_client = corona_api.get();
 							cbc.options.function_name = "/login/start/";
-							cbc.options.function_data.put_member_i64("SourceControlId", IDC_FORM_VIEW);
 							cbc.options.credentials = jp.create_object();
 						});
 					cb.calico_button(IDC_BTN_CANCEL);
 			});
-			_page.on_select([this](page_select_event evt) {
-				create_login_start_page(*evt.pg);
-				});
+
+			return;
 		}
 
 		void create_login_sendcode_page(
@@ -286,9 +333,6 @@ namespace corona
 						});
 					cb.calico_button(IDC_BTN_CANCEL);
 				});
-			_page.on_select([this](page_select_event evt) {
-				create_login_sendcode_page(*evt.pg);
-				});
 
 		}
 
@@ -296,7 +340,7 @@ namespace corona
 			page& _page
 		)
 		{
-			create_page_frame(_page, [this](control_builder cb)
+			create_page_frame(_page, [this](control_builder& cb)
 				{
 					cb.title("Enter Confirmation Code");
 					cb.paragraph("An email was sent to you.  Please enter the code you received.");
@@ -326,16 +370,13 @@ namespace corona
 					});
 					cb.calico_button(IDC_BTN_CANCEL);
 				});
-			_page.on_select([this](page_select_event evt) {
-				create_login_confirmcode_page(*evt.pg);
-				});
 		}
 
 		void create_login_passwordset_page (
 			page& _page
 		)
 		{
-			create_page_frame(_page, [this](control_builder cb)
+			create_page_frame(_page, [this](control_builder& cb)
 				{
 					cb.title("Enter New Password");
 					cb.paragraph("An email was sent to you.  Please enter the code you received.");
@@ -368,12 +409,10 @@ namespace corona
 							cbc.options.corona_client = corona_api.get();
 							cbc.options.function_name = "/login/passwordset/";
 							cbc.options.credentials = credentials;
+							cbc.options.function_data = jp.create_object();
 							cbc.options.function_data.put_member_i64("SourceControlId", IDC_FORM_VIEW);
 						});
 					cb.calico_button(IDC_BTN_CANCEL);
-				});
-			_page.on_select([this](page_select_event evt) {
-				create_login_passwordset_page(*evt.pg);
 				});
 
 		}
@@ -391,7 +430,7 @@ namespace corona
 
 			// then we must be a new page
 
-			create_page_frame(_page, [this](control_builder cb)
+			create_page_frame(_page, [this](control_builder& cb)
 				{
 					cb.form_view(IDC_FORM_VIEW, [](form_view_control& _fv)
 						{
@@ -405,6 +444,7 @@ namespace corona
 							cbc.options.corona_client = corona_api.get();
 							cbc.options.function_name = "/objects/put/";
 							cbc.options.credentials = credentials;
+							cbc.options.function_data = jp.create_object();
 							cbc.options.function_data.put_member_i64("SourceControlId", IDC_FORM_VIEW);
 						});
 					cb.calico_button(IDC_BTN_REVERT, [this](calico_button_control& cbc)
@@ -414,6 +454,7 @@ namespace corona
 							cbc.options.corona_client = corona_api.get();
 							cbc.options.function_name = "/objects/edit/";
 							cbc.options.credentials = credentials;
+							cbc.options.function_data = jp.create_object();
 							cbc.options.function_data.put_member_i64("SourceControlId", IDC_FORM_VIEW);
 						});
 				});
@@ -775,9 +816,10 @@ namespace corona
 
 	void run_developer_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 	{
-		revolution_application app;
 
 		EnableGuiStdOuts();
+
+		revolution_application app;
 
 		// and now wire the data to the presentation 
 		// the presentation can invoke the data

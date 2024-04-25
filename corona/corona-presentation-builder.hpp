@@ -132,13 +132,13 @@ namespace corona
 
 		control_builder(const control_builder& _src)
 		{
-			parent = nullptr;
+			parent = _src.parent;
 			root = _src.root;
 		}
 
 		control_builder &operator =(const control_builder& _src)
 		{
-			parent = nullptr;
+			parent = _src.parent;
 			root = _src.root;
 			return *this;
 		}
@@ -992,6 +992,8 @@ namespace corona
 			}
 
 			cb.apply_controls(this);
+
+			create(host);
 		}
 
 		virtual void on_subscribe(presentation_base* _presentation, page_base* _page)
@@ -1328,9 +1330,11 @@ namespace corona
 			}
 		}
 
-		void draw()
+		virtual void draw()
 		{
 			bool adapter_blown_away = false;
+
+			std::cout << typeid(*this).name() << " tab_view::draw" << std::endl;
 
 			if (auto pwindow = window.lock())
 			{
@@ -1384,14 +1388,22 @@ namespace corona
 				pwindow->endDraw(adapter_blown_away);
 			}
 			for (auto& child : children) {
-				child->draw();
+				try {
+					child->draw();
+				}
+				catch (std::exception exc)
+				{
+					std::cout << "Exception " << exc.what() << std::endl;
+				}
 			}
 		}
 
-		void render(ID2D1DeviceContext* _dest)
+		virtual void render(ID2D1DeviceContext* _dest)
 		{
 			if (auto pwindow = window.lock())
 			{
+				std::cout << typeid(*this).name() << " " << inner_bounds.x << ", " << inner_bounds.y << " " << inner_bounds.w << " " << inner_bounds.h << std::endl;
+
 				auto bm = pwindow->getBitmap();
 				D2D1_RECT_F dest;
 				dest.left = inner_bounds.x;
@@ -1687,23 +1699,6 @@ namespace corona
 
 		virtual void on_subscribe(presentation_base* _presentation, page_base* _page)
 		{
-			auto queue = global_job_queue.get();
-			_page->on_logged(id, [queue](page_logged_event evt)
-				{
-					auto& lg = evt.lake->get_log();
-					caption_bar_control* cbc = dynamic_cast<caption_bar_control*>(evt.control);
-					if (cbc && lg.size()) {
-						auto last = lg.get_last_element();
-
-						std::string src = last["source"];
-						std::string fn = last["function"];
-						std::string status = last["status"];
-						std::string message = last["response_body"];
-						cbc->set_status(src + "." + fn, status + " " + message);
-					}
-				}
-			);
-
 			for (auto child : children) {
 				child->on_subscribe(_presentation, _page);
 			}

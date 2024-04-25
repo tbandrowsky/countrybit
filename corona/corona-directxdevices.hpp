@@ -37,22 +37,36 @@ namespace corona
 
 			ID3D11Device* temp = nullptr;
 
-			HRESULT hr = D3D11CreateDevice(_adapter,
-				D3D_DRIVER_TYPE_HARDWARE,
-				NULL,
-				D3D11_CREATE_DEVICE_BGRA_SUPPORT,
-				feature_levels,
-				2,
-				D3D11_SDK_VERSION,
-				&d3d11Device,
-				&feature_level,
-				NULL
-			);
+			HRESULT hr;
+
+			try
+			{
+
+				hr = D3D11CreateDevice(_adapter,
+					D3D_DRIVER_TYPE_UNKNOWN,
+					NULL,
+					D3D11_CREATE_DEVICE_BGRA_SUPPORT | D3D10_CREATE_DEVICE_SINGLETHREADED,
+					feature_levels,
+					4,
+					D3D11_SDK_VERSION,
+					&d3d11Device,
+					&feature_level,
+					NULL
+				);
+
+			}
+			catch (...)
+			{
+				std::cerr << "An exception occurred trying to D3D11CreateDevice." << std::endl;
+				return false;
+			}
 
 			if (SUCCEEDED(hr) && d3d11Device != nullptr)
 			{
 				return true;
 			}
+
+			return false;
 		}
 
 		ID3D11Device* getD3DDevice() { return d3d11Device; }
