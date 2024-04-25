@@ -129,37 +129,6 @@ namespace corona
 			return *this;
 		}
 
-		container_control& set_background_color(solidBrushRequest _brushFill)
-		{
-			background_brush = _brushFill;
-			background_brush.name = typeid(*this).name();
-			background_brush.active = true;
-			return *this;
-		}
-
-		container_control& set_background_color(std::string _color)
-		{
-			background_brush.brushColor = toColor(_color.c_str());
-			background_brush.name = typeid(*this).name();
-			background_brush.active = true;
-			return *this;
-		}
-
-		container_control& set_border_color(solidBrushRequest _brushFill)
-		{
-			border_brush = _brushFill;
-			border_brush.name = typeid(*this).name();
-			border_brush.active = true;
-			return *this;
-		}
-
-		container_control& set_border_color(std::string _color)
-		{
-			border_brush.brushColor = toColor(_color.c_str());
-			border_brush.name = typeid(*this).name();
-			border_brush.active = true;
-			return *this;
-		}
 
 		container_control& set_position(layout_rect _new_layout)
 		{
@@ -339,7 +308,6 @@ namespace corona
 
 					if (auto pwindow = _src->window.lock())
 					{
-						pwindow->getContext().setSolidColorBrush(&border_brush);
 						pwindow->getContext().setSolidColorBrush(&selection_border);
 					}
 				};

@@ -9,6 +9,8 @@ namespace corona
 	{
 	public:
 
+		int border_width;
+
 		HBRUSH background_brush_win32;
 		solidBrushRequest	background_brush;
 
@@ -116,44 +118,64 @@ namespace corona
 					pwindow->beginDraw(adapter_blown_away);
 					if (!adapter_blown_away)
 					{
-
 						auto& context = pwindow->getContext();
 
 						auto& bc = background_brush.brushColor;
 
 						D2D1_COLOR_F color = {};
 
+						const char* border_name = nullptr;
+						const char* background_name = nullptr;
+
+
+						auto dc = context.getDeviceContext();
+
+						char letter_sequence[16] = "#00000000";
+
+//						letter_sequence[4] = rand() % 9 + '0';
+
+						color = toColor(letter_sequence);
+						dc->Clear(color);
+
 						if (border_brush.active)
 						{
+							context.setSolidColorBrush(&border_brush);
+							border_name = border_brush.name;
+
 							if (border_brush_win32)
 								DeleteBrush(border_brush_win32);
-
-							auto dc = context.getDeviceContext();
 							color = toColor(bc);
 							border_brush_win32 = ::CreateSolidBrush(RGB(color.a * color.r * 255.0, color.a * color.g * 255.0, color.a * color.b * 255.0));
 						}
 
 						if (background_brush.active)
 						{
+							context.setSolidColorBrush(&background_brush);
+							background_name = background_brush.name;
+
 							if (background_brush_win32)
 								DeleteBrush(background_brush_win32);
 
-							auto dc = context.getDeviceContext();
 							color = toColor(bc);
 							background_brush_win32 = ::CreateSolidBrush(RGB(color.a * color.r * 255.0, color.a * color.g * 255.0, color.a * color.b * 255.0));
-							dc->Clear(color);
 						}
-						else
-						{
-							auto dc = context.getDeviceContext();
 
-							char letter_sequence[16] = "#CCAACC";
-
-							letter_sequence[4] = rand() % 9 + '0';
-
-							color = toColor(letter_sequence);
-							dc->Clear(color);
+						if (border_name || background_name) {
+							rectangle r = bounds;
+							r.x = 0;
+							r.y = 0;
+							std::cout << std::format("{}:{} [{},{} x {},{}]", typeid(*this).name(), background_name, r.x, r.y, r.w, r.h) << std::endl;
+							context.drawRectangle(&r, border_name, border_width, background_name);
 						}
+
+						/* 
+						* this is commented out because it is helpful for debugging. 
+						* a parent is always the background of its children, 
+						* so, what this does is slightly alter a nasty pink
+						* color so you can see what the shape of all the things are 
+						* that do not have backgrounds.  This is helpful for layout work and debugging.
+						*/
+
 
 						if (on_draw)
 						{
@@ -162,12 +184,16 @@ namespace corona
 					}
 					pwindow->endDraw(adapter_blown_away);
 				}
-				else {
+/*				else
+				{
 					std::cout << typeid(*this).name() << " draw_control::draw NOT DRAWN, not able to lock window" << std::endl;
 				}
+				*/
 
-				for (auto& child : children) {
-					try {
+				for (auto& child : children) 
+				{
+					try 
+					{
 						child->draw();
 					}
 					catch (std::exception exc)
@@ -205,6 +231,38 @@ namespace corona
 			{
 				child->render(_dest);
 			}
+		}
+
+		void set_background_color(solidBrushRequest _brushFill)
+		{
+			background_brush = _brushFill;
+			std::string brush_name = std::format("background");
+			background_brush.name = brush_name;
+			background_brush.active = true;
+		}
+
+		void set_background_color(std::string _color)
+		{
+			background_brush.brushColor = toColor(_color.c_str());
+			std::string brush_name = std::format("background");
+			background_brush.name = brush_name;
+			background_brush.active = true;
+		}
+
+		void set_border_color(solidBrushRequest _brushFill)
+		{
+			border_brush = _brushFill;
+			std::string brush_name = std::format("border");
+			border_brush.name = brush_name;
+			border_brush.active = true;
+		}
+
+		void set_border_color(std::string _color)
+		{
+			border_brush.brushColor = toColor(_color.c_str());
+			std::string brush_name = std::format("border", typeid(*this).name(), id);
+			border_brush.name = brush_name;
+			border_brush.active = true;
 		}
 
 	};

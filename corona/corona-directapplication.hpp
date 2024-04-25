@@ -41,7 +41,7 @@ namespace corona
 		directApplicationWin32(std::shared_ptr<directXAdapter>  _factory);
 		virtual ~directApplicationWin32();
 
-		color backgroundColor;
+		ccolor backgroundColor;
 
 		HWND getMainWindow() { return hwndRoot; }
 		HWND getTooltipWindow() { return tooltip; }
@@ -256,8 +256,6 @@ namespace corona
 				auto& ctx = winroot->getContext();
 				auto dc = ctx.getDeviceContext();
 
-				dc->Clear(&backgroundColor);
-
 				// here, we tell the children to draw on their own surfaces...
 				// and then, draw on this one.
 				currentController->drawFrame(ctx);
@@ -283,14 +281,16 @@ namespace corona
 				dest.right = pos + boxw;
 				dest.bottom = dest.top + boxh;
 
-				ID2D1SolidColorBrush* brush;
+				ID2D1SolidColorBrush* brush = nullptr;
 				D2D1_COLOR_F brushColor = {};
 				brushColor.a = 1.0;
 				brushColor.b = 1.0;
 
 				dc->CreateSolidColorBrush(brushColor, &brush);
-				dc->DrawRectangle(&dest, brush, 4, nullptr);
-				brush->Release();
+				if (brush) {
+					dc->DrawRectangle(&dest, brush, 4, nullptr);
+					brush->Release();
+				}
 
 				winroot->endDraw(failedDevice);
 			}
@@ -859,7 +859,7 @@ namespace corona
 					HDC hdc = ::GetDC(NULL);
 					if (hdc) {
 						COLORREF cr = ::GetPixel(hdc, p.x, p.y);
-						color pickedColor;
+						ccolor pickedColor;
 						pickedColor.r = GetRValue(cr) / 255.0;
 						pickedColor.g = GetGValue(cr) / 255.0;
 						pickedColor.b = GetBValue(cr) / 255.0;
@@ -1173,22 +1173,43 @@ namespace corona
 
 		hwndRoot = NULL;
 
+		RECT desktop_rect = {};
+		::GetWindowRect(GetDesktopWindow(), &desktop_rect);
+		int desktop_width, desktop_height;
+		int window_width, window_height;
+		int window_x, window_y;
+
 		if (_fullScreen) {
+			desktop_width = desktop_rect.right - desktop_rect.left;
+			desktop_height = desktop_rect.bottom - desktop_rect.top;
+			window_width = desktop_width;
+			window_height = desktop_height;
+			window_x = 0;
+			window_y = 0;
+
 			dwStyle = WS_POPUP | WS_MAXIMIZE;
 			dwExStyle = WS_EX_APPWINDOW | WS_EX_TOPMOST;
-			ShowCursor(FALSE);
 		}
 		else {
+			int desktop_width, desktop_height;
+			desktop_width = desktop_rect.right - desktop_rect.left;
+			desktop_height = desktop_rect.bottom - desktop_rect.top;
+			window_width = desktop_width / 2;
+			window_height = desktop_height / 2;
+			window_x = (desktop_width - window_width) / 2;
+			window_y = (desktop_height - window_height) / 2;
+
 			dwStyle = WS_CAPTION | WS_OVERLAPPEDWINDOW;
 			dwExStyle = WS_EX_APPWINDOW | WS_EX_WINDOWEDGE;
 		}
 
 		setController(_firstController);
 
+
 		hwndRoot = CreateWindowEx(dwExStyle,
 			wcMain.lpszClassName, _title,
 			dwStyle | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_TABSTOP,
-			CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+			window_x, window_y, window_width, window_height,
 			NULL, NULL, hinstance, NULL);
 
 		if (!hwndRoot) {

@@ -110,7 +110,7 @@ namespace corona {
 		virtual void mouseLeftUp(point* _point);
 		virtual void mouseRightDown(point* _point);
 		virtual void mouseRightUp(point* _point);
-		virtual void pointSelected(point* _point, color* _color);
+		virtual void pointSelected(point* _point, ccolor* _color);
 		virtual LRESULT ncHitTest(point* _point);
 		virtual void setFocus(int ddlControlId);
 		virtual void killFocus(int ddlControlId);
@@ -593,7 +593,7 @@ namespace corona {
 			});
 	}
 
-	void presentation::pointSelected(point* _point, color* _color)
+	void presentation::pointSelected(point* _point, ccolor* _color)
 	{
 		;
 	}

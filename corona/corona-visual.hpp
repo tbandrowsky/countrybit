@@ -22,7 +22,7 @@ namespace corona {
 	struct gradientStop
 	{
 		float stop_position;
-		color stop_color;
+		ccolor stop_color;
 
 		gradientStop()
 		{
@@ -33,7 +33,7 @@ namespace corona {
 			stop_color.a = 1.0;
 		}
 
-		gradientStop(color _color, float _position)
+		gradientStop(ccolor _color, float _position)
 		{
 			stop_position = _position;
 			stop_color = _color;
@@ -204,7 +204,7 @@ namespace corona {
 
 	struct solidBrushRequest {
 		object_name_composed name;
-		color brushColor;
+		ccolor brushColor;
 		bool active;
 	};
 
@@ -364,7 +364,7 @@ namespace corona {
 	}
 
 
-	D2D1_COLOR_F toColor(color& _color)
+	D2D1_COLOR_F toColor(ccolor& _color)
 	{
 		return _color;
 	}

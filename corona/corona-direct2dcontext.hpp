@@ -11,7 +11,7 @@ namespace corona
 	class drawableHost {
 	public:
 
-		virtual void clear(color* _color) = 0;
+		virtual void clear(ccolor* _color) = 0;
 		virtual std::string setBitmap(bitmapRequest* _bitmap) = 0;
 		virtual bool setBitmapSizes(bitmapRequest* _bitmap, bool _forceResize) = 0;
 		virtual bool setBitmapFilter(bitmapRequest* _bitmap, std::function<bool(point, int, int, char* bytes)> _filter) = 0;
@@ -107,7 +107,7 @@ namespace corona
 		{
 		}
 
-		virtual void clear(color* _color)
+		virtual void clear(ccolor* _color)
 		{
 			D2D1_COLOR_F color;
 
@@ -166,9 +166,9 @@ namespace corona
 			return success;
 		}
 
-		virtual color getColorAtPoint(bitmapInstanceDto* _bitmap, point& _point)
+		virtual ccolor getColorAtPoint(bitmapInstanceDto* _bitmap, point& _point)
 		{
-			color x;
+			ccolor x;
 			auto i = bitmaps[_bitmap->bitmapName];
 			if (i) {
 				x = i->getColorAtPoint(_bitmap->width, _bitmap->height, _point);
@@ -538,9 +538,7 @@ namespace corona
 			{
 				auto fill = brushes[_fillBrush];
 				if (!fill) {
-#if TRACE_GUI
 					std::cout << "missing fill " << _fillBrush << std::endl;
-#endif
 				}
 				else
 					getDeviceContext()->FillRectangle(r, fill->getBrush());
@@ -550,9 +548,7 @@ namespace corona
 			{
 				auto border = brushes[_borderBrush];
 				if (!border) {
-#if TRACE_GUI
 					std::cout << "missing border " << _borderBrush << std::endl;
-#endif
 				}
 				else
 					getDeviceContext()->DrawRectangle(&r, border->getBrush(), _borderWidth);

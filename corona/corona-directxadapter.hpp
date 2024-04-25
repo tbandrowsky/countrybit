@@ -21,7 +21,7 @@ namespace corona
 
 		}
 
-		std::weak_ptr<direct2dWindow> createD2dWindow(HWND parent, color backgroundColor)
+		std::weak_ptr<direct2dWindow> createD2dWindow(HWND parent, ccolor backgroundColor)
 		{
 			auto pthis = weak_from_this();
 			std::shared_ptr<direct2dWindow> win = std::make_shared<direct2dWindow>(parent, pthis, backgroundColor);

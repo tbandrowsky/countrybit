@@ -5,10 +5,10 @@
 namespace corona
 {
 
-	class color_box : protected boxed<color>
+	class color_box : protected boxed<ccolor>
 	{
 	public:
-		color_box(char* t) : boxed<color>(t)
+		color_box(char* t) : boxed<ccolor>(t)
 		{
 			;
 		}
@@ -25,25 +25,25 @@ namespace corona
 			return *this;
 		}
 
-		color_box operator = (color _src)
+		color_box operator = (ccolor _src)
 		{
 			set_value(_src);
 			return *this;
 		}
 
-		color* operator->()
+		ccolor* operator->()
 		{
-			color& t = boxed<color>::get_data_ref();
+			ccolor& t = boxed<ccolor>::get_data_ref();
 			return &t;
 		}
 
-		operator color& ()
+		operator ccolor& ()
 		{
-			color& t = boxed<color>::get_data_ref();
+			ccolor& t = boxed<ccolor>::get_data_ref();
 			return t;
 		}
 
-		color value() const { return boxed<color>::get_value(); }
+		ccolor value() const { return boxed<ccolor>::get_value(); }
 
 	};
 

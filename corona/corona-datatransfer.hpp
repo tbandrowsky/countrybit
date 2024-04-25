@@ -3,7 +3,7 @@
 
 namespace corona
 {
-	using color = D2D1_COLOR_F;
+	using ccolor = D2D1_COLOR_F;
 
 	class directException {
 	public:

@@ -209,17 +209,10 @@ namespace corona
 
 		*/
 
-		void run(HINSTANCE hInstance, bool forceWindowed)
+		void run(HINSTANCE hInstance, bool fullScreen)
 		{
 			read_config("config.json");
-			if (forceWindowed)
-			{
-				application->runDialog(hInstance, "COUNTRYBIT REVOLUTION", IDI_REVOLUTION, false, presentation_layer);
-			}
-			else
-			{
-				application->runDialog(hInstance, "COUNTRYBIT REVOLUTION", IDI_REVOLUTION, true, presentation_layer);
-			}
+			application->runDialog(hInstance, "COUNTRYBIT REVOLUTION", IDI_REVOLUTION, fullScreen, presentation_layer);
 		}
 
 		using content_function = std::function<void(control_builder& _contents)> ;
@@ -235,12 +228,13 @@ namespace corona
 
 			auto contents = contents_root.row_begin(
 				id_main_row,
-				[](row_layout& _settings) {
+				[this](row_layout& _settings) {
 					_settings.set_size(1.0_container, 1.0_container);
+					_settings.set_background_color(st->PageBackgroundColor);
 				});
 
 			// note that, we are putting the breadcrumbs on a nav pane to the left.
-			command_container = contents.column_begin(id_command_container, [](column_layout& rl) {
+			command_container = contents.column_begin(id_command_container, [this](column_layout& rl) {
 				rl.set_size(300.0_px, 1.0_container);
 				});
 
@@ -252,7 +246,7 @@ namespace corona
 				control.set_size(300.0_px, 300.0_px);
 				});
 
-			current_container.caption_bar(id_caption_bar, st, application_menu.get(), [](caption_bar_control& _cb)
+			current_container.caption_bar(id_caption_bar, st, application_menu.get(), [this](caption_bar_control& _cb)
 				{
 					_cb.set_size(1.0_container, 100.0_px);
 					_cb.menu_button_id = IDC_SYSTEM_MENU;
@@ -260,6 +254,7 @@ namespace corona
 					_cb.image_file = "small_logo.png";
 					_cb.corporate_name = "COUNTRY VIDEO GAMES";
 					_cb.title_name = "Revolution";
+					_cb.set_background_color(st->HeaderBackgroundColor);
 					_cb.code_detail_id = IDC_STATUS_DETAIL;
 					_cb.code_status_id = IDC_STATUS_MESSAGE;
 				}
@@ -827,17 +822,20 @@ namespace corona
 		// json for analytics
 		// off to C++ structures for heavy duty
 
-		bool forceWindowed = false;
+		bool fullScreen = false;
 
-		if (strstr(lpszCmdParam, "-window")) {
-			forceWindowed = true;
+		if (strstr(lpszCmdParam, "-fullscreen")) {
+			fullScreen = true;
+		}
+		else if (strstr(lpszCmdParam, "-window")) {
+			fullScreen = false;
 		}
 
 #if _DEBUG
-		forceWindowed = true;
+		fullScreen = false;
 #endif
 
-		app.run(hInstance, forceWindowed);	
+		app.run(hInstance, fullScreen);
 	}
 
 }

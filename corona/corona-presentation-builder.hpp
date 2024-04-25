@@ -1038,24 +1038,6 @@ namespace corona
 					}
 				};
 
-			on_draw = [this](control_base* _item)
-				{
-					if (auto pwindow = window.lock())
-					{
-						if (auto phost = host.lock()) {
-							auto draw_bounds = inner_bounds;
-
-							draw_bounds.x = 0;
-							draw_bounds.y = 0;
-
-							auto& context = pwindow->getContext();
-
-							if (this->is_focused) {
-								context.drawRectangle(&draw_bounds, border_brush.name, 4, nullptr);
-							}
-						}
-					}
-				};
 
 			auto main = builder.column_begin(id_counter::next(), [this](column_layout& _settings) {
 				_settings.set_size(1.0_container, 1.0_container);
@@ -1345,14 +1327,20 @@ namespace corona
 
 					auto& bc = background_brush.brushColor;
 
+					const char* border_name = nullptr;
+					const char* background_name = nullptr;
+					D2D1_COLOR_F color;
+
 					if (border_brush.active)
 					{
+						pwindow->getContext().setSolidColorBrush(&border_brush);
 						if (border_brush_win32)
 							DeleteBrush(border_brush_win32);
 
 						auto dc = context.getDeviceContext();
-						D2D1_COLOR_F color = toColor(bc);
+						color = toColor(bc);
 						border_brush_win32 = ::CreateSolidBrush(RGB(color.a * color.r * 255.0, color.a * color.g * 255.0, color.a * color.b * 255.0));
+						border_name = border_brush.name;
 					}
 
 					if (background_brush.active)
@@ -1360,16 +1348,18 @@ namespace corona
 						if (background_brush_win32)
 							DeleteBrush(background_brush_win32);
 
+						pwindow->getContext().setSolidColorBrush(&background_brush);
 						auto dc = context.getDeviceContext();
-						D2D1_COLOR_F color = toColor(bc);
+						color = toColor(bc);
 						background_brush_win32 = ::CreateSolidBrush(RGB(color.a * color.r * 255.0, color.a * color.g * 255.0, color.a * color.b * 255.0));
-						dc->Clear(color);
+						background_name = background_brush.name;
 					}
-					else
-					{
-						auto dc = context.getDeviceContext();
-						D2D1_COLOR_F color = toColor("00000000");
-						dc->Clear(color);
+
+					if (border_name || background_name) {
+						rectangle r = inner_bounds;
+						r.x = 0;
+						r.y = 0;
+						context.drawRectangle(&r, border_name, 4, background_name);
 					}
 
 					if (on_draw)

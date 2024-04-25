@@ -232,7 +232,6 @@ namespace corona
 			};
 
 		on_draw = [this](draw_control* _src) {
-			std::cout << typeid(*_src).name() << " on_draw" << std::endl;
 			if (auto pwindow = this->window.lock())
 			{
 				if (auto phost = host.lock()) {
@@ -246,10 +245,9 @@ namespace corona
 					draw_bounds.y -= bounds.y;
 
 					pwindow->getContext().drawText(text.c_str(), &draw_bounds, this->text_style.name, this->text_idle_brush.name);
-//					pwindow->getContext().drawRectangle(&draw_bounds, this->text_fill_brush.name, 4, nullptr);
 				}
 			}
-			};
+		};
 	}
 
 	text_display_control& text_display_control::set_text(std::string _text)

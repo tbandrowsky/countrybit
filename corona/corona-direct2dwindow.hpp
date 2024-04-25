@@ -60,7 +60,7 @@ namespace corona
 
 	public:
 
-		direct2dWindow(HWND hwnd, std::weak_ptr<directXAdapterBase> _adapter, color _background_color);
+		direct2dWindow(HWND hwnd, std::weak_ptr<directXAdapterBase> _adapter, ccolor _background_color);
 		virtual ~direct2dWindow();
 
 		rectangle getBoundsDips();
@@ -87,7 +87,7 @@ namespace corona
 		auto& getChildren() { return children; }
 	};
 
-	direct2dWindow::direct2dWindow(HWND _hwnd, std::weak_ptr<directXAdapterBase> _adapterSet, color _background_color)
+	direct2dWindow::direct2dWindow(HWND _hwnd, std::weak_ptr<directXAdapterBase> _adapterSet, ccolor _background_color)
 	{
 		HRESULT hr;
 

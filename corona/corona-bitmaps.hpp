@@ -675,9 +675,9 @@ namespace corona
 			return current;
 		}
 
-		color getColorAtPoint(int _width, int _height, point point)
+		ccolor getColorAtPoint(int _width, int _height, point point)
 		{
-			color c;
+			ccolor c;
 			IWICBitmap* bm = NULL;
 			auto iter = std::find_if(filteredBitmaps.begin(), filteredBitmaps.end(), [_width, _height](filteredBitmap* _bm) { return _bm->size.width == _width && _bm->size.height == _height; });
 			if (iter != filteredBitmaps.end()) {
