@@ -66,6 +66,11 @@ namespace corona
 		generalBrushRequest LabelTextBrush;
 		textStyleRequest	LabelFont;
 
+		generalBrushRequest PlaceholderBackgroundBrush;
+		generalBrushRequest PlaceholderBorderBrush;
+		generalBrushRequest PlaceholderTextBrush;
+		textStyleRequest	PlaceholderFont;
+
 		generalBrushRequest ErrorBackgroundBrush;
 		generalBrushRequest ErrorBorderBrush;
 		generalBrushRequest ErrorTextBrush;
@@ -168,6 +173,12 @@ namespace corona
 { toColor("#000000"), 0.0 },
 { toColor("#010101"), 1.0 }
 		};
+
+		countrybit.PlaceholderBackgroundBrush = lgbr;
+		countrybit.PlaceholderTextBrush.setColor("#FFFFFF");
+		countrybit.PlaceholderFont = text_style;
+		countrybit.PlaceholderFont.fontName = "Century Gothic,Arial";
+		countrybit.PlaceholderFont.fontSize = 24;
 
 		countrybit.CaptionBackgroundBrush = lgbr;
 		countrybit.CaptionTextBrush.setColor("#FFFFFF");

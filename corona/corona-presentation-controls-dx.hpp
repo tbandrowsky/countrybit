@@ -248,12 +248,10 @@ namespace corona
 	class camera_control : public draw_control
 	{
 		void init();
-		solidBrushRequest	border_brush;
 	public:
 
 		camera_control(const camera_control& _src) : draw_control(_src)
 		{
-			border_brush = _src.border_brush;
 		}
 
 		camera_control(container_control_base* _parent, int _id);
@@ -747,17 +745,7 @@ namespace corona
 	void camera_control::init()
 	{
 		set_origin(0.0_px, 0.0_px);
-		set_size(1.0_container, 1.2_fontgr);
-
-		on_create = [this](draw_control* _src)
-			{
-				if (auto pwindow = this->window.lock())
-				{
-					solidBrushRequest	border_brush;
-					pwindow->getContext().setSolidColorBrush(&this->background_brush);
-					pwindow->getContext().setSolidColorBrush(&this->border_brush);
-				}
-			};
+		set_size(.25_container, .25_container);
 
 		on_draw = [this](draw_control* _src) {
 			if (auto pwindow = this->window.lock())
@@ -768,7 +756,7 @@ namespace corona
 					draw_bounds.x = 0;
 					draw_bounds.y = 0;
 
-					pwindow->getContext().drawRectangle(&draw_bounds, this->border_brush.name, 8, this->background_brush.name);
+					pwindow->getContext().drawRectangle(&draw_bounds, this->border_brush.get_name(), 8, this->background_brush.get_name());
 				}
 			}
 			};

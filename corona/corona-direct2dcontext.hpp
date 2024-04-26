@@ -15,6 +15,7 @@ namespace corona
 		virtual std::string setBitmap(bitmapRequest* _bitmap) = 0;
 		virtual bool setBitmapSizes(bitmapRequest* _bitmap, bool _forceResize) = 0;
 		virtual bool setBitmapFilter(bitmapRequest* _bitmap, std::function<bool(point, int, int, char* bytes)> _filter) = 0;
+		virtual std::string setBrush(generalBrushRequest* _generalBrushDto) = 0;
 		virtual std::string  setBitmapBrush(bitmapBrushRequest* _bitmapBrush) = 0;
 		virtual std::string setSolidColorBrush(solidBrushRequest* _solidBrushDto) = 0;
 		virtual std::string setLinearGradientBrush(linearGradientBrushRequest* _linearGradientBrushDto) = 0;
@@ -267,7 +268,7 @@ namespace corona
 			return _linearGradientBrushDto->name.c_str();
 		}
 
-		virtual std::string setRadialGradientBrush(const radialGradientBrushRequest* _radialGradientBrushDto)
+		virtual std::string setRadialGradientBrush(radialGradientBrushRequest* _radialGradientBrushDto)
 		{
 			D2D1_GRADIENT_STOP gradientStop;
 			auto brush = std::make_shared<radialGradientBrush>();

@@ -209,6 +209,18 @@ namespace corona {
 		bool active;
 	};
 
+
+	D2D1_COLOR_F toColor(std::string _htmlColor)
+	{
+		return toColor(_htmlColor.c_str());
+	}
+
+
+	D2D1_COLOR_F toColor(const ccolor& _color)
+	{
+		return _color;
+	}
+
 	enum brush_types 
 	{
 		no_brush_type = 0,
@@ -223,9 +235,9 @@ namespace corona {
 	public:
 
 		brush_types brush_type;
-		std::unique_ptr<solidBrushRequest> solid_brush;
-		std::unique_ptr<radialGradientBrushRequest> radial_brush;
-		std::unique_ptr<linearGradientBrushRequest> linear_brush;
+		std::shared_ptr<solidBrushRequest> solid_brush;
+		std::shared_ptr<radialGradientBrushRequest> radial_brush;
+		std::shared_ptr<linearGradientBrushRequest> linear_brush;
 		bool active;
 
 		generalBrushRequest()
@@ -282,13 +294,13 @@ namespace corona {
 			brush_type = gbr.brush_type;
 			switch (brush_type) {
 			case brush_types::solid_brush_type:
-				solid_brush = std::make_unique<solidBrushRequest>(gbr.solid_brush);
+				solid_brush = std::make_shared<solidBrushRequest>(gbr.solid_brush);
 				break;
 			case brush_types::radial_brush_type:
-				radial_brush = std::make_unique<radialGradientBrushRequest>(gbr.radial_brush);
+				radial_brush = std::make_shared<radialGradientBrushRequest>(gbr.radial_brush);
 				break;
 			case brush_types::linear_brush_type:
-				linear_brush = std::make_unique<linearGradientBrushRequest>(gbr.linear_brush);
+				linear_brush = std::make_shared<linearGradientBrushRequest>(gbr.linear_brush);
 				break;
 			}
 		}
@@ -299,13 +311,13 @@ namespace corona {
 			brush_type = gbr.brush_type;
 			switch (brush_type) {
 			case brush_types::solid_brush_type:
-				solid_brush = std::make_unique<solidBrushRequest>(gbr.solid_brush);
+				solid_brush = std::make_shared<solidBrushRequest>(gbr.solid_brush);
 				break;
 			case brush_types::radial_brush_type:
-				radial_brush = std::make_unique<radialGradientBrushRequest>(gbr.radial_brush);
+				radial_brush = std::make_shared<radialGradientBrushRequest>(gbr.radial_brush);
 				break;
 			case brush_types::linear_brush_type:
-				linear_brush = std::make_unique<linearGradientBrushRequest>(gbr.linear_brush);
+				linear_brush = std::make_shared<linearGradientBrushRequest>(gbr.linear_brush);
 				break;
 			}
 
@@ -316,28 +328,28 @@ namespace corona {
 		{
 			clear();
 			brush_type = brush_types::solid_brush_type;
-			solid_brush = std::make_unique<solidBrushRequest>(sbr);
+			solid_brush = std::make_shared<solidBrushRequest>(sbr);
 		}
 
 		generalBrushRequest(linearGradientBrushRequest sbr)
 		{
 			clear();
 			brush_type = brush_types::linear_brush_type;
-			linear_brush = std::make_unique<linearGradientBrushRequest>(sbr);
+			linear_brush = std::make_shared<linearGradientBrushRequest>(sbr);
 		}
 
 		generalBrushRequest(radialGradientBrushRequest sbr)
 		{
 			clear();
 			brush_type = brush_types::radial_brush_type;
-			radial_brush = std::make_unique<radialGradientBrushRequest>(sbr);
+			radial_brush = std::make_shared<radialGradientBrushRequest>(sbr);
 		}
 
 		generalBrushRequest operator = (const solidBrushRequest& sbr)
 		{
 			clear();
 			brush_type = brush_types::solid_brush_type;
-			solid_brush = std::make_unique<solidBrushRequest>(sbr);
+			solid_brush = std::make_shared<solidBrushRequest>(sbr);
 			return *this;
 		}
 
@@ -345,7 +357,7 @@ namespace corona {
 		{
 			clear();
 			brush_type = brush_types::linear_brush_type;
-			linear_brush = std::make_unique<linearGradientBrushRequest>(sbr);
+			linear_brush = std::make_shared<linearGradientBrushRequest>(sbr);
 			return *this;
 		}
 
@@ -353,7 +365,7 @@ namespace corona {
 		{
 			clear();
 			brush_type = brush_types::radial_brush_type;
-			radial_brush = std::make_unique<radialGradientBrushRequest>(sbr);
+			radial_brush = std::make_shared<radialGradientBrushRequest>(sbr);
 		}
 
 		void setColor(std::string _color)
@@ -530,17 +542,6 @@ namespace corona {
 		new_color.a = a / 255.0;
 
 		return new_color;
-	}
-
-	D2D1_COLOR_F toColor(std::string _htmlColor)
-	{
-		return toColor(_htmlColor.c_str());
-	}
-
-
-	D2D1_COLOR_F toColor(const ccolor& _color)
-	{
-		return _color;
 	}
 
 	D2D1_POINT_2F toPoint(const point& _point)

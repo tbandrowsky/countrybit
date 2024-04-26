@@ -244,7 +244,7 @@ namespace corona
 					draw_bounds.x -= bounds.x;
 					draw_bounds.y -= bounds.y;
 
-					pwindow->getContext().drawText(text.c_str(), &draw_bounds, this->text_style.name, this->text_idle_brush.name);
+					pwindow->getContext().drawText(text.c_str(), &draw_bounds, this->text_style.name, this->text_idle_brush.get_name());
 				}
 			}
 		};
@@ -294,7 +294,6 @@ namespace corona
 
 		background_brush = st->TitleBackgroundBrush;
 		text_idle_brush = st->TitleTextBrush;
-
 		text_style = st->TitleFont;
 	}
 
@@ -316,26 +315,9 @@ namespace corona
 	{
 		auto st = styles.get_style();
 
-		background_brush.name = "subtitle_fill";
-		background_brush.brushColor = toColor(st->SubtitleBackgroundColor);
-		background_brush.active = true;
-
-		text_idle_brush.name = "subtitle_text_fill";
-		text_idle_brush.brushColor = toColor(st->SubtitleTextColor);
-
-		text_style = {};
-		text_style.name = "subtitle_text_style";
-		text_style.fontName = st->SubtitleTextFont;
-		text_style.fontSize = 36;
-		text_style.bold = false;
-		text_style.italics = false;
-		text_style.underline = true;
-		text_style.strike_through = false;
-		text_style.horizontal_align = st->PrevailingAlignment;
-		text_style.vertical_align = visual_alignment::align_near;
-		text_style.wrap_text = true;
-		text_style.font_stretch = DWRITE_FONT_STRETCH_NORMAL;
-		text_style.character_spacing = 0;
+		background_brush = st->SubtitleBackgroundBrush;
+		text_idle_brush = st->SubtitleTextBrush;
+		text_style = st->SubtitleFont;
 
 	}
 
@@ -357,27 +339,9 @@ namespace corona
 	{
 		auto st = styles.get_style();
 
-		background_brush.name = "chaptertitle_fill";
-		background_brush.brushColor = toColor(st->ChapterTitleBackgroundColor);
-		background_brush.active = true;
-
-		text_idle_brush.name = "chaptertitle_text_fill";
-		text_idle_brush.brushColor = toColor(st->ChapterTitleTextColor);
-
-		text_style = {};
-		text_style.name = "chaptertitle_text_style";
-		text_style.fontName = st->ChapterTextFont;
-		text_style.fontSize = 20;
-		text_style.bold = false;
-		text_style.italics = false;
-		text_style.underline = false;
-		text_style.strike_through = false;
-		text_style.horizontal_align = st->PrevailingAlignment;
-		text_style.vertical_align = visual_alignment::align_near;
-		text_style.wrap_text = true;
-		text_style.font_stretch = DWRITE_FONT_STRETCH_NORMAL;
-		text_style.character_spacing = 0;
-
+		background_brush = st->ChapterTitleBackgroundBrush;
+		text_idle_brush = st->ChapterTitleTextBrush;
+		text_style = st->ChatperTitleFont;
 	}
 
 	chaptertitle_control::chaptertitle_control(container_control_base* _parent, int _id) : text_display_control(_parent, _id)
@@ -398,29 +362,10 @@ namespace corona
 	{
 		auto st = styles.get_style();
 
-		background_brush.name = "chaptersubtitle_fill";
-		background_brush.brushColor = toColor(st->SubchapterTitleBackgroundColor);
-		background_brush.active = true;
-
-		text_idle_brush.name = "chaptersubtitle_text_fill";
-		text_idle_brush.brushColor = toColor(st->SubchapterTitleTextColor);
-
-		text_style = {};
-		text_style.name = "chaptersubtitle_text_style";
-		text_style.fontName = st->SubchapterTextFont;
-		text_style.fontSize = 20;
-		text_style.bold = false;
-		text_style.italics = false;
-		text_style.underline = false;
-		text_style.strike_through = false;
-		text_style.horizontal_align = st->PrevailingAlignment;
-		text_style.vertical_align = visual_alignment::align_near;
-		text_style.wrap_text = true;
-		text_style.font_stretch = DWRITE_FONT_STRETCH_NORMAL;
-		text_style.character_spacing = 0;
-
+		background_brush = st->ChapterSubTitleBackgroundBrush;
+		text_idle_brush = st->ChapterSubTitleTextBrush;
+		text_style = st->ChapterSubTitleFont;
 	}
-
 
 	chaptersubtitle_control::chaptersubtitle_control(container_control_base* _parent, int _id) : text_display_control(_parent, _id)
 	{
@@ -440,27 +385,9 @@ namespace corona
 	{
 		auto st = styles.get_style();
 
-		background_brush.name = "paragraph_fill";
-		background_brush.brushColor = toColor(st->ParagraphBackgroundColor);
-		background_brush.active = true;
-
-		text_idle_brush.name = "paragraph_text_fill";
-		text_idle_brush.brushColor = toColor(st->ParagraphTextColor);
-
-		text_style = {};
-		text_style.name = "paragraph_text_style";
-		text_style.fontName = styles.get_style()->ParagraphTextFont;
-		text_style.fontSize = 12;
-		text_style.bold = false;
-		text_style.italics = false;
-		text_style.underline = false;
-		text_style.strike_through = false;
-		text_style.horizontal_align = visual_alignment::align_near;
-		text_style.vertical_align = visual_alignment::align_near;
-		text_style.wrap_text = true;
-		text_style.font_stretch = DWRITE_FONT_STRETCH_NORMAL;
-		text_style.character_spacing = 0;
-
+		background_brush = st->ParagraphBackgroundBrush;
+		text_idle_brush = st->ParagraphTextBrush;
+		text_style = st->ParagraphFont;
 	}
 
 	paragraph_control::paragraph_control(container_control_base* _parent, int _id) : text_display_control(_parent, _id)
@@ -481,26 +408,9 @@ namespace corona
 	{
 		auto st = styles.get_style();
 
-		background_brush.name = "code_fill";
-		background_brush.brushColor = toColor(st->CodeBackgroundColor);
-		background_brush.active = true;
-
-		text_idle_brush.name = "code_text_fill";
-		text_idle_brush.brushColor = toColor(st->CodeTextColor);
-
-		text_style = {};
-		text_style.name = "code_text_style";
-		text_style.fontName = st->CodeTextFont;
-		text_style.fontSize = 14;
-		text_style.bold = false;
-		text_style.italics = false;
-		text_style.underline = false;
-		text_style.strike_through = false;
-		text_style.horizontal_align = visual_alignment::align_near;
-		text_style.vertical_align = visual_alignment::align_near;
-		text_style.wrap_text = false;
-		text_style.font_stretch = DWRITE_FONT_STRETCH_NORMAL;
-		text_style.character_spacing = 0;
+		background_brush = st->CodeBackgroundBrush;
+		text_idle_brush = st->CodeTextBrush;
+		text_style = st->CodeFont;
 
 	}
 
@@ -521,22 +431,11 @@ namespace corona
 	void label_control::set_default_styles()
 	{
 
-		text_idle_brush.name = "label_text_fill";
-		text_idle_brush.brushColor = toColor(styles.get_style()->TextColor);
+		auto st = styles.get_style();
 
-		text_style = {};
-		text_style.name = "label_text_style";
-		text_style.fontName = styles.get_style()->PrimaryFont;
-		text_style.fontSize = 14;
-		text_style.bold = false;
-		text_style.italics = false;
-		text_style.underline = false;
-		text_style.strike_through = false;
-		text_style.horizontal_align = visual_alignment::align_near;
-		text_style.vertical_align = visual_alignment::align_far;
-		text_style.wrap_text = false;
-		text_style.font_stretch = DWRITE_FONT_STRETCH_NORMAL;
-		text_style.character_spacing = 0;
+		background_brush = st->LabelBackgroundBrush;
+		text_idle_brush = st->LabelTextBrush;
+		text_style = st->LabelFont;
 
 	}
 
@@ -557,22 +456,11 @@ namespace corona
 
 	void placeholder_control::set_default_styles()
 	{
-		text_idle_brush.name = "placeholder_text_fill";
-		text_idle_brush.brushColor = toColor(styles.get_style()->TextColor);
+		auto st = styles.get_style();
 
-		text_style = {};
-		text_style.name = "placeholder_text_style";
-		text_style.fontName = styles.get_style()->PrimaryFont;
-		text_style.fontSize = 14;
-		text_style.bold = false;
-		text_style.italics = false;
-		text_style.underline = false;
-		text_style.strike_through = false;
-		text_style.horizontal_align = visual_alignment::align_center;
-		text_style.vertical_align = visual_alignment::align_center;
-		text_style.wrap_text = false;
-		text_style.font_stretch = DWRITE_FONT_STRETCH_NORMAL;
-		text_style.character_spacing = 0;
+		background_brush = st->PlaceholderBackgroundBrush;
+		text_idle_brush = st->PlaceholderTextBrush;
+		text_style = st->PlaceholderFont;
 
 	}
 
