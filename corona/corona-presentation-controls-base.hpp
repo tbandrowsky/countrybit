@@ -418,7 +418,7 @@ namespace corona
 			return ptr;
 		}
 
-		virtual double get_font_size() { return 12; }
+		virtual double get_font_size() { return 14; }
 
 		template <typename control_type> control_type& find(int _id)
 		{

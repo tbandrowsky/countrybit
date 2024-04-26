@@ -11,8 +11,8 @@ namespace corona
 
 		int border_width;
 
-		generalBrushRequest	background_brush;
-		generalBrushRequest	border_brush;
+		std::shared_ptr<generalBrushRequest>	background_brush;
+		std::shared_ptr<generalBrushRequest>	border_brush;
 
 		std::weak_ptr<applicationBase> host;
 		std::weak_ptr<direct2dChildWindow> window;
@@ -101,8 +101,8 @@ namespace corona
 
 						D2D1_COLOR_F color = {};
 
-						const char* border_name = nullptr;
-						const char* background_name = nullptr;
+						std::string border_name;
+						std::string background_name;
 
 						auto dc = context.getDeviceContext();
 
@@ -113,19 +113,19 @@ namespace corona
 						color = toColor(letter_sequence);
 						dc->Clear(color);
 
-						if (border_brush.active)
+						if (border_brush && border_brush->get_name())
 						{
-							context.setBrush(&border_brush);
-							border_name = border_brush.get_name();
+							context.setBrush(border_brush.get());
+							border_name = border_brush->get_name();
 						}
 
-						if (background_brush.active)
+						if (background_brush && background_brush->get_name())
 						{
-							context.setBrush(&background_brush);
-							background_name = background_brush.get_name();
+							context.setBrush(background_brush.get());
+							background_name = background_brush->get_name();
 						}
 
-						if (border_name || background_name) {
+						if (border_name.size() || background_name.size()) {
 							rectangle r = bounds;
 							r.x = 0;
 							r.y = 0;
@@ -140,7 +140,6 @@ namespace corona
 						* color so you can see what the shape of all the things are 
 						* that do not have backgrounds.  This is helpful for layout work and debugging.
 						*/
-
 
 						if (on_draw)
 						{
@@ -200,34 +199,34 @@ namespace corona
 
 		void set_background_color(solidBrushRequest _brushFill)
 		{
-			background_brush = _brushFill;
 			std::string brush_name = std::format("background");
-			background_brush.set_name(brush_name);
-			background_brush.active = true;
+			background_brush = std::make_shared<generalBrushRequest>(_brushFill);
+			if (background_brush.get())
+				background_brush->set_name(brush_name);
 		}
 
 		void set_background_color(std::string _color)
 		{
-			background_brush.setColor(_color);
 			std::string brush_name = std::format("background");
-			background_brush.set_name( brush_name );
-			background_brush.active = true;
+			background_brush = std::make_shared<generalBrushRequest>();
+			if (background_brush.get())
+				background_brush->set_name( brush_name );
 		}
 
 		void set_border_color(solidBrushRequest _brushFill)
 		{
-			border_brush = _brushFill;
 			std::string brush_name = std::format("border");
-			border_brush.set_name(brush_name);
-			border_brush.active = true;
+			border_brush = std::make_shared<generalBrushRequest>(_brushFill);
+			if (border_brush.get())
+				border_brush->set_name(brush_name);
 		}
 
 		void set_border_color(std::string _color)
 		{
-			border_brush.setColor(_color);
-			std::string brush_name = std::format("border", typeid(*this).name(), id);
-			border_brush.set_name( brush_name );
-			border_brush.active = true;
+			std::string brush_name = std::format("border");
+			border_brush = std::make_shared<generalBrushRequest>();
+			if (border_brush.get())
+				border_brush->set_name(brush_name);
 		}
 
 	};
@@ -413,11 +412,8 @@ namespace corona
 				{ toColor("#E0F0E0FF"), 1.0 }
 			};
 
-			foregroundNormal.active = true;
 			foregroundNormal.brushColor = toColor("#C5C6CA");
-			foregroundOver.active = true;
 			foregroundOver.brushColor = toColor("#F5F6FA");
-			foregroundDown.active = true;
 			foregroundDown.brushColor = toColor("#E5E6EA");
 		}
 
@@ -476,23 +472,20 @@ namespace corona
 
 					if (mouse_left_down.value())
 					{
-						context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonFaceDown.name);
+						context.drawRectangle(&draw_bounds, "", 0.0, buttonFaceDown.name);
 						auto face_bounds = rectangle_math::deflate(draw_bounds, { 8, 8, 8, 8 });
-						//context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonBackLight.name);
 						draw_shape(this, &face_bounds, &foregroundDown);
 					}
 					else if (mouse_over.value())
 					{
-						context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonFaceOver.name);
+						context.drawRectangle(&draw_bounds, "", 0.0, buttonFaceOver.name);
 						auto face_bounds = rectangle_math::deflate(draw_bounds, { 8, 8, 8, 16 });
-						//context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonBackLight.name);
 						draw_shape(this, &face_bounds, &foregroundOver);
 					}
 					else
 					{
-						context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonFaceNormal.name);
+						context.drawRectangle(&draw_bounds, "", 0.0, buttonFaceNormal.name);
 						auto face_bounds = rectangle_math::deflate(draw_bounds, { 8, 8, 8, 16 });
-						//context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonBackLight.name);
 						draw_shape(this, &face_bounds, &foregroundNormal);
 					}
 				}
@@ -676,23 +669,20 @@ namespace corona
 
 					if (mouse_left_down.value() || *active_id == id)
 					{
-						context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonFaceDown.name);
+						context.drawRectangle(&draw_bounds, "", 0.0, buttonFaceDown.name);
 						auto face_bounds = rectangle_math::deflate(draw_bounds, { 8, 8, 8, 8 });
-						//context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonBackLight.name);
 						draw_shape(this, &face_bounds, &foregroundDown);
 					}
 					else if (mouse_over.value())
 					{
-						context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonFaceOver.name);
+						context.drawRectangle(&draw_bounds, "", 0.0, buttonFaceOver.name);
 						auto face_bounds = rectangle_math::deflate(draw_bounds, { 8, 8, 8, 8 });
-						//context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonBackLight.name);
 						draw_shape(this, &face_bounds, &foregroundOver);
 					}
 					else
 					{
-						context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonFaceNormal.name);
+						context.drawRectangle(&draw_bounds, "", 0.0, buttonFaceNormal.name);
 						auto face_bounds = rectangle_math::deflate(draw_bounds, { 8, 8, 8, 8 });
-						//context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonBackLight.name);
 						draw_shape(this, &face_bounds, &foregroundNormal);
 					}
 				}
@@ -756,7 +746,9 @@ namespace corona
 					draw_bounds.x = 0;
 					draw_bounds.y = 0;
 
-					pwindow->getContext().drawRectangle(&draw_bounds, this->border_brush.get_name(), 8, this->background_brush.get_name());
+					if (border_brush->get_name() && background_brush->get_name()) {
+						pwindow->getContext().drawRectangle(&draw_bounds, this->border_brush->get_name(), 8, this->background_brush->get_name());
+					}
 				}
 			}
 			};
@@ -823,7 +815,6 @@ namespace corona
 					auto& context = pwindow->getContext();
 
 					solidBrushRequest sbr;
-					sbr.active = true;
 					sbr.brushColor = toColor("FFFF00");
 					sbr.name = "image_control_test";
 					context.setSolidColorBrush(&sbr);

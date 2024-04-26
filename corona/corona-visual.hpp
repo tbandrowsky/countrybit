@@ -101,6 +101,7 @@ namespace corona {
 		std::string name;
 		point		start,
 					stop;
+		point		size;
 		std::vector<gradientStop> gradientStops;
 
 		linearGradientBrushRequest() = default;
@@ -127,6 +128,7 @@ namespace corona {
 					offset;
 		float		radiusX,
 					radiusY;
+		point		size;
 		std::vector<gradientStop> gradientStops;
 
 		radialGradientBrushRequest() = default;
@@ -152,7 +154,6 @@ namespace corona {
 	public:
 		std::string name;
 		ccolor brushColor;
-		bool active;
 
 		solidBrushRequest() = default;
 		solidBrushRequest(const solidBrushRequest& _request) = default;
@@ -164,10 +165,7 @@ namespace corona {
 		{
 			name = _request->name;
 			brushColor = _request->brushColor;
-			active = _request->active;
 		}
-
-
 	};
 
 	enum ePathPointType {
@@ -300,11 +298,47 @@ namespace corona {
 
 	};
 
+	D2D1_COLOR_F toColorBase(const char* _htmlColor)
+	{
+		D2D1_COLOR_F new_color = {};
+
+		int si = {}, r = {}, g = {}, b = {}, a = 255;
+		int sz = strlen(_htmlColor);
+
+		if (sz > 0)
+		{
+			si = (_htmlColor[0] == '#') ? 1 : 0;
+		}
+
+		if (sz >= 6)
+		{
+			r = toInt2(_htmlColor, si);
+			g = toInt2(_htmlColor, si + 2);
+			b = toInt2(_htmlColor, si + 4);
+		}
+
+		if (sz >= 8)
+		{
+			a = toInt2(_htmlColor, si + 6);
+		}
+
+		new_color.r = r / 255.0;
+		new_color.g = g / 255.0;
+		new_color.b = b / 255.0;
+		new_color.a = a / 255.0;
+
+		return new_color;
+	}
+
+	D2D1_COLOR_F toColor(const char* _htmlColor)
+	{
+		return toColorBase(_htmlColor);
+	}
 
 
 	D2D1_COLOR_F toColor(std::string _htmlColor)
 	{
-		return toColor(_htmlColor.c_str());
+		return toColorBase(_htmlColor.c_str());
 	}
 
 
@@ -477,7 +511,6 @@ namespace corona {
 		{
 			solidBrushRequest sbr;
 			sbr.brushColor = toColor(_color);
-			sbr.active = true;
 			*this = sbr;
 		}
 
@@ -614,39 +647,6 @@ namespace corona {
 		newSize.x = _size.width;
 		newSize.y = _size.height;
 		return newSize;
-	}
-
-
-	D2D1_COLOR_F toColor(const char* _htmlColor)
-	{
-		D2D1_COLOR_F new_color = {};
-
-		int si = {}, r = {}, g = {}, b = {}, a = 255;
-		int sz = strlen(_htmlColor);
-
-		if (sz > 0)
-		{
-			si = (_htmlColor[0] == '#') ? 1 : 0;
-		}
-
-		if (sz >= 6)
-		{
-			r = toInt2(_htmlColor, si);
-			g = toInt2(_htmlColor, si + 2);
-			b = toInt2(_htmlColor, si + 4);
-		}
-
-		if (sz >= 8)
-		{
-			a = toInt2(_htmlColor, si + 6);
-		}
-
-		new_color.r = r / 255.0;
-		new_color.g = g / 255.0;
-		new_color.b = b / 255.0;
-		new_color.a = a / 255.0;
-
-		return new_color;
 	}
 
 	D2D1_POINT_2F toPoint(const point& _point)

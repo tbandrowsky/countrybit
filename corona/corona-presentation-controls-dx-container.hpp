@@ -278,7 +278,6 @@ namespace corona
 			selection_border = _brushFill;
 			selection_border.name = typeid(*this).name();
 			selection_border.name +="_selection";
-			selection_border.active = true;
 			if (auto pwindow = window.lock())
 			{
 				pwindow->getContext().setSolidColorBrush(&selection_border);
@@ -290,7 +289,6 @@ namespace corona
 			selection_border.brushColor = toColor(_color.c_str());
 			selection_border.name = typeid(*this).name();
 			selection_border.name += "_selection";
-			selection_border.active = true;
 			if (auto pwindow = window.lock())
 			{
 				pwindow->getContext().setSolidColorBrush(&selection_border);
@@ -349,7 +347,7 @@ namespace corona
 									{
 										context.drawRectangle(&rect_bounds, selection_border.name, 4, nullptr);
 									}
-									context.drawText("Test", &rect_bounds, nullptr ,selection_border.name);
+									context.drawText("Test", &rect_bounds, "" ,selection_border.name);
 								}
 								else 
 								{

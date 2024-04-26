@@ -90,32 +90,28 @@ namespace corona
 
 					if (mouse_left_down.value())
 					{
-						context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonFaceDown.name);
+						context.drawRectangle(&draw_bounds, "", 0.0, buttonFaceDown.name);
 						auto face_bounds = rectangle_math::deflate(draw_bounds, { 8, 8, 8, 8 });
-						//context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonBackLight.name);
 						draw_shape(this, &face_bounds, &foregroundDown);
 					}
 					else if (mouse_over.value())
 					{
-						context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonFaceOver.name);
+						context.drawRectangle(&draw_bounds, "", 0.0, buttonFaceOver.name);
 						auto face_bounds = rectangle_math::deflate(draw_bounds, { 8, 8, 8, 16 });
-						//context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonBackLight.name);
 						draw_shape(this, &face_bounds, &foregroundOver);
 					}
 					else if (status && status->success)
 					{
 						time_t difference = draw_time - status->call_time;
 						if (difference > 3) {
-							context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonFaceNormal.name);
+							context.drawRectangle(&draw_bounds, "", 0.0, buttonFaceNormal.name);
 							auto face_bounds = rectangle_math::deflate(draw_bounds, { 8, 8, 8, 16 });
-							//context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonBackLight.name);
 							draw_shape(this, &face_bounds, &foregroundNormal);
 						}
 						else 
 						{
-							context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonFaceNormal.name);
+							context.drawRectangle(&draw_bounds, "", 0.0, buttonFaceNormal.name);
 							auto face_bounds = rectangle_math::deflate(draw_bounds, { 8, 8, 8, 16 });
-							//context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonBackLight.name);
 							draw_shape(this, &face_bounds, &foreground_complete_brush);
 						}
 					}
@@ -123,24 +119,22 @@ namespace corona
 					{
 						time_t difference = draw_time - status->call_time;
 						if (difference > 3) {
-							context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonFaceNormal.name);
+							context.drawRectangle(&draw_bounds, "", 0.0, buttonFaceNormal.name);
 							auto face_bounds = rectangle_math::deflate(draw_bounds, { 8, 8, 8, 16 });
-							//context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonBackLight.name);
 							draw_shape(this, &face_bounds, &foregroundNormal);
 						}
 						else
 						{
-							context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonFaceNormal.name);
+							context.drawRectangle(&draw_bounds, "", 0.0, buttonFaceNormal.name);
 							auto face_bounds = rectangle_math::deflate(draw_bounds, { 8, 8, 8, 16 });
-							//context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonBackLight.name);
 							draw_shape(this, &face_bounds, &foreground_processing_brush);
 						}
 					}
 					else
 					{
-						context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonFaceNormal.name);
+						context.drawRectangle(&draw_bounds, "", 0.0, buttonFaceNormal.name);
 						auto face_bounds = rectangle_math::deflate(draw_bounds, { 8, 8, 8, 16 });
-						//context.drawRectangle(&draw_bounds, nullptr, 0.0, buttonBackLight.name);
+						//context.drawRectangle(&draw_bounds, "", 0.0, buttonBackLight.name);
 						draw_shape(this, &face_bounds, &foregroundNormal);
 					}
 				}

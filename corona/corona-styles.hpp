@@ -21,65 +21,65 @@ namespace corona
 		std::map<std::string, std::vector<std::string>> DataColors;
 		std::map<std::string, std::vector<std::string>> ChartColors;
 
-		generalBrushRequest PageBackgroundBrush;
-		generalBrushRequest PageBorderBrush;
-		generalBrushRequest PageTextBrush;
-		textStyleRequest	PageFont;
+		std::shared_ptr<generalBrushRequest> PageBackgroundBrush;
+		std::shared_ptr<generalBrushRequest> PageBorderBrush;
+		std::shared_ptr<generalBrushRequest> PageTextBrush;
+		std::shared_ptr<textStyleRequest> PageFont;
 
-		generalBrushRequest CaptionBackgroundBrush;
-		generalBrushRequest CaptionBorderBrush;
-		generalBrushRequest CaptionTextBrush;
-		textStyleRequest	CaptionFont;
+		std::shared_ptr<generalBrushRequest> CaptionBackgroundBrush;
+		std::shared_ptr<generalBrushRequest> CaptionBorderBrush;
+		std::shared_ptr<generalBrushRequest> CaptionTextBrush;
+		std::shared_ptr<textStyleRequest> CaptionFont;
 
-		generalBrushRequest TitleBackgroundBrush;
-		generalBrushRequest TitleBorderBrush;
-		generalBrushRequest TitleTextBrush;
-		textStyleRequest	TitleFont;
+		std::shared_ptr<generalBrushRequest> TitleBackgroundBrush;
+		std::shared_ptr<generalBrushRequest> TitleBorderBrush;
+		std::shared_ptr<generalBrushRequest> TitleTextBrush;
+		std::shared_ptr<textStyleRequest> TitleFont;
 
-		generalBrushRequest SubtitleBackgroundBrush;
-		generalBrushRequest SubtitleBorderBrush;
-		generalBrushRequest SubtitleTextBrush;
-		textStyleRequest	SubtitleFont;
+		std::shared_ptr<generalBrushRequest> SubtitleBackgroundBrush;
+		std::shared_ptr<generalBrushRequest> SubtitleBorderBrush;
+		std::shared_ptr<generalBrushRequest> SubtitleTextBrush;
+		std::shared_ptr<textStyleRequest> SubtitleFont;
 
-		generalBrushRequest ChapterTitleBackgroundBrush;
-		generalBrushRequest ChapterTitleBorderBrush;
-		generalBrushRequest ChapterTitleTextBrush;
-		textStyleRequest	ChatperTitleFont;
+		std::shared_ptr<generalBrushRequest> ChapterTitleBackgroundBrush;
+		std::shared_ptr<generalBrushRequest> ChapterTitleBorderBrush;
+		std::shared_ptr<generalBrushRequest> ChapterTitleTextBrush;
+		std::shared_ptr<textStyleRequest>	ChatperTitleFont;
 
-		generalBrushRequest ChapterSubTitleBackgroundBrush;
-		generalBrushRequest ChapterSubTitleBorderBrush;
-		generalBrushRequest ChapterSubTitleTextBrush;
-		textStyleRequest	ChapterSubTitleFont;
+		std::shared_ptr<generalBrushRequest> ChapterSubTitleBackgroundBrush;
+		std::shared_ptr<generalBrushRequest> ChapterSubTitleBorderBrush;
+		std::shared_ptr<generalBrushRequest> ChapterSubTitleTextBrush;
+		std::shared_ptr<textStyleRequest>	ChapterSubTitleFont;
 
-		generalBrushRequest ParagraphBackgroundBrush;
-		generalBrushRequest ParagraphBorderBrush;
-		generalBrushRequest ParagraphTextBrush;
-		textStyleRequest	ParagraphFont;
+		std::shared_ptr<generalBrushRequest> ParagraphBackgroundBrush;
+		std::shared_ptr<generalBrushRequest> ParagraphBorderBrush;
+		std::shared_ptr<generalBrushRequest> ParagraphTextBrush;
+		std::shared_ptr<textStyleRequest>	ParagraphFont;
 
-		generalBrushRequest FormBackgroundBrush;
-		generalBrushRequest FormBorderBrush;
-		generalBrushRequest FormTextBrush;
-		textStyleRequest	FormFont;
+		std::shared_ptr<generalBrushRequest> FormBackgroundBrush;
+		std::shared_ptr<generalBrushRequest> FormBorderBrush;
+		std::shared_ptr<generalBrushRequest> FormTextBrush;
+		std::shared_ptr<textStyleRequest>	FormFont;
 
-		generalBrushRequest LabelBackgroundBrush;
-		generalBrushRequest LabelBorderBrush;
-		generalBrushRequest LabelTextBrush;
-		textStyleRequest	LabelFont;
+		std::shared_ptr<generalBrushRequest> LabelBackgroundBrush;
+		std::shared_ptr<generalBrushRequest> LabelBorderBrush;
+		std::shared_ptr<generalBrushRequest> LabelTextBrush;
+		std::shared_ptr<textStyleRequest>	LabelFont;
 
-		generalBrushRequest PlaceholderBackgroundBrush;
-		generalBrushRequest PlaceholderBorderBrush;
-		generalBrushRequest PlaceholderTextBrush;
-		textStyleRequest	PlaceholderFont;
+		std::shared_ptr<generalBrushRequest> PlaceholderBackgroundBrush;
+		std::shared_ptr<generalBrushRequest> PlaceholderBorderBrush;
+		std::shared_ptr<generalBrushRequest> PlaceholderTextBrush;
+		std::shared_ptr<textStyleRequest>	PlaceholderFont;
 
-		generalBrushRequest ErrorBackgroundBrush;
-		generalBrushRequest ErrorBorderBrush;
-		generalBrushRequest ErrorTextBrush;
-		textStyleRequest	ErrorFont;
+		std::shared_ptr<generalBrushRequest> ErrorBackgroundBrush;
+		std::shared_ptr<generalBrushRequest> ErrorBorderBrush;
+		std::shared_ptr<generalBrushRequest> ErrorTextBrush;
+		std::shared_ptr<textStyleRequest>	ErrorFont;
 
-		generalBrushRequest CodeBackgroundBrush;
-		generalBrushRequest CodeBorderBrush;
-		generalBrushRequest CodeTextBrush;
-		textStyleRequest	CodeFont;
+		std::shared_ptr<generalBrushRequest> CodeBackgroundBrush;
+		std::shared_ptr<generalBrushRequest> CodeBorderBrush;
+		std::shared_ptr<generalBrushRequest> CodeTextBrush;
+		std::shared_ptr<textStyleRequest>	CodeFont;
 
 		visual_alignment PrevailingAlignment;
 	};
@@ -156,80 +156,161 @@ namespace corona
 		text_style.character_spacing = 0;
 
 		linearGradientBrushRequest lgbr;
-		
+
+		lgbr.start.x = 0;
+		lgbr.start.y = 0;
+		lgbr.stop.x = 1;
+		lgbr.stop.y = 1;
+
 		lgbr.gradientStops = {
 	{ toColor("#FFFFFF"), 0.0 },
 	{ toColor("#CFCFCF"), 1.0 }
 		};
 
-		countrybit.PageBackgroundBrush = lgbr;
-		countrybit.PageBorderBrush.setColor("#c0c0c0");
-		countrybit.PageTextBrush.setColor("#000000");		
-		countrybit.PageFont = text_style;
-		countrybit.PageFont.fontName = "Century Gothic,Arial";
-		countrybit.PageFont.fontSize = 24;
+		countrybit.PageBackgroundBrush = std::make_shared<generalBrushRequest>(lgbr);
+		countrybit.PageBorderBrush = std::make_shared<generalBrushRequest>();
+		countrybit.PageTextBrush = std::make_shared<generalBrushRequest>();
 
+		countrybit.PageBorderBrush->setColor("#c0c0c0");
+		countrybit.PageTextBrush->setColor("#000000");	
+		countrybit.PageFont = std::make_shared<textStyleRequest>(text_style);
+		countrybit.PageFont->fontName = "Century Gothic,Arial";
+		countrybit.PageFont->fontSize = 24;
+		countrybit.PageBackgroundBrush->set_name("PageBackground");
+		countrybit.PageBorderBrush->set_name("PageBorder");
+		countrybit.PageTextBrush->set_name("PageText");
+		countrybit.PageFont->name = "PageFont";
+
+		lgbr.start.x = 0;
+		lgbr.start.y = 0;
+		lgbr.stop.x = 1;
+		lgbr.stop.y = 1;
 		lgbr.gradientStops = {
 { toColor("#000000"), 0.0 },
 { toColor("#010101"), 1.0 }
 		};
 
-		countrybit.PlaceholderBackgroundBrush = lgbr;
-		countrybit.PlaceholderTextBrush.setColor("#FFFFFF");
-		countrybit.PlaceholderFont = text_style;
-		countrybit.PlaceholderFont.fontName = "Century Gothic,Arial";
-		countrybit.PlaceholderFont.fontSize = 24;
 
-		countrybit.CaptionBackgroundBrush = lgbr;
-		countrybit.CaptionTextBrush.setColor("#FFFFFF");
-		countrybit.CaptionFont = text_style;
-		countrybit.CaptionFont.fontName = "Century Gothic,Arial";
-		countrybit.CaptionFont.fontSize = 48;
+		countrybit.PlaceholderBackgroundBrush = std::make_shared<generalBrushRequest>(lgbr);
+		countrybit.PlaceholderBorderBrush = std::make_shared<generalBrushRequest>();
+		countrybit.PlaceholderTextBrush = std::make_shared<generalBrushRequest>();
+		countrybit.PlaceholderTextBrush->setColor("#FFFFFF");
+		countrybit.PlaceholderFont = std::make_shared<textStyleRequest>(text_style);
+		countrybit.PlaceholderFont->fontName = "Century Gothic,Arial";
+		countrybit.PlaceholderFont->fontSize = 24;
+		countrybit.PlaceholderBackgroundBrush->set_name("PlaceholderBackground");
+		countrybit.PlaceholderBorderBrush->set_name("PlaceholderBorder");
+		countrybit.PlaceholderTextBrush->set_name("PlaceholderText");
+		countrybit.PlaceholderFont->name = "PlaceholderFont";
 
-		countrybit.TitleBackgroundBrush.clear();
-		countrybit.TitleBorderBrush.clear();
-		countrybit.TitleTextBrush.setColor("#000000");
-		countrybit.TitleFont = text_style;
-		countrybit.TitleFont.fontName = "Century Gothic,Arial";
-		countrybit.TitleFont.fontSize = 32;
 
-		countrybit.SubtitleBackgroundBrush.clear();
-		countrybit.SubtitleBorderBrush.clear();
-		countrybit.SubtitleTextBrush.setColor("#000000");
-		countrybit.SubtitleFont = text_style;
-		countrybit.SubtitleFont.fontName = "Century Gothic,Arial";
-		countrybit.SubtitleFont.fontSize = 28;
+		countrybit.CaptionBackgroundBrush = std::make_shared<generalBrushRequest>(lgbr);
+		countrybit.CaptionBorderBrush = std::make_shared<generalBrushRequest>();
+		countrybit.CaptionTextBrush = std::make_shared<generalBrushRequest>();
+		countrybit.CaptionTextBrush->setColor("#FFFFFF");
+		countrybit.CaptionFont = std::make_shared<textStyleRequest>(text_style);
+		countrybit.CaptionFont->fontName = "Century Gothic,Arial";
+		countrybit.CaptionFont->fontSize = 48;
+		countrybit.CaptionBackgroundBrush->set_name("CaptionBackground");
+		countrybit.CaptionBorderBrush->set_name("CaptionBorder");
+		countrybit.CaptionTextBrush->set_name("CaptionText");
+		countrybit.CaptionFont->name = "CaptionFont";
 
-		countrybit.ChapterTitleBackgroundBrush.clear();
-		countrybit.ChapterTitleBorderBrush.clear();
-		countrybit.ChapterTitleTextBrush.setColor("#000000");
-		countrybit.ChatperTitleFont = text_style;
-		countrybit.ChatperTitleFont.fontName = "Century Gothic,Arial";
-		countrybit.ChatperTitleFont.fontSize = 20;
+
+		countrybit.TitleBackgroundBrush = std::make_shared<generalBrushRequest>();
+		countrybit.TitleBorderBrush = std::make_shared<generalBrushRequest>();
+		countrybit.TitleTextBrush = std::make_shared<generalBrushRequest>();
+		countrybit.TitleTextBrush->setColor("#FFFFFF");
+		countrybit.TitleFont = std::make_shared<textStyleRequest>(text_style);
+		countrybit.TitleFont->fontName = "Century Gothic,Arial";
+		countrybit.TitleFont->fontSize = 32;
+		countrybit.TitleBackgroundBrush->set_name("TitleBackground");
+		countrybit.TitleBorderBrush->set_name("TitleBorder");
+		countrybit.TitleTextBrush->set_name("TitleText");
+		countrybit.TitleFont->name = "TitleFont";
+
+
+		countrybit.SubtitleBackgroundBrush = std::make_shared<generalBrushRequest>();
+		countrybit.SubtitleBorderBrush = std::make_shared<generalBrushRequest>();
+		countrybit.SubtitleTextBrush = std::make_shared<generalBrushRequest>();
+		countrybit.SubtitleTextBrush->setColor("#000000");
+		countrybit.SubtitleFont = std::make_shared<textStyleRequest>(text_style);
+		countrybit.SubtitleFont->fontName = "Century Gothic,Arial";
+		countrybit.SubtitleFont->fontSize = 28;
+		countrybit.SubtitleBackgroundBrush->set_name("SubtitleBackground");
+		countrybit.SubtitleBorderBrush->set_name("SubtitleBorder");
+		countrybit.SubtitleTextBrush->set_name("SubtitleText");
+		countrybit.SubtitleFont->name = "SubtitleFont";
+
+
+		countrybit.ChapterTitleBackgroundBrush = std::make_shared<generalBrushRequest>();
+		countrybit.ChapterTitleBorderBrush = std::make_shared<generalBrushRequest>();
+		countrybit.ChapterTitleTextBrush = std::make_shared<generalBrushRequest>();
+		countrybit.ChapterTitleTextBrush->setColor("#000000");
+		countrybit.ChatperTitleFont = std::make_shared<textStyleRequest>(text_style);
+		countrybit.ChatperTitleFont->fontName = "Century Gothic,Arial";
+		countrybit.ChatperTitleFont->fontSize = 20;
+		countrybit.ChapterTitleBackgroundBrush->set_name("ChapterTitleBackground");
+		countrybit.ChapterTitleBorderBrush->set_name("ChapterTitleBorder");
+		countrybit.ChapterTitleTextBrush->set_name("ChapterTitleText");
+		countrybit.ChatperTitleFont->name = "ChapterTitleFont";
+
 		
-		countrybit.ChapterSubTitleBackgroundBrush.clear();
-		countrybit.ChapterSubTitleBorderBrush.clear();
-		countrybit.ChapterSubTitleTextBrush.setColor("#000000");
-		countrybit.ChapterSubTitleFont = text_style;
-		countrybit.ChapterSubTitleFont.fontName = "Century Gothic,Arial";
-		countrybit.ChapterSubTitleFont.fontSize = 18;
-		countrybit.ChapterSubTitleFont.underline = 1;
+		countrybit.ChapterSubTitleBackgroundBrush = std::make_shared<generalBrushRequest>();
+		countrybit.ChapterSubTitleBorderBrush = std::make_shared<generalBrushRequest>();
+		countrybit.ChapterSubTitleTextBrush = std::make_shared<generalBrushRequest>();
+		countrybit.ChapterSubTitleTextBrush->setColor("#000000");
+		countrybit.ChapterSubTitleFont = std::make_shared<textStyleRequest>(text_style);
+		countrybit.ChapterSubTitleFont->fontName = "Century Gothic,Arial";
+		countrybit.ChapterSubTitleFont->fontSize = 18;
+		countrybit.ChapterSubTitleFont->underline = 1;
+		countrybit.ChapterSubTitleBackgroundBrush->set_name("ChapterSubTitleBackground");
+		countrybit.ChapterSubTitleBorderBrush->set_name("ChapterSubTitleBorder");
+		countrybit.ChapterSubTitleTextBrush->set_name("ChapterSubTitleText");
+		countrybit.ChapterSubTitleFont->name = "ChapterSubTitleFont";
 
-		countrybit.CodeBackgroundBrush.setColor("#111111");
-		countrybit.CodeBorderBrush.setColor("#000000");
-		countrybit.CodeTextBrush.setColor("#33FF33");
-		countrybit.CodeFont = text_style;
-		countrybit.CodeFont.fontName = "Consolas,Arial";
-		countrybit.CodeFont.fontSize = 14;
-		countrybit.CodeFont.underline = 0;
 
-		countrybit.ParagraphBackgroundBrush.clear();
-		countrybit.ParagraphBorderBrush.clear();
-		countrybit.ParagraphTextBrush.setColor("#000000");
-		countrybit.ParagraphFont = text_style;
-		countrybit.ParagraphFont.fontName = "Century Gothic, Arial";
-		countrybit.ParagraphFont.fontSize = 14;
-		countrybit.ParagraphFont.underline = 0;
+		countrybit.CodeBackgroundBrush = std::make_shared<generalBrushRequest>();
+		countrybit.CodeBorderBrush = std::make_shared<generalBrushRequest>();
+		countrybit.CodeTextBrush = std::make_shared<generalBrushRequest>();
+		countrybit.CodeBackgroundBrush->setColor("#111111");
+		countrybit.CodeBorderBrush->setColor("#000000");
+		countrybit.CodeTextBrush->setColor("#33FF33");
+		countrybit.CodeFont = std::make_shared<textStyleRequest>(text_style);
+		countrybit.CodeFont->fontName = "Consolas,Arial";
+		countrybit.CodeFont->fontSize = 14;
+		countrybit.CodeFont->underline = 0;
+		countrybit.CodeBackgroundBrush->set_name("CodeBackground");
+		countrybit.CodeBorderBrush->set_name("CodeBorder");
+		countrybit.CodeTextBrush->set_name("CodeText");
+		countrybit.CodeFont->name = "CodeFont";
+
+
+		countrybit.ParagraphBackgroundBrush = std::make_shared<generalBrushRequest>();
+		countrybit.ParagraphBorderBrush = std::make_shared<generalBrushRequest>();
+		countrybit.ParagraphTextBrush = std::make_shared<generalBrushRequest>();
+		countrybit.ParagraphTextBrush->setColor("#000000");
+		countrybit.ParagraphFont = std::make_shared<textStyleRequest>(text_style);
+		countrybit.ParagraphFont->fontName = "Century Gothic, Arial";
+		countrybit.ParagraphFont->fontSize = 14;
+		countrybit.ParagraphFont->underline = 0;
+		countrybit.ParagraphBackgroundBrush->set_name("ParagraphBackground");
+		countrybit.ParagraphBorderBrush->set_name("ParagraphBorder");
+		countrybit.ParagraphTextBrush->set_name("ParagraphText");
+		countrybit.ParagraphFont->name = "ParagraphFont";
+
+		countrybit.LabelBackgroundBrush = std::make_shared<generalBrushRequest>();
+		countrybit.LabelBorderBrush = std::make_shared<generalBrushRequest>();
+		countrybit.LabelTextBrush = std::make_shared<generalBrushRequest>();
+		countrybit.LabelTextBrush->setColor("#000000");
+		countrybit.LabelFont = std::make_shared<textStyleRequest>(text_style);
+		countrybit.LabelFont->fontName = "Century Gothic, Arial";
+		countrybit.LabelFont->fontSize = 14;
+		countrybit.LabelFont->underline = 0;
+		countrybit.LabelBackgroundBrush->set_name("LabelBackground");
+		countrybit.LabelBorderBrush->set_name("LabelBorder");
+		countrybit.LabelTextBrush->set_name("LabelText");
+		countrybit.LabelFont->name = "LabelFont";
 
 		styles["Countrybit"] = countrybit;
 		current_style = "Countrybit";

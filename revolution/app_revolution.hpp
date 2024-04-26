@@ -472,8 +472,6 @@ namespace corona
 
 			command_container.chaptertitle("Create New", [](chaptertitle_control& ct) {
 				ct.set_size(.95_container, 50.0_px);
-				ct.text_style.horizontal_align = visual_alignment::align_center;
-				ct.text_style.vertical_align = visual_alignment::align_center;
 				}, id_create_title);
 
 			// first we put a caption bar in our standard page and our stock form.
@@ -612,10 +610,11 @@ namespace corona
 							if (auto win = _parent->window.lock()) {
 								auto& ctxt = win->getContext();
 
-								ctxt.setTextStyle(&st->ParagraphFont);
+								if (st->ParagraphFont) {
+									ctxt.setTextStyle(st->ParagraphFont.get());
+								}
 
 								solidBrushRequest sbr;
-								sbr.active = true;
 								sbr.brushColor = toColor("#000000");
 								sbr.name = "item_foreground";
 								ctxt.setSolidColorBrush(&sbr);

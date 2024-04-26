@@ -1034,7 +1034,7 @@ namespace corona
 				{
 					if (auto pwindow = window.lock())
 					{
-						pwindow->getContext().setSolidColorBrush(&border_brush);
+						pwindow->getContext().setBrush(border_brush.get());
 					}
 				};
 
@@ -1083,11 +1083,8 @@ namespace corona
 		virtual DWORD get_window_style() { return DefaultWindowStyles; }
 		virtual DWORD get_window_ex_style() { return WS_EX_LAYERED; }
 
-		HBRUSH background_brush_win32;
-		solidBrushRequest	background_brush;
-
-		HBRUSH border_brush_win32;
-		solidBrushRequest	border_brush;
+		std::shared_ptr<generalBrushRequest>	background_brush;
+		std::shared_ptr<generalBrushRequest>	border_brush;
 
 		std::weak_ptr<applicationBase> host;
 		std::weak_ptr<direct2dChildWindow> window;
@@ -1096,10 +1093,6 @@ namespace corona
 
 		tab_view_control()
 		{
-			background_brush_win32 = nullptr;
-			background_brush = {};
-			border_brush_win32 = nullptr;
-			border_brush = {};
 			parent = nullptr;
 			id = id_counter::next();
 			current_presentation = nullptr;
@@ -1111,9 +1104,7 @@ namespace corona
 		tab_view_control(const tab_view_control& _src)
 		{
 			tab_panes = _src.tab_panes;
-			background_brush_win32 = nullptr;
 			background_brush = _src.background_brush;
-			border_brush_win32 = nullptr;
 			border_brush = _src.border_brush;
 			on_draw = _src.on_draw;
 			on_create = _src.on_create;
@@ -1126,10 +1117,6 @@ namespace corona
 
 		tab_view_control(container_control_base* _parent, int _id)
 		{
-			background_brush_win32 = nullptr;
-			background_brush = {};
-			border_brush_win32 = nullptr;
-			border_brush = {};
 			parent = _parent;
 			id = _id;
 			current_presentation = nullptr;
@@ -1140,14 +1127,6 @@ namespace corona
 
 		virtual ~tab_view_control()
 		{
-			if (background_brush_win32)
-			{
-				::DeleteObject(background_brush_win32);
-			}
-			if (border_brush_win32)
-			{
-				::DeleteObject(border_brush_win32);
-			}
 		}
 
 		virtual void arrange(rectangle _bounds)
@@ -1325,34 +1304,22 @@ namespace corona
 				{
 					auto& context = pwindow->getContext();
 
-					auto& bc = background_brush.brushColor;
-
 					const char* border_name = nullptr;
 					const char* background_name = nullptr;
 					D2D1_COLOR_F color;
 
-					if (border_brush.active)
+					if (border_brush->get_name())
 					{
-						pwindow->getContext().setSolidColorBrush(&border_brush);
-						if (border_brush_win32)
-							DeleteBrush(border_brush_win32);
-
+						pwindow->getContext().setBrush(border_brush.get());
 						auto dc = context.getDeviceContext();
-						color = toColor(bc);
-						border_brush_win32 = ::CreateSolidBrush(RGB(color.a * color.r * 255.0, color.a * color.g * 255.0, color.a * color.b * 255.0));
-						border_name = border_brush.name.c_str();
+						border_name = border_brush->get_name();
 					}
 
-					if (background_brush.active)
+					if (background_brush->get_name())
 					{
-						if (background_brush_win32)
-							DeleteBrush(background_brush_win32);
-
-						pwindow->getContext().setSolidColorBrush(&background_brush);
+						pwindow->getContext().setBrush(background_brush.get());
 						auto dc = context.getDeviceContext();
-						color = toColor(bc);
-						background_brush_win32 = ::CreateSolidBrush(RGB(color.a * color.r * 255.0, color.a * color.g * 255.0, color.a * color.b * 255.0));
-						background_name = background_brush.name.c_str();
+						background_name = background_brush->get_name();
 					}
 
 					if (border_name || background_name) {
@@ -1367,12 +1334,12 @@ namespace corona
 						on_draw(this);
 					}
 
-					if (is_focused) 
+					if (is_focused && border_name) 
 					{
 						rectangle r = get_inner_bounds();
 						r.x = 0;
 						r.y = 0;
-						context.drawRectangle(&r, border_brush.name, 4, "");
+						context.drawRectangle(&r, border_name, 4, "");
 					}
 				}
 				pwindow->endDraw(adapter_blown_away);
@@ -1431,48 +1398,44 @@ namespace corona
 
 		tab_view_control& set_background_color(solidBrushRequest _brushFill)
 		{
-			background_brush = _brushFill;
-			background_brush.name = typeid(*this).name();
-			background_brush.active = true;
+			background_brush = std::make_shared<generalBrushRequest>(_brushFill);
+			background_brush->set_name(typeid(*this).name() );
 			if (auto pwindow = window.lock())
 			{
-				pwindow->getContext().setSolidColorBrush(&background_brush);
+				pwindow->getContext().setBrush(background_brush.get());
 			}
 			return *this;
 		}
 
 		tab_view_control& set_background_color(std::string _color)
 		{
-			background_brush.brushColor = toColor(_color.c_str());
-			background_brush.name = typeid(*this).name();
-			background_brush.active = true;
+			background_brush->setColor(_color);
+			background_brush->set_name(typeid(*this).name());
 			if (auto pwindow = window.lock())
 			{
-				pwindow->getContext().setSolidColorBrush(&background_brush);
+				pwindow->getContext().setBrush(background_brush.get());
 			}
 			return *this;
 		}
 
 		tab_view_control& set_border_color(solidBrushRequest _brushFill)
 		{
-			border_brush = _brushFill;
-			border_brush.name = typeid(*this).name();
-			border_brush.active = true;
+			border_brush = std::make_shared<generalBrushRequest>(_brushFill);
+			border_brush->set_name(typeid(*this).name());
 			if (auto pwindow = window.lock())
 			{
-				pwindow->getContext().setSolidColorBrush(&border_brush);
+				pwindow->getContext().setBrush(border_brush.get());
 			}
 			return *this;
 		}
 
 		tab_view_control& set_border_color(std::string _color)
 		{
-			border_brush.brushColor = toColor(_color.c_str());
-			border_brush.name = typeid(*this).name();
-			border_brush.active = true;
+			border_brush->setColor(_color);
+			border_brush->set_name( typeid(*this).name() );
 			if (auto pwindow = window.lock())
 			{
-				pwindow->getContext().setSolidColorBrush(&border_brush);
+				pwindow->getContext().setBrush(border_brush.get());
 			}
 			return *this;
 		}
@@ -1580,11 +1543,7 @@ namespace corona
 				cl.set_size(1.0_remaining, 1.0_container);
 					})
 				.title(title_name, [this](title_control& control) {
-						control.text_style = this->st->CaptionFont;
-						control.text_style.horizontal_align = visual_alignment::align_center;
-						control.text_style.vertical_align = visual_alignment::align_center;
-						control.set_size(title_name, 1.2_font);
-						control.text_style.bold = true;
+						control.set_size(1.0_container, 1.0_container);
 					})
 				.end()
 				.end()
@@ -1603,15 +1562,9 @@ namespace corona
 					cl.set_item_margin(0.0_px);
 						})
 					.code(code_status_id, [](code_control& control) {
-							control.text_style.horizontal_align = visual_alignment::align_near;
-							control.text_style.vertical_align = visual_alignment::align_near;
-							control.text_style.underline = true;
 							control.set_size(1.0_container, 1.4_fontgr);
 						})
 					.code(code_detail_id, [](code_control& control) {
-							control.text_style.horizontal_align = visual_alignment::align_near;
-							control.text_style.vertical_align = visual_alignment::align_far;
-							control.text_style.underline = false;
 							control.set_size(1.0_container, .9_remaining);
 					})
 				.end()
@@ -1716,13 +1669,9 @@ namespace corona
 					cl.set_item_margin(0.0_px);
 					})
 					.title(id_counter::status_text_title_id, [](title_control& control) {
-						control.text_style.horizontal_align = visual_alignment::align_near;
-						control.text_style.vertical_align = visual_alignment::align_near;
 						control.set_size(300.0_px, 1.2_fontgr);
 						})
 						.subtitle(id_counter::status_text_subtitle_id, [](subtitle_control& control) {
-							control.text_style.horizontal_align = visual_alignment::align_near;
-							control.text_style.vertical_align = visual_alignment::align_near;
 							control.set_size(300.0_px, 1.2_fontgr);
 							})
 							.end()
