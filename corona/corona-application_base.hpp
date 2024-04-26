@@ -105,9 +105,9 @@ namespace corona
 		virtual rectangle toPixelsFromDips(const rectangle& r) = 0;
 		virtual rectangle toDipsFromPixels(const rectangle& r) = 0;
 
-		virtual HFONT createFontDips(HWND target, const char* _fontName, double fontSize, bool bold, bool italic) = 0;
-		virtual HFONT createFontPixels(const char* _fontName, double fontSize, bool bold, bool italic) = 0;
-		virtual HFONT createFontIndirect(LOGFONTA _font, const char* _fontName, double fontSize, bool bold, bool italic) = 0;
+		virtual HFONT createFontDips(HWND target, std::string _fontName, double fontSize, bool bold, bool italic) = 0;
+		virtual HFONT createFontPixels(std::string  _fontName, double fontSize, bool bold, bool italic) = 0;
+		virtual HFONT createFontIndirect(LOGFONTA _font, std::string _fontName, double fontSize, bool bold, bool italic) = 0;
 	};
 }
 

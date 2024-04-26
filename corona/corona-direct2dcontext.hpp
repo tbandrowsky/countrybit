@@ -36,11 +36,11 @@ namespace corona
 		virtual void drawText(drawTextRequest* _textInstanceDto) = 0;
 		virtual void drawBitmap(bitmapInstanceDto* _bitmapInstanceDto) = 0;
 
-		virtual void drawLine(point* start, point* stop, const char* _fillBrush, double thickness) = 0;
-		virtual void drawRectangle(rectangle* _rectDto, const char* _borderBrush, double _borderWidth, const char* _fillBrush) = 0;
-		virtual void drawEllipse(point* center, point* radius, const char* _borderBrush, double _borderWidth, const char* _fillBrush) = 0;
-		virtual void drawText(const char* _text, rectangle* _rectDto, const char* _textStyle, const char* _fillBrush) = 0;
-		virtual void drawText(const std::string& _text, rectangle* _rectDto, const std::string& _textStyle, const std::string& _fillBrush) = 0;
+		virtual void drawLine(point* start, point* stop, std::string  _fillBrush, double thickness) = 0;
+		virtual void drawRectangle(rectangle* _rectDto, std::string  _borderBrush, double _borderWidth, std::string  _fillBrush) = 0;
+		virtual void drawEllipse(point* center, point* radius, std::string  _borderBrush, double _borderWidth, std::string  _fillBrush) = 0;
+		virtual void drawText(const char* _text, rectangle* _rectDto, std::string  _textStyle, std::string  _fillBrush) = 0;
+		virtual void drawText(const std::string& _text, rectangle* _rectDto, std::string _textStyle, std::string _fillBrush) = 0;
 		virtual rectangle getCanvasSize() = 0;
 
 		virtual void popCamera() = 0;
@@ -496,7 +496,7 @@ namespace corona
 			}
 	}
 
-		virtual void drawLine(point* start, point* stop, const char* _fillBrush, double thickness)
+		virtual void drawLine(point* start, point* stop, std::string _fillBrush, double thickness)
 		{
 			auto fill = brushes[_fillBrush];
 
@@ -512,7 +512,7 @@ namespace corona
 			}
 		}
 
-		virtual void drawEllipse(point* center, point* radius, const char* _borderBrush, double _borderWidth, const char* _fillBrush)
+		virtual void drawEllipse(point* center, point* radius, std::string  _borderBrush, double _borderWidth, std::string  _fillBrush)
 		{
 			D2D1_ELLIPSE e;
 			e.point.x = center->x;
@@ -520,7 +520,7 @@ namespace corona
 			e.radiusX = radius->x;
 			e.radiusY = radius->y;
 
-			if (_fillBrush)
+			if (_fillBrush.size())
 			{
 				auto fill = brushes[_fillBrush];
 				if (!fill) {
@@ -532,7 +532,7 @@ namespace corona
 					getDeviceContext()->FillEllipse(e, fill->getBrush());
 			}
 
-			if (_borderBrush)
+			if (_borderBrush.size())
 			{
 				auto border = brushes[_borderBrush];
 				if (!border) {
@@ -545,7 +545,7 @@ namespace corona
 			}
 		}
 
-		virtual void drawRectangle(rectangle* _rectangle, const char* _borderBrush, double _borderWidth, const char* _fillBrush)
+		virtual void drawRectangle(rectangle* _rectangle, std::string  _borderBrush, double _borderWidth, std::string  _fillBrush)		
 		{
 			D2D1_RECT_F r;
 			r.left = _rectangle->x;
@@ -553,7 +553,7 @@ namespace corona
 			r.right = _rectangle->x + _rectangle->w;
 			r.bottom = _rectangle->y + _rectangle->h;
 
-			if (_fillBrush)
+			if (_fillBrush.size())
 			{
 				auto fill = brushes[_fillBrush];
 				if (!fill) {
@@ -563,7 +563,7 @@ namespace corona
 					getDeviceContext()->FillRectangle(r, fill->getBrush());
 			}
 
-			if (_borderBrush)
+			if (_borderBrush.size())
 			{
 				auto border = brushes[_borderBrush];
 				if (!border) {
@@ -574,15 +574,15 @@ namespace corona
 			}
 		}
 
-		virtual void drawText(const std::string& _text, rectangle* _rectangle, const std::string& _textStyle, const std::string& _fillBrush)
+		virtual void drawText(const std::string& _text, rectangle* _rectangle, std::string _textStyle, std::string _fillBrush)
 		{
-			drawText(_text.c_str(), _rectangle, _textStyle.c_str(), _fillBrush.c_str());
+			drawText(_text.c_str(), _rectangle, _textStyle, _fillBrush);
 		}
 
-		virtual void drawText(const char* _text, rectangle* _rectangle, const char* _textStyle, const char* _fillBrush)
+		virtual void drawText(const char* _text, rectangle* _rectangle, std::string _textStyle, std::string _fillBrush)
 		{
-			auto style = _textStyle ? textStyles[_textStyle] : nullptr;
-			auto fill = _fillBrush ? brushes[_fillBrush] : nullptr;
+			auto style = _textStyle.size() ? textStyles[_textStyle] : nullptr;
+			auto fill = _fillBrush.size() ? brushes[_fillBrush] : nullptr;
 
 			if (!style) {
 #if TRACE_GUI
@@ -820,7 +820,7 @@ namespace corona
 
 #if OUTLINE_GUI
 
-			drawRectangle(&_rect, "debug-border", 2.0, nullptr);
+			drawRectangle(&_rect, "debug-border", 2.0, "");
 			if (_debug_comment) {
 				drawText(_debug_comment, &_rect, "debug-text", "debug-border");
 			}

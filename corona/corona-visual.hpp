@@ -42,34 +42,132 @@ namespace corona {
 
 	/* std::string& _name, std::string& _filename, UINT _destinationWidth = 0, UINT _destinationHeight  = 0 */
 
-	struct bitmapRequest {
-		object_name name;
-		file_path file_name;
-		DWORD resource_id;
-		bool cropEnabled;
-		rectangle crop;
+	class bitmapRequest 
+	{
+	public:
+		std::string	name;
+		std::string	file_name;
+		DWORD		resource_id;
+		bool		cropEnabled;
+		rectangle	crop;
 		std::list<point> sizes;
+
+		bitmapRequest()
+		{
+			resource_id = {};
+			cropEnabled = false;
+			crop = {};
+		}
+
+		bitmapRequest(const bitmapRequest& _request) = default;
+		bitmapRequest(bitmapRequest&& _request) = default;
+		bitmapRequest& operator = (const bitmapRequest& _request) = default;
+		bitmapRequest& operator = (bitmapRequest&& _request) = default;
+
+		bitmapRequest(std::shared_ptr<bitmapRequest>& _request)
+		{
+			name = _request->name;
+			file_name = _request->file_name;
+			resource_id = _request->resource_id;
+			cropEnabled = _request->cropEnabled;
+			crop = _request->crop;
+			sizes = _request->sizes;
+		}
 	};
 
-	struct bitmapBrushRequest {
-		object_name name;
+	class bitmapBrushRequest 
+	{
+	public:
+		std::string name;
 		std::string bitmapName;
+
+		bitmapBrushRequest() = default;
+		bitmapBrushRequest(const bitmapBrushRequest& _request) = default;
+		bitmapBrushRequest(bitmapBrushRequest&& _request) = default;
+		bitmapBrushRequest& operator = (const bitmapBrushRequest& _request) = default;
+		bitmapBrushRequest& operator = (bitmapBrushRequest&& _request) = default;
+
+		bitmapBrushRequest(std::shared_ptr<bitmapBrushRequest> _request)
+		{
+			name = _request->name;
+			bitmapName = _request->bitmapName;
+		}
+
 	};
 
-	struct linearGradientBrushRequest {
-		object_name name;
-		point	start,
-			stop;
+	class linearGradientBrushRequest 
+	{
+	public:
+		std::string name;
+		point		start,
+					stop;
 		std::vector<gradientStop> gradientStops;
+
+		linearGradientBrushRequest() = default;
+		linearGradientBrushRequest(const linearGradientBrushRequest& _request) = default;
+		linearGradientBrushRequest(linearGradientBrushRequest&& _request) = default;
+		linearGradientBrushRequest& operator = (const linearGradientBrushRequest& _request) = default;
+		linearGradientBrushRequest& operator = (linearGradientBrushRequest&& _request) = default;
+
+		linearGradientBrushRequest(std::shared_ptr<linearGradientBrushRequest> _request)
+		{
+			name = _request->name;
+			start = _request->start;
+			stop = _request->stop;
+			gradientStops = _request->gradientStops;
+		}
+
 	};
 
-	struct radialGradientBrushRequest {
-		object_name name;
-		point	center,
-			offset;
+	class radialGradientBrushRequest 
+	{
+	public:
+		std::string name;
+		point		center,
+					offset;
 		float		radiusX,
-			radiusY;
+					radiusY;
 		std::vector<gradientStop> gradientStops;
+
+		radialGradientBrushRequest() = default;
+		radialGradientBrushRequest(const radialGradientBrushRequest& _request) = default;
+		radialGradientBrushRequest(radialGradientBrushRequest&& _request) = default;
+		radialGradientBrushRequest& operator = (const radialGradientBrushRequest& _request) = default;
+		radialGradientBrushRequest& operator = (radialGradientBrushRequest&& _request) = default;
+
+		radialGradientBrushRequest(std::shared_ptr<radialGradientBrushRequest> _request)
+		{
+			name = _request->name;
+			center = _request->center;
+			offset = _request->offset;
+			radiusX = _request->radiusX;
+			radiusY = _request->radiusY;
+			gradientStops = _request->gradientStops;
+		}
+
+	};
+
+	class solidBrushRequest
+	{
+	public:
+		std::string name;
+		ccolor brushColor;
+		bool active;
+
+		solidBrushRequest() = default;
+		solidBrushRequest(const solidBrushRequest& _request) = default;
+		solidBrushRequest(solidBrushRequest&& _request) = default;
+		solidBrushRequest& operator = (const solidBrushRequest& _request) = default;
+		solidBrushRequest& operator = (solidBrushRequest&& _request) = default;
+
+		solidBrushRequest(std::shared_ptr<solidBrushRequest> _request)
+		{
+			name = _request->name;
+			brushColor = _request->brushColor;
+			active = _request->active;
+		}
+
+
 	};
 
 	enum ePathPointType {
@@ -145,7 +243,7 @@ namespace corona {
 
 	class pathDto {
 	public:
-		object_name name;
+		std::string name;
 		std::vector<std::shared_ptr<pathBaseDto>> points;
 
 		pathDto& addLineTo(double x, double y)
@@ -202,12 +300,6 @@ namespace corona {
 
 	};
 
-	struct solidBrushRequest 
-	{
-		object_name_composed name;
-		ccolor brushColor;
-		bool active;
-	};
 
 
 	D2D1_COLOR_F toColor(std::string _htmlColor)
@@ -238,6 +330,7 @@ namespace corona {
 		std::shared_ptr<solidBrushRequest> solid_brush;
 		std::shared_ptr<radialGradientBrushRequest> radial_brush;
 		std::shared_ptr<linearGradientBrushRequest> linear_brush;
+		std::shared_ptr<bitmapBrushRequest> bitmap_brush;
 		bool active;
 
 		generalBrushRequest()
@@ -251,6 +344,7 @@ namespace corona {
 			solid_brush = nullptr;
 			radial_brush = nullptr;
 			linear_brush = nullptr;
+			bitmap_brush = nullptr;
 			active = false;
 		}
 
@@ -266,6 +360,9 @@ namespace corona {
 			case brush_types::linear_brush_type:
 				linear_brush->name = _name;
 				break;
+			case brush_types::bitmap_brush_type:
+				bitmap_brush->name = _name;
+				break;
 			}
 			return _name;
 		}
@@ -275,13 +372,16 @@ namespace corona {
 			const char *name = nullptr;
 			switch (brush_type) {
 			case brush_types::solid_brush_type:
-				name = solid_brush->name;
+				name = solid_brush->name.c_str();
 				break;
 			case brush_types::radial_brush_type:
-				name = radial_brush->name;
+				name = radial_brush->name.c_str();
 				break;
 			case brush_types::linear_brush_type:
-				name = linear_brush->name;
+				name = linear_brush->name.c_str();
+				break;
+			case brush_types::bitmap_brush_type:
+				name = bitmap_brush->name.c_str();
 				break;
 			}
 			return name;
@@ -302,6 +402,9 @@ namespace corona {
 			case brush_types::linear_brush_type:
 				linear_brush = std::make_shared<linearGradientBrushRequest>(gbr.linear_brush);
 				break;
+			case brush_types::bitmap_brush_type:
+				bitmap_brush = std::make_shared<bitmapBrushRequest>(gbr.bitmap_brush);
+				break;
 			}
 		}
 
@@ -319,6 +422,8 @@ namespace corona {
 			case brush_types::linear_brush_type:
 				linear_brush = std::make_shared<linearGradientBrushRequest>(gbr.linear_brush);
 				break;
+			case brush_types::bitmap_brush_type:
+				bitmap_brush = std::make_shared<bitmapBrushRequest>(gbr.bitmap_brush);
 			}
 
 			return *this;
@@ -446,8 +551,8 @@ namespace corona {
 
 	struct textStyleRequest
 	{
-		object_name_composed name;
-		object_name fontName;
+		std::string name;
+		std::string fontName;
 		float fontSize;
 		bool bold, italics, underline, strike_through;
 		double line_spacing;
@@ -460,7 +565,7 @@ namespace corona {
 
 	struct viewStyleRequest
 	{
-		object_name			name;
+		std::string			name;
 		textStyleRequest	text_style;
 		double shape_border_thickness;
 		double box_border_thickness;

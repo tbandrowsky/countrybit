@@ -57,9 +57,9 @@ namespace corona
 
 		virtual void setController(std::shared_ptr<controller> _newCurrentController);
 
-		HFONT createFontDips(HWND target, const char* _fontName, double fontSize, bool bold, bool italic);
-		HFONT createFontPixels(const char* _fontName, double fontSize, bool bold, bool italic);
-		HFONT createFontIndirect(LOGFONTA _font, const char* _fontName, double fontSize, bool bold, bool italic);
+		HFONT createFontDips(HWND target, std::string  _fontName, double fontSize, bool bold, bool italic);
+		HFONT createFontPixels(std::string _fontName, double fontSize, bool bold, bool italic);
+		HFONT createFontIndirect(LOGFONTA _font, std::string _fontName, double fontSize, bool bold, bool italic);
 
 		// general
 		virtual void redraw();
@@ -339,7 +339,7 @@ namespace corona
 		::DestroyWindow(hwnd);
 	}
 
-	HFONT directApplicationWin32::createFontDips(HWND target, const char* _fontName, double fontSize, bool bold, bool italic)
+	HFONT directApplicationWin32::createFontDips(HWND target, std::string _fontName, double fontSize, bool bold, bool italic)
 	{
 		HFONT hfont = nullptr;
 
@@ -358,7 +358,7 @@ namespace corona
 		return hfont;
 	}
 
-	HFONT directApplicationWin32::createFontPixels(const char* _fontName, double fontSizePixels, bool bold, bool italic)
+	HFONT directApplicationWin32::createFontPixels(std::string  _fontName, double fontSizePixels, bool bold, bool italic)
 	{
 		HFONT hfont = nullptr;
 
@@ -376,7 +376,7 @@ namespace corona
 		return hfont;
 	}
 
-	HFONT directApplicationWin32::createFontIndirect(LOGFONTA srcFont, const char* _fontName, double fontSizePixels, bool bold, bool italic)
+	HFONT directApplicationWin32::createFontIndirect(LOGFONTA srcFont, std::string  _fontName, double fontSizePixels, bool bold, bool italic)
 	{
 		HFONT hfont = nullptr;
 

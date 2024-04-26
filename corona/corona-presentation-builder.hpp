@@ -1340,7 +1340,7 @@ namespace corona
 						auto dc = context.getDeviceContext();
 						color = toColor(bc);
 						border_brush_win32 = ::CreateSolidBrush(RGB(color.a * color.r * 255.0, color.a * color.g * 255.0, color.a * color.b * 255.0));
-						border_name = border_brush.name;
+						border_name = border_brush.name.c_str();
 					}
 
 					if (background_brush.active)
@@ -1352,7 +1352,7 @@ namespace corona
 						auto dc = context.getDeviceContext();
 						color = toColor(bc);
 						background_brush_win32 = ::CreateSolidBrush(RGB(color.a * color.r * 255.0, color.a * color.g * 255.0, color.a * color.b * 255.0));
-						background_name = background_brush.name;
+						background_name = background_brush.name.c_str();
 					}
 
 					if (border_name || background_name) {
@@ -1372,7 +1372,7 @@ namespace corona
 						rectangle r = get_inner_bounds();
 						r.x = 0;
 						r.y = 0;
-						context.drawRectangle(&r, border_brush.name, 4, nullptr);
+						context.drawRectangle(&r, border_brush.name, 4, "");
 					}
 				}
 				pwindow->endDraw(adapter_blown_away);
