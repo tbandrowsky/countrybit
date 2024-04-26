@@ -813,8 +813,7 @@ namespace corona
 				{
 					if (draw_control* pdraw = pcontroller->get_parent_for_control_by_id<draw_control>(id)) {
 
-						hbrBkgnd = pdraw->background_brush_win32;
-						auto cv = pdraw->background_brush.brushColor;
+						auto cv = pdraw->background_brush.getColor();
 						SetBkColor(hdcStatic, RGB(int(cv.r * 255), int(255 * cv.g), int(255 * cv.b)));
 					}
 				}

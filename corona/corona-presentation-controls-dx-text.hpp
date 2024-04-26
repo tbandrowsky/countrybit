@@ -7,7 +7,7 @@ namespace corona
 	{
 	public:
 		std::string			text;
-		solidBrushRequest	text_idle_brush;
+		generalBrushRequest	text_idle_brush;
 		textStyleRequest	text_style;
 
 		text_display_control(const text_display_control& _src) : draw_control(_src)
@@ -226,7 +226,7 @@ namespace corona
 				if (auto pwindow = _src->window.lock())
 				{
 					std::cout << typeid(*_src).name() << " on_create created" << std::endl;
-					pwindow->getContext().setSolidColorBrush(&t->text_idle_brush);
+					pwindow->getContext().setBrush(&t->text_idle_brush);
 					pwindow->getContext().setTextStyle(&t->text_style);
 				}
 			};
@@ -264,8 +264,8 @@ namespace corona
 
 	text_display_control& text_display_control::set_text_fill(std::string _color)
 	{
-		text_idle_brush.name = typeid(*this).name();
-		text_idle_brush.brushColor = toColor(_color);
+		text_idle_brush.setColor(_color);
+		text_idle_brush.set_name("text_fill");
 		return *this;
 	}
 
@@ -292,27 +292,10 @@ namespace corona
 
 		auto st = styles.get_style();
 
-		background_brush.name = "title_fill";
-		background_brush.brushColor = toColor(st->TitleBackgroundColor);
-		background_brush.active = true;
+		background_brush = st->TitleBackgroundBrush;
+		text_idle_brush = st->TitleTextBrush;
 
-		text_idle_brush.name = "title_text_fill";
-		text_idle_brush.brushColor = toColor(st->TitleTextColor);
-
-		text_style = {};
-		text_style.name = "title_text_style";
-		text_style.fontName = st->TitleTextFont;
-		text_style.fontSize = 72;
-		text_style.bold = false;
-		text_style.italics = false;
-		text_style.underline = false;
-		text_style.strike_through = false;
-		text_style.horizontal_align = st->PrevailingAlignment;
-		text_style.vertical_align = visual_alignment::align_near;
-		text_style.wrap_text = true;
-		text_style.font_stretch = DWRITE_FONT_STRETCH_NORMAL;
-		text_style.character_spacing = 0;
-
+		text_style = st->TitleFont;
 	}
 
 	title_control::title_control(container_control_base* _parent, int _id) : text_display_control(_parent, _id)
@@ -343,7 +326,7 @@ namespace corona
 		text_style = {};
 		text_style.name = "subtitle_text_style";
 		text_style.fontName = st->SubtitleTextFont;
-		text_style.fontSize = 24;
+		text_style.fontSize = 36;
 		text_style.bold = false;
 		text_style.italics = false;
 		text_style.underline = true;
@@ -384,7 +367,7 @@ namespace corona
 		text_style = {};
 		text_style.name = "chaptertitle_text_style";
 		text_style.fontName = st->ChapterTextFont;
-		text_style.fontSize = 16;
+		text_style.fontSize = 20;
 		text_style.bold = false;
 		text_style.italics = false;
 		text_style.underline = false;
@@ -424,8 +407,8 @@ namespace corona
 
 		text_style = {};
 		text_style.name = "chaptersubtitle_text_style";
-		text_style.fontName = st->ChapterTextFont;
-		text_style.fontSize = 14;
+		text_style.fontName = st->SubchapterTextFont;
+		text_style.fontSize = 20;
 		text_style.bold = false;
 		text_style.italics = false;
 		text_style.underline = false;
@@ -537,13 +520,14 @@ namespace corona
 
 	void label_control::set_default_styles()
 	{
+
 		text_idle_brush.name = "label_text_fill";
 		text_idle_brush.brushColor = toColor(styles.get_style()->TextColor);
 
 		text_style = {};
 		text_style.name = "label_text_style";
 		text_style.fontName = styles.get_style()->PrimaryFont;
-		text_style.fontSize = 12;
+		text_style.fontSize = 14;
 		text_style.bold = false;
 		text_style.italics = false;
 		text_style.underline = false;

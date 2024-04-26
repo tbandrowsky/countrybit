@@ -202,13 +202,193 @@ namespace corona {
 
 	};
 
-	struct solidBrushRequest {
+	struct solidBrushRequest 
+	{
 		object_name_composed name;
 		ccolor brushColor;
 		bool active;
 	};
 
-	struct drawTextRequest {
+	enum brush_types 
+	{
+		no_brush_type = 0,
+		solid_brush_type = 1,
+		linear_brush_type = 2,
+		radial_brush_type = 3,
+		bitmap_brush_type = 4
+	};
+
+	class generalBrushRequest
+	{
+	public:
+
+		brush_types brush_type;
+		std::unique_ptr<solidBrushRequest> solid_brush;
+		std::unique_ptr<radialGradientBrushRequest> radial_brush;
+		std::unique_ptr<linearGradientBrushRequest> linear_brush;
+		bool active;
+
+		generalBrushRequest()
+		{
+			clear();
+		}
+
+		void clear()
+		{
+			brush_type = brush_types::no_brush_type;
+			solid_brush = nullptr;
+			radial_brush = nullptr;
+			linear_brush = nullptr;
+			active = false;
+		}
+
+		std::string set_name(std::string _name)
+		{
+			switch (brush_type) {
+			case brush_types::solid_brush_type:
+				solid_brush->name = _name;
+				break;
+			case brush_types::radial_brush_type:
+				radial_brush->name = _name;
+				break;
+			case brush_types::linear_brush_type:
+				linear_brush->name = _name;
+				break;
+			}
+			return _name;
+		}
+
+		const char *get_name()
+		{
+			const char *name = nullptr;
+			switch (brush_type) {
+			case brush_types::solid_brush_type:
+				name = solid_brush->name;
+				break;
+			case brush_types::radial_brush_type:
+				name = radial_brush->name;
+				break;
+			case brush_types::linear_brush_type:
+				name = linear_brush->name;
+				break;
+			}
+			return name;
+		}
+
+
+		generalBrushRequest(const generalBrushRequest& gbr)
+		{
+			clear();
+			brush_type = gbr.brush_type;
+			switch (brush_type) {
+			case brush_types::solid_brush_type:
+				solid_brush = std::make_unique<solidBrushRequest>(gbr.solid_brush);
+				break;
+			case brush_types::radial_brush_type:
+				radial_brush = std::make_unique<radialGradientBrushRequest>(gbr.radial_brush);
+				break;
+			case brush_types::linear_brush_type:
+				linear_brush = std::make_unique<linearGradientBrushRequest>(gbr.linear_brush);
+				break;
+			}
+		}
+
+		generalBrushRequest operator = (const generalBrushRequest& gbr)
+		{
+			clear();
+			brush_type = gbr.brush_type;
+			switch (brush_type) {
+			case brush_types::solid_brush_type:
+				solid_brush = std::make_unique<solidBrushRequest>(gbr.solid_brush);
+				break;
+			case brush_types::radial_brush_type:
+				radial_brush = std::make_unique<radialGradientBrushRequest>(gbr.radial_brush);
+				break;
+			case brush_types::linear_brush_type:
+				linear_brush = std::make_unique<linearGradientBrushRequest>(gbr.linear_brush);
+				break;
+			}
+
+			return *this;
+		}
+
+		generalBrushRequest(solidBrushRequest sbr)
+		{
+			clear();
+			brush_type = brush_types::solid_brush_type;
+			solid_brush = std::make_unique<solidBrushRequest>(sbr);
+		}
+
+		generalBrushRequest(linearGradientBrushRequest sbr)
+		{
+			clear();
+			brush_type = brush_types::linear_brush_type;
+			linear_brush = std::make_unique<linearGradientBrushRequest>(sbr);
+		}
+
+		generalBrushRequest(radialGradientBrushRequest sbr)
+		{
+			clear();
+			brush_type = brush_types::radial_brush_type;
+			radial_brush = std::make_unique<radialGradientBrushRequest>(sbr);
+		}
+
+		generalBrushRequest operator = (const solidBrushRequest& sbr)
+		{
+			clear();
+			brush_type = brush_types::solid_brush_type;
+			solid_brush = std::make_unique<solidBrushRequest>(sbr);
+			return *this;
+		}
+
+		generalBrushRequest operator = (linearGradientBrushRequest sbr)
+		{
+			clear();
+			brush_type = brush_types::linear_brush_type;
+			linear_brush = std::make_unique<linearGradientBrushRequest>(sbr);
+			return *this;
+		}
+
+		generalBrushRequest operator = (radialGradientBrushRequest sbr)
+		{
+			clear();
+			brush_type = brush_types::radial_brush_type;
+			radial_brush = std::make_unique<radialGradientBrushRequest>(sbr);
+		}
+
+		void setColor(std::string _color)
+		{
+			solidBrushRequest sbr;
+			sbr.brushColor = toColor(_color);
+			sbr.active = true;
+			*this = sbr;
+		}
+
+		ccolor getColor()
+		{
+			ccolor t = {};
+
+			switch (brush_type) {
+			case brush_types::solid_brush_type:
+				t = solid_brush->brushColor;
+				break;
+			case brush_types::radial_brush_type:
+				if (radial_brush->gradientStops.size())
+					t = radial_brush->gradientStops[0].stop_color;
+				break;
+			case brush_types::linear_brush_type:
+				if (linear_brush->gradientStops.size())
+					t = linear_brush->gradientStops[0].stop_color;
+				break;
+			}
+
+			return t;
+		}
+
+	};
+
+	struct drawTextRequest 
+	{
 		std::string text;
 		std::string fillBrushName;
 		std::string backgroundBrushName;
@@ -219,8 +399,6 @@ namespace corona {
 
 		drawTextRequest();
 	};
-
-
 
 	struct pathImmediateDto {
 		pathDto path;
@@ -321,10 +499,6 @@ namespace corona {
 		return newSize;
 	}
 
-	D2D1_COLOR_F toColor(const std::string& _htmlColor)
-	{
-		return toColor(_htmlColor.c_str());
-	}
 
 	D2D1_COLOR_F toColor(const char* _htmlColor)
 	{
@@ -358,18 +532,18 @@ namespace corona {
 		return new_color;
 	}
 
-	D2D1_COLOR_F toColor(std::string& _htmlColor)
+	D2D1_COLOR_F toColor(std::string _htmlColor)
 	{
 		return toColor(_htmlColor.c_str());
 	}
 
 
-	D2D1_COLOR_F toColor(ccolor& _color)
+	D2D1_COLOR_F toColor(const ccolor& _color)
 	{
 		return _color;
 	}
 
-	D2D1_POINT_2F toPoint(point& _point)
+	D2D1_POINT_2F toPoint(const point& _point)
 	{
 		D2D1_POINT_2F point2;
 		point2.x = _point.x;
@@ -377,7 +551,7 @@ namespace corona {
 		return point2;
 	}
 
-	D2D1_GRADIENT_STOP toGradientStop(gradientStop& _gradientStop)
+	D2D1_GRADIENT_STOP toGradientStop(const gradientStop& _gradientStop)
 	{
 		D2D1_GRADIENT_STOP stop;
 

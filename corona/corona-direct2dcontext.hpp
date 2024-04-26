@@ -267,7 +267,7 @@ namespace corona
 			return _linearGradientBrushDto->name.c_str();
 		}
 
-		virtual std::string setRadialGradientBrush(radialGradientBrushRequest* _radialGradientBrushDto)
+		virtual std::string setRadialGradientBrush(const radialGradientBrushRequest* _radialGradientBrushDto)
 		{
 			D2D1_GRADIENT_STOP gradientStop;
 			auto brush = std::make_shared<radialGradientBrush>();
@@ -283,6 +283,24 @@ namespace corona
 			brushes[_radialGradientBrushDto->name.c_str()] = brush;
 			brush->create(this);
 			return _radialGradientBrushDto->name.c_str();
+		}
+
+		virtual std::string setBrush(generalBrushRequest* _generalBrushDto)
+		{
+			std::string val;
+
+			switch (_generalBrushDto->brush_type) {
+			case brush_types::radial_brush_type:
+				val = setRadialGradientBrush(_generalBrushDto->radial_brush.get());
+				break;
+			case brush_types::linear_brush_type:
+				val = setLinearGradientBrush(_generalBrushDto->linear_brush.get());
+				break;
+			case brush_types::solid_brush_type:
+				val = setSolidColorBrush(_generalBrushDto->solid_brush.get());
+				break;
+			}
+			return val;
 		}
 
 		virtual void clearBitmapsAndBrushes(bool deleteStock)

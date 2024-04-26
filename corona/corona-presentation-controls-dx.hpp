@@ -11,11 +11,8 @@ namespace corona
 
 		int border_width;
 
-		HBRUSH background_brush_win32;
-		solidBrushRequest	background_brush;
-
-		HBRUSH border_brush_win32;
-		solidBrushRequest	border_brush;
+		generalBrushRequest	background_brush;
+		generalBrushRequest	border_brush;
 
 		std::weak_ptr<applicationBase> host;
 		std::weak_ptr<direct2dChildWindow> window;
@@ -24,19 +21,13 @@ namespace corona
 
 		draw_control()
 		{
-			background_brush_win32 = nullptr;
-			background_brush = {};
-			border_brush_win32 = nullptr;
-			border_brush = {};
 			parent = nullptr;
 			id = id_counter::next();
 		}
 
 		draw_control(const draw_control& _src) : control_base( _src )
 		{
-			background_brush_win32 = nullptr;
 			background_brush = _src.background_brush;
-			border_brush_win32 = nullptr;
 			border_brush = _src.border_brush;
 			on_draw = _src.on_draw;
 			on_create = _src.on_create;
@@ -44,24 +35,12 @@ namespace corona
 
 		draw_control(container_control_base *_parent, int _id) 
 		{
-			background_brush_win32 = nullptr;
-			background_brush = {};
-			border_brush_win32 = nullptr;
-			border_brush = {};
 			parent = _parent;
 			id = _id;
 		}
 
 		virtual ~draw_control()
 		{
-			if (background_brush_win32) 
-			{
-				::DeleteObject(background_brush_win32);
-			}
-			if (border_brush_win32)
-			{
-				::DeleteObject(border_brush_win32);
-			}
 		}
 
 		virtual void create(std::weak_ptr<applicationBase> _host)
@@ -120,13 +99,10 @@ namespace corona
 					{
 						auto& context = pwindow->getContext();
 
-						auto& bc = background_brush.brushColor;
-
 						D2D1_COLOR_F color = {};
 
 						const char* border_name = nullptr;
 						const char* background_name = nullptr;
-
 
 						auto dc = context.getDeviceContext();
 
@@ -139,32 +115,21 @@ namespace corona
 
 						if (border_brush.active)
 						{
-							context.setSolidColorBrush(&border_brush);
-							border_name = border_brush.name;
-
-							if (border_brush_win32)
-								DeleteBrush(border_brush_win32);
-							color = toColor(bc);
-							border_brush_win32 = ::CreateSolidBrush(RGB(color.a * color.r * 255.0, color.a * color.g * 255.0, color.a * color.b * 255.0));
+							context.setBrush(&border_brush);
+							border_name = border_brush.get_name();
 						}
 
 						if (background_brush.active)
 						{
-							context.setSolidColorBrush(&background_brush);
-							background_name = background_brush.name;
-
-							if (background_brush_win32)
-								DeleteBrush(background_brush_win32);
-
-							color = toColor(bc);
-							background_brush_win32 = ::CreateSolidBrush(RGB(color.a * color.r * 255.0, color.a * color.g * 255.0, color.a * color.b * 255.0));
+							context.setBrush(&background_brush);
+							background_name = background_brush.get_name();
 						}
 
 						if (border_name || background_name) {
 							rectangle r = bounds;
 							r.x = 0;
 							r.y = 0;
-							std::cout << std::format("{}:{} [{},{} x {},{}]", typeid(*this).name(), background_name, r.x, r.y, r.w, r.h) << std::endl;
+//							std::cout << std::format("{}:{} [{},{} x {},{}]", typeid(*this).name(), background_name, r.x, r.y, r.w, r.h) << std::endl;
 							context.drawRectangle(&r, border_name, border_width, background_name);
 						}
 
@@ -237,15 +202,15 @@ namespace corona
 		{
 			background_brush = _brushFill;
 			std::string brush_name = std::format("background");
-			background_brush.name = brush_name;
+			background_brush.set_name(brush_name);
 			background_brush.active = true;
 		}
 
 		void set_background_color(std::string _color)
 		{
-			background_brush.brushColor = toColor(_color.c_str());
+			background_brush.setColor(_color);
 			std::string brush_name = std::format("background");
-			background_brush.name = brush_name;
+			background_brush.set_name( brush_name );
 			background_brush.active = true;
 		}
 
@@ -253,15 +218,15 @@ namespace corona
 		{
 			border_brush = _brushFill;
 			std::string brush_name = std::format("border");
-			border_brush.name = brush_name;
+			border_brush.set_name(brush_name);
 			border_brush.active = true;
 		}
 
 		void set_border_color(std::string _color)
 		{
-			border_brush.brushColor = toColor(_color.c_str());
+			border_brush.setColor(_color);
 			std::string brush_name = std::format("border", typeid(*this).name(), id);
-			border_brush.name = brush_name;
+			border_brush.set_name( brush_name );
 			border_brush.active = true;
 		}
 

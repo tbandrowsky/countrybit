@@ -21,57 +21,60 @@ namespace corona
 		std::map<std::string, std::vector<std::string>> DataColors;
 		std::map<std::string, std::vector<std::string>> ChartColors;
 
-		std::string HeaderBackgroundColor;
-		std::string HeaderTextColor;
+		generalBrushRequest PageBackgroundBrush;
+		generalBrushRequest PageBorderBrush;
+		generalBrushRequest PageTextBrush;
+		textStyleRequest	PageFont;
 
-		std::string PageBackgroundColor;
-		std::string PageBorderColor;
-		std::string PageTextColor;
-		std::string PageTextFont;
+		generalBrushRequest CaptionBackgroundBrush;
+		generalBrushRequest CaptionBorderBrush;
+		generalBrushRequest CaptionTextBrush;
+		textStyleRequest	CaptionFont;
 
-		std::string TitleBackgroundColor;
-		std::string TitleTextColor;
-		std::string TitleTextFont;
+		generalBrushRequest TitleBackgroundBrush;
+		generalBrushRequest TitleBorderBrush;
+		generalBrushRequest TitleTextBrush;
+		textStyleRequest	TitleFont;
 
-		std::string SubtitleBackgroundColor;
-		std::string SubtitleTextColor;
-		std::string SubtitleTextFont;
+		generalBrushRequest SubtitleBackgroundBrush;
+		generalBrushRequest SubtitleBorderBrush;
+		generalBrushRequest SubtitleTextBrush;
+		textStyleRequest	SubtitleFont;
 
-		std::string ChapterTitleBackgroundColor;
-		std::string ChapterTitleTextColor;
-		std::string ChapterTextFont;
+		generalBrushRequest ChapterTitleBackgroundBrush;
+		generalBrushRequest ChapterTitleBorderBrush;
+		generalBrushRequest ChapterTitleTextBrush;
+		textStyleRequest	ChatperTitleFont;
 
-		std::string SubchapterTitleBackgroundColor;
-		std::string SubchapterTitleTextColor;
-		std::string SubchapterTextFont;
+		generalBrushRequest ChapterSubTitleBackgroundBrush;
+		generalBrushRequest ChapterSubTitleBorderBrush;
+		generalBrushRequest ChapterSubTitleTextBrush;
+		textStyleRequest	ChapterSubTitleFont;
 
-		std::string ParagraphBackgroundColor;
-		std::string ParagraphTextColor;
-		std::string ParagraphTextFont;
+		generalBrushRequest ParagraphBackgroundBrush;
+		generalBrushRequest ParagraphBorderBrush;
+		generalBrushRequest ParagraphTextBrush;
+		textStyleRequest	ParagraphFont;
 
-		std::string CodeBackgroundColor;
-		std::string CodeTextColor;
-		std::string CodeTextFont;
+		generalBrushRequest FormBackgroundBrush;
+		generalBrushRequest FormBorderBrush;
+		generalBrushRequest FormTextBrush;
+		textStyleRequest	FormFont;
 
-		std::string BackgroundColor;
-		std::string TextColor;
+		generalBrushRequest LabelBackgroundBrush;
+		generalBrushRequest LabelBorderBrush;
+		generalBrushRequest LabelTextBrush;
+		textStyleRequest	LabelFont;
 
-		std::string FormBackgroundColor;
+		generalBrushRequest ErrorBackgroundBrush;
+		generalBrushRequest ErrorBorderBrush;
+		generalBrushRequest ErrorTextBrush;
+		textStyleRequest	ErrorFont;
 
-		std::string Section1BackgroundColor;
-		std::string Section1TextColor;
-
-		std::string Section2BackgroundColor;
-		std::string Section2TextColor;
-
-		std::string Section3BackgroundColor;
-		std::string Section3TextColor;
-
-		std::string Section4BackgroundColor;
-		std::string Section4TextColor;
-
-		std::string FooterBackgroundColor;
-		std::string FooterTextColor;
+		generalBrushRequest CodeBackgroundBrush;
+		generalBrushRequest CodeBorderBrush;
+		generalBrushRequest CodeTextBrush;
+		textStyleRequest	CodeFont;
 
 		visual_alignment PrevailingAlignment;
 	};
@@ -80,7 +83,6 @@ namespace corona
 	{
 		std::string current_style;
 
-		void create_woodruff_styles();
 		void create_countrybit_styles();
 
 	public:
@@ -95,91 +97,6 @@ namespace corona
 	presentation_style_factory::presentation_style_factory()
 	{
 		create_countrybit_styles();
-	}
-
-	void presentation_style_factory::create_woodruff_styles()
-	{
-		presentation_style woodruff;
-
-		woodruff.PrimaryFont = "Open Sans,Arial";
-
-		woodruff.MasterBrandColors = { "319B42", "78BE20", "1F2A44", "D0D3D4", "FFFFFF" };
-		woodruff.SecondaryBrandColors = { "6399AE", "34657F", "A0D1CA", "6BBBAE", "621244", "C1C6C8", "A2AAAD", "7C878E", "5B6770", "081F2C" };
-		woodruff.SupportingBrandColors = { "5CAA7F", "EED484", "B04A5A", "893B67", "7E5475", "C1C6C8", "A2AAAD", "7C878E", "5B6770", "007396" };
-
-		woodruff.MasterBrandTextColors = { "FFFFFF", "000000", "FFFFFF", "000000", "000000" };
-		woodruff.SecondaryBrandTextColors = { "000000", "FFFFFF", "000000", "000000", "FFFFFF", "000000", "000000", "000000", "FFFFFF", "FFFFFF" };
-		woodruff.SupportingBrandTextColors = { "000000", "000000", "000000", "000000", "000000", "000000", "000000", "000000", "FFFFFF", "000000" };
-
-		woodruff.DataColors = {
-			{ "Blue", {"34657F", "D4E1E8", "AACDDA", "6399AE", "34657F", "081F2C" } },
-			{ "Gray", { "7C878E", "DEE1E1", "C1C6C8", "A2AAAD", "7C878E", "5B6770" } },
-			{ "Green", { "4BA24D", "C8DFBC", "AFD29E", "6DB658", "4BA24D", "008A41" } },
-			{ "Plum", { "621244", "D7D3DB", "C1B2C3", "996F8D", "862663", "621244"} },
-			{ "Khaki", { "B6B7A2", "DEDDD3", "CBCBBC", "B6B7A2", "888F6E", "67724C" } },
-			{ "Khaki", { "B6B7A2", "DEDDD3", "CBCBBC", "B6B7A2", "888F6E", "67724C" } },
-		};
-
-		woodruff.ChartColors = {
-			{ "Deductible", { "34657F" } },
-			{ "Lavender", { "E0D4D9", "CDB9C2", "B898A7" } },
-			{ "Perriwinkle", { "C8D9E2", "B0C9D7", "98BBCC" } },
-			{ "Grass", { "C9DEBC", "B2D2A2", "A2C490" } },
-			{ "Tulips", { "F8E0A4", "ECCF8F", "EAC189" } },
-			{ "Earth", { "E1DACE", "D8CEBE", "C4B69D" } },
-			{ "Stone", { "DEE1E1", "C1C6C8", "A2AAAD" } }
-		};
-
-		woodruff.PageBackgroundColor = "FFFFFF";
-		woodruff.PageTextColor = "000000";
-		woodruff.PageBorderColor = "#203020";
-
-		woodruff.HeaderBackgroundColor = "1F241F";
-		woodruff.HeaderTextColor = woodruff.MasterBrandColors[0];
-
-		woodruff.TitleBackgroundColor = "#00000000";
-		woodruff.TitleTextColor = woodruff.MasterBrandColors[0];
-		woodruff.TitleTextFont = woodruff.PrimaryFont;
-
-		woodruff.SubtitleBackgroundColor = "#00000000";
-		woodruff.SubtitleTextColor = woodruff.MasterBrandColors[0];
-		woodruff.SubtitleTextFont = woodruff.PrimaryFont;
-
-		woodruff.FormBackgroundColor = "#EEEFEE";
-
-		woodruff.ChapterTextFont = woodruff.PrimaryFont;
-
-		woodruff.ChapterTitleBackgroundColor = "#COC2CO";
-		woodruff.ChapterTitleTextColor = "111111";
-
-		woodruff.SubchapterTitleBackgroundColor = "FFFFFF";
-		woodruff.SubchapterTitleTextColor = "111111";
-
-		woodruff.ParagraphBackgroundColor = "#00000000";
-		woodruff.ParagraphTextColor = "111111";
-		woodruff.ParagraphTextFont = woodruff.PrimaryFont;
-
-		woodruff.CodeBackgroundColor = "00000000";
-		woodruff.CodeTextColor = "F8E0A4";
-		woodruff.CodeTextFont = "Courier New";
-
-		woodruff.Section1BackgroundColor = "DEE1E1";
-		woodruff.Section1TextColor = woodruff.ParagraphTextColor;
-
-		woodruff.Section2BackgroundColor = "D4E1E8";
-		woodruff.Section2TextColor = woodruff.ParagraphTextColor;
-
-		woodruff.Section3BackgroundColor = "D7D3DB";
-		woodruff.Section3TextColor = woodruff.ParagraphTextColor;
-
-		woodruff.Section4BackgroundColor = "DEDDD3";
-		woodruff.Section4TextColor = woodruff.ParagraphTextColor;
-
-		woodruff.FooterBackgroundColor = woodruff.MasterBrandColors[0];
-		woodruff.FooterTextColor = woodruff.MasterBrandTextColors[0];
-
-		styles["Woodruff"] = woodruff;
-		current_style = "Woodruff";
 	}
 
 	void presentation_style_factory::create_countrybit_styles()
@@ -218,53 +135,90 @@ namespace corona
 			{ "Stone", { "DEE1E1", "C1C6C8", "A2AAAD" } }
 		};
 
-		countrybit.PageBackgroundColor = "FFFFFF";
-		countrybit.PageTextColor = "000000";
-		countrybit.PageBorderColor = "#203020";
+		textStyleRequest text_style;
 
-		countrybit.HeaderBackgroundColor = countrybit.MasterBrandColors[0];
-		countrybit.HeaderTextColor = countrybit.MasterBrandTextColors[0];
+		text_style.name = "text_style";
+		text_style.fontName = bigFont;
+		text_style.fontSize = 72;
+		text_style.bold = false;
+		text_style.italics = false;
+		text_style.underline = false;
+		text_style.strike_through = false;
+		text_style.horizontal_align = visual_alignment::align_near;
+		text_style.vertical_align = visual_alignment::align_near;
+		text_style.wrap_text = true;
+		text_style.font_stretch = DWRITE_FONT_STRETCH_NORMAL;
+		text_style.character_spacing = 0;
 
-		countrybit.TitleBackgroundColor = "#000000";
-		countrybit.TitleTextColor = countrybit.MasterBrandTextColors[0];
-		countrybit.TitleTextFont = bigFont;
+		linearGradientBrushRequest lgbr;
+		
+		lgbr.gradientStops = {
+	{ toColor("#FFFFFF"), 0.0 },
+	{ toColor("#CFCFCF"), 1.0 }
+		};
 
-		countrybit.SubtitleBackgroundColor = "#000000";
-		countrybit.SubtitleTextColor = countrybit.MasterBrandTextColors[0];
-		countrybit.SubtitleTextFont = bigFont;
+		countrybit.PageBackgroundBrush = lgbr;
+		countrybit.PageBorderBrush.setColor("#c0c0c0");
+		countrybit.PageTextBrush.setColor("#000000");		
+		countrybit.PageFont = text_style;
+		countrybit.PageFont.fontName = "Century Gothic,Arial";
+		countrybit.PageFont.fontSize = 24;
 
-		countrybit.FormBackgroundColor = "#c2bbb7";
+		lgbr.gradientStops = {
+{ toColor("#000000"), 0.0 },
+{ toColor("#010101"), 1.0 }
+		};
 
-		countrybit.ChapterTextFont = textFont;
-		countrybit.ChapterTitleBackgroundColor = countrybit.MasterBrandColors[0];
-		countrybit.ChapterTitleTextColor = countrybit.MasterBrandTextColors[0];
+		countrybit.CaptionBackgroundBrush = lgbr;
+		countrybit.CaptionTextBrush.setColor("#FFFFFF");
+		countrybit.CaptionFont = text_style;
+		countrybit.CaptionFont.fontName = "Century Gothic,Arial";
+		countrybit.CaptionFont.fontSize = 48;
 
-		countrybit.SubchapterTextFont = textFont;
-		countrybit.SubchapterTitleBackgroundColor = countrybit.MasterBrandColors[0];
-		countrybit.SubchapterTitleTextColor = countrybit.MasterBrandTextColors[0];
+		countrybit.TitleBackgroundBrush.clear();
+		countrybit.TitleBorderBrush.clear();
+		countrybit.TitleTextBrush.setColor("#000000");
+		countrybit.TitleFont = text_style;
+		countrybit.TitleFont.fontName = "Century Gothic,Arial";
+		countrybit.TitleFont.fontSize = 32;
 
-		countrybit.ParagraphBackgroundColor = "#000000";
-		countrybit.ParagraphTextColor = countrybit.MasterBrandTextColors[0];
-		countrybit.ParagraphTextFont = textFont;
+		countrybit.SubtitleBackgroundBrush.clear();
+		countrybit.SubtitleBorderBrush.clear();
+		countrybit.SubtitleTextBrush.setColor("#000000");
+		countrybit.SubtitleFont = text_style;
+		countrybit.SubtitleFont.fontName = "Century Gothic,Arial";
+		countrybit.SubtitleFont.fontSize = 28;
 
-		countrybit.CodeBackgroundColor = "000000";
-		countrybit.CodeTextColor = "F8E0A4";
-		countrybit.CodeTextFont = "Consolas";
+		countrybit.ChapterTitleBackgroundBrush.clear();
+		countrybit.ChapterTitleBorderBrush.clear();
+		countrybit.ChapterTitleTextBrush.setColor("#000000");
+		countrybit.ChatperTitleFont = text_style;
+		countrybit.ChatperTitleFont.fontName = "Century Gothic,Arial";
+		countrybit.ChatperTitleFont.fontSize = 20;
+		
+		countrybit.ChapterSubTitleBackgroundBrush.clear();
+		countrybit.ChapterSubTitleBorderBrush.clear();
+		countrybit.ChapterSubTitleTextBrush.setColor("#000000");
+		countrybit.ChapterSubTitleFont = text_style;
+		countrybit.ChapterSubTitleFont.fontName = "Century Gothic,Arial";
+		countrybit.ChapterSubTitleFont.fontSize = 18;
+		countrybit.ChapterSubTitleFont.underline = 1;
 
-		countrybit.Section1BackgroundColor = countrybit.MasterBrandColors[0];
-		countrybit.Section1TextColor = countrybit.ParagraphTextColor;
+		countrybit.CodeBackgroundBrush.setColor("#111111");
+		countrybit.CodeBorderBrush.setColor("#000000");
+		countrybit.CodeTextBrush.setColor("#33FF33");
+		countrybit.CodeFont = text_style;
+		countrybit.CodeFont.fontName = "Consolas,Arial";
+		countrybit.CodeFont.fontSize = 14;
+		countrybit.CodeFont.underline = 0;
 
-		countrybit.Section2BackgroundColor = countrybit.MasterBrandColors[0];
-		countrybit.Section2TextColor = countrybit.ParagraphTextColor;
-
-		countrybit.Section3BackgroundColor = countrybit.MasterBrandColors[0];
-		countrybit.Section3TextColor = countrybit.ParagraphTextColor;
-
-		countrybit.Section4BackgroundColor = countrybit.MasterBrandColors[0];
-		countrybit.Section4TextColor = countrybit.ParagraphTextColor;
-
-		countrybit.FooterBackgroundColor = countrybit.MasterBrandColors[0];
-		countrybit.FooterTextColor = countrybit.MasterBrandTextColors[0];
+		countrybit.ParagraphBackgroundBrush.clear();
+		countrybit.ParagraphBorderBrush.clear();
+		countrybit.ParagraphTextBrush.setColor("#000000");
+		countrybit.ParagraphFont = text_style;
+		countrybit.ParagraphFont.fontName = "Century Gothic, Arial";
+		countrybit.ParagraphFont.fontSize = 14;
+		countrybit.ParagraphFont.underline = 0;
 
 		styles["Countrybit"] = countrybit;
 		current_style = "Countrybit";

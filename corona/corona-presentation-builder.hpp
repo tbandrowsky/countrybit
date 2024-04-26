@@ -1567,7 +1567,6 @@ namespace corona
 
 			auto main_row = cb.row_begin(id_counter::next(), [this](row_layout& rl) {
 				rl.set_size(1.0_container, 100.0_px);
-				rl.set_background_color(st->HeaderBackgroundColor);
 				rl.set_content_align(visual_alignment::align_far);
 				rl.set_content_cross_align(visual_alignment::align_center);
 				rl.set_item_margin(10.0_px);
@@ -1581,6 +1580,7 @@ namespace corona
 				cl.set_size(1.0_remaining, 1.0_container);
 					})
 				.title(title_name, [this](title_control& control) {
+						control.text_style = this->st->CaptionFont;
 						control.text_style.horizontal_align = visual_alignment::align_center;
 						control.text_style.vertical_align = visual_alignment::align_center;
 						control.set_size(title_name, 1.2_font);
@@ -1704,7 +1704,7 @@ namespace corona
 			control_builder cb;
 			cb.row_begin(id_counter::status_bar_id, [this](row_layout& rl) {
 				rl.set_size(1.0_container, 80.0_px);
-				rl.set_background_color(st->HeaderBackgroundColor);
+				rl.background_brush = st->CaptionBackgroundBrush;
 				rl.set_content_align(visual_alignment::align_near);
 				rl.set_content_cross_align(visual_alignment::align_near);
 				rl.set_item_margin(10.0_px);
@@ -1773,7 +1773,10 @@ namespace corona
 				{
 					r.set_size(1.0_container, 1.0_container);
 					r.set_content_align(visual_alignment::align_center);
-					r.set_background_color(styles.get_style()->FormBackgroundColor);
+					auto style = styles.get_style();
+					r.background_brush = style->FormBackgroundBrush;
+					r.border_brush = style->FormBorderBrush;
+					r.border_width = 1;
 				})
 				.column_begin(id_counter::next(), [this](column_layout& r)
 					{
@@ -1803,7 +1806,10 @@ namespace corona
 				{
 					r.set_size(1.0_container, 1.0_container);
 					r.set_content_align(visual_alignment::align_center);
-					r.set_background_color(styles.get_style()->FormBackgroundColor);
+					auto style = styles.get_style();
+					r.background_brush = style->FormBackgroundBrush;
+					r.border_brush = style->FormBorderBrush;
+					r.border_width = 1;
 				})
 				.column_begin(id_counter::next(), [this](column_layout& r)
 					{

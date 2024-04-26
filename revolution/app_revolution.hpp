@@ -230,7 +230,8 @@ namespace corona
 				id_main_row,
 				[this](row_layout& _settings) {
 					_settings.set_size(1.0_container, 1.0_container);
-					_settings.set_background_color(st->PageBackgroundColor);
+					_settings.background_brush = st->PageBackgroundBrush;
+					_settings.border_brush = st->PageBorderBrush;
 				});
 
 			// note that, we are putting the breadcrumbs on a nav pane to the left.
@@ -254,9 +255,10 @@ namespace corona
 					_cb.image_file = "small_logo.png";
 					_cb.corporate_name = "COUNTRY VIDEO GAMES";
 					_cb.title_name = "Revolution";
-					_cb.set_background_color(st->HeaderBackgroundColor);
 					_cb.code_detail_id = IDC_STATUS_DETAIL;
 					_cb.code_status_id = IDC_STATUS_MESSAGE;
+					_cb.background_brush = st->CaptionBackgroundBrush;
+					_cb.border_brush = st->CaptionBorderBrush;
 				}
 			);
 
@@ -610,11 +612,7 @@ namespace corona
 							if (auto win = _parent->window.lock()) {
 								auto& ctxt = win->getContext();
 
-								textStyleRequest tsr = {};
-								tsr.fontName = st->ParagraphTextFont;
-								tsr.fontSize = 14;
-								tsr.name = "item_paragraph";
-								ctxt.setTextStyle(&tsr);
+								ctxt.setTextStyle(&st->ParagraphFont);
 
 								solidBrushRequest sbr;
 								sbr.active = true;
