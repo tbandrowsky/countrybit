@@ -131,6 +131,43 @@ namespace corona {
 			double angle = float_math<double>::acos(costheta);
 			return angle;
 		}
+
+		static point origin(rectangle* _r)
+		{
+			point ret;
+
+			ret.x = _r->x;
+			ret.y = _r->y;
+
+			return ret;
+		}
+
+		static point size(rectangle* _r)
+		{
+			point ret;
+
+			ret.x = _r->w;
+			ret.y = _r->h;
+
+			return ret;
+		}
+
+		static point size(const point& i, const point& j)
+		{
+			point ret;
+
+			point min_point;
+			min_point.x = std::min(i.x, j.x);
+			min_point.y = std::min(i.y, j.y);
+
+			point max_point;
+			max_point.x = std::max(i.x, j.x);
+			max_point.y = std::max(i.y, j.y);
+
+			ret = max_point - min_point;
+
+			return ret;
+		}
 		static point rotate_2d(const point& origin, const point& pt, double angle)
 		{
 			double sinangle = float_math<double>::sin(angle);

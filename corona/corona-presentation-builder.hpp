@@ -1317,7 +1317,7 @@ namespace corona
 
 					if (background_brush->get_name())
 					{
-						pwindow->getContext().setBrush(background_brush.get());
+						pwindow->getContext().setBrush(background_brush.get(), &inner_bounds);
 						auto dc = context.getDeviceContext();
 						background_name = background_brush->get_name();
 					}

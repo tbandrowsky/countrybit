@@ -15,11 +15,11 @@ namespace corona
 		virtual std::string setBitmap(bitmapRequest* _bitmap) = 0;
 		virtual bool setBitmapSizes(bitmapRequest* _bitmap, bool _forceResize) = 0;
 		virtual bool setBitmapFilter(bitmapRequest* _bitmap, std::function<bool(point, int, int, char* bytes)> _filter) = 0;
-		virtual std::string setBrush(generalBrushRequest* _generalBrushDto) = 0;
-		virtual std::string  setBitmapBrush(bitmapBrushRequest* _bitmapBrush) = 0;
+		virtual std::string setBrush(generalBrushRequest* _generalBrushDto, rectangle*_size = nullptr) = 0;
+		virtual std::string setBitmapBrush(bitmapBrushRequest* _bitmapBrush) = 0;
 		virtual std::string setSolidColorBrush(solidBrushRequest* _solidBrushDto) = 0;
-		virtual std::string setLinearGradientBrush(linearGradientBrushRequest* _linearGradientBrushDto) = 0;
-		virtual std::string setRadialGradientBrush(radialGradientBrushRequest* _radialGradientBrushDto) = 0;
+		virtual std::string setLinearGradientBrush(linearGradientBrushRequest* _linearGradientBrushDto, rectangle* _size = nullptr) = 0;
+		virtual std::string setRadialGradientBrush(radialGradientBrushRequest* _radialGradientBrushDto, rectangle* _size = nullptr) = 0;
 		virtual void clearBitmapsAndBrushes(bool deleteStockObjects = false) = 0;
 
 		virtual std::string  setPath(pathDto* _pathDto, bool _closed = true) = 0;
@@ -252,23 +252,50 @@ namespace corona
 			return _solidBrushDto->name.c_str();
 		}
 
-		virtual std::string setLinearGradientBrush(linearGradientBrushRequest* _linearGradientBrushDto)
+		virtual std::string setLinearGradientBrush(linearGradientBrushRequest* _linearGradientBrushDto, rectangle* _size = nullptr)
 		{
 			D2D1_GRADIENT_STOP gradientStop;
 			auto brush = std::make_shared<linearGradientBrush>();
 			brush->stock = false;
-			brush->start = toPoint(_linearGradientBrushDto->start);
-			brush->stop = toPoint(_linearGradientBrushDto->stop);
+
+			// if a size rectangle is given, project the gradient onto that frame
+			if (_size) {
+				point extent_size = point_math::size(_size);
+				point extent_gradient = point_math::size(_linearGradientBrushDto->start, _linearGradientBrushDto->stop);
+				point diff = extent_size - extent_gradient;
+				point scale = {};
+
+				if (diff.x != 0.0) {
+					scale.x = extent_size.x / extent_gradient.x;
+				}
+				if (diff.y != 0.0) {
+					scale.y = extent_size.y / extent_gradient.y;
+				}
+
+				point origin = point_math::origin(_size);
+				point corner;
+				corner.x = origin.x + scale.x * extent_gradient.x;
+				corner.y = origin.y + scale.y * extent_gradient.y;
+
+				brush->start = toPoint(origin);
+				brush->stop = toPoint(corner);
+			}
+			else {
+				brush->start = toPoint(_linearGradientBrushDto->start);
+				brush->stop = toPoint(_linearGradientBrushDto->start);
+			}
+
 			for (auto i : _linearGradientBrushDto->gradientStops) {
 				gradientStop = toGradientStop(i);
 				brush->stops.push_back(gradientStop);
 			}
+
 			brushes[_linearGradientBrushDto->name.c_str()] = brush;
 			brush->create(this);
 			return _linearGradientBrushDto->name.c_str();
 		}
 
-		virtual std::string setRadialGradientBrush(radialGradientBrushRequest* _radialGradientBrushDto)
+		virtual std::string setRadialGradientBrush(radialGradientBrushRequest* _radialGradientBrushDto, rectangle* _size = nullptr)
 		{
 			D2D1_GRADIENT_STOP gradientStop;
 			auto brush = std::make_shared<radialGradientBrush>();
@@ -277,6 +304,31 @@ namespace corona
 			brush->radialProperties.gradientOriginOffset = toPoint(_radialGradientBrushDto->offset);
 			brush->radialProperties.radiusX = _radialGradientBrushDto->radiusX;
 			brush->radialProperties.radiusY = _radialGradientBrushDto->radiusY;
+
+			// if a size rectangle is given, project the gradient onto that frame
+			if (_size) 
+			{
+				point extent_size = point_math::size(_size);
+				point extent_gradient = point(_radialGradientBrushDto->radiusX, _radialGradientBrushDto->radiusY);
+				point diff = extent_size - extent_gradient;
+				point scale = {};
+
+				if (diff.x != 0.0) {
+					scale.x = extent_size.x / extent_gradient.x;
+				}
+				if (diff.y != 0.0) {
+					scale.y = extent_size.y / extent_gradient.y;
+				}
+
+				point origin = point_math::origin(_size);
+				point center;
+				center.x = origin.x + scale.x * extent_gradient.x;
+				center.y = origin.y + scale.y * extent_gradient.y;
+				brush->radialProperties.center = toPoint(center);
+				brush->radialProperties.radiusX = scale.x * _radialGradientBrushDto->radiusX;
+				brush->radialProperties.radiusY = scale.y * _radialGradientBrushDto->radiusY;
+			}
+
 			for (auto i : _radialGradientBrushDto->gradientStops) {
 				gradientStop = toGradientStop(i);
 				brush->stops.push_back(gradientStop);
@@ -286,16 +338,16 @@ namespace corona
 			return _radialGradientBrushDto->name.c_str();
 		}
 
-		virtual std::string setBrush(generalBrushRequest* _generalBrushDto)
+		virtual std::string setBrush(generalBrushRequest* _generalBrushDto, rectangle* _size = nullptr)
 		{
 			std::string val;
 
 			switch (_generalBrushDto->brush_type) {
 			case brush_types::radial_brush_type:
-				val = setRadialGradientBrush(_generalBrushDto->radial_brush.get());
+				val = setRadialGradientBrush(_generalBrushDto->radial_brush.get(), _size);
 				break;
 			case brush_types::linear_brush_type:
-				val = setLinearGradientBrush(_generalBrushDto->linear_brush.get());
+				val = setLinearGradientBrush(_generalBrushDto->linear_brush.get(), _size);
 				break;
 			case brush_types::solid_brush_type:
 				val = setSolidColorBrush(_generalBrushDto->solid_brush.get());
