@@ -1034,7 +1034,7 @@ namespace corona
 				{
 					if (auto pwindow = window.lock())
 					{
-						pwindow->getContext().setBrush(border_brush.get());
+						pwindow->getContext().setBrush(border_brush.get(), &inner_bounds);
 					}
 				};
 
@@ -1310,7 +1310,7 @@ namespace corona
 
 					if (border_brush->get_name())
 					{
-						pwindow->getContext().setBrush(border_brush.get());
+						pwindow->getContext().setBrush(border_brush.get(), &inner_bounds);
 						auto dc = context.getDeviceContext();
 						border_name = border_brush->get_name();
 					}
@@ -1402,7 +1402,7 @@ namespace corona
 			background_brush->set_name(typeid(*this).name() );
 			if (auto pwindow = window.lock())
 			{
-				pwindow->getContext().setBrush(background_brush.get());
+				pwindow->getContext().setBrush(background_brush.get(), &inner_bounds);
 			}
 			return *this;
 		}
@@ -1413,7 +1413,7 @@ namespace corona
 			background_brush->set_name(typeid(*this).name());
 			if (auto pwindow = window.lock())
 			{
-				pwindow->getContext().setBrush(background_brush.get());
+				pwindow->getContext().setBrush(background_brush.get(), &inner_bounds);
 			}
 			return *this;
 		}
@@ -1424,7 +1424,7 @@ namespace corona
 			border_brush->set_name(typeid(*this).name());
 			if (auto pwindow = window.lock())
 			{
-				pwindow->getContext().setBrush(border_brush.get());
+				pwindow->getContext().setBrush(border_brush.get(), &inner_bounds);
 			}
 			return *this;
 		}
@@ -1435,7 +1435,7 @@ namespace corona
 			border_brush->set_name( typeid(*this).name() );
 			if (auto pwindow = window.lock())
 			{
-				pwindow->getContext().setBrush(border_brush.get());
+				pwindow->getContext().setBrush(border_brush.get(), &inner_bounds);
 			}
 			return *this;
 		}

@@ -258,31 +258,18 @@ namespace corona
 			auto brush = std::make_shared<linearGradientBrush>();
 			brush->stock = false;
 
+			brush->start = _linearGradientBrushDto->start;
+			brush->stop = _linearGradientBrushDto->stop;
+
 			// if a size rectangle is given, project the gradient onto that frame
+			// assume that the position in the gradient is a 1 based square relative
+			// to whatever frame it is on.
 			if (_size) {
-				point extent_size = point_math::size(_size);
-				point extent_gradient = point_math::size(_linearGradientBrushDto->start, _linearGradientBrushDto->stop);
-				point diff = extent_size - extent_gradient;
-				point scale = {};
+				point extent_size = rectangle_math::size(_size);
+				point origin = rectangle_math::origin(_size);
 
-				if (diff.x != 0.0) {
-					scale.x = extent_size.x / extent_gradient.x;
-				}
-				if (diff.y != 0.0) {
-					scale.y = extent_size.y / extent_gradient.y;
-				}
-
-				point origin = point_math::origin(_size);
-				point corner;
-				corner.x = origin.x + scale.x * extent_gradient.x;
-				corner.y = origin.y + scale.y * extent_gradient.y;
-
-				brush->start = toPoint(origin);
-				brush->stop = toPoint(corner);
-			}
-			else {
-				brush->start = toPoint(_linearGradientBrushDto->start);
-				brush->stop = toPoint(_linearGradientBrushDto->start);
+				brush->stop = origin + _linearGradientBrushDto->stop * extent_size;
+				brush->start = origin + _linearGradientBrushDto->start * extent_size;
 			}
 
 			for (auto i : _linearGradientBrushDto->gradientStops) {
@@ -300,15 +287,15 @@ namespace corona
 			D2D1_GRADIENT_STOP gradientStop;
 			auto brush = std::make_shared<radialGradientBrush>();
 			brush->stock = false;
-			brush->radialProperties.center = toPoint(_radialGradientBrushDto->center);
-			brush->radialProperties.gradientOriginOffset = toPoint(_radialGradientBrushDto->offset);
+			brush->radialProperties.center = _radialGradientBrushDto->center;
+			brush->radialProperties.gradientOriginOffset = _radialGradientBrushDto->offset;
 			brush->radialProperties.radiusX = _radialGradientBrushDto->radiusX;
 			brush->radialProperties.radiusY = _radialGradientBrushDto->radiusY;
 
 			// if a size rectangle is given, project the gradient onto that frame
 			if (_size) 
 			{
-				point extent_size = point_math::size(_size);
+				point extent_size = rectangle_math::size(_size);
 				point extent_gradient = point(_radialGradientBrushDto->radiusX, _radialGradientBrushDto->radiusY);
 				point diff = extent_size - extent_gradient;
 				point scale = {};
@@ -320,11 +307,11 @@ namespace corona
 					scale.y = extent_size.y / extent_gradient.y;
 				}
 
-				point origin = point_math::origin(_size);
+				point origin = rectangle_math::origin(_size);
 				point center;
 				center.x = origin.x + scale.x * extent_gradient.x;
 				center.y = origin.y + scale.y * extent_gradient.y;
-				brush->radialProperties.center = toPoint(center);
+				brush->radialProperties.center = center;
 				brush->radialProperties.radiusX = scale.x * _radialGradientBrushDto->radiusX;
 				brush->radialProperties.radiusY = scale.y * _radialGradientBrushDto->radiusY;
 			}
@@ -381,7 +368,7 @@ namespace corona
 				if (findingMoveTo) {
 					pathLineDto* l = t->asPathLineDto();
 					if (l) {
-						D2D1_POINT_2F point = toPoint(t->asPathLineDto()->point);
+						D2D1_POINT_2F point = t->asPathLineDto()->point;
 						newPath->start_figure(point);
 						findingMoveTo = false;
 					}
@@ -391,27 +378,27 @@ namespace corona
 					switch (t->eType) {
 					case e_line:
 						pline = t->asPathLineDto();
-						point1 = toPoint(pline->point);
+						point1 = pline->point;
 						newPath->add_line(point1);
 						break;
 					case e_arc:
 						parc = t->asPathArcDto();
-						point1 = toPoint(parc->point);
+						point1 = parc->point;
 						size1.height = parc->radiusX;
 						size1.width = parc->radiusY;
 						newPath->add_arc(point1, size1, parc->angleDegrees);
 						break;
 					case e_bezier:
 						pbezier = t->asPathBezierDto();
-						point1 = toPoint(pbezier->point1);
-						point2 = toPoint(pbezier->point2);
-						point3 = toPoint(pbezier->point3);
+						point1 = pbezier->point1;
+						point2 = pbezier->point2;
+						point3 = pbezier->point3;
 						newPath->add_bezier(point1, point2, point3);
 						break;
 					case e_quadractic_bezier:
 						pquadraticbezier = t->asPathQuadraticBezierDto();
-						point1 = toPoint(pquadraticbezier->point1);
-						point2 = toPoint(pquadraticbezier->point2);
+						point1 = pquadraticbezier->point1;
+						point2 = pquadraticbezier->point2;
 						newPath->add_quadratic_bezier(point1, point2);
 						break;
 					}

@@ -218,7 +218,7 @@ namespace corona
 		set_origin(0.0_px, 0.0_px);
 		set_size(1.0_container, 1.2_fontgr);
 
-		on_create = [](draw_control* _src)
+		on_create = [this](draw_control* _src)
 			{
 				std::cout << typeid(*_src).name() << " on_create" << std::endl;
 				text_display_control *t = dynamic_cast<text_display_control*>(_src);
@@ -226,7 +226,7 @@ namespace corona
 				{
 					std::cout << typeid(*_src).name() << " on_create created" << std::endl;
 					if (t->text_fill_brush) {
-						pwindow->getContext().setBrush(t->text_fill_brush.get());
+						pwindow->getContext().setBrush(t->text_fill_brush.get(), &inner_bounds);
 					}
 					if (t->text_style) {
 						pwindow->getContext().setTextStyle(t->text_style.get());

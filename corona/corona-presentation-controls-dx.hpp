@@ -115,13 +115,13 @@ namespace corona
 
 						if (border_brush && border_brush->get_name())
 						{
-							context.setBrush(border_brush.get());
+							context.setBrush(border_brush.get(), &inner_bounds);
 							border_name = border_brush->get_name();
 						}
 
 						if (background_brush && background_brush->get_name())
 						{
-							context.setBrush(background_brush.get());
+							context.setBrush(background_brush.get(), &inner_bounds);
 							background_name = background_brush->get_name();
 						}
 

@@ -89,8 +89,8 @@ namespace corona
 	class linearGradientBrush : public deviceDependentAsset<ID2D1LinearGradientBrush*>, brush {
 	public:
 		std::vector<D2D1_GRADIENT_STOP> stops;
-		D2D1_POINT_2F					start,
-			stop;
+		D2D1_POINT_2F					start;
+		D2D1_POINT_2F					stop;
 
 		bool create(direct2dContextBase* ptarget)
 		{
@@ -107,6 +107,10 @@ namespace corona
 
 				if (SUCCEEDED(hr))
 				{
+					if (asset) {
+						asset->Release();
+						asset = nullptr;
+					}
 					hr = ptarget->getDeviceContext()->CreateLinearGradientBrush(
 						D2D1::LinearGradientBrushProperties(start, stop),
 						D2D1::BrushProperties(),
@@ -132,7 +136,7 @@ namespace corona
 		std::vector<D2D1_GRADIENT_STOP> stops;
 		D2D1_RADIAL_GRADIENT_BRUSH_PROPERTIES radialProperties;
 
-		bool radialGradientBrush::create(direct2dContextBase* ptarget)
+		bool create(direct2dContextBase* ptarget)
 		{
 			ID2D1GradientStopCollection* pGradientStops = NULL;
 

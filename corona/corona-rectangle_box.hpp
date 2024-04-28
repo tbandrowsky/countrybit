@@ -50,6 +50,26 @@ namespace corona {
 			return r1;
 		}
 
+		static point origin(rectangle* _r)
+		{
+			point ret;
+
+			ret.x = _r->x;
+			ret.y = _r->y;
+
+			return ret;
+		}
+
+		static point size(rectangle* _r)
+		{
+			point ret;
+
+			ret.x = _r->w;
+			ret.y = _r->h;
+
+			return ret;
+		}
+
 	};
 
 	class rectangle_box : protected boxed<rectangle>

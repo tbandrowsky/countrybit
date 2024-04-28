@@ -157,9 +157,9 @@ namespace corona
 
 		linearGradientBrushRequest lgbr;
 
-		lgbr.start.x = 0;
+		lgbr.start.x = .5;
 		lgbr.start.y = 0;
-		lgbr.stop.x = 1;
+		lgbr.stop.x = .5;
 		lgbr.stop.y = 1;
 
 		lgbr.gradientStops = {
@@ -181,15 +181,14 @@ namespace corona
 		countrybit.PageTextBrush->set_name("PageText");
 		countrybit.PageFont->name = "PageFont";
 
-		lgbr.start.x = 0;
+		lgbr.start.x = .5;
 		lgbr.start.y = 0;
-		lgbr.stop.x = 1;
+		lgbr.stop.x = .5;
 		lgbr.stop.y = 1;
 		lgbr.gradientStops = {
 { toColor("#000000"), 0.0 },
-{ toColor("#010101"), 1.0 }
+{ toColor("#0F0F0F"), 1.0 }
 		};
-
 
 		countrybit.PlaceholderBackgroundBrush = std::make_shared<generalBrushRequest>(lgbr);
 		countrybit.PlaceholderBorderBrush = std::make_shared<generalBrushRequest>();

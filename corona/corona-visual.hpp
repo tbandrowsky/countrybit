@@ -649,14 +649,6 @@ namespace corona {
 		return newSize;
 	}
 
-	D2D1_POINT_2F toPoint(const point& _point)
-	{
-		D2D1_POINT_2F point2;
-		point2.x = _point.x;
-		point2.y = _point.y;
-		return point2;
-	}
-
 	D2D1_GRADIENT_STOP toGradientStop(const gradientStop& _gradientStop)
 	{
 		D2D1_GRADIENT_STOP stop;

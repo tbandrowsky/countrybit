@@ -30,6 +30,14 @@ namespace corona {
 			y = _y;
 			z = _z;
 		}
+
+		operator D2D1_POINT_2F()
+		{
+			D2D1_POINT_2F pt;
+			pt.x = x;
+			pt.y = y;
+			return pt;
+		}
 	};
 
 
@@ -131,27 +139,6 @@ namespace corona {
 			double angle = float_math<double>::acos(costheta);
 			return angle;
 		}
-
-		static point origin(rectangle* _r)
-		{
-			point ret;
-
-			ret.x = _r->x;
-			ret.y = _r->y;
-
-			return ret;
-		}
-
-		static point size(rectangle* _r)
-		{
-			point ret;
-
-			ret.x = _r->w;
-			ret.y = _r->h;
-
-			return ret;
-		}
-
 		static point size(const point& i, const point& j)
 		{
 			point ret;
