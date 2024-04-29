@@ -681,6 +681,8 @@ namespace corona
 				std::copy(src_begin, src_end, dest);
 				return temp;
 			}
+			buffer empty;
+			return empty;
 		}
 
 		std::shared_ptr<json_value> operator ->()

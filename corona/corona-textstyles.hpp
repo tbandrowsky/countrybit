@@ -99,7 +99,10 @@ namespace corona {
 
 					if (auto fact = ptarget->getAdapter().lock())
 					{
-
+						if (lpWriteTextFormat) {
+							lpWriteTextFormat->Release();
+							lpWriteTextFormat = nullptr;
+						}
 						HRESULT hr = fact->getDWriteFactory()->CreateTextFormat(wideName.c_str(),
 							NULL,
 							bold ? DWRITE_FONT_WEIGHT_BOLD : DWRITE_FONT_WEIGHT_REGULAR,

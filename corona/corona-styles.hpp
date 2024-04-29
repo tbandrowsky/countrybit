@@ -163,19 +163,22 @@ namespace corona
 		lgbr.stop.y = 1;
 
 		lgbr.gradientStops = {
-	{ toColor("#FFFFFF"), 0.0 },
-	{ toColor("#CFCFCF"), 1.0 }
+	{ toColor("#101040"), 0.0 },
+	{ toColor("#101020"), 0.14 },
+	{ toColor("#d1d1d0"), 0.15 },
+	{ toColor("#d1d1d0"), 0.85 },
+	{ toColor("#d1d1d0"), 1.0 }
 		};
 
 		countrybit.PageBackgroundBrush = std::make_shared<generalBrushRequest>(lgbr);
 		countrybit.PageBorderBrush = std::make_shared<generalBrushRequest>();
 		countrybit.PageTextBrush = std::make_shared<generalBrushRequest>();
 
-		countrybit.PageBorderBrush->setColor("#c0c0c0");
+		countrybit.PageBorderBrush->setColor("#C0C0C0");
 		countrybit.PageTextBrush->setColor("#000000");	
 		countrybit.PageFont = std::make_shared<textStyleRequest>(text_style);
 		countrybit.PageFont->fontName = "Century Gothic,Arial";
-		countrybit.PageFont->fontSize = 24;
+		countrybit.PageFont->fontSize = 14;
 		countrybit.PageBackgroundBrush->set_name("PageBackground");
 		countrybit.PageBorderBrush->set_name("PageBorder");
 		countrybit.PageTextBrush->set_name("PageText");
@@ -186,16 +189,17 @@ namespace corona
 		lgbr.stop.x = .5;
 		lgbr.stop.y = 1;
 		lgbr.gradientStops = {
-{ toColor("#000000"), 0.0 },
-{ toColor("#0F0F0F"), 1.0 }
+{ toColor("#B0B0B0"), 0.0 },
+{ toColor("#C0C0C0"), 0.8 },
+{ toColor("#FFFFFF"), 1.0 }
 		};
 
 		countrybit.PlaceholderBackgroundBrush = std::make_shared<generalBrushRequest>(lgbr);
 		countrybit.PlaceholderBorderBrush = std::make_shared<generalBrushRequest>();
 		countrybit.PlaceholderTextBrush = std::make_shared<generalBrushRequest>();
-		countrybit.PlaceholderTextBrush->setColor("#FFFFFF");
+		countrybit.PlaceholderTextBrush->setColor("#000000");
 		countrybit.PlaceholderFont = std::make_shared<textStyleRequest>(text_style);
-		countrybit.PlaceholderFont->fontName = "Century Gothic,Arial";
+		countrybit.PlaceholderFont->fontName = textFont;
 		countrybit.PlaceholderFont->fontSize = 24;
 		countrybit.PlaceholderBackgroundBrush->set_name("PlaceholderBackground");
 		countrybit.PlaceholderBorderBrush->set_name("PlaceholderBorder");
@@ -203,26 +207,28 @@ namespace corona
 		countrybit.PlaceholderFont->name = "PlaceholderFont";
 
 
-		countrybit.CaptionBackgroundBrush = std::make_shared<generalBrushRequest>(lgbr);
+		countrybit.CaptionBackgroundBrush = std::make_shared<generalBrushRequest>();
+		countrybit.CaptionBackgroundBrush->set_name("CaptionBackground");
+		countrybit.CaptionBackgroundBrush->setColor("#000000");
 		countrybit.CaptionBorderBrush = std::make_shared<generalBrushRequest>();
+		countrybit.CaptionBorderBrush->set_name("CaptionBorder");
 		countrybit.CaptionTextBrush = std::make_shared<generalBrushRequest>();
 		countrybit.CaptionTextBrush->setColor("#FFFFFF");
+		countrybit.CaptionTextBrush->set_name("CaptionText");
 		countrybit.CaptionFont = std::make_shared<textStyleRequest>(text_style);
 		countrybit.CaptionFont->fontName = "Century Gothic,Arial";
-		countrybit.CaptionFont->fontSize = 48;
-		countrybit.CaptionBackgroundBrush->set_name("CaptionBackground");
-		countrybit.CaptionBorderBrush->set_name("CaptionBorder");
-		countrybit.CaptionTextBrush->set_name("CaptionText");
+		countrybit.CaptionFont->fontSize = 24;
 		countrybit.CaptionFont->name = "CaptionFont";
 
 
 		countrybit.TitleBackgroundBrush = std::make_shared<generalBrushRequest>();
 		countrybit.TitleBorderBrush = std::make_shared<generalBrushRequest>();
 		countrybit.TitleTextBrush = std::make_shared<generalBrushRequest>();
-		countrybit.TitleTextBrush->setColor("#FFFFFF");
+		countrybit.TitleTextBrush->setColor("#000000");
 		countrybit.TitleFont = std::make_shared<textStyleRequest>(text_style);
-		countrybit.TitleFont->fontName = "Century Gothic,Arial";
-		countrybit.TitleFont->fontSize = 32;
+		countrybit.TitleFont->fontName = "Perpetua Titling,Century Gothic,Arial";
+		countrybit.TitleFont->fontSize = 48;
+		countrybit.TitleFont->vertical_align = visual_alignment::align_near;
 		countrybit.TitleBackgroundBrush->set_name("TitleBackground");
 		countrybit.TitleBorderBrush->set_name("TitleBorder");
 		countrybit.TitleTextBrush->set_name("TitleText");
@@ -235,7 +241,7 @@ namespace corona
 		countrybit.SubtitleTextBrush->setColor("#000000");
 		countrybit.SubtitleFont = std::make_shared<textStyleRequest>(text_style);
 		countrybit.SubtitleFont->fontName = "Century Gothic,Arial";
-		countrybit.SubtitleFont->fontSize = 28;
+		countrybit.SubtitleFont->fontSize = 48;
 		countrybit.SubtitleBackgroundBrush->set_name("SubtitleBackground");
 		countrybit.SubtitleBorderBrush->set_name("SubtitleBorder");
 		countrybit.SubtitleTextBrush->set_name("SubtitleText");

@@ -1536,11 +1536,11 @@ namespace corona
 				rl.set_nchittest(HTCAPTION);
 				});
 
-			auto title_column = main_row.row_begin(id_counter::next(), [](row_layout& cl) {
-				cl.set_content_align(visual_alignment::align_center);
-				cl.set_content_cross_align(visual_alignment::align_center);
+			auto title_column = main_row.column_begin(id_counter::next(), [](column_layout& cl) {
+				cl.set_content_align(visual_alignment::align_near);
+				cl.set_content_cross_align(visual_alignment::align_near);
 				cl.set_item_margin(0.0_px);
-				cl.set_size(1.0_remaining, 1.0_container);
+				cl.set_size(500.0_px, 1.0_container);
 					})
 				.title(title_name, [this](title_control& control) {
 						control.set_size(1.0_container, 1.0_container);
@@ -1560,13 +1560,7 @@ namespace corona
 					cl.set_content_cross_align(visual_alignment::align_near);
 					cl.set_size(450.0_px, 1.0_container);
 					cl.set_item_margin(0.0_px);
-						})
-					.code(code_status_id, [](code_control& control) {
-							control.set_size(1.0_container, 1.4_fontgr);
-						})
-					.code(code_detail_id, [](code_control& control) {
-							control.set_size(1.0_container, .9_remaining);
-					})
+				})
 				.end()
 				.menu_button(menu_button_id, [this](auto& _ctrl) { _ctrl.set_size(50.0_px, 50.0_px);_ctrl.menu = *menu;	})
 				.minimize_button(min_button_id, [](auto& _ctrl) { _ctrl.set_size(50.0_px, 50.0_px); })

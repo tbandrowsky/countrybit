@@ -273,8 +273,8 @@ namespace corona
 		{
 			create_page_frame(_page, [this](control_builder cb) 
 			{
-					cb.title("Login");
-					cb.paragraph("Enter your username and password.");					
+					cb.chaptertitle("Login");
+					cb.chaptersubtitle("Enter your username and password.");					
 					cb.form_view(IDC_FORM_VIEW, [](form_view_control& _fv)
 					{
 						item_data_source ids;
@@ -318,8 +318,8 @@ namespace corona
 		{
 			create_page_frame(_page, [this](control_builder cb)
 				{
-					cb.title("Send Login Code");
-					cb.paragraph("Bring up your email, and click send code.  You'll receive a code that you will enter to login.  This extra step helps protect you.");
+					cb.chaptertitle("Send Login Code");
+					cb.chaptersubtitle("Bring up your email, and click send code.  You'll receive a code that you will enter to login.  This extra step helps protect you.");
 					cb.calico_button(IDC_BTN_LOGIN_SENDCODE, [this](calico_button_control& cbc)
 						{
 							json_parser jp;
@@ -339,8 +339,8 @@ namespace corona
 		{
 			create_page_frame(_page, [this](control_builder& cb)
 				{
-					cb.title("Enter Confirmation Code");
-					cb.paragraph("An email was sent to you.  Please enter the code you received.");
+					cb.chaptertitle("Enter Confirmation Code");
+					cb.chaptersubtitle("An email was sent to you.  Please enter the code you received.");
 					cb.form_view(IDC_FORM_VIEW, [](form_view_control& _fv)
 						{
 							item_data_source ids;
@@ -375,8 +375,8 @@ namespace corona
 		{
 			create_page_frame(_page, [this](control_builder& cb)
 				{
-					cb.title("Enter New Password");
-					cb.paragraph("An email was sent to you.  Please enter the code you received.");
+					cb.chaptertitle("Enter New Password");
+					cb.chaptersubtitle("Please enter the code that you were emailed.");
 
 					cb.form_view(IDC_FORM_VIEW, [](form_view_control& _fv)
 						{

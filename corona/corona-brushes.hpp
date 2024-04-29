@@ -35,9 +35,18 @@ namespace corona
 				if (!ptarget || !ptarget->getDeviceContext())
 					return false;
 
+				if (asset) {
+					asset->Release();
+					asset = nullptr;
+				}
+
 				if (auto pbm = bm.lock()) {
 					hr = ptarget->getDeviceContext()->CreateBitmapBrush(pbm->getFirst(), &asset);
+					if (!SUCCEEDED(hr)) {
+						std::cout << "Could not create bitnap brush " << std::endl;
+					}
 				}
+
 			}
 
 			return SUCCEEDED(hr);
@@ -73,7 +82,16 @@ namespace corona
 				if (!ptarget->getDeviceContext())
 					return false;
 
+				if (asset) {
+					asset->Release();
+					asset = nullptr;
+				}
+
 				hr = ptarget->getDeviceContext()->CreateSolidColorBrush(color, &asset);
+			}
+
+			if (!SUCCEEDED(hr)) {
+				std::cout << "Could not create solid brush " << std::endl;
 			}
 
 			return SUCCEEDED(hr);
@@ -118,9 +136,11 @@ namespace corona
 						&asset
 					);
 					pGradientStops->Release();
+					if (!SUCCEEDED(hr)) {
+						std::cout << "Could not create linear gradient brush " << std::endl;
+					}
 				}
 			}
-
 			return SUCCEEDED(hr);
 		}
 
@@ -151,6 +171,10 @@ namespace corona
 
 				if (SUCCEEDED(hr))
 				{
+					if (asset) {
+						asset->Release();
+						asset = nullptr;
+					}
 					hr = ptarget->getDeviceContext()->CreateRadialGradientBrush(
 						radialProperties,
 						D2D1::BrushProperties(),

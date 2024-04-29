@@ -28,6 +28,10 @@ namespace corona
 		}
 
 		void init();
+		virtual void set_default_styles()
+		{
+			;
+		}
 		virtual double get_font_size() { return text_style ? text_style->fontSize : 14; }
 		text_display_control& set_text(std::string _text);
 		text_display_control& set_text_fill(generalBrushRequest _brushFill);
@@ -39,7 +43,6 @@ namespace corona
 
 	class title_control : public text_display_control
 	{
-		void set_default_styles();
 	public:
 		title_control();
 		title_control(const title_control& _src) : text_display_control(_src) 
@@ -47,6 +50,8 @@ namespace corona
 			;
 		}
 		title_control(container_control_base* _parent, int _id);
+
+		virtual void set_default_styles();
 
 		virtual std::shared_ptr<control_base> clone()
 		{
@@ -59,7 +64,6 @@ namespace corona
 
 	class subtitle_control : public text_display_control
 	{
-		void set_default_styles();
 	public:
 		subtitle_control();
 		subtitle_control(const subtitle_control& _src) : text_display_control(_src)
@@ -67,6 +71,8 @@ namespace corona
 			;
 		}
 		subtitle_control(container_control_base* _parent, int _id);
+
+		virtual void set_default_styles();
 
 		virtual std::shared_ptr<control_base> clone()
 		{
@@ -79,7 +85,6 @@ namespace corona
 
 	class chaptertitle_control : public text_display_control
 	{
-		void set_default_styles();
 	public:
 		chaptertitle_control();
 		chaptertitle_control(const chaptertitle_control& _src) : text_display_control(_src)
@@ -87,6 +92,7 @@ namespace corona
 			;
 		}
 		chaptertitle_control(container_control_base* _parent, int _id);
+		virtual void set_default_styles();
 
 		virtual std::shared_ptr<control_base> clone()
 		{
@@ -99,7 +105,6 @@ namespace corona
 
 	class chaptersubtitle_control : public text_display_control
 	{
-		void set_default_styles();
 	public:
 		chaptersubtitle_control();
 		chaptersubtitle_control(const chaptersubtitle_control& _src) : text_display_control(_src)
@@ -108,6 +113,7 @@ namespace corona
 		}
 		chaptersubtitle_control(container_control_base* _parent, int _id);
 
+		virtual void set_default_styles();
 		virtual std::shared_ptr<control_base> clone()
 		{
 			auto tv = std::make_shared<chaptersubtitle_control>(*this);
@@ -119,7 +125,6 @@ namespace corona
 
 	class paragraph_control : public text_display_control
 	{
-		void set_default_styles();
 	public:
 		paragraph_control();
 		paragraph_control(container_control_base* _parent, int _id);
@@ -127,7 +132,7 @@ namespace corona
 		{
 			;
 		}
-
+		virtual void set_default_styles();
 		virtual std::shared_ptr<control_base> clone()
 		{
 			auto tv = std::make_shared<paragraph_control>(*this);
@@ -140,7 +145,6 @@ namespace corona
 
 	class code_control : public text_display_control
 	{
-		void set_default_styles();
 	public:
 		code_control();
 		code_control(container_control_base* _parent, int _id);
@@ -148,7 +152,7 @@ namespace corona
 		{
 			;
 		}
-
+		virtual void set_default_styles();
 		virtual std::shared_ptr<control_base> clone()
 		{
 			auto tv = std::make_shared<code_control>(*this);
@@ -160,7 +164,6 @@ namespace corona
 
 	class label_control : public text_display_control
 	{
-		void set_default_styles();
 	public:
 		label_control();
 		label_control(container_control_base* _parent, int _id);
@@ -168,7 +171,7 @@ namespace corona
 		{
 			;
 		}
-
+		virtual void set_default_styles();
 		virtual std::shared_ptr<control_base> clone()
 		{
 			auto tv = std::make_shared<label_control>(*this);
@@ -180,7 +183,6 @@ namespace corona
 
 	class placeholder_control : public text_display_control
 	{
-		void set_default_styles();
 	public:
 		placeholder_control();
 		placeholder_control(container_control_base* _parent, int _id);
@@ -188,7 +190,7 @@ namespace corona
 		{
 			;
 		}
-
+		virtual void set_default_styles();
 		virtual std::shared_ptr<control_base> clone()
 		{
 			auto tv = std::make_shared<placeholder_control>(*this);
@@ -222,14 +224,16 @@ namespace corona
 			{
 				std::cout << typeid(*_src).name() << " on_create" << std::endl;
 				text_display_control *t = dynamic_cast<text_display_control*>(_src);
-				if (auto pwindow = _src->window.lock())
-				{
-					std::cout << typeid(*_src).name() << " on_create created" << std::endl;
-					if (t->text_fill_brush) {
-						pwindow->getContext().setBrush(t->text_fill_brush.get(), &inner_bounds);
-					}
-					if (t->text_style) {
-						pwindow->getContext().setTextStyle(t->text_style.get());
+				if (t) {
+					t->set_default_styles();
+					if (auto pwindow = _src->window.lock())
+					{
+						if (t->text_fill_brush) {
+							pwindow->getContext().setBrush(t->text_fill_brush.get(), &inner_bounds);
+						}
+						if (t->text_style) {
+							pwindow->getContext().setTextStyle(t->text_style.get());
+						}
 					}
 				}
 			};
@@ -305,12 +309,12 @@ namespace corona
 
 	title_control::title_control(container_control_base* _parent, int _id) : text_display_control(_parent, _id)
 	{
-		set_default_styles();
+		
 	}
 
 	title_control::title_control()
 	{
-		set_default_styles();
+		
 	}
 
 	title_control::~title_control()
@@ -329,12 +333,12 @@ namespace corona
 
 	subtitle_control::subtitle_control(container_control_base* _parent, int _id) : text_display_control(_parent, _id)
 	{
-		set_default_styles();
+		
 	}
 
 	subtitle_control::subtitle_control()
 	{
-		set_default_styles();
+		
 	}
 
 	subtitle_control::~subtitle_control()
@@ -352,12 +356,12 @@ namespace corona
 
 	chaptertitle_control::chaptertitle_control(container_control_base* _parent, int _id) : text_display_control(_parent, _id)
 	{
-		set_default_styles();
+		
 	}
 
 	chaptertitle_control::chaptertitle_control()
 	{
-		set_default_styles();
+		
 	}
 
 	chaptertitle_control::~chaptertitle_control()
@@ -375,12 +379,12 @@ namespace corona
 
 	chaptersubtitle_control::chaptersubtitle_control(container_control_base* _parent, int _id) : text_display_control(_parent, _id)
 	{
-		set_default_styles();
+		
 	}
 
 	chaptersubtitle_control::chaptersubtitle_control()
 	{
-		set_default_styles();
+		
 	}
 
 	chaptersubtitle_control::~chaptersubtitle_control()
@@ -422,12 +426,12 @@ namespace corona
 
 	code_control::code_control(container_control_base* _parent, int _id) : text_display_control(_parent, _id)
 	{
-		set_default_styles();
+		
 	}
 
 	code_control::code_control()
 	{
-		set_default_styles();
+		
 	}
 
 	code_control::~code_control()
@@ -447,12 +451,12 @@ namespace corona
 
 	label_control::label_control()
 	{
-		set_default_styles();
+		
 	}
 
 	label_control::label_control(container_control_base* _parent, int _id) : text_display_control(_parent, _id)
 	{
-		set_default_styles();
+		
 	}
 
 	label_control::~label_control()

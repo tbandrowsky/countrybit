@@ -214,7 +214,7 @@ namespace corona
 		{
 			system_time = {};
 
-			int args = sscanf_s(_src.c_str(), "%04h-%h-%hT%h:%h:%h.%hZ",
+			int args = sscanf_s(_src.c_str(), "%04hd-%hd-%hdT%hd:%hd:%hd.%hdZ",
 				&system_time.wMonth,
 				&system_time.wDay,
 				&system_time.wYear,
@@ -231,7 +231,7 @@ namespace corona
 		{
 			system_time = {};
 
-			int args = sscanf_s(_src, "%d/%d/%d %d:%d:%d.%d",
+			int args = sscanf_s(_src, "%hd/%hd/%hd %hd:%hd:%hd.%hd",
 				&system_time.wMonth,
 				&system_time.wDay,
 				&system_time.wYear,
@@ -334,7 +334,8 @@ namespace corona
 		time_span at = (time_span)a;
 		time_span bt = (time_span)b;
 
-		time_span result = at - bt;
+		double temp = at.units - bt.units;
+		time_span result(temp, time_models::seconds);
 		return result;
 	}
 
