@@ -618,7 +618,7 @@ namespace corona
 				if (evt) {
 					evt->on_load(ple);
 				}
-			}
+			}			
 		}
 
 		void handle_unload(std::shared_ptr<page> _pg)

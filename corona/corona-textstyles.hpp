@@ -22,6 +22,8 @@ namespace corona {
 
 	public:
 
+
+
 		textStyle(std::string _fontName,
 			float _size,
 			bool _bold,
@@ -115,6 +117,13 @@ namespace corona {
 						if (SUCCEEDED(hr) || lpWriteTextFormat != nullptr) {
 							break;
 						}
+						else 
+						{
+							std::cout << "Font '" << fontName << "' not loaded." << std::endl;
+						}
+					}
+					else {
+						std::cout << "Font '" << fontName << "' not created adapter not locked." << std::endl;
 					}
 
 					fontExtractedName = fontList.next_token(',', state);

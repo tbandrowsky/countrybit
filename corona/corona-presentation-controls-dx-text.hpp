@@ -222,12 +222,12 @@ namespace corona
 
 		on_create = [this](draw_control* _src)
 			{
-				std::cout << typeid(*_src).name() << " on_create" << std::endl;
 				text_display_control *t = dynamic_cast<text_display_control*>(_src);
 				if (t) {
 					t->set_default_styles();
-					if (auto pwindow = _src->window.lock())
-					{
+
+					if (auto pwindow = this->window.lock())
+					{					
 						if (t->text_fill_brush) {
 							pwindow->getContext().setBrush(t->text_fill_brush.get(), &inner_bounds);
 						}
@@ -243,6 +243,8 @@ namespace corona
 			{
 				if (auto phost = host.lock()) {
 					auto draw_bounds = inner_bounds;
+
+					text_display_control* t = dynamic_cast<text_display_control*>(_src);
 
 					if (!text.size()) text = "";
 

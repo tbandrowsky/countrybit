@@ -20,6 +20,8 @@ namespace corona {
 		std::string home_page;
 
 	public:
+		int default_focus_id;
+		int default_push_button_id;
 
 		std::map<std::string, std::shared_ptr<page>> pages;
 		std::weak_ptr<applicationBase> window_host;
@@ -28,11 +30,15 @@ namespace corona {
 		presentation()
 		{
 			data = std::make_shared<data_lake>();
+			default_push_button_id = 0;
+			default_focus_id = 0;
 		}
 
 		presentation(std::weak_ptr<applicationBase> _window_host) : window_host(_window_host)
 		{
 			data = std::make_shared<data_lake>();
+			default_push_button_id = 0;
+			default_focus_id = 0;
 		}
 
 		int get_control_id(std::string _name, std::function<int()> _id)
@@ -264,8 +270,22 @@ namespace corona {
 			current_page = pages[_page_name];
 		}
 
+		default_focus_id = 0;
+		default_push_button_id = 0;
+
 		if (auto ppage = current_page.lock()) {
 			ppage->handle_onselect(ppage);
+			auto root = ppage->get_root();
+			root->foreach([this](control_base* _item) {
+				pushbutton_control* pct = dynamic_cast<pushbutton_control*>(_item);
+				if (pct->is_default_button) {
+					this->default_push_button_id = pct->id;
+				}
+				windows_control* wct = dynamic_cast<windows_control*>(_item);
+				if (wct->is_default_focus) {
+					this->default_focus_id = wct->id;
+				}
+			});
 		}
 
 		onCreated();
@@ -277,9 +297,11 @@ namespace corona {
 				::SetMenu(hwndMainMenu, hmenu);
 				::DrawMenuBar(hwndMainMenu);
 			}
-		}
+			HWND hwnd_control = ::GetDlgItem(phost->getMainWindow(), default_focus_id);
+			if (hwnd_control) {
+				::SetFocus(hwnd_control);
+			}
 
-		if (auto ppage = current_page.lock()) {
 			ppage->handle_onload(ppage);
 		}
 	}
@@ -305,12 +327,27 @@ namespace corona {
 			current_page = pages[_page_name];
 		}
 
+		default_focus_id = 0;
+		default_push_button_id = 0;
+
 		if (auto ppage = current_page.lock()) {
 			ppage->handle_onselect(ppage);
+			auto root = ppage->get_root();
+			root->foreach([this](control_base* _item) {
+				pushbutton_control* pct = dynamic_cast<pushbutton_control*>(_item);
+				if (pct->is_default_button) {
+					this->default_push_button_id = pct->id;
+				}
+				windows_control* wct = dynamic_cast<windows_control*>(_item);
+				if (wct->is_default_focus) {
+					this->default_focus_id = wct->id;
+				}
+			});
 		}
 
 		onCreated();
 		onResize(current_size, 1.0);
+
 		if (auto ppage = current_page.lock()) {
 			if (ppage->menu)
 			{
@@ -318,10 +355,13 @@ namespace corona {
 				::SetMenu(hwndMainMenu, hmenu);
 				::DrawMenuBar(hwndMainMenu);
 			}
-		}
 
-		if (auto ppage = current_page.lock()) {
+			HWND hwnd_control = ::GetDlgItem(phost->getMainWindow(), default_focus_id);
+			if (hwnd_control) {
+				::SetFocus(hwnd_control);
+			}
 			ppage->handle_onload(ppage);
+			auto root = ppage->get_root();
 		}
 
 	}

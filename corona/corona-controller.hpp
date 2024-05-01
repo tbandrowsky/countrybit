@@ -52,6 +52,8 @@ namespace corona
 		virtual void onDataChanged(json _params, data_lake* _api, data_function* _set) = 0;
 		virtual void onLogged(data_lake* _api) = 0;
 
+		virtual int getDefaultButtonId() = 0;
+
 	};
 
 }

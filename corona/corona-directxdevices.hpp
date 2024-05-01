@@ -93,15 +93,15 @@ namespace corona
 			wicFactory = nullptr;
 			dWriteFactory = nullptr;
 
-			D2D1_FACTORY_OPTIONS options;
-			options.debugLevel = D2D1_DEBUG_LEVEL_WARNING;
-			HRESULT hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED, options, &d2DFactory);
+			D2D1_FACTORY_OPTIONS options = {};
+//			options.debugLevel = D2D1_DEBUG_LEVEL_INFORMATION;
+			HRESULT hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, options, &d2DFactory);
 			throwOnFail(hr, "Could not create D2D1 factory");
 
 			hr = CoCreateInstance(CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&wicFactory));
 			throwOnFail(hr, "Could not create WIC Imaging factory");
 
-			hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(dWriteFactory), reinterpret_cast<IUnknown**>(&dWriteFactory));
+			hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_ISOLATED, __uuidof(dWriteFactory), reinterpret_cast<IUnknown**>(&dWriteFactory));
 			throwOnFail(hr, "Could not create direct write factory");
 		}
 

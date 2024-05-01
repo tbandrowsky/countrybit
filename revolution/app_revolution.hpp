@@ -85,8 +85,9 @@ namespace corona
 
 		int id_caption_bar;
 		int id_main_row;
-		int id_command_container;
-		int id_current_container;
+		int id_document_container;
+		int id_document_command_container;
+		int id_document_body_container;
 		int id_location_title;
 		int id_create_title;
 		int id_form_view;
@@ -132,8 +133,9 @@ namespace corona
 			{
 				id_caption_bar = _presentation->get_control_id("caption_bar", []() { return id_counter::next(); });
 				id_main_row = _presentation->get_control_id("main_row", []() { return id_counter::next(); });
-				id_command_container = _presentation->get_control_id("command_container", []() { return id_counter::next(); });
-				id_current_container = _presentation->get_control_id("current_container", []() { return id_counter::next(); });
+				id_document_container = _presentation->get_control_id("document_container", []() { return id_counter::next(); });
+				id_document_command_container = _presentation->get_control_id("document_command_container", []() { return id_counter::next(); });
+				id_document_body_container = _presentation->get_control_id("document_body_container", []() { return id_counter::next(); });
 				id_location_title = _presentation->get_control_id("location_title", []() { return id_counter::next(); });
 				id_create_title = _presentation->get_control_id("create_title", []() { return id_counter::next(); });
 				id_form_view = _presentation->get_control_id("get_ui_form_view", []() { return id_counter::next(); });
@@ -220,34 +222,22 @@ namespace corona
 		void create_page_frame(page& _page, content_function _fn)
 		{
 			control_builder command_container;
+			control_builder document_body;
 			caption_bar_control* caption_container;
 			tab_view_control* tab_container;
 			form_view_control* form_view;
 
 			control_builder contents_root(_page.get_root_container());
 
-			auto contents = contents_root.row_begin(
+			auto contents = contents_root.column_begin(
 				id_main_row,
-				[this](row_layout& _settings) {
+				[this](column_layout& _settings) {
 					_settings.set_size(1.0_container, 1.0_container);
 					_settings.background_brush = st->PageBackgroundBrush;
 					_settings.border_brush = st->PageBorderBrush;
 				});
 
-			// note that, we are putting the breadcrumbs on a nav pane to the left.
-			command_container = contents.column_begin(id_command_container, [this](column_layout& rl) {
-				rl.set_size(300.0_px, 1.0_container);
-				});
-
-			auto current_container = contents.column_begin(id_current_container, [](column_layout& rl) {
-				rl.set_size(1.0_remaining, 1.0_container);
-				});
-
-			command_container.image(image_control_id, "small_logo.png", [](image_control& control) {
-				control.set_size(300.0_px, 300.0_px);
-				});
-
-			current_container.caption_bar(id_caption_bar, st, application_menu.get(), [this](caption_bar_control& _cb)
+			contents.caption_bar(id_caption_bar, st, application_menu.get(), [this](caption_bar_control& _cb)
 				{
 					_cb.set_size(1.0_container, 100.0_px);
 					_cb.menu_button_id = IDC_SYSTEM_MENU;
@@ -262,7 +252,22 @@ namespace corona
 				}
 			);
 
-			_fn(current_container);
+			auto document_row = contents.row_begin(id_document_container, [this](row_layout& rl) {
+				rl.set_size(1.0_container, 1.0_remaining);
+				});
+
+			command_container = document_row.column_begin(id_document_command_container, [this](column_layout& rl) {
+				rl.set_size(0.25_container, 1.0_container);
+				});
+
+			document_body = document_row.column_begin(id_document_body_container, [](column_layout& rl) {
+				rl.set_size(0.75_container, 1.0_container);
+				rl.set_padding(8.0_px);
+				}); 
+
+			// note that, we are putting the breadcrumbs on a nav pane to the left.
+
+			_fn(document_body);
 
 			contents_root.apply_controls(_page.root.get());
 		}
@@ -293,7 +298,7 @@ namespace corona
 						ids.fields.push_back(iff);
 
 						_fv.fields_per_column = 3;
-						_fv.set_size(1.0_container, .15_container);
+						_fv.set_size(1.0_container, 200.0_px);
 						_fv.set_data(ids);
 					});
 					cb.calico_button(IDC_BTN_LOGIN_START, [this](calico_button_control& cbc)
@@ -305,8 +310,12 @@ namespace corona
 							cbc.options.corona_client = corona_api.get();
 							cbc.options.function_name = "/login/start/";
 							cbc.options.credentials = jp.create_object();
+							cbc.set_text("Login");
 						});
-					cb.calico_button(IDC_BTN_CANCEL);
+					cb.calico_button(IDC_BTN_CANCEL, [this](calico_button_control& cbc)
+						{
+							cbc.set_text("&Cancel");
+						});
 			});
 
 			return;
@@ -328,7 +337,10 @@ namespace corona
 							cbc.options.function_name = "/login/sendcode/";
 							cbc.options.credentials = credentials;
 						});
-					cb.calico_button(IDC_BTN_CANCEL);
+					cb.calico_button(IDC_BTN_CANCEL, [this](calico_button_control& cbc)
+						{
+							cbc.set_text("&Cancel");
+						});
 				});
 
 		}
@@ -365,7 +377,10 @@ namespace corona
 						cbc.options.function_data = jp.create_object();
 						cbc.options.function_data.put_member_i64("SourceControlId", IDC_FORM_VIEW);
 					});
-					cb.calico_button(IDC_BTN_CANCEL);
+					cb.calico_button(IDC_BTN_CANCEL, [this](calico_button_control& cbc)
+						{
+							cbc.set_text("&Cancel");
+						});
 				});
 		}
 
@@ -396,7 +411,7 @@ namespace corona
 							ids.fields.push_back(iff);
 
 							_fv.fields_per_column = 3;
-							_fv.set_size(1.0_container, 1.0_remaining);
+							_fv.set_size(1.0_container, 400.0_px);
 							_fv.set_data(ids);
 						});
 					cb.calico_button(IDC_BTN_LOGIN, [this](calico_button_control& cbc) 
@@ -409,7 +424,11 @@ namespace corona
 							cbc.options.function_data = jp.create_object();
 							cbc.options.function_data.put_member_i64("SourceControlId", IDC_FORM_VIEW);
 						});
-					cb.calico_button(IDC_BTN_CANCEL);
+					cb.calico_button(IDC_BTN_CANCEL, [this](calico_button_control& cbc)
+						{
+							cbc.set_text("&Cancel");
+						});
+
 				});
 
 		}
@@ -466,7 +485,7 @@ namespace corona
 				return;
 			}
 
-			command_container = _page.edit(id_command_container);
+			command_container = _page.edit(id_document_command_container);
 			caption_container = _page.find_container<caption_bar_control>(id_caption_bar);
 			tab_container = _page.find_container<tab_view_control>(id_tab_view);
 

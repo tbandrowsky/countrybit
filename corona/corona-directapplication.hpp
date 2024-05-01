@@ -975,43 +975,51 @@ namespace corona
 			}
 			break;
 		case WM_PAINT:
-		{
-			ValidateRect(hwnd, nullptr);
-			/*				PAINTSTRUCT ps;
-							BeginPaint(hwnd, &ps);
-							EndPaint(hwnd, &ps); */
-			redraw();
-			return 0;
-		}
-		case WM_SIZE:
-		{
-			rectangle rect;
-			rect.x = 0;
-			rect.y = 0;
-			rect.w = LOWORD(lParam);
-			rect.h = HIWORD(lParam);
-			if (pfactory) {
-				auto wwin = pfactory->getWindow(hwnd);
-				if (auto win = wwin.lock()) {
-					win->resize(rect.w, rect.h);
-					if (currentController) {
-						dpiScale = 96.0 / GetDpiForWindow(hwnd);
-#if TRACE_SIZE
-						std::cout << " w " << rect.w << "h " << rect.h << std::endl;
+			{
+				ValidateRect(hwnd, nullptr);
+				/*				PAINTSTRUCT ps;
+								BeginPaint(hwnd, &ps);
+								EndPaint(hwnd, &ps); */
+				redraw();
+				return 0;
+			}
+			case WM_SIZE:
+			{
+				rectangle rect;
+				rect.x = 0;
+				rect.y = 0;
+				rect.w = LOWORD(lParam);
+				rect.h = HIWORD(lParam);
+				if (pfactory) {
+					auto wwin = pfactory->getWindow(hwnd);
+					if (auto win = wwin.lock()) {
+						win->resize(rect.w, rect.h);
+						if (currentController) {
+							dpiScale = 96.0 / GetDpiForWindow(hwnd);
+	#if TRACE_SIZE
+							std::cout << " w " << rect.w << "h " << rect.h << std::endl;
 
-#endif
-						rect.w *= dpiScale;
-						rect.h *= dpiScale;
-						currentController->onResize(rect, dpiScale);
+	#endif
+							rect.w *= dpiScale;
+							rect.h *= dpiScale;
+							currentController->onResize(rect, dpiScale);
+						}
 					}
 				}
 			}
+			break;
+		case DM_GETDEFID:
+		{
+			if (currentController)
+				return MAKELONG(currentController->getDefaultButtonId(), DC_HASDEFID);
+
 		}
 		break;
-	}
+		
+		}
 
 		return DefWindowProc(hwnd, message, wParam, lParam);
-}
+	}
 
 	void directApplicationWin32::setController(std::shared_ptr<controller> _newCurrentController)
 	{

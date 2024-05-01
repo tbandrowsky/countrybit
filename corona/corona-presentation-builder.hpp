@@ -1534,6 +1534,7 @@ namespace corona
 				rl.set_content_cross_align(visual_alignment::align_center);
 				rl.set_item_margin(10.0_px);
 				rl.set_nchittest(HTCAPTION);
+				rl.background_brush = st->CaptionBackgroundBrush;
 				});
 
 			auto title_column = main_row.column_begin(id_counter::next(), [](column_layout& cl) {

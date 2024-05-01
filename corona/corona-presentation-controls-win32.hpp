@@ -36,6 +36,9 @@ namespace corona
 		std::weak_ptr<applicationBase> window_host;
 		textStyleRequest	text_style;
 
+		bool is_default_focus;
+		bool is_default_button;
+
 		windows_control() :
 			window(nullptr),
 			text_font(nullptr)
@@ -43,6 +46,8 @@ namespace corona
 			set_origin(0.0_px, 0.0_px);
 			set_size(1.0_container, 1.2_fontgr);
 			set_default_styles();
+			is_default_focus = false;
+			is_default_button = false;
 		}
 
 		windows_control(const windows_control& _src) : control_base(_src),
@@ -50,6 +55,8 @@ namespace corona
 			text_font(nullptr)
 		{
 			text_style = _src.text_style;
+			is_default_focus = false;
+			is_default_button = false;
 		}
 
 		windows_control(container_control_base *_parent, int _id)
@@ -60,6 +67,8 @@ namespace corona
 			set_origin(0.0_px, 0.0_px);
 			set_size(1.0_container, 1.2_fontgr);
 			set_default_styles();
+			is_default_focus = false;
+			is_default_button = false;
 		}
 
 		virtual bool gets_real_focus() { return true; }
