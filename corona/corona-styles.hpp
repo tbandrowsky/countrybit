@@ -301,7 +301,7 @@ namespace corona
 		countrybit.TitleBorderBrush = std::make_shared<generalBrushRequest>();
 		countrybit.TitleBorderBrush->setColor("#FFFFFF");
 		countrybit.TitleBorderBrush->set_name("TitleBorder");
-		countrybit.TitleBorderWidth = 4;
+		countrybit.TitleBorderWidth = 0;
 		countrybit.TitleTextBrush = std::make_shared<generalBrushRequest>();
 		countrybit.TitleTextBrush->setColor("#FFFFFF");
 		countrybit.TitleTextBrush->set_name("TitleText");
