@@ -301,6 +301,8 @@ namespace corona
 			return mouse_relative_position;
 		}
 
+		int get_id() { return id;  }
+
 		virtual std::shared_ptr<control_base> clone()
 		{
 			auto tv = std::make_shared<control_base>(*this);

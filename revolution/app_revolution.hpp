@@ -88,6 +88,9 @@ namespace corona
 		int id_document_container;
 		int id_document_command_container;
 		int id_document_body_container;
+		int id_document_body_details;
+		int id_status;
+
 		int id_location_title;
 		int id_create_title;
 		int id_form_view;
@@ -96,6 +99,9 @@ namespace corona
 
 		std::map<std::string, call_status> responses;
 		json credentials;
+
+		call_status				 status_recent;
+		std::vector<call_status> status_history;
 
 		revolution_application()
 		{
@@ -141,6 +147,8 @@ namespace corona
 				id_form_view = _presentation->get_control_id("get_ui_form_view", []() { return id_counter::next(); });
 				id_tab_view = _presentation->get_control_id("get_ui_tab_view", []() { return id_counter::next(); });
 				image_control_id = _presentation->get_control_id("get_ui_logo", []() { return id_counter::next(); });
+				id_document_body_details = _presentation->get_control_id("document_details", []() { return id_counter::next(); });
+				id_status = _presentation->get_control_id("status", []() { return id_counter::next(); });
 
 				_presentation->create_page("home", [](page& _page) {
 					control_builder cb(_page.get_root_container());
@@ -237,7 +245,10 @@ namespace corona
 					_settings.border_brush = st->PageBorderBrush;
 				});
 
-			contents.caption_bar(id_caption_bar, st, application_menu.get(), [this](caption_bar_control& _cb)
+			int title_id = 0;
+			int *ptitle_id = &title_id;
+
+			contents.caption_bar(id_caption_bar, st, application_menu.get(), [this, ptitle_id](caption_bar_control& _cb)
 				{
 					_cb.set_size(1.0_container, 100.0_px);
 					_cb.menu_button_id = IDC_SYSTEM_MENU;
@@ -245,10 +256,9 @@ namespace corona
 					_cb.image_file = "small_logo.png";
 					_cb.corporate_name = "COUNTRY VIDEO GAMES";
 					_cb.title_name = "Revolution";
-					_cb.code_detail_id = IDC_STATUS_DETAIL;
-					_cb.code_status_id = IDC_STATUS_MESSAGE;
 					_cb.background_brush = st->CaptionBackgroundBrush;
 					_cb.border_brush = st->CaptionBorderBrush;
+					*ptitle_id = _cb.title_id;
 				}
 			);
 
@@ -260,14 +270,24 @@ namespace corona
 				rl.set_size(0.25_container, 1.0_container);
 				});
 
-			document_body = document_row.column_begin(id_document_body_container, [](column_layout& rl) {
+			document_body = document_row.column_begin(id_document_body_container, [title_id](column_layout& rl) {
 				rl.set_size(0.75_container, 1.0_container);
 				rl.set_padding(8.0_px);
+				rl.push(title_id, true, false, false, false);
 				}); 
 
 			// note that, we are putting the breadcrumbs on a nav pane to the left.
 
-			_fn(document_body);
+			document_body.status(status_recent, [](status_control& _sc) {
+				_sc.set_size(0.75_container, 100.0_px);
+				}, id_status);
+
+			control_builder doc_details = document_body.column_begin(id_document_body_details, [title_id](column_layout& rl) {
+				rl.set_size(0.75_container, 1.0_remaining);
+				rl.set_padding(8.0_px);
+				rl.push(title_id, true, false, false, false);
+				});
+			_fn(doc_details);
 
 			contents_root.apply_controls(_page.root.get());
 		}
@@ -280,42 +300,48 @@ namespace corona
 			{
 					cb.chaptertitle("Login");
 					cb.chaptersubtitle("Enter your username and password.");					
-					cb.form_view(IDC_FORM_VIEW, [](form_view_control& _fv)
-					{
-						item_data_source ids;
+					cb.form_view(IDC_FORM_VIEW, [this](form_view_control& _fv)
+						{
+							item_data_source ids;
 
-						item_field iff;
-						iff.field_id = IDC_USER_NAME;
-						iff.field_label = "User name:";
-						iff.field_type = "string";
-						iff.json_member_name = "Name";
-						ids.fields.push_back(iff);
+							item_field iff;
+							iff.field_id = IDC_USER_NAME;
+							iff.field_label = "User name:";
+							iff.field_type = "string";
+							iff.json_member_name = "Name";
+							ids.fields.push_back(iff);
 
-						iff.field_id = IDC_USER_PASSWORD;
-						iff.field_label = "Password";
-						iff.field_type = "string";
-						iff.json_member_name = "Name";
-						ids.fields.push_back(iff);
+							iff.field_id = IDC_USER_PASSWORD;
+							iff.field_label = "Password";
+							iff.field_type = "string";
+							iff.json_member_name = "Name";
+							ids.fields.push_back(iff);
+							ids.fn_buttons = [this](control_builder& cb)
+								{
+									cb.calico_button(IDC_BTN_LOGIN_START, [this](calico_button_control& cbc)
+										{
+											json_parser jp;
+											cbc.options = {};
+											cbc.options.function_data = jp.create_object();
+											cbc.options.function_data.put_member_i64("SourceControlId", IDC_FORM_VIEW);
+											cbc.options.corona_client = corona_api.get();
+											cbc.options.function_name = "/login/start/";
+											cbc.options.credentials = jp.create_object();
+											cbc.is_default_button = true;
+											cbc.set_text("Login");
+										});
+									cb.calico_button(IDC_BTN_CANCEL, [this](calico_button_control& cbc)
+										{
+											cbc.set_text("&Cancel");
+										});
+
+								};
 
 						_fv.fields_per_column = 3;
 						_fv.set_size(1.0_container, 200.0_px);
 						_fv.set_data(ids);
+
 					});
-					cb.calico_button(IDC_BTN_LOGIN_START, [this](calico_button_control& cbc)
-						{
-							json_parser jp;
-							cbc.options = {};
-							cbc.options.function_data = jp.create_object();
-							cbc.options.function_data.put_member_i64("SourceControlId", IDC_FORM_VIEW);
-							cbc.options.corona_client = corona_api.get();
-							cbc.options.function_name = "/login/start/";
-							cbc.options.credentials = jp.create_object();
-							cbc.set_text("Login");
-						});
-					cb.calico_button(IDC_BTN_CANCEL, [this](calico_button_control& cbc)
-						{
-							cbc.set_text("&Cancel");
-						});
 			});
 
 			return;
@@ -353,7 +379,7 @@ namespace corona
 				{
 					cb.chaptertitle("Enter Confirmation Code");
 					cb.chaptersubtitle("An email was sent to you.  Please enter the code you received.");
-					cb.form_view(IDC_FORM_VIEW, [](form_view_control& _fv)
+					cb.form_view(IDC_FORM_VIEW, [this](form_view_control& _fv)
 						{
 							item_data_source ids;
 							item_field iff;
@@ -362,24 +388,26 @@ namespace corona
 							iff.field_type = "string";
 							iff.json_member_name = "ConfirmationCode";
 							ids.fields.push_back(iff);
+							ids.fn_buttons = [this](control_builder& cb) {
+								cb.calico_button(IDC_BTN_LOGIN_CONFIRM, [this](calico_button_control& cbc)
+									{
+										json_parser jp;
+										cbc.options = {};
+										cbc.options.corona_client = corona_api.get();
+										cbc.options.function_name = "/login/confirmcode/";
+										cbc.options.credentials = credentials;
+										cbc.options.function_data = jp.create_object();
+										cbc.options.function_data.put_member_i64("SourceControlId", IDC_FORM_VIEW);
+									});
+								cb.calico_button(IDC_BTN_CANCEL, [this](calico_button_control& cbc)
+									{
+										cbc.set_text("&Cancel");
+									});
+								};
 
 							_fv.fields_per_column = 3;
 							_fv.set_size(1.0_container, .15_container);
 							_fv.set_data(ids);
-						});
-					cb.calico_button(IDC_BTN_LOGIN_CONFIRM, [this](calico_button_control& cbc)
-					{
-						json_parser jp;
-						cbc.options = {};
-						cbc.options.corona_client = corona_api.get();
-						cbc.options.function_name = "/login/confirmcode/";
-						cbc.options.credentials = credentials;
-						cbc.options.function_data = jp.create_object();
-						cbc.options.function_data.put_member_i64("SourceControlId", IDC_FORM_VIEW);
-					});
-					cb.calico_button(IDC_BTN_CANCEL, [this](calico_button_control& cbc)
-						{
-							cbc.set_text("&Cancel");
 						});
 				});
 		}
@@ -393,7 +421,7 @@ namespace corona
 					cb.chaptertitle("Enter New Password");
 					cb.chaptersubtitle("Please enter the code that you were emailed.");
 
-					cb.form_view(IDC_FORM_VIEW, [](form_view_control& _fv)
+					cb.form_view(IDC_FORM_VIEW, [this](form_view_control& _fv)
 						{
 							item_data_source ids;
 							item_field iff;
@@ -410,25 +438,27 @@ namespace corona
 							iff.json_member_name = "Password2";
 							ids.fields.push_back(iff);
 
+							ids.fn_buttons = [this](control_builder& cb) {
+								cb.calico_button(IDC_BTN_LOGIN, [this](calico_button_control& cbc)
+									{
+										json_parser jp;
+										cbc.options = {};
+										cbc.options.corona_client = corona_api.get();
+										cbc.options.function_name = "/login/passwordset/";
+										cbc.options.credentials = credentials;
+										cbc.options.function_data = jp.create_object();
+										cbc.options.function_data.put_member_i64("SourceControlId", IDC_FORM_VIEW);
+									});
+								cb.calico_button(IDC_BTN_CANCEL, [this](calico_button_control& cbc)
+									{
+										cbc.set_text("&Cancel");
+									});
+								};
+
 							_fv.fields_per_column = 3;
 							_fv.set_size(1.0_container, 400.0_px);
 							_fv.set_data(ids);
 						});
-					cb.calico_button(IDC_BTN_LOGIN, [this](calico_button_control& cbc) 
-						{
-							json_parser jp;
-							cbc.options = {};
-							cbc.options.corona_client = corona_api.get();
-							cbc.options.function_name = "/login/passwordset/";
-							cbc.options.credentials = credentials;
-							cbc.options.function_data = jp.create_object();
-							cbc.options.function_data.put_member_i64("SourceControlId", IDC_FORM_VIEW);
-						});
-					cb.calico_button(IDC_BTN_CANCEL, [this](calico_button_control& cbc)
-						{
-							cbc.set_text("&Cancel");
-						});
-
 				});
 
 		}
@@ -451,27 +481,7 @@ namespace corona
 					cb.form_view(IDC_FORM_VIEW, [](form_view_control& _fv)
 						{
 							_fv.fields_per_column = 3;
-							_fv.set_size(1.0_container, .15_container);
-						});
-					cb.calico_button(IDC_BTN_OBJECTS_EDIT_SAVE, [this](calico_button_control& cbc)
-						{
-							json_parser jp;
-							cbc.options = {};
-							cbc.options.corona_client = corona_api.get();
-							cbc.options.function_name = "/objects/put/";
-							cbc.options.credentials = credentials;
-							cbc.options.function_data = jp.create_object();
-							cbc.options.function_data.put_member_i64("SourceControlId", IDC_FORM_VIEW);
-						});
-					cb.calico_button(IDC_BTN_REVERT, [this](calico_button_control& cbc)
-						{
-							json_parser jp;
-							cbc.options = {};
-							cbc.options.corona_client = corona_api.get();
-							cbc.options.function_name = "/objects/edit/";
-							cbc.options.credentials = credentials;
-							cbc.options.function_data = jp.create_object();
-							cbc.options.function_data.put_member_i64("SourceControlId", IDC_FORM_VIEW);
+							_fv.set_size(1.0_container, .15_container);							
 						});
 				});
 
@@ -512,6 +522,28 @@ namespace corona
 			item_data_source ids;
 			ids.name = edited_class["Description"];
 			ids.data = edited_data;
+			ids.fn_buttons = [this](control_builder& cb) {
+				cb.calico_button(IDC_BTN_OBJECTS_EDIT_SAVE, [this](calico_button_control& cbc)
+					{
+						json_parser jp;
+						cbc.options = {};
+						cbc.options.corona_client = corona_api.get();
+						cbc.options.function_name = "/objects/put/";
+						cbc.options.credentials = credentials;
+						cbc.options.function_data = jp.create_object();
+						cbc.options.function_data.put_member_i64("SourceControlId", IDC_FORM_VIEW);
+					});
+				cb.calico_button(IDC_BTN_REVERT, [this](calico_button_control& cbc)
+					{
+						json_parser jp;
+						cbc.options = {};
+						cbc.options.corona_client = corona_api.get();
+						cbc.options.function_name = "/objects/edit/";
+						cbc.options.credentials = credentials;
+						cbc.options.function_data = jp.create_object();
+						cbc.options.function_data.put_member_i64("SourceControlId", IDC_FORM_VIEW);
+					});
+				};
 
 			auto members = edited_fields.get_members();
 			for (auto field : members)
@@ -749,6 +781,7 @@ namespace corona
 					json response_data;
 
 					responses.insert_or_assign(_function_name, _status);
+					status_recent = _status;
 
 					if (_status.success) {
 						json_parser jp;

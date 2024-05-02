@@ -57,6 +57,11 @@ namespace corona {
 			;
 		}
 
+		virtual int getDefaultButtonId(void)
+		{
+			return default_push_button_id;
+		}
+
 		virtual page& create_page(std::string _name, std::function<void(page& pg)> _settings = nullptr);
 		virtual void select_page(const std::string& _page_name);
 		virtual void select_page(const std::string& _page_name, std::function<void(page& pg)> _settings);
@@ -278,12 +283,12 @@ namespace corona {
 			auto root = ppage->get_root();
 			root->foreach([this](control_base* _item) {
 				pushbutton_control* pct = dynamic_cast<pushbutton_control*>(_item);
-				if (pct->is_default_button) {
-					this->default_push_button_id = pct->id;
+				if (pct && pct->is_default_button) {
+					this->default_push_button_id = pct->get_id();
 				}
 				windows_control* wct = dynamic_cast<windows_control*>(_item);
-				if (wct->is_default_focus) {
-					this->default_focus_id = wct->id;
+				if (wct && wct->is_default_focus) {
+					this->default_focus_id = wct->get_id();
 				}
 			});
 		}
@@ -335,12 +340,12 @@ namespace corona {
 			auto root = ppage->get_root();
 			root->foreach([this](control_base* _item) {
 				pushbutton_control* pct = dynamic_cast<pushbutton_control*>(_item);
-				if (pct->is_default_button) {
-					this->default_push_button_id = pct->id;
+				if (pct && pct->is_default_button) {
+					this->default_push_button_id = pct->get_id();
 				}
 				windows_control* wct = dynamic_cast<windows_control*>(_item);
-				if (wct->is_default_focus) {
-					this->default_focus_id = wct->id;
+				if (wct && wct->is_default_focus) {
+					this->default_focus_id = wct->get_id();
 				}
 			});
 		}

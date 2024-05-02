@@ -38,29 +38,50 @@ namespace corona
 		{
 			call_status dfs;
 			json_parser jp;
-			
-			if (on_post_request) {
-				on_post_request(_function_name, _credentials, _payload, _corona_response);
-			}
 
-			http_client corona_client;
-			const char* corona_host = host.c_str();
-			int corona_port = port;
-			json token_request = create_request(_credentials, _payload);
-			http_params corona_http = corona_client.post(corona_host, corona_port, _function_name.c_str(), token_request);
-			dfs.request = corona_http.request;
-			dfs.response = corona_http.response;
-			dfs.function_path = _function_name;
-
-			if (corona_http.response.content_type.starts_with("application/json"))
+			try
 			{
-				_corona_response = jp.parse_object(corona_http.response.response_body.get_ptr());
-				dfs.success = _corona_response["Success"];
-				dfs.message = _corona_response["Message"];
+		
+				if (on_post_request) {
+					on_post_request(_function_name, _credentials, _payload, _corona_response);
+				}
+
+				http_client corona_client;
+				const char* corona_host = host.c_str();
+				int corona_port = port;
+				json token_request = create_request(_credentials, _payload);
+				http_params corona_http = corona_client.post(corona_host, corona_port, _function_name.c_str(), token_request);
+				dfs.request = corona_http.request;
+				dfs.response = corona_http.response;
+				dfs.function_path = _function_name;
+
+				if (corona_http.response.content_type.starts_with("application/json"))
+				{
+					_corona_response = jp.parse_object(corona_http.response.response_body.get_ptr());
+					dfs.success = _corona_response["Success"];
+					dfs.message = _corona_response["Message"];
+				}
+
+			}
+			catch (std::exception exc)
+			{
+				dfs.success = false;
+				std::string what = exc.what();
+				dfs.message = "Exception:" + what; 
 			}
 
-			if (on_post_response) {
-				on_post_response(dfs, _function_name, _credentials, _payload, _corona_response);
+			try 
+			{
+				if (on_post_response) 
+				{
+					on_post_response(dfs, _function_name, _credentials, _payload, _corona_response);
+				}
+			}
+			catch (std::exception exc)
+			{
+				dfs.success = false;
+				std::string what = exc.what();
+				dfs.message = "Exception:" + what;
 			}
 
 			return dfs;

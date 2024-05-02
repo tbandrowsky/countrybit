@@ -49,7 +49,8 @@ namespace corona
 				json_parser jp;
 				json results = jp.create_object();
 				json data;
-				if (options.function_data.is_object()) {
+				if (options.function_data.is_object()) 
+				{
 					if (options.function_data.has_member("SourceControlId")) {
 						int64_t control_id = options.function_data["SourceControlId"];
 						control_base* fvc = this->find(control_id);
@@ -67,7 +68,7 @@ namespace corona
 	void calico_button_control::init()
 	{
 		set_origin(0.0_px, 0.0_px);
-		set_size(200.0_px, 50.0_px);
+		set_size(100.0_px, 30.0_px);
 	}
 
 

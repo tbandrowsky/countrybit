@@ -180,6 +180,10 @@ namespace corona
 		inline control_builder& code(std::string _text) { return code(_text, nullptr, id_counter::next()); }
 		inline control_builder& label(std::string _text) { return label(_text, nullptr, id_counter::next()); }
 
+		inline control_builder& error(call_status _status) { return error(_status, nullptr, id_counter::next()); }
+		inline control_builder& status(call_status _status) { return status(_status, nullptr, id_counter::next()); }
+		inline control_builder& success(call_status _status) { return success(_status, nullptr, id_counter::next()); }
+
 		inline control_builder& title(int _id, std::string _text) { return title(_text, nullptr, _id); }
 		inline control_builder& subtitle(int _id, std::string _text) { return subtitle(_text, nullptr, _id); }
 		inline control_builder& chaptertitle(int _id, std::string _text) { return chaptertitle(_text, nullptr, _id); }
@@ -203,6 +207,10 @@ namespace corona
 		inline control_builder& paragraph(std::string _text, std::function<void(paragraph_control&)> _settings) { return paragraph(_text, _settings, id_counter::next()); }
 		inline control_builder& code(std::string _text, std::function<void(code_control&)> _settings) { return code(_text, _settings, id_counter::next()); }
 		inline control_builder& label(std::string _text, std::function<void(label_control&)> _settings) { return label(_text, _settings, id_counter::next()); }
+
+		inline control_builder& error(call_status _status, std::function<void(error_control&)> _settings) { return error(_status, _settings, id_counter::next()); }
+		inline control_builder& status(call_status _status, std::function<void(status_control&)> _settings) { return status(_status, _settings, id_counter::next()); }
+		inline control_builder& success(call_status _status, std::function<void(success_control&)> _settings) { return success(_status, _settings, id_counter::next()); }
 
 		control_builder row_begin(int _id, std::function<void(row_layout&)> _settings)
 		{
@@ -460,6 +468,42 @@ namespace corona
 			tc->set_text(_text);
 			if (_settings) {
 				_settings(*tc);
+			}
+			return *this;
+		}
+
+		control_builder& success(call_status _status, std::function<void(success_control&)> _settings, int _id)
+		{
+			auto tc = create<success_control>(_id);
+			apply_item_sizes(tc);
+			tc->set_status(_status);
+			if (_settings) {
+				_settings(*tc);
+
+			}
+			return *this;
+		}
+
+		control_builder& error(call_status _status, std::function<void(error_control&)> _settings, int _id)
+		{
+			auto tc = create<error_control>(_id);
+			apply_item_sizes(tc);
+			tc->set_status(_status);
+			if (_settings) {
+				_settings(*tc);
+
+			}
+			return *this;
+		}
+
+		control_builder& status(call_status _status, std::function<void(status_control&)> _settings, int _id)
+		{
+			auto tc = create<status_control>(_id);
+			apply_item_sizes(tc);
+			tc->set_status(_status);
+			if (_settings) {
+				_settings(*tc);
+
 			}
 			return *this;
 		}
@@ -783,12 +827,15 @@ namespace corona
 		list_data choice_options;
 	};
 
+	using item_buttons_function = std::function<void(control_builder& cb)>;
+
 	class item_data_source
 	{
 	public:
 		std::string				name;
 		std::vector<item_field> fields;
 		json					data;
+		item_buttons_function	fn_buttons;
 	};
 
 	class form_view_control : public row_layout
@@ -870,7 +917,7 @@ namespace corona
 		{
 			children.clear();
 
-			control_builder cb, field_column;
+			control_builder cb, field_column, form_row, button_row, form_body;
 
 			ids = _ids;
 
@@ -884,60 +931,78 @@ namespace corona
 			double width = 1.0 / column_count;
 			if (width >= .5) width = 1.0 / 3.0;
 
-			field_column = cb.column_begin(id_counter::next(), [width](column_layout& _cl) {
+			measure height = measure(200, measure_units::pixels);
+
+			form_body = cb.column_begin(id_counter::next(), [](column_layout& _cl) {
+				_cl.set_size(1.0_container, 1.0_container);
+				});
+
+			form_row = form_body.row_begin(id_counter::next(), [height](row_layout& _rl)
+				{
+					_rl.set_size(1.0_container, height);
+				});		
+
+			field_column = form_row.column_begin(id_counter::next(), [width](column_layout& _cl) {
 				_cl.set_size(measure(width, measure_units::percent_container), 1.0_container);
 				});
+
+			bool is_default = true;
 
 			for (auto &ctrl : ids.fields) 
 			{
 				if (ctrl.field_type == "double" || ctrl.field_type == "number")
 				{
-					field_column.edit_field(ctrl.field_id, ctrl.field_label, ctrl.field_tooltip, [ctrl, this](edit_control& _settings) {
+					field_column.edit_field(ctrl.field_id, ctrl.field_label, ctrl.field_tooltip, [is_default, ctrl, this](edit_control& _settings) {
 						if (ids.data.has_member(ctrl.json_member_name)) {
 							std::string _existing = ids.data[ctrl.json_member_name];
 							_settings.set_text(_existing);
+							_settings.is_default_focus = is_default;
 						}
 						});
 				}
 				else if (ctrl.field_type == "integer")
 				{
-					field_column.edit_field(ctrl.field_id, ctrl.field_label, ctrl.field_tooltip, [ctrl, this](edit_control& _settings) {
+					field_column.edit_field(ctrl.field_id, ctrl.field_label, ctrl.field_tooltip, [is_default, ctrl, this](edit_control& _settings) {
 						if (ids.data.has_member(ctrl.json_member_name)) {
 							std::string _existing = ids.data[ctrl.json_member_name];
 							_settings.set_text(_existing);
 						}
+						_settings.is_default_focus = is_default;
 						});
 				}
 				else if (ctrl.field_type == "currency")
 				{
-					field_column.edit_field(ctrl.field_id, ctrl.field_label, ctrl.field_tooltip, [ctrl, this](edit_control& _settings) {
+					field_column.edit_field(ctrl.field_id, ctrl.field_label, ctrl.field_tooltip, [is_default, ctrl, this](edit_control& _settings) {
 						if (ids.data.has_member(ctrl.json_member_name)) {
 							std::string _existing = ids.data[ctrl.json_member_name];
 							_settings.set_text(_existing);
 						}
+						_settings.is_default_focus = is_default;
 						});
 				}
 				else if (ctrl.field_type == "string")
 				{
-					field_column.edit_field(ctrl.field_id, ctrl.field_label, ctrl.field_tooltip, [ctrl, this](edit_control& _settings) {
+					field_column.edit_field(ctrl.field_id, ctrl.field_label, ctrl.field_tooltip, [is_default, ctrl, this](edit_control& _settings) {
 						if (ids.data.has_member(ctrl.json_member_name)) {
 							std::string _existing = ids.data[ctrl.json_member_name];
 							_settings.set_text(_existing);
 						}
+						_settings.is_default_focus = is_default;
 						});
 				}
 				else if (ctrl.field_type == "listbox") 
 				{
-					field_column.listbox_field(ctrl.field_id, ctrl.field_label, ctrl.field_tooltip, [ctrl, this](listbox_control& _settings) {
+					field_column.listbox_field(ctrl.field_id, ctrl.field_label, ctrl.field_tooltip, [is_default, ctrl, this](listbox_control& _settings) {
 						if (ids.data.has_member(ctrl.json_member_name)) {
 							std::string _existing = ids.data[ctrl.json_member_name];
 						}
+						_settings.is_default_focus = is_default;
 						});
 
 				}
 				else if (ctrl.field_type == "combobox")
 				{
-					field_column.combobox_field(ctrl.field_id, ctrl.field_label, ctrl.field_tooltip, [ctrl, this](combobox_control& _settings) {
+					field_column.combobox_field(ctrl.field_id, ctrl.field_label, ctrl.field_tooltip, [is_default, ctrl, this](combobox_control& _settings) {
 						if (ids.data.has_member(ctrl.json_member_name)) {
 							std::string _existing = ids.data[ctrl.json_member_name];
 						}
@@ -947,48 +1012,65 @@ namespace corona
 				}
 				else if (ctrl.field_type == "comboboxex")
 				{
-					field_column.comboboxex_field(ctrl.field_id, ctrl.field_label, ctrl.field_tooltip, [ctrl, this](comboboxex_control& _settings) {
+					field_column.comboboxex_field(ctrl.field_id, ctrl.field_label, ctrl.field_tooltip, [is_default, ctrl, this](comboboxex_control& _settings) {
 						if (ids.data.has_member(ctrl.json_member_name)) {
 							std::string _existing = ids.data[ctrl.json_member_name];
 						}
+						_settings.is_default_focus = is_default;
 
 						});
 
 				}
 				else if (ctrl.field_type == "datetimepicker")
 				{
-					field_column.datetimepicker_field(ctrl.field_id, ctrl.field_label, ctrl.field_tooltip, [ctrl, this](datetimepicker_control& _settings) {
+					field_column.datetimepicker_field(ctrl.field_id, ctrl.field_label, ctrl.field_tooltip, [is_default, ctrl, this](datetimepicker_control& _settings) {
 						if (ids.data.has_member(ctrl.json_member_name)) {
 							std::string _existing = ids.data[ctrl.json_member_name];
 						}
+						_settings.is_default_focus = is_default;
 
 						});
 				}
 				else if (ctrl.field_type == "richeedit")
 				{
-					field_column.richedit_field(ctrl.field_id, ctrl.field_label, ctrl.field_tooltip, [ctrl, this](richedit_control& _settings) {
+					field_column.richedit_field(ctrl.field_id, ctrl.field_label, ctrl.field_tooltip, [is_default, ctrl, this](richedit_control& _settings) {
 						if (ids.data.has_member(ctrl.json_member_name)) {
 							std::string _existing = ids.data[ctrl.json_member_name];
 						}
+						_settings.is_default_focus = is_default;
 
 						});
 				}
 				else 
 				{
-					field_column.edit_field(ctrl.field_id, ctrl.field_label, ctrl.field_tooltip, [ctrl, this](edit_control& _settings) {
+					field_column.edit_field(ctrl.field_id, ctrl.field_label, ctrl.field_tooltip, [is_default, ctrl, this](edit_control& _settings) {
 						if (ids.data.has_member(ctrl.json_member_name)) {
 							std::string _existing = ids.data[ctrl.json_member_name];
 							_settings.set_text(_existing);
 						}
+						_settings.is_default_focus = is_default;
+
 						});
 				}
 
 				field_counter++;
+				is_default = false;
+
 				if (field_counter >= fields_per_column) {
-					field_column = cb.column_begin(id_counter::next(), [width](column_layout& _cl) {
+					field_column = form_row.column_begin(id_counter::next(), [width](column_layout& _cl) {
 						_cl.set_size(measure(width, measure_units::percent_container), 1.0_container);
 						});
 				}
+			}
+
+			if (ids.fn_buttons) {
+				field_column.row_begin(id_counter::next(), [](row_layout& _cl) {
+					_cl.set_size(1.0_container, 20.0_px);
+					});
+				auto btn_row = field_column.row_begin(id_counter::next(), [](row_layout& _cl) {
+					_cl.set_size(1.0_container, 70.0_px);
+					});
+				ids.fn_buttons(btn_row);
 			}
 
 			cb.apply_controls(this);
@@ -1537,15 +1619,17 @@ namespace corona
 				rl.background_brush = st->CaptionBackgroundBrush;
 				});
 
-			auto title_column = main_row.column_begin(id_counter::next(), [](column_layout& cl) {
-				cl.set_content_align(visual_alignment::align_near);
-				cl.set_content_cross_align(visual_alignment::align_near);
-				cl.set_item_margin(0.0_px);
-				cl.set_size(500.0_px, 1.0_container);
-					})
+			auto title_column = main_row.absolute_begin(id_counter::next(), [](absolute_layout& cl) {
+				cl.set_size(1.0_remaining, 1.0_container);
+				})
 				.title(title_name, [this](title_control& control) {
-						control.set_size(1.0_container, 1.0_container);
-					})
+						layout_rect lr;
+						lr.width = 1.0_container;
+						lr.height = 40.0_px;
+						lr.x = .30_container;
+						lr.y = 20.0_px;
+						control.set_position(lr);
+					}, title_id)
 				.end()
 				.end()
 			.end();
@@ -1585,8 +1669,7 @@ namespace corona
 		std::string image_file;
 		std::string corporate_name;
 		std::string title_name;
-		int code_status_id;
-		int code_detail_id;
+		int title_id;
 		data_lake* lake;
 
 		caption_bar_control()
@@ -1612,6 +1695,7 @@ namespace corona
 			min_button_id = id_counter::next();
 			max_button_id = id_counter::next();
 			close_button_id = id_counter::next();
+			title_id = id_counter::next();
 		}
 
 		std::shared_ptr<control_base> clone()
@@ -1629,10 +1713,6 @@ namespace corona
 
 		void set_status(std::string _status, std::string _detail)
 		{
-			auto& tc_message = find<code_control>(code_status_id);
-			auto& tc_detail = find<code_control>(code_detail_id);
-			tc_message.set_text(_status);
-			tc_detail.set_text(_detail);
 		}
 
 		virtual void on_subscribe(presentation_base* _presentation, page_base* _page)

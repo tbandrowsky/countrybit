@@ -44,7 +44,7 @@ namespace corona
 			text_font(nullptr)
 		{
 			set_origin(0.0_px, 0.0_px);
-			set_size(1.0_container, 1.2_fontgr);
+			set_size(1.0_container, 1.5_fontgr);
 			set_default_styles();
 			is_default_focus = false;
 			is_default_button = false;
@@ -65,7 +65,7 @@ namespace corona
 			text_font(nullptr)
 		{
 			set_origin(0.0_px, 0.0_px);
-			set_size(1.0_container, 1.2_fontgr);
+			set_size(1.0_container, 1.5_fontgr);
 			set_default_styles();
 			is_default_focus = false;
 			is_default_button = false;
@@ -111,6 +111,11 @@ namespace corona
 		{
 			is_focused = true;
 			return true;
+		}
+
+		virtual LRESULT send_message(UINT msg, WPARAM  wParam, LPARAM  lParam)
+		{
+			return SendMessageA(window, msg, wParam, lParam);
 		}
 
 		virtual void on_resize()
@@ -550,6 +555,9 @@ namespace corona
 	class pushbutton_control : public button_control<PushButtonWindowStyles>
 	{
 	public:
+
+		using windows_control::is_default_button;
+
 		pushbutton_control(container_control_base* _parent, int _id) : button_control<PushButtonWindowStyles>(_parent, _id) { ; }
 		pushbutton_control(const pushbutton_control& _src) : button_control<PushButtonWindowStyles>(_src)
 		{
@@ -560,6 +568,8 @@ namespace corona
 			auto tv = std::make_shared<pushbutton_control>(*this);
 			return tv;
 		}
+
+		virtual DWORD get_window_style() { return PushButtonWindowStyles | (is_default_button ? BS_DEFPUSHBUTTON : BS_PUSHBUTTON); }
 
 		virtual ~pushbutton_control() { ; }
 	};

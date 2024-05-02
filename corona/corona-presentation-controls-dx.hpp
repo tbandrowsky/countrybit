@@ -197,7 +197,7 @@ namespace corona
 			}
 		}
 
-		void set_background_color(solidBrushRequest _brushFill)
+		void set_background_color(generalBrushRequest _brushFill)
 		{
 			std::string brush_name = std::format("background");
 			background_brush = std::make_shared<generalBrushRequest>(_brushFill);
@@ -213,7 +213,7 @@ namespace corona
 				background_brush->set_name( brush_name );
 		}
 
-		void set_border_color(solidBrushRequest _brushFill)
+		void set_border_color(generalBrushRequest _brushFill)
 		{
 			std::string brush_name = std::format("border");
 			border_brush = std::make_shared<generalBrushRequest>(_brushFill);

@@ -28,10 +28,12 @@ namespace corona
 		}
 
 		void init();
+
 		virtual void set_default_styles()
 		{
 			;
 		}
+
 		virtual double get_font_size() { return text_style ? text_style->fontSize : 14; }
 		text_display_control& set_text(std::string _text);
 		text_display_control& set_text_fill(generalBrushRequest _brushFill);
@@ -200,6 +202,107 @@ namespace corona
 		virtual ~placeholder_control();
 	};
 
+	class error_control : public text_display_control
+	{
+		call_status error_status;
+
+	public:
+
+		error_control();
+		error_control(const error_control& _src) : text_display_control(_src)
+		{
+			;
+		}
+		error_control(container_control_base* _parent, int _id);
+
+		void set_status(call_status _status)
+		{
+			error_status = _status;
+			text = error_status.message;
+		}
+
+		virtual void set_default_styles();
+
+		virtual std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<error_control>(*this);
+			return tv;
+		}
+
+		virtual ~error_control();
+	};
+
+	class success_control : public text_display_control
+	{
+		call_status error_status;
+
+	public:
+
+		success_control();
+		success_control(const success_control& _src) : text_display_control(_src)
+		{
+			;
+		}
+		success_control(container_control_base* _parent, int _id);
+
+		void set_status(call_status _status)
+		{
+			error_status = _status;
+			text = error_status.message;
+		}
+
+		virtual void set_default_styles();
+
+		virtual std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<success_control>(*this);
+			return tv;
+		}
+
+		virtual ~success_control();
+	};
+
+	class status_control : public frame_layout
+	{
+	public:
+
+		status_control();
+		status_control(const status_control& _src) : frame_layout(_src)
+		{
+			;
+		}
+		status_control(container_control_base* _parent, int _id);
+
+		void set_status(call_status _status)
+		{
+			children.clear();
+			if (_status.success) {
+				std::shared_ptr<success_control> sc = std::make_shared<success_control>(this, id_counter::next());
+				sc->set_status(_status);
+				sc->set_size(1.0_container, 1.0_container);
+				sc->set_bounds(bounds);
+				children.push_back(sc);
+			}
+			else 
+			{
+				std::shared_ptr<error_control> sc = std::make_shared<error_control>(this, id_counter::next());
+				sc->set_status(_status);
+				sc->set_size(1.0_container, 1.0_container);
+				sc->set_bounds(bounds);
+				children.push_back(sc);
+			}
+		}
+
+		virtual std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<status_control>(*this);
+			return tv;
+		}
+
+		virtual ~status_control();
+	};
+
+
 	text_display_control::text_display_control()
 	{
 		init();
@@ -307,6 +410,8 @@ namespace corona
 		background_brush = st->TitleBackgroundBrush;
 		text_fill_brush = st->TitleTextBrush;
 		text_style = st->TitleFont;
+		border_brush = st->TitleBorderBrush;
+		border_width = st->TitleBorderWidth;
 	}
 
 	title_control::title_control(container_control_base* _parent, int _id) : text_display_control(_parent, _id)
@@ -330,6 +435,8 @@ namespace corona
 		background_brush = st->SubtitleBackgroundBrush;
 		text_fill_brush = st->SubtitleTextBrush;
 		text_style = st->SubtitleFont;
+		border_brush = st->SubtitleBorderBrush;
+		border_width = st->SubtitleBorderWidth;
 
 	}
 
@@ -354,6 +461,8 @@ namespace corona
 		background_brush = st->ChapterTitleBackgroundBrush;
 		text_fill_brush = st->ChapterTitleTextBrush;
 		text_style = st->ChatperTitleFont;
+		border_brush = st->ChapterTitleBorderBrush;
+		border_width = st->ChatperTitleBorderWidth;
 	}
 
 	chaptertitle_control::chaptertitle_control(container_control_base* _parent, int _id) : text_display_control(_parent, _id)
@@ -377,6 +486,8 @@ namespace corona
 		background_brush = st->ChapterSubTitleBackgroundBrush;
 		text_fill_brush = st->ChapterSubTitleTextBrush;
 		text_style = st->ChapterSubTitleFont;
+		border_brush = st->ChapterSubTitleBorderBrush;
+		border_width = st->ChapterSubTitleBorderWidth;
 	}
 
 	chaptersubtitle_control::chaptersubtitle_control(container_control_base* _parent, int _id) : text_display_control(_parent, _id)
@@ -400,6 +511,8 @@ namespace corona
 		background_brush = st->ParagraphBackgroundBrush;
 		text_fill_brush = st->ParagraphTextBrush;
 		text_style = st->ParagraphFont;
+		border_brush = st->ParagraphBorderBrush;
+		border_width = st->ParagraphBorderWidth;
 	}
 
 	paragraph_control::paragraph_control(container_control_base* _parent, int _id) : text_display_control(_parent, _id)
@@ -423,7 +536,8 @@ namespace corona
 		background_brush = st->CodeBackgroundBrush;
 		text_fill_brush = st->CodeTextBrush;
 		text_style = st->CodeFont;
-
+		border_brush = st->CodeBorderBrush;
+		border_width = st->CodeBorderWidth;
 	}
 
 	code_control::code_control(container_control_base* _parent, int _id) : text_display_control(_parent, _id)
@@ -448,7 +562,8 @@ namespace corona
 		background_brush = st->LabelBackgroundBrush;
 		text_fill_brush = st->LabelTextBrush;
 		text_style = st->LabelFont;
-
+		border_brush = st->LabelBorderBrush;
+		border_width = st->LabelBorderWidth;
 	}
 
 	label_control::label_control()
@@ -473,6 +588,8 @@ namespace corona
 		background_brush = st->PlaceholderBackgroundBrush;
 		text_fill_brush = st->PlaceholderTextBrush;
 		text_style = st->PlaceholderFont;
+		border_brush = st->PlaceholderBorderBrush;
+		border_width = st->PlaceholderBorderWidth;
 
 	}
 
@@ -490,6 +607,72 @@ namespace corona
 	{
 
 	}
+
+	void error_control::set_default_styles()
+	{
+		auto st = styles.get_style();
+
+		background_brush = st->ErrorBackgroundBrush;
+		text_fill_brush = st->ErrorTextBrush;
+		text_style = st->ErrorFont;
+		border_brush = st->ErrorBorderBrush;
+		border_width = st->ErrorBorderWidth;
+	}
+
+	error_control::error_control(container_control_base* _parent, int _id) : text_display_control(_parent, _id)
+	{
+
+	}
+
+	error_control::error_control()
+	{
+
+	}
+
+	error_control::~error_control()
+	{
+	}
+
+
+	void success_control::set_default_styles()
+	{
+		auto st = styles.get_style();
+
+		background_brush = st->SuccessBackgroundBrush;
+		text_fill_brush = st->SuccessTextBrush;
+		text_style = st->SuccessFont;
+		border_brush = st->SuccessBorderBrush;
+		border_width = st->SuccessBorderWidth;
+	}
+
+	success_control::success_control(container_control_base* _parent, int _id) : text_display_control(_parent, _id)
+	{
+
+	}
+
+	success_control::success_control()
+	{
+
+	}
+
+	success_control::~success_control()
+	{
+	}
+
+	status_control::status_control(container_control_base* _parent, int _id) : frame_layout(_parent, _id)
+	{
+
+	}
+
+	status_control::status_control()
+	{
+
+	}
+
+	status_control::~status_control()
+	{
+	}
+
 }
 
 #endif
