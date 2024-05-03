@@ -90,6 +90,21 @@ namespace corona {
 			throw std::exception("could not lock current page");
 		}
 
+		template <typename control_type> control_type *find_ptr(int _id)
+		{
+			if (auto cp = current_page.lock()) {
+				control_base* temp = cp->root->find(_id);
+				if (temp == nullptr)
+				{
+					auto str = std::format("Control {0} not found ", _id);
+					return nullptr;
+				}
+				control_type* citem = dynamic_cast<control_type*>(temp);
+				return citem;
+			}
+			throw std::exception("could not lock current page");
+		}
+
 		template <typename control_type> control_type& get(control_base* _root, int _id)
 		{
 			if (auto cp = current_page.lock()) {

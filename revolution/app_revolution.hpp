@@ -107,6 +107,8 @@ namespace corona
 		{
 			st = styles.get_style();
 
+			status_recent = {};
+
 			factory = std::make_shared<directXAdapter>();
 
 			// build the factory initially.  we may have occasion to call this 
@@ -170,6 +172,8 @@ namespace corona
 					create_object_edit_page(_page);
 					});
 				_presentation->set_home_page("login_start");
+
+				set_corona_handlers();
 			};
 		}
 
@@ -771,17 +775,25 @@ namespace corona
 
 		void set_corona_handlers()
 		{
-			corona_api->on_post_request = [this](std::string _function_name, json& _credentials, json& _payload, json& _corona_response)
+			corona_api->on_post_request = [this](int _windows_id, std::string _function_name, json& _credentials, json& _payload)
 				{
-
+					auto ctrl = presentation_layer->find_ptr<windows_control>(_windows_id);
+					if (ctrl) {
+						ctrl->disable();
+					}
 				};
 
-			corona_api->on_post_response = [this](call_status _status, std::string _function_name, json& _credentials, json& _payload, json& _corona_response)
+			corona_api->on_post_response = [this](int _windows_id, call_status _status, std::string _function_name, json& _credentials, json& _payload)
 				{
 					json response_data;
 
 					responses.insert_or_assign(_function_name, _status);
 					status_recent = _status;
+
+					status_control *status_ctrl = presentation_layer->find_ptr<status_control>(id_status);
+					if (status_ctrl) {
+						status_ctrl->set_status(status_recent);
+					}
 
 					if (_status.success) {
 						json_parser jp;
@@ -789,6 +801,11 @@ namespace corona
 						if (response_data.has_member("Token")) {
 							credentials = response_data["Token"];
 						}
+					}
+
+					auto ctrl = presentation_layer->find_ptr<windows_control>(_windows_id);
+					if (ctrl) {
+						ctrl->enable();
 					}
 
 					if (_function_name == "/login/start/") 
@@ -817,7 +834,7 @@ namespace corona
 					{
 						if (_status.success)
 						{
-							db_object_id_type object_id;
+							db_object_id_type object_id = {};
 							json response;
 							call_status status = corona_api->edit_object(credentials, object_id, response);
 							select_page("edit_object");
@@ -883,7 +900,6 @@ namespace corona
 #if _DEBUG
 		fullScreen = false;
 #endif
-
 		app.run(hInstance, fullScreen);
 	}
 

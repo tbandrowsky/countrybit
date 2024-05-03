@@ -52,9 +52,10 @@ namespace corona
 		error_code = last_error;
 		if (error_code) {
 			success = false;
-			char buffer[2048];
+			char buffer[2048] = {};
 			int buffer_size = sizeof(buffer);
 			FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM, nullptr, error_code, 0, buffer, buffer_size, nullptr);
+			buffer[2000] = 0;
 			message = buffer;
 		}
 		else {
@@ -66,12 +67,14 @@ namespace corona
 		error_code = ::GetLastError();
 		if (error_code) {
 			success = false;
-			char buffer[2048];
+			char buffer[2048] = {};
 			int buffer_size = sizeof(buffer);
 			FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM, nullptr, error_code, 0, buffer, buffer_size, nullptr);
+			buffer[2000] = 0;
 			message = buffer;
 		}
 		else {
+			message = "Ok";
 			success = true;
 		}
 	}

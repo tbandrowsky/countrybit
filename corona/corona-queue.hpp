@@ -60,7 +60,9 @@ namespace corona {
 		friend class job_queue;
 	};
 
-	using runnable = std::function<void()>;
+	using runnable = std::function<void(void)>;
+	using runnable_http_request = std::function<call_status()>;
+	using runnable_http_response = std::function<void(call_status)>;
 
 	class general_job : public job
 	{

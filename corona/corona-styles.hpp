@@ -219,7 +219,7 @@ namespace corona
 
 		lgbr.gradientStops = {
 { toColor("#200000"), 0.0 },
-{ toColor("#400000"), 0.85 },
+{ toColor("#C000F0"), 0.85 },
 { toColor("#200000"), 1.0 }
 		};
 
@@ -227,26 +227,30 @@ namespace corona
 		countrybit.ErrorBackgroundBrush->set_name("ErrorBackground");
 
 		lgbr.gradientStops = {
-{ toColor("#100000"), 0.0 },
-{ toColor("#200000"), 0.85 },
-{ toColor("#100000"), 1.0 }
+{ toColor("#C00000"), 0.0 },
+{ toColor("#800000"), 0.85 },
+{ toColor("#300000"), 1.0 }
 		};
 
 		countrybit.ErrorBorderBrush = std::make_shared<generalBrushRequest>(lgbr);
-		countrybit.ErrorBorderWidth = 4;
+		countrybit.ErrorBorderBrush->set_name("ErrorBorder");
+		countrybit.ErrorBorderWidth = 16;
+
 		countrybit.ErrorTextBrush = std::make_shared<generalBrushRequest>();
 		countrybit.ErrorTextBrush->setColor("#FFFFFF");
-		countrybit.ErrorFont = std::make_shared<textStyleRequest>(text_style);
-		countrybit.ErrorFont->fontName = textFont;
-		countrybit.ErrorFont->fontSize = 16;
-		countrybit.ErrorBorderBrush->set_name("ErrorBorder");
 		countrybit.ErrorTextBrush->set_name("ErrorText");
+
+		countrybit.ErrorFont = std::make_shared<textStyleRequest>(text_style);
+		countrybit.ErrorFont->fontName = "Arial";
+		countrybit.ErrorFont->fontSize = 14;
+		countrybit.ErrorFont->vertical_align = visual_alignment::align_center;
+		countrybit.ErrorFont->horizontal_align = visual_alignment::align_near;
 		countrybit.ErrorFont->name = "ErrorFont";
 
 		lgbr.gradientStops = {
 { toColor("#000020"), 0.0 },
 { toColor("#000040"), 0.85 },
-{ toColor("#00020"), 1.0 }
+{ toColor("#000020"), 1.0 }
 		};
 
 		countrybit.SuccessBackgroundBrush = std::make_shared<generalBrushRequest>(lgbr);

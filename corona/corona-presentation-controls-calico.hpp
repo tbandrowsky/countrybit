@@ -21,6 +21,9 @@ namespace corona
 		std::shared_ptr<call_status>	status;
 		calico_button_onclick_options	options;
 
+		using windows_control::enable;
+		using windows_control::disable;
+
 		calico_button_control(container_control_base* _parent, int _id) : pushbutton_control(_parent, _id)
 		{
 			init();
@@ -47,21 +50,22 @@ namespace corona
 		_page->on_command(this->id, [this, _presentation, _page](command_event evt)
 			{
 				json_parser jp;
-				json results = jp.create_object();
 				json data;
-				if (options.function_data.is_object()) 
+				if (options.function_data.is_object())
 				{
 					if (options.function_data.has_member("SourceControlId")) {
 						int64_t control_id = options.function_data["SourceControlId"];
 						control_base* fvc = this->find(control_id);
 						data = fvc->get_data();
 					}
-					else 
+					else
 					{
 						data = options.function_data;
 					}
 				}
-				options.corona_client->general_post(options.function_name, options.credentials, data, results);
+				if (options.corona_client) {
+					options.corona_client->general_post_thread(id, options.function_name, options.credentials, data);
+				}
 			});
 	}
 

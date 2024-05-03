@@ -11,6 +11,8 @@ namespace corona
 
 	const int WM_CORONA_JOB_COMPLETE = WM_APP + 1;
 	const int WM_CORONA_TASK_COMPLETE = WM_APP + 2;
+	const int WM_CORONA_HTTP_JOB_COMPLETE = WM_APP + 3;
+	const int WM_CORONA_HTTP_TASK_COMPLETE = WM_APP + 4;
 
 	template <typename parameter_type> class task_job : public job
 	{
@@ -73,14 +75,28 @@ namespace corona
 		}
 	};
 
+	class http_task_result
+	{
+	public:
+		call_status status;
+		runnable_http_response on_gui;
+
+		http_task_result(call_status _param, runnable_http_response _on_gui) : status(_param), on_gui(_on_gui)
+		{
+			;
+		}
+	};
+
+	using runnable_json = std::function<void(json)>;
+
 	class ui_task_job : public job
 	{
 	public:
 		std::coroutine_handle<> handle;
 		HANDLE					event;
 		json params;
-		std::function<void(json)> on_gui;
-		std::function<void(json)> on_run;
+		runnable on_gui;
+		runnable_json on_run;
 
 		ui_task_job() : job()
 		{
@@ -89,8 +105,8 @@ namespace corona
 		ui_task_job(std::coroutine_handle<> _handle,
 			HANDLE _event,
 			json _params,
-			std::function<void(json)> _on_gui, 
-			std::function<void(json)> _on_run) :
+			runnable _on_gui,
+			runnable_json _on_run) :
 			handle(_handle), 
 			event(_event), 
 			params(_params), 
@@ -108,7 +124,7 @@ namespace corona
 
 			json blank_params;
 
-			runnable cylon = [this]() -> void
+			runnable cylon = []() -> void
 			{
 				//on_gui();
 			};
@@ -186,6 +202,62 @@ namespace corona
 			}
 
 //			std::cout << "gen ui task end:" << GetCurrentThreadId() << std::endl;
+			jn.shouldDelete = true;
+
+			return jn;
+		}
+	};
+
+	class general_http_ui_job : public job
+	{
+	public:
+		runnable_http_response on_gui;
+		runnable_http_request on_run;
+
+		general_http_ui_job() : job()
+		{
+		}
+
+		general_http_ui_job(
+			runnable_http_request _on_run,
+			runnable_http_response _on_gui) :
+			on_run(_on_run),
+			on_gui(_on_gui)
+		{
+			;
+		}
+
+		virtual job_notify execute(job_queue* _callingQueue, DWORD _bytesTransferred, BOOL _success)
+		{
+			job_notify jn;
+
+			json empty_default;
+
+			//			std::cout << "gen ui task start:" << GetCurrentThreadId() << std::endl;
+
+			try
+			{
+				if (on_run)
+				{
+					call_status status = on_run();
+					auto result = new http_task_result(status, on_gui);
+					_callingQueue->post_ui_message(WM_CORONA_HTTP_TASK_COMPLETE, TRUE, (LPARAM)result);
+				}
+				else {
+					call_status status = {};
+					auto result_empty = new http_task_result(status, on_gui);
+					_callingQueue->post_ui_message(WM_CORONA_HTTP_TASK_COMPLETE, TRUE, (LPARAM)result_empty);
+
+				}
+			}
+			catch (...)
+			{
+				call_status status = {};
+				auto result_empty = new http_task_result(status, on_gui);
+				_callingQueue->post_ui_message(WM_CORONA_HTTP_TASK_COMPLETE, FALSE, (LPARAM)result_empty);
+			}
+
+			//			std::cout << "gen ui task end:" << GetCurrentThreadId() << std::endl;
 			jn.shouldDelete = true;
 
 			return jn;
@@ -469,6 +541,12 @@ namespace corona
 		static void run_complete(runnable _runnable, runnable _ui_complete)
 		{
 			general_ui_job* guj = new general_ui_job(_runnable, _ui_complete);
+			global_job_queue->add_job(guj);
+		}
+
+		static void run_http(runnable_http_request _runnable, runnable_http_response _ui_complete)
+		{
+			general_http_ui_job* guj = new general_http_ui_job(_runnable, _ui_complete);
 			global_job_queue->add_job(guj);
 		}
 

@@ -193,7 +193,7 @@ namespace corona
         void throw_error(std::string host, std::string context)
         {
             os_result osr;
-            auto str = std::format("{0}, {1}, ErrorCode:{2}, {3}", host, context, osr.error_code, osr.message.c_str());
+            auto str = std::format("{1}\n{0}\nCheck your config.json for the correct server name and port.", host, context);
             throw std::runtime_error(str);
         }
 
@@ -253,7 +253,7 @@ namespace corona
             }
             else 
             {
-                throw_error(params.request.host, "Opening Connection");
+                throw_error(params.request.host, "System issue: Cannot open connection.");
             }
 
             // Create an HTTP request handle.
@@ -268,7 +268,7 @@ namespace corona
             }
             else 
             {
-                throw_error(params.request.host, "Opening Request");
+                throw_error(params.request.host, "System issue: Cannot open request.");
             }
 
             int total_length = body_length;
@@ -285,7 +285,7 @@ namespace corona
             }
             else 
             {
-                throw_error(params.request.host + "/" + params.request.path, "Sending Request");
+                throw_error(params.request.host + "/" + params.request.path, "Connection issue: Unable to send request.");
             }
 
             // End the request.
@@ -295,7 +295,7 @@ namespace corona
             }
             else
             {
-                throw_error(params.request.host + "/" + params.request.path, "Receiving Response");
+                throw_error(params.request.host + "/" + params.request.path, "Connection issue: Unable to get response.");
             }
 
             // Check the headers
@@ -312,7 +312,7 @@ namespace corona
                     dwSize = 0;
                     if (!WinHttpQueryDataAvailable(hRequest, &dwSize))
                     {
-                        throw_error(params.request.host + "/" + params.request.path, "Checking for Data");
+                        throw_error(params.request.host + "/" + params.request.path, "Server issue: Did not receive any data.");
                     }
 
                     if (dwSize) {
@@ -322,7 +322,7 @@ namespace corona
                         {
                             params.response.system_result.success = false;
                             params.response.system_result.message = "Out of memory";
-                            throw_error(params.request.host + "/" + params.request.path, "Allocating buffers");
+                            throw_error(params.request.host + "/" + params.request.path, "Client Issue: Do not have enough memory.");
                             dwSize = 0;
                         }
                         else
@@ -334,7 +334,7 @@ namespace corona
                             {
                                 params.response.system_result = os_result();
                                 dwSize = 0;
-                                throw_error(params.request.host + "/" + params.request.path, "Reading Data");
+                                throw_error(params.request.host + "/" + params.request.path, "Server issue: Did not receive body.");
                             }
                         }
                     }

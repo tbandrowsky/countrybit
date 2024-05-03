@@ -2224,26 +2224,53 @@ namespace corona
 	{
 		bool handled = false;
 		ui_task_result* result = nullptr;
+		http_task_result* http_result = nullptr;
 
 		if (_msg->message == WM_CORONA_JOB_COMPLETE)
 		{
 			result = (ui_task_result *)_msg->lParam;
-			if (result->on_gui) {
-				result->on_gui();
+			if (result) {
+				if (result->on_gui) {
+					result->on_gui();
+				}
+				delete result;
 			}
-			delete result;
 			handled = true;
 		}
 		else if (_msg->message == WM_CORONA_TASK_COMPLETE)
 		{
 			result = (ui_task_result*)_msg->lParam;
-			if (result->on_gui) {
-				result->on_gui();
+			if (result) {
+				if (result->on_gui) {
+					result->on_gui();
+				}
+				delete result;
 			}
-			delete result;
 			handled = true;
 		}
-		
+		else if (_msg->message == WM_CORONA_HTTP_TASK_COMPLETE)
+		{
+			http_result = (http_task_result*)_msg->lParam;
+			if (http_result) {
+				if (http_result->on_gui) {
+					http_result->on_gui(http_result->status);
+				}
+				delete http_result;
+			}
+			handled = true;
+		}
+		else if (_msg->message == WM_CORONA_HTTP_JOB_COMPLETE)
+		{
+			http_result = (http_task_result*)_msg->lParam;
+			if (http_result) {
+				if (http_result->on_gui) {
+					http_result->on_gui(http_result->status);
+				}
+				delete http_result;
+			}
+			handled = true;
+		}
+
 		return handled;
 	}
 

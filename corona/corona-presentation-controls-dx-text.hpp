@@ -266,6 +266,8 @@ namespace corona
 	{
 	public:
 
+		using draw_control::host;
+
 		status_control();
 		status_control(const status_control& _src) : frame_layout(_src)
 		{
@@ -276,21 +278,26 @@ namespace corona
 		void set_status(call_status _status)
 		{
 			children.clear();
-			if (_status.success) {
-				std::shared_ptr<success_control> sc = std::make_shared<success_control>(this, id_counter::next());
-				sc->set_status(_status);
-				sc->set_size(1.0_container, 1.0_container);
-				sc->set_bounds(bounds);
-				children.push_back(sc);
+			if (_status.message.size()) {
+				if (_status.success) {
+					std::shared_ptr<success_control> sc = std::make_shared<success_control>(this, id_counter::next());
+					sc->set_status(_status);
+					sc->set_size(1.0_container, 1.0_container);
+					sc->set_padding(8.0_px);
+					sc->set_bounds(bounds);
+					children.push_back(sc);
+				}
+				else
+				{
+					std::shared_ptr<error_control> sc = std::make_shared<error_control>(this, id_counter::next());
+					sc->set_status(_status);
+					sc->set_size(1.0_container, 1.0_container);
+					sc->set_padding(8.0_px);
+					sc->set_bounds(bounds);
+					children.push_back(sc);
+				}
 			}
-			else 
-			{
-				std::shared_ptr<error_control> sc = std::make_shared<error_control>(this, id_counter::next());
-				sc->set_status(_status);
-				sc->set_size(1.0_container, 1.0_container);
-				sc->set_bounds(bounds);
-				children.push_back(sc);
-			}
+			create(host);
 		}
 
 		virtual std::shared_ptr<control_base> clone()
@@ -621,7 +628,7 @@ namespace corona
 
 	error_control::error_control(container_control_base* _parent, int _id) : text_display_control(_parent, _id)
 	{
-
+		
 	}
 
 	error_control::error_control()
@@ -661,12 +668,14 @@ namespace corona
 
 	status_control::status_control(container_control_base* _parent, int _id) : frame_layout(_parent, _id)
 	{
-
+		set_origin(0.0_px, 0.0_px);
+		set_margin(0.0_px);
 	}
 
 	status_control::status_control()
 	{
-
+		set_origin(0.0_px, 0.0_px);
+		set_margin(0.0_px);
 	}
 
 	status_control::~status_control()

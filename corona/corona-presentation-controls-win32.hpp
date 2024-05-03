@@ -118,6 +118,16 @@ namespace corona
 			return SendMessageA(window, msg, wParam, lParam);
 		}
 
+		void enable()
+		{
+			::EnableWindow(window, true);
+		}
+
+		void disable()
+		{
+			::EnableWindow(window, false);
+		}
+
 		virtual void on_resize()
 		{
 			if (auto phost = window_host.lock()) {
