@@ -282,18 +282,18 @@ namespace corona
 				if (_status.success) {
 					std::shared_ptr<success_control> sc = std::make_shared<success_control>(this, id_counter::next());
 					sc->set_status(_status);
-					sc->set_size(1.0_container, 1.0_container);
 					sc->set_padding(8.0_px);
-					sc->set_bounds(bounds);
+					sc->set_size(1.0_container, 1.0_container);
+					sc->arrange(inner_bounds);
 					children.push_back(sc);
 				}
 				else
 				{
 					std::shared_ptr<error_control> sc = std::make_shared<error_control>(this, id_counter::next());
 					sc->set_status(_status);
-					sc->set_size(1.0_container, 1.0_container);
 					sc->set_padding(8.0_px);
-					sc->set_bounds(bounds);
+					sc->set_size(1.0_container, 1.0_container);
+					sc->arrange(inner_bounds);
 					children.push_back(sc);
 				}
 			}
@@ -304,6 +304,20 @@ namespace corona
 		{
 			auto tv = std::make_shared<status_control>(*this);
 			return tv;
+		}
+
+		virtual void arrange(rectangle _bounds)
+		{
+			frame_layout::arrange(_bounds);
+			std::cout << "status layout" << std::endl;
+			std::cout << bounds.x << " " << bounds.y << std::endl;
+			std::cout << inner_bounds.x << " " << inner_bounds.y << std::endl;
+			for (auto child : children) {
+				std::cout << "child layout" << std::endl;
+				std::cout << child->get_bounds().x << " " << child->get_bounds().y << std::endl;
+				std::cout << child->get_inner_bounds().x << " " << child->get_inner_bounds().y << std::endl;
+
+			}
 		}
 
 		virtual ~status_control();
@@ -339,7 +353,7 @@ namespace corona
 					if (auto pwindow = this->window.lock())
 					{					
 						if (t->text_fill_brush) {
-							pwindow->getContext().setBrush(t->text_fill_brush.get(), &inner_bounds);
+							pwindow->getContext().setBrush(t->text_fill_brush.get(), &bounds);
 						}
 						if (t->text_style) {
 							pwindow->getContext().setTextStyle(t->text_style.get());
@@ -360,8 +374,8 @@ namespace corona
 
 					std::string test_text = std::format("{0}, {1}, {2}", text, draw_bounds.x, draw_bounds.y, (long)this);
 
-					draw_bounds.x -= bounds.x;
-					draw_bounds.y -= bounds.y;
+					draw_bounds.x -= inner_bounds.x;
+					draw_bounds.y -= inner_bounds.y;
 
 					if (text_style && text_fill_brush) {
 						pwindow->getContext().drawText(text.c_str(), &draw_bounds, text_style->name, text_fill_brush->get_name());
@@ -668,14 +682,12 @@ namespace corona
 
 	status_control::status_control(container_control_base* _parent, int _id) : frame_layout(_parent, _id)
 	{
-		set_origin(0.0_px, 0.0_px);
-		set_margin(0.0_px);
+		set_padding(0.0_px);
 	}
 
 	status_control::status_control()
 	{
-		set_origin(0.0_px, 0.0_px);
-		set_margin(0.0_px);
+		set_padding(0.0_px);
 	}
 
 	status_control::~status_control()

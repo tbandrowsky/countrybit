@@ -135,7 +135,6 @@ namespace corona
 		{
 			if (auto whost = _host.lock()) {
 				auto pos = whost->getWindowClientPos();
-				pos = whost->toDipsFromPixels(pos);
 				arrange(pos.w, pos.h);
 				if (root.get())
 				{

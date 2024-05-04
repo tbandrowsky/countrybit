@@ -275,7 +275,7 @@ namespace corona
 					sign = -1;
 				}
 
-				D2D1_RECT_F dest;
+/*				D2D1_RECT_F dest;
 				dest.left = pos;
 				dest.top = (wbounds.h - boxh) / 2;
 				dest.right = pos + boxw;
@@ -291,7 +291,7 @@ namespace corona
 					dc->DrawRectangle(&dest, brush, 4, nullptr);
 					brush->Release();
 				}
-
+				*/
 				winroot->endDraw(failedDevice);
 			}
 
@@ -509,8 +509,8 @@ namespace corona
 				{
 					ScreenToClient(hwnd, &p);
 					point ptxo;
-					ptxo.x = p.x * 96.0 / GetDpiForWindow(hwnd);
-					ptxo.y = p.y * 96.0 / GetDpiForWindow(hwnd);
+					ptxo.x = p.x * dpiScale;
+					ptxo.y = p.y * dpiScale;
 
 					if (pcurrent_window) {
 						switch (message) {
@@ -593,9 +593,9 @@ namespace corona
 				RECT rcClient;
 				GetWindowRect(hwnd, &rcClient);
 				SetWindowPos(hwnd, NULL, rcClient.left, rcClient.top, abs(rcClient.right - rcClient.left), abs(rcClient.bottom - rcClient.top), SWP_FRAMECHANGED);
+				dpiScale = GetDpiForWindow(hwnd) / 96.0;
 				if (currentController) {
 					pfactory->createD2dWindow(hwnd, backgroundColor);
-					dpiScale = 96.0 / GetDpiForWindow(hwnd);
 
 					tooltip = CreateWindowEx(NULL, TOOLTIPS_CLASS, NULL,
 						WS_POPUP | TTS_ALWAYSTIP | TTS_BALLOON,
@@ -650,8 +650,8 @@ namespace corona
 				else if (currentController) {
 					point hitpoint;
 					hitpoint = { x, y };
-					hitpoint.x = x * 96.0 / GetDpiForWindow(hwnd);
-					hitpoint.y = y * 96.0 / GetDpiForWindow(hwnd);
+					hitpoint.x = x * dpiScale;
+					hitpoint.y = y * dpiScale;
 					test_hit = currentController->ncHitTest(&hitpoint);
 				}
 				else
@@ -701,6 +701,7 @@ namespace corona
 			}
 			break;
 		case WM_DPICHANGED:
+			dpiScale = 96.0 / GetDpiForWindow(hwnd);
 			if (currentController)
 			{
 				RECT* const prcNewWindow = (RECT*)lParam;
@@ -879,8 +880,8 @@ namespace corona
 					ScreenToClient(hwnd, &p);
 					::SetFocus(hwnd);
 					point ptxo;
-					ptxo.x = p.x * 96.0 / GetDpiForWindow(hwnd);
-					ptxo.y = p.y * 96.0 / GetDpiForWindow(hwnd);
+					ptxo.x = p.x * dpiScale;
+					ptxo.y = p.y * dpiScale;
 					if (pcurrent_window) {
 						currentController->mouseLeftDown(&ptxo);
 					}
@@ -913,8 +914,8 @@ namespace corona
 				{
 					ScreenToClient(hwnd, &p);
 					point ptxo;
-					ptxo.x = p.x * 96.0 / GetDpiForWindow(hwnd);
-					ptxo.y = p.y * 96.0 / GetDpiForWindow(hwnd);
+					ptxo.x = p.x * dpiScale;
+					ptxo.y = p.y * dpiScale;
 					if (pcurrent_window) {
 						currentController->mouseLeftUp(&ptxo);
 					}
@@ -935,8 +936,8 @@ namespace corona
 				{
 					ScreenToClient(hwnd, &p);
 					point ptxo;
-					ptxo.x = p.x * 96.0 / GetDpiForWindow(hwnd);
-					ptxo.y = p.y * 96.0 / GetDpiForWindow(hwnd);
+					ptxo.x = p.x * dpiScale;
+					ptxo.y = p.y * dpiScale;
 					if (pcurrent_window) {
 						currentController->mouseRightDown(&ptxo);
 					}
@@ -952,8 +953,8 @@ namespace corona
 				{
 					ScreenToClient(hwnd, &p);
 					point ptxo;
-					ptxo.x = p.x * 96.0 / GetDpiForWindow(hwnd);
-					ptxo.y = p.y * 96.0 / GetDpiForWindow(hwnd);
+					ptxo.x = p.x * dpiScale;
+					ptxo.y = p.y * dpiScale;
 					if (pcurrent_window) {
 						currentController->mouseRightUp(&ptxo);
 					}
@@ -968,8 +969,8 @@ namespace corona
 				{
 					ScreenToClient(hwnd, &p);
 					point ptxo;
-					ptxo.x = p.x * 96.0 / GetDpiForWindow(hwnd);
-					ptxo.y = p.y * 96.0 / GetDpiForWindow(hwnd);
+					ptxo.x = p.x * dpiScale;
+					ptxo.y = p.y * dpiScale;
 					currentController->mouseMove(&ptxo);
 				}
 			}
@@ -990,13 +991,13 @@ namespace corona
 				rect.y = 0;
 				rect.w = LOWORD(lParam);
 				rect.h = HIWORD(lParam);
+				dpiScale = 96.0 / GetDpiForWindow(hwnd);
 				if (pfactory) {
 					auto wwin = pfactory->getWindow(hwnd);
 					if (auto win = wwin.lock()) {
 						win->resize(rect.w, rect.h);
 						if (currentController) {
-							dpiScale = 96.0 / GetDpiForWindow(hwnd);
-	#if TRACE_SIZE
+#if TRACE_SIZE
 							std::cout << " w " << rect.w << "h " << rect.h << std::endl;
 
 	#endif
@@ -1989,8 +1990,6 @@ namespace corona
 		rd.w = r.right - r.left;
 		rd.h = r.bottom - r.top;
 
-		dpiScale = 96.0 / GetDpiForWindow(hwndRoot);
-
 		rd.x *= dpiScale;
 		rd.y *= dpiScale;
 		rd.w *= dpiScale;
@@ -2001,29 +2000,27 @@ namespace corona
 
 	double directApplicationWin32::toPixelsFromDips(double r)
 	{
-		return r * GetDpiForWindow(hwndRoot) / 96.0;
+		return r / dpiScale;
 	}
 
 	double directApplicationWin32::toDipsFromPixels(double r)
 	{
-		return r * 96.0 / GetDpiForWindow(hwndRoot);
+		return r * dpiScale;
 	}
 
 	rectangle directApplicationWin32::toPixelsFromDips(const rectangle& r)
 	{
-		dpiScale = GetDpiForWindow(hwndRoot) / 96.0;
 		rectangle rx;
 
-		rx.x = r.x * dpiScale;
-		rx.y = r.y * dpiScale;
-		rx.w = r.w * dpiScale;
-		rx.h = r.h * dpiScale;
+		rx.x = r.x / dpiScale;
+		rx.y = r.y / dpiScale;
+		rx.w = r.w / dpiScale;
+		rx.h = r.h / dpiScale;
 		return rx;
 	}
 
 	rectangle directApplicationWin32::toDipsFromPixels(const rectangle& r)
 	{
-		dpiScale = 96.0 / GetDpiForWindow(hwndRoot);
 		rectangle rx;
 
 		rx.x = r.x * dpiScale;

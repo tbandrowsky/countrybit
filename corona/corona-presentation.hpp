@@ -394,7 +394,6 @@ namespace corona {
 			if (auto phost = window_host.lock()) {
 				auto sheet = styles.get_style();
 				auto pos = phost->getWindowClientPos();
-				phost->toPixelsFromDips(pos);
 				cp->arrange(pos.w, pos.h);
 				cp->create(phost);
 				cp->subscribe(this);

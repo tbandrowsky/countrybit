@@ -1441,21 +1441,21 @@ namespace corona
 		{
 			if (auto pwindow = window.lock())
 			{
-				std::cout << typeid(*this).name() << " " << inner_bounds.x << ", " << inner_bounds.y << " " << inner_bounds.w << " " << inner_bounds.h << std::endl;
+				std::cout << typeid(*this).name() << " " << bounds.x << ", " << bounds.y << " " << bounds.w << " " << bounds.h << std::endl;
 
 				auto bm = pwindow->getBitmap();
 				D2D1_RECT_F dest;
-				dest.left = inner_bounds.x;
-				dest.top = inner_bounds.y;
-				dest.right = inner_bounds.w + inner_bounds.x;
-				dest.bottom = inner_bounds.h + inner_bounds.y;
+				dest.left = bounds.x;
+				dest.top = bounds.y;
+				dest.right = bounds.w + bounds.x;
+				dest.bottom = bounds.h + bounds.y;
 
 				auto size = bm->GetPixelSize();
 				D2D1_RECT_F source;
 				source.left = 0;
 				source.top = 0;
-				source.bottom = inner_bounds.h;
-				source.right = inner_bounds.w;
+				source.bottom = bounds.h;
+				source.right = bounds.w;
 				_dest->DrawBitmap(bm, &dest, 1.0, D2D1_INTERPOLATION_MODE::D2D1_INTERPOLATION_MODE_LINEAR, &source);
 			}
 			for (auto& child : children)

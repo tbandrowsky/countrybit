@@ -860,21 +860,22 @@ namespace corona
 				if (bounds.w < 0) bounds.w = 0;
 				if (bounds.h < 0) bounds.h = 0;
 			}
-			else
-			{
-
-			}
 		}
 
 		inner_bounds = bounds;
 
+		std::cout << std::format("bi:{0},{1},{2},{3}", inner_bounds.x, inner_bounds.y, inner_bounds.w, inner_bounds.h) << std::endl;
+		std::cout << std::format("b:{0},{1},{2},{3}", bounds.x, bounds.y, bounds.w, bounds.h) << std::endl;
+
 		inner_bounds.x += padding_amount.x;
 		inner_bounds.y += padding_amount.y;
-		inner_bounds.w -= (padding_amount.x * 2);
-		inner_bounds.h -= (padding_amount.y * 2);
+		inner_bounds.w -= (padding_amount.x * 2.0);
+		inner_bounds.h -= (padding_amount.y * 2.0);
 
 		if (inner_bounds.w < 0) inner_bounds.w = 0;
-		if (inner_bounds.h < 0) inner_bounds.h = 0;
+		if (inner_bounds.h < 0) inner_bounds.h = 00;
+
+		std::cout << std::format("{0},{1},{2},{3}", inner_bounds.x, inner_bounds.y, inner_bounds.w, inner_bounds.h) << std::endl;
 
 		for (auto pr : push_requests) {
 			auto target = find(pr.dest_control_id);
@@ -897,6 +898,7 @@ namespace corona
 				{
 					temp_bounds.x += bounds.bottom() - temp_bounds.bottom();
 				}
+				target->set_padding(padding);
 				target->arrange(temp_bounds);
 			}
 		}

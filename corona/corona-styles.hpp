@@ -183,8 +183,7 @@ namespace corona
 
 		lgbr.gradientStops = {
 	{ toColor("#e1e1e0"), 0.0 },
-	{ toColor("#e1e1e0"), 0.85 },
-	{ toColor("#e1e1e0"), 1.0 }
+	{ toColor("#f1f1ff"), 1.0 }
 		};
 
 		countrybit.PageBackgroundBrush = std::make_shared<generalBrushRequest>(lgbr);
@@ -218,8 +217,8 @@ namespace corona
 		countrybit.PlaceholderFont->name = "PlaceholderFont";
 
 		lgbr.gradientStops = {
-{ toColor("#200000"), 0.0 },
-{ toColor("#C000F0"), 0.85 },
+{ toColor("#600000"), 0.0 },
+{ toColor("#600000"), 0.13 },
 { toColor("#200000"), 1.0 }
 		};
 
@@ -227,14 +226,14 @@ namespace corona
 		countrybit.ErrorBackgroundBrush->set_name("ErrorBackground");
 
 		lgbr.gradientStops = {
-{ toColor("#C00000"), 0.0 },
-{ toColor("#800000"), 0.85 },
-{ toColor("#300000"), 1.0 }
+{ toColor("#600000"), 0.0 },
+{ toColor("#600000"), 0.13 },
+{ toColor("#100000"), 1.0 }
 		};
 
 		countrybit.ErrorBorderBrush = std::make_shared<generalBrushRequest>(lgbr);
 		countrybit.ErrorBorderBrush->set_name("ErrorBorder");
-		countrybit.ErrorBorderWidth = 16;
+		countrybit.ErrorBorderWidth = 8;
 
 		countrybit.ErrorTextBrush = std::make_shared<generalBrushRequest>();
 		countrybit.ErrorTextBrush->setColor("#FFFFFF");
@@ -248,7 +247,7 @@ namespace corona
 		countrybit.ErrorFont->name = "ErrorFont";
 
 		lgbr.gradientStops = {
-{ toColor("#000020"), 0.0 },
+{ toColor("#000040"), 0.0 },
 { toColor("#000040"), 0.85 },
 { toColor("#000020"), 1.0 }
 		};
@@ -258,8 +257,8 @@ namespace corona
 
 		lgbr.gradientStops = {
 { toColor("#000010"), 0.0 },
-{ toColor("#000020"), 0.85 },
-{ toColor("#000010"), 1.0 }
+{ toColor("#000010"), 0.13 },
+{ toColor("#000020"), 1.0 }
 		};
 
 		countrybit.SuccessBorderBrush = std::make_shared<generalBrushRequest>(lgbr);

@@ -282,14 +282,18 @@ namespace corona
 
 			// note that, we are putting the breadcrumbs on a nav pane to the left.
 
-			document_body.status(status_recent, [](status_control& _sc) {
-				_sc.set_size(0.75_container, 100.0_px);
+			control_builder doc_message = document_body.status(status_recent, [](status_control& _sc) {
+				_sc.set_size(1.0_container, 100.0_px);
+				_sc.set_margin(4.0_px);
 				}, id_status);
 
-			control_builder doc_details = document_body.column_begin(id_document_body_details, [title_id](column_layout& rl) {
+			int status_id = id_status;
+
+			control_builder doc_details = document_body.column_begin(id_document_body_details, [title_id, status_id](column_layout& rl) {
 				rl.set_size(0.75_container, 1.0_remaining);
-				rl.set_padding(8.0_px);
+				rl.set_margin(4.0_px);
 				rl.push(title_id, true, false, false, false);
+				rl.push(status_id, true, false, false, false);
 				});
 			_fn(doc_details);
 

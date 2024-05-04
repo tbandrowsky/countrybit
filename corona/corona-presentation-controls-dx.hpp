@@ -47,11 +47,11 @@ namespace corona
 		{
 			host = _host;
 			if (auto phost = _host.lock()) {
-				if (inner_bounds.x < 0 || inner_bounds.y < 0 || inner_bounds.w < 0 || inner_bounds.h < 0) {
-					std::cout << typeid(*this).name() << " inner bounds is jacked on create" << std::endl;
-					throw std::logic_error("inner bounds not initialized");
+				if (bounds.x < 0 || bounds.y < 0 || bounds.w < 0 || bounds.h < 0) {
+					std::cout << typeid(*this).name() << " bounds is jacked on create" << std::endl;
+					throw std::logic_error("bounds not initialized");
 				}
-				window = phost->createDirect2Window(id, inner_bounds);
+				window = phost->createDirect2Window(id, bounds);
 				std::cout << this << ":" << typeid(*this).name() << " created." << std::endl;
 			}
 			else {
@@ -115,13 +115,13 @@ namespace corona
 
 						if (border_brush && border_brush->get_name())
 						{
-							context.setBrush(border_brush.get(), &inner_bounds);
+							context.setBrush(border_brush.get(), &bounds);
 							border_name = border_brush->get_name();
 						}
 
 						if (background_brush && background_brush->get_name())
 						{
-							context.setBrush(background_brush.get(), &inner_bounds);
+							context.setBrush(background_brush.get(), &bounds);
 							background_name = background_brush->get_name();
 						}
 
@@ -178,17 +178,17 @@ namespace corona
 			{
 				auto bm = pwindow->getBitmap();
 				D2D1_RECT_F dest;
-				dest.left = inner_bounds.x;
-				dest.top = inner_bounds.y;
-				dest.right = inner_bounds.w + inner_bounds.x;
-				dest.bottom = inner_bounds.h + inner_bounds.y;
+				dest.left = bounds.x;
+				dest.top = bounds.y;
+				dest.right = bounds.w + bounds.x;
+				dest.bottom = bounds.h + bounds.y;
 
 				auto size = bm->GetPixelSize();
 				D2D1_RECT_F source;
 				source.left = 0;
 				source.top = 0;
-				source.bottom = inner_bounds.h;
-				source.right = inner_bounds.w;
+				source.bottom = bounds.h;
+				source.right = bounds.w;
 				_dest->DrawBitmap(bm, &dest, 1.0, D2D1_INTERPOLATION_MODE::D2D1_INTERPOLATION_MODE_LINEAR, &source);
 			}
 			for (auto &child : children)

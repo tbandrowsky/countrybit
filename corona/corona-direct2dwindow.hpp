@@ -158,8 +158,6 @@ namespace corona
 
 	void direct2dWindow::moveWindow(UINT x, UINT y, UINT w, UINT h)
 	{
-		double dpi = ::GetDpiForWindow(hwnd);
-
 		MoveWindow(hwnd, x, y, w, h, false);
 	}
 
@@ -174,10 +172,7 @@ namespace corona
 		dpiWindow = ::GetDpiForWindow(hwnd);
 		context->getDeviceContext()->GetDpi(&dpix, &dpiy);
 
-		int x = w;
-		int y = h;
-
-		hr = swapChain->ResizeBuffers(2, x, y, DXGI_FORMAT_B8G8R8A8_UNORM, 0);
+		hr = swapChain->ResizeBuffers(2, 0, 0, DXGI_FORMAT_B8G8R8A8_UNORM, 0);
 		throwOnFail(hr, "Couldn't resize swapchain");
 
 		// Now we set up the Direct2D render target bitmap linked to the swapchain. 

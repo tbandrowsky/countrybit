@@ -265,8 +265,8 @@ namespace corona
 			// assume that the position in the gradient is a 1 based square relative
 			// to whatever frame it is on.
 			if (_size) {
+				point origin = { 0,0 };
 				point extent_size = rectangle_math::size(_size);
-				point origin = rectangle_math::origin(_size);
 
 				brush->stop = origin + _linearGradientBrushDto->stop * extent_size;
 				brush->start = origin + _linearGradientBrushDto->start * extent_size;
@@ -604,6 +604,11 @@ namespace corona
 
 			if (_borderBrush.size())
 			{
+				int half_border_width = _borderWidth / 2;
+				r.left += half_border_width;
+				r.top += half_border_width;
+				r.right -= half_border_width;
+				r.bottom -= half_border_width;
 				auto border = brushes[_borderBrush];
 				if (!border) {
 					std::cout << "missing border " << _borderBrush << std::endl;
