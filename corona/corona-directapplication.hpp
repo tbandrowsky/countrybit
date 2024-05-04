@@ -848,7 +848,27 @@ namespace corona
 			colorCapture = false;
 			break;
 
+		case WM_KEYDOWN:
+			if (currentController)
+			{
+				if (pcurrent_window) {
+					int ctrlId = ::GetDlgCtrlID(hwnd);
+					currentController->keyDown(ctrlId, wParam);
+				}
+			}
+			break;
+		case WM_KEYUP:
+			if (currentController)
+			{
+				if (pcurrent_window) {
+					int ctrlId = ::GetDlgCtrlID(hwnd);
+					currentController->keyUp(ctrlId, wParam);
+				}
+			}
+			break;
+		case WM_NCLBUTTONDOWN:
 		case WM_LBUTTONDOWN:
+			std::cout << "left down." << std::endl;
 			if (colorCapture) {
 				colorCapture = false;
 				::ReleaseCapture();
@@ -888,25 +908,10 @@ namespace corona
 				}
 			}
 			break;
-		case WM_KEYDOWN:
-			if (currentController)
-			{
-				if (pcurrent_window) {
-					int ctrlId = ::GetDlgCtrlID(hwnd);
-					currentController->keyDown(ctrlId, wParam);
-				}
-			}
-			break;
-		case WM_KEYUP:
-			if (currentController)
-			{
-				if (pcurrent_window) {
-					int ctrlId = ::GetDlgCtrlID(hwnd);
-					currentController->keyUp(ctrlId, wParam);
-				}
-			}
-			break;
+
+		case WM_NCLBUTTONUP:
 		case WM_LBUTTONUP:
+			std::cout << "left up." << std::endl;
 			if (currentController)
 			{
 				POINT p;
@@ -922,6 +927,7 @@ namespace corona
 				}
 			}
 			break;
+		case WM_NCRBUTTONDOWN:
 		case WM_RBUTTONDOWN:
 		{
 			if (colorCapture) {
@@ -945,6 +951,7 @@ namespace corona
 			}
 		}
 		break;
+		case WM_NCRBUTTONUP:
 		case WM_RBUTTONUP:
 			if (currentController)
 			{

@@ -1615,20 +1615,15 @@ namespace corona
 				rl.set_content_align(visual_alignment::align_far);
 				rl.set_content_cross_align(visual_alignment::align_center);
 				rl.set_item_margin(10.0_px);
-				rl.set_nchittest(HTCAPTION);
 				rl.background_brush = st->CaptionBackgroundBrush;
 				});
 
-			auto title_column = main_row.absolute_begin(id_counter::next(), [](absolute_layout& cl) {
+			auto title_column = main_row.column_begin(id_counter::next(), [](column_layout& cl) {
 				cl.set_size(1.0_remaining, 1.0_container);
 				})
 				.title(title_name, [this](title_control& control) {
-						layout_rect lr;
-						lr.width = 1.0_container;
-						lr.height = 1.3_fontgr;
-						lr.x = .30_container;
-						lr.y = 20.0_px;
-						control.set_position(lr);
+						control.set_nchittest(HTCAPTION);
+						control.set_size(1.0_container, 1.3_fontgr);
 					}, title_id)
 				.end()
 				.end()

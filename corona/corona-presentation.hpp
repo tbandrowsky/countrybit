@@ -19,6 +19,7 @@ namespace corona {
 		std::map<std::string, int> control_ids;
 		std::string home_page;
 		point last_mouse_position;
+		point last_mouse_click;
 
 	public:
 		int default_focus_id;
@@ -33,6 +34,8 @@ namespace corona {
 			data = std::make_shared<data_lake>();
 			default_push_button_id = 0;
 			default_focus_id = 0;
+			last_mouse_position = {};
+			last_mouse_click = {};
 		}
 
 		presentation(std::weak_ptr<applicationBase> _window_host) : window_host(_window_host)
@@ -40,6 +43,8 @@ namespace corona {
 			data = std::make_shared<data_lake>();
 			default_push_button_id = 0;
 			default_focus_id = 0;
+			last_mouse_position = {};
+			last_mouse_click = {};
 		}
 
 		int get_control_id(std::string _name, std::function<int()> _id)
@@ -436,6 +441,12 @@ namespace corona {
 					ellipse.radiusX = 4;
 					ellipse.radiusY = 4;
 					dc->FillEllipse(ellipse, mouseBrush);
+
+					ellipse.point.x = last_mouse_click.x;
+					ellipse.point.y = last_mouse_click.y;
+					ellipse.radiusX = 8;
+					ellipse.radiusY = 8;
+					dc->FillEllipse(ellipse, mouseBrush);
 					mouseBrush->Release();
 				}
 
@@ -575,6 +586,7 @@ namespace corona {
 	void presentation::mouseLeftDown(point* _point)
 	{
 		bool leftMouse = true;
+		last_mouse_click = *_point;
 		auto cp = current_page.lock();
 		presentation* p = this;
 		cp->root->set_mouse(*_point, &leftMouse, nullptr, [cp, p, _point](control_base* _item) {
