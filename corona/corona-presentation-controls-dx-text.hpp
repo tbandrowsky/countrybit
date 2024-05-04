@@ -309,15 +309,14 @@ namespace corona
 		virtual void arrange(rectangle _bounds)
 		{
 			frame_layout::arrange(_bounds);
-			std::cout << "status layout" << std::endl;
-			std::cout << bounds.x << " " << bounds.y << std::endl;
-			std::cout << inner_bounds.x << " " << inner_bounds.y << std::endl;
-			for (auto child : children) {
-				std::cout << "child layout" << std::endl;
-				std::cout << child->get_bounds().x << " " << child->get_bounds().y << std::endl;
-				std::cout << child->get_inner_bounds().x << " " << child->get_inner_bounds().y << std::endl;
-
-			}
+			//std::cout << "status layout" << std::endl;
+			//std::cout << bounds.x << " " << bounds.y << std::endl;
+			//std::cout << inner_bounds.x << " " << inner_bounds.y << std::endl;
+			//for (auto child : children) {
+				//std::cout << "child layout" << std::endl;
+				//std::cout << child->get_bounds().x << " " << child->get_bounds().y << std::endl;
+				//std::cout << child->get_inner_bounds().x << " " << child->get_inner_bounds().y << std::endl;
+			//}
 		}
 
 		virtual ~status_control();

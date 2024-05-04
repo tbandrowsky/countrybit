@@ -52,10 +52,10 @@ namespace corona
 					throw std::logic_error("bounds not initialized");
 				}
 				window = phost->createDirect2Window(id, bounds);
-				std::cout << this << ":" << typeid(*this).name() << " created." << std::endl;
+//				std::cout << this << ":" << typeid(*this).name() << " created." << std::endl;
 			}
 			else {
-				std::cout << this << ":" << typeid(*this).name() << " NOT created because the host could not be locked" << std::endl;
+	//			std::cout << this << ":" << typeid(*this).name() << " NOT created because the host could not be locked" << std::endl;
 			}
 			if (on_create) {
 				on_create(this);

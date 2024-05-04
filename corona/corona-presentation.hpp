@@ -18,6 +18,7 @@ namespace corona {
 		lockable control_lock;
 		std::map<std::string, int> control_ids;
 		std::string home_page;
+		point last_mouse_position;
 
 	public:
 		int default_focus_id;
@@ -425,6 +426,21 @@ namespace corona {
 			if (auto phost = window_host.lock()) {
 				auto pos = phost->getWindowClientPos();
 
+				// this draws the mouse
+				ID2D1SolidColorBrush* mouseBrush = nullptr;
+				dc->CreateSolidColorBrush({ 0.0, 1.0, 0.0, 1.0 }, &mouseBrush);
+				if (mouseBrush) {
+					D2D1_ELLIPSE ellipse = {};
+					ellipse.point.x = last_mouse_position.x;
+					ellipse.point.y = last_mouse_position.y;
+					ellipse.radiusX = 4;
+					ellipse.radiusY = 4;
+					dc->FillEllipse(ellipse, mouseBrush);
+					mouseBrush->Release();
+				}
+
+				// this draws the screen border and sizing bars
+
 				double border_thickness = 4;
 
 				linearGradientBrushRequest lgbr;
@@ -545,6 +561,7 @@ namespace corona {
 
 	void presentation::mouseMove(point* _point)
 	{
+		last_mouse_position = *_point;
 		auto cp = current_page.lock();
 		mouse_move_event kde;
 		kde.control_id = 0;
@@ -660,6 +677,8 @@ namespace corona {
 	LRESULT presentation::ncHitTest(point* _point)
 	{
 		LRESULT result = HTCLIENT;
+
+		mouseMove(_point);
 
 		if (auto ppage = current_page.lock())
 		{

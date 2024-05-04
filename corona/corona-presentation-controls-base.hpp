@@ -864,8 +864,8 @@ namespace corona
 
 		inner_bounds = bounds;
 
-		std::cout << std::format("bi:{0},{1},{2},{3}", inner_bounds.x, inner_bounds.y, inner_bounds.w, inner_bounds.h) << std::endl;
-		std::cout << std::format("b:{0},{1},{2},{3}", bounds.x, bounds.y, bounds.w, bounds.h) << std::endl;
+//		std::cout << std::format("bi:{0},{1},{2},{3}", inner_bounds.x, inner_bounds.y, inner_bounds.w, inner_bounds.h) << std::endl;
+//		std::cout << std::format("b:{0},{1},{2},{3}", bounds.x, bounds.y, bounds.w, bounds.h) << std::endl;
 
 		inner_bounds.x += padding_amount.x;
 		inner_bounds.y += padding_amount.y;
@@ -875,7 +875,7 @@ namespace corona
 		if (inner_bounds.w < 0) inner_bounds.w = 0;
 		if (inner_bounds.h < 0) inner_bounds.h = 00;
 
-		std::cout << std::format("{0},{1},{2},{3}", inner_bounds.x, inner_bounds.y, inner_bounds.w, inner_bounds.h) << std::endl;
+//		std::cout << std::format("{0},{1},{2},{3}", inner_bounds.x, inner_bounds.y, inner_bounds.w, inner_bounds.h) << std::endl;
 
 		for (auto pr : push_requests) {
 			auto target = find(pr.dest_control_id);
