@@ -155,8 +155,16 @@ namespace corona
 					else
 						window = CreateWindowEx(get_window_ex_style(), get_window_class(), "", get_window_style(), boundsPixels.x, boundsPixels.y, boundsPixels.w, boundsPixels.h, parent, (HMENU)id, NULL, NULL);
 
+					HFONT old_font = text_font;
+
 					text_font = phost->createFontDips(window, text_style.fontName, text_style.fontSize, text_style.bold, text_style.italics);
 					SendMessage(window, WM_SETFONT, (WPARAM)text_font, 0);
+
+					if (old_font) {
+						::DeleteObject(old_font);
+						old_font = nullptr;
+					}
+
 					HWND tooltip = phost->getTooltipWindow();
 					if (tooltip && tooltip_text.size() > 0) {
 						TOOLINFOA toolInfo = { 0 };

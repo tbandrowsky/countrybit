@@ -1630,7 +1630,7 @@ namespace corona
 			.end();
 
 			auto frame_buttons = main_row.row_begin(id_counter::next(), [](row_layout& rl) {
-					rl.set_size(500.0_px, 1.0_container);
+					rl.set_size(250.0_px, 1.0_container);
 					rl.set_item_margin(5.0_px);
 					rl.set_content_cross_align(visual_alignment::align_center);
 					rl.set_content_align(visual_alignment::align_far);
@@ -1638,7 +1638,7 @@ namespace corona
 				.column_begin(id_counter::next(), [](column_layout& cl) {
 					cl.set_content_align(visual_alignment::align_center);
 					cl.set_content_cross_align(visual_alignment::align_near);
-					cl.set_size(450.0_px, 1.0_container);
+					cl.set_size(250.0_px, 1.0_container);
 					cl.set_item_margin(0.0_px);
 				})
 				.end()

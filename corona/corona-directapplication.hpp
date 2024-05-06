@@ -343,8 +343,7 @@ namespace corona
 	{
 		HFONT hfont = nullptr;
 
-		double targetScale = 96.0 / ::GetDpiForWindow(target);
-		double ifontSize = fontSize * dpiScale;
+		double ifontSize = fontSize / dpiScale;
 		istring<2048> fontList = _fontName;
 
 		int state = 0;
@@ -593,7 +592,7 @@ namespace corona
 				RECT rcClient;
 				GetWindowRect(hwnd, &rcClient);
 				SetWindowPos(hwnd, NULL, rcClient.left, rcClient.top, abs(rcClient.right - rcClient.left), abs(rcClient.bottom - rcClient.top), SWP_FRAMECHANGED);
-				dpiScale = GetDpiForWindow(hwnd) / 96.0;
+				dpiScale = 96.0 / GetDpiForWindow(hwnd);
 				if (currentController) {
 					pfactory->createD2dWindow(hwnd, backgroundColor);
 
