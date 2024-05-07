@@ -939,7 +939,7 @@ namespace corona
 
 			form_row = form_body.row_begin(id_counter::next(), [height](row_layout& _rl)
 				{
-					_rl.set_size(1.0_container, height);
+					_rl.set_size(1.0_container, 1.0_container);
 				});		
 
 			field_column = form_row.column_begin(id_counter::next(), [width](column_layout& _cl) {
@@ -1041,15 +1041,15 @@ namespace corona
 
 						});
 				}
-				else 
+				else if (ctrl.field_type == "section")
 				{
-					field_column.edit_field(ctrl.field_id, ctrl.field_label, ctrl.field_tooltip, [is_default, ctrl, this](edit_control& _settings) {
-						if (ids.data.has_member(ctrl.json_member_name)) {
-							std::string _existing = ids.data[ctrl.json_member_name];
-							_settings.set_text(_existing);
-						}
-						_settings.is_default_focus = is_default;
-
+					if (field_counter) {
+						field_column = form_row.column_begin(id_counter::next(), [width](column_layout& _cl) {
+							_cl.set_size(measure(width, measure_units::percent_container), 1.0_container);
+							});
+						field_counter = 0;
+					}
+					field_column.chaptersubtitle(ctrl.field_label, [is_default, ctrl, this](chaptersubtitle_control& _settings) {
 						});
 				}
 
@@ -1060,6 +1060,7 @@ namespace corona
 					field_column = form_row.column_begin(id_counter::next(), [width](column_layout& _cl) {
 						_cl.set_size(measure(width, measure_units::percent_container), 1.0_container);
 						});
+					field_counter = 0;
 				}
 			}
 

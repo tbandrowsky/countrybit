@@ -545,17 +545,6 @@ namespace corona
 			return value_base == nullptr;
 		}
 
-		operator bool() const
-		{
-			bool value = false;
-			if (is_double()) {
-				value = double_impl->value != 0.0;
-			}
-			else if (is_string()) {
-				value = string_impl->value == "true";
-			}
-			return value;
-		}
 
 		int64_t get_int64s()  const
 		{
@@ -605,6 +594,25 @@ namespace corona
 				return 0.0;
 		}
 
+		operator int() const
+		{
+			if (double_impl)
+				return double_impl->value;
+			else if (int64_impl)
+				return int64_impl->value;
+			else if (string_impl)
+			{
+				if (string_impl->value == "true") 
+					return 1;
+				else
+					return std::stod(string_impl->value);
+			}
+			else if (datetime_impl)
+				return 0;
+			else
+				return 0;
+		}
+
 		operator date_time() const
 		{
 			if (datetime_impl)
@@ -646,6 +654,22 @@ namespace corona
 				return blob_impl->to_string();
 			else
 				return "";
+		}
+
+
+		explicit operator bool() const
+		{
+			bool value = false;
+			if (is_double()) {
+				value = double_impl->value != 0.0;
+			}
+			else if (is_int64()) {
+				value = int64_impl->value != 0.0;
+			}
+			else if (is_string()) {
+				value = string_impl->value == "true";
+			}
+			return value;
 		}
 
 		operator std::shared_ptr<json_array>& ()
@@ -781,7 +805,7 @@ namespace corona
 		{
 			bool has_value = object_impl && object_impl->members.contains(_key);
 			if (has_value) {
-				bool svalue = get_member(_key);
+				bool svalue = (bool)get_member(_key);
 				has_value = svalue == _value;
 			}
 			return has_value;
@@ -891,7 +915,7 @@ namespace corona
 				put_member(_key, dt);
 			}
 			else if (_new_type == "bool") {
-				bool b = get_member(_key);
+				bool b = (bool)get_member(_key);
 				put_member(_key, b);
 			}
 		}

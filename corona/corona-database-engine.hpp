@@ -666,7 +666,7 @@ private:
 			json_parser jp;
 
 			json object_definition = check_object_request["Data"];
-			bool strict_enabled = check_object_request["Strict"];
+			bool strict_enabled = (bool)check_object_request["Strict"];
 
 			result = create_response(check_object_request, true, "Ok", object_definition, 0.0);
 
@@ -942,7 +942,7 @@ private:
 
 						if (grant.is_member("ClassName", "SysClassGrant"))
 						{
-							bool has_permissions = grant["Permissions"][_permission];
+							bool has_permissions = (bool)grant["Permissions"][_permission];
 							if (has_permissions) {
 								granted = has_permissions;
 								co_return granted;
@@ -1003,7 +1003,7 @@ private:
 
 							bool has_matching_key = filter.compare(obj);
 
-							bool has_permissions = grant["Permissions"][_permission];
+							bool has_permissions = (bool)grant["Permissions"][_permission];
 
 							granted = has_permissions || has_matching_key;
 
@@ -1066,7 +1066,7 @@ private:
 
 							bool has_matching_key = filter.compare(object);
 
-							bool has_permissions = grant["Permissions"][_permission];
+							bool has_permissions = (bool)grant["Permissions"][_permission];
 
 							granted = has_permissions || has_matching_key;
 

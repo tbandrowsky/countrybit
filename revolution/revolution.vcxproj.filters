@@ -50,6 +50,6 @@
     <CopyFileToFolders Include="assets\small_logo.png">
       <Filter>Resource Files</Filter>
     </CopyFileToFolders>
-    <CopyFileToFolders Include="config\config.json" />
+    <CopyFileToFolders Include="client.json" />
   </ItemGroup>
 </Project>

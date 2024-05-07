@@ -36,6 +36,24 @@ namespace corona
 	const int IDC_USER_PASSWORD2 = 2004;
 	const int IDC_USER_CONFIRMATION = 2005;
 
+
+	const int IDC_USER_LASTNAME = 2021;
+	const int IDC_USER_FIRSTNAME = 2022;
+	const int IDC_USER_STREET1 = 2023;
+	const int IDC_USER_STREET2 = 2024;
+	const int IDC_USER_CITY = 2025;
+	const int IDC_USER_STATE = 2026;
+	const int IDC_USER_ZIP = 2027;
+	const int IDC_USER_CITIZEN = 2028;
+	const int IDC_USER_RACE = 2029;
+	const int IDC_USER_SEX = 2030;
+	const int IDC_USER_EYES = 2031;
+	const int IDC_USER_HAIR = 2032;
+	const int IDC_USER_HEIGHT = 2033;
+	const int IDC_USER_WEIGHT = 2034;
+	const int IDC_USER_IDENTITY = 2035;
+	const int IDC_USER_VETERAN = 2036;
+
 	const int IDC_BTN_CANCEL = 2101;
 	const int IDC_BTN_LOGIN = 2102;
 	const int IDC_BTN_LOGIN_START = 2103;
@@ -43,6 +61,7 @@ namespace corona
 	const int IDC_BTN_LOGIN_CONFIRM = 2105;
 	const int IDC_BTN_OBJECTS_EDIT_SAVE = 2106;
 	const int IDC_BTN_REVERT = 2107;
+	const int IDC_BTN_NEXT = 2108;
 
 	// menu options
 	const int IDM_VIEW_MENU = 3001;
@@ -107,6 +126,8 @@ namespace corona
 		{
 			st = styles.get_style();
 
+			std::cout << "Revolution Client Startup at " << std::filesystem::current_path()  << std::endl;
+
 			status_recent = {};
 
 			factory = std::make_shared<directXAdapter>();
@@ -129,6 +150,10 @@ namespace corona
 
 			application_menu->destination(IDM_HOME, "&Home", "home")
 								.destination(IDM_LOGIN, "&Login", "login");
+
+
+			file_transaction<relative_ptr_type> ftr = read_config("client.json");
+			ftr.wait();
 
 			/*
 			
@@ -156,22 +181,32 @@ namespace corona
 					control_builder cb(_page.get_root_container());
 					cb.title("Test");
 					});
+
 				_presentation->create_page("login_start", [this](page& _page) {
 					create_login_start_page(_page);
 					});
+
 				_presentation->create_page("login_sendcode", [this](page& _page) {
 					create_login_sendcode_page(_page);
 					});
+
 				_presentation->create_page("login_confirmcode", [this](page& _page) {
 					create_login_confirmcode_page(_page);
 					});
+
 				_presentation->create_page("login_passwordset", [this](page& _page) {
 					create_login_passwordset_page(_page);
 					});
+
 				_presentation->create_page("edit_object", [this](page& _page) {
 					create_object_edit_page(_page);
 					});
-				_presentation->set_home_page("login_start");
+
+				_presentation->create_page("newuser_license", [this](page& _page) {
+					create_newuser_license_page(_page);
+					});
+
+				_presentation->set_home_page("newuser_license");
 
 				set_corona_handlers();
 			};
@@ -201,6 +236,7 @@ namespace corona
 							if (!jp.parse_errors.size()) {
 								json corona_config = temp_contents["CoronaServer"];
 								corona_api->host = corona_config["Host"];
+								corona_api->path = corona_config["Path"];
 								corona_api->port = corona_config["Port"];
 								co_return true;
 							}
@@ -225,7 +261,6 @@ namespace corona
 
 		void run(HINSTANCE hInstance, bool fullScreen)
 		{
-			read_config("config.json");
 			application->runDialog(hInstance, "COUNTRYBIT REVOLUTION", IDI_REVOLUTION, fullScreen, presentation_layer);
 		}
 
@@ -283,7 +318,7 @@ namespace corona
 			// note that, we are putting the breadcrumbs on a nav pane to the left.
 
 			control_builder doc_message = document_body.status(status_recent, [](status_control& _sc) {
-				_sc.set_size(1.0_container, 100.0_px);
+				_sc.set_size(.75_container, 100.0_px);
 				_sc.set_margin(4.0_px);
 				}, id_status);
 
@@ -418,6 +453,218 @@ namespace corona
 							_fv.set_data(ids);
 						});
 				});
+		}
+
+		void create_newuser_license_page(
+			page& _page
+		)
+		{
+			create_page_frame(_page, [this](control_builder& cb)
+				{
+					cb.chaptertitle("Welcome to Revolution");
+					cb.chaptersubtitle("Please present your Real ID compliant license.");
+
+					control_builder root_row = cb.row_begin(id_counter::next(), [](row_layout& _settings) {
+						_settings.set_size(1.0_container, 1.0_container);
+						});
+
+					control_builder camera_column = root_row.column_begin(id_counter::next(), [](column_layout& _settings) {
+						_settings.set_size(.4_container, 1.0_container);
+						});
+
+					control_builder form_column = root_row.form_view(IDC_FORM_VIEW, [this](form_view_control& _fv)
+						{
+							_fv.set_size(.6_container, 1.0_container);
+
+							item_data_source ids;
+							item_field iff;
+
+							iff.field_id = id_counter::next();
+							iff.field_label = "Name";
+							iff.field_type = "section";
+							ids.fields.push_back(iff);
+
+							iff.field_id = IDC_USER_LASTNAME;
+							iff.field_label = "Last Name";
+							iff.field_type = "string";
+							iff.json_member_name = "LastName";
+							ids.fields.push_back(iff);
+
+							iff.field_id = IDC_USER_FIRSTNAME;
+							iff.field_label = "First Name:";
+							iff.field_type = "string";
+							iff.json_member_name = "FirstName";
+							ids.fields.push_back(iff);
+
+							iff.field_id = id_counter::next(); 
+							iff.field_label = "Address";
+							iff.field_type = "section";
+
+							iff.field_id = IDC_USER_STREET1;
+							iff.field_label = "Street 1:";
+							iff.field_type = "string";
+							iff.json_member_name = "Street1";
+							ids.fields.push_back(iff);
+
+							iff.field_id = IDC_USER_STREET2;
+							iff.field_label = "Street 2:";
+							iff.field_type = "string";
+							iff.json_member_name = "Street2";
+							ids.fields.push_back(iff);
+
+							iff.field_id = IDC_USER_CITY;
+							iff.field_label = "City:";
+							iff.field_type = "string";
+							iff.json_member_name = "City";
+							ids.fields.push_back(iff);
+
+							iff.field_id = IDC_USER_STATE;
+							iff.field_label = "State:";
+							iff.field_type = "State";
+							iff.json_member_name = "State";
+							ids.fields.push_back(iff);
+
+							iff.field_id = IDC_USER_ZIP;
+							iff.field_label = "Zip:";
+							iff.field_type = "string";
+							iff.json_member_name = "Zip";
+							ids.fields.push_back(iff);
+
+							iff.field_id = id_counter::next();
+							iff.field_label = "Service";
+							iff.field_type = "section";
+							ids.fields.push_back(iff);
+
+							iff.field_id = IDC_USER_VETERAN;
+							iff.field_label = "Veteran:";
+							iff.field_type = "string";
+							iff.json_member_name = "Veteran";
+							ids.fields.push_back(iff);
+
+							iff.field_id = IDC_USER_CITIZEN;
+							iff.field_label = "Citizenship:";
+							iff.field_type = "string";
+							iff.json_member_name = "Citizenship";
+							ids.fields.push_back(iff);
+
+							iff.field_id = id_counter::next();
+							iff.field_label = "Description";
+							iff.field_type = "section";
+							ids.fields.push_back(iff);
+
+							iff.field_id = IDC_USER_RACE;
+							iff.field_label = "Race:";
+							iff.field_type = "string";
+							iff.json_member_name = "Race";
+							ids.fields.push_back(iff);
+
+							iff.field_id = IDC_USER_SEX;
+							iff.field_label = "Sex:";
+							iff.field_type = "string";
+							iff.json_member_name = "Sex";
+							ids.fields.push_back(iff);
+
+							iff.field_id = IDC_USER_EYES;
+							iff.field_label = "Eyes:";
+							iff.field_type = "string";
+							iff.json_member_name = "Eyes";
+							ids.fields.push_back(iff);
+
+							iff.field_id = IDC_USER_HAIR;
+							iff.field_label = "Hair:";
+							iff.field_type = "string";
+							iff.json_member_name = "Hair";
+							ids.fields.push_back(iff);
+
+							iff.field_id = IDC_USER_HEIGHT;
+							iff.field_label = "Height:";
+							iff.field_type = "string";
+							iff.json_member_name = "Password2";
+							ids.fields.push_back(iff);
+
+							iff.field_id = IDC_USER_WEIGHT;
+							iff.field_label = "Weight:";
+							iff.field_type = "string";
+							iff.json_member_name = "Password2";
+							ids.fields.push_back(iff);
+
+							iff.field_id = IDC_USER_IDENTITY;
+							iff.field_label = "Identity:";
+							iff.field_type = "string";
+							iff.json_member_name = "Identity";
+							ids.fields.push_back(iff);
+
+							ids.fn_buttons = [this](control_builder& cb) {
+								cb.push_button(IDC_BTN_NEXT, "&Next", [this](pushbutton_control& cbc)
+									{
+										json_parser jp;
+									});
+								cb.calico_button(IDC_BTN_CANCEL, [this](calico_button_control& cbc)
+									{
+										cbc.set_text("&Cancel");
+									});
+								};
+
+							_fv.fields_per_column = 8;
+							_fv.set_size(1.0_container, 1.0_container);
+							_fv.set_data(ids);
+						});
+				});
+
+				_page.on_command(IDC_BTN_NEXT, [](command_event evt) {
+
+					});
+		}
+
+		void create_newuser_user_page(
+			page& _page
+		)
+		{
+			create_page_frame(_page, [this](control_builder& cb)
+				{
+					cb.chaptertitle("Enter New Password");
+					cb.chaptersubtitle("Please enter the code that you were emailed.");
+
+					cb.form_view(IDC_FORM_VIEW, [this](form_view_control& _fv)
+						{
+							item_data_source ids;
+							item_field iff;
+
+							iff.field_id = IDC_USER_PASSWORD1;
+							iff.field_label = "Password 1:";
+							iff.field_type = "string";
+							iff.json_member_name = "Password1";
+							ids.fields.push_back(iff);
+
+							iff.field_id = IDC_USER_PASSWORD2;
+							iff.field_label = "Password 2:";
+							iff.field_type = "string";
+							iff.json_member_name = "Password2";
+							ids.fields.push_back(iff);
+
+							ids.fn_buttons = [this](control_builder& cb) {
+								cb.calico_button(IDC_BTN_LOGIN, [this](calico_button_control& cbc)
+									{
+										json_parser jp;
+										cbc.options = {};
+										cbc.options.corona_client = corona_api.get();
+										cbc.options.function_name = "/login/passwordset/";
+										cbc.options.credentials = credentials;
+										cbc.options.function_data = jp.create_object();
+										cbc.options.function_data.put_member_i64("SourceControlId", IDC_FORM_VIEW);
+									});
+								cb.calico_button(IDC_BTN_CANCEL, [this](calico_button_control& cbc)
+									{
+										cbc.set_text("&Cancel");
+									});
+								};
+
+							_fv.fields_per_column = 3;
+							_fv.set_size(1.0_container, 400.0_px);
+							_fv.set_data(ids);
+						});
+				});
+
 		}
 
 		void create_login_passwordset_page (

@@ -264,7 +264,7 @@ namespace corona
                     NULL,
                     WINHTTP_NO_REFERER,
                     allowed_types_lies,
-                    WINHTTP_FLAG_SECURE);
+                    WINHTTP_FLAG_ESCAPE_DISABLE /* WINHTTP_FLAG_SECURE */);
             }
             else 
             {

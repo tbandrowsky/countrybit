@@ -1,6 +1,0 @@
-{
-  "CoronaServer": {
-    "Host": "http://localhost/corona",
-    "Port": 5678
-  }
-}

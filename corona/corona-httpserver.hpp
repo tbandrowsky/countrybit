@@ -428,11 +428,12 @@ namespace corona {
 			std::string header_string;
 			auto& headers = _request->Headers;
 			auto& header = headers.KnownHeaders[_header_id];
-			if (header.RawValueLength) 
+			int length = header.RawValueLength + 1;
+			if (length) 
 			{
-				buffer buff(header.RawValueLength);
+				buffer buff(length);
 				char *temp = buff.get_ptr();
-				strncpy_s(temp, header.RawValueLength, header.pRawValue, header.RawValueLength);
+				strncpy_s(temp, length, header.pRawValue, header.RawValueLength);
 				header_string = temp;
 			}
 			return header_string;

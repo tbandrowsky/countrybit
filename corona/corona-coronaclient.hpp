@@ -8,6 +8,7 @@ namespace corona
 	public:
 
 		std::string host;
+		std::string path;
 		int port;
 		
 		corona_client()
@@ -19,6 +20,7 @@ namespace corona
 		{
 			host = _host;
 			port = _port;
+			path = "";
 		}
 
 		json create_request(json _credential, json _data)
@@ -41,6 +43,7 @@ namespace corona
 
 			try
 			{
+				std::string url = path + _function_name;
 
 				if (on_post_request) {
 					on_post_request(0, _function_name, _credentials, _payload);
@@ -50,7 +53,7 @@ namespace corona
 				const char* corona_host = host.c_str();
 				int corona_port = port;
 				json token_request = create_request(_credentials, _payload);
-				http_params corona_http = corona_client.post(corona_host, corona_port, _function_name.c_str(), token_request);
+				http_params corona_http = corona_client.post(corona_host, corona_port, url.c_str(), token_request);
 				dfs.request = corona_http.request;
 				dfs.response = corona_http.response;
 				dfs.function_path = _function_name;
@@ -58,7 +61,7 @@ namespace corona
 				if (corona_http.response.content_type.starts_with("application/json"))
 				{
 					json _corona_response = jp.parse_object(corona_http.response.response_body.get_ptr());
-					dfs.success = _corona_response["Success"];
+					dfs.success = (bool)_corona_response["Success"];
 					dfs.message = _corona_response["Message"];
 				}
 
@@ -91,6 +94,8 @@ namespace corona
 		{
 			try
 			{
+
+				std::string url = path + _function_name;
 	
 				if (on_post_request) {
 					on_post_request(_windows_id, _function_name, _credentials, _payload);
@@ -99,7 +104,7 @@ namespace corona
 				corona_client* pthis = this;
 
 				threadomatic::run_http(
-					[this, _function_name, _credentials, _payload]() -> call_status {
+					[this, url, _function_name, _credentials, _payload]() -> call_status {
 						call_status dfs;
 						try
 						{
@@ -107,7 +112,7 @@ namespace corona
 							const char* corona_host = host.c_str();
 							int corona_port = port;
 							json token_request = create_request(_credentials, _payload);
-							http_params corona_http = corona_client.post(corona_host, corona_port, _function_name.c_str(), token_request);
+							http_params corona_http = corona_client.post(corona_host, corona_port, url.c_str(), token_request);
 							dfs.request = corona_http.request;
 							dfs.response = corona_http.response;
 							dfs.function_path = _function_name;
@@ -116,7 +121,7 @@ namespace corona
 							{
 								json_parser jp;
 								json corona_response = jp.parse_object(corona_http.response.response_body.get_ptr());
-								dfs.success = corona_response["Success"];
+								dfs.success = (bool)corona_response["Success"];
 								dfs.message = corona_response["Message"];
 							}
 						}
@@ -166,7 +171,8 @@ namespace corona
 
 			login_object.put_member("Name", _user_name);
 			login_object.put_member("Password", _password);
-			http_params login_result = corona_client.post(corona_host, corona_port, "login/start", login_object);
+			std::string url = path + "login/start";
+			http_params login_result = corona_client.post(corona_host, corona_port, url.c_str(), login_object);
 
 			dfs.request = login_result.request;
 			dfs.response = login_result.response;
@@ -176,7 +182,7 @@ namespace corona
 				login_json = jp.parse_object(login_result.response.response_body.get_ptr());
 				std::cout << login_json.to_json() << std::endl;
 
-				dfs.success = login_json["Success"];
+				dfs.success = (bool)login_json["Success"];
 				dfs.message = login_json["Message"];
 			}
 			return dfs;
