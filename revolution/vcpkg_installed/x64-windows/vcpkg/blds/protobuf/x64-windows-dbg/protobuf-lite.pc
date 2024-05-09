@@ -1,0 +1,11 @@
+prefix=D:/countrybit/revolution/vcpkg_installed/x64-windows/vcpkg/pkgs/protobuf_x64-windows/debug
+exec_prefix=D:/countrybit/revolution/vcpkg_installed/x64-windows/vcpkg/pkgs/protobuf_x64-windows/debug
+libdir=D:/countrybit/revolution/vcpkg_installed/x64-windows/vcpkg/pkgs/protobuf_x64-windows/debug/lib
+includedir=D:/countrybit/revolution/vcpkg_installed/x64-windows/vcpkg/pkgs/protobuf_x64-windows/debug/include
+
+Name: Protocol Buffers
+Description: Google's Data Interchange Format
+Version: 3.21.12.0
+Libs: -L${libdir} -lprotobuf-lite 
+Cflags: -I${includedir}
+Conflicts: protobuf

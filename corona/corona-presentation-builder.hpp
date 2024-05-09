@@ -71,8 +71,8 @@ namespace corona
 			std::function<void(field_control&)> _settings = nullptr)
 		{
 			auto cl = column_begin(id_counter::next(), [](column_layout& _src) {
-				_src.set_size(100.0_container, 50.0_px);
-				_src.set_item_size(100.0_container, 1.3_fontgr);
+				_src.set_size(1.0_container, 50.0_px);
+				_src.set_item_size(1.0_container, 1.3_fontgr);
 			});
 			auto& lb = cl.label(_field_label);
 			auto tc = cl.create<field_control>(_id);
@@ -389,6 +389,16 @@ namespace corona
 			auto tc = create<image_control>(id_counter::next());
 			apply_item_sizes(tc);
 			tc->load_from_file(_filename);
+			if (_settings) {
+				_settings(*tc);
+			}
+			return *this;
+		}
+
+		control_builder& camera(std::function<void(camera_control&)> _settings)
+		{
+			auto tc = create<camera_control>(id_counter::next());
+			apply_item_sizes(tc);
 			if (_settings) {
 				_settings(*tc);
 			}
@@ -931,7 +941,7 @@ namespace corona
 			double width = 1.0 / column_count;
 			if (width >= .5) width = 1.0 / 3.0;
 
-			measure height = measure(200, measure_units::pixels);
+			measure height = measure(100.0 * fields_per_column, measure_units::pixels);
 
 			form_body = cb.column_begin(id_counter::next(), [](column_layout& _cl) {
 				_cl.set_size(1.0_container, 1.0_container);
@@ -939,7 +949,7 @@ namespace corona
 
 			form_row = form_body.row_begin(id_counter::next(), [height](row_layout& _rl)
 				{
-					_rl.set_size(1.0_container, 1.0_container);
+					_rl.set_size(1.0_container, height);
 				});		
 
 			field_column = form_row.column_begin(id_counter::next(), [width](column_layout& _cl) {

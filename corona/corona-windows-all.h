@@ -35,4 +35,10 @@
 #include "richedit.h"
 #include "Lmcons.h"
 
+#include "mfapi.h"
+#include "mfidl.h"
+#include "mfreadwrite.h"
+
+#include "opencv2/opencv.hpp"
+
 #endif

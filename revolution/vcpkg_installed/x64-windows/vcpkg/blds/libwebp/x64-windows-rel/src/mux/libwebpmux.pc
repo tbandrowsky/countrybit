@@ -1,0 +1,12 @@
+prefix=D:/countrybit/revolution/vcpkg_installed/x64-windows/vcpkg/pkgs/libwebp_x64-windows
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: libwebpmux
+Description: Library for manipulating the WebP graphics format container
+Version: 1.4.0
+Requires.private: libwebp >= 0.2.0
+Cflags: -I${includedir}
+Libs: -L${libdir} -llibwebpmux
+Libs.private: 

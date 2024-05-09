@@ -454,8 +454,11 @@ namespace corona
 	{
 		bool useFile;
 		bool useResource;
+		bool useBitmap;
+
 		std::string filename;
 		int resource_id;
+		HBITMAP hbitmap;
 
 		std::list<filteredBitmap*> filteredBitmaps;
 		std::function<bool(point, int, int, char*)> filterFunction;
@@ -530,10 +533,9 @@ namespace corona
 			return SUCCEEDED(hr);
 		}
 
-		bool create_from_resource(direct2dContextBase* _target)
+		bool create_from_bitmap(direct2dContextBase* _target)
 		{
 			bool hr = false;
-			HBITMAP hbitmap = ::LoadBitmap(NULL, MAKEINTRESOURCE(resource_id));
 
 			if (hbitmap) {
 
@@ -554,13 +556,26 @@ namespace corona
 			return hr;
 		}
 
+		bool create_from_resource(direct2dContextBase* _target)
+		{
+			bool hr = false;
+
+			if (hbitmap) {
+				DeleteObject(hbitmap);
+			}
+			hbitmap = ::LoadBitmap(NULL, MAKEINTRESOURCE(resource_id));
+
+			return create_from_bitmap(_target);
+		}
+
 	public:
 
 		bitmap(direct2dContextBase* _targetContext, bitmap* _src)
 			: useFile(_src->useFile),
 			useResource(_src->useResource),
 			filename(_src->filename),
-			filterFunction(_src->filterFunction)
+			filterFunction(_src->filterFunction),
+			useBitmap(_src->useBitmap)
 		{
 			copyFilteredBitmaps(_targetContext, _src);
 			applyFilters(_targetContext);
@@ -568,6 +583,7 @@ namespace corona
 
 		bitmap(std::string& _filename, std::list<sizeCrop>& _sizes) :
 			useFile(true),
+			useBitmap(false),
 			filename(_filename)
 		{
 			setFilteredBitmaps(_sizes);
@@ -575,13 +591,27 @@ namespace corona
 
 		bitmap(int _resource_id, std::list<sizeCrop>& _sizes) :
 			useFile(false),
+			useBitmap(false),
 			useResource(true)
 		{
 			setFilteredBitmaps(_sizes);
 		}
 
+		bitmap(HBITMAP _hbitmap, std::list<sizeCrop>& _sizes) :
+			useFile(false),
+			useBitmap(true),
+			useResource(false)
+		{
+			hbitmap = _hbitmap;
+			setFilteredBitmaps(_sizes);
+		}
+
 		virtual ~bitmap()
 		{
+			if (hbitmap) {
+				DeleteObject(hbitmap);
+			}
+			hbitmap = nullptr;
 			clearFilteredBitmaps();
 		}
 

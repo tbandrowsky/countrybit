@@ -1,0 +1,4 @@
+D:/countrybit/revolution/vcpkg_installed/x64-windows/vcpkg/pkgs/zlib_x64-windows/lib/zlib.lib
+D:/countrybit/revolution/vcpkg_installed/x64-windows/vcpkg/pkgs/zlib_x64-windows/bin/zlib1.dll
+D:/countrybit/revolution/vcpkg_installed/x64-windows/vcpkg/pkgs/zlib_x64-windows/include/zconf.h
+D:/countrybit/revolution/vcpkg_installed/x64-windows/vcpkg/pkgs/zlib_x64-windows/include/zlib.h

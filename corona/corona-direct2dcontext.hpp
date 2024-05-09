@@ -137,7 +137,11 @@ namespace corona
 			{
 				bm = std::make_shared<bitmap>(_bitmap->resource_id, sizes);
 			}
-			else
+			else if (_bitmap->source)
+			{
+				bm = std::make_shared<bitmap>(_bitmap->source, sizes);
+			}
+			else if (_bitmap->file_name.size())
 			{
 				bm = std::make_shared<bitmap>(filename, sizes);
 			}

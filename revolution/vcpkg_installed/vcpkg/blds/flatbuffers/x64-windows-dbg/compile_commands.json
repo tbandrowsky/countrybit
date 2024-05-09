@@ -1,0 +1,26 @@
+[
+{
+  "directory": "D:/countrybit/revolution/vcpkg_installed/vcpkg/blds/flatbuffers/x64-windows-dbg",
+  "command": "C:\\PROGRA~1\\MIB055~1\\2022\\PROFES~1\\VC\\Tools\\MSVC\\1439~1.335\\bin\\Hostx64\\x64\\cl.exe   /TP -DFLATBUFFERS_LOCALE_INDEPENDENT=1 -ID:\\countrybit\\revolution\\vcpkg_installed\\vcpkg\\blds\\flatbuffers\\src\\v24.3.25-0f065ed72a.clean\\include -ID:\\countrybit\\revolution\\vcpkg_installed\\vcpkg\\blds\\flatbuffers\\src\\v24.3.25-0f065ed72a.clean\\grpc  /nologo /DWIN32 /D_WINDOWS /W3 /utf-8 /GR /EHsc /MP  /D_DEBUG /MDd /Z7 /Ob0 /Od /RTC1  -MDd /W4 /wd4512 /wd4316 /wd4456 /FoCMakeFiles\\flatbuffers.dir\\src\\idl_parser.cpp.obj /FdTARGET_COMPILE_PDB /FS -c D:\\countrybit\\revolution\\vcpkg_installed\\vcpkg\\blds\\flatbuffers\\src\\v24.3.25-0f065ed72a.clean\\src\\idl_parser.cpp",
+  "file": "D:\\countrybit\\revolution\\vcpkg_installed\\vcpkg\\blds\\flatbuffers\\src\\v24.3.25-0f065ed72a.clean\\src\\idl_parser.cpp",
+  "output": "CMakeFiles\\flatbuffers.dir\\src\\idl_parser.cpp.obj"
+},
+{
+  "directory": "D:/countrybit/revolution/vcpkg_installed/vcpkg/blds/flatbuffers/x64-windows-dbg",
+  "command": "C:\\PROGRA~1\\MIB055~1\\2022\\PROFES~1\\VC\\Tools\\MSVC\\1439~1.335\\bin\\Hostx64\\x64\\cl.exe   /TP -DFLATBUFFERS_LOCALE_INDEPENDENT=1 -ID:\\countrybit\\revolution\\vcpkg_installed\\vcpkg\\blds\\flatbuffers\\src\\v24.3.25-0f065ed72a.clean\\include -ID:\\countrybit\\revolution\\vcpkg_installed\\vcpkg\\blds\\flatbuffers\\src\\v24.3.25-0f065ed72a.clean\\grpc  /nologo /DWIN32 /D_WINDOWS /W3 /utf-8 /GR /EHsc /MP  /D_DEBUG /MDd /Z7 /Ob0 /Od /RTC1  -MDd /W4 /wd4512 /wd4316 /wd4456 /FoCMakeFiles\\flatbuffers.dir\\src\\idl_gen_text.cpp.obj /FdTARGET_COMPILE_PDB /FS -c D:\\countrybit\\revolution\\vcpkg_installed\\vcpkg\\blds\\flatbuffers\\src\\v24.3.25-0f065ed72a.clean\\src\\idl_gen_text.cpp",
+  "file": "D:\\countrybit\\revolution\\vcpkg_installed\\vcpkg\\blds\\flatbuffers\\src\\v24.3.25-0f065ed72a.clean\\src\\idl_gen_text.cpp",
+  "output": "CMakeFiles\\flatbuffers.dir\\src\\idl_gen_text.cpp.obj"
+},
+{
+  "directory": "D:/countrybit/revolution/vcpkg_installed/vcpkg/blds/flatbuffers/x64-windows-dbg",
+  "command": "C:\\PROGRA~1\\MIB055~1\\2022\\PROFES~1\\VC\\Tools\\MSVC\\1439~1.335\\bin\\Hostx64\\x64\\cl.exe   /TP -DFLATBUFFERS_LOCALE_INDEPENDENT=1 -ID:\\countrybit\\revolution\\vcpkg_installed\\vcpkg\\blds\\flatbuffers\\src\\v24.3.25-0f065ed72a.clean\\include -ID:\\countrybit\\revolution\\vcpkg_installed\\vcpkg\\blds\\flatbuffers\\src\\v24.3.25-0f065ed72a.clean\\grpc  /nologo /DWIN32 /D_WINDOWS /W3 /utf-8 /GR /EHsc /MP  /D_DEBUG /MDd /Z7 /Ob0 /Od /RTC1  -MDd /W4 /wd4512 /wd4316 /wd4456 /FoCMakeFiles\\flatbuffers.dir\\src\\reflection.cpp.obj /FdTARGET_COMPILE_PDB /FS -c D:\\countrybit\\revolution\\vcpkg_installed\\vcpkg\\blds\\flatbuffers\\src\\v24.3.25-0f065ed72a.clean\\src\\reflection.cpp",
+  "file": "D:\\countrybit\\revolution\\vcpkg_installed\\vcpkg\\blds\\flatbuffers\\src\\v24.3.25-0f065ed72a.clean\\src\\reflection.cpp",
+  "output": "CMakeFiles\\flatbuffers.dir\\src\\reflection.cpp.obj"
+},
+{
+  "directory": "D:/countrybit/revolution/vcpkg_installed/vcpkg/blds/flatbuffers/x64-windows-dbg",
+  "command": "C:\\PROGRA~1\\MIB055~1\\2022\\PROFES~1\\VC\\Tools\\MSVC\\1439~1.335\\bin\\Hostx64\\x64\\cl.exe   /TP -DFLATBUFFERS_LOCALE_INDEPENDENT=1 -ID:\\countrybit\\revolution\\vcpkg_installed\\vcpkg\\blds\\flatbuffers\\src\\v24.3.25-0f065ed72a.clean\\include -ID:\\countrybit\\revolution\\vcpkg_installed\\vcpkg\\blds\\flatbuffers\\src\\v24.3.25-0f065ed72a.clean\\grpc  /nologo /DWIN32 /D_WINDOWS /W3 /utf-8 /GR /EHsc /MP  /D_DEBUG /MDd /Z7 /Ob0 /Od /RTC1  -MDd /W4 /wd4512 /wd4316 /wd4456 /FoCMakeFiles\\flatbuffers.dir\\src\\util.cpp.obj /FdTARGET_COMPILE_PDB /FS -c D:\\countrybit\\revolution\\vcpkg_installed\\vcpkg\\blds\\flatbuffers\\src\\v24.3.25-0f065ed72a.clean\\src\\util.cpp",
+  "file": "D:\\countrybit\\revolution\\vcpkg_installed\\vcpkg\\blds\\flatbuffers\\src\\v24.3.25-0f065ed72a.clean\\src\\util.cpp",
+  "output": "CMakeFiles\\flatbuffers.dir\\src\\util.cpp.obj"
+}
+]

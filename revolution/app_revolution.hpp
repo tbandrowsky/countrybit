@@ -472,6 +472,10 @@ namespace corona
 						_settings.set_size(.4_container, 1.0_container);
 						});
 
+					camera_column.camera([](camera_control& _settings) {
+						_settings.set_size(1.0_container, 1.0_aspect);
+						});
+
 					control_builder form_column = root_row.form_view(IDC_FORM_VIEW, [this](form_view_control& _fv)
 						{
 							_fv.set_size(.6_container, 1.0_container);
@@ -837,7 +841,7 @@ namespace corona
 
 				if (field_choices.is_object())
 				{
-					new_field.field_type == "combobox";
+					new_field.field_type = "combobox";
 					ids.fields.push_back(new_field);
 				}
 				else if (field_type == "currency") {

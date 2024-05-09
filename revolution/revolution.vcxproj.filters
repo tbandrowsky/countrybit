@@ -52,4 +52,7 @@
     </CopyFileToFolders>
     <CopyFileToFolders Include="client.json" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="vcpkg.json" />
+  </ItemGroup>
 </Project>

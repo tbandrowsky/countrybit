@@ -1,0 +1,16 @@
+D:/countrybit/revolution/vcpkg_installed/vcpkg/blds/libwebp/x64-windows-dbg/CMakeFiles/sharpyuv.dir
+D:/countrybit/revolution/vcpkg_installed/vcpkg/blds/libwebp/x64-windows-dbg/CMakeFiles/webpdecode.dir
+D:/countrybit/revolution/vcpkg_installed/vcpkg/blds/libwebp/x64-windows-dbg/CMakeFiles/webpdspdecode.dir
+D:/countrybit/revolution/vcpkg_installed/vcpkg/blds/libwebp/x64-windows-dbg/CMakeFiles/webputilsdecode.dir
+D:/countrybit/revolution/vcpkg_installed/vcpkg/blds/libwebp/x64-windows-dbg/CMakeFiles/webpdecoder.dir
+D:/countrybit/revolution/vcpkg_installed/vcpkg/blds/libwebp/x64-windows-dbg/CMakeFiles/webpencode.dir
+D:/countrybit/revolution/vcpkg_installed/vcpkg/blds/libwebp/x64-windows-dbg/CMakeFiles/webpdsp.dir
+D:/countrybit/revolution/vcpkg_installed/vcpkg/blds/libwebp/x64-windows-dbg/CMakeFiles/webputils.dir
+D:/countrybit/revolution/vcpkg_installed/vcpkg/blds/libwebp/x64-windows-dbg/CMakeFiles/webp.dir
+D:/countrybit/revolution/vcpkg_installed/vcpkg/blds/libwebp/x64-windows-dbg/CMakeFiles/webpdemux.dir
+D:/countrybit/revolution/vcpkg_installed/vcpkg/blds/libwebp/x64-windows-dbg/CMakeFiles/libwebpmux.dir
+D:/countrybit/revolution/vcpkg_installed/vcpkg/blds/libwebp/x64-windows-dbg/CMakeFiles/edit_cache.dir
+D:/countrybit/revolution/vcpkg_installed/vcpkg/blds/libwebp/x64-windows-dbg/CMakeFiles/rebuild_cache.dir
+D:/countrybit/revolution/vcpkg_installed/vcpkg/blds/libwebp/x64-windows-dbg/CMakeFiles/list_install_components.dir
+D:/countrybit/revolution/vcpkg_installed/vcpkg/blds/libwebp/x64-windows-dbg/CMakeFiles/install.dir
+D:/countrybit/revolution/vcpkg_installed/vcpkg/blds/libwebp/x64-windows-dbg/CMakeFiles/install/local.dir

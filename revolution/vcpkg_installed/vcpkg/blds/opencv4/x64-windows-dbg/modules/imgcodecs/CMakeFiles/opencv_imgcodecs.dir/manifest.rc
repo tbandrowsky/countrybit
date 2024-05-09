@@ -1,0 +1,2 @@
+#pragma code_page(65001)
+2 /* CREATEPROCESS_MANIFEST_RESOURCE_ID */ 24 /* RT_MANIFEST */ "D:/countrybit/revolution/vcpkg_installed/vcpkg/blds/opencv4/x64-windows-dbg/modules/imgcodecs/CMakeFiles/opencv_imgcodecs.dir/embed.manifest"

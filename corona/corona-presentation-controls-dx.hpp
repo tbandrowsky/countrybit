@@ -231,6 +231,497 @@ namespace corona
 
 	};
 
+	class camera_control : public draw_control
+	{
+	public:
+
+		IMFMediaSource* pSource;
+		IMFSourceReader* pSourceReader;
+
+		camera_control()
+		{
+			pSource = nullptr;
+		}
+
+		camera_control(const camera_control& _src) : draw_control(_src)
+		{
+			pSource = _src.pSource;
+			if (pSource) {
+				pSource->AddRef();
+			}
+			pSourceReader = _src.pSourceReader;
+			if (pSourceReader) {
+				pSourceReader->AddRef();
+			}
+		}
+
+		camera_control(container_control_base* _parent, int _id) : draw_control(_parent, _id)
+		{
+			pSource = nullptr;
+			pSourceReader = nullptr;
+		}
+
+		virtual void create(std::weak_ptr<applicationBase> _host)
+		{
+			host = _host;
+
+			if (auto phost = host.lock()) {
+				auto boundsPixels = phost->toPixelsFromDips(inner_bounds);
+			}
+
+			on_create();
+		}
+
+		void init()
+		{
+			on_draw = [this](draw_control* _dc) -> void {
+				if (auto pwindow = window.lock())
+				{
+					if (auto phost = host.lock()) {
+						auto draw_bounds = inner_bounds;
+
+						draw_bounds.x = 0;
+						draw_bounds.y = 0;
+
+						auto& context = pwindow->getContext();
+
+						bitmapInstanceDto bid;
+						bid.bitmapName = "camerabitmapframe";
+						bid.alpha = 1.0;
+						bid.copyId = 0;
+						bid.x = 0;
+						bid.y = 0;
+						bid.height = inner_bounds.w;
+						bid.width = inner_bounds.h;
+						context.drawBitmap(&bid);
+					}
+				}
+			};
+		}
+
+		HRESULT set_device_format(DWORD dwFormatIndex)
+		{
+			IMFPresentationDescriptor* pPD = NULL;
+			IMFStreamDescriptor* pSD = NULL;
+			IMFMediaTypeHandler* pHandler = NULL;
+			IMFMediaType* pType = NULL;
+
+			HRESULT hr = pSource->CreatePresentationDescriptor(&pPD);
+			if (FAILED(hr))
+			{
+				goto done;
+			}
+
+			BOOL fSelected;
+			hr = pPD->GetStreamDescriptorByIndex(0, &fSelected, &pSD);
+			if (FAILED(hr))
+			{
+				goto done;
+			}
+
+			hr = pSD->GetMediaTypeHandler(&pHandler);
+			if (FAILED(hr))
+			{
+				goto done;
+			}
+
+			hr = pHandler->GetMediaTypeByIndex(dwFormatIndex, &pType);
+			if (FAILED(hr))
+			{
+				goto done;
+			}
+
+			hr = pHandler->SetCurrentMediaType(pType);
+
+		done:
+			if (pPD) {
+				pPD->Release();
+				pPD = nullptr;
+			}
+			if (pSD) {
+				pSD->Release();
+				pSD = nullptr;
+			}
+			if (pHandler) {
+				pHandler->Release();
+				pHandler = nullptr;
+			}
+			if (pType) {
+				pType->Release();
+				pType = nullptr;
+			}
+			return hr;
+		}
+
+		HRESULT find_device_format(int64_t *format_index)
+		{
+			IMFPresentationDescriptor* pPD = NULL;
+			IMFStreamDescriptor* pSD = NULL;
+			IMFMediaTypeHandler* pHandler = NULL;
+			IMFMediaType* pType = NULL;
+			DWORD cTypes = 0;
+
+			if (format_index)
+				*format_index = -1;
+
+			HRESULT hr = pSource->CreatePresentationDescriptor(&pPD);
+			if (FAILED(hr))
+			{
+				goto done;
+			}
+
+			BOOL fSelected;
+			hr = pPD->GetStreamDescriptorByIndex(0, &fSelected, &pSD);
+			if (FAILED(hr))
+			{
+				goto done;
+			}
+
+			hr = pSD->GetMediaTypeHandler(&pHandler);
+			if (FAILED(hr))
+			{
+				goto done;
+			}
+
+			hr = pHandler->GetMediaTypeCount(&cTypes);
+			if (FAILED(hr))
+			{
+				goto done;
+			}
+
+			for (DWORD i = 0; i < cTypes; i++)
+			{
+				hr = pHandler->GetMediaTypeByIndex(i, &pType);
+				if (FAILED(hr))
+				{
+					goto done;
+				}
+
+				if (pType) 
+				{
+					GUID major_type, minor_type;
+					hr = pType->GetGUID(MF_MT_MAJOR_TYPE, &major_type);
+					if (SUCCEEDED(hr))
+					{
+						if (major_type == MFMediaType_Video) {
+							hr = pType->GetGUID(MF_MT_SUBTYPE, &minor_type);
+							if (SUCCEEDED(hr))
+							{
+								if ((minor_type == MFVideoFormat_RGB24 ||
+									minor_type == MFVideoFormat_RGB32	||
+									minor_type == MFVideoFormat_ARGB32)
+									&& format_index)
+								{
+									*format_index = i;
+								}
+							}
+						}
+					}
+					pType->Release();
+				}
+			}
+
+		done:
+			if (pPD) {
+				pPD->Release();
+				pPD = nullptr;
+			}
+			if (pSD) {
+				pSD->Release();
+				pSD = nullptr;
+			}
+			if (pHandler) {
+				pHandler->Release();
+				pHandler = nullptr;
+			}
+			if (pType) {
+				pType->Release();
+				pType = nullptr;
+			}
+			return hr;
+		}
+
+		virtual HRESULT start()
+		{
+			UINT32 count = 0;
+
+			IMFAttributes* pConfig = NULL;
+			IMFActivate** ppDevices = NULL;
+
+			stop();
+
+			// Create an attribute store to hold the search criteria.
+			HRESULT hr = MFCreateAttributes(&pConfig, 1);
+
+			// Request video capture devices.
+			if (SUCCEEDED(hr))
+			{
+				hr = pConfig->SetGUID(
+					MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE,
+					MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_GUID
+				);
+			}
+
+			// Enumerate the devices,
+			if (SUCCEEDED(hr))
+			{
+				hr = MFEnumDeviceSources(pConfig, &ppDevices, &count);
+			}
+
+			// Create a media source for the first device in the list.
+			if (SUCCEEDED(hr))
+			{
+				if (count > 0)
+				{
+					hr = ppDevices[0]->ActivateObject(IID_PPV_ARGS(&pSource));
+
+					int64_t device_selected_id = 0;
+					hr = find_device_format(&device_selected_id);
+
+					if (SUCCEEDED(hr)) 
+					{
+						hr = set_device_format(device_selected_id);
+
+						if (SUCCEEDED(hr)) {
+							IMFAttributes* pAttributes = nullptr;
+
+							hr = MFCreateAttributes(
+								&pAttributes,
+								2
+							);
+
+							if (pAttributes)
+							{
+								pAttributes->SetUINT32(MF_SOURCE_READER_DISCONNECT_MEDIASOURCE_ON_SHUTDOWN, FALSE);
+							}
+
+							if (pAttributes)
+							{
+								pAttributes->SetUINT32(MF_SOURCE_READER_ENABLE_VIDEO_PROCESSING, TRUE);
+							}
+
+							hr = MFCreateSourceReaderFromMediaSource(
+								pSource,
+								pAttributes,
+								&pSourceReader
+							);
+
+							hr = configure_decoder(MF_SOURCE_READER_FIRST_VIDEO_STREAM);
+
+							return hr;
+						}
+
+					}
+
+				}
+				else
+				{
+					hr = E_FAIL;
+				}
+			}
+
+			return hr;
+		}
+
+		HRESULT configure_decoder(DWORD dwStreamIndex)
+		{
+			IMFMediaType *pNativeType = nullptr;
+			IMFMediaType *pType = nullptr;
+			GUID majorType, subtype;
+			HRESULT hr;
+
+			// Find the native format of the stream.
+			hr = pSourceReader->GetNativeMediaType(dwStreamIndex, 0, &pNativeType);
+
+			if (SUCCEEDED(hr) && pNativeType) {
+
+				// Find the major type.
+				hr = pNativeType->GetGUID(MF_MT_MAJOR_TYPE, &majorType);
+
+				// Define the output type.
+				hr = MFCreateMediaType(&pType);
+
+				if (SUCCEEDED(hr) && pType) {
+
+					hr = pType->SetGUID(MF_MT_MAJOR_TYPE, majorType);
+
+					// Select a subtype.
+					if (majorType == MFMediaType_Video)
+					{
+						subtype = MFVideoFormat_ARGB32;
+					}
+					else if (majorType == MFMediaType_Audio)
+					{
+						subtype = MFAudioFormat_Float;
+					}
+					else
+					{
+						// Unrecognized type. Skip.
+						return S_FALSE;
+					}
+
+					hr = pType->SetGUID(MF_MT_SUBTYPE, subtype);
+
+					// Set the uncompressed format.
+					hr = pSourceReader->SetCurrentMediaType(dwStreamIndex, nullptr, pType);
+					return hr;
+				}
+			}
+		}
+
+		virtual void read_frame()
+		{
+			if (pSourceReader) 
+			{
+				HRESULT hr = S_OK;
+				IMFSample* pSample = NULL;
+
+				DWORD streamIndex, flags;
+				LONGLONG llTimeStamp;
+
+				hr = pSourceReader->ReadSample(
+					MF_SOURCE_READER_ANY_STREAM,    // Stream index.
+					0,                              // Flags.
+					&streamIndex,                   // Receives the actual stream index. 
+					&flags,                         // Receives status flags.
+					&llTimeStamp,                   // Receives the time stamp.
+					&pSample                        // Receives the sample or NULL.
+				);
+
+				if (FAILED(hr))
+				{
+					return;
+				}
+
+				if (flags & MF_SOURCE_READERF_ENDOFSTREAM)
+				{
+					return;
+				}
+				if (flags & MF_SOURCE_READERF_NEWSTREAM)
+				{
+					;
+				}
+				if (flags & MF_SOURCE_READERF_NATIVEMEDIATYPECHANGED)
+				{
+					;
+				}
+				if (flags & MF_SOURCE_READERF_CURRENTMEDIATYPECHANGED)
+				{
+					;
+				}
+				if (flags & MF_SOURCE_READERF_STREAMTICK)
+				{
+					;
+				}
+				if (flags & MF_SOURCE_READERF_NATIVEMEDIATYPECHANGED)
+				{
+					// The format changed. Reconfigure the decoder.
+					hr = configure_decoder(streamIndex);
+				}
+
+				if (pSample)
+				{
+					IMFMediaType *pMediaType = nullptr;
+					UINT videoWidth = 0;
+					UINT videoHeight = 0;
+
+					if (SUCCEEDED(pSourceReader->GetCurrentMediaType(uint32_t(MF_SOURCE_READER_FIRST_VIDEO_STREAM), &pMediaType)))
+					{
+						MFVideoArea videoArea = {};
+						if (SUCCEEDED(pMediaType->GetBlob(MF_MT_MINIMUM_DISPLAY_APERTURE, (uint8_t*)&videoArea, sizeof(MFVideoArea), nullptr)))
+						{
+							videoWidth = UINT(videoArea.Area.cx);
+							videoHeight = UINT(videoArea.Area.cy);
+						}
+						else
+						{
+							hr = MFGetAttributeSize(pMediaType, MF_MT_FRAME_SIZE, &videoWidth, &videoHeight);
+						}
+					}
+
+					IMFMediaBuffer* pMediaBuffer = nullptr;
+					hr = pSample->ConvertToContiguousBuffer(&pMediaBuffer);
+					if (SUCCEEDED(hr) && pMediaBuffer) {
+						IMF2DBuffer* p2dBuffer = nullptr;
+						hr = pMediaBuffer->QueryInterface(&p2dBuffer);
+						if (SUCCEEDED(hr) && p2dBuffer) {
+							BYTE* byte_start = nullptr;
+							long pitch = 0;
+							// here is where we can fill the MAT for OpenCV, in addition to
+							hr = p2dBuffer->Lock2D(&byte_start, &pitch);
+							if (SUCCEEDED(hr) && byte_start && pitch) 
+							{
+								BITMAP bms = {};
+								bms.bmBitsPixel = 32;
+								bms.bmPlanes = 1;
+								bms.bmType = 0;
+								bms.bmWidthBytes = pitch;
+								bms.bmWidth = videoWidth;
+								bms.bmHeight = videoHeight;
+								bms.bmBits = byte_start;
+
+								bitmapRequest bmr;
+								bmr.cropEnabled = false;
+								point t = {};
+								t.x = videoWidth;
+								t.y = videoHeight;
+								bmr.sizes.push_back(t);
+								bmr.source = CreateBitmapIndirect(&bms);
+								bmr.name = "camerabitmapframe";
+								bmr.resource_id = 0;
+
+								if (auto pwindow = window.lock())
+								{
+									auto& context = pwindow->getContext();
+									context.setBitmap(&bmr);
+								}
+							}
+						}
+					}
+
+					pSample->Release();
+					pSample = nullptr;
+				}
+
+			}
+
+		}
+
+		virtual void stop()
+		{
+			if (pSourceReader) {
+				pSourceReader->Release();
+			}
+			pSourceReader = nullptr;
+	
+			if (pSource) {
+				pSource->Release();
+			}
+			pSource = nullptr;
+
+
+		}
+
+		virtual void destroy()
+		{
+			stop();
+		}
+
+		virtual ~camera_control()
+		{
+			destroy();
+		}
+
+		virtual void on_create()
+		{
+			threadomatic::run_complete(nullptr, [this]() ->void {
+				start();
+				});
+		}
+
+	};
+
+
 	using cell_json_size = std::function<point(draw_control* _parent, int _index, rectangle _bounds)>;
 	using cell_json_draw = std::function<void(draw_control* _parent, int _index, rectangle _bounds)>;
 	using cell_json_assets = std::function<void(draw_control* _parent, rectangle _bounds)>;
@@ -242,20 +733,6 @@ namespace corona
 		cell_json_assets	assets;
 		cell_json_draw		draw_item;
 		cell_json_size		size_item;
-	};
-
-	class camera_control : public draw_control
-	{
-		void init();
-	public:
-
-		camera_control(const camera_control& _src) : draw_control(_src)
-		{
-		}
-
-		camera_control(container_control_base* _parent, int _id);
-		virtual ~camera_control();
-
 	};
 
 	class grid_control : public draw_control
@@ -727,37 +1204,6 @@ namespace corona
 	};
 
 
-	camera_control::camera_control(container_control_base* _parent, int _id) : draw_control(_parent, _id)
-	{
-		init();
-	}
-
-	void camera_control::init()
-	{
-		set_origin(0.0_px, 0.0_px);
-		set_size(.25_container, .25_container);
-
-		on_draw = [this](draw_control* _src) {
-			if (auto pwindow = this->window.lock())
-			{
-				if (auto phost = host.lock()) {
-					auto draw_bounds = inner_bounds;
-
-					draw_bounds.x = 0;
-					draw_bounds.y = 0;
-
-					if (border_brush->get_name() && background_brush->get_name()) {
-						pwindow->getContext().drawRectangle(&draw_bounds, this->border_brush->get_name(), 8, this->background_brush->get_name());
-					}
-				}
-			}
-			};
-	}
-
-	camera_control::~camera_control()
-	{
-		;
-	}
 
 	image_control::image_control()
 	{

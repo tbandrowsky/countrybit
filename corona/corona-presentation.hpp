@@ -432,27 +432,29 @@ namespace corona {
 				auto pos = phost->getWindowClientPos();
 
 				// this draws the mouse
-				ID2D1SolidColorBrush* mouseBrush = nullptr;
-				dc->CreateSolidColorBrush({ 0.0, 1.0, 0.0, 1.0 }, &mouseBrush);
-				if (mouseBrush) {
-					D2D1_ELLIPSE ellipse = {};
-					ellipse.point.x = last_mouse_position.x;
-					ellipse.point.y = last_mouse_position.y;
-					ellipse.radiusX = 4;
-					ellipse.radiusY = 4;
-					dc->FillEllipse(ellipse, mouseBrush);
+				if (false) {
+					ID2D1SolidColorBrush* mouseBrush = nullptr;
+					dc->CreateSolidColorBrush({ 0.0, 1.0, 0.0, 1.0 }, &mouseBrush);
+					if (mouseBrush) {
+						D2D1_ELLIPSE ellipse = {};
+						ellipse.point.x = last_mouse_position.x;
+						ellipse.point.y = last_mouse_position.y;
+						ellipse.radiusX = 4;
+						ellipse.radiusY = 4;
+						dc->FillEllipse(ellipse, mouseBrush);
 
-					ellipse.point.x = last_mouse_click.x;
-					ellipse.point.y = last_mouse_click.y;
-					ellipse.radiusX = 8;
-					ellipse.radiusY = 8;
-					dc->FillEllipse(ellipse, mouseBrush);
-					mouseBrush->Release();
+						ellipse.point.x = last_mouse_click.x;
+						ellipse.point.y = last_mouse_click.y;
+						ellipse.radiusX = 8;
+						ellipse.radiusY = 8;
+						dc->FillEllipse(ellipse, mouseBrush);
+						mouseBrush->Release();
+					}
 				}
 
 				// this draws the screen border and sizing bars
 
-				double border_thickness = 4;
+				double border_thickness = 6;
 
 				linearGradientBrushRequest lgbr;
 				lgbr.start.x = pos.w;

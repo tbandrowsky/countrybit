@@ -1,0 +1,12 @@
+D:/countrybit/revolution/vcpkg_installed/vcpkg/pkgs/libjpeg-turbo_x64-windows/debug/lib/jpeg.lib
+D:/countrybit/revolution/vcpkg_installed/vcpkg/pkgs/libjpeg-turbo_x64-windows/debug/bin/jpeg62.dll
+D:/countrybit/revolution/vcpkg_installed/vcpkg/pkgs/libjpeg-turbo_x64-windows/debug/bin/jpeg62.pdb
+D:/countrybit/revolution/vcpkg_installed/vcpkg/pkgs/libjpeg-turbo_x64-windows/debug/lib/turbojpeg.lib
+D:/countrybit/revolution/vcpkg_installed/vcpkg/pkgs/libjpeg-turbo_x64-windows/debug/bin/turbojpeg.dll
+D:/countrybit/revolution/vcpkg_installed/vcpkg/pkgs/libjpeg-turbo_x64-windows/debug/bin/turbojpeg.pdb
+D:/countrybit/revolution/vcpkg_installed/vcpkg/pkgs/libjpeg-turbo_x64-windows/debug/lib/pkgconfig/libjpeg.pc
+D:/countrybit/revolution/vcpkg_installed/vcpkg/pkgs/libjpeg-turbo_x64-windows/debug/lib/pkgconfig/libturbojpeg.pc
+D:/countrybit/revolution/vcpkg_installed/vcpkg/pkgs/libjpeg-turbo_x64-windows/debug/lib/cmake/libjpeg-turbo/libjpeg-turboConfig.cmake
+D:/countrybit/revolution/vcpkg_installed/vcpkg/pkgs/libjpeg-turbo_x64-windows/debug/lib/cmake/libjpeg-turbo/libjpeg-turboConfigVersion.cmake
+D:/countrybit/revolution/vcpkg_installed/vcpkg/pkgs/libjpeg-turbo_x64-windows/debug/lib/cmake/libjpeg-turbo/libjpeg-turboTargets.cmake
+D:/countrybit/revolution/vcpkg_installed/vcpkg/pkgs/libjpeg-turbo_x64-windows/debug/lib/cmake/libjpeg-turbo/libjpeg-turboTargets-debug.cmake

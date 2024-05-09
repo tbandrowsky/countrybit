@@ -1,0 +1,10 @@
+prefix=D:/countrybit/revolution/vcpkg_installed/x64-windows/vcpkg/pkgs/libjpeg-turbo_x64-windows/debug
+exec_prefix=D:/countrybit/revolution/vcpkg_installed/x64-windows/vcpkg/pkgs/libjpeg-turbo_x64-windows/debug
+libdir=D:/countrybit/revolution/vcpkg_installed/x64-windows/vcpkg/pkgs/libjpeg-turbo_x64-windows/debug/lib
+includedir=D:/countrybit/revolution/vcpkg_installed/x64-windows/vcpkg/pkgs/libjpeg-turbo_x64-windows/debug/include
+
+Name: libturbojpeg
+Description: A SIMD-accelerated JPEG codec that provides the TurboJPEG API
+Version: 3.0.2
+Libs: -L${libdir} -lturbojpeg
+Cflags: -I${includedir}

@@ -1,0 +1,8 @@
+{
+  "name": "revolution",
+  "version": "1.0",
+  "dependencies": [
+    "opencv"
+  ],
+  "builtin-baseline": "b323a5992e8cc742deddac74df6224419d662c16"
+}

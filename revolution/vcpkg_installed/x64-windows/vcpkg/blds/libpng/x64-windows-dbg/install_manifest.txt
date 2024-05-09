@@ -1,0 +1,6 @@
+D:/countrybit/revolution/vcpkg_installed/x64-windows/vcpkg/pkgs/libpng_x64-windows/debug/lib/libpng16d.lib
+D:/countrybit/revolution/vcpkg_installed/x64-windows/vcpkg/pkgs/libpng_x64-windows/debug/bin/libpng16d.dll
+D:/countrybit/revolution/vcpkg_installed/x64-windows/vcpkg/pkgs/libpng_x64-windows/debug/lib/pkgconfig/libpng16.pc
+D:/countrybit/revolution/vcpkg_installed/x64-windows/vcpkg/pkgs/libpng_x64-windows/debug/lib/libpng/libpng16.cmake
+D:/countrybit/revolution/vcpkg_installed/x64-windows/vcpkg/pkgs/libpng_x64-windows/debug/lib/libpng/libpng16-debug.cmake
+D:/countrybit/revolution/vcpkg_installed/x64-windows/vcpkg/pkgs/libpng_x64-windows/debug/lib/libpng/libpng-config.cmake

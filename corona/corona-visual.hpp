@@ -50,6 +50,7 @@ namespace corona {
 		DWORD		resource_id;
 		bool		cropEnabled;
 		rectangle	crop;
+		HBITMAP		source;
 		std::list<point> sizes;
 
 		bitmapRequest()
@@ -57,6 +58,7 @@ namespace corona {
 			resource_id = {};
 			cropEnabled = false;
 			crop = {};
+			source = nullptr;
 		}
 
 		bitmapRequest(const bitmapRequest& _request) = default;
@@ -72,6 +74,7 @@ namespace corona {
 			cropEnabled = _request->cropEnabled;
 			crop = _request->crop;
 			sizes = _request->sizes;
+			source = _request->source;
 		}
 	};
 
