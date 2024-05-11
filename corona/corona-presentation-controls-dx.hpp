@@ -82,6 +82,8 @@ namespace corona
 			}
 		}
 
+		virtual bool is_camera() { return false;  }
+
 		virtual void draw()
 		{
 			try {
@@ -92,6 +94,10 @@ namespace corona
 
 				bool adapter_blown_away = false;
 
+/*				if (is_camera()) {
+					::DebugBreak();
+				}
+				*/
 				if (auto pwindow = window.lock())
 				{
 					pwindow->beginDraw(adapter_blown_away);
@@ -237,10 +243,14 @@ namespace corona
 
 		IMFMediaSource* pSource;
 		IMFSourceReader* pSourceReader;
+		LONGLONG		stream_base_time;
 
 		camera_control()
 		{
 			pSource = nullptr;
+			pSourceReader = nullptr;
+			stream_base_time = 0;
+			init();
 		}
 
 		camera_control(const camera_control& _src) : draw_control(_src)
@@ -253,28 +263,26 @@ namespace corona
 			if (pSourceReader) {
 				pSourceReader->AddRef();
 			}
+			stream_base_time = _src.stream_base_time;
+			init();
 		}
 
 		camera_control(container_control_base* _parent, int _id) : draw_control(_parent, _id)
 		{
 			pSource = nullptr;
 			pSourceReader = nullptr;
+			stream_base_time = 0;
+			init();
 		}
 
-		virtual void create(std::weak_ptr<applicationBase> _host)
-		{
-			host = _host;
-
-			if (auto phost = host.lock()) {
-				auto boundsPixels = phost->toPixelsFromDips(inner_bounds);
-			}
-
-			on_create();
-		}
+		virtual bool is_camera() { return true; }
 
 		void init()
 		{
 			on_draw = [this](draw_control* _dc) -> void {
+
+				read_frame();
+
 				if (auto pwindow = window.lock())
 				{
 					if (auto phost = host.lock()) {
@@ -297,14 +305,20 @@ namespace corona
 					}
 				}
 			};
+
+			on_create = [this](draw_control *_ctrl) ->void 
+			{
+					threadomatic::run_complete(nullptr, [this]() ->void {
+						start();
+						});
+			};
 		}
 
-		HRESULT set_device_format(DWORD dwFormatIndex)
+		HRESULT set_device_format(IMFMediaType* pType)
 		{
 			IMFPresentationDescriptor* pPD = NULL;
 			IMFStreamDescriptor* pSD = NULL;
 			IMFMediaTypeHandler* pHandler = NULL;
-			IMFMediaType* pType = NULL;
 
 			HRESULT hr = pSource->CreatePresentationDescriptor(&pPD);
 			if (FAILED(hr))
@@ -320,12 +334,6 @@ namespace corona
 			}
 
 			hr = pSD->GetMediaTypeHandler(&pHandler);
-			if (FAILED(hr))
-			{
-				goto done;
-			}
-
-			hr = pHandler->GetMediaTypeByIndex(dwFormatIndex, &pType);
 			if (FAILED(hr))
 			{
 				goto done;
@@ -353,7 +361,7 @@ namespace corona
 			return hr;
 		}
 
-		HRESULT find_device_format(int64_t *format_index)
+		HRESULT find_device_format(IMFMediaType  **ppType)
 		{
 			IMFPresentationDescriptor* pPD = NULL;
 			IMFStreamDescriptor* pSD = NULL;
@@ -361,9 +369,11 @@ namespace corona
 			IMFMediaType* pType = NULL;
 			DWORD cTypes = 0;
 
-			if (format_index)
-				*format_index = -1;
+			if (!ppType)
+				return E_FAIL;
 
+			*ppType = nullptr;
+			
 			HRESULT hr = pSource->CreatePresentationDescriptor(&pPD);
 			if (FAILED(hr))
 			{
@@ -389,7 +399,10 @@ namespace corona
 				goto done;
 			}
 
-			for (DWORD i = 0; i < cTypes; i++)
+			UINT32 feed_width;
+			UINT32 feed_height;
+
+			for (DWORD i = 0; i < cTypes && !*ppType; i++)
 			{
 				hr = pHandler->GetMediaTypeByIndex(i, &pType);
 				if (FAILED(hr))
@@ -404,15 +417,13 @@ namespace corona
 					if (SUCCEEDED(hr))
 					{
 						if (major_type == MFMediaType_Video) {
-							hr = pType->GetGUID(MF_MT_SUBTYPE, &minor_type);
+							hr = MFGetAttributeSize(pType, MF_MT_FRAME_SIZE, &feed_width, &feed_height);
 							if (SUCCEEDED(hr))
 							{
-								if ((minor_type == MFVideoFormat_RGB24 ||
-									minor_type == MFVideoFormat_RGB32	||
-									minor_type == MFVideoFormat_ARGB32)
-									&& format_index)
+								if (feed_width > inner_bounds.w && feed_height > inner_bounds.h && ppType)
 								{
-									*format_index = i;
+									*ppType = pType;
+									(*ppType)->AddRef();
 								}
 							}
 						}
@@ -434,10 +445,6 @@ namespace corona
 				pHandler->Release();
 				pHandler = nullptr;
 			}
-			if (pType) {
-				pType->Release();
-				pType = nullptr;
-			}
 			return hr;
 		}
 
@@ -447,6 +454,9 @@ namespace corona
 
 			IMFAttributes* pConfig = NULL;
 			IMFActivate** ppDevices = NULL;
+
+			FILETIME ft;
+			LARGE_INTEGER li;
 
 			stop();
 
@@ -475,12 +485,17 @@ namespace corona
 				{
 					hr = ppDevices[0]->ActivateObject(IID_PPV_ARGS(&pSource));
 
-					int64_t device_selected_id = 0;
-					hr = find_device_format(&device_selected_id);
+					::GetSystemTimePreciseAsFileTime(&ft);
+					li.HighPart = ft.dwHighDateTime;
+					li.LowPart = ft.dwLowDateTime;
+					stream_base_time = li.QuadPart;
 
-					if (SUCCEEDED(hr)) 
+					IMFMediaType* ptype = nullptr;
+					hr = find_device_format(&ptype);
+
+					if (SUCCEEDED(hr) && ptype) 
 					{
-						hr = set_device_format(device_selected_id);
+						hr = set_device_format(ptype );
 
 						if (SUCCEEDED(hr)) {
 							IMFAttributes* pAttributes = nullptr;
@@ -497,7 +512,7 @@ namespace corona
 
 							if (pAttributes)
 							{
-								pAttributes->SetUINT32(MF_SOURCE_READER_ENABLE_VIDEO_PROCESSING, TRUE);
+								pAttributes->SetUINT32(MF_SOURCE_READER_ENABLE_ADVANCED_VIDEO_PROCESSING, TRUE);
 							}
 
 							hr = MFCreateSourceReaderFromMediaSource(
@@ -577,7 +592,9 @@ namespace corona
 				IMFSample* pSample = NULL;
 
 				DWORD streamIndex, flags;
-				LONGLONG llTimeStamp;
+				LONGLONG llTimeStamp, currentStamp;
+				FILETIME ft;
+				LARGE_INTEGER li;
 
 				hr = pSourceReader->ReadSample(
 					MF_SOURCE_READER_ANY_STREAM,    // Stream index.
@@ -587,6 +604,15 @@ namespace corona
 					&llTimeStamp,                   // Receives the time stamp.
 					&pSample                        // Receives the sample or NULL.
 				);
+
+				::GetSystemTimePreciseAsFileTime(&ft);
+
+				li.HighPart = ft.dwHighDateTime;
+				li.LowPart = ft.dwLowDateTime;
+				li.QuadPart -= stream_base_time;
+
+				if (li.QuadPart > llTimeStamp)
+					return;
 
 				if (FAILED(hr))
 				{
@@ -640,9 +666,10 @@ namespace corona
 					}
 
 					IMFMediaBuffer* pMediaBuffer = nullptr;
+					IMF2DBuffer* p2dBuffer = nullptr;
+
 					hr = pSample->ConvertToContiguousBuffer(&pMediaBuffer);
 					if (SUCCEEDED(hr) && pMediaBuffer) {
-						IMF2DBuffer* p2dBuffer = nullptr;
 						hr = pMediaBuffer->QueryInterface(&p2dBuffer);
 						if (SUCCEEDED(hr) && p2dBuffer) {
 							BYTE* byte_start = nullptr;
@@ -675,8 +702,14 @@ namespace corona
 									auto& context = pwindow->getContext();
 									context.setBitmap(&bmr);
 								}
+
+								p2dBuffer->Unlock2D();
+								p2dBuffer->Release();
+								p2dBuffer = nullptr;
 							}
 						}
+						pMediaBuffer->Release();
+						pMediaBuffer = nullptr;
 					}
 
 					pSample->Release();
@@ -712,12 +745,6 @@ namespace corona
 			destroy();
 		}
 
-		virtual void on_create()
-		{
-			threadomatic::run_complete(nullptr, [this]() ->void {
-				start();
-				});
-		}
 
 	};
 

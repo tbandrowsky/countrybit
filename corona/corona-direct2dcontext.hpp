@@ -764,7 +764,10 @@ namespace corona
 		virtual void drawBitmap(bitmapInstanceDto* _bitmapInstanceDto)
 		{
 			auto bm = bitmaps[_bitmapInstanceDto->bitmapName];
-			throwOnFalse(static_cast<bool>(bm), "Bitmap not found in context");
+			if (!bm) {
+				std::cout << "bitmap " << _bitmapInstanceDto->bitmapName << " not in context.";
+				return;
+			}
 			auto ibm = bm->getBySize(_bitmapInstanceDto->width, _bitmapInstanceDto->height);
 			if (ibm) 
 			{ // if the size is stupid, don't draw it, but TODO: fill something in.
@@ -790,6 +793,10 @@ namespace corona
 				source.right = size.width;
 				source.bottom = size.height;
 				getDeviceContext()->DrawBitmap(ibm, rect, _bitmapInstanceDto->alpha, D2D1_INTERPOLATION_MODE_MULTI_SAMPLE_LINEAR, source);
+			}
+			else {
+				std::cout << "bitmap " << _bitmapInstanceDto->bitmapName << " did not have a matching size of " << _bitmapInstanceDto->width << " " << _bitmapInstanceDto->height << std::endl;
+				return;
 			}
 		}
 

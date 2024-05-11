@@ -643,6 +643,10 @@ namespace corona
 			{
 				result = create_from_resource(_target);
 			}
+			else if (useBitmap)
+			{
+				result = create_from_bitmap(_target);
+			}
 			return result;
 		}
 
@@ -695,7 +699,7 @@ namespace corona
 			int current_largest = 0;
 
 			for (auto fbm : filteredBitmaps) {
-				if ((fbm->size.height >= _width && fbm->size.height <= current_largest)
+				if ((fbm->size.width >= _width && fbm->size.height <= current_largest)
 					|| !_height
 					|| !current_largest) {
 					current_largest = fbm->size.height;
