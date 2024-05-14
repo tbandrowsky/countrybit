@@ -3,13 +3,13 @@
   "spdxVersion": "SPDX-2.2",
   "dataLicense": "CC0-1.0",
   "SPDXID": "SPDXRef-DOCUMENT",
-  "documentNamespace": "https://spdx.org/spdxdocs/protobuf-x64-windows-3.21.12#2-1cdaeea7-06f1-4c4f-8808-cce9adfdad39",
-  "name": "protobuf:x64-windows@3.21.12#2 8256039d01eb71d0d7188955abcdc6256e7136e8a2862facd8e5a313793ec281",
+  "documentNamespace": "https://spdx.org/spdxdocs/protobuf-x64-windows-3.21.12#2-d7f7e92b-acce-4ad9-b461-2cbd8d106299",
+  "name": "protobuf:x64-windows@3.21.12#2 be528d43f2ad130463245d6120ff8f2c905e6b8a17cb78cbc78fe969c2c73144",
   "creationInfo": {
     "creators": [
       "Tool: vcpkg-1c9ec1978a6b0c2b39c9e9554a96e3e275f7556e"
     ],
-    "created": "2024-05-08T16:19:07Z"
+    "created": "2024-05-08T16:56:08Z"
   },
   "relationships": [
     {
@@ -109,7 +109,7 @@
     {
       "name": "protobuf:x64-windows",
       "SPDXID": "SPDXRef-binary",
-      "versionInfo": "8256039d01eb71d0d7188955abcdc6256e7136e8a2862facd8e5a313793ec281",
+      "versionInfo": "be528d43f2ad130463245d6120ff8f2c905e6b8a17cb78cbc78fe969c2c73144",
       "downloadLocation": "NONE",
       "licenseConcluded": "BSD-3-Clause",
       "licenseDeclared": "NOASSERTION",

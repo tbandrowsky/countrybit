@@ -3,13 +3,13 @@
   "spdxVersion": "SPDX-2.2",
   "dataLicense": "CC0-1.0",
   "SPDXID": "SPDXRef-DOCUMENT",
-  "documentNamespace": "https://spdx.org/spdxdocs/tiff-x64-windows-4.6.0#4-0f8e2303-0178-4f6f-9c38-9f3565b61606",
-  "name": "tiff:x64-windows@4.6.0#4 d5d53dba3febf4f878dec276cba05077f8ddf9449ddc6596d9d11cdb0d2a272e",
+  "documentNamespace": "https://spdx.org/spdxdocs/tiff-x64-windows-4.6.0#4-37300b36-fe35-43cb-9d0c-cd1d6411c17b",
+  "name": "tiff:x64-windows@4.6.0#4 4f554d02caf1be2bf73601ca164da4763c28b08bfd5245e8e9ce905bd26e7827",
   "creationInfo": {
     "creators": [
       "Tool: vcpkg-1c9ec1978a6b0c2b39c9e9554a96e3e275f7556e"
     ],
-    "created": "2024-05-08T16:17:56Z"
+    "created": "2024-05-08T16:54:54Z"
   },
   "relationships": [
     {
@@ -99,7 +99,7 @@
     {
       "name": "tiff:x64-windows",
       "SPDXID": "SPDXRef-binary",
-      "versionInfo": "d5d53dba3febf4f878dec276cba05077f8ddf9449ddc6596d9d11cdb0d2a272e",
+      "versionInfo": "4f554d02caf1be2bf73601ca164da4763c28b08bfd5245e8e9ce905bd26e7827",
       "downloadLocation": "NONE",
       "licenseConcluded": "libtiff",
       "licenseDeclared": "NOASSERTION",

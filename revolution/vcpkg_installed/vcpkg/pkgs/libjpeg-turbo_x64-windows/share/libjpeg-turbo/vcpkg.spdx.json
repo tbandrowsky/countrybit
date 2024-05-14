@@ -3,13 +3,13 @@
   "spdxVersion": "SPDX-2.2",
   "dataLicense": "CC0-1.0",
   "SPDXID": "SPDXRef-DOCUMENT",
-  "documentNamespace": "https://spdx.org/spdxdocs/libjpeg-turbo-x64-windows-3.0.2-0d382aef-19d3-4d80-9568-dac4dd8bfa4c",
-  "name": "libjpeg-turbo:x64-windows@3.0.2 df468e8aed20e636f9e24c92c1dd073a3138e2ec915eef85c2c1f1339c05a402",
+  "documentNamespace": "https://spdx.org/spdxdocs/libjpeg-turbo-x64-windows-3.0.2-984eac7d-930e-4877-98d4-074f6d93a363",
+  "name": "libjpeg-turbo:x64-windows@3.0.2 b1e5ca56329ec650748a9c9f342009a17d2802ac6e992b4134b2f6cdbce73a32",
   "creationInfo": {
     "creators": [
       "Tool: vcpkg-1c9ec1978a6b0c2b39c9e9554a96e3e275f7556e"
     ],
-    "created": "2024-05-08T16:17:21Z"
+    "created": "2024-05-08T16:54:15Z"
   },
   "relationships": [
     {
@@ -99,7 +99,7 @@
     {
       "name": "libjpeg-turbo:x64-windows",
       "SPDXID": "SPDXRef-binary",
-      "versionInfo": "df468e8aed20e636f9e24c92c1dd073a3138e2ec915eef85c2c1f1339c05a402",
+      "versionInfo": "b1e5ca56329ec650748a9c9f342009a17d2802ac6e992b4134b2f6cdbce73a32",
       "downloadLocation": "NONE",
       "licenseConcluded": "BSD-3-Clause",
       "licenseDeclared": "NOASSERTION",

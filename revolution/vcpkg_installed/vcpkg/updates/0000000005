@@ -1,7 +1,7 @@
-Package: tiff
-Feature: jpeg
-Depends: libjpeg-turbo
+Package: opencv4
+Feature: webp
+Depends: libwebp
 Architecture: x64-windows
 Multi-Arch: same
-Description: Support JPEG compression in TIFF image files
-Status: install ok half-installed
+Description: WebP support for opencv
+Status: purge ok half-installed

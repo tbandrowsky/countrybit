@@ -4,7 +4,7 @@ Port-Version: 19
 Depends: vcpkg-cmake, vcpkg-cmake-config, vcpkg-get-python-packages, zlib
 Architecture: x64-windows
 Multi-Arch: same
-Abi: b6bacea777ef548925243ed23b5c28c497a1f334c39a610b9c8503149ded6fae
+Abi: b45f7c58aae6fc44df14e759f2e81bb76484df723e85b747d60f6bfa3c458088
 Description: computer vision library
 Default-Features: default-features
 

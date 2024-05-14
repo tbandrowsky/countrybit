@@ -4,5 +4,5 @@ Port-Version: 2
 Depends: vcpkg-cmake, vcpkg-cmake-config
 Architecture: x64-windows
 Multi-Arch: same
-Abi: 8256039d01eb71d0d7188955abcdc6256e7136e8a2862facd8e5a313793ec281
+Abi: be528d43f2ad130463245d6120ff8f2c905e6b8a17cb78cbc78fe969c2c73144
 Description: Google's language-neutral, platform-neutral, extensible mechanism for serializing structured data.

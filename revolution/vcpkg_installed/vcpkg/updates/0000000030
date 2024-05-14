@@ -1,10 +1,10 @@
-Package: opencv4
-Version: 4.8.0
-Port-Version: 19
-Depends: vcpkg-cmake, vcpkg-cmake-config, vcpkg-get-python-packages, zlib
+Package: tiff
+Version: 4.6.0
+Port-Version: 4
+Depends: vcpkg-cmake, vcpkg-cmake-config
 Architecture: x64-windows
 Multi-Arch: same
-Abi: b6bacea777ef548925243ed23b5c28c497a1f334c39a610b9c8503149ded6fae
-Description: computer vision library
-Default-Features: default-features
-Status: install ok installed
+Abi: d5d53dba3febf4f878dec276cba05077f8ddf9449ddc6596d9d11cdb0d2a272e
+Description: A library that supports the manipulation of TIFF image files
+Default-Features: jpeg, lzma, zip
+Status: purge ok half-installed

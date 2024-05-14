@@ -501,7 +501,6 @@ namespace corona
 			tc->set_status(_status);
 			if (_settings) {
 				_settings(*tc);
-
 			}
 			return *this;
 		}
@@ -846,6 +845,7 @@ namespace corona
 		std::vector<item_field> fields;
 		json					data;
 		item_buttons_function	fn_buttons;
+		std::function<void(column_layout& _settings)> fn_columns;
 	};
 
 	class form_view_control : public row_layout
@@ -857,6 +857,9 @@ namespace corona
 	public:
 
 		int fields_per_column;
+
+		measure column_start_space;
+		measure column_next_space;
 
 		form_view_control()
 		{
@@ -943,17 +946,22 @@ namespace corona
 
 			measure height = measure(100.0 * fields_per_column, measure_units::pixels);
 
-			form_body = cb.column_begin(id_counter::next(), [](column_layout& _cl) {
+			form_body = cb.column_begin(id_counter::next(), [this](column_layout& _cl) {
 				_cl.set_size(1.0_container, 1.0_container);
 				});
 
-			form_row = form_body.row_begin(id_counter::next(), [height](row_layout& _rl)
+			form_row = form_body.row_begin(id_counter::next(), [this, height](row_layout& _rl)
 				{
 					_rl.set_size(1.0_container, height);
-				});		
+					_rl.item_start_space = column_start_space;
+					_rl.item_next_space = column_next_space;
+				});
 
-			field_column = form_row.column_begin(id_counter::next(), [width](column_layout& _cl) {
+			field_column = form_row.column_begin(id_counter::next(), [this,width](column_layout& _cl) {
 				_cl.set_size(measure(width, measure_units::percent_container), 1.0_container);
+				if (ids.fn_columns) {
+					ids.fn_columns(_cl);
+				}
 				});
 
 			bool is_default = true;
@@ -1067,8 +1075,11 @@ namespace corona
 				is_default = false;
 
 				if (field_counter >= fields_per_column) {
-					field_column = form_row.column_begin(id_counter::next(), [width](column_layout& _cl) {
+					field_column = form_row.column_begin(id_counter::next(), [width, this](column_layout& _cl) {
 						_cl.set_size(measure(width, measure_units::percent_container), 1.0_container);
+						if (ids.fn_columns) {
+							ids.fn_columns(_cl);
+						}
 						});
 					field_counter = 0;
 				}

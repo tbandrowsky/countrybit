@@ -106,6 +106,7 @@ namespace corona
 		int id_main_row;
 		int id_document_container;
 		int id_document_command_container;
+		int id_document_right_command_container;
 		int id_document_body_container;
 		int id_document_body_details;
 		int id_status;
@@ -168,6 +169,7 @@ namespace corona
 				id_main_row = _presentation->get_control_id("main_row", []() { return id_counter::next(); });
 				id_document_container = _presentation->get_control_id("document_container", []() { return id_counter::next(); });
 				id_document_command_container = _presentation->get_control_id("document_command_container", []() { return id_counter::next(); });
+				id_document_right_command_container = _presentation->get_control_id("document_right_command_container", []() { return id_counter::next(); });
 				id_document_body_container = _presentation->get_control_id("document_body_container", []() { return id_counter::next(); });
 				id_location_title = _presentation->get_control_id("location_title", []() { return id_counter::next(); });
 				id_create_title = _presentation->get_control_id("create_title", []() { return id_counter::next(); });
@@ -269,6 +271,7 @@ namespace corona
 		void create_page_frame(page& _page, content_function _fn)
 		{
 			control_builder command_container;
+			control_builder right_command_container;
 			control_builder document_body;
 			caption_bar_control* caption_container;
 			tab_view_control* tab_container;
@@ -303,29 +306,34 @@ namespace corona
 
 			auto document_row = contents.row_begin(id_document_container, [this](row_layout& rl) {
 				rl.set_size(1.0_container, 1.0_remaining);
+				rl.item_next_space = 8.0_px;
 				});
 
 			command_container = document_row.column_begin(id_document_command_container, [this](column_layout& rl) {
-				rl.set_size(0.25_container, 1.0_container);
+				rl.set_size(150.0_px, 1.0_container);
 				});
 
 			document_body = document_row.column_begin(id_document_body_container, [title_id](column_layout& rl) {
-				rl.set_size(0.75_container, 1.0_container);
-				rl.set_padding(8.0_px);
+				rl.set_size(1.0_remaining, 1.0_container);
 				rl.push(title_id, true, false, false, false);
 				}); 
 
-			// note that, we are putting the breadcrumbs on a nav pane to the left.
+			right_command_container = document_row.column_begin(id_document_right_command_container, [this](column_layout& rl) {
+				rl.set_size(150.0_px, 1.0_container);
+				});
 
+			// note that, we are putting the breadcrumbs on a nav pane to the left.
 			control_builder doc_message = document_body.status(status_recent, [](status_control& _sc) {
-				_sc.set_size(.75_container, 100.0_px);
+				measure sc_height = 10.0_px;
+				if (_sc.status_set) sc_height = 100.0_px;
+				_sc.set_size(1.0_container, sc_height);
 				_sc.set_margin(4.0_px);
 				}, id_status);
 
 			int status_id = id_status;
 
 			control_builder doc_details = document_body.column_begin(id_document_body_details, [title_id, status_id](column_layout& rl) {
-				rl.set_size(0.75_container, 1.0_remaining);
+				rl.set_size(1.0_container, 1.0_remaining);
 				rl.set_margin(4.0_px);
 				rl.push(title_id, true, false, false, false);
 				rl.push(status_id, true, false, false, false);
@@ -461,11 +469,12 @@ namespace corona
 		{
 			create_page_frame(_page, [this](control_builder& cb)
 				{
-					cb.chaptertitle("Welcome to Revolution");
-					cb.chaptersubtitle("Please present your Real ID compliant license.");
+					cb.chaptertitle("Welcome to the Revolution");
+					cb.chaptersubtitle("Let's get your Revolution ID set up.");
 
 					control_builder root_row = cb.row_begin(id_counter::next(), [](row_layout& _settings) {
 						_settings.set_size(1.0_container, 1.0_container);
+						_settings.item_next_space = 8.0_px;
 						});
 
 					control_builder camera_column = root_row.column_begin(id_counter::next(), [](column_layout& _settings) {
@@ -610,6 +619,8 @@ namespace corona
 								};
 
 							_fv.fields_per_column = 8;
+							_fv.column_start_space = 0.0_px;
+							_fv.column_next_space = 8.0_px;
 							_fv.set_size(1.0_container, 1.0_container);
 							_fv.set_data(ids);
 						});

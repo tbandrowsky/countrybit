@@ -1,8 +1,10 @@
-Package: quirc
-Version: 1.2
-Depends: vcpkg-cmake, vcpkg-cmake-config
+Package: opencv4
+Version: 4.8.0
+Port-Version: 19
+Depends: vcpkg-cmake, vcpkg-cmake-config, vcpkg-get-python-packages, zlib
 Architecture: x64-windows
 Multi-Arch: same
-Abi: c2fa737ba3b6d3d76f49741182243832f107b493feaef69569e61d8dc7443d13
-Description: quirc is one of the C library available for scanning QR Codes
-Status: install ok half-installed
+Abi: b6bacea777ef548925243ed23b5c28c497a1f334c39a610b9c8503149ded6fae
+Description: computer vision library
+Default-Features: default-features
+Status: purge ok not-installed

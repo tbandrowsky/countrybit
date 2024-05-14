@@ -3,13 +3,13 @@
   "spdxVersion": "SPDX-2.2",
   "dataLicense": "CC0-1.0",
   "SPDXID": "SPDXRef-DOCUMENT",
-  "documentNamespace": "https://spdx.org/spdxdocs/libwebp-x64-windows-1.4.0#1-61ead2bc-02b3-46de-a9f4-993a9c1e6304",
-  "name": "libwebp:x64-windows@1.4.0#1 f309e6e7420bb23fd35cf49224d123ce3077cbc9a043cb12203f2154dbf72c8f",
+  "documentNamespace": "https://spdx.org/spdxdocs/libwebp-x64-windows-1.4.0#1-666a9a7f-901c-40a3-87d6-bb2f1dac81fa",
+  "name": "libwebp:x64-windows@1.4.0#1 a7906fcd72e250f16105dadc418a283219a42105496963f22ee9b46d94bcb5e6",
   "creationInfo": {
     "creators": [
       "Tool: vcpkg-1c9ec1978a6b0c2b39c9e9554a96e3e275f7556e"
     ],
-    "created": "2024-05-08T16:12:37Z"
+    "created": "2024-05-08T16:53:16Z"
   },
   "relationships": [
     {
@@ -99,7 +99,7 @@
     {
       "name": "libwebp:x64-windows",
       "SPDXID": "SPDXRef-binary",
-      "versionInfo": "f309e6e7420bb23fd35cf49224d123ce3077cbc9a043cb12203f2154dbf72c8f",
+      "versionInfo": "a7906fcd72e250f16105dadc418a283219a42105496963f22ee9b46d94bcb5e6",
       "downloadLocation": "NONE",
       "licenseConcluded": "BSD-3-Clause",
       "licenseDeclared": "NOASSERTION",

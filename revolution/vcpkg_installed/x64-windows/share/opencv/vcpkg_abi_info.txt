@@ -1,6 +1,6 @@
-cmake 3.28.0-msvc1
+cmake 3.27.1
 features core;default-features
-opencv4 b6bacea777ef548925243ed23b5c28c497a1f334c39a610b9c8503149ded6fae
+opencv4 b45f7c58aae6fc44df14e759f2e81bb76484df723e85b747d60f6bfa3c458088
 portfile.cmake df79f6ac816e9d5a977cbd6b51abf341fe5c11f3bf69b36a69a4a85349a99f03
 ports.cmake acdf95a924917ff29a9e6bfbee2ecbdb786501f36a847bdff366e41544465592
 post_build_checks 2

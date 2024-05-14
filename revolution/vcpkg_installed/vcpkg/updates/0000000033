@@ -1,7 +1,7 @@
-Package: opencv4
+Package: tiff
 Feature: jpeg
 Depends: libjpeg-turbo
 Architecture: x64-windows
 Multi-Arch: same
-Description: JPEG support for opencv
-Status: install ok installed
+Description: Support JPEG compression in TIFF image files
+Status: purge ok half-installed

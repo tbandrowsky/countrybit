@@ -1,7 +1,7 @@
-Package: opencv4
-Feature: tiff
-Depends: tiff
+Package: tiff
+Feature: lzma
+Depends: liblzma
 Architecture: x64-windows
 Multi-Arch: same
-Description: TIFF support for opencv
-Status: install ok installed
+Description: Support LZMA compression in TIFF image files
+Status: purge ok not-installed

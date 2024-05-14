@@ -611,8 +611,9 @@ namespace corona
 				li.LowPart = ft.dwLowDateTime;
 				li.QuadPart -= stream_base_time;
 
-				if (li.QuadPart > llTimeStamp)
+				if (li.QuadPart > llTimeStamp) {
 					return;
+				}
 
 				if (FAILED(hr))
 				{
@@ -701,6 +702,13 @@ namespace corona
 								{
 									auto& context = pwindow->getContext();
 									context.setBitmap(&bmr);
+								}
+
+								ZXing::ImageView image_view(byte_start, videoWidth, videoHeight, ZXing::ImageFormat::XRGB, pitch);
+								std::vector<ZXing::Result> barcode_results = ZXing::ReadBarcodes(image_view);
+								std::cout << "Barcode detected" << std::endl;
+								for (auto result : barcode_results) {
+									std::cout << result.text() << std::endl;
 								}
 
 								p2dBuffer->Unlock2D();

@@ -40,5 +40,6 @@
 #include "mfreadwrite.h"
 
 #include "opencv2/opencv.hpp"
+#include "ZXing/ReadBarcode.h"
 
 #endif

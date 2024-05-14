@@ -1,7 +1,7 @@
-Package: opencv4
-Feature: quirc
-Depends: quirc
+Package: tiff
+Feature: zip
+Depends: zlib
 Architecture: x64-windows
 Multi-Arch: same
-Description: Enable QR code module
-Status: install ok installed
+Description: Support ZIP/deflate compression in TIFF image files
+Status: purge ok not-installed

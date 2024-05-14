@@ -267,6 +267,7 @@ namespace corona
 	public:
 
 		using draw_control::host;
+		bool status_set;
 
 		status_control();
 		status_control(const status_control& _src) : frame_layout(_src)
@@ -275,10 +276,12 @@ namespace corona
 		}
 		status_control(container_control_base* _parent, int _id);
 
-		void set_status(call_status _status)
+		bool set_status(call_status _status)
 		{
 			children.clear();
+			status_set = false;
 			if (_status.message.size()) {
+				status_set = true;
 				if (_status.success) {
 					std::shared_ptr<success_control> sc = std::make_shared<success_control>(this, id_counter::next());
 					sc->set_status(_status);
@@ -298,6 +301,7 @@ namespace corona
 				}
 			}
 			create(host);
+			return status_set;
 		}
 
 		virtual std::shared_ptr<control_base> clone()
@@ -681,11 +685,13 @@ namespace corona
 
 	status_control::status_control(container_control_base* _parent, int _id) : frame_layout(_parent, _id)
 	{
+		status_set = false;
 		set_padding(0.0_px);
 	}
 
 	status_control::status_control()
 	{
+		status_set = false;
 		set_padding(0.0_px);
 	}
 

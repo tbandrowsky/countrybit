@@ -4,7 +4,7 @@ Port-Version: 1
 Depends: opencv4
 Architecture: x64-windows
 Multi-Arch: same
-Abi: 6c0105ecbe01b4f7d0ee7a974397a791878a1ec9df5cd1d9f0742fc83d0cbf9f
+Abi: 0c1d0da017575904f8c4710d824297c28961768ed4b8168d59051a1296d40990
 Description: Computer vision library
 Default-Features: default-features
 

@@ -4,7 +4,7 @@ Port-Version: 4
 Depends: vcpkg-cmake, vcpkg-cmake-config
 Architecture: x64-windows
 Multi-Arch: same
-Abi: d5d53dba3febf4f878dec276cba05077f8ddf9449ddc6596d9d11cdb0d2a272e
+Abi: 4f554d02caf1be2bf73601ca164da4763c28b08bfd5245e8e9ce905bd26e7827
 Description: A library that supports the manipulation of TIFF image files
 Default-Features: jpeg, lzma, zip
 

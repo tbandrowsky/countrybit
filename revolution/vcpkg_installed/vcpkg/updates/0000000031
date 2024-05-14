@@ -1,6 +1,7 @@
-Package: opencv4
-Feature: default-features
+Package: tiff
+Feature: zip
+Depends: zlib
 Architecture: x64-windows
 Multi-Arch: same
-Description: Platform-dependent default features
-Status: install ok installed
+Description: Support ZIP/deflate compression in TIFF image files
+Status: purge ok half-installed

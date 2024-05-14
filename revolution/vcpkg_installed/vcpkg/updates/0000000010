@@ -1,7 +1,7 @@
-Package: tiff
-Feature: lzma
-Depends: liblzma
+Package: opencv4
+Feature: dnn
+Depends: flatbuffers, protobuf
 Architecture: x64-windows
 Multi-Arch: same
-Description: Support LZMA compression in TIFF image files
-Status: install ok installed
+Description: Enable dnn module
+Status: purge ok half-installed

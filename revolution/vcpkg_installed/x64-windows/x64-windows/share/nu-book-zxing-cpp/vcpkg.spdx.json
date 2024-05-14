@@ -1,0 +1,110 @@
+{
+  "$schema": "https://raw.githubusercontent.com/spdx/spdx-spec/v2.2.1/schemas/spdx-schema.json",
+  "spdxVersion": "SPDX-2.2",
+  "dataLicense": "CC0-1.0",
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "documentNamespace": "https://spdx.org/spdxdocs/nu-book-zxing-cpp-x64-windows-2.2.1-ab4306c1-8207-46cd-b5f2-5ce213ebdf1f",
+  "name": "nu-book-zxing-cpp:x64-windows@2.2.1 19458789dd9d15cfa745f4b60da19f04acaacadf3e5ac17bd3c8125c1a354ee1",
+  "creationInfo": {
+    "creators": [
+      "Tool: vcpkg-1c9ec1978a6b0c2b39c9e9554a96e3e275f7556e"
+    ],
+    "created": "2024-05-14T03:32:08Z"
+  },
+  "relationships": [
+    {
+      "spdxElementId": "SPDXRef-port",
+      "relationshipType": "GENERATES",
+      "relatedSpdxElement": "SPDXRef-binary"
+    },
+    {
+      "spdxElementId": "SPDXRef-port",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-file-0"
+    },
+    {
+      "spdxElementId": "SPDXRef-port",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-file-1"
+    },
+    {
+      "spdxElementId": "SPDXRef-binary",
+      "relationshipType": "GENERATED_FROM",
+      "relatedSpdxElement": "SPDXRef-port"
+    },
+    {
+      "spdxElementId": "SPDXRef-file-0",
+      "relationshipType": "CONTAINED_BY",
+      "relatedSpdxElement": "SPDXRef-port"
+    },
+    {
+      "spdxElementId": "SPDXRef-file-1",
+      "relationshipType": "CONTAINED_BY",
+      "relatedSpdxElement": "SPDXRef-port"
+    }
+  ],
+  "packages": [
+    {
+      "name": "nu-book-zxing-cpp",
+      "SPDXID": "SPDXRef-port",
+      "versionInfo": "2.2.1",
+      "downloadLocation": "git+https://github.com/microsoft/vcpkg@1db237096a98d1fb8766a540eee3eb5476d62b93",
+      "homepage": "https://github.com/zxing-cpp/zxing-cpp",
+      "licenseConcluded": "Apache-2.0",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "description": "Barcode detection and decoding library.",
+      "comment": "This is the port (recipe) consumed by vcpkg."
+    },
+    {
+      "name": "nu-book-zxing-cpp:x64-windows",
+      "SPDXID": "SPDXRef-binary",
+      "versionInfo": "19458789dd9d15cfa745f4b60da19f04acaacadf3e5ac17bd3c8125c1a354ee1",
+      "downloadLocation": "NONE",
+      "licenseConcluded": "Apache-2.0",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "comment": "This is a binary package built by vcpkg."
+    },
+    {
+      "SPDXID": "SPDXRef-resource-1",
+      "name": "zxing-cpp/zxing-cpp",
+      "downloadLocation": "git+https://github.com/zxing-cpp/zxing-cpp@v2.2.1",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA512",
+          "checksumValue": "f1de8df783061a152a18cd9102ac0c579c40c76ab4a5ba9f30bcb8ddb532f3fac08736840a631adbf7c30a7fa00ce8d65625c8cd695288620601708e8f256a53"
+        }
+      ]
+    }
+  ],
+  "files": [
+    {
+      "fileName": "./C:/Users/toddb/AppData/Local/vcpkg/registries/git-trees/1db237096a98d1fb8766a540eee3eb5476d62b93/portfile.cmake",
+      "SPDXID": "SPDXRef-file-0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "9c07c70ecd37334876081c6d4c68e6164fdf1d3612730fe621fa7d43e4fd2e08"
+        }
+      ],
+      "licenseConcluded": "NOASSERTION",
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "fileName": "./C:/Users/toddb/AppData/Local/vcpkg/registries/git-trees/1db237096a98d1fb8766a540eee3eb5476d62b93/vcpkg.json",
+      "SPDXID": "SPDXRef-file-1",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "b62b93483d7b04cfe4f2a7fa3e092924ee7dfb90c418c010b48b8cdd344a073a"
+        }
+      ],
+      "licenseConcluded": "NOASSERTION",
+      "copyrightText": "NOASSERTION"
+    }
+  ]
+}
