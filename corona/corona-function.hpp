@@ -550,6 +550,68 @@ namespace corona
 			global_job_queue->add_job(guj);
 		}
 
+		template <typename dest, typename item> static void run_each(dest *_targets, std::vector<item>& _items, std::function<void(dest *_target, item& _src)> _on_each)
+		{
+			std::vector<HANDLE> events;
+
+			int counter = 0;
+			int bucket_size = _items.size() / (global_job_queue->getThreadCount() + 1);
+			for (int idx = 0; idx < _items.size(); ) {
+				HANDLE handle = ::CreateEvent(NULL, FALSE, FALSE, NULL);
+				events.push_back(handle);
+				int end = idx + bucket_size;
+				if (end > _items.size())
+					end = _items.size();
+				std::vector<item>* src_items = &_items;
+				general_job* gj = new general_job([_targets, idx, end, _on_each, src_items]() -> void {					
+					for (int x = idx; x < end; x++)
+					{
+						item& itm = (*src_items)[x];
+						dest* d = &_targets[x];
+						_on_each(d, itm);
+					}
+				}, handle);
+				global_job_queue->add_job(gj);
+				idx = end;
+			}
+
+			for (auto evt : events) {
+				::WaitForSingleObject(evt, INFINITE);
+				CloseHandle(evt);
+			}
+		}
+
+
+		template <typename item> static void run_each(std::vector<item> &_items, std::function<void(item& _item)> _on_each)
+		{
+			std::vector<HANDLE> events;
+
+			int counter = 0;
+			int bucket_size = _items.size() / (global_job_queue->getThreadCount() + 1);
+			for (int idx = 0; idx < _items.size(); ) {
+				HANDLE handle = ::CreateEvent(NULL, FALSE, FALSE, NULL);
+				events.push_back(handle);
+				int end = idx + bucket_size;
+				if (end > _items.size())
+					end = _items.size();
+				std::vector<item>* src_items = &_items;
+				general_job* gj = new general_job([idx, end, _on_each, src_items]() -> void {
+					for (int x = idx; x < end; x++)
+					{
+						item& itm = (*src_items)[x];
+						_on_each(itm);
+					}
+					}, handle);
+				global_job_queue->add_job(gj);
+				idx = end;
+			}
+
+			for (auto evt : events) {
+				::WaitForSingleObject(evt, INFINITE);
+				CloseHandle(evt);
+			}
+		}
+
 		template <typename IOParams> static void run_io(job_queue* queue, IOParams params, std::function<bool(HANDLE hevent, IOParams* _src)> runner)
 		{
 			HANDLE hevent = ::CreateEvent(NULL, false, false, NULL);

@@ -212,7 +212,7 @@ namespace corona
 
 		using content_function = std::function<void(control_builder& _contents)>;
 
-		void create_page_frame(page& _page, content_function _fn)
+		void create_page_frame(page& _page, content_function _fn, bool _enable_command_container)
 		{
 			control_builder command_container;
 			control_builder right_command_container;
@@ -241,7 +241,7 @@ namespace corona
 					_cb.image_control_id = IDC_COMPANY_LOGO;
 					_cb.image_file = "small_logo.png";
 					_cb.corporate_name = "COUNTRY VIDEO GAMES";
-					_cb.title_name = "AURA";
+					_cb.title_name = " AURA VIEWER";
 					_cb.background_brush = st->CaptionBackgroundBrush;
 					_cb.border_brush = st->CaptionBorderBrush;
 					*ptitle_id = _cb.title_id;
@@ -250,12 +250,14 @@ namespace corona
 
 			auto document_row = contents.row_begin(id_document_container, [this](row_layout& rl) {
 				rl.set_size(1.0_container, 1.0_remaining);
-				rl.item_next_space = 8.0_px;
+				rl.item_next_space = 0.0_px;
 				});
 
-			command_container = document_row.column_begin(id_document_command_container, [this](column_layout& rl) {
-				rl.set_size(150.0_px, 1.0_container);
-				});
+			if (_enable_command_container) {
+				command_container = document_row.column_begin(id_document_command_container, [this](column_layout& rl) {
+					rl.set_size(150.0_px, 1.0_container);
+					});
+			}
 
 			document_body = document_row.column_begin(id_document_body_container, [title_id](column_layout& rl) {
 				rl.set_size(1.0_remaining, 1.0_container);
@@ -278,7 +280,7 @@ namespace corona
 
 			control_builder doc_details = document_body.column_begin(id_document_body_details, [title_id, status_id](column_layout& rl) {
 				rl.set_size(1.0_container, 1.0_remaining);
-				rl.set_margin(4.0_px);
+				rl.set_margin(0.0_px);
 				rl.push(title_id, true, false, false, false);
 				rl.push(status_id, true, false, false, false);
 				});
@@ -296,7 +298,7 @@ namespace corona
 				{
 					control_builder root_row = cb.row_begin(id_counter::next(), [](row_layout& _settings) {
 						_settings.set_size(1.0_container, 1.0_container);
-						_settings.item_next_space = 8.0_px;
+						_settings.item_next_space = 0.0_px;
 						});
 
 					control_builder camera_column = root_row.column_begin(id_counter::next(), [](column_layout& _settings) {
@@ -316,7 +318,8 @@ namespace corona
 						_settings.camera_control_id = id_camera;
 						});
 
-				});
+				}, 
+				false);
 		}
 
 		void set_corona_handlers()

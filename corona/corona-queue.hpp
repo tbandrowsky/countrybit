@@ -67,10 +67,11 @@ namespace corona {
 	class general_job : public job
 	{
 	public:
+		HANDLE notification_handle;
 		runnable function_to_run;
 		job_container container;
 		general_job();
-		general_job(runnable _runnable);
+		general_job(runnable _runnable, HANDLE _notification_handle = nullptr);
 		virtual ~general_job();
 		virtual job_notify execute(job_queue* _callingQueue, DWORD _bytesTransferred, BOOL _success);
 		friend class job_queue;
@@ -273,11 +274,12 @@ namespace corona {
 
 	general_job::general_job()
 	{
-		;
+		notification_handle = nullptr;
 	}
 
-	general_job::general_job(runnable _runnable)
+	general_job::general_job(runnable _runnable, HANDLE _notification_handle)
 	{
+		notification_handle = _notification_handle;
 		function_to_run = _runnable;
 	}
 
@@ -289,6 +291,10 @@ namespace corona {
 	job_notify general_job::execute(job_queue* _callingQueue, DWORD _bytesTransferred, BOOL _success)
 	{
 		job_notify jobNotify;
+
+		if (notification_handle) {
+			jobNotify.setSignal(notification_handle);
+		}
 
 		if (function_to_run)
 		{

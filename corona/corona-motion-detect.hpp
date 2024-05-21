@@ -193,10 +193,10 @@ namespace corona
 
 		void for_each(std::function<pixel_type (pixel_type)> _xform)
 		{
-			for (auto& px : pixels) {
+			threadomatic::run_each<pixel_type>(pixels, [_xform](pixel_type& px) -> void {
 				pixel_type np = _xform(px);
 				px = np;
-			}
+			});
 		}
 
 		ID2D1Bitmap1* get_bitmap(ID2D1DeviceContext *_context, std::function<bgra32_pixel(pixel_type)> _xform)
@@ -214,12 +214,9 @@ namespace corona
 
 			if (data) {
 
-				for (int i = 0; i < size_pixels; i++)
-				{
-					data[i] = _xform(pixels[i]);
-//					data[i].a = 128;
-					//data[i].b = 128;
-				}
+				threadomatic::run_each<bgra32_pixel, pixel_type>(data, pixels, [_xform](bgra32_pixel* _target, pixel_type& _src) -> void {
+					*_target = _xform(_src);
+					});
 
 				D2D1_BITMAP_PROPERTIES1 props = {};
 				props.dpiX = 96;
@@ -335,7 +332,7 @@ namespace corona
 							candidate0.x = x;
 							candidate0.y = y;
 							astate = extend_area;
-							activated_wait = 16;
+							activated_wait = 32;
 						}
 					}
 					else if (astate == analysis_states::extend_area)
@@ -344,7 +341,7 @@ namespace corona
 						{
 							candidate1.x = x;
 							candidate1.y = y;
-							activated_wait = 16;
+							activated_wait = 32;
 						}
 						else 
 						{
