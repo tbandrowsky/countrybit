@@ -1,9 +1,15 @@
 #define APPLICATION_REVOLUTION 1
 #define APPLICATION_GUITAR 2
-#define APPLICATION_ID APPLICATION_REVOLUTION
+#define APPLICATION_AURA 3
+#define APPLICATION_ID APPLICATION_AURA
 
 #if APPLICATION_ID == APPLICATION_REVOLUTION
 #include "app_revolution.hpp"
+#define application_function corona::run_aura_application;
+#endif
+
+#if APPLICATION_ID == APPLICATION_AURA
+#include "app_aura.hpp"
 #define application_function corona::run_revolution_application;
 #endif
 

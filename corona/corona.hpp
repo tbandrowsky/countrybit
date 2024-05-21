@@ -88,6 +88,8 @@
 #include "corona-direct2dcontextbase.hpp"
 #include "corona-visual.hpp"
 #include "corona-bitmap_filters.hpp"
+#include "corona-motion-detect.hpp"
+
 #include "corona-direct2dresources.hpp"
 #include "corona-bitmaps.hpp"
 #include "corona-brushes.hpp"

@@ -94,6 +94,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-windows-all.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-windows-lite.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-motion-detect.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="$(MSBuildThisFileDirectory)header-units.json" />

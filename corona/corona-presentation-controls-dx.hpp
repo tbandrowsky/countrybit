@@ -241,15 +241,18 @@ namespace corona
 	{
 	public:
 
-		IMFMediaSource* pSource;
-		IMFSourceReader* pSourceReader;
-		LONGLONG		stream_base_time;
+		IMFMediaSource*		pSource;
+		IMFSourceReader*	pSourceReader;
+		LONGLONG			stream_base_time;
+		LONGLONG			last_barcode_time;
+		delta_frame			delta_boi;
 
 		camera_control()
 		{
 			pSource = nullptr;
 			pSourceReader = nullptr;
 			stream_base_time = 0;
+			last_barcode_time = 0;
 			init();
 		}
 
@@ -264,6 +267,7 @@ namespace corona
 				pSourceReader->AddRef();
 			}
 			stream_base_time = _src.stream_base_time;
+			last_barcode_time = _src.last_barcode_time;
 			init();
 		}
 
@@ -272,6 +276,7 @@ namespace corona
 			pSource = nullptr;
 			pSourceReader = nullptr;
 			stream_base_time = 0;
+			last_barcode_time = 0;
 			init();
 		}
 
@@ -292,16 +297,38 @@ namespace corona
 						draw_bounds.y = 0;
 
 						auto& context = pwindow->getContext();
+						ID2D1DeviceContext* dc = context.getDeviceContext();
 
-						bitmapInstanceDto bid;
-						bid.bitmapName = "camerabitmapframe";
-						bid.alpha = 1.0;
-						bid.copyId = 0;
-						bid.x = 0;
-						bid.y = 0;
-						bid.height = inner_bounds.w;
-						bid.width = inner_bounds.h;
-						context.drawBitmap(&bid);
+						ID2D1Bitmap1* cbm = delta_boi.get_frame(dc);
+						if (cbm) {
+
+							D2D1_RECT_F dest_rect;
+
+							dest_rect.left = 0;
+							dest_rect.top = 0;
+							dest_rect.right = inner_bounds.w;
+							dest_rect.bottom = inner_bounds.h;
+
+							dc->DrawBitmap(cbm, &dest_rect, 1.0);
+
+							cbm->Release();
+						}
+
+						ID2D1Bitmap1* dbm = delta_boi.get_activation(dc);
+
+						if (dbm) {
+
+							D2D1_RECT_F dest_rect;
+
+							dest_rect.left = 0;
+							dest_rect.top = 0;
+							dest_rect.right = inner_bounds.w;
+							dest_rect.bottom = inner_bounds.h;
+
+							dc->DrawBitmap(dbm, &dest_rect, 1.0);
+
+							dbm->Release();
+						}
 					}
 				}
 			};
@@ -310,8 +337,18 @@ namespace corona
 			{
 					threadomatic::run_complete(nullptr, [this]() ->void {
 						start();
-						});
+					});
 			};
+		}
+
+		std::vector<rectangle> get_movement_boxes()
+		{
+			return delta_boi.get_movement_boxes();
+		}
+
+		ID2D1Bitmap *get_camera_image(ID2D1DeviceContext *_context)
+		{
+			return delta_boi.get_frame(_context);
 		}
 
 		HRESULT set_device_format(IMFMediaType* pType)
@@ -369,6 +406,13 @@ namespace corona
 			IMFMediaType* pType = NULL;
 			DWORD cTypes = 0;
 
+			UINT32 max_feed_width = 0;
+			UINT32 max_feed_height = 0;
+			BOOL found_match = false;
+
+			UINT32 feed_width;
+			UINT32 feed_height;
+
 			if (!ppType)
 				return E_FAIL;
 
@@ -399,14 +443,15 @@ namespace corona
 				goto done;
 			}
 
-			UINT32 feed_width;
-			UINT32 feed_height;
-
-			for (DWORD i = 0; i < cTypes && !*ppType; i++)
+			for (DWORD i = 0; i < cTypes && !found_match; i++)
 			{
 				hr = pHandler->GetMediaTypeByIndex(i, &pType);
 				if (FAILED(hr))
 				{
+					if (*ppType) {
+						(*ppType)->Release();
+						(*ppType) = nullptr;
+					}
 					goto done;
 				}
 
@@ -420,10 +465,20 @@ namespace corona
 							hr = MFGetAttributeSize(pType, MF_MT_FRAME_SIZE, &feed_width, &feed_height);
 							if (SUCCEEDED(hr))
 							{
-								if (feed_width > inner_bounds.w && feed_height > inner_bounds.h && ppType)
+								if (feed_width > max_feed_width && feed_height > max_feed_height && ppType)
 								{
+									if (*ppType) 
+										(*ppType)->Release();
+
 									*ppType = pType;
 									(*ppType)->AddRef();
+
+									max_feed_width = feed_width;
+									max_feed_height = feed_height;
+
+									if (feed_width >= 1024) {
+										found_match = true;
+									}
 								}
 							}
 						}
@@ -431,6 +486,7 @@ namespace corona
 					pType->Release();
 				}
 			}
+
 
 		done:
 			if (pPD) {
@@ -458,7 +514,8 @@ namespace corona
 			FILETIME ft;
 			LARGE_INTEGER li;
 
-			stop();
+			if (pSourceReader)
+				return S_OK;
 
 			// Create an attribute store to hold the search criteria.
 			HRESULT hr = MFCreateAttributes(&pConfig, 1);
@@ -584,6 +641,11 @@ namespace corona
 			}
 		}
 
+		virtual void arrange(rectangle _ctx)
+		{
+			draw_control::arrange(_ctx);
+		}
+
 		virtual void read_frame()
 		{
 			if (pSourceReader) 
@@ -679,36 +741,31 @@ namespace corona
 							hr = p2dBuffer->Lock2D(&byte_start, &pitch);
 							if (SUCCEEDED(hr) && byte_start && pitch) 
 							{
-								BITMAP bms = {};
-								bms.bmBitsPixel = 32;
-								bms.bmPlanes = 1;
-								bms.bmType = 0;
-								bms.bmWidthBytes = pitch;
-								bms.bmWidth = videoWidth;
-								bms.bmHeight = videoHeight;
-								bms.bmBits = byte_start;
+								int64_t diff = ( li.QuadPart - last_barcode_time ) / 10000000;
 
-								bitmapRequest bmr;
-								bmr.cropEnabled = false;
-								point t = {};
-								t.x = videoWidth;
-								t.y = videoHeight;
-								bmr.sizes.push_back(t);
-								bmr.source = CreateBitmapIndirect(&bms);
-								bmr.name = "camerabitmapframe";
-								bmr.resource_id = 0;
+								bgra32_pixel* px = (bgra32_pixel*)byte_start;
+								delta_boi.next_frame(px, videoWidth, videoHeight, videoWidth);
 
-								if (auto pwindow = window.lock())
+								if (diff > 0 && false) 
 								{
-									auto& context = pwindow->getContext();
-									context.setBitmap(&bmr);
-								}
+									last_barcode_time = li.QuadPart;
+									int64_t bm_bytes = videoHeight * pitch;
+									BYTE* temp = new BYTE[bm_bytes];
+									memcpy(temp, byte_start, bm_bytes);
 
-								ZXing::ImageView image_view(byte_start, videoWidth, videoHeight, ZXing::ImageFormat::XRGB, pitch);
-								std::vector<ZXing::Result> barcode_results = ZXing::ReadBarcodes(image_view);
-								std::cout << "Barcode detected" << std::endl;
-								for (auto result : barcode_results) {
-									std::cout << result.text() << std::endl;
+									threadomatic::run_complete([temp, videoHeight, videoWidth, pitch] {
+										std::cout << "checking for barcode" << std::endl;
+										auto options = ZXing::ReaderOptions().setFormats(ZXing::BarcodeFormat::PDF417);
+										ZXing::ImageView image_view(temp, videoWidth, videoHeight, ZXing::ImageFormat::XRGB, pitch);
+										std::vector<ZXing::Result> barcode_results = ZXing::ReadBarcodes(image_view, options);
+										if (barcode_results.size()) {
+											std::cout << "Barcode detected" << std::endl;
+											for (auto result : barcode_results) {
+												std::cout << result.text() << std::endl;
+											}
+										}
+										delete[] temp;
+									}, nullptr);
 								}
 
 								p2dBuffer->Unlock2D();
@@ -736,6 +793,7 @@ namespace corona
 			pSourceReader = nullptr;
 	
 			if (pSource) {
+				pSource->Shutdown();
 				pSource->Release();
 			}
 			pSource = nullptr;
@@ -756,6 +814,21 @@ namespace corona
 
 	};
 
+	class camera_view_control :
+		public draw_control
+	{
+
+		void init();
+
+	public:
+
+		int	camera_control_id;
+
+		camera_view_control();
+		camera_view_control(const camera_view_control& _src);
+		camera_view_control(container_control_base* _parent, int _id);
+		virtual ~camera_view_control();
+	};
 
 	using cell_json_size = std::function<point(draw_control* _parent, int _index, rectangle _bounds)>;
 	using cell_json_draw = std::function<void(draw_control* _parent, int _index, rectangle _bounds)>;
@@ -1351,20 +1424,28 @@ namespace corona
 					draw_bounds.x = 0;
 					draw_bounds.y = 0;
 
-					instance.copyId = 0;
-					instance.selected = false;
-					instance.x = draw_bounds.x;
-					instance.y = draw_bounds.y;
-					instance.width = draw_bounds.w;
-					instance.height = draw_bounds.h;
-					instance.alpha = 1.0;
+					if (image_mode == image_modes::use_control_id)
+					{
 
-					auto& context = pwindow->getContext();
+					} 
+					else
+					{
 
-					context.drawBitmap(&instance);
+						instance.copyId = 0;
+						instance.selected = false;
+						instance.x = draw_bounds.x;
+						instance.y = draw_bounds.y;
+						instance.width = draw_bounds.w;
+						instance.height = draw_bounds.h;
+						instance.alpha = 1.0;
+
+						auto& context = pwindow->getContext();
+
+						context.drawBitmap(&instance);
+					}
 				}
 			}
-			};
+		};
 	}
 
 	image_control::~image_control()
@@ -1372,6 +1453,105 @@ namespace corona
 		;
 	}
 
+	camera_view_control::camera_view_control()
+	{
+		camera_control_id = -1;
+		init();
+	}
+
+	camera_view_control::camera_view_control(const camera_view_control& _src) : 
+		draw_control(_src),
+		camera_control_id(_src.camera_control_id)
+	{
+		init();
+	}
+
+	camera_view_control::camera_view_control(container_control_base* _parent, int _id) : draw_control(_parent, _id)
+	{
+		init();
+	}
+
+	void camera_view_control::init()
+	{
+		set_origin(0.0_px, 0.0_px);
+		set_size(50.0_px, 50.0_px);
+
+		on_create = [this](draw_control* _src)
+			{
+				if (auto pwindow = this->window.lock())
+				{
+					auto& context = pwindow->getContext();
+				}
+			};
+
+		on_draw = [this](draw_control* _src) {
+			if (auto pwindow = this->window.lock())
+			{
+				if (auto phost = host.lock()) {
+					auto draw_bounds = inner_bounds;
+
+					draw_bounds.x = 0;
+					draw_bounds.y = 0;
+
+					control_base *camb = find(camera_control_id);
+					if (camb) {
+						camera_control* cam = dynamic_cast<camera_control*>(camb);
+						if (cam) {
+							auto* dc = pwindow->getContext()
+								.getDeviceContext();
+
+							auto *bm = cam->get_camera_image(dc);
+							if (bm) 
+							{
+								auto movement_boxes = cam->get_movement_boxes();
+
+								rectangle dest_box;
+								dest_box.x = 0;
+								dest_box.y = 0;
+								double max_y = 0;
+
+								for (auto source_box : movement_boxes) {
+									dest_box.w = source_box.w;
+									dest_box.h = source_box.h;
+									if (dest_box.h > max_y) {
+										max_y = dest_box.h + dest_box.y;
+									}
+									dest_box.w += source_box.w;
+									if (dest_box.right() > draw_bounds.right())
+									{
+										dest_box.x = 0;
+										dest_box.y = max_y;
+										max_y = 0;
+									}
+
+									D2D1_RECT_F source_rect;
+									D2D1_RECT_F dest_rect;
+
+									source_rect.left = source_box.x;
+									source_rect.top = source_box.y;
+									source_rect.right = source_box.right();
+									source_rect.bottom = source_box.bottom();
+
+									dest_rect.left = dest_box.x;
+									dest_rect.top = dest_box.y;
+									dest_rect.right = dest_box.right();
+									dest_rect.bottom = dest_box.bottom();
+
+									dc->DrawBitmap(bm, &dest_rect, 1.0, D2D1_BITMAP_INTERPOLATION_MODE::D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, &source_rect);
+								}
+								bm->Release();
+							}
+						}
+					}
+				}
+			}
+		};
+	}
+
+	camera_view_control::~camera_view_control()
+	{
+		;
+	}
 
 	menu_button_control::menu_button_control(container_control_base* _parent, int _id) : gradient_button_control(_parent, _id, "menu")
 	{

@@ -116,6 +116,7 @@ namespace corona
 		int id_form_view;
 		int id_tab_view;
 		int image_control_id;
+		int id_camera;
 
 		std::map<std::string, call_status> responses;
 		json credentials;
@@ -130,6 +131,8 @@ namespace corona
 			std::cout << "Revolution Client Startup at " << std::filesystem::current_path()  << std::endl;
 
 			status_recent = {};
+
+			MFStartup(MF_VERSION);
 
 			factory = std::make_shared<directXAdapter>();
 
@@ -178,6 +181,7 @@ namespace corona
 				image_control_id = _presentation->get_control_id("get_ui_logo", []() { return id_counter::next(); });
 				id_document_body_details = _presentation->get_control_id("document_details", []() { return id_counter::next(); });
 				id_status = _presentation->get_control_id("status", []() { return id_counter::next(); });
+				id_camera = _presentation->get_control_id("camera", []() { return id_counter::next(); });
 
 				_presentation->create_page("home", [](page& _page) {
 					control_builder cb(_page.get_root_container());
@@ -204,11 +208,15 @@ namespace corona
 					create_object_edit_page(_page);
 					});
 
-				_presentation->create_page("newuser_license", [this](page& _page) {
-					create_newuser_license_page(_page);
+				_presentation->create_page("user_license", [this](page& _page) {
+					create_user_license_page(_page);
 					});
 
-				_presentation->set_home_page("newuser_license");
+				_presentation->create_page("user_account", [this](page& _page) {
+					create_user_account_page(_page);
+					});
+
+				_presentation->set_home_page("user_license");
 
 				set_corona_handlers();
 			};
@@ -463,14 +471,14 @@ namespace corona
 				});
 		}
 
-		void create_newuser_license_page(
+		void create_user_license_page(
 			page& _page
 		)
 		{
 			create_page_frame(_page, [this](control_builder& cb)
 				{
-					cb.chaptertitle("Welcome to the Revolution");
-					cb.chaptersubtitle("Let's get your Revolution ID set up.");
+					cb.chaptertitle("Enlistment");
+					cb.chaptersubtitle("Please present your US RealID driver's license");
 
 					control_builder root_row = cb.row_begin(id_counter::next(), [](row_layout& _settings) {
 						_settings.set_size(1.0_container, 1.0_container);
@@ -478,16 +486,46 @@ namespace corona
 						});
 
 					control_builder camera_column = root_row.column_begin(id_counter::next(), [](column_layout& _settings) {
-						_settings.set_size(.4_container, 1.0_container);
+						_settings.set_size(.5_container, 1.0_container);
 						});
 
-					camera_column.camera([](camera_control& _settings) {
+					camera_column.camera(id_camera, [](camera_control& _settings) {
 						_settings.set_size(1.0_container, 1.0_aspect);
+						});
+
+					control_builder preview_column = root_row.column_begin(id_counter::next(), [](column_layout& _settings) {
+						_settings.set_size(.5_container, 1.0_container);
+						});
+
+					preview_column.camera_view([this](camera_view_control& _settings) {
+						_settings.set_size(1.0_container, 1.0_aspect);
+						_settings.camera_control_id = id_camera;
+						});
+
+				});
+
+				_page.on_command(IDC_BTN_NEXT, [](command_event evt) {
+
+					});
+
+		}
+
+		void create_user_account_page(
+			page& _page
+		)
+		{
+			create_page_frame(_page, [this](control_builder& cb)
+				{
+					cb.chaptertitle("Account Settings");
+
+					control_builder root_row = cb.row_begin(id_counter::next(), [](row_layout& _settings) {
+						_settings.set_size(1.0_container, 1.0_container);
+						_settings.item_next_space = 8.0_px;
 						});
 
 					control_builder form_column = root_row.form_view(IDC_FORM_VIEW, [this](form_view_control& _fv)
 						{
-							_fv.set_size(.6_container, 1.0_container);
+							_fv.set_size( 1.0_container, 1.0_container);
 
 							item_data_source ids;
 							item_field iff;
@@ -509,7 +547,7 @@ namespace corona
 							iff.json_member_name = "FirstName";
 							ids.fields.push_back(iff);
 
-							iff.field_id = id_counter::next(); 
+							iff.field_id = id_counter::next();
 							iff.field_label = "Address";
 							iff.field_type = "section";
 
@@ -626,9 +664,9 @@ namespace corona
 						});
 				});
 
-				_page.on_command(IDC_BTN_NEXT, [](command_event evt) {
+			_page.on_command(IDC_BTN_NEXT, [](command_event evt) {
 
-					});
+				});
 		}
 
 		void create_newuser_user_page(

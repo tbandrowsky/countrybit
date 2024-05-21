@@ -404,6 +404,16 @@ namespace corona
 			}
 			return *this;
 		}
+	
+		control_builder& camera_view(std::function<void(camera_view_control&)> _settings)
+		{
+			auto tc = create<camera_view_control>(id_counter::next());
+			apply_item_sizes(tc);
+			if (_settings) {
+				_settings(*tc);
+			}
+			return *this;
+		}
 
 		control_builder& title(std::string text, std::function<void(title_control&)> _settings, int _id)
 		{
