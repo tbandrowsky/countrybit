@@ -562,11 +562,10 @@ namespace corona
 				int end = idx + bucket_size;
 				if (end > _items.size())
 					end = _items.size();
-				std::vector<item>* src_items = &_items;
-				general_job* gj = new general_job([_targets, idx, end, _on_each, src_items]() -> void {					
+				general_job* gj = new general_job([_targets, idx, end, _on_each, &_items]() -> void {					
 					for (int x = idx; x < end; x++)
 					{
-						item& itm = (*src_items)[x];
+						item& itm = _items[x];
 						dest* d = &_targets[x];
 						_on_each(d, itm);
 					}

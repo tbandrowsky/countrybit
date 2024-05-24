@@ -9,6 +9,14 @@ namespace corona
 		argb32_pixel() : a(0), r(0), g(0), b(0) { };
 	};
 
+	struct color_hash_count
+	{
+		int hash_color;
+		int hash_count;
+
+		color_hash_count() : hash_color(0), hash_count(0) { ; }
+	};
+
 	struct bgra32_pixel
 	{
 		unsigned char b, g, r, a;
@@ -18,14 +26,22 @@ namespace corona
 
 	struct signal_pixel
 	{
-		double signal;
-		int	   detected;
-		bool   activated;
+		double			signal;
+		int				detected;
+		bool			activated;
+		uint64_t		color_hash;
 
-		signal_pixel() : signal(0.0), detected(0), activated(false)
+		signal_pixel() : signal(0.0), detected(0), activated(false), color_hash(0)
 		{
 			;
 		}
+	};
+
+	class movement_box
+	{
+	public:
+		std::string image_hash;
+		rectangle	area;
 	};
 
 	template <typename pixel_type> hsl to_hsl(pixel_type _pt)
@@ -45,6 +61,8 @@ namespace corona
 		std::vector<pixel_type> pixels;
 
 	public:
+
+		friend class cursor;
 
 		pixel_frame() : width(0), height(0),  size_pixels(0)
 		{
@@ -135,60 +153,190 @@ namespace corona
 			return size_pixels == 0;
 		}
 
-		pixel_type get(double px, double py)
+		class cursor
+		{
+		private:
+
+			pixel_frame* pf;
+			int cur_pos;
+
+			cursor() :
+				pf(nullptr), cur_pos(0)
+			{
+
+			}
+
+			cursor(pixel_frame* _pf) : 
+				pf(_pf), cur_pos(0)
+			{
+
+			}
+
+			cursor(pixel_frame* _pf, measure x, measure y) :
+				pf(_pf)
+			{
+
+				unsigned int pixel_x;
+				unsigned int pixel_y;
+
+				if (x.units == measure_units::percent_container)
+				{
+					pixel_x = x.amount * pf->get_width();
+				}
+				else if (x.units == measure_units::pixels)
+				{
+					pixel_x = x.amount;
+				}
+
+				if (y.units == measure_units::percent_container)
+				{
+					pixel_y = y.amount * pf->get_height();
+				}
+				else if (y.units == measure_units::pixels)
+				{
+					pixel_y = y.amount;
+				}
+
+				cur_pos = pixel_y * width + pixel_x;
+
+				if (cur_pos > pixels.size())
+				{
+					cur_pos = pixels.size() - 1;
+				}
+			}
+
+			cursor(pixel_frame* _pf, int x, int y) :
+				pf(_pf)
+			{
+				unsigned int pixel_x = x;
+				unsigned int pixel_y = y;
+
+				cur_pos = pixel_y * pf->get_width() + pixel_x;
+
+				if (cur_pos > pf->get_area())
+				{
+					cur_pos = pf->get_area() - 1;
+				}
+			}
+
+		public:
+
+			friend class pixel_frame;
+
+			inline pixel_type* first()
+			{
+				cur_pos = 0;
+				if (cur_pos < 0 || cur_pos >= pf->pixels.size())
+				{
+					return nullptr;
+				}
+				return &pf->pixels[cur_pos];
+			}
+
+			inline pixel_type* down()
+			{
+				cur_pos += pf->get_width();
+				if (cur_pos < 0 || cur_pos >= pf->pixels.size())
+				{
+					return nullptr;
+				}
+				return &pf->pixels[cur_pos];
+			}
+
+			inline pixel_type* up()
+			{
+				cur_pos += pf->get_width();
+				if (cur_pos < 0 || cur_pos >= pf->pixels.size())
+				{
+					return nullptr;
+				}
+				return &pf->pixels[cur_pos];
+			}
+
+			inline pixel_type* right( int _start_x = 0 )
+			{
+				cur_pos++;
+				if ((cur_pos % pf->get_width()) == 0)
+				{
+					cur_pos += _start_x;
+				}
+				if (cur_pos < 0 || cur_pos >= pf->get_area())
+				{
+					return nullptr;
+				}
+				return &pf->pixels[cur_pos];
+			}
+
+			inline pixel_type* carriage_return(int _start_x = 0)
+			{
+				cur_pos -= get_x();
+				cur_pos += pf->get_width();
+				cur_pos += _start_x;
+				if (cur_pos >= pf->get_area())
+				{
+					return nullptr;
+				}
+				return &pf->pixels[cur_pos];
+			}
+
+			inline pixel_type* get()
+			{
+				if (cur_pos < 0 || cur_pos >= pf->get_area())
+				{
+					return nullptr;
+				}
+				return &pf->pixels[cur_pos];
+			}
+
+			inline int get_x()
+			{
+				return cur_pos % pf->get_width();
+			}
+
+			inline int get_y()
+			{
+				return cur_pos / pf->get_width();
+			}
+
+			inline void set(int _new_x, int _new_y)
+			{
+				cur_pos = _new_y * pf->get_width() + _new_x;
+			}
+
+			inline void set_x(int _new_x)
+			{
+				int x = get_x();
+				cur_pos -= x;
+				cur_pos += _new_x;
+			}
+
+			inline void set_y(int _new_y)
+			{
+				int y = get_y();
+				cur_pos -= y * pf->get_width();
+				cur_pos += _new_y * pf->get_width();
+			}
+
+		};
+
+		cursor get_cursor_scaled(double px, double py)
 		{
 			if (empty()) {
-				pixel_type pt = {};
+				cursor pt = {};
 				return pt;
 			}
 
-			unsigned int pixel_x = px * width;
-			unsigned int pixel_y = py * height;
+			return cursor(this, px, py);
+		};
 
-			unsigned int position = pixel_y * width + pixel_x;
-
-			if (position > pixels.size()) 
-			{
-				position = pixels.size() - 1;
-			}
-
-			return pixels[position];
-		}
-
-		pixel_type get_pixel(unsigned int pixel_x, unsigned int pixel_y)
+		cursor get_cursor(unsigned int pixel_x, unsigned int pixel_y)
 		{
 			if (empty()) {
-				pixel_type pt = {};
+				cursor pt;
 				return pt;
 			}
 
-			unsigned int position = pixel_y * width + pixel_x;
-
-			if (position > pixels.size())
-			{
-				position = pixels.size() - 1;
-			}
-
-			return pixels[position];
-		}
-
-		void put(double px, double py, pixel_type _pixel)
-		{
-			if (empty()) {
-				return;
-			}
-
-			unsigned int pixel_x = px * width;
-			unsigned int pixel_y = py * height;
-
-			unsigned int position = pixel_y * width + pixel_x;
-
-			if (position > pixels.size())
-			{
-				position = pixels.size() - 1;
-			}
-
-			pixels[position] = _pixel;
+			return cursor(this, pixel_x, pixel_y);
 		}
 
 		void for_each(std::function<pixel_type (pixel_type)> _xform)
@@ -241,16 +389,36 @@ namespace corona
 		pixel_frame<bgra32_pixel> last_frame;
 
 		double hue_detection_threshold;
+		double sat_detection_threshold;
+		double lum_detection_threshold;
+
 		double activation_area_percentage;
 		double detection_pulse;
 		double detection_cooldown;
+		double motion_spacing;
 
 		delta_frame() : activation_frame(128,128)
 		{		
+			hue_detection_threshold = .2;
+			sat_detection_threshold = .2;
+			lum_detection_threshold = .2;
 			hue_detection_threshold = .4;
 			activation_area_percentage = .9;
 			detection_pulse = .3;
 			detection_cooldown = .3;
+			motion_spacing = 16;
+		}
+
+		void reset_defaults()
+		{
+			hue_detection_threshold = .2;
+			sat_detection_threshold = .2;
+			lum_detection_threshold = .2;
+			hue_detection_threshold = .4;
+			activation_area_percentage = .9;
+			detection_pulse = .3;
+			detection_cooldown = .3;
+			motion_spacing = 16;
 		}
 		
 		ID2D1Bitmap1* get_activation(ID2D1DeviceContext* _context)
@@ -295,105 +463,198 @@ namespace corona
 			return new_bitmap;
 		}
 
-		std::vector<rectangle> get_movement_boxes()
+		std::vector<movement_box> collapse_movement_boxes(std::vector<movement_box> list)
 		{
-			rectangle _src = {};
-			_src.x = 0;
-			_src.y = 0;
-			_src.w = activation_frame.get_width();
-			_src.h = activation_frame.get_height();
-			return get_movement_boxes(_src);
+
+			std::list<movement_box> new_list;
+			movement_box found_item;
+
+			int list_index;
+
+			for (list_index = 0; list_index < list.size(); list_index++)
+			{
+				bool was_found = false;
+
+				movement_box mb1 = list[list_index];
+
+				auto nli = new_list.begin();
+
+				while (nli != new_list.end())
+				{
+					movement_box mb2 = *nli;
+					bool x_ok = false;
+					bool y_ok = false;
+
+					if (mb1.area.x <= mb2.area.x && mb1.area.right() >= mb2.area.x)
+					{
+						x_ok = true;
+					}
+					else if (mb2.area.x <= mb1.area.x && mb2.area.right() >= mb2.area.x)
+					{
+						x_ok = true;
+					}
+
+					if (mb1.area.y <= mb2.area.y && mb1.area.bottom() >= mb2.area.y)
+					{
+						y_ok = true;
+					}
+					else if (mb2.area.y <= mb1.area.y && mb2.area.bottom() >= mb1.area.y)
+					{
+						y_ok = true;
+					}
+
+					if (x_ok && y_ok)
+					{
+						double right1 = mb1.area.right();
+						double bottom1 = mb1.area.bottom();
+						if (mb1.area.x > mb2.area.x)
+						{
+							mb1.area.x = mb2.area.x;
+						}
+						if (mb1.area.y > mb2.area.y)
+						{
+							mb1.area.y = mb2.area.y;
+						}
+						mb1.area.w = std::max(right1, mb2.area.right()) - mb1.area.x;
+						mb1.area.h = std::max(bottom1, mb2.area.bottom()) - mb1.area.y;
+						was_found = true;
+
+						list.push_back(mb1);
+						nli = new_list.erase(nli);
+					}
+					else
+					{
+						nli++;
+					}
+				}
+
+				if (!was_found)
+				{
+					new_list.push_back(mb1);
+				}
+			}
+
+			std::vector<movement_box> new_vector;
+
+			for (auto nlb : new_list)
+				new_vector.push_back(nlb);
+
+			return new_vector;
 		}
 
-		std::vector<rectangle> get_movement_boxes(rectangle _src)
+
+		std::vector<movement_box> get_movement_boxes()
 		{
-			std::vector<rectangle> movement_boxes;
+			std::vector<movement_box> movement_boxes;
 
-			// look for movement, then look for a y split.
+			point candidate0;
 
-			enum analysis_states { start_area, extend_area };
+			int activated_wait = 0;		
 
-			analysis_states astate = start_area;
+			pixel_frame<signal_pixel>::cursor c = activation_frame.get_cursor(0, 0);
 
-			point candidate0, candidate1;
+			int activation_distance = 16;
 
-			int activated_wait = 0;
-			
-			for (int y = _src.y; y < _src.bottom(); y++)
+			for (signal_pixel* sp = c.first(); sp; sp = c.right())
 			{
-				for (int x = _src.x; x < _src.right(); x++)
+				if (sp->activated)
 				{
-					auto px = activation_frame.get_pixel(x, y);
+					// make sure we didn't somehow pick up this pixel already
+					auto found = std::find_if(movement_boxes.begin(), movement_boxes.end(), [sp, &c](movement_box& r) {
+						return rectangle_math::contains(r.area, c.get_x(), c.get_y());
+						});
 
-					if (astate == analysis_states::start_area)
+					if (found != movement_boxes.end()) 
 					{
-						if (px.activated)
-						{
-							candidate0.x = x;
-							candidate0.y = y;
-							astate = extend_area;
-							activated_wait = 32;
+						movement_box r = *found;
+
+						// Now extend our box. 
+						/*
+
+						if (c.get_x() > (r.area.right()- activation_distance)) {
+							r.area.w += activation_distance;
 						}
+						if (c.get_y() > (r.area.bottom() - activation_distance)) {
+							r.area.h += activation_distance;
+						}
+						if (c.get_x() < (r.area.x - activation_distance)) {
+							r.area.x -= activation_distance;
+							r.area.w += activation_distance;
+						}
+						if (c.get_y() > (r.area.y - activation_distance)) {
+							r.area.y -= activation_distance;
+							r.area.h += activation_distance;
+						}
+						*/
+
 					}
-					else if (astate == analysis_states::extend_area)
-					{
-						if (px.activated)
-						{
-							candidate1.x = x;
-							candidate1.y = y;
-							activated_wait = 32;
+					else {
+						movement_box r;
+						r.area.x = c.get_x()- activation_distance/2;
+						r.area.y = c.get_y()- activation_distance/2;
+						if (r.area.x < 0) {
+							r.area.x = 0;
 						}
-						else 
-						{
-							activated_wait--;
-							if (activated_wait <= 0)
-							{
-								candidate1.x = x;
-								candidate1.y = y;
-								astate = start_area;
-								rectangle r;
-
-								if (candidate0.x < x) 
-								{
-									r.x = candidate0.x;
-									r.w = candidate1.x - candidate0.x;
-								}
-								else 
-								{
-									r.x = candidate1.x;
-									r.w = candidate0.x - candidate1.x;
-								}
-
-								if (candidate0.y < y) 
-								{
-									r.y = candidate0.y;
-									r.h = candidate1.y - candidate0.y;
-								}
-								else
-								{
-									r.y = candidate1.y;
-									r.h = candidate0.y - candidate1.y;
-								}
-
-								movement_boxes.push_back(r);
-							}
+						if (r.area.y < 0) {
+							r.area.y = 0;
 						}
+						r.area.w = activation_distance;
+						r.area.h = activation_distance;
+						movement_boxes.push_back(r);
 					}
 				}
 			}
-		
+
+			movement_boxes = collapse_movement_boxes(movement_boxes);
+
 			point scale = activation_frame.get_scale();
 
 			scale.x *= last_frame.get_width();
 			scale.y *= last_frame.get_height();
+//			std::cout << "movement boxes" << std::endl;
 
 			for (auto& mb : movement_boxes)
 			{
-				mb.x *= scale.x;
-				mb.y *= scale.y;
-				mb.w *= scale.x;
-				mb.h *= scale.y;
+				auto mbcursor = activation_frame.get_cursor(mb.area.x, mb.area.y);
+				signal_pixel* spmb = mbcursor.first();
+
+				std::vector<color_hash_count> color_hash_table;
+				color_hash_table.resize(256);
+
+				for (int y = 0; y < mb.area.h; y++)
+				{
+					for (int x = 0; x < mb.area.w; x++)
+					{
+						if (spmb) 
+						{
+							int index = spmb->color_hash % 256;
+							color_hash_table[index].hash_color = index;
+							color_hash_table[index].hash_count++;
+							spmb = mbcursor.right();
+						}
+					}
+					spmb = mbcursor.carriage_return(mb.area.x);
+				}
+				std::sort(color_hash_table.begin(), color_hash_table.end(), [](color_hash_count& a, color_hash_count& b) {
+					return b.hash_count - a.hash_count;
+					});
+				mb.image_hash = "";
+				for (int i = 0; i < 4 && i < color_hash_table.size(); i++) 
+				{
+					mb.image_hash = mb.image_hash += std::format("{0}.", color_hash_table[i].hash_color);
+				}
+				mb.area.x *= scale.x;
+				mb.area.y *= scale.y;
+				mb.area.w *= scale.x;
+				mb.area.h *= scale.y;
+				//std::cout << std::format("{4}:{0},{1}-{2}x{3}", mb.area.x, mb.area.y, mb.area.w, mb.area.h, mb.image_hash) << std::endl;
 			}
+
+			std::sort(movement_boxes.begin(), movement_boxes.end(), [](movement_box& _a, movement_box& _b) -> int
+				{
+					return _a.area.w * _a.area.h - _b.area.w * _b.area.h;
+				});
+
 			return movement_boxes;
 		}
 
@@ -431,44 +692,58 @@ namespace corona
 			long long m_pixel_count = 0;
 			long long a_pixel_count = 0;
 
-			int w, h;
+			auto frame0_cursor = last_frame.get_cursor(0, 0);
+			auto frame1_cursor = _frame1.get_cursor(0, 0);
+			auto activation_cursor = activation_frame.get_cursor(0, 0);
 
-			w = _frame1.get_width();
-			h = _frame1.get_height();
+			auto sp0 = frame0_cursor.first();
+			auto sp1 = frame1_cursor.first();
 
-#pragma omp parallel for
-			for (int iy = 0; iy < h; iy ++)
+			while (sp0 && sp1)
 			{
-				for (int ix = 0; ix < w; ix ++) 
+
+				hsl hsl0 = to_hsl(*sp0);
+				hsl hsl1 = to_hsl(*sp1);
+
+				double dh = std::abs(hsl0.h - hsl1.h);
+				double dl = std::abs(hsl0.l - hsl1.l);
+				double ds = std::abs(hsl0.s - hsl1.s);
+
+				int activation_x = (frame0_cursor.get_x() * activation_frame.get_width()) / last_frame.get_width();
+				int activation_y = (frame0_cursor.get_y() * activation_frame.get_height()) / last_frame.get_height();
+				activation_cursor.set(activation_x, activation_y);
+
+				auto spa = activation_cursor.get();
+
+				if (dh > .2 && dl > .2 && ds)
 				{
-					auto pixel0 = last_frame.get_pixel(ix, iy);
-					auto pixel1 = _frame1.get_pixel(ix, iy);
+					m_pixel_count++;
 
-					hsl hsl0 = to_hsl(pixel0);
-					hsl hsl1 = to_hsl(pixel1);
-
-					double dh = std::abs(hsl0.h - hsl1.h);
-					double dl = std::abs(hsl0.l - hsl1.l);
-					double ds = std::abs(hsl0.s - hsl1.s);
-
-					if (dh > .4 || dl > .8 || ds > .8) 
-					{
-						double px, py;
-						px = ix / (double)w;
-						py = iy / (double)h;
-						m_pixel_count++;
-						signal_pixel d = activation_frame.get(px, py);
-						if (!d.detected) {
-							d.signal += detection_pulse;
-						}
-						d.detected++;
-						activation_frame.put(px, py, d);
+					if (!spa->detected) {
+						spa->signal += detection_pulse;
 					}
-					else 
-					{
-						a_pixel_count++;
-					}
+					spa->detected++;
+
+					if (dh >= 1.0) dh = 1.0;
+					if (dl >= 1.0) dl = 1.0;
+					int idh = (double)dh * 8.0;
+					int idl = (double)dl * 4.0;
+					int64_t hash = idl * 8 + idh;
+					
+					spa->color_hash = hash;
 				}
+				else if (spa->signal > 0.0)
+				{
+					spa->detected++;
+				}
+				else
+				{
+					a_pixel_count++;
+				}
+
+				sp0 = frame0_cursor.right();
+				sp1 = frame1_cursor.right();
+
 			}
 
 			double frame_area = (double)_frame1.get_area() / (double)activation_frame.get_area();

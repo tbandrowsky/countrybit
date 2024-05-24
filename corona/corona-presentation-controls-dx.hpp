@@ -341,7 +341,7 @@ namespace corona
 			};
 		}
 
-		std::vector<rectangle> get_movement_boxes()
+		std::vector<movement_box> get_movement_boxes()
 		{
 			return delta_boi.get_movement_boxes();
 		}
@@ -814,6 +814,20 @@ namespace corona
 
 	};
 
+	class movement_box_instance
+	{
+	public:
+
+		movement_box	 box;
+		int64_t			 frame_last_detected;
+		int64_t			 frame_first_detected;
+
+		movement_box_instance()
+		{
+			;
+		}
+	};
+
 	class camera_view_control :
 		public draw_control
 	{
@@ -821,6 +835,9 @@ namespace corona
 		void init();
 
 	public:
+
+		int64_t frame_counter;
+		std::map<std::string, movement_box_instance> boxes;
 
 		int	camera_control_id;
 
@@ -1473,6 +1490,7 @@ namespace corona
 
 	void camera_view_control::init()
 	{
+		frame_counter = 0;
 		set_origin(0.0_px, 0.0_px);
 		set_size(50.0_px, 50.0_px);
 
@@ -1485,6 +1503,7 @@ namespace corona
 			};
 
 		on_draw = [this](draw_control* _src) {
+			frame_counter++;
 			if (auto pwindow = this->window.lock())
 			{
 				if (auto phost = host.lock()) {
@@ -1505,40 +1524,100 @@ namespace corona
 							{
 								auto movement_boxes = cam->get_movement_boxes();
 
-								rectangle dest_box;
-								dest_box.x = 0;
-								dest_box.y = 0;
-								double max_y = 0;
-
-								for (auto source_box : movement_boxes) {
-									dest_box.w = source_box.w;
-									dest_box.h = source_box.h;
-									if (dest_box.h > max_y) {
-										max_y = dest_box.h + dest_box.y;
-									}
-									dest_box.w += source_box.w;
-									if (dest_box.right() > draw_bounds.right())
+								for (auto source_box : movement_boxes) 
+								{
+									if (boxes.contains(source_box.image_hash)) 
 									{
-										dest_box.x = 0;
-										dest_box.y = max_y;
-										max_y = 0;
+										auto& bx = boxes[source_box.image_hash];
+										double diff = bx.box.area.x > source_box.area.x;
+										if (diff>0) {
+											bx.box.area.w += diff;
+											bx.box.area.x -= diff;
+										}
+										diff = bx.box.area.y - source_box.area.y;
+										if (diff > 0) {
+											bx.box.area.h += diff;
+											bx.box.area.y -= diff;
+										}
+										diff = source_box.area.right() - bx.box.area.right();
+										if (diff > 0) {
+											bx.box.area.w += diff;
+										}
+										diff = source_box.area.bottom() - bx.box.area.bottom();
+										if (diff > 0) {
+											bx.box.area.h += diff;
+										}
+										bx.frame_last_detected = frame_counter;
 									}
+									else {
+										movement_box_instance mbnew;
+										mbnew.frame_first_detected = frame_counter;
+										mbnew.frame_last_detected = frame_counter;
+										mbnew.box = source_box;
+										boxes.insert_or_assign(source_box.image_hash, mbnew);
+									}
+								}
+
+								std::vector<movement_box_instance> display_list;
+
+								for (auto& mbi : boxes)
+								{
+									auto& mb = mbi.second;
+									int64_t delay = frame_counter - mb.frame_last_detected;
+									if (frame_counter > 10 && delay < 60)
+									{
+										display_list.push_back(mb);
+									}
+								}
+
+								std::sort(display_list.begin(), display_list.end(), [](movement_box_instance& a, movement_box_instance& b) {
+									int r = b.box.area.x - a.box.area.x;
+									if (!r) r = b.box.area.y - a.box.area.y;
+									return r;
+									});
+
+								rectangle dest_box;
+								dest_box.x = 8;
+								dest_box.y = 8;
+								dest_box.w = (draw_bounds.w - 32) / 2;
+								if (dest_box.w < 0)
+									return;
+
+								for (int i = 0; i < display_list.size() && i < 4; i++)
+								{
+									auto source_box = display_list[i];
+									dest_box.h = dest_box.w / source_box.box.area.w * source_box.box.area.h;
 
 									D2D1_RECT_F source_rect;
 									D2D1_RECT_F dest_rect;
 
-									source_rect.left = source_box.x;
-									source_rect.top = source_box.y;
-									source_rect.right = source_box.right();
-									source_rect.bottom = source_box.bottom();
+									source_rect.left = source_box.box.area.x;
+									source_rect.top = source_box.box.area.y;
+									source_rect.right = source_box.box.area.right();
+									source_rect.bottom = source_box.box.area.bottom();
 
 									dest_rect.left = dest_box.x;
 									dest_rect.top = dest_box.y;
 									dest_rect.right = dest_box.right();
 									dest_rect.bottom = dest_box.bottom();
 
-									dc->DrawBitmap(bm, &dest_rect, 1.0, D2D1_BITMAP_INTERPOLATION_MODE::D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, &source_rect);
+									double opacity = 60 - (frame_counter - source_box.frame_last_detected);
+									if (opacity < 0) {
+										opacity = 0;
+									}
+									opacity /= 60.0;
+
+									dc->DrawBitmap(bm, &dest_rect, opacity, D2D1_BITMAP_INTERPOLATION_MODE::D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, &source_rect);
+
+									dest_box.x += dest_box.w + 4;
+
+									if (dest_box.right() > draw_bounds.right())
+									{
+										dest_box.x = 8;
+										dest_box.y += draw_bounds.h / 2;
+									}
 								}
+
 								bm->Release();
 							}
 						}

@@ -250,7 +250,7 @@ namespace corona
 
 			auto document_row = contents.row_begin(id_document_container, [this](row_layout& rl) {
 				rl.set_size(1.0_container, 1.0_remaining);
-				rl.item_next_space = 0.0_px;
+				rl.item_next_space = 8.0_px;
 				});
 
 			if (_enable_command_container) {
@@ -268,21 +268,10 @@ namespace corona
 				rl.set_size(150.0_px, 1.0_container);
 				});
 
-			// note that, we are putting the breadcrumbs on a nav pane to the left.
-			control_builder doc_message = document_body.status(status_recent, [](status_control& _sc) {
-				measure sc_height = 10.0_px;
-				if (_sc.status_set) sc_height = 100.0_px;
-				_sc.set_size(1.0_container, sc_height);
-				_sc.set_margin(4.0_px);
-				}, id_status);
-
-			int status_id = id_status;
-
-			control_builder doc_details = document_body.column_begin(id_document_body_details, [title_id, status_id](column_layout& rl) {
+			control_builder doc_details = document_body.column_begin(id_document_body_details, [title_id](column_layout& rl) {
 				rl.set_size(1.0_container, 1.0_remaining);
 				rl.set_margin(0.0_px);
 				rl.push(title_id, true, false, false, false);
-				rl.push(status_id, true, false, false, false);
 				});
 			_fn(doc_details);
 
@@ -306,7 +295,7 @@ namespace corona
 						});
 
 					camera_column.camera(id_camera, [](camera_control& _settings) {
-						_settings.set_size(1.0_container, 1.0_aspect);
+						_settings.set_size(1.0_container, 1.0_container);
 						});
 
 					control_builder preview_column = root_row.column_begin(id_counter::next(), [](column_layout& _settings) {
@@ -314,7 +303,7 @@ namespace corona
 						});
 
 					preview_column.camera_view([this](camera_view_control& _settings) {
-						_settings.set_size(1.0_container, 1.0_aspect);
+						_settings.set_size(1.0_container, 1.0_container);
 						_settings.camera_control_id = id_camera;
 						});
 
