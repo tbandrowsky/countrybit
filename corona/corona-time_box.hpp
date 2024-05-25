@@ -466,6 +466,73 @@ namespace corona
 		output << (time_t)src;
 		return output;
 	}
+
+	template <typename T, int size_items> class ring_buffer
+	{
+		T items[size_items];
+		volatile unsigned int counter;
+
+		int get_next_id()
+		{
+			::InterlockedIncrement(&counter);
+			return counter % size_items;
+		}
+
+	public:
+
+		ring_buffer() : counter(0)
+		{
+			;
+		}
+
+		int get_size()
+		{
+			if (counter < size_items)
+				return counter;
+			else
+				return size_items;
+		}
+
+		auto& get_items()
+		{
+			return items;
+		}
+
+		void put(T& item)
+		{
+			int newidx = get_next_id();
+			items[newidx] = item;
+		}
+
+		T& get(unsigned int _idx)
+		{
+			return items[_idx % size_items];
+		}
+
+	};
+
+	class timer
+	{
+		LARGE_INTEGER last_time;
+		LARGE_INTEGER frequency;
+	public:
+		
+		timer()
+		{
+			::QueryPerformanceFrequency(&frequency);
+			::QueryPerformanceCounter(&last_time);
+		}
+
+		double get_elapsed_seconds()
+		{
+			LARGE_INTEGER current_time;
+			::QueryPerformanceCounter(&current_time);
+			double elapsed = (double)(current_time.QuadPart - last_time.QuadPart) / (double)frequency.QuadPart;
+			last_time = current_time;
+			return elapsed;
+		}
+	};
+
 }
 
 #endif

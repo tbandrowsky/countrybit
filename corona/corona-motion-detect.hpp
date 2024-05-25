@@ -2,6 +2,7 @@
 
 namespace corona
 {
+
 	struct argb32_pixel 
 	{
 		unsigned char a, r, g, b;
@@ -23,6 +24,19 @@ namespace corona
 
 		bgra32_pixel() : b(0), g(0), r(0), a(0) { };
 	};
+
+	class sprinkle
+	{
+	public:
+		bgra32_pixel pixel_start;
+		bgra32_pixel pixel_end;
+		point current;
+		point velocity;
+		point acceleration;
+		int	  life_remaining;
+	};
+
+	using sprinkle_buffer = ring_buffer<sprinkle, 10>;
 
 	struct signal_pixel
 	{
@@ -347,7 +361,7 @@ namespace corona
 			});
 		}
 
-		ID2D1Bitmap1* get_bitmap(ID2D1DeviceContext *_context, std::function<bgra32_pixel(pixel_type)> _xform)
+		ID2D1Bitmap1* get_bitmap(ID2D1DeviceContext *_context, std::function<bgra32_pixel(int x, int y, pixel_type)> _xform)
 		{
 			ID2D1Bitmap1* new_bitmap = nullptr;
 
@@ -362,8 +376,11 @@ namespace corona
 
 			if (data) {
 
-				threadomatic::run_each<bgra32_pixel, pixel_type>(data, pixels, [_xform](bgra32_pixel* _target, pixel_type& _src) -> void {
-					*_target = _xform(_src);
+				threadomatic::run_each<bgra32_pixel, pixel_type>(data, pixels, [data, size, _xform](bgra32_pixel* _target, pixel_type& _src) -> void {
+					int pos = _target - data;
+					int x = pos % size.width;
+					int y = pos / size.width;
+					*_target = _xform(x, y, _src);
 					});
 
 				D2D1_BITMAP_PROPERTIES1 props = {};
@@ -385,6 +402,21 @@ namespace corona
 	{
 	public:
 
+		timer	frame_timer;
+		int		frame_counter;
+		double	last_frame_seconds;
+		double	total_frame_seconds;
+
+		timer	color_timer;
+		int		color_counter;
+		double	last_color_seconds;
+		double	total_color_seconds;
+
+		timer	sprinkle_timer;
+		int		sprinkle_counter;
+		double	last_sprinkle_seconds;
+		double	total_sprinkle_seconds;
+
 		pixel_frame<signal_pixel> activation_frame;
 		pixel_frame<bgra32_pixel> last_frame;
 
@@ -397,54 +429,104 @@ namespace corona
 		double detection_cooldown;
 		double motion_spacing;
 
-		delta_frame() : activation_frame(128,128)
-		{		
-			hue_detection_threshold = .2;
-			sat_detection_threshold = .2;
-			lum_detection_threshold = .2;
-			hue_detection_threshold = .4;
-			activation_area_percentage = .9;
-			detection_pulse = .3;
-			detection_cooldown = .3;
-			motion_spacing = 16;
+		int color_cycle_frames;
+		hsl color_cycle_start, 
+			color_cycle_step;
+
+		std::mt19937 random_engine;
+		std::uniform_real_distribution<double> color_distribution;
+		std::uniform_real_distribution<double> color_step_distribution;
+
+		delta_frame() : activation_frame(128, 128), 
+			color_distribution(0, 1.0),
+			color_step_distribution(0, 0.02),
+			total_frame_seconds(0),
+			last_frame_seconds(0),
+			frame_counter(0)
+		{
+			reset_defaults();
+				
 		}
 
 		void reset_defaults()
 		{
 			hue_detection_threshold = .2;
 			sat_detection_threshold = .2;
-			lum_detection_threshold = .2;
-			hue_detection_threshold = .4;
-			activation_area_percentage = .9;
-			detection_pulse = .3;
-			detection_cooldown = .3;
+			lum_detection_threshold = .1;
+			activation_area_percentage = .7;
+			detection_pulse = .8;
+			detection_cooldown = .1;
 			motion_spacing = 16;
+			color_cycle_start = {};
+			init_color_cycle();
+			next_color_cycle();
 		}
-		
-		ID2D1Bitmap1* get_activation(ID2D1DeviceContext* _context)
+
+		lockable activation_locker;
+
+		ID2D1Bitmap1* get_activation(ID2D1DeviceContext* _context, sprinkle_buffer& _sprinkles)
 		{
+
 			ID2D1Bitmap1* new_bitmap;
-			new_bitmap = activation_frame.get_bitmap(_context, [this](signal_pixel src)->bgra32_pixel {
+
+			bool sprinkle_enable = false;
+
+			sprinkle_counter++;
+			last_sprinkle_seconds = sprinkle_timer.get_elapsed_seconds();
+			total_sprinkle_seconds += last_sprinkle_seconds;
+			if (total_sprinkle_seconds > 1.0/4.0) {
+				sprinkle_enable = true;
+				total_sprinkle_seconds = 0.0;
+			}
+
+			new_bitmap = activation_frame.get_bitmap(_context, [sprinkle_enable, this, &_sprinkles](int x, int y, signal_pixel src)->bgra32_pixel {
 
 				bgra32_pixel temp = {};
+				rgb root_color;
 
-				if (src.activated) 
-				{
-					temp.a = 255.0;
-					temp.b = 255.0;
+				if (colors.get_size() > 0) {
+					int color_index = color_cycle_frames % colors.get_size();
+					root_color = hsl2rgb(colors.get(color_index));
 				}
-				else 
-				{
-					double alpha = src.signal;
-					if (alpha < 0) {
-						alpha = 0;
-					}
-					else if (alpha > 1) {
-						alpha = 1.0;
-					}
-					temp.a = 255.0 * alpha;
-					temp.b = 255.0 * alpha;
+				else {
+					root_color.r = 0;
+					root_color.g = 0;
+					root_color.b = .5;
+				}
 
+				double alpha = src.signal;
+
+				if (alpha < 0) {
+					alpha = 0;
+				}
+				else if (alpha > 1) {
+					alpha = 1.0;
+				}
+
+				temp.a = 255.0 * alpha;
+				temp.b = root_color.b * temp.a;
+				temp.g = root_color.g * temp.a;
+				temp.r = root_color.r * temp.a;
+
+				if (src.activated && sprinkle_enable)
+				{
+
+					sprinkle new_sprinkle;
+					new_sprinkle.acceleration.x = 0.00;
+					new_sprinkle.acceleration.y = -0.02;
+					new_sprinkle.acceleration.z = 0.00;
+					new_sprinkle.velocity.x = 0.00;
+					new_sprinkle.velocity.y = 0.0;
+					new_sprinkle.velocity.z = 0.00;
+					new_sprinkle.current.x = x;
+					new_sprinkle.current.y = y;
+					new_sprinkle.current.z = 0.00;
+					new_sprinkle.pixel_start = temp;
+					new_sprinkle.pixel_end.b /= 3;
+					new_sprinkle.pixel_end.r /= 3;
+					new_sprinkle.pixel_end.g /= 3;
+					new_sprinkle.pixel_end.a = 0.0;
+					_sprinkles.put(new_sprinkle);
 				}
 
 				return temp;
@@ -456,7 +538,7 @@ namespace corona
 		ID2D1Bitmap1* get_frame(ID2D1DeviceContext* _context)
 		{
 			ID2D1Bitmap1* new_bitmap;
-			new_bitmap = last_frame.get_bitmap(_context, [](bgra32_pixel src)->bgra32_pixel {
+			new_bitmap = last_frame.get_bitmap(_context, [](int x, int y, bgra32_pixel src)->bgra32_pixel {
 				return src;
 			});
 
@@ -564,31 +646,8 @@ namespace corona
 						return rectangle_math::contains(r.area, c.get_x(), c.get_y());
 						});
 
-					if (found != movement_boxes.end()) 
+					if (found == movement_boxes.end()) 
 					{
-						movement_box r = *found;
-
-						// Now extend our box. 
-						/*
-
-						if (c.get_x() > (r.area.right()- activation_distance)) {
-							r.area.w += activation_distance;
-						}
-						if (c.get_y() > (r.area.bottom() - activation_distance)) {
-							r.area.h += activation_distance;
-						}
-						if (c.get_x() < (r.area.x - activation_distance)) {
-							r.area.x -= activation_distance;
-							r.area.w += activation_distance;
-						}
-						if (c.get_y() > (r.area.y - activation_distance)) {
-							r.area.y -= activation_distance;
-							r.area.h += activation_distance;
-						}
-						*/
-
-					}
-					else {
 						movement_box r;
 						r.area.x = c.get_x()- activation_distance/2;
 						r.area.y = c.get_y()- activation_distance/2;
@@ -650,11 +709,6 @@ namespace corona
 				//std::cout << std::format("{4}:{0},{1}-{2}x{3}", mb.area.x, mb.area.y, mb.area.w, mb.area.h, mb.image_hash) << std::endl;
 			}
 
-			std::sort(movement_boxes.begin(), movement_boxes.end(), [](movement_box& _a, movement_box& _b) -> int
-				{
-					return _a.area.w * _a.area.h - _b.area.w * _b.area.h;
-				});
-
 			return movement_boxes;
 		}
 
@@ -670,8 +724,48 @@ namespace corona
 			next_frame(new_frame);
 		}
 
-		void next_frame(pixel_frame<bgra32_pixel>& _frame1)
+		ring_buffer<hsl,32> colors;
+
+		void init_color_cycle()
 		{
+			color_cycle_start.h = color_distribution(random_engine);
+			color_cycle_start.s = color_distribution(random_engine);
+			color_cycle_start.l = .1;
+
+			color_cycle_step.h = color_step_distribution(random_engine);
+			color_cycle_step.s = color_step_distribution(random_engine);
+			color_cycle_step.l = .1;
+
+			color_cycle_frames = 2000 * color_distribution(random_engine) + 500;
+		}
+
+		void next_color_cycle()
+		{
+			color_counter++;
+			last_color_seconds = color_timer.get_elapsed_seconds();
+			total_color_seconds += last_color_seconds;
+
+			if (total_color_seconds > 4) {
+				total_color_seconds = 0.0;
+				init_color_cycle();
+			}
+
+			int tsint = total_color_seconds * 16;
+
+			color_cycle_start.h += color_cycle_step.h;
+			color_cycle_start.s += color_cycle_step.s;
+			color_cycle_start.l += color_cycle_step.l;
+			colors.put(color_cycle_start);
+		}
+
+		void next_frame(pixel_frame<bgra32_pixel>& _frame1)
+		{		
+			frame_counter++;
+			last_frame_seconds = frame_timer.get_elapsed_seconds();
+			total_frame_seconds += last_frame_seconds;
+
+			next_color_cycle();
+
 			activation_frame.for_each([this](signal_pixel _src) -> signal_pixel {
 				if (_src.signal > 0.0)
 				{
@@ -688,6 +782,7 @@ namespace corona
 				last_frame = _frame1;
 				return;
 			}
+
 
 			long long m_pixel_count = 0;
 			long long a_pixel_count = 0;
@@ -715,7 +810,7 @@ namespace corona
 
 				auto spa = activation_cursor.get();
 
-				if (dh > .2 && dl > .2 && ds)
+				if (dh > hue_detection_threshold && dl > lum_detection_threshold && ds > sat_detection_threshold)
 				{
 					m_pixel_count++;
 
@@ -761,4 +856,3 @@ namespace corona
 	};
 
 }
-

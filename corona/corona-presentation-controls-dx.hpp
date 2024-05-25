@@ -246,6 +246,7 @@ namespace corona
 		LONGLONG			stream_base_time;
 		LONGLONG			last_barcode_time;
 		delta_frame			delta_boi;
+		int counter = 0;
 
 		camera_control()
 		{
@@ -282,19 +283,23 @@ namespace corona
 
 		virtual bool is_camera() { return true; }
 
+		ring_buffer<sprinkle, 200> current_sprinkles;
+
 		void init()
 		{
 			on_draw = [this](draw_control* _dc) -> void {
 
 				read_frame();
 
+				counter++;
+
 				if (auto pwindow = window.lock())
 				{
 					if (auto phost = host.lock()) {
 						auto draw_bounds = inner_bounds;
 
-						draw_bounds.x = 0;
-						draw_bounds.y = 0;
+						draw_bounds.x = inner_bounds.x - bounds.x;
+						draw_bounds.y = inner_bounds.y - bounds.y;
 
 						auto& context = pwindow->getContext();
 						ID2D1DeviceContext* dc = context.getDeviceContext();
@@ -304,30 +309,70 @@ namespace corona
 
 							D2D1_RECT_F dest_rect;
 
-							dest_rect.left = 0;
-							dest_rect.top = 0;
-							dest_rect.right = inner_bounds.w;
-							dest_rect.bottom = inner_bounds.h;
+							dest_rect.left = draw_bounds.x;
+							dest_rect.top = draw_bounds.y;
+							dest_rect.right = draw_bounds.w;
+							dest_rect.bottom = draw_bounds.h;
 
 							dc->DrawBitmap(cbm, &dest_rect, 1.0);
 
 							cbm->Release();
 						}
 
-						ID2D1Bitmap1* dbm = delta_boi.get_activation(dc);
+						sprinkle_buffer new_sprinkles;
+						ID2D1Bitmap1* dbm = delta_boi.get_activation(dc, new_sprinkles);
+						add_sprinkles(new_sprinkles);
 
 						if (dbm) {
 
 							D2D1_RECT_F dest_rect;
 
-							dest_rect.left = 0;
-							dest_rect.top = 0;
-							dest_rect.right = inner_bounds.w;
-							dest_rect.bottom = inner_bounds.h;
+							dest_rect.left = draw_bounds.x;
+							dest_rect.top = draw_bounds.y;
+							dest_rect.right = draw_bounds.w;
+							dest_rect.bottom = draw_bounds.h;
 
 							dc->DrawBitmap(dbm, &dest_rect, 1.0);
 
 							dbm->Release();
+						}
+
+						// sometimes you just cheat when you are on a tear for a check
+
+						point scale;
+						scale.x = draw_bounds.w / 128.0;
+						scale.y = draw_bounds.h / 128.0;
+						scale.z = 1.0;
+
+						radialGradientBrushRequest rgbr;
+						rgbr.name = "SprinkleFill";
+
+						rgbr.center = rectangle_math::center(draw_bounds);
+						rgbr.radiusX = draw_bounds.w / 2;
+						rgbr.radiusY = draw_bounds.h / 2;
+						rgbr.offset = {};
+						rgbr.size = { draw_bounds.w, draw_bounds.h };
+						rgbr.gradientStops = {
+							{ toColor("#F9A602FF"), 0.0 },
+							{ toColor("#F9A602CF"), 1.0 }
+						};
+
+						generalBrushRequest br(rgbr);
+						context.setBrush(&br);
+
+						for (int ispr = 0; ispr < current_sprinkles.get_size(); ispr++)
+						{
+							auto& spr = current_sprinkles.get(ispr);
+
+							spr.velocity += spr.acceleration;
+							spr.current += spr.velocity;
+
+							point sprpos = scale * spr.current;
+							ccolor cstart, cstop;
+
+							point radius;
+							radius.x = radius.y = (counter + ispr) % 8;
+							context.drawEllipse(&sprpos, &radius, "", 0, "SprinkleFill");
 						}
 					}
 				}
@@ -339,6 +384,17 @@ namespace corona
 						start();
 					});
 			};
+		}
+
+		void add_sprinkles(sprinkle_buffer& new_sprinkles)
+		{
+			int num_new_sprinkles = new_sprinkles.get_size();
+
+			for (int i = 0; i < num_new_sprinkles; i++)
+			{
+				sprinkle spr = new_sprinkles.get(i);
+				current_sprinkles.put(spr);
+			}
 		}
 
 		std::vector<movement_box> get_movement_boxes()
@@ -476,7 +532,7 @@ namespace corona
 									max_feed_width = feed_width;
 									max_feed_height = feed_height;
 
-									if (feed_width >= 1024) {
+									if (feed_width >= 640) {
 										found_match = true;
 									}
 								}
@@ -1509,8 +1565,8 @@ namespace corona
 				if (auto phost = host.lock()) {
 					auto draw_bounds = inner_bounds;
 
-					draw_bounds.x = 0;
-					draw_bounds.y = 0;
+					draw_bounds.x = inner_bounds.x - bounds.x;
+					draw_bounds.y = inner_bounds.y - bounds.y;
 
 					control_base *camb = find(camera_control_id);
 					if (camb) {
@@ -1577,8 +1633,8 @@ namespace corona
 									});
 
 								rectangle dest_box;
-								dest_box.x = 8;
-								dest_box.y = 8;
+								dest_box.x = draw_bounds.x;
+								dest_box.y = draw_bounds.y;
 								dest_box.w = (draw_bounds.w - 32) / 2;
 								if (dest_box.w < 0)
 									return;
@@ -1609,12 +1665,12 @@ namespace corona
 
 									dc->DrawBitmap(bm, &dest_rect, opacity, D2D1_BITMAP_INTERPOLATION_MODE::D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, &source_rect);
 
-									dest_box.x += dest_box.w + 4;
+									dest_box.x += dest_box.w + padding_amount.x;
 
 									if (dest_box.right() > draw_bounds.right())
 									{
-										dest_box.x = 8;
-										dest_box.y += draw_bounds.h / 2;
+										dest_box.x = draw_bounds.x;
+										dest_box.y += (draw_bounds.h - 32)/ 2 + 8;
 									}
 								}
 

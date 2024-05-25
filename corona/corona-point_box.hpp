@@ -38,6 +38,39 @@ namespace corona {
 			pt.y = y;
 			return pt;
 		}
+
+		point operator+=(const point& b)
+		{
+			x += b.x;
+			y += b.y;
+			z += b.z;
+			return *this;
+		}
+
+		point operator-=(const point& b)
+		{
+			x -= b.x;
+			y -= b.y;
+			z -= b.z;
+			return *this;
+		}
+
+		point operator*=(const point& b)
+		{
+			x *= b.x;
+			y *= b.y;
+			z *= b.z;
+			return *this;
+		}
+
+		point operator/=(const point& b)
+		{
+			x /= b.x;
+			y /= b.y;
+			z /= b.z;
+			return *this;
+		}
+
 	};
 
 
@@ -83,25 +116,25 @@ namespace corona {
 
 	point operator+(const point& a, const point& b)
 	{
-		point pt{ a.x + b.x, a.y + b.y, b.z + b.z };
+		point pt{ a.x + b.x, a.y + b.y, a.z + b.z };
 		return pt;
 	}
 
 	point operator-(const point& a, const point& b)
 	{
-		point pt{ a.x - b.x, a.y - b.y, b.z - b.z };
+		point pt{ a.x - b.x, a.y - b.y, a.z - b.z };
 		return pt;
 	}
 
 	point operator*(const point& a, const point& b)
 	{
-		point pt{ a.x * b.x, a.y * b.y, b.z * b.z };
+		point pt{ a.x * b.x, a.y * b.y, a.z * b.z };
 		return pt;
 	}
 
 	point operator/(const point& a, const point& b)
 	{
-		point pt{ a.x / b.x, a.y / b.y, b.z / b.z };
+		point pt{ a.x / b.x, a.y / b.y, a.z / b.z };
 		return pt;
 	}
 

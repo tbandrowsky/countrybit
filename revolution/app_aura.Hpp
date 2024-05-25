@@ -264,9 +264,11 @@ namespace corona
 				rl.push(title_id, true, false, false, false);
 				});
 
-			right_command_container = document_row.column_begin(id_document_right_command_container, [this](column_layout& rl) {
-				rl.set_size(150.0_px, 1.0_container);
-				});
+			if (_enable_command_container) {
+				right_command_container = document_row.column_begin(id_document_right_command_container, [this](column_layout& rl) {
+					rl.set_size(150.0_px, 1.0_container);
+					});
+			}
 
 			control_builder doc_details = document_body.column_begin(id_document_body_details, [title_id](column_layout& rl) {
 				rl.set_size(1.0_container, 1.0_remaining);
@@ -291,18 +293,20 @@ namespace corona
 						});
 
 					control_builder camera_column = root_row.column_begin(id_counter::next(), [](column_layout& _settings) {
-						_settings.set_size(.5_container, 1.0_container);
+						_settings.set_size(.6_container, 1.0_container);
 						});
 
 					camera_column.camera(id_camera, [](camera_control& _settings) {
+						_settings.set_padding(8.0_px);
 						_settings.set_size(1.0_container, 1.0_container);
 						});
 
 					control_builder preview_column = root_row.column_begin(id_counter::next(), [](column_layout& _settings) {
-						_settings.set_size(.5_container, 1.0_container);
+						_settings.set_size(.4_container, 1.0_container);
 						});
 
 					preview_column.camera_view([this](camera_view_control& _settings) {
+						_settings.set_padding(8.0_px);
 						_settings.set_size(1.0_container, 1.0_container);
 						_settings.camera_control_id = id_camera;
 						});

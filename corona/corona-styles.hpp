@@ -182,8 +182,8 @@ namespace corona
 		lgbr.stop.y = 1;
 
 		lgbr.gradientStops = {
-	{ toColor("#e1e1e0"), 0.0 },
-	{ toColor("#f1f1ff"), 1.0 }
+	{ toColor("#100030"), 0.0 },
+	{ toColor("#000010"), 1.0 }
 		};
 
 		countrybit.PageBackgroundBrush = std::make_shared<generalBrushRequest>(lgbr);

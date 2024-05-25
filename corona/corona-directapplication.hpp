@@ -1220,8 +1220,8 @@ namespace corona
 			int desktop_width, desktop_height;
 			desktop_width = desktop_rect.right - desktop_rect.left;
 			desktop_height = desktop_rect.bottom - desktop_rect.top;
-			window_width = desktop_width / 2;
-			window_height = desktop_height / 2;
+			window_width = desktop_width * .75;
+			window_height = desktop_height * .75;
 			window_x = (desktop_width - window_width) / 2;
 			window_y = (desktop_height - window_height) / 2;
 
