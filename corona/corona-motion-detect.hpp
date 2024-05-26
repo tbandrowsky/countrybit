@@ -36,13 +36,14 @@ namespace corona
 		int	  life_remaining;
 	};
 
-	using sprinkle_buffer = ring_buffer<sprinkle, 10>;
+	using sprinkle_buffer = ring_buffer<sprinkle, 4>;
 
 	struct signal_pixel
 	{
 		double			signal;
 		int				detected;
 		bool			activated;
+		double			detect_counter;
 		uint64_t		color_hash;
 
 		signal_pixel() : signal(0.0), detected(0), activated(false), color_hash(0)
@@ -407,10 +408,12 @@ namespace corona
 		double	last_frame_seconds;
 		double	total_frame_seconds;
 
+		ring_buffer<ccolor, 256> colors;
 		timer	color_timer;
 		int		color_counter;
 		double	last_color_seconds;
 		double	total_color_seconds;
+		double	total_cycle_seconds;
 
 		timer	sprinkle_timer;
 		int		sprinkle_counter;
@@ -430,16 +433,16 @@ namespace corona
 		double motion_spacing;
 
 		int color_cycle_frames;
-		hsl color_cycle_start, 
+		ccolor color_cycle_start, 
 			color_cycle_step;
 
 		std::mt19937 random_engine;
 		std::uniform_real_distribution<double> color_distribution;
-		std::uniform_real_distribution<double> color_step_distribution;
+		std::uniform_real_distribution<double> color_cycle_distribution;
 
-		delta_frame() : activation_frame(128, 128), 
-			color_distribution(0, 1.0),
-			color_step_distribution(0, 0.02),
+		delta_frame() : activation_frame(256, 256), 
+			color_distribution(.0, 1.0),
+			color_cycle_distribution(0.0, .1),
 			total_frame_seconds(0),
 			last_frame_seconds(0),
 			frame_counter(0)
@@ -450,12 +453,12 @@ namespace corona
 
 		void reset_defaults()
 		{
-			hue_detection_threshold = .2;
-			sat_detection_threshold = .2;
+			hue_detection_threshold = .05;
+			sat_detection_threshold = .1;
 			lum_detection_threshold = .1;
-			activation_area_percentage = .7;
+			activation_area_percentage = .3;
 			detection_pulse = .8;
-			detection_cooldown = .1;
+			detection_cooldown = .040;
 			motion_spacing = 16;
 			color_cycle_start = {};
 			init_color_cycle();
@@ -474,7 +477,7 @@ namespace corona
 			sprinkle_counter++;
 			last_sprinkle_seconds = sprinkle_timer.get_elapsed_seconds();
 			total_sprinkle_seconds += last_sprinkle_seconds;
-			if (total_sprinkle_seconds > 1.0/4.0) {
+			if (total_sprinkle_seconds > 1/4.0) {
 				sprinkle_enable = true;
 				total_sprinkle_seconds = 0.0;
 			}
@@ -482,11 +485,10 @@ namespace corona
 			new_bitmap = activation_frame.get_bitmap(_context, [sprinkle_enable, this, &_sprinkles](int x, int y, signal_pixel src)->bgra32_pixel {
 
 				bgra32_pixel temp = {};
-				rgb root_color;
+				ccolor root_color;
 
 				if (colors.get_size() > 0) {
-					int color_index = color_cycle_frames % colors.get_size();
-					root_color = hsl2rgb(colors.get(color_index));
+					root_color = colors.get(src.detect_counter + color_counter);
 				}
 				else {
 					root_color.r = 0;
@@ -496,8 +498,8 @@ namespace corona
 
 				double alpha = src.signal;
 
-				if (alpha < 0) {
-					alpha = 0;
+				if (alpha < .0) {
+					alpha = .0;
 				}
 				else if (alpha > 1) {
 					alpha = 1.0;
@@ -508,7 +510,7 @@ namespace corona
 				temp.g = root_color.g * temp.a;
 				temp.r = root_color.r * temp.a;
 
-				if (src.activated && sprinkle_enable)
+				if (src.activated)
 				{
 
 					sprinkle new_sprinkle;
@@ -519,7 +521,7 @@ namespace corona
 					new_sprinkle.velocity.y = 0.0;
 					new_sprinkle.velocity.z = 0.00;
 					new_sprinkle.current.x = x;
-					new_sprinkle.current.y = y;
+					new_sprinkle.current.y = y % 100;
 					new_sprinkle.current.z = 0.00;
 					new_sprinkle.pixel_start = temp;
 					new_sprinkle.pixel_end.b /= 3;
@@ -724,38 +726,56 @@ namespace corona
 			next_frame(new_frame);
 		}
 
-		ring_buffer<hsl,32> colors;
+		
 
 		void init_color_cycle()
 		{
-			color_cycle_start.h = color_distribution(random_engine);
-			color_cycle_start.s = color_distribution(random_engine);
-			color_cycle_start.l = .1;
+			double c = colors.get_capacity();
 
-			color_cycle_step.h = color_step_distribution(random_engine);
-			color_cycle_step.s = color_step_distribution(random_engine);
-			color_cycle_step.l = .1;
+			color_cycle_start.r = color_distribution(random_engine);
+			color_cycle_start.g = color_distribution(random_engine);
+			color_cycle_start.b = color_distribution(random_engine);
 
-			color_cycle_frames = 2000 * color_distribution(random_engine) + 500;
+			color_cycle_step.r = color_cycle_distribution(random_engine);
+			color_cycle_step.g = color_cycle_distribution(random_engine);
+			color_cycle_step.b = color_cycle_distribution(random_engine);
+
+/*			color_cycle_start.r = 0;
+			color_cycle_start.g = 0;
+			color_cycle_start.b = 0;
+
+			color_cycle_step.r = 0;
+			color_cycle_step.g = 1.0 / c;
+			color_cycle_step.b = 0;
+			*/
+			for (int i = 0; i < colors.get_capacity()/2; i++)
+			{
+				colors.put(color_cycle_start);
+				color_cycle_start.r += color_cycle_step.r;
+				if (color_cycle_start.r > 1.0) color_cycle_start.r = 0;
+				color_cycle_start.g += color_cycle_step.g;
+				if (color_cycle_start.g > 1.0) color_cycle_start.g = 0;
+				color_cycle_start.b += color_cycle_step.b;
+				if (color_cycle_start.b > 1.0) color_cycle_start.b = 0;
+			}
 		}
 
 		void next_color_cycle()
 		{
-			color_counter++;
-			last_color_seconds = color_timer.get_elapsed_seconds();
-			total_color_seconds += last_color_seconds;
 
-			if (total_color_seconds > 4) {
+			if (total_color_seconds > 3 || color_counter == 0) {
 				total_color_seconds = 0.0;
 				init_color_cycle();
 			}
 
-			int tsint = total_color_seconds * 16;
+			if (total_cycle_seconds > 1/16.0) {
+				total_cycle_seconds = 0.0;
+				color_counter++;
+			}
 
-			color_cycle_start.h += color_cycle_step.h;
-			color_cycle_start.s += color_cycle_step.s;
-			color_cycle_start.l += color_cycle_step.l;
-			colors.put(color_cycle_start);
+			last_color_seconds = color_timer.get_elapsed_seconds();
+			total_color_seconds += last_color_seconds;
+			total_cycle_seconds += last_color_seconds;
 		}
 
 		void next_frame(pixel_frame<bgra32_pixel>& _frame1)
@@ -816,6 +836,7 @@ namespace corona
 
 					if (!spa->detected) {
 						spa->signal += detection_pulse;
+						spa->detect_counter = frame_counter;
 					}
 					spa->detected++;
 

@@ -93,7 +93,7 @@ namespace corona
 		{
 			st = styles.get_style();
 
-			std::cout << "Aura Startup at " << std::filesystem::current_path() << std::endl;
+			std::cout << "Color Party Startup at " << std::filesystem::current_path() << std::endl;
 
 			status_recent = {};
 
@@ -207,7 +207,7 @@ namespace corona
 
 		void run(HINSTANCE hInstance, bool fullScreen)
 		{
-			application->runDialog(hInstance, "COUNTRYBIT AURA", IDI_REVOLUTION, fullScreen, presentation_layer);
+			application->runDialog(hInstance, "COUNTRY VIDEO GAMES COLOR PARTY", IDI_REVOLUTION, fullScreen, presentation_layer);
 		}
 
 		using content_function = std::function<void(control_builder& _contents)>;
@@ -241,7 +241,7 @@ namespace corona
 					_cb.image_control_id = IDC_COMPANY_LOGO;
 					_cb.image_file = "small_logo.png";
 					_cb.corporate_name = "COUNTRY VIDEO GAMES";
-					_cb.title_name = " AURA VIEWER";
+					_cb.title_name = "  COLOR PARTY";
 					_cb.background_brush = st->CaptionBackgroundBrush;
 					_cb.border_brush = st->CaptionBorderBrush;
 					*ptitle_id = _cb.title_id;

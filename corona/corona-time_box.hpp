@@ -485,6 +485,11 @@ namespace corona
 			;
 		}
 
+		int get_capacity()
+		{
+			return size_items;
+		}
+
 		int get_size()
 		{
 			if (counter < size_items)

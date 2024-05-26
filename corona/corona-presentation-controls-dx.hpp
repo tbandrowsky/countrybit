@@ -283,7 +283,7 @@ namespace corona
 
 		virtual bool is_camera() { return true; }
 
-		ring_buffer<sprinkle, 200> current_sprinkles;
+		ring_buffer<sprinkle, 300> current_sprinkles;
 
 		void init()
 		{
@@ -344,35 +344,75 @@ namespace corona
 						scale.y = draw_bounds.h / 128.0;
 						scale.z = 1.0;
 
-						radialGradientBrushRequest rgbr;
-						rgbr.name = "SprinkleFill";
+						if (false) {
 
-						rgbr.center = rectangle_math::center(draw_bounds);
-						rgbr.radiusX = draw_bounds.w / 2;
-						rgbr.radiusY = draw_bounds.h / 2;
-						rgbr.offset = {};
-						rgbr.size = { draw_bounds.w, draw_bounds.h };
-						rgbr.gradientStops = {
-							{ toColor("#F9A602FF"), 0.0 },
-							{ toColor("#F9A602CF"), 1.0 }
-						};
+							radialGradientBrushRequest rgbr;
+							for (int colorbits = 0; colorbits < 5; colorbits++) {
+								rgbr.name = "SprinkleFill" + std::to_string(colorbits);
 
-						generalBrushRequest br(rgbr);
-						context.setBrush(&br);
+								rgbr.center = rectangle_math::center(draw_bounds);
+								rgbr.radiusX = draw_bounds.w / 2;
+								rgbr.radiusY = draw_bounds.h / 2;
+								rgbr.offset = {};
+								rgbr.size = { draw_bounds.w, draw_bounds.h };
 
-						for (int ispr = 0; ispr < current_sprinkles.get_size(); ispr++)
-						{
-							auto& spr = current_sprinkles.get(ispr);
+								if (colorbits == 0) {
+									rgbr.gradientStops = {
+										{ toColor("#F9A6020F"), 0.0 },
+										{ toColor("#F9A6026F"), 1.0 }
+									};
 
-							spr.velocity += spr.acceleration;
-							spr.current += spr.velocity;
+								}
+								else if (colorbits == 1)
+								{
+									rgbr.gradientStops = {
+										{ toColor("#0000FF0F"), 0.0 },
+										{ toColor("#0000FF7F"), 1.0 }
+									};
+								}
+								else if (colorbits == 2)
+								{
+									rgbr.gradientStops = {
+										{ toColor("#00FF000F"), 0.0 },
+										{ toColor("#00FF007F"), 1.0 }
+									};
+								}
+								else if (colorbits == 3)
+								{
 
-							point sprpos = scale * spr.current;
-							ccolor cstart, cstop;
+									rgbr.gradientStops = {
+										{ toColor("#FF00000F"), 0.0 },
+										{ toColor("#FF00007F"), 1.0 }
+									};
+								}
+								else
+								{
 
-							point radius;
-							radius.x = radius.y = (counter + ispr) % 8;
-							context.drawEllipse(&sprpos, &radius, "", 0, "SprinkleFill");
+									rgbr.gradientStops = {
+										{ toColor("#F900000F"), 0.0 },
+										{ toColor("#F900007F"), 1.0 }
+									};
+								}
+
+								generalBrushRequest br(rgbr);
+								context.setBrush(&br);
+							}
+
+							for (int ispr = 0; ispr < current_sprinkles.get_size(); ispr++)
+							{
+								auto& spr = current_sprinkles.get(ispr);
+
+								spr.velocity += spr.acceleration;
+								spr.current += spr.velocity;
+
+								point sprpos = scale * spr.current;
+								ccolor cstart, cstop;
+
+								point radius;
+								radius.x = radius.y = 20 * abs(100.0 - spr.current.y) / draw_bounds.h;
+								std::string brushName = "SprinkleFill" + std::to_string(ispr % 5);
+								context.drawEllipse(&sprpos, &radius, "", 0, brushName);
+							}
 						}
 					}
 				}
