@@ -85,6 +85,27 @@ namespace corona
 		virtual ~subtitle_control();
 	};
 
+	class authorscredit_control : public text_display_control
+	{
+	public:
+		authorscredit_control();
+		authorscredit_control(const subtitle_control& _src) : text_display_control(_src)
+		{
+			;
+		}
+		authorscredit_control(container_control_base* _parent, int _id);
+
+		virtual void set_default_styles();
+
+		virtual std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<authorscredit_control>(*this);
+			return tv;
+		}
+
+		virtual ~authorscredit_control();
+	};
+
 	class chaptertitle_control : public text_display_control
 	{
 	public:
@@ -376,6 +397,7 @@ namespace corona
 					if (!text.size()) text = "";
 
 					std::string test_text = std::format("{0}, {1}, {2}", text, draw_bounds.x, draw_bounds.y, (long)this);
+					//std::cout << test_text << std::endl;
 
 					draw_bounds.x -= inner_bounds.x;
 					draw_bounds.y -= inner_bounds.y;
@@ -475,6 +497,32 @@ namespace corona
 	}
 
 	subtitle_control::~subtitle_control()
+	{
+	}
+
+	void authorscredit_control::set_default_styles()
+	{
+		auto st = styles.get_style();
+
+		background_brush = st->AuthorsCreditBackgroundBrush;
+		text_fill_brush = st->AuthorsCreditTextBrush;
+		text_style = st->AuthorsCreditFont;
+		border_brush = st->AuthorsCreditBorderBrush;
+		border_width = st->AuthorsCreditBorderWidth;
+
+	}
+
+	authorscredit_control::authorscredit_control(container_control_base* _parent, int _id) : text_display_control(_parent, _id)
+	{
+
+	}
+
+	authorscredit_control::authorscredit_control()
+	{
+
+	}
+
+	authorscredit_control::~authorscredit_control()
 	{
 	}
 

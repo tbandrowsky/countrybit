@@ -240,7 +240,7 @@ namespace corona
 					_cb.menu_button_id = IDC_SYSTEM_MENU;
 					_cb.image_control_id = IDC_COMPANY_LOGO;
 					_cb.image_file = "small_logo.png";
-					_cb.corporate_name = "COUNTRY VIDEO GAMES";
+					_cb.subtitle_name = "  by TJ Bandrowsky for Country Video Games";
 					_cb.title_name = "  COLOR PARTY";
 					_cb.background_brush = st->CaptionBackgroundBrush;
 					_cb.border_brush = st->CaptionBorderBrush;
@@ -303,14 +303,21 @@ namespace corona
 
 					control_builder preview_column = root_row.column_begin(id_counter::next(), [](column_layout& _settings) {
 						_settings.set_size(.4_container, 1.0_container);
+						_settings.set_content_align(visual_alignment::align_far);
 						});
 
 					preview_column.camera_view([this](camera_view_control& _settings) {
 						_settings.set_padding(8.0_px);
-						_settings.set_size(1.0_container, 1.0_container);
+						_settings.set_size(1.0_container, 1.0_remaining);
 						_settings.camera_control_id = id_camera;
 						});
 
+					preview_column.authorscredit("Todd Bandrowsky,Bowling Green KY, USA", 
+						[this](authorscredit_control& _settings) {
+						_settings.set_padding(8.0_px);
+						_settings.set_size(1.0_container,50.0_px);
+
+						});
 				}, 
 				false);
 		}

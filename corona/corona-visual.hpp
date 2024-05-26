@@ -514,6 +514,9 @@ namespace corona {
 		{
 			solidBrushRequest sbr;
 			sbr.brushColor = toColor(_color);
+			if (this->get_name()) {
+				sbr.name = this->get_name();
+			}
 			*this = sbr;
 		}
 

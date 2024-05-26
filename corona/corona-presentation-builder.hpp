@@ -194,6 +194,7 @@ namespace corona
 
 		inline control_builder& title(int _id, std::function<void(title_control&)> _settings) { return title("", _settings, _id); }
 		inline control_builder& subtitle(int _id, std::function<void(subtitle_control&)> _settings) { return subtitle("", _settings, _id); }
+		inline control_builder& authorscredit(int _id, std::function<void(authorscredit_control&)> _settings) { return authorscredit("", _settings, _id); }
 		inline control_builder& chaptertitle(int _id, std::function<void(chaptertitle_control&)> _settings) { return chaptertitle("", _settings, _id); }
 		inline control_builder& chaptersubtitle(int _id, std::function<void(chaptersubtitle_control&)> _settings) { return chaptersubtitle("", _settings, _id); }
 		inline control_builder& paragraph(int _id, std::function<void(paragraph_control&)> _settings) { return paragraph("", _settings, _id); }
@@ -202,6 +203,7 @@ namespace corona
 
 		inline control_builder& title(std::string _text, std::function<void(title_control&)> _settings) { return title(_text, _settings, id_counter::next()); }
 		inline control_builder& subtitle(std::string _text, std::function<void(subtitle_control&)> _settings) { return subtitle(_text, _settings, id_counter::next()); }
+		inline control_builder& authorscredit(std::string _text, std::function<void(authorscredit_control&)> _settings) { return authorscredit(_text, _settings, id_counter::next()); }
 		inline control_builder& chaptertitle(std::string _text, std::function<void(chaptertitle_control&)> _settings) { return chaptertitle(_text, _settings, id_counter::next()); }
 		inline control_builder& chaptersubtitle(std::string _text, std::function<void(chaptersubtitle_control&)> _settings) { return chaptersubtitle(_text, _settings, id_counter::next()); }
 		inline control_builder& paragraph(std::string _text, std::function<void(paragraph_control&)> _settings) { return paragraph(_text, _settings, id_counter::next()); }
@@ -429,6 +431,17 @@ namespace corona
 		control_builder& subtitle(std::string text, std::function<void(subtitle_control&)> _settings, int _id)
 		{
 			auto tc = create<subtitle_control>(_id);
+			apply_item_sizes(tc);
+			tc->text = text;
+			if (_settings) {
+				_settings(*tc);
+			}
+			return *this;
+		}
+
+		control_builder& authorscredit(std::string text, std::function<void(authorscredit_control&)> _settings, int _id)
+		{
+			auto tc = create<authorscredit_control>(_id);
 			apply_item_sizes(tc);
 			tc->text = text;
 			if (_settings) {
@@ -1652,12 +1665,15 @@ namespace corona
 
 			auto title_column = main_row.column_begin(id_counter::next(), [](column_layout& cl) {
 				cl.set_size(1.0_remaining, 1.0_container);
+				cl.set_content_align(visual_alignment::align_center);
 				})
 				.title(title_name, [this](title_control& control) {
 						control.set_nchittest(HTCAPTION);
 						control.set_size(1.0_container, 1.3_fontgr);
 					}, title_id)
 				.end()
+				.end()
+
 				.end()
 			.end();
 
@@ -1696,7 +1712,9 @@ namespace corona
 		std::string image_file;
 		std::string corporate_name;
 		std::string title_name;
+		std::string subtitle_name;
 		int title_id;
+		int subtitle_id;
 		data_lake* lake;
 
 		caption_bar_control()
@@ -1723,6 +1741,7 @@ namespace corona
 			max_button_id = id_counter::next();
 			close_button_id = id_counter::next();
 			title_id = id_counter::next();
+			subtitle_id = id_counter::next();
 		}
 
 		std::shared_ptr<control_base> clone()

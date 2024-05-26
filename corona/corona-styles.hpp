@@ -57,6 +57,12 @@ namespace corona
 		std::shared_ptr<textStyleRequest>	ChapterSubTitleFont;
 		int	ChapterSubTitleBorderWidth;
 
+		std::shared_ptr<generalBrushRequest> AuthorsCreditBackgroundBrush;
+		std::shared_ptr<generalBrushRequest> AuthorsCreditBorderBrush;
+		std::shared_ptr<generalBrushRequest> AuthorsCreditTextBrush;
+		std::shared_ptr<textStyleRequest>	AuthorsCreditFont;
+		int	AuthorsCreditBorderWidth;
+
 		std::shared_ptr<generalBrushRequest> ParagraphBackgroundBrush;
 		std::shared_ptr<generalBrushRequest> ParagraphBorderBrush;
 		std::shared_ptr<generalBrushRequest> ParagraphTextBrush;
@@ -318,15 +324,32 @@ namespace corona
 		countrybit.SubtitleBackgroundBrush = std::make_shared<generalBrushRequest>();
 		countrybit.SubtitleBackgroundBrush->set_name("SubtitleBackground");
 		countrybit.SubtitleBorderBrush = std::make_shared<generalBrushRequest>();
+		countrybit.SubtitleBorderBrush->setColor("#FFFFFF");
 		countrybit.SubtitleBorderBrush->set_name("SubtitleBorder");
-		countrybit.SubtitleBorderWidth = 0;
+		countrybit.SubtitleBorderWidth = 4;
 		countrybit.SubtitleTextBrush = std::make_shared<generalBrushRequest>();
+		countrybit.SubtitleTextBrush->setColor("#FFFFFF");
 		countrybit.SubtitleTextBrush->set_name("SubtitleText");
-		countrybit.SubtitleTextBrush->setColor("#FFFFF");
 		countrybit.SubtitleFont = std::make_shared<textStyleRequest>(text_style);
 		countrybit.SubtitleFont->fontName = bigFont;
-		countrybit.SubtitleFont->fontSize = 48;
+		countrybit.SubtitleFont->fontSize = 24;
 		countrybit.SubtitleFont->name = "SubtitleFont";
+
+		countrybit.AuthorsCreditBackgroundBrush = std::make_shared<generalBrushRequest>();
+		countrybit.AuthorsCreditBackgroundBrush->set_name("AuthorsCreditBackground");
+		countrybit.AuthorsCreditBorderBrush = std::make_shared<generalBrushRequest>();
+		countrybit.AuthorsCreditBorderBrush->setColor("#CCCCDD");
+		countrybit.AuthorsCreditBorderBrush->set_name("AuthorsCreditBorder");
+		countrybit.AuthorsCreditBorderWidth = 0;
+		countrybit.AuthorsCreditTextBrush = std::make_shared<generalBrushRequest>();
+		countrybit.AuthorsCreditTextBrush->setColor("#CCCCDD");
+		countrybit.AuthorsCreditTextBrush->set_name("AuthorsCreditText");
+		countrybit.AuthorsCreditFont = std::make_shared<textStyleRequest>(text_style);
+		countrybit.AuthorsCreditFont->fontName = "Old Newspaper font,Georgia,Courier New";
+		countrybit.AuthorsCreditFont->fontSize = 16;
+		countrybit.AuthorsCreditFont->bold = false;
+		countrybit.AuthorsCreditFont->horizontal_align = visual_alignment::align_center;
+		countrybit.AuthorsCreditFont->name = "AuthorsCreditFont";
 
 
 		countrybit.ChapterTitleBackgroundBrush = std::make_shared<generalBrushRequest>();
@@ -351,7 +374,7 @@ namespace corona
 		countrybit.ChapterSubTitleTextBrush->setColor("#000000");
 		countrybit.ChapterSubTitleFont = std::make_shared<textStyleRequest>(text_style);
 		countrybit.ChapterSubTitleFont->fontName = textFont;
-		countrybit.ChapterSubTitleFont->fontSize = 18;
+		countrybit.ChapterSubTitleFont->fontSize = 14;
 		countrybit.ChapterSubTitleFont->underline = 1;
 		countrybit.ChapterSubTitleBackgroundBrush->set_name("ChapterSubTitleBackground");
 		countrybit.ChapterSubTitleBorderBrush->set_name("ChapterSubTitleBorder");
