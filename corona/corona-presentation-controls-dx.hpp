@@ -248,6 +248,7 @@ namespace corona
 		delta_frame			delta_boi;
 		int counter = 0;
 		timer				camera_check_timer;
+		std::string			camera_status;
 
 		camera_control()
 		{
@@ -255,6 +256,7 @@ namespace corona
 			pSourceReader = nullptr;
 			stream_base_time = 0;
 			last_barcode_time = 0;
+			camera_status = "Starting";
 			init();
 		}
 
@@ -270,6 +272,7 @@ namespace corona
 			}
 			stream_base_time = _src.stream_base_time;
 			last_barcode_time = _src.last_barcode_time;
+			camera_status = _src.camera_status;
 			init();
 		}
 
@@ -279,6 +282,7 @@ namespace corona
 			pSourceReader = nullptr;
 			stream_base_time = 0;
 			last_barcode_time = 0;
+			camera_status = "Starting";
 			init();
 		}
 
@@ -291,32 +295,6 @@ namespace corona
 			on_draw = [this](draw_control* _dc) -> void {
 
 				counter++;
-
-				if (!pSourceReader) {
-					if (auto pwindow = window.lock())
-					{
-						if (auto phost = host.lock()) {
-							auto draw_bounds = inner_bounds;
-
-							draw_bounds.x = inner_bounds.x - bounds.x;
-							draw_bounds.y = inner_bounds.y - bounds.y;
-
-							auto& context = pwindow->getContext();
-
-							auto st = styles.get_style();
-
-							context.setBrush(st->TitleTextBrush.get());
-							auto temp = *st->TitleFont.get();
-							temp.name = "CameraText";
-							temp.vertical_align = visual_alignment::align_center;
-							temp.horizontal_align = visual_alignment::align_center;
-							context.setTextStyle(&temp);
-
-							context.drawText("Camera?", &draw_bounds, temp.name, st->TitleTextBrush->get_name());
-
-						}
-					}
-				}
 
 				if (auto pwindow = window.lock())
 				{
@@ -441,6 +419,32 @@ namespace corona
 						}
 					}
 				}
+
+				if (camera_status.size()) {
+					if (auto pwindow = window.lock())
+					{
+						if (auto phost = host.lock()) {
+							auto draw_bounds = inner_bounds;
+
+							draw_bounds.x = inner_bounds.x - bounds.x;
+							draw_bounds.y = inner_bounds.y - bounds.y;
+
+							auto& context = pwindow->getContext();
+
+							auto st = styles.get_style();
+
+							context.setBrush(st->TitleTextBrush.get());
+							auto temp = *st->TitleFont.get();
+							temp.name = "CameraText";
+							temp.vertical_align = visual_alignment::align_center;
+							temp.horizontal_align = visual_alignment::align_center;
+							context.setTextStyle(&temp);
+
+							context.drawText(camera_status, &draw_bounds, temp.name, st->TitleTextBrush->get_name());
+						}
+					}
+				}
+
 			};
 
 			on_create = [this](draw_control *_ctrl) ->void 
@@ -709,12 +713,14 @@ namespace corona
 				}
 				else
 				{
+					camera_status = "No camera found";
 					std::cout << "No cameras found yet" << std::endl;
 					hr = E_FAIL;
 				}
 			}
 			else 
 			{
+				camera_status = "No camera found";
 				std::cout << "Search for cameras failed" << std::endl;
 			}
 
@@ -809,9 +815,14 @@ namespace corona
 				if (FAILED(hr))
 				{
 					if (hr == 0xc00d3ea2) {
-						std::cout << "Camera failed" << std::endl;
-						stop();
+						camera_status = "Camera disconected";
+						std::cout << "Camera disconnected" << std::endl;
 					}
+					else {
+						camera_status = "Camera error";
+						std::cout << "Camera error" << std::endl;
+					}
+					stop();
 					return;
 				}
 
@@ -866,6 +877,7 @@ namespace corona
 
 					hr = pSample->ConvertToContiguousBuffer(&pMediaBuffer);
 					if (SUCCEEDED(hr) && pMediaBuffer) {
+						camera_status = "";
 						hr = pMediaBuffer->QueryInterface(&p2dBuffer);
 						if (SUCCEEDED(hr) && p2dBuffer) {
 							BYTE* byte_start = nullptr;
@@ -917,7 +929,7 @@ namespace corona
 			}
 			else if (camera_check_timer.check(2.0))
 			{
-				std::cout << "Looking for camera" << std::endl;
+				camera_status = "Checking for camera";
 				start();
 				if (auto phost = host.lock()) {
 					::PostMessage(phost->getMainWindow(), WM_CORONA_RESET, 0, 0);
