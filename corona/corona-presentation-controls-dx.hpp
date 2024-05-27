@@ -312,10 +312,25 @@ namespace corona
 
 							D2D1_RECT_F dest_rect;
 
-							dest_rect.left = draw_bounds.x;
-							dest_rect.top = draw_bounds.y;
-							dest_rect.right = draw_bounds.w;
-							dest_rect.bottom = draw_bounds.h;
+							auto surface_size = cbm->GetSize();
+
+							double xmag = (draw_bounds.w / surface_size.width);
+							double ymag = (draw_bounds.h / surface_size.height);
+
+							if (xmag > ymag) 
+							{
+								dest_rect.left = draw_bounds.x;
+								dest_rect.top = draw_bounds.y;
+								dest_rect.right = surface_size.width * xmag;
+								dest_rect.bottom = surface_size.height * xmag;
+							}
+							else 
+							{
+								dest_rect.left = draw_bounds.x;
+								dest_rect.top = draw_bounds.y;
+								dest_rect.right = surface_size.width * ymag;
+								dest_rect.bottom = surface_size.height * ymag;
+							}
 
 							dc->DrawBitmap(cbm, &dest_rect, 1.0);
 
@@ -330,10 +345,25 @@ namespace corona
 
 							D2D1_RECT_F dest_rect;
 
-							dest_rect.left = draw_bounds.x;
-							dest_rect.top = draw_bounds.y;
-							dest_rect.right = draw_bounds.w;
-							dest_rect.bottom = draw_bounds.h;
+							auto surface_size = dbm->GetSize();
+
+							double xmag = (draw_bounds.w / surface_size.width);
+							double ymag = (draw_bounds.h / surface_size.height);
+
+							if (xmag > ymag)
+							{
+								dest_rect.left = draw_bounds.x;
+								dest_rect.top = draw_bounds.y;
+								dest_rect.right = surface_size.width * xmag;
+								dest_rect.bottom = surface_size.height * xmag;
+							}
+							else
+							{
+								dest_rect.left = draw_bounds.x;
+								dest_rect.top = draw_bounds.y;
+								dest_rect.right = surface_size.width * ymag;
+								dest_rect.bottom = surface_size.height * ymag;
+							}
 
 							dc->DrawBitmap(dbm, &dest_rect, 1.0);
 
@@ -1682,35 +1712,20 @@ namespace corona
 
 								for (auto source_box : movement_boxes) 
 								{
-									if (boxes.contains(source_box.image_hash)) 
+									/// frame_counter % 4 meanns the hash is crap
+									std::string box_hash = source_box.image_hash + std::to_string(frame_counter % 8);
+									if (boxes.contains(box_hash)) 
 									{
 										auto& bx = boxes[source_box.image_hash];
-										double diff = bx.box.area.x > source_box.area.x;
-										if (diff>0) {
-											bx.box.area.w += diff;
-											bx.box.area.x -= diff;
-										}
-										diff = bx.box.area.y - source_box.area.y;
-										if (diff > 0) {
-											bx.box.area.h += diff;
-											bx.box.area.y -= diff;
-										}
-										diff = source_box.area.right() - bx.box.area.right();
-										if (diff > 0) {
-											bx.box.area.w += diff;
-										}
-										diff = source_box.area.bottom() - bx.box.area.bottom();
-										if (diff > 0) {
-											bx.box.area.h += diff;
-										}
 										bx.frame_last_detected = frame_counter;
+										bx.box = source_box;
 									}
 									else {
 										movement_box_instance mbnew;
 										mbnew.frame_first_detected = frame_counter;
 										mbnew.frame_last_detected = frame_counter;
 										mbnew.box = source_box;
-										boxes.insert_or_assign(source_box.image_hash, mbnew);
+										boxes.insert_or_assign(box_hash, mbnew);
 									}
 								}
 

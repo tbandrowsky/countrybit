@@ -40,13 +40,15 @@ namespace corona
 
 	struct signal_pixel
 	{
-		double			signal;
+		float			signal;
 		int				detected;
 		bool			activated;
-		double			detect_counter;
-		uint64_t		color_hash;
+		float			detect_counter;
+		float			total_red;
+		float			total_green;
+		float			total_blue;
 
-		signal_pixel() : signal(0.0), detected(0), activated(false), color_hash(0)
+		signal_pixel() : signal(0.0), detected(0), activated(false)
 		{
 			;
 		}
@@ -458,7 +460,7 @@ namespace corona
 			lum_detection_threshold = .1;
 			activation_area_percentage = .3;
 			detection_pulse = .8;
-			detection_cooldown = .040;
+			detection_cooldown = .020;
 			motion_spacing = 16;
 			color_cycle_start = {};
 			init_color_cycle();
@@ -587,7 +589,7 @@ namespace corona
 						y_ok = true;
 					}
 
-					if (x_ok && y_ok)
+					if (x_ok && y_ok && mb1.image_hash == mb2.image_hash)
 					{
 						double right1 = mb1.area.right();
 						double bottom1 = mb1.area.bottom();
@@ -661,10 +663,37 @@ namespace corona
 						}
 						r.area.w = activation_distance;
 						r.area.h = activation_distance;
+						
+
+						auto mbcursor = activation_frame.get_cursor(r.area.x, r.area.y);
+						signal_pixel* spmb = mbcursor.first();
+
+						for (int y = 0; y < r.area.h; y++)
+						{
+							for (int x = 0; x < r.area.w; x++)
+							{
+								if (spmb)
+								{
+									int count = spmb->detected;
+									rgb hasho;
+									if (count) {
+										hasho.r = spmb->total_red / count;
+										hasho.g = spmb->total_green / count;
+										hasho.b = spmb->total_blue / count;
+										r.image_hash = std::to_string((int)(rgb2hsl(hasho).h) * 16);
+									}
+									spmb = mbcursor.right();
+								}
+							}
+							spmb = mbcursor.carriage_return(r.area.x);
+						}
+
 						movement_boxes.push_back(r);
 					}
 				}
 			}
+
+			//std::cout << "movement boxes before collapse:" << movement_boxes.size() << std::endl;
 
 			movement_boxes = collapse_movement_boxes(movement_boxes);
 
@@ -672,38 +701,10 @@ namespace corona
 
 			scale.x *= last_frame.get_width();
 			scale.y *= last_frame.get_height();
-//			std::cout << "movement boxes" << std::endl;
+			//std::cout << "movement boxes after collapse:" << movement_boxes.size() << std::endl;
 
 			for (auto& mb : movement_boxes)
 			{
-				auto mbcursor = activation_frame.get_cursor(mb.area.x, mb.area.y);
-				signal_pixel* spmb = mbcursor.first();
-
-				std::vector<color_hash_count> color_hash_table;
-				color_hash_table.resize(256);
-
-				for (int y = 0; y < mb.area.h; y++)
-				{
-					for (int x = 0; x < mb.area.w; x++)
-					{
-						if (spmb) 
-						{
-							int index = spmb->color_hash % 256;
-							color_hash_table[index].hash_color = index;
-							color_hash_table[index].hash_count++;
-							spmb = mbcursor.right();
-						}
-					}
-					spmb = mbcursor.carriage_return(mb.area.x);
-				}
-				std::sort(color_hash_table.begin(), color_hash_table.end(), [](color_hash_count& a, color_hash_count& b) {
-					return (b.hash_count > a.hash_count);
-					});
-				mb.image_hash = "";
-				for (int i = 0; i < 4 && i < color_hash_table.size(); i++) 
-				{
-					mb.image_hash = mb.image_hash += std::format("{0}.", color_hash_table[i].hash_color);
-				}
 				mb.area.x *= scale.x;
 				mb.area.y *= scale.y;
 				mb.area.w *= scale.x;
@@ -793,6 +794,7 @@ namespace corona
 					if (_src.signal < 0.0)
 						_src.signal = 0.0;
 				}
+				_src.total_blue = _src.total_green = _src.total_red = 0.0;
 				_src.detected = 0;
 				_src.activated = false;
 				return _src;
@@ -838,15 +840,15 @@ namespace corona
 						spa->signal += detection_pulse;
 						spa->detect_counter = frame_counter;
 					}
-					spa->detected++;
 
-					if (dh >= 1.0) dh = 1.0;
-					if (dl >= 1.0) dl = 1.0;
-					int idh = (double)dh * 8.0;
-					int idl = (double)dl * 4.0;
-					int64_t hash = idl * 8 + idh;
+					auto sp0l = *sp0;
+					auto sp1l = *sp1;
+
+					spa->total_blue += sp0l.b + sp1l.b;
+					spa->total_green += sp0l.g + sp1l.g;
+					spa->total_red += sp0l.r + sp1l.r;
+					spa->detected++;
 					
-					spa->color_hash = hash;
 				}
 				else if (spa->signal > 0.0)
 				{

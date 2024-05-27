@@ -207,7 +207,7 @@ namespace corona
 
 		void run(HINSTANCE hInstance, bool fullScreen)
 		{
-			application->runDialog(hInstance, "COUNTRY VIDEO GAMES COLOR PARTY", IDI_REVOLUTION, fullScreen, presentation_layer);
+			application->runDialog(hInstance, "COLOR PARTY BY TODD BANDROWSKY", IDI_REVOLUTION, fullScreen, presentation_layer);
 		}
 
 		using content_function = std::function<void(control_builder& _contents)>;
@@ -293,7 +293,7 @@ namespace corona
 						});
 
 					control_builder camera_column = root_row.column_begin(id_counter::next(), [](column_layout& _settings) {
-						_settings.set_size(.6_container, 1.0_container);
+						_settings.set_size(.8_container, 1.0_container);
 						});
 
 					camera_column.camera(id_camera, [](camera_control& _settings) {
@@ -302,7 +302,7 @@ namespace corona
 						});
 
 					control_builder preview_column = root_row.column_begin(id_counter::next(), [](column_layout& _settings) {
-						_settings.set_size(.4_container, 1.0_container);
+						_settings.set_size(.2_container, 1.0_container);
 						_settings.set_content_align(visual_alignment::align_far);
 						});
 
@@ -312,10 +312,10 @@ namespace corona
 						_settings.camera_control_id = id_camera;
 						});
 
-					preview_column.authorscredit("Todd Bandrowsky,Bowling Green KY, USA", 
+					preview_column.authorscredit("Todd Bandrowsky\nBowling Green KY, USA", 
 						[this](authorscredit_control& _settings) {
 						_settings.set_padding(8.0_px);
-						_settings.set_size(1.0_container,50.0_px);
+						_settings.set_size(1.0_container,70.0_px);
 
 						});
 				}, 
@@ -349,7 +349,10 @@ namespace corona
 	void run_developer_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 	{
 
-		EnableGuiStdOuts();
+		if (strstr(lpszCmdParam, "-console")) {
+			EnableGuiStdOuts();
+			std::cout << "ColorParty Console Started" << std::endl;
+		}
 
 		aura_application app;
 
