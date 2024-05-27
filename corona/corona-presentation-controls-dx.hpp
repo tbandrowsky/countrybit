@@ -247,6 +247,7 @@ namespace corona
 		LONGLONG			last_barcode_time;
 		delta_frame			delta_boi;
 		int counter = 0;
+		timer				camera_check_timer;
 
 		camera_control()
 		{
@@ -289,9 +290,33 @@ namespace corona
 		{
 			on_draw = [this](draw_control* _dc) -> void {
 
-				read_frame();
-
 				counter++;
+
+				if (!pSourceReader) {
+					if (auto pwindow = window.lock())
+					{
+						if (auto phost = host.lock()) {
+							auto draw_bounds = inner_bounds;
+
+							draw_bounds.x = inner_bounds.x - bounds.x;
+							draw_bounds.y = inner_bounds.y - bounds.y;
+
+							auto& context = pwindow->getContext();
+
+							auto st = styles.get_style();
+
+							context.setBrush(st->TitleTextBrush.get());
+							auto temp = *st->TitleFont.get();
+							temp.name = "CameraText";
+							temp.vertical_align = visual_alignment::align_center;
+							temp.horizontal_align = visual_alignment::align_center;
+							context.setTextStyle(&temp);
+
+							context.drawText("Camera?", &draw_bounds, temp.name, st->TitleTextBrush->get_name());
+
+						}
+					}
+				}
 
 				if (auto pwindow = window.lock())
 				{
@@ -684,8 +709,13 @@ namespace corona
 				}
 				else
 				{
+					std::cout << "No cameras found yet" << std::endl;
 					hr = E_FAIL;
 				}
+			}
+			else 
+			{
+				std::cout << "Search for cameras failed" << std::endl;
 			}
 
 			return hr;
@@ -735,6 +765,9 @@ namespace corona
 					return hr;
 				}
 			}
+			else {
+				std::cout << "Couldn't get the native media type for the camera" << std::endl;
+			}
 		}
 
 		virtual void arrange(rectangle _ctx)
@@ -775,6 +808,10 @@ namespace corona
 
 				if (FAILED(hr))
 				{
+					if (hr == 0xc00d3ea2) {
+						std::cout << "Camera failed" << std::endl;
+						stop();
+					}
 					return;
 				}
 
@@ -784,15 +821,15 @@ namespace corona
 				}
 				if (flags & MF_SOURCE_READERF_NEWSTREAM)
 				{
-					;
+					std::cout << "New stream" << std::endl;
 				}
 				if (flags & MF_SOURCE_READERF_NATIVEMEDIATYPECHANGED)
 				{
-					;
+					std::cout << "Native media type changed" << std::endl;
 				}
 				if (flags & MF_SOURCE_READERF_CURRENTMEDIATYPECHANGED)
 				{
-					;
+					std::cout << "Current media type changed" << std::endl;
 				}
 				if (flags & MF_SOURCE_READERF_STREAMTICK)
 				{
@@ -878,7 +915,14 @@ namespace corona
 				}
 
 			}
-
+			else if (camera_check_timer.check(2.0))
+			{
+				std::cout << "Looking for camera" << std::endl;
+				start();
+				if (auto phost = host.lock()) {
+					::PostMessage(phost->getMainWindow(), WM_CORONA_RESET, 0, 0);
+				}
+			}
 		}
 
 		virtual void stop()
@@ -893,8 +937,6 @@ namespace corona
 				pSource->Release();
 			}
 			pSource = nullptr;
-
-
 		}
 
 		virtual void destroy()
@@ -907,7 +949,13 @@ namespace corona
 			destroy();
 		}
 
-
+		virtual void on_update(double _time)
+		{
+			read_frame();
+			for (auto child : children) {
+				child->on_update(_time);
+			}
+		}
 	};
 
 	class movement_box_instance

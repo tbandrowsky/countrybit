@@ -13,6 +13,7 @@ namespace corona
 	const int WM_CORONA_TASK_COMPLETE = WM_APP + 2;
 	const int WM_CORONA_HTTP_JOB_COMPLETE = WM_APP + 3;
 	const int WM_CORONA_HTTP_TASK_COMPLETE = WM_APP + 4;
+	const int WM_CORONA_RESET = WM_APP + 5;
 
 	template <typename parameter_type> class task_job : public job
 	{

@@ -697,7 +697,14 @@ namespace corona
 					spmb = mbcursor.carriage_return(mb.area.x);
 				}
 				std::sort(color_hash_table.begin(), color_hash_table.end(), [](color_hash_count& a, color_hash_count& b) {
-					return b.hash_count - a.hash_count;
+					int c;
+					if (b.hash_count > a.hash_count)
+						c = -1;
+					else if (b.hash_count > a.hash_count)
+						c = 0;
+					else if (b.hash_count < a.hash_count)
+						c = 1;
+					return c;
 					});
 				mb.image_hash = "";
 				for (int i = 0; i < 4 && i < color_hash_table.size(); i++) 

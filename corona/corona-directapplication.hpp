@@ -1018,6 +1018,33 @@ namespace corona
 				}
 			}
 			break;
+			case WM_CORONA_RESET:
+			{
+				RECT rect_size;
+				::GetWindowRect(hwnd, &rect_size);
+				rectangle rect;
+				rect.x = 0;
+				rect.y = 0;
+				rect.w = std::abs(rect_size.right - rect_size.left);
+				rect.h = std::abs(rect_size.bottom - rect_size.top);
+				dpiScale = 96.0 / GetDpiForWindow(hwnd);
+				if (pfactory) {
+					auto wwin = pfactory->getWindow(hwnd);
+					if (auto win = wwin.lock()) {
+						win->resize(rect.w, rect.h);
+						if (currentController) {
+#if TRACE_SIZE
+							std::cout << " w " << rect.w << "h " << rect.h << std::endl;
+
+#endif
+							rect.w *= dpiScale;
+							rect.h *= dpiScale;
+							currentController->onResize(rect, dpiScale);
+						}
+					}
+				}
+			}
+			break;
 			case DM_GETDEFID:
 			{
 				if (currentController)

@@ -536,6 +536,18 @@ namespace corona
 			last_time = current_time;
 			return elapsed;
 		}
+
+		bool check(double _elapsed_seconds)
+		{
+			LARGE_INTEGER current_time;
+			::QueryPerformanceCounter(&current_time);
+			double elapsed = (double)(current_time.QuadPart - last_time.QuadPart) / (double)frequency.QuadPart;
+			if (elapsed > _elapsed_seconds) {
+				last_time = current_time;
+				return true;
+			}
+			return false;
+		}
 	};
 
 }

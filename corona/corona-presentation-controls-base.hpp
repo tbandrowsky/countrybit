@@ -509,7 +509,16 @@ namespace corona
 
 		virtual void on_subscribe(presentation_base* _presentation, page_base* _page)
 		{
-			
+			for (auto child : children) {
+				child->on_subscribe(_presentation, _page);
+			}
+		}
+
+		virtual void on_update(double _time)
+		{
+			for (auto child : children) {
+				child->on_update(_time);
+			}
 		}
 
 	};

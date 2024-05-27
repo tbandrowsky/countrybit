@@ -345,7 +345,7 @@ namespace corona
 		countrybit.AuthorsCreditTextBrush->setColor("#CCCCDD");
 		countrybit.AuthorsCreditTextBrush->set_name("AuthorsCreditText");
 		countrybit.AuthorsCreditFont = std::make_shared<textStyleRequest>(text_style);
-		countrybit.AuthorsCreditFont->fontName = "Old Newspaper font,Georgia,Courier New";
+		countrybit.AuthorsCreditFont->fontName = bigFont;
 		countrybit.AuthorsCreditFont->fontSize = 16;
 		countrybit.AuthorsCreditFont->bold = false;
 		countrybit.AuthorsCreditFont->horizontal_align = visual_alignment::align_center;

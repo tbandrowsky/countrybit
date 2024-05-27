@@ -178,6 +178,10 @@ namespace corona
 
 		void update(std::shared_ptr<data_lake> _lake, double _elapsedSeconds, double _totalSeconds)
 		{
+			if (root) 
+			{
+				root->on_update(_elapsedSeconds);
+			}
 			if (update_event) 
 			{
 				update_event(this, _elapsedSeconds, _totalSeconds);
