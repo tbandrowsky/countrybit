@@ -1,4 +1,4 @@
-
+﻿
 #ifndef APP_AURA_H
 #define APP_AURA_H
 
@@ -241,7 +241,7 @@ namespace corona
 					_cb.image_control_id = IDC_COMPANY_LOGO;
 					_cb.image_file = "small_logo.png";
 					_cb.subtitle_name = "  by TJ Bandrowsky for Country Video Games";
-					_cb.title_name = "  COLOR PARTY";
+					_cb.title_name = "  CountryVideogames.com - COLOR PARTY";
 					_cb.background_brush = st->CaptionBackgroundBrush;
 					_cb.border_brush = st->CaptionBorderBrush;
 					*ptitle_id = _cb.title_id;
