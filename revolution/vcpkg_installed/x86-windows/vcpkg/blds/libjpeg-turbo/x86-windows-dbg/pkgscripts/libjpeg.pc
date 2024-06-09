@@ -1,0 +1,10 @@
+prefix=D:/countrybit/revolution/vcpkg_installed/x86-windows/vcpkg/pkgs/libjpeg-turbo_x86-windows/debug
+exec_prefix=D:/countrybit/revolution/vcpkg_installed/x86-windows/vcpkg/pkgs/libjpeg-turbo_x86-windows/debug
+libdir=D:/countrybit/revolution/vcpkg_installed/x86-windows/vcpkg/pkgs/libjpeg-turbo_x86-windows/debug/lib
+includedir=D:/countrybit/revolution/vcpkg_installed/x86-windows/vcpkg/pkgs/libjpeg-turbo_x86-windows/debug/include
+
+Name: libjpeg
+Description: A SIMD-accelerated JPEG codec that provides the libjpeg API
+Version: 3.0.2
+Libs: -L${libdir} -ljpeg
+Cflags: -I${includedir}

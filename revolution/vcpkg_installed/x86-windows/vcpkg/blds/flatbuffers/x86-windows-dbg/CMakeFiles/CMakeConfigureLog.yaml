@@ -1,0 +1,149 @@
+
+---
+events:
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Users/toddb/AppData/Local/vcpkg/downloads/tools/cmake-3.27.1-windows/cmake-3.27.1-windows-i386/share/cmake-3.27/Modules/CMakeDetermineSystem.cmake:206 (message)"
+      - "CMakeLists.txt:7 (project)"
+    message: |
+      The target system is: Windows - 10.0.22621 - x86
+      The host system is: Windows - 10.0.22621 - AMD64
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Users/toddb/AppData/Local/vcpkg/downloads/tools/cmake-3.27.1-windows/cmake-3.27.1-windows-i386/share/cmake-3.27/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
+      - "C:/Users/toddb/AppData/Local/vcpkg/downloads/tools/cmake-3.27.1-windows/cmake-3.27.1-windows-i386/share/cmake-3.27/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
+      - "C:/Users/toddb/AppData/Local/vcpkg/downloads/tools/cmake-3.27.1-windows/cmake-3.27.1-windows-i386/share/cmake-3.27/Modules/CMakeDetermineCXXCompiler.cmake:126 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "CMakeLists.txt:7 (project)"
+    message: |
+      Compiling the CXX compiler identification source file "CMakeCXXCompilerId.cpp" succeeded.
+      Compiler: C:/Program Files/Microsoft Visual Studio/2022/Professional/VC/Tools/MSVC/14.39.33519/bin/Hostx64/x86/cl.exe 
+      Build flags: /nologo;/DWIN32;/D_WINDOWS;/W3;/utf-8;/GR;/EHsc;/MP
+      Id flags:  
+      
+      The output was:
+      0
+      CMakeCXXCompilerId.cpp
+      
+      
+      Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "CMakeCXXCompilerId.exe"
+      
+      Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "CMakeCXXCompilerId.obj"
+      
+      The CXX compiler identification is MSVC, found in:
+        D:/countrybit/revolution/vcpkg_installed/x86-windows/vcpkg/blds/flatbuffers/x86-windows-dbg/CMakeFiles/3.27.1/CompilerIdCXX/CMakeCXXCompilerId.exe
+      
+  -
+    kind: "message-v1"
+    backtrace:
+      - "C:/Users/toddb/AppData/Local/vcpkg/downloads/tools/cmake-3.27.1-windows/cmake-3.27.1-windows-i386/share/cmake-3.27/Modules/CMakeDetermineCompilerId.cmake:1158 (message)"
+      - "C:/Users/toddb/AppData/Local/vcpkg/downloads/tools/cmake-3.27.1-windows/cmake-3.27.1-windows-i386/share/cmake-3.27/Modules/CMakeDetermineCompilerId.cmake:221 (CMAKE_DETERMINE_MSVC_SHOWINCLUDES_PREFIX)"
+      - "C:/Users/toddb/AppData/Local/vcpkg/downloads/tools/cmake-3.27.1-windows/cmake-3.27.1-windows-i386/share/cmake-3.27/Modules/CMakeDetermineCXXCompiler.cmake:126 (CMAKE_DETERMINE_COMPILER_ID)"
+      - "CMakeLists.txt:7 (project)"
+    message: |
+      Detecting CXX compiler /showIncludes prefix:
+        main.c
+        Note: including file: D:\\countrybit\\revolution\\vcpkg_installed\\x86-windows\\vcpkg\\blds\\flatbuffers\\x86-windows-dbg\\CMakeFiles\\ShowIncludes\\foo.h
+        
+      Found prefix "Note: including file: "
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Users/toddb/AppData/Local/vcpkg/downloads/tools/cmake-3.27.1-windows/cmake-3.27.1-windows-i386/share/cmake-3.27/Modules/CMakeDetermineCompilerABI.cmake:57 (try_compile)"
+      - "C:/Users/toddb/AppData/Local/vcpkg/downloads/tools/cmake-3.27.1-windows/cmake-3.27.1-windows-i386/share/cmake-3.27/Modules/CMakeTestCXXCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
+      - "CMakeLists.txt:7 (project)"
+    checks:
+      - "Detecting CXX compiler ABI info"
+    directories:
+      source: "D:/countrybit/revolution/vcpkg_installed/x86-windows/vcpkg/blds/flatbuffers/x86-windows-dbg/CMakeFiles/CMakeScratch/TryCompile-rtgg8a"
+      binary: "D:/countrybit/revolution/vcpkg_installed/x86-windows/vcpkg/blds/flatbuffers/x86-windows-dbg/CMakeFiles/CMakeScratch/TryCompile-rtgg8a"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: " /nologo /DWIN32 /D_WINDOWS /W3 /utf-8 /GR /EHsc /MP "
+      CMAKE_CXX_FLAGS_DEBUG: "/D_DEBUG /MDd /Z7 /Ob0 /Od /RTC1 "
+      CMAKE_EXE_LINKER_FLAGS: "/machine:X86"
+      CMAKE_MSVC_DEBUG_INFORMATION_FORMAT: ""
+      CMAKE_MSVC_RUNTIME_LIBRARY: "MultiThreaded$<$<CONFIG:Debug>:Debug>$<$<STREQUAL:dynamic,dynamic>:DLL>"
+      VCPKG_APPLOCAL_DEPS: "OFF"
+      VCPKG_CHAINLOAD_TOOLCHAIN_FILE: "C:/Program Files/Microsoft Visual Studio/2022/Professional/VC/vcpkg/scripts/toolchains/windows.cmake"
+      VCPKG_TARGET_ARCHITECTURE: "x86"
+      VCPKG_TARGET_TRIPLET: "x86-windows"
+      Z_VCPKG_ROOT_DIR: "C:/Program Files/Microsoft Visual Studio/2022/Professional/VC/vcpkg"
+    buildResult:
+      variable: "CMAKE_CXX_ABI_COMPILED"
+      cached: true
+      stdout: |
+        Change Dir: 'D:/countrybit/revolution/vcpkg_installed/x86-windows/vcpkg/blds/flatbuffers/x86-windows-dbg/CMakeFiles/CMakeScratch/TryCompile-rtgg8a'
+        
+        Run Build Command(s): "C:/Program Files/Microsoft Visual Studio/2022/Professional/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe" -v cmTC_8a62a
+        [1/2] C:\\PROGRA~1\\MIB055~1\\2022\\PROFES~1\\VC\\Tools\\MSVC\\1439~1.335\\bin\\Hostx64\\x86\\cl.exe  /nologo /TP   /nologo /DWIN32 /D_WINDOWS /W3 /utf-8 /GR /EHsc /MP   /D_DEBUG /MDd /Z7 /Ob0 /Od /RTC1  -MDd /showIncludes /FoCMakeFiles\\cmTC_8a62a.dir\\CMakeCXXCompilerABI.cpp.obj /FdCMakeFiles\\cmTC_8a62a.dir\\ /FS -c C:\\Users\\toddb\\AppData\\Local\\vcpkg\\downloads\\tools\\cmake-3.27.1-windows\\cmake-3.27.1-windows-i386\\share\\cmake-3.27\\Modules\\CMakeCXXCompilerABI.cpp
+        [2/2] cmd.exe /C "cd . && C:\\Users\\toddb\\AppData\\Local\\vcpkg\\downloads\\tools\\cmake-3.27.1-windows\\cmake-3.27.1-windows-i386\\bin\\cmake.exe -E vs_link_exe --intdir=CMakeFiles\\cmTC_8a62a.dir --rc=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100226~1.0\\x64\\rc.exe --mt=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100226~1.0\\x64\\mt.exe --manifests  -- C:\\PROGRA~1\\MIB055~1\\2022\\PROFES~1\\VC\\Tools\\MSVC\\1439~1.335\\bin\\Hostx64\\x86\\link.exe /nologo CMakeFiles\\cmTC_8a62a.dir\\CMakeCXXCompilerABI.cpp.obj  /out:cmTC_8a62a.exe /implib:cmTC_8a62a.lib /pdb:cmTC_8a62a.pdb /version:0.0 /machine:X86  /debug /INCREMENTAL /subsystem:console  kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib && cd ."
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Users/toddb/AppData/Local/vcpkg/downloads/tools/cmake-3.27.1-windows/cmake-3.27.1-windows-i386/share/cmake-3.27/Modules/CheckSymbolExists.cmake:140 (try_compile)"
+      - "C:/Users/toddb/AppData/Local/vcpkg/downloads/tools/cmake-3.27.1-windows/cmake-3.27.1-windows-i386/share/cmake-3.27/Modules/CheckCXXSymbolExists.cmake:72 (__CHECK_SYMBOL_EXISTS_IMPL)"
+      - "CMakeLists.txt:102 (check_cxx_symbol_exists)"
+    checks:
+      - "Looking for _strtof_l"
+    directories:
+      source: "D:/countrybit/revolution/vcpkg_installed/x86-windows/vcpkg/blds/flatbuffers/x86-windows-dbg/CMakeFiles/CMakeScratch/TryCompile-8fd599"
+      binary: "D:/countrybit/revolution/vcpkg_installed/x86-windows/vcpkg/blds/flatbuffers/x86-windows-dbg/CMakeFiles/CMakeScratch/TryCompile-8fd599"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: " /nologo /DWIN32 /D_WINDOWS /W3 /utf-8 /GR /EHsc /MP "
+      CMAKE_CXX_FLAGS_DEBUG: "/D_DEBUG /MDd /Z7 /Ob0 /Od /RTC1 "
+      CMAKE_EXE_LINKER_FLAGS: "/machine:X86"
+      CMAKE_MSVC_DEBUG_INFORMATION_FORMAT: ""
+      CMAKE_MSVC_RUNTIME_LIBRARY: "MultiThreaded$<$<CONFIG:Debug>:Debug>$<$<STREQUAL:dynamic,dynamic>:DLL>"
+      VCPKG_APPLOCAL_DEPS: "OFF"
+      VCPKG_CHAINLOAD_TOOLCHAIN_FILE: "C:/Program Files/Microsoft Visual Studio/2022/Professional/VC/vcpkg/scripts/toolchains/windows.cmake"
+      VCPKG_TARGET_ARCHITECTURE: "x86"
+      VCPKG_TARGET_TRIPLET: "x86-windows"
+      Z_VCPKG_ROOT_DIR: "C:/Program Files/Microsoft Visual Studio/2022/Professional/VC/vcpkg"
+    buildResult:
+      variable: "FLATBUFFERS_HAS_STRTOF_L"
+      cached: true
+      stdout: |
+        Change Dir: 'D:/countrybit/revolution/vcpkg_installed/x86-windows/vcpkg/blds/flatbuffers/x86-windows-dbg/CMakeFiles/CMakeScratch/TryCompile-8fd599'
+        
+        Run Build Command(s): "C:/Program Files/Microsoft Visual Studio/2022/Professional/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe" -v cmTC_00f95
+        [1/2] C:\\PROGRA~1\\MIB055~1\\2022\\PROFES~1\\VC\\Tools\\MSVC\\1439~1.335\\bin\\Hostx64\\x86\\cl.exe  /nologo /TP   /nologo /DWIN32 /D_WINDOWS /W3 /utf-8 /GR /EHsc /MP   /D_DEBUG /MDd /Z7 /Ob0 /Od /RTC1  -MDd /showIncludes /FoCMakeFiles\\cmTC_00f95.dir\\CheckSymbolExists.cxx.obj /FdCMakeFiles\\cmTC_00f95.dir\\ /FS -c D:\\countrybit\\revolution\\vcpkg_installed\\x86-windows\\vcpkg\\blds\\flatbuffers\\x86-windows-dbg\\CMakeFiles\\CMakeScratch\\TryCompile-8fd599\\CheckSymbolExists.cxx
+        [2/2] cmd.exe /C "cd . && C:\\Users\\toddb\\AppData\\Local\\vcpkg\\downloads\\tools\\cmake-3.27.1-windows\\cmake-3.27.1-windows-i386\\bin\\cmake.exe -E vs_link_exe --intdir=CMakeFiles\\cmTC_00f95.dir --rc=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100226~1.0\\x64\\rc.exe --mt=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100226~1.0\\x64\\mt.exe --manifests  -- C:\\PROGRA~1\\MIB055~1\\2022\\PROFES~1\\VC\\Tools\\MSVC\\1439~1.335\\bin\\Hostx64\\x86\\link.exe /nologo CMakeFiles\\cmTC_00f95.dir\\CheckSymbolExists.cxx.obj  /out:cmTC_00f95.exe /implib:cmTC_00f95.lib /pdb:cmTC_00f95.pdb /version:0.0 /machine:X86  /debug /INCREMENTAL /subsystem:console  kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib && cd ."
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "C:/Users/toddb/AppData/Local/vcpkg/downloads/tools/cmake-3.27.1-windows/cmake-3.27.1-windows-i386/share/cmake-3.27/Modules/CheckSymbolExists.cmake:140 (try_compile)"
+      - "C:/Users/toddb/AppData/Local/vcpkg/downloads/tools/cmake-3.27.1-windows/cmake-3.27.1-windows-i386/share/cmake-3.27/Modules/CheckCXXSymbolExists.cmake:72 (__CHECK_SYMBOL_EXISTS_IMPL)"
+      - "CMakeLists.txt:103 (check_cxx_symbol_exists)"
+    checks:
+      - "Looking for _strtoui64_l"
+    directories:
+      source: "D:/countrybit/revolution/vcpkg_installed/x86-windows/vcpkg/blds/flatbuffers/x86-windows-dbg/CMakeFiles/CMakeScratch/TryCompile-l24i0p"
+      binary: "D:/countrybit/revolution/vcpkg_installed/x86-windows/vcpkg/blds/flatbuffers/x86-windows-dbg/CMakeFiles/CMakeScratch/TryCompile-l24i0p"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: " /nologo /DWIN32 /D_WINDOWS /W3 /utf-8 /GR /EHsc /MP "
+      CMAKE_CXX_FLAGS_DEBUG: "/D_DEBUG /MDd /Z7 /Ob0 /Od /RTC1 "
+      CMAKE_EXE_LINKER_FLAGS: "/machine:X86"
+      CMAKE_MSVC_DEBUG_INFORMATION_FORMAT: ""
+      CMAKE_MSVC_RUNTIME_LIBRARY: "MultiThreaded$<$<CONFIG:Debug>:Debug>$<$<STREQUAL:dynamic,dynamic>:DLL>"
+      VCPKG_APPLOCAL_DEPS: "OFF"
+      VCPKG_CHAINLOAD_TOOLCHAIN_FILE: "C:/Program Files/Microsoft Visual Studio/2022/Professional/VC/vcpkg/scripts/toolchains/windows.cmake"
+      VCPKG_TARGET_ARCHITECTURE: "x86"
+      VCPKG_TARGET_TRIPLET: "x86-windows"
+      Z_VCPKG_ROOT_DIR: "C:/Program Files/Microsoft Visual Studio/2022/Professional/VC/vcpkg"
+    buildResult:
+      variable: "FLATBUFFERS_HAS_STRTOULL_L"
+      cached: true
+      stdout: |
+        Change Dir: 'D:/countrybit/revolution/vcpkg_installed/x86-windows/vcpkg/blds/flatbuffers/x86-windows-dbg/CMakeFiles/CMakeScratch/TryCompile-l24i0p'
+        
+        Run Build Command(s): "C:/Program Files/Microsoft Visual Studio/2022/Professional/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe" -v cmTC_3f3bf
+        [1/2] C:\\PROGRA~1\\MIB055~1\\2022\\PROFES~1\\VC\\Tools\\MSVC\\1439~1.335\\bin\\Hostx64\\x86\\cl.exe  /nologo /TP   /nologo /DWIN32 /D_WINDOWS /W3 /utf-8 /GR /EHsc /MP   /D_DEBUG /MDd /Z7 /Ob0 /Od /RTC1  -MDd /showIncludes /FoCMakeFiles\\cmTC_3f3bf.dir\\CheckSymbolExists.cxx.obj /FdCMakeFiles\\cmTC_3f3bf.dir\\ /FS -c D:\\countrybit\\revolution\\vcpkg_installed\\x86-windows\\vcpkg\\blds\\flatbuffers\\x86-windows-dbg\\CMakeFiles\\CMakeScratch\\TryCompile-l24i0p\\CheckSymbolExists.cxx
+        [2/2] cmd.exe /C "cd . && C:\\Users\\toddb\\AppData\\Local\\vcpkg\\downloads\\tools\\cmake-3.27.1-windows\\cmake-3.27.1-windows-i386\\bin\\cmake.exe -E vs_link_exe --intdir=CMakeFiles\\cmTC_3f3bf.dir --rc=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100226~1.0\\x64\\rc.exe --mt=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100226~1.0\\x64\\mt.exe --manifests  -- C:\\PROGRA~1\\MIB055~1\\2022\\PROFES~1\\VC\\Tools\\MSVC\\1439~1.335\\bin\\Hostx64\\x86\\link.exe /nologo CMakeFiles\\cmTC_3f3bf.dir\\CheckSymbolExists.cxx.obj  /out:cmTC_3f3bf.exe /implib:cmTC_3f3bf.lib /pdb:cmTC_3f3bf.pdb /version:0.0 /machine:X86  /debug /INCREMENTAL /subsystem:console  kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib && cd ."
+        
+      exitCode: 0
+...

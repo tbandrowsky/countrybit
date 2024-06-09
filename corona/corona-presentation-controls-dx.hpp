@@ -307,145 +307,47 @@ namespace corona
 						auto& context = pwindow->getContext();
 						ID2D1DeviceContext* dc = context.getDeviceContext();
 
+						double xmag = {}, ymag = {};
+						double mag = {};
+						D2D1_RECT_F dest_rect = {};
+						bool size_inited = false;
+
 						ID2D1Bitmap1* cbm = delta_boi.get_frame(dc);
 						if (cbm) {
 
-							D2D1_RECT_F dest_rect;
-
 							auto surface_size = cbm->GetSize();
 
-							double xmag = (draw_bounds.w / surface_size.width);
-							double ymag = (draw_bounds.h / surface_size.height);
+							xmag = (draw_bounds.w / surface_size.width);
+							ymag = (draw_bounds.h / surface_size.height);
 
 							if (xmag > ymag) 
 							{
-								dest_rect.left = draw_bounds.x;
-								dest_rect.top = draw_bounds.y;
-								dest_rect.right = surface_size.width * xmag;
-								dest_rect.bottom = surface_size.height * xmag;
+								mag = xmag;
 							}
 							else 
 							{
-								dest_rect.left = draw_bounds.x;
-								dest_rect.top = draw_bounds.y;
-								dest_rect.right = surface_size.width * ymag;
-								dest_rect.bottom = surface_size.height * ymag;
+								mag = ymag;
 							}
+
+							dest_rect.left = draw_bounds.x;
+							dest_rect.top = draw_bounds.y;
+							dest_rect.right = surface_size.width * mag;
+							dest_rect.bottom = surface_size.height * mag;
 
 							dc->DrawBitmap(cbm, &dest_rect, 1.0);
 
 							cbm->Release();
+							size_inited = true;
 						}
 
 						sprinkle_buffer new_sprinkles;
 						ID2D1Bitmap1* dbm = delta_boi.get_activation(dc, new_sprinkles);
 						add_sprinkles(new_sprinkles);
 
-						if (dbm) {
-
-							D2D1_RECT_F dest_rect;
-
-							auto surface_size = dbm->GetSize();
-
-							double xmag = (draw_bounds.w / surface_size.width);
-							double ymag = (draw_bounds.h / surface_size.height);
-
-							if (xmag > ymag)
-							{
-								dest_rect.left = draw_bounds.x;
-								dest_rect.top = draw_bounds.y;
-								dest_rect.right = surface_size.width * xmag;
-								dest_rect.bottom = surface_size.height * xmag;
-							}
-							else
-							{
-								dest_rect.left = draw_bounds.x;
-								dest_rect.top = draw_bounds.y;
-								dest_rect.right = surface_size.width * ymag;
-								dest_rect.bottom = surface_size.height * ymag;
-							}
-
+						if (size_inited && dbm) 
+						{
 							dc->DrawBitmap(dbm, &dest_rect, 1.0);
-
 							dbm->Release();
-						}
-
-						// sometimes you just cheat when you are on a tear for a check
-
-						point scale;
-						scale.x = draw_bounds.w / 128.0;
-						scale.y = draw_bounds.h / 128.0;
-						scale.z = 1.0;
-
-						if (false) {
-
-							radialGradientBrushRequest rgbr;
-							for (int colorbits = 0; colorbits < 5; colorbits++) {
-								rgbr.name = "SprinkleFill" + std::to_string(colorbits);
-
-								rgbr.center = rectangle_math::center(draw_bounds);
-								rgbr.radiusX = draw_bounds.w / 2;
-								rgbr.radiusY = draw_bounds.h / 2;
-								rgbr.offset = {};
-								rgbr.size = { draw_bounds.w, draw_bounds.h };
-
-								if (colorbits == 0) {
-									rgbr.gradientStops = {
-										{ toColor("#F9A6020F"), 0.0 },
-										{ toColor("#F9A6026F"), 1.0 }
-									};
-
-								}
-								else if (colorbits == 1)
-								{
-									rgbr.gradientStops = {
-										{ toColor("#0000FF0F"), 0.0 },
-										{ toColor("#0000FF7F"), 1.0 }
-									};
-								}
-								else if (colorbits == 2)
-								{
-									rgbr.gradientStops = {
-										{ toColor("#00FF000F"), 0.0 },
-										{ toColor("#00FF007F"), 1.0 }
-									};
-								}
-								else if (colorbits == 3)
-								{
-
-									rgbr.gradientStops = {
-										{ toColor("#FF00000F"), 0.0 },
-										{ toColor("#FF00007F"), 1.0 }
-									};
-								}
-								else
-								{
-
-									rgbr.gradientStops = {
-										{ toColor("#F900000F"), 0.0 },
-										{ toColor("#F900007F"), 1.0 }
-									};
-								}
-
-								generalBrushRequest br(rgbr);
-								context.setBrush(&br);
-							}
-
-							for (int ispr = 0; ispr < current_sprinkles.get_size(); ispr++)
-							{
-								auto& spr = current_sprinkles.get(ispr);
-
-								spr.velocity += spr.acceleration;
-								spr.current += spr.velocity;
-
-								point sprpos = scale * spr.current;
-								ccolor cstart, cstop;
-
-								point radius;
-								radius.x = radius.y = 20 * abs(100.0 - spr.current.y) / draw_bounds.h;
-								std::string brushName = "SprinkleFill" + std::to_string(ispr % 5);
-								context.drawEllipse(&sprpos, &radius, "", 0, brushName);
-							}
 						}
 					}
 				}
@@ -617,6 +519,7 @@ namespace corona
 					if (SUCCEEDED(hr))
 					{
 						if (major_type == MFMediaType_Video) {
+						
 							hr = MFGetAttributeSize(pType, MF_MT_FRAME_SIZE, &feed_width, &feed_height);
 							if (SUCCEEDED(hr))
 							{
@@ -801,7 +704,8 @@ namespace corona
 					return hr;
 				}
 			}
-			else {
+			else 
+			{
 				std::cout << "Couldn't get the native media type for the camera" << std::endl;
 			}
 		}
@@ -1000,19 +904,6 @@ namespace corona
 		}
 	};
 
-	class movement_box_instance
-	{
-	public:
-
-		movement_box	 box;
-		int64_t			 frame_last_detected;
-		int64_t			 frame_first_detected;
-
-		movement_box_instance()
-		{
-			;
-		}
-	};
 
 	class camera_view_control :
 		public draw_control
@@ -1023,7 +914,6 @@ namespace corona
 	public:
 
 		int64_t frame_counter;
-		std::map<std::string, movement_box_instance> boxes;
 
 		int	camera_control_id;
 
@@ -1710,43 +1600,6 @@ namespace corona
 							{
 								auto movement_boxes = cam->get_movement_boxes();
 
-								for (auto source_box : movement_boxes) 
-								{
-									/// frame_counter % 4 meanns the hash is crap
-									std::string box_hash = source_box.image_hash + std::to_string(frame_counter % 8);
-									if (boxes.contains(box_hash)) 
-									{
-										auto& bx = boxes[source_box.image_hash];
-										bx.frame_last_detected = frame_counter;
-										bx.box = source_box;
-									}
-									else {
-										movement_box_instance mbnew;
-										mbnew.frame_first_detected = frame_counter;
-										mbnew.frame_last_detected = frame_counter;
-										mbnew.box = source_box;
-										boxes.insert_or_assign(box_hash, mbnew);
-									}
-								}
-
-								std::vector<movement_box_instance> display_list;
-
-								for (auto& mbi : boxes)
-								{
-									auto& mb = mbi.second;
-									int64_t delay = frame_counter - mb.frame_last_detected;
-									if (frame_counter > 10 && delay < 60)
-									{
-										display_list.push_back(mb);
-									}
-								}
-
-								std::sort(display_list.begin(), display_list.end(), [](movement_box_instance& a, movement_box_instance& b) {
-									int r = b.box.area.x - a.box.area.x;
-									if (!r) r = b.box.area.y - a.box.area.y;
-									return r;
-									});
-
 								rectangle dest_box;
 								dest_box.x = draw_bounds.x;
 								dest_box.y = draw_bounds.y;
@@ -1754,31 +1607,25 @@ namespace corona
 								if (dest_box.w < 0)
 									return;
 
-								for (int i = 0; i < display_list.size() && i < 4; i++)
+								for (int i = 0; i < movement_boxes.size() && i < 4; i++)
 								{
-									auto source_box = display_list[i];
-									dest_box.h = dest_box.w / source_box.box.area.w * source_box.box.area.h;
+									auto source_box = movement_boxes[i];
+									dest_box.h = dest_box.w / source_box.area.w * source_box.area.h;
 
 									D2D1_RECT_F source_rect;
 									D2D1_RECT_F dest_rect;
 
-									source_rect.left = source_box.box.area.x;
-									source_rect.top = source_box.box.area.y;
-									source_rect.right = source_box.box.area.right();
-									source_rect.bottom = source_box.box.area.bottom();
+									source_rect.left = source_box.area.x;
+									source_rect.top = source_box.area.y;
+									source_rect.right = source_box.area.right();
+									source_rect.bottom = source_box.area.bottom();
 
 									dest_rect.left = dest_box.x;
 									dest_rect.top = dest_box.y;
 									dest_rect.right = dest_box.right();
 									dest_rect.bottom = dest_box.bottom();
 
-									double opacity = 60 - (frame_counter - source_box.frame_last_detected);
-									if (opacity < 0) {
-										opacity = 0;
-									}
-									opacity /= 60.0;
-
-									dc->DrawBitmap(bm, &dest_rect, opacity, D2D1_BITMAP_INTERPOLATION_MODE::D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, &source_rect);
+									dc->DrawBitmap(bm, &dest_rect, 1.0, D2D1_BITMAP_INTERPOLATION_MODE::D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, &source_rect);
 
 									dest_box.x += dest_box.w + padding_amount.x;
 

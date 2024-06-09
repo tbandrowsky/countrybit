@@ -1,0 +1,12 @@
+prefix=D:/countrybit/revolution/vcpkg_installed/x86-windows/vcpkg/pkgs/libpng_x86-windows/debug
+exec_prefix=D:/countrybit/revolution/vcpkg_installed/x86-windows/vcpkg/pkgs/libpng_x86-windows/debug
+libdir=D:/countrybit/revolution/vcpkg_installed/x86-windows/vcpkg/pkgs/libpng_x86-windows/debug/lib
+includedir=D:/countrybit/revolution/vcpkg_installed/x86-windows/vcpkg/pkgs/libpng_x86-windows/debug/include/libpng16
+
+Name: libpng
+Description: Loads and saves PNG files
+Version: 1.6.43
+Requires.private: zlib
+Libs: -L${libdir} -lpng16
+Libs.private: 
+Cflags: -I${includedir}

@@ -1,0 +1,7 @@
+D:/countrybit/revolution/vcpkg_installed/x86-windows/vcpkg/blds/zlib/x86-windows-rel/CMakeFiles/zlib.dir
+D:/countrybit/revolution/vcpkg_installed/x86-windows/vcpkg/blds/zlib/x86-windows-rel/CMakeFiles/test.dir
+D:/countrybit/revolution/vcpkg_installed/x86-windows/vcpkg/blds/zlib/x86-windows-rel/CMakeFiles/edit_cache.dir
+D:/countrybit/revolution/vcpkg_installed/x86-windows/vcpkg/blds/zlib/x86-windows-rel/CMakeFiles/rebuild_cache.dir
+D:/countrybit/revolution/vcpkg_installed/x86-windows/vcpkg/blds/zlib/x86-windows-rel/CMakeFiles/list_install_components.dir
+D:/countrybit/revolution/vcpkg_installed/x86-windows/vcpkg/blds/zlib/x86-windows-rel/CMakeFiles/install.dir
+D:/countrybit/revolution/vcpkg_installed/x86-windows/vcpkg/blds/zlib/x86-windows-rel/CMakeFiles/install/local.dir

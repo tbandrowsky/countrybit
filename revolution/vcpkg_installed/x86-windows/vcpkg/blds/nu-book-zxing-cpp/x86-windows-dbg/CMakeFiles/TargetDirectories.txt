@@ -1,0 +1,13 @@
+D:/countrybit/revolution/vcpkg_installed/x86-windows/vcpkg/blds/nu-book-zxing-cpp/x86-windows-dbg/CMakeFiles/test.dir
+D:/countrybit/revolution/vcpkg_installed/x86-windows/vcpkg/blds/nu-book-zxing-cpp/x86-windows-dbg/CMakeFiles/edit_cache.dir
+D:/countrybit/revolution/vcpkg_installed/x86-windows/vcpkg/blds/nu-book-zxing-cpp/x86-windows-dbg/CMakeFiles/rebuild_cache.dir
+D:/countrybit/revolution/vcpkg_installed/x86-windows/vcpkg/blds/nu-book-zxing-cpp/x86-windows-dbg/CMakeFiles/list_install_components.dir
+D:/countrybit/revolution/vcpkg_installed/x86-windows/vcpkg/blds/nu-book-zxing-cpp/x86-windows-dbg/CMakeFiles/install.dir
+D:/countrybit/revolution/vcpkg_installed/x86-windows/vcpkg/blds/nu-book-zxing-cpp/x86-windows-dbg/CMakeFiles/install/local.dir
+D:/countrybit/revolution/vcpkg_installed/x86-windows/vcpkg/blds/nu-book-zxing-cpp/x86-windows-dbg/core/CMakeFiles/ZXing.dir
+D:/countrybit/revolution/vcpkg_installed/x86-windows/vcpkg/blds/nu-book-zxing-cpp/x86-windows-dbg/core/CMakeFiles/test.dir
+D:/countrybit/revolution/vcpkg_installed/x86-windows/vcpkg/blds/nu-book-zxing-cpp/x86-windows-dbg/core/CMakeFiles/edit_cache.dir
+D:/countrybit/revolution/vcpkg_installed/x86-windows/vcpkg/blds/nu-book-zxing-cpp/x86-windows-dbg/core/CMakeFiles/rebuild_cache.dir
+D:/countrybit/revolution/vcpkg_installed/x86-windows/vcpkg/blds/nu-book-zxing-cpp/x86-windows-dbg/core/CMakeFiles/list_install_components.dir
+D:/countrybit/revolution/vcpkg_installed/x86-windows/vcpkg/blds/nu-book-zxing-cpp/x86-windows-dbg/core/CMakeFiles/install.dir
+D:/countrybit/revolution/vcpkg_installed/x86-windows/vcpkg/blds/nu-book-zxing-cpp/x86-windows-dbg/core/CMakeFiles/install/local.dir

@@ -61,6 +61,20 @@ namespace corona
 		rectangle	area;
 	};
 
+	class movement_box_instance
+	{
+	public:
+
+		movement_box	 box;
+		int64_t			 frame_last_detected;
+		int64_t			 frame_first_detected;
+
+		movement_box_instance()
+		{
+			;
+		}
+	};
+
 	template <typename pixel_type> hsl to_hsl(pixel_type _pt)
 	{
 		rgb rx;
@@ -417,10 +431,6 @@ namespace corona
 		double	total_color_seconds;
 		double	total_cycle_seconds;
 
-		timer	sprinkle_timer;
-		int		sprinkle_counter;
-		double	last_sprinkle_seconds;
-		double	total_sprinkle_seconds;
 
 		pixel_frame<signal_pixel> activation_frame;
 		pixel_frame<bgra32_pixel> last_frame;
@@ -442,6 +452,8 @@ namespace corona
 		std::uniform_real_distribution<double> color_distribution;
 		std::uniform_real_distribution<double> color_cycle_distribution;
 
+		std::map<std::string, movement_box> boxes;
+
 		delta_frame() : activation_frame(256, 256), 
 			color_distribution(.0, 1.0),
 			color_cycle_distribution(0.0, .1),
@@ -460,8 +472,8 @@ namespace corona
 			lum_detection_threshold = .1;
 			activation_area_percentage = .3;
 			detection_pulse = .8;
-			detection_cooldown = .020;
-			motion_spacing = 16;
+			detection_cooldown = .040;
+			motion_spacing = 8;
 			color_cycle_start = {};
 			init_color_cycle();
 			next_color_cycle();
@@ -474,17 +486,8 @@ namespace corona
 
 			ID2D1Bitmap1* new_bitmap;
 
-			bool sprinkle_enable = false;
 
-			sprinkle_counter++;
-			last_sprinkle_seconds = sprinkle_timer.get_elapsed_seconds();
-			total_sprinkle_seconds += last_sprinkle_seconds;
-			if (total_sprinkle_seconds > 1/4.0) {
-				sprinkle_enable = true;
-				total_sprinkle_seconds = 0.0;
-			}
-
-			new_bitmap = activation_frame.get_bitmap(_context, [sprinkle_enable, this, &_sprinkles](int x, int y, signal_pixel src)->bgra32_pixel {
+			new_bitmap = activation_frame.get_bitmap(_context, [this, &_sprinkles](int x, int y, signal_pixel src)->bgra32_pixel {
 
 				bgra32_pixel temp = {};
 				ccolor root_color;
@@ -512,27 +515,13 @@ namespace corona
 				temp.g = root_color.g * temp.a;
 				temp.r = root_color.r * temp.a;
 
-				if (src.activated)
-				{
-
-					sprinkle new_sprinkle;
-					new_sprinkle.acceleration.x = 0.00;
-					new_sprinkle.acceleration.y = -0.02;
-					new_sprinkle.acceleration.z = 0.00;
-					new_sprinkle.velocity.x = 0.00;
-					new_sprinkle.velocity.y = 0.0;
-					new_sprinkle.velocity.z = 0.00;
-					new_sprinkle.current.x = x;
-					new_sprinkle.current.y = y % 100;
-					new_sprinkle.current.z = 0.00;
-					new_sprinkle.pixel_start = temp;
-					new_sprinkle.pixel_end.b /= 3;
-					new_sprinkle.pixel_end.r /= 3;
-					new_sprinkle.pixel_end.g /= 3;
-					new_sprinkle.pixel_end.a = 0.0;
-					_sprinkles.put(new_sprinkle);
+/*				if (y % 20 < 2) {
+					temp.r = 0;
+					temp.g = 0;
+					temp.b = 128;
+					temp.a = 128;
 				}
-
+*/
 				return temp;
 			});
 
@@ -639,7 +628,7 @@ namespace corona
 
 			pixel_frame<signal_pixel>::cursor c = activation_frame.get_cursor(0, 0);
 
-			int activation_distance = 16;
+			int activation_distance = 8;
 
 			for (signal_pixel* sp = c.first(); sp; sp = c.right())
 			{
