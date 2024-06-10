@@ -316,23 +316,23 @@ namespace corona
 		countrybit.TitleTextBrush->set_name("TitleText");
 		countrybit.TitleFont = std::make_shared<textStyleRequest>(text_style);
 		countrybit.TitleFont->fontName = bigFont;
-		countrybit.TitleFont->fontSize = 48;
+		countrybit.TitleFont->fontSize = 38;
 		countrybit.TitleFont->vertical_align = visual_alignment::align_center;
 		countrybit.TitleFont->name = "TitleFont";
-
+		countrybit.TitleFont->underline = true;
 
 		countrybit.SubtitleBackgroundBrush = std::make_shared<generalBrushRequest>();
 		countrybit.SubtitleBackgroundBrush->set_name("SubtitleBackground");
 		countrybit.SubtitleBorderBrush = std::make_shared<generalBrushRequest>();
 		countrybit.SubtitleBorderBrush->setColor("#FFFFFF");
 		countrybit.SubtitleBorderBrush->set_name("SubtitleBorder");
-		countrybit.SubtitleBorderWidth = 4;
+		countrybit.SubtitleBorderWidth = 0;
 		countrybit.SubtitleTextBrush = std::make_shared<generalBrushRequest>();
 		countrybit.SubtitleTextBrush->setColor("#FFFFFF");
 		countrybit.SubtitleTextBrush->set_name("SubtitleText");
 		countrybit.SubtitleFont = std::make_shared<textStyleRequest>(text_style);
 		countrybit.SubtitleFont->fontName = bigFont;
-		countrybit.SubtitleFont->fontSize = 24;
+		countrybit.SubtitleFont->fontSize = 20;
 		countrybit.SubtitleFont->name = "SubtitleFont";
 
 		countrybit.AuthorsCreditBackgroundBrush = std::make_shared<generalBrushRequest>();

@@ -1663,18 +1663,24 @@ namespace corona
 				rl.background_brush = st->CaptionBackgroundBrush;
 				});
 
+			main_row.column_begin(id_counter::next(), [](column_layout& cl) {
+				cl.set_size(10.0_px, 1.0_container);
+				cl.set_content_align(visual_alignment::align_center);
+				});
+
 			auto title_column = main_row.column_begin(id_counter::next(), [](column_layout& cl) {
 				cl.set_size(1.0_remaining, 1.0_container);
 				cl.set_content_align(visual_alignment::align_center);
+				cl.set_item_margin(10.0_px);
 				})
 				.title(title_name, [this](title_control& control) {
 						control.set_nchittest(HTCAPTION);
-						control.set_size(1.0_container, 1.3_fontgr);
+						control.set_size(0.8_container, 1.3_fontgr);
 					}, title_id)
-				.end()
-				.end()
-
-				.end()
+				.subtitle(subtitle_name, [this](subtitle_control& control) {
+						control.set_nchittest(HTCAPTION);
+						control.set_size(0.8_container, 1.3_fontgr);
+					}, subtitle_id)
 			.end();
 
 			auto frame_buttons = main_row.row_begin(id_counter::next(), [](row_layout& rl) {
@@ -1784,7 +1790,7 @@ namespace corona
 				rl.set_item_margin(10.0_px);
 				})
 				.column_begin(id_counter::next(), [](column_layout& cl) {
-					cl.set_content_align(visual_alignment::align_near);
+					cl.set_content_align(visual_alignment::align_center);
 					cl.set_content_cross_align(visual_alignment::align_near);
 					cl.set_size(.3_container, 1.0_container);
 					cl.set_item_margin(0.0_px);

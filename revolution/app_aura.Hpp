@@ -240,8 +240,8 @@ namespace corona
 					_cb.menu_button_id = IDC_SYSTEM_MENU;
 					_cb.image_control_id = IDC_COMPANY_LOGO;
 					_cb.image_file = "small_logo.png";
-					_cb.subtitle_name = "  by TJ Bandrowsky for Country Video Games";
-					_cb.title_name = "  CountryVideogames.com - COLOR PARTY";
+					_cb.subtitle_name = "    BANDROWSKY";
+					_cb.title_name = "  COLOR PARTY";
 					_cb.background_brush = st->CaptionBackgroundBrush;
 					_cb.border_brush = st->CaptionBorderBrush;
 					*ptitle_id = _cb.title_id;
@@ -312,10 +312,10 @@ namespace corona
 						_settings.camera_control_id = id_camera;
 						});
 
-					preview_column.authorscredit("Todd Bandrowsky\nBowling Green KY, USA", 
+					preview_column.authorscredit("By Todd Bandrowsky\nCountry Video Games\nBowling Green KY, USA", 
 						[this](authorscredit_control& _settings) {
 						_settings.set_padding(8.0_px);
-						_settings.set_size(1.0_container,70.0_px);
+						_settings.set_size(1.0_container,100.0_px);
 
 						});
 				}, 
