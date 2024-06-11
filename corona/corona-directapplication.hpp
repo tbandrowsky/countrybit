@@ -681,7 +681,7 @@ namespace corona
 					case EN_UPDATE:
 						currentController->onTextChanged(controlId);
 						break;
-					case CBN_SELCHANGE:
+					case LBN_SELCHANGE:
 					{
 						char window_class[500];
 						if (::RealGetWindowClass(controlWindow, window_class, sizeof(window_class) - 1)) {
@@ -1018,6 +1018,11 @@ namespace corona
 				}
 			}
 			break;
+			case WM_DEVICECHANGE:
+				if (currentController) {
+					currentController->hardwareChanged();
+				}
+				break;
 			case WM_CORONA_RESET:
 			{
 				RECT rect_size;
@@ -1540,7 +1545,7 @@ namespace corona
 	void directApplicationWin32::addListItem(int ddlControlId, const char* _text, int _data)
 	{
 		HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
-		int newItemIndex = (int)::SendMessage(control, LB_ADDSTRING, NULL, (LPARAM)_text);
+		int newItemIndex = (int)::SendMessage(control, LB_INSERTSTRING, (WPARAM)(-1), (LPARAM)_text);
 		if (newItemIndex != LB_ERR) {
 			int err = ::SendMessage(control, LB_SETITEMDATA, newItemIndex, (LPARAM)_data);
 		}

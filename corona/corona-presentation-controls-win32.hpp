@@ -384,7 +384,7 @@ namespace corona
 		list_control_base()
 		{
 			control_base::set_origin(0.0_px, 0.0_px);
-			control_base::set_size(1.0_container, 10.0_fontgr);
+			control_base::set_size(1.0_container, 200.0_px);
 		}
 
 		list_control_base(const list_control_base& _src) : windows_control(_src)
@@ -395,7 +395,7 @@ namespace corona
 		list_control_base(container_control_base* _parent, int _id) : windows_control(_parent, _id)
 		{
 			control_base::set_origin(0.0_px, 0.0_px);
-			control_base::set_size(1.0_container, 10.0_fontgr);
+			control_base::set_size(1.0_container, 200.0_px);
 		}
 
 		virtual std::shared_ptr<control_base> clone()
@@ -411,14 +411,44 @@ namespace corona
 		{
 			if (auto phost = window_host.lock()) {
 				phost->clearListItems(id);
-				for (int i = 0; i < choices.items.size(); i++)
-				{
-					auto c = choices.items.get_element(i);
-					int lid = c[choices.id_field];
-					std::string description = c[choices.text_field];
-					phost->addListItem(id, description, lid);
+				if (choices.items.is_array()) {
+					for (int i = 0; i < choices.items.size(); i++)
+					{
+						auto c = choices.items.get_element(i);
+						int lid = c[choices.id_field];
+						std::string description = c[choices.text_field];
+						phost->addListItem(id, description, lid);
+					}
 				}
 			}
+		}
+
+		virtual json get_data()
+		{
+			json result;
+			if (json_field_name.size() > 0) {
+				json_parser jp;
+				result = jp.create_object();
+
+				if (auto ptr = window_host.lock()) {
+					std::string new_text = ptr->getListSelectedText(id);
+					int index = ptr->getListSelectedIndex(id);
+					int value = ptr->getListSelectedValue(id);
+					result.put_member(json_field_name, new_text);
+				}
+			}
+			return result;
+		}
+
+		virtual json set_data(json _data)
+		{
+			if (_data.has_member(json_field_name)) {
+				std::string text = _data[json_field_name];
+				if (auto ptr = window_host.lock()) {
+					ptr->setListSelectedText(id, text.c_str());
+				}
+			}
+			return _data;
 		}
 
 		void set_list(list_data& _choices)
@@ -470,14 +500,19 @@ namespace corona
 		void data_changed()
 		{
 			if (auto phost = window_host.lock()) {
+				std::string selectedText = phost->getComboSelectedText(id);
 				phost->clearComboItems(id);
-				for (int i = 0; i < choices.items.size(); i++)
+				if (choices.items.is_array()) 
 				{
-					auto element = choices.items.get_element(i);
-					int lid = element[choices.id_field];
-					std::string description = element[choices.text_field];
-					phost->addComboItem(id, description, lid);
+					for (int i = 0; i < choices.items.size(); i++)
+					{
+						auto element = choices.items.get_element(i);
+						int lid = element[choices.id_field];
+						std::string description = element[choices.text_field];
+						phost->addComboItem(id, description, lid);
+					}
 				}
+				phost->setComboSelectedText(id, selectedText);
 			}
 		}
 
@@ -505,6 +540,34 @@ namespace corona
 			data_changed();
 		}
 
+		virtual json get_data()
+		{
+			json result;
+			if (json_field_name.size() > 0) {
+				json_parser jp;
+				result = jp.create_object();
+
+				if (auto ptr = window_host.lock()) {
+					std::string new_text = ptr->getComboSelectedText(id);
+					int index = ptr->getComboSelectedIndex(id);
+					int value = ptr->getComboSelectedValue(id);
+					result.put_member(json_field_name, new_text);
+				}
+			}
+			return result;
+		}
+
+		virtual json set_data(json _data)
+		{
+			if (_data.has_member(json_field_name)) {
+				std::string text = _data[json_field_name];
+				if (auto ptr = window_host.lock()) {
+					ptr->setComboSelectedText(id, text.c_str());
+				}
+			}
+			return _data;
+		}
+
 	};
 
 	const int DefaultWindowStyles = WS_VISIBLE | WS_CHILD | WS_TABSTOP;
@@ -519,7 +582,7 @@ namespace corona
 	const int RadioButtonWindowStyles = WS_VISIBLE | WS_CHILD | WS_TABSTOP | BS_AUTORADIOBUTTON | BS_FLAT | BS_NOTIFY;
 	const int LinkButtonWindowStyles = WS_VISIBLE | WS_CHILD | WS_TABSTOP | BS_COMMANDLINK | BS_FLAT | BS_NOTIFY;
 	const int ListViewWindowsStyles = DefaultWindowStyles | LVS_REPORT | LVS_SINGLESEL | WS_BORDER | WS_VSCROLL;
-	const int ListBoxWindowsStyles = DefaultWindowStyles | WS_BORDER | WS_VSCROLL;
+	const int ListBoxWindowsStyles = DefaultWindowStyles | WS_BORDER | WS_VSCROLL | LBS_NOTIFY;
 
 	class static_control : public text_control_base
 	{

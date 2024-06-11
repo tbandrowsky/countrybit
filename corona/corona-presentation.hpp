@@ -165,6 +165,7 @@ namespace corona {
 		virtual void onTaskComplete(bool _success, ui_task_result_base* _result);
 		virtual void onDataChanged(json _params, data_lake* _api, data_function* _set);
 		virtual void onLogged(data_lake* _api);
+		virtual void hardwareChanged();
 
 		virtual int layout();
 
@@ -846,6 +847,13 @@ namespace corona {
 	{
 		if (auto pg = current_page.lock()) {
 			pg->handle_logged(pg, _api);
+		}
+	}
+
+	void presentation::hardwareChanged()
+	{
+		if (auto pg = current_page.lock()) {
+			pg->hardware_scan();
 		}
 	}
 

@@ -257,6 +257,14 @@ namespace corona
 			}
 		}
 
+		void hardware_scan()
+		{
+			if (root) 
+			{
+				root->hardware_scan();
+			}
+		}
+
 		int get_keyboard_parent(int _control_id)
 		{
 			if (!root) 
@@ -583,11 +591,9 @@ namespace corona
 			scope_lock locker(binding_lock);
 			if (list_changed_events.contains(_control_id)) {
 				auto& ptrx = list_changed_events[_control_id];
-				if (auto temp = ptrx.get()->control.lock()) {
-					evt.control = temp.get();
-					evt.control_id = temp->id;
-					ptrx->on_change(evt);
-				}
+				evt.control = find(_control_id);
+				evt.control_id = _control_id;
+				ptrx->on_change(evt);
 			}
 		}
 

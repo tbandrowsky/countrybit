@@ -628,7 +628,6 @@ namespace corona
 
 	void label_control::set_default_styles()
 	{
-
 		auto st = styles.get_style();
 
 		background_brush = st->LabelBackgroundBrush;

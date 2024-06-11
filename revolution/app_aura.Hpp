@@ -76,6 +76,12 @@ namespace corona
 		int id_document_body_details;
 		int id_status;
 
+		int id_camera_controls;
+		int id_camera_select;
+		int id_camera_activation_area_percentage;
+		int id_camera_activation_response;
+		int id_camera_activation_cooldown;
+
 		int id_location_title;
 		int id_create_title;
 		int id_form_view;
@@ -147,6 +153,11 @@ namespace corona
 					id_document_body_details = _presentation->get_control_id("document_details", []() { return id_counter::next(); });
 					id_status = _presentation->get_control_id("status", []() { return id_counter::next(); });
 					id_camera = _presentation->get_control_id("camera", []() { return id_counter::next(); });
+					id_camera_controls = _presentation->get_control_id("camera_controls", []() { return id_counter::next(); });
+					id_camera_select = _presentation->get_control_id("camera_select", []() { return id_counter::next(); });
+					id_camera_activation_area_percentage = _presentation->get_control_id("camera_activation_sense", []() { return id_counter::next(); });
+					id_camera_activation_response = _presentation->get_control_id("camera_activation_response", []() { return id_counter::next(); });
+					id_camera_activation_cooldown = _presentation->get_control_id("camera_activation_cooldown", []() { return id_counter::next(); });
 
 					_presentation->create_page("user_aura", [this](page& _page) {
 						create_user_license_page(_page);
@@ -280,7 +291,6 @@ namespace corona
 			contents_root.apply_controls(_page.root.get());
 		}
 
-
 		void create_user_license_page(
 			page& _page
 		)
@@ -296,15 +306,65 @@ namespace corona
 						_settings.set_size(.8_container, 1.0_container);
 						});
 
-					camera_column.camera(id_camera, [](camera_control& _settings) {
+					camera_column.camera(id_camera, [this](camera_control& _settings) {
 						_settings.set_padding(8.0_px);
 						_settings.set_size(1.0_container, 1.0_container);
-						});
+						_settings.camera_changed = [this](camera_control* _src) {
+							std::vector<std::string> camera_list = _src->get_cameras();
+							listbox_control& cbo = _src->find<listbox_control>(id_camera_select);
+							json_parser jp;
+							list_data ld;
+							ld.id_field = "id";
+							ld.text_field = "camera";
+							ld.items = jp.create_array();
+							std::cout << "Camera changed" << std::endl;
+							for (int i = 0; i < camera_list.size(); i++) {
+								json jo = jp.create_object();
+								jo.put_member("id", i);
+								jo.put_member("camera", camera_list[i]);
+								std::cout << camera_list[i] << std::endl;
+								ld.items.append_element(jo);
+							}
+							cbo.set_list(ld);
+							json jox = jp.create_object();
+							jox.put_member(cbo.json_field_name, _src->current_camera_name);
+							cbo.set_data(jox);
+						};
+					});
 
 					control_builder preview_column = root_row.column_begin(id_counter::next(), [](column_layout& _settings) {
 						_settings.set_size(.2_container, 1.0_container);
 						_settings.set_content_align(visual_alignment::align_far);
 						});
+
+					control_builder camera_controls = preview_column.form_view(id_camera_controls, [this](form_view_control& _settings) {
+						_settings.set_padding(8.0_px);
+						_settings.set_size(0.92_container, 300.0_px);
+						_settings.fields_per_column = 7;
+						_settings.on_changed = [this](form_view_control* _fv) {
+							camera_control& cc = _fv->find<camera_control>(id_camera);
+							json data = _fv->get_data();
+							std::string cam = data["camera_name"];
+							cc.select_camera(cam);
+							};
+
+						item_data_source ids;
+
+						item_field new_field;
+						new_field.field_id = id_camera_select;
+						new_field.choice_options.id_field = "Id";
+						new_field.choice_options.text_field = "Name";
+						new_field.field_type = "listbox";
+						new_field.field_label = "Camera Select";
+						new_field.json_member_name = "camera_name";
+						ids.fields.push_back(new_field);
+						_settings.set_data(ids);
+						});
+
+					preview_column.label("  Detection", [](label_control& _lc) {
+						_lc.set_margin(8.0_px);
+						_lc.set_size(1.0_container, 45.0_px);
+					});
 
 					preview_column.camera_view([this](camera_view_control& _settings) {
 						_settings.set_padding(8.0_px);

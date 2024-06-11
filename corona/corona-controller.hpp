@@ -53,6 +53,7 @@ namespace corona
 		virtual void onLogged(data_lake* _api) = 0;
 
 		virtual int getDefaultButtonId() = 0;
+		virtual void hardwareChanged() = 0;
 
 	};
 

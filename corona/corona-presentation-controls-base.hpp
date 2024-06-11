@@ -521,6 +521,13 @@ namespace corona
 			}
 		}
 
+		virtual void hardware_scan()
+		{
+			for (auto child : children) {
+				child->hardware_scan();
+			}
+		}
+
 	};
 
 	control_base* control_base::find(point p)

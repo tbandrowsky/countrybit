@@ -247,8 +247,11 @@ namespace corona
 		LONGLONG			last_barcode_time;
 		delta_frame			delta_boi;
 		int counter = 0;
-		timer				camera_check_timer;
-		std::string			camera_status;
+		timer						camera_check_timer;
+		std::string					camera_status;
+		std::string					selected_camera_name;
+		std::string					current_camera_name;
+		std::vector<std::string>	available_cameras;
 
 		camera_control()
 		{
@@ -285,6 +288,8 @@ namespace corona
 			camera_status = "Starting";
 			init();
 		}
+
+		std::function<void(camera_control* _src)> camera_changed;
 
 		virtual bool is_camera() { return true; }
 
@@ -352,31 +357,43 @@ namespace corona
 					}
 				}
 
-				if (camera_status.size()) {
-					if (auto pwindow = window.lock())
-					{
-						if (auto phost = host.lock()) {
-							auto draw_bounds = inner_bounds;
+				if (auto pwindow = window.lock())
+				{
+					if (auto phost = host.lock()) {
+						auto draw_bounds = inner_bounds;
 
-							draw_bounds.x = inner_bounds.x - bounds.x;
-							draw_bounds.y = inner_bounds.y - bounds.y;
+						draw_bounds.x = inner_bounds.x - bounds.x;
+						draw_bounds.y = inner_bounds.y - bounds.y;
 
-							auto& context = pwindow->getContext();
+						auto& context = pwindow->getContext();
 
-							auto st = styles.get_style();
+						auto st = styles.get_style();
+
+						if (camera_status.size()) {
 
 							context.setBrush(st->TitleTextBrush.get());
 							auto temp = *st->TitleFont.get();
-							temp.name = "CameraText";
+							temp.name = "CameraStatus";
 							temp.vertical_align = visual_alignment::align_center;
 							temp.horizontal_align = visual_alignment::align_center;
 							context.setTextStyle(&temp);
-
 							context.drawText(camera_status, &draw_bounds, temp.name, st->TitleTextBrush->get_name());
 						}
+
+						if (current_camera_name.size()) {
+
+							context.setBrush(st->TitleTextBrush.get());
+							auto temp = *st->CodeFont.get();
+							temp.name = "CameraName";
+							temp.vertical_align = visual_alignment::align_far;
+							temp.horizontal_align = visual_alignment::align_center;
+							context.setTextStyle(&temp);
+							draw_bounds.h -= 10.0;
+							context.drawText(current_camera_name, &draw_bounds, temp.name, st->TitleTextBrush->get_name());
+						}
+
 					}
 				}
-
 			};
 
 			on_create = [this](draw_control *_ctrl) ->void 
@@ -385,6 +402,24 @@ namespace corona
 						start();
 					});
 			};
+		}
+
+		void select_camera(std::string _camera_name)
+		{
+			if (selected_camera_name.empty() || selected_camera_name != _camera_name) {
+				selected_camera_name = _camera_name;
+				stop();
+			}
+		}
+
+		std::vector<std::string> get_cameras()
+		{
+			return available_cameras;
+		}
+
+		virtual void hardware_scan()
+		{
+			stop();
 		}
 
 		void add_sprinkles(sprinkle_buffer& new_sprinkles)
@@ -519,7 +554,7 @@ namespace corona
 					if (SUCCEEDED(hr))
 					{
 						if (major_type == MFMediaType_Video) {
-						
+					
 							hr = MFGetAttributeSize(pType, MF_MT_FRAME_SIZE, &feed_width, &feed_height);
 							if (SUCCEEDED(hr))
 							{
@@ -593,56 +628,93 @@ namespace corona
 				hr = MFEnumDeviceSources(pConfig, &ppDevices, &count);
 			}
 
+			available_cameras.clear();
+
 			// Create a media source for the first device in the list.
 			if (SUCCEEDED(hr))
 			{
 				if (count > 0)
 				{
-					hr = ppDevices[0]->ActivateObject(IID_PPV_ARGS(&pSource));
+					int selected_device_index = -1;
 
-					::GetSystemTimePreciseAsFileTime(&ft);
-					li.HighPart = ft.dwHighDateTime;
-					li.LowPart = ft.dwLowDateTime;
-					stream_base_time = li.QuadPart;
+					for (int i = 0; i < count; i++) {
+						auto pdevice = ppDevices[i];
 
-					IMFMediaType* ptype = nullptr;
-					hr = find_device_format(&ptype);
-
-					if (SUCCEEDED(hr) && ptype) 
-					{
-						hr = set_device_format(ptype );
-
-						if (SUCCEEDED(hr)) {
-							IMFAttributes* pAttributes = nullptr;
-
-							hr = MFCreateAttributes(
-								&pAttributes,
-								2
-							);
-
-							if (pAttributes)
-							{
-								pAttributes->SetUINT32(MF_SOURCE_READER_DISCONNECT_MEDIASOURCE_ON_SHUTDOWN, FALSE);
+						PWSTR deviceName = nullptr;
+						hr = MFGetAttributeString(pdevice, MF_DEVSOURCE_ATTRIBUTE_FRIENDLY_NAME, &deviceName);
+						if (SUCCEEDED(hr) && deviceName) {
+							istring<256> tcamera_name;
+							std::string scamera_name;
+							tcamera_name = deviceName;
+							scamera_name = tcamera_name;
+							available_cameras.push_back(scamera_name);
+							if (selected_camera_name.empty()) {
+								selected_camera_name = scamera_name;
 							}
-
-							if (pAttributes)
-							{
-								pAttributes->SetUINT32(MF_SOURCE_READER_ENABLE_ADVANCED_VIDEO_PROCESSING, TRUE);
+							if (scamera_name == selected_camera_name) {
+								current_camera_name = selected_camera_name;
+								selected_device_index = i;
 							}
-
-							hr = MFCreateSourceReaderFromMediaSource(
-								pSource,
-								pAttributes,
-								&pSourceReader
-							);
-
-							hr = configure_decoder(MF_SOURCE_READER_FIRST_VIDEO_STREAM);
-
-							return hr;
+							::CoTaskMemFree(deviceName);
 						}
-
 					}
 
+					if (selected_device_index == -1)
+					{
+						selected_device_index = 0;
+						current_camera_name = available_cameras[0];
+						selected_camera_name = available_cameras[0];
+					}
+
+					if (camera_changed)
+						camera_changed(this);
+
+					auto pdevice = ppDevices[selected_device_index];
+
+					hr = pdevice->ActivateObject(IID_PPV_ARGS(&pSource));
+					if (SUCCEEDED(hr) && pSource) {
+
+						::GetSystemTimePreciseAsFileTime(&ft);
+						li.HighPart = ft.dwHighDateTime;
+						li.LowPart = ft.dwLowDateTime;
+						stream_base_time = li.QuadPart;
+
+						IMFMediaType* ptype = nullptr;
+						hr = find_device_format(&ptype);
+
+						if (SUCCEEDED(hr) && ptype)
+						{
+							hr = set_device_format(ptype);
+
+							if (SUCCEEDED(hr)) {
+								IMFAttributes* pAttributes = nullptr;
+
+								hr = MFCreateAttributes(
+									&pAttributes,
+									2
+								);
+
+								if (pAttributes)
+								{
+									pAttributes->SetUINT32(MF_SOURCE_READER_DISCONNECT_MEDIASOURCE_ON_SHUTDOWN, FALSE);
+								}
+
+								if (pAttributes)
+								{
+									pAttributes->SetUINT32(MF_SOURCE_READER_ENABLE_ADVANCED_VIDEO_PROCESSING, TRUE);
+								}
+
+								hr = MFCreateSourceReaderFromMediaSource(
+									pSource,
+									pAttributes,
+									&pSourceReader
+								);
+
+								hr = configure_decoder(MF_SOURCE_READER_FIRST_VIDEO_STREAM);
+								return hr;
+							}
+						}
+					}
 				}
 				else
 				{
@@ -782,7 +854,7 @@ namespace corona
 				}
 				if (flags & MF_SOURCE_READERF_NATIVEMEDIATYPECHANGED)
 				{
-					// The format changed. Reconfigure the decoder.
+					std::cout << "Format changed" << std::endl;
 					hr = configure_decoder(streamIndex);
 				}
 
@@ -825,28 +897,6 @@ namespace corona
 								bgra32_pixel* px = (bgra32_pixel*)byte_start;
 								delta_boi.next_frame(px, videoWidth, videoHeight, videoWidth);
 
-								if (diff > 0 && false) 
-								{
-									last_barcode_time = li.QuadPart;
-									int64_t bm_bytes = videoHeight * pitch;
-									BYTE* temp = new BYTE[bm_bytes];
-									memcpy(temp, byte_start, bm_bytes);
-
-									threadomatic::run_complete([temp, videoHeight, videoWidth, pitch] {
-										std::cout << "checking for barcode" << std::endl;
-										auto options = ZXing::ReaderOptions().setFormats(ZXing::BarcodeFormat::PDF417);
-										ZXing::ImageView image_view(temp, videoWidth, videoHeight, ZXing::ImageFormat::XRGB, pitch);
-										std::vector<ZXing::Result> barcode_results = ZXing::ReadBarcodes(image_view, options);
-										if (barcode_results.size()) {
-											std::cout << "Barcode detected" << std::endl;
-											for (auto result : barcode_results) {
-												std::cout << result.text() << std::endl;
-											}
-										}
-										delete[] temp;
-									}, nullptr);
-								}
-
 								p2dBuffer->Unlock2D();
 								p2dBuffer->Release();
 								p2dBuffer = nullptr;
@@ -859,7 +909,6 @@ namespace corona
 					pSample->Release();
 					pSample = nullptr;
 				}
-
 			}
 			else if (camera_check_timer.check(2.0))
 			{

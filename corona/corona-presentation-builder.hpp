@@ -68,14 +68,15 @@ namespace corona
 			int _id,
 			std::string _field_label,
 			std::string _tooltip_string,
-			std::function<void(field_control&)> _settings = nullptr)
+			std::function<void(field_control&)> _settings = nullptr, 
+			measure _height = 50.0_px)
 		{
-			auto cl = column_begin(id_counter::next(), [](column_layout& _src) {
-				_src.set_size(1.0_container, 50.0_px);
-				_src.set_item_size(1.0_container, 1.3_fontgr);
+			auto cl = column_begin(id_counter::next(), [_height](column_layout& _src) {
+				_src.set_size(1.0_container, _height);
 			});
 			auto& lb = cl.label(_field_label);
 			auto tc = cl.create<field_control>(_id);
+			tc->set_size(1.0_container, 1.0_remaining);
 			tc->tooltip_text = _tooltip_string;
 			cl.apply_item_sizes(tc);
 			if (_settings) {
@@ -303,9 +304,9 @@ namespace corona
 			}
 		}
 
-		control_builder& listbox_field(int _id, std::string _field_label, std::string _tooltip_text, std::function<void(listbox_control&)> _settings)
+		control_builder& listbox_field(int _id, std::string _field_label, std::string _tooltip_text, std::function<void(listbox_control&)> _settings, measure _height)
 		{
-			return create_field<listbox_control>(_id, _field_label, _tooltip_text, _settings);
+			return create_field<listbox_control>(_id, _field_label, _tooltip_text, _settings, _height);
 		}
 		control_builder& combobox_field(int _id, std::string _field_label, std::string _tooltip_text, std::function<void(combobox_control&)> _settings)
 		{
@@ -909,6 +910,8 @@ namespace corona
 			;
 		}
 
+		std::function<void(form_view_control* _fv)> on_changed;
+
 		virtual json get_data()
 		{
 			json_parser jp;
@@ -965,7 +968,6 @@ namespace corona
 			}
 
 			double width = 1.0 / column_count;
-			if (width >= .5) width = 1.0 / 3.0;
 
 			measure height = measure(100.0 * fields_per_column, measure_units::pixels);
 
@@ -999,7 +1001,8 @@ namespace corona
 							_settings.set_text(_existing);
 							_settings.is_default_focus = is_default;
 						}
-						});
+						_settings.json_field_name = ctrl.json_member_name;
+					});
 				}
 				else if (ctrl.field_type == "integer")
 				{
@@ -1008,6 +1011,7 @@ namespace corona
 							std::string _existing = ids.data[ctrl.json_member_name];
 							_settings.set_text(_existing);
 						}
+						_settings.json_field_name = ctrl.json_member_name;
 						_settings.is_default_focus = is_default;
 						});
 				}
@@ -1018,8 +1022,9 @@ namespace corona
 							std::string _existing = ids.data[ctrl.json_member_name];
 							_settings.set_text(_existing);
 						}
+						_settings.json_field_name = ctrl.json_member_name;
 						_settings.is_default_focus = is_default;
-						});
+					});
 				}
 				else if (ctrl.field_type == "string")
 				{
@@ -1028,8 +1033,9 @@ namespace corona
 							std::string _existing = ids.data[ctrl.json_member_name];
 							_settings.set_text(_existing);
 						}
+						_settings.json_field_name = ctrl.json_member_name;
 						_settings.is_default_focus = is_default;
-						});
+					});
 				}
 				else if (ctrl.field_type == "listbox") 
 				{
@@ -1038,7 +1044,8 @@ namespace corona
 							std::string _existing = ids.data[ctrl.json_member_name];
 						}
 						_settings.is_default_focus = is_default;
-						});
+						_settings.json_field_name = ctrl.json_member_name;
+					}, 200.0_px);
 
 				}
 				else if (ctrl.field_type == "combobox")
@@ -1047,8 +1054,9 @@ namespace corona
 						if (ids.data.has_member(ctrl.json_member_name)) {
 							std::string _existing = ids.data[ctrl.json_member_name];
 						}
-
-						});
+						_settings.is_default_focus = is_default;
+						_settings.json_field_name = ctrl.json_member_name;
+					});
 
 				}
 				else if (ctrl.field_type == "comboboxex")
@@ -1058,6 +1066,7 @@ namespace corona
 							std::string _existing = ids.data[ctrl.json_member_name];
 						}
 						_settings.is_default_focus = is_default;
+						_settings.json_field_name = ctrl.json_member_name;
 
 						});
 
@@ -1069,6 +1078,7 @@ namespace corona
 							std::string _existing = ids.data[ctrl.json_member_name];
 						}
 						_settings.is_default_focus = is_default;
+						_settings.json_field_name = ctrl.json_member_name;
 
 						});
 				}
@@ -1079,7 +1089,7 @@ namespace corona
 							std::string _existing = ids.data[ctrl.json_member_name];
 						}
 						_settings.is_default_focus = is_default;
-
+						_settings.json_field_name = ctrl.json_member_name;
 						});
 				}
 				else if (ctrl.field_type == "section")
@@ -1125,6 +1135,30 @@ namespace corona
 
 		virtual void on_subscribe(presentation_base* _presentation, page_base* _page)
 		{
+			for (auto& ctrl : ids.fields)
+			{
+				if (ctrl.field_type == "combobox" ||
+					ctrl.field_type == "comboboxex" ||
+					ctrl.field_type == "listbox")
+				{
+					_page->on_list_changed(ctrl.field_id, [this](list_changed_event lce)
+						{
+							if (on_changed) {
+								on_changed(this);
+							}
+						});
+				}
+				else 
+				{
+					_page->on_item_changed(ctrl.field_id, [this](item_changed_event lce)
+						{
+							if (on_changed) {
+								on_changed(this);
+							}
+						});
+				}
+			}
+
 			for (auto child : children) {
 				child->on_subscribe(_presentation, _page);
 			}

@@ -417,7 +417,7 @@ namespace corona
 		countrybit.LabelBorderBrush = std::make_shared<generalBrushRequest>();
 		countrybit.LabelBorderWidth = 0;
 		countrybit.LabelTextBrush = std::make_shared<generalBrushRequest>();
-		countrybit.LabelTextBrush->setColor("#000000");
+		countrybit.LabelTextBrush->setColor("#FFFFFF");
 		countrybit.LabelFont = std::make_shared<textStyleRequest>(text_style);
 		countrybit.LabelFont->fontName = textFont;
 		countrybit.LabelFont->fontSize = 14;
