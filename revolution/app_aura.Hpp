@@ -327,7 +327,7 @@ namespace corona
 							}
 							cbo.set_list(ld);
 							json jox = jp.create_object();
-							jox.put_member(cbo.json_field_name, _src->current_camera_name);
+							jox.put_member(cbo.json_field_name, _src->get_camera_name());
 							cbo.set_data(jox);
 						};
 					});

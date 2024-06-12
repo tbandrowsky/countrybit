@@ -612,6 +612,38 @@ namespace corona
 			}
 		}
 
+		template <typename item> static void run_each(std::vector<item>& _items, int _width, int _height, std::function<void(int _x, int _y, item& _item)> _on_each)
+		{
+			std::vector<HANDLE> events;
+
+			int counter = 0;
+			int bucket_size = _items.size() / (global_job_queue->getThreadCount() + 1);
+			for (int idx = 0; idx < _items.size(); ) {
+				HANDLE handle = ::CreateEvent(NULL, FALSE, FALSE, NULL);
+				events.push_back(handle);
+				int end = idx + bucket_size;
+				if (end > _items.size())
+					end = _items.size();
+				std::vector<item>* src_items = &_items;
+				general_job* gj = new general_job([idx, _width, _height, end, _on_each, src_items]() -> void {
+					for (int x = idx; x < end; x++)
+					{
+						int px = x % _width;
+						int py = x / _width;
+						item& itm = (*src_items)[x];
+						_on_each(px, py, itm);
+					}
+					}, handle);
+				global_job_queue->add_job(gj);
+				idx = end;
+			}
+
+			for (auto evt : events) {
+				::WaitForSingleObject(evt, INFINITE);
+				CloseHandle(evt);
+			}
+		}
+
 		template <typename IOParams> static void run_io(job_queue* queue, IOParams params, std::function<bool(HANDLE hevent, IOParams* _src)> runner)
 		{
 			HANDLE hevent = ::CreateEvent(NULL, false, false, NULL);

@@ -9,7 +9,7 @@
   <Identity
     Name="27629CountryVideoGames.ColorParty"
     Publisher="CN=8855F627-AD63-41E1-990B-4633E16CE09E"
-    Version="1.0.10.0" />
+    Version="1.0.14.0" />
 
   <Properties>
     <DisplayName>Color Party</DisplayName>

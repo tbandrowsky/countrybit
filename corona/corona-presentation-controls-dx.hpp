@@ -7,6 +7,9 @@ namespace corona
 
 	class draw_control : public control_base
 	{
+
+	private:
+
 	public:
 
 		int border_width;
@@ -18,6 +21,8 @@ namespace corona
 		std::weak_ptr<direct2dChildWindow> window;
 		std::function<void(draw_control*)> on_draw;
 		std::function<void(draw_control*)> on_create;
+
+		lockable camera_access_lock;
 
 		draw_control()
 		{
@@ -239,7 +244,57 @@ namespace corona
 
 	class camera_control : public draw_control
 	{
-	public:
+
+	private:
+		HRESULT configure_decoder(IMFSourceReader *_pSourceReader, DWORD dwStreamIndex)
+		{
+			IMFMediaType* pNativeType = nullptr;
+			IMFMediaType* pType = nullptr;
+			GUID majorType, subtype;
+			HRESULT hr;
+
+			// Find the native format of the stream.
+			hr = _pSourceReader->GetNativeMediaType(dwStreamIndex, 0, &pNativeType);
+
+			if (SUCCEEDED(hr) && pNativeType) {
+
+				// Find the major type.
+				hr = pNativeType->GetGUID(MF_MT_MAJOR_TYPE, &majorType);
+
+				// Define the output type.
+				hr = MFCreateMediaType(&pType);
+
+				if (SUCCEEDED(hr) && pType) {
+
+					hr = pType->SetGUID(MF_MT_MAJOR_TYPE, majorType);
+
+					// Select a subtype.
+					if (majorType == MFMediaType_Video)
+					{
+						subtype = MFVideoFormat_ARGB32;
+					}
+					else if (majorType == MFMediaType_Audio)
+					{
+						subtype = MFAudioFormat_Float;
+					}
+					else
+					{
+						// Unrecognized type. Skip.
+						return S_FALSE;
+					}
+
+					hr = pType->SetGUID(MF_MT_SUBTYPE, subtype);
+
+					// Set the uncompressed format.
+					hr = _pSourceReader->SetCurrentMediaType(dwStreamIndex, nullptr, pType);
+					return hr;
+				}
+			}
+			else
+			{
+				std::cout << "Couldn't get the native media type for the camera" << std::endl;
+			}
+		}
 
 		IMFMediaSource*		pSource;
 		IMFSourceReader*	pSourceReader;
@@ -252,6 +307,139 @@ namespace corona
 		std::string					selected_camera_name;
 		std::string					current_camera_name;
 		std::vector<std::string>	available_cameras;
+
+		void init()
+		{
+			on_draw = [this](draw_control* _dc) -> void {
+
+				counter++;
+
+				if (auto pwindow = window.lock())
+				{
+					if (auto phost = host.lock()) {
+						auto draw_bounds = inner_bounds;
+
+						draw_bounds.x = inner_bounds.x - bounds.x;
+						draw_bounds.y = inner_bounds.y - bounds.y;
+
+						auto& context = pwindow->getContext();
+						ID2D1DeviceContext* dc = context.getDeviceContext();
+
+						double xmag = {}, ymag = {};
+						double mag = {};
+						D2D1_RECT_F dest_rect = {};
+						bool size_inited = false;
+
+						ID2D1Bitmap1* cbm = delta_boi.get_frame(dc);
+						if (cbm) {
+
+							auto surface_size = cbm->GetSize();
+
+							xmag = (draw_bounds.w / surface_size.width);
+							ymag = (draw_bounds.h / surface_size.height);
+
+							if (xmag > ymag)
+							{
+								mag = xmag;
+							}
+							else
+							{
+								mag = ymag;
+							}
+
+							dest_rect.left = draw_bounds.x;
+							dest_rect.top = draw_bounds.y;
+							dest_rect.right = surface_size.width * mag;
+							dest_rect.bottom = surface_size.height * mag;
+
+							dc->DrawBitmap(cbm, &dest_rect, 1.0);
+
+							cbm->Release();
+							size_inited = true;
+						}
+
+						sprinkle_buffer new_sprinkles;
+						ID2D1Bitmap1* dbm = delta_boi.get_activation(dc, new_sprinkles);
+						add_sprinkles(new_sprinkles);
+
+						if (size_inited && dbm)
+						{
+							dc->DrawBitmap(dbm, &dest_rect, 1.0);
+							dbm->Release();
+						}
+
+						auto boxes = get_movement_boxes();
+						if (boxes.size()) {
+							ID2D1SolidColorBrush* brush = nullptr;
+
+							D2D1_COLOR_F brushColor;
+							brushColor = toColor("#0000AA");
+							dc->CreateSolidColorBrush(brushColor, &brush);
+
+							if (brush) {
+								for (auto br : boxes)
+								{
+									D2D1_RECT_F rect;
+									rect.left = br.area.x * mag + draw_bounds.x;
+									rect.top = br.area.y * mag + draw_bounds.y;
+									rect.right = br.area.right() * mag + draw_bounds.x;
+									rect.bottom = br.area.bottom() * mag + draw_bounds.y;
+									dc->DrawRectangle(rect, brush, 2.0);
+								}
+								brush->Release();
+							}
+						}
+					}
+				}
+
+				if (auto pwindow = window.lock())
+				{
+					if (auto phost = host.lock()) {
+						auto draw_bounds = inner_bounds;
+
+						draw_bounds.x = inner_bounds.x - bounds.x;
+						draw_bounds.y = inner_bounds.y - bounds.y;
+
+						auto& context = pwindow->getContext();
+
+						auto st = styles.get_style();
+
+						if (camera_status.size()) {
+
+							context.setBrush(st->TitleTextBrush.get());
+							auto temp = *st->TitleFont.get();
+							temp.name = "CameraStatus";
+							temp.vertical_align = visual_alignment::align_center;
+							temp.horizontal_align = visual_alignment::align_center;
+							context.setTextStyle(&temp);
+							context.drawText(camera_status, &draw_bounds, temp.name, st->TitleTextBrush->get_name());
+						}
+
+						if (current_camera_name.size()) {
+
+							context.setBrush(st->TitleTextBrush.get());
+							auto temp = *st->CodeFont.get();
+							temp.name = "CameraName";
+							temp.vertical_align = visual_alignment::align_far;
+							temp.horizontal_align = visual_alignment::align_center;
+							context.setTextStyle(&temp);
+							draw_bounds.h -= 10.0;
+							context.drawText(current_camera_name, &draw_bounds, temp.name, st->TitleTextBrush->get_name());
+						}
+
+					}
+				}
+				};
+
+			on_create = [this](draw_control* _ctrl) ->void
+				{
+					threadomatic::run_complete(nullptr, [this]() ->void {
+						start();
+						});
+				};
+		}
+
+	public:
 
 		camera_control()
 		{
@@ -295,114 +483,6 @@ namespace corona
 
 		ring_buffer<sprinkle, 300> current_sprinkles;
 
-		void init()
-		{
-			on_draw = [this](draw_control* _dc) -> void {
-
-				counter++;
-
-				if (auto pwindow = window.lock())
-				{
-					if (auto phost = host.lock()) {
-						auto draw_bounds = inner_bounds;
-
-						draw_bounds.x = inner_bounds.x - bounds.x;
-						draw_bounds.y = inner_bounds.y - bounds.y;
-
-						auto& context = pwindow->getContext();
-						ID2D1DeviceContext* dc = context.getDeviceContext();
-
-						double xmag = {}, ymag = {};
-						double mag = {};
-						D2D1_RECT_F dest_rect = {};
-						bool size_inited = false;
-
-						ID2D1Bitmap1* cbm = delta_boi.get_frame(dc);
-						if (cbm) {
-
-							auto surface_size = cbm->GetSize();
-
-							xmag = (draw_bounds.w / surface_size.width);
-							ymag = (draw_bounds.h / surface_size.height);
-
-							if (xmag > ymag) 
-							{
-								mag = xmag;
-							}
-							else 
-							{
-								mag = ymag;
-							}
-
-							dest_rect.left = draw_bounds.x;
-							dest_rect.top = draw_bounds.y;
-							dest_rect.right = surface_size.width * mag;
-							dest_rect.bottom = surface_size.height * mag;
-
-							dc->DrawBitmap(cbm, &dest_rect, 1.0);
-
-							cbm->Release();
-							size_inited = true;
-						}
-
-						sprinkle_buffer new_sprinkles;
-						ID2D1Bitmap1* dbm = delta_boi.get_activation(dc, new_sprinkles);
-						add_sprinkles(new_sprinkles);
-
-						if (size_inited && dbm) 
-						{
-							dc->DrawBitmap(dbm, &dest_rect, 1.0);
-							dbm->Release();
-						}
-					}
-				}
-
-				if (auto pwindow = window.lock())
-				{
-					if (auto phost = host.lock()) {
-						auto draw_bounds = inner_bounds;
-
-						draw_bounds.x = inner_bounds.x - bounds.x;
-						draw_bounds.y = inner_bounds.y - bounds.y;
-
-						auto& context = pwindow->getContext();
-
-						auto st = styles.get_style();
-
-						if (camera_status.size()) {
-
-							context.setBrush(st->TitleTextBrush.get());
-							auto temp = *st->TitleFont.get();
-							temp.name = "CameraStatus";
-							temp.vertical_align = visual_alignment::align_center;
-							temp.horizontal_align = visual_alignment::align_center;
-							context.setTextStyle(&temp);
-							context.drawText(camera_status, &draw_bounds, temp.name, st->TitleTextBrush->get_name());
-						}
-
-						if (current_camera_name.size()) {
-
-							context.setBrush(st->TitleTextBrush.get());
-							auto temp = *st->CodeFont.get();
-							temp.name = "CameraName";
-							temp.vertical_align = visual_alignment::align_far;
-							temp.horizontal_align = visual_alignment::align_center;
-							context.setTextStyle(&temp);
-							draw_bounds.h -= 10.0;
-							context.drawText(current_camera_name, &draw_bounds, temp.name, st->TitleTextBrush->get_name());
-						}
-
-					}
-				}
-			};
-
-			on_create = [this](draw_control *_ctrl) ->void 
-			{
-					threadomatic::run_complete(nullptr, [this]() ->void {
-						start();
-					});
-			};
-		}
 
 		void select_camera(std::string _camera_name)
 		{
@@ -443,13 +523,13 @@ namespace corona
 			return delta_boi.get_frame(_context);
 		}
 
-		HRESULT set_device_format(IMFMediaType* pType)
+		HRESULT set_device_format(IMFMediaSource *_pSource, IMFMediaType* pType)
 		{
 			IMFPresentationDescriptor* pPD = NULL;
 			IMFStreamDescriptor* pSD = NULL;
 			IMFMediaTypeHandler* pHandler = NULL;
 
-			HRESULT hr = pSource->CreatePresentationDescriptor(&pPD);
+			HRESULT hr = _pSource->CreatePresentationDescriptor(&pPD);
 			if (FAILED(hr))
 			{
 				goto done;
@@ -490,7 +570,7 @@ namespace corona
 			return hr;
 		}
 
-		HRESULT find_device_format(IMFMediaType  **ppType)
+		HRESULT find_device_format(IMFMediaSource *_pSource, IMFMediaType  **ppType)
 		{
 			IMFPresentationDescriptor* pPD = NULL;
 			IMFStreamDescriptor* pSD = NULL;
@@ -510,7 +590,7 @@ namespace corona
 
 			*ppType = nullptr;
 			
-			HRESULT hr = pSource->CreatePresentationDescriptor(&pPD);
+			HRESULT hr = _pSource->CreatePresentationDescriptor(&pPD);
 			if (FAILED(hr))
 			{
 				goto done;
@@ -607,6 +687,8 @@ namespace corona
 			FILETIME ft;
 			LARGE_INTEGER li;
 
+			scope_lock lck(camera_access_lock);
+
 			if (pSourceReader)
 				return S_OK;
 
@@ -671,8 +753,11 @@ namespace corona
 
 					auto pdevice = ppDevices[selected_device_index];
 
-					hr = pdevice->ActivateObject(IID_PPV_ARGS(&pSource));
-					if (SUCCEEDED(hr) && pSource) {
+					IMFMediaSource* newSource = nullptr;
+					IMFSourceReader* newSourceReader = nullptr;
+
+					hr = pdevice->ActivateObject(IID_PPV_ARGS(&newSource));
+					if (SUCCEEDED(hr) && newSource) {
 
 						::GetSystemTimePreciseAsFileTime(&ft);
 						li.HighPart = ft.dwHighDateTime;
@@ -680,11 +765,11 @@ namespace corona
 						stream_base_time = li.QuadPart;
 
 						IMFMediaType* ptype = nullptr;
-						hr = find_device_format(&ptype);
+						hr = find_device_format(newSource, &ptype);
 
 						if (SUCCEEDED(hr) && ptype)
 						{
-							hr = set_device_format(ptype);
+							hr = set_device_format(newSource, ptype);
 
 							if (SUCCEEDED(hr)) {
 								IMFAttributes* pAttributes = nullptr;
@@ -705,12 +790,28 @@ namespace corona
 								}
 
 								hr = MFCreateSourceReaderFromMediaSource(
-									pSource,
+									newSource,
 									pAttributes,
-									&pSourceReader
+									&newSourceReader
 								);
 
-								hr = configure_decoder(MF_SOURCE_READER_FIRST_VIDEO_STREAM);
+								if (newSource && newSourceReader) 
+								{
+									hr = configure_decoder(newSourceReader, MF_SOURCE_READER_FIRST_VIDEO_STREAM);
+									pSource = newSource;
+									pSourceReader = newSourceReader;
+								}
+								else 
+								{
+									if (newSourceReader) {
+										newSourceReader->Release();
+									}
+									if (newSource)
+									{
+										newSource->Shutdown();
+										newSource->Release();
+									}
+								}
 								return hr;
 							}
 						}
@@ -732,54 +833,9 @@ namespace corona
 			return hr;
 		}
 
-		HRESULT configure_decoder(DWORD dwStreamIndex)
+		std::string get_camera_name()
 		{
-			IMFMediaType *pNativeType = nullptr;
-			IMFMediaType *pType = nullptr;
-			GUID majorType, subtype;
-			HRESULT hr;
-
-			// Find the native format of the stream.
-			hr = pSourceReader->GetNativeMediaType(dwStreamIndex, 0, &pNativeType);
-
-			if (SUCCEEDED(hr) && pNativeType) {
-
-				// Find the major type.
-				hr = pNativeType->GetGUID(MF_MT_MAJOR_TYPE, &majorType);
-
-				// Define the output type.
-				hr = MFCreateMediaType(&pType);
-
-				if (SUCCEEDED(hr) && pType) {
-
-					hr = pType->SetGUID(MF_MT_MAJOR_TYPE, majorType);
-
-					// Select a subtype.
-					if (majorType == MFMediaType_Video)
-					{
-						subtype = MFVideoFormat_ARGB32;
-					}
-					else if (majorType == MFMediaType_Audio)
-					{
-						subtype = MFAudioFormat_Float;
-					}
-					else
-					{
-						// Unrecognized type. Skip.
-						return S_FALSE;
-					}
-
-					hr = pType->SetGUID(MF_MT_SUBTYPE, subtype);
-
-					// Set the uncompressed format.
-					hr = pSourceReader->SetCurrentMediaType(dwStreamIndex, nullptr, pType);
-					return hr;
-				}
-			}
-			else 
-			{
-				std::cout << "Couldn't get the native media type for the camera" << std::endl;
-			}
+			return current_camera_name;
 		}
 
 		virtual void arrange(rectangle _ctx)
@@ -789,7 +845,8 @@ namespace corona
 
 		virtual void read_frame()
 		{
-			if (pSourceReader) 
+			scope_lock lck(camera_access_lock);
+			if (pSourceReader)
 			{
 				HRESULT hr = S_OK;
 				IMFSample* pSample = NULL;
@@ -855,7 +912,7 @@ namespace corona
 				if (flags & MF_SOURCE_READERF_NATIVEMEDIATYPECHANGED)
 				{
 					std::cout << "Format changed" << std::endl;
-					hr = configure_decoder(streamIndex);
+					hr = configure_decoder(pSourceReader, streamIndex);
 				}
 
 				if (pSample)
@@ -922,16 +979,22 @@ namespace corona
 
 		virtual void stop()
 		{
-			if (pSourceReader) {
-				pSourceReader->Release();
-			}
+			scope_lock lck(camera_access_lock);
+
+			auto tempReader = pSourceReader;
+			auto tempSource = pSource;
+
 			pSourceReader = nullptr;
-	
-			if (pSource) {
-				pSource->Shutdown();
-				pSource->Release();
-			}
 			pSource = nullptr;
+
+			if (tempReader) {
+				tempReader->Release();
+			}
+	
+			if (tempSource) {
+				tempSource->Shutdown();
+				tempSource->Release();
+			}
 		}
 
 		virtual void destroy()
