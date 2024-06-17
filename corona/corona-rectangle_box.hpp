@@ -70,6 +70,16 @@ namespace corona {
 			return ret;
 		}
 
+		static bool intersect(const rectangle* a, const rectangle* b)
+		{
+			bool intersection = false;
+			if (b->bottom() < a->y || a->bottom() < b->y || b->right() < a->x || a->right() < b->x)
+				intersection = false;
+			else
+				intersection = true;
+			return intersection;
+		}
+
 	};
 
 	class rectangle_box : protected boxed<rectangle>

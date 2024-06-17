@@ -514,14 +514,12 @@ namespace corona
 #if TRACE_GUI
 				std::cout << "missing fill " << _pathImmediateDto->fillBrushName << std::endl;
 #endif
-				return;
 			}
 
 			if (!border) {
 #if TRACE_GUI
 				std::cout << "missing border " << _pathImmediateDto->borderBrushName << std::endl;
 #endif
-				return;
 			}
 
 			auto p = createPath(&_pathImmediateDto->path, _pathImmediateDto->closed);
@@ -537,7 +535,7 @@ namespace corona
 			if (border && _pathImmediateDto->borderBrushName.size() > 0 && _pathImmediateDto->strokeWidth > 0.0) {
 				getDeviceContext()->DrawGeometry(p->geometry, border->getBrush(), _pathImmediateDto->strokeWidth);
 			}
-	}
+		}
 
 		virtual void drawLine(point* start, point* stop, std::string _fillBrush, double thickness)
 		{

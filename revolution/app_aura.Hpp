@@ -101,6 +101,8 @@ namespace corona
 
 			std::cout << "Color Party Startup at " << std::filesystem::current_path() << std::endl;
 
+			samples::test();
+
 			status_recent = {};
 
 			MFStartup(MF_VERSION);

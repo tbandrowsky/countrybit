@@ -376,9 +376,47 @@ namespace corona
 							brushColor = toColor("#0000AA");
 							dc->CreateSolidColorBrush(brushColor, &brush);
 
-							if (brush) {
-								for (auto br : boxes)
+							solidBrushRequest sbr;
+							sbr.brushColor = brushColor;
+							sbr.name = "polycolor";
+							generalBrushRequest gbr(sbr);
+							context.setBrush(&gbr);
+
+							if (brush) 
+							{
+								int ct = 0;
+
+								for (auto& br : boxes)
 								{
+									pathImmediateDto ptd;
+
+									for (auto pt : br.left)
+									{
+										pt.x = ( br.area.x + pt.x ) * mag + draw_bounds.x;
+										pt.y = ( br.area.y + pt.y ) * mag + draw_bounds.y;
+										ptd.path.addLineTo(pt.x, pt.y);
+									}
+
+									ptd.borderBrushName = "polycolor";
+									ptd.strokeWidth = 4;
+									ptd.rotation = 0;
+									ptd.closed = false;
+									ptd.position.x = 0;
+									ptd.position.y = 0;
+									context.drawPath(&ptd);
+
+									ptd.path.points.clear();
+									for (auto pt : br.right)
+									{
+										pt.x = (br.area.x + pt.x) * mag + draw_bounds.x;
+										pt.y = (br.area.y + pt.y) * mag + draw_bounds.y;
+										ptd.path.addLineTo(pt.x, pt.y);
+									}
+
+									ptd.borderBrushName = "polycolor";
+									context.drawPath(&ptd);
+
+
 									D2D1_RECT_F rect;
 									rect.left = br.area.x * mag + draw_bounds.x;
 									rect.top = br.area.y * mag + draw_bounds.y;

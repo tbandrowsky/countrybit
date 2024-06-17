@@ -59,6 +59,8 @@ namespace corona
 	public:
 		std::string image_hash;
 		rectangle	area;
+		std::vector<point> left;
+		std::vector<point> right;
 	};
 
 	class movement_box_instance
@@ -423,6 +425,143 @@ namespace corona
 		}
 	};
 
+	class sample_point
+	{
+	public:
+		LONG	point;
+		LONG	count;
+		LONG	length;
+
+		sample_point() : point(0), count(0), length(0)
+		{
+			;
+		}
+
+		sample_point(LONG _point, LONG _count, LONG _length) : point(_point), count(_count), length(_length)
+		{
+			;
+		}
+	};
+
+	class samples
+	{
+		std::vector<sample_point> sample_points;
+
+	public:
+
+		samples()
+		{
+			;
+		}
+
+		virtual ~samples()
+		{
+			;
+		}
+
+		void start(int _size)
+		{
+			sample_points.clear();
+			sample_points.resize(_size);
+		}
+
+		void count(int _point)
+		{
+			sample_point& pt = sample_points[_point];
+			::InterlockedIncrement(&pt.count);
+			pt.point = _point;
+			pt.length = 1;
+		}
+
+		std::vector<sample_point> get_points()
+		{
+			std::vector<sample_point> points;
+
+			auto start_span = sample_points.begin();
+			while (start_span != sample_points.end())
+			{
+				int total = 0;
+				int count = 0;
+				auto next_span = start_span;
+				int distance = 1;
+
+				while (next_span->count)
+				{
+					total += next_span->count;
+					count++;
+					next_span++;
+					if (next_span == sample_points.end())
+						break;
+				}
+
+				if (total) {
+					sample_point ptnew;
+					ptnew.count = total;
+					ptnew.length = count;
+					ptnew.point = start_span->point;
+					points.push_back(ptnew);
+				}
+				else
+				{
+					next_span++;
+				}
+				start_span = next_span;
+			}
+
+			return points;
+		}
+
+		static void test()
+		{
+			samples sc;
+			sc.start(20);
+
+			sc.count(1);
+			sc.count(3);
+			sc.count(4);
+			sc.count(4);
+			sc.count(4);
+			sc.count(5);
+			sc.count(10);
+			sc.count(11);
+			sc.count(12);
+			sc.count(13);
+			sc.count(14);
+			sc.count(15);
+			sc.count(17);
+
+			auto pt = sc.get_points();
+			
+			std::vector<sample_point> check_points = {
+				{ 1, 1, 1 },
+				{ 3, 5, 3 },
+				{ 10, 6, 6 },
+				{ 17, 1, 1 }
+			};
+
+			int isx = std::min(pt.size(), check_points.size());
+
+			if (isx < check_points.size())
+			{
+				std::cout << __LINE__ << " check points size incorrect" << std::endl;
+			}
+
+			for (int i = 0; i < pt.size(); i++)
+			{
+				if (pt[i].count != check_points[i].count) {
+					std::cout << __LINE__ << " check point count incorrect" << std::endl;
+				}
+				if (pt[i].point != check_points[i].point) {
+					std::cout << __LINE__ << " check point point incorrect" << std::endl;
+				}
+				if (pt[i].length != check_points[i].length) {
+					std::cout << __LINE__ << " check point length incorrect" << std::endl;
+				}
+			}
+
+		}
+	};
+
 	struct delta_frame
 	{
 	public:
@@ -461,8 +600,8 @@ namespace corona
 		std::uniform_real_distribution<double> color_cycle_distribution;
 
 		std::vector<movement_box> boxes;
-		std::vector<int> clean_columns;
-		std::vector<int> clean_rows;
+		samples active_columns;
+		samples active_rows;
 
 		delta_frame() : activation_frame(256, 256), 
 			color_distribution(.0, 1.0),
@@ -477,13 +616,13 @@ namespace corona
 
 		void reset_defaults()
 		{
-			clean_columns.clear();
-			clean_rows.clear();
+			active_columns.start(1024);
+			active_rows.start(1024);
 
-			hue_detection_threshold = .05;
+			hue_detection_threshold = .02;
 			sat_detection_threshold = .1;
 			lum_detection_threshold = .1;
-			activation_area_percentage = .3;
+			activation_area_percentage = .2;
 			detection_pulse = .8;
 			detection_cooldown = .040;
 			motion_spacing = 8;
@@ -544,84 +683,6 @@ namespace corona
 			return new_bitmap;
 		}
 
-		std::vector<movement_box> collapse_movement_boxes(std::vector<movement_box> list)
-		{
-
-			std::list<movement_box> new_list;
-			movement_box found_item;
-
-			int list_index;
-
-			for (list_index = 0; list_index < list.size(); list_index++)
-			{
-				bool was_found = false;
-
-				movement_box mb1 = list[list_index];
-
-				auto nli = new_list.begin();
-
-				while (nli != new_list.end())
-				{
-					movement_box mb2 = *nli;
-					bool x_ok = false;
-					bool y_ok = false;
-
-					if (mb1.area.x <= mb2.area.x && mb1.area.right() >= mb2.area.x)
-					{
-						x_ok = true;
-					}
-					else if (mb2.area.x <= mb1.area.x && mb2.area.right() >= mb2.area.x)
-					{
-						x_ok = true;
-					}
-
-					if (mb1.area.y <= mb2.area.y && mb1.area.bottom() >= mb2.area.y)
-					{
-						y_ok = true;
-					}
-					else if (mb2.area.y <= mb1.area.y && mb2.area.bottom() >= mb1.area.y)
-					{
-						y_ok = true;
-					}
-
-					if (x_ok && y_ok && mb1.image_hash == mb2.image_hash)
-					{
-						double right1 = mb1.area.right();
-						double bottom1 = mb1.area.bottom();
-						if (mb1.area.x > mb2.area.x)
-						{
-							mb1.area.x = mb2.area.x;
-						}
-						if (mb1.area.y > mb2.area.y)
-						{
-							mb1.area.y = mb2.area.y;
-						}
-						mb1.area.w = std::max(right1, mb2.area.right()) - mb1.area.x;
-						mb1.area.h = std::max(bottom1, mb2.area.bottom()) - mb1.area.y;
-						was_found = true;
-
-						list.push_back(mb1);
-						nli = new_list.erase(nli);
-					}
-					else
-					{
-						nli++;
-					}
-				}
-
-				if (!was_found)
-				{
-					new_list.push_back(mb1);
-				}
-			}
-
-			std::vector<movement_box> new_vector;
-
-			for (auto nlb : new_list)
-				new_vector.push_back(nlb);
-
-			return new_vector;
-		}
 
 		std::vector<movement_box> get_movement_boxes()
 		{
@@ -630,118 +691,122 @@ namespace corona
 
 		void calculate_movement_boxes()
 		{
-			boxes = get_frame_movement_boxes_fast();
-		}
+			boxes = get_frame_movement_boxes();
 
+/*			std::vector<movement_box> new_boxes;
+
+			for (auto b : boxes) 
+			{
+				auto found = std::find_if(frame_boxes.begin(), frame_boxes.end(), [b](movement_box& r) {
+					return rectangle_math::intersect(&b.area, &r.area);
+					});
+
+				if (found == std::end(frame_boxes))
+				{
+					new_boxes.push_back(b);
+				}
+			}
+
+			for (auto bx : frame_boxes)
+			{
+				new_boxes.push_back(bx);
+			}
+
+			boxes = std::move(new_boxes);
+			*/
+
+		}
 
 		// there is a way, way better way to do this.
 		// use the thing that recursively divides it into boxes.
 		// 
-		std::vector<movement_box> get_frame_movement_boxes_fast()
+		std::vector<movement_box> get_frame_movement_boxes()
 		{
 			std::vector<movement_box> new_boxes;
-			std::vector<int> box_x, box_y;
-
-			for (int i = 0; i < clean_columns.size(); i++)
-			{
-				if (i) {
-					box_x.push_back(i);
-				}
-
-				int t = clean_columns[i];
-				while (t == 0 && i < clean_columns.size()) 
-				{
-					t = clean_columns[i];
-					i++;
-				}
-
-				box_x.push_back(i);
-
-				t = clean_columns[i];
-				while (t > 0 && i < clean_columns.size())
-				{
-					t = clean_columns[i];
-					i++;
-				}
-			}
-			box_x.push_back(activation_frame.get_width());
-
-			for (int i = 0; i < clean_rows.size(); i++)
-			{
-				if (i) {
-					box_y.push_back(i);
-				}
-
-				int t = clean_rows[i];
-				while (t == 0 && i < clean_rows.size())
-				{
-					t = clean_rows[i];
-					i++;
-				}
-
-				box_y.push_back(i);
-
-				t = clean_rows[i];
-				while (t > 0 && i < clean_rows.size())
-				{
-					t = clean_rows[i];
-					i++;
-				}
-			}
-
-			box_y.push_back(activation_frame.get_height());
-
-			int last_x = 0;
-			for (auto x : box_x)
-			{
-				int last_y = 0;
-				for (auto y : box_y) 
-				{
-					movement_box mb;
-					mb.area.x = last_x;
-					mb.area.y = last_y;
-					mb.area.w = x - last_x;
-					mb.area.h = y - last_y;
-
-					auto mbcursor = activation_frame.get_cursor(last_x, last_y);
-					signal_pixel* spmb = mbcursor.first();
-					int active_count = 0;
-
-					for (int y = 0; y < mb.area.h; y++)
-					{
-						for (int x = 0; x < mb.area.w; x++)
-						{
-							if (spmb && spmb->signal > 0.0)
-							{
-								active_count++;
-								spmb = mbcursor.right();
-							}
-						}
-						spmb = mbcursor.carriage_return(mb.area.x);
-					}
-					last_y = y;
-
-					if (active_count > 5) {
-						new_boxes.push_back(mb);
-					}
-
-				}
-				last_x = x;
-			}
 
 			point scale = activation_frame.get_scale();
 
 			scale.x *= last_frame.get_width();
 			scale.y *= last_frame.get_height();
-			//std::cout << "movement boxes :" << new_boxes.size() << std::endl;
 
-			for (auto& mb : new_boxes)
+			auto box_ys = active_rows.get_points();
+			auto box_xs = active_columns.get_points();
+
+			for (auto box_y : box_ys)
 			{
-				mb.area.x *= scale.x;
-				mb.area.y *= scale.y;
-				mb.area.w *= scale.x;
-				mb.area.h *= scale.y;
-				//std::cout << std::format("{4}:{0},{1}-{2}x{3}", mb.area.x, mb.area.y, mb.area.w, mb.area.h, mb.image_hash) << std::endl;
+				for (auto box_x : box_xs)
+				{
+					std::list <point> left_polygon;
+					std::list <point> right_polygon;
+
+					movement_box mb;
+
+					mb.area.x = box_x.point;
+					mb.area.y = box_y.point;
+					mb.area.w = box_x.length;
+					mb.area.h = box_y.length;
+
+					int active_count = 0;
+					auto mbcursor = activation_frame.get_cursor(mb.area.x, mb.area.y);
+					signal_pixel* spmb = mbcursor.first();
+
+					for (int y = 0; y < mb.area.h; y++)
+					{
+						int first_active_x = -1;
+						int last_active_x = -1;
+
+						mbcursor.set(mb.area.x, mb.area.y + y);
+						spmb = mbcursor.first();
+
+						for (int x = 0; x < mb.area.w; x++)
+						{
+							if (spmb && spmb->activated > 0.0)
+							{
+								active_count++;
+								if (first_active_x < 0)
+									first_active_x = x;
+								last_active_x = x;
+							}
+							spmb = mbcursor.right();
+						}
+
+						if (first_active_x > -1)
+						{
+							point pt;
+							pt.x = first_active_x;
+							pt.y = y;
+							left_polygon.push_back(pt);
+							pt.x = last_active_x;
+							pt.y = y;
+							right_polygon.push_back(pt);
+						}
+					}
+
+					if (active_count > 5)
+					{
+						mb.area.x *= scale.x;
+						mb.area.y *= scale.y;
+						mb.area.w *= scale.x;
+						mb.area.h *= scale.y;
+
+						for (auto& pt : left_polygon)
+						{
+							pt.x *= scale.x;
+							pt.y *= scale.y;
+							mb.left.push_back(pt);
+						}
+
+						for (auto& pt : right_polygon)
+						{
+							pt.x *= scale.x;
+							pt.y *= scale.y;
+							mb.right.push_back(pt);
+						}
+
+						new_boxes.push_back(mb);
+					}
+
+				}
 			}
 
 			std::sort(new_boxes.begin(), new_boxes.end(), [](movement_box& a, movement_box& b) {
@@ -749,93 +814,6 @@ namespace corona
 				});
 
 			return new_boxes;
-		}
-
-		std::vector<movement_box> get_frame_movement_boxes()
-		{
-			std::vector<movement_box> movement_boxes;
-
-			point candidate0;
-
-			int activated_wait = 0;		
-
-			pixel_frame<signal_pixel>::cursor c = activation_frame.get_cursor(0, 0);
-
-			int activation_distance = 8;
-
-			for (signal_pixel* sp = c.first(); sp; sp = c.right())
-			{
-				if (sp->activated)
-				{
-					// make sure we didn't somehow pick up this pixel already
-					auto found = std::find_if(movement_boxes.begin(), movement_boxes.end(), [sp, &c](movement_box& r) {
-						return rectangle_math::contains(r.area, c.get_x(), c.get_y());
-						});
-
-					if (found == movement_boxes.end()) 
-					{
-						movement_box r;
-						r.area.x = c.get_x()- activation_distance/2;
-						r.area.y = c.get_y()- activation_distance/2;
-						r.area.w = activation_distance;
-						r.area.h = activation_distance;
-						if (r.area.x < 0) {
-							r.area.w += r.area.x;
-							r.area.x = 0;
-						}
-						if (r.area.y < 0) {
-							r.area.h += r.area.y;
-							r.area.y = 0;
-						}				
-
-						auto mbcursor = activation_frame.get_cursor(r.area.x, r.area.y);
-						signal_pixel* spmb = mbcursor.first();
-
-						for (int y = 0; y < r.area.h; y++)
-						{
-							for (int x = 0; x < r.area.w; x++)
-							{
-								if (spmb)
-								{
-									int count = spmb->detected;
-									rgb hasho;
-									if (count) {
-										hasho.r = spmb->total_red / count;
-										hasho.g = spmb->total_green / count;
-										hasho.b = spmb->total_blue / count;
-										r.image_hash = std::to_string((int)(rgb2hsl(hasho).h) * 16);
-									}
-									spmb = mbcursor.right();
-								}
-							}
-							spmb = mbcursor.carriage_return(r.area.x);
-						}
-
-						movement_boxes.push_back(r);
-					}
-				}
-			}
-
-			//std::cout << "movement boxes before collapse:" << movement_boxes.size() << std::endl;
-
-			movement_boxes = collapse_movement_boxes(movement_boxes);
-
-			point scale = activation_frame.get_scale();
-
-			scale.x *= last_frame.get_width();
-			scale.y *= last_frame.get_height();
-			//std::cout << "movement boxes after collapse:" << movement_boxes.size() << std::endl;
-
-			for (auto& mb : movement_boxes)
-			{
-				mb.area.x *= scale.x;
-				mb.area.y *= scale.y;
-				mb.area.w *= scale.x;
-				mb.area.h *= scale.y;
-				//std::cout << std::format("{4}:{0},{1}-{2}x{3}", mb.area.x, mb.area.y, mb.area.w, mb.area.h, mb.image_hash) << std::endl;
-			}
-
-			return movement_boxes;
 		}
 
 		std::vector<ID2D1Bitmap1*> get_motion(ID2D1DeviceContext* _context)
@@ -910,11 +888,8 @@ namespace corona
 
 			next_color_cycle();
 
-			clean_columns.clear();
-			clean_rows.clear();
-
-			clean_columns.resize(activation_frame.get_width());
-			clean_rows.resize(activation_frame.get_height());
+			active_columns.start(activation_frame.get_width());
+			active_rows.start(activation_frame.get_height());
 
 			activation_frame.for_each([this](signal_pixel _src) -> signal_pixel {
 				if (_src.signal > 0.0)
@@ -999,8 +974,8 @@ namespace corona
 				double d = _src.detected / frame_area;
 				if (d > this->activation_area_percentage) {
 					_src.activated = true;
-					clean_columns[x]++;
-					clean_rows[y]++;
+					active_columns.count(x);
+					active_rows.count(y);
 				}
 				return _src;
 				});
