@@ -672,8 +672,8 @@ namespace corona
 		point origin = { 0, 0, 0 };
 		set_bounds(_bounds);
 
-		double item_start_space_px = to_pixels(item_start_space);
-		double item_next_space_px = to_pixels(item_next_space);
+		double item_start_space_px = to_pixels_x(item_start_space);
+		double item_next_space_px = to_pixels_x(item_next_space);
 
 		std::function<point(point _remaining, point* _origin, const rectangle* _bounds, control_base* _item)> align_item = [this](point _remaining, point* _origin, const rectangle* _bounds, control_base* _item) -> point
 		{
@@ -798,8 +798,8 @@ namespace corona
 
 		set_bounds(_bounds);
 
-		double item_start_space_px = to_pixels(item_start_space);
-		double item_next_space_px = to_pixels(item_next_space);
+		double item_start_space_px = to_pixels_y(item_start_space);
+		double item_next_space_px = to_pixels_y(item_next_space);
 
 		std::function<point(point _remaining, point* _origin, const rectangle* _bounds, control_base* _item)> align_item = [this](point _remaining, point* _origin, const rectangle* _bounds, control_base* _item) -> point
 		{

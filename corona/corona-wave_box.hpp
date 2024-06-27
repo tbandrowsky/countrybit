@@ -6,9 +6,9 @@ namespace corona {
 	struct wave_instance
 	{
 		double	start_seconds,
-			stop_seconds;
+				stop_seconds;
 		double	pitch_adjust,
-			volume_adjust;
+				volume_adjust;
 		bool	playing;
 	};
 	/// <summary>

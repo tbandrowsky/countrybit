@@ -44,9 +44,7 @@ namespace corona
 		int				detected;
 		bool			activated;
 		float			detect_counter;
-		float			total_red;
-		float			total_green;
-		float			total_blue;
+		float			dh, dl, ds;
 
 		signal_pixel() : signal(0.0), detected(0), activated(false)
 		{
@@ -77,6 +75,27 @@ namespace corona
 		}
 	};
 
+	point hsl_to_point(hsl in)
+	{
+		double ar = in.h * 6.28;
+		double r = in.s;
+
+		point pt;
+		pt.z = in.l;
+		pt.x = cos(ar) * r;
+		pt.y = sin(ar) * r;
+
+		return pt;
+	}
+
+	double hsl_distance(hsl h1, hsl h2)
+	{
+		point p1 = hsl_to_point(h1);
+		point p2 = hsl_to_point(h2);
+		double distance = point_math::distance(p1, p2);
+		return distance;
+	}
+
 	template <typename pixel_type> hsl to_hsl(pixel_type _pt)
 	{
 		rgb rx;
@@ -86,6 +105,42 @@ namespace corona
 		rx.b = _pt.b / 255.0;
 
 		return rgb2hsl(rx);
+	}
+
+	void calculate_hsl_ranges()
+	{
+		rgb r;
+		hsl mins = {};
+		hsl maxes = {};
+
+		for (r.r = 0; r.r < 255; r.r += 16)
+		{
+			for (r.g = 0; r.g < 255; r.g += 16)
+			{
+				for (r.b = 0; r.b < 255; r.b += 16)
+				{
+					hsl t = to_hsl(r);
+
+					if (t.h < mins.h)
+						mins.h = t.h;
+					if (t.s < mins.s)
+						mins.s = t.s;
+					if (t.l < mins.l)
+						mins.l = t.l;
+
+					if (t.h >= maxes.h)
+						maxes.h = t.h;
+					if (t.s >= maxes.s)
+						maxes.s = t.s;
+					if (t.l >= maxes.l)
+						maxes.l = t.l;
+
+				}
+			}
+		}
+
+		std::cout << std::format("hsl ranges (h:{0},s:{1},l:{2})-(h:{3},s:{4},l:{5}",
+			mins.h, mins.s, mins.l, maxes.h, maxes.s, maxes.l) << std::endl;
 	}
 
 	template <typename pixel_type> struct pixel_frame
@@ -331,9 +386,10 @@ namespace corona
 				return cur_pos / pf->get_width();
 			}
 
-			inline void set(int _new_x, int _new_y)
+			inline pixel_type *set(int _new_x, int _new_y)
 			{
 				cur_pos = _new_y * pf->get_width() + _new_x;
+				return get();
 			}
 
 			inline void set_x(int _new_x)
@@ -557,6 +613,75 @@ namespace corona
 				if (pt[i].length != check_points[i].length) {
 					std::cout << __LINE__ << " check point length incorrect" << std::endl;
 				}
+
+				rgb sample_pixel;
+				sample_pixel.r = 255;
+				sample_pixel.g = 255;
+				sample_pixel.b = 255;
+
+				hsl sph = to_hsl(sample_pixel);
+				std::cout << __LINE__ << " hsl check: h:" << sph.h << " l:" << sph.l << " s:" << sph.s <<  std::endl;
+
+				rgb sp2 = hsl2rgb(sph);
+				sp2.r *= 255;
+				sp2.g *= 255;
+				sp2.b *= 255;
+				if (sp2.b != sample_pixel.b ||
+					sp2.g != sample_pixel.g ||
+					sp2.r != sample_pixel.r) {
+					std::cout << __LINE__ << " hsl round trip fails" << std::endl;
+				}
+
+				rgb wall1;
+				wall1.r = 122;
+				wall1.g = 128;
+				wall1.b = 141;
+				hsl hwall1 = to_hsl(wall1);
+
+				rgb wall2;
+				wall2.r = 164;
+				wall2.g = 175;
+				wall2.b = 180;
+				hsl hwall2 = to_hsl(wall2);
+
+				rgb hand1;
+				hand1.r = 205;
+				hand1.g = 142;
+				hand1.b = 124;
+				hsl hhand1 = to_hsl(hand1);
+
+				rgb hand2;
+				hand2.r = 205;
+				hand2.g = 142;
+				hand2.b = 124;
+				hsl hhand2 = to_hsl(hand2);
+
+				rgb hand3;
+				hand3.r = 225;
+				hand3.g = 179;
+				hand3.b = 169;
+				hsl hhand3 = to_hsl(hand3);
+
+				double d = hsl_distance(hhand1, hwall1);
+				std::cout << "d h1 w1:" << d << std::endl;
+				d = hsl_distance(hhand1, hwall2);
+				std::cout << "d h1 w2:" << d << std::endl;
+				d = hsl_distance(hhand2, hwall1);
+				std::cout << "d h2 w1:" << d << std::endl;
+				d = hsl_distance(hhand2, hwall2);
+				std::cout << "d h2 w2:" << d << std::endl;
+				d = hsl_distance(hhand3, hwall1);
+				std::cout << "d h3 w1:" << d << std::endl;
+				d = hsl_distance(hhand3, hwall2);
+				std::cout << "d h3 w2:" << d << std::endl;
+				d = hsl_distance(hhand1, hhand2);
+				std::cout << "d h1 h2:" << d << std::endl;
+				d = hsl_distance(hhand1, hhand3);
+				std::cout << "d h1 h3:" << d << std::endl;
+				d = hsl_distance(hhand2, hhand3);
+				std::cout << "d h2 h3:" << d << std::endl;
+
+				calculate_hsl_ranges();
 			}
 
 		}
@@ -582,14 +707,10 @@ namespace corona
 		pixel_frame<signal_pixel> activation_frame;
 		pixel_frame<bgra32_pixel> last_frame;
 
-		double hue_detection_threshold;
-		double sat_detection_threshold;
-		double lum_detection_threshold;
-
+		double detection_threshold;
 		double activation_area_percentage;
 		double detection_pulse;
 		double detection_cooldown;
-		double motion_spacing;
 
 		int color_cycle_frames;
 		ccolor color_cycle_start, 
@@ -611,7 +732,6 @@ namespace corona
 			frame_counter(0)
 		{
 			reset_defaults();
-				
 		}
 
 		void reset_defaults()
@@ -619,13 +739,10 @@ namespace corona
 			active_columns.start(1024);
 			active_rows.start(1024);
 
-			hue_detection_threshold = .02;
-			sat_detection_threshold = .1;
-			lum_detection_threshold = .1;
-			activation_area_percentage = .2;
+			detection_threshold = .3;
+			activation_area_percentage = .5;
 			detection_pulse = .8;
-			detection_cooldown = .040;
-			motion_spacing = 8;
+			detection_cooldown = .08;
 			color_cycle_start = {};
 			init_color_cycle();
 			next_color_cycle();
@@ -748,24 +865,30 @@ namespace corona
 
 					int active_count = 0;
 					auto mbcursor = activation_frame.get_cursor(mb.area.x, mb.area.y);
-					signal_pixel* spmb = mbcursor.first();
+					signal_pixel* spmb = nullptr;
 
 					for (int y = 0; y < mb.area.h; y++)
 					{
 						int first_active_x = -1;
 						int last_active_x = -1;
+						signal_pixel* xfound = mbcursor.set(mb.area.x + mb.area.w / 2, mb.area.y + y);
 
-						mbcursor.set(mb.area.x, mb.area.y + y);
-						spmb = mbcursor.first();
+						spmb = mbcursor.set(mb.area.x, mb.area.y + y);
 
 						for (int x = 0; x < mb.area.w; x++)
 						{
-							if (spmb && spmb->activated > 0.0)
+							if (spmb && spmb->activated)
 							{
 								active_count++;
-								if (first_active_x < 0)
+								if (first_active_x < 0) {
 									first_active_x = x;
-								last_active_x = x;
+								}
+								auto dh = std::abs(spmb->dh - xfound->dh);
+								auto dl = std::abs(spmb->dl - xfound->dl);
+								auto ds = std::abs(spmb->ds - xfound->ds);
+								if (xfound && dh < .05) {
+									last_active_x = x;
+								}
 							}
 							spmb = mbcursor.right();
 						}
@@ -776,13 +899,15 @@ namespace corona
 							pt.x = first_active_x;
 							pt.y = y;
 							left_polygon.push_back(pt);
-							pt.x = last_active_x;
-							pt.y = y;
-							right_polygon.push_back(pt);
+							if (last_active_x >= pt.x) {
+								pt.x = last_active_x;
+								pt.y = y;
+								right_polygon.push_back(pt);
+							}
 						}
 					}
 
-					if (active_count > 5)
+					if (active_count)
 					{
 						mb.area.x *= scale.x;
 						mb.area.y *= scale.y;
@@ -898,7 +1023,9 @@ namespace corona
 					if (_src.signal < 0.0)
 						_src.signal = 0.0;
 				}
-				_src.total_blue = _src.total_green = _src.total_red = 0.0;
+				_src.dh = 0.0;
+				_src.dl = 0.0;
+				_src.ds = 0.0;
 				_src.detected = 0;
 				_src.activated = false;
 				return _src;
@@ -926,17 +1053,15 @@ namespace corona
 				hsl hsl0 = to_hsl(*sp0);
 				hsl hsl1 = to_hsl(*sp1);
 
-				double dh = std::abs(hsl0.h - hsl1.h);
-				double dl = std::abs(hsl0.l - hsl1.l);
-				double ds = std::abs(hsl0.s - hsl1.s);
-
 				int activation_x = (frame0_cursor.get_x() * activation_frame.get_width()) / last_frame.get_width();
 				int activation_y = (frame0_cursor.get_y() * activation_frame.get_height()) / last_frame.get_height();
 				activation_cursor.set(activation_x, activation_y);
 
 				auto spa = activation_cursor.get();
 
-				if (dh > hue_detection_threshold && dl > lum_detection_threshold && ds > sat_detection_threshold)
+				double d = hsl_distance(hsl0, hsl1);
+
+				if (d > detection_threshold)
 				{
 					m_pixel_count++;
 
@@ -945,17 +1070,17 @@ namespace corona
 						spa->detect_counter = frame_counter;
 					}
 
-					auto sp0l = *sp0;
-					auto sp1l = *sp1;
-
-					spa->total_blue += sp0l.b + sp1l.b;
-					spa->total_green += sp0l.g + sp1l.g;
-					spa->total_red += sp0l.r + sp1l.r;
+					spa->dl += hsl1.l;
+					spa->dh += hsl1.h;
+					spa->ds += hsl1.s;
 					spa->detected++;
 					
 				}
 				else if (spa->signal > 0.0)
 				{
+					spa->dl += hsl1.l;
+					spa->dh += hsl1.h;
+					spa->ds += hsl1.s;
 					spa->detected++;
 				}
 				else
@@ -972,6 +1097,11 @@ namespace corona
 
 			activation_frame.for_each([this, frame_area](int x, int y, signal_pixel _src) -> signal_pixel {
 				double d = _src.detected / frame_area;
+				if (_src.detected) {
+					_src.dl /= _src.detected;
+					_src.dh /= _src.detected;
+					_src.ds /= _src.detected;
+				}
 				if (d > this->activation_area_percentage) {
 					_src.activated = true;
 					active_columns.count(x);

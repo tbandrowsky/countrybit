@@ -92,6 +92,11 @@ namespace corona
 		virtual void setSpinRange(int ddlControlId, int lo, int high) = 0;
 		virtual void setSpinPos(int ddlControlId, int pos) = 0;
 
+		// Handy
+		virtual void setRedraw(int ddlControlId, bool pos) = 0;
+		virtual void redraw(int ddlControlId, bool pos) = 0;
+
+
 		virtual void setSysLinkText(int ddlControlId, const char* _text) = 0;
 		virtual std::vector<std::string> readInternet(const char* _domain, const char* _path) = 0;
 

@@ -59,7 +59,8 @@ namespace corona
 				window = phost->createDirect2Window(id, bounds);
 //				std::cout << this << ":" << typeid(*this).name() << " created." << std::endl;
 			}
-			else {
+			else 
+			{
 	//			std::cout << this << ":" << typeid(*this).name() << " NOT created because the host could not be locked" << std::endl;
 			}
 			if (on_create) {
@@ -417,12 +418,12 @@ namespace corona
 									context.drawPath(&ptd);
 
 
-									D2D1_RECT_F rect;
+/*									D2D1_RECT_F rect;
 									rect.left = br.area.x * mag + draw_bounds.x;
 									rect.top = br.area.y * mag + draw_bounds.y;
 									rect.right = br.area.right() * mag + draw_bounds.x;
 									rect.bottom = br.area.bottom() * mag + draw_bounds.y;
-									dc->DrawRectangle(rect, brush, 2.0);
+									dc->DrawRectangle(rect, brush, 2.0);*/
 								}
 								brush->Release();
 							}
@@ -550,6 +551,39 @@ namespace corona
 				current_sprinkles.put(spr);
 			}
 		}
+
+		double get_detection_threshold() {
+			return delta_boi.detection_threshold;
+		}
+
+		double get_activation_area_percentage() {
+			return delta_boi.activation_area_percentage;
+		}
+
+		double get_detection_pulse() {
+			return delta_boi.detection_pulse;
+		}
+
+		double get_detection_cooldown() {
+			return delta_boi.detection_cooldown;
+		}
+
+		double set_detection_threshold(double _detection_threshold) {
+			return delta_boi.detection_threshold = _detection_threshold;
+		}
+
+		double set_activation_area_percentage(double _activation_area_percentage) {
+			return delta_boi.activation_area_percentage = _activation_area_percentage;
+		}
+
+		double set_detection_pulse(double _detection_pulse) {
+			return delta_boi.detection_pulse = _detection_pulse;
+		}
+
+		double set_detection_cooldown(double _detection_cooldown) {
+			return delta_boi.detection_cooldown = _detection_cooldown;
+		}
+
 
 		std::vector<movement_box> get_movement_boxes()
 		{

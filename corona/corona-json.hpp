@@ -582,35 +582,50 @@ namespace corona
 
 		operator double() const
 		{
-			if (double_impl)
-				return double_impl->value;
-			else if (int64_impl)
-				return int64_impl->value;
-			else if (string_impl)
-				return std::stod(string_impl->value);
-			else if (datetime_impl)
-				return datetime_impl->value.get_time_t();
-			else
+			try
+			{
+				if (double_impl)
+					return double_impl->value;
+				else if (int64_impl)
+					return int64_impl->value;
+				else if (string_impl)
+					return std::strtod(string_impl->value.c_str(), nullptr);
+				else if (datetime_impl)
+					return datetime_impl->value.get_time_t();
+				else
+					return 0.0;
+			}
+			catch (std::exception)
+			{
 				return 0.0;
+			}
 		}
 
 		operator int() const
 		{
-			if (double_impl)
-				return double_impl->value;
-			else if (int64_impl)
-				return int64_impl->value;
-			else if (string_impl)
+			try
 			{
-				if (string_impl->value == "true") 
-					return 1;
+
+				if (double_impl)
+					return double_impl->value;
+				else if (int64_impl)
+					return int64_impl->value;
+				else if (string_impl)
+				{
+					if (string_impl->value == "true")
+						return 1;
+					else
+						return std::strtod(string_impl->value.c_str(), nullptr);
+				}
+				else if (datetime_impl)
+					return 0;
 				else
-					return std::stod(string_impl->value);
+					return 0;
 			}
-			else if (datetime_impl)
+			catch (std::exception)
+			{
 				return 0;
-			else
-				return 0;
+			}
 		}
 
 		operator date_time() const
@@ -766,7 +781,7 @@ namespace corona
 
 		bool has_member(std::string _key) const
 		{
-			bool has_value = object_impl && object_impl->members.contains(_key);
+			bool has_value = !_key.empty() && object_impl && object_impl->members.contains(_key);
 			return has_value;
 		}
 

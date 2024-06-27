@@ -578,11 +578,9 @@ namespace corona
 			scope_lock locker(binding_lock);
 			if (item_changed_bindings.contains(_control_id)) {
 				auto& ptrx = item_changed_bindings[_control_id];
-				if (auto temp = ptrx.get()->control) {
-					evt.control_id = temp->id;
-					evt.control = ptrx->control;
-					ptrx->on_change(evt);
-				}
+				evt.control_id = _control_id;
+				evt.control = find(_control_id);
+				ptrx->on_change(evt);
 			}
 		}
 

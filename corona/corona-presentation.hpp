@@ -756,6 +756,8 @@ namespace corona {
 			std::string new_text = ptr->getListSelectedText(dropDownId);
 			int index = ptr->getListSelectedIndex(dropDownId);
 			int value = ptr->getListSelectedValue(dropDownId);
+
+			ptr->setRedraw(dropDownId, false);
 			list_changed_event lce;
 			lce.control_id = dropDownId;
 			lce.selected_text = new_text;
@@ -767,6 +769,8 @@ namespace corona {
 			if (cp) {
 				cp->handle_list_changed(dropDownId, lce);
 			}
+			ptr->setRedraw(dropDownId, true);
+			ptr->redraw(dropDownId, 0);
 		}
 	}
 

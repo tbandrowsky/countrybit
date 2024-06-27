@@ -32,7 +32,6 @@ namespace corona
 
 		double dpiScale;
 
-		bool disableChangeProcessing;
 		std::shared_ptr<directXAdapter> factory;
 		HWND tooltip;
 
@@ -151,6 +150,11 @@ namespace corona
 		virtual void setSpinRange(int ddlControlId, int lo, int high);
 		virtual void setSpinPos(int ddlControlId, int pos);
 
+		// Handy
+		virtual void setRedraw(int ddlControlId, bool pos);
+		virtual void redraw(int ddlControlId, bool pos);
+
+		// Simple
 		virtual void setSysLinkText(int ddlControlId, const char* _text);
 		std::vector<std::string> readInternet(const char* _domain, const char* _path);
 
@@ -200,7 +204,6 @@ namespace corona
 		labelFont = nullptr,
 		titleFont = nullptr;
 		dpiScale = 1.0;
-		disableChangeProcessing = false;
 
 		backgroundColor.a = 1.0;
 		backgroundColor.r = 1.0;
@@ -219,7 +222,6 @@ namespace corona
 
 		dpiScale = 0;
 
-		disableChangeProcessing = false;
 		tooltip = nullptr;
 
 	}
@@ -611,6 +613,7 @@ namespace corona
 			}
 			break;
 			case WM_NCCALCSIZE:
+			{
 				if (wParam)
 				{
 					NCCALCSIZE_PARAMS* Params = reinterpret_cast<NCCALCSIZE_PARAMS*>(lParam);
@@ -623,6 +626,7 @@ namespace corona
 					return 0;
 				}
 				return DefWindowProc(hwnd, message, wParam, lParam);
+			}
 			case WM_NCHITTEST:
 			{
 				RECT WindowRect;
@@ -669,37 +673,36 @@ namespace corona
 				PostQuitMessage(0);
 				return 0;
 			case WM_COMMAND:
-				if (currentController && !disableChangeProcessing)
+				if (currentController)
 				{
 					UINT controlId = LOWORD(wParam);
 					UINT notificationCode = HIWORD(wParam);
 					HWND controlWindow = (HWND)lParam;
 					switch (notificationCode) {
-					case BN_CLICKED: // button or menu
-						currentController->onCommand(controlId);
-						break;
-					case EN_UPDATE:
-						currentController->onTextChanged(controlId);
-						break;
-					case LBN_SELCHANGE:
-					{
-						char window_class[500];
-						if (::RealGetWindowClass(controlWindow, window_class, sizeof(window_class) - 1)) {
-							if (
-								(strcmp(WC_COMBOBOX, window_class) == 0) ||
-								(strcmp(WC_COMBOBOXEX, window_class) == 0)
-								) {
-								currentController->onDropDownChanged(controlId);
+						case BN_CLICKED: // button or menu
+							currentController->onCommand(controlId);
+							break;
+						case EN_UPDATE:
+							currentController->onTextChanged(controlId);
+							break;
+						case LBN_SELCHANGE:
+						{
+							char window_class[500];
+							if (::RealGetWindowClass(controlWindow, window_class, sizeof(window_class) - 1)) {
+								if (
+									(strcmp(WC_COMBOBOX, window_class) == 0) ||
+									(strcmp(WC_COMBOBOXEX, window_class) == 0)
+									) {
+									currentController->onDropDownChanged(controlId);
+								}
+								else
+								{
+									currentController->onListBoxChanged(controlId);
+								}
 							}
-							else
-							{
-								currentController->onListBoxChanged(controlId);
-							}
+							break;
 						}
-						break;
 					}
-					}
-					break;
 				}
 				break;
 			case WM_DPICHANGED:
@@ -717,7 +720,7 @@ namespace corona
 				}
 				break;
 			case WM_NOTIFY:
-				if (currentController && !disableChangeProcessing)
+				if (currentController)
 				{
 					//LVN_ITEMACTIVATE
 					LPNMHDR lpnm = (LPNMHDR)lParam;
@@ -736,6 +739,9 @@ namespace corona
 							currentController->onListViewChanged(lpnm->idFrom);
 					}
 					break;
+					case EN_CHANGE:
+						currentController->onTextChanged(lpnm->idFrom);
+						break;
 					case NM_CLICK:
 					{
 
@@ -2120,6 +2126,18 @@ namespace corona
 	{
 		HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
 		::SendMessage(control, UDM_SETPOS32, 0, pos);
+	}
+
+	void directApplicationWin32::setRedraw(int ddlControlId, bool pos)
+	{
+		HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
+		::SendMessage(control, WM_SETREDRAW, pos, 0);
+	}
+
+	void directApplicationWin32::redraw(int ddlControlId, bool pos)
+	{
+		HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
+		RedrawWindow(control, NULL, NULL, RDW_ERASE | RDW_FRAME | RDW_INVALIDATE | RDW_ALLCHILDREN);
 	}
 
 	void directApplicationWin32::setSysLinkText(int ddlControlId, const char* _text)

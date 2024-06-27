@@ -245,6 +245,22 @@ namespace corona
 			return text;
 		}
 
+		void set_format(const std::string& _text)
+		{
+			text = _text;
+			if (auto phost = window_host.lock()) {
+				phost->setEditText(id, _text);
+			}
+		}
+
+		std::string get_format()
+		{
+			if (auto phost = window_host.lock()) {
+				text = phost->getEditText(id);
+			}
+			return text;
+		}
+
 		virtual void create(std::weak_ptr<applicationBase> _host)
 		{
 			windows_control::create(_host);
@@ -410,6 +426,7 @@ namespace corona
 		void data_changed()
 		{
 			if (auto phost = window_host.lock()) {
+				std::string selection = phost->getListSelectedText(id);
 				phost->clearListItems(id);
 				if (choices.items.is_array()) {
 					for (int i = 0; i < choices.items.size(); i++)
@@ -418,6 +435,10 @@ namespace corona
 						int lid = c[choices.id_field];
 						std::string description = c[choices.text_field];
 						phost->addListItem(id, description, lid);
+					}
+					if (selection.size())
+					{
+						phost->setListSelectedText(id, selection.c_str());
 					}
 				}
 			}
@@ -445,7 +466,10 @@ namespace corona
 			if (_data.has_member(json_field_name)) {
 				std::string text = _data[json_field_name];
 				if (auto ptr = window_host.lock()) {
-					ptr->setListSelectedText(id, text.c_str());
+					std::string existing = ptr->getListSelectedText(id);
+					if (existing != text) {
+						ptr->setListSelectedText(id, text.c_str());
+					}
 				}
 			}
 			return _data;
@@ -562,7 +586,10 @@ namespace corona
 			if (_data.has_member(json_field_name)) {
 				std::string text = _data[json_field_name];
 				if (auto ptr = window_host.lock()) {
-					ptr->setComboSelectedText(id, text.c_str());
+					std::string existing = ptr->getComboSelectedText(id);
+					if (existing != text) {
+						ptr->setComboSelectedText(id, text.c_str());
+					}
 				}
 			}
 			return _data;
@@ -725,7 +752,13 @@ namespace corona
 
 	class edit_control : public text_control_base
 	{
+
+		using windows_control::window;
+
 	public:
+
+		std::string format;
+
 		edit_control(container_control_base* _parent, int _id) : text_control_base(_parent, _id) { ; }
 		virtual ~edit_control() { ; }
 		edit_control(const edit_control& _src) : text_control_base(_src)
@@ -735,6 +768,52 @@ namespace corona
 		virtual std::shared_ptr<control_base> clone()
 		{
 			auto tv = std::make_shared<edit_control>(*this);
+			return tv;
+		}
+
+		virtual const char* get_window_class() { return WC_EDIT; }
+		virtual DWORD get_window_style() { return EditWindowStyles; }
+		virtual DWORD get_window_ex_style() { return 0; }
+
+		static LRESULT myEditProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+		{
+			LONG_PTR ptr = ::GetWindowLongPtrA(hWnd, GWLP_USERDATA);
+			if (ptr) {
+				auto pedit = (edit_control*)ptr;
+				if (msg == WM_PAINT)
+				{
+					auto szFormat = pedit->format.c_str();
+					auto ccFormat = pedit->format.size();
+					PAINTSTRUCT ps = {};
+					BeginPaint(hWnd, &ps);
+					SetTextColor(ps.hdc, RGB(128, 128, 128));
+					DrawText(ps.hdc, szFormat, ccFormat, &ps.rcPaint, DT_EDITCONTROL);
+					EndPaint(hWnd, &ps);
+				}
+			}
+			return CallWindowProcW(DefWindowProcW, hWnd, msg, wParam, lParam);
+		}
+
+		virtual void on_create() 
+		{ 
+			if (::IsWindow(window)) {
+				::SetWindowLongPtr(window, GWLP_USERDATA, (LONG_PTR)this);
+			}
+		}
+	};
+
+	class number_control : public text_control_base
+	{
+	public:
+		number_control(container_control_base* _parent, int _id) : text_control_base(_parent, _id) { ; }
+		virtual ~number_control() { ; }
+		number_control(const edit_control& _src) : text_control_base(_src)
+		{
+
+		}
+		virtual std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<number_control>(*this);
 			return tv;
 		}
 

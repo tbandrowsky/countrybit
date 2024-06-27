@@ -474,6 +474,7 @@ namespace corona
 	{
 	}
 
+
 	void subtitle_control::set_default_styles()
 	{
 		auto st = styles.get_style();

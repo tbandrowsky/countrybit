@@ -48,6 +48,8 @@ namespace corona
 	public:
 		presentation_style* st;
 
+		json				data;
+
 		// the adapter, created first.  It is the graphics card on the machine
 		std::shared_ptr<directXAdapter> factory;
 
@@ -78,6 +80,7 @@ namespace corona
 
 		int id_camera_controls;
 		int id_camera_select;
+		int id_camera_detection_threshold;
 		int id_camera_activation_area_percentage;
 		int id_camera_activation_response;
 		int id_camera_activation_cooldown;
@@ -97,6 +100,11 @@ namespace corona
 
 		aura_application()
 		{
+
+			json_parser jp;
+			data = jp.create_object();
+			data.put_member_object("cameras");
+
 			st = styles.get_style();
 
 			std::cout << "Color Party Startup at " << std::filesystem::current_path() << std::endl;
@@ -128,7 +136,6 @@ namespace corona
 			application_menu->destination(IDM_HOME, "&Home", "home")
 				.destination(IDM_LOGIN, "&Login", "login");
 
-
 			file_transaction<relative_ptr_type> ftr = read_config("client.json");
 			ftr.wait();
 
@@ -157,7 +164,8 @@ namespace corona
 					id_camera = _presentation->get_control_id("camera", []() { return id_counter::next(); });
 					id_camera_controls = _presentation->get_control_id("camera_controls", []() { return id_counter::next(); });
 					id_camera_select = _presentation->get_control_id("camera_select", []() { return id_counter::next(); });
-					id_camera_activation_area_percentage = _presentation->get_control_id("camera_activation_sense", []() { return id_counter::next(); });
+					id_camera_detection_threshold = _presentation->get_control_id("camera_activation_threshold", []() { return id_counter::next(); });
+					id_camera_activation_area_percentage = _presentation->get_control_id("camera_activation_area", []() { return id_counter::next(); });
 					id_camera_activation_response = _presentation->get_control_id("camera_activation_response", []() { return id_counter::next(); });
 					id_camera_activation_cooldown = _presentation->get_control_id("camera_activation_cooldown", []() { return id_counter::next(); });
 
@@ -232,7 +240,7 @@ namespace corona
 			control_builder document_body;
 			caption_bar_control* caption_container;
 			tab_view_control* tab_container;
-			form_view_control* form_view;
+			form_control* form_view;
 
 			control_builder contents_root(_page.get_root_container());
 
@@ -320,17 +328,33 @@ namespace corona
 							ld.text_field = "camera";
 							ld.items = jp.create_array();
 							std::cout << "Camera changed" << std::endl;
-							for (int i = 0; i < camera_list.size(); i++) {
+							json camera_settings;
+							camera_settings = data["cameras"];
+
+							for (int i = 0; i < camera_list.size(); i++) 
+							{
+								std::string& camera_name = camera_list[i];
 								json jo = jp.create_object();
 								jo.put_member("id", i);
-								jo.put_member("camera", camera_list[i]);
-								std::cout << camera_list[i] << std::endl;
+								jo.put_member("camera", camera_name);
+								std::cout << camera_name << std::endl;
+
+								if (!camera_settings.has_member(camera_name))
+								{
+									json new_settings = jp.create_object();
+
+									new_settings.put_member("camera_name", camera_name);
+									new_settings.put_member("detection_threshold", _src->get_detection_threshold() );
+									new_settings.put_member("activation_area", _src->get_activation_area_percentage());
+									new_settings.put_member("detection_pulse", _src->get_detection_pulse());
+									new_settings.put_member("detection_cooldown", _src->get_detection_cooldown());
+
+									camera_settings.put_member(camera_list[i], new_settings);
+								}
+
 								ld.items.append_element(jo);
 							}
 							cbo.set_list(ld);
-							json jox = jp.create_object();
-							jox.put_member(cbo.json_field_name, _src->get_camera_name());
-							cbo.set_data(jox);
 						};
 					});
 
@@ -339,20 +363,38 @@ namespace corona
 						_settings.set_content_align(visual_alignment::align_far);
 						});
 
-					control_builder camera_controls = preview_column.form_view(id_camera_controls, [this](form_view_control& _settings) {
+					control_builder camera_controls = preview_column.form(id_camera_controls, [this](form_control& _settings) {
 						_settings.set_padding(8.0_px);
-						_settings.set_size(0.92_container, 300.0_px);
+						_settings.set_size(0.92_container, 500.0_px);
 						_settings.fields_per_column = 7;
-						_settings.on_changed = [this](form_view_control* _fv) {
+						_settings.on_changed = [this](int _control_id, form_control* _fv) {
 							camera_control& cc = _fv->find<camera_control>(id_camera);
-							json data = _fv->get_data();
-							std::string cam = data["camera_name"];
-							cc.select_camera(cam);
-							};
+							json form_data = _fv->get_data();
+							std::string cam = form_data["camera_name"];
 
-						item_data_source ids;
+							if (_control_id == id_camera_select) {
+								cc.select_camera(cam);
+								json new_cam = data["cameras"][cam];
+								_fv->set_data(new_cam);
+							}
+							else 
+							{
+								double temp = form_data["detection_threshold"];
+								cc.set_detection_threshold(temp);
+								temp = form_data["activation_area"];
+								cc.set_activation_area_percentage(temp);
+								temp = form_data["detection_pulse"];
+								cc.set_detection_pulse(temp);
+								temp = form_data["detection_cooldown"];
+								cc.set_detection_cooldown(temp);
+								data["cameras"].put_member(cam, form_data);
+							}
+						};
 
-						item_field new_field;
+						form_data_source ids;
+
+						form_field new_field;
+
 						new_field.field_id = id_camera_select;
 						new_field.choice_options.id_field = "Id";
 						new_field.choice_options.text_field = "Name";
@@ -360,6 +402,31 @@ namespace corona
 						new_field.field_label = "Camera Select";
 						new_field.json_member_name = "camera_name";
 						ids.fields.push_back(new_field);
+
+						new_field.field_id = id_camera_detection_threshold;
+						new_field.field_type = "number";
+						new_field.field_label = "Detection";
+						new_field.json_member_name = "detection_threshold";
+						ids.fields.push_back(new_field);
+
+						new_field.field_id = id_camera_activation_area_percentage;
+						new_field.field_type = "number";
+						new_field.field_label = "Area";
+						new_field.json_member_name = "activation_area";
+						ids.fields.push_back(new_field);
+
+						new_field.field_id = id_camera_activation_response;
+						new_field.field_type = "number";
+						new_field.field_label = "Response";
+						new_field.json_member_name = "detection_pulse";
+						ids.fields.push_back(new_field);
+
+						new_field.field_id = id_camera_activation_cooldown;
+						new_field.field_type = "number";
+						new_field.field_label = "Cooldown";
+						new_field.json_member_name = "detection_cooldown";
+						ids.fields.push_back(new_field);
+
 						_settings.set_data(ids);
 						});
 

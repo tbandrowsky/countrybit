@@ -283,7 +283,7 @@ namespace corona
 			control_builder document_body;
 			caption_bar_control* caption_container;
 			tab_view_control* tab_container;
-			form_view_control* form_view;
+			form_control* form_view;
 
 			control_builder contents_root(_page.get_root_container());
 
@@ -359,11 +359,11 @@ namespace corona
 			{
 					cb.chaptertitle("Login");
 					cb.chaptersubtitle("Enter your username and password.");					
-					cb.form_view(IDC_FORM_VIEW, [this](form_view_control& _fv)
+					cb.form_view(IDC_FORM_VIEW, [this](form_control& _fv)
 						{
-							item_data_source ids;
+							form_data_source ids;
 
-							item_field iff;
+							form_field iff;
 							iff.field_id = IDC_USER_NAME;
 							iff.field_label = "User name:";
 							iff.field_type = "string";
@@ -438,10 +438,10 @@ namespace corona
 				{
 					cb.chaptertitle("Enter Confirmation Code");
 					cb.chaptersubtitle("An email was sent to you.  Please enter the code you received.");
-					cb.form_view(IDC_FORM_VIEW, [this](form_view_control& _fv)
+					cb.form(IDC_FORM_VIEW, [this](form_control& _fv)
 						{
-							item_data_source ids;
-							item_field iff;
+							form_data_source ids;
+							form_field iff;
 							iff.field_id = IDC_USER_CONFIRMATION;
 							iff.field_label = "Confirmation Code:";
 							iff.field_type = "string";
@@ -523,12 +523,12 @@ namespace corona
 						_settings.item_next_space = 8.0_px;
 						});
 
-					control_builder form_column = root_row.form_view(IDC_FORM_VIEW, [this](form_view_control& _fv)
+					control_builder form_column = root_row.form(IDC_FORM_VIEW, [this](form_control& _fv)
 						{
 							_fv.set_size( 1.0_container, 1.0_container);
 
-							item_data_source ids;
-							item_field iff;
+							form_data_source ids;
+							form_field iff;
 
 							iff.field_id = id_counter::next();
 							iff.field_label = "Name";
@@ -678,10 +678,10 @@ namespace corona
 					cb.chaptertitle("Enter New Password");
 					cb.chaptersubtitle("Please enter the code that you were emailed.");
 
-					cb.form_view(IDC_FORM_VIEW, [this](form_view_control& _fv)
+					cb.form_view(IDC_FORM_VIEW, [this](form_control& _fv)
 						{
-							item_data_source ids;
-							item_field iff;
+							form_data_source ids;
+							form_field iff;
 
 							iff.field_id = IDC_USER_PASSWORD1;
 							iff.field_label = "Password 1:";
@@ -729,10 +729,10 @@ namespace corona
 					cb.chaptertitle("Enter New Password");
 					cb.chaptersubtitle("Please enter the code that you were emailed.");
 
-					cb.form_view(IDC_FORM_VIEW, [this](form_view_control& _fv)
+					cb.form_view(IDC_FORM_VIEW, [this](form_control& _fv)
 						{
-							item_data_source ids;
-							item_field iff;
+							form_data_source ids;
+							form_field iff;
 
 							iff.field_id = IDC_USER_PASSWORD1;
 							iff.field_label = "Password 1:";
@@ -779,14 +779,14 @@ namespace corona
 			control_builder command_container;
 			caption_bar_control* caption_container;
 			tab_view_control* tab_container;
-			form_view_control* form_view;
+			form_control* form_view;
 			std::vector<tab_pane> tabs;
 
 			// then we must be a new page
 
 			create_page_frame(_page, [this](control_builder& cb)
 				{
-					cb.form_view(IDC_FORM_VIEW, [](form_view_control& _fv)
+					cb.form_view(IDC_FORM_VIEW, [](form_control& _fv)
 						{
 							_fv.fields_per_column = 3;
 							_fv.set_size(1.0_container, .15_container);							
@@ -827,7 +827,7 @@ namespace corona
 			edited_fields = edited_class["Fields"];
 			edited_build = edited_class["Edit"];
 
-			item_data_source ids;
+			form_data_source ids;
 			ids.name = edited_class["Description"];
 			ids.data = edited_data;
 			ids.fn_buttons = [this](control_builder& cb) {
@@ -860,7 +860,7 @@ namespace corona
 				std::string field_type;
 				json field_choices;
 				json field_options;
-				item_field new_field;
+				form_field new_field;
 
 				field_name = field.first;
 
@@ -1070,7 +1070,7 @@ namespace corona
 				}
 			}
 
-			auto fv = presentation_layer->get_control<form_view_control>(id_form_view);
+			auto fv = presentation_layer->get_control<form_control>(id_form_view);
 			if (fv) {
 				fv->set_data(ids);
 			}

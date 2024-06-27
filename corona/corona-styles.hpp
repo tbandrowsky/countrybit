@@ -228,21 +228,8 @@ namespace corona
 { toColor("#200000"), 1.0 }
 		};
 
-		countrybit.ErrorBackgroundBrush = std::make_shared<generalBrushRequest>(lgbr);
-		countrybit.ErrorBackgroundBrush->set_name("ErrorBackground");
-
-		lgbr.gradientStops = {
-{ toColor("#600000"), 0.0 },
-{ toColor("#600000"), 0.13 },
-{ toColor("#100000"), 1.0 }
-		};
-
-		countrybit.ErrorBorderBrush = std::make_shared<generalBrushRequest>(lgbr);
-		countrybit.ErrorBorderBrush->set_name("ErrorBorder");
-		countrybit.ErrorBorderWidth = 8;
-
 		countrybit.ErrorTextBrush = std::make_shared<generalBrushRequest>();
-		countrybit.ErrorTextBrush->setColor("#FFFFFF");
+		countrybit.ErrorTextBrush->setColor("#CC0000");
 		countrybit.ErrorTextBrush->set_name("ErrorText");
 
 		countrybit.ErrorFont = std::make_shared<textStyleRequest>(text_style);

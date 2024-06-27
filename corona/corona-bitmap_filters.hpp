@@ -208,7 +208,8 @@ namespace corona
 			out.h = 0;
 			return out;
 		}
-		else {
+		else
+		{
 			out.s = out.l > 0.5 ? delta / (2 - maxc - minc) : delta / (maxc + minc);
 			if (maxc == in.r) {
 				out.h = (in.g - in.b) / delta + (in.g < in.b ? 6 : 0);

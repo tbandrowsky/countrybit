@@ -56,8 +56,6 @@ namespace corona
 
 	class caption_bar_control;
 	class status_bar_control;
-	class form_double_column_control;
-	class form_single_column_control;
 
 	class camera_control;
 
@@ -182,7 +180,8 @@ namespace corona
 
 		point get_size(rectangle _ctx, point _remaining);
 		point get_position(rectangle _ctx);
-		double to_pixels(measure _margin);
+		double to_pixels_x(measure _margin);
+		double to_pixels_y(measure _margin);
 		virtual point get_remaining(point _ctx);
 		virtual void on_resize();
 		void arrange_children(rectangle _bounds,
@@ -677,7 +676,7 @@ namespace corona
 		return mouse_over;
 	}
 
-	double control_base::to_pixels(measure length)
+	double control_base::to_pixels_x(measure length)
 	{
 		double sz = 0.0;
 
@@ -697,6 +696,35 @@ namespace corona
 		case measure_units::font_golden_ratio:
 			double font_height = 12.0;
 			sz = font_height * pi.box.width.amount;
+			if (pi.box.width.units == measure_units::font_golden_ratio)
+			{
+				sz /= 1.618;
+			}
+			break;
+		}
+		return sz;
+	}
+
+	double control_base::to_pixels_y(measure length)
+	{
+		double sz = 0.0;
+
+		control_base& pi = *this;
+
+		switch (length.units) {
+		case measure_units::pixels:
+			sz = length.amount;
+			break;
+		case measure_units::percent_container:
+			sz = length.amount * bounds.h;
+			break;
+		case measure_units::percent_remaining:
+			sz = length.amount * bounds.h;
+			break;
+		case measure_units::font:
+		case measure_units::font_golden_ratio:
+			double font_height = 12.0;
+			sz = font_height * pi.box.height.amount;
 			if (pi.box.width.units == measure_units::font_golden_ratio)
 			{
 				sz /= 1.618;
@@ -846,8 +874,10 @@ namespace corona
 
 	void control_base::calculate_margins()
 	{
-		margin_amount.x = margin_amount.y = to_pixels(margin);
-		padding_amount.x = padding_amount.y = to_pixels(padding);
+		margin_amount.x = to_pixels_x(margin);
+		margin_amount.y = to_pixels_y(margin); 
+		padding_amount.x = to_pixels_x(margin);
+		padding_amount.y = to_pixels_y(padding);
 	}
 
 	rectangle& control_base::set_bounds(rectangle& _bounds)
