@@ -12,6 +12,24 @@ namespace corona
 	class form_control;
 	class field_container_control;
 
+	class form_field
+	{
+	public:
+		int		 	  field_id;
+		std::string   json_member_name;
+		std::string   field_label;
+		std::string   field_type;
+		std::string   field_tooltip;
+		std::string   field_format;
+		std::string   field_suffix;
+		std::string   field_prefix;
+		bool		  read_only;
+		bool		  is_default_focus;
+		function_bag  settings;
+		list_data	  source_list;
+		table_data	  source_table;
+	};
+
 	class control_builder
 	{
 		std::shared_ptr<container_control> root;
@@ -956,6 +974,16 @@ namespace corona
 
 			set_label(ctrl.field_label);
 
+			if (!ctrl.field_prefix.empty())
+			{
+				set_prefix(ctrl.field_prefix);
+			}
+
+			if (!ctrl.field_suffix.empty())
+			{
+				set_suffix(ctrl.field_prefix);
+			}
+
 			if (ctrl.field_type == "status")
 			{
 				create_control<status_control>(cb, ctrl.field_id, [pcontrol](status_control& _settings) {
@@ -998,6 +1026,11 @@ namespace corona
 			}
 			else if (ctrl.field_type == "currency")
 			{
+				if (ctrl.field_prefix.empty())
+				{
+					set_prefix("$");
+				}
+
 				create_control<edit_control>(cb, ctrl.field_id, [pcontrol, data](edit_control& _settings) {
 					pcontrol->settings.call<edit_control>(_settings);
 					if (data.has_member(pcontrol->json_member_name)) {
@@ -1015,240 +1048,251 @@ namespace corona
 			}
 			else if (ctrl.field_type == "datetime")
 			{
-				field_column.edit_field(ctrl.field_id, ctrl.field_label, ctrl.field_tooltip, [is_default, ctrl, this](edit_control& _settings) {
-					if (ids.data.has_member(ctrl.json_member_name)) {
-						std::string _existing = ids.data[ctrl.json_member_name];
+				create_control<edit_control>(cb, ctrl.field_id, [pcontrol, data](edit_control& _settings) {
+					pcontrol->settings.call<edit_control>(_settings);
+					if (data.has_member(pcontrol->json_member_name)) {
+						std::string _existing = data[pcontrol->json_member_name];
 						_settings.set_text(_existing);
+						_settings.is_default_focus = pcontrol->is_default_focus;
 					}
-					std::string format = ctrl.field_format;
-					_settings.set_format(ctrl.field_format);
-					_settings.json_field_name = ctrl.json_member_name;
-					_settings.is_default_focus = is_default;
+					std::string format = pcontrol->field_format;
+					if (format.empty()) {
+						format = "d/d/d d:d";
+					}
+					_settings.set_format(pcontrol->field_format);
+					_settings.json_field_name = pcontrol->json_member_name;
 					});
 			}
 			else if (ctrl.field_type == "date")
 			{
-				field_column.edit_field(ctrl.field_id, ctrl.field_label, ctrl.field_tooltip, [is_default, ctrl, this](edit_control& _settings) {
-					if (ids.data.has_member(ctrl.json_member_name)) {
-						std::string _existing = ids.data[ctrl.json_member_name];
+				create_control<edit_control>(cb, ctrl.field_id, [pcontrol, data](edit_control& _settings) {
+					pcontrol->settings.call<edit_control>(_settings);
+					if (data.has_member(pcontrol->json_member_name)) {
+						std::string _existing = data[pcontrol->json_member_name];
 						_settings.set_text(_existing);
+						_settings.is_default_focus = pcontrol->is_default_focus;
 					}
-					std::string format = ctrl.field_format;
-					_settings.set_format(ctrl.field_format);
-					_settings.json_field_name = ctrl.json_member_name;
-					_settings.is_default_focus = is_default;
+					std::string format = pcontrol->field_format;
+					if (format.empty()) {
+						format = "d/d/d";
+					}
+					_settings.set_format(pcontrol->field_format);
+					_settings.json_field_name = pcontrol->json_member_name;
 					});
 			}
 			else if (ctrl.field_type == "time")
 			{
-				field_column.edit_field(ctrl.field_id, ctrl.field_label, ctrl.field_tooltip, [is_default, ctrl, this](edit_control& _settings) {
-					if (ids.data.has_member(ctrl.json_member_name)) {
-						std::string _existing = ids.data[ctrl.json_member_name];
+				create_control<edit_control>(cb, ctrl.field_id, [pcontrol, data](edit_control& _settings) {
+					pcontrol->settings.call<edit_control>(_settings);
+					if (data.has_member(pcontrol->json_member_name)) {
+						std::string _existing = data[pcontrol->json_member_name];
 						_settings.set_text(_existing);
+						_settings.is_default_focus = pcontrol->is_default_focus;
 					}
-					std::string format = ctrl.field_format;
-					_settings.set_format(ctrl.field_format);
-					_settings.json_field_name = ctrl.json_member_name;
-					_settings.is_default_focus = is_default;
+					std::string format = pcontrol->field_format;
+					if (format.empty()) {
+						format = "d:d";
+					}
+					_settings.set_format(pcontrol->field_format);
+					_settings.json_field_name = pcontrol->json_member_name;
 					});
 			}
 			else if (ctrl.field_type == "ssn")
 			{
-				field_column.edit_field(ctrl.field_id, ctrl.field_label, ctrl.field_tooltip, [is_default, ctrl, this](edit_control& _settings) {
-					if (ids.data.has_member(ctrl.json_member_name)) {
-						std::string _existing = ids.data[ctrl.json_member_name];
+				create_control<edit_control>(cb, ctrl.field_id, [pcontrol, data](edit_control& _settings) {
+					pcontrol->settings.call<edit_control>(_settings);
+					if (data.has_member(pcontrol->json_member_name)) {
+						std::string _existing = data[pcontrol->json_member_name];
 						_settings.set_text(_existing);
+						_settings.is_default_focus = pcontrol->is_default_focus;
 					}
-					std::string format = ctrl.field_format;
-					_settings.set_format(ctrl.field_format);
-					_settings.json_field_name = ctrl.json_member_name;
-					_settings.is_default_focus = is_default;
+					std::string format = pcontrol->field_format;
+					if (format.empty()) {
+						format = "d-d-d";
+					}
+					_settings.set_format(pcontrol->field_format);
+					_settings.json_field_name = pcontrol->json_member_name;
 					});
 			}
 			else if (ctrl.field_type == "string")
 			{
-				field_column.edit_field(ctrl.field_id, ctrl.field_label, ctrl.field_tooltip, [is_default, ctrl, this](edit_control& _settings) {
-					if (ids.data.has_member(ctrl.json_member_name)) {
-						std::string _existing = ids.data[ctrl.json_member_name];
+				create_control<edit_control>(cb, ctrl.field_id, [pcontrol, data](edit_control& _settings) {
+					pcontrol->settings.call<edit_control>(_settings);
+					if (data.has_member(pcontrol->json_member_name)) {
+						std::string _existing = data[pcontrol->json_member_name];
 						_settings.set_text(_existing);
+						_settings.is_default_focus = pcontrol->is_default_focus;
 					}
-					std::string format = ctrl.field_format;
-					_settings.set_format(ctrl.field_format);
-					_settings.json_field_name = ctrl.json_member_name;
-					_settings.is_default_focus = is_default;
+					std::string format = pcontrol->field_format;
+					if (format.empty()) {
+						format = "d-d-d";
+					}
+					_settings.set_format(pcontrol->field_format);
+					_settings.json_field_name = pcontrol->json_member_name;
 					});
 			}
 			else if (ctrl.field_type == "checkboxlist")
 			{
-				field_column.edit_field(ctrl.field_id, ctrl.field_label, ctrl.field_tooltip, [is_default, ctrl, this](edit_control& _settings) {
-					if (ids.data.has_member(ctrl.json_member_name)) {
-						std::string _existing = ids.data[ctrl.json_member_name];
+				create_control<edit_control>(cb, ctrl.field_id, [pcontrol, data](edit_control& _settings) {
+					pcontrol->settings.call<edit_control>(_settings);
+					if (data.has_member(pcontrol->json_member_name)) {
+						std::string _existing = data[pcontrol->json_member_name];
 						_settings.set_text(_existing);
+						_settings.is_default_focus = pcontrol->is_default_focus;
 					}
-					std::string format = ctrl.field_format;
-					_settings.set_format(ctrl.field_format);
-					_settings.json_field_name = ctrl.json_member_name;
-					_settings.is_default_focus = is_default;
+					std::string format = pcontrol->field_format;
+					if (format.empty()) {
+						format = "d-d-d";
+					}
+					_settings.set_format(pcontrol->field_format);
+					_settings.json_field_name = pcontrol->json_member_name;
 					});
 			}
 			else if (ctrl.field_type == "radiolist")
 			{
-				field_column.edit_field(ctrl.field_id, ctrl.field_label, ctrl.field_tooltip, [is_default, ctrl, this](edit_control& _settings) {
-					if (ids.data.has_member(ctrl.json_member_name)) {
-						std::string _existing = ids.data[ctrl.json_member_name];
+				create_control<edit_control>(cb, ctrl.field_id, [pcontrol, data](edit_control& _settings) {
+					pcontrol->settings.call<edit_control>(_settings);
+					if (data.has_member(pcontrol->json_member_name)) {
+						std::string _existing = data[pcontrol->json_member_name];
 						_settings.set_text(_existing);
+						_settings.is_default_focus = pcontrol->is_default_focus;
 					}
-					std::string format = ctrl.field_format;
-					_settings.set_format(ctrl.field_format);
-					_settings.json_field_name = ctrl.json_member_name;
-					_settings.is_default_focus = is_default;
+					std::string format = pcontrol->field_format;
+					if (format.empty()) {
+						format = "d-d-d";
+					}
+					_settings.set_format(pcontrol->field_format);
+					_settings.json_field_name = pcontrol->json_member_name;
 					});
-					}
+			}
 			else if (ctrl.field_type == "listview")
 			{
-				field_column.edit_field(ctrl.field_id, ctrl.field_label, ctrl.field_tooltip, [is_default, ctrl, this](edit_control& _settings) {
-					if (ids.data.has_member(ctrl.json_member_name)) {
-						std::string _existing = ids.data[ctrl.json_member_name];
-						_settings.set_text(_existing);
+				create_control<listview_control>(cb, ctrl.field_id, [pcontrol, data](listview_control &_settings) {
+					pcontrol->settings.call<listview_control>(_settings);
+					_settings.set_table(pcontrol->source_table);
+					if (data.has_member(pcontrol->json_member_name)) {
+						std::string _existing = data[pcontrol->json_member_name];
+						_settings.is_default_focus = pcontrol->is_default_focus;
 					}
-					std::string format = ctrl.field_format;
-					_settings.set_format(ctrl.field_format);
-					_settings.json_field_name = ctrl.json_member_name;
-					_settings.is_default_focus = is_default;
+					_settings.json_field_name = pcontrol->json_member_name;
 					});
 			}
 			else if (ctrl.field_type == "listbox")
 			{
-				field_column.listbox_field(ctrl.field_id, ctrl.field_label, ctrl.field_tooltip, [is_default, ctrl, this](listbox_control& _settings) {
-					if (ids.data.has_member(ctrl.json_member_name)) {
-						std::string _existing = ids.data[ctrl.json_member_name];
+				create_control<listbox_control>(cb, ctrl.field_id, [pcontrol, data](listbox_control& _settings) {
+					pcontrol->settings.call<listbox_control>(_settings);
+					_settings.set_list(pcontrol->source_list);
+					if (data.has_member(pcontrol->json_member_name)) {
+						std::string _existing = data[pcontrol->json_member_name];
+						_settings.is_default_focus = pcontrol->is_default_focus;
 					}
-					_settings.is_default_focus = is_default;
-					_settings.json_field_name = ctrl.json_member_name;
-					}, 200.0_px);
-
+					_settings.json_field_name = pcontrol->json_member_name;
+					});
 			}
 			else if (ctrl.field_type == "combobox")
 			{
-				field_column.combobox_field(ctrl.field_id, ctrl.field_label, ctrl.field_tooltip, [is_default, ctrl, this](combobox_control& _settings) {
-					if (ids.data.has_member(ctrl.json_member_name)) {
-						std::string _existing = ids.data[ctrl.json_member_name];
+				create_control<combobox_control>(cb, ctrl.field_id, [pcontrol, data](combobox_control& _settings) {
+					pcontrol->settings.call<combobox_control>(_settings);
+					_settings.set_list(pcontrol->source_list);
+					if (data.has_member(pcontrol->json_member_name)) {
+						std::string _existing = data[pcontrol->json_member_name];
+						_settings.is_default_focus = pcontrol->is_default_focus;
 					}
-					_settings.is_default_focus = is_default;
-					_settings.json_field_name = ctrl.json_member_name;
+					_settings.json_field_name = pcontrol->json_member_name;
 					});
-
 			}
 			else if (ctrl.field_type == "comboboxex")
 			{
-				field_column.comboboxex_field(ctrl.field_id, ctrl.field_label, ctrl.field_tooltip, [is_default, ctrl, this](comboboxex_control& _settings) {
-					if (ids.data.has_member(ctrl.json_member_name)) {
-						std::string _existing = ids.data[ctrl.json_member_name];
+				create_control<comboboxex_control>(cb, ctrl.field_id, [pcontrol, data](comboboxex_control& _settings) {
+					pcontrol->settings.call<comboboxex_control>(_settings);
+					_settings.set_list(pcontrol->source_list);
+					if (data.has_member(pcontrol->json_member_name)) {
+						std::string _existing = data[pcontrol->json_member_name];
+						_settings.is_default_focus = pcontrol->is_default_focus;
 					}
-					_settings.is_default_focus = is_default;
-					_settings.json_field_name = ctrl.json_member_name;
-
+					_settings.json_field_name = pcontrol->json_member_name;
 					});
-
 			}
 			else if (ctrl.field_type == "datetimepicker")
 			{
-				field_column.datetimepicker_field(ctrl.field_id, ctrl.field_label, ctrl.field_tooltip, [is_default, ctrl, this](datetimepicker_control& _settings) {
-					if (ids.data.has_member(ctrl.json_member_name)) {
-						std::string _existing = ids.data[ctrl.json_member_name];
+				create_control<datetimepicker_control>(cb, ctrl.field_id, [pcontrol, data](datetimepicker_control& _settings) {
+					pcontrol->settings.call<datetimepicker_control>(_settings);
+					if (data.has_member(pcontrol->json_member_name)) {
+						std::string _existing = data[pcontrol->json_member_name];
+						_settings.is_default_focus = pcontrol->is_default_focus;
 					}
-					_settings.is_default_focus = is_default;
-					_settings.json_field_name = ctrl.json_member_name;
-
+					_settings.json_field_name = pcontrol->json_member_name;
 					});
 			}
 			else if (ctrl.field_type == "richeedit")
 			{
-				field_column.richedit_field(ctrl.field_id, ctrl.field_label, ctrl.field_tooltip, [is_default, ctrl, this](richedit_control& _settings) {
-					if (ids.data.has_member(ctrl.json_member_name)) {
-						std::string _existing = ids.data[ctrl.json_member_name];
+				create_control<edit_control>(cb, ctrl.field_id, [pcontrol, data](edit_control& _settings) {
+					pcontrol->settings.call<edit_control>(_settings);
+					if (data.has_member(pcontrol->json_member_name)) {
+						std::string _existing = data[pcontrol->json_member_name];
+						_settings.set_text(_existing);
+						_settings.is_default_focus = pcontrol->is_default_focus;
 					}
-					_settings.is_default_focus = is_default;
-					_settings.json_field_name = ctrl.json_member_name;
+					_settings.set_format(pcontrol->field_format);
+					_settings.json_field_name = pcontrol->json_member_name;
 					});
 			}
 			else if (ctrl.field_type == "title")
 			{
-				if (field_counter) {
-					field_column = form_row.column_begin(id_counter::next(), [width](column_layout& _cl) {
-						_cl.set_size(measure(width, measure_units::percent_container), 1.0_container);
-						});
-					field_counter = 0;
-				}
-				field_column.chaptersubtitle(ctrl.field_label, [is_default, ctrl, this](chaptersubtitle_control& _settings) {
+				create_control<title_control>(cb, ctrl.field_id, [pcontrol, data](title_control& _settings) {
+					pcontrol->settings.call<title_control>(_settings);
+					_settings.json_field_name = pcontrol->json_member_name;
 					});
 			}
 			else if (ctrl.field_type == "subtitle")
 			{
-				if (field_counter) {
-					field_column = form_row.column_begin(id_counter::next(), [width](column_layout& _cl) {
-						_cl.set_size(measure(width, measure_units::percent_container), 1.0_container);
-						});
-					field_counter = 0;
-				}
-				field_column.chaptersubtitle(ctrl.field_label, [is_default, ctrl, this](chaptersubtitle_control& _settings) {
+				create_control<subtitle_control>(cb, ctrl.field_id, [pcontrol, data](subtitle_control& _settings) {
+					pcontrol->settings.call<subtitle_control>(_settings);
+					_settings.json_field_name = pcontrol->json_member_name;
 					});
 			}
 			else if (ctrl.field_type == "chaptertitle")
 			{
-				if (field_counter) {
-					field_column = form_row.column_begin(id_counter::next(), [width](column_layout& _cl) {
-						_cl.set_size(measure(width, measure_units::percent_container), 1.0_container);
-						});
-					field_counter = 0;
-				}
-				field_column.chaptersubtitle(ctrl.field_label, [is_default, ctrl, this](chaptersubtitle_control& _settings) {
+				create_control<chaptertitle_control>(cb, ctrl.field_id, [pcontrol, data](chaptertitle_control& _settings) {
+					pcontrol->settings.call<chaptertitle_control>(_settings);
+					_settings.json_field_name = pcontrol->json_member_name;
 					});
 			}
 			else if (ctrl.field_type == "chaptersubtitle")
 			{
-				if (field_counter) {
-					field_column = form_row.column_begin(id_counter::next(), [width](column_layout& _cl) {
-						_cl.set_size(measure(width, measure_units::percent_container), 1.0_container);
-						});
-					field_counter = 0;
-				}
-				field_column.chaptersubtitle(ctrl.field_label, [is_default, ctrl, this](chaptersubtitle_control& _settings) {
+				create_control<chaptersubtitle_control>(cb, ctrl.field_id, [pcontrol, data](chaptersubtitle_control& _settings) {
+					pcontrol->settings.call<chaptersubtitle_control>(_settings);
+					_settings.json_field_name = pcontrol->json_member_name;
 					});
 			}
 			else if (ctrl.field_type == "paragraph")
 			{
-				if (field_counter) {
-					field_column = form_row.column_begin(id_counter::next(), [width](column_layout& _cl) {
-						_cl.set_size(measure(width, measure_units::percent_container), 1.0_container);
-						});
-					field_counter = 0;
-				}
-				field_column.chaptersubtitle(ctrl.field_label, [is_default, ctrl, this](chaptersubtitle_control& _settings) {
+				create_control<paragraph_control>(cb, ctrl.field_id, [pcontrol, data](paragraph_control& _settings) {
+					pcontrol->settings.call<paragraph_control>(_settings);
+					_settings.json_field_name = pcontrol->json_member_name;
 					});
 			}
 			else if (ctrl.field_type == "image")
 			{
-				if (field_counter) {
-					field_column = form_row.column_begin(id_counter::next(), [width](column_layout& _cl) {
-						_cl.set_size(measure(width, measure_units::percent_container), 1.0_container);
-						});
-					field_counter = 0;
-				}
-				field_column.chaptersubtitle(ctrl.field_label, [is_default, ctrl, this](chaptersubtitle_control& _settings) {
+				create_control<image_control>(cb, ctrl.field_id, [pcontrol, data](image_control& _settings) {
+					pcontrol->settings.call<image_control>(_settings);
+					_settings.json_field_name = pcontrol->json_member_name;
 					});
 			}
 			else if (ctrl.field_type == "camera")
 			{
-				if (field_counter) {
-					field_column = form_row.column_begin(id_counter::next(), [width](column_layout& _cl) {
-						_cl.set_size(measure(width, measure_units::percent_container), 1.0_container);
-						});
-					field_counter = 0;
-				}
-				field_column.chaptersubtitle(ctrl.field_label, [is_default, ctrl, this](chaptersubtitle_control& _settings) {
+				create_control<camera_control>(cb, ctrl.field_id, [pcontrol, data](camera_control& _settings) {
+					pcontrol->settings.call<camera_control>(_settings);
+					_settings.json_field_name = pcontrol->json_member_name;
 					});
-					}
+			}
+			else if (ctrl.field_type == "cameraview")
+			{
+				create_control<camera_view_control>(cb, ctrl.field_id, [pcontrol, data](camera_view_control& _settings) {
+					pcontrol->settings.call<camera_view_control>(_settings);
+					_settings.json_field_name = pcontrol->json_member_name;
+					});
+			}
 		}
 
 		template <typename field_control> void set_field(
@@ -1353,22 +1397,6 @@ namespace corona
 		}
 	};
 
-	class form_field
-	{
-	public:
-		int		 	  field_id;
-		std::string   json_member_name;
-		std::string   field_label;
-		std::string   field_type;
-		std::string   field_tooltip;	
-		std::string   field_format;
-		std::string   field_suffix;
-		std::string   field_prefix;
-		bool		  read_only;
-		list_data	  choice_options;
-		bool		  is_default_focus;	
-		function_bag  settings;
-	};
 
 	using item_buttons_function = std::function<void(control_builder& cb)>;
 
@@ -1894,7 +1922,7 @@ namespace corona
 					if (on_draw)
 					{
 						on_draw(this);
-					}
+					} 
 
 					if (is_focused && border_name) 
 					{
