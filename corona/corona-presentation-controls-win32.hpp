@@ -41,7 +41,8 @@ namespace corona
 
 		windows_control() :
 			window(nullptr),
-			text_font(nullptr)
+			text_font(nullptr),
+			is_group(false)
 		{
 			set_origin(0.0_px, 0.0_px);
 			set_size(1.0_container, 1.5_fontgr);
@@ -52,7 +53,8 @@ namespace corona
 
 		windows_control(const windows_control& _src) : control_base(_src),
 			window(nullptr),
-			text_font(nullptr)
+			text_font(nullptr),
+			is_group(false)
 		{
 			text_style = _src.text_style;
 			is_default_focus = false;
@@ -62,7 +64,8 @@ namespace corona
 		windows_control(container_control_base *_parent, int _id)
 			: control_base(_parent, _id),
 			window(nullptr),
-			text_font(nullptr)
+			text_font(nullptr),
+			is_group(false)
 		{
 			set_origin(0.0_px, 0.0_px);
 			set_size(1.0_container, 1.5_fontgr);
@@ -128,6 +131,18 @@ namespace corona
 			::EnableWindow(window, false);
 		}
 
+		void hide()
+		{
+			::ShowWindow(window, SW_HIDE);
+		}
+
+		void show()
+		{
+			::ShowWindow(window, SW_SHOW);
+		}
+
+		bool is_group;
+
 		virtual void on_resize()
 		{
 			if (auto phost = window_host.lock()) {
@@ -150,10 +165,17 @@ namespace corona
 
 				if (window == nullptr) {
 					HWND parent = phost->getMainWindow();
+
+					DWORD group_style = 0;
+
+					if (is_group) {
+						group_style = WS_GROUP | WS_TABSTOP;
+					}
+
 					if (auto wclassname = get_window_class_w())
-						window = CreateWindowExW(get_window_ex_style(), get_window_class_w(), L"", get_window_style(), boundsPixels.x, boundsPixels.y, boundsPixels.w, boundsPixels.h, parent, (HMENU)id, NULL, NULL);
+						window = CreateWindowExW(get_window_ex_style(), get_window_class_w(), L"", get_window_style() | group_style, boundsPixels.x, boundsPixels.y, boundsPixels.w, boundsPixels.h, parent, (HMENU)id, NULL, NULL);
 					else
-						window = CreateWindowEx(get_window_ex_style(), get_window_class(), "", get_window_style(), boundsPixels.x, boundsPixels.y, boundsPixels.w, boundsPixels.h, parent, (HMENU)id, NULL, NULL);
+						window = CreateWindowEx(get_window_ex_style(), get_window_class(), "", get_window_style() | group_style, boundsPixels.x, boundsPixels.y, boundsPixels.w, boundsPixels.h, parent, (HMENU)id, NULL, NULL);
 
 					HFONT old_font = text_font;
 
@@ -272,7 +294,7 @@ namespace corona
 		virtual json get_data()
 		{
 			json result;
-			if (json_field_name.size() > 0) {
+			if (!json_field_name.empty()) {
 				json_parser jp;
 				result = jp.create_object();
 				std::string text = get_text();
@@ -447,7 +469,7 @@ namespace corona
 		virtual json get_data()
 		{
 			json result;
-			if (json_field_name.size() > 0) {
+			if (!json_field_name.empty()) {
 				json_parser jp;
 				result = jp.create_object();
 
@@ -567,7 +589,7 @@ namespace corona
 		virtual json get_data()
 		{
 			json result;
-			if (json_field_name.size() > 0) {
+			if (!json_field_name.empty()) {
 				json_parser jp;
 				result = jp.create_object();
 
@@ -713,6 +735,34 @@ namespace corona
 			return tv;
 		}
 
+		virtual json get_data()
+		{
+			json result;
+			if (!json_field_name.empty()) {
+				json_parser jp;
+				result = jp.create_object();
+
+				if (auto ptr = window_host.lock()) {
+					bool test = ptr->getButtonChecked(id);
+					result.put_member(json_field_name, test);
+				}
+			}
+			return result;
+		}
+
+		virtual json set_data(json _data)
+		{
+			if (!json_field_name.empty()) {
+				json_parser jp;
+
+				if (auto ptr = window_host.lock()) {
+					int checked = _data.get_member(json_field_name);
+					ptr->setButtonChecked(id, checked);
+				}
+			}
+			return _data;
+		}
+
 		virtual ~radiobutton_control() { ; }
 	};
 
@@ -729,6 +779,35 @@ namespace corona
 			auto tv = std::make_shared<checkbox_control>(*this);
 			return tv;
 		}
+
+		virtual json get_data()
+		{
+			json result;
+			if (!json_field_name.empty()) {
+				json_parser jp;
+				result = jp.create_object();
+
+				if (auto ptr = window_host.lock()) {
+					bool test = ptr->getButtonChecked(id);
+					result.put_member(json_field_name, test);
+				}
+			}
+			return result;
+		}
+
+		virtual json set_data(json _data)
+		{
+			if (!json_field_name.empty()) {
+				json_parser jp;
+
+				if (auto ptr = window_host.lock()) {
+					int checked = _data.get_member(json_field_name);
+					ptr->setButtonChecked(id, checked);
+				}
+			}
+			return _data;
+		}
+
 
 		virtual ~checkbox_control() { ; }
 	};

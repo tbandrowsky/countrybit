@@ -366,7 +366,7 @@ namespace corona
 					control_builder camera_controls = preview_column.form(id_camera_controls, [this](form_control& _settings) {
 						_settings.set_padding(8.0_px);
 						_settings.set_size(0.92_container, 500.0_px);
-						_settings.fields_per_column = 7;
+						_settings.set_column_width(0.5_container);
 						_settings.on_changed = [this](int _control_id, form_control* _fv) {
 							camera_control& cc = _fv->find<camera_control>(id_camera);
 							json form_data = _fv->get_data();
@@ -396,8 +396,8 @@ namespace corona
 						form_field new_field;
 
 						new_field.field_id = id_camera_select;
-						new_field.choice_options.id_field = "Id";
-						new_field.choice_options.text_field = "Name";
+						new_field.source_list.id_field = "Id";
+						new_field.source_list.text_field = "Name";
 						new_field.field_type = "listbox";
 						new_field.field_label = "Camera Select";
 						new_field.json_member_name = "camera_name";

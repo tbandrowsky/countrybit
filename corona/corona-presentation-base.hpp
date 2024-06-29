@@ -14,6 +14,7 @@ namespace corona
 
 		std::string id_field;
 		std::string text_field;
+		std::string selected_field;
 
 		json items;
 	};

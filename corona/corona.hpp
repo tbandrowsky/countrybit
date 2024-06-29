@@ -41,6 +41,7 @@
 #include <conio.h>
 
 #include "corona-constants.hpp"
+#include "corona-function-bag.hpp"
 #include "corona-wchart_convert.hpp"
 #include "corona-utility.hpp"
 #include "corona-read_all_string.hpp"

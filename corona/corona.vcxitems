@@ -42,6 +42,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-file.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-filterable_iterator.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-float_box.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-function-bag.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-function.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-grouping.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-http-messages.hpp" />

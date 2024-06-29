@@ -178,11 +178,14 @@ namespace corona
 
 		measure item_start_space;
 		measure item_next_space;
+		measure column_width;
+		int		column_count;
 
 	public:
-		column_layout() { ; }
+		column_layout() : column_count(0), column_width(300.0_px) { ; }
 		column_layout(const column_layout& _src) = default;
-		column_layout(container_control_base* _parent, int _id) : container_control(_parent, _id) { ; }
+		column_layout(container_control_base* _parent, int _id) : container_control(_parent, _id), column_count(0), column_width(300.0_px) { ; }
+
 		virtual ~column_layout() { ; }
 
 		virtual std::shared_ptr<control_base> clone()
@@ -194,6 +197,15 @@ namespace corona
 
 		virtual void arrange(rectangle _ctx);
 		virtual point get_remaining(point _ctx);
+
+		void set_column_width(measure _column_width)
+		{
+			column_width = _column_width;
+		}
+		measure get_column_width()
+		{
+			return column_width;
+		}
 	};
 
 	class row_layout :
@@ -611,6 +623,189 @@ namespace corona
 	};
 
 
+	class radio_list_control :
+		public column_layout
+	{
+	protected:
+	public:
+		radio_list_control() { ; }
+		radio_list_control(const radio_list_control& _src) = default;
+		radio_list_control(container_control_base* _parent, int _id) : column_layout(_parent, _id) { ; }
+
+		virtual std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<absolute_view_layout>(*this);
+			return tv;
+		}
+
+		virtual ~radio_list_control() { ; }
+
+		void data_changed()
+		{
+			if (auto phost = window_host.lock()) {
+				std::string selection = phost->getListSelectedText(id);
+				phost->clearListItems(id);
+				if (choices.items.is_array()) {
+					for (int i = 0; i < choices.items.size(); i++)
+					{
+						auto c = choices.items.get_element(i);
+						int lid = c[choices.id_field];
+						std::string description = c[choices.text_field];
+						phost->addListItem(id, description, lid);
+					}
+					if (selection.size())
+					{
+						phost->setListSelectedText(id, selection.c_str());
+					}
+				}
+			}
+		}
+
+		virtual json get_data()
+		{
+			json result;
+			if (json_field_name.size() > 0) {
+				json_parser jp;
+				result = jp.create_object();
+
+				if (auto ptr = window_host.lock()) {
+					std::string new_text = ptr->getListSelectedText(id);
+					int index = ptr->getListSelectedIndex(id);
+					int value = ptr->getListSelectedValue(id);
+					result.put_member(json_field_name, new_text);
+				}
+			}
+			return result;
+		}
+
+		virtual json set_data(json _data)
+		{
+			if (_data.has_member(json_field_name)) {
+				std::string text = _data[json_field_name];
+				if (auto ptr = window_host.lock()) {
+					std::string existing = ptr->getListSelectedText(id);
+					if (existing != text) {
+						ptr->setListSelectedText(id, text.c_str());
+					}
+				}
+			}
+			return _data;
+		}
+
+		void set_list(list_data& _choices)
+		{
+			choices = _choices;
+			data_changed();
+		}
+
+		virtual void on_create()
+		{
+			data_changed();
+		}
+
+	};
+
+	class checkbox_list_control :
+		public column_layout
+	{
+	protected:
+		list_data choices;
+		json data;
+
+	public:
+		checkbox_list_control() { ; }
+		checkbox_list_control(const checkbox_list_control& _src) = default;
+		checkbox_list_control(container_control_base* _parent, int _id) : column_layout(_parent, _id) { ; }
+
+		virtual std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<absolute_view_layout>(*this);
+			return tv;
+		}
+
+		virtual ~checkbox_list_control() { ; }
+
+		void list_changed()
+		{
+			control_builder cb;
+
+			children.clear();
+
+			int count = choices.items.size();
+
+			for (int i = 0; i < count; i++)
+			{
+				json item = choices.items.get_element(i);
+				int id = item.get_member(choices.id_field);
+				std::string text = item.get_member(choices.text_field);
+				bool selected = (bool)item.get_member(choices.selected_field);
+				cb.checkbox(id, text, [item, this](checkbox_control& _rbc) {
+					_rbc.json_field_name = choices.selected_field;
+					_rbc.set_data(item);
+				});
+			}
+		}
+
+		virtual json get_data()
+		{
+			json result;
+			if (!json_field_name.empty()) {
+				json_parser jp;
+				result = jp.create_object();
+				json result_array = jp.create_array();
+
+				for (auto child : children)
+				{
+					json data = child->get_data();
+					result_array.put_element(-1, data);
+				}
+
+				result.put_member(json_field_name, result_array);
+
+			}
+			return result;
+		}
+
+		virtual json set_data(json _data)
+		{
+			data = _data;
+			if (_data.has_member(json_field_name)) {
+				json field_items = _data[json_field_name];
+				if (field_items.is_array()) {
+					json as_object = field_items.array_to_object(
+
+						[this](json& _item)->std::string {
+							return _item.get_member(choices.id_field);
+						},
+						[](json& _item)->json {
+							return _item;
+						}
+					);
+					for (auto child : children) {
+						json existing = child->get_data();
+						std::string key = choices.id_field;
+						json item = as_object.get_member(key);
+						child->set_data(item);
+					}
+				}
+			}
+			return _data;
+		}
+
+		void set_list(list_data& _choices)
+		{
+			choices = _choices;
+			list_changed();
+		}
+
+		virtual void on_create()
+		{
+			list_changed();
+		}
+
+	};
+
+
 	point row_layout::get_remaining(point _ctx)
 	{
 		point pt = { 0.0, 0.0, 0.0 };
@@ -836,11 +1031,17 @@ namespace corona
 					return temp;
 				},
 				align_item,
-				[this, item_next_space_px](point _remaining, point* _origin, const rectangle* _bounds, control_base* _item) {
+				[this, item_start_space_px, item_next_space_px](point _remaining, point* _origin, const rectangle* _bounds, control_base* _item) {
 					point temp = *_origin;
 					auto sz = _item->get_size(bounds, { _bounds->w, _bounds->h });
 					temp.y += sz.y;
 					temp.y += _item->margin.amount + item_next_space_px;
+					auto width_pixels = to_pixels_x(column_width);
+					if (temp.y > _bounds->bottom()) {
+						column_count++;
+						temp.x = _bounds->x + column_count * width_pixels;
+						temp.y = _bounds->y + _item->margin.amount + item_start_space_px;
+					}
 					return temp;
 				}
 			);
