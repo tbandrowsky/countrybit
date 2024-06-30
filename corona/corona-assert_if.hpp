@@ -1,3 +1,15 @@
+/*
+CORONA
+C++ Low Code Performance Applications for Windows SDK
+by Todd Bandrowky
+(c) 2024 + All Rights Reserved
+
+About this File
+
+Notes
+
+For Future Consideration
+*/
 
 #ifndef CORONA_ASSERT_IF_H
 #define CORONA_ASSERT_IF_H

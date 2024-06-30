@@ -1,4 +1,18 @@
 
+/*
+CORONA
+C++ Low Code Performance Applications for Windows SDK
+by Todd Bandrowky
+(c) 2024 + All Rights Reserved
+
+About this File
+
+Notes
+
+For Future Consideration
+*/
+
+
 #ifndef CORONA_READ_ALL_STRING_H
 #define CORONA_READ_ALL_STRING_H
 

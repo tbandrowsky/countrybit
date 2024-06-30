@@ -623,14 +623,17 @@ namespace corona
 	};
 
 
-	class radio_list_control :
+	class radiobutton_list_control :
 		public column_layout
 	{
 	protected:
+		list_data choices;
+		json data;
+
 	public:
-		radio_list_control() { ; }
-		radio_list_control(const radio_list_control& _src) = default;
-		radio_list_control(container_control_base* _parent, int _id) : column_layout(_parent, _id) { ; }
+		radiobutton_list_control() { ; }
+		radiobutton_list_control(const radiobutton_list_control& _src) = default;
+		radiobutton_list_control(container_control_base* _parent, int _id) : column_layout(_parent, _id) { ; }
 
 		virtual std::shared_ptr<control_base> clone()
 		{
@@ -638,54 +641,70 @@ namespace corona
 			return tv;
 		}
 
-		virtual ~radio_list_control() { ; }
+		virtual ~radiobutton_list_control() { ; }
 
-		void data_changed()
+		void list_changed()
 		{
-			if (auto phost = window_host.lock()) {
-				std::string selection = phost->getListSelectedText(id);
-				phost->clearListItems(id);
-				if (choices.items.is_array()) {
-					for (int i = 0; i < choices.items.size(); i++)
-					{
-						auto c = choices.items.get_element(i);
-						int lid = c[choices.id_field];
-						std::string description = c[choices.text_field];
-						phost->addListItem(id, description, lid);
-					}
-					if (selection.size())
-					{
-						phost->setListSelectedText(id, selection.c_str());
-					}
-				}
+			control_builder cb;
+
+			children.clear();
+
+			int count = choices.items.size();
+
+			for (int i = 0; i < count; i++)
+			{
+				json item = choices.items.get_element(i);
+				int id = item.get_member(choices.id_field);
+				std::string text = item.get_member(choices.text_field);
+				bool selected = (bool)item.get_member(choices.selected_field);
+				cb.radio_button(id, text, [item, this, i](radiobutton_control& _rbc) {
+					_rbc.json_field_name = choices.selected_field;
+					_rbc.is_group = i == 0;
+					_rbc.set_data(item);
+					});
 			}
 		}
 
 		virtual json get_data()
 		{
 			json result;
-			if (json_field_name.size() > 0) {
+			if (!json_field_name.empty()) {
 				json_parser jp;
 				result = jp.create_object();
+				json result_array = jp.create_array();
 
-				if (auto ptr = window_host.lock()) {
-					std::string new_text = ptr->getListSelectedText(id);
-					int index = ptr->getListSelectedIndex(id);
-					int value = ptr->getListSelectedValue(id);
-					result.put_member(json_field_name, new_text);
+				for (auto child : children)
+				{
+					json data = child->get_data();
+					result_array.put_element(-1, data);
 				}
+
+				result.put_member(json_field_name, result_array);
+
 			}
 			return result;
 		}
 
 		virtual json set_data(json _data)
 		{
+			data = _data;
 			if (_data.has_member(json_field_name)) {
-				std::string text = _data[json_field_name];
-				if (auto ptr = window_host.lock()) {
-					std::string existing = ptr->getListSelectedText(id);
-					if (existing != text) {
-						ptr->setListSelectedText(id, text.c_str());
+				json field_items = _data[json_field_name];
+				if (field_items.is_array()) {
+					json as_object = field_items.array_to_object(
+
+						[this](json& _item)->std::string {
+							return _item.get_member(choices.id_field);
+						},
+						[](json& _item)->json {
+							return _item;
+						}
+					);
+					for (auto child : children) {
+						json existing = child->get_data();
+						std::string key = choices.id_field;
+						json item = as_object.get_member(key);
+						child->set_data(item);
 					}
 				}
 			}
@@ -695,12 +714,12 @@ namespace corona
 		void set_list(list_data& _choices)
 		{
 			choices = _choices;
-			data_changed();
+			list_changed();
 		}
 
 		virtual void on_create()
 		{
-			data_changed();
+			list_changed();
 		}
 
 	};

@@ -1,3 +1,15 @@
+/*
+CORONA
+C++ Low Code Performance Applications for Windows SDK
+by Todd Bandrowky
+(c) 2024 + All Rights Reserved
+
+About this File
+
+Notes
+
+For Future Consideration
+*/
 
 #ifndef CORONA_PRESENTATION_CONTROLS_WIN32_H
 #define CORONA_PRESENTATION_CONTROLS_WIN32_H

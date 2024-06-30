@@ -98,9 +98,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-motion-detect.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="$(MSBuildThisFileDirectory)header-units.json" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-coronaclient.hpp" />
   </ItemGroup>
 </Project>

@@ -1,3 +1,17 @@
+/*
+CORONA
+C++ Low Code Performance Applications for Windows SDK
+by Todd Bandrowky
+(c) 2024 + All Rights Reserved
+
+About this File
+
+Notes
+
+For Future Consideration
+*/
+
+
 #ifndef SORTED_INDEX_H
 #define SORTED_INDEX_H
 

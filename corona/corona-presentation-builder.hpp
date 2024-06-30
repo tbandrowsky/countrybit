@@ -1,3 +1,17 @@
+/*
+CORONA
+C++ Low Code Performance Applications for Windows SDK
+by Todd Bandrowky
+(c) 2024 + All Rights Reserved
+
+About this File
+
+Notes
+
+For Future Consideration
+*/
+
+
 
 #ifndef CORONA_PRESENTATION_BUILDER_H
 #define CORONA_PRESENTATION_BUILDER_H
@@ -604,6 +618,28 @@ namespace corona
 		}
 
 		control_builder& checkbox(int _id, std::string text, std::function<void(checkbox_control&)> _settings = nullptr)
+		{
+			auto tc = create<checkbox_control>(_id);
+			apply_item_sizes(tc);
+			tc->set_text(text);
+			if (_settings) {
+				_settings(*tc);
+			}
+			return *this;
+		}
+
+		control_builder& radiobutton_list(int _id, std::string text, std::function<void(radiobutton_list&)> _settings = nullptr)
+		{
+			auto tc = create<radiobutton_list>(_id);
+			apply_item_sizes(tc);
+			tc->set_text(text);
+			if (_settings) {
+				_settings(*tc);
+			}
+			return *this;
+		}
+
+		control_builder& checkbox_list(int _id, std::string text, std::function<void(checkbox_control&)> _settings = nullptr)
 		{
 			auto tc = create<checkbox_control>(_id);
 			apply_item_sizes(tc);
