@@ -5,8 +5,10 @@ by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
 About this File
+database server for a jdatabase.  
 
 Notes
+jcollection has been tested but this has not.
 
 For Future Consideration
 */

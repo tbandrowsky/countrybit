@@ -5,8 +5,10 @@ by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
 About this File
+This file is for monitoring for directory changes.
 
 Notes
+Needs unit test script
 
 For Future Consideration
 */

@@ -5,8 +5,13 @@ by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
 About this File
+Originally this file contained a number of "dto" objects
+for shuffling data between a client and other things.
+This proved to be not entirely great, and many things were 
+broken into their own files.
 
 Notes
+The icons should be loadable by the image type.  
 
 For Future Consideration
 */

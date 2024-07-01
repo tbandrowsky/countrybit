@@ -5,6 +5,8 @@ by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
 About this File
+This is a collection id.  A collection in Corona is a binary representation 
+of an object designed for impactful batch serialization and processing.
 
 Notes
 

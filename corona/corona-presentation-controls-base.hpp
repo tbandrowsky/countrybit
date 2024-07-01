@@ -164,7 +164,7 @@ namespace corona
 		}
 	};
 
-	class container_control_base
+	class container_control_base : public json_serializable
 	{
 	public:
 		container_control_base()
@@ -375,6 +375,40 @@ namespace corona
 		{
 			json empty;
 			return empty;
+		}
+
+		virtual void get_json(json& _dest)
+		{
+			json_parser jp;
+
+			json jbox, jmargin, jpadding;
+
+			jbox = jp.create_object();
+			jmargin = jp.create_object();
+			jpadding = jp.create_object();
+
+			_dest.put_member("id", id );
+			_dest.put_member("box", jbox );
+			_dest.put_member("padding", jpadding);
+			_dest.put_member("margin", jmargin);
+			_dest.put_member("tooltip_text", tooltip_text);
+			_dest.put_member("json_field_name", json_field_name);
+		}
+
+		virtual void put_json(json& _src)
+		{
+			json jbox, jmargin, jpadding;
+
+			jbox = _src["box"];
+			jmargin = _src["margin"];
+			jpadding = _src["padding"];
+
+			box.put_json(jbox);
+			margin.put_json(jmargin);
+			padding.put_json(jpadding);
+
+			tooltip_text = _src["tooltip_text"];
+			json_field_name = _src["json_field_name"];
 		}
 
 		rectangle& get_bounds() { return bounds; }

@@ -5,8 +5,10 @@ by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
 About this File
+handles a jobject variant.
 
 Notes
+not the best, mostly works.
 
 For Future Consideration
 */

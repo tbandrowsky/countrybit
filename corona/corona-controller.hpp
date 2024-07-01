@@ -5,8 +5,10 @@ by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
 About this File
+The controller here mediates windows messages.
 
 Notes
+A corona page is a corona controller.
 
 For Future Consideration
 */

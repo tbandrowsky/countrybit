@@ -5,10 +5,12 @@ by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
 About this File
+binary wrapper for a reference to midi object.
 
 Notes
 
 For Future Consideration
+Implement midi chumpies here.
 */
 
 

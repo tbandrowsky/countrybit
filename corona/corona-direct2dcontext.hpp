@@ -5,6 +5,10 @@ by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
 About this File
+This is the Corona direct context.  It manages objects in the 
+Corona. It's original purpose was to keep tabs on what is in a direct context,
+so that, if a surface was lost, they can be restored.  But I've never
+seen a surface actually lost, except when faking it during testing.
 
 Notes
 

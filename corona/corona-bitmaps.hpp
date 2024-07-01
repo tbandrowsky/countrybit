@@ -5,8 +5,12 @@ by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
 About this File
+This implements a bitmap in a corona device context.
+Bitmaps can be loaded from files, a Windows resource file, or, be 
+composed from another control's bitmap.
 
 Notes
+Loading a bitmap from another control requires some additional work.
 
 For Future Consideration
 */

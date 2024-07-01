@@ -5,10 +5,13 @@ by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
 About this File
+data lake is an in memory arbiter between the presentation and the data.
+It's not really a well baked thing but it does work.
 
 Notes
 
 For Future Consideration
+Should use the corona database directly within the application.
 */
 
 

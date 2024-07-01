@@ -6,7 +6,7 @@ by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
 About this File
-
+A bag of std::function each of which with their own types.
 Notes
 
 For Future Consideration

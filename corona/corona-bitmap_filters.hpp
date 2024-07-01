@@ -5,8 +5,13 @@ by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
 About this File
+In Corona, a bitmap is loaded into a Corona Device Context, which is a 
+wrapper around a Direct2D context.  When the bitmap is loaded, it 
+can have CPU based transformations applied to this.
 
 Notes
+In the future, we will have proper shaders.  This was originally done
+for mass background removal in another project.  Note all the hsl stuff.
 
 For Future Consideration
 */

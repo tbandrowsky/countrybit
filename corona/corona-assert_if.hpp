@@ -5,8 +5,10 @@ by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
 About this File
+Provides asserts for critical system flags.
 
 Notes
+Corona needs to use these more often.
 
 For Future Consideration
 */

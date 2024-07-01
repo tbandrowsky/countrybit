@@ -5,6 +5,9 @@ by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
 About this File
+This implements some of the things of things that can be tossed
+onto a threadpool, including awaitable functions,
+quick and easy fire and forget with threadsafe ui updates.
 
 Notes
 

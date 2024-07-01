@@ -5,10 +5,17 @@ by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
 About this File
+This is the core database engine for the corona database server.  
 
 Notes
+The templated types such as file_transaction are all awaiters.
+The threading behavior is designed to be, switch to thread.... 
+allowing for massive scalability.
+However, multiuser / multithread testing is necessary.
 
 For Future Consideration
+Load and multithread engine tests.
+Deploy a database to azure.
 */
 
 

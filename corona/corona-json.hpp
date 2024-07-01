@@ -5,6 +5,7 @@ by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
 About this File
+This is a json parser and json object representation
 
 Notes
 
@@ -2717,6 +2718,19 @@ namespace corona
 
 		return success;
 	}
+
+	class json_serializable
+	{
+	public:
+		virtual void get_json(json& _dest) 
+		{
+			;
+		}
+		virtual void put_json(json& _src)
+		{
+			;
+		}
+	};
 
 }
 

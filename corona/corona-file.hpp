@@ -5,6 +5,8 @@ by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
 About this File
+This contains a file access object along with its associated awaiters.
+file i/o in corona is based on C++20 co_await with io completion ports.
 
 Notes
 

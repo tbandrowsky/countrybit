@@ -5,6 +5,8 @@ by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
 About this File
+A concept lock is a lock designed to be used around a 
+business process.
 
 Notes
 

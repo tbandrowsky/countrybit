@@ -5,6 +5,8 @@ by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
 About this File
+Brushes in a corona device context.  Bitmap, solid and gradient brushes
+are supported.
 
 Notes
 

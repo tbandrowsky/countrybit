@@ -5,10 +5,13 @@ by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
 About this File
+This implements various cryptography wrappers around Windows crypto.
 
 Notes
 
 For Future Consideration
+don't forget to encrypt key fields and traffic.
+
 */
 
 

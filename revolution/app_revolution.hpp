@@ -361,17 +361,17 @@ namespace corona
 					cb.chaptersubtitle("Enter your username and password.");					
 					cb.form_view(IDC_FORM_VIEW, [this](form_control& _fv)
 						{
-							form_data_source ids;
+							form_model ids;
 
 							form_field iff;
 							iff.field_id = IDC_USER_NAME;
-							iff.field_label = "User name:";
+							iff.label_text = "User name:";
 							iff.field_type = "string";
 							iff.json_member_name = "Name";
 							ids.fields.push_back(iff);
 
 							iff.field_id = IDC_USER_PASSWORD;
-							iff.field_label = "Password";
+							iff.label_text = "Password";
 							iff.field_type = "string";
 							iff.json_member_name = "Name";
 							ids.fields.push_back(iff);
@@ -440,10 +440,10 @@ namespace corona
 					cb.chaptersubtitle("An email was sent to you.  Please enter the code you received.");
 					cb.form(IDC_FORM_VIEW, [this](form_control& _fv)
 						{
-							form_data_source ids;
+							form_model ids;
 							form_field iff;
 							iff.field_id = IDC_USER_CONFIRMATION;
-							iff.field_label = "Confirmation Code:";
+							iff.label_text = "Confirmation Code:";
 							iff.field_type = "string";
 							iff.json_member_name = "ConfirmationCode";
 							ids.fields.push_back(iff);
@@ -527,120 +527,120 @@ namespace corona
 						{
 							_fv.set_size( 1.0_container, 1.0_container);
 
-							form_data_source ids;
+							form_model ids;
 							form_field iff;
 
 							iff.field_id = id_counter::next();
-							iff.field_label = "Name";
+							iff.label_text = "Name";
 							iff.field_type = "section";
 							ids.fields.push_back(iff);
 
 							iff.field_id = IDC_USER_LASTNAME;
-							iff.field_label = "Last Name";
+							iff.label_text = "Last Name";
 							iff.field_type = "string";
 							iff.json_member_name = "LastName";
 							ids.fields.push_back(iff);
 
 							iff.field_id = IDC_USER_FIRSTNAME;
-							iff.field_label = "First Name:";
+							iff.label_text = "First Name:";
 							iff.field_type = "string";
 							iff.json_member_name = "FirstName";
 							ids.fields.push_back(iff);
 
 							iff.field_id = id_counter::next();
-							iff.field_label = "Address";
+							iff.label_text = "Address";
 							iff.field_type = "section";
 
 							iff.field_id = IDC_USER_STREET1;
-							iff.field_label = "Street 1:";
+							iff.label_text = "Street 1:";
 							iff.field_type = "string";
 							iff.json_member_name = "Street1";
 							ids.fields.push_back(iff);
 
 							iff.field_id = IDC_USER_STREET2;
-							iff.field_label = "Street 2:";
+							iff.label_text = "Street 2:";
 							iff.field_type = "string";
 							iff.json_member_name = "Street2";
 							ids.fields.push_back(iff);
 
 							iff.field_id = IDC_USER_CITY;
-							iff.field_label = "City:";
+							iff.label_text = "City:";
 							iff.field_type = "string";
 							iff.json_member_name = "City";
 							ids.fields.push_back(iff);
 
 							iff.field_id = IDC_USER_STATE;
-							iff.field_label = "State:";
+							iff.label_text = "State:";
 							iff.field_type = "State";
 							iff.json_member_name = "State";
 							ids.fields.push_back(iff);
 
 							iff.field_id = IDC_USER_ZIP;
-							iff.field_label = "Zip:";
+							iff.label_text = "Zip:";
 							iff.field_type = "string";
 							iff.json_member_name = "Zip";
 							ids.fields.push_back(iff);
 
 							iff.field_id = id_counter::next();
-							iff.field_label = "Service";
+							iff.label_text = "Service";
 							iff.field_type = "section";
 							ids.fields.push_back(iff);
 
 							iff.field_id = IDC_USER_VETERAN;
-							iff.field_label = "Veteran:";
+							iff.label_text = "Veteran:";
 							iff.field_type = "string";
 							iff.json_member_name = "Veteran";
 							ids.fields.push_back(iff);
 
 							iff.field_id = IDC_USER_CITIZEN;
-							iff.field_label = "Citizenship:";
+							iff.label_text = "Citizenship:";
 							iff.field_type = "string";
 							iff.json_member_name = "Citizenship";
 							ids.fields.push_back(iff);
 
 							iff.field_id = id_counter::next();
-							iff.field_label = "Description";
+							iff.label_text = "Description";
 							iff.field_type = "section";
 							ids.fields.push_back(iff);
 
 							iff.field_id = IDC_USER_RACE;
-							iff.field_label = "Race:";
+							iff.label_text = "Race:";
 							iff.field_type = "string";
 							iff.json_member_name = "Race";
 							ids.fields.push_back(iff);
 
 							iff.field_id = IDC_USER_SEX;
-							iff.field_label = "Sex:";
+							iff.label_text = "Sex:";
 							iff.field_type = "string";
 							iff.json_member_name = "Sex";
 							ids.fields.push_back(iff);
 
 							iff.field_id = IDC_USER_EYES;
-							iff.field_label = "Eyes:";
+							iff.label_text = "Eyes:";
 							iff.field_type = "string";
 							iff.json_member_name = "Eyes";
 							ids.fields.push_back(iff);
 
 							iff.field_id = IDC_USER_HAIR;
-							iff.field_label = "Hair:";
+							iff.label_text = "Hair:";
 							iff.field_type = "string";
 							iff.json_member_name = "Hair";
 							ids.fields.push_back(iff);
 
 							iff.field_id = IDC_USER_HEIGHT;
-							iff.field_label = "Height:";
+							iff.label_text = "Height:";
 							iff.field_type = "string";
 							iff.json_member_name = "Password2";
 							ids.fields.push_back(iff);
 
 							iff.field_id = IDC_USER_WEIGHT;
-							iff.field_label = "Weight:";
+							iff.label_text = "Weight:";
 							iff.field_type = "string";
 							iff.json_member_name = "Password2";
 							ids.fields.push_back(iff);
 
 							iff.field_id = IDC_USER_IDENTITY;
-							iff.field_label = "Identity:";
+							iff.label_text = "Identity:";
 							iff.field_type = "string";
 							iff.json_member_name = "Identity";
 							ids.fields.push_back(iff);
@@ -680,17 +680,17 @@ namespace corona
 
 					cb.form_view(IDC_FORM_VIEW, [this](form_control& _fv)
 						{
-							form_data_source ids;
+							form_model ids;
 							form_field iff;
 
 							iff.field_id = IDC_USER_PASSWORD1;
-							iff.field_label = "Password 1:";
+							iff.label_text = "Password 1:";
 							iff.field_type = "string";
 							iff.json_member_name = "Password1";
 							ids.fields.push_back(iff);
 
 							iff.field_id = IDC_USER_PASSWORD2;
-							iff.field_label = "Password 2:";
+							iff.label_text = "Password 2:";
 							iff.field_type = "string";
 							iff.json_member_name = "Password2";
 							ids.fields.push_back(iff);
@@ -731,17 +731,17 @@ namespace corona
 
 					cb.form_view(IDC_FORM_VIEW, [this](form_control& _fv)
 						{
-							form_data_source ids;
+							form_model ids;
 							form_field iff;
 
 							iff.field_id = IDC_USER_PASSWORD1;
-							iff.field_label = "Password 1:";
+							iff.label_text = "Password 1:";
 							iff.field_type = "string";
 							iff.json_member_name = "Password1";
 							ids.fields.push_back(iff);
 
 							iff.field_id = IDC_USER_PASSWORD2;
-							iff.field_label = "Password 2:";
+							iff.label_text = "Password 2:";
 							iff.field_type = "string";
 							iff.json_member_name = "Password2";
 							ids.fields.push_back(iff);
@@ -827,7 +827,7 @@ namespace corona
 			edited_fields = edited_class["Fields"];
 			edited_build = edited_class["Edit"];
 
-			form_data_source ids;
+			form_model ids;
 			ids.name = edited_class["Description"];
 			ids.data = edited_data;
 			ids.fn_buttons = [this](control_builder& cb) {
@@ -875,8 +875,8 @@ namespace corona
 					field_type = field_options["FieldType"];
 					field_choices = field_options["Choices"];
 
-					new_field.field_label = field_options["Description"];
-					new_field.field_tooltip = field_options["ToolTip"];
+					new_field.label_text = field_options["Description"];
+					new_field.tooltip_text = field_options["ToolTip"];
 					new_field.choice_options.id_field = field_choices["ValueField"];
 					new_field.choice_options.text_field = field_choices["NameField"];
 					new_field.choice_options.items = field_choices["Items"];
@@ -884,8 +884,8 @@ namespace corona
 				else
 				{
 					field_type = field.second;
-					new_field.field_label = field_name;
-					new_field.field_tooltip = "";
+					new_field.label_text = field_name;
+					new_field.tooltip_text = "";
 				}
 
 				if (field_choices.is_object())

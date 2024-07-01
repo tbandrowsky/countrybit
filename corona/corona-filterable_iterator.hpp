@@ -5,8 +5,11 @@ by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
 About this File
+Corona more or less has two primary object representations, json,
+and a binary format. This is a first whack at iterators with the binary side.
 
 Notes
+Is it the best? No, but it works.
 
 For Future Consideration
 */

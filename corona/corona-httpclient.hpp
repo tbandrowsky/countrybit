@@ -5,6 +5,8 @@ by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
 About this File
+Standard http client. The client itself is syncrhonous but in practice 
+it gets used on background threads.
 
 Notes
 

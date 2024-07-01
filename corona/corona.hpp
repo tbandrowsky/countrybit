@@ -6,6 +6,10 @@ by Todd Bandrowky
 (c) 2024+ All Rights Reserved
 
 About this File
+This is the main header file.
+It was structured to facilitate C++ modules but there 
+is much work to be done, and at the time, there were issues
+with the compiler.
 
 Notes
 
@@ -61,6 +65,8 @@ For Future Consideration
 #include "corona-wchart_convert.hpp"
 #include "corona-utility.hpp"
 #include "corona-read_all_string.hpp"
+
+#include "corona-json.hpp"
 #include "corona-store_box.hpp"
 #include "corona-time_box.hpp"
 #include "corona-iarray.hpp"
@@ -82,7 +88,6 @@ For Future Consideration
 #include "corona-http-messages.hpp"
 
 #include "corona-queue.hpp"
-#include "corona-json.hpp"
 #include "corona-function.hpp"
 #include "corona-file.hpp"
 #include "corona-application.hpp"

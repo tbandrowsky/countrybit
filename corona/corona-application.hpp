@@ -6,6 +6,10 @@ by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
 About this File
+This is the application root class.  It can be used for both 
+console and desktop applications.  It manages a threadpool
+that is used pervasively by Corona.  It also provides the entry
+to open and work with files asynchronously.
 
 Notes
 

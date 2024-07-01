@@ -5,6 +5,9 @@ by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
 About this File
+This is the case class contract for a Corona GUI application.
+Corona GUI can use Windows SDK native controls freely along a Direct X 
+surface.
 
 Notes
 

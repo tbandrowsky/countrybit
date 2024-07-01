@@ -5,6 +5,7 @@ by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
 About this File
+floating point wrapper for serialization and easier inclusion of C++ math stuff.
 
 Notes
 

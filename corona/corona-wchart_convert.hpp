@@ -5,6 +5,10 @@ by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
 About this File
+Wide character conversions.  
+Useful for, when Windows needs 16 bit unicode characters.
+Corona is meant to be compiled in 8 bit characters 
+with UTF-8 character set.
 
 Notes
 

@@ -5,6 +5,7 @@ by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
 About this File
+represents an image reference to an object in a binary database.
 
 Notes
 

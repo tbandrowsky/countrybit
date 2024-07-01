@@ -5,6 +5,9 @@ by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
 About this File
+Multithreaded http server.  Uses Windows I/O completion ports.
+Conceptually, you define the server, load it up with handlers for various 
+paths, and off you go.
 
 Notes
 

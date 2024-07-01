@@ -5,6 +5,7 @@ by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
 About this File
+Binary object and binary class and collections of them.
 
 Notes
 

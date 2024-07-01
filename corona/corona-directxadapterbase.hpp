@@ -5,6 +5,8 @@ by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
 About this File
+adapter base is responsible for all the factories that need 
+to be created in the DX system.
 
 Notes
 

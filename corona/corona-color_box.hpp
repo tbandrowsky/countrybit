@@ -5,7 +5,8 @@ by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
 About this File
-
+A color box is a wrapper around a d2d color, with an 
+eye towards binary serialization 
 Notes
 
 For Future Consideration

@@ -26,24 +26,56 @@ namespace corona
 	class form_control;
 	class form_field_control;
 
-	class form_field
+	class form_field : public json_serializable
 	{
 	public:
 		int		 	  field_id;
 		std::string   json_member_name;
-		std::string   field_label;
+		std::string   label_text;
 		std::string   field_type;
-		std::string   field_tooltip;
-		std::string   field_format;
-		std::string   field_suffix;
-		std::string   field_prefix;
+		std::string   tooltip_text;
+		std::string   input_format;
+		std::string   suffix;
+		std::string   prefix;
 		bool		  read_only;
 		bool		  is_default_focus;
-		function_bag<control_base>  settings;
+		json		  settings_data;
 		list_data	  source_list;
 		table_data	  source_table;
 		measure		  visualization_height;
 		std::function<void(form_field_control* _src, draw_control* _dest)> draw_visualization;
+		function_bag<control_base>  settings;
+
+		virtual void get_json(json& _dest)
+		{
+			_dest.put_member("field_id", field_id);
+			_dest.put_member("json_member_name", json_member_name);
+			_dest.put_member("label_text", label_text);
+			_dest.put_member("field_type", field_type);
+			_dest.put_member("tooltip_text", tooltip_text);
+			_dest.put_member("input_format", input_format);
+			_dest.put_member("suffix", suffix);
+			_dest.put_member("prefix", prefix);
+			_dest.put_member("read_only", read_only);
+			_dest.put_member("is_default_focus", is_default_focus);
+			_dest.put_member("settings_data", settings_data);
+		}
+
+		virtual void put_json(json& _src)
+		{
+			field_id = _src.get_member("field_id");
+			json_member_name = _src.get_member("json_member_name");
+			label_text = _src.get_member("label_text");
+			field_type = _src.get_member("field_type");
+			tooltip_text = _src.get_member("tooltip_text");
+			input_format = _src.get_member("input_format");
+			suffix = _src.get_member("suffix");
+			prefix = _src.get_member("prefix");
+			read_only = (bool)_src.get_member("read_only");
+			is_default_focus = (bool)_src.get_member("is_default_focus");
+			settings_data = _src.get_member("settings_data");
+		}
+
 	};
 
 	class control_builder
@@ -628,22 +660,20 @@ namespace corona
 			return *this;
 		}
 
-		control_builder& radiobutton_list(int _id, std::string text, std::function<void(radiobutton_list&)> _settings = nullptr)
+		control_builder& radiobutton_list(int _id, std::function<void(radiobutton_list_control&)> _settings = nullptr)
 		{
-			auto tc = create<radiobutton_list>(_id);
+			auto tc = create<radiobutton_list_control>(_id);
 			apply_item_sizes(tc);
-			tc->set_text(text);
 			if (_settings) {
 				_settings(*tc);
 			}
 			return *this;
 		}
 
-		control_builder& checkbox_list(int _id, std::string text, std::function<void(checkbox_control&)> _settings = nullptr)
+		control_builder& checkbox_list(int _id,  std::function<void(checkbox_list_control&)> _settings = nullptr)
 		{
-			auto tc = create<checkbox_control>(_id);
+			auto tc = create<checkbox_list_control>(_id);
 			apply_item_sizes(tc);
-			tc->set_text(text);
 			if (_settings) {
 				_settings(*tc);
 			}
@@ -918,6 +948,9 @@ namespace corona
 		std::shared_ptr<label_control>  suffix;
 		std::shared_ptr<draw_control>	visualization;
 		std::shared_ptr<control_base>	field;
+		std::string error_text;
+
+		form_control* form;
 
 		template <typename field_control> std::shared_ptr<field_control> create_control(control_builder& cl, int _field_id, std::function<void(field_control&)> _settings)
 		{			
@@ -930,18 +963,23 @@ namespace corona
 			return tc;
 		}
 
-		std::string error_text;
 
 	public:
 
-		form_field_control()
+		form_field_control() : form(nullptr)
 		{
 			;
 		}
 
 		form_field_control(const form_field_control& _src) : column_layout(_src)
 		{
-			;
+			label = _src.label;
+			prefix = _src.prefix;
+			suffix = _src.suffix;
+			visualization = _src.visualization;
+			field = _src.field;
+			error_text = _src.error_text;
+			form = _src.form;
 		}
 
 		form_field_control(container_control_base* _parent, int _id) : column_layout(_parent, _id)
@@ -1015,16 +1053,16 @@ namespace corona
 		{
 			control_builder cb(this);
 
-			set_label(ctrl.field_label);
+			set_label(ctrl.label_text);
 
-			if (!ctrl.field_prefix.empty())
+			if (!ctrl.prefix.empty())
 			{
-				set_prefix(ctrl.field_prefix);
+				set_prefix(ctrl.prefix);
 			}
 
-			if (!ctrl.field_suffix.empty())
+			if (!ctrl.suffix.empty())
 			{
-				set_suffix(ctrl.field_suffix);
+				set_suffix(ctrl.suffix);
 			}
 
 			if (_draw_visualization)
@@ -1090,9 +1128,9 @@ namespace corona
 			if (ctrl.field_type == "status")
 			{
 				set_field<status_control>(ctrl.field_id,
-					ctrl.field_label,
-					ctrl.field_prefix,
-					ctrl.field_suffix,
+					ctrl.label_text,
+					ctrl.prefix,
+					ctrl.suffix,
 					[pcontrol, data](status_control& _settings) {
 						pcontrol->settings.call<status_control>(_settings);
 						_settings.json_field_name = pcontrol->json_member_name;
@@ -1104,17 +1142,17 @@ namespace corona
 			else if (ctrl.field_type == "double" || ctrl.field_type == "number")
 			{
 				set_field<edit_control>(ctrl.field_id,
-					ctrl.field_label,
-					ctrl.field_prefix,
-					ctrl.field_suffix,
+					ctrl.label_text,
+					ctrl.prefix,
+					ctrl.suffix,
 					[pcontrol, data](edit_control& _settings) {
 						pcontrol->settings.call<edit_control>(_settings);
-						std::string format = pcontrol->field_format;
+						std::string format = pcontrol->input_format;
 						if (format.empty()) {
 							format = "d.d";
 						}
 						_settings.is_default_focus = pcontrol->is_default_focus;
-						_settings.set_format(pcontrol->field_format);
+						_settings.set_format(pcontrol->input_format);
 						_settings.json_field_name = pcontrol->json_member_name;
 						_settings.set_data(data);
 					},
@@ -1126,16 +1164,16 @@ namespace corona
 			else if (ctrl.field_type == "integer")
 			{
 				set_field<edit_control>(ctrl.field_id,
-					ctrl.field_label,
-					ctrl.field_prefix,
-					ctrl.field_suffix,
+					ctrl.label_text,
+					ctrl.prefix,
+					ctrl.suffix,
 					[pcontrol, data](edit_control& _settings) {
 						pcontrol->settings.call<edit_control>(_settings);
-						std::string format = pcontrol->field_format;
+						std::string format = pcontrol->input_format;
 						if (format.empty()) {
 							format = "d";
 						}
-						_settings.set_format(pcontrol->field_format);
+						_settings.set_format(pcontrol->input_format);
 						_settings.json_field_name = pcontrol->json_member_name;
 						_settings.set_data(data);
 
@@ -1148,12 +1186,12 @@ namespace corona
 			{
 
 				set_field<edit_control>(ctrl.field_id,
-					ctrl.field_label,
-					ctrl.field_prefix,
-					ctrl.field_suffix,
+					ctrl.label_text,
+					ctrl.prefix,
+					ctrl.suffix,
 					[pcontrol, data](edit_control& _settings) {
 						pcontrol->settings.call<edit_control>(_settings);
-						std::string format = pcontrol->field_format;
+						std::string format = pcontrol->input_format;
 						if (format.empty()) {
 							format = "d.d";
 						}
@@ -1168,16 +1206,16 @@ namespace corona
 			else if (ctrl.field_type == "datetime")
 			{
 				set_field<edit_control>(ctrl.field_id,
-					ctrl.field_label,
-					ctrl.field_prefix,
-					ctrl.field_suffix,
+					ctrl.label_text,
+					ctrl.prefix,
+					ctrl.suffix,
 					[pcontrol, data](edit_control& _settings) {
 						pcontrol->settings.call<edit_control>(_settings);
-						std::string format = pcontrol->field_format;
+						std::string format = pcontrol->input_format;
 						if (format.empty()) {
 							format = "d/d/d d:d";
 						}
-						_settings.set_format(pcontrol->field_format);
+						_settings.set_format(pcontrol->input_format);
 						_settings.json_field_name = pcontrol->json_member_name;
 						_settings.set_data(data);
 					},
@@ -1189,16 +1227,16 @@ namespace corona
 			else if (ctrl.field_type == "date")
 			{
 				set_field<edit_control>(ctrl.field_id,
-					ctrl.field_label,
-					ctrl.field_prefix,
-					ctrl.field_suffix,
+					ctrl.label_text,
+					ctrl.prefix,
+					ctrl.suffix,
 					[pcontrol, data](edit_control& _settings) {
 						pcontrol->settings.call<edit_control>(_settings);
-						std::string format = pcontrol->field_format;
+						std::string format = pcontrol->input_format;
 						if (format.empty()) {
 							format = "d/d/d";
 						}
-						_settings.set_format(pcontrol->field_format);
+						_settings.set_format(pcontrol->input_format);
 						_settings.json_field_name = pcontrol->json_member_name;
 						_settings.set_data(data);
 						_settings.is_default_focus = pcontrol->is_default_focus;
@@ -1210,16 +1248,16 @@ namespace corona
 			else if (ctrl.field_type == "time")
 			{
 				set_field<edit_control>(ctrl.field_id,
-					ctrl.field_label,
-					ctrl.field_prefix,
-					ctrl.field_suffix,
+					ctrl.label_text,
+					ctrl.prefix,
+					ctrl.suffix,
 					[pcontrol, data](edit_control& _settings) {
 						pcontrol->settings.call<edit_control>(_settings);
-						std::string format = pcontrol->field_format;
+						std::string format = pcontrol->input_format;
 						if (format.empty()) {
 							format = "d:d";
 						}
-						_settings.set_format(pcontrol->field_format);
+						_settings.set_format(pcontrol->input_format);
 						_settings.json_field_name = pcontrol->json_member_name;
 						_settings.set_data(data);
 						_settings.is_default_focus = pcontrol->is_default_focus;
@@ -1232,16 +1270,16 @@ namespace corona
 			else if (ctrl.field_type == "ssn")
 			{
 				set_field<edit_control>(ctrl.field_id,
-					ctrl.field_label,
-					ctrl.field_prefix,
-					ctrl.field_suffix,
+					ctrl.label_text,
+					ctrl.prefix,
+					ctrl.suffix,
 					[pcontrol, data](edit_control& _settings) {
 						pcontrol->settings.call<edit_control>(_settings);
-						std::string format = pcontrol->field_format;
+						std::string format = pcontrol->input_format;
 						if (format.empty()) {
 							format = "d-d-d";
 						}
-						_settings.set_format(pcontrol->field_format);
+						_settings.set_format(pcontrol->input_format);
 						_settings.json_field_name = pcontrol->json_member_name;
 						_settings.set_data(data);
 						_settings.is_default_focus = pcontrol->is_default_focus;
@@ -1253,16 +1291,16 @@ namespace corona
 			else if (ctrl.field_type == "string")
 			{
 				set_field<edit_control>(ctrl.field_id,
-					ctrl.field_label,
-					ctrl.field_prefix,
-					ctrl.field_suffix,
+					ctrl.label_text,
+					ctrl.prefix,
+					ctrl.suffix,
 					[pcontrol, data](edit_control& _settings) {
 						pcontrol->settings.call<edit_control>(_settings);
-						std::string format = pcontrol->field_format;
+						std::string format = pcontrol->input_format;
 						if (format.empty()) {
 							format = "d-d-d";
 						}
-						_settings.set_format(pcontrol->field_format);
+						_settings.set_format(pcontrol->input_format);
 						_settings.json_field_name = pcontrol->json_member_name;
 						_settings.set_data(data);
 						_settings.is_default_focus = pcontrol->is_default_focus;
@@ -1274,14 +1312,13 @@ namespace corona
 			else if (ctrl.field_type == "checkboxlist")
 			{
 				set_field<camera_view_control>(ctrl.field_id,
-					ctrl.field_label,
-					ctrl.field_prefix,
-					ctrl.field_suffix,
+					ctrl.label_text,
+					ctrl.prefix,
+					ctrl.suffix,
 					[pcontrol, data](camera_view_control& _settings) {
 						pcontrol->settings.call<camera_view_control>(_settings);
 						_settings.json_field_name = pcontrol->json_member_name;
 						_settings.set_data(data);
-						_settings.is_default_focus = pcontrol->is_default_focus;
 					},
 					ctrl.visualization_height,
 					ctrl.draw_visualization
@@ -1291,16 +1328,16 @@ namespace corona
 			else if (ctrl.field_type == "radiolist")
 			{
 				set_field<edit_control>(ctrl.field_id,
-					ctrl.field_label,
-					ctrl.field_prefix,
-					ctrl.field_suffix,
+					ctrl.label_text,
+					ctrl.prefix,
+					ctrl.suffix,
 					[pcontrol, data](edit_control& _settings) {
 						pcontrol->settings.call<edit_control>(_settings);
-						std::string format = pcontrol->field_format;
+						std::string format = pcontrol->input_format;
 						if (format.empty()) {
 							format = "d-d-d";
 						}
-						_settings.set_format(pcontrol->field_format);
+						_settings.set_format(pcontrol->input_format);
 						_settings.json_field_name = pcontrol->json_member_name;
 						_settings.set_data(data);
 						_settings.is_default_focus = pcontrol->is_default_focus;
@@ -1313,9 +1350,9 @@ namespace corona
 			else if (ctrl.field_type == "listview")
 			{
 				set_field<listview_control>(ctrl.field_id,
-					ctrl.field_label,
-					ctrl.field_prefix,
-					ctrl.field_suffix,
+					ctrl.label_text,
+					ctrl.prefix,
+					ctrl.suffix,
 					[pcontrol, data](listview_control& _settings) {
 						pcontrol->settings.call<listview_control>(_settings);
 						_settings.set_table(pcontrol->source_table);
@@ -1330,9 +1367,9 @@ namespace corona
 			else if (ctrl.field_type == "listbox")
 			{
 				set_field<listbox_control>(ctrl.field_id,
-					ctrl.field_label,
-					ctrl.field_prefix,
-					ctrl.field_suffix,
+					ctrl.label_text,
+					ctrl.prefix,
+					ctrl.suffix,
 					[pcontrol, data](listbox_control& _settings) {
 						pcontrol->settings.call<listbox_control>(_settings);
 						_settings.set_list(pcontrol->source_list);
@@ -1347,9 +1384,9 @@ namespace corona
 			else if (ctrl.field_type == "combobox")
 			{
 				set_field<combobox_control>(ctrl.field_id,
-					ctrl.field_label,
-					ctrl.field_prefix,
-					ctrl.field_suffix,
+					ctrl.label_text,
+					ctrl.prefix,
+					ctrl.suffix,
 					[pcontrol, data](combobox_control& _settings) {
 						pcontrol->settings.call<combobox_control>(_settings);
 						_settings.set_list(pcontrol->source_list);
@@ -1365,9 +1402,9 @@ namespace corona
 			else if (ctrl.field_type == "comboboxex")
 			{
 				set_field<comboboxex_control>(ctrl.field_id,
-					ctrl.field_label,
-					ctrl.field_prefix,
-					ctrl.field_suffix,
+					ctrl.label_text,
+					ctrl.prefix,
+					ctrl.suffix,
 					[pcontrol, data](comboboxex_control& _settings) {
 						pcontrol->settings.call<comboboxex_control>(_settings);
 						_settings.set_list(pcontrol->source_list);
@@ -1383,9 +1420,9 @@ namespace corona
 			else if (ctrl.field_type == "datetimepicker")
 			{
 				set_field<datetimepicker_control>(ctrl.field_id,
-					ctrl.field_label,
-					ctrl.field_prefix,
-					ctrl.field_suffix,
+					ctrl.label_text,
+					ctrl.prefix,
+					ctrl.suffix,
 					[pcontrol, data](datetimepicker_control& _settings) {
 						pcontrol->settings.call<datetimepicker_control>(_settings);
 						_settings.json_field_name = pcontrol->json_member_name;
@@ -1399,12 +1436,12 @@ namespace corona
 			else if (ctrl.field_type == "richeedit")
 			{
 				set_field<richedit_control>(ctrl.field_id,
-					ctrl.field_label,
-					ctrl.field_prefix,
-					ctrl.field_suffix,
+					ctrl.label_text,
+					ctrl.prefix,
+					ctrl.suffix,
 					[pcontrol, data](richedit_control& _settings) {
 						pcontrol->settings.call<richedit_control>(_settings);
-						_settings.set_format(pcontrol->field_format);
+						_settings.set_format(pcontrol->input_format);
 						_settings.json_field_name = pcontrol->json_member_name;
 						_settings.set_data(data);
 						_settings.is_default_focus = pcontrol->is_default_focus;
@@ -1417,14 +1454,13 @@ namespace corona
 			else if (ctrl.field_type == "title")
 			{
 				set_field<title_control>(ctrl.field_id,
-					ctrl.field_label,
-					ctrl.field_prefix,
-					ctrl.field_suffix,
+					ctrl.label_text,
+					ctrl.prefix,
+					ctrl.suffix,
 					[pcontrol, data](title_control& _settings) {
 						pcontrol->settings.call<title_control>(_settings);
 						_settings.json_field_name = pcontrol->json_member_name;
 						_settings.set_data(data);
-						_settings.is_default_focus = pcontrol->is_default_focus;
 					},
 					ctrl.visualization_height,
 					ctrl.draw_visualization
@@ -1433,14 +1469,13 @@ namespace corona
 			else if (ctrl.field_type == "subtitle")
 			{
 				set_field<subtitle_control>(ctrl.field_id,
-					ctrl.field_label,
-					ctrl.field_prefix,
-					ctrl.field_suffix,
+					ctrl.label_text,
+					ctrl.prefix,
+					ctrl.suffix,
 					[pcontrol, data](subtitle_control& _settings) {
 						pcontrol->settings.call<subtitle_control>(_settings);
 						_settings.json_field_name = pcontrol->json_member_name;
 						_settings.set_data(data);
-						_settings.is_default_focus = pcontrol->is_default_focus;
 					},
 					ctrl.visualization_height,
 					ctrl.draw_visualization
@@ -1449,15 +1484,14 @@ namespace corona
 			else if (ctrl.field_type == "chaptertitle")
 			{
 				set_field<chaptertitle_control>(ctrl.field_id,
-					ctrl.field_label,
-					ctrl.field_prefix,
-					ctrl.field_suffix,
+					ctrl.label_text,
+					ctrl.prefix,
+					ctrl.suffix,
 					[pcontrol, data](chaptertitle_control& _settings) {
 						pcontrol->settings.call<chaptertitle_control>(_settings);
 						_settings.json_field_name = pcontrol->json_member_name;
 						_settings.set_data(data);
-						_settings.is_default_focus = pcontrol->is_default_focus;
-					},
+				},
 					ctrl.visualization_height,
 					ctrl.draw_visualization
 				);
@@ -1465,14 +1499,13 @@ namespace corona
 			else if (ctrl.field_type == "chaptersubtitle")
 			{
 				set_field<chaptersubtitle_control>(ctrl.field_id,
-					ctrl.field_label,
-					ctrl.field_prefix,
-					ctrl.field_suffix,
+					ctrl.label_text,
+					ctrl.prefix,
+					ctrl.suffix,
 					[pcontrol, data](chaptersubtitle_control& _settings) {
 						pcontrol->settings.call<chaptersubtitle_control>(_settings);
 						_settings.json_field_name = pcontrol->json_member_name;
 						_settings.set_data(data);
-						_settings.is_default_focus = pcontrol->is_default_focus;
 					},
 					ctrl.visualization_height,
 					ctrl.draw_visualization
@@ -1481,14 +1514,13 @@ namespace corona
 			else if (ctrl.field_type == "paragraph")
 			{
 				set_field<paragraph_control>(ctrl.field_id,
-					ctrl.field_label,
-					ctrl.field_prefix,
-					ctrl.field_suffix,
+					ctrl.label_text,
+					ctrl.prefix,
+					ctrl.suffix,
 					[pcontrol, data](paragraph_control& _settings) {
 						pcontrol->settings.call<paragraph_control>(_settings);
 						_settings.json_field_name = pcontrol->json_member_name;
 						_settings.set_data(data);
-						_settings.is_default_focus = pcontrol->is_default_focus;
 					},
 					ctrl.visualization_height,
 					ctrl.draw_visualization
@@ -1497,14 +1529,13 @@ namespace corona
 			else if (ctrl.field_type == "image")
 			{
 				set_field<image_control>(ctrl.field_id,
-					ctrl.field_label,
-					ctrl.field_prefix,
-					ctrl.field_suffix,
+					ctrl.label_text,
+					ctrl.prefix,
+					ctrl.suffix,
 					[pcontrol, data](image_control& _settings) {
 						pcontrol->settings.call<image_control>(_settings);
 						_settings.json_field_name = pcontrol->json_member_name;
 						_settings.set_data(data);
-						_settings.is_default_focus = pcontrol->is_default_focus;
 					},
 					ctrl.visualization_height,
 					ctrl.draw_visualization
@@ -1513,14 +1544,13 @@ namespace corona
 			else if (ctrl.field_type == "camera")
 			{
 				set_field<camera_control>(ctrl.field_id,
-					ctrl.field_label,
-					ctrl.field_prefix,
-					ctrl.field_suffix,
+					ctrl.label_text,
+					ctrl.prefix,
+					ctrl.suffix,
 					[pcontrol, data](camera_control& _settings) {
 						pcontrol->settings.call<camera_control>(_settings);
 						_settings.json_field_name = pcontrol->json_member_name;
 						_settings.set_data(data);
-						_settings.is_default_focus = pcontrol->is_default_focus;
 					},
 					ctrl.visualization_height,
 					ctrl.draw_visualization
@@ -1530,19 +1560,102 @@ namespace corona
 			else if (ctrl.field_type == "cameraview")
 			{
 				set_field<camera_view_control>(ctrl.field_id, 
-					ctrl.field_label,
-					ctrl.field_prefix,
-					ctrl.field_suffix,
+					ctrl.label_text,
+					ctrl.prefix,
+					ctrl.suffix,
 					[pcontrol, data](camera_view_control& _settings) {
 						pcontrol->settings.call<camera_view_control>(_settings);
 						_settings.json_field_name = pcontrol->json_member_name;
 						_settings.set_data(data);
-						_settings.is_default_focus = pcontrol->is_default_focus;
 					},
 					ctrl.visualization_height,
 					ctrl.draw_visualization
 					);
 			}
+			else if (ctrl.field_type == "row")
+			{
+				set_field<row_layout>(ctrl.field_id,
+					ctrl.label_text,
+					ctrl.prefix,
+					ctrl.suffix,
+					[pcontrol, data](row_layout& _settings) {
+						pcontrol->settings.call<row_layout>(_settings);
+						_settings.json_field_name = pcontrol->json_member_name;
+						_settings.set_data(data);
+					},
+					ctrl.visualization_height,
+					ctrl.draw_visualization
+				);
+				}
+			else if (ctrl.field_type == "column")
+			{
+				set_field<column_layout>(ctrl.field_id,
+					ctrl.label_text,
+					ctrl.prefix,
+					ctrl.suffix,
+					[pcontrol, data](column_layout& _settings) {
+						pcontrol->settings.call<column_layout>(_settings);
+						_settings.json_field_name = pcontrol->json_member_name;
+						_settings.set_data(data);
+					},
+					ctrl.visualization_height,
+					ctrl.draw_visualization
+				);
+				}
+			else if (ctrl.field_type == "absolute")
+			{
+				set_field<absolute_layout>(ctrl.field_id,
+					ctrl.label_text,
+					ctrl.prefix,
+					ctrl.suffix,
+					[pcontrol, data](absolute_layout& _settings) {
+						pcontrol->settings.call<absolute_layout>(_settings);
+						_settings.json_field_name = pcontrol->json_member_name;
+						_settings.set_data(data);
+					},
+					ctrl.visualization_height,
+					ctrl.draw_visualization
+				);
+				}
+		}
+
+		virtual void on_subscribe(presentation_base* _presentation, page_base* _page)
+		{
+			_page->on_list_changed(field->id, [this](list_changed_event lce)
+				{
+					if (form) {
+						form->list_changed(lce, this);
+					}
+				});
+
+			_page->on_item_changed(field->id, [this](item_changed_event lce)
+				{
+					if (form) {
+						form->item_changed(lce, this);
+					}
+				});
+
+			_page->on_command(field->id, [this](command_event lce)
+				{
+					if (form) {
+						form->field_command(lce, this);
+					}
+				});
+
+			_page->on_mouse_click(field.get(), [this](mouse_click_event lce)
+				{
+					if (form) {
+						form->field_mouse_click(lce, this);
+					}
+				});
+
+			_page->on_mouse_move(field.get(), [this](mouse_move_event lce)
+				{
+					if (form) {
+						form->field_mouse_move(lce, this);
+					}
+				});
+
 		}
 
 		virtual ~form_field_control()
@@ -1552,21 +1665,30 @@ namespace corona
 
 	};
 
-	using item_buttons_function = std::function<void(control_builder& cb)>;
+	using form_list_changed_handler = std::function<void(list_changed_event lce, form_field_control* _ctrl)>;
+	using form_item_changed_handler = std::function<void(item_changed_event lce, form_field_control* _ctrl)>;
+	using form_command_handler = std::function<void(command_event lce, form_field_control* _ctrl)>;
+	using form_mouse_click_handler = std::function<void(mouse_click_event lce, form_field_control* _ctrl)>;
+	using form_mouse_move_handler = std::function<void(mouse_move_event lce, form_field_control* _ctrl)>;
 
-	class form_data_source
+	class form_model
 	{
 	public:
 		std::string				name;
 		std::vector<form_field> fields;
 		json					data;
-		item_buttons_function	fn_buttons;
-		std::function<void(column_layout& _settings)> fn_columns;
+
+		form_list_changed_handler	on_list_changed;
+		form_item_changed_handler	on_item_changed;
+		form_command_handler		on_command;
+		form_mouse_click_handler	on_mouse_click;
+		form_mouse_move_handler		on_mouse_move;
+
 	};
 
 	class form_control : public column_layout
 	{
-		form_data_source ids;
+		form_model ids;
 		presentation_base* current_presentation;
 		page_base* current_page;
 
@@ -1637,11 +1759,14 @@ namespace corona
 			return empty;
 		}
 
-		void set_data(form_data_source _ids)
+		void set_data(form_model _ids)
 		{
 			children.clear();
 
+			std::stack<control_builder> cbs;
+
 			control_builder cb;
+			cbs.push(cb);
 
 			ids = _ids;
 
@@ -1649,57 +1774,78 @@ namespace corona
 
 			for (auto &ctrl : ids.fields) 
 			{
+				auto* cbx = &cbs.top();
+
+				if (ctrl.field_type == "row" || 
+					ctrl.field_type == "column" || 
+					ctrl.field_type == "absolute")
+				{
+					control_builder cb;
+					cbs.push(cb);
+				}
+				else if (ctrl.field_type == "end")
+				{
+					cbs.pop();
+					cbx = &cbs.top();
+				}
+
 				auto pctrl = &ctrl;
-				cb.form_field(id_counter::next(), [this,pctrl](form_field_control& _settings) {
+				cbx->form_field(id_counter::next(), [this,pctrl](form_field_control& _settings) {
 					_settings.set_field(*pctrl, ids.data);
 					});
 
 				is_default = false;
 			}
 
-			if (ids.fn_buttons) {
-				auto btn_row = cb.row_begin(id_counter::next(), [](row_layout& _cl) {
-					_cl.set_size(1.0_container, 70.0_px);
-					});
-				ids.fn_buttons(btn_row);
-			}
-
-			cb.apply_controls(this);
+			auto& cbx = cbs.top();
+			cbx.apply_controls(this);
 
 			create(host);
 		}
 
 		virtual void on_subscribe(presentation_base* _presentation, page_base* _page)
 		{
-			for (auto& ctrl : ids.fields)
-			{
-				if (ctrl.field_type == "combobox" ||
-					ctrl.field_type == "comboboxex" ||
-					ctrl.field_type == "listbox" ||
-					ctrl.field_type == "listview")
-				{
-					_page->on_list_changed(ctrl.field_id, [this](list_changed_event lce)
-						{
-							if (on_changed) {
-								on_changed(lce.control_id, this);
-							}
-						});
-				}
-				else 
-				{
-					_page->on_item_changed(ctrl.field_id, [this](item_changed_event lce)
-						{
-							if (on_changed) {
-								on_changed(lce.control_id, this);
-							}
-						});
-				}
-			}
 
 			for (auto child : children) {
 				child->on_subscribe(_presentation, _page);
 			}
 		}
+
+		virtual void list_changed(list_changed_event lce, form_field_control* _ctrl)
+		{
+			if (ids.on_list_changed) {
+				ids.on_list_changed(lce, _ctrl);
+			}
+		}
+
+		virtual void item_changed(item_changed_event lce, form_field_control* _ctrl)
+		{
+			if (ids.on_item_changed) {
+				ids.on_item_changed(lce, _ctrl);
+			}
+		}
+
+		virtual void field_command(command_event lce, form_field_control* _ctrl)
+		{
+			if (ids.on_command) {
+				ids.on_command(lce, _ctrl);
+			}
+		}
+
+		virtual void field_mouse_click(mouse_click_event lce, form_field_control *_ctrl)
+		{
+			if (ids.on_mouse_click) {
+				ids.on_mouse_click(lce, _ctrl);
+			}
+		}
+
+		virtual void field_mouse_move(mouse_move_event lce, form_field_control* _ctrl)
+		{
+			if (ids.on_mouse_move) {
+				ids.on_mouse_move(lce, _ctrl);
+			}
+		}
+
 	};
 
 	class tab_pane

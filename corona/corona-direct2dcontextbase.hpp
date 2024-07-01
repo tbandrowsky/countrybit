@@ -5,6 +5,7 @@ by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
 About this File
+Base contract for a direct context.  This basically is for managing foward declarations.
 
 Notes
 

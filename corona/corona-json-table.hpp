@@ -5,6 +5,7 @@ by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
 About this File
+This is a table in a json database, implemented with a skip list.
 
 Notes
 

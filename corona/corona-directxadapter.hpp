@@ -5,6 +5,7 @@ by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
 About this File
+The adapter here in this case is a logical construct of several d2d windows.
 
 Notes
 
