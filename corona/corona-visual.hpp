@@ -23,6 +23,57 @@ namespace corona {
 		D2D1_RECT_F crop;
 	};
 
+	void get_json(json& _dest, D2D1_SIZE_U& _src)
+	{
+		_dest.put_member("width", _src.width);
+		_dest.put_member("height", _src.height);
+	}
+
+	void put_json(D2D1_SIZE_U& _dest, json& _src)
+	{
+		_dest.width = (double)_src["width"];
+		_dest.height = (double)_src["height"];
+	}
+
+	void get_json(json& _dest, D2D1_RECT_F& _src)
+	{
+		_dest.put_member("left", _src.left);
+		_dest.put_member("top", _src.top);
+		_dest.put_member("right", _src.right);
+		_dest.put_member("bottom", _src.bottom);
+	}
+
+	void put_json(D2D1_RECT_F& _dest, json& _src)
+	{
+		_dest.left = (double)_src["left"];
+		_dest.top = (double)_src["top"];
+		_dest.right = (double)_src["right"];
+		_dest.bottom = (double)_src["bottom"];
+	}
+
+	void get_json(json& _dest, sizeCrop& _src)
+	{
+		json_parser jp;
+		json jcrop, jsize;
+		jcrop = jp.create_object();
+		jsize = jp.create_object();
+		get_json(jcrop, _src.crop);
+		get_json(jsize, _src.size);
+		_dest.put_member("crop", jcrop);
+		_dest.put_member("size", jsize);
+		_dest.put_member("enabled", _src.cropEnabled);
+	}
+
+	void put_json(sizeCrop& _dest, json& _src)
+	{
+		json jcrop, jsize;
+		jcrop = _src["crop"];
+		jsize = _src["size"];
+		_dest.cropEnabled = (bool)_src["enabled"];
+		put_json(_dest.crop, jcrop);
+		put_json(_dest.size, jsize);
+	}
+
 	enum class visual_alignment
 	{
 		align_none = 0,
@@ -31,6 +82,50 @@ namespace corona {
 		align_justify = 3,
 		align_far = 4,
 	};
+
+	std::string get_json(json& _dest, std::string _member_name, visual_alignment& _src)
+	{
+		std::string dva = "near";
+		switch (_src) {
+		case visual_alignment::align_none:
+		case visual_alignment::align_near:
+			break;
+		case visual_alignment::align_center:
+			dva = "center";
+			break;
+		case visual_alignment::align_justify:
+			dva = "justify";
+			break;
+		case visual_alignment::align_far:
+			dva = "far";
+			break;
+		}
+		_dest.put_member(_member_name, dva);
+	}
+
+	void put_json(visual_alignment& _dest, json& _src, std::string _member_name)
+	{
+		std::string dva = _src[_member_name];
+
+		if (dva == "near")
+		{
+			_dest = visual_alignment::align_near;
+		}
+		else if (dva == "far")
+		{
+			_dest = visual_alignment::align_far;
+		}
+		else if (dva == "center")
+		{
+			_dest = visual_alignment::align_center;
+		}
+		else if (dva == "justify")
+		{
+			_dest = visual_alignment::align_justify;
+		}
+		else
+			_dest = visual_alignment::align_near;
+	}
 
 	struct gradientStop
 	{
@@ -53,9 +148,52 @@ namespace corona {
 		}
 	};
 
+	void get_json(json& _dest, ccolor & _src)
+	{
+		_dest.put_member("a", _src.a);
+		_dest.put_member("r", _src.r);
+		_dest.put_member("g", _src.g);
+		_dest.put_member("b", _src.b);
+	}
+
+	void put_json(ccolor& _dest, std::string _member_name, json& _src)
+	{
+		json jcolor = _src[_member_name];
+		if (jcolor.is_string()) {
+			std::string color_string = jcolor;
+			_dest = toColor(color_string);
+		}
+		else if (jcolor.is_object())
+		{
+			if (jcolor.has_member("a"))
+				_dest.a = (double)jcolor["a"];
+			else
+				_dest.a = 1.0;
+
+			_dest.r = (double)jcolor["r"];
+			_dest.g = (double)jcolor["g"];
+			_dest.b = (double)jcolor["b"];
+		}
+	}
+
+	void get_json(json& _dest, gradientStop& _src)
+	{
+		json_parser jp;
+		json jcolor = jp.create_object();
+		get_json(jcolor, _src.stop_color);
+		_dest.put_member("color", jcolor);
+		_dest.put_member("position", _src.stop_position);
+	}
+
+	void put_json(gradientStop& _dest, json& _src)
+	{
+		_dest.stop_position = (double)_src["position"];
+		put_json(_dest.stop_color, "color", _src);
+	}
+
 	/* std::string& _name, std::string& _filename, UINT _destinationWidth = 0, UINT _destinationHeight  = 0 */
 
-	class bitmapRequest 
+	class bitmapRequest
 	{
 	public:
 		std::string	name;
@@ -91,6 +229,54 @@ namespace corona {
 		}
 	};
 
+	void get_json(json& _dest, bitmapRequest& _src)
+	{
+		json_parser jp;
+
+		_dest.put_member("name", _src.name);
+		_dest.put_member("file_name", _src.file_name);
+		_dest.put_member("resource_id", _src.resource_id);
+		_dest.put_member("crop_enabled", _src.cropEnabled);
+
+		json jcrop = jp.create_object();
+		get_json(jcrop, _src.crop);
+		_dest.put_member("crop", jcrop);
+
+		json jsizes = jp.create_array();
+		for (auto sz : _src.sizes)
+		{
+			json jcrop = jp.create_object();
+			get_json(jcrop, _src.crop);
+		}
+		_dest.put_member("sizes", jsizes);
+	}
+
+	void put_json(bitmapRequest& _dest, json& _src)
+	{
+		json_parser jp;
+
+		_dest.name = _src["name"];
+		_dest.file_name = _src["file_name"];
+		_dest.resource_id = (int)_src["resource_id"];
+		_dest.cropEnabled = (bool)_src["crop_enabled"];
+
+		json jcrop = _src["crop"];
+		put_json(_dest.crop, jcrop);
+
+		json jsizes = _src["sizes"];
+		if (jsizes.is_array()) {
+			_dest.sizes.clear();
+			int asz = jsizes.size();
+			for (int i = 0; i < asz; i++)
+			{
+				json jsize = jsizes.get_element(i);
+				point sz;
+				put_json(sz, jsize);
+				_dest.sizes.push_back(sz);
+			}
+		}
+	}
+
 	class bitmapBrushRequest 
 	{
 	public:
@@ -110,6 +296,18 @@ namespace corona {
 		}
 
 	};
+
+	void get_json(json& _dest, bitmapBrushRequest& _src)
+	{
+		_dest.put_member("name", _src.name);
+		_dest.put_member("bitmap_name", _src.bitmapName);
+	}
+
+	void put_json(bitmapBrushRequest& _dest, json& _src)
+	{
+		_dest.name = _src["name"];
+		_dest.bitmapName = _src["file_name"];
+	}
 
 	class linearGradientBrushRequest 
 	{
@@ -135,6 +333,68 @@ namespace corona {
 		}
 
 	};
+
+	void get_json(json& _dest, linearGradientBrushRequest& _src)
+	{
+		json_parser jp;
+
+		_dest.put_member("name", _src.name);
+		
+		json jstart, jstop, jsize, jstops, jstop;
+
+		jstart = jp.create_object();
+		get_json(jstart, _src.start);
+		_dest.put_member("start", jstart);
+
+		jstop = jp.create_object();
+		get_json(jstop, _src.stop);
+		_dest.put_member("stop", jstop);
+
+		jsize = jp.create_object();
+		get_json(jsize, _src.size);
+		_dest.put_member("size", jsize);
+
+		jstops = jp.create_array();
+		for (auto st : _src.gradientStops) {
+			jstop = jp.create_object();
+			get_json(jstop, st);
+			jstops.append_element(jstop);
+		}
+		_dest.put_member("stops", jstops);
+	}
+
+	void put_json(linearGradientBrushRequest& _dest, json& _src)
+	{
+		json_parser jp;
+
+		_dest.name = (std::string)_src["name"];
+
+		json jstart, jstop, jsize, jstops, jstop;
+
+		jstart = _src["start"];
+		put_json(_dest.start, jstart);
+
+		jstop = _src["stop"];
+		put_json(_dest.stop, jstop);
+
+		jsize = _src["size"];
+		put_json(_dest.size, jsize);
+
+		jstops = _src["stops"];
+		if (jstops.is_array()) {
+			int msz = jstops.size();
+			_dest.gradientStops.clear();
+
+			for (int i = 0; i < msz; i++)
+			{
+				json jgs = jstops.get_element(i);
+				gradientStop gs;
+				put_json(gs, jgs);
+				_dest.gradientStops.push_back(gs);
+			}
+		}
+	}
+
 
 	class radialGradientBrushRequest 
 	{
@@ -165,6 +425,69 @@ namespace corona {
 
 	};
 
+	void get_json(json& _dest, radialGradientBrushRequest& _src)
+	{
+		json_parser jp;
+
+		_dest.put_member("name", _src.name);
+
+		json jcenter, joffset, jsize, jstops, jstop;
+
+		jcenter = jp.create_object();
+		get_json(jcenter, _src.center);
+		_dest.put_member("center", jcenter);
+
+		joffset = jp.create_object();
+		get_json(joffset, _src.offset);
+		_dest.put_member("offset", joffset);
+
+		_dest.put_member("radiusX", _src.radiusX);
+		_dest.put_member("radiusY", _src.radiusY);
+
+		jstops = jp.create_array();
+		for (auto st : _src.gradientStops) {
+			jstop = jp.create_object();
+			get_json(jstop, st);
+			jstops.append_element(jstop);
+		}
+		_dest.put_member("stops", jstops);
+	}
+
+	void put_json(radialGradientBrushRequest& _dest, json& _src)
+	{
+		json_parser jp;
+
+		_dest.name = (std::string)_src["name"];
+
+		json jcenter, joffset, jsize, jstops, jstop;
+
+		jcenter = _src["center"];
+		put_json(_dest.center, jcenter);
+
+		joffset = _src["offset"];
+		put_json(_dest.offset, joffset);
+
+		jsize = _src["size"];
+		put_json(_dest.size, jsize);
+
+		_dest.radiusX = (double)_src["radiusX"];
+		_dest.radiusY = (double)_src["radiusY"];
+
+		jstops = _src["stops"];
+		if (jstops.is_array()) {
+			int msz = jstops.size();
+			_dest.gradientStops.clear();
+
+			for (int i = 0; i < msz; i++)
+			{
+				json jgs = jstops.get_element(i);
+				gradientStop gs;
+				put_json(gs, jgs);
+				_dest.gradientStops.push_back(gs);
+			}
+		}
+	}
+
 	class solidBrushRequest
 	{
 	public:
@@ -183,6 +506,24 @@ namespace corona {
 			brushColor = _request->brushColor;
 		}
 	};
+
+	void get_json(json& _dest, solidBrushRequest& _src)
+	{
+		json_parser jp;
+		_dest.put_member("name", _src.name);
+
+		json jcolor = jp.create_object();
+		get_json(_dest, _src.brushColor);
+		_dest.put_member("color", jcolor);
+	}
+
+	void put_json(solidBrushRequest& _dest, json& _src)
+	{
+		json_parser jp;
+
+		_dest.name = (std::string)_src["name"];
+		put_json(_dest.brushColor, "color", _src);
+	}
 
 	enum ePathPointType {
 		e_line,
@@ -556,6 +897,61 @@ namespace corona {
 
 	};
 
+	void get_json(json& _dest, generalBrushRequest& _src)
+	{
+		json_parser jp;
+
+		switch (_src.brush_type) {
+		case brush_types::solid_brush_type:
+			_dest.put_member("type", "solid");
+			get_json(_dest, *_src.solid_brush);
+			break;
+		case brush_types::linear_brush_type:
+			_dest.put_member("type", "linear");
+			get_json(_dest, *_src.linear_brush);
+			break;
+		case brush_types::radial_brush_type:
+			_dest.put_member("type", "radial");
+			get_json(_dest, *_src.radial_brush);
+			break;
+		case brush_types::bitmap_brush_type:
+			_dest.put_member("type", "bitmap");
+			get_json(_dest, *_src.bitmap_brush);
+			break;
+		}
+	}
+
+	void put_json(generalBrushRequest& _dest, json& _src)
+	{
+		json_parser jp;
+
+		std::string jtype = _src.get_member("type");
+		if (jtype == "solid")
+		{
+			solidBrushRequest sbr;
+			put_json(sbr, _src);
+			_dest = sbr;
+		}
+		else if (jtype == "linear")
+		{
+			linearGradientBrushRequest lgbr;
+			put_json(lgbr, _src);
+			_dest = lgbr;
+		}
+		else if (jtype == "radial")
+		{
+			radialGradientBrushRequest rgbr;
+			put_json(rgbr, _src);
+			_dest = rgbr;
+		}
+		else if (jtype == "bitmap")
+		{
+			radialGradientBrushRequest rgbr;
+			put_json(rgbr, _src);
+			_dest = rgbr;
+		}
+	}
+
 	struct drawTextRequest 
 	{
 		std::string text;
@@ -615,6 +1011,98 @@ namespace corona {
 		DWRITE_FONT_STRETCH font_stretch;
 	};
 
+	void get_json(json& _dest, textStyleRequest& _src)
+	{
+		json_parser jp;
+
+		_dest.put_member("name", _src.name);
+		_dest.put_member("font_name", _src.fontName);
+		_dest.put_member("font_size", _src.fontSize);
+		_dest.put_member("bold", _src.bold);
+		_dest.put_member("italics", _src.italics);
+		_dest.put_member("underline", _src.underline);
+		_dest.put_member("strike_through", _src.strike_through);
+		_dest.put_member("line_spacing", _src.line_spacing);
+		_dest.put_member("wrap_text", _src.wrap_text);
+		_dest.put_member("character_spacing", _src.character_spacing);
+
+		switch (_src.font_stretch) {
+		case DWRITE_FONT_STRETCH::DWRITE_FONT_STRETCH_CONDENSED:
+			_dest.put_member("font_stretch", "condensed");
+			break;
+		case DWRITE_FONT_STRETCH::DWRITE_FONT_STRETCH_EXPANDED:
+			_dest.put_member("font_stretch", "expanded");
+			break;
+		case DWRITE_FONT_STRETCH::DWRITE_FONT_STRETCH_EXTRA_CONDENSED:
+			_dest.put_member("font_stretch", "extra_condensed");
+			break;
+		case DWRITE_FONT_STRETCH::DWRITE_FONT_STRETCH_EXTRA_EXPANDED:
+			_dest.put_member("font_stretch", "extra_expanded");
+			break;
+		case DWRITE_FONT_STRETCH::DWRITE_FONT_STRETCH_NORMAL:
+			_dest.put_member("font_stretch", "normal");
+			break;
+		case DWRITE_FONT_STRETCH::DWRITE_FONT_STRETCH_SEMI_CONDENSED:
+			_dest.put_member("font_stretch", "semi_condensed");
+			break;
+		case DWRITE_FONT_STRETCH::DWRITE_FONT_STRETCH_SEMI_EXPANDED:
+			_dest.put_member("font_stretch", "semi_expanded");
+			break;
+		case DWRITE_FONT_STRETCH::DWRITE_FONT_STRETCH_ULTRA_CONDENSED:
+			_dest.put_member("font_stretch", "ultra_condensed");
+			break;
+		case DWRITE_FONT_STRETCH::DWRITE_FONT_STRETCH_ULTRA_EXPANDED:
+			_dest.put_member("font_stretch", "ultra_expanded");
+			break;
+		default:
+			_dest.put_member("font_stretch", "normal");
+			break;
+		}
+
+		_dest.put_member("font_stretch", _src.font_stretch);
+		get_json( _dest, "horizontal_alignment", _src.horizontal_align);
+		get_json(_dest, "vertical_alignment", _src.vertical_align);
+	}
+
+	void put_json(textStyleRequest& _dest, json& _src)
+	{
+		_dest.name = _src["name"];
+		_dest.fontName = _src["font_name"];
+		_dest.fontSize = (double)_src["font_size"];
+		_dest.bold = (bool)_src["bold"];
+		_dest.italics = (bool)_src["italics"];
+		_dest.underline = (bool)_src["underline"];
+		_dest.strike_through = (bool)_src["strike_through"];
+		_dest.line_spacing =  (double)_src["line_spacing"];
+		_dest.wrap_text = (bool)_src["wrap_text"];
+		_dest.character_spacing = (double)_src["character_spacing"];
+		std::string stretch = _src["font_stretch"];
+
+		if (stretch == "condensed")
+			_dest.font_stretch = DWRITE_FONT_STRETCH::DWRITE_FONT_STRETCH_CONDENSED;
+		else if (stretch == "expanded")
+			_dest.font_stretch = DWRITE_FONT_STRETCH::DWRITE_FONT_STRETCH_EXPANDED;
+		else if (stretch == "extra_condensed")
+			_dest.font_stretch = DWRITE_FONT_STRETCH::DWRITE_FONT_STRETCH_EXTRA_CONDENSED;
+		else if (stretch == "extra_expanded")
+			_dest.font_stretch = DWRITE_FONT_STRETCH::DWRITE_FONT_STRETCH_EXTRA_EXPANDED;
+		else if (stretch == "normal")
+			_dest.font_stretch = DWRITE_FONT_STRETCH::DWRITE_FONT_STRETCH_NORMAL;
+		else if (stretch == "semi_condensed")
+			_dest.font_stretch = DWRITE_FONT_STRETCH::DWRITE_FONT_STRETCH_SEMI_CONDENSED;
+		else if (stretch == "semi_expanded")
+			_dest.font_stretch = DWRITE_FONT_STRETCH::DWRITE_FONT_STRETCH_SEMI_EXPANDED;
+		else if (stretch == "ultra_condensed")
+			_dest.font_stretch = DWRITE_FONT_STRETCH::DWRITE_FONT_STRETCH_ULTRA_CONDENSED;
+		else if (stretch == "ultra_expanded")
+			_dest.font_stretch = DWRITE_FONT_STRETCH::DWRITE_FONT_STRETCH_ULTRA_EXPANDED;
+		else
+			_dest.font_stretch = DWRITE_FONT_STRETCH::DWRITE_FONT_STRETCH_NORMAL;
+
+		put_json(_dest.horizontal_align, _src, "horizontal_alignment");
+		put_json(_dest.vertical_align, _src, "vertical_alignment");
+	}
+
 	struct viewStyleRequest
 	{
 		std::string			name;
@@ -626,6 +1114,51 @@ namespace corona {
 		solidBrushRequest box_fill_color;
 		solidBrushRequest shape_fill_color;
 	};
+
+	void get_json(json& _dest, viewStyleRequest& _src)
+	{
+		json_parser jp;
+		json text_style = jp.create_object();
+		json box_border = jp.create_object();
+		json shape_border = jp.create_object();
+		json box_fill = jp.create_object();
+		json shape_fill = jp.create_object();
+
+		get_json(text_style, _src.text_style);
+		get_json(box_border, _src.box_border_color);
+		get_json(shape_border, _src.shape_border_color);
+		get_json(box_fill, _src.box_fill_color);
+		get_json(shape_fill, _src.shape_fill_color);
+
+		_dest.put_member("name", _src.name);
+		_dest.put_member("shape_border_thickness", _src.shape_border_thickness);
+		_dest.put_member("box_border_thickness", _src.box_border_thickness);
+
+		_dest.put_member("text_style", text_style);
+		_dest.put_member("box_border", box_border);
+		_dest.put_member("shape_border", shape_border);
+		_dest.put_member("box_fill", box_fill);
+		_dest.put_member("shape_fill", shape_fill);
+	}
+
+	void put_json(viewStyleRequest& _dest, json& _src)
+	{
+		json text_style = _src["text_style"];
+		json box_border = _src["box_border"];
+		json shape_border = _src["shape_border"];
+		json box_fill = _src["box_fill"];
+		json shape_fill = _src["shape_fill"];
+
+		_dest.name = _src["name"];
+		_dest.shape_border_thickness = _src["shape_border_thickness"];
+		_dest.box_border_thickness = _src["box_border_thickness"];
+
+		put_json(_dest.text_style, text_style);
+		put_json(_dest.box_border_color, box_border);
+		put_json(_dest.shape_border_color, shape_border);
+		put_json(_dest.box_fill_color, box_fill);
+		put_json(_dest.shape_fill_color, shape_fill);
+	}
 
 	struct bitmapFilterFunction {
 		std::function<bool(point, int, int, char*)> filterFunction;

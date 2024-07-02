@@ -5,6 +5,8 @@ by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
 About this File
+This file contains advanced composed controllers and a more
+fluent code style builder for building them.
 
 Notes
 

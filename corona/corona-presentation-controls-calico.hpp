@@ -5,6 +5,7 @@ by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
 About this File
+This is the base class(es) for a control in a presentation.
 
 Notes
 

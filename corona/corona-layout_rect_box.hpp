@@ -30,7 +30,7 @@ namespace corona {
 		text = 7
 	};
 
-	class measure : public json_serializable
+	class measure 
 	{
 	public:
 		long double amount;
@@ -39,82 +39,84 @@ namespace corona {
 		measure() : amount(0), units(measure_units::pixels) { ; }
 		measure(long double _amount, measure_units _units) : amount(_amount), units(_units) { ; }
 
-		virtual void get_json(json& _dest)
-		{
-			_dest.put_member("amount", amount);
-			switch (units)
-			{
-			case measure_units::font:
-				_dest.put_member("units", "font");
-				break;
-			case measure_units::font_golden_ratio:
-				_dest.put_member("units", "fontgr");
-				break;
-			case measure_units::percent_aspect:
-				_dest.put_member("units", "aspect");
-				break;
-			case measure_units::percent_child:
-				_dest.put_member("units", "child");
-				break;
-			case measure_units::percent_container:
-				_dest.put_member("units", "container");
-				break;
-			case measure_units::percent_remaining:
-				_dest.put_member("units", "remaining");
-				break;
-			case measure_units::pixels:
-				_dest.put_member("units", "pixels");
-				break;
-			case measure_units::text:
-				_dest.put_member("units", "text");
-				break;
-			}
-		}
-		virtual void put_json(json& _src)
-		{
-			amount = (double)_src["amount"];
-			std::string sunits = _src["units"];
-			if (sunits.empty())
-				sunits = "pixels";
-
-			if (sunits == "font")
-			{
-				units = measure_units::font;
-			}
-			else if (sunits == "fontgr")
-			{
-				units = measure_units::font_golden_ratio;
-			}
-			else if (sunits == "aspect")
-			{
-				units = measure_units::percent_aspect;
-			}
-			else if (sunits == "child")
-			{
-				units = measure_units::percent_child;
-			}
-			else if (sunits == "container")
-			{
-				units = measure_units::percent_container;
-			}
-			else if (sunits == "remaining")
-			{
-				units = measure_units::percent_remaining;
-			}
-			else if (sunits == "pixels")
-			{
-				units = measure_units::pixels;
-			}
-			else if (sunits == "text")
-			{
-				units = measure_units::pixels;
-			}
-			else
-			{
-				units = measure_units::pixels;
-			}
-		}
 	};
+
+	void get_json(json& _dest, measure _src)
+	{
+		_dest.put_member("amount", _src.amount);
+		switch (_src.units)
+		{
+		case measure_units::font:
+			_dest.put_member("units", "font");
+			break;
+		case measure_units::font_golden_ratio:
+			_dest.put_member("units", "fontgr");
+			break;
+		case measure_units::percent_aspect:
+			_dest.put_member("units", "aspect");
+			break;
+		case measure_units::percent_child:
+			_dest.put_member("units", "child");
+			break;
+		case measure_units::percent_container:
+			_dest.put_member("units", "container");
+			break;
+		case measure_units::percent_remaining:
+			_dest.put_member("units", "remaining");
+			break;
+		case measure_units::pixels:
+			_dest.put_member("units", "pixels");
+			break;
+		case measure_units::text:
+			_dest.put_member("units", "text");
+			break;
+		}
+	}
+	void put_json(measure& _dest, json& _src)
+	{
+		_dest.amount = (double)_src["amount"];
+		std::string sunits = _src["units"];
+		if (sunits.empty())
+			sunits = "pixels";
+
+		if (sunits == "font")
+		{
+			_dest.units = measure_units::font;
+		}
+		else if (sunits == "fontgr")
+		{
+			_dest.units = measure_units::font_golden_ratio;
+		}
+		else if (sunits == "aspect")
+		{
+			_dest.units = measure_units::percent_aspect;
+		}
+		else if (sunits == "child")
+		{
+			_dest.units = measure_units::percent_child;
+		}
+		else if (sunits == "container")
+		{
+			_dest.units = measure_units::percent_container;
+		}
+		else if (sunits == "remaining")
+		{
+			_dest.units = measure_units::percent_remaining;
+		}
+		else if (sunits == "pixels")
+		{
+			_dest.units = measure_units::pixels;
+		}
+		else if (sunits == "text")
+		{
+			_dest.units = measure_units::pixels;
+		}
+		else
+		{
+			_dest.units = measure_units::pixels;
+		}
+	}
+
 
 	measure operator ""_px(long double px);
 	measure operator ""_container(long double pct);
@@ -126,7 +128,7 @@ namespace corona {
 	measure operator ""_text(long double fnt);
 	measure operator -(const measure& _src);
 
-	class layout_rect : public json_serializable
+	class layout_rect 
 	{
 	public:
 		measure x, y, width, height;
@@ -143,38 +145,39 @@ namespace corona {
 			;
 		}
 
-		virtual void get_json(json& _dest)
-		{
-			json_parser jp;
-			json jx, jy, jwidth, jheight;
-			jx = jp.create_object();
-			x.get_json(jx);
-			jy = jp.create_object();
-			y.get_json(jy);
-			jwidth = jp.create_object();
-			width.get_json(jwidth);
-			jheight = jp.create_object();
-			height.get_json(jheight);
-			_dest.put_member("x", jx);
-			_dest.put_member("y", jy);
-			_dest.put_member("width", jwidth);
-			_dest.put_member("height", jheight);
-		}
-
-		virtual void put_json(json& _src)
-		{
-			json jx, jy, jwidth, jheight;
-			jx = _src["x"];
-			jy = _src["y"];
-			jwidth = _src["width"];
-			jheight = _src["height"];
-			x.put_json(jx);
-			y.put_json(jy);
-			width.put_json(jwidth);
-			height.put_json(jheight);
-		}
 
 	};
+
+	void get_json(json& _dest, layout_rect& _src)
+	{
+		json_parser jp;
+		json jx, jy, jwidth, jheight;
+		jx = jp.create_object();
+		get_json(jx, _src.x);
+		jy = jp.create_object();
+		get_json(jy, _src.y);
+		jwidth = jp.create_object();
+		get_json(jwidth, _src.width);
+		jheight = jp.create_object();
+		get_json(jheight, _src.height);
+		_dest.put_member("x", jx);
+		_dest.put_member("y", jy);
+		_dest.put_member("width", jwidth);
+		_dest.put_member("height", jheight);
+	}
+
+	void put_json(layout_rect& _dest, json& _src)
+	{
+		json jx, jy, jwidth, jheight;
+		jx = _src["x"];
+		jy = _src["y"];
+		jwidth = _src["width"];
+		jheight = _src["height"];
+		put_json(_dest.x, jx);
+		put_json(_dest.y, jy);
+		put_json(_dest.width, jwidth);
+		put_json(_dest.height, jheight);
+	}
 
 	class layout_rect_box : protected boxed<layout_rect>
 	{

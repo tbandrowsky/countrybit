@@ -5,6 +5,7 @@ by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
 About this File
+This is for controls using direct2d to draw their own contexts.
 
 Notes
 

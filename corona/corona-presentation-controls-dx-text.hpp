@@ -5,6 +5,7 @@ by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
 About this File
+This is for the direct 2d controls such as title, subtitle, etc.
 
 Notes
 

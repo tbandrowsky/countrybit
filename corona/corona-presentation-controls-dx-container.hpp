@@ -1,3 +1,18 @@
+/*
+CORONA
+C++ Low Code Performance Applications for Windows SDK
+by Todd Bandrowky
+(c) 2024 + All Rights Reserved
+
+About this File
+This is for controls using direct2d to draw their own contexts and are containers
+
+Notes
+
+For Future Consideration
+*/
+
+
 #ifndef CORONA_PRESENTATION_CONTROLS_DX_CONTAINER_H
 #define CORONA_PRESENTATION_CONTROLS_DX_CONTAINER_H
 

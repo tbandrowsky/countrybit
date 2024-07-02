@@ -87,6 +87,19 @@ namespace corona {
 
 	};
 
+	void get_json(json& _dest, point& _src)
+	{
+		_dest.put_member("x", _src.x);
+		_dest.put_member("y", _src.y);
+		_dest.put_member("z", _src.z);
+	}
+
+	void put_json(point& _dest, json& _src)
+	{
+		_dest.x = (double)_src["x"];
+		_dest.y = (double)_src["y"];
+		_dest.z = (double)_src["z"];
+	}
 
 	std::partial_ordering operator<=>(const point& a, const point& b)
 	{
@@ -151,6 +164,7 @@ namespace corona {
 		point pt{ a.x / b.x, a.y / b.y, a.z / b.z };
 		return pt;
 	}
+
 
 	class point_math
 	{
