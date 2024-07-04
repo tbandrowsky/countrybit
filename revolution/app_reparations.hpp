@@ -1,6 +1,6 @@
-﻿
-#ifndef APP_AURA_H
-#define APP_AURA_H
+
+#ifndef APP_REPARATIONS_H
+#define APP_REPARATIONS_H
 
 #include "resource.h"
 #include "corona.hpp"
@@ -107,7 +107,7 @@ namespace corona
 
 			st = styles.get_style();
 
-			std::cout << "Color Party Startup at " << std::filesystem::current_path() << std::endl;
+			std::cout << "Reparations Startup at " << std::filesystem::current_path() << std::endl;
 
 			samples::test();
 
@@ -248,7 +248,8 @@ namespace corona
 				id_main_row,
 				[this](column_layout& _settings) {
 					_settings.set_size(1.0_container, 1.0_container);
-					_settings.set_style(st->PageStyle);
+					_settings.background_brush = st->PageBackgroundBrush;
+					_settings.border_brush = st->PageBorderBrush;
 				});
 
 			int title_id = 0;
@@ -262,7 +263,8 @@ namespace corona
 					_cb.image_file = "small_logo.png";
 					_cb.subtitle_name = "    BANDROWSKY";
 					_cb.title_name = "  COLOR PARTY";
-					_cb.set_style(st->CaptionStyle);
+					_cb.background_brush = st->CaptionBackgroundBrush;
+					_cb.border_brush = st->CaptionBorderBrush;
 					*ptitle_id = _cb.title_id;
 				}
 			);
@@ -329,7 +331,7 @@ namespace corona
 							json camera_settings;
 							camera_settings = data["cameras"];
 
-							for (int i = 0; i < camera_list.size(); i++) 
+							for (int i = 0; i < camera_list.size(); i++)
 							{
 								std::string& camera_name = camera_list[i];
 								json jo = jp.create_object();
@@ -342,7 +344,7 @@ namespace corona
 									json new_settings = jp.create_object();
 
 									new_settings.put_member("camera_name", camera_name);
-									new_settings.put_member("detection_threshold", _src->get_detection_threshold() );
+									new_settings.put_member("detection_threshold", _src->get_detection_threshold());
 									new_settings.put_member("activation_area", _src->get_activation_area_percentage());
 									new_settings.put_member("detection_pulse", _src->get_detection_pulse());
 									new_settings.put_member("detection_cooldown", _src->get_detection_cooldown());
@@ -353,8 +355,8 @@ namespace corona
 								ld.items.append_element(jo);
 							}
 							cbo.set_list(ld);
-						};
-					});
+							};
+						});
 
 					control_builder preview_column = root_row.column_begin(id_counter::next(), [](column_layout& _settings) {
 						_settings.set_size(.2_container, 1.0_container);
@@ -375,7 +377,7 @@ namespace corona
 								json new_cam = data["cameras"][cam];
 								_fv->set_data(new_cam);
 							}
-							else 
+							else
 							{
 								double temp = form_data["detection_threshold"];
 								cc.set_detection_threshold(temp);
@@ -387,7 +389,7 @@ namespace corona
 								cc.set_detection_cooldown(temp);
 								data["cameras"].put_member(cam, form_data);
 							}
-						};
+							};
 
 						form_model ids;
 
@@ -431,7 +433,7 @@ namespace corona
 					preview_column.label("  Detection", [](label_control& _lc) {
 						_lc.set_margin(8.0_px);
 						_lc.set_size(1.0_container, 45.0_px);
-					});
+						});
 
 					preview_column.camera_view([this](camera_view_control& _settings) {
 						_settings.set_padding(8.0_px);
@@ -439,13 +441,13 @@ namespace corona
 						_settings.camera_control_id = id_camera;
 						});
 
-					preview_column.authorscredit("By Todd Bandrowsky\nCountry Video Games\nBowling Green KY, USA", 
+					preview_column.authorscredit("By Todd Bandrowsky\nCountry Video Games\nBowling Green KY, USA",
 						[this](authorscredit_control& _settings) {
-						_settings.set_padding(8.0_px);
-						_settings.set_size(1.0_container,100.0_px);
+							_settings.set_padding(8.0_px);
+							_settings.set_size(1.0_container, 100.0_px);
 
 						});
-				}, 
+				},
 				false);
 		}
 

@@ -553,6 +553,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="app_reparations.hpp" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="revolution.h" />
   </ItemGroup>

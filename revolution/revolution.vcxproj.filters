@@ -30,6 +30,9 @@
     <ClInclude Include="app_aura.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="app_reparations.hpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="revolution.cpp">
