@@ -28,7 +28,7 @@ namespace corona
 	class form_control;
 	class form_field_control;
 
-	class form_field : public json_serializable
+	class form_field 
 	{
 	public:
 		int		 	  field_id;
@@ -61,6 +61,17 @@ namespace corona
 			_dest.put_member("read_only", read_only);
 			_dest.put_member("is_default_focus", is_default_focus);
 			_dest.put_member("settings_data", settings_data);
+
+			json_parser jp;
+			json jsource_list = jp.create_object();
+			json jsource_table = jp.create_object();
+			json jvisualization_height = jp.create_object();
+			source_list.get_json(jsource_list);
+			source_table.get_json(jsource_table);
+			corona::get_json(jvisualization_height, visualization_height);
+			_dest.put_member("source_list", jsource_list);
+			_dest.put_member("source_table", jsource_table);
+			_dest.put_member("visualization", jvisualization_height);
 		}
 
 		virtual void put_json(json& _src)
@@ -76,6 +87,15 @@ namespace corona
 			read_only = (bool)_src.get_member("read_only");
 			is_default_focus = (bool)_src.get_member("is_default_focus");
 			settings_data = _src.get_member("settings_data");
+
+			json jsource_list = _src["source_list"];
+			json jsource_table = _src["source_table"];
+			json jvisualization_height = _src["visualization"];
+
+			source_list.put_json(jsource_list);
+			source_table.put_json(jsource_table);
+			corona::put_json(visualization_height, jvisualization_height);
+
 		}
 
 	};
@@ -371,65 +391,140 @@ namespace corona
 			}
 		}
 
-		control_builder& listbox_field(int _id, std::string _field_label, std::string _tooltip_text, std::function<void(listbox_control&)> _settings, measure _height)
+		control_builder& listbox(int _id, std::function<void(listbox_control&)> _settings)
 		{
-			return create_field<listbox_control>(_id, _field_label, _tooltip_text, _settings, _height);
+			auto tc = create<listbox_control>(_id);
+			apply_item_sizes(tc);
+			if (_settings) {
+				_settings(*tc);
+			}
+			return *this;
 		}
-		control_builder& combobox_field(int _id, std::string _field_label, std::string _tooltip_text, std::function<void(combobox_control&)> _settings)
+		control_builder& combobox(int _id, std::function<void(combobox_control&)> _settings)
 		{
-			return create_field<combobox_control>(_id, _field_label, _tooltip_text, _settings);
+			auto tc = create<combobox_control>(_id);
+			apply_item_sizes(tc);
+			if (_settings) {
+				_settings(*tc);
+			}
+			return *this;
 		}
-		control_builder& edit_field(int _id, std::string _field_label, std::string _tooltip_text, std::function<void(edit_control&)> _settings)
+		control_builder& edit_field(int _id, std::function<void(edit_control&)> _settings)
 		{
-			return create_field<edit_control>(_id, _field_label, _tooltip_text, _settings);
+			auto tc = create<edit_control>(_id);
+			apply_item_sizes(tc);
+			if (_settings) {
+				_settings(*tc);
+			}
+			return *this;
 		}
-		control_builder& listview_field(int _id, std::string _field_label, std::string _tooltip_text, std::function<void(listview_control&)> _settings)
+		control_builder& listview_field(int _id, std::function<void(listview_control&)> _settings)
 		{
-			return create_field<listview_control>(_id, _field_label, _tooltip_text, _settings);
+			auto tc = create<listview_control>(_id);
+			apply_item_sizes(tc);
+			if (_settings) {
+				_settings(*tc);
+			}
+			return *this;
 		}
-		control_builder& treeview_field(int _id, std::string _field_label, std::string _tooltip_text, std::function<void(treeview_control&)> _settings)
+		control_builder& treeview_field(int _id, std::function<void(treeview_control&)> _settings)
 		{
-			return create_field<treeview_control>(_id, _field_label, _tooltip_text, _settings);
+			auto tc = create<treeview_control>(_id);
+			apply_item_sizes(tc);
+			if (_settings) {
+				_settings(*tc);
+			}
+			return *this;
 		}
-		control_builder& header_field(int _id, std::string _field_label, std::string _tooltip_text, std::function<void(header_control&)> _settings)
+		control_builder& header_field(int _id, std::function<void(header_control&)> _settings)
 		{
-			return create_field<header_control>(_id, _field_label, _tooltip_text, _settings);
+			auto tc = create<header_control>(_id);
+			apply_item_sizes(tc);
+			if (_settings) {
+				_settings(*tc);
+			}
+			return *this;
 		}
-		control_builder& toolbar_field(int _id, std::string _field_label, std::string _tooltip_text, std::function<void(toolbar_control&)> _settings)
+		control_builder& toolbar_field(int _id, std::function<void(toolbar_control&)> _settings)
 		{
-			return create_field<toolbar_control>(_id, _field_label, _tooltip_text, _settings);
+			auto tc = create<toolbar_control>(_id);
+			apply_item_sizes(tc);
+			if (_settings) {
+				_settings(*tc);
+			}
+			return *this;
 		}
-		control_builder& statusbar_field(int _id, std::string _field_label, std::string _tooltip_text, std::function<void(statusbar_control&)> _settings)
+		control_builder& statusbar_field(int _id, std::function<void(statusbar_control&)> _settings)
 		{
-			return create_field<statusbar_control>(_id, _field_label, _tooltip_text, _settings);
+			auto tc = create<statusbar_control>(_id);
+			apply_item_sizes(tc);
+			if (_settings) {
+				_settings(*tc);
+			}
+			return *this;
 		}
-		control_builder& hotkey_field(int _id, std::string _field_label, std::string _tooltip_text, std::function<void(hotkey_control&)> _settings)
+		control_builder& hotkey_field(int _id, std::function<void(hotkey_control&)> _settings)
 		{
-			return create_field<hotkey_control>(_id, _field_label, _tooltip_text, _settings);
+			auto tc = create<hotkey_control>(_id);
+			apply_item_sizes(tc);
+			if (_settings) {
+				_settings(*tc);
+			}
+			return *this;
 		}
-		control_builder& animate_field(int _id, std::string _field_label, std::string _tooltip_text, std::function<void(animate_control&)> _settings)
+		control_builder& animate_field(int _id, std::function<void(animate_control&)> _settings)
 		{
-			return create_field<animate_control>(_id, _field_label, _tooltip_text, _settings);
+			auto tc = create<animate_control>(_id);
+			apply_item_sizes(tc);
+			if (_settings) {
+				_settings(*tc);
+			}
+			return *this;
 		}
-		control_builder& richedit_field(int _id, std::string _field_label, std::string _tooltip_text, std::function<void(richedit_control&)> _settings)
+		control_builder& richedit_field(int _id, std::function<void(richedit_control&)> _settings)
 		{
-			return create_field<richedit_control>(_id, _field_label, _tooltip_text, _settings);
+			auto tc = create<richedit_control>(_id);
+			apply_item_sizes(tc);
+			if (_settings) {
+				_settings(*tc);
+			}
+			return *this;
 		}
-		control_builder& draglistbox_field(int _id, std::string _field_label, std::string _tooltip_text, std::function<void(draglistbox_control&)> _settings)
+		control_builder& draglistbox_field(int _id, std::function<void(draglistbox_control&)> _settings)
 		{
-			return create_field<draglistbox_control>(_id, _field_label, _tooltip_text, _settings);
+			auto tc = create<draglistbox_control>(_id);
+			apply_item_sizes(tc);
+			if (_settings) {
+				_settings(*tc);
+			}
+			return *this;
 		}
-		control_builder& comboboxex_field(int _id, std::string _field_label, std::string _tooltip_text, std::function<void(comboboxex_control&)> _settings)
+		control_builder& comboboxex_field(int _id, std::function<void(comboboxex_control&)> _settings)
 		{
-			return create_field<comboboxex_control>(_id, _field_label, _tooltip_text, _settings);
+			auto tc = create<comboboxex_control>(_id);
+			apply_item_sizes(tc);
+			if (_settings) {
+				_settings(*tc);
+			}
+			return *this;
 		}
-		control_builder& datetimepicker_field(int _id, std::string _field_label, std::string _tooltip_text, std::function<void(datetimepicker_control&)> _settings)
+		control_builder& datetimepicker_field(int _id, std::function<void(datetimepicker_control&)> _settings)
 		{
-			return create_field<datetimepicker_control>(_id, _field_label, _tooltip_text, _settings);
+			auto tc = create<datetimepicker_control>(_id);
+			apply_item_sizes(tc);
+			if (_settings) {
+				_settings(*tc);
+			}
+			return *this;
 		}
-		control_builder& monthcalendar_field(int _id, std::string _field_label, std::string _tooltip_text, std::function<void(monthcalendar_control&)> _settings)
+		control_builder& monthcalendar_field(int _id, std::function<void(monthcalendar_control&)> _settings)
 		{
-			return create_field<monthcalendar_control>(_id, _field_label, _tooltip_text, _settings);
+			auto tc = create<monthcalendar_control>(_id);
+			apply_item_sizes(tc);
+			if (_settings) {
+				_settings(*tc);
+			}
+			return *this;
 		}
 
 		control_builder& image(int id, int _control_id, std::function<void(image_control&)> _settings)
@@ -941,6 +1036,8 @@ namespace corona
 		control_builder& status_bar(int _id, std::function<void(status_bar_control&)> _settings = nullptr);
 		control_builder& form(int _id, std::function<void(form_control&)> _settings = nullptr);
 		control_builder& form_field(int _id, std::function<void(form_field_control&)> _settings = nullptr);
+
+		control_builder& from_json(json& _dest_map, json _src_control);
 	};
 
 	class form_field_control : public column_layout
@@ -1685,7 +1782,6 @@ namespace corona
 		form_command_handler		on_command;
 		form_mouse_click_handler	on_mouse_click;
 		form_mouse_move_handler		on_mouse_move;
-
 	};
 
 	class form_control : public column_layout
@@ -2379,7 +2475,7 @@ namespace corona
 				rl.set_content_align(visual_alignment::align_far);
 				rl.set_content_cross_align(visual_alignment::align_center);
 				rl.set_item_margin(10.0_px);
-				rl.background_brush = st->CaptionBackgroundBrush;
+				rl.set_style(*st->CaptionStyle);
 				});
 
 			main_row.column_begin(id_counter::next(), [](column_layout& cl) {
@@ -2619,6 +2715,195 @@ namespace corona
 			_settings(*tc);
 		}
 		return *this;
+	}
+
+	control_builder& control_builder::from_json(json& _dest_map, json _src_control)
+	{
+		control_builder cb(*this);
+
+		json_parser jp;
+
+		if (_dest_map.is_empty()) {
+			_dest_map = jp.create_object();
+		}
+
+		std::string field_type = _src_control["field_type"];
+		std::string field_name = _src_control["field_name"];
+		json field_options = _src_control["field_options"];
+
+		int field_id = id_counter::next();
+
+		if (!field_name.empty())
+		{
+			_dest_map.put_member_object(field_name);
+			_dest_map[field_name].put_member("field_id", field_id);
+		}
+
+		std::string default_text = "";
+		call_status default_status;
+
+		cb.title(default_text, [](auto& _ctrl) ->void {
+
+			}, field_id);
+		cb.subtitle(default_text, [](auto& _ctrl) ->void {
+
+			}, field_id);
+		cb.authorscredit(default_text, [](auto& _ctrl) ->void {
+
+			}, field_id);
+		cb.chaptertitle(default_text, [](auto& _ctrl) ->void {
+
+			}, field_id);
+		cb.chaptersubtitle(default_text, [](auto& _ctrl) ->void {
+
+			}, field_id);
+		cb.paragraph(default_text, [](auto& _ctrl) ->void {
+
+			}, field_id);
+		cb.code(default_text, [](auto& _ctrl) ->void {
+
+			}, field_id);
+		cb.label(default_text, [](auto& _ctrl) ->void {
+
+			}, field_id);
+		cb.error(default_status, [](auto& _ctrl) ->void {
+
+			}, field_id);
+		cb.status(default_status, [](auto& _ctrl) ->void {
+
+			}, field_id);
+		cb.success(default_status, [](auto& _ctrl) ->void {
+
+			}, field_id);
+
+		cb.row_begin(field_id, [](auto& _ctrl)->void {
+
+			});
+		cb.column_begin(field_id, [](auto& _ctrl)->void {
+
+			});
+		cb.absolute_begin(field_id, [](auto& _ctrl)->void {
+
+			});
+		cb.row_view_begin(field_id, [](auto& _ctrl)->void {
+
+			});
+		cb.grid_view_begin(field_id, [](auto& _ctrl)->void {
+
+			});
+		cb.absolute_view_begin(field_id, [](auto& _ctrl)->void {
+
+			});
+		cb.frame_begin(field_id, [](auto& _ctrl)->void {
+
+			});
+		cb.end();
+
+		cb.listbox(field_id, [](auto& _ctrl)->void {
+
+			});
+		cb.combobox(field_id, [](auto& _ctrl)->void {
+
+			});
+		cb.edit(field_id, [](auto& _ctrl)->void {
+
+			});
+		cb.listview(field_id, [](auto& _ctrl)->void {
+
+			});
+		cb.treeview(field_id, [](auto& _ctrl)->void {
+
+			});
+		cb.header(field_id, [](auto& _ctrl)->void {
+
+			});
+		cb.toolbar(field_id, [](auto& _ctrl)->void {
+
+			});
+		cb.statusbar_field(field_id, [](auto& _ctrl)->void {
+
+			});
+		cb.hotkey(field_id, [](auto& _ctrl)->void {
+
+			});
+		cb.animate(field_id, [](auto& _ctrl)->void {
+
+			});
+		cb.richedit(field_id, [](auto& _ctrl)->void {
+
+			});
+		cb.draglistbox(field_id, [](auto& _ctrl)->void {
+
+			});
+		cb.comboboxex(field_id, [](auto& _ctrl)->void {
+
+			});
+		cb.datetimepicker(field_id, [](auto& _ctrl)->void {
+
+			});
+		cb.monthcalendar(field_id, [](auto& _ctrl)->void {
+
+			});
+		cb.radiobutton_list(field_id, [](auto& _ctrl)->void {
+
+			});
+		cb.checkbox_list(field_id, [](auto& _ctrl)->void {
+
+			});
+		cb.minimize_button(field_id, [](auto& _ctrl)->void {
+
+			});
+		cb.maximize_button(field_id, [](auto& _ctrl)->void {
+
+			});
+		cb.close_button(field_id, [](auto& _ctrl)->void {
+
+			});
+		cb.menu_button(field_id, [](auto& _ctrl)->void {
+
+			});
+
+		cb.calico_button(field_id, [](auto& _ctrl)->void {
+
+			});
+
+		cb.camera(field_id, [](auto& _ctrl)->void {
+
+			});
+
+		cb.grid(field_id, [](auto& _ctrl)->void {
+
+			});
+
+		cb.chart(field_id, [](auto& _ctrl)->void {
+
+			});
+
+		cb.slide(field_id, [](auto& _ctrl)->void {
+
+			});
+
+		cb.tab_button(field_id, [](auto& _ctrl)->void {
+
+			});
+		cb.tab_view(field_id, [](auto& _ctrl)->void {
+
+			});
+		cb.search_view(field_id, [](auto& _ctrl)->void {
+
+			});
+		cb.caption_bar(field_id, [](auto& _ctrl)->void {
+
+			});
+		cb.status_bar(field_id, [](auto& _ctrl)->void {
+
+			});
+		cb.form(field_id, [](auto& _ctrl)->void {
+
+			});
+		cb.form_field(field_id, [](auto& _ctrl)->void {
+
+			});
 	}
 }
 

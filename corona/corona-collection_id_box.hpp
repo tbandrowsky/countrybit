@@ -18,7 +18,6 @@ For Future Consideration
 namespace corona
 {
 
-
 	class collection_id_math
 	{
 	public:

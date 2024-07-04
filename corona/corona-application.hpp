@@ -11,9 +11,12 @@ console and desktop applications.  It manages a threadpool
 that is used pervasively by Corona.  It also provides the entry
 to open and work with files asynchronously.
 
+This is a singleton.  
+
 Notes
 
 For Future Consideration
+This is a singleton.  having a public constructor is wrong.
 */
 
 #ifndef CORONA_APPLICATION_H

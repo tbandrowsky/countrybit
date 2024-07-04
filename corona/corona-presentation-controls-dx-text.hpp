@@ -22,14 +22,11 @@ namespace corona
 	{
 	public:
 		std::string			text;
-		std::shared_ptr<generalBrushRequest>	text_fill_brush;
-		std::shared_ptr<textStyleRequest>		text_style;
+		std::shared_ptr<viewStyleRequest>	view_style;
 
 		text_display_control(const text_display_control& _src) : draw_control(_src)
 		{
 			text = _src.text;
-			text_fill_brush = _src.text_fill_brush;
-			text_style = _src.text_style;
 		}
 
 		text_display_control();
@@ -49,12 +46,9 @@ namespace corona
 			;
 		}
 
-		virtual double get_font_size() { return text_style ? text_style->fontSize : 14; }
+		virtual double get_font_size() { return view_style ? view_style->text_style.fontSize : 14; }
 		text_display_control& set_text(std::string _text);
-		text_display_control& set_text_fill(generalBrushRequest _brushFill);
-		text_display_control& set_text_fill(std::string _color);
-		text_display_control& set_text_style(std::string _font_name, int _font_size, bool _bold = false, bool _underline = false, bool _italic = false, bool _strike_through = false);
-		text_display_control& set_text_style(textStyleRequest request);
+		text_display_control& set_style(viewStyleRequest request);
 
 	};
 
@@ -391,12 +385,7 @@ namespace corona
 
 					if (auto pwindow = this->window.lock())
 					{					
-						if (t->text_fill_brush) {
-							pwindow->getContext().setBrush(t->text_fill_brush.get(), &bounds);
-						}
-						if (t->text_style) {
-							pwindow->getContext().setTextStyle(t->text_style.get());
-						}
+						pwindow->getContext().setViewStyle(*view_style);
 					}
 				}
 			};
@@ -417,8 +406,8 @@ namespace corona
 					draw_bounds.x -= inner_bounds.x;
 					draw_bounds.y -= inner_bounds.y;
 
-					if (text_style && text_fill_brush) {
-						pwindow->getContext().drawText(text.c_str(), &draw_bounds, text_style->name, text_fill_brush->get_name());
+					if (view_style) {
+						pwindow->getContext().drawText(text.c_str(), &draw_bounds, view_style->text_style.name, view_style->shape_fill_brush.get_name());
 					}
 				}
 			}
@@ -431,36 +420,10 @@ namespace corona
 		return *this;
 	}
 
-	text_display_control& text_display_control::set_text_fill(generalBrushRequest _brushFill)
+	text_display_control& text_display_control::set_style(viewStyleRequest request)
 	{
-		text_fill_brush = std::make_shared<generalBrushRequest>(_brushFill);
-		return *this;
-	}
+		view_style = std::make_shared<viewStyleRequest>(request);
 
-	text_display_control& text_display_control::set_text_fill(std::string _color)
-	{
-		text_fill_brush = std::make_shared<generalBrushRequest>();
-		text_fill_brush->setColor(_color);
-		text_fill_brush->set_name("text_fill");
-		return *this;
-	}
-
-	text_display_control& text_display_control::set_text_style(std::string _font_name, int _font_size, bool _bold, bool _underline, bool _italic, bool _strike_through)
-	{
-		text_style = std::make_shared<textStyleRequest>();
-		text_style->name = typeid(*this).name();
-		text_style->fontName = _font_name;
-		text_style->fontSize = _font_size;
-		text_style->bold = _bold;
-		text_style->underline = _underline;
-		text_style->italics = _italic;
-		text_style->strike_through = _strike_through;
-		return *this;
-	}
-
-	text_display_control& text_display_control::set_text_style(textStyleRequest request)
-	{
-		text_style = std::make_shared<textStyleRequest>(request);
 		return *this;
 	}
 
@@ -468,11 +431,7 @@ namespace corona
 	{
 		auto st = styles.get_style();
 
-		background_brush = st->TitleBackgroundBrush;
-		text_fill_brush = st->TitleTextBrush;
-		text_style = st->TitleFont;
-		border_brush = st->TitleBorderBrush;
-		border_width = st->TitleBorderWidth;
+		view_style = st->TitleStyle;
 	}
 
 	title_control::title_control(container_control_base* _parent, int _id) : text_display_control(_parent, _id)
@@ -494,11 +453,7 @@ namespace corona
 	{
 		auto st = styles.get_style();
 
-		background_brush = st->SubtitleBackgroundBrush;
-		text_fill_brush = st->SubtitleTextBrush;
-		text_style = st->SubtitleFont;
-		border_brush = st->SubtitleBorderBrush;
-		border_width = st->SubtitleBorderWidth;
+		view_style = st->SubtitleStyle;
 
 	}
 
@@ -520,11 +475,7 @@ namespace corona
 	{
 		auto st = styles.get_style();
 
-		background_brush = st->AuthorsCreditBackgroundBrush;
-		text_fill_brush = st->AuthorsCreditTextBrush;
-		text_style = st->AuthorsCreditFont;
-		border_brush = st->AuthorsCreditBorderBrush;
-		border_width = st->AuthorsCreditBorderWidth;
+		view_style = st->AuthorsCreditStyle;
 
 	}
 
@@ -546,11 +497,7 @@ namespace corona
 	{
 		auto st = styles.get_style();
 
-		background_brush = st->ChapterTitleBackgroundBrush;
-		text_fill_brush = st->ChapterTitleTextBrush;
-		text_style = st->ChatperTitleFont;
-		border_brush = st->ChapterTitleBorderBrush;
-		border_width = st->ChatperTitleBorderWidth;
+		view_style = st->ChapterTitleStyle;
 	}
 
 	chaptertitle_control::chaptertitle_control(container_control_base* _parent, int _id) : text_display_control(_parent, _id)
@@ -571,11 +518,8 @@ namespace corona
 	{
 		auto st = styles.get_style();
 
-		background_brush = st->ChapterSubTitleBackgroundBrush;
-		text_fill_brush = st->ChapterSubTitleTextBrush;
-		text_style = st->ChapterSubTitleFont;
-		border_brush = st->ChapterSubTitleBorderBrush;
-		border_width = st->ChapterSubTitleBorderWidth;
+		view_style = st->ChapterSubTitleStyle;
+
 	}
 
 	chaptersubtitle_control::chaptersubtitle_control(container_control_base* _parent, int _id) : text_display_control(_parent, _id)
@@ -596,11 +540,7 @@ namespace corona
 	{
 		auto st = styles.get_style();
 
-		background_brush = st->ParagraphBackgroundBrush;
-		text_fill_brush = st->ParagraphTextBrush;
-		text_style = st->ParagraphFont;
-		border_brush = st->ParagraphBorderBrush;
-		border_width = st->ParagraphBorderWidth;
+		view_style = st->ParagraphStyle;
 	}
 
 	paragraph_control::paragraph_control(container_control_base* _parent, int _id) : text_display_control(_parent, _id)
@@ -621,11 +561,7 @@ namespace corona
 	{
 		auto st = styles.get_style();
 
-		background_brush = st->CodeBackgroundBrush;
-		text_fill_brush = st->CodeTextBrush;
-		text_style = st->CodeFont;
-		border_brush = st->CodeBorderBrush;
-		border_width = st->CodeBorderWidth;
+		view_style = st->CodeStyle;
 	}
 
 	code_control::code_control(container_control_base* _parent, int _id) : text_display_control(_parent, _id)
@@ -646,11 +582,7 @@ namespace corona
 	{
 		auto st = styles.get_style();
 
-		background_brush = st->LabelBackgroundBrush;
-		text_fill_brush = st->LabelTextBrush;
-		text_style = st->LabelFont;
-		border_brush = st->LabelBorderBrush;
-		border_width = st->LabelBorderWidth;
+		view_style = st->LabelStyle;
 	}
 
 	label_control::label_control()
@@ -672,12 +604,7 @@ namespace corona
 	{
 		auto st = styles.get_style();
 
-		background_brush = st->PlaceholderBackgroundBrush;
-		text_fill_brush = st->PlaceholderTextBrush;
-		text_style = st->PlaceholderFont;
-		border_brush = st->PlaceholderBorderBrush;
-		border_width = st->PlaceholderBorderWidth;
-
+		view_style = st->PlaceholderStyle;
 	}
 
 	placeholder_control::placeholder_control()
@@ -699,11 +626,7 @@ namespace corona
 	{
 		auto st = styles.get_style();
 
-		background_brush = st->ErrorBackgroundBrush;
-		text_fill_brush = st->ErrorTextBrush;
-		text_style = st->ErrorFont;
-		border_brush = st->ErrorBorderBrush;
-		border_width = st->ErrorBorderWidth;
+		view_style = st->ErrorStyle;
 	}
 
 	error_control::error_control(container_control_base* _parent, int _id) : text_display_control(_parent, _id)
@@ -725,11 +648,7 @@ namespace corona
 	{
 		auto st = styles.get_style();
 
-		background_brush = st->SuccessBackgroundBrush;
-		text_fill_brush = st->SuccessTextBrush;
-		text_style = st->SuccessFont;
-		border_brush = st->SuccessBorderBrush;
-		border_width = st->SuccessBorderWidth;
+		view_style = st->SuccessStyle;
 	}
 
 	success_control::success_control(container_control_base* _parent, int _id) : text_display_control(_parent, _id)

@@ -228,12 +228,15 @@ namespace corona
 		{
 			destroy();
 		}
+
+
 	};
 
 
 	class text_control_base : public windows_control
 	{
 		std::string text;
+		std::string format;
 
 	public:
 
@@ -281,18 +284,12 @@ namespace corona
 
 		void set_format(const std::string& _text)
 		{
-			text = _text;
-			if (auto phost = window_host.lock()) {
-				phost->setEditText(id, _text);
-			}
+			format = _text;
 		}
 
 		std::string get_format()
 		{
-			if (auto phost = window_host.lock()) {
-				text = phost->getEditText(id);
-			}
-			return text;
+			return format;
 		}
 
 		virtual void create(std::weak_ptr<applicationBase> _host)
@@ -323,6 +320,28 @@ namespace corona
 			}
 			return _data;
 		}
+
+		virtual void get_json(json& _dest)
+		{
+			json_parser jp;
+
+			control_base::get_json(_dest);
+
+			_dest.put_member("text", text);
+			_dest.put_member("format", format);
+		}
+
+		virtual void put_json(json& _src)
+		{
+			control_base::put_json(_src);
+
+			std::string temp = _src["text"];
+			set_text(temp);
+
+			format = _src["format"];
+			set_format(temp);
+		}
+
 
 	};
 
@@ -422,6 +441,27 @@ namespace corona
 			choices = _choices;
 			data_changed();
 		}
+
+		virtual void get_json(json& _dest)
+		{
+			json_parser jp;
+
+			control_base::get_json(_dest);
+			json jtable_data = jp.create_object();
+			choices.get_json(jtable_data);
+			_dest.put_member("table", jtable_data);
+		}
+
+		virtual void put_json(json& _src)
+		{
+			json_parser jp;
+
+			control_base::put_json(_src);
+			json jtable_data = _src["table"];
+			choices.put_json(jtable_data);
+			data_changed();
+		}
+
 	};
 
 	class list_control_base : public windows_control
@@ -519,6 +559,27 @@ namespace corona
 		{
 			data_changed();
 		}
+
+		virtual void get_json(json& _dest)
+		{
+			json_parser jp;
+
+			control_base::get_json(_dest);
+			json jlist_data = jp.create_object();
+			choices.get_json(jlist_data);
+			_dest.put_member("list", jlist_data);
+		}
+
+		virtual void put_json(json& _src)
+		{
+			json_parser jp;
+
+			control_base::put_json(_src);
+			json jlist_data = _src["list"];
+			choices.put_json(jlist_data);
+			data_changed();
+		}
+
 
 	};
 
@@ -628,6 +689,28 @@ namespace corona
 			}
 			return _data;
 		}
+
+		virtual void get_json(json& _dest)
+		{
+			json_parser jp;
+
+			control_base::get_json(_dest);
+			json jlist_data = jp.create_object();
+			choices.get_json(jlist_data);
+			_dest.put_member("list", jlist_data);
+		}
+
+		virtual void put_json(json& _src)
+		{
+			json_parser jp;
+
+			control_base::put_json(_src);
+			json jlist_data = _src["list"];
+			choices.put_json(jlist_data);
+			data_changed();
+		}
+
+
 
 	};
 

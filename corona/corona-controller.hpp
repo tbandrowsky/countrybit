@@ -71,6 +71,9 @@ namespace corona
 		virtual int getDefaultButtonId() = 0;
 		virtual void hardwareChanged() = 0;
 
+		virtual void checkPresentationFile() = 0;
+		virtual void setPresentationFile() = 0;
+
 	};
 
 }

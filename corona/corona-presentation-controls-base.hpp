@@ -388,6 +388,10 @@ namespace corona
 			jmargin = jp.create_object();
 			jpadding = jp.create_object();
 
+			corona::get_json(jbox, box);
+			corona::get_json(jbox, padding);
+			corona::get_json(jbox, margin);
+
 			_dest.put_member("id", id );
 			_dest.put_member("box", jbox );
 			_dest.put_member("padding", jpadding);
@@ -404,9 +408,9 @@ namespace corona
 			jmargin = _src["margin"];
 			jpadding = _src["padding"];
 
-			box.put_json(jbox);
-			margin.put_json(jmargin);
-			padding.put_json(jpadding);
+			corona::put_json(box, jbox);
+			corona::put_json(margin, jmargin);
+			corona::put_json(padding, jpadding);
 
 			tooltip_text = _src["tooltip_text"];
 			json_field_name = _src["json_field_name"];

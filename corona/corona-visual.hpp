@@ -83,7 +83,7 @@ namespace corona {
 		align_far = 4,
 	};
 
-	std::string get_json(json& _dest, std::string _member_name, visual_alignment& _src)
+	void get_json(json& _dest, std::string _member_name, visual_alignment& _src)
 	{
 		std::string dva = "near";
 		switch (_src) {
@@ -820,6 +820,15 @@ namespace corona {
 			return *this;
 		}
 
+		generalBrushRequest(std::string name, std::string color)
+		{
+			clear();
+			brush_type = brush_types::solid_brush_type;
+			solid_brush = std::make_shared<solidBrushRequest>();
+			set_name(name);
+			setColor(color);
+		}
+
 		generalBrushRequest(solidBrushRequest sbr)
 		{
 			clear();
@@ -1107,12 +1116,12 @@ namespace corona {
 	{
 		std::string			name;
 		textStyleRequest	text_style;
-		double shape_border_thickness;
-		double box_border_thickness;
-		solidBrushRequest box_border_color;
-		solidBrushRequest shape_border_color;
-		solidBrushRequest box_fill_color;
-		solidBrushRequest shape_fill_color;
+		double				shape_border_thickness;
+		double				box_border_thickness;
+		generalBrushRequest box_border_brush;
+		generalBrushRequest shape_border_brush;
+		generalBrushRequest box_fill_brush;
+		generalBrushRequest shape_fill_brush;
 	};
 
 	void get_json(json& _dest, viewStyleRequest& _src)
@@ -1125,39 +1134,39 @@ namespace corona {
 		json shape_fill = jp.create_object();
 
 		get_json(text_style, _src.text_style);
-		get_json(box_border, _src.box_border_color);
-		get_json(shape_border, _src.shape_border_color);
-		get_json(box_fill, _src.box_fill_color);
-		get_json(shape_fill, _src.shape_fill_color);
+		get_json(box_border, _src.box_border_brush);
+		get_json(shape_border, _src.shape_border_brush);
+		get_json(box_fill, _src.box_fill_brush);
+		get_json(shape_fill, _src.shape_fill_brush);
 
 		_dest.put_member("name", _src.name);
 		_dest.put_member("shape_border_thickness", _src.shape_border_thickness);
 		_dest.put_member("box_border_thickness", _src.box_border_thickness);
 
 		_dest.put_member("text_style", text_style);
-		_dest.put_member("box_border", box_border);
-		_dest.put_member("shape_border", shape_border);
-		_dest.put_member("box_fill", box_fill);
-		_dest.put_member("shape_fill", shape_fill);
+		_dest.put_member("box_border_brush", box_border);
+		_dest.put_member("shape_border_brush", shape_border);
+		_dest.put_member("box_fill_brush", box_fill);
+		_dest.put_member("shape_fill_brush", shape_fill);
 	}
 
 	void put_json(viewStyleRequest& _dest, json& _src)
 	{
 		json text_style = _src["text_style"];
-		json box_border = _src["box_border"];
-		json shape_border = _src["shape_border"];
-		json box_fill = _src["box_fill"];
-		json shape_fill = _src["shape_fill"];
+		json box_border = _src["box_border_brush"];
+		json shape_border = _src["shape_border_brush"];
+		json box_fill = _src["box_fill_brush"];
+		json shape_fill = _src["shape_fill_brush"];
 
 		_dest.name = _src["name"];
 		_dest.shape_border_thickness = _src["shape_border_thickness"];
 		_dest.box_border_thickness = _src["box_border_thickness"];
 
 		put_json(_dest.text_style, text_style);
-		put_json(_dest.box_border_color, box_border);
-		put_json(_dest.shape_border_color, shape_border);
-		put_json(_dest.box_fill_color, box_fill);
-		put_json(_dest.shape_fill_color, shape_fill);
+		put_json(_dest.box_border_brush, box_border);
+		put_json(_dest.shape_border_brush, shape_border);
+		put_json(_dest.box_fill_brush, box_fill);
+		put_json(_dest.shape_fill_brush, shape_fill);
 	}
 
 	struct bitmapFilterFunction {

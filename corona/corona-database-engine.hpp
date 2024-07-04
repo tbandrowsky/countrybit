@@ -59,10 +59,11 @@ namespace corona
 			;
 		}
 
-		file_transaction<relative_ptr_type> poll(application* _app)
+		file_transaction<relative_ptr_type> poll()
 		{
 			json_parser jp;
 			try {
+				application* _app = application::get_application();
 				file f = _app->open_file(file_name, file_open_types::open_existing);
 				if (f.success()) {
 					auto fsize = f.size();
@@ -1403,7 +1404,7 @@ private:
 		void read_config(application* _app)
 		{
 			try {
-				file_transaction<relative_ptr_type> config_tran = config_file.poll(_app);
+				file_transaction<relative_ptr_type> config_tran = config_file.poll();
 				if (config_tran.wait() != null_row)
 				{
 					apply_config(config_file.contents);
@@ -1431,26 +1432,26 @@ private:
 			}
 		}
 
-		void watch_config_schema(application* _app)
+		void watch_config_schema()
 		{
 			if (watch_polling) 
 			{
-				threadomatic::run([this, _app]() -> void
+				threadomatic::run([this]() -> void
 					{
 						try {
-							file_transaction<relative_ptr_type> config_tran = config_file.poll(_app);
+							file_transaction<relative_ptr_type> config_tran = config_file.poll();
 							if (config_tran.wait())
 							{
 								apply_config(config_file.contents);
 							}
-							file_transaction<relative_ptr_type> schema_tran = schema_file.poll(_app);
+							file_transaction<relative_ptr_type> schema_tran = schema_file.poll();
 							if (schema_tran.wait())
 							{
 								auto schema_task = apply_schema(schema_file.contents);
 								schema_task.wait();
 							}
 							::Sleep(1000);
-							watch_config_schema(_app);
+							watch_config_schema();
 						}
 						catch (std::exception exc)
 						{
@@ -3072,7 +3073,7 @@ private:
 
 		try {
 
-			application app;
+			application *app = application::get_application();
 
 			std::shared_ptr<dynamic_box> box = std::make_shared<dynamic_box>();
 			box->init(1 << 21);

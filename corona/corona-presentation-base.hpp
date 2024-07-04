@@ -22,7 +22,7 @@ namespace corona
 
 	presentation_style_factory styles;
 
-	class list_data
+	class list_data : public json_serializable
 	{
 	public:
 
@@ -31,23 +31,93 @@ namespace corona
 		std::string selected_field;
 
 		json items;
+
+		virtual void get_json(json& _dest)
+		{
+			_dest.put_member("id_field", id_field);
+			_dest.put_member("text_field", text_field);
+			_dest.put_member("selected_field", selected_field);
+			_dest.put_member("items", items);
+		}
+
+		virtual void put_json(json& _src)
+		{
+			id_field = _src.get_member("id_field");
+			text_field = _src.get_member("text_field");
+			selected_field = _src.get_member("selected_field");
+			items = _src.get_member("items");
+		}
+
 	};
 
-	class table_column
+	class table_column : public json_serializable
 	{
 	public:
 		std::string display_name;
 		std::string json_field;
 		int width;
 		visual_alignment alignment;
+
+		virtual void get_json(json& _dest)
+		{
+			_dest.put_member("display_name", display_name);
+			_dest.put_member("json_field", json_field);
+			_dest.put_member("width", width);
+			corona::get_json(_dest, "alignment", alignment);
+		}
+
+		virtual void put_json(json& _src)
+		{
+			display_name = _src["display_name"];
+			json_field = _src["json_field"];
+			width = (int)_src["width"];
+			corona::put_json(alignment, _src, "alignment");
+		}
+
 	};
 
-	class table_data
+	class table_data : public json_serializable
 	{
 	public:
 		std::vector<table_column> columns;
 		std::string id_field;
 		json items;
+
+		virtual void get_json(json& _dest)
+		{
+			json_parser jp;
+			json jcolumns = jp.create_array();
+
+			for (auto tc : columns)
+			{
+				json tcitem = jp.create_object();
+				tc.get_json(tcitem);
+				jcolumns.push_back(tc);
+			}
+
+			_dest.put_member("id_field", id_field);
+			_dest.put_member("items", items);
+			_dest.put_member("columns", jcolumns);
+		}
+
+		virtual void put_json(json& _src)
+		{
+			json jcolumns = _src["columns"];
+
+			if (jcolumns.is_array()) 
+			{
+				for (auto jtc : jcolumns)
+				{
+					table_column tc;
+					tc.put_json(jtc);
+					columns.push_back(tc);
+				}
+			}
+
+			id_field = _src["id_field"];
+			items = _src["items"];
+		}
+
 	};
 
 	class id_counter

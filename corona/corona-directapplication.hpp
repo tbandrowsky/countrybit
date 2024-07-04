@@ -193,20 +193,18 @@ namespace corona
 
 		file open_file(file_path filename, file_open_types _file_open_type)
 		{
-			file f(global_job_queue.get(), filename, _file_open_type);
-			return f;
+			return application::get_application()->open_file(filename, _file_open_type);
 		}
 
 		file create_file(file_path filename)
 		{
-			return file(global_job_queue.get(), filename, file_open_types::create_new);
+			return application::get_application()->open_file(filename, file_open_types::create_new);
 		}
 
 		void add_job(job* _job)
 		{
-			global_job_queue->add_job(_job);
+			application::get_application()->add_job(_job);
 		}
-
 	};
 
 	void EnableGuiStdOuts();
@@ -215,9 +213,7 @@ namespace corona
 
 	directApplicationWin32::directApplicationWin32(std::shared_ptr<directXAdapter> _factory) : factory(_factory), colorCapture(false)
 	{
-
-		global_job_queue = std::make_unique<job_queue>();
-		global_job_queue->start(0);
+		application::get_application();
 
 		current = this;
 		controlFont = nullptr;
@@ -614,9 +610,12 @@ namespace corona
 			case WM_CREATE:
 			{
 				hwndRoot = hwnd;
+
 				RECT rcClient;
 				GetWindowRect(hwnd, &rcClient);
 				SetWindowPos(hwnd, NULL, rcClient.left, rcClient.top, abs(rcClient.right - rcClient.left), abs(rcClient.bottom - rcClient.top), SWP_FRAMECHANGED);
+				SetTimer(hwnd,1,2000,nullptr);
+
 				dpiScale = 96.0 / GetDpiForWindow(hwnd);
 				if (currentController) {
 					pfactory->createD2dWindow(hwnd, backgroundColor);
@@ -632,6 +631,16 @@ namespace corona
 				}
 			}
 			break;
+			case WM_TIMER:
+				threadomatic::run_complete(
+					[currentController]()->void {
+						currentController->readForm();
+					},
+					[currentController]()->void {
+						currentController->setForm();
+					}
+				);
+				break;
 			case WM_NCCALCSIZE:
 			{
 				if (wParam)

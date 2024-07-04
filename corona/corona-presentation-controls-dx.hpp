@@ -29,8 +29,7 @@ namespace corona
 
 		int border_width;
 
-		std::shared_ptr<generalBrushRequest>	background_brush;
-		std::shared_ptr<generalBrushRequest>	border_brush;
+		std::shared_ptr<viewStyleRequest>	view_style;
 
 		std::weak_ptr<applicationBase> host;
 		std::weak_ptr<direct2dChildWindow> window;
@@ -47,8 +46,7 @@ namespace corona
 
 		draw_control(const draw_control& _src) : control_base( _src )
 		{
-			background_brush = _src.background_brush;
-			border_brush = _src.border_brush;
+			view_style = _src.view_style;
 			on_draw = _src.on_draw;
 			on_create = _src.on_create;
 		}
@@ -140,16 +138,16 @@ namespace corona
 						color = toColor(letter_sequence);
 						dc->Clear(color);
 
-						if (border_brush && border_brush->get_name())
+						if (view_style && view_style->box_border_brush.get_name())
 						{
-							context.setBrush(border_brush.get(), &bounds);
-							border_name = border_brush->get_name();
+							context.setBrush(&view_style->box_border_brush, &bounds);
+							border_name = view_style->box_border_brush.get_name();
 						}
 
-						if (background_brush && background_brush->get_name())
+						if (view_style && view_style->box_fill_brush.get_name())
 						{
-							context.setBrush(background_brush.get(), &bounds);
-							background_name = background_brush->get_name();
+							context.setBrush(&view_style->box_fill_brush, &bounds);
+							background_name = view_style->box_fill_brush.get_name();
 						}
 
 						if (border_name.size() || background_name.size()) {
@@ -224,36 +222,9 @@ namespace corona
 			}
 		}
 
-		void set_background_color(generalBrushRequest _brushFill)
+		void set_style(std::shared_ptr<viewStyleRequest> _style)
 		{
-			std::string brush_name = std::format("background");
-			background_brush = std::make_shared<generalBrushRequest>(_brushFill);
-			if (background_brush.get())
-				background_brush->set_name(brush_name);
-		}
-
-		void set_background_color(std::string _color)
-		{
-			std::string brush_name = std::format("background");
-			background_brush = std::make_shared<generalBrushRequest>();
-			if (background_brush.get())
-				background_brush->set_name( brush_name );
-		}
-
-		void set_border_color(generalBrushRequest _brushFill)
-		{
-			std::string brush_name = std::format("border");
-			border_brush = std::make_shared<generalBrushRequest>(_brushFill);
-			if (border_brush.get())
-				border_brush->set_name(brush_name);
-		}
-
-		void set_border_color(std::string _color)
-		{
-			std::string brush_name = std::format("border");
-			border_brush = std::make_shared<generalBrushRequest>();
-			if (border_brush.get())
-				border_brush->set_name(brush_name);
+			view_style = _style;
 		}
 
 	};
@@ -460,25 +431,25 @@ namespace corona
 
 						if (camera_status.size()) {
 
-							context.setBrush(st->TitleTextBrush.get());
-							auto temp = *st->TitleFont.get();
+							context.setBrush(&st->CaptionStyle->shape_fill_brush);
+							auto temp = st->TitleStyle->text_style;
 							temp.name = "CameraStatus";
 							temp.vertical_align = visual_alignment::align_center;
 							temp.horizontal_align = visual_alignment::align_center;
 							context.setTextStyle(&temp);
-							context.drawText(camera_status, &draw_bounds, temp.name, st->TitleTextBrush->get_name());
+							context.drawText(camera_status, &draw_bounds, temp.name, st->CaptionStyle->shape_fill_brush.get_name());
 						}
 
 						if (current_camera_name.size()) {
 
-							context.setBrush(st->TitleTextBrush.get());
-							auto temp = *st->CodeFont.get();
+							context.setBrush(&st->TitleStyle->shape_fill_brush);
+							auto temp = st->CodeStyle->text_style;
 							temp.name = "CameraName";
 							temp.vertical_align = visual_alignment::align_far;
 							temp.horizontal_align = visual_alignment::align_center;
 							context.setTextStyle(&temp);
 							draw_bounds.h -= 10.0;
-							context.drawText(current_camera_name, &draw_bounds, temp.name, st->TitleTextBrush->get_name());
+							context.drawText(current_camera_name, &draw_bounds, temp.name, st->TitleStyle->shape_fill_brush.get_name());
 						}
 
 					}
@@ -2068,7 +2039,7 @@ namespace corona
 		text_style.italics = false;
 		text_style.underline = false;
 		text_style.strike_through = false;
-		text_style.horizontal_align = st->PrevailingAlignment;
+		text_style.horizontal_align = st->PrimaryAlignment;
 		text_style.vertical_align = visual_alignment::align_center;
 		text_style.wrap_text = true;
 		text_style.font_stretch = DWRITE_FONT_STRETCH_NORMAL;

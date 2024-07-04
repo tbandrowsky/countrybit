@@ -38,6 +38,9 @@ namespace corona {
 		point last_mouse_position;
 		point last_mouse_click;
 
+		json_file_watcher json_pages_watcher;
+		json json_pages;
+
 	public:
 		int default_focus_id;
 		int default_push_button_id;
@@ -183,6 +186,8 @@ namespace corona {
 		virtual void onDataChanged(json _params, data_lake* _api, data_function* _set);
 		virtual void onLogged(data_lake* _api);
 		virtual void hardwareChanged();
+		virtual void checkPresentationFile();
+		virtual void setPresentationFile();
 
 		virtual int layout();
 
@@ -878,6 +883,29 @@ namespace corona {
 		}
 	}
 
+	void presentation::checkPresentationFile()
+	{
+		threadomatic::run([this]()->void {
+			file_transaction<relative_ptr_type> pt = json_pages_watcher.poll();
+			if (pt.wait() != null_row) {
+				lockable me;
+				scope_lock lock(me);
+				json_pages = json_pages_watcher.contents;
+				threadomatic::run_complete(nullptr,
+					[this]() {
+						setPresentationFile();
+					});
+			}
+		});
+	}
+
+	void presentation::setPresentationFile()
+	{
+		json jpages = json_pages.get_member("pages");
+		pages.clear();
+
+		json jstyle = json_pages.get_member("styles");
+	}
 }
 
 #endif

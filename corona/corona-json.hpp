@@ -1246,6 +1246,11 @@ namespace corona
 			return put_element( -1, et);
 		}
 
+		template <typename element_type> json push_back(element_type et)
+		{
+			return put_element(-1, et);
+		}
+
 		json put_element(int _index, json &_element)
 		{
 			if (!array_impl) {
@@ -1862,7 +1867,99 @@ namespace corona
 				return 1;
 		}
 
+		class json_iterator
+		{
+			json* base;
+			int index;
+
+		public:
+
+			using iterator_category = std::forward_iterator_tag;
+			using difference_type = std::ptrdiff_t;
+			using value_type = json;
+			using pointer = json*;  // or also value_type*
+			using reference = json&;  // or also value_type&
+
+			json_iterator(json* _base, int _index) :
+				base(_base),
+				index(_index)
+			{
+				if (!base || index >= base->size() || index < 0) {
+					index = -1;
+				}
+			}
+
+			json_iterator() : base(nullptr), index(-1)
+			{
+
+			}
+
+			json_iterator& operator = (const json_iterator& _src)
+			{
+				base = _src.base;
+				index = _src.index;
+				return *this;
+			}
+
+			json operator *();
+
+			inline json_iterator begin() const
+			{
+				return json_iterator(base, index);
+			}
+
+			inline json_iterator end() const
+			{
+				return json_iterator(base, -1);
+			}
+
+			inline json_iterator operator++()
+			{
+				index++;
+				return json_iterator(base, index);
+			}
+
+			inline json_iterator operator++(int)
+			{
+				json_iterator tmp(*this);
+				operator++();
+				return tmp;
+			}
+
+			bool operator == (const json_iterator& _src) const
+			{
+				return (base == nullptr || _src.base == nullptr || base == _src.base) 
+						&& _src.index == index;
+			}
+
+			bool operator != (const json_iterator& _src)
+			{
+				bool r = (*this == _src);
+				return !r;
+			}
+
+		};
+
+		json_iterator begin()
+		{
+			return json_iterator(this, 0);
+		}
+
+		json_iterator end()
+		{
+			return json_iterator(this, -1);
+		}
 	};
+
+	json json::json_iterator::operator *()
+	{
+		json r;
+
+		if (base && index < base->size() && index >= 0) {
+			r = base->get_element(index);
+		}
+		return;
+	}
 
 	std::map<std::string, json> json::get_members()
 	{
