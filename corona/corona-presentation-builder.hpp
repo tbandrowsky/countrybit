@@ -27,6 +27,8 @@ namespace corona
 	class status_bar_control;
 	class form_control;
 	class form_field_control;
+	class checkbox_list_control;
+	class radiobutton_list_control;
 
 	class form_field 
 	{
@@ -106,6 +108,18 @@ namespace corona
 		control_builder *parent;
 
 	public:
+
+		template <typename control_type> std::shared_ptr<control_type> get(int _id)
+		{
+			std::shared_ptr<control_type> temp;
+			auto found = std::find_if(root->children.begin(), root->children.end(), [_id](auto& ch) {
+				return ch->id == _id;
+				});
+			if (found != std::end(root->children)) {
+				temp = std::dynamic_pointer_cast<control_type>(*found);
+			}
+			return temp;
+		}
 
 		template <typename control_type> std::shared_ptr<control_type> create(int _id)
 		{
@@ -208,8 +222,7 @@ namespace corona
 		control_builder(std::shared_ptr<container_control> _root, int _id )
 		{
 			parent = nullptr;
-			_root->find(_id);
-			root = _root;
+			root = _root->find_by_id<container_control>(_id);
 		}
 
 		control_builder(control_builder* _parent, std::shared_ptr<container_control>& _root)
@@ -776,27 +789,6 @@ namespace corona
 			}
 			return *this;
 		}
-
-		control_builder& listbox(int _id, std::function<void(listbox_control&)> _settings = nullptr)
-		{
-			auto tc = create<listbox_control>(_id);
-			apply_item_sizes(tc);
-			if (_settings) {
-				_settings(*tc);
-			}
-			return *this;
-		}
-
-		control_builder& combobox(int _id, std::function<void(combobox_control&)> _settings = nullptr)
-		{
-			auto tc = create<combobox_control>(_id);
-			apply_item_sizes(tc);
-			if (_settings) {
-				_settings(*tc);
-			}
-			return *this;
-		}
-
 		control_builder& edit(int _id, std::function<void(edit_control&)> _settings = nullptr)
 		{
 			auto tc = create<edit_control>(_id);
@@ -979,9 +971,9 @@ namespace corona
 			return *this;
 		}
 
-		control_builder& calico_button(int _id, std::function<void(calico_button_control&)> _settings = nullptr)
+		control_builder& corona_button(int _id, std::function<void(corona_button_control&)> _settings = nullptr)
 		{
-			auto tc = create<calico_button_control>(_id);
+			auto tc = create<corona_button_control>(_id);
 			apply_item_sizes(tc);
 			if (_settings) {
 				_settings(*tc);
@@ -1032,12 +1024,12 @@ namespace corona
 		control_builder& tab_button(int _id, std::function<void(tab_button_control&)> _settings = nullptr);
 		control_builder& tab_view(int _id, std::function<void(tab_view_control&)> _settings = nullptr);
 		control_builder& search_view(int _id, std::function<void(search_view_control&)> _settings = nullptr);
-		control_builder& caption_bar(int _id, presentation_style* _st, menu_item* _mi, std::function<void(caption_bar_control&)> _settings = nullptr);
+		control_builder& caption_bar(int _id, std::function<void(caption_bar_control&)> _settings = nullptr);
 		control_builder& status_bar(int _id, std::function<void(status_bar_control&)> _settings = nullptr);
 		control_builder& form(int _id, std::function<void(form_control&)> _settings = nullptr);
 		control_builder& form_field(int _id, std::function<void(form_field_control&)> _settings = nullptr);
 
-		control_builder& from_json(json& _dest_map, json _src_control);
+		std::shared_ptr<control_base> from_json(json _control_properties);
 	};
 
 	class form_field_control : public column_layout
@@ -1047,9 +1039,9 @@ namespace corona
 		std::shared_ptr<label_control>  suffix;
 		std::shared_ptr<draw_control>	visualization;
 		std::shared_ptr<control_base>	field;
-		std::string error_text;
+		std::string						error_text;
 
-		form_control* form;
+		form_control*					form;
 
 		template <typename field_control> std::shared_ptr<field_control> create_control(control_builder& cl, int _field_id, std::function<void(field_control&)> _settings)
 		{			
@@ -1141,33 +1133,33 @@ namespace corona
 			return error_text;
 		}
 
-		template <typename field_control> void set_field(
+		void set_field(
 			int _field_id,
 			std::string _label,
 			std::string _prefix,
 			std::string _suffix,
-			std::function<void(field_control& _settings)> _settings,
+			json control_props,
 			measure _visualization_height,
 			std::function<void(form_field_control* _src, draw_control* _dest)> _draw_visualization)
 		{
-			control_builder cb(this);
+			control_builder cb;
 
-			set_label(ctrl.label_text);
+			set_label(_label);
 
-			if (!ctrl.prefix.empty())
+			if (!_prefix.empty())
 			{
-				set_prefix(ctrl.prefix);
+				set_prefix(_prefix);
 			}
 
-			if (!ctrl.suffix.empty())
+			if (!_suffix.empty())
 			{
-				set_suffix(ctrl.suffix);
+				set_suffix(_suffix);
 			}
 
 			if (_draw_visualization)
 			{
 				int draw_id = id_counter::next();
-				visualization = create_control<draw_control>(cb, draw_id, [_label, _draw_visualization](draw_control& _settings) {
+				visualization = create_control<draw_control>(cb, draw_id, [this, _label, _visualization_height, _draw_visualization](draw_control& _settings) {
 					_settings.set_size(1.0_container, _visualization_height);
 					_settings.on_draw = [this, _draw_visualization](draw_control* control) {
 						_draw_visualization(this, control);
@@ -1195,7 +1187,9 @@ namespace corona
 					});
 			}
 
-			field = create_control<field_control>(edit_row, _field_id, _settings);
+			control_props.put_member("id", _field_id);
+			cb.from_json(control_props);
+			field = cb.get<control_base>(_field_id);
 
 			if (!_suffix.empty())
 			{
@@ -1216,506 +1210,6 @@ namespace corona
 			}
 
 			set_size(1.0_container, measure(form_height, measure_units::pixels));
-		}
-
-		void set_field(form_field& ctrl, json data)
-		{
-			control_builder cb;
-
-			auto pcontrol = &ctrl;
-
-			if (ctrl.field_type == "status")
-			{
-				set_field<status_control>(ctrl.field_id,
-					ctrl.label_text,
-					ctrl.prefix,
-					ctrl.suffix,
-					[pcontrol, data](status_control& _settings) {
-						pcontrol->settings.call<status_control>(_settings);
-						_settings.json_field_name = pcontrol->json_member_name;
-					},
-					ctrl.visualization_height,
-					ctrl.draw_visualization
-				);
-			}
-			else if (ctrl.field_type == "double" || ctrl.field_type == "number")
-			{
-				set_field<edit_control>(ctrl.field_id,
-					ctrl.label_text,
-					ctrl.prefix,
-					ctrl.suffix,
-					[pcontrol, data](edit_control& _settings) {
-						pcontrol->settings.call<edit_control>(_settings);
-						std::string format = pcontrol->input_format;
-						if (format.empty()) {
-							format = "d.d";
-						}
-						_settings.is_default_focus = pcontrol->is_default_focus;
-						_settings.set_format(pcontrol->input_format);
-						_settings.json_field_name = pcontrol->json_member_name;
-						_settings.set_data(data);
-					},
-					ctrl.visualization_height,
-					ctrl.draw_visualization
-				);
-
-			}
-			else if (ctrl.field_type == "integer")
-			{
-				set_field<edit_control>(ctrl.field_id,
-					ctrl.label_text,
-					ctrl.prefix,
-					ctrl.suffix,
-					[pcontrol, data](edit_control& _settings) {
-						pcontrol->settings.call<edit_control>(_settings);
-						std::string format = pcontrol->input_format;
-						if (format.empty()) {
-							format = "d";
-						}
-						_settings.set_format(pcontrol->input_format);
-						_settings.json_field_name = pcontrol->json_member_name;
-						_settings.set_data(data);
-
-					},
-					ctrl.visualization_height,
-					ctrl.draw_visualization
-				);
-			}
-			else if (ctrl.field_type == "currency")
-			{
-
-				set_field<edit_control>(ctrl.field_id,
-					ctrl.label_text,
-					ctrl.prefix,
-					ctrl.suffix,
-					[pcontrol, data](edit_control& _settings) {
-						pcontrol->settings.call<edit_control>(_settings);
-						std::string format = pcontrol->input_format;
-						if (format.empty()) {
-							format = "d.d";
-						}
-						_settings.json_field_name = pcontrol->json_member_name;
-						_settings.set_data(data);
-					},
-					ctrl.visualization_height,
-					ctrl.draw_visualization
-				);
-
-			}
-			else if (ctrl.field_type == "datetime")
-			{
-				set_field<edit_control>(ctrl.field_id,
-					ctrl.label_text,
-					ctrl.prefix,
-					ctrl.suffix,
-					[pcontrol, data](edit_control& _settings) {
-						pcontrol->settings.call<edit_control>(_settings);
-						std::string format = pcontrol->input_format;
-						if (format.empty()) {
-							format = "d/d/d d:d";
-						}
-						_settings.set_format(pcontrol->input_format);
-						_settings.json_field_name = pcontrol->json_member_name;
-						_settings.set_data(data);
-					},
-					ctrl.visualization_height,
-					ctrl.draw_visualization
-				);
-
-			}
-			else if (ctrl.field_type == "date")
-			{
-				set_field<edit_control>(ctrl.field_id,
-					ctrl.label_text,
-					ctrl.prefix,
-					ctrl.suffix,
-					[pcontrol, data](edit_control& _settings) {
-						pcontrol->settings.call<edit_control>(_settings);
-						std::string format = pcontrol->input_format;
-						if (format.empty()) {
-							format = "d/d/d";
-						}
-						_settings.set_format(pcontrol->input_format);
-						_settings.json_field_name = pcontrol->json_member_name;
-						_settings.set_data(data);
-						_settings.is_default_focus = pcontrol->is_default_focus;
-					},
-					ctrl.visualization_height,
-					ctrl.draw_visualization
-				);
-			}
-			else if (ctrl.field_type == "time")
-			{
-				set_field<edit_control>(ctrl.field_id,
-					ctrl.label_text,
-					ctrl.prefix,
-					ctrl.suffix,
-					[pcontrol, data](edit_control& _settings) {
-						pcontrol->settings.call<edit_control>(_settings);
-						std::string format = pcontrol->input_format;
-						if (format.empty()) {
-							format = "d:d";
-						}
-						_settings.set_format(pcontrol->input_format);
-						_settings.json_field_name = pcontrol->json_member_name;
-						_settings.set_data(data);
-						_settings.is_default_focus = pcontrol->is_default_focus;
-					},
-					ctrl.visualization_height,
-					ctrl.draw_visualization
-				);
-
-			}
-			else if (ctrl.field_type == "ssn")
-			{
-				set_field<edit_control>(ctrl.field_id,
-					ctrl.label_text,
-					ctrl.prefix,
-					ctrl.suffix,
-					[pcontrol, data](edit_control& _settings) {
-						pcontrol->settings.call<edit_control>(_settings);
-						std::string format = pcontrol->input_format;
-						if (format.empty()) {
-							format = "d-d-d";
-						}
-						_settings.set_format(pcontrol->input_format);
-						_settings.json_field_name = pcontrol->json_member_name;
-						_settings.set_data(data);
-						_settings.is_default_focus = pcontrol->is_default_focus;
-					},
-					ctrl.visualization_height,
-					ctrl.draw_visualization
-				);
-			}
-			else if (ctrl.field_type == "string")
-			{
-				set_field<edit_control>(ctrl.field_id,
-					ctrl.label_text,
-					ctrl.prefix,
-					ctrl.suffix,
-					[pcontrol, data](edit_control& _settings) {
-						pcontrol->settings.call<edit_control>(_settings);
-						std::string format = pcontrol->input_format;
-						if (format.empty()) {
-							format = "d-d-d";
-						}
-						_settings.set_format(pcontrol->input_format);
-						_settings.json_field_name = pcontrol->json_member_name;
-						_settings.set_data(data);
-						_settings.is_default_focus = pcontrol->is_default_focus;
-					},
-					ctrl.visualization_height,
-					ctrl.draw_visualization
-				);
-			}
-			else if (ctrl.field_type == "checkboxlist")
-			{
-				set_field<camera_view_control>(ctrl.field_id,
-					ctrl.label_text,
-					ctrl.prefix,
-					ctrl.suffix,
-					[pcontrol, data](camera_view_control& _settings) {
-						pcontrol->settings.call<camera_view_control>(_settings);
-						_settings.json_field_name = pcontrol->json_member_name;
-						_settings.set_data(data);
-					},
-					ctrl.visualization_height,
-					ctrl.draw_visualization
-				);
-
-			}
-			else if (ctrl.field_type == "radiolist")
-			{
-				set_field<edit_control>(ctrl.field_id,
-					ctrl.label_text,
-					ctrl.prefix,
-					ctrl.suffix,
-					[pcontrol, data](edit_control& _settings) {
-						pcontrol->settings.call<edit_control>(_settings);
-						std::string format = pcontrol->input_format;
-						if (format.empty()) {
-							format = "d-d-d";
-						}
-						_settings.set_format(pcontrol->input_format);
-						_settings.json_field_name = pcontrol->json_member_name;
-						_settings.set_data(data);
-						_settings.is_default_focus = pcontrol->is_default_focus;
-
-					},
-					ctrl.visualization_height,
-					ctrl.draw_visualization
-				);
-			}
-			else if (ctrl.field_type == "listview")
-			{
-				set_field<listview_control>(ctrl.field_id,
-					ctrl.label_text,
-					ctrl.prefix,
-					ctrl.suffix,
-					[pcontrol, data](listview_control& _settings) {
-						pcontrol->settings.call<listview_control>(_settings);
-						_settings.set_table(pcontrol->source_table);
-						_settings.json_field_name = pcontrol->json_member_name;
-						_settings.set_data(data);
-						_settings.is_default_focus = pcontrol->is_default_focus;
-					},
-					ctrl.visualization_height,
-					ctrl.draw_visualization
-				);
-			}
-			else if (ctrl.field_type == "listbox")
-			{
-				set_field<listbox_control>(ctrl.field_id,
-					ctrl.label_text,
-					ctrl.prefix,
-					ctrl.suffix,
-					[pcontrol, data](listbox_control& _settings) {
-						pcontrol->settings.call<listbox_control>(_settings);
-						_settings.set_list(pcontrol->source_list);
-						_settings.json_field_name = pcontrol->json_member_name;
-						_settings.set_data(data);
-						_settings.is_default_focus = pcontrol->is_default_focus;
-					},
-					ctrl.visualization_height,
-					ctrl.draw_visualization
-				);
-			}
-			else if (ctrl.field_type == "combobox")
-			{
-				set_field<combobox_control>(ctrl.field_id,
-					ctrl.label_text,
-					ctrl.prefix,
-					ctrl.suffix,
-					[pcontrol, data](combobox_control& _settings) {
-						pcontrol->settings.call<combobox_control>(_settings);
-						_settings.set_list(pcontrol->source_list);
-						_settings.json_field_name = pcontrol->json_member_name;
-						_settings.set_data(data);
-						_settings.is_default_focus = pcontrol->is_default_focus;
-					},
-					ctrl.visualization_height,
-					ctrl.draw_visualization
-				);
-
-			}
-			else if (ctrl.field_type == "comboboxex")
-			{
-				set_field<comboboxex_control>(ctrl.field_id,
-					ctrl.label_text,
-					ctrl.prefix,
-					ctrl.suffix,
-					[pcontrol, data](comboboxex_control& _settings) {
-						pcontrol->settings.call<comboboxex_control>(_settings);
-						_settings.set_list(pcontrol->source_list);
-						_settings.json_field_name = pcontrol->json_member_name;
-						_settings.set_data(data);
-						_settings.is_default_focus = pcontrol->is_default_focus;
-					},
-					ctrl.visualization_height,
-					ctrl.draw_visualization
-				);
-
-			}
-			else if (ctrl.field_type == "datetimepicker")
-			{
-				set_field<datetimepicker_control>(ctrl.field_id,
-					ctrl.label_text,
-					ctrl.prefix,
-					ctrl.suffix,
-					[pcontrol, data](datetimepicker_control& _settings) {
-						pcontrol->settings.call<datetimepicker_control>(_settings);
-						_settings.json_field_name = pcontrol->json_member_name;
-						_settings.set_data(data);
-						_settings.is_default_focus = pcontrol->is_default_focus;
-					},
-					ctrl.visualization_height,
-					ctrl.draw_visualization
-				);
-			}
-			else if (ctrl.field_type == "richeedit")
-			{
-				set_field<richedit_control>(ctrl.field_id,
-					ctrl.label_text,
-					ctrl.prefix,
-					ctrl.suffix,
-					[pcontrol, data](richedit_control& _settings) {
-						pcontrol->settings.call<richedit_control>(_settings);
-						_settings.set_format(pcontrol->input_format);
-						_settings.json_field_name = pcontrol->json_member_name;
-						_settings.set_data(data);
-						_settings.is_default_focus = pcontrol->is_default_focus;
-					},
-					ctrl.visualization_height,
-					ctrl.draw_visualization
-				);
-
-			}
-			else if (ctrl.field_type == "title")
-			{
-				set_field<title_control>(ctrl.field_id,
-					ctrl.label_text,
-					ctrl.prefix,
-					ctrl.suffix,
-					[pcontrol, data](title_control& _settings) {
-						pcontrol->settings.call<title_control>(_settings);
-						_settings.json_field_name = pcontrol->json_member_name;
-						_settings.set_data(data);
-					},
-					ctrl.visualization_height,
-					ctrl.draw_visualization
-				);
-			}
-			else if (ctrl.field_type == "subtitle")
-			{
-				set_field<subtitle_control>(ctrl.field_id,
-					ctrl.label_text,
-					ctrl.prefix,
-					ctrl.suffix,
-					[pcontrol, data](subtitle_control& _settings) {
-						pcontrol->settings.call<subtitle_control>(_settings);
-						_settings.json_field_name = pcontrol->json_member_name;
-						_settings.set_data(data);
-					},
-					ctrl.visualization_height,
-					ctrl.draw_visualization
-				);
-			}
-			else if (ctrl.field_type == "chaptertitle")
-			{
-				set_field<chaptertitle_control>(ctrl.field_id,
-					ctrl.label_text,
-					ctrl.prefix,
-					ctrl.suffix,
-					[pcontrol, data](chaptertitle_control& _settings) {
-						pcontrol->settings.call<chaptertitle_control>(_settings);
-						_settings.json_field_name = pcontrol->json_member_name;
-						_settings.set_data(data);
-				},
-					ctrl.visualization_height,
-					ctrl.draw_visualization
-				);
-			}
-			else if (ctrl.field_type == "chaptersubtitle")
-			{
-				set_field<chaptersubtitle_control>(ctrl.field_id,
-					ctrl.label_text,
-					ctrl.prefix,
-					ctrl.suffix,
-					[pcontrol, data](chaptersubtitle_control& _settings) {
-						pcontrol->settings.call<chaptersubtitle_control>(_settings);
-						_settings.json_field_name = pcontrol->json_member_name;
-						_settings.set_data(data);
-					},
-					ctrl.visualization_height,
-					ctrl.draw_visualization
-				);
-			}
-			else if (ctrl.field_type == "paragraph")
-			{
-				set_field<paragraph_control>(ctrl.field_id,
-					ctrl.label_text,
-					ctrl.prefix,
-					ctrl.suffix,
-					[pcontrol, data](paragraph_control& _settings) {
-						pcontrol->settings.call<paragraph_control>(_settings);
-						_settings.json_field_name = pcontrol->json_member_name;
-						_settings.set_data(data);
-					},
-					ctrl.visualization_height,
-					ctrl.draw_visualization
-				);
-			}
-			else if (ctrl.field_type == "image")
-			{
-				set_field<image_control>(ctrl.field_id,
-					ctrl.label_text,
-					ctrl.prefix,
-					ctrl.suffix,
-					[pcontrol, data](image_control& _settings) {
-						pcontrol->settings.call<image_control>(_settings);
-						_settings.json_field_name = pcontrol->json_member_name;
-						_settings.set_data(data);
-					},
-					ctrl.visualization_height,
-					ctrl.draw_visualization
-				);
-			}
-			else if (ctrl.field_type == "camera")
-			{
-				set_field<camera_control>(ctrl.field_id,
-					ctrl.label_text,
-					ctrl.prefix,
-					ctrl.suffix,
-					[pcontrol, data](camera_control& _settings) {
-						pcontrol->settings.call<camera_control>(_settings);
-						_settings.json_field_name = pcontrol->json_member_name;
-						_settings.set_data(data);
-					},
-					ctrl.visualization_height,
-					ctrl.draw_visualization
-				);
-
-			}
-			else if (ctrl.field_type == "cameraview")
-			{
-				set_field<camera_view_control>(ctrl.field_id, 
-					ctrl.label_text,
-					ctrl.prefix,
-					ctrl.suffix,
-					[pcontrol, data](camera_view_control& _settings) {
-						pcontrol->settings.call<camera_view_control>(_settings);
-						_settings.json_field_name = pcontrol->json_member_name;
-						_settings.set_data(data);
-					},
-					ctrl.visualization_height,
-					ctrl.draw_visualization
-					);
-			}
-			else if (ctrl.field_type == "row")
-			{
-				set_field<row_layout>(ctrl.field_id,
-					ctrl.label_text,
-					ctrl.prefix,
-					ctrl.suffix,
-					[pcontrol, data](row_layout& _settings) {
-						pcontrol->settings.call<row_layout>(_settings);
-						_settings.json_field_name = pcontrol->json_member_name;
-						_settings.set_data(data);
-					},
-					ctrl.visualization_height,
-					ctrl.draw_visualization
-				);
-				}
-			else if (ctrl.field_type == "column")
-			{
-				set_field<column_layout>(ctrl.field_id,
-					ctrl.label_text,
-					ctrl.prefix,
-					ctrl.suffix,
-					[pcontrol, data](column_layout& _settings) {
-						pcontrol->settings.call<column_layout>(_settings);
-						_settings.json_field_name = pcontrol->json_member_name;
-						_settings.set_data(data);
-					},
-					ctrl.visualization_height,
-					ctrl.draw_visualization
-				);
-				}
-			else if (ctrl.field_type == "absolute")
-			{
-				set_field<absolute_layout>(ctrl.field_id,
-					ctrl.label_text,
-					ctrl.prefix,
-					ctrl.suffix,
-					[pcontrol, data](absolute_layout& _settings) {
-						pcontrol->settings.call<absolute_layout>(_settings);
-						_settings.json_field_name = pcontrol->json_member_name;
-						_settings.set_data(data);
-					},
-					ctrl.visualization_height,
-					ctrl.draw_visualization
-				);
-				}
 		}
 
 		virtual void on_subscribe(presentation_base* _presentation, page_base* _page)
@@ -1890,6 +1384,7 @@ namespace corona
 				auto pctrl = &ctrl;
 				cbx->form_field(id_counter::next(), [this,pctrl](form_field_control& _settings) {
 					_settings.set_field(*pctrl, ids.data);
+					_settings.
 					});
 
 				is_default = false;
@@ -2475,7 +1970,7 @@ namespace corona
 				rl.set_content_align(visual_alignment::align_far);
 				rl.set_content_cross_align(visual_alignment::align_center);
 				rl.set_item_margin(10.0_px);
-				rl.set_style(*st->CaptionStyle);
+				rl.set_style(presentation_style_factory::get_current()->get_style()->CaptionStyle);
 				});
 
 			main_row.column_begin(id_counter::next(), [](column_layout& cl) {
@@ -2511,7 +2006,7 @@ namespace corona
 					cl.set_item_margin(0.0_px);
 				})
 				.end()
-				.menu_button(menu_button_id, [this](auto& _ctrl) { _ctrl.set_size(50.0_px, 50.0_px);_ctrl.menu = *menu;	})
+					.menu_button(menu_button_id, [this](auto& _ctrl) { _ctrl.set_size(50.0_px, 50.0_px); if (menu) { _ctrl.menu = *menu };	})
 				.minimize_button(min_button_id, [](auto& _ctrl) { _ctrl.set_size(50.0_px, 50.0_px); })
 				.maximize_button(max_button_id, [](auto& _ctrl) { _ctrl.set_size(50.0_px, 50.0_px); })
 				.close_button(close_button_id, [](auto& _ctrl) { _ctrl.set_size(50.0_px, 50.0_px); })
@@ -2523,7 +2018,6 @@ namespace corona
 
 	public:
 
-		presentation_style* st;
 		int menu_button_id;
 		int min_button_id;
 		int max_button_id;
@@ -2540,7 +2034,6 @@ namespace corona
 
 		caption_bar_control()
 		{
-			st = nullptr;
 			menu = nullptr;
 			menu_button_id = 0;
 			image_control_id = 0;
@@ -2549,13 +2042,8 @@ namespace corona
 
 		caption_bar_control(const caption_bar_control& _src) = default;
 
-		caption_bar_control(container_control_base *_parent, 
-			int _id, 
-			presentation_style *_st, 
-			menu_item *_mi ) : container_control(_parent, _id)
+		caption_bar_control(container_control_base *_parent, int _id) : container_control(_parent, _id)
 		{
-			st = _st;
-			menu = _mi;
 			menu_button_id = id_counter::next();
 			image_control_id = id_counter::next();
 			min_button_id = id_counter::next();
@@ -2599,7 +2087,6 @@ namespace corona
 			control_builder cb;
 			cb.row_begin(id_counter::status_bar_id, [this](row_layout& rl) {
 				rl.set_size(1.0_container, 80.0_px);
-				rl.background_brush = st->CaptionBackgroundBrush;
 				rl.set_content_align(visual_alignment::align_near);
 				rl.set_content_cross_align(visual_alignment::align_near);
 				rl.set_item_margin(10.0_px);
@@ -2669,12 +2156,12 @@ namespace corona
 		return *this;
 	}
 
-	control_builder& control_builder::caption_bar(int _id, presentation_style* _st, menu_item* _mi, std::function<void(caption_bar_control&)> _settings)
+	control_builder& control_builder::caption_bar(int _id, std::function<void(caption_bar_control&)> _settings)
 	{
 
 		auto cp = root.get();
 		std::shared_ptr<caption_bar_control> tc;
-		tc = std::make_shared<caption_bar_control>(cp, _id, _st, _mi);
+		tc = std::make_shared<caption_bar_control>(cp, _id);
 		if (tc) {
 			root->children.push_back(tc);
 //			std::cout << " " << typeid(*this).name() << " ->create:" << typeid(control_type).name() << std::endl;
@@ -2717,194 +2204,622 @@ namespace corona
 		return *this;
 	}
 
-	control_builder& control_builder::from_json(json& _dest_map, json _src_control)
+	std::shared_ptr<control_base> control_builder::from_json(json _control_properties)
 	{
-		control_builder cb(*this);
-
 		json_parser jp;
 
-		if (_dest_map.is_empty()) {
-			_dest_map = jp.create_object();
-		}
+		std::string class_name = _control_properties["class_name"];
+		std::string field_name = _control_properties["name"];
+		std::string field_type = _control_properties["type"];
+		json control_data = _control_properties["data"];
 
-		std::string field_type = _src_control["field_type"];
-		std::string field_name = _src_control["field_name"];
-		json field_options = _src_control["field_options"];
+		int id = (int)_control_properties.get_member("id");
 
-		int field_id = id_counter::next();
-
-		if (!field_name.empty())
-		{
-			_dest_map.put_member_object(field_name);
-			_dest_map[field_name].put_member("field_id", field_id);
-		}
+		int field_id = id ? id : id_counter::next();
 
 		std::string default_text = "";
 		call_status default_status;
 
-		cb.title(default_text, [](auto& _ctrl) ->void {
+		json control_data = _control_properties.get_member("data");
 
-			}, field_id);
-		cb.subtitle(default_text, [](auto& _ctrl) ->void {
+		if (class_name == "title")
+		{
+			title(default_text, [this, _control_properties, control_data](auto& _ctrl) ->void {
+				_ctrl.set_json(_control_properties);
+				_ctrl.set_data(control_data);
+				}, field_id);
+		}
+		else if (class_name == "subtitle")
+		{
+			subtitle(default_text, [this, _control_properties, control_data](auto& _ctrl) ->void {
+				_ctrl.set_json(_control_properties);
+				_ctrl.set_data(control_data);
+				}, field_id);
+		}
+		else if (class_name == "authorscredit")
+		{
+			authorscredit(default_text, [this, _control_properties, control_data](auto& _ctrl) ->void {
+				_ctrl.set_json(_control_properties);
+				_ctrl.set_data(control_data);
+				}, field_id);
+		}
+		else if (class_name == "chaptertitle")
+		{
+			chaptertitle(default_text, [this, _control_properties, control_data](auto& _ctrl) ->void {
+				_ctrl.set_json(_control_properties);
+				_ctrl.set_data(control_data);
+				}, field_id);
+		}
+		else if (class_name == "chaptersubtitle")
+		{
+			chaptersubtitle(default_text, [this, _control_properties, control_data](auto& _ctrl) ->void {
+				_ctrl.set_json(_control_properties);
+				_ctrl.set_data(control_data);
+				}, field_id);
+		}
+		else if (class_name == "paragraph")
+		{
+			paragraph(default_text, [this, _control_properties, control_data](auto& _ctrl) ->void {
+				_ctrl.set_json(_control_properties);
+				_ctrl.set_data(control_data);
+				}, field_id);
+		}
+		else if (class_name == "code")
+		{
+			code(default_text, [this, _control_properties, control_data](auto& _ctrl) ->void {
+				_ctrl.set_json(_control_properties);
+				_ctrl.set_data(control_data);
+				}, field_id);
+		}
+		else if (class_name == "label")
+		{
+			label(default_text, [this, _control_properties, control_data](auto& _ctrl) ->void {
+				_ctrl.set_json(_control_properties);
+				_ctrl.set_data(control_data);
+				}, field_id);
+		}
+		else if (class_name == "error")
+		{
+			error(default_status, [this, _control_properties, control_data](auto& _ctrl) ->void {
+				_ctrl.set_json(_control_properties);
+				_ctrl.set_data(control_data);
+				}, field_id);
+		}
+		else if (class_name == "status")
+		{
+			status(default_status, [this, _control_properties, control_data](auto& _ctrl) ->void {
+				_ctrl.set_json(_control_properties);
+				_ctrl.set_data(control_data);
+				}, field_id);
+		}
+		else if (class_name == "success")
+		{
+			success(default_status, [this, _control_properties, control_data](auto& _ctrl) ->void {
+				_ctrl.set_json(_control_properties);
+				_ctrl.set_data(control_data);
+				}, field_id);
+		}
+		else if (class_name == "row")
+		{
+			row_begin(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.set_json(_control_properties);
+				_ctrl.set_data(control_data);
+				});
+		}
+		else if (class_name == "column")
+		{
+			column_begin(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.set_json(_control_properties);
+				_ctrl.set_data(control_data);
+				});
+		}
+		else if (class_name == "absolute")
+		{
+			absolute_begin(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.set_json(_control_properties);
+				_ctrl.set_data(control_data);
+				});
+		}
+		else if (class_name == "row_view")
+		{
+			row_view_begin(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.set_json(_control_properties);
+				_ctrl.set_data(control_data);
+				});
+		}
+		else if (class_name == "grid_view")
+		{
+			grid_view_begin(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.set_json(_control_properties);
+				_ctrl.set_data(control_data);
+				});
+		}
+		else if (class_name == "absolute_view")
+		{
+			absolute_view_begin(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.set_json(_control_properties);
+				_ctrl.set_data(control_data);
+				});
+		}
+		else if (class_name == "frame")
+		{
+			frame_begin(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.set_json(_control_properties);
+				_ctrl.set_data(control_data);
+				});
+		}
+		else if (class_name == "listbox")
+		{
+			listbox(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.set_json(_control_properties);
+				_ctrl.set_data(control_data);
+				});
+		}
+		else if (class_name == "combobox")
+		{
+			combobox(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.set_json(_control_properties);
+				_ctrl.set_data(control_data);
+				});
+		}
+		else if (class_name == "edit")
+		{
+			edit(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.set_json(_control_properties);
+				_ctrl.set_data(control_data);
+				});
+		}
+		else if (class_name == "listview")
+		{
+			listview(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.set_json(_control_properties);
+				_ctrl.set_data(control_data);
+				});
+		}
+		else if (class_name == "treeview")
+		{
+			treeview(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.set_json(_control_properties);
+				_ctrl.set_data(control_data);
+				});
+		}
+		else if (class_name == "header")
+		{
+			header(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.set_json(_control_properties);
+				_ctrl.set_data(control_data);
+				});
+		}
+		else if (class_name == "toolbar")
+		{
+			toolbar(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.set_json(_control_properties);
+				_ctrl.set_data(control_data);
+				});
+		}
+		else if (class_name == "statusbar")
+		{
+			statusbar_field(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.set_json(_control_properties);
+				_ctrl.set_data(control_data);
+				});
+		}
+		else if (class_name == "hotkey")
+		{
+			hotkey(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.set_json(_control_properties);
+				_ctrl.set_data(control_data);
+				});
+		}
+		else if (class_name == "animate")
+		{
+			animate(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.set_json(_control_properties);
+				_ctrl.set_data(control_data);
+				});
+		}
+		else if (class_name == "richedit")
+		{
+			richedit(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.set_json(_control_properties);
+				_ctrl.set_data(control_data);
+				});
+		}
+		else if (class_name == "draglistbox")
+		{
+			draglistbox(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.set_json(_control_properties);
+				_ctrl.set_data(control_data);
+				});
+		}
+		else if (class_name == "comboboxex")
+		{
+			comboboxex(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.set_json(_control_properties);
+				_ctrl.set_data(control_data);
+				});
+		}
+		else if (class_name == "datetimepicker")
+		{
+			datetimepicker(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.set_json(_control_properties);
+				_ctrl.set_data(control_data);
+				});
+		}
+		else if (class_name == "monthcalendar")
+		{
+			monthcalendar(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.set_json(_control_properties);
+				_ctrl.set_data(control_data);
+				});
+		}
+		else if (class_name == "radiobutton_list")
+		{
+			radiobutton_list(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.set_json(_control_properties);
+				_ctrl.set_data(control_data);
+				});
+		}
+		else if (class_name == "checkbox_list")
+		{
+			checkbox_list(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.set_json(_control_properties);
+				_ctrl.set_data(control_data);
+				});
+		}
+		else if (class_name == "minimize_button")
+		{
+			minimize_button(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.set_json(_control_properties);
+				_ctrl.set_data(control_data);
+				});
+		}
+		else if (class_name == "maximize_button")
+		{
+			maximize_button(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.set_json(_control_properties);
+				_ctrl.set_data(control_data);
+				});
+		}
+		else if (class_name == "close_button")
+		{
+			close_button(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.set_json(_control_properties);
+				_ctrl.set_data(control_data);
+				});
+		}
+		else if (class_name == "menu_button")
+		{
+			menu_button(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.set_json(_control_properties);
+				_ctrl.set_data(control_data);
+				});
+		}
+		else if (class_name == "corona_button")
+		{
+			corona_button(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.set_json(_control_properties);
+				_ctrl.set_data(control_data);
+				});
+		}
+		else if (class_name == "camera")
+		{
+			camera(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.set_json(_control_properties);
+				_ctrl.set_data(control_data);
+				});
+		}
+		else if (class_name == "grid")
+		{
+			grid(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.set_json(_control_properties);
+				_ctrl.set_data(control_data);
+				});
+		}
+		else if (class_name == "chart")
+		{
+			chart(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.set_json(_control_properties);
+				_ctrl.set_data(control_data);
+				});
+		}
+		else if (class_name == "slide")
+		{
+			slide(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.set_json(_control_properties);
+				_ctrl.set_data(control_data);
+				});
+		}
+		else if (class_name == "grid")
+		{
+			grid(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.set_json(_control_properties);
+				_ctrl.set_data(control_data);
+				});
+		}
+		else if (class_name == "tab_button")
+		{
+			tab_button(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.set_json(_control_properties);
+				_ctrl.set_data(control_data);
+				});
+		}
+		else if (class_name == "tab_view")
+		{
+			tab_view(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.set_json(_control_properties);
+				_ctrl.set_data(control_data);
+				});
+		}
+		else if (class_name == "search_view")
+		{
+			search_view(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.set_json(_control_properties);
+				_ctrl.set_data(control_data);
+				});
+		}
+		else if (class_name == "caption_bar")
+		{
+			caption_bar(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.set_json(_control_properties);
+				_ctrl.set_data(control_data);
+				});
+		}
+		else if (class_name == "status_bar")
+		{
+			status_bar(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.set_json(_control_properties);
+				_ctrl.set_data(control_data);
+				});
+		}
+		else if (class_name == "form")
+		{
+			form(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.set_json(_control_properties);
+				_ctrl.set_data(control_data);
+				});
+		}
+		else if (class_name == "form_field")
+		{
+			form_field(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.set_json(_control_properties);
+				_ctrl.set_data(control_data);
+				});
+		}
+		else 
+		{
+			std::cout << "Undefined class_name for control:" << class_name << std::endl;
+			std::cout << "Currently the following control classes are supported.  Set class_name to one of these." << std::endl;
+			std::cout << "Text Box types" << std::endl;
+			std::cout << "title, subtitle, chaptertitle, chaptersubtitle, paragraph, " << std::endl;
+			std::cout << "code, label, error, status, success" << std::endl;
+			std::cout << "Layout types" << class_name << std::endl;
+			std::cout << "row, column, absolute, row_view, absolute_view, grid_view, grid, slide, frame, tab_button, tab_view, search_view" << class_name << std::endl;
+			std::cout << "Windows SDK types" << class_name << std::endl;
+			std::cout << "combobox, listbox, edit, listview, treeview, header, toolbar, statusbar, hotkey, animate, richedit, draglistbox, comboboxex, datetimepicker, monthcalendar, radiobutton_list, checkbox_list" << std::endl;
+			std::cout << "System Button types" << class_name << std::endl;
+			std::cout << "caption_bar, minimize_button, mnaximize_button, close_button, menu_button, corona_button" << std::endl;
+			std::cout << "Forms types" << class_name << std::endl;
+			std::cout << "form, form_field" << std::endl;
+			std::cout << "" << class_name << std::endl;
+		}
 
-			}, field_id);
-		cb.authorscredit(default_text, [](auto& _ctrl) ->void {
+		std::shared_ptr<control_base> ret = get<control_base>(field_id);
 
-			}, field_id);
-		cb.chaptertitle(default_text, [](auto& _ctrl) ->void {
+		json children = _control_properties.get_member("children");
+		if (children.is_array()) {
 
-			}, field_id);
-		cb.chaptersubtitle(default_text, [](auto& _ctrl) ->void {
+			control_builder cb;
+			for (auto child : children)
+			{
+				auto new_child = cb.from_json(child);
+				ret->children.push_back(new_child);
+			}
+		}
 
-			}, field_id);
-		cb.paragraph(default_text, [](auto& _ctrl) ->void {
-
-			}, field_id);
-		cb.code(default_text, [](auto& _ctrl) ->void {
-
-			}, field_id);
-		cb.label(default_text, [](auto& _ctrl) ->void {
-
-			}, field_id);
-		cb.error(default_status, [](auto& _ctrl) ->void {
-
-			}, field_id);
-		cb.status(default_status, [](auto& _ctrl) ->void {
-
-			}, field_id);
-		cb.success(default_status, [](auto& _ctrl) ->void {
-
-			}, field_id);
-
-		cb.row_begin(field_id, [](auto& _ctrl)->void {
-
-			});
-		cb.column_begin(field_id, [](auto& _ctrl)->void {
-
-			});
-		cb.absolute_begin(field_id, [](auto& _ctrl)->void {
-
-			});
-		cb.row_view_begin(field_id, [](auto& _ctrl)->void {
-
-			});
-		cb.grid_view_begin(field_id, [](auto& _ctrl)->void {
-
-			});
-		cb.absolute_view_begin(field_id, [](auto& _ctrl)->void {
-
-			});
-		cb.frame_begin(field_id, [](auto& _ctrl)->void {
-
-			});
-		cb.end();
-
-		cb.listbox(field_id, [](auto& _ctrl)->void {
-
-			});
-		cb.combobox(field_id, [](auto& _ctrl)->void {
-
-			});
-		cb.edit(field_id, [](auto& _ctrl)->void {
-
-			});
-		cb.listview(field_id, [](auto& _ctrl)->void {
-
-			});
-		cb.treeview(field_id, [](auto& _ctrl)->void {
-
-			});
-		cb.header(field_id, [](auto& _ctrl)->void {
-
-			});
-		cb.toolbar(field_id, [](auto& _ctrl)->void {
-
-			});
-		cb.statusbar_field(field_id, [](auto& _ctrl)->void {
-
-			});
-		cb.hotkey(field_id, [](auto& _ctrl)->void {
-
-			});
-		cb.animate(field_id, [](auto& _ctrl)->void {
-
-			});
-		cb.richedit(field_id, [](auto& _ctrl)->void {
-
-			});
-		cb.draglistbox(field_id, [](auto& _ctrl)->void {
-
-			});
-		cb.comboboxex(field_id, [](auto& _ctrl)->void {
-
-			});
-		cb.datetimepicker(field_id, [](auto& _ctrl)->void {
-
-			});
-		cb.monthcalendar(field_id, [](auto& _ctrl)->void {
-
-			});
-		cb.radiobutton_list(field_id, [](auto& _ctrl)->void {
-
-			});
-		cb.checkbox_list(field_id, [](auto& _ctrl)->void {
-
-			});
-		cb.minimize_button(field_id, [](auto& _ctrl)->void {
-
-			});
-		cb.maximize_button(field_id, [](auto& _ctrl)->void {
-
-			});
-		cb.close_button(field_id, [](auto& _ctrl)->void {
-
-			});
-		cb.menu_button(field_id, [](auto& _ctrl)->void {
-
-			});
-
-		cb.calico_button(field_id, [](auto& _ctrl)->void {
-
-			});
-
-		cb.camera(field_id, [](auto& _ctrl)->void {
-
-			});
-
-		cb.grid(field_id, [](auto& _ctrl)->void {
-
-			});
-
-		cb.chart(field_id, [](auto& _ctrl)->void {
-
-			});
-
-		cb.slide(field_id, [](auto& _ctrl)->void {
-
-			});
-
-		cb.tab_button(field_id, [](auto& _ctrl)->void {
-
-			});
-		cb.tab_view(field_id, [](auto& _ctrl)->void {
-
-			});
-		cb.search_view(field_id, [](auto& _ctrl)->void {
-
-			});
-		cb.caption_bar(field_id, [](auto& _ctrl)->void {
-
-			});
-		cb.status_bar(field_id, [](auto& _ctrl)->void {
-
-			});
-		cb.form(field_id, [](auto& _ctrl)->void {
-
-			});
-		cb.form_field(field_id, [](auto& _ctrl)->void {
-
-			});
+		return ret;
 	}
+
+	class radiobutton_list_control :
+		public column_layout
+	{
+	protected:
+		list_data choices;
+		json data;
+
+	public:
+		radiobutton_list_control() { ; }
+		radiobutton_list_control(const radiobutton_list_control& _src) = default;
+		radiobutton_list_control(container_control_base* _parent, int _id) : column_layout(_parent, _id) { ; }
+
+		virtual std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<absolute_view_layout>(*this);
+			return tv;
+		}
+
+		virtual ~radiobutton_list_control() { ; }
+
+		void list_changed()
+		{
+			control_builder cb;
+
+			children.clear();
+
+			int count = choices.items.size();
+
+			for (int i = 0; i < count; i++)
+			{
+				json item = choices.items.get_element(i);
+				int id = item.get_member(choices.id_field);
+				std::string text = item.get_member(choices.text_field);
+				bool selected = (bool)item.get_member(choices.selected_field);
+				cb.radio_button(id, text, [item, this, i](radiobutton_control& _rbc) {
+					_rbc.json_field_name = choices.selected_field;
+					_rbc.is_group = i == 0;
+					_rbc.set_data(item);
+					});
+			}
+		}
+
+		virtual json get_data()
+		{
+			json result;
+			if (!json_field_name.empty()) {
+				json_parser jp;
+				result = jp.create_object();
+				json result_array = jp.create_array();
+
+				for (auto child : children)
+				{
+					json data = child->get_data();
+					result_array.put_element(-1, data);
+				}
+
+				result.put_member(json_field_name, result_array);
+
+			}
+			return result;
+		}
+
+		virtual json set_data(json _data)
+		{
+			data = _data;
+			if (_data.has_member(json_field_name)) {
+				json field_items = _data[json_field_name];
+				if (field_items.is_array()) {
+					json as_object = field_items.array_to_object(
+
+						[this](json& _item)->std::string {
+							return _item.get_member(choices.id_field);
+						},
+						[](json& _item)->json {
+							return _item;
+						}
+					);
+					for (auto child : children) {
+						json existing = child->get_data();
+						std::string key = choices.id_field;
+						json item = as_object.get_member(key);
+						child->set_data(item);
+					}
+				}
+			}
+			return _data;
+		}
+
+		void set_list(list_data& _choices)
+		{
+			choices = _choices;
+			list_changed();
+		}
+
+		virtual void on_create()
+		{
+			list_changed();
+		}
+
+	};
+
+	class checkbox_list_control :
+		public column_layout
+	{
+	protected:
+		list_data choices;
+		json data;
+
+	public:
+		checkbox_list_control() { ; }
+		checkbox_list_control(const checkbox_list_control& _src) = default;
+		checkbox_list_control(container_control_base* _parent, int _id) : column_layout(_parent, _id) { ; }
+
+		virtual std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<absolute_view_layout>(*this);
+			return tv;
+		}
+
+		virtual ~checkbox_list_control() { ; }
+
+		void list_changed()
+		{
+			control_builder cb;
+
+			children.clear();
+
+			int count = choices.items.size();
+
+			for (int i = 0; i < count; i++)
+			{
+				json item = choices.items.get_element(i);
+				int id = item.get_member(choices.id_field);
+				std::string text = item.get_member(choices.text_field);
+				bool selected = (bool)item.get_member(choices.selected_field);
+				cb.checkbox(id, text, [item, this](checkbox_control& _rbc) {
+					_rbc.json_field_name = choices.selected_field;
+					_rbc.set_data(item);
+					});
+			}
+		}
+
+		virtual json get_data()
+		{
+			json result;
+			if (!json_field_name.empty()) {
+				json_parser jp;
+				result = jp.create_object();
+				json result_array = jp.create_array();
+
+				for (auto child : children)
+				{
+					json data = child->get_data();
+					result_array.put_element(-1, data);
+				}
+
+				result.put_member(json_field_name, result_array);
+
+			}
+			return result;
+		}
+
+		virtual json set_data(json _data)
+		{
+			data = _data;
+			if (_data.has_member(json_field_name)) {
+				json field_items = _data[json_field_name];
+				if (field_items.is_array()) {
+					json as_object = field_items.array_to_object(
+
+						[this](json& _item)->std::string {
+							return _item.get_member(choices.id_field);
+						},
+						[](json& _item)->json {
+							return _item;
+						}
+					);
+					for (auto child : children) {
+						json existing = child->get_data();
+						std::string key = choices.id_field;
+						json item = as_object.get_member(key);
+						child->set_data(item);
+					}
+				}
+			}
+			return _data;
+		}
+
+		void set_list(list_data& _choices)
+		{
+			choices = _choices;
+			list_changed();
+		}
+
+		virtual void on_create()
+		{
+			list_changed();
+		}
+
+	};
 }
 
 #endif

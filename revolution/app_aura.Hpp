@@ -105,7 +105,10 @@ namespace corona
 			data = jp.create_object();
 			data.put_member_object("cameras");
 
-			st = styles.get_style();
+			application::get_application()->application_folder_name = "countryvideogames";
+			application::get_application()->application_name = "colorparty";
+
+			st = presentation_style_factory::get_current()->get_style();
 
 			std::cout << "Color Party Startup at " << std::filesystem::current_path() << std::endl;
 

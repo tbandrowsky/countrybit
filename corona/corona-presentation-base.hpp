@@ -20,8 +20,6 @@ namespace corona
 	class presentation;
 	class page;
 
-	presentation_style_factory styles;
-
 	class list_data : public json_serializable
 	{
 	public:
@@ -42,6 +40,10 @@ namespace corona
 
 		virtual void put_json(json& _src)
 		{
+			if (!_src.has_members({ "id_field", "text_field", "selected_field" })) {
+				std::cout << "list_data must have id_field, text_field, and selected_field" << std::endl;
+				std::cout << _src.to_json() << std::endl;
+			}
 			id_field = _src.get_member("id_field");
 			text_field = _src.get_member("text_field");
 			selected_field = _src.get_member("selected_field");
@@ -68,6 +70,10 @@ namespace corona
 
 		virtual void put_json(json& _src)
 		{
+			if (!_src.has_members({ "display_name", "json_field", "width" })) {
+				std::cout << "table_column display_name, json_field, and width" << std::endl;
+				std::cout << _src.to_json() << std::endl;
+			}
 			display_name = _src["display_name"];
 			json_field = _src["json_field"];
 			width = (int)_src["width"];
@@ -102,6 +108,12 @@ namespace corona
 
 		virtual void put_json(json& _src)
 		{
+
+			if (!_src.has_members({ "columns", "id_field", "items" })) {
+				std::cout << "table_data must have columns, id_field, and items" << std::endl;
+				std::cout << _src.to_json() << std::endl;
+			}
+
 			json jcolumns = _src["columns"];
 
 			if (jcolumns.is_array()) 

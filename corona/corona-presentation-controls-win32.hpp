@@ -1441,12 +1441,6 @@ namespace corona
 		return "";
 	}
 
-	/*
-	class monthcalendar_control : public windows_control<CMonthCalendarCtrl, WS_VISIBLE | WS_BORDER | WS_CHILD>
-	{
-	public:
-	};
-	*/
 
 	bool animate_control::open(const std::string& _name)
 	{

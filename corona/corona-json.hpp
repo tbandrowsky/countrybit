@@ -465,6 +465,18 @@ namespace corona
 			return value_base->to_json_typed();
 		}
 
+		bool has_members(std::vector<std::string> _src)
+		{
+			if (!is_object())
+				return false;
+
+			for (auto s : _src) {
+				if (!has_member(s))
+					return false;
+			}
+			return true;
+		}
+
 		std::string to_json_typed_string()
 		{
 			std::string json_str = to_json_typed();
@@ -560,6 +572,10 @@ namespace corona
 			return value_base == nullptr;
 		}
 
+		bool is_error()
+		{
+			return has_member("ClassName") && (std::string)get_member("ClassName") == "SysParseError";
+		}
 
 		int64_t get_int64s()  const
 		{
@@ -1958,7 +1974,7 @@ namespace corona
 		if (base && index < base->size() && index >= 0) {
 			r = base->get_element(index);
 		}
-		return;
+		return r;
 	}
 
 	std::map<std::string, json> json::get_members()

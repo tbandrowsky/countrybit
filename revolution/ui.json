@@ -1,0 +1,312 @@
+{
+  "styles": [
+    {
+      "primary_font": "TW Cent MT, Century Gothic, Arial",
+      "colors": {
+        "Blue": [ "34657F", "D4E1E8", "AACDDA", "6399AE", "34657F", "081F2C" ],
+        "Gray": [ "7C878E", "DEE1E1", "C1C6C8", "A2AAAD", "7C878E", "5B6770" ],
+        "Green": [ "4BA24D", "C8DFBC", "AFD29E", "6DB658", "4BA24D", "008A41" ],
+        "Purple": [ "621244", "D7D3DB", "C1B2C3", "996F8D", "862663", "621244" ],
+        "Tan": [ "B6B7A2", "DEDDD3", "CBCBBC", "B6B7A2", "888F6E", "67724C" ],
+        "Deductible": [ "34657F" ],
+        "Lavendar": [ "E0D4D9", "CDB9C2", "B898A7" ],
+        "Perriwinkle": [ "C8D9E2", "B0C9D7", "98BBCC" ],
+        "Grass": [ "C9DEBC", "B2D2A2", "A2C490" ],
+        "Tulips": [ "F8E0A4", "ECCF8F", "EAC189" ],
+        "Earth": [ "E1DACE", "D8CEBE", "C4B69D" ],
+        "Stone": [ "DEE1E1", "C1C6C8", "A2AAAD" ]
+      },
+      "page_style": {
+        "text_style": {
+          "font_name": "TW Cent MT, Century Gothic, Arial",
+          "font_size": 32.0
+        },
+        "shape_border_thickness": 0,
+        "box_border_brush": {
+          "class_name": "solid_brush",
+          "color": "C0C0C0"
+        },
+        "box_border_thickness": 0,
+        "box_fill_brush": {
+          "class_name": "linear_brush",
+          "start": {
+            "x": 0.5,
+            "y": 0
+          },
+          "stop": {
+            "x": 0.5,
+            "y": 1
+          },
+          "stops": [
+            {
+              "color": "100030",
+              "position": 0.0
+            },
+            {
+              "color": "000010",
+              "position": 1.0
+            }
+          ]
+        },
+        "shape_fill_brush": {
+          "class_name": "solid_brush",
+          "color": "000000"
+        }
+      },
+      "caption_style": {
+        "text_style": {
+          "font_name": "TW Cent MT, Century Gothic, Arial",
+          "font_size": 32.0
+        },
+        "shape_border_thickness": 0,
+        "box_border_thickness": 0,
+        "box_border_brush": {
+
+        },
+        "shape_border_brush": {
+
+        },
+        "box_fill_brush": {
+          "class_name": "linear_brush",
+          "start": {
+            "x": 0.5,
+            "y": 0
+          },
+          "stop": {
+            "x": 0.5,
+            "y": 1
+          },
+          "stops": [
+            {
+              "color": "313150",
+              "position": 0.0
+            },
+            {
+              "color": "313150",
+              "position": 0.13
+            },
+            {
+              "color": "101020",
+              "position": 1.0
+            }
+          ]
+        },
+        "shape_fill_brush": {
+          "class_name": "solid_brush",
+          "color": "FFFFFF"
+        }
+      },
+      "title_style": {
+        "text_style": {
+          "font_name": "TW Cent MT, Century Gothic, Arial",
+          "font_size": 24.0
+        },
+        "shape_border_thickness": 0,
+        "box_border_thickness": 0,
+        "shape_fill_brush": {
+          "class_name": "solid_brush",
+          "color": "000000"
+        }
+      },
+      "subtitle_style": {
+        "text_style": {
+          "font_name": "TW Cent MT, Century Gothic, Arial",
+          "font_size": 18.0
+        },
+        "shape_border_thickness": 0,
+        "box_border_thickness": 0,
+        "shape_fill_brush": {
+          "class_name": "solid_brush",
+          "color": "000000"
+        }
+      },
+      "chapter_title_style": {
+        "text_style": {
+          "font_name": "TW Cent MT, Century Gothic, Arial",
+          "font_size": 16.0
+        },
+        "shape_border_thickness": 0,
+        "box_border_thickness": 0,
+        "shape_fill_brush": {
+          "class_name": "solid_brush",
+          "color": "000000"
+        }
+      },
+      "chapter_subtitle_style": {
+        "text_style": {
+          "font_name": "TW Cent MT, Century Gothic, Arial",
+          "font_size": 14.0,
+          "underline": true
+        },
+        "shape_fill_brush": {
+          "class_name": "solid_brush",
+          "color": "000000"
+        }
+      },
+      "paragraph_style": {
+        "text_style": {
+          "font_name": "Tahoma, Arial",
+          "font_size": 14.0,
+          "underline": true
+        },
+        "shape_fill_brush": {
+          "class_name": "solid_brush",
+          "color": "000000"
+        }
+      },
+      "form_style": {
+        "text_style": {
+          "font_name": "Tahoma, Arial",
+          "font_size": 14.0,
+          "underline": true
+        },
+        "shape_fill_brush": {
+          "class_name": "solid_brush",
+          "color": "000000"
+        }
+      },
+      "placeholder_style": {
+        "text_style": {
+          "font_name": "Tahoma, Arial",
+          "font_size": 14.0,
+          "underline": true
+        },
+        "shape_fill_brush": {
+          "class_name": "solid_brush",
+          "color": "000000"
+        }
+      },
+      "error_style": {
+        "text_style": {
+          "font_name": "Tahoma, Arial",
+          "font_size": 14.0,
+          "underline": true
+        },
+        "shape_fill_brush": {
+          "class_name": "solid_brush",
+          "color": "000000"
+        }
+      },
+      "success_style": {
+        "text_style": {
+          "font_name": "Tahoma, Arial",
+          "font_size": 14.0,
+          "underline": true
+        },
+        "shape_fill_brush": {
+          "class_name": "solid_brush",
+          "color": "000000"
+        }
+      },
+      "code_style": {
+        "text_style": {
+          "font_name": "Consolas, CourierNew",
+          "font_size": 14.0,
+          "underline": true
+        },
+        "shape_fill_brush": {
+          "class_name": "solid_brush",
+          "color": "000000"
+        }
+      }
+
+    }
+  ],
+  "pages": [
+    {
+      "class_name": "page",
+      "name" :  "home",
+      "children": [
+        {
+          "class_name": "page",
+          "children": [
+            {
+              "class_name": "title",
+              "text": "sample title",
+              "box": {
+                "width": {
+                  "amount": 1.0,
+                  "units": "remaining"
+                },
+                "height": {
+                  "amount": 65,
+                  "units": "pixels"
+                }
+              }
+            },
+            {
+              "class_name": "subtitle",
+              "text": "sample subtitle",
+              "box": {
+                "width": {
+                  "amount": 1.0,
+                  "units": "remaining"
+                },
+                "height": {
+                  "amount": 65,
+                  "units": "pixels"
+                }
+              }
+            },
+            {
+              "class_name": "chaptertitle",
+              "text": "sample chaptertitle",
+              "box": {
+                "width": {
+                  "amount": 1.0,
+                  "units": "remaining"
+                },
+                "height": {
+                  "amount": 65,
+                  "units": "pixels"
+                }
+              }
+            },
+            {
+              "class_name": "chaptersubtitle",
+              "text": "sample chaptersubtitle",
+              "box": {
+                "width": {
+                  "amount": 1.0,
+                  "units": "remaining"
+                },
+                "height": {
+                  "amount": 65,
+                  "units": "pixels"
+                }
+              }
+            },
+            {
+              "class_name": "paragraph",
+              "text": "sample paragraph",
+              "box": {
+                "width": {
+                  "amount": 1.0,
+                  "units": "remaining"
+                },
+                "height": {
+                  "amount": 65,
+                  "units": "pixels"
+                }
+              }
+            },
+            {
+              "class_name": "code",
+              "text":  "sample code",
+              "box": {
+                "width": {
+                  "amount": 1.0,
+                  "units": "remaining"
+                },
+                "height": {
+                  "amount": 65,
+                  "units": "pixels"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

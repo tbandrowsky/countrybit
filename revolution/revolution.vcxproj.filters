@@ -57,6 +57,7 @@
       <Filter>Resource Files</Filter>
     </CopyFileToFolders>
     <CopyFileToFolders Include="client.json" />
+    <CopyFileToFolders Include="ui.json" />
   </ItemGroup>
   <ItemGroup>
     <None Include="vcpkg.json" />

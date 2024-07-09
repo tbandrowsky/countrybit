@@ -429,9 +429,9 @@ namespace corona
 
 	void title_control::set_default_styles()
 	{
-		auto st = styles.get_style();
+		auto st = presentation_style_factory::get_current();
 
-		view_style = st->TitleStyle;
+		view_style = st->get_style()->TitleStyle;
 	}
 
 	title_control::title_control(container_control_base* _parent, int _id) : text_display_control(_parent, _id)
@@ -451,9 +451,9 @@ namespace corona
 
 	void subtitle_control::set_default_styles()
 	{
-		auto st = styles.get_style();
+		auto st = presentation_style_factory::get_current();
 
-		view_style = st->SubtitleStyle;
+		view_style = st->get_style()->SubtitleStyle;
 
 	}
 
@@ -473,9 +473,9 @@ namespace corona
 
 	void authorscredit_control::set_default_styles()
 	{
-		auto st = styles.get_style();
+		auto st = presentation_style_factory::get_current();
 
-		view_style = st->AuthorsCreditStyle;
+		view_style = st->get_style()->AuthorsCreditStyle;
 
 	}
 
@@ -495,9 +495,9 @@ namespace corona
 
 	void chaptertitle_control::set_default_styles()
 	{
-		auto st = styles.get_style();
+		auto st = presentation_style_factory::get_current();
 
-		view_style = st->ChapterTitleStyle;
+		view_style = st->get_style()->ChapterTitleStyle;
 	}
 
 	chaptertitle_control::chaptertitle_control(container_control_base* _parent, int _id) : text_display_control(_parent, _id)
@@ -516,9 +516,9 @@ namespace corona
 
 	void chaptersubtitle_control::set_default_styles()
 	{
-		auto st = styles.get_style();
+		auto st = presentation_style_factory::get_current();
 
-		view_style = st->ChapterSubTitleStyle;
+		view_style = st->get_style()->ChapterSubTitleStyle;
 
 	}
 
@@ -538,9 +538,9 @@ namespace corona
 
 	void paragraph_control::set_default_styles()
 	{
-		auto st = styles.get_style();
+		auto st = presentation_style_factory::get_current();
 
-		view_style = st->ParagraphStyle;
+		view_style = st->get_style()->ParagraphStyle;
 	}
 
 	paragraph_control::paragraph_control(container_control_base* _parent, int _id) : text_display_control(_parent, _id)
@@ -559,9 +559,9 @@ namespace corona
 
 	void code_control::set_default_styles()
 	{
-		auto st = styles.get_style();
+		auto st = presentation_style_factory::get_current();
 
-		view_style = st->CodeStyle;
+		view_style = st->get_style()->CodeStyle;
 	}
 
 	code_control::code_control(container_control_base* _parent, int _id) : text_display_control(_parent, _id)
@@ -580,9 +580,9 @@ namespace corona
 
 	void label_control::set_default_styles()
 	{
-		auto st = styles.get_style();
+		auto st = presentation_style_factory::get_current();
 
-		view_style = st->LabelStyle;
+		view_style = st->get_style()->LabelStyle;
 	}
 
 	label_control::label_control()
@@ -602,9 +602,9 @@ namespace corona
 
 	void placeholder_control::set_default_styles()
 	{
-		auto st = styles.get_style();
+		auto st = presentation_style_factory::get_current();
 
-		view_style = st->PlaceholderStyle;
+		view_style = st->get_style()->PlaceholderStyle;
 	}
 
 	placeholder_control::placeholder_control()
@@ -624,9 +624,9 @@ namespace corona
 
 	void error_control::set_default_styles()
 	{
-		auto st = styles.get_style();
+		auto st = presentation_style_factory::get_current();
 
-		view_style = st->ErrorStyle;
+		view_style = st->get_style()->ErrorStyle;
 	}
 
 	error_control::error_control(container_control_base* _parent, int _id) : text_display_control(_parent, _id)
@@ -646,9 +646,9 @@ namespace corona
 
 	void success_control::set_default_styles()
 	{
-		auto st = styles.get_style();
+		auto st = presentation_style_factory::get_current();
 
-		view_style = st->SuccessStyle;
+		view_style = st->get_style()->SuccessStyle;
 	}
 
 	success_control::success_control(container_control_base* _parent, int _id) : text_display_control(_parent, _id)

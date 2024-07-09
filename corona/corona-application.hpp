@@ -31,6 +31,9 @@ namespace corona
 
 	public:
 
+		std::string application_name;
+		std::string application_folder_name;
+
 		application()
 		{
 			global_job_queue = std::make_unique<job_queue>();
@@ -50,6 +53,39 @@ namespace corona
 				home = new application();
 			}
 			return home;
+		}
+
+		std::string get_config_filename(std::string _filename)
+		{
+			char buff[MAX_PATH * 2];
+			memset(buff, 0, sizeof(buff) / sizeof(char));
+			::GetModuleFileName(nullptr, buff, sizeof(buff) / sizeof(char));
+			::PathRemoveFileSpec(buff);
+			std::string temp = buff;
+			temp += "/";
+			temp += _filename;
+			return buff;
+		}
+
+		std::string get_data_filename(std::string _filename)
+		{
+			char path_name[ MAX_PATH * 4 ];
+			wchar_t* wide_path = nullptr;
+			std::string result;
+			::SHGetKnownFolderPath(FOLDERID_RoamingAppData, KF_FLAG_DEFAULT, NULL, &wide_path);
+			if (wide_path)
+			{
+				istring<2048> temp = wide_path;
+				PathAppend(temp.c_str_w(), application_folder_name.c_str());
+				if (CreateDirectory(temp.c_str(), NULL) || ERROR_ALREADY_EXISTS == GetLastError()) {
+					PathAppend(temp.c_str_w(), _filename.c_str());
+					result = temp;
+				}
+				else {
+					// Failed to create directory
+				}
+			}
+			return result;
 		}
 
 		void wait()

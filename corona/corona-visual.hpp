@@ -31,6 +31,10 @@ namespace corona {
 
 	void put_json(D2D1_SIZE_U& _dest, json& _src)
 	{
+		if (!_src.has_members({ "width", "height" })) {
+			std::cout << "D2D1_SIZE_U needs a width and height" << std::endl;
+			std::cout << _src.to_json() << std::endl;
+		}
 		_dest.width = (double)_src["width"];
 		_dest.height = (double)_src["height"];
 	}
@@ -45,6 +49,10 @@ namespace corona {
 
 	void put_json(D2D1_RECT_F& _dest, json& _src)
 	{
+		if (!_src.has_members({ "left", "top", "right", "bottom" })) {
+			std::cout << "D2D1_RECT_F needs a crop and size" << std::endl;
+			std::cout << _src.to_json() << std::endl;
+		}
 		_dest.left = (double)_src["left"];
 		_dest.top = (double)_src["top"];
 		_dest.right = (double)_src["right"];
@@ -66,6 +74,11 @@ namespace corona {
 
 	void put_json(sizeCrop& _dest, json& _src)
 	{
+		if (!_src.has_members({ "crop", "size" })) {
+			std::cout << "sizeCrop needs a crop and size" << std::endl;
+			std::cout << _src.to_json() << std::endl;
+		}
+
 		json jcrop, jsize;
 		jcrop = _src["crop"];
 		jsize = _src["size"];
@@ -187,6 +200,11 @@ namespace corona {
 
 	void put_json(gradientStop& _dest, json& _src)
 	{
+		if (!_src.has_members({ "color", "position" })) {
+			std::cout << "gradientStop needs a color and position" << std::endl;
+			std::cout << _src.to_json() << std::endl;
+		}
+
 		_dest.stop_position = (double)_src["position"];
 		put_json(_dest.stop_color, "color", _src);
 	}
@@ -255,6 +273,11 @@ namespace corona {
 	{
 		json_parser jp;
 
+		if (!_src.has_members({ "name", "file_name", "crop", "sizes"})) {
+			std::cout << "bitmap needs a name and filename and crop and sizes" << std::endl;
+			std::cout << _src.to_json() << std::endl;
+		}
+
 		_dest.name = _src["name"];
 		_dest.file_name = _src["file_name"];
 		_dest.resource_id = (int)_src["resource_id"];
@@ -305,6 +328,11 @@ namespace corona {
 
 	void put_json(bitmapBrushRequest& _dest, json& _src)
 	{
+		if (!_src.has_members({ "name", "file_name" })) {
+			std::cout << "bitmap_brush must have name and file_name" << std::endl;
+			std::cout << _src.to_json() << std::endl;
+		}
+
 		_dest.name = _src["name"];
 		_dest.bitmapName = _src["file_name"];
 	}
@@ -366,6 +394,11 @@ namespace corona {
 	void put_json(linearGradientBrushRequest& _dest, json& _src)
 	{
 		json_parser jp;
+
+		if (!_src.has_members({ "name", "start", "stop", "size", "stops" })) {
+			std::cout << "linear_brush must have name, start, size, and stops" << std::endl;
+			std::cout << _src.to_json() << std::endl;
+		}
 
 		_dest.name = (std::string)_src["name"];
 
@@ -457,6 +490,11 @@ namespace corona {
 	{
 		json_parser jp;
 
+		if (!_src.has_members({ "name", "center", "offset", "size", "radiusX", "radiusY", "stops"})) {
+			std::cout << "radial_brush must have name, center, offset, size, radiusX, radiusY and stops" << std::endl;
+			std::cout << _src.to_json() << std::endl;
+		}
+
 		_dest.name = (std::string)_src["name"];
 
 		json jcenter, joffset, jsize, jstops, jstop;
@@ -520,6 +558,11 @@ namespace corona {
 	void put_json(solidBrushRequest& _dest, json& _src)
 	{
 		json_parser jp;
+
+		if (!_src.has_members({ "name", "color" })) {
+			std::cout << "solid_brush must have name and color" << std::endl;
+			std::cout << _src.to_json() << std::endl;
+		}
 
 		_dest.name = (std::string)_src["name"];
 		put_json(_dest.brushColor, "color", _src);
@@ -912,19 +955,19 @@ namespace corona {
 
 		switch (_src.brush_type) {
 		case brush_types::solid_brush_type:
-			_dest.put_member("type", "solid");
+			_dest.put_member("class_name", "solid_brush");
 			get_json(_dest, *_src.solid_brush);
 			break;
 		case brush_types::linear_brush_type:
-			_dest.put_member("type", "linear");
+			_dest.put_member("class_name", "linear_brush");
 			get_json(_dest, *_src.linear_brush);
 			break;
 		case brush_types::radial_brush_type:
-			_dest.put_member("type", "radial");
+			_dest.put_member("class_name", "radial_brush");
 			get_json(_dest, *_src.radial_brush);
 			break;
 		case brush_types::bitmap_brush_type:
-			_dest.put_member("type", "bitmap");
+			_dest.put_member("class_name", "bitmap_brush");
 			get_json(_dest, *_src.bitmap_brush);
 			break;
 		}
@@ -934,26 +977,26 @@ namespace corona {
 	{
 		json_parser jp;
 
-		std::string jtype = _src.get_member("type");
-		if (jtype == "solid")
+		std::string jtype = _src.get_member("class_name");
+		if (jtype == "solid_brush")
 		{
 			solidBrushRequest sbr;
 			put_json(sbr, _src);
 			_dest = sbr;
 		}
-		else if (jtype == "linear")
+		else if (jtype == "linear_brush")
 		{
 			linearGradientBrushRequest lgbr;
 			put_json(lgbr, _src);
 			_dest = lgbr;
 		}
-		else if (jtype == "radial")
+		else if (jtype == "radial_brush")
 		{
 			radialGradientBrushRequest rgbr;
 			put_json(rgbr, _src);
 			_dest = rgbr;
 		}
-		else if (jtype == "bitmap")
+		else if (jtype == "bitmap_brush")
 		{
 			radialGradientBrushRequest rgbr;
 			put_json(rgbr, _src);
@@ -1075,6 +1118,12 @@ namespace corona {
 
 	void put_json(textStyleRequest& _dest, json& _src)
 	{
+
+		if (!_src.has_members({ "name", "font_name", "font_size" })) {
+			std::cout << "text style must have name, font_name, and font_size." << std::endl;
+			std::cout << "text style may also have bold, italics, underline, strike_through, line_spacing, wrap_text, character_spacing, font_stretch." << std::endl;
+			std::cout << _src.to_json() << std::endl;
+		}
 		_dest.name = _src["name"];
 		_dest.fontName = _src["font_name"];
 		_dest.fontSize = (double)_src["font_size"];
@@ -1122,6 +1171,16 @@ namespace corona {
 		generalBrushRequest shape_border_brush;
 		generalBrushRequest box_fill_brush;
 		generalBrushRequest shape_fill_brush;
+
+		void set_default_name(std::string _name)
+		{
+			name = _name;
+			text_style.name = "text_" + _name;
+			box_border_brush.set_name("boxborder_" + _name);
+			shape_border_brush.set_name("shapeborder_" + _name);
+			box_fill_brush.set_name("boxfill_" + _name);
+			shape_fill_brush.set_name("shapefill_" + _name);
+		}
 	};
 
 	void get_json(json& _dest, viewStyleRequest& _src)
@@ -1152,6 +1211,13 @@ namespace corona {
 
 	void put_json(viewStyleRequest& _dest, json& _src)
 	{
+
+		if (!_src.has_members({ "text_style" })) {
+			std::cout << "A style must have a text_style member, and may also have these:" << std::endl;
+			std::cout << "box_border_brush" << "shape_border_brush" << "box_fill_brush" << "shape_fill_brush" << std::endl;
+			return;
+		}
+
 		json text_style = _src["text_style"];
 		json box_border = _src["box_border_brush"];
 		json shape_border = _src["shape_border_brush"];

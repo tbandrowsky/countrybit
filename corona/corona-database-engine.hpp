@@ -64,26 +64,30 @@ namespace corona
 			json_parser jp;
 			try {
 				application* _app = application::get_application();
-				file f = _app->open_file(file_name, file_open_types::open_existing);
-				if (f.success()) {
-					auto fsize = f.size();
-					buffer b(fsize + 1);
-					auto result = co_await f.read(0, b.get_ptr(), fsize);
-					if (result.success) {
-						crypto crypter;
-						if (b.is_safe_string()) {
-							std::string s_contents = b.get_ptr();
-							if (s_contents != last_contents) {
-								json temp_contents = jp.parse_object(s_contents);
-								if (!jp.parse_errors.size()) {
-									last_contents = contents;
-									contents = temp_contents;
-									co_return true;
+				if (!file_name.empty()) {
+					std::cout << "polling " << file_name << std::endl;
+					file f = _app->open_file(file_name, file_open_types::open_existing);
+					if (f.success()) {
+						auto fsize = f.size();
+						buffer b(fsize + 1);
+						auto result = co_await f.read(0, b.get_ptr(), fsize);
+						if (result.success) {
+							crypto crypter;
+							if (b.is_safe_string()) {
+								std::string s_contents = b.get_ptr();
+								if (s_contents != last_contents) {
+									json temp_contents = jp.parse_object(s_contents);
+									if (!jp.parse_errors.size()) {
+										last_contents = contents;
+										contents = temp_contents;
+										co_return true;
+									}
 								}
 							}
 						}
 					}
 				}
+
 			}
 			catch (std::exception exc)
 			{
@@ -635,6 +639,11 @@ private:
 			if (!class_definition.has_member("ClassDescription"))
 			{
 				result = create_response(check_class_request, false, "Class must have a description", class_definition, 0.0);
+			}
+
+			if (!class_definition.has_member("Forms"))
+			{
+				result = create_response(check_class_request, false, "Class must have a forms collection, even if empty.", class_definition, 0.0);
 			}
 
 			if (!class_definition.has_member("Fields") || !class_definition["Fields"].is_object())
@@ -1419,7 +1428,7 @@ private:
 		void read_schema(application* _app)
 		{
 			try {
-				file_transaction<relative_ptr_type> schema_tran = schema_file.poll(_app);
+				file_transaction<relative_ptr_type> schema_tran = schema_file.poll();
 				if (schema_tran.wait() != null_row)
 				{
 					auto schema_task = apply_schema(schema_file.contents);
@@ -1432,33 +1441,28 @@ private:
 			}
 		}
 
-		void watch_config_schema()
+		void poll_config_schema()
 		{
-			if (watch_polling) 
-			{
-				threadomatic::run([this]() -> void
-					{
-						try {
-							file_transaction<relative_ptr_type> config_tran = config_file.poll();
-							if (config_tran.wait())
-							{
-								apply_config(config_file.contents);
-							}
-							file_transaction<relative_ptr_type> schema_tran = schema_file.poll();
-							if (schema_tran.wait())
-							{
-								auto schema_task = apply_schema(schema_file.contents);
-								schema_task.wait();
-							}
-							::Sleep(1000);
-							watch_config_schema();
-						}
-						catch (std::exception exc)
+			threadomatic::run([this]() -> void
+				{
+					try {
+						file_transaction<relative_ptr_type> config_tran = config_file.poll();
+						if (config_tran.wait())
 						{
-							std::cout << "File change exception:" << exc.what() << std::endl;
+							apply_config(config_file.contents);
 						}
-					});
-			}
+						file_transaction<relative_ptr_type> schema_tran = schema_file.poll();
+						if (schema_tran.wait())
+						{
+							auto schema_task = apply_schema(schema_file.contents);
+							schema_task.wait();
+						}
+					}
+					catch (std::exception exc)
+					{
+						std::cout << "File change exception:" << exc.what() << std::endl;
+					}
+				});
 		}
 
 		database_transaction<relative_ptr_type> open_database(relative_ptr_type _header_location)
@@ -1664,7 +1668,7 @@ private:
 					json por = create_request(_send_request, ul);
 					co_await put_object(por);
 
-					std::string code_email = "Your Countrybit confirmation code is " + confirmation_code;
+					std::string code_email = "Your Country Video Games confirmation code is " + confirmation_code;
 					sendgrid_client sgc;
 					sgc.api_key = send_grid_api_key;
 
@@ -1673,7 +1677,7 @@ private:
 					json user = co_await get_object(gur);
 					if (user["Success"])
 					{
-						sgc.send_email(user, "Countrybit Confirmation Code", code_email, "text/plain");
+						sgc.send_email(user, "Country Video Games Confirmation Code", code_email, "text/plain");
 						response = create_response(user_name, auth_receive_login_confirmation_code, true, "Ok", send_data, 0.0);
 					}
 					else {
@@ -1796,9 +1800,9 @@ private:
 					json user = co_await get_object(gur);
 					if (user["Success"])
 					{
-						std::string code_email = "Your Countrybit password reset code is " + confirmation_code;
+						std::string code_email = "Your Country Video Games password reset code is " + confirmation_code;
 
-						sgc.send_email(user, "Countrybit Password Reset Code", code_email, "text/plain");
+						sgc.send_email(user, "Country Video Games Password Reset Code", code_email, "text/plain");
 						response = create_response(user_name, auth_receive_reset_password_code, true, "Ok", jp.create_object(), 0.0);
 					}
 					else 

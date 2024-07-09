@@ -126,7 +126,9 @@ namespace corona
 
 		revolution_application()
 		{
-			st = styles.get_style();
+
+			application::get_application()->application_folder_name = "countryvideogames";
+			application::get_application()->application_name = "revolution";
 
 			std::cout << "Revolution Client Startup at " << std::filesystem::current_path()  << std::endl;
 

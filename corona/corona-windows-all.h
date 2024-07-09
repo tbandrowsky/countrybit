@@ -50,6 +50,7 @@ For Future Consideration
 #include "mfapi.h"
 #include "mfidl.h"
 #include "mfreadwrite.h"
+#include "security.h"
 
 #include "opencv2/opencv.hpp"
 #include "ZXing/ReadBarcode.h"

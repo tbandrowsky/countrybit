@@ -404,6 +404,11 @@ namespace corona
 		{
 			json jbox, jmargin, jpadding;
 
+			if (!_src.has_members({ "id", "box" })) {
+				std::cout << "a control must have an id and box defined for layout, along with these optional properties: padding, margin, tooltip_text, json_field_name" << std::endl;
+				return;
+			}
+
 			jbox = _src["box"];
 			jmargin = _src["margin"];
 			jpadding = _src["padding"];

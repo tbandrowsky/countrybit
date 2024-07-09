@@ -474,10 +474,10 @@ namespace corona
 			*(vs.get()) = _request;
 			viewStyles[_request.name.c_str()] = vs;
 			setTextStyle(&_request.text_style);
-			setSolidColorBrush(&_request.box_border_color);
-			setSolidColorBrush(&_request.box_fill_color);
-			setSolidColorBrush(&_request.shape_border_color);
-			setSolidColorBrush(&_request.shape_fill_color);
+			setBrush(&_request.box_border_brush);
+			setBrush(&_request.box_fill_brush);
+			setBrush(&_request.shape_border_brush);
+			setBrush(&_request.shape_fill_brush);
 		}
 
 		virtual void clearViewStyles()
@@ -877,15 +877,14 @@ namespace corona
 			view_style_name(style_name, style_composed_name, _state);
 
 			auto vs = viewStyles[style_composed_name.c_str()];
-			auto& rectFill = vs->box_fill_color;
-			drawRectangle(&_rect, vs->box_border_color.name, vs->box_border_thickness, vs->box_fill_color.name);
+			drawRectangle(&_rect, vs->box_border_brush.get_name(), vs->box_border_thickness, vs->box_fill_brush.get_name());
 
 			_rect.h -= vs->box_border_thickness * 2.0;
 			_rect.w -= vs->box_border_thickness * 2.0;
 			_rect.x += vs->box_border_thickness;
 			_rect.y += vs->box_border_thickness;
 
-			drawText(_text, &_rect, vs->text_style.name, vs->shape_fill_color.name);
+			drawText(_text, &_rect, vs->text_style.name, vs->shape_fill_brush.get_name());
 
 #if OUTLINE_GUI
 

@@ -159,6 +159,20 @@ namespace corona
 
 	void put_json(presentation_style& _dest, json& _src)
 	{
+		if (!_src.has_members({ "colors", "page_style", "caption_style",
+			"title_style", "subtitle_style", 
+			"chapter_title_style", "chapter_subtitle_style", 
+			"paragraph_style", "form_style", "label_style"
+			"error_style", "success_style", "code_style"})) {
+			std::cout << "style sheet must have these members:" << std::endl;
+			std::cout << "colors" <<"page_style" <<"caption_style" <<
+				"title_style" <<"subtitle_style" <<
+				"chapter_title_style" <<"chapter_subtitle_style" <<
+				"paragraph_style" <<"form_style" <<"label_style" <<
+				"error_style" <<"success_style" <<"code_style" << std::endl;
+			return;
+		}
+
 		json colors = _src["colors"];
 
 		_dest.Colors.clear();
@@ -166,86 +180,145 @@ namespace corona
 
 		json page_style = _src["page_style"];
 		if (page_style.is_object()) {
-			_dest.PageStyle = std::make_shared<viewStyleRequest>();
+			if (!_dest.PageStyle) {
+				_dest.PageStyle = std::make_shared<viewStyleRequest>();
+			}
 			put_json(*_dest.PageStyle.get(), page_style);
+			if (_dest.PageStyle->name.empty()) {
+				_dest.PageStyle->set_default_name( "page_style" );
+			}
 		}
 
 		json caption_style = _src["caption_style"];
 		if (caption_style.is_object()) {
-			_dest.CaptionStyle = std::make_shared<viewStyleRequest>();
+			if (!_dest.CaptionStyle) {
+				_dest.CaptionStyle = std::make_shared<viewStyleRequest>();
+			}
 			put_json(*_dest.CaptionStyle.get(), caption_style);
+			if (_dest.CaptionStyle->name.empty()) {
+				_dest.CaptionStyle->set_default_name("caption_style");
+			}
 		}
 
 		json title_style = _src["title_style"];
 		if (title_style.is_object()) {
-			_dest.TitleStyle = std::make_shared<viewStyleRequest>();
+			if (!_dest.TitleStyle) {
+				_dest.TitleStyle = std::make_shared<viewStyleRequest>();
+			}
 			put_json(*_dest.TitleStyle.get(), title_style);
+			if (_dest.TitleStyle->name.empty()) {
+				_dest.TitleStyle->set_default_name("title_style");
+			}
 		}
 
 		json subtitle_style = _src["subtitle_style"];
 		if (subtitle_style.is_object()) {
-
-			_dest.SubtitleStyle = std::make_shared<viewStyleRequest>();
+			if (!_dest.SubtitleStyle) {
+				_dest.SubtitleStyle = std::make_shared<viewStyleRequest>();
+			}
 			put_json(*_dest.SubtitleStyle.get(), subtitle_style);
+			if (_dest.SubtitleStyle->name.empty()) {
+				_dest.SubtitleStyle->set_default_name("subtitle_style");
+			}
 		}
 
 		json chapter_title_style = _src["chapter_title_style"];
 		if (chapter_title_style.is_object()) {
-			_dest.ChapterTitleStyle = std::make_shared<viewStyleRequest>();
+			if (!_dest.ChapterTitleStyle) {
+				_dest.ChapterTitleStyle = std::make_shared<viewStyleRequest>();
+			}
 			put_json(*_dest.ChapterTitleStyle.get(), chapter_title_style);
+			if (_dest.ChapterTitleStyle->name.empty()) {
+				_dest.ChapterTitleStyle->set_default_name("chapter_title_style");
+			}
 		}
 
 		json chapter_subtitle_style = _src["chapter_subtitle_style"];
 		if (chapter_subtitle_style.is_object()) {
-
-			_dest.ChapterSubTitleStyle = std::make_shared<viewStyleRequest>();
+			if (!_dest.ChapterSubTitleStyle) {
+				_dest.ChapterSubTitleStyle = std::make_shared<viewStyleRequest>();
+			}
 			put_json(*_dest.ChapterSubTitleStyle.get(), chapter_subtitle_style);
+			if (_dest.ChapterSubTitleStyle->name.empty()) {
+				_dest.ChapterSubTitleStyle->set_default_name("chapter_subtitle_style");
+			}
 		}
 
 		json paragraph_style = _src["paragraph_style"];
 		if (paragraph_style.is_object()) {
-
-			_dest.ParagraphStyle = std::make_shared<viewStyleRequest>();
+			if (!_dest.ParagraphStyle) {
+				_dest.ParagraphStyle = std::make_shared<viewStyleRequest>();
+			}
 			put_json(*_dest.ParagraphStyle.get(), paragraph_style);
+			if (_dest.ParagraphStyle->name.empty()) {
+				_dest.ParagraphStyle->set_default_name("paragraph_style");
+			}
 		}
 
 		json form_style = _src["form_style"];
 		if (form_style.is_object()) {
-
-			_dest.FormStyle = std::make_shared<viewStyleRequest>();
+			if (!_dest.FormStyle) {
+				_dest.FormStyle = std::make_shared<viewStyleRequest>();
+			}
 			put_json(*_dest.FormStyle.get(), form_style);
+			if (_dest.FormStyle->name.empty()) {
+				_dest.FormStyle->set_default_name("form_style");
+			}
 		}
 
 		json label_style = _src["label_style"];
 		if (label_style.is_object()) {
-
-			_dest.LabelStyle = std::make_shared<viewStyleRequest>();
+			if (!_dest.LabelStyle) {
+				_dest.LabelStyle = std::make_shared<viewStyleRequest>();
+			}
 			put_json(*_dest.LabelStyle.get(), label_style);
+			if (_dest.LabelStyle->name.empty()) {
+				_dest.LabelStyle->set_default_name("label_style");
+			}
 		}
 
 		json placeholder_style = _src["placeholder_style"];
 		if (placeholder_style.is_object()) {
-
-			_dest.PlaceholderStyle = std::make_shared<viewStyleRequest>();
+			if (!_dest.PlaceholderStyle) {
+				_dest.PlaceholderStyle = std::make_shared<viewStyleRequest>();
+			}
 			put_json(*_dest.PlaceholderStyle.get(), placeholder_style);
+			if (_dest.PlaceholderStyle->name.empty()) {
+				_dest.PlaceholderStyle->set_default_name("placeholder_style");
+			}
 		}
 
 		json error_style = _src["error_style"];
 		if (error_style.is_object()) {
-			_dest.ErrorStyle = std::make_shared<viewStyleRequest>();
+			if (!_dest.ErrorStyle) {
+				_dest.ErrorStyle = std::make_shared<viewStyleRequest>();
+			}
 			put_json(*_dest.ErrorStyle.get(), error_style);
+			if (_dest.ErrorStyle->name.empty()) {
+				_dest.ErrorStyle->set_default_name("error_style");
+			}
 		}
 
 		json success_style = _src["success_style"];
 		if (success_style.is_object()) {
-			_dest.SuccessStyle = std::make_shared<viewStyleRequest>();
+			if (!_dest.SuccessStyle) {
+				_dest.SuccessStyle = std::make_shared<viewStyleRequest>();
+			}
 			put_json(*_dest.SuccessStyle.get(), success_style);
+			if (_dest.SuccessStyle->name.empty()) {
+				_dest.SuccessStyle->set_default_name("success_style");
+			}
 		}
 
 		json code_style = _src["code_style"];
 		if (code_style.is_object()) {
-			_dest.CodeStyle = std::make_shared<viewStyleRequest>();
+			if (!_dest.CodeStyle) {
+				_dest.CodeStyle = std::make_shared<viewStyleRequest>();
+			}
 			put_json(*_dest.CodeStyle.get(), code_style);
+			if (_dest.CodeStyle->name.empty()) {
+				_dest.CodeStyle->set_default_name("code_style");
+			}
 		}
 	}
 
@@ -253,40 +326,51 @@ namespace corona
 	class presentation_style_factory
 	{
 		std::string current_style;
+		std::map<std::string, std::shared_ptr<presentation_style>> style_sheets;
 
-		void create_countrybit_styles();
+		void create_default_styles();
 
-	public:
-		std::map<std::string, presentation_style> styles;
+		static presentation_style_factory* current;
 
 		presentation_style_factory();
-		presentation_style* get_style();
 
-		void load_styles(std::string _name, json& _src);
+	public:
+
+		static presentation_style_factory* get_current()
+		{
+			if (current == nullptr) {
+				current = new presentation_style_factory();
+			}
+			return current;
+		}
+
+		presentation_style* get_style();
+		void load_style_sheet(json& _src);
 	};
+
+	presentation_style_factory *presentation_style_factory::current = nullptr;
 
 	// 4D6DFF
 
 	presentation_style_factory::presentation_style_factory()
 	{
-		create_countrybit_styles();
+		create_default_styles();
 	}
 
-	void presentation_style_factory::create_countrybit_styles()
+	void presentation_style_factory::create_default_styles()
 	{
-		presentation_style countrybit;
+		std::shared_ptr<presentation_style> countrybit = std::make_shared<presentation_style>();
 
 		std::string bigFont = "TW Cent MT, Century Gothic, Arial";
 		std::string textFont = "Tahoma, Arial";
 
-		countrybit.PrimaryFont = textFont;
+		countrybit->PrimaryFont = textFont;
 
-		countrybit.Colors = {
+		countrybit->Colors = {
 			{ "Blue", {"34657F", "D4E1E8", "AACDDA", "6399AE", "34657F", "081F2C" } },
 			{ "Gray", { "7C878E", "DEE1E1", "C1C6C8", "A2AAAD", "7C878E", "5B6770" } },
 			{ "Green", { "4BA24D", "C8DFBC", "AFD29E", "6DB658", "4BA24D", "008A41" } },
 			{ "Plum", { "621244", "D7D3DB", "C1B2C3", "996F8D", "862663", "621244"} },
-			{ "Khaki", { "B6B7A2", "DEDDD3", "CBCBBC", "B6B7A2", "888F6E", "67724C" } },
 			{ "Khaki", { "B6B7A2", "DEDDD3", "CBCBBC", "B6B7A2", "888F6E", "67724C" } },
 			{ "Deductible", { "34657F" } },
 			{ "Lavender", { "E0D4D9", "CDB9C2", "B898A7" } },
@@ -325,35 +409,35 @@ namespace corona
 	{ toColor("#000010"), 1.0 }
 		};
 
-		countrybit.PageStyle = std::make_shared<viewStyleRequest>();
-		countrybit.PageStyle->name = "Page";
-		countrybit.PageStyle->box_fill_brush = generalBrushRequest(lgbr);
-		countrybit.PageStyle->box_fill_brush.set_name("PageBackground");
-		countrybit.PageStyle->box_border_brush = generalBrushRequest();
-		countrybit.PageStyle->box_border_brush.setColor("#C0C0C0");
-		countrybit.PageStyle->box_border_brush.set_name("PageBorder");
-		countrybit.PageStyle->shape_fill_brush = generalBrushRequest();
-		countrybit.PageStyle->shape_fill_brush.setColor("#000000");
-		countrybit.PageStyle->shape_fill_brush.set_name("PageText");
-		countrybit.PageStyle->text_style = text_style;
-		countrybit.PageStyle->text_style.fontName = textFont;
-		countrybit.PageStyle->text_style.fontSize = 14;
-		countrybit.PageStyle->text_style.name = "PageFont";
+		countrybit->PageStyle = std::make_shared<viewStyleRequest>();
+		countrybit->PageStyle->name = "Page";
+		countrybit->PageStyle->box_fill_brush = generalBrushRequest(lgbr);
+		countrybit->PageStyle->box_fill_brush.set_name("PageBackground");
+		countrybit->PageStyle->box_border_brush = generalBrushRequest();
+		countrybit->PageStyle->box_border_brush.setColor("#C0C0C0");
+		countrybit->PageStyle->box_border_brush.set_name("PageBorder");
+		countrybit->PageStyle->shape_fill_brush = generalBrushRequest();
+		countrybit->PageStyle->shape_fill_brush.setColor("#000000");
+		countrybit->PageStyle->shape_fill_brush.set_name("PageText");
+		countrybit->PageStyle->text_style = text_style;
+		countrybit->PageStyle->text_style.fontName = textFont;
+		countrybit->PageStyle->text_style.fontSize = 14;
+		countrybit->PageStyle->text_style.name = "PageFont";
 
-		countrybit.PlaceholderStyle = std::make_shared<viewStyleRequest>();
-		countrybit.PlaceholderStyle->name = "Placeholder";
-		countrybit.PlaceholderStyle->box_fill_brush = generalBrushRequest(lgbr);
-		countrybit.PlaceholderStyle->box_fill_brush.set_name("PlaceholderBackground");
-		countrybit.PlaceholderStyle->box_border_brush = generalBrushRequest();
-		countrybit.PlaceholderStyle->box_border_brush.setColor("#C0C0C0");
-		countrybit.PlaceholderStyle->box_border_brush.set_name("PlaceholderBorder");
-		countrybit.PlaceholderStyle->shape_fill_brush = generalBrushRequest();
-		countrybit.PlaceholderStyle->shape_fill_brush.setColor("#000000");
-		countrybit.PlaceholderStyle->shape_fill_brush.set_name("PlaceholderText");
-		countrybit.PlaceholderStyle->text_style = text_style;
-		countrybit.PlaceholderStyle->text_style.fontName = textFont;
-		countrybit.PlaceholderStyle->text_style.fontSize = 23;
-		countrybit.PlaceholderStyle->text_style.name = "PlaceholderFont";
+		countrybit->PlaceholderStyle = std::make_shared<viewStyleRequest>();
+		countrybit->PlaceholderStyle->name = "Placeholder";
+		countrybit->PlaceholderStyle->box_fill_brush = generalBrushRequest(lgbr);
+		countrybit->PlaceholderStyle->box_fill_brush.set_name("PlaceholderBackground");
+		countrybit->PlaceholderStyle->box_border_brush = generalBrushRequest();
+		countrybit->PlaceholderStyle->box_border_brush.setColor("#C0C0C0");
+		countrybit->PlaceholderStyle->box_border_brush.set_name("PlaceholderBorder");
+		countrybit->PlaceholderStyle->shape_fill_brush = generalBrushRequest();
+		countrybit->PlaceholderStyle->shape_fill_brush.setColor("#000000");
+		countrybit->PlaceholderStyle->shape_fill_brush.set_name("PlaceholderText");
+		countrybit->PlaceholderStyle->text_style = text_style;
+		countrybit->PlaceholderStyle->text_style.fontName = textFont;
+		countrybit->PlaceholderStyle->text_style.fontSize = 23;
+		countrybit->PlaceholderStyle->text_style.name = "PlaceholderFont";
 
 		lgbr.gradientStops = {
 { toColor("#600000"), 0.0 },
@@ -361,22 +445,22 @@ namespace corona
 { toColor("#200000"), 1.0 }
 		};
 
-		countrybit.ErrorStyle = std::make_shared<viewStyleRequest>();
-		countrybit.ErrorStyle->name = "Error";
-		countrybit.ErrorStyle->box_fill_brush = generalBrushRequest(lgbr);
-		countrybit.ErrorStyle->box_fill_brush.set_name("ErrorBackground");
-		countrybit.ErrorStyle->box_border_brush = generalBrushRequest();
-		countrybit.ErrorStyle->box_border_brush.setColor("#C0C0C0");
-		countrybit.ErrorStyle->box_border_brush.set_name("ErrorBorder");
-		countrybit.ErrorStyle->shape_fill_brush = generalBrushRequest();
-		countrybit.ErrorStyle->shape_fill_brush.setColor("#CC0000");
-		countrybit.ErrorStyle->shape_fill_brush.set_name("ErrorText");
-		countrybit.ErrorStyle->text_style = text_style;
-		countrybit.ErrorStyle->text_style.fontName = "Arial";
-		countrybit.ErrorStyle->text_style.fontSize = 14;
-		countrybit.ErrorStyle->text_style.name = "ErrorFont";
-		countrybit.ErrorStyle->text_style.vertical_align = visual_alignment::align_center;
-		countrybit.ErrorStyle->text_style.horizontal_align = visual_alignment::align_near;
+		countrybit->ErrorStyle = std::make_shared<viewStyleRequest>();
+		countrybit->ErrorStyle->name = "Error";
+		countrybit->ErrorStyle->box_fill_brush = generalBrushRequest(lgbr);
+		countrybit->ErrorStyle->box_fill_brush.set_name("ErrorBackground");
+		countrybit->ErrorStyle->box_border_brush = generalBrushRequest();
+		countrybit->ErrorStyle->box_border_brush.setColor("#C0C0C0");
+		countrybit->ErrorStyle->box_border_brush.set_name("ErrorBorder");
+		countrybit->ErrorStyle->shape_fill_brush = generalBrushRequest();
+		countrybit->ErrorStyle->shape_fill_brush.setColor("#CC0000");
+		countrybit->ErrorStyle->shape_fill_brush.set_name("ErrorText");
+		countrybit->ErrorStyle->text_style = text_style;
+		countrybit->ErrorStyle->text_style.fontName = "Arial";
+		countrybit->ErrorStyle->text_style.fontSize = 14;
+		countrybit->ErrorStyle->text_style.name = "ErrorFont";
+		countrybit->ErrorStyle->text_style.vertical_align = visual_alignment::align_center;
+		countrybit->ErrorStyle->text_style.horizontal_align = visual_alignment::align_near;
 
 		lgbr.gradientStops = {
 { toColor("#000010"), 0.0 },
@@ -384,22 +468,22 @@ namespace corona
 { toColor("#000020"), 1.0 }
 		};
 
-		countrybit.SuccessStyle = std::make_shared<viewStyleRequest>();
-		countrybit.SuccessStyle->name = "Success";
-		countrybit.SuccessStyle->box_fill_brush = generalBrushRequest(lgbr);
-		countrybit.SuccessStyle->box_fill_brush.set_name("SuccessBackground");
-		countrybit.SuccessStyle->box_border_brush = generalBrushRequest();
-		countrybit.SuccessStyle->box_border_brush.setColor("#C0C0C0");
-		countrybit.SuccessStyle->box_border_brush.set_name("SuccessBorder");
-		countrybit.SuccessStyle->shape_fill_brush = generalBrushRequest();
-		countrybit.SuccessStyle->shape_fill_brush.setColor("#CC0000");
-		countrybit.SuccessStyle->shape_fill_brush.set_name("SuccessText");
-		countrybit.SuccessStyle->text_style = text_style;
-		countrybit.SuccessStyle->text_style.fontName = textFont;
-		countrybit.SuccessStyle->text_style.fontSize = 16;
-		countrybit.SuccessStyle->text_style.name = "SuccessFont";
-		countrybit.SuccessStyle->text_style.vertical_align = visual_alignment::align_center;
-		countrybit.SuccessStyle->text_style.horizontal_align = visual_alignment::align_near;
+		countrybit->SuccessStyle = std::make_shared<viewStyleRequest>();
+		countrybit->SuccessStyle->name = "Success";
+		countrybit->SuccessStyle->box_fill_brush = generalBrushRequest(lgbr);
+		countrybit->SuccessStyle->box_fill_brush.set_name("SuccessBackground");
+		countrybit->SuccessStyle->box_border_brush = generalBrushRequest();
+		countrybit->SuccessStyle->box_border_brush.setColor("#C0C0C0");
+		countrybit->SuccessStyle->box_border_brush.set_name("SuccessBorder");
+		countrybit->SuccessStyle->shape_fill_brush = generalBrushRequest();
+		countrybit->SuccessStyle->shape_fill_brush.setColor("#CC0000");
+		countrybit->SuccessStyle->shape_fill_brush.set_name("SuccessText");
+		countrybit->SuccessStyle->text_style = text_style;
+		countrybit->SuccessStyle->text_style.fontName = textFont;
+		countrybit->SuccessStyle->text_style.fontSize = 16;
+		countrybit->SuccessStyle->text_style.name = "SuccessFont";
+		countrybit->SuccessStyle->text_style.vertical_align = visual_alignment::align_center;
+		countrybit->SuccessStyle->text_style.horizontal_align = visual_alignment::align_near;
 
 		lgbr.start.x = .5;
 		lgbr.start.y = 0;
@@ -411,202 +495,192 @@ namespace corona
 	{ toColor("#101020"), 1.0 },
 		};
 
-		countrybit.CaptionStyle = std::make_shared<viewStyleRequest>();
-		countrybit.CaptionStyle->name = "Caption";
-		countrybit.CaptionStyle->box_fill_brush = generalBrushRequest(lgbr);
-		countrybit.CaptionStyle->box_fill_brush.set_name("CaptionBackground");
-		countrybit.CaptionStyle->box_border_brush = generalBrushRequest();
-		countrybit.CaptionStyle->box_border_brush.setColor("#C0C0C0");
-		countrybit.CaptionStyle->box_border_brush.set_name("CaptionBorder");
-		countrybit.CaptionStyle->shape_fill_brush = generalBrushRequest();
-		countrybit.CaptionStyle->shape_fill_brush.setColor("#FFFFFF");
-		countrybit.CaptionStyle->shape_fill_brush.set_name("CaptionText");
-		countrybit.CaptionStyle->text_style = text_style;
-		countrybit.CaptionStyle->text_style.fontName = bigFont;
-		countrybit.CaptionStyle->text_style.fontSize = 24;
-		countrybit.CaptionStyle->text_style.name = "CaptionFont";
-		countrybit.CaptionStyle->text_style.vertical_align = visual_alignment::align_center;
-		countrybit.CaptionStyle->text_style.horizontal_align = visual_alignment::align_near;
+		countrybit->CaptionStyle = std::make_shared<viewStyleRequest>();
+		countrybit->CaptionStyle->name = "Caption";
+		countrybit->CaptionStyle->box_fill_brush = generalBrushRequest(lgbr);
+		countrybit->CaptionStyle->box_fill_brush.set_name("CaptionBackground");
+		countrybit->CaptionStyle->box_border_brush = generalBrushRequest();
+		countrybit->CaptionStyle->box_border_brush.setColor("#C0C0C0");
+		countrybit->CaptionStyle->box_border_brush.set_name("CaptionBorder");
+		countrybit->CaptionStyle->shape_fill_brush = generalBrushRequest();
+		countrybit->CaptionStyle->shape_fill_brush.setColor("#FFFFFF");
+		countrybit->CaptionStyle->shape_fill_brush.set_name("CaptionText");
+		countrybit->CaptionStyle->text_style = text_style;
+		countrybit->CaptionStyle->text_style.fontName = bigFont;
+		countrybit->CaptionStyle->text_style.fontSize = 24;
+		countrybit->CaptionStyle->text_style.name = "CaptionFont";
+		countrybit->CaptionStyle->text_style.vertical_align = visual_alignment::align_center;
+		countrybit->CaptionStyle->text_style.horizontal_align = visual_alignment::align_near;
 
-		countrybit.TitleStyle = std::make_shared<viewStyleRequest>();
-		countrybit.TitleStyle->name = "Title";
-		countrybit.TitleStyle->box_fill_brush = generalBrushRequest(lgbr);
-		countrybit.TitleStyle->box_fill_brush.set_name("TitleBackground");
-		countrybit.TitleStyle->box_border_brush = generalBrushRequest();
-		countrybit.TitleStyle->box_border_brush.setColor("#FFFFFF");
-		countrybit.TitleStyle->box_border_brush.set_name("TitleBorder");
-		countrybit.TitleStyle->shape_fill_brush = generalBrushRequest();
-		countrybit.TitleStyle->shape_fill_brush.setColor("#FFFFFF");
-		countrybit.TitleStyle->shape_fill_brush.set_name("TitleText");
-		countrybit.TitleStyle->text_style = text_style;
-		countrybit.TitleStyle->text_style.fontName = bigFont;
-		countrybit.TitleStyle->text_style.fontSize = 38;
-		countrybit.TitleStyle->text_style.name = "TitleFont";
-		countrybit.TitleStyle->text_style.vertical_align = visual_alignment::align_center;
-		countrybit.TitleStyle->text_style.horizontal_align = visual_alignment::align_near;
+		countrybit->TitleStyle = std::make_shared<viewStyleRequest>();
+		countrybit->TitleStyle->name = "Title";
+		countrybit->TitleStyle->box_fill_brush = generalBrushRequest(lgbr);
+		countrybit->TitleStyle->box_fill_brush.set_name("TitleBackground");
+		countrybit->TitleStyle->box_border_brush = generalBrushRequest();
+		countrybit->TitleStyle->box_border_brush.setColor("#FFFFFF");
+		countrybit->TitleStyle->box_border_brush.set_name("TitleBorder");
+		countrybit->TitleStyle->shape_fill_brush = generalBrushRequest();
+		countrybit->TitleStyle->shape_fill_brush.setColor("#FFFFFF");
+		countrybit->TitleStyle->shape_fill_brush.set_name("TitleText");
+		countrybit->TitleStyle->text_style = text_style;
+		countrybit->TitleStyle->text_style.fontName = bigFont;
+		countrybit->TitleStyle->text_style.fontSize = 38;
+		countrybit->TitleStyle->text_style.name = "TitleFont";
+		countrybit->TitleStyle->text_style.vertical_align = visual_alignment::align_center;
+		countrybit->TitleStyle->text_style.horizontal_align = visual_alignment::align_near;
 
-		countrybit.SubtitleStyle = std::make_shared<viewStyleRequest>();
-		countrybit.SubtitleStyle->name = "Subtitle";
-		countrybit.SubtitleStyle->box_fill_brush = generalBrushRequest(lgbr);
-		countrybit.SubtitleStyle->box_fill_brush.set_name("SubtitleBackground");
-		countrybit.SubtitleStyle->box_border_brush = generalBrushRequest();
-		countrybit.SubtitleStyle->box_border_brush.setColor("#FFFFFF");
-		countrybit.SubtitleStyle->box_border_brush.set_name("SubtitleBorder");
-		countrybit.SubtitleStyle->shape_fill_brush = generalBrushRequest();
-		countrybit.SubtitleStyle->shape_fill_brush.setColor("#FFFFFF");
-		countrybit.SubtitleStyle->shape_fill_brush.set_name("SubtitleText");
-		countrybit.SubtitleStyle->text_style = text_style;
-		countrybit.SubtitleStyle->text_style.fontName = bigFont;
-		countrybit.SubtitleStyle->text_style.fontSize = 20;
-		countrybit.SubtitleStyle->text_style.name = "SubtitleFont";
-		countrybit.SubtitleStyle->text_style.vertical_align = visual_alignment::align_center;
-		countrybit.SubtitleStyle->text_style.horizontal_align = visual_alignment::align_near;
+		countrybit->SubtitleStyle = std::make_shared<viewStyleRequest>();
+		countrybit->SubtitleStyle->name = "Subtitle";
+		countrybit->SubtitleStyle->box_fill_brush = generalBrushRequest(lgbr);
+		countrybit->SubtitleStyle->box_fill_brush.set_name("SubtitleBackground");
+		countrybit->SubtitleStyle->box_border_brush = generalBrushRequest();
+		countrybit->SubtitleStyle->box_border_brush.setColor("#FFFFFF");
+		countrybit->SubtitleStyle->box_border_brush.set_name("SubtitleBorder");
+		countrybit->SubtitleStyle->shape_fill_brush = generalBrushRequest();
+		countrybit->SubtitleStyle->shape_fill_brush.setColor("#FFFFFF");
+		countrybit->SubtitleStyle->shape_fill_brush.set_name("SubtitleText");
+		countrybit->SubtitleStyle->text_style = text_style;
+		countrybit->SubtitleStyle->text_style.fontName = bigFont;
+		countrybit->SubtitleStyle->text_style.fontSize = 20;
+		countrybit->SubtitleStyle->text_style.name = "SubtitleFont";
+		countrybit->SubtitleStyle->text_style.vertical_align = visual_alignment::align_center;
+		countrybit->SubtitleStyle->text_style.horizontal_align = visual_alignment::align_near;
 
-		countrybit.AuthorsCreditStyle = std::make_shared<viewStyleRequest>();
-		countrybit.AuthorsCreditStyle->name = "AuthorsCredit";
-		countrybit.AuthorsCreditStyle->box_fill_brush = generalBrushRequest(lgbr);
-		countrybit.AuthorsCreditStyle->box_fill_brush.set_name("AuthorsCreditBackground");
-		countrybit.AuthorsCreditStyle->box_border_brush = generalBrushRequest();
-		countrybit.AuthorsCreditStyle->box_border_brush.setColor("#FFFFFF");
-		countrybit.AuthorsCreditStyle->box_border_brush.set_name("AuthorsCreditBorder");
-		countrybit.AuthorsCreditStyle->shape_fill_brush = generalBrushRequest();
-		countrybit.AuthorsCreditStyle->shape_fill_brush.setColor("#FFFFFF");
-		countrybit.AuthorsCreditStyle->shape_fill_brush.set_name("AuthorsCreditText");
-		countrybit.AuthorsCreditStyle->text_style = text_style;
-		countrybit.AuthorsCreditStyle->text_style.fontName = bigFont;
-		countrybit.AuthorsCreditStyle->text_style.fontSize = 20;
-		countrybit.AuthorsCreditStyle->text_style.name = "AuthorsCreditFont";
-		countrybit.AuthorsCreditStyle->text_style.vertical_align = visual_alignment::align_center;
-		countrybit.AuthorsCreditStyle->text_style.horizontal_align = visual_alignment::align_near;
+		countrybit->AuthorsCreditStyle = std::make_shared<viewStyleRequest>();
+		countrybit->AuthorsCreditStyle->name = "AuthorsCredit";
+		countrybit->AuthorsCreditStyle->box_fill_brush = generalBrushRequest(lgbr);
+		countrybit->AuthorsCreditStyle->box_fill_brush.set_name("AuthorsCreditBackground");
+		countrybit->AuthorsCreditStyle->box_border_brush = generalBrushRequest();
+		countrybit->AuthorsCreditStyle->box_border_brush.setColor("#FFFFFF");
+		countrybit->AuthorsCreditStyle->box_border_brush.set_name("AuthorsCreditBorder");
+		countrybit->AuthorsCreditStyle->shape_fill_brush = generalBrushRequest();
+		countrybit->AuthorsCreditStyle->shape_fill_brush.setColor("#FFFFFF");
+		countrybit->AuthorsCreditStyle->shape_fill_brush.set_name("AuthorsCreditText");
+		countrybit->AuthorsCreditStyle->text_style = text_style;
+		countrybit->AuthorsCreditStyle->text_style.fontName = bigFont;
+		countrybit->AuthorsCreditStyle->text_style.fontSize = 20;
+		countrybit->AuthorsCreditStyle->text_style.name = "AuthorsCreditFont";
+		countrybit->AuthorsCreditStyle->text_style.vertical_align = visual_alignment::align_center;
+		countrybit->AuthorsCreditStyle->text_style.horizontal_align = visual_alignment::align_near;
 
-		countrybit.ChapterTitleStyle = std::make_shared<viewStyleRequest>();
-		countrybit.ChapterTitleStyle->name = "ChapterTitle";
-		countrybit.ChapterTitleStyle->box_fill_brush = generalBrushRequest(lgbr);
-		countrybit.ChapterTitleStyle->box_fill_brush.set_name("ChapterTitleBackground");
-		countrybit.ChapterTitleStyle->box_border_brush = generalBrushRequest();
-		countrybit.ChapterTitleStyle->box_border_brush.setColor("#FFFFFF");
-		countrybit.ChapterTitleStyle->box_border_brush.set_name("ChapterTitleBorder");
-		countrybit.ChapterTitleStyle->shape_fill_brush = generalBrushRequest();
-		countrybit.ChapterTitleStyle->shape_fill_brush.setColor("#000000");
-		countrybit.ChapterTitleStyle->shape_fill_brush.set_name("ChapterTitleText");
-		countrybit.ChapterTitleStyle->text_style = text_style;
-		countrybit.ChapterTitleStyle->text_style.fontName = bigFont;
-		countrybit.ChapterTitleStyle->text_style.fontSize = 20;
-		countrybit.ChapterTitleStyle->text_style.name = "ChapterTitleFont";
-		countrybit.ChapterTitleStyle->text_style.vertical_align = visual_alignment::align_center;
-		countrybit.ChapterTitleStyle->text_style.horizontal_align = visual_alignment::align_near;
+		countrybit->ChapterTitleStyle = std::make_shared<viewStyleRequest>();
+		countrybit->ChapterTitleStyle->name = "ChapterTitle";
+		countrybit->ChapterTitleStyle->box_fill_brush = generalBrushRequest(lgbr);
+		countrybit->ChapterTitleStyle->box_fill_brush.set_name("ChapterTitleBackground");
+		countrybit->ChapterTitleStyle->box_border_brush = generalBrushRequest();
+		countrybit->ChapterTitleStyle->box_border_brush.setColor("#FFFFFF");
+		countrybit->ChapterTitleStyle->box_border_brush.set_name("ChapterTitleBorder");
+		countrybit->ChapterTitleStyle->shape_fill_brush = generalBrushRequest();
+		countrybit->ChapterTitleStyle->shape_fill_brush.setColor("#000000");
+		countrybit->ChapterTitleStyle->shape_fill_brush.set_name("ChapterTitleText");
+		countrybit->ChapterTitleStyle->text_style = text_style;
+		countrybit->ChapterTitleStyle->text_style.fontName = bigFont;
+		countrybit->ChapterTitleStyle->text_style.fontSize = 20;
+		countrybit->ChapterTitleStyle->text_style.name = "ChapterTitleFont";
+		countrybit->ChapterTitleStyle->text_style.vertical_align = visual_alignment::align_center;
+		countrybit->ChapterTitleStyle->text_style.horizontal_align = visual_alignment::align_near;
 
 
-		countrybit.ChapterSubTitleStyle = std::make_shared<viewStyleRequest>();
-		countrybit.ChapterSubTitleStyle->name = "ChapterSubTitle";
-		countrybit.ChapterSubTitleStyle->box_fill_brush = generalBrushRequest(lgbr);
-		countrybit.ChapterSubTitleStyle->box_fill_brush.set_name("ChapterSubTitleBackground");
-		countrybit.ChapterSubTitleStyle->box_border_brush = generalBrushRequest();
-		countrybit.ChapterSubTitleStyle->box_border_brush.setColor("#FFFFFF");
-		countrybit.ChapterSubTitleStyle->box_border_brush.set_name("ChapterSubTitleBorder");
-		countrybit.ChapterSubTitleStyle->shape_fill_brush = generalBrushRequest();
-		countrybit.ChapterSubTitleStyle->shape_fill_brush.setColor("#FFFFFF");
-		countrybit.ChapterSubTitleStyle->shape_fill_brush.set_name("ChapterSubTitleText");
-		countrybit.ChapterSubTitleStyle->text_style = text_style;
-		countrybit.ChapterSubTitleStyle->text_style.fontName = textFont;
-		countrybit.ChapterSubTitleStyle->text_style.fontSize = 14;
-		countrybit.ChapterSubTitleStyle->text_style.underline = 1;
-		countrybit.ChapterSubTitleStyle->text_style.name = "ChapterSubTitleFont";
-		countrybit.ChapterSubTitleStyle->text_style.vertical_align = visual_alignment::align_center;
-		countrybit.ChapterSubTitleStyle->text_style.horizontal_align = visual_alignment::align_near;
+		countrybit->ChapterSubTitleStyle = std::make_shared<viewStyleRequest>();
+		countrybit->ChapterSubTitleStyle->name = "ChapterSubTitle";
+		countrybit->ChapterSubTitleStyle->box_fill_brush = generalBrushRequest(lgbr);
+		countrybit->ChapterSubTitleStyle->box_fill_brush.set_name("ChapterSubTitleBackground");
+		countrybit->ChapterSubTitleStyle->box_border_brush = generalBrushRequest();
+		countrybit->ChapterSubTitleStyle->box_border_brush.setColor("#FFFFFF");
+		countrybit->ChapterSubTitleStyle->box_border_brush.set_name("ChapterSubTitleBorder");
+		countrybit->ChapterSubTitleStyle->shape_fill_brush = generalBrushRequest();
+		countrybit->ChapterSubTitleStyle->shape_fill_brush.setColor("#FFFFFF");
+		countrybit->ChapterSubTitleStyle->shape_fill_brush.set_name("ChapterSubTitleText");
+		countrybit->ChapterSubTitleStyle->text_style = text_style;
+		countrybit->ChapterSubTitleStyle->text_style.fontName = textFont;
+		countrybit->ChapterSubTitleStyle->text_style.fontSize = 14;
+		countrybit->ChapterSubTitleStyle->text_style.underline = 1;
+		countrybit->ChapterSubTitleStyle->text_style.name = "ChapterSubTitleFont";
+		countrybit->ChapterSubTitleStyle->text_style.vertical_align = visual_alignment::align_center;
+		countrybit->ChapterSubTitleStyle->text_style.horizontal_align = visual_alignment::align_near;
 
-		countrybit.CodeStyle = std::make_shared<viewStyleRequest>();
-		countrybit.CodeStyle->name = "Code";
-		countrybit.CodeStyle->box_fill_brush = generalBrushRequest("CodeBackground", "#111111");
-		countrybit.CodeStyle->box_border_brush = generalBrushRequest("CodeBorder", "#FFFFFF");
-		countrybit.CodeStyle->shape_fill_brush = generalBrushRequest("CodeText", "#FFFFFF");
-		countrybit.CodeStyle->text_style = text_style;
-		countrybit.CodeStyle->text_style.fontName = textFont;
-		countrybit.CodeStyle->text_style.fontSize = 14;
-		countrybit.CodeStyle->text_style.underline = 1;
-		countrybit.CodeStyle->text_style.name = "CodeFont";
-		countrybit.CodeStyle->text_style.vertical_align = visual_alignment::align_near;
-		countrybit.CodeStyle->text_style.horizontal_align = visual_alignment::align_near;
+		countrybit->CodeStyle = std::make_shared<viewStyleRequest>();
+		countrybit->CodeStyle->name = "Code";
+		countrybit->CodeStyle->box_fill_brush = generalBrushRequest("CodeBackground", "#111111");
+		countrybit->CodeStyle->box_border_brush = generalBrushRequest("CodeBorder", "#FFFFFF");
+		countrybit->CodeStyle->shape_fill_brush = generalBrushRequest("CodeText", "#FFFFFF");
+		countrybit->CodeStyle->text_style = text_style;
+		countrybit->CodeStyle->text_style.fontName = textFont;
+		countrybit->CodeStyle->text_style.fontSize = 14;
+		countrybit->CodeStyle->text_style.underline = 1;
+		countrybit->CodeStyle->text_style.name = "CodeFont";
+		countrybit->CodeStyle->text_style.vertical_align = visual_alignment::align_near;
+		countrybit->CodeStyle->text_style.horizontal_align = visual_alignment::align_near;
 
-		countrybit.ParagraphStyle = std::make_shared<viewStyleRequest>();
-		countrybit.ParagraphStyle->name = "Paragraph";
-		countrybit.ParagraphStyle->box_fill_brush = generalBrushRequest("ParagraphBackground", "#111111");
-		countrybit.ParagraphStyle->box_border_brush = generalBrushRequest("ParagraphBorder", "#FFFFFF");
-		countrybit.ParagraphStyle->shape_fill_brush = generalBrushRequest("ParagraphText", "#FFFFFF");
-		countrybit.ParagraphStyle->text_style = text_style;
-		countrybit.ParagraphStyle->text_style.fontName = textFont;
-		countrybit.ParagraphStyle->text_style.fontSize = 14;
-		countrybit.ParagraphStyle->text_style.underline = 1;
-		countrybit.ParagraphStyle->text_style.name = "ParagraphFont";
-		countrybit.ParagraphStyle->text_style.vertical_align = visual_alignment::align_near;
-		countrybit.ParagraphStyle->text_style.horizontal_align = visual_alignment::align_near;
+		countrybit->ParagraphStyle = std::make_shared<viewStyleRequest>();
+		countrybit->ParagraphStyle->name = "Paragraph";
+		countrybit->ParagraphStyle->box_fill_brush = generalBrushRequest("ParagraphBackground", "#111111");
+		countrybit->ParagraphStyle->box_border_brush = generalBrushRequest("ParagraphBorder", "#FFFFFF");
+		countrybit->ParagraphStyle->shape_fill_brush = generalBrushRequest("ParagraphText", "#000000");
+		countrybit->ParagraphStyle->text_style = text_style;
+		countrybit->ParagraphStyle->text_style.fontName = textFont;
+		countrybit->ParagraphStyle->text_style.fontSize = 14;
+		countrybit->ParagraphStyle->text_style.underline = 0;
+		countrybit->ParagraphStyle->text_style.name = "ParagraphFont";
 
-		countrybit.ParagraphBackgroundBrush = std::make_shared<generalBrushRequest>();
-		countrybit.ParagraphBorderBrush = std::make_shared<generalBrushRequest>();
-		countrybit.ParagraphBorderWidth = 0;
-		countrybit.ParagraphTextBrush = std::make_shared<generalBrushRequest>();
-		countrybit.ParagraphTextBrush->setColor("#000000");
-		countrybit.ParagraphFont = std::make_shared<textStyleRequest>(text_style);
-		countrybit.ParagraphFont->fontName = textFont;
-		countrybit.ParagraphFont->fontSize = 14;
-		countrybit.ParagraphFont->underline = 0;
-		countrybit.ParagraphBackgroundBrush->set_name("ParagraphBackground");
-		countrybit.ParagraphBorderBrush->set_name("ParagraphBorder");
-		countrybit.ParagraphTextBrush->set_name("ParagraphText");
-		countrybit.ParagraphFont->name = "ParagraphFont";
+		countrybit->LabelStyle = std::make_shared<viewStyleRequest>();
+		countrybit->LabelStyle->name = "Label";
+		countrybit->LabelStyle->box_fill_brush = generalBrushRequest("LabelBackground", "#FFFFFF");
+		countrybit->LabelStyle->box_border_brush = generalBrushRequest("LabelBorder", "#FFFFFF");
+		countrybit->LabelStyle->shape_fill_brush = generalBrushRequest("LabelText", "#000000");
+		countrybit->LabelStyle->text_style = text_style;
+		countrybit->LabelStyle->text_style.fontName = textFont;
+		countrybit->LabelStyle->text_style.fontSize = 14;
+		countrybit->LabelStyle->text_style.underline = 0;
+		countrybit->LabelStyle->text_style.name = "LabelFont";
 
-		countrybit.LabelBackgroundBrush = std::make_shared<generalBrushRequest>();
-		countrybit.LabelBorderBrush = std::make_shared<generalBrushRequest>();
-		countrybit.LabelBorderWidth = 0;
-		countrybit.LabelTextBrush = std::make_shared<generalBrushRequest>();
-		countrybit.LabelTextBrush->setColor("#FFFFFF");
-		countrybit.LabelFont = std::make_shared<textStyleRequest>(text_style);
-		countrybit.LabelFont->fontName = textFont;
-		countrybit.LabelFont->fontSize = 14;
-		countrybit.LabelFont->underline = 0;
-		countrybit.LabelFont->vertical_align = visual_alignment::align_far;
-		countrybit.LabelBackgroundBrush->set_name("LabelBackground");
-		countrybit.LabelBorderBrush->set_name("LabelBorder");
-		countrybit.LabelTextBrush->set_name("LabelText");
-		countrybit.LabelFont->name = "LabelFont";
+		countrybit->FormStyle = std::make_shared<viewStyleRequest>();
+		countrybit->FormStyle->name = "Form";
+		countrybit->FormStyle->box_fill_brush = generalBrushRequest("FormBackground", "#FFFFFF");
+		countrybit->FormStyle->box_border_brush = generalBrushRequest("FormBorder", "#FFFFFF");
+		countrybit->FormStyle->shape_fill_brush = generalBrushRequest("FormText", "#000000");
+		countrybit->FormStyle->text_style = text_style;
+		countrybit->FormStyle->text_style.fontName = textFont;
+		countrybit->FormStyle->text_style.fontSize = 14;
+		countrybit->FormStyle->text_style.underline = 0;
+		countrybit->FormStyle->text_style.name = "FormFont";
 
-		countrybit.FormBackgroundBrush = std::make_shared<generalBrushRequest>();
-		countrybit.FormBorderBrush = std::make_shared<generalBrushRequest>();
-		countrybit.FormBorderWidth = 0;
-		countrybit.FormTextBrush = std::make_shared<generalBrushRequest>();
-		countrybit.FormTextBrush->setColor("#000000");
-		countrybit.FormFont = std::make_shared<textStyleRequest>(text_style);
-		countrybit.FormFont->fontName = textFont;
-		countrybit.FormFont->fontSize = 14;
-		countrybit.FormFont->underline = 0;
-		countrybit.FormBackgroundBrush->set_name("FormBackground");
-		countrybit.FormBorderBrush->set_name("FormBorder");
-		countrybit.FormTextBrush->set_name("FormText");
-		countrybit.FormFont->name = "FormFont";
-
-		styles["Countrybit"] = countrybit;
-		current_style = "Countrybit";
+		style_sheets["default"] = countrybit;
+		current_style = "default";
 	}
 
 	presentation_style *presentation_style_factory::get_style()
 	{
-		return &styles[current_style];
+		return style_sheets[current_style].get();
 	}
 
-	void presentation_style_factory::load_styles(std::string _name, json& _src)
+	void presentation_style_factory::load_style_sheet(json& _src)
 	{
 		lockable me;
 
 		{
 			scope_lock lock(me);
 
-			std::shared_ptr<presentation_style> new_style = std::make_shared<presentation_style>();
+			std::string style_sheet_name = _src["style_sheet_name"];
+			std::shared_ptr<presentation_style> update_style;
 
-			presentation_style* st = new_style.get();
-			
-			put_json(*st, _src);
+			if (!style_sheet_name.empty()) {
 
-			styles.insert_or_assign(_name, new_style);
+				if (style_sheets.contains(style_sheet_name)) {
+					update_style = style_sheets[style_sheet_name];
+					presentation_style* st = update_style.get();
+					put_json(*st, _src);
+				}
+				else 
+				{
+					update_style = std::make_shared<presentation_style>();
+					presentation_style* st = update_style.get();
+					put_json(*st, _src);
+					style_sheets.insert_or_assign(style_sheet_name, update_style);
+				}
+
+				current_style = style_sheet_name;
+			}
 		}
 	}
 }

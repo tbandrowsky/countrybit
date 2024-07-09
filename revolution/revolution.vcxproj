@@ -549,7 +549,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);;Comctl32.lib;Winhttp.lib;D2d1.lib;dwrite.lib;Shlwapi.lib;DXGI.lib;D3D11.lib;DXGUID.lib;Dwmapi.lib;bcrypt.lib;httpapi.lib;opencv_core4.lib; mfplat.lib; mf.lib; mfreadwrite.lib; mfuuid.lib; zxing.lib</AdditionalDependencies>
+      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);;Comctl32.lib;Winhttp.lib;D2d1.lib;dwrite.lib;Shlwapi.lib;DXGI.lib;D3D11.lib;DXGUID.lib;Dwmapi.lib;bcrypt.lib;httpapi.lib;opencv_core4.lib; mfplat.lib; mf.lib; mfreadwrite.lib; mfuuid.lib; zxing.lib; Secur32.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -586,6 +586,9 @@
     </CopyFileToFolders>
   </ItemGroup>
   <ItemGroup>
+    <CopyFileToFolders Include="ui.json">
+      <FileType>Document</FileType>
+    </CopyFileToFolders>
     <None Include="vcpkg.json" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

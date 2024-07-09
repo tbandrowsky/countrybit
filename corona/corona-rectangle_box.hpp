@@ -25,22 +25,6 @@ namespace corona {
 		double bottom() const { return y + h; }
 	};
 
-	void get_json(json& _dest, rectangle& _src)
-	{
-		_dest.put_member("x", _src.x);
-		_dest.put_member("y", _src.y);
-		_dest.put_member("w", _src.w);
-		_dest.put_member("h", _src.h);
-	}
-
-	void put_json(rectangle& _dest, json& _src)
-	{
-		_dest.x = (double)_src["x"];
-		_dest.y = (double)_src["y"];
-		_dest.w = (double)_src["w"];
-		_dest.h = (double)_src["h"];
-	}
-
 	class rectangle_math
 	{
 	public:

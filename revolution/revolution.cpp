@@ -1,6 +1,7 @@
 #define APPLICATION_REVOLUTION 1
 #define APPLICATION_GUITAR 2
 #define APPLICATION_AURA 3
+#define APPLICATION_REPARATIONS 4
 #define APPLICATION_ID APPLICATION_AURA
 
 #if APPLICATION_ID == APPLICATION_REVOLUTION
@@ -16,6 +17,11 @@
 #if APPLICATION_ID == APPLICATION_GUITAR
 #include "app_guitar.hpp"
 #define application_function corona::run_proposal_application;
+#endif
+
+#if APPLICATION_ID == APPLICATION_REPARATIONS
+#include "app_reparations.hpp"
+#define application_function corona::run_reparations_application;
 #endif
 
 int __stdcall WinMain(HINSTANCE hInstance,

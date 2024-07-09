@@ -66,7 +66,6 @@ For Future Consideration
 #include "corona-utility.hpp"
 #include "corona-read_all_string.hpp"
 
-#include "corona-json.hpp"
 #include "corona-store_box.hpp"
 #include "corona-time_box.hpp"
 #include "corona-iarray.hpp"
@@ -78,6 +77,7 @@ For Future Consideration
 #include "corona-int_box.hpp"
 #include "corona-midi_box.hpp"
 #include "corona-object_id_box.hpp"
+
 #include "corona-point_box.hpp"
 #include "corona-wave_box.hpp"
 #include "corona-rectangle_box.hpp"
@@ -87,6 +87,8 @@ For Future Consideration
 #include "corona-messages.hpp"
 #include "corona-http-messages.hpp"
 
+#include "corona-json.hpp"
+#include "corona-json-serialization.hpp"
 #include "corona-queue.hpp"
 #include "corona-function.hpp"
 #include "corona-file.hpp"

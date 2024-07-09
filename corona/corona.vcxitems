@@ -54,6 +54,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-jdatabase_server.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-jfield.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-jobject.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-json-serialization.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-json-table.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-json.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-jvalue.hpp" />

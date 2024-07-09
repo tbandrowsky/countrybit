@@ -456,7 +456,7 @@ namespace corona
 				}
 			};
 
-			ads.draw_item = [app_show, ads](draw_control* _parent, int _index, rectangle _bounds) {
+			ads.draw_item = [app_show, ads](draw_control* _parent, int _index, json& _item, rectangle _bounds) {
 				auto json_object = ads.data[_index];
 				if (json_object.has_member("Source")) {
 					json_object = json_object["Source"];

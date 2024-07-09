@@ -38,8 +38,10 @@ namespace corona {
 		point last_mouse_position;
 		point last_mouse_click;
 
-		json_file_watcher json_pages_watcher;
+		json_file_watcher front_end_watcher;
 		json json_pages;
+
+
 
 	public:
 		int default_focus_id;
@@ -56,6 +58,7 @@ namespace corona {
 			default_focus_id = 0;
 			last_mouse_position = {};
 			last_mouse_click = {};
+			front_end_watcher.file_name = application::get_application()->get_config_filename("ui.json");
 		}
 
 		presentation(std::weak_ptr<applicationBase> _window_host) : window_host(_window_host)
@@ -65,6 +68,7 @@ namespace corona {
 			default_focus_id = 0;
 			last_mouse_position = {};
 			last_mouse_click = {};
+			front_end_watcher.file_name = application::get_application()->get_config_filename("ui.json");
 		}
 
 		int get_control_id(std::string _name, std::function<int()> _id)
@@ -421,7 +425,6 @@ namespace corona {
 		if (cp) {
 			cp->handle_onselect(cp);
 			if (auto phost = window_host.lock()) {
-				auto sheet = styles.get_style();
 				auto pos = phost->getWindowClientPos();
 				cp->arrange(pos.w, pos.h);
 				cp->create(phost);
@@ -882,29 +885,135 @@ namespace corona {
 			pg->hardware_scan();
 		}
 	}
-
+	
 	void presentation::checkPresentationFile()
 	{
-		threadomatic::run([this]()->void {
-			file_transaction<relative_ptr_type> pt = json_pages_watcher.poll();
-			if (pt.wait() != null_row) {
-				lockable me;
-				scope_lock lock(me);
-				json_pages = json_pages_watcher.contents;
-				threadomatic::run_complete(nullptr,
-					[this]() {
-						setPresentationFile();
-					});
-			}
-		});
+		if (!front_end_watcher.file_name.empty()) {
+			threadomatic::run([this]()->void {
+				file_transaction<relative_ptr_type> pt = front_end_watcher.poll();
+				if (pt.wait() != null_row) {
+					json_pages = front_end_watcher.contents;
+					threadomatic::run_complete(nullptr,
+						[this]() {
+							setPresentationFile();
+						});
+				}
+				});
+		}
 	}
 
 	void presentation::setPresentationFile()
 	{
-		json jpages = json_pages.get_member("pages");
-		pages.clear();
 
-		json jstyle = json_pages.get_member("styles");
+		if (json_pages.is_error()) {
+			pages.clear();
+			create_page("errors", [this](page& _pg) {
+				control_builder cb(_pg.get_root_container());
+				cb.grid_view_begin(id_counter::next(), [this](grid_view& rvl) {
+					json_parser jp;
+					array_data_source ads;
+					ads.data = json_pages["errors"];
+/*					using cell_json_size = std::function<point(draw_control* _parent, int _index, rectangle _bounds)>;
+					using cell_json_draw = std::function<void(draw_control* _parent, int _index, rectangle _bounds)>;
+					using cell_json_assets = std::function<void(draw_control* _parent, rectangle _bounds)>;
+					*/
+					ads.draw_item = [this](draw_control* _parent, int _index, json _data, rectangle _bounds) {
+						auto json_object = _data.get_element(_index);
+						auto object_members = json_object.get_members();
+						double x = _bounds.x;
+						double w = 0.0;
+						if (auto win = _parent->window.lock()) {
+							auto& ctxt = win->getContext();
+							ctxt.drawRectangle(&_bounds, "item_border", 1, nullptr);
+							std::string eline = json_object.get_member("line");
+							std::string echar = json_object.get_member("char");
+							std::string etopic = json_object.get_member("topic");
+							std::string eerror = json_object.get_member("error");
+
+							std::string text = std::format("{0}: '{1}' {2} - {3}", eline, echar, etopic, eerror);
+							auto field_bounds = _bounds;
+							field_bounds.x = x;
+							ctxt.drawText(text, &field_bounds, "item_paragraph", "item_foreground");
+							x += w;
+						}
+						};
+					ads.size_item = [this](draw_control* _parent, int _index, json _item, rectangle _bounds) -> point {
+						point pt;
+						pt.x = _bounds.w;
+						pt.y = 50;
+						};
+					ads.assets = [this](draw_control* _parent, rectangle _bounds) {
+						if (auto win = _parent->window.lock()) {
+							auto& ctxt = win->getContext();
+
+							textStyleRequest tsr = {};
+							tsr.fontName = "Arial";
+							tsr.fontSize = 14;
+							tsr.name = "item_paragraph";
+							ctxt.setTextStyle(&tsr);
+
+							solidBrushRequest sbr;
+							sbr.brushColor = toColor("#000000");
+							sbr.name = "item_foreground";
+							ctxt.setSolidColorBrush(&sbr);
+
+							sbr.brushColor = toColor("#FFFFFF");
+							sbr.name = "item_background";
+							ctxt.setSolidColorBrush(&sbr);
+
+							sbr.brushColor = toColor("#C0C0C0");
+							sbr.name = "item_border";
+							ctxt.setSolidColorBrush(&sbr);
+						}
+					};
+					rvl.set_item_source(ads);
+					});
+				});
+			select_page("errors");
+			return;
+		}
+
+		json jstyles = json_pages.get_member("styles");
+		if (jstyles.is_array())
+		{
+			for (auto js : jstyles) {
+				presentation_style_factory::get_current()->load_style_sheet(js);
+			}
+		}
+
+		json jpages = json_pages.get_member("pages");
+		
+		if (jpages.is_array())
+		{
+			pages.clear();
+			for (auto pg : jpages)
+			{
+				if (pg.is_object()) {
+					std::string class_name = pg["class_name"];
+					if (class_name == "page") {
+						std::string name = pg["page_name"];
+						create_page(name, [pg](page& _settings)->void
+							{
+								json_parser jp;
+								auto root = _settings.get_root_container();
+								control_builder cb(root);
+								json jchildren = pg["children"];
+								if (jchildren.is_array()) {
+									for (auto jchild : jchildren) 
+									{
+										auto child = cb.from_json(jchild);
+										root->children.push_back(child);
+									}
+								}
+							});
+					}
+					else 
+					{
+						std::cout << "Unknown class_name: " << class_name << std::endl;
+					}
+				}
+			}
+		}
 	}
 }
 

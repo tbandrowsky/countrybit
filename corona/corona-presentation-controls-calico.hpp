@@ -18,47 +18,83 @@ For Future Consideration
 namespace corona
 {
 
-	struct calico_button_onclick_options
+	struct corona_button_onclick_options
 	{
 		corona_client*					corona_client;
 		std::string						function_name;
 		json							function_data;
 		json							credentials;
+
+		corona_button_onclick_options()
+		{
+			corona_client = nullptr;
+		}
+
+		virtual void get_json(json& _dest)
+		{
+			_dest.put_member("function_name", function_name);
+			_dest.put_member("function_data", function_data);
+			_dest.put_member("credentials", credentials);
+		}
+
+		virtual void put_json(json& _src)
+		{
+			if (!_src.has_members({ "function_name", "function_data", "credentials" }))
+			{
+				std::cout << "corona button must have function_name, function_data, and credentials" << std::endl;
+				std::cout << "function_data can be an explicit json," << std::endl;
+				std::cout << "				an id of a control," << std::endl;
+				std::cout << "				form_parent," << std::endl;
+			}
+			function_name = _src["function_name"];
+			function_data = _src["function_data"];
+			credentials = _src["credentials"];
+		}
 	};
 
-	class calico_button_control : public pushbutton_control
+	class corona_button_control : public pushbutton_control
 	{
 	public:
 		using control_base::id;
 
 		std::shared_ptr<call_status>	status;
-		calico_button_onclick_options	options;
+		corona_button_onclick_options	options;
 
 		using windows_control::enable;
 		using windows_control::disable;
 
-		calico_button_control(container_control_base* _parent, int _id) : pushbutton_control(_parent, _id)
+		corona_button_control(container_control_base* _parent, int _id) : pushbutton_control(_parent, _id)
 		{
 			init();
 		}
 
-		calico_button_control(const calico_button_control& _src) : pushbutton_control(_src) 
+		corona_button_control(const corona_button_control& _src) : pushbutton_control(_src) 
 		{
 			init();
 			status = _src.status;
 			options = _src.options;
 		}
 
-		virtual ~calico_button_control() { ; }
+		virtual ~corona_button_control() { ; }
 
 		void init();
 		virtual double get_font_size() { return text_style.fontSize; }
 
 		virtual void on_subscribe(presentation_base* _presentation, page_base* _page);
 
+		virtual void get_json(json& _dest)
+		{
+			pushbutton_control::get_json(_dest);
+			options.get_json(_dest);
+		}
+		virtual void put_json(json& _src)
+		{
+			pushbutton_control::put_json(_src);
+			options.put_json(_src);
+		}
 	};
 
-	void calico_button_control::on_subscribe(presentation_base* _presentation, page_base* _page)
+	void corona_button_control::on_subscribe(presentation_base* _presentation, page_base* _page)
 	{
 		_page->on_command(this->id, [this, _presentation, _page](command_event evt)
 			{
@@ -66,10 +102,23 @@ namespace corona
 				json data;
 				if (options.function_data.is_object())
 				{
-					if (options.function_data.has_member("SourceControlId")) {
-						int64_t control_id = options.function_data["SourceControlId"];
-						control_base* fvc = this->find(control_id);
-						data = fvc->get_data();
+					std::string from_data = options.function_data.get_member("from");
+					if (!from_data.empty())
+					{
+						if (std::isdigit(from_data[0])) {
+							int64_t control_id = (int64_t)options.function_data["from"];
+							control_base* fvc = this->find(control_id);
+							data = fvc->get_data();
+						}
+						else if (from_data == "form")
+						{
+							for (control_base* p = dynamic_cast<control_base*>(parent); p; p = dynamic_cast<control_base*>(p->parent)) {
+								form_control* fc = dynamic_cast<form_control*>(p);
+								if (fc) {
+									data = fc->get_data();
+								}
+							}
+						}
 					}
 					else
 					{
@@ -82,13 +131,11 @@ namespace corona
 			});
 	}
 
-	void calico_button_control::init()
+	void corona_button_control::init()
 	{
 		set_origin(0.0_px, 0.0_px);
 		set_size(100.0_px, 30.0_px);
 	}
-
-
 }
 
 #endif

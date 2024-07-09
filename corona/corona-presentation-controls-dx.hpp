@@ -1093,8 +1093,8 @@ namespace corona
 		virtual ~camera_view_control();
 	};
 
-	using cell_json_size = std::function<point(draw_control* _parent, int _index, rectangle _bounds)>;
-	using cell_json_draw = std::function<void(draw_control* _parent, int _index, rectangle _bounds)>;
+	using cell_json_size = std::function<point(draw_control* _parent, int _index, json _data, rectangle _bounds)>;
+	using cell_json_draw = std::function<void(draw_control* _parent, int _index, json _data, rectangle _bounds)>;
 	using cell_json_assets = std::function<void(draw_control* _parent, rectangle _bounds)>;
 
 	class array_data_source
