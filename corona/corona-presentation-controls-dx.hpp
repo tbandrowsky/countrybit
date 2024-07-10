@@ -427,7 +427,7 @@ namespace corona
 
 						auto& context = pwindow->getContext();
 
-						auto st = styles.get_style();
+						auto st = presentation_style_factory::get_current()->get_style();
 
 						if (camera_status.size()) {
 
@@ -1108,15 +1108,21 @@ namespace corona
 
 	class grid_control : public draw_control
 	{
-		void init();
 		solidBrushRequest	border_brush;
 	public:
 		grid_control(const grid_control& _src) : draw_control(_src)
 		{
 			border_brush = _src.border_brush;
 		}
-		grid_control(container_control_base* _parent, int _id);
-		virtual ~grid_control();
+		grid_control(container_control_base* _parent, int _id) : draw_control(_parent, _id)
+		{
+			;
+		}
+
+		virtual ~grid_control()
+		{
+			;
+		}
 
 	};
 
@@ -2029,7 +2035,7 @@ namespace corona
 		set_size(200.0_px, 1.0_container);
 		icon_width = 8;
 
-		auto st = styles.get_style();
+		auto st = presentation_style_factory::get_current()->get_style();
 
 		text_style = {};
 		text_style.name = "tab_text_style";

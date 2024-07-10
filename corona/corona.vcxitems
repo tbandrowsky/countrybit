@@ -39,6 +39,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-directxadapter.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-directxadapterbase.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-directxdevices.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-file-monitor.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-file.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-filterable_iterator.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-float_box.hpp" />
@@ -68,7 +69,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-presentation-base.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-presentation-builder.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-presentation-controls-base.hpp" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)corona-presentation-controls-calico.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-presentation-controls-dx-container.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-presentation-controls-dx-text.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-presentation-controls-dx.hpp" />

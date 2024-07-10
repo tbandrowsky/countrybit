@@ -50,9 +50,11 @@ For Future Consideration
 #include "mfapi.h"
 #include "mfidl.h"
 #include "mfreadwrite.h"
+
+#define SECURITY_WIN32
 #include "security.h"
 
-#include "opencv2/opencv.hpp"
-#include "ZXing/ReadBarcode.h"
+//#include "opencv2/opencv.hpp"
+//#include "ZXing/ReadBarcode.h"
 
 #endif

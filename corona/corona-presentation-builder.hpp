@@ -30,6 +30,82 @@ namespace corona
 	class checkbox_list_control;
 	class radiobutton_list_control;
 
+	struct corona_button_onclick_options
+	{
+		corona_client* corona_client;
+		std::string						function_name;
+		json							function_data;
+		json							credentials;
+
+		corona_button_onclick_options()
+		{
+			corona_client = nullptr;
+		}
+
+		virtual void get_json(json& _dest)
+		{
+			_dest.put_member("function_name", function_name);
+			_dest.put_member("function_data", function_data);
+			_dest.put_member("credentials", credentials);
+		}
+
+		virtual void put_json(json& _src)
+		{
+			if (!_src.has_members({ "function_name", "function_data", "credentials" }))
+			{
+				std::cout << "corona button must have function_name, function_data, and credentials" << std::endl;
+				std::cout << "function_data can be an explicit json," << std::endl;
+				std::cout << "				an id of a control," << std::endl;
+				std::cout << "				form_parent," << std::endl;
+			}
+			function_name = _src["function_name"];
+			function_data = _src["function_data"];
+			credentials = _src["credentials"];
+		}
+	};
+
+	class corona_button_control : public pushbutton_control
+	{
+	public:
+		using control_base::id;
+
+		std::shared_ptr<call_status>	status;
+		corona_button_onclick_options	options;
+
+		using windows_control::enable;
+		using windows_control::disable;
+
+		corona_button_control(container_control_base* _parent, int _id) : pushbutton_control(_parent, _id)
+		{
+			init();
+		}
+
+		corona_button_control(const corona_button_control& _src) : pushbutton_control(_src)
+		{
+			init();
+			status = _src.status;
+			options = _src.options;
+		}
+
+		virtual ~corona_button_control() { ; }
+
+		void init();
+		virtual double get_font_size() { return text_style.fontSize; }
+
+		virtual void on_subscribe(presentation_base* _presentation, page_base* _page);
+
+		virtual void get_json(json& _dest)
+		{
+			pushbutton_control::get_json(_dest);
+			options.get_json(_dest);
+		}
+		virtual void put_json(json& _src)
+		{
+			pushbutton_control::put_json(_src);
+			options.put_json(_src);
+		}
+	};
+
 	class form_field 
 	{
 	public:
@@ -128,15 +204,30 @@ namespace corona
 			auto found = std::find_if(root->children.begin(), root->children.end(), [_id](auto& ch) {
 				return ch->id == _id;
 				});
+
+			// check to see if an element of this id exists
 			if (found != std::end(root->children)) {
+				// ok, so now we see if it is of the same type
 				temp = std::dynamic_pointer_cast<control_type>(*found);
+
+				// and, it is not, so we replace it
 				if (temp == nullptr) {
 					temp = std::make_shared<control_type>(cp, _id);
-					*found = temp;
+					if (temp) {
+						// here's our new temp, and we copy the children
+						// this may not be the best plan but it allows us
+						// to easily switch container types.
+						temp->children = (*found)->children;
+						int found_index = std::distance(found, root->children.begin());
+						root->children[found_index] = temp;
+					}
 				}
+
+				// otherwise, we found an existing control of the same type and we use that.
 			}
 			else 
 			{
+				// and, since we found nothing, we go ahead and just shove our new element at the back
 				temp = std::make_shared<control_type>(cp, _id);
 				if (temp) {
 					root->children.push_back(temp);
@@ -1034,12 +1125,21 @@ namespace corona
 
 	class form_field_control : public column_layout
 	{
+		int								field_id;
+		int								label_id;
+		int								prefix_id;
+		int								suffix_id;
+		int								visualization_id;
+		int								edit_block_id;
+
 		std::shared_ptr<label_control>  label;
 		std::shared_ptr<label_control>  prefix;
 		std::shared_ptr<label_control>  suffix;
 		std::shared_ptr<draw_control>	visualization;
 		std::shared_ptr<control_base>	field;
 		std::string						error_text;
+		measure							visualization_height;
+		std::function<void(form_field_control* _src, draw_control* _dest)> draw_visualization;
 
 		form_control*					form;
 
@@ -1059,11 +1159,16 @@ namespace corona
 
 		form_field_control() : form(nullptr)
 		{
-			;
+			label_id = id_counter::next();
+			prefix_id = id_counter::next();
+			suffix_id = id_counter::next();
+			visualization_id = id_counter::next();
+			edit_block_id = id_counter::next();
 		}
 
 		form_field_control(const form_field_control& _src) : column_layout(_src)
 		{
+			field_id = _src.field_id;
 			label = _src.label;
 			prefix = _src.prefix;
 			suffix = _src.suffix;
@@ -1071,11 +1176,17 @@ namespace corona
 			field = _src.field;
 			error_text = _src.error_text;
 			form = _src.form;
+			edit_block_id = _src.edit_block_id;
+			draw_visualization = _src.draw_visualization;
 		}
 
 		form_field_control(container_control_base* _parent, int _id) : column_layout(_parent, _id)
 		{
-			;
+			label_id = id_counter::next();
+			prefix_id = id_counter::next();
+			suffix_id = id_counter::next();
+			visualization_id = id_counter::next();
+			edit_block_id = id_counter::next();
 		}
 
 		std::string get_suffix()
@@ -1133,6 +1244,76 @@ namespace corona
 			return error_text;
 		}
 
+		virtual void get_json(json& _dest)
+		{
+			_dest.put_member("field_id", field_id);
+
+			if (label) {
+				_dest.put_member("label", label->text);
+			}
+			if (prefix) {
+				_dest.put_member("prefix", prefix->text);
+			}
+			if (suffix) {
+				_dest.put_member("suffix", suffix->text);
+			}
+
+			json_parser jp;
+			json control_props = jp.create_object();
+			field->get_json(control_props);
+
+			_dest.put_member("properties", control_props);
+			json jvisualization_height = jp.create_object();		
+			corona::get_json(jvisualization_height, visualization_height);
+		}
+
+		virtual void put_json(json& _src)
+		{
+			int _field_id = _src["field_id"];
+			std::string _label = _src["label"];
+			std::string _prefix = _src["prefix"];
+			std::string _suffix = _src["suffix"];
+			json control_props = _src["properties"];
+			json jvisualization_height = _src["visualization_height"];
+			measure _visualization_height;
+			corona::put_json(_visualization_height, jvisualization_height);
+
+			set_field(
+				_field_id,
+				_label,
+				_prefix,
+				_suffix,
+				control_props,
+				_visualization_height,
+				nullptr
+			);
+		}
+
+		void set_field_visualization(std::function<void(form_field_control* _src, draw_control* _dest)> _draw_visualization)
+		{
+			draw_visualization = _draw_visualization;
+
+			std::string label_text;
+			std::string prefix_text;
+			std::string suffix_text;
+
+			if (label) {
+				label_text = label->text;
+			}
+			if (prefix) {
+				prefix_text = prefix->text;
+			}
+			if (suffix) {
+				suffix_text = suffix->text;
+			}
+
+			json_parser jp;
+			json control_props = jp.create_object();
+			field->get_json(control_props);
+
+			set_field(field_id, label_text, prefix_text, suffix_text, control_props, visualization_height, _draw_visualization);
+		}
+
 		void set_field(
 			int _field_id,
 			std::string _label,
@@ -1143,6 +1324,13 @@ namespace corona
 			std::function<void(form_field_control* _src, draw_control* _dest)> _draw_visualization)
 		{
 			control_builder cb;
+
+			field_id = _field_id;
+			visualization_height = _visualization_height;
+
+			if (_draw_visualization) {
+				draw_visualization = _draw_visualization;
+			}
 
 			set_label(_label);
 
@@ -1156,22 +1344,20 @@ namespace corona
 				set_suffix(_suffix);
 			}
 
-			if (_draw_visualization)
+			if (!_label.empty())
 			{
-				int draw_id = id_counter::next();
-				visualization = create_control<draw_control>(cb, draw_id, [this, _label, _visualization_height, _draw_visualization](draw_control& _settings) {
-					_settings.set_size(1.0_container, _visualization_height);
-					_settings.on_draw = [this, _draw_visualization](draw_control* control) {
-						_draw_visualization(this, control);
-						};
+				label = create_control<label_control>(cb, label_id, [_label](label_control& _settings) {
+					_settings.text = _label;
 					});
 			}
 
-			if (!_label.empty())
+			if (draw_visualization)
 			{
-				int label_id = id_counter::next();
-				label = create_control<label_control>(cb, label_id, [_label](label_control& _settings) {
-					_settings.text = _label;
+				visualization = create_control<draw_control>(cb, visualization_id, [this, _label, _visualization_height](draw_control& _settings) {
+					_settings.set_size(1.0_container, _visualization_height);
+					_settings.on_draw = [this](draw_control* control) {
+						draw_visualization(this, control);
+						};
 					});
 			}
 
@@ -1181,7 +1367,6 @@ namespace corona
 
 			if (!_prefix.empty())
 			{
-				int prefix_id = id_counter::next();
 				prefix = create_control<label_control>(edit_row, prefix_id, [_prefix](label_control& _settings) {
 					_settings.text = _prefix;
 					});
@@ -1193,7 +1378,6 @@ namespace corona
 
 			if (!_suffix.empty())
 			{
-				int suffix_id = id_counter::next();
 				suffix = create_control<label_control>(edit_row, suffix_id, [_prefix](label_control& _settings) {
 					_settings.text = _prefix;
 					});
@@ -1212,44 +1396,7 @@ namespace corona
 			set_size(1.0_container, measure(form_height, measure_units::pixels));
 		}
 
-		virtual void on_subscribe(presentation_base* _presentation, page_base* _page)
-		{
-			_page->on_list_changed(field->id, [this](list_changed_event lce)
-				{
-					if (form) {
-						form->list_changed(lce, this);
-					}
-				});
-
-			_page->on_item_changed(field->id, [this](item_changed_event lce)
-				{
-					if (form) {
-						form->item_changed(lce, this);
-					}
-				});
-
-			_page->on_command(field->id, [this](command_event lce)
-				{
-					if (form) {
-						form->field_command(lce, this);
-					}
-				});
-
-			_page->on_mouse_click(field.get(), [this](mouse_click_event lce)
-				{
-					if (form) {
-						form->field_mouse_click(lce, this);
-					}
-				});
-
-			_page->on_mouse_move(field.get(), [this](mouse_move_event lce)
-				{
-					if (form) {
-						form->field_mouse_move(lce, this);
-					}
-				});
-
-		}
+		virtual void on_subscribe(presentation_base* _presentation, page_base* _page);
 
 		virtual ~form_field_control()
 		{
@@ -1264,7 +1411,7 @@ namespace corona
 	using form_mouse_click_handler = std::function<void(mouse_click_event lce, form_field_control* _ctrl)>;
 	using form_mouse_move_handler = std::function<void(mouse_move_event lce, form_field_control* _ctrl)>;
 
-	class form_model
+	class form_model : public json_serializable
 	{
 	public:
 		std::string				name;
@@ -1276,6 +1423,37 @@ namespace corona
 		form_command_handler		on_command;
 		form_mouse_click_handler	on_mouse_click;
 		form_mouse_move_handler		on_mouse_move;
+
+		virtual void get_json(json& _dest)
+		{
+			_dest.put_member("name", name);
+			_dest.put_member("data", data);
+			json_parser jp;
+			json jfields = jp.create_array();
+			for (auto fld : fields) {
+				json jfield = jp.create_object();
+				fld.get_json(jfield);
+				jfields.append_element(jfield);
+			}
+			_dest.put_member("fields", jfields);
+		}
+
+		virtual void put_json(json& _src)
+		{
+			name = _src["name"];
+			data = _src["data"];
+			fields.clear();
+			json field_array = _src["fields"];
+			if (field_array.is_array()) 
+			{
+				for (auto fld : field_array) 
+				{
+					form_field ff;
+					ff.put_json(fld);
+					fields.push_back(ff);
+				}
+			}
+		}
 	};
 
 	class form_control : public column_layout
@@ -1351,14 +1529,11 @@ namespace corona
 			return empty;
 		}
 
-		void set_data(form_model _ids)
+		void set_model(form_model _ids)
 		{
 			children.clear();
 
-			std::stack<control_builder> cbs;
-
 			control_builder cb;
-			cbs.push(cb);
 
 			ids = _ids;
 
@@ -1366,39 +1541,37 @@ namespace corona
 
 			for (auto &ctrl : ids.fields) 
 			{
-				auto* cbx = &cbs.top();
-
-				if (ctrl.field_type == "row" || 
-					ctrl.field_type == "column" || 
-					ctrl.field_type == "absolute")
-				{
-					control_builder cb;
-					cbs.push(cb);
-				}
-				else if (ctrl.field_type == "end")
-				{
-					cbs.pop();
-					cbx = &cbs.top();
-				}
-
 				auto pctrl = &ctrl;
-				cbx->form_field(id_counter::next(), [this,pctrl](form_field_control& _settings) {
-					_settings.set_field(*pctrl, ids.data);
-					_settings.
+				cb.form_field(id_counter::next(), [this,pctrl](form_field_control& _settings) {
 					});
 
 				is_default = false;
 			}
 
-			auto& cbx = cbs.top();
-			cbx.apply_controls(this);
+			cb.apply_controls(this);
 
 			create(host);
 		}
 
+		virtual void get_json(json& _dest)
+		{
+			json_parser jp;
+			json props = jp.create_object();
+
+			ids.get_json(props);
+			_dest.put_member("model", _dest);
+		}
+
+		virtual void put_json(json& _ids)
+		{
+			form_model fm;
+			json props = _ids["model"];
+			fm.get_json(props);
+			set_model(fm);
+		}
+
 		virtual void on_subscribe(presentation_base* _presentation, page_base* _page)
 		{
-
 			for (auto child : children) {
 				child->on_subscribe(_presentation, _page);
 			}
@@ -1441,24 +1614,31 @@ namespace corona
 
 	};
 
+
 	class tab_pane
 	{
 	public:
 		int id;
 		std::string name;
-		std::function<void(tab_pane& _src, control_base*)> apply_data;
-		std::function<void(tab_pane& _src, control_base*)> create_tab_controls;
+		form_model form;
 		std::vector<json> create_objects;
 		std::vector<json> create_classes;
 	};
 
+	class tab_pane_instance
+	{
+	public:
+		tab_pane					  pane;
+		std::shared_ptr<form_control> tab_form;
+		json						  tab_form_data;
+	};
+
 	class tab_view_control : public windows_control
 	{
-		std::vector<tab_pane> tab_panes;
+		std::vector<tab_pane_instance> tab_panes;
 		std::shared_ptr<frame_layout> content_frame;
 		presentation_base* current_presentation;
 		page_base* current_page;
-		std::map<int, std::shared_ptr<control_base>> pane_controls;
 		int active_id;
 
 		void init()
@@ -1498,11 +1678,11 @@ namespace corona
 
 				if (!i && active_id <= 0)
 				{
-					active_id = dat.id;
+					active_id = dat.pane.id;
 				}
 
-				tab_row.tab_button(dat.id, [this, dat](tab_button_control& _tb) {
-					_tb.text = dat.name;
+				tab_row.tab_button(dat.pane.id, [this, dat](tab_button_control& _tb) {
+					_tb.text = dat.pane.id;
 					_tb.active_id = &active_id;
 					_tb.tab_selected = [this](tab_button_control& _src)->void
 						{
@@ -1623,42 +1803,37 @@ namespace corona
 
 		void set_tabs(std::vector<tab_pane> _new_panes)
 		{
-			tab_panes = _new_panes;
+			tab_panes.clear();
+			for (auto tp : _new_panes) {
+				tab_pane_instance tpi;
+				tpi.pane = tp;
+				tab_panes.push_back(tpi);
+			}
 			init();
 			tab_selected(active_id);
 		}
 
-		void tab_selected(std::vector<tab_pane>::iterator tbi)
+		void tab_selected(std::vector<tab_pane_instance>::iterator tbi)
 		{
 			if (tbi != tab_panes.end())
 			{
-				active_id = tbi->id;
+				active_id = tbi->pane.id;
 
-				if (pane_controls.contains(active_id)) 
-				{
-					contents_generator<tab_pane*> cg;
-					// set contents will clone this for us.
-					cg.data = &*tbi;
-					cg.generator = [this](tab_pane* _tp, control_base* _args)
-						{
-							_args->children.clear();
-							_args->children.push_back(pane_controls[active_id]);
-							_tp->apply_data(*_tp, pane_controls[active_id].get());
-						};
-					content_frame->set_contents(cg);
-				}
-				else 
-				{
-					contents_generator<tab_pane*> cg;
-					// set contents will clone this for us.
-					cg.data = &*tbi;
-					cg.generator = [](tab_pane* _tp, control_base* _args)
-						{
-							_tp->create_tab_controls(*_tp, _args);
-						};
-					content_frame->set_contents(cg);
-					pane_controls[active_id] = content_frame->children[0];
-				}
+				contents_generator<tab_pane_instance*> cg;
+
+				// set contents will clone this for us.
+				cg.data = &*tbi;
+				cg.generator = [this](tab_pane_instance* _tp, control_base* _args)
+					{
+						_args->children.clear();
+						if (!_tp->tab_form) {
+							_tp->tab_form = std::make_shared<form_control>(this, active_id);
+							_tp->tab_form->set_model(_tp->pane.form);
+						}
+						_args->children.push_back(_tp->tab_form);
+					};
+				content_frame->set_contents(cg);
+
 				if (current_presentation && current_page) {
 					content_frame->on_subscribe(current_presentation, current_page);
 				}
@@ -1670,16 +1845,16 @@ namespace corona
 
 		void tab_selected(int _active_id)
 		{
-			auto tbi = std::find_if(tab_panes.begin(), tab_panes.end(), [this](tab_pane& _tb) {
-				return _tb.id == this->active_id;
+			auto tbi = std::find_if(tab_panes.begin(), tab_panes.end(), [this](tab_pane_instance& _tb) {
+				return _tb.pane.id == this->active_id;
 				});
 			tab_selected(tbi);
 		}
 
 		void tab_selected(tab_button_control& _tab)
 		{
-			auto tbi = std::find_if(tab_panes.begin(), tab_panes.end(), [this](tab_pane& _tb) {
-				return _tb.id == this->active_id;
+			auto tbi = std::find_if(tab_panes.begin(), tab_panes.end(), [this](tab_pane_instance& _tb) {
+				return _tb.pane.id == this->active_id;
 				});
 			tab_selected(tbi);
 		}
@@ -2006,7 +2181,7 @@ namespace corona
 					cl.set_item_margin(0.0_px);
 				})
 				.end()
-					.menu_button(menu_button_id, [this](auto& _ctrl) { _ctrl.set_size(50.0_px, 50.0_px); if (menu) { _ctrl.menu = *menu };	})
+					.menu_button(menu_button_id, [this](auto& _ctrl) { _ctrl.set_size(50.0_px, 50.0_px); if (menu) { _ctrl.menu = *menu; };	})
 				.minimize_button(min_button_id, [](auto& _ctrl) { _ctrl.set_size(50.0_px, 50.0_px); })
 				.maximize_button(max_button_id, [](auto& _ctrl) { _ctrl.set_size(50.0_px, 50.0_px); })
 				.close_button(close_button_id, [](auto& _ctrl) { _ctrl.set_size(50.0_px, 50.0_px); })
@@ -2212,6 +2387,7 @@ namespace corona
 		std::string field_name = _control_properties["name"];
 		std::string field_type = _control_properties["type"];
 		json control_data = _control_properties["data"];
+		json control_properties = _control_properties;
 
 		int id = (int)_control_properties.get_member("id");
 
@@ -2220,369 +2396,367 @@ namespace corona
 		std::string default_text = "";
 		call_status default_status;
 
-		json control_data = _control_properties.get_member("data");
-
 		if (class_name == "title")
 		{
-			title(default_text, [this, _control_properties, control_data](auto& _ctrl) ->void {
-				_ctrl.set_json(_control_properties);
+			title(default_text, [this, &control_properties, control_data](auto& _ctrl) ->void {
+				_ctrl.put_json(control_properties);
 				_ctrl.set_data(control_data);
 				}, field_id);
 		}
 		else if (class_name == "subtitle")
 		{
-			subtitle(default_text, [this, _control_properties, control_data](auto& _ctrl) ->void {
-				_ctrl.set_json(_control_properties);
+			subtitle(default_text, [this, &control_properties, control_data](auto& _ctrl) ->void {
+				_ctrl.put_json(control_properties);
 				_ctrl.set_data(control_data);
 				}, field_id);
 		}
 		else if (class_name == "authorscredit")
 		{
-			authorscredit(default_text, [this, _control_properties, control_data](auto& _ctrl) ->void {
-				_ctrl.set_json(_control_properties);
+			authorscredit(default_text, [this, &control_properties, control_data](auto& _ctrl) ->void {
+				_ctrl.put_json(control_properties);
 				_ctrl.set_data(control_data);
 				}, field_id);
 		}
 		else if (class_name == "chaptertitle")
 		{
-			chaptertitle(default_text, [this, _control_properties, control_data](auto& _ctrl) ->void {
-				_ctrl.set_json(_control_properties);
+			chaptertitle(default_text, [this, &control_properties, control_data](auto& _ctrl) ->void {
+				_ctrl.put_json(control_properties);
 				_ctrl.set_data(control_data);
 				}, field_id);
 		}
 		else if (class_name == "chaptersubtitle")
 		{
-			chaptersubtitle(default_text, [this, _control_properties, control_data](auto& _ctrl) ->void {
-				_ctrl.set_json(_control_properties);
+			chaptersubtitle(default_text, [this, &control_properties, control_data](auto& _ctrl) ->void {
+				_ctrl.put_json(control_properties);
 				_ctrl.set_data(control_data);
 				}, field_id);
 		}
 		else if (class_name == "paragraph")
 		{
-			paragraph(default_text, [this, _control_properties, control_data](auto& _ctrl) ->void {
-				_ctrl.set_json(_control_properties);
+			paragraph(default_text, [this, &control_properties, control_data](auto& _ctrl) ->void {
+				_ctrl.put_json(control_properties);
 				_ctrl.set_data(control_data);
 				}, field_id);
 		}
 		else if (class_name == "code")
 		{
-			code(default_text, [this, _control_properties, control_data](auto& _ctrl) ->void {
-				_ctrl.set_json(_control_properties);
+			code(default_text, [this, &control_properties, control_data](auto& _ctrl) ->void {
+				_ctrl.put_json(control_properties);
 				_ctrl.set_data(control_data);
 				}, field_id);
 		}
 		else if (class_name == "label")
 		{
-			label(default_text, [this, _control_properties, control_data](auto& _ctrl) ->void {
-				_ctrl.set_json(_control_properties);
+			label(default_text, [this, &control_properties, control_data](auto& _ctrl) ->void {
+				_ctrl.put_json(control_properties);
 				_ctrl.set_data(control_data);
 				}, field_id);
 		}
 		else if (class_name == "error")
 		{
-			error(default_status, [this, _control_properties, control_data](auto& _ctrl) ->void {
-				_ctrl.set_json(_control_properties);
+			error(default_status, [this, &control_properties, control_data](auto& _ctrl) ->void {
+				_ctrl.put_json(control_properties);
 				_ctrl.set_data(control_data);
 				}, field_id);
 		}
 		else if (class_name == "status")
 		{
-			status(default_status, [this, _control_properties, control_data](auto& _ctrl) ->void {
-				_ctrl.set_json(_control_properties);
+			status(default_status, [this, &control_properties, control_data](auto& _ctrl) ->void {
+				_ctrl.put_json(control_properties);
 				_ctrl.set_data(control_data);
 				}, field_id);
 		}
 		else if (class_name == "success")
 		{
-			success(default_status, [this, _control_properties, control_data](auto& _ctrl) ->void {
-				_ctrl.set_json(_control_properties);
+			success(default_status, [this, &control_properties, control_data](auto& _ctrl) ->void {
+				_ctrl.put_json(control_properties);
 				_ctrl.set_data(control_data);
 				}, field_id);
 		}
 		else if (class_name == "row")
 		{
-			row_begin(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
-				_ctrl.set_json(_control_properties);
+			row_begin(field_id, [this, &control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.put_json(control_properties);
 				_ctrl.set_data(control_data);
 				});
 		}
 		else if (class_name == "column")
 		{
-			column_begin(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
-				_ctrl.set_json(_control_properties);
+			column_begin(field_id, [this, &control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.put_json(control_properties);
 				_ctrl.set_data(control_data);
 				});
 		}
 		else if (class_name == "absolute")
 		{
-			absolute_begin(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
-				_ctrl.set_json(_control_properties);
+			absolute_begin(field_id, [this, &control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.put_json(control_properties);
 				_ctrl.set_data(control_data);
 				});
 		}
 		else if (class_name == "row_view")
 		{
-			row_view_begin(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
-				_ctrl.set_json(_control_properties);
+			row_view_begin(field_id, [this, &control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.put_json(control_properties);
 				_ctrl.set_data(control_data);
 				});
 		}
 		else if (class_name == "grid_view")
 		{
-			grid_view_begin(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
-				_ctrl.set_json(_control_properties);
+			grid_view_begin(field_id, [this, &control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.put_json(control_properties);
 				_ctrl.set_data(control_data);
 				});
 		}
 		else if (class_name == "absolute_view")
 		{
-			absolute_view_begin(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
-				_ctrl.set_json(_control_properties);
+			absolute_view_begin(field_id, [this, &control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.put_json(control_properties);
 				_ctrl.set_data(control_data);
 				});
 		}
 		else if (class_name == "frame")
 		{
-			frame_begin(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
-				_ctrl.set_json(_control_properties);
+			frame_begin(field_id, [this, &control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.put_json(control_properties);
 				_ctrl.set_data(control_data);
 				});
 		}
 		else if (class_name == "listbox")
 		{
-			listbox(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
-				_ctrl.set_json(_control_properties);
+			listbox(field_id, [this, &control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.put_json(control_properties);
 				_ctrl.set_data(control_data);
 				});
 		}
 		else if (class_name == "combobox")
 		{
-			combobox(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
-				_ctrl.set_json(_control_properties);
+			combobox(field_id, [this, &control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.put_json(control_properties);
 				_ctrl.set_data(control_data);
 				});
 		}
 		else if (class_name == "edit")
 		{
-			edit(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
-				_ctrl.set_json(_control_properties);
+			edit(field_id, [this, &control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.put_json(control_properties);
 				_ctrl.set_data(control_data);
 				});
 		}
 		else if (class_name == "listview")
 		{
-			listview(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
-				_ctrl.set_json(_control_properties);
+			listview(field_id, [this, &control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.put_json(control_properties);
 				_ctrl.set_data(control_data);
 				});
 		}
 		else if (class_name == "treeview")
 		{
-			treeview(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
-				_ctrl.set_json(_control_properties);
+			treeview(field_id, [this, &control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.put_json(control_properties);
 				_ctrl.set_data(control_data);
 				});
 		}
 		else if (class_name == "header")
 		{
-			header(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
-				_ctrl.set_json(_control_properties);
+			header(field_id, [this, &control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.put_json(control_properties);
 				_ctrl.set_data(control_data);
 				});
 		}
 		else if (class_name == "toolbar")
 		{
-			toolbar(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
-				_ctrl.set_json(_control_properties);
+			toolbar(field_id, [this, &control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.put_json(control_properties);
 				_ctrl.set_data(control_data);
 				});
 		}
 		else if (class_name == "statusbar")
 		{
-			statusbar_field(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
-				_ctrl.set_json(_control_properties);
+			statusbar_field(field_id, [this, &control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.put_json(control_properties);
 				_ctrl.set_data(control_data);
 				});
 		}
 		else if (class_name == "hotkey")
 		{
-			hotkey(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
-				_ctrl.set_json(_control_properties);
+			hotkey(field_id, [this, &control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.put_json(control_properties);
 				_ctrl.set_data(control_data);
 				});
 		}
 		else if (class_name == "animate")
 		{
-			animate(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
-				_ctrl.set_json(_control_properties);
+			animate(field_id, [this, &control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.put_json(control_properties);
 				_ctrl.set_data(control_data);
 				});
 		}
 		else if (class_name == "richedit")
 		{
-			richedit(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
-				_ctrl.set_json(_control_properties);
+			richedit(field_id, [this, &control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.put_json(control_properties);
 				_ctrl.set_data(control_data);
 				});
 		}
 		else if (class_name == "draglistbox")
 		{
-			draglistbox(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
-				_ctrl.set_json(_control_properties);
+			draglistbox(field_id, [this, &control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.put_json(control_properties);
 				_ctrl.set_data(control_data);
 				});
 		}
 		else if (class_name == "comboboxex")
 		{
-			comboboxex(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
-				_ctrl.set_json(_control_properties);
+			comboboxex(field_id, [this, &control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.put_json(control_properties);
 				_ctrl.set_data(control_data);
 				});
 		}
 		else if (class_name == "datetimepicker")
 		{
-			datetimepicker(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
-				_ctrl.set_json(_control_properties);
+			datetimepicker(field_id, [this, &control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.put_json(control_properties);
 				_ctrl.set_data(control_data);
 				});
 		}
 		else if (class_name == "monthcalendar")
 		{
-			monthcalendar(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
-				_ctrl.set_json(_control_properties);
+			monthcalendar(field_id, [this, &control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.put_json(control_properties);
 				_ctrl.set_data(control_data);
 				});
 		}
 		else if (class_name == "radiobutton_list")
 		{
-			radiobutton_list(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
-				_ctrl.set_json(_control_properties);
+			radiobutton_list(field_id, [this, &control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.put_json(control_properties);
 				_ctrl.set_data(control_data);
 				});
 		}
 		else if (class_name == "checkbox_list")
 		{
-			checkbox_list(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
-				_ctrl.set_json(_control_properties);
+			checkbox_list(field_id, [this, &control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.put_json(control_properties);
 				_ctrl.set_data(control_data);
 				});
 		}
 		else if (class_name == "minimize_button")
 		{
-			minimize_button(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
-				_ctrl.set_json(_control_properties);
+			minimize_button(field_id, [this, &control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.put_json(control_properties);
 				_ctrl.set_data(control_data);
 				});
 		}
 		else if (class_name == "maximize_button")
 		{
-			maximize_button(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
-				_ctrl.set_json(_control_properties);
+			maximize_button(field_id, [this, &control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.put_json(control_properties);
 				_ctrl.set_data(control_data);
 				});
 		}
 		else if (class_name == "close_button")
 		{
-			close_button(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
-				_ctrl.set_json(_control_properties);
+			close_button(field_id, [this, &control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.put_json(control_properties);
 				_ctrl.set_data(control_data);
 				});
 		}
 		else if (class_name == "menu_button")
 		{
-			menu_button(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
-				_ctrl.set_json(_control_properties);
+			menu_button(field_id, [this, &control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.put_json(control_properties);
 				_ctrl.set_data(control_data);
 				});
 		}
 		else if (class_name == "corona_button")
 		{
-			corona_button(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
-				_ctrl.set_json(_control_properties);
+			corona_button(field_id, [this, &control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.put_json(control_properties);
 				_ctrl.set_data(control_data);
 				});
 		}
 		else if (class_name == "camera")
 		{
-			camera(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
-				_ctrl.set_json(_control_properties);
+			camera(field_id, [this, &control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.put_json(control_properties);
 				_ctrl.set_data(control_data);
 				});
 		}
 		else if (class_name == "grid")
 		{
-			grid(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
-				_ctrl.set_json(_control_properties);
+			grid(field_id, [this, &control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.put_json(control_properties);
 				_ctrl.set_data(control_data);
 				});
 		}
 		else if (class_name == "chart")
 		{
-			chart(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
-				_ctrl.set_json(_control_properties);
+			chart(field_id, [this, &control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.put_json(control_properties);
 				_ctrl.set_data(control_data);
 				});
 		}
 		else if (class_name == "slide")
 		{
-			slide(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
-				_ctrl.set_json(_control_properties);
+			slide(field_id, [this, &control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.put_json(control_properties);
 				_ctrl.set_data(control_data);
 				});
 		}
 		else if (class_name == "grid")
 		{
-			grid(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
-				_ctrl.set_json(_control_properties);
+			grid(field_id, [this, &control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.put_json(control_properties);
 				_ctrl.set_data(control_data);
 				});
 		}
 		else if (class_name == "tab_button")
 		{
-			tab_button(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
-				_ctrl.set_json(_control_properties);
+			tab_button(field_id, [this, &control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.put_json(control_properties);
 				_ctrl.set_data(control_data);
 				});
 		}
 		else if (class_name == "tab_view")
 		{
-			tab_view(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
-				_ctrl.set_json(_control_properties);
+			tab_view(field_id, [this, &control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.put_json(control_properties);
 				_ctrl.set_data(control_data);
 				});
 		}
 		else if (class_name == "search_view")
 		{
-			search_view(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
-				_ctrl.set_json(_control_properties);
+			search_view(field_id, [this, &control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.put_json(control_properties);
 				_ctrl.set_data(control_data);
 				});
 		}
 		else if (class_name == "caption_bar")
 		{
-			caption_bar(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
-				_ctrl.set_json(_control_properties);
+			caption_bar(field_id, [this, &control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.put_json(control_properties);
 				_ctrl.set_data(control_data);
 				});
 		}
 		else if (class_name == "status_bar")
 		{
-			status_bar(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
-				_ctrl.set_json(_control_properties);
+			status_bar(field_id, [this, &control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.put_json(control_properties);
 				_ctrl.set_data(control_data);
 				});
 		}
 		else if (class_name == "form")
 		{
-			form(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
-				_ctrl.set_json(_control_properties);
+			form(field_id, [this, &control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.put_json(control_properties);
 				_ctrl.set_data(control_data);
 				});
 		}
 		else if (class_name == "form_field")
 		{
-			form_field(field_id, [this, _control_properties, control_data](auto& _ctrl)->void {
-				_ctrl.set_json(_control_properties);
+			form_field(field_id, [this, &control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.put_json(control_properties);
 				_ctrl.set_data(control_data);
 				});
 		}
@@ -2634,7 +2808,7 @@ namespace corona
 
 		virtual std::shared_ptr<control_base> clone()
 		{
-			auto tv = std::make_shared<absolute_view_layout>(*this);
+			auto tv = std::make_shared<radiobutton_list_control>(*this);
 			return tv;
 		}
 
@@ -2735,7 +2909,7 @@ namespace corona
 
 		virtual std::shared_ptr<control_base> clone()
 		{
-			auto tv = std::make_shared<absolute_view_layout>(*this);
+			auto tv = std::make_shared<checkbox_list_control>(*this);
 			return tv;
 		}
 
@@ -2820,6 +2994,90 @@ namespace corona
 		}
 
 	};
+
+	void form_field_control::on_subscribe(presentation_base* _presentation, page_base* _page)
+	{
+		_page->on_list_changed(field->id, [this](list_changed_event lce)
+			{
+				if (form) {
+					form->list_changed(lce, this);
+				}
+			});
+
+		_page->on_item_changed(field->id, [this](item_changed_event lce)
+			{
+				if (form) {
+					form->item_changed(lce, this);
+				}
+			});
+
+		_page->on_command(field->id, [this](command_event lce)
+			{
+				if (form) {
+					form->field_command(lce, this);
+				}
+			});
+
+		_page->on_mouse_click(field.get(), [this](mouse_click_event lce)
+			{
+				if (form) {
+					form->field_mouse_click(lce, this);
+				}
+			});
+
+		_page->on_mouse_move(field.get(), [this](mouse_move_event lce)
+			{
+				if (form) {
+					form->field_mouse_move(lce, this);
+				}
+			});
+
+	}
+
+	void corona_button_control::on_subscribe(presentation_base* _presentation, page_base* _page)
+	{
+		_page->on_command(this->id, [this, _presentation, _page](command_event evt)
+			{
+				json_parser jp;
+				json data;
+				if (options.function_data.is_object())
+				{
+					std::string from_data = options.function_data.get_member("from");
+					if (!from_data.empty())
+					{
+						if (std::isdigit(from_data[0])) {
+							int64_t control_id = (int64_t)options.function_data["from"];
+							control_base* fvc = this->find(control_id);
+							data = fvc->get_data();
+						}
+						else if (from_data == "form")
+						{
+							for (auto p = parent; p; ) {
+								form_control* fc = dynamic_cast<form_control*>(p);
+								if (fc) {
+									data = fc->get_data();
+									p = nullptr;
+								}
+							}
+						}
+					}
+					else
+					{
+						data = options.function_data;
+					}
+				}
+				if (options.corona_client) {
+					options.corona_client->general_post_thread(id, options.function_name, options.credentials, data);
+				}
+			});
+	}
+
+	void corona_button_control::init()
+	{
+		set_origin(0.0_px, 0.0_px);
+		set_size(100.0_px, 30.0_px);
+	}
+
 }
 
 #endif

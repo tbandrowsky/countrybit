@@ -25,7 +25,7 @@ namespace corona
 		{
 			text_style = {};
 			text_style.name = "windows_control_style";
-			text_style.fontName = styles.get_style()->PrimaryFont;
+			text_style.fontName = presentation_style_factory::get_current()->get_style()->PrimaryFont;
 			text_style.fontSize = 12;
 			text_style.bold = false;
 			text_style.italics = false;
@@ -754,6 +754,7 @@ namespace corona
 
 	template <long ButtonWindowStyles> class button_control : public text_control_base
 	{
+	protected:
 		using control_base::id;
 		using windows_control::window_host;
 		std::string caption_text;
@@ -818,7 +819,9 @@ namespace corona
 
 	class radiobutton_control : public button_control<RadioButtonWindowStyles>
 	{
+		using button_control<RadioButtonWindowStyles>::window_host;
 	public:
+		
 		radiobutton_control(container_control_base* _parent, int _id) : button_control<RadioButtonWindowStyles>(_parent, _id) { ; }
 		radiobutton_control(const radiobutton_control& _src) : button_control<RadioButtonWindowStyles>(_src)
 		{

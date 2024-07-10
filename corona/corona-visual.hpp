@@ -87,6 +87,55 @@ namespace corona {
 		put_json(_dest.size, jsize);
 	}
 
+	D2D1_COLOR_F toColorBase(const char* _htmlColor)
+	{
+		D2D1_COLOR_F new_color = {};
+
+		int si = {}, r = {}, g = {}, b = {}, a = 255;
+		int sz = strlen(_htmlColor);
+
+		if (sz > 0)
+		{
+			si = (_htmlColor[0] == '#') ? 1 : 0;
+		}
+
+		if (sz >= 6)
+		{
+			r = toInt2(_htmlColor, si);
+			g = toInt2(_htmlColor, si + 2);
+			b = toInt2(_htmlColor, si + 4);
+		}
+
+		if (sz >= 8)
+		{
+			a = toInt2(_htmlColor, si + 6);
+		}
+
+		new_color.r = r / 255.0;
+		new_color.g = g / 255.0;
+		new_color.b = b / 255.0;
+		new_color.a = a / 255.0;
+
+		return new_color;
+	}
+
+	D2D1_COLOR_F toColor(const char* _htmlColor)
+	{
+		return toColorBase(_htmlColor);
+	}
+
+
+	D2D1_COLOR_F toColor(std::string _htmlColor)
+	{
+		return toColorBase(_htmlColor.c_str());
+	}
+
+
+	D2D1_COLOR_F toColor(const ccolor& _color)
+	{
+		return _color;
+	}
+
 	enum class visual_alignment
 	{
 		align_none = 0,
@@ -174,7 +223,7 @@ namespace corona {
 		json jcolor = _src[_member_name];
 		if (jcolor.is_string()) {
 			std::string color_string = jcolor;
-			_dest = toColor(color_string);
+			_dest = corona::toColor(color_string);
 		}
 		else if (jcolor.is_object())
 		{
@@ -368,7 +417,7 @@ namespace corona {
 
 		_dest.put_member("name", _src.name);
 		
-		json jstart, jstop, jsize, jstops, jstop;
+		json jstart, jstop, jsize, jstops;
 
 		jstart = jp.create_object();
 		get_json(jstart, _src.start);
@@ -402,7 +451,7 @@ namespace corona {
 
 		_dest.name = (std::string)_src["name"];
 
-		json jstart, jstop, jsize, jstops, jstop;
+		json jstart, jstop, jsize, jstops;
 
 		jstart = _src["start"];
 		put_json(_dest.start, jstart);
@@ -698,54 +747,6 @@ namespace corona {
 
 	};
 
-	D2D1_COLOR_F toColorBase(const char* _htmlColor)
-	{
-		D2D1_COLOR_F new_color = {};
-
-		int si = {}, r = {}, g = {}, b = {}, a = 255;
-		int sz = strlen(_htmlColor);
-
-		if (sz > 0)
-		{
-			si = (_htmlColor[0] == '#') ? 1 : 0;
-		}
-
-		if (sz >= 6)
-		{
-			r = toInt2(_htmlColor, si);
-			g = toInt2(_htmlColor, si + 2);
-			b = toInt2(_htmlColor, si + 4);
-		}
-
-		if (sz >= 8)
-		{
-			a = toInt2(_htmlColor, si + 6);
-		}
-
-		new_color.r = r / 255.0;
-		new_color.g = g / 255.0;
-		new_color.b = b / 255.0;
-		new_color.a = a / 255.0;
-
-		return new_color;
-	}
-
-	D2D1_COLOR_F toColor(const char* _htmlColor)
-	{
-		return toColorBase(_htmlColor);
-	}
-
-
-	D2D1_COLOR_F toColor(std::string _htmlColor)
-	{
-		return toColorBase(_htmlColor.c_str());
-	}
-
-
-	D2D1_COLOR_F toColor(const ccolor& _color)
-	{
-		return _color;
-	}
 
 	enum brush_types 
 	{
@@ -914,6 +915,7 @@ namespace corona {
 			clear();
 			brush_type = brush_types::radial_brush_type;
 			radial_brush = std::make_shared<radialGradientBrushRequest>(sbr);
+			return *this;
 		}
 
 		void setColor(std::string _color)

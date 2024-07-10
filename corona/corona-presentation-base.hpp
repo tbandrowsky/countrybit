@@ -98,7 +98,7 @@ namespace corona
 			{
 				json tcitem = jp.create_object();
 				tc.get_json(tcitem);
-				jcolumns.push_back(tc);
+				jcolumns.push_back(tcitem);
 			}
 
 			_dest.put_member("id_field", id_field);

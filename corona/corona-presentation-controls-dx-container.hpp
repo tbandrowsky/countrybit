@@ -452,7 +452,8 @@ namespace corona
 			int i;
 			for (i = 0; i < sz; i++)
 			{
-				auto isz = items_source.size_item(this, i, _bounds);
+				json temp;
+				auto isz = items_source.size_item(this, i, temp, _bounds);
 				auto& r = rows[i];
 				r.bounds.x = 0;
 				r.bounds.y = y;

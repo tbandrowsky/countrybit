@@ -257,7 +257,7 @@ namespace corona
 			int title_id = 0;
 			int* ptitle_id = &title_id;
 
-			contents.caption_bar(id_caption_bar, st, application_menu.get(), [this, ptitle_id](caption_bar_control& _cb)
+			contents.caption_bar(id_caption_bar, [this, ptitle_id](caption_bar_control& _cb)
 				{
 					_cb.set_size(1.0_container, 100.0_px);
 					_cb.menu_button_id = IDC_SYSTEM_MENU;
@@ -266,6 +266,7 @@ namespace corona
 					_cb.subtitle_name = "    BANDROWSKY";
 					_cb.title_name = "  COLOR PARTY";
 					_cb.set_style(st->CaptionStyle);
+					_cb.menu = application_menu.get();
 					*ptitle_id = _cb.title_id;
 				}
 			);
@@ -428,7 +429,7 @@ namespace corona
 						new_field.json_member_name = "detection_cooldown";
 						ids.fields.push_back(new_field);
 
-						_settings.set_data(ids);
+						_settings.set_model(ids);
 						});
 
 					preview_column.label("  Detection", [](label_control& _lc) {

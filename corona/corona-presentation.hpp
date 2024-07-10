@@ -941,6 +941,7 @@ namespace corona {
 						point pt;
 						pt.x = _bounds.w;
 						pt.y = 50;
+						return pt;
 						};
 					ads.assets = [this](draw_control* _parent, rectangle _bounds) {
 						if (auto win = _parent->window.lock()) {
