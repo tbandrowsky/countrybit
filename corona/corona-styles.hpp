@@ -159,17 +159,16 @@ namespace corona
 
 	void put_json(presentation_style& _dest, json& _src)
 	{
-		if (!_src.has_members({ "colors", "page_style", "caption_style",
+		std::vector<std::string> missing;
+		if (!_src.has_members(missing, { "colors", "page_style", "caption_style",
 			"title_style", "subtitle_style", 
 			"chapter_title_style", "chapter_subtitle_style", 
-			"paragraph_style", "form_style", "label_style"
+			"paragraph_style", "form_style", "label_style",
 			"error_style", "success_style", "code_style"})) {
-			std::cout << "style sheet must have these members:" << std::endl;
-			std::cout << "colors" <<"page_style" <<"caption_style" <<
-				"title_style" <<"subtitle_style" <<
-				"chapter_title_style" <<"chapter_subtitle_style" <<
-				"paragraph_style" <<"form_style" <<"label_style" <<
-				"error_style" <<"success_style" <<"code_style" << std::endl;
+			std::cout << "style sheet is missing:" << std::endl;
+			std::for_each(missing.begin(), missing.end(), [](const std::string& s) { 
+				std::cout << s << std::endl; 
+				});
 			return;
 		}
 
@@ -183,10 +182,8 @@ namespace corona
 			if (!_dest.PageStyle) {
 				_dest.PageStyle = std::make_shared<viewStyleRequest>();
 			}
-			put_json(*_dest.PageStyle.get(), page_style);
-			if (_dest.PageStyle->name.empty()) {
-				_dest.PageStyle->set_default_name( "page_style" );
-			}
+			put_json(_dest.PageStyle, page_style);
+			_dest.PageStyle->set_default_name( "page_style" );
 		}
 
 		json caption_style = _src["caption_style"];
@@ -194,10 +191,8 @@ namespace corona
 			if (!_dest.CaptionStyle) {
 				_dest.CaptionStyle = std::make_shared<viewStyleRequest>();
 			}
-			put_json(*_dest.CaptionStyle.get(), caption_style);
-			if (_dest.CaptionStyle->name.empty()) {
-				_dest.CaptionStyle->set_default_name("caption_style");
-			}
+			put_json(_dest.CaptionStyle, caption_style);
+			_dest.CaptionStyle->set_default_name("caption_style");
 		}
 
 		json title_style = _src["title_style"];
@@ -205,10 +200,8 @@ namespace corona
 			if (!_dest.TitleStyle) {
 				_dest.TitleStyle = std::make_shared<viewStyleRequest>();
 			}
-			put_json(*_dest.TitleStyle.get(), title_style);
-			if (_dest.TitleStyle->name.empty()) {
-				_dest.TitleStyle->set_default_name("title_style");
-			}
+			put_json(_dest.TitleStyle, title_style);
+			_dest.TitleStyle->set_default_name("title_style");
 		}
 
 		json subtitle_style = _src["subtitle_style"];
@@ -216,10 +209,8 @@ namespace corona
 			if (!_dest.SubtitleStyle) {
 				_dest.SubtitleStyle = std::make_shared<viewStyleRequest>();
 			}
-			put_json(*_dest.SubtitleStyle.get(), subtitle_style);
-			if (_dest.SubtitleStyle->name.empty()) {
-				_dest.SubtitleStyle->set_default_name("subtitle_style");
-			}
+			put_json(_dest.SubtitleStyle, subtitle_style);
+			_dest.SubtitleStyle->set_default_name("subtitle_style");
 		}
 
 		json chapter_title_style = _src["chapter_title_style"];
@@ -227,10 +218,8 @@ namespace corona
 			if (!_dest.ChapterTitleStyle) {
 				_dest.ChapterTitleStyle = std::make_shared<viewStyleRequest>();
 			}
-			put_json(*_dest.ChapterTitleStyle.get(), chapter_title_style);
-			if (_dest.ChapterTitleStyle->name.empty()) {
-				_dest.ChapterTitleStyle->set_default_name("chapter_title_style");
-			}
+			put_json(_dest.ChapterTitleStyle, chapter_title_style);
+			_dest.ChapterTitleStyle->set_default_name("chapter_title_style");
 		}
 
 		json chapter_subtitle_style = _src["chapter_subtitle_style"];
@@ -238,10 +227,8 @@ namespace corona
 			if (!_dest.ChapterSubTitleStyle) {
 				_dest.ChapterSubTitleStyle = std::make_shared<viewStyleRequest>();
 			}
-			put_json(*_dest.ChapterSubTitleStyle.get(), chapter_subtitle_style);
-			if (_dest.ChapterSubTitleStyle->name.empty()) {
-				_dest.ChapterSubTitleStyle->set_default_name("chapter_subtitle_style");
-			}
+			put_json(_dest.ChapterSubTitleStyle, chapter_subtitle_style);
+			_dest.ChapterSubTitleStyle->set_default_name("chapter_subtitle_style");
 		}
 
 		json paragraph_style = _src["paragraph_style"];
@@ -249,10 +236,8 @@ namespace corona
 			if (!_dest.ParagraphStyle) {
 				_dest.ParagraphStyle = std::make_shared<viewStyleRequest>();
 			}
-			put_json(*_dest.ParagraphStyle.get(), paragraph_style);
-			if (_dest.ParagraphStyle->name.empty()) {
-				_dest.ParagraphStyle->set_default_name("paragraph_style");
-			}
+			put_json(_dest.ParagraphStyle, paragraph_style);
+			_dest.ParagraphStyle->set_default_name("paragraph_style");
 		}
 
 		json form_style = _src["form_style"];
@@ -260,10 +245,8 @@ namespace corona
 			if (!_dest.FormStyle) {
 				_dest.FormStyle = std::make_shared<viewStyleRequest>();
 			}
-			put_json(*_dest.FormStyle.get(), form_style);
-			if (_dest.FormStyle->name.empty()) {
-				_dest.FormStyle->set_default_name("form_style");
-			}
+			put_json(_dest.FormStyle, form_style);
+			_dest.FormStyle->set_default_name("form_style");
 		}
 
 		json label_style = _src["label_style"];
@@ -271,10 +254,8 @@ namespace corona
 			if (!_dest.LabelStyle) {
 				_dest.LabelStyle = std::make_shared<viewStyleRequest>();
 			}
-			put_json(*_dest.LabelStyle.get(), label_style);
-			if (_dest.LabelStyle->name.empty()) {
-				_dest.LabelStyle->set_default_name("label_style");
-			}
+			put_json(_dest.LabelStyle, label_style);
+			_dest.LabelStyle->set_default_name("label_style");
 		}
 
 		json placeholder_style = _src["placeholder_style"];
@@ -282,10 +263,8 @@ namespace corona
 			if (!_dest.PlaceholderStyle) {
 				_dest.PlaceholderStyle = std::make_shared<viewStyleRequest>();
 			}
-			put_json(*_dest.PlaceholderStyle.get(), placeholder_style);
-			if (_dest.PlaceholderStyle->name.empty()) {
-				_dest.PlaceholderStyle->set_default_name("placeholder_style");
-			}
+			put_json(_dest.PlaceholderStyle, placeholder_style);
+			_dest.PlaceholderStyle->set_default_name("placeholder_style");
 		}
 
 		json error_style = _src["error_style"];
@@ -293,10 +272,8 @@ namespace corona
 			if (!_dest.ErrorStyle) {
 				_dest.ErrorStyle = std::make_shared<viewStyleRequest>();
 			}
-			put_json(*_dest.ErrorStyle.get(), error_style);
-			if (_dest.ErrorStyle->name.empty()) {
-				_dest.ErrorStyle->set_default_name("error_style");
-			}
+			put_json(_dest.ErrorStyle, error_style);
+			_dest.ErrorStyle->set_default_name("error_style");
 		}
 
 		json success_style = _src["success_style"];
@@ -304,10 +281,8 @@ namespace corona
 			if (!_dest.SuccessStyle) {
 				_dest.SuccessStyle = std::make_shared<viewStyleRequest>();
 			}
-			put_json(*_dest.SuccessStyle.get(), success_style);
-			if (_dest.SuccessStyle->name.empty()) {
-				_dest.SuccessStyle->set_default_name("success_style");
-			}
+			put_json(_dest.SuccessStyle, success_style);
+			_dest.SuccessStyle->set_default_name("success_style");
 		}
 
 		json code_style = _src["code_style"];
@@ -315,10 +290,8 @@ namespace corona
 			if (!_dest.CodeStyle) {
 				_dest.CodeStyle = std::make_shared<viewStyleRequest>();
 			}
-			put_json(*_dest.CodeStyle.get(), code_style);
-			if (_dest.CodeStyle->name.empty()) {
-				_dest.CodeStyle->set_default_name("code_style");
-			}
+			put_json(_dest.CodeStyle, code_style);
+			_dest.CodeStyle->set_default_name("code_style");
 		}
 	}
 
@@ -662,6 +635,9 @@ namespace corona
 			scope_lock lock(me);
 
 			std::string style_sheet_name = _src["style_sheet_name"];
+			if (style_sheet_name.empty()) {
+				std::cout << "style_sheet_name must not be empty" << std::endl;
+			}
 			std::shared_ptr<presentation_style> update_style;
 
 			if (!style_sheet_name.empty()) {

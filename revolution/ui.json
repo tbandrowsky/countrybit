@@ -215,96 +215,91 @@
   "pages": [
     {
       "class_name": "page",
-      "name" :  "home",
+      "page_name" :  "home",
       "children": [
         {
-          "class_name": "page",
-          "children": [
-            {
-              "class_name": "title",
-              "text": "sample title",
-              "box": {
-                "width": {
-                  "amount": 1.0,
-                  "units": "remaining"
-                },
-                "height": {
-                  "amount": 65,
-                  "units": "pixels"
-                }
-              }
+          "class_name": "title",
+          "text": "aliens title of death",
+          "box": {
+            "width": {
+              "amount": 1.0,
+              "units": "container"
             },
-            {
-              "class_name": "subtitle",
-              "text": "sample subtitle",
-              "box": {
-                "width": {
-                  "amount": 1.0,
-                  "units": "remaining"
-                },
-                "height": {
-                  "amount": 65,
-                  "units": "pixels"
-                }
-              }
-            },
-            {
-              "class_name": "chaptertitle",
-              "text": "sample chaptertitle",
-              "box": {
-                "width": {
-                  "amount": 1.0,
-                  "units": "remaining"
-                },
-                "height": {
-                  "amount": 65,
-                  "units": "pixels"
-                }
-              }
-            },
-            {
-              "class_name": "chaptersubtitle",
-              "text": "sample chaptersubtitle",
-              "box": {
-                "width": {
-                  "amount": 1.0,
-                  "units": "remaining"
-                },
-                "height": {
-                  "amount": 65,
-                  "units": "pixels"
-                }
-              }
-            },
-            {
-              "class_name": "paragraph",
-              "text": "sample paragraph",
-              "box": {
-                "width": {
-                  "amount": 1.0,
-                  "units": "remaining"
-                },
-                "height": {
-                  "amount": 65,
-                  "units": "pixels"
-                }
-              }
-            },
-            {
-              "class_name": "code",
-              "text":  "sample code",
-              "box": {
-                "width": {
-                  "amount": 1.0,
-                  "units": "remaining"
-                },
-                "height": {
-                  "amount": 65,
-                  "units": "pixels"
-                }
-              }
+            "height": {
+              "amount": 65,
+              "units": "pixels"
             }
-          ]
+          }
+        },
+        {
+          "class_name": "subtitle",
+          "text": "samplesss subtitle",
+          "box": {
+            "width": {
+              "amount": 1.0,
+              "units": "container"
+            },
+            "height": {
+              "amount": 65,
+              "units": "pixels"
+            }
+          }
+        },
+        {
+          "class_name": "chaptertitle",
+          "text": "sample chaptertitle",
+          "box": {
+            "width": {
+              "amount": 1.0,
+              "units": "container"
+            },
+            "height": {
+              "amount": 65,
+              "units": "pixels"
+            }
+          }
+        },
+        {
+          "class_name": "chaptersubtitle",
+          "text": "sample chaptersubtitle",
+          "box": {
+            "width": {
+              "amount": 1.0,
+              "units": "container"
+            },
+            "height": {
+              "amount": 65,
+              "units": "pixels"
+            }
+          }
+        },
+        {
+          "class_name": "paragraph",
+          "text": "sample paragraph",
+          "box": {
+            "width": {
+              "amount": 1.0,
+              "units": "container"
+            },
+            "height": {
+              "amount": 65,
+              "units": "pixels"
+            }
+          }
+        },
+        {
+          "class_name": "code",
+          "text":  "sample code",
+          "box": {
+            "width": {
+              "amount": 1.0,
+              "units": "container"
+            },
+            "height": {
+              "amount": 65,
+              "units": "pixels"
+            }
+          }
         }
       ]
     }

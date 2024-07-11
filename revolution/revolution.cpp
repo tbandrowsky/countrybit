@@ -2,26 +2,26 @@
 #define APPLICATION_GUITAR 2
 #define APPLICATION_AURA 3
 #define APPLICATION_REPARATIONS 4
-#define APPLICATION_ID APPLICATION_AURA
+#define APPLICATION_ID APPLICATION_REPARATIONS
 
 #if APPLICATION_ID == APPLICATION_REVOLUTION
 #include "app_revolution.hpp"
-#define application_function corona::run_aura_application;
+#define application_function(a,b) corona::run_aura_application(a,b);
 #endif
 
 #if APPLICATION_ID == APPLICATION_AURA
 #include "app_aura.hpp"
-#define application_function corona::run_revolution_application;
+#define application_function(a,b) corona::run_revolution_application(a,b);
 #endif
 
 #if APPLICATION_ID == APPLICATION_GUITAR
 #include "app_guitar.hpp"
-#define application_function corona::run_proposal_application;
+#define application_function(a,b) corona::run_proposal_application(a,b);
 #endif
 
 #if APPLICATION_ID == APPLICATION_REPARATIONS
 #include "app_reparations.hpp"
-#define application_function corona::run_reparations_application;
+#define application_function(a,b) corona::run_reparations_application(a,b);
 #endif
 
 int __stdcall WinMain(HINSTANCE hInstance,
@@ -54,7 +54,7 @@ int __stdcall WinMain(HINSTANCE hInstance,
 
 	BOOL result = ::InitCommonControlsEx(&ice);
 
-	corona::run_developer_application(hInstance, lpszCmdParam);
+	application_function(hInstance, lpszCmdParam);
 
 	CoUninitialize();
 }

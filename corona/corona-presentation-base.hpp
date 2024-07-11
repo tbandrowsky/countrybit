@@ -40,10 +40,17 @@ namespace corona
 
 		virtual void put_json(json& _src)
 		{
-			if (!_src.has_members({ "id_field", "text_field", "selected_field" })) {
-				std::cout << "list_data must have id_field, text_field, and selected_field" << std::endl;
+			std::vector<std::string> missing;
+			if (!_src.has_members(missing, { "id_field", "text_field", "selected_field" })) {
+				std::cout << "list_data is missing:" << std::endl;
+				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
+					std::cout << s << std::endl;
+					});
+				std::cout << "source json:" << std::endl;
 				std::cout << _src.to_json() << std::endl;
+				return;
 			}
+
 			id_field = _src.get_member("id_field");
 			text_field = _src.get_member("text_field");
 			selected_field = _src.get_member("selected_field");
@@ -70,10 +77,18 @@ namespace corona
 
 		virtual void put_json(json& _src)
 		{
-			if (!_src.has_members({ "display_name", "json_field", "width" })) {
-				std::cout << "table_column display_name, json_field, and width" << std::endl;
+			std::vector<std::string> missing;
+			if (!_src.has_members(missing, { "display_name", "json_field", "width" })) {
+				std::cout << "table_column is missing:" << std::endl;
+				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
+					std::cout << s << std::endl;
+					});
+				std::cout << "source json:" << std::endl;
 				std::cout << _src.to_json() << std::endl;
+				return;
 			}
+
+
 			display_name = _src["display_name"];
 			json_field = _src["json_field"];
 			width = (int)_src["width"];
@@ -109,9 +124,15 @@ namespace corona
 		virtual void put_json(json& _src)
 		{
 
-			if (!_src.has_members({ "columns", "id_field", "items" })) {
-				std::cout << "table_data must have columns, id_field, and items" << std::endl;
+			std::vector<std::string> missing;
+			if (!_src.has_members(missing, { "columns", "id_field", "items" })) {
+				std::cout << "table_data is missing:" << std::endl;
+				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
+					std::cout << s << std::endl;
+					});
+				std::cout << "source json:" << std::endl;
 				std::cout << _src.to_json() << std::endl;
+				return;
 			}
 
 			json jcolumns = _src["columns"];

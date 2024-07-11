@@ -35,10 +35,11 @@ namespace corona
 							if (b.is_safe_string()) {
 								std::string s_contents = b.get_ptr();
 								if (s_contents != last_contents) {
+									last_contents = s_contents;
 									json temp_contents = jp.parse_object(s_contents);
+									contents = temp_contents;
+									std::string xtemp = contents.to_json();
 									if (!jp.parse_errors.size()) {
-										last_contents = contents;
-										contents = temp_contents;
 										co_return true;
 									}
 								}

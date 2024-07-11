@@ -43,7 +43,7 @@ namespace corona
 
 	/* And now, this is the application */
 
-	class aura_application
+	class reparations_application
 	{
 	public:
 
@@ -97,7 +97,7 @@ namespace corona
 		call_status				 status_recent;
 		std::vector<call_status> status_history;
 
-		aura_application()
+		reparations_application()
 		{
 
 			json_parser jp;
@@ -201,7 +201,7 @@ namespace corona
 
 		void run(HINSTANCE hInstance, bool fullScreen)
 		{
-			application->runDialog(hInstance, "COLOR PARTY BY TODD BANDROWSKY", IDI_REVOLUTION, fullScreen, presentation_layer);
+			application->runDialog(hInstance, "REPARATIONS BY TODD BANDROWSKY", IDI_REVOLUTION, fullScreen, presentation_layer);
 		}
 
 		void set_corona_handlers()
@@ -228,15 +228,15 @@ namespace corona
 
 	};
 
-	void run_developer_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
+	void run_reparations_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 	{
 
 		if (strstr(lpszCmdParam, "-console")) {
 			EnableGuiStdOuts();
-			std::cout << "ColorParty Console Started" << std::endl;
+			std::cout << "Reparations Console Started" << std::endl;
 		}
 
-		aura_application app;
+		reparations_application app;
 
 		// and now wire the data to the presentation 
 		// the presentation can invoke the data

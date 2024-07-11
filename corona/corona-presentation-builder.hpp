@@ -51,13 +51,22 @@ namespace corona
 
 		virtual void put_json(json& _src)
 		{
-			if (!_src.has_members({ "function_name", "function_data", "credentials" }))
-			{
+
+			std::vector<std::string> missing;
+			if (!_src.has_members(missing, { "function_name", "function_data", "credentials" })) {
 				std::cout << "corona button must have function_name, function_data, and credentials" << std::endl;
 				std::cout << "function_data can be an explicit json," << std::endl;
 				std::cout << "				an id of a control," << std::endl;
 				std::cout << "				form_parent," << std::endl;
+				std::cout << "corona button is missing:" << std::endl;
+				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
+					std::cout << s << std::endl;
+					});
+				std::cout << "source json:" << std::endl;
+				std::cout << _src.to_json() << std::endl;
+				return;
 			}
+
 			function_name = _src["function_name"];
 			function_data = _src["function_data"];
 			credentials = _src["credentials"];
@@ -199,6 +208,10 @@ namespace corona
 
 		template <typename control_type> std::shared_ptr<control_type> create(int _id)
 		{
+
+			if (_id == 0)
+				throw std::logic_error("cannot create a control with id 0");
+
 			auto cp = root.get();
 			std::shared_ptr<control_type> temp;
 			auto found = std::find_if(root->children.begin(), root->children.end(), [_id](auto& ch) {
@@ -1269,6 +1282,8 @@ namespace corona
 
 		virtual void put_json(json& _src)
 		{
+			column_layout::put_json(_src);
+
 			int _field_id = _src["field_id"];
 			std::string _label = _src["label"];
 			std::string _prefix = _src["prefix"];
@@ -1276,6 +1291,7 @@ namespace corona
 			json control_props = _src["properties"];
 			json jvisualization_height = _src["visualization_height"];
 			measure _visualization_height;
+
 			corona::put_json(_visualization_height, jvisualization_height);
 
 			set_field(
@@ -1559,13 +1575,14 @@ namespace corona
 			json props = jp.create_object();
 
 			ids.get_json(props);
-			_dest.put_member("model", _dest);
+			_dest.put_member("model", props);
 		}
 
 		virtual void put_json(json& _ids)
 		{
 			form_model fm;
 			json props = _ids["model"];
+
 			fm.get_json(props);
 			set_model(fm);
 		}
@@ -2021,6 +2038,7 @@ namespace corona
 
 		tab_view_control& set_background_color(std::string _color)
 		{
+			background_brush = std::make_shared<generalBrushRequest>();
 			background_brush->setColor(_color);
 			background_brush->set_name(typeid(*this).name());
 			if (auto pwindow = window.lock())
@@ -2043,6 +2061,7 @@ namespace corona
 
 		tab_view_control& set_border_color(std::string _color)
 		{
+			border_brush = std::make_shared<generalBrushRequest>();
 			border_brush->setColor(_color);
 			border_brush->set_name( typeid(*this).name() );
 			if (auto pwindow = window.lock())
@@ -2780,14 +2799,16 @@ namespace corona
 
 		std::shared_ptr<control_base> ret = get<control_base>(field_id);
 
-		json children = _control_properties.get_member("children");
-		if (children.is_array()) {
+		if (ret) {
+			json children = _control_properties.get_member("children");
+			if (children.is_array()) {
 
-			control_builder cb;
-			for (auto child : children)
-			{
-				auto new_child = cb.from_json(child);
-				ret->children.push_back(new_child);
+				control_builder cb;
+				for (auto child : children)
+				{
+					auto new_child = cb.from_json(child);
+					ret->children.push_back(new_child);
+				}
 			}
 		}
 
@@ -2997,6 +3018,9 @@ namespace corona
 
 	void form_field_control::on_subscribe(presentation_base* _presentation, page_base* _page)
 	{
+		if (!field)
+			return;
+
 		_page->on_list_changed(field->id, [this](list_changed_event lce)
 			{
 				if (form) {
@@ -3052,12 +3076,19 @@ namespace corona
 						}
 						else if (from_data == "form")
 						{
-							for (auto p = parent; p; ) {
+							control_base* p = dynamic_cast<control_base*>(parent);
+							while (p) 
+							{
 								form_control* fc = dynamic_cast<form_control*>(p);
 								if (fc) {
 									data = fc->get_data();
 									p = nullptr;
 								}
+								else if (p->parent) {
+									p = dynamic_cast<control_base*>(p->parent);
+								}
+								else
+									p = nullptr;
 							}
 						}
 					}

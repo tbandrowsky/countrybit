@@ -99,6 +99,7 @@ namespace corona {
 		{
 			home_page = _page_name;
 		}
+		virtual void load_page();
 
 		template <typename control_type> control_type& find(int _id)
 		{
@@ -361,7 +362,6 @@ namespace corona {
 
 	void presentation::select_page(const std::string& _page_name)
 	{
-
 		auto phost = window_host.lock();
 		if (!phost) {
 			throw std::logic_error("Cannot select a page without the window host being created.");
@@ -419,6 +419,61 @@ namespace corona {
 
 	}
 
+	void presentation::load_page()
+	{
+		auto phost = window_host.lock();
+		if (!phost) {
+			throw std::logic_error("Cannot select a page without the window host being created.");
+		}
+
+		HWND hwndMainMenu = phost->getMainWindow();
+		if (!hwndMainMenu) {
+			throw std::logic_error("Cannot select a page without the window being created first.");
+		}
+
+		default_focus_id = 0;
+		default_push_button_id = 0;
+
+		if (auto ppage = current_page.lock()) {
+			ppage->handle_unload(ppage);
+			ppage->destroy();
+
+			ppage->handle_onselect(ppage);
+			auto root = ppage->get_root();
+			root->foreach([this](control_base* _item) {
+				pushbutton_control* pct = dynamic_cast<pushbutton_control*>(_item);
+				if (pct && pct->is_default_button) {
+					this->default_push_button_id = pct->get_id();
+				}
+				windows_control* wct = dynamic_cast<windows_control*>(_item);
+				if (wct && wct->is_default_focus) {
+					this->default_focus_id = wct->get_id();
+				}
+				});
+		}
+
+		onCreated();
+		onResize(current_size, 1.0);
+
+		if (auto ppage = current_page.lock()) {
+			if (ppage->menu)
+			{
+				HMENU hmenu = ppage->menu->to_menu();
+				::SetMenu(hwndMainMenu, hmenu);
+				::DrawMenuBar(hwndMainMenu);
+			}
+
+			HWND hwnd_control = ::GetDlgItem(phost->getMainWindow(), default_focus_id);
+			if (hwnd_control) {
+				::SetFocus(hwnd_control);
+			}
+			ppage->handle_onload(ppage);
+			auto root = ppage->get_root();
+		}
+
+	}
+
+
 	void presentation::onCreated()
 	{
 		auto cp = current_page.lock();
@@ -449,8 +504,19 @@ namespace corona {
 	{
 		auto cp = current_page.lock();
 		if (cp) {
+			auto *style = presentation_style_factory::get_current()->get_style();			
 			cp->draw();
 
+			if (style->PageStyle) {
+				viewStyleRequest vsr = *style->PageStyle;
+				rectangle size_rect = current_size;
+				point size_pt;
+				size_pt.x = size_rect.w;
+				size_pt.y = size_rect.h;
+				vsr.apply_scale(size_pt);
+				_ctx.setViewStyle(vsr);
+				_ctx.drawRectangle(&size_rect, style->PageStyle->box_fill_brush.get_name(), style->PageStyle->box_border_thickness, style->PageStyle->box_fill_brush.get_name());
+			}
 			auto dc = _ctx.getDeviceContext();
 			cp->render(dc);
 
@@ -993,17 +1059,23 @@ namespace corona {
 					std::string class_name = pg["class_name"];
 					if (class_name == "page") {
 						std::string name = pg["page_name"];
+						if (name.empty()) {
+							std::cout << "page_name is empty for this page, skipping" << std::endl;
+						}
 						create_page(name, [pg](page& _settings)->void
 							{
 								json_parser jp;
 								auto root = _settings.get_root_container();
+								root->children.clear();
 								control_builder cb(root);
 								json jchildren = pg["children"];
-								if (jchildren.is_array()) {
+								if (jchildren.is_array()) {	
 									for (auto jchild : jchildren) 
 									{
 										auto child = cb.from_json(jchild);
-										root->children.push_back(child);
+										if (child) {
+											root->children.push_back(child);
+										}
 									}
 								}
 							});
@@ -1015,6 +1087,7 @@ namespace corona {
 				}
 			}
 		}
+		load_page();
 	}
 }
 

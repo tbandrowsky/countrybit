@@ -73,9 +73,19 @@ namespace corona
 	}
 	void put_json(measure& _dest, json& _src)
 	{
-		if (!_src.has_members({ "amount", "units" })) {
-			std::cout << "measure must have amount and units" << std::endl;
+		if (_src.is_empty())
+			return;
+
+		std::vector<std::string> missing;
+
+		if (!_src.has_members(missing, { "amount", "units" })) {
+			std::cout << "measure is missing:" << std::endl;
+			std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
+				std::cout << s << std::endl;
+				});
+			std::cout << "source json:" << std::endl;
 			std::cout << _src.to_json() << std::endl;
+			return;
 		}
 
 		_dest.amount = (double)_src["amount"];
@@ -113,7 +123,7 @@ namespace corona
 		}
 		else if (sunits == "text")
 		{
-			_dest.units = measure_units::pixels;
+			_dest.units = measure_units::text;
 		}
 		else
 		{
@@ -143,17 +153,27 @@ namespace corona
 	void put_json(layout_rect& _dest, json& _src)
 	{
 		json jx, jy, jwidth, jheight;
-		if (!_src.has_members({ "width", "height" })) {
-			std::cout << "layout_rect must have width and height. x and y are optional." << std::endl;
+
+		if (_src.is_empty())
+			return;
+
+		std::vector<std::string> missing;
+		if (!_src.has_members(missing, { "width", "height" })) {
+			std::cout << "layout_rect is missing:" << std::endl;
+			std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
+				std::cout << s << std::endl;
+				});
+			std::cout << "source json:" << std::endl;
 			std::cout << _src.to_json() << std::endl;
 			return;
 		}
+
 		jx = _src["x"];
 		jy = _src["y"];
 		jwidth = _src["width"];
 		jheight = _src["height"];
-		put_json(_dest.x, jx);
-		put_json(_dest.y, jy);
+		if (!jx.is_empty()) put_json(_dest.x, jx);
+		if (!jy.is_empty()) put_json(_dest.y, jy);
 		put_json(_dest.width, jwidth);
 		put_json(_dest.height, jheight);
 	}
@@ -168,11 +188,21 @@ namespace corona
 
 	void put_json(rectangle& _dest, json& _src)
 	{
-		if (!_src.has_members({ "w", "h" })) {
-			std::cout << "rectangle must have w, and h.  x & y are optional." << std::endl;
+
+		if (_src.is_empty())
+			return;
+
+		std::vector<std::string> missing;
+		if (!_src.has_members(missing, { "w", "h" })) {
+			std::cout << "rectangle is missing:" << std::endl;
+			std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
+				std::cout << s << std::endl;
+				});
+			std::cout << "source json:" << std::endl;
 			std::cout << _src.to_json() << std::endl;
 			return;
 		}
+
 
 		_dest.x = (double)_src["x"];
 		_dest.y = (double)_src["y"];

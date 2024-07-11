@@ -477,6 +477,22 @@ namespace corona
 			return true;
 		}
 
+		bool has_members(std::vector<std::string>& _missing, std::vector<std::string> _src)
+		{
+			if (!is_object())
+				return false;
+
+			bool good = true;
+
+			for (auto s : _src) {
+				if (!has_member(s)) {
+					good = false;
+					_missing.push_back(s);
+				}
+			}
+			return good;
+		}
+
 		std::string to_json_typed_string()
 		{
 			std::string json_str = to_json_typed();
@@ -878,7 +894,7 @@ namespace corona
 			json jn, jx;
 
 			if (!object_impl) {
-				throw std::logic_error("Not an object");
+				return jn;
 			}
 
 			jn = json(object_impl->members[_key]);
@@ -1900,12 +1916,14 @@ namespace corona
 				base(_base),
 				index(_index)
 			{
-				if (!base || index >= base->size() || index < 0) {
-					index = -1;
-				}
 			}
 
-			json_iterator() : base(nullptr), index(-1)
+			json_iterator() : base(nullptr), index(0)
+			{
+
+			}
+
+			json_iterator(const json_iterator& _src) : base(_src.base), index(_src.index)
 			{
 
 			}
@@ -1926,12 +1944,14 @@ namespace corona
 
 			inline json_iterator end() const
 			{
-				return json_iterator(base, -1);
+				return json_iterator(base, base->size());
 			}
 
 			inline json_iterator operator++()
 			{
-				index++;
+				if (index < base->size()) {
+					index++;
+				}
 				return json_iterator(base, index);
 			}
 
@@ -1944,8 +1964,7 @@ namespace corona
 
 			bool operator == (const json_iterator& _src) const
 			{
-				return (base == nullptr || _src.base == nullptr || base == _src.base) 
-						&& _src.index == index;
+				return (base == _src.base && _src.index == index);
 			}
 
 			bool operator != (const json_iterator& _src)
@@ -1963,7 +1982,7 @@ namespace corona
 
 		json_iterator end()
 		{
-			return json_iterator(this, -1);
+			return json_iterator(this, size());
 		}
 	};
 

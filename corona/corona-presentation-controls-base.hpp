@@ -405,7 +405,18 @@ namespace corona
 			json jbox, jmargin, jpadding;
 
 			if (!_src.has_members({ "id", "box" })) {
+				return;
+			}
+
+			std::vector<std::string> missing;
+			if (!_src.has_members(missing, { "id", "box" })) {
 				std::cout << "a control must have an id and box defined for layout, along with these optional properties: padding, margin, tooltip_text, json_field_name" << std::endl;
+				std::cout << "control is missing:" << std::endl;
+				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
+					std::cout << s << std::endl;
+					});
+				std::cout << "source json:" << std::endl;
+				std::cout << _src.to_json() << std::endl;
 				return;
 			}
 

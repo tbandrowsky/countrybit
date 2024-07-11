@@ -1671,7 +1671,24 @@ namespace corona
 			params.lpSecurityAttributes = NULL;
 			params.dwFileFlags = FILE_FLAG_OVERLAPPED;
 
-			instance.hfile = ::CreateFile2(file_name.c_str(), (GENERIC_READ | GENERIC_WRITE), 0, disposition, &params);
+			int retry_count = 10;
+
+			do
+			{
+				instance.hfile = ::CreateFile2(file_name.c_str(), (GENERIC_READ | GENERIC_WRITE), 0, disposition, &params);
+				if (instance.hfile != INVALID_HANDLE_VALUE) {
+					break;
+				}
+				os_result what_wrong;
+				std::cout << what_wrong.message << std::endl;
+				if (what_wrong.error_code < 90) {
+					Sleep(200);
+					retry_count--;
+				}
+				else {
+					break;
+				}
+			} while (retry_count >= 5);
 			if (instance.hfile == INVALID_HANDLE_VALUE) {
 				os_result osr;
 				{

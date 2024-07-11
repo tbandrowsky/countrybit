@@ -33,6 +33,15 @@ namespace corona
 		text_display_control(container_control_base* _parent, int _id);
 		virtual ~text_display_control() { ; }
 
+		virtual void get_json(json& _dest)
+		{
+			_dest.put_member("text", text);
+		}
+		virtual void put_json(json& _src)
+		{
+			text = _src["text"];
+		}
+
 		virtual std::shared_ptr<control_base> clone()
 		{
 			auto tv = std::make_shared<text_display_control>(*this);
@@ -49,6 +58,8 @@ namespace corona
 		virtual double get_font_size() { return view_style ? view_style->text_style.fontSize : 14; }
 		text_display_control& set_text(std::string _text);
 		text_display_control& set_style(viewStyleRequest request);
+
+
 
 	};
 
@@ -385,7 +396,9 @@ namespace corona
 
 					if (auto pwindow = this->window.lock())
 					{					
-						pwindow->getContext().setViewStyle(*view_style);
+						if (view_style) {
+							pwindow->getContext().setViewStyle(*view_style);
+						}
 					}
 				}
 			};

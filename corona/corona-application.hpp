@@ -62,9 +62,9 @@ namespace corona
 			::GetModuleFileName(nullptr, buff, sizeof(buff) / sizeof(char));
 			::PathRemoveFileSpec(buff);
 			std::string temp = buff;
-			temp += "/";
+			temp += "\\";
 			temp += _filename;
-			return buff;
+			return temp;
 		}
 
 		std::string get_data_filename(std::string _filename)

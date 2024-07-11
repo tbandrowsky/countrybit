@@ -49,10 +49,18 @@ namespace corona {
 
 	void put_json(D2D1_RECT_F& _dest, json& _src)
 	{
-		if (!_src.has_members({ "left", "top", "right", "bottom" })) {
+		std::vector<std::string> missing;
+		if (!_src.has_members(missing, { "left", "top", "right", "bottom" })) {
 			std::cout << "D2D1_RECT_F needs a crop and size" << std::endl;
+			std::cout << "is missing:" << std::endl;
+			std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
+				std::cout << s << std::endl;
+				});
+			std::cout << "source json:" << std::endl;
 			std::cout << _src.to_json() << std::endl;
+			return;
 		}
+
 		_dest.left = (double)_src["left"];
 		_dest.top = (double)_src["top"];
 		_dest.right = (double)_src["right"];
@@ -74,9 +82,17 @@ namespace corona {
 
 	void put_json(sizeCrop& _dest, json& _src)
 	{
-		if (!_src.has_members({ "crop", "size" })) {
+
+		std::vector<std::string> missing;
+		if (!_src.has_members(missing, { "crop", "size" })) {
 			std::cout << "sizeCrop needs a crop and size" << std::endl;
+			std::cout << "is missing:" << std::endl;
+			std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
+				std::cout << s << std::endl;
+				});
+			std::cout << "source json:" << std::endl;
 			std::cout << _src.to_json() << std::endl;
+			return;
 		}
 
 		json jcrop, jsize;
@@ -249,9 +265,16 @@ namespace corona {
 
 	void put_json(gradientStop& _dest, json& _src)
 	{
-		if (!_src.has_members({ "color", "position" })) {
+		std::vector<std::string> missing;
+		if (!_src.has_members(missing, { "color", "position" })) {
 			std::cout << "gradientStop needs a color and position" << std::endl;
+			std::cout << "gradientStop is missing:" << std::endl;
+			std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
+				std::cout << s << std::endl;
+				});
+			std::cout << "source json:" << std::endl;
 			std::cout << _src.to_json() << std::endl;
+			return;
 		}
 
 		_dest.stop_position = (double)_src["position"];
@@ -322,12 +345,12 @@ namespace corona {
 	{
 		json_parser jp;
 
-		if (!_src.has_members({ "name", "file_name", "crop", "sizes"})) {
-			std::cout << "bitmap needs a name and filename and crop and sizes" << std::endl;
+		if (!_src.has_members({ "file_name", "crop", "sizes"})) {
+			std::cout << "bitmap needs a filename and crop and sizes" << std::endl;
 			std::cout << _src.to_json() << std::endl;
+			return;
 		}
 
-		_dest.name = _src["name"];
 		_dest.file_name = _src["file_name"];
 		_dest.resource_id = (int)_src["resource_id"];
 		_dest.cropEnabled = (bool)_src["crop_enabled"];
@@ -377,12 +400,12 @@ namespace corona {
 
 	void put_json(bitmapBrushRequest& _dest, json& _src)
 	{
-		if (!_src.has_members({ "name", "file_name" })) {
-			std::cout << "bitmap_brush must have name and file_name" << std::endl;
+		if (!_src.has_members({ "file_name" })) {
+			std::cout << "bitmap_brush must have file_name" << std::endl;
 			std::cout << _src.to_json() << std::endl;
+			return;
 		}
 
-		_dest.name = _src["name"];
 		_dest.bitmapName = _src["file_name"];
 	}
 
@@ -444,23 +467,19 @@ namespace corona {
 	{
 		json_parser jp;
 
-		if (!_src.has_members({ "name", "start", "stop", "size", "stops" })) {
-			std::cout << "linear_brush must have name, start, size, and stops" << std::endl;
+		if (!_src.has_members({ "start", "stop", "stops" })) {
+			std::cout << "linear_brush must have start, stop and stops" << std::endl;
 			std::cout << _src.to_json() << std::endl;
+			return;
 		}
 
-		_dest.name = (std::string)_src["name"];
-
-		json jstart, jstop, jsize, jstops;
+		json jstart, jstop, jstops;
 
 		jstart = _src["start"];
 		put_json(_dest.start, jstart);
 
 		jstop = _src["stop"];
 		put_json(_dest.stop, jstop);
-
-		jsize = _src["size"];
-		put_json(_dest.size, jsize);
 
 		jstops = _src["stops"];
 		if (jstops.is_array()) {
@@ -539,12 +558,17 @@ namespace corona {
 	{
 		json_parser jp;
 
-		if (!_src.has_members({ "name", "center", "offset", "size", "radiusX", "radiusY", "stops"})) {
+		std::vector<std::string> missing;
+		if (!_src.has_members(missing, { "center", "offset", "size", "radiusX", "radiusY", "stops" })) {
 			std::cout << "radial_brush must have name, center, offset, size, radiusX, radiusY and stops" << std::endl;
+			std::cout << "is missing:" << std::endl;
+			std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
+				std::cout << s << std::endl;
+				});
+			std::cout << "source json:" << std::endl;
 			std::cout << _src.to_json() << std::endl;
+			return;
 		}
-
-		_dest.name = (std::string)_src["name"];
 
 		json jcenter, joffset, jsize, jstops, jstop;
 
@@ -608,12 +632,12 @@ namespace corona {
 	{
 		json_parser jp;
 
-		if (!_src.has_members({ "name", "color" })) {
-			std::cout << "solid_brush must have name and color" << std::endl;
+		if (!_src.has_members({ "color" })) {
+			std::cout << "solid_brush must have color" << std::endl;
 			std::cout << _src.to_json() << std::endl;
+			return;
 		}
 
-		_dest.name = (std::string)_src["name"];
 		put_json(_dest.brushColor, "color", _src);
 	}
 
@@ -949,6 +973,31 @@ namespace corona {
 			return t;
 		}
 
+		void apply_scale(point _size)
+		{
+			switch (brush_type) {
+			case brush_types::solid_brush_type:
+				break;
+			case brush_types::linear_brush_type:
+				if (linear_brush) {
+					linear_brush->size *= _size;
+					linear_brush->start *= _size;
+					linear_brush->stop *= _size;
+				}
+				break;
+			case brush_types::radial_brush_type:
+				if (radial_brush) {
+					radial_brush->center *= _size;
+					radial_brush->radiusX *= _size.x;
+					radial_brush->radiusY *= _size.y;
+				}
+				break;
+			case brush_types::bitmap_brush_type:
+				break;
+			}
+		}
+
+
 	};
 
 	void get_json(json& _dest, generalBrushRequest& _src)
@@ -974,6 +1023,7 @@ namespace corona {
 			break;
 		}
 	}
+
 
 	void put_json(generalBrushRequest& _dest, json& _src)
 	{
@@ -1121,12 +1171,12 @@ namespace corona {
 	void put_json(textStyleRequest& _dest, json& _src)
 	{
 
-		if (!_src.has_members({ "name", "font_name", "font_size" })) {
-			std::cout << "text style must have name, font_name, and font_size." << std::endl;
+		if (!_src.has_members({ "font_name", "font_size" })) {
+			std::cout << "text style must have font_name, and font_size." << std::endl;
 			std::cout << "text style may also have bold, italics, underline, strike_through, line_spacing, wrap_text, character_spacing, font_stretch." << std::endl;
 			std::cout << _src.to_json() << std::endl;
+			return;
 		}
-		_dest.name = _src["name"];
 		_dest.fontName = _src["font_name"];
 		_dest.fontSize = (double)_src["font_size"];
 		_dest.bold = (bool)_src["bold"];
@@ -1177,11 +1227,19 @@ namespace corona {
 		void set_default_name(std::string _name)
 		{
 			name = _name;
-			text_style.name = "text_" + _name;
-			box_border_brush.set_name("boxborder_" + _name);
-			shape_border_brush.set_name("shapeborder_" + _name);
-			box_fill_brush.set_name("boxfill_" + _name);
-			shape_fill_brush.set_name("shapefill_" + _name);
+			text_style.name = "tx_" + _name;
+			box_border_brush.set_name("bb_" + _name);
+			shape_border_brush.set_name("sb_" + _name);
+			box_fill_brush.set_name("bf_" + _name);
+			shape_fill_brush.set_name("sf_" + _name);
+		}
+
+		void apply_scale(point _size)
+		{
+			box_border_brush.apply_scale( _size);
+			shape_border_brush.apply_scale(_size);
+			box_fill_brush.apply_scale(_size);
+			shape_fill_brush.apply_scale(_size);
 		}
 	};
 
@@ -1235,6 +1293,15 @@ namespace corona {
 		put_json(_dest.shape_border_brush, shape_border);
 		put_json(_dest.box_fill_brush, box_fill);
 		put_json(_dest.shape_fill_brush, shape_fill);
+
+		_dest.set_default_name(_src["name"]);
+	}
+
+	void put_json(std::shared_ptr<viewStyleRequest>& _dest, json& _src)
+	{
+		if (_dest) {
+			put_json(*_dest, _src);
+		}
 	}
 
 	struct bitmapFilterFunction {
