@@ -22,7 +22,6 @@ namespace corona
 	{
 	public:
 		std::string			text;
-		std::shared_ptr<viewStyleRequest>	view_style;
 
 		text_display_control(const text_display_control& _src) : draw_control(_src)
 		{
@@ -35,10 +34,12 @@ namespace corona
 
 		virtual void get_json(json& _dest)
 		{
+			draw_control::get_json(_dest);
 			_dest.put_member("text", text);
 		}
 		virtual void put_json(json& _src)
 		{
+			draw_control::put_json(_src);
 			text = _src["text"];
 		}
 
@@ -393,13 +394,6 @@ namespace corona
 				text_display_control *t = dynamic_cast<text_display_control*>(_src);
 				if (t) {
 					t->set_default_styles();
-
-					if (auto pwindow = this->window.lock())
-					{					
-						if (view_style) {
-							pwindow->getContext().setViewStyle(*view_style);
-						}
-					}
 				}
 			};
 
@@ -416,8 +410,8 @@ namespace corona
 					std::string test_text = std::format("{0}, {1}, {2}", text, draw_bounds.x, draw_bounds.y, (long)this);
 					//std::cout << test_text << std::endl;
 
-					draw_bounds.x -= inner_bounds.x;
-					draw_bounds.y -= inner_bounds.y;
+					draw_bounds.x -= bounds.x;
+					draw_bounds.y -= bounds.y;
 
 					if (view_style) {
 						pwindow->getContext().drawText(text.c_str(), &draw_bounds, view_style->text_style.name, view_style->shape_fill_brush.get_name());

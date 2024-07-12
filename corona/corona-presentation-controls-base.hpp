@@ -404,13 +404,9 @@ namespace corona
 		{
 			json jbox, jmargin, jpadding;
 
-			if (!_src.has_members({ "id", "box" })) {
-				return;
-			}
-
 			std::vector<std::string> missing;
-			if (!_src.has_members(missing, { "id", "box" })) {
-				std::cout << "a control must have an id and box defined for layout, along with these optional properties: padding, margin, tooltip_text, json_field_name" << std::endl;
+			if (!_src.has_members(missing, { "box" })) {
+				std::cout << "a control must have a box defined for layout, along with these optional properties: padding, margin, tooltip_text, json_field_name" << std::endl;
 				std::cout << "control is missing:" << std::endl;
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 					std::cout << s << std::endl;
@@ -434,6 +430,9 @@ namespace corona
 
 		rectangle& get_bounds() { return bounds; }
 		rectangle& get_inner_bounds() { return inner_bounds; }
+
+		point& get_margin_amount() { return margin_amount; }
+		point& get_padding_amount() { return padding_amount; }
 
 		rectangle& set_bounds(rectangle& _bounds);
 		void calculate_margins();
@@ -944,7 +943,7 @@ namespace corona
 	{
 		margin_amount.x = to_pixels_x(margin);
 		margin_amount.y = to_pixels_y(margin); 
-		padding_amount.x = to_pixels_x(margin);
+		padding_amount.x = to_pixels_x(padding);
 		padding_amount.y = to_pixels_y(padding);
 	}
 
@@ -956,7 +955,7 @@ namespace corona
 
 		if (parent)
 		{
-			auto pparent = (control_base *)(parent);
+			auto pparent = dynamic_cast<control_base *>(parent);
 			if (pparent) {
 				auto pbounds = pparent->get_inner_bounds();
 				if (bounds.x < pbounds.x)
@@ -1044,6 +1043,7 @@ namespace corona
 			{
 				auto child = *sichild;
 				auto* c = child.get();
+				c->parent = this;
 
 				auto location  = _align_item(remaining, &origin, &bounds, child.get());
 

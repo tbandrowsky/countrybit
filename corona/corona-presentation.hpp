@@ -673,8 +673,8 @@ namespace corona {
 		kde.absolute_point = *_point;
 		if (cp) {
 			cp->handle_mouse_move(0, kde);
+			cp->root->set_mouse(*_point, nullptr, nullptr, nullptr, nullptr);
 		}
-		cp->root->set_mouse(*_point, nullptr, nullptr, nullptr, nullptr);
 	}
 
 	void presentation::mouseLeftDown(point* _point)
@@ -682,97 +682,106 @@ namespace corona {
 		bool leftMouse = true;
 		last_mouse_click = *_point;
 		auto cp = current_page.lock();
-		presentation* p = this;
-		cp->root->set_mouse(*_point, &leftMouse, nullptr, [cp, p, _point](control_base* _item) {
-			mouse_left_click_event mcel = {};
-			mcel.control = _item;
-			mcel.control_id = _item->id;
-			mcel.absolute_point.x = _point->x;
-			mcel.absolute_point.y = _point->y;
-			mcel.absolute_point.z = 0;
-			if (_item) {
-				mcel.relative_point.x = _point->x - _item->get_bounds().x;
-				mcel.relative_point.y = _point->y - _item->get_bounds().y;
-				mcel.relative_point.z = 0;
-			}
-			cp->handle_mouse_left_click(_item->id, mcel);
+		if (cp) {
+			presentation* p = this;
+			cp->root->set_mouse(*_point, &leftMouse, nullptr, [cp, p, _point](control_base* _item) {
+				mouse_left_click_event mcel = {};
+				mcel.control = _item;
+				mcel.control_id = _item->id;
+				mcel.absolute_point.x = _point->x;
+				mcel.absolute_point.y = _point->y;
+				mcel.absolute_point.z = 0;
+				if (_item) {
+					mcel.relative_point.x = _point->x - _item->get_bounds().x;
+					mcel.relative_point.y = _point->y - _item->get_bounds().y;
+					mcel.relative_point.z = 0;
+				}
+				cp->handle_mouse_left_click(_item->id, mcel);
 
-			mouse_click_event mce = {};
-			mce.control = _item;
-			mce.control_id = _item->id;
-			mce.absolute_point.x = _point->x;
-			mce.absolute_point.y = _point->y;
-			mce.absolute_point.z = 0;
-			if (_item) {
-				mcel.relative_point.x = _point->x - _item->get_bounds().x;
-				mcel.relative_point.y = _point->y - _item->get_bounds().y;
-				mcel.relative_point.z = 0;
-			}
-			cp->handle_mouse_click(_item->id, mce);
-			}, nullptr);
+				mouse_click_event mce = {};
+				mce.control = _item;
+				mce.control_id = _item->id;
+				mce.absolute_point.x = _point->x;
+				mce.absolute_point.y = _point->y;
+				mce.absolute_point.z = 0;
+				if (_item) {
+					mcel.relative_point.x = _point->x - _item->get_bounds().x;
+					mcel.relative_point.y = _point->y - _item->get_bounds().y;
+					mcel.relative_point.z = 0;
+				}
+				cp->handle_mouse_click(_item->id, mce);
+				}, nullptr);
+		}
 	}
 
 	void presentation::mouseLeftUp(point* _point)
 	{
 		bool leftMouse = false;
 		auto cp = current_page.lock();
-		presentation* p = this;
-		cp->root->set_mouse(*_point, &leftMouse, nullptr, [cp, p, _point](control_base* _item) {
-			mouse_click_event mce;
-			mce.control = _item;
-			mce.control_id = _item->id;
-			mce.absolute_point.x = _point->x;
-			mce.absolute_point.y = _point->y;
-			mce.absolute_point.z = 0;
-			cp->handle_mouse_click(_item->id, mce);
+		if (cp) {
+			presentation* p = this;
 
-			mouse_left_click_event mcel;
-			mcel.control = _item;
-			mcel.control_id = _item->id;
-			mcel.absolute_point.x = _point->x;
-			mcel.absolute_point.y = _point->y;
-			mcel.absolute_point.z = 0;
-			cp->handle_mouse_left_click(_item->id, mcel);
-			}, nullptr);
+			cp->root->set_mouse(*_point, &leftMouse, nullptr, [cp, p, _point](control_base* _item) {
+				mouse_click_event mce;
+				mce.control = _item;
+				mce.control_id = _item->id;
+				mce.absolute_point.x = _point->x;
+				mce.absolute_point.y = _point->y;
+				mce.absolute_point.z = 0;
+				cp->handle_mouse_click(_item->id, mce);
+
+				mouse_left_click_event mcel;
+				mcel.control = _item;
+				mcel.control_id = _item->id;
+				mcel.absolute_point.x = _point->x;
+				mcel.absolute_point.y = _point->y;
+				mcel.absolute_point.z = 0;
+				cp->handle_mouse_left_click(_item->id, mcel);
+				}, nullptr);
+		}
 	}
 
 	void presentation::mouseRightDown(point* _point)
 	{
 		bool rightMouse = true;
 		auto cp = current_page.lock();
-		presentation* p = this;
-		cp->root->set_mouse(*_point, &rightMouse, nullptr, nullptr, [cp, p, _point](control_base* _item) {
-			mouse_click_event mce;
-			mce.control = _item;
-			mce.control_id = _item->id;
-			mce.absolute_point.x = _point->x;
-			mce.absolute_point.y = _point->y;
-			mce.absolute_point.z = 0;
-			cp->handle_mouse_click(_item->id, mce);
-			});
+		if (cp) {
+			presentation* p = this;
+			cp->root->set_mouse(*_point, &rightMouse, nullptr, nullptr, [cp, p, _point](control_base* _item) {
+				mouse_click_event mce;
+				mce.control = _item;
+				mce.control_id = _item->id;
+				mce.absolute_point.x = _point->x;
+				mce.absolute_point.y = _point->y;
+				mce.absolute_point.z = 0;
+				cp->handle_mouse_click(_item->id, mce);
+				});
+		}
 	}
 
 	void presentation::mouseRightUp(point* _point)
 	{
 		bool rightMouse = false;
 		auto cp = current_page.lock();
-		presentation* p = this;
-		cp->root->set_mouse(*_point, &rightMouse, nullptr, nullptr, [cp, p, _point](control_base* _item) {
-			mouse_click_event mce;
-			mce.control = _item;
-			mce.control_id = _item->id;
-			mce.absolute_point.x = _point->x;
-			mce.absolute_point.y = _point->y;
-			mce.absolute_point.z = 0;
-			cp->handle_mouse_click(_item->id, mce);
-			mouse_right_click_event mcel;
-			mcel.control = _item;
-			mcel.control_id = _item->id;
-			mcel.absolute_point.x = _point->x;
-			mcel.absolute_point.y = _point->y;
-			mcel.absolute_point.z = 0;
-			cp->handle_mouse_right_click(_item->id, mcel);
-			});
+		if (cp) {
+			presentation* p = this;
+			cp->root->set_mouse(*_point, &rightMouse, nullptr, nullptr, [cp, p, _point](control_base* _item) {
+				mouse_click_event mce;
+				mce.control = _item;
+				mce.control_id = _item->id;
+				mce.absolute_point.x = _point->x;
+				mce.absolute_point.y = _point->y;
+				mce.absolute_point.z = 0;
+				cp->handle_mouse_click(_item->id, mce);
+				mouse_right_click_event mcel;
+				mcel.control = _item;
+				mcel.control_id = _item->id;
+				mcel.absolute_point.x = _point->x;
+				mcel.absolute_point.y = _point->y;
+				mcel.absolute_point.z = 0;
+				cp->handle_mouse_right_click(_item->id, mcel);
+				});
+		}
 	}
 
 	void presentation::pointSelected(point* _point, ccolor* _color)
@@ -1066,6 +1075,7 @@ namespace corona {
 							{
 								json_parser jp;
 								auto root = _settings.get_root_container();
+								root->set_size(1.0_container, 1.0_container);
 								root->children.clear();
 								control_builder cb(root);
 								json jchildren = pg["children"];
@@ -1073,9 +1083,6 @@ namespace corona {
 									for (auto jchild : jchildren) 
 									{
 										auto child = cb.from_json(jchild);
-										if (child) {
-											root->children.push_back(child);
-										}
 									}
 								}
 							});

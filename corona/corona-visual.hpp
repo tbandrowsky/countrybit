@@ -826,6 +826,11 @@ namespace corona {
 			return _name;
 		}
 
+		bool has_brush()
+		{
+			return solid_brush || radial_brush || linear_brush || bitmap_brush;
+		}
+
 		const char *get_name()
 		{
 			const char *name = nullptr;
@@ -1054,6 +1059,8 @@ namespace corona {
 			put_json(rgbr, _src);
 			_dest = rgbr;
 		}
+		else
+			_dest.clear();
 	}
 
 	struct drawTextRequest 
@@ -1253,30 +1260,33 @@ namespace corona {
 		json shape_fill = jp.create_object();
 
 		get_json(text_style, _src.text_style);
-		get_json(box_border, _src.box_border_brush);
-		get_json(shape_border, _src.shape_border_brush);
-		get_json(box_fill, _src.box_fill_brush);
-		get_json(shape_fill, _src.shape_fill_brush);
+		_dest.put_member("text_style", text_style);
+
+		if (_src.box_border_brush.has_brush()) {
+			get_json(box_border, _src.box_border_brush);
+			_dest.put_member("box_border_brush", box_border);
+		}
+		if (_src.shape_border_brush.has_brush()) {
+			get_json(shape_border, _src.shape_border_brush);
+			_dest.put_member("shape_border_brush", shape_border);
+		}
+		if (_src.box_fill_brush.has_brush()) {
+			get_json(box_fill, _src.box_fill_brush);
+			_dest.put_member("box_fill_brush", box_fill);
+		}
+		if (_src.shape_fill_brush.has_brush()) {
+			get_json(shape_fill, _src.shape_fill_brush);
+			_dest.put_member("shape_fill_brush", shape_fill);
+		}
 
 		_dest.put_member("name", _src.name);
 		_dest.put_member("shape_border_thickness", _src.shape_border_thickness);
 		_dest.put_member("box_border_thickness", _src.box_border_thickness);
 
-		_dest.put_member("text_style", text_style);
-		_dest.put_member("box_border_brush", box_border);
-		_dest.put_member("shape_border_brush", shape_border);
-		_dest.put_member("box_fill_brush", box_fill);
-		_dest.put_member("shape_fill_brush", shape_fill);
 	}
 
 	void put_json(viewStyleRequest& _dest, json& _src)
 	{
-
-		if (!_src.has_members({ "text_style" })) {
-			std::cout << "A style must have a text_style member, and may also have these:" << std::endl;
-			std::cout << "box_border_brush" << "shape_border_brush" << "box_fill_brush" << "shape_fill_brush" << std::endl;
-			return;
-		}
 
 		json text_style = _src["text_style"];
 		json box_border = _src["box_border_brush"];
@@ -1284,17 +1294,19 @@ namespace corona {
 		json box_fill = _src["box_fill_brush"];
 		json shape_fill = _src["shape_fill_brush"];
 
-		_dest.name = _src["name"];
-		_dest.shape_border_thickness = _src["shape_border_thickness"];
-		_dest.box_border_thickness = _src["box_border_thickness"];
+		_dest.shape_border_thickness = (double)_src["shape_border_thickness"];
+		_dest.box_border_thickness = (double)_src["box_border_thickness"];
 
-		put_json(_dest.text_style, text_style);
+		if (text_style.is_object()) {
+			put_json(_dest.text_style, text_style);
+		}
 		put_json(_dest.box_border_brush, box_border);
 		put_json(_dest.shape_border_brush, shape_border);
 		put_json(_dest.box_fill_brush, box_fill);
 		put_json(_dest.shape_fill_brush, shape_fill);
 
-		_dest.set_default_name(_src["name"]);
+		_dest.name = (std::string)_src["name"];
+		_dest.set_default_name(_dest.name);
 	}
 
 	void put_json(std::shared_ptr<viewStyleRequest>& _dest, json& _src)

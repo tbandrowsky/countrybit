@@ -166,6 +166,23 @@ namespace corona
 				child->arrange(_ctx);
 			}
 		}
+
+		virtual void get_json(json& _dest)
+		{
+			draw_control::get_json(_dest);
+
+			corona::get_json(_dest, "content_alignment", content_alignment);
+			corona::get_json(_dest, "content_cross_alignment", content_cross_alignment);
+		}
+
+		virtual void put_json(json& _src)
+		{
+			draw_control::put_json(_src);
+
+			corona::put_json(content_alignment, _src, "content_alignment" );
+			corona::put_json(content_cross_alignment, _src, "content_cross_alignment");
+		}
+
 	};
 
 	class absolute_layout :
@@ -353,8 +370,8 @@ namespace corona
 
 							auto draw_bounds = inner_bounds;
 
-							draw_bounds.x = 0;
-							draw_bounds.y = 0;
+							draw_bounds.x = inner_bounds.x - bounds.x;
+							draw_bounds.y = inner_bounds.y - bounds.y;
 
 							point offset = { view_port.x, view_port.y };
 
@@ -708,7 +725,7 @@ namespace corona
 		{
 			point temp = { 0, 0, 0 };
 
-			auto sz = _item->get_size(bounds, { _bounds->w, _bounds->h });
+			auto sz = _item->get_size(inner_bounds, { _bounds->w, _bounds->h });
 
 			if (this->content_cross_alignment == visual_alignment::align_near)
 			{
@@ -731,11 +748,11 @@ namespace corona
 
 		if (content_alignment == visual_alignment::align_near)
 		{
-			arrange_children(bounds,
+			arrange_children(inner_bounds,
 				[this, item_start_space_px](point _remaining, const rectangle* _bounds, control_base* _item) {
 					point temp = { _bounds->x, _bounds->y };
-					temp.x += _item->margin.amount;
-					temp.y += _item->margin.amount;
+					temp.x += _item->get_margin_amount().x;
+					temp.y += _item->get_margin_amount().y;
 					temp.x += item_start_space_px;
 					return temp;
 				},
@@ -744,14 +761,14 @@ namespace corona
 					point temp = *_origin;
 					auto sz = _item->get_size(bounds, { _bounds->w, _bounds->h });
 					temp.x += sz.x + item_next_space_px;
-					temp.y += _item->margin.amount;
+					temp.x += _item->get_margin_amount().x;
 					return temp;
 				}
 			);
 		}
 		else if (content_alignment == visual_alignment::align_far)
 		{
-			arrange_children(bounds,
+			arrange_children(inner_bounds,
 				[this, item_start_space_px](point _remaining, const rectangle* _bounds, control_base* _item) {
 
 					double w = 0;
@@ -762,7 +779,7 @@ namespace corona
 						child->calculate_margins();
 						auto sz = child->get_size(*_bounds, _remaining);
 						w += sz.x;
-						w += child->margin.amount;
+						w += child->get_margin_amount().x;
 					}
 
 					point temp = { 0, 0, 0 };
@@ -775,7 +792,7 @@ namespace corona
 					point temp = *_origin;
 					auto sz = _item->get_size(bounds, { _bounds->w, _bounds->h });
 					temp.x += sz.x;
-					temp.x += _item->margin.amount;
+					temp.x += _item->get_margin_amount().x;
 					temp.x += item_next_space_px;
 					return temp;
 				}
@@ -784,7 +801,7 @@ namespace corona
 		else //  DOESN'T MATTER AND ALLOWS FOR A CORRUPTION if (content_alignment == visual_alignment::align_center)
 		{
 			content_alignment = visual_alignment::align_center;
-			arrange_children(bounds,
+			arrange_children(inner_bounds,
 				[this, item_start_space_px](point _remaining, const rectangle* _bounds, control_base* _item) {
 
 					double w = 0.0;
@@ -799,7 +816,7 @@ namespace corona
 					{
 						auto sz = child->get_size(*_bounds, remaining);
 						w += sz.x;
-						w += child->margin.amount;
+						w += child->get_margin_amount().x;
 					}
 
 					origin.x = (bounds.x + bounds.w - w) / 2;
@@ -813,7 +830,7 @@ namespace corona
 					point temp = *_origin;
 					auto sz = _item->get_size(bounds, { _bounds->w, _bounds->h });
 					temp.x += sz.x;
-					temp.x += _item->margin.amount;
+					temp.x += get_margin_amount().x;
 					temp.x += item_next_space_px;
 					return temp;
 				}
@@ -838,17 +855,17 @@ namespace corona
 
 			if (this->content_cross_alignment == visual_alignment::align_near)
 			{
-				temp.x = _bounds->x;
+				temp.x = _bounds->x + _item->get_margin_amount().x;
 				temp.y = _origin->y;
 			}
 			else if (this->content_cross_alignment == visual_alignment::align_center)
 			{
-				temp.x = _bounds->x + (_bounds->w - sz.x) / 2.0;
+				temp.x = _bounds->x + (_bounds->w + _item->get_margin_amount().x * 2 - sz.x) / 2.0;
 				temp.y = _origin->y;
 			}
 			else if (this->content_cross_alignment == visual_alignment::align_far)
 			{
-				temp.x = _bounds->x + (_bounds->w - sz.x);
+				temp.x = _bounds->x + (_bounds->w - _item->get_margin_amount().x * 2 - sz.x);
 				temp.y = _origin->y;
 			}
 
@@ -857,11 +874,11 @@ namespace corona
 
 		if (content_alignment == visual_alignment::align_near)
 		{
-			arrange_children(bounds,
+			arrange_children(inner_bounds,
 				[this, item_start_space_px](point _remaining, const rectangle* _bounds, control_base* _item) {
 					point temp = { 0, 0, 0 };
-					temp.x = _bounds->x + _item->margin.amount;
-					temp.y = _bounds->y + _item->margin.amount + item_start_space_px;
+					temp.x = _bounds->x + _item->get_margin_amount().x;
+					temp.y = _bounds->y + _item->get_margin_amount().y + item_start_space_px;
 					return temp;
 				},
 				align_item,
@@ -869,12 +886,12 @@ namespace corona
 					point temp = *_origin;
 					auto sz = _item->get_size(bounds, { _bounds->w, _bounds->h });
 					temp.y += sz.y;
-					temp.y += _item->margin.amount + item_next_space_px;
+					temp.y += _item->get_margin_amount().y + item_next_space_px;
 					auto width_pixels = to_pixels_x(column_width);
 					if (temp.y > _bounds->bottom()) {
 						column_count++;
 						temp.x = _bounds->x + column_count * width_pixels;
-						temp.y = _bounds->y + _item->margin.amount + item_start_space_px;
+						temp.y = _bounds->y + _item->get_margin_amount().y + item_start_space_px;
 					}
 					return temp;
 				}
@@ -883,7 +900,7 @@ namespace corona
 		}
 		else if (content_alignment == visual_alignment::align_far)
 		{
-			arrange_children(bounds,
+			arrange_children(inner_bounds,
 				[this, item_start_space_px](point _remaining, const rectangle* _bounds, control_base* _item) {
 					point temp = { 0, 0, 0 };
 
@@ -897,7 +914,7 @@ namespace corona
 					{
 						auto sz = child->get_size(*_bounds, remaining);
 						h += sz.y;
-						h += child->margin.amount;
+						h += child->get_margin_amount().y;
 					}
 
 					temp.x = _bounds->x;
@@ -911,7 +928,7 @@ namespace corona
 					point temp = *_origin;
 					auto size = _item->get_size(bounds, { bounds.w, bounds.h });
 					temp.y += (size.y);
-					temp.y += _item->margin.amount;
+					temp.y += _item->get_margin_amount().y;
 					temp.y += item_next_space_px;
 
 					return temp;
@@ -921,7 +938,7 @@ namespace corona
 		else if (content_alignment == visual_alignment::align_center)
 		{
 
-			arrange_children(bounds,
+			arrange_children(inner_bounds,
 				[this, item_start_space_px](point _remaining, const rectangle* _bounds, control_base* _item) {
 
 					double h = 0.0;
@@ -935,7 +952,7 @@ namespace corona
 					{
 						auto sz = child->get_size(*_bounds, remaining);
 						h += sz.y;
-						h += child->margin.amount;
+						h += child->get_margin_amount().y;
 					}
 
 					origin.x = bounds.x;
@@ -966,7 +983,7 @@ namespace corona
 		point origin = { 0, 0, 0 };
 		point remaining = { _bounds.w, _bounds.h, 0.0 };
 
-		arrange_children(bounds,
+		arrange_children(inner_bounds,
 			[this](point _remaining, const rectangle* _bounds, control_base* _item) {
 				point temp = { 0, 0, 0 };
 				temp.x = _bounds->x;

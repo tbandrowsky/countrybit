@@ -1951,11 +1951,11 @@ namespace corona
 						background_name = background_brush->get_name();
 					}
 
-					if (border_name || background_name) {
+					if (background_name) {
 						rectangle r = inner_bounds;
-						r.x = 0;
-						r.y = 0;
-						context.drawRectangle(&r, border_name, 4, background_name);
+						r.x = bounds.x - inner_bounds.x;
+						r.y = bounds.y - inner_bounds.y;
+						context.drawRectangle(&r, "", 0.0, background_name);
 					}
 
 					if (on_draw)
@@ -1965,9 +1965,9 @@ namespace corona
 
 					if (is_focused && border_name) 
 					{
-						rectangle r = get_inner_bounds();
-						r.x = 0;
-						r.y = 0;
+						rectangle r = inner_bounds;
+						r.x = bounds.x - inner_bounds.x;
+						r.y = bounds.y - inner_bounds.y;
 						context.drawRectangle(&r, border_name, 4, "");
 					}
 				}
@@ -2155,11 +2155,9 @@ namespace corona
 	{
 		void init()
 		{
-			set_size(1.0_container, 100.0_px);
-
 			control_builder cb;
 
-			auto main_row = cb.row_begin(id_counter::next(), [this](row_layout& rl) {
+			auto main_row = cb.row_begin(id_counter::next(), [](row_layout& rl) {
 				rl.set_size(1.0_container, 100.0_px);
 				rl.set_content_align(visual_alignment::align_far);
 				rl.set_content_cross_align(visual_alignment::align_center);
@@ -2172,10 +2170,11 @@ namespace corona
 				cl.set_content_align(visual_alignment::align_center);
 				});
 
-			auto title_column = main_row.column_begin(id_counter::next(), [](column_layout& cl) {
+			auto title_column = main_row.column_begin(id_counter::next(), [this](column_layout& cl) {
 				cl.set_size(1.0_remaining, 1.0_container);
 				cl.set_content_align(visual_alignment::align_center);
 				cl.set_item_margin(10.0_px);
+				cl.set_origin(title_start, 0.0_px);
 				})
 				.title(title_name, [this](title_control& control) {
 						control.set_nchittest(HTCAPTION);
@@ -2200,7 +2199,7 @@ namespace corona
 					cl.set_item_margin(0.0_px);
 				})
 				.end()
-					.menu_button(menu_button_id, [this](auto& _ctrl) { _ctrl.set_size(50.0_px, 50.0_px); if (menu) { _ctrl.menu = *menu; };	})
+				.menu_button(menu_button_id, [](auto& _ctrl) { _ctrl.set_size(50.0_px, 50.0_px); })
 				.minimize_button(min_button_id, [](auto& _ctrl) { _ctrl.set_size(50.0_px, 50.0_px); })
 				.maximize_button(max_button_id, [](auto& _ctrl) { _ctrl.set_size(50.0_px, 50.0_px); })
 				.close_button(close_button_id, [](auto& _ctrl) { _ctrl.set_size(50.0_px, 50.0_px); })
@@ -2216,7 +2215,6 @@ namespace corona
 		int min_button_id;
 		int max_button_id;
 		int close_button_id;
-		menu_item* menu;
 		int image_control_id;
 		std::string image_file;
 		std::string corporate_name;
@@ -2225,10 +2223,10 @@ namespace corona
 		int title_id;
 		int subtitle_id;
 		data_lake* lake;
+		measure title_start;
 
 		caption_bar_control()
 		{
-			menu = nullptr;
 			menu_button_id = 0;
 			image_control_id = 0;
 			lake = nullptr;
@@ -2270,6 +2268,34 @@ namespace corona
 				child->on_subscribe(_presentation, _page);
 			}
 		}
+
+		virtual void get_json(json& _dest)
+		{
+			container_control::get_json(_dest);
+
+			_dest.put_member("image_file", image_file);
+			_dest.put_member("corporate_name", corporate_name);
+			_dest.put_member("title_name", title_name);
+			_dest.put_member("subtitle_name", subtitle_name);
+			
+			json_parser jp;
+			json jtitle_start = jp.create_object();
+			corona::get_json(jtitle_start, title_start);
+			_dest.put_member("title_start", jtitle_start);
+		}
+
+		virtual void put_json(json& _src)
+		{
+			container_control::put_json(_src);
+			image_file = _src["image_file"];
+			corporate_name = _src["corporate_name"];
+			title_name = _src["title_name"];
+			subtitle_name = _src["subtitle_name"];
+
+			json jtitle_start = _src["title_start"];
+			corona::put_json(title_start, jtitle_start);
+		}
+
 	};
 
 	class status_bar_control : public container_control
@@ -2294,13 +2320,13 @@ namespace corona
 					.title(id_counter::status_text_title_id, [](title_control& control) {
 						control.set_size(300.0_px, 1.2_fontgr);
 						})
-						.subtitle(id_counter::status_text_subtitle_id, [](subtitle_control& control) {
-							control.set_size(300.0_px, 1.2_fontgr);
-							})
-							.end()
-								.end();
+					.subtitle(id_counter::status_text_subtitle_id, [](subtitle_control& control) {
+						control.set_size(300.0_px, 1.2_fontgr);
+						})
+				.end()
+			.end();
 
-							cb.apply_controls(this);
+			cb.apply_controls(this);
 		}
 
 		presentation_style* st = nullptr;

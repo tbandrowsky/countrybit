@@ -26,9 +26,6 @@ namespace corona
 	private:
 
 	public:
-
-		int border_width;
-
 		std::shared_ptr<viewStyleRequest>	view_style;
 
 		std::weak_ptr<applicationBase> host;
@@ -87,7 +84,9 @@ namespace corona
 		void destroy()
 		{
 			for (auto child : children) {
-				child->destroy();
+				if (child) {
+					child->destroy();
+				}
 			}
 		}
 
@@ -138,24 +137,31 @@ namespace corona
 						color = toColor(letter_sequence);
 						dc->Clear(color);
 
+						if (view_style) {
+							auto vs = *view_style;
+							point pt;
+							pt.x = bounds.w;
+							pt.y = bounds.h;
+							vs.apply_scale(pt);
+							pwindow->getContext().setViewStyle(vs);
+						}
+
 						if (view_style && view_style->box_border_brush.get_name())
 						{
-							context.setBrush(&view_style->box_border_brush, &bounds);
 							border_name = view_style->box_border_brush.get_name();
 						}
 
 						if (view_style && view_style->box_fill_brush.get_name())
 						{
-							context.setBrush(&view_style->box_fill_brush, &bounds);
 							background_name = view_style->box_fill_brush.get_name();
 						}
 
-						if (border_name.size() || background_name.size()) {
-							rectangle r = bounds;
-							r.x = 0;
-							r.y = 0;
-//							std::cout << std::format("{}:{} [{},{} x {},{}]", typeid(*this).name(), background_name, r.x, r.y, r.w, r.h) << std::endl;
-							context.drawRectangle(&r, border_name, border_width, background_name);
+						if ( background_name.size()) {
+							rectangle r = inner_bounds;
+							r.x -= bounds.x;
+							r.y -= bounds.y;
+							//							std::cout << std::format("{}:{} [{},{} x {},{}]", typeid(*this).name(), background_name, r.x, r.y, r.w, r.h) << std::endl;
+							context.drawRectangle(&r, "", 0, background_name);
 						}
 
 						/* 
@@ -170,6 +176,16 @@ namespace corona
 						{
 							on_draw(this);
 						}
+
+						if (border_name.size()) {
+							rectangle r = inner_bounds;
+							r.x -= bounds.x;
+							r.y -= bounds.y;
+							//							std::cout << std::format("{}:{} [{},{} x {},{}]", typeid(*this).name(), background_name, r.x, r.y, r.w, r.h) << std::endl;
+							context.drawRectangle(&r, border_name, view_style->box_border_thickness, "");
+						}
+
+
 					}
 					pwindow->endDraw(adapter_blown_away);
 				}
@@ -225,6 +241,33 @@ namespace corona
 		void set_style(std::shared_ptr<viewStyleRequest> _style)
 		{
 			view_style = _style;
+		}
+
+		virtual void get_json(json& _dest)
+		{
+			control_base::get_json(_dest);
+
+			if (view_style) {
+				json_parser jp;
+				json jview_style = jp.create_object();
+				corona::get_json(jview_style, *view_style);
+			}
+		}
+
+		virtual void put_json(json& _src)
+		{
+			control_base::put_json(_src);
+
+			json jview_style = _src["view_style"];
+			if (jview_style.is_object()) {
+
+				if (view_style)
+					view_style = std::make_shared<viewStyleRequest>(*view_style);
+				else
+					view_style = std::make_shared<viewStyleRequest>();
+
+				corona::put_json(view_style, jview_style);
+			}
 		}
 
 	};

@@ -686,39 +686,41 @@ namespace corona
 			auto brush = fill->getBrush();
 			int len = (strlen(_text) + 1) * 2;
 			wchar_t* buff = new wchar_t[len];
-			int ret = ::MultiByteToWideChar(CP_ACP, NULL, _text, -1, buff, len - 1);
+			if (buff) {
+				int ret = ::MultiByteToWideChar(CP_ACP, NULL, _text, -1, buff, len - 1);
 
-			if (style->get_strike_through() || style->get_underline())
-			{
-				int l = wcslen(buff);
-				IDWriteTextLayout* textLayout = nullptr;
+				if (style->get_strike_through() || style->get_underline())
+				{
+					int l = wcslen(buff);
+					IDWriteTextLayout* textLayout = nullptr;
 
-				if (auto pfactory = getAdapter().lock()) {
+					if (auto pfactory = getAdapter().lock()) {
 
-					pfactory->getDWriteFactory()->CreateTextLayout(buff, l, format, r.right - r.left, r.bottom - r.top, &textLayout);
-					if (textLayout != nullptr) {
-						textLayout->SetUnderline(style->get_underline(), { (UINT32)0, (UINT32)l });
-						textLayout->SetStrikethrough(style->get_strike_through(), { (UINT32)0, (UINT32)l });
-						getDeviceContext()->DrawTextLayout({ r.left, r.top }, textLayout, brush);
-						textLayout->Release();
-						textLayout = nullptr;
-					}
-					else
-					{
-						getDeviceContext()->DrawText(buff, ret, format, &r, brush);
+						pfactory->getDWriteFactory()->CreateTextLayout(buff, l, format, r.right - r.left, r.bottom - r.top, &textLayout);
+						if (textLayout != nullptr) {
+							textLayout->SetUnderline(style->get_underline(), { (UINT32)0, (UINT32)l });
+							textLayout->SetStrikethrough(style->get_strike_through(), { (UINT32)0, (UINT32)l });
+							getDeviceContext()->DrawTextLayout({ r.left, r.top }, textLayout, brush);
+							textLayout->Release();
+							textLayout = nullptr;
+						}
+						else if (brush)
+						{
+							getDeviceContext()->DrawText(buff, ret, format, &r, brush);
+						}
 					}
 				}
-			}
-			else
-			{
-				getDeviceContext()->DrawText(buff, ret, format, &r, brush);
-			}
+				else if (brush)
+				{
+					getDeviceContext()->DrawText(buff, ret, format, &r, brush);
+				}
 
-			// uncomment this to show the text borders 
-			//getDeviceContext()->DrawRectangle(&r, brush);
+				// uncomment this to show the text borders 
+				//getDeviceContext()->DrawRectangle(&r, brush);
 
-			delete[] buff;
+				delete[] buff;
 			}
+		}
 
 		virtual rectangle getCanvasSize()
 		{

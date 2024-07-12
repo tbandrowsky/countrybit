@@ -137,23 +137,25 @@ namespace corona
 				if (!ptarget->getDeviceContext())
 					return false;
 
-				hr = ptarget->getDeviceContext()->CreateGradientStopCollection(&stops[0], stops.size(), &pGradientStops);
+				if (stops.size() > 0) {
+					hr = ptarget->getDeviceContext()->CreateGradientStopCollection(&stops[0], stops.size(), &pGradientStops);
 
-				if (SUCCEEDED(hr))
-				{
-					if (asset) {
-						asset->Release();
-						asset = nullptr;
-					}
-					hr = ptarget->getDeviceContext()->CreateLinearGradientBrush(
-						D2D1::LinearGradientBrushProperties(start, stop),
-						D2D1::BrushProperties(),
-						pGradientStops,
-						&asset
-					);
-					pGradientStops->Release();
-					if (!SUCCEEDED(hr)) {
-						std::cout << "Could not create linear gradient brush " << std::endl;
+					if (SUCCEEDED(hr))
+					{
+						if (asset) {
+							asset->Release();
+							asset = nullptr;
+						}
+						hr = ptarget->getDeviceContext()->CreateLinearGradientBrush(
+							D2D1::LinearGradientBrushProperties(start, stop),
+							D2D1::BrushProperties(),
+							pGradientStops,
+							&asset
+						);
+						pGradientStops->Release();
+						if (!SUCCEEDED(hr)) {
+							std::cout << "Could not create linear gradient brush " << std::endl;
+						}
 					}
 				}
 			}
