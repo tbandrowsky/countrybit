@@ -614,7 +614,7 @@ namespace corona
 				RECT rcClient;
 				GetWindowRect(hwnd, &rcClient);
 				SetWindowPos(hwnd, NULL, rcClient.left, rcClient.top, abs(rcClient.right - rcClient.left), abs(rcClient.bottom - rcClient.top), SWP_FRAMECHANGED);
-				SetTimer(hwnd,1,2000,nullptr);
+				SetTimer(hwnd,1,500,nullptr);
 
 				dpiScale = 96.0 / GetDpiForWindow(hwnd);
 				if (currentController) {
