@@ -93,10 +93,31 @@ namespace corona
 			global_job_queue->waitForEmptyQueue();
 		}
 
+		std::string get_user_name()
+		{
+			std::string result;
+			char buffer[UNLEN + 1] = {};
+			DWORD max_length = sizeof(buffer) / sizeof(char);
+			if (GetUserNameEx(NameUserPrincipal, buffer, &max_length)) {
+				result = buffer;
+			}
+			return result;
+		}
+
 		file open_file(file_path filename, file_open_types _file_open_type)
 		{
 			file f(global_job_queue.get(), filename, _file_open_type);
 			return f;
+		}
+
+		bool file_exists(std::string filename)
+		{
+			DWORD       fileAttr;
+
+			fileAttr = GetFileAttributes(filename.c_str());
+			if (0xFFFFFFFF == fileAttr && GetLastError() == ERROR_FILE_NOT_FOUND)
+				return false;
+			return true;
 		}
 
 		file open_file(KNOWNFOLDERID folderId, file_path filename, file_open_types _file_open_type)
@@ -113,6 +134,24 @@ namespace corona
 		file create_file(file_path filename)
 		{
 			return file(global_job_queue.get(), filename, file_open_types::create_always);
+		}
+
+		std::shared_ptr<file> open_file_ptr(KNOWNFOLDERID folderId, file_path filename, file_open_types _file_open_type)
+		{
+			std::shared_ptr<file> f = std::make_shared<file>(global_job_queue.get(), folderId, filename, _file_open_type);
+			return f;
+		}
+
+		std::shared_ptr<file> create_file_ptr(KNOWNFOLDERID folderId, file_path filename)
+		{
+			std::shared_ptr<file> f = std::make_shared<file>(global_job_queue.get(), folderId, filename, file_open_types::create_always);
+			return f;
+		}
+
+		std::shared_ptr<file> create_file_ptr(file_path filename)
+		{
+			std::shared_ptr<file> f = std::make_shared<file>(global_job_queue.get(), filename, file_open_types::create_always);
+			return f;
 		}
 
 		void add_job(job* _job)

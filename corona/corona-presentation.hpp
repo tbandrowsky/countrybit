@@ -37,11 +37,9 @@ namespace corona {
 		std::string home_page;
 		point last_mouse_position;
 		point last_mouse_click;
-
-		json_file_watcher front_end_watcher;
 		json json_pages;
 
-
+		comm_bus_interface *bus;
 
 	public:
 		int default_focus_id;
@@ -49,26 +47,21 @@ namespace corona {
 
 		std::map<std::string, std::shared_ptr<page>> pages;
 		std::weak_ptr<applicationBase> window_host;
-		std::shared_ptr<data_lake> data;
 
-		presentation()
+		presentation(comm_bus_interface* _com_bus) : bus(_com_bus)
 		{
-			data = std::make_shared<data_lake>();
 			default_push_button_id = 0;
 			default_focus_id = 0;
 			last_mouse_position = {};
 			last_mouse_click = {};
-			front_end_watcher.file_name = application::get_application()->get_config_filename("ui.json");
 		}
 
-		presentation(std::weak_ptr<applicationBase> _window_host) : window_host(_window_host)
+		presentation(comm_bus_interface *_com_bus, std::weak_ptr<applicationBase> _window_host) : window_host(_window_host), bus(_com_bus)
 		{
-			data = std::make_shared<data_lake>();
 			default_push_button_id = 0;
 			default_focus_id = 0;
 			last_mouse_position = {};
 			last_mouse_click = {};
-			front_end_watcher.file_name = application::get_application()->get_config_filename("ui.json");
 		}
 
 		int get_control_id(std::string _name, std::function<int()> _id)
@@ -188,11 +181,9 @@ namespace corona {
 		virtual int onSpin(int controlId, int newPosition);
 		virtual void onJobComplete(bool _success, int _id);
 		virtual void onTaskComplete(bool _success, ui_task_result_base* _result);
-		virtual void onDataChanged(json _params, data_lake* _api, data_function* _set);
-		virtual void onLogged(data_lake* _api);
 		virtual void hardwareChanged();
 		virtual void checkPresentationFile();
-		virtual void setPresentationFile();
+		virtual std::string setPresentationFile();
 
 		virtual int layout();
 
@@ -637,6 +628,7 @@ namespace corona {
 		key_press_event kde;
 		kde.control_id = _ctrl_id;
 		kde.key = _key;
+		kde.bus = bus;
 		if (cp) {
 			cp->handle_key_press(_ctrl_id, kde);
 		}
@@ -648,6 +640,7 @@ namespace corona {
 		key_down_event kde;
 		kde.control_id = _ctrl_id;
 		kde.key = _key;
+		kde.bus = bus;
 		if (cp) {
 			cp->handle_key_down(_ctrl_id, kde);
 		}
@@ -659,6 +652,7 @@ namespace corona {
 		key_up_event kde;
 		kde.control_id = _ctrl_id;
 		kde.key = _key;
+		kde.bus = bus;
 		if (cp) {
 			cp->handle_key_up(_ctrl_id, kde);
 		}
@@ -671,6 +665,7 @@ namespace corona {
 		mouse_move_event kde;
 		kde.control_id = 0;
 		kde.absolute_point = *_point;
+		kde.bus = bus;
 		if (cp) {
 			cp->handle_mouse_move(0, kde);
 			cp->root->set_mouse(*_point, nullptr, nullptr, nullptr, nullptr);
@@ -696,9 +691,11 @@ namespace corona {
 					mcel.relative_point.y = _point->y - _item->get_bounds().y;
 					mcel.relative_point.z = 0;
 				}
+				mcel.bus = p->bus;
 				cp->handle_mouse_left_click(_item->id, mcel);
 
 				mouse_click_event mce = {};
+				mcel.bus = p->bus;
 				mce.control = _item;
 				mce.control_id = _item->id;
 				mce.absolute_point.x = _point->x;
@@ -728,6 +725,8 @@ namespace corona {
 				mce.absolute_point.x = _point->x;
 				mce.absolute_point.y = _point->y;
 				mce.absolute_point.z = 0;
+				mce.bus = p->bus;
+
 				cp->handle_mouse_click(_item->id, mce);
 
 				mouse_left_click_event mcel;
@@ -736,6 +735,8 @@ namespace corona {
 				mcel.absolute_point.x = _point->x;
 				mcel.absolute_point.y = _point->y;
 				mcel.absolute_point.z = 0;
+				mcel.bus = p->bus;
+
 				cp->handle_mouse_left_click(_item->id, mcel);
 				}, nullptr);
 		}
@@ -754,6 +755,8 @@ namespace corona {
 				mce.absolute_point.x = _point->x;
 				mce.absolute_point.y = _point->y;
 				mce.absolute_point.z = 0;
+				mce.bus = p->bus;
+
 				cp->handle_mouse_click(_item->id, mce);
 				});
 		}
@@ -772,6 +775,7 @@ namespace corona {
 				mce.absolute_point.x = _point->x;
 				mce.absolute_point.y = _point->y;
 				mce.absolute_point.z = 0;
+				mce.bus = p->bus;
 				cp->handle_mouse_click(_item->id, mce);
 				mouse_right_click_event mcel;
 				mcel.control = _item;
@@ -779,6 +783,8 @@ namespace corona {
 				mcel.absolute_point.x = _point->x;
 				mcel.absolute_point.y = _point->y;
 				mcel.absolute_point.z = 0;
+				mcel.bus = p->bus;
+
 				cp->handle_mouse_right_click(_item->id, mcel);
 				});
 		}
@@ -811,6 +817,7 @@ namespace corona {
 		auto cp = current_page.lock();
 		command_event ce;
 		ce.control_id = buttonId;
+		ce.bus = bus;
 		if (cp) {
 			cp->handle_command(buttonId, ce);
 		}
@@ -823,6 +830,8 @@ namespace corona {
 			item_changed_event lce;
 			lce.control_id = textControlId;
 			lce.text_value = new_text;
+			lce.bus = bus;
+
 			auto cp = current_page.lock();
 			if (cp) {
 				cp->handle_item_changed(textControlId, lce);
@@ -843,6 +852,7 @@ namespace corona {
 			lce.selected_index = index;
 			lce.state = 0;
 			lce.control = nullptr; // the page will assign this.
+			lce.bus = bus;
 			auto cp = current_page.lock();
 			if (cp) {
 				cp->handle_list_changed(dropDownId, lce);
@@ -865,6 +875,7 @@ namespace corona {
 			lce.selected_index = index;
 			lce.state = 0;
 			lce.control = nullptr; // the page will assign this.
+			lce.bus = bus;
 			auto cp = current_page.lock();
 			if (cp) {
 				cp->handle_list_changed(dropDownId, lce);
@@ -887,6 +898,7 @@ namespace corona {
 			lce.selected_index = index;
 			lce.state = 0;
 			lce.control = nullptr; // the page will assign this.
+			lce.bus = bus;
 			auto cp = current_page.lock();
 			if (cp) {
 				cp->handle_list_changed(listViewId, lce);
@@ -940,19 +952,6 @@ namespace corona {
 		;
 	}
 
-	void presentation::onDataChanged(json _params, data_lake* _api, data_function* _set)
-	{
-		if (auto pg = current_page.lock()) {
-			pg->handle_changed(pg, _params, _api, _set);
-		}
-	}
-
-	void presentation::onLogged(data_lake* _api)
-	{
-		if (auto pg = current_page.lock()) {
-			pg->handle_logged(pg, _api);
-		}
-	}
 
 	void presentation::hardwareChanged()
 	{
@@ -963,21 +962,17 @@ namespace corona {
 	
 	void presentation::checkPresentationFile()
 	{
-		if (!front_end_watcher.file_name.empty()) {
-			threadomatic::run([this]()->void {
-				file_transaction<relative_ptr_type> pt = front_end_watcher.poll();
-				if (pt.wait() != null_row) {
-					json_pages = front_end_watcher.contents;
-					threadomatic::run_complete(nullptr,
-						[this]() {
-							setPresentationFile();
-						});
-				}
-				});
+		comm_bus_transaction<json> new_pages = bus->get_pages();
+		json tempo = new_pages.wait();
+		if (!tempo.is_empty()) {
+			json_pages = tempo;
+			bus->run_ui([this](controller* p)->void {
+				bus->default_page = p->setPresentationFile();
+			});
 		}
 	}
 
-	void presentation::setPresentationFile()
+	std::string presentation::setPresentationFile()
 	{
 
 		if (json_pages.is_error()) {
@@ -1061,15 +1056,20 @@ namespace corona {
 		
 		if (jpages.is_array())
 		{
+			std::string new_home_page;
 			pages.clear();
 			for (auto pg : jpages)
 			{
 				if (pg.is_object()) {
 					std::string class_name = pg["class_name"];
 					if (class_name == "page") {
+						bool is_default = (bool)pg["default"];
 						std::string name = pg["page_name"];
 						if (name.empty()) {
 							std::cout << "page_name is empty for this page, skipping" << std::endl;
+						}
+						if (is_default) {
+							new_home_page = name;
 						}
 						create_page(name, [pg](page& _settings)->void
 							{

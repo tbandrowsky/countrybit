@@ -37,9 +37,6 @@ namespace corona
 		std::vector<std::shared_ptr<page_unload_event_binding>> unload_bindings;
 		std::vector<std::shared_ptr<page_load_event_binding>> load_bindings;
 		std::vector<std::shared_ptr<page_select_event_binding>> select_bindings;
-		std::list<std::shared_ptr<page_data_event_binding>> page_data_bindings;
-		std::vector<std::shared_ptr<page_refresh_data_binding>> page_refresh_bindings;
-		std::list<std::shared_ptr<page_logged_event_binding>> page_logged_bindings;
 		update_function update_event;
 
 		lockable binding_lock;
@@ -91,9 +88,6 @@ namespace corona
 			unload_bindings.clear();
 			load_bindings.clear();
 			select_bindings.clear();
-			page_data_bindings.clear();
-			page_refresh_bindings.clear();
-			page_logged_bindings.clear();
 			destroy();
 			root = std::make_shared<column_layout>();
 		}
@@ -111,8 +105,6 @@ namespace corona
 			item_changed_bindings.erase(_control_id);
 			list_changed_events.erase(_control_id);
 			command_bindings.erase(_control_id);
-			page_data_bindings.remove_if([_control_id](std::shared_ptr<page_data_event_binding>& x) { return x->subscribed_item_id == _control_id; });
-			page_logged_bindings.remove_if([_control_id](std::shared_ptr<page_logged_event_binding>& x) { return x->subscribed_item_id == _control_id; });
 		}
 
 		auto get_root_container() 
@@ -191,7 +183,7 @@ namespace corona
 		double last_update_seconds = 0;
 		const double refresh_pulse_seconds = .5;
 
-		void update(std::shared_ptr<data_lake> _lake, double _elapsedSeconds, double _totalSeconds)
+		void update(double _elapsedSeconds, double _totalSeconds)
 		{
 			if (root) 
 			{
@@ -202,20 +194,6 @@ namespace corona
 				update_event(this, _elapsedSeconds, _totalSeconds);
 			}
 			last_update_seconds += _elapsedSeconds;
-			if (last_update_seconds > refresh_pulse_seconds) {
-				double previous_last_update_seconds = last_update_seconds;
-				last_update_seconds = 0;
-				scope_lock locker(binding_lock);
-				for (auto sch : page_refresh_bindings) {
-//					std::cout << "refresh check " << sch->source_name << " " << sch->function_name << " " << sch->seconds_since_update << std::endl;
-					sch->seconds_since_update += previous_last_update_seconds;
-					if (sch->seconds_since_update > sch->period_seconds)
-					{
-						sch->seconds_since_update = 0;
-						_lake->call_function(sch->source_name, sch->function_name);
-					}
-				}
-			}
 		}
 		
 		void subscribe(presentation_base* _presentation)
@@ -453,37 +431,6 @@ namespace corona
 			unload_bindings.push_back(plet);
 		}
 
-		virtual void on_changed(int _control_id, std::string _source_name, std::string _function_name, std::function< void(page_data_event) > evt)
-		{
-			scope_lock locker(binding_lock);
-			auto plet = std::make_shared<page_data_event_binding>();
-			plet->source_name = _source_name;
-			plet->function_name = _function_name;
-			plet->subscribed_item_id = _control_id;
-			plet->on_changed = evt;
-			page_data_bindings.push_back(plet);
-		}
-
-		virtual void on_logged(int _control_id, std::function< void(page_logged_event) > evt)
-		{
-			scope_lock locker(binding_lock);
-			auto plet = std::make_shared<page_logged_event_binding>();
-			plet->subscribed_item_id = _control_id;
-			plet->on_changed = evt;
-			page_logged_bindings.push_back(plet);
-		}
-
-		virtual void schedule_refresh(time_t _period_seconds, std::string _source_name, std::string _function_name)
-		{
-			scope_lock locker(binding_lock);
-			auto plet = std::make_shared<page_refresh_data_binding>();
-			plet->source_name = _source_name;
-			plet->function_name = _function_name;
-			plet->period_seconds = _period_seconds;
-			plet->seconds_since_update = 0;
-			page_refresh_bindings.push_back(plet);
-		}
-
 		bool handle_key_up(int _control_id, key_up_event evt)
 		{
 			scope_lock locker(binding_lock);
@@ -655,43 +602,7 @@ namespace corona
 			}
 		}
 
-		void handle_changed(std::shared_ptr<page> _pg, json _params, data_lake* _api, data_function* _set)
-		{
-			scope_lock locker(binding_lock);
-			for (auto pdb : page_data_bindings) {
-
-				if (pdb->source_name == _set->api->name &&
-					(pdb->function_name == _set->name || pdb->function_name == "*"))
-				{
-					threadomatic::run_complete(nullptr, [_pg, this, _params, _api, _set, pdb]() {
-						page_data_event pde;
-						pde.changed_fn = _set;
-						pde.destination_control_id = pdb->subscribed_item_id;
-						pde.params = _params;
-						pde.lake = _api;
-						pde.pg = _pg;
-						pde.control = _pg->find(pde.destination_control_id);
-						pdb->on_changed(pde);
-						});
-				}
-			}
-		}
-
-		void handle_logged(std::shared_ptr<page> _pg, data_lake* _api)
-		{
-			scope_lock locker(binding_lock);
-			for (auto pdb : page_logged_bindings) {
-				threadomatic::run_complete(nullptr, [_pg, this, _api, pdb]() {
-						page_logged_event pde;
-						pde.destination_control_id = pdb->subscribed_item_id;
-						pde.lake = _api;
-						pde.pg = _pg;
-						pde.control = _pg->find(pde.destination_control_id);
-						pdb->on_changed(pde);
-						});
-			}
-		}
-
+				
 		friend class presentation;
 	};
 }

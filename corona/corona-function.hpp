@@ -14,14 +14,10 @@ Notes
 For Future Consideration
 */
 
-
-
 #ifndef CORONA_FUNCTION_H
 #define CORONA_FUNCTION_H
 
-
 const int debug_functions = 0;
-
 
 namespace corona
 {
@@ -31,6 +27,7 @@ namespace corona
 	const int WM_CORONA_HTTP_JOB_COMPLETE = WM_APP + 3;
 	const int WM_CORONA_HTTP_TASK_COMPLETE = WM_APP + 4;
 	const int WM_CORONA_RESET = WM_APP + 5;
+	const int WM_CORONA_BUS = WM_APP + 6;
 
 	template <typename parameter_type> class task_job : public job
 	{
@@ -81,18 +78,6 @@ namespace corona
 		}
 	};
 
-	class ui_task_result
-	{
-	public:
-		json parameters;
-		runnable on_gui;
-
-		ui_task_result(json _param, runnable _on_gui) : parameters(_param), on_gui(_on_gui)
-		{
-			;
-		}
-	};
-
 	class http_task_result
 	{
 	public:
@@ -106,6 +91,19 @@ namespace corona
 	};
 
 	using runnable_json = std::function<void(json)>;
+
+	class ui_task_result
+	{
+	public:
+		json parameters;
+		runnable on_gui;
+
+		ui_task_result(json _param, runnable _on_gui) : parameters(_param), on_gui(_on_gui)
+		{
+			;
+		}
+	};
+
 
 	class ui_task_job : public job
 	{
@@ -142,7 +140,7 @@ namespace corona
 
 			json blank_params;
 
-			runnable cylon = []() -> void
+			runnable cylon = [](controller*) -> void
 			{
 				//on_gui();
 			};
@@ -210,7 +208,7 @@ namespace corona
 			{
 				if (on_run)
 				{
-					on_run();
+					on_run(nullptr);
 				}
 				_callingQueue->post_ui_message(WM_CORONA_TASK_COMPLETE, TRUE, (LPARAM)result);
 			}
@@ -257,7 +255,7 @@ namespace corona
 			{
 				if (on_run)
 				{
-					call_status status = on_run();
+					call_status status = on_run(nullptr);
 					auto result = new http_task_result(status, on_gui);
 					_callingQueue->post_ui_message(WM_CORONA_HTTP_TASK_COMPLETE, TRUE, (LPARAM)result);
 				}
@@ -546,139 +544,6 @@ namespace corona
 		};
 	};
 
-	class threadomatic 
-	{
-	public:
-
-		static void run(runnable _runnable)
-		{
-			general_job* gj = new general_job(_runnable);
-			global_job_queue->add_job(gj);
-		}
-
-		static void run_complete(runnable _runnable, runnable _ui_complete)
-		{
-			general_ui_job* guj = new general_ui_job(_runnable, _ui_complete);
-			global_job_queue->add_job(guj);
-		}
-
-		static void run_http(runnable_http_request _runnable, runnable_http_response _ui_complete)
-		{
-			general_http_ui_job* guj = new general_http_ui_job(_runnable, _ui_complete);
-			global_job_queue->add_job(guj);
-		}
-
-		template <typename dest, typename item> static void run_each(dest *_targets, std::vector<item>& _items, std::function<void(dest *_target, item& _src)> _on_each)
-		{
-			std::vector<HANDLE> events;
-
-			int counter = 0;
-			int bucket_size = _items.size() / (global_job_queue->getThreadCount() + 1);
-			for (int idx = 0; idx < _items.size(); ) {
-				HANDLE handle = ::CreateEvent(NULL, FALSE, FALSE, NULL);
-				events.push_back(handle);
-				int end = idx + bucket_size;
-				if (end > _items.size())
-					end = _items.size();
-				general_job* gj = new general_job([_targets, idx, end, _on_each, &_items]() -> void {					
-					for (int x = idx; x < end; x++)
-					{
-						item& itm = _items[x];
-						dest* d = &_targets[x];
-						_on_each(d, itm);
-					}
-				}, handle);
-				global_job_queue->add_job(gj);
-				idx = end;
-			}
-
-			for (auto evt : events) {
-				::WaitForSingleObject(evt, INFINITE);
-				CloseHandle(evt);
-			}
-		}
-
-
-		template <typename item> static void run_each(std::vector<item> &_items, std::function<void(item& _item)> _on_each)
-		{
-			std::vector<HANDLE> events;
-
-			int counter = 0;
-			int bucket_size = _items.size() / (global_job_queue->getThreadCount() + 1);
-			for (int idx = 0; idx < _items.size(); ) {
-				HANDLE handle = ::CreateEvent(NULL, FALSE, FALSE, NULL);
-				events.push_back(handle);
-				int end = idx + bucket_size;
-				if (end > _items.size())
-					end = _items.size();
-				std::vector<item>* src_items = &_items;
-				general_job* gj = new general_job([idx, end, _on_each, src_items]() -> void {
-					for (int x = idx; x < end; x++)
-					{
-						item& itm = (*src_items)[x];
-						_on_each(itm);
-					}
-					}, handle);
-				global_job_queue->add_job(gj);
-				idx = end;
-			}
-
-			for (auto evt : events) {
-				::WaitForSingleObject(evt, INFINITE);
-				CloseHandle(evt);
-			}
-		}
-
-		template <typename item> static void run_each(std::vector<item>& _items, int _width, int _height, std::function<void(int _x, int _y, item& _item)> _on_each)
-		{
-			std::vector<HANDLE> events;
-
-			int counter = 0;
-			int bucket_size = _items.size() / (global_job_queue->getThreadCount() + 1);
-			for (int idx = 0; idx < _items.size(); ) {
-				HANDLE handle = ::CreateEvent(NULL, FALSE, FALSE, NULL);
-				events.push_back(handle);
-				int end = idx + bucket_size;
-				if (end > _items.size())
-					end = _items.size();
-				std::vector<item>* src_items = &_items;
-				general_job* gj = new general_job([idx, _width, _height, end, _on_each, src_items]() -> void {
-					for (int x = idx; x < end; x++)
-					{
-						int px = x % _width;
-						int py = x / _width;
-						item& itm = (*src_items)[x];
-						_on_each(px, py, itm);
-					}
-					}, handle);
-				global_job_queue->add_job(gj);
-				idx = end;
-			}
-
-			for (auto evt : events) {
-				::WaitForSingleObject(evt, INFINITE);
-				CloseHandle(evt);
-			}
-		}
-
-		template <typename IOParams> static void run_io(job_queue* queue, IOParams params, std::function<bool(HANDLE hevent, IOParams* _src)> runner)
-		{
-			HANDLE hevent = ::CreateEvent(NULL, false, false, NULL);
-			debug_functions&& std::cout << "run_io_task start:" << GetCurrentThreadId() << std::endl;
-			if (runner) {
-				if (runner(hevent, &params)) {
-					debug_functions&& std::cout << "run_io await_suspend away : " << GetCurrentThreadId() << std::endl;
-					::WaitForSingleObject(hevent, INFINITE);
-					debug_functions&& std::cout << "run_io await_suspend finished:" << GetCurrentThreadId() << std::endl;
-				}
-				else
-				{
-					debug_functions&& std::cout << "error skipped finished:" << GetCurrentThreadId() << std::endl;
-				}
-			}
-			::CloseHandle(hevent);
-		}
-	};
 }
 
 #endif

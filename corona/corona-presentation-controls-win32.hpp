@@ -348,7 +348,6 @@ namespace corona
 
 	class table_control_base : public windows_control
 	{
-		mini_table mtable;
 		char blank[256] = { 0 };
 
 		void data_changed()
@@ -359,12 +358,13 @@ namespace corona
 				phost->clearListView(id);
 				int row_size = choices.columns.size();
 				int num_rows = choices.items.size() * 2;
-				mtable.init(row_size, num_rows);
 				std::map<std::string, int> column_map;
 				int row_index = 0;
 				int col_index = 0;
 				for (auto col : choices.columns) {
-					char* t = mtable.set(col_index, row_index, col.display_name);
+					// damn it I know what I'm doing!
+					// or... do I?
+					char* t = (char *)col.display_name.c_str();
 					phost->addListViewColumn(id, col_index, t, col.width, col.alignment);
 					column_map[col.json_field] = col_index;
 					col_index++;
@@ -382,8 +382,8 @@ namespace corona
 						data_row[col_index] = blank;
 						bool has_field = item.has_member(col.json_field);
 						if (has_field) {
-							std::string item_value = item[col.json_field];
-							char* value = mtable.set(col_index, row_index, item_value);
+							std::string item_value = (std::string)item[col.json_field];
+							char* value = (char *)item_value.c_str();
 							if (value) {
 								data_row[col_index] = value;
 							}
@@ -411,7 +411,6 @@ namespace corona
 
 		table_control_base(const table_control_base& _src) : windows_control(_src)
 		{
-			mtable = _src.mtable;
 			choices = _src.choices;
 		}
 

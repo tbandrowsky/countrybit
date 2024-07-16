@@ -355,7 +355,7 @@ namespace corona
 
 		relative_ptr_type header_location;
 		poco_node<index_header_struct> index_header;
-		file* database_file;
+		std::shared_ptr<file> database_file;
 
 		using KEY = json;
 		using VALUE = json_node;
@@ -366,13 +366,13 @@ namespace corona
 		table_transaction<relative_ptr_type> create_header()
 		{
 			json_parser jp;
-			header_location = co_await index_header.append(database_file);
+			header_location = co_await index_header.append(database_file.get());
 			json_node header = co_await create_node(JsonTableMaxLevel, header_key);
 			index_header.data.header_node_location = header.storage.current_location;
 			index_header.data.count = 0;
 			index_header.data.level = JsonTableMaxLevel;
-			co_await index_header.write(database_file);
-			co_await header.write(database_file);
+			co_await index_header.write(database_file.get());
+			co_await header.write(database_file.get());
 			co_return header_location;
 		}
 
@@ -381,9 +381,9 @@ namespace corona
 
 			json_node in;
 
-			co_await index_header.read(database_file, header_location);
+			co_await index_header.read(database_file.get(), header_location);
 
-			int64_t result = co_await in.read(database_file, index_header.data.header_node_location);
+			int64_t result = co_await in.read(database_file.get(), index_header.data.header_node_location);
 
 			if (result < 0) 
 			{
@@ -407,7 +407,7 @@ namespace corona
 
 			new_node.data = _data;
 
-			co_await new_node.append(database_file);
+			co_await new_node.append(database_file.get());
 			co_return new_node;
 		}
 
@@ -424,12 +424,13 @@ namespace corona
 
 	public:
 
-		json_table(file* _database_file, std::vector<std::string> _key_fields) : database_file(_database_file), key_fields(_key_fields)
+		json_table(std::shared_ptr<file> _database_file, std::vector<std::string> _key_fields) : database_file(_database_file), key_fields(_key_fields)
 		{
 
 		}
 
-		json_table(const json_table& _src) : key_fields(_src.key_fields)
+		json_table(const json_table& _src) 
+			: key_fields(_src.key_fields)
 		{
 			index_header = _src.index_header;
 			database_file = _src.database_file;
@@ -466,7 +467,7 @@ namespace corona
 		table_transaction<relative_ptr_type> open(relative_ptr_type location)
 		{
 			header_location = location;
-			co_await index_header.read(database_file, header_location);
+			co_await index_header.read(database_file.get(), header_location);
 			co_return header_location;
 		}
 
@@ -491,7 +492,7 @@ namespace corona
 			json result;
 			relative_ptr_type n = co_await find_node(key);
 			if (n != null_row) {
-				json_node r = co_await get_node(database_file, n);
+				json_node r = co_await get_node(database_file.get(), n);
 				result = r.data;
 			}
 			co_return result;
@@ -502,7 +503,7 @@ namespace corona
 			json result;
 			relative_ptr_type n = co_await find_node(key);
 			if (n != null_row) {
-				json_node r = co_await get_node(database_file, n);
+				json_node r = co_await get_node(database_file.get(), n);
 				result = r.data;
 			}
 			co_return result;
@@ -513,7 +514,7 @@ namespace corona
 			json result;
 			relative_ptr_type n = co_await find_node(key);
 			if (n != null_row) {
-				json_node r = co_await get_node(database_file, n);
+				json_node r = co_await get_node(database_file.get(), n);
 				if (!r.data.is_empty()) {
 					result = r.data.extract(include_fields);
 				}
@@ -578,17 +579,17 @@ namespace corona
 			{
 				k = 0;
 				p = update[k];
-				qnd = co_await get_node(database_file, q);
-				pnd = co_await get_node(database_file, p);
+				qnd = co_await get_node(database_file.get(), q);
+				pnd = co_await get_node(database_file.get(), p);
 				int m = index_header.data.level;
 				while (k <= m && pnd.forward[k] == q)
 				{
 					pnd.forward[k] = qnd.forward[k];
-					co_await pnd.write(database_file);
+					co_await pnd.write(database_file.get());
 					k++;
 					if (k <= m) {
 						p = update[k];
-						pnd = co_await get_node(database_file, p);
+						pnd = co_await get_node(database_file.get(), p);
 					}
 				}
 
@@ -601,8 +602,8 @@ namespace corona
 					m--;
 				}
 				index_header.data.level = m;
-				co_await header.write(database_file);
-				co_await index_header.write(database_file);
+				co_await header.write(database_file.get());
+				co_await index_header.write(database_file.get());
 				co_return true;
 			}
 			else
@@ -620,7 +621,7 @@ namespace corona
 			while (location != null_row) 
 			{
 				json_node node;
-				node = co_await get_node(database_file, location);
+				node = co_await get_node(database_file.get(), location);
 				int comparison = _key_fragment.compare(node.data);
 				if (comparison == 0) 
 				{
@@ -645,7 +646,7 @@ namespace corona
 			while (location != null_row)
 			{
 				json_node node;
-				node = co_await get_node(database_file, location);
+				node = co_await get_node(database_file.get(), location);
 				int comparison = _key_fragment.compare(node.data);
 				if (comparison == 0)
 				{
@@ -671,7 +672,7 @@ namespace corona
 			while (location != null_row)
 			{
 				json_node node;
-				node = co_await get_node(database_file, location);
+				node = co_await get_node(database_file.get(), location);
 				int comparison = _key_fragment.compare(node.data);
 				if (comparison == 0)
 				{
@@ -695,7 +696,7 @@ namespace corona
 			while (location != null_row && !is_any)
 			{
 				json_node node;
-				node = co_await get_node(database_file, location);
+				node = co_await get_node(database_file.get(), location);
 				int comparison = _key_fragment.compare(node.data);
 				if (comparison == 0)
 				{
@@ -725,7 +726,7 @@ namespace corona
 			while (location != null_row && is_all)
 			{
 				json_node node;
-				node = co_await get_node(database_file, location);
+				node = co_await get_node(database_file.get(), location);
 				int comparison = _key_fragment.compare(node.data);
 				if (comparison == 0)
 				{
@@ -757,7 +758,7 @@ namespace corona
 			while (location != null_row)
 			{
 				json_node node;
-				node = co_await get_node(database_file, location);
+				node = co_await get_node(database_file.get(), location);
 				relative_ptr_type process_result = co_await _process_clause(index, node.data);
 				if (process_result > 0)
 				{
@@ -780,7 +781,7 @@ namespace corona
 			while (location != null_row)
 			{
 				json_node node;
-				node = co_await get_node(database_file, location);
+				node = co_await get_node(database_file.get(), location);
 				relative_ptr_type process_result = _process_clause(index, node.data);
 				if (process_result > 0)
 				{
@@ -932,7 +933,7 @@ namespace corona
 				int comp = 1;
 				json_node qnd;
 				if (q != null_row) {
-					qnd = co_await get_node(database_file, q);
+					qnd = co_await get_node(database_file.get(), q);
 					comp = compare_node(qnd, _key);
 				}
 				while (comp < 0)
@@ -942,7 +943,7 @@ namespace corona
 					q = jn.forward[k];
 					comp = 1;
 					if (q != null_row) {
-						qnd = co_await get_node(database_file, q);
+						qnd = co_await get_node(database_file.get(), q);
 						comp = compare_node(qnd, _key);
 					}
 				}
@@ -969,13 +970,13 @@ namespace corona
 			for (int k = index_header.data.level; k >= 0; k--)
 			{
 				p = header.forward[k];
-				json_node jn = co_await get_node(database_file, p);
+				json_node jn = co_await get_node(database_file.get(), p);
 				q = jn.forward[k];
 				last_link = q;
 				json_node qnd;
 				int comp = 1;
 				if (q != null_row) {
-					qnd = co_await get_node(database_file, q);
+					qnd = co_await get_node(database_file.get(), q);
 					comp = compare_node(qnd, _key);
 				}
 				while (comp < 0)
@@ -986,7 +987,7 @@ namespace corona
 					q = jn.forward[k];
 					comp = 1;
 					if (q != null_row) {
-						qnd = co_await get_node(database_file, q);
+						qnd = co_await get_node(database_file.get(), q);
 						comp = compare_node(qnd, _key);
 					}
 				}
@@ -1019,9 +1020,9 @@ namespace corona
 
 			if (q != null_row)
 			{
-				qnd = co_await get_node(database_file, q);
+				qnd = co_await get_node(database_file.get(), q);
 				predicate(qnd.data);
-				co_await qnd.write(database_file);
+				co_await qnd.write(database_file.get());
 				co_return qnd.storage.current_location;
 			}
 
@@ -1048,16 +1049,16 @@ namespace corona
 
 			do 
 			{
-				json_node pnd = co_await get_node(database_file, update[k]);
+				json_node pnd = co_await get_node(database_file.get(), update[k]);
 				qnd.forward[k] = pnd.forward[k];
 				pnd.forward[k] = qnd.storage.current_location;
 
-				co_await qnd.write(database_file);
-				co_await pnd.write(database_file);
+				co_await qnd.write(database_file.get());
+				co_await pnd.write(database_file.get());
 
 			} while (--k >= 0);
 
-			co_await index_header.write(database_file);
+			co_await index_header.write(database_file.get());
 
 			co_return qnd.storage.current_location;
 		}
@@ -1091,7 +1092,7 @@ namespace corona
 			auto header_task = get_header();
 			auto header = header_task.wait();
 			if (header.forward[0] != null_row) {
-				jn = get_node(database_file, header.forward[0]);
+				jn = get_node(database_file.get(), header.forward[0]);
 			}
 			co_return jn;
 		}
@@ -1101,7 +1102,7 @@ namespace corona
 			if (_node.is_empty())
 				co_return _node;
 
-			json_node nd = co_await get_node(database_file, _node.forward[0]);
+			json_node nd = co_await get_node(database_file.get(), _node.forward[0]);
 			co_return nd;
 		}
 	};
@@ -1112,18 +1113,17 @@ namespace corona
 		return output;
 	}
 
-	user_transaction<bool> test_json_table(corona::application& _app);
+	user_transaction<bool> test_json_table(std::shared_ptr<corona::application> _app);
+	file_batch test_file(std::shared_ptr<corona::application> _app);
+	file_transaction<int64_t> test_data_block(std::shared_ptr<corona::application> _app);
+	file_transaction<int64_t> test_json_node(std::shared_ptr<corona::application> _app);
 
-	file_batch test_file(corona::application& _app);
-	file_transaction<int64_t> test_data_block(corona::application& _app);
-	file_transaction<int64_t> test_json_node(corona::application& _app);
-
-	file_batch test_file(corona::application& _app)
+	file_batch test_file(std::shared_ptr<corona::application> _app)
 	{
 
 		std::cout << "\ntest_file: entry, thread:" << ::GetCurrentThreadId() << std::endl;
 
-		file dtest = _app.create_file(FOLDERID_Documents, "corona_data_block_test.ctb");
+		file dtest = _app->create_file(FOLDERID_Documents, "corona_data_block_test.ctb");
 
 		char buffer_write[2048], buffer_read[2048];
 
@@ -1150,9 +1150,9 @@ namespace corona
 		co_return 0;
 	}
 
-	file_transaction<int64_t> test_data_block(corona::application& _app)
+	file_transaction<int64_t> test_data_block(std::shared_ptr<corona::application> _app)
 	{
-		file dtest = _app.create_file(FOLDERID_Documents, "corona_data_block_test.ctb");
+		std::shared_ptr<file>  dtest = _app->create_file_ptr(FOLDERID_Documents, "corona_data_block_test.ctb");
 
 		std::cout << "test_data_block, thread:" << ::GetCurrentThreadId() << std::endl;
 
@@ -1161,10 +1161,10 @@ namespace corona
 		data_block db, dc;
 		db = jx;
 		std::cout << "test_data_block, write, thread:" << ::GetCurrentThreadId() << std::endl;
-		int64_t r1 = co_await db.append(&dtest);
+		int64_t r1 = co_await db.append(dtest.get());
 		
 		std::cout << "test_data_block, read, thread:" << ::GetCurrentThreadId() << std::endl;
-		int64_t r2 = co_await dc.read(&dtest, db.current_location);
+		int64_t r2 = co_await dc.read(dtest.get(), db.current_location);
 
 		std::cout << "test_data_block_nested, check, thread:" << ::GetCurrentThreadId() << std::endl;
 		std::string x = dc.get_string();
@@ -1172,9 +1172,9 @@ namespace corona
 		co_return 32;
 	}
 
-	file_transaction<int64_t> test_json_node(corona::application& _app)
+	file_transaction<int64_t> test_json_node(std::shared_ptr<corona::application> _app)
 	{
-		file dtest = _app.create_file(FOLDERID_Documents, "corona_json_node_test.ctb");
+		std::shared_ptr<file>  dtest = _app->create_file_ptr(FOLDERID_Documents, "corona_json_node_test.ctb");
 
 		std::cout << "test_json_node, thread:" << ::GetCurrentThreadId() << std::endl;
 
@@ -1188,10 +1188,10 @@ namespace corona
 		}
 
 		std::cout << "test_json_node, write, thread:" << ::GetCurrentThreadId() << std::endl;
-		int64_t location = co_await jnwrite.append(&dtest);
+		int64_t location = co_await jnwrite.append(dtest.get());
 
 		std::cout << "test_json_node, read, thread:" << ::GetCurrentThreadId() << std::endl;
-		int64_t bytes_ex = co_await jnread.read(&dtest, location);
+		int64_t bytes_ex = co_await jnread.read(dtest.get(), location);
 		
 		std::cout << "test_json_node, check, thread:" << ::GetCurrentThreadId() << std::endl;
 		std::string x = jnread.data.to_json_string();
@@ -1199,11 +1199,11 @@ namespace corona
 		co_return 1;
 	}
 
-	user_transaction<bool> test_json_table(corona::application& _app)
+	user_transaction<bool> test_json_table(std::shared_ptr<corona::application> _app)
 	{
 		using return_type = user_transaction<bool>;
 
-		file f = _app.create_file(FOLDERID_Documents, "corona_table.ctb");
+		std::shared_ptr<file> f = _app->create_file_ptr(FOLDERID_Documents, "corona_table.ctb");
 
 		json_parser jp;
 
@@ -1212,7 +1212,7 @@ namespace corona
 		test_write.put_member("Name", "Joe");
 		json test_key = test_write.extract({ "ObjectId" });
 
-		json_table test_table(&f, { "ObjectId" });
+		json_table test_table(f, {"ObjectId"});
 
 		co_await test_table.create();
 

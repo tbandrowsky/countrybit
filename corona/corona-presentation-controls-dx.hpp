@@ -501,7 +501,7 @@ namespace corona
 
 			on_create = [this](draw_control* _ctrl) ->void
 				{
-					threadomatic::run_complete(nullptr, [this]() ->void {
+					threadomatic::run_complete([](controller*)->void {}, [this](controller *) ->void {
 						start();
 						});
 				};

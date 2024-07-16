@@ -221,8 +221,9 @@ namespace corona
 
 			current_page = _new_page;
 
-			threadomatic::run_complete(nullptr, [this]() -> void {
-				presentation_layer->select_page(current_page);
+			threadomatic::run_complete([](controller* pcontroller) {}, 
+				[this](controller* pcontroller) -> void {
+					presentation_layer->select_page(current_page);
 				});
 		}
 

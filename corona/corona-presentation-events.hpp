@@ -18,8 +18,6 @@ For Future Consideration
 
 namespace corona {
 
-	class data_lake;
-	class data_function;
 	class control_base;
 
 	class page;
@@ -28,24 +26,6 @@ namespace corona {
 	{
 	public:
 		std::shared_ptr<page> pg;
-	};
-
-	class page_data_event : public page_event
-	{
-	public:
-		int destination_control_id;
-		json params;
-		data_lake* lake;
-		data_function *changed_fn;
-		control_base* control;
-	};
-
-	class page_logged_event : public page_event
-	{
-	public:
-		int destination_control_id;
-		data_lake* lake;
-		control_base* control;
 	};
 
 	class page_select_event : public page_event
@@ -71,6 +51,7 @@ namespace corona {
 	public:
 		int control_id;
 		control_base* control;
+		comm_bus_interface* bus;
 	};
 
 	class command_event : public control_event
@@ -235,32 +216,6 @@ namespace corona {
 		std::function< void(list_changed_event) > on_change;
 	};
 
-	class page_data_event_binding
-	{
-	public:
-		int subscribed_item_id;
-		std::string source_name;
-		std::string function_name;
-		std::function< void(page_data_event) > on_changed;
-	};
-
-	class page_logged_event_binding
-	{
-	public:
-		int subscribed_item_id;
-		std::function< void(page_logged_event) > on_changed;
-	};
-
-	class page_refresh_data_binding
-	{
-	public:
-		double seconds_since_update;
-		int period_seconds;
-		int subscribed_item_id;
-		std::string source_name;
-		std::string function_name;
-	};
-
 	class page_select_event_binding
 	{
 	public:
@@ -301,8 +256,6 @@ namespace corona {
 		virtual void on_select(std::function< void(page_select_event) >) = 0;
 		virtual void on_load(std::function< void(page_load_event) >) = 0;
 		virtual void on_unload(std::function< void(page_unload_event) >) = 0;
-		virtual void on_changed(int _control_id, std::string _source_name, std::string _function_name, std::function< void(page_data_event) >) = 0;
-		virtual void on_logged(int _control_id, std::function< void(page_logged_event) > evt) = 0;
 		virtual void schedule_refresh(time_t _period_seconds, std::string _source_name, std::string _function_name) = 0;
 
 	};

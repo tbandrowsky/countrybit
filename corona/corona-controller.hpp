@@ -65,14 +65,11 @@ namespace corona
 		virtual int onSpin(int controlId, int newPosition) = 0;
 		virtual int layout() = 0;
 
-		virtual void onDataChanged(json _params, data_lake* _api, data_function* _set) = 0;
-		virtual void onLogged(data_lake* _api) = 0;
-
 		virtual int getDefaultButtonId() = 0;
 		virtual void hardwareChanged() = 0;
 
 		virtual void checkPresentationFile() = 0;
-		virtual void setPresentationFile() = 0;
+		virtual std::string setPresentationFile() = 0;
 
 	};
 

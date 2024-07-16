@@ -94,6 +94,7 @@ For Future Consideration
 #include "corona-function.hpp"
 #include "corona-file.hpp"
 #include "corona-application.hpp"
+#include "corona-comm-bus-interface.hpp"
 
 #include "corona-filterable_iterator.hpp"
 #include "corona-table.hpp"
@@ -106,7 +107,6 @@ For Future Consideration
 #include "corona-jvalue.hpp"
 #include "corona-jobject.hpp"
 #include "corona-jdatabase_server.hpp"
-#include "corona-dataplane.hpp"
 
 #include "corona-datatransfer.hpp"
 #include "corona-directxdevices.hpp"
@@ -155,5 +155,7 @@ For Future Consideration
 #include "corona-sendgrid-client.hpp"
 #include "corona-httpserver.hpp"
 #include "corona-database-engine.hpp"
+
+#include "corona-comm-bus.hpp"
 
 #endif

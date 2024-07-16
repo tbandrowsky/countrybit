@@ -119,7 +119,7 @@ namespace corona
 				corona_client* pthis = this;
 
 				threadomatic::run_http(
-					[this, url, _function_name, _credentials, _payload]() -> call_status {
+					[this, url, _function_name, _credentials, _payload](controller* pcontroller) -> call_status {
 						call_status dfs;
 						try
 						{
@@ -147,7 +147,7 @@ namespace corona
 						}
 						return dfs;
 					},
-					[_windows_id, pthis, _function_name, _credentials, _payload](call_status _param) -> void {
+					[_windows_id, pthis, _function_name, _credentials, _payload](controller* pcontroller, call_status _param) -> void {
 						try
 						{
 							if (pthis->on_post_response)

@@ -57,7 +57,9 @@ namespace corona
 
 	public:
 
-		directApplicationWin32(std::shared_ptr<directXAdapter>  _factory);
+		comm_bus_interface* bus;
+
+		directApplicationWin32(comm_bus_interface* _bus, std::shared_ptr<directXAdapter>  _factory);
 		virtual ~directApplicationWin32();
 
 		ccolor backgroundColor;
@@ -211,10 +213,11 @@ namespace corona
 
 	directApplicationWin32* directApplicationWin32::current;
 
-	directApplicationWin32::directApplicationWin32(std::shared_ptr<directXAdapter> _factory) : factory(_factory), colorCapture(false)
+	directApplicationWin32::directApplicationWin32(comm_bus_interface* _bus, std::shared_ptr<directXAdapter> _factory) : 
+		factory(_factory), 
+		colorCapture(false), 
+		bus(_bus)
 	{
-		application::get_application();
-
 		current = this;
 		controlFont = nullptr;
 		labelFont = nullptr,
@@ -632,11 +635,11 @@ namespace corona
 			}
 			break;
 			case WM_TIMER:
-				threadomatic::run_complete(
-					[this]()->void {
+				bus->run_complete(
+					[this](controller* pcontroller)->void {
 						currentController->checkPresentationFile();
 					},
-					[this]()->void {
+					[this](controller* pcontroller)->void {
 						currentController->setPresentationFile();
 					}
 				);
@@ -2325,7 +2328,7 @@ namespace corona
 			result = (ui_task_result *)_msg->lParam;
 			if (result) {
 				if (result->on_gui) {
-					result->on_gui();
+					result->on_gui(currentController.get());
 				}
 				delete result;
 			}
@@ -2336,7 +2339,7 @@ namespace corona
 			result = (ui_task_result*)_msg->lParam;
 			if (result) {
 				if (result->on_gui) {
-					result->on_gui();
+					result->on_gui(currentController.get());
 				}
 				delete result;
 			}
@@ -2347,7 +2350,7 @@ namespace corona
 			http_result = (http_task_result*)_msg->lParam;
 			if (http_result) {
 				if (http_result->on_gui) {
-					http_result->on_gui(http_result->status);
+					http_result->on_gui(currentController.get(), http_result->status);
 				}
 				delete http_result;
 			}
@@ -2358,7 +2361,7 @@ namespace corona
 			http_result = (http_task_result*)_msg->lParam;
 			if (http_result) {
 				if (http_result->on_gui) {
-					http_result->on_gui(http_result->status);
+					http_result->on_gui(currentController.get(), http_result->status);
 				}
 				delete http_result;
 			}
@@ -2368,6 +2371,8 @@ namespace corona
 		return handled;
 	}
 
+
+	// this needs to get moved to application
 	std::string directApplicationWin32::getUserName()
 	{
 		std::string result;

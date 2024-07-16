@@ -4,15 +4,18 @@
 #define CORONA_CONSOLE 1
 #include "corona.hpp"
 
-corona::file_batch test_file_awaitable(corona::application& app);
-int test_file_straight(corona::application& app);
+corona::file_batch test_file_awaitable(std::shared_ptr<corona::application> app);
+int test_file_straight(std::shared_ptr<corona::application> app);
 
 void corona_tests()
 {
-    corona::application app;
+    std::shared_ptr<corona::application> app = std::make_shared<corona::application>();
 
     try
     {
+        app->application_folder_name = "corona_tests";
+        app->application_name = "corona_tests";
+
         std::cout << "\nmain::begin,thread:" << GetCurrentThreadId() << std::endl;
 
         std::cout << "\n\n=============================================" << std::endl;
@@ -85,13 +88,13 @@ void corona_tests()
     }
 }
 
-corona::file_batch test_file_nested_awaitable(corona::application& app)
+corona::file_batch test_file_nested_awaitable(std::shared_ptr<corona::application> app)
 {
     auto fbr = test_file_awaitable(app);
     return fbr;
 }
 
-corona::file_batch test_file_awaitable(corona::application& app)
+corona::file_batch test_file_awaitable(std::shared_ptr<corona::application> app)
 {
     std::cout << "test_file_awaitable::entry, thread:" << GetCurrentThreadId() << std::endl;
     auto fb = corona::test_file(app);
@@ -99,7 +102,7 @@ corona::file_batch test_file_awaitable(corona::application& app)
     return fb;
 }
 
-int test_file_straight(corona::application& app)
+int test_file_straight(std::shared_ptr<corona::application> app)
 {
     std::cout << "test_file_straight::test, thread:" << GetCurrentThreadId() << std::endl;
     auto batch_result = corona::test_file(app);

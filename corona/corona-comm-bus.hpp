@@ -1,0 +1,235 @@
+#pragma once
+
+#ifndef CORONA_COMM_BUS_H
+#define CORONA_COMM_BUS_H
+
+namespace corona
+{
+
+	class comm_bus : public comm_bus_interface
+	{
+	protected:
+
+		std::multimap<UINT, windows_event_waiter> windows_waiters;
+		std::multimap<std::string, topic_event_waiter> topic_waiters;
+
+		void check_windows_queue(MSG* _msg)
+		{
+			auto waiters = windows_waiters.find(_msg->message);
+			while (waiters != std::end(windows_waiters))
+			{
+				auto temp_waiter = waiters;
+				auto& waiter = *waiters;
+				SetEvent(waiter.second.hevent);
+				waiters++;
+			}
+		}
+
+		void check_topic(std::string _topic)
+		{
+			auto waiters = topic_waiters.find(_topic);
+			while (waiters != std::end(topic_waiters))
+			{
+				auto& waiter = *waiters;
+				SetEvent(waiter.second.hevent);
+				waiters++;
+			}
+			topic_waiters.erase(_topic);
+		}
+
+		json								admin_user;
+		buffer								io_buffer;
+
+	public:
+
+		std::shared_ptr<corona_database>	local_db;
+		std::shared_ptr<application>		app;
+		file								db_file;
+
+		// the adapter, created first.  It is the graphics card on the machine
+		std::shared_ptr<directXAdapter> factory;
+
+		// This creates the application window (and children), handling the mapping from the window and the events
+		// back through the presentation.
+		std::shared_ptr<directApplicationWin32> app_ui;
+
+		// create a win32 set of windows that can use this factory
+		// to make windows with a d2d / d3d image
+		std::shared_ptr<menu_item> app_menu;
+
+		// create the presentation - this holds the data of what is on screen, for various pages.
+		std::shared_ptr<presentation> presentation_layer;
+
+		int application_icon_id;
+
+		std::string database_schema_file_name;
+		std::string database_config_file_name;
+		std::string pages_config_file_name;
+		std::string database_file_name;
+		std::string user_file_name;
+
+		comm_bus(std::string _application_name, 
+			std::string _application_folder_name)
+		{
+			app = std::make_shared<application>();
+			app->application_folder_name = _application_folder_name;
+			app->application_name = _application_name;
+
+			MFStartup(MF_VERSION);
+
+			factory = std::make_shared<directXAdapter>();
+
+			// build the factory initially.  we may have occasion to call this 
+			// in the future in the event of a system setting change or something.
+			// otherwise.... I hate doing big things in constructors.
+			factory->refresh();
+			// create a win32 set of windows that can use this factory
+			// to make windows with a d2d / d3d image
+			app_ui = std::make_shared<directApplicationWin32>(factory);
+
+			// create the presentation - this holds the data of what is on screen, for various pages.
+			presentation_layer = std::make_shared<presentation>(this, app_ui);
+
+			app_menu = std::make_shared<menu_item>();
+
+			std::string database_schema_file_name = "schema.json";
+			std::string database_config_file_name = "config.json";
+			std::string pages_config_file_name = "ui.json";
+			std::string database_file_name = app->get_data_filename("corona.cdb");
+			std::string user_file_name = app->get_data_filename("user.json");
+
+			if (!app->file_exists(database_file_name)) 
+			{
+				db_file = app->open_file(database_file_name, file_open_types::create_always);
+				local_db = std::make_shared<corona_database>(db_file, database_schema_file_name, database_config_file_name);
+				auto admin_user_transaction = local_db->create_database();
+				admin_user = admin_user_transaction.wait();
+				if (admin_user.is_object()) {
+					std::string suser_json = admin_user.to_json();
+					io_buffer.set_buffer(suser_json);
+					file user_file = app->open_file(user_file_name, file_open_types::create_always);
+					file_task task = user_file.write(0, io_buffer.get_ptr(), io_buffer.get_size());
+					task.initiate();
+				}
+			} 
+			else 
+			{
+				db_file = app->open_file(database_file_name, file_open_types::open_existing);
+				local_db = std::make_shared<corona_database>(db_file, database_schema_file_name, database_config_file_name);
+				json_file_watcher user_file_watcher;
+				user_file_watcher.file_name = user_file_name;
+				file_transaction<relative_ptr_type> ftran = user_file_watcher.poll();
+				relative_ptr_type rpt = ftran.wait();
+				if (rpt != null_row) {
+					admin_user = user_file_watcher.contents;
+				}
+			}
+		}
+
+		virtual comm_bus_transaction<json> get_pages()
+		{
+			json_file_watcher jfw;
+
+			jfw.file_name = pages_config_file_name;
+			relative_ptr_type rpt;
+
+			auto tranny = co_await jfw.poll();
+			co_return jfw.contents;
+		}
+
+		virtual comm_bus_transaction<json>  create_user(json user_information)
+		{
+			json j = co_await local_db->create_user(user_information);
+			co_return j;
+		}
+
+		virtual comm_bus_transaction<json>  login_user(json login_information)
+		{
+			json j = co_await local_db->login_user(login_information);
+			co_return j;
+		}
+
+		virtual comm_bus_transaction<json>  put_object(json object_information)
+		{
+			json_parser jp;
+			json request = jp.create_object();
+			request.put_member("Token", admin_user);
+			request.put_member("Data", object_information);
+			json response = co_await local_db->put_object(request);
+			co_return response;
+		}
+
+		virtual comm_bus_transaction<json>  get_object(json object_information)
+		{
+			json_parser jp;
+			json request = jp.create_object();
+			request.put_member("Token", admin_user);
+			request.put_member("Data", object_information);
+			json response = co_await local_db->put_object(request);
+			co_return response;
+		}
+
+		virtual comm_bus_transaction<json>  delete_object(json object_information)
+		{
+			json_parser jp;
+			json request = jp.create_object();
+			request.put_member("Token", admin_user);
+			request.put_member("Data", object_information);
+			json response = co_await local_db->put_object(request);
+			co_return response;
+		}
+
+		virtual comm_bus_transaction<json>  pop_object(json user_information)
+		{
+			json_parser jp;
+			json request = jp.create_object();
+			request.put_member("Token", admin_user);
+			request.put_member("Data", user_information);
+			json response = co_await local_db->put_object(request);
+			co_return response;
+		}
+
+		virtual comm_bus_transaction<json>  query_objects(json login_token, json user_information)
+		{
+			json_parser jp;
+			json request = jp.create_object();
+			request.put_member("Token", admin_user);
+			request.put_member("Data", user_information);
+			json response = co_await local_db->put_object(request);
+			co_return response;
+		}
+
+		void when(UINT topic, std::function<void()> _runnable)
+		{
+			windows_event_waiter evt;
+			evt.msg = topic;
+			std::pair<UINT,windows_event_waiter> pair;
+			pair.first = topic;
+			pair.second = evt;
+			windows_waiters.insert(pair);
+			::WaitForSingleObject(evt.hevent, INFINITE);
+			_runnable();
+		}
+
+		void when(std::string _topic, std::function<void()> _runnable)
+		{
+			topic_event_waiter evt;
+			evt.topic = _topic;
+			std::pair<std::string, topic_event_waiter> pair;
+			pair.first = _topic;
+			pair.second = evt;
+			topic_waiters.insert(pair);
+			::WaitForSingleObject(evt.hevent, INFINITE);
+			_runnable();
+		}
+
+		void run(HINSTANCE hInstance, bool fullScreen)
+		{
+			app_ui->runDialog(hInstance, app->application_name.c_str(), application_icon_id, fullScreen, presentation_layer);
+		}
+
+
+	};
+}
+
+#endif

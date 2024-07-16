@@ -1,0 +1,9 @@
+{
+  "Server": {
+    "ListenPoint": "http://localhost:5678/corona",
+    "DefaultUserName": "system",
+    "DefaultUserPassword": "systempassword",
+    "DefaultUserEmailAddress": "todd.bandrowsky@gmail.com",
+    "DefaultGuestTeam": "Guests"
+  }
+}

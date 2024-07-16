@@ -5,8 +5,9 @@ by Todd Bandrowky
 (c) 2024 + All Rights Reserved
 
 About this File
-This file contains advanced composed controllers and a more
-fluent code style builder for building them.
+This file contains controls that are compositions, and a more
+fluent code style builder for building them.  The fluent code builder
+is then used to build up the page collection.
 
 Notes
 
@@ -29,6 +30,14 @@ namespace corona
 	class form_field_control;
 	class checkbox_list_control;
 	class radiobutton_list_control;
+
+	enum corona_commands {
+		get_object,
+		put_object,
+		get_class,
+		put_class,
+
+	};
 
 	struct corona_button_onclick_options
 	{
@@ -2222,14 +2231,12 @@ namespace corona
 		std::string subtitle_name;
 		int title_id;
 		int subtitle_id;
-		data_lake* lake;
 		measure title_start;
 
 		caption_bar_control()
 		{
 			menu_button_id = 0;
 			image_control_id = 0;
-			lake = nullptr;
 		}
 
 		caption_bar_control(const caption_bar_control& _src) = default;

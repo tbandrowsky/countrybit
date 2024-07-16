@@ -591,6 +591,8 @@
     <CopyFileToFolders Include="ui.json">
       <FileType>Document</FileType>
     </CopyFileToFolders>
+    <None Include="config.json" />
+    <None Include="schema.json" />
     <None Include="vcpkg.json" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

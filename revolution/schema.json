@@ -1,0 +1,26 @@
+{
+  "Classes": [
+    {
+      "ClassName": "Message",
+      "ClassDescription" :  "Base class of all messages",
+      "BaseClassName": "SysObject",
+      "Fields": {
+        "Topic": "string",
+        "Data": "object"
+      }
+    },
+    {
+      "ClassName": "LocalUIMessage",
+      "BaseClassName": "Message"
+    }
+  ],
+  "Users": [],
+  "Objects": [
+    {
+      "ClassName": "SysTeam",
+      "Name": "RevolutionTeam",
+      "Description": "Revolution users"
+    }
+  ]
+}
+  
