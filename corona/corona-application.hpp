@@ -27,8 +27,6 @@ namespace corona
 
 	class application
 	{
-		static application* home;
-
 	public:
 
 		std::string application_name;
@@ -38,21 +36,11 @@ namespace corona
 		{
 			global_job_queue = std::make_unique<job_queue>();
 			global_job_queue->start(0);
-			home = this;
 		}
 
 		~application()
 		{
 			global_job_queue->shutDown();
-		}
-
-		static application* get_application()
-		{
-			if (!home) 
-			{				
-				home = new application();
-			}
-			return home;
 		}
 
 		std::string get_config_filename(std::string _filename)
@@ -142,6 +130,12 @@ namespace corona
 			return f;
 		}
 
+		std::shared_ptr<file> open_file_ptr(file_path filename, file_open_types _file_open_type)
+		{
+			std::shared_ptr<file> f = std::make_shared<file>(global_job_queue.get(), filename, _file_open_type);
+			return f;
+		}
+
 		std::shared_ptr<file> create_file_ptr(KNOWNFOLDERID folderId, file_path filename)
 		{
 			std::shared_ptr<file> f = std::make_shared<file>(global_job_queue.get(), folderId, filename, file_open_types::create_always);
@@ -169,9 +163,9 @@ namespace corona
 	file_batch application_tests()
 	{
 		try {
-			auto app = application::get_application();
+			application app;
 
-			auto my_file = app->create_file("file.txt");
+			auto my_file = app.create_file("file.txt");
 
 			my_file.add(32);
 
@@ -196,10 +190,6 @@ namespace corona
 			co_return false;
 		}
 	}
-
-
-	application* application::home;
-
 }
 
 #endif

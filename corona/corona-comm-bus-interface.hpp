@@ -1,5 +1,4 @@
 #pragma once
-#pragma once
 
 #ifndef CORONA_COMM_BUS_INTERFACE_H
 #define CORONA_COMM_BUS_INTERFACE_H
@@ -40,39 +39,16 @@ namespace corona
 			return *this;
 		}
 
-		event_waiter(const event_waiter& _waiter)
-		{
-			::DuplicateHandle(GetCurrentProcess(),
-				_waiter.hevent,
-				GetCurrentProcess(),
-				&hevent,
-				0,
-				FALSE,
-				DUPLICATE_SAME_ACCESS);
-		}
-
-		event_waiter& operator = (event_waiter&& _src)
-		{
-			hevent = _src.hevent;
-			_src.hevent = INVALID_HANDLE_VALUE;
-			return *this;
-		}
-
 		event_waiter(event_waiter&& _src)
 		{
 			hevent = _src.hevent;
 			_src.hevent = INVALID_HANDLE_VALUE;
 		}
 
-		event_waiter operator = (const event_waiter& _src)
+		event_waiter& operator = (event_waiter&& _src)
 		{
-			::DuplicateHandle(GetCurrentProcess(),
-				_src.hevent,
-				GetCurrentProcess(),
-				&hevent,
-				0,
-				FALSE,
-				DUPLICATE_SAME_ACCESS);
+			hevent = _src.hevent;
+			_src.hevent = INVALID_HANDLE_VALUE;
 			return *this;
 		}
 
@@ -138,7 +114,7 @@ namespace corona
 			std::suspend_always final_suspend() noexcept { return {}; }
 
 			void return_value(transaction_result value) {
-				debug_functions&& std::cout << "commbus_transaction::promise return_value:" << " " << value << " " << GetCurrentThreadId() << std::endl;
+				debug_functions&& std::cout << "commbus_transaction::promise return_value:" << " " << " " << GetCurrentThreadId() << std::endl;
 				m_value = value;
 			}
 
@@ -261,6 +237,8 @@ namespace corona
 		}
 
 	public:
+		
+		std::string default_page;
 
 		virtual void run_ui(HINSTANCE hInstance, bool fullScreen) = 0;
 
@@ -314,7 +292,7 @@ namespace corona
 				int end = idx + bucket_size;
 				if (end > _items.size())
 					end = _items.size();
-				general_job* gj = new general_job([_targets, idx, end, _on_each, &_items](controller* p) -> void {
+				general_job* gj = new general_job([_targets, idx, end, _on_each, &_items]() -> void {
 					for (int x = idx; x < end; x++)
 					{
 						item& itm = _items[x];
@@ -345,7 +323,7 @@ namespace corona
 				if (end > _items.size())
 					end = _items.size();
 				std::vector<item>* src_items = &_items;
-				general_job* gj = new general_job([idx, end, _on_each, src_items](controller* p) -> void {
+				general_job* gj = new general_job([idx, end, _on_each, src_items]() -> void {
 					for (int x = idx; x < end; x++)
 					{
 						item& itm = (*src_items)[x];
@@ -375,7 +353,7 @@ namespace corona
 				if (end > _items.size())
 					end = _items.size();
 				std::vector<item>* src_items = &_items;
-				general_job* gj = new general_job([idx, _width, _height, end, _on_each, src_items](controller* p) -> void {
+				general_job* gj = new general_job([idx, _width, _height, end, _on_each, src_items]() -> void {
 					for (int x = idx; x < end; x++)
 					{
 						int px = x % _width;
@@ -411,6 +389,8 @@ namespace corona
 			}
 			::CloseHandle(hevent);
 		}
+
+		virtual void poll() = 0;
 	};
 }
 

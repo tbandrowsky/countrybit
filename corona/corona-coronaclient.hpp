@@ -25,14 +25,16 @@ namespace corona
 		std::string host;
 		std::string path;
 		int port;
-		
-		corona_client()
+		comm_bus_interface* cbi;
+
+		corona_client() : cbi(nullptr)
 		{
 			
 		}
 
-		corona_client(std::string _host, int _port)
+		corona_client(comm_bus_interface *_cbi, std::string _host, int _port)
 		{
+			cbi = _cbi;
 			host = _host;
 			port = _port;
 			path = "";
@@ -118,8 +120,8 @@ namespace corona
 
 				corona_client* pthis = this;
 
-				threadomatic::run_http(
-					[this, url, _function_name, _credentials, _payload](controller* pcontroller) -> call_status {
+				cbi->run_http(
+					[this, url, _function_name, _credentials, _payload]() -> call_status {
 						call_status dfs;
 						try
 						{
@@ -147,7 +149,7 @@ namespace corona
 						}
 						return dfs;
 					},
-					[_windows_id, pthis, _function_name, _credentials, _payload](controller* pcontroller, call_status _param) -> void {
+					[_windows_id, pthis, _function_name, _credentials, _payload](call_status _param) -> void {
 						try
 						{
 							if (pthis->on_post_response)

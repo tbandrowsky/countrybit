@@ -85,10 +85,7 @@ namespace corona
 
 		crypto crypter;
 
-		json_file_watcher config_file;
 		std::string send_grid_api_key;
-
-		json_file_watcher schema_file;
 		bool watch_polling;
 
 		std::shared_ptr<file> database_file;
@@ -1129,6 +1126,28 @@ private:
 			co_return false;
 		}
 
+
+	public:
+
+		std::string listen_point;
+		std::string default_user;
+		std::string default_password;
+		std::string default_email_address;
+		std::string default_guest_team;
+		time_span token_life;
+
+		// constructing and opening a database
+
+		corona_database(std::shared_ptr<file> _database_file)
+			: database_file(_database_file),
+			classes(_database_file, { "ClassName" }),
+			class_objects(_database_file, { "ClassName", "ObjectId" }),
+			objects(_database_file, { "ObjectId" }),
+			objects_by_name(_database_file, { "ClassName", "Name", "ObjectId" })
+		{
+			token_life = time_span(1, time_models::hours);	
+		}
+
 		void apply_config(json _config)
 		{
 			if (_config.has_member("SendGrid"))
@@ -1222,89 +1241,6 @@ private:
 				std::cout << "Send grid api key not found in configuration" << std::endl;
 			}
 
-		}
-
-	public:
-
-		std::string listen_point;
-		std::string default_user;
-		std::string default_password;
-		std::string default_email_address;
-		std::string default_guest_team;
-		time_span token_life;
-
-		// constructing and opening a database
-
-		corona_database(std::shared_ptr<file> _database_file, 			
-			std::string config_file_name, 
-			std::string schema_file_name)
-			: database_file(_database_file),
-			classes(_database_file, { "ClassName" }),
-			class_objects(_database_file, { "ClassName", "ObjectId" }),
-			objects(_database_file, { "ObjectId" }),
-			objects_by_name(_database_file, { "ClassName", "Name", "ObjectId" })
-		{
-			token_life = time_span(1, time_models::hours);	
-
-			config_file.file_name = config_file_name;
-			schema_file.file_name = schema_file_name;
-
-			watch_polling = true;
-		}
-
-		void read_config()
-		{
-			try {
-				file_transaction<relative_ptr_type> config_tran = config_file.poll();
-				if (config_tran.wait() != null_row)
-				{
-					apply_config(config_file.contents);
-				}
-			}
-			catch (std::exception exc)
-			{
-				std::cout << "File change exception:" << exc.what() << std::endl;
-			}
-		}
-
-		void read_schema()
-		{
-			try {
-				file_transaction<relative_ptr_type> schema_tran = schema_file.poll();
-				if (schema_tran.wait() != null_row)
-				{
-					auto schema_task = apply_schema(schema_file.contents);
-					schema_task.wait();
-				}
-			}
-			catch (std::exception exc)
-			{
-				std::cout << "File change exception:" << exc.what() << std::endl;
-			}
-		}
-
-		void poll_config_schema()
-		{
-			threadomatic::run([this](corona::controller* pcontroller) -> void
-				{
-					try {
-						file_transaction<relative_ptr_type> config_tran = config_file.poll();
-						if (config_tran.wait())
-						{
-							apply_config(config_file.contents);
-						}
-						file_transaction<relative_ptr_type> schema_tran = schema_file.poll();
-						if (schema_tran.wait())
-						{
-							auto schema_task = apply_schema(schema_file.contents);
-							schema_task.wait();
-						}
-					}
-					catch (std::exception exc)
-					{
-						std::cout << "File change exception:" << exc.what() << std::endl;
-					}
-				});
 		}
 
 		database_transaction<relative_ptr_type> open_database(relative_ptr_type _header_location)
@@ -2376,7 +2312,7 @@ private:
 	};
 
 
-	user_transaction<bool> test_database_engine(std::shared_ptr<corona::application> _app)
+	user_transaction<bool> test_database_engine(std::shared_ptr<application> _app)
 	{
 		bool success = true;
 		std::shared_ptr<file> dtest = std::make_shared<file>();
@@ -2385,7 +2321,19 @@ private:
 
 		std::cout << "test_database_engine, thread:" << ::GetCurrentThreadId() << std::endl;
 
-		corona_database db(dtest, "db.json", "schema.json");
+		corona_database db(dtest);
+
+		json_file_watcher jf;
+		json db_config, schema_config;
+
+		jf.file_name = "db.json";
+		jf.poll_contents(_app.get(), db_config);
+		jf.file_name = "schema.json";
+		jf.poll_contents(_app.get(), schema_config);
+
+		db.apply_config(db_config);
+		auto schema_task = db.apply_schema(schema_config);
+		schema_task.wait();
 
 		std::cout << "test_database_engine, create_database, thread:" << ::GetCurrentThreadId() << std::endl;
 
@@ -2426,11 +2374,21 @@ private:
 
 			std::cout << "test_database_engine, thread:" << ::GetCurrentThreadId() << std::endl;
 
-			corona_database db(dtest, "db.json", "schema.json");
+			corona_database db(dtest);
 
 			corona_database *pdb = &db;
 
-			db.read_config();
+			json_file_watcher jf;
+			json db_config, schema_config;
+
+			jf.file_name = "db.json";
+			jf.poll_contents(_app.get(), db_config);
+			jf.file_name = "schema.json";
+			jf.poll_contents(_app.get(), schema_config);
+
+			db.apply_config(db_config);
+			auto schema_task = db.apply_schema(schema_config);
+			schema_task.wait();
 
 			std::cout << "test_database_engine, create_database, thread:" << ::GetCurrentThreadId() << std::endl;
 			
@@ -2446,7 +2404,17 @@ private:
 
 			while (true)
 			{
-				db.read_config(&_app);
+				jf.file_name = "db.json";
+				if (jf.poll_contents(_app.get(), db_config) != null_row) {
+					db.apply_config(db_config);
+				}
+
+				jf.file_name = "schema.json";
+				if (jf.poll_contents(_app.get(), schema_config) != null_row) {
+					auto schema_task = db.apply_schema(schema_config);
+					schema_task.wait();
+				}
+
 				std::cout << "Waiting for request." << std::endl;
 				co_await db_api_server.next_request();
 			}
@@ -2465,7 +2433,7 @@ private:
 
 		try {
 
-			application *app = application::get_application();
+			application app;
 
 			std::shared_ptr<dynamic_box> box = std::make_shared<dynamic_box>();
 			box->init(1 << 21);

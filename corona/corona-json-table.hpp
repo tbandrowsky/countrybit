@@ -1113,12 +1113,12 @@ namespace corona
 		return output;
 	}
 
-	user_transaction<bool> test_json_table(std::shared_ptr<corona::application> _app);
-	file_batch test_file(std::shared_ptr<corona::application> _app);
-	file_transaction<int64_t> test_data_block(std::shared_ptr<corona::application> _app);
-	file_transaction<int64_t> test_json_node(std::shared_ptr<corona::application> _app);
+	user_transaction<bool> test_json_table(std::shared_ptr<application> _app);
+	file_batch test_file(std::shared_ptr<application> _app);
+	file_transaction<int64_t> test_data_block(std::shared_ptr<application> _app);
+	file_transaction<int64_t> test_json_node(std::shared_ptr<application> _app);
 
-	file_batch test_file(std::shared_ptr<corona::application> _app)
+	file_batch test_file(std::shared_ptr<application> _app)
 	{
 
 		std::cout << "\ntest_file: entry, thread:" << ::GetCurrentThreadId() << std::endl;
@@ -1150,7 +1150,7 @@ namespace corona
 		co_return 0;
 	}
 
-	file_transaction<int64_t> test_data_block(std::shared_ptr<corona::application> _app)
+	file_transaction<int64_t> test_data_block(std::shared_ptr<application> _app)
 	{
 		std::shared_ptr<file>  dtest = _app->create_file_ptr(FOLDERID_Documents, "corona_data_block_test.ctb");
 
@@ -1172,7 +1172,7 @@ namespace corona
 		co_return 32;
 	}
 
-	file_transaction<int64_t> test_json_node(std::shared_ptr<corona::application> _app)
+	file_transaction<int64_t> test_json_node(std::shared_ptr<application> _app)
 	{
 		std::shared_ptr<file>  dtest = _app->create_file_ptr(FOLDERID_Documents, "corona_json_node_test.ctb");
 
@@ -1199,7 +1199,7 @@ namespace corona
 		co_return 1;
 	}
 
-	user_transaction<bool> test_json_table(std::shared_ptr<corona::application> _app)
+	user_transaction<bool> test_json_table(std::shared_ptr<application> _app)
 	{
 		using return_type = user_transaction<bool>;
 

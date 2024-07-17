@@ -215,6 +215,7 @@ namespace corona
 
 		void copy(const control_base& _src)
 		{
+			bus = _src.bus;
 			id = _src.id;
 			bounds = _src.bounds;
 			inner_bounds = _src.inner_bounds;
@@ -262,6 +263,8 @@ namespace corona
 		std::string				json_field_name;
 
 		container_control_base* parent;
+		comm_bus_interface* bus;
+
 		std::vector<control_push_request> push_requests;
 
 		std::vector<std::shared_ptr<control_base>> children;
@@ -275,7 +278,8 @@ namespace corona
 			id(-1),
 			margin(),
 			parent(nullptr),
-			margin_amount({ 0.0, 0.0 })
+			margin_amount({ 0.0, 0.0 }),
+			bus(nullptr)
 		{
 			id = id_counter::next();
 			is_focused = false;

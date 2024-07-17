@@ -188,25 +188,6 @@ namespace corona
 
 		std::string getUserName();
 
-		void wait()
-		{
-			global_job_queue->waitForEmptyQueue();
-		}
-
-		file open_file(file_path filename, file_open_types _file_open_type)
-		{
-			return application::get_application()->open_file(filename, _file_open_type);
-		}
-
-		file create_file(file_path filename)
-		{
-			return application::get_application()->open_file(filename, file_open_types::create_new);
-		}
-
-		void add_job(job* _job)
-		{
-			application::get_application()->add_job(_job);
-		}
 	};
 
 	void EnableGuiStdOuts();
@@ -635,14 +616,9 @@ namespace corona
 			}
 			break;
 			case WM_TIMER:
-				bus->run_complete(
-					[this](controller* pcontroller)->void {
-						currentController->checkPresentationFile();
-					},
-					[this](controller* pcontroller)->void {
-						currentController->setPresentationFile();
-					}
-				);
+				if (bus) {
+					bus->poll();
+				}
 				break;
 			case WM_NCCALCSIZE:
 			{
@@ -2328,7 +2304,7 @@ namespace corona
 			result = (ui_task_result *)_msg->lParam;
 			if (result) {
 				if (result->on_gui) {
-					result->on_gui(currentController.get());
+					result->on_gui();
 				}
 				delete result;
 			}
@@ -2339,7 +2315,7 @@ namespace corona
 			result = (ui_task_result*)_msg->lParam;
 			if (result) {
 				if (result->on_gui) {
-					result->on_gui(currentController.get());
+					result->on_gui();
 				}
 				delete result;
 			}
@@ -2350,7 +2326,7 @@ namespace corona
 			http_result = (http_task_result*)_msg->lParam;
 			if (http_result) {
 				if (http_result->on_gui) {
-					http_result->on_gui(currentController.get(), http_result->status);
+					http_result->on_gui( http_result->status);
 				}
 				delete http_result;
 			}
@@ -2361,7 +2337,7 @@ namespace corona
 			http_result = (http_task_result*)_msg->lParam;
 			if (http_result) {
 				if (http_result->on_gui) {
-					http_result->on_gui(currentController.get(), http_result->status);
+					http_result->on_gui(http_result->status);
 				}
 				delete http_result;
 			}

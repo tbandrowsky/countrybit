@@ -157,7 +157,7 @@ namespace corona
 			mins.h, mins.s, mins.l, maxes.h, maxes.s, maxes.l) << std::endl;
 	}
 
-	template <typename pixel_type> struct pixel_frame
+	template <typename pixel_type> class pixel_frame
 	{
 		unsigned int width, height, size_pixels;
 		std::vector<pixel_type> pixels;
@@ -165,8 +165,9 @@ namespace corona
 	public:
 
 		friend class cursor;
+		comm_bus_interface* bus;
 
-		pixel_frame() : width(0), height(0),  size_pixels(0)
+		pixel_frame() : width(0), height(0),  size_pixels(0), bus(nullptr)
 		{
 			
 		}
@@ -180,8 +181,8 @@ namespace corona
 			}
 		}
 
-		pixel_frame(pixel_type *_src, unsigned int _width, unsigned int _height)
-			: width(_width), height(_height), size_pixels(_height* _width)
+		pixel_frame(comm_bus_interface* _bus, pixel_type *_src, unsigned int _width, unsigned int _height)
+			: bus(_bus), width(_width), height(_height), size_pixels(_height* _width)
 		{
 			pixels.resize(size_pixels);
 			for (int i = 0; i < size_pixels; i++) {
@@ -191,7 +192,7 @@ namespace corona
 		}
 
 		pixel_frame(pixel_frame&& _src)
-			: width(_src.width), height(_src.height), size_pixels(_src.size_pixels)
+			: bus(_src.bus), width(_src.width), height(_src.height), size_pixels(_src.size_pixels)
 		{
 			pixels = std::move(_src.pixels);
 		}
@@ -209,6 +210,7 @@ namespace corona
 			height = _src.height;
 			size_pixels = _src.size_pixels;
 			pixels = std::move(_src.pixels);
+			bus = _src.bus;
 			return *this;
 		}
 
@@ -216,6 +218,7 @@ namespace corona
 			: width(_src.width), height(_src.height), size_pixels(_src.size_pixels)
 		{
 			pixels = _src.pixels;
+			bus = _src.bus;
 		}
 
 		pixel_frame& operator = (const pixel_frame& _src)
@@ -224,6 +227,7 @@ namespace corona
 			height = _src.height;
 			size_pixels = _src.size_pixels;
 			pixels = _src.pixels;
+			bus = _src.bus;
 			return *this;
 		}
 
@@ -444,18 +448,22 @@ namespace corona
 
 		void for_each(std::function<pixel_type(int x, int y, pixel_type)> _xform)
 		{
-			threadomatic::run_each<pixel_type>(pixels, get_width(), get_height(), [_xform](int x, int y, pixel_type& px) -> void {
-				pixel_type np = _xform(x, y, px);
-				px = np;
-				});
+			if (bus) {
+				bus->run_each<pixel_type>(pixels, get_width(), get_height(), [_xform](int x, int y, pixel_type& px) -> void {
+					pixel_type np = _xform(x, y, px);
+					px = np;
+					});
+			}
 		}
 
 		void for_each(std::function<pixel_type (pixel_type)> _xform)
 		{
-			threadomatic::run_each<pixel_type>(pixels, [_xform](pixel_type& px) -> void {
-				pixel_type np = _xform(px);
-				px = np;
-			});
+			if (bus) {
+				bus->run_each<pixel_type>(pixels, [_xform](pixel_type& px) -> void {
+					pixel_type np = _xform(px);
+					px = np;
+					});
+			}
 		}
 
 		ID2D1Bitmap1* get_bitmap(ID2D1DeviceContext *_context, std::function<bgra32_pixel(int x, int y, pixel_type)> _xform)
@@ -473,7 +481,7 @@ namespace corona
 
 			if (data) {
 
-				threadomatic::run_each<bgra32_pixel, pixel_type>(data, pixels, [data, size, _xform](bgra32_pixel* _target, pixel_type& _src) -> void {
+				bus->run_each<bgra32_pixel, pixel_type>(data, pixels, [data, size, _xform](bgra32_pixel* _target, pixel_type& _src) -> void {
 					int pos = _target - data;
 					int x = pos % size.width;
 					int y = pos / size.width;
@@ -705,6 +713,7 @@ namespace corona
 	{
 	public:
 
+		comm_bus_interface* bus;
 		timer	frame_timer;
 		int		frame_counter;
 		double	last_frame_seconds;
@@ -746,6 +755,13 @@ namespace corona
 			frame_counter(0)
 		{
 			reset_defaults();
+		}
+
+		void set_bus(comm_bus_interface* _bus)
+		{
+			bus = _bus;
+			activation_frame.bus = _bus;
+			last_frame.bus = _bus;
 		}
 
 		void reset_defaults()
@@ -963,7 +979,7 @@ namespace corona
 
 		void next_frame(bgra32_pixel* _src, int _width, int _height, int _stride)
 		{
-			pixel_frame<bgra32_pixel> new_frame(_src, _width, _height);
+			pixel_frame<bgra32_pixel> new_frame(bus, _src, _width, _height);
 			next_frame(new_frame);
 		}
 

@@ -55,7 +55,7 @@ namespace corona
 
 		// This creates the application window (and children), handling the mapping from the window and the events
 		// back through the presentation.
-		std::shared_ptr<directApplicationWin32> application;
+		std::shared_ptr<directApplicationWin32> appwin32;
 
 		// create a win32 set of windows that can use this factory
 		// to make windows with a d2d / d3d image

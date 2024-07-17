@@ -68,8 +68,7 @@ namespace corona
 		virtual int getDefaultButtonId() = 0;
 		virtual void hardwareChanged() = 0;
 
-		virtual void checkPresentationFile() = 0;
-		virtual std::string setPresentationFile() = 0;
+		virtual std::string setPresentation(json presentation) = 0;
 
 	};
 

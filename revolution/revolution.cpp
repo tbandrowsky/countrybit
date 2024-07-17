@@ -54,7 +54,7 @@ int __stdcall WinMain(HINSTANCE hInstance,
 
 	BOOL result = ::InitCommonControlsEx(&ice);
 
-	application_function(hInstance, lpszCmdParam);
+	//application_function(hInstance, lpszCmdParam);
 
 	CoUninitialize();
 }

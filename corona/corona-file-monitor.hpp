@@ -18,11 +18,20 @@ namespace corona
 			;
 		}
 
-		file_transaction<relative_ptr_type> poll()
+		relative_ptr_type poll_contents(application* _app, json& item)
+		{
+			auto pollomatic = poll(_app);
+			relative_ptr_type pt = pollomatic.wait();
+			if (pt != null_row) {
+				item = contents;
+			}
+			return pt;
+		}
+
+		file_transaction<relative_ptr_type> poll(application *_app)
 		{
 			json_parser jp;
 			try {
-				application* _app = application::get_application();
 				if (!file_name.empty()) {
 					std::cout << "polling " << file_name << std::endl;
 					file f = _app->open_file(file_name, file_open_types::open_existing);
@@ -38,7 +47,6 @@ namespace corona
 									last_contents = s_contents;
 									json temp_contents = jp.parse_object(s_contents);
 									contents = temp_contents;
-									std::string xtemp = contents.to_json();
 									if (!jp.parse_errors.size()) {
 										co_return true;
 									}

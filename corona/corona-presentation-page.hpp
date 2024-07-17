@@ -602,7 +602,6 @@ namespace corona
 			}
 		}
 
-				
 		friend class presentation;
 	};
 }

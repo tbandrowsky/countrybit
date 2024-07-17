@@ -44,7 +44,7 @@ namespace corona
 
 		std::shared_ptr<corona_database>	local_db;
 		std::shared_ptr<application>		app;
-		file								db_file;
+		std::shared_ptr<file>				db_file;
 
 		// the adapter, created first.  It is the graphics card on the machine
 		std::shared_ptr<directXAdapter> factory;
@@ -65,6 +65,11 @@ namespace corona
 		std::string database_schema_file_name;
 		std::string database_config_file_name;
 		std::string pages_config_file_name;
+
+		json_file_watcher database_schema_mon;
+		json_file_watcher database_config_mon;
+		json_file_watcher pages_config_mon;
+
 		std::string database_file_name;
 		std::string user_file_name;
 
@@ -85,23 +90,30 @@ namespace corona
 			factory->refresh();
 			// create a win32 set of windows that can use this factory
 			// to make windows with a d2d / d3d image
-			app_ui = std::make_shared<directApplicationWin32>(factory);
+			app_ui = std::make_shared<directApplicationWin32>(this, factory);
 
 			// create the presentation - this holds the data of what is on screen, for various pages.
 			presentation_layer = std::make_shared<presentation>(this, app_ui);
 
 			app_menu = std::make_shared<menu_item>();
 
-			std::string database_schema_file_name = "schema.json";
-			std::string database_config_file_name = "config.json";
-			std::string pages_config_file_name = "ui.json";
-			std::string database_file_name = app->get_data_filename("corona.cdb");
-			std::string user_file_name = app->get_data_filename("user.json");
+			database_schema_file_name = "schema.json";
+			database_config_file_name = "config.json";
+			pages_config_file_name = "ui.json";
+			database_file_name = app->get_data_filename("corona.cdb");
+			user_file_name = app->get_data_filename("user.json");
+
+			database_schema_mon.file_name = database_schema_file_name;
+			database_config_mon.file_name = database_config_file_name;
+			pages_config_mon.file_name = pages_config_file_name;
 
 			if (!app->file_exists(database_file_name)) 
 			{
-				db_file = app->open_file(database_file_name, file_open_types::create_always);
-				local_db = std::make_shared<corona_database>(db_file, database_schema_file_name, database_config_file_name);
+				db_file = app->open_file_ptr(database_file_name, file_open_types::create_always);
+				local_db = std::make_shared<corona_database>(db_file);
+
+				file_transaction<relative_ptr_type> result = database_config_mon.poll(app.get());
+
 				auto admin_user_transaction = local_db->create_database();
 				admin_user = admin_user_transaction.wait();
 				if (admin_user.is_object()) {
@@ -114,16 +126,40 @@ namespace corona
 			} 
 			else 
 			{
-				db_file = app->open_file(database_file_name, file_open_types::open_existing);
-				local_db = std::make_shared<corona_database>(db_file, database_schema_file_name, database_config_file_name);
+				db_file = app->open_file_ptr(database_file_name, file_open_types::open_existing);
+				local_db = std::make_shared<corona_database>(db_file);
 				json_file_watcher user_file_watcher;
 				user_file_watcher.file_name = user_file_name;
-				file_transaction<relative_ptr_type> ftran = user_file_watcher.poll();
-				relative_ptr_type rpt = ftran.wait();
-				if (rpt != null_row) {
-					admin_user = user_file_watcher.contents;
-				}
+				user_file_watcher.poll_contents(app.get(), admin_user);
 			}
+		}
+
+		void poll_db()
+		{
+			json_parser jp;
+			json temp;
+			if (database_schema_mon.poll_contents(app.get(), temp)) {
+				auto tempo = local_db->apply_schema(temp);
+				tempo.wait();
+			}
+			if (database_config_mon.poll_contents(app.get(), temp)) {
+				local_db->apply_config(temp);
+			}
+		}
+
+		void poll_pages()
+		{
+			json_parser jp;
+			json temp;
+			if (pages_config_mon.poll_contents(app.get(), temp)) {
+				load_pages(temp);
+			}
+		}
+
+		virtual void poll()
+		{
+			poll_db();
+			poll_pages();
 		}
 
 		virtual comm_bus_transaction<json> get_pages()
@@ -133,13 +169,17 @@ namespace corona
 			jfw.file_name = pages_config_file_name;
 			relative_ptr_type rpt;
 
-			auto tranny = co_await jfw.poll();
+			auto tranny = co_await jfw.poll(app.get());
 			co_return jfw.contents;
 		}
 
 		virtual comm_bus_transaction<json>  create_user(json user_information)
 		{
-			json j = co_await local_db->create_user(user_information);
+			json_parser jp;
+			json request = jp.create_object();
+			request.put_member("Token", admin_user);
+			request.put_member("Data", user_information);
+			json j = co_await local_db->create_user(request);
 			co_return j;
 		}
 
@@ -199,6 +239,20 @@ namespace corona
 			co_return response;
 		}
 
+		void load_pages(json _pages)
+		{
+			run_ui([this, _pages]() ->void {
+				presentation_layer->setPresentation(_pages);
+				});
+		}
+
+		void select_page(std::string _page)
+		{
+			run_ui([this, _page]() ->void {
+				presentation_layer->select_page(_page);
+				});
+		}
+
 		void when(UINT topic, std::function<void()> _runnable)
 		{
 			windows_event_waiter evt;
@@ -227,7 +281,6 @@ namespace corona
 		{
 			app_ui->runDialog(hInstance, app->application_name.c_str(), application_icon_id, fullScreen, presentation_layer);
 		}
-
 
 	};
 }

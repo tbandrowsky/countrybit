@@ -47,8 +47,8 @@ namespace corona
 			if (!_src)
 				return nullptr;
 
-			int max_len = strlen(_src);
-			int max_len_bytes = max_len * sizeof(wchar_t);
+			size_t max_len = strlen(_src);
+			size_t max_len_bytes = max_len * sizeof(wchar_t);
 			std::unique_ptr<wchar_t[]> temp;
 
 			int result = MultiByteToWideChar(CP_UTF8, 0, _src, max_len_bytes, NULL, 0);
@@ -78,7 +78,7 @@ namespace corona
 			if (!_src)
 				return nullptr;
 
-			int max_len = wcslen(_src);
+			size_t max_len = wcslen(_src);
 			std::unique_ptr<char[]> temp;
 
 			int result = WideCharToMultiByte(CP_UTF8, 0, _src, max_len, NULL, 0, NULL, NULL);

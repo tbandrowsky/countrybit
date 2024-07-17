@@ -140,7 +140,7 @@ namespace corona
 
 			json blank_params;
 
-			runnable cylon = [](controller*) -> void
+			runnable cylon = []() -> void
 			{
 				//on_gui();
 			};
@@ -208,7 +208,7 @@ namespace corona
 			{
 				if (on_run)
 				{
-					on_run(nullptr);
+					on_run();
 				}
 				_callingQueue->post_ui_message(WM_CORONA_TASK_COMPLETE, TRUE, (LPARAM)result);
 			}
@@ -255,7 +255,7 @@ namespace corona
 			{
 				if (on_run)
 				{
-					call_status status = on_run(nullptr);
+					call_status status = on_run();
 					auto result = new http_task_result(status, on_gui);
 					_callingQueue->post_ui_message(WM_CORONA_HTTP_TASK_COMPLETE, TRUE, (LPARAM)result);
 				}

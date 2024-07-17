@@ -89,10 +89,10 @@ namespace corona {
 		virtual corona_size_t free() const = 0;
 		virtual void clear() = 0;
 		virtual box_block* reserve(corona_size_t length) = 0;
-		virtual box_block* allocate(int64_t sizeofobj, int length) = 0;
+		virtual box_block* allocate(int64_t sizeofobj, size_t length) = 0;
 		virtual box_block* get_object(relative_ptr_type _src) = 0;
-		virtual relative_ptr_type create_object(char* _src, int _length) = 0;
-		virtual relative_ptr_type update_object(relative_ptr_type _location, char* _src, int _length) = 0;
+		virtual relative_ptr_type create_object(char* _src, size_t _length) = 0;
+		virtual relative_ptr_type update_object(relative_ptr_type _location, char* _src, size_t _length) = 0;
 		virtual bool delete_object(relative_ptr_type _location) = 0;
 		virtual relative_ptr_type copy_object(relative_ptr_type _location) = 0;
 		virtual relative_ptr_type commit() = 0;
@@ -186,7 +186,7 @@ namespace corona {
 			return ac;
 		}
 
-		virtual box_block* allocate(int64_t sizeofobj, int length)
+		virtual box_block* allocate(int64_t sizeofobj, size_t length)
 		{
 			relative_ptr_type alignment = sizeof(sizeofobj);
 
@@ -229,7 +229,7 @@ namespace corona {
 			return item;
 		}
 
-		virtual relative_ptr_type create_object(char* _src, int _length)
+		virtual relative_ptr_type create_object(char* _src, size_t _length)
 		{
 			box_block* item = allocate(1, _length);
 			if (!item) return null_row;
@@ -237,7 +237,7 @@ namespace corona {
 			return item->location;
 		}
 
-		virtual relative_ptr_type update_object(relative_ptr_type _placement, char* _src, int _length)
+		virtual relative_ptr_type update_object(relative_ptr_type _placement, char* _src, size_t _length)
 		{
 			box_block* item = (box_block*)&sbdata->_data[_placement];
 			char* dest;
@@ -330,7 +330,7 @@ namespace corona {
 			boxi->clear();
 		}
 
-		char* allocate(int64_t sizeofobj, int length, relative_ptr_type& dest)
+		char* allocate(int64_t sizeofobj, size_t length, relative_ptr_type& dest)
 		{
 			auto allocation = boxi->allocate(sizeofobj, length);
 			dest = allocation->location;
@@ -342,12 +342,12 @@ namespace corona {
 			return boxi->get_object(_src);
 		}
 
-		relative_ptr_type create_object(char* _src, int _length)
+		relative_ptr_type create_object(char* _src, size_t _length)
 		{
 			return boxi->create_object(_src, _length);
 		}
 
-		virtual relative_ptr_type update_object(relative_ptr_type _placement, char* _src, int _length)
+		virtual relative_ptr_type update_object(relative_ptr_type _placement, char* _src, size_t _length)
 		{
 			return boxi->update_object(_placement, _src, _length);
 		}
@@ -397,7 +397,7 @@ namespace corona {
 		}
 
 		template <typename T>
-		T* allocate(int length, relative_ptr_type& dest)
+		T* allocate(size_t length, relative_ptr_type& dest)
 		{
 			auto obj = get_box()->allocate(sizeof(T), length, dest);
 			return (T*)obj;
@@ -424,7 +424,7 @@ namespace corona {
 
 		template <typename T>
 			requires (std::is_standard_layout<T>::value)
-		relative_ptr_type put_object(const T* src, int length)
+		relative_ptr_type put_object(const T* src, size_t length)
 		{
 			relative_ptr_type placement;
 			T* item = allocate<T>(length, placement);
@@ -441,7 +441,7 @@ namespace corona {
 
 		template <typename T>
 			requires (std::is_standard_layout<T>::value)
-		relative_ptr_type fill(T src, int length)
+		relative_ptr_type fill(T src, size_t length)
 		{
 			relative_ptr_type placement;
 			T* item = allocate<T>(length, placement);
@@ -457,7 +457,7 @@ namespace corona {
 
 		template <typename T>
 			requires (std::is_standard_layout<T>::value)
-		relative_ptr_type pack_slice(const T* base, int start, int stop, bool terminate = true)
+		relative_ptr_type pack_slice(const T* base, size_t start, size_t stop, bool terminate = true)
 		{
 			relative_ptr_type placement;
 			T* item = allocate<T>((stop - start) + 1, placement);
@@ -482,7 +482,7 @@ namespace corona {
 
 		template <typename T>
 			requires (std::is_standard_layout<T>::value)
-		relative_ptr_type put_null_terminated(const T* base, int start)
+		relative_ptr_type put_null_terminated(const T* base, size_t start)
 		{
 			int length = 0;
 			T defaulto = {};
@@ -512,7 +512,7 @@ namespace corona {
 
 		template <typename T>
 			requires (std::is_standard_layout<T>::value)
-		T* copy(const T* base, int start)
+		T* copy(const T* base, size_t start)
 		{
 			if (!base) return nullptr;
 			corona_size_t l = put_null_terminated(base, start);
@@ -521,7 +521,7 @@ namespace corona {
 
 		template <typename T>
 			requires (std::is_standard_layout<T>::value)
-		T* copy(const T* base, int start, int stop, bool terminate = true)
+		T* copy(const T* base, size_t start, size_t stop, bool terminate = true)
 		{
 			if (!base) return nullptr;
 			corona_size_t l = pack_slice(base, start, stop, terminate);
@@ -543,7 +543,7 @@ namespace corona {
 
 		template <typename T>
 			requires (std::is_standard_layout<T>::value)
-		T* allocate(int count)
+		T* allocate(size_t count)
 		{
 			relative_ptr_type placement;
 			T* item = allocate<T>(count, placement);
@@ -623,7 +623,7 @@ namespace corona {
 
 		}
 
-		inline_box(char* _stuff, int _length)
+		inline_box(char* _stuff, size_t _length)
 			:
 			stuff(_stuff),
 			length(_length)
@@ -649,7 +649,7 @@ namespace corona {
 
 		inline_box& operator =(inline_box& _src)
 		{
-			int new_size = _src.size();
+			size_t new_size = _src.size();
 			if (length < new_size)
 				throw std::invalid_argument("target box too small");
 			clear();
@@ -935,7 +935,7 @@ namespace corona {
 
 		test_struct tests[3] = { { 1, 2, 3, 4.5, "alpha"}, { 10, 20, 30, 45.5, "beta"}, { 100, 200, 300, 455.5, "gamma"} };
 		int locations[3] = { -1, -1, -1 };
-		int l = 0;
+		relative_ptr_type l = 0;
 		int c = 0;
 
 		// pack the box until it is full
@@ -944,7 +944,7 @@ namespace corona {
 		{
 			int i = c % 3;
 			l = b->put_object(tests[i]);
-			if (l >= 0) {
+			if (l != null_row) {
 				locations[i] = l;
 				c++;
 			}

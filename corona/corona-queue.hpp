@@ -21,8 +21,6 @@ namespace corona {
 
 	class job_queue;
 
-	class controller;
-
 	class job_notify {
 
 		enum notifies {
@@ -76,9 +74,9 @@ namespace corona {
 		friend class job_queue;
 	};
 
-	using runnable = std::function<void(controller *)>;
-	using runnable_http_request = std::function<call_status(controller *)>;
-	using runnable_http_response = std::function<void(controller*,call_status)>;
+	using runnable = std::function<void()>;
+	using runnable_http_request = std::function<call_status()>;
+	using runnable_http_response = std::function<void(call_status)>;
 
 	class general_job : public job
 	{
@@ -314,7 +312,7 @@ namespace corona {
 
 		if (function_to_run)
 		{
-			function_to_run(nullptr);
+			function_to_run();
 		}
 
 		jobNotify.shouldDelete = true;

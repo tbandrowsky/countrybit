@@ -182,8 +182,7 @@ namespace corona {
 		virtual void onJobComplete(bool _success, int _id);
 		virtual void onTaskComplete(bool _success, ui_task_result_base* _result);
 		virtual void hardwareChanged();
-		virtual void checkPresentationFile();
-		virtual std::string setPresentationFile();
+		virtual std::string setPresentation(json pages);
 
 		virtual int layout();
 
@@ -429,9 +428,9 @@ namespace corona {
 			ppage->handle_unload(ppage);
 			ppage->destroy();
 
-			ppage->handle_onselect(ppage);
 			auto root = ppage->get_root();
 			root->foreach([this](control_base* _item) {
+				_item->bus = bus;
 				pushbutton_control* pct = dynamic_cast<pushbutton_control*>(_item);
 				if (pct && pct->is_default_button) {
 					this->default_push_button_id = pct->get_id();
@@ -441,6 +440,7 @@ namespace corona {
 					this->default_focus_id = wct->get_id();
 				}
 				});
+			ppage->handle_onselect(ppage);
 		}
 
 		onCreated();
@@ -584,7 +584,7 @@ namespace corona {
 	{
 		auto cp = current_page.lock();
 		if (cp) {
-			cp->update(data, _elapsedSeconds, _totalSeconds);
+			cp->update(_elapsedSeconds, _totalSeconds);
 		}
 		return true;
 	}
@@ -960,20 +960,10 @@ namespace corona {
 		}
 	}
 	
-	void presentation::checkPresentationFile()
+	std::string presentation::setPresentation(json _json_pages)
 	{
-		comm_bus_transaction<json> new_pages = bus->get_pages();
-		json tempo = new_pages.wait();
-		if (!tempo.is_empty()) {
-			json_pages = tempo;
-			bus->run_ui([this](controller* p)->void {
-				bus->default_page = p->setPresentationFile();
-			});
-		}
-	}
-
-	std::string presentation::setPresentationFile()
-	{
+		json_pages = _json_pages;
+		std::string default_page_name;
 
 		if (json_pages.is_error()) {
 			pages.clear();
@@ -1040,8 +1030,8 @@ namespace corona {
 					rvl.set_item_source(ads);
 					});
 				});
-			select_page("errors");
-			return;
+				select_page("errors");
+			return default_page_name;
 		}
 
 		json jstyles = json_pages.get_member("styles");
@@ -1056,7 +1046,6 @@ namespace corona {
 		
 		if (jpages.is_array())
 		{
-			std::string new_home_page;
 			pages.clear();
 			for (auto pg : jpages)
 			{
@@ -1068,8 +1057,8 @@ namespace corona {
 						if (name.empty()) {
 							std::cout << "page_name is empty for this page, skipping" << std::endl;
 						}
-						if (is_default) {
-							new_home_page = name;
+						if (is_default || default_page_name.empty()) {
+							default_page_name = name;
 						}
 						create_page(name, [pg](page& _settings)->void
 							{
@@ -1095,6 +1084,7 @@ namespace corona {
 			}
 		}
 		load_page();
+		return default_page_name;
 	}
 }
 

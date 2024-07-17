@@ -586,7 +586,7 @@ namespace corona
 			return *this;
 		}
 
-		std::string to_hex(int _bytes = 0)
+		std::string to_hex(size_t _bytes = 0)
 		{
 			std::string temp = "";
 			if (_bytes > buffer_size || _bytes <= 0) {
@@ -701,7 +701,7 @@ namespace corona
 		{
 			if (_src) 
 			{
-				int len = strlen(_src);
+				size_t len = strlen(_src);
 				buffer temp(len+1);
 				char* d = temp.get_ptr();
 				const char* s = _src;
@@ -766,7 +766,7 @@ namespace corona
 			return consolidated;
 		}
 
-		int size()
+		size_t size()
 		{
 			return buffers.size();
 		}
