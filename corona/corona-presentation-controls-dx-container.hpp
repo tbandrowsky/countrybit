@@ -617,6 +617,15 @@ namespace corona
 			}
 		}
 
+		virtual json get_selected_object()
+		{
+			json j;
+			if (selected_item_index >= 0) {
+				j = items_source.data.get_element(selected_item_index);
+			}
+			return j;
+		}
+
 	};
 
 	class row_view_layout :

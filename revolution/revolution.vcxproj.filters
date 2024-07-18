@@ -64,4 +64,7 @@
     <None Include="schema.json" />
     <None Include="config.json" />
   </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="corona.natvis" />
+  </ItemGroup>
 </Project>

@@ -16,6 +16,8 @@ For Future Consideration
 
 namespace corona {
 
+	using ccolor = D2D1_COLOR_F;
+
 	struct sizeCrop
 	{
 		D2D1_SIZE_U size;

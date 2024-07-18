@@ -24,6 +24,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-collection_id_box.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-color_box.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-comm-bus-interface.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-comm-bus-commands.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-concept_lock.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-constants.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-controller.hpp" />
@@ -66,7 +67,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-object_id_box.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-paths.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-point_box.hpp" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)corona-presentation-base.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-control-data.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-presentation-builder.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-presentation-controls-base.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-presentation-controls-dx-container.hpp" />

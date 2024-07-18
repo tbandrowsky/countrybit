@@ -12,14 +12,11 @@ For Future Consideration
 */
 
 
-#ifndef CORONA_PRESENTATION_BASE_H
-#define CORONA_PRESENTATION_BASE_H
+#ifndef CORONA_CONTROL_DATA_H
+#define CORONA_CONTROL_DATA_H
 
 namespace corona
 {
-	class presentation;
-	class page;
-
 	class list_data : public json_serializable
 	{
 	public:
@@ -173,9 +170,6 @@ namespace corona
 		point remaining_size;
 		point space_amount;
 	};
-
-
-
 }
 
 #endif

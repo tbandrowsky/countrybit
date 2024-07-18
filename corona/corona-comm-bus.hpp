@@ -229,14 +229,49 @@ namespace corona
 			co_return response;
 		}
 
-		virtual comm_bus_transaction<json>  query_objects(json login_token, json user_information)
+		virtual comm_bus_transaction<json>  query_objects(json query_information)
 		{
 			json_parser jp;
 			json request = jp.create_object();
 			request.put_member("Token", admin_user);
-			request.put_member("Data", user_information);
-			json response = co_await local_db->put_object(request);
+			request.put_member("Data", query_information);
+			json response = co_await local_db->query_class(request);
 			co_return response;
+		}
+
+		virtual comm_bus_transaction<table_data>  query_objects_as_table(json query_information)
+		{
+			table_data td;
+			json_parser jp;
+			json request = jp.create_object();
+			request.put_member("Token", admin_user);
+			request.copy_member("Filter", query_information);
+			json table = request["Table"];
+			td.put_json(table);			
+			json response = co_await local_db->query_class(request);
+			json response_items = response["Data"];
+			td.items = response_items;
+			co_return td;
+		}
+
+		virtual comm_bus_transaction<list_data>  query_objects_as_list(json query_information)
+		{
+			list_data ld;
+			json_parser jp;
+			json request = jp.create_object();
+			request.put_member("Token", admin_user);
+			request.copy_member("Filter", query_information);
+			json lst = request["List"];
+			ld.put_json(lst);
+			json response = co_await local_db->query_class(request);
+			json response_items = response["Data"];
+			ld.items = response_items;
+			co_return ld;
+		}
+
+		virtual control_base* find_control(int _id)
+		{
+			return presentation_layer->find_ptr<control_base>(_id);
 		}
 
 		void load_pages(json _pages)
@@ -246,11 +281,17 @@ namespace corona
 				});
 		}
 
-		void select_page(std::string _page)
+		virtual void select_page(std::string _page, int _target_control_id, json _obj)
 		{
-			run_ui([this, _page]() ->void {
+			run_ui([this, _page, _obj, _target_control_id]() ->void {
 				presentation_layer->select_page(_page);
-				});
+				if (_target_control_id > 0) {
+					control_base* cb = presentation_layer->find_ptr<control_base>(_target_control_id);
+					if (cb) {
+						cb->set_data(_obj);
+					}
+				}
+			});
 		}
 
 		void when(UINT topic, std::function<void()> _runnable)
@@ -277,7 +318,7 @@ namespace corona
 			_runnable();
 		}
 
-		void run(HINSTANCE hInstance, bool fullScreen)
+		virtual void run_app_ui(HINSTANCE hInstance, bool fullScreen)
 		{
 			app_ui->runDialog(hInstance, app->application_name.c_str(), application_icon_id, fullScreen, presentation_layer);
 		}

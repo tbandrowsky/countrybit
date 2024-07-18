@@ -22,7 +22,6 @@ For Future Consideration
 
 namespace corona
 {
-	using ccolor = D2D1_COLOR_F;
 
 	class directException {
 	public:

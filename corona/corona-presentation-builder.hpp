@@ -31,56 +31,6 @@ namespace corona
 	class checkbox_list_control;
 	class radiobutton_list_control;
 
-	enum corona_commands {
-		get_object,
-		put_object,
-		get_class,
-		put_class,
-
-	};
-
-	struct corona_button_onclick_options
-	{
-		corona_client* corona_client;
-		std::string						function_name;
-		json							function_data;
-		json							credentials;
-
-		corona_button_onclick_options()
-		{
-			corona_client = nullptr;
-		}
-
-		virtual void get_json(json& _dest)
-		{
-			_dest.put_member("function_name", function_name);
-			_dest.put_member("function_data", function_data);
-			_dest.put_member("credentials", credentials);
-		}
-
-		virtual void put_json(json& _src)
-		{
-
-			std::vector<std::string> missing;
-			if (!_src.has_members(missing, { "function_name", "function_data", "credentials" })) {
-				std::cout << "corona button must have function_name, function_data, and credentials" << std::endl;
-				std::cout << "function_data can be an explicit json," << std::endl;
-				std::cout << "				an id of a control," << std::endl;
-				std::cout << "				form_parent," << std::endl;
-				std::cout << "corona button is missing:" << std::endl;
-				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
-					std::cout << s << std::endl;
-					});
-				std::cout << "source json:" << std::endl;
-				std::cout << _src.to_json() << std::endl;
-				return;
-			}
-
-			function_name = _src["function_name"];
-			function_data = _src["function_data"];
-			credentials = _src["credentials"];
-		}
-	};
 
 	class corona_button_control : public pushbutton_control
 	{
@@ -88,7 +38,7 @@ namespace corona
 		using control_base::id;
 
 		std::shared_ptr<call_status>	status;
-		corona_button_onclick_options	options;
+		std::shared_ptr<corona_bus_command> options;
 
 		using windows_control::enable;
 		using windows_control::disable;
@@ -115,12 +65,12 @@ namespace corona
 		virtual void get_json(json& _dest)
 		{
 			pushbutton_control::get_json(_dest);
-			options.get_json(_dest);
+			corona::get_json(_dest, options);
 		}
 		virtual void put_json(json& _src)
 		{
 			pushbutton_control::put_json(_src);
-			options.put_json(_src);
+			corona::put_json(options, _src);
 		}
 	};
 
@@ -3095,44 +3045,12 @@ namespace corona
 	{
 		_page->on_command(this->id, [this, _presentation, _page](command_event evt)
 			{
-				json_parser jp;
-				json data;
-				if (options.function_data.is_object())
-				{
-					std::string from_data = options.function_data.get_member("from");
-					if (!from_data.empty())
-					{
-						if (std::isdigit(from_data[0])) {
-							int64_t control_id = (int64_t)options.function_data["from"];
-							control_base* fvc = this->find(control_id);
-							data = fvc->get_data();
-						}
-						else if (from_data == "form")
-						{
-							control_base* p = dynamic_cast<control_base*>(parent);
-							while (p) 
-							{
-								form_control* fc = dynamic_cast<form_control*>(p);
-								if (fc) {
-									data = fc->get_data();
-									p = nullptr;
-								}
-								else if (p->parent) {
-									p = dynamic_cast<control_base*>(p->parent);
-								}
-								else
-									p = nullptr;
-							}
-						}
-					}
-					else
-					{
-						data = options.function_data;
-					}
+				disable();
+				if (options) {
+					auto transaction = options->execute();
+					transaction.wait();
 				}
-				if (options.corona_client) {
-					options.corona_client->general_post_thread(id, options.function_name, options.credentials, data);
-				}
+				enable();
 			});
 	}
 

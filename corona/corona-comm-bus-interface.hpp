@@ -6,6 +6,9 @@
 namespace corona
 {
 
+	class corona_bus_command;
+	class control_base;
+
 	class event_waiter
 	{
 	public:
@@ -212,6 +215,29 @@ namespace corona
 		std::multimap<UINT, windows_event_waiter> windows_waiters;
 		std::multimap<std::string, topic_event_waiter> topic_waiters;
 
+	public:
+		
+		std::string default_page;
+
+		virtual void run_app_ui(HINSTANCE hInstance, bool fullScreen) = 0;
+
+		virtual comm_bus_transaction<json> create_user(json user_information) = 0;
+		virtual comm_bus_transaction<json> login_user(json login_information) = 0;
+		virtual comm_bus_transaction<json> put_object(json object_information) = 0;
+		virtual comm_bus_transaction<json> get_object(json object_information) = 0;
+		virtual comm_bus_transaction<json> delete_object(json object_information) = 0;
+		virtual comm_bus_transaction<json> pop_object(json object_information) = 0;
+		virtual comm_bus_transaction<json> query_objects(json object_information) = 0;
+		virtual comm_bus_transaction<table_data> query_objects_as_table(json query_information) = 0;
+		virtual comm_bus_transaction<list_data> query_objects_as_list(json query_information) = 0;
+
+		virtual void when(UINT topic, std::function<void()> _runnable) = 0;
+		virtual void when(std::string _topic, std::function<void()> _runnable) = 0;
+
+		virtual comm_bus_transaction<json> get_pages() = 0;
+
+		virtual void select_page(std::string _page, int _target_control_id, json _obj) = 0;
+
 		void check_windows_queue(MSG* _msg)
 		{
 			auto waiters = windows_waiters.find(_msg->message);
@@ -235,25 +261,6 @@ namespace corona
 			}
 			topic_waiters.erase(_topic);
 		}
-
-	public:
-		
-		std::string default_page;
-
-		virtual void run_ui(HINSTANCE hInstance, bool fullScreen) = 0;
-
-		virtual comm_bus_transaction<json> create_user(json user_information) = 0;
-		virtual comm_bus_transaction<json> login_user(json login_information) = 0;
-		virtual comm_bus_transaction<json> put_object(json object_information) = 0;
-		virtual comm_bus_transaction<json> get_object(json object_information) = 0;
-		virtual comm_bus_transaction<json> delete_object(json object_information) = 0;
-		virtual comm_bus_transaction<json> pop_object(json object_information) = 0;
-		virtual comm_bus_transaction<json> query_objects(json object_information) = 0;
-
-		virtual void when(UINT topic, std::function<void()> _runnable) = 0;
-		virtual void when(std::string _topic, std::function<void()> _runnable) = 0;
-
-		virtual comm_bus_transaction<json> get_pages() = 0;
 
 		void run(runnable _runnable)
 		{
@@ -390,7 +397,34 @@ namespace corona
 			::CloseHandle(hevent);
 		}
 
+		virtual control_base* find_control(int _id) = 0;
 		virtual void poll() = 0;
+	};
+
+	class corona_bus_command : public json_serializable
+	{
+	public:
+		comm_bus_interface* bus;
+
+		corona_bus_command() : bus(nullptr)
+		{
+			;
+		}
+
+		corona_bus_command(comm_bus_interface *_bus) : bus(_bus)
+		{
+			;
+		}
+
+		virtual comm_bus_transaction<json> execute() = 0;
+
+		virtual void get_json(json& _dest)
+		{
+		}
+
+		virtual void put_json(json& _src)
+		{
+		}
 	};
 }
 

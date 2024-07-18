@@ -548,6 +548,18 @@ namespace corona
 			return _data;
 		}
 
+		virtual json get_selected_object()
+		{
+			json j;
+			if (auto ptr = window_host.lock()) {
+				int index = ptr->getListSelectedIndex(id);
+				if (index >= 0) {
+					j = choices.items.get_element(index);
+				}
+			}
+			return j;
+		}
+
 		void set_list(list_data& _choices)
 		{
 			choices = _choices;
@@ -632,6 +644,18 @@ namespace corona
 				}
 				phost->setComboSelectedText(id, selectedText);
 			}
+		}
+
+		virtual json get_selected_object()
+		{
+			json j;
+			if (auto ptr = window_host.lock()) {
+				int index = ptr->getComboSelectedIndex(id);
+				if (index >= 0) {
+					j = choices.items.get_element(index);
+				}
+			}
+			return j;
 		}
 
 		void set_list(list_data& _choices)
@@ -1073,6 +1097,18 @@ namespace corona
 		virtual DWORD get_window_style() { return ComboWindowStyles; }
 		virtual DWORD get_window_ex_style() { return 0; }
 
+		virtual json get_selected_object()
+		{
+			json j;
+			if (auto ptr = window_host.lock()) {
+				int index = ptr->getComboSelectedIndex(id);
+				if (index >= 0) {
+					j = choices.items.get_element(index);
+				}
+			}
+			return j;
+		}
+
 	};
 
 	class listview_control : public table_control_base
@@ -1094,6 +1130,18 @@ namespace corona
 		virtual const char* get_window_class() { return WC_LISTVIEW; }
 		virtual DWORD get_window_style() { return ListViewWindowsStyles; }
 		virtual DWORD get_window_ex_style() { return 0; }
+
+		virtual json get_selected_object()
+		{
+			json j;
+			if (auto ptr = window_host.lock()) {
+				int index = ptr->getListViewSelectedIndex(id);
+				if (index >= 0) {
+					j = choices.items.get_element(index);
+				}
+			}
+			return j;
+		}
 
 	};
 

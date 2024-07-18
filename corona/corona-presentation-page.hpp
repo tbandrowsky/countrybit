@@ -19,6 +19,8 @@ For Future Consideration
 namespace corona
 {
 
+	class presentation;
+
 	using update_function = std::function< void(page* _page, double _elapsedSeconds, double _totalSeconds) >;
 
 	class page : public page_base

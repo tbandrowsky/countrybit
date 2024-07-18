@@ -2299,6 +2299,9 @@ namespace corona
 		ui_task_result* result = nullptr;
 		http_task_result* http_result = nullptr;
 
+		if (bus)
+			bus->check_windows_queue(_msg);
+
 		if (_msg->message == WM_CORONA_JOB_COMPLETE)
 		{
 			result = (ui_task_result *)_msg->lParam;

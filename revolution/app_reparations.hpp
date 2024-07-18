@@ -7,7 +7,7 @@
 
 namespace corona
 {
-
+	void run_reparations_application(HINSTANCE hInstance, LPSTR  lpszCmdParam);
 
 	/*
 
@@ -43,6 +43,12 @@ namespace corona
 
 	/* And now, this is the application */
 
+	void run_reparations_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
+	{
+		comm_bus bus("Reparations", "reparations");
+
+		bus.run_app_ui(hInstance, lpszCmdParam);
+	}
 
 }
 

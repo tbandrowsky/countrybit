@@ -432,6 +432,13 @@ namespace corona
 			json_field_name = _src["json_field_name"];
 		}
 
+		virtual json get_selected_object()
+		{
+			json j;
+			get_json(j);
+			return j;
+		}
+
 		rectangle& get_bounds() { return bounds; }
 		rectangle& get_inner_bounds() { return inner_bounds; }
 
