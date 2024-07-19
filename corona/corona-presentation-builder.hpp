@@ -1724,7 +1724,7 @@ namespace corona
 
 		virtual void arrange(rectangle _bounds)
 		{
-			set_bounds(_bounds);
+			set_bounds(_bounds, true);
 
 			point origin = { 0, 0, 0 };
 			point remaining = { _bounds.w, _bounds.h, 0.0 };

@@ -64,6 +64,27 @@ namespace corona {
 			return r1;
 		}
 
+		static rectangle extend(rectangle r0, rectangle r1)
+		{
+			if (r0.x == 0 || r0.x > r1.x) {
+				double rm = r0.right();
+				r0.x = r1.x;
+				r0.w = rm - r0.x;
+			}
+			if (r0.y == 0 || r0.y > r1.y) {
+				double rm = r0.bottom();
+				r0.y = r1.y;
+				r0.h = rm - r0.y;
+			}
+			if (r1.bottom() > r0.bottom()) {
+				r0.h += (r1.bottom() - r0.bottom());
+			}
+			if (r1.right() > r0.right()) {
+				r0.w += (r1.right() - r0.right());
+			}
+			return r0;
+		}
+
 		static point origin(rectangle* _r)
 		{
 			point ret;

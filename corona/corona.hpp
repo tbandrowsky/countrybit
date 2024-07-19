@@ -228,7 +228,6 @@ For Future Consideration
 // actually mission ready to go, and does all the right things
 // well mostly, with threading and message handoff.
 // https works.
-
 #include "corona-httpserver.hpp"
 
 // this is the database engine.  It lets you create an object database 

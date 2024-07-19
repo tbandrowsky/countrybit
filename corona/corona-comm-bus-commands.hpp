@@ -171,6 +171,35 @@ namespace corona
 
 	};
 
+	class corona_select_page_command : public corona_bus_command
+	{
+	public:
+		std::string		page_name;
+		int				target_control_id;
+		json			data;
+
+		virtual comm_bus_transaction<json> execute()
+		{
+			json obj;
+			bus->select_page(page_name, target_control_id, data);
+			co_return obj;
+		}
+
+		virtual void get_json(json& _dest)
+		{
+			_dest.put_member("page_name", page_name);
+			_dest.put_member("target_control_id", target_control_id);
+			_dest.put_member("data", data);
+		}
+
+		virtual void put_json(json& _src)
+		{
+			page_name = _src["page_name"];
+			target_control_id = _src["target_control_id"];
+			data = _src["data"];
+		}
+	};
+
 	void get_json(json& _dest, std::shared_ptr<corona_bus_command>& _src)
 	{
 		json_parser jp;
@@ -183,6 +212,7 @@ namespace corona
 		if (_src.has_member("ClassName"))
 		{
 			std::string class_name = _src["ClassName"];
+
 			if (class_name == "SelectObjectCommand")
 			{
 				_dest = std::make_shared<corona_select_object_command>();
@@ -203,10 +233,12 @@ namespace corona
 			{
 				_dest = std::make_shared<corona_search_objects_command>();
 			}
+			else if (class_name == "SelectPageCommand")
+			{
+				_dest = std::make_shared<corona_select_page_command>();
+			}
 		}
 	}
-
 }
 
 #endif
-

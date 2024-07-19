@@ -219,7 +219,7 @@ namespace corona
 		
 		std::string default_page;
 
-		virtual void run_app_ui(HINSTANCE hInstance, bool fullScreen) = 0;
+		virtual void run_app_ui(HINSTANCE hInstance, LPSTR command_line, bool fullScreen) = 0;
 
 		virtual comm_bus_transaction<json> create_user(json user_information) = 0;
 		virtual comm_bus_transaction<json> login_user(json login_information) = 0;
@@ -233,8 +233,6 @@ namespace corona
 
 		virtual void when(UINT topic, std::function<void()> _runnable) = 0;
 		virtual void when(std::string _topic, std::function<void()> _runnable) = 0;
-
-		virtual comm_bus_transaction<json> get_pages() = 0;
 
 		virtual void select_page(std::string _page, int _target_control_id, json _obj) = 0;
 

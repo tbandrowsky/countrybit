@@ -446,7 +446,10 @@ namespace corona
 
 		json clone()
 		{
-			json result(value_base->clone());
+			json result;
+			if (value_base) {
+				result = json(value_base->clone());
+			}
 			return result;
 		}
 
@@ -817,6 +820,21 @@ namespace corona
 				for (auto src : members)
 				{
 					put_member_value(src.first, src.second);
+				}
+			}
+		}
+
+		void append_array(json _src)
+		{
+			if (array_impl) {
+				if (_src.is_array()) {
+					for (json item : _src) {
+						array_impl->elements.push_back(item.value_base->clone());
+					}
+				}
+				else 
+				{
+					array_impl->elements.push_back(_src.value_base->clone());
 				}
 			}
 		}

@@ -45,9 +45,9 @@ namespace corona
 
 	void run_reparations_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 	{
-		comm_bus bus("Reparations", "reparations");
+		comm_bus bus("Reparations", "Reparations");
 
-		bus.run_app_ui(hInstance, lpszCmdParam);
+		bus.run_app_ui(hInstance, lpszCmdParam, false);
 	}
 
 }

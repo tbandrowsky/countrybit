@@ -39,6 +39,7 @@ namespace corona
 		{
 			targetContext = nullptr;
 			target = nullptr;
+			bitmap = nullptr;
 
 			auto options = D2D1_DEVICE_CONTEXT_OPTIONS::D2D1_DEVICE_CONTEXT_OPTIONS_NONE;
 
@@ -93,8 +94,8 @@ namespace corona
 
 		virtual ~direct2dBitmapCore()
 		{
-			if (target) target->Release();
 			if (bitmap) bitmap->Release();
+			if (target) target->Release();
 			if (targetContext) targetContext->Release();
 		}
 

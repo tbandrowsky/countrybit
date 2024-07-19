@@ -1,0 +1,232 @@
+{
+  "pages": [
+    {
+      "class_name": "page",
+      "page_name": "home",
+      "children": [
+        {
+          "class_name": "column",
+          "box": {
+            "width": {
+              "amount": 1.0,
+              "units": "container"
+            },
+            "height": {
+              "amount": 1.0,
+              "units": "container"
+            }
+          },
+          "padding": {
+            "amount": 0,
+            "units": "pixels"
+          },
+          "content_alignment": "near",
+          "content_cross_alignment": "center",
+          "children": [
+            {
+              "class_name": "caption_bar",
+              "corporate_name": "country video games",
+              "title_name": "United States of America",
+              "subtitle_name" :  "Descendants of Slaves Reparations System (DSRS)",
+              "title_start": {
+                "amount": 0.25,
+                "units": "container"
+              },
+              "box": {
+                "width": {
+                  "amount": 1.0,
+                  "units": "container"
+                },
+                "height": {
+                  "amount": 100,
+                  "units": "pixels"
+                }
+              }
+            },
+
+            {
+              "class_name": "column",
+              "box": {
+                "width": {
+                  "amount": 0.5,
+                  "units": "container"
+                },
+                "height": {
+                  "amount": 0.8,
+                  "units": "container"
+                }
+              },
+              "view_style": {
+                "box_fill_brush": {
+                  "class_name": "solid_brush",
+                  "color": "211012AA"
+                },
+                "box_border_brush": {
+                  "class_name": "solid_brush",
+                  "color": "21101277"
+                },
+                "box_border_thickness": 8
+              },
+              "padding": {
+                "amount": 10,
+                "units": "pixels"
+              },
+              "content_alignment": "near",
+              "content_cross_alignment": "near",
+              "children": [
+                {
+                  "class_name": "chaptertitle",
+                  "text": "Reparations Login",
+                  "box": {
+                    "width": {
+                      "amount": 1,
+                      "units": "container"
+                    },
+                    "height": {
+                      "amount": 34,
+                      "units": "pixels"
+                    }
+                  }
+                },
+                {
+                  "class_name": "chaptersubtitle",
+                  "text": "Select a Role",
+                  "box": {
+                    "width": {
+                      "amount": 1,
+                      "units": "container"
+                    },
+                    "height": {
+                      "amount": 24,
+                      "units": "pixels"
+                    }
+                  }
+                },
+                {
+                  "class_name": "paragraph",
+                  "text": "Welcome to the Descendants of Slaves Reparations System.  This is an interactive simulation of a Reparations System for Black Americans.  With this system, Black Americans can walk through a reparations process, from research to claims and payments, pretending to different types of users that work on the claims process.",
+                  "box": {
+                    "width": {
+                      "amount": 1,
+                      "units": "container"
+                    },
+                    "height": {
+                      "amount": 75,
+                      "units": "pixels"
+                    }
+                  }
+                },
+                {
+                  "class_name": "row",
+                  "box": {
+                    "width": {
+                      "amount": 1,
+                      "units": "container"
+                    },
+                    "height": {
+                      "amount": 1,
+                      "units": "container"
+                    }
+                  },
+                  "wrap" :  true,
+                  "children": [
+                    {
+                      "class_name": "corona_button",
+                      "text": "Researcher",
+                      "box": {
+                        "width": {
+                          "amount": 150,
+                          "units": "pixels"
+                        },
+                        "height": {
+                          "amount": 65,
+                          "units": "pixels"
+                        }
+                      },
+                      "margin": {
+                        "amount": 20,
+                        "units": "pixels"
+                      }
+                    },
+                    {
+                      "class_name": "corona_button",
+                      "text": "Plaintiff Attorneys",
+                      "box": {
+                        "width": {
+                          "amount": 150,
+                          "units": "pixels"
+                        },
+                        "height": {
+                          "amount": 65,
+                          "units": "pixels"
+                        }
+                      },
+                      "margin": {
+                        "amount": 20,
+                        "units": "pixels"
+                      }
+                    },
+                    {
+                      "class_name": "corona_button",
+                      "text": "Reparations Court",
+                      "box": {
+                        "width": {
+                          "amount": 150,
+                          "units": "pixels"
+                        },
+                        "height": {
+                          "amount": 65,
+                          "units": "pixels"
+                        }
+                      },
+                      "margin": {
+                        "amount": 20,
+                        "units": "pixels"
+                      }
+                    },
+                    {
+                      "class_name": "corona_button",
+                      "text": "Government Attorneys",
+                      "box": {
+                        "width": {
+                          "amount": 150,
+                          "units": "pixels"
+                        },
+                        "height": {
+                          "amount": 65,
+                          "units": "pixels"
+                        }
+                      },
+                      "margin": {
+                        "amount": 20,
+                        "units": "pixels"
+                      }
+                    },
+                    {
+                      "class_name": "corona_button",
+                      "text": "Claims Fund Managers",
+                      "box": {
+                        "width": {
+                          "amount": 150,
+                          "units": "pixels"
+                        },
+                        "height": {
+                          "amount": 65,
+                          "units": "pixels"
+                        }
+                      },
+                      "margin": {
+                        "amount": 20,
+                        "units": "pixels"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

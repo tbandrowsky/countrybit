@@ -360,25 +360,31 @@ namespace corona
 	{
 		HRESULT hr;
 
+		bool changed = false;
+
+		if (_wdips != windowPosition.w || _hdips != windowPosition.h || !childBitmap)
+			changed = true;
+
 		windowPosition.w = _wdips;
 		windowPosition.h = _hdips;
 
-		if (auto pwindow = parent.lock()) {
-			int dpiWindow;
-			dpiWindow = ::GetDpiForWindow(pwindow->getWindow());
+		if (changed) {
+			if (auto pwindow = parent.lock()) {
+				int dpiWindow;
+				dpiWindow = ::GetDpiForWindow(pwindow->getWindow());
 
-			D2D1_SIZE_F size;
-			size.width = _wdips;
-			size.height = _hdips;
+				D2D1_SIZE_F size;
+				size.width = _wdips;
+				size.height = _hdips;
 
-			if (auto pfactory = context->getAdapter().lock())
-			{
-				auto tempBitmap = std::make_shared<direct2dBitmapCore>(size, pfactory, dpiWindow);
-				context->getDeviceContext()->SetTarget(tempBitmap->getBitmap());
-				childBitmap = tempBitmap;
+				if (auto pfactory = context->getAdapter().lock())
+				{
+					auto tempBitmap = std::make_shared<direct2dBitmapCore>(size, pfactory, dpiWindow);
+					context->getDeviceContext()->SetTarget(tempBitmap->getBitmap());
+					childBitmap = tempBitmap;
+				}
 			}
 		}
-
 	}
 
 	void direct2dChildWindow::moveWindow(UINT _xdips, UINT _ydips, UINT _wdips, UINT _hdips)

@@ -5,7 +5,6 @@
 namespace corona
 {
 
-
 	class json_file_watcher
 	{
 		std::string last_contents;
@@ -20,10 +19,25 @@ namespace corona
 
 		relative_ptr_type poll_contents(application* _app, json& item)
 		{
-			auto pollomatic = poll(_app);
-			relative_ptr_type pt = pollomatic.wait();
-			if (pt != null_row) {
-				item = contents;
+			relative_ptr_type pt = null_row;
+			if (_app->file_exists(file_name)) {
+				try {
+					std::string file_contents = read_all_string(file_name);
+					if (last_contents != file_contents) {
+						last_contents = file_contents;
+						json_parser jp;
+						json tcontents = jp.parse_object(file_contents);
+						if (!tcontents.is_empty()) {
+							contents = tcontents;
+							pt = 1;
+						}
+					}
+					item = contents;
+				}
+				catch (std::exception exc)
+				{
+					std::cerr << "Error:" << __FILE__ << " " << __LINE__ << " polling " << file_name << " failed:" << exc.what() << std::endl;
+				}
 			}
 			return pt;
 		}
@@ -32,8 +46,7 @@ namespace corona
 		{
 			json_parser jp;
 			try {
-				if (!file_name.empty()) {
-					std::cout << "polling " << file_name << std::endl;
+				if (_app->file_exists(file_name)) {
 					file f = _app->open_file(file_name, file_open_types::open_existing);
 					if (f.success()) {
 						auto fsize = f.size();
@@ -59,9 +72,9 @@ namespace corona
 			}
 			catch (std::exception exc)
 			{
-				std::cout << exc.what() << std::endl;
+				std::cerr << "Error:" << __FILE__ << " " << __LINE__ << " polling " << file_name << " failed:" << exc.what() << std::endl;
 			}
-			co_return false;
+			co_return null_row;
 		}
 	};
 

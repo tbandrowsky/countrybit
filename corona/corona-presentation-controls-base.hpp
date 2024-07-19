@@ -445,7 +445,7 @@ namespace corona
 		point& get_margin_amount() { return margin_amount; }
 		point& get_padding_amount() { return padding_amount; }
 
-		rectangle& set_bounds(rectangle& _bounds);
+		rectangle& set_bounds(rectangle& _bounds, bool _clip_children = true);
 		void calculate_margins();
 
 		virtual void arrange(rectangle _ctx);
@@ -958,7 +958,7 @@ namespace corona
 		padding_amount.y = to_pixels_y(padding);
 	}
 
-	rectangle& control_base::set_bounds(rectangle& _bounds)
+	rectangle& control_base::set_bounds(rectangle& _bounds, bool _clip_children)
 	{
 		bounds = _bounds;
 
@@ -967,7 +967,7 @@ namespace corona
 		if (parent)
 		{
 			auto pparent = dynamic_cast<control_base *>(parent);
-			if (pparent) {
+			if (pparent && _clip_children) {
 				auto pbounds = pparent->get_inner_bounds();
 				if (bounds.x < pbounds.x)
 					bounds.x = pbounds.x;
@@ -1056,7 +1056,7 @@ namespace corona
 				auto* c = child.get();
 				c->parent = this;
 
-				auto location  = _align_item(remaining, &origin, &bounds, child.get());
+				auto location  = _align_item(remaining, &origin, &inner_bounds, child.get());
 
 				auto sz = child->get_size(_bounds, remaining);
 				auto pos = child->get_position(_bounds);
@@ -1067,9 +1067,10 @@ namespace corona
 				new_bounds.w = sz.x;
 				new_bounds.h = sz.y;
 
+				origin = _next_origin(remaining, &origin, &inner_bounds, child.get());
+
 				child->arrange(new_bounds);
 
-				origin = _next_origin(remaining, &origin, &bounds, child.get());
 				sichild++;
 
 			}

@@ -510,7 +510,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);;Comctl32.lib;Winhttp.lib;D2d1.lib;dwrite.lib;Shlwapi.lib;DXGI.lib;D3D11.lib;DXGUID.lib;Dwmapi.lib;bcrypt.lib;httpapi.lib;opencv_core4.lib; mfplat.lib; mf.lib; mfreadwrite.lib; mfuuid.lib; zxing.lib;Secur32.lib</AdditionalDependencies>
       <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
-      <StackReserveSize>1000000</StackReserveSize>
+      <StackReserveSize>10000000</StackReserveSize>
       <StackCommitSize>1000000</StackCommitSize>
       <RandomizedBaseAddress>true</RandomizedBaseAddress>
     </Link>
@@ -588,15 +588,22 @@
     </CopyFileToFolders>
   </ItemGroup>
   <ItemGroup>
-    <CopyFileToFolders Include="ui.json">
+    <CopyFileToFolders Include="pages.json">
       <FileType>Document</FileType>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</DeploymentContent>
     </CopyFileToFolders>
     <None Include="config.json" />
     <None Include="schema.json" />
+    <CopyFileToFolders Include="styles.json">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</DeploymentContent>
+      <FileType>Document</FileType>
+    </CopyFileToFolders>
     <None Include="vcpkg.json" />
   </ItemGroup>
   <ItemGroup>
-    <Natvis Include="corona.natvis" />
+    <Natvis Include="corona.natvis">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</DeploymentContent>
+    </Natvis>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

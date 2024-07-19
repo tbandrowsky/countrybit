@@ -64,11 +64,13 @@ namespace corona
 
 		std::string database_schema_file_name;
 		std::string database_config_file_name;
+		std::string styles_config_file_name;
 		std::string pages_config_file_name;
 
 		json_file_watcher database_schema_mon;
 		json_file_watcher database_config_mon;
 		json_file_watcher pages_config_mon;
+		json_file_watcher styles_config_mon;
 
 		std::string database_file_name;
 		std::string user_file_name;
@@ -99,13 +101,15 @@ namespace corona
 
 			database_schema_file_name = "schema.json";
 			database_config_file_name = "config.json";
-			pages_config_file_name = "ui.json";
+			pages_config_file_name = "pages.json";
+			styles_config_file_name = "styles.json";
 			database_file_name = app->get_data_filename("corona.cdb");
 			user_file_name = app->get_data_filename("user.json");
 
 			database_schema_mon.file_name = database_schema_file_name;
 			database_config_mon.file_name = database_config_file_name;
 			pages_config_mon.file_name = pages_config_file_name;
+			styles_config_mon.file_name = styles_config_file_name;
 
 			if (!app->file_exists(database_file_name)) 
 			{
@@ -138,21 +142,57 @@ namespace corona
 		{
 			json_parser jp;
 			json temp;
-			if (database_schema_mon.poll_contents(app.get(), temp)) {
+			if (database_schema_mon.poll_contents(app.get(), temp) != null_row) {
 				auto tempo = local_db->apply_schema(temp);
 				tempo.wait();
 			}
-			if (database_config_mon.poll_contents(app.get(), temp)) {
+			if (database_config_mon.poll_contents(app.get(), temp) != null_row) {
 				local_db->apply_config(temp);
 			}
 		}
 
 		void poll_pages()
 		{
-			json_parser jp;
-			json temp;
-			if (pages_config_mon.poll_contents(app.get(), temp)) {
-				load_pages(temp);
+			json_parser			jp;
+			json				pages_json;
+			json				styles_json;
+			relative_ptr_type	pages_changed = pages_config_mon.poll_contents(app.get(), pages_json);
+			relative_ptr_type	styles_changed = styles_config_mon.poll_contents(app.get(), styles_json);
+
+			if (pages_changed != null_row || 
+				styles_changed != null_row)
+			{
+				// to do, at some point create a merge method in json proper.
+				json combined;
+				if (styles_json.is_object() && pages_json.is_object())
+				{
+					combined = styles_json.clone();
+					json jsrcstyles = pages_json["styles"].clone();
+					json jdststyles = combined["styles"];
+
+					if (jsrcstyles.is_array() && jdststyles.is_array()) 
+					{
+						jdststyles.append_array(jsrcstyles);
+					}
+					else if (jsrcstyles.is_array())
+					{
+						combined.put_member_array("styles", jsrcstyles);
+					}
+
+					json jsrcpages = pages_json["pages"].clone();
+					json jdstpages = combined["pages"];
+
+					if (jsrcpages.is_array() && jdstpages.is_array())
+					{
+						jdstpages.append_array(jsrcpages);
+					}
+					else if (jsrcpages.is_array())
+					{
+						combined.put_member_array("pages", jsrcpages);
+					}
+
+					load_pages(combined);
+				}
 			}
 		}
 
@@ -160,17 +200,6 @@ namespace corona
 		{
 			poll_db();
 			poll_pages();
-		}
-
-		virtual comm_bus_transaction<json> get_pages()
-		{
-			json_file_watcher jfw;
-
-			jfw.file_name = pages_config_file_name;
-			relative_ptr_type rpt;
-
-			auto tranny = co_await jfw.poll(app.get());
-			co_return jfw.contents;
 		}
 
 		virtual comm_bus_transaction<json>  create_user(json user_information)
@@ -318,8 +347,13 @@ namespace corona
 			_runnable();
 		}
 
-		virtual void run_app_ui(HINSTANCE hInstance, bool fullScreen)
+		virtual void run_app_ui(HINSTANCE hInstance, LPSTR command_line, bool fullScreen)
 		{
+			if (strstr(command_line, "-console")) {
+				EnableGuiStdOuts();
+				std::cout << "Revolution Started" << std::endl;
+			}
+
 			app_ui->runDialog(hInstance, app->application_name.c_str(), application_icon_id, fullScreen, presentation_layer);
 		}
 

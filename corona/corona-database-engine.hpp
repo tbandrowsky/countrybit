@@ -1161,10 +1161,6 @@ private:
 				default_email_address = server["DefaultUserEmailAddress"];
 				default_guest_team = server["DefaultGuestTeam"];
 			}
-			else
-			{
-				std::cout << "Send grid api key not found in configuration" << std::endl;
-			}
 		}
 
 		database_transaction<json> apply_schema(json _schema)
@@ -1212,10 +1208,6 @@ private:
 					co_await create_user(put_user_request);
 				}
 			}
-			else
-			{
-				std::cout << "Send grid api key not found in configuration" << std::endl;
-			}
 
 			if (_schema.has_member("Objects"))
 			{
@@ -1235,10 +1227,6 @@ private:
 					json put_object_request = create_system_request(object_definition);
 					co_await put_class(put_object_request);
 				}
-			}
-			else
-			{
-				std::cout << "Send grid api key not found in configuration" << std::endl;
 			}
 
 		}

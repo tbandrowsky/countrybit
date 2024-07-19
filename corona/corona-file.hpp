@@ -1250,7 +1250,7 @@ namespace corona
 		{
 			transaction_result result = coro.promise().m_value;
 			return result;
-		}
+		}	
 	};
 
 
@@ -1563,19 +1563,21 @@ namespace corona
 			frj.metask = this;
 		}
 
-		void initiate()
+		int initiate()
 		{
+			int r = ERROR_API_UNAVAILABLE;
 			switch (fun) {
 			case read_function:
-				ReadFile(file, (void*)buffer, size, nullptr, (LPOVERLAPPED)&frj.container);
+				r = ReadFile(file, (void*)buffer, size, nullptr, (LPOVERLAPPED)&frj.container);
 				break;
 			case write_function:
-				WriteFile(file, (void*)buffer, size, nullptr, (LPOVERLAPPED)&frj.container);
+				r = WriteFile(file, (void*)buffer, size, nullptr, (LPOVERLAPPED)&frj.container);
 				break;
 			case append_function:
-				WriteFile(file, (void*)buffer, size, nullptr, (LPOVERLAPPED)&frj.container);
+				r = WriteFile(file, (void*)buffer, size, nullptr, (LPOVERLAPPED)&frj.container);
 				break;
 			}
+			return r;
 		}
 
 		virtual ~file_task()
@@ -1584,15 +1586,21 @@ namespace corona
 		}
 
 		bool await_ready() {
+			bool suspend = true;
 			debug_functions&& std::cout << "file_task: await_ready" << " " << ::GetCurrentThreadId() << std::endl;
-			initiate();
-			return false;
+			int r = initiate();
+			if (r != 0) {
+				r = ::GetLastError();
+				if (r == ERROR_IO_PENDING) {
+					suspend = true;
+				}
+			}
+			return suspend;
 		}
 
 		void await_suspend(std::coroutine_handle<> handle)
 		{
-			debug_functions&& std::cout << "file_task: suspend file_batch_result" << " " << ::GetCurrentThreadId() << std::endl;
-			debug_functions&& std::cout << "file_task: suspend initiate" << " " << ::GetCurrentThreadId() << std::endl;
+			debug_functions&& std::cout << "file_task: await_suspend" << " " << ::GetCurrentThreadId() << std::endl;
 			::WaitForSingleObject(hevent, INFINITE);
 			debug_functions&& std::cout << "file_task:io complete" << " " << ::GetCurrentThreadId() << std::endl;
 			handle();

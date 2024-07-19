@@ -1,7 +1,79 @@
 <?xml version="1.0" encoding="utf-8"?> 
 <AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
 	<Type Name="corona::json">
+		<DisplayString>{{value={value_base}}}</DisplayString>
+	</Type>
+	<Type Name="corona::json_double">
+		<DisplayString>{{value={value}}}</DisplayString>
+	</Type>
+	<Type Name="corona::json_string">
+		<DisplayString>{{value={value}}}</DisplayString>
+	</Type>
+	<Type Name="corona::json_datetime">
+		<DisplayString>{{value={value}}}</DisplayString>
+	</Type>
+	<Type Name="corona::json_blob">
+		<DisplayString>{{value={value}}}</DisplayString>
+		<StringView>value</StringView>
+	</Type>
+	<Type Name="corona::json_int64">
+		<DisplayString>{{value={value}}}</DisplayString>
+	</Type>
+	<Type Name="corona::json_array">
+		<Intrinsic Name="size" Expression="elements._Mypair._Myval2._Mylast - elements._Mypair._Myval2._Myfirst" />
+		<Intrinsic Name="capacity" Expression="elements._Mypair._Myval2._Myend - elements._Mypair._Myval2._Myfirst" />
+		<DisplayString>{{ size={size()} }}</DisplayString>
+		<Expand>
+			<ArrayItems>
+				<Size>size()</Size>
+				<ValuePointer>_Mypair._Myval2._Myfirst</ValuePointer>
+			</ArrayItems>
+		</Expand>			
+	</Type>
+	
+	<Type Name="corona::json_object">
+		<DisplayString>{{ size={members._Mypair._Myval2._Myval2._Mysize} }}</DisplayString>
+		<Expand>
+			<TreeItems>
+				<Size>members._Mypair._Myval2._Myval2._Mysize</Size>
+				<HeadPointer>members._Mypair._Myval2._Myval2._Myhead-&gt;_Parent</HeadPointer>
+				<LeftPointer>_Left</LeftPointer>
+				<RightPointer>_Right</RightPointer>
+				<ValueNode Condition="_Isnil == 0" Name="[{_Myval.first}]">_Myval,view(MapHelper)</ValueNode>
+			</TreeItems>
+		</Expand>
 	</Type>
 	<Type Name="corona::control_base">
+		<DisplayString>{{ children={children._Mylast - _Myfirst} }}</DisplayString>
+		<Expand>
+			<Item Name="[bounds]">bounds</Item>
+			<Item Name="[inner_bounds]">inner_bounds</Item>
+			<Item Name="[margin_amount]">margin_amount</Item>
+			<Item Name="[padding_amount]">padding_amount</Item>
+			<Item Name="[box]">box</Item>
+			<ArrayItems>
+				<Size>children._Mylast - children._Myfirst</Size>
+				<ValuePointer>children._Myfirst</ValuePointer>
+			</ArrayItems>
+		</Expand>
+	</Type>
+	<Type Name="corona::rectangle">
+		<DisplayString>{{x={x} y={y} width={width} height={height}}}</DisplayString>
+		<Expand>
+			<Item Name="Right">x + width</Item>
+			<Item Name="Bottom">y + height</Item>
+		</Expand>
+	</Type>
+	<Type Name="corona::measure">
+		<DisplayString>{{amount={amount} units={units}}}</DisplayString>
+	</Type>
+	<Type Name="corona::point">
+		<DisplayString>{{x={x} y={y}}}</DisplayString>
+	</Type>
+	<Type Name="corona::ccolor">
+		<DisplayString>{{r={r} g={g} b={b} a={a}}}</DisplayString>
+	</Type>
+	<Type Name="corona::layout_rect">
+		<DisplayString>{{x={x.amount},{x.units} y={y.amount},{y.units} width={width.amount},{width.units} height={height.amount},{height.units}}}</DisplayString>
 	</Type>
 </AutoVisualizer>

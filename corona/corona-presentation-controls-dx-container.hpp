@@ -206,17 +206,17 @@ namespace corona
 	class column_layout :
 		public container_control
 	{
-		layout_rect item_size;
-
-		measure item_start_space;
-		measure item_next_space;
-		measure column_width;
-		int		column_count;
+		rectangle	arrange_extent;
 
 	public:
-		column_layout() : column_count(0), column_width(300.0_px) { ; }
+		layout_rect item_size;
+		measure item_start_space;
+		measure item_next_space;
+		bool	wrap;
+
+		column_layout() : wrap(true) { ; }
 		column_layout(const column_layout& _src) = default;
-		column_layout(container_control_base* _parent, int _id) : container_control(_parent, _id), column_count(0), column_width(300.0_px) { ; }
+		column_layout(container_control_base* _parent, int _id) : container_control(_parent, _id), wrap(true) { ; }
 
 		virtual ~column_layout() { ; }
 
@@ -226,28 +226,53 @@ namespace corona
 			return tv;
 		}
 
-
 		virtual void arrange(rectangle _ctx);
 		virtual point get_remaining(point _ctx);
 
-		void set_column_width(measure _column_width)
+		virtual void get_json(json& _dest)
 		{
-			column_width = _column_width;
+			container_control::get_json(_dest);
+
+			json_parser jp;
+
+			json temp = jp.create_object();
+			corona::get_json(temp, item_start_space );
+			_dest.put_member("item_start_space", temp);
+
+			temp = jp.create_object();
+			corona::get_json(temp, item_next_space);
+			_dest.put_member("item_next_space", temp);
+
+			_dest.put_member("wrap", wrap);
 		}
-		measure get_column_width()
+
+		virtual void put_json(json& _src)
 		{
-			return column_width;
+			container_control::put_json(_src);
+
+			json temp = _src["item_start_space"];
+			corona::put_json(item_start_space, temp);
+
+			temp = _src["item_next_space"];
+			corona::put_json(item_next_space, temp);
+
+			wrap = (bool)_src["wrap"];
 		}
+
 	};
 
 	class row_layout :
 		public container_control
 	{
+		rectangle	arrange_extent;
 	protected:
 	public:
 
 		measure item_start_space;
 		measure item_next_space;
+
+		layout_rect item_size;
+		bool		wrap;
 
 		row_layout() { ; }
 		row_layout(const row_layout& _src) = default;
@@ -262,6 +287,36 @@ namespace corona
 
 		virtual void arrange(rectangle _ctx);
 		virtual point get_remaining(point _ctx);
+		virtual void get_json(json& _dest)
+		{
+			container_control::get_json(_dest);
+
+			json_parser jp;
+
+			json temp = jp.create_object();
+			corona::get_json(temp, item_start_space);
+			_dest.put_member("item_start_space", temp);
+
+			temp = jp.create_object();
+			corona::get_json(temp, item_next_space);
+			_dest.put_member("item_next_space", temp);
+
+			_dest.put_member("wrap", wrap);
+		}
+
+		virtual void put_json(json& _src)
+		{
+			container_control::put_json(_src);
+
+			json temp = _src["item_start_space"];
+			corona::put_json(item_start_space, temp);
+
+			temp = _src["item_next_space"];
+			corona::put_json(item_next_space, temp);
+
+			wrap = (bool)_src["wrap"];
+		}
+
 	};
 
 	class frame_layout :
@@ -726,6 +781,8 @@ namespace corona
 	{
 		point origin = { 0, 0, 0 };
 		set_bounds(_bounds);
+		
+		arrange_extent = { 0, 0, 0, 0 };
 
 		double item_start_space_px = to_pixels_x(item_start_space);
 		double item_next_space_px = to_pixels_x(item_next_space);
@@ -739,18 +796,20 @@ namespace corona
 			if (this->content_cross_alignment == visual_alignment::align_near)
 			{
 				temp.x = _origin->x;
-				temp.y = _bounds->y;
+				temp.y = _origin->y;
 			}
 			else if (this->content_cross_alignment == visual_alignment::align_center)
 			{
 				temp.x = _origin->x;
-				temp.y = _bounds->y + (_bounds->h - sz.y) / 2.0;
+				temp.y = _origin->y + (_bounds->h - sz.y) / 2.0;
 			}
 			else if (this->content_cross_alignment == visual_alignment::align_far)
 			{
 				temp.x = _origin->x;
-				temp.y = _bounds->y + (_bounds->h - sz.y);
+				temp.y = _origin->y + (_bounds->h - sz.y);
 			}
+
+			arrange_extent = rectangle_math::extend(arrange_extent, _item->bounds);
 
 			return temp;
 		};
@@ -766,12 +825,22 @@ namespace corona
 					return temp;
 				},
 				align_item,
-				[this, item_next_space_px](point _remaining, point* _origin, const rectangle* _bounds, control_base* _item) {
-					point temp = *_origin;
-					auto sz = _item->get_size(bounds, { _bounds->w, _bounds->h });
-					temp.x += sz.x + item_next_space_px;
-					temp.x += _item->get_margin_amount().x;
-					return temp;
+				[this, item_next_space_px, item_start_space_px](point _remaining, point* _origin, const rectangle* _bounds, control_base* _item) {
+					point tempest = *_origin;
+					auto sz = _item->get_size(inner_bounds, { _bounds->w, _bounds->h });
+
+					tempest.x += sz.x + item_next_space_px;
+					tempest.x += _item->get_margin_amount().x;
+
+					double r = _bounds->right();
+					double tx = tempest.x + sz.x;
+
+					if (wrap && (tx >= r)) {
+						tempest.x = _bounds->x + _item->get_margin_amount().x + item_start_space_px;
+						tempest.y = arrange_extent.bottom() + _item->get_margin_amount().y;
+						arrange_extent = {};
+					}
+					return tempest;
 				}
 			);
 		}
@@ -856,6 +925,8 @@ namespace corona
 		double item_start_space_px = to_pixels_y(item_start_space);
 		double item_next_space_px = to_pixels_y(item_next_space);
 
+		arrange_extent = { 0, 0, 0, 0 };
+
 		std::function<point(point _remaining, point* _origin, const rectangle* _bounds, control_base* _item)> align_item = [this](point _remaining, point* _origin, const rectangle* _bounds, control_base* _item) -> point
 		{
 			point temp = { 0, 0, 0 };
@@ -878,6 +949,8 @@ namespace corona
 				temp.y = _origin->y;
 			}
 
+			arrange_extent = rectangle_math::extend(arrange_extent, _item->bounds);
+
 			return temp;
 		};
 
@@ -896,11 +969,12 @@ namespace corona
 					auto sz = _item->get_size(bounds, { _bounds->w, _bounds->h });
 					temp.y += sz.y;
 					temp.y += _item->get_margin_amount().y + item_next_space_px;
-					auto width_pixels = to_pixels_x(column_width);
-					if (temp.y > _bounds->bottom()) {
-						column_count++;
-						temp.x = _bounds->x + column_count * width_pixels;
+					double r = _bounds->bottom();
+					double ty = temp.y + sz.y;
+					if (wrap && (ty > r)) {
+						temp.x = arrange_extent.right() + _item->get_margin_amount().x;
 						temp.y = _bounds->y + _item->get_margin_amount().y + item_start_space_px;
+						arrange_extent = {};
 					}
 					return temp;
 				}
