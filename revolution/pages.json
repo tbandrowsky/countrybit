@@ -3,6 +3,7 @@
     {
       "class_name": "page",
       "page_name": "home",
+      "default" :  true,
       "children": [
         {
           "class_name": "column",
@@ -27,7 +28,7 @@
               "class_name": "caption_bar",
               "corporate_name": "country video games",
               "title_name": "United States of America",
-              "subtitle_name" :  "Descendants of Slaves Reparations System (DSRS)",
+              "subtitle_name": "Descendants of Slaves Reparations System (DSRS)",
               "title_start": {
                 "amount": 0.25,
                 "units": "container"
@@ -97,7 +98,7 @@
                       "units": "container"
                     },
                     "height": {
-                      "amount": 24,
+                      "amount": 30,
                       "units": "pixels"
                     }
                   }
@@ -111,8 +112,8 @@
                       "units": "container"
                     },
                     "height": {
-                      "amount": 75,
-                      "units": "pixels"
+                      "amount": 6.2,
+                      "units": "text"
                     }
                   }
                 },
@@ -128,7 +129,7 @@
                       "units": "container"
                     }
                   },
-                  "wrap" :  true,
+                  "wrap": true,
                   "children": [
                     {
                       "class_name": "corona_button",
@@ -146,6 +147,10 @@
                       "margin": {
                         "amount": 20,
                         "units": "pixels"
+                      },
+                      "command": {
+                        "class_name": "select_page_command",
+                        "page_name" : "researcher_home"
                       }
                     },
                     {
@@ -164,6 +169,10 @@
                       "margin": {
                         "amount": 20,
                         "units": "pixels"
+                      },
+                      "command": {
+                        "class_name": "select_page_command",
+                        "page_name": "plaintiff_attorney_home"
                       }
                     },
                     {
@@ -182,6 +191,10 @@
                       "margin": {
                         "amount": 20,
                         "units": "pixels"
+                      },
+                      "command": {
+                        "class_name": "select_page_command",
+                        "page_name": "reparations_court_home"
                       }
                     },
                     {
@@ -200,6 +213,10 @@
                       "margin": {
                         "amount": 20,
                         "units": "pixels"
+                      },
+                      "command": {
+                        "class_name": "select_page_command",
+                        "page_name": "government_attorney_home"
                       }
                     },
                     {
@@ -218,6 +235,10 @@
                       "margin": {
                         "amount": 20,
                         "units": "pixels"
+                      },
+                      "command": {
+                        "class_name": "select_page_command",
+                        "page_name": "claims_fund_home"
                       }
                     }
                   ]
@@ -227,6 +248,813 @@
           ]
         }
       ]
+    },
+    {
+      "class_name": "page",
+      "page_name": "researcher_home",
+      "children": [
+        {
+          "class_name": "column",
+          "box": {
+            "width": {
+              "amount": 1.0,
+              "units": "container"
+            },
+            "height": {
+              "amount": 1.0,
+              "units": "container"
+            }
+          },
+          "padding": {
+            "amount": 0,
+            "units": "pixels"
+          },
+          "content_alignment": "near",
+          "content_cross_alignment": "center",
+          "children": [
+            {
+              "class_name": "caption_bar",
+              "corporate_name": "country video games",
+              "title_name": "United States of America",
+              "subtitle_name": "Descendants of Slaves Reparations System (DSRS)",
+              "title_start": {
+                "amount": 0.25,
+                "units": "container"
+              },
+              "box": {
+                "width": {
+                  "amount": 1.0,
+                  "units": "container"
+                },
+                "height": {
+                  "amount": 100,
+                  "units": "pixels"
+                }
+              }
+            },
+
+            {
+              "class_name": "column",
+              "box": {
+                "width": {
+                  "amount": 0.5,
+                  "units": "container"
+                },
+                "height": {
+                  "amount": 0.8,
+                  "units": "container"
+                }
+              },
+              "view_style": {
+                "box_fill_brush": {
+                  "class_name": "solid_brush",
+                  "color": "211012AA"
+                },
+                "box_border_brush": {
+                  "class_name": "solid_brush",
+                  "color": "21101277"
+                },
+                "box_border_thickness": 8
+              },
+              "padding": {
+                "amount": 10,
+                "units": "pixels"
+              },
+              "content_alignment": "near",
+              "content_cross_alignment": "near",
+              "children": [
+                {
+                  "class_name": "chaptertitle",
+                  "text": "Researcher Home",
+                  "box": {
+                    "width": {
+                      "amount": 1,
+                      "units": "container"
+                    },
+                    "height": {
+                      "amount": 34,
+                      "units": "pixels"
+                    }
+                  }
+                },
+                {
+                  "class_name": "chaptersubtitle",
+                  "text": "Record Injustices",
+                  "box": {
+                    "width": {
+                      "amount": 1,
+                      "units": "container"
+                    },
+                    "height": {
+                      "amount": 30,
+                      "units": "pixels"
+                    }
+                  }
+                },
+                {
+                  "class_name": "paragraph",
+                  "text": "Researchers are Black American Citizens, Writers and Historians who create a historical resource of injustices to be used by Plaintiff Attorneys.  They will formulate this data into cases they bring on your behalf to the Reparations Court.",
+                  "box": {
+                    "width": {
+                      "amount": 1,
+                      "units": "container"
+                    },
+                    "height": {
+                      "amount": 6.2,
+                      "units": "text"
+                    }
+                  }
+                },
+                {
+                  "class_name": "row",
+                  "box": {
+                    "width": {
+                      "amount": 1,
+                      "units": "container"
+                    },
+                    "height": {
+                      "amount": 1,
+                      "units": "container"
+                    }
+                  },
+                  "wrap": true,
+                  "children": [
+                    {
+                      "class_name": "corona_button",
+                      "text": "Home",
+                      "box": {
+                        "width": {
+                          "amount": 150,
+                          "units": "pixels"
+                        },
+                        "height": {
+                          "amount": 65,
+                          "units": "pixels"
+                        }
+                      },
+                      "margin": {
+                        "amount": 20,
+                        "units": "pixels"
+                      },
+                      "command": {
+                        "class_name": "select_page_command",
+                        "page_name": "home"
+                      }
+                    }
+
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "class_name": "page",
+      "page_name": "plaintiff_attorney_home",
+      "children": [
+        {
+          "class_name": "column",
+          "box": {
+            "width": {
+              "amount": 1.0,
+              "units": "container"
+            },
+            "height": {
+              "amount": 1.0,
+              "units": "container"
+            }
+          },
+          "padding": {
+            "amount": 0,
+            "units": "pixels"
+          },
+          "content_alignment": "near",
+          "content_cross_alignment": "center",
+          "children": [
+            {
+              "class_name": "caption_bar",
+              "corporate_name": "country video games",
+              "title_name": "United States of America",
+              "subtitle_name": "Descendants of Slaves Reparations System (DSRS)",
+              "title_start": {
+                "amount": 0.25,
+                "units": "container"
+              },
+              "box": {
+                "width": {
+                  "amount": 1.0,
+                  "units": "container"
+                },
+                "height": {
+                  "amount": 100,
+                  "units": "pixels"
+                }
+              }
+            },
+
+            {
+              "class_name": "column",
+              "box": {
+                "width": {
+                  "amount": 0.5,
+                  "units": "container"
+                },
+                "height": {
+                  "amount": 0.8,
+                  "units": "container"
+                }
+              },
+              "view_style": {
+                "box_fill_brush": {
+                  "class_name": "solid_brush",
+                  "color": "211012AA"
+                },
+                "box_border_brush": {
+                  "class_name": "solid_brush",
+                  "color": "21101277"
+                },
+                "box_border_thickness": 8
+              },
+              "padding": {
+                "amount": 10,
+                "units": "pixels"
+              },
+              "content_alignment": "near",
+              "content_cross_alignment": "near",
+              "children": [
+                {
+                  "class_name": "chaptertitle",
+                  "text": "Plaintiff Attorney Home",
+                  "box": {
+                    "width": {
+                      "amount": 1,
+                      "units": "container"
+                    },
+                    "height": {
+                      "amount": 34,
+                      "units": "pixels"
+                    }
+                  }
+                },
+                {
+                  "class_name": "chaptersubtitle",
+                  "text": "Squeeze Injustice into Justice",
+                  "box": {
+                    "width": {
+                      "amount": 1,
+                      "units": "container"
+                    },
+                    "height": {
+                      "amount": 30,
+                      "units": "pixels"
+                    }
+                  }
+                },
+                {
+                  "class_name": "paragraph",
+                  "text": "Plaintiff Attorneys use the resources gathered by researchers to formulate claims cases to be made before the reparations court.",
+                  "box": {
+                    "width": {
+                      "amount": 1,
+                      "units": "container"
+                    },
+                    "height": {
+                      "amount": 6.2,
+                      "units": "text"
+                    }
+                  }
+                },
+                {
+                  "class_name": "row",
+                  "box": {
+                    "width": {
+                      "amount": 1,
+                      "units": "container"
+                    },
+                    "height": {
+                      "amount": 1,
+                      "units": "container"
+                    }
+                  },
+                  "wrap": true,
+                  "children": [
+                    {
+                      "class_name": "corona_button",
+                      "text": "Home",
+                      "box": {
+                        "width": {
+                          "amount": 150,
+                          "units": "pixels"
+                        },
+                        "height": {
+                          "amount": 65,
+                          "units": "pixels"
+                        }
+                      },
+                      "margin": {
+                        "amount": 20,
+                        "units": "pixels"
+                      },
+                      "command": {
+                        "class_name": "select_page_command",
+                        "page_name": "home"
+                      }
+                    }
+
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "class_name": "page",
+      "page_name": "reparations_court_home",
+      "children": [
+        {
+          "class_name": "column",
+          "box": {
+            "width": {
+              "amount": 1.0,
+              "units": "container"
+            },
+            "height": {
+              "amount": 1.0,
+              "units": "container"
+            }
+          },
+          "padding": {
+            "amount": 0,
+            "units": "pixels"
+          },
+          "content_alignment": "near",
+          "content_cross_alignment": "center",
+          "children": [
+            {
+              "class_name": "caption_bar",
+              "corporate_name": "country video games",
+              "title_name": "United States of America",
+              "subtitle_name": "Descendants of Slaves Reparations System (DSRS)",
+              "title_start": {
+                "amount": 0.25,
+                "units": "container"
+              },
+              "box": {
+                "width": {
+                  "amount": 1.0,
+                  "units": "container"
+                },
+                "height": {
+                  "amount": 100,
+                  "units": "pixels"
+                }
+              }
+            },
+
+            {
+              "class_name": "column",
+              "box": {
+                "width": {
+                  "amount": 0.5,
+                  "units": "container"
+                },
+                "height": {
+                  "amount": 0.8,
+                  "units": "container"
+                }
+              },
+              "view_style": {
+                "box_fill_brush": {
+                  "class_name": "solid_brush",
+                  "color": "211012AA"
+                },
+                "box_border_brush": {
+                  "class_name": "solid_brush",
+                  "color": "21101277"
+                },
+                "box_border_thickness": 8
+              },
+              "padding": {
+                "amount": 10,
+                "units": "pixels"
+              },
+              "content_alignment": "near",
+              "content_cross_alignment": "near",
+              "children": [
+                {
+                  "class_name": "chaptertitle",
+                  "text": "Reparations Court",
+                  "box": {
+                    "width": {
+                      "amount": 1,
+                      "units": "container"
+                    },
+                    "height": {
+                      "amount": 34,
+                      "units": "pixels"
+                    }
+                  }
+                },
+                {
+                  "class_name": "chaptersubtitle",
+                  "text": "The United States of America Will Hear You Now",
+                  "box": {
+                    "width": {
+                      "amount": 1,
+                      "units": "container"
+                    },
+                    "height": {
+                      "amount": 30,
+                      "units": "pixels"
+                    }
+                  }
+                },
+                {
+                  "class_name": "paragraph",
+                  "text": "Ensures the United States of America, the Federal Government, pays for the times it has not honored the guarantees it makes in the Constitution and Declaration of Independence.",
+                  "box": {
+                    "width": {
+                      "amount": 1,
+                      "units": "container"
+                    },
+                    "height": {
+                      "amount": 6.2,
+                      "units": "text"
+                    }
+                  }
+                },
+                {
+                  "class_name": "row",
+                  "box": {
+                    "width": {
+                      "amount": 1,
+                      "units": "container"
+                    },
+                    "height": {
+                      "amount": 1,
+                      "units": "container"
+                    }
+                  },
+                  "wrap": true,
+                  "children": [
+                    {
+                      "class_name": "corona_button",
+                      "text": "Home",
+                      "box": {
+                        "width": {
+                          "amount": 150,
+                          "units": "pixels"
+                        },
+                        "height": {
+                          "amount": 65,
+                          "units": "pixels"
+                        }
+                      },
+                      "margin": {
+                        "amount": 20,
+                        "units": "pixels"
+                      },
+                      "command": {
+                        "class_name": "select_page_command",
+                        "page_name": "home"
+                      }
+                    }
+
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "class_name": "page",
+      "page_name": "government_attorney_home",
+      "children": [
+        {
+          "class_name": "column",
+          "box": {
+            "width": {
+              "amount": 1.0,
+              "units": "container"
+            },
+            "height": {
+              "amount": 1.0,
+              "units": "container"
+            }
+          },
+          "padding": {
+            "amount": 0,
+            "units": "pixels"
+          },
+          "content_alignment": "near",
+          "content_cross_alignment": "center",
+          "children": [
+            {
+              "class_name": "caption_bar",
+              "corporate_name": "country video games",
+              "title_name": "United States of America",
+              "subtitle_name": "Descendants of Slaves Reparations System (DSRS)",
+              "title_start": {
+                "amount": 0.25,
+                "units": "container"
+              },
+              "box": {
+                "width": {
+                  "amount": 1.0,
+                  "units": "container"
+                },
+                "height": {
+                  "amount": 100,
+                  "units": "pixels"
+                }
+              }
+            },
+
+            {
+              "class_name": "column",
+              "box": {
+                "width": {
+                  "amount": 0.5,
+                  "units": "container"
+                },
+                "height": {
+                  "amount": 0.8,
+                  "units": "container"
+                }
+              },
+              "view_style": {
+                "box_fill_brush": {
+                  "class_name": "solid_brush",
+                  "color": "211012AA"
+                },
+                "box_border_brush": {
+                  "class_name": "solid_brush",
+                  "color": "21101277"
+                },
+                "box_border_thickness": 8
+              },
+              "padding": {
+                "amount": 10,
+                "units": "pixels"
+              },
+              "content_alignment": "near",
+              "content_cross_alignment": "near",
+              "children": [
+                {
+                  "class_name": "chaptertitle",
+                  "text": "Government Attorneys",
+                  "box": {
+                    "width": {
+                      "amount": 1,
+                      "units": "container"
+                    },
+                    "height": {
+                      "amount": 34,
+                      "units": "pixels"
+                    }
+                  }
+                },
+                {
+                  "class_name": "chaptersubtitle",
+                  "text": "Defend the Federal Government of United States of America",
+                  "box": {
+                    "width": {
+                      "amount": 1,
+                      "units": "container"
+                    },
+                    "height": {
+                      "amount": 30,
+                      "units": "pixels"
+                    }
+                  }
+                },
+                {
+                  "class_name": "paragraph",
+                  "text": "Government Attorneys can organize their defenses, settlements, and capitulations as the part of our American adversarial legal system.",
+                  "box": {
+                    "width": {
+                      "amount": 1,
+                      "units": "container"
+                    },
+                    "height": {
+                      "amount": 6.2,
+                      "units": "text"
+                    }
+                  }
+                },
+                {
+                  "class_name": "row",
+                  "box": {
+                    "width": {
+                      "amount": 1,
+                      "units": "container"
+                    },
+                    "height": {
+                      "amount": 1,
+                      "units": "container"
+                    }
+                  },
+                  "wrap": true,
+                  "children": [
+                    {
+                      "class_name": "corona_button",
+                      "text": "Home",
+                      "box": {
+                        "width": {
+                          "amount": 150,
+                          "units": "pixels"
+                        },
+                        "height": {
+                          "amount": 65,
+                          "units": "pixels"
+                        }
+                      },
+                      "margin": {
+                        "amount": 20,
+                        "units": "pixels"
+                      },
+                      "command": {
+                        "class_name": "select_page_command",
+                        "page_name": "home"
+                      }
+                    }
+
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "class_name": "page",
+      "page_name": "claims_fund_home",
+      "children": [
+        {
+          "class_name": "column",
+          "box": {
+            "width": {
+              "amount": 1.0,
+              "units": "container"
+            },
+            "height": {
+              "amount": 1.0,
+              "units": "container"
+            }
+          },
+          "padding": {
+            "amount": 0,
+            "units": "pixels"
+          },
+          "content_alignment": "near",
+          "content_cross_alignment": "center",
+          "children": [
+            {
+              "class_name": "caption_bar",
+              "corporate_name": "country video games",
+              "title_name": "United States of America",
+              "subtitle_name": "Descendants of Slaves Reparations System (DSRS)",
+              "title_start": {
+                "amount": 0.25,
+                "units": "container"
+              },
+              "box": {
+                "width": {
+                  "amount": 1.0,
+                  "units": "container"
+                },
+                "height": {
+                  "amount": 100,
+                  "units": "pixels"
+                }
+              }
+            },
+
+            {
+              "class_name": "column",
+              "box": {
+                "width": {
+                  "amount": 0.5,
+                  "units": "container"
+                },
+                "height": {
+                  "amount": 0.8,
+                  "units": "container"
+                }
+              },
+              "view_style": {
+                "box_fill_brush": {
+                  "class_name": "solid_brush",
+                  "color": "211012AA"
+                },
+                "box_border_brush": {
+                  "class_name": "solid_brush",
+                  "color": "21101277"
+                },
+                "box_border_thickness": 8
+              },
+              "padding": {
+                "amount": 10,
+                "units": "pixels"
+              },
+              "content_alignment": "near",
+              "content_cross_alignment": "near",
+              "children": [
+                {
+                  "class_name": "chaptertitle",
+                  "text": "Claims Fund",
+                  "box": {
+                    "width": {
+                      "amount": 1,
+                      "units": "container"
+                    },
+                    "height": {
+                      "amount": 34,
+                      "units": "pixels"
+                    }
+                  }
+                },
+                {
+                  "class_name": "chaptersubtitle",
+                  "text": "Manage the Reparations Funds",
+                  "box": {
+                    "width": {
+                      "amount": 1,
+                      "units": "container"
+                    },
+                    "height": {
+                      "amount": 30,
+                      "units": "pixels"
+                    }
+                  }
+                },
+                {
+                  "class_name": "paragraph",
+                  "text": "Claims fund managers ensure that adequate insurance reserves are available.  Financed directly by the Federal Reserve Bank, the Claims Fund managers ensure a transparent state of finances in the claims fund and provides a valuable resource for policy makers and scientists for guidance and study.",
+                  "box": {
+                    "width": {
+                      "amount": 1,
+                      "units": "container"
+                    },
+                    "height": {
+                      "amount": 6.2,
+                      "units": "text"
+                    }
+                  }
+                },
+                {
+                  "class_name": "row",
+                  "box": {
+                    "width": {
+                      "amount": 1,
+                      "units": "container"
+                    },
+                    "height": {
+                      "amount": 1,
+                      "units": "container"
+                    }
+                  },
+                  "wrap": true,
+                  "children": [
+                    {
+                      "class_name": "corona_button",
+                      "text": "Home",
+                      "box": {
+                        "width": {
+                          "amount": 150,
+                          "units": "pixels"
+                        },
+                        "height": {
+                          "amount": 65,
+                          "units": "pixels"
+                        }
+                      },
+                      "margin": {
+                        "amount": 20,
+                        "units": "pixels"
+                      },
+                      "command": {
+                        "class_name": "select_page_command",
+                        "page_name": "home"
+                      }
+                    }
+
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
     }
+
+
   ]
 }

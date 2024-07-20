@@ -871,7 +871,7 @@ namespace corona
 		else if (pi.box.height.units == measure_units::text)
 		{
 			double font_height = get_font_size();
-			sz.x = font_height * pi.box.height.amount;
+			sz.y = font_height * pi.box.height.amount;
 		}
 
 		if (box.width.units == measure_units::percent_aspect)

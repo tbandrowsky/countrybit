@@ -396,7 +396,7 @@ namespace corona
 		}
 
 		virtual control_base* find_control(int _id) = 0;
-		virtual void poll() = 0;
+		virtual void poll(bool _select_default_page) = 0;
 	};
 
 	class corona_bus_command : public json_serializable

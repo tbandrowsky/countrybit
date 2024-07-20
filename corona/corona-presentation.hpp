@@ -1060,13 +1060,14 @@ namespace corona {
 						if (is_default || default_page_name.empty()) {
 							default_page_name = name;
 						}
-						create_page(name, [pg](page& _settings)->void
+						create_page(name, [pg, this](page& _settings)->void
 							{
 								json_parser jp;
 								auto root = _settings.get_root_container();
 								root->set_size(1.0_container, 1.0_container);
 								root->children.clear();
 								control_builder cb(root);
+								cb.bus = bus;
 								json jchildren = pg["children"];
 								if (jchildren.is_array()) {	
 									for (auto jchild : jchildren) 

@@ -617,7 +617,7 @@ namespace corona
 			break;
 			case WM_TIMER:
 				if (bus) {
-					bus->poll();
+					bus->poll(false);
 				}
 				break;
 			case WM_NCCALCSIZE:

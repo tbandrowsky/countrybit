@@ -38,7 +38,7 @@ namespace corona
 		using control_base::id;
 
 		std::shared_ptr<call_status>	status;
-		std::shared_ptr<corona_bus_command> options;
+		std::shared_ptr<corona_bus_command> command;
 
 		using windows_control::enable;
 		using windows_control::disable;
@@ -52,7 +52,7 @@ namespace corona
 		{
 			init();
 			status = _src.status;
-			options = _src.options;
+			command = _src.command;
 		}
 
 		virtual ~corona_button_control() { ; }
@@ -65,12 +65,17 @@ namespace corona
 		virtual void get_json(json& _dest)
 		{
 			pushbutton_control::get_json(_dest);
-			corona::get_json(_dest, options);
+			json_parser jp;
+			json joptions = jp.create_object();
+			corona::get_json(joptions, command);
+			_dest.put_member("command", joptions);
 		}
 		virtual void put_json(json& _src)
 		{
 			pushbutton_control::put_json(_src);
-			corona::put_json(options, _src);
+			json joptions = _src["command"];
+			corona::put_json(command, joptions);
+			command->bus = bus;
 		}
 	};
 
@@ -153,6 +158,8 @@ namespace corona
 
 	public:
 
+		comm_bus_interface* bus;
+
 		template <typename control_type> std::shared_ptr<control_type> get(int _id)
 		{
 			std::shared_ptr<control_type> temp;
@@ -186,6 +193,7 @@ namespace corona
 				if (temp == nullptr) {
 					temp = std::make_shared<control_type>(cp, _id);
 					if (temp) {
+						temp->bus = bus;
 						// here's our new temp, and we copy the children
 						// this may not be the best plan but it allows us
 						// to easily switch container types.
@@ -193,6 +201,9 @@ namespace corona
 						int found_index = std::distance(found, root->children.begin());
 						root->children[found_index] = temp;
 					}
+				}
+				else {
+					temp->bus = bus;
 				}
 
 				// otherwise, we found an existing control of the same type and we use that.
@@ -202,6 +213,7 @@ namespace corona
 				// and, since we found nothing, we go ahead and just shove our new element at the back
 				temp = std::make_shared<control_type>(cp, _id);
 				if (temp) {
+					temp->bus = bus;
 					root->children.push_back(temp);
 				}
 			}
@@ -3046,8 +3058,11 @@ namespace corona
 		_page->on_command(this->id, [this, _presentation, _page](command_event evt)
 			{
 				disable();
-				if (options) {
-					auto transaction = options->execute();
+				if (command) {
+					if (!command->bus) {
+						command->bus = evt.bus;
+					}
+					auto transaction = command->execute();
 					transaction.wait();
 				}
 				enable();

@@ -151,7 +151,7 @@ namespace corona
 			}
 		}
 
-		void poll_pages()
+		void poll_pages(bool _select_default_page)
 		{
 			json_parser			jp;
 			json				pages_json;
@@ -191,15 +191,15 @@ namespace corona
 						combined.put_member_array("pages", jsrcpages);
 					}
 
-					load_pages(combined);
+					load_pages(combined, _select_default_page);
 				}
 			}
 		}
 
-		virtual void poll()
+		virtual void poll(bool _select_default_page)
 		{
 			poll_db();
-			poll_pages();
+			poll_pages(_select_default_page);
 		}
 
 		virtual comm_bus_transaction<json>  create_user(json user_information)
@@ -303,10 +303,13 @@ namespace corona
 			return presentation_layer->find_ptr<control_base>(_id);
 		}
 
-		void load_pages(json _pages)
+		void load_pages(json _pages, bool _select_default)
 		{
-			run_ui([this, _pages]() ->void {
-				presentation_layer->setPresentation(_pages);
+			run_ui([this, _pages, _select_default]() ->void {
+				std::string default_page = presentation_layer->setPresentation(_pages);
+				if (_select_default && !default_page.empty()) {
+					presentation_layer->select_page(default_page);
+				}
 				});
 		}
 

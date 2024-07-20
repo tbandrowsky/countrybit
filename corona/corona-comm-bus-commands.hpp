@@ -29,6 +29,7 @@ namespace corona
 
 		virtual void get_json(json& _dest)
 		{
+			_dest.put_member("class_name", "select_object_command");
 			_dest.put_member("table_control_id", table_control_id);
 			_dest.put_member("target_control_id", target_control_id);
 			_dest.put_member("page_name", page_name);
@@ -64,6 +65,7 @@ namespace corona
 
 		virtual void get_json(json& _dest)
 		{
+			_dest.put_member("class_name", "save_object_command");
 			_dest.put_member("form_control_id", form_control_id);
 		}
 
@@ -94,6 +96,7 @@ namespace corona
 
 		virtual void get_json(json& _dest)
 		{
+			_dest.put_member("class_name", "load_object_command");
 			_dest.put_member("form_control_id", form_control_id);
 			_dest.put_member("data", object_data);
 		}
@@ -125,6 +128,7 @@ namespace corona
 
 		virtual void get_json(json& _dest)
 		{
+			_dest.put_member("class_name", "delete_object_command");
 			_dest.put_member("form_control_id", form_control_id);
 		}
 
@@ -159,6 +163,7 @@ namespace corona
 
 		virtual void get_json(json& _dest)
 		{
+			_dest.put_member("class_name", "search_objects_command");
 			_dest.put_member("form_control_id", form_control_id);
 			_dest.put_member("table_control_id", table_control_id);
 		}
@@ -187,6 +192,7 @@ namespace corona
 
 		virtual void get_json(json& _dest)
 		{
+			_dest.put_member("class_name", "select_page_command");
 			_dest.put_member("page_name", page_name);
 			_dest.put_member("target_control_id", target_control_id);
 			_dest.put_member("data", data);
@@ -209,33 +215,39 @@ namespace corona
 
 	void put_json(std::shared_ptr<corona_bus_command>& _dest, json _src)
 	{
-		if (_src.has_member("ClassName"))
+		if (_src.has_member("class_name"))
 		{
-			std::string class_name = _src["ClassName"];
+			std::string class_name = _src["class_name"];
 
-			if (class_name == "SelectObjectCommand")
+			if (class_name == "select_object_command")
 			{
 				_dest = std::make_shared<corona_select_object_command>();
+				_dest->put_json(_src);
 			}
-			else if (class_name == "SaveObjectCommand")
+			else if (class_name == "save_object_command")
 			{
 				_dest = std::make_shared<corona_save_object_command>();
+				_dest->put_json(_src);
 			}
-			else if (class_name == "LoadObjectCommand")
+			else if (class_name == "load_object_command")
 			{
 				_dest = std::make_shared<corona_load_object_command>();
+				_dest->put_json(_src);
 			}
-			else if (class_name == "DeleteObjectCommand")
+			else if (class_name == "delete_object_command")
 			{
 				_dest = std::make_shared<corona_delete_object_command>();
+				_dest->put_json(_src);
 			}
-			else if (class_name == "SearchObjectsCommand")
+			else if (class_name == "search_objects_command")
 			{
 				_dest = std::make_shared<corona_search_objects_command>();
+				_dest->put_json(_src);
 			}
-			else if (class_name == "SelectPageCommand")
+			else if (class_name == "select_page_command")
 			{
 				_dest = std::make_shared<corona_select_page_command>();
+				_dest->put_json(_src);
 			}
 		}
 	}
