@@ -223,6 +223,7 @@ namespace corona
 
 		virtual comm_bus_transaction<json> create_user(json user_information) = 0;
 		virtual comm_bus_transaction<json> login_user(json login_information) = 0;
+		virtual comm_bus_transaction<json> create_object(std::string class_name) = 0;
 		virtual comm_bus_transaction<json> put_object(json object_information) = 0;
 		virtual comm_bus_transaction<json> get_object(json object_information) = 0;
 		virtual comm_bus_transaction<json> delete_object(json object_information) = 0;
@@ -234,7 +235,7 @@ namespace corona
 		virtual void when(UINT topic, std::function<void()> _runnable) = 0;
 		virtual void when(std::string _topic, std::function<void()> _runnable) = 0;
 
-		virtual void select_page(std::string _page, int _target_control_id, json _obj) = 0;
+		virtual void select_page(std::string _page, std::string _target_name, json _obj) = 0;
 
 		void check_windows_queue(MSG* _msg)
 		{
@@ -396,6 +397,7 @@ namespace corona
 		}
 
 		virtual control_base* find_control(int _id) = 0;
+		virtual control_base* find_control(std::string _name) = 0;
 		virtual void poll(bool _select_default_page) = 0;
 	};
 
@@ -414,7 +416,7 @@ namespace corona
 			;
 		}
 
-		virtual comm_bus_transaction<json> execute() = 0;
+		virtual comm_bus_transaction<json> execute(control_base* _parent) = 0;
 
 		virtual void get_json(json& _dest)
 		{

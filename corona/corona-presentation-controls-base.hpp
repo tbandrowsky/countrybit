@@ -212,6 +212,7 @@ namespace corona
 		change_monitored_property<bool> mouse_left_down;
 		change_monitored_property<bool> mouse_right_down;
 		point		 mouse_relative_position;
+		std::string  name;
 
 		void copy(const control_base& _src)
 		{
@@ -241,6 +242,7 @@ namespace corona
 				new_child->parent = this;
 				children.push_back(new_child);
 			}
+			name = _src.name;
 		}
 
 	public:
@@ -263,7 +265,7 @@ namespace corona
 		std::string				json_field_name;
 
 		container_control_base* parent;
-		comm_bus_interface* bus;
+		comm_bus_interface*		bus;
 
 		std::vector<control_push_request> push_requests;
 
@@ -376,6 +378,12 @@ namespace corona
 			return empty;
 		}
 
+		virtual json set_items(json _data)
+		{
+			json empty;
+			return empty;
+		}
+
 		virtual json set_data(json _data)
 		{
 			json empty;
@@ -396,6 +404,8 @@ namespace corona
 			corona::get_json(jbox, padding);
 			corona::get_json(jbox, margin);
 
+
+			_dest.put_member("name", name);
 			_dest.put_member("id", id );
 			_dest.put_member("box", jbox );
 			_dest.put_member("padding", jpadding);
@@ -423,6 +433,7 @@ namespace corona
 			jbox = _src["box"];
 			jmargin = _src["margin"];
 			jpadding = _src["padding"];
+			name = _src["name"];
 
 			corona::put_json(box, jbox);
 			corona::put_json(margin, jmargin);
@@ -473,8 +484,10 @@ namespace corona
 		}
 
 		control_base* find(int _id);
+		control_base* find(std::string _name);
 		control_base* find(point p);
 		control_base* get(control_base* _root, int _id);
+		control_base* get(control_base* _root, std::string _name);
 
 		template <typename control_type> std::shared_ptr<control_type> find_by_id(int _id)
 		{
@@ -634,6 +647,23 @@ namespace corona
 			root = (control_base*)root->parent;
 		}
 		control_base* result = control_base::get(root, _id);
+		return result;
+	}
+
+	control_base* control_base::find(std::string _name)
+	{
+		control_base* root = (control_base*)this;
+		while (root->parent)
+		{
+			root = (control_base*)root->parent;
+		}
+		control_base* result = control_base::get(root, _name);
+		return result;
+	}
+
+	control_base* control_base::get(control_base* _root, std::string _name)
+	{
+		control_base* result = _root->find_if([_name](control_base* c) { return c->name == _name; });
 		return result;
 	}
 

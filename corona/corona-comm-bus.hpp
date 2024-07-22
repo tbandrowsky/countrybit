@@ -218,6 +218,19 @@ namespace corona
 			co_return j;
 		}
 
+		virtual comm_bus_transaction<json>  create_object(std::string class_name)
+		{
+			json_parser jp;
+			json request = jp.create_object();
+			request.put_member("Token", admin_user);
+			json data = jp.create_object();
+			data.put_member("ClassName", class_name);
+			request.put_member("Data", data);
+			json response = co_await local_db->create_object(request);
+			response = response["Data"];
+			co_return response;
+		}
+
 		virtual comm_bus_transaction<json>  put_object(json object_information)
 		{
 			json_parser jp;
@@ -225,6 +238,7 @@ namespace corona
 			request.put_member("Token", admin_user);
 			request.put_member("Data", object_information);
 			json response = co_await local_db->put_object(request);
+			response = response["Data"];
 			co_return response;
 		}
 
@@ -235,6 +249,7 @@ namespace corona
 			request.put_member("Token", admin_user);
 			request.put_member("Data", object_information);
 			json response = co_await local_db->put_object(request);
+			response = response["Data"];
 			co_return response;
 		}
 
@@ -245,6 +260,7 @@ namespace corona
 			request.put_member("Token", admin_user);
 			request.put_member("Data", object_information);
 			json response = co_await local_db->put_object(request);
+			response = response["Data"];
 			co_return response;
 		}
 
@@ -255,6 +271,7 @@ namespace corona
 			request.put_member("Token", admin_user);
 			request.put_member("Data", user_information);
 			json response = co_await local_db->put_object(request);
+			response = response["Data"];
 			co_return response;
 		}
 
@@ -265,6 +282,7 @@ namespace corona
 			request.put_member("Token", admin_user);
 			request.put_member("Data", query_information);
 			json response = co_await local_db->query_class(request);
+			response = response["Data"];
 			co_return response;
 		}
 
@@ -298,6 +316,11 @@ namespace corona
 			co_return ld;
 		}
 
+		virtual control_base* find_control(std::string _name)
+		{
+			return presentation_layer->find_ptr<control_base>(_name);
+		}
+
 		virtual control_base* find_control(int _id)
 		{
 			return presentation_layer->find_ptr<control_base>(_id);
@@ -313,12 +336,12 @@ namespace corona
 				});
 		}
 
-		virtual void select_page(std::string _page, int _target_control_id, json _obj)
+		virtual void select_page(std::string _page, std::string _target_control, json _obj)
 		{
-			run_ui([this, _page, _obj, _target_control_id]() ->void {
+			run_ui([this, _page, _target_control, _obj]() ->void {
 				presentation_layer->select_page(_page);
-				if (_target_control_id > 0) {
-					control_base* cb = presentation_layer->find_ptr<control_base>(_target_control_id);
+				if (!_target_control.empty()) {
+					control_base* cb = find_control(_target_control);
 					if (cb) {
 						cb->set_data(_obj);
 					}

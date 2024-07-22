@@ -461,6 +461,13 @@ namespace corona
 			data_changed();
 		}
 
+		virtual json set_items(json _data)
+		{
+			choices.items = _data;
+			return _data;
+			data_changed();
+		}
+
 	};
 
 	class list_control_base : public windows_control
@@ -563,6 +570,13 @@ namespace corona
 		void set_list(list_data& _choices)
 		{
 			choices = _choices;
+			data_changed();
+		}
+
+		virtual json set_items(json _data)
+		{
+			choices.items = _data;
+			return _data;
 			data_changed();
 		}
 
@@ -733,6 +747,12 @@ namespace corona
 			data_changed();
 		}
 
+		virtual json set_items(json _data)
+		{
+			choices.items = _data;
+			return _data;
+			data_changed();
+		}
 
 
 	};

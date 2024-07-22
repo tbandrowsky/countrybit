@@ -3055,14 +3055,15 @@ namespace corona
 
 	void corona_button_control::on_subscribe(presentation_base* _presentation, page_base* _page)
 	{
-		_page->on_command(this->id, [this, _presentation, _page](command_event evt)
+		control_base* cb = this;
+		_page->on_command(this->id, [this, cb, _presentation, _page](command_event evt)
 			{
 				disable();
 				if (command) {
 					if (!command->bus) {
 						command->bus = evt.bus;
 					}
-					auto transaction = command->execute();
+					auto transaction = command->execute(cb);
 					transaction.wait();
 				}
 				enable();

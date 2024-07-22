@@ -400,8 +400,30 @@
                         "class_name": "select_page_command",
                         "page_name": "home"
                       }
+                    },
+                    {
+                      "class_name": "corona_button",
+                      "text": "New Event",
+                      "box": {
+                        "width": {
+                          "amount": 150,
+                          "units": "pixels"
+                        },
+                        "height": {
+                          "amount": 65,
+                          "units": "pixels"
+                        }
+                      },
+                      "margin": {
+                        "amount": 20,
+                        "units": "pixels"
+                      },
+                      "command": {
+                        "class_name": "new_object_command",
+                        "corona_class_name": "HistoricalEvent",
+                        "form_name" :  "EventDetail"
+                      }
                     }
-
                   ]
                 }
               ]
