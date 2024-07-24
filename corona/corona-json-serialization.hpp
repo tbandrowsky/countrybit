@@ -73,7 +73,7 @@ namespace corona
 	}
 	void put_json(measure& _dest, json& _src)
 	{
-		if (_src.is_empty())
+		if (_src.empty())
 			return;
 
 		std::vector<std::string> missing;
@@ -154,7 +154,7 @@ namespace corona
 	{
 		json jx, jy, jwidth, jheight;
 
-		if (_src.is_empty())
+		if (_src.empty())
 			return;
 
 		std::vector<std::string> missing;
@@ -172,8 +172,8 @@ namespace corona
 		jy = _src["y"];
 		jwidth = _src["width"];
 		jheight = _src["height"];
-		if (!jx.is_empty()) put_json(_dest.x, jx);
-		if (!jy.is_empty()) put_json(_dest.y, jy);
+		if (!jx.empty()) put_json(_dest.x, jx);
+		if (!jy.empty()) put_json(_dest.y, jy);
 		put_json(_dest.width, jwidth);
 		put_json(_dest.height, jheight);
 	}
@@ -189,7 +189,7 @@ namespace corona
 	void put_json(rectangle& _dest, json& _src)
 	{
 
-		if (_src.is_empty())
+		if (_src.empty())
 			return;
 
 		std::vector<std::string> missing;

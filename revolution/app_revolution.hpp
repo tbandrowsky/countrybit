@@ -871,7 +871,7 @@ namespace corona
 				std::string control_name = "fv_" + class_name + "_" + field_name;
 				new_field.field_id = presentation_layer->get_control_id(control_name, []() { return id_counter::next(); });
 
-				if (field.second.is_object())
+				if (field.second.object())
 				{
 					field_options = field.second;
 					field_type = field_options["FieldType"];
@@ -890,7 +890,7 @@ namespace corona
 					new_field.tooltip_text = "";
 				}
 
-				if (field_choices.is_object())
+				if (field_choices.object())
 				{
 					new_field.field_type = "combobox";
 					ids.fields.push_back(new_field);
@@ -939,7 +939,7 @@ namespace corona
 					json_parser jp;
 
 					ads.data = edited_data[field_name];
-					if (ads.data.is_empty()) {
+					if (ads.data.empty()) {
 						ads.data = jp.create_array();
 					}
 
@@ -948,7 +948,7 @@ namespace corona
 					if (edited_build.has_member(field_name))
 					{
 						child_create_options = edited_build[field_name];
-						if (child_create_options.is_array())
+						if (child_create_options.array())
 						{
 							for (int i = 0; i < child_create_options.size(); i++)
 							{
@@ -1033,7 +1033,7 @@ namespace corona
 						cb.row_begin(id_counter::next(), [_pane, corapi, token](row_layout& _rl) {
 							for (auto& co : _pane.create_objects)
 							{
-								if (co.is_object()) {
+								if (co.object()) {
 									control_builder rb;
 									rb.calico_button(id_counter::next(), [co, corapi, token](calico_button_control& _cb) {
 										_cb.options.corona_client = corapi;
@@ -1046,7 +1046,7 @@ namespace corona
 
 							for (auto& cc : _pane.create_classes)
 							{
-								if (cc.is_object()) {
+								if (cc.object()) {
 									control_builder rb;
 									rb.calico_button(id_counter::next(), [cc, corapi, token](calico_button_control& _cb) {
 										std::string option_name = "Subclass " + cc["Data"]["BaseClassName"];

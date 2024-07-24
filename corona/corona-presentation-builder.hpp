@@ -94,8 +94,91 @@ namespace corona
 		bool		  is_default_focus;
 		json		  control_settings;
 		measure		  visualization_height;
+		layout_rect	  box;
 		std::function<void(form_field_control* _src, draw_control* _dest)> draw_visualization;
-		function_bag<control_base>  settings;
+
+		form_field()
+		{
+			field_id = {};
+			read_only = false;
+			is_default_focus = false;
+			box.width = 300.0_px;
+			box.height = 100.0_px;
+		}
+
+		form_field(const form_field& _src)
+		{
+			field_id = _src.field_id;
+			json_member_name = _src.json_member_name;
+			label_text = _src.label_text;
+			class_name = _src.class_name;
+			tooltip_text = _src.tooltip_text;
+			input_format = _src.input_format;
+			suffix = _src.suffix;
+			prefix = _src.prefix;
+			read_only = _src.read_only;
+			is_default_focus = _src.is_default_focus;
+			control_settings = _src.control_settings;
+			visualization_height = _src.visualization_height;
+			box = _src.box;
+			draw_visualization = _src.draw_visualization;
+		}
+
+		form_field(form_field&& _src)
+		{
+			field_id = _src.field_id;
+			json_member_name = std::move(_src.json_member_name);
+			label_text = std::move(_src.label_text);
+			class_name = std::move(_src.class_name);
+			tooltip_text = std::move(_src.tooltip_text);
+			input_format = std::move(_src.input_format);
+			suffix = std::move(_src.suffix);
+			prefix = std::move(_src.prefix);
+			read_only = _src.read_only;
+			is_default_focus = _src.is_default_focus;
+			control_settings = _src.control_settings;
+			visualization_height = _src.visualization_height;
+			box = std::move(_src.box);
+			draw_visualization = std::move(_src.draw_visualization);
+		}
+
+		form_field& operator = (const form_field& _src)
+		{
+			field_id = _src.field_id;
+			json_member_name = _src.json_member_name;
+			label_text = _src.label_text;
+			class_name = _src.class_name;
+			tooltip_text = _src.tooltip_text;
+			input_format = _src.input_format;
+			suffix = _src.suffix;
+			prefix = _src.prefix;
+			read_only = _src.read_only;
+			is_default_focus = _src.is_default_focus;
+			control_settings = _src.control_settings;
+			visualization_height = _src.visualization_height;
+			box = _src.box;
+			draw_visualization = _src.draw_visualization;
+			return *this;
+		}
+
+		form_field operator = (form_field&& _src)
+		{
+			field_id = _src.field_id;
+			json_member_name = std::move(_src.json_member_name);
+			label_text = std::move(_src.label_text);
+			class_name = std::move(_src.class_name);
+			tooltip_text = std::move(_src.tooltip_text);
+			input_format = std::move(_src.input_format);
+			suffix = std::move(_src.suffix);
+			prefix = std::move(_src.prefix);
+			read_only = _src.read_only;
+			is_default_focus = _src.is_default_focus;
+			control_settings = _src.control_settings;
+			visualization_height = _src.visualization_height;
+			box = std::move(_src.box);
+			draw_visualization = std::move(_src.draw_visualization);
+			return *this;
+		}
 
 		virtual void get_json(json& _dest)
 		{
@@ -115,6 +198,8 @@ namespace corona
 			json jsource_list = jp.create_object();
 			json jsource_table = jp.create_object();
 			json jvisualization_height = jp.create_object();
+			json jbox = jp.create_object();
+			corona::get_json(jbox, box);
 			corona::get_json(jvisualization_height, visualization_height);
 			_dest.put_member("visualization", jvisualization_height);
 		}
@@ -133,8 +218,10 @@ namespace corona
 			is_default_focus = (bool)_src.get_member("is_default_focus");
 			control_settings = _src.get_member("control_settings");
 
-			json jvisualization_height = _src["visualization"];
+			json jbox = _src["box"];
+			corona::put_json(box, jbox);
 
+			json jvisualization_height = _src["visualization"];
 			corona::put_json(visualization_height, jvisualization_height);
 
 		}
@@ -1279,13 +1366,17 @@ namespace corona
 					});
 			}
 
-			if (field_def.control_settings.is_empty())
+			if (field_def.control_settings.empty())
 			{
 				field_def.control_settings = jp.create_object();
 			}
 
-			field_def.control_settings.copy_member("id", field_def.control_settings);
-			field_def.control_settings.copy_member("class_name", field_def.control_settings);
+			field_def.control_settings.put_member("id", field_def.field_id);
+			field_def.control_settings.put_member("class_name", field_def.class_name);
+			json jbox = jp.create_object();
+			corona::get_json(jbox, field_def.box);
+			field_def.control_settings.put_member("box", jbox);
+
 			cb.from_json(field_def.control_settings);
 			field = cb.get<control_base>(field_def.control_settings);
 
@@ -1356,12 +1447,13 @@ namespace corona
 			corona::put_json(item_box, jitembox);
 			fields.clear();
 			json field_array = _src["fields"];
-			if (field_array.is_array()) 
+			if (field_array.array()) 
 			{
 				for (auto fld : field_array) 
 				{
 					form_field ff;
 					ff.put_json(fld);
+					
 					fields.push_back(ff);
 				}
 			}
@@ -1411,7 +1503,7 @@ namespace corona
 				control_base *cb = find(ctrl.field_id);
 				if (cb) {
 					json field = cb->get_data();
-					if (field.is_object())
+					if (field.object())
 					{
 						for (auto member : field.get_members())
 						{
@@ -2326,16 +2418,16 @@ namespace corona
 		json control_data = control_properties["data"];
 		json box_properties = control_properties["box"];
 
-		if (box_properties.is_empty()) 
+		if (box_properties.empty()) 
 		{
 			box_properties = jp.create_object();
 			layout_rect lay = _default;
-			if (!_control_properties["width"].is_empty()) 
+			if (!_control_properties["width"].empty()) 
 			{
 				json jw = _control_properties["width"];
 				corona::put_json(lay.width, jw);
 			}
-			if (!_control_properties["height"].is_empty()) 
+			if (!_control_properties["height"].empty()) 
 			{
 				json jh = _control_properties["height"];
 				corona::put_json(lay.height, jh);
@@ -2743,7 +2835,7 @@ namespace corona
 
 		if (ret) {
 			json children = _control_properties.get_member("children");
-			if (children.is_array()) {
+			if (children.array()) {
 
 				control_builder cb;
 				for (auto child : children)
@@ -2826,7 +2918,7 @@ namespace corona
 			data = _data;
 			if (_data.has_member(json_field_name)) {
 				json field_items = _data[json_field_name];
-				if (field_items.is_array()) {
+				if (field_items.array()) {
 					json as_object = field_items.array_to_object(
 
 						[this](json& _item)->std::string {
@@ -2926,7 +3018,7 @@ namespace corona
 			data = _data;
 			if (_data.has_member(json_field_name)) {
 				json field_items = _data[json_field_name];
-				if (field_items.is_array()) {
+				if (field_items.array()) {
 					json as_object = field_items.array_to_object(
 
 						[this](json& _item)->std::string {

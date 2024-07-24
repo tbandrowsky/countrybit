@@ -470,7 +470,7 @@ namespace corona
 
 		bool has_members(std::vector<std::string> _src)
 		{
-			if (!is_object())
+			if (!object())
 				return false;
 
 			for (auto s : _src) {
@@ -482,7 +482,7 @@ namespace corona
 
 		bool has_members(std::vector<std::string>& _missing, std::vector<std::string> _src)
 		{
-			if (!is_object())
+			if (!object())
 				return false;
 
 			bool good = true;
@@ -571,27 +571,27 @@ namespace corona
 			return (bool)string_impl;
 		}
 
-		bool is_array() const
+		bool array() const
 		{
 			return (bool)array_impl;
 		}
 
-		bool is_object() const
+		bool object() const
 		{
 			return (bool)object_impl;
 		}
 
-		bool is_function() const
+		bool function() const
 		{
 			return (bool)function_impl;
 		}
 
-		bool is_empty() const
+		bool empty() const
 		{
 			return value_base == nullptr;
 		}
 
-		bool is_error()
+		bool error()
 		{
 			return has_member("ClassName") && (std::string)get_member("ClassName") == "SysParseError";
 		}
@@ -759,7 +759,7 @@ namespace corona
 		
 		operator buffer()
 		{
-			if (!is_empty()) 
+			if (!empty()) 
 			{
 				std::string temp_s = to_json();
 				int sz = temp_s.size();
@@ -802,18 +802,18 @@ namespace corona
 		void assign_update(json _member)
 		{
 
-			if (_member.is_empty())
+			if (_member.empty())
 			{
 				return;
 			}
 
-			if (is_empty())
+			if (empty())
 			{
 				set(_member.value_base);
 				return;
 			}
 
-			if (_member.is_object() && is_object()) 
+			if (_member.object() && object()) 
 			{
 				auto members = _member.get_members_raw();
 
@@ -827,7 +827,7 @@ namespace corona
 		void append_array(json _src)
 		{
 			if (array_impl) {
-				if (_src.is_array()) {
+				if (_src.array()) {
 					for (json item : _src) {
 						array_impl->elements.push_back(item.value_base->clone());
 					}
@@ -1005,7 +1005,7 @@ namespace corona
 			if (!object_impl) {
 				throw std::logic_error("Not an object");
 			}
-			if (_member.is_array()) {
+			if (_member.array()) {
 				put_member_array(_key, _member);
 			}
 			else if (_member.is_double()) {
@@ -1020,7 +1020,7 @@ namespace corona
 				date_time d = _member;
 				put_member(_key, d);
 			}
-			else if (_member.is_object()) {
+			else if (_member.object()) {
 				put_member_object(_key, _member);
 			}
 			else if (_member.is_string()) {
@@ -1031,7 +1031,7 @@ namespace corona
 				std::string d = _member;
 				put_member(_key, d);
 			}
-			else if (_member.is_function()) {
+			else if (_member.function()) {
 				put_member_function(_key, _member);
 			}
 			return *this;
@@ -1307,7 +1307,7 @@ namespace corona
 				throw std::logic_error("Not an array");
 			}
 
-			if (_element.is_array()) {
+			if (_element.array()) {
 				put_element_array(_index, _element);
 			}
 			else if (_element.is_double()) {
@@ -1322,7 +1322,7 @@ namespace corona
 				date_time timex = _element;
 				put_element(_index, timex);
 			}
-			else if (_element.is_object()) {
+			else if (_element.object()) {
 				put_element_object(_index, _element);
 			}
 			else if (_element.is_string()) {
@@ -1468,17 +1468,17 @@ namespace corona
 		{
 			int comparison = 0;
 
-			if (is_object() && !_item.is_object())
+			if (object() && !_item.object())
 			{
 				return 1;
 			}
 
-			if (!is_object() && _item.is_object())
+			if (!object() && _item.object())
 			{
 				return -1;
 			}
 
-			if (!is_object() && !_item.is_object()) 
+			if (!object() && !_item.object()) 
 			{
 				throw std::logic_error("At least one of the being compared must be json_object (not array or value, yet)");
 			}
@@ -1544,7 +1544,7 @@ namespace corona
 
 					comparison = dtst_src.compare(dtst_dst);
 				}
-				else if (member_src.is_object() || member_src.is_array() || member_src.is_function())
+				else if (member_src.object() || member_src.array() || member_src.function())
 				{
 					json dtst_src, dtst_dst;
 					dtst_src = member_src;
@@ -1687,7 +1687,7 @@ namespace corona
 				for (int i = 0; i < size(); i++)
 				{
 					auto element = get_element(i);
-					if (element.is_object()) {
+					if (element.object()) {
 						std::string key = _get_key(element);
 						json new_item = _get_payload(element);
 						if (result_item.has_member(key)) 
@@ -1719,7 +1719,7 @@ namespace corona
 				for (auto member: members)
 				{
 					json new_object = _get_payload(member.first, member.second);
-					if (!new_object.is_empty()) {
+					if (!new_object.empty()) {
 						result_item.append_element(new_object);
 					}
 				}
@@ -1742,7 +1742,7 @@ namespace corona
 				{
 					auto element = get_element(i);
 					auto new_element = _transform("", i, element);
-					if (new_element.is_array()) {
+					if (new_element.array()) {
 						for (int i = 0; i < new_element.size(); i++) {
 							json j = new_element.get_element(i);
 							result_item.append_element( j);
@@ -1761,7 +1761,7 @@ namespace corona
 				for (auto member : members)
 				{
 					auto new_member = _transform(member.first, 0, member.second);
-					if (new_member.is_object()) {
+					if (new_member.object()) {
 						auto members = new_member.get_members();
 						for (auto member : members) {
 							if (!result_item.has_member(member.first)) {

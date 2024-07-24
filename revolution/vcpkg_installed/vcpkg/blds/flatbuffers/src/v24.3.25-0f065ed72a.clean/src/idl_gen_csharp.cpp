@@ -2235,9 +2235,9 @@ class CSharpGenerator : public BaseGenerator {
     for (auto it = struct_def.fields.vec.begin();
          it != struct_def.fields.vec.end(); ++it) {
       auto &field = **it;
-      auto is_array = IsArray(field.value.type);
+      auto array = IsArray(field.value.type);
       const auto &field_type =
-          is_array ? field.value.type.VectorType() : field.value.type;
+          array ? field.value.type.VectorType() : field.value.type;
       FieldArrayLength tmp_array_length = {
         field.name,
         field_type.fixed_length,

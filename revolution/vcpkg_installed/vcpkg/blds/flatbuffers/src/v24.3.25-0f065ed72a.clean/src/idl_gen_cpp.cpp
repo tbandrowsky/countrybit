@@ -1148,8 +1148,8 @@ class CppGenerator : public BaseGenerator {
     for (auto &type : types) {
       if (!ts.empty()) ts += ",\n    ";
       auto is_vector = IsVector(type);
-      auto is_array = IsArray(type);
-      auto bt = is_vector || is_array ? type.element : type.base_type;
+      auto array = IsArray(type);
+      auto bt = is_vector || array ? type.element : type.base_type;
       auto et = IsScalar(bt) || bt == BASE_TYPE_STRING
                     ? bt - BASE_TYPE_UTYPE + ET_UTYPE
                     : ET_SEQUENCE;
@@ -1170,9 +1170,9 @@ class CppGenerator : public BaseGenerator {
           type_refs.push_back(ref_name);
         }
       }
-      if (is_array) { array_sizes.push_back(type.fixed_length); }
+      if (array) { array_sizes.push_back(type.fixed_length); }
       ts += "{ ::flatbuffers::" + std::string(ElementaryTypeNames()[et]) +
-            ", " + NumToString(is_vector || is_array) + ", " +
+            ", " + NumToString(is_vector || array) + ", " +
             NumToString(ref_idx) + " }";
     }
     std::string rs;
@@ -2333,7 +2333,7 @@ class CppGenerator : public BaseGenerator {
       code_.SetValue("LHS", lhs_struct_literal + "_" + curr_field_name);
       code_.SetValue("RHS", rhs_struct_literal + "_" + curr_field_name);
       const bool is_scalar = IsScalar(curr_field->value.type.base_type);
-      const bool is_array = IsArray(curr_field->value.type);
+      const bool array = IsArray(curr_field->value.type);
       const bool is_struct = IsStruct(curr_field->value.type);
 
       // If encouter a key field, call KeyCompareWithValue to compare this
@@ -2359,7 +2359,7 @@ class CppGenerator : public BaseGenerator {
         code_ += space +
                  "  return static_cast<int>({{LHS}} > {{RHS}}) - "
                  "static_cast<int>({{LHS}} < {{RHS}});";
-      } else if (is_array) {
+      } else if (array) {
         const auto &elem_type = curr_field->value.type.VectorType();
         code_ +=
             space +
@@ -2400,7 +2400,7 @@ class CppGenerator : public BaseGenerator {
   void GenKeyFieldMethods(const FieldDef &field) {
     FLATBUFFERS_ASSERT(field.key);
     const bool is_string = IsString(field.value.type);
-    const bool is_array = IsArray(field.value.type);
+    const bool array = IsArray(field.value.type);
     const bool is_struct = IsStruct(field.value.type);
     // Generate KeyCompareLessThan function
     code_ +=
@@ -2408,7 +2408,7 @@ class CppGenerator : public BaseGenerator {
     if (is_string) {
       // use operator< of ::flatbuffers::String
       code_ += "    return *{{FIELD_NAME}}() < *o->{{FIELD_NAME}}();";
-    } else if (is_array || is_struct) {
+    } else if (array || is_struct) {
       code_ += "    return KeyCompareWithValue(o->{{FIELD_NAME}}()) < 0;";
     } else {
       code_ += "    return {{FIELD_NAME}}() < o->{{FIELD_NAME}}();";
@@ -2431,7 +2431,7 @@ class CppGenerator : public BaseGenerator {
           "    if ({{FIELD_NAME}}()->c_str() < _{{FIELD_NAME}}) return -1;";
       code_ += "    if (_{{FIELD_NAME}} < {{FIELD_NAME}}()->c_str()) return 1;";
       code_ += "    return 0;";
-    } else if (is_array) {
+    } else if (array) {
       const auto &elem_type = field.value.type.VectorType();
       std::string input_type = "::flatbuffers::Array<" +
                                GenTypeGet(elem_type, "", "", "", false) + ", " +
@@ -2595,10 +2595,10 @@ class CppGenerator : public BaseGenerator {
   }
 
   void GenStructFieldType(const FieldDef &field) {
-    const auto is_array = IsArray(field.value.type);
+    const auto array = IsArray(field.value.type);
     std::string field_type =
-        GenTypeGet(field.value.type, "", is_array ? "" : "const ",
-                   is_array ? "" : " &", true);
+        GenTypeGet(field.value.type, "", array ? "" : "const ",
+                   array ? "" : " &", true);
     code_.SetValue("FIELD_TYPE", field_type);
     code_ += "    {{FIELD_TYPE}}\\";
   }
@@ -3826,24 +3826,24 @@ class CppGenerator : public BaseGenerator {
          it != struct_def.fields.vec.end(); ++it) {
       const auto &field = **it;
       const auto &type = field.value.type;
-      const auto is_array = IsArray(type);
+      const auto array = IsArray(type);
       const auto arg_name = "_" + Name(field);
-      if (!is_array || init_arrays) {
+      if (!array || init_arrays) {
         if (it != first && !arg_list.empty()) { arg_list += ", "; }
-        arg_list += !is_array ? GenTypeGet(type, " ", "const ", " &", true)
+        arg_list += !array ? GenTypeGet(type, " ", "const ", " &", true)
                               : GenTypeSpan(type, true, type.fixed_length);
         arg_list += arg_name;
       }
       // skip an array with initialization from span
-      if (false == (is_array && init_arrays)) {
+      if (false == (array && init_arrays)) {
         if (it != first && !init_list.empty()) { init_list += ",\n        "; }
         init_list += Name(field) + "_";
         if (IsScalar(type.base_type)) {
           auto scalar_type = GenUnderlyingCast(field, false, arg_name);
           init_list += "(::flatbuffers::EndianScalar(" + scalar_type + "))";
         } else {
-          FLATBUFFERS_ASSERT((is_array && !init_arrays) || IsStruct(type));
-          if (!is_array)
+          FLATBUFFERS_ASSERT((array && !init_arrays) || IsStruct(type));
+          if (!array)
             init_list += "(" + arg_name + ")";
           else
             init_list += "()";
@@ -3978,10 +3978,10 @@ class CppGenerator : public BaseGenerator {
     for (const auto &field : struct_def.fields.vec) {
       const auto &type = field->value.type;
       const auto is_scalar = IsScalar(type.base_type);
-      const auto is_array = IsArray(type);
+      const auto array = IsArray(type);
 
-      const auto field_type = GenTypeGet(type, " ", is_array ? "" : "const ",
-                                         is_array ? "" : " &", true);
+      const auto field_type = GenTypeGet(type, " ", array ? "" : "const ",
+                                         array ? "" : " &", true);
       auto member = Name(*field) + "_";
       const std::string &value =
           is_scalar ? "::flatbuffers::EndianScalar(" + member + ")" : member;
@@ -3993,7 +3993,7 @@ class CppGenerator : public BaseGenerator {
       GenComment(field->doc_comment, "  ");
 
       // Generate a const accessor function.
-      if (is_array) {
+      if (array) {
         GenArrayAccessor(type, false);
       } else {
         code_ += "  {{FIELD_TYPE}}{{FIELD_NAME}}() const {";
@@ -4004,7 +4004,7 @@ class CppGenerator : public BaseGenerator {
       // Generate a mutable accessor function.
       if (opts_.mutable_buffer) {
         auto mut_field_type =
-            GenTypeGet(type, " ", "", is_array ? "" : " &", true);
+            GenTypeGet(type, " ", "", array ? "" : " &", true);
         code_.SetValue("FIELD_TYPE", mut_field_type);
         if (is_scalar) {
           code_.SetValue("ARG", GenTypeBasic(type, true));
@@ -4016,7 +4016,7 @@ class CppGenerator : public BaseGenerator {
               "    ::flatbuffers::WriteScalar(&{{FIELD_NAME}}_, "
               "{{FIELD_VALUE}});";
           code_ += "  }";
-        } else if (is_array) {
+        } else if (array) {
           GenArrayAccessor(type, true);
         } else {
           code_ += "  {{FIELD_TYPE}}mutable_{{FIELD_NAME}}() {";

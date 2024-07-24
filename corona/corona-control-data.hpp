@@ -134,7 +134,7 @@ namespace corona
 
 			json jcolumns = _src["columns"];
 
-			if (jcolumns.is_array()) 
+			if (jcolumns.array()) 
 			{
 				for (auto jtc : jcolumns)
 				{

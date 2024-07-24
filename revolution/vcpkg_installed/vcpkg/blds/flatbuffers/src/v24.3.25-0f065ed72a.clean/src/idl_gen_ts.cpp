@@ -1049,7 +1049,7 @@ class TsGenerator : public BaseGenerator {
   std::string GenUnionValTS(import_set &imports, const StructDef &dependent,
                             const std::string &field_name,
                             const Type &union_type,
-                            const bool is_array = false) {
+                            const bool array = false) {
     if (union_type.enum_def) {
       const auto &enum_def = *union_type.enum_def;
       const auto enum_type = AddImport(imports, dependent, enum_def).name;
@@ -1060,7 +1060,7 @@ class TsGenerator : public BaseGenerator {
 
       std::string ret;
 
-      if (!is_array) {
+      if (!array) {
         const auto conversion_function = GenUnionConvFuncName(enum_def);
 
         ret = "(() => {\n";

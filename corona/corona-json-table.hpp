@@ -515,7 +515,7 @@ namespace corona
 			relative_ptr_type n = co_await find_node(key);
 			if (n != null_row) {
 				json_node r = co_await get_node(database_file.get(), n);
-				if (!r.data.is_empty()) {
+				if (!r.data.empty()) {
 					result = r.data.extract(include_fields);
 				}
 			}
@@ -539,7 +539,7 @@ namespace corona
 		{
 			json_parser jp;
 			json jx = jp.parse_object(_json);
-			if (jx.is_empty() || jx.is_member("ClassName", "SysParseError")) {
+			if (jx.empty() || jx.is_member("ClassName", "SysParseError")) {
 				std::cout << jx.to_json() << std::endl;
 				co_return null_row;
 			}
@@ -804,7 +804,7 @@ namespace corona
 				{
 					relative_ptr_type count = 0;
 					json new_item = _project(_index, _data);
-					if (!new_item.is_empty() && !new_item.is_member("Skip", "this")) {
+					if (!new_item.empty() && !new_item.is_member("Skip", "this")) {
 						pja->append_element(new_item);
 						count = 1;
 					}
@@ -827,7 +827,7 @@ namespace corona
 				{
 					relative_ptr_type count = 0;
 					json new_item = _project(_index, _data);
-					if (!new_item.is_empty() && !new_item.is_member("Skip", "this")) {
+					if (!new_item.empty() && !new_item.is_member("Skip", "this")) {
 						pja->append_element(new_item);
 						count = 1;
 					}
@@ -850,13 +850,13 @@ namespace corona
 			int64_t count = co_await co_for_each(_key_fragment, [this, _group_by, pdestination, _project, _get_child_key](int _index, json& _data) -> table_transaction<int64_t>
 				{
 					json new_item = _project(_index, _data);
-					if (!new_item.is_empty()) {
+					if (!new_item.empty()) {
 						json group_key = new_item.extract(_group_by);
 						std::string member_name = group_key.to_key();
 						if (pdestination->has_member(member_name))
 						{
 							json jx = pdestination->get_member(member_name);
-							if (jx.is_array())
+							if (jx.array())
 							{
 								jx.append_element(new_item);
 							}
@@ -869,7 +869,7 @@ namespace corona
 							pdestination->put_member_array(member_name, item_array);
 
 							json child_key = _get_child_key(_index, _data);
-							if (child_key.is_object()) {
+							if (child_key.object()) {
 								auto children_task = select_object(*pdestination, child_key, _project, _get_child_key, _group_by);
 								children_task.wait();
 							}

@@ -981,7 +981,7 @@ namespace corona {
 		json_pages = _json_pages;
 		std::string default_page_name;
 
-		if (json_pages.is_error()) {
+		if (json_pages.error()) {
 			pages.clear();
 			create_page("errors", [this](page& _pg) {
 				control_builder cb(_pg.get_root_container());
@@ -1051,7 +1051,7 @@ namespace corona {
 		}
 
 		json jstyles = json_pages.get_member("styles");
-		if (jstyles.is_array())
+		if (jstyles.array())
 		{
 			for (auto js : jstyles) {
 				presentation_style_factory::get_current()->load_style_sheet(js);
@@ -1060,12 +1060,12 @@ namespace corona {
 
 		json jpages = json_pages.get_member("pages");
 		
-		if (jpages.is_array())
+		if (jpages.array())
 		{
 			pages.clear();
 			for (auto pg : jpages)
 			{
-				if (pg.is_object()) {
+				if (pg.object()) {
 					std::string class_name = pg["class_name"];
 					if (class_name == "page") {
 						bool is_default = (bool)pg["default"];
@@ -1085,7 +1085,7 @@ namespace corona {
 								control_builder cb(root);
 								cb.bus = bus;
 								json jchildren = pg["children"];
-								if (jchildren.is_array()) {	
+								if (jchildren.array()) {	
 									for (auto jchild : jchildren) 
 									{
 										auto child = cb.from_json(jchild);

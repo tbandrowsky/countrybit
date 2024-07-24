@@ -259,7 +259,7 @@ namespace corona
 			control_base::put_json(_src);
 
 			json jview_style = _src["view_style"];
-			if (jview_style.is_object()) {
+			if (jview_style.object()) {
 
 				if (view_style)
 					view_style = std::make_shared<viewStyleRequest>(*view_style);

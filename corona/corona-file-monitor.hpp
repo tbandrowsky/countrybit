@@ -27,7 +27,7 @@ namespace corona
 						last_contents = file_contents;
 						json_parser jp;
 						json tcontents = jp.parse_object(file_contents);
-						if (!tcontents.is_empty()) {
+						if (!tcontents.empty()) {
 							contents = tcontents;
 							pt = 1;
 						}

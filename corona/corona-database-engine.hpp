@@ -180,7 +180,7 @@ namespace corona
 			}
 
 			json test = co_await classes.get(R"({"ClassName":"SysObject"})");
-			if (test.is_empty() || test.is_member("ClassName", "SysParseError")) {
+			if (test.empty() || test.is_member("ClassName", "SysParseError")) {
 				std::cout << __FILE__ << " " << __LINE__ << ":Could not find class after creation." << std::endl;
 				co_return result;
 			}
@@ -207,7 +207,7 @@ namespace corona
 			}
 
 			test = co_await classes.get(R"({"ClassName":"SysReference"})");
-			if (test.is_empty() || test.is_member("ClassName", "SysParseError")) {
+			if (test.empty() || test.is_member("ClassName", "SysParseError")) {
 				std::cout << __FILE__ << " " << __LINE__ << ":Could not find class after creation." << std::endl;
 				co_return result;
 			}
@@ -243,7 +243,7 @@ namespace corona
 			}
 
 			test = co_await classes.get(R"({"ClassName":"SysUser"})");
-			if (test.is_empty() || test.is_member("ClassName", "SysParseError")) {
+			if (test.empty() || test.is_member("ClassName", "SysParseError")) {
 				std::cout << __FILE__ << " " << __LINE__ << ":Could not find class after creation." << std::endl;
 				co_return result;
 			}
@@ -276,7 +276,7 @@ namespace corona
 			}
 
 			test = co_await classes.get(R"({"ClassName":"SysLogin"})");
-			if (test.is_empty() || test.is_member("ClassName", "SysParseError")) {
+			if (test.empty() || test.is_member("ClassName", "SysParseError")) {
 				std::cout << __FILE__ << " " << __LINE__ << ":Could not find class after creation." << std::endl;
 				co_return result;
 			}
@@ -308,7 +308,7 @@ namespace corona
 			}
 
 			test = co_await classes.get(R"({"ClassName":"SysPermission"})");
-			if (test.is_empty() || test.is_member("ClassName", "SysParseError")) {
+			if (test.empty() || test.is_member("ClassName", "SysParseError")) {
 				std::cout << __FILE__ << " " << __LINE__ << ":Could not find class after creation." << std::endl;
 				co_return result;
 			}
@@ -341,7 +341,7 @@ namespace corona
 			}
 
 			test = co_await classes.get(R"({"ClassName":"SysMember"})");
-			if (test.is_empty() || test.is_member("ClassName", "SysParseError")) {
+			if (test.empty() || test.is_member("ClassName", "SysParseError")) {
 				std::cout << __FILE__ << " " << __LINE__ << ":Could not find class after creation." << std::endl;
 				co_return result;
 			}
@@ -370,7 +370,7 @@ namespace corona
 			}
 
 			test = co_await classes.get(R"({"ClassName":"SysGrant"})");
-			if (test.is_empty() || test.is_member("ClassName", "SysParseError")) {
+			if (test.empty() || test.is_member("ClassName", "SysParseError")) {
 				std::cout << __FILE__ << " " << __LINE__ << ":Could not find class after creation." << std::endl;
 				co_return result;
 			}
@@ -392,7 +392,7 @@ namespace corona
 			}
 
 			test = co_await classes.get(R"({"ClassName":"SysClassGrant"})");
-			if (test.is_empty() || test.is_member("ClassName", "SysParseError")) {
+			if (test.empty() || test.is_member("ClassName", "SysParseError")) {
 				std::cout << __FILE__ << " " << __LINE__ << ":Could not find class after creation." << std::endl;
 				co_return result;
 			}
@@ -417,7 +417,7 @@ namespace corona
 			}
 
 			test = co_await classes.get(R"({"ClassName":"SysObjectGrant"})");
-			if (test.is_empty() || test.is_member("ClassName", "SysParseError")) {
+			if (test.empty() || test.is_member("ClassName", "SysParseError")) {
 				std::cout << __FILE__ << " " << __LINE__ << ":Could not find class after creation." << std::endl;
 				co_return result;
 			}
@@ -450,7 +450,7 @@ namespace corona
 			}
 
 			test = co_await classes.get(R"({"ClassName":"SysTeam"})");
-			if (test.is_empty() || test.is_member("ClassName", "SysParseError")) {
+			if (test.empty() || test.is_member("ClassName", "SysParseError")) {
 				std::cout << __FILE__ << " " << __LINE__ << ":Could not find class after creation." << std::endl;
 				co_return result;
 			}
@@ -509,13 +509,13 @@ private:
 				if (ptr != null_row) {
 					json key = adjusted_class.extract({ "ClassName" });
 					json temp = co_await classes.get(key); 
-					if (temp.is_empty()) {
+					if (temp.empty()) {
 						response = create_response(check_request, false, "save check failed", adjusted_class, 0.0);
 						co_return response;
 					}
 					if (adjusted_class.has_member("Ancestors")) {
 						auto ancestors = adjusted_class["Ancestors"];
-						if (ancestors.is_object()) {
+						if (ancestors.object()) {
 							auto ancestor_classes = ancestors.get_members_raw();
 							for (auto acp : ancestor_classes) {
 								std::string acn = acp.first;
@@ -576,13 +576,13 @@ private:
 					base_class_def = co_await classes.get(class_key);
 				}
 
-				if (!base_class_def.is_object())
+				if (!base_class_def.object())
 				{
 					result = create_response(check_class_request, false, "Base class not found", class_definition, 0.0);
 				}
 
 				json ancestors = base_class_def["Ancestors"];
-				if (!ancestors.is_empty()) {
+				if (!ancestors.empty()) {
 					ancestors.put_member(base_class_name, base_class_name);
 					class_definition.put_member("Ancestors", ancestors);
 				}
@@ -610,7 +610,7 @@ private:
 				result = create_response(check_class_request, false, "Class must have a description", class_definition, 0.0);
 			}
 
-			if (!class_definition.has_member("Fields") || !class_definition["Fields"].is_object())
+			if (!class_definition.has_member("Fields") || !class_definition["Fields"].object())
 			{
 				result = create_response(check_class_request, false, "Class needs some fields", class_definition, 0.0);
 			}
@@ -632,7 +632,7 @@ private:
 							co_return result;
 						}
 					}
-					else if (jp.is_object())
+					else if (jp.object())
 					{
 						std::string field_type = jp["FieldType"];
 						if (!allowed_field_types.contains(field_type))
@@ -662,7 +662,7 @@ private:
 
 			result = create_response(check_object_request, true, "Ok", object_definition, 0.0);
 
-			if (!object_definition.is_object())
+			if (!object_definition.object())
 			{
 				result = create_response(check_object_request, false, "This is not an object", object_definition, 0);
 				co_return result;
@@ -695,7 +695,7 @@ private:
 
 				json class_data = co_await classes.get(key_boy);
 
-				if (!class_data.is_empty())
+				if (!class_data.empty())
 				{
 					result.put_member("ClassDefinition", class_data);
 					json field_definition = class_data["Fields"];
@@ -781,7 +781,7 @@ private:
 		{
 			json token = _message["Token"];
 
-			if (!token.is_object())
+			if (!token.object())
 			{
 				return false;
 			}
@@ -856,7 +856,7 @@ private:
 				objects_by_name_key.copy_member("Name", _object_key);
 				objects_by_name_key.set_compare_order({ "ClassName", "Name" });
 				json name_id = co_await objects_by_name.get_first(objects_by_name_key);
-				if (name_id.is_object()) {
+				if (name_id.object()) {
 					json object_key = jp.create_object();
 					object_key.copy_member("ObjectId", name_id);
 					object_key.set_natural_order();
@@ -889,7 +889,7 @@ private:
 				object_key.set_natural_order();
 				obj = co_await objects.get(object_key);
 			}
-			else if (_object_definition.is_object())
+			else if (_object_definition.object())
 			{
 				obj = _object_definition;
 			}
@@ -922,7 +922,7 @@ private:
 			user_key.put_member("ClassName", "SysUser");
 
 			user = co_await acquire_object(user_key);
-			if (user.is_empty()) {
+			if (user.empty()) {
 				co_return false;
 			}
 
@@ -977,7 +977,7 @@ private:
 			}
 
 			user = co_await acquire_object(user_key);
-			if (user.is_empty()) {
+			if (user.empty()) {
 				co_return false;
 			}
 
@@ -1042,7 +1042,7 @@ private:
 			// extract the user key from the token and get the user object
 			user_key.set_compare_order({ "ClassName", "Name" });
 			user = co_await acquire_object(user_key);
-			if (user.is_empty()) {
+			if (user.empty()) {
 				co_return false;
 			}
 
@@ -1099,7 +1099,7 @@ private:
 
 			json class_obj = co_await classes.get(class_key);
 
-			if (!class_obj.is_empty())
+			if (!class_obj.empty())
 			{
 				bool has_ancestor = class_obj["Ancestors"].has_member(_class_to_check);
 				co_return has_ancestor;
@@ -1117,7 +1117,7 @@ private:
 
 			json class_obj = co_await classes.get(class_key);
 
-			if (!class_obj.is_empty())
+			if (!class_obj.empty())
 			{
 				bool has_ancestor = class_obj["Ancestors"].has_member(_base_class);
 				co_return has_ancestor;
@@ -1168,7 +1168,7 @@ private:
 			if (_schema.has_member("Classes"))
 			{
 				json class_array = _schema["Classes"];
-				if (class_array.is_array())
+				if (class_array.array())
 				{
 					for (int i = 0; i < class_array.size(); i++)
 					{
@@ -1177,7 +1177,7 @@ private:
 						co_await create_class(put_class_request);
 					}
 				}
-				else if (class_array.is_object())
+				else if (class_array.object())
 				{
 					json class_definition = class_array;
 					json put_class_request = create_system_request(class_definition);
@@ -1192,7 +1192,7 @@ private:
 			if (_schema.has_member("Users"))
 			{
 				json user_array = _schema["Users"];
-				if (user_array.is_array())
+				if (user_array.array())
 				{
 					for (int i = 0; i < user_array.size(); i++)
 					{
@@ -1201,7 +1201,7 @@ private:
 						co_await create_user(put_user_request);
 					}
 				}
-				else if (user_array.is_object())
+				else if (user_array.object())
 				{
 					json user_definition = user_array;
 					json put_user_request = create_system_request(user_definition);
@@ -1212,7 +1212,7 @@ private:
 			if (_schema.has_member("Objects"))
 			{
 				json object_array = _schema["Objects"];
-				if (object_array.is_array())
+				if (object_array.array())
 				{
 					for (int i = 0; i < object_array.size(); i++)
 					{
@@ -1221,7 +1221,7 @@ private:
 						co_await create_user(put_object_request);
 					}
 				}
-				else if (object_array.is_object())
+				else if (object_array.object())
 				{
 					json object_definition = object_array;
 					json put_object_request = create_system_request(object_definition);
@@ -1263,7 +1263,7 @@ private:
 				user_key.set_compare_order({ "ClassName", "Name" });
 				json existing_user_link = co_await objects_by_name.get(user_key);
 
-				if (existing_user_link.is_object()) 
+				if (existing_user_link.object()) 
 				{
 					attempt_count++;
 					char buff[128];
@@ -1532,7 +1532,7 @@ private:
 			class_key.put_member("ClassName", class_name);
 			class_key.set_compare_order({ "ClassName" });
 			json class_exists = classes.get(class_key);
-			if (class_exists.is_object()) {
+			if (class_exists.object()) {
 				result = create_response(put_class_request, false, "Class already exists", class_definition, 0.0);
 				co_return result;
 			}
@@ -1544,7 +1544,7 @@ private:
 				relative_ptr_type ptr = co_await classes.put(adjusted_class);
 				if (ptr != null_row) {
 					auto ancestors = adjusted_class["Ancestors"];
-					if (ancestors.is_object()) {
+					if (ancestors.object()) {
 						auto ancestor_classes = ancestors.get_members_raw();
 						for (auto acp : ancestor_classes) {
 							std::string acn = acp.first;
@@ -1603,7 +1603,7 @@ private:
 				relative_ptr_type ptr = co_await classes.put(adjusted_class);
 				if (ptr != null_row) {
 					auto ancestors = adjusted_class["Ancestors"];
-					if (ancestors.is_object()) {
+					if (ancestors.object()) {
 						auto ancestor_classes = ancestors.get_members_raw();
 						for (auto acp : ancestor_classes) {
 							std::string acn = acp.first;
@@ -1730,7 +1730,7 @@ private:
 				class_data = co_await classes.get(class_key);
 			}
 
-			if (class_data.is_object()) {
+			if (class_data.object()) {
 				json field_definition = class_data["Fields"];
 				auto members = field_definition.get_members();
 				json new_object = jp.create_object();
@@ -1781,11 +1781,11 @@ private:
 							}
 						}
 					}
-					else if (jpx.is_object())
+					else if (jpx.object())
 					{
 						new_object.put_member_object(member.first);
 					}
-					else if (jpx.is_array())
+					else if (jpx.array())
 					{
 						new_object.put_member_array(member.first);
 					}
@@ -1904,7 +1904,7 @@ private:
 
 			response = create_response(pop_object_request, false, "Failed", object_key, 0.0);
 
-			if (object_def.is_object()) {
+			if (object_def.object()) {
 				bool success = co_await class_objects.erase(object_def);
 				if (success) {
 					success = co_await objects.erase(object_key);
@@ -1944,7 +1944,7 @@ private:
 
 			response = create_response(delete_object_request, false, "Failed", object_key, 0.0);
 
-			if (object_def.is_object()) {
+			if (object_def.object()) {
 				bool success = co_await class_objects.erase(object_def);
 				if (success) {
 					success = co_await objects.erase(object_key);

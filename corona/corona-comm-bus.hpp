@@ -120,7 +120,7 @@ namespace corona
 
 				auto admin_user_transaction = local_db->create_database();
 				admin_user = admin_user_transaction.wait();
-				if (admin_user.is_object()) {
+				if (admin_user.object()) {
 					std::string suser_json = admin_user.to_json();
 					io_buffer.set_buffer(suser_json);
 					file user_file = app->open_file(user_file_name, file_open_types::create_always);
@@ -164,17 +164,17 @@ namespace corona
 			{
 				// to do, at some point create a merge method in json proper.
 				json combined;
-				if (styles_json.is_object() && pages_json.is_object())
+				if (styles_json.object() && pages_json.object())
 				{
 					combined = styles_json.clone();
 					json jsrcstyles = pages_json["styles"].clone();
 					json jdststyles = combined["styles"];
 
-					if (jsrcstyles.is_array() && jdststyles.is_array()) 
+					if (jsrcstyles.array() && jdststyles.array()) 
 					{
 						jdststyles.append_array(jsrcstyles);
 					}
-					else if (jsrcstyles.is_array())
+					else if (jsrcstyles.array())
 					{
 						combined.put_member_array("styles", jsrcstyles);
 					}
@@ -182,11 +182,11 @@ namespace corona
 					json jsrcpages = pages_json["pages"].clone();
 					json jdstpages = combined["pages"];
 
-					if (jsrcpages.is_array() && jdstpages.is_array())
+					if (jsrcpages.array() && jdstpages.array())
 					{
 						jdstpages.append_array(jsrcpages);
 					}
-					else if (jsrcpages.is_array())
+					else if (jsrcpages.array())
 					{
 						combined.put_member_array("pages", jsrcpages);
 					}

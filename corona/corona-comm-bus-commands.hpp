@@ -51,7 +51,7 @@ namespace corona
 			control_base* cb = bus->find_control(table_name);
 			if (cb) {
 				json key_data = cb->get_selected_object();
-				if (key_data.is_object()) {
+				if (key_data.object()) {
 					obj = co_await bus->get_object(key_data);
 					bus->select_page(page_name, form_name, obj);
 				}
@@ -92,7 +92,7 @@ namespace corona
 				cb = _parent;
 			if (cb) {
 				json object_data = cb->get_data();
-				if (object_data.is_object()) {
+				if (object_data.object()) {
 					obj = co_await bus->put_object(object_data);
 				}
 			}
@@ -129,7 +129,7 @@ namespace corona
 				cb = _parent;
 
 			if (cb) {
-				if (object_data.is_object()) {
+				if (object_data.object()) {
 					obj = co_await bus->put_object(object_data);
 				}
 			}
@@ -166,7 +166,7 @@ namespace corona
 				cb = _parent;
 			if (cb) {
 				json object_data = cb->get_data();
-				if (object_data.is_object()) {
+				if (object_data.object()) {
 					obj = co_await bus->delete_object(object_data);
 				}
 			}
@@ -210,7 +210,7 @@ namespace corona
 
 			if (cb_form && cb_table) {
 				json object_data = cb_form->get_data();
-				if (object_data.is_object()) {
+				if (object_data.object()) {
 					obj = co_await bus->query_objects(object_data);
 					if (cb_table) {
 						cb_table->set_items(object_data);

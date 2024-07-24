@@ -243,7 +243,7 @@ namespace corona {
 			std::string color_string = jcolor;
 			_dest = corona::toColor(color_string);
 		}
-		else if (jcolor.is_object())
+		else if (jcolor.object())
 		{
 			if (jcolor.has_member("a"))
 				_dest.a = (double)jcolor["a"];
@@ -361,7 +361,7 @@ namespace corona {
 		put_json(_dest.crop, jcrop);
 
 		json jsizes = _src["sizes"];
-		if (jsizes.is_array()) {
+		if (jsizes.array()) {
 			_dest.sizes.clear();
 			int asz = jsizes.size();
 			for (int i = 0; i < asz; i++)
@@ -484,7 +484,7 @@ namespace corona {
 		put_json(_dest.stop, jstop);
 
 		jstops = _src["stops"];
-		if (jstops.is_array()) {
+		if (jstops.array()) {
 			int msz = jstops.size();
 			_dest.gradientStops.clear();
 
@@ -587,7 +587,7 @@ namespace corona {
 		_dest.radiusY = (double)_src["radiusY"];
 
 		jstops = _src["stops"];
-		if (jstops.is_array()) {
+		if (jstops.array()) {
 			int msz = jstops.size();
 			_dest.gradientStops.clear();
 
@@ -1299,7 +1299,7 @@ namespace corona {
 		_dest.shape_border_thickness = (double)_src["shape_border_thickness"];
 		_dest.box_border_thickness = (double)_src["box_border_thickness"];
 
-		if (text_style.is_object()) {
+		if (text_style.object()) {
 			put_json(_dest.text_style, text_style);
 		}
 		put_json(_dest.box_border_brush, box_border);

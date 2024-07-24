@@ -373,7 +373,7 @@ namespace corona
 				data_row.resize(choices.columns.size());
 				row_index++;
 
-				if (choices.items.is_array())
+				if (choices.items.array())
 				{
 					for (int i = 0; i < choices.items.size(); i++)
 					{
@@ -511,7 +511,7 @@ namespace corona
 			if (auto phost = window_host.lock()) {
 				std::string selection = phost->getListSelectedText(id);
 				phost->clearListItems(id);
-				if (choices.items.is_array()) {
+				if (choices.items.array()) {
 					for (int i = 0; i < choices.items.size(); i++)
 					{
 						auto c = choices.items.get_element(i);
@@ -649,7 +649,7 @@ namespace corona
 			if (auto phost = window_host.lock()) {
 				std::string selectedText = phost->getComboSelectedText(id);
 				phost->clearComboItems(id);
-				if (choices.items.is_array()) 
+				if (choices.items.array()) 
 				{
 					for (int i = 0; i < choices.items.size(); i++)
 					{

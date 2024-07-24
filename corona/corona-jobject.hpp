@@ -494,7 +494,7 @@ namespace corona {
 
 		void add_standard_fields();
 
-		bool is_empty(jfield& fld)
+		bool empty(jfield& fld)
 		{
 			return fld.field_id == null_row && fld.type_id == jtype::type_null;
 		}
