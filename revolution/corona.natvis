@@ -43,8 +43,14 @@
 			</TreeItems>
 		</Expand>
 	</Type>
+	<Type Name="std::shared_ptr&lt;control_base&gt;">
+		<DisplayString>{{ name={ptr.name} id={ptr.id} }}</DisplayString>
+		<Expand>
+			<ExpandedItem>_Myptr</ExpandedItem>
+		</Expand>
+	</Type>
 	<Type Name="corona::control_base">
-		<DisplayString>{{ children={children._Mylast - _Myfirst} }}</DisplayString>
+		<DisplayString>{{ children={children._Mylast - children._Myfirst} }}</DisplayString>
 		<Expand>
 			<Item Name="[bounds]">bounds</Item>
 			<Item Name="[inner_bounds]">inner_bounds</Item>
@@ -52,16 +58,16 @@
 			<Item Name="[padding_amount]">padding_amount</Item>
 			<Item Name="[box]">box</Item>
 			<ArrayItems>
-				<Size>children._Mylast - children._Myfirst</Size>
+				<Size>children._MyPair._Mylast - children._MyPair._Myfirst</Size>
 				<ValuePointer>children._Myfirst</ValuePointer>
 			</ArrayItems>
 		</Expand>
 	</Type>
 	<Type Name="corona::rectangle">
-		<DisplayString>{{x={x} y={y} width={width} height={height}}}</DisplayString>
+		<DisplayString>{{x={x} y={y} width={w} height={h}}}</DisplayString>
 		<Expand>
-			<Item Name="Right">x + width</Item>
-			<Item Name="Bottom">y + height</Item>
+			<Item Name="Right">x + w</Item>
+			<Item Name="Bottom">y + h</Item>
 		</Expand>
 	</Type>
 	<Type Name="corona::measure">

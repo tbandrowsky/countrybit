@@ -378,10 +378,9 @@ namespace corona
 			return empty;
 		}
 
-		virtual json set_items(json _data)
+		virtual bool set_items(json _data)
 		{
-			json empty;
-			return empty;
+			return false;
 		}
 
 		virtual json set_data(json _data)
@@ -688,8 +687,10 @@ namespace corona
 	void control_base::foreach(std::function<void(control_base* _root)> _item)
 	{
 		_item(this);
-		for (auto child : children) {
-			child->foreach(_item);
+		for (auto child : children) {	
+			if (child) {
+				child->foreach(_item);
+			}
 		}
 	}
 

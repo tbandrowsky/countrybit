@@ -366,6 +366,47 @@
                   }
                 },
                 {
+                  "class_name": "form",
+                  "name": "search_form",
+                  "model": {
+                    "name": "search_form",
+                    "fields": [
+                      {
+                        "json_member_name": "EventName",
+                        "label_text": "Name", 
+                        "class_name": "edit",
+                        "tooltip_text": "The name of the event",
+                        "is_default_focus": true
+                      },
+                      {
+                        "json_member_name": "EventDescription",
+                        "label_text": "Description",
+                        "field_type": "string",
+                        "tooltip_text": "The description of the event",
+                        "is_default_focus": false
+                      },
+                      {
+                        "json_member_name": "EventDate",
+                        "label_text": "Date",
+                        "field_type": "date",
+                        "tooltip_text": "The date of the event",
+                        "is_default_focus": false
+                      }
+                    ],
+                    "data": []
+                  },
+                  "box": {
+                    "width": {
+                      "amount": 1,
+                      "units": "container"
+                    },
+                    "height": {
+                      "amount": 300.0,
+                      "units": "pixels"
+                    }
+                  }
+                },
+                {
                   "class_name": "row",
                   "box": {
                     "width": {
@@ -373,12 +414,59 @@
                       "units": "container"
                     },
                     "height": {
-                      "amount": 1,
-                      "units": "container"
+                      "amount": 75.0,
+                      "units": "pixels"
                     }
                   },
                   "wrap": true,
                   "children": [
+                    {
+                      "class_name": "corona_button",
+                      "text": "Search",
+                      "box": {
+                        "width": {
+                          "amount": 150,
+                          "units": "pixels"
+                        },
+                        "height": {
+                          "amount": 65,
+                          "units": "pixels"
+                        }
+                      },
+                      "margin": {
+                        "amount": 20,
+                        "units": "pixels"
+                      },
+                      "command": {
+                        "class_name": "search_objects_command",
+                        "corona_class_name": "HistoricalEvent",
+                        "form_name": "search_form",
+                        "table_name": "search_list"
+                      }
+                    },
+                    {
+                      "class_name": "corona_button",
+                      "text": "New Event",
+                      "box": {
+                        "width": {
+                          "amount": 150,
+                          "units": "pixels"
+                        },
+                        "height": {
+                          "amount": 65,
+                          "units": "pixels"
+                        }
+                      },
+                      "margin": {
+                        "amount": 20,
+                        "units": "pixels"
+                      },
+                      "command": {
+                        "class_name": "create_object_command",
+                        "corona_class_name": "HistoricalEvent",
+                        "form_name": "EventDetail"
+                      }
+                    },
                     {
                       "class_name": "corona_button",
                       "text": "Home",
@@ -400,31 +488,43 @@
                         "class_name": "select_page_command",
                         "page_name": "home"
                       }
-                    },
-                    {
-                      "class_name": "corona_button",
-                      "text": "New Event",
-                      "box": {
-                        "width": {
-                          "amount": 150,
-                          "units": "pixels"
-                        },
-                        "height": {
-                          "amount": 65,
-                          "units": "pixels"
-                        }
-                      },
-                      "margin": {
-                        "amount": 20,
-                        "units": "pixels"
-                      },
-                      "command": {
-                        "class_name": "new_object_command",
-                        "corona_class_name": "HistoricalEvent",
-                        "form_name" :  "EventDetail"
-                      }
                     }
                   ]
+                },
+                {
+                  "class_name": "listview",
+                  "name": "search_list",
+                  "box": {
+                    "width": {
+                      "amount": 1,
+                      "units": "container"
+                    },
+                    "height": {
+                      "amount": 1.0,
+                      "units": "remaining"
+                    }
+                  },
+                  "table": {
+                    "id_field": "ObjectId",
+                    "columns": [
+                      {
+                        "json_member_name": "EventDate",
+                        "label_text": "Date",
+                        "width": 200
+                      },
+                      {
+                        "json_member_name": "EventName",
+                        "label_text": "Name",
+                        "width": 200
+                      },
+                      {
+                        "json_member_name": "EventDescription",
+                        "label_text": "Description",
+                        "width": 400
+                      }
+                    ],
+                    "items": []
+                  }
                 }
               ]
             }

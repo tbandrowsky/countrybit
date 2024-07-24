@@ -66,8 +66,8 @@ namespace corona
 
 		virtual void get_json(json& _dest)
 		{
-			_dest.put_member("display_name", display_name);
-			_dest.put_member("json_field", json_field);
+			_dest.put_member("label_text", display_name);
+			_dest.put_member("json_member_name", json_field);
 			_dest.put_member("width", width);
 			corona::get_json(_dest, "alignment", alignment);
 		}
@@ -75,7 +75,7 @@ namespace corona
 		virtual void put_json(json& _src)
 		{
 			std::vector<std::string> missing;
-			if (!_src.has_members(missing, { "display_name", "json_field", "width" })) {
+			if (!_src.has_members(missing, { "label_text", "json_member_name", "width" })) {
 				std::cout << "table_column is missing:" << std::endl;
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 					std::cout << s << std::endl;
@@ -86,8 +86,8 @@ namespace corona
 			}
 
 
-			display_name = _src["display_name"];
-			json_field = _src["json_field"];
+			display_name = _src["label_text"];
+			json_field = _src["json_member_name"];
 			width = (int)_src["width"];
 			corona::put_json(alignment, _src, "alignment");
 		}

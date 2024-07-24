@@ -373,26 +373,29 @@ namespace corona
 				data_row.resize(choices.columns.size());
 				row_index++;
 
-				for (int i = 0; i < choices.items.size(); i++)
+				if (choices.items.is_array())
 				{
-					auto item = choices.items.get_element(i);
-					col_index = 0;
-					for (auto col : choices.columns)
+					for (int i = 0; i < choices.items.size(); i++)
 					{
-						data_row[col_index] = blank;
-						bool has_field = item.has_member(col.json_field);
-						if (has_field) {
-							std::string item_value = (std::string)item[col.json_field];
-							char* value = (char *)item_value.c_str();
-							if (value) {
-								data_row[col_index] = value;
+						auto item = choices.items.get_element(i);
+						col_index = 0;
+						for (auto col : choices.columns)
+						{
+							data_row[col_index] = blank;
+							bool has_field = item.has_member(col.json_field);
+							if (has_field) {
+								std::string item_value = (std::string)item[col.json_field];
+								char* value = (char*)item_value.c_str();
+								if (value) {
+									data_row[col_index] = value;
+								}
 							}
+							col_index++;
 						}
-						col_index++;
+						//virtual void addListViewRow(int ddlControlId, LPARAM data, const std::vector<std::string>&_items) = 0;
+						phost->addListViewRow(id, row_index, data_row);
+						row_index++;
 					}
-					//virtual void addListViewRow(int ddlControlId, LPARAM data, const std::vector<std::string>&_items) = 0;
-					phost->addListViewRow(id, row_index, data_row);
-					row_index++;
 				}
 			}
 		}
@@ -461,11 +464,11 @@ namespace corona
 			data_changed();
 		}
 
-		virtual json set_items(json _data)
+		virtual bool set_items(json _data)
 		{
 			choices.items = _data;
-			return _data;
 			data_changed();
+			return true;
 		}
 
 	};
@@ -573,11 +576,11 @@ namespace corona
 			data_changed();
 		}
 
-		virtual json set_items(json _data)
+		virtual bool set_items(json _data)
 		{
 			choices.items = _data;
-			return _data;
 			data_changed();
+			return true;
 		}
 
 		virtual void on_create()
@@ -747,11 +750,11 @@ namespace corona
 			data_changed();
 		}
 
-		virtual json set_items(json _data)
+		virtual bool set_items(json _data)
 		{
 			choices.items = _data;
-			return _data;
 			data_changed();
+			return true;
 		}
 
 

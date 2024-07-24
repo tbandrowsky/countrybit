@@ -332,7 +332,12 @@ namespace corona
 				std::string default_page = presentation_layer->setPresentation(_pages);
 				if (_select_default && !default_page.empty()) {
 					presentation_layer->select_page(default_page);
+					std::cout << "Pages loaded, default page: " << default_page << std::endl;
 				}
+				else {
+					std::cout << "Pages loaded:" << default_page << std::endl;
+				}
+				
 				});
 		}
 
@@ -343,7 +348,9 @@ namespace corona
 				if (!_target_control.empty()) {
 					control_base* cb = find_control(_target_control);
 					if (cb) {
-						cb->set_data(_obj);
+						if (!cb->set_items(_obj)) {
+							cb->set_data(_obj);
+						}
 					}
 				}
 			});

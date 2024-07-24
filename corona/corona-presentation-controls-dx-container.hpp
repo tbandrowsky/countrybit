@@ -681,6 +681,14 @@ namespace corona
 			return j;
 		}
 
+		virtual bool set_items(json _data)
+		{
+			items_source.data = _data;
+			set_item_source(items_source);
+			return true;
+		}
+
+
 	};
 
 	class row_view_layout :
