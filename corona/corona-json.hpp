@@ -1008,6 +1008,10 @@ namespace corona
 			if (_member.array()) {
 				put_member_array(_key, _member);
 			}
+			else if (_member.empty())
+			{
+				put_member_object(_key, _member);
+			}
 			else if (_member.is_double()) {
 				double d = _member;
 				put_member(_key, d);
@@ -1137,9 +1141,11 @@ namespace corona
 			if (!object_impl) {
 				throw std::logic_error("Not an object");
 			}
-			std::shared_ptr<json_object> existing_object = _object;
-			auto new_object = existing_object->clone();
-			object_impl->members[_key] = new_object;
+			std::shared_ptr<json_object> existing_object = _object.object_impl;
+			if (existing_object) {
+				auto new_object = existing_object->clone();
+				object_impl->members[_key] = new_object;
+			}
 			return *this;
 		}
 

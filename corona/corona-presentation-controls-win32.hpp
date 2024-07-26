@@ -366,7 +366,7 @@ namespace corona
 					// or... do I?
 					char* t = (char *)col.display_name.c_str();
 					phost->addListViewColumn(id, col_index, t, col.width, col.alignment);
-					column_map[col.json_field] = col_index;
+					column_map[col.json_field_name] = col_index;
 					col_index++;
 				}
 				std::vector<char*> data_row;
@@ -382,9 +382,9 @@ namespace corona
 						for (auto col : choices.columns)
 						{
 							data_row[col_index] = blank;
-							bool has_field = item.has_member(col.json_field);
+							bool has_field = item.has_member(col.json_field_name);
 							if (has_field) {
-								std::string item_value = (std::string)item[col.json_field];
+								std::string item_value = (std::string)item[col.json_field_name];
 								char* value = (char*)item_value.c_str();
 								if (value) {
 									data_row[col_index] = value;
@@ -470,6 +470,7 @@ namespace corona
 			data_changed();
 			return true;
 		}
+
 
 	};
 

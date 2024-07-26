@@ -53,6 +53,7 @@ For Future Consideration
 #include <sstream>
 #include <numeric>
 #include <thread>
+#include <regex>
 
 #include <io.h>
 #include <fcntl.h>

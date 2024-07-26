@@ -403,7 +403,6 @@ namespace corona
 			corona::get_json(jbox, padding);
 			corona::get_json(jbox, margin);
 
-
 			_dest.put_member("name", name);
 			_dest.put_member("id", id );
 			_dest.put_member("box", jbox );
@@ -560,7 +559,14 @@ namespace corona
 			return *this;
 		}
 
-		control_base& set_position(layout_rect _new_layout)
+		control_base& set_size(layout_rect _new_layout)
+		{
+			box.width = _new_layout.width;
+			box.height = _new_layout.height;
+			return *this;
+		}
+
+		control_base& set_box(layout_rect _new_layout)
 		{
 			box = _new_layout;
 			return *this;
@@ -614,6 +620,50 @@ namespace corona
 		{
 			for (auto child : children) {
 				child->hardware_scan();
+			}
+		}
+
+		virtual void dump(int _indent = {})
+		{
+			json_parser jp;
+			json control_json = jp.create_object();
+			std::string sindent(_indent, ' ');
+
+			std::cout << sindent << typeid(*this).name() << std::endl;
+			get_json(control_json);
+			if (control_json.object()) 
+			{
+
+				control_json.for_each_member([control_json, sindent](std::string _key_name) {
+					json member = control_json.get_member(_key_name);
+					std::string str = member.to_json();
+					if (str.size() < 40)
+					{
+						std::cout << sindent <<  _key_name << ":" << str << std::endl;
+					}
+					else
+					{
+						std::cout << sindent << _key_name << std::endl;
+						std::cout << sindent << str << std::endl;
+					}
+					});
+			}
+			else 
+			{
+				std::cout << sindent << "No json object representation." << std::endl;
+			}
+
+			_indent += 2;
+			for (auto child : children) 
+			{
+				if (child) 
+				{
+					child->dump(_indent);
+				}
+				else 
+				{
+					std::cout << sindent << "a child is null" << std::endl;
+				}
 			}
 		}
 

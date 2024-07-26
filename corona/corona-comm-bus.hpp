@@ -75,9 +75,13 @@ namespace corona
 		std::string database_file_name;
 		std::string user_file_name;
 
+		bool ready_for_polling;
+
 		comm_bus(std::string _application_name, 
 			std::string _application_folder_name)
 		{
+			ready_for_polling = false;
+
 			app = std::make_shared<application>();
 			app->application_folder_name = _application_folder_name;
 			app->application_name = _application_name;
@@ -111,15 +115,19 @@ namespace corona
 			pages_config_mon.file_name = pages_config_file_name;
 			styles_config_mon.file_name = styles_config_file_name;
 
-			if (!app->file_exists(database_file_name)) 
+			if (true || !app->file_exists(database_file_name)) 
 			{
 				db_file = app->open_file_ptr(database_file_name, file_open_types::create_always);
 				local_db = std::make_shared<corona_database>(db_file);
 
-				file_transaction<relative_ptr_type> result = database_config_mon.poll(app.get());
+				json temp;
+				if (database_config_mon.poll_contents(app.get(), temp) != null_row) {
+					local_db->apply_config(temp);
+				}
 
 				auto admin_user_transaction = local_db->create_database();
 				admin_user = admin_user_transaction.wait();
+
 				if (admin_user.object()) {
 					std::string suser_json = admin_user.to_json();
 					io_buffer.set_buffer(suser_json);
@@ -127,27 +135,35 @@ namespace corona
 					file_task task = user_file.write(0, io_buffer.get_ptr(), io_buffer.get_size());
 					task.initiate();
 				}
+
+				file_transaction<relative_ptr_type> result = database_config_mon.poll(app.get());
+				ready_for_polling = true;
 			} 
 			else 
 			{
 				db_file = app->open_file_ptr(database_file_name, file_open_types::open_existing);
 				local_db = std::make_shared<corona_database>(db_file);
+				auto odbs = local_db->open_database(0);
+				odbs.wait();
 				json_file_watcher user_file_watcher;
 				user_file_watcher.file_name = user_file_name;
 				user_file_watcher.poll_contents(app.get(), admin_user);
+				ready_for_polling = true;
 			}
 		}
 
 		void poll_db()
 		{
-			json_parser jp;
-			json temp;
-			if (database_schema_mon.poll_contents(app.get(), temp) != null_row) {
-				auto tempo = local_db->apply_schema(temp);
-				tempo.wait();
-			}
-			if (database_config_mon.poll_contents(app.get(), temp) != null_row) {
-				local_db->apply_config(temp);
+			if (ready_for_polling) {
+				json_parser jp;
+				json temp;
+				if (database_schema_mon.poll_contents(app.get(), temp) != null_row) {
+					auto tempo = local_db->apply_schema(temp);
+					tempo.wait();
+				}
+				if (database_config_mon.poll_contents(app.get(), temp) != null_row) {
+					local_db->apply_config(temp);
+				}
 			}
 		}
 
@@ -249,6 +265,7 @@ namespace corona
 			request.put_member("Token", admin_user);
 			request.put_member("Data", object_information);
 			json response = co_await local_db->put_object(request);
+			std::cout << "get_object:" << std::endl << response.to_json_string() << std::endl;
 			response = response["Data"];
 			co_return response;
 		}
@@ -260,6 +277,7 @@ namespace corona
 			request.put_member("Token", admin_user);
 			request.put_member("Data", object_information);
 			json response = co_await local_db->put_object(request);
+			std::cout << "query_object:" << std::endl << response.to_json_string() << std::endl;
 			response = response["Data"];
 			co_return response;
 		}
@@ -271,6 +289,7 @@ namespace corona
 			request.put_member("Token", admin_user);
 			request.put_member("Data", user_information);
 			json response = co_await local_db->put_object(request);
+			std::cout << "pop_object:" << std::endl << response.to_json_string() << std::endl;
 			response = response["Data"];
 			co_return response;
 		}
@@ -282,6 +301,7 @@ namespace corona
 			request.put_member("Token", admin_user);
 			request.put_member("Data", query_information);
 			json response = co_await local_db->query_class(request);
+			std::cout << "query_objects:" << std::endl << response.to_json_string() << std::endl;
 			response = response["Data"];
 			co_return response;
 		}
@@ -297,6 +317,7 @@ namespace corona
 			td.put_json(table);			
 			json response = co_await local_db->query_class(request);
 			json response_items = response["Data"];
+			std::cout << "query_objects_as_table:" << std::endl << response.to_json_string() << std::endl;
 			td.items = response_items;
 			co_return td;
 		}
@@ -312,6 +333,7 @@ namespace corona
 			ld.put_json(lst);
 			json response = co_await local_db->query_class(request);
 			json response_items = response["Data"];
+			std::cout << "query_objects_as_list:" << std::endl << response.to_json_string() << std::endl;
 			ld.items = response_items;
 			co_return ld;
 		}

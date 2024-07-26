@@ -39,8 +39,11 @@ namespace corona {
 		measure() : amount(0), units(measure_units::pixels) { ; }
 		measure(long double _amount, measure_units _units) : amount(_amount), units(_units) { ; }
 
+		bool empty()
+		{
+			return amount == 0.0;
+		}
 	};
-
 
 	measure operator ""_px(long double px);
 	measure operator ""_container(long double pct);
@@ -69,6 +72,10 @@ namespace corona {
 			;
 		}
 
+		bool empty()
+		{
+			return x.empty() && y.empty() && width.empty() && height.empty();
+		}
 
 	};
 

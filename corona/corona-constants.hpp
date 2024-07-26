@@ -382,7 +382,6 @@ namespace corona
 			block_id t = block_id::path_id();
 			return strcmp(t.name, name) == 0;
 		}
-
 	};
 
 	struct block_header_struct
@@ -771,8 +770,6 @@ namespace corona
 			return buffers.size();
 		}
 	};
-
-
 }
 
 #endif

@@ -71,14 +71,28 @@ namespace corona
 
 		}
 	}
+
 	void put_json(measure& _dest, json& _src)
 	{
 		if (_src.empty())
 			return;
 
 		std::vector<std::string> missing;
+		double damount;
+		std::string sunits;
 
-		if (!_src.has_members(missing, { "amount", "units" })) {
+		if (_src.is_string())
+		{
+			std::string measure_string = (std::string)_src;
+			std::regex pattern(R"(([01234567890\.]+)(\s*)([\w_]+))");
+			std::smatch matches;
+			if (std::regex_search(measure_string, matches, pattern)) {
+				std::string samount = matches[1];
+				damount = std::stod(samount);
+				sunits = matches[3];
+			}
+		}
+		else if (!_src.has_members(missing, { "amount", "units" })) {
 			std::cout << "measure is missing:" << std::endl;
 			std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 				std::cout << s << std::endl;
@@ -87,9 +101,13 @@ namespace corona
 			std::cout << _src.to_json() << std::endl;
 			return;
 		}
+		else 
+		{
+			damount = (double)_src["amount"];
+			sunits = _src["units"];
+		}
 
-		_dest.amount = (double)_src["amount"];
-		std::string sunits = _src["units"];
+		_dest.amount = damount;
 		if (sunits.empty())
 			sunits = "pixels";
 

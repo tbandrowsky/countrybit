@@ -1586,7 +1586,7 @@ namespace corona
 		}
 
 		bool await_ready() {
-			bool suspend = true;
+			bool suspend = false;
 			debug_functions&& std::cout << "file_task: await_ready" << " " << ::GetCurrentThreadId() << std::endl;
 			int r = initiate();
 			if (r != 0) {
@@ -1633,7 +1633,6 @@ namespace corona
 		file_result instance;
 		lockable size_locker;
 		HANDLE resize_event;
-		LARGE_INTEGER end_of_file_position;
 
 		void open(job_queue* _queue, const file_path& _filename, file_open_types _file_open_type)
 		{
@@ -1721,7 +1720,6 @@ namespace corona
 					throw std::logic_error(temp.c_str());
 				}
 			}
-			::GetFileSizeEx(instance.hfile, &end_of_file_position);
 			instance.last_result = os_result(0);
 		}
 
@@ -1790,20 +1788,21 @@ namespace corona
 
 		uint64_t add(uint64_t _bytes_to_add) // adds size_bytes to file and returns the position of the start
 		{
-			uint64_t position;
-
 			if (instance.hfile == INVALID_HANDLE_VALUE)
 				return 0;
 
 			::WaitForSingleObject(resize_event, INFINITE);
 			::ResetEvent(resize_event);
 
-			position = end_of_file_position.QuadPart;
-			end_of_file_position.QuadPart += _bytes_to_add;
-			::SetFilePointerEx(instance.hfile, end_of_file_position, &end_of_file_position, FILE_BEGIN);
+			LARGE_INTEGER position, new_position;
+			::GetFileSizeEx(instance.hfile, &position);
+			new_position = position;
+			new_position.QuadPart += _bytes_to_add;
+			::SetFilePointerEx(instance.hfile, new_position, nullptr, FILE_BEGIN);
 			::SetEndOfFile(instance.hfile);
 			::SetEvent(resize_event);
-			return position;
+
+			return new_position.QuadPart;
 		}
 
 		file_task write(uint64_t location, void* _buffer, int _buffer_length)
@@ -1830,7 +1829,7 @@ namespace corona
 
 		file_task append(void* _buffer, int _buffer_length)
 		{
-			debug_file&& std::cout << "append file:" << end_of_file_position.QuadPart <<  ", thread:" << GetCurrentThreadId() << std::endl;
+			debug_file&& std::cout << "append file:" <<  ", thread:" << GetCurrentThreadId() << std::endl;
 
 			int64_t file_position = add(_buffer_length);
 

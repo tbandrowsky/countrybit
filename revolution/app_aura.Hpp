@@ -402,31 +402,31 @@ namespace corona
 						new_field.source_list.text_field = "Name";
 						new_field.field_type = "listbox";
 						new_field.label_text = "Camera Select";
-						new_field.json_member_name = "camera_name";
+						new_field.json_field_name = "camera_name";
 						ids.fields.push_back(new_field);
 
 						new_field.field_id = id_camera_detection_threshold;
 						new_field.field_type = "number";
 						new_field.label_text = "Detection";
-						new_field.json_member_name = "detection_threshold";
+						new_field.json_field_name = "detection_threshold";
 						ids.fields.push_back(new_field);
 
 						new_field.field_id = id_camera_activation_area_percentage;
 						new_field.field_type = "number";
 						new_field.label_text = "Area";
-						new_field.json_member_name = "activation_area";
+						new_field.json_field_name = "activation_area";
 						ids.fields.push_back(new_field);
 
 						new_field.field_id = id_camera_activation_response;
 						new_field.field_type = "number";
 						new_field.label_text = "Response";
-						new_field.json_member_name = "detection_pulse";
+						new_field.json_field_name = "detection_pulse";
 						ids.fields.push_back(new_field);
 
 						new_field.field_id = id_camera_activation_cooldown;
 						new_field.field_type = "number";
 						new_field.label_text = "Cooldown";
-						new_field.json_member_name = "detection_cooldown";
+						new_field.json_field_name = "detection_cooldown";
 						ids.fields.push_back(new_field);
 
 						_settings.set_model(ids);

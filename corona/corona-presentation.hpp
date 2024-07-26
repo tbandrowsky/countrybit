@@ -693,8 +693,22 @@ namespace corona {
 		bool leftMouse = true;
 		last_mouse_click = *_point;
 		auto cp = current_page.lock();
+
 		if (cp) {
 			presentation* p = this;
+			SHORT keystate = ::GetKeyState(VK_CONTROL);
+
+			if (keystate) 
+			{
+				control_base* cb = cp->root->find(*_point);
+
+				if (cb) 
+				{
+					std::cout << "Clicked" << std::endl;
+					cb->dump();
+				}
+			}
+
 			cp->root->set_mouse(*_point, &leftMouse, nullptr, [cp, p, _point](control_base* _item) {
 				mouse_left_click_event mcel = {};
 				mcel.control = _item;
@@ -1062,6 +1076,10 @@ namespace corona {
 		
 		if (jpages.array())
 		{
+			std::string current_page_name;
+			if (auto cp = current_page.lock()) {
+				current_page_name = cp->name;
+			}
 			pages.clear();
 			for (auto pg : jpages)
 			{
@@ -1098,6 +1116,10 @@ namespace corona {
 						std::cout << "Unknown class_name: " << class_name << std::endl;
 					}
 				}
+			}
+			if (!current_page_name.empty() && pages.contains(current_page_name)) {
+				default_page_name = current_page_name;
+				current_page = pages[current_page_name];
 			}
 		}
 		load_page();

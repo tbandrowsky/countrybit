@@ -28,7 +28,7 @@
               "class_name": "caption_bar",
               "corporate_name": "country video games",
               "title_name": "United States of America",
-              "subtitle_name": "Descendants of Slaves Reparations System (DSRS)",
+              "subtitle_name": "Reparations System",
               "title_start": {
                 "amount": 0.25,
                 "units": "container"
@@ -256,19 +256,10 @@
         {
           "class_name": "column",
           "box": {
-            "width": {
-              "amount": 1.0,
-              "units": "container"
-            },
-            "height": {
-              "amount": 1.0,
-              "units": "container"
-            }
+            "width": "1.0 container",
+            "height": "1.0 container"
           },
-          "padding": {
-            "amount": 0,
-            "units": "pixels"
-          },
+          "padding": "0 pixels",
           "content_alignment": "near",
           "content_cross_alignment": "center",
           "children": [
@@ -277,255 +268,229 @@
               "corporate_name": "country video games",
               "title_name": "United States of America",
               "subtitle_name": "Descendants of Slaves Reparations System (DSRS)",
-              "title_start": {
-                "amount": 0.25,
-                "units": "container"
-              },
+              "title_start": "0.25 container",
               "box": {
-                "width": {
-                  "amount": 1.0,
-                  "units": "container"
-                },
-                "height": {
-                  "amount": 100,
-                  "units": "pixels"
-                }
+                "width": "1.0 container",
+                "height": "100 pixels"
               }
             },
-
             {
-              "class_name": "column",
+              "class_name": "row",
               "box": {
-                "width": {
-                  "amount": 0.5,
-                  "units": "container"
-                },
-                "height": {
-                  "amount": 0.8,
-                  "units": "container"
-                }
+                "width": "1.0 container",
+                "height": "1.0 container"
               },
-              "view_style": {
-                "box_fill_brush": {
-                  "class_name": "solid_brush",
-                  "color": "211012AA"
-                },
-                "box_border_brush": {
-                  "class_name": "solid_brush",
-                  "color": "21101277"
-                },
-                "box_border_thickness": 8
-              },
-              "padding": {
-                "amount": 10,
-                "units": "pixels"
-              },
-              "content_alignment": "near",
-              "content_cross_alignment": "near",
               "children": [
                 {
-                  "class_name": "chaptertitle",
-                  "text": "Researcher Home",
+                  "class_name": "column",
                   "box": {
-                    "width": {
-                      "amount": 1,
-                      "units": "container"
-                    },
-                    "height": {
-                      "amount": 34,
-                      "units": "pixels"
-                    }
-                  }
-                },
-                {
-                  "class_name": "chaptersubtitle",
-                  "text": "Record Injustices",
-                  "box": {
-                    "width": {
-                      "amount": 1,
-                      "units": "container"
-                    },
-                    "height": {
-                      "amount": 30,
-                      "units": "pixels"
-                    }
-                  }
-                },
-                {
-                  "class_name": "paragraph",
-                  "text": "Researchers are Black American Citizens, Writers and Historians who create a historical resource of injustices to be used by Plaintiff Attorneys.  They will formulate this data into cases they bring on your behalf to the Reparations Court.",
-                  "box": {
-                    "width": {
-                      "amount": 1,
-                      "units": "container"
-                    },
-                    "height": {
-                      "amount": 6.2,
-                      "units": "text"
-                    }
-                  }
-                },
-                {
-                  "class_name": "form",
-                  "name": "search_form",
-                  "model": {
-                    "name": "search_form",
-                    "fields": [
-                      {
-                        "json_member_name": "EventName",
-                        "label_text": "Name", 
-                        "class_name": "edit",
-                        "tooltip_text": "The name of the event",
-                        "is_default_focus": true
-                      },
-                      {
-                        "json_member_name": "EventDescription",
-                        "label_text": "Description",
-                        "field_type": "string",
-                        "tooltip_text": "The description of the event",
-                        "is_default_focus": false
-                      },
-                      {
-                        "json_member_name": "EventDate",
-                        "label_text": "Date",
-                        "field_type": "date",
-                        "tooltip_text": "The date of the event",
-                        "is_default_focus": false
-                      }
-                    ],
-                    "data": []
+                    "x" :  "32.0 pixels",
+                    "width": "0.25 container",
+                    "height": "1.0 container"
                   },
-                  "box": {
-                    "width": {
-                      "amount": 1,
-                      "units": "container"
-                    },
-                    "height": {
-                      "amount": 300.0,
-                      "units": "pixels"
-                    }
-                  }
-                },
-                {
-                  "class_name": "row",
-                  "box": {
-                    "width": {
-                      "amount": 1,
-                      "units": "container"
-                    },
-                    "height": {
-                      "amount": 75.0,
-                      "units": "pixels"
-                    }
-                  },
-                  "wrap": true,
                   "children": [
                     {
-                      "class_name": "corona_button",
-                      "text": "Search",
+                      "class_name": "chaptertitle",
+                      "text": "Researcher Home",
                       "box": {
-                        "width": {
-                          "amount": 150,
-                          "units": "pixels"
-                        },
-                        "height": {
-                          "amount": 65,
-                          "units": "pixels"
-                        }
-                      },
-                      "margin": {
-                        "amount": 20,
-                        "units": "pixels"
-                      },
-                      "command": {
-                        "class_name": "search_objects_command",
-                        "corona_class_name": "HistoricalEvent",
-                        "form_name": "search_form",
-                        "table_name": "search_list"
+                        "width": "1.0 container",
+                        "height": "30 pixels"
                       }
                     },
                     {
-                      "class_name": "corona_button",
-                      "text": "New Event",
+                      "class_name": "paragraph",
+                      "text": "Black American Citizens, Writers and Historians who create a historical resource of injustices to be used by Plaintiff Attorneys.  They will formulate this data into cases they bring on your behalf to the Reparations Court.",
                       "box": {
-                        "width": {
-                          "amount": 150,
-                          "units": "pixels"
-                        },
-                        "height": {
-                          "amount": 65,
-                          "units": "pixels"
-                        }
-                      },
-                      "margin": {
-                        "amount": 20,
-                        "units": "pixels"
-                      },
-                      "command": {
-                        "class_name": "create_object_command",
-                        "corona_class_name": "HistoricalEvent",
-                        "form_name": "EventDetail"
-                      }
-                    },
-                    {
-                      "class_name": "corona_button",
-                      "text": "Home",
-                      "box": {
-                        "width": {
-                          "amount": 150,
-                          "units": "pixels"
-                        },
-                        "height": {
-                          "amount": 65,
-                          "units": "pixels"
-                        }
-                      },
-                      "margin": {
-                        "amount": 20,
-                        "units": "pixels"
-                      },
-                      "command": {
-                        "class_name": "select_page_command",
-                        "page_name": "home"
+                        "width": "1.0 container",
+                        "height": "0.3 container"
                       }
                     }
                   ]
                 },
                 {
-                  "class_name": "listview",
-                  "name": "search_list",
+                  "class_name": "column",
                   "box": {
-                    "width": {
-                      "amount": 1,
-                      "units": "container"
-                    },
-                    "height": {
-                      "amount": 1.0,
-                      "units": "remaining"
-                    }
+                    "x" :  "48 pixels",
+                    "width": "0.65 container",
+                    "height": "0.8 container"
                   },
-                  "table": {
-                    "id_field": "ObjectId",
-                    "columns": [
-                      {
-                        "json_member_name": "EventDate",
-                        "label_text": "Date",
-                        "width": 200
-                      },
-                      {
-                        "json_member_name": "EventName",
-                        "label_text": "Name",
-                        "width": 200
-                      },
-                      {
-                        "json_member_name": "EventDescription",
-                        "label_text": "Description",
-                        "width": 400
+                  "view_style": {
+                    "box_fill_brush": {
+                      "class_name": "solid_brush",
+                      "color": "211012AA"
+                    },
+                    "box_border_brush": {
+                      "class_name": "solid_brush",
+                      "color": "21101277"
+                    },
+                    "box_border_thickness": 8
+                  },
+                  "content_alignment": "near",
+                  "content_cross_alignment": "near",
+                  "children": [
+                    {
+                      "class_name": "chaptertitle",
+                      "text": "A History of Injustice",
+                      "box": {
+                        "width": "1.0 container",
+                        "height": "30 pixels"
                       }
-                    ],
-                    "items": []
-                  }
+                    },
+                    {
+                      "class_name": "form",
+                      "name": "search_form",
+                      "model": {
+                        "name": "search_form",
+                        "defaults": {
+                          "container_box": {
+                            "width": "250 pixels",
+                            "height": "120 pixels"
+                          },
+                          "label_box": {
+                            "width": "200 pixels",
+                            "height": "25 pixels"
+                          },
+                          "field_box": {
+                            "width": "200 pixels",
+                            "height": "25 pixels"
+                          }
+                        },
+                        "fields": [
+                          {
+                            "json_field_name": "EventName",
+                            "label_text": "Name",
+                            "class_name": "edit",
+                            "tooltip_text": "The name of the event",
+                            "is_default_focus": true
+                          },
+                          {
+                            "json_field_name": "EventDescription",
+                            "label_text": "Description",
+                            "class_name": "edit",
+                            "tooltip_text": "The description of the event",
+                            "is_default_focus": false
+                          },
+                          {
+                            "json_field_name": "EventDate",
+                            "label_text": "Date",
+                            "class_name": "edit",
+                            "tooltip_text": "The date of the event",
+                            "is_default_focus": false
+                          }
+                        ],
+                        "data": []
+                      },
+                      "box": {
+                        "width": "1.0 container",
+                        "height" : "100 pixels"
+                      }
+                    },
+                    {
+                      "class_name": "row",
+                      "box": {
+                        "width": "1.0 container",
+                        "height": "75 pixels"
+                      },
+                      "item_next_space" :  "10 pixels",
+                      "wrap": true,
+                      "children": [
+                        {
+                          "class_name": "corona_button",
+                          "text": "Search",
+                          "box": {
+                            "width": {
+                              "amount": 100,
+                              "units": "pixels"
+                            },
+                            "height": {
+                              "amount": 40,
+                              "units": "pixels"
+                            }
+                          },
+                          "command": {
+                            "class_name": "search_objects_command",
+                            "corona_class_name": "HistoricalEvent",
+                            "form_name": "search_form",
+                            "table_name": "search_list"
+                          }
+                        },
+                        {
+                          "class_name": "corona_button",
+                          "text": "New Event",
+                          "box": {
+                            "width": {
+                              "amount": 100,
+                              "units": "pixels"
+                            },
+                            "height": {
+                              "amount": 40,
+                              "units": "pixels"
+                            }
+                          },
+                          "command": {
+                            "class_name": "create_object_command",
+                            "corona_class_name": "HistoricalEvent",
+                            "form_name": "EventDetail"
+                          }
+                        },
+                        {
+                          "class_name": "corona_button",
+                          "text": "Home",
+                          "box": {
+                            "width": {
+                              "amount": 100,
+                              "units": "pixels"
+                            },
+                            "height": {
+                              "amount": 40,
+                              "units": "pixels"
+                            }
+                          },
+                          "command": {
+                            "class_name": "select_page_command",
+                            "page_name": "home"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "class_name": "listview",
+                      "name": "search_list",
+                      "box": {
+                        "width": {
+                          "amount": 1,
+                          "units": "container"
+                        },
+                        "height": {
+                          "amount": 1.0,
+                          "units": "remaining"
+                        }
+                      },
+                      "table": {
+                        "id_field": "ObjectId",
+                        "columns": [
+                          {
+                            "json_field_name": "EventDate",
+                            "label_text": "Date",
+                            "width": 200
+                          },
+                          {
+                            "json_field_name": "EventName",
+                            "label_text": "Name",
+                            "width": 200
+                          },
+                          {
+                            "json_field_name": "EventDescription",
+                            "label_text": "Description",
+                            "width": 400
+                          }
+                        ],
+                        "items": []
+                      }
+                    }
+                  ]
                 }
+
               ]
             }
           ]

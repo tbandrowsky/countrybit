@@ -1173,15 +1173,28 @@ private:
 					for (int i = 0; i < class_array.size(); i++)
 					{
 						json class_definition = class_array.get_element(i);
-						json put_class_request = create_system_request(class_definition);
-						co_await create_class(put_class_request);
+						try {
+							json put_class_request = create_system_request(class_definition);
+							co_await create_class(put_class_request);
+						}
+						catch (std::exception exc)
+						{
+							std::cout << "Exception " << exc.what() << std::endl;
+						}
 					}
 				}
 				else if (class_array.object())
 				{
 					json class_definition = class_array;
 					json put_class_request = create_system_request(class_definition);
-					co_await create_class(put_class_request);
+					try 
+					{
+						co_await create_class(put_class_request);
+					}
+					catch (std::exception exc)
+					{
+						std::cout << "Exception " << exc.what() << std::endl;
+					}
 				}
 			}
 			else
@@ -1236,6 +1249,14 @@ private:
 			scope_lock lock_one(header_rw_lock);
 
 			relative_ptr_type header_location = co_await header.read(database_file.get(), _header_location);
+
+			if (header_location != null_row) {
+				relative_ptr_type result = co_await classes.open(header.data.classes_location);
+				result = co_await class_objects.open(header.data.class_objects_location);
+				result = co_await objects_by_name.open(header.data.objects_by_name_location);
+				result = co_await objects.open(header.data.objects_location);
+			}
+
 			co_return header_location;
 		}
 

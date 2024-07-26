@@ -83,7 +83,7 @@ namespace corona
 	{
 	public:
 		int		 	  field_id;
-		std::string   json_member_name;
+		std::string   json_field_name;
 		std::string   label_text;
 		std::string   class_name;
 		std::string   tooltip_text;
@@ -93,8 +93,12 @@ namespace corona
 		bool		  read_only;
 		bool		  is_default_focus;
 		json		  control_settings;
-		measure		  visualization_height;
-		layout_rect	  box;
+		layout_rect	  container_box;
+		layout_rect	  label_box;
+		layout_rect	  visualization_box;
+		layout_rect	  prefix_box;
+		layout_rect	  field_box;
+		layout_rect	  suffix_box;
 		std::function<void(form_field_control* _src, draw_control* _dest)> draw_visualization;
 
 		form_field()
@@ -102,14 +106,12 @@ namespace corona
 			field_id = {};
 			read_only = false;
 			is_default_focus = false;
-			box.width = 300.0_px;
-			box.height = 100.0_px;
 		}
 
 		form_field(const form_field& _src)
 		{
 			field_id = _src.field_id;
-			json_member_name = _src.json_member_name;
+			json_field_name = _src.json_field_name;
 			label_text = _src.label_text;
 			class_name = _src.class_name;
 			tooltip_text = _src.tooltip_text;
@@ -119,15 +121,19 @@ namespace corona
 			read_only = _src.read_only;
 			is_default_focus = _src.is_default_focus;
 			control_settings = _src.control_settings;
-			visualization_height = _src.visualization_height;
-			box = _src.box;
+			container_box = _src.container_box;
+			label_box = _src.label_box;
+			visualization_box = _src.visualization_box;
+			prefix_box = _src.prefix_box;
+			field_box = _src.field_box;
+			suffix_box = _src.suffix_box;
 			draw_visualization = _src.draw_visualization;
 		}
 
 		form_field(form_field&& _src)
 		{
 			field_id = _src.field_id;
-			json_member_name = std::move(_src.json_member_name);
+			json_field_name = std::move(_src.json_field_name);
 			label_text = std::move(_src.label_text);
 			class_name = std::move(_src.class_name);
 			tooltip_text = std::move(_src.tooltip_text);
@@ -137,15 +143,19 @@ namespace corona
 			read_only = _src.read_only;
 			is_default_focus = _src.is_default_focus;
 			control_settings = _src.control_settings;
-			visualization_height = _src.visualization_height;
-			box = std::move(_src.box);
+			container_box = _src.container_box;
+			label_box = _src.label_box;
+			visualization_box = _src.visualization_box;
+			prefix_box = _src.prefix_box;
+			field_box = _src.field_box;
+			suffix_box = _src.suffix_box;
 			draw_visualization = std::move(_src.draw_visualization);
 		}
 
 		form_field& operator = (const form_field& _src)
 		{
 			field_id = _src.field_id;
-			json_member_name = _src.json_member_name;
+			json_field_name = _src.json_field_name;
 			label_text = _src.label_text;
 			class_name = _src.class_name;
 			tooltip_text = _src.tooltip_text;
@@ -155,8 +165,12 @@ namespace corona
 			read_only = _src.read_only;
 			is_default_focus = _src.is_default_focus;
 			control_settings = _src.control_settings;
-			visualization_height = _src.visualization_height;
-			box = _src.box;
+			visualization_box = _src.visualization_box;
+			container_box = _src.container_box;
+			label_box = _src.label_box;
+			prefix_box = _src.prefix_box;
+			field_box = _src.field_box;
+			suffix_box = _src.suffix_box;
 			draw_visualization = _src.draw_visualization;
 			return *this;
 		}
@@ -164,7 +178,7 @@ namespace corona
 		form_field operator = (form_field&& _src)
 		{
 			field_id = _src.field_id;
-			json_member_name = std::move(_src.json_member_name);
+			json_field_name = std::move(_src.json_field_name);
 			label_text = std::move(_src.label_text);
 			class_name = std::move(_src.class_name);
 			tooltip_text = std::move(_src.tooltip_text);
@@ -174,8 +188,12 @@ namespace corona
 			read_only = _src.read_only;
 			is_default_focus = _src.is_default_focus;
 			control_settings = _src.control_settings;
-			visualization_height = _src.visualization_height;
-			box = std::move(_src.box);
+			container_box = container_box;
+			label_box = label_box;
+			visualization_box = _src.visualization_box;
+			prefix_box = _src.prefix_box;
+			field_box = field_box;
+			suffix_box = _src.suffix_box;
 			draw_visualization = std::move(_src.draw_visualization);
 			return *this;
 		}
@@ -183,7 +201,7 @@ namespace corona
 		virtual void get_json(json& _dest)
 		{
 			_dest.put_member("field_id", field_id);
-			_dest.put_member("json_member_name", json_member_name);
+			_dest.put_member("json_field_name", json_field_name);
 			_dest.put_member("label_text", label_text);
 			_dest.put_member("class_name", class_name);
 			_dest.put_member("tooltip_text", tooltip_text);
@@ -198,16 +216,37 @@ namespace corona
 			json jsource_list = jp.create_object();
 			json jsource_table = jp.create_object();
 			json jvisualization_height = jp.create_object();
-			json jbox = jp.create_object();
-			corona::get_json(jbox, box);
-			corona::get_json(jvisualization_height, visualization_height);
-			_dest.put_member("visualization", jvisualization_height);
+
+			json jcontainer_box = jp.create_object();
+			corona::get_json(jcontainer_box, container_box);
+			_dest.put_member("container_box", jcontainer_box);
+
+			json jlabel_box = jp.create_object();
+			corona::get_json(jlabel_box, label_box);
+			_dest.put_member("label_box", jlabel_box);
+
+			json jvisualization_box = jp.create_object();
+			corona::get_json(jvisualization_box, visualization_box);
+			_dest.put_member("visualization_box", jvisualization_box);
+
+			json jprefix_box = jp.create_object();
+			corona::get_json(jprefix_box, prefix_box);
+			_dest.put_member("prefix_box", jprefix_box);
+
+			json jfield_box = jp.create_object();
+			corona::get_json(jfield_box, field_box);
+			_dest.put_member("field_box", jfield_box);
+
+			json jsuffix_box = jp.create_object();
+			corona::get_json(jsuffix_box, suffix_box);
+			_dest.put_member("suffix_box", jsuffix_box);
+
 		}
 
 		virtual void put_json(json& _src)
 		{
 			field_id = _src.get_member("field_id");
-			json_member_name = _src.get_member("json_member_name");
+			json_field_name = _src.get_member("json_field_name");
 			label_text = _src.get_member("label_text");
 			class_name = _src.get_member("class_name");
 			tooltip_text = _src.get_member("tooltip_text");
@@ -218,11 +257,24 @@ namespace corona
 			is_default_focus = (bool)_src.get_member("is_default_focus");
 			control_settings = _src.get_member("control_settings");
 
-			json jbox = _src["box"];
-			corona::put_json(box, jbox);
+			json jcontainer_box = _src["container_box"];
+			corona::put_json(container_box, jcontainer_box);
 
-			json jvisualization_height = _src["visualization"];
-			corona::put_json(visualization_height, jvisualization_height);
+			json jlabel_box = _src["label_box"];
+			corona::put_json(label_box, jlabel_box);
+
+			json jvisualization_box = _src["visualization_box"];
+			corona::put_json(visualization_box, jvisualization_box);
+
+			json jprefix_box = _src["prefix_box"];
+			corona::put_json(prefix_box, jprefix_box);
+
+			json jfield_box = _src["field_box"];
+			corona::put_json(field_box, jfield_box);
+
+			json jsuffix_box = _src["suffix_box"];
+			corona::put_json(suffix_box, jsuffix_box);
+
 
 		}
 
@@ -1205,17 +1257,6 @@ namespace corona
 		form_control*					form;
 		std::string						error_text;
 
-		template <typename field_control> std::shared_ptr<field_control> create_control(control_builder& cl, int _field_id, std::function<void(field_control&)> _settings)
-		{			
-			auto tc = cl.create<field_control>(_field_id);
-			cl.apply_item_sizes(tc);
-			if (_settings) {
-				_settings(*tc);
-			}
-			return tc;
-		}
-
-
 	public:
 
 		form_field_control() : form(nullptr)
@@ -1249,6 +1290,11 @@ namespace corona
 			suffix_id = id_counter::next();
 			visualization_id = id_counter::next();
 			edit_block_id = id_counter::next();
+		}
+
+		void set_form(form_control* _form)
+		{
+			form = _form;
 		}
 
 		std::string get_suffix()
@@ -1303,6 +1349,8 @@ namespace corona
 		virtual void get_json(json& _dest)
 		{
 			json jfield;
+			json_parser jp;
+			jfield = jp.create_object();
 			column_layout::get_json(_dest);
 			field_def.get_json(jfield);
 			_dest.put_member("options", jfield);
@@ -1320,6 +1368,15 @@ namespace corona
 			);
 		}
 
+		virtual json get_data()
+		{
+			json result;
+			if (field) {
+				result = field->get_data();
+			}
+			return result;
+		}
+
 		void set_field_visualization(std::function<void(form_field_control* _src, draw_control* _dest)> _draw_visualization)
 		{
 			set_field(field_def, _draw_visualization);
@@ -1332,7 +1389,27 @@ namespace corona
 			control_builder cb;
 			json_parser jp;
 
+			field_id = _field.field_id;
 			field_def = _field;
+			box = _field.container_box;
+
+			if (field_def.field_box.width.empty())
+			{
+				field_def.field_box.width = 1.0_remaining;
+			}
+			if (field_def.field_box.height.empty())
+			{
+				field_def.field_box.height = 1.0_container;
+			}
+
+			if (field_def.label_box.width.empty())
+			{
+				field_def.label_box.width = 1.0_container;
+			}
+			if (field_def.label_box.height.empty())
+			{
+				field_def.label_box.height = 25.0_px;
+			}
 
 			if (_draw_visualization) {
 				draw_visualization = _draw_visualization;
@@ -1340,49 +1417,43 @@ namespace corona
 
 			if (!field_def.label_text.empty())
 			{
-				label = create_control<label_control>(cb, label_id, [this](label_control& _settings) {
+				cb.label(label_id, [this](label_control& _settings) {
 					_settings.text = field_def.label_text;
+					_settings.set_box(field_def.label_box);
 					});
+				label = cb.get<label_control>(label_id);
 			}
 
 			if (draw_visualization)
 			{
-				visualization = create_control<draw_control>(cb, visualization_id, [this](draw_control& _settings) {
-					_settings.set_size(1.0_container, field_def.visualization_height);
+				cb.draw(visualization_id, [this](draw_control& _settings) {
+					_settings.set_box(field_def.visualization_box);
 					_settings.on_draw = [this](draw_control* control) {
 						draw_visualization(this, control);
 						};
 					});
+				visualization = cb.get<draw_control>(label_id);
 			}
 
-			auto edit_row = cb.row_begin(id_counter::next(), [](row_layout& _row) {
-				_row.set_size(1.0_remaining, 50.0_px);
+			auto edit_row = cb.row_begin(id_counter::next(), [this](row_layout& _row) {
+				_row.set_size(1.0_container, field_def.field_box.height);
 				});
 
 			if (!field_def.prefix.empty())
 			{
-				prefix = create_control<label_control>(edit_row, prefix_id, [this](label_control& _settings) {
+				edit_row.label(prefix_id, [this](label_control& _settings) {
+					_settings.set_box(field_def.field_box);
 					_settings.text = field_def.prefix;
 					});
+				prefix = cb.get<label_control>(label_id);
 			}
 
-			if (field_def.control_settings.empty())
-			{
-				field_def.control_settings = jp.create_object();
-			}
-
-			field_def.control_settings.put_member("id", field_def.field_id);
-			field_def.control_settings.put_member("class_name", field_def.class_name);
-			json jbox = jp.create_object();
-			corona::get_json(jbox, field_def.box);
-			field_def.control_settings.put_member("box", jbox);
-
-			cb.from_json(field_def.control_settings);
-			field = cb.get<control_base>(field_def.control_settings);
+			edit_row.from_json(field_def.control_settings);
+			field = cb.get<control_base>(field_def.field_id);
 
 			if (!field_def.suffix.empty())
 			{
-				suffix = create_control<label_control>(edit_row, suffix_id, [this](label_control& _settings) {
+				edit_row.label(suffix_id, [this](label_control& _settings) {
 					_settings.text = field_def.suffix;
 					});
 			}
@@ -1406,13 +1477,63 @@ namespace corona
 	using form_mouse_click_handler = std::function<void(mouse_click_event lce, form_field_control* _ctrl)>;
 	using form_mouse_move_handler = std::function<void(mouse_move_event lce, form_field_control* _ctrl)>;
 
+
+
 	class form_model : public json_serializable
 	{
+	private:
+		void apply_defaults()
+		{
+			int index = 0;
+			for (auto& fld : fields)
+			{
+				if (fld.field_id == 0) {
+					fld.field_id = id_counter::next();
+				}
+				if (fld.container_box.empty())
+				{
+					fld.container_box = defaults.container_box;
+				}
+				if (fld.label_box.empty())
+				{
+					fld.label_box = defaults.label_box;
+				}
+				if (fld.prefix_box.empty())
+				{
+					fld.prefix_box = defaults.prefix_box;
+				}
+				if (fld.field_box.empty())
+				{
+					fld.field_box = defaults.field_box;
+				}
+				if (fld.suffix_box.empty())
+				{
+					fld.suffix_box = defaults.suffix_box;
+				}
+
+				if (fld.class_name.empty()) {
+					std::cout << "form " << name << " fields.[" << index << "] " << " does not have a class_name" << std::endl;
+				}
+				if (fld.control_settings.empty())
+				{
+					json_parser jp;
+					fld.control_settings = jp.create_object();
+					fld.control_settings.put_member("id", fld.field_id);
+					fld.control_settings.put_member("class_name", fld.class_name);
+					fld.control_settings.put_member("json_field_name", fld.json_field_name);
+					json jbox = jp.create_object();
+					corona::get_json(jbox, fld.field_box);
+					fld.control_settings.put_member("box", jbox);
+				}
+				index++;
+			}
+		}
+
 	public:
 		std::string				name;
 		std::vector<form_field> fields;
 		json					data;
-		layout_rect				item_box;
+		form_field				defaults;
 
 		form_list_changed_handler	on_list_changed;
 		form_item_changed_handler	on_item_changed;
@@ -1427,8 +1548,8 @@ namespace corona
 
 			json_parser jp;
 			json jfields = jp.create_array();
-			json jitembox = jp.create_object();
-			corona::get_json(jitembox, item_box);
+			json jdefault = jp.create_object();
+			defaults.get_json(jdefault);
 
 			for (auto fld : fields) {
 				json jfield = jp.create_object();
@@ -1436,15 +1557,15 @@ namespace corona
 				jfields.append_element(jfield);
 			}
 			_dest.put_member("fields", jfields);
-			_dest.put_member("item_box", jitembox);
+			_dest.put_member("defaults", jdefault);
 		}
 
 		virtual void put_json(json& _src)
 		{
 			name = _src["name"];
 			data = _src["data"];
-			json jitembox = _src["item_box"];
-			corona::put_json(item_box, jitembox);
+			json jitembox = _src["defaults"];
+			defaults.put_json(jitembox);
 			fields.clear();
 			json field_array = _src["fields"];
 			if (field_array.array()) 
@@ -1457,7 +1578,9 @@ namespace corona
 					fields.push_back(ff);
 				}
 			}
+			apply_defaults();
 		}
+
 	};
 
 	class form_control : public column_layout
@@ -1496,20 +1619,20 @@ namespace corona
 		virtual json get_data()
 		{
 			json_parser jp;
-			json obj = jp.create_object();
+
+			json obj = column_layout::get_data();
+			if (obj.empty())
+				obj = jp.create_object();
 
 			for (auto& ctrl : ids.fields)
 			{
+				if (ctrl.json_field_name.empty()) {
+					continue;
+				}
 				control_base *cb = find(ctrl.field_id);
 				if (cb) {
-					json field = cb->get_data();
-					if (field.object())
-					{
-						for (auto member : field.get_members())
-						{
-							obj.put_member(member.first, member.second);
-						}
-					}
+					json field_data = cb->get_data();
+					obj.copy_member(ctrl.json_field_name, field_data);
 				}
 			}
 
@@ -1519,6 +1642,8 @@ namespace corona
 		virtual json set_data(json _data)
 		{
 			json empty;
+
+			column_layout::set_data(_data);
 
 			for (auto& ctrl : ids.fields)
 			{
@@ -1540,17 +1665,19 @@ namespace corona
 			control_builder cb;
 
 			ids = _ids;
+			auto pform = this;
 
 			for (auto &ctrl : ids.fields) 
 			{
-				cb.form_field(id_counter::next(), [this, &ctrl](form_field_control& _settings) {
-					_settings.set_position(ids.item_box);
-					_settings.set_field(ctrl,
-						nullptr);
+				cb.form_field(id_counter::next(), [pform, &ctrl](form_field_control& _settings) {
+					_settings.set_form( pform );
+					_settings.set_field( ctrl, nullptr );
 					});
 			}
 
 			cb.apply_controls(this);
+			calculate_margins();
+			arrange(bounds);
 
 			create(host);
 		}
@@ -1560,6 +1687,7 @@ namespace corona
 			json_parser jp;
 			json props = jp.create_object();
 
+			column_layout::get_json(_dest);
 			ids.get_json(props);
 			_dest.put_member("model", props);
 		}
@@ -1567,8 +1695,8 @@ namespace corona
 		virtual void put_json(json& _ids)
 		{
 			form_model fm;
+			column_layout::put_json(_ids);
 			json props = _ids["model"];
-
 			fm.put_json(props);
 			set_model(fm);
 		}

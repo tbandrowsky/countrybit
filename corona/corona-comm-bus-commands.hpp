@@ -204,7 +204,7 @@ namespace corona
 				cb_form = _parent;
 
 			if (!table_name.empty())
-				cb_table = bus->find_control(form_name);
+				cb_table = bus->find_control(table_name);
 			else
 				cb_table = _parent;
 

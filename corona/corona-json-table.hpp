@@ -140,21 +140,20 @@ namespace corona
 
 			debug_json_table&& std::cout << "append begin:" << *this << " " << GetCurrentThreadId() << std::endl;
 
-			current_location = _file->add(sizeof(header));
+			current_location = _file->add(sizeof(header) + size);
 
 			header.block_type = block_id::general_id();
 			header.next_free_block = 0;
-			header.data_location = _file->add(size);
+			header.data_location = current_location + sizeof(header);
 			header.data_length = size;
 
-			file_task_result data_result = co_await _file->write( header.data_location, bytes.get_ptr(), size);
-
+			file_task_result header_result = co_await _file->write(current_location, &header, sizeof(header));
 			debug_json_table&& std::cout << "append write header:" << *this << " " << GetCurrentThreadId() << std::endl;
 
-			if (data_result.success)
+			if (header_result.success)
 			{
 				debug_json_table&& std::cout << "append write data:" << *this << " " << GetCurrentThreadId() << std::endl;
-				file_task_result header_result = co_await _file->write(current_location, &header, sizeof(header));
+				file_task_result data_result = co_await _file->write(header.data_location, bytes.get_ptr(), size);
 
 				debug_json_table&& std::cout << "append write data finished:" << *this << " " << GetCurrentThreadId() << std::endl;
 				co_return current_location;
@@ -424,7 +423,10 @@ namespace corona
 
 	public:
 
-		json_table(std::shared_ptr<file> _database_file, std::vector<std::string> _key_fields) : database_file(_database_file), key_fields(_key_fields)
+		json_table(std::shared_ptr<file> _database_file, std::vector<std::string> _key_fields) 
+			: database_file(_database_file), 
+				key_fields(_key_fields),
+			header_location(0)
 		{
 
 		}
@@ -435,6 +437,7 @@ namespace corona
 			index_header = _src.index_header;
 			database_file = _src.database_file;
 			header_key = _src.header_key;
+			header_location = 0;
 		}
 
 		json_table operator = (const json_table& _src)
@@ -443,6 +446,7 @@ namespace corona
 			database_file = _src.database_file;
 			key_fields = _src.key_fields;
 			header_key = _src.header_key;
+			header_location = _src.header_location;
 			return *this;
 		}
 
