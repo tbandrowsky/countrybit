@@ -1063,7 +1063,7 @@ namespace corona
 			return *this;
 		}
 
-		json put_member(std::string _key, double _value)
+		json put_member_double(std::string _key, double _value)
 		{
 			if (!object_impl) {
 				throw std::logic_error("Not an object");
@@ -1072,6 +1072,11 @@ namespace corona
 			new_member->value = _value;
 			object_impl->members[_key] = new_member;
 			return *this;
+		}
+
+		json put_member(std::string _key, double _value)
+		{
+			return put_member_double(_key, _value);
 		}
 
 		json put_member(std::string _key, date_time _value)
@@ -1092,6 +1097,19 @@ namespace corona
 			}
 			auto new_member = std::make_shared<json_array>();
 			object_impl->members[_key] = new_member;
+			return *this;
+		}
+
+		json put_member_object(std::string _key, json& _object)
+		{
+			if (!object_impl) {
+				throw std::logic_error("Not an object");
+			}
+			std::shared_ptr<json_object> existing_object = _object.object_impl;
+			if (existing_object) {
+				auto new_object = existing_object->clone();
+				object_impl->members[_key] = new_object;
+			}
 			return *this;
 		}
 
@@ -1136,18 +1154,7 @@ namespace corona
 			return *this;
 		}
 
-		json put_member_object(std::string _key, json& _object)
-		{
-			if (!object_impl) {
-				throw std::logic_error("Not an object");
-			}
-			std::shared_ptr<json_object> existing_object = _object.object_impl;
-			if (existing_object) {
-				auto new_object = existing_object->clone();
-				object_impl->members[_key] = new_object;
-			}
-			return *this;
-		}
+		json merge(json& _object);
 
 		json put_member_function(std::string _key, json& _object)
 		{
@@ -1240,26 +1247,25 @@ namespace corona
 			{
 				throw std::logic_error("Not an object");
 			}
-
-			auto	index_keys = keys.begin();
-			auto				   my_keys = comparison_fields.begin();
-
-			int chk = 0;
-			while (index_keys != std::end(keys))
+			if (!comparison_fields.size())
 			{
-				if (my_keys != std::end(comparison_fields))
-					return false;
-
-				std::string ifx = std::get<1>(*my_keys);
-				std::string ify = *index_keys;
-
-				if (ifx != ify)
-					return false;
-
-				index_keys++;
-				my_keys++;
+				return false;
 			}
-			
+			for (auto k : keys) 
+			{				
+				bool found = false;
+				for (compared_item& c : comparison_fields)
+				{
+					std::string cname = std::get<1>(c);
+					if (cname == k) {
+						found = true;
+						break;
+					}
+				}
+				if (!found) {
+					return false;
+				}
+			}
 			return true;
 		}
 
@@ -2010,6 +2016,8 @@ namespace corona
 		}
 	};
 
+
+
 	json json::json_iterator::operator *()
 	{
 		json r;
@@ -2715,28 +2723,28 @@ namespace corona
 	}
 }
 
-corona::json operator ""_json_array(const char* _src, size_t _length)
+corona::json operator ""_jarray(const char* _src, size_t _length)
 {
 	corona::json_parser parser;
 	auto result = parser.parse_array(_src);
 	return result;
 }
 
-corona::json operator ""_json_object(const char* _src, size_t _length)
+corona::json operator ""_jobject(const char* _src, size_t _length)
 {
 	corona::json_parser parser;
 	auto result = parser.parse_object(_src);
 	return result;
 }
 
-corona::json operator ""_json_array(const char* _src)
+corona::json operator ""_jarray(const char* _src)
 {
 	corona::json_parser parser;
 	auto result = parser.parse_array(_src);
 	return result;
 }
 
-corona::json operator ""_json_object(const char* _src)
+corona::json operator ""_jobject(const char* _src)
 {
 	corona::json_parser parser;
 	auto result = parser.parse_object(_src);
@@ -2887,6 +2895,34 @@ namespace corona
 			;
 		}
 	};
+
+	json json::merge(json& _object)
+	{
+		json_parser jp;
+
+		if (!object_impl)
+		{
+			throw std::logic_error("Not an object");
+		}
+
+		json new_array = _object.object_to_array([](std::string _member_name, json& _src) -> json
+			{
+				json_parser jp;
+				json new_item = jp.create_object();
+				new_item.put_member("member_name", _member_name);
+				new_item.put_member("member_value", (std::string)_src);
+				return new_item;
+			});
+
+		for (auto e : new_array)
+		{
+			std::string member_name = e["member_name"];
+			json member_value = e["member_value"];
+			put_member(member_name, member_value);
+		}
+
+		return *this;
+	}
 
 }
 

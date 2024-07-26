@@ -38,6 +38,7 @@ namespace corona
 		}
 
 		json								admin_user;
+		json								admin_user_token;
 		buffer								io_buffer;
 
 	public:
@@ -126,7 +127,12 @@ namespace corona
 				}
 
 				auto admin_user_transaction = local_db->create_database();
-				admin_user = admin_user_transaction.wait();
+				json create_database_response = admin_user_transaction.wait();
+
+				// when you create the database you get back your user object
+				// to login to it.
+				admin_user = create_database_response["Data"];
+				admin_user_token = admin_user["Token"];
 
 				if (admin_user.object()) {
 					std::string suser_json = admin_user.to_json();
@@ -148,6 +154,7 @@ namespace corona
 				json_file_watcher user_file_watcher;
 				user_file_watcher.file_name = user_file_name;
 				user_file_watcher.poll_contents(app.get(), admin_user);
+				admin_user_token = admin_user["Token"];
 				ready_for_polling = true;
 			}
 		}
@@ -222,7 +229,7 @@ namespace corona
 		{
 			json_parser jp;
 			json request = jp.create_object();
-			request.put_member("Token", admin_user);
+			request.put_member("Token", admin_user_token);
 			request.put_member("Data", user_information);
 			json j = co_await local_db->create_user(request);
 			co_return j;
@@ -238,7 +245,7 @@ namespace corona
 		{
 			json_parser jp;
 			json request = jp.create_object();
-			request.put_member("Token", admin_user);
+			request.put_member("Token", admin_user_token);
 			json data = jp.create_object();
 			data.put_member("ClassName", class_name);
 			request.put_member("Data", data);
@@ -251,7 +258,7 @@ namespace corona
 		{
 			json_parser jp;
 			json request = jp.create_object();
-			request.put_member("Token", admin_user);
+			request.put_member("Token", admin_user_token);
 			request.put_member("Data", object_information);
 			json response = co_await local_db->put_object(request);
 			response = response["Data"];
@@ -262,7 +269,7 @@ namespace corona
 		{
 			json_parser jp;
 			json request = jp.create_object();
-			request.put_member("Token", admin_user);
+			request.put_member("Token", admin_user_token);
 			request.put_member("Data", object_information);
 			json response = co_await local_db->put_object(request);
 			std::cout << "get_object:" << std::endl << response.to_json_string() << std::endl;
@@ -274,7 +281,7 @@ namespace corona
 		{
 			json_parser jp;
 			json request = jp.create_object();
-			request.put_member("Token", admin_user);
+			request.put_member("Token", admin_user_token);
 			request.put_member("Data", object_information);
 			json response = co_await local_db->put_object(request);
 			std::cout << "query_object:" << std::endl << response.to_json_string() << std::endl;
@@ -282,12 +289,12 @@ namespace corona
 			co_return response;
 		}
 
-		virtual comm_bus_transaction<json>  pop_object(json user_information)
+		virtual comm_bus_transaction<json>  pop_object(json pop_info)
 		{
 			json_parser jp;
 			json request = jp.create_object();
-			request.put_member("Token", admin_user);
-			request.put_member("Data", user_information);
+			request.put_member("Token", admin_user_token);
+			request.put_member("Data", pop_info);
 			json response = co_await local_db->put_object(request);
 			std::cout << "pop_object:" << std::endl << response.to_json_string() << std::endl;
 			response = response["Data"];
@@ -298,7 +305,7 @@ namespace corona
 		{
 			json_parser jp;
 			json request = jp.create_object();
-			request.put_member("Token", admin_user);
+			request.put_member("Token", admin_user_token);
 			request.put_member("Data", query_information);
 			json response = co_await local_db->query_class(request);
 			std::cout << "query_objects:" << std::endl << response.to_json_string() << std::endl;
@@ -311,10 +318,10 @@ namespace corona
 			table_data td;
 			json_parser jp;
 			json request = jp.create_object();
-			request.put_member("Token", admin_user);
-			request.copy_member("Filter", query_information);
-			json table = request["Table"];
-			td.put_json(table);			
+			request.put_member("Token", admin_user_token);
+			request.put_member("Data", query_information);
+			json table = query_information["Table"];
+			td.put_json(table);
 			json response = co_await local_db->query_class(request);
 			json response_items = response["Data"];
 			std::cout << "query_objects_as_table:" << std::endl << response.to_json_string() << std::endl;
@@ -327,9 +334,9 @@ namespace corona
 			list_data ld;
 			json_parser jp;
 			json request = jp.create_object();
-			request.put_member("Token", admin_user);
-			request.copy_member("Filter", query_information);
-			json lst = request["List"];
+			request.put_member("Token", admin_user_token);
+			request.put_member("Data", query_information);
+			json lst = query_information["List"];
 			ld.put_json(lst);
 			json response = co_await local_db->query_class(request);
 			json response_items = response["Data"];
@@ -360,7 +367,7 @@ namespace corona
 					std::cout << "Pages loaded:" << default_page << std::endl;
 				}
 				
-				});
+			});
 		}
 
 		virtual void select_page(std::string _page, std::string _target_control, json _obj)

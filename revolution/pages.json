@@ -409,7 +409,7 @@
                           },
                           "command": {
                             "class_name": "search_objects_command",
-                            "corona_class_name": "HistoricalEvent",
+                            "search_class_name": "HistoricalEvent",
                             "form_name": "search_form",
                             "table_name": "search_list"
                           }
@@ -429,7 +429,7 @@
                           },
                           "command": {
                             "class_name": "create_object_command",
-                            "corona_class_name": "HistoricalEvent",
+                            "create_class_name": "HistoricalEvent",
                             "form_name": "EventDetail"
                           }
                         },

@@ -9,7 +9,7 @@ namespace corona
 	class corona_create_object_command : public corona_bus_command
 	{
 	public:
-		std::string	corona_class_name;
+		std::string	create_class_name;
 		std::string form_name;
 
 		virtual comm_bus_transaction<json> execute(control_base* _parent)
@@ -17,7 +17,7 @@ namespace corona
 			json obj;
 			control_base* cb = bus->find_control(form_name);
 			if (cb) {
-				obj = co_await bus->create_object(corona_class_name);
+				obj = co_await bus->create_object(create_class_name);
 				cb->put_json(obj);
 			}
 			co_return obj;
@@ -26,13 +26,13 @@ namespace corona
 		virtual void get_json(json& _dest)
 		{
 			_dest.put_member("class_name", "create_object_command");
-			_dest.put_member("corona_class_name", corona_class_name);
+			_dest.put_member("create_class_name", create_class_name);
 			_dest.put_member("form_name", form_name);
 		}
 
 		virtual void put_json(json& _src)
 		{
-			corona_class_name = _src["corona_class_name"];
+			create_class_name = _src["create_class_name"];
 			form_name = _src["form_name"];
 		}
 
@@ -189,11 +189,13 @@ namespace corona
 	class corona_search_objects_command : public corona_bus_command
 	{
 	public:
+		std::string			search_class_name;
 		std::string			form_name;
 		std::string			table_name;
 
 		virtual comm_bus_transaction<json> execute(control_base *_parent)
 		{
+			json_parser jp;
 			json obj;
 			control_base* cb_form;
 			control_base* cb_table;
@@ -209,11 +211,14 @@ namespace corona
 				cb_table = _parent;
 
 			if (cb_form && cb_table) {
+				json search_class_filters = jp.create_object();
+				search_class_filters.put_member("ClassName", search_class_name);
 				json object_data = cb_form->get_data();
 				if (object_data.object()) {
-					obj = co_await bus->query_objects(object_data);
+					search_class_filters.put_member("Filter", object_data);
+					obj = co_await bus->query_objects(search_class_filters);
 					if (cb_table) {
-						cb_table->set_items(object_data);
+						cb_table->set_items(obj);
 					}
 				}
 			}
@@ -223,6 +228,7 @@ namespace corona
 		virtual void get_json(json& _dest)
 		{
 			_dest.put_member("class_name", "search_objects_command");
+			_dest.put_member("search_class_name", search_class_name);
 			_dest.put_member("form_name", form_name);
 			_dest.put_member("table_name", table_name);
 		}
@@ -231,6 +237,7 @@ namespace corona
 		{
 			form_name = _src["form_name"];
 			table_name = _src["table_name"];
+			search_class_name = _src["search_class_name"];
 		}
 
 	};

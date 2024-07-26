@@ -1722,7 +1722,13 @@ namespace corona
 	{
 		HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
 		ListView_DeleteAllItems(control);
-		while (ListView_DeleteColumn(hwndRoot, 1));
+		HWND header = ListView_GetHeader(control);
+		int columnCount = (int)SendMessage((header), HDM_GETITEMCOUNT, 0, 0L);
+
+		// Delete each column
+		for (int i = columnCount - 1; i >= 0; i--) {
+			ListView_DeleteColumn(control, i);
+		}
 	}
 
 	void directApplicationWin32::addListViewItem(int ddlControlId, std::string& _text, LPARAM _data)

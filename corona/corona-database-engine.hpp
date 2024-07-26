@@ -137,6 +137,7 @@ namespace corona
 		user_transaction<json> create_database()
 		{
 			json result;
+			timer method_timer;
 
 			json created_classes;
 			relative_ptr_type class_location;
@@ -488,14 +489,17 @@ namespace corona
 
 			new_user_request = create_system_request(new_user_data);
 			json new_user_result = co_await create_user(new_user_request);
-
-			co_return new_user_result;
+			json new_user = new_user_result["Data"];
+			json user_return = create_response(new_user_request, true, "Ok", new_user, method_timer.get_elapsed_seconds());
+			response = create_response(new_user_request, true, "Database Created", user_return, method_timer.get_elapsed_seconds());
+			co_return response;
 		}
 
 private:
 
 		database_transaction<json> create_class(std::string _text)
 		{
+			timer method_timer;
 			json_parser jp;
 			json j = jp.parse_object(_text);
 			json check_request = create_system_request(j);
@@ -510,7 +514,7 @@ private:
 					json key = adjusted_class.extract({ "ClassName" });
 					json temp = co_await classes.get(key); 
 					if (temp.empty()) {
-						response = create_response(check_request, false, "save check failed", adjusted_class, 0.0);
+						response = create_response(check_request, false, "save check failed", adjusted_class, method_timer.get_elapsed_seconds());
 						co_return response;
 					}
 					if (adjusted_class.has_member("Ancestors")) {
@@ -530,10 +534,10 @@ private:
 							}
 						}
 					}
-					response = create_response(check_request, true, "Ok", adjusted_class, 0.0);
+					response = create_response(check_request, true, "Ok", adjusted_class, method_timer.get_elapsed_seconds());
 				}
 				else {
-					response = create_response(check_request, false, "didn't save", checked, 0.0);
+					response = create_response(check_request, false, "didn't save", checked, method_timer.get_elapsed_seconds());
 				}
 			}
 			else 
@@ -545,15 +549,16 @@ private:
 
 		database_transaction<json> check_class(json check_class_request)
 		{
+			timer method_timer;
 			json result;
 
 			json class_definition = check_class_request["Data"];
 
-			result = create_response(check_class_request, true, "Ok", class_definition, 0.0);
+			result = create_response(check_class_request, true, "Ok", class_definition, method_timer.get_elapsed_seconds());
 
 			if (!class_definition.has_member("ClassName"))
 			{
-				result = create_response(check_class_request, false, "Class must have a name", class_definition, 0.0);
+				result = create_response(check_class_request, false, "Class must have a name", class_definition, method_timer.get_elapsed_seconds());
 			}
 
 			std::string class_name = class_definition["ClassName"];
@@ -578,7 +583,7 @@ private:
 
 				if (!base_class_def.object())
 				{
-					result = create_response(check_class_request, false, "Base class not found", class_definition, 0.0);
+					result = create_response(check_class_request, false, "Base class not found", class_definition, method_timer.get_elapsed_seconds());
 				}
 
 				json ancestors = base_class_def["Ancestors"];
@@ -607,12 +612,12 @@ private:
 
 			if (!class_definition.has_member("ClassDescription"))
 			{
-				result = create_response(check_class_request, false, "Class must have a description", class_definition, 0.0);
+				result = create_response(check_class_request, false, "Class must have a description", class_definition, method_timer.get_elapsed_seconds());
 			}
 
 			if (!class_definition.has_member("Fields") || !class_definition["Fields"].object())
 			{
-				result = create_response(check_class_request, false, "Class needs some fields", class_definition, 0.0);
+				result = create_response(check_class_request, false, "Class needs some fields", class_definition, method_timer.get_elapsed_seconds());
 			}
 			else
 			{
@@ -628,7 +633,7 @@ private:
 						std::string field_type = jp.get_string();
 						if (!allowed_field_types.contains(field_type))
 						{
-							result = create_response(check_class_request, false, "Bad field", err_field, 0.0);
+							result = create_response(check_class_request, false, "Bad field", err_field, method_timer.get_elapsed_seconds());
 							co_return result;
 						}
 					}
@@ -637,16 +642,16 @@ private:
 						std::string field_type = jp["FieldType"];
 						if (!allowed_field_types.contains(field_type))
 						{
-							result = create_response(check_class_request, false, "Bad field", err_field, 0.0);
+							result = create_response(check_class_request, false, "Bad field", err_field, method_timer.get_elapsed_seconds());
 							co_return result;
 						}
 					}
 					else
 					{
-						result = create_response(check_class_request, false, "Class field incorrect", err_field, 0.0);
+						result = create_response(check_class_request, false, "Class field incorrect", err_field, method_timer.get_elapsed_seconds());
 					}
 				}
-				result = create_response(check_class_request, true, "Ok", class_definition, 0.0);
+				result = create_response(check_class_request, true, "Ok", class_definition, method_timer.get_elapsed_seconds());
 			}
 
 			co_return result;
@@ -654,23 +659,24 @@ private:
 
 		database_method_transaction<json> check_object(json check_object_request)
 		{
+			timer method_timer;
 			json result;
 			json_parser jp;
 
 			json object_definition = check_object_request["Data"];
 			bool strict_enabled = (bool)check_object_request["Strict"];
 
-			result = create_response(check_object_request, true, "Ok", object_definition, 0.0);
+			result = create_response(check_object_request, true, "Ok", object_definition, method_timer.get_elapsed_seconds());
 
 			if (!object_definition.object())
 			{
-				result = create_response(check_object_request, false, "This is not an object", object_definition, 0);
+				result = create_response(check_object_request, false, "This is not an object", object_definition, method_timer.get_elapsed_seconds());
 				co_return result;
 			}
 
 			if (!object_definition.has_member("ClassName"))
 			{
-				result = create_response(check_object_request, false, "Object must have class name", object_definition, 0);
+				result = create_response(check_object_request, false, "Object must have class name", object_definition, method_timer.get_elapsed_seconds());
 				co_return result;
 			}
 
@@ -772,15 +778,12 @@ private:
 			payload.put_member("Success", _success);
 			payload.put_member("Message", _message);
 			payload.put_member("Data", _data);
-			payload.put_member("Seconds", _seconds);
+			payload.put_member_double("Seconds", _seconds);
 			return payload;
 		}
 
-
-		bool check_message(json& _message, std::vector<std::string> _authorizations)
+		bool check_token(json& token, std::vector<std::string> _authorizations)
 		{
-			json token = _message["Token"];
-
 			if (!token.object())
 			{
 				return false;
@@ -831,6 +834,15 @@ private:
 			}
 
 			return false;
+		}
+
+		bool check_message(json& _message, std::vector<std::string> _authorizations)
+		{
+			json token = _message["Token"];
+
+			bool result = check_token(token, _authorizations);
+
+			return result;
 		}
 
 		json get_message_user(json _token)
@@ -909,7 +921,7 @@ private:
 			json user;
 
 			// check the token to make sure it is valid - this includes signature verification
-			if (!check_message(_token, { auth_general })) {
+			if (!check_token(_token, { auth_general })) {
 				co_return false;
 			}
 
@@ -1234,9 +1246,14 @@ private:
 					{
 						json object_definition = object_array.get_element(i);
 						json put_object_request = create_system_request(object_definition);
+						// in corona, creating an object doesn't actually persist anything 
+						// but a change in identifier.  It's a clean way of just getting the 
+						// "new chumpy" item for ya.  
 						json create_result = co_await create_object(put_object_request);
 						if (create_result["Success"]) {
-							json empty = co_await put_object(create_result["Data"]);
+							json created_object = create_result["Data"];
+							json save_result = co_await put_object(create_result);
+							std::cout << "Created object:" << std::endl;
 						}
 					}
 				}
@@ -1252,6 +1269,7 @@ private:
 
 		database_transaction<relative_ptr_type> open_database(relative_ptr_type _header_location)
 		{
+			timer method_timer;
 			scope_lock lock_one(header_rw_lock);
 
 			relative_ptr_type header_location = co_await header.read(database_file.get(), _header_location);
@@ -1269,6 +1287,7 @@ private:
 		// this creates a user account, using an email and a phone number to send a confirmation code to.
 		database_transaction<json> create_user(json create_user_request)
 		{
+			timer method_timer;
 			json_parser jp;
 			json response;
 
@@ -1329,12 +1348,12 @@ private:
 				if (succeeded)
 				{
 					data.put_member("Password", hashed_pw);
-					response = create_response(user_name, auth_login_user, true, "User created", data, 0.0);
+					response = create_response(user_name, auth_login_user, true, "User created", data, method_timer.get_elapsed_seconds());
 				}
 			}
 			else
 			{
-				response = create_response(create_user_request, false, "User not created", data, 0.0);
+				response = create_response(create_user_request, false, "User not created", data, method_timer.get_elapsed_seconds());
 			}
 
 			co_return response;
@@ -1343,6 +1362,7 @@ private:
 		// this starts a login attempt
 		database_transaction<json> login_user(json _login_request)
 		{
+			timer method_timer;
 			json_parser jp;
 			json response;
 
@@ -1377,16 +1397,16 @@ private:
 
 					data.copy_member("ObjectId", ul);
 
-					response = create_response(user_name, auth_general, true, "Ok", data, 0.0);
+					response = create_response(user_name, auth_general, true, "Ok", data, method_timer.get_elapsed_seconds());
 				}
 				else 
 				{
-					response = create_response(_login_request, false, "Failed", jp.create_object(), 0.0);
+					response = create_response(_login_request, false, "Failed", jp.create_object(), method_timer.get_elapsed_seconds());
 				}
 			}
 			else
 			{
-				response = create_response(_login_request, false, "Failed", jp.create_object(), 0.0);
+				response = create_response(_login_request, false, "Failed", jp.create_object(), method_timer.get_elapsed_seconds());
 			}
 
 			co_return response;
@@ -1418,6 +1438,7 @@ private:
 
 		database_transaction<json> edit_object(json _edit_object_request)
 		{
+			timer method_timer;
 			json_parser jp;
 			json result;
 
@@ -1426,7 +1447,7 @@ private:
 
 			if (!check_message(_edit_object_request, { auth_general }))
 			{
-				result = create_response(_edit_object_request, false, "Denied", jp.create_object(), 0.0);
+				result = create_response(_edit_object_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
 				co_return result;
 			}
 
@@ -1453,14 +1474,15 @@ private:
 						object_fields.put_member(field.first, field.second);
 					}
 				}
-				co_return create_response(_edit_object_request, true, "Ok", object_options, 0.0);
+				co_return create_response(_edit_object_request, true, "Ok", object_options, method_timer.get_elapsed_seconds());
 			}
-			co_return create_response(_edit_object_request, false, "Sadly, this object eludes you.", object_options, 0.0);
+			co_return create_response(_edit_object_request, false, "Sadly, this object eludes you.", object_options, method_timer.get_elapsed_seconds());
 		}
 
 
 		database_method_transaction<json> get_classes(json get_classes_request)
 		{
+			timer method_timer;
 			json_parser jp;
 
 			json result;
@@ -1470,13 +1492,14 @@ private:
 
 			if (!check_message(get_classes_request, { auth_general }))
 			{
-				result = create_response(get_classes_request, false, "Denied", jp.create_object(), 0.0);
+				result = create_response(get_classes_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
 				co_return result;
 			}
 
 			result_list = co_await classes.select_array([this, get_classes_request](int _index, json& _item) {
 				json_parser jp;
-				auto permission_task = has_class_permission(get_classes_request, _item["ClassName"], "Get");
+				json token = get_classes_request["Token"];
+				auto permission_task = has_class_permission(token, _item["ClassName"], "Get");
 				bool has_permission = permission_task.wait();
 
 				if (has_permission) 
@@ -1488,23 +1511,38 @@ private:
 					json empty = jp.create_object("Skip", "this");
 					return empty;
 				}
-				});
+			});
 
 			std::cout << "result_list::" << result_list.to_json() << std::endl;
 
-			result = create_response(get_classes_request, true, "Ok", result_list, 0);
+			result = create_response(get_classes_request, true, "Ok", result_list, method_timer.get_elapsed_seconds());
 
 			co_return result;
 		}
 
 		database_composed_transaction<json> get_class(json get_class_request)
 		{
+			timer method_timer;
 			json_parser jp;
 			json result;
 
+			std::vector<std::string> missing_elements;
+			if (!get_class_request.has_members(missing_elements, { "Token", "Data" })) {
+				std::string error_message;
+				error_message = "get_class missing elements:";
+				std::string comma = "";
+				for (auto m : missing_elements) {
+					error_message.append(comma);
+					error_message.append(m);
+				}
+				json response = create_response(get_class_request, false, error_message, jp.create_object(), method_timer.get_elapsed_seconds());
+				co_return response;
+			}
+
+
 			if (!check_message(get_class_request, { auth_general }))
 			{
-				result = create_response(get_class_request, false, "Denied", jp.create_object(), 0.0);
+				result = create_response(get_class_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
 				co_return result;
 			}
 
@@ -1525,18 +1563,32 @@ private:
 			}
 
 
-			result = create_response(get_class_request, true, "Ok", result, 0);
+			result = create_response(get_class_request, true, "Ok", result, method_timer.get_elapsed_seconds());
 			co_return result;
 		}
 
 		database_composed_transaction<json> create_class(json put_class_request)
 		{
+			timer method_timer;
 			json result;
 			json_parser jp;
 
+			std::vector<std::string> missing_elements;
+			if (!put_class_request.has_members(missing_elements, { "Token", "Data" })) {
+				std::string error_message;
+				error_message = "create_class missing elements:";
+				std::string comma = "";
+				for (auto m : missing_elements) {
+					error_message.append(comma);
+					error_message.append(m);
+				}
+				json response = create_response(put_class_request, false, error_message, jp.create_object(), method_timer.get_elapsed_seconds());
+				co_return response;
+			}
+
 			if (!check_message(put_class_request, { auth_general }))
 			{
-				result = create_response(put_class_request, false, "Denied", jp.create_object(), 0.0);
+				result = create_response(put_class_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
 				co_return result;
 			}
 
@@ -1549,7 +1601,7 @@ private:
 				"Put");
 
 			if (!can_put_class) {
-				result = create_response(put_class_request, false, "Denied", class_definition, 0.0);
+				result = create_response(put_class_request, false, "Denied", class_definition, method_timer.get_elapsed_seconds());
 				co_return result;
 			}
 
@@ -1561,11 +1613,11 @@ private:
 			class_key.set_compare_order({ "ClassName" });
 			json class_exists = classes.get(class_key);
 			if (class_exists.object()) {
-				result = create_response(put_class_request, false, "Class already exists", class_definition, 0.0);
+				result = create_response(put_class_request, false, "Class already exists", class_definition, method_timer.get_elapsed_seconds());
 				co_return result;
 			}
-
-			json checked = co_await check_class(class_definition);
+			json check_request = create_request(put_class_request, class_definition);
+			json checked = co_await check_class(check_request);
 			if (checked["Success"]) {
 				json adjusted_class = checked["Data"];
 				scope_lock lock_one(classes_rw_lock);
@@ -1586,27 +1638,41 @@ private:
 							co_await classes.put(ancestor_class);
 						}
 					}
-					result = create_response(put_class_request, true, "Ok", adjusted_class, 0.0);
+					result = create_response(put_class_request, true, "Ok", adjusted_class, method_timer.get_elapsed_seconds());
 				}
 				else {
-					result = create_response(put_class_request, false, "class not written", adjusted_class, 0.0);
+					result = create_response(put_class_request, false, "class not written", adjusted_class, method_timer.get_elapsed_seconds());
 				}
 			}
 			else
 			{
-				result = create_response(put_class_request, false, "class failed checks", checked, 0.0);
+				result = create_response(put_class_request, false, "class failed checks", checked, method_timer.get_elapsed_seconds());
 			}
 			co_return result;
 		}
 
 		database_composed_transaction<json> put_class(json put_class_request)
 		{
+			timer method_timer;
 			json result;
 			json_parser jp;
 
+			std::vector<std::string> missing_elements;
+			if (!put_class_request.has_members(missing_elements, { "Token", "Filter", "ClassName" })) {
+				std::string error_message;
+				error_message = "put_class missing elements:";
+				std::string comma = "";
+				for (auto m : missing_elements) {
+					error_message.append(comma);
+					error_message.append(m);
+				}
+				json response = create_response(put_class_request, false, error_message, jp.create_object(), method_timer.get_elapsed_seconds());
+				co_return response;
+			}
+
 			if (!check_message(put_class_request, { auth_general }))
 			{
-				result = create_response(put_class_request, false, "Denied", jp.create_object(), 0.0);
+				result = create_response(put_class_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
 				co_return result;
 			}
 
@@ -1619,11 +1685,11 @@ private:
 				"Put");
 
 			if (!can_put_class) {
-				result = create_response(put_class_request, false, "Denied", class_definition, 0.0);
+				result = create_response(put_class_request, false, "Denied", class_definition, method_timer.get_elapsed_seconds());
 				co_return result;
 			}
-
-			json checked = co_await check_class(class_definition);
+			json check_request = create_request(put_class_request, class_definition);
+			json checked = co_await check_class(check_request);
 			if (checked["Success"]) {
 				scope_lock lock_one(classes_rw_lock);
 
@@ -1645,38 +1711,70 @@ private:
 							co_await classes.put(ancestor_class);
 						}
 					}
-					result = create_response(put_class_request, true, "Ok", adjusted_class, 0.0);
+					result = create_response(put_class_request, true, "Ok", adjusted_class, method_timer.get_elapsed_seconds());
 				}
 				else {
-					result = create_response(put_class_request, false, "class not written", adjusted_class, 0.0);
+					result = create_response(put_class_request, false, "class not written", adjusted_class, method_timer.get_elapsed_seconds());
 				}
 			}
 			else 
 			{
-				result = create_response(put_class_request, false, "class failed checks", checked, 0.0);
+				result = create_response(put_class_request, false, "class failed checks", checked, method_timer.get_elapsed_seconds());
 			}
 			co_return result;
 		}
 
 		database_method_transaction<json> query_class(json query_class_request)
 		{
+			timer method_timer;
 			json_parser jp;
 			json response;
 
+			std::vector<std::string> missing_elements;
+			if (!query_class_request.has_members(missing_elements, { "Token", "Data" })) {
+				std::string error_message;
+				error_message = "Missing elements:";
+				std::string comma = "";
+				for (auto m : missing_elements) {
+					error_message.append(comma);
+					error_message.append(m);
+				}
+				response = create_response(query_class_request, false, error_message, jp.create_object(), method_timer.get_elapsed_seconds());
+				co_return response;
+			}
+
+			missing_elements.clear();
+			json manip = query_class_request["Data"];
+			if (!manip.has_members(missing_elements, { "Filter", "ClassName" })) {
+				std::string error_message;
+				error_message = "Missing elements:";
+				std::string comma = "";
+				for (auto m : missing_elements) {
+					error_message.append(comma);
+					error_message.append(m);
+				}
+				response = create_response(query_class_request, false, error_message, jp.create_object(), method_timer.get_elapsed_seconds());
+				co_return response;
+			}
+
 			if (!check_message(query_class_request, { auth_general }))
 			{
-				response = create_response(query_class_request, false, "Denied", jp.create_object(), 0.0);
+				response = create_response(query_class_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
 				co_return response;
 			}
 
 			json token = query_class_request["Token"];
-			json base_class_name = query_class_request["ClassName"];
-			json filter = query_class_request["Filter"];
+			json base_class_name = manip["ClassName"];
+			if (base_class_name.empty()) {
+				response = create_response(query_class_request, false, "Classname not specified", jp.create_object(), method_timer.get_elapsed_seconds());
+				co_return response;
+			}
+			json filter = manip["Filter"];
 
-
-			if (!has_class_permission(token, base_class_name, "Get"))
+			bool class_granted = co_await has_class_permission(token, base_class_name, "Get");
+			if (!class_granted)
 			{
-				response = create_response(query_class_request, false, "Denied", jp.create_object(), 0.0);
+				response = create_response(query_class_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
 				co_return response;
 			}
 
@@ -1699,7 +1797,7 @@ private:
 
 				{
 					scope_lock lock_one(classes_rw_lock);
-					auto class_object_ids = co_await class_objects.select_array(search_key, [](int _index, json& _item)->json {
+					class_object_ids = co_await class_objects.select_array(search_key, [](int _index, json& _item)->json {
 						return _item;
 						});
 				}
@@ -1707,29 +1805,33 @@ private:
 				json get_object_id = jp.create_object("ObjectId", 0i64);
 				get_object_id.put_member("Token", token);
 
-				for (db_object_id_type i = 0; i < class_object_ids.size(); i++)
-				{
-					db_object_id_type ri = class_object_ids.get_element(i)["ObjectId"];
-					get_object_id.put_member_i64("ObjectId", ri);
-					get_object_id.set_natural_order();
-					json check_request = create_request(query_class_request, get_object_id);
-					if (check_object_key_permission(check_request, "Get"))
+				if (class_object_ids.array()) {
+					for (db_object_id_type i = 0; i < class_object_ids.size(); i++)
 					{
-						json objx = co_await get_object(get_object_id);
-						if (objx["Success"])
+						db_object_id_type ri = class_object_ids.get_element(i)["ObjectId"];
+						get_object_id.put_member_i64("ObjectId", ri);
+						get_object_id.set_natural_order();
+						json check_request = create_request(query_class_request, get_object_id);
+						bool granted = co_await check_object_key_permission(check_request, "Get");
+						if (granted)
 						{
-							objects.append_element(objx["Data"]);
+							json objx = co_await get_object(get_object_id);
+							if (objx["Success"])
+							{
+								objects.append_element(objx["Data"]);
+							}
 						}
 					}
 				}
 			}
 
-			response = create_response(query_class_request, true, "Query completed", objects, 0.0);
+			response = create_response(query_class_request, true, "Query completed", objects, method_timer.get_elapsed_seconds());
 			co_return response;
 		}
 
 		database_method_transaction<json> create_object(json create_object_request)
 		{
+			timer method_timer;
 			json_parser jp;
 
 			json token = create_object_request["Token"];
@@ -1739,12 +1841,12 @@ private:
 
 			if (!check_message(create_object_request, { auth_general }))
 			{
-				response = create_response(create_object_request, false, "Denied", jp.create_object(), 0.0);
+				response = create_response(create_object_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
 				co_return response;
 			}
 
 			if (!has_class_permission(token, class_name, "Get")) {
-				json result = create_response(create_object_request, false, "Cannot get class", data, 0.0);
+				json result = create_response(create_object_request, false, "Cannot get class", data, method_timer.get_elapsed_seconds());
 				co_return result;
 			}
 
@@ -1818,7 +1920,7 @@ private:
 						new_object.put_member_array(member.first);
 					}
 				}
-				response = create_response(create_object_request, true, "Object created", new_object, 0.0);
+				response = create_response(create_object_request, true, "Object created", new_object, method_timer.get_elapsed_seconds());
 
 			}
 			co_return response;
@@ -1827,6 +1929,7 @@ private:
 
 		database_method_transaction<json> put_object(json put_object_request)
 		{
+			timer method_timer;
 			json_parser jp;
 
 			json token;
@@ -1837,13 +1940,13 @@ private:
 
 			if (!check_message(put_object_request, { auth_general }))
 			{
-				result = create_response(put_object_request, false, "Denied", jp.create_object(), 0.0);
+				result = create_response(put_object_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
 				co_return result;
 			}
 
 			bool permission = co_await check_object_permission(put_object_request, "Put");
 			if (!permission) {
-				json result = create_response(put_object_request, false, "Cannot create object", put_object_request["Data"], 0.0);
+				json result = create_response(put_object_request, false, "Cannot create object", put_object_request["Data"], method_timer.get_elapsed_seconds());
 				co_return result;
 			}
 
@@ -1866,11 +1969,11 @@ private:
 				json cobj = object_definition.extract({ "ClassName", "ObjectId" });
 				relative_ptr_type classput_result = co_await class_objects.put(cobj);
 
-				result = create_response(put_object_request, true, "Object created", object_definition, 0.0);
+				result = create_response(put_object_request, true, "Object created", object_definition, method_timer.get_elapsed_seconds());
 			}
 			else 
 			{
-				result = create_response(put_object_request, false, "Invalid object", put_object_request["Data"], 0.0);
+				result = create_response(put_object_request, false, "Invalid object", put_object_request["Data"], method_timer.get_elapsed_seconds());
 			}
 
 			co_return result;
@@ -1880,42 +1983,44 @@ private:
 			json get_object_request
 		)
 		{
+			timer method_timer;
 			json_parser jp;
 			json result;
 
 			if (!check_message(get_object_request, { auth_general }))
 			{
-				result = create_response(get_object_request, false, "Denied", jp.create_object(), 0.0);
+				result = create_response(get_object_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
 				co_return result;
 			}
 
 			bool permission = co_await check_object_permission(get_object_request, "Get");
 			if (!permission) {
-				json result = create_response(get_object_request, false, "Denied", jp.create_object(), 0.0);
+				json result = create_response(get_object_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
 				co_return result;
 			}
 
 			json token = get_object_request["Token"];
 			json obj = co_await acquire_object(get_object_request);
 
-			result = create_response(get_object_request, true, "Ok", obj, 0.0);
+			result = create_response(get_object_request, true, "Ok", obj, method_timer.get_elapsed_seconds());
 
 			co_return result;
 		}
 
 		database_transaction<json> pop_object(json pop_object_request)
 		{
+			timer method_timer;
 			json response;
 			json_parser jp;
 
 			if (!check_message(pop_object_request, { auth_general }))
 			{
-				response = create_response(pop_object_request, false, "Denied", jp.create_object(), 0.0);
+				response = create_response(pop_object_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
 				co_return response;
 			}
 
 			if (!check_object_key_permission(pop_object_request, "Delete")) {
-				json result = create_response(pop_object_request, false, "Cannot delete object", jp.create_object(), 0.0);
+				json result = create_response(pop_object_request, false, "Cannot delete object", jp.create_object(), method_timer.get_elapsed_seconds());
 				co_return result;
 			}
 
@@ -1930,37 +2035,38 @@ private:
 
 			json object_def = co_await objects.get(object_key);
 
-			response = create_response(pop_object_request, false, "Failed", object_key, 0.0);
+			response = create_response(pop_object_request, false, "Failed", object_key, method_timer.get_elapsed_seconds());
 
 			if (object_def.object()) {
 				bool success = co_await class_objects.erase(object_def);
 				if (success) {
 					success = co_await objects.erase(object_key);
 					if (success) {
-						response = create_response(pop_object_request, true, "Ok", object_key, 0.0);
+						response = create_response(pop_object_request, true, "Ok", object_key, method_timer.get_elapsed_seconds());
 					}
 				}
 			}
 			else
 			{
-				response = create_response(pop_object_request, false, "Not found", object_key, 0.0);
+				response = create_response(pop_object_request, false, "Not found", object_key, method_timer.get_elapsed_seconds());
 			}
 			co_return response;
 		}
 
 		database_transaction<json> delete_object(json delete_object_request)
 		{
+			timer method_timer;
 			json response;
 			json_parser jp;
 
 			if (!check_message(delete_object_request, { auth_general }))
 			{
-				response = create_response(delete_object_request, false, "Denied", jp.create_object(), 0.0);
+				response = create_response(delete_object_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
 				co_return response;
 			}
 
 			if (!check_object_key_permission(delete_object_request, "Delete")) {
-				json result = create_response(delete_object_request, false, "Cannot delete object", jp.create_object(), 0.0);
+				json result = create_response(delete_object_request, false, "Cannot delete object", jp.create_object(), method_timer.get_elapsed_seconds());
 				co_return result;
 			}
 
@@ -1970,33 +2076,34 @@ private:
 
 			json object_def = co_await objects.get(object_key);
 
-			response = create_response(delete_object_request, false, "Failed", object_key, 0.0);
+			response = create_response(delete_object_request, false, "Failed", object_key, method_timer.get_elapsed_seconds());
 
 			if (object_def.object()) {
 				bool success = co_await class_objects.erase(object_def);
 				if (success) {
 					success = co_await objects.erase(object_key);
 					if (success) {
-						response = create_response(delete_object_request, true, "Ok", object_key, 0.0);
+						response = create_response(delete_object_request, true, "Ok", object_key, method_timer.get_elapsed_seconds());
 					}
 				}
 			}
 			else 
 			{
-				response = create_response(delete_object_request, false, "Not found", object_key, 0.0);
+				response = create_response(delete_object_request, false, "Not found", object_key, method_timer.get_elapsed_seconds());
 			}
 			co_return response;
 		}
 
 		database_transaction<json> copy_object(json copy_request)
 		{
+			timer method_timer;
 			json_parser jp;
 
 			json response;
 
 			if (!check_message(copy_request, { auth_general }))
 			{
-				response = create_response(copy_request, false, "Denied", jp.create_object(), 0.0);
+				response = create_response(copy_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
 				co_return response;
 			}
 
@@ -2008,7 +2115,7 @@ private:
 
 			bool permission = co_await check_object_permission(copy_request, "Get");
 			if (!permission) {
-				json result = create_response(copy_request, false, "Denied", source_key, 0.0);
+				json result = create_response(copy_request, false, "Denied", source_key, method_timer.get_elapsed_seconds());
 				co_return result;
 			}
 
@@ -2020,7 +2127,7 @@ private:
 			json result = co_await put_object(por);
 
 			if (result["Success"]) {
-				response = create_response(copy_request, true, "Ok", result["Data"], 0);
+				response = create_response(copy_request, true, "Ok", result["Data"], method_timer.get_elapsed_seconds());
 			}
 			else
 			{
