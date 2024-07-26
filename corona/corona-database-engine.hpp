@@ -1154,6 +1154,9 @@ private:
 			{
 				json send_grid = _config["SendGrid"];
 				send_grid_api_key = send_grid["ApiKey"];
+			}
+			if (_config.has_member("Server"))
+			{
 				json server = _config["Server"];
 				listen_point = server["ListenPoint"];
 				default_user = server["DefaultUserName"];
@@ -1231,7 +1234,10 @@ private:
 					{
 						json object_definition = object_array.get_element(i);
 						json put_object_request = create_system_request(object_definition);
-						co_await create_user(put_object_request);
+						json create_result = co_await create_object(put_object_request);
+						if (create_result["Success"]) {
+							json empty = co_await put_object(create_result["Data"]);
+						}
 					}
 				}
 				else if (object_array.object())
@@ -1319,7 +1325,8 @@ private:
 				json put_object_request = create_request(create_user_request, create_login_params);
 				json put_response = co_await put_object(put_object_request);
 
-				if (put_response["Succeeded"])
+				bool succeeded = (bool)put_response["Success"];
+				if (succeeded)
 				{
 					data.put_member("Password", hashed_pw);
 					response = create_response(user_name, auth_login_user, true, "User created", data, 0.0);
