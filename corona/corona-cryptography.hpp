@@ -45,7 +45,6 @@ namespace corona
 			}
 			else
 			{
-				std::cout << "Cannot get crypto property" << std::endl;
 				throw std::logic_error("Cannot get crypto property");
 			}
 			return new_buffer;

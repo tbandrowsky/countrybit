@@ -34,7 +34,7 @@ namespace corona {
 	void put_json(D2D1_SIZE_U& _dest, json& _src)
 	{
 		if (!_src.has_members({ "width", "height" })) {
-			std::cout << "D2D1_SIZE_U needs a width and height" << std::endl;
+			system_monitoring_interface::global_mon->log_warning("D2D1_SIZE_U needs a width and height");
 			std::cout << _src.to_json() << std::endl;
 		}
 		_dest.width = (double)_src["width"];
@@ -53,7 +53,7 @@ namespace corona {
 	{
 		std::vector<std::string> missing;
 		if (!_src.has_members(missing, { "left", "top", "right", "bottom" })) {
-			std::cout << "D2D1_RECT_F needs a crop and size" << std::endl;
+			system_monitoring_interface::global_mon->log_warning("D2D1_RECT_F needs a crop and size");
 			std::cout << "is missing:" << std::endl;
 			std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 				std::cout << s << std::endl;
@@ -87,7 +87,7 @@ namespace corona {
 
 		std::vector<std::string> missing;
 		if (!_src.has_members(missing, { "crop", "size" })) {
-			std::cout << "sizeCrop needs a crop and size" << std::endl;
+			system_monitoring_interface::global_mon->log_warning("sizeCrop needs a crop and size");
 			std::cout << "is missing:" << std::endl;
 			std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 				std::cout << s << std::endl;
@@ -269,7 +269,7 @@ namespace corona {
 	{
 		std::vector<std::string> missing;
 		if (!_src.has_members(missing, { "color", "position" })) {
-			std::cout << "gradientStop needs a color and position" << std::endl;
+			system_monitoring_interface::global_mon->log_warning("gradientStop needs a color and position");
 			std::cout << "gradientStop is missing:" << std::endl;
 			std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 				std::cout << s << std::endl;
@@ -347,8 +347,8 @@ namespace corona {
 	{
 		json_parser jp;
 
-		if (!_src.has_members({ "file_name", "crop", "sizes"})) {
-			std::cout << "bitmap needs a filename and crop and sizes" << std::endl;
+		if (!_src.has_members({ "file_name", "crop", "sizes" })) {
+			system_monitoring_interface::global_mon->log_warning("bitmap needs a filename, crop, and sizes");
 			std::cout << _src.to_json() << std::endl;
 			return;
 		}
@@ -403,7 +403,7 @@ namespace corona {
 	void put_json(bitmapBrushRequest& _dest, json& _src)
 	{
 		if (!_src.has_members({ "file_name" })) {
-			std::cout << "bitmap_brush must have file_name" << std::endl;
+			system_monitoring_interface::global_mon->log_warning("bitmap_brush must have file_name");
 			std::cout << _src.to_json() << std::endl;
 			return;
 		}
@@ -470,7 +470,7 @@ namespace corona {
 		json_parser jp;
 
 		if (!_src.has_members({ "start", "stop", "stops" })) {
-			std::cout << "linear_brush must have start, stop and stops" << std::endl;
+			system_monitoring_interface::global_mon->log_warning("linear_brush must have start, stop and stops");
 			std::cout << _src.to_json() << std::endl;
 			return;
 		}
@@ -562,7 +562,7 @@ namespace corona {
 
 		std::vector<std::string> missing;
 		if (!_src.has_members(missing, { "center", "offset", "size", "radiusX", "radiusY", "stops" })) {
-			std::cout << "radial_brush must have name, center, offset, size, radiusX, radiusY and stops" << std::endl;
+			system_monitoring_interface::global_mon->log_warning("radial_brush must have name, center, offset, size, radiusX, radiusY and stops");
 			std::cout << "is missing:" << std::endl;
 			std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 				std::cout << s << std::endl;
@@ -635,7 +635,7 @@ namespace corona {
 		json_parser jp;
 
 		if (!_src.has_members({ "color" })) {
-			std::cout << "solid_brush must have color" << std::endl;
+			system_monitoring_interface::global_mon->log_warning("solid_brush must have color");
 			std::cout << _src.to_json() << std::endl;
 			return;
 		}
@@ -1181,7 +1181,7 @@ namespace corona {
 	{
 
 		if (!_src.has_members({ "font_name", "font_size" })) {
-			std::cout << "text style must have font_name, and font_size." << std::endl;
+			system_monitoring_interface::global_mon->log_warning("text style must have font_name, and font_size.");
 			std::cout << "text style may also have bold, italics, underline, strike_through, line_spacing, wrap_text, character_spacing, font_stretch." << std::endl;
 			std::cout << _src.to_json() << std::endl;
 			return;

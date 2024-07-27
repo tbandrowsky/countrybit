@@ -1512,7 +1512,9 @@ namespace corona
 				}
 
 				if (fld.class_name.empty()) {
-					std::cout << "form " << name << " fields.[" << index << "] " << " does not have a class_name" << std::endl;
+					std::string msg;
+					msg = std::format("form '{0}' fields.[{1}] does not have a class_name", name, index);
+					system_monitoring_interface::global_mon->log_warning(msg);
 				}
 				if (fld.control_settings.empty())
 				{
@@ -2038,8 +2040,6 @@ namespace corona
 		{
 			bool adapter_blown_away = false;
 
-			std::cout << typeid(*this).name() << " tab_view::draw" << std::endl;
-
 			if (auto pwindow = window.lock())
 			{
 				pwindow->beginDraw(adapter_blown_away);
@@ -2093,7 +2093,7 @@ namespace corona
 				}
 				catch (std::exception exc)
 				{
-					std::cout << "Exception " << exc.what() << std::endl;
+					system_monitoring_interface::global_mon->log_exception(exc);
 				}
 			}
 		}
@@ -2102,8 +2102,6 @@ namespace corona
 		{
 			if (auto pwindow = window.lock())
 			{
-				std::cout << typeid(*this).name() << " " << bounds.x << ", " << bounds.y << " " << bounds.w << " " << bounds.h << std::endl;
-
 				auto bm = pwindow->getBitmap();
 				D2D1_RECT_F dest;
 				dest.left = bounds.x;
@@ -2943,7 +2941,9 @@ namespace corona
 		}
 		else 
 		{
-			std::cout << "class_name '" << class_name << "' is invalid'" << std::endl;
+			std::string msg;
+			msg = std::format("class_name '{0}' is invalid", class_name);
+			system_monitoring_interface::global_mon->log_warning(msg);
 			std::cout << "Currently the following control classes are supported.  Set class_name to one of these." << std::endl;
 			std::cout << "Text Box types" << std::endl;
 			std::cout << "title, subtitle, chaptertitle, chaptersubtitle, paragraph, " << std::endl;

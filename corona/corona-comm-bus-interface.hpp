@@ -172,9 +172,8 @@ namespace corona
 			}
 			catch (std::exception exc)
 			{
-				std::cout << exc.what() << std::endl;
+				system_monitoring_interface::global_mon->log_exception(exc);
 			}
-
 
 			return result;
 		}
@@ -193,7 +192,7 @@ namespace corona
 			}
 			catch (std::exception exc)
 			{
-				std::cout << exc.what() << std::endl;
+				system_monitoring_interface::global_mon->log_exception(exc);
 			}
 
 
@@ -209,17 +208,26 @@ namespace corona
 		}
 	};
 
-	class comm_bus_interface
+	class comm_bus_interface 
 	{
 
 		std::multimap<UINT, windows_event_waiter> windows_waiters;
 		std::multimap<std::string, topic_event_waiter> topic_waiters;
 
+
 	public:
-		
+
+		static comm_bus_interface* global_bus;
+
+		comm_bus_interface()
+		{
+			global_bus = this;
+		}
+
 		std::string default_page;
 
 		virtual void run_app_ui(HINSTANCE hInstance, LPSTR command_line, bool fullScreen) = 0;
+
 
 		virtual comm_bus_transaction<json> create_user(json user_information) = 0;
 		virtual comm_bus_transaction<json> login_user(json login_information) = 0;
@@ -400,6 +408,8 @@ namespace corona
 		virtual control_base* find_control(std::string _name) = 0;
 		virtual void poll(bool _select_default_page) = 0;
 	};
+
+	comm_bus_interface* comm_bus_interface::global_bus = nullptr;
 
 	class corona_bus_command : public json_serializable
 	{

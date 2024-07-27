@@ -39,11 +39,11 @@ namespace corona
 		{
 			std::vector<std::string> missing;
 			if (!_src.has_members(missing, { "id_field", "text_field", "selected_field" })) {
-				std::cout << "list_data is missing:" << std::endl;
+				system_monitoring_interface::global_mon->log_bus("list_data is missing");
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 					std::cout << s << std::endl;
 					});
-				std::cout << "source json:" << std::endl;
+				system_monitoring_interface::global_mon->log_bus("list_data is missing");
 				std::cout << _src.to_json() << std::endl;
 				return;
 			}
@@ -76,7 +76,7 @@ namespace corona
 		{
 			std::vector<std::string> missing;
 			if (!_src.has_members(missing, { "label_text", "json_field_name", "width" })) {
-				std::cout << "table_column is missing:" << std::endl;
+				system_monitoring_interface::global_mon->log_warning("table_column is missing:");
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 					std::cout << s << std::endl;
 					});
@@ -123,7 +123,6 @@ namespace corona
 
 			std::vector<std::string> missing;
 			if (!_src.has_members(missing, { "columns", "id_field", "items" })) {
-				std::cout << "table_data is missing:" << std::endl;
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 					std::cout << s << std::endl;
 					});

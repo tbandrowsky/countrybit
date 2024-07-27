@@ -81,6 +81,9 @@ namespace corona
 		comm_bus(std::string _application_name, 
 			std::string _application_folder_name)
 		{
+			timer tx;
+			date_time t = date_time::now();
+			system_monitoring_interface::global_mon->log_bus("comm_bus", "startup", t);
 			ready_for_polling = false;
 
 			app = std::make_shared<application>();
@@ -157,19 +160,25 @@ namespace corona
 				admin_user_token = admin_user["Token"];
 				ready_for_polling = true;
 			}
+
+			system_monitoring_interface::global_mon->log_bus("comm_bus", "startup complete", tx.get_elapsed_seconds());
 		}
 
 		void poll_db()
 		{
 			if (ready_for_polling) {
+				timer tx;
 				json_parser jp;
 				json temp;
 				if (database_schema_mon.poll_contents(app.get(), temp) != null_row) {
 					auto tempo = local_db->apply_schema(temp);
 					tempo.wait();
+					system_monitoring_interface::global_mon->log_bus("poll_db", "schema applied", tx.get_elapsed_seconds());
 				}
+				timer tx2;
 				if (database_config_mon.poll_contents(app.get(), temp) != null_row) {
 					local_db->apply_config(temp);
+					system_monitoring_interface::global_mon->log_bus("poll_db", "config applied", tx2.get_elapsed_seconds());
 				}
 			}
 		}
@@ -185,6 +194,7 @@ namespace corona
 			if (pages_changed != null_row || 
 				styles_changed != null_row)
 			{
+				timer tx;
 				// to do, at some point create a merge method in json proper.
 				json combined;
 				if (styles_json.object() && pages_json.object())
@@ -216,6 +226,7 @@ namespace corona
 
 					load_pages(combined, _select_default_page);
 				}
+				system_monitoring_interface::global_mon->log_bus("poll_pages", "pages updated", tx.get_elapsed_seconds());
 			}
 		}
 
@@ -227,22 +238,36 @@ namespace corona
 
 		virtual comm_bus_transaction<json>  create_user(json user_information)
 		{
+			date_time dt;
+			dt = date_time::now();
+			system_monitoring_interface::global_mon->log_bus("create_user", user_information["Name"], dt);
+			timer tx;
 			json_parser jp;
 			json request = jp.create_object();
 			request.put_member("Token", admin_user_token);
 			request.put_member("Data", user_information);
 			json j = co_await local_db->create_user(request);
+			system_monitoring_interface::global_mon->log_bus("create_user", "complete", tx.get_elapsed_seconds());
 			co_return j;
 		}
 
 		virtual comm_bus_transaction<json>  login_user(json login_information)
 		{
-			json j = co_await local_db->login_user(login_information);
-			co_return j;
+			date_time dt;
+			dt = date_time::now();
+			system_monitoring_interface::global_mon->log_bus("login_user", login_information["Name"], dt);
+			timer tx;
+			json response = co_await local_db->login_user(login_information);
+			system_monitoring_interface::global_mon->log_bus("login", response["Message"], tx.get_elapsed_seconds());
+			co_return response;
 		}
 
 		virtual comm_bus_transaction<json>  create_object(std::string class_name)
 		{
+			date_time dt;
+			dt = date_time::now();
+			system_monitoring_interface::global_mon->log_bus("create_object", class_name, dt);
+			timer tx;
 			json_parser jp;
 			json request = jp.create_object();
 			request.put_member("Token", admin_user_token);
@@ -250,71 +275,97 @@ namespace corona
 			data.put_member("ClassName", class_name);
 			request.put_member("Data", data);
 			json response = co_await local_db->create_object(request);
+			system_monitoring_interface::global_mon->log_bus("create_object", response["Message"], tx.get_elapsed_seconds());
 			response = response["Data"];
 			co_return response;
 		}
 
 		virtual comm_bus_transaction<json>  put_object(json object_information)
 		{
+			date_time dt;
+			dt = date_time::now();
+			system_monitoring_interface::global_mon->log_bus("put_object", object_information["ClassName"], dt);
+			timer tx;
 			json_parser jp;
 			json request = jp.create_object();
 			request.put_member("Token", admin_user_token);
 			request.put_member("Data", object_information);
 			json response = co_await local_db->put_object(request);
 			response = response["Data"];
+			system_monitoring_interface::global_mon->log_bus("put_object", response["Message"], tx.get_elapsed_seconds());
 			co_return response;
 		}
 
 		virtual comm_bus_transaction<json>  get_object(json object_information)
 		{
+			date_time dt;
+			dt = date_time::now();
+			system_monitoring_interface::global_mon->log_bus("get_object", object_information["ClassName"], dt);
+			timer tx;
 			json_parser jp;
 			json request = jp.create_object();
 			request.put_member("Token", admin_user_token);
 			request.put_member("Data", object_information);
 			json response = co_await local_db->put_object(request);
-			std::cout << "get_object:" << std::endl << response.to_json_string() << std::endl;
+			system_monitoring_interface::global_mon->log_bus("put_object", response["Message"], tx.get_elapsed_seconds());
 			response = response["Data"];
 			co_return response;
 		}
 
 		virtual comm_bus_transaction<json>  delete_object(json object_information)
 		{
+			date_time dt;
+			dt = date_time::now();
+			system_monitoring_interface::global_mon->log_bus("delete_object", object_information["ClassName"], dt);
+			timer tx;
 			json_parser jp;
 			json request = jp.create_object();
 			request.put_member("Token", admin_user_token);
 			request.put_member("Data", object_information);
 			json response = co_await local_db->put_object(request);
-			std::cout << "query_object:" << std::endl << response.to_json_string() << std::endl;
+			system_monitoring_interface::global_mon->log_bus("delete_object", response["Message"], tx.get_elapsed_seconds());
 			response = response["Data"];
 			co_return response;
 		}
 
 		virtual comm_bus_transaction<json>  pop_object(json pop_info)
 		{
+			date_time dt;
+			dt = date_time::now();
+			system_monitoring_interface::global_mon->log_bus("pop_object", pop_info["ClassName"], dt);
+			timer tx;
 			json_parser jp;
 			json request = jp.create_object();
 			request.put_member("Token", admin_user_token);
 			request.put_member("Data", pop_info);
 			json response = co_await local_db->put_object(request);
-			std::cout << "pop_object:" << std::endl << response.to_json_string() << std::endl;
+			system_monitoring_interface::global_mon->log_bus("pop_object", response["Message"], tx.get_elapsed_seconds());
 			response = response["Data"];
 			co_return response;
 		}
 
 		virtual comm_bus_transaction<json>  query_objects(json query_information)
 		{
+			date_time dt;
+			dt = date_time::now();
+			system_monitoring_interface::global_mon->log_bus("query_objects", query_information["ClassName"], dt);
+			timer tx;
 			json_parser jp;
 			json request = jp.create_object();
 			request.put_member("Token", admin_user_token);
 			request.put_member("Data", query_information);
 			json response = co_await local_db->query_class(request);
-			std::cout << "query_objects:" << std::endl << response.to_json_string() << std::endl;
+			system_monitoring_interface::global_mon->log_bus("query_objects", response["Message"], tx.get_elapsed_seconds());
 			response = response["Data"];
 			co_return response;
 		}
 
 		virtual comm_bus_transaction<table_data>  query_objects_as_table(json query_information)
 		{
+			date_time dt;
+			dt = date_time::now();
+			system_monitoring_interface::global_mon->log_bus("query_objects_table", query_information["ClassName"], dt);
+			timer tx;
 			table_data td;
 			json_parser jp;
 			json request = jp.create_object();
@@ -323,6 +374,7 @@ namespace corona
 			json table = query_information["Table"];
 			td.put_json(table);
 			json response = co_await local_db->query_class(request);
+			system_monitoring_interface::global_mon->log_bus("query_objects_table", response["Message"], tx.get_elapsed_seconds());
 			json response_items = response["Data"];
 			std::cout << "query_objects_as_table:" << std::endl << response.to_json_string() << std::endl;
 			td.items = response_items;
@@ -331,6 +383,10 @@ namespace corona
 
 		virtual comm_bus_transaction<list_data>  query_objects_as_list(json query_information)
 		{
+			date_time dt;
+			dt = date_time::now();
+			system_monitoring_interface::global_mon->log_bus("query_objects_list", query_information["ClassName"], dt);
+			timer tx;
 			list_data ld;
 			json_parser jp;
 			json request = jp.create_object();
@@ -340,7 +396,7 @@ namespace corona
 			ld.put_json(lst);
 			json response = co_await local_db->query_class(request);
 			json response_items = response["Data"];
-			std::cout << "query_objects_as_list:" << std::endl << response.to_json_string() << std::endl;
+			system_monitoring_interface::global_mon->log_bus("query_objects_list", response["Message"], tx.get_elapsed_seconds());
 			ld.items = response_items;
 			co_return ld;
 		}
@@ -357,7 +413,10 @@ namespace corona
 
 		void load_pages(json _pages, bool _select_default)
 		{
+			date_time dt = date_time::now();
+			system_monitoring_interface::global_mon->log_bus("load_pages", "", dt);
 			run_ui([this, _pages, _select_default]() ->void {
+				timer tx;
 				std::string default_page = presentation_layer->setPresentation(_pages);
 				if (_select_default && !default_page.empty()) {
 					presentation_layer->select_page(default_page);
@@ -366,13 +425,17 @@ namespace corona
 				else {
 					std::cout << "Pages loaded:" << default_page << std::endl;
 				}
-				
+				system_monitoring_interface::global_mon->log_bus("load_pages", "Pages loaded", tx.get_elapsed_seconds());
 			});
 		}
 
 		virtual void select_page(std::string _page, std::string _target_control, json _obj)
 		{
+			date_time dt = date_time::now();
+			system_monitoring_interface::global_mon->log_bus("select_page", _page, dt);
+
 			run_ui([this, _page, _target_control, _obj]() ->void {
+				timer tx;
 				presentation_layer->select_page(_page);
 				if (!_target_control.empty()) {
 					control_base* cb = find_control(_target_control);
@@ -382,6 +445,7 @@ namespace corona
 						}
 					}
 				}
+				system_monitoring_interface::global_mon->log_bus("select_page", _page, tx.get_elapsed_seconds());
 			});
 		}
 

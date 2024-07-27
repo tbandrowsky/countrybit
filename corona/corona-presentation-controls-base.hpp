@@ -418,13 +418,15 @@ namespace corona
 
 			std::vector<std::string> missing;
 			if (!_src.has_members(missing, { "box" })) {
-				std::cout << "a control must have a box defined for layout, along with these optional properties: padding, margin, tooltip_text, json_field_name" << std::endl;
+				std::string msg;
+				msg = std::format("control must have a box defined for layout");
+				system_monitoring_interface::global_mon->log_warning(msg);
+
 				std::cout << "control is missing:" << std::endl;
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 					std::cout << s << std::endl;
 					});
 				std::cout << "source json:" << std::endl;
-				std::cout << _src.to_json() << std::endl;
 				return;
 			}
 
@@ -623,7 +625,7 @@ namespace corona
 			}
 		}
 
-		virtual void dump(int _indent = {})
+		virtual void dump(int _indent = {4})
 		{
 			json_parser jp;
 			json control_json = jp.create_object();
@@ -752,7 +754,7 @@ namespace corona
 			}
 			catch (std::exception exc)
 			{
-				std::cout << typeid(*this).name() << ": exception creating children." << std::endl;
+				system_monitoring_interface::global_mon->log_exception(exc);
 			}
 		}
 	}
@@ -773,7 +775,7 @@ namespace corona
 			}
 			catch (std::exception exc)
 			{
-				std::cout << "Exception " << exc.what() << std::endl;
+				system_monitoring_interface::global_mon->log_exception(exc);
 			}
 		}
 	}

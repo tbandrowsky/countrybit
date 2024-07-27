@@ -416,7 +416,9 @@ namespace corona
 		}
 		else 
 		{
-			std::cout << "could not create direct2d window because root window not found" << std::endl;
+			std::string msg = std::format("could not create direct2d window because root window not found");
+			system_monitoring_interface::global_mon->log_warning(msg);
+
 			std::weak_ptr<direct2dChildWindow> child;
 			return child;
 		}
@@ -884,7 +886,7 @@ namespace corona
 				break;
 			case WM_NCLBUTTONDOWN:
 			case WM_LBUTTONDOWN:
-				std::cout << "left down." << std::endl;
+				system_monitoring_interface::global_mon->log_bus("Left Down");
 				if (colorCapture) {
 					colorCapture = false;
 					::ReleaseCapture();
@@ -927,7 +929,7 @@ namespace corona
 
 			case WM_NCLBUTTONUP:
 			case WM_LBUTTONUP:
-				std::cout << "left up." << std::endl;
+				system_monitoring_interface::global_mon->log_bus("Left Up");
 				if (currentController)
 				{
 					POINT p;
@@ -1076,7 +1078,7 @@ namespace corona
 		}
 		catch (std::exception exc)
 		{
-			std::cout << exc.what() << std::endl;
+			system_monitoring_interface::global_mon->log_exception(exc);
 		}
 		catch (...)
 		{
@@ -2424,6 +2426,10 @@ namespace corona
 			HANDLE stdHandle = GetStdHandle(STD_OUTPUT_HANDLE);
 			if (stdHandle != INVALID_HANDLE_VALUE)
 			{
+				DWORD mode = 0;
+				GetConsoleMode(stdHandle, &mode);
+				SetConsoleMode(stdHandle, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+
 				int fileDescriptor = _open_osfhandle((intptr_t)stdHandle, _O_TEXT);
 				if (fileDescriptor != -1)
 				{
@@ -2446,6 +2452,10 @@ namespace corona
 			HANDLE stdHandle = GetStdHandle(STD_ERROR_HANDLE);
 			if (stdHandle != INVALID_HANDLE_VALUE)
 			{
+				DWORD mode = 0;
+				GetConsoleMode(stdHandle, &mode);
+				SetConsoleMode(stdHandle, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+
 				int fileDescriptor = _open_osfhandle((intptr_t)stdHandle, _O_TEXT);
 				if (fileDescriptor != -1)
 				{

@@ -162,15 +162,13 @@ namespace corona
 						}
 						catch (std::exception exc)
 						{
-							std::string what = exc.what();
-							std::cout << what << std::endl;
+							system_monitoring_interface::global_mon->log_exception(exc);
 						}
 					});
 			}
 			catch (std::exception exc)
 			{
-				std::string what = exc.what();
-				std::cout << what << std::endl;
+				system_monitoring_interface::global_mon->log_exception(exc);
 			}
 		}
 

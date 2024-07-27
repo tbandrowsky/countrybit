@@ -377,7 +377,9 @@ namespace corona
 			selected_page_index = rows[selected_item_index].page_index;
 			int selected_item_page_index = page_to_item_index[selected_page_index];
 			view_port.y = rows[selected_item_page_index].bounds.y;
-			std::cout << selected_page_index << " " << selected_item_index << " " << selected_item_page_index << " " << view_port.y << std::endl;
+			std::string msg;
+			msg = std::format("selected_page_index '{0}' selected_item_index {1}, y:{2} ", selected_page_index, selected_item_page_index, view_port.y);
+			system_monitoring_interface::global_mon->log_bus(msg);
 		}
 
 		void set_selection_border(solidBrushRequest _brushFill)
@@ -433,7 +435,9 @@ namespace corona
 							auto& context = pwindow->getContext();
 
 							if (!page_to_item_index.contains(selected_page_index )) {
-								std::cout << "selected_page_index not found." << std::endl;
+								std::string msg;
+								msg = std::format("selected_page_index '{0}' not found", selected_page_index);
+								system_monitoring_interface::global_mon->log_warning(msg);
 								return;
 							}
 

@@ -698,13 +698,13 @@ namespace corona {
 			presentation* p = this;
 			SHORT keystate = ::GetKeyState(VK_CONTROL);
 
-			if (keystate) 
+			if (keystate < 0) 
 			{
 				control_base* cb = cp->root->find(*_point);
 
 				if (cb) 
 				{
-					std::cout << "Clicked" << std::endl;
+					system_monitoring_interface::global_mon->log_bus("Control clicked");
 					cb->dump();
 				}
 			}
@@ -1089,7 +1089,7 @@ namespace corona {
 						bool is_default = (bool)pg["default"];
 						std::string name = pg["page_name"];
 						if (name.empty()) {
-							std::cout << "page_name is empty for this page, skipping" << std::endl;
+							system_monitoring_interface::global_mon->log_warning("page_name is empty for this page, skipping");
 						}
 						if (is_default || default_page_name.empty()) {
 							default_page_name = name;
@@ -1113,7 +1113,9 @@ namespace corona {
 					}
 					else 
 					{
-						std::cout << "Unknown class_name: " << class_name << std::endl;
+						std::stringstream ss;
+						ss << "Unknown class_name: " << class_name << std::endl;
+						system_monitoring_interface::global_mon->log_warning(ss.str());
 					}
 				}
 			}

@@ -1194,7 +1194,7 @@ private:
 						}
 						catch (std::exception exc)
 						{
-							std::cout << "Exception " << exc.what() << std::endl;
+							system_monitoring_interface::global_mon->log_exception(exc);
 						}
 					}
 				}
@@ -1208,13 +1208,13 @@ private:
 					}
 					catch (std::exception exc)
 					{
-						std::cout << "Exception " << exc.what() << std::endl;
+						system_monitoring_interface::global_mon->log_exception(exc);
 					}
 				}
 			}
 			else
 			{
-				std::cout << "Classes not found in schema." << std::endl;
+				system_monitoring_interface::global_mon->log_warning("Classes not found in schema");
 			}
 
 			if (_schema.has_member("Users"))
@@ -1253,7 +1253,7 @@ private:
 						if (create_result["Success"]) {
 							json created_object = create_result["Data"];
 							json save_result = co_await put_object(create_result);
-							std::cout << "Created object:" << std::endl;
+							system_monitoring_interface::global_mon->log_bus("Created object");
 						}
 					}
 				}
@@ -2545,7 +2545,7 @@ private:
 		}
 		catch (std::exception exc)
 		{
-			std::cout << "Exception:" << exc.what() << std::endl;
+			system_monitoring_interface::global_mon->log_exception(exc);
 		}
 
 		co_return true;
@@ -2712,7 +2712,7 @@ private:
 		}
 		catch (std::exception exc)
 		{
-			std::cout << exc.what() << std::endl;
+			system_monitoring_interface::global_mon->log_exception(exc);
 			return false;
 		}
 
@@ -2823,7 +2823,7 @@ private:
 		}
 		catch (std::exception& exc)
 		{
-			std::cout << exc.what() << std::endl;
+			system_monitoring_interface::global_mon->log_exception(exc);
 			return false;
 		}
 	}

@@ -63,8 +63,10 @@ namespace corona
 			host = _host;
 			if (auto phost = _host.lock()) {
 				if (bounds.x < 0 || bounds.y < 0 || bounds.w < 0 || bounds.h < 0) {
-					std::cout << typeid(*this).name() << " bounds is jacked on create" << std::endl;
-					throw std::logic_error("bounds not initialized");
+					std::stringstream ss;
+					ss << typeid(*this).name() << " bounds is jacked on create" << std::endl;
+					std::string mm = ss.str();
+					throw std::logic_error(mm);
 				}
 				window = phost->createDirect2Window(id, bounds);
 //				std::cout << this << ":" << typeid(*this).name() << " created." << std::endl;
@@ -203,13 +205,13 @@ namespace corona
 					}
 					catch (std::exception exc)
 					{
-						std::cout << "Draw Child Exception " << exc.what() << std::endl;
+						system_monitoring_interface::global_mon->log_exception(exc);
 					}
 				}
 			}
 			catch (std::exception exc)
 			{
-				std::cout << "Draw Exception " << exc.what() << std::endl;
+				system_monitoring_interface::global_mon->log_exception(exc);
 			}
 		}
 
@@ -322,7 +324,7 @@ namespace corona
 			}
 			else
 			{
-				std::cout << "Couldn't get the native media type for the camera" << std::endl;
+				system_monitoring_interface::global_mon->log_warning("Couldn't get the native media type for the camera");
 			}
 		}
 
@@ -927,14 +929,14 @@ namespace corona
 				else
 				{
 					camera_status = "No camera found";
-					std::cout << "No cameras found yet" << std::endl;
+					system_monitoring_interface::global_mon->log_warning(camera_status);
 					hr = E_FAIL;
 				}
 			}
 			else 
 			{
 				camera_status = "No camera found";
-				std::cout << "Search for cameras failed" << std::endl;
+				system_monitoring_interface::global_mon->log_warning(camera_status);
 			}
 
 			return hr;
@@ -987,11 +989,11 @@ namespace corona
 				{
 					if (hr == 0xc00d3ea2) {
 						camera_status = "Camera disconected";
-						std::cout << "Camera disconnected" << std::endl;
+						system_monitoring_interface::global_mon->log_warning(camera_status);
 					}
 					else {
 						camera_status = "Camera error";
-						std::cout << "Camera error" << std::endl;
+						system_monitoring_interface::global_mon->log_warning(camera_status);
 					}
 					stop();
 					return;
@@ -1003,15 +1005,15 @@ namespace corona
 				}
 				if (flags & MF_SOURCE_READERF_NEWSTREAM)
 				{
-					std::cout << "New stream" << std::endl;
+					system_monitoring_interface::global_mon->log_bus("New camera stream");
 				}
 				if (flags & MF_SOURCE_READERF_NATIVEMEDIATYPECHANGED)
 				{
-					std::cout << "Native media type changed" << std::endl;
+					system_monitoring_interface::global_mon->log_bus("Native media type changed");
 				}
 				if (flags & MF_SOURCE_READERF_CURRENTMEDIATYPECHANGED)
 				{
-					std::cout << "Current media type changed" << std::endl;
+					system_monitoring_interface::global_mon->log_bus("Current media type changed");
 				}
 				if (flags & MF_SOURCE_READERF_STREAMTICK)
 				{
@@ -1019,7 +1021,7 @@ namespace corona
 				}
 				if (flags & MF_SOURCE_READERF_NATIVEMEDIATYPECHANGED)
 				{
-					std::cout << "Format changed" << std::endl;
+					system_monitoring_interface::global_mon->log_bus("Format changed");
 					hr = configure_decoder(pSourceReader, streamIndex);
 				}
 

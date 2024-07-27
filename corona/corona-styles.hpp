@@ -165,7 +165,7 @@ namespace corona
 			"chapter_title_style", "chapter_subtitle_style", 
 			"paragraph_style", "form_style", "label_style",
 			"error_style", "success_style", "code_style"})) {
-			std::cout << "style sheet is missing:" << std::endl;
+			system_monitoring_interface::global_mon->log_warning("style sheet is missing");
 			std::for_each(missing.begin(), missing.end(), [](const std::string& s) { 
 				std::cout << s << std::endl; 
 				});
@@ -636,7 +636,7 @@ namespace corona
 
 			std::string style_sheet_name = _src["style_sheet_name"];
 			if (style_sheet_name.empty()) {
-				std::cout << "style_sheet_name must not be empty" << std::endl;
+				system_monitoring_interface::global_mon->log_warning("style_sheet_name must not be empty");
 			}
 			std::shared_ptr<presentation_style> update_style;
 

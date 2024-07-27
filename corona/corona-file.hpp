@@ -163,7 +163,7 @@ namespace corona
 			}
 			catch (std::exception exc)
 			{
-				std::cout << exc.what() << std::endl;
+				system_monitoring_interface::global_mon->log_exception(exc);
 			}
 
 			return result;
@@ -185,7 +185,7 @@ namespace corona
 			}
 			catch (std::exception exc)
 			{
-				std::cout << exc.what() << std::endl;
+				system_monitoring_interface::global_mon->log_exception(exc);
 			}
 
 			debug_functions&& std::cout << "user_transaction: complete" << " " << ::GetCurrentThreadId() << std::endl;
@@ -287,7 +287,7 @@ namespace corona
 			}
 			catch (std::exception exc)
 			{
-				std::cout << exc.what() << std::endl;
+				system_monitoring_interface::global_mon->log_exception(exc);
 			}
 
 
@@ -308,7 +308,7 @@ namespace corona
 			}
 			catch (std::exception exc)
 			{
-				std::cout << exc.what() << std::endl;
+				system_monitoring_interface::global_mon->log_exception(exc);
 			}
 
 			debug_functions&& std::cout << "database_transaction: complete" << " " << ::GetCurrentThreadId() << std::endl;
@@ -403,7 +403,7 @@ namespace corona
 			}
 			catch (std::exception exc)
 			{
-				std::cout << exc.what() << std::endl;
+				system_monitoring_interface::global_mon->log_exception(exc);
 			}
 
 
@@ -424,7 +424,7 @@ namespace corona
 			}
 			catch (std::exception exc)
 			{
-				std::cout << exc.what() << std::endl;
+				system_monitoring_interface::global_mon->log_exception(exc);
 			}
 
 			debug_functions&& std::cout << "database_composed_transaction: complete" << " " << ::GetCurrentThreadId() << std::endl;
@@ -517,7 +517,7 @@ namespace corona
 			}
 			catch (std::exception exc)
 			{
-				std::cout << exc.what() << std::endl;
+				system_monitoring_interface::global_mon->log_exception(exc);
 			}
 
 			return result;
@@ -537,7 +537,7 @@ namespace corona
 			}
 			catch (std::exception exc)
 			{
-				std::cout << exc.what() << std::endl;
+				system_monitoring_interface::global_mon->log_exception(exc);
 			}
 
 			debug_functions&& std::cout << "database_method_transaction: complete" << " " << ::GetCurrentThreadId() << std::endl;
@@ -632,7 +632,7 @@ namespace corona
 			}
 			catch (std::exception exc)
 			{
-				std::cout << exc.what() << std::endl;
+				system_monitoring_interface::global_mon->log_exception(exc);
 			}
 
 
@@ -653,7 +653,7 @@ namespace corona
 			}
 			catch (std::exception exc)
 			{
-				std::cout << exc.what() << std::endl;
+				system_monitoring_interface::global_mon->log_exception(exc);
 			}
 
 			debug_functions&& std::cout << "table_array_transaction: complete" << " " << ::GetCurrentThreadId() << std::endl;
@@ -748,7 +748,7 @@ namespace corona
 			}
 			catch (std::exception exc)
 			{
-				std::cout << exc.what() << std::endl;
+				system_monitoring_interface::global_mon->log_exception(exc);
 			}
 
 
@@ -769,7 +769,7 @@ namespace corona
 			}
 			catch (std::exception exc)
 			{
-				std::cout << exc.what() << std::endl;
+				system_monitoring_interface::global_mon->log_exception(exc);
 			}
 
 			debug_functions&& std::cout << "table_group_transaction: complete" << " " << ::GetCurrentThreadId() << std::endl;
@@ -865,7 +865,7 @@ namespace corona
 			}
 			catch (std::exception exc)
 			{
-				std::cout << exc.what() << std::endl;
+				system_monitoring_interface::global_mon->log_exception(exc);
 			}
 
 			return result;
@@ -885,7 +885,7 @@ namespace corona
 			}
 			catch (std::exception exc)
 			{
-				std::cout << exc.what() << std::endl;
+				system_monitoring_interface::global_mon->log_exception(exc);
 			}
 
 			debug_functions&& std::cout << "table_transaction: complete" << " " << ::GetCurrentThreadId() << std::endl;
@@ -981,7 +981,7 @@ namespace corona
 			}
 			catch (std::exception exc)
 			{
-				std::cout << exc.what() << std::endl;
+				system_monitoring_interface::global_mon->log_exception(exc);
 			}
 
 
@@ -1002,7 +1002,7 @@ namespace corona
 			}
 			catch (std::exception exc)
 			{
-				std::cout << exc.what() << std::endl;
+				system_monitoring_interface::global_mon->log_exception(exc);
 			}
 
 
@@ -1098,7 +1098,7 @@ namespace corona
 			}
 			catch (std::exception exc)
 			{
-				std::cout << exc.what() << std::endl;
+				system_monitoring_interface::global_mon->log_exception(exc);
 			}
 
 
@@ -1119,7 +1119,7 @@ namespace corona
 			}
 			catch (std::exception exc)
 			{
-				std::cout << exc.what() << std::endl;
+				system_monitoring_interface::global_mon->log_exception(exc);
 			}
 
 
@@ -1216,7 +1216,7 @@ namespace corona
 			}
 			catch (std::exception exc)
 			{
-				std::cout << exc.what() << std::endl;
+				system_monitoring_interface::global_mon->log_exception(exc);
 			}
 
 
@@ -1237,7 +1237,7 @@ namespace corona
 			}
 			catch (std::exception exc)
 			{
-				std::cout << exc.what() << std::endl;
+				system_monitoring_interface::global_mon->log_exception(exc);
 			}
 
 
