@@ -8,6 +8,7 @@
         "EventName": "string",
         "EventDescription": "string",
         "EventDate" :  "datetime",
+        "Person" :  "string",
         "Attachments": "array",
         "Claims": "array"
       }
@@ -28,8 +29,8 @@
   "Objects": [
     {
       "ClassName": "SysTeam",
-      "Name": "RevolutionTeam",
-      "Description": "Revolution users"
+      "Name": "ReparationsTeam",
+      "Description": "Reparations users"
     },
     {
       "ClassName": "HistoricalEvent",

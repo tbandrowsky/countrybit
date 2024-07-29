@@ -154,7 +154,6 @@ namespace corona
 		{
 			return "\"" + to_string() + "\"";
 		}
-
 		virtual std::string to_json_typed()
 		{
 			return get_type_prefix() + " " + to_json();
@@ -247,6 +246,7 @@ namespace corona
 		{
 			return "\"" + value + "\"";
 		}
+
 		virtual std::string to_json_typed()
 		{
 			return get_type_prefix() + " " + to_json();
@@ -302,6 +302,7 @@ namespace corona
 		{
 			return to_json();
 		}
+
 
 		virtual std::string to_string()
 		{

@@ -376,7 +376,15 @@
                             "class_name": "edit",
                             "tooltip_text": "The date of the event",
                             "is_default_focus": false
+                          },
+                          {
+                            "json_field_name": "Person",
+                            "label_text": "Person",
+                            "class_name": "edit",
+                            "tooltip_text": "Name of person",
+                            "is_default_focus": false
                           }
+
                         ],
                         "data": []
                       },

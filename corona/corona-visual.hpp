@@ -35,7 +35,8 @@ namespace corona {
 	{
 		if (!_src.has_members({ "width", "height" })) {
 			system_monitoring_interface::global_mon->log_warning("D2D1_SIZE_U needs a width and height");
-			std::cout << _src.to_json() << std::endl;
+			system_monitoring_interface::global_mon->log_bus("source json:");
+			system_monitoring_interface::global_mon->log_json(_src, 2);
 		}
 		_dest.width = (double)_src["width"];
 		_dest.height = (double)_src["height"];
@@ -54,12 +55,12 @@ namespace corona {
 		std::vector<std::string> missing;
 		if (!_src.has_members(missing, { "left", "top", "right", "bottom" })) {
 			system_monitoring_interface::global_mon->log_warning("D2D1_RECT_F needs a crop and size");
-			std::cout << "is missing:" << std::endl;
+			system_monitoring_interface::global_mon->log_warning("is missing:");
 			std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
-				std::cout << s << std::endl;
+				system_monitoring_interface::global_mon->log_bus(s);
 				});
-			std::cout << "source json:" << std::endl;
-			std::cout << _src.to_json() << std::endl;
+			system_monitoring_interface::global_mon->log_bus("source json:");
+			system_monitoring_interface::global_mon->log_json(_src, 2);
 			return;
 		}
 
@@ -88,12 +89,12 @@ namespace corona {
 		std::vector<std::string> missing;
 		if (!_src.has_members(missing, { "crop", "size" })) {
 			system_monitoring_interface::global_mon->log_warning("sizeCrop needs a crop and size");
-			std::cout << "is missing:" << std::endl;
+			system_monitoring_interface::global_mon->log_warning("is missing:");
 			std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
-				std::cout << s << std::endl;
+				system_monitoring_interface::global_mon->log_bus(s);
 				});
-			std::cout << "source json:" << std::endl;
-			std::cout << _src.to_json() << std::endl;
+			system_monitoring_interface::global_mon->log_bus("source json:");
+			system_monitoring_interface::global_mon->log_json(_src, 2);
 			return;
 		}
 
@@ -270,12 +271,12 @@ namespace corona {
 		std::vector<std::string> missing;
 		if (!_src.has_members(missing, { "color", "position" })) {
 			system_monitoring_interface::global_mon->log_warning("gradientStop needs a color and position");
-			std::cout << "gradientStop is missing:" << std::endl;
+			system_monitoring_interface::global_mon->log_warning("is missing:");
 			std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
-				std::cout << s << std::endl;
+				system_monitoring_interface::global_mon->log_bus(s);
 				});
-			std::cout << "source json:" << std::endl;
-			std::cout << _src.to_json() << std::endl;
+			system_monitoring_interface::global_mon->log_bus("source json:");
+			system_monitoring_interface::global_mon->log_json(_src, 2);
 			return;
 		}
 
@@ -349,7 +350,8 @@ namespace corona {
 
 		if (!_src.has_members({ "file_name", "crop", "sizes" })) {
 			system_monitoring_interface::global_mon->log_warning("bitmap needs a filename, crop, and sizes");
-			std::cout << _src.to_json() << std::endl;
+			system_monitoring_interface::global_mon->log_bus("source json:");
+			system_monitoring_interface::global_mon->log_json(_src, 2);
 			return;
 		}
 
@@ -404,7 +406,7 @@ namespace corona {
 	{
 		if (!_src.has_members({ "file_name" })) {
 			system_monitoring_interface::global_mon->log_warning("bitmap_brush must have file_name");
-			std::cout << _src.to_json() << std::endl;
+			system_monitoring_interface::global_mon->log_json(_src, 2);
 			return;
 		}
 
@@ -471,7 +473,8 @@ namespace corona {
 
 		if (!_src.has_members({ "start", "stop", "stops" })) {
 			system_monitoring_interface::global_mon->log_warning("linear_brush must have start, stop and stops");
-			std::cout << _src.to_json() << std::endl;
+			system_monitoring_interface::global_mon->log_bus("source json:");
+			system_monitoring_interface::global_mon->log_json(_src, 2);
 			return;
 		}
 
@@ -563,12 +566,12 @@ namespace corona {
 		std::vector<std::string> missing;
 		if (!_src.has_members(missing, { "center", "offset", "size", "radiusX", "radiusY", "stops" })) {
 			system_monitoring_interface::global_mon->log_warning("radial_brush must have name, center, offset, size, radiusX, radiusY and stops");
-			std::cout << "is missing:" << std::endl;
+			system_monitoring_interface::global_mon->log_warning("is missing:");
 			std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
-				std::cout << s << std::endl;
+				system_monitoring_interface::global_mon->log_bus(s);
 				});
-			std::cout << "source json:" << std::endl;
-			std::cout << _src.to_json() << std::endl;
+			system_monitoring_interface::global_mon->log_bus("source json:");
+			system_monitoring_interface::global_mon->log_json(_src, 2);
 			return;
 		}
 
@@ -636,7 +639,8 @@ namespace corona {
 
 		if (!_src.has_members({ "color" })) {
 			system_monitoring_interface::global_mon->log_warning("solid_brush must have color");
-			std::cout << _src.to_json() << std::endl;
+			system_monitoring_interface::global_mon->log_bus("source json:");
+			system_monitoring_interface::global_mon->log_json(_src, 2);
 			return;
 		}
 
@@ -1182,8 +1186,9 @@ namespace corona {
 
 		if (!_src.has_members({ "font_name", "font_size" })) {
 			system_monitoring_interface::global_mon->log_warning("text style must have font_name, and font_size.");
-			std::cout << "text style may also have bold, italics, underline, strike_through, line_spacing, wrap_text, character_spacing, font_stretch." << std::endl;
-			std::cout << _src.to_json() << std::endl;
+			system_monitoring_interface::global_mon->log_bus("text style may also have bold, italics, underline, strike_through, line_spacing, wrap_text, character_spacing, font_stretch." );
+			system_monitoring_interface::global_mon->log_bus("source json:");
+			system_monitoring_interface::global_mon->log_json(_src, 2);
 			return;
 		}
 		_dest.fontName = _src["font_name"];

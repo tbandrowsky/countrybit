@@ -41,10 +41,10 @@ namespace corona
 			if (!_src.has_members(missing, { "id_field", "text_field", "selected_field" })) {
 				system_monitoring_interface::global_mon->log_bus("list_data is missing");
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
-					std::cout << s << std::endl;
+					system_monitoring_interface::global_mon->log_bus(s);
 					});
-				system_monitoring_interface::global_mon->log_bus("list_data is missing");
-				std::cout << _src.to_json() << std::endl;
+				system_monitoring_interface::global_mon->log_bus("source json:");
+				system_monitoring_interface::global_mon->log_json(_src, 2);
 				return;
 			}
 
@@ -78,10 +78,10 @@ namespace corona
 			if (!_src.has_members(missing, { "label_text", "json_field_name", "width" })) {
 				system_monitoring_interface::global_mon->log_warning("table_column is missing:");
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
-					std::cout << s << std::endl;
+					system_monitoring_interface::global_mon->log_bus(s);
 					});
-				std::cout << "source json:" << std::endl;
-				std::cout << _src.to_json() << std::endl;
+				system_monitoring_interface::global_mon->log_bus("source json:");
+				system_monitoring_interface::global_mon->log_json(_src, 2);
 				return;
 			}
 
@@ -124,10 +124,10 @@ namespace corona
 			std::vector<std::string> missing;
 			if (!_src.has_members(missing, { "columns", "id_field", "items" })) {
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
-					std::cout << s << std::endl;
+					system_monitoring_interface::global_mon->log_bus(s);
 					});
-				std::cout << "source json:" << std::endl;
-				std::cout << _src.to_json() << std::endl;
+				system_monitoring_interface::global_mon->log_bus("source json:");
+				system_monitoring_interface::global_mon->log_json(_src, 2);
 				return;
 			}
 

@@ -206,9 +206,10 @@ namespace corona
 			transaction_result result = coro.promise().m_value;
 			return result;
 		}
+
 	};
 
-	class comm_bus_interface 
+	class comm_bus_interface : public system_monitoring_interface
 	{
 
 		std::multimap<UINT, windows_event_waiter> windows_waiters;
@@ -239,6 +240,7 @@ namespace corona
 		virtual comm_bus_transaction<json> query_objects(json object_information) = 0;
 		virtual comm_bus_transaction<table_data> query_objects_as_table(json query_information) = 0;
 		virtual comm_bus_transaction<list_data> query_objects_as_list(json query_information) = 0;
+		virtual void error(json _error) = 0;
 
 		virtual void when(UINT topic, std::function<void()> _runnable) = 0;
 		virtual void when(std::string _topic, std::function<void()> _runnable) = 0;
@@ -267,6 +269,15 @@ namespace corona
 				waiters++;
 			}
 			topic_waiters.erase(_topic);
+		}
+
+		virtual void log_error(json j, const char* _file = nullptr, int _line = 0)
+		{
+			std::string msg = j["message"];
+			if (msg.empty())
+				msg = "Error";
+			log_warning(msg, _file, _line);
+			log_json(j, 4);
 		}
 
 		void run(runnable _runnable)

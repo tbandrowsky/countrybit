@@ -475,9 +475,6 @@ namespace corona
 				std::cout << __FILE__ << " " << __LINE__ << ":Class list returned from database missed some classes." << std::endl;
 				co_return result;
 			}
-			else {
-				std::cout << "database creation complete with :" << classes_grouped.to_json() << std::endl;
-			}
 
 			json new_user_request;
 			json new_user_data;
@@ -1147,11 +1144,13 @@ private:
 		std::string default_email_address;
 		std::string default_guest_team;
 		time_span token_life;
+		comm_bus_interface* bus;
 
 		// constructing and opening a database
 
-		corona_database(std::shared_ptr<file> _database_file)
-			: database_file(_database_file),
+		corona_database(comm_bus_interface* _bus, std::shared_ptr<file> _database_file) :
+			bus(_bus),
+			database_file(_database_file),
 			classes(_database_file, { "ClassName" }),
 			class_objects(_database_file, { "ClassName", "ObjectId" }),
 			objects(_database_file, { "ObjectId" }),
@@ -1190,7 +1189,10 @@ private:
 						json class_definition = class_array.get_element(i);
 						try {
 							json put_class_request = create_system_request(class_definition);
-							co_await create_class(put_class_request);
+							json class_result = co_await create_class(put_class_request);
+							if (class_result.error()) {
+								bus->log_error(class_result, __FILE__, __LINE__);
+							}
 						}
 						catch (std::exception exc)
 						{
@@ -1204,7 +1206,8 @@ private:
 					json put_class_request = create_system_request(class_definition);
 					try 
 					{
-						co_await create_class(put_class_request);
+						json result = co_await create_class(put_class_request);
+						bus->log_error(result);
 					}
 					catch (std::exception exc)
 					{
@@ -1512,8 +1515,6 @@ private:
 					return empty;
 				}
 			});
-
-			std::cout << "result_list::" << result_list.to_json() << std::endl;
 
 			result = create_response(get_classes_request, true, "Ok", result_list, method_timer.get_elapsed_seconds());
 
@@ -2444,7 +2445,7 @@ private:
 
 		std::cout << "test_database_engine, thread:" << ::GetCurrentThreadId() << std::endl;
 
-		corona_database db(dtest);
+		corona_database db(nullptr, dtest);
 
 		json_file_watcher jf;
 		json db_config, schema_config;
@@ -2497,7 +2498,7 @@ private:
 
 			std::cout << "test_database_engine, thread:" << ::GetCurrentThreadId() << std::endl;
 
-			corona_database db(dtest);
+			corona_database db(nullptr, dtest);
 
 			corona_database *pdb = &db;
 
