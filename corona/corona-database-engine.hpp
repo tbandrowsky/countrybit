@@ -1179,6 +1179,9 @@ private:
 
 		database_transaction<json> apply_schema(json _schema)
 		{
+			date_time start_schema;
+			timer tx;
+			system_monitoring_interface::global_mon->log_bus("Corona database", "Applying schema file", start_schema, __FILE__, __LINE__);
 			if (_schema.has_member("Classes"))
 			{
 				json class_array = _schema["Classes"];
@@ -1254,10 +1257,19 @@ private:
 						// "new chumpy" item for ya.  
 						json create_result = co_await create_object(put_object_request);
 						if (create_result["Success"]) {
-							json created_object = create_result["Data"];
-							json save_result = co_await put_object(create_result);
-							system_monitoring_interface::global_mon->log_bus("Created object");
+							json created_object = put_object_request["Data"];
+							json save_result = co_await put_object(put_object_request);
+							if (!save_result["Success"]) {
+								system_monitoring_interface::global_mon->log_warning(save_result["Message"]);
+								system_monitoring_interface::global_mon->log_json(save_result);
+							}
+							else 
+								system_monitoring_interface::global_mon->log_bus(save_result["Success"]);
 						}
+						else {
+							system_monitoring_interface::global_mon->log_warning(create_result["Message"], __FILE__, __LINE__);
+							system_monitoring_interface::global_mon->log_json(create_result);
+ 						}
 					}
 				}
 				else if (object_array.object())
@@ -1267,6 +1279,8 @@ private:
 					co_await put_class(put_object_request);
 				}
 			}
+
+			system_monitoring_interface::global_mon->log_bus("Corona database", "schema applied", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 		}
 
@@ -1846,7 +1860,8 @@ private:
 				co_return response;
 			}
 
-			if (!has_class_permission(token, class_name, "Get")) {
+			bool permission = co_await has_class_permission(token, class_name, "Get");
+			if (!permission) {
 				json result = create_response(create_object_request, false, "Cannot get class", data, method_timer.get_elapsed_seconds());
 				co_return result;
 			}
@@ -1952,12 +1967,11 @@ private:
 			}
 
 			result = co_await check_object(put_object_request);
+			json obj = result["Data"];
 
 			if (result["Success"])
 			{
 				scope_lock lock_one(objects_rw_lock);
-
-				json obj = result["Data"];
 
 				json key_index = jp.create_object();
 				key_index.copy_member("ClassName", obj);
@@ -1974,7 +1988,8 @@ private:
 			}
 			else 
 			{
-				result = create_response(put_object_request, false, "Invalid object", put_object_request["Data"], method_timer.get_elapsed_seconds());
+				std::string msg = "Invalid '" + (std::string)object_definition["ClassName"] + "' object";
+				result = create_response(put_object_request, false, msg, put_object_request["Data"], method_timer.get_elapsed_seconds());
 			}
 
 			co_return result;

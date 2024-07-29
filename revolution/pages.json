@@ -367,7 +367,7 @@
                             "json_field_name": "EventDescription",
                             "label_text": "Description",
                             "class_name": "edit",
-                            "tooltip_text": "The description of the event",
+                            "tooltip_text": "The Description of the event",
                             "is_default_focus": false
                           },
                           {

@@ -10,7 +10,7 @@ namespace corona
 	{
 	public:
 		char CSI[3] = { 0x1b, '[', 0 };
-		char Normal[4] = { 0x1b, '[', '0', 0 };
+		char Normal[5] = { 0x1b, '[', '0', 'm', 0 };
 		char Logstart[11] = { 0x1b, '[', '9', '7', 'm', 0x1b, '[', '4', '4', 'm', 0 };
 		char Logstop[11] = { 0x1b, '[', '9', '2', 'm', 0x1b, '[', '4', '4', 'm', 0 };
 		char Lognormal[11] = { 0x1b, '[', '9', '7', 'm', 0x1b, '[', '4', '4', 'm', 0 };
@@ -64,22 +64,22 @@ namespace corona
 				(std::string)_request_time
 			);
 			file_line(_file, _line);
-			std::cout << std::endl;
 			std::cout << Normal;
+			std::cout << std::endl;
 		}
 
 		virtual void log_bus(std::string _request_name, std::string _message, double _elapsed_seconds, const char* _file = nullptr, int _line = 0)
 		{
 			std::cout << Logstop;
-			std::cout << std::format("{0:<25}{1:<50}{2:<10}{3:<25}",
+			std::cout << std::format("  {0:<23}{1:<50}{2:<10}{3:<25}",
 				_request_name,
 				_message,
 				GetCurrentThreadId(),
 				_elapsed_seconds
 			);
 			file_line(_file, _line);
-			std::cout << std::endl;
 			std::cout << Normal;
+			std::cout << std::endl;
 		}
 
 		virtual void log_bus(std::string _message, const char* _file = nullptr, int _line = 0)
@@ -92,8 +92,8 @@ namespace corona
 				""
 			);
 			file_line(_file, _line);
-			std::cout << std::endl;
 			std::cout << Normal;
+			std::cout << std::endl;
 		}
 
 		virtual void log_warning(std::string _message, const char *_file = nullptr, int _line = 0)
@@ -106,8 +106,8 @@ namespace corona
 				""
 			);
 			file_line(_file, _line);
-			std::cout << std::endl;
 			std::cout << Normal;
+			std::cout << std::endl;
 
 		}
 
@@ -138,18 +138,18 @@ namespace corona
 					std::cout << std::format("{0:<40}:", name);
 					if (body.object())
 					{
-						std::cout << std::format("{0:<80}:", "object");
+						std::cout << std::format("{0:<50}:", "{object}") << std::endl;
 						log_json(body, _indent + 4);
 					}
 					else if (body.array())
 					{
-						std::cout << std::format("{0:<80}:", "array");
+						std::cout << std::format("{0:<50}:", "[array]") << std::endl;
 						log_json(body, _indent + 4);
 					}
 					else
 					{
 						std::string v = body.to_json();
-						std::cout << std::format("{0:<80}", v);
+						std::cout << std::format("{0:<50}", v) << std::endl;
 					}
 				}
 			}

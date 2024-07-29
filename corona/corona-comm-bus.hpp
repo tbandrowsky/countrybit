@@ -393,6 +393,10 @@ namespace corona
 				log_error(response, __FILE__, __LINE__);
 			log_bus("query_objects", response["Message"], tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			response = response["Data"];
+			if (response.array()) {
+				std::string rr = std::format("{0} items", response.size());
+				log_bus("", rr, tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			}
 			co_return response;
 		}
 
