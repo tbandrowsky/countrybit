@@ -8,7 +8,6 @@
         "EventName": "string",
         "EventDescription": "string",
         "EventDate" :  "datetime",
-        "Person" :  "string",
         "Attachments": "array",
         "Claims": "array"
       }
@@ -30,19 +29,25 @@
     {
       "ClassName": "SysTeam",
       "Name": "ReparationsTeam",
-      "Description": "Reparations users"
+      "Description": "Reparations users",
+      "Grants" : [],
+      "Members" : []
     },
     {
       "ClassName": "HistoricalEvent",
-      "Name": "Government Resegregates",
-      "Date": "11/1/1914",
-      "Description": "Democratic President Woodrow Wilson segregated the Treasury, the Post Office, the Bureau of Engraving and Printing, the Navy, the Interior, the Marine Hospital, the War Department and the Government Printing Office. This meant creating separate offices, lunchrooms, bathrooms and other facilities for white and Black workers. Most black supervisors were fired."
+      "EventName": "Government Resegregates",
+      "EventDate": "11/1/1914",
+      "EventDescription": "Democratic President Woodrow Wilson segregated the Treasury, the Post Office, the Bureau of Engraving and Printing, the Navy, the Interior, the Marine Hospital, the War Department and the Government Printing Office. This meant creating separate offices, lunchrooms, bathrooms and other facilities for white and Black workers. Most black supervisors were fired.",
+      "Attachments" :[],
+      "Claims":[]
     },
     {
       "ClassName": "HistoricalEvent",
-      "Name": "Federal Government Embraces the Lost Cause and the Klan",
-      "Date": "2/1/1915",
-      "Description": "Democratic President Woodrow Wilson screens a Birth of a Nation, a film glorifying the Ku Klux Klan.  Stuffed with quotes from his own racist books, and his own endorsement, Birth of Nation created an upwelling of lynchings, stamped the lies of the Lost Cause as truth, and kicked off the most severe era of Jim Crow."
+      "EventName": "Federal Government Embraces the Lost Cause and the Klan",
+      "EventDate": "2/1/1915",
+      "EventDescription": "Democratic President Woodrow Wilson screens a Birth of a Nation, a film glorifying the Ku Klux Klan.  Stuffed with quotes from his own racist books, and his own endorsement, Birth of Nation created an upwelling of lynchings, stamped the lies of the Lost Cause as truth, and kicked off the most severe era of Jim Crow.",
+      "Attachments" :[],
+      "Claims":[]
     }
   ]
 }

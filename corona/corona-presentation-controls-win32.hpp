@@ -352,6 +352,7 @@ namespace corona
 
 		void data_changed()
 		{
+			std::vector<std::string> data_row;
 			strcpy_s(blank, "N/A");
 			if (auto phost = window_host.lock())
 			{
@@ -369,7 +370,6 @@ namespace corona
 					column_map[col.json_field_name] = col_index;
 					col_index++;
 				}
-				std::vector<char*> data_row;
 				data_row.resize(choices.columns.size());
 				row_index++;
 

@@ -134,6 +134,8 @@ namespace corona
 
 	public:
 
+		bool trace_check_class = false;
+
 		user_transaction<json> create_database()
 		{
 			json result;
@@ -523,10 +525,15 @@ private:
 								json class_key = jp.create_object();
 								class_key.put_member("ClassName", acn);
 								auto ancestor_class = co_await classes.get(class_key);
-								if (!ancestor_class.has_member("Descendants")) {
-									ancestor_class.put_member_object("Descendants");
+								json descendants;
+								if (ancestor_class.has_member("Descendants")) {
+									descendants = ancestor_class["Descendants"];
 								}
-								ancestor_class["Descendants"].put_member(acn, acn);
+								else 
+								{
+									descendants = jp.create_object();
+								}
+								ancestor_class.put_member("Descendants", descendants);
 								co_await classes.put(ancestor_class);
 							}
 						}
@@ -551,11 +558,21 @@ private:
 
 			json class_definition = check_class_request["Data"];
 
+			date_time start_time = date_time::now();
+			if (trace_check_class) {
+				bus->log_bus("check_class", "", start_time);
+			}
+
 			result = create_response(check_class_request, true, "Ok", class_definition, method_timer.get_elapsed_seconds());
 
 			if (!class_definition.has_member("ClassName"))
 			{
 				result = create_response(check_class_request, false, "Class must have a name", class_definition, method_timer.get_elapsed_seconds());
+			}
+
+			if (trace_check_class) {
+				bus->log_bus("Supplied class definition");
+				bus->log_json(class_definition);
 			}
 
 			std::string class_name = class_definition["ClassName"];
@@ -568,14 +585,21 @@ private:
 				std::string base_class_name = class_definition["BaseClassName"];
 
 				json_parser jp;
-				json class_key = jp.create_object("ClassName", base_class_name);
-
+				json base_class_key = jp.create_object();
+				base_class_key.put_member("ClassName", base_class_name);
+				base_class_key.set_compare_order({ "ClassName" });
 				json base_class_def;
 
 				{
 					scope_lock lock_one(classes_rw_lock);
 
-					base_class_def = co_await classes.get(class_key);
+					base_class_def = co_await classes.get(base_class_key);
+				}
+
+				if (trace_check_class)
+				{
+					bus->log_bus("Base class definition");
+					bus->log_json(base_class_def);
 				}
 
 				if (!base_class_def.object())
@@ -593,15 +617,36 @@ private:
 					class_definition.put_member_object("Ancestors");
 				}
 
-				auto fields = base_class_def["Fields"].get_members();
+				if (trace_check_class)
+				{
+					bus->log_bus("Class ancestors");
+					bus->log_json(ancestors);
+				}
+
+				auto inherited_fields = base_class_def["Fields"].get_members();
+				if (trace_check_class)
+				{
+					bus->log_bus("Inherited fields");
+				}
+
 				if (!class_definition.has_member("Fields")) {
 					class_definition.put_member_object("Fields");
 				}
-				auto class_fields = class_definition["Fields"];
-				for (auto field : fields) {
-					class_fields.put_member(field.first, field.second);
+				json fieldso = class_definition["Fields"];
+				for (auto field : inherited_fields) {
+					fieldso.put_member(field.first, field.second);
+					if (trace_check_class)
+					{
+						bus->log_bus(field.first);
+					}
 				}
-			}
+
+				if (trace_check_class) {
+					bus->log_bus("Apply inherited fields");
+					bus->log_json(class_definition);
+				}
+
+			} 
 			else 
 			{
 				class_definition.put_member_object("Ancestors");
@@ -686,24 +731,26 @@ private:
 			else
 			{
 				object_id = co_await get_next_object_id();
+				object_definition.put_member_i64("ObjectId", object_id);
 			}
-			 
-			object_definition.put_member_i64("ObjectId", object_id);
 
 			json key_boy = object_definition.extract({ "ClassName" });
-
 
 			{
 				scope_lock lock_one(classes_rw_lock);
 
 				json class_data = co_await classes.get(key_boy);
+				json warnings = jp.create_array();
+				std::string class_name = key_boy["ClassName"];
 
 				if (!class_data.empty())
 				{
 					result.put_member("ClassDefinition", class_data);
+					// check the object against the class definition for correctness
+					// first we see which fields are in the class not in the object
 					json field_definition = class_data["Fields"];
-					auto members = field_definition.get_members();
-					for (auto kv : members) {
+					auto class_members = field_definition.get_members();
+					for (auto kv : class_members) {
 						json err_field = jp.create_object("Name", kv.first);
 						if (object_definition.has_member(kv.first)) {
 							std::string obj_type = object_definition[kv.first]->get_type_name();
@@ -712,10 +759,50 @@ private:
 								object_definition.change_member_type(kv.first, member_type);
 							}
 						}
+						else 
+						{
+							json warning = jp.create_object();
+							warning.put_member("Error", "Required field missing");
+							warning.put_member("FieldName", kv.first);
+							warnings.push_back(warning);
+						}
+					}
+					// then we see which fields are in the object that are not 
+					// in the class definition.
+					auto object_members = object_definition.get_members();
+					for (auto om : object_members) {
+						if (field_definition.has_member(om.first)) {
+							;
+						}
+						else {
+							json warning = jp.create_object();
+							warning.put_member("Error", "Field not found in class definition");
+							warning.put_member("FieldName", om.first);
+							warnings.push_back(warning);
+						}
+					}
+					result = jp.create_object();
+					if (warnings.size() > 0) {
+						std::string msg = std::format("Object '{0}' has problems", class_name );
+						result.put_member("Message", msg);
+						result.put_member("Success", 0);
+						result.put_member("Warnings", warnings);
+						result.put_member("Definition", class_data);
+						result.put_member("Data", object_definition);
+					}
+					else {
+						result.put_member("Message", "Ok");
+						result.put_member("Success", 1);
+						result.put_member("Definition", class_data);
+						result.put_member("Data", object_definition);
 					}
 				}
 				else
 				{
+					std::string msg = std::format("'{0}' is not valid", class_name);
+					result.put_member("Message", msg);
+					result.put_member("Success", 0);
+					result.put_member("Data", object_definition);
 					result = class_data;
 				}
 
@@ -1276,7 +1363,24 @@ private:
 				{
 					json object_definition = object_array;
 					json put_object_request = create_system_request(object_definition);
-					co_await put_class(put_object_request);
+					// in corona, creating an object doesn't actually persist anything 
+					// but a change in identifier.  It's a clean way of just getting the 
+					// "new chumpy" item for ya.  
+					json create_result = co_await create_object(put_object_request);
+					if (create_result["Success"]) {
+						json created_object = put_object_request["Data"];
+						json save_result = co_await put_object(put_object_request);
+						if (!save_result["Success"]) {
+							system_monitoring_interface::global_mon->log_warning(save_result["Message"]);
+							system_monitoring_interface::global_mon->log_json(save_result);
+						}
+						else
+							system_monitoring_interface::global_mon->log_bus(save_result["Success"]);
+					}
+					else {
+						system_monitoring_interface::global_mon->log_warning(create_result["Message"], __FILE__, __LINE__);
+						system_monitoring_interface::global_mon->log_json(create_result);
+					}
 				}
 			}
 
@@ -1649,7 +1753,7 @@ private:
 							if (!ancestor_class.has_member("Descendants")) {
 								ancestor_class.put_member_object("Descendants");
 							}
-							ancestor_class["Descendants"].put_member(acn, acn);
+							ancestor_class["Descendants"].put_member(class_name, class_name);
 							co_await classes.put(ancestor_class);
 						}
 					}
@@ -1693,10 +1797,11 @@ private:
 
 			json token = put_class_request["Token"];
 			json class_definition = put_class_request["Data"];
+			json class_name = class_definition["ClassName"];
 
 			bool can_put_class = co_await has_class_permission(
 				token,
-				class_definition["ClassName"] ,
+				class_name,
 				"Put");
 
 			if (!can_put_class) {
@@ -1719,10 +1824,13 @@ private:
 							json class_key = jp.create_object();
 							class_key.put_member("ClassName", acn);
 							auto ancestor_class = co_await classes.get(class_key);
+							json descendants;
 							if (!ancestor_class.has_member("Descendants")) {
-								ancestor_class.put_member_object("Descendants");
+								descendants = jp.create_object();
+								ancestor_class.put_member("Descendants", descendants);
 							}
-							ancestor_class["Descendants"].put_member(acn, acn);
+							descendants = ancestor_class["Descendants"];
+							descendants.put_member(class_name, class_name);
 							co_await classes.put(ancestor_class);
 						}
 					}
@@ -1967,10 +2075,11 @@ private:
 			}
 
 			result = co_await check_object(put_object_request);
-			json obj = result["Data"];
 
 			if (result["Success"])
 			{
+				json obj = result["Data"];
+
 				scope_lock lock_one(objects_rw_lock);
 
 				json key_index = jp.create_object();
@@ -1984,12 +2093,11 @@ private:
 				json cobj = object_definition.extract({ "ClassName", "ObjectId" });
 				relative_ptr_type classput_result = co_await class_objects.put(cobj);
 
-				result = create_response(put_object_request, true, "Object created", object_definition, method_timer.get_elapsed_seconds());
+				result = create_response(put_object_request, true, "Object created", obj, method_timer.get_elapsed_seconds());
 			}
 			else 
 			{
-				std::string msg = "Invalid '" + (std::string)object_definition["ClassName"] + "' object";
-				result = create_response(put_object_request, false, msg, put_object_request["Data"], method_timer.get_elapsed_seconds());
+				result = create_response(put_object_request, false, result["Message"], result["Warnings"], method_timer.get_elapsed_seconds());
 			}
 
 			co_return result;

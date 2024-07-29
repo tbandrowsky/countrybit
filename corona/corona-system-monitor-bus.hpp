@@ -13,7 +13,7 @@ namespace corona
 		char Normal[5] = { 0x1b, '[', '0', 'm', 0 };
 		char Logstart[11] = { 0x1b, '[', '9', '7', 'm', 0x1b, '[', '4', '4', 'm', 0 };
 		char Logstop[11] = { 0x1b, '[', '9', '2', 'm', 0x1b, '[', '4', '4', 'm', 0 };
-		char Lognormal[11] = { 0x1b, '[', '9', '7', 'm', 0x1b, '[', '4', '4', 'm', 0 };
+		char Lognormal[11] = { 0x1b, '[', '3', '7', 'm', 0x1b, '[', '4', '4', 'm', 0 };
 		char Logexception[11] = { 0x1b, '[', '9', '5', 'm', 0x1b, '[', '4', '0', 'm', 0 };
 		char Logwarning[11] = { 0x1b, '[', '9', '3', 'm', 0x1b, '[', '4', '0', 'm', 0 };
 		char Loginformation[11] = { 0x1b, '[', '3', '7', 'm', 0x1b, '[', '4', '0', 'm', 0 };
@@ -135,7 +135,7 @@ namespace corona
 					auto body = member.second;
 					auto key = member.first;
 					std::string name = sindent + key;
-					std::cout << std::format("{0:<40}:", name);
+					std::cout << std::format("{0:<30}:", name);
 					if (body.object())
 					{
 						std::cout << std::format("{0:<50}:", "{object}") << std::endl;
@@ -158,7 +158,8 @@ namespace corona
 				for (int i = 0; i < _src.size(); i++)
 				{
 					auto item = _src.get_element(i);
-					std::cout << std::format("{0:<40}:", i);
+					std::string sindex = sindent + std::to_string(i);
+					std::cout << std::format("{0:<30}:", sindex) << std::endl;
 					log_json(item, _indent + 4);
 				}
 			}

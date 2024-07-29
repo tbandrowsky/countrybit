@@ -145,7 +145,7 @@ namespace corona
 		virtual void addListViewItem(int ddlControlId, std::string& _text, LPARAM _data);
 		virtual void addListViewItem(int ddlControlId, const char* _text, LPARAM _data);
 		virtual void addListViewColumn(int ddlControlId, int column_id, char* _text, int _width, visual_alignment _alignment);
-		virtual void addListViewRow(int ddlControlId, LPARAM data, const std::vector<char*>& _items);
+		virtual void addListViewRow(int ddlControlId, LPARAM data, const std::vector<std::string>& _items);
 
 		virtual std::string getListViewSelectedText(int ddlControlId);
 		virtual int getListViewSelectedIndex(int ddlControlId);
@@ -1768,7 +1768,7 @@ namespace corona
 		bool success = ::SendMessage(control, LVM_INSERTCOLUMNA, column_id, (LPARAM)&lvitem);
 	}
 
-	void directApplicationWin32::addListViewRow(int ddlControlId, LPARAM _data, const std::vector<char*>& _items)
+	void directApplicationWin32::addListViewRow(int ddlControlId, LPARAM _data, const std::vector<std::string>& _items)
 	{
 		HWND control = ::GetDlgItem(hwndRoot, ddlControlId);
 
@@ -1777,7 +1777,7 @@ namespace corona
 		lvitem.mask = LVIF_TEXT | LVIF_PARAM;
 		lvitem.iItem = ListView_GetItemCount(control);
 		lvitem.iSubItem = 0;
-		lvitem.pszText = _items[0];
+		lvitem.pszText = (char *)_items[0].c_str();
 		lvitem.cchTextMax = 0;
 		lvitem.lParam = _data;
 		bool success =  ListView_InsertItem(control, &lvitem);
@@ -1789,7 +1789,7 @@ namespace corona
 
 		for (int i = 0; i < _items.size(); i++)
 		{
-			lvitem.pszText = _items[i];
+			lvitem.pszText = (char*)_items[i].c_str();
 			lvitem.iItem = row;
 			lvitem.iSubItem = i;
 			subitemSuccess = ListView_SetItem(control, &lvitem);
