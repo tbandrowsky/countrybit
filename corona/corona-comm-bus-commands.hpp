@@ -12,7 +12,7 @@ namespace corona
 		std::string	create_class_name;
 		std::string form_name;
 
-		virtual comm_bus_transaction<json> execute(control_base* _parent)
+		virtual comm_bus_transaction<json> execute()
 		{
 			json obj;
 			control_base* cb = bus->find_control(form_name);
@@ -45,7 +45,7 @@ namespace corona
 		std::string page_name;
 		std::string form_name;
 
-		virtual comm_bus_transaction<json> execute(control_base* _parent)
+		virtual comm_bus_transaction<json> execute()
 		{
 			json obj;
 			control_base* cb = bus->find_control(table_name);
@@ -76,20 +76,58 @@ namespace corona
 
 	};
 
+	class corona_preview_object_command : public corona_bus_command
+	{
+	public:
+		std::string	table_name;
+		std::string form_name;
+
+		virtual comm_bus_transaction<json> execute()
+		{
+			json obj;
+			control_base* cb = bus->find_control(table_name);
+			if (cb) {
+				json key_data = cb->get_selected_object();
+				if (key_data.object()) {
+					obj = co_await bus->get_object(key_data);
+					control_base* cf = bus->find_control(form_name);
+					if (cf) {
+						cf->set_data(obj);
+					}
+				}
+			}
+			co_return obj;
+		}
+
+		virtual void get_json(json& _dest)
+		{
+			_dest.put_member("class_name", "select_object_command");
+			_dest.put_member("table_name", table_name);
+			_dest.put_member("form_name", form_name);
+		}
+
+		virtual void put_json(json& _src)
+		{
+			table_name = _src["table_name"];
+			form_name = _src["form_name"];
+		}
+
+	};
+
 	class corona_save_object_command : public corona_bus_command
 	{
 	public:
 
 		std::string form_name;
 
-		virtual comm_bus_transaction<json> execute(control_base* _parent)
+		virtual comm_bus_transaction<json> execute()
 		{
 			json obj;
 			control_base* cb = nullptr;
+
 			if (!form_name.empty())
 				cb = bus->find_control(form_name);
-			else
-				cb = _parent;
+
 			if (cb) {
 				json object_data = cb->get_data();
 				if (object_data.object()) {
@@ -118,15 +156,12 @@ namespace corona
 		std::string control_name;
 		json		object_data;
 
-		virtual comm_bus_transaction<json> execute(control_base* _parent)
+		virtual comm_bus_transaction<json> execute()
 		{
 			json obj;
-			control_base* cb;
+			control_base* cb = nullptr;
 			
-			if (!control_name.empty())
-				cb = bus->find_control(control_name);
-			else
-				cb = _parent;
+			cb = bus->find_control(control_name);
 
 			if (cb) {
 				if (object_data.object()) {
@@ -156,14 +191,10 @@ namespace corona
 	public:
 		std::string		control_name;
 
-		virtual comm_bus_transaction<json> execute(control_base *_parent)
+		virtual comm_bus_transaction<json> execute()
 		{
 			json obj;
-			control_base* cb;
-			if (!control_name.empty())
-				cb = bus->find_control(control_name);
-			else
-				cb = _parent;
+			control_base* cb = bus->find_control(control_name);
 			if (cb) {
 				json object_data = cb->get_data();
 				if (object_data.object()) {
@@ -193,7 +224,7 @@ namespace corona
 		std::string			form_name;
 		std::string			table_name;
 
-		virtual comm_bus_transaction<json> execute(control_base *_parent)
+		virtual comm_bus_transaction<json> execute()
 		{
 			json_parser jp;
 			json obj;
@@ -202,13 +233,9 @@ namespace corona
 
 			if (!form_name.empty())
 				cb_form = bus->find_control(form_name);
-			else
-				cb_form = _parent;
 
 			if (!table_name.empty())
 				cb_table = bus->find_control(table_name);
-			else
-				cb_table = _parent;
 
 			if (cb_form && cb_table) {
 				json search_class_filters = jp.create_object();
@@ -249,14 +276,12 @@ namespace corona
 		std::string		form_name;
 		std::string		source_name;
 
-		virtual comm_bus_transaction<json> execute(control_base* _parent)
+		virtual comm_bus_transaction<json> execute()
 		{
 			json obj;
 			control_base* cb;
 			if (!source_name.empty())
 				cb = bus->find_control(source_name);
-			else
-				cb = _parent;
 			json data;
 			if (cb) {
 				data = cb->get_data();
@@ -302,6 +327,11 @@ namespace corona
 			else if (class_name == "select_object_command")
 			{
 				_dest = std::make_shared<corona_select_object_command>();
+				_dest->put_json(_src);
+			}
+			else if (class_name == "preview_object_command")
+			{
+				_dest = std::make_shared<corona_preview_object_command>();
 				_dest->put_json(_src);
 			}
 			else if (class_name == "save_object_command")

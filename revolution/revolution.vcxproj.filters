@@ -59,6 +59,9 @@
     <CopyFileToFolders Include="client.json" />
     <CopyFileToFolders Include="pages.json" />
     <CopyFileToFolders Include="styles.json" />
+    <CopyFileToFolders Include="cockade.png">
+      <Filter>Resource Files</Filter>
+    </CopyFileToFolders>
   </ItemGroup>
   <ItemGroup>
     <None Include="vcpkg.json" />

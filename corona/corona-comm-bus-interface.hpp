@@ -418,6 +418,7 @@ namespace corona
 		virtual control_base* find_control(int _id) = 0;
 		virtual control_base* find_control(std::string _name) = 0;
 		virtual void poll(bool _select_default_page) = 0;
+		virtual void run_command(std::shared_ptr<corona_bus_command> _command) = 0;
 	};
 
 	comm_bus_interface* comm_bus_interface::global_bus = nullptr;
@@ -437,7 +438,7 @@ namespace corona
 			;
 		}
 
-		virtual comm_bus_transaction<json> execute(control_base* _parent) = 0;
+		virtual comm_bus_transaction<json> execute() = 0;
 
 		virtual void get_json(json& _dest)
 		{

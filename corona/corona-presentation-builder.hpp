@@ -74,8 +74,16 @@ namespace corona
 		{
 			pushbutton_control::put_json(_src);
 			json joptions = _src["command"];
-			corona::put_json(command, joptions);
-			command->bus = bus;
+			if (joptions.object()) {
+				corona::put_json(command, joptions);
+				if (command) {
+					command->bus = bus;
+				}
+			}
+			else if (bus) {
+				std::string msg = "Corona button '" + this->name + "' does not have a command.";
+				bus->log_warning("button does not have a command");
+			}
 		}
 	};
 
@@ -2277,10 +2285,18 @@ namespace corona
 				rl.set_style(presentation_style_factory::get_current()->get_style()->CaptionStyle);
 				});
 
-			main_row.column_begin(id_counter::next(), [](column_layout& cl) {
-				cl.set_size(10.0_px, 1.0_container);
-				cl.set_content_align(visual_alignment::align_center);
-				});
+			if (image_file.size())
+			{
+				auto image_column = main_row.column_begin(id_counter::next(), [](column_layout& cl) {
+					cl.set_size(75.0_px, 1.0_container);
+					cl.set_content_align(visual_alignment::align_center);
+					});
+
+				image_column.image(image_control_id, image_file, [](image_control& _settings) {
+					_settings.box.x = 10.0_px;
+					_settings.set_size(1.0_container, 1.0_aspect);
+					});
+			}
 
 			auto title_column = main_row.column_begin(id_counter::next(), [this](column_layout& cl) {
 				cl.set_size(1.0_remaining, 1.0_container);
@@ -3227,15 +3243,12 @@ namespace corona
 		control_base* cb = this;
 		_page->on_command(this->id, [this, cb, _presentation, _page](command_event evt)
 			{
-				disable();
 				if (command) {
 					if (!command->bus) {
 						command->bus = evt.bus;
 					}
-					auto transaction = command->execute(cb);
-					transaction.wait();
+					bus->run_command(command);
 				}
-				enable();
 			});
 	}
 

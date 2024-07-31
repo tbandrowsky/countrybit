@@ -623,27 +623,30 @@ private:
 					bus->log_json(ancestors);
 				}
 
-				auto inherited_fields = base_class_def["Fields"].get_members();
-				if (trace_check_class)
-				{
-					bus->log_bus("Inherited fields");
-				}
-
-				if (!class_definition.has_member("Fields")) {
-					class_definition.put_member_object("Fields");
-				}
-				json fieldso = class_definition["Fields"];
-				for (auto field : inherited_fields) {
-					fieldso.put_member(field.first, field.second);
+				auto inh_fields = base_class_def["Fields"];
+				if (inh_fields.object()) {
+					auto inherited_fields = inh_fields.get_members();
 					if (trace_check_class)
 					{
-						bus->log_bus(field.first);
+						bus->log_bus("Inherited fields");
 					}
-				}
 
-				if (trace_check_class) {
-					bus->log_bus("Apply inherited fields");
-					bus->log_json(class_definition);
+					if (!class_definition.has_member("Fields")) {
+						class_definition.put_member_object("Fields");
+					}
+					json fieldso = class_definition["Fields"];
+					for (auto field : inherited_fields) {
+						fieldso.put_member(field.first, field.second);
+						if (trace_check_class)
+						{
+							bus->log_bus(field.first);
+						}
+					}
+
+					if (trace_check_class) {
+						bus->log_bus("Apply inherited fields");
+						bus->log_json(class_definition);
+					}
 				}
 
 			} 
@@ -668,14 +671,14 @@ private:
 				for (auto& member : members)
 				{
 					json_parser jpx;
-					json err_field = jpx.create_object("Name", member.first);
 					json jp = member.second;
 					if (jp.is_string())
 					{
 						std::string field_type = jp.get_string();
 						if (!allowed_field_types.contains(field_type))
 						{
-							result = create_response(check_class_request, false, "Bad field", err_field, method_timer.get_elapsed_seconds());
+							json err_field = jpx.create_object("Name", member.first);
+							result = create_response(check_class_request, false, "Bad field type", err_field, method_timer.get_elapsed_seconds());
 							co_return result;
 						}
 					}
@@ -684,12 +687,14 @@ private:
 						std::string field_type = jp["FieldType"];
 						if (!allowed_field_types.contains(field_type))
 						{
-							result = create_response(check_class_request, false, "Bad field", err_field, method_timer.get_elapsed_seconds());
+							json err_field = jpx.create_object("Name", member.first);
+							result = create_response(check_class_request, false, "Bad field type", err_field, method_timer.get_elapsed_seconds());
 							co_return result;
 						}
 					}
 					else
 					{
+						json err_field = jpx.create_object("Name", member.first);
 						result = create_response(check_class_request, false, "Class field incorrect", err_field, method_timer.get_elapsed_seconds());
 					}
 				}

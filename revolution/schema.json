@@ -1,26 +1,235 @@
+
+
 {
   "Classes": [
     {
-      "ClassName": "HistoricalEvent",
-      "ClassDescription": "Captures a historical event",
-      "BaseClassName": "SysObject",
+      "ClassName" : "Files",
+      "ClassDescription": "Computer files, including images, links and office spreadsheets and word processing",
+      "BaseClassName" : "SysObject",
       "Fields": {
-        "EventName": "string",
-        "EventDescription": "string",
-        "EventDate" :  "datetime",
-        "Attachments": "array",
-        "Claims": "array"
+        "DocumentName" : "string",
+        "DocumentDescription" : "string",
+        "DocumentSourcePath" : "string",
+        "DocumentStoragePath" : "string"
       }
     },
     {
-      "ClassName": "Claim",
-      "ClassDescription": "A Claim represents a financial damage or claim associated with an event.",
+      "ClassName": "Facts",
+      "ClassDescription": "Statements, supported by documents and other facts.",
       "BaseClassName": "SysObject",
       "Fields": {
-        "ClaimName": "string",
-        "ClaimDescription": "string",
-        "Attachments": "array",
-        "Cases" :  "array"
+        "Description": "string",
+        "Files": "array",
+        "Facts": "array"
+      }
+    },
+    {
+      "ClassName" : "Residences",
+      "ClassDescription": "Where people live.",
+      "BaseClassName" : "Facts",
+      "Fields": {
+          "Street" : "string",
+          "City" : "string",
+          "County" : "string",
+          "State" : "string"
+      }
+    },
+    {
+      "ClassName" : "Roles",
+      "ClassDescription": "A moment in a career.",
+      "BaseClassName" : "Fact",
+      "Fields": {
+        "Title" : "string",
+        "Powers" : "string"
+      }
+    },
+    {
+      "ClassName" : "Jobs",
+      "ClassDescription": "Occupations, callings and vocations.",
+      "BaseClassName" : "Roles",
+      "Fields": {
+      }
+    },
+    {
+      "ClassName" : "Degrees",
+      "ClassDescription": "Educational achievements.",
+      "BaseClassName" : "Roles",
+      "Fields": {
+      }
+    },
+    {
+      "ClassName" : "Institutions",
+      "ClassDescription": "An organization whose lifetime exceeds that of its human members.",
+      "BaseClassName" : "Fact",
+      "Fields": {
+        "FoundingYear" : "number",
+        "EndingYear" : "number",
+        "Institution" : "array"
+      }
+    },
+    {
+      "ClassName" : "Schools",
+      "ClassDescription": "Educational institutions.",
+      "BaseClassName" : "Institution",
+      "Fields": {
+      }
+    },
+    {
+      "ClassName" : "Governments",
+      "ClassDescription": "Government institutions.",
+      "BaseClassName" : "Institution",
+      "Fields": {
+      }
+    },
+    {
+      "ClassName" : "Biography",
+      "BaseClassName" : "Fact",
+      "Fields" : {
+        "StartYear" : "number",
+        "EndYear" : "number",
+        "LifeRole" : "object",
+        "Institution" : "object"
+      }
+    },
+    {
+      "ClassName" : "Relations",
+      "BaseClassName" : "Facts"
+    },
+    {
+      "ClassName": "Actors",
+      "ClassDescription": "People with power who influenced events.",
+      "BaseClassName": "Facts",
+      "Fields": {
+        "FirstName": "string",
+        "LastName": "string",
+        "Biography": "array",
+        "Relations": "array"
+      }
+    },
+    {
+      "ClassName" : "Children",
+      "ClassDescription": "Descendants of an actor",
+      "BaseClassName" : "Relations",
+      "Fields" : {
+        "Actors" : "object"
+      }
+    },
+    {
+      "ClassName" : "Students",
+      "ClassDescription": "Students of an actor",
+      "BaseClassName" : "Relations",
+      "Fields" : {
+        "Actors" : "object"
+      }
+    },
+    {
+      "ClassName" : "Connections",
+      "ClassDescription": "Casual connections between allies",
+      "BaseClassName" : "Relations",
+      "Fields" : {
+        "Actors" : "object"
+      }
+    },
+    {
+      "ClassName": "Events",
+      "ClassDescription": "A moment in history.",
+      "BaseClassName": "Facts",
+      "Fields": {
+        "EventYear" : "number",
+        "Actors" : "array"
+      }
+    },
+    {
+      "ClassName": "Population",
+      "ClassDescription": "People bound by the impact of an event.",
+      "BaseClassName": "Facts",
+      "Fields": {
+        "Population" : "array",
+        "Census" : "number",
+        "Impact" : "string"
+      }
+    },
+    {
+      "ClassName": "Claims",
+      "ClassDescription": "Damages to a population caused by an event",
+      "BaseClassName": "Facts",
+      "Fields": {
+        "Event" : "object",
+        "Population" : "array",
+        "Damages" : "number"
+      }
+    },
+    {
+      "ClassName": "Lawyers",
+      "ClassDescription": "A legal expert participating in this process.",
+      "BaseClassName": "SysUser",
+      "Fields": {
+        "Jurisdiction": "array"
+      }
+    },
+    {
+      "ClassName": "PlaintiffAttorneys",
+      "ClassDescription": "Lawyers who brings cases to the Reparations Court.",
+      "BaseClassName": "Lawyers",
+      "Fields": {
+        
+      }
+    },
+    {
+      "ClassName": "DefenseAttorneys",
+      "ClassDescription": "Lawyers who defends the US Government.",
+      "BaseClassName": "Lawyers",
+      "Fields": {
+        
+      }
+    },
+    {
+      "ClassName": "Judges",
+      "ClassDescription": "Lawyers who administer the proceedings of reparations cases.",
+      "BaseClassName": "Lawyers",
+      "Fields": {
+        
+      }
+    },
+    {
+      "ClassName": "Cases",
+      "ClassDescription": "A Case Before The Court",
+      "BaseClassName": "SysObject",
+      "Fields": {
+        "Claims": "array",
+        "Lawyers" : "array",
+        "Proceedings" : "array"
+      }
+    },
+    {
+      "ClassName": "Proceedings",
+      "ClassDescription": "Discussions before the court",
+      "BaseClassName": "SysObject",
+      "Fields": {
+        "Cases": "object",
+        "Lawyers" : "array",
+        "StartTime" : "datetime",
+        "Rulings" : "array"
+      }
+    },
+    {
+      "ClassName": "Filings",
+      "ClassDescription": "Messages sent to the court",
+      "BaseClassName": "SysObject",
+      "Fields": {
+        "Cases": "object",
+        "Lawyers" : "array",
+        "StartTime" : "datetime",
+        "Rulings" : "array"
+      }
+    },
+    {
+      "ClassName": "Trials",
+      "ClassDescription": "Decisive legal engagement in court.",
+      "BaseClassName": "Proceedings",
+      "Fields": {
+        "Claims": "array",
+        "Lawyer" : "array"
       }
     }
   ],
@@ -34,20 +243,20 @@
       "Members" : []
     },
     {
-      "ClassName": "HistoricalEvent",
-      "EventName": "Government Resegregates",
-      "EventDate": "11/1/1914",
-      "EventDescription": "Democratic President Woodrow Wilson segregated the Treasury, the Post Office, the Bureau of Engraving and Printing, the Navy, the Interior, the Marine Hospital, the War Department and the Government Printing Office. This meant creating separate offices, lunchrooms, bathrooms and other facilities for white and Black workers. Most black supervisors were fired.",
-      "Attachments" :[],
-      "Claims":[]
+      "ClassName": "Events",
+      "EventYear": "1914",
+      "Description": "The President orders segregation.",
+      "Actors" :[],
+      "Facts" : [],
+      "Files" : []
     },
     {
-      "ClassName": "HistoricalEvent",
-      "EventName": "Federal Government Embraces the Lost Cause and the Klan",
-      "EventDate": "2/1/1915",
-      "EventDescription": "Democratic President Woodrow Wilson screens a Birth of a Nation, a film glorifying the Ku Klux Klan.  Stuffed with quotes from his own racist books, and his own endorsement, Birth of Nation created an upwelling of lynchings, stamped the lies of the Lost Cause as truth, and kicked off the most severe era of Jim Crow.",
-      "Attachments" :[],
-      "Claims":[]
+      "ClassName": "Events",
+      "EventYear": "1915",
+      "Description": "The President endorses Birth of a Nation.",
+      "Actors" :[],
+      "Facts" : [],
+      "Files" : []
     }
   ]
 }

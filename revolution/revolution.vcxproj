@@ -578,6 +578,9 @@
     <CopyFileToFolders Include="assets\small_logo.png">
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</DeploymentContent>
     </CopyFileToFolders>
+    <CopyFileToFolders Include="cockade.png">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</DeploymentContent>
+    </CopyFileToFolders>
     <Image Include="revolution.ico" />
     <Image Include="small.ico" />
   </ItemGroup>

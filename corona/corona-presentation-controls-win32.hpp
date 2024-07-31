@@ -243,6 +243,8 @@ namespace corona
 		using control_base::id;
 		using windows_control::window_host;
 
+		std::shared_ptr<corona_bus_command> change_command;
+
 		text_control_base()
 		{
 			;
@@ -342,6 +344,16 @@ namespace corona
 			set_format(temp);
 		}
 
+		virtual void on_subscribe(presentation_base* _presentation, page_base* _page)
+		{
+			windows_control::on_subscribe(_presentation, _page);
+
+			if (change_command) {
+				_page->on_item_changed(id, [this](item_changed_event lce) {
+					lce.bus->run_command(change_command);
+					});
+			}
+		}
 
 	};
 
@@ -405,6 +417,8 @@ namespace corona
 		using control_base::id;
 		using windows_control::window_host;
 		table_data choices;
+		std::shared_ptr<corona_bus_command> select_command;
+
 
 		table_control_base()
 		{
@@ -471,6 +485,16 @@ namespace corona
 			return true;
 		}
 
+		virtual void on_subscribe(presentation_base* _presentation, page_base* _page)
+		{
+			windows_control::on_subscribe(_presentation, _page);
+
+			if (select_command) {
+				_page->on_list_changed(id, [this](list_changed_event lce) {
+					lce.bus->run_command(select_command);
+					});
+			}
+		}
 
 	};
 
@@ -480,6 +504,7 @@ namespace corona
 		using control_base::id;
 		using windows_control::window_host;
 		list_data choices;
+		std::shared_ptr<corona_bus_command> select_command;
 
 		list_control_base()
 		{
@@ -609,7 +634,14 @@ namespace corona
 			data_changed();
 		}
 
-
+		virtual void on_subscribe(presentation_base* _presentation, page_base* _page)
+		{
+			if (select_command) {
+				_page->on_list_changed(id, [this](list_changed_event lce) {
+						lce.bus->run_command(select_command);
+				});
+			}
+		}
 	};
 
 	class dropdown_control_base : public windows_control
@@ -619,6 +651,7 @@ namespace corona
 		using control_base::id;
 		using windows_control::window_host;
 		list_data choices;
+		std::shared_ptr<corona_bus_command> select_command;
 
 		dropdown_control_base()
 		{
@@ -758,6 +791,19 @@ namespace corona
 			return true;
 		}
 
+		virtual void on_subscribe(presentation_base* _presentation, page_base* _page)
+		{
+			windows_control::on_subscribe(_presentation, _page);
+
+			if (select_command) {
+				_page->on_list_changed(id, [this](list_changed_event lce) {
+					listview_control* lvc = dynamic_cast<listview_control*>(lce.control);
+					if (lvc) {
+						lce.bus->run_command(select_command);
+					}
+					});
+			}
+		}
 
 	};
 
@@ -808,6 +854,8 @@ namespace corona
 		long caption_icon_id;
 		HICON caption_icon;
 	public:
+		std::shared_ptr<corona_bus_command> clicked_command;
+
 		button_control(container_control_base* _parent, int _id) : text_control_base(_parent, _id) { ; }
 		button_control(const button_control& _src) : text_control_base(_src)
 		{
@@ -823,6 +871,18 @@ namespace corona
 		virtual const char* get_window_class() { return WC_BUTTON; }
 		virtual DWORD get_window_style() { return ButtonWindowStyles; }
 		virtual DWORD get_window_ex_style() { return 0; }
+
+		virtual void on_subscribe(presentation_base* _presentation, page_base* _page)
+		{
+			windows_control::on_subscribe(_presentation, _page);
+
+			if (clicked_command) {
+				_page->on_command(id, [this](command_event lce) {
+					lce.bus->run_command(clicked_command);
+					});
+			}
+		}
+
 	};
 
 	class pushbutton_control : public button_control<PushButtonWindowStyles>
@@ -845,6 +905,8 @@ namespace corona
 		virtual DWORD get_window_style() { return PushButtonWindowStyles | (is_default_button ? BS_DEFPUSHBUTTON : BS_PUSHBUTTON); }
 
 		virtual ~pushbutton_control() { ; }
+
+
 	};
 
 	class pressbutton_control : public button_control<PressButtonWindowStyles>
@@ -868,7 +930,7 @@ namespace corona
 	{
 		using button_control<RadioButtonWindowStyles>::window_host;
 	public:
-		
+
 		radiobutton_control(container_control_base* _parent, int _id) : button_control<RadioButtonWindowStyles>(_parent, _id) { ; }
 		radiobutton_control(const radiobutton_control& _src) : button_control<RadioButtonWindowStyles>(_src)
 		{
@@ -914,6 +976,7 @@ namespace corona
 	class checkbox_control : public button_control<CheckboxWindowStyles>
 	{
 	public:
+
 		checkbox_control(container_control_base* _parent, int _id) : button_control<CheckboxWindowStyles>(_parent, _id) { ; }
 		checkbox_control(const checkbox_control& _src) : button_control<CheckboxWindowStyles>(_src)
 		{
@@ -960,6 +1023,7 @@ namespace corona
 	class linkbutton_control : public button_control<LinkButtonWindowStyles>
 	{
 	public:
+
 		linkbutton_control(container_control_base* _parent, int _id) : button_control<LinkButtonWindowStyles>(_parent, _id) { ; }
 		linkbutton_control(const linkbutton_control& _src) : button_control<LinkButtonWindowStyles>(_src)
 		{
@@ -1026,12 +1090,13 @@ namespace corona
 		}
 	};
 
-	class number_control : public text_control_base
+	class number_control : public edit_control
 	{
 	public:
-		number_control(container_control_base* _parent, int _id) : text_control_base(_parent, _id) { ; }
+
+		number_control(container_control_base* _parent, int _id) : edit_control(_parent, _id) { ; }
 		virtual ~number_control() { ; }
-		number_control(const edit_control& _src) : text_control_base(_src)
+		number_control(const edit_control& _src) : edit_control(_src)
 		{
 
 		}
@@ -1050,6 +1115,7 @@ namespace corona
 	class listbox_control : public list_control_base
 	{
 	public:
+
 		listbox_control(container_control_base* _parent, int _id) : list_control_base(_parent, _id) { ; }
 		virtual ~listbox_control() { ; }
 
@@ -1072,6 +1138,7 @@ namespace corona
 	class combobox_control : public dropdown_control_base
 	{
 	public:
+
 		combobox_control(container_control_base* _parent, int _id) : dropdown_control_base(_parent, _id) { ; }
 		virtual ~combobox_control() { ; }
 
@@ -1088,6 +1155,7 @@ namespace corona
 		virtual const char* get_window_class() { return WC_COMBOBOX; }
 		virtual DWORD get_window_style() { return ComboWindowStyles; }
 		virtual DWORD get_window_ex_style() { return 0; }
+
 
 	};
 
@@ -1138,6 +1206,7 @@ namespace corona
 	class listview_control : public table_control_base
 	{
 	public:
+
 		listview_control(container_control_base* _parent, int _id) : table_control_base(_parent, _id) { ; }
 		virtual ~listview_control() { ; }
 
@@ -1172,6 +1241,8 @@ namespace corona
 	class scrollbar_control : public windows_control
 	{
 	public:
+		std::shared_ptr<corona_bus_command> change_command;
+
 		scrollbar_control(container_control_base* _parent, int _id) : windows_control(_parent, _id) { ; }
 		virtual ~scrollbar_control() { ; }
 
@@ -1189,11 +1260,22 @@ namespace corona
 		virtual DWORD get_window_style() { return DefaultWindowStyles; }
 		virtual DWORD get_window_ex_style() { return 0; }
 
+		virtual void on_subscribe(presentation_base* _presentation, page_base* _page)
+		{
+			if (change_command) {
+				_page->on_item_changed(id, [this](item_changed_event lce) {
+						lce.bus->run_command(change_command);
+					});
+			}
+		}
+
 	};
 
 	class richedit_control : public text_control_base
 	{
 	public:
+		std::shared_ptr<corona_bus_command> changed_command;
+
 		void set_html(const std::string& _text);
 		std::string get_html();
 
@@ -1224,6 +1306,9 @@ namespace corona
 	class datetimepicker_control : public windows_control
 	{
 	public:
+
+		std::shared_ptr<corona_bus_command> change_command;
+
 		void set_text(const std::string& _text);
 		std::string get_text();
 
@@ -1245,11 +1330,22 @@ namespace corona
 		virtual DWORD get_window_style() { return DefaultWindowStyles; }
 		virtual DWORD get_window_ex_style() { return 0; }
 
+		virtual void on_subscribe(presentation_base* _presentation, page_base* _page)
+		{
+			if (change_command) {
+				_page->on_item_changed(id, [this](item_changed_event lce) {
+					lce.bus->run_command(change_command);
+					});
+			}
+		}
+
 	};
 
 	class monthcalendar_control : public windows_control
 	{
 	public:
+		std::shared_ptr<corona_bus_command> change_command;
+
 		monthcalendar_control(container_control_base* _parent, int _id) : windows_control(_parent, _id) { ; }
 		virtual ~monthcalendar_control() { ; }
 
@@ -1267,14 +1363,25 @@ namespace corona
 		virtual DWORD get_window_style() { return DefaultWindowStyles; }
 		virtual DWORD get_window_ex_style() { return 0; }
 
+		virtual void on_subscribe(presentation_base* _presentation, page_base* _page)
+		{
+			if (change_command) {
+				_page->on_item_changed(id, [this](item_changed_event lce) {
+					lce.bus->run_command(change_command);
+				});
+			}
+		}
+
 	};
 
 	class animate_control : public windows_control
 	{
+
 	public:
 		animate_control(container_control_base* _parent, int _id) : windows_control(_parent, _id) { ; }
 		virtual ~animate_control() { ; }
 
+		std::shared_ptr<corona_bus_command> change_command;
 
 		animate_control(const animate_control& _src) : windows_control(_src)
 		{
@@ -1295,6 +1402,18 @@ namespace corona
 		virtual const char* get_window_class() { return ANIMATE_CLASS; }
 		virtual DWORD get_window_style() { return DefaultWindowStyles; }
 		virtual DWORD get_window_ex_style() { return 0; }
+
+		virtual void on_subscribe(presentation_base* _presentation, page_base* _page)
+		{
+			windows_control::on_subscribe(_presentation, _page);
+
+			if (change_command) {
+				_page->on_item_changed(id, [this](item_changed_event lce) {
+						lce.bus->run_command(change_command);
+					});
+			}
+		}
+
 	};
 
 	class treeview_control : public windows_control
@@ -1302,6 +1421,8 @@ namespace corona
 	public:
 		treeview_control(container_control_base* _parent, int _id) : windows_control(_parent, _id) { ; }
 		virtual ~treeview_control() { ; }
+
+		std::shared_ptr<corona_bus_command> select_command;
 
 		treeview_control(const treeview_control& _src) : windows_control(_src)
 		{
@@ -1317,10 +1438,23 @@ namespace corona
 		virtual DWORD get_window_style() { return DefaultWindowStyles; }
 		virtual DWORD get_window_ex_style() { return 0; }
 
+		virtual void on_subscribe(presentation_base* _presentation, page_base* _page)
+		{
+			windows_control::on_subscribe(_presentation, _page);
+
+			if (select_command) {
+				_page->on_list_changed(id, [this](list_changed_event lce) {
+					lce.bus->run_command(select_command);
+				});
+			}
+		}
+
 	};
 
 	class header_control : public windows_control
 	{
+		std::shared_ptr<corona_bus_command> select_command;
+
 	public:
 		header_control(container_control_base* _parent, int _id) : windows_control(_parent, _id) { ; }
 		virtual ~header_control() { ; }
@@ -1339,11 +1473,23 @@ namespace corona
 		virtual DWORD get_window_style() { return DefaultWindowStyles; }
 		virtual DWORD get_window_ex_style() { return 0; }
 
+		virtual void on_subscribe(presentation_base* _presentation, page_base* _page)
+		{
+			windows_control::on_subscribe(_presentation, _page);
+
+			if (select_command) {
+				_page->on_list_changed(id, [this](list_changed_event lce) {
+					lce.bus->run_command(select_command);
+				});
+			}
+		}
+
 	};
 
 	class toolbar_control : public windows_control
 	{
 	public:
+
 		toolbar_control(container_control_base* _parent, int _id) : windows_control(_parent, _id) { ; }
 		virtual ~toolbar_control() { ; }
 
@@ -1360,6 +1506,7 @@ namespace corona
 		virtual const char* get_window_class() { return TOOLBARCLASSNAME; }
 		virtual DWORD get_window_style() { return DefaultWindowStyles; }
 		virtual DWORD get_window_ex_style() { return 0; }
+
 
 	};
 
@@ -1388,6 +1535,7 @@ namespace corona
 	class hotkey_control : public windows_control
 	{
 	public:
+
 		hotkey_control(container_control_base* _parent, int _id) : windows_control(_parent, _id) { ; }
 		hotkey_control(const hotkey_control& _src) : windows_control(_src)
 		{
@@ -1404,11 +1552,13 @@ namespace corona
 		virtual const char* get_window_class() { return TOOLBARCLASSNAME; }
 		virtual DWORD get_window_style() { return DefaultWindowStyles; }
 		virtual DWORD get_window_ex_style() { return 0; }
+
 	};
 
 	class draglistbox_control : public windows_control
 	{
 	public:
+
 		draglistbox_control(container_control_base* _parent, int _id) : windows_control(_parent, _id) { ; }
 		draglistbox_control(const draglistbox_control& _src) : windows_control(_src)
 		{
@@ -1425,6 +1575,7 @@ namespace corona
 		virtual const char* get_window_class() { return HOTKEY_CLASS; }
 		virtual DWORD get_window_style() { return DefaultWindowStyles; }
 		virtual DWORD get_window_ex_style() { return 0; }
+
 	};
 
 	comboboxex_control::comboboxex_control()
@@ -1483,6 +1634,7 @@ namespace corona
 
 		data_changed();
 	}
+
 
 	void comboboxex_control::on_resize()
 	{

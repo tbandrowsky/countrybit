@@ -460,15 +460,16 @@ namespace corona
 			log_bus("load_pages", "", dt);
 			run_ui([this, _pages, _select_default]() ->void {
 				timer tx;
+				std::stringstream page_message;
 				std::string default_page = presentation_layer->setPresentation(_pages);
 				if (_select_default && !default_page.empty()) {
 					presentation_layer->select_page(default_page);
-					std::cout << "Pages loaded, default page: " << default_page << std::endl;
+					page_message << "Pages loaded, default page: " << default_page;
 				}
 				else {
-					std::cout << "Pages loaded:" << default_page << std::endl;
+					page_message << "Pages loaded:" << default_page;
 				}
-				log_bus("load_pages", "Pages loaded", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				log_bus("load_pages", page_message.str(), tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			});
 		}
 
@@ -524,6 +525,18 @@ namespace corona
 			}
 
 			app_ui->runDialog(hInstance, app->application_name.c_str(), application_icon_id, fullScreen, presentation_layer);
+		}
+
+		virtual void run_command(std::shared_ptr<corona_bus_command> _command)
+		{
+			if (!_command) 
+				return;
+			this->run_ui([this, &_command]() {
+				if (_command) {
+					auto tranny = _command->execute();
+					tranny.wait();
+				}
+			});
 		}
 
 	};
