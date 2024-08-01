@@ -1,4 +1,16 @@
 {
+  "startup" : [
+    {
+      "class_name" : "select_frame_command",
+      "form_name" : "",
+      "source_name" : "",
+      "frame_name" : ""
+      "page_name" : ""        
+    },
+    {
+
+    }
+  ],
   "pages": [
     {
       "class_name": "page",
@@ -67,6 +79,21 @@
               "content_alignment": "near",
               "content_cross_alignment": "near",
               "children": [
+                {
+                  "class_name": "frame",
+                  "name" : "reparations_home_frame",
+                  "box": {
+                    "width": {
+                      "amount": 1,
+                      "units": "container"
+                    },
+                    "height": {
+                      "amount": 1,
+                      "units": "container"
+                    }
+                  }
+                },
+
                 {
                   "class_name": "chaptertitle",
                   "text": "Reparations Login",

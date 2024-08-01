@@ -460,6 +460,7 @@ namespace corona
 			log_bus("load_pages", "", dt);
 			run_ui([this, _pages, _select_default]() ->void {
 				timer tx;
+				date_time dt = date_time::now();
 				std::stringstream page_message;
 				std::string default_page = presentation_layer->setPresentation(_pages);
 				if (_select_default && !default_page.empty()) {
@@ -469,7 +470,23 @@ namespace corona
 				else {
 					page_message << "Pages loaded:" << default_page;
 				}
+
+				json jcommands = _pages.get_member("startup");
 				log_bus("load_pages", page_message.str(), tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				log_bus("run_commands", "", dt);
+
+				if (jcommands.array())
+				{
+					for (auto cmd : jcommands) {
+						std::shared_ptr<corona_bus_command> command;
+						corona::put_json(command, cmd);
+						if (command) {
+							run_command(command);
+						}
+					}
+				}
+				log_bus("load_pages", page_message.str(), tx.get_elapsed_seconds(), __FILE__, __LINE__);
+
 			});
 		}
 
@@ -491,6 +508,35 @@ namespace corona
 				}
 				log_bus("select_page", _page, tx.get_elapsed_seconds());
 			});
+		}
+
+		virtual void select_page(std::string _page, std::string _target_frame, std::string _frame_contents_page, json _obj)
+		{
+			date_time dt = date_time::now();
+			log_bus("select_page", _page, dt);
+
+			run_ui([this, _page, _target_frame, _frame_contents_page, _obj]() ->void {
+				timer tx;
+				presentation_layer->select_page(_page);
+				if (!_target_frame.empty()) {
+					control_base* cb = find_control(_target_frame);
+					if (cb) {
+						frame_layout* fl = dynamic_cast<frame_layout*>(cb);
+						if (fl) {
+							for (auto pg = presentation_layer->pages.find(_frame_contents_page);
+								pg != std::end(presentation_layer->pages);
+							pg++)
+							{
+								fl->set_contents(pg->second.get());
+							}
+						}
+						if (!cb->set_items(_obj)) {
+							cb->set_data(_obj);
+						}
+					}
+				}
+				log_bus("select_page", _page, tx.get_elapsed_seconds());
+				});
 		}
 
 		void when(UINT topic, std::function<void()> _runnable)

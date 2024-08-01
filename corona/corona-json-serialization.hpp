@@ -97,7 +97,7 @@ namespace corona
 			std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 				system_monitoring_interface::global_mon->log_bus(s);
 				});
-			system_monitoring_interface::global_mon->log_bus("source json:");
+			system_monitoring_interface::global_mon->log_bus("the source json is:");
 			system_monitoring_interface::global_mon->log_json(_src, 2);
 			return;
 		}
@@ -181,7 +181,7 @@ namespace corona
 			std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 				system_monitoring_interface::global_mon->log_bus(s);
 				});
-			system_monitoring_interface::global_mon->log_bus("source json:");
+			system_monitoring_interface::global_mon->log_bus("the source json is:");
 			system_monitoring_interface::global_mon->log_json(_src, 2);
 			return;
 		}
@@ -216,7 +216,7 @@ namespace corona
 			std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 				system_monitoring_interface::global_mon->log_bus(s);
 				});
-			system_monitoring_interface::global_mon->log_bus("source json:");
+			system_monitoring_interface::global_mon->log_bus("the source json is:");
 			system_monitoring_interface::global_mon->log_json(_src, 2);
 			return;
 		}

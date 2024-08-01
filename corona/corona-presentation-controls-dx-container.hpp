@@ -82,6 +82,21 @@ namespace corona
 			create(host);
 		}
 
+		virtual void set_contents(page_base *_contents)
+		{
+			auto new_root = _contents->root;
+			children.clear();
+
+			for (auto srcchild : _contents->root->children)
+			{
+				auto new_child = srcchild->clone();
+				children.push_back(new_child);
+			}
+
+			arrange(bounds);
+			create(host);
+		}
+
 		virtual void on_subscribe(presentation_base* _presentation, page_base* _page)
 		{
 			for (auto child : children) {
@@ -182,7 +197,6 @@ namespace corona
 			corona::put_json(content_alignment, _src, "content_alignment" );
 			corona::put_json(content_cross_alignment, _src, "content_cross_alignment");
 		}
-
 	};
 
 	class absolute_layout :
@@ -338,7 +352,6 @@ namespace corona
 
 		virtual void arrange(rectangle _ctx);
 		virtual point get_remaining(point _ctx);
-
 
 	};
 

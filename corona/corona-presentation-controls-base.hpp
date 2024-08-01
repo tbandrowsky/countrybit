@@ -418,15 +418,11 @@ namespace corona
 
 			std::vector<std::string> missing;
 			if (!_src.has_members(missing, { "box" })) {
-				std::string msg;
-				msg = std::format("control must have a box defined for layout");
-				system_monitoring_interface::global_mon->log_warning(msg);
-
-				std::cout << "control is missing:" << std::endl;
+				system_monitoring_interface::global_mon->log_warning("control is missing:", __FILE__, __LINE__);
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 					std::cout << s << std::endl;
 					});
-				std::cout << "source json:" << std::endl;
+				system_monitoring_interface::global_mon->log_bus("the source json is:");
 				return;
 			}
 

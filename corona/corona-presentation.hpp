@@ -1124,6 +1124,7 @@ namespace corona {
 				current_page = pages[current_page_name];
 			}
 		}
+
 		load_page();
 		return default_page_name;
 	}
