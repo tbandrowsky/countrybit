@@ -1672,7 +1672,7 @@ namespace corona
 
 			json jcommand = _src["change_command"];
 			if (jcommand.empty()) {
-				comm_bus::global_bus->log_information("month calendar control missing select_command", __FILE__, __LINE__);
+				comm_bus::global_bus->log_bus("month calendar control missing select_command", __FILE__, __LINE__);
 				comm_bus::global_bus->log_json(_src);
 			}
 
