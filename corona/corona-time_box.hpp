@@ -283,6 +283,11 @@ namespace corona
 			date_time temp = add(-1, _span);
 			return temp;
 		}
+
+		operator SYSTEMTIME& ()
+		{
+			return system_time;
+		}
 		
 		int year()
 		{

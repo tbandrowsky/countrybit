@@ -630,43 +630,12 @@ namespace corona
 			json_parser jp;
 			json control_json = jp.create_object();
 			std::string sindent(_indent, ' ');
-
-			std::cout << sindent << typeid(*this).name() << std::endl;
+			std::string fmt;
+			fmt = std::format("{0} {1} debug clicked", typeid(*this).name(), name);
+			date_time dt = date_time::now();
+			bus->log_bus("",  fmt, dt, __FILE__, __LINE__);
 			get_json(control_json);
-			if (control_json.object()) 
-			{
-
-				control_json.for_each_member([control_json, sindent](std::string _key_name) {
-					json member = control_json.get_member(_key_name);
-					std::string str = member.to_json();
-					if (str.size() < 40)
-					{
-						std::cout << sindent <<  _key_name << ":" << str << std::endl;
-					}
-					else
-					{
-						std::cout << sindent << _key_name << std::endl;
-						std::cout << sindent << str << std::endl;
-					}
-					});
-			}
-			else 
-			{
-				std::cout << sindent << "No json object representation." << std::endl;
-			}
-
-			_indent += 2;
-			for (auto child : children) 
-			{
-				if (child) 
-				{
-					child->dump(_indent);
-				}
-				else 
-				{
-					std::cout << sindent << "a child is null" << std::endl;
-				}
-			}
+			bus->log_json(control_json);
 		}
 
 	};

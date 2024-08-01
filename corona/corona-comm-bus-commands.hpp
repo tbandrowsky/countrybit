@@ -228,8 +228,8 @@ namespace corona
 		{
 			json_parser jp;
 			json obj;
-			control_base* cb_form;
-			control_base* cb_table;
+			control_base* cb_form = {};
+			control_base* cb_table = {};
 
 			if (!form_name.empty())
 				cb_form = bus->find_control(form_name);
@@ -279,7 +279,7 @@ namespace corona
 		virtual comm_bus_transaction<json> execute()
 		{
 			json obj;
-			control_base* cb;
+			control_base* cb = {};
 			if (!source_name.empty())
 				cb = bus->find_control(source_name);
 			json data;

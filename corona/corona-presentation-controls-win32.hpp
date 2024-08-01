@@ -328,6 +328,11 @@ namespace corona
 			json_parser jp;
 
 			control_base::get_json(_dest);
+			if (change_command) {
+				json jcommand = jp.create_object();
+				corona::get_json(jcommand, change_command);
+				_dest.put_member("change_command", jcommand);
+			}
 
 			_dest.put_member("text", text);
 			_dest.put_member("format", format);
@@ -337,11 +342,16 @@ namespace corona
 		{
 			control_base::put_json(_src);
 
+			json command = _src["change_command"];
+			corona::put_json(change_command, command);
+
 			std::string temp = _src["text"];
 			set_text(temp);
 
 			format = _src["format"];
 			set_format(temp);
+
+
 		}
 
 		virtual void on_subscribe(presentation_base* _presentation, page_base* _page)
@@ -465,6 +475,12 @@ namespace corona
 			control_base::get_json(_dest);
 			json jtable_data = jp.create_object();
 			choices.get_json(jtable_data);
+			if (select_command) {
+				json jcommand = jp.create_object();
+				corona::get_json(jcommand, select_command);
+				_dest.put_member("select_command", jcommand);
+			}
+
 			_dest.put_member("table", jtable_data);
 		}
 
@@ -475,7 +491,11 @@ namespace corona
 			control_base::put_json(_src);
 			json jtable_data = _src["table"];
 			choices.put_json(jtable_data);
+			json command = _src["select_command"];
+			corona::put_json(select_command, command);
+
 			data_changed();
+
 		}
 
 		virtual bool set_items(json _data)
@@ -622,6 +642,12 @@ namespace corona
 			json jlist_data = jp.create_object();
 			choices.get_json(jlist_data);
 			_dest.put_member("list", jlist_data);
+			if (select_command) {
+				json jcommand = jp.create_object();
+				corona::get_json(jcommand, select_command);
+				_dest.put_member("select_command", jcommand);
+			}
+
 		}
 
 		virtual void put_json(json& _src)
@@ -631,6 +657,9 @@ namespace corona
 			control_base::put_json(_src);
 			json jlist_data = _src["list"];
 			choices.put_json(jlist_data);
+			json command = _src["select_command"];
+			corona::put_json(select_command, command);
+
 			data_changed();
 		}
 
@@ -781,6 +810,9 @@ namespace corona
 			control_base::put_json(_src);
 			json jlist_data = _src["list"];
 			choices.put_json(jlist_data);
+			json command = _src["select_command"];
+			corona::put_json(select_command, command);
+
 			data_changed();
 		}
 
@@ -797,10 +829,7 @@ namespace corona
 
 			if (select_command) {
 				_page->on_list_changed(id, [this](list_changed_event lce) {
-					listview_control* lvc = dynamic_cast<listview_control*>(lce.control);
-					if (lvc) {
-						lce.bus->run_command(select_command);
-					}
+					lce.bus->run_command(select_command);
 					});
 			}
 		}
@@ -854,7 +883,7 @@ namespace corona
 		long caption_icon_id;
 		HICON caption_icon;
 	public:
-		std::shared_ptr<corona_bus_command> clicked_command;
+		std::shared_ptr<corona_bus_command> click_command;
 
 		button_control(container_control_base* _parent, int _id) : text_control_base(_parent, _id) { ; }
 		button_control(const button_control& _src) : text_control_base(_src)
@@ -872,13 +901,33 @@ namespace corona
 		virtual DWORD get_window_style() { return ButtonWindowStyles; }
 		virtual DWORD get_window_ex_style() { return 0; }
 
+		virtual void get_json(json& _dest)
+		{
+			json_parser jp;
+
+			control_base::get_json(_dest);
+			if (click_command) {
+				json jcommand = jp.create_object();
+				corona::get_json(jcommand, click_command);
+				_dest.put_member("click_command", jcommand);
+			}
+		}
+
+		virtual void put_json(json& _src)
+		{
+			json_parser jp;
+
+			json command = _src["click_command"];
+			corona::put_json(click_command, command);
+		}
+
 		virtual void on_subscribe(presentation_base* _presentation, page_base* _page)
 		{
 			windows_control::on_subscribe(_presentation, _page);
 
-			if (clicked_command) {
+			if (click_command) {
 				_page->on_command(id, [this](command_event lce) {
-					lce.bus->run_command(clicked_command);
+					lce.bus->run_command(click_command);
 					});
 			}
 		}
@@ -1165,6 +1214,7 @@ namespace corona
 		using control_base::id;
 		using windows_control::window_host;
 		list_data choices;
+		std::shared_ptr<corona_bus_command> select_command;
 
 		comboboxex_control();
 		comboboxex_control(container_control_base* _parent, int _id);
@@ -1199,6 +1249,29 @@ namespace corona
 				}
 			}
 			return j;
+		}
+
+		virtual void get_json(json& _dest)
+		{
+			json_parser jp;
+
+			control_base::get_json(_dest);
+			json jlist_data = jp.create_object();
+			choices.get_json(jlist_data);
+			_dest.put_member("choices", jlist_data);
+		}
+
+		virtual void put_json(json& _src)
+		{
+			json_parser jp;
+
+			control_base::put_json(_src);
+			json jlist_data = _src["list"];
+			choices.put_json(jlist_data);
+			json command = _src["select_command"];
+			corona::put_json(select_command, command);
+
+			data_changed();
 		}
 
 	};
@@ -1241,14 +1314,29 @@ namespace corona
 	class scrollbar_control : public windows_control
 	{
 	public:
+
+		SCROLLINFO sbi;
+		double scaleMin;
+		double scaleMax;
+		double scale;
+
 		std::shared_ptr<corona_bus_command> change_command;
 
-		scrollbar_control(container_control_base* _parent, int _id) : windows_control(_parent, _id) { ; }
+		scrollbar_control(container_control_base* _parent, int _id) : windows_control(_parent, _id) 
+		{ 
+			sbi = {};
+			sbi.cbSize = sizeof(SCROLLINFO);
+			sbi.fMask = SIF_PAGE | SIF_RANGE | SIF_POS | SIF_TRACKPOS;
+			scaleMin = scaleMax = scale = 0;
+		}
 		virtual ~scrollbar_control() { ; }
 
 		scrollbar_control(const scrollbar_control& _src) : windows_control(_src)
 		{
-			;
+			sbi = _src.sbi;
+			scaleMin = _src.scaleMin;
+			scaleMax = _src.scaleMax;
+			scaleMin = scaleMax = scale = 0;
 		}
 		virtual std::shared_ptr<control_base> clone()
 		{
@@ -1269,6 +1357,75 @@ namespace corona
 			}
 		}
 
+		virtual void get_json(json& _dest)
+		{
+			json_parser jp;
+			
+			windows_control::get_json(_dest);
+
+			if (window) {
+				::GetScrollInfo(window, SB_CTL, &sbi);
+			}
+
+			_dest.put_member("min", sbi.nMin);
+			_dest.put_member("max", sbi.nMax);
+			_dest.put_member("page", sbi.nPage);
+			_dest.put_member("pos", sbi.nPos);
+			_dest.put_member("track", sbi.nTrackPos);
+			_dest.put_member("scale_min", scaleMin);
+			_dest.put_member("scale_max", scaleMax);
+
+		}
+
+		virtual void put_json(json& _src)
+		{
+			json_parser jp;
+
+			windows_control::put_json(_src);
+			sbi.nMin = (double)_src["min"];
+			sbi.nMax = (double)_src["max"];
+			sbi.nPage = (double)_src["page"];
+			sbi.nPos = (double)_src["pos"];
+			scaleMin = (double)_src["scale_min"];
+			scaleMax = (double)_src["scale_max"];
+			scale = (double)(sbi.nMax - sbi.nMin) / (scaleMax - scaleMin);
+			if (window) {
+				::SetScrollInfo(window, SB_CTL, &sbi, true);
+			}
+
+		}
+
+		virtual void on_create()
+		{
+			if (window) {
+				::SetScrollInfo(window, SB_CTL, &sbi, true);
+			}
+		}
+
+		virtual json get_data()
+		{
+			json result;
+			if (!json_field_name.empty()) {
+				json_parser jp;
+				if (window) {
+					::GetScrollInfo(window, SB_CTL, &sbi);
+				}
+				result = jp.create_object();
+				double v = (sbi.nPos - sbi.nMin) * scale + scaleMin;
+				result.put_member(json_field_name, v);
+			}
+			return result;
+		}
+
+		virtual json set_data(json _data)
+		{
+			if (_data.has_member(json_field_name)) {
+				double pos = _data[json_field_name];
+				sbi.nPos = (pos - scaleMin) / scale + sbi.nMin;
+			}
+			return _data;
+		}
+
 	};
 
 	class richedit_control : public text_control_base
@@ -1286,7 +1443,7 @@ namespace corona
 		richedit_control(const richedit_control& _src) : text_control_base(_src)
 		{
 			;
-		}
+		} 
 		virtual std::shared_ptr<control_base> clone()
 		{
 			auto tv = std::make_shared<richedit_control>(*this);
@@ -1307,6 +1464,9 @@ namespace corona
 	{
 	public:
 
+		date_time current_date;
+		date_time min_date;
+		date_time max_date;
 		std::shared_ptr<corona_bus_command> change_command;
 
 		void set_text(const std::string& _text);
@@ -1318,6 +1478,7 @@ namespace corona
 		{
 			;
 		}
+
 		virtual std::shared_ptr<control_base> clone()
 		{
 			auto tv = std::make_shared<datetimepicker_control>(*this);
@@ -1327,7 +1488,7 @@ namespace corona
 		virtual ~datetimepicker_control() { ; }
 
 		virtual const char* get_window_class() { return DATETIMEPICK_CLASS; }
-		virtual DWORD get_window_style() { return DefaultWindowStyles; }
+		virtual DWORD get_window_style() { return DefaultWindowStyles | DTS_SHORTDATECENTURYFORMAT; 		}		
 		virtual DWORD get_window_ex_style() { return 0; }
 
 		virtual void on_subscribe(presentation_base* _presentation, page_base* _page)
@@ -1339,11 +1500,86 @@ namespace corona
 			}
 		}
 
+
+		virtual void get_json(json& _dest)
+		{
+			json_parser jp;
+
+			windows_control::get_json(_dest);
+
+			if (window) {
+				SYSTEMTIME st[3];
+				DateTime_GetRange(window, &st[1]);
+				min_date = st[1];
+				max_date = st[2];
+			}
+
+			_dest.put_member("min_date", min_date);
+			_dest.put_member("max_date", max_date);
+		}
+
+		virtual void put_json(json& _src)
+		{
+			json_parser jp;
+
+			windows_control::put_json(_src);
+
+			min_date = _src["min_date"];
+			max_date = _src["max_date"];
+
+			if (window) {
+				SYSTEMTIME st[3];
+				DateTime_SetRange(window, GDTR_MIN | GDTR_MAX, &st[1]);
+				st[1] = min_date;
+				st[2] = max_date;
+			}
+		}
+
+		virtual void on_create()
+		{
+			if (window) {
+				SYSTEMTIME st[3];
+				st[0] = current_date;
+				st[1] = min_date;
+				st[2] = max_date;
+				DateTime_SetRange(window, GDTR_MIN | GDTR_MAX, &st[1]);
+				DateTime_SetSystemtime(window, GDT_VALID, &st[0]);
+			}
+		}
+
+		virtual json get_data()
+		{
+			json result;
+			if (!json_field_name.empty()) {
+				if (window) {
+					SYSTEMTIME st;
+					DateTime_GetSystemtime(window, &st);
+					current_date = st;
+				}
+				result.put_member(json_field_name, current_date);
+			}
+			return result;
+		}
+
+		virtual json set_data(json _data)
+		{
+			if (_data.has_member(json_field_name)) {
+				current_date = _data[json_field_name];
+				if (window) {
+					SYSTEMTIME st = current_date;
+					DateTime_SetSystemtime(window, GDT_VALID, &st);
+				}
+			}
+			return _data;
+		}
 	};
 
 	class monthcalendar_control : public windows_control
 	{
 	public:
+		date_time current_date;
+		date_time min_date;
+		date_time max_date;
 		std::shared_ptr<corona_bus_command> change_command;
 
 		monthcalendar_control(container_control_base* _parent, int _id) : windows_control(_parent, _id) { ; }
@@ -1363,13 +1599,96 @@ namespace corona
 		virtual DWORD get_window_style() { return DefaultWindowStyles; }
 		virtual DWORD get_window_ex_style() { return 0; }
 
+
 		virtual void on_subscribe(presentation_base* _presentation, page_base* _page)
 		{
 			if (change_command) {
 				_page->on_item_changed(id, [this](item_changed_event lce) {
 					lce.bus->run_command(change_command);
-				});
+					});
 			}
+		}
+
+		virtual void get_json(json& _dest)
+		{
+			json_parser jp;
+
+			windows_control::get_json(_dest);
+
+			if (window) {
+				SYSTEMTIME st[3];
+				MonthCal_GetRange(window, &st[1]);
+				min_date = st[1];
+				max_date = st[2];
+			}
+
+			_dest.put_member("min_date", min_date);
+			_dest.put_member("max_date", max_date);
+
+			if (change_command) {
+				json jcommand = jp.create_object();
+				corona::get_json(jcommand, change_command);
+				_dest.put_member("change_command", jcommand);
+			}
+
+		}
+
+		virtual void put_json(json& _src)
+		{
+			json_parser jp;
+
+			windows_control::put_json(_src);
+
+			json jcommand = _src["change_command"];
+			corona::put_json(change_command, jcommand);
+
+			min_date = _src["min_date"];
+			max_date = _src["max_date"];
+
+			if (window) {
+				SYSTEMTIME st[3];
+				MonthCal_SetRange(window, GDTR_MIN | GDTR_MAX, &st[1]);
+				st[1] = min_date;
+				st[2] = max_date;
+			}
+		}
+
+		virtual void on_create()
+		{
+			if (window) {
+				SYSTEMTIME st[3];
+				st[0] = current_date;
+				st[1] = min_date;
+				st[2] = max_date;
+				MonthCal_SetRange(window, GDTR_MIN | GDTR_MAX, &st[1]);
+				MonthCal_SetCurSel(window, GDT_VALID, &st[0]);
+			}
+		}
+
+		virtual json get_data()
+		{
+			json result;
+			if (!json_field_name.empty()) {
+				if (window) {
+					SYSTEMTIME st;
+					MonthCal_GetCurSel(window, &st);
+					current_date = st;
+				}
+				result.put_member(json_field_name, current_date);
+			}
+			return result;
+		}
+
+		virtual json set_data(json _data)
+		{
+			if (_data.has_member(json_field_name)) {
+				current_date = _data[json_field_name];
+				if (window) {
+					SYSTEMTIME st = current_date;
+					MonthCal_SetCurSel(window, GDT_VALID, &st);
+				}
+			}
+			return _data;
 		}
 
 	};
