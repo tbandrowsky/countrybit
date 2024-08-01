@@ -343,10 +343,6 @@ namespace corona
 			control_base::put_json(_src);
 
 			json jcommand = _src["change_command"];
-			if (jcommand.empty()) {
-				comm_bus::global_bus->log_bus("text control missing change_command", __FILE__, __LINE__);
-				comm_bus::global_bus->log_json(_src);
-			}
 			corona::put_json(change_command, jcommand);
 
 			std::string temp = _src["text"];
@@ -498,8 +494,10 @@ namespace corona
 			json command = _src["select_command"];
 
 			if (command.empty()) {
-				comm_bus::global_bus->log_bus("table control missing select_command", __FILE__, __LINE__);
-				comm_bus::global_bus->log_json(_src);
+				if (bus) {
+					bus->log_bus("table control missing select_command", __FILE__, __LINE__);
+					bus->log_json(_src);
+				}
 			}
 
 			corona::put_json(select_command, command);
@@ -669,8 +667,10 @@ namespace corona
 			choices.put_json(jlist_data);
 			json command = _src["select_command"];
 			if (command.empty()) {
-				comm_bus::global_bus->log_bus("list control missing select_command", __FILE__, __LINE__);
-				comm_bus::global_bus->log_json(_src);
+				if (bus) {
+					bus->log_bus("list control missing select_command", __FILE__, __LINE__);
+					bus->log_json(_src);
+				}
 			}
 
 			corona::put_json(select_command, command);
@@ -827,8 +827,10 @@ namespace corona
 			choices.put_json(jlist_data);
 			json command = _src["select_command"];
 			if (command.empty()) {
-				comm_bus::global_bus->log_bus("dropdown control missing select_command", __FILE__, __LINE__);
-				comm_bus::global_bus->log_json(_src);
+				if (bus) {
+					bus->log_bus("dropdown control missing select_command", __FILE__, __LINE__);
+					bus->log_json(_src);
+				}
 			}
 
 			corona::put_json(select_command, command);
@@ -940,11 +942,13 @@ namespace corona
 			text_control_base::put_json(_src);
 			json jcommand = _src["click_command"];
 			if (jcommand.empty()) {
-				comm_bus::global_bus->log_bus("button control missing click_command", __FILE__, __LINE__);
-				comm_bus::global_bus->log_json(_src);
+				if (bus) {
+					bus->log_bus("button control missing click_command", __FILE__, __LINE__);
+					bus->log_json(_src);
+				}
 			}
 
-			corona::put_json(click_command, command);
+			corona::put_json(click_command, jcommand);
 		}
 
 		virtual void on_subscribe(presentation_base* _presentation, page_base* _page)
@@ -1296,8 +1300,10 @@ namespace corona
 			choices.put_json(jlist_data);
 			json command = _src["select_command"];
 			if (command.empty()) {
-				comm_bus::global_bus->log_bus("comboboxex control missing select_command", __FILE__, __LINE__);
-				comm_bus::global_bus->log_json(_src);
+				if (bus) {
+					bus->log_bus("comboboxex control missing select_command", __FILE__, __LINE__);
+					bus->log_json(_src);
+				}
 			}
 
 			corona::put_json(select_command, command);
@@ -1672,8 +1678,14 @@ namespace corona
 
 			json jcommand = _src["change_command"];
 			if (jcommand.empty()) {
-				comm_bus::global_bus->log_bus("month calendar control missing select_command", __FILE__, __LINE__);
-				comm_bus::global_bus->log_json(_src);
+				if (bus) {
+					bus->log_bus("month calendar control missing select_command", __FILE__, __LINE__);
+					bus->log_json(_src);
+				}
+				else {
+					system_monitoring_interface::global_mon->log_bus("month calendar control missing select_command", __FILE__, __LINE__);
+					system_monitoring_interface::global_mon->log_json(_src);
+				}
 			}
 
 			corona::put_json(change_command, jcommand);

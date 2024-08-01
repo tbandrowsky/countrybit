@@ -140,7 +140,7 @@
                         "amount": 20,
                         "units": "pixels"
                       },
-                      "command": {
+                      "click_command": {
                         "class_name": "select_page_command",
                         "page_name" : "researcher_home"
                       }
@@ -162,7 +162,7 @@
                         "amount": 20,
                         "units": "pixels"
                       },
-                      "command": {
+                      "click_command": {
                         "class_name": "select_page_command",
                         "page_name": "plaintiff_attorney_home"
                       }
@@ -184,7 +184,7 @@
                         "amount": 20,
                         "units": "pixels"
                       },
-                      "command": {
+                      "click_command": {
                         "class_name": "select_page_command",
                         "page_name": "reparations_court_home"
                       }
@@ -206,7 +206,7 @@
                         "amount": 20,
                         "units": "pixels"
                       },
-                      "command": {
+                      "click_command": {
                         "class_name": "select_page_command",
                         "page_name": "government_attorney_home"
                       }
@@ -228,7 +228,7 @@
                         "amount": 20,
                         "units": "pixels"
                       },
-                      "command": {
+                      "click_command": {
                         "class_name": "select_page_command",
                         "page_name": "claims_fund_home"
                       }
@@ -353,7 +353,7 @@
                           "units": "pixels"
                         }
                       },
-                      "command": {
+                      "click_command": {
                         "class_name": "search_objects_command",
                         "search_class_name": "Search Events",
                         "form_name": "search_form",
@@ -373,7 +373,7 @@
                           "units": "pixels"
                         }
                       },
-                      "command": {
+                      "click_command": {
                         "class_name": "create_object_command",
                         "create_class_name": "Events",
                         "form_name": "EventPage"
@@ -392,7 +392,7 @@
                           "units": "pixels"
                         }
                       },
-                      "command": {
+                      "click_command": {
                         "class_name": "create_object_command",
                         "create_class_name": "Cases",
                         "form_name": "CasePage"
@@ -411,7 +411,7 @@
                           "units": "pixels"
                         }
                       },
-                      "command": {
+                      "click_command": {
                         "class_name": "create_object_command",
                         "create_class_name": "Actors",
                         "form_name": "ActorPage"
@@ -430,7 +430,7 @@
                           "units": "pixels"
                         }
                       },
-                      "command": {
+                      "click_command": {
                         "class_name": "create_object_command",
                         "create_class_name": "Institutions",
                         "form_name": "InstitutionPage"
@@ -449,7 +449,7 @@
                           "units": "pixels"
                         }
                       },
-                      "command": {
+                      "click_command": {
                         "class_name": "select_page_command",
                         "page_name": "home"
                       }
@@ -500,7 +500,7 @@
                       "class_name": "listview",
                       "name": "search_list",
                       "box": {
-                        "width": "410px",
+                        "width": "410 pixels",
                         "height": {
                           "amount": 1.0,
                           "units": "remaining"
@@ -678,7 +678,7 @@
                                 "units": "pixels"
                               }
                             },
-                            "command": {
+                            "click_command": {
                               "class_name": "search_objects_command",
                               "search_class_name": "Events",
                               "form_name": "search_form",
@@ -706,7 +706,7 @@
                           "units": "pixels"
                         }
                       },
-                      "command": {
+                      "click_command": {
                         "class_name": "create_object_command",
                         "create_class_name": "Events",
                         "form_name": "EventPage"
@@ -725,7 +725,7 @@
                           "units": "pixels"
                         }
                       },
-                      "command": {
+                      "click_command": {
                         "class_name": "create_object_command",
                         "create_class_name": "Cases",
                         "form_name": "CasePage"
@@ -744,7 +744,7 @@
                           "units": "pixels"
                         }
                       },
-                      "command": {
+                      "click_command": {
                         "class_name": "create_object_command",
                         "create_class_name": "Actors",
                         "form_name": "ActorPage"
@@ -763,7 +763,7 @@
                           "units": "pixels"
                         }
                       },
-                      "command": {
+                      "click_command": {
                         "class_name": "create_object_command",
                         "create_class_name": "Institutions",
                         "form_name": "InstitutionPage"
@@ -782,7 +782,7 @@
                           "units": "pixels"
                         }
                       },
-                      "command": {
+                      "click_command": {
                         "class_name": "select_page_command",
                         "page_name": "home"
                       }
@@ -1037,7 +1037,7 @@
                               "units": "pixels"
                             }
                           },
-                          "command": {
+                          "click_command": {
                             "class_name": "search_objects_command",
                             "search_class_name": "Cases",
                             "form_name": "search_cases_form",
@@ -1057,7 +1057,7 @@
                               "units": "pixels"
                             }
                           },
-                          "command": {
+                          "click_command": {
                             "class_name": "create_object_command",
                             "create_class_name": "Case",
                             "form_name": "CaseDetail"
@@ -1076,7 +1076,7 @@
                               "units": "pixels"
                             }
                           },
-                          "command": {
+                          "click_command": {
                             "class_name": "select_page_command",
                             "page_name": "home"
                           }
@@ -1265,7 +1265,7 @@
                         "amount": 20,
                         "units": "pixels"
                       },
-                      "command": {
+                      "click_command": {
                         "class_name": "select_page_command",
                         "page_name": "home"
                       }
@@ -1418,7 +1418,7 @@
                         "amount": 20,
                         "units": "pixels"
                       },
-                      "command": {
+                      "click_command": {
                         "class_name": "select_page_command",
                         "page_name": "home"
                       }

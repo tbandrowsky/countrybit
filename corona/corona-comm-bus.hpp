@@ -533,13 +533,16 @@ namespace corona
 				json_parser jp;
 				json jcommand = jp.create_object();
 				corona::get_json(jcommand, _command);
-				this->run_ui([this, jcommand, &_command]() {
+				this->run_ui([this, jcommand]() {
 					date_time start_time = date_time::now();
 					log_bus("run_command", jcommand["class_name"], start_time, __FILE__, __LINE__);
 					timer tx;
 					log_json(jcommand);
-					if (_command) {
-						auto tranny = _command->execute();
+					std::shared_ptr<corona_bus_command> command;
+					corona::put_json(command, jcommand);
+					if (command) {
+						command->bus = this;
+						auto tranny = command->execute();
 						tranny.wait();
 					}
 					log_bus("", jcommand["class_name"], tx.get_elapsed_seconds(), __FILE__, __LINE__);
