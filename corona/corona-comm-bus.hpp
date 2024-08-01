@@ -529,14 +529,22 @@ namespace corona
 
 		virtual void run_command(std::shared_ptr<corona_bus_command> _command)
 		{
-			if (!_command) 
-				return;
-			this->run_ui([this, &_command]() {
-				if (_command) {
-					auto tranny = _command->execute();
-					tranny.wait();
-				}
-			});
+			if (_command) {
+				json_parser jp;
+				json jcommand = jp.create_object();
+				corona::get_json(jcommand, _command);
+				this->run_ui([this, jcommand, &_command]() {
+					date_time start_time = date_time::now();
+					log_bus("run_command", jcommand["class_name"], start_time, __FILE__, __LINE__);
+					timer tx;
+					log_json(jcommand);
+					if (_command) {
+						auto tranny = _command->execute();
+						tranny.wait();
+					}
+					log_bus("", jcommand["class_name"], tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				});
+			}
 		}
 
 	};

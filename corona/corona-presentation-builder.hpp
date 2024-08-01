@@ -38,7 +38,6 @@ namespace corona
 		using control_base::id;
 
 		std::shared_ptr<call_status>	status;
-		std::shared_ptr<corona_bus_command> command;
 
 		using windows_control::enable;
 		using windows_control::disable;
@@ -52,7 +51,6 @@ namespace corona
 		{
 			init();
 			status = _src.status;
-			command = _src.command;
 		}
 
 		virtual ~corona_button_control() { ; }
@@ -60,30 +58,13 @@ namespace corona
 		void init();
 		virtual double get_font_size() { return text_style.fontSize; }
 
-		virtual void on_subscribe(presentation_base* _presentation, page_base* _page);
-
 		virtual void get_json(json& _dest)
 		{
 			pushbutton_control::get_json(_dest);
-			json_parser jp;
-			json joptions = jp.create_object();
-			corona::get_json(joptions, command);
-			_dest.put_member("command", joptions);
 		}
 		virtual void put_json(json& _src)
 		{
 			pushbutton_control::put_json(_src);
-			json joptions = _src["command"];
-			if (joptions.object()) {
-				corona::put_json(command, joptions);
-				if (command) {
-					command->bus = bus;
-				}
-			}
-			else if (bus) {
-				std::string msg = "Corona button '" + this->name + "' does not have a command.";
-				bus->log_warning("button does not have a command");
-			}
 		}
 	};
 
@@ -3238,19 +3219,6 @@ namespace corona
 
 	}
 
-	void corona_button_control::on_subscribe(presentation_base* _presentation, page_base* _page)
-	{
-		control_base* cb = this;
-		_page->on_command(this->id, [this, cb, _presentation, _page](command_event evt)
-			{
-				if (command) {
-					if (!command->bus) {
-						command->bus = evt.bus;
-					}
-					bus->run_command(command);
-				}
-			});
-	}
 
 	void corona_button_control::init()
 	{

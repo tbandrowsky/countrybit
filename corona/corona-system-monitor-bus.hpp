@@ -125,7 +125,7 @@ namespace corona
 			std::cout << Normal;
 		}
 
-		template <typename json_type> void log_json(json_type& _src, int _indent = 2)
+		template <typename json_type> void log_json(json_type _src, int _indent = 2)
 		{
 			std::string sindent(_indent, ' ');
 			if (_src.object())
