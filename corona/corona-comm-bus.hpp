@@ -225,6 +225,18 @@ namespace corona
 						combined.put_member_array("pages", jsrcpages);
 					}
 
+					json jsrcstartup = pages_json["startup"].clone();
+					json jdststartup = combined["startup"];
+
+					if (jsrcstartup.array() && jdststartup.array())
+					{
+						jdststartup.append_array(jsrcstartup);
+					}
+					else if (jsrcstartup.array())
+					{
+						combined.put_member_array("startup", jsrcstartup);
+					}
+
 					load_pages(combined, _select_default_page);
 				}
 				log_bus("poll_pages", "pages updated", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -473,7 +485,7 @@ namespace corona
 
 				json jcommands = _pages.get_member("startup");
 				log_bus("load_pages", page_message.str(), tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				log_bus("run_commands", "", dt);
+				log_bus("start up commands", "", dt);
 
 				if (jcommands.array())
 				{

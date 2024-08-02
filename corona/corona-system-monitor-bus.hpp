@@ -20,6 +20,8 @@ namespace corona
 
 		static system_monitoring_interface* global_mon;
 
+		bool enable_options_display = false;
+
 		system_monitoring_interface()
 		{
 			

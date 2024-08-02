@@ -380,7 +380,7 @@ namespace corona
 		{
 			std::vector<std::string> missing;
 
-			if (!_src.has_members(missing, { "page_name", "form_name", "source_name" })) {
+			if (!_src.has_members(missing, { "page_name" })) {
 				system_monitoring_interface::global_mon->log_warning("select_page_command missing:");
 
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
@@ -391,6 +391,17 @@ namespace corona
 				return;
 			}
 
+			if (system_monitoring_interface::global_mon->enable_options_display) {
+				missing.clear();
+				if (!_src.has_members(missing, { "form_name", "source_name" })) {
+					system_monitoring_interface::global_mon->log_warning("select_object_command has options:");
+					std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
+						system_monitoring_interface::global_mon->log_bus(s);
+						});
+					system_monitoring_interface::global_mon->log_bus("the source json is:");
+					system_monitoring_interface::global_mon->log_json(_src, 2);
+				}
+			}
 			page_name = _src["page_name"];
 			form_name = _src["form_name"];
 			source_name = _src["source_name"];
@@ -400,38 +411,38 @@ namespace corona
 	class corona_select_frame_command : public corona_bus_command
 	{
 	public:
-		std::string		source_form_name;
-		std::string		dest_page_name;
-		std::string		dest_frame_name;
-		std::string		dest_frame_page;
+		std::string		form_to_read;
+		std::string		page_to_select;
+		std::string		frame_to_load;
+		std::string		frame_contents_page;
 
 		virtual comm_bus_transaction<json> execute()
 		{
 			json obj;
 			control_base* cb = {};
-			if (!source_form_name.empty())
-				cb = bus->find_control(source_form_name);
+			if (!form_to_read.empty())
+				cb = bus->find_control(form_to_read);
 			json data;
 			if (cb) {
 				data = cb->get_data();
 			}
-			bus->select_page(dest_page_name, dest_frame_name, dest_frame_page, data);
+			bus->select_page(page_to_select, frame_to_load, frame_contents_page, data);
 			co_return obj;
 		}
 
 		virtual void get_json(json& _dest)
 		{
 			_dest.put_member("class_name", "select_frame_command");
-			_dest.put_member("source_form_name", source_form_name);
-			_dest.put_member("dest_page_name", dest_page_name);
-			_dest.put_member("dest_frame_name", dest_frame_name);
-			_dest.put_member("dest_frame_page", dest_frame_page);
+			_dest.put_member("form_to_read", form_to_read);
+			_dest.put_member("page_to_select", page_to_select);
+			_dest.put_member("frame_to_load", frame_to_load);
+			_dest.put_member("frame_contents_page", frame_contents_page);
 		}
 
 		virtual void put_json(json& _src)
 		{
 			std::vector<std::string> missing;
-			if (!_src.has_members(missing, { "source_form_name", "select_page_name", "select_frame_name", "frame_contents_page" })) {
+			if (!_src.has_members(missing, { "form_to_read", "page_to_select", "frame_to_load", "frame_contents_page" })) {
 				system_monitoring_interface::global_mon->log_warning("select_frame_command missing:");
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 					system_monitoring_interface::global_mon->log_bus(s);
@@ -441,10 +452,10 @@ namespace corona
 				return;
 			}
 
-			source_form_name = _src["source_form_name"];
-			dest_page_name = _src["select_page_name"];
-			dest_frame_name = _src["select_frame_name"];
-			dest_frame_page = _src["frame_contents_page"];
+			form_to_read = _src["form_to_read"];
+			page_to_select = _src["page_to_select"];
+			frame_to_load = _src["frame_to_load"];
+			frame_contents_page = _src["frame_contents_page"];
 		}
 	};
 
@@ -459,13 +470,15 @@ namespace corona
 	{
 		std::vector<std::string> missing;
 
+		if (_src.empty())
+			return;
+
 		if (!_src.has_members(missing, { "class_name" })) {
-			system_monitoring_interface::global_mon->log_warning("command object missing:");
-			std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
-				system_monitoring_interface::global_mon->log_bus(s);
-				});
-			system_monitoring_interface::global_mon->log_bus("the source json is:");
-			system_monitoring_interface::global_mon->log_json(_src, 2);
+			system_monitoring_interface::global_mon->log_warning("command object missing class_name.");
+			if (_src.size()) {
+				system_monitoring_interface::global_mon->log_bus("the source json is:");
+				system_monitoring_interface::global_mon->log_json(_src, 2);
+			}
 			return;
 		}
 
