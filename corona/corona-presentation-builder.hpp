@@ -2536,6 +2536,7 @@ namespace corona
 		json_parser jp;
 
 		json control_properties = _control_properties;
+
 		std::string class_name = control_properties["class_name"];
 		std::string field_name = control_properties["name"];
 		json control_data = control_properties["data"];
@@ -3219,11 +3220,30 @@ namespace corona
 
 	}
 
-
 	void corona_button_control::init()
 	{
 		set_origin(0.0_px, 0.0_px);
 		set_size(100.0_px, 30.0_px);
+	}
+
+	void frame_layout::set_contents(page_base* _contents)
+	{
+		control_builder cb;
+		children.clear();
+
+		cb.column_begin(id_counter::next(), [_contents](column_layout& _settings) {
+			_settings.set_size(1.0_container, 1.0_container);
+			for (auto srcchild : _contents->root->children)
+			{
+				auto new_child = srcchild->clone();
+				_settings.children.push_back(new_child);
+			}
+		});
+
+		cb.apply_controls(this);
+
+		arrange(bounds);
+		create(host);
 	}
 
 }

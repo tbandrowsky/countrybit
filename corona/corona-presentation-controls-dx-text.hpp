@@ -389,7 +389,7 @@ namespace corona
 		set_origin(0.0_px, 0.0_px);
 		set_size(1.0_container, 1.2_fontgr);
 
-		on_create = [this](draw_control* _src)
+		on_create = [](draw_control* _src)
 			{
 				text_display_control *t = dynamic_cast<text_display_control*>(_src);
 				if (t) {
@@ -397,24 +397,25 @@ namespace corona
 				}
 			};
 
-		on_draw = [this](draw_control* _src) {
-			if (auto pwindow = this->window.lock())
+		on_draw = [](draw_control* _src) {
+			if (auto pwindow = _src->window.lock())
 			{
-				if (auto phost = host.lock()) {
-					auto draw_bounds = inner_bounds;
+				if (auto phost = _src->host.lock()) {
 
 					text_display_control* t = dynamic_cast<text_display_control*>(_src);
 
-					if (!text.size()) text = "";
+					auto draw_bounds = t->inner_bounds;
 
-					std::string test_text = std::format("{0}, {1}, {2}", text, draw_bounds.x, draw_bounds.y, (long)this);
+					if (!t->text.size()) t->text = "";
+
+					std::string test_text = std::format("{0}, {1}, {2}", t->text, draw_bounds.x, draw_bounds.y, (long)t);
 					//std::cout << test_text << std::endl;
 
-					draw_bounds.x -= bounds.x;
-					draw_bounds.y -= bounds.y;
+					draw_bounds.x -= t->bounds.x;
+					draw_bounds.y -= t->bounds.y;
 
-					if (view_style) {
-						pwindow->getContext().drawText(text.c_str(), &draw_bounds, view_style->text_style.name, view_style->shape_fill_brush.get_name());
+					if (t->view_style) {
+						pwindow->getContext().drawText(t->text.c_str(), &draw_bounds, t->view_style->text_style.name, t->view_style->shape_fill_brush.get_name());
 					}
 				}
 			}

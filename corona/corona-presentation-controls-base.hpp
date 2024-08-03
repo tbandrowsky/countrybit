@@ -393,15 +393,29 @@ namespace corona
 		{
 			json_parser jp;
 
-			json jbox, jmargin, jpadding;
+			json jbox, jmargin, jpadding, jbounds, jinner_bounds, jcomputed, jissues;
 
 			jbox = jp.create_object();
 			jmargin = jp.create_object();
 			jpadding = jp.create_object();
 
+			jbounds = jp.create_object();
+			jinner_bounds = jp.create_object();
+			jcomputed = jp.create_object();
+			jissues = jp.create_array();
+
 			corona::get_json(jbox, box);
-			corona::get_json(jbox, padding);
-			corona::get_json(jbox, margin);
+			corona::get_json(jpadding, padding);
+			corona::get_json(jmargin, margin);
+
+			corona::get_json(jinner_bounds, inner_bounds);
+			corona::get_json(jbounds, bounds);
+			jcomputed.put_member("inner_bounds", jinner_bounds);
+			jcomputed.put_member("bounds", jbounds);
+
+			if (bounds.w == 0 || bounds.h == 0) {
+				jissues.push_back("item sized empty");
+			}
 
 			_dest.put_member("name", name);
 			_dest.put_member("id", id );
@@ -410,6 +424,9 @@ namespace corona
 			_dest.put_member("margin", jmargin);
 			_dest.put_member("tooltip_text", tooltip_text);
 			_dest.put_member("json_field_name", json_field_name);
+			_dest.put_member("computed", jcomputed);
+			_dest.put_member("issues", jissues);
+
 		}
 
 		virtual void put_json(json& _src)

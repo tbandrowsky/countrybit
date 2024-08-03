@@ -64,17 +64,20 @@ namespace corona
 			if (auto phost = _host.lock()) {
 				if (bounds.x < 0 || bounds.y < 0 || bounds.w < 0 || bounds.h < 0) {
 					std::stringstream ss;
-					ss << typeid(*this).name() << " bounds is jacked on create" << std::endl;
+					ss << typeid(*this).name() << " bounds is jacked on create";
 					std::string mm = ss.str();
-					throw std::logic_error(mm);
+					system_monitoring_interface::global_mon->log_warning(mm);
 				}
 				window = phost->createDirect2Window(id, bounds);
 //				std::cout << this << ":" << typeid(*this).name() << " created." << std::endl;
 			}
-			else 
+			else
 			{
-	//			std::cout << this << ":" << typeid(*this).name() << " NOT created because the host could not be locked" << std::endl;
+				std::stringstream ss;
+				ss << typeid(*this).name() << " not created because the host is not available";
+				system_monitoring_interface::global_mon->log_warning(ss.str());
 			}
+
 			if (on_create) {
 				on_create(this);
 			}
@@ -247,12 +250,19 @@ namespace corona
 
 		virtual void get_json(json& _dest)
 		{
+			json_parser jp;
 			control_base::get_json(_dest);
 
 			if (view_style) {
-				json_parser jp;
 				json jview_style = jp.create_object();
 				corona::get_json(jview_style, *view_style);
+			}
+
+			json issues = _dest["issues"];
+			if (issues.array()) {
+				if (window.expired()) {
+					issues.push_back("d2d window is not created");
+				}
 			}
 		}
 

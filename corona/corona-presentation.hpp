@@ -281,6 +281,10 @@ namespace corona {
 			}
 		}
 
+		virtual int onResize()
+		{
+			return onResize(current_size, 1.0);
+		}
 	};
 
 	int id_counter::status_text_title_id = 20000;

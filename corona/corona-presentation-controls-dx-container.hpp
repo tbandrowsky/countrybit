@@ -353,6 +353,12 @@ namespace corona
 		virtual void arrange(rectangle _ctx);
 		virtual point get_remaining(point _ctx);
 
+		virtual void set_contents(page_base* _contents);
+		virtual void set_contents(std::function<void(control_base* _page)> _contents)
+		{
+			container_control::set_contents(_contents);
+		}
+
 	};
 
 	class grid_view_row
@@ -1088,30 +1094,9 @@ namespace corona
 	{
 		set_bounds(_bounds);
 
-		point origin = { 0, 0, 0 };
-		point remaining = { _bounds.w, _bounds.h, 0.0 };
-
-		arrange_children(inner_bounds,
-			[this](point _remaining, const rectangle* _bounds, control_base* _item) {
-				point temp = { 0, 0, 0 };
-				temp.x = _bounds->x;
-				temp.y = _bounds->y;
-				return temp;
-			},
-			[this](point _remaining, point* _origin, const rectangle* _bounds, control_base* _item) {
-				point temp = *_origin;
-				auto sz = _item->get_size(bounds, { _bounds->w, _bounds->h });
-				temp.x = _bounds->x;
-				return temp;
-			},
-			[this](point _remaining, point* _origin, const rectangle* _bounds, control_base* _item) {
-				point temp = *_origin;
-				auto sz = _item->get_size(bounds, { _bounds->w, _bounds->h });
-				temp.y += sz.y;
-				temp.x = _bounds->x;
-				return temp;
-			}
-		);
+		for (auto child : children) {
+			child->arrange(inner_bounds);
+		}
 	}
 
 	point frame_layout::get_remaining(point _ctx)

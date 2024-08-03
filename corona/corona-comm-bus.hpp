@@ -545,6 +545,7 @@ namespace corona
 						if (!cb->set_items(_obj)) {
 							cb->set_data(_obj);
 						}
+						presentation_layer->onResize();
 					}
 				}
 				log_bus("select_page", _page, tx.get_elapsed_seconds());
