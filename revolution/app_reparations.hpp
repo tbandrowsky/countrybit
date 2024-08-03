@@ -52,6 +52,8 @@ namespace corona
 		comm_bus bus("Reparations", "Reparations");
 
 		bus.run_app_ui(hInstance, lpszCmdParam, false);
+
+		DisableGuiStdOuts();
 	}
 
 }

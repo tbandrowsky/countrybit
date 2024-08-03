@@ -256,6 +256,7 @@ namespace corona {
 		virtual void on_select(std::function< void(page_select_event) >) = 0;
 		virtual void on_load(std::function< void(page_load_event) >) = 0;
 		virtual void on_unload(std::function< void(page_unload_event) >) = 0;
+		virtual void clear_events(int _item_id) = 0;
 
 	};
 }

@@ -258,6 +258,7 @@ namespace corona
 		text_control_base(const text_control_base& _src) : windows_control(_src)
 		{
 			text = _src.text;
+			change_command = _src.change_command;
 		}
 
 		virtual std::shared_ptr<control_base> clone()
@@ -439,6 +440,7 @@ namespace corona
 		table_control_base(const table_control_base& _src) : windows_control(_src)
 		{
 			choices = _src.choices;
+			select_command = _src.select_command;
 		}
 
 		table_control_base(container_control_base* _parent, int _id) : windows_control(_parent, _id)
@@ -543,6 +545,7 @@ namespace corona
 		list_control_base(const list_control_base& _src) : windows_control(_src)
 		{
 			choices = _src.choices;
+			select_command = _src.select_command;
 		}
 
 		list_control_base(container_control_base* _parent, int _id) : windows_control(_parent, _id)
@@ -706,6 +709,7 @@ namespace corona
 		dropdown_control_base(const dropdown_control_base& _src) : windows_control(_src)
 		{
 			choices = _src.choices;
+			select_command = _src.select_command;
 		}
 
 		dropdown_control_base(container_control_base* _parent, int _id) : windows_control(_parent, _id)
@@ -910,7 +914,7 @@ namespace corona
 		button_control(container_control_base* _parent, int _id) : text_control_base(_parent, _id) { ; }
 		button_control(const button_control& _src) : text_control_base(_src)
 		{
-
+			click_command = _src.click_command;
 		}
 		virtual std::shared_ptr<control_base> clone()
 		{
@@ -953,7 +957,7 @@ namespace corona
 
 		virtual void on_subscribe(presentation_base* _presentation, page_base* _page)
 		{
-			windows_control::on_subscribe(_presentation, _page);
+			text_control_base::on_subscribe(_presentation, _page);
 
 			if (click_command) {
 				_page->on_command(id, [this](command_event lce) {

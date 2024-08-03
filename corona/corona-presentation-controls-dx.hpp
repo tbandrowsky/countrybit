@@ -71,13 +71,13 @@ namespace corona
 				window = phost->createDirect2Window(id, bounds);
 //				std::cout << this << ":" << typeid(*this).name() << " created." << std::endl;
 			}
-			else
+/*			else
 			{
 				std::stringstream ss;
 				ss << typeid(*this).name() << " not created because the host is not available";
 				system_monitoring_interface::global_mon->log_warning(ss.str());
 			}
-
+			*/
 			if (on_create) {
 				on_create(this);
 			}

@@ -94,7 +94,7 @@ namespace corona
 			root = std::make_shared<column_layout>();
 		}
 
-		void clear_events(int _control_id)
+		virtual void clear_events(int _control_id)
 		{
 			scope_lock locker(binding_lock);
 			key_press_bindings.erase(_control_id);

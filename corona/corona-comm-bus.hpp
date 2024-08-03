@@ -529,17 +529,18 @@ namespace corona
 
 			run_ui([this, _page, _target_frame, _frame_contents_page, _obj]() ->void {
 				timer tx;
-				presentation_layer->select_page(_page);
+				if (!presentation_layer->is_current_page(_page)) {
+					presentation_layer->select_page(_page);
+				}
 				if (!_target_frame.empty()) {
 					control_base* cb = find_control(_target_frame);
 					if (cb) {
 						frame_layout* fl = dynamic_cast<frame_layout*>(cb);
 						if (fl) {
-							for (auto pg = presentation_layer->pages.find(_frame_contents_page);
-								pg != std::end(presentation_layer->pages);
-							pg++)
-							{
-								fl->set_contents(pg->second.get());
+							if (presentation_layer->pages.contains(_frame_contents_page)) {
+								auto pg_src = presentation_layer->pages[_frame_contents_page];
+								auto pg_master = presentation_layer->get_current_page();
+								fl->set_contents(presentation_layer.get(), pg_master, pg_src.get());
 							}
 						}
 						if (!cb->set_items(_obj)) {
@@ -549,7 +550,7 @@ namespace corona
 					}
 				}
 				log_bus("select_page", _page, tx.get_elapsed_seconds());
-				});
+			});
 		}
 
 		void when(UINT topic, std::function<void()> _runnable)
@@ -578,11 +579,6 @@ namespace corona
 
 		virtual void run_app_ui(HINSTANCE hInstance, LPSTR command_line, bool fullScreen)
 		{
-			if (strstr(command_line, "-console")) {
-				EnableGuiStdOuts();
-				std::cout << std::endl << "Revolution Started" << std::endl;
-			}
-
 			app_ui->runDialog(hInstance, app->application_name.c_str(), application_icon_id, fullScreen, presentation_layer);
 		}
 

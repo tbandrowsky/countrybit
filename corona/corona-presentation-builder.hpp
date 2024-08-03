@@ -919,6 +919,16 @@ namespace corona
 			return *this;
 		}
 
+		control_builder& push_button(int _id, std::function<void(pushbutton_control&)> _settings = nullptr)
+		{
+			auto tc = create<pushbutton_control>(_id);
+			apply_item_sizes(tc);
+			if (_settings) {
+				_settings(*tc);
+			}
+			return *this;
+		}
+
 		control_builder& push_button(int _id, std::string text, std::function<void(pushbutton_control&)> _settings = nullptr)
 		{
 			auto tc = create<pushbutton_control>(_id);
@@ -957,6 +967,26 @@ namespace corona
 			auto tc = create<checkbox_control>(_id);
 			apply_item_sizes(tc);
 			tc->set_text(text);
+			if (_settings) {
+				_settings(*tc);
+			}
+			return *this;
+		}
+
+		control_builder& radio_button(int _id, std::function<void(radiobutton_control&)> _settings = nullptr)
+		{
+			auto tc = create<radiobutton_control>(_id);
+			apply_item_sizes(tc);
+			if (_settings) {
+				_settings(*tc);
+			}
+			return *this;
+		}
+
+		control_builder& checkbox(int _id, std::function<void(checkbox_control&)> _settings = nullptr)
+		{
+			auto tc = create<checkbox_control>(_id);
+			apply_item_sizes(tc);
 			if (_settings) {
 				_settings(*tc);
 			}
@@ -1990,6 +2020,8 @@ namespace corona
 			}
 		}
 
+
+
 		virtual void create(std::weak_ptr<applicationBase> _host)
 		{
 			host = _host;
@@ -2853,6 +2885,27 @@ namespace corona
 				_ctrl.set_data(control_data);
 				});
 		}
+		else if (class_name == "push_button")
+		{
+			push_button(field_id, [this, &control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.put_json(control_properties);
+				_ctrl.set_data(control_data);
+				});
+		}
+		else if (class_name == "radio_button")
+		{
+			radio_button(field_id, [this, &control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.put_json(control_properties);
+				_ctrl.set_data(control_data);
+				});
+		}
+		else if (class_name == "checkbox")
+		{
+			checkbox(field_id, [this, &control_properties, control_data](auto& _ctrl)->void {
+				_ctrl.put_json(control_properties);
+				_ctrl.set_data(control_data);
+				});
+		}
 		else if (class_name == "camera")
 		{
 			camera(field_id, [this, &control_properties, control_data](auto& _ctrl)->void {
@@ -3226,9 +3279,13 @@ namespace corona
 		set_size(100.0_px, 30.0_px);
 	}
 
-	void frame_layout::set_contents(page_base* _contents)
+	void frame_layout::set_contents(presentation_base* _presentation, page_base* _parent_page, page_base* _contents)
 	{
 		control_builder cb;
+
+		for (auto child : children) {
+			child->on_unsubscribe(_presentation, _parent_page);
+		}
 		children.clear();
 
 		cb.column_begin(id_counter::next(), [_contents](column_layout& _settings) {
@@ -3241,6 +3298,10 @@ namespace corona
 		});
 
 		cb.apply_controls(this);
+
+		for (auto child : children) {
+			child->on_subscribe(_presentation, _parent_page);
+		}
 
 		arrange(bounds);
 		create(host);

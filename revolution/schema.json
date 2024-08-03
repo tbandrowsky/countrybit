@@ -60,7 +60,7 @@
     {
       "ClassName" : "Institutions",
       "ClassDescription": "An organization whose lifetime exceeds that of its human members.",
-      "BaseClassName" : "Fact",
+      "BaseClassName" : "Facts",
       "Fields": {
         "FoundingYear" : "number",
         "EndingYear" : "number",
@@ -135,7 +135,7 @@
       "ClassDescription": "A moment in history.",
       "BaseClassName": "Facts",
       "Fields": {
-        "EventYear" : "number",
+        "EventYear" : "datetime",
         "Actors" : "array"
       }
     },

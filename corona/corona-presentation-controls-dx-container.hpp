@@ -353,7 +353,7 @@ namespace corona
 		virtual void arrange(rectangle _ctx);
 		virtual point get_remaining(point _ctx);
 
-		virtual void set_contents(page_base* _contents);
+		virtual void set_contents(presentation_base *_presentation, page_base *_parent_page, page_base* _contents);
 		virtual void set_contents(std::function<void(control_base* _page)> _contents)
 		{
 			container_control::set_contents(_contents);

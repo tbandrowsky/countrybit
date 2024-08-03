@@ -506,6 +506,8 @@ namespace corona
 		fullScreen = false;
 #endif
 		app.run(hInstance, fullScreen);
+
+		DisableGuiStdOuts();
 	}
 
 }

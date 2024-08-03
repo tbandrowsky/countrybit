@@ -64,6 +64,15 @@ namespace corona {
 			last_mouse_click = {};
 		}
 
+		page_base* get_current_page()
+		{
+			page_base* gcp = nullptr;
+			if (auto cpg = current_page.lock()) {
+				gcp = cpg.get();
+			}
+			return gcp;
+		}
+
 		int get_control_id(std::string _name, std::function<int()> _id)
 		{
 			int temp = 0;
@@ -86,6 +95,7 @@ namespace corona {
 		}
 
 		virtual page& create_page(std::string _name, std::function<void(page& pg)> _settings = nullptr);
+		virtual bool is_current_page(const std::string& _page_name);
 		virtual void select_page(const std::string& _page_name);
 		virtual void select_page(const std::string& _page_name, std::function<void(page& pg)> _settings);
 		virtual void set_home_page(const std::string& _page_name) 
@@ -368,6 +378,15 @@ namespace corona {
 
 			ppage->handle_onload(ppage);
 		}
+	}
+
+	bool presentation::is_current_page(const std::string& _page_name)
+	{
+		bool success = false;
+		if (pages.contains(_page_name)) {		
+			success = current_page.lock() == pages[_page_name];
+		}
+		return success;
 	}
 
 	void presentation::select_page(const std::string& _page_name)

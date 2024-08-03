@@ -617,6 +617,14 @@ namespace corona
 			std::function<void(control_base* _item)> _right_click
 		);
 
+		virtual void on_unsubscribe(presentation_base* _presentation, page_base* _page)
+		{
+			_page->clear_events(id);
+			for (auto child : children) {
+				child->on_unsubscribe(_presentation, _page);
+			}
+		}
+
 		virtual void on_subscribe(presentation_base* _presentation, page_base* _page)
 		{
 			for (auto child : children) {

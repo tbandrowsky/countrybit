@@ -442,7 +442,7 @@ namespace corona
 		virtual void put_json(json& _src)
 		{
 			std::vector<std::string> missing;
-			if (!_src.has_members(missing, { "form_to_read", "page_to_select", "frame_to_load", "frame_contents_page" })) {
+			if (!_src.has_members(missing, { "page_to_select", "frame_to_load", "frame_contents_page" })) {
 				system_monitoring_interface::global_mon->log_warning("select_frame_command missing:");
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 					system_monitoring_interface::global_mon->log_bus(s);
@@ -451,7 +451,7 @@ namespace corona
 				system_monitoring_interface::global_mon->log_json(_src, 2);
 				return;
 			}
-
+	
 			form_to_read = _src["form_to_read"];
 			page_to_select = _src["page_to_select"];
 			frame_to_load = _src["frame_to_load"];
