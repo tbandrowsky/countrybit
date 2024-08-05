@@ -469,7 +469,6 @@ namespace corona {
 
 			auto root = ppage->get_root();
 			root->foreach([this](control_base* _item) {
-				_item->bus = bus;
 				pushbutton_control* pct = dynamic_cast<pushbutton_control*>(_item);
 				if (pct && pct->is_default_button) {
 					this->default_push_button_id = pct->get_id();

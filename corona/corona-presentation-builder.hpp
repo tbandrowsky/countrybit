@@ -82,7 +82,7 @@ namespace corona
 		bool		  read_only;
 		bool		  is_default_focus;
 		json		  control_settings;
-		layout_rect	  container_box;
+		layout_rect	  box;
 		layout_rect	  label_box;
 		layout_rect	  visualization_box;
 		layout_rect	  prefix_box;
@@ -110,7 +110,7 @@ namespace corona
 			read_only = _src.read_only;
 			is_default_focus = _src.is_default_focus;
 			control_settings = _src.control_settings;
-			container_box = _src.container_box;
+			box = _src.box;
 			label_box = _src.label_box;
 			visualization_box = _src.visualization_box;
 			prefix_box = _src.prefix_box;
@@ -132,7 +132,7 @@ namespace corona
 			read_only = _src.read_only;
 			is_default_focus = _src.is_default_focus;
 			control_settings = _src.control_settings;
-			container_box = _src.container_box;
+			box = _src.box;
 			label_box = _src.label_box;
 			visualization_box = _src.visualization_box;
 			prefix_box = _src.prefix_box;
@@ -155,7 +155,7 @@ namespace corona
 			is_default_focus = _src.is_default_focus;
 			control_settings = _src.control_settings;
 			visualization_box = _src.visualization_box;
-			container_box = _src.container_box;
+			box = _src.box;
 			label_box = _src.label_box;
 			prefix_box = _src.prefix_box;
 			field_box = _src.field_box;
@@ -177,11 +177,11 @@ namespace corona
 			read_only = _src.read_only;
 			is_default_focus = _src.is_default_focus;
 			control_settings = _src.control_settings;
-			container_box = container_box;
-			label_box = label_box;
+			box = _src.box;
+			label_box = _src.label_box;
 			visualization_box = _src.visualization_box;
 			prefix_box = _src.prefix_box;
-			field_box = field_box;
+			field_box = _src.field_box;
 			suffix_box = _src.suffix_box;
 			draw_visualization = std::move(_src.draw_visualization);
 			return *this;
@@ -207,8 +207,8 @@ namespace corona
 			json jvisualization_height = jp.create_object();
 
 			json jcontainer_box = jp.create_object();
-			corona::get_json(jcontainer_box, container_box);
-			_dest.put_member("container_box", jcontainer_box);
+			corona::get_json(jcontainer_box, box);
+			_dest.put_member("box", jcontainer_box);
 
 			json jlabel_box = jp.create_object();
 			corona::get_json(jlabel_box, label_box);
@@ -246,8 +246,8 @@ namespace corona
 			is_default_focus = (bool)_src.get_member("is_default_focus");
 			control_settings = _src.get_member("control_settings");
 
-			json jcontainer_box = _src["container_box"];
-			corona::put_json(container_box, jcontainer_box);
+			json jcontainer_box = _src["box"];
+			corona::put_json(box, jcontainer_box);
 
 			json jlabel_box = _src["label_box"];
 			corona::put_json(label_box, jlabel_box);
@@ -311,7 +311,6 @@ namespace corona
 				if (temp == nullptr) {
 					temp = std::make_shared<control_type>(cp, _id);
 					if (temp) {
-						temp->bus = bus;
 						// here's our new temp, and we copy the children
 						// this may not be the best plan but it allows us
 						// to easily switch container types.
@@ -319,9 +318,6 @@ namespace corona
 						int found_index = std::distance(found, root->children.begin());
 						root->children[found_index] = temp;
 					}
-				}
-				else {
-					temp->bus = bus;
 				}
 
 				// otherwise, we found an existing control of the same type and we use that.
@@ -331,7 +327,6 @@ namespace corona
 				// and, since we found nothing, we go ahead and just shove our new element at the back
 				temp = std::make_shared<control_type>(cp, _id);
 				if (temp) {
-					temp->bus = bus;
 					root->children.push_back(temp);
 				}
 			}
@@ -358,28 +353,6 @@ namespace corona
 			{
 				_ref->margin = root->item_margin;
 			}
-		}
-
-		template <typename field_control> control_builder& create_field(
-			int _id,
-			std::string _field_label,
-			std::string _tooltip_string,
-			std::function<void(field_control&)> _settings = nullptr, 
-			measure _height = 50.0_px)
-		{
-			auto cl = column_begin(id_counter::next(), [_height](column_layout& _src) {
-				_src.set_size(1.0_container, _height);
-			});
-			auto& lb = cl.label(_field_label);
-			auto tc = cl.create<field_control>(_id);
-			tc->set_size(1.0_container, 1.0_remaining);
-			tc->tooltip_text = _tooltip_string;
-			cl.apply_item_sizes(tc);
-			if (_settings) {
-				_settings(*tc);
-			}
-			cl.end();
-			return *this;
 		}
 
 		control_builder() 
@@ -1264,10 +1237,10 @@ namespace corona
 		int								visualization_id;
 		int								edit_block_id;
 
-		std::shared_ptr<label_control>  label;
-		std::shared_ptr<label_control>  prefix;
-		std::shared_ptr<label_control>  suffix;
-		std::shared_ptr<draw_control>	visualization;
+		std::shared_ptr<control_base>  label;
+		std::shared_ptr<control_base>  prefix;
+		std::shared_ptr<control_base>  suffix;
+		std::shared_ptr<control_base>	visualization;
 		std::shared_ptr<control_base>	field;
 
 		form_field						field_def;
@@ -1280,6 +1253,7 @@ namespace corona
 
 		form_field_control() : form(nullptr)
 		{
+			field_id = id_counter::next();
 			label_id = id_counter::next();
 			prefix_id = id_counter::next();
 			suffix_id = id_counter::next();
@@ -1289,16 +1263,32 @@ namespace corona
 
 		form_field_control(const form_field_control& _src) : column_layout(_src)
 		{
-			field_def = _src.field_def;
 			field_id = _src.field_id;
-			label = _src.label;
-			prefix = _src.prefix;
-			suffix = _src.suffix;
-			visualization = _src.visualization;
-			field = _src.field;
-			form = _src.form;
+			label_id = _src.label_id;
+			prefix_id = _src.prefix_id;
+			suffix_id = _src.suffix_id;
+			visualization_id = _src.visualization_id;
 			edit_block_id = _src.edit_block_id;
+
+			if (_src.label) {
+				label = _src.label->clone();
+			}
+			if (_src.prefix) {
+				prefix = _src.prefix->clone();
+			}
+			if (_src.suffix) {
+				suffix = _src.suffix->clone();
+			}
+			if (_src.visualization) {
+				visualization = _src.visualization->clone();
+			}
+			if (_src.field) {
+				field = _src.field->clone();
+			}
+
+			field_def = _src.field_def;
 			draw_visualization = _src.draw_visualization;
+			form = _src.form;
 			error_text = _src.error_text;
 		}
 
@@ -1311,48 +1301,15 @@ namespace corona
 			edit_block_id = id_counter::next();
 		}
 
+		virtual std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<form_field_control>(*this);
+			return tv;
+		}
+
 		void set_form(form_control* _form)
 		{
 			form = _form;
-		}
-
-		std::string get_suffix()
-		{
-			return field_def.suffix;
-		}
-
-		void set_suffix(std::string _text)
-		{
-			field_def.suffix = _text;
-			if (suffix) {
-				suffix->set_text(_text);
-			}
-		}
-
-		std::string get_prefix()
-		{
-			return field_def.prefix;
-		}
-
-		void set_prefix(std::string _text)
-		{
-			field_def.prefix = _text;
-			if (prefix) {
-				prefix->set_text(_text);
-			}
-		}
-
-		std::string get_label()
-		{
-			return field_def.label_text;
-		}
-
-		void set_label(std::string _text)
-		{
-			field_def.label_text = _text;
-			if (label) {
-				label->set_text(_text);
-			}
 		}
 
 		void set_error(std::string _text)
@@ -1410,25 +1367,7 @@ namespace corona
 
 			field_id = _field.field_id;
 			field_def = _field;
-			box = _field.container_box;
-
-			if (field_def.field_box.width.empty())
-			{
-				field_def.field_box.width = 1.0_remaining;
-			}
-			if (field_def.field_box.height.empty())
-			{
-				field_def.field_box.height = 1.0_container;
-			}
-
-			if (field_def.label_box.width.empty())
-			{
-				field_def.label_box.width = 1.0_container;
-			}
-			if (field_def.label_box.height.empty())
-			{
-				field_def.label_box.height = 25.0_px;
-			}
+			box = _field.box;
 
 			if (_draw_visualization) {
 				draw_visualization = _draw_visualization;
@@ -1436,6 +1375,17 @@ namespace corona
 
 			if (!field_def.label_text.empty())
 			{
+				if (field_def.label_box.width.empty())
+				{
+					std::string msg = std::format("'{0}' {1} missing label_box width", field_def.label_text, field_def.class_name);
+					comm_bus_interface::global_bus->log_warning(msg);
+				}
+				if (field_def.label_box.height.empty())
+				{
+					std::string msg = std::format("'{0}' {1} missing label_box height", field_def.label_text, field_def.class_name);
+					comm_bus_interface::global_bus->log_warning(msg);
+				}
+
 				cb.label(label_id, [this](label_control& _settings) {
 					_settings.text = field_def.label_text;
 					_settings.set_box(field_def.label_box);
@@ -1461,10 +1411,21 @@ namespace corona
 			if (!field_def.prefix.empty())
 			{
 				edit_row.label(prefix_id, [this](label_control& _settings) {
-					_settings.set_box(field_def.field_box);
+					_settings.set_box(field_def.prefix_box);
 					_settings.text = field_def.prefix;
 					});
 				prefix = cb.get<label_control>(label_id);
+			}
+
+			if (field_def.field_box.width.empty())
+			{
+				std::string msg = std::format("'{0}' {1} missing field_box width", field_def.label_text, field_def.class_name);
+				comm_bus_interface::global_bus->log_warning(msg);
+			}
+			if (field_def.field_box.height.empty())
+			{
+				std::string msg = std::format("'{0}' {1} missing field_box height", field_def.label_text, field_def.class_name);
+				comm_bus_interface::global_bus->log_warning(msg);
 			}
 
 			edit_row.from_json(field_def.control_settings);
@@ -1503,15 +1464,17 @@ namespace corona
 	private:
 		void apply_defaults()
 		{
+			json_parser jp;
+
 			int index = 0;
 			for (auto& fld : fields)
 			{
 				if (fld.field_id == 0) {
 					fld.field_id = id_counter::next();
 				}
-				if (fld.container_box.empty())
+				if (fld.box.empty())
 				{
-					fld.container_box = defaults.container_box;
+					fld.box = defaults.box;
 				}
 				if (fld.label_box.empty())
 				{
@@ -1537,7 +1500,6 @@ namespace corona
 				}
 				if (fld.control_settings.empty())
 				{
-					json_parser jp;
 					fld.control_settings = jp.create_object();
 					fld.control_settings.put_member("id", fld.field_id);
 					fld.control_settings.put_member("class_name", fld.class_name);
@@ -1545,6 +1507,14 @@ namespace corona
 					json jbox = jp.create_object();
 					corona::get_json(jbox, fld.field_box);
 					fld.control_settings.put_member("box", jbox);
+				}
+				else if (fld.control_settings.object())
+				{
+					if (!fld.control_settings.has_member("box")) {
+						json fbox = jp.create_object();
+						corona::get_json(fbox, fld.field_box);
+						fld.control_settings.put_member("box", fbox);
+					}
 				}
 				index++;
 			}
@@ -1762,6 +1732,12 @@ namespace corona
 			if (ids.on_mouse_move) {
 				ids.on_mouse_move(lce, _ctrl);
 			}
+		}
+
+		virtual std::shared_ptr<control_base> clone()
+		{
+			auto tv = std::make_shared<form_control>(*this);
+			return tv;
 		}
 
 	};
@@ -2572,24 +2548,6 @@ namespace corona
 		std::string class_name = control_properties["class_name"];
 		std::string field_name = control_properties["name"];
 		json control_data = control_properties["data"];
-		json box_properties = control_properties["box"];
-
-		if (box_properties.empty()) 
-		{
-			box_properties = jp.create_object();
-			layout_rect lay = _default;
-			if (!_control_properties["width"].empty()) 
-			{
-				json jw = _control_properties["width"];
-				corona::put_json(lay.width, jw);
-			}
-			if (!_control_properties["height"].empty()) 
-			{
-				json jh = _control_properties["height"];
-				corona::put_json(lay.height, jh);
-			}
-			corona::get_json(box_properties, lay);
-		}
 
 		int id = (int)_control_properties.get_member("id");
 

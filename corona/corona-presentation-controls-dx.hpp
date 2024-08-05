@@ -43,6 +43,8 @@ namespace corona
 
 		draw_control(const draw_control& _src) : control_base( _src )
 		{
+			window = _src.window;
+			host = _src.host;
 			view_style = _src.view_style;
 			on_draw = _src.on_draw;
 			on_create = _src.on_create;
@@ -513,11 +515,9 @@ namespace corona
 
 			on_create = [this](draw_control* _ctrl) ->void
 				{
-					if (bus) {
-						bus->run_ui([this]() ->void {
-							start();
-							});
-					}
+					comm_bus_interface::global_bus->run_ui([this]() ->void {
+						start();
+						});
 				};
 		}
 
@@ -630,8 +630,6 @@ namespace corona
 
 		std::vector<movement_box> get_movement_boxes()
 		{
-			delta_boi.set_bus(bus);
-
 			return delta_boi.get_movement_boxes();
 		}
 
@@ -796,7 +794,6 @@ namespace corona
 
 		virtual HRESULT start()
 		{
-			delta_boi.set_bus(bus);
 
 			UINT32 count = 0;
 
@@ -964,7 +961,6 @@ namespace corona
 
 		virtual void read_frame()
 		{
-			delta_boi.set_bus(bus);
 			scope_lock lck(camera_access_lock);
 			if (pSourceReader)
 			{
@@ -1099,7 +1095,6 @@ namespace corona
 
 		virtual void stop()
 		{
-			delta_boi.set_bus(bus);
 			scope_lock lck(camera_access_lock);
 
 			auto tempReader = pSourceReader;
@@ -1120,19 +1115,16 @@ namespace corona
 
 		virtual void destroy()
 		{
-			delta_boi.set_bus(bus);
 			stop();
 		}
 
 		virtual ~camera_control()
 		{
-			delta_boi.set_bus(bus);
 			destroy();
 		}
 
 		virtual void on_update(double _time)
 		{
-			delta_boi.set_bus(bus);
 			read_frame();
 			for (auto child : children) {
 				child->on_update(_time);

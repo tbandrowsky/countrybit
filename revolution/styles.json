@@ -260,7 +260,8 @@
         "text_style": {
           "font_name": "Tahoma, Arial",
           "font_size": 14,
-          "underline": true
+          "underline": false,
+          "vertical_alignment": "far"
         },
         "shape_fill_brush": {
           "class_name": "solid_brush",
@@ -310,7 +311,20 @@
           "class_name": "solid_brush",
           "color": "FFFFEE"
         }
+      },
+      "window_style": {
+        "text_style": {
+          "font_name": "Tahoma, Arial",
+          "font_size": 14,
+          "underline": false,
+          "vertical_alignment": "far"
+        },
+        "shape_fill_brush": {
+          "class_name": "solid_brush",
+          "color": "FFFFEE"
+        }
       }
+
     }
   ]
 }

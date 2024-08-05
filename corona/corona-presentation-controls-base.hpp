@@ -216,7 +216,6 @@ namespace corona
 
 		void copy(const control_base& _src)
 		{
-			bus = _src.bus;
 			id = _src.id;
 			bounds = _src.bounds;
 			inner_bounds = _src.inner_bounds;
@@ -265,8 +264,7 @@ namespace corona
 		std::string				json_field_name;
 
 		container_control_base* parent;
-		comm_bus_interface*		bus;
-
+		
 		std::vector<control_push_request> push_requests;
 
 		std::vector<std::shared_ptr<control_base>> children;
@@ -280,8 +278,7 @@ namespace corona
 			id(-1),
 			margin(),
 			parent(nullptr),
-			margin_amount({ 0.0, 0.0 }),
-			bus(nullptr)
+			margin_amount({ 0.0, 0.0 })
 		{
 			id = id_counter::next();
 			is_focused = false;
@@ -454,6 +451,7 @@ namespace corona
 
 			tooltip_text = _src["tooltip_text"];
 			json_field_name = _src["json_field_name"];
+
 		}
 
 		virtual json get_selected_object()
@@ -654,9 +652,9 @@ namespace corona
 			std::string fmt;
 			fmt = std::format("{0} {1} debug clicked", typeid(*this).name(), name);
 			date_time dt = date_time::now();
-			bus->log_bus("",  fmt, dt, __FILE__, __LINE__);
+			system_monitoring_interface::global_mon->log_bus("",  fmt, dt, __FILE__, __LINE__);
 			get_json(control_json);
-			bus->log_json(control_json);
+			system_monitoring_interface::global_mon->log_json(control_json);
 		}
 
 	};
