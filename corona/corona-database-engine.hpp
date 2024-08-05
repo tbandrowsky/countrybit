@@ -1921,6 +1921,7 @@ private:
 			{
 				json_parser jp;
 				json search_key = jp.create_object("ClassName", member.first);
+				search_key.set_compare_order({ "ClassName" });
 				json class_object_ids;
 
 				{
