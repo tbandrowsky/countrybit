@@ -685,6 +685,12 @@ namespace corona
 			{
 				return datetime_impl->value;
 			}
+			else if (string_impl)
+			{
+				date_time temp;
+				temp.parse( string_impl->value );
+				return temp;
+			}
 			else
 			{
 				date_time temp;

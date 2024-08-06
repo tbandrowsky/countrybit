@@ -577,7 +577,7 @@
                             "width": 100
                           },
                           {
-                            "json_field_name": "Description ",
+                            "json_field_name": "Description",
                             "label_text": "Name",
                             "width": 300
                           }

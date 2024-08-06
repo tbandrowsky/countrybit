@@ -438,7 +438,6 @@ namespace corona
 		table_data choices;
 		std::shared_ptr<corona_bus_command> select_command;
 
-
 		table_control_base()
 		{
 		}

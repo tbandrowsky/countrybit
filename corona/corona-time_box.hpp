@@ -184,6 +184,18 @@ namespace corona
 			system_time.wMilliseconds = _milliseconds;
 		}
 
+		date_time(struct std::tm _tm)
+		{
+			system_time = {};
+			system_time.wYear = _tm.tm_year + 1900;
+			system_time.wMonth = _tm.tm_mon;
+			system_time.wDay = _tm.tm_mday;
+			system_time.wHour = _tm.tm_hour;
+			system_time.wMinute = _tm.tm_min;
+			system_time.wSecond = _tm.tm_sec;
+			system_time.wMilliseconds = 0;
+		}
+
 		operator time_span() const
 		{
 			FILETIME ft;
@@ -209,6 +221,33 @@ namespace corona
 
 		date_time& operator =(const date_time& _span) = default;
 		date_time& operator =(date_time&& _span) = default;
+
+		date_time parse(std::string _src)
+		{
+			date_time dt;
+
+			std::string formats[6] = {
+				"%m/%d/%Y",
+				"%Y-%m-%d",
+				"%m/%d/%Y %H:%M:%S",
+				"%Y-%m-%d %H:%M:%S",
+				"%m/%d/%Y %H:%M",
+				"%Y-%m-%d %H:%M"
+			};
+
+			for (auto format : formats) {
+				std::istringstream ss(_src);
+				std::tm tm = {};
+				ss >> std::get_time(&tm, format.c_str());
+				if (!ss.fail())
+				{
+					dt = tm;
+					break;
+				}
+			}
+
+			return dt;
+		}
 
 		operator std::string() const
 		{
