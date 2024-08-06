@@ -572,9 +572,10 @@
                             "width": 100
                           },
                           {
-                            "json_field_name": "EventYear",
+                            "json_field_name": "EventDate",
                             "label_text": "Year",
-                            "width": 100
+                            "width": 100,
+                            "format" :  "%Y"
                           },
                           {
                             "json_field_name": "Description",
@@ -977,7 +978,7 @@
                         "is_default_focus": false
                       },
                       {
-                        "json_field_name": "EventYear",
+                        "json_field_name": "EventDate",
                         "label_text": "Year",
                         "class_name": "edit",
                         "tooltip_text": "The year of the event",

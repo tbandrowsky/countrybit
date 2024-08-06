@@ -27,6 +27,7 @@ namespace corona {
 		}
 	}
 
+	std::string join(std::vector<std::string> items, std::string delim);
 	std::vector<std::string> split(const std::string& s, char delim);
 
 	std::vector<std::string> split(const std::string& s, char delim)
@@ -34,6 +35,18 @@ namespace corona {
 		std::vector<std::string> elems;
 		split(s, delim, std::back_inserter(elems));
 		return elems;
+	}
+
+	std::string join(std::vector<std::string> items, std::string delim)
+	{
+		std::stringstream ss;
+		std::string sep = "";
+		for (auto tv : items) {
+			ss << tv;
+			ss << sep;
+			sep = delim;
+		}
+		return ss.str();
 	}
 
 }

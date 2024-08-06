@@ -254,10 +254,19 @@
       "ClassName": "Events",
       "EventDate": "2/18/1915",
       "Description": "The President endorses Birth of a Nation.",
-      "Actors" :[],
-      "Facts" : [],
-      "Files" : []
+      "Actors": [],
+      "Facts": [],
+      "Files": []
+    },
+    {
+      "ClassName": "Events",
+      "EventDate": "2/18/1915",
+      "Description": "The President endorses Birth of a Nation.",
+      "Actors": [],
+      "Facts": [],
+      "Files": []
     }
+
   ]
 }
   

@@ -303,7 +303,8 @@ namespace corona
 			if (!table_name.empty())
 				cb_table = bus->find_control(table_name);
 
-			if (cb_form && cb_table) {
+			if (cb_form && cb_table) 
+			{
 				json search_class_filters = jp.create_object();
 				search_class_filters.put_member("ClassName", search_class_name);
 				json object_data = cb_form->get_data();
@@ -315,6 +316,7 @@ namespace corona
 					}
 				}
 			}
+
 			co_return obj;
 		}
 

@@ -235,10 +235,9 @@ namespace corona
 				json_parser jp;
 				json payload = jp.parse_object(c);
 				if (payload.is_member("ClassName", "SysParseErrors")) {
-					std::string temp = "Could not parse:";
+					std::string temp = "Could not parse json node on retrieval:";
 					temp += c;
-					std::cout << std::endl << "*******" << std::endl << "Could not parse:" << std::endl <<  temp << std::endl;
-					throw std::logic_error( temp.c_str() );
+					system_monitoring_interface::global_mon->log_warning(temp, __FILE__, __LINE__);
 				}
 				put_json(payload);
 			}

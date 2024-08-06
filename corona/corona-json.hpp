@@ -45,6 +45,10 @@ namespace corona
 		{
 			return "";
 		}
+		virtual std::string format(std::string _format)
+		{
+			return "";
+		}
 		virtual std::string to_string()
 		{
 			return "";
@@ -76,6 +80,64 @@ namespace corona
 		}
 	};
 
+	enum base_scales {
+		plain = 0,
+		us_length = 1,
+		us_mass = 2,
+		metric_length = 3,
+		metric_mass = 4,
+		quantity = 5
+	} base_scale;
+
+	struct base_scale_item 
+	{
+		double threshold;
+		std::string name;
+	};
+
+	std::vector<std::vector<base_scale_item>> scales = {
+		{ { 1, "" } },
+		{ { 1, "16ths" }, { 4, "quarters" }, { 2, "half" }, { 2, "inches" }, { 12, "feet" }, { 3, "yards" }, { 5.5, "rods" }, { 4, "chains" }, { 80, "miles" } },
+		{ { 1, "ounces" }, { 16, "pounds" }, { 2000, "tons" } },
+		{ { 1, "millimeter" }, { 10, "centimeter" }, { 100, "meter" }, { 1000, "kilometer" } },
+		{ { 1, "grams" }, { 1000, "kilograms" } },
+		{ { 1, "" }, { 1000, "thousand" }, { 1000, "million" }, { 1000, "billion" }, { 1000, "trillion" } }
+	};
+
+	std::string get_scale(double _amount, base_scales _scales)
+	{
+		auto& scale_v = scales[_scales];
+		std::vector<std::string> temp_items;
+
+		double scale_boy = 1;
+		auto iscale = scale_v.begin();
+		auto llast = iscale;
+
+		while (iscale != std::end(scale_v)) 
+		{
+			double next_scale = scale_boy * iscale->threshold;
+			if (next_scale > _amount) {
+				while (llast != std::begin(scale_v)) {
+					double step_amount = std::floor(_amount / scale_boy);
+					_amount = std::fmod(_amount, scale_boy);
+					if (llast->name.size()) {
+						std::string temp = std::format("{0} {1}", step_amount, llast->name);
+						temp_items.push_back(temp);
+					}
+					else
+					{
+						std::string temp = std::format("{0}", step_amount);
+						temp_items.push_back(temp);
+					}
+					llast--;
+				}
+				std::string result = join(temp_items, ", ");
+				return result;
+			}
+		}
+		return std::to_string(_amount);
+	}
+
 	class json_double : public json_value
 	{
 	public:
@@ -97,6 +159,126 @@ namespace corona
 		{
 			return std::format("{}", value);
 		}
+
+		virtual std::string format(std::string _format)
+		{
+			std::vector<std::string> options = corona::split(_format, ',');
+
+			enum base_formats {
+				currency,
+				number,
+				scales,
+				plain
+			} base_format;
+
+			base_format = base_formats::plain;
+
+			char decimal_sep[3] = ".";
+			char thousands_sep[3] = ",";
+			char currency_symbol[3] = "$";
+
+			bool insurance = false;
+			int decimals = 0;
+
+			for (auto option : options) 
+			{
+				if (option.starts_with("currency"))
+				{
+					base_format = base_formats::currency;					
+				}
+				else if (option == "number") 
+				{
+					base_format = base_formats::number;
+				}
+				else if (option.starts_with("scale"))
+				{
+					std::vector<std::string> scales = corona::split(_format, '-');
+					if (scales.size() > 1) {
+						std::string dscale = scales[1];
+						if (dscale == "us_length") {
+							base_scale = base_scales::us_length;
+						}
+						else if (dscale == "us_mass") {
+							base_scale = base_scales::us_mass;
+						}
+						else if (dscale == "metric_length") {
+							base_scale = base_scales::metric_length;
+						}
+						else if (dscale == "metric_mass") {
+							base_scale = base_scales::metric_mass;
+						}
+						else
+							base_scale = base_scales::plain;
+					}
+				}
+				else if (option.starts_with("decimals"))
+				{
+					std::vector<std::string> decimalssize = corona::split(_format, '-');
+					if (decimalssize.size() > 1) {
+						std::string dsize = decimalssize[1];
+						decimals = std::strtol(dsize.c_str(), nullptr, 10);
+					}
+				}
+				else if (option == "plain")
+				{
+					base_format = base_formats::plain;
+				}
+			}
+
+			std::string base_result_number = std::format("{0}", value);
+			std::string formatted_number;
+
+			switch (base_format) {
+			case base_formats::number:
+				{
+					char buffer[256];
+					NUMBERFMTA numformat = {};
+					numformat.Grouping = 3;
+					numformat.LeadingZero = 0;
+					numformat.lpDecimalSep = decimal_sep;
+					numformat.lpThousandSep = thousands_sep;
+					numformat.NegativeOrder = 0;
+					numformat.NumDigits = decimals;
+
+					bool success = ::GetNumberFormatA(LOCALE_USER_DEFAULT, 0, base_result_number.c_str(), &numformat, buffer, std::size(buffer));
+					if (success) {
+						formatted_number = buffer;
+					}
+				}
+				break;
+			case base_formats::scales:
+				{
+					formatted_number = get_scale(value, base_scale);
+				}
+				break;
+			case base_formats::plain:
+				{
+					formatted_number = base_result_number;
+				}
+				break;
+			case base_formats::currency:
+				{
+					char buffer[256];
+					CURRENCYFMTA currencyformat = {};
+					currencyformat.Grouping = 3;
+					currencyformat.LeadingZero = 0;
+					currencyformat.lpDecimalSep = decimal_sep;
+					currencyformat.lpThousandSep = thousands_sep;
+					currencyformat.NegativeOrder = 0;
+					currencyformat.NumDigits = decimals;
+					currencyformat.lpCurrencySymbol = currency_symbol;
+
+					bool success = ::GetCurrencyFormatA(LOCALE_USER_DEFAULT, 0, base_result_number.c_str(), &currencyformat, buffer, std::size(buffer));
+					if (success) {
+						formatted_number = buffer;
+					}
+				}
+				break;
+			}
+
+			return formatted_number;
+		}
+
 		virtual std::string get_type_prefix()
 		{
 			return "$double";
@@ -131,6 +313,10 @@ namespace corona
 		virtual std::string to_string()
 		{
 			return value;
+		}
+		virtual std::string format(std::string _format)
+		{
+			return value.format(_format);
 		}
 		virtual std::string get_type_prefix()
 		{
@@ -214,6 +400,11 @@ namespace corona
 			return get_type_prefix() + " " + to_json();
 		}
 
+		virtual std::string format(std::string _format)
+		{
+			return std::to_string(value);
+		}
+
 		virtual std::string to_string()
 		{
 			return std::format("{}", value);
@@ -259,6 +450,10 @@ namespace corona
 		{
 			return "$string";
 		}
+		virtual std::string format(std::string _format)
+		{
+			return value;
+		}
 		virtual std::shared_ptr<json_value> clone()
 		{
 			auto t = std::make_shared<json_string>();
@@ -303,6 +498,10 @@ namespace corona
 			return to_json();
 		}
 
+		virtual std::string format(std::string _format)
+		{
+			return to_json();
+		}
 
 		virtual std::string to_string()
 		{
@@ -358,13 +557,32 @@ namespace corona
 
 		virtual std::string to_json_typed()
 		{
-			return to_json();
+			std::string ret = "{ ";
+			std::string comma = "";
+			for (auto el : members) {
+				ret += comma;
+				comma = ", ";
+				ret += "\"" + el.first + "\"";
+				ret += ":";
+				if (el.second) {
+					ret += el.second->to_json_typed();
+				}
+			}
+			ret += " }";
+			return ret;
 		}
 
 		virtual std::string to_string()
 		{
 			return to_json();
 		}
+
+		virtual std::string format(std::string _format)
+		{
+			return to_json();
+		}
+
+
 		virtual std::shared_ptr<json_value> clone()
 		{
 			auto t = std::make_shared<json_object>();
@@ -400,6 +618,11 @@ namespace corona
 		virtual std::string get_type_prefix();
 		virtual json get_json();
 		virtual std::shared_ptr<json_value> clone();
+		virtual std::string format(std::string _format)
+		{
+			return to_json();
+		}
+
 
 	};
 
@@ -728,6 +951,18 @@ namespace corona
 				return "";
 		}
 
+		std::string format_string(std::string _format)
+		{
+			return value_base->format(_format);
+		}
+
+		std::string format_member(std::string _member, std::string _format)
+		{
+			if (!object()) 
+			{
+				return value_base->format(_format);
+			}
+		}
 
 		explicit operator bool() const
 		{
@@ -2075,7 +2310,7 @@ namespace corona
 				error_array.append_element( err);
 			}
 
-			error_root.put_member("errors", error_array);
+			error_root.put_member("SysParseErrors", error_array);
 			return error_root;
 		}
 
@@ -2245,7 +2480,7 @@ namespace corona
 			{
 				_src++;
 				result = true;
-				while (isalpha(*_src))
+				while (isalnum(*_src))
 				{
 					check_line(_src);
 					temp += *_src;
@@ -2442,7 +2677,8 @@ namespace corona
 			std::string member_type;
 			if (parse_member_type(member_type, _src, &new_src))
 			{
-				if (member_type == "$double")
+				_src = new_src;
+				if (member_type == "double")
 				{
 					if (parse_number(new_number_value, _src, &new_src))
 					{
@@ -2453,7 +2689,18 @@ namespace corona
 						return result;
 					}
 				}
-				else if (member_type == "$datetime")
+				else if (member_type == "datetime")
+				{
+					if (parse_string(new_string_value, _src, &new_src))
+					{
+						auto js = std::make_shared<json_datetime>();
+						js->value.parse(new_string_value);
+						_value = js;
+						*_modified = new_src;
+						return result;
+					}
+				}
+				else if (member_type == "int64")
 				{
 					if (parse_int64(new_int64_value, _src, &new_src))
 					{
@@ -2464,18 +2711,7 @@ namespace corona
 						return result;
 					}
 				}
-				else if (member_type == "$int64")
-				{
-					if (parse_int64(new_int64_value, _src, &new_src))
-					{
-						auto js = std::make_shared<json_int64>();
-						js->value = new_int64_value;
-						_value = js;
-						*_modified = new_src;
-						return result;
-					}
-				}
-				else if (member_type == "$blob")
+				else if (member_type == "blob")
 				{
 					if (parse_string(new_string_value, _src, &new_src))
 					{
@@ -2486,7 +2722,7 @@ namespace corona
 						return result;
 					}
 				}
-				else if (member_type == "$string")
+				else if (member_type == "string")
 				{
 					if (parse_string(new_string_value, _src, &new_src))
 					{
@@ -2497,7 +2733,7 @@ namespace corona
 						return result;
 					}
 				}
-				else if (member_type == "$function")
+				else if (member_type == "function")
 				{
 					if (parse_string(new_string_value, _src, &new_src))
 					{

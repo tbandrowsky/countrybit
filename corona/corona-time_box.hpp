@@ -196,6 +196,66 @@ namespace corona
 			system_time.wMilliseconds = 0;
 		}
 
+		date_time& operator = (SYSTEMTIME st)
+		{
+			system_time = st;
+			return *this;
+		}
+
+		date_time& operator = (FILETIME ft)
+		{
+			::FileTimeToSystemTime(&ft, &system_time);
+			return *this;
+		}
+
+		date_time& operator = (time_span ts)
+		{
+			FILETIME ft;
+			LARGE_INTEGER li;
+
+			li.QuadPart = ts.value * time_model_nanos[ts.units];
+			ft.dwLowDateTime = li.LowPart;
+			ft.dwHighDateTime = li.QuadPart;
+			::FileTimeToSystemTime(&ft, &system_time);
+			return *this;
+		}
+
+		date_time& operator = (time_t tt)
+		{
+			date_time start = epoch();
+
+			FILETIME ft;
+			LARGE_INTEGER li;
+
+			::SystemTimeToFileTime(&start.system_time, &ft);
+			li.LowPart = ft.dwLowDateTime;
+			li.HighPart = ft.dwHighDateTime;
+			li.QuadPart += tt * time_model_nanos[time_models::seconds];
+			ft.dwLowDateTime = li.LowPart;
+			ft.dwHighDateTime = li.HighPart;
+			::FileTimeToSystemTime(&ft, &system_time);
+			return *this;
+		}
+
+		date_time &operator = (struct std::tm _tm)
+		{
+			system_time = {};
+			system_time.wYear = _tm.tm_year + 1900;
+			system_time.wMonth = _tm.tm_mon + 1;
+			system_time.wDay = _tm.tm_mday;
+			system_time.wHour = _tm.tm_hour;
+			system_time.wMinute = _tm.tm_min;
+			system_time.wSecond = _tm.tm_sec;
+			system_time.wMilliseconds = 0;
+			return *this;
+		}
+
+		date_time& operator = (date_time &_src)
+		{
+			system_time = _src.system_time;
+			return *this;
+		}
+
 		operator time_span() const
 		{
 			FILETIME ft;
@@ -208,6 +268,33 @@ namespace corona
 			ts.units = time_models::seconds;
 			ts.value = li.QuadPart / time_model_nanos[time_models::seconds];
 			return ts;
+		}
+
+		operator struct tm() const
+		{
+			struct tm tmx = {};
+
+			if (system_time.wYear) 
+			{
+				tmx.tm_year = system_time.wYear - 1900;
+				tmx.tm_mon = system_time.wMonth - 1;
+				tmx.tm_mday = system_time.wDay;
+				tmx.tm_hour = system_time.wHour;
+				tmx.tm_min = system_time.wMinute;
+				tmx.tm_sec = system_time.wSecond;
+				tmx.tm_isdst = -1;
+			}
+			else {
+				tmx.tm_year = 0;
+				tmx.tm_mon = 0;
+				tmx.tm_mday = 1;
+				tmx.tm_hour = 0;
+				tmx.tm_min = 0;
+				tmx.tm_sec = 0;
+				tmx.tm_isdst = 0;
+			}
+
+			return tmx;
 		}
 
 		time_t get_time_t() const
@@ -224,15 +311,15 @@ namespace corona
 
 		date_time parse(std::string _src)
 		{
-			date_time dt;
-
-			std::string formats[6] = {
+			std::string formats[8] = {
 				"%m/%d/%Y",
 				"%Y-%m-%d",
 				"%m/%d/%Y %H:%M:%S",
 				"%Y-%m-%d %H:%M:%S",
 				"%m/%d/%Y %H:%M",
-				"%Y-%m-%d %H:%M"
+				"%Y-%m-%d %H:%M",
+				"%Y-%m-%dT%H:%M:%S",
+				"%Y-%m-%dT%H:%M:%SZ"
 			};
 
 			for (auto format : formats) {
@@ -241,59 +328,51 @@ namespace corona
 				ss >> std::get_time(&tm, format.c_str());
 				if (!ss.fail())
 				{
-					dt = tm;
+					*this = tm;
 					break;
 				}
 			}
 
-			return dt;
+			return *this;
+		}
+
+		std::string short_date() const
+		{
+			std::string temp;
+
+			temp = std::format("{0}/{1}/{2}", system_time.wMonth, system_time.wDay, system_time.wYear);
+
+			return temp;
 		}
 
 		operator std::string() const
 		{
-			std::string temp = std::format("{0:04d}-{1:d}-{2:d}T{3}:{4:02d}:{5:02d}.{6:d}Z",
-				system_time.wYear,
-				system_time.wMonth,
-				system_time.wDay,
-				system_time.wHour,
-				system_time.wMinute,
-				system_time.wSecond,
-				system_time.wMilliseconds);
+			char timeString[std::size("yyyy-mm-ddThh:mm:ssZ")];
+			struct tm tmx = (struct tm)(*this);
+			std::strftime(std::data(timeString), std::size(timeString), "%FT%TZ", &tmx);
+			std::string temp = timeString;
+			return temp;
+		}
 
+		std::string format(std::string _format)
+		{
+			char time_buff[256] = {};
+			strncpy_s(time_buff, _format.c_str(), _TRUNCATE);
+			struct tm tmx = (struct tm)(*this);
+			std::strftime(time_buff, std::size(time_buff), _format.c_str(), &tmx);
+			std::string temp = time_buff;
 			return temp;
 		}
 
 		date_time& operator =(const std::string& _src)
 		{
-			system_time = {};
-
-			int args = sscanf_s(_src.c_str(), "%04hd-%hd-%hdT%hd:%hd:%hd.%hdZ",
-				&system_time.wMonth,
-				&system_time.wDay,
-				&system_time.wYear,
-				&system_time.wHour,
-				&system_time.wMinute,
-				&system_time.wSecond,
-				&system_time.wMilliseconds
-			);
-
+			parse(_src);
 			return *this;
 		}
 
 		date_time& operator =(const char *_src)
 		{
-			system_time = {};
-
-			int args = sscanf_s(_src, "%hd/%hd/%hd %hd:%hd:%hd.%hd",
-				&system_time.wMonth,
-				&system_time.wDay,
-				&system_time.wYear,
-				&system_time.wHour,
-				&system_time.wMinute,
-				&system_time.wSecond,
-				&system_time.wMilliseconds
-				);
-
+			parse(_src);
 			return *this;
 		}
 

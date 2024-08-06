@@ -415,7 +415,7 @@ namespace corona
 							data_row[col_index] = blank;
 							bool has_field = item.has_member(col.json_field_name);
 							if (has_field) {
-								std::string item_value = (std::string)item[col.json_field_name];
+								std::string item_value = item[col.json_field_name].format_string(col.format);
 								char* value = (char*)item_value.c_str();
 								if (value) {
 									data_row[col_index] = value;
@@ -1552,8 +1552,8 @@ namespace corona
 
 			windows_control::put_json(_src);
 
-			min_date = _src["min_date"];
-			max_date = _src["max_date"];
+			min_date = (date_time)_src["min_date"];
+			max_date = (date_time)_src["max_date"];
 
 			if (window) {
 				SYSTEMTIME st[3];
@@ -1592,7 +1592,7 @@ namespace corona
 		virtual json set_data(json _data)
 		{
 			if (_data.has_member(json_field_name)) {
-				current_date = _data[json_field_name];
+				current_date = (date_time)_data[json_field_name];
 				if (window) {
 					SYSTEMTIME st = current_date;
 					DateTime_SetSystemtime(window, GDT_VALID, &st);
@@ -1675,8 +1675,8 @@ namespace corona
 
 			corona::put_json(change_command, jcommand);
 
-			min_date = _src["min_date"];
-			max_date = _src["max_date"];
+			min_date = (date_time)_src["min_date"];
+			max_date = (date_time)_src["max_date"];
 
 			if (window) {
 				SYSTEMTIME st[3];
@@ -1723,7 +1723,7 @@ namespace corona
 		virtual json set_data(json _data)
 		{
 			if (_data.has_member(json_field_name)) {
-				current_date = _data[json_field_name];
+				current_date = (date_time)_data[json_field_name];
 				if (window) {
 					SYSTEMTIME st = current_date;
 					MonthCal_SetCurSel(window, GDT_VALID, &st);

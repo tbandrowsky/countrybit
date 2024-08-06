@@ -1271,7 +1271,7 @@ private:
 
 		database_transaction<json> apply_schema(json _schema)
 		{
-			date_time start_schema;
+			date_time start_schema = date_time::now();
 			timer tx;
 			system_monitoring_interface::global_mon->log_bus("Corona database", "Applying schema file", start_schema, __FILE__, __LINE__);
 			if (_schema.has_member("Classes"))
@@ -2092,6 +2092,7 @@ private:
 				key_index.copy_member("ClassName", obj);
 				key_index.copy_member("Name", obj);
 				key_index.copy_member("ObjectId", obj);
+				key_index.set_compare_order({ "ClassName", "Name" });
 				co_await objects_by_name.put(key_index);
 
 				relative_ptr_type put_result = co_await objects.put( obj );

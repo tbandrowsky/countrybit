@@ -61,6 +61,7 @@ namespace corona
 	public:
 		std::string display_name;
 		std::string json_field_name;
+		std::string format;
 		int width;
 		visual_alignment alignment;
 
@@ -69,6 +70,7 @@ namespace corona
 			_dest.put_member("label_text", display_name);
 			_dest.put_member("json_field_name", json_field_name);
 			_dest.put_member("width", width);
+			_dest.put_member("format", format);
 			corona::get_json(_dest, "alignment", alignment);
 		}
 
@@ -85,10 +87,10 @@ namespace corona
 				return;
 			}
 
-
 			display_name = _src["label_text"];
 			json_field_name = _src["json_field_name"];
 			width = (int)_src["width"];
+			format = _src["format"];
 			corona::put_json(alignment, _src, "alignment");
 		}
 
