@@ -1237,12 +1237,6 @@ namespace corona
 		int								visualization_id;
 		int								edit_block_id;
 
-		std::shared_ptr<control_base>  label;
-		std::shared_ptr<control_base>  prefix;
-		std::shared_ptr<control_base>  suffix;
-		std::shared_ptr<control_base>	visualization;
-		std::shared_ptr<control_base>	field;
-
 		form_field						field_def;
 		std::function<void(form_field_control* _src, draw_control* _dest)> draw_visualization;
 
@@ -1269,23 +1263,6 @@ namespace corona
 			suffix_id = _src.suffix_id;
 			visualization_id = _src.visualization_id;
 			edit_block_id = _src.edit_block_id;
-
-			if (_src.label) {
-				label = _src.label->clone();
-			}
-			if (_src.prefix) {
-				prefix = _src.prefix->clone();
-			}
-			if (_src.suffix) {
-				suffix = _src.suffix->clone();
-			}
-			if (_src.visualization) {
-				visualization = _src.visualization->clone();
-			}
-			if (_src.field) {
-				field = _src.field->clone();
-			}
-
 			field_def = _src.field_def;
 			draw_visualization = _src.draw_visualization;
 			form = _src.form;
@@ -1347,6 +1324,7 @@ namespace corona
 		virtual json get_data()
 		{
 			json result;
+			auto field = find_by_id<control_base>(field_id);
 			if (field) {
 				result = field->get_data();
 			}
@@ -1390,7 +1368,6 @@ namespace corona
 					_settings.text = field_def.label_text;
 					_settings.set_box(field_def.label_box);
 					});
-				label = cb.get<label_control>(label_id);
 			}
 
 			if (draw_visualization)
@@ -1401,7 +1378,6 @@ namespace corona
 						draw_visualization(this, control);
 						};
 					});
-				visualization = cb.get<draw_control>(label_id);
 			}
 
 			auto edit_row = cb.row_begin(id_counter::next(), [this](row_layout& _row) {
@@ -1414,7 +1390,6 @@ namespace corona
 					_settings.set_box(field_def.prefix_box);
 					_settings.text = field_def.prefix;
 					});
-				prefix = cb.get<label_control>(label_id);
 			}
 
 			if (field_def.field_box.width.empty())
@@ -1429,7 +1404,6 @@ namespace corona
 			}
 
 			edit_row.from_json(field_def.control_settings);
-			field = cb.get<control_base>(field_def.field_id);
 
 			if (!field_def.suffix.empty())
 			{
@@ -1439,7 +1413,6 @@ namespace corona
 			}
 
 			cb.apply_controls(this);
-
 		}
 
 		virtual void on_subscribe(presentation_base* _presentation, page_base* _page);
@@ -3191,38 +3164,37 @@ namespace corona
 
 	void form_field_control::on_subscribe(presentation_base* _presentation, page_base* _page)
 	{
-		if (!field)
-			return;
 
-		_page->on_list_changed(field->id, [this](list_changed_event lce)
+		_page->on_list_changed(field_id, [this](list_changed_event lce)
 			{
 				if (form) {
 					form->list_changed(lce, this);
 				}
 			});
 
-		_page->on_item_changed(field->id, [this](item_changed_event lce)
+		_page->on_item_changed(field_id, [this](item_changed_event lce)
 			{
 				if (form) {
 					form->item_changed(lce, this);
 				}
 			});
 
-		_page->on_command(field->id, [this](command_event lce)
+		_page->on_command(field_id, [this](command_event lce)
 			{
 				if (form) {
 					form->field_command(lce, this);
 				}
 			});
 
-		_page->on_mouse_click(field.get(), [this](mouse_click_event lce)
+		auto fld = find_by_id<control_base>(field_id);
+		_page->on_mouse_click(fld.get(), [this](mouse_click_event lce)
 			{
 				if (form) {
 					form->field_mouse_click(lce, this);
 				}
 			});
 
-		_page->on_mouse_move(field.get(), [this](mouse_move_event lce)
+		_page->on_mouse_move(fld.get(), [this](mouse_move_event lce)
 			{
 				if (form) {
 					form->field_mouse_move(lce, this);

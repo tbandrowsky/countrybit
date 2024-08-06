@@ -27,7 +27,7 @@
               "class_name": "caption_bar",
               "corporate_name": "country video games",
               "image_file": "cockade.png",
-              "title_name": "Black American Reparations System",
+              "title_name": "United States Reparations System",
               "subtitle_name": "Country Video Games",
               "title_start": "0.28 container",
               "box": {
@@ -80,7 +80,7 @@
       "children": [
         {
           "class_name": "chaptertitle",
-          "text": "Reparations Login",
+          "text": "Reparations Process",
           "box": {
             "width": {
               "amount": 1,
@@ -94,7 +94,7 @@
         },
         {
           "class_name": "chaptersubtitle",
-          "text": "Select a Role",
+          "text": "Process Activities",
           "box": {
             "width": {
               "amount": 1,
@@ -108,7 +108,7 @@
         },
         {
           "class_name": "paragraph",
-          "text": "Descendants of Slaves Reparations System.  Test. This is an interactive simulation of a Reparations System for Black Americans.  With this system, Black Americans can walk through a reparations process, from research to claims and payments, pretending to different types of users that work on the claims process.",
+          "text": "This is an interactive simulation of a Reparations System for subjects of the United States Government.  With this system, American subjects can walk through a reparations process, from research to claims and payments.  The entire process may be viewed at any point, in any detail, to promote transparancy.",
           "box": {
             "width": {
               "amount": 1,
@@ -567,20 +567,20 @@
                         "id_field": "ObjectId",
                         "columns": [
                           {
-                            "json_field_name": "ObjectId",
-                            "label_text": "Id",
-                            "width": 100
-                          },
-                          {
                             "json_field_name": "EventDate",
                             "label_text": "Year",
                             "width": 100,
-                            "format" :  "%Y"
+                            "format": "%Y"
                           },
                           {
                             "json_field_name": "Description",
                             "label_text": "Name",
                             "width": 300
+                          },
+                          {
+                            "json_field_name": "ObjectId",
+                            "label_text": "Id",
+                            "width": 100
                           }
                         ],
                         "items": []

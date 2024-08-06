@@ -345,10 +345,10 @@ namespace corona
 			json request = jp.create_object();
 			request.put_member("Token", admin_user_token);
 			request.put_member("Data", object_information);
-			json response = co_await local_db->put_object(request);
+			json response = co_await local_db->get_object(request);
 			if (response.error())
 				log_error(response, __FILE__, __LINE__);
-			log_bus("put_object", response["Message"], tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			log_bus("get_object", response["Message"], tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			response = response["Data"];
 			co_return response;
 		}

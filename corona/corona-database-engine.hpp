@@ -1944,7 +1944,7 @@ private:
 						bool granted = co_await check_object_key_permission(check_request, "Get");
 						if (granted)
 						{
-							json objx = co_await get_object(get_object_id);
+							json objx = co_await get_object(check_request);
 							if (objx["Success"])
 							{
 								objects.append_element(objx["Data"]);
@@ -2129,9 +2129,9 @@ private:
 				json result = create_response(get_object_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
 				co_return result;
 			}
-
-			json token = get_object_request["Token"];
-			json obj = co_await acquire_object(get_object_request);
+			
+			json payload = get_object_request["Data"];
+			json obj = co_await acquire_object(payload);
 
 			result = create_response(get_object_request, true, "Ok", obj, method_timer.get_elapsed_seconds());
 
