@@ -23,11 +23,7 @@ namespace corona
 	public:
 		std::string			text;
 
-		text_display_control(const text_display_control& _src) : draw_control(_src)
-		{
-			text = _src.text;
-		}
-
+		text_display_control(const text_display_control& _src) = default;
 		text_display_control();
 		text_display_control(container_control_base* _parent, int _id);
 		virtual ~text_display_control() { ; }
@@ -68,10 +64,7 @@ namespace corona
 	{
 	public:
 		title_control();
-		title_control(const title_control& _src) : text_display_control(_src) 
-		{
-			;
-		}
+		title_control(const title_control& _src) = default;
 		title_control(container_control_base* _parent, int _id);
 
 		virtual void set_default_styles();
@@ -89,10 +82,7 @@ namespace corona
 	{
 	public:
 		subtitle_control();
-		subtitle_control(const subtitle_control& _src) : text_display_control(_src)
-		{
-			;
-		}
+		subtitle_control(const subtitle_control& _src) = default;
 		subtitle_control(container_control_base* _parent, int _id);
 
 		virtual void set_default_styles();
@@ -110,10 +100,7 @@ namespace corona
 	{
 	public:
 		authorscredit_control();
-		authorscredit_control(const subtitle_control& _src) : text_display_control(_src)
-		{
-			;
-		}
+		authorscredit_control(const authorscredit_control& _src) = default;
 		authorscredit_control(container_control_base* _parent, int _id);
 
 		virtual void set_default_styles();
@@ -131,10 +118,7 @@ namespace corona
 	{
 	public:
 		chaptertitle_control();
-		chaptertitle_control(const chaptertitle_control& _src) : text_display_control(_src)
-		{
-			;
-		}
+		chaptertitle_control(const chaptertitle_control& _src) = default;
 		chaptertitle_control(container_control_base* _parent, int _id);
 		virtual void set_default_styles();
 
@@ -151,10 +135,7 @@ namespace corona
 	{
 	public:
 		chaptersubtitle_control();
-		chaptersubtitle_control(const chaptersubtitle_control& _src) : text_display_control(_src)
-		{
-			;
-		}
+		chaptersubtitle_control(const chaptersubtitle_control& _src) = default;
 		chaptersubtitle_control(container_control_base* _parent, int _id);
 
 		virtual void set_default_styles();
@@ -172,10 +153,7 @@ namespace corona
 	public:
 		paragraph_control();
 		paragraph_control(container_control_base* _parent, int _id);
-		paragraph_control(const paragraph_control& _src) : text_display_control(_src)
-		{
-			;
-		}
+		paragraph_control(const paragraph_control& _src) = default;
 		virtual void set_default_styles();
 		virtual std::shared_ptr<control_base> clone()
 		{
@@ -192,10 +170,7 @@ namespace corona
 	public:
 		code_control();
 		code_control(container_control_base* _parent, int _id);
-		code_control(const code_control& _src) : text_display_control(_src)
-		{
-			;
-		}
+		code_control(const code_control& _src) = default;
 		virtual void set_default_styles();
 		virtual std::shared_ptr<control_base> clone()
 		{
@@ -211,10 +186,7 @@ namespace corona
 	public:
 		label_control();
 		label_control(container_control_base* _parent, int _id);
-		label_control(const label_control& _src) : text_display_control(_src)
-		{
-			;
-		}
+		label_control(const label_control& _src) = default;
 		virtual void set_default_styles();
 		virtual std::shared_ptr<control_base> clone()
 		{
@@ -230,10 +202,7 @@ namespace corona
 	public:
 		placeholder_control();
 		placeholder_control(container_control_base* _parent, int _id);
-		placeholder_control(const placeholder_control& _src) : text_display_control(_src)
-		{
-			;
-		}
+		placeholder_control(const placeholder_control& _src) = default;
 		virtual void set_default_styles();
 		virtual std::shared_ptr<control_base> clone()
 		{
@@ -251,10 +220,7 @@ namespace corona
 	public:
 
 		error_control();
-		error_control(const error_control& _src) : text_display_control(_src)
-		{
-			;
-		}
+		error_control(const error_control& _src) = default;
 		error_control(container_control_base* _parent, int _id);
 
 		void set_status(call_status _status)
@@ -281,10 +247,7 @@ namespace corona
 	public:
 
 		success_control();
-		success_control(const success_control& _src) : text_display_control(_src)
-		{
-			;
-		}
+		success_control(const success_control& _src) = default;
 		success_control(container_control_base* _parent, int _id);
 
 		void set_status(call_status _status)
@@ -312,10 +275,7 @@ namespace corona
 		bool status_set;
 
 		status_control();
-		status_control(const status_control& _src) : frame_layout(_src)
-		{
-			;
-		}
+		status_control(const status_control& _src) = default;
 		status_control(container_control_base* _parent, int _id);
 
 		bool set_status(call_status _status)

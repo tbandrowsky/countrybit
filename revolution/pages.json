@@ -765,10 +765,10 @@
                     "is_default_focus": true
                   },
                   {
-                    "json_field_name": "EventYear",
-                    "label_text": "Year",
+                    "json_field_name": "EventDate",
+                    "label_text": "Date",
                     "class_name": "edit",
-                    "tooltip_text": "The year of the event",
+                    "tooltip_text": "Date of the event",
                     "is_default_focus": false
                   },
                   {

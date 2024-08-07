@@ -48,13 +48,7 @@ namespace corona
 			id = id_counter::next();
 		}
 
-		container_control(const container_control& _src) : draw_control(_src)
-		{
-			item_box = _src.item_box;
-			item_margin = _src.item_margin;
-			content_alignment = _src.content_alignment;
-			content_cross_alignment = _src.content_cross_alignment;
-		}
+		container_control(const container_control& _src) = default;
 
 		container_control(container_control_base *_parent, int _id)
 		{

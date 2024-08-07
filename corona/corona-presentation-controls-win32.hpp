@@ -903,10 +903,7 @@ namespace corona
 		std::shared_ptr<corona_bus_command> click_command;
 
 		button_control(container_control_base* _parent, int _id) : text_control_base(_parent, _id) { ; }
-		button_control(const button_control& _src) : text_control_base(_src)
-		{
-			click_command = _src.click_command;
-		}
+		button_control(const button_control& _src) = default;
 		virtual std::shared_ptr<control_base> clone()
 		{
 			auto tv = std::make_shared<button_control<ButtonWindowStyles>>(*this);
@@ -964,10 +961,8 @@ namespace corona
 		using windows_control::is_default_button;
 
 		pushbutton_control(container_control_base* _parent, int _id) : button_control<PushButtonWindowStyles>(_parent, _id) { ; }
-		pushbutton_control(const pushbutton_control& _src) : button_control<PushButtonWindowStyles>(_src)
-		{
+		pushbutton_control(const pushbutton_control& _src) = default;
 
-		}
 		virtual std::shared_ptr<control_base> clone()
 		{
 			auto tv = std::make_shared<pushbutton_control>(*this);
@@ -985,10 +980,7 @@ namespace corona
 	{
 	public:
 		pressbutton_control(container_control_base* _parent, int _id) : button_control<PressButtonWindowStyles>(_parent, _id) { ; }
-		pressbutton_control(const pressbutton_control& _src) : button_control<PressButtonWindowStyles>(_src)
-		{
-
-		}
+		pressbutton_control(const pressbutton_control& _src) = default;
 		virtual std::shared_ptr<control_base> clone()
 		{
 			auto tv = std::make_shared<pressbutton_control>(*this);
@@ -1004,10 +996,7 @@ namespace corona
 	public:
 
 		radiobutton_control(container_control_base* _parent, int _id) : button_control<RadioButtonWindowStyles>(_parent, _id) { ; }
-		radiobutton_control(const radiobutton_control& _src) : button_control<RadioButtonWindowStyles>(_src)
-		{
-
-		}
+		radiobutton_control(const radiobutton_control& _src) = default;
 		virtual std::shared_ptr<control_base> clone()
 		{
 			auto tv = std::make_shared<radiobutton_control>(*this);
@@ -1050,10 +1039,7 @@ namespace corona
 	public:
 
 		checkbox_control(container_control_base* _parent, int _id) : button_control<CheckboxWindowStyles>(_parent, _id) { ; }
-		checkbox_control(const checkbox_control& _src) : button_control<CheckboxWindowStyles>(_src)
-		{
-
-		}
+		checkbox_control(const checkbox_control& _src) = default;
 		virtual std::shared_ptr<control_base> clone()
 		{
 			auto tv = std::make_shared<checkbox_control>(*this);
@@ -1097,10 +1083,7 @@ namespace corona
 	public:
 
 		linkbutton_control(container_control_base* _parent, int _id) : button_control<LinkButtonWindowStyles>(_parent, _id) { ; }
-		linkbutton_control(const linkbutton_control& _src) : button_control<LinkButtonWindowStyles>(_src)
-		{
-
-		}
+		linkbutton_control(const linkbutton_control& _src) = default;
 		virtual std::shared_ptr<control_base> clone()
 		{
 			auto tv = std::make_shared<linkbutton_control>(*this);
@@ -1121,10 +1104,7 @@ namespace corona
 
 		edit_control(container_control_base* _parent, int _id) : text_control_base(_parent, _id) { ; }
 		virtual ~edit_control() { ; }
-		edit_control(const edit_control& _src) : text_control_base(_src)
-		{
-
-		}
+		edit_control(const edit_control& _src) = default;
 		virtual std::shared_ptr<control_base> clone()
 		{
 			auto tv = std::make_shared<edit_control>(*this);
@@ -1168,10 +1148,7 @@ namespace corona
 
 		number_control(container_control_base* _parent, int _id) : edit_control(_parent, _id) { ; }
 		virtual ~number_control() { ; }
-		number_control(const edit_control& _src) : edit_control(_src)
-		{
-
-		}
+		number_control(const number_control& _src) = default;
 		virtual std::shared_ptr<control_base> clone()
 		{
 			auto tv = std::make_shared<number_control>(*this);
@@ -1191,10 +1168,7 @@ namespace corona
 		listbox_control(container_control_base* _parent, int _id) : list_control_base(_parent, _id) { ; }
 		virtual ~listbox_control() { ; }
 
-		listbox_control(const listbox_control& _src) : list_control_base(_src)
-		{
-
-		}
+		listbox_control(const listbox_control& _src) = default;
 		virtual std::shared_ptr<control_base> clone()
 		{
 			auto tv = std::make_shared<listbox_control>(*this);
@@ -1214,10 +1188,7 @@ namespace corona
 		combobox_control(container_control_base* _parent, int _id) : dropdown_control_base(_parent, _id) { ; }
 		virtual ~combobox_control() { ; }
 
-		combobox_control(const combobox_control& _src) : dropdown_control_base(_src)
-		{
-
-		}
+		combobox_control(const combobox_control& _src) = default;
 		virtual std::shared_ptr<control_base> clone()
 		{
 			auto tv = std::make_shared<combobox_control>(*this);
@@ -1242,10 +1213,7 @@ namespace corona
 		comboboxex_control();
 		comboboxex_control(container_control_base* _parent, int _id);
 
-		comboboxex_control(const comboboxex_control& _src) : windows_control(_src)
-		{
-			choices = _src.choices;
-		}
+		comboboxex_control(const comboboxex_control& _src) = default;
 		virtual std::shared_ptr<control_base> clone()
 		{
 			auto tv = std::make_shared<comboboxex_control>(*this);
@@ -1311,10 +1279,7 @@ namespace corona
 		listview_control(container_control_base* _parent, int _id) : table_control_base(_parent, _id) { ; }
 		virtual ~listview_control() { ; }
 
-		listview_control(const listview_control& _src) : table_control_base(_src)
-		{
-			;
-		}
+		listview_control(const listview_control& _src) = default;
 		virtual std::shared_ptr<control_base> clone()
 		{
 			auto tv = std::make_shared<listview_control>(*this);
@@ -1359,13 +1324,7 @@ namespace corona
 		}
 		virtual ~scrollbar_control() { ; }
 
-		scrollbar_control(const scrollbar_control& _src) : windows_control(_src)
-		{
-			sbi = _src.sbi;
-			scaleMin = _src.scaleMin;
-			scaleMax = _src.scaleMax;
-			scaleMin = scaleMax = scale = 0;
-		}
+		scrollbar_control(const scrollbar_control& _src) = default;
 		virtual std::shared_ptr<control_base> clone()
 		{
 			auto tv = std::make_shared<scrollbar_control>(*this);
@@ -1468,10 +1427,7 @@ namespace corona
 			LoadLibrary(TEXT("Msftedit.dll"));
 		}
 
-		richedit_control(const richedit_control& _src) : text_control_base(_src)
-		{
-			;
-		} 
+		richedit_control(const richedit_control& _src) = default;
 		virtual std::shared_ptr<control_base> clone()
 		{
 			auto tv = std::make_shared<richedit_control>(*this);
@@ -1502,10 +1458,7 @@ namespace corona
 
 		datetimepicker_control(container_control_base* _parent, int _id) : windows_control(_parent, _id) { ; }
 
-		datetimepicker_control(const datetimepicker_control& _src) : windows_control(_src)
-		{
-			;
-		}
+		datetimepicker_control(const datetimepicker_control& _src) = default;
 
 		virtual std::shared_ptr<control_base> clone()
 		{
@@ -1613,10 +1566,7 @@ namespace corona
 		monthcalendar_control(container_control_base* _parent, int _id) : windows_control(_parent, _id) { ; }
 		virtual ~monthcalendar_control() { ; }
 
-		monthcalendar_control(const monthcalendar_control& _src) : windows_control(_src)
-		{
-			;
-		}
+		monthcalendar_control(const monthcalendar_control& _src) = default;
 		virtual std::shared_ptr<control_base> clone()
 		{
 			auto tv = std::make_shared<monthcalendar_control>(*this);
@@ -1708,7 +1658,8 @@ namespace corona
 
 		virtual json get_data()
 		{
-			json result;
+			json_parser jp;
+			json result = jp.create_object();
 			if (!json_field_name.empty()) {
 				if (window) {
 					SYSTEMTIME st;
@@ -1742,10 +1693,7 @@ namespace corona
 
 		std::shared_ptr<corona_bus_command> change_command;
 
-		animate_control(const animate_control& _src) : windows_control(_src)
-		{
-			;
-		}
+		animate_control(const animate_control& _src) = default;
 		virtual std::shared_ptr<control_base> clone()
 		{
 			auto tv = std::make_shared<animate_control>(*this);
@@ -1783,10 +1731,7 @@ namespace corona
 
 		std::shared_ptr<corona_bus_command> select_command;
 
-		treeview_control(const treeview_control& _src) : windows_control(_src)
-		{
-			;
-		}
+		treeview_control(const treeview_control& _src) = default;
 		virtual std::shared_ptr<control_base> clone()
 		{
 			auto tv = std::make_shared<treeview_control>(*this);
@@ -1818,10 +1763,7 @@ namespace corona
 		header_control(container_control_base* _parent, int _id) : windows_control(_parent, _id) { ; }
 		virtual ~header_control() { ; }
 
-		header_control(const treeview_control& _src) : windows_control(_src)
-		{
-			;
-		}
+		header_control(const header_control& _src) = default;
 		virtual std::shared_ptr<control_base> clone()
 		{
 			auto tv = std::make_shared<header_control>(*this);
@@ -1852,10 +1794,7 @@ namespace corona
 		toolbar_control(container_control_base* _parent, int _id) : windows_control(_parent, _id) { ; }
 		virtual ~toolbar_control() { ; }
 
-		toolbar_control(const toolbar_control& _src) : windows_control(_src)
-		{
-			;
-		}
+		toolbar_control(const toolbar_control& _src) = default;
 		virtual std::shared_ptr<control_base> clone()
 		{
 			auto tv = std::make_shared<toolbar_control>(*this);
@@ -1875,10 +1814,7 @@ namespace corona
 		statusbar_control(container_control_base* _parent, int _id) : windows_control(_parent, _id) { ; }
 		virtual ~statusbar_control() { ; }
 
-		statusbar_control(const statusbar_control& _src) : windows_control(_src)
-		{
-			;
-		}
+		statusbar_control(const statusbar_control& _src) = default;
 		virtual std::shared_ptr<control_base> clone()
 		{
 			auto tv = std::make_shared<statusbar_control>(*this);
@@ -1896,10 +1832,7 @@ namespace corona
 	public:
 
 		hotkey_control(container_control_base* _parent, int _id) : windows_control(_parent, _id) { ; }
-		hotkey_control(const hotkey_control& _src) : windows_control(_src)
-		{
-			;
-		}
+		hotkey_control(const hotkey_control& _src) = default;
 		virtual std::shared_ptr<control_base> clone()
 		{
 			auto tv = std::make_shared<hotkey_control>(*this);
@@ -1919,10 +1852,7 @@ namespace corona
 	public:
 
 		draglistbox_control(container_control_base* _parent, int _id) : windows_control(_parent, _id) { ; }
-		draglistbox_control(const draglistbox_control& _src) : windows_control(_src)
-		{
-			;
-		}
+		draglistbox_control(const draglistbox_control& _src) = default;
 		virtual std::shared_ptr<control_base> clone()
 		{
 			auto tv = std::make_shared<draglistbox_control>(*this);

@@ -30,6 +30,7 @@ namespace corona {
 	{
 	protected:
 
+		corona::lockable presentation_lock;
 		std::weak_ptr<page> current_page;
 		rectangle current_size;
 		lockable control_lock;
@@ -1014,6 +1015,7 @@ namespace corona {
 	
 	std::string presentation::setPresentation(json _json_pages)
 	{
+		corona::scope_lock lock(presentation_lock);
 		json_pages = _json_pages;
 		std::string default_page_name;
 

@@ -302,6 +302,8 @@ namespace corona
 			copy(_src);
 		}
 
+		virtual std::string form_name() { return "don't name your form godzilla"; }
+
 		bool is_mouse_over()
 		{
 			return mouse_over;
