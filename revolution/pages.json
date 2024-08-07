@@ -703,9 +703,8 @@
                         }
                       },
                       "click_command": {
-                        "class_name": "create_object_command",
-                        "create_class_name": "Events",
-                        "form_name": "EventPage"
+                        "class_name": "save_object_command",
+                        "form_name": "edit_event_form"
                       }
                     }
 

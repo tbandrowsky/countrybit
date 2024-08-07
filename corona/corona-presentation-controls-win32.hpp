@@ -463,7 +463,7 @@ namespace corona
 
 		virtual void on_create()
 		{
-			ListView_SetExtendedListViewStyle(window, LVS_EX_FULLROWSELECT);
+			ListView_SetExtendedListViewStyle(window, LVS_EX_FULLROWSELECT );
 			data_changed();
 		}
 
@@ -864,7 +864,7 @@ namespace corona
 	const int CheckboxWindowStyles = WS_VISIBLE | WS_CHILD | WS_TABSTOP | BS_AUTOCHECKBOX | BS_FLAT | BS_NOTIFY;
 	const int RadioButtonWindowStyles = WS_VISIBLE | WS_CHILD | WS_TABSTOP | BS_AUTORADIOBUTTON | BS_FLAT | BS_NOTIFY;
 	const int LinkButtonWindowStyles = WS_VISIBLE | WS_CHILD | WS_TABSTOP | BS_COMMANDLINK | BS_FLAT | BS_NOTIFY;
-	const int ListViewWindowsStyles = DefaultWindowStyles | LVS_REPORT | LVS_SINGLESEL | WS_BORDER | WS_VSCROLL;
+	const int ListViewWindowsStyles = DefaultWindowStyles | LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | WS_BORDER | WS_VSCROLL;
 	const int ListBoxWindowsStyles = DefaultWindowStyles | WS_BORDER | WS_VSCROLL | LBS_NOTIFY;
 
 	class static_control : public text_control_base

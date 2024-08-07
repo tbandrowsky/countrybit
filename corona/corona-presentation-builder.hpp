@@ -1468,6 +1468,7 @@ namespace corona
 		form_model ids;
 		presentation_base* current_presentation;
 		page_base* current_page;
+		json current_object;
 
 	public:
 
@@ -1497,9 +1498,9 @@ namespace corona
 		{
 			json_parser jp;
 
-			json obj = column_layout::get_data();
-			if (obj.empty())
-				obj = jp.create_object();
+			if (current_object.empty()) {
+				current_object = jp.create_object();
+			}
 
 			for (auto& ctrl : ids.fields)
 			{
@@ -1509,18 +1510,18 @@ namespace corona
 				control_base *cb = find(ctrl.field_id);
 				if (cb) {
 					json field_data = cb->get_data();
-					obj.copy_member(ctrl.json_field_name, field_data);
+					current_object.copy_member(ctrl.json_field_name, field_data);
 				}
 			}
 
-			return obj;
+			return current_object;
 		}
 
 		virtual json set_data(json _data)
 		{
 			json empty;
 
-			column_layout::set_data(_data);
+			current_object = _data;
 
 			for (auto& ctrl : ids.fields)
 			{

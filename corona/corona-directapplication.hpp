@@ -760,6 +760,9 @@ namespace corona
 							auto plink = (PNMLINK)lParam;
 							auto r = ::ShellExecuteW(NULL, L"open", plink->item.szUrl, NULL, NULL, SW_SHOWNORMAL);
 						}
+						else {
+							currentController->onListViewChanged(lpnm->idFrom);
+						}
 					}
 					break;
 
