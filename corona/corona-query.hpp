@@ -89,7 +89,7 @@ namespace corona
 		json		stage_output;
 		double		execution_time_seconds;
 
-		virtual std::string term_name() { return "filter"; }
+		virtual std::string term_name() { return "stage"; }
 		virtual json process(query_context_base *_src) { return stage_output; }
 
 		virtual void get_json(json& _dest)
@@ -104,7 +104,7 @@ namespace corona
 		{
 			std::vector<std::string> missing;
 
-			if (!_src.has_members(missing, { "class_name", "source_name" })) {
+			if (!_src.has_members(missing, { "class_name", "stage_name" })) {
 				system_monitoring_interface::global_mon->log_warning("query_project missing:");
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 					system_monitoring_interface::global_mon->log_bus(s);
@@ -162,10 +162,21 @@ namespace corona
 			query_context_base::put_json(_src);
 
 			json jstgs = _src["stages"];
-			for (auto item : jstgs) {
+			if (jstgs.array()) {
+				for (auto item : jstgs) {
+					std::shared_ptr<query_stage> new_query;
+					corona::put_json(new_query, item);
+					if (new_query) {
+						stages.push_back(new_query);
+					}
+				}
+			}
+			else if (jstgs.object()) {
 				std::shared_ptr<query_stage> new_query;
-				corona::put_json(new_query, item);
-				stages.push_back(new_query);
+				corona::put_json(new_query, jstgs);
+				if (new_query) {
+					stages.push_back(new_query);
+				}
 			}
 		}
 
@@ -253,8 +264,12 @@ namespace corona
 		{
 			json_parser jp;
 			query_stage::get_json(_dest);
-
-			_dest.put_member("class_name", "query_filter");
+			json jpredicate = jp.create_object();
+			if (predicate) {
+				predicate->get_json(jpredicate);
+				_dest.put_member("predicate", jpredicate);
+			}
+			_dest.put_member("class_name", "filter");
 			_dest.put_member("stage_input_name", stage_input_name);
 		}
 
@@ -275,6 +290,7 @@ namespace corona
 			query_stage::put_json(_src);
 			json jpredicate = _src["predicate"];
 			corona::put_json(predicate, jpredicate);
+			stage_input_name = _src["stage_input_name"];
 		}
 
 	};
@@ -351,7 +367,7 @@ namespace corona
 			std::vector<std::string> missing;
 
 			if (!_src.has_members(missing, { "class_name", "resultname1", "resultname2", "source1", "source2", "keys" })) {
-				system_monitoring_interface::global_mon->log_warning("query_project missing:");
+				system_monitoring_interface::global_mon->log_warning("join missing:");
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 					system_monitoring_interface::global_mon->log_bus(s);
 					});
@@ -382,7 +398,8 @@ namespace corona
 
 		virtual bool accepts(query_context_base* _qcb, json _src)
 		{
-			return _src.contains_text(textsrc);
+			std::string search_text = _qcb->get_data(textsrc);
+			return _src.contains_text(search_text);
 		}
 
 		virtual void get_json(json& _dest)
@@ -860,7 +877,7 @@ namespace corona
 
 		virtual void get_json(json& _dest)
 		{
-			_dest.put_member("class_name", "query_project");
+			_dest.put_member("class_name", "project");
 			_dest.put_member("source_name", source_name);
 			_dest.put_member("projection", projection);
 		}
@@ -1000,6 +1017,10 @@ namespace corona
 			{
 				_dest = std::make_shared<query_join>();
 				_dest->put_json(_src);
+			}
+			else {
+				std::string msg = std::format("class_name {0} is not a valid query stage.  Use 'filter', 'project', 'join'.",  class_name );
+				system_monitoring_interface::global_mon->log_warning(msg, __FILE__, __LINE__);
 			}
 		}
 	}

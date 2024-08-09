@@ -1544,7 +1544,11 @@ namespace corona
 
 			if (ids.name.empty()) {
 				system_monitoring_interface::global_mon->log_warning("Forms without names basically don't work");
-			}
+/*				json_parser jp;
+				json diag = jp.create_object();
+				_ids.get_json(diag);
+				system_monitoring_interface::global_mon->log_json(diag);
+	*/		}
 
 			ids = _ids;
 			auto pform = this;

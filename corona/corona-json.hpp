@@ -2190,10 +2190,15 @@ namespace corona
 									comma = ", ";
 								}
 							}
+							auto v = std::make_shared<json_string>();
+							v->value = sresult;
+							result = json(v);
+							return result;
 						}
 					}
 				}
 			}
+			return start;
 		}
 
 		json join(json& _right, 
@@ -2421,6 +2426,9 @@ namespace corona
 			{
 				j.put_member("source_name", path_components[0]);
 				j.put_member("query_path", path_components[1]);
+			}
+			else if (_path.find(':') != std::string::npos) {
+				j.put_member("source_name", path_components[0]);
 			}
 			else {
 				j.put_member("query_path", path_components[0]);

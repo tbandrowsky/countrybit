@@ -456,7 +456,7 @@ namespace corona
 		virtual void put_json(json& _src)
 		{
 			std::vector<std::string> missing;
-			if (!_src.has_members(missing, { "page_to_select", "frame_to_load", "frame_contents_page" })) {
+			if (!_src.has_members(missing, { "frame_contents_page", "frame_to_load" })) {
 				system_monitoring_interface::global_mon->log_warning("select_frame_command missing:");
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 					system_monitoring_interface::global_mon->log_bus(s);

@@ -135,7 +135,8 @@
       "ClassDescription": "A moment in history.",
       "BaseClassName": "Facts",
       "Fields": {
-        "EventDate" : "datetime",
+        "EventDate": "datetime",
+        "Story" :  "string",
         "Actors" : "array"
       }
     },

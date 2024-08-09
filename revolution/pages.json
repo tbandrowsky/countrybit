@@ -27,7 +27,7 @@
               "class_name": "caption_bar",
               "corporate_name": "country video games",
               "image_file": "cockade.png",
-              "title_name": "United States Reparations System",
+              "title_name": "Reparations : Act 1 of the Revolution Game",
               "subtitle_name": "Country Video Games",
               "title_start": "0.28 container",
               "box": {
@@ -431,28 +431,13 @@
                             "class_name": "edit",
                             "tooltip_text": "Search for an event",
                             "is_default_focus": true
-                          },
-                          {
-                            "json_field_name": "EventDate",
-                            "label_text": "Date",
-                            "class_name": "monthcalendar",
-                            "tooltip_text": "The day of the event",
-                            "is_default_focus": false,
-                            "field_box": {
-                              "width": "250 pixels",
-                              "height": "250 pixels"
-                            },
-                            "box": {
-                              "width": "250 pixels",
-                              "height": "200 pixels"
-                            }
                           }
                         ],
                         "data": []
                       },
                       "box": {
                         "width": "1.0 container",
-                        "height": "250 pixels"
+                        "height": "75 pixels"
                       }
                     },
                     {
@@ -493,10 +478,10 @@
                                 {
                                   "stage_name":  "search for any event text",
                                   "class_name": "filter",
-                                  "stage_input_name": "event_list",
+                                  "stage_input_name": "Events:",
                                   "predicate": {
                                     "class_name": "contains",
-                                    "textsrc": "search_event_form.description"
+                                    "textsrc": "search_event_form:Description"
                                   }
                                 }
                               ]
@@ -689,6 +674,22 @@
                             "box": {
                               "width": "250 pixels",
                               "height": "50 pixels"
+                            }
+                          },
+                          {
+                            "json_field_name": "Story",
+                            "label_text": "Story",
+                            "width": 300,
+                            "class_name": "richedit",
+                            "tooltip_text": "The day of the event",
+                            "is_default_focus": false,
+                            "field_box": {
+                              "width": "250 pixels",
+                              "height": "150 pixels"
+                            },
+                            "box": {
+                              "width": "250 pixels",
+                              "height": "150 pixels"
                             }
                           }
                         ],
