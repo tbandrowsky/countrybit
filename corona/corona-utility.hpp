@@ -49,6 +49,14 @@ namespace corona {
 		return ss.str();
 	}
 
+	bool is_number(const std::string& s) {
+		for (char c : s) {
+			if (!std::isdigit(c)) {
+				return false;
+			}
+		}
+		return !s.empty();
+	}
 }
 
 #endif

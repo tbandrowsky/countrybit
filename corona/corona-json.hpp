@@ -979,6 +979,8 @@ namespace corona
 			return value;
 		}
 
+		bool contains_text(std::string _text);
+
 		operator std::shared_ptr<json_array>& ()
 		{
 			return array_impl;
@@ -1040,6 +1042,10 @@ namespace corona
 			json empty;
 			return empty;
 		}
+
+		bool gt(json _value);
+		bool lt(json _value);
+		bool eq(json _value);
 
 		void assign_update(json _member)
 		{
@@ -2048,6 +2054,148 @@ namespace corona
 			return *this;
 		}
 
+		json get_query(std::string _path)
+		{
+			json result;
+			std::vector<std::string> items = split(_path, '.');
+			json start = *this;
+
+			for (auto item : items) 
+			{
+				if (start.object()) 
+				{
+					start = start[item];
+				}
+				else if (start.array())
+				{
+					if (is_number(item)) {
+						int idx = std::strtol(item.c_str(), nullptr, 10);
+						if (idx < 0 || idx >= start.size()) {
+							return result;
+						}
+						start = start.get_element(idx);
+					} 
+					else {
+						std::vector<std::string> item_ops = split(item, '-');
+						if (item_ops.size() < 2) {
+							return result;
+						}
+						std::string operation = item_ops[0];
+						std::string member_name = item_ops[1];
+						if (operation == "last")
+						{
+							int index = start.size() - 1;
+							if (index < 0)
+								return result;
+							else
+								return start.get_element(index);
+						}
+						else if (operation == "first")
+						{
+							int index = start.size() - 1;
+							if (index < 0)
+								return result;
+							else
+								return start.get_element(index);
+						}
+						else if (operation == "count")
+						{
+							int count = 0;
+							for (auto ch : start) {
+								if (ch.has_member(member_name)) {
+									count++;
+								}
+							}
+							auto v = std::make_shared<json_double>();
+							v->value = count;
+							result = json(v);
+							return result;
+						}
+						else if (operation == "min")
+						{
+							json mvalue;
+							for (auto ch : start) {
+								if (ch.has_member(member_name)) {
+									if (mvalue.empty()) {
+										mvalue = ch[member_name];
+									}
+									else {
+										json tvalue = ch[member_name];
+										if (tvalue.lt(mvalue)) {
+											mvalue = tvalue;
+										}
+									}
+								}
+							}
+							return mvalue;
+						}
+						else if (operation == "max")
+						{
+							json mvalue;
+							for (auto ch : start) {
+								if (ch.has_member(member_name)) {
+									if (mvalue.empty()) {
+										mvalue = ch[member_name];
+									}
+									else {
+										json tvalue = ch[member_name];
+										if (tvalue.gt(mvalue)) {
+											mvalue = tvalue;
+										}
+									}
+								}
+							}
+							return mvalue;
+						}
+						else if (operation == "sum")
+						{
+							double rsum = 0;
+							for (auto ch : start) {
+								if (ch.has_member(member_name)) {
+									double t = (double)ch[member_name];
+									t += rsum;
+								}							
+							}
+							auto v = std::make_shared<json_double>();
+							v->value = rsum;
+							result = json(v);
+							return result;
+						}
+						else if (operation == "avg")
+						{
+							double rsum = 0;
+							double count = 0;
+							for (auto ch : start) {
+								if (ch.has_member(member_name)) {
+									double t = (double)ch[member_name];
+									t += rsum;
+									count += 1.0;
+								}
+							}
+							if (count > 0) {
+								auto v = std::make_shared<json_double>();
+								v->value = rsum / count;
+								result = json(v);
+							}
+							return result;
+						}
+						else if (operation == "cat")
+						{
+							std::string sresult = "";
+							std::string comma = "";
+							for (auto ch : start) {
+								if (ch.has_member(member_name)) {
+									sresult += comma;
+									sresult += (std::string)ch[member_name];
+									comma = ", ";
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
 		json join(json& _right, 
 			std::function<bool(json&_item1, json&_item2)> _compare,
 			std::function<json(json& _item1, json& _item2)> _compose
@@ -2067,71 +2215,6 @@ namespace corona
 					if (_compare(left_item, right_item)) {
 						json new_item = _compose(left_item, right_item);
 						new_array.put_element(-1, new_item);
-					}
-				}
-			}
-
-			return new_array;
-		}
-
-		json join(json& _right,
-			std::function<std::string(json& _item)> _get_key_left,
-			std::function<std::string(json& _item)> _get_key_right,
-			std::function<json(json& _item1, json& _item2)> _compose
-		)
-		{
-			if (!array_impl) {
-				throw std::logic_error("Not an array");
-			}
-
-			int i, j;
-
-			class match_set
-			{
-			public:
-				std::vector<int> left;
-				std::vector<int> right;
-			};
-
-			std::map<std::string, match_set> join_items;
-
-			json new_array(std::make_shared<json_array>());
-
-			for (i = 0; i < size(); i++)
-			{
-				json left_item = get_element(i);				
-				std::string key = _get_key_left(left_item);
-				if (!join_items.contains(key)) {
-					match_set m;
-					join_items[key] = m;
-				}
-				join_items[key].left.push_back(i);
-			}
-
-			for (j = 0; j < _right.size(); j++)
-			{
-				json right_item = _right.get_element(j);
-				std::string key = _get_key_right(right_item);
-				if (!join_items.contains(key)) {
-					match_set m;
-					join_items[key] = m;
-				}
-				join_items[key].left.push_back(j);
-			}
-
-			for (auto join_item : join_items)
-			{
-				for (i = 0; i < join_item.second.left.size(); i++) 
-				{
-					auto left_id = join_item.second.left[i];
-					auto left_item = get_element(i);
-
-					for (j = 0; i < join_item.second.right.size(); j++)
-					{
-						auto right_id = join_item.second.right[i];
-						auto right_item = get_element(i);
-						auto new_item = _compose(left_item, right_item);
-						new_array.append_element(new_item);
 					}
 				}
 			}
@@ -2326,6 +2409,25 @@ namespace corona
 		};
 
 		std::vector<parse_message> parse_errors;
+
+		json parse_query(std::string _path)
+		{
+			json_parser jp;
+			json j = jp.create_object();
+
+			std::vector<std::string> path_components;
+			path_components = split(_path, ':');
+			if (path_components.size() == 2)
+			{
+				j.put_member("source_name", path_components[0]);
+				j.put_member("query_path", path_components[1]);
+			}
+			else {
+				j.put_member("query_path", path_components[0]);
+			}
+
+			return j;
+		}
 
 		json parse_object(std::string _object)
 		{
@@ -3138,6 +3240,151 @@ namespace corona
 			;
 		}
 	};
+
+	bool json::contains_text(std::string _text)
+	{
+		if (empty())
+			return false;
+		if (object_impl)
+		{
+			auto members = get_members();
+			for (auto m : members)
+			{
+				if (m.second.contains_text(_text))
+				{
+					return true;
+				}
+			}
+		}
+		else if (array_impl)
+		{
+			for (auto e : *this)
+			{
+				if (e.contains_text(_text))
+				{
+					return true;
+				}
+			}
+		}
+		else {
+			std::string temp = (std::string)*this;
+			if (temp.find(_text) != std::string::npos) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	bool json::gt(json _value)
+	{
+		if (empty() || _value.empty())
+			return false;
+		if (is_datetime() && _value.is_datetime()) {
+			date_time dtme = datetime_impl->value;
+			date_time dtv = _value.datetime_impl->value;
+			return dtme > dtv;
+		}
+		else if (is_double() && _value.is_double()) {
+			double dme = double_impl->value;
+			double dv = _value.double_impl->value;
+			return dme > dv;
+		}
+		else if (is_int64() && _value.is_int64()) {
+			int64_t ime = int64_impl->value;
+			int64_t iv = _value.int64_impl->value;
+			return ime > iv;
+		}
+		else if (_value.is_int64()) {
+			int64_t ime = (int64_t)*this;
+			int64_t iv = _value.int64_impl->value;
+			return ime > iv;
+		}
+		else if (_value.is_double()) {
+			double dme = (double)*this;
+			double dv = _value.double_impl->value;
+			return dme > dv;
+		}
+		else 
+		{
+			std::string sme = (std::string)(*this);
+			std::string sv = (std::string)(_value);
+			return sme > sv;
+		}
+	}
+
+	bool json::lt(json _value)
+	{
+		if (empty() || _value.empty())
+			return false;
+		if (is_datetime() && _value.is_datetime()) {
+			date_time dtme = datetime_impl->value;
+			date_time dtv = _value.datetime_impl->value;
+			return dtme < dtv;
+		}
+		else if (is_double() && _value.is_double()) {
+			double dme = double_impl->value;
+			double dv = _value.double_impl->value;
+			return dme < dv;
+		}
+		else if (is_int64() && _value.is_int64()) {
+			int64_t ime = int64_impl->value;
+			int64_t iv = _value.int64_impl->value;
+			return ime < iv;
+		}
+		else if (_value.is_int64()) {
+			int64_t ime = (int64_t)*this;
+			int64_t iv = _value.int64_impl->value;
+			return ime < iv;
+		}
+		else if (_value.is_double()) {
+			double dme = (double)*this;
+			double dv = _value.double_impl->value;
+			return dme < dv;
+		}
+		else
+		{
+			std::string sme = (std::string)(*this);
+			std::string sv = (std::string)(_value);
+			return sme < sv;
+		}
+	}
+
+	bool json::eq(json _value)
+	{
+		if (empty() || _value.empty())
+			return false;
+		if (is_datetime() && _value.is_datetime()) {
+			date_time dtme = datetime_impl->value;
+			date_time dtv = _value.datetime_impl->value;
+			return dtme == dtv;
+		}
+		else if (is_double() && _value.is_double()) {
+			double dme = double_impl->value;
+			double dv = _value.double_impl->value;
+			return dme == dv;
+		}
+		else if (is_int64() && _value.is_int64()) {
+			int64_t ime = int64_impl->value;
+			int64_t iv = _value.int64_impl->value;
+			return ime == iv;
+		}
+		else if (_value.is_int64()) {
+			int64_t ime = (int64_t)*this;
+			int64_t iv = _value.int64_impl->value;
+			return ime == iv;
+		}
+		else if (_value.is_double()) {
+			double dme = (double)*this;
+			double dv = _value.double_impl->value;
+			return dme == dv;
+		}
+		else
+		{
+			std::string sme = (std::string)(*this);
+			std::string sv = (std::string)(_value);
+			return sme == sv;
+		}
+	}
 
 	json json::merge(json& _object)
 	{

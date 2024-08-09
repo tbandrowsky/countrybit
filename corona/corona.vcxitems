@@ -78,6 +78,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-presentation-page.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-presentation-controls-win32.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-presentation.hpp" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)corona-query.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-queue.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-read_all_string.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)corona-rectangle_box.hpp" />

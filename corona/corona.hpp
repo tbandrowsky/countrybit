@@ -170,6 +170,9 @@ For Future Consideration
 
 #include "corona-cryptography.hpp"
 
+// query implements a linq like predicate object graph for everywhere
+#include "corona-query.hpp"
+
 // a json table here is a physical table in a file beginning at some point within it.
 #include "corona-json-table.hpp"
 

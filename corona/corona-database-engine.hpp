@@ -69,7 +69,7 @@ namespace corona
 	using corona_db_header = poco_node<corona_db_header_struct>;
 	using class_method_key = std::tuple<std::string, std::string>;
 
-	class corona_database
+	class corona_database 
 	{
 		corona_db_header header;
 
