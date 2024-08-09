@@ -482,7 +482,25 @@
                             "class_name": "search_objects_command",
                             "search_class_name": "Events",
                             "form_name": "search_event_form",
-                            "table_name": "event_list"
+                            "table_name": "event_list",
+                            "query": {
+                              "class_name":  "query_context",
+                              "froms": {
+                                "event_list": [],
+                                "search_event_form": {}
+                              },
+                              "stages": [
+                                {
+                                  "stage_name":  "search for any event text",
+                                  "class_name": "filter",
+                                  "stage_input_name": "event_list",
+                                  "predicate": {
+                                    "class_name": "contains",
+                                    "textsrc": "search_event_form.description"
+                                  }
+                                }
+                              ]
+                            }
                           }
                         }
                       ]

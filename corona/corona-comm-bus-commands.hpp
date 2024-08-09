@@ -289,6 +289,7 @@ namespace corona
 		std::string			search_class_name;
 		std::string			form_name;
 		std::string			table_name;
+		query_context		qctx;
 
 		virtual comm_bus_transaction<json> execute()
 		{
@@ -309,10 +310,15 @@ namespace corona
 				search_class_filters.put_member("ClassName", search_class_name);
 				json object_data = cb_form->get_data();
 				if (object_data.object()) {
+					json search_class = jp.create_object();
+					search_class.put_member("ClassName", search_class_name);
 					search_class_filters.put_member("Filter", object_data);
 					obj = co_await bus->query_objects(search_class_filters);
+					qctx.set_data_source(form_name, object_data);
+					qctx.set_data_source(search_class_name, obj);
+					json results = qctx.run();
 					if (cb_table) {
-						cb_table->set_items(obj);
+						cb_table->set_items(results);
 					}
 				}
 			}
@@ -326,6 +332,10 @@ namespace corona
 			_dest.put_member("search_class_name", search_class_name);
 			_dest.put_member("form_name", form_name);
 			_dest.put_member("table_name", table_name);
+			json_parser jp;
+			json jctx = jp.create_object();
+			qctx.get_json(jctx);
+			_dest.put_member("query", jctx);
 		}
 
 		virtual void put_json(json& _src)
@@ -345,6 +355,8 @@ namespace corona
 			form_name = _src["form_name"];
 			table_name = _src["table_name"];
 			search_class_name = _src["search_class_name"];
+			json jctx = _src["query"];
+			qctx.put_json(jctx);
 		}
 
 	};

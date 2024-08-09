@@ -120,6 +120,9 @@ namespace corona
 
 	};
 
+	void get_json(json& _dest, std::shared_ptr<query_stage>& _src);
+	void put_json(std::shared_ptr<query_stage>& _dest, json _src);
+
 	class query_context : public query_context_base
 	{
 	public:
@@ -136,7 +139,7 @@ namespace corona
 			for (auto st : stages) {
 				json stj = jp.create_object();
 				st->get_json(stj);
-				stage_array.push_back(st);
+				stage_array.push_back(stj);
 			}
 			_dest.put_member("stages", stage_array);
 		}
@@ -174,8 +177,8 @@ namespace corona
 				auto found = std::find_if(
 					stages.begin(), 
 					stages.end(), 
-					[_data_name](query_stage& _item) ->bool {
-						return _item.stage_name == _data_name;
+					[_data_name](std::shared_ptr<query_stage>& _item) ->bool {
+						return _item->stage_name == _data_name;
 					});
 				while (found != std::end(stages) && j.empty()) {
 					j = found->get()->stage_output;
@@ -185,6 +188,14 @@ namespace corona
 			return j;
 		}
 
+		virtual json run()
+		{
+			json output_op;
+			for (auto stage : stages) {
+				output_op = stage->process(this);
+			}
+			return output_op;
+		}
 	};
 
 	class query_predicate
@@ -241,7 +252,6 @@ namespace corona
 		virtual void get_json(json& _dest)
 		{
 			json_parser jp;
-			json _dest = jp.create_object();
 			query_stage::get_json(_dest);
 
 			_dest.put_member("class_name", "query_filter");
@@ -380,7 +390,6 @@ namespace corona
 			query_predicate::get_json(_dest);
 			_dest.put_member("class_name", "contains");
 			_dest.put_member("textsrc", textsrc);
-			_dest.put_member("execution_time_seconds", execution_time_seconds);
 		}
 
 		virtual void put_json(json& _src)
@@ -731,9 +740,9 @@ namespace corona
 
 		virtual bool accepts(query_context_base* _qcb, json _src)
 		{
-			return std::all_of(conditions.begin(), conditions.end(), [_qcb, _src](std::shared_ptr<query_predicate>& _condition)
+			return std::all_of(conditions.begin(), conditions.end(), [_qcb, _src](std::shared_ptr<query_predicate>& _condition)-> bool
 				{
-					_condition->accepts(_qcb, _src);
+					return _condition->accepts(_qcb, _src);
 				});
 		}
 
@@ -788,9 +797,9 @@ namespace corona
 
 		virtual bool accepts(query_context_base* _qcb, json _src)
 		{
-			return std::any_of(conditions.begin(), conditions.end(), [_qcb, _src](std::shared_ptr<query_predicate>& _condition)
+			return std::any_of(conditions.begin(), conditions.end(), [_qcb, _src](std::shared_ptr<query_predicate>& _condition) -> bool
 				{
-					_condition->accepts(_qcb, _src);
+					return _condition->accepts(_qcb, _src);
 				});
 		}
 
@@ -802,8 +811,11 @@ namespace corona
 			_dest.put_member("class_name", "in");
 			json jconditions = jp.create_array();
 			for (auto cond : conditions) {
-				json jcond = jp.create_object();
-				cond->get_json(jcond);
+				if (cond) {
+					json jcond = jp.create_object();
+					cond->get_json(jcond);
+					jconditions.push_back(jcond);
+				}
 			}
 			_dest.put_member("conditions", jconditions);
 		}
@@ -831,7 +843,9 @@ namespace corona
 			{
 				std::shared_ptr<query_predicate> new_condition;
 				corona::put_json(new_condition, jcondition);
-				conditions.push_back(new_condition);
+				if (new_condition) {
+					conditions.push_back(new_condition);
+				}
 			}
 		}
 	};
@@ -949,8 +963,7 @@ namespace corona
 
 	void get_json(json& _dest, std::shared_ptr<query_stage>& _src)
 	{
-		json_parser jp;
-		_dest = jp.create_object();
+		_src->get_json(_dest);
 	}
 
 	void put_json(std::shared_ptr<query_stage>& _dest, json _src)
@@ -993,8 +1006,8 @@ namespace corona
 
 	void get_json(json& _dest, std::shared_ptr<query_filter>& _src)
 	{
-		json_parser jp;
-		_dest = jp.create_object();
+		if (_src)
+			_src->get_json(_dest);
 	}
 
 	void put_json(std::shared_ptr<query_predicate>& _dest, json _src)
@@ -1039,17 +1052,22 @@ namespace corona
 			}
 			else if (class_name == "lte")
 			{
-				_dest = std::make_shared<filter_lt>();
+				_dest = std::make_shared<filter_lte>();
 				_dest->put_json(_src);
 			}
 			else if (class_name == "any")
 			{
-				_dest = std::make_shared<filter_lt>();
+				_dest = std::make_shared<filter_any>();
 				_dest->put_json(_src);
 			}
 			else if (class_name == "all")
 			{
-				_dest = std::make_shared<filter_lt>();
+				_dest = std::make_shared<filter_all>();
+				_dest->put_json(_src);
+			}
+			else if (class_name == "contains")
+			{
+				_dest = std::make_shared<filter_contains>();
 				_dest->put_json(_src);
 			}
 		}
