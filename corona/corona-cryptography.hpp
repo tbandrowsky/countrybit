@@ -349,6 +349,69 @@ namespace corona
 		}
 	};
 
+	class certificates {
+	public:
+
+		bool InstallRootCertificate(const std::string& certPath) {
+			// Open the certificate file
+			HANDLE hFile = CreateFile(certPath.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+			if (hFile == INVALID_HANDLE_VALUE) {
+				std::cerr << "Failed to open certificate file." << std::endl;
+				return false;
+			}
+
+			// Get the file size
+			DWORD fileSize = GetFileSize(hFile, NULL);
+			if (fileSize == INVALID_FILE_SIZE) {
+				std::cerr << "Failed to get certificate file size." << std::endl;
+				CloseHandle(hFile);
+				return false;
+			}
+
+			// Read the certificate file into memory
+			BYTE* certData = new BYTE[fileSize];
+			DWORD bytesRead;
+			if (!ReadFile(hFile, certData, fileSize, &bytesRead, NULL)) {
+				std::cerr << "Failed to read certificate file." << std::endl;
+				delete[] certData;
+				CloseHandle(hFile);
+				return false;
+			}
+			CloseHandle(hFile);
+
+			// Create a certificate context from the file data
+			PCCERT_CONTEXT pCertContext = CertCreateCertificateContext(X509_ASN_ENCODING | PKCS_7_ASN_ENCODING, certData, fileSize);
+			delete[] certData;
+			if (!pCertContext) {
+				std::cerr << "Failed to create certificate context." << std::endl;
+				return false;
+			}
+
+			// Open the root certificate store
+			HCERTSTORE hStore = CertOpenStore(CERT_STORE_PROV_SYSTEM, 0, NULL, CERT_SYSTEM_STORE_LOCAL_MACHINE, L"ROOT");
+			if (!hStore) {
+				std::cerr << "Failed to open root certificate store." << std::endl;
+				CertFreeCertificateContext(pCertContext);
+				return false;
+			}
+
+			// Add the certificate to the store
+			if (!CertAddCertificateContextToStore(hStore, pCertContext, CERT_STORE_ADD_REPLACE_EXISTING, NULL)) {
+				std::cerr << "Failed to add certificate to store." << std::endl;
+				CertCloseStore(hStore, 0);
+				CertFreeCertificateContext(pCertContext);
+				return false;
+			}
+
+			// Clean up
+			CertCloseStore(hStore, 0);
+			CertFreeCertificateContext(pCertContext);
+
+			std::cout << "Certificate installed successfully." << std::endl;
+			return true;
+		}
+	};
+
 	bool test_encryption()
 	{
 		crypto crypter;

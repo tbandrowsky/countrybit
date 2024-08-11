@@ -679,19 +679,19 @@
                           {
                             "json_field_name": "Story",
                             "label_text": "Story",
-                            "width": 300,
-                            "class_name": "richedit",
+                            "class_name": "edit",
                             "tooltip_text": "The day of the event",
                             "is_default_focus": false,
                             "field_box": {
                               "width": "250 pixels",
-                              "height": "150 pixels"
+                              "height": "125 pixels"
                             },
                             "box": {
                               "width": "250 pixels",
                               "height": "150 pixels"
                             }
                           }
+
                         ],
                         "data": []
                       },

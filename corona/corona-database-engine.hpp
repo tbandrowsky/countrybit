@@ -168,10 +168,14 @@ namespace corona
 			json response = co_await create_class(R"(
 {	
 	"ClassName" : "SysObject",
-	"ClassDescription" : "A reference to another object",
+	"ClassDescription" : "Base of all objects",
 	"Fields" : {			
 			"ObjectId" : "int64",
-			"ClassName" : "string"
+			"ClassName" : "string",
+			"Created" : "datetime",
+			"CreatedBy" : "string",
+			"Updated" : "datetime",
+			"UpdatedBy" : "string"
 	}
 }
 )");
@@ -189,6 +193,67 @@ namespace corona
 			}
 
 			created_classes.put_member("SysObject", true);
+
+			response = co_await create_class(R"(
+{
+	"ClassName" : "SysSchemas",
+	"BaseClassName" : "SysObject"
+	"ClassDescription" : "Database script changes",
+	"UniqueConstraint" : [ "SchemaName", "SchemaVersion" ],
+	"Fields" : {			
+			"SchemaName" : "string",
+			"SchemaVersion" : "string",
+			"SchemaAuthors" : "array",
+			"Classes" : "array",
+			"Users" : "array",
+			"Datasets" : "array"
+	}
+}
+)");
+
+			if (!response["Success"]) {
+				std::cout << __FILE__ << " " << __LINE__ << ":classes.put failed." << std::endl;
+				std::cout << response.to_json() << std::endl;
+				co_return result;
+			}
+
+			test = co_await classes.get(R"({"ClassName":"SysSchemas"})");
+			if (test.empty() || test.is_member("ClassName", "SysParseError")) {
+				std::cout << __FILE__ << " " << __LINE__ << ":Could not find class after creation." << std::endl;
+				co_return result;
+			}
+
+			created_classes.put_member("SysSchemas", true);
+
+			response = co_await create_class(R"(
+{
+	"ClassName" : "SysDatasets",
+	"BaseClassName" : "SysObject"
+	"ClassDescription" : "Database script changes",
+	"UniqueConstraint" : [ "DatasetName", "DatasetVersion" ],
+	"Fields" : {			
+			"DatasetName" : "string",
+			"DatasetVersion" : "string",
+			"DatasetAuthors" : "array",
+			"RunOnChange": "bool",
+			"Objects" : "array"
+	}
+}
+)");
+
+			if (!response["Success"]) {
+				std::cout << __FILE__ << " " << __LINE__ << ":classes.put failed." << std::endl;
+				std::cout << response.to_json() << std::endl;
+				co_return result;
+			}
+
+			test = co_await classes.get(R"({"ClassName":"SysSchemas"})");
+			if (test.empty() || test.is_member("ClassName", "SysParseError")) {
+				std::cout << __FILE__ << " " << __LINE__ << ":Could not find class after creation." << std::endl;
+				co_return result;
+			}
+
+			created_classes.put_member("SysSchemas", true);
 
 			response = co_await create_class(R"(
 {	
@@ -220,7 +285,7 @@ namespace corona
 	"BaseClassName" : "SysObject",
 	"ClassName" : "SysUser",
 	"ClassDescription" : "A user",
-	"NameIndex" : true,
+	"UniqueConstraint" : [ "Name" ],
 	"Fields" : {			
 			"ClassName" : "string",
 			"FirstName" : "string",
@@ -258,7 +323,7 @@ namespace corona
 	"BaseClassName" : "SysObject",
 	"ClassName" : "SysLogin",
 	"ClassDescription" : "A login of a user",
-	"NameIndex" : true,
+	"UniqueConstraint" : [ "Name" ],
 	"Fields" : {			
 			"Name" : "string",
 			"Password" : "string",
@@ -432,7 +497,7 @@ namespace corona
 	"ClassName" : "SysTeam",
 	"BaseClassName" : "SysObject",
 	"ClassDescription" : "A team",
-	"NameIndex" : true,
+	"UniqueConstraint" : [ "Name" ],
 	"Fields" : {			
 			"Name" : "string",
 			"Description" : "string",
@@ -533,6 +598,7 @@ private:
 								{
 									descendants = jp.create_object();
 								}
+								descendants.put_member(acn, acn);
 								ancestor_class.put_member("Descendants", descendants);
 								co_await classes.put(ancestor_class);
 							}
@@ -549,6 +615,24 @@ private:
 				response = checked;
 			}
 			co_return response;
+		}
+
+		bool compare_classes(json _classA, json _classB)
+		{
+			json_parser jp;
+			json classA = jp.create_object();
+			classA.copy_member("BaseClassName", _classA);
+			classA.copy_member("Fields", _classA);
+			classA.copy_member("UniqueConstraint", _classA);
+			std::string sa = classA.to_json_typed();
+
+			json classB = jp.create_object();
+			classB.copy_member("BaseClassName", _classB);
+			classB.copy_member("Fields", _classB);
+			classB.copy_member("UniqueConstraint", _classB);
+			std::string sb = classB.to_json_typed();
+
+			return sa == sb;
 		}
 
 		database_transaction<json> check_class(json check_class_request)
@@ -647,6 +731,21 @@ private:
 						bus->log_bus("Apply inherited fields");
 						bus->log_json(class_definition);
 					}
+				}
+
+				if (class_definition.has_member("UniqueConstraint")) {
+					json class_fields = class_definition["Fields"];
+					json unique_name = class_definition["UniqueConstraint"];
+					if (unique_name.array()) {
+						for (auto jfield_name : unique_name) {
+							std::string field_name = (std::string)jfield_name;
+							if (!class_fields.has_member(unique_name)) {
+								std::string msg = std::format("unique constraint {0} does not exist in class {1}", (std::string)unique_name, (std::string)class_name);
+								result = create_response(check_class_request, false, msg, class_definition, method_timer.get_elapsed_seconds());
+								co_return result;
+							}
+						}
+					}					
 				}
 
 			} 
@@ -801,10 +900,23 @@ private:
 						result.put_member("Definition", class_data);
 						result.put_member("Data", object_definition);
 					}
+
+					if (class_data.has_member("UniqueConstraint"))
+					{
+						json objects_by_name_key = jp.create_object();
+						json constraint_fields = class_data["UniqueConstraint"];
+						std::vector<std::string> constraint_names;
+						constraint_names.push_back("ClassName");
+						for (auto constraint_field : constraint_fields) {
+							constraint_names.push_back(constraint_field);
+						}
+						objects_by_name_key.set_compare_order(constraint_names);
+						result.put_member("UniqueConstraintKey", objects_by_name_key);
+					} 
 				}
 				else
 				{
-					std::string msg = std::format("'{0}' is not valid", class_name);
+					std::string msg = std::format("'{0}' is not valid class_name", class_name);
 					result.put_member("Message", msg);
 					result.put_member("Success", 0);
 					result.put_member("Data", object_definition);
@@ -950,12 +1062,24 @@ private:
 
 			scope_lock lock_one(objects_rw_lock);
 
-			if (_object_key.has_member("Name"))
+			std::string class_name = _object_key["ClassName"];
+			json classdef = classes.get(class_name);
+			
+			if (classdef.empty()) 
+			{
+				co_return obj;
+			}
+
+			if (classdef.has_member("UniqueConstraint"))
 			{
 				json objects_by_name_key = jp.create_object();
-				objects_by_name_key.copy_member("ClassName", _object_key);
-				objects_by_name_key.copy_member("Name", _object_key);
-				objects_by_name_key.set_compare_order({ "ClassName", "Name" });
+				json constraint_fields = classdef["UniqueConstraint"];
+				std::vector<std::string> constraint_names;
+				constraint_names.push_back("ClassName");
+				for (auto constraint_field : constraint_fields) {
+					constraint_names.push_back(constraint_field);
+				}
+				objects_by_name_key.set_compare_order(constraint_names);
 				json name_id = co_await objects_by_name.get_first(objects_by_name_key);
 				if (name_id.object()) {
 					json object_key = jp.create_object();
@@ -1274,6 +1398,41 @@ private:
 			date_time start_schema = date_time::now();
 			timer tx;
 			system_monitoring_interface::global_mon->log_bus("Corona database", "Applying schema file", start_schema, __FILE__, __LINE__);
+
+			bool new_database = true;
+
+			std::map<std::string, bool> changed_classes;
+
+			if (!_schema.has_member("SchemaName"))
+			{
+				system_monitoring_interface::global_mon->log_bus("Corona database", "Schema doesn't have a schema name", start_schema, __FILE__, __LINE__);
+			}
+
+			if (!_schema.has_member("SchemaVersion"))
+			{
+				system_monitoring_interface::global_mon->log_bus("Corona database", "Schema doesn't have a schema version", start_schema, __FILE__, __LINE__);
+			}
+
+			if (!_schema.has_member("SchemaAuthors"))
+			{
+				system_monitoring_interface::global_mon->log_bus("Corona database", "Schema doesn't have an author", start_schema, __FILE__, __LINE__);
+			}
+
+			json_parser jp;
+
+			json schema_key = jp.create_object();
+			schema_key.copy_member("SchemaName", _schema);
+			schema_key.copy_member("SchemaVersion", _schema);
+			schema_key.put_member("ClassName", "SysDatasets");
+			schema_key.set_compare_order({ "SchemaName", "SchemaVersion" });
+
+			json schema_test = co_await acquire_object(schema_key);
+
+			if (schema_test.object()) 
+			{
+				new_database = false;
+			}
+
 			if (_schema.has_member("Classes"))
 			{
 				json class_array = _schema["Classes"];
@@ -1283,10 +1442,22 @@ private:
 					{
 						json class_definition = class_array.get_element(i);
 						try {
+
 							json put_class_request = create_system_request(class_definition);
-							json class_result = co_await create_class(put_class_request);
-							if (class_result.error()) {
+							json class_result = co_await put_class(put_class_request);
+
+							if (class_result.error()) 
+							{
 								bus->log_error(class_result, __FILE__, __LINE__);
+							}
+							else 
+							{
+								json class_data = class_result["Data"];
+								bool changed_class = (bool)class_data["ClassChanged"];
+								if (changed_class) {
+									std::string class_name = class_data["ClassName"];
+									changed_classes[class_name] = true;
+								}
 							}
 						}
 						catch (std::exception exc)
@@ -1334,57 +1505,122 @@ private:
 					co_await create_user(put_user_request);
 				}
 			}
-
-			if (_schema.has_member("Objects"))
+			/*
+			  "Datasets": [
+    {
+		"ClassName" : "SysDatasets"
+      "DatasetName": "Load Base Events",
+      "RunWhen" :  "DatabaseCreate",
+      "ObjectList": [
+        {
+          "ClassName": "SysTeam",
+          "Name": "ReparationsTeam",
+          "Description": "Reparations users",
+          "Grants": [],
+          "Members": []
+        },
+        {
+          "ClassName": "Events",
+          "EventDate": "11/1/1914",
+          "Description": "The President orders segregation.",
+          "Story": "Special story 1",
+          "Actors": [],
+          "Facts": [],
+          "Files": []
+        },
+        {
+          "ClassName": "Events",
+          "EventDate": "2/18/1915",
+          "Description": "The President endorses Birth of a Nation.",
+          "Story": "Special story 2",
+          "Actors": [],
+          "Facts": [],
+          "Files": []
+        },
+        {
+          "ClassName": "Events",
+          "EventDate": "2/18/1915",
+          "Description": "The President endorses Birth of a Nation.",
+          "Story": "Special story 3",
+          "Actors": [],
+          "Facts": [],
+          "Files": []
+        },
+        {
+          "ClassName": "Events",
+          "EventDate": "2/18/1946",
+          "Description": "GI Bill Policy Change.",
+          "Story": "Special story 4",
+          "Actors": [],
+          "Facts": [],
+          "Files": []
+        }
+      ]
+    }
+  ]
+*/
+			if (_schema.has_member("Datasets"))
 			{
-				json object_array = _schema["Objects"];
-				if (object_array.array())
+				json script_array = _schema["Datasets"];
+				if (script_array.array())
 				{
-					for (int i = 0; i < object_array.size(); i++)
+					for (int i = 0; i < script_array.size(); i++)
 					{
-						json object_definition = object_array.get_element(i);
-						json put_object_request = create_system_request(object_definition);
-						// in corona, creating an object doesn't actually persist anything 
-						// but a change in identifier.  It's a clean way of just getting the 
-						// "new chumpy" item for ya.  
-						json create_result = co_await create_object(put_object_request);
-						if (create_result["Success"]) {
-							json created_object = put_object_request["Data"];
-							json save_result = co_await put_object(put_object_request);
-							if (!save_result["Success"]) {
-								system_monitoring_interface::global_mon->log_warning(save_result["Message"]);
-								system_monitoring_interface::global_mon->log_json(save_result);
+						json script_definition = script_array.get_element(i);
+						json script_key = jp.create_object();
+						script_key.copy_member("DatasetName", script_definition);
+						script_key.copy_member("DatasetVersion", script_definition);
+						script_key.put_member("ClassName", "SysDatasets");
+
+						bool script_run = (bool)script_key["RunOnChange"];
+						json existing_script = co_await acquire_object(script_key);
+						bool run_script = false;
+						if (existing_script.empty() || script_run)
+							run_script = true;
+
+						std::string changed_trigger_class_name = script_key["RunOnChangeClass"];
+						if (changed_classes.contains(changed_trigger_class_name))
+							run_script = true;
+
+						if (run_script && script_definition.has_member("Objects")) {
+							json object_list = script_definition["Objects"];
+							if (object_list.array()) {
+								for (int j = 0; j < object_list.size(); j++) {
+									json object_definition = object_list.get_element(i);
+									json put_object_request = create_system_request(object_definition);
+									// in corona, creating an object doesn't actually persist anything 
+									// but a change in identifier.  It's a clean way of just getting the 
+									// "new chumpy" item for ya.  
+									json create_result = co_await create_object(put_object_request);
+									if (create_result["Success"]) {
+										json created_object = put_object_request["Data"];
+										json save_result = co_await put_object(put_object_request);
+										if (!save_result["Success"]) {
+											system_monitoring_interface::global_mon->log_warning(save_result["Message"]);
+											system_monitoring_interface::global_mon->log_json(save_result);
+										}
+										else
+											system_monitoring_interface::global_mon->log_bus(save_result["Message"]);
+										object_definition.copy_member("Success", create_result);
+										object_definition.copy_member("Message", create_result);
+									}
+									else {
+										object_definition.copy_member("Success", create_result);
+										object_definition.copy_member("Message", create_result);
+										system_monitoring_interface::global_mon->log_warning(create_result["Message"], __FILE__, __LINE__);
+										system_monitoring_interface::global_mon->log_json(create_result);
+									}
+								}
 							}
-							else 
-								system_monitoring_interface::global_mon->log_bus(save_result["Success"]);
+							json put_script_request = create_system_request(script_definition);
+							json save_script_result = co_await put_object(put_script_request);
+							if (!save_script_result["Success"]) {
+								system_monitoring_interface::global_mon->log_warning(save_script_result["Message"]);
+								system_monitoring_interface::global_mon->log_json(save_script_result);
+							}
+							else
+								system_monitoring_interface::global_mon->log_bus(save_script_result["Message"]);
 						}
-						else {
-							system_monitoring_interface::global_mon->log_warning(create_result["Message"], __FILE__, __LINE__);
-							system_monitoring_interface::global_mon->log_json(create_result);
- 						}
-					}
-				}
-				else if (object_array.object())
-				{
-					json object_definition = object_array;
-					json put_object_request = create_system_request(object_definition);
-					// in corona, creating an object doesn't actually persist anything 
-					// but a change in identifier.  It's a clean way of just getting the 
-					// "new chumpy" item for ya.  
-					json create_result = co_await create_object(put_object_request);
-					if (create_result["Success"]) {
-						json created_object = put_object_request["Data"];
-						json save_result = co_await put_object(put_object_request);
-						if (!save_result["Success"]) {
-							system_monitoring_interface::global_mon->log_warning(save_result["Message"]);
-							system_monitoring_interface::global_mon->log_json(save_result);
-						}
-						else
-							system_monitoring_interface::global_mon->log_bus(save_result["Success"]);
-					}
-					else {
-						system_monitoring_interface::global_mon->log_warning(create_result["Message"], __FILE__, __LINE__);
-						system_monitoring_interface::global_mon->log_json(create_result);
 					}
 				}
 			}
@@ -1691,7 +1927,7 @@ private:
 			co_return result;
 		}
 
-		database_composed_transaction<json> create_class(json put_class_request)
+		database_composed_transaction<json> put_class(json put_class_request)
 		{
 			timer method_timer;
 			json result;
@@ -1736,118 +1972,62 @@ private:
 			class_key.put_member("ClassName", class_name);
 			class_key.set_compare_order({ "ClassName" });
 			json class_exists = classes.get(class_key);
-			if (class_exists.object()) {
-				result = create_response(put_class_request, false, "Class already exists", class_definition, method_timer.get_elapsed_seconds());
-				co_return result;
+			
+			bool changed_class = false;
+
+			if (compare_classes(class_exists, class_definition)) {
+				class_exists.put_member("RunScript", true);
+				result = create_response(put_class_request, true, "Class has not changed", class_exists, method_timer.get_elapsed_seconds());
 			}
+
+			changed_class = true;
+
 			json check_request = create_request(put_class_request, class_definition);
 			json checked = co_await check_class(check_request);
 			if (checked["Success"]) {
+				scope_lock lock(classes_rw_lock);
 				json adjusted_class = checked["Data"];
-				scope_lock lock_one(classes_rw_lock);
 				relative_ptr_type ptr = co_await classes.put(adjusted_class);
 				if (ptr != null_row) {
-					auto ancestors = adjusted_class["Ancestors"];
-					if (ancestors.object()) {
-						auto ancestor_classes = ancestors.get_members_raw();
-						for (auto acp : ancestor_classes) {
-							std::string acn = acp.first;
-							json class_key = jp.create_object();
-							class_key.put_member("ClassName", acn);
-							auto ancestor_class = co_await classes.get(class_key);
-							if (!ancestor_class.has_member("Descendants")) {
-								ancestor_class.put_member_object("Descendants");
+					json key = adjusted_class.extract({ "ClassName" });
+					json temp = co_await classes.get(key);
+					if (temp.empty()) {
+						result = create_response(check_request, false, "save check failed", adjusted_class, method_timer.get_elapsed_seconds());
+						co_return result;
+					}
+					if (adjusted_class.has_member("Ancestors")) {
+						auto ancestors = adjusted_class["Ancestors"];
+						if (ancestors.object()) {
+							auto ancestor_classes = ancestors.get_members_raw();
+							for (auto acp : ancestor_classes) {
+								std::string acn = acp.first;
+								json class_key = jp.create_object();
+								class_key.put_member("ClassName", acn);
+								auto ancestor_class = co_await classes.get(class_key);
+								json descendants;
+								if (ancestor_class.has_member("Descendants")) {
+									descendants = ancestor_class["Descendants"];
+								}
+								else
+								{
+									descendants = jp.create_object();
+								}
+								descendants.put_member(acn, acn);
+								ancestor_class.put_member("Descendants", descendants);
+								co_await classes.put(ancestor_class);
 							}
-							ancestor_class["Descendants"].put_member(class_name, class_name);
-							co_await classes.put(ancestor_class);
 						}
 					}
-					result = create_response(put_class_request, true, "Ok", adjusted_class, method_timer.get_elapsed_seconds());
+					adjusted_class.put_member("ClassChanged", changed_class);
+					result = create_response(check_request, true, "Ok", adjusted_class, method_timer.get_elapsed_seconds());
 				}
 				else {
-					result = create_response(put_class_request, false, "class not written", adjusted_class, method_timer.get_elapsed_seconds());
+					result = create_response(check_request, false, "didn't save", checked, method_timer.get_elapsed_seconds());
 				}
 			}
 			else
 			{
-				result = create_response(put_class_request, false, "class failed checks", checked, method_timer.get_elapsed_seconds());
-			}
-			co_return result;
-		}
-
-		database_composed_transaction<json> put_class(json put_class_request)
-		{
-			timer method_timer;
-			json result;
-			json_parser jp;
-
-			std::vector<std::string> missing_elements;
-			if (!put_class_request.has_members(missing_elements, { "Token", "Filter", "ClassName" })) {
-				std::string error_message;
-				error_message = "put_class missing elements:";
-				std::string comma = "";
-				for (auto m : missing_elements) {
-					error_message.append(comma);
-					error_message.append(m);
-				}
-				json response = create_response(put_class_request, false, error_message, jp.create_object(), method_timer.get_elapsed_seconds());
-				co_return response;
-			}
-
-			if (!check_message(put_class_request, { auth_general }))
-			{
-				result = create_response(put_class_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
-				co_return result;
-			}
-
-			json token = put_class_request["Token"];
-			json class_definition = put_class_request["Data"];
-			json class_name = class_definition["ClassName"];
-
-			bool can_put_class = co_await has_class_permission(
-				token,
-				class_name,
-				"Put");
-
-			if (!can_put_class) {
-				result = create_response(put_class_request, false, "Denied", class_definition, method_timer.get_elapsed_seconds());
-				co_return result;
-			}
-			json check_request = create_request(put_class_request, class_definition);
-			json checked = co_await check_class(check_request);
-			if (checked["Success"]) {
-				scope_lock lock_one(classes_rw_lock);
-
-				json adjusted_class = checked["Data"];
-				relative_ptr_type ptr = co_await classes.put(adjusted_class);
-				if (ptr != null_row) {
-					auto ancestors = adjusted_class["Ancestors"];
-					if (ancestors.object()) {
-						auto ancestor_classes = ancestors.get_members_raw();
-						for (auto acp : ancestor_classes) {
-							std::string acn = acp.first;
-							json class_key = jp.create_object();
-							class_key.put_member("ClassName", acn);
-							auto ancestor_class = co_await classes.get(class_key);
-							json descendants;
-							if (!ancestor_class.has_member("Descendants")) {
-								descendants = jp.create_object();
-								ancestor_class.put_member("Descendants", descendants);
-							}
-							descendants = ancestor_class["Descendants"];
-							descendants.put_member(class_name, class_name);
-							co_await classes.put(ancestor_class);
-						}
-					}
-					result = create_response(put_class_request, true, "Ok", adjusted_class, method_timer.get_elapsed_seconds());
-				}
-				else {
-					result = create_response(put_class_request, false, "class not written", adjusted_class, method_timer.get_elapsed_seconds());
-				}
-			}
-			else 
-			{
-				result = create_response(put_class_request, false, "class failed checks", checked, method_timer.get_elapsed_seconds());
+				result = checked;
 			}
 			co_return result;
 		}
@@ -2086,14 +2266,24 @@ private:
 			{
 				json obj = result["Data"];
 
-				scope_lock lock_one(objects_rw_lock);
+				if (result.has_member("UniqueConstraintKey"))
+				{
+					json keys = result["UniqueConstraintKey"];
+					if (keys.array()) {
+						json key_index = jp.create_object();
+						std::vector<std::string> key_order;
+						for (auto skey : keys) {
+							std::string sskey = (std::string)skey;
+							key_index.copy_member(skey, obj);
+							key_order.push_back(skey);
+						}
+						key_index.set_compare_order(key_order);
+						key_index.copy_member("ObjectId", obj);
+						co_await objects_by_name.put(key_index);
+					}
+				}
 
-				json key_index = jp.create_object();
-				key_index.copy_member("ClassName", obj);
-				key_index.copy_member("Name", obj);
-				key_index.copy_member("ObjectId", obj);
-				key_index.set_compare_order({ "ClassName", "Name" });
-				co_await objects_by_name.put(key_index);
+				scope_lock lock_one(objects_rw_lock);
 
 				relative_ptr_type put_result = co_await objects.put( obj );
 

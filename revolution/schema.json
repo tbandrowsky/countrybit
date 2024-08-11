@@ -136,8 +136,8 @@
       "BaseClassName": "Facts",
       "Fields": {
         "EventDate": "datetime",
-        "Story" :  "string",
-        "Actors" : "array"
+        "Actors": "array",
+        "Story" :  "string"
       }
     },
     {
@@ -235,39 +235,56 @@
     }
   ],
   "Users": [],
-  "Objects": [
+  "DataLoad": [
     {
-      "ClassName": "SysTeam",
-      "Name": "ReparationsTeam",
-      "Description": "Reparations users",
-      "Grants" : [],
-      "Members" : []
-    },
-    {
-      "ClassName": "Events",
-      "EventDate": "11/1/1914",
-      "Description": "The President orders segregation.",
-      "Actors" :[],
-      "Facts" : [],
-      "Files" : []
-    },
-    {
-      "ClassName": "Events",
-      "EventDate": "2/18/1915",
-      "Description": "The President endorses Birth of a Nation.",
-      "Actors": [],
-      "Facts": [],
-      "Files": []
-    },
-    {
-      "ClassName": "Events",
-      "EventDate": "2/18/1915",
-      "Description": "The President endorses Birth of a Nation.",
-      "Actors": [],
-      "Facts": [],
-      "Files": []
+      "Name": "Load Base Events",
+      "Author" :  "Todd Bandrowsky",
+      "PutObjects": [
+        {
+          "ClassName": "SysTeam",
+          "Name": "ReparationsTeam",
+          "Description": "Reparations users",
+          "Grants": [],
+          "Members": []
+        },
+        {
+          "ClassName": "Events",
+          "EventDate": "11/1/1914",
+          "Description": "The President orders segregation.",
+          "Story": "Special story 1",
+          "Actors": [],
+          "Facts": [],
+          "Files": []
+        },
+        {
+          "ClassName": "Events",
+          "EventDate": "2/18/1915",
+          "Description": "The President endorses Birth of a Nation.",
+          "Story": "Special story 2",
+          "Actors": [],
+          "Facts": [],
+          "Files": []
+        },
+        {
+          "ClassName": "Events",
+          "EventDate": "2/18/1915",
+          "Description": "The President endorses Birth of a Nation.",
+          "Story": "Special story 3",
+          "Actors": [],
+          "Facts": [],
+          "Files": []
+        },
+        {
+          "ClassName": "Events",
+          "EventDate": "2/18/1946",
+          "Description": "GI Bill Policy Change.",
+          "Story": "Special story 4",
+          "Actors": [],
+          "Facts": [],
+          "Files": []
+        }
+      ]
     }
-
   ]
 }
   

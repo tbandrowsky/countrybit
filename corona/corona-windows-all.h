@@ -53,6 +53,7 @@ For Future Consideration
 
 #define SECURITY_WIN32
 #include "security.h"
+#include <wincrypt.h>
 
 //#include "opencv2/opencv.hpp"
 //#include "ZXing/ReadBarcode.h"

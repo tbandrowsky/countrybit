@@ -62,10 +62,10 @@
     <CopyFileToFolders Include="cockade.png">
       <Filter>Resource Files</Filter>
     </CopyFileToFolders>
+    <CopyFileToFolders Include="schema.json" />
   </ItemGroup>
   <ItemGroup>
     <None Include="vcpkg.json" />
-    <None Include="schema.json" />
     <None Include="config.json" />
   </ItemGroup>
   <ItemGroup>
