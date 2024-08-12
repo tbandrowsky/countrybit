@@ -1,17 +1,20 @@
-
-
 {
+  "SchemaName": "Country Video Games Reparations",
+  "SchemaDescription": "This schema uses a network conceptualization of intersectionality to build a class action lawsuits against a government to seek compensation for classes it may injure during the course of its coalition building and policy making.",
+  "SchemaVersion" :  "1.0",
+  "SchemaAuthors": [ "TJ Bandrowsky" ],
   "Classes": [
     {
-      "ClassName" : "Files",
+      "ClassName": "Files",
       "ClassDescription": "Computer files, including images, links and office spreadsheets and word processing",
-      "BaseClassName" : "SysObject",
+      "BaseClassName": "SysObject",
       "Fields": {
-        "DocumentName" : "string",
-        "DocumentDescription" : "string",
-        "DocumentSourcePath" : "string",
-        "DocumentStoragePath" : "string"
-      }
+        "DocumentName": "string",
+        "DocumentDescription": "string",
+        "DocumentSourcePath": "string",
+        "DocumentStoragePath": "string"
+      },
+      "UniqueConstraintKey" :  [ "DocumentName" ]
     },
     {
       "ClassName": "Facts",
@@ -24,76 +27,76 @@
       }
     },
     {
-      "ClassName" : "Residences",
-      "ClassDescription": "Where people live.",
-      "BaseClassName" : "Facts",
+      "ClassName": "Residences",
+      "ClassDescription": "Places where people live.",
+      "BaseClassName": "Facts",
       "Fields": {
-          "Street" : "string",
-          "City" : "string",
-          "County" : "string",
-          "State" : "string"
+        "Street": "string",
+        "City": "string",
+        "County": "string",
+        "State": "string"
       }
     },
     {
-      "ClassName" : "Roles",
+      "ClassName": "Roles",
       "ClassDescription": "A moment in a career.",
-      "BaseClassName" : "Fact",
+      "BaseClassName": "Fact",
       "Fields": {
-        "Title" : "string",
-        "Powers" : "string"
+        "Title": "string",
+        "Powers": "string"
       }
     },
     {
-      "ClassName" : "Jobs",
+      "ClassName": "Jobs",
       "ClassDescription": "Occupations, callings and vocations.",
-      "BaseClassName" : "Roles",
+      "BaseClassName": "Roles",
       "Fields": {
       }
     },
     {
-      "ClassName" : "Degrees",
+      "ClassName": "Degrees",
       "ClassDescription": "Educational achievements.",
-      "BaseClassName" : "Roles",
+      "BaseClassName": "Roles",
       "Fields": {
       }
     },
     {
-      "ClassName" : "Institutions",
+      "ClassName": "Institutions",
       "ClassDescription": "An organization whose lifetime exceeds that of its human members.",
-      "BaseClassName" : "Facts",
+      "BaseClassName": "Facts",
       "Fields": {
-        "FoundingYear" : "number",
-        "EndingYear" : "number",
-        "Institution" : "array"
+        "FoundingYear": "number",
+        "EndingYear": "number",
+        "Institution": "array"
       }
     },
     {
-      "ClassName" : "Schools",
+      "ClassName": "Schools",
       "ClassDescription": "Educational institutions.",
-      "BaseClassName" : "Institution",
+      "BaseClassName": "Institution",
       "Fields": {
       }
     },
     {
-      "ClassName" : "Governments",
+      "ClassName": "Governments",
       "ClassDescription": "Government institutions.",
-      "BaseClassName" : "Institution",
+      "BaseClassName": "Institution",
       "Fields": {
       }
     },
     {
-      "ClassName" : "Biography",
-      "BaseClassName" : "Fact",
-      "Fields" : {
-        "StartYear" : "number",
-        "EndYear" : "number",
-        "LifeRole" : "object",
-        "Institution" : "object"
+      "ClassName": "Biography",
+      "BaseClassName": "Fact",
+      "Fields": {
+        "StartYear": "number",
+        "EndYear": "number",
+        "LifeRole": "object",
+        "Institution": "object"
       }
     },
     {
-      "ClassName" : "Relations",
-      "BaseClassName" : "Facts"
+      "ClassName": "Relations",
+      "BaseClassName": "Facts"
     },
     {
       "ClassName": "Actors",
@@ -102,32 +105,34 @@
       "Fields": {
         "FirstName": "string",
         "LastName": "string",
+        "MiddleName": "string",
+        "Characterization" :  "string",
         "Biography": "array",
         "Relations": "array"
       }
     },
     {
-      "ClassName" : "Children",
+      "ClassName": "Children",
       "ClassDescription": "Descendants of an actor",
-      "BaseClassName" : "Relations",
-      "Fields" : {
-        "Actors" : "object"
+      "BaseClassName": "Relations",
+      "Fields": {
+        "Actors": "object"
       }
     },
     {
-      "ClassName" : "Students",
+      "ClassName": "Students",
       "ClassDescription": "Students of an actor",
-      "BaseClassName" : "Relations",
-      "Fields" : {
-        "Actors" : "object"
+      "BaseClassName": "Relations",
+      "Fields": {
+        "Actors": "object"
       }
     },
     {
-      "ClassName" : "Connections",
+      "ClassName": "Connections",
       "ClassDescription": "Casual connections between allies",
-      "BaseClassName" : "Relations",
-      "Fields" : {
-        "Actors" : "object"
+      "BaseClassName": "Relations",
+      "Fields": {
+        "Actors": "object"
       }
     },
     {
@@ -137,7 +142,7 @@
       "Fields": {
         "EventDate": "datetime",
         "Actors": "array",
-        "Story" :  "string"
+        "Story": "string"
       }
     },
     {
@@ -145,9 +150,9 @@
       "ClassDescription": "People bound by the impact of an event.",
       "BaseClassName": "Facts",
       "Fields": {
-        "Population" : "array",
-        "Census" : "number",
-        "Impact" : "string"
+        "Population": "array",
+        "Census": "number",
+        "Impact": "string"
       }
     },
     {
@@ -155,9 +160,9 @@
       "ClassDescription": "Damages to a population caused by an event",
       "BaseClassName": "Facts",
       "Fields": {
-        "Event" : "object",
-        "Population" : "array",
-        "Damages" : "number"
+        "Event": "object",
+        "Population": "array",
+        "Damages": "number"
       }
     },
     {
@@ -170,18 +175,18 @@
     },
     {
       "ClassName": "PlaintiffAttorneys",
-      "ClassDescription": "Lawyers who brings cases to the Reparations Court.",
+      "ClassDescription": "Lawyers who represent damaged classes in Reparations Court.",
       "BaseClassName": "Lawyers",
       "Fields": {
-        
+
       }
     },
     {
       "ClassName": "DefenseAttorneys",
-      "ClassDescription": "Lawyers who defends the US Government.",
+      "ClassDescription": "Lawyers who defend the US Government.",
       "BaseClassName": "Lawyers",
       "Fields": {
-        
+
       }
     },
     {
@@ -189,7 +194,7 @@
       "ClassDescription": "Lawyers who administer the proceedings of reparations cases.",
       "BaseClassName": "Lawyers",
       "Fields": {
-        
+
       }
     },
     {
@@ -198,8 +203,8 @@
       "BaseClassName": "SysObject",
       "Fields": {
         "Claims": "array",
-        "Lawyers" : "array",
-        "Proceedings" : "array"
+        "Lawyers": "array",
+        "Proceedings": "array"
       }
     },
     {
@@ -208,9 +213,9 @@
       "BaseClassName": "SysObject",
       "Fields": {
         "Cases": "object",
-        "Lawyers" : "array",
-        "StartTime" : "datetime",
-        "Rulings" : "array"
+        "Lawyers": "array",
+        "StartTime": "datetime",
+        "Rulings": "array"
       }
     },
     {
@@ -219,9 +224,9 @@
       "BaseClassName": "SysObject",
       "Fields": {
         "Cases": "object",
-        "Lawyers" : "array",
-        "StartTime" : "datetime",
-        "Rulings" : "array"
+        "Lawyers": "array",
+        "StartTime": "datetime",
+        "Rulings": "array"
       }
     },
     {
@@ -230,61 +235,59 @@
       "BaseClassName": "Proceedings",
       "Fields": {
         "Claims": "array",
-        "Lawyer" : "array"
+        "Lawyer": "array"
       }
     }
   ],
   "Users": [],
-  "DataLoad": [
+  "Datasets": [
     {
-      "Name": "Load Base Events",
-      "Author" :  "Todd Bandrowsky",
-      "PutObjects": [
-        {
-          "ClassName": "SysTeam",
-          "Name": "ReparationsTeam",
-          "Description": "Reparations users",
-          "Grants": [],
-          "Members": []
-        },
-        {
-          "ClassName": "Events",
-          "EventDate": "11/1/1914",
-          "Description": "The President orders segregation.",
-          "Story": "Special story 1",
-          "Actors": [],
-          "Facts": [],
-          "Files": []
-        },
-        {
-          "ClassName": "Events",
-          "EventDate": "2/18/1915",
-          "Description": "The President endorses Birth of a Nation.",
-          "Story": "Special story 2",
-          "Actors": [],
-          "Facts": [],
-          "Files": []
-        },
-        {
-          "ClassName": "Events",
-          "EventDate": "2/18/1915",
-          "Description": "The President endorses Birth of a Nation.",
-          "Story": "Special story 3",
-          "Actors": [],
-          "Facts": [],
-          "Files": []
-        },
-        {
-          "ClassName": "Events",
-          "EventDate": "2/18/1946",
-          "Description": "GI Bill Policy Change.",
-          "Story": "Special story 4",
-          "Actors": [],
-          "Facts": [],
-          "Files": []
-        }
-      ]
-    }
+      "DatasetName": "Base Events",
+      "DatasetDescription": "Load Base Events",
+      "DatasetVersion": "1.0",
+      "Author": "Todd Bandrowsky",
+      "RunOnChange": {
+        "ClassToMonitor": "Events",
+        "KillAndFill" :  true
+      },
+      "Objects": [
+          {
+            "ClassName": "Events",
+            "EventDate": "11/1/1914",
+            "Description": "The President orders segregation.",
+            "Story": "Special story 1",
+            "Actors": [],
+            "Facts": [],
+            "Files": []
+          },
+          {
+            "ClassName": "Events",
+            "EventDate": "2/18/1915",
+            "Description": "The President endorses Birth of a Nation.",
+            "Story": "Special story 2",
+            "Actors": [],
+            "Facts": [],
+            "Files": []
+          },
+          {
+            "ClassName": "Events",
+            "EventDate": "2/18/1915",
+            "Description": "The President endorses Birth of a Nation.",
+            "Story": "Special story 3",
+            "Actors": [],
+            "Facts": [],
+            "Files": []
+          },
+          {
+            "ClassName": "Events",
+            "EventDate": "2/18/1946",
+            "Description": "GI Bill Policy Change.",
+            "Story": "Special story 4",
+            "Actors": [],
+            "Facts": [],
+            "Files": []
+          }
+        ]
+      }
   ]
 }
-  

@@ -352,6 +352,60 @@ namespace corona
 	class certificates {
 	public:
 
+		int create_root_ca() {
+			HCRYPTPROV hProv = 0;
+			HCRYPTKEY hKey = 0;
+			PCCERT_CONTEXT pCertContext = NULL;
+
+			// Acquire a cryptographic provider context handle.
+			if (!CryptAcquireContext(&hProv, NULL, NULL, PROV_RSA_FULL, CRYPT_NEWKEYSET)) {
+				std::cerr << "Error during CryptAcquireContext!" << std::endl;
+				return 1;
+			}
+
+			// Generate a key pair.
+			if (!CryptGenKey(hProv, AT_SIGNATURE, 0x08000000, &hKey)) {
+				std::cerr << "Error during CryptGenKey!" << std::endl;
+				CryptReleaseContext(hProv, 0);
+				return 1;
+			}
+
+			// Create a self-signed certificate.
+			CERT_NAME_BLOB SubjectIssuerBlob = { 0 };
+			SubjectIssuerBlob.pbData = (BYTE*)"CN=RootCA";
+			SubjectIssuerBlob.cbData = strlen((char*)SubjectIssuerBlob.pbData);
+
+			pCertContext = CertCreateSelfSignCertificate(
+				hProv,
+				&SubjectIssuerBlob,
+				0,
+				NULL,
+				NULL,
+				NULL,
+				NULL,
+				NULL
+			);
+
+			if (!pCertContext) {
+				std::cerr << "Error during CertCreateSelfSignCertificate!" << std::endl;
+				CryptDestroyKey(hKey);
+				CryptReleaseContext(hProv, 0);
+				return 1;
+			}
+
+			// Save the certificate to a file or store.
+			// Example: Save to a file (not shown here).
+
+			// Clean up.
+			CertFreeCertificateContext(pCertContext);
+			CryptDestroyKey(hKey);
+			CryptReleaseContext(hProv, 0);
+
+			std::cout << "Root CA created successfully!" << std::endl;
+			return 0;
+		}
+
+
 		bool InstallRootCertificate(const std::string& certPath) {
 			// Open the certificate file
 			HANDLE hFile = CreateFile(certPath.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);

@@ -616,7 +616,7 @@ namespace corona
 		}
 
 		table_group_transaction<int64_t> 
-			co_for_each(json _key_fragment, std::function<table_transaction<relative_ptr_type>(int _index, json& _item)> _process_clause)
+			co_for_each(json _key_fragment, std::function<table_transaction<relative_ptr_type>(int _index, json_node& _item)> _process_clause)
 		{
 			relative_ptr_type location = co_await find_first_node_gte(_key_fragment);
 			int64_t index = 0;
@@ -628,7 +628,7 @@ namespace corona
 				int comparison = _key_fragment.compare(node.data);
 				if (comparison == 0) 
 				{
-					relative_ptr_type process_result = co_await _process_clause(index, node.data);
+					relative_ptr_type process_result = co_await _process_clause(index, node);
 					if (process_result > 0)
 					{
 						index++;
@@ -796,6 +796,31 @@ namespace corona
 			co_return index;
 		}
 
+		table_transaction<json> get_first(json _key_fragment, std::function<bool(json& _src)> _fn)
+		{
+			relative_ptr_type location = co_await find_first_node_gte(_key_fragment);
+			int64_t index = 0;
+			json result_data;
+
+			while (location != null_row)
+			{
+				json_node node;
+				node = co_await get_node(database_file.get(), location);
+				int comparison = _key_fragment.compare(node.data);
+				if (comparison == 0 && _fn(node.data))
+				{
+					result_data = node.data;
+					location = null_row;
+				}
+				else 
+				{
+					location = node.forward[0];
+				}
+			}
+
+			co_return result_data;
+		}
+
 		table_array_transaction<json>
 		select_array(std::function<json(int _index, json& _item)> _project)
 		{
@@ -819,20 +844,25 @@ namespace corona
 
 		table_array_transaction<json>
 		select_array(json _key_fragment, 
-			std::function<json(int _index, json& _item)> _project
+			std::function<json(int _index, json& _item)> _project,
+			json _update = "{ }"_jobject
 		)
 		{
 			json_parser jp;
 			json ja = jp.create_array();
 			json* pja = &ja;
 
-			int64_t count = co_await co_for_each(_key_fragment, [pja, _project](int _index, json& _data) -> table_transaction<relative_ptr_type> 
+			int64_t count = co_await co_for_each(_key_fragment, [this, pja, _project, &_update](int _index, json_node& _data) -> table_transaction<relative_ptr_type> 
 				{
 					relative_ptr_type count = 0;
-					json new_item = _project(_index, _data);
-					if (!new_item.empty() && !new_item.is_member("Skip", "this")) {
+					json new_item = _project(_index, _data.data);
+					if (!new_item.empty()&& !new_item.is_member("Skip", "this")) {
 						pja->append_element(new_item);
-						count = 1;
+						count++;
+						if (_update.object() && _update.size()>0) {
+							auto key = get_key(_data.data);
+							update_node(key, [_update](UPDATE_VALUE& dest) { dest.assign_update(_update); });							
+						}
 					}
 					co_return count;
 				});
@@ -850,8 +880,9 @@ namespace corona
 		{
 			json* pdestination = &_destination;
 
-			int64_t count = co_await co_for_each(_key_fragment, [this, _group_by, pdestination, _project, _get_child_key](int _index, json& _data) -> table_transaction<int64_t>
+			int64_t count = co_await co_for_each(_key_fragment, [this, _group_by, pdestination, _project, _get_child_key](int _index, json_node& _jdata) -> table_transaction<int64_t>
 				{
+					json _data = _jdata.data;
 					json new_item = _project(_index, _data);
 					if (!new_item.empty()) {
 						json group_key = new_item.extract(_group_by);

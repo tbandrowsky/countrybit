@@ -3403,20 +3403,13 @@ namespace corona
 			throw std::logic_error("Not an object");
 		}
 
-		json new_array = _object.object_to_array([](std::string _member_name, json& _src) -> json
-			{
-				json_parser jp;
-				json new_item = jp.create_object();
-				new_item.put_member("member_name", _member_name);
-				new_item.put_member("member_value", (std::string)_src);
-				return new_item;
-			});
-
-		for (auto e : new_array)
+		if (_object.object())
 		{
-			std::string member_name = e["member_name"];
-			json member_value = e["member_value"];
-			put_member(member_name, member_value);
+			auto members = _object.get_members();
+			for (auto member : members)
+			{
+				copy_member(member.first, member.second);
+			}
 		}
 
 		return *this;
