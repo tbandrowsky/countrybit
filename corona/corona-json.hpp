@@ -839,7 +839,7 @@ namespace corona
 			return int64_impl->value;
 		}
 
-		date_time& get_time()  const
+		date_time& get_datetime()  const
 		{
 			return datetime_impl->value;
 		}
@@ -2346,8 +2346,6 @@ namespace corona
 		}
 	};
 
-
-
 	json json::json_iterator::operator *()
 	{
 		json r;
@@ -2414,6 +2412,38 @@ namespace corona
 		};
 
 		std::vector<parse_message> parse_errors;
+
+		json from_double(double _d)
+		{
+			std::shared_ptr<json_double> dd = std::make_shared<json_double>();
+			dd->value = _d;
+			json result(dd);
+			return result;
+		}
+
+		json from_integer(int64_t _d)
+		{
+			std::shared_ptr<json_int64> dd = std::make_shared<json_int64>();
+			dd->value = _d;
+			json result(dd);
+			return result;
+		}
+
+		json from_datetime(date_time _d)
+		{
+			std::shared_ptr<json_datetime> dd = std::make_shared<json_datetime>();
+			dd->value = _d;
+			json result(dd);
+			return result;
+		}
+
+		json from_string(std::string _d)
+		{
+			std::shared_ptr<json_string> dd = std::make_shared<json_string>();
+			dd->value = _d;
+			json result(dd);
+			return result;
+		}
 
 		json parse_query(std::string _path)
 		{
@@ -2772,6 +2802,8 @@ namespace corona
 			*_modified = _src;
 			return result;
 		}
+
+	public:
 
 		bool parse_value(std::shared_ptr<json_value>& _value, const char* _src, const char** _modified)
 		{
@@ -3414,6 +3446,430 @@ namespace corona
 
 		return *this;
 	}
+
+	json negate(json& _src)
+	{
+		json j = _src.clone();
+		j = 0 - j;
+		return j;
+	}
+
+
+	json operator + (json& _srcA, json& _srcB)
+	{
+		json_parser jp;
+		json result;
+		if (_srcA.is_double() && _srcB.is_double())
+		{
+			double d1 = _srcA.get_double();
+			double d2 = _srcB.get_double();
+			result = jp.from_double(d1 + d2);
+		}
+		else if (_srcA.is_int64() && _srcB.is_int64())
+		{
+			int64_t d1 = _srcA.get_int64();
+			int64_t d2 = _srcB.get_int64();
+			result = jp.from_integer(d1 + d2);
+		}
+		else if (_srcA.is_double() && _srcB.is_int64())
+		{
+			double d1 = _srcA.get_double();
+			int64_t d2 = _srcB.get_int64();
+			result = jp.from_double(d1 + d2);
+		}
+		else if (_srcA.is_int64() && _srcB.is_double())
+		{
+			int64_t d1 = _srcA.get_int64();
+			double d2 = _srcB.get_double();
+			result = jp.from_double(d1 + d2);
+		}
+		else if (_srcA.is_string() || _srcB.is_string())
+		{
+			std::string d1 = (std::string)_srcA;
+			std::string d2 = (std::string)_srcB;
+			std::string r = d1 + d2;
+			result = jp.from_string(r);
+		}
+		else if (_srcA.is_datetime() && _srcB.is_double())
+		{
+			date_time d1 = _srcA.get_datetime();
+			double elapsed = _srcB.get_double();
+			double start;
+			double days = floor(elapsed);
+			d1 = d1 + time_span(days, time_models::days);
+
+			double hours = start / 24.0;
+			d1 = d1 + time_span(hours, time_models::hours);
+			start = fmod(start, 24.0);
+
+			double minutes = start / 60.0;
+			d1 = d1 + time_span(minutes, time_models::minutes);
+			start = fmod(start, 60.0);
+
+			double seconds = minutes / 60.0;
+			d1 = d1 + time_span(seconds, time_models::seconds);
+			start = fmod(start, 60.0);
+
+			double milliseconds = start / 1000;
+			d1 = d1 + time_span(seconds, time_models::milliseconds);
+
+			result = jp.from_datetime(d1);
+		}
+		else if (_srcA.is_datetime() || _srcB.is_int64())
+		{
+			date_time d1 = _srcA.get_datetime();
+			int64_t elapsed = _srcB.get_int64();
+			d1 = d1 + time_span(elapsed, time_models::days);
+		}
+		else if (_srcA.is_datetime() && _srcB.is_double())
+		{
+			date_time d1 = _srcA.get_datetime();
+			double elapsed = _srcB.get_double();
+			double start;
+			double days = floor(elapsed);
+			d1 = d1 + time_span(days, time_models::days);
+
+			double hours = start / 24.0;
+			d1 = d1 + time_span(hours, time_models::hours);
+			start = fmod(start, 24.0);
+
+			double minutes = start / 60.0;
+			d1 = d1 + time_span(minutes, time_models::minutes);
+			start = fmod(start, 60.0);
+
+			double seconds = minutes / 60.0;
+			d1 = d1 + time_span(seconds, time_models::seconds);
+			start = fmod(start, 60.0);
+
+			double milliseconds = start / 1000;
+			d1 = d1 + time_span(seconds, time_models::milliseconds);
+
+			result = jp.from_datetime(d1);
+		}
+		else if (_srcA.is_datetime() && _srcB.is_int64())
+		{
+			date_time d1 = _srcA.get_datetime();
+			int64_t elapsed = _srcB.get_int64();
+			d1 = d1 + time_span(elapsed, time_models::days);
+			result = jp.from_datetime(d1);
+		}
+		else if (_srcA.is_double() && _srcB.is_datetime())
+		{
+			date_time d1 = _srcB.get_datetime();
+			double elapsed = _srcA.get_double();
+			double start;
+			double days = floor(elapsed);
+			d1 = d1 + time_span(days, time_models::days);
+
+			double hours = start / 24.0;
+			d1 = d1 + time_span(hours, time_models::hours);
+			start = fmod(start, 24.0);
+
+			double minutes = start / 60.0;
+			d1 = d1 + time_span(minutes, time_models::minutes);
+			start = fmod(start, 60.0);
+
+			double seconds = minutes / 60.0;
+			d1 = d1 + time_span(seconds, time_models::seconds);
+			start = fmod(start, 60.0);
+
+			double milliseconds = start / 1000;
+			d1 = d1 + time_span(seconds, time_models::milliseconds);
+
+			result = jp.from_datetime(d1);
+		}
+		else if (_srcA.is_int64() || _srcB.is_datetime())
+		{
+			date_time d1 = _srcB.get_datetime();
+			int64_t elapsed = _srcA.get_int64();
+			d1 = d1 + time_span(elapsed, time_models::days);
+		}
+		else if (_srcA.is_double() && _srcB.is_datetime())
+		{
+			date_time d1 = _srcB.get_datetime();
+			double elapsed = _srcA.get_double();
+			double start;
+			double days = floor(elapsed);
+			d1 = d1 + time_span(days, time_models::days);
+
+			double hours = start / 24.0;
+			d1 = d1 + time_span(hours, time_models::hours);
+			start = fmod(start, 24.0);
+
+			double minutes = start / 60.0;
+			d1 = d1 + time_span(minutes, time_models::minutes);
+			start = fmod(start, 60.0);
+
+			double seconds = minutes / 60.0;
+			d1 = d1 + time_span(seconds, time_models::seconds);
+			start = fmod(start, 60.0);
+
+			double milliseconds = start / 1000;
+			d1 = d1 + time_span(seconds, time_models::milliseconds);
+
+			result = jp.from_datetime(d1);
+		}
+		else if (_srcA.is_int64() || _srcB.is_datetime())
+		{
+			date_time d1 = _srcB.get_datetime();
+			int64_t elapsed = _srcA.get_int64();
+			d1 = d1 + time_span(elapsed, time_models::days);
+			result = jp.from_datetime(d1);
+		}
+		return result;
+	}
+
+	json operator + (const json& _srcA, double _d)
+	{
+		json_parser jp;
+		json d = jp.from_double(_d);
+		return _srcA + d;
+	}
+
+	json operator - (double _d, const json& _srcA)
+	{
+		json_parser jp;
+		json d = jp.from_double(_d);
+		return d - _srcA;
+	}
+
+	json operator - (const json& _srcA, double _d)
+	{
+		json_parser jp;
+		json d = jp.from_double(_d);
+		return d - _srcA;
+	}
+
+	json operator + (json& _srcA, double _d)
+	{
+		json_parser jp;
+		json d = jp.from_double(_d);
+		return _srcA + d;
+	}
+
+	json operator - (json& _srcA, const json& _srcB)
+	{
+		json_parser jp;
+		json result;
+		if (_srcA.is_double() && _srcB.is_double())
+		{
+			double d1 = _srcA.get_double();
+			double d2 = _srcB.get_double();
+			result = jp.from_double(d1 - d2);
+		}
+		else if (_srcA.is_int64() && _srcB.is_int64())
+		{
+			int64_t d1 = _srcA.get_int64();
+			int64_t d2 = _srcB.get_int64();
+			result = jp.from_integer(d1 - d2);
+		}
+		else if (_srcA.is_double() && _srcB.is_int64())
+		{
+			double d1 = _srcA.get_double();
+			int64_t d2 = _srcB.get_int64();
+			result = jp.from_double(d1 - d2);
+		}
+		else if (_srcA.is_int64() && _srcB.is_double())
+		{
+			int64_t d1 = _srcA.get_int64();
+			double d2 = _srcB.get_double();
+			result = jp.from_double(d1 - d2);
+		}
+		else if (_srcA.is_string() || _srcB.is_string())
+		{
+			std::string d1 = (std::string)_srcA;
+			std::string d2 = (std::string)_srcB;
+
+			size_t pos = d1.find(d2);
+			while (pos != std::string::npos)
+			{
+				d1.replace(pos, d2.length(), "");
+				pos = d1.find(d2, pos + d2.length());
+			}
+			result = jp.from_string(d1);
+		}
+		else if (_srcA.is_datetime() && _srcB.is_double())
+		{
+			date_time d1 = _srcA.get_datetime();
+			double elapsed = _srcB.get_double();
+			double start;
+			double days = floor(elapsed);
+			d1 = d1 + time_span(days, time_models::days);
+
+			double hours = start / 24.0;
+			d1 = d1 - time_span(hours, time_models::hours);
+			start = fmod(start, 24.0);
+
+			double minutes = start / 60.0;
+			d1 = d1 - time_span(minutes, time_models::minutes);
+			start = fmod(start, 60.0);
+
+			double seconds = minutes / 60.0;
+			d1 = d1 - time_span(seconds, time_models::seconds);
+			start = fmod(start, 60.0);
+
+			double milliseconds = start / 1000;
+			d1 = d1 - time_span(seconds, time_models::milliseconds);
+
+			result = jp.from_datetime(d1);
+		}
+		else if (_srcA.is_datetime() || _srcB.is_int64())
+		{
+			date_time d1 = _srcA.get_datetime();
+			int64_t elapsed = _srcB.get_int64();
+			d1 = d1 - time_span(elapsed, time_models::days);
+		}
+		else if (_srcA.is_datetime() && _srcB.is_double())
+		{
+			date_time d1 = _srcA.get_datetime();
+			double elapsed = _srcB.get_double();
+			double start;
+			double days = floor(elapsed);
+			d1 = d1 - time_span(days, time_models::days);
+
+			double hours = start / 24.0;
+			d1 = d1 - time_span(hours, time_models::hours);
+			start = fmod(start, 24.0);
+
+			double minutes = start / 60.0;
+			d1 = d1 - time_span(minutes, time_models::minutes);
+			start = fmod(start, 60.0);
+
+			double seconds = minutes / 60.0;
+			d1 = d1 - time_span(seconds, time_models::seconds);
+			start = fmod(start, 60.0);
+
+			double milliseconds = start / 1000;
+			d1 = d1 - time_span(seconds, time_models::milliseconds);
+
+			result = jp.from_datetime(d1);
+		}
+		else if (_srcA.is_datetime() && _srcB.is_int64())
+		{
+			date_time d1 = _srcA.get_datetime();
+			int64_t elapsed = _srcB.get_int64();
+			d1 = d1 - time_span(elapsed, time_models::days);
+			result = jp.from_datetime(d1);
+		}
+		else if (_srcA.is_double() && _srcB.is_datetime())
+		{
+			date_time d1 = _srcB.get_datetime();
+			double elapsed = _srcA.get_double();
+			double start;
+			double days = floor(elapsed);
+			d1 = d1 - time_span(days, time_models::days);
+
+			double hours = start / 24.0;
+			d1 = d1 - time_span(hours, time_models::hours);
+			start = fmod(start, 24.0);
+
+			double minutes = start / 60.0;
+			d1 = d1 - time_span(minutes, time_models::minutes);
+			start = fmod(start, 60.0);
+
+			double seconds = minutes / 60.0;
+			d1 = d1 - time_span(seconds, time_models::seconds);
+			start = fmod(start, 60.0);
+
+			double milliseconds = start / 1000;
+			d1 = d1 - time_span(seconds, time_models::milliseconds);
+
+			result = jp.from_datetime(d1);
+		}
+		else if (_srcA.is_int64() || _srcB.is_datetime())
+		{
+			date_time d1 = _srcB.get_datetime();
+			int64_t elapsed = _srcA.get_int64();
+			d1 = d1 - time_span(elapsed, time_models::days);
+		}
+		else if (_srcA.is_double() && _srcB.is_datetime())
+		{
+			date_time d1 = _srcB.get_datetime();
+			double elapsed = _srcA.get_double();
+			double start;
+			double days = floor(elapsed);
+			d1 = d1 - time_span(days, time_models::days);
+
+			double hours = start / 24.0;
+			d1 = d1 - time_span(hours, time_models::hours);
+			start = fmod(start, 24.0);
+
+			double minutes = start / 60.0;
+			d1 = d1 - time_span(minutes, time_models::minutes);
+			start = fmod(start, 60.0);
+
+			double seconds = minutes / 60.0;
+			d1 = d1 - time_span(seconds, time_models::seconds);
+			start = fmod(start, 60.0);
+
+			double milliseconds = start / 1000;
+			d1 = d1 - time_span(seconds, time_models::milliseconds);
+
+			result = jp.from_datetime(d1);
+		}
+		else if (_srcA.is_int64() || _srcB.is_datetime())
+		{
+			date_time d1 = _srcB.get_datetime();
+			int64_t elapsed = _srcA.get_int64();
+			d1 = d1 - time_span(elapsed, time_models::days);
+			result = jp.from_datetime(d1);
+		}
+
+	}
+
+	json operator / (json& _srcA, const json& _srcB)
+	{
+		json_parser jp;
+		json result;
+		if (_srcA.is_double() && _srcB.is_double())
+		{
+			double d1 = _srcA.get_double();
+			double d2 = _srcB.get_double();
+			result = jp.from_double(d1 / d2);
+		}
+		else if (_srcA.is_int64() && _srcB.is_int64())
+		{
+			int64_t d1 = _srcA.get_int64();
+			int64_t d2 = _srcB.get_int64();
+			result = jp.from_integer(d1 / d2);
+		}
+		else if (_srcA.is_double() && _srcB.is_int64())
+		{
+			double d1 = _srcA.get_double();
+			int64_t d2 = _srcB.get_int64();
+			result = jp.from_double(d1 / d2);
+		}
+
+		return result;
+	}
+
+	json operator * (const json& _srcA, const json& _srcB)
+	{
+		json_parser jp;
+		json result;
+		if (_srcA.is_double() && _srcB.is_double())
+		{
+			double d1 = _srcA.get_double();
+			double d2 = _srcB.get_double();
+			result = jp.from_double(d1 * d2);
+		}
+		else if (_srcA.is_int64() && _srcB.is_int64())
+		{
+			int64_t d1 = _srcA.get_int64();
+			int64_t d2 = _srcB.get_int64();
+			result = jp.from_integer(d1 * d2);
+		}
+		else if (_srcA.is_double() && _srcB.is_int64())
+		{
+			double d1 = _srcA.get_double();
+			int64_t d2 = _srcB.get_int64();
+			result = jp.from_double(d1 * d2);
+		}
+
+		return result;
+	}
+
+
 
 }
 

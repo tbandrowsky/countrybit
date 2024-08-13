@@ -24,6 +24,25 @@
         "Description": "string",
         "Files": "array",
         "Facts": "array"
+      },
+      "Validation": {
+        "FormRules": [
+          {
+            "Description": {
+              "Query": {
+                "Description.Length": {
+
+                }
+              }
+            },
+            "Files": {
+
+            },
+            "Facts": {
+
+            }
+          }
+        ]
       }
     },
     {

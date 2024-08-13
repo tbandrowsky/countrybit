@@ -173,6 +173,9 @@ For Future Consideration
 // query implements a linq like predicate object graph for everywhere
 #include "corona-query.hpp"
 
+// query implements a linq like predicate object graph for everywhere
+#include "corona-expressions.hpp"
+
 // a json table here is a physical table in a file beginning at some point within it.
 #include "corona-json-table.hpp"
 
