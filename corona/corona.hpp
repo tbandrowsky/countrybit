@@ -64,6 +64,10 @@ For Future Consideration
 
 // these are all miscellaneous utility classes and the ever abused core constants
 
+namespace corona {
+	void log_warning(const std::string &_src);
+}
+
 #include "corona-constants.hpp"
 #include "corona-function-bag.hpp"
 #include "corona-wchart_convert.hpp"

@@ -499,7 +499,7 @@ namespace corona
 			json command = _src["select_command"];
 
 			if (command.empty()) {
-				comm_bus_interface::global_bus->log_bus("table control missing select_command", __FILE__, __LINE__);
+				comm_bus_interface::global_bus->log_information("table control missing select_command", __FILE__, __LINE__);
 				comm_bus_interface::global_bus->log_json(_src);
 			}
 
@@ -668,7 +668,7 @@ namespace corona
 			choices.put_json(jlist_data);
 			json command = _src["select_command"];
 			if (command.empty()) {
-				comm_bus_interface::global_bus->log_bus("list control missing select_command", __FILE__, __LINE__);
+				comm_bus_interface::global_bus->log_information("list control missing select_command", __FILE__, __LINE__);
 				comm_bus_interface::global_bus->log_json(_src);
 			}
 
@@ -824,7 +824,7 @@ namespace corona
 			choices.put_json(jlist_data);
 			json command = _src["select_command"];
 			if (command.empty()) {
-				comm_bus_interface::global_bus->log_bus("dropdown control missing select_command", __FILE__, __LINE__);
+				comm_bus_interface::global_bus->log_information("dropdown control missing select_command", __FILE__, __LINE__);
 				comm_bus_interface::global_bus->log_json(_src);
 			}
 
@@ -934,7 +934,7 @@ namespace corona
 			text_control_base::put_json(_src);
 			json jcommand = _src["click_command"];
 			if (jcommand.empty()) {
-				comm_bus_interface::global_bus->log_bus("button control missing click_command", __FILE__, __LINE__);
+				comm_bus_interface::global_bus->log_information("button control missing click_command", __FILE__, __LINE__);
 				comm_bus_interface::global_bus->log_json(_src);
 			}
 
@@ -1261,7 +1261,7 @@ namespace corona
 			choices.put_json(jlist_data);
 			json command = _src["select_command"];
 			if (command.empty()) {
-				comm_bus_interface::global_bus->log_bus("comboboxex control missing select_command", __FILE__, __LINE__);
+				comm_bus_interface::global_bus->log_information("comboboxex control missing select_command", __FILE__, __LINE__);
 				comm_bus_interface::global_bus->log_json(_src);
 			}
 
@@ -1619,7 +1619,7 @@ namespace corona
 
 			json jcommand = _src["change_command"];
 			if (jcommand.empty()) {
-				comm_bus_interface::global_bus->log_bus("month calendar control missing change_command", __FILE__, __LINE__);
+				comm_bus_interface::global_bus->log_information("month calendar control missing change_command", __FILE__, __LINE__);
 				comm_bus_interface::global_bus->log_json(_src);
 			}
 

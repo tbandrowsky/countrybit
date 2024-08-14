@@ -85,7 +85,8 @@ namespace corona
 			system_monitoring_interface::start(); // this will create the global log queue.
 			timer tx;
 			date_time t = date_time::now();
-			log_bus("comm_bus", "startup", t);
+
+			log_command_start("comm_bus", "startup", t);
 			ready_for_polling = false;
 
 			app = std::make_shared<application>();
@@ -163,7 +164,7 @@ namespace corona
 				ready_for_polling = true;
 			}
 
-			log_bus("comm_bus", "startup complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			log_command_stop("comm_bus", "startup complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 		}
 
 		void poll_db()
@@ -172,15 +173,18 @@ namespace corona
 				timer tx;
 				json_parser jp;
 				json temp;
+				date_time start_time = date_time::now();
 				if (database_schema_mon.poll_contents(app.get(), temp) != null_row) {
+					log_command_start("poll_db", "apply schema", start_time, __FILE__, __LINE__);
 					auto tempo = local_db->apply_schema(temp);
 					tempo.wait();
-					log_bus("poll_db", "schema applied", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+					log_command_stop("poll_db", "schema applied", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				}
 				timer tx2;
 				if (database_config_mon.poll_contents(app.get(), temp) != null_row) {
+					log_command_start("poll_db", "apply config", start_time, __FILE__, __LINE__);
 					local_db->apply_config(temp);
-					log_bus("poll_db", "config applied", tx2.get_elapsed_seconds(), __FILE__, __LINE__);
+					log_command_stop("poll_db", "config applied", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				}
 			}
 		}
@@ -197,6 +201,10 @@ namespace corona
 				styles_changed != null_row)
 			{
 				timer tx;
+				date_time t = date_time::now();
+
+				log_command_start("poll_pages", "apply pages", t, __FILE__, __LINE__);
+
 				// to do, at some point create a merge method in json proper.
 				json combined;
 				if (styles_json.object() && pages_json.object())
@@ -240,7 +248,7 @@ namespace corona
 
 					load_pages(combined, _select_default_page);
 				}
-				log_bus("poll_pages", "pages updated", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				log_command_start("poll_pages", "pages updated", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
 		}
 
@@ -252,27 +260,14 @@ namespace corona
 
 		virtual void error(json _error)
 		{
-			date_time _dt = date_time::now();
-			std::cout << Logexception;
-
-			std::string message = _error["Message"];
-			std::string temp_time = _dt;
-			std::cout << std::format("{0:<25}{1:<50}{2:<10}{3:<25}",
-				"error",
-				message,
-				GetCurrentThreadId(),
-				temp_time
-			) << std::endl;
-			std::cout << Loginformation << std::endl;
-			std::string jsonr = _error.to_json_string();
-			std::cout << Normal;
+			log_error(_error);
 		}
 
 		virtual comm_bus_transaction<json>  create_user(json user_information)
 		{
 			date_time dt;
 			dt = date_time::now();
-			log_bus("create_user", user_information["Name"], dt);
+			log_command_start("create_user", user_information["Name"], dt);
 			timer tx;
 			json_parser jp;
 			json request = jp.create_object();
@@ -281,7 +276,7 @@ namespace corona
 			json j = co_await local_db->create_user(request);
 			if (j.error())
 				log_error(j, __FILE__, __LINE__);
-			log_bus("create_user", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			log_command_stop("create_user", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			co_return j;
 		}
 
@@ -289,12 +284,12 @@ namespace corona
 		{
 			date_time dt;
 			dt = date_time::now();
-			log_bus("login_user", login_information["Name"], dt);
+			log_command_start("login_user", login_information["Name"], dt);
 			timer tx;
 			json response = co_await local_db->login_user(login_information);
 			if (response.error())
 				log_error(response, __FILE__, __LINE__);
-			log_bus("login", response["Message"], tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			log_command_stop("login", response["Message"], tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			co_return response;
 		}
 
@@ -302,7 +297,7 @@ namespace corona
 		{
 			date_time dt;
 			dt = date_time::now();
-			log_bus("create_object", class_name, dt);
+			log_command_start("create_object", class_name, dt);
 			timer tx;
 			json_parser jp;
 			json request = jp.create_object();
@@ -311,7 +306,7 @@ namespace corona
 			data.put_member("ClassName", class_name);
 			request.put_member("Data", data);
 			json response = co_await local_db->create_object(request);
-			log_bus("create_object", response["Message"], tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			log_command_stop("create_object", response["Message"], tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			if (response.error())
 				log_error(response, __FILE__, __LINE__);
 			response = response["Data"];
@@ -322,7 +317,7 @@ namespace corona
 		{
 			date_time dt;
 			dt = date_time::now();
-			log_bus("put_object", object_information["ClassName"], dt);
+			log_command_start("put_object", object_information["ClassName"], dt);
 			timer tx;
 			json_parser jp;
 			json request = jp.create_object();
@@ -332,7 +327,7 @@ namespace corona
 			if (response.error())
 				log_error(response, __FILE__, __LINE__);
 			response = response["Data"];
-			log_bus("put_object", response["Message"], tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			log_command_stop("put_object", response["Message"], tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			co_return response;
 		}
 
@@ -340,7 +335,7 @@ namespace corona
 		{
 			date_time dt;
 			dt = date_time::now();
-			log_bus("get_object", object_information["ClassName"], dt);
+			log_command_start("get_object", object_information["ClassName"], dt);
 			timer tx;
 			json_parser jp;
 			json request = jp.create_object();
@@ -349,7 +344,7 @@ namespace corona
 			json response = co_await local_db->get_object(request);
 			if (response.error())
 				log_error(response, __FILE__, __LINE__);
-			log_bus("get_object", response["Message"], tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			log_command_stop("get_object", response["Message"], tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			response = response["Data"];
 			co_return response;
 		}
@@ -358,7 +353,7 @@ namespace corona
 		{
 			date_time dt;
 			dt = date_time::now();
-			log_bus("delete_object", object_information["ClassName"], dt);
+			log_command_start("delete_object", object_information["ClassName"], dt);
 			timer tx;
 			json_parser jp;
 			json request = jp.create_object();
@@ -368,7 +363,7 @@ namespace corona
 			if (response.error())
 				log_error(response, __FILE__, __LINE__);
 
-			log_bus("delete_object", response["Message"], tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			log_command_stop("delete_object", response["Message"], tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			response = response["Data"];
 			co_return response;
 		}
@@ -377,7 +372,7 @@ namespace corona
 		{
 			date_time dt;
 			dt = date_time::now();
-			log_bus("pop_object", pop_info["ClassName"], dt);
+			log_command_start("pop_object", pop_info["ClassName"], dt);
 			timer tx;
 			json_parser jp;
 			json request = jp.create_object();
@@ -386,7 +381,7 @@ namespace corona
 			json response = co_await local_db->put_object(request);
 			if (response.error())
 				log_error(response, __FILE__, __LINE__);
-			log_bus("pop_object", response["Message"], tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			log_command_stop("pop_object", response["Message"], tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			response = response["Data"];
 			co_return response;
 		}
@@ -395,7 +390,7 @@ namespace corona
 		{
 			date_time dt;
 			dt = date_time::now();
-			log_bus("query_objects", query_information["ClassName"], dt);
+			log_command_start("query_objects", query_information["ClassName"], dt);
 			timer tx;
 			json_parser jp;
 			json request = jp.create_object();
@@ -404,12 +399,12 @@ namespace corona
 			json response = co_await local_db->query_class(request);
 			if (response.error())
 				log_error(response, __FILE__, __LINE__);
-			log_bus("query_objects", response["Message"], tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			response = response["Data"];
 			if (response.array()) {
 				std::string rr = std::format("{0} items", response.size());
-				log_bus("", rr, tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				log_information(rr);
 			}
+			log_command_stop("query_objects", response["Message"], tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			co_return response;
 		}
 
@@ -417,7 +412,7 @@ namespace corona
 		{
 			date_time dt;
 			dt = date_time::now();
-			log_bus("query_objects_table", query_information["ClassName"], dt);
+			log_command_start("query_objects_table", query_information["ClassName"], dt);
 			timer tx;
 			table_data td;
 			json_parser jp;
@@ -427,7 +422,7 @@ namespace corona
 			json table = query_information["Table"];
 			td.put_json(table);
 			json response = co_await local_db->query_class(request);
-			log_bus("query_objects_table", response["Message"], tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			log_command_stop("query_objects_table", response["Message"], tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			if (response.error())
 				log_error(response, __FILE__, __LINE__);
 			json response_items = response["Data"];
@@ -439,7 +434,7 @@ namespace corona
 		{
 			date_time dt;
 			dt = date_time::now();
-			log_bus("query_objects_list", query_information["ClassName"], dt);
+			log_command_start("query_objects_list", query_information["ClassName"], dt);
 			timer tx;
 			list_data ld;
 			json_parser jp;
@@ -452,7 +447,7 @@ namespace corona
 			if (response.error())
 				log_error(response, __FILE__, __LINE__);
 			json response_items = response["Data"];
-			log_bus("query_objects_list", response["Message"], tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			log_command_stop("query_objects_list", response["Message"], tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			ld.items = response_items;
 			co_return ld;
 		}
@@ -470,7 +465,7 @@ namespace corona
 		void load_pages(json _pages, bool _select_default)
 		{
 			date_time dt = date_time::now();
-			log_bus("load_pages", "", dt);
+			log_command_start("load_pages", "", dt);
 			run_ui([this, _pages, _select_default]() ->void {
 				timer tx;
 				date_time dt = date_time::now();
@@ -485,8 +480,8 @@ namespace corona
 				}
 
 				json jcommands = _pages.get_member("startup");
-				log_bus("load_pages", page_message.str(), tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				log_bus("start up commands", "", dt);
+				log_information("start up commands");
+				log_json(jcommands);
 
 				if (jcommands.array())
 				{
@@ -498,7 +493,7 @@ namespace corona
 						}
 					}
 				}
-				log_bus("load_pages", page_message.str(), tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				log_command_stop("load_pages", page_message.str(), tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 			});
 		}
@@ -506,7 +501,7 @@ namespace corona
 		virtual void select_page(std::string _page, std::string _target_control, json _obj)
 		{
 			date_time dt = date_time::now();
-			log_bus("select_page", _page, dt);
+			log_command_start("select_page", _page, dt);
 
 			run_ui([this, _page, _target_control, _obj]() ->void {
 				timer tx;
@@ -519,14 +514,14 @@ namespace corona
 						}
 					}
 				}
-				log_bus("select_page", _page, tx.get_elapsed_seconds());
+				log_command_stop("select_page", _page, tx.get_elapsed_seconds());
 			});
 		}
 
 		virtual void select_page(std::string _page, std::string _target_frame, std::string _frame_contents_page, json _obj)
 		{
 			date_time dt = date_time::now();
-			log_bus("select_page", _page, dt);
+			log_command_start("select_page", _page, dt);
 
 			run_ui([this, _page, _target_frame, _frame_contents_page, _obj]() ->void {
 				timer tx;
@@ -550,7 +545,7 @@ namespace corona
 						presentation_layer->onResize();
 					}
 				}
-				log_bus("select_page", _page, tx.get_elapsed_seconds());
+				log_command_stop("select_page", _page, tx.get_elapsed_seconds());
 			});
 		}
 
@@ -591,7 +586,7 @@ namespace corona
 				corona::get_json(jcommand, _command);
 				this->run_ui([this, jcommand]() {
 					date_time start_time = date_time::now();
-					log_bus("run_command", jcommand["class_name"], start_time, __FILE__, __LINE__);
+					log_user_command_start("run_command", jcommand["class_name"], start_time, __FILE__, __LINE__);
 					timer tx;
 					log_json(jcommand);
 					std::shared_ptr<corona_bus_command> command;
@@ -601,7 +596,7 @@ namespace corona
 						auto tranny = command->execute();
 						tranny.wait();
 					}
-					log_bus("", jcommand["class_name"], tx.get_elapsed_seconds(), __FILE__, __LINE__);
+					log_user_command_stop("run_command", jcommand["class_name"], tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				});
 			}
 		}

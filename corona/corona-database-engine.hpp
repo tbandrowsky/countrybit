@@ -181,8 +181,8 @@ namespace corona
 )");
 
 			if (!response["Success"]) {
-				std::cout << __FILE__ << " " << __LINE__ << ":classes.put failed." << std::endl;
-				std::cout << response.to_json() << std::endl;
+				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_json(response);
 				co_return result;
 			}
 
@@ -213,8 +213,8 @@ namespace corona
 )");
 
 			if (!response["Success"]) {
-				std::cout << __FILE__ << " " << __LINE__ << ":classes.put failed." << std::endl;
-				std::cout << response.to_json() << std::endl;
+				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_json(response);
 				co_return result;
 			}
 
@@ -307,8 +307,8 @@ namespace corona
 )");
 
 			if (!response["Success"]) {
-				std::cout << __FILE__ << " " << __LINE__ << ":classes.put failed." << std::endl;
-				std::cout << response.to_json() << std::endl;
+				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_json(response);
 				co_return result;
 			}
 
@@ -372,8 +372,8 @@ namespace corona
 )");
 
 			if (!response["Success"]) {
-				std::cout << __FILE__ << " " << __LINE__ << ":classes.put failed." << std::endl;
-				std::cout << response.to_json() << std::endl;
+				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_json(response);
 				co_return result;
 			}
 
@@ -434,8 +434,8 @@ namespace corona
 )");
 
 			if (!response["Success"]) {
-				std::cout << __FILE__ << " " << __LINE__ << ":classes.put failed." << std::endl;
-				std::cout << response.to_json() << std::endl;
+				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_json(response);
 				co_return result;
 			}
 
@@ -456,8 +456,8 @@ namespace corona
 )");
 
 			if (!response["Success"]) {
-				std::cout << __FILE__ << " " << __LINE__ << ":classes.put failed." << std::endl;
-				std::cout << response.to_json() << std::endl;
+				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_json(response);
 				co_return result;
 			}
 
@@ -481,8 +481,8 @@ namespace corona
 )");
 
 			if (!response["Success"]) {
-				std::cout << response.to_json() << std::endl;
-				std::cout << __FILE__ << " " << __LINE__ << ":classes.put failed." << std::endl;
+				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_json(response);
 				co_return result;
 			}
 
@@ -514,8 +514,8 @@ namespace corona
 )");
 
 			if (!response["Success"]) {
-				std::cout << response.to_json() << std::endl;
-				std::cout << __FILE__ << " " << __LINE__ << ":classes.put failed." << std::endl;
+				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_json(response);
 				co_return result;
 			}
 
@@ -646,7 +646,7 @@ private:
 
 			date_time start_time = date_time::now();
 			if (trace_check_class) {
-				bus->log_bus("check_class", "", start_time);
+				bus->log_activity("check_class", start_time);
 			}
 
 			result = create_response(check_class_request, true, "Ok", class_definition, method_timer.get_elapsed_seconds());
@@ -657,7 +657,7 @@ private:
 			}
 
 			if (trace_check_class) {
-				bus->log_bus("Supplied class definition");
+				bus->log_information("Supplied class definition");
 				bus->log_json(class_definition);
 			}
 
@@ -684,7 +684,7 @@ private:
 
 				if (trace_check_class)
 				{
-					bus->log_bus("Base class definition");
+					bus->log_information("Base class definition");
 					bus->log_json(base_class_def);
 				}
 
@@ -705,7 +705,7 @@ private:
 
 				if (trace_check_class)
 				{
-					bus->log_bus("Class ancestors");
+					bus->log_information("Class ancestors");
 					bus->log_json(ancestors);
 				}
 
@@ -714,7 +714,7 @@ private:
 					auto inherited_fields = inh_fields.get_members();
 					if (trace_check_class)
 					{
-						bus->log_bus("Inherited fields");
+						bus->log_information("Inherited fields");
 					}
 
 					if (!class_definition.has_member("Fields")) {
@@ -725,12 +725,12 @@ private:
 						fieldso.put_member(field.first, field.second);
 						if (trace_check_class)
 						{
-							bus->log_bus(field.first);
+							bus->log_information(field.first);
 						}
 					}
 
 					if (trace_check_class) {
-						bus->log_bus("Apply inherited fields");
+						bus->log_information("Apply inherited fields");
 						bus->log_json(class_definition);
 					}
 				}
@@ -1425,7 +1425,7 @@ private:
 		{
 			date_time start_schema = date_time::now();
 			timer tx;
-			system_monitoring_interface::global_mon->log_bus("Corona database", "Applying schema file", start_schema, __FILE__, __LINE__);
+			system_monitoring_interface::global_mon->log_job_start("apply_schema", "Applying schema file", start_schema, __FILE__, __LINE__);
 
 			bool new_database = true;
 
@@ -1433,17 +1433,17 @@ private:
 
 			if (!_schema.has_member("SchemaName"))
 			{
-				system_monitoring_interface::global_mon->log_bus("Corona database", "Schema doesn't have a schema name", start_schema, __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_warning("Schema doesn't have a schema name");
 			}
 
 			if (!_schema.has_member("SchemaVersion"))
 			{
-				system_monitoring_interface::global_mon->log_bus("Corona database", "Schema doesn't have a schema version", start_schema, __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_warning("Schema doesn't have a schema version");
 			}
 
 			if (!_schema.has_member("SchemaAuthors"))
 			{
-				system_monitoring_interface::global_mon->log_bus("Corona database", "Schema doesn't have an author", start_schema, __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_warning("Schema doesn't have a schema author");
 			}
 
 			json_parser jp;
@@ -1547,7 +1547,7 @@ private:
 								system_monitoring_interface::global_mon->log_json(save_result);
 							}
 							else
-								system_monitoring_interface::global_mon->log_bus(save_result["Message"]);
+								system_monitoring_interface::global_mon->log_information(save_result["Message"]);
 						}
 
 						json change_trigger = script_definition["RunOnChange"];
@@ -1580,9 +1580,9 @@ private:
 							if (!import_spec.has_members(missing, { "TargetClass", "Type", "page_name" })) {
 								system_monitoring_interface::global_mon->log_warning("Import missing:");
 								std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
-									system_monitoring_interface::global_mon->log_bus(s);
+									system_monitoring_interface::global_mon->log_information(s);
 									});
-								system_monitoring_interface::global_mon->log_bus("the source json is:");
+								system_monitoring_interface::global_mon->log_information("the source json is:");
 								system_monitoring_interface::global_mon->log_json(import_spec, 2);
 								continue;
 							}
@@ -1595,9 +1595,9 @@ private:
 								if (!import_spec.has_members(missing, { "FileName", "Delimiter" })) {
 									system_monitoring_interface::global_mon->log_warning("Import CSV missing:");
 									std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
-										system_monitoring_interface::global_mon->log_bus(s);
+										system_monitoring_interface::global_mon->log_information(s);
 										});
-									system_monitoring_interface::global_mon->log_bus("the source json is:");
+									system_monitoring_interface::global_mon->log_information("the source json is:");
 									system_monitoring_interface::global_mon->log_json(import_spec, 2);
 									continue;
 								}
@@ -1611,7 +1611,9 @@ private:
 
 								json column_map = import_spec["ColumnMap"];
 
-								FILE* fp = fopen(file_name.c_str(), "r");
+								FILE* fp = nullptr;
+								int error_code = fopen_s(&fp, file_name.c_str(), "rS, ccs=UTF-8");
+
 								if (fp) {
 									// Buffer to store each line of the file.
 									char line[8182];
@@ -1633,12 +1635,13 @@ private:
 											new_object.erase_member("ObjectId");
 											jp.parse_delimited_string(new_object, column_map, line, delimiter[0]);
 											datomatic.push_back(new_object);
-											if (datomatic.size() > 10000) {
+											if (datomatic.size() > 5000) {
 												timer tx;
 												json cor = create_system_request(datomatic);
 												co_await put_object(cor);
 												double e = tx.get_elapsed_seconds();
-												system_monitoring_interface::global_mon->log_bus("", "import 1000000 rows",  e);
+												std::string msg = std::format("import {0} rows @{1} rows / second", datomatic.size(), e / datomatic.size());
+												system_monitoring_interface::global_mon->log_activity(msg, e, __FILE__, __LINE__ );
 												datomatic = jp.create_array();
 											}
 										}
@@ -1655,7 +1658,17 @@ private:
 									// Close the file stream once all lines have been read.
 									fclose(fp);
 								}
-								system_monitoring_interface::global_mon->log_bus("", __FILE__, __LINE__);
+								else {
+									char error_buffer[256] = {};
+									strerror_s(
+										error_buffer,
+										std::size(error_buffer),
+										error_code
+									);
+									std::string msg = std::format("could not open file {0}:{1}", file_name, error_buffer);
+									system_monitoring_interface::global_mon->log_warning(error_buffer, __FILE__, __LINE__);
+								}
+								system_monitoring_interface::global_mon->log_information("", __FILE__, __LINE__);
 							}
 						}
 
@@ -1677,7 +1690,7 @@ private:
 											system_monitoring_interface::global_mon->log_json(save_result);
 										}
 										else
-											system_monitoring_interface::global_mon->log_bus(save_result["Message"]);
+											system_monitoring_interface::global_mon->log_information(save_result["Message"]);
 										object_definition.copy_member("Success", create_result);
 										object_definition.copy_member("Message", create_result);
 									}
@@ -1696,7 +1709,7 @@ private:
 								system_monitoring_interface::global_mon->log_json(save_script_result);
 							}
 							else
-								system_monitoring_interface::global_mon->log_bus(save_script_result["Message"]);
+								system_monitoring_interface::global_mon->log_information(save_script_result["Message"]);
 						}
 					}
 				}
@@ -1715,7 +1728,7 @@ private:
 					system_monitoring_interface::global_mon->log_json(save_schema_result);
 				}
 				else
-					system_monitoring_interface::global_mon->log_bus(save_schema_result["Message"]);
+					system_monitoring_interface::global_mon->log_information(save_schema_result["Message"]);
 			}
 			else 
 			{
@@ -1723,13 +1736,17 @@ private:
 				system_monitoring_interface::global_mon->log_json(create_schema_result);
 			}
 
-			system_monitoring_interface::global_mon->log_bus("Corona database", "schema applied", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			system_monitoring_interface::global_mon->log_job_complete("apply_schema", "schema applied", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 		}
 
 		database_transaction<relative_ptr_type> open_database(relative_ptr_type _header_location)
 		{
 			timer method_timer;
+			date_time start_schema = date_time::now();
+			timer tx;
+			system_monitoring_interface::global_mon->log_job_start("open_database", "Open database", start_schema, __FILE__, __LINE__);
+
 			scope_lock lock_one(header_rw_lock);
 
 			relative_ptr_type header_location = co_await header.read(database_file.get(), _header_location);
@@ -1740,6 +1757,8 @@ private:
 				result = co_await objects_by_name.open(header.data.objects_by_name_location);
 				result = co_await objects.open(header.data.objects_location);
 			}
+
+			system_monitoring_interface::global_mon->log_job_complete("open_database", "Open database", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 			co_return header_location;
 		}
@@ -2905,7 +2924,9 @@ private:
 
 		*dtest = _app->create_file(FOLDERID_Documents, "corona_json_database_test.ctb");
 
-		std::cout << "test_database_engine, thread:" << ::GetCurrentThreadId() << std::endl;
+		date_time start_schema = date_time::now();
+		timer tx;
+		system_monitoring_interface::global_mon->log_job_start("test_database_engine", "start", start_schema, __FILE__, __LINE__);
 
 		corona_database db(nullptr, dtest);
 
@@ -2921,7 +2942,7 @@ private:
 		auto schema_task = db.apply_schema(schema_config);
 		schema_task.wait();
 
-		std::cout << "test_database_engine, create_database, thread:" << ::GetCurrentThreadId() << std::endl;
+		system_monitoring_interface::global_mon->log_information("create_database");
 
 		auto create_database_task = db.create_database();
 		relative_ptr_type database_location = create_database_task.wait();
@@ -2946,19 +2967,21 @@ private:
 
 		json user_result = co_await db.create_user(sys_request);
 
+		system_monitoring_interface::global_mon->log_job_complete("test_database_engine", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+
 		co_return success;
 	}
 
 	user_transaction<bool> run_server(std::shared_ptr<application> _app)
 	{
-		try 
+		date_time start_schema = date_time::now();
+		timer tx;
+		try
 		{
-			std::cout << "test_database_engine, thread:" << ::GetCurrentThreadId() << std::endl;
+			system_monitoring_interface::global_mon->log_command_start("run_server", "start", start_schema, __FILE__, __LINE__);
 
 			std::shared_ptr<file> dtest = std::make_shared<file>();
 			*dtest = _app->create_file(FOLDERID_Documents, "corona_json_database_test.ctb");
-
-			std::cout << "test_database_engine, thread:" << ::GetCurrentThreadId() << std::endl;
 
 			corona_database db(nullptr, dtest);
 
@@ -2976,12 +2999,9 @@ private:
 			auto schema_task = db.apply_schema(schema_config);
 			schema_task.wait();
 
-			std::cout << "test_database_engine, create_database, thread:" << ::GetCurrentThreadId() << std::endl;
-			
+
 			auto create_database_task = db.create_database();
 			relative_ptr_type database_location = create_database_task.wait();
-
-			std::cout << "test_database_engine, create_database, thread:" << ::GetCurrentThreadId() << std::endl;
 
 			http_server db_api_server;
 
@@ -3001,7 +3021,6 @@ private:
 					schema_task.wait();
 				}
 
-				std::cout << "Waiting for request." << std::endl;
 				co_await db_api_server.next_request();
 			}
 
@@ -3010,6 +3029,8 @@ private:
 		{
 			system_monitoring_interface::global_mon->log_exception(exc);
 		}
+
+		system_monitoring_interface::global_mon->log_command_stop("run_server", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 		co_return true;
 	}

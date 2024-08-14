@@ -114,33 +114,6 @@ namespace corona
                 advance();
             }
         }
-
-        int get_integer() {
-            int result = 0;
-            while (current_char != '\0' && isdigit(current_char)) {
-                result = result * 10 + (current_char - '0');
-                advance();
-            }
-            return result;
-        }
-
-        double get_double() {
-            int result = 0;
-            while (current_char != '\0' && isdigit(current_char)) {
-                result = result * 10 + (current_char - '0');
-                advance();
-            }
-            return result;
-        }
-
-        double get_double() {
-            int result = 0;
-            while (current_char != '\0' && isdigit(current_char)) {
-                result = result * 10 + (current_char - '0');
-                advance();
-            }
-            return result;
-        }
     };
 
     class Parser {
@@ -195,7 +168,7 @@ namespace corona
             else if (token.type == MINUS) {
                 eat(MINUS);
                 json t = factor();
-                t = 0.0 - t;
+                t = negate(t);
                 return t;
             }
             throw std::runtime_error("Invalid syntax");

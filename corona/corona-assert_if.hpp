@@ -22,7 +22,7 @@ namespace corona
    bool assert_if(int test, const char* fail)
     {
         if (!test) {
-            std::cout << fail << std::endl;
+            log_warning(fail);
             return false;
         }
         return true;
@@ -31,7 +31,7 @@ namespace corona
     bool assert_if(std::function<int()> test, const char* fail)
     {
         if (!test()) {
-            std::cout << fail << std::endl;
+            log_warning(fail);
             return false;
         }
         return true;

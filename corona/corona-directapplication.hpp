@@ -889,7 +889,7 @@ namespace corona
 				break;
 			case WM_NCLBUTTONDOWN:
 			case WM_LBUTTONDOWN:
-				system_monitoring_interface::global_mon->log_bus("Left Down");
+				system_monitoring_interface::global_mon->log_information("Left Down");
 				if (colorCapture) {
 					colorCapture = false;
 					::ReleaseCapture();
@@ -932,7 +932,7 @@ namespace corona
 
 			case WM_NCLBUTTONUP:
 			case WM_LBUTTONUP:
-				system_monitoring_interface::global_mon->log_bus("Left Up");
+				system_monitoring_interface::global_mon->log_information("Left Up");
 				if (currentController)
 				{
 					POINT p;
@@ -2376,7 +2376,7 @@ namespace corona
 
 	// This was taken from a stack overflow article
 
-	void BindCrtHandlesToStdHandles(bool bindStdIn, bool bindStdOut, bool bindStdErr)
+	void BindCrtHandlesToStdHandles(bool bindStdIn, bool bindStdOut)
 	{
 		// Re-initialize the C runtime "FILE" handles with clean handles bound to "nul". We do this because it has been
 		// observed that the file number of our standard handle file objects can be assigned internally to a value of -2
@@ -2395,12 +2395,6 @@ namespace corona
 			FILE* dummyFile;
 			freopen_s(&dummyFile, "nul", "w", stdout);
 		}
-		if (bindStdErr)
-		{
-			FILE* dummyFile;
-			freopen_s(&dummyFile, "nul", "w", stderr);
-		}
-
 		// Redirect unbuffered stdin from the current standard input handle
 		if (bindStdIn)
 		{
@@ -2431,8 +2425,14 @@ namespace corona
 			{
 				DWORD mode = 0;
 				GetConsoleMode(stdHandle, &mode);
-				SetConsoleMode(stdHandle, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
-
+				mode &= ~ENABLE_WRAP_AT_EOL_OUTPUT;
+				mode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+				SetConsoleMode(stdHandle, mode);
+				CONSOLE_SCREEN_BUFFER_INFOEX csbi = {};
+				csbi.cbSize = sizeof(CONSOLE_SCREEN_BUFFER_INFOEX);
+				GetConsoleScreenBufferInfoEx(stdHandle, &csbi);
+				csbi.dwSize.X = 180;
+				SetConsoleScreenBufferInfoEx(stdHandle, &csbi);
 				int fileDescriptor = _open_osfhandle((intptr_t)stdHandle, _O_TEXT);
 				if (fileDescriptor != -1)
 				{
@@ -2443,32 +2443,6 @@ namespace corona
 						if (dup2Result == 0)
 						{
 							setvbuf(stdout, NULL, _IONBF, 0);
-						}
-					}
-				}
-			}
-		}
-
-		// Redirect unbuffered stderr to the current standard error handle
-		if (bindStdErr)
-		{
-			HANDLE stdHandle = GetStdHandle(STD_ERROR_HANDLE);
-			if (stdHandle != INVALID_HANDLE_VALUE)
-			{
-				DWORD mode = 0;
-				GetConsoleMode(stdHandle, &mode);
-				SetConsoleMode(stdHandle, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
-
-				int fileDescriptor = _open_osfhandle((intptr_t)stdHandle, _O_TEXT);
-				if (fileDescriptor != -1)
-				{
-					FILE* file = _fdopen(fileDescriptor, "w");
-					if (file != NULL)
-					{
-						int dup2Result = _dup2(_fileno(file), _fileno(stderr));
-						if (dup2Result == 0)
-						{
-							setvbuf(stderr, NULL, _IONBF, 0);
 						}
 					}
 				}
@@ -2489,15 +2463,10 @@ namespace corona
 			std::wcout.clear();
 			std::cout.clear();
 		}
-		if (bindStdErr)
-		{
-			std::wcerr.clear();
-			std::cerr.clear();
-		}
 	}
 
 
-	void UnbindCrtHandles(bool bindStdIn, bool bindStdOut, bool bindStdErr)
+	void UnbindCrtHandles(bool bindStdIn, bool bindStdOut)
 	{
 		// Re-initialize the C runtime "FILE" handles with clean handles bound to "nul". We do this because it has been
 		// observed that the file number of our standard handle file objects can be assigned internally to a value of -2
@@ -2517,22 +2486,17 @@ namespace corona
 			FILE* dummyFile;
 			freopen_s(&dummyFile, "nul", "w", stdout);
 		}
-		if (bindStdErr)
-		{
-			FILE* dummyFile;
-			freopen_s(&dummyFile, "nul", "w", stderr);
-		}
 	}
 
 	void EnableGuiStdOuts()
 	{
 		AllocConsole();
-		BindCrtHandlesToStdHandles(true, true, true);
+		BindCrtHandlesToStdHandles(true, true);
 	}
 
 	void DisableGuiStdOuts()
 	{
-		UnbindCrtHandles(true, true, true);
+		UnbindCrtHandles(true, true);
 		FreeConsole();
 	}
 

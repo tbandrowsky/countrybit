@@ -208,7 +208,7 @@
                               },
                               "stages": [
                                 {
-                                  "stage_name": "search for any donatio text",
+                                  "stage_name": "search for any donation text",
                                   "class_name": "filter",
                                   "stage_input_name": "Donations:",
                                   "predicate": {

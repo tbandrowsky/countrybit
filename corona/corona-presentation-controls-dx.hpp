@@ -1011,15 +1011,15 @@ namespace corona
 				}
 				if (flags & MF_SOURCE_READERF_NEWSTREAM)
 				{
-					system_monitoring_interface::global_mon->log_bus("New camera stream");
+					system_monitoring_interface::global_mon->log_information("New camera stream");
 				}
 				if (flags & MF_SOURCE_READERF_NATIVEMEDIATYPECHANGED)
 				{
-					system_monitoring_interface::global_mon->log_bus("Native media type changed");
+					system_monitoring_interface::global_mon->log_information("Native media type changed");
 				}
 				if (flags & MF_SOURCE_READERF_CURRENTMEDIATYPECHANGED)
 				{
-					system_monitoring_interface::global_mon->log_bus("Current media type changed");
+					system_monitoring_interface::global_mon->log_information("Current media type changed");
 				}
 				if (flags & MF_SOURCE_READERF_STREAMTICK)
 				{
@@ -1027,7 +1027,7 @@ namespace corona
 				}
 				if (flags & MF_SOURCE_READERF_NATIVEMEDIATYPECHANGED)
 				{
-					system_monitoring_interface::global_mon->log_bus("Format changed");
+					system_monitoring_interface::global_mon->log_information("Format changed");
 					hr = configure_decoder(pSourceReader, streamIndex);
 				}
 

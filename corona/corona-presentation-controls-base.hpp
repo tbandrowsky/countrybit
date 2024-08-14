@@ -438,7 +438,7 @@ namespace corona
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
 					std::cout << s << std::endl;
 					});
-				system_monitoring_interface::global_mon->log_bus("the source json is:");
+				system_monitoring_interface::global_mon->log_information("the source json is:");
 				return;
 			}
 
@@ -653,8 +653,7 @@ namespace corona
 			std::string sindent(_indent, ' ');
 			std::string fmt;
 			fmt = std::format("{0} {1} debug clicked", typeid(*this).name(), name);
-			date_time dt = date_time::now();
-			system_monitoring_interface::global_mon->log_bus("",  fmt, dt, __FILE__, __LINE__);
+			system_monitoring_interface::global_mon->log_information(fmt);
 			get_json(control_json);
 			system_monitoring_interface::global_mon->log_json(control_json);
 		}

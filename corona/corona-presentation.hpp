@@ -727,7 +727,7 @@ namespace corona {
 
 				if (cb) 
 				{
-					system_monitoring_interface::global_mon->log_bus("Control clicked");
+					system_monitoring_interface::global_mon->log_information("Control clicked");
 					cb->dump();
 				}
 			}

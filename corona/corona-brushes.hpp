@@ -59,7 +59,7 @@ namespace corona
 				if (auto pbm = bm.lock()) {
 					hr = ptarget->getDeviceContext()->CreateBitmapBrush(pbm->getFirst(), &asset);
 					if (!SUCCEEDED(hr)) {
-						std::cout << "Could not create bitnap brush " << std::endl;
+						system_monitoring_interface::global_mon->log_warning("Could not create bitnap brush");
 					}
 				}
 
@@ -107,7 +107,7 @@ namespace corona
 			}
 
 			if (!SUCCEEDED(hr)) {
-				std::cout << "Could not create solid brush " << std::endl;
+				system_monitoring_interface::global_mon->log_warning("Could not create solid brush ");
 			}
 
 			return SUCCEEDED(hr);
@@ -154,7 +154,7 @@ namespace corona
 						);
 						pGradientStops->Release();
 						if (!SUCCEEDED(hr)) {
-							std::cout << "Could not create linear gradient brush " << std::endl;
+							system_monitoring_interface::global_mon->log_warning("Could not create linear gradient brush ");
 						}
 					}
 				}

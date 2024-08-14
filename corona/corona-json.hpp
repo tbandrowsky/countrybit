@@ -2844,13 +2844,20 @@ namespace corona
 
 	public:
 
-		bool parse_delimited_string(json _dest, json& _column_map, const std::string _src, char _delimiter)
+		bool parse_delimited_string(json _dest_template, json& _column_map, const std::string _src, char _delimiter)
 		{
 			bool r = false;
 
 			std::vector<std::string> stuff = split(_src, _delimiter);
 
+			for (int i = 0; i < stuff.size(); i++) 
+			{
+				std::string index_key = std::to_string(i);
+				std::string column_name = _column_map[index_key];
+				r = r || _dest_template.import_member(column_name, stuff[i]);
+			}
 
+			return r;
 		}
 
 		bool parse_value(std::shared_ptr<json_value>& _value, const char* _src, const char** _modified)
@@ -3495,13 +3502,6 @@ namespace corona
 		return *this;
 	}
 
-	json negate(json& _src)
-	{
-		json j = _src.clone();
-		j = 0.0 - j;
-		return j;
-	}
-
 	json operator + (json& _srcA, json& _srcB)
 	{
 		json_parser jp;
@@ -3565,7 +3565,7 @@ namespace corona
 		else if (_srcA.is_datetime() || _srcB.is_int64())
 		{
 			date_time d1 = _srcA.get_datetime();
-			int64_t elapsed = _srcB.get_int64();
+			double elapsed = _srcB.get_int64();
 			d1 = d1 + time_span(elapsed, time_models::days);
 		}
 		else if (_srcA.is_datetime() && _srcB.is_double())
@@ -3596,7 +3596,7 @@ namespace corona
 		else if (_srcA.is_datetime() && _srcB.is_int64())
 		{
 			date_time d1 = _srcA.get_datetime();
-			int64_t elapsed = _srcB.get_int64();
+			double elapsed = (double)_srcB.get_int64();
 			d1 = d1 + time_span(elapsed, time_models::days);
 			result = jp.from_datetime(d1);
 		}
@@ -3628,7 +3628,7 @@ namespace corona
 		else if (_srcA.is_int64() || _srcB.is_datetime())
 		{
 			date_time d1 = _srcB.get_datetime();
-			int64_t elapsed = _srcA.get_int64();
+			double elapsed = (double)_srcA.get_int64();
 			d1 = d1 + time_span(elapsed, time_models::days);
 		}
 		else if (_srcA.is_double() && _srcB.is_datetime())
@@ -3659,7 +3659,7 @@ namespace corona
 		else if (_srcA.is_int64() || _srcB.is_datetime())
 		{
 			date_time d1 = _srcB.get_datetime();
-			int64_t elapsed = _srcA.get_int64();
+			double elapsed = (double)_srcA.get_int64();
 			d1 = d1 + time_span(elapsed, time_models::days);
 			result = jp.from_datetime(d1);
 		}
@@ -3684,7 +3684,7 @@ namespace corona
 	{
 		json_parser jp;
 		json d = jp.from_double(_d);
-		return d - _srcA;
+		return _srcA - _d;
 	}
 
 	json operator + (json& _srcA, double _d)
@@ -3916,6 +3916,12 @@ namespace corona
 		return result;
 	}
 
+	json negate(json& _src)
+	{
+		json j = _src.clone();
+		j = 0.0 - j;
+		return j;
+	}
 
 
 }

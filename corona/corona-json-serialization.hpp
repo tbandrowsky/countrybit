@@ -95,9 +95,9 @@ namespace corona
 		else if (!_src.has_members(missing, { "amount", "units" })) {
 			std::cout << "measure is missing:" << std::endl;
 			std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
-				system_monitoring_interface::global_mon->log_bus(s);
+				system_monitoring_interface::global_mon->log_information(s);
 				});
-			system_monitoring_interface::global_mon->log_bus("the source json is:");
+			system_monitoring_interface::global_mon->log_information("the source json is:");
 			system_monitoring_interface::global_mon->log_json(_src, 2);
 			return;
 		}
@@ -179,9 +179,9 @@ namespace corona
 		if (!_src.has_members(missing, { "width", "height" })) {
 			std::cout << "layout_rect is missing:" << std::endl;
 			std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
-				system_monitoring_interface::global_mon->log_bus(s);
+				system_monitoring_interface::global_mon->log_information(s);
 				});
-			system_monitoring_interface::global_mon->log_bus("the source json is:");
+			system_monitoring_interface::global_mon->log_information("the source json is:");
 			system_monitoring_interface::global_mon->log_json(_src, 2);
 			return;
 		}
@@ -214,9 +214,9 @@ namespace corona
 		if (!_src.has_members(missing, { "w", "h" })) {
 			system_monitoring_interface::global_mon->log_warning("rectangle is missing:");
 			std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
-				system_monitoring_interface::global_mon->log_bus(s);
+				system_monitoring_interface::global_mon->log_information(s);
 				});
-			system_monitoring_interface::global_mon->log_bus("the source json is:");
+			system_monitoring_interface::global_mon->log_information("the source json is:");
 			system_monitoring_interface::global_mon->log_json(_src, 2);
 			return;
 		}

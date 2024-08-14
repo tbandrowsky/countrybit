@@ -68,7 +68,7 @@ namespace corona
 				if (DXGI_ERROR_NOT_FOUND == dxFactory->EnumAdapters1(adapterIndex, &currentAdapter))
 				{
 					// No more adapters to enumerate.
-					system_monitoring_interface::global_mon->log_bus("Adapter not found");
+					system_monitoring_interface::global_mon->log_information("Adapter not found");
 					break;
 				}
 				else 
@@ -78,13 +78,13 @@ namespace corona
 					if (currentAdapter->GetDesc(&desc) == S_OK) {
 						temp = desc.Description;
 						std::string msg = std::format("Scanning {0}", temp.c_str());
-						system_monitoring_interface::global_mon->log_bus(msg);
+						system_monitoring_interface::global_mon->log_information(msg);
 					}
 				}
 
 				if (direct3d->setDevice(currentAdapter))
 				{
-					system_monitoring_interface::global_mon->log_bus("Adapter Ok");
+					system_monitoring_interface::global_mon->log_information("Adapter Ok");
 					dxAdapter = currentAdapter;
 					break;
 				}
