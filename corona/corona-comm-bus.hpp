@@ -79,7 +79,8 @@ namespace corona
 		bool ready_for_polling;
 
 		comm_bus(std::string _application_name, 
-			std::string _application_folder_name)
+			std::string _application_folder_name,
+			std::string _config_file_name_base)
 		{
 			system_monitoring_interface::start(); // this will create the global log queue.
 			timer tx;
@@ -108,10 +109,10 @@ namespace corona
 
 			app_menu = std::make_shared<menu_item>();
 
-			database_schema_file_name = "schema.json";
+			database_schema_file_name = _config_file_name_base + "schema.json";
 			database_config_file_name = "config.json";
-			pages_config_file_name = "pages.json";
-			styles_config_file_name = "styles.json";
+			pages_config_file_name = _config_file_name_base + "pages.json";
+			styles_config_file_name = _config_file_name_base + "styles.json";
 			database_file_name = app->get_data_filename("corona.cdb");
 			user_file_name = app->get_data_filename("user.json");
 

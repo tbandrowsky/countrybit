@@ -53,6 +53,10 @@ namespace corona
 		{
 			return "";
 		}
+		virtual void from_string(std::string _src)
+		{
+			;
+		}
 		virtual std::string get_type_prefix()
 		{
 			return "";
@@ -159,7 +163,10 @@ namespace corona
 		{
 			return std::format("{}", value);
 		}
-
+		virtual void from_string(std::string _src)
+		{
+			value = std::stod(_src);
+		}
 		virtual std::string format(std::string _format)
 		{
 			std::vector<std::string> options = corona::split(_format, ',');
@@ -314,6 +321,10 @@ namespace corona
 		{
 			return value;
 		}
+		virtual void from_string(std::string _src)
+		{
+			value = _src;
+		}
 		virtual std::string format(std::string _format)
 		{
 			return value.format(_format);
@@ -410,6 +421,11 @@ namespace corona
 			return std::format("{}", value);
 		}
 
+		virtual void from_string(std::string _src)
+		{
+			value = std::stoll(_src);
+		}
+
 		virtual std::string get_type_prefix()
 		{
 			return "$int64";
@@ -445,6 +461,10 @@ namespace corona
 		virtual std::string to_string()
 		{
 			return value;
+		}
+		virtual void from_string(std::string _src)
+		{
+			value = _src;
 		}
 		virtual std::string get_type_prefix()
 		{
@@ -506,6 +526,10 @@ namespace corona
 		virtual std::string to_string()
 		{
 			return to_json();
+		}
+		virtual void from_string(std::string _src)
+		{
+			elements.clear();
 		}
 		virtual std::shared_ptr<json_value> clone()
 		{
@@ -575,6 +599,11 @@ namespace corona
 		virtual std::string to_string()
 		{
 			return to_json();
+		}
+
+		virtual void from_string(std::string _src)
+		{
+			members.clear();
 		}
 
 		virtual std::string format(std::string _format)
@@ -962,6 +991,16 @@ namespace corona
 			{
 				return value_base->format(_format);
 			}
+		}
+
+		bool import_member(std::string _member, std::string _value_to_import)
+		{
+			bool stuffed = false;
+			if (object_impl && object_impl->members[_value_to_import]) {
+				object_impl->members[_member]->from_string(_value_to_import);
+				stuffed = true;
+			}
+			return stuffed;
 		}
 
 		explicit operator bool() const
@@ -2805,6 +2844,15 @@ namespace corona
 
 	public:
 
+		bool parse_delimited_string(json _dest, json& _column_map, const std::string _src, char _delimiter)
+		{
+			bool r = false;
+
+			std::vector<std::string> stuff = split(_src, _delimiter);
+
+
+		}
+
 		bool parse_value(std::shared_ptr<json_value>& _value, const char* _src, const char** _modified)
 		{
 			std::shared_ptr<json_array> new_array_value;
@@ -3450,10 +3498,9 @@ namespace corona
 	json negate(json& _src)
 	{
 		json j = _src.clone();
-		j = 0 - j;
+		j = 0.0 - j;
 		return j;
 	}
-
 
 	json operator + (json& _srcA, json& _srcB)
 	{

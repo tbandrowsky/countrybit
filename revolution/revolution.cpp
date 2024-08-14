@@ -2,7 +2,8 @@
 #define APPLICATION_GUITAR 2
 #define APPLICATION_AURA 3
 #define APPLICATION_REPARATIONS 4
-#define APPLICATION_ID APPLICATION_REPARATIONS
+#define APPLICATION_DONATION_FINDER 5
+#define APPLICATION_ID APPLICATION_DONATION_FINDER
 
 #if APPLICATION_ID == APPLICATION_REVOLUTION
 #include "app_revolution.hpp"
@@ -22,6 +23,11 @@
 #if APPLICATION_ID == APPLICATION_REPARATIONS
 #include "app_reparations.hpp"
 #define application_function(a,b) corona::run_reparations_application(a,b);
+#endif
+
+#if APPLICATION_ID == APPLICATION_DONATION_FINDER
+#include "app_donation_finder.hpp"
+#define application_function(a,b) corona::run_donation_finder_application(a,b);
 #endif
 
 int __stdcall WinMain(HINSTANCE hInstance,

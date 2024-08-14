@@ -1,6 +1,6 @@
 
-#ifndef APP_REPARATIONS_H
-#define APP_REPARATIONS_H
+#ifndef APP_DONATION_FINDER_H
+#define APP_DONATION_FINDER_H
 
 #include "resource.h"
 #include "corona.hpp"
@@ -8,7 +8,7 @@
 namespace corona
 {
 
-	void run_reparations_application(HINSTANCE hInstance, LPSTR  lpszCmdParam);
+	void run_donation_finder_application(HINSTANCE hInstance, LPSTR  lpszCmdParam);
 
 	/*
 
@@ -44,12 +44,12 @@ namespace corona
 
 	/* And now, this is the application */
 
-	void run_reparations_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
+	void run_donation_finder_application(HINSTANCE hInstance, LPSTR  lpszCmdParam)
 	{
 
 		EnableGuiStdOuts();
 
-		comm_bus bus("Reparations", "Reparations", "reparations_");
+		comm_bus bus("DonationFinder", "DonationFinder", "donation_finder_");
 
 		bus.run_app_ui(hInstance, lpszCmdParam, false);
 

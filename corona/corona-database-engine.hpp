@@ -974,6 +974,8 @@ private:
 			token.put_member("Name", _user_name);
 			token.put_member("Authorization", _authorization);
 			date_time expiration = date_time::utc_now() + this->token_life;
+			std::string hash = crypter.hash(_data);
+			token.put_member("DataHash", hash);
 			token.put_member("TokenExpires", expiration);
 			std::string cipher_text = crypter.encrypt(token, get_pass_phrase(), get_iv());
 			token.put_member("Signature", cipher_text);
@@ -1560,6 +1562,100 @@ private:
 									json request = create_system_request(update_data);
 									co_await update(request, R"({ "Active", false })"_jobject);
 								}
+							}
+						}
+
+						if (run_script && script_definition.has_member("Import"))
+						{
+							/*
+							        "Type": "csv",
+        "Delimiter": "|",
+        "FileName": "itcont.csv",
+        "TargetClass": "Individuals",
+        "ColumnMap": {
+*/
+							json import_spec = script_definition["Import"];
+							std::vector<std::string> missing;
+
+							if (!import_spec.has_members(missing, { "TargetClass", "Type", "page_name" })) {
+								system_monitoring_interface::global_mon->log_warning("Import missing:");
+								std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
+									system_monitoring_interface::global_mon->log_bus(s);
+									});
+								system_monitoring_interface::global_mon->log_bus("the source json is:");
+								system_monitoring_interface::global_mon->log_json(import_spec, 2);
+								continue;
+							}
+
+							std::string target_class = import_spec["TargetClass"];
+							std::string import_type = import_spec["Type"];
+
+							if (import_type == "csv") {
+
+								if (!import_spec.has_members(missing, { "FileName", "Delimiter" })) {
+									system_monitoring_interface::global_mon->log_warning("Import CSV missing:");
+									std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
+										system_monitoring_interface::global_mon->log_bus(s);
+										});
+									system_monitoring_interface::global_mon->log_bus("the source json is:");
+									system_monitoring_interface::global_mon->log_json(import_spec, 2);
+									continue;
+								}
+
+								std::string file_name = import_spec["FileName"];
+								std::string delimiter = import_spec["Delimiter"];
+								char cdelimiter;
+								if (file_name.empty() || delimiter.empty()) {
+									system_monitoring_interface::global_mon->log_warning("FileName and Delimiter can't be blank.");
+								}
+
+								json column_map = import_spec["ColumnMap"];
+
+								FILE* fp = fopen(file_name.c_str(), "r");
+								if (fp) {
+									// Buffer to store each line of the file.
+									char line[8182];
+									json datomatic = jp.create_array();
+
+									// create template object
+									json codata = jp.create_object();
+									codata.put_member("ClassName", target_class);
+									json cor = create_system_request(codata);
+									json new_object_response = co_await create_object(cor);
+
+									if (new_object_response["Success"]) {
+										json new_object_template = new_object_response["Data"];
+
+										// Read each line from the file and store it in the 'line' buffer.
+										while (fgets(line, sizeof(line), fp)) {
+											// Print each line to the standard output.
+											json new_object = new_object_template.clone();
+											new_object.erase_member("ObjectId");
+											jp.parse_delimited_string(new_object, column_map, line, delimiter[0]);
+											datomatic.push_back(new_object);
+											if (datomatic.size() > 10000) {
+												timer tx;
+												json cor = create_system_request(datomatic);
+												co_await put_object(cor);
+												double e = tx.get_elapsed_seconds();
+												system_monitoring_interface::global_mon->log_bus("", "import 1000000 rows",  e);
+												datomatic = jp.create_array();
+											}
+										}
+
+										if (datomatic.size() > 0) {
+											timer tx;
+											json cor = create_system_request(datomatic);
+											co_await put_object(cor);
+											system_monitoring_interface::global_mon->log_warning("FileName and Delimiter can't be blank.");
+										}
+
+									}
+
+									// Close the file stream once all lines have been read.
+									fclose(fp);
+								}
+								system_monitoring_interface::global_mon->log_bus("", __FILE__, __LINE__);
 							}
 						}
 
@@ -2290,35 +2386,47 @@ private:
 
 			if (result["Success"])
 			{
-				json obj = result["Data"];
+				json data = result["Data"];
 
-				if (result.has_member("ImplementMapKey"))
-				{
-					json keys = result["ImplementMapKey"];
-					if (keys.array()) {
-						json key_index = jp.create_object();
-						std::vector<std::string> key_order;
-						for (auto skey : keys) {
-							std::string sskey = (std::string)skey;
-							key_index.copy_member(skey, obj);
-							key_order.push_back(skey);
-						}
-						key_index.set_compare_order(key_order);
-						key_index.copy_member("ObjectId", obj);
-						co_await objects_by_name.put(key_index);
-					}
+				json item_array;
+				if (data.array()) {
+					item_array = data;
+				}
+				else {
+					item_array = jp.create_array();
+					item_array.push_back(data);
 				}
 
-				scope_lock lock_one(objects_rw_lock);
+				for (json obj : data) {
 
-				obj.put_member("Active", true);
-				relative_ptr_type put_result = co_await objects.put( obj );
+					if (result.has_member("ImplementMapKey"))
+					{
+						json keys = result["ImplementMapKey"];
+						if (keys.array()) {
+							json key_index = jp.create_object();
+							std::vector<std::string> key_order;
+							for (auto skey : keys) {
+								std::string sskey = (std::string)skey;
+								key_index.copy_member(skey, obj);
+								key_order.push_back(skey);
+							}
+							key_index.set_compare_order(key_order);
+							key_index.copy_member("ObjectId", obj);
+							co_await objects_by_name.put(key_index);
+						}
+					}
 
-				json cobj = object_definition.extract({ "ClassName", "ObjectId" });
-				cobj.put_member("Active", true);
-				relative_ptr_type classput_result = co_await class_objects.put(cobj);
+					scope_lock lock_one(objects_rw_lock);
 
-				result = create_response(put_object_request, true, "Object created", obj, method_timer.get_elapsed_seconds());
+					obj.put_member("Active", true);
+					relative_ptr_type put_result = co_await objects.put(obj);
+
+					json cobj = object_definition.extract({ "ClassName", "ObjectId" });
+					cobj.put_member("Active", true);
+					relative_ptr_type classput_result = co_await class_objects.put(cobj);
+				}
+
+				result = create_response(put_object_request, true, "Object(s) created", data, method_timer.get_elapsed_seconds());
 			}
 			else 
 			{
@@ -2523,6 +2631,8 @@ private:
 			token.copy_member("Authorization", src_token);
 			date_time expiration = date_time::utc_now() + this->token_life;
 			token.put_member("TokenExpires", expiration);
+			std::string hash = crypter.hash(_data);
+			token.put_member("DataHash", hash);
 			std::string cipher_text = crypter.encrypt(token, get_pass_phrase(), get_iv());
 			token.put_member("Signature", cipher_text);
 
