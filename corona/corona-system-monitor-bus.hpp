@@ -16,7 +16,9 @@ namespace corona
 	{
 		char CSI[3] = { 0x1b, '[', 0 };
 
-		_src << CSI << "38;2;" << _color.color_foreground << "48;2;" << _color.color_background << "m";
+		// << "38;2;" << _color.color_foreground << 
+
+		_src << CSI << "48;2;" << _color.color_background << "m";
 		return _src;
 	}
 
@@ -28,18 +30,26 @@ namespace corona
 
 		void test_colors()
 		{
-			for (int i = 0; i < 256; i += 128) {
-				for (int j = 0; j < 128; j++) {
+
+			date_time start_time = date_time::now();
+			timer tx;
+			log_command_start("Startup", "Color Test", start_time, __FILE__, __LINE__);
+
+			for (int i = 0; i < 256; i += 80) {
+				std::cout << std::format("{0:<30}", " ");
+				for (int j = 0; j < 80; j++) {
 					std::cout << CSI << "48;5;" << std::to_string(j + i) << "m ";
 				}
-				std::cout << std::endl;
+				std::cout << Loginformation << std::endl;
 			}
-			for (int i = 0; i < 256; i += 128) {
-				for (int j = 0; j < 128; j++) {
+			for (int i = 0; i < 256; i += 80) {
+				std::cout << std::format("{0:<30}", " ");
+				for (int j = 0; j < 80; j++) {
 					std::cout << CSI << "48;2;" << "0;0;" << std::to_string(j + i) << "m ";
 				}
-				std::cout << std::endl;
+				std::cout << Loginformation << std::endl;
 			}
+			log_command_stop("Startup", "Color Test", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 		}
 
 		char Normal[5] = { 0x1b, '[', '0', 'm', 0 };
@@ -60,23 +70,23 @@ namespace corona
 
 		system_monitoring_interface()
 		{
-			Logusercommand.color_background = "0;0;32";
-			Logcommand.color_background = "8;0;24";
-			Logapi.color_background = "0;24;0";
-			Logfunction.color_background = "6;8;6";
-			Lognormal.color_background = "0;0;0";
-			Logexception.color_background = "0;0;0";
-			Logwarning.color_background = "0;0;0";
+			Logusercommand.color_background = "12;59;69";
+			Logcommand.color_background = "21;83;98";
+			Logapi.color_background = "40;55;42";
+			Logfunction.color_background = "134;129;135";
+			Lognormal.color_background = "103;115;95";
+			Logexception.color_background = "103;50;40";
+			Logwarning.color_background = "178;94;23";
 			Loginformation.color_background = "0;0;0";
 
 			Logusercommand.color_foreground = "220;220;220";
 			Logcommand.color_foreground = "220;220;220";
 			Logapi.color_foreground = "220;220;220";
 			Logfunction.color_foreground = "220;220;220";
-			Lognormal.color_foreground = "128;128;128";
-			Logexception.color_foreground = "192;96;96";
-			Logwarning.color_foreground = "150;150;96";
-			Loginformation.color_foreground = "128;128;128";
+			Lognormal.color_foreground = "0;0;0";
+			Logexception.color_foreground = "0;0;0";
+			Logwarning.color_foreground = "0;0;0";
+			Loginformation.color_foreground = "179;182;174";
 		}
 
 		void file_line(const char* _file, int _line)
@@ -114,6 +124,11 @@ namespace corona
 
 		virtual void log_user_command_start(std::string _command_name, std::string _message, date_time _request_time, const char* _file = nullptr, int _line = 0)
 		{
+			if (_command_name.empty())
+				_command_name = " ";
+			if (_message.empty())
+				_message = " ";
+
 			std::cout << Logusercommand;
 			std::cout << std::format("{0:<30}{1:<80}{2:<10}{3:<25}",
 				_command_name,
@@ -157,6 +172,11 @@ namespace corona
 
 		virtual void log_command_stop(std::string _command_name, std::string _message, double _elapsed_seconds, const char* _file = nullptr, int _line = 0)
 		{
+			if (_command_name.empty())
+				_command_name = " ";
+			if (_message.empty())
+				_message = " ";
+
 			std::cout << Logcommand;
 			std::cout << std::format("{0:<30}{1:<80}{2:<10}{3:<25}",
 				_command_name,
@@ -171,8 +191,12 @@ namespace corona
 
 		virtual void log_job_start(std::string _api_name, std::string _message, date_time _request_time, const char* _file = nullptr, int _line = 0)
 		{
+			if (_api_name.empty())
+				_api_name = " ";
+			if (_message.empty())
+				_message = " ";
 			std::cout << Logcommand;
-			std::cout << std::format("{0:<5}", "");
+			std::cout << std::format("{0:<5}", " ");
 			std::cout << Logapi;
 			std::cout << std::format("{0:<25}{1:<80}{2:<10}{3:<25}",
 				_api_name,
@@ -187,8 +211,13 @@ namespace corona
 
 		virtual void log_job_complete(std::string _api_name, std::string _message, double _elapsed_seconds, const char* _file = nullptr, int _line = 0)
 		{
+			if (_api_name.empty())
+				_api_name = " ";
+			if (_message.empty())
+				_message = " ";
+
 			std::cout << Logcommand;
-			std::cout << std::format("{0:<5}", "");
+			std::cout << std::format("{0:<5}", " ");
 			std::cout << Logapi;
 			std::cout << std::format("{0:<25}{1:<80}{2:<10}{3:<25}",
 				_api_name,
@@ -201,15 +230,15 @@ namespace corona
 			std::cout << std::endl << std::endl;
 		}
 
-		virtual void log_function_start(std::string _request_name, std::string _message, date_time _request_time, const char* _file = nullptr, int _line = 0)
+		virtual void log_function_start(std::string _function_name, std::string _message, date_time _request_time, const char* _file = nullptr, int _line = 0)
 		{
 			std::cout << Logcommand;
-			std::cout << std::format("{0:<5}", "");
+			std::cout << std::format("{0:<5}", " ");
 			std::cout << Logapi;
-			std::cout << std::format("{0:<5}", "");
+			std::cout << std::format("{0:<5}", " ");
 			std::cout << Logfunction;
 			std::cout << std::format("{0:<20}{1:<80}{2:<10}{3:<25}",
-				_request_name,
+				_function_name,
 				_message,
 				GetCurrentThreadId(),
 				(std::string)_request_time
@@ -219,15 +248,15 @@ namespace corona
 			std::cout << std::endl;
 		}
 
-		virtual void log_function_stop(std::string _request_name, std::string _message, double _elapsed_seconds, const char* _file = nullptr, int _line = 0)
+		virtual void log_function_stop(std::string _function_name, std::string _message, double _elapsed_seconds, const char* _file = nullptr, int _line = 0)
 		{
 			std::cout << Logcommand;
-			std::cout << std::format("{0:<5}", "");
+			std::cout << std::format("{0:<5}", " ");
 			std::cout << Logapi;
-			std::cout << std::format("{0:<5}", "");
+			std::cout << std::format("{0:<5}", " ");
 			std::cout << Logfunction;
 			std::cout << std::format("{0:<20}{1:<80}{2:<10}{3:<25}",
-				_request_name,
+				_function_name,
 				_message,
 				GetCurrentThreadId(),
 				_elapsed_seconds
@@ -240,16 +269,16 @@ namespace corona
 		virtual void log_information(std::string _message, const char* _file = nullptr, int _line = 0)
 		{
 			std::cout << Logcommand;
-			std::cout << std::format("{0:<5}", "");
+			std::cout << std::format("{0:<5}", " ");
 			std::cout << Logapi;
-			std::cout << std::format("{0:<5}", "");
+			std::cout << std::format("{0:<5}", " ");
 			std::cout << Logfunction;
-			std::cout << std::format("{0:<20}", "");
+			std::cout << std::format("{0:<20}", " ");
 			std::cout << Loginformation;
 			std::cout << std::format("{0:<80}{1:<10}{2:<25}",
 				_message,
 				GetCurrentThreadId(),
-				""
+				" "
 			);
 			file_line(_file, _line);
 			std::cout << std::endl;
@@ -257,13 +286,14 @@ namespace corona
 
 		virtual void log_activity(std::string _message, date_time _time, const char* _file = nullptr, int _line = 0)
 		{
-			std::cout << Logcommand;
-			std::cout << std::format("{0:<5}", "");
-			std::cout << Logapi;
-			std::cout << std::format("{0:<5}", "");
-			std::cout << Logfunction;
-			std::cout << std::format("{0:<20}", "");
 			std::cout << Logactivity;
+			std::cout << Logcommand;
+			std::cout << std::format("{0:<5}", " ");
+			std::cout << Logapi;
+			std::cout << std::format("{0:<5}", " ");
+			std::cout << Logfunction;
+			std::cout << std::format("{0:<20}", " ");
+			std::cout << Loginformation;
 			std::cout << std::format("{0:<80}{1:<10}{2:<25}",
 				_message,
 				GetCurrentThreadId(),
@@ -277,11 +307,11 @@ namespace corona
 		virtual void log_activity(std::string _message, double _elapsed_seconds, const char* _file = nullptr, int _line = 0)
 		{
 			std::cout << Logcommand;
-			std::cout << std::format("{0:<5}", "");
+			std::cout << std::format("{0:<5}", " ");
 			std::cout << Logapi;
-			std::cout << std::format("{0:<5}", "");
+			std::cout << std::format("{0:<5}", " ");
 			std::cout << Logfunction;
-			std::cout << std::format("{0:<20}", "");
+			std::cout << std::format("{0:<20}", " ");
 			std::cout << Logactivity;
 			std::cout << std::format("{0:<80}{1:<10}{2:<25}",
 				_message,
@@ -296,17 +326,16 @@ namespace corona
 		virtual void log_warning(std::string _message, const char *_file = nullptr, int _line = 0)
 		{
 			std::cout << Logcommand;
-			std::cout << std::format("{0:<5}", "");
+			std::cout << std::format("{0:<5}", " ");
 			std::cout << Logapi;
-			std::cout << std::format("{0:<5}", "");
+			std::cout << std::format("{0:<5}", " ");
 			std::cout << Logfunction;
-			std::cout << std::format("{0:<20}", "");
+			std::cout << std::format("{0:<20}", " ");
 			std::cout << Logwarning;
-			std::cout << std::format("{1:<80}{2:<10}{3:<25}",
-				"",
+			std::cout << std::format("{0:<80}{1:<10}{2:<25}",
 				_message,
 				GetCurrentThreadId(),
-				""
+				" "
 			);
 			file_line(_file, _line);
 			std::cout << Normal;
@@ -316,11 +345,11 @@ namespace corona
 		virtual void log_exception(std::exception exc, const char* _file = nullptr, int _line = 0)
 		{
 			std::cout << Logcommand;
-			std::cout << std::format("{0:<5}", "");
+			std::cout << std::format("{0:<5}", " ");
 			std::cout << Logapi;
-			std::cout << std::format("{0:<5}", "");
+			std::cout << std::format("{0:<5}", " ");
 			std::cout << Logfunction;
-			std::cout << std::format("{0:<20}", "");
+			std::cout << std::format("{0:<20}", " ");
 			std::cout << Logexception;
 			std::cout << std::format("{0:<80}{1:<10}{2:<25}",
 				exc.what(),
@@ -342,7 +371,14 @@ namespace corona
 					auto body = member.second;
 					auto key = member.first;
 					std::string name = sindent + key;
-					std::cout << std::format("{0:<30}{0:<30}:", "", name);
+					std::cout << Logcommand;
+					std::cout << std::format("{0:<5}", " ");
+					std::cout << Logapi;
+					std::cout << std::format("{0:<5}", " ");
+					std::cout << Logfunction;
+					std::cout << std::format("{0:<20}", " ");
+					std::cout << Loginformation;
+					std::cout << std::format("{1:<30}:", " ", name);
 					if (body.object())
 					{
 						std::cout << std::format("{0:<50}:", "{object}") << std::endl;
@@ -366,7 +402,14 @@ namespace corona
 				{
 					auto item = _src.get_element(i);
 					std::string sindex = sindent + std::to_string(i);
-					std::cout << std::format("{0:<30}{0:<30}:", "", sindex) << std::endl;
+					std::cout << Logcommand;
+					std::cout << std::format("{0:<5}", " ");
+					std::cout << Logapi;
+					std::cout << std::format("{0:<5}", " ");
+					std::cout << Logfunction;
+					std::cout << std::format("{0:<20}", " ");
+					std::cout << Loginformation;
+					std::cout << std::format("{0:<30}:", "", sindex) << std::endl;
 					log_json(item, _indent + 4);
 				}
 			}
