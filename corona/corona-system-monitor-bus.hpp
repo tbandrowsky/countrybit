@@ -73,20 +73,20 @@ namespace corona
 			Logusercommand.color_background = "12;59;69";
 			Logcommand.color_background = "21;83;98";
 			Logapi.color_background = "40;55;42";
-			Logfunction.color_background = "134;129;135";
+			Logfunction.color_background = "68;60;57";
 			Lognormal.color_background = "103;115;95";
 			Logexception.color_background = "103;50;40";
 			Logwarning.color_background = "178;94;23";
 			Loginformation.color_background = "0;0;0";
 
-			Logusercommand.color_foreground = "220;220;220";
-			Logcommand.color_foreground = "220;220;220";
-			Logapi.color_foreground = "220;220;220";
-			Logfunction.color_foreground = "220;220;220";
+			Logusercommand.color_foreground = "239;236;232";
+			Logcommand.color_foreground = "239;236;232";
+			Logapi.color_foreground = "220;214;209";
+			Logfunction.color_foreground = "220;214;209";
 			Lognormal.color_foreground = "0;0;0";
 			Logexception.color_foreground = "0;0;0";
 			Logwarning.color_foreground = "0;0;0";
-			Loginformation.color_foreground = "179;182;174";
+			Loginformation.color_foreground = "220;214;209";
 		}
 
 		void file_line(const char* _file, int _line)

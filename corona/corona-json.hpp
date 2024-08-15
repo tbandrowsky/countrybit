@@ -3502,7 +3502,7 @@ namespace corona
 		return *this;
 	}
 
-	json operator + (json& _srcA, json& _srcB)
+	json operator + (const json& _srcA, const json& _srcB)
 	{
 		json_parser jp;
 		json result;
@@ -3541,7 +3541,7 @@ namespace corona
 		{
 			date_time d1 = _srcA.get_datetime();
 			double elapsed = _srcB.get_double();
-			double start;
+			double start = elapsed;
 			double days = floor(elapsed);
 			d1 = d1 + time_span(days, time_models::days);
 
@@ -3572,7 +3572,8 @@ namespace corona
 		{
 			date_time d1 = _srcA.get_datetime();
 			double elapsed = _srcB.get_double();
-			double start;
+			double start = elapsed;
+
 			double days = floor(elapsed);
 			d1 = d1 + time_span(days, time_models::days);
 
@@ -3604,7 +3605,7 @@ namespace corona
 		{
 			date_time d1 = _srcB.get_datetime();
 			double elapsed = _srcA.get_double();
-			double start;
+			double start = elapsed;
 			double days = floor(elapsed);
 			d1 = d1 + time_span(days, time_models::days);
 
@@ -3635,7 +3636,7 @@ namespace corona
 		{
 			date_time d1 = _srcB.get_datetime();
 			double elapsed = _srcA.get_double();
-			double start;
+			double start = elapsed;
 			double days = floor(elapsed);
 			d1 = d1 + time_span(days, time_models::days);
 
@@ -3666,35 +3667,7 @@ namespace corona
 		return result;
 	}
 
-	json operator + (const json& _srcA, double _d)
-	{
-		json_parser jp;
-		json d = jp.from_double(_d);
-		return _srcA + d;
-	}
-
-	json operator - (double _d, const json& _srcA)
-	{
-		json_parser jp;
-		json d = jp.from_double(_d);
-		return d - _srcA;
-	}
-
-	json operator - (const json& _srcA, double _d)
-	{
-		json_parser jp;
-		json d = jp.from_double(_d);
-		return _srcA - _d;
-	}
-
-	json operator + (json& _srcA, double _d)
-	{
-		json_parser jp;
-		json d = jp.from_double(_d);
-		return _srcA + d;
-	}
-
-	json operator - (json& _srcA, const json& _srcB)
+	json operator - (const json& _srcA, const json& _srcB)
 	{
 		json_parser jp;
 		json result;
@@ -3739,7 +3712,8 @@ namespace corona
 		{
 			date_time d1 = _srcA.get_datetime();
 			double elapsed = _srcB.get_double();
-			double start;
+			double start = elapsed;
+
 			double days = floor(elapsed);
 			d1 = d1 + time_span(days, time_models::days);
 
@@ -3770,7 +3744,7 @@ namespace corona
 		{
 			date_time d1 = _srcA.get_datetime();
 			double elapsed = _srcB.get_double();
-			double start;
+			double start = elapsed;
 			double days = floor(elapsed);
 			d1 = d1 - time_span(days, time_models::days);
 
@@ -3802,7 +3776,8 @@ namespace corona
 		{
 			date_time d1 = _srcB.get_datetime();
 			double elapsed = _srcA.get_double();
-			double start;
+			double start = elapsed;
+
 			double days = floor(elapsed);
 			d1 = d1 - time_span(days, time_models::days);
 
@@ -3833,23 +3808,24 @@ namespace corona
 		{
 			date_time d1 = _srcB.get_datetime();
 			double elapsed = _srcA.get_double();
-			double start;
+			double start = elapsed;
 			double days = floor(elapsed);
 			d1 = d1 - time_span(days, time_models::days);
 
-			double hours = start / 24.0;
+			start -= days;
+			double hours = floor(start / 24.0);
 			d1 = d1 - time_span(hours, time_models::hours);
-			start = fmod(start, 24.0);
 
-			double minutes = start / 60.0;
+			start -= hours;
+			double minutes = floor(start / 60.0);
 			d1 = d1 - time_span(minutes, time_models::minutes);
-			start = fmod(start, 60.0);
 
-			double seconds = minutes / 60.0;
+			start -= minutes;
+			double seconds = floor(minutes / 60.0);
 			d1 = d1 - time_span(seconds, time_models::seconds);
-			start = fmod(start, 60.0);
 
-			double milliseconds = start / 1000;
+			start -= seconds;
+			double milliseconds = floor(start / 1000);
 			d1 = d1 - time_span(seconds, time_models::milliseconds);
 
 			result = jp.from_datetime(d1);
@@ -3861,10 +3837,10 @@ namespace corona
 			d1 = d1 - time_span(elapsed, time_models::days);
 			result = jp.from_datetime(d1);
 		}
-
+		return result;
 	}
 
-	json operator / (json& _srcA, const json& _srcB)
+	json operator / (const json& _srcA, const json& _srcB)
 	{
 		json_parser jp;
 		json result;
@@ -3918,8 +3894,9 @@ namespace corona
 
 	json negate(json& _src)
 	{
+		json_parser jp;
 		json j = _src.clone();
-		j = 0.0 - j;
+		j = jp.from_double(0.0) - j;
 		return j;
 	}
 

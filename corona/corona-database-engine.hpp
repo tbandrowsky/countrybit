@@ -146,6 +146,11 @@ namespace corona
 			relative_ptr_type header_location;
 			json_parser jp;
 
+			date_time start_time = date_time::now();
+			timer tx;
+
+			system_monitoring_interface::global_mon->log_function_start("create_database", "start", start_time, __FILE__, __LINE__);
+			
 			{
 				scope_lock lock_one(classes_rw_lock);
 				scope_lock lock_two(objects_rw_lock);
@@ -183,12 +188,14 @@ namespace corona
 			if (!response["Success"]) {
 				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_json(response);
+				system_monitoring_interface::global_mon->log_function_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return result;
 			}
 
 			json test = co_await classes.get(R"({"ClassName":"SysObject"})");
 			if (test.empty() || test.is_member("ClassName", "SysParseError")) {
-				std::cout << __FILE__ << " " << __LINE__ << ":Could not find class after creation." << std::endl;
+				system_monitoring_interface::global_mon->log_warning("could not find class SysObject after creation.", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_function_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return result;
 			}
 
@@ -215,12 +222,15 @@ namespace corona
 			if (!response["Success"]) {
 				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_json(response);
+				system_monitoring_interface::global_mon->log_function_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return result;
 			}
 
 			test = co_await classes.get(R"({"ClassName":"SysSchemas"})");
 			if (test.empty() || test.is_member("ClassName", "SysParseError")) {
-				std::cout << __FILE__ << " " << __LINE__ << ":Could not find class after creation." << std::endl;
+				system_monitoring_interface::global_mon->log_warning("could not find class SysSchemas after creation.", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_function_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+
 				co_return result;
 			}
 
@@ -244,14 +254,17 @@ namespace corona
 )");
 
 			if (!response["Success"]) {
-				std::cout << __FILE__ << " " << __LINE__ << ":classes.put failed." << std::endl;
+				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_json(response);
 				std::cout << response.to_json() << std::endl;
+				system_monitoring_interface::global_mon->log_function_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return result;
 			}
 
 			test = co_await classes.get(R"({"ClassName":"SysSchemas"})");
 			if (test.empty() || test.is_member("ClassName", "SysParseError")) {
-				std::cout << __FILE__ << " " << __LINE__ << ":Could not find class after creation." << std::endl;
+				system_monitoring_interface::global_mon->log_warning("could not find class SysSchemas after creation.", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_function_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return result;
 			}
 
@@ -271,14 +284,16 @@ namespace corona
 			created_classes.put_member("SysReference", true);
 
 			if (!response["Success"]) {
-				std::cout << __FILE__ << " " << __LINE__ << ":classes.put failed." << std::endl;
-				std::cout << response.to_json() << std::endl;
+				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_json(response);
+				system_monitoring_interface::global_mon->log_function_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return result;
 			}
 
 			test = co_await classes.get(R"({"ClassName":"SysReference"})");
 			if (test.empty() || test.is_member("ClassName", "SysParseError")) {
-				std::cout << __FILE__ << " " << __LINE__ << ":Could not find class after creation." << std::endl;
+				system_monitoring_interface::global_mon->log_warning("could not find class SysParseError after creation.", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_function_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return result;
 			}
 
@@ -309,12 +324,14 @@ namespace corona
 			if (!response["Success"]) {
 				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_json(response);
+				system_monitoring_interface::global_mon->log_function_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return result;
 			}
 
 			test = co_await classes.get(R"({"ClassName":"SysUser"})");
 			if (test.empty() || test.is_member("ClassName", "SysParseError")) {
-				std::cout << __FILE__ << " " << __LINE__ << ":Could not find class after creation." << std::endl;
+				system_monitoring_interface::global_mon->log_warning("could not find class SysParseError after creation.", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_function_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return result;
 			}
 
@@ -340,14 +357,16 @@ namespace corona
 )");
 
 			if (!response["Success"]) {
-				std::cout << __FILE__ << " " << __LINE__ << ":classes.put failed." << std::endl;
-				std::cout << response.to_json() << std::endl;
+				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_json(response);
+				system_monitoring_interface::global_mon->log_function_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return result;
 			}
 
 			test = co_await classes.get(R"({"ClassName":"SysLogin"})");
 			if (test.empty() || test.is_member("ClassName", "SysParseError")) {
-				std::cout << __FILE__ << " " << __LINE__ << ":Could not find class after creation." << std::endl;
+				system_monitoring_interface::global_mon->log_warning("could not find class SysParseError after creation.", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_function_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return result;
 			}
 
@@ -374,12 +393,14 @@ namespace corona
 			if (!response["Success"]) {
 				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_json(response);
+				system_monitoring_interface::global_mon->log_function_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return result;
 			}
 
 			test = co_await classes.get(R"({"ClassName":"SysPermission"})");
 			if (test.empty() || test.is_member("ClassName", "SysParseError")) {
-				std::cout << __FILE__ << " " << __LINE__ << ":Could not find class after creation." << std::endl;
+				system_monitoring_interface::global_mon->log_warning("could not find class SysPermission after creation.", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_function_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return result;
 			}
 
@@ -405,14 +426,17 @@ namespace corona
 )");
 
 			if (!response["Success"]) {
-				std::cout << __FILE__ << " " << __LINE__ << ":classes.put failed." << std::endl;
+				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_json(response);
 				std::cout << response.to_json() << std::endl;
+				system_monitoring_interface::global_mon->log_function_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return result;
 			}
 
 			test = co_await classes.get(R"({"ClassName":"SysMember"})");
 			if (test.empty() || test.is_member("ClassName", "SysParseError")) {
-				std::cout << __FILE__ << " " << __LINE__ << ":Could not find class after creation." << std::endl;
+				system_monitoring_interface::global_mon->log_warning("could not find class SysMember after creation.", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_function_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return result;
 			}
 
@@ -436,12 +460,15 @@ namespace corona
 			if (!response["Success"]) {
 				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_json(response);
+				system_monitoring_interface::global_mon->log_function_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return result;
 			}
 
 			test = co_await classes.get(R"({"ClassName":"SysGrant"})");
 			if (test.empty() || test.is_member("ClassName", "SysParseError")) {
-				std::cout << __FILE__ << " " << __LINE__ << ":Could not find class after creation." << std::endl;
+				system_monitoring_interface::global_mon->log_warning("could not find class SysGrant after creation.", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_json(response);
+				system_monitoring_interface::global_mon->log_function_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return result;
 			}
 
@@ -458,12 +485,14 @@ namespace corona
 			if (!response["Success"]) {
 				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_json(response);
+				system_monitoring_interface::global_mon->log_function_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return result;
 			}
 
 			test = co_await classes.get(R"({"ClassName":"SysClassGrant"})");
 			if (test.empty() || test.is_member("ClassName", "SysParseError")) {
-				std::cout << __FILE__ << " " << __LINE__ << ":Could not find class after creation." << std::endl;
+				system_monitoring_interface::global_mon->log_warning("could not find class SysGlassGrant after creation.", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_function_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return result;
 			}
 
@@ -483,12 +512,14 @@ namespace corona
 			if (!response["Success"]) {
 				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_json(response);
+				system_monitoring_interface::global_mon->log_function_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return result;
 			}
 
 			test = co_await classes.get(R"({"ClassName":"SysObjectGrant"})");
 			if (test.empty() || test.is_member("ClassName", "SysParseError")) {
-				std::cout << __FILE__ << " " << __LINE__ << ":Could not find class after creation." << std::endl;
+				system_monitoring_interface::global_mon->log_warning("could not find class SysObjectGrant after creation.", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_function_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return result;
 			}
 
@@ -516,12 +547,14 @@ namespace corona
 			if (!response["Success"]) {
 				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_json(response);
+				system_monitoring_interface::global_mon->log_function_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return result;
 			}
 
 			test = co_await classes.get(R"({"ClassName":"SysTeam"})");
 			if (test.empty() || test.is_member("ClassName", "SysParseError")) {
-				std::cout << __FILE__ << " " << __LINE__ << ":Could not find class after creation." << std::endl;
+				system_monitoring_interface::global_mon->log_warning("could not find class SysTeam after creation.", __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_function_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return result;
 			}
 
@@ -541,6 +574,7 @@ namespace corona
 				});
 
 			if (missing) {
+				system_monitoring_interface::global_mon->log_function_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				std::cout << __FILE__ << " " << __LINE__ << ":Class list returned from database missed some classes." << std::endl;
 				co_return result;
 			}
@@ -558,6 +592,8 @@ namespace corona
 			json new_user = new_user_result["Data"];
 			json user_return = create_response(new_user_request, true, "Ok", new_user, method_timer.get_elapsed_seconds());
 			response = create_response(new_user_request, true, "Database Created", user_return, method_timer.get_elapsed_seconds());
+
+			system_monitoring_interface::global_mon->log_function_stop("create_database", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			co_return response;
 		}
 
@@ -571,6 +607,12 @@ private:
 			json check_request = create_system_request(j);
 			json checked = co_await check_class(check_request);
 			json response;
+
+
+			date_time start_time = date_time::now();
+			timer tx;
+
+			system_monitoring_interface::global_mon->log_function_start("create_class", "start", start_time, __FILE__, __LINE__);
 
 			if (checked["Success"]) {
 				scope_lock lock(classes_rw_lock);
@@ -616,6 +658,8 @@ private:
 			{
 				response = checked;
 			}
+			system_monitoring_interface::global_mon->log_function_stop("create_class", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+
 			co_return response;
 		}
 
@@ -1405,6 +1449,10 @@ private:
 
 		void apply_config(json _config)
 		{
+			date_time start;
+			start = date_time::now();
+			timer tx;
+			system_monitoring_interface::global_mon->log_job_start("apply_config", "start", start, __FILE__, __LINE__);
 			if (_config.has_member("SendGrid"))
 			{
 				json send_grid = _config["SendGrid"];
@@ -1419,6 +1467,8 @@ private:
 				default_email_address = server["DefaultUserEmailAddress"];
 				default_guest_team = server["DefaultGuestTeam"];
 			}
+			system_monitoring_interface::global_mon->log_job_complete("apply_config", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+
 		}
 
 		database_transaction<json> apply_schema(json _schema)
@@ -1604,7 +1654,6 @@ private:
 
 								std::string file_name = import_spec["FileName"];
 								std::string delimiter = import_spec["Delimiter"];
-								char cdelimiter;
 								if (file_name.empty() || delimiter.empty()) {
 									system_monitoring_interface::global_mon->log_warning("FileName and Delimiter can't be blank.");
 								}
@@ -1738,6 +1787,9 @@ private:
 
 			system_monitoring_interface::global_mon->log_job_complete("apply_schema", "schema applied", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
+			json temp = R"({ "Success" : true, "Message" : "Everything Ok, suitation normal."})"_jobject;
+
+			co_return temp;
 		}
 
 		database_transaction<relative_ptr_type> open_database(relative_ptr_type _header_location)
@@ -1769,6 +1821,12 @@ private:
 			timer method_timer;
 			json_parser jp;
 			json response;
+
+
+			date_time start_time = date_time::now();
+			timer tx;
+
+			system_monitoring_interface::global_mon->log_function_start("create_user", "start", start_time, __FILE__, __LINE__);
 
 			json data = create_user_request["Data"];
 
@@ -1834,6 +1892,7 @@ private:
 			{
 				response = create_response(create_user_request, false, "User not created", data, method_timer.get_elapsed_seconds());
 			}
+			system_monitoring_interface::global_mon->log_function_stop("create_user", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 			co_return response;
 		}
@@ -1844,6 +1903,11 @@ private:
 			timer method_timer;
 			json_parser jp;
 			json response;
+
+			date_time start_time = date_time::now();
+			timer tx;
+
+			system_monitoring_interface::global_mon->log_function_start("login_user", "start", start_time, __FILE__, __LINE__);
 
 			json data = _login_request;
 			std::string user_name = data["Name"];
@@ -1887,6 +1951,7 @@ private:
 			{
 				response = create_response(_login_request, false, "Failed", jp.create_object(), method_timer.get_elapsed_seconds());
 			}
+			system_monitoring_interface::global_mon->log_function_stop("login_user", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 			co_return response;
 		}
@@ -1921,6 +1986,11 @@ private:
 			json_parser jp;
 			json result;
 
+			date_time start_time = date_time::now();
+			timer tx;
+
+			system_monitoring_interface::global_mon->log_function_start("edit_object", "start", start_time, __FILE__, __LINE__);
+
 			json token = _edit_object_request["Token"];
 			json object_key = _edit_object_request["ObjectId"];
 
@@ -1953,8 +2023,10 @@ private:
 						object_fields.put_member(field.first, field.second);
 					}
 				}
+				system_monitoring_interface::global_mon->log_function_stop("edit_object", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return create_response(_edit_object_request, true, "Ok", object_options, method_timer.get_elapsed_seconds());
 			}
+			system_monitoring_interface::global_mon->log_function_stop("edit_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			co_return create_response(_edit_object_request, false, "Sadly, this object eludes you.", object_options, method_timer.get_elapsed_seconds());
 		}
 
@@ -1968,6 +2040,12 @@ private:
 			json result_list;
 			
 			scope_lock lock_one(classes_rw_lock);
+
+			date_time start_time = date_time::now();
+			timer tx;
+
+			system_monitoring_interface::global_mon->log_function_start("get_classes", "start", start_time, __FILE__, __LINE__);
+
 
 			if (!check_message(get_classes_request, { auth_general }))
 			{
@@ -1991,7 +2069,7 @@ private:
 					return empty;
 				}
 			});
-
+			system_monitoring_interface::global_mon->log_function_stop("get_classes", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			result = create_response(get_classes_request, true, "Ok", result_list, method_timer.get_elapsed_seconds());
 
 			co_return result;
@@ -2003,6 +2081,12 @@ private:
 			json_parser jp;
 			json result;
 
+			date_time start_time = date_time::now();
+			timer tx;
+
+			system_monitoring_interface::global_mon->log_function_start("get_class", "start", start_time, __FILE__, __LINE__);
+
+
 			std::vector<std::string> missing_elements;
 			if (!get_class_request.has_members(missing_elements, { "Token", "Data" })) {
 				std::string error_message;
@@ -2013,6 +2097,7 @@ private:
 					error_message.append(m);
 				}
 				json response = create_response(get_class_request, false, error_message, jp.create_object(), method_timer.get_elapsed_seconds());
+				system_monitoring_interface::global_mon->log_function_stop("get_class", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return response;
 			}
 
@@ -2020,6 +2105,7 @@ private:
 			if (!check_message(get_class_request, { auth_general }))
 			{
 				result = create_response(get_class_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
+				system_monitoring_interface::global_mon->log_function_stop("get_class", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return result;
 			}
 
@@ -2041,11 +2127,18 @@ private:
 
 
 			result = create_response(get_class_request, true, "Ok", result, method_timer.get_elapsed_seconds());
+			system_monitoring_interface::global_mon->log_function_stop("get_class", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			co_return result;
 		}
 
 		database_composed_transaction<json> delete_objects(json delete_request)
 		{
+
+			date_time start_time = date_time::now();
+			timer tx;
+
+			system_monitoring_interface::global_mon->log_function_start("delete_objects", "start", start_time, __FILE__, __LINE__);
+
 			timer method_timer;
 			json_parser jp;
 			json result;
@@ -2054,6 +2147,8 @@ private:
 				result = create_response(delete_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
 				co_return result;
 			}
+
+			system_monitoring_interface::global_mon->log_function_stop("delete_objects", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 			json delete_filter = delete_request["Data"];
 
@@ -2065,6 +2160,12 @@ private:
 			json result;
 			json_parser jp;
 
+			date_time start_time = date_time::now();
+			timer tx;
+
+			system_monitoring_interface::global_mon->log_function_start("put_class", "start", start_time, __FILE__, __LINE__);
+
+
 			std::vector<std::string> missing_elements;
 			if (!put_class_request.has_members(missing_elements, { "Token", "Data" })) {
 				std::string error_message;
@@ -2075,12 +2176,15 @@ private:
 					error_message.append(m);
 				}
 				json response = create_response(put_class_request, false, error_message, jp.create_object(), method_timer.get_elapsed_seconds());
+				system_monitoring_interface::global_mon->log_function_stop("put_class", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return response;
 			}
 
 			if (!check_message(put_class_request, { auth_general }))
 			{
 				result = create_response(put_class_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
+				system_monitoring_interface::global_mon->log_function_stop("put_class", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+
 				co_return result;
 			}
 
@@ -2094,6 +2198,8 @@ private:
 
 			if (!can_put_class) {
 				result = create_response(put_class_request, false, "Denied", class_definition, method_timer.get_elapsed_seconds());
+				system_monitoring_interface::global_mon->log_function_stop("put_class", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+
 				co_return result;
 			}
 
@@ -2125,6 +2231,8 @@ private:
 					json temp = co_await classes.get(key);
 					if (temp.empty()) {
 						result = create_response(check_request, false, "save check failed", adjusted_class, method_timer.get_elapsed_seconds());
+						system_monitoring_interface::global_mon->log_function_stop("put_class", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+
 						co_return result;
 					}
 					if (adjusted_class.has_member("Ancestors")) {
@@ -2161,6 +2269,7 @@ private:
 			{
 				result = checked;
 			}
+			system_monitoring_interface::global_mon->log_function_stop("put_class", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			co_return result;
 		}
 
@@ -2169,6 +2278,11 @@ private:
 			timer method_timer;
 			json_parser jp;
 			json response;
+
+			date_time start_time = date_time::now();
+			timer tx;
+
+			system_monitoring_interface::global_mon->log_function_start("update", "start", start_time, __FILE__, __LINE__);
 
 			std::vector<std::string> missing_elements;
 			if (!query_class_request.has_members(missing_elements, { "Token", "Data" })) {
@@ -2180,6 +2294,7 @@ private:
 					error_message.append(m);
 				}
 				response = create_response(query_class_request, false, error_message, jp.create_object(), method_timer.get_elapsed_seconds());
+				system_monitoring_interface::global_mon->log_function_stop("update", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return response;
 			}
 
@@ -2194,12 +2309,14 @@ private:
 					error_message.append(m);
 				}
 				response = create_response(query_class_request, false, error_message, jp.create_object(), method_timer.get_elapsed_seconds());
+				system_monitoring_interface::global_mon->log_function_stop("update", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return response;
 			}
 
 			if (!check_message(query_class_request, { auth_general }))
 			{
 				response = create_response(query_class_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
+				system_monitoring_interface::global_mon->log_function_stop("update", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return response;
 			}
 
@@ -2207,6 +2324,7 @@ private:
 			json base_class_name = manip["ClassName"];
 			if (base_class_name.empty()) {
 				response = create_response(query_class_request, false, "Classname not specified", jp.create_object(), method_timer.get_elapsed_seconds());
+				system_monitoring_interface::global_mon->log_function_stop("update", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return response;
 			}
 			json filter = manip["Filter"];
@@ -2215,6 +2333,7 @@ private:
 			if (!class_granted)
 			{
 				response = create_response(query_class_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
+				system_monitoring_interface::global_mon->log_function_stop("update", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return response;
 			}
 
@@ -2267,6 +2386,7 @@ private:
 			}
 
 			response = create_response(query_class_request, true, "Query completed", objects, method_timer.get_elapsed_seconds());
+			system_monitoring_interface::global_mon->log_function_stop("update", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			co_return response;
 		}
 
@@ -2284,6 +2404,12 @@ private:
 			timer method_timer;
 			json_parser jp;
 
+			date_time start_time = date_time::now();
+			timer tx;
+
+			system_monitoring_interface::global_mon->log_function_start("create_object", "start", start_time, __FILE__, __LINE__);
+
+
 			json token = create_object_request["Token"];
 			json data = create_object_request["Data"];
 			std::string class_name = data["ClassName"];
@@ -2292,12 +2418,14 @@ private:
 			if (!check_message(create_object_request, { auth_general }))
 			{
 				response = create_response(create_object_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
+				system_monitoring_interface::global_mon->log_function_stop("create_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return response;
 			}
 
 			bool permission = co_await has_class_permission(token, class_name, "Get");
 			if (!permission) {
 				json result = create_response(create_object_request, false, "Cannot get class", data, method_timer.get_elapsed_seconds());
+				system_monitoring_interface::global_mon->log_function_stop("create_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return result;
 			}
 
@@ -2374,6 +2502,7 @@ private:
 				response = create_response(create_object_request, true, "Object created", new_object, method_timer.get_elapsed_seconds());
 
 			}
+			system_monitoring_interface::global_mon->log_function_stop("create_object", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			co_return response;
 			
 		}
@@ -2387,17 +2516,24 @@ private:
 			json object_definition;
 			json result;
 
+			date_time start_time = date_time::now();
+			timer tx;
+
+			system_monitoring_interface::global_mon->log_function_start("put_object", "start", start_time, __FILE__, __LINE__);
+
 			object_definition = put_object_request["Data"];
 
 			if (!check_message(put_object_request, { auth_general }))
 			{
 				result = create_response(put_object_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
+				system_monitoring_interface::global_mon->log_function_stop("put_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return result;
 			}
 
 			bool permission = co_await check_object_permission(put_object_request, "Put");
 			if (!permission) {
 				json result = create_response(put_object_request, false, "Cannot create object", put_object_request["Data"], method_timer.get_elapsed_seconds());
+				system_monitoring_interface::global_mon->log_function_stop("put_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return result;
 			}
 
@@ -2451,6 +2587,7 @@ private:
 			{
 				result = create_response(put_object_request, false, result["Message"], result["Warnings"], method_timer.get_elapsed_seconds());
 			}
+			system_monitoring_interface::global_mon->log_function_stop("put_object", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 			co_return result;
 		}
@@ -2463,15 +2600,22 @@ private:
 			json_parser jp;
 			json result;
 
+			date_time start_time = date_time::now();
+			timer tx;
+
+			system_monitoring_interface::global_mon->log_function_start("get_object", "start", start_time, __FILE__, __LINE__);
+
 			if (!check_message(get_object_request, { auth_general }))
 			{
 				result = create_response(get_object_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
+				system_monitoring_interface::global_mon->log_function_stop("get_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return result;
 			}
 
 			bool permission = co_await check_object_permission(get_object_request, "Get");
 			if (!permission) {
 				json result = create_response(get_object_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
+				system_monitoring_interface::global_mon->log_function_stop("get_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return result;
 			}
 			
@@ -2479,6 +2623,7 @@ private:
 			json obj = co_await acquire_object(payload);
 
 			result = create_response(get_object_request, true, "Ok", obj, method_timer.get_elapsed_seconds());
+			system_monitoring_interface::global_mon->log_function_stop("get_object", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 			co_return result;
 		}
@@ -2489,6 +2634,13 @@ private:
 			json response;
 			json_parser jp;
 
+
+			date_time start_time = date_time::now();
+			timer tx;
+
+			system_monitoring_interface::global_mon->log_function_start("pop_object", "start", start_time, __FILE__, __LINE__);
+
+
 			if (!check_message(pop_object_request, { auth_general }))
 			{
 				response = create_response(pop_object_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
@@ -2497,6 +2649,7 @@ private:
 
 			if (!check_object_key_permission(pop_object_request, "Delete")) {
 				json result = create_response(pop_object_request, false, "Cannot delete object", jp.create_object(), method_timer.get_elapsed_seconds());
+				system_monitoring_interface::global_mon->log_function_stop("pop_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return result;
 			}
 
@@ -2526,6 +2679,7 @@ private:
 			{
 				response = create_response(pop_object_request, false, "Not found", object_key, method_timer.get_elapsed_seconds());
 			}
+			system_monitoring_interface::global_mon->log_function_stop("pop_object", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			co_return response;
 		}
 
@@ -2535,14 +2689,22 @@ private:
 			json response;
 			json_parser jp;
 
+			date_time start_time = date_time::now();
+			timer tx;
+
+			system_monitoring_interface::global_mon->log_function_start("delete_object", "start", start_time, __FILE__, __LINE__);
+
+
 			if (!check_message(delete_object_request, { auth_general }))
 			{
 				response = create_response(delete_object_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
+				system_monitoring_interface::global_mon->log_function_stop("delete_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return response;
 			}
 
 			if (!check_object_key_permission(delete_object_request, "Delete")) {
 				json result = create_response(delete_object_request, false, "Cannot delete object", jp.create_object(), method_timer.get_elapsed_seconds());
+				system_monitoring_interface::global_mon->log_function_stop("delete_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return result;
 			}
 
@@ -2571,6 +2733,7 @@ private:
 			{
 				response = create_response(delete_object_request, false, "Not found", object_key, method_timer.get_elapsed_seconds());
 			}
+			system_monitoring_interface::global_mon->log_function_stop("delete_object", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			co_return response;
 		}
 
@@ -2581,9 +2744,17 @@ private:
 
 			json response;
 
+
+			date_time start_time = date_time::now();
+			timer tx;
+
+			system_monitoring_interface::global_mon->log_function_start("copy_object", "start", start_time, __FILE__, __LINE__);
+
+
 			if (!check_message(copy_request, { auth_general }))
 			{
 				response = create_response(copy_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
+				system_monitoring_interface::global_mon->log_function_stop("copy_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return response;
 			}
 
@@ -2596,6 +2767,7 @@ private:
 			bool permission = co_await check_object_permission(copy_request, "Get");
 			if (!permission) {
 				json result = create_response(copy_request, false, "Denied", source_key, method_timer.get_elapsed_seconds());
+				system_monitoring_interface::global_mon->log_function_stop("copy_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return result;
 			}
 
@@ -2613,7 +2785,7 @@ private:
 			{
 				response = result;
 			}
-
+			system_monitoring_interface::global_mon->log_function_stop("copy_object", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			co_return response;
 		}
 

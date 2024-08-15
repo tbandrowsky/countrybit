@@ -337,7 +337,9 @@ namespace corona
 			else
 			{
 				system_monitoring_interface::global_mon->log_warning("Couldn't get the native media type for the camera");
+				return HRESULT_FROM_NT(E_FAIL);
 			}
+			return HRESULT_FROM_NT(E_FAIL);
 		}
 
 		IMFMediaSource*		pSource;

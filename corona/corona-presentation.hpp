@@ -178,9 +178,9 @@ namespace corona {
 		virtual bool drawFrame(direct2dContext& _ctx);
 		virtual bool update(double _elapsedSeconds, double _totalSeconds);
 
-		virtual void keyPress(int _ctrl_id, short _key);
-		virtual void keyDown(int _ctrl_id, short _key);
-		virtual void keyUp(int _ctrl_id, short _key);
+		virtual void keyPress(int _ctrl_id, int _key);
+		virtual void keyDown(int _ctrl_id, int _key);
+		virtual void keyUp(int _ctrl_id, int _key);
 		virtual void mouseMove(point* _point);
 		virtual void mouseLeftDown(point* _point);
 		virtual void mouseLeftUp(point* _point);
@@ -661,7 +661,7 @@ namespace corona {
 		return r;
 	}
 
-	void presentation::keyPress(int _ctrl_id, short _key)
+	void presentation::keyPress(int _ctrl_id, int _key)
 	{
 		auto cp = current_page.lock();
 		key_press_event kde;
@@ -673,7 +673,7 @@ namespace corona {
 		}
 	}
 
-	void presentation::keyDown(int _ctrl_id, short _key)
+	void presentation::keyDown(int _ctrl_id, int _key)
 	{
 		auto cp = current_page.lock();
 		key_down_event kde;
@@ -685,7 +685,7 @@ namespace corona {
 		}
 	}
 
-	void presentation::keyUp(int _ctrl_id, short _key)
+	void presentation::keyUp(int _ctrl_id, int _key)
 	{
 		auto cp = current_page.lock();
 		key_up_event kde;

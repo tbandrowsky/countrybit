@@ -1939,7 +1939,6 @@ namespace corona
 
 					const char* border_name = nullptr;
 					const char* background_name = nullptr;
-					D2D1_COLOR_F color;
 
 					if (border_brush->get_name())
 					{
