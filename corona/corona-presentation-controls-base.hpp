@@ -655,7 +655,7 @@ namespace corona
 			fmt = std::format("{0} {1} debug clicked", typeid(*this).name(), name);
 			system_monitoring_interface::global_mon->log_information(fmt);
 			get_json(control_json);
-			system_monitoring_interface::global_mon->log_json(control_json);
+			system_monitoring_interface::global_mon->log_json<json>(control_json);
 		}
 
 	};

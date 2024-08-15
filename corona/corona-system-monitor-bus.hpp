@@ -416,26 +416,33 @@ namespace corona
 					std::cout << std::format("{1:<30}:", " ", name);
 					if (body.object())
 					{
-						std::cout << std::format("{0:<50}:", "{object}") << std::endl;
-						log_json(body, _indent + 4);
+						std::string rightArrow = "->";
+						std::cout << std::format("{0:<50}:", "{object}" + rightArrow) << std::endl;
+						log_json<json_type>(body, _indent + 4);
 					}
 					else if (body.array())
 					{
-						std::cout << std::format("{0:<50}:", "[array]") << std::endl;
-						log_json(body, _indent + 4);
+						std::string rightArrow = "->";
+						std::cout << std::format("{0:<50}:", "[array]" + rightArrow ) << std::endl;
+						log_json<json_type>(body, _indent + 4);
 					}
 					else
 					{
-						std::string v = body.to_json();
-						std::cout << std::format("{0:<50}", v) << std::endl;
+						log_json<json_type>(body, _indent + 4);
 					}
 				}
 			}
 			else if (_src.array())
 			{
-				for (int i = 0; i < _src.size(); i++)
+				bool too_many = false;
+				int max_items = _src.size();
+				if (max_items > 10) {
+					max_items = 10;
+					too_many = true;
+				}
+				for (int i = 0; i < max_items; i++)
 				{
-					auto item = _src.get_element(i);
+					auto body = _src.get_element(i);
 					std::string sindex = sindent + std::to_string(i);
 					std::cout << Logcommand;
 					std::cout << std::format("{0:<5}", " ");
@@ -444,9 +451,44 @@ namespace corona
 					std::cout << Logfunction;
 					std::cout << std::format("{0:<20}", " ");
 					std::cout << Loginformation;
-					std::cout << std::format("{0:<30}:", "", sindex) << std::endl;
-					log_json(item, _indent + 4);
+					std::cout << std::format("{0:<30}:", sindex);
+					if (body.object())
+					{
+						std::string rightArrow = "->";
+						std::cout << std::format("{0:<50}:", "{object}" + rightArrow) << std::endl;
+						log_json<json_type>(body, _indent + 4);
+					}
+					else if (body.array())
+					{
+						std::string rightArrow = "->";
+						std::cout << std::format("{0:<50}:", "[array]" + rightArrow) << std::endl;
+						log_json<json_type>(body, _indent + 4);
+					}
+					else
+					{
+						log_json<json_type>(body, _indent + 4);
+					}
+					std::cout << std::endl;
 				}
+
+				if (too_many) {
+					std::string sindex = sindent + std::to_string(max_items);
+					std::cout << Logcommand;
+					std::cout << std::format("{0:<5}", " ");
+					std::cout << Logapi;
+					std::cout << std::format("{0:<5}", " ");
+					std::cout << Logfunction;
+					std::cout << std::format("{0:<20}", " ");
+					std::cout << Loginformation;
+					std::cout << std::format("{0:<30}:", "", sindex);
+					std::cout << "*more than this*";
+					std::cout << std::endl;
+				}
+			}
+			else {
+				std::string v = _src.to_json();
+				std::cout << std::format("{0:<50}", v);
+				std::cout << std::endl;
 			}
 		}
 	};

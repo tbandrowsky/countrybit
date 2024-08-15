@@ -483,7 +483,7 @@ namespace corona
 				json jcommands = _pages.get_member("startup");
 
 				log_function_start("startup commands", "", dt);
-				log_json(jcommands);
+				log_json<json>(jcommands);
 
 				if (jcommands.array())
 				{
@@ -590,7 +590,7 @@ namespace corona
 				log_function_start("run_command", jcommand["class_name"], start_time, __FILE__, __LINE__);
 				this->run_ui([this, jcommand]() {
 					timer tx;
-					log_json(jcommand);
+					log_json<json>(jcommand);
 					std::shared_ptr<corona_bus_command> command;
 					corona::put_json(command, jcommand);
 					if (command) {
@@ -613,7 +613,7 @@ namespace corona
 				log_user_command_start("run_command", jcommand["class_name"], start_time, __FILE__, __LINE__);
 				this->run_ui([this, jcommand]() {
 					timer tx;
-					log_json(jcommand);
+					log_json<json>(jcommand);
 					std::shared_ptr<corona_bus_command> command;
 					corona::put_json(command, jcommand);
 					if (command) {

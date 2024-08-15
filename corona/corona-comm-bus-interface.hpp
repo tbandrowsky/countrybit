@@ -278,7 +278,7 @@ namespace corona
 			if (msg.empty())
 				msg = "Error";
 			log_warning(msg, _file, _line);
-			log_json(j, 4);
+			log_json<json>(j, 4);
 		}
 
 		void run(runnable _runnable)

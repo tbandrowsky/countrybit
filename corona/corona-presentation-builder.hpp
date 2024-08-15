@@ -1547,7 +1547,7 @@ namespace corona
 /*				json_parser jp;
 				json diag = jp.create_object();
 				_ids.get_json(diag);
-				system_monitoring_interface::global_mon->log_json(diag);
+				system_monitoring_interface::global_mon->log_json<json>(diag);
 	*/		}
 
 			ids = _ids;

@@ -26,7 +26,7 @@ namespace corona
 					system_monitoring_interface::global_mon->log_warning(s);
 					});
 				system_monitoring_interface::global_mon->log_information("the source json is:");
-				system_monitoring_interface::global_mon->log_json(_src, 2);
+				system_monitoring_interface::global_mon->log_json<json>(_src, 2);
 				return;
 			}
 
@@ -110,7 +110,7 @@ namespace corona
 					system_monitoring_interface::global_mon->log_warning(s);
 					});
 				system_monitoring_interface::global_mon->log_information("the source json is:");
-				system_monitoring_interface::global_mon->log_json(_src, 2);
+				system_monitoring_interface::global_mon->log_json<json>(_src, 2);
 				return;
 			}
 
@@ -155,7 +155,7 @@ namespace corona
 					system_monitoring_interface::global_mon->log_warning(s);
 					});
 				system_monitoring_interface::global_mon->log_information("the source json is:");
-				system_monitoring_interface::global_mon->log_json(_src, 2);
+				system_monitoring_interface::global_mon->log_json<json>(_src, 2);
 				return;
 			}
 
@@ -283,7 +283,7 @@ namespace corona
 					system_monitoring_interface::global_mon->log_warning(s);
 					});
 				system_monitoring_interface::global_mon->log_information("the source json is:");
-				system_monitoring_interface::global_mon->log_json(_src, 2);
+				system_monitoring_interface::global_mon->log_json<json>(_src, 2);
 				return;
 			}
 
@@ -372,7 +372,7 @@ namespace corona
 					system_monitoring_interface::global_mon->log_warning(s);
 					});
 				system_monitoring_interface::global_mon->log_information("the source json is:");
-				system_monitoring_interface::global_mon->log_json(_src, 2);
+				system_monitoring_interface::global_mon->log_json<json>(_src, 2);
 				return;
 			}
 			query_stage::put_json(_src);
@@ -418,7 +418,7 @@ namespace corona
 					system_monitoring_interface::global_mon->log_warning(s);
 					});
 				system_monitoring_interface::global_mon->log_information("the source json is:");
-				system_monitoring_interface::global_mon->log_json(_src, 2);
+				system_monitoring_interface::global_mon->log_json<json>(_src, 2);
 				return;
 			}
 
@@ -459,7 +459,7 @@ namespace corona
 					system_monitoring_interface::global_mon->log_warning(s);
 					});
 				system_monitoring_interface::global_mon->log_information("the source json is:");
-				system_monitoring_interface::global_mon->log_json(_src, 2);
+				system_monitoring_interface::global_mon->log_json<json>(_src, 2);
 				return;
 			}
 
@@ -502,7 +502,7 @@ namespace corona
 					system_monitoring_interface::global_mon->log_warning(s);
 					});
 				system_monitoring_interface::global_mon->log_information("the source json is:");
-				system_monitoring_interface::global_mon->log_json(_src, 2);
+				system_monitoring_interface::global_mon->log_json<json>(_src, 2);
 				return;
 			}
 
@@ -545,7 +545,7 @@ namespace corona
 					system_monitoring_interface::global_mon->log_warning(s);
 					});
 				system_monitoring_interface::global_mon->log_information("the source json is:");
-				system_monitoring_interface::global_mon->log_json(_src, 2);
+				system_monitoring_interface::global_mon->log_json<json>(_src, 2);
 				return;
 			}
 
@@ -587,7 +587,7 @@ namespace corona
 					system_monitoring_interface::global_mon->log_warning(s);
 					});
 				system_monitoring_interface::global_mon->log_information("the source json is:");
-				system_monitoring_interface::global_mon->log_json(_src, 2);
+				system_monitoring_interface::global_mon->log_json<json>(_src, 2);
 				return;
 			}
 
@@ -629,7 +629,7 @@ namespace corona
 					system_monitoring_interface::global_mon->log_warning(s);
 					});
 				system_monitoring_interface::global_mon->log_information("the source json is:");
-				system_monitoring_interface::global_mon->log_json(_src, 2);
+				system_monitoring_interface::global_mon->log_json<json>(_src, 2);
 				return;
 			}
 
@@ -682,7 +682,7 @@ namespace corona
 					system_monitoring_interface::global_mon->log_warning(s);
 					});
 				system_monitoring_interface::global_mon->log_information("the source json is:");
-				system_monitoring_interface::global_mon->log_json(_src, 2);
+				system_monitoring_interface::global_mon->log_json<json>(_src, 2);
 				return;
 			}
 
@@ -739,7 +739,7 @@ namespace corona
 					system_monitoring_interface::global_mon->log_warning(s);
 					});
 				system_monitoring_interface::global_mon->log_information("the source json is:");
-				system_monitoring_interface::global_mon->log_json(_src, 2);
+				system_monitoring_interface::global_mon->log_json<json>(_src, 2);
 				return;
 			}
 
@@ -786,7 +786,7 @@ namespace corona
 					system_monitoring_interface::global_mon->log_warning(s);
 					});
 				system_monitoring_interface::global_mon->log_information("the source json is:");
-				system_monitoring_interface::global_mon->log_json(_src, 2);
+				system_monitoring_interface::global_mon->log_json<json>(_src, 2);
 				return;
 			}
 
@@ -846,7 +846,7 @@ namespace corona
 					system_monitoring_interface::global_mon->log_warning(s);
 					});
 				system_monitoring_interface::global_mon->log_information("the source json is:");
-				system_monitoring_interface::global_mon->log_json(_src, 2);
+				system_monitoring_interface::global_mon->log_json<json>(_src, 2);
 				return;
 			}
 
@@ -892,7 +892,7 @@ namespace corona
 					system_monitoring_interface::global_mon->log_warning(s);
 					});
 				system_monitoring_interface::global_mon->log_information("the source json is:");
-				system_monitoring_interface::global_mon->log_json(_src, 2);
+				system_monitoring_interface::global_mon->log_json<json>(_src, 2);
 				return;
 			}
 
@@ -994,7 +994,7 @@ namespace corona
 			system_monitoring_interface::global_mon->log_warning("query stage missing class_name.");
 			if (_src.size()) {
 				system_monitoring_interface::global_mon->log_information("the source json is:");
-				system_monitoring_interface::global_mon->log_json(_src, 2);
+				system_monitoring_interface::global_mon->log_json<json>(_src, 2);
 			}
 			return;
 		}
@@ -1042,7 +1042,7 @@ namespace corona
 			system_monitoring_interface::global_mon->log_warning("query filter missing class_name.");
 			if (_src.size()) {
 				system_monitoring_interface::global_mon->log_information("the source json is:");
-				system_monitoring_interface::global_mon->log_json(_src, 2);
+				system_monitoring_interface::global_mon->log_json<json>(_src, 2);
 			}
 			return;
 		}

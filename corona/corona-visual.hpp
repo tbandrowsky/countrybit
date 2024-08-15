@@ -36,7 +36,7 @@ namespace corona {
 		if (!_src.has_members({ "width", "height" })) {
 			system_monitoring_interface::global_mon->log_warning("D2D1_SIZE_U needs a width and height");
 			system_monitoring_interface::global_mon->log_information("source json:");
-			system_monitoring_interface::global_mon->log_json(_src, 2);
+			system_monitoring_interface::global_mon->log_json<json>(_src, 2);
 		}
 		_dest.width = (double)_src["width"];
 		_dest.height = (double)_src["height"];
@@ -60,7 +60,7 @@ namespace corona {
 				system_monitoring_interface::global_mon->log_warning(s);
 				});
 			system_monitoring_interface::global_mon->log_information("source json:");
-			system_monitoring_interface::global_mon->log_json(_src, 2);
+			system_monitoring_interface::global_mon->log_json<json>(_src, 2);
 			return;
 		}
 
@@ -94,7 +94,7 @@ namespace corona {
 				system_monitoring_interface::global_mon->log_warning(s);
 				});
 			system_monitoring_interface::global_mon->log_information("source json:");
-			system_monitoring_interface::global_mon->log_json(_src, 2);
+			system_monitoring_interface::global_mon->log_json<json>(_src, 2);
 			return;
 		}
 
@@ -276,7 +276,7 @@ namespace corona {
 				system_monitoring_interface::global_mon->log_warning(s);
 				});
 			system_monitoring_interface::global_mon->log_information("source json:");
-			system_monitoring_interface::global_mon->log_json(_src, 2);
+			system_monitoring_interface::global_mon->log_json<json>(_src, 2);
 			return;
 		}
 
@@ -351,7 +351,7 @@ namespace corona {
 		if (!_src.has_members({ "file_name", "crop", "sizes" })) {
 			system_monitoring_interface::global_mon->log_warning("bitmap needs a filename, crop, and sizes");
 			system_monitoring_interface::global_mon->log_information("source json:");
-			system_monitoring_interface::global_mon->log_json(_src, 2);
+			system_monitoring_interface::global_mon->log_json<json>(_src, 2);
 			return;
 		}
 
@@ -406,7 +406,7 @@ namespace corona {
 	{
 		if (!_src.has_members({ "file_name" })) {
 			system_monitoring_interface::global_mon->log_warning("bitmap_brush must have file_name");
-			system_monitoring_interface::global_mon->log_json(_src, 2);
+			system_monitoring_interface::global_mon->log_json<json>(_src, 2);
 			return;
 		}
 
@@ -474,7 +474,7 @@ namespace corona {
 		if (!_src.has_members({ "start", "stop", "stops" })) {
 			system_monitoring_interface::global_mon->log_warning("linear_brush must have start, stop and stops");
 			system_monitoring_interface::global_mon->log_information("source json:");
-			system_monitoring_interface::global_mon->log_json(_src, 2);
+			system_monitoring_interface::global_mon->log_json<json>(_src, 2);
 			return;
 		}
 
@@ -571,7 +571,7 @@ namespace corona {
 				system_monitoring_interface::global_mon->log_warning(s);
 				});
 			system_monitoring_interface::global_mon->log_information("source json:");
-			system_monitoring_interface::global_mon->log_json(_src, 2);
+			system_monitoring_interface::global_mon->log_json<json>(_src, 2);
 			return;
 		}
 
@@ -640,7 +640,7 @@ namespace corona {
 		if (!_src.has_members({ "color" })) {
 			system_monitoring_interface::global_mon->log_warning("solid_brush must have color");
 			system_monitoring_interface::global_mon->log_information("source json:");
-			system_monitoring_interface::global_mon->log_json(_src, 2);
+			system_monitoring_interface::global_mon->log_json<json>(_src, 2);
 			return;
 		}
 
@@ -1188,7 +1188,7 @@ namespace corona {
 			system_monitoring_interface::global_mon->log_warning("text style must have font_name, and font_size.");
 			system_monitoring_interface::global_mon->log_information("text style may also have bold, italics, underline, strike_through, line_spacing, wrap_text, character_spacing, font_stretch." );
 			system_monitoring_interface::global_mon->log_information("source json:");
-			system_monitoring_interface::global_mon->log_json(_src, 2);
+			system_monitoring_interface::global_mon->log_json<json>(_src, 2);
 			return;
 		}
 		_dest.fontName = _src["font_name"];
