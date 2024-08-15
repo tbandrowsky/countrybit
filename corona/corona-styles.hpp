@@ -167,7 +167,7 @@ namespace corona
 			"error_style", "success_style", "code_style"})) {
 			system_monitoring_interface::global_mon->log_warning("style sheet is missing");
 			std::for_each(missing.begin(), missing.end(), [](const std::string& s) { 
-				std::cout << s << std::endl; 
+				system_monitoring_interface::global_mon->log_warning(s);
 				});
 			return;
 		}

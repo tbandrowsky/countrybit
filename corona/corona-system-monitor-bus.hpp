@@ -63,6 +63,9 @@ namespace corona
 		console_color Logexception;
 		console_color Logwarning;
 		console_color Loginformation;
+		console_color Logamd;
+		console_color Lognvidia;
+		console_color Logintel;
 
 		static system_monitoring_interface* global_mon;
 
@@ -78,6 +81,9 @@ namespace corona
 			Logexception.color_background = "103;50;40";
 			Logwarning.color_background = "178;94;23";
 			Loginformation.color_background = "0;0;0";
+			Logamd.color_background = "237;28;36";
+			Logintel.color_background = "0;104;181";
+			Lognvidia.color_background = "118;185;0";
 
 			Logusercommand.color_foreground = "239;236;232";
 			Logcommand.color_foreground = "239;236;232";
@@ -87,6 +93,9 @@ namespace corona
 			Logexception.color_foreground = "0;0;0";
 			Logwarning.color_foreground = "0;0;0";
 			Loginformation.color_foreground = "220;214;209";
+			Logamd.color_foreground = "255;255;255";
+			Logintel.color_foreground = "255;255;255";
+			Lognvidia.color_foreground = "255;255;255";
 		}
 
 		void file_line(const char* _file, int _line)
@@ -134,7 +143,7 @@ namespace corona
 				_command_name,
 				_message,
 				GetCurrentThreadId(),
-				(std::string)_request_time
+				_request_time.format("%D %H:%M start")
 			);
 			file_line(_file, _line);
 			std::cout << Normal;
@@ -148,7 +157,7 @@ namespace corona
 				_command_name,
 				_message,
 				GetCurrentThreadId(),
-				_elapsed_seconds
+				std::format("{0} secs",_elapsed_seconds)
 			);
 			file_line(_file, _line);
 			std::cout << Normal;
@@ -163,7 +172,7 @@ namespace corona
 				_command_name,
 				_message,
 				GetCurrentThreadId(),
-				(std::string)_request_time
+				_request_time.format("%D %H:%M start")
 			);
 			file_line(_file, _line);
 			std::cout << Normal;
@@ -182,11 +191,11 @@ namespace corona
 				_command_name,
 				_message,
 				GetCurrentThreadId(),
-				_elapsed_seconds
+				std::format("{0} secs", _elapsed_seconds)
 			);
 			file_line(_file, _line);
 			std::cout << Normal;
-			std::cout << std::endl << std::endl;
+			std::cout << std::endl;
 		}
 
 		virtual void log_job_start(std::string _api_name, std::string _message, date_time _request_time, const char* _file = nullptr, int _line = 0)
@@ -202,14 +211,14 @@ namespace corona
 				_api_name,
 				_message,
 				GetCurrentThreadId(),
-				(std::string)_request_time
+				_request_time.format("%D %H:%M start")
 			);
 			file_line(_file, _line);
 			std::cout << Normal;
 			std::cout << std::endl;
 		}
 
-		virtual void log_job_complete(std::string _api_name, std::string _message, double _elapsed_seconds, const char* _file = nullptr, int _line = 0)
+		virtual void log_job_stop(std::string _api_name, std::string _message, double _elapsed_seconds, const char* _file = nullptr, int _line = 0)
 		{
 			if (_api_name.empty())
 				_api_name = " ";
@@ -223,11 +232,11 @@ namespace corona
 				_api_name,
 				_message,
 				GetCurrentThreadId(),
-				_elapsed_seconds
+				std::format("{0} secs", _elapsed_seconds)
 			);
 			file_line(_file, _line);
 			std::cout << Normal;
-			std::cout << std::endl << std::endl;
+			std::cout << std::endl;
 		}
 
 		virtual void log_function_start(std::string _function_name, std::string _message, date_time _request_time, const char* _file = nullptr, int _line = 0)
@@ -241,7 +250,7 @@ namespace corona
 				_function_name,
 				_message,
 				GetCurrentThreadId(),
-				(std::string)_request_time
+				_request_time.format("%D %H:%M start")
 			);
 			file_line(_file, _line);
 			std::cout << Normal;
@@ -259,7 +268,7 @@ namespace corona
 				_function_name,
 				_message,
 				GetCurrentThreadId(),
-				_elapsed_seconds
+				std::format("{0} secs", _elapsed_seconds)
 			);
 			file_line(_file, _line);
 			std::cout << Normal;
@@ -297,7 +306,7 @@ namespace corona
 			std::cout << std::format("{0:<80}{1:<10}{2:<25}",
 				_message,
 				GetCurrentThreadId(),
-				(std::string)_time
+				_time.format("%D %H:%M")
 			);
 			file_line(_file, _line);
 			std::cout << Normal;
@@ -316,9 +325,35 @@ namespace corona
 			std::cout << std::format("{0:<80}{1:<10}{2:<25}",
 				_message,
 				GetCurrentThreadId(),
-				_elapsed_seconds
+				std::format("{0} secs", _elapsed_seconds)
 			);
 			file_line(_file, _line);
+			std::cout << Normal;
+			std::cout << std::endl;
+		}
+
+		virtual void log_adapter(std::string _message)
+		{
+			std::cout << Logcommand;
+			std::cout << std::format("{0:<5}", " ");
+			std::cout << Logapi;
+			std::cout << std::format("{0:<5}", " ");
+			std::cout << Logfunction;
+			std::cout << std::format("{0:<20}", " ");
+			if (_message.find("Intel") != std::string::npos) {
+				std::cout << Logintel;
+			}
+			else if (_message.find("AMD") != std::string::npos) {
+				std::cout << Logamd;
+			}
+			else if (_message.find("NVIDIA") != std::string::npos) {
+				std::cout << Lognvidia;
+			}
+			std::cout << std::format("{0:<80}{1:<10}{2:<25}",
+				_message,
+				GetCurrentThreadId(),
+				" "
+			);
 			std::cout << Normal;
 			std::cout << std::endl;
 		}

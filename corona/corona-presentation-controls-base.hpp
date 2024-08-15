@@ -436,7 +436,7 @@ namespace corona
 			if (!_src.has_members(missing, { "box" })) {
 				system_monitoring_interface::global_mon->log_warning("control is missing:", __FILE__, __LINE__);
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
-					std::cout << s << std::endl;
+					system_monitoring_interface::global_mon->log_warning(s);
 					});
 				system_monitoring_interface::global_mon->log_information("the source json is:");
 				return;

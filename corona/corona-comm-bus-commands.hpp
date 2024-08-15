@@ -36,7 +36,7 @@ namespace corona
 			if (!_src.has_members(missing, { "create_class_name", "form_name" })) {
 				system_monitoring_interface::global_mon->log_warning("create_object_command missing:");
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
-					system_monitoring_interface::global_mon->log_information(s);
+					system_monitoring_interface::global_mon->log_warning(s);
 					});
 				system_monitoring_interface::global_mon->log_information("the source json is:");
 				system_monitoring_interface::global_mon->log_json(_src, 2);
@@ -84,7 +84,7 @@ namespace corona
 			if (!_src.has_members(missing, { "table_name", "form_name", "page_name"})) {
 				system_monitoring_interface::global_mon->log_warning("select_object_command missing:");
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
-					system_monitoring_interface::global_mon->log_information(s);
+					system_monitoring_interface::global_mon->log_warning(s);
 					});
 				system_monitoring_interface::global_mon->log_information("the source json is:");
 				system_monitoring_interface::global_mon->log_json(_src, 2);
@@ -134,7 +134,7 @@ namespace corona
 			if (!_src.has_members(missing, { "table_name", "form_name" })) {
 				system_monitoring_interface::global_mon->log_warning("preview_object_command missing:");
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
-					system_monitoring_interface::global_mon->log_information(s);
+					system_monitoring_interface::global_mon->log_warning(s);
 					});
 				system_monitoring_interface::global_mon->log_information("the source json is:");
 				system_monitoring_interface::global_mon->log_json(_src, 2);
@@ -183,7 +183,7 @@ namespace corona
 			if (!_src.has_members(missing, { "form_name" })) {
 				system_monitoring_interface::global_mon->log_warning("save_object_command missing:");
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
-					system_monitoring_interface::global_mon->log_information(s);
+					system_monitoring_interface::global_mon->log_warning(s);
 					});
 				system_monitoring_interface::global_mon->log_information("the source json is:");
 				system_monitoring_interface::global_mon->log_json(_src, 2);
@@ -229,7 +229,7 @@ namespace corona
 			if (!_src.has_members(missing, { "control_name", "data" })) {
 				system_monitoring_interface::global_mon->log_warning("load_object_command missing:");
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
-					system_monitoring_interface::global_mon->log_information(s);
+					system_monitoring_interface::global_mon->log_warning(s);
 					});
 				system_monitoring_interface::global_mon->log_information("the source json is:");
 				system_monitoring_interface::global_mon->log_json(_src, 2);
@@ -271,7 +271,7 @@ namespace corona
 			if (!_src.has_members(missing, { "class_name", "control_name" })) {
 				system_monitoring_interface::global_mon->log_warning("delete_object_command missing:");
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
-					system_monitoring_interface::global_mon->log_information(s);
+					system_monitoring_interface::global_mon->log_warning(s);
 					});
 				system_monitoring_interface::global_mon->log_information("the source json is:");
 				system_monitoring_interface::global_mon->log_json(_src, 2);
@@ -345,7 +345,7 @@ namespace corona
 			if (!_src.has_members(missing, { "form_name", "table_name", "search_class_name"})) {
 				system_monitoring_interface::global_mon->log_warning("search_objects_command missing:");
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
-					system_monitoring_interface::global_mon->log_information(s);
+					system_monitoring_interface::global_mon->log_warning(s);
 					});
 				system_monitoring_interface::global_mon->log_information("the source json is:");
 				system_monitoring_interface::global_mon->log_json(_src, 2);
@@ -398,7 +398,7 @@ namespace corona
 				system_monitoring_interface::global_mon->log_warning("select_page_command missing:");
 
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
-					system_monitoring_interface::global_mon->log_information(s);
+					system_monitoring_interface::global_mon->log_warning(s);
 					});
 				system_monitoring_interface::global_mon->log_information("the source json is:");
 				system_monitoring_interface::global_mon->log_json(_src, 2);
@@ -410,7 +410,7 @@ namespace corona
 				if (!_src.has_members(missing, { "form_name", "source_name" })) {
 					system_monitoring_interface::global_mon->log_warning("select_object_command has options:");
 					std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
-						system_monitoring_interface::global_mon->log_information(s);
+						system_monitoring_interface::global_mon->log_warning(s);
 						});
 					system_monitoring_interface::global_mon->log_information("the source json is:");
 					system_monitoring_interface::global_mon->log_json(_src, 2);
@@ -459,7 +459,7 @@ namespace corona
 			if (!_src.has_members(missing, { "frame_contents_page", "frame_to_load" })) {
 				system_monitoring_interface::global_mon->log_warning("select_frame_command missing:");
 				std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
-					system_monitoring_interface::global_mon->log_information(s);
+					system_monitoring_interface::global_mon->log_warning(s);
 					});
 				system_monitoring_interface::global_mon->log_information("the source json is:");
 				system_monitoring_interface::global_mon->log_json(_src, 2);

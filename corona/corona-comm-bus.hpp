@@ -203,7 +203,7 @@ namespace corona
 				timer tx;
 				date_time t = date_time::now();
 
-				log_command_start("poll_pages", "apply pages", t, __FILE__, __LINE__);
+				log_job_start("poll_pages", "apply pages", t, __FILE__, __LINE__);
 
 				// to do, at some point create a merge method in json proper.
 				json combined;
@@ -248,7 +248,7 @@ namespace corona
 
 					load_pages(combined, _select_default_page);
 				}
-				log_command_start("poll_pages", "pages updated", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				log_job_stop("poll_pages", "pages updated", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
 		}
 
@@ -465,7 +465,7 @@ namespace corona
 		void load_pages(json _pages, bool _select_default)
 		{
 			date_time dt = date_time::now();
-			log_command_start("load_pages", "", dt);
+			log_function_start("load_pages", "", dt);
 			run_ui([this, _pages, _select_default]() ->void {
 				timer tx;
 				date_time dt = date_time::now();
@@ -478,9 +478,11 @@ namespace corona
 				else {
 					page_message << "Pages loaded:" << default_page;
 				}
+				log_function_stop("load_pages", page_message.str(), tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 				json jcommands = _pages.get_member("startup");
-				log_information("start up commands");
+
+				log_function_start("startup commands", "", dt);
 				log_json(jcommands);
 
 				if (jcommands.array())
@@ -489,11 +491,11 @@ namespace corona
 						std::shared_ptr<corona_bus_command> command;
 						corona::put_json(command, cmd);
 						if (command) {
-							run_command(command);
+							run_system_command(command);
 						}
 					}
 				}
-				log_command_stop("load_pages", page_message.str(), tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				log_function_stop("startup commands", page_message.str(), tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 			});
 		}
@@ -501,7 +503,7 @@ namespace corona
 		virtual void select_page(std::string _page, std::string _target_control, json _obj)
 		{
 			date_time dt = date_time::now();
-			log_command_start("select_page", _page, dt);
+			log_function_start("select_page", _page, dt);
 
 			run_ui([this, _page, _target_control, _obj]() ->void {
 				timer tx;
@@ -514,7 +516,7 @@ namespace corona
 						}
 					}
 				}
-				log_command_stop("select_page", _page, tx.get_elapsed_seconds());
+				log_function_start("select_page", _page, tx.get_elapsed_seconds());
 			});
 		}
 
@@ -576,6 +578,29 @@ namespace corona
 		virtual void run_app_ui(HINSTANCE hInstance, LPSTR command_line, bool fullScreen)
 		{
 			app_ui->runDialog(hInstance, app->application_name.c_str(), application_icon_id, fullScreen, presentation_layer);
+		}
+
+		virtual void run_system_command(std::shared_ptr<corona_bus_command> _command)
+		{
+			if (_command) {
+				json_parser jp;
+				json jcommand = jp.create_object();
+				corona::get_json(jcommand, _command);
+				date_time start_time = date_time::now();
+				log_function_start("run_command", jcommand["class_name"], start_time, __FILE__, __LINE__);
+				this->run_ui([this, jcommand]() {
+					timer tx;
+					log_json(jcommand);
+					std::shared_ptr<corona_bus_command> command;
+					corona::put_json(command, jcommand);
+					if (command) {
+						command->bus = this;
+						auto tranny = command->execute();
+						tranny.wait();
+					}
+					log_function_stop("run_command", jcommand["class_name"], tx.get_elapsed_seconds(), __FILE__, __LINE__);
+					});
+			}
 		}
 
 		virtual void run_command(std::shared_ptr<corona_bus_command> _command)

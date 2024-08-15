@@ -149,7 +149,7 @@ namespace corona
 			date_time start_time = date_time::now();
 			timer tx;
 
-			system_monitoring_interface::global_mon->log_function_start("create_database", "start", start_time, __FILE__, __LINE__);
+			system_monitoring_interface::global_mon->log_job_start("create_database", "start", start_time, __FILE__, __LINE__);
 			
 			{
 				scope_lock lock_one(classes_rw_lock);
@@ -188,14 +188,14 @@ namespace corona
 			if (!response["Success"]) {
 				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_json(response);
-				system_monitoring_interface::global_mon->log_function_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return result;
 			}
 
 			json test = co_await classes.get(R"({"ClassName":"SysObject"})");
 			if (test.empty() || test.is_member("ClassName", "SysParseError")) {
 				system_monitoring_interface::global_mon->log_warning("could not find class SysObject after creation.", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_function_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return result;
 			}
 
@@ -204,7 +204,7 @@ namespace corona
 			response = co_await create_class(R"(
 {
 	"ClassName" : "SysSchemas",
-	"BaseClassName" : "SysObject"
+	"BaseClassName" : "SysObject",
 	"ClassDescription" : "Database script changes",
 	"ImplementMap" : [ "SchemaName", "SchemaVersion" ],
 	"Fields" : {			
@@ -222,14 +222,14 @@ namespace corona
 			if (!response["Success"]) {
 				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_json(response);
-				system_monitoring_interface::global_mon->log_function_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return result;
 			}
 
 			test = co_await classes.get(R"({"ClassName":"SysSchemas"})");
 			if (test.empty() || test.is_member("ClassName", "SysParseError")) {
 				system_monitoring_interface::global_mon->log_warning("could not find class SysSchemas after creation.", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_function_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 				co_return result;
 			}
@@ -257,14 +257,14 @@ namespace corona
 				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_json(response);
 				std::cout << response.to_json() << std::endl;
-				system_monitoring_interface::global_mon->log_function_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return result;
 			}
 
 			test = co_await classes.get(R"({"ClassName":"SysSchemas"})");
 			if (test.empty() || test.is_member("ClassName", "SysParseError")) {
 				system_monitoring_interface::global_mon->log_warning("could not find class SysSchemas after creation.", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_function_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return result;
 			}
 
@@ -286,14 +286,14 @@ namespace corona
 			if (!response["Success"]) {
 				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_json(response);
-				system_monitoring_interface::global_mon->log_function_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return result;
 			}
 
 			test = co_await classes.get(R"({"ClassName":"SysReference"})");
 			if (test.empty() || test.is_member("ClassName", "SysParseError")) {
 				system_monitoring_interface::global_mon->log_warning("could not find class SysParseError after creation.", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_function_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return result;
 			}
 
@@ -324,14 +324,14 @@ namespace corona
 			if (!response["Success"]) {
 				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_json(response);
-				system_monitoring_interface::global_mon->log_function_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return result;
 			}
 
 			test = co_await classes.get(R"({"ClassName":"SysUser"})");
 			if (test.empty() || test.is_member("ClassName", "SysParseError")) {
 				system_monitoring_interface::global_mon->log_warning("could not find class SysParseError after creation.", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_function_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return result;
 			}
 
@@ -359,14 +359,14 @@ namespace corona
 			if (!response["Success"]) {
 				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_json(response);
-				system_monitoring_interface::global_mon->log_function_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return result;
 			}
 
 			test = co_await classes.get(R"({"ClassName":"SysLogin"})");
 			if (test.empty() || test.is_member("ClassName", "SysParseError")) {
 				system_monitoring_interface::global_mon->log_warning("could not find class SysParseError after creation.", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_function_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return result;
 			}
 
@@ -393,14 +393,14 @@ namespace corona
 			if (!response["Success"]) {
 				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_json(response);
-				system_monitoring_interface::global_mon->log_function_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return result;
 			}
 
 			test = co_await classes.get(R"({"ClassName":"SysPermission"})");
 			if (test.empty() || test.is_member("ClassName", "SysParseError")) {
 				system_monitoring_interface::global_mon->log_warning("could not find class SysPermission after creation.", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_function_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return result;
 			}
 
@@ -429,14 +429,14 @@ namespace corona
 				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_json(response);
 				std::cout << response.to_json() << std::endl;
-				system_monitoring_interface::global_mon->log_function_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return result;
 			}
 
 			test = co_await classes.get(R"({"ClassName":"SysMember"})");
 			if (test.empty() || test.is_member("ClassName", "SysParseError")) {
 				system_monitoring_interface::global_mon->log_warning("could not find class SysMember after creation.", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_function_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return result;
 			}
 
@@ -460,7 +460,7 @@ namespace corona
 			if (!response["Success"]) {
 				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_json(response);
-				system_monitoring_interface::global_mon->log_function_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return result;
 			}
 
@@ -468,7 +468,7 @@ namespace corona
 			if (test.empty() || test.is_member("ClassName", "SysParseError")) {
 				system_monitoring_interface::global_mon->log_warning("could not find class SysGrant after creation.", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_json(response);
-				system_monitoring_interface::global_mon->log_function_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return result;
 			}
 
@@ -485,14 +485,14 @@ namespace corona
 			if (!response["Success"]) {
 				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_json(response);
-				system_monitoring_interface::global_mon->log_function_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return result;
 			}
 
 			test = co_await classes.get(R"({"ClassName":"SysClassGrant"})");
 			if (test.empty() || test.is_member("ClassName", "SysParseError")) {
 				system_monitoring_interface::global_mon->log_warning("could not find class SysGlassGrant after creation.", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_function_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return result;
 			}
 
@@ -512,14 +512,14 @@ namespace corona
 			if (!response["Success"]) {
 				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_json(response);
-				system_monitoring_interface::global_mon->log_function_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return result;
 			}
 
 			test = co_await classes.get(R"({"ClassName":"SysObjectGrant"})");
 			if (test.empty() || test.is_member("ClassName", "SysParseError")) {
 				system_monitoring_interface::global_mon->log_warning("could not find class SysObjectGrant after creation.", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_function_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return result;
 			}
 
@@ -547,14 +547,14 @@ namespace corona
 			if (!response["Success"]) {
 				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_json(response);
-				system_monitoring_interface::global_mon->log_function_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return result;
 			}
 
 			test = co_await classes.get(R"({"ClassName":"SysTeam"})");
 			if (test.empty() || test.is_member("ClassName", "SysParseError")) {
 				system_monitoring_interface::global_mon->log_warning("could not find class SysTeam after creation.", __FILE__, __LINE__);
-				system_monitoring_interface::global_mon->log_function_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return result;
 			}
 
@@ -574,7 +574,7 @@ namespace corona
 				});
 
 			if (missing) {
-				system_monitoring_interface::global_mon->log_function_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				std::cout << __FILE__ << " " << __LINE__ << ":Class list returned from database missed some classes." << std::endl;
 				co_return result;
 			}
@@ -593,7 +593,7 @@ namespace corona
 			json user_return = create_response(new_user_request, true, "Ok", new_user, method_timer.get_elapsed_seconds());
 			response = create_response(new_user_request, true, "Database Created", user_return, method_timer.get_elapsed_seconds());
 
-			system_monitoring_interface::global_mon->log_function_stop("create_database", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			system_monitoring_interface::global_mon->log_job_stop("create_database", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			co_return response;
 		}
 
@@ -1467,7 +1467,7 @@ private:
 				default_email_address = server["DefaultUserEmailAddress"];
 				default_guest_team = server["DefaultGuestTeam"];
 			}
-			system_monitoring_interface::global_mon->log_job_complete("apply_config", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			system_monitoring_interface::global_mon->log_job_stop("apply_config", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 		}
 
@@ -1627,10 +1627,10 @@ private:
 							json import_spec = script_definition["Import"];
 							std::vector<std::string> missing;
 
-							if (!import_spec.has_members(missing, { "TargetClass", "Type", "page_name" })) {
+							if (!import_spec.has_members(missing, { "TargetClass", "Type" })) {
 								system_monitoring_interface::global_mon->log_warning("Import missing:");
 								std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
-									system_monitoring_interface::global_mon->log_information(s);
+									system_monitoring_interface::global_mon->log_warning(s);
 									});
 								system_monitoring_interface::global_mon->log_information("the source json is:");
 								system_monitoring_interface::global_mon->log_json(import_spec, 2);
@@ -1645,7 +1645,7 @@ private:
 								if (!import_spec.has_members(missing, { "FileName", "Delimiter" })) {
 									system_monitoring_interface::global_mon->log_warning("Import CSV missing:");
 									std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
-										system_monitoring_interface::global_mon->log_information(s);
+										system_monitoring_interface::global_mon->log_warning(s);
 										});
 									system_monitoring_interface::global_mon->log_information("the source json is:");
 									system_monitoring_interface::global_mon->log_json(import_spec, 2);
@@ -1785,7 +1785,7 @@ private:
 				system_monitoring_interface::global_mon->log_json(create_schema_result);
 			}
 
-			system_monitoring_interface::global_mon->log_job_complete("apply_schema", "schema applied", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			system_monitoring_interface::global_mon->log_job_stop("apply_schema", "schema applied", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 			json temp = R"({ "Success" : true, "Message" : "Everything Ok, suitation normal."})"_jobject;
 
@@ -1810,7 +1810,7 @@ private:
 				result = co_await objects.open(header.data.objects_location);
 			}
 
-			system_monitoring_interface::global_mon->log_job_complete("open_database", "Open database", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			system_monitoring_interface::global_mon->log_job_stop("open_database", "Open database", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 			co_return header_location;
 		}
@@ -3139,7 +3139,7 @@ private:
 
 		json user_result = co_await db.create_user(sys_request);
 
-		system_monitoring_interface::global_mon->log_job_complete("test_database_engine", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+		system_monitoring_interface::global_mon->log_job_stop("test_database_engine", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 		co_return success;
 	}

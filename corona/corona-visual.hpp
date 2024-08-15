@@ -57,7 +57,7 @@ namespace corona {
 			system_monitoring_interface::global_mon->log_warning("D2D1_RECT_F needs a crop and size");
 			system_monitoring_interface::global_mon->log_warning("is missing:");
 			std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
-				system_monitoring_interface::global_mon->log_information(s);
+				system_monitoring_interface::global_mon->log_warning(s);
 				});
 			system_monitoring_interface::global_mon->log_information("source json:");
 			system_monitoring_interface::global_mon->log_json(_src, 2);
@@ -91,7 +91,7 @@ namespace corona {
 			system_monitoring_interface::global_mon->log_warning("sizeCrop needs a crop and size");
 			system_monitoring_interface::global_mon->log_warning("is missing:");
 			std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
-				system_monitoring_interface::global_mon->log_information(s);
+				system_monitoring_interface::global_mon->log_warning(s);
 				});
 			system_monitoring_interface::global_mon->log_information("source json:");
 			system_monitoring_interface::global_mon->log_json(_src, 2);
@@ -273,7 +273,7 @@ namespace corona {
 			system_monitoring_interface::global_mon->log_warning("gradientStop needs a color and position");
 			system_monitoring_interface::global_mon->log_warning("is missing:");
 			std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
-				system_monitoring_interface::global_mon->log_information(s);
+				system_monitoring_interface::global_mon->log_warning(s);
 				});
 			system_monitoring_interface::global_mon->log_information("source json:");
 			system_monitoring_interface::global_mon->log_json(_src, 2);
@@ -568,7 +568,7 @@ namespace corona {
 			system_monitoring_interface::global_mon->log_warning("radial_brush must have name, center, offset, size, radiusX, radiusY and stops");
 			system_monitoring_interface::global_mon->log_warning("is missing:");
 			std::for_each(missing.begin(), missing.end(), [](const std::string& s) {
-				system_monitoring_interface::global_mon->log_information(s);
+				system_monitoring_interface::global_mon->log_warning(s);
 				});
 			system_monitoring_interface::global_mon->log_information("source json:");
 			system_monitoring_interface::global_mon->log_json(_src, 2);

@@ -78,7 +78,7 @@ namespace corona
 					if (currentAdapter->GetDesc(&desc) == S_OK) {
 						temp = desc.Description;
 						std::string msg = std::format("Scanning {0}", temp.c_str());
-						system_monitoring_interface::global_mon->log_information(msg);
+						system_monitoring_interface::global_mon->log_adapter(msg);
 					}
 				}
 
