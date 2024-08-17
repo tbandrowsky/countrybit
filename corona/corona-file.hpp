@@ -273,6 +273,8 @@ namespace corona
 		{
 			bool r = false;
 
+			whore_wait = CreateEvent(NULL, FALSE, FALSE, FALSE);
+
 			switch (request.command) {
 			case file_commands::read:
 				r = ::ReadFile(request.hfile, (void*)request.buffer, request.size, nullptr, (LPOVERLAPPED)&container);
@@ -332,12 +334,14 @@ namespace corona
 		{
 			try
 			{
-				return result;
+				WaitForSingleObject(whore_wait, INFINITE);
 			}
 			catch (std::exception exc)
 			{
 				system_monitoring_interface::global_mon->log_exception(exc);
 			}
+
+			return result;
 		}
 
 		operator file_command_result()
@@ -347,8 +351,6 @@ namespace corona
 
 		file_command_result wait()
 		{
-			whore_wait = CreateEvent(NULL, FALSE, FALSE, FALSE);
-
 			caller_routine = nullptr;
 
 			container.ovp = {};
