@@ -248,7 +248,8 @@ namespace corona
 			"DatasetVersion" : "string",
 			"DatasetAuthors" : "array",
 			"RunOnChange": "bool",
-			"Objects" : "array"
+			"Objects" : "array",
+			"Import" : "object"
 	}
 }
 )");
@@ -855,146 +856,164 @@ private:
 			json result;
 			json_parser jp;
 
-			json object_definition = check_object_request["Data"];
+			json object_load = check_object_request["Data"];
 			bool strict_enabled = (bool)check_object_request["Strict"];
 
-			result = create_response(check_object_request, true, "Ok", object_definition, method_timer.get_elapsed_seconds());
+			result = create_response(check_object_request, true, "Ok", object_load, method_timer.get_elapsed_seconds());
 
-			if (!object_definition.object())
-			{
-				result = create_response(check_object_request, false, "This is not an object", object_definition, method_timer.get_elapsed_seconds());
-				co_return result;
+			json object_definition,
+				object_list,
+				result_list;
+
+			if (object_load.array()) {
+				object_list = object_load;
+			}
+			else {
+				object_list = jp.create_array();
+				object_list.push_back(object_load);
 			}
 
-			if (!object_definition.has_member("ClassName"))
+			result_list = jp.create_array();
+
+			for (auto object_definition : object_list)
 			{
-				result = create_response(check_object_request, false, "Object must have class name", object_definition, method_timer.get_elapsed_seconds());
-				co_return result;
-			}
-
-			db_object_id_type object_id = -1;
-
-			if (object_definition.has_member("ObjectId"))
-			{
-				object_id = object_definition["ObjectId"].get_int64s();
-			}
-			else
-			{
-				json object_key = jp.create_object();
-				object_key.copy_member("ClassName", object_definition);
-				object_key.set_compare_order({ "ClassName" });
-
-				json ready_object = co_await class_objects.get_first(object_key, 
-					[](json& _src) -> bool 
-					{
-						bool can_be_recycled = _src.has_member("Active");
-						if (can_be_recycled) {
-							bool is_active = (bool)_src["Active"];
-							if (!is_active) {
-								can_be_recycled = true;
-							}
-						}
-						return can_be_recycled;
-					}
-				);
-
-				if (ready_object.has_member("ObjectId")) {
-					object_id = co_await get_next_object_id();
-				}
-				else {
-					object_id = co_await get_next_object_id();
-				}
-
-				object_definition.put_member_i64("ObjectId", object_id);
-			}
-
-			json key_boy = object_definition.extract({ "ClassName" });
-
-			{
-				scope_lock lock_one(classes_rw_lock);
-
-				json class_data = co_await classes.get(key_boy);
-				json warnings = jp.create_array();
-				std::string class_name = key_boy["ClassName"];
-
-				if (!class_data.empty())
+				if (!object_definition.object())
 				{
-					result.put_member("ClassDefinition", class_data);
-					// check the object against the class definition for correctness
-					// first we see which fields are in the class not in the object
-					json field_definition = class_data["Fields"];
-					auto class_members = field_definition.get_members();
-					for (auto kv : class_members) {
-						json err_field = jp.create_object("Name", kv.first);
-						if (object_definition.has_member(kv.first)) {
-							std::string obj_type = object_definition[kv.first]->get_type_name();
-							std::string member_type = kv.second;
-							if (member_type != obj_type) {
-								object_definition.change_member_type(kv.first, member_type);
-							}
-						}
-						else 
-						{
-							json warning = jp.create_object();
-							warning.put_member("Error", "Required field missing");
-							warning.put_member("FieldName", kv.first);
-							warnings.push_back(warning);
-						}
-					}
-					// then we see which fields are in the object that are not 
-					// in the class definition.
-					auto object_members = object_definition.get_members();
-					for (auto om : object_members) {
-						if (field_definition.has_member(om.first)) {
-							;
-						}
-						else {
-							json warning = jp.create_object();
-							warning.put_member("Error", "Field not found in class definition");
-							warning.put_member("FieldName", om.first);
-							warnings.push_back(warning);
-						}
-					}
-					result = jp.create_object();
-					if (warnings.size() > 0) {
-						std::string msg = std::format("Object '{0}' has problems", class_name );
-						result.put_member("Message", msg);
-						result.put_member("Success", 0);
-						result.put_member("Warnings", warnings);
-						result.put_member("Definition", class_data);
-						result.put_member("Data", object_definition);
-					}
-					else {
-						result.put_member("Message", "Ok");
-						result.put_member("Success", 1);
-						result.put_member("Definition", class_data);
-						result.put_member("Data", object_definition);
-					}
+					result = create_response(check_object_request, false, "This is not an object", object_definition, method_timer.get_elapsed_seconds());
+					result_list.push_back(result);
+				}
 
-					if (class_data.has_member("ImplementMap"))
-					{
-						json objects_by_name_key = jp.create_object();
-						json constraint_fields = class_data["ImplementMap"];
-						std::vector<std::string> constraint_names;
-						constraint_names.push_back("ClassName");
-						for (auto constraint_field : constraint_fields) {
-							constraint_names.push_back(constraint_field);
-						}
-						objects_by_name_key.set_compare_order(constraint_names);
-						result.put_member("ImplementMapKey", objects_by_name_key);
-					} 
+				if (!object_definition.has_member("ClassName"))
+				{
+					result = create_response(check_object_request, false, "Object must have class name", object_definition, method_timer.get_elapsed_seconds());
+					result_list.push_back(result);
+				}
+
+				db_object_id_type object_id = -1;
+
+				if (object_definition.has_member("ObjectId"))
+				{
+					object_id = object_definition["ObjectId"].get_int64s();
 				}
 				else
 				{
-					std::string msg = std::format("'{0}' is not valid class_name", class_name);
-					result.put_member("Message", msg);
-					result.put_member("Success", 0);
-					result.put_member("Data", object_definition);
-					result = class_data;
+					json object_key = jp.create_object();
+					object_key.copy_member("ClassName", object_definition);
+					object_key.set_compare_order({ "ClassName" });
+
+					json ready_object = co_await class_objects.get_first(object_key,
+						[](json& _src) -> bool
+						{
+							bool can_be_recycled = _src.has_member("Active");
+							if (can_be_recycled) {
+								bool is_active = (bool)_src["Active"];
+								if (!is_active) {
+									can_be_recycled = true;
+								}
+							}
+							return can_be_recycled;
+						}
+					);
+
+					if (ready_object.has_member("ObjectId")) {
+						object_id = ready_object["ObjectId"];
+					}
+					else {
+						object_id = co_await get_next_object_id();
+					}
+
+					object_definition.put_member_i64("ObjectId", object_id);
 				}
 
-				co_return result;
+				json key_boy = object_definition.extract({ "ClassName" });
+
+				{
+					scope_lock lock_one(classes_rw_lock);
+
+					json class_data = co_await classes.get(key_boy);
+					json warnings = jp.create_array();
+					std::string class_name = key_boy["ClassName"];
+
+					if (!class_data.empty())
+					{
+						result.put_member("ClassDefinition", class_data);
+						// check the object against the class definition for correctness
+						// first we see which fields are in the class not in the object
+						json field_definition = class_data["Fields"];
+						auto class_members = field_definition.get_members();
+						for (auto kv : class_members) {
+							json err_field = jp.create_object("Name", kv.first);
+							if (object_definition.has_member(kv.first)) {
+								std::string obj_type = object_definition[kv.first]->get_type_name();
+								std::string member_type = kv.second;
+								if (member_type != obj_type) {
+									object_definition.change_member_type(kv.first, member_type);
+								}
+							}
+							else
+							{
+								json warning = jp.create_object();
+								warning.put_member("Error", "Required field missing");
+								warning.put_member("FieldName", kv.first);
+								warnings.push_back(warning);
+							}
+						}
+						// then we see which fields are in the object that are not 
+						// in the class definition.
+						auto object_members = object_definition.get_members();
+						for (auto om : object_members) {
+							if (field_definition.has_member(om.first)) {
+								;
+							}
+							else {
+								json warning = jp.create_object();
+								warning.put_member("Error", "Field not found in class definition");
+								warning.put_member("FieldName", om.first);
+								warnings.push_back(warning);
+							}
+						}
+						result = jp.create_object();
+						if (warnings.size() > 0) {
+							std::string msg = std::format("Object '{0}' has problems", class_name);
+							result.put_member("Message", msg);
+							result.put_member("Success", 0);
+							result.put_member("Warnings", warnings);
+							result.put_member("Definition", class_data);
+							result.put_member("Data", object_definition);
+						}
+						else {
+							result.put_member("Message", "Ok");
+							result.put_member("Success", 1);
+							result.put_member("Definition", class_data);
+							result.put_member("Data", object_definition);
+						}
+
+						if (class_data.has_member("ImplementMap"))
+						{
+							json objects_by_name_key = jp.create_object();
+							json constraint_fields = class_data["ImplementMap"];
+							std::vector<std::string> constraint_names;
+							constraint_names.push_back("ClassName");
+							for (auto constraint_field : constraint_fields) {
+								constraint_names.push_back(constraint_field);
+							}
+							objects_by_name_key.set_compare_order(constraint_names);
+							result.put_member("ImplementMapKey", objects_by_name_key);
+						}
+					}
+					else
+					{
+						std::string msg = std::format("'{0}' is not valid class_name", class_name);
+						result.put_member("Message", msg);
+						result.put_member("Success", 0);
+						result.put_member("Data", object_definition);
+						result = class_data;
+					}
+					result_list.push_back(result);
+				}
 			}
+			result = create_response(check_object_request, true, "Objects processed", result_list, method_timer.get_elapsed_seconds());
+			co_return result;
 		}
 
 		lockable header_lock;
@@ -1661,7 +1680,7 @@ private:
 								json column_map = import_spec["ColumnMap"];
 
 								FILE* fp = nullptr;
-								int error_code = fopen_s(&fp, file_name.c_str(), "rS, ccs=UTF-8");
+								int error_code = fopen_s(&fp, file_name.c_str(), "rS");
 
 								if (fp) {
 									// Buffer to store each line of the file.
@@ -1678,6 +1697,7 @@ private:
 										json new_object_template = new_object_response["Data"];
 
 										// Read each line from the file and store it in the 'line' buffer.
+										int64_t total_row_count = 0;
 										while (fgets(line, sizeof(line), fp)) {
 											// Print each line to the standard output.
 											json new_object = new_object_template.clone();
@@ -1687,11 +1707,23 @@ private:
 											if (datomatic.size() > 5000) {
 												timer tx;
 												json cor = create_system_request(datomatic);
-												co_await put_object(cor);
-												double e = tx.get_elapsed_seconds();
-												std::string msg = std::format("import {0} rows @{1} rows / second", datomatic.size(), e / datomatic.size());
-												system_monitoring_interface::global_mon->log_activity(msg, e, __FILE__, __LINE__ );
-												datomatic = jp.create_array();
+												json put_result = co_await put_object(cor);
+												if (put_result["Success"]) {
+													double e = tx.get_elapsed_seconds();
+													total_row_count += datomatic.size();
+													std::string msg = std::format("import {0} rows @{1} rows / second, {2} rows total", datomatic.size() / e, datomatic.size(), total_row_count);
+													system_monitoring_interface::global_mon->log_activity(msg, e, __FILE__, __LINE__);
+													datomatic = jp.create_array();
+												}
+												else {
+													std::string msg = std::format("Error saving object {0}", (std::string)put_result["Message"]);
+													system_monitoring_interface::global_mon->log_warning(msg);
+													system_monitoring_interface::global_mon->log_information("Return result");
+													system_monitoring_interface::global_mon->log_json(put_result);
+													system_monitoring_interface::global_mon->log_information("Object that failed.");
+													system_monitoring_interface::global_mon->log_json(new_object);
+													break;
+												}
 											}
 										}
 
@@ -1715,9 +1747,14 @@ private:
 										error_code
 									);
 									std::string msg = std::format("could not open file {0}:{1}", file_name, error_buffer);
-									system_monitoring_interface::global_mon->log_warning(error_buffer, __FILE__, __LINE__);
+									system_monitoring_interface::global_mon->log_warning(msg, __FILE__, __LINE__);
+									char directory_name[MAX_PATH] = {};
+									char *result = _getcwd(directory_name, std::size(directory_name));
+									if (result) {
+										msg = std::format("cwd is {0}", result);
+										system_monitoring_interface::global_mon->log_information(msg, __FILE__, __LINE__);
+									}
 								}
-								system_monitoring_interface::global_mon->log_information("", __FILE__, __LINE__);
 							}
 						}
 
@@ -1869,24 +1906,30 @@ private:
 			json create_object_request = create_request(create_user_request, create_user_params);
 			json user_result = co_await put_object(create_object_request);
 			if (user_result["Success"]) {
-				json new_user = user_result["Data"];
+				json new_user_wrapper = user_result["Data"];
+				if (new_user_wrapper.array() && new_user_wrapper.size()> 0) {
+					json new_user = new_user_wrapper.get_element(0);
 
-				json create_login_params = jp.create_object();
-				create_login_params.put_member("ClassName", "SysLogin");
-				create_login_params.put_member("Password", hashed_pw);
-				create_login_params.put_member("Name", user_name);
-				create_login_params.put_member("LoginState", "UserCreated");
-				db_object_id_type objid = new_user["ObjectId"].get_int64();
-				create_login_params.put_member("CurrentObjectId", objid);
-				json put_object_request = create_request(create_user_request, create_login_params);
-				json put_response = co_await put_object(put_object_request);
+					json create_login_params = jp.create_object();
+					create_login_params.put_member("ClassName", "SysLogin");
+					create_login_params.put_member("Password", hashed_pw);
+					create_login_params.put_member("Name", user_name);
+					create_login_params.put_member("LoginState", "UserCreated");
+					if (new_user.has_member("ObjectId")) {
+						db_object_id_type objid = new_user["ObjectId"].get_int64();
+						create_login_params.put_member("CurrentObjectId", objid);
+					}
+					json put_object_request = create_request(create_user_request, create_login_params);
+					json put_response = co_await put_object(put_object_request);
 
-				bool succeeded = (bool)put_response["Success"];
-				if (succeeded)
-				{
-					data.put_member("Password", hashed_pw);
-					response = create_response(user_name, auth_login_user, true, "User created", data, method_timer.get_elapsed_seconds());
-				}
+					bool succeeded = (bool)put_response["Success"];
+					if (succeeded)
+					{
+						data.put_member("Password", hashed_pw);
+						response = create_response(user_name, auth_login_user, true, "User created", data, method_timer.get_elapsed_seconds());
+					}
+				} else 
+					response = create_response(user_name, auth_login_user, false, "User created", data, method_timer.get_elapsed_seconds());
 			}
 			else
 			{
@@ -2429,7 +2472,8 @@ private:
 				co_return result;
 			}
 
-			json class_key = jp.create_object("ClassName", class_name);
+			json class_key = jp.create_object();
+			class_key.put_member("ClassName", class_name);
 			class_key.set_natural_order();
 
 			json class_data;
@@ -2447,6 +2491,9 @@ private:
 
 				for (auto& member : members)
 				{
+					if (member.first == "ClassName")
+						continue;
+
 					json jpx = member.second;
 					if (jpx.is_string())
 					{
@@ -2500,9 +2547,15 @@ private:
 					}
 				}
 				response = create_response(create_object_request, true, "Object created", new_object, method_timer.get_elapsed_seconds());
-
+				system_monitoring_interface::global_mon->log_function_stop("create_object", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
-			system_monitoring_interface::global_mon->log_function_stop("create_object", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			else {
+				std::string msg = std::format("create_object failed because the class '{0}' was never found.", class_name);
+				system_monitoring_interface::global_mon->log_warning(msg);
+				system_monitoring_interface::global_mon->log_json(class_key);
+				response = create_response(create_object_request, false, "Couldn't find class", class_key, method_timer.get_elapsed_seconds());
+				system_monitoring_interface::global_mon->log_function_stop("create_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			}
 			co_return response;
 			
 		}
@@ -2552,11 +2605,12 @@ private:
 					item_array.push_back(data);
 				}
 
-				for (json obj : data) {
+				for (json obj : item_array) {
 
-					if (result.has_member("ImplementMapKey"))
+					json dobj = obj["Data"];
+					if (dobj.has_member("ImplementMapKey"))
 					{
-						json keys = result["ImplementMapKey"];
+						json keys = dobj["ImplementMapKey"];
 						if (keys.array()) {
 							json key_index = jp.create_object();
 							std::vector<std::string> key_order;

@@ -61,6 +61,7 @@ For Future Consideration
 #include <numbers>
 #include <cctype>
 #include <conio.h>
+#include <direct.h>
 
 // these are all miscellaneous utility classes and the ever abused core constants
 

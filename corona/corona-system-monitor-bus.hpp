@@ -71,8 +71,11 @@ namespace corona
 
 		bool enable_options_display = false;
 
+		CRITICAL_SECTION log_lock;
+
 		system_monitoring_interface()
 		{
+			::InitializeCriticalSectionAndSpinCount(&log_lock, 10);
 			Logusercommand.color_background = "12;59;69";
 			Logcommand.color_background = "21;83;98";
 			Logapi.color_background = "40;55;42";
@@ -138,49 +141,87 @@ namespace corona
 			if (_message.empty())
 				_message = " ";
 
-			std::cout << Logusercommand;
-			std::cout << std::format("{0:<30}{1:<80}{2:<10}{3:<25}",
-				_command_name,
-				_message,
-				GetCurrentThreadId(),
-				_request_time.format("%D %H:%M start")
-			);
-			file_line(_file, _line);
-			std::cout << Normal;
-			std::cout << std::endl;
+			::EnterCriticalSection(&log_lock);
+
+			try {
+				std::cout << Logusercommand;
+				std::cout << std::format("{0:<30}{1:<80}{2:<10}{3:<25}",
+					_command_name,
+					_message,
+					GetCurrentThreadId(),
+					_request_time.format("%D %H:%M start")
+				);
+				file_line(_file, _line);
+				std::cout << Normal;
+				std::cout << std::endl;
+			}
+			catch (std::exception exc)
+			{
+				log_exception(exc, __FILE__, __LINE__);
+			}
+
+			::LeaveCriticalSection(&log_lock);
 		}
 
 		virtual void log_user_command_stop(std::string _command_name, std::string _message, double _elapsed_seconds, const char* _file = nullptr, int _line = 0)
 		{
-			std::cout << Logusercommand;
-			std::cout << std::format("{0:<30}{1:<80}{2:<10}{3:<25}",
-				_command_name,
-				_message,
-				GetCurrentThreadId(),
-				std::format("{0} secs",_elapsed_seconds)
-			);
-			file_line(_file, _line);
-			std::cout << Normal;
-			std::cout << std::endl << std::endl;
+			::EnterCriticalSection(&log_lock);
+
+			try {
+
+				std::cout << Logusercommand;
+				std::cout << std::format("{0:<30}{1:<80}{2:<10}{3:<25}",
+					_command_name,
+					_message,
+					GetCurrentThreadId(),
+					std::format("{0} secs",_elapsed_seconds)
+				);
+				file_line(_file, _line);
+				std::cout << Normal;
+				std::cout << std::endl << std::endl;
+
+			}
+			catch (std::exception exc)
+			{
+				log_exception(exc, __FILE__, __LINE__);
+			}
+
+
+			::LeaveCriticalSection(&log_lock);
 		}
 
 
 		virtual void log_command_start(std::string _command_name, std::string _message, date_time _request_time, const char* _file = nullptr, int _line = 0)
 		{
-			std::cout << Logcommand;
-			std::cout << std::format("{0:<30}{1:<80}{2:<10}{3:<25}",
-				_command_name,
-				_message,
-				GetCurrentThreadId(),
-				_request_time.format("%D %H:%M start")
-			);
-			file_line(_file, _line);
-			std::cout << Normal;
-			std::cout << std::endl;
+			::EnterCriticalSection(&log_lock);
+
+			try {
+				std::cout << Logcommand;
+				std::cout << std::format("{0:<30}{1:<80}{2:<10}{3:<25}",
+					_command_name,
+					_message,
+					GetCurrentThreadId(),
+					_request_time.format("%D %H:%M start")
+				);
+				file_line(_file, _line);
+				std::cout << Normal;
+				std::cout << std::endl;
+			}
+			catch (std::exception exc)
+			{
+				log_exception(exc, __FILE__, __LINE__);
+			}
+
+
+			::LeaveCriticalSection(&log_lock);
 		}
 
 		virtual void log_command_stop(std::string _command_name, std::string _message, double _elapsed_seconds, const char* _file = nullptr, int _line = 0)
 		{
+			::EnterCriticalSection(&log_lock);
+
+			try {
+
 			if (_command_name.empty())
 				_command_name = " ";
 			if (_message.empty())
@@ -196,10 +237,23 @@ namespace corona
 			file_line(_file, _line);
 			std::cout << Normal;
 			std::cout << std::endl;
+
+			}
+			catch (std::exception exc)
+			{
+				log_exception(exc, __FILE__, __LINE__);
+			}
+
+
+			::LeaveCriticalSection(&log_lock);
 		}
 
 		virtual void log_job_start(std::string _api_name, std::string _message, date_time _request_time, const char* _file = nullptr, int _line = 0)
 		{
+			::EnterCriticalSection(&log_lock);
+
+			try {
+
 			if (_api_name.empty())
 				_api_name = " ";
 			if (_message.empty())
@@ -216,10 +270,23 @@ namespace corona
 			file_line(_file, _line);
 			std::cout << Normal;
 			std::cout << std::endl;
+
+			}
+			catch (std::exception exc)
+			{
+				log_exception(exc, __FILE__, __LINE__);
+			}
+
+
+			::LeaveCriticalSection(&log_lock);
 		}
 
 		virtual void log_job_stop(std::string _api_name, std::string _message, double _elapsed_seconds, const char* _file = nullptr, int _line = 0)
 		{
+			::EnterCriticalSection(&log_lock);
+
+			try {
+
 			if (_api_name.empty())
 				_api_name = " ";
 			if (_message.empty())
@@ -237,10 +304,23 @@ namespace corona
 			file_line(_file, _line);
 			std::cout << Normal;
 			std::cout << std::endl;
+
+			}
+			catch (std::exception exc)
+			{
+				log_exception(exc, __FILE__, __LINE__);
+			}
+
+
+			::LeaveCriticalSection(&log_lock);
 		}
 
 		virtual void log_function_start(std::string _function_name, std::string _message, date_time _request_time, const char* _file = nullptr, int _line = 0)
 		{
+			::EnterCriticalSection(&log_lock);
+
+			try {
+
 			std::cout << Logcommand;
 			std::cout << std::format("{0:<5}", " ");
 			std::cout << Logapi;
@@ -255,10 +335,22 @@ namespace corona
 			file_line(_file, _line);
 			std::cout << Normal;
 			std::cout << std::endl;
+
+			}
+			catch (std::exception exc)
+			{
+				log_exception(exc, __FILE__, __LINE__);
+			}
+
+
+			::LeaveCriticalSection(&log_lock);
 		}
 
 		virtual void log_function_stop(std::string _function_name, std::string _message, double _elapsed_seconds, const char* _file = nullptr, int _line = 0)
 		{
+			::EnterCriticalSection(&log_lock);
+
+			try {
 			std::cout << Logcommand;
 			std::cout << std::format("{0:<5}", " ");
 			std::cout << Logapi;
@@ -273,10 +365,129 @@ namespace corona
 			file_line(_file, _line);
 			std::cout << Normal;
 			std::cout << std::endl;
+			}
+			catch (std::exception exc)
+			{
+				log_exception(exc, __FILE__, __LINE__);
+			}
+
+
+
+			::LeaveCriticalSection(&log_lock);
+		}
+
+
+		virtual void log_base_block_start(int _indent, std::string _function_name, std::string _message, date_time _request_time, const char* _file = nullptr, int _line = 0)
+		{
+			::EnterCriticalSection(&log_lock);
+
+			try {
+				std::string sindent(_indent, ' ');
+				_function_name = sindent + _function_name;
+				std::cout << Logcommand;
+				std::cout << std::format("{0:<5}", " ");
+				std::cout << Logapi;
+				std::cout << std::format("{0:<5}", " ");
+				std::cout << Logfunction;
+				std::cout << std::format("{0:<20}{1:<80}{2:<10}{3:<25}",
+					_function_name,
+					_message,
+					GetCurrentThreadId(),
+					_request_time.format("%D %H:%M start")
+				);
+				file_line(_file, _line);
+				std::cout << Normal;
+				std::cout << std::endl;
+
+			}
+			catch (std::exception exc)
+			{
+				log_exception(exc, __FILE__, __LINE__);
+			}
+
+
+			::LeaveCriticalSection(&log_lock);
+		}
+
+		virtual void log_base_block_stop(int _indent, std::string _function_name, std::string _message, double _elapsed_seconds, const char* _file = nullptr, int _line = 0)
+		{
+			::EnterCriticalSection(&log_lock);
+
+			try {
+				std::string sindent(_indent, ' ');
+				_function_name = sindent + _function_name;
+				std::cout << Logcommand;
+				std::cout << std::format("{0:<5}", " ");
+				std::cout << Logapi;
+				std::cout << std::format("{0:<5}", " ");
+				std::cout << Logfunction;
+				std::cout << std::format("{0:<20}{1:<80}{2:<10}{3:<25}",
+					_function_name,
+					_message,
+					GetCurrentThreadId(),
+					std::format("{0} secs", _elapsed_seconds)
+				);
+				file_line(_file, _line);
+				std::cout << Normal;
+				std::cout << std::endl;
+			}
+			catch (std::exception exc)
+			{
+				log_exception(exc, __FILE__, __LINE__);
+			}
+
+
+
+			::LeaveCriticalSection(&log_lock);
+		}
+
+		virtual void log_table_start(std::string _function_name, std::string _message, date_time _request_time, const char* _file = nullptr, int _line = 0)
+		{
+			log_base_block_start(0, _function_name, _message, _request_time, _file, _line);
+		}
+
+		virtual void log_table_stop(std::string _function_name, std::string _message, double _elapsed_seconds, const char* _file = nullptr, int _line = 0)
+		{
+			log_base_block_stop(0, _function_name, _message, _elapsed_seconds, _file, _line);
+		}
+
+
+		virtual void log_json_start(std::string _function_name, std::string _message, date_time _request_time, const char* _file = nullptr, int _line = 0)
+		{
+			log_base_block_start(2, _function_name, _message, _request_time, _file, _line);
+		}
+
+		virtual void log_json_stop(std::string _function_name, std::string _message, double _elapsed_seconds, const char* _file = nullptr, int _line = 0)
+		{
+			log_base_block_stop(2, _function_name, _message, _elapsed_seconds, _file, _line);
+		}
+
+		virtual void log_poco_start(std::string _function_name, std::string _message, date_time _request_time, const char* _file = nullptr, int _line = 0)
+		{
+			log_base_block_start(2, _function_name, _message, _request_time, _file, _line);
+		}
+
+		virtual void log_poco_stop(std::string _function_name, std::string _message, double _elapsed_seconds, const char* _file = nullptr, int _line = 0)
+		{
+			log_base_block_stop(2, _function_name, _message, _elapsed_seconds, _file, _line);
+		}
+
+		virtual void log_block_start(std::string _function_name, std::string _message, date_time _request_time, const char* _file = nullptr, int _line = 0)
+		{
+			log_base_block_start(4, _function_name, _message, _request_time, _file, _line);
+		}
+
+		virtual void log_block_stop(std::string _function_name, std::string _message, double _elapsed_seconds, const char* _file = nullptr, int _line = 0)
+		{
+			log_base_block_stop(4, _function_name, _message, _elapsed_seconds, _file, _line);
 		}
 
 		virtual void log_information(std::string _message, const char* _file = nullptr, int _line = 0)
 		{
+			::EnterCriticalSection(&log_lock);
+
+			try {
+
 			std::cout << Logcommand;
 			std::cout << std::format("{0:<5}", " ");
 			std::cout << Logapi;
@@ -291,10 +502,22 @@ namespace corona
 			);
 			file_line(_file, _line);
 			std::cout << std::endl;
+
+			}
+			catch (std::exception exc)
+			{
+				log_exception(exc, __FILE__, __LINE__);
+			}
+
+
+			::LeaveCriticalSection(&log_lock);
 		}
 
 		virtual void log_activity(std::string _message, date_time _time, const char* _file = nullptr, int _line = 0)
 		{
+			::EnterCriticalSection(&log_lock);
+
+			try {
 			std::cout << Logactivity;
 			std::cout << Logcommand;
 			std::cout << std::format("{0:<5}", " ");
@@ -311,10 +534,22 @@ namespace corona
 			file_line(_file, _line);
 			std::cout << Normal;
 			std::cout << std::endl;
+			}
+			catch (std::exception exc)
+			{
+				log_exception(exc, __FILE__, __LINE__);
+			}
+
+
+			::LeaveCriticalSection(&log_lock);
 		}
 
 		virtual void log_activity(std::string _message, double _elapsed_seconds, const char* _file = nullptr, int _line = 0)
 		{
+			::EnterCriticalSection(&log_lock);
+
+			try {
+
 			std::cout << Logcommand;
 			std::cout << std::format("{0:<5}", " ");
 			std::cout << Logapi;
@@ -330,10 +565,21 @@ namespace corona
 			file_line(_file, _line);
 			std::cout << Normal;
 			std::cout << std::endl;
+			}
+			catch (std::exception exc)
+			{
+				log_exception(exc, __FILE__, __LINE__);
+			}
+
+
+			::LeaveCriticalSection(&log_lock);
 		}
 
 		virtual void log_adapter(std::string _message)
 		{
+			::EnterCriticalSection(&log_lock);
+
+			try {
 			std::cout << Logcommand;
 			std::cout << std::format("{0:<5}", " ");
 			std::cout << Logapi;
@@ -356,10 +602,23 @@ namespace corona
 			);
 			std::cout << Normal;
 			std::cout << std::endl;
+
+			}
+			catch (std::exception exc)
+			{
+				log_exception(exc, __FILE__, __LINE__);
+			}
+
+
+			::LeaveCriticalSection(&log_lock);
 		}
 
 		virtual void log_warning(std::string _message, const char *_file = nullptr, int _line = 0)
 		{
+			::EnterCriticalSection(&log_lock);
+
+			try {
+
 			std::cout << Logcommand;
 			std::cout << std::format("{0:<5}", " ");
 			std::cout << Logapi;
@@ -375,10 +634,21 @@ namespace corona
 			file_line(_file, _line);
 			std::cout << Normal;
 			std::cout << std::endl;
+			}
+			catch (std::exception exc)
+			{
+				log_exception(exc, __FILE__, __LINE__);
+			}
+
+
+			::LeaveCriticalSection(&log_lock);
 		}
 
 		virtual void log_exception(std::exception exc, const char* _file = nullptr, int _line = 0)
 		{
+			::EnterCriticalSection(&log_lock);
+
+			try {
 			std::cout << Logcommand;
 			std::cout << std::format("{0:<5}", " ");
 			std::cout << Logapi;
@@ -394,10 +664,21 @@ namespace corona
 			file_line(_file, _line);
 			std::cout << std::endl;
 			std::cout << Normal;
+			}
+			catch (std::exception exc)
+			{
+				log_exception(exc, __FILE__, __LINE__);
+			}
+
+
+			::LeaveCriticalSection(&log_lock);
 		}
 
 		template <typename json_type> void log_json(json_type _src, int _indent = 2)
 		{
+			::EnterCriticalSection(&log_lock);
+
+			try {
 			std::string sindent(_indent, ' ');
 			if (_src.object())
 			{
@@ -490,6 +771,16 @@ namespace corona
 				std::cout << std::format("{0:<50}", v);
 				std::cout << std::endl;
 			}
+
+			}
+			catch (std::exception exc)
+			{
+				log_exception(exc, __FILE__, __LINE__);
+			}
+
+
+			::LeaveCriticalSection(&log_lock);
+
 		}
 	};
 

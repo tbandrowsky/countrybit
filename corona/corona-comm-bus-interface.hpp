@@ -215,14 +215,22 @@ namespace corona
 		std::multimap<UINT, windows_event_waiter> windows_waiters;
 		std::multimap<std::string, topic_event_waiter> topic_waiters;
 
-
 	public:
 
 		static comm_bus_interface* global_bus;
 
 		comm_bus_interface()
 		{
-			global_bus = this;
+			if (global_bus == nullptr) {
+				global_bus = this;
+			}
+		}
+
+		virtual ~comm_bus_interface()
+		{
+			if (global_bus == this) {
+				global_bus = nullptr;
+			}
 		}
 
 		std::string default_page;

@@ -144,8 +144,7 @@ namespace corona
 					std::string suser_json = admin_user.to_json();
 					io_buffer.set_buffer(suser_json);
 					file user_file = app->open_file(user_file_name, file_open_types::create_always);
-					file_task task = user_file.write(0, io_buffer.get_ptr(), io_buffer.get_size());
-					task.initiate();
+					file_command task = user_file.write(0, io_buffer.get_ptr(), io_buffer.get_size());					
 				}
 
 				file_transaction<relative_ptr_type> result = database_config_mon.poll(app.get());

@@ -70,6 +70,7 @@ namespace corona {
 		job_container container;
 		job();
 		virtual ~job();
+		virtual bool queued(job_queue* _callingQueue) { return true; }
 		virtual job_notify execute(job_queue* _callingQueue, DWORD _bytesTransferred, BOOL _success);
 		friend class job_queue;
 	};
@@ -186,6 +187,7 @@ namespace corona {
 		void listen(HANDLE _otherQueue);
 
 		void post_ui_message(UINT msg, WPARAM wparam, LPARAM lparam);
+		bool listen_job(job *_jobMessage);
 		void add_job(job* _jobMessage);
 		void shutDown();
 		void kill();
@@ -464,9 +466,20 @@ namespace corona {
 	void job_queue::add_job(job* _jobMessage)
 	{
 		LONG result;
-		++num_outstanding_jobs;
-		ResetEvent(empty_queue_event);
-		result = PostQueuedCompletionStatus(ioCompPort, 0, 0, (LPOVERLAPPED)(&_jobMessage->container));
+		if (!_jobMessage)
+			return;
+		if (_jobMessage->queued(this)) {
+			++num_outstanding_jobs;
+			ResetEvent(empty_queue_event);
+			result = PostQueuedCompletionStatus(ioCompPort, 0, 0, (LPOVERLAPPED)(&_jobMessage->container));
+		}
+	}
+
+	bool job_queue::listen_job(job* _jobMessage)
+	{
+		if (!_jobMessage)
+			return false;
+		return _jobMessage->queued(this);
 	}
 
 	void job_queue::post_ui_message(UINT msg, WPARAM wparam, LPARAM lparam)

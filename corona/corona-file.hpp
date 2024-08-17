@@ -19,44 +19,18 @@ For Future Consideration
 
 namespace corona
 {
+	class file;
+}
+
+template <typename class_type>
+void* operator new(size_t size, class_type& _src, uint64_t, void*, int) {
+	// Allocate memory and initialize with arguments
+	return ::operator new(size);
+}
+
+namespace corona
+{
 	const int debug_file = 0;
-
-	class file_result
-	{
-	public:
-		job_queue* queue;
-		file_path	file_name;
-		HANDLE		hfile;
-		char*		buffer_bytes;
-		DWORD		buffer_size;
-		uint64_t	location;
-		DWORD		bytes_transferred;
-		BOOL		success;
-		os_result	last_result;
-
-		file_result() :
-			queue(nullptr),
-			file_name(""),
-			hfile(INVALID_HANDLE_VALUE)
-		{
-
-		}
-
-		~file_result() = default;
-
-		file_result(job_queue* _queue, const file_path& _file_name, HANDLE _hfile) :
-			queue(_queue),
-			file_name(_file_name),
-			hfile(_hfile),
-			buffer_bytes(nullptr),
-			buffer_size(0),
-			location(0),
-			bytes_transferred(0),
-			success(false)
-		{
-
-		}
-	};
 
 	enum class file_open_types
 	{
@@ -74,7 +48,6 @@ namespace corona
 	template <typename transaction_result> class file_transaction;
 
 	class file_batch;
-	class file_task;
 	class json_node;
 
 	struct index_header_struct
@@ -98,11 +71,9 @@ namespace corona
 			promise_type()
 			{
 				m_value = {};
-				debug_functions&& std::cout << "user_transaction::promise:" << this << " " << GetCurrentThreadId() << std::endl;
 			}
 
 			user_transaction  get_return_object() {
-				debug_functions&& std::cout << "user_transaction::get_return_object:" << this << " " << GetCurrentThreadId() << std::endl;
 				std::coroutine_handle<promise_type> promise_coro = std::coroutine_handle<promise_type>::from_promise(*this);
 				user_transaction  fbr(promise_coro);
 				return fbr;
@@ -112,12 +83,10 @@ namespace corona
 			std::suspend_always final_suspend() noexcept { return {}; }
 
 			void return_value(transaction_result value) {
-				debug_functions&& std::cout << "user_transaction::promise return_value, thread:" <<  GetCurrentThreadId() << std::endl;
 				m_value = value;
 			}
 
 			void unhandled_exception() {
-				debug_functions&& std::cout << "user_transaction::promise unhandled exception:" << this << GetCurrentThreadId() << std::endl;
 			}
 		};
 
@@ -128,17 +97,14 @@ namespace corona
 		user_transaction(std::coroutine_handle<promise_type> _promise_coro)
 		{
 			coro = _promise_coro;
-			debug_functions&& std::cout << "user_transaction: coro ctor:" << ::GetCurrentThreadId() << std::endl;
 		}
 
 		user_transaction()
 		{
-			debug_functions&& std::cout << "user_transaction: empty ctor:" << ::GetCurrentThreadId() << std::endl;
 		}
 
 		bool await_ready()
 		{
-			debug_functions&& std::cout << "user_transaction::await_ready:" << this << " " << GetCurrentThreadId() << std::endl;
 			if (coro) {
 				coro.resume();
 			}
@@ -148,12 +114,10 @@ namespace corona
 		void await_suspend(std::coroutine_handle<> handle)
 		{
 			handle();
-			debug_functions&& std::cout << "user_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
 		}
 
 		transaction_result await_resume()
 		{
-			debug_functions&& std::cout << "user_transaction::await_resume:" << this << " " << GetCurrentThreadId() << std::endl;
 			transaction_result result;
 			try
 			{
@@ -171,12 +135,10 @@ namespace corona
 
 		transaction_result wait()
 		{
-			debug_functions&& std::cout << "user_transaction::wait:" << this << " " << GetCurrentThreadId() << std::endl;
 			transaction_result result = {};
 
 			try
 			{
-
 				if (coro) {
 					coro.resume();
 					result = coro.promise().m_value;
@@ -188,8 +150,6 @@ namespace corona
 				system_monitoring_interface::global_mon->log_exception(exc);
 			}
 
-			debug_functions&& std::cout << "user_transaction: complete" << " " << ::GetCurrentThreadId() << std::endl;
-
 			return result;
 		}
 
@@ -200,14 +160,211 @@ namespace corona
 		}
 	};
 
-	class file_task_result
+	enum file_commands
 	{
-	public:
-		bool success;
-		int64_t bytes_transferred;
-		int64_t location;
+		read = 0,
+		write = 1
 	};
 
+	class file_command_result
+	{
+	public:
+		bool		success;
+		int64_t		bytes_transferred;
+		int64_t		location;
+		const char* buffer;
+		os_result	result;
+	};
+
+	class file_command_request
+	{
+	public:
+
+		file_commands		command;
+		file_path			file_name;
+		HANDLE				hfile;
+
+		int64_t				location;
+		DWORD				size;
+		void*				buffer;
+
+		file_command_request() = default;
+		file_command_request(const file_command_request& fcr) = default;
+		file_command_request(file_command_request&& fcr) = default;
+
+		file_command_request& operator = (const file_command_request& fcr) = default;
+		file_command_request& operator = (file_command_request&& fcr) = default;
+
+		file_command_request(file_commands _command, const file_path& _file_name, HANDLE _file, int64_t _location, DWORD _size, void* _buffer) :
+			command(_command),
+			file_name(_file_name),
+			hfile(_file),
+			location(_location),
+			size(_size),
+			buffer(_buffer)
+		{
+			;
+		}
+	};
+
+	class file_command : public job
+	{
+	public:
+
+		std::coroutine_handle<> caller_routine;
+
+		struct promise_type
+		{
+			file_command_request				request;
+			file_command_result					result;
+
+			promise_type(file_command_request& _request)
+			{
+				request = _request;
+			}
+
+			file_command get_return_object() 
+			{
+				file_command  fbr(this);
+				return fbr;
+			}
+
+			std::suspend_always initial_suspend() noexcept { return {}; }
+			std::suspend_always final_suspend() noexcept { return {}; }
+
+			void return_value(file_command_result _result) 
+			{
+				result = _result;
+			}
+
+			void unhandled_exception() 
+			{
+
+			}
+		};
+
+		file_command_request  request;
+		file_command_result   result;
+		HANDLE				  whore_wait;
+
+		file_command()
+		{
+			request = {};
+			result = {};
+		}
+
+		file_command(promise_type *_owner_promise) 
+		{
+			request = _owner_promise->request;
+			result = {};
+		}
+
+		file_command(const file_command& _src) = default;
+		file_command(file_command&& _src) = default;
+		file_command& operator = (const file_command& _src) = default;
+		file_command& operator = (file_command&& _src) = default;
+
+		virtual ~file_command()  noexcept
+		{
+			;
+		}
+
+		virtual bool queued(job_queue* _callingQueue)
+		{
+			bool r = false;
+
+			switch (request.command) {
+			case file_commands::read:
+				r = ::ReadFile(request.hfile, (void*)request.buffer, request.size, nullptr, (LPOVERLAPPED)&container);
+				break;
+			case file_commands::write:
+				r = ::WriteFile(request.hfile, (void*)request.buffer, request.size, nullptr, (LPOVERLAPPED)&container);
+				break;
+			}
+
+			// because these are asynch, 
+			if (!r) {
+				r = ::GetLastError();
+				return r == ERROR_IO_PENDING;
+			}
+			return false;
+		}
+
+		virtual job_notify execute(job_queue* _callingQueue, DWORD _bytesTransferred, BOOL _success)
+		{
+			job_notify jn;
+			jn.shouldDelete = false;
+
+			result.bytes_transferred = _bytesTransferred;
+			result.result.success = _success;
+
+			if (whore_wait)
+				::SetEvent(whore_wait);
+
+			if (caller_routine) {
+				caller_routine();
+			}
+
+			return jn;
+		}
+
+		bool await_ready()
+		{
+			bool ready = false;
+			return ready;
+		}
+
+		void await_suspend(std::coroutine_handle<> handle)
+		{
+			caller_routine = handle;
+
+			container.ovp = {};
+			LARGE_INTEGER li;
+
+			li.QuadPart = request.location;
+			container.ovp.Offset = li.LowPart;
+			container.ovp.OffsetHigh = li.HighPart;
+
+			global_job_queue->listen_job(this);
+		}
+
+		file_command_result await_resume()
+		{
+			try
+			{
+				return result;
+			}
+			catch (std::exception exc)
+			{
+				system_monitoring_interface::global_mon->log_exception(exc);
+			}
+		}
+
+		operator file_command_result()
+		{
+			return result;
+		}
+
+		file_command_result wait()
+		{
+			whore_wait = CreateEvent(NULL, FALSE, FALSE, FALSE);
+
+			caller_routine = nullptr;
+
+			container.ovp = {};
+			LARGE_INTEGER li;
+
+			li.QuadPart = request.location;
+			container.ovp.Offset = li.LowPart;
+			container.ovp.OffsetHigh = li.HighPart;
+
+			global_job_queue->listen_job(this);
+
+			::WaitForSingleObject(whore_wait, INFINITE);
+
+		}
+
+	};
 
 	template <typename transaction_result> 	class database_transaction
 	{
@@ -220,11 +377,9 @@ namespace corona
 			promise_type()
 			{
 				m_value = {};
-				debug_functions&& std::cout << "user_transaction::promise:" << this << " " << GetCurrentThreadId() << std::endl;
 			}
 
 			database_transaction  get_return_object() {
-				debug_functions&& std::cout << "user_transaction::get_return_object:" << this << " " << GetCurrentThreadId() << std::endl;
 				std::coroutine_handle<promise_type> promise_coro = std::coroutine_handle<promise_type>::from_promise(*this);
 				database_transaction  fbr(promise_coro);
 				return fbr;
@@ -234,12 +389,10 @@ namespace corona
 			std::suspend_always final_suspend() noexcept { return {}; }
 
 			void return_value(transaction_result value) {
-				debug_functions&& std::cout << "user_transaction::promise return_value, thread:" << GetCurrentThreadId() << std::endl;
 				m_value = value;
 			}
 
 			void unhandled_exception() {
-				debug_functions&& std::cout << "user_transaction::promise unhandled exception:" << this << GetCurrentThreadId() << std::endl;
 			}
 		};
 
@@ -250,19 +403,16 @@ namespace corona
 		database_transaction(std::coroutine_handle<promise_type> _promise_coro)
 		{
 			coro = _promise_coro;
-			debug_functions&& std::cout << "database_transaction: coro ctor:" << ::GetCurrentThreadId() << std::endl;
 		}
 
 		database_transaction()
 		{
-			debug_functions&& std::cout << "database_transaction: empty ctor:" << ::GetCurrentThreadId() << std::endl;
 		}
 
 		// awaiter
 
 		bool await_ready()
 		{
-			debug_functions&& std::cout << "database_transaction::await_ready:" << this << " " << GetCurrentThreadId() << std::endl;
 			if (coro) {
 				coro.resume();
 			}
@@ -272,12 +422,10 @@ namespace corona
 		void await_suspend(std::coroutine_handle<> handle)
 		{
 			handle();
-			debug_functions&& std::cout << "database_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
 		}
 
 		transaction_result await_resume()
 		{
-			debug_functions&& std::cout << "database_transaction::await_resume:" << this << " " << GetCurrentThreadId() << std::endl;
 			transaction_result result;
 			try
 			{
@@ -296,7 +444,6 @@ namespace corona
 
 		transaction_result wait()
 		{
-			debug_functions&& std::cout << "database_transaction::wait:" << this << " " << GetCurrentThreadId() << std::endl;
 			transaction_result result = {};
 
 			try
@@ -310,8 +457,6 @@ namespace corona
 			{
 				system_monitoring_interface::global_mon->log_exception(exc);
 			}
-
-			debug_functions&& std::cout << "database_transaction: complete" << " " << ::GetCurrentThreadId() << std::endl;
 
 			return result;
 		}
@@ -334,11 +479,9 @@ namespace corona
 			promise_type()
 			{
 				m_value = {};
-				debug_functions&& std::cout << "database_composed_transaction::promise:" << this << " " << GetCurrentThreadId() << std::endl;
 			}
 
 			database_composed_transaction get_return_object() {
-				debug_functions&& std::cout << "database_composed_transaction::get_return_object:" << this << " " << GetCurrentThreadId() << std::endl;
 				std::coroutine_handle<promise_type> promise_coro = std::coroutine_handle<promise_type>::from_promise(*this);
 				database_composed_transaction  fbr(promise_coro);
 				return fbr;
@@ -348,12 +491,10 @@ namespace corona
 			std::suspend_always final_suspend() noexcept { return {}; }
 
 			void return_value(transaction_result value) {
-				debug_functions&& std::cout << "database_composed_transaction::promise return_value, thread:" << GetCurrentThreadId() << std::endl;
 				m_value = value;
 			}
 
 			void unhandled_exception() {
-				debug_functions&& std::cout << "database_composed_transaction::promise unhandled exception:" << this << GetCurrentThreadId() << std::endl;
 			}
 		};
 
@@ -364,19 +505,16 @@ namespace corona
 		database_composed_transaction(std::coroutine_handle<promise_type> _promise_coro)
 		{
 			coro = _promise_coro;
-			debug_functions&& std::cout << "database_composed_transaction: coro ctor:" << ::GetCurrentThreadId() << std::endl;
 		}
 
 		database_composed_transaction()
 		{
-			debug_functions&& std::cout << "database_composed_transaction: empty ctor:" << ::GetCurrentThreadId() << std::endl;
 		}
 
 		// awaiter
 
 		bool await_ready()
 		{
-			debug_functions&& std::cout << "database_composed_transaction::await_ready:" << this << " " << GetCurrentThreadId() << std::endl;
 			if (coro) {
 				coro.resume();
 			}
@@ -386,14 +524,11 @@ namespace corona
 		void await_suspend(std::coroutine_handle<> handle)
 		{
 			handle();
-
-			debug_functions&& std::cout << "database_composed_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
 		}
 
 
 		transaction_result await_resume()
 		{
-			debug_functions&& std::cout << "database_composed_transaction::await_resume:" << this << " " << GetCurrentThreadId() << std::endl;
 			transaction_result result;
 			try
 			{
@@ -412,7 +547,6 @@ namespace corona
 
 		transaction_result wait()
 		{
-			debug_functions&& std::cout << "database_composed_transaction::wait:" << this << " " << GetCurrentThreadId() << std::endl;
 			transaction_result result = {};
 
 			try
@@ -426,8 +560,6 @@ namespace corona
 			{
 				system_monitoring_interface::global_mon->log_exception(exc);
 			}
-
-			debug_functions&& std::cout << "database_composed_transaction: complete" << " " << ::GetCurrentThreadId() << std::endl;
 
 			return result;
 		}
@@ -450,11 +582,9 @@ namespace corona
 			promise_type()
 			{
 				m_value = {};
-				debug_functions&& std::cout << "database_method_transaction::promise:" << this << " " << GetCurrentThreadId() << std::endl;
 			}
 
 			database_method_transaction  get_return_object() {
-				debug_functions&& std::cout << "database_method_transaction::get_return_object:" << this << " " << GetCurrentThreadId() << std::endl;
 				std::coroutine_handle<promise_type> promise_coro = std::coroutine_handle<promise_type>::from_promise(*this);
 				database_method_transaction  fbr(promise_coro);
 				return fbr;
@@ -464,12 +594,10 @@ namespace corona
 			std::suspend_always final_suspend() noexcept { return {}; }
 
 			void return_value(transaction_result value) {
-				debug_functions&& std::cout << "database_method_transaction::promise return_value, thread:" << GetCurrentThreadId() << std::endl;
 				m_value = value;
 			}
 
 			void unhandled_exception() {
-				debug_functions&& std::cout << "database_method_transaction::promise unhandled exception:" << this << GetCurrentThreadId() << std::endl;
 			}
 		};
 
@@ -480,19 +608,16 @@ namespace corona
 		database_method_transaction(std::coroutine_handle<promise_type> _promise_coro)
 		{
 			coro = _promise_coro;
-			debug_functions&& std::cout << "database_method_transaction: coro ctor:" << ::GetCurrentThreadId() << std::endl;
 		}
 
 		database_method_transaction()
 		{
-			debug_functions&& std::cout << "database_method_transaction: empty ctor:" << ::GetCurrentThreadId() << std::endl;
 		}
 
 		// awaiter
 
 		bool await_ready()
 		{
-			debug_functions&& std::cout << "database_method_transaction::await_ready:" << this << " " << GetCurrentThreadId() << std::endl;
 			if (coro) {
 				coro.resume();
 			}
@@ -501,13 +626,11 @@ namespace corona
 
 		void await_suspend(std::coroutine_handle<> handle)
 		{
-			debug_functions&& std::cout << "database_method_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
 			handle();
 		}
 
 		transaction_result await_resume()
 		{
-			debug_functions&& std::cout << "database_method_transaction::await_resume:" << this << " " << GetCurrentThreadId() << std::endl;
 			transaction_result result;
 			try
 			{
@@ -525,7 +648,6 @@ namespace corona
 
 		transaction_result wait()
 		{
-			debug_functions&& std::cout << "database_method_transaction::wait:" << this << " " << GetCurrentThreadId() << std::endl;
 			transaction_result result = {};
 
 			try
@@ -539,8 +661,6 @@ namespace corona
 			{
 				system_monitoring_interface::global_mon->log_exception(exc);
 			}
-
-			debug_functions&& std::cout << "database_method_transaction: complete" << " " << ::GetCurrentThreadId() << std::endl;
 
 			return result;
 		}
@@ -565,11 +685,9 @@ namespace corona
 			promise_type()
 			{
 				m_value = {};
-				debug_functions&& std::cout << "table_array_transaction::promise:" << this << " " << GetCurrentThreadId() << std::endl;
 			}
 
 			table_array_transaction  get_return_object() {
-				debug_functions&& std::cout << "table_array_transaction::get_return_object:" << this << " " << GetCurrentThreadId() << std::endl;
 				std::coroutine_handle<promise_type> promise_coro = std::coroutine_handle<promise_type>::from_promise(*this);
 				table_array_transaction  fbr(promise_coro);
 				return fbr;
@@ -579,12 +697,10 @@ namespace corona
 			std::suspend_always final_suspend() noexcept { return {}; }
 
 			void return_value(transaction_result value) {
-				debug_functions&& std::cout << "table_array_transaction::promise return_value,thread:" << " " << GetCurrentThreadId() << std::endl;
 				m_value = value;
 			}
 
 			void unhandled_exception() {
-				debug_functions&& std::cout << "table_array_transaction::promise unhandled exception, thread:" << this << GetCurrentThreadId() << std::endl;
 			}
 		};
 
@@ -595,18 +711,15 @@ namespace corona
 		table_array_transaction(std::coroutine_handle<promise_type> _promise_coro)
 		{
 			coro = _promise_coro;
-			debug_functions&& std::cout << "table_array_transaction: coro ctor:" << ::GetCurrentThreadId() << std::endl;
 		}
 
 		table_array_transaction()
 		{
-			debug_functions&& std::cout << "table_array_transaction: empty ctor:" << ::GetCurrentThreadId() << std::endl;
 		}
 
 		// awaiter
 		bool await_ready()
 		{
-			debug_functions&& std::cout << "table_array_transaction::await_ready:" << this << " " << GetCurrentThreadId() << std::endl;
 			if (coro) {
 				coro.resume();
 			}
@@ -616,13 +729,11 @@ namespace corona
 		void await_suspend(std::coroutine_handle<> handle)
 		{
 			handle();
-			debug_functions&& std::cout << "table_array_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
 		}
 
 		// this creates the 
 		transaction_result await_resume()
 		{
-			debug_functions&& std::cout << "table_array_transaction::await_resume:" << this << " " << GetCurrentThreadId() << std::endl;
 			transaction_result result;
 			try
 			{
@@ -641,7 +752,6 @@ namespace corona
 
 		transaction_result wait()
 		{
-			debug_functions&& std::cout << "table_array_transaction::wait:" << this << " " << GetCurrentThreadId() << std::endl;
 			transaction_result result = {};
 
 			try
@@ -655,8 +765,6 @@ namespace corona
 			{
 				system_monitoring_interface::global_mon->log_exception(exc);
 			}
-
-			debug_functions&& std::cout << "table_array_transaction: complete" << " " << ::GetCurrentThreadId() << std::endl;
 
 			return result;
 		}
@@ -680,11 +788,9 @@ namespace corona
 			promise_type()
 			{
 				m_value = {};
-				debug_functions&& std::cout << "table_group_transaction::promise:" << this << " " << GetCurrentThreadId() << std::endl;
 			}
 
 			table_group_transaction  get_return_object() {
-				debug_functions&& std::cout << "table_group_transaction::get_return_object:" << this << " " << GetCurrentThreadId() << std::endl;
 				std::coroutine_handle<promise_type> promise_coro = std::coroutine_handle<promise_type>::from_promise(*this);
 				table_group_transaction  fbr(promise_coro);
 				return fbr;
@@ -694,12 +800,10 @@ namespace corona
 			std::suspend_always final_suspend() noexcept { return {}; }
 
 			void return_value(transaction_result value) {
-				debug_functions&& std::cout << "table_group_transaction::promise return_value,thread:" << " " << GetCurrentThreadId() << std::endl;
 				m_value = value;
 			}
 
 			void unhandled_exception() {
-				debug_functions&& std::cout << "table_group_transaction::promise unhandled exception, thread:" << this << GetCurrentThreadId() << std::endl;
 			}
 		};
 
@@ -710,18 +814,15 @@ namespace corona
 		table_group_transaction(std::coroutine_handle<promise_type> _promise_coro)
 		{
 			coro = _promise_coro;
-			debug_functions&& std::cout << "table_group_transaction: coro ctor:" << ::GetCurrentThreadId() << std::endl;
 		}
 
 		table_group_transaction()
 		{
-			debug_functions&& std::cout << "table_group_transaction: empty ctor:" << ::GetCurrentThreadId() << std::endl;
 		}
 
 		// awaiter
 		bool await_ready()
 		{
-			debug_functions&& std::cout << "table_group_transaction::await_ready:" << this << " " << GetCurrentThreadId() << std::endl;
 			if (coro) {
 				coro.resume();
 			}
@@ -731,14 +832,11 @@ namespace corona
 		void await_suspend(std::coroutine_handle<> handle)
 		{
 			handle();
-
-			debug_functions&& std::cout << "table_group_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
 		}
 
 		// this creates the 
 		transaction_result await_resume()
 		{
-			debug_functions&& std::cout << "table_group_transaction::await_resume:" << this << " " << GetCurrentThreadId() << std::endl;
 			transaction_result result;
 			try
 			{
@@ -757,7 +855,6 @@ namespace corona
 
 		transaction_result wait()
 		{
-			debug_functions&& std::cout << "table_group_transaction::wait:" << this << " " << GetCurrentThreadId() << std::endl;
 			transaction_result result = {};
 
 			try
@@ -771,8 +868,6 @@ namespace corona
 			{
 				system_monitoring_interface::global_mon->log_exception(exc);
 			}
-
-			debug_functions&& std::cout << "table_group_transaction: complete" << " " << ::GetCurrentThreadId() << std::endl;
 
 			return result;
 		}
@@ -796,11 +891,9 @@ namespace corona
 			promise_type()
 			{
 				m_value = {};
-				debug_functions&& std::cout << "table_transaction::promise:" << this << " " << GetCurrentThreadId() << std::endl;
 			}
 
 			table_transaction  get_return_object() {
-				debug_functions&& std::cout << "table_transaction::get_return_object:" << this << " " << GetCurrentThreadId() << std::endl;
 				std::coroutine_handle<promise_type> promise_coro = std::coroutine_handle<promise_type>::from_promise(*this);
 				table_transaction  fbr(promise_coro);
 				return fbr;
@@ -810,12 +903,10 @@ namespace corona
 			std::suspend_always final_suspend() noexcept { return {}; }
 
 			void return_value(transaction_result value) {
-				debug_functions&& std::cout << "table_transaction::promise return_value,thread:" << " " << GetCurrentThreadId() << std::endl;
 				m_value = value;
 			}
 
 			void unhandled_exception() {
-				debug_functions&& std::cout << "table_transaction::promise unhandled exception, thread:" << this << GetCurrentThreadId() << std::endl;
 			}
 		};
 
@@ -826,18 +917,15 @@ namespace corona
 		table_transaction(std::coroutine_handle<promise_type> _promise_coro)
 		{
 			coro = _promise_coro;
-			debug_functions&& std::cout << "table_transaction: coro ctor:" << ::GetCurrentThreadId() << std::endl;
 		}
 
 		table_transaction()
 		{
-			debug_functions&& std::cout << "table_transaction: empty ctor:" << ::GetCurrentThreadId() << std::endl;
 		}
 
 		// awaiter
 		bool await_ready()
 		{
-			debug_functions&& std::cout << "table_transaction::await_ready:" << this << " " << GetCurrentThreadId() << std::endl;
 			if (coro) {
 				coro.resume();
 			}
@@ -846,16 +934,12 @@ namespace corona
 
 		void await_suspend(std::coroutine_handle<> handle)
 		{
-			debug_functions&& std::cout << "table_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
-			debug_functions&& std::cout << "table_transaction::await_suspend post coro:" << this << " " << GetCurrentThreadId() << std::endl;
 			handle();
-			debug_functions&& std::cout << "table_transaction::await_suspend post handle:" << this << " " << GetCurrentThreadId() << std::endl;
 		}
 
 		// this creates the 
 		transaction_result await_resume()
 		{
-			debug_functions&& std::cout << "table_transaction::await_resume:" << this << " " << GetCurrentThreadId() << std::endl;
 			transaction_result result;
 			try
 			{
@@ -873,7 +957,6 @@ namespace corona
 
 		transaction_result wait()
 		{
-			debug_functions&& std::cout << "table_transaction::wait:" << this << " " << GetCurrentThreadId() << std::endl;
 			transaction_result result = {};
 
 			try
@@ -887,8 +970,6 @@ namespace corona
 			{
 				system_monitoring_interface::global_mon->log_exception(exc);
 			}
-
-			debug_functions&& std::cout << "table_transaction: complete" << " " << ::GetCurrentThreadId() << std::endl;
 
 			return result;
 		}
@@ -912,11 +993,9 @@ namespace corona
 			promise_type()
 			{
 				m_value = {};
-				debug_functions&& std::cout << "table_method_transaction::promise:" << this << " " << GetCurrentThreadId() << std::endl;
 			}
 
 			table_method_transaction  get_return_object() {
-				debug_functions&& std::cout << "table_method_transaction::get_return_object:" << this << " " << GetCurrentThreadId() << std::endl;
 				std::coroutine_handle<promise_type> promise_coro = std::coroutine_handle<promise_type>::from_promise(*this);
 				table_method_transaction  fbr(promise_coro);
 				return fbr;
@@ -926,12 +1005,10 @@ namespace corona
 			std::suspend_always final_suspend() noexcept { return {}; }
 
 			void return_value(transaction_result value) {
-				debug_functions&& std::cout << "table_method_transaction::promise return_value:" << " " << value << " " << GetCurrentThreadId() << std::endl;
 				m_value = value;
 			}
 
 			void unhandled_exception() {
-				debug_functions&& std::cout << "table_method_transaction::promise unhandled exception:" << this << GetCurrentThreadId() << std::endl;
 			}
 		};
 
@@ -942,18 +1019,15 @@ namespace corona
 		table_method_transaction(std::coroutine_handle<promise_type> _promise_coro)
 		{
 			coro = _promise_coro;
-			debug_functions&& std::cout << "table_method_transaction: coro ctor:" << ::GetCurrentThreadId() << std::endl;
 		}
 
 		table_method_transaction()
 		{
-			debug_functions&& std::cout << "table_method_transaction: empty ctor:" << ::GetCurrentThreadId() << std::endl;
 		}
 
 		// awaiter
 		bool await_ready()
 		{
-			debug_functions&& std::cout << "table_method_transaction::await_ready:" << this << " " << GetCurrentThreadId() << std::endl;
 			if (coro) {
 				coro.resume();
 			}
@@ -963,7 +1037,6 @@ namespace corona
 
 		void await_suspend(std::coroutine_handle<> handle)
 		{
-			debug_functions&& std::cout << "table_method_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
 			handle();
 		}
 
@@ -971,7 +1044,6 @@ namespace corona
 		// this creates the 
 		transaction_result await_resume()
 		{
-			debug_functions&& std::cout << "table_method_transaction::await_resume:" << this << " " << GetCurrentThreadId() << std::endl;
 			transaction_result result;
 			try
 			{
@@ -990,7 +1062,6 @@ namespace corona
 
 		transaction_result wait()
 		{
-			debug_functions&& std::cout << "table_method_transaction::wait:" << this << " " << GetCurrentThreadId() << std::endl;
 			transaction_result result = {};
 
 			try
@@ -1004,9 +1075,6 @@ namespace corona
 			{
 				system_monitoring_interface::global_mon->log_exception(exc);
 			}
-
-
-			debug_functions&& std::cout << "table_method_transaction: complete" << " " << ::GetCurrentThreadId() << std::endl;
 
 			return result;
 		}
@@ -1030,11 +1098,9 @@ namespace corona
 			promise_type()
 			{
 				m_value = 0;
-				debug_functions&& std::cout << "compare_transaction::promise:" << this << " " << GetCurrentThreadId() << std::endl;
 			}
 
 			compare_transaction  get_return_object() {
-				debug_functions&& std::cout << "compare_transaction::get_return_object:" << this << " " << GetCurrentThreadId() << std::endl;
 				std::coroutine_handle<promise_type> promise_coro = std::coroutine_handle<promise_type>::from_promise(*this);
 				compare_transaction  fbr(promise_coro);
 				return fbr;
@@ -1044,12 +1110,10 @@ namespace corona
 			std::suspend_always final_suspend() noexcept { return {}; }
 
 			void return_value(int64_t value) {
-				debug_functions&& std::cout << "compare_transaction::promise return_value:" << " " << value << " " << GetCurrentThreadId() << std::endl;
 				m_value = value;
 			}
 
 			void unhandled_exception() {
-				debug_functions&& std::cout << "compare_transaction::promise unhandled exception:" << this << GetCurrentThreadId() << std::endl;
 			}
 		};
 
@@ -1060,18 +1124,15 @@ namespace corona
 		compare_transaction(std::coroutine_handle<promise_type> _promise_coro)
 		{
 			coro = _promise_coro;
-			debug_functions&& std::cout << "compare_transaction: coro ctor:" << ::GetCurrentThreadId() << std::endl;
 		}
 
 		compare_transaction()
 		{
-			debug_functions&& std::cout << "compare_transaction: empty ctor:" << ::GetCurrentThreadId() << std::endl;
 		}
 
 		// awaiter
 		bool await_ready()
 		{
-			debug_functions&& std::cout << "compare_transaction::await_ready:" << this << " " << GetCurrentThreadId() << std::endl;
 			if (coro) {
 				coro.resume();
 			}
@@ -1081,14 +1142,12 @@ namespace corona
 
 		void await_suspend(std::coroutine_handle<> handle)
 		{
-			debug_functions&& std::cout << "compare_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
 			handle();
 		}
 
 		// this creates the 
 		int64_t await_resume()
 		{
-			debug_functions&& std::cout << "compare_transaction::await_resume:" << this << " " << GetCurrentThreadId() << std::endl;
 			int64_t result;
 			try
 			{
@@ -1107,7 +1166,6 @@ namespace corona
 
 		int64_t wait()
 		{
-			debug_functions&& std::cout << "compare_transaction::wait:" << this << " " << GetCurrentThreadId() << std::endl;
 			int64_t result = {};
 
 			try
@@ -1121,9 +1179,6 @@ namespace corona
 			{
 				system_monitoring_interface::global_mon->log_exception(exc);
 			}
-
-
-			debug_functions&& std::cout << "compare_transaction: complete" << " " << ::GetCurrentThreadId() << std::endl;
 
 			return result;
 		}
@@ -1147,11 +1202,9 @@ namespace corona
 			promise_type()
 			{
 				m_value = {};
-				debug_functions&& std::cout << "file_transaction::promise:" << this << " " << GetCurrentThreadId() << std::endl;
 			}
 
 			file_transaction  get_return_object() {
-				debug_functions&& std::cout << "file_transaction::get_return_object:" << this << " " << GetCurrentThreadId() << std::endl;
 				std::coroutine_handle<promise_type> promise_coro = std::coroutine_handle<promise_type>::from_promise(*this);
 				file_transaction  fbr(promise_coro);
 				return fbr;
@@ -1161,12 +1214,10 @@ namespace corona
 			std::suspend_always final_suspend() noexcept { return {}; }
 
 			void return_value(transaction_result value) {
-				debug_functions&& std::cout << "file_transaction::promise return_value:" << " " << value << " " << GetCurrentThreadId() << std::endl;
 				m_value = value;
 			}
 
 			void unhandled_exception() {
-				debug_functions&& std::cout << "file_transaction::promise unhandled exception:" << this << GetCurrentThreadId() << std::endl;
 			}
 		};
 
@@ -1177,19 +1228,16 @@ namespace corona
 		file_transaction(std::coroutine_handle<promise_type> _promise_coro)
 		{
 			coro = _promise_coro;
-			debug_functions&& std::cout << "file_transaction: coro ctor:" << ::GetCurrentThreadId() << std::endl;
 		}
 
 		file_transaction()
 		{
-			debug_functions&& std::cout << "file_transaction: empty ctor:" << ::GetCurrentThreadId() << std::endl;
 		}
 
 		// awaiter
 
 		bool await_ready()
 		{
-			debug_functions&& std::cout << "file_transaction::await_ready:" << this << " " << GetCurrentThreadId() << std::endl;
 			if (coro) {
 				coro.resume();
 			}
@@ -1199,13 +1247,11 @@ namespace corona
 
 		void await_suspend(std::coroutine_handle<> handle)
 		{
-			debug_functions&& std::cout << "file_transaction::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
 			handle();
 		}
 
 		transaction_result await_resume()
 		{
-			debug_functions&& std::cout << "file_transaction::await_resume:" << this << " " << GetCurrentThreadId() << std::endl;
 			transaction_result result;
 
 			try
@@ -1225,7 +1271,6 @@ namespace corona
 
 		transaction_result wait()
 		{
-			debug_functions&& std::cout << "file_transaction::wait:" << this << " " << GetCurrentThreadId() << std::endl;
 			transaction_result result = {};
 
 			try
@@ -1239,9 +1284,6 @@ namespace corona
 			{
 				system_monitoring_interface::global_mon->log_exception(exc);
 			}
-
-
-			debug_functions&& std::cout << "file_transaction: complete" << " " << ::GetCurrentThreadId() << std::endl;
 
 			return result;
 		}
@@ -1266,11 +1308,9 @@ namespace corona
 			promise_type()
 			{
 				m_value = 0;
-				debug_functions&& std::cout << "file_batch::promise:" << this << " " << GetCurrentThreadId() << std::endl;
 			}
 
 			file_batch get_return_object() {
-				debug_functions&& std::cout << "file_batch::get_return_object:" << this << " " << GetCurrentThreadId() << std::endl;
 				std::coroutine_handle<promise_type> promise_coro = std::coroutine_handle<promise_type>::from_promise(*this);
 				file_batch fbr(promise_coro);
 				return fbr;
@@ -1280,12 +1320,10 @@ namespace corona
 			std::suspend_always final_suspend() noexcept { return {}; }
 
 			void return_value(int64_t value) {
-				debug_functions&& std::cout << "file_batch::promise return_value:" << " " << value << " " << GetCurrentThreadId() << std::endl;
 				m_value = value;
 			}
 
 			void unhandled_exception() {
-				debug_functions&& std::cout << "file_batch::promise unhandled exception:" << this << GetCurrentThreadId() << std::endl;
 			}
 		};
 
@@ -1296,38 +1334,30 @@ namespace corona
 		file_batch(std::coroutine_handle<promise_type> _promise_coro)
 		{
 			coro = _promise_coro;
-			debug_functions&& std::cout << "file_batch: coro ctor:" << ::GetCurrentThreadId() << std::endl;
 		}
 
 		file_batch()
 		{
-			debug_functions&& std::cout << "file_batch: empty ctor:" << ::GetCurrentThreadId() << std::endl;
 		}
 
 		// awaiter
 
 		bool await_ready()
 		{
-			debug_functions&& std::cout << "file_batch::await_ready:" << this << " " << GetCurrentThreadId() << std::endl;
-			if (coro) {
-				coro.resume();
-			}
-
 			return false;
 		}
 
 		void await_suspend(std::coroutine_handle<> handle)
 		{
-			debug_functions&& std::cout << "file_batch::await_suspend:" << this << " " << GetCurrentThreadId() << std::endl;
 			handle();
 		}
 
 		int64_t await_resume()
 		{
-			debug_functions&& std::cout << "file_batch::await_resume:" << this << " " << GetCurrentThreadId() << std::endl;
 			int64_t result;
 			if (coro) {
 				result = coro.promise().m_value;
+				coro.resume();
 			}
 
 			return result;
@@ -1335,15 +1365,12 @@ namespace corona
 
 		int64_t wait()
 		{
-			debug_functions&& std::cout << "file_batch::wait:" << this << " " << GetCurrentThreadId() << std::endl;
 			int64_t result = -1;
 
 			if (coro) {
-				coro.resume();
 				result = coro.promise().m_value;
+				coro.resume();
 			}
-
-			debug_functions&& std::cout << "file_batch: complete" << " " << ::GetCurrentThreadId() << std::endl;
 
 			return result;
 		}
@@ -1355,288 +1382,22 @@ namespace corona
 		}
 	};
 
-	enum file_task_function
-	{
-		void_function = 0,
-		read_function = 1,
-		write_function = 2,
-		append_function = 3,
-	};
-
-	class file_task
-	{
-		class file_task_job : public job
-		{
-		public:
-			std::coroutine_handle<> handle;
-			HANDLE					event;
-			file_task* metask;
-
-			file_task_job() : job()
-			{
-				handle = {};
-				event = {};
-				metask = nullptr;
-			}
-
-			job_notify execute(job_queue* _callingQueue, DWORD _bytesTransferred, BOOL _success)
-			{
-				job_notify jn;
-
-				debug_functions&& std::cout << "file_task_job: receiving IO results " << GetCurrentThreadId() << std::endl;
-
-				if (metask) {
-					debug_functions&& std::cout << "file_task_job: bytes transferred: " << _bytesTransferred << std::endl;
-					metask->bytes_transferred = _bytesTransferred;
-					metask->success = _success;
-/*					LARGE_INTEGER li;
-					li.HighPart = container.ovp.OffsetHigh;
-					li.LowPart = container.ovp.Offset;
-					metask->location = li.QuadPart;
-					*/
-					jn.setSignal(metask->hevent);
-				}
-
-				if (handle) {
-					handle.resume();
-					handle.destroy();
-				}
-
-				debug_functions&& std::cout << "file_task_job: end:" << GetCurrentThreadId() << std::endl;
-
-				jn.shouldDelete = false;
-				return jn;
-			}
-		};
-
-	public:
-
-		HANDLE file;
-		HANDLE hevent;
-		int64_t location;
-		char* buffer;
-		int size;
-		int bytes_transferred;
-		bool success;
-		file_task_job frj;
-		file_task_function fun;
-		std::function<void(HANDLE _fi, int64_t _location, char* _buffer, int _size)> chumpy;
-
-
-		struct promise_type
-		{
-			file_task_result m_value;
-			std::coroutine_handle<promise_type> promise_coro;
-
-			promise_type()
-			{
-				debug_functions&& std::cout << "file_task::promise:" << this << " " << GetCurrentThreadId() << std::endl;
-			}
-
-			file_task get_return_object() {
-				debug_functions&& std::cout << "file_batch_result::get_return_object:" << this << " " << GetCurrentThreadId() << std::endl;
-				std::coroutine_handle<promise_type> promise_coro = std::coroutine_handle<promise_type>::from_promise(*this);
-				file_task fbr(promise_coro);
-				return fbr;
-			}
-
-			std::suspend_always initial_suspend() noexcept { return {}; }
-			std::suspend_always final_suspend() noexcept { return {}; }
-
-			void return_value(file_task_result value) {
-				debug_functions&& std::cout << "file_task::promise return_value:" << " " << this << GetCurrentThreadId() << std::endl;
-				m_value = value;
-			}
-
-			void unhandled_exception() {
-				debug_functions&& std::cout << "file_task::promise unhandled exception:" << this << GetCurrentThreadId() << std::endl;
-			}
-		};
-
-		std::coroutine_handle<promise_type> coro;
-
-		file_task()
-		{
-			file = nullptr;
-			location = 0;
-			buffer = nullptr;
-			size = 0;
-			bytes_transferred = 0;
-			success = false;
-			hevent = CreateEvent(NULL, FALSE, FALSE, nullptr);
-			coro = nullptr;
-			fun = {};
-		}
-
-		file_task(const file_task& _src)
-		{
-			file = _src.file;
-			location = _src.location;
-			buffer = _src.buffer;
-			size = _src.size;
-			bytes_transferred = _src.bytes_transferred;
-			success = _src.success;
-			hevent = CreateEvent(NULL, FALSE, FALSE, nullptr);
-			frj = _src.frj;
-			fun = _src.fun;
-		}
-
-		file_task(file_task&& _src)
-		{
-			file = _src.file;
-			location = _src.location;
-			buffer = _src.buffer;
-			size = _src.size;
-			hevent = _src.hevent;
-			bytes_transferred = _src.bytes_transferred;
-			success = _src.success;
-			_src.hevent = nullptr;
-			frj = std::move(_src.frj);
-			fun = _src.fun;
-		}
-
-		file_task(std::coroutine_handle<promise_type> _coro)
-		{
-			location = 0;
-			buffer = nullptr;
-			size = 0;
-			bytes_transferred = 0;
-			success = false;
-			hevent = CreateEvent(NULL, FALSE, FALSE, nullptr);
-			coro = _coro;
-			fun = {};
-		}
-
-		void read(HANDLE _fi, int64_t _location, char* _buffer, int _size)
-		{
-			fun = read_function;
-			file = _fi;
-			location = _location;
-			buffer = _buffer;
-			size = _size;
-			bytes_transferred = 0;
-			success = false;
-			hevent = CreateEvent(NULL, FALSE, FALSE, nullptr);
-
-			LARGE_INTEGER li;
-			li.QuadPart = location;
-			frj.container.ovp.Offset = li.LowPart;
-			frj.container.ovp.OffsetHigh = li.HighPart;
-			frj.handle = coro;
-			frj.metask = this;
-		}
-
-		void write(HANDLE _fi, int64_t _location, char* _buffer, int _size)
-		{
-			fun = write_function;
-			file = _fi;
-			location = _location;
-			buffer = _buffer;
-			size = _size;
-			bytes_transferred = 0;
-			success = false;
-			hevent = CreateEvent(NULL, FALSE, FALSE, nullptr);
-
-			LARGE_INTEGER li;
-			li.QuadPart = location;
-			frj.container.ovp.Offset = li.LowPart;
-			frj.container.ovp.OffsetHigh = li.HighPart;
-			frj.handle = coro;
-			frj.metask = this;
-		}
-
-		void append(HANDLE _fi, char* _buffer, int _size)
-		{
-			fun = write_function;
-			file = _fi;
-			buffer = _buffer;
-			size = _size;
-			bytes_transferred = 0;
-			success = false;
-			hevent = CreateEvent(NULL, FALSE, FALSE, nullptr);
-
-			LARGE_INTEGER li;
-			li.QuadPart = location;
-			frj.container.ovp.Offset = 0xFFFFFFFF;
-			frj.container.ovp.OffsetHigh = 0xFFFFFFFF;
-			frj.handle = coro;
-			frj.metask = this;
-		}
-
-		int initiate()
-		{
-			int r = ERROR_API_UNAVAILABLE;
-			switch (fun) {
-			case read_function:
-				r = ReadFile(file, (void*)buffer, size, nullptr, (LPOVERLAPPED)&frj.container);
-				break;
-			case write_function:
-				r = WriteFile(file, (void*)buffer, size, nullptr, (LPOVERLAPPED)&frj.container);
-				break;
-			case append_function:
-				r = WriteFile(file, (void*)buffer, size, nullptr, (LPOVERLAPPED)&frj.container);
-				break;
-			}
-			return r;
-		}
-
-		virtual ~file_task()
-		{
-			::CloseHandle(hevent);
-		}
-
-		bool await_ready() {
-			bool suspend = false;
-			debug_functions&& std::cout << "file_task: await_ready" << " " << ::GetCurrentThreadId() << std::endl;
-			int r = initiate();
-			if (r != 0) {
-				r = ::GetLastError();
-				if (r == ERROR_IO_PENDING) {
-					suspend = true;
-				}
-			}
-			return suspend;
-		}
-
-		void await_suspend(std::coroutine_handle<> handle)
-		{
-			debug_functions&& std::cout << "file_task: await_suspend" << " " << ::GetCurrentThreadId() << std::endl;
-			::WaitForSingleObject(hevent, INFINITE);
-			debug_functions&& std::cout << "file_task:io complete" << " " << ::GetCurrentThreadId() << std::endl;
-			handle();
-			debug_functions&& std::cout << "file_task:suspend complete" << " " << ::GetCurrentThreadId() << std::endl;
-		}
-
-		file_task_result await_resume()
-		{
-			file_task_result ftr = {};
-			ftr.success = success;
-			ftr.bytes_transferred = bytes_transferred;
-			ftr.location = location;
-			debug_functions&& std::cout << "file_task: await_resume:" << ftr.success << " bytes:" << ftr.bytes_transferred << " " << ::GetCurrentThreadId() << std::endl;
-			return ftr;
-		}
-
-		operator file_task_result()
-		{
-			file_task_result ftr = {};
-			ftr.success = success;
-			ftr.bytes_transferred = bytes_transferred;
-			ftr.location = location;
-			debug_functions&& std::cout << "file_task: result:" << ftr.success << " bytes:" << ftr.bytes_transferred << " " << ::GetCurrentThreadId() << std::endl;
-			return ftr;
-		}
-	};
-
 	class file
 	{
-		file_result instance;
-		lockable size_locker;
-		HANDLE resize_event;
+		file_path		file_name;
+		HANDLE			hfile;
+		lockable		size_locker;
+		HANDLE			resize_event;
+		job_queue*		queue;
+
+
+		// you actually can't put stuff like this here, 
+		// because you will have multiple file users.  
+		// so tempting.
+		os_result		last_result;
 
 		void open(job_queue* _queue, const file_path& _filename, file_open_types _file_open_type)
 		{
-			instance = file_result(_queue, _filename, INVALID_HANDLE_VALUE);
 			resize_event = 0;
 
 			DWORD disposition;
@@ -1663,11 +1424,11 @@ namespace corona
 			if (resize_event == NULL) {
 				os_result osr;
 				{
-					instance.last_result = osr;
+					last_result = osr;
 					return;
 				}
 			}
-			iwstring<600> file_name = instance.file_name;
+			iwstring<600> wfile_name = file_name;
 
 			CREATEFILE2_EXTENDED_PARAMETERS params = { 0 };
 
@@ -1682,8 +1443,8 @@ namespace corona
 
 			do
 			{
-				instance.hfile = ::CreateFile2(file_name.c_str(), (GENERIC_READ | GENERIC_WRITE), 0, disposition, &params);
-				if (instance.hfile != INVALID_HANDLE_VALUE) {
+				hfile = ::CreateFile2(wfile_name.c_str(), (GENERIC_READ | GENERIC_WRITE), 0, disposition, &params);
+				if (hfile != INVALID_HANDLE_VALUE) {
 					break;
 				}
 				os_result what_wrong;
@@ -1696,58 +1457,60 @@ namespace corona
 					break;
 				}
 			} while (retry_count >= 5);
-			if (instance.hfile == INVALID_HANDLE_VALUE) {
+			if (hfile == INVALID_HANDLE_VALUE) {
 				os_result osr;
 				{
 					CloseHandle(resize_event);
-					instance.last_result = osr;
-					std::string temp = instance.file_name + ":" + osr.message;
+					last_result = osr;
+					std::string temp = file_name + ":" + osr.message;
 					throw std::logic_error(temp.c_str());
 				}
 			}
-			HANDLE hport = instance.queue->getPort();
-			auto hfileport = ::CreateIoCompletionPort(instance.hfile, hport, 0, 0);
+			HANDLE hport = queue->getPort();
+			auto hfileport = ::CreateIoCompletionPort(hfile, hport, 0, 0);
 			if (hfileport == NULL)
 			{
 				os_result osr;
 				{
 					CloseHandle(resize_event);
-					CloseHandle(instance.hfile);
-					instance.hfile = INVALID_HANDLE_VALUE;
+					CloseHandle(hfile);
+					hfile = INVALID_HANDLE_VALUE;
 					resize_event = NULL;
-					instance.last_result = osr;
-					std::string temp = instance.file_name + ":" + osr.message;
+					last_result = osr;
+					std::string temp = file_name + ":" + osr.message;
 					throw std::logic_error(temp.c_str());
 				}
 			}
-			instance.last_result = os_result(0);
+			last_result = os_result(0);
 		}
 
 	public:
 
-		file() :
-			resize_event(NULL)
+		void copy(const file& _src)
 		{
-			;
+			file_name = _src.file_name;
+			if (_src.hfile && _src.hfile != INVALID_HANDLE_VALUE) {
+				HANDLE hprocess = GetCurrentProcess();
+				DuplicateHandle(hprocess, _src.hfile, NULL, &hfile, 0, 0, 0);
+			}
+			resize_event = _src.resize_event;
+			queue = _src.queue;
+			last_result = _src.last_result;
 		}
 
-		file(file&& _srcFile) noexcept
-		{
-			instance = _srcFile.instance;
-			resize_event = _srcFile.resize_event;
-			_srcFile.instance = file_result();
+		file() = default;
+
+		file(const file& _src) {
+			copy(_src);
 		}
 
-		file& operator = (file&& _srcFile) noexcept
-		{
-			instance = _srcFile.instance;
-			resize_event = _srcFile.resize_event;
-			_srcFile.instance = file_result();
+		file& operator=(const file& _src) {
+			copy(_src);
 			return *this;
 		}
 
 		file(job_queue* _queue, KNOWNFOLDERID _folder_id, const file_path& _filename, file_open_types _file_open_type)
-			: instance(_queue, _filename, INVALID_HANDLE_VALUE),
+			: queue(_queue), file_name(_filename), hfile(INVALID_HANDLE_VALUE),
 			resize_event(NULL)
 		{
 			wchar_t* wide_path = nullptr;
@@ -1762,14 +1525,11 @@ namespace corona
 		}
 
 		file(job_queue* _queue, const file_path& _filename, file_open_types _file_open_type)
-			: instance(_queue, _filename, INVALID_HANDLE_VALUE),
+			: queue(_queue), file_name(_filename), hfile(INVALID_HANDLE_VALUE),
 			resize_event(NULL)
 		{
 			open(_queue, _filename, _file_open_type);
 		}
-
-		file(const file& src) = delete;
-		file& operator = (const file& _srcFile) = delete;
 
 		~file()
 		{
@@ -1779,88 +1539,80 @@ namespace corona
 				resize_event = INVALID_HANDLE_VALUE;
 			}
 
-			if (instance.hfile != INVALID_HANDLE_VALUE)
+			if (hfile != INVALID_HANDLE_VALUE)
 			{
-				CloseHandle(instance.hfile);
-				instance.hfile = INVALID_HANDLE_VALUE;
+				CloseHandle(hfile);
+				hfile = INVALID_HANDLE_VALUE;
 			}
 		}
 
 		uint64_t add(uint64_t _bytes_to_add) // adds size_bytes to file and returns the position of the start
 		{
-			if (instance.hfile == INVALID_HANDLE_VALUE)
+			if (hfile == INVALID_HANDLE_VALUE)
 				return 0;
 
 			::WaitForSingleObject(resize_event, INFINITE);
 			::ResetEvent(resize_event);
 
 			LARGE_INTEGER position, new_position;
-			::GetFileSizeEx(instance.hfile, &position);
+			::GetFileSizeEx(hfile, &position);
 			new_position = position;
 			new_position.QuadPart += _bytes_to_add;
-			::SetFilePointerEx(instance.hfile, new_position, nullptr, FILE_BEGIN);
-			::SetEndOfFile(instance.hfile);
+			::SetFilePointerEx(hfile, new_position, nullptr, FILE_BEGIN);
+			::SetEndOfFile(hfile);
 			::SetEvent(resize_event);
 
 			return new_position.QuadPart;
 		}
 
-		file_task write(uint64_t location, void* _buffer, int _buffer_length)
-		{
-			debug_file && std::cout << "write file:" << location << ", thread:" << GetCurrentThreadId() << std::endl;
-
-			file_task ft;
-			
-			ft.write(instance.hfile, location, (char*)_buffer, _buffer_length);
-
-			return ft;
+		file_command write(uint64_t location, void* _buffer, int _buffer_length)
+		{		
+			file_command_request fcr(file_commands::write, file_name, hfile, location, _buffer_length, _buffer);
+			file_command fc;
+			fc.request = fcr;
+			return fc;
 		}
 
-		file_task read(uint64_t location, void* _buffer, int _buffer_length)
+		file_command read(uint64_t location, void* _buffer, int _buffer_length)
 		{
-			debug_file && std::cout << "read file:" << location << ", thread:" << GetCurrentThreadId() << std::endl;
-
-			file_task ft;
-
-			ft.read(instance.hfile, location, (char*)_buffer, _buffer_length);
-
-			return ft;
+			file_command_request fcr(file_commands::write, file_name, hfile, location, _buffer_length, _buffer);
+			file_command fc;
+			fc.request = fcr;
+			return fc;
 		}
 
-		file_task append(void* _buffer, int _buffer_length)
+		file_command append(void* _buffer, int _buffer_length)
 		{
-			debug_file&& std::cout << "append file:" <<  ", thread:" << GetCurrentThreadId() << std::endl;
-
 			int64_t file_position = add(_buffer_length);
 
-			file_task ft;
-
-			ft.write(instance.hfile, file_position, (char*)_buffer, _buffer_length);
-
-			return ft;
+			file_command_request fcr(file_commands::write, file_name, hfile, file_position, _buffer_length, _buffer);
+			file_command fc;
+			fc.request = fcr;
+			return fc;
 		}
 
 		uint64_t size()
 		{
-			if (instance.hfile == INVALID_HANDLE_VALUE)
+			if (hfile == INVALID_HANDLE_VALUE)
 				return 0;
 			LARGE_INTEGER file_size;
 			::WaitForSingleObject(resize_event, INFINITE);
 			file_size.QuadPart = 0;
-			::GetFileSizeEx(instance.hfile, &file_size);
+			::GetFileSizeEx(hfile, &file_size);
 			return file_size.QuadPart;
 		}
 
 		bool success()
 		{
-			return resize_event != NULL && instance.hfile != INVALID_HANDLE_VALUE && instance.last_result.success;
+			return resize_event != NULL && hfile != INVALID_HANDLE_VALUE && last_result.success;
 		}
 
 		os_result& result()
 		{
-			return instance.last_result;
+			return last_result;
 		}
 	};
 }
+
 
 #endif

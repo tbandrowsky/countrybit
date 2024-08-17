@@ -1003,8 +1003,6 @@ namespace corona {
 	using query_body = istring<8192>;
 	using file_path = istring<512>;
 
-
-
 	std::string operator+(const string_box& a, const char* b)
 	{
 		std::string temp = a.c_str();

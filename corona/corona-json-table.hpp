@@ -76,37 +76,42 @@ namespace corona
 		{
 			current_location = location;
 
-			debug_json_table && std::cout << "datablock:read begin:" << *this << " " << GetCurrentThreadId() << std::endl;
+			date_time start_time = date_time::now();
+			timer tx;
+			system_monitoring_interface::global_mon->log_block_start("block", "read block", start_time, __FILE__, __LINE__);
 
-			file_task_result header_result = co_await _file->read(location, &header, sizeof(header));
+			file_command_result header_result = co_await _file->read(location, &header, sizeof(header));
 
 			if (header_result.success) 
 			{
-				debug_json_table && std::cout << "datablock:read data begin:" << *this << " " << GetCurrentThreadId() << std::endl;
-
 				bytes = buffer(header.data_length);
-				file_task_result  data_result = co_await _file->read(header.data_location, bytes.get_ptr(), header.data_length);
+				file_command_result data_result = co_await _file->read(header.data_location, bytes.get_ptr(), header.data_length);
 
 				if (data_result.success) 
 				{
-					debug_json_table && std::cout << "datablock:read data worked:" << *this << " " << GetCurrentThreadId() << std::endl;
+					system_monitoring_interface::global_mon->log_block_stop("block", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 					co_return data_result.bytes_transferred; // want to make this 0 or -1 if error
+				}
+				else {
+					system_monitoring_interface::global_mon->log_function_stop("block", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				}
 			}
 
-			debug_json_table && std::cout << "header read failed:" << *this << " " << GetCurrentThreadId() << std::endl;
-
+			system_monitoring_interface::global_mon->log_block_stop("block", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			co_return -1i64;
 		}
 
 		file_batch write(file* _file)
 		{
-			debug_json_table&& std::cout << "datablock:write begin:" << *this << " " << GetCurrentThreadId() << std::endl;
 
 			if (current_location < 0) 
 			{
 				throw std::invalid_argument("use append for new blocks");
 			}
+
+			date_time start_time = date_time::now();
+			timer tx;
+			system_monitoring_interface::global_mon->log_block_start("block", "write block", start_time, __FILE__, __LINE__);
 
 			int size = bytes.get_size();
 
@@ -119,17 +124,15 @@ namespace corona
 				header.data_location = _file->add(header.data_length);
 			}
 
-			debug_json_table&& std::cout << "datablock:write header start:" << *this << " " << GetCurrentThreadId() << std::endl;
-
-			file_task_result data_result = co_await _file->write(header.data_location, bytes.get_ptr(), size);
-
-			debug_json_table && std::cout << "datablock:write header end:" << *this << " " << GetCurrentThreadId() << std::endl;
+			file_command_result data_result = co_await _file->write(header.data_location, bytes.get_ptr(), size);
 
 			if (data_result.success)
 			{
-				file_task_result header_result = co_await _file->write(current_location, &header, sizeof(header));
+				file_command_result header_result = co_await _file->write(current_location, &header, sizeof(header));
+				system_monitoring_interface::global_mon->log_block_stop("block", "write complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return header_result.bytes_transferred;
 			}
+			system_monitoring_interface::global_mon->log_block_stop("block", "write failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 			co_return -1i64;
 		}
@@ -138,7 +141,9 @@ namespace corona
 		{
 			int size = bytes.get_size();
 
-			debug_json_table&& std::cout << "append begin:" << *this << " " << GetCurrentThreadId() << std::endl;
+			date_time start_time = date_time::now();
+			timer tx;
+			system_monitoring_interface::global_mon->log_block_start("block", "append", start_time, __FILE__, __LINE__);
 
 			current_location = _file->add(sizeof(header) + size);
 
@@ -147,21 +152,21 @@ namespace corona
 			header.data_location = current_location + sizeof(header);
 			header.data_length = size;
 
-			file_task_result header_result = co_await _file->write(current_location, &header, sizeof(header));
-			debug_json_table&& std::cout << "append write header:" << *this << " " << GetCurrentThreadId() << std::endl;
+			file_command_result header_result = co_await _file->write(current_location, &header, sizeof(header));
 
 			if (header_result.success)
 			{
-				debug_json_table&& std::cout << "append write data:" << *this << " " << GetCurrentThreadId() << std::endl;
-				file_task_result data_result = co_await _file->write(header.data_location, bytes.get_ptr(), size);
+				file_command_result data_result = co_await _file->write(header.data_location, bytes.get_ptr(), size);
 
-				debug_json_table&& std::cout << "append write data finished:" << *this << " " << GetCurrentThreadId() << std::endl;
+				system_monitoring_interface::global_mon->log_block_stop("block", "append complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return current_location;
 			}
-
+			else 
+			{
+				system_monitoring_interface::global_mon->log_block_stop("block", "append failed ", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+			}
 			co_return -1i64;
 		}
-
 	};
 
 	std::ostream& operator <<(std::ostream& output, data_block& src)
@@ -226,38 +231,59 @@ namespace corona
 
 		file_batch read(file* _file, relative_ptr_type location)
 		{
-			debug_json_table&& std::cout << "json_node read:" << location << std::endl;
+			date_time start_time = date_time::now();
+			timer tx;
+			system_monitoring_interface::global_mon->log_json_start("json", "read", start_time, __FILE__, __LINE__);
+
 			relative_ptr_type status = co_await storage.read(_file, location);
 
 			if (status > -1)
 			{
 				char* c = storage.bytes.get_ptr();
 				json_parser jp;
-				json payload = jp.parse_object(c);
+				json payload;
+				if (c) {
+					payload = jp.parse_object(c);
+				}
+				else {
+					std::exception exc("Fatal Read Error");
+					system_monitoring_interface::global_mon->log_exception(exc, __FILE__, __LINE__);
+					system_monitoring_interface::global_mon->log_json_stop("json", "read failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+
+				}
 				if (payload.is_member("ClassName", "SysParseErrors")) {
 					std::string temp = "Could not parse json node on retrieval:";
 					temp += c;
 					system_monitoring_interface::global_mon->log_warning(temp, __FILE__, __LINE__);
+					system_monitoring_interface::global_mon->log_json_stop("json", "read failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				}
 				put_json(payload);
 			}
+			system_monitoring_interface::global_mon->log_json_stop("json", "read complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			co_return status;
 		}
 
 		file_batch write(file* _file)
 		{
-			debug_json_table&& std::cout << "json_node write:" << storage.current_location << std::endl;
+			date_time start_time = date_time::now();
+			timer tx;
+			system_monitoring_interface::global_mon->log_json_start("json", "write", start_time, __FILE__, __LINE__);
+
 			auto json_payload = get_json();
 
 			storage = json_payload;
 
 			relative_ptr_type result = co_await storage.write(_file);
+			system_monitoring_interface::global_mon->log_json_stop("json", "write complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			co_return result;
 		}
 
 		file_batch append(file* _file)
 		{
-			debug_json_table&& std::cout << "json_node append:" << std::endl;
+			date_time start_time = date_time::now();
+			timer tx;
+			system_monitoring_interface::global_mon->log_json_start("json", "append", start_time, __FILE__, __LINE__);
+
 			auto json_payload = get_json();
 
 			storage = json_payload;
@@ -265,9 +291,7 @@ namespace corona
 			relative_ptr_type result = co_await storage.append(_file);
 
 			storage.current_location = result;
-
-			debug_json_table&& std::cout << "json_node append location:" << result << std::endl;
-
+			system_monitoring_interface::global_mon->log_json_stop("json", "append complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			co_return result;
 		}
 	};
@@ -299,9 +323,12 @@ namespace corona
 
 		file_batch read(file* _file, relative_ptr_type location)
 		{
+			date_time start_time = date_time::now();
+			timer tx;
+			system_monitoring_interface::global_mon->log_poco_start("poco", "read", start_time, __FILE__, __LINE__);
+
 			storage.init(sizeof(poco_type));
 
-			debug_json_table&& std::cout << "read poco:" << location << std::endl;
 
 			relative_ptr_type status = co_await storage.read(_file, location);
 
@@ -311,31 +338,43 @@ namespace corona
 				data = *c;
 			}
 
+			system_monitoring_interface::global_mon->log_poco_stop("poco", "read complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+
 			co_return status;
 		}
 
 		file_batch write(file* _file)
 		{
+			date_time start_time = date_time::now();
+			timer tx;
+			system_monitoring_interface::global_mon->log_poco_start("poco", "write", start_time, __FILE__, __LINE__);
+
 			storage.init(sizeof(poco_type));
 			poco_type* c = (poco_type*)storage.bytes.get_ptr();
 			*c = data;
 
-			debug_json_table&& std::cout << "write poco:" << storage.current_location << std::endl;
 
 			relative_ptr_type status = co_await storage.write(_file);
+			system_monitoring_interface::global_mon->log_poco_stop("poco", "write complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 			co_return status;
 		}
 
 		file_batch append(file* _file)
 		{
+			date_time start_time = date_time::now();
+			timer tx;
+			system_monitoring_interface::global_mon->log_poco_start("poco", "append", start_time, __FILE__, __LINE__);
+
 			storage.init(sizeof(poco_type));
 			poco_type* c = (poco_type*)storage.bytes.get_ptr();
 			*c = data;
 
-			debug_json_table&& std::cout << "append poco:" << storage.current_location << std::endl;
-
 			relative_ptr_type status = co_await storage.append(_file);
+
+
+			system_monitoring_interface::global_mon->log_poco_stop("poco", "append complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+
 
 			co_return status;
 		}
@@ -463,25 +502,44 @@ namespace corona
 
 		table_transaction<relative_ptr_type> create()
 		{
+			date_time start_time = date_time::now();
+			timer tx;
+			system_monitoring_interface::global_mon->log_table_start("table", "create", start_time, __FILE__, __LINE__);
+
+
 			relative_ptr_type location = co_await create_header();
+			system_monitoring_interface::global_mon->log_table_stop("table", "create complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			co_return location;
 		}
 
 		table_transaction<relative_ptr_type> open(relative_ptr_type location)
 		{
+			date_time start_time = date_time::now();
+			timer tx;
+			system_monitoring_interface::global_mon->log_table_start("table", "open", start_time, __FILE__, __LINE__);
 			header_location = location;
 			co_await index_header.read(database_file.get(), header_location);
+			system_monitoring_interface::global_mon->log_table_stop("table", "open complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			co_return header_location;
 		}
 
 		table_transaction<bool> contains(const KEY key)
 		{
+			date_time start_time = date_time::now();
+			timer tx;
+			system_monitoring_interface::global_mon->log_table_start("table", "contains", start_time, __FILE__, __LINE__);
+
 			relative_ptr_type result = co_await find_node(key);
+			system_monitoring_interface::global_mon->log_table_stop("table", "contains complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			co_return  result != null_row;
 		}
 
 		table_transaction<json> get(std::string _key)
 		{
+			date_time start_time = date_time::now();
+			timer tx;
+			system_monitoring_interface::global_mon->log_table_start("table", "get", start_time, __FILE__, __LINE__);
+
 			json_parser jp;
 			json key = jp.parse_object(_key);
 
@@ -498,22 +556,34 @@ namespace corona
 				json_node r = co_await get_node(database_file.get(), n);
 				result = r.data;
 			}
+			system_monitoring_interface::global_mon->log_table_stop("table", "get", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+
 			co_return result;
 		}
 
 		table_transaction<json> get(const KEY key)
 		{
+			date_time start_time = date_time::now();
+			timer tx;
+			system_monitoring_interface::global_mon->log_table_start("table", "get", start_time, __FILE__, __LINE__);
+
 			json result;
 			relative_ptr_type n = co_await find_node(key);
 			if (n != null_row) {
 				json_node r = co_await get_node(database_file.get(), n);
 				result = r.data;
 			}
+			system_monitoring_interface::global_mon->log_table_stop("table", "get", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+
 			co_return result;
 		}
 
 		table_transaction<json> get(const KEY key, std::initializer_list<std::string> include_fields)
 		{
+			date_time start_time = date_time::now();
+			timer tx;
+			system_monitoring_interface::global_mon->log_table_start("table", "get", start_time, __FILE__, __LINE__);
+
 			json result;
 			relative_ptr_type n = co_await find_node(key);
 			if (n != null_row) {
@@ -522,24 +592,36 @@ namespace corona
 					result = r.data.extract(include_fields);
 				}
 			}
+			system_monitoring_interface::global_mon->log_table_stop("table", "get", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+
 			co_return result;
 		}
 
 		table_transaction<relative_ptr_type>
 		put(json value)
 		{
+			date_time start_time = date_time::now();
+			timer tx;
+			system_monitoring_interface::global_mon->log_table_start("table", "put", start_time, __FILE__, __LINE__);
+
 			auto key = get_key(value);
 			relative_ptr_type modified_node = co_await this->update_node(key, 
 				[value](UPDATE_VALUE& dest) { 
 					dest.assign_update(value); 
 				}
 			);
+			system_monitoring_interface::global_mon->log_table_stop("table", "put", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+
 			co_return modified_node;
 		}
 
 		table_transaction<relative_ptr_type>
 		put(std::string _json)
 		{
+			date_time start_time = date_time::now();
+			timer tx;
+			system_monitoring_interface::global_mon->log_table_start("table", "put", start_time, __FILE__, __LINE__);
+
 			json_parser jp;
 			json jx = jp.parse_object(_json);
 			if (jx.empty() || jx.is_member("ClassName", "SysParseError")) {
@@ -548,20 +630,32 @@ namespace corona
 			}
 			auto key = get_key(jx);
 			relative_ptr_type modified_node = co_await this->update_node(key, [jx](UPDATE_VALUE& dest) { dest.assign_update(jx); });
+			system_monitoring_interface::global_mon->log_table_stop("table", "put", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+
 			co_return modified_node;
 		}
 
 		table_transaction<relative_ptr_type>
 			replace(json value)
 		{
+			date_time start_time = date_time::now();
+			timer tx;
+			system_monitoring_interface::global_mon->log_table_start("table", "replace", start_time, __FILE__, __LINE__);
+
 			auto key = get_key(value);
 			relative_ptr_type modified_node = co_await this->update_node(key, [value](UPDATE_VALUE& dest) { dest.assign_replace(value); });
+			system_monitoring_interface::global_mon->log_table_stop("table", "replace", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+
 			co_return modified_node;
 		}
 
 		table_transaction<relative_ptr_type>
 			replace(std::string _json)
 		{
+			date_time start_time = date_time::now();
+			timer tx;
+			system_monitoring_interface::global_mon->log_table_start("table", "replace", start_time, __FILE__, __LINE__);
+
 			json_parser jp;
 			json jx = jp.parse_object(_json);
 			auto key = get_key(jx);
@@ -572,6 +666,10 @@ namespace corona
 		table_transaction<bool>
 		erase(const KEY& key)
 		{
+			date_time start_time = date_time::now();
+			timer tx;
+			system_monitoring_interface::global_mon->log_table_start("table", "erase", start_time, __FILE__, __LINE__);
+
 			int k;
 			relative_ptr_type update[JsonTableMaxNumberOfLevels], p;
 			json_node qnd, pnd;
@@ -607,10 +705,12 @@ namespace corona
 				index_header.data.level = m;
 				co_await header.write(database_file.get());
 				co_await index_header.write(database_file.get());
+				system_monitoring_interface::global_mon->log_table_stop("table", "erase complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return true;
 			}
 			else
 			{
+				system_monitoring_interface::global_mon->log_table_stop("table", "erase failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				co_return false;
 			}
 		}
@@ -618,6 +718,10 @@ namespace corona
 		table_group_transaction<int64_t> 
 			co_for_each(json _key_fragment, std::function<table_transaction<relative_ptr_type>(int _index, json_node& _item)> _process_clause)
 		{
+			date_time start_time = date_time::now();
+			timer tx;
+			system_monitoring_interface::global_mon->log_table_start("table", "co_for_each", start_time, __FILE__, __LINE__);
+
 			relative_ptr_type location = co_await find_first_node_gte(_key_fragment);
 			int64_t index = 0;
 
@@ -636,6 +740,7 @@ namespace corona
 				}
 				location = node.forward[0];
 			}
+			system_monitoring_interface::global_mon->log_table_stop("table", "co_for_each complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 			co_return index;
 		}
@@ -643,6 +748,10 @@ namespace corona
 		table_group_transaction<int64_t>
 			for_each(json _key_fragment, std::function<relative_ptr_type(int _index, json& _item)> _process_clause)
 		{
+			date_time start_time = date_time::now();
+			timer tx;
+			system_monitoring_interface::global_mon->log_table_start("table", "for_each", start_time, __FILE__, __LINE__);
+
 			relative_ptr_type location = co_await find_first_node_gte(_key_fragment);
 			int64_t index = 0;
 
@@ -661,6 +770,7 @@ namespace corona
 				}
 				location = node.forward[0];
 			}
+			system_monitoring_interface::global_mon->log_table_stop("table", "for_each complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 			co_return index;
 		}
@@ -668,6 +778,10 @@ namespace corona
 		table_transaction<json>
 			get_first(json _key_fragment)
 		{
+			date_time start_time = date_time::now();
+			timer tx;
+			system_monitoring_interface::global_mon->log_table_start("table", "get_first", start_time, __FILE__, __LINE__);
+
 			relative_ptr_type location = co_await find_first_node_gte(_key_fragment);
 			int64_t index = 0;
 			json result_data;
@@ -687,11 +801,16 @@ namespace corona
 				}
 			}
 
+			system_monitoring_interface::global_mon->log_table_stop("table", "get_first complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			co_return result_data;
 		}
 
 		table_group_transaction<bool> any(json _key_fragment, std::function<relative_ptr_type(int _index, json& _item)> _process_clause)
 		{
+			date_time start_time = date_time::now();
+			timer tx;
+			system_monitoring_interface::global_mon->log_table_start("table", "any", start_time, __FILE__, __LINE__);
+
 			relative_ptr_type location = co_await find_first_node_gte(_key_fragment);
 			int64_t index = 0;
 			bool is_any = false;
@@ -717,11 +836,16 @@ namespace corona
 				}
 			}
 
+			system_monitoring_interface::global_mon->log_table_stop("table", "is_any complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			co_return is_any;
 		}
 
 		table_group_transaction<bool> all(json _key_fragment, std::function<relative_ptr_type(int _index, json& _item)> _process_clause)
 		{
+			date_time start_time = date_time::now();
+			timer tx;
+			system_monitoring_interface::global_mon->log_table_start("table", "all", start_time, __FILE__, __LINE__);
+
 			relative_ptr_type location = co_await find_first_node_gte(_key_fragment);
 			int64_t index = 0;
 			bool is_all = true;
@@ -746,6 +870,7 @@ namespace corona
 					location = null_row;
 				}
 			}
+			system_monitoring_interface::global_mon->log_table_stop("table", "is_all complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 			co_return is_all;
 		}
@@ -753,6 +878,10 @@ namespace corona
 		table_group_transaction<int64_t>
 			co_for_each(std::function<table_method_transaction<relative_ptr_type>(int _index, json& _item)> _process_clause)
 		{
+			date_time start_time = date_time::now();
+			timer tx;
+			system_monitoring_interface::global_mon->log_table_start("table", "co_for_each", start_time, __FILE__, __LINE__);
+
 			auto header = co_await get_header();
 
 			relative_ptr_type location = header.forward[0];
@@ -769,6 +898,7 @@ namespace corona
 				}
 				location = node.forward[0];
 			}
+			system_monitoring_interface::global_mon->log_table_stop("table", "co_for_each complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 			co_return index;
 		}
@@ -776,6 +906,10 @@ namespace corona
 		table_group_transaction<int64_t>
 			for_each(std::function<relative_ptr_type(int _index, json& _item)> _process_clause)
 		{
+			date_time start_time = date_time::now();
+			timer tx;
+			system_monitoring_interface::global_mon->log_table_start("table", "for_each", start_time, __FILE__, __LINE__);
+
 			auto header = co_await get_header();
 
 			relative_ptr_type location = header.forward[0];
@@ -792,12 +926,17 @@ namespace corona
 				}
 				location = node.forward[0];
 			}
+			system_monitoring_interface::global_mon->log_table_stop("table", "for_each complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 			co_return index;
 		}
 
 		table_transaction<json> get_first(json _key_fragment, std::function<bool(json& _src)> _fn)
 		{
+			date_time start_time = date_time::now();
+			timer tx;
+			system_monitoring_interface::global_mon->log_table_start("table", "get_first", start_time, __FILE__, __LINE__);
+
 			relative_ptr_type location = co_await find_first_node_gte(_key_fragment);
 			int64_t index = 0;
 			json result_data;
@@ -817,6 +956,7 @@ namespace corona
 					location = node.forward[0];
 				}
 			}
+			system_monitoring_interface::global_mon->log_table_stop("table", "get_first complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 			co_return result_data;
 		}
@@ -824,6 +964,10 @@ namespace corona
 		table_array_transaction<json>
 		select_array(std::function<json(int _index, json& _item)> _project)
 		{
+			date_time start_time = date_time::now();
+			timer tx;
+			system_monitoring_interface::global_mon->log_table_start("table", "select_array", start_time, __FILE__, __LINE__);
+
 			json_parser jp;
 			json ja = jp.create_array();
 			json* pja = &ja;
@@ -839,6 +983,8 @@ namespace corona
 					co_return count;
 				});
 
+			system_monitoring_interface::global_mon->log_table_stop("table", "select_array complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+
 			co_return ja;
 		}
 
@@ -848,6 +994,10 @@ namespace corona
 			json _update = "{ }"_jobject
 		)
 		{
+			date_time start_time = date_time::now();
+			timer tx;
+			system_monitoring_interface::global_mon->log_table_start("table", "select_array", start_time, __FILE__, __LINE__);
+
 			json_parser jp;
 			json ja = jp.create_array();
 			json* pja = &ja;
@@ -867,6 +1017,8 @@ namespace corona
 					co_return count;
 				});
 
+			system_monitoring_interface::global_mon->log_table_stop("table", "select_array complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
+
 			co_return ja;
 		}
 
@@ -879,6 +1031,10 @@ namespace corona
 			)
 		{
 			json* pdestination = &_destination;
+
+			date_time start_time = date_time::now();
+			timer tx;
+			system_monitoring_interface::global_mon->log_table_start("table", "select_object", start_time, __FILE__, __LINE__);
 
 			int64_t count = co_await co_for_each(_key_fragment, [this, _group_by, pdestination, _project, _get_child_key](int _index, json_node& _jdata) -> table_transaction<int64_t>
 				{
@@ -911,6 +1067,7 @@ namespace corona
 					}
 					co_return true;
 				});
+			system_monitoring_interface::global_mon->log_table_stop("table", "select_object complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
 			co_return _destination;
 		}
@@ -1040,8 +1197,6 @@ namespace corona
 		{
 			int k;
 
-			debug_json_table&& std::cout << "json_table update_node" << std::endl;
-
 			relative_ptr_type update[JsonTableMaxNumberOfLevels];
 
 			auto get_header_task = get_header();
@@ -1167,10 +1322,10 @@ namespace corona
 		dtest.add(1000);
 
 		std::cout << "\ntest_file: co_await write, thread:" << ::GetCurrentThreadId() << std::endl;
-		file_task_result tsk = co_await dtest.write(0, (void *)buffer_write, l);
+		file_command_result tsk = co_await dtest.write(0, (void *)buffer_write, l);
 
 		std::cout << "\ntest_file: co_await read, thread:" << ::GetCurrentThreadId() << std::endl;
-		file_task_result tsk2 = co_await dtest.read(0, (void*)buffer_read, l);
+		file_command_result tsk2 = co_await dtest.read(0, (void*)buffer_read, l);
 
 		std::cout << "\ntest_file: co_await read, thread:" << ::GetCurrentThreadId() << std::endl;
 		

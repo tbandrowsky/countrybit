@@ -996,7 +996,7 @@ namespace corona
 		bool import_member(std::string _member, std::string _value_to_import)
 		{
 			bool stuffed = false;
-			if (object_impl && object_impl->members[_value_to_import]) {
+			if (object_impl && object_impl->members.contains(_member)) {
 				object_impl->members[_member]->from_string(_value_to_import);
 				stuffed = true;
 			}
@@ -2854,7 +2854,8 @@ namespace corona
 			{
 				std::string index_key = std::to_string(i);
 				std::string column_name = _column_map[index_key];
-				r = r || _dest_template.import_member(column_name, stuff[i]);
+				bool t = _dest_template.import_member(column_name, stuff[i]);
+				if (t) r = t;
 			}
 
 			return r;
@@ -3079,6 +3080,7 @@ namespace corona
 					}
 					else if (parse_object_state == parse_object_states::parsing_value)
 					{
+						_src = eat_white(_src);
 						std::shared_ptr<json_value> member_value;
 						if (parse_value(member_value, _src, &_src)) {
 							parse_object_state = parse_object_states::parsing_comma;
