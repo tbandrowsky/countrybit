@@ -65,7 +65,7 @@ namespace corona
 		console_color Loginformation;
 		console_color Logamd;
 		console_color Lognvidia;
-		console_color Logintel;
+		console_color Logintel;		
 
 		static system_monitoring_interface* global_mon;
 
@@ -376,6 +376,9 @@ namespace corona
 			::LeaveCriticalSection(&log_lock);
 		}
 
+		bool enable_json_table_logging = false;
+		bool enable_json_poco_logging = false;
+		bool enable_json_block_logging = false;
 
 		virtual void log_base_block_start(int _indent, std::string _function_name, std::string _message, date_time _request_time, const char* _file = nullptr, int _line = 0)
 		{
@@ -443,43 +446,59 @@ namespace corona
 
 		virtual void log_table_start(std::string _function_name, std::string _message, date_time _request_time, const char* _file = nullptr, int _line = 0)
 		{
-			log_base_block_start(0, _function_name, _message, _request_time, _file, _line);
+			if (enable_json_table_logging) {
+				log_base_block_start(0, _function_name, _message, _request_time, _file, _line);
+			}
 		}
 
 		virtual void log_table_stop(std::string _function_name, std::string _message, double _elapsed_seconds, const char* _file = nullptr, int _line = 0)
 		{
-			log_base_block_stop(0, _function_name, _message, _elapsed_seconds, _file, _line);
+			if (enable_json_table_logging) {
+				log_base_block_stop(0, _function_name, _message, _elapsed_seconds, _file, _line);
+			}
 		}
 
 
 		virtual void log_json_start(std::string _function_name, std::string _message, date_time _request_time, const char* _file = nullptr, int _line = 0)
 		{
-			log_base_block_start(2, _function_name, _message, _request_time, _file, _line);
+			if (enable_json_poco_logging) {
+				log_base_block_start(2, _function_name, _message, _request_time, _file, _line);
+			}
 		}
 
 		virtual void log_json_stop(std::string _function_name, std::string _message, double _elapsed_seconds, const char* _file = nullptr, int _line = 0)
 		{
-			log_base_block_stop(2, _function_name, _message, _elapsed_seconds, _file, _line);
+			if (enable_json_poco_logging) {
+				log_base_block_stop(2, _function_name, _message, _elapsed_seconds, _file, _line);
+			}
 		}
 
 		virtual void log_poco_start(std::string _function_name, std::string _message, date_time _request_time, const char* _file = nullptr, int _line = 0)
 		{
-			log_base_block_start(2, _function_name, _message, _request_time, _file, _line);
+			if (enable_json_poco_logging) {
+				log_base_block_start(2, _function_name, _message, _request_time, _file, _line);
+			}
 		}
 
 		virtual void log_poco_stop(std::string _function_name, std::string _message, double _elapsed_seconds, const char* _file = nullptr, int _line = 0)
 		{
-			log_base_block_stop(2, _function_name, _message, _elapsed_seconds, _file, _line);
+			if (enable_json_poco_logging) {
+				log_base_block_stop(2, _function_name, _message, _elapsed_seconds, _file, _line);
+			}
 		}
 
 		virtual void log_block_start(std::string _function_name, std::string _message, date_time _request_time, const char* _file = nullptr, int _line = 0)
 		{
-			log_base_block_start(4, _function_name, _message, _request_time, _file, _line);
+			if (enable_json_block_logging) {
+				log_base_block_start(4, _function_name, _message, _request_time, _file, _line);
+			}
 		}
 
 		virtual void log_block_stop(std::string _function_name, std::string _message, double _elapsed_seconds, const char* _file = nullptr, int _line = 0)
 		{
-			log_base_block_stop(4, _function_name, _message, _elapsed_seconds, _file, _line);
+			if (enable_json_block_logging) {
+				log_base_block_stop(4, _function_name, _message, _elapsed_seconds, _file, _line);
+			}
 		}
 
 		virtual void log_information(std::string _message, const char* _file = nullptr, int _line = 0)
