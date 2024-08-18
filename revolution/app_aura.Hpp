@@ -197,7 +197,7 @@ namespace corona
 				if (f.success()) {
 					auto fsize = f.size();
 					buffer b(fsize + 1);
-					auto result = co_await f.read(0, b.get_ptr(), fsize);
+					auto result =  f.read(0, b.get_ptr(), fsize);
 					if (result.success) {
 						crypto crypter;
 						if (b.is_safe_string()) {
@@ -208,7 +208,7 @@ namespace corona
 								corona_api->host = corona_config["Host"];
 								corona_api->path = corona_config["Path"];
 								corona_api->port = corona_config["Port"];
-								co_return true;
+								return true;
 							}
 						}
 					}
@@ -218,7 +218,7 @@ namespace corona
 			{
 				std::cout << exc.what() << std::endl;
 			}
-			co_return false;
+			return false;
 		}
 
 		/*

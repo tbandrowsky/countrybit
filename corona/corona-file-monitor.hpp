@@ -42,7 +42,7 @@ namespace corona
 			return pt;
 		}
 
-		file_transaction<relative_ptr_type> poll(application *_app)
+		relative_ptr_type poll(application *_app)
 		{
 			json_parser jp;
 			try {
@@ -51,7 +51,7 @@ namespace corona
 					if (f.success()) {
 						auto fsize = f.size();
 						buffer b(fsize + 1);
-						auto result = co_await f.read(0, b.get_ptr(), fsize);
+						auto result = f.read(0, b.get_ptr(), fsize);
 						if (result.success) {
 							crypto crypter;
 							if (b.is_safe_string()) {
@@ -61,7 +61,7 @@ namespace corona
 									json temp_contents = jp.parse_object(s_contents);
 									contents = temp_contents;
 									if (!jp.parse_errors.size()) {
-										co_return true;
+										return true;
 									}
 								}
 							}
@@ -74,7 +74,7 @@ namespace corona
 			{
 				std::cerr << "Error:" << __FILE__ << " " << __LINE__ << " polling " << file_name << " failed:" << exc.what() << std::endl;
 			}
-			co_return null_row;
+			return null_row;
 		}
 	};
 

@@ -11,7 +11,7 @@ and their pages.
 It has the message loop, for example.
 
 Notes
-co_await implementation instead of the janky queue 
+ implementation instead of the janky queue 
 mechanism might be better.  but, it works.
 
 For Future Consideration

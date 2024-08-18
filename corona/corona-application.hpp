@@ -160,7 +160,7 @@ namespace corona
 
 	};
 
-	file_batch application_tests()
+	bool application_tests()
 	{
 		try {
 			application app;
@@ -172,22 +172,22 @@ namespace corona
 			char buffer[10] = { 0 };
 
 			strcpy_s(buffer, "test1");
-			co_await my_file.write( 0, buffer, 5);
+			my_file.write( 0, buffer, 5);
 			strcpy_s(buffer, "test2");
-			co_await my_file.write( 5, buffer, 5);
-			co_await my_file.read( 0, buffer, 5);
+			my_file.write( 5, buffer, 5);
+			my_file.read( 0, buffer, 5);
 
 			if (strcmp(buffer, "test1") != 0)
 			{
 				system_monitoring_interface::global_mon->log_warning("read / write test failed");
 			}
 
-			co_return true;
+			return true;
 		}
 		catch (std::exception exc)
 		{
 			system_monitoring_interface::global_mon->log_exception(exc, __FILE__, __LINE__);
-			co_return false;
+			return false;
 		}
 	}
 }

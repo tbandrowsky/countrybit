@@ -12,15 +12,15 @@ namespace corona
 		std::string	create_class_name;
 		std::string form_name;
 
-		virtual comm_bus_transaction<json> execute()
+		virtual json execute()
 		{
 			json obj;
 			control_base* cb = bus->find_control(form_name);
 			if (cb) {
-				obj = co_await bus->create_object(create_class_name);
+				obj =  bus->create_object(create_class_name);
 				cb->put_json(obj);
 			}
-			co_return obj;
+			return obj;
 		}
 
 		virtual void get_json(json& _dest)
@@ -56,18 +56,18 @@ namespace corona
 		std::string page_name;
 		std::string form_name;
 
-		virtual comm_bus_transaction<json> execute()
+		virtual json execute()
 		{
 			json obj;
 			control_base* cb = bus->find_control(table_name);
 			if (cb) {
 				json key_data = cb->get_selected_object();
 				if (key_data.object()) {
-					obj = co_await bus->get_object(key_data);
+					obj =  bus->get_object(key_data);
 					bus->select_page(page_name, form_name, obj);
 				}
 			}
-			co_return obj;
+			return obj;
 		}
 
 		virtual void get_json(json& _dest)
@@ -104,21 +104,21 @@ namespace corona
 		std::string	table_name;
 		std::string form_name;
 
-		virtual comm_bus_transaction<json> execute()
+		virtual json execute()
 		{
 			json obj;
 			control_base* cb = bus->find_control(table_name);
 			if (cb) {
 				json key_data = cb->get_selected_object();
 				if (key_data.object()) {
-					obj = co_await bus->get_object(key_data);
+					obj =  bus->get_object(key_data);
 					control_base* cf = bus->find_control(form_name);
 					if (cf) {
 						cf->set_data(obj);
 					}
 				}
 			}
-			co_return obj;
+			return obj;
 		}
 
 		virtual void get_json(json& _dest)
@@ -153,7 +153,7 @@ namespace corona
 
 		std::string form_name;
 
-		virtual comm_bus_transaction<json> execute()
+		virtual json execute()
 		{
 			json obj;
 			control_base* cb = nullptr;
@@ -164,10 +164,10 @@ namespace corona
 			if (cb) {
 				json object_data = cb->get_data();
 				if (object_data.object()) {
-					obj = co_await bus->put_object(object_data);
+					obj =  bus->put_object(object_data);
 				}
 			}
-			co_return obj;
+			return obj;
 		}
 
 		virtual void get_json(json& _dest)
@@ -201,7 +201,7 @@ namespace corona
 		std::string control_name;
 		json		object_data;
 
-		virtual comm_bus_transaction<json> execute()
+		virtual json execute()
 		{
 			json obj;
 			control_base* cb = nullptr;
@@ -210,10 +210,10 @@ namespace corona
 
 			if (cb) {
 				if (object_data.object()) {
-					obj = co_await bus->put_object(object_data);
+					obj =  bus->put_object(object_data);
 				}
 			}
-			co_return obj;
+			return obj;
 		}
 
 		virtual void get_json(json& _dest)
@@ -246,17 +246,17 @@ namespace corona
 	public:
 		std::string		control_name;
 
-		virtual comm_bus_transaction<json> execute()
+		virtual json execute()
 		{
 			json obj;
 			control_base* cb = bus->find_control(control_name);
 			if (cb) {
 				json object_data = cb->get_data();
 				if (object_data.object()) {
-					obj = co_await bus->delete_object(object_data);
+					obj =  bus->delete_object(object_data);
 				}
 			}
-			co_return obj;
+			return obj;
 		}
 
 		virtual void get_json(json& _dest)
@@ -291,7 +291,7 @@ namespace corona
 		std::string			table_name;
 		query_context		qctx;
 
-		virtual comm_bus_transaction<json> execute()
+		virtual json execute()
 		{
 			json_parser jp;
 			json obj;
@@ -313,7 +313,7 @@ namespace corona
 					json search_class = jp.create_object();
 					search_class.put_member("ClassName", search_class_name);
 					search_class_filters.put_member("Filter", object_data);
-					obj = co_await bus->query_objects(search_class_filters);
+					obj =  bus->query_objects(search_class_filters);
 					qctx.set_data_source(form_name, object_data);
 					qctx.set_data_source(search_class_name, obj);
 					json results = qctx.run();
@@ -323,7 +323,7 @@ namespace corona
 				}
 			}
 
-			co_return obj;
+			return obj;
 		}
 
 		virtual void get_json(json& _dest)
@@ -368,7 +368,7 @@ namespace corona
 		std::string		form_name;
 		std::string		source_name;
 
-		virtual comm_bus_transaction<json> execute()
+		virtual json execute()
 		{
 			json obj;
 			control_base* cb = {};
@@ -379,7 +379,7 @@ namespace corona
 				data = cb->get_data();
 			}
 			bus->select_page(page_name, form_name, data);
-			co_return obj;
+			return obj;
 		}
 
 		virtual void get_json(json& _dest)
@@ -430,7 +430,7 @@ namespace corona
 		std::string		frame_to_load;
 		std::string		frame_contents_page;
 
-		virtual comm_bus_transaction<json> execute()
+		virtual json execute()
 		{
 			json obj;
 			control_base* cb = {};
@@ -441,7 +441,7 @@ namespace corona
 				data = cb->get_data();
 			}
 			bus->select_page(page_to_select, frame_to_load, frame_contents_page, data);
-			co_return obj;
+			return obj;
 		}
 
 		virtual void get_json(json& _dest)

@@ -136,7 +136,7 @@ namespace corona
 
 		bool trace_check_class = false;
 
-		user_transaction<json> create_database()
+		json create_database()
 		{
 			json result;
 			timer method_timer;
@@ -156,21 +156,21 @@ namespace corona
 				scope_lock lock_two(objects_rw_lock);
 
 				header.object_id = 1;
-				header_location = co_await header.append(database_file.get());
+				header_location =  header.append(database_file.get());
 
 				header.data.object_id = 1;
-				header.data.classes_location = co_await classes.create();
-				header.data.class_objects_location = co_await class_objects.create();
-				header.data.objects_location = co_await objects.create();
-				header.data.objects_by_name_location = co_await objects_by_name.create();
+				header.data.classes_location =  classes.create();
+				header.data.class_objects_location =  class_objects.create();
+				header.data.objects_location =  objects.create();
+				header.data.objects_by_name_location =  objects_by_name.create();
 
 				created_classes = jp.create_object();
 
-				co_await header.write(database_file.get());
+				 header.write(database_file.get());
 
 			}
 		
-			json response = co_await create_class(R"(
+			json response =  create_class(R"(
 {	
 	"ClassName" : "SysObject",
 	"ClassDescription" : "Base of all objects",
@@ -189,19 +189,19 @@ namespace corona
 				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_json<json>(response);
 				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				co_return result;
+				return result;
 			}
 
-			json test = co_await classes.get(R"({"ClassName":"SysObject"})");
+			json test =  classes.get(R"({"ClassName":"SysObject"})");
 			if (test.empty() || test.is_member("ClassName", "SysParseError")) {
 				system_monitoring_interface::global_mon->log_warning("could not find class SysObject after creation.", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				co_return result;
+				return result;
 			}
 
 			created_classes.put_member("SysObject", true);
 
-			response = co_await create_class(R"(
+			response =  create_class(R"(
 {
 	"ClassName" : "SysSchemas",
 	"BaseClassName" : "SysObject",
@@ -223,20 +223,20 @@ namespace corona
 				system_monitoring_interface::global_mon->log_warning("create_class put failed", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_json<json>(response);
 				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				co_return result;
+				return result;
 			}
 
-			test = co_await classes.get(R"({"ClassName":"SysSchemas"})");
+			test =  classes.get(R"({"ClassName":"SysSchemas"})");
 			if (test.empty() || test.is_member("ClassName", "SysParseErrors")) {
 				system_monitoring_interface::global_mon->log_warning("could not find class SysSchemas after creation.", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
-				co_return result;
+				return result;
 			}
 
 			created_classes.put_member("SysSchemas", true);
 
-			response = co_await create_class(R"(
+			response =  create_class(R"(
 {
 	"ClassName" : "SysDatasets",
 	"BaseClassName" : "SysObject",
@@ -259,19 +259,19 @@ namespace corona
 				system_monitoring_interface::global_mon->log_json<json>(response);
 				std::cout << response.to_json() << std::endl;
 				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				co_return result;
+				return result;
 			}
 
-			test = co_await classes.get(R"({"ClassName":"SysSchemas"})");
+			test =  classes.get(R"({"ClassName":"SysSchemas"})");
 			if (test.empty() || test.is_member("ClassName", "SysParseError")) {
 				system_monitoring_interface::global_mon->log_warning("could not find class SysDatasets after creation.", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				co_return result;
+				return result;
 			}
 
 			created_classes.put_member("SysSchemas", true);
 
-			response = co_await create_class(R"(
+			response =  create_class(R"(
 {	
 	"ClassName" : "SysReference",
 	"BaseClassName" : "SysObject",
@@ -288,17 +288,17 @@ namespace corona
 				system_monitoring_interface::global_mon->log_warning("create_class SysReference put failed", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_json<json>(response);
 				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				co_return result;
+				return result;
 			}
 
-			test = co_await classes.get(R"({"ClassName":"SysReference"})");
+			test =  classes.get(R"({"ClassName":"SysReference"})");
 			if (test.empty() || test.is_member("ClassName", "SysParseError")) {
 				system_monitoring_interface::global_mon->log_warning("could not find class SysParseError after creation.", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				co_return result;
+				return result;
 			}
 
-			response = co_await create_class(R"(
+			response =  create_class(R"(
 {	
 	"BaseClassName" : "SysObject",
 	"ClassName" : "SysUser",
@@ -326,19 +326,19 @@ namespace corona
 				system_monitoring_interface::global_mon->log_warning("create_class SysUser put failed", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_json<json>(response);
 				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				co_return result;
+				return result;
 			}
 
-			test = co_await classes.get(R"({"ClassName":"SysUser"})");
+			test =  classes.get(R"({"ClassName":"SysUser"})");
 			if (test.empty() || test.is_member("ClassName", "SysParseError")) {
 				system_monitoring_interface::global_mon->log_warning("could not find class SysUser after creation.", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				co_return result;
+				return result;
 			}
 
 			created_classes.put_member("SysUser", true);
 
-			response = co_await create_class(R"(
+			response =  create_class(R"(
 {	
 	"BaseClassName" : "SysObject",
 	"ClassName" : "SysLogin",
@@ -361,14 +361,14 @@ namespace corona
 				system_monitoring_interface::global_mon->log_warning("create_class SysLogin put failed", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_json<json>(response);
 				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				co_return result;
+				return result;
 			}
 
-			test = co_await classes.get(R"({"ClassName":"SysLogin"})");
+			test =  classes.get(R"({"ClassName":"SysLogin"})");
 			if (test.empty() || test.is_member("ClassName", "SysParseError")) {
 				system_monitoring_interface::global_mon->log_warning("could not find class SysLogin after creation.", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				co_return result;
+				return result;
 			}
 
 			created_classes.put_member("SysLogin", true);
@@ -377,7 +377,7 @@ namespace corona
 
 
 
-			response = co_await create_class(R"(
+			response =  create_class(R"(
 {	
 	"ClassName" : "SysPermission",
 	"BaseClassName" : "SysObject",
@@ -395,20 +395,20 @@ namespace corona
 				system_monitoring_interface::global_mon->log_warning("create_class SysPermission put failed", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_json<json>(response);
 				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				co_return result;
+				return result;
 			}
 
-			test = co_await classes.get(R"({"ClassName":"SysPermission"})");
+			test =  classes.get(R"({"ClassName":"SysPermission"})");
 			if (test.empty() || test.is_member("ClassName", "SysParseError")) {
 				system_monitoring_interface::global_mon->log_warning("could not find class SysPermission after creation.", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				co_return result;
+				return result;
 			}
 
 			created_classes.put_member("SysPermission", true);
 
 
-			response = co_await create_class(R"(
+			response =  create_class(R"(
 {	
 	"ClassName" : "SysMember",
 	"BaseClassName" : "SysObject",
@@ -431,19 +431,19 @@ namespace corona
 				system_monitoring_interface::global_mon->log_json<json>(response);
 				std::cout << response.to_json() << std::endl;
 				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				co_return result;
+				return result;
 			}
 
-			test = co_await classes.get(R"({"ClassName":"SysMember"})");
+			test =  classes.get(R"({"ClassName":"SysMember"})");
 			if (test.empty() || test.is_member("ClassName", "SysParseError")) {
 				system_monitoring_interface::global_mon->log_warning("could not find class SysMember after creation.", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				co_return result;
+				return result;
 			}
 
 			created_classes.put_member("SysMember", true);
 
-			response = co_await create_class(R"(
+			response =  create_class(R"(
 {	
 	"ClassName" : "SysGrant",
 	"BaseClassName" : "SysObject",
@@ -462,20 +462,20 @@ namespace corona
 				system_monitoring_interface::global_mon->log_warning("create_class SysGrant put failed", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_json<json>(response);
 				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				co_return result;
+				return result;
 			}
 
-			test = co_await classes.get(R"({"ClassName":"SysGrant"})");
+			test =  classes.get(R"({"ClassName":"SysGrant"})");
 			if (test.empty() || test.is_member("ClassName", "SysParseError")) {
 				system_monitoring_interface::global_mon->log_warning("could not find class SysGrant after creation.", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_json<json>(response);
 				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				co_return result;
+				return result;
 			}
 
 			created_classes.put_member("SysGrant", true);
 
-			response = co_await create_class(R"(
+			response =  create_class(R"(
 {	
 	"ClassName" : "SysClassGrant",
 	"BaseClassName" : "SysGrant",
@@ -487,19 +487,19 @@ namespace corona
 				system_monitoring_interface::global_mon->log_warning("create_class SysClassGrant put failed", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_json<json>(response);
 				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				co_return result;
+				return result;
 			}
 
-			test = co_await classes.get(R"({"ClassName":"SysClassGrant"})");
+			test =  classes.get(R"({"ClassName":"SysClassGrant"})");
 			if (test.empty() || test.is_member("ClassName", "SysParseError")) {
 				system_monitoring_interface::global_mon->log_warning("could not find class SysGlassGrant after creation.", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				co_return result;
+				return result;
 			}
 
 			created_classes.put_member("SysClassGrant", true);
 
-			class_location = co_await create_class(R"(
+			class_location =  create_class(R"(
 {	
 	"ClassName" : "SysObjectGrant",
 	"BaseClassName" : "SysGrant",
@@ -514,19 +514,19 @@ namespace corona
 				system_monitoring_interface::global_mon->log_warning("create_class SysObjectGrant put failed", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_json<json>(response);
 				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				co_return result;
+				return result;
 			}
 
-			test = co_await classes.get(R"({"ClassName":"SysObjectGrant"})");
+			test =  classes.get(R"({"ClassName":"SysObjectGrant"})");
 			if (test.empty() || test.is_member("ClassName", "SysParseError")) {
 				system_monitoring_interface::global_mon->log_warning("could not find class SysObjectGrant after creation.", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				co_return result;
+				return result;
 			}
 
 			created_classes.put_member("SysObjectGrant", true);
 
-			response = co_await create_class(R"(
+			response =  create_class(R"(
 {	
 	"ClassName" : "SysTeam",
 	"BaseClassName" : "SysObject",
@@ -549,14 +549,14 @@ namespace corona
 				system_monitoring_interface::global_mon->log_warning("create_class SysTeam put failed", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_json<json>(response);
 				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				co_return result;
+				return result;
 			}
 
-			test = co_await classes.get(R"({"ClassName":"SysTeam"})");
+			test =  classes.get(R"({"ClassName":"SysTeam"})");
 			if (test.empty() || test.is_member("ClassName", "SysParseError")) {
 				system_monitoring_interface::global_mon->log_warning("could not find class SysTeam after creation.", __FILE__, __LINE__);
 				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				co_return result;
+				return result;
 			}
 
 			created_classes.put_member("SysTeam", true);
@@ -564,7 +564,7 @@ namespace corona
 			json gc = jp.create_object();
 			json gcr = create_system_request( gc );
 
-			json classes_array_response = co_await get_classes(gcr);
+			json classes_array_response =  get_classes(gcr);
 			json classes_array = classes_array_response["Data"];
 			json classes_grouped = classes_array.group([](json& _item) -> std::string {
 				return (std::string)_item["ClassName"];
@@ -577,7 +577,7 @@ namespace corona
 			if (missing) {
 				system_monitoring_interface::global_mon->log_job_stop("create_database", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				std::cout << __FILE__ << " " << __LINE__ << ":Class list returned from database missed some classes." << std::endl;
-				co_return result;
+				return result;
 			}
 
 			json new_user_request;
@@ -589,24 +589,24 @@ namespace corona
 			new_user_data.put_member("Email", default_email_address);
 
 			new_user_request = create_system_request(new_user_data);
-			json new_user_result = co_await create_user(new_user_request);
+			json new_user_result =  create_user(new_user_request);
 			json new_user = new_user_result["Data"];
 			json user_return = create_response(new_user_request, true, "Ok", new_user, method_timer.get_elapsed_seconds());
 			response = create_response(new_user_request, true, "Database Created", user_return, method_timer.get_elapsed_seconds());
 
 			system_monitoring_interface::global_mon->log_job_stop("create_database", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-			co_return response;
+			return response;
 		}
 
 private:
 
-		database_transaction<json> create_class(std::string _text)
+		json create_class(std::string _text)
 		{
 			timer method_timer;
 			json_parser jp;
 			json j = jp.parse_object(_text);
 			json check_request = create_system_request(j);
-			json checked = co_await check_class(check_request);
+			json checked =  check_class(check_request);
 			json response;
 
 
@@ -618,13 +618,13 @@ private:
 			if (checked["Success"]) {
 				scope_lock lock(classes_rw_lock);
 				json adjusted_class = checked["Data"];
-				relative_ptr_type ptr = co_await classes.put(adjusted_class);
+				relative_ptr_type ptr =  classes.put(adjusted_class);
 				if (ptr != null_row) {
 					json key = adjusted_class.extract({ "ClassName" });
-					json temp = co_await classes.get(key); 
+					json temp =  classes.get(key); 
 					if (temp.empty()) {
 						response = create_response(check_request, false, "save check failed", adjusted_class, method_timer.get_elapsed_seconds());
-						co_return response;
+						return response;
 					}
 					if (adjusted_class.has_member("Ancestors")) {
 						auto ancestors = adjusted_class["Ancestors"];
@@ -634,7 +634,7 @@ private:
 								std::string acn = acp.first;
 								json class_key = jp.create_object();
 								class_key.put_member("ClassName", acn);
-								auto ancestor_class = co_await classes.get(class_key);
+								auto ancestor_class =  classes.get(class_key);
 								json descendants;
 								if (ancestor_class.has_member("Descendants")) {
 									descendants = ancestor_class["Descendants"];
@@ -645,7 +645,7 @@ private:
 								}
 								descendants.put_member(acn, acn);
 								ancestor_class.put_member("Descendants", descendants);
-								co_await classes.put(ancestor_class);
+								 classes.put(ancestor_class);
 							}
 						}
 					}
@@ -661,7 +661,7 @@ private:
 			}
 			system_monitoring_interface::global_mon->log_function_stop("create_class", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
-			co_return response;
+			return response;
 		}
 
 		bool compare_classes(json _classA, json _classB)
@@ -682,7 +682,7 @@ private:
 			return sa == sb;
 		}
 
-		database_transaction<json> check_class(json check_class_request)
+		json check_class(json check_class_request)
 		{
 			timer method_timer;
 			json result;
@@ -724,7 +724,7 @@ private:
 				{
 					scope_lock lock_one(classes_rw_lock);
 
-					base_class_def = co_await classes.get(base_class_key);
+					base_class_def =  classes.get(base_class_key);
 				}
 
 				if (trace_check_class)
@@ -789,7 +789,7 @@ private:
 							if (!class_fields.has_member(jfield_name)) {
 								std::string msg = std::format("map key field {0} does not exist in class {1}", (std::string)jfield_name, (std::string)class_name);
 								result = create_response(check_class_request, false, msg, class_definition, method_timer.get_elapsed_seconds());
-								co_return result;
+								return result;
 							}
 						}
 					}					
@@ -825,7 +825,7 @@ private:
 						{
 							json err_field = jpx.create_object("Name", member.first);
 							result = create_response(check_class_request, false, "Bad field type", err_field, method_timer.get_elapsed_seconds());
-							co_return result;
+							return result;
 						}
 					}
 					else if (jp.object())
@@ -835,7 +835,7 @@ private:
 						{
 							json err_field = jpx.create_object("Name", member.first);
 							result = create_response(check_class_request, false, "Bad field type", err_field, method_timer.get_elapsed_seconds());
-							co_return result;
+							return result;
 						}
 					}
 					else
@@ -847,10 +847,10 @@ private:
 				result = create_response(check_class_request, true, "Ok", class_definition, method_timer.get_elapsed_seconds());
 			}
 
-			co_return result;
+			return result;
 		}
 
-		database_method_transaction<json> check_object(json check_object_request)
+		json check_object(json check_object_request)
 		{
 			timer method_timer;
 			json result;
@@ -901,7 +901,7 @@ private:
 					object_key.copy_member("ClassName", object_definition);
 					object_key.set_compare_order({ "ClassName" });
 
-					json ready_object = co_await class_objects.get_first(object_key,
+					json ready_object =  class_objects.get_first(object_key,
 						[](json& _src) -> bool
 						{
 							bool can_be_recycled = _src.has_member("Active");
@@ -919,7 +919,7 @@ private:
 						object_id = ready_object["ObjectId"];
 					}
 					else {
-						object_id = co_await get_next_object_id();
+						object_id =  get_next_object_id();
 					}
 
 					object_definition.put_member_i64("ObjectId", object_id);
@@ -930,7 +930,7 @@ private:
 				{
 					scope_lock lock_one(classes_rw_lock);
 
-					json class_data = co_await classes.get(key_boy);
+					json class_data =  classes.get(key_boy);
 					json warnings = jp.create_array();
 					std::string class_name = key_boy["ClassName"];
 
@@ -1013,7 +1013,7 @@ private:
 				}
 			}
 			result = create_response(check_object_request, true, "Objects processed", result_list, method_timer.get_elapsed_seconds());
-			co_return result;
+			return result;
 		}
 
 		lockable header_lock;
@@ -1146,7 +1146,7 @@ private:
 			return token_name;
 		}
 
-		table_transaction<json> acquire_object(json _object_key)
+		json acquire_object(json _object_key)
 		{
 			json_parser jp;
 			json obj;
@@ -1158,7 +1158,7 @@ private:
 			
 			if (classdef.empty()) 
 			{
-				co_return obj;
+				return obj;
 			}
 
 			if (classdef.has_member("ImplementMap"))
@@ -1171,12 +1171,12 @@ private:
 					constraint_names.push_back(constraint_field);
 				}
 				objects_by_name_key.set_compare_order(constraint_names);
-				json name_id = co_await objects_by_name.get_first(objects_by_name_key);
+				json name_id =  objects_by_name.get_first(objects_by_name_key);
 				if (name_id.object()) {
 					json object_key = jp.create_object();
 					object_key.copy_member("ObjectId", name_id);
 					object_key.set_natural_order();
-					obj = co_await objects.get(object_key);
+					obj =  objects.get(object_key);
 				}
 			}
 			else if (_object_key.has_member("ObjectId"))
@@ -1184,13 +1184,13 @@ private:
 				json object_key = jp.create_object();
 				object_key.copy_member("ObjectId", _object_key);
 				object_key.set_natural_order();
-				obj = co_await objects.get(object_key);
+				obj =  objects.get(object_key);
 			}
 
-			co_return obj;
+			return obj;
 		}
 
-		table_transaction<json> get_linked_object(json _object_definition)
+		json get_linked_object(json _object_definition)
 		{
 			json_parser jp;
 			json obj;
@@ -1203,17 +1203,17 @@ private:
 				db_object_id_type object_id = (db_object_id_type)_object_definition["LinkObjectId"];
 				object_key.put_member("ObjectId", object_id);
 				object_key.set_natural_order();
-				obj = co_await objects.get(object_key);
+				obj =  objects.get(object_key);
 			}
 			else if (_object_definition.object())
 			{
 				obj = _object_definition;
 			}
 
-			co_return obj;
+			return obj;
 		}
 
-		database_method_transaction<bool> has_class_permission(
+		bool has_class_permission(
 			json _token,
 			std::string _class_name,
 			std::string _permission)
@@ -1226,20 +1226,20 @@ private:
 
 			// check the token to make sure it is valid - this includes signature verification
 			if (!check_token(_token, { auth_general })) {
-				co_return false;
+				return false;
 			}
 
 			// extract the user key from the token and get the user object
 			json user_key = get_message_user(_token);
 			if ((std::string)user_key["Name"] == "System") {
-				co_return true;
+				return true;
 			}
 
 			user_key.put_member("ClassName", "SysUser");
 
-			user = co_await acquire_object(user_key);
+			user =  acquire_object(user_key);
 			if (user.empty()) {
-				co_return false;
+				return false;
 			}
 
 			// Now go through the teams the user is a member of and check the grants to see if we can access this
@@ -1249,7 +1249,7 @@ private:
 			{
 				json item = teams_list.get_element(i);
 
-				json team = co_await get_linked_object(item);
+				json team =  get_linked_object(item);
 
 				if (team.is_member("ClassName", "Team")) {
 					json team_grants = team["Grants"];
@@ -1263,16 +1263,16 @@ private:
 							bool has_permissions = (bool)grant["Permissions"][_permission];
 							if (has_permissions) {
 								granted = has_permissions;
-								co_return granted;
+								return granted;
 							}
 						}
 					}
 				}
 			}
-			co_return granted;
+			return granted;
 		}
 
-		database_method_transaction<bool> check_object_key_permission(
+		bool check_object_key_permission(
 			json _message,
 			std::string _permission)
 		{
@@ -1289,12 +1289,12 @@ private:
 			user_key.put_member("ClassName", "SysUser");
 
 			if ((std::string)user_key["Name"] == "System") {
-				co_return true;
+				return true;
 			}
 
-			user = co_await acquire_object(user_key);
+			user =  acquire_object(user_key);
 			if (user.empty()) {
-				co_return false;
+				return false;
 			}
 
 			json teams_list = user["Teams"];
@@ -1303,7 +1303,7 @@ private:
 			{
 				json item = teams_list.get_element(i);
 
-				json team = co_await get_linked_object(item);
+				json team =  get_linked_object(item);
 
 				if (team.is_member("ClassName", "SysTeam")) 
 				{
@@ -1317,7 +1317,7 @@ private:
 						{
 							json filter = grant["ObjectFilter"];
 
-							json obj = co_await acquire_object(object_key);
+							json obj =  acquire_object(object_key);
 
 							bool has_matching_key = filter.compare(obj);
 
@@ -1326,16 +1326,16 @@ private:
 							granted = has_permissions || has_matching_key;
 
 							if (granted) {
-								co_return granted;
+								return granted;
 							}
 						}
 					}
 				}
 			}
-			co_return granted;
+			return granted;
 		}
 
-		database_method_transaction<bool> check_object_permission(
+		bool check_object_permission(
 			json _request,
 			std::string _permission)
 		{
@@ -1352,14 +1352,14 @@ private:
 			user_key.put_member("ClassName", "SysUser");
 
 			if ((std::string)user_key["Name"] == "System") {
-				co_return true;
+				return true;
 			}
 
 			// extract the user key from the token and get the user object
 			user_key.set_compare_order({ "ClassName", "Name" });
-			user = co_await acquire_object(user_key);
+			user =  acquire_object(user_key);
 			if (user.empty()) {
-				co_return false;
+				return false;
 			}
 
 			json teams_list = user["Teams"];
@@ -1368,7 +1368,7 @@ private:
 			{
 				json item = teams_list.get_element(i);
 
-				json team = co_await get_linked_object(item);
+				json team =  get_linked_object(item);
 
 				if (team.is_member("ClassName", "SysTeam"))
 				{
@@ -1389,57 +1389,57 @@ private:
 							granted = has_permissions || has_matching_key;
 
 							if (granted) {
-								co_return granted;
+								return granted;
 							}
 						}
 					}
 				}
 			}
-			co_return granted;
+			return granted;
 		}
 
-		table_transaction<db_object_id_type> get_next_object_id()
+		db_object_id_type get_next_object_id()
 		{
 			scope_lock hlock(header_rw_lock);
 			header.data.object_id++;
-			co_await header.write(database_file.get());
-			co_return header.data.object_id;
+			 header.write(database_file.get());
+			return header.data.object_id;
 		}
 
-		database_method_transaction<bool> is_ancestor(json _token, std::string _base_class, std::string _class_to_check)
+		bool is_ancestor(json _token, std::string _base_class, std::string _class_to_check)
 		{
 			json_parser jp;
 
 			json class_key = jp.create_object("ClassName", _base_class);
 			class_key.set_natural_order();
 
-			json class_obj = co_await classes.get(class_key);
+			json class_obj =  classes.get(class_key);
 
 			if (!class_obj.empty())
 			{
 				bool has_ancestor = class_obj["Ancestors"].has_member(_class_to_check);
-				co_return has_ancestor;
+				return has_ancestor;
 			}
 
-			co_return false;
+			return false;
 		}
 
-		database_method_transaction<bool> is_descendant(json _token, std::string _base_class, std::string _class_to_check)
+		bool is_descendant(json _token, std::string _base_class, std::string _class_to_check)
 		{
 			json_parser jp;
 
 			json class_key = jp.create_object("ClassName", _class_to_check);
 			class_key.set_natural_order();
 
-			json class_obj = co_await classes.get(class_key);
+			json class_obj =  classes.get(class_key);
 
 			if (!class_obj.empty())
 			{
 				bool has_ancestor = class_obj["Ancestors"].has_member(_base_class);
-				co_return has_ancestor;
+				return has_ancestor;
 			}
 
-			co_return false;
+			return false;
 		}
 
 
@@ -1490,7 +1490,7 @@ private:
 
 		}
 
-		database_transaction<json> apply_schema(json _schema)
+		json apply_schema(json _schema)
 		{
 			date_time start_schema = date_time::now();
 			timer tx;
@@ -1523,7 +1523,7 @@ private:
 			schema_key.put_member("ClassName", "SysDatasets");
 			schema_key.set_compare_order({ "SchemaName", "SchemaVersion" });
 
-			json schema_test = co_await acquire_object(schema_key);
+			json schema_test =  acquire_object(schema_key);
 
 			if (schema_test.object()) 
 			{
@@ -1542,7 +1542,7 @@ private:
 						try {
 
 							json put_class_request = create_system_request(class_definition);
-							json class_result = co_await put_class(put_class_request);
+							json class_result =  put_class(put_class_request);
 
 							if (class_result.error()) 
 							{
@@ -1579,7 +1579,7 @@ private:
 					{
 						json user_definition = user_array.get_element(i);
 						json put_user_request = create_system_request(user_definition);
-						co_await create_user(put_user_request);
+						 create_user(put_user_request);
 					}
 				}
 			}
@@ -1598,7 +1598,7 @@ private:
 						script_key.put_member("ClassName", "SysDatasets");
 
 						bool script_run = (bool)script_definition["RunOnChange"];
-						json existing_script = co_await acquire_object(script_key);
+						json existing_script =  acquire_object(script_key);
 						bool run_script = false;
 						if (existing_script.empty() || script_run)
 							run_script = true;
@@ -1607,10 +1607,10 @@ private:
 						// in corona, creating an object doesn't actually persist anything 
 						// but a change in identifier.  It's a clean way of just getting the 
 						// "new chumpy" item for ya.  
-						json create_result = co_await create_object(put_script_request);
+						json create_result =  create_object(put_script_request);
 						if (create_result["Success"]) {
 							json created_object = put_script_request["Data"];
-							json save_result = co_await put_object(put_script_request);
+							json save_result =  put_object(put_script_request);
 							if (!save_result["Success"]) {
 								system_monitoring_interface::global_mon->log_warning(save_result["Message"]);
 								system_monitoring_interface::global_mon->log_json<json>(save_result);
@@ -1629,7 +1629,7 @@ private:
 									json update_data = jp.create_object();
 									update_data.put_member("ClassName", class_to_watch);
 									json request = create_system_request(update_data);
-									co_await update(request, R"({ "Active", false })"_jobject);
+									 update(request, R"({ "Active", false })"_jobject);
 								}
 							}
 						}
@@ -1691,7 +1691,7 @@ private:
 									json codata = jp.create_object();
 									codata.put_member("ClassName", target_class);
 									json cor = create_system_request(codata);
-									json new_object_response = co_await create_object(cor);
+									json new_object_response =  create_object(cor);
 
 									if (new_object_response["Success"]) {
 										json new_object_template = new_object_response["Data"];
@@ -1707,7 +1707,7 @@ private:
 											if (datomatic.size() > 5000) {
 												timer tx;
 												json cor = create_system_request(datomatic);
-												json put_result = co_await put_object(cor);
+												json put_result =  put_object(cor);
 												if (put_result["Success"]) {
 													double e = tx.get_elapsed_seconds();
 													total_row_count += datomatic.size();
@@ -1730,7 +1730,7 @@ private:
 										if (datomatic.size() > 0) {
 											timer tx;
 											json cor = create_system_request(datomatic);
-											co_await put_object(cor);
+											 put_object(cor);
 											system_monitoring_interface::global_mon->log_warning("FileName and Delimiter can't be blank.");
 										}
 
@@ -1767,10 +1767,10 @@ private:
 									// in corona, creating an object doesn't actually persist anything 
 									// but a change in identifier.  It's a clean way of just getting the 
 									// "new chumpy" item for ya.  
-									json create_result = co_await create_object(put_object_request);
+									json create_result =  create_object(put_object_request);
 									if (create_result["Success"]) {
 										json created_object = put_object_request["Data"];
-										json save_result = co_await put_object(put_object_request);
+										json save_result =  put_object(put_object_request);
 										if (!save_result["Success"]) {
 											system_monitoring_interface::global_mon->log_warning(save_result["Message"]);
 											system_monitoring_interface::global_mon->log_json<json>(save_result);
@@ -1789,7 +1789,7 @@ private:
 								}
 							}
 							json put_script_request = create_system_request(script_definition);
-							json save_script_result = co_await put_object(put_script_request);
+							json save_script_result =  put_object(put_script_request);
 							if (!save_script_result["Success"]) {
 								system_monitoring_interface::global_mon->log_warning(save_script_result["Message"]);
 								system_monitoring_interface::global_mon->log_json<json>(save_script_result);
@@ -1805,10 +1805,10 @@ private:
 			// in corona, creating an object doesn't actually persist anything 
 			// but a change in identifier.  It's a clean way of just getting the 
 			// "new chumpy" item for ya.  
-			json create_schema_result = co_await create_object(put_schema_request);
+			json create_schema_result =  create_object(put_schema_request);
 			if (create_schema_result["Success"]) {
 				json created_object = put_schema_request["Data"];
-				json save_schema_result = co_await put_object(put_schema_request);
+				json save_schema_result =  put_object(put_schema_request);
 				if (!save_schema_result["Success"]) {
 					system_monitoring_interface::global_mon->log_warning(save_schema_result["Message"]);
 					system_monitoring_interface::global_mon->log_json<json>(save_schema_result);
@@ -1826,10 +1826,10 @@ private:
 
 			json temp = R"({ "Success" : true, "Message" : "Everything Ok, suitation normal."})"_jobject;
 
-			co_return temp;
+			return temp;
 		}
 
-		database_transaction<relative_ptr_type> open_database(relative_ptr_type _header_location)
+		relative_ptr_type open_database(relative_ptr_type _header_location)
 		{
 			timer method_timer;
 			date_time start_schema = date_time::now();
@@ -1838,22 +1838,22 @@ private:
 
 			scope_lock lock_one(header_rw_lock);
 
-			relative_ptr_type header_location = co_await header.read(database_file.get(), _header_location);
+			relative_ptr_type header_location =  header.read(database_file.get(), _header_location);
 
 			if (header_location != null_row) {
-				relative_ptr_type result = co_await classes.open(header.data.classes_location);
-				result = co_await class_objects.open(header.data.class_objects_location);
-				result = co_await objects_by_name.open(header.data.objects_by_name_location);
-				result = co_await objects.open(header.data.objects_location);
+				relative_ptr_type result =  classes.open(header.data.classes_location);
+				result =  class_objects.open(header.data.class_objects_location);
+				result =  objects_by_name.open(header.data.objects_by_name_location);
+				result =  objects.open(header.data.objects_location);
 			}
 
 			system_monitoring_interface::global_mon->log_job_stop("open_database", "Open database", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
-			co_return header_location;
+			return header_location;
 		}
 
 		// this creates a user account, using an email and a phone number to send a confirmation code to.
-		database_transaction<json> create_user(json create_user_request)
+		json create_user(json create_user_request)
 		{
 			timer method_timer;
 			json_parser jp;
@@ -1881,7 +1881,7 @@ private:
 				user_key.put_member("ClassName", user_class);
 				user_key.put_member("Name", user_name);
 				user_key.set_compare_order({ "ClassName", "Name" });
-				json existing_user_link = co_await objects_by_name.get(user_key);
+				json existing_user_link =  objects_by_name.get(user_key);
 
 				if (existing_user_link.object()) 
 				{
@@ -1904,7 +1904,7 @@ private:
 			create_user_params.put_member("ClassName", user_class);
 			create_user_params.put_member("Name", user_name);
 			json create_object_request = create_request(create_user_request, create_user_params);
-			json user_result = co_await put_object(create_object_request);
+			json user_result =  put_object(create_object_request);
 			if (user_result["Success"]) {
 				json new_user_wrapper = user_result["Data"];
 				if (new_user_wrapper.array() && new_user_wrapper.size()> 0) {
@@ -1920,7 +1920,7 @@ private:
 						create_login_params.put_member("CurrentObjectId", objid);
 					}
 					json put_object_request = create_request(create_user_request, create_login_params);
-					json put_response = co_await put_object(put_object_request);
+					json put_response =  put_object(put_object_request);
 
 					bool succeeded = (bool)put_response["Success"];
 					if (succeeded)
@@ -1937,11 +1937,11 @@ private:
 			}
 			system_monitoring_interface::global_mon->log_function_stop("create_user", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
-			co_return response;
+			return response;
 		}
 
 		// this starts a login attempt
-		database_transaction<json> login_user(json _login_request)
+		json login_user(json _login_request)
 		{
 			timer method_timer;
 			json_parser jp;
@@ -1962,7 +1962,7 @@ private:
 			user_key.put_member("ClassName", "SysLogin");
 			json gor = create_request(_login_request, user_key);		
 
-			json user_login = co_await get_object(gor);
+			json user_login =  get_object(gor);
 
 			/*   
 			
@@ -1979,7 +1979,7 @@ private:
 				{
 					ul.put_member("LoginState", "PasswordAccepted");
 					json porq = create_request(_login_request, ul);
-					co_await put_object(porq);
+					 put_object(porq);
 
 					data.copy_member("ObjectId", ul);
 
@@ -1996,7 +1996,7 @@ private:
 			}
 			system_monitoring_interface::global_mon->log_function_stop("login_user", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
-			co_return response;
+			return response;
 		}
 
 		std::string get_random_code()
@@ -2023,7 +2023,7 @@ private:
 			return s_confirmation_code;
 		}
 
-		database_transaction<json> edit_object(json _edit_object_request)
+		json edit_object(json _edit_object_request)
 		{
 			timer method_timer;
 			json_parser jp;
@@ -2040,7 +2040,7 @@ private:
 			if (!check_message(_edit_object_request, { auth_general }))
 			{
 				result = create_response(_edit_object_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
-				co_return result;
+				return result;
 			}
 
 			json object_options = jp.create_object();
@@ -2050,13 +2050,13 @@ private:
 			object_options.put_member_object("Edit");
 			json edit_options_root = object_options["Edit"];
 
-			json get_response = co_await get_object(_edit_object_request);
+			json get_response =  get_object(_edit_object_request);
 			if (get_response["Success"]) {
 				json obj = get_response["Data"];
 				object_options.put_member("Data", obj);
 				json class_key = obj.extract({ "ClassName" });
 				class_key.put_member("Token", token);
-				json class_response = co_await get_class(class_key);
+				json class_response =  get_class(class_key);
 				if (class_response["Success"]) {
 					json class_definition = class_response["Data"];
 					object_options.put_member_object("ClassDefinition", class_definition);
@@ -2067,14 +2067,14 @@ private:
 					}
 				}
 				system_monitoring_interface::global_mon->log_function_stop("edit_object", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				co_return create_response(_edit_object_request, true, "Ok", object_options, method_timer.get_elapsed_seconds());
+				return create_response(_edit_object_request, true, "Ok", object_options, method_timer.get_elapsed_seconds());
 			}
 			system_monitoring_interface::global_mon->log_function_stop("edit_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-			co_return create_response(_edit_object_request, false, "Sadly, this object eludes you.", object_options, method_timer.get_elapsed_seconds());
+			return create_response(_edit_object_request, false, "Sadly, this object eludes you.", object_options, method_timer.get_elapsed_seconds());
 		}
 
 
-		database_method_transaction<json> get_classes(json get_classes_request)
+		json get_classes(json get_classes_request)
 		{
 			timer method_timer;
 			json_parser jp;
@@ -2093,14 +2093,13 @@ private:
 			if (!check_message(get_classes_request, { auth_general }))
 			{
 				result = create_response(get_classes_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
-				co_return result;
+				return result;
 			}
 
-			result_list = co_await classes.select_array([this, get_classes_request](int _index, json& _item) {
+			result_list =  classes.select_array([this, get_classes_request](int _index, json& _item) {
 				json_parser jp;
 				json token = get_classes_request["Token"];
-				auto permission_task = has_class_permission(token, _item["ClassName"], "Get");
-				bool has_permission = permission_task.wait();
+				bool has_permission = has_class_permission(token, _item["ClassName"], "Get");
 
 				if (has_permission) 
 				{
@@ -2115,10 +2114,10 @@ private:
 			system_monitoring_interface::global_mon->log_function_stop("get_classes", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			result = create_response(get_classes_request, true, "Ok", result_list, method_timer.get_elapsed_seconds());
 
-			co_return result;
+			return result;
 		}
 
-		database_composed_transaction<json> get_class(json get_class_request)
+		json get_class(json get_class_request)
 		{
 			timer method_timer;
 			json_parser jp;
@@ -2141,7 +2140,7 @@ private:
 				}
 				json response = create_response(get_class_request, false, error_message, jp.create_object(), method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("get_class", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				co_return response;
+				return response;
 			}
 
 
@@ -2149,13 +2148,13 @@ private:
 			{
 				result = create_response(get_class_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("get_class", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				co_return result;
+				return result;
 			}
 
 			json token = get_class_request["Token"];
 			std::string class_name = get_class_request["ClassName"];
 
-			bool can_get_class = co_await has_class_permission(
+			bool can_get_class =  has_class_permission(
 				token,
 				class_name,
 				"Get");
@@ -2165,16 +2164,16 @@ private:
 
 			{
 				scope_lock lock_one(classes_rw_lock);
-				result = co_await classes.get(key);
+				result =  classes.get(key);
 			}
 
 
 			result = create_response(get_class_request, true, "Ok", result, method_timer.get_elapsed_seconds());
 			system_monitoring_interface::global_mon->log_function_stop("get_class", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-			co_return result;
+			return result;
 		}
 
-		database_composed_transaction<json> delete_objects(json delete_request)
+		json delete_objects(json delete_request)
 		{
 
 			date_time start_time = date_time::now();
@@ -2188,7 +2187,7 @@ private:
 			if (!check_message(delete_request, { auth_general }))
 			{
 				result = create_response(delete_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
-				co_return result;
+				return result;
 			}
 
 			system_monitoring_interface::global_mon->log_function_stop("delete_objects", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -2197,7 +2196,7 @@ private:
 
 		}
 
-		database_composed_transaction<json> put_class(json put_class_request)
+		json put_class(json put_class_request)
 		{
 			timer method_timer;
 			json result;
@@ -2220,7 +2219,7 @@ private:
 				}
 				json response = create_response(put_class_request, false, error_message, jp.create_object(), method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("put_class", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				co_return response;
+				return response;
 			}
 
 			if (!check_message(put_class_request, { auth_general }))
@@ -2228,13 +2227,13 @@ private:
 				result = create_response(put_class_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("put_class", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
-				co_return result;
+				return result;
 			}
 
 			json token = put_class_request["Token"];
 			json class_definition = put_class_request["Data"];
 
-			bool can_put_class = co_await has_class_permission(
+			bool can_put_class =  has_class_permission(
 				token,
 				class_definition["ClassName"],
 				"Put");
@@ -2243,7 +2242,7 @@ private:
 				result = create_response(put_class_request, false, "Denied", class_definition, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("put_class", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
-				co_return result;
+				return result;
 			}
 
 			scope_lock lock_one(classes_rw_lock);
@@ -2264,19 +2263,19 @@ private:
 			changed_class = true;
 
 			json check_request = create_request(put_class_request, class_definition);
-			json checked = co_await check_class(check_request);
+			json checked =  check_class(check_request);
 			if (checked["Success"]) {
 				scope_lock lock(classes_rw_lock);
 				json adjusted_class = checked["Data"];
-				relative_ptr_type ptr = co_await classes.put(adjusted_class);
+				relative_ptr_type ptr =  classes.put(adjusted_class);
 				if (ptr != null_row) {
 					json key = adjusted_class.extract({ "ClassName" });
-					json temp = co_await classes.get(key);
+					json temp =  classes.get(key);
 					if (temp.empty()) {
 						result = create_response(check_request, false, "save check failed", adjusted_class, method_timer.get_elapsed_seconds());
 						system_monitoring_interface::global_mon->log_function_stop("put_class", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
-						co_return result;
+						return result;
 					}
 					if (adjusted_class.has_member("Ancestors")) {
 						auto ancestors = adjusted_class["Ancestors"];
@@ -2286,7 +2285,7 @@ private:
 								std::string acn = acp.first;
 								json class_key = jp.create_object();
 								class_key.put_member("ClassName", acn);
-								auto ancestor_class = co_await classes.get(class_key);
+								auto ancestor_class =  classes.get(class_key);
 								json descendants;
 								if (ancestor_class.has_member("Descendants")) {
 									descendants = ancestor_class["Descendants"];
@@ -2297,7 +2296,7 @@ private:
 								}
 								descendants.put_member(acn, acn);
 								ancestor_class.put_member("Descendants", descendants);
-								co_await classes.put(ancestor_class);
+								 classes.put(ancestor_class);
 							}
 						}
 					}
@@ -2313,10 +2312,10 @@ private:
 				result = checked;
 			}
 			system_monitoring_interface::global_mon->log_function_stop("put_class", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-			co_return result;
+			return result;
 		}
 
-		database_method_transaction<json> update(json query_class_request, json update_json)
+		json update(json query_class_request, json update_json)
 		{
 			timer method_timer;
 			json_parser jp;
@@ -2338,7 +2337,7 @@ private:
 				}
 				response = create_response(query_class_request, false, error_message, jp.create_object(), method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("update", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				co_return response;
+				return response;
 			}
 
 			missing_elements.clear();
@@ -2353,14 +2352,14 @@ private:
 				}
 				response = create_response(query_class_request, false, error_message, jp.create_object(), method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("update", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				co_return response;
+				return response;
 			}
 
 			if (!check_message(query_class_request, { auth_general }))
 			{
 				response = create_response(query_class_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("update", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				co_return response;
+				return response;
 			}
 
 			json token = query_class_request["Token"];
@@ -2368,16 +2367,16 @@ private:
 			if (base_class_name.empty()) {
 				response = create_response(query_class_request, false, "Classname not specified", jp.create_object(), method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("update", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				co_return response;
+				return response;
 			}
 			json filter = manip["Filter"];
 
-			bool class_granted = co_await has_class_permission(token, base_class_name, "Get");
+			bool class_granted =  has_class_permission(token, base_class_name, "Get");
 			if (!class_granted)
 			{
 				response = create_response(query_class_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("update", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				co_return response;
+				return response;
 			}
 
 			json objects = jp.create_array();
@@ -2385,7 +2384,7 @@ private:
 
 			{
 				scope_lock lock_one(classes_rw_lock);
-				class_def = co_await classes.get(query_class_request);
+				class_def =  classes.get(query_class_request);
 			}
 
 			json derived_classes = class_def["Descendants"];
@@ -2400,7 +2399,7 @@ private:
 
 				{
 					scope_lock lock_one(classes_rw_lock);
-					class_object_ids = co_await class_objects.select_array(search_key, [](int _index, json& _item)->json {
+					class_object_ids =  class_objects.select_array(search_key, [](int _index, json& _item)->json {
 						return _item;
 						}, update_json);
 				}
@@ -2415,10 +2414,10 @@ private:
 						get_object_id.put_member_i64("ObjectId", ri);
 						get_object_id.set_natural_order();
 						json check_request = create_request(query_class_request, get_object_id);
-						bool granted = co_await check_object_key_permission(check_request, "Get");
+						bool granted =  check_object_key_permission(check_request, "Get");
 						if (granted)
 						{
-							json objx = co_await get_object(check_request);
+							json objx =  get_object(check_request);
 							if (objx["Success"])
 							{
 								objects.append_element(objx["Data"]);
@@ -2430,11 +2429,11 @@ private:
 
 			response = create_response(query_class_request, true, "Query completed", objects, method_timer.get_elapsed_seconds());
 			system_monitoring_interface::global_mon->log_function_stop("update", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-			co_return response;
+			return response;
 		}
 
 
-		database_method_transaction<json> query_class(json query_class_request)
+		json query_class(json query_class_request)
 		{
 			json_parser jp;
 			json jx; // not creating an object, leaving it empty.  should work with empty objects
@@ -2442,7 +2441,7 @@ private:
 			return update(query_class_request, jx);
 		}
 
-		database_method_transaction<json> create_object(json create_object_request)
+		json create_object(json create_object_request)
 		{
 			timer method_timer;
 			json_parser jp;
@@ -2462,14 +2461,14 @@ private:
 			{
 				response = create_response(create_object_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("create_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				co_return response;
+				return response;
 			}
 
-			bool permission = co_await has_class_permission(token, class_name, "Get");
+			bool permission =  has_class_permission(token, class_name, "Get");
 			if (!permission) {
 				json result = create_response(create_object_request, false, "Cannot get class", data, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("create_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				co_return result;
+				return result;
 			}
 
 			json class_key = jp.create_object();
@@ -2480,7 +2479,7 @@ private:
 
 			{
 				scope_lock lock_one(classes_rw_lock);
-				class_data = co_await classes.get(class_key);
+				class_data =  classes.get(class_key);
 			}
 
 			if (class_data.object()) {
@@ -2556,11 +2555,11 @@ private:
 				response = create_response(create_object_request, false, "Couldn't find class", class_key, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("create_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			}
-			co_return response;
+			return response;
 			
 		}
 
-		database_method_transaction<json> put_object(json put_object_request)
+		json put_object(json put_object_request)
 		{
 			timer method_timer;
 			json_parser jp;
@@ -2580,17 +2579,17 @@ private:
 			{
 				result = create_response(put_object_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("put_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				co_return result;
+				return result;
 			}
 
-			bool permission = co_await check_object_permission(put_object_request, "Put");
+			bool permission =  check_object_permission(put_object_request, "Put");
 			if (!permission) {
 				json result = create_response(put_object_request, false, "Cannot create object", put_object_request["Data"], method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("put_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				co_return result;
+				return result;
 			}
 
-			result = co_await check_object(put_object_request);
+			result =  check_object(put_object_request);
 
 			if (result["Success"])
 			{
@@ -2621,18 +2620,18 @@ private:
 							}
 							key_index.set_compare_order(key_order);
 							key_index.copy_member("ObjectId", obj);
-							co_await objects_by_name.put(key_index);
+							 objects_by_name.put(key_index);
 						}
 					}
 
 					scope_lock lock_one(objects_rw_lock);
 
 					obj.put_member("Active", true);
-					relative_ptr_type put_result = co_await objects.put(obj);
+					relative_ptr_type put_result =  objects.put(obj);
 
 					json cobj = object_definition.extract({ "ClassName", "ObjectId" });
 					cobj.put_member("Active", true);
-					relative_ptr_type classput_result = co_await class_objects.put(cobj);
+					relative_ptr_type classput_result =  class_objects.put(cobj);
 				}
 
 				result = create_response(put_object_request, true, "Object(s) created", data, method_timer.get_elapsed_seconds());
@@ -2643,10 +2642,10 @@ private:
 			}
 			system_monitoring_interface::global_mon->log_function_stop("put_object", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
-			co_return result;
+			return result;
 		}
 
-		database_method_transaction<json> get_object(
+		json get_object(
 			json get_object_request
 		)
 		{
@@ -2663,26 +2662,26 @@ private:
 			{
 				result = create_response(get_object_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("get_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				co_return result;
+				return result;
 			}
 
-			bool permission = co_await check_object_permission(get_object_request, "Get");
+			bool permission =  check_object_permission(get_object_request, "Get");
 			if (!permission) {
 				json result = create_response(get_object_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("get_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				co_return result;
+				return result;
 			}
 			
 			json payload = get_object_request["Data"];
-			json obj = co_await acquire_object(payload);
+			json obj =  acquire_object(payload);
 
 			result = create_response(get_object_request, true, "Ok", obj, method_timer.get_elapsed_seconds());
 			system_monitoring_interface::global_mon->log_function_stop("get_object", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
-			co_return result;
+			return result;
 		}
 
-		database_transaction<json> pop_object(json pop_object_request)
+		json pop_object(json pop_object_request)
 		{
 			timer method_timer;
 			json response;
@@ -2698,13 +2697,13 @@ private:
 			if (!check_message(pop_object_request, { auth_general }))
 			{
 				response = create_response(pop_object_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
-				co_return response;
+				return response;
 			}
 
 			if (!check_object_key_permission(pop_object_request, "Delete")) {
 				json result = create_response(pop_object_request, false, "Cannot delete object", jp.create_object(), method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("pop_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				co_return result;
+				return result;
 			}
 
 			json object_key = pop_object_request["Data"];
@@ -2712,18 +2711,18 @@ private:
 			scope_lock lock_one(objects_rw_lock);
 
 			if (object_key.has_member("ClassName")) {
-				json revised_key = co_await class_objects.get_first(object_key);
+				json revised_key =  class_objects.get_first(object_key);
 				object_key.copy_member("ObjectId", revised_key);
 			}
 
-			json object_def = co_await objects.get(object_key);
+			json object_def =  objects.get(object_key);
 
 			response = create_response(pop_object_request, false, "Failed", object_key, method_timer.get_elapsed_seconds());
 
 			if (object_def.object()) {
-				bool success = co_await class_objects.erase(object_def);
+				bool success =  class_objects.erase(object_def);
 				if (success) {
-					success = co_await objects.erase(object_key);
+					success =  objects.erase(object_key);
 					if (success) {
 						response = create_response(pop_object_request, true, "Ok", object_key, method_timer.get_elapsed_seconds());
 					}
@@ -2734,10 +2733,10 @@ private:
 				response = create_response(pop_object_request, false, "Not found", object_key, method_timer.get_elapsed_seconds());
 			}
 			system_monitoring_interface::global_mon->log_function_stop("pop_object", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-			co_return response;
+			return response;
 		}
 
-		database_transaction<json> delete_object(json delete_object_request)
+		json delete_object(json delete_object_request)
 		{
 			timer method_timer;
 			json response;
@@ -2753,31 +2752,31 @@ private:
 			{
 				response = create_response(delete_object_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("delete_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				co_return response;
+				return response;
 			}
 
 			if (!check_object_key_permission(delete_object_request, "Delete")) {
 				json result = create_response(delete_object_request, false, "Cannot delete object", jp.create_object(), method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("delete_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				co_return result;
+				return result;
 			}
 
 			json object_key = delete_object_request["Data"];
 
 			scope_lock lock_one(objects_rw_lock);
 
-			json object_def = co_await objects.get(object_key);
+			json object_def =  objects.get(object_key);
 			object_def.put_member("Active", false);
 
 			response = create_response(delete_object_request, false, "Failed", object_key, method_timer.get_elapsed_seconds());
 
 			if (object_def.object()) 
 			{
-				auto obj = co_await class_objects.get(object_key);
+				auto obj =  class_objects.get(object_key);
 				json cobj = obj.extract({ "ClassName", "ObjectId" });
 				cobj.put_member("Active", false);
-				relative_ptr_type classput_result = co_await class_objects.put(cobj);
-				relative_ptr_type objectput_result = co_await objects.put(object_def);
+				relative_ptr_type classput_result =  class_objects.put(cobj);
+				relative_ptr_type objectput_result =  objects.put(object_def);
 				if (classput_result != null_row && objectput_result != null_row) 
 				{
 					response = create_response(delete_object_request, true, "Ok", object_key, method_timer.get_elapsed_seconds());
@@ -2788,10 +2787,10 @@ private:
 				response = create_response(delete_object_request, false, "Not found", object_key, method_timer.get_elapsed_seconds());
 			}
 			system_monitoring_interface::global_mon->log_function_stop("delete_object", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-			co_return response;
+			return response;
 		}
 
-		database_transaction<json> copy_object(json copy_request)
+		json copy_object(json copy_request)
 		{
 			timer method_timer;
 			json_parser jp;
@@ -2809,28 +2808,28 @@ private:
 			{
 				response = create_response(copy_request, false, "Denied", jp.create_object(), method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("copy_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				co_return response;
+				return response;
 			}
 
 			json source_key = copy_request["SourceKey"];
 
-			json object_copy = co_await acquire_object(source_key);
+			json object_copy =  acquire_object(source_key);
 
 			json check_request = create_request(copy_request, object_copy);
 
-			bool permission = co_await check_object_permission(copy_request, "Get");
+			bool permission =  check_object_permission(copy_request, "Get");
 			if (!permission) {
 				json result = create_response(copy_request, false, "Denied", source_key, method_timer.get_elapsed_seconds());
 				system_monitoring_interface::global_mon->log_function_stop("copy_object", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				co_return result;
+				return result;
 			}
 
 			json new_object = object_copy.clone();
-			db_object_id_type new_object_id = co_await get_next_object_id();
+			db_object_id_type new_object_id =  get_next_object_id();
 			new_object.put_member_i64("ObjectId", new_object_id);
 
 			json por = create_request(copy_request, new_object);
-			json result = co_await put_object(por);
+			json result =  put_object(por);
 
 			if (result["Success"]) {
 				response = create_response(copy_request, true, "Ok", result["Data"], method_timer.get_elapsed_seconds());
@@ -2840,7 +2839,7 @@ private:
 				response = result;
 			}
 			system_monitoring_interface::global_mon->log_function_stop("copy_object", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-			co_return response;
+			return response;
 		}
 
 		json create_system_request(json _data)
@@ -2890,7 +2889,7 @@ private:
 		}
 
 
-		database_transaction<json> get_banner()
+		json get_banner()
 		{
 			json_parser jp;
 			json body = jp.parse_object(R"(
@@ -2899,7 +2898,7 @@ private:
 	"Version":"1.0"
 }
 )");
-			co_return body;
+			return body;
 		}
 
 		http_handler_function corona_test = [this](http_action_request _request)-> void {
@@ -2908,8 +2907,7 @@ private:
 				http_response error_response = create_response(500, parsed_request);
 				_request.send_response(500, "Parse error", parsed_request);
 			}
-			auto btask = this->get_banner();
-			json fn_response = btask.wait();
+			json fn_response = this->get_banner();
 			http_response response = create_response(200, fn_response);
 			_request.send_response(200, "Ok", fn_response);
 			};
@@ -2920,8 +2918,7 @@ private:
 				http_response error_response = create_response(500, parsed_request);
 				_request.send_response(500, "Parse error", parsed_request);
 			}
-			auto lutask = this->login_user(parsed_request);
-			json fn_response = lutask.wait();
+			auto fn_response = this->login_user(parsed_request);
 			http_response response = create_response(200, fn_response);
 			_request.send_response(200, "Ok", fn_response);
 			};
@@ -2933,8 +2930,7 @@ private:
 				http_response error_response = create_response(500, parsed_request);
 				_request.send_response(500, "Parse error", parsed_request);
 			}
-			auto gctask = this->get_classes(parsed_request);
-			json fn_response = gctask.wait();
+			auto fn_response = this->get_classes(parsed_request);
 			http_response response = create_response(200, fn_response);
 			_request.send_response(200, "Ok", fn_response);
 			};
@@ -2945,8 +2941,7 @@ private:
 				http_response error_response = create_response(500, parsed_request);
 				_request.send_response(500, "Parse error", parsed_request);
 			}
-			auto pctask = this->create_class(parsed_request);
-			json fn_response = pctask.wait();
+			json fn_response = this->create_class(parsed_request);
 			http_response response = create_response(200, fn_response);
 			_request.send_response(200, "Ok", fn_response);
 			};
@@ -2957,8 +2952,7 @@ private:
 				http_response error_response = create_response(500, parsed_request);
 				_request.send_response(500, "Parse error", parsed_request);
 			}
-			auto pctask = this->put_class(parsed_request);
-			json fn_response = pctask.wait();
+			json fn_response = this->put_class(parsed_request);
 			http_response response = create_response(200, fn_response);
 			_request.send_response(200, "Ok", fn_response);
 			};
@@ -2969,8 +2963,7 @@ private:
 				http_response error_response = create_response(500, parsed_request);
 				_request.send_response(500, "Parse error", parsed_request);
 			}
-			auto pctask = this->create_user(parsed_request);
-			json fn_response = pctask.wait();
+			json fn_response = this->create_user(parsed_request);
 			http_response response = create_response(200, fn_response);
 			_request.send_response(200, "Ok", fn_response);
 			};
@@ -2981,8 +2974,7 @@ private:
 				http_response error_response = create_response(500, parsed_request);
 				_request.send_response(500, "Parse error", parsed_request);
 			}
-			auto pctask = this->get_object(parsed_request);
-			json fn_response = pctask.wait();
+			json fn_response = this->get_object(parsed_request);
 			http_response response = create_response(200, fn_response);
 			_request.send_response(200, "Ok", fn_response);
 			};
@@ -2993,8 +2985,7 @@ private:
 				http_response error_response = create_response(500, parsed_request);
 				_request.send_response(500, "Parse error", parsed_request);
 			}
-			auto pctask = this->query_class(parsed_request);
-			json fn_response = pctask.wait();
+			json fn_response = this->query_class(parsed_request);
 			http_response response = create_response(200, fn_response);
 			_request.send_response(200, "Ok", fn_response);
 			};
@@ -3005,8 +2996,7 @@ private:
 				http_response error_response = create_response(500, parsed_request);
 				_request.send_response(500, "Parse error", parsed_request);
 			}
-			auto pctask = this->create_object(parsed_request);
-			json fn_response = pctask.wait();
+			json fn_response = this->create_object(parsed_request);
 			http_response response = create_response(200, fn_response);
 			_request.send_response(200, "Ok", fn_response);
 			};
@@ -3017,8 +3007,7 @@ private:
 				http_response error_response = create_response(500, parsed_request);
 				_request.send_response(500, "Parse error", parsed_request);
 			}
-			auto pctask = this->put_object(parsed_request);
-			json fn_response = pctask.wait();
+			json fn_response = this->put_object(parsed_request);
 			http_response response = create_response(200, fn_response);
 			_request.send_response(200, "Ok", fn_response);
 			};
@@ -3029,8 +3018,7 @@ private:
 				http_response error_response = create_response(500, parsed_request);
 				_request.send_response(500, "Parse error", parsed_request);
 			}
-			auto pctask = this->delete_object(parsed_request);
-			json fn_response = pctask.wait();
+			json fn_response = this->delete_object(parsed_request);
 			http_response response = create_response(200, fn_response);
 			_request.send_response(200, "Ok", fn_response);
 			};
@@ -3041,8 +3029,7 @@ private:
 				http_response error_response = create_response(500, parsed_request);
 				_request.send_response(500, "Parse error", parsed_request);
 			}
-			auto pctask = this->edit_object(parsed_request);
-			json fn_response = pctask.wait();
+			json fn_response = this->edit_object(parsed_request);
 			http_response response = create_response(200, fn_response);
 			_request.send_response(200, "Ok", fn_response);
 			};
@@ -3143,7 +3130,7 @@ private:
 	};
 
 
-	user_transaction<bool> test_database_engine(std::shared_ptr<application> _app)
+	bool test_database_engine(std::shared_ptr<application> _app)
 	{
 		bool success = true;
 		std::shared_ptr<file> dtest = std::make_shared<file>();
@@ -3166,12 +3153,10 @@ private:
 
 		db.apply_config(db_config);
 		auto schema_task = db.apply_schema(schema_config);
-		schema_task.wait();
 
 		system_monitoring_interface::global_mon->log_information("create_database");
 
-		auto create_database_task = db.create_database();
-		relative_ptr_type database_location = create_database_task.wait();
+		relative_ptr_type database_location = db.create_database();
 
 		json_parser jp;
 		json user = jp.parse_object(R"(
@@ -3191,14 +3176,14 @@ private:
 
 		json sys_request = db.create_system_request(user);
 
-		json user_result = co_await db.create_user(sys_request);
+		json user_result =  db.create_user(sys_request);
 
 		system_monitoring_interface::global_mon->log_job_stop("test_database_engine", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
-		co_return success;
+		return success;
 	}
 
-	user_transaction<bool> run_server(std::shared_ptr<application> _app)
+	bool run_server(std::shared_ptr<application> _app)
 	{
 		date_time start_schema = date_time::now();
 		timer tx;
@@ -3222,12 +3207,9 @@ private:
 			jf.poll_contents(_app.get(), schema_config);
 
 			db.apply_config(db_config);
-			auto schema_task = db.apply_schema(schema_config);
-			schema_task.wait();
-
-
-			auto create_database_task = db.create_database();
-			relative_ptr_type database_location = create_database_task.wait();
+			db.apply_schema(schema_config);
+			
+			relative_ptr_type database_location = db.create_database();
 
 			http_server db_api_server;
 
@@ -3244,10 +3226,9 @@ private:
 				jf.file_name = "schema.json";
 				if (jf.poll_contents(_app.get(), schema_config) != null_row) {
 					auto schema_task = db.apply_schema(schema_config);
-					schema_task.wait();
 				}
 
-				co_await db_api_server.next_request();
+				 db_api_server.next_request();
 			}
 
 		}
@@ -3258,7 +3239,7 @@ private:
 
 		system_monitoring_interface::global_mon->log_command_stop("run_server", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
-		co_return true;
+		return true;
 	}
 
 	bool collection_tests()

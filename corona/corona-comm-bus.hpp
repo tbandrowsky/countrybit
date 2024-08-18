@@ -132,8 +132,7 @@ namespace corona
 					local_db->apply_config(temp);
 				}
 
-				auto admin_user_transaction = local_db->create_database();
-				json create_database_response = admin_user_transaction.wait();
+				json create_database_response = local_db->create_database();
 
 				// when you create the database you get back your user object
 				// to login to it.
@@ -144,18 +143,17 @@ namespace corona
 					std::string suser_json = admin_user.to_json();
 					io_buffer.set_buffer(suser_json);
 					file user_file = app->open_file(user_file_name, file_open_types::create_always);
-					file_command task = user_file.write(0, io_buffer.get_ptr(), io_buffer.get_size());					
+					user_file.write(0, io_buffer.get_ptr(), io_buffer.get_size());
 				}
 
-				file_transaction<relative_ptr_type> result = database_config_mon.poll(app.get());
+				relative_ptr_type result = database_config_mon.poll(app.get());
 				ready_for_polling = true;
 			} 
 			else 
 			{
 				db_file = app->open_file_ptr(database_file_name, file_open_types::open_existing);
 				local_db = std::make_shared<corona_database>(this, db_file);
-				auto odbs = local_db->open_database(0);
-				odbs.wait();
+				local_db->open_database(0);
 				json_file_watcher user_file_watcher;
 				user_file_watcher.file_name = user_file_name;
 				user_file_watcher.poll_contents(app.get(), admin_user);
@@ -176,7 +174,6 @@ namespace corona
 				if (database_schema_mon.poll_contents(app.get(), temp) != null_row) {
 					log_command_start("poll_db", "apply schema", start_time, __FILE__, __LINE__);
 					auto tempo = local_db->apply_schema(temp);
-					tempo.wait();
 					log_command_stop("poll_db", "schema applied", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				}
 				timer tx2;
@@ -262,7 +259,7 @@ namespace corona
 			log_error(_error);
 		}
 
-		virtual comm_bus_transaction<json>  create_user(json user_information)
+		virtual json  create_user(json user_information)
 		{
 			date_time dt;
 			dt = date_time::now();
@@ -272,27 +269,27 @@ namespace corona
 			json request = jp.create_object();
 			request.put_member("Token", admin_user_token);
 			request.put_member("Data", user_information);
-			json j = co_await local_db->create_user(request);
+			json j =  local_db->create_user(request);
 			if (j.error())
 				log_error(j, __FILE__, __LINE__);
 			log_command_stop("create_user", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-			co_return j;
+			return j;
 		}
 
-		virtual comm_bus_transaction<json>  login_user(json login_information)
+		virtual json  login_user(json login_information)
 		{
 			date_time dt;
 			dt = date_time::now();
 			log_command_start("login_user", login_information["Name"], dt);
 			timer tx;
-			json response = co_await local_db->login_user(login_information);
+			json response =  local_db->login_user(login_information);
 			if (response.error())
 				log_error(response, __FILE__, __LINE__);
 			log_command_stop("login", response["Message"], tx.get_elapsed_seconds(), __FILE__, __LINE__);
-			co_return response;
+			return response;
 		}
 
-		virtual comm_bus_transaction<json>  create_object(std::string class_name)
+		virtual json  create_object(std::string class_name)
 		{
 			date_time dt;
 			dt = date_time::now();
@@ -304,15 +301,15 @@ namespace corona
 			json data = jp.create_object();
 			data.put_member("ClassName", class_name);
 			request.put_member("Data", data);
-			json response = co_await local_db->create_object(request);
+			json response =  local_db->create_object(request);
 			log_command_stop("create_object", response["Message"], tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			if (response.error())
 				log_error(response, __FILE__, __LINE__);
 			response = response["Data"];
-			co_return response;
+			return response;
 		}
 
-		virtual comm_bus_transaction<json>  put_object(json object_information)
+		virtual json  put_object(json object_information)
 		{
 			date_time dt;
 			dt = date_time::now();
@@ -322,15 +319,15 @@ namespace corona
 			json request = jp.create_object();
 			request.put_member("Token", admin_user_token);
 			request.put_member("Data", object_information);
-			json response = co_await local_db->put_object(request);
+			json response =  local_db->put_object(request);
 			if (response.error())
 				log_error(response, __FILE__, __LINE__);
 			response = response["Data"];
 			log_command_stop("put_object", response["Message"], tx.get_elapsed_seconds(), __FILE__, __LINE__);
-			co_return response;
+			return response;
 		}
 
-		virtual comm_bus_transaction<json>  get_object(json object_information)
+		virtual json  get_object(json object_information)
 		{
 			date_time dt;
 			dt = date_time::now();
@@ -340,15 +337,15 @@ namespace corona
 			json request = jp.create_object();
 			request.put_member("Token", admin_user_token);
 			request.put_member("Data", object_information);
-			json response = co_await local_db->get_object(request);
+			json response =  local_db->get_object(request);
 			if (response.error())
 				log_error(response, __FILE__, __LINE__);
 			log_command_stop("get_object", response["Message"], tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			response = response["Data"];
-			co_return response;
+			return response;
 		}
 
-		virtual comm_bus_transaction<json>  delete_object(json object_information)
+		virtual json  delete_object(json object_information)
 		{
 			date_time dt;
 			dt = date_time::now();
@@ -358,16 +355,16 @@ namespace corona
 			json request = jp.create_object();
 			request.put_member("Token", admin_user_token);
 			request.put_member("Data", object_information);
-			json response = co_await local_db->put_object(request);
+			json response =  local_db->put_object(request);
 			if (response.error())
 				log_error(response, __FILE__, __LINE__);
 
 			log_command_stop("delete_object", response["Message"], tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			response = response["Data"];
-			co_return response;
+			return response;
 		}
 
-		virtual comm_bus_transaction<json>  pop_object(json pop_info)
+		virtual json  pop_object(json pop_info)
 		{
 			date_time dt;
 			dt = date_time::now();
@@ -377,15 +374,15 @@ namespace corona
 			json request = jp.create_object();
 			request.put_member("Token", admin_user_token);
 			request.put_member("Data", pop_info);
-			json response = co_await local_db->put_object(request);
+			json response =  local_db->put_object(request);
 			if (response.error())
 				log_error(response, __FILE__, __LINE__);
 			log_command_stop("pop_object", response["Message"], tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			response = response["Data"];
-			co_return response;
+			return response;
 		}
 
-		virtual comm_bus_transaction<json>  query_objects(json query_information)
+		virtual json  query_objects(json query_information)
 		{
 			date_time dt;
 			dt = date_time::now();
@@ -395,7 +392,7 @@ namespace corona
 			json request = jp.create_object();
 			request.put_member("Token", admin_user_token);
 			request.put_member("Data", query_information);
-			json response = co_await local_db->query_class(request);
+			json response =  local_db->query_class(request);
 			if (response.error())
 				log_error(response, __FILE__, __LINE__);
 			response = response["Data"];
@@ -404,10 +401,10 @@ namespace corona
 				log_information(rr);
 			}
 			log_command_stop("query_objects", response["Message"], tx.get_elapsed_seconds(), __FILE__, __LINE__);
-			co_return response;
+			return response;
 		}
 
-		virtual comm_bus_transaction<table_data>  query_objects_as_table(json query_information)
+		virtual table_data  query_objects_as_table(json query_information)
 		{
 			date_time dt;
 			dt = date_time::now();
@@ -420,16 +417,16 @@ namespace corona
 			request.put_member("Data", query_information);
 			json table = query_information["Table"];
 			td.put_json(table);
-			json response = co_await local_db->query_class(request);
+			json response =  local_db->query_class(request);
 			log_command_stop("query_objects_table", response["Message"], tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			if (response.error())
 				log_error(response, __FILE__, __LINE__);
 			json response_items = response["Data"];
 			td.items = response_items;
-			co_return td;
+			return td;
 		}
 
-		virtual comm_bus_transaction<list_data>  query_objects_as_list(json query_information)
+		virtual list_data  query_objects_as_list(json query_information)
 		{
 			date_time dt;
 			dt = date_time::now();
@@ -442,13 +439,13 @@ namespace corona
 			request.put_member("Data", query_information);
 			json lst = query_information["List"];
 			ld.put_json(lst);
-			json response = co_await local_db->query_class(request);
+			json response =  local_db->query_class(request);
 			if (response.error())
 				log_error(response, __FILE__, __LINE__);
 			json response_items = response["Data"];
 			log_command_stop("query_objects_list", response["Message"], tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			ld.items = response_items;
-			co_return ld;
+			return ld;
 		}
 
 		virtual control_base* find_control(std::string _name)
@@ -595,7 +592,6 @@ namespace corona
 					if (command) {
 						command->bus = this;
 						auto tranny = command->execute();
-						tranny.wait();
 					}
 					log_function_stop("run_command", jcommand["class_name"], tx.get_elapsed_seconds(), __FILE__, __LINE__);
 					});
@@ -618,7 +614,6 @@ namespace corona
 					if (command) {
 						command->bus = this;
 						auto tranny = command->execute();
-						tranny.wait();
 					}
 					log_user_command_stop("run_command", jcommand["class_name"], tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				});

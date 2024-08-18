@@ -238,16 +238,16 @@ namespace corona
 		virtual void run_app_ui(HINSTANCE hInstance, LPSTR command_line, bool fullScreen) = 0;
 
 
-		virtual comm_bus_transaction<json> create_user(json user_information) = 0;
-		virtual comm_bus_transaction<json> login_user(json login_information) = 0;
-		virtual comm_bus_transaction<json> create_object(std::string class_name) = 0;
-		virtual comm_bus_transaction<json> put_object(json object_information) = 0;
-		virtual comm_bus_transaction<json> get_object(json object_information) = 0;
-		virtual comm_bus_transaction<json> delete_object(json object_information) = 0;
-		virtual comm_bus_transaction<json> pop_object(json object_information) = 0;
-		virtual comm_bus_transaction<json> query_objects(json object_information) = 0;
-		virtual comm_bus_transaction<table_data> query_objects_as_table(json query_information) = 0;
-		virtual comm_bus_transaction<list_data> query_objects_as_list(json query_information) = 0;
+		virtual json create_user(json user_information) = 0;
+		virtual json login_user(json login_information) = 0;
+		virtual json create_object(std::string class_name) = 0;
+		virtual json put_object(json object_information) = 0;
+		virtual json get_object(json object_information) = 0;
+		virtual json delete_object(json object_information) = 0;
+		virtual json pop_object(json object_information) = 0;
+		virtual json query_objects(json object_information) = 0;
+		virtual table_data query_objects_as_table(json query_information) = 0;
+		virtual list_data query_objects_as_list(json query_information) = 0;
 		virtual void error(json _error) = 0;
 
 		virtual void when(UINT topic, std::function<void()> _runnable) = 0;
@@ -447,7 +447,7 @@ namespace corona
 			;
 		}
 
-		virtual comm_bus_transaction<json> execute() = 0;
+		virtual json execute() = 0;
 
 		virtual void get_json(json& _dest)
 		{
