@@ -161,8 +161,7 @@ namespace corona
 			jn.shouldDelete = false;
 
 			result.bytes_transferred = _bytesTransferred;
-			result.result = os_result();
-			result.result.success = _success;
+			result.success = _success;
 
 			if (whore_wait) 
 				::SetEvent(whore_wait);
@@ -375,7 +374,7 @@ namespace corona
 			::SetEndOfFile(hfile);
 			::SetEvent(resize_event);
 
-			return new_position.QuadPart;
+			return position.QuadPart;
 		}
 
 		file_command_result write(uint64_t location, void* _buffer, int _buffer_length)
@@ -389,7 +388,7 @@ namespace corona
 
 		file_command_result read(uint64_t location, void* _buffer, int _buffer_length)
 		{
-			file_command_request fcr(file_commands::write, file_name, hfile, location, _buffer_length, _buffer);
+			file_command_request fcr(file_commands::read, file_name, hfile, location, _buffer_length, _buffer);
 			file_command fc;
 			fc.request = fcr;
 			file_command_result result = fc.run();

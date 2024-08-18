@@ -90,7 +90,7 @@ namespace corona
 				if (data_result.success) 
 				{
 					system_monitoring_interface::global_mon->log_block_stop("block", "complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-					return data_result.bytes_transferred; // want to make this 0 or -1 if error
+					return header_result.location; // want to make this 0 or -1 if error
 				}
 				else {
 					system_monitoring_interface::global_mon->log_function_stop("block", "failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
@@ -130,7 +130,7 @@ namespace corona
 			{
 				file_command_result header_result = _file->write(current_location, &header, sizeof(header));
 				system_monitoring_interface::global_mon->log_block_stop("block", "write complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				return header_result.bytes_transferred;
+				return header_result.location;
 			}
 			system_monitoring_interface::global_mon->log_block_stop("block", "write failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
@@ -159,7 +159,7 @@ namespace corona
 				file_command_result data_result = _file->write(header.data_location, bytes.get_ptr(), size);
 
 				system_monitoring_interface::global_mon->log_block_stop("block", "append complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
-				return current_location;
+				return header_result.location;
 			}
 			else 
 			{
@@ -257,7 +257,9 @@ namespace corona
 					system_monitoring_interface::global_mon->log_warning(temp, __FILE__, __LINE__);
 					system_monitoring_interface::global_mon->log_json_stop("json", "read failed", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 				}
-				put_json(payload);
+				else {
+					put_json(payload);
+				}
 			}
 			system_monitoring_interface::global_mon->log_json_stop("json", "read complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 			return status;
@@ -315,9 +317,16 @@ namespace corona
 			data = {};
 		}
 
+		poco_node()
+		{
+			clear();
+		}
+
 		poco_node& operator = (const poco_type& _src)
 		{
 			data = _src;
+			object_id = _src;
+			storage = _src.storage;
 			return *this;
 		}
 
@@ -370,13 +379,11 @@ namespace corona
 			poco_type* c = (poco_type*)storage.bytes.get_ptr();
 			*c = data;
 
-			relative_ptr_type status =  storage.append(_file);
-
+			relative_ptr_type location = storage.append(_file);
 
 			system_monitoring_interface::global_mon->log_poco_stop("poco", "append complete", tx.get_elapsed_seconds(), __FILE__, __LINE__);
 
-
-			return status;
+			return location;
 		}
 	};
 
@@ -418,7 +425,7 @@ namespace corona
 
 			json_node in;
 
-			 index_header.read(database_file.get(), header_location);
+			index_header.read(database_file.get(), header_location);
 
 			int64_t result =  in.read(database_file.get(), index_header.data.header_node_location);
 
@@ -466,7 +473,8 @@ namespace corona
 				key_fields(_key_fields),
 			header_location(0)
 		{
-
+			json_parser jp;
+			header_key = jp.create_object();
 		}
 
 		json_table(const json_table& _src) 
