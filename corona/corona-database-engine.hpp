@@ -1153,8 +1153,11 @@ private:
 
 			scope_lock lock_one(objects_rw_lock);
 
-			std::string class_name = _object_key["ClassName"];
-			json classdef = classes.get(class_name);
+			json class_key = _object_key.extract({ "ClassName" } );
+			json classdef;
+
+			class_key.set_compare_order({ "ClassName" });
+			classdef = classes.get(class_key);
 			
 			if (classdef.empty()) 
 			{
@@ -1704,7 +1707,7 @@ private:
 											new_object.erase_member("ObjectId");
 											jp.parse_delimited_string(new_object, column_map, line, delimiter[0]);
 											datomatic.push_back(new_object);
-											if (datomatic.size() > 5000) {
+											if (datomatic.size() > 5) {
 												timer tx;
 												json cor = create_system_request(datomatic);
 												json put_result =  put_object(cor);

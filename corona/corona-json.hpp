@@ -799,6 +799,20 @@ namespace corona
 			return escaped_json_str;
 		}
 
+		int64_t get_hash_code()
+		{
+			int64_t hash = 0;
+			if (!object())
+				return 0;
+			auto members = get_members();
+			for (auto m : members) {
+				int64_t x = (int64_t)m.second;
+				hash = hash ^ x;
+			}
+			if (hash < 0) hash = -hash;
+			return hash;
+		}
+
 		bool is_int64() const
 		{
 			return (bool)int64_impl;

@@ -387,10 +387,10 @@ namespace corona
 	struct block_header_struct
 	{
 		block_id	block_type;
-		int64_t		object_id;
+		int64_t		block_location;
 		int64_t		data_length;
 		int64_t		data_location;
-		int64_t		next_free_block;
+		int64_t		next_block;
 	};
 
 	template <typename blocked_type> concept named_block =

@@ -46,16 +46,22 @@ namespace corona
 	class file_batch;
 	class json_node;
 
+	struct free_block_header
+	{
+	public:
+		int64_t		first_free_block;
+		int64_t		last_free_block;
+	};
+
 	struct index_header_struct
 	{
 	public:
-		int64_t		header_node_location;
-		int64_t		count;
-		long		level;
+		int64_t								 count;
+		iarray<free_block_header, 20>		 free_lists;
+		iarray<free_block_header, 10000>	 index;
 	};
 
 	template <typename data> class poco_node;
-
 
 	enum file_commands
 	{

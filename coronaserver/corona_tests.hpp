@@ -15,7 +15,7 @@ void corona_tests()
     {
         app->application_folder_name = "corona_tests";
         app->application_name = "corona_tests";
-
+        a
         std::cout << "\nmain::begin,thread:" << GetCurrentThreadId() << std::endl;
 
         std::cout << "\n\n=============================================" << std::endl;
